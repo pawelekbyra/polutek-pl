@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { NajsIcon } from "./najs/primitives";
+import { Download } from "lucide-react";
 import { usePwaInstall } from "@/app/hooks/usePwaInstall";
 import { useLanguage } from "./LanguageContext";
 
@@ -64,7 +64,7 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
         aria-haspopup="menu"
         aria-expanded={isOpen}
       >
-        <NajsIcon name="download" className="h-5 w-5" stroke="currentColor" />
+        <Download className="h-5 w-5 shrink-0" strokeWidth={1.8} />
       </button>
 
       {isOpen && (
@@ -94,7 +94,7 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
               onClick={handleInstallClick}
               className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] font-bold text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)]"
             >
-              <NajsIcon name="download" className="h-4 w-4" stroke="var(--chan-ink)" />
+              <Download className="h-4 w-4 shrink-0" strokeWidth={1.8} color="var(--chan-ink)" />
               {isPl ? "Zainstaluj aplikację" : "Install app"}
             </button>
           ) : (

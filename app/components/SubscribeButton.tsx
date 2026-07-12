@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageContext";
 import EmailSubscriptionConsentModal from "./subscriptions/EmailSubscriptionConsentModal";
 import { Frame, INK, BLUE } from "./najs/primitives";
-import { Bell } from "lucide-react";
+import { Pointer } from "lucide-react";
 
 export type SubscribeButtonColorScheme = "default" | "v2" | "flat";
 
@@ -152,7 +152,7 @@ export default function SubscribeButton({
           className,
         )}
       >
-        <Bell size={20} className="relative shrink-0 z-10" fill={isSubscribed ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.5} />
+        <Pointer size={20} className="relative shrink-0 z-10" fill={isSubscribed ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.8} />
         <span className="relative leading-none z-10">{isSubscribed ? (t.subscribed || "Subskrajbujesz") : (t.subscribe || "Subskrajb")}</span>
       </motion.button>
       {errorMessage && (

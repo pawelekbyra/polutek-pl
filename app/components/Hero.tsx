@@ -19,7 +19,7 @@ import SubscribeButton from './SubscribeButton';
 import ShareButton from './ShareButton';
 import InstallAppMenu from './InstallAppMenu';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
-import { NajsIcon } from './najs/primitives';
+import { ThumbsUp, ThumbsDown } from 'lucide-react';
 import styles from './watch-actions.module.css';
 
 interface HeroProps {
@@ -246,7 +246,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     title="Lubię to"
                     aria-label="Lubię to"
                   >
-                     <NajsIcon name="like" className="h-5 w-5" stroke={interactionState.isLiked ? "#2563eb" : "var(--chan-ink)"} />
+                     <ThumbsUp className="h-5 w-5 shrink-0" strokeWidth={1.8} color={interactionState.isLiked ? "#2563eb" : "var(--chan-ink)"} />
                      <span className="text-[12px] font-bold">{interactionState.likesCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US')}</span>
                   </button>
                   <span className="h-5 w-px bg-[var(--chan-line-soft)]" />
@@ -262,7 +262,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     title="Nie lubię"
                     aria-label="Nie lubię"
                   >
-                     <NajsIcon name="dislike" className="h-5 w-5" stroke={interactionState.isDisliked ? "#2563eb" : "var(--chan-ink)"} />
+                     <ThumbsDown className="h-5 w-5 shrink-0" strokeWidth={1.8} color={interactionState.isDisliked ? "#2563eb" : "var(--chan-ink)"} />
                   </button>
                </div>
                <ShareButton
