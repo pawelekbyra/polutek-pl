@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Copy, Check, Facebook, Mail, MessageCircle, Share2 } from 'lucide-react';
+import { Copy, Check, Facebook, Mail, MessageCircle, Send } from 'lucide-react';
 import { useShare } from '@/app/hooks/useShare';
 import { cn } from '@/lib/utils';
 
@@ -70,7 +70,7 @@ export default function ShareButton({
           className
         )}
       >
-        <Share2 className="h-5 w-5 shrink-0" strokeWidth={1.8} color="var(--chan-ink)" />
+        <Send className="h-5 w-5 shrink-0" strokeWidth={1.8} color="var(--chan-ink)" />
         <span className="leading-none">Szeruj</span>
       </button>
 
