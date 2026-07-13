@@ -749,6 +749,208 @@
   }
 }
 
+@layer utilities {
+  /*
+   * /polysk1 — "Frosted Glass". Same components/data as the real homepage
+   * (see app/polysk1/page.tsx), same colors and tokens as main — this is
+   * purely additive polish, not a re-theme. Every rule is scoped under
+   * .polysk1-page. Cards/nav become translucent frosted panels
+   * (backdrop-filter blur + a soft top sheen), buttons get a glassy
+   * gradient + a diagonal shine sweep on hover, corners round out further.
+   * See also /polysk2 for the richer "glossy lacquer" take.
+   */
+  .polysk1-page {
+    position: relative;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 18% -8%, color-mix(in srgb, var(--chan-blue) 9%, transparent), transparent 45%),
+      radial-gradient(circle at 88% 0%, color-mix(in srgb, var(--chan-blue) 7%, transparent), transparent 42%),
+      var(--chan-nav);
+  }
+
+  .polysk1-page .polutek-watch-nav {
+    background: color-mix(in srgb, var(--chan-nav) 66%, transparent) !important;
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border-bottom: 1px solid color-mix(in srgb, white 55%, transparent);
+    box-shadow:
+      0 8px 30px rgba(23, 23, 23, 0.07),
+      inset 0 1px 0 color-mix(in srgb, white 70%, transparent);
+  }
+
+  .polysk1-page [class*="bg-[var(--chan-card)]"],
+  .polysk1-page [class*="bg-[var(--chan-surface)]"] {
+    position: relative;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--chan-surface) 52%, transparent) !important;
+    backdrop-filter: blur(14px) saturate(150%);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    border-color: color-mix(in srgb, white 65%, transparent) !important;
+    box-shadow:
+      0 10px 34px rgba(23, 23, 23, 0.08),
+      inset 0 1px 0 color-mix(in srgb, white 75%, transparent);
+  }
+
+  .polysk1-page [class*="bg-[var(--chan-card)]"]::before,
+  .polysk1-page [class*="bg-[var(--chan-surface)]"]::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 44%;
+    background: linear-gradient(180deg, color-mix(in srgb, white 45%, transparent), transparent);
+    pointer-events: none;
+  }
+
+  .polysk1-page .bg-\[\#2563EB\] {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, color-mix(in srgb, white 32%, var(--chan-blue)) 0%, var(--chan-blue) 55%, color-mix(in srgb, black 10%, var(--chan-blue)) 100%) !important;
+    border: 1px solid color-mix(in srgb, white 40%, var(--chan-blue));
+    box-shadow:
+      0 8px 22px color-mix(in srgb, var(--chan-blue) 35%, transparent),
+      inset 0 1px 0 color-mix(in srgb, white 55%, transparent);
+  }
+
+  .polysk1-page .bg-\[\#2563EB\]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 30%, color-mix(in srgb, white 40%, transparent) 45%, transparent 60%);
+    transform: translateX(-130%);
+    transition: transform 0.65s ease;
+  }
+
+  .polysk1-page .bg-\[\#2563EB\]:hover::after {
+    transform: translateX(130%);
+  }
+
+  .polysk1-page [class*="rounded-2xl"],
+  .polysk1-page [class*="rounded-xl"],
+  .polysk1-page [class*="rounded-\[1"],
+  .polysk1-page [class*="rounded-\[2"] {
+    border-radius: 18px !important;
+  }
+
+  .polysk1-page .polutek-vidstack-player {
+    position: relative;
+    border-radius: 20px !important;
+    box-shadow:
+      0 24px 60px rgba(23, 23, 23, 0.22),
+      inset 0 1px 0 color-mix(in srgb, white 22%, transparent);
+  }
+
+  .polysk1-page footer {
+    background: color-mix(in srgb, var(--chan-nav) 70%, transparent) !important;
+    backdrop-filter: blur(14px) saturate(150%);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    border-top: 1px solid color-mix(in srgb, white 55%, transparent) !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .polysk1-page .bg-\[\#2563EB\]::after {
+      transition: none;
+    }
+  }
+}
+
+@layer utilities {
+  /*
+   * /polysk2 — "Glossy Lacquer". Same components/data/colors as main —
+   * purely additive polish, scoped under .polysk2-page. Deeper elevation
+   * shadows, a bright specular highlight band across the top ~half of
+   * cards/buttons (piano-black-gloss style), a beveled inner highlight on
+   * the accent button, and a soft contact-shadow under the video frame.
+   * More saturated/dramatic than /polysk1's airy frosted-glass take.
+   */
+  .polysk2-page {
+    min-height: 100vh;
+    background: var(--chan-nav);
+  }
+
+  .polysk2-page .polutek-watch-nav {
+    position: relative;
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, white 80%, transparent),
+      0 14px 36px rgba(23, 23, 23, 0.1);
+  }
+
+  .polysk2-page .polutek-watch-nav::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, white 90%, transparent) 50%, transparent);
+  }
+
+  .polysk2-page [class*="bg-[var(--chan-card)]"],
+  .polysk2-page [class*="bg-[var(--chan-surface)]"] {
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 18px 40px rgba(23, 23, 23, 0.14),
+      inset 0 2px 0 color-mix(in srgb, white 70%, transparent);
+  }
+
+  .polysk2-page [class*="bg-[var(--chan-card)]"]::before,
+  .polysk2-page [class*="bg-[var(--chan-surface)]"]::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 55%;
+    background: linear-gradient(180deg, color-mix(in srgb, white 55%, transparent) 0%, transparent 100%);
+    pointer-events: none;
+  }
+
+  .polysk2-page .bg-\[\#2563EB\] {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, #6d9bff 0%, var(--chan-blue) 45%, #123a9e 100%) !important;
+    border: 1px solid #0d2c7a;
+    box-shadow:
+      0 10px 26px color-mix(in srgb, var(--chan-blue) 45%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.55),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.25);
+  }
+
+  .polysk2-page .bg-\[\#2563EB\]::before {
+    content: "";
+    position: absolute;
+    inset: 2px 2px auto 2px;
+    height: 40%;
+    border-radius: inherit;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.65), transparent);
+    pointer-events: none;
+  }
+
+  .polysk2-page [class*="rounded-2xl"],
+  .polysk2-page [class*="rounded-xl"] {
+    border-radius: 16px !important;
+  }
+
+  .polysk2-page .polutek-vidstack-player {
+    position: relative;
+    box-shadow:
+      0 30px 70px rgba(23, 23, 23, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+
+  .polysk2-page .polutek-vidstack-player::after {
+    content: "";
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    bottom: -28px;
+    height: 28px;
+    background: linear-gradient(180deg, rgba(23, 23, 23, 0.16), transparent);
+    filter: blur(6px);
+    pointer-events: none;
+  }
+
+  .polysk2-page footer {
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 70%, transparent);
+  }
+}
+
 @layer components {
   .polutek-watch-nav {
     background:
