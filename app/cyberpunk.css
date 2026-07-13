@@ -1,9 +1,12 @@
-/* Global cyberpunk skin loaded after globals.css.
- * It intentionally overrides the existing paper/channel tokens while keeping
- * component structure, spacing and accessibility behavior unchanged.
+/* /cyberpunk — dark neon re-skin, scoped to .cyberpunk-dark-page.
+ * Same components/data as the real homepage (see app/cyberpunk/page.tsx),
+ * only the visual skin differs — this file must never affect any other
+ * route. It intentionally overrides the existing paper/channel tokens
+ * while keeping component structure, spacing and accessibility behavior
+ * unchanged.
  */
 
-:root {
+.cyberpunk-dark-page {
   color-scheme: dark;
 
   --cyber-bg: #03040c;
@@ -72,14 +75,7 @@
   --chan-blue-soft: var(--cyber-cyan-soft);
   --chan-avatar-gradient: linear-gradient(135deg, var(--cyber-magenta), #712bff 46%, var(--cyber-cyan));
   --chan-support-shadow: 0 0 0 1px rgba(0, 246, 255, 0.22), 0 14px 42px rgba(0, 0, 0, 0.42), var(--cyber-glow);
-}
 
-html {
-  background: var(--cyber-bg);
-  scrollbar-color: var(--cyber-cyan) #080b16;
-}
-
-body {
   color: var(--cyber-text);
   background-color: var(--cyber-bg) !important;
   background-image:
@@ -92,13 +88,16 @@ body {
   background-attachment: fixed !important;
   font-family: var(--font-jakarta);
   text-rendering: geometricPrecision;
+  min-height: 100vh;
+  position: relative;
 }
 
-body::before {
+.cyberpunk-dark-page::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
+  z-index: 1;
   background: repeating-linear-gradient(
     to bottom,
     transparent 0,
@@ -109,70 +108,57 @@ body::before {
   opacity: 0.7;
 }
 
-body::after {
+.cyberpunk-dark-page::after {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
+  z-index: 1;
   background: radial-gradient(circle at center, transparent 48%, rgba(0, 0, 0, 0.54) 140%);
 }
 
-::selection {
+.cyberpunk-dark-page ::selection {
   color: #02040b;
   background: var(--cyber-cyan);
   text-shadow: none;
 }
 
-::-webkit-scrollbar-track {
-  background: #050816 !important;
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(var(--cyber-cyan), var(--cyber-magenta)) !important;
-  border: 2px solid #050816 !important;
-  border-radius: 2px !important;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(var(--cyber-yellow), var(--cyber-magenta)) !important;
-}
-
-h1,
-h2,
-h3,
-.font-heading {
+.cyberpunk-dark-page h1,
+.cyberpunk-dark-page h2,
+.cyberpunk-dark-page h3,
+.cyberpunk-dark-page .font-heading {
   color: var(--cyber-text);
   letter-spacing: -0.025em;
   text-shadow: 0 0 16px rgba(0, 246, 255, 0.12);
 }
 
-h1,
-.font-display {
+.cyberpunk-dark-page h1,
+.cyberpunk-dark-page .font-display {
   text-wrap: balance;
 }
 
-p,
-li {
+.cyberpunk-dark-page p,
+.cyberpunk-dark-page li {
   text-wrap: pretty;
 }
 
-a {
+.cyberpunk-dark-page a {
   text-underline-offset: 0.24em;
   transition: color 160ms ease, text-shadow 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
 
-a:hover {
+.cyberpunk-dark-page a:hover {
   text-shadow: 0 0 12px rgba(0, 246, 255, 0.34);
 }
 
-:where(a, button, input, textarea, select, [role="button"]):focus-visible {
+.cyberpunk-dark-page :where(a, button, input, textarea, select, [role="button"]):focus-visible {
   outline: 2px solid var(--cyber-cyan) !important;
   outline-offset: 3px !important;
   box-shadow: 0 0 0 1px #02040b, 0 0 20px rgba(0, 246, 255, 0.48) !important;
 }
 
 /* Navigation and global chrome */
-.polutek-watch-nav {
+.cyberpunk-dark-page .polutek-watch-nav {
   border-bottom: 1px solid var(--cyber-line) !important;
   background:
     linear-gradient(90deg, rgba(255, 43, 214, 0.05), transparent 32%, rgba(0, 246, 255, 0.06)),
@@ -182,7 +168,7 @@ a:hover {
   -webkit-backdrop-filter: blur(18px) saturate(145%);
 }
 
-.polutek-watch-nav::after {
+.cyberpunk-dark-page .polutek-watch-nav::after {
   content: "";
   position: absolute;
   right: 0;
@@ -193,20 +179,20 @@ a:hover {
   opacity: 0.68;
 }
 
-.polutek-watch-nav a[aria-label="POLUTEK.PL"] {
+.cyberpunk-dark-page .polutek-watch-nav a[aria-label="POLUTEK.PL"] {
   filter: drop-shadow(0 0 7px rgba(0, 246, 255, 0.42));
 }
 
-.chan-lang-pill-active {
+.cyberpunk-dark-page .chan-lang-pill-active {
   background: linear-gradient(135deg, #7b2cff, var(--cyber-magenta) 48%, var(--cyber-cyan)) !important;
   box-shadow: 0 0 16px rgba(255, 43, 214, 0.42), inset 0 0 0 1px rgba(255, 255, 255, 0.18) !important;
 }
 
 /* Existing channel-token surfaces */
-[class*="bg-[var(--chan-card)]"],
-[class*="bg-[color-mix"][class*="var(--chan-card)"],
-[class~="bg-card"],
-[data-slot="card"] {
+.cyberpunk-dark-page [class*="bg-[var(--chan-card)]"],
+.cyberpunk-dark-page [class*="bg-[color-mix"][class*="var(--chan-card)"],
+.cyberpunk-dark-page [class~="bg-card"],
+.cyberpunk-dark-page [data-slot="card"] {
   border-color: var(--cyber-line) !important;
   background:
     linear-gradient(145deg, rgba(255, 43, 214, 0.035), rgba(0, 246, 255, 0.035)),
@@ -215,37 +201,37 @@ a:hover {
   backdrop-filter: blur(12px);
 }
 
-[class*="bg-[var(--chan-surface)]"],
-[class*="bg-[color-mix"][class*="var(--chan-surface)"],
-[class~="bg-secondary"],
-[class~="bg-muted"] {
+.cyberpunk-dark-page [class*="bg-[var(--chan-surface)]"],
+.cyberpunk-dark-page [class*="bg-[color-mix"][class*="var(--chan-surface)"],
+.cyberpunk-dark-page [class~="bg-secondary"],
+.cyberpunk-dark-page [class~="bg-muted"] {
   border-color: rgba(0, 246, 255, 0.18) !important;
   background-color: rgba(15, 24, 47, 0.88) !important;
 }
 
-[class~="bg-white"],
-[class*="bg-white/"],
-[class*="bg-[#f8f3e7]"],
-[class*="bg-[#f7f1e4]"] {
+.cyberpunk-dark-page [class~="bg-white"],
+.cyberpunk-dark-page [class*="bg-white/"],
+.cyberpunk-dark-page [class*="bg-[#f8f3e7]"],
+.cyberpunk-dark-page [class*="bg-[#f7f1e4]"] {
   background-color: var(--cyber-bg-raised) !important;
 }
 
-[class~="text-black"],
-[class*="text-[#171717]"],
-[class*="text-[#09090b]"] {
+.cyberpunk-dark-page [class~="text-black"],
+.cyberpunk-dark-page [class*="text-[#171717]"],
+.cyberpunk-dark-page [class*="text-[#09090b]"] {
   color: var(--cyber-text) !important;
 }
 
-[class*="border-[#d8d0bd]"],
-[class*="border-[#e4e4e7]"],
-[class~="border-black"] {
+.cyberpunk-dark-page [class*="border-[#d8d0bd]"],
+.cyberpunk-dark-page [class*="border-[#e4e4e7]"],
+.cyberpunk-dark-page [class~="border-black"] {
   border-color: var(--cyber-line) !important;
 }
 
 /* Inputs, menus and dialogs */
-input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
-textarea,
-select {
+.cyberpunk-dark-page input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+.cyberpunk-dark-page textarea,
+.cyberpunk-dark-page select {
   color: var(--cyber-text) !important;
   caret-color: var(--cyber-magenta);
   border-color: rgba(0, 246, 255, 0.27) !important;
@@ -253,19 +239,19 @@ select {
   box-shadow: inset 0 0 0 1px rgba(255, 43, 214, 0.025), inset 0 0 18px rgba(0, 246, 255, 0.035) !important;
 }
 
-input::placeholder,
-textarea::placeholder {
+.cyberpunk-dark-page input::placeholder,
+.cyberpunk-dark-page textarea::placeholder {
   color: #678792 !important;
 }
 
-:where(input, textarea, select):focus {
+.cyberpunk-dark-page :where(input, textarea, select):focus {
   border-color: var(--cyber-cyan) !important;
   box-shadow: 0 0 0 3px rgba(0, 246, 255, 0.12), 0 0 24px rgba(0, 246, 255, 0.13) !important;
 }
 
-[role="dialog"],
-[role="menu"],
-[data-radix-popper-content-wrapper] > * {
+.cyberpunk-dark-page [role="dialog"],
+.cyberpunk-dark-page [role="menu"],
+.cyberpunk-dark-page [data-radix-popper-content-wrapper] > * {
   color: var(--cyber-text);
   border-color: var(--cyber-line) !important;
   background:
@@ -276,10 +262,10 @@ textarea::placeholder {
 }
 
 /* Primary actions that were previously plain black */
-button[class*="bg-black"],
-a[class*="bg-black"],
-button[class*="bg-primary"],
-a[class*="bg-primary"] {
+.cyberpunk-dark-page button[class*="bg-black"],
+.cyberpunk-dark-page a[class*="bg-black"],
+.cyberpunk-dark-page button[class*="bg-primary"],
+.cyberpunk-dark-page a[class*="bg-primary"] {
   color: #02040b !important;
   border-color: rgba(0, 246, 255, 0.75) !important;
   background: linear-gradient(105deg, var(--cyber-cyan), #53a7ff 54%, var(--cyber-magenta)) !important;
@@ -287,50 +273,48 @@ a[class*="bg-primary"] {
   text-shadow: none !important;
 }
 
-button[class*="bg-black"]:hover,
-a[class*="bg-black"]:hover,
-button[class*="bg-primary"]:hover,
-a[class*="bg-primary"]:hover {
+.cyberpunk-dark-page button[class*="bg-black"]:hover,
+.cyberpunk-dark-page a[class*="bg-black"]:hover,
+.cyberpunk-dark-page button[class*="bg-primary"]:hover,
+.cyberpunk-dark-page a[class*="bg-primary"]:hover {
   filter: brightness(1.12) saturate(1.16);
   box-shadow: 0 0 22px rgba(0, 246, 255, 0.36), 0 0 36px rgba(255, 43, 214, 0.18) !important;
 }
 
 /* Borders and separators */
-hr,
-footer {
+.cyberpunk-dark-page hr,
+.cyberpunk-dark-page footer {
   border-color: var(--cyber-line) !important;
 }
 
-footer {
+.cyberpunk-dark-page footer {
   background: linear-gradient(180deg, transparent, rgba(8, 3, 22, 0.8));
 }
 
-/* Video player follows the new palette even while using Vidstack's layout. */
-.polutek-vidstack-player {
-  --video-brand: var(--cyber-cyan) !important;
-  --video-focus-ring-color: var(--cyber-magenta) !important;
+/* Video player follows the new palette. */
+.cyberpunk-dark-page .polutek-vidstack-player {
   border: 1px solid rgba(0, 246, 255, 0.3);
   background: #010207 !important;
   box-shadow: 0 0 0 1px rgba(255, 43, 214, 0.1), 0 18px 50px rgba(0, 0, 0, 0.58), var(--cyber-glow);
 }
 
-.polutek-vidstack-player [class*="vds-slider-fill"],
-.polutek-vidstack-player .vds-slider-fill {
+.cyberpunk-dark-page .polutek-player-scrub-fill,
+.cyberpunk-dark-page .polutek-player-volume-fill {
   background: linear-gradient(90deg, var(--cyber-magenta), var(--cyber-cyan)) !important;
   box-shadow: 0 0 12px rgba(0, 246, 255, 0.48);
 }
 
-.polutek-vidstack-player .vds-controls {
+.cyberpunk-dark-page .polutek-player-controls .polutek-player-scrim {
   background: linear-gradient(transparent, rgba(2, 4, 13, 0.96)) !important;
 }
 
 /* Small neon accents without affecting layout. */
-.badge,
-[class*="rounded-full"][class*="border"][class*="text-"] {
+.cyberpunk-dark-page .badge,
+.cyberpunk-dark-page [class*="rounded-full"][class*="border"][class*="text-"] {
   box-shadow: inset 0 0 0 1px rgba(0, 246, 255, 0.045);
 }
 
-@keyframes cyber-pulse {
+@keyframes cyberpunk-dark-pulse {
   0%, 100% {
     opacity: 0.72;
     filter: drop-shadow(0 0 4px rgba(0, 246, 255, 0.32));
@@ -341,25 +325,26 @@ footer {
   }
 }
 
-[aria-busy="true"],
-.animate-pulse {
-  animation-name: cyber-pulse !important;
+.cyberpunk-dark-page [aria-busy="true"],
+.cyberpunk-dark-page .animate-pulse {
+  animation-name: cyberpunk-dark-pulse !important;
 }
 
 @media (max-width: 640px) {
-  body {
+  .cyberpunk-dark-page {
     background-size: auto, auto, 28px 28px, 28px 28px, auto !important;
   }
 
-  .polutek-watch-nav {
+  .cyberpunk-dark-page .polutek-watch-nav {
     backdrop-filter: blur(14px) saturate(135%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  .cyberpunk-dark-page,
+  .cyberpunk-dark-page *,
+  .cyberpunk-dark-page *::before,
+  .cyberpunk-dark-page *::after {
     scroll-behavior: auto !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
