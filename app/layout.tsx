@@ -3,6 +3,7 @@ import ClerkLocalizationProvider from "@/app/components/ClerkLocalizationProvide
 import { Suspense } from 'react';
 import { jakarta, outfit, spaceGrotesk, bebasNeue, kalam, patrickHand, caveat } from "./fonts";
 import "./globals.css";
+import "./cyberpunk.css";
 
 import { APP_NAME } from '@/lib/constants';
 import { ServiceWorkerCleanup } from "@/app/components/ServiceWorkerCleanup";
@@ -15,7 +16,7 @@ export const metadata = {
   title: APP_NAME,
   description: `${APP_NAME} — niezależny kanał wideo z materiałami publicznymi, dla zalogowanych i patronackimi.`,
   manifest: "/manifest.json",
-  themeColor: "#f7f1e4",
+  themeColor: "#03040c",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -51,7 +52,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content={APP_NAME} />
-        <meta name="theme-color" content="#f7f1e4" />
+        <meta name="theme-color" content="#03040c" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icon" />
       </head>
