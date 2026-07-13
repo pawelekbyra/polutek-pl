@@ -8,10 +8,7 @@ import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageContext";
 import EmailSubscriptionConsentModal from "./subscriptions/EmailSubscriptionConsentModal";
-import { Frame, INK, BLUE } from "./najs/primitives";
 import { Rocket } from "lucide-react";
-
-export type SubscribeButtonColorScheme = "default" | "v2" | "flat";
 
 interface SubscribeButtonProps {
   creatorId?: string;
@@ -21,7 +18,6 @@ interface SubscribeButtonProps {
   initialIsSubscribed?: boolean;
   className?: string;
   variant?: "default" | "compact";
-  colorScheme?: SubscribeButtonColorScheme;
   onStatusChange?: (isSubscribed: boolean, subscribersCount?: number) => void;
 }
 
@@ -33,7 +29,6 @@ export default function SubscribeButton({
   initialIsSubscribed,
   className,
   variant = "default",
-  colorScheme = "default",
   onStatusChange,
 }: SubscribeButtonProps) {
   const { t, language } = useLanguage();
@@ -136,8 +131,6 @@ export default function SubscribeButton({
       }
     });
   };
-
-  const isFlat = colorScheme === "flat";
 
   return (
     <>
