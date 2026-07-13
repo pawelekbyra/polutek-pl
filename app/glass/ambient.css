@@ -1,0 +1,4 @@
+.glass-page::before,
+.glass-page::after {
+  z-index: 0 !important;
+}
