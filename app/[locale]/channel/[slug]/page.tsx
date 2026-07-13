@@ -205,7 +205,6 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
                 creatorId={creator.id}
                 creatorSlug={creator.slug}
                 creatorName={creator.name}
-                colorScheme="flat"
                 initialIsSubscribed={initialSubscribed}
               />
             </div>

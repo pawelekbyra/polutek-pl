@@ -110,12 +110,6 @@ importers:
       resend:
         specifier: ^6.9.4
         version: 6.16.0(@react-email/render@2.0.9(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
-      rough-notation:
-        specifier: ^0.5.1
-        version: 0.5.1
-      roughjs:
-        specifier: ^4.6.6
-        version: 4.6.6
       sanitize-html:
         specifier: ^2.17.4
         version: 2.17.5
@@ -4366,9 +4360,6 @@ packages:
     resolution: {integrity: sha512-1F1eEtUBtFvcGm1HQ9TiUIUHPQG7mSAODrhIzjxoUEFuo8OcbrGLiVLkevNgj84TE4lnHvnumwFjhJO5Eu135g==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
-
-  rough-notation@0.5.1:
-    resolution: {integrity: sha512-ITHofTzm13cWFVfoGsh/4c/k2Mg8geKgBCwex71UZLnNuw403tCRjYPQ68jSAd37DMbZIePXPjDgY0XdZi9HPw==}
 
   roughjs@4.6.6:
     resolution: {integrity: sha512-ZUz/69+SYpFN/g/lUlo2FXcIjRkSu3nDarreVdGGndHEBJ6cXPdKguS8JGxwj5HA5xIbVKSmLgr5b3AWxtRfvQ==}
@@ -9336,8 +9327,6 @@ snapshots:
       '@rolldown/binding-wasm32-wasi': 1.1.3
       '@rolldown/binding-win32-arm64-msvc': 1.1.3
       '@rolldown/binding-win32-x64-msvc': 1.1.3
-
-  rough-notation@0.5.1: {}
 
   roughjs@4.6.6:
     dependencies:

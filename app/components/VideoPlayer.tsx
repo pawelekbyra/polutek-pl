@@ -12,7 +12,6 @@ import { useAuth } from "@clerk/nextjs";
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType, type VideoTextTrackDTO } from '@/app/types/video';
 import { cn } from '@/lib/utils';
-import { INK } from './najs/primitives';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
 import { PlayerLoadingIndicator } from './PlayerLoadingState';
@@ -29,12 +28,8 @@ interface VideoPlayerProps {
 function PolutekWatermark() {
     return (
         <div className="pointer-events-none absolute right-3 top-3 z-20 sm:right-4 sm:top-4">
-            <div className="relative flex h-9 w-9 items-center justify-center">
-                <svg className="absolute inset-0 h-full w-full pointer-events-none" viewBox="0 0 36 36" aria-hidden="true">
-                    <path d={`M 5 7 C 4 5 5 4 7 4 L 29 4 C 31 4 32 5 32 7 L 32 29 C 32 31 31 32 29 32 L 7 32 C 5 32 4 31 4 29 Z`}
-                        fill="rgba(248,243,231,0.88)" stroke={INK} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <span className="relative text-[17px] font-bold text-[#171717]" style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}>P</span>
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-[10px] bg-white/88 shadow-sm">
+                <span className="relative font-brand text-[17px] font-bold text-[#171717]">P</span>
             </div>
         </div>
     );
