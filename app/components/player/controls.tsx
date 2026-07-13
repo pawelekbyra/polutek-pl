@@ -45,11 +45,13 @@ import styles from './controls.module.css';
 function CenterStage() {
     const paused = useMediaState('paused');
     const waiting = useMediaState('waiting');
+    const started = useMediaState('started');
     const ended = useMediaState('ended');
+    const showBuffering = waiting && started;
 
     return (
-        <div className={styles.center} aria-hidden={!paused && !waiting}>
-            {waiting ? (
+        <div className={styles.center} aria-hidden={!paused && !showBuffering}>
+            {showBuffering ? (
                 <div className={styles.spinner} role="status" aria-label="Buforowanie" />
             ) : paused ? (
                 <PlayButton className={styles.hero} aria-label={ended ? 'Odtwórz ponownie' : 'Odtwórz'}>
