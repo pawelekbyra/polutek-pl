@@ -1,14 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import {
     MediaPlayer,
     MediaProvider,
     type MediaPlayerInstance,
 } from '@vidstack/react';
-import { DefaultVideoLayout, defaultLayoutIcons } from '@vidstack/react/player/layouts/default';
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from '@clerk/nextjs';
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType, type VideoTextTrackDTO } from '@/app/types/video';
 import { cn } from '@/lib/utils';
@@ -19,6 +18,7 @@ import { PlayerLoadingIndicator } from './PlayerLoadingState';
 import { resolvePlaybackSource } from './playback-source';
 import { shouldSendViewForPlaybackPosition } from './video-view-threshold';
 import { usePlaybackTelemetry } from '@/lib/hooks/usePlaybackTelemetry';
+import PolutekControls from './player/controls';
 
 interface VideoPlayerProps {
     video: VideoType;
@@ -31,10 +31,21 @@ function PolutekWatermark() {
         <div className="pointer-events-none absolute right-3 top-3 z-20 sm:right-4 sm:top-4">
             <div className="relative flex h-9 w-9 items-center justify-center">
                 <svg className="absolute inset-0 h-full w-full pointer-events-none" viewBox="0 0 36 36" aria-hidden="true">
-                    <path d={`M 5 7 C 4 5 5 4 7 4 L 29 4 C 31 4 32 5 32 7 L 32 29 C 32 31 31 32 29 32 L 7 32 C 5 32 4 31 4 29 Z`}
-                        fill="rgba(248,243,231,0.88)" stroke={INK} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                        d="M 5 7 C 4 5 5 4 7 4 L 29 4 C 31 4 32 5 32 7 L 32 29 C 32 31 31 32 29 32 L 7 32 C 5 32 4 31 4 29 Z"
+                        fill="rgba(248,243,231,0.88)"
+                        stroke={INK}
+                        strokeWidth="1.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
                 </svg>
-                <span className="relative text-[17px] font-bold text-[#171717]" style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}>P</span>
+                <span
+                    className="relative text-[17px] font-bold text-[#171717]"
+                    style={{ fontFamily: "var(--font-patrick, 'Patrick Hand', cursive)" }}
+                >
+                    P
+                </span>
             </div>
         </div>
     );
@@ -79,9 +90,14 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
         playerRef: player,
     });
 
-
     const maybeSendView = useCallback(async (currentTimeSeconds: number, durationSeconds?: number) => {
-        if (hasReached10s.current || viewCountRequestInFlight.current || !shouldSendViewForPlaybackPosition(currentTimeSeconds, durationSeconds)) return;
+        if (
+            hasReached10s.current ||
+            viewCountRequestInFlight.current ||
+            !shouldSendViewForPlaybackPosition(currentTimeSeconds, durationSeconds)
+        ) {
+            return;
+        }
 
         viewCountRequestInFlight.current = true;
         const durationMs = Number.isFinite(durationSeconds) && durationSeconds && durationSeconds > 0
@@ -109,15 +125,12 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     useEffect(() => {
         setHasStartedPlayback(false);
         setLoadError(null);
-        setPlayerKey((k) => k + 1);
+        setPlayerKey((key) => key + 1);
         hasReached10s.current = false;
         viewCountRequestInFlight.current = false;
         reachedThresholds.current = {};
     }, [video.id, videoUrl, videoEmbedUrl, videoSourceKind, tracking?.playbackSessionId]);
 
-    // Safety valve: if the first frame never fires (stalled network, silent
-    // provider hiccup with no onError), stop covering the native player after
-    // a while instead of leaving the branded overlay up forever.
     useEffect(() => {
         setBufferingOverlayTimedOut(false);
         const timer = setTimeout(() => setBufferingOverlayTimedOut(true), 15000);
@@ -126,26 +139,26 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
 
     useEffect(() => {
         if (!isMounted || !tracking?.playbackSessionId) return;
+
         const interval = setInterval(() => {
             if (player.current?.paused === false) {
                 sendEvent('HEARTBEAT');
             }
         }, (tracking.heartbeatIntervalSeconds || 15) * 1000);
+
         return () => clearInterval(interval);
     }, [isMounted, tracking, sendEvent]);
 
-    // PremiumWrapper owns the single player loading placeholder. Avoid adding a nested skeleton here.
     if (!isMounted || isLoading) {
         return null;
     }
 
-    // Optimized Thumbnail Variant: No player engine, just a static preview
     if (variant === 'thumbnail') {
         return (
             <div
                 className={cn(
-                    "relative w-full h-full group/player overflow-hidden bg-neutral-900",
-                    "cursor-default"
+                    'relative w-full h-full group/player overflow-hidden bg-neutral-900',
+                    'cursor-default',
                 )}
             >
                 <Image
@@ -184,7 +197,9 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     });
 
     if (resolvedSource.mode === 'unavailable') {
-        const errorCode = resolvedSource.reason.startsWith('missing') ? 'NO_PLAYBACK_URL' : 'UNSUPPORTED_SOURCE';
+        const errorCode = resolvedSource.reason.startsWith('missing')
+            ? 'NO_PLAYBACK_URL'
+            : 'UNSUPPORTED_SOURCE';
 
         return (
             <PlayerStateFrame>
@@ -207,108 +222,119 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                     onRetry={() => {
                         setLoadError(null);
                         setHasStartedPlayback(false);
-                        setPlayerKey((k) => k + 1);
+                        setPlayerKey((key) => key + 1);
                         refreshPlaybackPlan?.();
                     }}
                     isAdmin={isAdmin}
                 />
             ) : (
                 <div className="relative h-full w-full">
-                <MediaPlayer
-                    key={playerKey}
-                    ref={player}
-                    className="polutek-vidstack-player h-full w-full"
-                    title={playerConfig?.title || video.title || 'Video'}
-                    src={src}
-                    muted={playerConfig ? playerConfig.mutedAutoplay : variant === 'hero'}
-                    autoPlay={playerConfig ? (playerConfig.autoplayAllowed && playerConfig.mutedAutoplay) : variant === 'hero'}
-                    playsInline
-                    aspectRatio="16/9"
-                    onCanPlay={() => {
-                        // A video chosen after the viewer has already interacted with the page
-                        // (sticky user activation) may play with sound — browsers only force
-                        // muted autoplay before the first interaction. So switching videos
-                        // starts audible instead of silently muted.
-                        if (player.current?.muted && typeof navigator !== 'undefined' && navigator.userActivation?.hasBeenActive) {
-                            player.current.muted = false;
-                        }
-                        sendEvent('PLAYER_READY');
-                    }}
-                    onPlay={() => {
-                        if (!hasStartedPlayback) {
-                            setHasStartedPlayback(true);
-                            sendEvent('PLAY_STARTED');
-                        }
-                    }}
-                    onPause={() => sendEvent('PLAY_PAUSED')}
-                    onEnded={() => {
-                        void sendEvent('ENDED');
-                        if (player.current) {
-                            void maybeSendView(player.current.currentTime, player.current.duration);
-                        }
-                    }}
-                    onSeeked={(e: any) => {
-                        const detailTime = typeof e.detail === 'number' ? e.detail : e.detail?.currentTime;
-                        const currentTime = Number.isFinite(detailTime) ? detailTime : player.current?.currentTime || 0;
-                        sendEvent('SEEKED', { positionMs: Math.floor(currentTime * 1000) });
-                    }}
-                    onWaiting={() => sendEvent('BUFFERING_STARTED')}
-                    onPlaying={() => {
-                        setHasStartedPlayback(true);
-                        sendEvent('BUFFERING_ENDED');
-                    }}
-                    onTimeUpdate={(e: any) => {
-                        const detail = typeof e.detail === 'number' ? { currentTime: e.detail, duration: player.current?.duration } : e.detail || {};
-                        const currentTime = Number.isFinite(detail.currentTime) ? detail.currentTime : player.current?.currentTime || 0;
-                        const duration = Number.isFinite(detail.duration) ? detail.duration : player.current?.duration;
-                        if (currentTime > 0 && !hasStartedPlayback) {
-                            setHasStartedPlayback(true);
-                        }
-
-                        void maybeSendView(currentTime, duration);
-
-                        const pct = duration ? (currentTime / duration) * 100 : 0;
-                        const thresholds = [
-                            { pct: 25, type: 'WATCHED_25_PERCENT' },
-                            { pct: 50, type: 'WATCHED_50_PERCENT' },
-                            { pct: 75, type: 'WATCHED_75_PERCENT' },
-                            { pct: 90, type: 'WATCHED_90_PERCENT' },
-                        ];
-
-                        for (const threshold of thresholds) {
-                            if (pct >= threshold.pct && !reachedThresholds.current[threshold.pct]) {
-                                reachedThresholds.current[threshold.pct] = true;
-                                sendEvent(threshold.type);
+                    <MediaPlayer
+                        key={playerKey}
+                        ref={player}
+                        className="polutek-vidstack-player h-full w-full"
+                        title={playerConfig?.title || video.title || 'Video'}
+                        src={src}
+                        muted={playerConfig ? playerConfig.mutedAutoplay : variant === 'hero'}
+                        autoPlay={playerConfig
+                            ? playerConfig.autoplayAllowed && playerConfig.mutedAutoplay
+                            : variant === 'hero'}
+                        playsInline
+                        aspectRatio="16/9"
+                        onCanPlay={() => {
+                            if (
+                                player.current?.muted &&
+                                typeof navigator !== 'undefined' &&
+                                navigator.userActivation?.hasBeenActive
+                            ) {
+                                player.current.muted = false;
                             }
-                        }
-                    }}
-                    onError={() => {
-                        setLoadError('Nie udało się załadować materiału wideo. Sprawdź link, CORS lub dostępność źródła.');
-                        sendEvent('PLAYER_ERROR', { errorCode: 'LOAD_FAILED' });
-                    }}
-                >
-                    <MediaProvider>
-                        {textTracks.map((track) => (
-                            <track
-                                key={`${track.kind}:${track.language}:${track.label}:${track.src}`}
-                                src={track.src}
-                                kind={track.kind}
-                                label={track.label}
-                                srcLang={track.language}
-                                default={track.default}
-                            />
-                        ))}
-                    </MediaProvider>
-                    <PolutekWatermark />
-                    {(playerConfig ? playerConfig.controls : true) && (
-                        <DefaultVideoLayout icons={defaultLayoutIcons} colorScheme="dark" />
+                            sendEvent('PLAYER_READY');
+                        }}
+                        onPlay={() => {
+                            if (!hasStartedPlayback) {
+                                setHasStartedPlayback(true);
+                                sendEvent('PLAY_STARTED');
+                            }
+                        }}
+                        onPause={() => sendEvent('PLAY_PAUSED')}
+                        onEnded={() => {
+                            void sendEvent('ENDED');
+                            if (player.current) {
+                                void maybeSendView(player.current.currentTime, player.current.duration);
+                            }
+                        }}
+                        onSeeked={(event: any) => {
+                            const detailTime = typeof event.detail === 'number'
+                                ? event.detail
+                                : event.detail?.currentTime;
+                            const currentTime = Number.isFinite(detailTime)
+                                ? detailTime
+                                : player.current?.currentTime || 0;
+                            sendEvent('SEEKED', { positionMs: Math.floor(currentTime * 1000) });
+                        }}
+                        onWaiting={() => sendEvent('BUFFERING_STARTED')}
+                        onPlaying={() => {
+                            setHasStartedPlayback(true);
+                            sendEvent('BUFFERING_ENDED');
+                        }}
+                        onTimeUpdate={(event: any) => {
+                            const detail = typeof event.detail === 'number'
+                                ? { currentTime: event.detail, duration: player.current?.duration }
+                                : event.detail || {};
+                            const currentTime = Number.isFinite(detail.currentTime)
+                                ? detail.currentTime
+                                : player.current?.currentTime || 0;
+                            const duration = Number.isFinite(detail.duration)
+                                ? detail.duration
+                                : player.current?.duration;
+
+                            if (currentTime > 0 && !hasStartedPlayback) {
+                                setHasStartedPlayback(true);
+                            }
+
+                            void maybeSendView(currentTime, duration);
+
+                            const pct = duration ? (currentTime / duration) * 100 : 0;
+                            const thresholds = [
+                                { pct: 25, type: 'WATCHED_25_PERCENT' },
+                                { pct: 50, type: 'WATCHED_50_PERCENT' },
+                                { pct: 75, type: 'WATCHED_75_PERCENT' },
+                                { pct: 90, type: 'WATCHED_90_PERCENT' },
+                            ];
+
+                            for (const threshold of thresholds) {
+                                if (pct >= threshold.pct && !reachedThresholds.current[threshold.pct]) {
+                                    reachedThresholds.current[threshold.pct] = true;
+                                    sendEvent(threshold.type);
+                                }
+                            }
+                        }}
+                        onError={() => {
+                            setLoadError('Nie udało się załadować materiału wideo. Sprawdź link, CORS lub dostępność źródła.');
+                            sendEvent('PLAYER_ERROR', { errorCode: 'LOAD_FAILED' });
+                        }}
+                    >
+                        <MediaProvider>
+                            {textTracks.map((track) => (
+                                <track
+                                    key={`${track.kind}:${track.language}:${track.label}:${track.src}`}
+                                    src={track.src}
+                                    kind={track.kind}
+                                    label={track.label}
+                                    srcLang={track.language}
+                                    default={track.default}
+                                />
+                            ))}
+                        </MediaProvider>
+                        <PolutekWatermark />
+                        {(playerConfig ? playerConfig.controls : true) && <PolutekControls />}
+                    </MediaPlayer>
+                    {!hasStartedPlayback && !bufferingOverlayTimedOut && (
+                        <div className="absolute inset-0 z-10 pointer-events-none">
+                            <PlayerLoadingIndicator />
+                        </div>
                     )}
-                </MediaPlayer>
-                {!hasStartedPlayback && !bufferingOverlayTimedOut && (
-                    <div className="absolute inset-0 z-10 pointer-events-none">
-                        <PlayerLoadingIndicator />
-                    </div>
-                )}
                 </div>
             )}
         </div>
