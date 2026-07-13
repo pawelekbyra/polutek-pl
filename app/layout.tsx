@@ -16,7 +16,7 @@ export const metadata = {
   title: APP_NAME,
   description: `${APP_NAME} — niezależny kanał wideo z materiałami publicznymi, dla zalogowanych i patronackimi.`,
   manifest: "/manifest.json",
-  themeColor: "#03040c",
+  themeColor: "#f7f1e4",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -52,7 +52,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content={APP_NAME} />
-        <meta name="theme-color" content="#03040c" />
+        <meta name="theme-color" content="#f7f1e4" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icon" />
       </head>

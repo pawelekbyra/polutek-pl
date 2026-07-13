@@ -589,6 +589,166 @@
   }
 }
 
+@layer utilities {
+  /*
+   * /cyberpunk-light — same re-skin contract as /testujemy: identical
+   * homepage components (Navbar/ChannelHome/Footer), only the --chan-*
+   * tokens and a few additive decorations change. The accent blue and
+   * light background are intentionally left as-is (owner asked to keep
+   * the colorway); the cyberpunk read comes from typography, hairline
+   * grid texture, glow, and HUD corner brackets — not a dark/neon
+   * palette swap. See also /cyberpunk (app/cyberpunk.css), the dark
+   * neon variant.
+   */
+  .cyberpunk-light-page {
+    --chan-nav: #f7f9fc;
+    --chan-card: #ffffff;
+    --chan-surface: #eef2fb;
+    --chan-line: #c9d6f2;
+    --chan-line-soft: #dde6f7;
+    --chan-ink: #0a0e17;
+    --chan-muted: #5b6478;
+    --chan-muted-2: #45506b;
+    --chan-body: #1b2233;
+    --chan-blue: #2563eb;
+    --chan-blue-soft: #eaf0ff;
+    --chan-avatar-gradient: linear-gradient(135deg, #2563eb, #1e40af);
+    --chan-support-shadow: 0 1px 0 rgba(10, 14, 23, 0.08);
+
+    --cyber-mono: ui-monospace, "SFMono-Regular", "Cascadia Code", "Roboto Mono", Menlo, Consolas, "Courier New", monospace;
+
+    background:
+      linear-gradient(var(--chan-line) 1px, transparent 1px) 0 0 / 36px 36px,
+      linear-gradient(90deg, var(--chan-line) 1px, transparent 1px) 0 0 / 36px 36px,
+      radial-gradient(circle at 15% 0%, color-mix(in srgb, var(--chan-blue) 10%, transparent), transparent 40%),
+      var(--chan-nav);
+    color: var(--chan-ink);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: clip;
+  }
+
+  .cyberpunk-light-page::after {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: 160px;
+    pointer-events: none;
+    z-index: 60;
+    background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--chan-blue) 12%, transparent) 50%, transparent 100%);
+    animation: cyberpunk-light-scan 6s linear infinite;
+  }
+
+  @keyframes cyberpunk-light-scan {
+    0% { transform: translateY(-160px); }
+    100% { transform: translateY(100vh); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cyberpunk-light-page::after {
+      display: none;
+    }
+  }
+
+  .cyberpunk-light-page .font-brand {
+    font-family: var(--cyber-mono) !important;
+    letter-spacing: 0.02em;
+  }
+
+  .cyberpunk-light-page .polutek-watch-nav a,
+  .cyberpunk-light-page .polutek-watch-nav button {
+    font-family: var(--cyber-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    position: relative;
+  }
+
+  .cyberpunk-light-page .polutek-watch-nav a::before,
+  .cyberpunk-light-page .polutek-watch-nav button::before {
+    content: "[ ";
+    color: color-mix(in srgb, var(--chan-blue) 55%, transparent);
+  }
+
+  .cyberpunk-light-page .polutek-watch-nav a::after,
+  .cyberpunk-light-page .polutek-watch-nav button::after {
+    content: " ]";
+    color: color-mix(in srgb, var(--chan-blue) 55%, transparent);
+  }
+
+  .cyberpunk-light-page .polutek-watch-nav {
+    position: relative;
+    border-bottom: 1px solid var(--chan-blue);
+    box-shadow: 0 1px 12px color-mix(in srgb, var(--chan-blue) 25%, transparent);
+  }
+
+  .cyberpunk-light-page .polutek-watch-nav::before,
+  .cyberpunk-light-page .polutek-watch-nav::after,
+  .cyberpunk-light-page .polutek-vidstack-player::before,
+  .cyberpunk-light-page .polutek-vidstack-player::after {
+    content: "";
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border: 3px solid var(--chan-blue);
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--chan-blue) 70%, transparent));
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .cyberpunk-light-page .polutek-watch-nav::before {
+    top: 3px;
+    left: 3px;
+    border-right: none;
+    border-bottom: none;
+  }
+
+  .cyberpunk-light-page .polutek-watch-nav::after {
+    bottom: -2px;
+    right: 3px;
+    border-left: none;
+    border-top: none;
+  }
+
+  .cyberpunk-light-page .polutek-vidstack-player {
+    position: relative;
+  }
+
+  .cyberpunk-light-page .polutek-vidstack-player::before {
+    top: -3px;
+    left: -3px;
+    border-right: none;
+    border-bottom: none;
+  }
+
+  .cyberpunk-light-page .polutek-vidstack-player::after {
+    bottom: -2px;
+    right: -2px;
+    border-left: none;
+    border-top: none;
+  }
+
+  .cyberpunk-light-page [class*="rounded-2xl"],
+  .cyberpunk-light-page [class*="rounded-xl"],
+  .cyberpunk-light-page [class*="rounded-lg"],
+  .cyberpunk-light-page [class*="rounded-\[1"],
+  .cyberpunk-light-page [class*="rounded-\[2"] {
+    border-radius: 3px !important;
+  }
+
+  .cyberpunk-light-page .bg-\[\#2563EB\],
+  .cyberpunk-light-page [class*="bg-\[var(--chan-blue)\]"] {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--chan-blue) 70%, transparent),
+      0 0 12px color-mix(in srgb, var(--chan-blue) 55%, transparent),
+      0 0 28px color-mix(in srgb, var(--chan-blue) 35%, transparent);
+  }
+
+  .cyberpunk-light-page a:hover,
+  .cyberpunk-light-page button:hover {
+    text-shadow: 0 0 8px color-mix(in srgb, var(--chan-blue) 45%, transparent);
+  }
+}
+
 @layer components {
   .polutek-watch-nav {
     background:
