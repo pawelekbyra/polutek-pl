@@ -28,9 +28,9 @@ interface VideoPlayerProps {
 function PolutekWatermark() {
     return (
         <div className="pointer-events-none absolute right-3 top-3 z-20 sm:right-4 sm:top-4">
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-[10px] bg-white/88 shadow-sm">
-                <span className="relative font-brand text-[17px] font-bold text-[#171717]">P</span>
-            </div>
+            <span className="block rounded-lg border border-white/15 bg-black/35 px-2.5 py-1 font-sans text-[10px] font-semibold tracking-[0.035em] text-white/82 shadow-sm backdrop-blur-sm sm:text-[11px]">
+                www.polutek.pl
+            </span>
         </div>
     );
 }
@@ -168,7 +168,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     const src = resolvedSource.src;
 
     return (
-        <div className="relative w-full h-full min-h-0 sm:min-h-[220px] bg-black rounded-xl overflow-hidden shadow-2xl">
+        <div className="relative h-full w-full min-h-0 overflow-hidden rounded-[18px] border border-black/10 bg-black shadow-[0_18px_48px_rgba(15,23,42,0.16)] sm:min-h-[220px]">
             {loadError ? (
                 <PlayerErrorOverlay
                     errorCode="MEDIA_LOAD_FAILED"

@@ -4,6 +4,32 @@ import { describe, expect, it } from "vitest";
 const read = (path: string) => readFileSync(path, "utf8");
 
 describe("shared visual system contracts", () => {
+  it("shows the full homepage skeleton only after locale resolution", () => {
+    const rootLoading = read("app/loading.tsx");
+    const localizedLoading = read("app/[locale]/loading.tsx");
+    const channelHome = read("app/components/ChannelHome.tsx");
+
+    expect(rootLoading).not.toContain("HomePageSkeleton");
+    expect(localizedLoading).toContain("HomePageSkeleton");
+    expect(channelHome).toContain("CommentsMountPlaceholder");
+    expect(channelHome).not.toContain("CommentsShellSkeleton");
+  });
+
+  it("keeps public actions tactile and secondary panels proportional", () => {
+    const navbar = read("app/components/Navbar.tsx");
+    const subscribe = read("app/components/SubscribeButton.tsx");
+    const authModal = read("app/components/auth/AuthModal.tsx");
+    const comments = read("app/components/comments/components/CommentComposer.tsx");
+    const player = read("app/components/VideoPlayer.tsx");
+
+    expect(navbar).toContain("shadow-[0_2px_0_#2563eb");
+    expect(subscribe).toContain("border-[color-mix");
+    expect(authModal).toContain("!max-w-[390px]");
+    expect(comments).toContain("bg-[var(--chan-blue-soft)]");
+    expect(player).toContain("www.polutek.pl");
+    expect(player).not.toContain(">P</span>");
+  });
+
   it("applies the doodle admin shell while preserving the payment settings skin", () => {
     const layout = read("app/admin/layout.tsx");
     const shell = read("app/admin/components/AdminVisualShell.tsx");

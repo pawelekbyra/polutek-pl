@@ -22,7 +22,6 @@ describe("public loading/access state UX contracts", () => {
   it("uses the custom responsive Polutek player controls", () => {
     const player = read("app/components/VideoPlayer.tsx");
     const controls = read("app/components/player/PolutekControls.tsx");
-    const icons = read("app/components/player/icons.tsx");
 
     expect(player).toContain("PolutekControls");
     expect(player).not.toContain("DefaultVideoLayout");
@@ -48,27 +47,36 @@ describe("public loading/access state UX contracts", () => {
       "height:5px;",
       "env(safe-area-inset-bottom)",
       "prefers-reduced-motion:reduce",
-      "polutek-player-time-duration { display:none; }",
-      "polutek-player-volume,.polutek-player-seek,.polutek-player-pip { display:none; }",
+      "polutek-player-time-duration,.polutek-player-time span { display:none; }",
+      ".polutek-player-volume { display:none; }",
     ]) {
       expect(controls).toContain(responsiveContract);
     }
 
-    expect(controls).toContain("Jeszcze raz?");
+    expect(controls).toContain("Odtwórz ponownie");
     expect(controls).toContain("polutek-player-center--ended");
-    expect(icons).toContain("strokeLinecap=\"round\"");
+    expect(controls).toContain('from "lucide-react"');
+    expect(controls).not.toContain("SeekButton");
+    expect(controls).not.toContain("PIPButton");
+    expect(controls).not.toContain("Cofnij 10 sekund");
+    expect(controls).not.toContain("Przewiń 10 sekund");
+    expect(controls).not.toContain("Obraz w obrazie");
 
     const videoTypes = read("app/types/video.ts");
     expect(player).toContain("type VideoTextTrackDTO");
     expect(videoTypes).toContain("export type VideoTextTrackDTO");
   });
 
-  it("uses the branded doodle loading state instead of a black system-like bar", () => {
+  it("uses the branded application loading state instead of a black system-like bar", () => {
     const loading = read("app/components/PlayerLoadingState.tsx");
 
     expect(loading).toContain("Już podaję film…");
     expect(loading).toContain("polutek-player-loader-mark");
-    expect(loading).toContain("#fff8e8");
+    expect(loading).toContain("polutek-player-loader-progress");
+    expect(loading).toContain("var(--chan-nav,#f7f1e4)");
+    expect(loading).toContain('from "lucide-react"');
+    expect(loading).not.toContain("scribble");
+    expect(loading).not.toContain("spark");
     expect(loading).toContain('role="status"');
     expect(loading).toContain('aria-live="polite"');
     expect(loading).not.toContain("bg-black text-white");

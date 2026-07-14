@@ -78,10 +78,12 @@
   position: relative;
   min-height: 42px;
   overflow: hidden;
-  border: 1px solid var(--chan-blue);
+  border: 1px solid color-mix(in srgb, var(--chan-blue) 76%, black);
   background: var(--chan-blue) !important;
   color: white !important;
-  box-shadow: none !important;
+  box-shadow:
+    0 2px 0 color-mix(in srgb, var(--chan-blue) 68%, black),
+    0 6px 14px color-mix(in srgb, var(--chan-blue) 16%, transparent) !important;
 }
 
 .secondaryAction,
@@ -117,7 +119,9 @@
 .subscribeAction:hover {
   border-color: color-mix(in srgb, var(--chan-blue) 82%, black);
   background: color-mix(in srgb, var(--chan-blue) 88%, black) !important;
-  box-shadow: none !important;
+  box-shadow:
+    0 3px 0 color-mix(in srgb, var(--chan-blue) 64%, black),
+    0 8px 18px color-mix(in srgb, var(--chan-blue) 20%, transparent) !important;
   filter: none;
 }
 
