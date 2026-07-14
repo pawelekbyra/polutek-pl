@@ -1,0 +1,27 @@
+/*
+ * TEMPORARY logo font bake-off (/logo1 … /logo20).
+ * Self-hosted display fonts (woff2, latin subset) served from /public/fonts/logo.
+ * These power the throwaway logo-comparison routes only — delete this file, the
+ * /logoN routes, the woff2 files and the LogoExperiment components once a
+ * wordmark font is chosen. Nothing in the production app depends on them.
+ */
+@font-face { font-family: "Frijole";        font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo1.woff2")  format("woff2"); }
+@font-face { font-family: "Bowlby One SC";  font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo2.woff2")  format("woff2"); }
+@font-face { font-family: "Bebas Neue";     font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo3.woff2")  format("woff2"); }
+@font-face { font-family: "Anton";          font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo4.woff2")  format("woff2"); }
+@font-face { font-family: "Archivo Black";  font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo5.woff2")  format("woff2"); }
+@font-face { font-family: "Righteous";      font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo6.woff2")  format("woff2"); }
+@font-face { font-family: "Passion One";    font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo7.woff2")  format("woff2"); }
+@font-face { font-family: "Titan One";      font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo8.woff2")  format("woff2"); }
+@font-face { font-family: "Bungee";         font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo9.woff2")  format("woff2"); }
+@font-face { font-family: "Alfa Slab One";  font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo10.woff2") format("woff2"); }
+@font-face { font-family: "Luckiest Guy";   font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo11.woff2") format("woff2"); }
+@font-face { font-family: "Staatliches";    font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo12.woff2") format("woff2"); }
+@font-face { font-family: "Rubik Mono One"; font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo13.woff2") format("woff2"); }
+@font-face { font-family: "Russo One";      font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo14.woff2") format("woff2"); }
+@font-face { font-family: "Fjalla One";     font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo15.woff2") format("woff2"); }
+@font-face { font-family: "Sigmar One";     font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo16.woff2") format("woff2"); }
+@font-face { font-family: "Black Ops One";  font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo17.woff2") format("woff2"); }
+@font-face { font-family: "Monoton";        font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo18.woff2") format("woff2"); }
+@font-face { font-family: "Paytone One";    font-style: normal; font-weight: 400; font-display: swap; src: url("/fonts/logo/logo19.woff2") format("woff2"); }
+@font-face { font-family: "Teko";           font-style: normal; font-weight: 700; font-display: swap; src: url("/fonts/logo/logo20.woff2") format("woff2"); }

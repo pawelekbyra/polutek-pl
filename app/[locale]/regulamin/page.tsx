@@ -9,7 +9,7 @@ import { notFound } from 'next/navigation';
 import { getLocalizedHref } from '@/lib/i18n/routing';
 
 export const metadata = {
-  title: `Regulamin — ${APP_NAME}`,
+  title: APP_NAME,
   description: `Regulamin serwisu ${APP_NAME}: zasady korzystania, wsparcie twórcy, dostęp do Strefy Fenkju, reklamacje.`,
 };
 

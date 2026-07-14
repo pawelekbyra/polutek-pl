@@ -11,7 +11,8 @@
 }
 
 .scene.login {
-  background: color-mix(in srgb, var(--chan-blue) 82%, black);
+  /* Main login-overlay background, per owner request. */
+  background: #1e3a8a;
 }
 
 .scene.patron {
@@ -29,7 +30,7 @@
 .aurora {
   position: absolute;
   inset: -25%;
-  filter: blur(44px);
+  filter: blur(58px);
   transition: transform .8s var(--ease-standard, ease);
 }
 
@@ -44,13 +45,16 @@
 .blob1, .blob2, .blob3 {
   position: absolute;
   border-radius: 50%;
-  opacity: .7;
+  opacity: .62;
+  /* Extra softness on top of the .aurora blur so the puffs read as clouds. */
+  filter: blur(12px);
   will-change: transform;
 }
 
-.blob1 { top: -8%; left: -6%; width: 58%; aspect-ratio: 1; animation: drift-a 24s ease-in-out infinite; }
-.blob2 { right: -10%; bottom: -12%; width: 48%; aspect-ratio: 1; animation: drift-b 30s ease-in-out infinite; }
-.blob3 { top: 32%; right: 12%; width: 30%; aspect-ratio: 1; animation: drift-c 20s ease-in-out infinite; }
+/* Wide, low ellipses that drift slowly and mostly sideways, like clouds. */
+.blob1 { top: 4%; left: -14%; width: 64%; aspect-ratio: 1.9; animation: cloud-a 48s ease-in-out infinite; }
+.blob2 { right: -16%; bottom: 2%; width: 58%; aspect-ratio: 2.1; animation: cloud-b 60s ease-in-out infinite; }
+.blob3 { top: 34%; left: 24%; width: 42%; aspect-ratio: 1.7; animation: cloud-c 54s ease-in-out infinite; }
 
 .login .blob1 { background: radial-gradient(circle, color-mix(in srgb, var(--chan-blue) 60%, white), transparent 70%); }
 .login .blob2 { background: radial-gradient(circle, var(--chan-blue), transparent 72%); }
@@ -277,19 +281,20 @@
   .ctaText { letter-spacing: .18em; }
 }
 
-@keyframes drift-a {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(6%, 5%) scale(1.14); }
+/* Slow, mostly-horizontal cloud drift with a faint vertical bob. */
+@keyframes cloud-a {
+  0%, 100% { transform: translate(-6%, 0) scale(1); }
+  50% { transform: translate(9%, -2%) scale(1.06); }
 }
 
-@keyframes drift-b {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(-7%, -6%) scale(0.9); }
+@keyframes cloud-b {
+  0%, 100% { transform: translate(7%, 0) scale(1); }
+  50% { transform: translate(-10%, 2%) scale(1.08); }
 }
 
-@keyframes drift-c {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(-5%, 7%) scale(1.12); }
+@keyframes cloud-c {
+  0%, 100% { transform: translate(-3%, 0) scale(1); }
+  50% { transform: translate(8%, -1%) scale(1.05); }
 }
 
 @keyframes sheen-sweep {
