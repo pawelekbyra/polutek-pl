@@ -253,7 +253,7 @@
   z-index: 1;
   display: -webkit-box;
   overflow: hidden;
-  max-width: 96%;
+  max-width: 100%;
   color: #fff;
   font-size: clamp(10px, 11cqi, 15px);
   font-weight: 800;
