@@ -57,13 +57,17 @@ function DropdownMenuLabel({
   className,
   inset,
   ...props
-}: MenuPrimitive.GroupLabel.Props & {
+}: React.ComponentProps<"div"> & {
   inset?: boolean
 }) {
+  // Plain div, not Menu.GroupLabel: that primitive requires a Menu.Group
+  // ancestor and throws otherwise. These call sites use the label as a
+  // standalone header, not as a label for a Menu.Group of items.
   return (
-    <MenuPrimitive.GroupLabel
+    <div
       data-slot="dropdown-menu-label"
       data-inset={inset}
+      role="presentation"
       className={cn(
         "px-1.5 py-1 text-xs font-medium text-muted-foreground data-inset:pl-7",
         className
