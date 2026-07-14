@@ -274,11 +274,11 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
   return (
     <div
       id="donations"
-      className="relative my-[10px] mb-3 scroll-mt-20 rounded-[18px] border border-[#f1dfbd] bg-white p-[22px_26px_18px]"
+      className="relative my-[10px] mb-3 scroll-mt-20 rounded-[var(--chan-radius-lg)] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_82%,white)] p-[22px_26px_18px] shadow-[var(--chan-shadow-md)]"
     >
       <div>
         <div className="mb-1.5 flex items-center gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-red-500">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--chan-radius-md)] bg-red-500">
             <Heart size={25} className="fill-white text-white" />
           </span>
           <h4 className="font-brand m-0 text-[21px] font-extrabold leading-tight tracking-[-0.045em] text-[var(--chan-ink)]">
@@ -323,7 +323,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
           onClick={onSupport}
           disabled={isLoading || isInitialLoading || amount === "" || amount < minAmount}
           aria-busy={isLoading}
-          className="font-sans flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[8px] bg-[#2563EB] text-[16px] font-extrabold tracking-[-0.025em] text-white transition-[background-color,box-shadow,transform] duration-160 hover:-translate-y-px hover:bg-[#1e4fc1] hover:shadow-[0_8px_20px_rgba(37,99,235,0.25)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
+          className="font-sans flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[var(--chan-radius-md)] bg-[#2563EB] text-[16px] font-extrabold tracking-[-0.025em] text-white transition-[background-color,box-shadow,transform] duration-160 hover:-translate-y-px hover:bg-[#1e4fc1] hover:shadow-[0_8px_20px_rgba(37,99,235,0.25)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2"
         >
           {isLoading ? (
             <span className="inline-flex items-center gap-2">

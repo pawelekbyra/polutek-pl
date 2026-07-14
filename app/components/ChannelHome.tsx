@@ -111,7 +111,7 @@ function ChannelHomeContent({
   if (!selectedVideo)
     return (
       <main className="min-h-screen flex items-center justify-center p-6 bg-[var(--chan-nav)]">
-        <div className="max-w-md w-full rounded-[22px] border border-[var(--chan-line)] bg-white p-10 text-center animate-in fade-in zoom-in duration-500">
+        <div className="max-w-md w-full rounded-[var(--chan-radius-xl)] border border-[var(--chan-line)] bg-white p-10 text-center animate-in fade-in zoom-in duration-500">
           <div className="w-20 h-20 flex items-center justify-center mx-auto mb-6 rounded-full bg-[var(--chan-surface)]">
             <AlertCircle size={36} className="text-[var(--chan-muted)]" />
           </div>
@@ -125,7 +125,7 @@ function ChannelHomeContent({
           </p>
           <Link
             href={getLocalizedHref(language, "home")}
-            className="inline-flex items-center justify-center h-[44px] px-10 rounded-[14px] bg-[#2563EB] text-white font-brand font-bold text-[14px] transition-all active:scale-95 hover:-translate-y-px"
+            className="inline-flex items-center justify-center h-[44px] px-10 rounded-[var(--chan-radius-md)] bg-[#2563EB] text-white font-brand font-bold text-[14px] transition-all active:scale-95 hover:-translate-y-px"
           >
             {language === "pl" ? "Wróć do bazy" : "Back to database"}
           </Link>
@@ -184,13 +184,13 @@ function ChannelHomeContent({
             </div>
 
             {isDesktop ? (
-              <div className="mt-5 hidden rounded-[24px] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_84%,white)] px-5 py-2 shadow-[0_12px_30px_rgba(23,23,23,0.045)] lg:block">
+              <div className="mt-5 hidden rounded-[var(--chan-radius-xl)] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_84%,white)] px-5 py-2 shadow-[var(--chan-shadow-md)] lg:block">
                 {mounted ? comments : <CommentsMountPlaceholder />}
               </div>
             ) : mounted ? (
               <>
                 <div className="mt-5 lg:hidden">
-                  <div className="relative flex overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_86%,white)] p-1 font-sans shadow-[0_8px_20px_rgba(23,23,23,0.045)]">
+                  <div className="relative flex overflow-hidden rounded-[var(--chan-radius-lg)] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_86%,white)] p-1 font-sans shadow-[var(--chan-shadow-sm)]">
                     {(["comments", "videos"] as const).map((tab) => {
                       const isActive = activeTab === tab;
                       return (
@@ -199,7 +199,7 @@ function ChannelHomeContent({
                           onClick={() => setActiveTab(tab)}
                           aria-pressed={isActive}
                           className={cn(
-                            "relative flex-1 rounded-xl py-2.5 text-[12px] font-bold not-italic uppercase tracking-widest transition-all duration-200",
+                            "relative flex-1 rounded-[var(--chan-radius-md)] py-2.5 text-[12px] font-bold not-italic uppercase tracking-widest transition-all duration-200",
                             isActive
                               ? "bg-white text-[#2563EB] shadow-sm"
                               : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]",
@@ -213,9 +213,9 @@ function ChannelHomeContent({
                 </div>
                 <div className="mt-3 lg:hidden">
                   {activeTab === "comments" ? (
-                    <div className="rounded-[22px] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_86%,white)] px-4 py-2 shadow-[0_10px_26px_rgba(23,23,23,0.045)]">{comments}</div>
+                    <div className="rounded-[var(--chan-radius-xl)] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_86%,white)] px-4 py-2 shadow-[var(--chan-shadow-md)]">{comments}</div>
                   ) : (
-                    <div className="rounded-[22px] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_84%,white)] p-3 shadow-[0_10px_26px_rgba(23,23,23,0.045)]">
+                    <div className="rounded-[var(--chan-radius-xl)] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_84%,white)] p-3 shadow-[var(--chan-shadow-md)]">
                       <SidebarPlaylist {...commonSidebarProps} />
                     </div>
                   )}
@@ -228,7 +228,7 @@ function ChannelHomeContent({
             )}
           </div>
           <div className="hidden lg:col-span-4 lg:flex lg:flex-col lg:gap-4">
-            <aside className="lg:flex lg:flex-col lg:gap-0 lg:overflow-y-auto rounded-[24px] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_82%,white)] p-3 shadow-[0_16px_38px_rgba(23,23,23,0.055)]">
+            <aside className="lg:flex lg:flex-col lg:gap-0 lg:overflow-y-auto rounded-[var(--chan-radius-xl)] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_82%,white)] p-3 shadow-[var(--chan-shadow-lg)]">
               <SidebarPlaylist {...commonSidebarProps} showSupportBox={false} />
             </aside>
             <div className="lg:shrink-0">

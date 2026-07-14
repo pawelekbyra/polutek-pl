@@ -344,6 +344,18 @@
     --chan-blue-soft: #eff3fe;
     --chan-avatar-gradient: linear-gradient(135deg, #4f7df0, #2563eb);
     --chan-support-shadow: 0 4px 18px rgba(23, 23, 23, 0.05);
+
+    /* Shared radius/shadow scale for the channel homepage skin. Every
+       Navbar/Hero/ChannelHome/Sidebar/Donation/Footer card, pill and
+       button should use one of these instead of inventing a new px value. */
+    --chan-radius-sm: 10px;   /* inputs, chips, small thumbnails */
+    --chan-radius-md: 14px;   /* buttons, pills, list rows */
+    --chan-radius-lg: 20px;   /* secondary cards (donation box, lock overlay) */
+    --chan-radius-xl: 24px;   /* primary surface cards (hero, sidebar aside, comments panel) */
+    --chan-shadow-sm: 0 8px 20px rgba(23, 23, 23, 0.045);   /* tabs, chips, subtle lift */
+    --chan-shadow-md: 0 12px 30px rgba(23, 23, 23, 0.055);  /* secondary cards */
+    --chan-shadow-lg: 0 18px 44px rgba(23, 23, 23, 0.06);   /* primary surface cards */
+    --chan-shadow-action: 0 2px 0 var(--chan-blue), 0 8px 20px rgba(37, 99, 235, 0.22); /* primary CTA buttons */
   }
 }
 

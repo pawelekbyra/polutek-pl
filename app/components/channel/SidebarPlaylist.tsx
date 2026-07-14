@@ -212,7 +212,7 @@ export function SidebarPlaylist({
           }}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
-            "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-[background-color,box-shadow] duration-160 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[88px] lg:items-center lg:gap-3 lg:p-2",
+            "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[var(--chan-radius-md)] p-2 transition-[background-color,box-shadow] duration-160 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[88px] lg:items-center lg:gap-3 lg:p-2",
             isCurrent
               ? "bg-[#2563EB]/20"
               : isPublicSection
@@ -226,7 +226,7 @@ export function SidebarPlaylist({
               className="absolute left-0 top-1/2 h-12 w-1 -translate-y-1/2 rounded-r-lg bg-gradient-to-b from-[#2563EB] to-[#1e40af] shadow-[0_0_12px_rgba(37,99,235,0.4)] transition-all duration-200"
             />
           )}
-          <div className="w-[130px] h-[73px] shrink-0 rounded-[10px] bg-black relative overflow-hidden group/thumb lg:w-[135px] lg:h-[76px] xl:w-[145px] xl:h-[82px]">
+          <div className="w-[130px] h-[73px] shrink-0 rounded-[var(--chan-radius-sm)] bg-black relative overflow-hidden group/thumb lg:w-[135px] lg:h-[76px] xl:w-[145px] xl:h-[82px]">
               {video.thumbnailUrl ? (
                 <Image
                   src={video.thumbnailUrl}
@@ -334,8 +334,8 @@ export function SidebarPlaylist({
     const renderSkeletonSection = (title: string) => (
       <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
         {renderSectionHeader(title)}
-        <div className="mb-0.5 flex gap-3 p-2 rounded-[14px] animate-pulse motion-reduce:animate-none">
-          <div className="w-[130px] h-[73px] shrink-0 rounded-[10px] bg-[var(--chan-line)]" />
+        <div className="mb-0.5 flex gap-3 p-2 rounded-[var(--chan-radius-md)] animate-pulse motion-reduce:animate-none">
+          <div className="w-[130px] h-[73px] shrink-0 rounded-[var(--chan-radius-sm)] bg-[var(--chan-line)]" />
           <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
             <div className="h-4 bg-[var(--chan-line)] rounded w-3/4" />
             <div className="h-3 bg-[var(--chan-line)] rounded w-1/2" />
@@ -351,7 +351,7 @@ export function SidebarPlaylist({
         {renderSkeletonSection(language === "pl" ? "Dla zalogowanych" : "For logged in")}
         {renderSkeletonSection(language === "pl" ? "Strefa Fenkjuu" : "Thank You Zone")}
         {showSupportBox && (
-          <div className="shrink-0 mt-2 p-4 rounded-lg bg-[var(--chan-surface)] animate-pulse motion-reduce:animate-none">
+          <div className="shrink-0 mt-2 p-4 rounded-[var(--chan-radius-lg)] bg-[var(--chan-surface)] animate-pulse motion-reduce:animate-none">
             <div className="h-8 bg-[var(--chan-line)] rounded w-full" />
           </div>
         )}
@@ -364,7 +364,7 @@ export function SidebarPlaylist({
 
     if (fallbackItems.length === 0) {
       return (
-        <div className="rounded-2xl border-2 border-dashed border-[var(--chan-line)] p-8 text-center">
+        <div className="rounded-[var(--chan-radius-lg)] border-2 border-dashed border-[var(--chan-line)] p-8 text-center">
           <p className="text-sm text-[var(--chan-muted)]">
             {language === "pl"
               ? "Brak filmów do wyświetlenia."

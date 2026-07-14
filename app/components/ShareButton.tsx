@@ -65,7 +65,7 @@ export default function ShareButton({
       <button
         onClick={handleShareClick}
         className={cn(
-          "relative flex items-center justify-center gap-1.5 h-10 px-3 rounded-[12px] active:scale-95 text-[var(--chan-ink)] font-bold text-sm font-sans transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] bg-[var(--chan-surface)]",
+          "relative flex items-center justify-center gap-1.5 h-10 px-3 rounded-[var(--chan-radius-md)] active:scale-95 text-[var(--chan-ink)] font-bold text-sm font-sans transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2",
           fill && "w-full",
           className
         )}
@@ -79,7 +79,7 @@ export default function ShareButton({
           ref={popoverRef}
           className={cn(
             "absolute bottom-[calc(100%+8px)] right-0 min-w-[240px] z-[1100]",
-            "rounded-2xl border border-[var(--chan-line)] bg-white p-1.5 shadow-[0_8px_26px_rgba(23,23,23,0.12)]",
+            "rounded-[var(--chan-radius-lg)] border border-[var(--chan-line)] bg-white p-1.5 shadow-[0_8px_26px_rgba(23,23,23,0.12)]",
             "animate-in fade-in-0 zoom-in-95 duration-150 slide-in-from-bottom-2"
           )}
         >
