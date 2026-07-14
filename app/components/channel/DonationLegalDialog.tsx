@@ -29,20 +29,23 @@ export default function DonationLegalDialog({
 }: DonationLegalDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto bg-background">
-        <DialogHeader className="border-b-2 border-[#1a1a1a]/10 pb-4">
-          <DialogTitle className="text-2xl font-black uppercase tracking-tighter text-[#1a1a1a]">{title}</DialogTitle>
-          <p className="mt-1 text-xs text-[#7a7a7a]">{LEGAL_EFFECTIVE_DATE}</p>
+      <DialogContent
+        overlayClassName="bg-[color-mix(in_srgb,var(--chan-ink)_30%,transparent)] backdrop-blur-md backdrop-saturate-150"
+        className="max-h-[85vh] max-w-2xl overflow-y-auto rounded-[var(--chan-radius-xl)] border border-[var(--chan-line)] bg-[var(--chan-card)] p-0 shadow-[var(--chan-shadow-lg)]"
+      >
+        <DialogHeader className="gap-1 border-b border-[var(--chan-line)] px-6 py-4">
+          <DialogTitle className="font-brand text-2xl font-black uppercase tracking-tighter text-[var(--chan-ink)]">{title}</DialogTitle>
+          <p className="text-xs text-[var(--chan-muted)]">{LEGAL_EFFECTIVE_DATE}</p>
         </DialogHeader>
 
-        <div className="pt-2 text-[#1a1a1a]">
-          {intro && <p className="mb-6 text-[13px] leading-[1.6] text-[#4a4a4a]">{intro}</p>}
+        <div className="px-6 py-4 text-[var(--chan-body)]">
+          {intro && <p className="mb-6 text-[13px] leading-[1.6] text-[var(--chan-body)]">{intro}</p>}
           {children}
           {href && (
-            <div className="mt-10 border-t border-[#1a1a1a]/10 pt-6">
+            <div className="mt-10 border-t border-[var(--chan-line)] pt-6">
               <Link
                 href={href}
-                className="text-sm font-bold underline hover:text-primary"
+                className="text-sm font-bold text-[var(--chan-ink)] underline hover:text-[var(--chan-blue)]"
                 target="_blank"
                 rel="noopener noreferrer"
               >

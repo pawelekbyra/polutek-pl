@@ -57,7 +57,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
 
   return (
     <PlayerStateFrame className="rounded-[var(--chan-radius-lg)]">
-      <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-[var(--chan-nav,#f7f1e4)] p-6 [container-type:inline-size]">
+      <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-[color-mix(in_srgb,var(--chan-nav,#f7f1e4)_55%,transparent)] p-6 backdrop-blur-md backdrop-saturate-150 [container-type:inline-size]">
         <div
           className={cn(
             "absolute left-1/2 top-1/2 h-[70%] w-[62%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl",

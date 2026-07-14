@@ -338,18 +338,18 @@ export default function PolutekControls({ className }: { className?: string }) {
         .polutek-player-time { display:flex; align-items:center; gap:5px; margin-left:8px; color:#fff; font-size:12px; font-weight:650; letter-spacing:.01em; white-space:nowrap; font-variant-numeric:tabular-nums; }
         .polutek-player-time-duration,.polutek-player-time span { color:rgba(255,255,255,.6); }
         .polutek-player-scrub { position:relative; display:flex; width:100%; height:16px; align-items:center; cursor:pointer; touch-action:none; background:rgba(15,23,42,.74); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); padding:0 0; }
-        .polutek-player-scrub-track,.polutek-player-volume-track { position:relative; width:100%; height:4px; overflow:hidden; border-radius:2px; background:rgba(255,255,255,.22); transition:height .14s ease; }
+        .polutek-player-scrub-track,.polutek-player-volume-track { position:absolute; top:50%; left:0; width:100%; height:4px; overflow:hidden; border-radius:2px; background:rgba(255,255,255,.22); transform:translateY(-50%); transition:height .14s ease; }
         .polutek-player-scrub:hover .polutek-player-scrub-track,.polutek-player-scrub:focus-visible .polutek-player-scrub-track { height:6px; }
         .polutek-player-scrub-buffer { position:absolute; inset:0 auto 0 0; width:var(--slider-progress); background:rgba(255,255,255,.3); }
         .polutek-player-scrub-fill,.polutek-player-volume-fill { position:absolute; inset:0 auto 0 0; width:var(--slider-fill); border-radius:inherit; background:#2563eb; }
-        .polutek-player-scrub-thumb,.polutek-player-volume-thumb { position:absolute; left:var(--slider-fill); width:13px; height:13px; border:2px solid #fff; border-radius:999px; background:#2563eb; box-shadow:0 1px 4px rgba(0,0,0,.4); opacity:0; transform:translateX(-50%) scale(.72); transition:opacity .14s ease,transform .14s ease; }
-        .polutek-player-scrub:hover .polutek-player-scrub-thumb,.polutek-player-scrub:focus-within .polutek-player-scrub-thumb,.polutek-player-scrub[data-dragging] .polutek-player-scrub-thumb { opacity:1; transform:translateX(-50%) scale(1); }
+        .polutek-player-scrub-thumb,.polutek-player-volume-thumb { position:absolute; top:50%; left:var(--slider-fill); width:13px; height:13px; border:2px solid #fff; border-radius:999px; background:#2563eb; box-shadow:0 1px 4px rgba(0,0,0,.4); opacity:0; transform:translate(-50%,-50%) scale(.72); transition:opacity .14s ease,transform .14s ease; }
+        .polutek-player-scrub:hover .polutek-player-scrub-thumb,.polutek-player-scrub:focus-within .polutek-player-scrub-thumb,.polutek-player-scrub[data-dragging] .polutek-player-scrub-thumb { opacity:1; transform:translate(-50%,-50%) scale(1); }
         .polutek-player-scrub-preview { position:absolute; bottom:20px; padding:6px 9px; border:1px solid rgba(255,255,255,.14); border-radius:4px; background:rgba(15,23,42,.94); color:#fff; box-shadow:0 4px 16px rgba(0,0,0,.3); font-size:11px; font-weight:700; font-variant-numeric:tabular-nums; backdrop-filter:blur(10px); }
         .polutek-player-volume { display:flex; align-items:center; }
         .polutek-player-volume-slider { position:relative; display:flex; width:0; height:44px; align-items:center; overflow:hidden; opacity:0; transition:width .18s ease,opacity .18s ease,margin .18s ease; }
         .polutek-player-volume:hover .polutek-player-volume-slider,.polutek-player-volume:focus-within .polutek-player-volume-slider { width:76px; margin-right:8px; opacity:1; }
         .polutek-player-volume-track { height:3px; border-radius:2px; }
-        .polutek-player-volume-thumb { width:11px; height:11px; border-width:1.5px; opacity:1; transform:translateX(-50%); }
+        .polutek-player-volume-thumb { width:11px; height:11px; border-width:1.5px; opacity:1; transform:translate(-50%,-50%); }
         .polutek-player-center { position:absolute; inset:0; z-index:12; display:grid; place-items:center; pointer-events:none; }
         .polutek-player-center--ended { background:linear-gradient(rgba(3,7,18,.34),rgba(3,7,18,.58)); }
         .polutek-player-hero { display:grid; width:64px; height:64px; place-items:center; border:1px solid rgba(255,255,255,.42); border-radius:999px; background:#2563eb; color:#fff; box-shadow:0 16px 40px rgba(0,0,0,.34),0 0 0 6px rgba(255,255,255,.12); pointer-events:auto; transition:background-color .16s ease,transform .16s ease,box-shadow .16s ease; }
@@ -385,7 +385,7 @@ export default function PolutekControls({ className }: { className?: string }) {
           .polutek-player-volume { display:none; }
           .polutek-player-scrub { height:18px; }
           .polutek-player-scrub-track { height:5px; }
-          .polutek-player-scrub-thumb { width:16px; height:16px; opacity:1; transform:translateX(-50%) scale(1); }
+          .polutek-player-scrub-thumb { width:16px; height:16px; opacity:1; transform:translate(-50%,-50%) scale(1); }
           .polutek-player-hero { width:56px; height:56px; }
           .polutek-player-hero--replay { width:auto; height:50px; padding:0 16px 0 9px; }
           .polutek-player-menu { right:-43px; bottom:46px; width:min(210px,calc(100vw - 20px)); }
