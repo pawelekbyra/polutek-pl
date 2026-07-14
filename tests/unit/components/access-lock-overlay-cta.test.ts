@@ -17,7 +17,7 @@ describe("AccessLockOverlay CTA and accessibility verification", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
     expect(source).toContain('href="#donations"');
     expect(source).toContain("scrollIntoView");
-    expect(source).toContain("Wesprzyj jednorazowo");
+    expect(source).toContain("Odblokuj dostęp");
   });
 
   it("uses the shared action and patron tokens", () => {
@@ -26,6 +26,6 @@ describe("AccessLockOverlay CTA and accessibility verification", () => {
 
     expect(styles).toContain("var(--chan-blue)");
     expect(styles).toContain("var(--chan-amber)");
-    expect(styles).toContain("var(--chan-amber-ink)");
+    expect(styles).toContain("var(--chan-amber-strong)");
   });
 });

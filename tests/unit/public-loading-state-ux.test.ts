@@ -101,7 +101,7 @@ describe("public loading/access state UX contracts", () => {
     const overlayStyles = read("app/components/AccessLockOverlay.module.css");
 
     expect(overlay).toContain("Zaloguj się");
-    expect(overlay).toContain("Wesprzyj jednorazowo");
+    expect(overlay).toContain("Odblokuj dostęp");
     expect(overlay).toContain('href="#donations"');
     expect(overlay).toContain('getElementById("donations")');
     expect(overlay).toContain("useReducedMotion");

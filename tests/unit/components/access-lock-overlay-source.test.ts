@@ -24,17 +24,16 @@ describe("access lock overlay source contract", () => {
     expect(source).toContain('isSignedIn={isSignedIn === true}');
     expect(source).toContain('href="#donations"');
     expect(source).toContain("scrollIntoView");
-    expect(source).toContain("Jednorazowe wsparcie spełniające próg");
-    expect(source).toContain("To specjalny materiał dla wspierających");
+    expect(source).toContain("Odblokuj dostęp");
+    expect(source).toContain("Fenkjuu");
   });
 
   it("uses deterministic, reduced-motion-safe ambient art", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
     const styles = component("app/components/AccessLockOverlay.module.css");
 
-    expect(source).toContain("patronConfetti");
-    expect(source).toContain("thankYouCard");
-    expect(source).toContain("loginArtwork");
+    expect(source).toContain("styles.glow");
+    expect(source).toContain("styles.mark");
     expect(source).toContain("useReducedMotion");
     expect(source).not.toContain("Math.random");
     expect(styles).toContain("@media (prefers-reduced-motion: reduce)");
