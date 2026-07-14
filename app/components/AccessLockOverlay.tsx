@@ -230,7 +230,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
                   .getElementById("donations")
                   ?.scrollIntoView({ behavior: "smooth", block: "center" });
               }}
-              className="relative mt-[4px] flex h-[clamp(44px,8.2cqi,50px)] items-center justify-center overflow-hidden px-[clamp(24px,6cqi,36px)] rounded-full bg-white font-brand font-bold text-[clamp(13.5px,2.5cqi,15.5px)] text-amber-800 shadow-[0_14px_30px_-8px_rgba(0,0,0,0.4)] transition-all duration-200 active:scale-95 hover:-translate-y-px hover:shadow-[0_16px_34px_-8px_rgba(0,0,0,0.45)]"
+               className="relative mt-[4px] flex h-[clamp(44px,8.2cqi,50px)] items-center justify-center overflow-hidden px-[clamp(24px,6cqi,36px)] rounded-full border-2 border-[var(--chan-ink)] bg-[var(--chan-card)] font-brand font-bold text-[clamp(13.5px,2.5cqi,15.5px)] text-[var(--chan-ink)] shadow-[3px_4px_0_var(--chan-ink)] transition-all duration-200 active:translate-x-px active:translate-y-px active:shadow-[1px_2px_0_var(--chan-ink)] hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-amber-700"
             >
               <span className="cta-shimmer pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-black/[0.06] to-transparent" />
               <span className="relative whitespace-nowrap">
@@ -241,7 +241,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             <button
               type="button"
               onClick={() => openAuthModal("sign-in")}
-              className="relative mt-[4px] flex h-[clamp(44px,8.2cqi,50px)] items-center justify-center overflow-hidden px-[clamp(24px,6cqi,36px)] rounded-full bg-white font-brand font-bold text-[clamp(13.5px,2.5cqi,15.5px)] text-[#1846C4] shadow-[0_14px_30px_-8px_rgba(0,0,0,0.4)] transition-all duration-200 active:scale-95 hover:-translate-y-px hover:shadow-[0_16px_34px_-8px_rgba(0,0,0,0.45)]"
+               className="relative mt-[4px] flex h-[clamp(44px,8.2cqi,50px)] items-center justify-center overflow-hidden px-[clamp(24px,6cqi,36px)] rounded-full border-2 border-[var(--chan-ink)] bg-[var(--chan-card)] font-brand font-bold text-[clamp(13.5px,2.5cqi,15.5px)] text-[var(--chan-ink)] shadow-[3px_4px_0_var(--chan-ink)] transition-all duration-200 active:translate-x-px active:translate-y-px active:shadow-[1px_2px_0_var(--chan-ink)] hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-blue-700"
             >
               <span className="cta-shimmer pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-black/[0.06] to-transparent" />
               <span className="relative whitespace-nowrap">

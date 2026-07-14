@@ -144,7 +144,7 @@ export default async function Home(props: { params: Promise<{ locale: string }>;
   if (content.status === 'error' || content.status === 'empty') {
     const isError = content.status === 'error';
     return (
-      <div className="min-h-screen bg-background text-foreground">
+      <div className="public-visual-shell min-h-screen bg-background text-foreground">
         <Navbar />
         <main className="max-w-3xl mx-auto px-6 py-20 text-center">
           <h1 className="text-2xl font-bold mb-4">
@@ -197,7 +197,7 @@ export default async function Home(props: { params: Promise<{ locale: string }>;
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="public-visual-shell min-h-screen bg-background text-foreground">
       <Navbar />
       <main className="relative">
         <ChannelHome

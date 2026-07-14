@@ -11,19 +11,19 @@ const base: IconProps = {
 };
 
 export function PlayIcon(props: IconProps) {
-  return <svg {...base} {...props} fill="currentColor" stroke="none"><path d="M8.5 5.6c0-1.02 1.12-1.64 1.98-1.1l9.4 5.9c.83.52.83 1.75 0 2.27l-9.4 5.9c-.86.54-1.98-.08-1.98-1.1V5.6Z" /></svg>;
+  return <svg {...base} {...props} fill="none" stroke="currentColor" strokeWidth={2.15} strokeLinecap="round" strokeLinejoin="round"><path d="M8.1 5.2c.1-.8.9-1.1 1.6-.7l9.8 6c.8.5.7 1.5-.1 2l-9.7 6.1c-.7.5-1.6 0-1.5-.8l-.1-12.6Z" fill="currentColor" /><path d="M9.4 6.2 18 11.5" opacity={0.35} /></svg>;
 }
 
 export function PauseIcon(props: IconProps) {
-  return <svg {...base} {...props} fill="currentColor" stroke="none"><rect x="6.2" y="4.8" width="4" height="14.4" rx="1.4" /><rect x="13.8" y="4.8" width="4" height="14.4" rx="1.4" /></svg>;
+  return <svg {...base} {...props} fill="none" stroke="currentColor" strokeWidth={2.1} strokeLinecap="round" strokeLinejoin="round"><path d="M7.2 5.2c.8-.2 2.1 0 2.5.3l-.1 13.1c-.7.3-1.7.3-2.5 0L7.2 5.2Z" fill="currentColor" /><path d="M14.3 5.4c.7-.3 1.8-.2 2.5 0l.1 13.2c-.8.3-1.8.2-2.5 0l-.1-13.2Z" fill="currentColor" /></svg>;
 }
 
 export function ReplayIcon(props: IconProps) {
-  return <svg {...base} {...props} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12a8 8 0 1 1 2.6 5.9" /><path d="M4 12V7.5" /><path d="M4 12h4.5" /></svg>;
+  return <svg {...base} {...props} fill="none" stroke="currentColor" strokeWidth={2.15} strokeLinecap="round" strokeLinejoin="round"><path d="M4.1 11.8c.3-4.3 3.6-7.5 7.8-7.6 4.6-.1 8.1 3.4 8 7.9-.1 4.3-3.6 7.7-7.9 7.7-2.1 0-4-.8-5.4-2.1" /><path d="M4.1 11.8 4 7.1M4.1 11.8l4.6-.2" /><path d="M5.1 10.8c.8-2.9 3.4-5.2 6.7-5.4" opacity={0.32} /></svg>;
 }
 
 function Speaker({ children, ...props }: IconProps & { children?: React.ReactNode }) {
-  return <svg {...base} {...props} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"><path d="M4 9.5v5h3.6L13 19V5L7.6 9.5H4Z" fill="currentColor" stroke="none" />{children}</svg>;
+  return <svg {...base} {...props} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M4.1 9.4v5.2l3.5-.1 5.3 4.6.2-14.2-5.5 4.6-3.5-.1Z" />{children}</svg>;
 }
 
 export function VolumeHighIcon(props: IconProps) { return <Speaker {...props}><path d="M16.4 8.3a5.4 5.4 0 0 1 0 7.4" /><path d="M18.8 5.8a9 9 0 0 1 0 12.4" /></Speaker>; }
@@ -42,7 +42,7 @@ export function CaptionsOnIcon(props: IconProps) { return <svg {...base} {...pro
 export function CaptionsOffIcon(props: IconProps) { return <svg {...base} {...props} fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2.6" opacity={0.55} /><text x="7.6" y="14.6" fontSize="6.6" fontWeight={800} fill="currentColor" stroke="none" fontFamily="inherit" opacity={0.55}>CC</text><path d="M3.5 4.5 20.5 19.5" /></svg>; }
 
 export function SettingsIcon(props: IconProps) {
-  return <svg {...base} {...props} fill="currentColor" stroke="none"><path d="M12 8.4a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 0 0 0-7.2Zm0 1.8a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6Z" /><path d="M13.7 3.1a1.7 1.7 0 0 0-3.4 0l-.14.86a7.9 7.9 0 0 0-1.66.69l-.7-.5a1.7 1.7 0 0 0-2.36 2.36l.5.7c-.3.52-.53 1.08-.69 1.66l-.86.14a1.7 1.7 0 0 0 0 3.4l.86.14c.16.58.4 1.14.69 1.66l-.5.7a1.7 1.7 0 0 0 2.36 2.36l.7-.5c.52.3 1.08.53 1.66.69l.14.86a1.7 1.7 0 0 0 3.4 0l.14-.86c.58-.16 1.14-.4 1.66-.69l.7.5a1.7 1.7 0 0 0 2.36-2.36l-.5-.7c.3-.52.53-1.08.69-1.66l.86-.14a1.7 1.7 0 0 0 0-3.4l-.86-.14a7.9 7.9 0 0 0-.69-1.66l.5-.7a1.7 1.7 0 0 0-2.36-2.36l-.7.5a7.9 7.9 0 0 0-1.66-.69l-.14-.86Zm-1.7 3.5a5.4 5.4 0 1 1 0 10.8 5.4 5.4 0 0 1 0-10.8Z" fillRule="evenodd" /></svg>;
+  return <svg {...base} {...props} fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round"><path d="m10.2 3.5.7-1.2h2.3l.6 1.4 1.7.7 1.5-.5 1.6 1.7-.6 1.5.7 1.6 1.5.7v2.4l-1.5.6-.7 1.7.6 1.5-1.7 1.7-1.5-.6-1.7.7-.6 1.5h-2.4l-.6-1.5-1.7-.7-1.5.6-1.6-1.7.5-1.5-.7-1.6-1.5-.7V9.4l1.5-.6.7-1.7-.5-1.5 1.6-1.7 1.5.6 1.8-1Z" /><path d="M15.3 11.4c.1 2-1.4 3.5-3.3 3.6-2 .1-3.5-1.4-3.5-3.4-.1-1.9 1.4-3.4 3.3-3.5 1.9 0 3.4 1.4 3.5 3.3Z" /></svg>;
 }
 
 export function PipEnterIcon(props: IconProps) { return <svg {...base} {...props} fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4.5" width="18" height="13" rx="2" /><rect x="12" y="10.5" width="7" height="5" rx="1.1" fill="currentColor" stroke="none" /></svg>; }

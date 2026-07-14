@@ -81,10 +81,10 @@ export default function ChannelVideoCard({
     : null;
 
   return (
-    <div className="group cursor-pointer flex flex-col">
+    <div className="channel-video-card group cursor-pointer flex flex-col">
       <div className="block relative">
         <Link href={appendQueryString(getLocalizedHref(language, "home"), `v=${video.id}`)} className="absolute inset-0 z-0" />
-        <div className="relative aspect-video rounded-[10px] bg-black mb-2.5 z-10 overflow-hidden">
+        <div className="channel-video-card-media relative aspect-video rounded-[13px] bg-black mb-3 z-10 overflow-hidden">
           <div className="relative h-full w-full">
             {video.thumbnailUrl ? (
               <Image
@@ -157,9 +157,6 @@ export default function ChannelVideoCard({
               </div>
             </div>
           </div>
-          <button className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[var(--chan-surface)] opacity-0 shrink-0 transition-opacity active:scale-95 group-hover:opacity-100">
-            <NajsIcon name="more-vertical" className="h-[16px] w-[16px]" stroke="var(--chan-ink)" />
-          </button>
         </div>
       </div>
     </div>

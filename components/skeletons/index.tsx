@@ -27,7 +27,7 @@ export function PageShellSkeleton() {
 
 export function HomePageSkeleton() {
   return (
-    <div className="flex flex-col min-h-screen bg-neutral-50">
+    <div className="public-visual-shell flex flex-col min-h-screen bg-neutral-50">
       <div className="h-14 bg-white/80 border-b px-4 flex items-center justify-between sticky top-0 z-50 backdrop-blur-md">
         <div className="flex items-center gap-4">
           <Skeleton className="h-8 w-32" />
@@ -90,7 +90,7 @@ export function HomePageSkeleton() {
 
 export function ChannelPageSkeleton() {
   return (
-    <div className="min-h-screen bg-[#FDFBF7]">
+    <div className="channel-page-shell min-h-screen bg-[#FDFBF7]">
       <div className="max-w-[1284px] mx-auto px-0 md:px-4 lg:px-6 pt-6">
         <Skeleton className="w-full aspect-[6/1] md:rounded-xl" />
       </div>
@@ -122,7 +122,7 @@ export function ChannelPageSkeleton() {
 
 export function PlayerSkeleton() {
   return (
-    <div className="aspect-video w-full rounded-[14px] bg-neutral-200/70 relative overflow-hidden motion-reduce:after:hidden after:absolute after:inset-0 after:translate-x-[-100%] after:animate-shimmer after:bg-gradient-to-r after:from-transparent after:via-white/40 after:to-transparent" />
+    <div aria-hidden="true" className="app-skeleton aspect-video w-full rounded-[14px] bg-neutral-200/70 relative isolate overflow-hidden" />
   );
 }
 
@@ -144,7 +144,7 @@ export function VideoCardSkeleton() {
 
 export function VideoGridSkeleton({ count = 8 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-8 py-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-8 py-7">
       {Array.from({ length: count }).map((_, i) => (
         <VideoCardSkeleton key={i} />
       ))}

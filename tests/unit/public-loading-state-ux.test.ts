@@ -15,51 +15,63 @@ describe("public loading/access state UX contracts", () => {
     expect(player).toContain(
       "PremiumWrapper owns the single player loading placeholder",
     );
-    expect(player).toMatch(
-      /if \(!isMounted \|\| isLoading\) \{\s*return null;\s*\}/,
-    );
+    expect(player).toContain("if (!isMounted || isLoading) return null;");
     expect(player).not.toContain("<PlayerLoadingState");
   });
 
-  it("uses the Vidstack default layout instead of custom public player controls", () => {
+  it("uses the custom responsive Polutek player controls", () => {
     const player = read("app/components/VideoPlayer.tsx");
-    const globals = read("app/globals.css");
+    const controls = read("app/components/player/PolutekControls.tsx");
+    const icons = read("app/components/player/icons.tsx");
 
-    expect(player).toContain("DefaultVideoLayout");
-    expect(player).toContain("defaultLayoutIcons");
+    expect(player).toContain("PolutekControls");
+    expect(player).not.toContain("DefaultVideoLayout");
 
-    for (const forbidden of [
+    for (const primitive of [
       "TimeSlider",
       "VolumeSlider",
       "Controls.Root",
       "CaptionButton",
       "MuteButton",
       "FullscreenButton",
-      "useMediaRemote",
       "useMediaState",
     ]) {
-      expect(player).not.toContain(forbidden);
+      expect(controls).toContain(primitive);
     }
 
     expect(player).toContain("<MediaProvider>");
     expect(player).toContain("posterUrl");
-    expect(player).toContain('<DefaultVideoLayout icons={defaultLayoutIcons} colorScheme="dark" />');
+    expect(player).toContain("<PolutekControls />");
 
-    expect(globals).toContain(".polutek-vidstack-player {");
-    for (const cssVariable of [
-      "--media-slider-height: 24px;",
-      "--media-slider-track-height: 2px;",
-      "--media-slider-thumb-size: 10px;",
-      "--media-controls-padding: 0px;",
-      "--media-captions-padding",
-      "--media-cue-font-size",
+    for (const responsiveContract of [
+      "width:44px; height:44px;",
+      "height:5px;",
+      "env(safe-area-inset-bottom)",
+      "prefers-reduced-motion:reduce",
+      "polutek-player-time-duration { display:none; }",
+      "polutek-player-volume,.polutek-player-seek,.polutek-player-pip { display:none; }",
     ]) {
-      expect(globals).toContain(cssVariable);
+      expect(controls).toContain(responsiveContract);
     }
+
+    expect(controls).toContain("Jeszcze raz?");
+    expect(controls).toContain("polutek-player-center--ended");
+    expect(icons).toContain("strokeLinecap=\"round\"");
 
     const videoTypes = read("app/types/video.ts");
     expect(player).toContain("type VideoTextTrackDTO");
     expect(videoTypes).toContain("export type VideoTextTrackDTO");
+  });
+
+  it("uses the branded doodle loading state instead of a black system-like bar", () => {
+    const loading = read("app/components/PlayerLoadingState.tsx");
+
+    expect(loading).toContain("Już podaję film…");
+    expect(loading).toContain("polutek-player-loader-mark");
+    expect(loading).toContain("#fff8e8");
+    expect(loading).toContain('role="status"');
+    expect(loading).toContain('aria-live="polite"');
+    expect(loading).not.toContain("bg-black text-white");
   });
 
   it("renders channel grid thumbnails from safe summary data without mounting PremiumWrapper or VideoPlayer", () => {
