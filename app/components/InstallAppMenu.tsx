@@ -57,7 +57,7 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
           setShowIosInstructions(false);
         }}
         className={cn(
-          "flex h-10 w-10 items-center justify-center rounded-[12px] shrink-0 font-sans text-sm font-bold text-[var(--chan-ink)] bg-[var(--chan-surface)] transition-transform hover:-translate-y-px hover:brightness-110 active:scale-95",
+          "flex h-10 w-10 items-center justify-center rounded-[var(--chan-radius-md)] shrink-0 font-sans text-sm font-bold text-[var(--chan-ink)] bg-[var(--chan-surface)] transition-transform hover:-translate-y-px hover:brightness-110 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2",
           !installed && !canOfferInstall && "opacity-50",
         )}
         aria-label={isPl ? "Zainstaluj aplikację" : "Install app"}
@@ -70,7 +70,7 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
       {isOpen && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-[1100] mt-2 min-w-[230px] rounded-2xl border border-[var(--chan-line)] bg-white p-1.5 shadow-[0_8px_26px_rgba(23,23,23,0.12)] animate-in fade-in-0 zoom-in-95 duration-150"
+          className="absolute right-0 top-full z-[1100] mt-2 min-w-[230px] rounded-[var(--chan-radius-lg)] border border-[var(--chan-line)] bg-white p-1.5 shadow-[0_8px_26px_rgba(23,23,23,0.12)] animate-in fade-in-0 zoom-in-95 duration-150"
         >
           {installed ? (
             <div className="px-3 py-2.5 text-[13px] font-bold text-[var(--chan-ink)]">

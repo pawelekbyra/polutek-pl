@@ -274,107 +274,113 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
   return (
     <div
       id="donations"
-      className="relative my-[10px] mb-3 scroll-mt-20 rounded-[18px] border border-[#f1dfbd] bg-white p-[22px_26px_18px]"
+      className="relative my-[10px] mb-3 scroll-mt-20 rounded-[var(--chan-radius-lg)] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_82%,white)] shadow-[var(--chan-shadow-md)]"
     >
       <div>
-        <div className="mb-1.5 flex items-center gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-red-500">
+        <div className="flex items-center gap-4 px-6 py-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--chan-radius-md)] bg-red-500">
             <Heart size={25} className="fill-white text-white" />
           </span>
-          <h4 className="font-brand m-0 text-[21px] font-extrabold leading-tight tracking-[-0.045em] text-[var(--chan-ink)]">
-            <span>{title}</span>
-          </h4>
+          <div className="flex flex-col">
+            <h4 className="font-brand m-0 text-[21px] font-extrabold leading-tight tracking-[-0.045em] text-[var(--chan-ink)]">
+              <span>{title}</span>
+            </h4>
+            <p className="mt-0.5 font-sans text-[13px] font-medium tracking-[-0.015em] text-[var(--chan-body)]">{subtitle}</p>
+          </div>
         </div>
-        <p className="m-[-22px_0_16px_64px] font-sans text-[13px] font-medium tracking-[-0.015em] text-[var(--chan-body)]">{subtitle}</p>
         <p className="sr-only">{bodyCopy}</p>
 
-        <ul className="m-[0_0_16px] flex flex-col gap-[9px] font-sans text-[13px]">
-          {bullets.map((bullet) => (
-            <li
-              key={bullet.text}
-              className="flex items-start gap-[8px] text-[var(--chan-ink)]"
-            >
-              <span className="mt-[2px] flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full bg-[#58a65c] text-[9px] font-black text-white">✓</span>
-              {bullet.text}
-            </li>
-          ))}
-        </ul>
+        <div className="px-6 py-2">
+          <ul className="mb-4 flex flex-col gap-[9px] font-sans text-[13px]">
+            {bullets.map((bullet) => (
+              <li
+                key={bullet.text}
+                className="flex items-start gap-[8px] text-[var(--chan-ink)]"
+              >
+                <span className="mt-[2px] flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full bg-[#58a65c] text-[9px] font-black text-white">✓</span>
+                {bullet.text}
+              </li>
+            ))}
+          </ul>
 
-        {showTermsError && (
-          <p id={termsErrorId} role="alert" className="mb-2 text-[11px] font-bold uppercase tracking-widest text-destructive">
-            {t.pleaseAcceptTerms}
-          </p>
-        )}
-
-        <DonationAmountField
-          viewerIsPatron={viewerIsPatron}
-          isPl={isPl}
-          amount={amount}
-          setAmount={setAmount}
-          minAmount={minAmount}
-          selectedCurrency={selectedCurrency}
-          availableCurrencies={availableCurrencies}
-          onCurrencyChange={handleCurrencyChange}
-          amountTooLow={amountTooLow}
-        />
-
-        <button
-          type="button"
-          onClick={onSupport}
-          disabled={isLoading || isInitialLoading || amount === "" || amount < minAmount}
-          aria-busy={isLoading}
-          className="font-sans flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[8px] bg-[#2563EB] text-[16px] font-extrabold tracking-[-0.025em] text-white transition-[background-color,box-shadow,transform] duration-160 hover:-translate-y-px hover:bg-[#1e4fc1] hover:shadow-[0_8px_20px_rgba(37,99,235,0.25)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
-        >
-          {isLoading ? (
-            <span className="inline-flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-              <span role="status" aria-live="polite">
-                {isPl ? "Przetwarzanie..." : "Processing..."}
-              </span>
-            </span>
-          ) : (
-            <span>{t.tipTheGuy}</span>
+          {showTermsError && (
+            <p id={termsErrorId} role="alert" className="mb-2 text-[11px] font-bold uppercase tracking-widest text-destructive">
+              {t.pleaseAcceptTerms}
+            </p>
           )}
-        </button>
 
-        <label className="mt-3 flex cursor-pointer items-start justify-center gap-2 px-1 text-center">
-          <Checkbox
-            id="donation-accept-terms"
-            checked={isTermsAccepted}
-            onCheckedChange={(checked) => {
-              setIsTermsAccepted(!!checked);
-              if (checked) setShowTermsError(false);
-            }}
-            aria-invalid={showTermsError}
-            aria-describedby={showTermsError ? termsErrorId : undefined}
-            className="mt-[2px] shrink-0"
+          <DonationAmountField
+            viewerIsPatron={viewerIsPatron}
+            isPl={isPl}
+            amount={amount}
+            setAmount={setAmount}
+            minAmount={minAmount}
+            selectedCurrency={selectedCurrency}
+            availableCurrencies={availableCurrencies}
+            onCurrencyChange={handleCurrencyChange}
+            amountTooLow={amountTooLow}
           />
-          <span className="font-sans text-[11px] leading-[1.4] text-[var(--chan-muted)]">
-            {isPl ? (
-              <>
-                Akceptuję{" "}
-                <button type="button" onClick={() => setIsRegulaminOpen(true)} className="underline hover:text-[var(--chan-ink)]">
-                  Regulamin
-                </button>{" "}
-                i{" "}
-                <button type="button" onClick={() => setIsPolitykaOpen(true)} className="underline hover:text-[var(--chan-ink)]">
-                  Politykę Prywatności
-                </button>
-              </>
+        </div>
+
+        <div className="px-6 pb-4 pt-1">
+          <button
+            type="button"
+            onClick={onSupport}
+            disabled={isLoading || isInitialLoading || amount === "" || amount < minAmount}
+            aria-busy={isLoading}
+            className="font-sans flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[var(--chan-radius-md)] bg-[#2563EB] text-[16px] font-extrabold tracking-[-0.025em] text-white transition-[background-color,box-shadow,transform] duration-160 hover:-translate-y-px hover:bg-[#1e4fc1] hover:shadow-[0_8px_20px_rgba(37,99,235,0.25)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2"
+          >
+            {isLoading ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                <span role="status" aria-live="polite">
+                  {isPl ? "Przetwarzanie..." : "Processing..."}
+                </span>
+              </span>
             ) : (
-              <>
-                I accept the{" "}
-                <button type="button" onClick={() => setIsRegulaminOpen(true)} className="underline hover:text-[var(--chan-ink)]">
-                  Terms
-                </button>{" "}
-                and{" "}
-                <button type="button" onClick={() => setIsPolitykaOpen(true)} className="underline hover:text-[var(--chan-ink)]">
-                  Privacy Policy
-                </button>
-              </>
+              <span>{t.tipTheGuy}</span>
             )}
-          </span>
-        </label>
+          </button>
+
+          <label className="mt-3 flex cursor-pointer items-start justify-center gap-2 px-1 text-center">
+            <Checkbox
+              id="donation-accept-terms"
+              checked={isTermsAccepted}
+              onCheckedChange={(checked) => {
+                setIsTermsAccepted(!!checked);
+                if (checked) setShowTermsError(false);
+              }}
+              aria-invalid={showTermsError}
+              aria-describedby={showTermsError ? termsErrorId : undefined}
+              className="mt-[2px] shrink-0"
+            />
+            <span className="font-sans text-[11px] leading-[1.4] text-[var(--chan-muted)]">
+              {isPl ? (
+                <>
+                  Akceptuję{" "}
+                  <button type="button" onClick={() => setIsRegulaminOpen(true)} className="underline hover:text-[var(--chan-ink)]">
+                    Regulamin
+                  </button>{" "}
+                  i{" "}
+                  <button type="button" onClick={() => setIsPolitykaOpen(true)} className="underline hover:text-[var(--chan-ink)]">
+                    Politykę Prywatności
+                  </button>
+                </>
+              ) : (
+                <>
+                  I accept the{" "}
+                  <button type="button" onClick={() => setIsRegulaminOpen(true)} className="underline hover:text-[var(--chan-ink)]">
+                    Terms
+                  </button>{" "}
+                  and{" "}
+                  <button type="button" onClick={() => setIsPolitykaOpen(true)} className="underline hover:text-[var(--chan-ink)]">
+                    Privacy Policy
+                  </button>
+                </>
+              )}
+            </span>
+          </label>
+        </div>
       </div>
 
       {isMounted &&
