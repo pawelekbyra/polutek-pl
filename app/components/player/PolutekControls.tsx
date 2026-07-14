@@ -35,52 +35,7 @@ import {
   VolumeX,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useOptionalLanguage } from "../LanguageContext";
-
-function usePlayerCopy() {
-  const language = useOptionalLanguage();
-  return language === "pl"
-    ? {
-        buffering: "Buforowanie",
-        replay: "Odtwórz ponownie",
-        play: "Odtwórz",
-        pause: "Pauza",
-        unmute: "Włącz dźwięk",
-        mute: "Wycisz",
-        volume: "Głośność",
-        progress: "Postęp odtwarzania",
-        normal: "Normalna",
-        speed: "Prędkość",
-        captions: "Napisy",
-        captionsOff: "Wyłączone",
-        settings: "Ustawienia",
-        playerSettings: "Ustawienia odtwarzacza",
-        disableCaptions: "Wyłącz napisy",
-        enableCaptions: "Włącz napisy",
-        exitFullscreen: "Zamknij pełny ekran",
-        fullscreen: "Pełny ekran",
-      }
-    : {
-        buffering: "Buffering",
-        replay: "Play again",
-        play: "Play",
-        pause: "Pause",
-        unmute: "Unmute",
-        mute: "Mute",
-        volume: "Volume",
-        progress: "Playback progress",
-        normal: "Normal",
-        speed: "Speed",
-        captions: "Captions",
-        captionsOff: "Off",
-        settings: "Settings",
-        playerSettings: "Player settings",
-        disableCaptions: "Turn captions off",
-        enableCaptions: "Turn captions on",
-        exitFullscreen: "Exit fullscreen",
-        fullscreen: "Fullscreen",
-      };
-}
+import { usePlayerCopy } from "./polutek-controls-copy";
 
 function CenterStage() {
   const copy = usePlayerCopy();

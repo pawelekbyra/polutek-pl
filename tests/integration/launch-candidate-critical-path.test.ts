@@ -638,6 +638,7 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     const actionsSource = readFileSync('app/admin/users/UserPatronActions.tsx', 'utf8');
     const diagnosticsSource = readFileSync('app/admin/users/AdminAccessDiagnostics.tsx', 'utf8');
     const wrapperSource = readFileSync('app/components/PremiumWrapper.tsx', 'utf8');
+    const playbackStateSource = readFileSync('app/components/playback-plan-state.ts', 'utf8');
 
     expect(actionsSource).not.toContain('prompt(');
     expect(actionsSource).toContain('Dialog');
@@ -651,10 +652,10 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     expect(diagnosticsSource).toContain('Newsletter/subskrypcja (niezwiązane z dostępem)');
 
     for (const state of ['LOGIN_REQUIRED', 'PATRON_REQUIRED', 'VIDEO_NOT_READY', 'PROCESSING', 'NO_PRIMARY_ASSET', 'UNAVAILABLE', 'ERROR']) {
-      expect(wrapperSource).toContain(`${state}: {`);
-      expect(wrapperSource).toContain(`  "${state}",`);
+      expect(playbackStateSource).toContain(`${state}: {`);
+      expect(playbackStateSource).toContain(`  "${state}",`);
     }
-    expect(wrapperSource).toContain('Dostęp patrona jest nagrodą za kwalifikujące jednorazowe wsparcie. To nie jest subskrypcja cykliczna.');
+    expect(playbackStateSource).toContain('Dostęp patrona jest nagrodą za kwalifikujące jednorazowe wsparcie. To nie jest subskrypcja cykliczna.');
     expect(wrapperSource).toContain('if (!isPlayablePlaybackPlan(playbackPlan))');
     expect(wrapperSource).toContain('<PlaybackPlanStateOverlay');
     expect(wrapperSource).toContain('{children}');

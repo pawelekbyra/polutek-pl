@@ -22,6 +22,9 @@ describe("public loading/access state UX contracts", () => {
   it("uses the custom responsive Polutek player controls", () => {
     const player = read("app/components/VideoPlayer.tsx");
     const controls = read("app/components/player/PolutekControls.tsx");
+    const controlsCopy = read(
+      "app/components/player/polutek-controls-copy.ts",
+    );
 
     expect(player).toContain("PolutekControls");
     expect(player).not.toContain("DefaultVideoLayout");
@@ -53,7 +56,7 @@ describe("public loading/access state UX contracts", () => {
       expect(controls).toContain(responsiveContract);
     }
 
-    expect(controls).toContain("Odtwórz ponownie");
+    expect(controlsCopy).toContain("Odtwórz ponownie");
     expect(controls).toContain("polutek-player-center--ended");
     expect(controls).toContain('from "lucide-react"');
     expect(controls).not.toContain("SeekButton");
