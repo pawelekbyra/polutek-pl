@@ -97,10 +97,10 @@ describe('PremiumWrapper playback plan state messaging', () => {
     expect(source).toContain('onClick={onRetry}');
 
     expect(accessLockOverlaySource).toContain('openAuthModal("sign-in")');
-    expect(accessLockOverlaySource).toContain('<button');
+    expect(accessLockOverlaySource).toContain('motion.button');
     expect(accessLockOverlaySource).toContain('type="button"');
     expect(accessLockOverlaySource).toContain('Zaloguj się');
-    expect(accessLockOverlaySource).toContain('<a');
+    expect(accessLockOverlaySource).toContain('motion.a');
     expect(accessLockOverlaySource).toContain('href="#donations"');
     expect(accessLockOverlaySource).not.toContain('Wesprzyj, aby obczaić');
   });

@@ -12,7 +12,7 @@ describe("access lock overlay source contract", () => {
 
     expect(source).toContain('LOGIN_REQUIRED');
     expect(source).toContain('openAuthModal("sign-in")');
-    expect(source).toContain("<button");
+    expect(source).toContain("motion.button");
     expect(source).toContain('type="button"');
     expect(source).toContain("Zaloguj się");
   });
@@ -32,7 +32,7 @@ describe("access lock overlay source contract", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
     const styles = component("app/components/AccessLockOverlay.module.css");
 
-    expect(source).toContain("styles.glow");
+    expect(source).toContain("styles.aurora");
     expect(source).toContain("styles.mark");
     expect(source).toContain("useReducedMotion");
     expect(source).not.toContain("Math.random");

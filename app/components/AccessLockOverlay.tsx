@@ -2,7 +2,7 @@
 
 import { useId, type MouseEvent } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Gem, Lock } from "lucide-react";
 import type { PlaybackPlanStatus } from "@/lib/modules/playback";
 import { cn } from "@/lib/utils";
@@ -81,12 +81,18 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         className={cn(styles.scene, isPatron ? styles.patron : styles.login)}
         aria-labelledby={titleId}
       >
-        <span className={styles.glow} aria-hidden="true" />
+        <div className={styles.aurora} aria-hidden="true">
+          <span className={styles.blob1} />
+          <span className={styles.blob2} />
+          <span className={styles.blob3} />
+        </div>
+        <span className={styles.sheen} aria-hidden="true" />
         <span className={styles.noise} aria-hidden="true" />
         {isPatron ? (
           <PatronScene
             isPl={isPl}
             isSignedIn={isSignedIn === true}
+            reduceMotion={Boolean(reduceMotion)}
             titleId={titleId}
             onSignIn={() => openAuthModal("sign-in")}
             onSupport={handleSupport}
@@ -94,6 +100,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         ) : (
           <LoginScene
             isPl={isPl}
+            reduceMotion={Boolean(reduceMotion)}
             titleId={titleId}
             onSignIn={() => openAuthModal("sign-in")}
           />
@@ -105,31 +112,62 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
 
 function LoginScene({
   isPl,
+  reduceMotion,
   titleId,
   onSignIn,
 }: {
   isPl: boolean;
+  reduceMotion: boolean;
   titleId: string;
   onSignIn: () => void;
 }) {
   return (
     <div className={styles.content}>
-      <Lock aria-hidden="true" className={styles.mark} />
+      <motion.div
+        initial={reduceMotion ? false : { opacity: 0, scale: 0.6, rotate: -10 }}
+        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+        transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 210, damping: 16 }}
+      >
+        <Lock aria-hidden="true" className={styles.mark} />
+      </motion.div>
       <h2 id={titleId} className={styles.heading}>
-        <span className={cn(styles.word, styles.wordWhite)}>
+        <motion.span
+          className={cn(styles.word, styles.wordWhite)}
+          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.1 }}
+        >
           {isPl ? "Strefa" : "Members"}
-        </span>
-        <span className={styles.divider} aria-hidden="true" />
-        <span className={cn(styles.word, styles.wordBlue)}>
+        </motion.span>
+        <motion.span
+          className={styles.divider}
+          aria-hidden="true"
+          initial={reduceMotion ? false : { scaleX: 0, opacity: 0 }}
+          animate={{ scaleX: 1, opacity: 1 }}
+          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.22 }}
+        />
+        <motion.span
+          className={cn(styles.word, styles.wordBlue)}
+          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.28 }}
+        >
           {isPl ? "Zalogowanych" : "Zone"}
-        </span>
+        </motion.span>
       </h2>
-      <button type="button" onClick={onSignIn} className={styles.cta}>
+      <motion.button
+        type="button"
+        onClick={onSignIn}
+        className={styles.cta}
+        initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: reduceMotion ? 0 : 0.4, delay: reduceMotion ? 0 : 0.44 }}
+      >
         <span className={styles.ctaLine} aria-hidden="true" />
         <span className={styles.ctaText}>
           {isPl ? "Zaloguj się, aby obczaić" : "Sign in to keep watching"}
         </span>
-      </button>
+      </motion.button>
     </div>
   );
 }
@@ -137,42 +175,80 @@ function LoginScene({
 function PatronScene({
   isPl,
   isSignedIn,
+  reduceMotion,
   titleId,
   onSignIn,
   onSupport,
 }: {
   isPl: boolean;
   isSignedIn: boolean;
+  reduceMotion: boolean;
   titleId: string;
   onSignIn: () => void;
   onSupport: (event: MouseEvent<HTMLAnchorElement>) => void;
 }) {
   return (
     <div className={styles.content}>
-      <Gem aria-hidden="true" className={styles.mark} />
+      <motion.div
+        initial={reduceMotion ? false : { opacity: 0, scale: 0.6, rotate: 10 }}
+        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+        transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 210, damping: 16 }}
+      >
+        <Gem aria-hidden="true" className={styles.mark} />
+      </motion.div>
       <h2 id={titleId} className={styles.heading}>
-        <span className={cn(styles.word, styles.wordAmber)}>
+        <motion.span
+          className={cn(styles.word, styles.wordAmber)}
+          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.1 }}
+        >
           {isPl ? "Strefa" : "Thank You"}
-        </span>
-        <span className={styles.divider} aria-hidden="true" />
-        <span className={cn(styles.word, styles.wordWhite)}>
+        </motion.span>
+        <motion.span
+          className={styles.divider}
+          aria-hidden="true"
+          initial={reduceMotion ? false : { scaleX: 0, opacity: 0 }}
+          animate={{ scaleX: 1, opacity: 1 }}
+          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.22 }}
+        />
+        <motion.span
+          className={cn(styles.word, styles.wordWhite)}
+          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.28 }}
+        >
           {isPl ? "Fenkjuu" : "Zone"}
-        </span>
+        </motion.span>
       </h2>
       {isSignedIn ? (
-        <a href="#donations" onClick={onSupport} className={styles.cta}>
+        <motion.a
+          href="#donations"
+          onClick={onSupport}
+          className={styles.cta}
+          initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.4, delay: reduceMotion ? 0 : 0.44 }}
+        >
           <span className={styles.ctaLine} aria-hidden="true" />
           <span className={styles.ctaText}>
             {isPl ? "Odblokuj dostęp" : "Unlock access"}
           </span>
-        </a>
+        </motion.a>
       ) : (
-        <button type="button" onClick={onSignIn} className={styles.cta}>
+        <motion.button
+          type="button"
+          onClick={onSignIn}
+          className={styles.cta}
+          initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.4, delay: reduceMotion ? 0 : 0.44 }}
+        >
           <span className={styles.ctaLine} aria-hidden="true" />
           <span className={styles.ctaText}>
-            {isPl ? "Zaloguj się" : "Sign in"}
+            {isPl ? "Zostań Patronem Projektu" : "Become a Project Patron"}
           </span>
-        </button>
+        </motion.button>
       )}
     </div>
   );
