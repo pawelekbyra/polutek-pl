@@ -71,11 +71,11 @@ export function PlayerErrorOverlay({
 
   return (
     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[var(--chan-nav,#f7f1e4)] p-6 text-center text-[var(--chan-ink,#171717)] animate-in fade-in duration-300 [container-type:inline-size]">
-      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-red-500/15 bg-white text-red-500 shadow-[0_10px_28px_rgba(15,23,42,0.1)]">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-[18px] border border-red-500/20 bg-[color-mix(in_srgb,var(--chan-card)_92%,white)] text-red-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_16px_32px_-12px_rgba(220,38,38,0.3)]">
         <CircleAlert className="h-7 w-7" aria-hidden="true" />
       </div>
 
-      <h3 className="mb-2 max-w-md font-brand text-[min(1.2rem,6cqi)] font-bold tracking-tight">
+      <h3 className="mb-2 max-w-md font-brand text-[min(1.2rem,6cqi)] font-bold tracking-[-0.01em]">
         {content.title}
       </h3>
 
@@ -86,7 +86,7 @@ export function PlayerErrorOverlay({
       {onRetry && (
         <Button
           onClick={onRetry}
-          className="h-[min(2.75rem,12cqi)] rounded-xl bg-[#2563eb] px-6 font-brand text-[min(13px,3.2cqi)] font-bold text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)] transition-all hover:bg-[#1d4ed8] active:scale-[0.97]"
+          className="h-[min(2.75rem,12cqi)] rounded-xl bg-[var(--chan-blue)] px-6 font-brand text-[min(13px,3.2cqi)] font-bold text-white shadow-[0_8px_20px_-6px_color-mix(in_srgb,var(--chan-blue)_50%,transparent)] transition-all hover:-translate-y-px hover:bg-[color-mix(in_srgb,var(--chan-blue)_88%,black)] active:translate-y-0 active:scale-[0.97]"
         >
           <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
           {retryLabel}

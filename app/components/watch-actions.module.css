@@ -78,12 +78,12 @@
   position: relative;
   min-height: 42px;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--chan-blue) 76%, black);
+  border: 1px solid color-mix(in srgb, var(--chan-blue) 62%, black);
   background: var(--chan-blue) !important;
   color: white !important;
   box-shadow:
-    0 2px 0 color-mix(in srgb, var(--chan-blue) 68%, black),
-    0 6px 14px color-mix(in srgb, var(--chan-blue) 16%, transparent) !important;
+    inset 0 1px 0 color-mix(in srgb, white 30%, transparent),
+    0 8px 18px -8px color-mix(in srgb, var(--chan-blue) 60%, transparent) !important;
 }
 
 .secondaryAction,
@@ -117,11 +117,11 @@
 }
 
 .subscribeAction:hover {
-  border-color: color-mix(in srgb, var(--chan-blue) 82%, black);
-  background: color-mix(in srgb, var(--chan-blue) 88%, black) !important;
+  border-color: color-mix(in srgb, var(--chan-blue) 70%, black);
+  background: color-mix(in srgb, var(--chan-blue) 90%, black) !important;
   box-shadow:
-    0 3px 0 color-mix(in srgb, var(--chan-blue) 64%, black),
-    0 8px 18px color-mix(in srgb, var(--chan-blue) 20%, transparent) !important;
+    inset 0 1px 0 color-mix(in srgb, white 30%, transparent),
+    0 12px 24px -8px color-mix(in srgb, var(--chan-blue) 62%, transparent) !important;
   filter: none;
 }
 

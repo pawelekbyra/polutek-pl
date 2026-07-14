@@ -36,21 +36,21 @@ export function PlayerLoadingIndicator({ compact = false }: { compact?: boolean 
         </p>
       )}
       <style jsx global>{`
-        .polutek-player-loader { position:relative; display:flex; width:100%; height:100%; min-height:220px; flex-direction:column; align-items:center; justify-content:center; gap:13px; overflow:hidden; color:#171717; background:radial-gradient(circle at 50% 42%,rgba(37,99,235,.1),transparent 34%),var(--chan-nav,#f7f1e4); font-family:var(--font-space-grotesk,sans-serif); }
-        .polutek-player-loader::before { content:""; position:absolute; inset:12px; border:1px solid rgba(23,23,23,.1); border-radius:16px; }
+        .polutek-player-loader { position:relative; display:flex; width:100%; height:100%; min-height:220px; flex-direction:column; align-items:center; justify-content:center; gap:15px; overflow:hidden; color:var(--chan-ink,#171717); background:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--chan-blue,#2563eb) 13%,transparent),transparent 44%),var(--chan-nav,#f7f1e4); font-family:var(--font-space-grotesk,sans-serif); }
+        .polutek-player-loader::before { content:""; position:absolute; inset:12px; border:1px solid color-mix(in srgb,var(--chan-line,#e1d4be) 76%,transparent); border-radius:18px; box-shadow:inset 0 1px 0 rgba(255,255,255,.5); }
         .polutek-player-loader--compact { min-height:0; gap:8px; }
-        .polutek-player-loader--compact::before { inset:5px; border-radius:9px; }
-        .polutek-player-loader-mark { position:relative; display:grid; width:52px; height:52px; place-items:center; border:1px solid rgba(37,99,235,.2); border-radius:15px; background:#fff; color:#2563eb; box-shadow:0 12px 30px rgba(37,99,235,.14); }
+        .polutek-player-loader--compact::before { inset:5px; border-radius:10px; }
+        .polutek-player-loader-mark { position:relative; display:grid; width:54px; height:54px; place-items:center; border:1px solid color-mix(in srgb,var(--chan-blue,#2563eb) 22%,transparent); border-radius:16px; background:color-mix(in srgb,var(--chan-card,#fff) 90%,white); color:var(--chan-blue,#2563eb); box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 16px 32px -12px color-mix(in srgb,var(--chan-blue,#2563eb) 45%,transparent); }
         .polutek-player-loader-mark svg { width:24px; height:24px; animation:polutek-loader-spin .9s linear infinite; }
-        .polutek-player-loader--compact .polutek-player-loader-mark { width:34px; height:34px; border-radius:10px; }
+        .polutek-player-loader--compact .polutek-player-loader-mark { width:34px; height:34px; border-radius:11px; }
         .polutek-player-loader--compact .polutek-player-loader-mark svg { width:17px; height:17px; }
-        .polutek-player-loader-track { position:relative; width:min(168px,45%); height:4px; overflow:hidden; border-radius:999px; background:rgba(37,99,235,.14); }
-        .polutek-player-loader--compact .polutek-player-loader-track { width:64px; height:3px; }
-        .polutek-player-loader-progress { position:absolute; inset:0 auto 0 -38%; width:38%; border-radius:999px; background:#2563eb; animation:polutek-loader-sweep 1.05s ease-in-out infinite; }
-        .polutek-player-loader-label { position:relative; margin:0; color:#4b5563; font-size:12px; font-weight:700; letter-spacing:.01em; }
-        @keyframes polutek-loader-sweep { 0% { transform:translateX(0); } 100% { transform:translateX(365%); } }
+        .polutek-player-loader-track { position:relative; width:min(160px,42%); height:4px; overflow:hidden; border-radius:999px; background:color-mix(in srgb,var(--chan-blue,#2563eb) 15%,transparent); }
+        .polutek-player-loader--compact .polutek-player-loader-track { width:60px; height:3px; }
+        .polutek-player-loader-progress { position:absolute; inset:0 auto 0 -38%; width:38%; border-radius:999px; background:var(--chan-blue,#2563eb); animation:polutek-loader-sweep 1.05s ease-in-out infinite; }
+        .polutek-player-loader-label { position:relative; margin:0; color:var(--chan-muted,#4b5563); font-size:10.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
+        @keyframes polutek-loader-sweep { 0% { transform:translateX(0); } 100% { transform:translateX(320%); } }
         @keyframes polutek-loader-spin { to { transform:rotate(360deg); } }
-        @media (max-width:640px) { .polutek-player-loader { min-height:0; gap:10px; } .polutek-player-loader-mark { width:44px; height:44px; } .polutek-player-loader-label { font-size:11px; } }
+        @media (max-width:640px) { .polutek-player-loader { min-height:0; gap:11px; } .polutek-player-loader-mark { width:46px; height:46px; } .polutek-player-loader-label { font-size:10px; } }
         @media (prefers-reduced-motion:reduce) { .polutek-player-loader-mark svg { animation-duration:1.8s; } .polutek-player-loader-progress { animation-duration:2s; } }
       `}</style>
     </div>

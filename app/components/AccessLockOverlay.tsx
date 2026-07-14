@@ -66,7 +66,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
           aria-hidden="true"
         />
 
-        <div className="relative flex w-full max-w-[390px] flex-col items-center gap-[clamp(13px,2.5cqi,19px)] rounded-[20px] border border-[color-mix(in_srgb,var(--chan-ink)_12%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_94%,white)] px-7 py-[clamp(24px,5cqi,36px)] text-center shadow-[0_18px_46px_rgba(15,23,42,0.14)]">
+        <div className="relative flex w-full max-w-[390px] flex-col items-center gap-[clamp(13px,2.5cqi,19px)] rounded-[22px] border border-[color-mix(in_srgb,var(--chan-line)_82%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_94%,white)] px-7 py-[clamp(24px,5cqi,36px)] text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_30px_64px_-26px_rgba(15,23,42,0.3)]">
           <div
             className={cn(
               "grid h-[clamp(52px,10cqi,66px)] w-[clamp(52px,10cqi,66px)] place-items-center rounded-[18px] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_10px_24px_rgba(15,23,42,0.16)]",
@@ -76,8 +76,17 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             <Icon className="h-[clamp(24px,5cqi,30px)] w-[clamp(24px,5cqi,30px)]" />
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <h2 className="font-brand text-[clamp(20px,4.6cqi,28px)] font-bold leading-tight text-[var(--chan-ink)]">
+          <div className="flex flex-col items-center gap-1.5">
+            <span className={cn(
+              "flex items-center gap-1.5 font-brand text-[clamp(9.5px,1.9cqi,11px)] font-bold uppercase leading-none tracking-[0.16em]",
+              isPatron ? "text-amber-600" : "text-[var(--chan-blue)]",
+            )}>
+              <span aria-hidden="true" className={cn("inline-flex h-1.5 w-1.5 rounded-full", isPatron ? "bg-amber-500" : "bg-[var(--chan-blue)]")} />
+              {isPatron
+                ? isPl ? "Strefa wspierających" : "Supporters only"
+                : isPl ? "Tylko dla zalogowanych" : "Members only"}
+            </span>
+            <h2 className="font-brand text-[clamp(20px,4.6cqi,28px)] font-bold leading-tight tracking-[-0.01em] text-[var(--chan-ink)]">
               {isPatron
                 ? isPl ? "Strefa Patronów" : "Patron Zone"
                 : isPl ? "Zaloguj się" : "Sign In"}
