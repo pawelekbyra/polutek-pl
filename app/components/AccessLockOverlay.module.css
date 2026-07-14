@@ -236,7 +236,7 @@
   position: relative;
   z-index: 1;
   display: grid;
-  width: clamp(20px, 17cqi, 32px);
+  width: clamp(16px, 12cqi, 24px);
   aspect-ratio: 1;
   place-items: center;
   color: #fff;
@@ -255,7 +255,7 @@
   overflow: hidden;
   max-width: 96%;
   color: #fff;
-  font-size: clamp(9.5px, 9.5cqi, 14px);
+  font-size: clamp(10px, 11cqi, 15px);
   font-weight: 800;
   letter-spacing: .03em;
   line-height: 1.05;
@@ -270,8 +270,8 @@
   gap: 2px;
 }
 
-.compactTiny .compactMark { width: clamp(16px, 15cqi, 26px); }
-.compactTiny .compactLabel { font-size: clamp(9px, 9cqi, 12px); }
+.compactTiny .compactMark { width: clamp(12px, 10cqi, 20px); }
+.compactTiny .compactLabel { font-size: clamp(9px, 10cqi, 13px); }
 
 @container (max-width: 420px) {
   .mark { margin-bottom: 10px; }
