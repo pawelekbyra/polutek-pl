@@ -1,11 +1,18 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { useState } from "react";
 import Image from "next/image";
-import { useUser, useClerk } from "@clerk/nextjs";
-import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { useClerk, useUser } from "@clerk/nextjs";
 import { ShieldCheck } from "../icons";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useLanguage } from "../LanguageContext";
 import AccountModal from "./AccountModal";
 
@@ -14,8 +21,8 @@ interface UserMenuProps {
   isPatron: boolean;
 }
 
-// Custom replacement for Clerk's default user button: avatar trigger + our own dropdown and
-// account panel. Clerk stays the backend (useUser/useClerk); no default Clerk UI is rendered.
+// Custom replacement for Clerk's default user button. Clerk remains the
+// identity backend; the application owns all visible account UI.
 export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
   const { user } = useUser();
   const { signOut } = useClerk();
@@ -23,103 +30,101 @@ export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
   const isPl = language === "pl";
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    function onPointerDown(e: PointerEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setMenuOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setMenuOpen(false);
-    }
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [menuOpen]);
 
   if (!user) return null;
 
-  const displayName = user.fullName || user.username || user.primaryEmailAddress?.emailAddress || "";
+  const displayName =
+    user.fullName ||
+    user.username ||
+    user.primaryEmailAddress?.emailAddress ||
+    "";
   const email = user.primaryEmailAddress?.emailAddress || "";
   const avatar = user.imageUrl;
+  const itemClassName =
+    "min-h-10 rounded-xl px-3 py-2 text-[14px] font-semibold text-[var(--chan-ink)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]";
 
   return (
-    <div className="relative" ref={containerRef}>
-      <button
-        type="button"
-        onClick={() => setMenuOpen((v) => !v)}
-        aria-haspopup="menu"
-        aria-expanded={menuOpen}
-        aria-label={isPl ? "Menu konta" : "Account menu"}
-        className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95"
-        title={isPatron ? "Patron" : undefined}
-      >
-        <span
-          className="flex h-[34px] w-[34px] items-center justify-center overflow-hidden rounded-full border border-[var(--chan-line)]"
+    <>
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+        <DropdownMenuTrigger
+          aria-label={isPl ? "Menu konta" : "Account menu"}
+          className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95 motion-reduce:transform-none motion-reduce:transition-none"
+          title={isPatron ? "Patron" : undefined}
         >
-          {avatar ? (
-            <Image src={avatar} alt="" width={34} height={34} className="h-full w-full object-cover" unoptimized />
-          ) : (
-            <span className="text-[13px] font-bold text-[var(--chan-ink)]">{(displayName[0] || "?").toUpperCase()}</span>
-          )}
-        </span>
-      </button>
-
-      {menuOpen && (
-        <div
-          role="menu"
-          className="absolute right-0 top-[calc(100%+8px)] z-[1100] w-60 rounded-2xl border border-[var(--chan-line)] bg-white p-2 font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(23,23,23,0.14)]"
-        >
-          <div>
-            <div className="border-b border-[var(--chan-line)] px-2 pb-2 pt-1">
-              <p className="truncate text-[14px] font-bold">{displayName}</p>
-              {email && <p className="truncate text-[12px] text-[var(--chan-muted)]">{email}</p>}
-            </div>
-
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setMenuOpen(false);
-                setAccountOpen(true);
-              }}
-              className="mt-1 w-full rounded-lg px-2 py-2 text-left text-[14px] font-semibold hover:bg-[var(--chan-surface)]"
-            >
-              {isPl ? "Moje konto" : "My account"}
-            </button>
-
-            {isAdmin && (
-              <Link
-                href="/admin"
-                role="menuitem"
-                onClick={() => setMenuOpen(false)}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[14px] font-semibold hover:bg-[var(--chan-surface)]"
-              >
-                <ShieldCheck size={16} />
-                {isPl ? "Zarządzaj kanałem" : "Manage channel"}
-              </Link>
+          <span
+            className={
+              isPatron
+                ? "chan-patron-ring flex h-[34px] w-[34px] items-center justify-center overflow-hidden rounded-full border"
+                : "flex h-[34px] w-[34px] items-center justify-center overflow-hidden rounded-full border border-[var(--chan-line)]"
+            }
+          >
+            {avatar ? (
+              <Image
+                src={avatar}
+                alt=""
+                width={34}
+                height={34}
+                className="h-full w-full object-cover"
+                unoptimized
+              />
+            ) : (
+              <span className="text-[13px] font-bold text-[var(--chan-ink)]">
+                {(displayName[0] || "?").toUpperCase()}
+              </span>
             )}
+          </span>
+        </DropdownMenuTrigger>
 
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setMenuOpen(false);
-                void signOut();
-              }}
-              className="mt-1 w-full rounded-lg border-t border-[var(--chan-line)] px-2 py-2 text-left text-[14px] font-semibold text-red-600 hover:bg-red-50"
+        <DropdownMenuContent
+          align="end"
+          sideOffset={8}
+          className="z-[1100] w-64 rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-1.5 font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.14)] ring-0"
+        >
+          <DropdownMenuLabel className="px-3 py-2 font-normal">
+            <span className="block truncate text-[14px] font-bold text-[var(--chan-ink)]">
+              {displayName}
+            </span>
+            {email && (
+              <span className="block truncate text-[12px] text-[var(--chan-muted)]">
+                {email}
+              </span>
+            )}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator className="mx-1 bg-[var(--chan-line)]" />
+
+          <DropdownMenuItem
+            onClick={() => setAccountOpen(true)}
+            className={itemClassName}
+          >
+            {isPl ? "Moje konto" : "My account"}
+          </DropdownMenuItem>
+
+          {isAdmin && (
+            <DropdownMenuItem
+              render={<Link href="/admin" />}
+              className={itemClassName}
             >
-              {isPl ? "Wyloguj się" : "Sign out"}
-            </button>
-          </div>
-        </div>
-      )}
+              <ShieldCheck aria-hidden="true" size={16} />
+              {isPl ? "Zarządzaj kanałem" : "Manage channel"}
+            </DropdownMenuItem>
+          )}
 
-      <AccountModal open={accountOpen} onOpenChange={setAccountOpen} isAdmin={isAdmin} />
-    </div>
+          <DropdownMenuSeparator className="mx-1 bg-[var(--chan-line)]" />
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => void signOut()}
+            className="min-h-10 rounded-xl px-3 py-2 text-[14px] font-semibold"
+          >
+            {isPl ? "Wyloguj się" : "Sign out"}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AccountModal
+        open={accountOpen}
+        onOpenChange={setAccountOpen}
+        isAdmin={isAdmin}
+      />
+    </>
   );
 }

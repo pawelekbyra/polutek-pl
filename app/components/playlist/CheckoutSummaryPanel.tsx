@@ -95,7 +95,10 @@ export default function CheckoutSummaryPanel({
     <div className="relative hidden h-full flex-col justify-between overflow-hidden border-r border-[var(--chan-line)] bg-[var(--chan-surface)] px-10 py-10 text-[var(--chan-ink)] md:flex md:w-[45%] lg:px-14">
       {/* brand */}
       <div className="relative z-10">
-        <BrandName className="text-[22px] leading-none" variant="classic" />
+        <BrandName
+          className="text-[22.5px] leading-none"
+          shine="ambient"
+        />
       </div>
 
       {/* centre: drawing + message + amount */}
@@ -106,7 +109,7 @@ export default function CheckoutSummaryPanel({
           <h1 className="font-brand m-0 text-[30px] font-bold leading-[1.15] lg:text-[34px]">
             <span
               className="px-[4px]"
-              style={{ background: 'linear-gradient(180deg, transparent 55%, #EFF3FE 55%, #EFF3FE 94%, transparent 94%)' }}
+              style={{ background: 'linear-gradient(180deg, transparent 55%, var(--chan-blue-soft) 55%, var(--chan-blue-soft) 94%, transparent 94%)' }}
             >
               {heading}
             </span>

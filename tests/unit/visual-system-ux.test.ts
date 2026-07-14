@@ -22,7 +22,8 @@ describe("shared visual system contracts", () => {
     const comments = read("app/components/comments/components/CommentComposer.tsx");
     const player = read("app/components/VideoPlayer.tsx");
 
-    expect(navbar).toContain("shadow-[0_2px_0_#2563eb");
+    expect(navbar).toContain("polutek-watch-nav");
+    expect(navbar).toContain("var(--chan-blue)");
     expect(subscribe).toContain("border-[color-mix");
     expect(authModal).toContain("!max-w-[390px]");
     expect(comments).toContain("bg-[var(--chan-blue-soft)]");
@@ -30,7 +31,7 @@ describe("shared visual system contracts", () => {
     expect(player).not.toContain(">P</span>");
   });
 
-  it("applies the doodle admin shell while preserving the payment settings skin", () => {
+  it("keeps the scoped admin shell while preserving the payment settings skin", () => {
     const layout = read("app/admin/layout.tsx");
     const shell = read("app/admin/components/AdminVisualShell.tsx");
     const globals = read("app/globals.css");

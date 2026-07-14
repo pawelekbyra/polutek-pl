@@ -11,12 +11,20 @@ import { useAuth, useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "../LanguageContext";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { AccessTierDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { CommentComposer } from "./components/CommentComposer";
 import { CommentItem } from "./components/CommentItem";
 import { AnimatePresence } from "framer-motion";
 import { CommentMotionItem, AnimatedCount } from "./components/comment-motion";
 import { useComments } from "./hooks/useComments";
+import { useClientReady } from "@/app/hooks/useClientEnvironment";
 
 type ClerkCommentMetadata = {
   totalPaid?: unknown;
@@ -51,15 +59,13 @@ interface EmbeddedCommentsProps {
 }
 
 const CommentsLoadingState = ({ language }: { language: string }) => (
-  // Legacy static UX contract reference for removed skeleton header:
-  // <Skeleton className="h-7 w-48" />
   <div className="py-14 flex flex-col items-center justify-center text-center space-y-3 rounded-2xl border border-dashed border-neutral-200 bg-white/35" role="status" aria-live="polite">
     <MessageSquare size={34} className="text-neutral-300" />
     <p className="text-[11px] font-black uppercase tracking-[0.22em] text-neutral-500">
       {language === "pl" ? "Dogrzewam rozmowę" : "Warming up the discussion"}
     </p>
     <div className="h-1 w-32 overflow-hidden rounded-full bg-neutral-200">
-      <div className="h-full w-1/2 animate-pulse rounded-full bg-primary/70" />
+      <div className="h-full w-1/2 animate-pulse rounded-full bg-primary/70 motion-reduce:animate-none" />
     </div>
   </div>
 );
@@ -125,21 +131,15 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     : null;
 
   const [sortBy, setSortBy] = useState<"newest" | "top">("newest");
-  const [isSortMenuOpen, setIsSortMenuOpen] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [isClient, setIsClient] = useState(false);
+  const isClient = useClientReady();
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   const [composerError, setComposerError] = useState<string | null>(null);
 
   const commentsTopRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const sortMenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const {
     data,
@@ -173,26 +173,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   useEffect(() => {
-    if (!isSortMenuOpen) return;
-
-    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
-      if (
-        sortMenuRef.current &&
-        !sortMenuRef.current.contains(event.target as Node)
-      ) {
-        setIsSortMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("touchstart", handlePointerDown);
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("touchstart", handlePointerDown);
-    };
-  }, [isSortMenuOpen]);
-
-  useEffect(() => {
     const handleScroll = () => {
       if (commentsTopRef.current) {
         const top = commentsTopRef.current.getBoundingClientRect().top;
@@ -210,7 +190,13 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         commentsTopRef.current.getBoundingClientRect().top +
         window.pageYOffset +
         yOffset;
-      window.scrollTo({ top: y, behavior: "smooth" });
+      const shouldReduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      window.scrollTo({
+        top: y,
+        behavior: shouldReduceMotion ? "auto" : "smooth",
+      });
     }
   };
 
@@ -278,7 +264,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
   const handleSortChange = (nextSort: "newest" | "top") => {
     setSortBy(nextSort);
-    setIsSortMenuOpen(false);
   };
 
   return (
@@ -288,12 +273,12 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     >
       {/* Back to comments top */}
       {showStickyHeader && (
-        <div className="fixed bottom-5 right-5 z-50 animate-in fade-in slide-in-from-bottom-3 duration-200 sm:bottom-6 sm:right-6">
+        <div className="fixed bottom-5 right-5 z-50 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-200 sm:bottom-6 sm:right-6">
           <button
             type="button"
             onClick={scrollToTop}
             aria-label={language === "pl" ? "Wróć do początku komentarzy" : "Back to the top of comments"}
-            className="group flex h-12 w-12 items-center justify-center rounded-full bg-[#2563EB] text-white shadow-[0_10px_30px_rgba(37,99,235,0.35)] ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:bg-[#1D4ED8] hover:shadow-[0_14px_36px_rgba(37,99,235,0.42)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#93C5FD] focus-visible:ring-offset-2 active:translate-y-0 active:scale-95"
+            className="group flex h-12 w-12 items-center justify-center rounded-full bg-[var(--chan-blue)] text-white shadow-[0_10px_30px_color-mix(in_srgb,var(--chan-blue)_35%,transparent)] ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:bg-[color-mix(in_srgb,var(--chan-blue)_86%,black)] hover:shadow-[0_14px_36px_color-mix(in_srgb,var(--chan-blue)_42%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:translate-y-0 active:scale-95"
           >
             <svg
               width="22"
@@ -321,13 +306,12 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         </div>
 
         <div className="flex gap-[16px] shrink-0 items-center">
-          <div ref={sortMenuRef} className="relative">
-            <button
-              type="button"
-              onClick={() => setIsSortMenuOpen((open) => !open)}
-              aria-haspopup="menu"
-              aria-expanded={isSortMenuOpen}
-              className="flex items-center gap-2 text-[var(--chan-muted)] hover:text-[var(--chan-ink)] transition-colors"
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="flex min-h-11 items-center gap-2 rounded-lg px-2 text-[var(--chan-muted)] transition-colors hover:bg-[var(--chan-surface)] hover:text-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transition-none"
+              aria-label={
+                language === "pl" ? "Sortuj komentarze" : "Sort comments"
+              }
             >
               <svg
                 width="14"
@@ -353,46 +337,34 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               <span className="text-[13px] font-semibold">
                 {language === "pl" ? "Sortuj według" : "Sort by"}
               </span>
-            </button>
+            </DropdownMenuTrigger>
 
-            {isSortMenuOpen && (
-              <div
-                role="menu"
-                className="absolute right-0 top-full z-30 mt-2 min-w-[158px] rounded-2xl border border-neutral-200 bg-white p-1 shadow-lg"
+            <DropdownMenuContent
+              align="end"
+              sideOffset={8}
+              className="z-[1100] w-[168px] rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-1.5 text-[var(--chan-ink)] shadow-[0_14px_34px_-16px_rgba(15,23,42,0.3)] ring-0"
+            >
+              <DropdownMenuRadioGroup
+                value={sortBy}
+                onValueChange={(value) =>
+                  handleSortChange(value as "newest" | "top")
+                }
               >
-                <button
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={sortBy === "newest"}
-                  onClick={() => handleSortChange("newest")}
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[12px] font-bold transition-colors",
-                    sortBy === "newest"
-                      ? "bg-[var(--chan-surface)] text-[var(--chan-ink)]"
-                      : "text-[var(--chan-muted)] hover:bg-[var(--chan-surface)] hover:text-[var(--chan-ink)]",
-                  )}
+                <DropdownMenuRadioItem
+                  value="newest"
+                  className="min-h-10 rounded-xl px-3 py-2 text-[12px] font-bold text-[var(--chan-muted)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]"
                 >
                   {language === "pl" ? "Najnowsze" : "Newest"}
-                  {sortBy === "newest" && <span aria-hidden="true">•</span>}
-                </button>
-                <button
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={sortBy === "top"}
-                  onClick={() => handleSortChange("top")}
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[12px] font-bold transition-colors",
-                    sortBy === "top"
-                      ? "bg-[var(--chan-surface)] text-[var(--chan-ink)]"
-                      : "text-[var(--chan-muted)] hover:bg-[var(--chan-surface)] hover:text-[var(--chan-ink)]",
-                  )}
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem
+                  value="top"
+                  className="min-h-10 rounded-xl px-3 py-2 text-[12px] font-bold text-[var(--chan-muted)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]"
                 >
                   {language === "pl" ? "Najlepsze" : "Top"}
-                  {sortBy === "top" && <span aria-hidden="true">•</span>}
-                </button>
-              </div>
-            )}
-          </div>
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -491,6 +463,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                   pinMutation.mutate({ commentId: id, pinned })
                 }
                 isPinPending={pinMutation.isPending}
+                isReactionPending={
+                  likeMutation.isPending || dislikeMutation.isPending
+                }
                 onEdit={(id, text) =>
                   editMutation.mutate({ commentId: id, text })
                 }
@@ -517,6 +492,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                       onDelete={(id) => deleteMutation.mutate(id)}
                       onPin={() => {}}
                       isPinPending={false}
+                      isReactionPending={
+                        likeMutation.isPending || dislikeMutation.isPending
+                      }
                       onEdit={(id, text) =>
                         editMutation.mutate({ commentId: id, text })
                       }

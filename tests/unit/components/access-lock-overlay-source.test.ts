@@ -20,21 +20,21 @@ describe("access lock overlay source contract", () => {
   it("keeps PATRON_REQUIRED on the patron branded lock path", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
 
-    expect(source).toContain('state === "PATRON_REQUIRED"');
-    expect(source).toContain("PATRON");
+    expect(source).toContain('state === "PATRON_REQUIRED" && isSignedIn === true');
     expect(source).toContain('href="#donations"');
     expect(source).toContain("scrollIntoView");
-    expect(source).not.toContain("Wesprzyj, aby obczaić");
+    expect(source).toContain("Jednorazowe wsparcie spełniające próg");
   });
 
-  it("keeps old badge wrapper colors out of the icon treatment", () => {
+  it("uses deterministic, reduced-motion-safe ambient art", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
+    const styles = component("app/components/AccessLockOverlay.module.css");
 
-    expect(source).not.toContain("bg-white/5");
-    expect(source).not.toContain("bg-amber-500/10");
-    expect(source).not.toContain("border-white/10");
-    expect(source).not.toContain("border-amber-500/20");
-    expect(source).not.toContain("blur-2xl");
+    expect(source).toContain("CONSTELLATION");
+    expect(source).toContain("useReducedMotion");
+    expect(source).not.toContain("Math.random");
+    expect(styles).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(styles).toContain("pointer-events: none");
   });
 
   it("renders ChannelVideoCard badges regardless of access state", () => {

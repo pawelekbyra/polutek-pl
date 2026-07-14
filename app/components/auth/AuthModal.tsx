@@ -189,7 +189,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
               </p>
             )}
             {info && !error && (
-              <p className="mt-3 rounded-lg bg-[#EFF3FE] px-3 py-2 text-[13px] font-semibold text-[#2563EB]">{info}</p>
+              <p className="mt-3 rounded-lg bg-[var(--chan-blue-soft)] px-3 py-2 text-[13px] font-semibold text-[var(--chan-blue)]">{info}</p>
             )}
 
             {view === "sign-in" && (
@@ -294,7 +294,7 @@ function Field({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-[12px] border border-[var(--chan-line)] bg-[var(--chan-surface)] px-3 py-2 font-sans text-[15px] text-[var(--chan-ink)] outline-none transition-colors focus:border-[#2563EB]"
+        className="w-full rounded-[12px] border border-[var(--chan-line)] bg-[var(--chan-surface)] px-3 py-2 font-sans text-[15px] text-[var(--chan-ink)] outline-none transition-colors focus:border-[var(--chan-blue)]"
         {...rest}
       />
     </label>
@@ -306,7 +306,7 @@ function PrimaryButton({ loading, disabled, label }: { loading: boolean; disable
     <button
       type="submit"
       disabled={loading || disabled}
-      className="flex h-[44px] w-full items-center justify-center gap-2 rounded-[12px] bg-[#2563EB] font-brand text-[15px] font-bold text-white transition-[background-color,box-shadow,transform] duration-160 hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(37,99,235,0.25)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
+      className="flex h-[44px] w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--chan-blue)] font-brand text-[15px] font-bold text-white transition-[background-color,box-shadow,transform] duration-160 hover:-translate-y-px hover:shadow-[0_8px_20px_color-mix(in_srgb,var(--chan-blue)_25%,transparent)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
     >
       {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <span>{label}</span>}
     </button>

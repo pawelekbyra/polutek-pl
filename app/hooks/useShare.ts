@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useClientReady } from './useClientEnvironment';
 
 interface ShareData {
   title: string;
@@ -8,17 +9,18 @@ interface ShareData {
   url: string;
 }
 
-export function useShare() {
-  const [isMobile, setIsMobile] = useState(false);
-  const [canNativeShare, setCanNativeShare] = useState(false);
-  const [copied, setCopied] = useState(false);
+export type NativeShareResult =
+  | "shared"
+  | "cancelled"
+  | "failed"
+  | "unsupported";
 
-  useEffect(() => {
-    const ua = navigator.userAgent;
-    const mobile = /Mobi|Android|iPhone|iPad/i.test(ua);
-    setIsMobile(mobile);
-    setCanNativeShare(typeof navigator.share === 'function');
-  }, []);
+export function useShare() {
+  const clientReady = useClientReady();
+  const [copied, setCopied] = useState(false);
+  const isMobile =
+    clientReady && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+  const canNativeShare = clientReady && typeof navigator.share === 'function';
 
   const copyToClipboard = async (url: string) => {
     try {
@@ -36,15 +38,14 @@ export function useShare() {
     if (isMobile && canNativeShare) {
       try {
         await navigator.share(data);
-        return true;
+        return "shared" as const;
       } catch (err) {
-        if ((err as Error).name !== 'AbortError') {
-          console.error('Share failed:', err);
-        }
-        return false;
+        if ((err as Error).name === 'AbortError') return "cancelled" as const;
+        console.error('Share failed:', err);
+        return "failed" as const;
       }
     }
-    return false;
+    return "unsupported" as const;
   };
 
   return { isMobile, canNativeShare, share, copied, copyToClipboard };

@@ -15,9 +15,9 @@ Owner: rolling — any agent may pick up the next unchecked phase below.
 ## Why
 
 The default Clerk UI works functionally but is visually off-brand — it does not
-use POLUTEK's typography, colours, `<Frame>` hand-drawn primitives, or
-animations, and it exposes "Secured by Clerk". We want an interface where a user
-cannot tell Clerk is involved.
+use POLUTEK's typography, semantic application colours, components or motion,
+and it exposes "Secured by Clerk". We want an interface where a user cannot tell
+Clerk is involved.
 
 ## Architecture (unchanged)
 

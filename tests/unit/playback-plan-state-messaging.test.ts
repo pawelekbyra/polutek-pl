@@ -41,7 +41,10 @@ describe('PremiumWrapper playback plan state messaging', () => {
     expect(source).toContain('if (!isPlayablePlaybackPlan(playbackPlan))');
     expect(source).toContain('<PlaybackPlanStateOverlay');
     expect(source).toContain('{children}');
-    expect(source).toContain('plan && (plan.status === "READY" || !plan.status) && plan.canPlay !== false');
+    expect(source).toContain('plan.status === "READY"');
+    expect(source).toContain('plan.canPlay === true');
+    expect(source).toContain('plan.access?.allowed === true');
+    expect(source).toContain('plan.source &&');
   });
 
   it('does not request playback source data from the blocked-state overlay', () => {

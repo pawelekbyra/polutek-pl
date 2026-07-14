@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 const composer = () => readFileSync('app/components/comments/components/CommentComposer.tsx', 'utf8');
 const embedded = () => readFileSync('app/components/comments/EmbeddedComments.tsx', 'utf8');
 const hook = () => readFileSync('app/components/comments/hooks/useComments.ts', 'utf8');
+const item = () => readFileSync('app/components/comments/components/CommentItem.tsx', 'utf8');
+const motion = () => readFileSync('app/components/comments/components/comment-motion.tsx', 'utf8');
 
 describe('comments UI production contract', () => {
   it('uses a semantic accessible form with typed buttons and inline errors', () => {
@@ -50,11 +52,34 @@ describe('comments UI production contract', () => {
     expect(source).toContain('queryClient.setQueryData(queryKey, data);');
   });
 
-  it('keeps image comments as backend-compatible only and does not advertise image UI', () => {
+  it('posts the supported text contract and does not expose image attachment UI', () => {
     const composerSource = composer();
     const hookSource = hook();
 
-    expect(composerSource).not.toContain('imageUrl');
-    expect(hookSource).not.toContain('imageUrl,');
+    expect(composerSource).not.toContain('/api/comments/image-upload');
+    expect(composerSource).not.toContain('type="file"');
+    expect(composerSource).not.toContain('accept="image/');
+    expect(composerSource).not.toContain('uploadedImage');
+    expect(hookSource).toMatch(
+      /body: JSON\.stringify\(\{\s*text,\s*parentId,\s*\}\)/,
+    );
+  });
+
+  it('keeps comment reactions accessible and permission-gated', () => {
+    const source = item();
+
+    expect(source).toContain('const reactionsDisabled = !userProfile || !canComment || isReactionPending;');
+    expect(source).toContain('disabled={reactionsDisabled}');
+    expect(source).toContain('aria-pressed={isLiked}');
+    expect(source).toContain('aria-pressed={isDisliked}');
+    expect(source).toContain('min-h-11 min-w-11');
+    expect(source).toContain('locale: language === "pl" ? pl : enUS');
+  });
+
+  it('renders static comment motion equivalents for reduced-motion users', () => {
+    const source = motion();
+
+    expect(source).toContain('useReducedMotion');
+    expect(source.match(/if \(shouldReduceMotion\)/g)).toHaveLength(3);
   });
 });

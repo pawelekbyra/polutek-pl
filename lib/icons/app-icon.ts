@@ -3,14 +3,12 @@
 // animated SplashScreen read as one continuous, on-brand square icon instead
 // of two mismatched screens.
 
-export const APP_ICON_BACKGROUND = "#f7f1e4";
-export const APP_ICON_INK = "#171717";
-// Brand blue — same accent used by the site's buttons/logo and the <Frame> primitive (BLUE).
+export const APP_ICON_BACKGROUND = "#f7f9fc";
+export const APP_ICON_INK = "#111827";
+// Brand blue — the primary action accent used by the site's buttons and logo.
 export const APP_ICON_BLUE = "#2563eb";
 
-// Same deterministic "hand-drawn wobble" used by the site's <Frame> primitive
-// (app/components/najs/primitives.tsx), reproduced here so the icon border
-// reads as the same hand style as every other card/button on the site.
+// Stable, deterministic contour variation for the launcher icon border.
 function wobble(seed: number, i: number, amp = 1.4) {
   const n = Math.sin(seed * 701 + i * 89.7) * 10000;
   return (n - Math.floor(n) - 0.5) * amp;
@@ -50,7 +48,7 @@ export function enterGlyphPaths(canvas: number): { main: string; head1: string; 
 // Filled "Enter / Return" key glyph (↵) — a solid, chunky L-shaped return arrow: a tall
 // riser on the right, a rounded elbow, a horizontal bar running left, ending in a big
 // left-pointing arrowhead. Rendered as a single closed polygon so it can be *filled*
-// (brand blue) with a bold ink outline, matching the app's Enter-key visual language.
+// (brand blue) with a bold outline that stays legible at launcher-icon sizes.
 // Coordinates come from a normalized 100×100 box scaled into `canvas` and centered, so
 // the mark stays dead-centre at any size (splash, favicon, PWA launch icon).
 export function enterGlyphFilledPath(canvas: number): { path: string; strokeWidth: number } {

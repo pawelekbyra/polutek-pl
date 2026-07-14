@@ -3,9 +3,8 @@
 import { logger } from "@/lib/logger";
 import { useAuth } from "@clerk/nextjs";
 import React, {
-  createContext,
-  useContext,
   useEffect,
+  useRef,
   useState,
   useCallback,
 } from "react";
@@ -18,25 +17,13 @@ import { AccessTierDto } from "@/lib/modules/comments/domain/comment-frontend.dt
 import { PlayerLoadingState } from "./PlayerLoadingState";
 import { PlayerStateFrame } from "./PlayerStateFrame";
 import AccessLockOverlay from "./AccessLockOverlay";
-import { useAppPreload } from "./preload/AppPreloadProvider";
+import {
+  resolvePlaybackViewerKey,
+  useAppPreload,
+} from "./preload/AppPreloadProvider";
+import { VideoAccessContext, useVideoAccess } from "./VideoAccessContext";
 
-interface VideoAccessContextType {
-  hasAccess: boolean;
-  playbackPlan: PlaybackPlan | null;
-  isLoading: boolean;
-  effectiveTier: AccessTierDto;
-  refreshPlaybackPlan: () => Promise<void>;
-}
-
-const VideoAccessContext = createContext<VideoAccessContextType>({
-  hasAccess: false,
-  playbackPlan: null,
-  isLoading: true,
-  effectiveTier: "PUBLIC" as AccessTierDto,
-  refreshPlaybackPlan: async () => {},
-});
-
-export const useVideoAccess = () => useContext(VideoAccessContext);
+export { useVideoAccess };
 
 function isAccessTierDto(value: unknown): value is AccessTierDto {
   return value === "PUBLIC" || value === "LOGGED_IN" || value === "PATRON";
@@ -58,9 +45,10 @@ export default function PremiumWrapper({
   variant = "default",
   onAccessLoad,
 }: PremiumWrapperProps) {
-  const { userId, isLoaded } = useAuth();
+  const { userId, isLoaded, sessionId } = useAuth();
   const [hasAccess, setHasAccess] = useState<boolean>(false);
   const [playbackPlan, setPlaybackPlan] = useState<PlaybackPlan | null>(null);
+  const [resolvedViewerKey, setResolvedViewerKey] = useState<string | null>(null);
   const [dbTier, setDbTier] = useState<AccessTierDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -68,127 +56,175 @@ export default function PremiumWrapper({
     null,
   );
   const preloader = useAppPreload();
+  const authViewerKey = resolvePlaybackViewerKey({ isLoaded, userId, sessionId });
+  const viewerKey = preloader
+    ? preloader.viewerKey === authViewerKey
+      ? authViewerKey
+      : null
+    : authViewerKey;
+  const requestGenerationRef = useRef(0);
+  const directRequestControllerRef = useRef<AbortController | null>(null);
+
   const effectiveTier = (initialTier || dbTier || "PUBLIC") as AccessTierDto;
   const isPublic = effectiveTier === "PUBLIC";
-  const isUnlockedByAuth = !!userId && effectiveTier === "LOGGED_IN";
 
   const deniedState =
     effectiveTier === "PATRON" ? "PATRON_REQUIRED" : "LOGIN_REQUIRED";
 
+  const getPreloadedPlaybackPlan = preloader?.getPlaybackPlan;
+  const warmPreloadedVideo = preloader?.warmVideo;
+  const invalidatePreloadedPlaybackPlan = preloader?.invalidatePlaybackPlan;
+
   const checkAccess = useCallback(async () => {
-    if (isLoaded && !userId && !isPublic) {
+    const requestViewerKey = viewerKey;
+    const requestGeneration = ++requestGenerationRef.current;
+    directRequestControllerRef.current?.abort();
+    directRequestControllerRef.current = null;
+
+    setHasAccess(false);
+    setPlaybackPlan(null);
+    setResolvedViewerKey(null);
+    setFetchError(null);
+    setIsLoading(true);
+
+    const isCurrentRequest = () =>
+      requestGenerationRef.current === requestGeneration;
+
+    if (!requestViewerKey) return;
+
+    if (!userId && !isPublic) {
       setHasAccess(false);
       setPlaybackPlan(null);
       setPlaybackState(deniedState);
       setFetchError(null);
+      setResolvedViewerKey(requestViewerKey);
       setIsLoading(false);
+      onAccessLoad?.(false);
       return;
     }
 
-    if (!isLoaded && !isPublic) return;
-
     try {
-      const warmedPlan = preloader?.getPlaybackPlan(videoId);
-      const data = warmedPlan ?? await preloader?.warmVideo(videoId, { includePoster: true, priority: "critical" });
+      let rawData: unknown = getPreloadedPlaybackPlan?.(videoId) ?? null;
 
-      if (data) {
-        const warmedData: Partial<PlaybackPlan> & { access?: { allowed?: unknown; reason?: unknown; requiredTier?: string }; hasAccess?: unknown; requiredTier?: string } = data;
-        const nextState = getSafePlaybackState(
-          warmedData,
-          !userId ? deniedState : false,
-        );
-        const nextHasAccess = Boolean(warmedData.hasAccess || warmedData.access?.allowed);
-        setHasAccess(nextHasAccess);
-        onAccessLoad?.(nextHasAccess);
-        setPlaybackState(nextState);
-        setPlaybackPlan(nextHasAccess ? (warmedData as PlaybackPlan) : null);
-        const requiredTier = warmedData.requiredTier ?? warmedData.access?.requiredTier;
-        if (isAccessTierDto(requiredTier)) setDbTier(requiredTier);
-        setFetchError(null);
-        return;
+      if (!rawData && warmPreloadedVideo) {
+        rawData = await warmPreloadedVideo(videoId, {
+          includePoster: true,
+          priority: "critical",
+        });
+      } else if (!rawData) {
+        const controller = new AbortController();
+        directRequestControllerRef.current = controller;
+        const response = await fetch(`/api/media-source/${encodeURIComponent(videoId)}`, {
+          cache: "no-store",
+          credentials: "same-origin",
+          signal: controller.signal,
+        });
+        rawData = await response.json().catch(() => null);
       }
 
-      const response = await fetch(`/api/media-source/${videoId}`, { cache: "no-store" });
-      const fetchedData = await response.json();
+      if (!isCurrentRequest()) return;
+      if (!rawData || typeof rawData !== "object") {
+        throw new Error("Invalid playback plan response");
+      }
+
+      const data = rawData as Partial<PlaybackPlan> & {
+        access?: {
+          allowed?: unknown;
+          reason?: unknown;
+          requiredTier?: string;
+        };
+        hasAccess?: unknown;
+        requiredTier?: string;
+      };
 
       const nextState = getSafePlaybackState(
-        fetchedData,
+        data,
         !userId ? deniedState : false,
       );
+      const nextHasAccess = isPlayablePlaybackPlan(data as PlaybackPlan, videoId);
+      const requiredTier = data.requiredTier ?? data.access?.requiredTier;
 
-      if (!response.ok) {
-        setHasAccess(false);
-        setPlaybackPlan(null);
-        setPlaybackState(nextState);
-        if (fetchedData.requiredTier || fetchedData.access?.requiredTier)
-          setDbTier(fetchedData.requiredTier || fetchedData.access.requiredTier);
-        setFetchError(null);
-        return;
-      }
-
-      const nextHasAccess = Boolean(fetchedData.hasAccess || fetchedData.access?.allowed);
       setHasAccess(nextHasAccess);
       onAccessLoad?.(nextHasAccess);
       setPlaybackState(nextState);
-      if (nextHasAccess) {
-        setPlaybackPlan(fetchedData);
-      } else {
-        setPlaybackPlan(null);
-      }
-      if (fetchedData.requiredTier || fetchedData.access?.requiredTier)
-        setDbTier(fetchedData.requiredTier || fetchedData.access.requiredTier);
+      setPlaybackPlan(nextHasAccess ? data as PlaybackPlan : null);
+      if (isAccessTierDto(requiredTier)) setDbTier(requiredTier);
       setFetchError(null);
     } catch (error) {
+      if (!isCurrentRequest()) return;
       logger.error("Error checking video access:", error);
       setHasAccess(false);
       setPlaybackPlan(null);
       setPlaybackState("ERROR");
       setFetchError("SOURCE_ERROR");
     } finally {
-      setIsLoading(false);
+      if (isCurrentRequest()) {
+        setResolvedViewerKey(requestViewerKey);
+        setIsLoading(false);
+      }
     }
-  }, [isLoaded, userId, isPublic, videoId, onAccessLoad, deniedState, preloader]);
+  }, [deniedState, getPreloadedPlaybackPlan, isPublic, onAccessLoad, userId, videoId, viewerKey, warmPreloadedVideo]);
 
   useEffect(() => {
-    checkAccess();
+    void checkAccess();
+    return () => {
+      requestGenerationRef.current += 1;
+      directRequestControllerRef.current?.abort();
+      directRequestControllerRef.current = null;
+    };
   }, [checkAccess]);
 
-  useEffect(() => {
-    if (!playbackPlan?.source?.expiresAt) return;
+  const isCurrentViewerResolution =
+    viewerKey !== null && resolvedViewerKey === viewerKey;
+  const currentPlaybackPlan =
+    isCurrentViewerResolution && isPlayablePlaybackPlan(playbackPlan, videoId)
+      ? playbackPlan
+      : null;
 
-    const expiresAt = new Date(playbackPlan.source.expiresAt).getTime();
+  const refreshPlaybackPlan = useCallback(async () => {
+    invalidatePreloadedPlaybackPlan?.(videoId);
+    await checkAccess();
+  }, [checkAccess, invalidatePreloadedPlaybackPlan, videoId]);
+
+  useEffect(() => {
+    if (!currentPlaybackPlan?.source?.expiresAt) return;
+
+    const expiresAt = new Date(currentPlaybackPlan.source.expiresAt).getTime();
     const refreshThresholdMs = 120 * 1000; // 2 minutes
     const now = Date.now();
     const msToRefresh = expiresAt - now - refreshThresholdMs;
 
     if (msToRefresh <= 0) {
-      preloader?.invalidatePlaybackPlan(videoId);
-      checkAccess();
+      void refreshPlaybackPlan();
       return;
     }
 
     const timer = setTimeout(() => {
-      preloader?.invalidatePlaybackPlan(videoId);
-      checkAccess();
+      void refreshPlaybackPlan();
     }, msToRefresh);
 
     return () => clearTimeout(timer);
-  }, [playbackPlan, checkAccess, preloader, videoId]);
+  }, [currentPlaybackPlan, refreshPlaybackPlan]);
+
+  const safePlaybackState = isCurrentViewerResolution ? playbackState : null;
+  const safeFetchError = isCurrentViewerResolution ? fetchError : null;
+  const safeIsLoading = !viewerKey || !isCurrentViewerResolution || isLoading;
+  const safeHasAccess = Boolean(currentPlaybackPlan && hasAccess);
 
   const contextValue = {
-    hasAccess: isPublic || isUnlockedByAuth || hasAccess,
-    playbackPlan,
-    isLoading,
+    hasAccess: safeHasAccess,
+    playbackPlan: currentPlaybackPlan,
+    isLoading: safeIsLoading,
     effectiveTier,
-    refreshPlaybackPlan: checkAccess,
+    refreshPlaybackPlan,
   };
 
-  if (isLoading) {
+  if (safeIsLoading) {
     if (isLoaded && !userId && !isPublic) {
       return (
         <PlaybackPlanStateOverlay
           state={deniedState}
-          onRetry={checkAccess}
+          onRetry={refreshPlaybackPlan}
           variant={variant}
         />
       );
@@ -196,22 +232,22 @@ export default function PremiumWrapper({
     return <PlayerLoadingState variant={variant} />;
   }
 
-  if (contextValue.hasAccess) {
-    if (fetchError) {
+  if (safeHasAccess) {
+    if (safeFetchError) {
       return (
         <PlaybackPlanStateOverlay
           state="ERROR"
-          onRetry={checkAccess}
+          onRetry={refreshPlaybackPlan}
           variant={variant}
         />
       );
     }
 
-    if (!playbackPlan) {
+    if (!playbackPlan || resolvedViewerKey !== viewerKey) {
       return (
         <PlaybackPlanStateOverlay
-          state={playbackState || "ERROR"}
-          onRetry={checkAccess}
+          state={safePlaybackState || "ERROR"}
+          onRetry={refreshPlaybackPlan}
           variant={variant}
         />
       );
@@ -220,8 +256,8 @@ export default function PremiumWrapper({
     if (!isPlayablePlaybackPlan(playbackPlan)) {
       return (
         <PlaybackPlanStateOverlay
-          state={playbackState || playbackPlan.status || "ERROR"}
-          onRetry={checkAccess}
+          state={safePlaybackState || playbackPlan.status || "ERROR"}
+          onRetry={refreshPlaybackPlan}
           variant={variant}
         />
       );
@@ -238,10 +274,10 @@ export default function PremiumWrapper({
     <VideoAccessContext.Provider value={contextValue}>
       <PlaybackPlanStateOverlay
         state={
-          playbackState ||
+          safePlaybackState ||
           (effectiveTier === "PATRON" ? "PATRON_REQUIRED" : "LOGIN_REQUIRED")
         }
-        onRetry={checkAccess}
+        onRetry={refreshPlaybackPlan}
         variant={variant}
       />
     </VideoAccessContext.Provider>
@@ -368,9 +404,21 @@ export function getSafePlaybackState(
 
 export function isPlayablePlaybackPlan(
   plan: PlaybackPlan | null,
-): plan is PlaybackPlan & { status: "READY" } {
+  expectedVideoId?: string,
+): plan is PlaybackPlan & {
+  status: "READY";
+  canPlay: true;
+  access: PlaybackPlan["access"] & { allowed: true };
+  source: NonNullable<PlaybackPlan["source"]>;
+} {
   return Boolean(
-    plan && (plan.status === "READY" || !plan.status) && plan.canPlay !== false,
+    plan &&
+      plan.status === "READY" &&
+      plan.canPlay === true &&
+      plan.access?.allowed === true &&
+      plan.source &&
+      (plan.source.playbackUrl || plan.source.embedUrl) &&
+      (!expectedVideoId || plan.videoId === expectedVideoId),
   );
 }
 

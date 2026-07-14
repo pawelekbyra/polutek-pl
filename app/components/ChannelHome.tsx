@@ -12,6 +12,10 @@ import { SidebarPlaylist, SidebarSupportBox } from "./channel/SidebarPlaylist";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
 import { AppPreloadProvider, useAppPreload } from "./preload/AppPreloadProvider";
+import {
+  useClientReady,
+  useMediaQuery,
+} from "@/app/hooks/useClientEnvironment";
 
 const EmbeddedComments = dynamic(() => import("./comments/EmbeddedComments"), {
   ssr: false,
@@ -38,6 +42,12 @@ interface ChannelHomeProps {
     role?: string;
   } | null;
 }
+
+type ChannelViewState = {
+  routeVideoId: string | undefined;
+  selectedVideoId: string | undefined;
+  activeTab: "comments" | "videos";
+};
 
 
 export default function ChannelHome({
@@ -80,33 +90,59 @@ function ChannelHomeContent({
   userProfile,
 }: ChannelHomeProps) {
   const { t, language } = useLanguage();
-  const [clientSelectedVideoId, setClientSelectedVideoId] = useState(currentVideoId);
+  const [selectionState, setSelectionState] = useState<ChannelViewState>(() => ({
+    routeVideoId: currentVideoId,
+    selectedVideoId: currentVideoId,
+    activeTab: "comments",
+  }));
+  if (selectionState.routeVideoId !== currentVideoId) {
+    setSelectionState({
+      routeVideoId: currentVideoId,
+      selectedVideoId: currentVideoId,
+      activeTab: "comments",
+    });
+  }
+  const clientSelectedVideoId =
+    selectionState.routeVideoId === currentVideoId
+      ? selectionState.selectedVideoId
+      : currentVideoId;
   const selectedVideo =
     (allVideos || []).find(
       (v) => v.id === clientSelectedVideoId || v.slug === clientSelectedVideoId,
     ) || mainVideo;
   const viewerIsPatron = userProfile?.role === 'ADMIN' || userProfile?.isPatronDecorative === true;
-  const [activeTab, setActiveTab] = useState<"comments" | "videos">("comments");
-  const [mounted, setMounted] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
+  const activeTab = selectionState.activeTab;
+  const mounted = useClientReady();
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
   const preloader = useAppPreload();
 
-  useEffect(() => {
-    setMounted(true);
-    const mediaQuery = window.matchMedia("(min-width: 1024px)");
-    const updateViewport = () => setIsDesktop(mediaQuery.matches);
-
-    updateViewport();
-    mediaQuery.addEventListener("change", updateViewport);
-    return () => mediaQuery.removeEventListener("change", updateViewport);
-  }, []);
+  const setActiveTab = (activeTab: "comments" | "videos") => {
+    setSelectionState((current) => ({ ...current, activeTab }));
+  };
 
   useEffect(() => {
     if (selectedVideo?.id) {
-      setActiveTab("comments");
       scrollToMediaOnMobile();
     }
   }, [selectedVideo?.id]);
+
+  useEffect(() => {
+    const openSupport = () => {
+      setActiveTab("videos");
+      window.setTimeout(() => {
+        const prefersReducedMotion = window.matchMedia?.(
+          "(prefers-reduced-motion: reduce)",
+        ).matches ?? false;
+        document.getElementById("donations")?.scrollIntoView({
+          behavior: prefersReducedMotion ? "auto" : "smooth",
+          block: "center",
+        });
+      }, 0);
+    };
+
+    window.addEventListener("polutek:open-support", openSupport);
+    return () => window.removeEventListener("polutek:open-support", openSupport);
+  }, []);
 
   if (!selectedVideo)
     return (
@@ -125,7 +161,7 @@ function ChannelHomeContent({
           </p>
           <Link
             href={getLocalizedHref(language, "home")}
-            className="inline-flex items-center justify-center h-[44px] px-10 rounded-[14px] bg-[#2563EB] text-white font-brand font-bold text-[14px] transition-all active:scale-95 hover:-translate-y-px"
+            className="inline-flex items-center justify-center h-[44px] px-10 rounded-[14px] bg-[var(--chan-blue)] text-white font-brand font-bold text-[14px] transition-all active:scale-95 hover:-translate-y-px"
           >
             {language === "pl" ? "Wróć do bazy" : "Back to database"}
           </Link>
@@ -142,7 +178,12 @@ function ChannelHomeContent({
   const handleVideoSelect = (clickedId?: string) => {
     if (clickedId && clickedId !== selectedVideo.id) {
       void preloader?.warmVideo(clickedId, { includeComments: false, includePoster: true, priority: "intent" });
-      setClientSelectedVideoId(clickedId);
+      setSelectionState({
+        routeVideoId: currentVideoId,
+        selectedVideoId: clickedId,
+        activeTab: "comments",
+      });
+      return;
     }
     setActiveTab("comments");
   };
@@ -150,7 +191,6 @@ function ChannelHomeContent({
   const commonSidebarProps = {
     sortedVideos,
     selectedVideoId: selectedVideo.id,
-    userProfile,
     viewerIsPatron,
     t,
     language,
@@ -201,7 +241,7 @@ function ChannelHomeContent({
                           className={cn(
                             "relative flex-1 rounded-full py-2.5 text-[12px] font-bold not-italic uppercase tracking-[0.14em] transition-all duration-200",
                             isActive
-                              ? "bg-[var(--chan-card)] text-[#2563EB] shadow-[0_1px_2px_rgba(23,23,23,0.06),0_4px_10px_-4px_rgba(23,23,23,0.14)]"
+                              ? "bg-[var(--chan-card)] text-[var(--chan-blue)] shadow-[0_1px_2px_rgba(23,23,23,0.06),0_4px_10px_-4px_rgba(23,23,23,0.14)]"
                               : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]",
                           )}
                         >

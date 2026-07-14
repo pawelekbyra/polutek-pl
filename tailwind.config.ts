@@ -10,24 +10,24 @@ const config = {
     extend: {
       fontFamily: {
         serif: [
-          'var(--font-outfit)',
+          'var(--font-geist-sans)',
           'sans-serif'
         ],
         sans: [
-          'var(--font-jakarta)',
+          'var(--font-geist-sans)',
           'sans-serif'
         ],
         heading: [
-          'var(--font-outfit)',
+          'var(--font-geist-sans)',
           'sans-serif'
         ],
         brand: [
-          'var(--font-space-grotesk)',
+          'var(--font-geist-sans)',
           'sans-serif'
         ],
-        handwriting: [
-          'var(--font-gluten)',
-          'cursive'
+        mono: [
+          'var(--font-geist-mono)',
+          'monospace'
         ]
       },
       colors: {
@@ -79,28 +79,14 @@ const config = {
         }
       },
       animation: {
-        glow: 'pl-glow 2.4s ease-out infinite',
         shimmer: 'shimmer 2s infinite'
       },
       keyframes: {
-        'pl-glow': {
-          '0%': {
-            boxShadow: '0 0 0 0 var(--accent-ring), 0 10px 30px rgba(0,0,0,.35)'
-          },
-          '100%': {
-            boxShadow: '0 0 0 14px rgba(37,99,235,0), 0 10px 30px rgba(0,0,0,.35)'
-          }
-        },
         shimmer: {
           '100%': {
             transform: 'translateX(100%)'
           }
         }
-      },
-      boxShadow: {
-        'brutalist-sm': '2px 2px 0px 0px #1a1a1a',
-        brutalist: '4px 4px 0px 0px #1a1a1a',
-        'brutalist-lg': '8px 8px 0px 0px #1a1a1a'
       },
       borderRadius: {
         lg: 'var(--radius)',

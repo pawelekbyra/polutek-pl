@@ -72,7 +72,7 @@ export default function CheckoutForm({ returnUrl, paymentId }: { returnUrl?: str
       <button
         type="submit"
         disabled={isLoading || !stripe || !elements}
-        className="group relative w-full overflow-hidden rounded-[16px] bg-[#2563EB] py-5 font-brand text-[13px] font-bold uppercase tracking-[0.2em] text-white transition-all duration-300 hover:-translate-y-px hover:shadow-xl disabled:opacity-50 active:scale-[0.98]"
+        className="group relative w-full overflow-hidden rounded-[16px] bg-[var(--chan-blue)] py-5 font-brand text-[13px] font-bold uppercase tracking-[0.2em] text-white transition-all duration-300 hover:-translate-y-px hover:shadow-xl disabled:opacity-50 active:scale-[0.98]"
       >
         <div className="relative flex items-center justify-center gap-3">
           {isLoading ? (

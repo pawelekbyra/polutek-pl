@@ -63,4 +63,21 @@ describe("#1104 search/sidebar cleanup contracts", () => {
     expect(sidebar).toContain("onVideoMouseEnter(video.id);");
     expect(sidebar).toContain("void preloader?.warmVideo(video.id");
   });
+
+  it("keeps selection navigation local and fetches viewer layout only when auth changes", () => {
+    const channelHome = source("app/components/ChannelHome.tsx");
+    const sidebar = source("app/components/channel/SidebarPlaylist.tsx");
+
+    expect(channelHome).toContain("selectionState.routeVideoId !== currentVideoId");
+    expect(channelHome).toContain("selectedVideoId: currentVideoId");
+    expect(sidebar).toContain('fetch("/api/channel/sidebar"');
+    expect(sidebar).toContain("const controller = new AbortController();");
+    expect(sidebar).toContain("signal: controller.signal");
+    expect(sidebar).toContain("return () => controller.abort();");
+    expect(sidebar).toContain("[authLoaded, authUserId, isSignedIn]");
+    expect(sidebar).toContain("? !(isSignedIn && viewerIsPatron)");
+    expect(sidebar).toContain('? !isSignedIn');
+    expect(sidebar).not.toContain("currentVideoId=${selectedVideoId");
+    expect(sidebar).not.toContain("window.scrollTo");
+  });
 });
