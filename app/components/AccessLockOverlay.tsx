@@ -128,7 +128,7 @@ function LoginScene({
         animate={{ opacity: 1, scale: 1, rotate: 0 }}
         transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 210, damping: 16 }}
       >
-        <Rocket aria-hidden="true" className={styles.mark} />
+        <Star aria-hidden="true" className={styles.mark} />
       </motion.div>
       <h2 id={titleId} className={styles.heading}>
         <motion.span
@@ -194,7 +194,7 @@ function PatronScene({
         animate={{ opacity: 1, scale: 1, rotate: 0 }}
         transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 210, damping: 16 }}
       >
-        <Star aria-hidden="true" className={styles.mark} />
+        <Rocket aria-hidden="true" className={styles.mark} />
       </motion.div>
       <h2 id={titleId} className={styles.heading}>
         <motion.span
