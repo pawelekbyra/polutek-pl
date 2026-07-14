@@ -60,32 +60,37 @@
 @layer components {
   .channel-page-shell {
     background:
-      radial-gradient(circle at 8% 8%, color-mix(in srgb, var(--chan-blue) 9%, transparent), transparent 26rem),
-      linear-gradient(rgba(23, 23, 23, .035) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(23, 23, 23, .035) 1px, transparent 1px),
+      radial-gradient(circle at 8% 6%, color-mix(in srgb, var(--chan-blue) 9%, transparent), transparent 30rem),
+      linear-gradient(180deg, color-mix(in srgb, var(--chan-card) 60%, transparent), transparent 44%),
       var(--chan-nav);
-    background-size: auto, 42px 42px, 42px 42px, auto;
   }
 
   .channel-hero-banner {
-    border-width: 2px;
-    border-color: color-mix(in srgb, var(--chan-ink) 80%, transparent);
-    box-shadow: 5px 6px 0 color-mix(in srgb, var(--chan-blue) 82%, transparent), 0 18px 44px rgba(23, 23, 23, .08);
+    border-width: 1px;
+    border-color: color-mix(in srgb, var(--chan-line) 74%, transparent);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .5),
+      0 1px 2px rgba(23, 23, 23, .04),
+      0 30px 60px -28px rgba(23, 23, 23, .28);
   }
 
   .channel-profile {
     padding: clamp(1rem, 2.4vw, 1.6rem);
-    border: 1.5px solid color-mix(in srgb, var(--chan-ink) 18%, transparent);
-    border-radius: 22px 17px 24px 15px;
-    background: color-mix(in srgb, var(--chan-card) 90%, white);
-    box-shadow: 4px 5px 0 color-mix(in srgb, var(--chan-blue) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--chan-line) 80%, transparent);
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--chan-card) 92%, white);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .6),
+      0 1px 2px rgba(23, 23, 23, .03),
+      0 24px 50px -26px rgba(23, 23, 23, .2);
   }
 
   .channel-profile-avatar {
-    border-width: 2.5px;
-    border-color: var(--chan-ink);
-    box-shadow: 4px 4px 0 var(--chan-blue);
-    transform: rotate(-1deg);
+    border-width: 2px;
+    border-color: color-mix(in srgb, var(--chan-card) 90%, white);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--chan-line) 70%, transparent),
+      0 10px 24px -8px color-mix(in srgb, var(--chan-blue) 34%, transparent);
   }
 
   .channel-tabs {
@@ -98,13 +103,15 @@
   }
 
   .channel-video-card {
-    border-radius: 16px 12px 18px 11px;
+    border-radius: 16px;
     transition: transform .2s ease;
   }
 
   .channel-video-card-media {
-    border: 1.5px solid color-mix(in srgb, var(--chan-ink) 72%, transparent);
-    box-shadow: 3px 4px 0 color-mix(in srgb, var(--chan-blue) 22%, transparent), 0 10px 22px rgba(23, 23, 23, .07);
+    border: 1px solid color-mix(in srgb, var(--chan-line) 70%, transparent);
+    box-shadow:
+      0 1px 2px rgba(23, 23, 23, .04),
+      0 12px 26px -12px rgba(23, 23, 23, .18);
     transition: box-shadow .2s ease, transform .2s ease;
   }
 
@@ -237,14 +244,7 @@
 
   .public-visual-shell button:not(:disabled):not([class*="underline"]):not(.polutek-player-btn):not(.polutek-player-hero),
   .channel-page-shell button:not(:disabled):not([class*="underline"]) {
-    outline: 1px solid color-mix(in srgb, var(--chan-ink) 15%, transparent);
-    outline-offset: -1px;
     cursor: pointer;
-  }
-
-  .public-visual-shell button:not(:disabled):not([class*="underline"]):not(.polutek-player-btn):not(.polutek-player-hero):hover,
-  .channel-page-shell button:not(:disabled):not([class*="underline"]):hover {
-    outline-color: color-mix(in srgb, var(--chan-blue) 34%, var(--chan-ink) 12%);
   }
 
   .channel-page-shell :is(a, button):focus-visible,
@@ -266,12 +266,14 @@
   @media (max-width: 767px) {
     .channel-hero-banner {
       border-inline: 0;
-      box-shadow: 0 4px 0 color-mix(in srgb, var(--chan-blue) 52%, transparent);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, .5),
+        0 18px 38px -20px rgba(23, 23, 23, .24);
     }
 
     .channel-profile {
       padding: 1rem;
-      border-radius: 18px 14px 20px 13px;
+      border-radius: 18px;
     }
 
     .admin-visual-shell main {
@@ -989,12 +991,16 @@
 @layer components {
   .polutek-watch-nav {
     background:
-      radial-gradient(circle at top left, color-mix(in srgb, var(--chan-blue) 7%, transparent), transparent 34%),
-      linear-gradient(180deg, color-mix(in srgb, var(--chan-card) 70%, transparent), transparent 95%),
-      var(--chan-nav);
-    border-bottom: 1px solid color-mix(in srgb, var(--chan-line) 72%, transparent);
-    box-shadow: 0 1px 0 rgba(23, 23, 23, .025);
-    backdrop-filter: blur(18px);
+      radial-gradient(circle at top left, color-mix(in srgb, var(--chan-blue) 8%, transparent), transparent 34%),
+      linear-gradient(180deg, color-mix(in srgb, var(--chan-card) 82%, transparent), color-mix(in srgb, var(--chan-nav) 70%, transparent) 96%),
+      color-mix(in srgb, var(--chan-nav) 78%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--chan-line) 66%, transparent);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      0 1px 0 rgba(23, 23, 23, .03),
+      0 10px 30px -18px rgba(23, 23, 23, 0.18);
+    backdrop-filter: blur(22px) saturate(1.35);
+    -webkit-backdrop-filter: blur(22px) saturate(1.35);
   }
 
   .polutek-watch-nav input::placeholder {

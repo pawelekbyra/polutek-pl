@@ -9,20 +9,29 @@ const Footer = () => {
   const { language } = useLanguage();
   const isPl = language === 'pl';
 
-  return (
-    <footer className="border-t border-[var(--chan-line)] bg-[var(--chan-nav)]">
-      <div className="max-w-[1240px] mx-auto flex flex-col items-center justify-center gap-[10px] p-[22px] md:flex-row md:justify-between md:gap-[14px]">
-        <div className="hidden w-32 md:block" />
+  const linkClass =
+    "relative font-sans text-[12.5px] font-medium text-[var(--chan-muted)] transition-colors duration-200 hover:text-[var(--chan-ink)] after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-[var(--chan-blue)] after:transition-transform after:duration-200 hover:after:scale-x-100";
 
-        <span className="font-brand order-2 text-center text-[12px] font-bold tracking-[0.1em] uppercase text-[var(--chan-muted-2)] md:order-none">
+  return (
+    <footer className="relative bg-[var(--chan-nav)]">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--chan-line)_92%,transparent)_18%,color-mix(in_srgb,var(--chan-line)_92%,transparent)_82%,transparent)]"
+      />
+      <div className="mx-auto flex max-w-[1180px] flex-col items-center justify-center gap-[14px] px-6 py-[26px] md:flex-row md:justify-between md:gap-[14px]">
+        <div className="hidden w-40 md:block" />
+
+        <span className="font-brand order-2 flex items-center gap-2 text-center text-[12px] font-bold uppercase tracking-[0.22em] text-[var(--chan-muted-2)] md:order-none">
+          <span aria-hidden="true" className="inline-flex h-1 w-1 rounded-full bg-[var(--chan-blue)]" />
           WWW.POLUTEK.PL
+          <span aria-hidden="true" className="inline-flex h-1 w-1 rounded-full bg-[var(--chan-blue)]" />
         </span>
 
-        <div className="order-1 flex justify-center gap-[22px] text-center font-sans text-[12.5px] text-[var(--chan-muted)] font-medium md:order-none">
-          <Link href={getLocalizedHref(language, "terms")} className="hover:text-[var(--chan-ink)] transition-colors">
+        <div className="order-1 flex w-40 justify-center gap-[26px] text-center md:order-none md:justify-end">
+          <Link href={getLocalizedHref(language, "terms")} className={linkClass}>
             {isPl ? "Regulamin" : "Terms"}
           </Link>
-          <Link href={getLocalizedHref(language, "privacy")} className="hover:text-[var(--chan-ink)] transition-colors">
+          <Link href={getLocalizedHref(language, "privacy")} className={linkClass}>
             {isPl ? "Polityka prywatności" : "Privacy Policy"}
           </Link>
         </div>

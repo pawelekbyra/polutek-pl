@@ -88,14 +88,14 @@ const Navbar = () => {
               <X className="h-5 w-5 shrink-0" strokeWidth={1.8} />
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
-              <div className="relative flex h-9 min-w-0 flex-1 items-center rounded-[12px] border border-[color-mix(in_srgb,var(--chan-line)_84%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_82%,white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,background-color,box-shadow] duration-160 focus-within:border-[var(--chan-blue)] focus-within:bg-white focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--chan-blue)_14%,transparent)]">
+              <div className="relative flex h-[38px] min-w-0 flex-1 items-center rounded-full border border-[color-mix(in_srgb,var(--chan-line)_82%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_74%,white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[color-mix(in_srgb,var(--chan-blue)_55%,transparent)] focus-within:bg-[color-mix(in_srgb,var(--chan-card)_45%,white)] focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--chan-blue)_14%,transparent)]">
                 <input
                   type="text"
                   autoFocus
                   placeholder={searchLabel}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  className="w-full h-full bg-transparent pl-4 pr-12 text-[14px] font-sans outline-none text-[var(--chan-ink)] placeholder:text-[var(--chan-muted)]"
+                  className="w-full h-full bg-transparent pl-5 pr-12 text-[14px] font-sans outline-none text-[var(--chan-ink)] placeholder:text-[var(--chan-muted)]"
                 />
                 <button
                   type="submit"
@@ -127,13 +127,13 @@ const Navbar = () => {
             {/* Desktop search */}
             <div className="flex-1 max-w-[548px] hidden md:flex mx-2 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
-                <div className="relative flex h-9 min-w-0 flex-1 items-center rounded-[12px] border border-[color-mix(in_srgb,var(--chan-line)_84%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_82%,white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,background-color,box-shadow] duration-160 focus-within:border-[var(--chan-blue)] focus-within:bg-white focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--chan-blue)_14%,transparent)]">
+                <div className="relative flex h-[38px] min-w-0 flex-1 items-center rounded-full border border-[color-mix(in_srgb,var(--chan-line)_82%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_74%,white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[color-mix(in_srgb,var(--chan-blue)_55%,transparent)] focus-within:bg-[color-mix(in_srgb,var(--chan-card)_45%,white)] focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--chan-blue)_14%,transparent)]">
                   <input
                     type="text"
                     placeholder={searchLabel}
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
-                    className="w-full h-full bg-transparent pl-4 pr-12 text-[14px] font-sans outline-none text-[var(--chan-ink)] placeholder:text-[var(--chan-muted)]"
+                    className="w-full h-full bg-transparent pl-5 pr-12 text-[14px] font-sans outline-none text-[var(--chan-ink)] placeholder:text-[var(--chan-muted)]"
                   />
                   <button
                     type="submit"
@@ -200,7 +200,7 @@ const Navbar = () => {
               ) : isLoaded ? (
                 <button
                   onClick={() => openAuthModal("sign-in")}
-                  className="flex h-[38px] shrink-0 items-center justify-center gap-1.5 rounded-[11px] border border-[#4b5563] bg-black px-2 font-sans text-white shadow-[0_2px_0_#2563eb,0_5px_12px_rgba(0,0,0,0.18)] transition-[transform,background-color,border-color,box-shadow] duration-160 hover:-translate-y-px hover:border-[#64748b] hover:bg-[#171717] hover:shadow-[0_3px_0_#2563eb,0_7px_16px_rgba(0,0,0,0.24)] active:translate-y-px active:scale-[0.97] active:shadow-[0_1px_0_#2563eb] sm:px-3"
+                  className="flex h-[38px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-[color-mix(in_srgb,var(--chan-ink)_55%,transparent)] bg-[var(--chan-ink)] px-3.5 font-sans text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_6px_16px_-6px_rgba(23,23,23,0.42)] transition-[transform,background-color,border-color,box-shadow] duration-200 hover:-translate-y-px hover:bg-[color-mix(in_srgb,var(--chan-ink)_88%,black)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_11px_24px_-8px_rgba(23,23,23,0.48)] active:translate-y-0 active:scale-[0.97] sm:px-4"
                   aria-label={t.signIn}
                   title={t.signIn}
                 >

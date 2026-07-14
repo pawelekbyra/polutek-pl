@@ -274,14 +274,18 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
   return (
     <div
       id="donations"
-      className="relative my-[10px] mb-3 scroll-mt-20 rounded-[18px] border border-[#f1dfbd] bg-white p-[22px_26px_18px]"
+      className="relative my-[10px] mb-3 scroll-mt-20 overflow-hidden rounded-[20px] border border-[color-mix(in_srgb,var(--chan-line)_82%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_92%,white)] p-[22px_24px_18px] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(23,23,23,0.03),0_24px_50px_-26px_rgba(23,23,23,0.2)]"
     >
-      <div>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--chan-blue)_9%,transparent),transparent)]"
+      />
+      <div className="relative">
         <div className="mb-1.5 flex items-center gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-red-500">
-            <Heart size={25} className="fill-white text-white" />
+          <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-[linear-gradient(140deg,color-mix(in_srgb,var(--chan-blue)_72%,white),var(--chan-blue))] text-white shadow-[0_8px_20px_-6px_color-mix(in_srgb,var(--chan-blue)_50%,transparent),inset_0_1px_0_rgba(255,255,255,0.4)]">
+            <Heart size={24} className="fill-white text-white" />
           </span>
-          <h4 className="font-brand m-0 text-[21px] font-extrabold leading-tight tracking-[-0.045em] text-[var(--chan-ink)]">
+          <h4 className="font-brand m-0 text-[21px] font-extrabold leading-tight tracking-[-0.035em] text-[var(--chan-ink)]">
             <span>{title}</span>
           </h4>
         </div>
@@ -292,9 +296,9 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
           {bullets.map((bullet) => (
             <li
               key={bullet.text}
-              className="flex items-start gap-[8px] text-[var(--chan-ink)]"
+              className="flex items-start gap-[9px] text-[var(--chan-ink)]"
             >
-              <span className="mt-[2px] flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full bg-[#58a65c] text-[9px] font-black text-white">✓</span>
+              <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full bg-[var(--chan-blue)] text-[9px] font-black text-white shadow-[0_2px_5px_-1px_color-mix(in_srgb,var(--chan-blue)_45%,transparent)]">✓</span>
               {bullet.text}
             </li>
           ))}
@@ -323,7 +327,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
           onClick={onSupport}
           disabled={isLoading || isInitialLoading || amount === "" || amount < minAmount}
           aria-busy={isLoading}
-          className="font-sans flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[8px] bg-[#2563EB] text-[16px] font-extrabold tracking-[-0.025em] text-white transition-[background-color,box-shadow,transform] duration-160 hover:-translate-y-px hover:bg-[#1e4fc1] hover:shadow-[0_8px_20px_rgba(37,99,235,0.25)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
+          className="font-sans flex h-[46px] w-full cursor-pointer items-center justify-center gap-2 rounded-[13px] bg-[var(--chan-blue)] text-[16px] font-extrabold tracking-[-0.02em] text-white shadow-[0_1px_0_color-mix(in_srgb,var(--chan-blue)_70%,black),0_10px_22px_-10px_color-mix(in_srgb,var(--chan-blue)_55%,transparent)] transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:bg-[color-mix(in_srgb,var(--chan-blue)_88%,black)] hover:shadow-[0_2px_0_color-mix(in_srgb,var(--chan-blue)_70%,black),0_14px_28px_-10px_color-mix(in_srgb,var(--chan-blue)_55%,transparent)] active:translate-y-0 active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
         >
           {isLoading ? (
             <span className="inline-flex items-center gap-2">

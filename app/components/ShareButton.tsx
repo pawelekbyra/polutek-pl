@@ -78,16 +78,16 @@ export default function ShareButton({
         <div
           ref={popoverRef}
           className={cn(
-            "absolute bottom-[calc(100%+8px)] right-0 min-w-[240px] z-[1100]",
-            "rounded-2xl border border-[var(--chan-line)] bg-white p-1.5 shadow-[0_8px_26px_rgba(23,23,23,0.12)]",
+            "absolute bottom-[calc(100%+8px)] right-0 min-w-[244px] z-[1100]",
+            "rounded-2xl border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_94%,white)] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_18px_44px_-16px_rgba(23,23,23,0.26)] backdrop-blur-xl",
             "animate-in fade-in-0 zoom-in-95 duration-150 slide-in-from-bottom-2"
           )}
         >
           <div
             onClick={() => copyToClipboard(url)}
             className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm cursor-pointer transition-colors duration-100 font-bold uppercase tracking-wider text-[#2563eb]",
-              copied ? "bg-[#EFF3FE]" : "hover:bg-[var(--chan-surface)]"
+              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm cursor-pointer transition-colors duration-100 font-bold uppercase tracking-wider text-[var(--chan-blue)]",
+              copied ? "bg-[color-mix(in_srgb,var(--chan-blue)_12%,white)]" : "hover:bg-[var(--chan-surface)]"
             )}
           >
             {copied ? <Check size={16} /> : <Copy size={16} />}
