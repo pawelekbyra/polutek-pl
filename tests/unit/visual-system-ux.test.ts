@@ -22,7 +22,7 @@ describe("shared visual system contracts", () => {
     const comments = read("app/components/comments/components/CommentComposer.tsx");
     const player = read("app/components/VideoPlayer.tsx");
 
-    expect(navbar).toContain("shadow-[0_2px_0_#2563eb");
+    expect(navbar).toContain('color="blue"');
     expect(subscribe).toContain("border-[color-mix");
     expect(authModal).toContain("!max-w-[390px]");
     expect(comments).toContain("bg-[var(--chan-blue-soft)]");

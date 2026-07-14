@@ -4,30 +4,34 @@ import React from 'react';
 import Link from 'next/link';
 import { useLanguage } from './LanguageContext';
 import { getLocalizedHref } from '@/lib/i18n/routing';
+import { Footer as FlowbiteFooter, FooterCopyright, FooterLinkGroup, FooterLink } from 'flowbite-react';
 
 const Footer = () => {
   const { language } = useLanguage();
   const isPl = language === 'pl';
 
   return (
-    <footer className="border-t border-[var(--chan-line)] bg-[var(--chan-nav)]">
-      <div className="max-w-[1240px] mx-auto flex flex-col items-center justify-center gap-[10px] p-[22px] md:flex-row md:justify-between md:gap-[14px]">
+    <FlowbiteFooter container className="rounded-none border-t border-[var(--chan-line)] bg-[var(--chan-nav)] py-5">
+      <div className="max-w-[1240px] mx-auto flex w-full flex-col items-center justify-center gap-[10px] px-[22px] md:flex-row md:justify-between md:gap-[14px]">
         <div className="hidden w-32 md:block" />
 
-        <span className="font-brand order-2 text-center text-[12px] font-bold tracking-[0.1em] uppercase text-[var(--chan-muted-2)] md:order-none">
-          WWW.POLUTEK.PL
-        </span>
+        <FooterCopyright
+          href={getLocalizedHref(language, "home")}
+          by="WWW.POLUTEK.PL"
+          year={new Date().getFullYear()}
+          className="order-2 font-brand text-center text-[12px] font-bold tracking-[0.1em] uppercase text-[var(--chan-muted-2)] md:order-none [&_span]:text-inherit"
+        />
 
-        <div className="order-1 flex justify-center gap-[22px] text-center font-sans text-[12.5px] text-[var(--chan-muted)] font-medium md:order-none">
-          <Link href={getLocalizedHref(language, "terms")} className="hover:text-[var(--chan-ink)] transition-colors">
+        <FooterLinkGroup className="order-1 flex justify-center gap-[22px] text-center font-sans text-[12.5px] font-medium text-[var(--chan-muted)] md:order-none">
+          <FooterLink as={Link} href={getLocalizedHref(language, "terms")} className="hover:text-[var(--chan-ink)] transition-colors">
             {isPl ? "Regulamin" : "Terms"}
-          </Link>
-          <Link href={getLocalizedHref(language, "privacy")} className="hover:text-[var(--chan-ink)] transition-colors">
+          </FooterLink>
+          <FooterLink as={Link} href={getLocalizedHref(language, "privacy")} className="hover:text-[var(--chan-ink)] transition-colors">
             {isPl ? "Polityka prywatności" : "Privacy Policy"}
-          </Link>
-        </div>
+          </FooterLink>
+        </FooterLinkGroup>
       </div>
-    </footer>
+    </FlowbiteFooter>
   );
 };
 

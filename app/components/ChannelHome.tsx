@@ -12,6 +12,7 @@ import { SidebarPlaylist, SidebarSupportBox } from "./channel/SidebarPlaylist";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
 import { AppPreloadProvider, useAppPreload } from "./preload/AppPreloadProvider";
+import { Button, ButtonGroup } from "flowbite-react";
 
 const EmbeddedComments = dynamic(() => import("./comments/EmbeddedComments"), {
   ssr: false,
@@ -123,12 +124,9 @@ function ChannelHomeContent({
               ? "Nie znaleziono wybranego filmu. Materiał mógł zostać zarchiwizowany lub przeniesiony."
               : "The selected video could not be found. It might have been archived or moved."}
           </p>
-          <Link
-            href={getLocalizedHref(language, "home")}
-            className="inline-flex items-center justify-center h-[44px] px-10 rounded-[14px] bg-[#2563EB] text-white font-brand font-bold text-[14px] transition-all active:scale-95 hover:-translate-y-px"
-          >
+          <Button as={Link} href={getLocalizedHref(language, "home")} color="blue" className="font-brand">
             {language === "pl" ? "Wróć do bazy" : "Back to database"}
-          </Link>
+          </Button>
         </div>
       </main>
     );
@@ -190,26 +188,19 @@ function ChannelHomeContent({
             ) : mounted ? (
               <>
                 <div className="mt-5 lg:hidden">
-                  <div className="relative flex overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_86%,white)] p-1 font-sans shadow-[0_8px_20px_rgba(23,23,23,0.045)]">
-                    {(["comments", "videos"] as const).map((tab) => {
-                      const isActive = activeTab === tab;
-                      return (
-                        <button
-                          key={tab}
-                          onClick={() => setActiveTab(tab)}
-                          aria-pressed={isActive}
-                          className={cn(
-                            "relative flex-1 rounded-xl py-2.5 text-[12px] font-bold not-italic uppercase tracking-widest transition-all duration-200",
-                            isActive
-                              ? "bg-white text-[#2563EB] shadow-sm"
-                              : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]",
-                          )}
-                        >
-                          {tab === "comments" ? t.comments : t.videosTab}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <ButtonGroup className="w-full">
+                    {(["comments", "videos"] as const).map((tab) => (
+                      <Button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        color={activeTab === tab ? "blue" : "light"}
+                        aria-pressed={activeTab === tab}
+                        className="flex-1 font-sans text-[12px] font-bold uppercase tracking-widest"
+                      >
+                        {tab === "comments" ? t.comments : t.videosTab}
+                      </Button>
+                    ))}
+                  </ButtonGroup>
                 </div>
                 <div className="mt-3 lg:hidden">
                   {activeTab === "comments" ? (

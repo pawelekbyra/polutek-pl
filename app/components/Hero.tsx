@@ -21,6 +21,7 @@ import InstallAppMenu from './InstallAppMenu';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
 import styles from './watch-actions.module.css';
+import { Card, Button, ButtonGroup, Badge } from 'flowbite-react';
 
 interface HeroProps {
   video: PublicVideoDTO;
@@ -174,7 +175,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
   return (
     <section className="bg-transparent">
-      <div className="w-full rounded-[28px] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_86%,white)] p-2.5 shadow-[0_18px_44px_rgba(23,23,23,0.06)] md:p-3">
+      <Card className="w-full rounded-[28px] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_86%,white)] p-0 shadow-[0_18px_44px_rgba(23,23,23,0.06)] [&>div]:p-2.5 md:[&>div]:p-3">
         {/* FEATURED MEDIA */}
         <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-[22px] bg-black md:rounded-[24px]">
           <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured}>
@@ -232,38 +233,27 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             </div>
 
             <div className={cn("flex w-full flex-wrap items-center gap-2 lg:w-auto lg:flex-nowrap", styles.actionRail)}>
-               <div className={cn("relative flex h-[42px] shrink-0 items-center rounded-[12px] bg-[var(--chan-surface)]", styles.actionCluster)}>
-                  <button
+               <ButtonGroup>
+                  <Button
+                    color={interactionState.isLiked ? "blue" : "light"}
                     onClick={handleLike}
                     disabled={isPending}
-                    className={cn(
-                        "flex h-full items-center justify-center gap-1.5 px-3 font-sans transition-colors active:opacity-70 lg:px-4",
-                        styles.actionButton,
-                        interactionState.isLiked ? "text-[#2563eb]" : "text-[var(--chan-ink)]",
-                        isPending && "opacity-50"
-                    )}
                     title="Lubię to"
                     aria-label="Lubię to"
                   >
-                     <ThumbsUp className="h-5 w-5 shrink-0" strokeWidth={1.8} color={interactionState.isLiked ? "#2563eb" : "var(--chan-ink)"} />
-                     <span className="text-[12px] font-bold">{interactionState.likesCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US')}</span>
-                  </button>
-                  <span className="h-5 w-px bg-[var(--chan-line-soft)]" />
-                  <button
+                     <ThumbsUp className="h-4 w-4 shrink-0" strokeWidth={1.8} />
+                     <span className="ml-1.5 text-[12px] font-bold">{interactionState.likesCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US')}</span>
+                  </Button>
+                  <Button
+                    color={interactionState.isDisliked ? "blue" : "light"}
                     onClick={handleDislike}
                     disabled={isPending}
-                    className={cn(
-                        "flex h-full items-center justify-center px-4 transition-colors active:opacity-70",
-                        styles.actionButton,
-                        interactionState.isDisliked ? "text-[#2563eb]" : "text-[var(--chan-ink)]",
-                        isPending && "opacity-50"
-                    )}
                     title="Nie lubię"
                     aria-label="Nie lubię"
                   >
-                     <ThumbsDown className="h-5 w-5 shrink-0" strokeWidth={1.8} color={interactionState.isDisliked ? "#2563eb" : "var(--chan-ink)"} />
-                  </button>
-               </div>
+                     <ThumbsDown className="h-4 w-4 shrink-0" strokeWidth={1.8} />
+                  </Button>
+               </ButtonGroup>
                <ShareButton
                  url={typeof window !== 'undefined' ? `${window.location.origin}/?v=${encodeURIComponent(video.slug)}` : ''}
                  title={displayTitle}
@@ -283,12 +273,12 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         >
            <div>
              <div className="flex flex-wrap gap-x-2 gap-y-0.5 mb-1.5 items-baseline">
-                <span className="font-sans text-[12px] font-bold not-italic text-[var(--chan-ink)]">
+                <Badge color="gray" size="sm">
                    {mounted ? localViewsCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : localViewsCount} {t.views}
-                </span>
-                <span className="font-sans text-[12px] font-bold not-italic text-[var(--chan-ink)]">
-                   · {video.publishedAt ? new Date(video.publishedAt).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : t.noDate}
-                </span>
+                </Badge>
+                <Badge color="gray" size="sm">
+                   {video.publishedAt ? new Date(video.publishedAt).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : t.noDate}
+                </Badge>
              </div>
 
              <div className="text-[12px] text-[var(--chan-body)] leading-[1.5] whitespace-pre-wrap">
@@ -325,7 +315,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
              )}
            </div>
         </div>
-      </div>
+      </Card>
     </section>
   );
 };

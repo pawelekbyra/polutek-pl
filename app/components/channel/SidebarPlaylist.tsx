@@ -17,6 +17,7 @@ import { NajsIcon } from "../najs/primitives";
 import DonationBox from "./DonationBox";
 import { useAppPreload } from "../preload/AppPreloadProvider";
 import { getLocalizedHref } from "@/lib/i18n/routing";
+import { Badge } from "flowbite-react";
 
 type UserProfile = {
   id: string;
@@ -259,19 +260,13 @@ export function SidebarPlaylist({
                   const badge = getSidebarAccessBadge(video, hasAccess, language);
                   if (!badge) return null;
                   return (
-                    <div
-                      className={cn(
-                        "absolute right-[6px] top-[6px] z-30 max-w-[86px] truncate rounded-full px-[7px] py-[3px] text-[8px] font-black uppercase leading-none tracking-[0.1em] pointer-events-none",
-                        badge.variant === "public" &&
-                          "bg-white/92 text-[var(--chan-ink)]",
-                        badge.variant === "unlocked" &&
-                          "bg-[#EFF3FE] text-[#2563EB]",
-                        badge.variant === "locked" &&
-                          "bg-[var(--chan-ink)] text-white",
-                      )}
+                    <Badge
+                      color={badge.variant === "unlocked" ? "blue" : badge.variant === "locked" ? "dark" : "light"}
+                      size="sm"
+                      className="absolute right-[6px] top-[6px] z-30 max-w-[86px] truncate pointer-events-none"
                     >
                       {badge.text}
-                    </div>
+                    </Badge>
                   );
                 })()}
           </div>

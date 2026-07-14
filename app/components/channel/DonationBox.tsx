@@ -18,6 +18,7 @@ import CheckoutModal from "../playlist/CheckoutModal";
 import DonationAmountField from "./DonationAmountField";
 import DonationLegalDialog from "./DonationLegalDialog";
 import { RegulaminContent, PolitykaContent } from "../legal/LegalDocs";
+import { Card, Button } from "flowbite-react";
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
@@ -272,9 +273,9 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
   ];
 
   return (
-    <div
+    <Card
       id="donations"
-      className="relative my-[10px] mb-3 scroll-mt-20 rounded-[18px] border border-[#f1dfbd] bg-white p-[22px_26px_18px]"
+      className="relative my-[10px] mb-3 scroll-mt-20 rounded-[18px] border border-[#f1dfbd] bg-white [&>div]:p-[22px_26px_18px]"
     >
       <div>
         <div className="mb-1.5 flex items-center gap-4">
@@ -318,12 +319,14 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
           amountTooLow={amountTooLow}
         />
 
-        <button
+        <Button
           type="button"
+          color="blue"
+          size="lg"
           onClick={onSupport}
           disabled={isLoading || isInitialLoading || amount === "" || amount < minAmount}
           aria-busy={isLoading}
-          className="font-sans flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[8px] bg-[#2563EB] text-[16px] font-extrabold tracking-[-0.025em] text-white transition-[background-color,box-shadow,transform] duration-160 hover:-translate-y-px hover:bg-[#1e4fc1] hover:shadow-[0_8px_20px_rgba(37,99,235,0.25)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
+          className="font-sans w-full text-[16px] font-extrabold tracking-[-0.025em]"
         >
           {isLoading ? (
             <span className="inline-flex items-center gap-2">
@@ -335,7 +338,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
           ) : (
             <span>{t.tipTheGuy}</span>
           )}
-        </button>
+        </Button>
 
         <label className="mt-3 flex cursor-pointer items-start justify-center gap-2 px-1 text-center">
           <Checkbox
@@ -426,6 +429,6 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
       >
         <PolitykaContent />
       </DonationLegalDialog>
-    </div>
+    </Card>
   );
 }

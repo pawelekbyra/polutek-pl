@@ -2,7 +2,9 @@
 @import '@vidstack/react/player/styles/default/layouts/video.css';
 
 @import 'tailwindcss';
+@import 'flowbite-react/plugin/tailwindcss';
 @import 'tw-animate-css';
+@source '../.flowbite-react/class-list.json';
 
 @config '../tailwind.config.ts';
 

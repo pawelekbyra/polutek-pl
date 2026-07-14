@@ -11,6 +11,7 @@ import { AppVersionCheck } from "@/app/components/AppVersionCheck";
 import { resolveInitialLanguage } from "@/lib/i18n/server-language";
 import { AuthModalProvider } from "@/app/components/auth/AuthModalProvider";
 import { Analytics } from '@vercel/analytics/next';
+import { ThemeInit } from "@/.flowbite-react/init";
 
 export const metadata = {
   title: APP_NAME,
@@ -46,6 +47,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       className={`${jakarta.variable} ${outfit.variable} ${spaceGrotesk.variable} ${bebasNeue.variable} ${kalam.variable} ${patrickHand.variable} ${caveat.variable}`}
     >
       <head>
+        <ThemeInit />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="application-name" content={APP_NAME} />
         <meta name="mobile-web-app-capable" content="yes" />
