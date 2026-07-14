@@ -3,7 +3,7 @@
 import { useId, type MouseEvent } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { motion, useReducedMotion } from "framer-motion";
-import { Star, Rocket, Key } from "lucide-react";
+import { Star, Rocket, Gem } from "lucide-react";
 import type { PlaybackPlanStatus } from "@/lib/modules/playback";
 import { cn } from "@/lib/utils";
 import { useAuthModal } from "./auth/AuthModalProvider";
@@ -50,7 +50,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
       : isPl
         ? "Zaloguj się"
         : "Sign in";
-    const Icon = isPatron ? Star : Key;
+    const Icon = isPatron ? Gem : Star;
 
     return (
       <PlayerStateFrame
@@ -194,7 +194,7 @@ function PatronScene({
         animate={{ opacity: 1, scale: 1, rotate: 0 }}
         transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 210, damping: 16 }}
       >
-        <Rocket aria-hidden="true" className={styles.mark} />
+        <Gem aria-hidden="true" className={styles.mark} />
       </motion.div>
       <h2 id={titleId} className={styles.heading}>
         <motion.span
