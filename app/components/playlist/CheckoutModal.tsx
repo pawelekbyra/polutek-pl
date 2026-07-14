@@ -52,7 +52,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
       />
 
       {/* Right Column (Form Area) */}
-      <div className="relative flex h-full flex-1 flex-col bg-[var(--chan-card)]">
+      <div className="relative flex h-full min-w-0 flex-1 flex-col bg-[var(--chan-card)]">
         <Button
           variant="ghost"
           onClick={onClose}
