@@ -299,21 +299,23 @@ export default function PolutekControls({ className }: { className?: string }) {
       >
         <div className="polutek-player-scrim" />
         <Controls.Group className="polutek-player-bottom">
-          <ScrubBar />
-          <div className="polutek-player-row">
-            <div className="polutek-player-row-group">
-              <PlayPauseButton />
-              <VolumeControl />
-              <div className="polutek-player-time">
-                <Time type="current" />
-                <span aria-hidden="true">/</span>
-                <Time type="duration" className="polutek-player-time-duration" />
+          <div className="polutek-player-bar">
+            <ScrubBar />
+            <div className="polutek-player-row">
+              <div className="polutek-player-row-group">
+                <PlayPauseButton />
+                <VolumeControl />
+                <div className="polutek-player-time">
+                  <Time type="current" />
+                  <span aria-hidden="true">/</span>
+                  <Time type="duration" className="polutek-player-time-duration" />
+                </div>
               </div>
-            </div>
-            <div className="polutek-player-row-group polutek-player-row-group--right">
-              <CaptionToggle />
-              <SettingsMenu />
-              <FullscreenToggleButton />
+              <div className="polutek-player-row-group polutek-player-row-group--right">
+                <CaptionToggle />
+                <SettingsMenu />
+                <FullscreenToggleButton />
+              </div>
             </div>
           </div>
         </Controls.Group>
@@ -322,83 +324,85 @@ export default function PolutekControls({ className }: { className?: string }) {
         .polutek-player-gesture { position:absolute; inset:0; z-index:1; }
         .polutek-player-controls { position:absolute; inset:0; z-index:20; pointer-events:none; visibility:hidden; opacity:0; transition:opacity .24s ease,visibility 0s linear .24s; font-family:var(--font-space-grotesk,sans-serif); }
         .polutek-player-controls--visible { visibility:visible; opacity:1; transition-delay:0s; }
-        .polutek-player-scrim { position:absolute; inset:0; background:linear-gradient(to bottom,transparent 60%,rgba(0,0,0,.5) 85%,rgba(0,0,0,.8) 100%); }
-        .polutek-player-bottom { position:absolute; right:0; bottom:0; left:0; padding:16px 14px max(10px,env(safe-area-inset-bottom)); background:linear-gradient(to bottom,rgba(0,0,0,0),rgba(0,0,0,.7)); pointer-events:auto; }
-        .polutek-player-row { display:flex; min-height:40px; align-items:center; justify-content:space-between; gap:10px; }
-        .polutek-player-row-group { display:flex; min-width:0; align-items:center; gap:2px; }
+        .polutek-player-scrim { position:absolute; inset:0; background:linear-gradient(to bottom,transparent 55%,rgba(0,0,0,.4) 85%,rgba(0,0,0,.6) 100%); pointer-events:none; }
+        .polutek-player-bottom { position:absolute; right:0; bottom:0; left:0; padding:30px; pointer-events:auto; }
+        .polutek-player-bar { border-radius:9999px; background:rgba(0,0,0,.2); padding:10px 14px; display:flex; flex-direction:column; gap:10px; }
+        .polutek-player-row { display:flex; min-height:32px; align-items:center; justify-content:space-between; gap:5px; }
+        .polutek-player-row-group { display:flex; min-width:0; align-items:center; gap:5px; }
         .polutek-player-row-group--right { justify-content:flex-end; }
-        .polutek-player-btn { display:grid; width:36px; height:36px; place-items:center; border:0; border-radius:4px; color:#fff; background:transparent; cursor:pointer; transition:opacity .16s ease,transform .16s ease; }
-        .polutek-player-btn:hover { opacity:.8; transform:scale(1.08); }
-        .polutek-player-btn:active { opacity:.6; transform:scale(.96); }
+        .polutek-player-btn { display:grid; width:32px; height:32px; place-items:center; border:0; border-radius:9999px; color:#fff; background:#fff; cursor:pointer; transition:box-shadow .16s ease,transform .16s ease; }
+        .polutek-player-btn:hover { box-shadow:0 0 0 2px #7596CC; transform:scale(1.05); }
+        .polutek-player-btn:active { transform:scale(.95); }
         .polutek-player-btn:focus-visible { outline:2px solid #fff; outline-offset:2px; }
-        .polutek-player-icon { width:20px; height:20px; stroke-width:2; }
+        .polutek-player-icon { width:16px; height:16px; stroke-width:2; color:#000; }
         .polutek-player-icon--play { transform:translateX(1px); }
         .polutek-player-time { display:flex; align-items:center; gap:4px; margin-left:8px; color:#fff; font-size:12px; font-weight:500; letter-spacing:.01em; white-space:nowrap; font-variant-numeric:tabular-nums; }
         .polutek-player-time-duration,.polutek-player-time span { color:rgba(255,255,255,.7); }
 
         /* ---- Progress scrubber ---- */
         .polutek-player-scrub { position:relative; display:flex; width:100%; height:24px; align-items:center; cursor:pointer; touch-action:none; margin-bottom:8px; }
-        .polutek-player-scrub-track,.polutek-player-volume-track { position:relative; width:100%; height:4px; overflow:hidden; border-radius:999px; background:rgba(255,255,255,.25); transition:height .16s ease; }
-        .polutek-player-scrub:hover .polutek-player-scrub-track,.polutek-player-scrub:focus-visible .polutek-player-scrub-track { height:5px; }
-        .polutek-player-scrub-buffer { position:absolute; inset:0 auto 0 0; width:var(--slider-progress); background:rgba(255,255,255,.45); }
+        .polutek-player-scrub-track,.polutek-player-volume-track { position:relative; width:100%; height:6px; overflow:hidden; border-radius:9999px; background:rgba(0,0,0,.4); transition:height .16s ease; }
+        .polutek-player-scrub:hover .polutek-player-scrub-track,.polutek-player-scrub:focus-visible .polutek-player-scrub-track { height:8px; }
+        .polutek-player-scrub-buffer { position:absolute; inset:0 auto 0 0; width:var(--slider-progress); background:rgba(255,255,255,.3); }
         .polutek-player-scrub-fill,.polutek-player-volume-fill { position:absolute; inset:0 auto 0 0; width:var(--slider-fill); border-radius:inherit; background:#fff; }
-        .polutek-player-scrub-thumb,.polutek-player-volume-thumb { position:absolute; left:var(--slider-fill); width:12px; height:12px; border:0; border-radius:999px; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.6); opacity:0; transform:translateX(-50%) scale(.6); transition:opacity .16s ease,transform .16s ease; }
+        .polutek-player-scrub-thumb,.polutek-player-volume-thumb { position:absolute; left:var(--slider-fill); width:14px; height:14px; border:0; border-radius:9999px; background:#7596CC; box-shadow:0 2px 6px rgba(0,0,0,.5); opacity:0; transform:translateX(-50%) scale(.5); transition:opacity .16s ease,transform .16s ease; }
         .polutek-player-scrub:hover .polutek-player-scrub-thumb,.polutek-player-scrub:focus-within .polutek-player-scrub-thumb,.polutek-player-scrub[data-dragging] .polutek-player-scrub-thumb { opacity:1; transform:translateX(-50%) scale(1); }
-        .polutek-player-scrub-preview { position:absolute; bottom:28px; padding:5px 8px; border-radius:4px; background:rgba(0,0,0,.9); color:#fff; box-shadow:0 4px 16px rgba(0,0,0,.6); font-size:11px; font-weight:500; font-variant-numeric:tabular-nums; white-space:nowrap; }
+        .polutek-player-scrub-preview { position:absolute; bottom:28px; padding:5px 8px; border-radius:4px; background:rgba(0,0,0,.85); color:#fff; box-shadow:0 4px 12px rgba(0,0,0,.5); font-size:11px; font-weight:500; font-variant-numeric:tabular-nums; white-space:nowrap; }
 
         /* ---- Volume ---- */
         .polutek-player-volume { display:flex; align-items:center; }
-        .polutek-player-volume-slider { position:relative; display:flex; width:0; height:26px; align-items:center; overflow:hidden; opacity:0; transition:width .18s ease,opacity .18s ease,margin .18s ease; }
-        .polutek-player-volume:hover .polutek-player-volume-slider,.polutek-player-volume:focus-within .polutek-player-volume-slider { width:72px; margin-right:6px; opacity:1; }
-        .polutek-player-volume-track { height:3px; }
-        .polutek-player-volume-thumb { width:10px; height:10px; opacity:1; transform:translateX(-50%); }
+        .polutek-player-volume-slider { position:relative; display:flex; width:0; height:100px; align-items:center; justify-content:center; overflow:visible; opacity:0; transform:translateY(-80px); transition:width .18s ease,opacity .18s ease,transform .18s ease; }
+        .polutek-player-volume:hover .polutek-player-volume-slider,.polutek-player-volume:focus-within .polutek-player-volume-slider { width:32px; opacity:1; transform:translateY(-80px); }
+        .polutek-player-volume-track { height:80px; width:6px; }
+        .polutek-player-volume-thumb { width:12px; height:12px; opacity:1; transform:translateX(-50%); }
 
         /* ---- Center play button ---- */
         .polutek-player-center { position:absolute; inset:0; z-index:12; display:grid; place-items:center; pointer-events:none; }
-        .polutek-player-center--ended { background:rgba(0,0,0,.3); }
-        .polutek-player-hero { position:relative; display:grid; width:72px; height:72px; place-items:center; border:2px solid #fff; border-radius:999px; background:rgba(255,255,255,.95); color:#000; pointer-events:auto; transition:transform .18s ease,box-shadow .18s ease,background .18s ease; }
-        .polutek-player-hero:hover { background:#fff; transform:scale(1.08); box-shadow:0 8px 32px rgba(0,0,0,.6); }
+        .polutek-player-center--ended { background:rgba(0,0,0,.2); }
+        .polutek-player-hero { position:relative; display:grid; width:96px; height:96px; place-items:center; border:0; border-radius:9999px; background:rgba(0,0,0,.8); color:#fff; pointer-events:auto; transition:box-shadow .18s ease,transform .18s ease; }
+        .polutek-player-hero:hover { box-shadow:0 0 0 2px #7596CC; transform:scale(1.06); }
         .polutek-player-hero:active { transform:scale(.94); }
-        .polutek-player-hero:focus-visible { outline:2px solid #fff; outline-offset:4px; box-shadow:0 8px 32px rgba(0,0,0,.6); }
-        .polutek-player-hero--replay { display:flex; width:auto; height:48px; padding:0 20px 0 12px; gap:10px; border-radius:12px; background:#fff; color:#000; border:none; }
-        .polutek-player-hero--replay:hover { background:#f5f5f5; }
-        .polutek-player-hero-icon-wrap { display:grid; width:32px; height:32px; place-items:center; border-radius:6px; background:rgba(0,0,0,.08); color:#000; }
+        .polutek-player-hero:focus-visible { outline:2px solid #fff; outline-offset:4px; box-shadow:0 0 0 2px #7596CC; }
+        .polutek-player-hero--replay { display:flex; width:auto; height:48px; padding:0 20px 0 12px; gap:10px; border-radius:12px; background:rgba(255,255,255,.95); color:#000; border:none; }
+        .polutek-player-hero--replay:hover { background:#fff; box-shadow:0 0 0 2px #7596CC; }
+        .polutek-player-hero-icon-wrap { display:grid; width:32px; height:32px; place-items:center; border-radius:6px; background:rgba(0,0,0,.1); color:#000; }
         .polutek-player-hero-icon { width:28px; height:28px; stroke-width:2; }
         .polutek-player-hero-icon-wrap .polutek-player-hero-icon { width:18px; height:18px; }
         .polutek-player-hero-icon--play { transform:translateX(2px); }
         .polutek-player-replay-label { font-size:13px; font-weight:600; letter-spacing:-.01em; }
-        .polutek-player-spinner { display:grid; width:52px; height:52px; place-items:center; border:2px solid rgba(255,255,255,.3); border-radius:999px; background:rgba(0,0,0,.3); color:#fff; box-shadow:0 4px 16px rgba(0,0,0,.5); }
+        .polutek-player-spinner { display:grid; width:56px; height:56px; place-items:center; border:2px solid rgba(255,255,255,.2); border-radius:9999px; background:rgba(0,0,0,.5); color:#fff; box-shadow:0 0 0 2px rgba(117,150,204,.3); }
         .polutek-player-spinner svg { width:24px; height:24px; animation:polutek-spin .8s linear infinite; }
 
         /* ---- Settings menu ---- */
         .polutek-player-menu-root { position:relative; }
-        .polutek-player-menu { position:absolute; right:0; bottom:44px; width:200px; max-height:min(320px,60vh); overflow:auto; padding:8px 0; border-radius:4px; background:rgba(0,0,0,.95); color:#fff; box-shadow:0 8px 32px rgba(0,0,0,.8); border:1px solid rgba(255,255,255,.1); }
-        .polutek-player-menu-section + .polutek-player-menu-section { border-top:1px solid rgba(255,255,255,.1); padding-top:8px; margin-top:8px; }
-        .polutek-player-menu-heading { padding:8px 16px 6px; color:rgba(255,255,255,.6); font-size:9px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
-        .polutek-player-menu-item { display:flex; width:100%; min-height:38px; align-items:center; justify-content:space-between; padding:0 16px; border:0; background:transparent; color:#fff; font-size:13px; font-weight:500; text-align:left; cursor:pointer; transition:background-color .14s ease,color .14s ease; }
-        .polutek-player-menu-item:hover { background:rgba(255,255,255,.1); }
-        .polutek-player-menu-item:focus-visible { outline:2px solid #fff; outline-offset:-2px; }
-        .polutek-player-menu-check { width:16px; height:16px; color:#fff; stroke-width:2.4; }
+        .polutek-player-menu { position:absolute; right:0; bottom:44px; width:180px; max-height:min(300px,60vh); overflow:auto; padding:0; border-radius:8px; background:rgba(0,0,0,.9); color:#fff; box-shadow:0 8px 24px rgba(0,0,0,.7); border:1px solid rgba(117,150,204,.2); }
+        .polutek-player-menu-section + .polutek-player-menu-section { border-top:1px solid rgba(117,150,204,.1); }
+        .polutek-player-menu-heading { padding:8px 14px 6px; color:rgba(255,255,255,.6); font-size:9px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
+        .polutek-player-menu-item { display:flex; width:100%; min-height:36px; align-items:center; justify-content:space-between; padding:0 14px; border:0; background:transparent; color:#fff; font-size:13px; font-weight:500; text-align:left; cursor:pointer; transition:background-color .14s ease; }
+        .polutek-player-menu-item:hover { background:rgba(117,150,204,.15); }
+        .polutek-player-menu-item:focus-visible { outline:2px solid #7596CC; outline-offset:-2px; }
+        .polutek-player-menu-check { width:16px; height:16px; color:#7596CC; stroke-width:2.4; }
 
-        .polutek-vidstack-player .vds-captions { bottom:88px; font-family:var(--font-space-grotesk,sans-serif); }
+        .polutek-vidstack-player .vds-captions { bottom:104px; font-family:var(--font-space-grotesk,sans-serif); }
         @keyframes polutek-spin { to { transform:rotate(360deg); } }
 
         @media (max-width:640px) {
-          .polutek-player-bottom { padding:12px 10px max(8px,env(safe-area-inset-bottom)); }
-          .polutek-player-row { min-height:40px; gap:4px; }
-          .polutek-player-btn { width:40px; height:40px; }
-          .polutek-player-icon { width:20px; height:20px; }
-          .polutek-player-row-group { gap:0; }
+          .polutek-player-bottom { padding:24px; }
+          .polutek-player-bar { padding:8px 12px; gap:8px; }
+          .polutek-player-row { min-height:32px; gap:4px; }
+          .polutek-player-btn { width:32px; height:32px; }
+          .polutek-player-icon { width:16px; height:16px; }
+          .polutek-player-row-group { gap:5px; }
           .polutek-player-time { margin-left:6px; font-size:11px; }
           .polutek-player-time-duration,.polutek-player-time span { display:none; }
           .polutek-player-volume { display:none; }
-          .polutek-player-scrub { height:26px; margin-bottom:10px; }
+          .polutek-player-scrub { height:26px; margin-bottom:8px; }
           .polutek-player-scrub-track { height:5px; }
-          .polutek-player-scrub-thumb { width:14px; height:14px; opacity:1; transform:translateX(-50%) scale(1); }
-          .polutek-player-hero { width:64px; height:64px; }
-          .polutek-player-hero--replay { width:auto; height:46px; padding:0 18px 0 11px; }
-          .polutek-player-menu { right:-32px; bottom:48px; width:min(196px,calc(100vw - 20px)); }
-          .polutek-vidstack-player .vds-captions { bottom:82px; }
+          .polutek-player-scrub-thumb { width:12px; height:12px; opacity:1; transform:translateX(-50%) scale(1); }
+          .polutek-player-hero { width:72px; height:72px; }
+          .polutek-player-hero--replay { width:auto; height:44px; padding:0 16px 0 10px; }
+          .polutek-player-menu { right:-16px; bottom:44px; width:min(172px,calc(100vw - 24px)); }
+          .polutek-vidstack-player .vds-captions { bottom:100px; }
         }
         @media (max-width:360px) { .polutek-player-caption { display:none; } }
         @media (hover:none) { .polutek-player-scrub-preview { display:none; } }
