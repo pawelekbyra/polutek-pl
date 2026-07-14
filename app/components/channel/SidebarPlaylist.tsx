@@ -174,6 +174,7 @@ export function SidebarPlaylist({
   const renderVideoItem = (video: SidebarLayoutItem, isPublicSection = false) => {
     const displayTitle = getVideoDisplayTitle(video, language);
     const isCurrent = video.id === selectedVideoId;
+    const isPatronVideo = video.tier === "PATRON";
     const hasAccess = !video.isLocked;
     const lockState = !hasAccess
       ? video.tier === "PATRON"
@@ -212,7 +213,9 @@ export function SidebarPlaylist({
           className={cn(
             "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-[background-color,box-shadow] duration-160 motion-reduce:transition-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[88px] lg:items-center lg:gap-3 lg:p-2",
             isCurrent
-              ? "bg-[var(--chan-blue)]/20"
+              ? isPatronVideo
+                ? "bg-[var(--chan-amber-soft)]"
+                : "bg-[var(--chan-blue)]/20"
               : isPublicSection
                 ? "bg-gradient-to-br from-[#EAF0FF] to-[#DBE7FB] transition-[background-color,transform] duration-160 hover:brightness-[1.03]"
                 : "transition-[background-color,box-shadow] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_2px_8px_rgba(23,23,23,0.06)]",
@@ -221,7 +224,12 @@ export function SidebarPlaylist({
           {isCurrent && (
             <span
               aria-hidden="true"
-              className="absolute left-0 top-1/2 h-12 w-1 -translate-y-1/2 rounded-r-lg bg-[var(--chan-blue)] shadow-[0_0_12px_color-mix(in_srgb,var(--chan-blue)_40%,transparent)] transition-all duration-160 motion-reduce:transition-none"
+              className={cn(
+                "absolute left-0 top-1/2 h-12 w-1 -translate-y-1/2 rounded-r-lg transition-all duration-160 motion-reduce:transition-none",
+                isPatronVideo
+                  ? "bg-[var(--chan-amber)] shadow-[0_0_12px_color-mix(in_srgb,var(--chan-amber)_46%,transparent)]"
+                  : "bg-[var(--chan-blue)] shadow-[0_0_12px_color-mix(in_srgb,var(--chan-blue)_40%,transparent)]",
+              )}
             />
           )}
           <div className="w-[130px] h-[73px] shrink-0 rounded-[12px] bg-black relative overflow-hidden group/thumb lg:w-[135px] lg:h-[76px] xl:w-[145px] xl:h-[82px]">
@@ -420,6 +428,10 @@ export function SidebarPlaylist({
         <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
           {renderSectionHeader(
             language === "pl" ? "Strefa Fenkjuu" : "Thank You Zone",
+            <span
+              aria-hidden="true"
+              className="inline-flex h-1.5 w-1.5 rounded-full bg-[var(--chan-amber)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--chan-amber)_20%,transparent)]"
+            />,
           )}
           {patronSection.items.map((v) => renderVideoItem(v))}
         </div>

@@ -51,12 +51,17 @@ describe("BrandName", () => {
 
     expect(definitionIds).toHaveLength(4);
     expect(new Set(definitionIds).size).toBe(definitionIds.length);
-    expect(container.querySelectorAll("clipPath")).toHaveLength(0);
+    expect(container.querySelectorAll("clipPath")).toHaveLength(2);
     expect(
       container.querySelectorAll(
-        "path[fill^='url(#polutek-logo-shine-']",
+        "rect[fill^='url(#polutek-logo-shine-']",
       ),
-    ).toHaveLength(4);
+    ).toHaveLength(2);
+    expect(
+      container.querySelectorAll(
+        "g[clip-path^='url(#polutek-logo-lens-clip-']",
+      ),
+    ).toHaveLength(2);
   });
 
   it("can be decorative when its parent already supplies the accessible name", () => {

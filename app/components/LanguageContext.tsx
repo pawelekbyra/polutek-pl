@@ -64,6 +64,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode; initialLang
     const prevLang = language;
     setLanguageState(lang);
     persistLanguage(lang);
+    document.documentElement.lang = lang;
 
     // Logged-in users additionally persist to the database (authoritative on next load) and to
     // Clerk metadata. A 401 just means the visitor is logged out — the cookie already covers them.
@@ -232,4 +233,16 @@ export const useLanguage = () => {
     ...context,
     t
   }), [context, t]);
+};
+
+/**
+ * Low-level player states can also render in isolated tests/previews. In the
+ * application they inherit LanguageProvider; outside it they fall back to the
+ * document language and finally Polish.
+ */
+export const useOptionalLanguage = (): Language => {
+  const context = useContext(LanguageContext);
+  if (context) return context.language;
+  if (typeof document !== 'undefined' && document.documentElement.lang === 'en') return 'en';
+  return 'pl';
 };

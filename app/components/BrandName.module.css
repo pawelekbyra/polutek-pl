@@ -9,113 +9,65 @@
   overflow: hidden;
 }
 
-.shineLead,
-.shineTrail {
+.shineSweep {
   pointer-events: none;
   opacity: 0;
+  transform: translateX(0);
+  will-change: transform, opacity;
 }
 
-.ambientShineLead {
-  animation: lens-ambient-lead 7.6s cubic-bezier(0.22, 1, 0.36, 1) 1.4s
-    infinite;
+.ambientShineSweep {
+  animation: lens-ambient-sweep 10.5s var(--ease-enter, cubic-bezier(0.16, 1, 0.3, 1)) 1.8s infinite;
 }
 
-.ambientShineTrail {
-  animation: lens-ambient-trail 7.6s cubic-bezier(0.22, 1, 0.36, 1) 1.4s
-    infinite;
+.root:hover .shineSweep,
+.root:focus-within .shineSweep {
+  animation: lens-interaction-sweep 780ms var(--ease-enter, cubic-bezier(0.16, 1, 0.3, 1)) both;
 }
 
-.root:hover .shineLead,
-.root:focus-within .shineLead {
-  animation: lens-interaction-lead 920ms cubic-bezier(0.22, 1, 0.36, 1)
-    both;
-}
-
-.root:hover .shineTrail,
-.root:focus-within .shineTrail {
-  animation: lens-interaction-trail 920ms cubic-bezier(0.22, 1, 0.36, 1)
-    both;
-}
-
-@keyframes lens-ambient-lead {
-  0%,
-  69%,
-  82%,
-  100% {
+@keyframes lens-ambient-sweep {
+  0%, 72%, 100% {
     opacity: 0;
+    transform: translateX(0);
   }
-
-  75% {
-    opacity: 0.18;
+  74% {
+    opacity: .88;
   }
-
-  79% {
-    opacity: 0.08;
+  84% {
+    opacity: .88;
+    transform: translateX(2780px);
   }
-}
-
-@keyframes lens-ambient-trail {
-  0%,
-  74%,
-  90%,
-  100% {
-    opacity: 0;
-  }
-
-  82% {
-    opacity: 0.16;
-  }
-
   86% {
-    opacity: 0.06;
+    opacity: 0;
+    transform: translateX(2780px);
   }
 }
 
-@keyframes lens-interaction-lead {
+@keyframes lens-interaction-sweep {
   0% {
     opacity: 0;
+    transform: translateX(0);
   }
-
-  32% {
-    opacity: 0.36;
+  12%, 78% {
+    opacity: .94;
   }
-
-  66%,
   100% {
     opacity: 0;
-  }
-}
-
-@keyframes lens-interaction-trail {
-  0%,
-  28% {
-    opacity: 0;
-  }
-
-  62% {
-    opacity: 0.3;
-  }
-
-  100% {
-    opacity: 0;
+    transform: translateX(2780px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ambientShineLead,
-  .ambientShineTrail,
-  .root:hover .shineLead,
-  .root:hover .shineTrail,
-  .root:focus-within .shineLead,
-  .root:focus-within .shineTrail {
+  .ambientShineSweep,
+  .root:hover .shineSweep,
+  .root:focus-within .shineSweep {
     animation: none;
     opacity: 0;
   }
 }
 
 @media (forced-colors: active) {
-  .shineLead,
-  .shineTrail {
+  .shineSweep {
     display: none;
   }
 }
