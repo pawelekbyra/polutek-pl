@@ -286,42 +286,6 @@ export default function PolutekControls({ className }: { className?: string }) {
 
   return (
     <>
-      {/* SVG fractal-noise displacement filter — the "liquid" refraction on glass edges. */}
-      <svg
-        className="polutek-glass-svg"
-        aria-hidden="true"
-        focusable="false"
-        width="0"
-        height="0"
-      >
-        <defs>
-          <filter
-            id="polutek-liquid-glass"
-            x="-20%"
-            y="-20%"
-            width="140%"
-            height="140%"
-            colorInterpolationFilters="sRGB"
-          >
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.012 0.012"
-              numOctaves="2"
-              seed="7"
-              result="noise"
-            />
-            <feGaussianBlur in="noise" stdDeviation="1.5" result="blurredNoise" />
-            <feDisplacementMap
-              in="SourceGraphic"
-              in2="blurredNoise"
-              scale="18"
-              xChannelSelector="R"
-              yChannelSelector="G"
-            />
-          </filter>
-        </defs>
-      </svg>
-
       <Gesture className="polutek-player-gesture" event="pointerup" action="toggle:paused" />
       <Gesture className="polutek-player-gesture" event="dblpointerup" action="toggle:fullscreen" />
       <CaptionsLayer className="vds-captions" />
@@ -362,7 +326,6 @@ export default function PolutekControls({ className }: { className?: string }) {
         </Controls.Group>
       </Controls.Root>
       <style jsx global>{`
-        .polutek-glass-svg { position:absolute; width:0; height:0; pointer-events:none; }
         .polutek-player-gesture { position:absolute; inset:0; z-index:1; }
         .polutek-player-controls { position:absolute; inset:0; z-index:20; pointer-events:none; visibility:hidden; opacity:0; transition:opacity .2s ease,visibility 0s linear .2s; font-family:var(--font-space-grotesk,sans-serif); }
         .polutek-player-controls--visible { visibility:visible; opacity:1; transition-delay:0s; }
@@ -372,9 +335,12 @@ export default function PolutekControls({ className }: { className?: string }) {
         /* ---- Liquid glass surface ---- */
         .polutek-glass { position:relative; isolation:isolate; }
         .polutek-glass--bar { border-radius:22px; overflow:hidden; box-shadow:0 10px 34px rgba(0,0,0,.42); }
-        .polutek-glass-effect { position:absolute; inset:0; z-index:0; border-radius:inherit; background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 60%,rgba(255,255,255,.09)); -webkit-backdrop-filter:blur(18px) saturate(180%); backdrop-filter:blur(18px) saturate(180%); }
+        .polutek-glass-effect { position:absolute; inset:0; z-index:0; border-radius:inherit; background:rgba(15,23,42,.48); -webkit-backdrop-filter:blur(18px) saturate(180%); backdrop-filter:blur(18px) saturate(180%); }
+        @supports (backdrop-filter: blur(1px)) {
+          .polutek-glass-effect { background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 60%,rgba(255,255,255,.09)); }
+        }
         .polutek-glass-noise { position:absolute; inset:0; z-index:1; border-radius:inherit; opacity:.5; mix-blend-mode:overlay; pointer-events:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
-        .polutek-glass-edge { position:absolute; inset:0; z-index:2; border-radius:inherit; pointer-events:none; border:1px solid transparent; box-shadow:inset 1px 1px 0 0 rgba(255,255,255,.5),inset -1px -1px 0 1px rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.06); filter:url(#polutek-liquid-glass); }
+        .polutek-glass-edge { position:absolute; inset:0; z-index:2; border-radius:inherit; pointer-events:none; border:1px solid transparent; box-shadow:inset 1px 1px 0 0 rgba(255,255,255,.5),inset -1px -1px 0 1px rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.06); }
         .polutek-glass-content { position:relative; z-index:3; padding:8px 12px 10px; }
 
         .polutek-player-row { display:flex; min-height:44px; align-items:center; justify-content:space-between; gap:10px; }
@@ -397,7 +363,10 @@ export default function PolutekControls({ className }: { className?: string }) {
         .polutek-player-scrub-fill,.polutek-player-volume-fill { position:absolute; inset:0 auto 0 0; width:var(--slider-fill); border-radius:inherit; background:linear-gradient(90deg,rgba(255,255,255,.85),#fff); box-shadow:0 0 8px rgba(255,255,255,.55); }
         .polutek-player-scrub-thumb,.polutek-player-volume-thumb { position:absolute; left:var(--slider-fill); width:15px; height:15px; border:1px solid rgba(255,255,255,.85); border-radius:999px; background:radial-gradient(circle at 32% 28%,#fff,rgba(255,255,255,.72)); box-shadow:0 2px 8px rgba(0,0,0,.4),inset 0 1px 1px rgba(255,255,255,.9); opacity:0; transform:translateX(-50%) scale(.7); transition:opacity .16s ease,transform .16s ease; }
         .polutek-player-scrub:hover .polutek-player-scrub-thumb,.polutek-player-scrub:focus-within .polutek-player-scrub-thumb,.polutek-player-scrub[data-dragging] .polutek-player-scrub-thumb { opacity:1; transform:translateX(-50%) scale(1); }
-        .polutek-player-scrub-preview { position:absolute; bottom:30px; padding:6px 9px; border:1px solid rgba(255,255,255,.22); border-radius:10px; background:rgba(15,23,42,.6); color:#fff; box-shadow:0 8px 24px rgba(0,0,0,.34); font-size:11px; font-weight:700; font-variant-numeric:tabular-nums; -webkit-backdrop-filter:blur(14px) saturate(160%); backdrop-filter:blur(14px) saturate(160%); }
+        .polutek-player-scrub-preview { position:absolute; bottom:30px; padding:6px 9px; border:1px solid rgba(255,255,255,.22); border-radius:10px; background:rgba(15,23,42,.8); color:#fff; box-shadow:0 8px 24px rgba(0,0,0,.34); font-size:11px; font-weight:700; font-variant-numeric:tabular-nums; -webkit-backdrop-filter:blur(14px) saturate(160%); backdrop-filter:blur(14px) saturate(160%); }
+        @supports (backdrop-filter: blur(1px)) {
+          .polutek-player-scrub-preview { background:rgba(15,23,42,.6); }
+        }
 
         /* ---- Volume capsule ---- */
         .polutek-player-volume { display:flex; align-items:center; }
@@ -409,7 +378,10 @@ export default function PolutekControls({ className }: { className?: string }) {
         /* ---- Center hero / spinner ---- */
         .polutek-player-center { position:absolute; inset:0; z-index:12; display:grid; place-items:center; pointer-events:none; }
         .polutek-player-center--ended { background:linear-gradient(rgba(3,7,18,.34),rgba(3,7,18,.58)); }
-        .polutek-player-hero { position:relative; display:grid; width:70px; height:70px; place-items:center; border:1px solid rgba(255,255,255,.5); border-radius:999px; background:linear-gradient(160deg,rgba(255,255,255,.28),rgba(255,255,255,.08)); color:#fff; -webkit-backdrop-filter:blur(16px) saturate(180%); backdrop-filter:blur(16px) saturate(180%); box-shadow:0 16px 44px rgba(0,0,0,.4),inset 1px 1px 0 rgba(255,255,255,.6),inset -1px -1px 0 rgba(255,255,255,.14); pointer-events:auto; transition:transform .18s ease,box-shadow .18s ease,background .18s ease; }
+        .polutek-player-hero { position:relative; display:grid; width:70px; height:70px; place-items:center; border:1px solid rgba(255,255,255,.5); border-radius:999px; background:rgba(37,99,235,.7); color:#fff; -webkit-backdrop-filter:blur(16px) saturate(180%); backdrop-filter:blur(16px) saturate(180%); box-shadow:0 16px 44px rgba(0,0,0,.4),inset 1px 1px 0 rgba(255,255,255,.6),inset -1px -1px 0 rgba(255,255,255,.14); pointer-events:auto; transition:transform .18s ease,box-shadow .18s ease,background .18s ease; }
+        @supports (backdrop-filter: blur(1px)) {
+          .polutek-player-hero { background:linear-gradient(160deg,rgba(255,255,255,.28),rgba(255,255,255,.08)); }
+        }
         .polutek-player-hero:hover { background:linear-gradient(160deg,rgba(255,255,255,.38),rgba(255,255,255,.12)); transform:scale(1.06); box-shadow:0 20px 50px rgba(0,0,0,.45),inset 1px 1px 0 rgba(255,255,255,.7),inset -1px -1px 0 rgba(255,255,255,.18); }
         .polutek-player-hero:active { transform:scale(.95); }
         .polutek-player-hero:focus-visible { outline:3px solid #fff; outline-offset:4px; box-shadow:0 0 0 7px rgba(37,99,235,.7); }
@@ -419,12 +391,18 @@ export default function PolutekControls({ className }: { className?: string }) {
         .polutek-player-hero-icon-wrap .polutek-player-hero-icon { width:19px; height:19px; }
         .polutek-player-hero-icon--play { transform:translateX(2px); }
         .polutek-player-replay-label { font-size:14px; font-weight:750; letter-spacing:-.01em; text-shadow:0 1px 3px rgba(0,0,0,.5); }
-        .polutek-player-spinner { display:grid; width:56px; height:56px; place-items:center; border:1px solid rgba(255,255,255,.32); border-radius:999px; background:linear-gradient(160deg,rgba(255,255,255,.2),rgba(255,255,255,.05)); color:#fff; box-shadow:0 16px 40px rgba(0,0,0,.34),inset 1px 1px 0 rgba(255,255,255,.4); -webkit-backdrop-filter:blur(14px) saturate(160%); backdrop-filter:blur(14px) saturate(160%); }
+        .polutek-player-spinner { display:grid; width:56px; height:56px; place-items:center; border:1px solid rgba(255,255,255,.32); border-radius:999px; background:rgba(15,23,42,.6); color:#fff; box-shadow:0 16px 40px rgba(0,0,0,.34),inset 1px 1px 0 rgba(255,255,255,.4); -webkit-backdrop-filter:blur(14px) saturate(160%); backdrop-filter:blur(14px) saturate(160%); }
+        @supports (backdrop-filter: blur(1px)) {
+          .polutek-player-spinner { background:linear-gradient(160deg,rgba(255,255,255,.2),rgba(255,255,255,.05)); }
+        }
         .polutek-player-spinner svg { width:26px; height:26px; animation:polutek-spin .8s linear infinite; }
 
         /* ---- Glass settings flyout ---- */
         .polutek-player-menu-root { position:relative; }
-        .polutek-player-menu { position:absolute; right:0; bottom:52px; width:222px; max-height:min(360px,65vh); overflow:auto; padding:8px; border:1px solid rgba(255,255,255,.16); border-radius:16px; background:linear-gradient(160deg,rgba(24,26,32,.72),rgba(14,16,22,.68)); color:#fff; box-shadow:0 18px 48px rgba(0,0,0,.5),inset 1px 1px 0 rgba(255,255,255,.24); -webkit-backdrop-filter:blur(22px) saturate(180%); backdrop-filter:blur(22px) saturate(180%); }
+        .polutek-player-menu { position:absolute; right:0; bottom:52px; width:222px; max-height:min(360px,65vh); overflow:auto; padding:8px; border:1px solid rgba(255,255,255,.16); border-radius:16px; background:rgba(14,16,22,.85); color:#fff; box-shadow:0 18px 48px rgba(0,0,0,.5),inset 1px 1px 0 rgba(255,255,255,.24); -webkit-backdrop-filter:blur(22px) saturate(180%); backdrop-filter:blur(22px) saturate(180%); }
+        @supports (backdrop-filter: blur(1px)) {
+          .polutek-player-menu { background:linear-gradient(160deg,rgba(24,26,32,.72),rgba(14,16,22,.68)); }
+        }
         .polutek-player-menu-section + .polutek-player-menu-section { margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,.12); }
         .polutek-player-menu-heading { padding:6px 10px 5px; color:rgba(255,255,255,.55); font-size:10px; font-weight:750; letter-spacing:.1em; text-transform:uppercase; }
         .polutek-player-menu-item { display:flex; width:100%; min-height:42px; align-items:center; justify-content:space-between; padding:8px 11px; border-radius:11px; color:#fff; font-size:13px; font-weight:650; text-align:left; transition:background-color .14s ease,color .14s ease; }
