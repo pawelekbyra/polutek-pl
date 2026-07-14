@@ -174,9 +174,9 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
   return (
     <section className="bg-transparent">
-      <div className="w-full rounded-[28px] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_86%,white)] p-2.5 shadow-[0_18px_44px_rgba(23,23,23,0.06)] md:p-3">
+      <div className="w-full rounded-xl border border-[var(--chan-line)] bg-white p-2.5 shadow-sm md:p-3">
         {/* FEATURED MEDIA */}
-        <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-[22px] bg-black md:rounded-[24px]">
+        <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-lg bg-black">
           <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured}>
             <VideoPlayer video={video} onViewCounted={() => setLocalViewsCount((views) => views + 1)} />
           </PremiumWrapper>
@@ -278,7 +278,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* DESCRIPTION PANEL */}
         <div
-          className={cn("mt-2 cursor-pointer rounded-[20px] border px-4 pt-[9px] pb-3 transition-colors hover:border-[#2563eb]/40 md:px-5", styles.descPanel)}
+          className={cn("mt-2 cursor-pointer rounded-lg border px-4 pt-[9px] pb-3 transition-colors hover:border-[#2563eb]/40 md:px-5", styles.descPanel)}
           onClick={() => setIsExpanded(!isExpanded)}
         >
            <div>

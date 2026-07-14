@@ -212,21 +212,19 @@ export function SidebarPlaylist({
           }}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
-            "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-[background-color,box-shadow] duration-160 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[88px] lg:items-center lg:gap-3 lg:p-2",
+            "group relative mb-0.5 flex gap-3 overflow-hidden rounded-md border p-2 transition-colors duration-160 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[88px] lg:items-center lg:gap-3 lg:p-2",
             isCurrent
-              ? "bg-[#2563EB]/20"
-              : isPublicSection
-                ? "bg-gradient-to-br from-[#EAF0FF] to-[#DBE7FB] transition-[background-color,transform] duration-160 hover:brightness-[1.03]"
-                : "transition-[background-color,box-shadow] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_2px_8px_rgba(23,23,23,0.06)]",
+              ? "border-[var(--chan-blue)] bg-[var(--chan-blue-soft)]"
+              : "border-transparent hover:border-[var(--chan-line)] hover:bg-[var(--chan-surface)]",
           )}
         >
           {isCurrent && (
             <span
               aria-hidden="true"
-              className="absolute left-0 top-1/2 h-12 w-1 -translate-y-1/2 rounded-r-lg bg-gradient-to-b from-[#2563EB] to-[#1e40af] shadow-[0_0_12px_rgba(37,99,235,0.4)] transition-all duration-200"
+              className="absolute left-0 top-1/2 h-8 w-[3px] -translate-y-1/2 rounded-full bg-[var(--chan-blue)]"
             />
           )}
-          <div className="w-[130px] h-[73px] shrink-0 rounded-[10px] bg-black relative overflow-hidden group/thumb lg:w-[135px] lg:h-[76px] xl:w-[145px] xl:h-[82px]">
+          <div className="w-[130px] h-[73px] shrink-0 rounded-md bg-black relative overflow-hidden group/thumb lg:w-[135px] lg:h-[76px] xl:w-[145px] xl:h-[82px]">
               {video.thumbnailUrl ? (
                 <Image
                   src={video.thumbnailUrl}
@@ -261,7 +259,7 @@ export function SidebarPlaylist({
                   return (
                     <div
                       className={cn(
-                        "absolute right-[6px] top-[6px] z-30 max-w-[86px] truncate rounded-full px-[7px] py-[3px] text-[8px] font-black uppercase leading-none tracking-[0.1em] pointer-events-none",
+                        "absolute right-[6px] top-[6px] z-30 max-w-[86px] truncate rounded px-[7px] py-[3px] text-[8px] font-black uppercase leading-none tracking-[0.1em] pointer-events-none",
                         badge.variant === "public" &&
                           "bg-white/92 text-[var(--chan-ink)]",
                         badge.variant === "unlocked" &&
@@ -315,12 +313,17 @@ export function SidebarPlaylist({
 
   const supportItem = (layout?.sections.flatMap((section) => section.items) ?? sortedVideos).find((item) => item.creatorId);
 
-  const renderSectionHeader = (title: string, icon?: React.ReactNode) => (
+  const renderSectionHeader = (title: string, icon?: React.ReactNode, count?: number) => (
     <div className="mb-1 flex shrink-0 items-center gap-2 border-b border-[var(--chan-line)] pb-1">
       {icon}
       <h3 className="font-brand text-[12px] font-bold uppercase tracking-[0.1em] text-[var(--chan-muted-2)]">
         {title}
       </h3>
+      {typeof count === "number" && (
+        <span className="ml-auto rounded bg-[var(--chan-surface)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--chan-muted)]">
+          {count}
+        </span>
+      )}
     </div>
   );
 
@@ -334,8 +337,8 @@ export function SidebarPlaylist({
     const renderSkeletonSection = (title: string) => (
       <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
         {renderSectionHeader(title)}
-        <div className="mb-0.5 flex gap-3 p-2 rounded-[14px] animate-pulse motion-reduce:animate-none">
-          <div className="w-[130px] h-[73px] shrink-0 rounded-[10px] bg-[var(--chan-line)]" />
+        <div className="mb-0.5 flex gap-3 p-2 rounded-md animate-pulse motion-reduce:animate-none">
+          <div className="w-[130px] h-[73px] shrink-0 rounded-md bg-[var(--chan-line)]" />
           <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
             <div className="h-4 bg-[var(--chan-line)] rounded w-3/4" />
             <div className="h-3 bg-[var(--chan-line)] rounded w-1/2" />
@@ -364,7 +367,7 @@ export function SidebarPlaylist({
 
     if (fallbackItems.length === 0) {
       return (
-        <div className="rounded-2xl border-2 border-dashed border-[var(--chan-line)] p-8 text-center">
+        <div className="rounded-lg border border-dashed border-[var(--chan-line)] p-8 text-center">
           <p className="text-sm text-[var(--chan-muted)]">
             {language === "pl"
               ? "Brak filmów do wyświetlenia."
@@ -404,13 +407,13 @@ export function SidebarPlaylist({
     <div className="flex flex-col gap-1 lg:h-full lg:gap-0.5">
       {publicSection && (
         <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
-          {renderSectionHeader(publicSection.title)}
+          {renderSectionHeader(publicSection.title, undefined, publicSection.items.length)}
           {publicSection.items.map((v) => renderVideoItem(v, true))}
         </div>
       )}
       {loggedInSection && (
         <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
-          {renderSectionHeader(loggedInSection.title)}
+          {renderSectionHeader(loggedInSection.title, undefined, loggedInSection.items.length)}
           {loggedInSection.items.map((v) => renderVideoItem(v))}
         </div>
       )}
@@ -419,6 +422,8 @@ export function SidebarPlaylist({
         <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
           {renderSectionHeader(
             language === "pl" ? "Strefa Fenkjuu" : "Thank You Zone",
+            undefined,
+            patronSection.items.length,
           )}
           {patronSection.items.map((v) => renderVideoItem(v))}
         </div>

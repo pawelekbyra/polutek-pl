@@ -274,11 +274,11 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
   return (
     <div
       id="donations"
-      className="relative my-[10px] mb-3 scroll-mt-20 rounded-[18px] border border-[#f1dfbd] bg-white p-[22px_26px_18px]"
+      className="relative my-[10px] mb-3 scroll-mt-20 rounded-xl border border-[var(--chan-line)] bg-white p-[22px_26px_18px] shadow-sm"
     >
       <div>
         <div className="mb-1.5 flex items-center gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-red-500">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-red-500">
             <Heart size={25} className="fill-white text-white" />
           </span>
           <h4 className="font-brand m-0 text-[21px] font-extrabold leading-tight tracking-[-0.045em] text-[var(--chan-ink)]">

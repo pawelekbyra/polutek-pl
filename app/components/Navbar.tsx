@@ -88,7 +88,7 @@ const Navbar = () => {
               <X className="h-5 w-5 shrink-0" strokeWidth={1.8} />
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
-              <div className="relative flex h-9 min-w-0 flex-1 items-center rounded-[12px] border border-[color-mix(in_srgb,var(--chan-line)_84%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_82%,white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,background-color,box-shadow] duration-160 focus-within:border-[var(--chan-blue)] focus-within:bg-white focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--chan-blue)_14%,transparent)]">
+              <div className="relative flex h-9 min-w-0 flex-1 items-center rounded-lg border border-[var(--chan-line)] bg-white transition-[border-color,box-shadow] duration-160 focus-within:border-[var(--chan-blue)] focus-within:shadow-[0_0_0_2px_color-mix(in_srgb,var(--chan-blue)_16%,transparent)]">
                 <input
                   type="text"
                   autoFocus
@@ -127,7 +127,7 @@ const Navbar = () => {
             {/* Desktop search */}
             <div className="flex-1 max-w-[548px] hidden md:flex mx-2 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
-                <div className="relative flex h-9 min-w-0 flex-1 items-center rounded-[12px] border border-[color-mix(in_srgb,var(--chan-line)_84%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_82%,white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,background-color,box-shadow] duration-160 focus-within:border-[var(--chan-blue)] focus-within:bg-white focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--chan-blue)_14%,transparent)]">
+                <div className="relative flex h-9 min-w-0 flex-1 items-center rounded-lg border border-[var(--chan-line)] bg-white transition-[border-color,box-shadow] duration-160 focus-within:border-[var(--chan-blue)] focus-within:shadow-[0_0_0_2px_color-mix(in_srgb,var(--chan-blue)_16%,transparent)]">
                   <input
                     type="text"
                     placeholder={searchLabel}
@@ -162,12 +162,12 @@ const Navbar = () => {
               <div
                 role="radiogroup"
                 aria-label={language === "pl" ? "Wybierz język" : "Choose language"}
-                className="relative flex h-[38px] w-[78px] shrink-0 items-center rounded-full border border-[color-mix(in_srgb,var(--chan-line)_84%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_82%,white)] p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[0_4px_14px_rgba(37,99,235,0.08)]"
+                className="relative flex h-[38px] w-[78px] shrink-0 items-center rounded-lg border border-[var(--chan-line)] bg-white p-[3px] transition-colors duration-160 hover:border-[var(--chan-blue)]"
               >
                 <span
                   aria-hidden="true"
                   className={
-                    "chan-lang-pill-active absolute bottom-[3px] left-[3px] top-[3px] w-9 rounded-full transition-transform duration-200 ease-out " +
+                    "chan-lang-pill-active absolute bottom-[3px] left-[3px] top-[3px] w-9 rounded-md transition-transform duration-200 ease-out " +
                     (language === "en" ? "translate-x-9" : "translate-x-0")
                   }
                 />
@@ -200,7 +200,7 @@ const Navbar = () => {
               ) : isLoaded ? (
                 <button
                   onClick={() => openAuthModal("sign-in")}
-                  className="flex h-[38px] shrink-0 items-center justify-center gap-1.5 rounded-[11px] border border-[#4b5563] bg-black px-2 font-sans text-white shadow-[0_2px_0_#2563eb,0_5px_12px_rgba(0,0,0,0.18)] transition-[transform,background-color,border-color,box-shadow] duration-160 hover:-translate-y-px hover:border-[#64748b] hover:bg-[#171717] hover:shadow-[0_3px_0_#2563eb,0_7px_16px_rgba(0,0,0,0.24)] active:translate-y-px active:scale-[0.97] active:shadow-[0_1px_0_#2563eb] sm:px-3"
+                  className="flex h-[38px] shrink-0 items-center justify-center gap-1.5 rounded-lg bg-[var(--chan-blue)] px-2 font-sans text-white transition-colors duration-160 hover:bg-[#1e4fc1] active:bg-[#1a43a3] sm:px-3"
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
