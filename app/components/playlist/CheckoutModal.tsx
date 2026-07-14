@@ -149,7 +149,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                           colorBackground: '#ffffff',
                           colorText: '#1a1a1a',
                           borderRadius: '12px',
-                          fontFamily: 'var(--font-brand)',
+                          fontFamily: 'var(--font-geist-sans)',
                         }
                       }
                     }}>

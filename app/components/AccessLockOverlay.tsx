@@ -1,11 +1,15 @@
 "use client";
 
-import { LockKeyhole, Star } from "lucide-react";
-import { useAuthModal } from "./auth/AuthModalProvider";
+import { useId, type CSSProperties, type MouseEvent } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { motion, useReducedMotion } from "framer-motion";
+import { Crown, LockKeyhole, Sparkles } from "lucide-react";
 import type { PlaybackPlanStatus } from "@/lib/modules/playback";
-import { PlayerStateFrame } from "./PlayerStateFrame";
-import { useLanguage } from "./LanguageContext";
 import { cn } from "@/lib/utils";
+import { useAuthModal } from "./auth/AuthModalProvider";
+import { useLanguage } from "./LanguageContext";
+import { PlayerStateFrame } from "./PlayerStateFrame";
+import styles from "./AccessLockOverlay.module.css";
 
 type AccessLockState = Extract<
   PlaybackPlanStatus,
@@ -17,111 +21,191 @@ interface AccessLockOverlayProps {
   variant: "default" | "thumbnail" | "thumbnailCompact";
 }
 
+const CONSTELLATION_POINTS = [
+  [12, 24, 3],
+  [25, 67, 2],
+  [34, 18, 2],
+  [43, 82, 3],
+  [54, 34, 2],
+  [63, 68, 2],
+  [72, 15, 3],
+  [79, 47, 2],
+  [88, 76, 3],
+  [93, 27, 2],
+] as const;
+
+const CONSTELLATION = CONSTELLATION_POINTS.map(
+  ([left, top, size], index) => ({
+    key: `${left}-${top}`,
+    style: {
+      left: `${left}%`,
+      top: `${top}%`,
+      width: size,
+      height: size,
+      "--star-index": index,
+    } as CSSProperties,
+  }),
+);
+
 export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
   const { language } = useLanguage();
+  const { isSignedIn } = useAuth();
   const { open: openAuthModal } = useAuthModal();
-  const isPatron = state === "PATRON_REQUIRED";
+  const reduceMotion = useReducedMotion();
+  const titleId = useId();
   const isPl = language === "pl";
   const isCompact = variant !== "default";
-  const Icon = isPatron ? Star : LockKeyhole;
+
+  // A guest always gets the sign-in path first, even when the backend correctly
+  // reports that the final tier is PATRON. This affects copy only, never access.
+  const isPatronExperience =
+    state === "PATRON_REQUIRED" && isSignedIn === true;
+  const Icon = isPatronExperience ? Crown : LockKeyhole;
+
+  const handleSupport = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    window.dispatchEvent(new CustomEvent("polutek:open-support"));
+
+    window.requestAnimationFrame(() => {
+      document.getElementById("donations")?.scrollIntoView({
+        behavior: reduceMotion ? "auto" : "smooth",
+        block: "center",
+      });
+    });
+  };
 
   if (isCompact) {
     const isTiny = variant === "thumbnailCompact";
-    const label = isPatron
-      ? isPl ? "Patroni" : "Patrons"
-      : isPl ? "Zaloguj się" : "Sign in";
+    const label = isPatronExperience
+      ? isPl
+        ? "Dla Patronów"
+        : "Patrons only"
+      : isPl
+        ? "Zaloguj się"
+        : "Sign in";
 
     return (
       <PlayerStateFrame fill className={isTiny ? "rounded-md" : "rounded-lg"}>
         <div
           className={cn(
-            "absolute inset-0 z-50 flex flex-col items-center justify-center gap-2 overflow-hidden [container-type:inline-size]",
-            isPatron ? "bg-amber-500" : "bg-[var(--chan-blue)]",
+            styles.compact,
+            isPatronExperience ? styles.patron : styles.login,
+            isTiny && styles.compactTiny,
           )}
+          role="img"
+          aria-label={label}
         >
-          <div
-            className={cn(
-              "grid place-items-center rounded-xl border border-white/25 bg-white/16 text-white shadow-sm backdrop-blur-sm",
-              isTiny ? "h-7 w-7" : "h-9 w-9",
-            )}
-          >
-            <Icon className={isTiny ? "h-4 w-4" : "h-[18px] w-[18px]"} />
-          </div>
-          <span className="px-2 text-center font-sans text-[clamp(9px,8cqi,11px)] font-bold uppercase leading-tight tracking-[0.08em] text-white">
-            {label}
+          <span className={styles.compactGlow} aria-hidden="true" />
+          <span className={styles.compactMark} aria-hidden="true">
+            <Icon />
           </span>
+          <span className={styles.compactLabel}>{label}</span>
         </div>
       </PlayerStateFrame>
     );
   }
 
+  const eyebrow = isPatronExperience
+    ? isPl
+      ? "Premiera dla wspierających"
+      : "Supporter premiere"
+    : isPl
+      ? "Zaloguj się i oglądaj dalej"
+      : "Sign in and keep watching";
+  const title = isPatronExperience
+    ? isPl
+      ? "Ten materiał czeka na Patronów"
+      : "This release is for Patrons"
+    : isPl
+      ? "Twoje miejsce jest już gotowe"
+      : "Your seat is ready";
+  const description = isPatronExperience
+    ? isPl
+      ? "Jednorazowe wsparcie spełniające próg odblokowuje dostęp na zawsze. Bez subskrypcji."
+      : "One qualifying contribution unlocks permanent access. No subscription."
+    : isPl
+      ? "Zaloguj się bezpłatnie, aby uruchomić ten film i wrócić do swojej historii."
+      : "Sign in for free to play this video and return to your watch history.";
+
   return (
     <PlayerStateFrame className="rounded-[18px]">
-      <div className="absolute inset-0 z-50 flex items-center justify-center overflow-hidden bg-[var(--chan-nav,#f7f1e4)] p-6 [container-type:inline-size]">
-        <div
-          className={cn(
-            "absolute left-1/2 top-1/2 h-[70%] w-[62%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl",
-            isPatron ? "bg-amber-300/25" : "bg-[color-mix(in_srgb,var(--chan-blue)_22%,transparent)]",
-          )}
-          aria-hidden="true"
-        />
-
-        <div className="relative flex w-full max-w-[390px] flex-col items-center gap-[clamp(13px,2.5cqi,19px)] rounded-[22px] border border-[color-mix(in_srgb,var(--chan-line)_82%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_94%,white)] px-7 py-[clamp(24px,5cqi,36px)] text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_30px_64px_-26px_rgba(15,23,42,0.3)]">
-          <div
-            className={cn(
-              "grid h-[clamp(52px,10cqi,66px)] w-[clamp(52px,10cqi,66px)] place-items-center rounded-[18px] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_10px_24px_rgba(15,23,42,0.16)]",
-              isPatron ? "bg-[linear-gradient(140deg,#fbbf24,#f59e0b)]" : "bg-[linear-gradient(140deg,color-mix(in_srgb,var(--chan-blue)_72%,white),var(--chan-blue))]",
-            )}
-          >
-            <Icon className="h-[clamp(24px,5cqi,30px)] w-[clamp(24px,5cqi,30px)]" />
-          </div>
-
-          <div className="flex flex-col items-center gap-1.5">
-            <span className={cn(
-              "flex items-center gap-1.5 font-brand text-[clamp(9.5px,1.9cqi,11px)] font-bold uppercase leading-none tracking-[0.16em]",
-              isPatron ? "text-amber-600" : "text-[var(--chan-blue)]",
-            )}>
-              <span aria-hidden="true" className={cn("inline-flex h-1.5 w-1.5 rounded-full", isPatron ? "bg-amber-500" : "bg-[var(--chan-blue)]")} />
-              {isPatron
-                ? isPl ? "Strefa wspierających" : "Supporters only"
-                : isPl ? "Tylko dla zalogowanych" : "Members only"}
-            </span>
-            <h2 className="font-brand text-[clamp(20px,4.6cqi,28px)] font-bold leading-tight tracking-[-0.01em] text-[var(--chan-ink)]">
-              {isPatron
-                ? isPl ? "Strefa Patronów" : "Patron Zone"
-                : isPl ? "Zaloguj się" : "Sign In"}
-            </h2>
-            <p className="font-sans text-[clamp(12.5px,2.3cqi,15px)] leading-relaxed text-[var(--chan-muted,#64748b)]">
-              {isPatron
-                ? isPl ? "Jednorazowe wsparcie odblokowuje dostęp na zawsze" : "One-time support unlocks access forever"
-                : isPl ? "aby obejrzeć ten materiał" : "to watch this video"}
-            </p>
-          </div>
-
-          {isPatron ? (
-            <a
-              href="#donations"
-              onClick={(event) => {
-                event.preventDefault();
-                document
-                  .getElementById("donations")
-                  ?.scrollIntoView({ behavior: "smooth", block: "center" });
-              }}
-              className="mt-1 inline-flex min-h-11 items-center justify-center rounded-xl bg-amber-500 px-6 font-brand text-[clamp(13px,2.4cqi,15px)] font-bold text-[#211d18] shadow-[0_8px_20px_rgba(245,158,11,0.22)] transition-[transform,background-color,box-shadow] duration-150 hover:-translate-y-px hover:bg-amber-400 hover:shadow-[0_10px_24px_rgba(245,158,11,0.28)] active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
-            >
-              {isPl ? "Wesprzyj kanał" : "Support Channel"}
-            </a>
-          ) : (
-            <button
-              type="button"
-              onClick={() => openAuthModal("sign-in")}
-              className="mt-1 inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--chan-blue)] px-6 font-brand text-[clamp(13px,2.4cqi,15px)] font-bold text-white shadow-[0_8px_20px_-6px_color-mix(in_srgb,var(--chan-blue)_50%,transparent)] transition-[transform,background-color,box-shadow] duration-150 hover:-translate-y-px hover:bg-[color-mix(in_srgb,var(--chan-blue)_88%,black)] hover:shadow-[0_12px_26px_-8px_color-mix(in_srgb,var(--chan-blue)_55%,transparent)] active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2"
-            >
-              {isPl ? "Zaloguj się" : "Sign In"}
-            </button>
-          )}
+      <section
+        className={cn(
+          styles.scene,
+          isPatronExperience ? styles.patron : styles.login,
+        )}
+        aria-labelledby={titleId}
+      >
+        <div className={styles.ambient} aria-hidden="true">
+          <span className={styles.glowOne} />
+          <span className={styles.glowTwo} />
+          <span className={styles.orbitOne} />
+          <span className={styles.orbitTwo} />
+          {CONSTELLATION.map((star) => (
+            <span
+              key={star.key}
+              className={styles.star}
+              style={star.style}
+            />
+          ))}
         </div>
-      </div>
+
+        <motion.div
+          className={styles.panel}
+          initial={reduceMotion ? false : { opacity: 0, y: 8, scale: 0.985 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: reduceMotion ? 0 : 0.24, ease: [0.2, 0.8, 0.2, 1] }}
+        >
+          <div className={styles.art} aria-hidden="true">
+            <span className={styles.artHalo} />
+            <span className={styles.artRing} />
+            <motion.span
+              className={styles.artMark}
+              initial={reduceMotion ? false : { opacity: 0, scale: 0.78 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={
+                reduceMotion
+                  ? { duration: 0 }
+                  : { type: "spring", stiffness: 320, damping: 22, delay: 0.08 }
+              }
+            >
+              <Icon />
+            </motion.span>
+            <Sparkles className={styles.sparkle} />
+          </div>
+
+          <div className={styles.content}>
+            <p className={styles.eyebrow}>
+              <span aria-hidden="true" />
+              {eyebrow}
+            </p>
+            <h2 id={titleId} className={styles.title}>
+              {title}
+            </h2>
+            <p className={styles.description}>{description}</p>
+
+            {isPatronExperience ? (
+              <a
+                href="#donations"
+                onClick={handleSupport}
+                className={cn(styles.cta, styles.patronCta)}
+              >
+                <Crown aria-hidden="true" />
+                {isPl ? "Wesprzyj jednorazowo" : "Support once"}
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={() => openAuthModal("sign-in")}
+                className={cn(styles.cta, styles.loginCta)}
+              >
+                <LockKeyhole aria-hidden="true" />
+                {isPl ? "Zaloguj się" : "Sign in"}
+              </button>
+            )}
+          </div>
+        </motion.div>
+      </section>
     </PlayerStateFrame>
   );
 }

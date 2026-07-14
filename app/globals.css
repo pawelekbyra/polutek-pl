@@ -13,8 +13,8 @@
     aspect-ratio: 16 / 9;
     background: #000;
     color: #fff;
-    --video-brand: #2563eb;
-    --video-focus-ring-color: #2563eb;
+    --video-brand: var(--chan-blue);
+    --video-focus-ring-color: var(--chan-blue);
     --media-slider-height: 24px;
     --media-slider-track-height: 2px;
     --media-slider-thumb-size: 10px;
@@ -33,12 +33,6 @@
     --media-slider-height: 24px;
   }
 
-  /* Progress bar fill color */
-  .polutek-vidstack-player [class*="vds-slider-fill"],
-  .polutek-vidstack-player .vds-slider-fill {
-    background-color: #2563eb !important;
-  }
-
   @media (max-width: 640px) {
     .polutek-vidstack-player {
       --media-slider-height: 20px;
@@ -55,13 +49,14 @@
   }
 }
 
-/* Doodle-forward product surfaces. The payment settings route is deliberately
-   outside `.admin-visual-shell`, so its approved visual treatment stays intact. */
+/* Public application surfaces. Admin remains intentionally scoped to its
+   existing visual shell so the public redesign cannot leak into operations. */
 @layer components {
   .channel-page-shell {
     background:
-      radial-gradient(circle at 8% 6%, color-mix(in srgb, var(--chan-blue) 9%, transparent), transparent 30rem),
-      linear-gradient(180deg, color-mix(in srgb, var(--chan-card) 60%, transparent), transparent 44%),
+      radial-gradient(circle at 8% 3%, color-mix(in srgb, var(--chan-blue) 8%, transparent), transparent 34rem),
+      radial-gradient(circle at 92% 18%, color-mix(in srgb, var(--chan-amber) 6%, transparent), transparent 26rem),
+      linear-gradient(180deg, color-mix(in srgb, var(--chan-card) 48%, transparent), transparent 46%),
       var(--chan-nav);
   }
 
@@ -71,14 +66,14 @@
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, .5),
       0 1px 2px rgba(23, 23, 23, .04),
-      0 30px 60px -28px rgba(23, 23, 23, .28);
+      0 30px 64px -34px rgba(15, 23, 42, .28);
   }
 
   .channel-profile {
     padding: clamp(1rem, 2.4vw, 1.6rem);
     border: 1px solid color-mix(in srgb, var(--chan-line) 80%, transparent);
     border-radius: 22px;
-    background: color-mix(in srgb, var(--chan-card) 92%, white);
+    background: color-mix(in srgb, var(--chan-card) 94%, transparent);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, .6),
       0 1px 2px rgba(23, 23, 23, .03),
@@ -153,7 +148,7 @@
   .admin-visual-shell [data-slot="card-title"],
   .admin-visual-shell h1,
   .admin-visual-shell h2 {
-    font-family: var(--font-space-grotesk, sans-serif);
+    font-family: var(--font-geist-sans), sans-serif;
     letter-spacing: -.025em;
   }
 
@@ -197,13 +192,19 @@
     transition: background-color .15s ease, transform .15s ease;
   }
 
-  .admin-visual-shell .app-skeleton,
-  .public-visual-shell .app-skeleton,
-  .channel-page-shell .app-skeleton {
+  .admin-visual-shell .app-skeleton {
     animation: none;
     border: 1px solid rgba(23, 23, 23, .07);
     border-radius: 12px 9px 13px 8px;
     background: #e9e3d8;
+  }
+
+  .public-visual-shell .app-skeleton,
+  .channel-page-shell .app-skeleton {
+    animation: none;
+    border: 1px solid color-mix(in srgb, var(--chan-line) 72%, transparent);
+    border-radius: 12px;
+    background: var(--chan-surface);
   }
 
   .admin-visual-shell .app-skeleton::after,
@@ -212,18 +213,26 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(105deg, transparent 25%, rgba(255, 252, 244, .8) 45%, rgba(37, 99, 235, .09) 52%, transparent 72%);
     transform: translateX(-110%);
     animation: polutek-skeleton-sweep 1.45s ease-in-out infinite;
   }
 
+  .admin-visual-shell .app-skeleton::after {
+    background: linear-gradient(105deg, transparent 25%, rgba(255, 252, 244, .8) 45%, rgba(37, 99, 235, .09) 52%, transparent 72%);
+  }
+
+  .public-visual-shell .app-skeleton::after,
+  .channel-page-shell .app-skeleton::after {
+    background: linear-gradient(105deg, transparent 25%, rgba(255, 255, 255, .82) 45%, color-mix(in srgb, var(--chan-blue) 9%, transparent) 52%, transparent 72%);
+  }
+
   @media (hover: hover) {
     .channel-video-card:hover {
-      transform: translateY(-3px) rotate(-.15deg);
+      transform: translateY(-3px);
     }
 
     .channel-video-card:hover .channel-video-card-media {
-      box-shadow: 5px 6px 0 color-mix(in srgb, var(--chan-blue) 34%, transparent), 0 14px 28px rgba(23, 23, 23, .1);
+      box-shadow: 0 18px 34px -18px color-mix(in srgb, var(--chan-blue) 46%, transparent), 0 10px 24px rgba(15, 23, 42, .1);
     }
 
     .admin-visual-shell [data-slot="button"]:not(:disabled):hover {
@@ -299,15 +308,15 @@
 
 @layer base {
   :root {
-    /* ===== Akcent (niebieski — jedyny kolor akcentowy) ===== */
-    --primary: 221.2 83.2% 53.3%;          /* #2563EB — bez zmian */
+    /* Blue drives actions; amber is reserved for patron/premium meaning. */
+    --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 0 0% 100%;
     --ring: 221.2 83.2% 53.3%;
-    --accent-soft: 222 90% 96%;            /* #EFF3FE — tło badge/box patrona */
-    --accent-ring: 221 83% 53% / 0.18;     /* rgba(37,99,235,.18) — focus/obwódki */
+    --accent-soft: 222 90% 96%;
+    --accent-ring: 221 83% 53% / 0.18;
 
     /* ===== Neutral background ===== */
-    --background: 0 0% 100%;               /* biały */
+    --background: 220 33% 98%;
     --foreground: 240 10% 3.9%;            /* #09090B Zinc-950 equivalent */
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
@@ -325,27 +334,25 @@
     --destructive-foreground: 210 40% 98%;
     --radius: 0.75rem;
 
-    /* Keep production builds independent from remote Google Font fetches. */
-    --font-inter: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --font-outfit: Outfit, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --font-jakarta: "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --font-space-grotesk: "Space Grotesk", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --font-gluten: Gluten, "Comic Sans MS", "Segoe Print", cursive;
-
-    /* ===== Channel homepage flat card skin (Navbar/Hero/ChannelHome/Sidebar/Donation/Footer) ===== */
-    --chan-card: oklch(98% 0.006 75);
-    --chan-nav: oklch(99% 0.004 75);
-    --chan-surface: oklch(95% 0.006 75);
-    --chan-line: oklch(91% 0.01 75);
-    --chan-line-soft: oklch(88% 0.01 75);
-    --chan-ink: oklch(20% 0.01 75);
-    --chan-muted: oklch(52% 0.01 75);
-    --chan-muted-2: oklch(45% 0.01 75);
-    --chan-body: oklch(33% 0.01 75);
+    /* Application UI tokens shared by the VOD channel and installable PWA. */
+    --chan-card: #ffffff;
+    --chan-nav: #f7f9fc;
+    --chan-surface: #f0f3f8;
+    --chan-surface-raised: #ffffff;
+    --chan-line: #e1e6ef;
+    --chan-line-soft: #d5dce8;
+    --chan-ink: #111827;
+    --chan-muted: #667085;
+    --chan-muted-2: #475467;
+    --chan-body: #344054;
     --chan-blue: #2563eb;
     --chan-blue-soft: #eff3fe;
+    --chan-amber: #f2b84b;
+    --chan-amber-strong: #d99516;
+    --chan-amber-soft: #fff4d6;
+    --chan-amber-ink: #422b05;
     --chan-avatar-gradient: linear-gradient(135deg, #4f7df0, #2563eb);
-    --chan-support-shadow: 0 4px 18px rgba(23, 23, 23, 0.05);
+    --chan-support-shadow: 0 12px 32px -20px rgba(15, 23, 42, .28);
   }
 }
 
@@ -364,11 +371,6 @@
   body {
     @apply bg-background text-foreground;
     overscroll-behavior-y: contain;
-    background-image:
-      linear-gradient(rgba(23,23,23,.065) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(23,23,23,.065) 1px, transparent 1px);
-    background-size: 42px 42px;
-    background-attachment: scroll;
     /* Safe area for iPhone notch / home bar */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
@@ -413,585 +415,19 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #D6D2C7;
+    background: var(--chan-line-soft);
     border-radius: 6px;
     border: 2px solid hsl(var(--background));
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #bfbab0;
-  }
-}
-
-/* Font variant theme overrides for testing different font pairings */
-[data-font-variant="1"] {
-  /* Elegant Serif: Playfair Display + Lora */
-  --font-space-grotesk: "Playfair Display", Georgia, serif;
-  --font-jakarta: "Lora", Georgia, serif;
-  --font-outfit: "Playfair Display", Georgia, serif;
-}
-
-[data-font-variant="2"] {
-  /* Tech Forward: IBM Plex Mono + IBM Plex Sans */
-  --font-space-grotesk: "IBM Plex Mono", monospace;
-  --font-jakarta: "IBM Plex Sans", sans-serif;
-  --font-outfit: "IBM Plex Mono", monospace;
-}
-
-[data-font-variant="3"] {
-  /* Friendly Casual: Poppins + Raleway */
-  --font-space-grotesk: "Poppins", sans-serif;
-  --font-jakarta: "Raleway", sans-serif;
-  --font-outfit: "Poppins", sans-serif;
-}
-
-[data-font-variant="4"] {
-  /* Professional Business: Montserrat + Open Sans */
-  --font-space-grotesk: "Montserrat", sans-serif;
-  --font-jakarta: "Open Sans", sans-serif;
-  --font-outfit: "Montserrat", sans-serif;
-}
-
-[data-font-variant="5"] {
-  /* Artistic Premium: Cormorant Garamond + Crimson Text */
-  --font-space-grotesk: "Cormorant Garamond", Georgia, serif;
-  --font-jakarta: "Crimson Text", Georgia, serif;
-  --font-outfit: "Cormorant Garamond", Georgia, serif;
-}
-
-[data-font-variant="6"] {
-  /* Modern & Clean: Space Grotesk + Plus Jakarta Sans (current/default) */
-  --font-space-grotesk: "Space Grotesk", sans-serif;
-  --font-jakarta: "Plus Jakarta Sans", sans-serif;
-  --font-outfit: "Space Grotesk", sans-serif;
-}
-
-[data-font-variant="7"] {
-  /* Classic Luxury: Abril Fatface + Merriweather */
-  --font-space-grotesk: "Abril Fatface", Georgia, serif;
-  --font-jakarta: "Merriweather", Georgia, serif;
-  --font-outfit: "Abril Fatface", Georgia, serif;
-}
-
-[data-font-variant="8"] {
-  /* Developer Friendly: JetBrains Mono + Inter */
-  --font-space-grotesk: "JetBrains Mono", monospace;
-  --font-jakarta: "Inter", sans-serif;
-  --font-outfit: "JetBrains Mono", monospace;
-}
-
-[data-font-variant="9"] {
-  /* Friendly Modern: Quicksand + Nunito */
-  --font-space-grotesk: "Quicksand", sans-serif;
-  --font-jakarta: "Nunito", sans-serif;
-  --font-outfit: "Quicksand", sans-serif;
-}
-
-[data-font-variant="10"] {
-  /* Bold Statement: Barlow + Barlow Condensed */
-  --font-space-grotesk: "Barlow", sans-serif;
-  --font-jakarta: "Barlow Condensed", sans-serif;
-  --font-outfit: "Barlow", sans-serif;
-}
-
-[data-font-variant="11"] {
-  /* Academic Elegance: EB Garamond + Source Sans Pro */
-  --font-space-grotesk: "EB Garamond", Georgia, serif;
-  --font-jakarta: "Source Sans Pro", sans-serif;
-  --font-outfit: "EB Garamond", Georgia, serif;
-}
-
-[data-font-variant="12"] {
-  /* Contemporary Creative: Syne + Commissioner */
-  --font-space-grotesk: "Syne", sans-serif;
-  --font-jakarta: "Commissioner", sans-serif;
-  --font-outfit: "Syne", sans-serif;
-}
-
-[data-font-variant="13"] {
-  /* Playful & Bold: Fredoka + Ubuntu */
-  --font-space-grotesk: "Fredoka", sans-serif;
-  --font-jakarta: "Ubuntu", sans-serif;
-  --font-outfit: "Fredoka", sans-serif;
-}
-
-[data-font-variant="14"] {
-  /* Editorial: Libre Baskerville + Libre Franklin */
-  --font-space-grotesk: "Libre Baskerville", Georgia, serif;
-  --font-jakarta: "Libre Franklin", sans-serif;
-  --font-outfit: "Libre Baskerville", Georgia, serif;
-}
-
-[data-font-variant="15"] {
-  /* Monospace Brutalist: Courier Prime */
-  --font-space-grotesk: "Courier Prime", monospace;
-  --font-jakarta: "Courier Prime", monospace;
-  --font-outfit: "Courier Prime", monospace;
-}
-
-[data-font-variant="16"] {
-  /* Balanced Serif & Sans: Bitter + Merriweather Sans */
-  --font-space-grotesk: "Bitter", Georgia, serif;
-  --font-jakarta: "Merriweather Sans", sans-serif;
-  --font-outfit: "Bitter", Georgia, serif;
-}
-
-@layer utilities {
-  .bg-\[\#1F7A88\] {
-    background-color: hsl(var(--primary)) !important;
-  }
-
-  .hover\:bg-\[\#1F7A88\]\/90:hover {
-    background-color: hsl(var(--primary) / 0.9) !important;
-  }
-
-  .active\:bg-\[\#1F7A88\]\/85:active {
-    background-color: hsl(var(--primary) / 0.85) !important;
-  }
-
-  .experiment2-skin svg path,
-  .experiment3-skin svg path,
-  .experiment4-skin svg path {
-    stroke-linecap: round !important;
-    stroke-linejoin: round !important;
-  }
-
-  @keyframes pl-glow {
-    0% {
-      box-shadow: 0 0 0 0 var(--accent-ring), 0 10px 30px rgba(0,0,0,.35);
-    }
-    100% {
-      box-shadow: 0 0 0 14px rgba(37,99,235,0), 0 10px 30px rgba(0,0,0,.35);
-    }
-  }
-
-  .animate-pl-glow {
-    animation: pl-glow 2.4s ease-out infinite;
-  }
-
-  @keyframes player-loading-sweep {
-    0% {
-      transform: translateX(-100%);
-    }
-    100% {
-      transform: translateX(340%);
-    }
-  }
-
-  .animate-player-loading-sweep {
-    animation: player-loading-sweep 1.1s ease-in-out infinite;
-  }
-
-  /* --- Access lock overlay: aurora blobs, icon draw-in, sparkles, shimmer --- */
-  @keyframes aurora-drift-a {
-    0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-    50% { transform: translate(4%, -6%) scale(1.12) rotate(10deg); }
-  }
-  @keyframes aurora-drift-b {
-    0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-    50% { transform: translate(-6%, 5%) scale(0.9) rotate(-8deg); }
-  }
-  @keyframes aurora-drift-c {
-    0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
-    50% { transform: translate(3%, 4%) scale(1.08) rotate(6deg); }
-  }
-  .aurora-blob-a { animation: aurora-drift-a 16s ease-in-out infinite; transform-origin: 50% 50%; }
-  .aurora-blob-b { animation: aurora-drift-b 20s ease-in-out infinite; transform-origin: 50% 50%; }
-  .aurora-blob-c { animation: aurora-drift-c 24s ease-in-out infinite; transform-origin: 50% 50%; }
-
-  @keyframes lock-draw {
-    to { stroke-dashoffset: 0; }
-  }
-  .lock-draw {
-    animation: lock-draw 0.55s cubic-bezier(0.65,0,0.35,1) 0.1s forwards;
-  }
-
-  @keyframes lock-dot-pop {
-    0%, 40% { opacity: 0; transform: scale(0); }
-    70% { opacity: 1; transform: scale(1.3); }
-    100% { opacity: 1; transform: scale(1); }
-  }
-  .lock-dot-pop {
-    transform-origin: 12px 16px;
-    animation: lock-dot-pop 0.4s ease-out 0.55s both;
-  }
-
-  @keyframes icon-pop-in {
-    0% { opacity: 0; transform: scale(0.3) rotate(-35deg); }
-    60% { opacity: 1; transform: scale(1.15) rotate(8deg); }
-    100% { opacity: 1; transform: scale(1) rotate(0deg); }
-  }
-  .icon-pop-in {
-    transform-origin: 50% 50%;
-    animation: icon-pop-in 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.1s both;
-  }
-
-  @keyframes icon-float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-4px); }
-  }
-  @keyframes icon-breathe {
-    0%, 100% { box-shadow: 0 0 0 0 var(--breathe-ring, rgba(37,99,235,0.35)); }
-    50% { box-shadow: 0 0 0 10px rgba(0,0,0,0); }
-  }
-  .badge-float {
-    animation: icon-float 3.6s ease-in-out infinite;
-  }
-  .badge-float-glow {
-    animation: icon-float 3.6s ease-in-out infinite, icon-breathe 2.6s ease-out infinite;
-  }
-
-  @keyframes sparkle-twinkle {
-    0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
-    50% { opacity: 1; transform: scale(1) rotate(25deg); }
-  }
-  .sparkle-particle {
-    animation: sparkle-twinkle 2.4s ease-in-out infinite;
-  }
-
-  @keyframes cta-shimmer {
-    0% { transform: translateX(-160%) skewX(-15deg); }
-    100% { transform: translateX(340%) skewX(-15deg); }
-  }
-  .cta-shimmer {
-    animation: cta-shimmer 3.2s ease-in-out infinite;
-  }
-
-  @keyframes card-enter {
-    from { opacity: 0; transform: translateY(10px) scale(0.96); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-  }
-  .card-enter {
-    animation: card-enter 0.5s cubic-bezier(0.16,1,0.3,1) both;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .aurora-blob-a, .aurora-blob-b, .aurora-blob-c,
-    .lock-draw, .lock-dot-pop, .icon-pop-in,
-    .badge-float, .badge-float-glow,
-    .sparkle-particle, .cta-shimmer, .card-enter {
-      animation: none !important;
-      opacity: 1 !important;
-      transform: none !important;
-      stroke-dashoffset: 0 !important;
-    }
-  }
-}
-
-@layer utilities {
-  .rough-ui-page {
-    background-image:
-      radial-gradient(circle at 20% 10%, rgba(37, 99, 235, 0.08), transparent 26%),
-      radial-gradient(circle at 78% 8%, rgba(245, 196, 81, 0.13), transparent 22%),
-      linear-gradient(rgba(23,23,23,.045) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(23,23,23,.045) 1px, transparent 1px);
-    background-size: auto, auto, 42px 42px, 42px 42px;
-  }
-
-  .rough-ui-page :is(h1, h2, h3, nav, button, a, .rough-chip) {
-    letter-spacing: -0.025em;
-  }
-
-  .rough-box,
-  .rough-card,
-  .rough-btn,
-  .rough-chip {
-    position: relative;
-    border-color: rgba(23, 23, 23, 0.92) !important;
-    box-shadow: none !important;
-  }
-
-  .rough-box::after,
-  .rough-card::after,
-  .rough-btn::after,
-  .rough-chip::after {
-    content: "";
-    pointer-events: none;
-    position: absolute;
-    inset: 2px -2px -2px 2px;
-    border: 1px solid rgba(23, 23, 23, 0.22);
-    border-radius: inherit;
-    transform: rotate(-0.25deg);
-  }
-
-  .rough-card:nth-child(even)::after,
-  .rough-ui-page article:nth-child(even)::after {
-    transform: rotate(0.35deg);
-  }
-
-  .rough-btn {
-    border: 2px solid rgba(23, 23, 23, 0.92);
-    transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
-  }
-
-  .rough-btn:hover {
-    transform: translateY(-1px) rotate(-0.25deg);
-  }
-
-  .rough-btn-filled,
-  .rough-btn-blue {
-    color: #f8f3e7;
-  }
-
-  .rough-copy {
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 0.28em;
-    text-decoration-color: rgba(23, 23, 23, 0.18);
-  }
-
-  .rough-underline {
-    text-decoration: underline;
-    text-decoration-thickness: 3px;
-    text-underline-offset: 0.22em;
-    text-decoration-color: rgba(23, 23, 23, 0.85);
-  }
-}
-
-@layer utilities {
-  /*
-   * /testujemy — an elegant "maison française" re-skin of the exact same
-   * homepage components (Navbar/ChannelHome/Footer), not a parallel set of
-   * components. Redefining the --chan-* tokens here re-themes every surface
-   * that already reads them; the rules below only need to catch the handful
-   * of spots in those files that hardcode #2563EB/#2563eb/#EFF3FE instead of
-   * a token, so this whole block is additive and scoped to .testujemy-page —
-   * it never touches the real homepage's tokens or markup.
-   */
-  .testujemy-page {
-    --fr-accent: #7a2331;
-    --fr-accent-soft: #f0e0dc;
-    --fr-gold: #ad8a4c;
-
-    --chan-nav: #fbf8f2;
-    --chan-card: #f7f1e6;
-    --chan-surface: #efe7d8;
-    --chan-line: #e1d4be;
-    --chan-line-soft: #eae0cb;
-    --chan-ink: #211d18;
-    --chan-muted: #7c7264;
-    --chan-muted-2: #6b6152;
-    --chan-body: #46403a;
-    --chan-blue: var(--fr-accent);
-    --chan-blue-soft: var(--fr-accent-soft);
-    --chan-avatar-gradient: linear-gradient(135deg, #c9a063, #7a2331);
-    --chan-support-shadow: 0 1px 0 rgba(33, 29, 24, 0.08);
-
-    --primary: 350 55% 31%;
-    --primary-foreground: 40 40% 97%;
-    --ring: 350 55% 31%;
-    --accent-soft: 350 35% 92%;
-
-    background: var(--chan-card);
-    color: var(--chan-ink);
-    min-height: 100vh;
-  }
-
-  .testujemy-page .font-brand {
-    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.01em;
-  }
-
-  .testujemy-page .bg-\[\#2563EB\] {
-    background-color: var(--fr-accent) !important;
-  }
-
-  .testujemy-page .text-\[\#2563EB\],
-  .testujemy-page .text-\[\#2563eb\] {
-    color: var(--fr-accent) !important;
-  }
-
-  .testujemy-page .bg-\[\#EFF3FE\],
-  .testujemy-page .bg-\[\#EFF3FE\]\/60 {
-    background-color: var(--fr-accent-soft) !important;
-  }
-
-  .testujemy-page .fill-\[\#2563EB\],
-  .testujemy-page .fill-\[\#2563eb\] {
-    fill: var(--fr-accent) !important;
-  }
-
-  .testujemy-page .from-\[\#EAF0FF\].to-\[\#DBE7FB\] {
-    background-image: linear-gradient(135deg, var(--fr-accent-soft), #fbf6ef) !important;
-  }
-
-  .testujemy-page svg[stroke="#2563eb" i] {
-    stroke: var(--fr-accent) !important;
-  }
-
-  .testujemy-page svg[fill="#2563eb" i] {
-    fill: var(--fr-accent) !important;
-  }
-
-  .testujemy-page [style*="rgba(37,99,235"] {
-    background: linear-gradient(135deg, var(--fr-accent) 0%, rgba(20, 16, 12, 0.78) 100%) !important;
-  }
-}
-
-@layer utilities {
-  /*
-   * /cyberpunk-light — same re-skin contract as /testujemy: identical
-   * homepage components (Navbar/ChannelHome/Footer), only the --chan-*
-   * tokens and a few additive decorations change. The accent blue and
-   * light background are intentionally left as-is (owner asked to keep
-   * the colorway); the cyberpunk read comes from typography, hairline
-   * grid texture, glow, and HUD corner brackets — not a dark/neon
-   * palette swap. See also /cyberpunk (app/cyberpunk.css), the dark
-   * neon variant.
-   */
-  .cyberpunk-light-page {
-    --chan-nav: #f7f9fc;
-    --chan-card: #ffffff;
-    --chan-surface: #eef2fb;
-    --chan-line: #c9d6f2;
-    --chan-line-soft: #dde6f7;
-    --chan-ink: #0a0e17;
-    --chan-muted: #5b6478;
-    --chan-muted-2: #45506b;
-    --chan-body: #1b2233;
-    --chan-blue: #2563eb;
-    --chan-blue-soft: #eaf0ff;
-    --chan-avatar-gradient: linear-gradient(135deg, #2563eb, #1e40af);
-    --chan-support-shadow: 0 1px 0 rgba(10, 14, 23, 0.08);
-
-    --cyber-mono: ui-monospace, "SFMono-Regular", "Cascadia Code", "Roboto Mono", Menlo, Consolas, "Courier New", monospace;
-
-    background:
-      linear-gradient(var(--chan-line) 1px, transparent 1px) 0 0 / 36px 36px,
-      linear-gradient(90deg, var(--chan-line) 1px, transparent 1px) 0 0 / 36px 36px,
-      radial-gradient(circle at 15% 0%, color-mix(in srgb, var(--chan-blue) 10%, transparent), transparent 40%),
-      var(--chan-nav);
-    color: var(--chan-ink);
-    min-height: 100vh;
-    position: relative;
-    overflow-x: clip;
-  }
-
-  .cyberpunk-light-page::after {
-    content: "";
-    position: fixed;
-    inset: 0 0 auto 0;
-    height: 160px;
-    pointer-events: none;
-    z-index: 60;
-    background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--chan-blue) 12%, transparent) 50%, transparent 100%);
-    animation: cyberpunk-light-scan 6s linear infinite;
-  }
-
-  @keyframes cyberpunk-light-scan {
-    0% { transform: translateY(-160px); }
-    100% { transform: translateY(100vh); }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .cyberpunk-light-page::after {
-      display: none;
-    }
-  }
-
-  .cyberpunk-light-page .font-brand {
-    font-family: var(--cyber-mono) !important;
-    letter-spacing: 0.02em;
-  }
-
-  .cyberpunk-light-page .polutek-watch-nav a,
-  .cyberpunk-light-page .polutek-watch-nav button {
-    font-family: var(--cyber-mono);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    position: relative;
-  }
-
-  .cyberpunk-light-page .polutek-watch-nav a::before,
-  .cyberpunk-light-page .polutek-watch-nav button::before {
-    content: "[ ";
-    color: color-mix(in srgb, var(--chan-blue) 55%, transparent);
-  }
-
-  .cyberpunk-light-page .polutek-watch-nav a::after,
-  .cyberpunk-light-page .polutek-watch-nav button::after {
-    content: " ]";
-    color: color-mix(in srgb, var(--chan-blue) 55%, transparent);
-  }
-
-  .cyberpunk-light-page .polutek-watch-nav {
-    position: relative;
-    border-bottom: 1px solid var(--chan-blue);
-    box-shadow: 0 1px 12px color-mix(in srgb, var(--chan-blue) 25%, transparent);
-  }
-
-  .cyberpunk-light-page .polutek-watch-nav::before,
-  .cyberpunk-light-page .polutek-watch-nav::after,
-  .cyberpunk-light-page .polutek-vidstack-player::before,
-  .cyberpunk-light-page .polutek-vidstack-player::after {
-    content: "";
-    position: absolute;
-    width: 26px;
-    height: 26px;
-    border: 3px solid var(--chan-blue);
-    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--chan-blue) 70%, transparent));
-    pointer-events: none;
-    z-index: 5;
-  }
-
-  .cyberpunk-light-page .polutek-watch-nav::before {
-    top: 3px;
-    left: 3px;
-    border-right: none;
-    border-bottom: none;
-  }
-
-  .cyberpunk-light-page .polutek-watch-nav::after {
-    bottom: -2px;
-    right: 3px;
-    border-left: none;
-    border-top: none;
-  }
-
-  .cyberpunk-light-page .polutek-vidstack-player {
-    position: relative;
-  }
-
-  .cyberpunk-light-page .polutek-vidstack-player::before {
-    top: -3px;
-    left: -3px;
-    border-right: none;
-    border-bottom: none;
-  }
-
-  .cyberpunk-light-page .polutek-vidstack-player::after {
-    bottom: -2px;
-    right: -2px;
-    border-left: none;
-    border-top: none;
-  }
-
-  .cyberpunk-light-page [class*="rounded-2xl"],
-  .cyberpunk-light-page [class*="rounded-xl"],
-  .cyberpunk-light-page [class*="rounded-lg"],
-  .cyberpunk-light-page [class*="rounded-\[1"],
-  .cyberpunk-light-page [class*="rounded-\[2"] {
-    border-radius: 3px !important;
-  }
-
-  .cyberpunk-light-page .bg-\[\#2563EB\],
-  .cyberpunk-light-page [class*="bg-\[var(--chan-blue)\]"] {
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--chan-blue) 70%, transparent),
-      0 0 12px color-mix(in srgb, var(--chan-blue) 55%, transparent),
-      0 0 28px color-mix(in srgb, var(--chan-blue) 35%, transparent);
-  }
-
-  .cyberpunk-light-page a:hover,
-  .cyberpunk-light-page button:hover {
-    text-shadow: 0 0 8px color-mix(in srgb, var(--chan-blue) 45%, transparent);
+    background: var(--chan-muted);
   }
 }
 
 @layer components {
   .polutek-watch-nav {
     background:
-      radial-gradient(circle at top left, color-mix(in srgb, var(--chan-blue) 8%, transparent), transparent 34%),
+      radial-gradient(circle at top left, color-mix(in srgb, var(--chan-blue) 7%, transparent), transparent 34%),
       linear-gradient(180deg, color-mix(in srgb, var(--chan-card) 82%, transparent), color-mix(in srgb, var(--chan-nav) 70%, transparent) 96%),
       color-mix(in srgb, var(--chan-nav) 78%, transparent);
     border-bottom: 1px solid color-mix(in srgb, var(--chan-line) 66%, transparent);
@@ -1017,11 +453,11 @@
   }
 
   .chan-patron-ring {
-    border-color: var(--chan-blue);
+    border-color: var(--chan-amber);
     box-shadow:
-      0 0 0 3px color-mix(in srgb, var(--chan-blue) 16%, transparent),
-      0 0 18px color-mix(in srgb, var(--chan-blue) 34%, transparent),
-      0 8px 20px color-mix(in srgb, var(--chan-blue) 12%, transparent);
+      0 0 0 3px color-mix(in srgb, var(--chan-amber) 18%, transparent),
+      0 0 18px color-mix(in srgb, var(--chan-amber) 28%, transparent),
+      0 8px 20px color-mix(in srgb, var(--chan-amber) 14%, transparent);
   }
 
   .chan-lang-pill-active {

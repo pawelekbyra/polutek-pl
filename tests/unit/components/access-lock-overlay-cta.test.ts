@@ -17,12 +17,15 @@ describe("AccessLockOverlay CTA and accessibility verification", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
     expect(source).toContain('href="#donations"');
     expect(source).toContain("scrollIntoView");
-    expect(source).toContain("Wesprzyj kanał");
+    expect(source).toContain("Wesprzyj jednorazowo");
   });
 
-  it("uses the flat channel card design tokens", () => {
+  it("uses the shared action and patron tokens", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
-    expect(source).toContain("var(--chan-card)");
-    expect(source).toContain("var(--chan-ink)");
+    const styles = component("app/components/AccessLockOverlay.module.css");
+
+    expect(styles).toContain("var(--chan-blue)");
+    expect(styles).toContain("var(--chan-amber)");
+    expect(styles).toContain("var(--chan-amber-ink)");
   });
 });

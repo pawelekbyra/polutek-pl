@@ -73,7 +73,7 @@ describe("public loading/access state UX contracts", () => {
     expect(loading).toContain("Już podaję film…");
     expect(loading).toContain("polutek-player-loader-mark");
     expect(loading).toContain("polutek-player-loader-progress");
-    expect(loading).toContain("var(--chan-nav,#f7f1e4)");
+    expect(loading).toContain("var(--chan-nav,#f7f9fc)");
     expect(loading).toContain('from "lucide-react"');
     expect(loading).not.toContain("scribble");
     expect(loading).not.toContain("spark");
@@ -93,17 +93,20 @@ describe("public loading/access state UX contracts", () => {
     expect(card).toContain("{badge && (");
   });
 
-  it("shows visible access CTAs for both full and compact lock states without framer infinite motion", () => {
+  it("shows visible access CTAs with reduced-motion-safe ambient art and static compact states", () => {
     const overlay = read("app/components/AccessLockOverlay.tsx");
+    const overlayStyles = read("app/components/AccessLockOverlay.module.css");
 
     expect(overlay).toContain("Zaloguj się");
-    expect(overlay).toContain("Wesprzyj kanał");
+    expect(overlay).toContain("Wesprzyj jednorazowo");
     expect(overlay).toContain('href="#donations"');
     expect(overlay).toContain('getElementById("donations")');
-    expect(overlay).toContain("Zaloguj");
-    expect(overlay).not.toContain("framer-motion");
+    expect(overlay).toContain("useReducedMotion");
     expect(overlay).not.toContain("repeat: Infinity");
     expect(overlay).not.toContain("text-transparent");
+    expect(overlayStyles).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(overlayStyles).toContain(".compact");
+    expect(overlayStyles).toContain("pointer-events: none");
   });
 
   it("keeps comments neutral while loading and exposes readable pending labels", () => {
@@ -113,7 +116,9 @@ describe("public loading/access state UX contracts", () => {
     );
 
     expect(embedded).toContain("isViewerLoading={isLoading}");
-    expect(embedded).toContain('<Skeleton className="h-7 w-48" />');
+    expect(embedded).toContain("<CommentsLoadingState language={language} />");
+    expect(embedded).toContain("Warming up the discussion");
+    expect(embedded).toContain("motion-reduce:animate-none");
     expect(composer).toContain("Checking comment access");
     expect(composer).toContain("Sprawdzamy możliwość komentowania");
     expect(composer).toContain("Wysyłanie...");

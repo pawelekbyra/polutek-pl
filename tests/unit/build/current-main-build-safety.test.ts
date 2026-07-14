@@ -21,24 +21,14 @@ describe('current main build safety', () => {
     expect(read('app/globals.css')).not.toMatch(/@import\s+[^;]*fonts\.googleapis\.com/i);
   });
 
-  it('keeps deterministic system font fallbacks for existing font variables', () => {
-    const css = read('app/globals.css');
+  it('uses bundled Geist font variables instead of remote font hooks', () => {
+    const fonts = read('app/fonts.ts');
+    const layout = read('app/layout.tsx');
 
-    for (const variable of [
-      '--font-inter',
-      '--font-outfit',
-      '--font-jakarta',
-      '--font-space-grotesk',
-      '--font-gluten',
-    ]) {
-      expect(css).toContain(variable);
-    }
-
-    expect(css).toMatch(/--font-inter:[^;]*(ui-sans-serif|system-ui)[^;]*;/);
-    expect(css).toMatch(/--font-outfit:[^;]*(ui-sans-serif|system-ui)[^;]*;/);
-    expect(css).toMatch(/--font-jakarta:[^;]*(ui-sans-serif|system-ui)[^;]*;/);
-    expect(css).toMatch(/--font-space-grotesk:[^;]*(ui-sans-serif|system-ui)[^;]*;/);
-    expect(css).toMatch(/--font-gluten:[^;]*(cursive|Segoe Print|Comic Sans MS)[^;]*;/);
+    expect(fonts).toContain('from "geist/font/sans"');
+    expect(fonts).toContain('from "geist/font/mono"');
+    expect(layout).toContain('geistSans.variable');
+    expect(layout).toContain('geistMono.variable');
   });
 
   it('keeps sitemap output limited to public page URLs without private/provider fields', () => {

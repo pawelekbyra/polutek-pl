@@ -27,7 +27,7 @@ function useAccountUser() {
 
 export function Feedback({ error, info }: { error: string | null; info: string | null }) {
   if (error) return <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-[13px] font-semibold text-red-600">{error}</p>;
-  if (info) return <p className="rounded-lg bg-[#EFF3FE] px-3 py-2 text-[13px] font-semibold text-[#2563EB]">{info}</p>;
+  if (info) return <p className="rounded-lg bg-[var(--chan-blue-soft)] px-3 py-2 text-[13px] font-semibold text-[var(--chan-blue)]">{info}</p>;
   return null;
 }
 
@@ -413,7 +413,7 @@ function Field({
         value={value}
         inputMode={inputMode}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-[12px] border border-[var(--chan-line)] bg-[var(--chan-surface)] px-3 py-2 font-sans text-[15px] text-[var(--chan-ink)] outline-none transition-colors focus:border-[#2563EB]"
+        className="w-full rounded-[12px] border border-[var(--chan-line)] bg-[var(--chan-surface)] px-3 py-2 font-sans text-[15px] text-[var(--chan-ink)] outline-none transition-colors focus:border-[var(--chan-blue)]"
       />
     </label>
   );
@@ -424,7 +424,7 @@ function Primary({ loading, label }: { loading: boolean; label: string }) {
     <button
       type="submit"
       disabled={loading}
-      className="flex h-[44px] w-full items-center justify-center rounded-[12px] bg-[#2563EB] font-brand text-[15px] font-bold text-white transition-all hover:-translate-y-px active:scale-[0.98] disabled:opacity-60"
+      className="flex h-[44px] w-full items-center justify-center rounded-[12px] bg-[var(--chan-blue)] font-brand text-[15px] font-bold text-white transition-all hover:-translate-y-px active:scale-[0.98] disabled:opacity-60"
     >
       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span>{label}</span>}
     </button>

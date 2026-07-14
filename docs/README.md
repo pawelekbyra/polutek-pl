@@ -13,10 +13,11 @@ Brak subskrypcji cyklicznych, brak multi-tenant, brak marketplace.
 - Runtime jest po stabilizacji wokół `PatronGrant` jako jedynego źródła prawdy
   dla patron access; legacy pola `User.isPatron`, `User.patronSince` i
   `User.patronSource` zostały usunięte ze schematu.
-- Publiczny frontend jest na Next.js 15, używa custom/headless Clerk auth UI,
-  progressive app shell, in-memory preloadu (`AppPreloadProvider`) i paper/ink
-  visual system. Nie ma już blokującego splash/ENTER gate ani fullscreen iris
-  transition przy zmianie filmu.
+- Publiczny frontend jest na Next.js 16/React 19, używa custom/headless Clerk
+  auth UI, progressive app shell, in-memory preloadu (`AppPreloadProvider`) i
+  jednego application-grade systemu VOD/PWA (Geist, neutralne powierzchnie,
+  niebieskie akcje, bursztynowy patron). Nie ma osobnych tras ze skinami,
+  blokującego splash/ENTER gate ani fullscreen transition przy zmianie filmu.
 - Production launch nie jest certyfikowany samą dokumentacją ani zielonym CI;
   wymaga owner/legal/operator evidence, manualnego smoke testu i finalnej
   decyzji właściciela.

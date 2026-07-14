@@ -82,7 +82,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
 
             <div className="mt-5 flex items-center justify-between border-t border-[var(--chan-line)] pt-4">
               {isAdmin ? (
-                <Link href="/admin" className="font-sans text-[13px] font-bold text-[var(--chan-ink)] underline hover:text-[#2563EB]">
+                <Link href="/admin" className="font-sans text-[13px] font-bold text-[var(--chan-ink)] underline hover:text-[var(--chan-blue)]">
                   {isPl ? "Zarządzaj kanałem" : "Manage channel"}
                 </Link>
               ) : (

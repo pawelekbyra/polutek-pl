@@ -5,11 +5,11 @@
   "id": "/",
   "start_url": "/",
   "scope": "/",
-  "display": "fullscreen",
-  "display_override": ["fullscreen", "standalone"],
-  "orientation": "portrait-primary",
-  "background_color": "#f7f1e4",
-  "theme_color": "#f7f1e4",
+  "display": "standalone",
+  "display_override": ["standalone", "fullscreen"],
+  "orientation": "any",
+  "background_color": "#f7f9fc",
+  "theme_color": "#f7f9fc",
   "lang": "pl",
   "icons": [
     {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import UserMenu from "./auth/UserMenu";
@@ -17,6 +17,11 @@ import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
 type NavbarMetadata = {
   isPatron?: unknown;
   role?: unknown;
+};
+
+type ServerAdminState = {
+  userId: string;
+  isAdmin: boolean;
 };
 
 const Navbar = () => {
@@ -40,20 +45,38 @@ const Navbar = () => {
   };
 
   const metadata = (user?.publicMetadata || {}) as NavbarMetadata;
-  const [serverIsAdmin, setServerIsAdmin] = useState(false);
+  const userId = user?.id;
+  const [serverAdminState, setServerAdminState] =
+    useState<ServerAdminState | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    if (!user) {
-      setServerIsAdmin(false);
-      return () => { cancelled = true; };
-    }
-    fetch("/api/user/profile", { cache: "no-store" })
+    if (!userId) return;
+
+    const controller = new AbortController();
+    fetch("/api/user/profile", {
+      cache: "no-store",
+      signal: controller.signal,
+    })
       .then((response) => (response.ok ? response.json() : null))
-      .then((profile) => { if (!cancelled) setServerIsAdmin(profile?.isAdmin === true); })
-      .catch(() => { if (!cancelled) setServerIsAdmin(false); });
-    return () => { cancelled = true; };
-  }, [user]);
+      .then((profile) => {
+        if (!controller.signal.aborted) {
+          setServerAdminState({ userId, isAdmin: profile?.isAdmin === true });
+        }
+      })
+      .catch((error: unknown) => {
+        if (
+          !controller.signal.aborted &&
+          !(error instanceof DOMException && error.name === "AbortError")
+        ) {
+          setServerAdminState({ userId, isAdmin: false });
+        }
+      });
+
+    return () => controller.abort();
+  }, [userId]);
+
+  const serverIsAdmin =
+    serverAdminState?.userId === userId && serverAdminState?.isAdmin === true;
 
   const isAdmin = resolveNavbarAdminUiState(serverIsAdmin, metadata.role);
   const isPatron = isAdmin || metadata.isPatron === true;
@@ -117,9 +140,9 @@ const Navbar = () => {
                 aria-label="POLUTEK.PL"
               >
                 <BrandName
-                  className="text-[1.1rem] leading-none text-[var(--chan-ink)] md:text-[1.35rem]"
-                  variant="classic"
-                  style={{ fontFamily: "'Bitter', Georgia, serif" }}
+                  className="text-[17.5px] leading-none md:text-[21.25px]"
+                  decorative
+                  shine="hover"
                 />
               </Link>
             </div>

@@ -320,7 +320,7 @@ export default function PolutekControls({ className }: { className?: string }) {
       </Controls.Root>
       <style jsx global>{`
         .polutek-player-gesture { position:absolute; inset:0; z-index:1; }
-        .polutek-player-controls { position:absolute; inset:0; z-index:20; pointer-events:none; visibility:hidden; opacity:0; transition:opacity .16s ease,visibility 0s linear .16s; font-family:var(--font-space-grotesk,sans-serif); }
+        .polutek-player-controls { position:absolute; inset:0; z-index:20; pointer-events:none; visibility:hidden; opacity:0; transition:opacity .16s ease,visibility 0s linear .16s; font-family:var(--font-geist-sans),sans-serif; }
         .polutek-player-controls--visible { visibility:visible; opacity:1; transition-delay:0s; }
         .polutek-player-scrim { position:absolute; inset:0; background:linear-gradient(to bottom,transparent 42%,rgba(3,7,18,.12) 61%,rgba(3,7,18,.88) 100%); }
         .polutek-player-bottom { position:absolute; right:0; bottom:0; left:0; padding:0 14px max(10px,env(safe-area-inset-bottom)); pointer-events:auto; }
@@ -354,7 +354,7 @@ export default function PolutekControls({ className }: { className?: string }) {
         .polutek-player-hero:hover { background:color-mix(in srgb,var(--chan-blue,#2563eb) 88%,black); transform:scale(1.05); box-shadow:0 20px 46px rgba(0,0,0,.38),0 0 0 7px rgba(255,255,255,.16); }
         .polutek-player-hero:active { transform:scale(.96); }
         .polutek-player-hero:focus-visible { outline:3px solid #fff; outline-offset:4px; box-shadow:0 0 0 7px var(--chan-blue,#2563eb); }
-        .polutek-player-hero--replay { display:flex; width:auto; height:52px; padding:0 18px 0 10px; gap:10px; border-radius:15px; background:color-mix(in srgb,var(--chan-card,#f7f1e4) 96%,white); color:var(--chan-ink,#171717); box-shadow:0 16px 44px rgba(0,0,0,.38); backdrop-filter:blur(14px); }
+        .polutek-player-hero--replay { display:flex; width:auto; height:52px; padding:0 18px 0 10px; gap:10px; border-radius:15px; background:color-mix(in srgb,var(--chan-card,#fff) 96%,white); color:var(--chan-ink,#111827); box-shadow:0 16px 44px rgba(0,0,0,.38); backdrop-filter:blur(14px); }
         .polutek-player-hero--replay:hover { background:color-mix(in srgb,var(--chan-card,#fff) 80%,white); box-shadow:0 20px 48px rgba(0,0,0,.42); }
         .polutek-player-hero-icon-wrap { display:grid; width:34px; height:34px; place-items:center; border-radius:10px; background:var(--chan-blue,#2563eb); color:#fff; }
         .polutek-player-hero-icon { width:27px; height:27px; stroke-width:2.2; }
@@ -371,7 +371,7 @@ export default function PolutekControls({ className }: { className?: string }) {
         .polutek-player-menu-item:hover,.polutek-player-menu-item:focus-visible { background:color-mix(in srgb,var(--chan-blue,#2563eb) 10%,white); color:var(--chan-blue,#1d4ed8); outline:none; }
         .polutek-player-menu-item:focus-visible { box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--chan-blue,#2563eb) 35%,transparent); }
         .polutek-player-menu-check { width:17px; height:17px; color:var(--chan-blue,#2563eb); stroke-width:2.4; }
-        .polutek-vidstack-player .vds-captions { bottom:82px; font-family:var(--font-space-grotesk,sans-serif); }
+        .polutek-vidstack-player .vds-captions { bottom:82px; font-family:var(--font-geist-sans),sans-serif; }
         @keyframes polutek-spin { to { transform:rotate(360deg); } }
         @media (max-width:640px) {
           .polutek-player-bottom { padding:0 7px max(6px,env(safe-area-inset-bottom)); }

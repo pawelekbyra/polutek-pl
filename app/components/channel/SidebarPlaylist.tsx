@@ -18,17 +18,6 @@ import DonationBox from "./DonationBox";
 import { useAppPreload } from "../preload/AppPreloadProvider";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 
-type UserProfile = {
-  id: string;
-  email: string;
-  imageUrl?: string | null;
-  totalPaid: number;
-  initialInteraction?: { liked: boolean; disliked: boolean };
-  initialIsSubscribed?: boolean;
-  isPatronDecorative?: boolean;
-  role?: string;
-} | null | undefined;
-
 type Translations = {
   views: string;
 };
@@ -54,7 +43,6 @@ type SidebarLayout = {
 interface SidebarPlaylistProps {
   sortedVideos: PublicVideoDTO[];
   selectedVideoId?: string;
-  userProfile: UserProfile;
   viewerIsPatron: boolean;
   t: Translations;
   language: string;
@@ -91,7 +79,6 @@ export function SidebarSupportBox({
 export function SidebarPlaylist({
   sortedVideos,
   selectedVideoId,
-  userProfile,
   viewerIsPatron,
   t,
   language,
@@ -100,7 +87,11 @@ export function SidebarPlaylist({
   onVideoSelect,
   showSupportBox = true,
 }: SidebarPlaylistProps) {
-  const { isLoaded: authLoaded, isSignedIn } = useAuth();
+  const {
+    isLoaded: authLoaded,
+    isSignedIn,
+    userId: authUserId,
+  } = useAuth();
   const preloader = useAppPreload();
   const getSidebarAccessBadge = (
     video: SidebarLayoutItem,
@@ -144,14 +135,23 @@ export function SidebarPlaylist({
   const [error, setError] = useState<boolean>(false);
 
   useEffect(() => {
+    if (!authLoaded) return;
+
+    const controller = new AbortController();
+
     async function fetchLayout() {
+      setLayout(null);
+      setLoading(true);
+      setError(false);
+
       try {
-        const res = await fetch(
-          `/api/channel/sidebar?currentVideoId=${selectedVideoId || ""}`,
-          { cache: "no-store" },
-        );
+        const res = await fetch("/api/channel/sidebar", {
+          cache: "no-store",
+          signal: controller.signal,
+        });
         if (res.ok) {
-          const data = await res.json();
+          const data: SidebarLayout = await res.json();
+          if (controller.signal.aborted) return;
           setLayout(data);
           setError(false);
         } else {
@@ -159,14 +159,17 @@ export function SidebarPlaylist({
           setError(true);
         }
       } catch (err) {
+        if (controller.signal.aborted) return;
         logger.error("Failed to fetch sidebar layout", err);
         setError(true);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
-    fetchLayout();
-  }, [selectedVideoId]);
+    void fetchLayout();
+
+    return () => controller.abort();
+  }, [authLoaded, authUserId, isSignedIn]);
 
   const renderVideoItem = (video: SidebarLayoutItem, isPublicSection = false) => {
     const displayTitle = getVideoDisplayTitle(video, language);
@@ -204,17 +207,12 @@ export function SidebarPlaylist({
         <Link
           href={feedVideoHref}
           scroll={false}
-          onClick={() => {
-            onVideoSelect?.(video.id);
-            if (typeof window !== "undefined") {
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }
-          }}
+          onClick={() => onVideoSelect?.(video.id)}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
-            "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-[background-color,box-shadow] duration-160 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[88px] lg:items-center lg:gap-3 lg:p-2",
+            "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-[background-color,box-shadow] duration-160 motion-reduce:transition-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[88px] lg:items-center lg:gap-3 lg:p-2",
             isCurrent
-              ? "bg-[#2563EB]/20"
+              ? "bg-[var(--chan-blue)]/20"
               : isPublicSection
                 ? "bg-gradient-to-br from-[#EAF0FF] to-[#DBE7FB] transition-[background-color,transform] duration-160 hover:brightness-[1.03]"
                 : "transition-[background-color,box-shadow] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_2px_8px_rgba(23,23,23,0.06)]",
@@ -223,7 +221,7 @@ export function SidebarPlaylist({
           {isCurrent && (
             <span
               aria-hidden="true"
-              className="absolute left-0 top-1/2 h-12 w-1 -translate-y-1/2 rounded-r-lg bg-gradient-to-b from-[#2563EB] to-[#1e40af] shadow-[0_0_12px_rgba(37,99,235,0.4)] transition-all duration-200"
+              className="absolute left-0 top-1/2 h-12 w-1 -translate-y-1/2 rounded-r-lg bg-[var(--chan-blue)] shadow-[0_0_12px_color-mix(in_srgb,var(--chan-blue)_40%,transparent)] transition-all duration-160 motion-reduce:transition-none"
             />
           )}
           <div className="w-[130px] h-[73px] shrink-0 rounded-[12px] bg-black relative overflow-hidden group/thumb lg:w-[135px] lg:h-[76px] xl:w-[145px] xl:h-[82px]">
@@ -233,7 +231,7 @@ export function SidebarPlaylist({
                   alt={displayTitle}
                   fill
                   sizes="(min-width: 1280px) 158px, (min-width: 1024px) 150px, 130px"
-                  className="object-cover transition duration-700 group-hover/thumb:scale-105"
+                  className="object-cover transition-transform duration-200 group-hover/thumb:scale-[1.025] motion-reduce:transform-none motion-reduce:transition-none"
                 />
               ) : (
                 <div className="w-full h-full bg-neutral-800 flex items-center justify-center">
@@ -265,7 +263,7 @@ export function SidebarPlaylist({
                         badge.variant === "public" &&
                           "bg-white/92 text-[var(--chan-ink)]",
                         badge.variant === "unlocked" &&
-                          "bg-[#EFF3FE] text-[#2563EB]",
+                          "bg-[var(--chan-blue-soft)] text-[var(--chan-blue)]",
                         badge.variant === "locked" &&
                           "bg-[var(--chan-ink)] text-white",
                       )}
@@ -329,11 +327,9 @@ export function SidebarPlaylist({
     </div>
   );
 
-  const PatronBox = () => {
-    if (!authLoaded || !isSignedIn) return null;
-    if (!supportItem?.creatorId) return null;
-    return <DonationBox videoTitle={supportItem?.title} viewerIsPatron={viewerIsPatron} />;
-  };
+  const patronBox = authLoaded && isSignedIn && supportItem?.creatorId
+    ? <DonationBox videoTitle={supportItem.title} viewerIsPatron={viewerIsPatron} />
+    : null;
 
   if (loading) {
     const renderSkeletonSection = (title: string) => (
@@ -383,20 +379,20 @@ export function SidebarPlaylist({
       <div className="space-y-1.5 lg:h-full lg:min-h-0">
         {renderSectionHeader(
           language === "pl" ? "Dostępne filmy" : "Available videos",
-          <AlertCircle size={14} className="text-amber-500" />,
+          <AlertCircle size={14} className="text-[var(--chan-amber-strong)]" />,
         )}
         {fallbackItems.map((v) =>
           renderVideoItem({
             ...v,
             isLocked:
               v.tier === "PATRON"
-                ? !viewerIsPatron
+                ? !(isSignedIn && viewerIsPatron)
                 : v.tier === "LOGGED_IN"
-                  ? !userProfile
+                  ? !isSignedIn
                   : false,
           }),
         )}
-        {showSupportBox && <PatronBox />}
+        {showSupportBox && patronBox}
       </div>
     );
   }
@@ -431,7 +427,7 @@ export function SidebarPlaylist({
 
       {showSupportBox && (
         <div className="shrink-0">
-          <PatronBox />
+          {patronBox}
         </div>
       )}
     </div>

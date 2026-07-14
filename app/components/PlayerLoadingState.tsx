@@ -36,8 +36,8 @@ export function PlayerLoadingIndicator({ compact = false }: { compact?: boolean 
         </p>
       )}
       <style jsx global>{`
-        .polutek-player-loader { position:relative; display:flex; width:100%; height:100%; min-height:220px; flex-direction:column; align-items:center; justify-content:center; gap:15px; overflow:hidden; color:var(--chan-ink,#171717); background:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--chan-blue,#2563eb) 13%,transparent),transparent 44%),var(--chan-nav,#f7f1e4); font-family:var(--font-space-grotesk,sans-serif); }
-        .polutek-player-loader::before { content:""; position:absolute; inset:12px; border:1px solid color-mix(in srgb,var(--chan-line,#e1d4be) 76%,transparent); border-radius:18px; box-shadow:inset 0 1px 0 rgba(255,255,255,.5); }
+        .polutek-player-loader { position:relative; display:flex; width:100%; height:100%; min-height:220px; flex-direction:column; align-items:center; justify-content:center; gap:15px; overflow:hidden; color:var(--chan-ink,#111827); background:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--chan-blue,#2563eb) 12%,transparent),transparent 44%),var(--chan-nav,#f7f9fc); font-family:var(--font-geist-sans),sans-serif; }
+        .polutek-player-loader::before { content:""; position:absolute; inset:12px; border:1px solid color-mix(in srgb,var(--chan-line,#e1e6ef) 76%,transparent); border-radius:18px; box-shadow:inset 0 1px 0 rgba(255,255,255,.5); }
         .polutek-player-loader--compact { min-height:0; gap:8px; }
         .polutek-player-loader--compact::before { inset:5px; border-radius:10px; }
         .polutek-player-loader-mark { position:relative; display:grid; width:54px; height:54px; place-items:center; border:1px solid color-mix(in srgb,var(--chan-blue,#2563eb) 22%,transparent); border-radius:16px; background:color-mix(in srgb,var(--chan-card,#fff) 90%,white); color:var(--chan-blue,#2563eb); box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 16px 32px -12px color-mix(in srgb,var(--chan-blue,#2563eb) 45%,transparent); }
@@ -51,7 +51,7 @@ export function PlayerLoadingIndicator({ compact = false }: { compact?: boolean 
         @keyframes polutek-loader-sweep { 0% { transform:translateX(0); } 100% { transform:translateX(320%); } }
         @keyframes polutek-loader-spin { to { transform:rotate(360deg); } }
         @media (max-width:640px) { .polutek-player-loader { min-height:0; gap:11px; } .polutek-player-loader-mark { width:46px; height:46px; } .polutek-player-loader-label { font-size:10px; } }
-        @media (prefers-reduced-motion:reduce) { .polutek-player-loader-mark svg { animation-duration:1.8s; } .polutek-player-loader-progress { animation-duration:2s; } }
+        @media (prefers-reduced-motion:reduce) { .polutek-player-loader-mark svg, .polutek-player-loader-progress { animation:none; } .polutek-player-loader-progress { inset:0 31%; width:38%; opacity:.8; } }
       `}</style>
     </div>
   );
