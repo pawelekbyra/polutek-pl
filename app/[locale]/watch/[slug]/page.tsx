@@ -15,7 +15,7 @@ function getFeedVideoHref(locale: Locale, slug: string): string {
 
 export async function generateMetadata(props: WatchPageProps): Promise<Metadata> {
   const { locale: rawLocale, slug } = await props.params;
-  if (!isLocale(rawLocale)) return { title: "Not found — POLUTEK.PL" };
+  if (!isLocale(rawLocale)) return { title: "POLUTEK.PL" };
 
   const baseUrl = getBaseUrl();
   const canonicalPath = getFeedVideoHref(rawLocale, slug);

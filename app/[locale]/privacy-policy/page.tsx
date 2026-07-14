@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import { APP_NAME } from "@/lib/constants";
-export const metadata = { title: `Privacy Policy — ${APP_NAME}` };
+export const metadata = { title: APP_NAME };
 export default async function PrivacyPolicyPage(props: { params: Promise<{ locale: string }> }) {
   const { locale } = await props.params;
   if (locale !== "en") notFound();

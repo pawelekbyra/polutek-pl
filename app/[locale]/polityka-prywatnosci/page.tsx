@@ -9,7 +9,7 @@ import { notFound } from 'next/navigation';
 import { getLocalizedHref } from '@/lib/i18n/routing';
 
 export const metadata = {
-  title: `Polityka prywatności — ${APP_NAME}`,
+  title: APP_NAME,
   description: `Polityka prywatności serwisu ${APP_NAME}: jakie dane zbieramy, po co i jakie masz prawa.`,
 };
 

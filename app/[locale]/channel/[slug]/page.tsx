@@ -15,6 +15,7 @@ import { formatCount, getBaseUrl } from '@/lib/utils';
 import SubscribeButton from '@/app/components/SubscribeButton';
 import { prisma } from '@/lib/prisma';
 import { getLocalizedHref, isLocale, type Locale } from '@/lib/i18n/routing';
+import { APP_NAME } from '@/lib/constants';
 import { notFound } from 'next/navigation';
 
 export const revalidate = 60;
@@ -35,15 +36,16 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   if (!isLocale(params.locale)) notFound();
   const locale: Locale = params.locale;
   const mainSlug = getConfiguredSlugSafe();
-  if (mainSlug && params.slug !== mainSlug) return { title: locale === "pl" ? "Kanał nie znaleziony" : "Channel not found" };
+  if (mainSlug && params.slug !== mainSlug) return { title: APP_NAME };
 
   const creator = await ContentService.getCreatorBySlug(params.slug).catch(() => null);
-  if (!creator) return { title: locale === "pl" ? "Kanał nie znaleziony" : "Channel not found" };
+  if (!creator) return { title: APP_NAME };
 
   const baseUrl = getBaseUrl();
 
   return {
-    title: creator.name,
+    // Browser tab always reads POLUTEK.PL; creator name stays in OG/twitter below.
+    title: APP_NAME,
     alternates: {
       canonical: `${baseUrl}${getLocalizedHref(locale, "channel", { slug: params.slug })}`,
       languages: {

@@ -25,6 +25,10 @@ const config = {
           'var(--font-geist-sans)',
           'sans-serif'
         ],
+        brandLogo: [
+          'var(--font-brand-logo)',
+          'sans-serif'
+        ],
         mono: [
           'var(--font-geist-mono)',
           'monospace'

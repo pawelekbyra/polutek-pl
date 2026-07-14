@@ -1,92 +1,59 @@
 "use client";
 
-import { useId } from "react";
+import type { CSSProperties } from "react";
+import { Egg } from "lucide-react";
 import { cn } from "@/lib/utils";
-import styles from "./BrandName.module.css";
-
-const LENS_INTERIORS_PATH =
-  "m-1564 46-52 2-36 3-34 5-25 6-20 7-19 10-12 9-14 14-7 10-6 10-7 17-4 19-1 11v10l2 18 5 19 6 16 12 23 11 16 13 16 12 13 17 17 8 7 16 13 20 15 20 13 20 12 22 12 28 13 19 8 37 13 43 12 35 8 35 6 44 5 17 1h83l33-2 33-4 26-5 26-7 27-11 16-10 11-9 10-10 12-16 11-19 8-16 12-26 13-35 9-29 5-22 3-20 1-11v-25l-3-20-5-16-7-11-8-9-12-9-15-7-33-11-41-10-52-10-47-7-66-8-62-6-53-4-63-3-42-1zm1389 0-54 2-60 4-57 5-54 6-64 9-46 8-33 7-34 9-26 9-16 8-11 8-9 9-8 13-5 15-2 11-1 11v27l3 24 6 26 8 27 10 28 9 20 13 27 14 23 10 13 12 13 10 8 18 11 21 9 24 7 23 5 28 4 20 2 19 1 35 1h25l50-2 34-4 36-6 34-7 35-9 33-10 27-10 23-10 16-8 23-12 25-15 18-12 19-14 13-11 8-7 13-12 15-16 13-17 12-18 12-23 6-16 5-21 1-7v-24l-3-17-7-21-8-15-10-14-11-11-15-10-16-8-16-6-27-7-30-5-28-3-39-2z";
+import { useLogoBrand } from "./logo-experiment/LogoBrandContext";
 
 interface BrandNameProps {
   className?: string;
   decorative?: boolean;
+  /**
+   * Retained for API compatibility with prior SVG logo callers. The wordmark is
+   * plain text now, so this is accepted but no longer renders a shine sweep.
+   */
   shine?: false | "hover" | "ambient";
 }
 
+/**
+ * Wordmark logo: "POLUTEK.PL" set in Bowlby One SC (self-hosted, `font-brandLogo`).
+ * "POLUTEK" is the near-black ink token; the ".PL" (dot + PL) is the site's blue
+ * accent.
+ *
+ * On the temporary /logoN bake-off pages a LogoBrandProvider swaps the font and
+ * can prepend a lucide Egg icon; in the production app there is no provider and
+ * the default Bowlby wordmark renders.
+ */
 export default function BrandName({
   className,
   decorative = false,
-  shine = "hover",
 }: BrandNameProps) {
-  const instanceId = useId().replaceAll(":", "");
-  const titleId = `polutek-logo-title-${instanceId}`;
-  const lensClipId = `polutek-logo-lens-clip-${instanceId}`;
-  const lensShineId = `polutek-logo-shine-${instanceId}`;
+  const logoBrand = useLogoBrand();
+  const style = logoBrand?.fontFamily
+    ? ({ "--font-brand-logo": logoBrand.fontFamily } as CSSProperties)
+    : undefined;
 
   return (
     <span
       className={cn(
-        styles.root,
-        "relative inline-flex items-center justify-center",
+        "font-brandLogo inline-flex select-none items-baseline whitespace-nowrap leading-none tracking-[0.005em]",
         className,
       )}
+      style={style}
+      role={decorative ? undefined : "img"}
+      aria-label={decorative ? undefined : "POLUTEK.PL"}
+      aria-hidden={decorative ? true : undefined}
     >
-      <svg
-        aria-hidden={decorative ? true : undefined}
-        aria-labelledby={decorative ? undefined : titleId}
-        className={styles.mark}
-        focusable="false"
-        height="506"
-        preserveAspectRatio="xMidYMid meet"
-        role={decorative ? undefined : "img"}
-        shapeRendering="geometricPrecision"
-        viewBox="0 0 2048 506"
-        width="2048"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {!decorative && <title id={titleId}>POLUTEK.PL</title>}
-        {shine !== false && (
-          <defs>
-            <clipPath id={lensClipId}>
-              <path transform="translate(1860,4)" d={LENS_INTERIORS_PATH} />
-            </clipPath>
-            <linearGradient id={lensShineId} x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0" stopColor="#ffffff" stopOpacity="0" />
-              <stop offset="0.34" stopColor="#9bc8ff" stopOpacity="0.12" />
-              <stop offset="0.5" stopColor="#ffffff" stopOpacity="0.96" />
-              <stop offset="0.66" stopColor="#9bc8ff" stopOpacity="0.12" />
-              <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-        )}
-
-        <g aria-hidden="true">
-          <path transform="translate(1860,4)" d="m0 0h99l25 1 12 3 9 6 7 8 8 14 7 16 6 18 6 26 3 20 1 13v13l-2 25-5 26-6 22-6 18-10 23-9 16-12 17-9 11-9 10-11 12-15 14-10 9-14 11-17 13-27 18-22 13-24 13-27 13-36 15-36 13-36 11-56 14-42 8-40 6-48 4-18 1h-51l-39-3-28-4-37-8-29-9-24-10-14-8-12-9-12-11-10-11-14-19-15-26-11-23-11-27-10-28-9-32-6-29-4-29-1-12-1-28-9-6-21-11-24-8-23-5-28-4-16-1h-32l-23 2-29 5-19 5-22 8-19 10-6 4-3 44-5 33-7 31-9 30-10 29-10 24-11 23-10 17-12 17-9 11-15 15-15 11-16 9-17 8-30 10-26 6-28 5-32 3-17 1h-53l-48-3-37-4-43-7-42-9-38-10-33-10-41-15-30-13-31-15-23-13-22-13-19-13-14-10-13-10-11-9-14-12-7-7-8-7-16-17-9-11-11-15-12-20-10-21-7-20-6-21-4-20-2-22v-21l2-25 5-23 7-23 9-21 8-14 9-10 9-5 16-2 18-1 43-1h48l43 1 89 4 100 5 73 5 64 6 61 7 55 8 45 8 34 7 32 8 26 8 22 9 25 11 21 7 22 4 21 2 19 1h180l41-2 22-3 21-5 25-10 32-13 22-7 33-8 38-8 58-10 57-8 73-8 83-7 74-5 112-6z" fill="#272727"/>
-          <path transform="translate(1685,50)" d="m0 0h89l39 2 36 4 31 6 24 7 21 9 17 11 10 9 8 9 10 16 6 13 6 20 2 13v24l-4 21-6 18-12 25-14 21-11 14-9 10-11 12-16 15-14 11-13 10-17 12-25 15-21 12-21 11-30 13-34 12-39 11-38 9-38 7-38 5-28 2-32 1h-25l-35-1-29-2-26-3-27-5-26-7-25-10-14-8-14-10-10-10-11-14-11-17-10-18-13-27-12-31-9-28-6-24-4-23-1-11v-27l2-17 4-15 7-14 11-12 9-7 12-7 21-8 26-8 33-8 42-8 44-7 53-7 45-5 57-5 60-4z" fill="#272727"/>
-          <path transform="translate(1860,4)" d="m0 0h99l25 1 12 3 9 6 7 8 8 14 7 16 6 18 6 26 3 20 1 13v13l-2 25-5 26-6 22-6 18-10 23-9 16-12 17-9 11-9 10-11 12-15 14-10 9-14 11-17 13-27 18-22 13-24 13-27 13-36 15-36 13-36 11-56 14-42 8-40 6-48 4-18 1h-51l-39-3-28-4-37-8-29-9-24-10-14-8-12-9-12-11-10-11-14-19-15-26-11-23-11-27-10-28-9-32-6-29-4-29-1-12-1-28-9-6-21-11-24-8-23-5-28-4-16-1h-32l-23 2-29 5-19 5-22 8-19 10-6 4-3 44-5 33-7 31-9 30-10 29-10 24-11 23-10 17-12 17-9 11-15 15-15 11-16 9-17 8-30 10-26 6-28 5-32 3-17 1h-53l-48-3-37-4-43-7-42-9-38-10-33-10-41-15-30-13-31-15-23-13-22-13-19-13-14-10-13-10-11-9-14-12-7-7-8-7-16-17-9-11-11-15-12-20-10-21-7-20-6-21-4-20-2-22v-21l2-25 5-23 7-23 9-21 8-14 9-10 9-5 16-2 18-1 43-1h48l43 1 89 4 100 5 73 5 64 6 61 7 55 8 45 8 34 7 32 8 26 8 22 9 25 11 21 7 22 4 21 2 19 1h180l41-2 22-3 21-5 25-10 32-13 22-7 33-8 38-8 58-10 57-8 73-8 83-7 74-5 112-6zm-1564 46-52 2-36 3-34 5-25 6-20 7-19 10-12 9-14 14-7 10-6 10-7 17-4 19-1 11v10l2 18 5 19 6 16 12 23 11 16 13 16 12 13 17 17 8 7 16 13 20 15 20 13 20 12 22 12 28 13 19 8 37 13 43 12 35 8 35 6 44 5 17 1h83l33-2 33-4 26-5 26-7 27-11 16-10 11-9 10-10 12-16 11-19 8-16 12-26 13-35 9-29 5-22 3-20 1-11v-25l-3-20-5-16-7-11-8-9-12-9-15-7-33-11-41-10-52-10-47-7-66-8-62-6-53-4-63-3-42-1zm1389 0-54 2-60 4-57 5-54 6-64 9-46 8-33 7-34 9-26 9-16 8-11 8-9 9-8 13-5 15-2 11-1 11v27l3 24 6 26 8 27 10 28 9 20 13 27 14 23 10 13 12 13 10 8 18 11 21 9 24 7 23 5 28 4 20 2 19 1 35 1h25l50-2 34-4 36-6 34-7 35-9 33-10 27-10 23-10 16-8 23-12 25-15 18-12 19-14 13-11 8-7 13-12 15-16 13-17 12-18 12-23 6-16 5-21 1-7v-24l-3-17-7-21-8-15-10-14-11-11-15-10-16-8-16-6-27-7-30-5-28-3-39-2z" fill="#292929"/>
-          <path transform="translate(284,32)" d="m0 0h69l34 1 53 3 60 5 56 6 68 9 56 9 47 9 39 9 26 8 19 8 11 7 10 8 10 10 9 15 5 12 4 17 2 18v18l-4 33-5 24-9 30-9 25-9 22-13 28-14 26-10 14-8 10-16 16-13 9-21 11-33 11-30 7-30 5-32 3-19 1h-54l-32-2-36-4-44-7-40-8-31-8-29-9-29-10-34-14-35-17-20-11-21-13-19-13-19-14-16-13-13-11-27-27-11-14-12-16-12-21-7-15-5-15-4-19-1-7v-28l3-17 7-20 10-19 11-14 13-13 15-11 16-9 19-8 25-7 26-5 31-4 41-3zm12 18-52 2-36 3-34 5-25 6-20 7-19 10-12 9-14 14-7 10-6 10-7 17-4 19-1 11v10l2 18 5 19 6 16 12 23 11 16 13 16 12 13 17 17 8 7 16 13 20 15 20 13 20 12 22 12 28 13 19 8 37 13 43 12 35 8 35 6 44 5 17 1h83l33-2 33-4 26-5 26-7 27-11 16-10 11-9 10-10 12-16 11-19 8-16 12-26 13-35 9-29 5-22 3-20 1-11v-25l-3-20-5-16-7-11-8-9-12-9-15-7-33-11-41-10-52-10-47-7-66-8-62-6-53-4-63-3-42-1z" fill="#FEFEFE"/>
-          <path transform="translate(1683,32)" d="m0 0h88l29 1 36 3 28 4 24 5 24 7 18 8 15 8 13 9 11 9 12 12 10 15 8 16 6 18 2 12 1 22-3 25-5 19-6 16-11 21-12 18-10 13-12 14-13 14-8 7-11 10-14 11-19 14-15 10-20 12-18 10-15 8-33 15-35 14-46 15-42 11-39 8-35 6-33 4-40 3-34 1-35-1-33-3-36-6-32-8-23-8-19-9-14-9-14-11-9-9-9-11-9-13-12-21-8-16-11-24-11-29-9-27-6-23-5-29-1-8v-37l3-19 6-18 8-14 11-12 9-8 14-8 21-9 19-6 42-10 52-10 49-8 43-6 59-7 69-6 47-3zm2 18-54 2-60 4-57 5-54 6-64 9-46 8-33 7-34 9-26 9-16 8-11 8-9 9-8 13-5 15-2 11-1 11v27l3 24 6 26 8 27 10 28 9 20 13 27 14 23 10 13 12 13 10 8 18 11 21 9 24 7 23 5 28 4 20 2 19 1 35 1h25l50-2 34-4 36-6 34-7 35-9 33-10 27-10 23-10 16-8 23-12 25-15 18-12 19-14 13-11 8-7 13-12 15-16 13-17 12-18 12-23 6-16 5-21 1-7v-24l-3-17-7-21-8-15-10-14-11-11-15-10-16-8-16-6-27-7-30-5-28-3-39-2z" fill="#FEFEFE"/>
-        </g>
-
-        {shine !== false && (
-          <g aria-hidden="true" clipPath={`url(#${lensClipId})`}>
-            <g transform="rotate(-16 1024 253)">
-              <rect
-                x="-360"
-                y="-520"
-                width="250"
-                height="1540"
-                rx="125"
-              className={cn(
-                  styles.shineSweep,
-                  shine === "ambient" && styles.ambientShineSweep,
-              )}
-                fill={`url(#${lensShineId})`}
-              />
-            </g>
-          </g>
-        )}
-      </svg>
+      {logoBrand?.showEgg && (
+        <Egg
+          aria-hidden="true"
+          className="mr-[0.18em] self-center text-[var(--chan-blue)]"
+          style={{ width: "0.92em", height: "0.92em" }}
+          strokeWidth={2.4}
+        />
+      )}
+      <span className="text-[var(--chan-ink)]">POLUTEK</span>
+      <span className="text-[var(--chan-blue)]">.PL</span>
     </span>
   );
 }
