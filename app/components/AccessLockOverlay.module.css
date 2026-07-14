@@ -8,17 +8,17 @@
 }
 
 .login {
-  color: var(--chan-ink);
+  color: #eef4ff;
   background:
-    radial-gradient(circle at 7% 18%, color-mix(in srgb, var(--chan-blue) 15%, transparent), transparent 26%),
-    linear-gradient(135deg, #f6f9ff 0%, #e9f1ff 55%, #dce9ff 100%);
+    radial-gradient(circle at 7% 18%, color-mix(in srgb, white 14%, transparent), transparent 28%),
+    linear-gradient(135deg, color-mix(in srgb, var(--chan-blue) 58%, black) 0%, var(--chan-blue) 55%, color-mix(in srgb, var(--chan-blue) 72%, black) 100%);
 }
 
 .patron {
-  color: var(--chan-amber-ink);
+  color: #fff3e0;
   background:
-    radial-gradient(circle at 84% 12%, rgba(255, 255, 255, .82), transparent 24%),
-    linear-gradient(135deg, #fffaf0 0%, var(--chan-amber-soft) 48%, #ffd56f 100%);
+    radial-gradient(circle at 84% 12%, color-mix(in srgb, var(--chan-amber-bright) 22%, transparent), transparent 26%),
+    linear-gradient(135deg, color-mix(in srgb, var(--chan-amber-strong) 64%, black) 0%, var(--chan-amber-strong) 55%, color-mix(in srgb, var(--chan-amber) 72%, black) 100%);
 }
 
 .loginLayout,
@@ -94,7 +94,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #e5efff;
+  background: var(--chan-blue);
 }
 
 .ticket::before { top: -11px; }
@@ -131,8 +131,8 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--chan-blue);
-  box-shadow: 0 0 0 8px color-mix(in srgb, var(--chan-blue) 10%, transparent);
+  background: white;
+  box-shadow: 0 0 0 8px rgba(255, 255, 255, .12);
 }
 
 .loginDotOne { top: 16%; right: 14%; }
@@ -161,8 +161,8 @@
   text-transform: uppercase;
 }
 
-.loginEyebrow { color: var(--chan-blue); }
-.patronEyebrow { color: var(--chan-amber-ink); }
+.loginEyebrow { color: color-mix(in srgb, white 84%, var(--chan-blue)); }
+.patronEyebrow { color: color-mix(in srgb, white 86%, var(--chan-amber-bright)); }
 .loginEyebrow svg, .patronEyebrow svg { width: 15px; height: 15px; }
 
 .title {
@@ -209,12 +209,12 @@
 .cta:focus-visible { outline: 3px solid color-mix(in srgb, currentColor 36%, transparent); outline-offset: 3px; }
 
 .loginCta {
-  background: var(--chan-blue);
-  color: white;
-  box-shadow: 0 16px 30px -16px color-mix(in srgb, var(--chan-blue) 80%, transparent);
+  background: white;
+  color: var(--chan-blue);
+  box-shadow: 0 16px 30px -16px rgba(0, 0, 0, .5);
 }
 
-.loginCta:hover { background: color-mix(in srgb, var(--chan-blue) 88%, black); }
+.loginCta:hover { background: color-mix(in srgb, white 90%, var(--chan-blue)); }
 
 .patronLayout {
   grid-template-columns: minmax(230px, 1.08fr) minmax(190px, .92fr);
@@ -236,13 +236,13 @@
 }
 
 .patronConfetti { position: absolute; inset: 0; pointer-events: none; }
-.patronConfetti > * { position: absolute; color: var(--chan-amber-strong); }
+.patronConfetti > * { position: absolute; color: #ffe6b3; }
 .confettiStarOne { top: 13%; left: 8%; width: 18px; rotate: -15deg; }
 .confettiStarTwo { right: 8%; bottom: 12%; width: 13px; rotate: 18deg; }
 .confettiSparkle { top: 12%; right: 13%; width: 22px; animation: friendly-twinkle 2.8s ease-in-out infinite; }
 .confettiDotOne, .confettiDotTwo { width: 9px; height: 9px; border-radius: 50%; background: var(--chan-blue); }
-.confettiDotOne { left: 47%; bottom: 12%; opacity: .72; }
-.confettiDotTwo { top: 22%; left: 42%; width: 6px; height: 6px; opacity: .45; }
+.confettiDotOne { left: 47%; bottom: 12%; opacity: .85; }
+.confettiDotTwo { top: 22%; left: 42%; width: 6px; height: 6px; opacity: .6; }
 
 .thankYouCard {
   position: relative;
@@ -288,12 +288,12 @@
 .cardForever { margin-top: 3px; color: color-mix(in srgb, var(--chan-amber-ink) 60%, transparent); font-size: clamp(9px, 1.6cqi, 11px); font-weight: 700; }
 
 .patronCta {
-  background: var(--chan-amber-ink);
-  color: #fffaf0;
-  box-shadow: 0 16px 30px -16px rgba(66, 43, 5, .68);
+  background: #fff8ec;
+  color: var(--chan-amber-strong);
+  box-shadow: 0 16px 30px -16px rgba(0, 0, 0, .55);
 }
 
-.patronCta:hover { background: color-mix(in srgb, var(--chan-amber-ink) 88%, black); }
+.patronCta:hover { background: color-mix(in srgb, white 90%, var(--chan-amber-strong)); }
 
 .compact {
   position: absolute;
@@ -309,8 +309,16 @@
   pointer-events: none;
 }
 
-.compact.login { color: var(--chan-blue); background: linear-gradient(145deg, #f6f9ff, #dce9ff); }
-.compact.patron { color: var(--chan-amber-ink); background: linear-gradient(145deg, #fff8e8, #ffd46b); }
+.compact.login {
+  color: #eef4ff;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--chan-blue) 58%, black), var(--chan-blue));
+}
+.compact.patron {
+  color: #fff3e0;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--chan-amber-strong) 62%, black), var(--chan-amber-strong));
+}
+.compact.login .compactMark { color: var(--chan-blue); }
+.compact.patron .compactMark { color: var(--chan-amber-strong); }
 
 .compactPattern {
   position: absolute;
