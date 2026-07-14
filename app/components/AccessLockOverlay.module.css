@@ -198,7 +198,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: clamp(3px, 2.5cqi, 6px);
+  gap: clamp(6px, 4cqi, 10px);
   overflow: hidden;
   padding: 6px;
   pointer-events: none;
@@ -255,7 +255,7 @@
   overflow: hidden;
   max-width: 100%;
   color: #fff;
-  font-size: clamp(10px, 11cqi, 15px);
+  font-size: clamp(11px, 13cqi, 17px);
   font-weight: 800;
   letter-spacing: .03em;
   line-height: 1.05;
@@ -267,11 +267,11 @@
 }
 
 .compactTiny {
-  gap: 2px;
+  gap: 4px;
 }
 
 .compactTiny .compactMark { width: clamp(12px, 10cqi, 20px); }
-.compactTiny .compactLabel { font-size: clamp(9px, 10cqi, 13px); }
+.compactTiny .compactLabel { font-size: clamp(10px, 12cqi, 15px); }
 
 @container (max-width: 420px) {
   .mark { margin-bottom: 10px; }
