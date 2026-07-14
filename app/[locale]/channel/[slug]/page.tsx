@@ -6,7 +6,6 @@ import { Metadata } from 'next';
 import { PublicVideoDTO } from '@/app/types/video';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search } from '@/app/components/icons';
 import { CreatorContentService as ContentService } from '@/lib/modules/channel/infrastructure/creator-content.service';
 import { getOrCreateCurrentUser } from '@/lib/modules/users';
 import { createAppContext } from '@/lib/modules/shared/app-context';
@@ -158,11 +157,11 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
   const displayBio = creator.bio || (locale === "pl" ? "Witamy na oficjalnym kanale." : "Welcome to the official channel.");
 
   return (
-    <div className="min-h-screen bg-[var(--chan-nav)] text-[var(--chan-ink)] font-sans">
+    <div className="channel-page-shell min-h-screen bg-[var(--chan-nav)] text-[var(--chan-ink)] font-sans">
       <Navbar />
 
       <div className="max-w-[1284px] mx-auto px-0 md:px-4 lg:px-6">
-        <div className="w-full aspect-[6/1] bg-[var(--chan-surface)] relative overflow-hidden rounded-none md:rounded-xl border border-[var(--chan-line)]">
+        <div className="channel-hero-banner w-full aspect-[6/1] bg-[var(--chan-surface)] relative overflow-hidden rounded-none md:rounded-xl border border-[var(--chan-line)]">
            {creator.bannerUrl ? (
              <Image src={creator.bannerUrl} alt={displayName} fill sizes="(max-width: 768px) 100vw, 1284px" className="object-cover" unoptimized />
            ) : (
@@ -177,8 +176,8 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
       </div>
 
       <div className="max-w-[1284px] mx-auto px-4 md:px-6 lg:px-8 py-6">
-        <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-          <div className="relative w-24 h-24 md:w-40 md:h-40 rounded-full border border-[var(--chan-line)] overflow-hidden bg-[var(--chan-avatar-gradient)] shrink-0">
+        <div className="channel-profile flex flex-col md:flex-row items-center md:items-start gap-5 md:gap-7">
+          <div className="channel-profile-avatar relative w-24 h-24 md:w-36 md:h-36 rounded-full border border-[var(--chan-line)] overflow-hidden bg-[var(--chan-avatar-gradient)] shrink-0">
              <Image
                src={channelAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`}
                alt={displayName}
@@ -189,7 +188,7 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
              />
           </div>
           <div className="flex-1 text-center md:text-left space-y-1">
-            <h1 className="font-brand text-[36px] font-bold leading-tight mb-1">
+            <h1 className="font-brand text-[34px] md:text-[42px] font-bold leading-[1.05] tracking-[-0.04em] mb-2">
               {displayName}
             </h1>
             <div className="text-[14px] text-[var(--chan-muted)] flex flex-wrap justify-center md:justify-start gap-x-1.5 font-sans">
@@ -211,18 +210,12 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
           </div>
         </div>
 
-        <div className="flex border-b border-[var(--chan-line)] mt-6 overflow-x-auto no-scrollbar gap-8">
-           <button className="pb-3 border-b-2 border-[var(--chan-ink)] text-[14px] font-bold uppercase tracking-widest font-sans">{locale === "pl" ? "Wideo" : "Videos"}</button>
-           <button className="pb-3 text-[var(--chan-muted)] text-[14px] font-bold uppercase tracking-widest hover:text-[var(--chan-ink)] transition-colors font-sans">{locale === "pl" ? "Playlisty" : "Playlists"}</button>
-           <button className="pb-3 text-[var(--chan-muted)] text-[14px] font-bold uppercase tracking-widest hover:text-[var(--chan-ink)] transition-colors font-sans">{locale === "pl" ? "Społeczność" : "Community"}</button>
-           <button className="pb-3 text-[var(--chan-muted)] text-[14px] font-bold uppercase tracking-widest hover:text-[var(--chan-ink)] transition-colors font-sans">{locale === "pl" ? "Informacje" : "About"}</button>
-           <div className="ml-auto pb-3 flex items-center gap-4">
-              <Search size={20} className="text-[var(--chan-muted)] cursor-pointer" />
-           </div>
+        <div className="channel-tabs flex border-b border-[var(--chan-line)] mt-7 overflow-x-auto no-scrollbar gap-8">
+           <div className="channel-tab-active pb-3 border-b-2 border-[var(--chan-ink)] text-[13px] font-bold uppercase tracking-[0.14em] font-sans" aria-current="page">{locale === "pl" ? "Wideo" : "Videos"}</div>
         </div>
 
         {allVideos.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-8 py-6">
+          <div className="channel-video-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-8 py-7">
             {allVideos.map((video) => (
               <ChannelVideoCard
                 key={video.id}

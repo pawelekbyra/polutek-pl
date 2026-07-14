@@ -121,6 +121,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
         return () => clearInterval(interval);
     }, [isMounted, tracking, sendEvent]);
 
+    // PremiumWrapper owns the single player loading placeholder; avoid stacking a second one here.
     if (!isMounted || isLoading) return null;
 
     if (variant === 'thumbnail') {
@@ -264,7 +265,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                         {(playerConfig ? playerConfig.controls : true) && <PolutekControls />}
                     </MediaPlayer>
                     {!hasStartedPlayback && !bufferingOverlayTimedOut && (
-                        <div className="absolute inset-0 z-10 pointer-events-none">
+                        <div className="absolute inset-0 z-30 pointer-events-none">
                             <PlayerLoadingIndicator />
                         </div>
                     )}

@@ -1,6 +1,7 @@
 import { logger } from "@/lib/logger";
 import { redirect } from "next/navigation";
 import { AuthError, requireAdmin } from "@/lib/auth-utils";
+import { AdminVisualShell } from "@/app/admin/components/AdminVisualShell";
 
 export const dynamic = "force-dynamic";
 
@@ -16,5 +17,5 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     throw error;
   }
 
-  return children;
+  return <AdminVisualShell>{children}</AdminVisualShell>;
 }

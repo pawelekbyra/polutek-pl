@@ -425,7 +425,7 @@ function PlaybackPlanStateOverlay({
           {content.action === "support" && (
             <a
               href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? ''}?subject=Problem%20z%20dost%C4%99pem%20do%20wideo`}
-              className="mt-2 inline-flex items-center justify-center rounded-[14px] border border-white/30 bg-white/10 hover:bg-white/20 px-[clamp(20px,5cqi,32px)] py-[clamp(10px,2cqi,14px)] text-[clamp(11px,2.4cqi,14px)] font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-all duration-200 active:scale-95 hover:shadow-lg drop-shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
+               className="mt-2 inline-flex items-center justify-center rounded-[14px] border border-white/30 bg-white/10 hover:bg-white/20 px-[clamp(20px,5cqi,32px)] py-[clamp(10px,2cqi,14px)] text-[clamp(11px,2.4cqi,14px)] font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-all duration-200 active:scale-95 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 drop-shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
             >
               {content.actionLabel}
             </a>
@@ -435,7 +435,7 @@ function PlaybackPlanStateOverlay({
             <button
               type="button"
               onClick={onRetry}
-              className="mt-2 inline-flex items-center justify-center rounded-[14px] border border-white/30 bg-white/10 hover:bg-white/20 px-[clamp(20px,5cqi,32px)] py-[clamp(10px,2cqi,14px)] text-[clamp(11px,2.4cqi,14px)] font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-all duration-200 active:scale-95 hover:shadow-lg gap-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
+               className="mt-2 inline-flex items-center justify-center rounded-[14px] border border-white/30 bg-white/10 hover:bg-white/20 px-[clamp(20px,5cqi,32px)] py-[clamp(10px,2cqi,14px)] text-[clamp(11px,2.4cqi,14px)] font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-all duration-200 active:scale-95 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 gap-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
             >
               <RefreshCcw size={16} className="flex-shrink-0" aria-hidden="true" />
               <span>{content.actionLabel}</span>

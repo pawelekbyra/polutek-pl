@@ -4,9 +4,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-/* Google Fonts for font variants testing */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700&family=Playfair+Display:wght@700;900&family=Lora:wght@400;600&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600;700&family=Poppins:wght@400;600;700&family=Raleway:wght@300;400;600;700&family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600;700&family=Cormorant+Garamond:wght@400;600;700&family=Crimson+Text:wght@400;600&family=Abril+Fatface:wght@400&family=Merriweather:wght@400;700&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;600;700&family=Quicksand:wght@400;600;700&family=Nunito:wght@400;600;700&family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@400;600;700&family=EB+Garamond:wght@400;700&family=Source+Sans+Pro:wght@400;600;700&family=Syne:wght@400;600;700&family=Commissioner:wght@400;600;700&family=Fredoka:wght@400;600;700&family=Ubuntu:wght@400;600;700&family=Libre+Baskerville:wght@400;700&family=Libre+Franklin:wght@400;600;700&family=Courier+Prime:wght@400;700&family=Bitter:wght@400;700&family=Merriweather+Sans:wght@400;600;700&display=swap');
-
 @config '../tailwind.config.ts';
 
 @layer components {
@@ -54,6 +51,234 @@
 
     .polutek-vidstack-player .vds-time-slider {
       --media-slider-height: 20px;
+    }
+  }
+}
+
+/* Doodle-forward product surfaces. The payment settings route is deliberately
+   outside `.admin-visual-shell`, so its approved visual treatment stays intact. */
+@layer components {
+  .channel-page-shell {
+    background:
+      radial-gradient(circle at 8% 8%, color-mix(in srgb, var(--chan-blue) 9%, transparent), transparent 26rem),
+      linear-gradient(rgba(23, 23, 23, .035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(23, 23, 23, .035) 1px, transparent 1px),
+      var(--chan-nav);
+    background-size: auto, 42px 42px, 42px 42px, auto;
+  }
+
+  .channel-hero-banner {
+    border-width: 2px;
+    border-color: color-mix(in srgb, var(--chan-ink) 80%, transparent);
+    box-shadow: 5px 6px 0 color-mix(in srgb, var(--chan-blue) 82%, transparent), 0 18px 44px rgba(23, 23, 23, .08);
+  }
+
+  .channel-profile {
+    padding: clamp(1rem, 2.4vw, 1.6rem);
+    border: 1.5px solid color-mix(in srgb, var(--chan-ink) 18%, transparent);
+    border-radius: 22px 17px 24px 15px;
+    background: color-mix(in srgb, var(--chan-card) 90%, white);
+    box-shadow: 4px 5px 0 color-mix(in srgb, var(--chan-blue) 15%, transparent);
+  }
+
+  .channel-profile-avatar {
+    border-width: 2.5px;
+    border-color: var(--chan-ink);
+    box-shadow: 4px 4px 0 var(--chan-blue);
+    transform: rotate(-1deg);
+  }
+
+  .channel-tabs {
+    min-height: 44px;
+  }
+
+  .channel-tab-active {
+    display: flex;
+    align-items: end;
+  }
+
+  .channel-video-card {
+    border-radius: 16px 12px 18px 11px;
+    transition: transform .2s ease;
+  }
+
+  .channel-video-card-media {
+    border: 1.5px solid color-mix(in srgb, var(--chan-ink) 72%, transparent);
+    box-shadow: 3px 4px 0 color-mix(in srgb, var(--chan-blue) 22%, transparent), 0 10px 22px rgba(23, 23, 23, .07);
+    transition: box-shadow .2s ease, transform .2s ease;
+  }
+
+  .admin-visual-shell {
+    --background: 43 43% 96%;
+    --card: 42 60% 98%;
+    --popover: 42 60% 98%;
+    --secondary: 42 24% 92%;
+    --muted: 42 20% 93%;
+    --border: 35 17% 82%;
+    --input: 35 17% 72%;
+    min-height: 100dvh;
+    color: #211f1b;
+    background:
+      radial-gradient(circle at 10% 0%, rgba(37, 99, 235, .09), transparent 28rem),
+      linear-gradient(rgba(23, 23, 23, .035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(23, 23, 23, .035) 1px, transparent 1px),
+      #f8f4eb;
+    background-size: auto, 42px 42px, 42px 42px, auto;
+  }
+
+  .admin-visual-shell > [class*="min-h-screen"],
+  .admin-visual-shell > [class*="min-h-\[100dvh\]"] {
+    background: transparent !important;
+  }
+
+  .admin-visual-shell main {
+    animation: polutek-surface-enter .28s ease-out both;
+  }
+
+  .admin-visual-shell [data-slot="card"],
+  .admin-visual-shell [class*="rounded-3xl"][class*="bg-card"] {
+    border: 1.5px solid rgba(23, 23, 23, .2);
+    border-radius: 19px 15px 21px 14px;
+    background: rgba(255, 251, 242, .96);
+    box-shadow: 4px 5px 0 rgba(37, 99, 235, .11), 0 12px 28px rgba(23, 23, 23, .055);
+  }
+
+  .admin-visual-shell [data-slot="card-title"],
+  .admin-visual-shell h1,
+  .admin-visual-shell h2 {
+    font-family: var(--font-space-grotesk, sans-serif);
+    letter-spacing: -.025em;
+  }
+
+  .admin-visual-shell [data-slot="button"] {
+    min-height: 36px;
+    border-radius: 11px 9px 12px 8px;
+    transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease, color .15s ease;
+  }
+
+  .admin-visual-shell [data-slot="button"]:not([class*="bg-destructive"]):not([class*="variant-ghost"]) {
+    border-color: rgba(23, 23, 23, .2);
+  }
+
+  .admin-visual-shell [data-slot="input"],
+  .admin-visual-shell textarea,
+  .admin-visual-shell [role="combobox"] {
+    min-height: 40px;
+    border-width: 1.5px;
+    border-color: rgba(23, 23, 23, .24);
+    border-radius: 11px 8px 12px 9px;
+    background: rgba(255, 253, 247, .9);
+    transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+  }
+
+  .admin-visual-shell [data-slot="input"]:focus-visible,
+  .admin-visual-shell textarea:focus-visible,
+  .admin-visual-shell [role="combobox"]:focus-visible {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .14);
+  }
+
+  .admin-visual-shell [data-slot="table-container"] {
+    border-radius: 14px 11px 16px 10px;
+  }
+
+  .admin-visual-shell [data-slot="table-header"] {
+    background: rgba(239, 243, 254, .68);
+  }
+
+  .admin-visual-shell [data-slot="table-row"] {
+    transition: background-color .15s ease, transform .15s ease;
+  }
+
+  .admin-visual-shell .app-skeleton,
+  .public-visual-shell .app-skeleton,
+  .channel-page-shell .app-skeleton {
+    animation: none;
+    border: 1px solid rgba(23, 23, 23, .07);
+    border-radius: 12px 9px 13px 8px;
+    background: #e9e3d8;
+  }
+
+  .admin-visual-shell .app-skeleton::after,
+  .public-visual-shell .app-skeleton::after,
+  .channel-page-shell .app-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 25%, rgba(255, 252, 244, .8) 45%, rgba(37, 99, 235, .09) 52%, transparent 72%);
+    transform: translateX(-110%);
+    animation: polutek-skeleton-sweep 1.45s ease-in-out infinite;
+  }
+
+  @media (hover: hover) {
+    .channel-video-card:hover {
+      transform: translateY(-3px) rotate(-.15deg);
+    }
+
+    .channel-video-card:hover .channel-video-card-media {
+      box-shadow: 5px 6px 0 color-mix(in srgb, var(--chan-blue) 34%, transparent), 0 14px 28px rgba(23, 23, 23, .1);
+    }
+
+    .admin-visual-shell [data-slot="button"]:not(:disabled):hover {
+      transform: translateY(-1px) rotate(-.2deg);
+      box-shadow: 2px 3px 0 rgba(37, 99, 235, .18);
+    }
+
+    .admin-visual-shell [data-slot="table-row"]:hover {
+      background: rgba(239, 243, 254, .72);
+    }
+  }
+
+  .channel-page-shell button:active:not(:disabled),
+  .public-visual-shell button:active:not(:disabled),
+  .admin-visual-shell [data-slot="button"]:active:not(:disabled) {
+    transform: translateY(1px) scale(.97);
+  }
+
+  .channel-page-shell :is(a, button):focus-visible,
+  .public-visual-shell :is(a, button):focus-visible,
+  .admin-visual-shell :is(a, button):focus-visible {
+    outline: 3px solid rgba(37, 99, 235, .45);
+    outline-offset: 3px;
+  }
+
+  @keyframes polutek-surface-enter {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes polutek-skeleton-sweep {
+    to { transform: translateX(110%); }
+  }
+
+  @media (max-width: 767px) {
+    .channel-hero-banner {
+      border-inline: 0;
+      box-shadow: 0 4px 0 color-mix(in srgb, var(--chan-blue) 52%, transparent);
+    }
+
+    .channel-profile {
+      padding: 1rem;
+      border-radius: 18px 14px 20px 13px;
+    }
+
+    .admin-visual-shell main {
+      padding-inline: 1rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .admin-visual-shell main,
+    .admin-visual-shell .app-skeleton::after,
+    .public-visual-shell .app-skeleton::after,
+    .channel-page-shell .app-skeleton::after {
+      animation: none;
+    }
+
+    .channel-video-card,
+    .channel-video-card-media,
+    .admin-visual-shell [data-slot="button"] {
+      transition: none;
     }
   }
 }

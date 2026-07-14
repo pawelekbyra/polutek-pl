@@ -24,7 +24,7 @@ export default async function SearchPage(props: SearchPageProps) {
     : [];
 
   return (
-    <div className="min-h-screen bg-[var(--chan-nav)] font-sans text-[var(--chan-ink)]">
+    <div className="public-visual-shell min-h-screen bg-[var(--chan-nav)] font-sans text-[var(--chan-ink)]">
       <Navbar />
       <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-8 border-b border-[var(--chan-line)] pb-6">
