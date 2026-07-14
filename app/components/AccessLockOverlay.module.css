@@ -102,6 +102,11 @@
   transition: transform .7s var(--ease-standard, ease);
 }
 
+.patron .mark {
+  color: #92400e;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, .28));
+}
+
 .scene:hover .mark { transform: scale(1.06); }
 
 .heading {
@@ -126,7 +131,7 @@
 
 .wordWhite { color: #fff; }
 .wordBlue { color: color-mix(in srgb, var(--chan-blue) 22%, white); }
-.wordAmber { color: color-mix(in srgb, var(--chan-amber-bright) 40%, white); }
+.wordAmber { color: #92400e; }
 
 .divider {
   width: clamp(56px, 16cqi, 148px);
