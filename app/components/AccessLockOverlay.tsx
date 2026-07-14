@@ -36,7 +36,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         <div
           className={cn(
             "absolute inset-0 z-50 flex flex-col items-center justify-center gap-2 overflow-hidden [container-type:inline-size]",
-            isPatron ? "bg-amber-500" : "bg-[#2563eb]",
+            isPatron ? "bg-amber-500" : "bg-[var(--chan-blue)]",
           )}
         >
           <div
@@ -61,7 +61,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         <div
           className={cn(
             "absolute left-1/2 top-1/2 h-[70%] w-[62%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl",
-            isPatron ? "bg-amber-300/25" : "bg-blue-400/20",
+            isPatron ? "bg-amber-300/25" : "bg-[color-mix(in_srgb,var(--chan-blue)_22%,transparent)]",
           )}
           aria-hidden="true"
         />
@@ -69,8 +69,8 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         <div className="relative flex w-full max-w-[390px] flex-col items-center gap-[clamp(13px,2.5cqi,19px)] rounded-[20px] border border-[color-mix(in_srgb,var(--chan-ink)_12%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_94%,white)] px-7 py-[clamp(24px,5cqi,36px)] text-center shadow-[0_18px_46px_rgba(15,23,42,0.14)]">
           <div
             className={cn(
-              "grid h-[clamp(52px,10cqi,66px)] w-[clamp(52px,10cqi,66px)] place-items-center rounded-[17px] text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)]",
-              isPatron ? "bg-amber-500" : "bg-[#2563eb]",
+              "grid h-[clamp(52px,10cqi,66px)] w-[clamp(52px,10cqi,66px)] place-items-center rounded-[18px] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_10px_24px_rgba(15,23,42,0.16)]",
+              isPatron ? "bg-[linear-gradient(140deg,#fbbf24,#f59e0b)]" : "bg-[linear-gradient(140deg,color-mix(in_srgb,var(--chan-blue)_72%,white),var(--chan-blue))]",
             )}
           >
             <Icon className="h-[clamp(24px,5cqi,30px)] w-[clamp(24px,5cqi,30px)]" />
@@ -106,7 +106,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             <button
               type="button"
               onClick={() => openAuthModal("sign-in")}
-              className="mt-1 inline-flex min-h-11 items-center justify-center rounded-xl bg-[#2563eb] px-6 font-brand text-[clamp(13px,2.4cqi,15px)] font-bold text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)] transition-[transform,background-color,box-shadow] duration-150 hover:-translate-y-px hover:bg-[#1d4ed8] hover:shadow-[0_10px_24px_rgba(37,99,235,0.28)] active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563eb] focus-visible:ring-offset-2"
+              className="mt-1 inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--chan-blue)] px-6 font-brand text-[clamp(13px,2.4cqi,15px)] font-bold text-white shadow-[0_8px_20px_-6px_color-mix(in_srgb,var(--chan-blue)_50%,transparent)] transition-[transform,background-color,box-shadow] duration-150 hover:-translate-y-px hover:bg-[color-mix(in_srgb,var(--chan-blue)_88%,black)] hover:shadow-[0_12px_26px_-8px_color-mix(in_srgb,var(--chan-blue)_55%,transparent)] active:translate-y-0 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2"
             >
               {isPl ? "Zaloguj się" : "Sign In"}
             </button>

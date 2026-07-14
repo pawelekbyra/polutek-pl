@@ -45,7 +45,7 @@ export default function DonationAmountField({
   );
 
   return (
-    <div className="mb-3 rounded-[10px] bg-white/72 p-[8px_12px] shadow-[inset_0_0_0_1px_rgba(229,214,185,.85)]">
+    <div className="mb-3 rounded-[12px] bg-[color-mix(in_srgb,var(--chan-surface)_66%,white)] p-[9px_14px] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--chan-line)_86%,transparent),inset_0_1px_0_rgba(255,255,255,0.5)]">
       <div className="space-y-1.5">
         <label htmlFor={viewerIsPatron ? inputId : undefined} className="sr-only">
           {viewerIsPatron

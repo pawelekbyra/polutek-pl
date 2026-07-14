@@ -226,7 +226,7 @@ export function SidebarPlaylist({
               className="absolute left-0 top-1/2 h-12 w-1 -translate-y-1/2 rounded-r-lg bg-gradient-to-b from-[#2563EB] to-[#1e40af] shadow-[0_0_12px_rgba(37,99,235,0.4)] transition-all duration-200"
             />
           )}
-          <div className="w-[130px] h-[73px] shrink-0 rounded-[10px] bg-black relative overflow-hidden group/thumb lg:w-[135px] lg:h-[76px] xl:w-[145px] xl:h-[82px]">
+          <div className="w-[130px] h-[73px] shrink-0 rounded-[12px] bg-black relative overflow-hidden group/thumb lg:w-[135px] lg:h-[76px] xl:w-[145px] xl:h-[82px]">
               {video.thumbnailUrl ? (
                 <Image
                   src={video.thumbnailUrl}
@@ -316,9 +316,14 @@ export function SidebarPlaylist({
   const supportItem = (layout?.sections.flatMap((section) => section.items) ?? sortedVideos).find((item) => item.creatorId);
 
   const renderSectionHeader = (title: string, icon?: React.ReactNode) => (
-    <div className="mb-1 flex shrink-0 items-center gap-2 border-b border-[var(--chan-line)] pb-1">
-      {icon}
-      <h3 className="font-brand text-[12px] font-bold uppercase tracking-[0.1em] text-[var(--chan-muted-2)]">
+    <div className="mb-1.5 flex shrink-0 items-center gap-2 border-b border-[color-mix(in_srgb,var(--chan-line)_76%,transparent)] pb-1.5">
+      {icon ?? (
+        <span
+          aria-hidden="true"
+          className="inline-flex h-1.5 w-1.5 rounded-full bg-[var(--chan-blue)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--chan-blue)_16%,transparent)]"
+        />
+      )}
+      <h3 className="font-brand text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--chan-muted-2)]">
         {title}
       </h3>
     </div>

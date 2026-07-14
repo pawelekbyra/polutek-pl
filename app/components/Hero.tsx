@@ -174,9 +174,9 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
   return (
     <section className="bg-transparent">
-      <div className="w-full rounded-[28px] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_86%,white)] p-2.5 shadow-[0_18px_44px_rgba(23,23,23,0.06)] md:p-3">
+      <div className="w-full rounded-[26px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_92%,white)] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_2px_6px_rgba(23,23,23,0.03),0_30px_60px_-26px_rgba(23,23,23,0.24)] md:p-3">
         {/* FEATURED MEDIA */}
-        <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-[22px] bg-black md:rounded-[24px]">
+        <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-[20px] bg-black md:rounded-[22px]">
           <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured}>
             <VideoPlayer video={video} onViewCounted={() => setLocalViewsCount((views) => views + 1)} />
           </PremiumWrapper>
@@ -184,7 +184,11 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* INFO SECTION */}
         <div className="space-y-3 px-1 pb-1 md:px-2">
-          <h1 className="font-brand font-bold not-italic text-[22px] md:text-[28px] text-[var(--chan-ink)] leading-[1.25] mb-2">
+          <p className="mb-1.5 flex items-center gap-2 font-brand text-[10.5px] font-bold uppercase leading-none tracking-[0.18em] text-[var(--chan-muted-2)]">
+            <span aria-hidden="true" className="inline-flex h-1.5 w-1.5 rounded-full bg-[var(--chan-blue)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--chan-blue)_18%,transparent)]" />
+            {language === "pl" ? "Teraz odtwarzane" : "Now playing"}
+          </p>
+          <h1 className="font-brand font-bold not-italic text-[22px] md:text-[30px] tracking-[-0.021em] text-[var(--chan-ink)] leading-[1.16] mb-2">
              {displayTitle}
           </h1>
 
@@ -192,7 +196,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             <div className={cn("flex w-full items-center gap-[13px] min-w-0 lg:w-auto", styles.creatorStrip)}>
                <Link
                  href={video.creator?.slug ? getLocalizedHref(language, "channel", { slug: video.creator.slug }) : "#"}
-                 className="w-[46px] h-[46px] rounded-full bg-[var(--chan-avatar-gradient)] overflow-hidden shrink-0 hover:opacity-85 transition-opacity relative"
+                 className="w-[46px] h-[46px] rounded-full bg-[var(--chan-avatar-gradient)] overflow-hidden shrink-0 transition-[transform,opacity] duration-200 hover:opacity-90 hover:scale-[1.04] relative"
                >
                   <Image
                     src={video.creator?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${video.creator?.name || MAIN_CREATOR_NAME}`}
@@ -205,11 +209,11 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                <div className="min-w-0 flex flex-col">
                   <Link
                     href={video.creator?.slug ? getLocalizedHref(language, "channel", { slug: video.creator.slug }) : "#"}
-                    className="font-brand font-bold text-[var(--chan-ink)] text-[15px] leading-[1.2] truncate block"
+                    className="font-brand font-bold text-[var(--chan-ink)] text-[15px] leading-[1.2] tracking-[-0.01em] truncate block transition-colors hover:text-[var(--chan-blue)]"
                   >
                     {video.creator?.name || MAIN_CREATOR_NAME}
                   </Link>
-                  <span className="text-[12.5px] text-[var(--chan-muted)] mt-[1px]">
+                  <span className="text-[12.5px] font-medium text-[var(--chan-muted)] mt-[1px] tabular-nums">
                      {mounted ? formatCount(localSubState.subscribersCount) : (video.creator?.subscribersCount || 0)} {t.subscribers}
                   </span>
                </div>
@@ -278,16 +282,17 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* DESCRIPTION PANEL */}
         <div
-          className={cn("mt-2 cursor-pointer rounded-[20px] border px-4 pt-[9px] pb-3 transition-colors hover:border-[#2563eb]/40 md:px-5", styles.descPanel)}
+          className={cn("mt-2 cursor-pointer rounded-[18px] border px-4 pt-[9px] pb-3 transition-[border-color,background-color,box-shadow] duration-200 hover:border-[color-mix(in_srgb,var(--chan-blue)_36%,var(--chan-line))] md:px-5", styles.descPanel)}
           onClick={() => setIsExpanded(!isExpanded)}
         >
            <div>
-             <div className="flex flex-wrap gap-x-2 gap-y-0.5 mb-1.5 items-baseline">
-                <span className="font-sans text-[12px] font-bold not-italic text-[var(--chan-ink)]">
+             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mb-1.5">
+                <span className="font-sans text-[12px] font-bold not-italic tabular-nums text-[var(--chan-ink)]">
                    {mounted ? localViewsCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : localViewsCount} {t.views}
                 </span>
-                <span className="font-sans text-[12px] font-bold not-italic text-[var(--chan-ink)]">
-                   · {video.publishedAt ? new Date(video.publishedAt).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : t.noDate}
+                <span aria-hidden="true" className="h-[3px] w-[3px] rounded-full bg-[var(--chan-line-soft)]" />
+                <span className="font-sans text-[12px] font-semibold not-italic text-[var(--chan-muted)]">
+                   {video.publishedAt ? new Date(video.publishedAt).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : t.noDate}
                 </span>
              </div>
 
@@ -299,7 +304,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     {displayDescription.slice(0, 160).trim()}
                     {displayDescription.length > 160 && (
                       <span
-                        className="text-[12px] font-bold text-[var(--chan-ink)] ml-1 hover:underline cursor-pointer inline"
+                        className="text-[12px] font-bold text-[var(--chan-blue)] ml-1 hover:underline cursor-pointer inline"
                         onClick={(e) => {
                           e.stopPropagation();
                           setIsExpanded(true);
@@ -314,7 +319,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
              {isExpanded && (
                <button
-                 className="text-[12px] font-bold text-[var(--chan-ink)] mt-1 hover:underline inline-block"
+                 className="text-[12px] font-bold text-[var(--chan-blue)] mt-1 hover:underline inline-block"
                  onClick={(e) => {
                    e.stopPropagation();
                    setIsExpanded(false);
