@@ -1,5 +1,9 @@
-import { HomePageSkeleton } from "@/components/skeletons";
-
 export default function Loading() {
-  return <HomePageSkeleton />;
+  return (
+    <div
+      className="min-h-[100dvh] bg-[var(--chan-nav,#f7f1e4)]"
+      aria-label="Przechodzę do strony"
+      role="status"
+    />
+  );
 }

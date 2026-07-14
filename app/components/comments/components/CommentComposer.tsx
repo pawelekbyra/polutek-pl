@@ -167,12 +167,17 @@ export function CommentComposer({
               </div>
             </div>
           ) : !canComment ? (
-            <div className={fieldClassName}>
+            <div
+              className={cn(
+                fieldClassName,
+                "bg-[var(--chan-blue-soft)] ring-1 ring-inset ring-[#2563EB]/20",
+              )}
+            >
               <div className="relative flex min-h-[2.75rem] w-full items-center justify-center py-2.5">
                 {isPatronGated && userProfile ? (
                   <a
                     href="#donations"
-                    className="text-[14px] font-bold text-[#2563EB] underline underline-offset-4 hover:opacity-80 transition-all text-center"
+                    className="inline-flex min-h-9 items-center justify-center rounded-lg border border-[#2563EB]/25 bg-white/75 px-4 text-center text-[13px] font-bold text-[#2563EB] shadow-[0_2px_0_rgba(37,99,235,0.13)] transition-[transform,background-color,box-shadow] hover:-translate-y-px hover:bg-white hover:shadow-[0_3px_0_rgba(37,99,235,0.18)] active:translate-y-px active:shadow-none"
                   >
                     {language === "pl"
                       ? "Zostaw napiwek, aby komentować"
@@ -182,7 +187,7 @@ export function CommentComposer({
                   <button
                     type="button"
                     onClick={() => openAuthModal("sign-in")}
-                    className="text-[14px] font-bold text-[#2563EB] underline underline-offset-4 hover:opacity-80 transition-all text-center"
+                    className="inline-flex min-h-9 items-center justify-center rounded-lg border border-[#2563EB]/25 bg-white/75 px-4 text-center text-[13px] font-bold text-[#2563EB] shadow-[0_2px_0_rgba(37,99,235,0.13)] transition-[transform,background-color,box-shadow] hover:-translate-y-px hover:bg-white hover:shadow-[0_3px_0_rgba(37,99,235,0.18)] active:translate-y-px active:shadow-none"
                   >
                     {t.signInToComment}
                   </button>

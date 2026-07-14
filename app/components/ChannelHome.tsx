@@ -17,19 +17,9 @@ const EmbeddedComments = dynamic(() => import("./comments/EmbeddedComments"), {
   ssr: false,
 });
 
-function CommentsShellSkeleton() {
+function CommentsMountPlaceholder() {
   return (
-    <div className="py-10 space-y-4" role="status" aria-live="polite" aria-label="Loading comments">
-      <div className="flex items-center justify-between gap-3">
-        <div className="h-4 w-32 rounded-full bg-[var(--chan-line)] motion-reduce:animate-none animate-pulse" />
-        <div className="h-4 w-24 rounded-full bg-[var(--chan-line)] motion-reduce:animate-none animate-pulse" />
-      </div>
-      <div className="rounded-2xl border border-dashed border-[var(--chan-line-soft)] bg-[var(--chan-surface)] p-4 space-y-3">
-        <div className="h-3 w-2/3 rounded-full bg-[var(--chan-line)] motion-reduce:animate-none animate-pulse" />
-        <div className="h-3 w-full rounded-full bg-[var(--chan-line)] motion-reduce:animate-none animate-pulse" />
-        <div className="h-3 w-5/6 rounded-full bg-[var(--chan-line)] motion-reduce:animate-none animate-pulse" />
-      </div>
-    </div>
+    <div className="min-h-[180px]" aria-hidden="true" />
   );
 }
 
@@ -195,7 +185,7 @@ function ChannelHomeContent({
 
             {isDesktop ? (
               <div className="mt-5 hidden rounded-[24px] border border-[var(--chan-line)] bg-[color-mix(in_srgb,var(--chan-card)_84%,white)] px-5 py-2 shadow-[0_12px_30px_rgba(23,23,23,0.045)] lg:block">
-                {mounted ? comments : <CommentsShellSkeleton />}
+                {mounted ? comments : <CommentsMountPlaceholder />}
               </div>
             ) : mounted ? (
               <>
@@ -233,7 +223,7 @@ function ChannelHomeContent({
               </>
             ) : (
               <div className="mt-2">
-                <CommentsShellSkeleton />
+                <CommentsMountPlaceholder />
               </div>
             )}
           </div>

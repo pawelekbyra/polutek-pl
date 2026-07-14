@@ -1,9 +1,8 @@
 "use client";
 
-import React from 'react';
 import { useLanguage } from './LanguageContext';
 import { Button } from '@/components/ui/button';
-import { NajsIcon } from './najs/primitives';
+import { CircleAlert, RefreshCw } from 'lucide-react';
 
 interface PlayerErrorOverlayProps {
   errorCode?: string;
@@ -12,12 +11,12 @@ interface PlayerErrorOverlayProps {
   showTechnicalDetails?: boolean;
 }
 
-export const PlayerErrorOverlay: React.FC<PlayerErrorOverlayProps> = ({
+export function PlayerErrorOverlay({
   errorCode,
   onRetry,
   isAdmin = false,
   showTechnicalDetails = false
-}) => {
+}: PlayerErrorOverlayProps) {
   const { language } = useLanguage();
 
   const getErrorContent = (code?: string, lang: string = 'pl') => {
@@ -71,35 +70,34 @@ export const PlayerErrorOverlay: React.FC<PlayerErrorOverlayProps> = ({
   const retryLabel = language === 'pl' ? "Spróbuj ponownie" : "Try again";
 
   return (
-    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0a0a] text-white p-6 text-center animate-in fade-in duration-500 [container-type:inline-size]">
-      <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-4 border border-red-500/20">
-        <NajsIcon name="alert" className="w-8 h-8 text-red-500" stroke="currentColor" />
+    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[var(--chan-nav,#f7f1e4)] p-6 text-center text-[var(--chan-ink,#171717)] animate-in fade-in duration-300 [container-type:inline-size]">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-red-500/15 bg-white text-red-500 shadow-[0_10px_28px_rgba(15,23,42,0.1)]">
+        <CircleAlert className="h-7 w-7" aria-hidden="true" />
       </div>
 
-      <h3 className="text-[min(1.2rem,6cqi)] font-black uppercase tracking-tight mb-2 max-w-md">
+      <h3 className="mb-2 max-w-md font-brand text-[min(1.2rem,6cqi)] font-bold tracking-tight">
         {content.title}
       </h3>
 
-      <p className="text-[min(0.875rem,4cqi)] text-neutral-400 max-w-xs mb-8 leading-relaxed">
+      <p className="mb-7 max-w-xs text-[min(0.875rem,4cqi)] leading-relaxed text-[var(--chan-muted,#64748b)]">
         {content.description}
       </p>
 
       {onRetry && (
         <Button
           onClick={onRetry}
-          variant="outline"
-          className="bg-white/5 border-white/10 hover:bg-white/10 text-white rounded-full px-8 h-[min(3rem,12cqi)] font-black uppercase tracking-widest text-[min(11px,3cqi)] transition-all active:scale-95"
+          className="h-[min(2.75rem,12cqi)] rounded-xl bg-[#2563eb] px-6 font-brand text-[min(13px,3.2cqi)] font-bold text-white shadow-[0_8px_20px_rgba(37,99,235,0.22)] transition-all hover:bg-[#1d4ed8] active:scale-[0.97]"
         >
-          <NajsIcon name="refresh" className="mr-2 h-3.5 w-3.5" stroke="currentColor" />
+          <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
           {retryLabel}
         </Button>
       )}
 
       {(isAdmin || showTechnicalDetails) && errorCode && (
-        <div className="absolute bottom-4 right-4 px-2 py-1 bg-black/40 rounded border border-white/5 text-[9px] font-mono text-white/30 uppercase tracking-tighter">
+        <div className="absolute bottom-4 right-4 rounded-md border border-black/10 bg-white/70 px-2 py-1 font-mono text-[9px] uppercase tracking-tighter text-black/35">
           Dev Error: {errorCode}
         </div>
       )}
     </div>
   );
-};
+}

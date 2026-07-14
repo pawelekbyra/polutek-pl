@@ -235,6 +235,18 @@
     transform: translateY(1px) scale(.97);
   }
 
+  .public-visual-shell button:not(:disabled):not([class*="underline"]):not(.polutek-player-btn):not(.polutek-player-hero),
+  .channel-page-shell button:not(:disabled):not([class*="underline"]) {
+    outline: 1px solid color-mix(in srgb, var(--chan-ink) 15%, transparent);
+    outline-offset: -1px;
+    cursor: pointer;
+  }
+
+  .public-visual-shell button:not(:disabled):not([class*="underline"]):not(.polutek-player-btn):not(.polutek-player-hero):hover,
+  .channel-page-shell button:not(:disabled):not([class*="underline"]):hover {
+    outline-color: color-mix(in srgb, var(--chan-blue) 34%, var(--chan-ink) 12%);
+  }
+
   .channel-page-shell :is(a, button):focus-visible,
   .public-visual-shell :is(a, button):focus-visible,
   .admin-visual-shell :is(a, button):focus-visible {
