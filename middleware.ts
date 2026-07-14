@@ -54,7 +54,7 @@ const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);
 // TEMPORARY: /logo1 … /logo20 logo font bake-off pages are public and must not
 // be locale-rewritten. Remove alongside the experiment.
 function isLogoExperimentRoute(pathname: string): boolean {
-  return /^\/logo\d+$/.test(pathname);
+  return /^\/logo\d+\/?$/.test(pathname);
 }
 
 // Static root files served from /public that must never get a /pl or /en
