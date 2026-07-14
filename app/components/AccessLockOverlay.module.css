@@ -182,12 +182,12 @@
 .cta:focus-visible .ctaLine { width: 124px; }
 
 .ctaText {
-  max-width: 26ch;
+  max-width: 100%;
   font-size: clamp(10px, 1.9cqi, 13px);
   font-weight: 800;
   letter-spacing: .24em;
   text-transform: uppercase;
-  text-wrap: balance;
+  white-space: nowrap;
 }
 
 .compact {
