@@ -142,7 +142,7 @@ const Navbar = () => {
                 <BrandName
                   className="text-[17.5px] leading-none md:text-[21.25px]"
                   decorative
-                  shine="hover"
+                  shine="ambient"
                 />
               </Link>
             </div>

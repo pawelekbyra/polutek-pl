@@ -14,7 +14,6 @@ import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
 import { AppPreloadProvider, useAppPreload } from "./preload/AppPreloadProvider";
 import {
   useClientReady,
-  useMediaQuery,
 } from "@/app/hooks/useClientEnvironment";
 
 const EmbeddedComments = dynamic(() => import("./comments/EmbeddedComments"), {
@@ -113,7 +112,6 @@ function ChannelHomeContent({
   const viewerIsPatron = userProfile?.role === 'ADMIN' || userProfile?.isPatronDecorative === true;
   const activeTab = selectionState.activeTab;
   const mounted = useClientReady();
-  const isDesktop = useMediaQuery("(min-width: 1024px)");
   const preloader = useAppPreload();
 
   const setActiveTab = (activeTab: "comments" | "videos") => {
@@ -128,7 +126,9 @@ function ChannelHomeContent({
 
   useEffect(() => {
     const openSupport = () => {
-      setActiveTab("videos");
+      if (!window.matchMedia("(min-width: 1024px)").matches) {
+        setActiveTab("videos");
+      }
       window.setTimeout(() => {
         const prefersReducedMotion = window.matchMedia?.(
           "(prefers-reduced-motion: reduce)",
@@ -208,7 +208,7 @@ function ChannelHomeContent({
   );
 
   return (
-    <main className="min-h-screen bg-[var(--chan-nav)] bg-[radial-gradient(circle_at_top_left,color-mix(in_srgb,var(--chan-blue)_9%,transparent),transparent_34%),linear-gradient(180deg,color-mix(in_srgb,var(--chan-card)_72%,transparent),transparent_42%)]">
+    <main className="min-h-screen bg-[var(--chan-nav)] bg-[radial-gradient(circle_at_top_left,color-mix(in_srgb,var(--chan-blue)_9%,transparent),transparent_34%),radial-gradient(circle_at_top_right,color-mix(in_srgb,var(--chan-amber)_8%,transparent),transparent_30%),linear-gradient(180deg,color-mix(in_srgb,var(--chan-card)_72%,transparent),transparent_42%)]">
       <div className="mx-auto max-w-[1180px] px-4 pb-8 pt-4 md:px-6 lg:px-8 lg:pb-10 lg:pt-5">
         <div className="grid grid-cols-12 gap-5 lg:items-start xl:gap-6">
           <div className="col-span-12 flex flex-col lg:col-span-8">
@@ -223,47 +223,42 @@ function ChannelHomeContent({
               />
             </div>
 
-            {isDesktop ? (
-              <div className="mt-5 hidden rounded-[24px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_88%,white)] px-5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(23,23,23,0.03),0_22px_48px_-24px_rgba(23,23,23,0.18)] lg:block">
-                {mounted ? comments : <CommentsMountPlaceholder />}
+            <div className="mt-5 lg:hidden">
+              <div className="relative flex overflow-hidden rounded-full border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_88%,white)] p-1 font-sans shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_8px_20px_-8px_rgba(23,23,23,0.12)]">
+                {(["comments", "videos"] as const).map((tab) => {
+                  const isActive = activeTab === tab;
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      aria-pressed={isActive}
+                      className={cn(
+                        "relative flex-1 rounded-full py-2.5 text-[12px] font-bold not-italic uppercase tracking-[0.14em] transition-all duration-200 motion-reduce:transition-none",
+                        isActive
+                          ? tab === "videos"
+                            ? "bg-[var(--chan-amber-soft)] text-[var(--chan-amber-strong)] shadow-[0_1px_2px_rgba(23,23,23,0.06),0_4px_10px_-4px_rgba(23,23,23,0.14)]"
+                            : "bg-[var(--chan-card)] text-[var(--chan-blue)] shadow-[0_1px_2px_rgba(23,23,23,0.06),0_4px_10px_-4px_rgba(23,23,23,0.14)]"
+                          : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]",
+                      )}
+                    >
+                      {tab === "comments" ? t.comments : t.videosTab}
+                    </button>
+                  );
+                })}
               </div>
-            ) : mounted ? (
-              <>
-                <div className="mt-5 lg:hidden">
-                  <div className="relative flex overflow-hidden rounded-full border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_88%,white)] p-1 font-sans shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_8px_20px_-8px_rgba(23,23,23,0.12)]">
-                    {(["comments", "videos"] as const).map((tab) => {
-                      const isActive = activeTab === tab;
-                      return (
-                        <button
-                          key={tab}
-                          onClick={() => setActiveTab(tab)}
-                          aria-pressed={isActive}
-                          className={cn(
-                            "relative flex-1 rounded-full py-2.5 text-[12px] font-bold not-italic uppercase tracking-[0.14em] transition-all duration-200",
-                            isActive
-                              ? "bg-[var(--chan-card)] text-[var(--chan-blue)] shadow-[0_1px_2px_rgba(23,23,23,0.06),0_4px_10px_-4px_rgba(23,23,23,0.14)]"
-                              : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]",
-                          )}
-                        >
-                          {tab === "comments" ? t.comments : t.videosTab}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div className="mt-3 lg:hidden">
-                  {activeTab === "comments" ? (
-                    <div className="rounded-[22px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_88%,white)] px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_18px_40px_-22px_rgba(23,23,23,0.18)]">{comments}</div>
-                  ) : (
-                    <div className="rounded-[22px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_88%,white)] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_18px_40px_-22px_rgba(23,23,23,0.18)]">
-                      <SidebarPlaylist {...commonSidebarProps} />
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="mt-2">
-                <CommentsMountPlaceholder />
+            </div>
+
+            <div
+              className={cn(
+                "mt-3 rounded-[22px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_88%,white)] px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_18px_40px_-22px_rgba(23,23,23,0.18)] lg:mt-5 lg:block lg:rounded-[24px] lg:px-5 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(23,23,23,0.03),0_22px_48px_-24px_rgba(23,23,23,0.18)]",
+                activeTab === "videos" && "hidden",
+              )}
+            >
+              {mounted ? comments : <CommentsMountPlaceholder />}
+            </div>
+            {activeTab === "videos" && (
+              <div className="mt-3 rounded-[22px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_88%,white)] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_18px_40px_-22px_rgba(23,23,23,0.18)] lg:hidden">
+                <SidebarPlaylist {...commonSidebarProps} />
               </div>
             )}
           </div>

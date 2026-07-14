@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "./LanguageContext";
 import EmailSubscriptionConsentModal from "./subscriptions/EmailSubscriptionConsentModal";
 import { Rocket } from "lucide-react";
+import { useClientReady } from "@/app/hooks/useClientEnvironment";
 
 interface SubscribeButtonProps {
   creatorId?: string;
@@ -38,20 +39,9 @@ export default function SubscribeButton({
     initialIsSubscribed ?? false,
   );
   const [isPending, startTransition] = useTransition();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useClientReady();
   const [showConfirm, setShowConfirm] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Sync with prop if it changes
-  useEffect(() => {
-    if (initialIsSubscribed !== undefined) {
-      setIsSubscribed(initialIsSubscribed);
-    }
-  }, [initialIsSubscribed]);
 
   // Fetch status if not provided
   useEffect(() => {
@@ -69,9 +59,7 @@ export default function SubscribeButton({
     }
   }, [userId, creatorId, creatorSlug, initialIsSubscribed]);
 
-  useEffect(() => {
-    if (!userId && mounted) setIsSubscribed(false);
-  }, [userId, mounted]);
+  const effectiveIsSubscribed = Boolean(mounted && userId && isSubscribed);
 
   const handleSubscribe = async () => {
     if (!userId) {
@@ -80,7 +68,7 @@ export default function SubscribeButton({
     }
     if (isPending) return;
 
-    if (!isSubscribed) {
+    if (!effectiveIsSubscribed) {
       setShowConfirm(true);
       return;
     }
@@ -89,8 +77,10 @@ export default function SubscribeButton({
   };
 
   const executeSubscribe = async () => {
-    const nextState = !isSubscribed;
+    const nextState = !effectiveIsSubscribed;
+    const previousState = effectiveIsSubscribed;
     setErrorMessage(null);
+    setIsSubscribed(nextState);
 
     startTransition(async () => {
       try {
@@ -120,6 +110,7 @@ export default function SubscribeButton({
                     : result.message ||
                       "Nie udało się zapisać subskrypcji. Spróbuj ponownie.";
           setErrorMessage(message);
+          setIsSubscribed(previousState);
           return;
         }
 
@@ -127,6 +118,7 @@ export default function SubscribeButton({
         onStatusChange?.(result.isSubscribed, result.subscribersCount);
       } catch (err) {
         logger.warn("[SUBSCRIPTION_TOGGLE_ERROR]", err);
+        setIsSubscribed(previousState);
         setErrorMessage("Nie udało się połączyć z serwerem. Spróbuj ponownie.");
       }
     });
@@ -145,8 +137,8 @@ export default function SubscribeButton({
           className,
         )}
       >
-        <span className="relative leading-none z-10">{isSubscribed ? (t.subscribed || "Subskrajbujesz") : (t.subscribe || "Subskrajb")}</span>
-        <Rocket size={20} className="relative shrink-0 z-10" fill={isSubscribed ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.8} />
+        <span className="relative leading-none z-10">{effectiveIsSubscribed ? (t.subscribed || "Subskrajbujesz") : (t.subscribe || "Subskrajb")}</span>
+        <Rocket size={20} className="relative shrink-0 z-10" fill={effectiveIsSubscribed ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.8} />
       </motion.button>
       {errorMessage && (
         <div className="mt-2 max-w-[280px] flex flex-col gap-1">

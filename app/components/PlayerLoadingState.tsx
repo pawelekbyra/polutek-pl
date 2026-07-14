@@ -4,6 +4,7 @@ import React from "react";
 import { LoaderCircle } from "lucide-react";
 import { PlayerStateFrame } from "./PlayerStateFrame";
 import { cn } from "@/lib/utils";
+import { useOptionalLanguage } from "./LanguageContext";
 
 interface PlayerLoadingStateProps {
   className?: string;
@@ -18,6 +19,7 @@ interface PlayerLoadingStateProps {
  * both loading phases read as one continuous indicator instead of two.
  */
 export function PlayerLoadingIndicator({ compact = false }: { compact?: boolean }) {
+  const language = useOptionalLanguage();
   return (
     <div
       className={cn("polutek-player-loader", compact && "polutek-player-loader--compact")}
@@ -32,7 +34,7 @@ export function PlayerLoadingIndicator({ compact = false }: { compact?: boolean 
       </div>
       {!compact && (
         <p className="polutek-player-loader-label">
-          Już podaję film…
+          {language === "pl" ? "Już podaję film…" : "Getting the video ready…"}
         </p>
       )}
       <style jsx global>{`

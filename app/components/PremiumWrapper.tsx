@@ -22,6 +22,7 @@ import {
   useAppPreload,
 } from "./preload/AppPreloadProvider";
 import { VideoAccessContext, useVideoAccess } from "./VideoAccessContext";
+import { useOptionalLanguage } from "./LanguageContext";
 
 export { useVideoAccess };
 
@@ -369,6 +370,51 @@ export const PLAYBACK_PLAN_STATE_MESSAGES: Record<
   },
 };
 
+const PLAYBACK_PLAN_STATE_MESSAGES_EN: typeof PLAYBACK_PLAN_STATE_MESSAGES = {
+  LOGIN_REQUIRED: {
+    title: "Sign in to watch this video.",
+    description: "This video is available after signing in. Signing in does not grant Patron access or mailing consent.",
+    action: "login",
+    actionLabel: "Sign in",
+  },
+  PATRON_REQUIRED: {
+    title: "A release for Patrons.",
+    description: "Patron access is a reward for a qualifying one-time tip. It is not a recurring subscription.",
+    action: "support",
+    actionLabel: "Support once",
+  },
+  VIDEO_NOT_READY: {
+    title: "This video is being prepared.",
+    description: "The video is saved but is not ready for secure playback yet. Please check again shortly.",
+    action: "retry",
+    actionLabel: "Check again",
+  },
+  PROCESSING: {
+    title: "The video is processing.",
+    description: "The player will appear automatically when processing is complete.",
+    action: "retry",
+    actionLabel: "Refresh status",
+  },
+  NO_PRIMARY_ASSET: {
+    title: "This video does not have an active media file yet.",
+    description: "Playback cannot start right now. Please try again later or contact us about access.",
+    action: "support",
+    actionLabel: "Contact support",
+  },
+  UNAVAILABLE: {
+    title: "This video is temporarily unavailable.",
+    description: "We cannot prepare secure playback right now. Please try again or contact us about access.",
+    action: "support",
+    actionLabel: "Contact support",
+  },
+  ERROR: {
+    title: "Playback could not be prepared.",
+    description: "Try again. If the problem continues, contact us and include the video title.",
+    action: "retry",
+    actionLabel: "Try again",
+  },
+};
+
 export function getSafePlaybackState(
   data:
     | (Partial<PlaybackPlan> & {
@@ -433,9 +479,10 @@ function PlaybackPlanStateOverlay({
   onRetry,
   variant,
 }: PlaybackPlanStateOverlayProps) {
+  const language = useOptionalLanguage();
   const safeState = BLOCKED_PLAYBACK_STATES.has(state) ? state : "ERROR";
   const content =
-    PLAYBACK_PLAN_STATE_MESSAGES[
+    (language === "pl" ? PLAYBACK_PLAN_STATE_MESSAGES : PLAYBACK_PLAN_STATE_MESSAGES_EN)[
       safeState as Exclude<PlaybackPlanStatus, "READY">
     ];
   const isThumbnail = variant === "thumbnail" || variant === "thumbnailCompact";
@@ -446,34 +493,31 @@ function PlaybackPlanStateOverlay({
 
   return (
     <PlayerStateFrame className={isThumbnail ? "rounded-lg" : undefined}>
-      <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 text-center text-white [container-type:inline-size]">
-        {/* Subtle accent gradient accent in background */}
-        <div className="absolute inset-0 z-0 opacity-30">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-transparent" />
-        </div>
+      <div className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-[var(--chan-nav)] p-6 text-center text-[var(--chan-ink)] [container-type:inline-size]">
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,color-mix(in_srgb,var(--chan-blue)_10%,transparent),transparent_34%),radial-gradient(circle_at_84%_82%,color-mix(in_srgb,var(--chan-amber)_8%,transparent),transparent_30%)]"
+        />
 
-        <div className="relative z-10 flex max-w-md flex-col items-center gap-[clamp(12px,2cqi,20px)]">
-          {/* Icon Circle */}
-          <div className="flex h-[clamp(56px,11cqi,72px)] w-[clamp(56px,11cqi,72px)] items-center justify-center rounded-full border border-white/20 bg-white/5 backdrop-blur-sm shadow-lg">
-            <AlertCircle className="h-[clamp(28px,6cqi,36px)] w-[clamp(28px,6cqi,36px)] text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]" />
+        <div className="relative z-10 flex max-w-md flex-col items-center gap-[clamp(12px,2cqi,20px)] rounded-[22px] border border-[color-mix(in_srgb,var(--chan-line)_82%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_90%,white)] px-[clamp(22px,5cqi,42px)] py-[clamp(24px,5cqi,38px)] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_24px_54px_-28px_rgba(15,23,42,0.34)]">
+          <div className="flex h-[clamp(56px,11cqi,72px)] w-[clamp(56px,11cqi,72px)] items-center justify-center rounded-[18px] border border-[color-mix(in_srgb,var(--chan-blue)_18%,var(--chan-line))] bg-[var(--chan-blue-soft)] text-[var(--chan-blue)] shadow-[0_14px_30px_-18px_color-mix(in_srgb,var(--chan-blue)_58%,transparent)]">
+            <AlertCircle className="h-[clamp(28px,6cqi,36px)] w-[clamp(28px,6cqi,36px)]" />
           </div>
 
-          {/* Heading & Description */}
           <div className="flex flex-col gap-[clamp(8px,1.5cqi,12px)]">
-            <h3 className="text-[clamp(18px,5cqi,28px)] font-bold tracking-tight leading-tight drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]">
+            <h3 className="text-[clamp(18px,5cqi,28px)] font-bold leading-tight tracking-tight">
               {content.title}
             </h3>
 
-            <p className="text-[clamp(12px,2.2cqi,15px)] leading-relaxed text-white/80 drop-shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
+            <p className="text-[clamp(12px,2.2cqi,15px)] leading-relaxed text-[var(--chan-muted)]">
               {content.description}
             </p>
           </div>
 
-          {/* Action Button */}
           {content.action === "support" && (
             <a
               href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? ''}?subject=Problem%20z%20dost%C4%99pem%20do%20wideo`}
-               className="mt-2 inline-flex items-center justify-center rounded-[14px] border border-white/30 bg-white/10 hover:bg-white/20 px-[clamp(20px,5cqi,32px)] py-[clamp(10px,2cqi,14px)] text-[clamp(11px,2.4cqi,14px)] font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-all duration-200 active:scale-95 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 drop-shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
+              className="mt-2 inline-flex min-h-11 items-center justify-center rounded-[14px] bg-[var(--chan-amber)] px-[clamp(20px,5cqi,32px)] text-[clamp(11px,2.4cqi,14px)] font-bold uppercase tracking-wider text-[var(--chan-amber-ink)] shadow-[0_12px_26px_-14px_color-mix(in_srgb,var(--chan-amber)_70%,transparent)] transition-[transform,filter] duration-160 hover:-translate-y-px hover:brightness-[1.04] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-amber-strong)] focus-visible:ring-offset-2 motion-reduce:transition-none"
             >
               {content.actionLabel}
             </a>
@@ -483,7 +527,7 @@ function PlaybackPlanStateOverlay({
             <button
               type="button"
               onClick={onRetry}
-               className="mt-2 inline-flex items-center justify-center rounded-[14px] border border-white/30 bg-white/10 hover:bg-white/20 px-[clamp(20px,5cqi,32px)] py-[clamp(10px,2cqi,14px)] text-[clamp(11px,2.4cqi,14px)] font-bold uppercase tracking-wider text-white backdrop-blur-sm transition-all duration-200 active:scale-95 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 gap-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
+              className="mt-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-[14px] bg-[var(--chan-blue)] px-[clamp(20px,5cqi,32px)] text-[clamp(11px,2.4cqi,14px)] font-bold uppercase tracking-wider text-white shadow-[0_12px_26px_-14px_color-mix(in_srgb,var(--chan-blue)_70%,transparent)] transition-[transform,background-color] duration-160 hover:-translate-y-px hover:bg-[color-mix(in_srgb,var(--chan-blue)_88%,black)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 motion-reduce:transition-none"
             >
               <RefreshCcw size={16} className="flex-shrink-0" aria-hidden="true" />
               <span>{content.actionLabel}</span>

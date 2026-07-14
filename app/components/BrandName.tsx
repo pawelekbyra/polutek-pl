@@ -20,8 +20,8 @@ export default function BrandName({
 }: BrandNameProps) {
   const instanceId = useId().replaceAll(":", "");
   const titleId = `polutek-logo-title-${instanceId}`;
-  const lensShineLeadId = `polutek-logo-shine-lead-${instanceId}`;
-  const lensShineTrailId = `polutek-logo-shine-trail-${instanceId}`;
+  const lensClipId = `polutek-logo-lens-clip-${instanceId}`;
+  const lensShineId = `polutek-logo-shine-${instanceId}`;
 
   return (
     <span
@@ -47,23 +47,15 @@ export default function BrandName({
         {!decorative && <title id={titleId}>POLUTEK.PL</title>}
         {shine !== false && (
           <defs>
-            <linearGradient id={lensShineLeadId} x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0" stopColor="#4a9fff" stopOpacity="0" />
-            <stop offset="0.22" stopColor="#4a9fff" stopOpacity="0" />
-            <stop offset="0.32" stopColor="#4a9fff" stopOpacity="0.2" />
-            <stop offset="0.4" stopColor="#ffffff" stopOpacity="0.9" />
-            <stop offset="0.48" stopColor="#86bfff" stopOpacity="0.18" />
-            <stop offset="0.6" stopColor="#86bfff" stopOpacity="0" />
-            <stop offset="1" stopColor="#86bfff" stopOpacity="0" />
-            </linearGradient>
-            <linearGradient id={lensShineTrailId} x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0" stopColor="#4a9fff" stopOpacity="0" />
-            <stop offset="0.42" stopColor="#4a9fff" stopOpacity="0" />
-            <stop offset="0.54" stopColor="#4a9fff" stopOpacity="0.16" />
-            <stop offset="0.64" stopColor="#ffffff" stopOpacity="0.78" />
-            <stop offset="0.72" stopColor="#86bfff" stopOpacity="0.16" />
-            <stop offset="0.84" stopColor="#86bfff" stopOpacity="0" />
-            <stop offset="1" stopColor="#86bfff" stopOpacity="0" />
+            <clipPath id={lensClipId}>
+              <path transform="translate(1860,4)" d={LENS_INTERIORS_PATH} />
+            </clipPath>
+            <linearGradient id={lensShineId} x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0" stopColor="#ffffff" stopOpacity="0" />
+              <stop offset="0.34" stopColor="#9bc8ff" stopOpacity="0.12" />
+              <stop offset="0.5" stopColor="#ffffff" stopOpacity="0.96" />
+              <stop offset="0.66" stopColor="#9bc8ff" stopOpacity="0.12" />
+              <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
             </linearGradient>
           </defs>
         )}
@@ -77,23 +69,21 @@ export default function BrandName({
         </g>
 
         {shine !== false && (
-          <g aria-hidden="true" transform="translate(1860,4)">
-            <path
+          <g aria-hidden="true" clipPath={`url(#${lensClipId})`}>
+            <g transform="rotate(-16 1024 253)">
+              <rect
+                x="-360"
+                y="-520"
+                width="250"
+                height="1540"
+                rx="125"
               className={cn(
-                styles.shineLead,
-                shine === "ambient" && styles.ambientShineLead,
+                  styles.shineSweep,
+                  shine === "ambient" && styles.ambientShineSweep,
               )}
-              d={LENS_INTERIORS_PATH}
-              fill={`url(#${lensShineLeadId})`}
-            />
-            <path
-              className={cn(
-                styles.shineTrail,
-                shine === "ambient" && styles.ambientShineTrail,
-              )}
-              d={LENS_INTERIORS_PATH}
-              fill={`url(#${lensShineTrailId})`}
-            />
+                fill={`url(#${lensShineId})`}
+              />
+            </g>
           </g>
         )}
       </svg>

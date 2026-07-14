@@ -35,8 +35,55 @@ import {
   VolumeX,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useOptionalLanguage } from "../LanguageContext";
+
+function usePlayerCopy() {
+  const language = useOptionalLanguage();
+  return language === "pl"
+    ? {
+        buffering: "Buforowanie",
+        replay: "Odtwórz ponownie",
+        play: "Odtwórz",
+        pause: "Pauza",
+        unmute: "Włącz dźwięk",
+        mute: "Wycisz",
+        volume: "Głośność",
+        progress: "Postęp odtwarzania",
+        normal: "Normalna",
+        speed: "Prędkość",
+        captions: "Napisy",
+        captionsOff: "Wyłączone",
+        settings: "Ustawienia",
+        playerSettings: "Ustawienia odtwarzacza",
+        disableCaptions: "Wyłącz napisy",
+        enableCaptions: "Włącz napisy",
+        exitFullscreen: "Zamknij pełny ekran",
+        fullscreen: "Pełny ekran",
+      }
+    : {
+        buffering: "Buffering",
+        replay: "Play again",
+        play: "Play",
+        pause: "Pause",
+        unmute: "Unmute",
+        mute: "Mute",
+        volume: "Volume",
+        progress: "Playback progress",
+        normal: "Normal",
+        speed: "Speed",
+        captions: "Captions",
+        captionsOff: "Off",
+        settings: "Settings",
+        playerSettings: "Player settings",
+        disableCaptions: "Turn captions off",
+        enableCaptions: "Turn captions on",
+        exitFullscreen: "Exit fullscreen",
+        fullscreen: "Fullscreen",
+      };
+}
 
 function CenterStage() {
+  const copy = usePlayerCopy();
   const paused = useMediaState("paused");
   const waiting = useMediaState("waiting");
   const ended = useMediaState("ended");
@@ -50,7 +97,7 @@ function CenterStage() {
       aria-hidden={!paused && !waiting}
     >
       {waiting ? (
-        <div className="polutek-player-spinner" role="status" aria-label="Buforowanie">
+        <div className="polutek-player-spinner" role="status" aria-label={copy.buffering}>
           <LoaderCircle aria-hidden="true" />
         </div>
       ) : paused ? (
@@ -59,14 +106,14 @@ function CenterStage() {
             "polutek-player-hero",
             ended && "polutek-player-hero--replay",
           )}
-          aria-label={ended ? "Odtwórz ponownie" : "Odtwórz"}
+          aria-label={ended ? copy.replay : copy.play}
         >
           {ended ? (
             <>
               <span className="polutek-player-hero-icon-wrap">
                 <RotateCcw className="polutek-player-hero-icon" aria-hidden="true" />
               </span>
-              <span className="polutek-player-replay-label">Odtwórz ponownie</span>
+              <span className="polutek-player-replay-label">{copy.replay}</span>
             </>
           ) : (
             <Play
@@ -82,8 +129,9 @@ function CenterStage() {
 }
 
 function PlayPauseButton() {
+  const copy = usePlayerCopy();
   const paused = useMediaState("paused");
-  const label = paused ? "Odtwórz" : "Pauza";
+  const label = paused ? copy.play : copy.pause;
 
   return (
     <PlayButton className="polutek-player-btn" aria-label={label} title={label}>
@@ -97,11 +145,12 @@ function PlayPauseButton() {
 }
 
 function VolumeControl() {
+  const copy = usePlayerCopy();
   const muted = useMediaState("muted");
   const volume = useMediaState("volume");
   const canSetVolume = useMediaState("canSetVolume");
   const isMuted = muted || volume === 0;
-  const label = isMuted ? "Włącz dźwięk" : "Wycisz";
+  const label = isMuted ? copy.unmute : copy.mute;
 
   return (
     <div className="polutek-player-volume">
@@ -115,7 +164,7 @@ function VolumeControl() {
         )}
       </MuteButton>
       {canSetVolume && (
-        <VolumeSlider.Root className="polutek-player-volume-slider" aria-label="Głośność">
+        <VolumeSlider.Root className="polutek-player-volume-slider" aria-label={copy.volume}>
           <VolumeSlider.Track className="polutek-player-volume-track">
             <VolumeSlider.TrackFill className="polutek-player-volume-fill" />
           </VolumeSlider.Track>
@@ -127,8 +176,9 @@ function VolumeControl() {
 }
 
 function ScrubBar() {
+  const copy = usePlayerCopy();
   return (
-    <TimeSlider.Root className="polutek-player-scrub" aria-label="Postęp odtwarzania">
+    <TimeSlider.Root className="polutek-player-scrub" aria-label={copy.progress}>
       <TimeSlider.Track className="polutek-player-scrub-track">
         <TimeSlider.Progress className="polutek-player-scrub-buffer" />
         <TimeSlider.TrackFill className="polutek-player-scrub-fill" />
@@ -142,12 +192,13 @@ function ScrubBar() {
 }
 
 function SpeedMenuSection({ onSelect }: { onSelect: () => void }) {
-  const options = usePlaybackRateOptions({ normalLabel: "Normalna" });
+  const copy = usePlayerCopy();
+  const options = usePlaybackRateOptions({ normalLabel: copy.normal });
   if (options.disabled) return null;
 
   return (
     <div className="polutek-player-menu-section">
-      <div className="polutek-player-menu-heading">Prędkość</div>
+      <div className="polutek-player-menu-heading">{copy.speed}</div>
       {options.map((option: PlaybackRateOption) => (
         <button
           key={option.value}
@@ -169,12 +220,13 @@ function SpeedMenuSection({ onSelect }: { onSelect: () => void }) {
 }
 
 function CaptionsMenuSection({ onSelect }: { onSelect: () => void }) {
-  const options = useCaptionOptions({ off: "Wyłączone" });
+  const copy = usePlayerCopy();
+  const options = useCaptionOptions({ off: copy.captionsOff });
   if (!options.length) return null;
 
   return (
     <div className="polutek-player-menu-section">
-      <div className="polutek-player-menu-heading">Napisy</div>
+      <div className="polutek-player-menu-heading">{copy.captions}</div>
       {options.map((option: CaptionOption) => (
         <button
           key={option.value}
@@ -196,6 +248,7 @@ function CaptionsMenuSection({ onSelect }: { onSelect: () => void }) {
 }
 
 function SettingsMenu() {
+  const copy = usePlayerCopy();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -224,8 +277,8 @@ function SettingsMenu() {
       <button
         type="button"
         className="polutek-player-btn"
-        aria-label="Ustawienia"
-        title="Ustawienia"
+        aria-label={copy.settings}
+        title={copy.settings}
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen((value) => !value)}
@@ -233,7 +286,7 @@ function SettingsMenu() {
         <Settings className="polutek-player-icon" />
       </button>
       {open && (
-        <div className="polutek-player-menu" role="menu" aria-label="Ustawienia odtwarzacza">
+        <div className="polutek-player-menu" role="menu" aria-label={copy.playerSettings}>
           <SpeedMenuSection onSelect={() => setOpen(false)} />
           <CaptionsMenuSection onSelect={() => setOpen(false)} />
         </div>
@@ -243,12 +296,13 @@ function SettingsMenu() {
 }
 
 function CaptionToggle() {
+  const copy = usePlayerCopy();
   const hasCaptions = useMediaState("hasCaptions");
   const track = useMediaState("textTrack");
   const isOn = Boolean(track && isTrackCaptionKind(track));
   if (!hasCaptions) return null;
 
-  const label = isOn ? "Wyłącz napisy" : "Włącz napisy";
+  const label = isOn ? copy.disableCaptions : copy.enableCaptions;
   return (
     <CaptionButton
       className="polutek-player-btn polutek-player-caption"
@@ -265,11 +319,12 @@ function CaptionToggle() {
 }
 
 function FullscreenToggleButton() {
+  const copy = usePlayerCopy();
   const canFullscreen = useMediaState("canFullscreen");
   const isFullscreen = useMediaState("fullscreen");
   if (!canFullscreen) return null;
 
-  const label = isFullscreen ? "Zamknij pełny ekran" : "Pełny ekran";
+  const label = isFullscreen ? copy.exitFullscreen : copy.fullscreen;
   return (
     <FullscreenButton className="polutek-player-btn" aria-label={label} title={label}>
       {isFullscreen ? (
@@ -392,7 +447,7 @@ export default function PolutekControls({ className }: { className?: string }) {
         }
         @media (max-width:360px) { .polutek-player-caption { display:none; } }
         @media (hover:none) { .polutek-player-scrub-preview { display:none; } }
-        @media (prefers-reduced-motion:reduce) { .polutek-player-controls,.polutek-player-btn,.polutek-player-hero,.polutek-player-volume-slider,.polutek-player-scrub-track,.polutek-player-scrub-thumb { transition:none; } .polutek-player-spinner svg { animation-duration:1.4s; } }
+        @media (prefers-reduced-motion:reduce) { .polutek-player-controls,.polutek-player-btn,.polutek-player-hero,.polutek-player-volume-slider,.polutek-player-scrub-track,.polutek-player-scrub-thumb { transition:none; } .polutek-player-spinner svg { animation:none; } }
       `}</style>
     </>
   );

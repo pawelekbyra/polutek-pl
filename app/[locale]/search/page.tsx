@@ -64,7 +64,7 @@ export default async function SearchPage(props: SearchPageProps) {
                       src={video.thumbnailUrl}
                       alt={`Miniatura filmu: ${locale === "en" ? (video.titleEn || video.title) : video.title}`}
                       fill
-                      sizes="(min-width: 1280px) 20vw, (min-width: 640px) 30vw, 100vw"
+                      sizes="(min-width: 640px) 224px, 160px"
                       className="object-cover opacity-90 transition duration-500 group-hover:scale-105"
                     />
                   ) : null}

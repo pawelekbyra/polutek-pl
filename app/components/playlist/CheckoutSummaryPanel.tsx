@@ -5,7 +5,7 @@ import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import BrandName from '../BrandName';
 
 const INK = '#211d18';
-const BLUE = '#2563eb';
+const SUPPORT_AMBER = '#f59e0b';
 
 interface CheckoutSummaryPanelProps {
   language: string;
@@ -32,7 +32,7 @@ function SupportHandDrawing() {
       <g transform="rotate(-4 100 62)">
         <path
           d="M100 96 C 100 96 62 70 61 47 C 60.5 34 70 26 81 26.5 C 89 27 96 32 99.5 39 C 103 32 110 26.5 118 26 C 129 25.5 139.5 33 139 46 C 138 70 100 96 100 96 Z"
-          fill={BLUE}
+          fill={SUPPORT_AMBER}
           stroke={INK}
           strokeWidth="4"
           strokeLinejoin="round"
@@ -109,7 +109,7 @@ export default function CheckoutSummaryPanel({
           <h1 className="font-brand m-0 text-[30px] font-bold leading-[1.15] lg:text-[34px]">
             <span
               className="px-[4px]"
-              style={{ background: 'linear-gradient(180deg, transparent 55%, var(--chan-blue-soft) 55%, var(--chan-blue-soft) 94%, transparent 94%)' }}
+              style={{ background: 'linear-gradient(180deg, transparent 55%, var(--chan-amber-soft) 55%, var(--chan-amber-soft) 94%, transparent 94%)' }}
             >
               {heading}
             </span>

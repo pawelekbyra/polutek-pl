@@ -41,7 +41,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   onBackToSite,
 }) => {
   return (
-    <div className="fixed left-0 top-0 z-[9999] flex h-screen w-screen flex-col overflow-hidden bg-[var(--chan-card)] md:flex-row">
+    <div className="fixed left-0 top-0 z-[9999] flex h-[100dvh] min-h-[100dvh] w-screen flex-col overflow-hidden bg-[var(--chan-card)] pb-[env(safe-area-inset-bottom)] md:flex-row">
       {/* Left Column (Summary - Desktop) */}
       <CheckoutSummaryPanel
         language={language}
@@ -97,7 +97,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
                 <div className="space-y-4">
                   <h1 className="font-brand text-4xl font-bold text-[var(--chan-ink)]">
-                    {language === 'pl' ? 'Wielkie dzięki!' : 'Succeed!!!'}
+                    {language === 'pl' ? 'Wielkie dzięki!' : 'Thank you!'}
                   </h1>
                   <p className="mx-auto max-w-sm text-lg leading-relaxed text-[var(--chan-muted)]">
                     {paymentUiStatus === 'SUCCEEDED'
