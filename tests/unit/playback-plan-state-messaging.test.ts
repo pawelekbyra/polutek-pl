@@ -2,6 +2,10 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const source = readFileSync('app/components/PremiumWrapper.tsx', 'utf8');
+const stateSource = readFileSync(
+  'app/components/playback-plan-state.ts',
+  'utf8',
+);
 const accessLockOverlaySource = readFileSync(
   'app/components/AccessLockOverlay.tsx',
   'utf8',
@@ -20,31 +24,31 @@ const requiredStates = [
 describe('PremiumWrapper playback plan state messaging', () => {
   it('defines a safe Polish user-facing message and action for every non-ready playback state', () => {
     for (const state of requiredStates) {
-      expect(source).toContain(`${state}: {`);
+      expect(stateSource).toContain(`${state}: {`);
     }
 
-    expect(source).toContain('Zaloguj się, aby obejrzeć materiał.');
-    expect(source).toContain('Zaloguj się');
-    expect(source).toContain('Dostęp patrona jest nagrodą za kwalifikujące jednorazowe wsparcie. To nie jest subskrypcja cykliczna.');
-    expect(source).toContain('Materiał jest przygotowywany.');
-    expect(source).toContain('Trwa przetwarzanie wideo.');
-    expect(source).toContain('Materiał nie ma jeszcze aktywnego pliku wideo.');
-    expect(source).toContain('Materiał jest chwilowo niedostępny.');
-    expect(source).toContain('Nie udało się przygotować odtwarzania.');
+    expect(stateSource).toContain('Zaloguj się, aby obejrzeć materiał.');
+    expect(stateSource).toContain('Zaloguj się');
+    expect(stateSource).toContain('Dostęp patrona jest nagrodą za kwalifikujące jednorazowe wsparcie. To nie jest subskrypcja cykliczna.');
+    expect(stateSource).toContain('Materiał jest przygotowywany.');
+    expect(stateSource).toContain('Trwa przetwarzanie wideo.');
+    expect(stateSource).toContain('Materiał nie ma jeszcze aktywnego pliku wideo.');
+    expect(stateSource).toContain('Materiał jest chwilowo niedostępny.');
+    expect(stateSource).toContain('Nie udało się przygotować odtwarzania.');
   });
 
   it('keeps denied and not-ready states out of the real player mount path while READY can still render children', () => {
-    expect(source).toContain('const BLOCKED_PLAYBACK_STATES = new Set<PlaybackPlanStatus>([');
+    expect(stateSource).toContain('BLOCKED_PLAYBACK_STATES = new Set<PlaybackPlanStatus>([');
     for (const state of requiredStates) {
-      expect(source).toContain(`  "${state}",`);
+      expect(stateSource).toContain(`  "${state}",`);
     }
     expect(source).toContain('if (!isPlayablePlaybackPlan(playbackPlan))');
     expect(source).toContain('<PlaybackPlanStateOverlay');
     expect(source).toContain('{children}');
-    expect(source).toContain('plan.status === "READY"');
-    expect(source).toContain('plan.canPlay === true');
-    expect(source).toContain('plan.access?.allowed === true');
-    expect(source).toContain('plan.source &&');
+    expect(stateSource).toContain('plan.status === "READY"');
+    expect(stateSource).toContain('plan.canPlay === true');
+    expect(stateSource).toContain('plan.access?.allowed === true');
+    expect(stateSource).toContain('plan.source &&');
   });
 
   it('does not request playback source data from the blocked-state overlay', () => {
@@ -61,9 +65,9 @@ describe('PremiumWrapper playback plan state messaging', () => {
   });
 
   it('keeps sensitive provider details and internal diagnostics out of user-facing copy', () => {
-    const messagesStart = source.indexOf('PLAYBACK_PLAN_STATE_MESSAGES');
-    const helperStart = source.indexOf('export function getSafePlaybackState');
-    const messages = source.slice(messagesStart, helperStart);
+    const messagesStart = stateSource.indexOf('PLAYBACK_PLAN_STATE_MESSAGES');
+    const helperStart = stateSource.indexOf('export function getSafePlaybackState');
+    const messages = stateSource.slice(messagesStart, helperStart);
 
     const forbiddenTerms = [
       'Cloudflare',
