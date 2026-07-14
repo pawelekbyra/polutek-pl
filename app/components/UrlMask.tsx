@@ -75,7 +75,7 @@ function UrlMaskEffect() {
     } catch {
       // Masking is cosmetic — never let it break navigation.
     }
-  });
+  }, [pathname]);
 
   return null;
 }
