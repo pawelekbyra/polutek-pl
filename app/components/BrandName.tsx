@@ -13,7 +13,7 @@ interface BrandNameProps {
 }
 
 /**
- * Wordmark logo: "POLUTEK.PL" set in Frijole (self-hosted, `font-brandLogo`).
+ * Wordmark logo: "POLUTEK.PL" set in Bowlby One (self-hosted, `font-brandLogo`).
  * "POLUTEK" is the near-black ink token; the ".PL" (dot + PL) is the site's blue
  * accent.
  */
