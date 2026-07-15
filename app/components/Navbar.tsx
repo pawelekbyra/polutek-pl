@@ -136,11 +136,11 @@ const Navbar = () => {
             <div className="flex items-center shrink-0">
               <Link
                 href={getLocalizedHref(language, "home")}
-                className="flex h-[38px] shrink-0 items-center gap-0 transition-all hover:opacity-85 active:scale-95"
+                className="flex h-[38px] shrink-0 items-center gap-0 transition-all hover:opacity-85 active:scale-95 md:h-[48px]"
                 aria-label="POLUTEK.PL"
               >
                 <BrandName
-                  className="text-[17.5px] leading-none md:text-[21.25px]"
+                  className="text-[17.5px] leading-none md:text-[47.5px]"
                   decorative
                   shine="ambient"
                 />
