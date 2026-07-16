@@ -2,6 +2,7 @@ import React from 'react';
 import { APP_NAME } from '@/lib/constants';
 
 export const LEGAL_EFFECTIVE_DATE = 'Obowiązuje od 3 lipca 2026 r.';
+export const LEGAL_EFFECTIVE_DATE_EN = 'Effective as of 3 July 2026.';
 
 export const LEGAL_OWNER = {
   name: 'Paweł Perfect Inc.',
@@ -302,6 +303,283 @@ export function PolitykaContent() {
           <p>
             Jeśli polityka się zmieni (np. dojdzie nowy dostawca), zaktualizujemy ten dokument i datę na górze strony.
             Istotne zmiany zakomunikujemy w serwisie.
+          </p>
+        </LegalSection>
+      </div>
+    </>
+  );
+}
+
+/** Full Terms of Service body (English translation, no page chrome), used by the /en/terms page. */
+export function TermsContentEn() {
+  return (
+    <>
+      <LegalSummary
+        items={[
+          'Watching public videos is free and does not require an account.',
+          'A one-time payment in the amount shown in the service grants lifetime access to the Thank You Zone for as long as the service (or that part of the service) operates. No subscription.',
+          'You get access right away, so — with your explicit consent — once access is fully activated you no longer have the right to withdraw from the contract.',
+          <>Complaints: email {OWNER.email}, we reply within 14 days.</>,
+        ]}
+      />
+
+      <div className="space-y-10">
+        <LegalSection nr="1" title="Who runs the service">
+          <p>
+            The {APP_NAME} service is run by {OWNER.name}, {OWNER.address}, NIP: {OWNER.nip}, REGON: {OWNER.regon}.
+            Contact: <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>, tel. {OWNER.phone}.
+            We respond fastest to emails.
+          </p>
+        </LegalSection>
+
+        <LegalSection nr="2" title="What you'll find in the service and technical requirements">
+          <p>
+            {APP_NAME} is a single creator&rsquo;s video channel. Public videos can be watched for free and without an
+            account. Some features (comments, content for signed-in users) require a free account. The Thank You Zone
+            is a section with bonus content, available to supporters (§ 4).
+          </p>
+          <p>
+            Using the service only requires a device with an up-to-date web browser, JavaScript enabled, and an
+            internet connection. Creating an account requires an email address. Sign-in is handled by the external
+            provider Clerk, and video content may be delivered using external hosting and streaming infrastructure.
+            We do not guarantee correct operation of the service on outdated browsers, on devices that do not support
+            modern video standards, or when scripts, sign-in, or elements required to play content are blocked.
+          </p>
+        </LegalSection>
+
+        <LegalSection nr="3" title="Account and usage rules">
+          <p>
+            The account is free and you can delete it at any time (an email to the address in § 1 is enough). When
+            using the service — in particular when commenting — you must not publish unlawful or offensive content,
+            or spam. We may remove such content and, in the case of repeated violations, block the account. Videos
+            and other materials are protected by copyright and are intended solely for personal use.
+          </p>
+        </LegalSection>
+
+        <LegalSection nr="4" title="Support and access to the Thank You Zone">
+          <p>
+            A one-time payment in the amount shown in the service at the moment of payment constitutes the price for
+            entering into an agreement for the supply of digital content and grants you <strong>lifetime access to
+            the Thank You Zone</strong> — all current and future bonus materials — for as long as the service (or
+            that part of the service) operates. We activate access immediately after the payment is credited, on the
+            account the payment was made from.
+          </p>
+          <p>
+            There is no subscription, no recurring payments, and no hidden costs. If the support amount changes in
+            the future, this does not affect access already granted. Your payment funds the development of the
+            project — the library of bonus content is still growing, and we do not guarantee the frequency of new
+            material publication.
+          </p>
+          <p>
+            People who already have active access to the Thank You Zone may additionally support the channel with
+            any amount. Such an additional payment is voluntary support for the project; it is not a price or
+            remuneration for new digital content, additional access, extended access, or any other reciprocal
+            performance, and it does not grant any additional benefits beyond those the user already has. The
+            payment is processed as a payment transaction through the payment operator, but it does not expand the
+            user&rsquo;s rights in the service.
+          </p>
+        </LegalSection>
+
+        <LegalSection nr="5" title="Payments, prices and invoices">
+          <p>
+            Payments are handled by Stripe. Amounts shown in the service are total prices payable by the consumer.
+            After a successful payment you will receive an email confirmation. We do not store your card data.
+          </p>
+          <p>
+            Confirmation of the access purchase may include, in particular: the name of the service, the payment
+            amount, information about the one-time nature of the payment, the payment date, the payment identifier,
+            information about the activation of access, and confirmation of consents relating to the immediate
+            delivery of digital content.
+          </p>
+          <p>
+            Upon the buyer&rsquo;s request we issue an invoice in accordance with applicable tax law. A request to
+            issue an invoice may be made within the timeframe and on the terms resulting from those provisions. VAT
+            status, the manner of documenting sales, and any cross-border settlements depend on the applicable tax
+            regulations and the seller&rsquo;s status at the time of sale.
+          </p>
+          <p>
+            Additional voluntary payments made by people who already have access to the Thank You Zone are not
+            documented as a price for access to digital content, provided they are not linked to any reciprocal
+            performance on the seller&rsquo;s part. Their tax treatment and the manner of documenting them depend on
+            the nature of the given payment and the applicable tax regulations.
+          </p>
+        </LegalSection>
+
+        <LegalSection nr="6" title="Right of withdrawal">
+          <p>
+            A consumer has 14 days to withdraw from a contract concluded at a distance. However, because we activate
+            access to the Thank You Zone immediately after payment, before you pay we ask you for explicit consent to
+            begin supplying digital content before the withdrawal period expires, and for confirmation that you
+            acknowledge you will lose the right of withdrawal once access has been fully activated.
+          </p>
+          <p>
+            If you give these consents and access is fully activated, you lose the right to withdraw from the
+            agreement for the supply of digital content not delivered on a tangible medium (Article 38(1)(13) of the
+            Polish Consumer Rights Act). We may confirm the conclusion of the agreement and the consents given by
+            email.
+          </p>
+          <p>
+            If you paid and access was not activated — contact us; we will fix it or refund your money.
+          </p>
+        </LegalSection>
+
+        <LegalSection nr="7" title="Complaints and out-of-court dispute resolution">
+          <p>
+            Something not working? Email{' '}
+            <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a> —
+            describe the problem and provide the account email. We will respond within 14 days at the latest. We are
+            liable for the conformity of digital content with the contract under the terms of the Polish Consumer
+            Rights Act.
+          </p>
+          <p>
+            If digital content is not in conformity with the contract, the consumer may demand that it be brought
+            into conformity with the contract. In cases provided for by law, the consumer may also make a statement
+            on price reduction or withdrawal from the contract.
+          </p>
+          <p>
+            The consumer may use out-of-court methods of handling complaints and pursuing claims, in particular the
+            assistance of the municipal or district consumer ombudsman and the competent Provincial Trade
+            Inspectorate. Information on access to these procedures and the list of authorized entities is available
+            on the UOKiK website on out-of-court consumer dispute resolution. The seller does not commit in advance
+            to participate in ADR proceedings; we decide after reviewing the specific case.
+          </p>
+        </LegalSection>
+
+        <LegalSection nr="8" title="Changes to the Terms and governing law">
+          <p>
+            We may change these Terms for important reasons (e.g. a change in law or in the service&rsquo;s
+            features). We will announce changes within the service in advance, and changes do not take away rights
+            already acquired — in particular, access already granted to the Thank You Zone. Agreements are governed
+            by Polish law, which does not deprive the consumer of the protection resulting from mandatory legal
+            provisions.
+          </p>
+        </LegalSection>
+      </div>
+    </>
+  );
+}
+
+const DATA_ROWS_EN = [
+  { what: 'Account and sign-in', data: 'email, name, avatar', why: 'managing the account and providing access to service features' },
+  { what: 'Payments', data: 'amount, date, payment identifier, email, access status', why: 'processing payments, granting access, confirmations and tax obligations' },
+  { what: 'Comments', data: 'content, name, date', why: 'public discussion under videos and moderation' },
+  { what: 'Transactional emails', data: 'email address', why: 'confirmations of payments, access, complaints and other important service information' },
+  { what: 'Marketing notifications', data: 'email address', why: 'sending a newsletter or marketing information, only when you give separate consent' },
+  { what: 'Security', data: 'IP address, technical logs', why: 'protecting the service from abuse and rate limiting' },
+];
+
+/** Full Privacy Policy body (English translation, no page chrome), used by the /en/privacy-policy page. */
+export function PrivacyContentEn() {
+  return (
+    <>
+      <LegalSummary
+        items={[
+          'We only collect what is needed to run the service: account, payments, comments, transactional emails and security logs.',
+          'We never sell your data and we do not build advertising profiles from it. No advertising cookies.',
+          <>You can always ask for access to your data, or ask us to delete it: {OWNER.email}.</>,
+        ]}
+      />
+
+      <div className="space-y-10">
+        <LegalSection nr="1" title="Data controller">
+          <p>
+            The controller of your data is {OWNER.name}, {OWNER.address}, NIP: {OWNER.nip}, REGON: {OWNER.regon}.
+            For matters concerning personal data, write to{' '}
+            <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>.
+          </p>
+        </LegalSection>
+
+        <LegalSection nr="2" title="What data we collect and why">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[14px]">
+              <thead>
+                <tr className="border-b-2 border-[#1a1a1a]/15 text-left">
+                  <th className="py-2 pr-4 text-[11px] font-black uppercase tracking-[0.1em] text-[#7a7a7a]">Area</th>
+                  <th className="py-2 pr-4 text-[11px] font-black uppercase tracking-[0.1em] text-[#7a7a7a]">Data</th>
+                  <th className="py-2 text-[11px] font-black uppercase tracking-[0.1em] text-[#7a7a7a]">Purpose</th>
+                </tr>
+              </thead>
+              <tbody>
+                {DATA_ROWS_EN.map((row) => (
+                  <tr key={row.what} className="border-b border-dashed border-[#1a1a1a]/10 align-top">
+                    <td className="py-3 pr-4 font-bold">{row.what}</td>
+                    <td className="py-3 pr-4">{row.data}</td>
+                    <td className="py-3">{row.why}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p>
+            The legal basis for processing depends on the purpose: running the account, handling access and payments
+            — performance of a contract or steps taken at your request before entering into one (Article 6(1)(b)
+            GDPR); tax and accounting settlements — a legal obligation (Article 6(1)(c) GDPR); service security,
+            abuse prevention, complaint handling, and the establishment, defense and pursuit of claims — our
+            legitimate interest (Article 6(1)(f) GDPR); newsletter or marketing information — your separate consent
+            (Article 6(1)(a) GDPR), if you give it.
+          </p>
+        </LegalSection>
+
+        <LegalSection nr="3" title="Who we share data with">
+          <p>
+            We use trusted technology providers: Clerk (sign-in), Stripe (payments), Resend (emails), Vercel
+            (hosting), Neon (database), Cloudflare (video and infrastructure), and Upstash (abuse protection).
+            Depending on the type of service, these providers may act as processors on our instructions, or as
+            separate controllers to the extent necessary to fulfil their own legal, security and infrastructure
+            obligations — this applies in particular to the payment operator Stripe.
+          </p>
+          <p>
+            Some providers may process data outside the European Economic Area. Transfers rely on the mechanisms
+            available under law, such as the Data Privacy Framework, standard contractual clauses, or other
+            appropriate safeguards. We never sell your data to anyone.
+          </p>
+        </LegalSection>
+
+        <LegalSection nr="4" title="How long we keep data">
+          <p>
+            We keep account data until the account is deleted, and afterwards for the period necessary for
+            settlements, defense of claims and compliance with legal obligations. We keep payment and settlement
+            data for the period required by tax and accounting law. We generally keep technical logs for up to 90
+            days, unless a longer retention period is needed to investigate abuse, failures, complaints or claims.
+            We keep comments until you or moderation deletes them.
+          </p>
+        </LegalSection>
+
+        <LegalSection nr="5" title="Your rights">
+          <p>
+            You have the right to: access your data, have it corrected, deleted, have its processing restricted,
+            transfer it, and object to its processing. Where we process data based on consent, you can withdraw it
+            at any time, which does not affect the lawfulness of processing carried out before its withdrawal. Just
+            email{' '}
+            <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>{' '}
+            — this also deletes your account. You may also file a complaint with the President of the Polish Data
+            Protection Authority (UODO, uodo.gov.pl).
+          </p>
+        </LegalSection>
+
+        <LegalSection nr="6" title="Emails and notifications">
+          <p>
+            We send transactional emails — such as confirmations of payments, access, complaints, or significant
+            service changes — in connection with performing the contract or our information obligations. We send
+            newsletters or marketing/promotional information only when you give separate consent. You can
+            unsubscribe from such messages at any time.
+          </p>
+        </LegalSection>
+
+        <LegalSection nr="7" title="Cookies">
+          <p>
+            We use only cookies and similar technologies necessary for the service to work: keeping you signed in,
+            security, abuse protection, and playing content. We do not use advertising or tracking cookies. If we
+            add analytics or marketing tools that require consent in the future, we will ask for it before using
+            them. You can remove cookies in your browser settings — the service will work normally without signing
+            in, but some account features may require necessary cookies.
+          </p>
+        </LegalSection>
+
+        <LegalSection nr="8" title="Changes to this policy">
+          <p>
+            If this policy changes (e.g. a new provider is added), we will update this document and the date at the
+            top of the page. We will communicate significant changes within the service.
           </p>
         </LegalSection>
       </div>

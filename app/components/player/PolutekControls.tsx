@@ -20,6 +20,7 @@ import {
 } from "@vidstack/react";
 import {
   ArrowCounterClockwise,
+  Check,
   ClosedCaptioning,
   CornersIn,
   CornersOut,
