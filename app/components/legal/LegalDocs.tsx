@@ -207,10 +207,9 @@ export function PolitykaContent() {
       <div className="space-y-10">
         <LegalSection nr="1" title="Administrator danych">
           <p>
-            Administratorem serwisu {APP_NAME} jest {OWNER.name}, {OWNER.address}, NIP: {OWNER.nip}, REGON: {OWNER.regon}.
-            Kontakt:{' '}
-            <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>,
-            tel. {OWNER.phone}.
+            Administratorem Twoich danych jest {OWNER.name}, {OWNER.address}, NIP: {OWNER.nip}, REGON: {OWNER.regon}.
+            W sprawach danych osobowych pisz na{' '}
+            <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>.
           </p>
         </LegalSection>
 
@@ -484,10 +483,9 @@ export function PrivacyContentEn() {
       <div className="space-y-10">
         <LegalSection nr="1" title="Data controller">
           <p>
-            The controller of the {APP_NAME} service is {OWNER.name}, {OWNER.address}, NIP: {OWNER.nip},
-            REGON: {OWNER.regon}. Contact:{' '}
-            <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>,
-            tel. {OWNER.phone}.
+            The controller of your data is {OWNER.name}, {OWNER.address}, NIP: {OWNER.nip}, REGON: {OWNER.regon}.
+            For matters concerning personal data, write to{' '}
+            <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>.
           </p>
         </LegalSection>
 
