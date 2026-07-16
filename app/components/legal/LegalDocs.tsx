@@ -4,7 +4,7 @@ import { APP_NAME } from '@/lib/constants';
 export const LEGAL_EFFECTIVE_DATE = 'Obowiązuje od 3 lipca 2026 r.';
 
 export const LEGAL_OWNER = {
-  name: 'Paweł Perfect',
+  name: 'Paweł Perfect Inc',
   address: 'ul. Złota 75A/7, 00-819 Warszawa',
   nip: '527-000-00-00',
   regon: '000000000',
