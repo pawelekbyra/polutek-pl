@@ -11,7 +11,6 @@ export const LEGAL_OWNER = {
   regon: '000000000',
   phone: '+48 600 000 000',
   email: 'kontakt@polutek.pl',
-  privacyEmail: 'support@polutek.pl',
 };
 
 export function LegalSection({ nr, title, children }: { nr: string; title: string; children: React.ReactNode }) {
@@ -201,16 +200,16 @@ export function PolitykaContent() {
         items={[
           'Zbieramy tylko to, co potrzebne do działania serwisu: konto, płatności, komentarze, e-maile transakcyjne i logi bezpieczeństwa.',
           'Niczego nie sprzedajemy i nie profilujemy Cię reklamowo. Brak cookies reklamowych.',
-          <>Zawsze możesz poprosić o dostęp do swoich danych albo ich usunięcie: {OWNER.privacyEmail}.</>,
+          <>Zawsze możesz poprosić o dostęp do swoich danych albo ich usunięcie: {OWNER.email}.</>,
         ]}
       />
 
       <div className="space-y-10">
         <LegalSection nr="1" title="Administrator danych">
           <p>
-            Administratorem serwisu {APP_NAME} jest {OWNER.name}, {OWNER.address}, Polska, NIP: {OWNER.nip}, REGON: {OWNER.regon}.
+            Administratorem serwisu {APP_NAME} jest {OWNER.name}, {OWNER.address}, NIP: {OWNER.nip}, REGON: {OWNER.regon}.
             Kontakt:{' '}
-            <a href={`mailto:${OWNER.privacyEmail}`} className="underline hover:text-primary">{OWNER.privacyEmail}</a>,
+            <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>,
             tel. {OWNER.phone}.
           </p>
         </LegalSection>
@@ -276,7 +275,7 @@ export function PolitykaContent() {
             Masz prawo do: dostępu do danych, ich sprostowania, usunięcia, ograniczenia przetwarzania,
             przenoszenia oraz sprzeciwu. Jeżeli dane przetwarzamy na podstawie zgody, możesz ją w każdej chwili wycofać,
             co nie wpływa na zgodność z prawem przetwarzania sprzed jej wycofania. Wystarczy e-mail na{' '}
-            <a href={`mailto:${OWNER.privacyEmail}`} className="underline hover:text-primary">{OWNER.privacyEmail}</a> —
+            <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a> —
             w ten sposób usuniesz też konto. Możesz również złożyć skargę do Prezesa Urzędu Ochrony Danych
             Osobowych (uodo.gov.pl).
           </p>
@@ -328,7 +327,7 @@ export function TermsContentEn() {
       <div className="space-y-10">
         <LegalSection nr="1" title="Who runs the service">
           <p>
-            The {APP_NAME} service is run by {OWNER.name}, {OWNER.address}, Poland, NIP: {OWNER.nip}, REGON: {OWNER.regon}.
+            The {APP_NAME} service is run by {OWNER.name}, {OWNER.address}, NIP: {OWNER.nip}, REGON: {OWNER.regon}.
             Contact: <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>, tel. {OWNER.phone}.
             We respond fastest to emails.
           </p>
@@ -478,16 +477,16 @@ export function PrivacyContentEn() {
         items={[
           'We only collect what is needed to run the service: account, payments, comments, transactional emails and security logs.',
           'We never sell your data and we do not build advertising profiles from it. No advertising cookies.',
-          <>You can always ask for access to your data, or ask us to delete it: {OWNER.privacyEmail}.</>,
+          <>You can always ask for access to your data, or ask us to delete it: {OWNER.email}.</>,
         ]}
       />
 
       <div className="space-y-10">
         <LegalSection nr="1" title="Data controller">
           <p>
-            The controller of the {APP_NAME} service is {OWNER.name}, {OWNER.address}, Poland, NIP: {OWNER.nip},
+            The controller of the {APP_NAME} service is {OWNER.name}, {OWNER.address}, NIP: {OWNER.nip},
             REGON: {OWNER.regon}. Contact:{' '}
-            <a href={`mailto:${OWNER.privacyEmail}`} className="underline hover:text-primary">{OWNER.privacyEmail}</a>,
+            <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>,
             tel. {OWNER.phone}.
           </p>
         </LegalSection>
@@ -554,7 +553,7 @@ export function PrivacyContentEn() {
             transfer it, and object to its processing. Where we process data based on consent, you can withdraw it
             at any time, which does not affect the lawfulness of processing carried out before its withdrawal. Just
             email{' '}
-            <a href={`mailto:${OWNER.privacyEmail}`} className="underline hover:text-primary">{OWNER.privacyEmail}</a>{' '}
+            <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>{' '}
             — this also deletes your account. You may also file a complaint with the President of the Polish Data
             Protection Authority (UODO, uodo.gov.pl).
           </p>
