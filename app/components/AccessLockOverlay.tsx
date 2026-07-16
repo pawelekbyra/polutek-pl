@@ -137,7 +137,7 @@ function LoginScene({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.1 }}
         >
-          {isPl ? "Strefa" : "Members"}
+          {isPl ? "Strefa" : "Signed"}
         </motion.span>
         <motion.span
           className={styles.divider}
@@ -152,7 +152,7 @@ function LoginScene({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.28 }}
         >
-          {isPl ? "Zalogowanych" : "Zone"}
+          {isPl ? "Zalogowanych" : "In"}
         </motion.span>
       </h2>
       <motion.button
