@@ -124,20 +124,29 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
         attempts++;
         try {
           const res = await fetch(`/api/payments/${encodeURIComponent(returnedPaymentId)}`, { cache: "no-store" });
+          if (!res.ok) throw new Error(`Status check failed (${res.status})`);
           const data = await res.json();
-          setPaymentUiStatus(data.uiStatus || null);
-          if (
-            data.uiStatus === "SUCCEEDED" ||
-            data.uiStatus === "FAILED_CANCELED" ||
-            data.uiStatus === "REFUNDED_DISPUTED" ||
-            attempts >= maxAttempts
-          ) {
+          const nextStatus: string | null = data.uiStatus || null;
+          const isTerminal =
+            nextStatus === "SUCCEEDED" ||
+            nextStatus === "FAILED_CANCELED" ||
+            nextStatus === "REFUNDED_DISPUTED";
+
+          if (isTerminal || attempts >= maxAttempts) {
             clearInterval(interval);
             setIsSyncing(false);
-            if (data.uiStatus === "SUCCEEDED") router.refresh();
+            setPaymentUiStatus(nextStatus ?? "TIMED_OUT");
+            if (nextStatus === "SUCCEEDED") router.refresh();
+          } else {
+            setPaymentUiStatus(nextStatus);
           }
         } catch (e) {
           logger.error("[DonationBox] Sync error", e);
+          if (attempts >= maxAttempts) {
+            clearInterval(interval);
+            setIsSyncing(false);
+            setPaymentUiStatus((current) => current ?? "TIMED_OUT");
+          }
         }
       }, 2000);
     }
@@ -147,6 +156,24 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  const handleRetryStatusCheck = useCallback(async () => {
+    if (!paymentId) return;
+    setIsSyncing(true);
+    try {
+      const res = await fetch(`/api/payments/${encodeURIComponent(paymentId)}`, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Status check failed (${res.status})`);
+      const data = await res.json();
+      const nextStatus: string | null = data.uiStatus || null;
+      setPaymentUiStatus(nextStatus ?? "TIMED_OUT");
+      if (nextStatus === "SUCCEEDED") router.refresh();
+    } catch (e) {
+      logger.error("[DonationBox] Manual status check error", e);
+      setPaymentUiStatus("TIMED_OUT");
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [paymentId, router]);
 
   useEffect(() => {
     document.body.style.overflow = isCheckoutModalOpen ? "hidden" : "unset";
@@ -396,6 +423,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
             clientSecret={clientSecret}
             paymentId={paymentId}
             paymentUiStatus={paymentUiStatus}
+            onRetryStatusCheck={handleRetryStatusCheck}
             stripePromise={stripePromise}
             onClose={() => {
               setIsCheckoutModalOpen(false);
