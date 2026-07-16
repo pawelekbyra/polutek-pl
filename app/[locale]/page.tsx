@@ -90,7 +90,11 @@ export default async function Home(props: { params: Promise<{ locale: string }>;
         description:
           (locale === 'en' ? selectedVideo.descriptionEn || selectedVideo.description : selectedVideo.description) ||
           selectedVideo.title,
-        thumbnailUrl: [selectedVideo.thumbnailUrl],
+        thumbnailUrl: [
+          selectedVideo.thumbnailUrl.startsWith('http')
+            ? selectedVideo.thumbnailUrl
+            : `${getBaseUrl()}${selectedVideo.thumbnailUrl}`,
+        ],
         uploadDate: selectedVideo.publishedAt ? new Date(selectedVideo.publishedAt).toISOString() : undefined,
         duration: durationToIso8601(selectedVideo.duration),
         embedUrl: `${getBaseUrl()}${canonicalHomeHref(locale, selectedVideo.slug)}`,
