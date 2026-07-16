@@ -23,6 +23,7 @@ interface CheckoutModalProps {
   stripePromise: Promise<Stripe | null> | null;
   onClose: () => void;
   onBackToSite: () => void;
+  onRetryStatusCheck?: () => void;
 }
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({
@@ -39,6 +40,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   stripePromise,
   onClose,
   onBackToSite,
+  onRetryStatusCheck,
 }) => {
   return (
     <div className="fixed left-0 top-0 z-[9999] flex h-[100dvh] min-h-[100dvh] w-screen flex-col overflow-hidden bg-[var(--chan-card)] pb-[env(safe-area-inset-bottom)] md:flex-row">
@@ -108,13 +110,26 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                           ? (language === 'pl' ? 'Płatność nie została ukończona albo została anulowana.' : 'The payment was not completed or was canceled.')
                           : paymentUiStatus === 'REFUNDED_DISPUTED'
                             ? (language === 'pl' ? 'Status płatności wymaga sprawdzenia po zwrocie lub sporze.' : 'The payment status needs review after a refund or dispute.')
-                            : (language === 'pl'
-                              ? 'Twoje wsparcie zostało zarejestrowane. Czekamy na potwierdzenie webhooka Stripe.'
-                              : 'Your support was registered. Waiting for Stripe webhook confirmation.')}
+                            : paymentUiStatus === 'TIMED_OUT'
+                              ? (language === 'pl'
+                                ? 'Potwierdzenie płatności trwa dłużej niż zwykle. Sprawdź status jeszcze raz za chwilę — nie musisz płacić ponownie.'
+                                : 'Confirming your payment is taking longer than usual. Check the status again in a moment — no need to pay twice.')
+                              : (language === 'pl'
+                                ? 'Twoje wsparcie zostało zarejestrowane. Czekamy na potwierdzenie webhooka Stripe.'
+                                : 'Your support was registered. Waiting for Stripe webhook confirmation.')}
                   </p>
                 </div>
 
-                <div className="pt-4">
+                <div className="space-y-3 pt-4">
+                  {paymentUiStatus === 'TIMED_OUT' && !isSyncing && onRetryStatusCheck && (
+                    <Button
+                      onClick={onRetryStatusCheck}
+                      variant="outline"
+                      className="h-14 w-full rounded-[16px] border-[var(--chan-line)] font-brand text-xs font-bold uppercase tracking-[0.2em]"
+                    >
+                      {language === 'pl' ? 'Sprawdź status ponownie' : 'Check status again'}
+                    </Button>
+                  )}
                   <Button
                     onClick={onBackToSite}
                     className="h-16 w-full rounded-[16px] bg-[var(--chan-ink)] font-brand text-xs font-bold uppercase tracking-[0.2em] text-white transition-all duration-300 hover:opacity-90"
@@ -122,7 +137,11 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     {language === 'pl' ? 'Wróć do serwisu' : 'Back to site'}
                   </Button>
                   <p className="mt-6 text-[10px] font-black uppercase tracking-widest text-[var(--chan-muted)]">
-                    {isSyncing ? (language === 'pl' ? 'Oczekiwanie na webhook Stripe...' : 'Waiting for Stripe webhook...') : (paymentUiStatus || (language === 'pl' ? 'Status sprawdzony' : 'Status checked'))}
+                    {isSyncing
+                      ? (language === 'pl' ? 'Sprawdzanie statusu płatności...' : 'Checking payment status...')
+                      : paymentUiStatus === 'TIMED_OUT'
+                        ? (language === 'pl' ? 'Sprawdzanie zajęło zbyt długo' : 'Status check timed out')
+                        : (paymentUiStatus || (language === 'pl' ? 'Status sprawdzony' : 'Status checked'))}
                   </p>
                 </div>
               </div>
