@@ -56,9 +56,8 @@ export function RegulaminContent() {
       <div className="space-y-10">
         <LegalSection nr="1" title="Kto prowadzi serwis">
           <p>
-            Serwis {APP_NAME} prowadzi {OWNER.name}, {OWNER.address}, NIP: {OWNER.nip}, REGON: {OWNER.regon}.
+            Administratorem serwisu {APP_NAME} jest {OWNER.name}, {OWNER.address}, NIP: {OWNER.nip}, REGON: {OWNER.regon}.
             Kontakt: <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>, tel. {OWNER.phone}.
-            Najszybciej odpowiadamy na e-maile.
           </p>
         </LegalSection>
 
@@ -326,9 +325,8 @@ export function TermsContentEn() {
       <div className="space-y-10">
         <LegalSection nr="1" title="Who runs the service">
           <p>
-            The {APP_NAME} service is run by {OWNER.name}, {OWNER.address}, NIP: {OWNER.nip}, REGON: {OWNER.regon}.
+            {APP_NAME} is administered by {OWNER.name}, {OWNER.address}, NIP: {OWNER.nip}, REGON: {OWNER.regon}.
             Contact: <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>, tel. {OWNER.phone}.
-            We respond fastest to emails.
           </p>
         </LegalSection>
 
