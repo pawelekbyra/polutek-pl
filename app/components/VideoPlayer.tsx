@@ -25,15 +25,6 @@ interface VideoPlayerProps {
     onViewCounted?: () => void;
 }
 
-function PolutekWatermark() {
-    return (
-        <div className="pointer-events-none absolute right-3 top-3 z-20 sm:right-4 sm:top-4">
-            <span className="block rounded-lg border border-white/15 bg-black/35 px-2.5 py-1 font-sans text-[10px] font-semibold tracking-[0.035em] text-white/82 shadow-sm backdrop-blur-sm sm:text-[11px]">
-                www.polutek.pl
-            </span>
-        </div>
-    );
-}
 
 function normalizeTextTracks(tracks: VideoTextTrackDTO[] | undefined): VideoTextTrackDTO[] {
     if (!Array.isArray(tracks)) return [];
@@ -261,7 +252,6 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                                 />
                             ))}
                         </MediaProvider>
-                        <PolutekWatermark />
                         {(playerConfig ? playerConfig.controls : true) && <PolutekControls />}
                     </MediaPlayer>
                     {!hasStartedPlayback && !bufferingOverlayTimedOut && (

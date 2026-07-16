@@ -171,7 +171,7 @@ export function CommentItem({
             />
         </div>
         {authorIsPatron && (
-          <span className="whitespace-nowrap rounded-full border border-[var(--chan-amber)] bg-[var(--chan-amber-soft)] px-[5px] py-[1px] text-[8px] font-extrabold uppercase tracking-wider text-[var(--chan-amber-ink)]">
+          <span className="whitespace-nowrap rounded-full border border-[color-mix(in_srgb,var(--chan-blue)_35%,transparent)] bg-[var(--chan-blue-soft)] px-[5px] py-[1px] text-[8px] font-extrabold uppercase tracking-wider text-[var(--chan-blue)]">
             PATRON
           </span>
         )}
@@ -380,74 +380,77 @@ export function CommentItem({
           onSubmit={(reason, note) => onReport(comment.id, reason, note)}
         />
 
-        <div className="flex flex-wrap items-center gap-[10px] pt-1 min-w-0">
-          <button
-            type="button"
-            onClick={() => onLike(comment.id)}
-            disabled={reactionsDisabled}
-            aria-label={
-              isLiked
-                ? language === "pl"
-                  ? "Cofnij polubienie komentarza"
-                  : "Remove like from comment"
-                : language === "pl"
-                  ? "Polub komentarz"
-                  : "Like comment"
-            }
-            aria-pressed={isLiked}
-            className={cn(
-              "group inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-2 transition-[color,background-color,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 motion-reduce:transition-none",
-              isLiked
-                ? "text-primary"
-                : "text-[var(--chan-muted)] enabled:hover:bg-[var(--chan-surface)] enabled:hover:text-[var(--chan-ink)]",
-            )}
-          >
-            <LikePop active={isLiked}>
-              <NajsIcon
-                name="like"
-                className="h-4 w-4"
-                stroke={isLiked ? "var(--chan-blue)" : "currentColor"}
-              />
-            </LikePop>
-            <AnimatedCount value={comment.likesCount || 0} className="font-semibold text-sm leading-none" />
-          </button>
+        <div className="flex flex-wrap items-center gap-[6px] pt-1 min-w-0">
+          {/* Like + Dislike zgrupowane razem */}
+          <div className="flex items-center gap-0">
+            <button
+              type="button"
+              onClick={() => onLike(comment.id)}
+              disabled={reactionsDisabled}
+              aria-label={
+                isLiked
+                  ? language === "pl"
+                    ? "Cofnij polubienie komentarza"
+                    : "Remove like from comment"
+                  : language === "pl"
+                    ? "Polub komentarz"
+                    : "Like comment"
+              }
+              aria-pressed={isLiked}
+              className={cn(
+                "group inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-full px-2 transition-[color,background-color,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 motion-reduce:transition-none",
+                isLiked
+                  ? "text-primary"
+                  : "text-[var(--chan-muted)] enabled:hover:bg-[var(--chan-surface)] enabled:hover:text-[var(--chan-ink)]",
+              )}
+            >
+              <LikePop active={isLiked}>
+                <NajsIcon
+                  name="like"
+                  className="h-4 w-4"
+                  stroke={isLiked ? "var(--chan-blue)" : "currentColor"}
+                />
+              </LikePop>
+              <AnimatedCount value={comment.likesCount || 0} className="font-semibold text-[12px] leading-none" />
+            </button>
 
-          <button
-            type="button"
-            onClick={() => onDislike(comment.id)}
-            disabled={reactionsDisabled}
-            className={cn(
-              "inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-2 transition-[color,background-color,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 motion-reduce:transition-none",
-              isDisliked
-                ? "text-primary"
-                : "text-[var(--chan-muted)] enabled:hover:bg-[var(--chan-surface)] enabled:hover:text-[var(--chan-ink)]",
-            )}
-            aria-label={
-              isDisliked
-                ? language === "pl"
-                  ? "Cofnij reakcję nie lubię"
-                  : "Remove dislike from comment"
-                : language === "pl"
-                  ? "Nie lubię komentarza"
-                  : "Dislike comment"
-            }
-            aria-pressed={isDisliked}
-          >
-            <NajsIcon
-              name="dislike"
-              className="h-4 w-4"
-              stroke={isDisliked ? "var(--chan-blue)" : "currentColor"}
-            />
-          </button>
+            <button
+              type="button"
+              onClick={() => onDislike(comment.id)}
+              disabled={reactionsDisabled}
+              className={cn(
+                "inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-full px-2 transition-[color,background-color,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 motion-reduce:transition-none",
+                isDisliked
+                  ? "text-primary"
+                  : "text-[var(--chan-muted)] enabled:hover:bg-[var(--chan-surface)] enabled:hover:text-[var(--chan-ink)]",
+              )}
+              aria-label={
+                isDisliked
+                  ? language === "pl"
+                    ? "Cofnij reakcję nie lubię"
+                    : "Remove dislike from comment"
+                  : language === "pl"
+                    ? "Nie lubię komentarza"
+                    : "Dislike comment"
+              }
+              aria-pressed={isDisliked}
+            >
+              <NajsIcon
+                name="dislike"
+                className="h-4 w-4"
+                stroke={isDisliked ? "var(--chan-blue)" : "currentColor"}
+              />
+            </button>
+          </div>
 
           {isHearted && (
             <span
               aria-label={language === "pl" ? "Serce twórcy" : "Creator heart"}
-              className="inline-flex min-h-11 items-center px-1 text-[var(--chan-amber)]"
+              className="inline-flex h-8 items-center px-1 text-[var(--chan-amber)]"
               role="img"
             >
               <Heart
-                size={16}
+                size={15}
                 className="fill-[var(--chan-amber)] text-[var(--chan-amber)]"
                 aria-hidden="true"
               />
@@ -458,7 +461,7 @@ export function CommentItem({
             <button
               type="button"
               onClick={() => userProfile && onReply(comment.id)}
-              className="min-h-11 rounded-lg px-3 text-[12px] font-bold text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transition-none"
+              className="h-8 rounded-lg px-3 text-[12px] font-bold text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transition-none"
             >
               {t.reply || "Odpowiedz"}
             </button>
