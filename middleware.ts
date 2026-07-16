@@ -27,6 +27,11 @@ const isPublicRoute = createRouteMatcher([
   // PWA manifest: the middleware matcher excludes .webmanifest but not .json,
   // so /manifest.json must be explicitly public or anonymous visitors get 404.
   '/manifest.json',
+  // Crawlers fetch these at the bare root; without an explicit public entry
+  // they'd hit auth.protect() once locale-rewrite is skipped (see
+  // LOCALE_EXEMPT_STATIC_PATHS), which previously made bots get 404s.
+  '/robots.txt',
+  '/sitemap.xml',
   // Email unsubscribe must work without login: List-Unsubscribe headers and
   // email footer links target /unsubscribe?token=..., and the page posts the
   // signed token to the API. Both are token-authorized, not session-authorized.
@@ -60,7 +65,7 @@ function isLogoExperimentRoute(pathname: string): boolean {
 // Static root files served from /public that must never get a /pl or /en
 // prefix. The matcher's static-extension exclusion skips most file types but
 // not .json, so /manifest.json falls through to this rewrite check.
-const LOCALE_EXEMPT_STATIC_PATHS = new Set(['/manifest.json']);
+const LOCALE_EXEMPT_STATIC_PATHS = new Set(['/manifest.json', '/robots.txt', '/sitemap.xml']);
 
 function shouldRewriteForPolish(pathname: string): boolean {
   if (LOCALE_EXEMPT_STATIC_PATHS.has(pathname)) return false;
