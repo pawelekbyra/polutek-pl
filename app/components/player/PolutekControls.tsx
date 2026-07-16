@@ -19,20 +19,19 @@ import {
   type PlaybackRateOption,
 } from "@vidstack/react";
 import {
-  Captions,
-  CaptionsOff,
-  Check,
-  Loader,
-  Maximize,
-  Minimize,
+  ArrowCounterClockwise,
+  ClosedCaptioning,
+  CornersIn,
+  CornersOut,
+  GearSix,
   Pause,
   Play,
-  RotateCcw,
-  Settings,
-  Volume1,
-  Volume2,
-  VolumeX,
-} from "lucide-react";
+  SpeakerSimpleHigh,
+  SpeakerSimpleLow,
+  SpeakerSimpleNone,
+  SpeakerSimpleSlash,
+  SpinnerGap,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { usePlayerCopy } from "./polutek-controls-copy";
 
@@ -49,7 +48,7 @@ function CenterStage() {
     >
       {waiting ? (
         <div className="mc-spinner" role="status" aria-label={copy.buffering}>
-          <Loader aria-hidden="true" />
+          <SpinnerGap weight="bold" aria-hidden="true" />
         </div>
       ) : paused ? (
         <PlayButton
@@ -59,12 +58,12 @@ function CenterStage() {
           {ended ? (
             <>
               <span className="mc-hero-icon-wrap">
-                <RotateCcw className="mc-hero-icon" aria-hidden="true" />
+                <ArrowCounterClockwise weight="bold" className="mc-hero-icon" aria-hidden="true" />
               </span>
               <span className="mc-replay-label">{copy.replay}</span>
             </>
           ) : (
-            <Play className="mc-hero-icon mc-hero-icon--play" fill="currentColor" aria-hidden="true" />
+            <Play weight="fill" className="mc-hero-icon mc-hero-icon--play" aria-hidden="true" />
           )}
         </PlayButton>
       ) : null}
@@ -80,8 +79,8 @@ function PlayPauseButton() {
   return (
     <PlayButton className="mc-btn" aria-label={label} title={label}>
       {paused
-        ? <Play className="mc-icon mc-icon--play" fill="currentColor" />
-        : <Pause className="mc-icon" fill="currentColor" />}
+        ? <Play weight="fill" className="mc-icon mc-icon--play" />
+        : <Pause weight="fill" className="mc-icon" />}
     </PlayButton>
   );
 }
@@ -98,10 +97,10 @@ function VolumeControl() {
     <div className="mc-volume">
       <MuteButton className="mc-btn" aria-label={label} title={label}>
         {isMuted
-          ? <VolumeX className="mc-icon" />
+          ? <SpeakerSimpleSlash weight="regular" className="mc-icon" />
           : volume < 0.5
-            ? <Volume1 className="mc-icon" />
-            : <Volume2 className="mc-icon" />}
+            ? <SpeakerSimpleLow weight="regular" className="mc-icon" />
+            : <SpeakerSimpleHigh weight="regular" className="mc-icon" />}
       </MuteButton>
       {canSetVolume && (
         <VolumeSlider.Root className="mc-vol-slider" aria-label={copy.volume}>
@@ -149,7 +148,7 @@ function SpeedMenuSection({ onSelect }: { onSelect: () => void }) {
           onClick={() => { option.select(); onSelect(); }}
         >
           <span>{option.label}</span>
-          {option.selected && <Check className="mc-menu-check" />}
+          {option.selected && <Check weight="bold" className="mc-menu-check" />}
         </button>
       ))}
     </div>
@@ -174,7 +173,7 @@ function CaptionsMenuSection({ onSelect }: { onSelect: () => void }) {
           onClick={() => { option.select(); onSelect(); }}
         >
           <span>{option.label}</span>
-          {option.selected && <Check className="mc-menu-check" />}
+          {option.selected && <Check weight="bold" className="mc-menu-check" />}
         </button>
       ))}
     </div>
@@ -211,7 +210,7 @@ function SettingsMenu() {
         aria-haspopup="menu"
         onClick={() => setOpen(v => !v)}
       >
-        <Settings className="mc-icon" />
+        <GearSix weight="regular" className="mc-icon" />
       </button>
       {open && (
         <div className="mc-menu" role="menu" aria-label={copy.playerSettings}>
@@ -233,7 +232,7 @@ function CaptionToggle() {
   const label = isOn ? copy.disableCaptions : copy.enableCaptions;
   return (
     <CaptionButton className="mc-btn mc-caption" aria-label={label} title={label}>
-      {isOn ? <Captions className="mc-icon" /> : <CaptionsOff className="mc-icon" />}
+      {isOn ? <ClosedCaptioning weight="regular" className="mc-icon" /> : <ClosedCaptioning weight="thin" className="mc-icon" style={{opacity:0.5}} />}
     </CaptionButton>
   );
 }
@@ -247,7 +246,7 @@ function FullscreenToggleButton() {
   const label = isFullscreen ? copy.exitFullscreen : copy.fullscreen;
   return (
     <FullscreenButton className="mc-btn" aria-label={label} title={label}>
-      {isFullscreen ? <Minimize className="mc-icon" /> : <Maximize className="mc-icon" />}
+      {isFullscreen ? <CornersIn weight="regular" className="mc-icon" /> : <CornersOut weight="regular" className="mc-icon" />}
     </FullscreenButton>
   );
 }
