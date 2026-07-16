@@ -519,18 +519,25 @@
     pointer-events:auto;
   }
 
+  /* Cały pasek — scrubber + przyciski — w jednym ciemnym kontenerze */
   .mc-bar {
+    display:flex;
+    flex-direction: column;
+    gap: 0;
+    background: rgba(0,0,0,.65);
+    backdrop-filter: blur(12px) saturate(1.4);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+    border-radius: 12px;
+    padding: 6px 6px 4px;
+  }
+
+  /* rząd przycisków pod scrubberem */
+  .mc-row {
     display:flex;
     align-items:center;
     justify-content:space-between;
-    height: 44px;
+    height: 40px;
     gap: 4px;
-    background: rgba(0,0,0,.62);
-    backdrop-filter: blur(10px) saturate(1.4);
-    -webkit-backdrop-filter: blur(10px) saturate(1.4);
-    border-radius: 10px;
-    padding: 0 4px;
-    margin-top: 2px;
   }
 
   .mc-group { display:flex; align-items:center; gap:0; min-width:0; }
@@ -570,10 +577,10 @@
 
   .mc-scrub {
     position:relative; display:flex;
-    width:100%; height:20px;
+    width:100%; height:18px;
     align-items:center;
     cursor:pointer; touch-action:none;
-    margin-bottom:2px;
+    padding: 0 2px;
   }
   .mc-scrub-track {
     position:relative; width:100%;
@@ -766,13 +773,13 @@
 
   @media (max-width:640px) {
     .mc-bottom { padding:0 4px max(6px,env(safe-area-inset-bottom)); }
-    .mc-bar { height:42px; border-radius:8px; padding:0 2px; gap:2px; }
-    .mc-btn { width:40px; height:40px; }
+    .mc-bar { border-radius:8px; padding:4px 4px 2px; }
+    .mc-row { height:38px; gap:2px; }
+    .mc-btn { width:38px; height:38px; }
     .mc-icon { width:18px; height:18px; }
     .mc-time { font-size:11px; margin-left:0; }
     .mc-time-sep, .mc-time-dur { display:none; }
     .mc-volume { display:none; }
-    .mc-scrub { height:18px; margin-bottom:1px; }
     .mc-hero { width:52px; height:52px; }
     .polutek-vidstack-player .vds-captions { bottom:70px; }
   }

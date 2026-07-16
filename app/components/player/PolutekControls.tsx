@@ -273,26 +273,25 @@ export default function PolutekControls({ className }: { className?: string }) {
         <div className="mc-scrim" />
 
         <Controls.Group className="mc-bottom">
-          {/* progress bar */}
-          <ScrubBar />
-
-          {/* pasek przycisków */}
           <div className="mc-bar">
-            {/* lewa grupa */}
-            <div className="mc-group">
-              <PlayPauseButton />
-              <VolumeControl />
-              <div className="mc-time">
-                <Time type="current" />
-                <span aria-hidden="true" className="mc-time-sep">/</span>
-                <Time type="duration" className="mc-time-dur" />
+            {/* scrubber na górze paska */}
+            <ScrubBar />
+            {/* przyciski pod scrubberem */}
+            <div className="mc-row">
+              <div className="mc-group">
+                <PlayPauseButton />
+                <VolumeControl />
+                <div className="mc-time">
+                  <Time type="current" />
+                  <span aria-hidden="true" className="mc-time-sep">/</span>
+                  <Time type="duration" className="mc-time-dur" />
+                </div>
               </div>
-            </div>
-            {/* prawa grupa */}
-            <div className="mc-group mc-group--right">
-              <CaptionToggle />
-              <SettingsMenu />
-              <FullscreenToggleButton />
+              <div className="mc-group mc-group--right">
+                <CaptionToggle />
+                <SettingsMenu />
+                <FullscreenToggleButton />
+              </div>
             </div>
           </div>
         </Controls.Group>
