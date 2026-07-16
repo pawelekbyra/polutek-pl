@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   CaptionButton,
   Captions as CaptionsLayer,
-  Controls,
   FullscreenButton,
   Gesture,
   MuteButton,
@@ -262,21 +261,18 @@ export default function PolutekControls({ className }: { className?: string }) {
       <Gesture className="mc-gesture" event="dblpointerup" action="toggle:fullscreen" />
       <CaptionsLayer className="vds-captions" />
       <CenterStage />
-      <Controls.Root
+      {/* zwykły div zamiast Controls.Root — eliminuje Vidstack CSS interference */}
+      <div
         className={cn(
           "mc-controls",
           controlsVisible && "mc-controls--visible",
           className,
         )}
       >
-        {/* scrim — gradient od dołu */}
         <div className="mc-scrim" />
-
-        <Controls.Group className="mc-bottom">
+        <div className="mc-bottom">
           <div className="mc-bar">
-            {/* scrubber na górze paska */}
             <ScrubBar />
-            {/* przyciski pod scrubberem */}
             <div className="mc-row">
               <div className="mc-group">
                 <PlayPauseButton />
@@ -294,9 +290,8 @@ export default function PolutekControls({ className }: { className?: string }) {
               </div>
             </div>
           </div>
-        </Controls.Group>
-      </Controls.Root>
-
+        </div>
+      </div>
     </>
   );
 }
