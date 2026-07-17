@@ -578,11 +578,22 @@
   .mc-time-dur { color: rgba(255,255,255,.5); }
 
   .mc-scrub {
-    position:relative; display:flex;
-    width:100%; height:18px;
-    align-items:center;
-    cursor:pointer; touch-action:none;
-    padding: 0 2px;
+    /* override Vidstack: display:inline-flex i margin:0 calc(thumb/2) */
+    display: flex !important;
+    width: 100% !important;
+    height: 18px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative;
+    align-items: center;
+    cursor: pointer;
+    touch-action: none;
+    /* ustaw Vidstack CSS vars */
+    --media-slider-height: 18px;
+    --media-slider-width: 100%;
+    --media-slider-thumb-size: 12px;
+    --media-slider-track-height: 3px;
+    --media-slider-focused-track-height: 5px;
   }
   .mc-scrub-track {
     position:relative; width:100%;
@@ -623,7 +634,7 @@
   }
 
   .mc-scrub-preview {
-    position:absolute; bottom:24px;
+    position:absolute; bottom:calc(100% + 6px);
     padding:4px 8px;
     border-radius:6px;
     background:rgba(0,0,0,.85);
