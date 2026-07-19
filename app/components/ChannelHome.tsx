@@ -12,6 +12,8 @@ import { SidebarPlaylist, SidebarSupportBox } from "./channel/SidebarPlaylist";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
 import { AppPreloadProvider, useAppPreload } from "./preload/AppPreloadProvider";
+import { PreloadProgressBar } from "./preload/PreloadProgressBar";
+import { CommentLoadingSkeleton } from "@/components/skeletons";
 import {
   useClientReady,
 } from "@/app/hooks/useClientEnvironment";
@@ -21,9 +23,7 @@ const EmbeddedComments = dynamic(() => import("./comments/EmbeddedComments"), {
 });
 
 function CommentsMountPlaceholder() {
-  return (
-    <div className="min-h-[180px]" aria-hidden="true" />
-  );
+  return <CommentLoadingSkeleton />;
 }
 
 interface ChannelHomeProps {
@@ -208,7 +208,9 @@ function ChannelHomeContent({
   );
 
   return (
-    <main className="min-h-screen bg-[var(--chan-nav)] bg-[radial-gradient(circle_at_top_left,color-mix(in_srgb,var(--chan-blue)_9%,transparent),transparent_34%),radial-gradient(circle_at_top_right,color-mix(in_srgb,var(--chan-amber)_8%,transparent),transparent_30%),linear-gradient(180deg,color-mix(in_srgb,var(--chan-card)_72%,transparent),transparent_42%)]">
+    <>
+      <PreloadProgressBar />
+      <main className="min-h-screen bg-[var(--chan-nav)] bg-[radial-gradient(circle_at_top_left,color-mix(in_srgb,var(--chan-blue)_9%,transparent),transparent_34%),radial-gradient(circle_at_top_right,color-mix(in_srgb,var(--chan-amber)_8%,transparent),transparent_30%),linear-gradient(180deg,color-mix(in_srgb,var(--chan-card)_72%,transparent),transparent_42%)]">
       <div className="mx-auto max-w-[1180px] px-4 pb-8 pt-4 md:px-6 lg:px-8 lg:pb-10 lg:pt-5">
         <div className="grid grid-cols-12 gap-5 lg:items-start xl:gap-6">
           <div className="col-span-12 flex flex-col lg:col-span-8">
@@ -273,5 +275,6 @@ function ChannelHomeContent({
         </div>
       </div>
     </main>
+    </>
   );
 }
