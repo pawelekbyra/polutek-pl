@@ -7,11 +7,22 @@ import {
   Lock,
   Ticket,
   Radar,
-  Film,
-  Newspaper,
   Compass,
   Sparkles,
   ShieldCheck,
+  Stamp,
+  Scissors,
+  Orbit,
+  PenTool,
+  Sun,
+  KeyRound,
+  CreditCard,
+  BookOpen,
+  Radio,
+  Droplets,
+  Box,
+  Flame,
+  Cpu,
 } from "lucide-react";
 import AccessLockOverlay from "@/app/components/AccessLockOverlay";
 import { cn } from "@/lib/utils";
@@ -324,6 +335,438 @@ function ConceptMarquee({ mode }: { mode: Mode }) {
   );
 }
 
+/* 11. Wax Seal / Envelope */
+function ConceptWax({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.wax, isPatron && styles.patron)}>
+        <div className={styles.waxEnvelope}>
+          <span className={styles.waxSeal}>{isPatron ? <Gem /> : <Stamp />}</span>
+          <span className={styles.waxKicker}>{c.kicker}</span>
+          <h4 className={styles.waxTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <span className={styles.waxCta}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 12. Holographic Foil */
+function ConceptHolo({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={styles.holo}>
+        <div className={styles.holoCard}>
+          {isPatron ? <Gem className={styles.holoBadge} /> : <Sparkles className={styles.holoBadge} />}
+          <h4 className={styles.holoTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <span className={styles.holoCta}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 13. Origami Paper Fold */
+function ConceptOrigami({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.origami, isPatron && styles.patron)}>
+        <div className={styles.origamiFold} aria-hidden="true">
+          <span /><span /><span />
+        </div>
+        <div className={styles.origamiContent}>
+          {isPatron ? <Gem size={30} /> : <Scissors size={30} />}
+          <h4 className={styles.origamiTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <span className={styles.origamiCta}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 14. Retro Terminal */
+function ConceptTerminal({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.term, isPatron && styles.patron)}>
+        <div className={styles.termGlow} />
+        <div className={styles.termScan} />
+        <div className={styles.termBox}>
+          <span className={styles.termLine}>&gt; whoami</span>
+          <span className={styles.termLine}>&gt; access_level: {isPatron ? "GUEST" : "ANONYMOUS"}</span>
+          <h4 className={styles.termTitle}>
+            {c.title} {c.titleAccent}
+            <span className={styles.termCursor} aria-hidden="true" />
+          </h4>
+          <span className={styles.termLine}>&gt; {c.cta.toLowerCase()}_</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 15. Constellation */
+function ConceptConstellation({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  const dots = [
+    [12, 18], [28, 10], [42, 24], [18, 46], [64, 14], [78, 32], [58, 52], [86, 58], [34, 66], [70, 74], [10, 78], [92, 20],
+  ];
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.constellation, isPatron && styles.patron)}>
+        {dots.map(([x, y], i) => (
+          <span
+            key={i}
+            className={styles.constDot}
+            style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${i * 0.3}s` }}
+            aria-hidden="true"
+          />
+        ))}
+        <div className={styles.constContent}>
+          {isPatron ? <Sparkles className={styles.constIcon} /> : <Orbit className={styles.constIcon} />}
+          <h4 className={styles.constTitle}>
+            {c.title} <strong>{c.titleAccent}</strong>
+          </h4>
+          <span className={styles.constCta}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 16. Hand-drawn Sketch */
+function ConceptSketch({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.sketch, isPatron && styles.patron)}>
+        <div className={styles.sketchCard}>
+          {isPatron ? <Gem className={styles.sketchIcon} /> : <PenTool className={styles.sketchIcon} />}
+          <h4 className={styles.sketchTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <span className={styles.sketchCta}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 17. Vaporwave Grid */
+function ConceptVaporwave({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.vapor, isPatron && styles.patron)}>
+        <span className={styles.vaporSun} aria-hidden="true" />
+        <span className={styles.vaporGrid} aria-hidden="true" />
+        <div className={styles.vaporContent}>
+          <h4 className={styles.vaporTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <span className={styles.vaporCta}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 18. Newspaper Classified */
+function ConceptClassified({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.classified, isPatron && styles.patron)}>
+        <div className={styles.classifiedBox}>
+          <span className={styles.classifiedKicker}>{c.tag}</span>
+          <h4 className={styles.classifiedTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <span className={styles.classifiedStamp}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 19. Membership Card */
+function ConceptCard3D({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.card3d, isPatron && styles.patron)}>
+        <div className={styles.cardBody}>
+          <div className={styles.cardChip} aria-hidden="true" />
+          <h4 className={styles.cardTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <div className={styles.cardMeta}>
+            <span>{c.tag}</span>
+            {isPatron ? <Gem size={16} /> : <CreditCard size={16} />}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 20. Popup Book Layers */
+function ConceptPopup({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.popup, isPatron && styles.patron)}>
+        <span className={cn(styles.popupLayer, styles.back)} aria-hidden="true" />
+        <span className={cn(styles.popupLayer, styles.mid)} aria-hidden="true" />
+        <div className={styles.popupContent}>
+          {isPatron ? <Gem size={28} /> : <BookOpen size={28} />}
+          <h4 className={styles.popupTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <span className={styles.popupCta}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 21. Radial Sunburst */
+function ConceptSunburst({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.sunburst, isPatron && styles.patron)}>
+        <span className={styles.sunburstRays} aria-hidden="true" />
+        <span className={styles.sunburstBadge}>{isPatron ? <Gem /> : <Sun />}</span>
+        <div className={styles.sunburstContent}>
+          <h4 className={styles.sunburstTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <span className={styles.sunburstCta}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 22. Morse Signal */
+function ConceptMorse({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.morse, isPatron && styles.patron)}>
+        <div className={styles.morseContent}>
+          <div className={styles.morseRow} aria-hidden="true">
+            <span /><span /><span /><span /><span />
+          </div>
+          <span className={styles.morseDot} aria-hidden="true" />
+          {isPatron ? <Gem size={26} /> : <Radio size={26} />}
+          <h4 className={styles.morseTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <span className={styles.morseCta}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 23. Watercolor Wash */
+function ConceptWatercolor({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.water, isPatron && styles.patron)}>
+        <span className={cn(styles.waterBlob, styles.b1)} aria-hidden="true" />
+        <span className={cn(styles.waterBlob, styles.b2)} aria-hidden="true" />
+        <span className={cn(styles.waterBlob, styles.b3)} aria-hidden="true" />
+        <div className={styles.waterContent}>
+          {isPatron ? <Droplets className={styles.waterIcon} /> : <Droplets className={styles.waterIcon} />}
+          <h4 className={styles.waterTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <span className={styles.waterCta}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 24. Wireframe Cube */
+function ConceptWireframe({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.wire, isPatron && styles.patron)}>
+        <div className={styles.wireContent}>
+          <div className={styles.wireCube} aria-hidden="true">
+            <span className={cn(styles.wireFace, styles.f1)} />
+            <span className={cn(styles.wireFace, styles.f2)} />
+            <span className={cn(styles.wireFace, styles.f3)} />
+          </div>
+          <h4 className={styles.wireTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <span className={styles.wireCta}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 25. Torn Paper Edge */
+function ConceptTorn({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.torn, isPatron && styles.patron)}>
+        <div className={styles.tornCard}>
+          {isPatron ? <Gem /> : <Box />}
+          <h4 className={styles.tornTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <span className={styles.tornCta}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 26. Neon Sign */
+function ConceptNeon({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.neon, isPatron && styles.patron)}>
+        <div className={styles.neonContent}>
+          {isPatron ? <Gem className={styles.neonIcon} /> : <Sparkles className={styles.neonIcon} />}
+          <h4 className={styles.neonTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <span className={styles.neonCta}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 27. Stained Glass Mosaic */
+function ConceptMosaic({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.glassMosaic, isPatron && styles.patron)}>
+        <span className={styles.mosaicTile} aria-hidden="true" />
+        <span className={styles.mosaicTile} aria-hidden="true" />
+        <span className={styles.mosaicTile} aria-hidden="true" />
+        <span className={styles.mosaicTile} aria-hidden="true" />
+        <div className={styles.mosaicContent}>
+          {isPatron ? <Gem size={28} /> : <KeyRound size={28} />}
+          <h4 className={styles.mosaicTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <span className={styles.mosaicCta}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 28. Candlelit Wax Melt */
+function ConceptCandle({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.candle, isPatron && styles.patron)}>
+        <span className={styles.candleFlicker} aria-hidden="true" />
+        <div className={styles.candleContent}>
+          {isPatron ? <Gem className={styles.candleIcon} /> : <Flame className={styles.candleIcon} />}
+          <h4 className={styles.candleTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <span className={styles.candleCta}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 29. Circuit Board */
+function ConceptCircuit({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  const nodes = [[15, 20], [80, 15], [10, 75], [88, 70], [50, 12], [50, 88]];
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.circuit, isPatron && styles.patron)}>
+        {nodes.map(([x, y], i) => (
+          <span
+            key={i}
+            className={styles.circuitNode}
+            style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${i * 0.4}s` }}
+            aria-hidden="true"
+          />
+        ))}
+        <div className={styles.circuitContent}>
+          {isPatron ? <Gem size={26} /> : <Cpu size={26} />}
+          <h4 className={styles.circuitTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <span className={styles.circuitCta}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* 30. Embossed Letterpress */
+function ConceptEmboss({ mode }: { mode: Mode }) {
+  const c = COPY[mode];
+  const isPatron = mode === "PATRON_REQUIRED";
+  return (
+    <div className={styles.frame}>
+      <div className={cn(styles.emboss, isPatron && styles.patron)}>
+        <div className={styles.embossContent}>
+          {isPatron ? <Gem className={styles.embossIcon} /> : <ShieldCheck className={styles.embossIcon} />}
+          <h4 className={styles.embossTitle}>
+            {c.title} {c.titleAccent}
+          </h4>
+          <div className={styles.embossRule} />
+          <span className={styles.embossCta}>{c.cta}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const CONCEPTS: {
   title: string;
   tag: string;
@@ -399,6 +842,146 @@ const CONCEPTS: {
     description:
       "W tle przewija się powtarzalny napis (np. 'PATRON • PATRON'), na pierwszym planie zwarty, energiczny komunikat i pigułka CTA.",
     Component: ConceptMarquee,
+  },
+  {
+    title: "Wax Seal / Envelope",
+    tag: "Pieczęć / list",
+    description:
+      "Kremowa koperta z woskową pieczęcią u góry — nawiązuje do 'zaproszenia' i personalnego charakteru odblokowania.",
+    Component: ConceptWax,
+  },
+  {
+    title: "Holographic Foil",
+    tag: "Holo / karta kolekcjonerska",
+    description:
+      "Przelewający się tęczowy gradient jak folia na karcie kolekcjonerskiej — efektowny, 'rzadki przedmiot' w odbiorze.",
+    Component: ConceptHolo,
+  },
+  {
+    title: "Origami Paper Fold",
+    tag: "Papier / geometria",
+    description:
+      "Geometryczne, złożone płaszczyzny papieru w tle (clip-path) z kartą treści na wierzchu — czyste i nowoczesne.",
+    Component: ConceptOrigami,
+  },
+  {
+    title: "Retro Terminal",
+    tag: "Konsola / CRT",
+    description:
+      "Zielony fosfor na czarnym tle, linie skanowania i migający kursor — żartobliwe 'techniczne' podejście do komunikatu dostępu.",
+    Component: ConceptTerminal,
+  },
+  {
+    title: "Constellation",
+    tag: "Gwiazdozbiór",
+    description:
+      "Migoczące punkty gwiazd na granatowym tle sugerują coś wyjątkowego i odległego — subtelny, spokojny nastrój premium.",
+    Component: ConceptConstellation,
+  },
+  {
+    title: "Hand-drawn Sketch",
+    tag: "Szkic / odręczny",
+    description:
+      "Nieregularna, 'odręczna' ramka i miękkie kształty — przyjazny, mniej korporacyjny ton komunikatu.",
+    Component: ConceptSketch,
+  },
+  {
+    title: "Vaporwave Grid",
+    tag: "Retro / synthwave",
+    description:
+      "Zachodzące słońce nad perspektywiczną siatką w stylu lat 80. — odważny, nostalgiczny akcent kolorystyczny.",
+    Component: ConceptVaporwave,
+  },
+  {
+    title: "Newspaper Classified",
+    tag: "Ogłoszenie prasowe",
+    description:
+      "Wąska ramka jak ogłoszenie drobne w gazecie, z przekrzywioną pieczątką — lekko humorystyczny, 'urzędowy' klimat.",
+    Component: ConceptClassified,
+  },
+  {
+    title: "Membership Card",
+    tag: "Karta członkowska",
+    description:
+      "Plastikowa karta z chipem i połyskiem — traktuje dostęp jak fizyczną kartę członkowską klubu.",
+    Component: ConceptCard3D,
+  },
+  {
+    title: "Popup Book Layers",
+    tag: "Warstwy 3D",
+    description:
+      "Ułożone warstwowo kolorowe płaszczyzny budują wrażenie głębi jak w książce pop-up — playful i przestrzenne.",
+    Component: ConceptPopup,
+  },
+  {
+    title: "Radial Sunburst",
+    tag: "Odznaka / medal",
+    description:
+      "Promienisty rozbłysk za świecącą odznaką — komunikat jako 'nagroda' albo wyróżnienie do zdobycia.",
+    Component: ConceptSunburst,
+  },
+  {
+    title: "Morse Signal",
+    tag: "Sygnał / transmisja",
+    description:
+      "Pulsujący punkt i dekoracyjny wzór kropka-kreska sugerują nadchodzącą, oczekiwaną transmisję/wiadomość.",
+    Component: ConceptMorse,
+  },
+  {
+    title: "Watercolor Wash",
+    tag: "Akwarela",
+    description:
+      "Miękkie, rozlane plamy akwareli w tle na jasnej karcie — artystyczny, spokojny, 'ręcznie malowany' charakter.",
+    Component: ConceptWatercolor,
+  },
+  {
+    title: "Wireframe Cube",
+    tag: "3D / tech",
+    description:
+      "Obracająca się szkieletowa kostka 3D za treścią — nowoczesny, inżynierski akcent bez zbędnego przepychu.",
+    Component: ConceptWireframe,
+  },
+  {
+    title: "Torn Paper Edge",
+    tag: "Naderwany papier",
+    description:
+      "Karta z postrzępioną, 'naderwaną' krawędzią (clip-path) — surowa, fakturowa alternatywa dla gładkich kart.",
+    Component: ConceptTorn,
+  },
+  {
+    title: "Neon Sign",
+    tag: "Neon",
+    description:
+      "Świecący napis neonowy na ceglastym tle z migotaniem — nocny, klubowy klimat 'ekskluzywnego wejścia'.",
+    Component: ConceptNeon,
+  },
+  {
+    title: "Stained Glass Mosaic",
+    tag: "Witraż",
+    description:
+      "Kolorowe geometryczne segmenty jak witraż w oknie kościoła — dostojny, 'uroczysty' odbiór odblokowania.",
+    Component: ConceptMosaic,
+  },
+  {
+    title: "Candlelit Wax Melt",
+    tag: "Świeca / ciepło",
+    description:
+      "Ciepła, migocząca poświata jak przy świecy — przytulny, intymny nastrój zamiast zimnej blokady.",
+    Component: ConceptCandle,
+  },
+  {
+    title: "Circuit Board",
+    tag: "Płytka PCB",
+    description:
+      "Ścieżki obwodu drukowanego i pulsujące węzły — 'cyfrowy klucz dostępu' w czysto technicznej estetyce.",
+    Component: ConceptCircuit,
+  },
+  {
+    title: "Embossed Letterpress",
+    tag: "Wytłoczenie",
+    description:
+      "Głęboko wytłoczona ikona i napis na papierze — elegancki, minimalistyczny efekt druku typograficznego.",
+    Component: ConceptEmboss,
   },
 ];
 
