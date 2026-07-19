@@ -190,3 +190,29 @@ export function TipsListSkeleton() {
     </div>
   );
 }
+
+export function CommentLoadingSkeleton() {
+  return (
+    <div className="py-6 space-y-4">
+      {[1, 2, 3].map(i => (
+        <div key={i} className="flex gap-3">
+          <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+          <div className="flex-1 space-y-3">
+            <div className="space-y-1">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-5/6" />
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Skeleton className="h-3 w-12" />
+              <Skeleton className="h-3 w-12" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}

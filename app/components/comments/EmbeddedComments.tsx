@@ -25,6 +25,7 @@ import { AnimatePresence } from "framer-motion";
 import { CommentMotionItem, AnimatedCount } from "./components/comment-motion";
 import { useComments } from "./hooks/useComments";
 import { useClientReady } from "@/app/hooks/useClientEnvironment";
+import { CommentLoadingSkeleton } from "@/components/skeletons";
 
 type ClerkCommentMetadata = {
   totalPaid?: unknown;
@@ -58,17 +59,7 @@ interface EmbeddedCommentsProps {
   videoTier?: AccessTierDto;
 }
 
-const CommentsLoadingState = ({ language }: { language: string }) => (
-  <div className="py-14 flex flex-col items-center justify-center text-center space-y-3 rounded-2xl border border-dashed border-neutral-200 bg-white/35" role="status" aria-live="polite">
-    <MessageSquare size={34} className="text-neutral-300" />
-    <p className="text-[11px] font-black uppercase tracking-[0.22em] text-neutral-500">
-      {language === "pl" ? "Dogrzewam rozmowę" : "Warming up the discussion"}
-    </p>
-    <div className="h-1 w-32 overflow-hidden rounded-full bg-neutral-200">
-      <div className="h-full w-1/2 animate-pulse rounded-full bg-primary/70 motion-reduce:animate-none" />
-    </div>
-  </div>
-);
+const CommentsLoadingState = () => <CommentLoadingSkeleton />;
 
 const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   userProfile: propUserProfile,
