@@ -13,6 +13,7 @@ import { Search, X, LogIn } from "lucide-react";
 import NotificationsMenu from "./notifications/NotificationsMenu";
 import { NotificationDTO } from "@/app/types/notification";
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type NavbarMetadata = {
   isPatron?: unknown;
@@ -232,8 +233,8 @@ const Navbar = () => {
                 </button>
               ) : (
                 <div className="flex gap-1.5">
-                  <div className="h-[38px] w-[38px] rounded-full bg-[var(--chan-line)] animate-pulse shrink-0 motion-reduce:animate-none" />
-                  <div className="h-[38px] w-[38px] rounded-full bg-[var(--chan-line)] animate-pulse shrink-0 motion-reduce:animate-none" />
+                  <Skeleton className="h-[38px] w-[38px] shrink-0 rounded-full" />
+                  <Skeleton className="h-[38px] w-[38px] shrink-0 rounded-full" />
                 </div>
               )}
 

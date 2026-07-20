@@ -30,16 +30,16 @@ export default function DonationLegalDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto bg-background">
-        <DialogHeader className="border-b-2 border-[#1a1a1a]/10 pb-4">
-          <DialogTitle className="text-2xl font-black uppercase tracking-tighter text-[#1a1a1a]">{title}</DialogTitle>
-          <p className="mt-1 text-xs text-[#7a7a7a]">{LEGAL_EFFECTIVE_DATE}</p>
+        <DialogHeader className="border-b-2 border-[var(--chan-ink)]/10 pb-4">
+          <DialogTitle className="text-2xl font-black uppercase tracking-tighter text-[var(--chan-ink)]">{title}</DialogTitle>
+          <p className="mt-1 text-xs text-[var(--chan-muted)]">{LEGAL_EFFECTIVE_DATE}</p>
         </DialogHeader>
 
-        <div className="pt-2 text-[#1a1a1a]">
-          {intro && <p className="mb-6 text-[13px] leading-[1.6] text-[#4a4a4a]">{intro}</p>}
+        <div className="pt-2 text-[var(--chan-ink)]">
+          {intro && <p className="mb-6 text-[13px] leading-[1.6] text-[var(--chan-body)]">{intro}</p>}
           {children}
           {href && (
-            <div className="mt-10 border-t border-[#1a1a1a]/10 pt-6">
+            <div className="mt-10 border-t border-[var(--chan-ink)]/10 pt-6">
               <Link
                 href={href}
                 className="text-sm font-bold underline hover:text-primary"

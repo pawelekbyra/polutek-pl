@@ -386,7 +386,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
       <div className="space-y-[22px]">
         {isLoading ? (
-          <CommentsLoadingState language={language} />
+          <CommentsLoadingState />
         ) : isError ? (
           <div className="py-12 flex flex-col items-center justify-center text-center space-y-4 bg-red-50/50 rounded-2xl border border-red-100">
             <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
@@ -467,7 +467,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
               {/* NESTED REPLIES */}
               {comment.repliesPreview && comment.repliesPreview.length > 0 && (
-                <div className="pl-6 md:pl-13 space-y-[22px] border-l border-border ml-4 md:ml-[19px] mt-4">
+                <div className="pl-6 md:pl-13 space-y-[22px] border-l border-[var(--chan-line)] ml-4 md:ml-[19px] mt-4">
                   {comment.repliesPreview.map((reply) => (
                     <CommentItem
                       key={reply.id}

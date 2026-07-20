@@ -17,6 +17,7 @@ import { NajsIcon } from "../najs/primitives";
 import DonationBox from "./DonationBox";
 import { useAppPreload } from "../preload/AppPreloadProvider";
 import { getLocalizedHref } from "@/lib/i18n/routing";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Translations = {
   views: string;
@@ -217,7 +218,7 @@ export function SidebarPlaylist({
                 ? "bg-[var(--chan-amber-soft)]"
                 : "bg-[var(--chan-blue)]/20"
               : isPublicSection
-                ? "bg-gradient-to-br from-[#EAF0FF] to-[#DBE7FB] transition-[background-color,transform] duration-160 hover:brightness-[1.03]"
+                ? "bg-gradient-to-br from-[color-mix(in_srgb,var(--chan-blue)_10%,var(--chan-card))] to-[color-mix(in_srgb,var(--chan-blue)_18%,var(--chan-card))] transition-[background-color,transform] duration-160 hover:brightness-[1.03]"
                 : "transition-[background-color,box-shadow] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_2px_8px_rgba(23,23,23,0.06)]",
           )}
         >
@@ -343,12 +344,12 @@ export function SidebarPlaylist({
     const renderSkeletonSection = (title: string) => (
       <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
         {renderSectionHeader(title)}
-        <div className="mb-0.5 flex gap-3 p-2 rounded-[14px] animate-pulse motion-reduce:animate-none">
-          <div className="w-[130px] h-[73px] shrink-0 rounded-[10px] bg-[var(--chan-line)]" />
-          <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
-            <div className="h-4 bg-[var(--chan-line)] rounded w-3/4" />
-            <div className="h-3 bg-[var(--chan-line)] rounded w-1/2" />
-            <div className="h-3 bg-[var(--chan-line)] rounded w-2/3" />
+        <div className="mb-0.5 flex gap-3 rounded-[14px] p-2">
+          <Skeleton className="h-[76px] w-[135px] shrink-0 rounded-[12px]" />
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
+            <Skeleton className="h-[13px] w-3/4" />
+            <Skeleton className="h-[12px] w-1/2" />
+            <Skeleton className="h-[11px] w-2/3" />
           </div>
         </div>
       </div>
@@ -360,8 +361,8 @@ export function SidebarPlaylist({
         {renderSkeletonSection(language === "pl" ? "Dla zalogowanych" : "For logged in")}
         {renderSkeletonSection(language === "pl" ? "Strefa Fenkjuu" : "Thank You Zone")}
         {showSupportBox && (
-          <div className="shrink-0 mt-2 p-4 rounded-lg bg-[var(--chan-surface)] animate-pulse motion-reduce:animate-none">
-            <div className="h-8 bg-[var(--chan-line)] rounded w-full" />
+          <div className="mt-2 shrink-0 rounded-lg bg-[var(--chan-surface)] p-4">
+            <Skeleton className="h-8 w-full rounded-[10px]" />
           </div>
         )}
       </div>

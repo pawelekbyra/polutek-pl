@@ -230,7 +230,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
 
             {view === "verify-email" && (
               <form onSubmit={handleVerifyEmail} className="mt-5 space-y-3.5">
-                <p className="text-[13px] text-[#4a4a4a]">
+                <p className="text-[13px] text-[var(--chan-body)]">
                   {isPl ? "Wpisz kod, który wysłaliśmy na " : "Enter the code we sent to "}<strong>{email}</strong>.
                 </p>
                 <Field label={isPl ? "Kod z e-maila" : "Email code"} type="text" value={code} onChange={setCode} inputMode="numeric" required />
@@ -240,7 +240,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
 
             {view === "forgot" && (
               <form onSubmit={handleForgot} className="mt-5 space-y-3.5">
-                <p className="text-[13px] text-[#4a4a4a]">
+                <p className="text-[13px] text-[var(--chan-body)]">
                   {isPl ? "Podaj e-mail — wyślemy kod do zresetowania hasła." : "Enter your email — we'll send a reset code."}
                 </p>
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
