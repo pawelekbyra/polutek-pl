@@ -325,11 +325,11 @@ function PlaybackPlanStateOverlay({
       <div className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-[var(--chan-nav)] p-6 text-center text-[var(--chan-ink)] [container-type:inline-size]">
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,color-mix(in_srgb,var(--chan-blue)_10%,transparent),transparent_34%),radial-gradient(circle_at_84%_82%,color-mix(in_srgb,var(--chan-amber)_8%,transparent),transparent_30%)]"
+          className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,var(--cm-blue-10),transparent_34%),radial-gradient(circle_at_84%_82%,var(--cm-amber-8),transparent_30%)]"
         />
 
-        <div className="relative z-10 flex max-w-md flex-col items-center gap-[clamp(12px,2cqi,20px)] rounded-[22px] border border-[color-mix(in_srgb,var(--chan-line)_82%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_90%,white)] px-[clamp(22px,5cqi,42px)] py-[clamp(24px,5cqi,38px)] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_24px_54px_-28px_rgba(15,23,42,0.34)]">
-          <div className="flex h-[clamp(56px,11cqi,72px)] w-[clamp(56px,11cqi,72px)] items-center justify-center rounded-[18px] border border-[color-mix(in_srgb,var(--chan-blue)_18%,var(--chan-line))] bg-[var(--chan-blue-soft)] text-[var(--chan-blue)] shadow-[0_14px_30px_-18px_color-mix(in_srgb,var(--chan-blue)_58%,transparent)]">
+        <div className="relative z-10 flex max-w-md flex-col items-center gap-[clamp(12px,2cqi,20px)] rounded-[22px] border border-[var(--cm-line-82)] bg-[var(--cm-card-90-white-2)] px-[clamp(22px,5cqi,42px)] py-[clamp(24px,5cqi,38px)] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_24px_54px_-28px_rgba(15,23,42,0.34)]">
+          <div className="flex h-[clamp(56px,11cqi,72px)] w-[clamp(56px,11cqi,72px)] items-center justify-center rounded-[18px] border border-[var(--cm-blue-18-line)] bg-[var(--chan-blue-soft)] text-[var(--chan-blue)] shadow-[0_14px_30px_-18px_var(--cm-blue-58)]">
             <AlertCircle className="h-[clamp(28px,6cqi,36px)] w-[clamp(28px,6cqi,36px)]" />
           </div>
 
@@ -346,7 +346,7 @@ function PlaybackPlanStateOverlay({
           {content.action === "support" && (
             <a
               href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? ''}?subject=Problem%20z%20dost%C4%99pem%20do%20wideo`}
-              className="mt-2 inline-flex min-h-11 items-center justify-center rounded-[14px] bg-[var(--chan-amber)] px-[clamp(20px,5cqi,32px)] text-[clamp(11px,2.4cqi,14px)] font-bold uppercase tracking-wider text-[var(--chan-amber-ink)] shadow-[0_12px_26px_-14px_color-mix(in_srgb,var(--chan-amber)_70%,transparent)] transition-[transform,filter] duration-160 hover:-translate-y-px hover:brightness-[1.04] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-amber-strong)] focus-visible:ring-offset-2 motion-reduce:transition-none"
+              className="mt-2 inline-flex min-h-11 items-center justify-center rounded-[14px] bg-[var(--chan-amber)] px-[clamp(20px,5cqi,32px)] text-[clamp(11px,2.4cqi,14px)] font-bold uppercase tracking-wider text-[var(--chan-amber-ink)] shadow-[0_12px_26px_-14px_var(--cm-amber-70)] transition-[transform,filter] duration-160 hover:-translate-y-px hover:brightness-[1.04] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-amber-strong)] focus-visible:ring-offset-2 motion-reduce:transition-none"
             >
               {content.actionLabel}
             </a>
@@ -356,7 +356,7 @@ function PlaybackPlanStateOverlay({
             <button
               type="button"
               onClick={onRetry}
-              className="mt-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-[14px] bg-[var(--chan-blue)] px-[clamp(20px,5cqi,32px)] text-[clamp(11px,2.4cqi,14px)] font-bold uppercase tracking-wider text-white shadow-[0_12px_26px_-14px_color-mix(in_srgb,var(--chan-blue)_70%,transparent)] transition-[transform,background-color] duration-160 hover:-translate-y-px hover:bg-[color-mix(in_srgb,var(--chan-blue)_88%,black)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 motion-reduce:transition-none"
+              className="mt-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-[14px] bg-[var(--chan-blue)] px-[clamp(20px,5cqi,32px)] text-[clamp(11px,2.4cqi,14px)] font-bold uppercase tracking-wider text-white shadow-[0_12px_26px_-14px_var(--cm-blue-70)] transition-[transform,background-color] duration-160 hover:-translate-y-px hover:bg-[var(--cm-blue-88-black)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 motion-reduce:transition-none"
             >
               <RefreshCcw size={16} className="flex-shrink-0" aria-hidden="true" />
               <span>{content.actionLabel}</span>

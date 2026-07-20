@@ -16,7 +16,7 @@ export const LEGAL_OWNER = {
 export function LegalSection({ nr, title, children }: { nr: string; title: string; children: React.ReactNode }) {
   return (
     <section className="space-y-3">
-      <h2 className="flex items-baseline gap-3 text-lg font-black uppercase tracking-tight text-[#1a1a1a]">
+      <h2 className="flex items-baseline gap-3 text-lg font-black uppercase tracking-tight text-[var(--chan-ink)]">
         <span className="text-primary tabular-nums">{nr}.</span>
         {title}
       </h2>
@@ -27,8 +27,8 @@ export function LegalSection({ nr, title, children }: { nr: string; title: strin
 
 export function LegalSummary({ items }: { items: React.ReactNode[] }) {
   return (
-    <div className="mb-12 rounded-xl border border-[#1a1a1a]/15 bg-white/60 p-5 text-[14px] leading-[1.7]">
-      <p className="mb-2 text-[11px] font-black uppercase tracking-[0.14em] text-[#7a7a7a]">W skrócie</p>
+    <div className="mb-12 rounded-xl border border-[var(--chan-ink)]/15 bg-white/60 p-5 text-[14px] leading-[1.7]">
+      <p className="mb-2 text-[11px] font-black uppercase tracking-[0.14em] text-[var(--chan-muted)]">W skrócie</p>
       <ul className="list-disc space-y-1 pl-5">
         {items.map((item, index) => (
           <li key={index}>{item}</li>
@@ -216,15 +216,15 @@ export function PolitykaContent() {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-[14px]">
               <thead>
-                <tr className="border-b-2 border-[#1a1a1a]/15 text-left">
-                  <th className="py-2 pr-4 text-[11px] font-black uppercase tracking-[0.1em] text-[#7a7a7a]">Obszar</th>
-                  <th className="py-2 pr-4 text-[11px] font-black uppercase tracking-[0.1em] text-[#7a7a7a]">Dane</th>
-                  <th className="py-2 text-[11px] font-black uppercase tracking-[0.1em] text-[#7a7a7a]">Po co</th>
+                <tr className="border-b-2 border-[var(--chan-ink)]/15 text-left">
+                  <th className="py-2 pr-4 text-[11px] font-black uppercase tracking-[0.1em] text-[var(--chan-muted)]">Obszar</th>
+                  <th className="py-2 pr-4 text-[11px] font-black uppercase tracking-[0.1em] text-[var(--chan-muted)]">Dane</th>
+                  <th className="py-2 text-[11px] font-black uppercase tracking-[0.1em] text-[var(--chan-muted)]">Po co</th>
                 </tr>
               </thead>
               <tbody>
                 {DATA_ROWS.map((row) => (
-                  <tr key={row.what} className="border-b border-dashed border-[#1a1a1a]/10 align-top">
+                  <tr key={row.what} className="border-b border-dashed border-[var(--chan-ink)]/10 align-top">
                     <td className="py-3 pr-4 font-bold">{row.what}</td>
                     <td className="py-3 pr-4">{row.data}</td>
                     <td className="py-3">{row.why}</td>
@@ -491,15 +491,15 @@ export function PrivacyContentEn() {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-[14px]">
               <thead>
-                <tr className="border-b-2 border-[#1a1a1a]/15 text-left">
-                  <th className="py-2 pr-4 text-[11px] font-black uppercase tracking-[0.1em] text-[#7a7a7a]">Area</th>
-                  <th className="py-2 pr-4 text-[11px] font-black uppercase tracking-[0.1em] text-[#7a7a7a]">Data</th>
-                  <th className="py-2 text-[11px] font-black uppercase tracking-[0.1em] text-[#7a7a7a]">Purpose</th>
+                <tr className="border-b-2 border-[var(--chan-ink)]/15 text-left">
+                  <th className="py-2 pr-4 text-[11px] font-black uppercase tracking-[0.1em] text-[var(--chan-muted)]">Area</th>
+                  <th className="py-2 pr-4 text-[11px] font-black uppercase tracking-[0.1em] text-[var(--chan-muted)]">Data</th>
+                  <th className="py-2 text-[11px] font-black uppercase tracking-[0.1em] text-[var(--chan-muted)]">Purpose</th>
                 </tr>
               </thead>
               <tbody>
                 {DATA_ROWS_EN.map((row) => (
-                  <tr key={row.what} className="border-b border-dashed border-[#1a1a1a]/10 align-top">
+                  <tr key={row.what} className="border-b border-dashed border-[var(--chan-ink)]/10 align-top">
                     <td className="py-3 pr-4 font-bold">{row.what}</td>
                     <td className="py-3 pr-4">{row.data}</td>
                     <td className="py-3">{row.why}</td>

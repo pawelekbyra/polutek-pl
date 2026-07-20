@@ -171,7 +171,7 @@ export function CommentItem({
             />
         </div>
         {authorIsPatron && (
-          <span className="whitespace-nowrap rounded-full border border-[color-mix(in_srgb,var(--chan-blue)_35%,transparent)] bg-[var(--chan-blue-soft)] px-[5px] py-[1px] text-[8px] font-extrabold uppercase tracking-wider text-[var(--chan-blue)]">
+          <span className="whitespace-nowrap rounded-full border border-[var(--cm-blue-35)] bg-[var(--chan-blue-soft)] px-[5px] py-[1px] text-[8px] font-extrabold uppercase tracking-wider text-[var(--chan-blue)]">
             PATRON
           </span>
         )}
@@ -354,14 +354,14 @@ export function CommentItem({
             <div className="flex gap-2">
                <button
                 onClick={() => setIsEditing(false)}
-                className="text-xs font-bold px-3 py-1 rounded-md hover:bg-secondary"
+                className="text-xs font-bold px-3 py-1 rounded-md hover:bg-[var(--chan-surface)]"
                >
                  {t.cancel}
                </button>
                <button
                 onClick={() => { onEdit(comment.id, editText); setIsEditing(false); }}
                 disabled={!editText.trim() || editText === comment.text}
-                className="text-xs font-bold px-3 py-1 bg-primary text-white rounded-md hover:brightness-110 disabled:opacity-50"
+                className="text-xs font-bold px-3 py-1 bg-[var(--chan-blue)] text-white rounded-md hover:brightness-110 disabled:opacity-50"
                >
                  {language === "pl" ? "Zapisz" : "Save"}
                </button>
@@ -400,7 +400,7 @@ export function CommentItem({
               className={cn(
                 "group inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-full px-2 transition-[color,background-color,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 motion-reduce:transition-none",
                 isLiked
-                  ? "text-primary"
+                  ? "text-[var(--chan-blue)]"
                   : "text-[var(--chan-muted)] enabled:hover:bg-[var(--chan-surface)] enabled:hover:text-[var(--chan-ink)]",
               )}
             >
@@ -421,7 +421,7 @@ export function CommentItem({
               className={cn(
                 "inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-full px-2 transition-[color,background-color,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 motion-reduce:transition-none",
                 isDisliked
-                  ? "text-primary"
+                  ? "text-[var(--chan-blue)]"
                   : "text-[var(--chan-muted)] enabled:hover:bg-[var(--chan-surface)] enabled:hover:text-[var(--chan-ink)]",
               )}
               aria-label={

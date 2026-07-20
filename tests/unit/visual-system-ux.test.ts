@@ -24,10 +24,10 @@ describe("shared visual system contracts", () => {
 
     expect(navbar).toContain("polutek-watch-nav");
     expect(navbar).toContain("var(--chan-blue)");
-    expect(subscribe).toContain("border-[color-mix");
+    expect(subscribe).toContain("border-[var(--cm-");
     expect(authModal).toContain("!max-w-[390px]");
     expect(comments).toContain("bg-[var(--chan-blue-soft)]");
-    expect(player).toContain("www.polutek.pl");
+    expect(player).not.toContain("www.polutek.pl");
     expect(player).not.toContain(">P</span>");
   });
 
@@ -64,5 +64,25 @@ describe("shared visual system contracts", () => {
     expect(globals).toContain("prefers-reduced-motion: reduce");
     expect(globals).toContain(".public-visual-shell .app-skeleton::after");
     expect(globals).toContain(".channel-page-shell .app-skeleton::after");
+  });
+
+  it("gives every color-mix() a static fallback for Safari without color-mix support (all iOS Safari below 16.2, e.g. iPhone 7/8/X)", () => {
+    const globals = read("app/globals.css");
+    const authModal = read("app/components/auth/AuthModal.tsx");
+    const accessLock = read("app/components/AccessLockOverlay.module.css");
+    const watchActions = read("app/components/watch-actions.module.css");
+
+    // The fallback layer itself: live color-mix() vars plus a static override
+    // for browsers that don't understand color-mix() at all.
+    expect(globals).toContain("@supports not (color: color-mix(in srgb, red, red))");
+    expect(globals).toMatch(/--cm-[a-z0-9-]+:\s*color-mix\(/);
+    expect(globals).toMatch(/--cm-[a-z0-9-]+:\s*rgba?\(/);
+
+    // Public/auth/player surfaces must reference the fallback-safe --cm-*
+    // vars, not raw color-mix() (which old Safari silently drops, leaving
+    // borders/backgrounds/shadows fully invisible instead of just imprecise).
+    expect(authModal).not.toContain("color-mix(");
+    expect(accessLock).not.toContain("color-mix(");
+    expect(watchActions).not.toContain("color-mix(");
   });
 });

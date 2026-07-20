@@ -16,7 +16,7 @@
 }
 
 .scene.patron {
-  background: color-mix(in srgb, var(--chan-amber-strong) 82%, black);
+  background: var(--cm-amber-strong-82-black);
 }
 
 .scene::after {
@@ -35,11 +35,11 @@
 }
 
 .login .aurora {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--chan-blue) 70%, black) 0%, var(--chan-blue) 48%, color-mix(in srgb, var(--chan-blue) 60%, black) 100%);
+  background: linear-gradient(135deg, var(--cm-blue-70-black) 0%, var(--chan-blue) 48%, var(--cm-blue-60-black) 100%);
 }
 
 .patron .aurora {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--chan-amber-strong) 68%, black) 0%, var(--chan-amber) 46%, color-mix(in srgb, var(--chan-amber-strong) 58%, black) 100%);
+  background: linear-gradient(135deg, var(--cm-amber-strong-68-black) 0%, var(--chan-amber) 46%, var(--cm-amber-strong-58-black) 100%);
 }
 
 .blob1, .blob2, .blob3 {
@@ -56,7 +56,7 @@
 .blob2 { right: -16%; bottom: 2%; width: 58%; aspect-ratio: 2.1; animation: cloud-b 60s ease-in-out infinite; }
 .blob3 { top: 34%; left: 24%; width: 42%; aspect-ratio: 1.7; animation: cloud-c 54s ease-in-out infinite; }
 
-.login .blob1 { background: radial-gradient(circle, color-mix(in srgb, var(--chan-blue) 60%, white), transparent 70%); }
+.login .blob1 { background: radial-gradient(circle, var(--cm-blue-60-white), transparent 70%); }
 .login .blob2 { background: radial-gradient(circle, var(--chan-blue), transparent 72%); }
 .login .blob3 { background: radial-gradient(circle, rgba(255, 255, 255, .3), transparent 70%); }
 
@@ -134,7 +134,7 @@
 }
 
 .wordWhite { color: #fff; }
-.wordBlue { color: color-mix(in srgb, var(--chan-blue) 22%, white); }
+.wordBlue { color: var(--cm-blue-22-white); }
 .wordAmber { color: #92400e; }
 
 .divider {
@@ -205,11 +205,11 @@
 }
 
 .compact.login {
-  background: color-mix(in srgb, var(--chan-blue) 80%, black);
+  background: var(--cm-blue-80-black);
 }
 
 .compact.patron {
-  background: color-mix(in srgb, var(--chan-amber-strong) 80%, black);
+  background: var(--cm-amber-strong-80-black);
 }
 
 .compact::before {
@@ -222,14 +222,14 @@
 
 .compact.login::before {
   background:
-    radial-gradient(circle at 32% 26%, color-mix(in srgb, var(--chan-blue) 55%, white), transparent 60%),
-    linear-gradient(135deg, color-mix(in srgb, var(--chan-blue) 65%, black), var(--chan-blue));
+    radial-gradient(circle at 32% 26%, var(--cm-blue-55-white), transparent 60%),
+    linear-gradient(135deg, var(--cm-blue-65-black), var(--chan-blue));
 }
 
 .compact.patron::before {
   background:
     radial-gradient(circle at 32% 24%, var(--chan-amber-bright), transparent 58%),
-    linear-gradient(135deg, color-mix(in srgb, var(--chan-amber-strong) 62%, black), var(--chan-amber));
+    linear-gradient(135deg, var(--cm-amber-strong-62-black), var(--chan-amber));
 }
 
 .compactMark {

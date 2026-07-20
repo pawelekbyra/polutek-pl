@@ -174,7 +174,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
   return (
     <section className="bg-transparent">
-      <div className="w-full rounded-[26px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_92%,white)] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_2px_6px_rgba(23,23,23,0.03),0_30px_60px_-26px_rgba(23,23,23,0.24)] md:p-3">
+      <div className="w-full rounded-[26px] border border-[var(--cm-line-80)] bg-[var(--cm-card-92-white)] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_2px_6px_rgba(23,23,23,0.03),0_30px_60px_-26px_rgba(23,23,23,0.24)] md:p-3">
         {/* FEATURED MEDIA */}
         <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-[20px] bg-black md:rounded-[22px]">
           <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured}>
@@ -185,7 +185,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         {/* INFO SECTION */}
         <div className="space-y-3 px-1 pb-1 md:px-2">
           <p className="mb-1.5 flex items-center gap-2 font-brand text-[10.5px] font-bold uppercase leading-none tracking-[0.18em] text-[var(--chan-muted-2)]">
-            <span aria-hidden="true" className="inline-flex h-1.5 w-1.5 rounded-full bg-[var(--chan-blue)] shadow-[0_0_0_3px_color-mix(in_srgb,var(--chan-blue)_18%,transparent)]" />
+            <span aria-hidden="true" className="inline-flex h-1.5 w-1.5 rounded-full bg-[var(--chan-blue)] shadow-[0_0_0_3px_var(--cm-blue-18)]" />
             {language === "pl" ? "Teraz odtwarzane" : "Now playing"}
           </p>
           <h1 className="font-brand font-bold not-italic text-[22px] md:text-[30px] tracking-[-0.021em] text-[var(--chan-ink)] leading-[1.16] mb-2">
@@ -282,7 +282,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* DESCRIPTION PANEL */}
         <div
-          className={cn("mt-2 cursor-pointer rounded-[18px] border px-4 pt-[9px] pb-3 transition-[border-color,background-color,box-shadow] duration-200 hover:border-[color-mix(in_srgb,var(--chan-blue)_36%,var(--chan-line))] md:px-5", styles.descPanel)}
+          className={cn("mt-2 cursor-pointer rounded-[18px] border px-4 pt-[9px] pb-3 transition-[border-color,background-color,box-shadow] duration-200 hover:border-[var(--cm-blue-36-line)] md:px-5", styles.descPanel)}
           onClick={() => setIsExpanded(!isExpanded)}
         >
            <div>

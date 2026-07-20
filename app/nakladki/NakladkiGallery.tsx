@@ -76,7 +76,7 @@ function ConceptCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-[24px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_92%,white)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_18px_40px_-24px_rgba(23,23,23,0.2)] md:p-5">
+    <div className="flex flex-col gap-3 rounded-[24px] border border-[var(--cm-line-80)] bg-[var(--cm-card-92-white)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_18px_40px_-24px_rgba(23,23,23,0.2)] md:p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--chan-blue)]">
@@ -413,7 +413,7 @@ export default function NakladkiGallery() {
   return (
     <main className="min-h-screen bg-[var(--chan-nav)] px-4 py-10 md:px-8 lg:px-10">
       <div className="mx-auto max-w-[1320px]">
-        <header className="mb-8 flex flex-col gap-4 rounded-[24px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_92%,white)] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_18px_40px_-24px_rgba(23,23,23,0.2)] md:p-8">
+        <header className="mb-8 flex flex-col gap-4 rounded-[24px] border border-[var(--cm-line-80)] bg-[var(--cm-card-92-white)] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_18px_40px_-24px_rgba(23,23,23,0.2)] md:p-8">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--chan-blue)]">
               Galeria koncepcji · wyłącznie podgląd

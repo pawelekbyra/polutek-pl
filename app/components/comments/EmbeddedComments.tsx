@@ -269,7 +269,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             type="button"
             onClick={scrollToTop}
             aria-label={language === "pl" ? "Wróć do początku komentarzy" : "Back to the top of comments"}
-            className="group flex h-12 w-12 items-center justify-center rounded-full bg-[var(--chan-blue)] text-white shadow-[0_10px_30px_color-mix(in_srgb,var(--chan-blue)_35%,transparent)] ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:bg-[color-mix(in_srgb,var(--chan-blue)_86%,black)] hover:shadow-[0_14px_36px_color-mix(in_srgb,var(--chan-blue)_42%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:translate-y-0 active:scale-95"
+            className="group flex h-12 w-12 items-center justify-center rounded-full bg-[var(--chan-blue)] text-white shadow-[0_10px_30px_var(--cm-blue-35)] ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:bg-[var(--cm-blue-86-black)] hover:shadow-[0_14px_36px_var(--cm-blue-42)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:translate-y-0 active:scale-95"
           >
             <svg
               width="22"
@@ -386,7 +386,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
       <div className="space-y-[22px]">
         {isLoading ? (
-          <CommentsLoadingState language={language} />
+          <CommentsLoadingState />
         ) : isError ? (
           <div className="py-12 flex flex-col items-center justify-center text-center space-y-4 bg-red-50/50 rounded-2xl border border-red-100">
             <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
@@ -467,7 +467,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
               {/* NESTED REPLIES */}
               {comment.repliesPreview && comment.repliesPreview.length > 0 && (
-                <div className="pl-6 md:pl-13 space-y-[22px] border-l border-border ml-4 md:ml-[19px] mt-4">
+                <div className="pl-6 md:pl-13 space-y-[22px] border-l border-[var(--chan-line)] ml-4 md:ml-[19px] mt-4">
                   {comment.repliesPreview.map((reply) => (
                     <CommentItem
                       key={reply.id}
