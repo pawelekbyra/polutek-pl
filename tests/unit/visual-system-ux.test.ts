@@ -27,7 +27,7 @@ describe("shared visual system contracts", () => {
     expect(subscribe).toContain("border-[color-mix");
     expect(authModal).toContain("!max-w-[390px]");
     expect(comments).toContain("bg-[var(--chan-blue-soft)]");
-    expect(player).toContain("www.polutek.pl");
+    expect(player).not.toContain("www.polutek.pl");
     expect(player).not.toContain(">P</span>");
   });
 
