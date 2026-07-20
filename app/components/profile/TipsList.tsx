@@ -63,7 +63,7 @@ export default function TipsList() {
 
   if (tips.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-[color-mix(in_srgb,var(--chan-line)_90%,transparent)] bg-[var(--chan-surface)] p-12 text-center">
+      <div className="rounded-2xl border border-dashed border-[var(--cm-line-90)] bg-[var(--chan-surface)] p-12 text-center">
         <div className="flex justify-center">
            <Coins size={40} className="text-[var(--chan-muted)] opacity-50" />
         </div>
@@ -80,7 +80,7 @@ export default function TipsList() {
       {tips.map((tip) => (
         <div
           key={tip.id}
-          className="flex items-center justify-between gap-4 rounded-[18px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[var(--chan-card)] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_10px_24px_-18px_rgba(23,23,23,0.18)] transition-shadow hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_14px_30px_-16px_rgba(23,23,23,0.22)]"
+          className="flex items-center justify-between gap-4 rounded-[18px] border border-[var(--cm-line-80)] bg-[var(--chan-card)] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_10px_24px_-18px_rgba(23,23,23,0.18)] transition-shadow hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_14px_30px_-16px_rgba(23,23,23,0.22)]"
         >
           <div className="flex min-w-0 items-center gap-4">
              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--chan-blue-soft)] text-[var(--chan-blue)]">

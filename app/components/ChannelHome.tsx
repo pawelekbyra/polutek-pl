@@ -147,7 +147,7 @@ function ChannelHomeContent({
   if (!selectedVideo)
     return (
       <main className="min-h-screen flex items-center justify-center p-6 bg-[var(--chan-nav)]">
-        <div className="max-w-md w-full rounded-[24px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_92%,white)] p-10 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_28px_60px_-28px_rgba(23,23,23,0.24)] animate-in fade-in zoom-in duration-500">
+        <div className="max-w-md w-full rounded-[24px] border border-[var(--cm-line-80)] bg-[var(--cm-card-92-white)] p-10 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_28px_60px_-28px_rgba(23,23,23,0.24)] animate-in fade-in zoom-in duration-500">
           <div className="w-20 h-20 flex items-center justify-center mx-auto mb-6 rounded-full bg-[var(--chan-surface)]">
             <AlertCircle size={36} className="text-[var(--chan-muted)]" />
           </div>
@@ -210,7 +210,7 @@ function ChannelHomeContent({
   return (
     <>
       <PreloadProgressBar />
-      <main className="min-h-screen bg-[var(--chan-nav)] bg-[radial-gradient(circle_at_top_left,color-mix(in_srgb,var(--chan-blue)_9%,transparent),transparent_34%),radial-gradient(circle_at_top_right,color-mix(in_srgb,var(--chan-amber)_8%,transparent),transparent_30%),linear-gradient(180deg,color-mix(in_srgb,var(--chan-card)_72%,transparent),transparent_42%)]">
+      <main className="min-h-screen bg-[var(--chan-nav)] bg-[radial-gradient(circle_at_top_left,var(--cm-blue-9),transparent_34%),radial-gradient(circle_at_top_right,var(--cm-amber-8),transparent_30%),linear-gradient(180deg,var(--cm-card-72),transparent_42%)]">
       <div className="mx-auto max-w-[1180px] px-4 pb-8 pt-4 md:px-6 lg:px-8 lg:pb-10 lg:pt-5">
         <div className="grid grid-cols-12 gap-5 lg:items-start xl:gap-6">
           <div className="col-span-12 flex flex-col lg:col-span-8">
@@ -226,7 +226,7 @@ function ChannelHomeContent({
             </div>
 
             <div className="mt-5 lg:hidden">
-              <div className="relative flex overflow-hidden rounded-full border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_88%,white)] p-1 font-sans shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_8px_20px_-8px_rgba(23,23,23,0.12)]">
+              <div className="relative flex overflow-hidden rounded-full border border-[var(--cm-line-80)] bg-[var(--cm-card-88-white)] p-1 font-sans shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_8px_20px_-8px_rgba(23,23,23,0.12)]">
                 {(["comments", "videos"] as const).map((tab) => {
                   const isActive = activeTab === tab;
                   return (
@@ -252,20 +252,20 @@ function ChannelHomeContent({
 
             <div
               className={cn(
-                "mt-3 rounded-[22px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_88%,white)] px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_18px_40px_-22px_rgba(23,23,23,0.18)] lg:mt-5 lg:block lg:rounded-[24px] lg:px-5 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(23,23,23,0.03),0_22px_48px_-24px_rgba(23,23,23,0.18)]",
+                "mt-3 rounded-[22px] border border-[var(--cm-line-80)] bg-[var(--cm-card-88-white)] px-4 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_18px_40px_-22px_rgba(23,23,23,0.18)] lg:mt-5 lg:block lg:rounded-[24px] lg:px-5 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(23,23,23,0.03),0_22px_48px_-24px_rgba(23,23,23,0.18)]",
                 activeTab === "videos" && "hidden",
               )}
             >
               {mounted ? comments : <CommentsMountPlaceholder />}
             </div>
             {activeTab === "videos" && (
-              <div className="mt-3 rounded-[22px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_88%,white)] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_18px_40px_-22px_rgba(23,23,23,0.18)] lg:hidden">
+              <div className="mt-3 rounded-[22px] border border-[var(--cm-line-80)] bg-[var(--cm-card-88-white)] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_18px_40px_-22px_rgba(23,23,23,0.18)] lg:hidden">
                 <SidebarPlaylist {...commonSidebarProps} />
               </div>
             )}
           </div>
           <div className="hidden lg:col-span-4 lg:flex lg:flex-col lg:gap-4">
-            <aside className="lg:flex lg:flex-col lg:gap-0 lg:overflow-y-auto rounded-[24px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_88%,white)] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(23,23,23,0.03),0_24px_50px_-26px_rgba(23,23,23,0.2)]">
+            <aside className="lg:flex lg:flex-col lg:gap-0 lg:overflow-y-auto rounded-[24px] border border-[var(--cm-line-80)] bg-[var(--cm-card-88-white)] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(23,23,23,0.03),0_24px_50px_-26px_rgba(23,23,23,0.2)]">
               <SidebarPlaylist {...commonSidebarProps} showSupportBox={false} />
             </aside>
             <div className="lg:shrink-0">

@@ -38,7 +38,7 @@ export function HomePageSkeleton() {
       <div className="mx-auto w-full max-w-[1180px] px-4 pb-8 pt-4 md:px-6 lg:px-8 lg:pt-5">
         <div className="grid grid-cols-12 gap-5 lg:items-start xl:gap-6">
           <div className="col-span-12 flex flex-col lg:col-span-8">
-            <div className="rounded-[26px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_92%,white)] p-2.5 md:p-3">
+            <div className="rounded-[26px] border border-[var(--cm-line-80)] bg-[var(--cm-card-92-white)] p-2.5 md:p-3">
               <Skeleton className="aspect-video w-full rounded-[20px] md:rounded-[22px]" />
               <div className="space-y-3 px-1 pb-1 pt-4 md:px-2">
                 <Skeleton className="h-[26px] w-3/4" />
@@ -57,7 +57,7 @@ export function HomePageSkeleton() {
                     <Skeleton className="h-[42px] w-[42px] rounded-[12px]" />
                   </div>
                 </div>
-                <div className="mt-1 rounded-[18px] border border-[color-mix(in_srgb,var(--chan-line)_70%,transparent)] bg-[var(--chan-surface)] px-4 py-3 space-y-2 md:px-5">
+                <div className="mt-1 rounded-[18px] border border-[var(--cm-line-70)] bg-[var(--chan-surface)] px-4 py-3 space-y-2 md:px-5">
                   <div className="flex gap-2">
                     <Skeleton className="h-[13px] w-[80px]" />
                     <Skeleton className="h-[13px] w-[100px]" />
@@ -67,7 +67,7 @@ export function HomePageSkeleton() {
                 </div>
               </div>
             </div>
-            <div className="mt-5 rounded-[24px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_88%,white)] px-5 py-4">
+            <div className="mt-5 rounded-[24px] border border-[var(--cm-line-80)] bg-[var(--cm-card-88-white)] px-5 py-4">
               <div className="flex gap-2">
                 <Skeleton className="h-[14px] w-[90px]" />
                 <Skeleton className="h-[14px] w-[110px]" />
@@ -78,8 +78,8 @@ export function HomePageSkeleton() {
             </div>
           </div>
           <div className="hidden lg:col-span-4 lg:flex lg:flex-col lg:gap-4">
-            <div className="rounded-[24px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_88%,white)] p-3">
-              <div className="mb-3 border-b border-[color-mix(in_srgb,var(--chan-line)_76%,transparent)] pb-2">
+            <div className="rounded-[24px] border border-[var(--cm-line-80)] bg-[var(--cm-card-88-white)] p-3">
+              <div className="mb-3 border-b border-[var(--cm-line-76-2)] pb-2">
                 <Skeleton className="h-[13px] w-28" />
               </div>
               <div className="space-y-1.5">
@@ -152,7 +152,7 @@ export function ChannelPageSkeleton() {
             </div>
           </div>
         </div>
-        <div className="flex border-b border-[color-mix(in_srgb,var(--chan-line)_76%,transparent)] mt-7 gap-8 overflow-hidden">
+        <div className="flex border-b border-[var(--cm-line-76-2)] mt-7 gap-8 overflow-hidden">
           <Skeleton className="h-7 w-20 mb-3" />
         </div>
         <VideoGridSkeleton />
@@ -220,7 +220,7 @@ export function TipsListSkeleton() {
       {[1, 2, 3].map(i => (
         <div
           key={i}
-          className="flex items-center justify-between gap-4 rounded-[18px] border border-[color-mix(in_srgb,var(--chan-line)_80%,transparent)] bg-[var(--chan-card)] p-5"
+          className="flex items-center justify-between gap-4 rounded-[18px] border border-[var(--cm-line-80)] bg-[var(--chan-card)] p-5"
         >
           <div className="flex items-center gap-4">
             <Skeleton className="h-11 w-11 shrink-0 rounded-full" />

@@ -132,7 +132,7 @@ export default function SubscribeButton({
         onClick={handleSubscribe}
         disabled={isPending}
         className={cn(
-          "relative text-sm font-bold h-10 px-4 flex items-center justify-center gap-1.5 border border-[color-mix(in_srgb,var(--chan-ink)_14%,var(--chan-line))] transition-[transform,background-color,border-color,box-shadow] duration-200 active:translate-y-0 active:scale-[0.97] rounded-full font-sans text-[var(--chan-ink)] bg-[color-mix(in_srgb,var(--chan-card)_58%,white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_6px_16px_-8px_rgba(23,23,23,0.2)] hover:-translate-y-px hover:border-[color-mix(in_srgb,var(--chan-blue)_38%,var(--chan-line))] hover:bg-[color-mix(in_srgb,var(--chan-card)_72%,white)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_10px_22px_-8px_rgba(23,23,23,0.26)]",
+          "relative text-sm font-bold h-10 px-4 flex items-center justify-center gap-1.5 border border-[var(--cm-ink-14-line)] transition-[transform,background-color,border-color,box-shadow] duration-200 active:translate-y-0 active:scale-[0.97] rounded-full font-sans text-[var(--chan-ink)] bg-[var(--cm-card-58-white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_6px_16px_-8px_rgba(23,23,23,0.2)] hover:-translate-y-px hover:border-[var(--cm-blue-38-line)] hover:bg-[var(--cm-card-72-white)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_10px_22px_-8px_rgba(23,23,23,0.26)]",
           isPending && "opacity-50 cursor-wait",
           className,
         )}

@@ -1,7 +1,7 @@
 .metaRow {
-  --watch-control-bg: color-mix(in srgb, var(--chan-card) 94%, white);
-  --watch-control-border: color-mix(in srgb, var(--chan-line) 78%, var(--chan-ink) 22%);
-  --watch-control-hover: color-mix(in srgb, var(--chan-blue-soft) 48%, var(--watch-control-bg));
+  --watch-control-bg: var(--cm-card-94-white);
+  --watch-control-border: var(--cm-line-78-ink);
+  --watch-control-hover: var(--cm-blue-soft-48-wc-bg);
   position: relative;
   isolation: isolate;
   align-items: stretch;
@@ -78,12 +78,12 @@
   position: relative;
   min-height: 42px;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--chan-blue) 62%, black);
+  border: 1px solid var(--cm-blue-62-black);
   background: var(--chan-blue) !important;
   color: white !important;
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 30%, transparent),
-    0 8px 18px -8px color-mix(in srgb, var(--chan-blue) 60%, transparent) !important;
+    inset 0 1px 0 var(--cm-white-30),
+    0 8px 18px -8px var(--cm-blue-60) !important;
 }
 
 .secondaryAction,
@@ -108,7 +108,7 @@
 
 .secondaryAction:hover,
 .installAction button:hover {
-  border-color: color-mix(in srgb, var(--chan-blue) 28%, var(--watch-control-border));
+  border-color: var(--cm-blue-28-wc-border);
   background: var(--watch-control-hover) !important;
   box-shadow:
     0 2px 4px rgba(23, 23, 23, 0.05),
@@ -117,11 +117,11 @@
 }
 
 .subscribeAction:hover {
-  border-color: color-mix(in srgb, var(--chan-blue) 70%, black);
-  background: color-mix(in srgb, var(--chan-blue) 90%, black) !important;
+  border-color: var(--cm-blue-70-black);
+  background: var(--cm-blue-90-black) !important;
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 30%, transparent),
-    0 12px 24px -8px color-mix(in srgb, var(--chan-blue) 62%, transparent) !important;
+    inset 0 1px 0 var(--cm-white-30),
+    0 12px 24px -8px var(--cm-blue-62) !important;
   filter: none;
 }
 
@@ -129,7 +129,7 @@
 .secondaryAction:focus-visible,
 .installAction button:focus-visible,
 .subscribeAction:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--chan-blue) 22%, transparent);
+  outline: 3px solid var(--cm-blue-22-2);
   outline-offset: 2px;
 }
 
@@ -140,8 +140,8 @@
 
 /* Keep the media, action rail and description visually in the same card family. */
 :global(main):has(.metaRow) :global(section:has(.polutek-vidstack-player) > div > div:first-child) {
-  border: 1px solid color-mix(in srgb, var(--chan-line) 62%, var(--chan-ink) 38%);
-  outline: 1px solid color-mix(in srgb, white 78%, transparent);
+  border: 1px solid var(--cm-line-62-ink);
+  outline: 1px solid var(--cm-white-78);
   outline-offset: -2px;
   background: #050505;
   box-shadow:
@@ -172,12 +172,12 @@
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--chan-surface) 62%, white),
-      color-mix(in srgb, var(--chan-surface) 80%, white)
+      var(--cm-surface-62-white),
+      var(--cm-surface-80-white)
     );
-  border-color: color-mix(in srgb, var(--chan-line) 78%, var(--chan-ink) 8%);
+  border-color: var(--cm-line-78-ink-2);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 70%, transparent),
+    inset 0 1px 0 var(--cm-white-70),
     0 1px 2px rgba(23, 23, 23, 0.03);
 }
 
@@ -218,7 +218,7 @@
 
 :global(main):has(.metaRow) :global(aside:has(a[href*="?v="]) a[href*="?v="]) {
   border: 1px solid transparent !important;
-  background: color-mix(in srgb, var(--chan-card) 72%, transparent) !important;
+  background: var(--cm-card-72) !important;
   box-shadow: none !important;
   transition:
     transform 160ms ease,
@@ -229,15 +229,15 @@
 
 :global(main):has(.metaRow) :global(aside:has(a[href*="?v="]) a[href*="?v="]:hover) {
   transform: translateX(3px);
-  border-color: color-mix(in srgb, var(--chan-blue) 22%, var(--chan-line)) !important;
-  background: color-mix(in srgb, var(--chan-blue) 8%, white) !important;
+  border-color: var(--cm-blue-22-line) !important;
+  background: var(--cm-blue-8-white) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
     0 10px 22px -10px rgba(23, 23, 23, 0.14) !important;
 }
 
 :global(main):has(.metaRow) :global(aside:has(a[href*="?v="]) a[href*="?v="] > div:first-of-type) {
-  border: 1px solid color-mix(in srgb, var(--chan-line) 68%, transparent);
+  border: 1px solid var(--cm-line-68);
   box-shadow:
     0 1px 2px rgba(23, 23, 23, 0.04),
     0 6px 14px -6px rgba(23, 23, 23, 0.14);
@@ -246,21 +246,21 @@
 :global(main):has(.metaRow) :global(a[href*="?v="][aria-current="page"]),
 :global(main):has(.metaRow) :global(a[href*="?v="][aria-current="page"]:hover) {
   border: 0 !important;
-  background: color-mix(in srgb, var(--chan-blue) 20%, white) !important;
+  background: var(--cm-blue-20-white) !important;
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--chan-blue) 32%, transparent),
-    0 2px 8px color-mix(in srgb, var(--chan-blue) 14%, transparent) !important;
+    inset 0 0 0 1px var(--cm-blue-32),
+    0 2px 8px var(--cm-blue-14) !important;
   transform: none !important;
 }
 
 :global(main):has(.metaRow) :global(a[href*="?v="][aria-current="page"] h4) {
-  color: color-mix(in srgb, var(--chan-blue) 78%, var(--chan-ink));
+  color: var(--cm-blue-78-ink);
 }
 
 @media (max-width: 1023px) {
   .creatorStrip {
     padding-bottom: 11px;
-    border-bottom: 1px solid color-mix(in srgb, var(--chan-line) 76%, transparent);
+    border-bottom: 1px solid var(--cm-line-76-2);
   }
 }
 

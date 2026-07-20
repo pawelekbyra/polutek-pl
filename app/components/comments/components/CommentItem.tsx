@@ -171,7 +171,7 @@ export function CommentItem({
             />
         </div>
         {authorIsPatron && (
-          <span className="whitespace-nowrap rounded-full border border-[color-mix(in_srgb,var(--chan-blue)_35%,transparent)] bg-[var(--chan-blue-soft)] px-[5px] py-[1px] text-[8px] font-extrabold uppercase tracking-wider text-[var(--chan-blue)]">
+          <span className="whitespace-nowrap rounded-full border border-[var(--cm-blue-35)] bg-[var(--chan-blue-soft)] px-[5px] py-[1px] text-[8px] font-extrabold uppercase tracking-wider text-[var(--chan-blue)]">
             PATRON
           </span>
         )}

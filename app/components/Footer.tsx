@@ -16,7 +16,7 @@ const Footer = () => {
     <footer className="relative bg-[var(--chan-nav)]">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--chan-line)_92%,transparent)_18%,color-mix(in_srgb,var(--chan-line)_92%,transparent)_82%,transparent)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,var(--cm-line-92)_18%,var(--cm-line-92)_82%,transparent)]"
       />
       <div className="mx-auto flex max-w-[1180px] flex-col items-center justify-center gap-[14px] px-6 py-[26px] md:flex-row md:justify-between md:gap-[14px]">
         <div className="hidden w-60 shrink-0 md:block" />

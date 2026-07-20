@@ -301,15 +301,15 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
   return (
     <div
       id="donations"
-      className="relative my-[10px] mb-3 scroll-mt-20 overflow-hidden rounded-[20px] border border-[color-mix(in_srgb,var(--chan-line)_82%,transparent)] bg-[color-mix(in_srgb,var(--chan-card)_92%,white)] p-[22px_24px_18px] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(23,23,23,0.03),0_24px_50px_-26px_rgba(23,23,23,0.2)]"
+      className="relative my-[10px] mb-3 scroll-mt-20 overflow-hidden rounded-[20px] border border-[var(--cm-line-82)] bg-[var(--cm-card-92-white)] p-[22px_24px_18px] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(23,23,23,0.03),0_24px_50px_-26px_rgba(23,23,23,0.2)]"
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_18%_0%,color-mix(in_srgb,var(--chan-amber)_17%,transparent),transparent_58%),radial-gradient(circle_at_82%_0%,color-mix(in_srgb,var(--chan-blue)_7%,transparent),transparent_55%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_18%_0%,var(--cm-amber-17),transparent_58%),radial-gradient(circle_at_82%_0%,var(--cm-blue-7),transparent_55%)]"
       />
       <div className="relative">
         <div className="mb-1.5 flex items-center gap-4">
-          <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-[linear-gradient(140deg,var(--chan-amber-bright),var(--chan-amber))] text-[var(--chan-amber-ink)] shadow-[0_8px_20px_-6px_color-mix(in_srgb,var(--chan-amber)_58%,transparent),inset_0_1px_0_rgba(255,255,255,0.45)]">
+          <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-[linear-gradient(140deg,var(--chan-amber-bright),var(--chan-amber))] text-[var(--chan-amber-ink)] shadow-[0_8px_20px_-6px_var(--cm-amber-58),inset_0_1px_0_rgba(255,255,255,0.45)]">
             <Heart size={24} className="fill-current" />
           </span>
           <h4 className="font-brand m-0 text-[21px] font-extrabold leading-tight tracking-[-0.035em] text-[var(--chan-ink)]">
@@ -325,7 +325,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
               key={bullet.text}
               className="flex items-start gap-[9px] text-[var(--chan-ink)]"
             >
-              <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full bg-[var(--chan-amber)] text-[9px] font-black text-[var(--chan-amber-ink)] shadow-[0_2px_5px_-1px_color-mix(in_srgb,var(--chan-amber)_48%,transparent)]">✓</span>
+              <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full bg-[var(--chan-amber)] text-[9px] font-black text-[var(--chan-amber-ink)] shadow-[0_2px_5px_-1px_var(--cm-amber-48)]">✓</span>
               {bullet.text}
             </li>
           ))}
@@ -354,7 +354,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
           onClick={onSupport}
           disabled={isLoading || isInitialLoading || amount === "" || amount < minAmount}
           aria-busy={isLoading}
-          className="font-sans flex h-[46px] w-full cursor-pointer items-center justify-center gap-2 rounded-[13px] bg-[linear-gradient(135deg,var(--chan-amber-bright),var(--chan-amber))] text-[16px] font-extrabold tracking-[-0.02em] text-[var(--chan-amber-ink)] shadow-[0_1px_0_color-mix(in_srgb,var(--chan-amber)_66%,black),0_10px_22px_-10px_color-mix(in_srgb,var(--chan-amber)_62%,transparent)] transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:brightness-[1.04] hover:shadow-[0_2px_0_color-mix(in_srgb,var(--chan-amber)_66%,black),0_14px_28px_-10px_color-mix(in_srgb,var(--chan-amber)_68%,transparent)] active:translate-y-0 active:scale-[0.98] disabled:cursor-wait disabled:opacity-60 motion-reduce:transition-none"
+          className="font-sans flex h-[46px] w-full cursor-pointer items-center justify-center gap-2 rounded-[13px] bg-[linear-gradient(135deg,var(--chan-amber-bright),var(--chan-amber))] text-[16px] font-extrabold tracking-[-0.02em] text-[var(--chan-amber-ink)] shadow-[0_1px_0_var(--cm-amber-66-black),0_10px_22px_-10px_var(--cm-amber-62)] transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:brightness-[1.04] hover:shadow-[0_2px_0_var(--cm-amber-66-black),0_14px_28px_-10px_var(--cm-amber-68)] active:translate-y-0 active:scale-[0.98] disabled:cursor-wait disabled:opacity-60 motion-reduce:transition-none"
         >
           {isLoading ? (
             <span className="inline-flex items-center gap-2">

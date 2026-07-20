@@ -269,7 +269,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             type="button"
             onClick={scrollToTop}
             aria-label={language === "pl" ? "Wróć do początku komentarzy" : "Back to the top of comments"}
-            className="group flex h-12 w-12 items-center justify-center rounded-full bg-[var(--chan-blue)] text-white shadow-[0_10px_30px_color-mix(in_srgb,var(--chan-blue)_35%,transparent)] ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:bg-[color-mix(in_srgb,var(--chan-blue)_86%,black)] hover:shadow-[0_14px_36px_color-mix(in_srgb,var(--chan-blue)_42%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:translate-y-0 active:scale-95"
+            className="group flex h-12 w-12 items-center justify-center rounded-full bg-[var(--chan-blue)] text-white shadow-[0_10px_30px_var(--cm-blue-35)] ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:bg-[var(--cm-blue-86-black)] hover:shadow-[0_14px_36px_var(--cm-blue-42)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:translate-y-0 active:scale-95"
           >
             <svg
               width="22"

@@ -59,7 +59,7 @@ export default function EmailSubscriptionConsentModal({
             type="button"
             onClick={onConfirm}
             disabled={pending}
-            className="min-h-11 rounded-xl bg-[var(--chan-blue)] px-4 text-sm font-semibold text-white transition-[transform,background-color] duration-160 hover:bg-[color-mix(in_srgb,var(--chan-blue)_88%,black)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-50 motion-reduce:transition-none"
+            className="min-h-11 rounded-xl bg-[var(--chan-blue)] px-4 text-sm font-semibold text-white transition-[transform,background-color] duration-160 hover:bg-[var(--cm-blue-88-black)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-50 motion-reduce:transition-none"
           >
             {t.yes}
           </button>
