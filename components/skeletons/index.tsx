@@ -75,7 +75,7 @@ export function HomePageSkeleton() {
               <div className="mt-4 space-y-4 py-6">
                 {[1, 2].map((i) => (
                   <div key={i} className="flex gap-3">
-                    <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                    <Skeleton className="h-[38px] w-[38px] rounded-full shrink-0" />
                     <div className="flex-1 space-y-3">
                       <div className="space-y-1">
                         <Skeleton className="h-4 w-32" />
@@ -99,7 +99,7 @@ export function HomePageSkeleton() {
               <div className="space-y-1.5">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <div key={i} className="flex gap-3 p-2">
-                    <Skeleton className="h-[76px] w-[135px] shrink-0 rounded-[12px]" />
+                    <Skeleton className="h-[73px] w-[130px] shrink-0 rounded-[12px] lg:h-[76px] lg:w-[135px] xl:h-[82px] xl:w-[145px]" />
                     <div className="flex-1 space-y-2 py-1">
                       <Skeleton className="h-[13px] w-full" />
                       <Skeleton className="h-[13px] w-2/3" />
@@ -255,7 +255,7 @@ export function CommentLoadingSkeleton({ count = 3 }: { count?: number }) {
     <div className="py-6 space-y-4">
       {Array.from({ length: count }, (_, i) => i + 1).map(i => (
         <div key={i} className="flex gap-3">
-          <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+          <Skeleton className="h-[38px] w-[38px] rounded-full shrink-0" />
           <div className="flex-1 space-y-3">
             <div className="space-y-1">
               <Skeleton className="h-4 w-32" />

@@ -345,7 +345,7 @@ export function SidebarPlaylist({
       <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
         {renderSectionHeader(title)}
         <div className="mb-0.5 flex gap-3 rounded-[14px] p-2">
-          <Skeleton className="h-[76px] w-[135px] shrink-0 rounded-[12px]" />
+          <Skeleton className="h-[73px] w-[130px] shrink-0 rounded-[12px] lg:h-[76px] lg:w-[135px] xl:h-[82px] xl:w-[145px]" />
           <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
             <Skeleton className="h-[13px] w-3/4" />
             <Skeleton className="h-[12px] w-1/2" />
