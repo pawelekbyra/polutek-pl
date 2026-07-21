@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { useAuthModal } from "../auth/AuthModalProvider";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -38,6 +38,8 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
   const isPl = language === "pl";
   const toast = useToast();
   const { userId } = useAuth();
+  const { user } = useUser();
+  const userEmail = user?.primaryEmailAddress?.emailAddress;
   const { open: openAuthModal } = useAuthModal();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -423,6 +425,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
             clientSecret={clientSecret}
             paymentId={paymentId}
             paymentUiStatus={paymentUiStatus}
+            userEmail={userEmail}
             onRetryStatusCheck={handleRetryStatusCheck}
             stripePromise={stripePromise}
             onClose={() => {

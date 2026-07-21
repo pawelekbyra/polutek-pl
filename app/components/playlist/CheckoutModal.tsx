@@ -20,6 +20,7 @@ interface CheckoutModalProps {
   clientSecret: string | null;
   paymentId?: string | null;
   paymentUiStatus?: string | null;
+  userEmail?: string | null;
   stripePromise: Promise<Stripe | null> | null;
   onClose: () => void;
   onBackToSite: () => void;
@@ -37,6 +38,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   clientSecret,
   paymentId,
   paymentUiStatus,
+  userEmail,
   stripePromise,
   onClose,
   onBackToSite,
@@ -172,7 +174,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                         }
                       }
                     }}>
-                      <CheckoutForm paymentId={paymentId} />
+                      <CheckoutForm paymentId={paymentId} userEmail={userEmail} />
                     </Elements>
                   ) : (
                     <div className="flex flex-col items-center justify-center space-y-8 py-24">
