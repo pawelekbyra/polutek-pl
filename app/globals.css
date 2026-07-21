@@ -775,12 +775,13 @@
     box-sizing: border-box;
   }
 
-  /* rząd przycisków pod scrubberem */
+  /* rząd przycisków pod scrubberem — height matches .mc-btn exactly so the
+     buttons don't overflow their row and icons stay vertically centered. */
   .mc-row {
     display:flex;
     align-items:center;
     justify-content:space-between;
-    height: 36px;
+    height: 38px;
     gap: 2px;
   }
 
@@ -792,7 +793,7 @@
     width:38px; height:38px;
     border:0; border-radius:8px;
     background:transparent;
-    color: rgba(255,255,255,.9);
+    color: rgba(255,255,255,.92);
     transition: background .12s ease, color .12s ease, transform .1s ease;
     flex-shrink:0;
     cursor:pointer;
@@ -804,8 +805,8 @@
     outline-offset:1px;
   }
 
-  .mc-icon { width:20px; height:20px; flex-shrink:0; }
-  .mc-icon--play { transform: translateX(1px); }
+  /* Material Symbols (filled) — bold, optically-centered glyphs, YouTube-style. */
+  .mc-icon { width:24px; height:24px; flex-shrink:0; }
 
   .mc-time {
     display:flex; align-items:center; gap:4px;
@@ -959,9 +960,8 @@
     border-radius:8px;
     background:rgba(255,255,255,.15);
   }
-  .mc-hero-icon { width:24px; height:24px; stroke-width:1.75; }
+  .mc-hero-icon { width:28px; height:28px; }
   .mc-hero-icon-wrap .mc-hero-icon { width:16px; height:16px; }
-  .mc-hero-icon--play { transform:translateX(2px); }
   .mc-replay-label { font-size:13px; font-weight:650; letter-spacing:-.01em; }
 
   .mc-spinner {
@@ -973,7 +973,15 @@
     color:#fff;
     box-shadow:0 0 0 1px rgba(255,255,255,.15);
   }
-  .mc-spinner svg { width:22px; height:22px; animation:mc-spin .8s linear infinite; }
+  /* Plain CSS ring instead of an icon glyph — a spinner isn't a shape any
+     icon set represents well, and this rotates perfectly regardless of library. */
+  .mc-spinner-ring {
+    width:22px; height:22px;
+    border-radius:999px;
+    border:2.5px solid rgba(255,255,255,.28);
+    border-top-color:#fff;
+    animation:mc-spin .8s linear infinite;
+  }
 
   .mc-menu-root { position:relative; }
   .mc-menu {
@@ -1014,7 +1022,7 @@
   .mc-menu-item:focus-visible {
     background:rgba(255,255,255,.1); color:#fff; outline:none;
   }
-  .mc-menu-check { width:15px; height:15px; stroke-width:2.4; color:rgba(255,255,255,.7); }
+  .mc-menu-check { width:16px; height:16px; color:rgba(255,255,255,.7); }
 
   .polutek-vidstack-player .vds-captions {
     bottom:76px;
@@ -1026,9 +1034,9 @@
   @media (max-width:640px) {
     .mc-bottom { padding:0; }
     .mc-bar { border-radius:0; padding:0 6px 2px; }
-    .mc-row { height:38px; gap:2px; }
-    .mc-btn { width:38px; height:38px; }
-    .mc-icon { width:18px; height:18px; }
+    .mc-row { gap:2px; }
+    /* .mc-btn/.mc-icon keep their base 38px/24px size — icons stay bold and
+       legible on mobile rather than shrinking further. */
     .mc-time { font-size:11px; margin-left:0; }
     .mc-time-sep, .mc-time-dur { display:none; }
     .mc-volume { display:none; }
@@ -1039,7 +1047,7 @@
   @media (prefers-reduced-motion:reduce) {
     .mc-controls, .mc-btn, .mc-hero,
     .mc-vol-slider, .mc-scrub-track, .mc-scrub-thumb { transition:none; }
-    .mc-spinner svg { animation:none; }
+    .mc-spinner-ring { animation:none; }
   }
 
   @media (hover:none) { .mc-scrub-preview { display:none; } }

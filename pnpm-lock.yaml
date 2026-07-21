@@ -23,9 +23,6 @@ importers:
       '@clerk/nextjs':
         specifier: ^7.5.3
         version: 7.5.9(next@16.2.6(@babel/core@7.29.7)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      '@phosphor-icons/react':
-        specifier: ^2.1.10
-        version: 2.1.10(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@prisma/client':
         specifier: ^6.19.3
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
@@ -110,6 +107,9 @@ importers:
       react-easy-crop:
         specifier: ^6.0.2
         version: 6.0.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      react-icons:
+        specifier: ^5.7.0
+        version: 5.7.0(react@19.2.6)
       resend:
         specifier: ^6.9.4
         version: 6.16.0(@react-email/render@2.0.9(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
@@ -1072,13 +1072,6 @@ packages:
 
   '@oxc-project/types@0.137.0':
     resolution: {integrity: sha512-WT+Gb24i8hmvo85AIv2oEYouEXkRlKAlT9WaCa3TfLgNCN+GhrJOGZuIlMouAh38Qe4QOx26eUOVsq70qXrywA==}
-
-  '@phosphor-icons/react@2.1.10':
-    resolution: {integrity: sha512-vt8Tvq8GLjheAZZYa+YG/pW7HDbov8El/MANW8pOAz4eGxrwhnbfrQZq0Cp4q8zBEu8NIhHdnr+r8thnfRSNYA==}
-    engines: {node: '>=10'}
-    peerDependencies:
-      react: '>= 16.8'
-      react-dom: '>= 16.8'
 
   '@playwright/test@1.61.1':
     resolution: {integrity: sha512-8nKv6+0RJSL9FE4jYOEGXnPeM/Hg12qZpmqzZjRh3qM0Y7c3z1mrOTfFLids72RDQYVh9WpLEfR5WdpNX4fkig==}
@@ -4234,6 +4227,11 @@ packages:
       react: '>=16.4.0'
       react-dom: '>=16.4.0'
 
+  react-icons@5.7.0:
+    resolution: {integrity: sha512-LBLy340Rzqy6+/yVhZKT3B/QpP1BZaesGqasf09HPOBzRarcDIFH0WwXlXQfE7q7ipxK4MSiC5DIBWURCny6fw==}
+    peerDependencies:
+      react: '*'
+
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
 
@@ -5974,11 +5972,6 @@ snapshots:
   '@nolyfill/is-core-module@1.0.39': {}
 
   '@oxc-project/types@0.137.0': {}
-
-  '@phosphor-icons/react@2.1.10(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
-    dependencies:
-      react: 19.2.6
-      react-dom: 19.2.6(react@19.2.6)
 
   '@playwright/test@1.61.1':
     dependencies:
@@ -9158,6 +9151,10 @@ snapshots:
       normalize-wheel: 1.0.1
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
+
+  react-icons@5.7.0(react@19.2.6):
+    dependencies:
+      react: 19.2.6
 
   react-is@16.13.1: {}
 
