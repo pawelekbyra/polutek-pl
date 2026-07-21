@@ -61,6 +61,10 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
   const [isMounted, setIsMounted] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  // True once we've shown a confirmed-success screen for this return (either Stripe's own
+  // redirect_status said "succeeded", or the backend later confirmed it). Drives the full-reload
+  // on close so the page comes back with live Patron access, video unlocks and support-box copy.
+  const [paymentSucceeded, setPaymentSucceeded] = useState(false);
   const [minimums, setMinimums] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
   const [patronThresholds, setPatronThresholds] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
   const [patronBoxMinimums, setPatronBoxMinimums] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
@@ -115,17 +119,48 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
 
     const returnedPaymentId = searchParams.get("payment_id");
     if (searchParams.get("success") === "true" && returnedPaymentId) {
+      // Stripe appends its own authoritative outcome to the return URL. We trust it for the
+      // user-facing message: the charge result is known the instant Stripe redirects back, so
+      // there's no reason to make the user wait on our webhook/DB before we say "thank you".
+      const redirectStatus = searchParams.get("redirect_status");
+
       setIsCheckoutModalOpen(true);
       setIsSuccess(true);
-      setIsSyncing(true);
       setPaymentId(returnedPaymentId);
       queryClient.invalidateQueries();
+
+      if (redirectStatus === "failed") {
+        // Stripe says the payment failed — show the failure message, nothing to reconcile.
+        setIsSyncing(false);
+        setPaymentUiStatus("FAILED_CANCELED");
+        return () => {
+          cancelled = true;
+        };
+      }
+
+      // Treat "succeeded" (and the common case where Stripe omits the param on a plain card
+      // confirmation) as an immediate success: show the thank-you now, reconcile access quietly
+      // in the background. Genuinely async methods that come back "pending"/"processing" get a
+      // neutral processing screen until the backend confirms.
+      const redirectSucceeded = redirectStatus === "succeeded" || redirectStatus === null;
+      if (redirectSucceeded) {
+        setPaymentUiStatus("SUCCEEDED");
+        setPaymentSucceeded(true);
+        setIsSyncing(false);
+      } else {
+        setPaymentUiStatus("PROCESSING");
+        setIsSyncing(true);
+      }
 
       let attempts = 0;
       const maxAttempts = 10;
 
-      // Returns true once polling should stop (terminal status or attempts exhausted).
-      const checkStatus = async (): Promise<boolean> => {
+      // Background reconciliation: ensures the PatronGrant actually lands (the status endpoint
+      // retrieves the PaymentIntent from Stripe and runs fulfillPayment() when still PENDING).
+      // This runs silently — it never downgrades an already-shown success message; it only
+      // upgrades a "processing" screen to success (or surfaces a real failure). Returns true
+      // once there's nothing left to wait for.
+      const reconcile = async (): Promise<boolean> => {
         attempts++;
         try {
           const res = await fetch(`/api/payments/${encodeURIComponent(returnedPaymentId)}`, { cache: "no-store" });
@@ -139,35 +174,45 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
 
           if (cancelled) return true;
 
-          if (isTerminal || attempts >= maxAttempts) {
+          if (nextStatus === "SUCCEEDED") {
+            setPaymentSucceeded(true);
             setIsSyncing(false);
-            setPaymentUiStatus(nextStatus ?? "TIMED_OUT");
-            if (nextStatus === "SUCCEEDED") router.refresh();
+            setPaymentUiStatus("SUCCEEDED");
             return true;
           }
-          setPaymentUiStatus(nextStatus);
-          return false;
+
+          if (!redirectSucceeded) {
+            // Only a not-yet-confirmed (async) flow may still change the visible message.
+            if (isTerminal || attempts >= maxAttempts) {
+              setIsSyncing(false);
+              setPaymentUiStatus(nextStatus ?? "TIMED_OUT");
+              return true;
+            }
+            setPaymentUiStatus(nextStatus ?? "PROCESSING");
+            return false;
+          }
+
+          // Already showing success from the redirect signal: keep quietly reconciling until the
+          // grant lands so the on-close reload reflects live Patron access, but never change copy.
+          return isTerminal || attempts >= maxAttempts;
         } catch (e) {
-          logger.error("[DonationBox] Sync error", e);
+          logger.error("[DonationBox] Reconcile error", e);
           if (cancelled) return true;
           if (attempts >= maxAttempts) {
-            setIsSyncing(false);
-            setPaymentUiStatus((current) => current ?? "TIMED_OUT");
+            if (!redirectSucceeded) {
+              setIsSyncing(false);
+              setPaymentUiStatus((current) => current ?? "TIMED_OUT");
+            }
             return true;
           }
           return false;
         }
       };
 
-      // Check immediately on mount rather than waiting for the first interval tick. The status
-      // endpoint now actively reconciles against Stripe (retrieving the PaymentIntent directly)
-      // when the local record is still PENDING, so — since Stripe.js already knows the outcome
-      // the instant it redirects back here (`redirect_status` on the return URL) — this first
-      // request resolves the common case immediately instead of after up to 20s of polling.
-      checkStatus().then((done) => {
+      reconcile().then((done) => {
         if (done || cancelled) return;
         interval = setInterval(async () => {
-          const finished = await checkStatus();
+          const finished = await reconcile();
           if (finished && interval) clearInterval(interval);
         }, 2000);
       });
@@ -189,14 +234,28 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
       const data = await res.json();
       const nextStatus: string | null = data.uiStatus || null;
       setPaymentUiStatus(nextStatus ?? "TIMED_OUT");
-      if (nextStatus === "SUCCEEDED") router.refresh();
+      if (nextStatus === "SUCCEEDED") setPaymentSucceeded(true);
     } catch (e) {
       logger.error("[DonationBox] Manual status check error", e);
       setPaymentUiStatus("TIMED_OUT");
     } finally {
       setIsSyncing(false);
     }
-  }, [paymentId, router]);
+  }, [paymentId]);
+
+  // Closing the success screen (either the X or "back to site"): if the payment went through,
+  // do a full reload to the clean URL so every server-rendered surface — Patron badge, video
+  // access locks, the support box's patron/non-patron copy — comes back reflecting the freshly
+  // granted access at once, and all client caches are rebuilt. For a non-success close we only
+  // need to strip the return params, so a soft navigation is enough.
+  const closeSuccessAndSync = useCallback(() => {
+    setIsCheckoutModalOpen(false);
+    if (paymentSucceeded) {
+      window.location.replace(window.location.pathname);
+    } else {
+      router.replace(window.location.pathname);
+    }
+  }, [paymentSucceeded, router]);
 
   useEffect(() => {
     document.body.style.overflow = isCheckoutModalOpen ? "hidden" : "unset";
@@ -449,14 +508,8 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
             userEmail={userEmail}
             onRetryStatusCheck={handleRetryStatusCheck}
             stripePromise={stripePromise}
-            onClose={() => {
-              setIsCheckoutModalOpen(false);
-              if (isSuccess) router.replace(window.location.pathname);
-            }}
-            onBackToSite={() => {
-              setIsCheckoutModalOpen(false);
-              router.replace(window.location.pathname);
-            }}
+            onClose={closeSuccessAndSync}
+            onBackToSite={closeSuccessAndSync}
           />,
           document.body,
         )}

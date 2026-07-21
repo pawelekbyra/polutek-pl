@@ -24,6 +24,7 @@ function getStatusCaption(paymentUiStatus: string | null | undefined, isPl: bool
       return isPl ? 'Wymaga sprawdzenia' : 'Needs review';
     case 'TIMED_OUT':
       return isPl ? 'Sprawdzanie zajęło zbyt długo' : 'Status check timed out';
+    case 'PROCESSING':
     case 'PENDING_WEBHOOK':
     default:
       return isPl ? 'Potwierdzanie płatności...' : 'Confirming payment...';
@@ -66,6 +67,9 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   onBackToSite,
   onRetryStatusCheck,
 }) => {
+  // A terminal non-success outcome — show a red "something went wrong" header instead of the
+  // green thank-you check, so the icon/headline never contradict a failure/refund message.
+  const isFailureState = paymentUiStatus === 'FAILED_CANCELED' || paymentUiStatus === 'REFUNDED_DISPUTED';
   return (
     <div className="fixed left-0 top-0 z-[9999] flex h-[100dvh] min-h-[100dvh] w-screen flex-col overflow-hidden bg-[var(--chan-card)] pb-[env(safe-area-inset-bottom)] md:flex-row">
       {/* Left Column (Summary - Desktop) */}
@@ -114,16 +118,18 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             {isSuccess ? (
               <div className="animate-in fade-in zoom-in-95 space-y-10 py-12 text-center duration-700">
                 <div className="relative mx-auto h-24 w-24">
-                  <div className="absolute inset-0 rotate-12 animate-pulse rounded-3xl bg-green-500 opacity-20" />
-                  <div className="absolute inset-0 -rotate-12 animate-pulse rounded-3xl bg-green-500 opacity-20 delay-75" />
-                  <div className="relative flex h-full w-full items-center justify-center rounded-[24px] bg-green-500 text-4xl font-black text-white">
-                    ✓
+                  <div className={`absolute inset-0 rotate-12 animate-pulse rounded-3xl opacity-20 ${isFailureState ? 'bg-red-500' : 'bg-green-500'}`} />
+                  <div className={`absolute inset-0 -rotate-12 animate-pulse rounded-3xl opacity-20 delay-75 ${isFailureState ? 'bg-red-500' : 'bg-green-500'}`} />
+                  <div className={`relative flex h-full w-full items-center justify-center rounded-[24px] text-4xl font-black text-white ${isFailureState ? 'bg-red-500' : 'bg-green-500'}`}>
+                    {isFailureState ? '✕' : '✓'}
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <h1 className="font-brand text-4xl font-bold text-[var(--chan-ink)]">
-                    {language === 'pl' ? 'Wielkie dzięki!' : 'Thank you!'}
+                    {isFailureState
+                      ? (language === 'pl' ? 'Coś poszło nie tak' : 'Something went wrong')
+                      : (language === 'pl' ? 'Wielkie dzięki!' : 'Thank you!')}
                   </h1>
                   <p className="mx-auto max-w-sm text-lg leading-relaxed text-[var(--chan-muted)]">
                     {paymentUiStatus === 'SUCCEEDED'
