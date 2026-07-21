@@ -111,6 +111,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
   useEffect(() => {
     setIsMounted(true);
     let interval: ReturnType<typeof setInterval> | undefined;
+    let cancelled = false;
 
     const returnedPaymentId = searchParams.get("payment_id");
     if (searchParams.get("success") === "true" && returnedPaymentId) {
@@ -122,7 +123,9 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
 
       let attempts = 0;
       const maxAttempts = 10;
-      interval = setInterval(async () => {
+
+      // Returns true once polling should stop (terminal status or attempts exhausted).
+      const checkStatus = async (): Promise<boolean> => {
         attempts++;
         try {
           const res = await fetch(`/api/payments/${encodeURIComponent(returnedPaymentId)}`, { cache: "no-store" });
@@ -134,26 +137,44 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
             nextStatus === "FAILED_CANCELED" ||
             nextStatus === "REFUNDED_DISPUTED";
 
+          if (cancelled) return true;
+
           if (isTerminal || attempts >= maxAttempts) {
-            clearInterval(interval);
             setIsSyncing(false);
             setPaymentUiStatus(nextStatus ?? "TIMED_OUT");
             if (nextStatus === "SUCCEEDED") router.refresh();
-          } else {
-            setPaymentUiStatus(nextStatus);
+            return true;
           }
+          setPaymentUiStatus(nextStatus);
+          return false;
         } catch (e) {
           logger.error("[DonationBox] Sync error", e);
+          if (cancelled) return true;
           if (attempts >= maxAttempts) {
-            clearInterval(interval);
             setIsSyncing(false);
             setPaymentUiStatus((current) => current ?? "TIMED_OUT");
+            return true;
           }
+          return false;
         }
-      }, 2000);
+      };
+
+      // Check immediately on mount rather than waiting for the first interval tick. The status
+      // endpoint now actively reconciles against Stripe (retrieving the PaymentIntent directly)
+      // when the local record is still PENDING, so — since Stripe.js already knows the outcome
+      // the instant it redirects back here (`redirect_status` on the return URL) — this first
+      // request resolves the common case immediately instead of after up to 20s of polling.
+      checkStatus().then((done) => {
+        if (done || cancelled) return;
+        interval = setInterval(async () => {
+          const finished = await checkStatus();
+          if (finished && interval) clearInterval(interval);
+        }, 2000);
+      });
     }
 
     return () => {
+      cancelled = true;
       if (interval) clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
