@@ -8,6 +8,28 @@ import type { Stripe } from '@stripe/stripe-js';
 import CheckoutForm from '../CheckoutForm';
 import CheckoutSummaryPanel from './CheckoutSummaryPanel';
 
+// Short status caption shown under the CTA buttons on the success screen. Every value of
+// PaymentUiStatus (see lib/modules/payments/application/get-payment-status.use-case.ts) is
+// mapped explicitly here so a raw enum value (e.g. "PENDING_WEBHOOK") never renders directly —
+// end users should never see internal implementation details like "webhook".
+function getStatusCaption(paymentUiStatus: string | null | undefined, isPl: boolean): string {
+  switch (paymentUiStatus) {
+    case 'SUCCEEDED':
+      return isPl ? 'Płatność potwierdzona' : 'Payment confirmed';
+    case 'ACCESS_SYNC_PENDING':
+      return isPl ? 'Finalizowanie dostępu' : 'Finalizing access';
+    case 'FAILED_CANCELED':
+      return isPl ? 'Płatność nieudana' : 'Payment unsuccessful';
+    case 'REFUNDED_DISPUTED':
+      return isPl ? 'Wymaga sprawdzenia' : 'Needs review';
+    case 'TIMED_OUT':
+      return isPl ? 'Sprawdzanie zajęło zbyt długo' : 'Status check timed out';
+    case 'PENDING_WEBHOOK':
+    default:
+      return isPl ? 'Potwierdzanie płatności...' : 'Confirming payment...';
+  }
+}
+
 interface CheckoutModalProps {
   isSuccess: boolean;
   isSyncing: boolean;
@@ -20,6 +42,7 @@ interface CheckoutModalProps {
   clientSecret: string | null;
   paymentId?: string | null;
   paymentUiStatus?: string | null;
+  userEmail?: string | null;
   stripePromise: Promise<Stripe | null> | null;
   onClose: () => void;
   onBackToSite: () => void;
@@ -37,6 +60,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   clientSecret,
   paymentId,
   paymentUiStatus,
+  userEmail,
   stripePromise,
   onClose,
   onBackToSite,
@@ -115,8 +139,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                                 ? 'Potwierdzenie płatności trwa dłużej niż zwykle. Sprawdź status jeszcze raz za chwilę — nie musisz płacić ponownie.'
                                 : 'Confirming your payment is taking longer than usual. Check the status again in a moment — no need to pay twice.')
                               : (language === 'pl'
-                                ? 'Twoje wsparcie zostało zarejestrowane. Czekamy na potwierdzenie webhooka Stripe.'
-                                : 'Your support was registered. Waiting for Stripe webhook confirmation.')}
+                                ? 'Potwierdzamy Twoją wpłatę. To zajmie tylko chwilę.'
+                                : 'Confirming your payment. This only takes a moment.')}
                   </p>
                 </div>
 
@@ -139,9 +163,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <p className="mt-6 text-[10px] font-black uppercase tracking-widest text-[var(--chan-muted)]">
                     {isSyncing
                       ? (language === 'pl' ? 'Sprawdzanie statusu płatności...' : 'Checking payment status...')
-                      : paymentUiStatus === 'TIMED_OUT'
-                        ? (language === 'pl' ? 'Sprawdzanie zajęło zbyt długo' : 'Status check timed out')
-                        : (paymentUiStatus || (language === 'pl' ? 'Status sprawdzony' : 'Status checked'))}
+                      : getStatusCaption(paymentUiStatus, language === 'pl')}
                   </p>
                 </div>
               </div>
@@ -172,7 +194,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                         }
                       }
                     }}>
-                      <CheckoutForm paymentId={paymentId} />
+                      <CheckoutForm paymentId={paymentId} userEmail={userEmail} />
                     </Elements>
                   ) : (
                     <div className="flex flex-col items-center justify-center space-y-8 py-24">

@@ -6,7 +6,7 @@ import { useLanguage } from './LanguageContext';
 import { Loader2 } from './icons';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
 
-export default function CheckoutForm({ returnUrl, paymentId }: { returnUrl?: string; paymentId?: string | null }) {
+export default function CheckoutForm({ returnUrl, paymentId, userEmail }: { returnUrl?: string; paymentId?: string | null; userEmail?: string | null }) {
   const stripe = useStripe();
   const elements = useElements();
   const { language } = useLanguage();
@@ -20,8 +20,9 @@ export default function CheckoutForm({ returnUrl, paymentId }: { returnUrl?: str
 
     setIsLoading(true);
 
-    // We use confirmPayment but we need to ensure Link is not interfering.
-    // Actually, setting fields.billingDetails.email to 'never' in PaymentElement is the key.
+    // The PaymentElement hides the email field (fields.billingDetails.email: 'never') since
+    // we already know the signed-in user's email — but Stripe then requires it to be supplied
+    // explicitly here, or confirmPayment throws an IntegrationError and the payment never submits.
     const currentUrl = new URL(returnUrl || window.location.href);
     currentUrl.searchParams.set('success', 'true');
     if (paymentId) currentUrl.searchParams.set('payment_id', paymentId);
@@ -30,6 +31,9 @@ export default function CheckoutForm({ returnUrl, paymentId }: { returnUrl?: str
       elements,
       confirmParams: {
         return_url: currentUrl.toString(),
+        ...(userEmail
+          ? { payment_method_data: { billing_details: { email: userEmail } } }
+          : {}),
       },
     });
 
@@ -57,7 +61,9 @@ export default function CheckoutForm({ returnUrl, paymentId }: { returnUrl?: str
           },
           fields: {
             billingDetails: {
-              email: 'never'
+              // Only hide the field when we already have an email to submit on confirm —
+              // otherwise fall back to letting Stripe collect it in the UI.
+              email: userEmail ? 'never' : 'auto'
             }
           }
         }} />

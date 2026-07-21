@@ -132,6 +132,8 @@ Stripe webhook (signature verified)
 
 `fulfillPayment()` in `lib/modules/payments/` is idempotent and replay-safe. Always use it for payment fulfillment, never issue manual `updateMany({ status: 'SUCCEEDED' })` shortcuts.
 
+**Return-page fast path (added 2026-07-21):** the webhook remains the reliability backbone, but `getOwnedPaymentStatus()` (`lib/modules/payments/application/get-payment-status.use-case.ts`, backing `GET /api/payments/[paymentId]`) no longer only reads the local `Payment.status`. When the caller's own payment (ownership already enforced by the `{ id, userId }` lookup) is still `PENDING` and has a `stripeIntentId`, it retrieves that PaymentIntent directly from Stripe and, if Stripe already reports `succeeded`, calls `fulfillPayment()` right there — the same canonical, replay-safe path, never a manual status write — before responding. This is what lets `DonationBox.tsx`'s post-checkout success screen resolve near-instantly instead of only after the webhook lands; the polling loop there does an immediate check on mount rather than waiting for the first interval tick. Any Stripe/network failure in this path is swallowed and falls back to the normal webhook-driven polling — it is a best-effort fast path, not a new source of truth.
+
 ### 4.3 Video Playback Security
 
 - **Never expose `videoUrl` to the public frontend.** Use `PublicVideoDTO` for all public-facing data.
