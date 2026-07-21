@@ -72,8 +72,22 @@ export function HomePageSkeleton() {
                 <Skeleton className="h-[14px] w-[90px]" />
                 <Skeleton className="h-[14px] w-[110px]" />
               </div>
-              <div className="mt-4">
-                <CommentLoadingSkeleton count={2} />
+              <div className="mt-4 space-y-4 py-6">
+                {[1, 2].map((i) => (
+                  <div key={i} className="flex gap-3">
+                    <Skeleton className="h-[38px] w-[38px] rounded-full shrink-0" />
+                    <div className="flex-1 space-y-3">
+                      <div className="space-y-1">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                      <div className="space-y-2">
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-3 w-5/6" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -85,7 +99,7 @@ export function HomePageSkeleton() {
               <div className="space-y-1.5">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <div key={i} className="flex gap-3 p-2">
-                    <Skeleton className="h-[76px] w-[135px] shrink-0 rounded-[12px]" />
+                    <Skeleton className="h-[73px] w-[130px] shrink-0 rounded-[12px] lg:h-[76px] lg:w-[135px] xl:h-[82px] xl:w-[145px]" />
                     <div className="flex-1 space-y-2 py-1">
                       <Skeleton className="h-[13px] w-full" />
                       <Skeleton className="h-[13px] w-2/3" />
@@ -107,7 +121,7 @@ export function HomePageSkeleton() {
  * real `polutek-watch-nav` chrome so the sticky bar's gradient, blur and border
  * are identical before and after hydration — only the controls are shimmering.
  */
-function SkeletonNavbar() {
+export function SkeletonNavbar() {
   return (
     <div className="polutek-watch-nav sticky top-0 z-[1000] flex w-full flex-col">
       <div className="flex min-h-[54px] w-full items-center justify-between gap-3 px-4 py-2 md:gap-5 md:px-6 lg:px-8">
@@ -241,7 +255,7 @@ export function CommentLoadingSkeleton({ count = 3 }: { count?: number }) {
     <div className="py-6 space-y-4">
       {Array.from({ length: count }, (_, i) => i + 1).map(i => (
         <div key={i} className="flex gap-3">
-          <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+          <Skeleton className="h-[38px] w-[38px] rounded-full shrink-0" />
           <div className="flex-1 space-y-3">
             <div className="space-y-1">
               <Skeleton className="h-4 w-32" />
@@ -258,6 +272,45 @@ export function CommentLoadingSkeleton({ count = 3 }: { count?: number }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Placeholder for the legal document pages (regulamin/terms, polityka-
+ * prywatnosci/privacy-policy) — a plain text document, not the channel/video
+ * shell. Mirrors LegalDocs.tsx: page header (title + effective date), the
+ * "W skrócie" summary box, then a stack of numbered sections. Using
+ * HomePageSkeleton here (as the shared app/[locale]/loading.tsx boundary
+ * would by default) drew a video player and playlist over a text-only page,
+ * which read as broken.
+ */
+export function LegalDocSkeleton() {
+  return (
+    <div className="min-h-screen bg-background">
+      <SkeletonNavbar />
+      <main className="mx-auto max-w-3xl px-4 py-16">
+        <div className="mb-10 space-y-3 border-b-2 border-[var(--chan-ink)]/10 pb-8">
+          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="h-4 w-40" />
+        </div>
+        <div className="mb-12 space-y-2 rounded-xl border border-[var(--chan-ink)]/15 bg-white/60 p-5">
+          <Skeleton className="mb-2 h-3 w-24" />
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-5/6" />
+          <Skeleton className="h-3 w-2/3" />
+        </div>
+        <div className="space-y-10">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="space-y-3">
+              <Skeleton className="h-5 w-1/3" />
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-4/5" />
+            </div>
+          ))}
+        </div>
+      </main>
     </div>
   );
 }

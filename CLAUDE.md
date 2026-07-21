@@ -21,7 +21,7 @@ Current UI/runtime baseline as of 2026-07-14:
 - Next.js 16 App Router with React 19 is the framework target.
 - Clerk remains the identity backend, but public auth/account UI is custom/headless (`AuthModalProvider`, `AuthModal`, `UserMenu`, `AccountModal`) rather than default Clerk widgets.
 - Public entry is a progressive app shell. Do not reintroduce a blocking splash/ENTER gate.
-- The root `/` route redirects to a locale. Keep `app/loading.tsx` visually neutral and the full homepage skeleton in `app/[locale]/loading.tsx`; rendering the same full skeleton on both sides of the redirect creates a visible double-loading pass. `ChannelHome` likewise reserves comment space before client mount without drawing a second skeleton; `EmbeddedComments` owns the actual comment-loading skeleton.
+- The root `/` route redirects to a locale. Keep `app/loading.tsx` visually neutral. The home page (`page.tsx`) and its full-channel `HomePageSkeleton` fallback (`loading.tsx`) live under the `app/[locale]/(home)/` route group — not directly in `app/[locale]/` — because a `loading.tsx` placed at a segment applies as an outer Suspense boundary to *every* route nested under that segment, not just its own page. Legal docs, search and other `app/[locale]/*` routes have their own scoped `loading.tsx` (e.g. `LegalDocSkeleton` for `regulamin`/`polityka-prywatnosci`/`terms`/`privacy-policy`); do not add a bare `app/[locale]/loading.tsx` again or it will leak the video/playlist skeleton onto every sibling route. `ChannelHome` likewise reserves comment space before client mount without drawing a second skeleton; `EmbeddedComments` owns the actual comment-loading skeleton.
 - Video switching uses a local CSS fade/slide around the player area. Do not reintroduce fullscreen iris/wipe transitions.
 - `AppPreloadProvider` warms playback plans, posters and comments on intent. Playback plans are isolated by Clerk viewer/session plus video, stale requests are aborted, and `PremiumWrapper` fails closed unless the current viewer has an explicit `READY + canPlay + access.allowed + source + matching videoId` plan. Keep this cache in-memory; do not weaken its viewer scope or add persistent service-worker caching without a cache-safety design.
 - `InstallAppMenu` provides install/add-to-home-screen affordances where the browser/platform supports them.
@@ -277,7 +277,8 @@ The daily cron is only the safety net for video provider jobs. The primary recov
 
 | File | Role |
 |---|---|
-| `app/page.tsx` | Public home/channel entry; dynamic page with cached/loaded public content and per-user state |
+| `app/page.tsx` | Root `/` route; resolves locale and redirects to `/[locale]` |
+| `app/[locale]/(home)/page.tsx` | Public home/channel entry; dynamic page with cached/loaded public content and per-user state. Route-grouped with its `loading.tsx` so the full `HomePageSkeleton` doesn't leak onto sibling `app/[locale]/*` routes |
 | `app/components/ChannelHome.tsx` | Public app shell composition, selected video state, local player transition |
 | `app/components/preload/AppPreloadProvider.tsx` | In-memory preload/warm layer for playback plans/posters/comments |
 | `app/components/VideoPlayer.tsx` | Vidstack player, text tracks, telemetry, custom controls |
