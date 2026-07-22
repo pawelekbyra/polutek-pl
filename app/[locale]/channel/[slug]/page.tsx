@@ -6,6 +6,7 @@ import { Metadata } from 'next';
 import { PublicVideoDTO } from '@/app/types/video';
 import Link from 'next/link';
 import Image from 'next/image';
+import { SafeAvatar } from '@/app/components/SafeAvatar';
 import { CreatorContentService as ContentService } from '@/lib/modules/channel/infrastructure/creator-content.service';
 import { getOrCreateCurrentUser } from '@/lib/modules/users';
 import { createAppContext } from '@/lib/modules/shared/app-context';
@@ -179,14 +180,20 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
 
       <div className="max-w-[1284px] mx-auto px-4 md:px-6 lg:px-8 py-6">
         <div className="channel-profile flex flex-col md:flex-row items-center md:items-start gap-5 md:gap-7">
-          <div className="channel-profile-avatar relative w-24 h-24 md:w-36 md:h-36 rounded-full border border-[var(--chan-line)] overflow-hidden bg-[var(--chan-avatar-gradient)] shrink-0">
-             <Image
-               src={channelAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`}
+          <div className="channel-profile-avatar w-24 h-24 md:w-36 md:h-36 rounded-full border border-[var(--chan-line)] shrink-0">
+             <SafeAvatar
+               src={channelAvatar}
                alt={displayName}
-               fill
-               sizes="(min-width: 768px) 160px, 96px"
-               className="object-cover"
-               unoptimized
+               size={96}
+               fallbackSeed={displayName}
+               className="md:hidden bg-[var(--chan-avatar-gradient)]"
+             />
+             <SafeAvatar
+               src={channelAvatar}
+               alt={displayName}
+               size={144}
+               fallbackSeed={displayName}
+               className="hidden md:block bg-[var(--chan-avatar-gradient)]"
              />
           </div>
           <div className="flex-1 text-center md:text-left space-y-1">
