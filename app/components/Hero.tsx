@@ -7,8 +7,8 @@ import { useAuthModal } from './auth/AuthModalProvider';
 import { cn, formatCount } from '@/lib/utils';
 import PremiumWrapper from './PremiumWrapper';
 import Link from 'next/link';
-import Image from 'next/image';
 import VideoPlayer from './VideoPlayer';
+import { SafeAvatar } from './SafeAvatar';
 import { toggleVideoLike, toggleVideoDislike } from '@/lib/actions/interactions';
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { useLanguage } from './LanguageContext';
@@ -196,14 +196,14 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             <div className={cn("flex w-full items-center gap-[13px] min-w-0 lg:w-auto", styles.creatorStrip)}>
                <Link
                  href={video.creator?.slug ? getLocalizedHref(language, "channel", { slug: video.creator.slug }) : "#"}
-                 className="w-[46px] h-[46px] rounded-full bg-[var(--chan-avatar-gradient)] overflow-hidden shrink-0 transition-[transform,opacity] duration-200 hover:opacity-90 hover:scale-[1.04] relative"
+                 className="shrink-0"
                >
-                  <Image
-                    src={video.creator?.imageUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${video.creator?.name || MAIN_CREATOR_NAME}`}
+                  <SafeAvatar
+                    src={video.creator?.imageUrl}
                     alt={video.creator?.name || 'Creator'}
-                    fill
-                    sizes="46px"
-                    className="object-cover"
+                    size={46}
+                    fallbackSeed={video.creator?.name || MAIN_CREATOR_NAME}
+                    className="bg-[var(--chan-avatar-gradient)] transition-[transform,opacity] duration-200 hover:opacity-90 hover:scale-[1.04]"
                   />
                </Link>
                <div className="min-w-0 flex flex-col">
