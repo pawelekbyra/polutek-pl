@@ -48,13 +48,22 @@ async function reconcilePendingPaymentWithStripe(payment: OwnedPendingPayment, c
     const intent = await stripe.paymentIntents.retrieve(payment.stripeIntentId);
 
     if (intent.status === 'succeeded') {
+      // fulfillPayment() grants patron status via grantPatron(), which is gated to
+      // admin/system actors only (PatronPolicy.canGrantPatron). The caller's ctx here carries
+      // the paying user's own `user` actor, so running fulfillPayment with it verbatim always
+      // throws PATRON_GRANT_FAILED — and since fulfillPayment runs inside one DB transaction,
+      // that throw also rolls back the payment's SUCCEEDED status write, silently no-opping
+      // this entire fast path on every poll. Ownership (`{id, userId}` lookup by the caller)
+      // and payment success (the Stripe retrieve above) are already independently verified at
+      // this point, so switching to a system actor for this one trusted internal call is safe
+      // and mirrors exactly what the Stripe webhook route does for the same fulfillPayment() call.
       const result = await fulfillPayment({
         paymentId: payment.id,
         stripeIntentId: intent.id,
         metadataUserId: intent.metadata?.userId ?? null,
         amountMinor: intent.amount,
         currency: intent.currency,
-      }, ctx);
+      }, { ...ctx, actor: { type: 'system', reason: 'payment-status-fast-path-reconciliation' } });
 
       if (!result.ok) {
         logger.error(`[getOwnedPaymentStatus] Reconciliation fulfillPayment failed for ${payment.id}: ${result.error.message}`);

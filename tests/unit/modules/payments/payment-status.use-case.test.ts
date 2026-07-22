@@ -71,9 +71,13 @@ describe('getOwnedPaymentStatus - Stripe reconciliation fast-path', () => {
 
     const result = await getOwnedPaymentStatus({ paymentId: 'pay_1', userId: 'user_1' }, ctx);
 
+    // The reconciliation call must run as a `system` actor, not the paying user's own ctx —
+    // grantPatron() inside fulfillPayment is gated to admin/system (PatronPolicy.canGrantPatron),
+    // so passing the user ctx through verbatim makes every fast-path fulfillment throw
+    // PATRON_GRANT_FAILED and roll back the SUCCEEDED write (the bug this test now guards against).
     expect(fulfillSpy).toHaveBeenCalledWith(
       expect.objectContaining({ paymentId: 'pay_1', stripeIntentId: 'pi_123', amountMinor: 1000, currency: 'pln' }),
-      ctx,
+      expect.objectContaining({ ...ctx, actor: { type: 'system', reason: 'payment-status-fast-path-reconciliation' } }),
     );
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error('unexpected failure');
