@@ -166,6 +166,30 @@ danych strony — to osobne zadanie, nie blokuje Opcji A/B.
 - Nie jest to (bezpośrednio) ciężar animacji `framer-motion`/aurora — to prawdziwy,
   ale drugorzędny problem wydajnościowy, nie przyczyna zawieszenia na skeletonie.
 
+## Status: Opcja A wdrożona (2026-07-22)
+
+Dodano `"browserslist"` do `package.json` (`safari >= 14`, `ios_saf >= 14`, plus
+odpowiedniki dla Chrome/Edge/Firefox), obniżając próg kompilacji SWC poniżej
+domyślnego `safari 16.4+` Next.js 16, tak by obejmował Safari 15.6 (iPhone 7)
+z zapasem. `npm run build` przechodzi czysto po tej zmianie — brak nowych błędów
+kompilacji.
+
+**Ograniczenie weryfikacji:** w tym środowisku nie ma dostępu do realnego iPhone'a/
+Safari 15.6 ani BrowserStack, więc **nie potwierdzono na żywym urządzeniu**, że to
+w 100% usuwa `SyntaxError` — build-time success dowodzi tylko, że SWC nie zgłasza
+konfliktu przy tym targecie, nie że każda zależność (`framer-motion`, `@vidstack/react`,
+`@base-ui/react`) faktycznie zredukowała swoją składnię do czegoś, co Safari 15.6
+sparsuje. Zalecana weryfikacja przed uznaniem tematu za zamknięty: Safari Web
+Inspector na prawdziwym iPhonie 7 (lub BrowserStack z iOS 15.6) — patrz sekcja
+"Jak to zweryfikować" niżej. Jeśli po tej zmianie nadal wystąpi błąd parsowania,
+kolejny krok to zawężenie go do konkretnej zależności i albo jej aktualizacja/wymiana,
+albo dalsze obniżenie targetu.
+
+Dla użytkowników, którzy już wcześniej trafili na zablokowaną stronę na tym
+urządzeniu: może być potrzebne ręczne wyczyszczenie danych witryny w Safari (patrz
+sekcja "Czynnik pogłębiający" wyżej) — ten fix nie cofa się w czasie do już
+zarejestrowanego, zepsutego Service Workera.
+
 ## Jak to zweryfikować bez zgadywania
 
 Najpewniejszy sposób: prawdziwy iPhone 7 (lub iOS 15.6 w BrowserStack/Sauce Labs)
