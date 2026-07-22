@@ -96,7 +96,7 @@ export default function CheckoutSummaryPanel({
       {/* brand */}
       <div className="relative z-10">
         <BrandName
-          className="text-[22.5px] leading-none"
+          className="text-[27px] leading-none"
           shine="ambient"
         />
       </div>

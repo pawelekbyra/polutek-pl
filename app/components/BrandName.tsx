@@ -16,7 +16,7 @@ export default function BrandName({
   return (
     <span
       className={cn(
-        "inline-flex select-none items-center font-brandLogo font-bold tracking-tight",
+        "inline-flex select-none items-center font-brandLogo font-bold tracking-[0.01em]",
         className,
       )}
       role={decorative ? undefined : "img"}
