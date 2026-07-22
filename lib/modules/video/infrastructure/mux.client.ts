@@ -1,4 +1,5 @@
 import { createScopedLogger } from "@/lib/logger";
+import { MUX_VIDEO_QUALITY } from "../domain/mux-delivery.policy";
 
 export interface MuxDirectUploadResponse {
   id: string;
@@ -46,6 +47,10 @@ export class MuxClient {
           process.env.MUX_SIGNING_KEY_ID ? "signed" : "public",
         ],
         mp4_support: "none",
+        // "basic" is free to encode and plenty for this catalogue's use case. Set explicitly
+        // rather than left as the account default, which someone could change in the Mux
+        // dashboard for an unrelated reason and unknowingly start billing us for pricier encodes.
+        video_quality: MUX_VIDEO_QUALITY,
       },
       cors_origin: corsOrigin || process.env.NEXT_PUBLIC_APP_URL || "*",
     };
@@ -134,6 +139,9 @@ export class MuxClient {
       input: [{ url: input.url }],
       playback_policy: [process.env.MUX_SIGNING_KEY_ID ? "signed" : "public"],
       mp4_support: "none",
+      // See the matching comment in createDirectUpload(): explicit "basic" quality so an
+      // unrelated Mux dashboard change to the account default can't silently raise encoding cost.
+      video_quality: MUX_VIDEO_QUALITY,
     };
 
     const response = await fetch("https://api.mux.com/video/v1/assets", {
@@ -157,5 +165,32 @@ export class MuxClient {
 
   static isSigningConfigured(): boolean {
     return Boolean(process.env.MUX_SIGNING_KEY_ID && process.env.MUX_SIGNING_PRIVATE_KEY);
+  }
+
+  /**
+   * Lists the daily usage export CSVs Mux generates (input/storage/delivery usage per asset).
+   * Requires "Usage Exports" to be enabled for the Mux account by contacting Mux support first —
+   * see lib/modules/video/application/check-mux-usage-budget.use-case.ts for how this is used and
+   * what to verify before trusting its numbers.
+   */
+  async listUsageExports(params: { sinceEpochSeconds: number; untilEpochSeconds: number }): Promise<
+    Array<{ date: string; download_url: string }>
+  > {
+    const url = new URL("https://api.mux.com/system/v1/usage/exports");
+    url.searchParams.append("timeframe[]", String(params.sinceEpochSeconds));
+    url.searchParams.append("timeframe[]", String(params.untilEpochSeconds));
+    url.searchParams.set("limit", "100");
+
+    const response = await fetch(url.toString(), {
+      headers: { Authorization: this.auth },
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      throw new Error(`Mux listUsageExports failed (HTTP ${response.status}): ${text.slice(0, 200)}`);
+    }
+
+    const data = await response.json();
+    return (data.data || []) as Array<{ date: string; download_url: string }>;
   }
 }

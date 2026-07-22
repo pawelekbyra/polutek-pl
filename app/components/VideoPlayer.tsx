@@ -57,6 +57,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     const hasReached10s = useRef(false);
     const viewCountRequestInFlight = useRef(false);
     const reachedThresholds = useRef<Record<number, boolean>>({});
+    const intersectionObserverRef = useRef<IntersectionObserver | null>(null);
 
     const sendEvent = usePlaybackTelemetry({
         videoId: video.id,
@@ -112,6 +113,37 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
         return () => clearInterval(interval);
     }, [isMounted, tracking, sendEvent]);
 
+    // Delivery-cost guardrail: a video left playing in a background tab or scrolled out of view
+    // still bills as streamed minutes on Mux. Pause it in both cases. Deliberately never
+    // auto-resume on return (viewport or tab) — only the user pressing play again should restart
+    // playback, so this can't surprise anyone with unexpected autoplay.
+    useEffect(() => {
+        if (!isMounted) return;
+
+        const handleVisibilityChange = () => {
+            if (document.hidden) player.current?.pause();
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [isMounted]);
+
+    // Callback ref (not a useEffect keyed on JSX state) so this attaches whichever branch below
+    // actually renders the container — including after a loading/error state resolves into the
+    // real player — without needing to track every possible render-branch transition.
+    const setViewportObserverTarget = useCallback((node: HTMLDivElement | null) => {
+        intersectionObserverRef.current?.disconnect();
+        intersectionObserverRef.current = null;
+        if (!node || typeof IntersectionObserver === 'undefined') return;
+
+        intersectionObserverRef.current = new IntersectionObserver(
+            ([entry]) => {
+                if (entry && !entry.isIntersecting) player.current?.pause();
+            },
+            { threshold: 0.25 },
+        );
+        intersectionObserverRef.current.observe(node);
+    }, []);
+
     // PremiumWrapper owns the single player loading placeholder; avoid stacking a second one here.
     if (!isMounted || isLoading) return null;
 
@@ -159,7 +191,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     const src = resolvedSource.src;
 
     return (
-        <div className="relative h-full w-full min-h-0 overflow-hidden rounded-[18px] border border-black/10 bg-black shadow-[0_18px_48px_rgba(15,23,42,0.16)] sm:min-h-[220px]">
+        <div ref={setViewportObserverTarget} className="relative h-full w-full min-h-0 overflow-hidden rounded-[18px] border border-black/10 bg-black shadow-[0_18px_48px_rgba(15,23,42,0.16)] sm:min-h-[220px]">
             {loadError ? (
                 <PlayerErrorOverlay
                     errorCode="MEDIA_LOAD_FAILED"

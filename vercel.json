@@ -1,6 +1,7 @@
 {
   "buildCommand": "npm run vercel-build",
   "crons": [
-    { "path": "/api/cron/video-provider-jobs/reconcile", "schedule": "0 4 * * *" }
+    { "path": "/api/cron/video-provider-jobs/reconcile", "schedule": "0 4 * * *" },
+    { "path": "/api/cron/mux-usage-alert", "schedule": "0 6 * * *" }
   ]
 }
