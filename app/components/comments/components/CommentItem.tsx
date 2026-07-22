@@ -177,7 +177,7 @@ export function CommentItem({
         )}
       </div>
       <div className={cn("relative z-[5] flex-1 space-y-[2px] min-w-0 pt-0", !isReply && comment.isPinned && "pr-[86px]")}>
-        <div className="flex items-start justify-between">
+        <div className={cn("relative flex items-start justify-between", userProfile && "pr-9")}>
           <div className="flex items-center gap-1.5 leading-none">
             <span
               className={cn(
@@ -198,7 +198,7 @@ export function CommentItem({
             <DropdownMenu open={showMenu} onOpenChange={setShowMenu}>
               <DropdownMenuTrigger
                 className={cn(
-                  "grid h-9 w-9 place-items-center rounded-full transition-[opacity,background-color] hover:bg-[var(--chan-surface)] focus-visible:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transition-none",
+                  "absolute right-0 top-0 grid h-9 w-9 place-items-center rounded-full transition-[opacity,background-color] hover:bg-[var(--chan-surface)] focus-visible:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transition-none",
                   showMenu
                     ? "opacity-100"
                     : "opacity-0 group-hover/comment:opacity-100 group-hover/reply:opacity-100 group-focus-within/comment:opacity-100 group-focus-within/reply:opacity-100 focus:opacity-100",
