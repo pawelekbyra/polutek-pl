@@ -316,7 +316,7 @@
     --accent-ring: 221 83% 53% / 0.18;
 
     /* ===== Neutral background ===== */
-    --background: 220 33% 98%;
+    --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;            /* #09090B Zinc-950 equivalent */
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
@@ -336,7 +336,7 @@
 
     /* Application UI tokens shared by the VOD channel and installable PWA. */
     --chan-card: #ffffff;
-    --chan-nav: #f7f9fc;
+    --chan-nav: #ffffff;
     --chan-surface: #f0f3f8;
     --chan-surface-raised: #ffffff;
     --chan-line: #e1e6ef;
@@ -594,8 +594,8 @@
       --cm-line-86: rgba(225, 230, 239, 0.86);
       --cm-line-90: rgba(225, 230, 239, 0.9);
       --cm-line-92: rgba(225, 230, 239, 0.92);
-      --cm-nav-70: rgba(247, 249, 252, 0.7);
-      --cm-nav-78: rgba(247, 249, 252, 0.78);
+      --cm-nav-70: rgba(255, 255, 255, 0.7);
+      --cm-nav-78: rgba(255, 255, 255, 0.78);
       --cm-surface-62-white: rgb(246, 248, 251);
       --cm-surface-66-white: rgb(245, 247, 250);
       --cm-surface-80-white: rgb(243, 245, 249);
