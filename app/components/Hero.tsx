@@ -174,7 +174,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
   return (
     <section className="bg-transparent">
-      <div className="w-full rounded-[26px] border border-[var(--cm-line-80)] bg-[var(--cm-card-92-white)] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_2px_6px_rgba(23,23,23,0.03),0_30px_60px_-26px_rgba(23,23,23,0.24)] md:p-3">
+      <div className="w-full rounded-[26px] border border-[var(--cm-line-80)] bg-[radial-gradient(circle_at_10%_0%,var(--cm-blue-14),transparent_46%),radial-gradient(circle_at_96%_100%,var(--cm-amber-8),transparent_40%),var(--cm-card-92-white)] p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_2px_6px_rgba(23,23,23,0.03),0_10px_26px_-16px_var(--cm-blue-25),0_30px_60px_-26px_rgba(23,23,23,0.24)] md:p-3">
         {/* FEATURED MEDIA */}
         <div className="relative mb-4 aspect-video w-full overflow-hidden rounded-[20px] bg-black md:rounded-[22px]">
           <PremiumWrapper videoId={video.id} requiredTier={video.tier} isMainFeatured={video.isMainFeatured}>
