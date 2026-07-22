@@ -11,7 +11,7 @@ import { CloudflareSignedPlaybackTokenService } from '../infrastructure/cloudfla
 import { getPrimaryPlayableAsset } from '../domain/primary-playable-asset';
 import { selectPrimaryVideoAsset } from '@/lib/modules/video';
 import { extractYouTubeVideoId, extractVimeoVideoId } from '@/lib/modules/video';
-import { MuxClient } from '@/lib/modules/video';
+import { MuxClient, resolveMuxMaxResolution, isMuxDeliveryDegraded } from '@/lib/modules/video';
 import { VideoStatus, type VideoAsset } from '@prisma/client';
 
 export type PlaybackErrorCode =
@@ -389,13 +389,21 @@ export class PlaybackService {
           const playbackId = asset.providerPlaybackId || asset.providerAssetId;
           if (!playbackId) throw new Error('Mux asset missing playback ID');
 
+          // Delivery-cost guardrail: cap the advertised HLS renditions so a viral traffic spike
+          // can't run up an uncontrolled Mux delivery bill. isAnonymous drives the per-tier cap
+          // (guests get a stricter default than signed-in/patron viewers); degraded reflects the
+          // global circuit breaker (see mux-circuit-breaker.ts) tripping under abnormal load —
+          // both are no-ops (1080p, never degraded) unless explicitly configured via env vars.
+          const degraded = await isMuxDeliveryDegraded();
+          const maxResolution = resolveMuxMaxResolution({ isAnonymous: actor.type === 'guest', degraded });
+
           let playbackUrl: string;
           let isSignedUrl = false;
 
           if (MuxClient.isSigningConfigured()) {
             const muxClient = new MuxClient();
             const token = muxClient.createSignedPlaybackToken(playbackId);
-            playbackUrl = `https://stream.mux.com/${playbackId}.m3u8?token=${token}`;
+            playbackUrl = `https://stream.mux.com/${playbackId}.m3u8?token=${token}&max_resolution=${maxResolution}`;
             isSignedUrl = true;
           } else if (tier === 'PATRON') {
             return {
@@ -415,7 +423,7 @@ export class PlaybackService {
               tracking: emptyPlaybackRuntime(),
             };
           } else {
-            playbackUrl = `https://stream.mux.com/${playbackId}.m3u8`;
+            playbackUrl = `https://stream.mux.com/${playbackId}.m3u8?max_resolution=${maxResolution}`;
           }
 
           const posterUrl = `https://image.mux.com/${playbackId}/thumbnail.jpg`;

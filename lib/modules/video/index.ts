@@ -41,6 +41,9 @@ export type { CreateVideoInput, UpdateVideoInput } from './infrastructure/video.
 export * from './domain/video-asset-selection';
 export * from './domain/video-asset.constants';
 export * from './infrastructure/mux.client';
+export * from './infrastructure/mux-circuit-breaker';
+export * from './domain/mux-delivery.policy';
+export * from './application/check-mux-usage-budget.use-case';
 export * from './application/original-source-url.service';
 export * from './application/video-distribution-plan.service';
 export * from './application/video-provider-job.service';

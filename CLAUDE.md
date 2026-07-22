@@ -145,6 +145,17 @@ Stripe webhook (signature verified)
 - `isLegacyPrivatePlaybackFallbackAllowed()` from `lib/modules/playback/domain/playback-policy.ts` always returns `false` — do not bypass it or check `ALLOW_LEGACY_PRIVATE_FALLBACK` env directly.
 - **Never CDN-cache `/api/media-source` responses** (no `s-maxage`/`public` Cache-Control). The response carries a per-viewer `playbackSessionId` bound to the requester fingerprint.
 
+### 4.3a Mux Delivery-Cost Guardrails (added 2026-07-22)
+
+Mux is billed pay-as-you-go per minute delivered, so an uncontrolled traffic spike directly increases cost. Every guardrail below is env-var gated and a strict no-op (1080p, never degraded, no extra Mux/Redis calls) unless explicitly configured — never assume any of this is "on" without checking the relevant env var.
+
+- **Resolution capping.** `resolveMuxMaxResolution()` (`lib/modules/video/domain/mux-delivery.policy.ts`) resolves the `max_resolution` query param appended to every `stream.mux.com/{playbackId}.m3u8` URL built in `playback.service.ts`. Signed-in/patron viewers get `MUX_MAX_RESOLUTION` (default 1080p); guests get the stricter of `MUX_MAX_RESOLUTION_ANONYMOUS` (default 720p) and that cap — anonymous can never exceed the signed-in cap even if misconfigured.
+- **Global circuit breaker.** `lib/modules/video/infrastructure/mux-circuit-breaker.ts` tracks a single global (not per-user) Mux playback-event counter via the existing `lib/rate-limit.ts` store. Disabled unless `MUX_GLOBAL_SOFT_LIMIT_PER_HOUR` is set. When tripped, `resolveMuxMaxResolution()` additionally clamps to `MUX_DEGRADED_MAX_RESOLUTION` (default 480p) site-wide until the rolling hour resets — a soft degrade, playback never stops. `record-playback-event.use-case.ts` feeds the counter for `sourceKind === 'mux'` events, fire-and-forget.
+- **Video encoding tier.** `mux.client.ts` explicitly sets `video_quality: "basic"` on both `createDirectUpload()` and `createAssetFromUrl()` — do not remove this or let it fall back to the Mux account dashboard default, which could silently start billing pricier encodes.
+- **Budget alerts.** `/api/cron/mux-usage-alert` (daily, `check-mux-usage-budget.use-case.ts`) sums Mux's daily Usage Export CSVs for the current month and alerts at 50/80/100% of `MUX_MONTHLY_DELIVERY_MINUTES_BUDGET` and/or `MUX_MONTHLY_BUDGET_USD`. This requires Mux "Usage Exports" to be enabled for the account via Mux support first, and the delivery-column detection matches by CSV header name (Mux doesn't publish an exact schema) — treat its numbers as an estimate, not the authoritative bill; keep Mux's own dashboard billing alerts as the real safety net.
+- Alerts fire via the existing `recordAlert()` plus an additive `notifyAlertWebhook()` (`lib/observability.ts`) that POSTs a Slack-compatible payload to `ALERT_WEBHOOK_URL` if set — this is separate from `recordAlert()` itself so unrelated existing `recordAlert()` call sites don't gain a new outbound network call.
+- `app/components/VideoPlayer.tsx` pauses on `IntersectionObserver` (25% visibility threshold) and `document.visibilitychange` (backgrounded tab) to stop billing delivery minutes for video no one is watching. It never auto-resumes on return — only the user pressing play again restarts playback, by design.
+
 ### 4.4 Access Checks
 
 Access is checked via `checkVideoAccess()` in `lib/modules/access/`. It reads `PatronGrant`, not `User.isPatron`. Actor type comes from `getActorFromAuth()`.
@@ -272,6 +283,7 @@ Co robi ten cron: co 15 minut szuka płatności `PENDING` starszych niż 15 min 
 |---|---|---|
 | `/api/cron/stripe-reconciliation` | `*/15 * * * *` | Recovers stuck `PENDING` payments by re-running `fulfillPayment()` or marking as failed |
 | `/api/cron/video-provider-jobs/reconcile` | `0 4 * * *` (registered; daily works on Hobby) | Polls provider status for stuck import jobs (missed webhooks), restarts imports that never reached the provider, fails them with a clear reason after max attempts |
+| `/api/cron/mux-usage-alert` | `0 6 * * *` (registered; daily works on Hobby) | Sums Mux daily usage-export CSVs for the current month and alerts at 50/80/100% of the configured budget — see §4.3a. No-op unless a budget env var is configured. |
 
 The daily cron is only the safety net for video provider jobs. The primary recovery path is on-demand: `POST /api/admin/videos/[id]/reconcile` now runs the provider-job reconciler scoped to that video before route policy, and the admin media panel calls it from the "Odśwież" button plus an automatic 15s poll while the pipeline is in `CREATING_SOURCES`/`PARTIALLY_READY`. Do not revert the media panel to a passive DB-state read — without provider polling, a missed webhook leaves targets in "Tworzę źródło" forever.
 
@@ -300,6 +312,8 @@ The daily cron is only the safety net for video provider jobs. The primary recov
 | `lib/modules/access/application/check-video-access.use-case.ts` | Gatekeeper for video access |
 | `lib/modules/playback/application/playback.service.ts` | Resolves playable video source based on access plan |
 | `lib/modules/playback/domain/playback-policy.ts` | Policy gates for legacy private playback fallback (always false) |
+| `lib/modules/video/domain/mux-delivery.policy.ts` | Mux `max_resolution` cost-cap resolution (see §4.3a) |
+| `lib/modules/video/infrastructure/mux-circuit-breaker.ts` | Global Mux delivery circuit breaker (see §4.3a) |
 | `app/api/media/[...path]/route.ts` | Media proxy using playback policy |
 | `app/api/webhooks/stripe/route.ts` | Stripe webhook handler |
 | `app/api/webhooks/cloudflare/route.ts` | Cloudflare Stream webhook handler |
