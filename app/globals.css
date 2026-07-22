@@ -765,13 +765,13 @@
   .mc-bar {
     display:flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 0;
     width: 100%;
     background: rgba(0,0,0,.72);
     backdrop-filter: blur(14px) saturate(1.5);
     -webkit-backdrop-filter: blur(14px) saturate(1.5);
     border-radius: 0;
-    padding: 0 8px 8px;
+    padding: 0 8px 2px;
     box-sizing: border-box;
   }
 
@@ -781,7 +781,7 @@
     display:flex;
     align-items:center;
     justify-content:space-between;
-    height: 42px;
+    height: 38px;
     gap: 2px;
   }
 
@@ -790,7 +790,7 @@
 
   .mc-btn {
     display:grid; place-items:center;
-    width:42px; height:42px;
+    width:38px; height:38px;
     border:0; border-radius:8px;
     background:transparent;
     color: rgba(255,255,255,.92);
@@ -806,13 +806,12 @@
   }
 
   /* Material Symbols (filled) — bold, optically-centered glyphs, YouTube-style. */
-  .mc-icon { width:26px; height:26px; flex-shrink:0; }
+  .mc-icon { width:24px; height:24px; flex-shrink:0; }
 
   .mc-time {
     display:flex; align-items:center; gap:4px;
     margin-left:2px;
     color: rgba(255,255,255,.9);
-    font-family: var(--font-geist-mono, ui-monospace), monospace;
     font-size:12px; font-weight:600;
     font-variant-numeric: tabular-nums;
     white-space:nowrap;
@@ -1026,7 +1025,7 @@
   .mc-menu-check { width:16px; height:16px; color:rgba(255,255,255,.7); }
 
   .polutek-vidstack-player .vds-captions {
-    bottom:92px;
+    bottom:76px;
     font-family:var(--font-geist-sans, ui-sans-serif), sans-serif;
   }
 
@@ -1034,15 +1033,15 @@
 
   @media (max-width:640px) {
     .mc-bottom { padding:0; }
-    .mc-bar { border-radius:0; padding:0 6px 6px; gap:4px; }
+    .mc-bar { border-radius:0; padding:0 6px 2px; }
     .mc-row { gap:2px; }
-    /* .mc-btn/.mc-icon keep their base 42px/26px size — icons stay bold and
+    /* .mc-btn/.mc-icon keep their base 38px/24px size — icons stay bold and
        legible on mobile rather than shrinking further. */
     .mc-time { font-size:11px; margin-left:0; }
     .mc-time-sep, .mc-time-dur { display:none; }
     .mc-volume { display:none; }
     .mc-hero { width:52px; height:52px; }
-    .polutek-vidstack-player .vds-captions { bottom:82px; }
+    .polutek-vidstack-player .vds-captions { bottom:70px; }
   }
 
   @media (prefers-reduced-motion:reduce) {
