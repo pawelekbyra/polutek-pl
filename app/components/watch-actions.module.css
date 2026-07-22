@@ -78,12 +78,12 @@
   position: relative;
   min-height: 42px;
   overflow: hidden;
-  border: 1px solid var(--cm-blue-62-black);
-  background: var(--chan-blue) !important;
+  border: 1px solid var(--chan-ink);
+  background: var(--chan-ink) !important;
   color: white !important;
   box-shadow:
     inset 0 1px 0 var(--cm-white-30),
-    0 8px 18px -8px var(--cm-blue-60) !important;
+    0 8px 18px -8px rgba(0, 0, 0, 0.5) !important;
 }
 
 .secondaryAction,
@@ -117,11 +117,11 @@
 }
 
 .subscribeAction:hover {
-  border-color: var(--cm-blue-70-black);
-  background: var(--cm-blue-90-black) !important;
+  border-color: var(--chan-line-soft);
+  background: var(--chan-line-soft) !important;
   box-shadow:
     inset 0 1px 0 var(--cm-white-30),
-    0 12px 24px -8px var(--cm-blue-62) !important;
+    0 12px 24px -8px rgba(0, 0, 0, 0.55) !important;
   filter: none;
 }
 
@@ -131,6 +131,10 @@
 .subscribeAction:focus-visible {
   outline: 3px solid var(--cm-blue-22-2);
   outline-offset: 2px;
+}
+
+.subscribeAction:focus-visible {
+  outline: 3px solid rgba(0, 0, 0, 0.3);
 }
 
 .secondaryAction span,
