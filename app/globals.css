@@ -316,7 +316,7 @@
     --accent-ring: 221 83% 53% / 0.18;
 
     /* ===== Neutral background ===== */
-    --background: 0 0% 100%;
+    --background: 220 33% 98%;
     --foreground: 240 10% 3.9%;            /* #09090B Zinc-950 equivalent */
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
@@ -336,7 +336,7 @@
 
     /* Application UI tokens shared by the VOD channel and installable PWA. */
     --chan-card: #ffffff;
-    --chan-nav: #ffffff;
+    --chan-nav: #f7f9fc;
     --chan-surface: #f0f3f8;
     --chan-surface-raised: #ffffff;
     --chan-line: #e1e6ef;
@@ -477,6 +477,8 @@
     --cm-line-86: color-mix(in srgb, var(--chan-line) 86%, transparent);
     --cm-line-90: color-mix(in srgb, var(--chan-line) 90%, transparent);
     --cm-line-92: color-mix(in srgb, var(--chan-line) 92%, transparent);
+    --cm-nav-70: color-mix(in srgb, var(--chan-nav) 70%, transparent);
+    --cm-nav-78: color-mix(in srgb, var(--chan-nav) 78%, transparent);
     --cm-surface-62-white: color-mix(in srgb, var(--chan-surface) 62%, white);
     --cm-surface-66-white: color-mix(in srgb, var(--chan-surface) 66%, white);
     --cm-surface-80-white: color-mix(in srgb, var(--chan-surface) 80%, white);
@@ -592,6 +594,8 @@
       --cm-line-86: rgba(225, 230, 239, 0.86);
       --cm-line-90: rgba(225, 230, 239, 0.9);
       --cm-line-92: rgba(225, 230, 239, 0.92);
+      --cm-nav-70: rgba(247, 249, 252, 0.7);
+      --cm-nav-78: rgba(247, 249, 252, 0.78);
       --cm-surface-62-white: rgb(246, 248, 251);
       --cm-surface-66-white: rgb(245, 247, 250);
       --cm-surface-80-white: rgb(243, 245, 249);
@@ -672,11 +676,18 @@
 
 @layer components {
   .polutek-watch-nav {
-    background: var(--chan-card);
-    border-bottom: 1px solid var(--cm-line-70);
+    background:
+      radial-gradient(circle at top left, var(--cm-blue-7), transparent 34%),
+      radial-gradient(circle at 88% 0%, var(--cm-amber-5), transparent 28%),
+      linear-gradient(180deg, var(--cm-card-82), var(--cm-nav-70) 96%),
+      var(--cm-nav-78);
+    border-bottom: 1px solid var(--cm-line-66);
     box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
       0 1px 0 rgba(23, 23, 23, .03),
-      0 10px 30px -18px rgba(23, 23, 23, 0.14);
+      0 10px 30px -18px rgba(23, 23, 23, 0.18);
+    backdrop-filter: blur(22px) saturate(1.35);
+    -webkit-backdrop-filter: blur(22px) saturate(1.35);
   }
 
   .polutek-watch-nav input::placeholder {
