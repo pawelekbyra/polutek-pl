@@ -11,6 +11,7 @@ const isPublicRoute = createRouteMatcher([
   '/pl/regulamin',
   '/pl/polityka-prywatnosci',
   '/pl/sklep',
+  '/pl/secretproject',
   '/en',
   '/en/search',
   '/en/watch/(.*)',
@@ -18,12 +19,15 @@ const isPublicRoute = createRouteMatcher([
   '/en/terms',
   '/en/privacy-policy',
   '/en/shop',
+  '/en/secretproject',
   '/search',
   '/watch/(.*)',
   '/channel/(.*)',
   '/regulamin',
   '/polityka-prywatnosci',
   '/sklep',
+  // Public crowdfunding campaign page (bare path is locale-rewritten to /pl).
+  '/secretproject',
   // PWA manifest: the middleware matcher excludes .webmanifest but not .json,
   // so /manifest.json must be explicitly public or anonymous visitors get 404.
   '/manifest.json',
