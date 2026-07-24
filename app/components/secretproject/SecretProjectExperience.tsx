@@ -14,19 +14,13 @@ import {
   Users,
 } from "lucide-react";
 import type { PublicVideoDTO } from "@/app/types/video";
+import type { SecretProjectFunding } from "@/lib/modules/campaign/secret-project-funding";
 import PremiumWrapper from "../PremiumWrapper";
 import VideoPlayer from "../VideoPlayer";
 import { useAuthModal } from "../auth/AuthModalProvider";
 import { useLanguage } from "../LanguageContext";
 import SecretPledgeBox from "./SecretPledgeBox";
 import styles from "./SecretProject.module.css";
-
-export interface SecretProjectFunding {
-  raisedPln: number;
-  goalPln: number;
-  backers: number;
-  daysLeft: number;
-}
 
 interface SecretProjectExperienceProps {
   pitchVideo: PublicVideoDTO | null;

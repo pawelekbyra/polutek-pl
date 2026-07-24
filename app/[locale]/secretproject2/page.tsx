@@ -9,7 +9,7 @@ import {
   loadSecretProjectViewerIsPatron,
   pickSecretProjectVideos,
 } from "@/lib/modules/campaign/secret-project-funding";
-import SecretProjectExperience from "@/app/components/secretproject/SecretProjectExperience";
+import SecretProject2Experience from "@/app/components/secretproject2/SecretProject2Experience";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,12 @@ const PAGE_TITLE = "I raise money for my secret project";
 const PAGE_DESCRIPTION =
   "Kampania crowdfundingowa Secret Project — jednorazowa wpłata odblokowuje tajny materiał wideo dożywotnio.";
 
-/** Campaign display settings — retune here when the campaign changes. */
+/**
+ * Same underlying campaign as /secretproject — same Payment rows, same goal
+ * and deadline — just a different, light editorial presentation. Keep these
+ * two constants in sync with app/[locale]/secretproject/page.tsx when the
+ * campaign's numbers change.
+ */
 const CAMPAIGN_GOAL_PLN = 100_000;
 const CAMPAIGN_END = new Date("2026-09-30T23:59:59+02:00");
 
@@ -32,11 +37,11 @@ export async function generateMetadata(props: {
     title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,
     alternates: {
-      canonical: `${baseUrl}${rawLocale === "en" ? "/en" : ""}/secretproject`,
+      canonical: `${baseUrl}${rawLocale === "en" ? "/en" : ""}/secretproject2`,
       languages: {
-        pl: `${baseUrl}/secretproject`,
-        en: `${baseUrl}/en/secretproject`,
-        "x-default": `${baseUrl}/secretproject`,
+        pl: `${baseUrl}/secretproject2`,
+        en: `${baseUrl}/en/secretproject2`,
+        "x-default": `${baseUrl}/secretproject2`,
       },
     },
     openGraph: {
@@ -47,7 +52,7 @@ export async function generateMetadata(props: {
   };
 }
 
-export default async function SecretProjectPage(props: {
+export default async function SecretProject2Page(props: {
   params: Promise<{ locale: string }>;
 }) {
   const { locale: rawLocale } = await props.params;
@@ -69,7 +74,7 @@ export default async function SecretProjectPage(props: {
   const { pitchVideo, rewardVideo } = pickSecretProjectVideos(mainVideo, allVideos);
 
   return (
-    <SecretProjectExperience
+    <SecretProject2Experience
       pitchVideo={pitchVideo}
       rewardVideo={rewardVideo}
       funding={funding}
