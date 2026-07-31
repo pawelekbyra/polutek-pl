@@ -561,10 +561,934 @@
   100% { transform: translateX(-50%); }
 }
 
+/* ---------- 11. Wax Seal / Envelope ---------- */
+.wax {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #efe4d0;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, .015) 0 2px, transparent 2px 4px);
+}
+.waxEnvelope {
+  position: relative;
+  width: min(88%, 380px);
+  padding: clamp(28px, 6cqi, 44px) clamp(20px, 5cqi, 32px);
+  background: #f6ecd9;
+  border: 1px solid rgba(120, 90, 40, .25);
+  box-shadow: 0 20px 40px -20px rgba(60, 40, 10, .35);
+  text-align: center;
+}
+.waxSeal {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #dc2626, #7f1d1d 76%);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, .35), inset 0 -3px 6px rgba(0, 0, 0, .3);
+  color: #fde68a;
+}
+.wax.patron .waxSeal { background: radial-gradient(circle at 35% 30%, #f59e0b, #92400e 76%); color: #fff7e6; }
+.waxSeal svg { width: 50%; height: 50%; }
+.waxKicker {
+  margin-top: 20px;
+  font-size: clamp(9px, 1.6cqi, 10.5px);
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: #78350f;
+}
+.waxTitle {
+  font-family: Georgia, serif;
+  font-size: clamp(1.2rem, 5cqi, 1.9rem);
+  color: #3f2d12;
+  margin: 6px 0;
+}
+.waxCta {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: clamp(9px, 1.6cqi, 11px);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #7f1d1d;
+  border-bottom: 1px solid currentColor;
+}
+.wax.patron .waxCta { color: #92400e; }
+
+/* ---------- 12. Holographic Foil ---------- */
+.holo {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(120deg, #6d28d9, #2563eb 35%, #06b6d4 55%, #f59e0b 75%, #ec4899 100%);
+  background-size: 260% 260%;
+  animation: holo-shift 7s ease-in-out infinite;
+}
+.holoCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: clamp(20px, 5cqi, 34px) clamp(24px, 6cqi, 40px);
+  border-radius: 20px;
+  background: rgba(10, 10, 20, .38);
+  border: 1px solid rgba(255, 255, 255, .5);
+  backdrop-filter: blur(6px);
+  text-align: center;
+  color: #fff;
+}
+.holoBadge { width: clamp(30px, 8cqi, 42px); height: clamp(30px, 8cqi, 42px); filter: drop-shadow(0 2px 8px rgba(0,0,0,.4)); }
+.holoTitle { font-size: clamp(1.1rem, 5cqi, 1.8rem); font-weight: 800; text-transform: uppercase; }
+.holoCta {
+  margin-top: 4px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .18);
+  border: 1px solid rgba(255, 255, 255, .5);
+  font-size: clamp(9px, 1.6cqi, 11px);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+@keyframes holo-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ---------- 13. Origami Paper Fold ---------- */
+.origami {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef2f7;
+}
+.origamiFold {
+  position: absolute;
+  inset: 0;
+}
+.origamiFold span {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0 0, 55% 0, 20% 100%, 0 100%);
+  background: linear-gradient(135deg, #93c5fd, #2563eb);
+}
+.origami.patron .origamiFold span { background: linear-gradient(135deg, #fde68a, #f59e0b); }
+.origamiFold span:nth-child(2) {
+  clip-path: polygon(55% 0, 100% 0, 100% 40%, 20% 100%, 0 100%, 0 100%);
+  background: linear-gradient(135deg, #60a5fa, #1d4ed8);
+  opacity: .9;
+}
+.origami.patron .origamiFold span:nth-child(2) { background: linear-gradient(135deg, #fbbf24, #b45309); }
+.origamiFold span:nth-child(3) {
+  clip-path: polygon(100% 40%, 100% 100%, 20% 100%);
+  background: linear-gradient(135deg, #1e40af, #172554);
+  opacity: .85;
+}
+.origami.patron .origamiFold span:nth-child(3) { background: linear-gradient(135deg, #92400e, #451a03); }
+.origamiContent {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .88);
+  box-shadow: 0 18px 40px -18px rgba(15, 23, 42, .35);
+  text-align: center;
+}
+.origamiTitle { font-size: clamp(1.05rem, 4.6cqi, 1.6rem); font-weight: 800; color: #111827; }
+.origamiCta {
+  margin-top: 2px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: #111827;
+  color: #fff;
+  font-size: clamp(9px, 1.6cqi, 11px);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+/* ---------- 14. Retro Terminal ---------- */
+.term {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #04140a;
+  overflow: hidden;
+  font-family: var(--font-geist-mono), monospace;
+}
+.termScan {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, .3) 0 1px, transparent 1px 3px);
+  pointer-events: none;
+}
+.termGlow {
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(circle at 50% 50%, rgba(34, 197, 94, .12), transparent 60%);
+}
+.term.patron .termGlow { background: radial-gradient(circle at 50% 50%, rgba(251, 191, 36, .14), transparent 60%); }
+.termBox {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: clamp(16px, 4cqi, 26px);
+  border: 1px solid rgba(34, 197, 94, .5);
+  color: #4ade80;
+}
+.term.patron .termBox { border-color: rgba(251, 191, 36, .5); color: #fde68a; }
+.termLine { font-size: clamp(10px, 1.8cqi, 13px); letter-spacing: .04em; }
+.termTitle { font-size: clamp(1rem, 4.4cqi, 1.6rem); font-weight: 700; margin: 4px 0; }
+.termCursor {
+  display: inline-block;
+  width: 8px;
+  height: 1em;
+  background: currentColor;
+  margin-left: 2px;
+  animation: term-blink 1s steps(1) infinite;
+  vertical-align: text-bottom;
+}
+@keyframes term-blink { 50% { opacity: 0; } }
+
+/* ---------- 15. Constellation ---------- */
+.constellation {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 30%, #14213d, #05070f 75%);
+  overflow: hidden;
+}
+.constDot {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #93c5fd;
+  animation: const-twinkle 3.4s ease-in-out infinite;
+}
+.constellation.patron .constDot { background: #fde68a; }
+.constContent {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  color: #e2e8f0;
+}
+.constIcon { color: #93c5fd; width: clamp(28px, 7cqi, 40px); height: clamp(28px, 7cqi, 40px); }
+.constellation.patron .constIcon { color: #fde68a; }
+.constTitle { font-size: clamp(1.1rem, 5cqi, 1.8rem); font-weight: 300; letter-spacing: .04em; }
+.constTitle strong { font-weight: 700; }
+.constCta { font-size: clamp(9px, 1.6cqi, 11px); letter-spacing: .2em; text-transform: uppercase; opacity: .8; }
+@keyframes const-twinkle {
+  0%, 100% { opacity: .25; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.6); }
+}
+
+/* ---------- 16. Hand-drawn Sketch ---------- */
+.sketch {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fdfbf3;
+  padding: 20px;
+}
+.sketchCard {
+  position: relative;
+  padding: clamp(20px, 5cqi, 34px);
+  border: 2.5px solid #111827;
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  text-align: center;
+  background: #fff;
+}
+.sketch.patron .sketchCard { border-color: #92400e; }
+.sketchIcon { color: #2563eb; width: clamp(30px, 7cqi, 42px); height: clamp(30px, 7cqi, 42px); }
+.sketch.patron .sketchIcon { color: #f59e0b; }
+.sketchTitle {
+  font-family: var(--font-geist-sans), sans-serif;
+  font-size: clamp(1.05rem, 4.6cqi, 1.7rem);
+  font-weight: 700;
+  color: #111827;
+  margin: 8px 0;
+}
+.sketchCta {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 6px 14px;
+  border: 2px solid #111827;
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  font-size: clamp(9px, 1.6cqi, 11px);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.sketch.patron .sketchCta { border-color: #92400e; }
+
+/* ---------- 17. Vaporwave Grid ---------- */
+.vapor {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #2e1065 0%, #7c3aed 45%, #f0abfc 75%, #fef08a 100%);
+}
+.vapor.patron { background: linear-gradient(180deg, #451a03 0%, #b45309 45%, #fbbf24 75%, #fef9c3 100%); }
+.vaporSun {
+  position: absolute;
+  left: 50%;
+  bottom: 30%;
+  width: clamp(90px, 24cqi, 160px);
+  height: clamp(90px, 24cqi, 160px);
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #f472b6, #facc15);
+  box-shadow: 0 0 60px rgba(244, 114, 182, .6);
+}
+.vapor.patron .vaporSun { background: linear-gradient(180deg, #fde047, #f97316); box-shadow: 0 0 60px rgba(249, 115, 22, .6); }
+.vaporGrid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 45%;
+  background-image:
+    linear-gradient(rgba(15, 3, 40, .8) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 3, 40, .8) 1px, transparent 1px);
+  background-size: 40px 24px;
+  transform: perspective(220px) rotateX(58deg);
+  transform-origin: bottom;
+}
+.vaporContent {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  padding-top: clamp(10px, 3cqi, 20px);
+}
+.vaporTitle {
+  font-size: clamp(1.2rem, 5.6cqi, 2.1rem);
+  font-weight: 800;
+  color: #fff;
+  text-transform: uppercase;
+  text-shadow: 0 0 18px rgba(244, 114, 182, .8), 2px 2px 0 #7c3aed;
+}
+.vapor.patron .vaporTitle { text-shadow: 0 0 18px rgba(249, 115, 22, .8), 2px 2px 0 #92400e; }
+.vaporCta {
+  padding: 7px 18px;
+  border-radius: 2px;
+  background: rgba(15, 3, 40, .5);
+  border: 1px solid rgba(255, 255, 255, .6);
+  color: #fff;
+  font-size: clamp(9px, 1.6cqi, 11px);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+/* ---------- 18. Newspaper Classified ---------- */
+.classified {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ece7da;
+  padding: 20px;
+}
+.classifiedBox {
+  position: relative;
+  width: min(90%, 340px);
+  padding: clamp(16px, 4cqi, 26px);
+  border: 1px solid #111827;
+  background: #f7f4ea;
+  font-family: Georgia, serif;
+  text-align: center;
+}
+.classifiedBox::before,
+.classifiedBox::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  height: 1px;
+  background: #111827;
+}
+.classifiedBox::before { top: 6px; }
+.classifiedBox::after { bottom: 6px; }
+.classifiedKicker {
+  font-size: clamp(9px, 1.6cqi, 10.5px);
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: #57534e;
+}
+.classifiedTitle {
+  font-size: clamp(1.1rem, 4.8cqi, 1.7rem);
+  font-weight: 700;
+  color: #111827;
+  margin: 8px 0;
+}
+.classifiedStamp {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 12px;
+  border: 2px solid #b91c1c;
+  color: #b91c1c;
+  font-weight: 800;
+  font-size: clamp(10px, 1.8cqi, 12px);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  transform: rotate(-6deg);
+}
+.classified.patron .classifiedStamp { border-color: #92400e; color: #92400e; }
+
+/* ---------- 19. Membership Card ---------- */
+.card3d {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e7ebf3;
+}
+.card3d.patron { background: #fdf1dc; }
+.cardBody {
+  position: relative;
+  width: min(85%, 340px);
+  aspect-ratio: 1.6;
+  border-radius: 16px;
+  padding: clamp(14px, 4cqi, 22px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  box-shadow: 0 20px 40px -18px rgba(15, 23, 42, .5);
+  color: #fff;
+  overflow: hidden;
+}
+.card3d.patron .cardBody { background: linear-gradient(135deg, #78350f, #451a03); }
+.cardBody::after {
+  content: "";
+  position: absolute;
+  inset: -40% -10%;
+  background: linear-gradient(75deg, transparent 40%, rgba(255, 255, 255, .12) 50%, transparent 60%);
+}
+.cardChip {
+  width: 30px;
+  height: 22px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #fde68a, #d97706);
+}
+.cardTitle { font-size: clamp(.95rem, 4.2cqi, 1.4rem); font-weight: 800; text-transform: uppercase; }
+.cardMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-size: clamp(8.5px, 1.5cqi, 10px);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  opacity: .75;
+}
+
+/* ---------- 20. Popup Book Layers ---------- */
+.popup {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f2f0ea;
+  perspective: 700px;
+}
+.popupLayer {
+  position: absolute;
+  border-radius: 18px;
+  box-shadow: 0 16px 30px -16px rgba(15, 23, 42, .3);
+}
+.popupLayer.back {
+  width: 62%;
+  height: 62%;
+  background: #dbeafe;
+  transform: translateY(6%) rotateX(4deg);
+}
+.popup.patron .popupLayer.back { background: #fde8b8; }
+.popupLayer.mid {
+  width: 48%;
+  height: 48%;
+  background: #93c5fd;
+  transform: translateY(2%) rotateX(2deg);
+}
+.popup.patron .popupLayer.mid { background: #fbbf24; }
+.popupContent {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: clamp(16px, 4cqi, 26px);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 14px 30px -14px rgba(15, 23, 42, .35);
+  text-align: center;
+}
+.popupTitle { font-size: clamp(1rem, 4.4cqi, 1.5rem); font-weight: 800; color: #111827; }
+.popupCta {
+  margin-top: 2px;
+  font-size: clamp(9px, 1.6cqi, 11px);
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #2563eb;
+}
+.popup.patron .popupCta { color: #92400e; }
+
+/* ---------- 21. Radial Sunburst ---------- */
+.sunburst {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d1b2a;
+  overflow: hidden;
+}
+.sunburstRays {
+  position: absolute;
+  width: 200%;
+  aspect-ratio: 1;
+  background: repeating-conic-gradient(rgba(96, 165, 250, .16) 0deg 4deg, transparent 4deg 12deg);
+  animation: sun-rotate 60s linear infinite;
+}
+.sunburst.patron .sunburstRays { background: repeating-conic-gradient(rgba(251, 191, 36, .18) 0deg 4deg, transparent 4deg 12deg); }
+.sunburstBadge {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: clamp(64px, 16cqi, 96px);
+  height: clamp(64px, 16cqi, 96px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #60a5fa, #1d4ed8 75%);
+  box-shadow: 0 0 40px rgba(96, 165, 250, .55);
+  color: #fff;
+  margin-bottom: 14px;
+}
+.sunburst.patron .sunburstBadge { background: radial-gradient(circle at 35% 30%, #fbbf24, #b45309 75%); box-shadow: 0 0 40px rgba(251, 191, 36, .55); }
+.sunburstBadge svg { width: 45%; height: 45%; }
+.sunburstContent { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.sunburstTitle { font-size: clamp(1.1rem, 5cqi, 1.9rem); font-weight: 800; color: #fff; text-transform: uppercase; }
+.sunburstCta { margin-top: 8px; font-size: clamp(9px, 1.6cqi, 11px); letter-spacing: .2em; text-transform: uppercase; color: rgba(255, 255, 255, .75); }
+@keyframes sun-rotate { to { transform: rotate(360deg); } }
+
+/* ---------- 22. Morse Signal ---------- */
+.morse {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #101820;
+}
+.morseRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 14px;
+}
+.morseRow span {
+  background: #38bdf8;
+  border-radius: 2px;
+}
+.morse.patron .morseRow span { background: #fbbf24; }
+.morseRow span:nth-child(odd) { width: 6px; height: 6px; border-radius: 50%; }
+.morseRow span:nth-child(even) { width: 18px; height: 6px; }
+.morseDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #38bdf8;
+  margin-bottom: 12px;
+  animation: morse-pulse 1.6s ease-in-out infinite;
+}
+.morse.patron .morseDot { background: #fbbf24; }
+.morseContent { display: flex; flex-direction: column; align-items: center; text-align: center; color: #e2e8f0; }
+.morseTitle { font-size: clamp(1.05rem, 4.8cqi, 1.8rem); font-weight: 700; }
+.morseCta {
+  margin-top: 10px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: clamp(9px, 1.6cqi, 11px);
+  letter-spacing: .1em;
+  color: #7dd3fc;
+}
+.morse.patron .morseCta { color: #fde68a; }
+@keyframes morse-pulse {
+  0%, 100% { opacity: .35; box-shadow: 0 0 0 rgba(56, 189, 248, 0); }
+  50% { opacity: 1; box-shadow: 0 0 16px rgba(56, 189, 248, .7); }
+}
+
+/* ---------- 23. Watercolor Wash ---------- */
+.water {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fdfcf9;
+  overflow: hidden;
+}
+.waterBlob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(24px);
+  opacity: .55;
+  mix-blend-mode: multiply;
+}
+.waterBlob.b1 { width: 45%; aspect-ratio: 1; top: -8%; left: -6%; background: #93c5fd; }
+.waterBlob.b2 { width: 40%; aspect-ratio: 1; bottom: -10%; right: -4%; background: #60a5fa; }
+.waterBlob.b3 { width: 30%; aspect-ratio: 1; top: 30%; left: 55%; background: #bfdbfe; }
+.water.patron .waterBlob.b1 { background: #fde68a; }
+.water.patron .waterBlob.b2 { background: #fbbf24; }
+.water.patron .waterBlob.b3 { background: #fef3c7; }
+.waterContent {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  color: #1f2937;
+}
+.waterIcon { color: #2563eb; width: clamp(28px, 7cqi, 40px); height: clamp(28px, 7cqi, 40px); }
+.water.patron .waterIcon { color: #b45309; }
+.waterTitle { font-family: Georgia, serif; font-size: clamp(1.1rem, 5cqi, 1.8rem); }
+.waterCta {
+  margin-top: 4px;
+  font-size: clamp(9px, 1.6cqi, 11px);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #1f2937;
+  border-bottom: 1px solid currentColor;
+}
+
+/* ---------- 24. Wireframe Cube ---------- */
+.wire {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0e17;
+  perspective: 600px;
+}
+.wireCube {
+  position: relative;
+  width: clamp(56px, 14cqi, 84px);
+  height: clamp(56px, 14cqi, 84px);
+  margin-bottom: 18px;
+  transform-style: preserve-3d;
+  animation: wire-spin 10s linear infinite;
+}
+.wireFace {
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid rgba(96, 165, 250, .8);
+  background: rgba(96, 165, 250, .04);
+}
+.wire.patron .wireFace { border-color: rgba(251, 191, 36, .8); }
+.wireFace.f1 { transform: translateZ(30px); }
+.wireFace.f2 { transform: rotateY(90deg) translateZ(30px); }
+.wireFace.f3 { transform: rotateX(90deg) translateZ(30px); }
+.wireContent { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.wireTitle { font-size: clamp(1.05rem, 4.8cqi, 1.8rem); font-weight: 700; color: #e2e8f0; }
+.wireCta {
+  margin-top: 8px;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: clamp(9px, 1.6cqi, 11px);
+  letter-spacing: .1em;
+  color: #93c5fd;
+}
+.wire.patron .wireCta { color: #fde68a; }
+@keyframes wire-spin {
+  from { transform: rotateX(0deg) rotateY(0deg); }
+  to { transform: rotateX(360deg) rotateY(360deg); }
+}
+
+/* ---------- 25. Torn Paper Edge ---------- */
+.torn {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #d9dee7;
+  padding: 20px;
+}
+.torn.patron { background: #f2e2c4; }
+.tornCard {
+  width: min(88%, 360px);
+  padding: clamp(20px, 5cqi, 34px);
+  background: #fff;
+  clip-path: polygon(
+    0% 4%, 6% 0%, 14% 3%, 22% 0%, 30% 4%, 38% 1%, 46% 4%, 54% 0%, 62% 3%, 70% 0%, 78% 4%, 86% 1%, 94% 3%, 100% 0%,
+    100% 96%, 94% 100%, 86% 97%, 78% 100%, 70% 96%, 62% 100%, 54% 97%, 46% 100%, 38% 96%, 30% 100%, 22% 97%, 14% 100%, 6% 96%, 0% 100%
+  );
+  text-align: center;
+  box-shadow: 0 20px 40px -18px rgba(15, 23, 42, .3);
+}
+.tornTitle { font-size: clamp(1.05rem, 4.8cqi, 1.7rem); font-weight: 800; color: #111827; }
+.tornCta {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 7px 16px;
+  background: #111827;
+  color: #fff;
+  font-size: clamp(9px, 1.6cqi, 11px);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.torn.patron .tornCta { background: #92400e; }
+
+/* ---------- 26. Neon Sign ---------- */
+.neon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(rgba(0, 0, 0, .55), rgba(0, 0, 0, .55)),
+    repeating-linear-gradient(0deg, #2a1810 0 20px, #241410 20px 40px),
+    repeating-linear-gradient(90deg, transparent 0 58px, rgba(0, 0, 0, .35) 58px 62px);
+}
+.neonContent { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.neonIcon {
+  color: #f472b6;
+  width: clamp(30px, 7cqi, 42px);
+  height: clamp(30px, 7cqi, 42px);
+  filter: drop-shadow(0 0 8px #f472b6) drop-shadow(0 0 18px #ec4899);
+  animation: neon-flicker 3.2s infinite;
+}
+.neon.patron .neonIcon { color: #fbbf24; filter: drop-shadow(0 0 8px #fbbf24) drop-shadow(0 0 18px #f59e0b); }
+.neonTitle {
+  font-size: clamp(1.2rem, 5.6cqi, 2.1rem);
+  font-weight: 800;
+  color: #f9a8d4;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px #f472b6, 0 0 22px #ec4899, 0 0 40px #ec4899;
+  animation: neon-flicker 3.2s infinite;
+}
+.neon.patron .neonTitle { color: #fde68a; text-shadow: 0 0 8px #fbbf24, 0 0 22px #f59e0b, 0 0 40px #f59e0b; }
+.neonCta {
+  padding: 6px 16px;
+  border: 2px solid #f9a8d4;
+  border-radius: 6px;
+  color: #f9a8d4;
+  font-size: clamp(9px, 1.6cqi, 11px);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  box-shadow: 0 0 10px rgba(244, 114, 182, .5);
+}
+.neon.patron .neonCta { border-color: #fde68a; color: #fde68a; box-shadow: 0 0 10px rgba(251, 191, 36, .5); }
+@keyframes neon-flicker {
+  0%, 18%, 22%, 25%, 53%, 57%, 100% { opacity: 1; }
+  20%, 24%, 55% { opacity: .4; }
+}
+
+/* ---------- 27. Stained Glass Mosaic ---------- */
+.glassMosaic {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111827;
+  overflow: hidden;
+}
+.mosaicTile {
+  position: absolute;
+  opacity: .55;
+}
+.mosaicTile:nth-child(1) { top: -10%; left: -10%; width: 45%; height: 60%; background: #2563eb; clip-path: polygon(0 0, 100% 0, 40% 100%, 0 70%); }
+.mosaicTile:nth-child(2) { top: -6%; right: -14%; width: 50%; height: 55%; background: #7c3aed; clip-path: polygon(20% 0, 100% 0, 100% 70%, 0 100%); }
+.mosaicTile:nth-child(3) { bottom: -12%; left: -8%; width: 55%; height: 60%; background: #0891b2; clip-path: polygon(0 30%, 60% 0, 100% 100%, 0 100%); }
+.mosaicTile:nth-child(4) { bottom: -14%; right: -10%; width: 48%; height: 58%; background: #db2777; clip-path: polygon(30% 0, 100% 20%, 100% 100%, 0 100%); }
+.glassMosaic.patron .mosaicTile:nth-child(1) { background: #f59e0b; }
+.glassMosaic.patron .mosaicTile:nth-child(2) { background: #dc2626; }
+.glassMosaic.patron .mosaicTile:nth-child(3) { background: #b45309; }
+.glassMosaic.patron .mosaicTile:nth-child(4) { background: #fbbf24; }
+.mosaicContent {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: clamp(18px, 5cqi, 30px);
+  border-radius: 18px;
+  background: rgba(17, 24, 39, .55);
+  border: 1px solid rgba(255, 255, 255, .18);
+  text-align: center;
+  color: #fff;
+}
+.mosaicTitle { font-size: clamp(1.1rem, 5cqi, 1.9rem); font-weight: 800; text-transform: uppercase; }
+.mosaicCta { margin-top: 4px; font-size: clamp(9px, 1.6cqi, 11px); letter-spacing: .16em; text-transform: uppercase; opacity: .8; }
+
+/* ---------- 28. Candlelit Wax Melt ---------- */
+.candle {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 40%, #4a2c12 0%, #1a0f05 75%);
+  overflow: hidden;
+}
+.candleFlicker {
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(circle at 50% 45%, rgba(251, 146, 60, .35), transparent 55%);
+  animation: candle-flicker 4s ease-in-out infinite;
+}
+.candle.patron .candleFlicker { background: radial-gradient(circle at 50% 45%, rgba(251, 191, 36, .4), transparent 55%); }
+.candleContent { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.candleIcon { color: #fdba74; width: clamp(28px, 7cqi, 40px); height: clamp(28px, 7cqi, 40px); }
+.candle.patron .candleIcon { color: #fde68a; }
+.candleTitle { font-family: Georgia, serif; font-size: clamp(1.1rem, 5cqi, 1.9rem); color: #fde8cc; }
+.candleCta { margin-top: 6px; font-size: clamp(9px, 1.6cqi, 11px); letter-spacing: .14em; text-transform: uppercase; color: #fdba74; }
+.candle.patron .candleCta { color: #fde68a; }
+@keyframes candle-flicker {
+  0%, 100% { opacity: .8; transform: scale(1); }
+  25% { opacity: 1; transform: scale(1.03); }
+  50% { opacity: .7; transform: scale(.98); }
+  75% { opacity: .95; transform: scale(1.02); }
+}
+
+/* ---------- 29. Circuit Board ---------- */
+.circuit {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #061a14;
+  background-image:
+    linear-gradient(90deg, rgba(34, 197, 94, .18) 1px, transparent 1px),
+    linear-gradient(rgba(34, 197, 94, .18) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+.circuit.patron {
+  background-image:
+    linear-gradient(90deg, rgba(251, 191, 36, .18) 1px, transparent 1px),
+    linear-gradient(rgba(251, 191, 36, .18) 1px, transparent 1px);
+}
+.circuitNode {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 10px #4ade80;
+  animation: circuit-pulse 2.4s ease-in-out infinite;
+}
+.circuit.patron .circuitNode { background: #fbbf24; box-shadow: 0 0 10px #fbbf24; }
+.circuitContent {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: clamp(18px, 5cqi, 30px);
+  border: 1px solid rgba(74, 222, 128, .4);
+  background: rgba(6, 26, 20, .7);
+  text-align: center;
+}
+.circuit.patron .circuitContent { border-color: rgba(251, 191, 36, .4); }
+.circuitTitle { font-family: var(--font-geist-mono), monospace; font-size: clamp(1rem, 4.6cqi, 1.6rem); color: #bbf7d0; }
+.circuit.patron .circuitTitle { color: #fde68a; }
+.circuitCta { margin-top: 4px; font-family: var(--font-geist-mono), monospace; font-size: clamp(9px, 1.6cqi, 11px); color: #4ade80; letter-spacing: .08em; }
+.circuit.patron .circuitCta { color: #fbbf24; }
+@keyframes circuit-pulse {
+  0%, 100% { opacity: .3; }
+  50% { opacity: 1; }
+}
+
+/* ---------- 30. Embossed Letterpress ---------- */
+.emboss {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e8e3d8;
+}
+.emboss.patron { background: #ecdcb8; }
+.embossContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.embossIcon {
+  color: transparent;
+  width: clamp(36px, 9cqi, 52px);
+  height: clamp(36px, 9cqi, 52px);
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, .7)) drop-shadow(0 -1px 1px rgba(0, 0, 0, .25));
+  opacity: .8;
+  stroke: #6b6153;
+}
+.embossTitle {
+  font-family: Georgia, serif;
+  font-size: clamp(1.2rem, 5.4cqi, 2rem);
+  color: #4b4536;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .8), 0 -1px 1px rgba(0, 0, 0, .25);
+}
+.embossRule { width: 60px; height: 2px; background: rgba(0, 0, 0, .15); box-shadow: 0 1px 0 rgba(255, 255, 255, .6); margin: 4px 0; }
+.embossCta {
+  font-size: clamp(9px, 1.6cqi, 11px);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #6b6153;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hudScan,
   .liquidBlob,
-  .marqueeRow {
+  .marqueeRow,
+  .holo,
+  .sunburstRays,
+  .morseDot,
+  .wireCube,
+  .neonIcon,
+  .neonTitle,
+  .candleFlicker,
+  .circuitNode {
     animation: none;
   }
 }
