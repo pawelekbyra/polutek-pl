@@ -141,10 +141,10 @@ const Navbar = () => {
               <Link
                 href={getLocalizedHref(language, "home")}
                 className="flex h-[38px] shrink-0 items-center gap-0 transition-all hover:opacity-85 active:scale-95"
-                aria-label="www.pawelperfect.pl"
+                aria-label="KUTASHI.COM"
               >
                 <BrandName
-                  className="h-[28px] md:h-[34px]"
+                  className="text-[20px] md:text-[24px]"
                   decorative
                 />
               </Link>

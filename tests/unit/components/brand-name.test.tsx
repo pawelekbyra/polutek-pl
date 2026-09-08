@@ -8,25 +8,25 @@ import BrandName from "@/app/components/BrandName";
 describe("BrandName", () => {
   afterEach(() => cleanup());
 
-  it("renders the glasses logo as an accessible image by default", () => {
+  it("renders the KUTASHI.COM wordmark as an accessible image by default", () => {
     render(<BrandName />);
-    const img = screen.getByRole("img", { name: "www.pawelperfect.pl" });
-    expect(img.getAttribute("src")).toBe("/logo-glasses.svg");
+    const mark = screen.getByRole("img", { name: "KUTASHI.COM" });
+    expect(mark.textContent).toBe("KUTASHI.COM");
   });
 
   it("is decorative when its parent already supplies the accessible name", () => {
     const { container } = render(<BrandName decorative />);
-    const img = container.querySelector("img");
+    const mark = container.querySelector("span");
 
-    expect(img?.getAttribute("alt")).toBe("");
-    expect(img?.getAttribute("aria-hidden")).toBe("true");
+    expect(mark?.getAttribute("aria-hidden")).toBe("true");
+    expect(mark?.hasAttribute("aria-label")).toBe(false);
     expect(screen.queryByRole("img")).toBeNull();
   });
 
   it("lets the caller size the mark via className", () => {
-    render(<BrandName className="h-[28px]" />);
-    const img = screen.getByRole("img", { name: "www.pawelperfect.pl" });
+    render(<BrandName className="text-[20px]" />);
+    const mark = screen.getByRole("img", { name: "KUTASHI.COM" });
 
-    expect(img.className).toContain("h-[28px]");
+    expect(mark.className).toContain("text-[20px]");
   });
 });
