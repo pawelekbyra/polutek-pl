@@ -30,12 +30,18 @@ export default function DonationAmountField({
   onCurrencyChange,
   amountTooLow,
 }: DonationAmountFieldProps) {
+  // Both call sites get the same visible keyboard focus ring (the app's --chan-blue pattern);
+  // the `outline-none` in the per-call-site classes removes the UA outline, so without this a
+  // keyboard user tabbing through the payment amount had no focus indication at all.
+  const focusRing =
+    "rounded-[8px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]";
+
   const currencySelect = (className: string) => (
     <select
       value={selectedCurrency}
       onChange={(e) => onCurrencyChange(e.target.value)}
       aria-label="Currency"
-      className={className}
+      className={`${className} ${focusRing}`}
     >
       {availableCurrencies.map((curr) => (
         <option key={curr} value={curr}>
@@ -74,7 +80,7 @@ export default function DonationAmountField({
               aria-invalid={amountTooLow}
               aria-describedby={amountTooLow ? errorId : undefined}
               placeholder={String(minAmount)}
-              className="font-sans w-full bg-transparent px-16 text-center text-[18px] font-extrabold tabular-nums text-[var(--chan-ink)] outline-none placeholder:text-[var(--chan-line-soft)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className={`font-sans w-full bg-transparent px-16 text-center text-[18px] font-extrabold tabular-nums text-[var(--chan-ink)] outline-none placeholder:text-[var(--chan-line-soft)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none ${focusRing}`}
             />
             <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center">
               {currencySelect("cursor-pointer appearance-none bg-transparent pr-5 font-sans text-[14px] font-bold text-[var(--chan-body)] outline-none")}

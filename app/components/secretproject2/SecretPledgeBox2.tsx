@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import { SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
 import { detectDefaultCurrency } from "@/lib/payments/detect-currency";
 import { useLanguage } from "../LanguageContext";
@@ -306,29 +305,25 @@ export default function SecretPledgeBox2({ viewerIsPatron = false }: SecretPledg
         <Lock size={12} className="ml-1" aria-hidden="true" />
       </p>
 
-      {isMounted &&
-        isCheckoutModalOpen &&
-        (clientSecret || isSuccess) &&
-        createPortal(
-          <CheckoutModal
-            isSuccess={isSuccess}
-            isSyncing={isSyncing}
-            language={language}
-            amount={effectiveAmount}
-            selectedCurrency={selectedCurrency}
-            videoTitle="Secret Project"
-            viewerIsPatron={viewerIsPatron}
-            clientSecret={clientSecret}
-            paymentId={paymentId}
-            paymentUiStatus={paymentUiStatus}
-            userEmail={userEmail}
-            onRetryStatusCheck={handleRetryStatusCheck}
-            stripePromise={checkoutStripePromise}
-            onClose={closeSuccessAndSync}
-            onBackToSite={closeSuccessAndSync}
-          />,
-          document.body,
-        )}
+      {isMounted && isCheckoutModalOpen && (clientSecret || isSuccess) && (
+        <CheckoutModal
+          isSuccess={isSuccess}
+          isSyncing={isSyncing}
+          language={language}
+          amount={effectiveAmount}
+          selectedCurrency={selectedCurrency}
+          videoTitle="Secret Project"
+          viewerIsPatron={viewerIsPatron}
+          clientSecret={clientSecret}
+          paymentId={paymentId}
+          paymentUiStatus={paymentUiStatus}
+          userEmail={userEmail}
+          onRetryStatusCheck={handleRetryStatusCheck}
+          stripePromise={checkoutStripePromise}
+          onClose={closeSuccessAndSync}
+          onBackToSite={closeSuccessAndSync}
+        />
+      )}
 
       <DonationLegalDialog
         open={isRegulaminOpen}

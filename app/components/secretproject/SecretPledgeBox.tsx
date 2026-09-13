@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import { SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
 import { detectDefaultCurrency } from "@/lib/payments/detect-currency";
 import { useLanguage } from "../LanguageContext";
@@ -254,29 +253,25 @@ export default function SecretPledgeBox({ viewerIsPatron = false }: SecretPledge
         </div>
       </div>
 
-      {isMounted &&
-        isCheckoutModalOpen &&
-        (clientSecret || isSuccess) &&
-        createPortal(
-          <CheckoutModal
-            isSuccess={isSuccess}
-            isSyncing={isSyncing}
-            language={language}
-            amount={amount}
-            selectedCurrency={selectedCurrency}
-            videoTitle="Secret Project"
-            viewerIsPatron={viewerIsPatron}
-            clientSecret={clientSecret}
-            paymentId={paymentId}
-            paymentUiStatus={paymentUiStatus}
-            userEmail={userEmail}
-            onRetryStatusCheck={handleRetryStatusCheck}
-            stripePromise={checkoutStripePromise}
-            onClose={closeSuccessAndSync}
-            onBackToSite={closeSuccessAndSync}
-          />,
-          document.body,
-        )}
+      {isMounted && isCheckoutModalOpen && (clientSecret || isSuccess) && (
+        <CheckoutModal
+          isSuccess={isSuccess}
+          isSyncing={isSyncing}
+          language={language}
+          amount={amount}
+          selectedCurrency={selectedCurrency}
+          videoTitle="Secret Project"
+          viewerIsPatron={viewerIsPatron}
+          clientSecret={clientSecret}
+          paymentId={paymentId}
+          paymentUiStatus={paymentUiStatus}
+          userEmail={userEmail}
+          onRetryStatusCheck={handleRetryStatusCheck}
+          stripePromise={checkoutStripePromise}
+          onClose={closeSuccessAndSync}
+          onBackToSite={closeSuccessAndSync}
+        />
+      )}
 
       <DonationLegalDialog
         open={isRegulaminOpen}

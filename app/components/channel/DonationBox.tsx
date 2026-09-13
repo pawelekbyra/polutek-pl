@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
 import { detectDefaultCurrency } from "@/lib/payments/detect-currency";
@@ -331,29 +330,25 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
         </label>
       </div>
 
-      {isMounted &&
-        isCheckoutModalOpen &&
-        (clientSecret || isSuccess) &&
-        createPortal(
-          <CheckoutModal
-            isSuccess={isSuccess}
-            isSyncing={isSyncing}
-            language={language}
-            amount={amount}
-            selectedCurrency={selectedCurrency}
-            videoTitle={videoTitle}
-            viewerIsPatron={viewerIsPatron}
-            clientSecret={clientSecret}
-            paymentId={paymentId}
-            paymentUiStatus={paymentUiStatus}
-            userEmail={userEmail}
-            onRetryStatusCheck={handleRetryStatusCheck}
-            stripePromise={checkoutStripePromise}
-            onClose={closeSuccessAndSync}
-            onBackToSite={closeSuccessAndSync}
-          />,
-          document.body,
-        )}
+      {isMounted && isCheckoutModalOpen && (clientSecret || isSuccess) && (
+        <CheckoutModal
+          isSuccess={isSuccess}
+          isSyncing={isSyncing}
+          language={language}
+          amount={amount}
+          selectedCurrency={selectedCurrency}
+          videoTitle={videoTitle}
+          viewerIsPatron={viewerIsPatron}
+          clientSecret={clientSecret}
+          paymentId={paymentId}
+          paymentUiStatus={paymentUiStatus}
+          userEmail={userEmail}
+          onRetryStatusCheck={handleRetryStatusCheck}
+          stripePromise={checkoutStripePromise}
+          onClose={closeSuccessAndSync}
+          onBackToSite={closeSuccessAndSync}
+        />
+      )}
 
       <DonationLegalDialog
         open={isRegulaminOpen}
