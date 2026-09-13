@@ -22,6 +22,8 @@ rozbite na małe, wykonywalne tickety kodowe.
 | [`VIDEO-PLAYBACK-SESSION-RETENTION-001`](VIDEO-PLAYBACK-SESSION-RETENTION-001.md) | LOW | Retencja/czyszczenie tabeli VideoPlaybackSession (rośnie bez ograniczeń przez preload) |
 | [`PRISMA-MIGRATION-TIMESTAMP-DEDUP-001`](PRISMA-MIGRATION-TIMESTAMP-DEDUP-001.md) | LOW | Normalizacja duplikatów timestampów w historii migracji Prisma |
 | [`MEDIA-DTO-SAFETY-ASSERTS-WIRING-001`](MEDIA-DTO-SAFETY-ASSERTS-WIRING-001.md) | LOW | Wpięcie nieużywanych safety-netów DTO mediów do produkcyjnego kodu |
+| [`ADMIN-EMAILS-VISUAL-DRIFT-001`](ADMIN-EMAILS-VISUAL-DRIFT-001.md) | LOW | `/admin/emails` ma inny język wizualny niż reszta panelu — decyzja: ujednolicić czy udokumentować jako celowe |
+| [`ADMIN-LIST-SCAFFOLD-CONSOLIDATION-001`](ADMIN-LIST-SCAFFOLD-CONSOLIDATION-001.md) | LOW | Wspólny scaffold list/paginacji/filtrowania zamiast 4 niezależnych implementacji w panelu admina |
 
 ## Znane kierunki bez ticketu (do rozpisania przed realizacją)
 
