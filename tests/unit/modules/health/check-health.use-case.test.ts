@@ -1,10 +1,10 @@
-import { getMainChannel } from "@/lib/modules/channel";
+import { MainChannelService } from "@/lib/modules/channel";
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { checkHealth } from '@/lib/modules/health';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 
 vi.mock("@/lib/modules/channel", () => ({
-  getMainChannel: vi.fn(),
+  MainChannelService: { getOptional: vi.fn(), getRequired: vi.fn() },
 }));
 
 describe('checkHealth Use Case', () => {
@@ -22,7 +22,7 @@ describe('checkHealth Use Case', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.HEALTHCHECK_TOKEN = 'test-token';
-    vi.mocked(getMainChannel).mockResolvedValue({ id: 'main-channel-id' } as any);
+    vi.mocked(MainChannelService.getOptional).mockResolvedValue({ id: 'main-channel-id' } as any);
   });
 
   const ctx = createAppContext({

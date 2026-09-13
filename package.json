@@ -26,7 +26,6 @@
     "maintenance:migrations:repair": "npm run db:migrate:repair",
     "postinstall": "npm run prisma:generate",
     "content:diagnose": "npx tsx scripts/diagnose-home-content.ts",
-    "content:ensure:welcome": "npx tsx scripts/ensure-welcome-template.ts",
     "emails:ensure-required": "npx tsx scripts/ensure-required-emails.ts",
     "clerk:resync": "npx tsx scripts/resync-clerk-access.ts",
     "db:validate": "prisma validate",
