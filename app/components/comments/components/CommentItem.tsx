@@ -241,7 +241,7 @@ export function CommentItem({
                     onClick={() => {
                       if (confirm(t.deleteComment)) onDelete(comment.id);
                     }}
-                    className={cn(menuItemClassName, "text-neutral-600")}
+                    className={cn(menuItemClassName, "text-[var(--chan-muted-2)]")}
                   >
                     <Trash2 aria-hidden="true" size={14} />
                     {language === "pl" ? "Usuń" : "Delete"}

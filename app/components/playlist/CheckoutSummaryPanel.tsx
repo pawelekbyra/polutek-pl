@@ -4,7 +4,6 @@ import React from 'react';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
 
 const INK = '#211d18';
-const SUPPORT_AMBER = '#f59e0b';
 
 interface CheckoutSummaryPanelProps {
   language: string;
@@ -31,13 +30,13 @@ function SupportHandDrawing() {
       <g transform="rotate(-4 100 62)">
         <path
           d="M100 96 C 100 96 62 70 61 47 C 60.5 34 70 26 81 26.5 C 89 27 96 32 99.5 39 C 103 32 110 26.5 118 26 C 129 25.5 139.5 33 139 46 C 138 70 100 96 100 96 Z"
-          fill={SUPPORT_AMBER}
+          fill="var(--chan-amber)"
           stroke={INK}
           strokeWidth="4"
           strokeLinejoin="round"
         />
         {/* highlight stroke inside the heart */}
-        <path d="M 76 40 C 74 44 74 49 77 54" fill="none" stroke="#eff3fe" strokeWidth="3" strokeLinecap="round" opacity=".85" />
+        <path d="M 76 40 C 74 44 74 49 77 54" fill="none" stroke="var(--chan-blue-soft)" strokeWidth="3" strokeLinecap="round" opacity=".85" />
       </g>
       {/* open hand cradling the heart */}
       <g fill="none" stroke={INK} strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">

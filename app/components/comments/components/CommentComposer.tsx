@@ -249,7 +249,7 @@ export function CommentComposer({
                       type="button"
                       onClick={() => insertEmoji(emoji)}
                       disabled={isPending}
-                      className="grid h-9 w-9 place-items-center rounded-md text-[16px] transition-colors hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
+                      className="grid h-9 w-9 place-items-center rounded-md text-[16px] transition-colors hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
                       aria-label={
                         language === "pl"
                           ? `Dodaj emoji ${emoji}`
@@ -264,7 +264,7 @@ export function CommentComposer({
                     type="button"
                     onClick={() => setShowEmojiPanel(prev => !prev)}
                     disabled={isPending}
-                    className="min-h-9 rounded-md px-2 text-[11px] font-bold text-neutral-500 transition-colors hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
+                    className="min-h-9 rounded-md px-2 text-[11px] font-bold text-[var(--chan-muted)] transition-colors hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
                     aria-expanded={showEmojiPanel}
                     aria-controls={emojiPanelId}
                     aria-haspopup="dialog"
@@ -294,7 +294,7 @@ export function CommentComposer({
                             key={emoji}
                             type="button"
                             onClick={() => { insertEmoji(emoji); setShowEmojiPanel(false); }}
-                            className="grid h-9 w-9 place-items-center rounded text-[18px] leading-none transition-colors hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
+                            className="grid h-9 w-9 place-items-center rounded text-[18px] leading-none transition-colors hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
                             aria-label={
                               language === "pl"
                                 ? `Dodaj emoji ${emoji}`
@@ -313,7 +313,7 @@ export function CommentComposer({
                   id={limitId}
                   className={cn(
                     "text-[10px] font-bold",
-                    isTooLong ? "text-red-500" : "text-neutral-400",
+                    isTooLong ? "text-red-500" : "text-[var(--chan-muted)]",
                   )}
                 >
                   {graphemeCount} / 2000

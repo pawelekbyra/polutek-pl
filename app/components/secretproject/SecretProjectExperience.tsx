@@ -49,6 +49,7 @@ export default function SecretProjectExperience({
 
   const percent = funding.goalPln > 0 ? Math.min(100, (funding.raisedPln / funding.goalPln) * 100) : 0;
   const percentLabel = percent >= 10 ? Math.round(percent).toString() : percent.toFixed(1);
+  const percentValue = Number(percentLabel);
   const daysLeft = Math.max(0, funding.daysLeft);
   const titleParts = splitTitleForHighlight(PROJECT_TITLE, "secret");
 
@@ -226,7 +227,7 @@ export default function SecretProjectExperience({
                   : `of the ${formatAmount(funding.goalPln, isPl)} zł goal`}
               </p>
 
-              <div className={`${styles.progressTrack} mt-5`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(percent)} aria-label={isPl ? "Postęp zbiórki" : "Funding progress"}>
+              <div className={`${styles.progressTrack} mt-5`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percentValue} aria-label={isPl ? "Postęp zbiórki" : "Funding progress"}>
                 <div className={styles.progressFill} style={{ width: `${Math.max(percent, 1.5)}%` }} />
               </div>
 

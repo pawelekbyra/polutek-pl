@@ -273,7 +273,7 @@ export default function SecretProject2Experience({
             <div className="flex items-center gap-6">
               <div className="relative shrink-0">
                 <FundingRing percent={percent} />
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="absolute inset-0 flex flex-col items-center justify-center" aria-hidden="true">
                   <span className="font-brand text-[26px] font-extrabold tabular-nums text-[var(--sp2-ink)]">
                     {Math.round(percent)}%
                   </span>

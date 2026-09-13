@@ -441,7 +441,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           </div>
         ) : comments.length === 0 ? (
           <div className="py-16 flex flex-col items-center justify-center text-center space-y-3 opacity-60">
-            <MessageSquare size={48} className="text-neutral-300" />
+            <MessageSquare size={48} className="text-[var(--chan-line-soft)]" />
             <div className="space-y-1">
               <p className="font-black uppercase tracking-widest text-[11px]">
                 {language === "pl" ? "Brak komentarzy" : "No comments yet"}
