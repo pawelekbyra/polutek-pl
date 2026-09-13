@@ -248,8 +248,9 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                         interactionState.isLiked ? "text-[var(--chan-blue)]" : "text-[var(--chan-ink)]",
                         isPending && "opacity-50"
                     )}
-                    title="Lubię to"
-                    aria-label="Lubię to"
+                    title={interactionState.isLiked ? (language === 'pl' ? 'Cofnij polubienie' : 'Remove like') : (language === 'pl' ? 'Lubię to' : 'Like')}
+                    aria-label={interactionState.isLiked ? (language === 'pl' ? 'Cofnij polubienie filmu' : 'Remove like from video') : (language === 'pl' ? 'Polub film' : 'Like video')}
+                    aria-pressed={interactionState.isLiked}
                   >
                      <ThumbsUp className="h-4 w-4 shrink-0" strokeWidth={1.8} color={interactionState.isLiked ? "var(--chan-blue)" : "var(--chan-ink)"} />
                      <span className="text-[12px] font-bold">{interactionState.likesCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US')}</span>
@@ -264,8 +265,9 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                         interactionState.isDisliked ? "text-[var(--chan-blue)]" : "text-[var(--chan-ink)]",
                         isPending && "opacity-50"
                     )}
-                    title="Nie lubię"
-                    aria-label="Nie lubię"
+                    title={interactionState.isDisliked ? (language === 'pl' ? 'Cofnij reakcję nie lubię' : 'Remove dislike') : (language === 'pl' ? 'Nie lubię' : 'Dislike')}
+                    aria-label={interactionState.isDisliked ? (language === 'pl' ? 'Cofnij reakcję nie lubię filmu' : 'Remove dislike from video') : (language === 'pl' ? 'Nie lubię filmu' : 'Dislike video')}
+                    aria-pressed={interactionState.isDisliked}
                   >
                      <ThumbsDown className="h-4 w-4 shrink-0" strokeWidth={1.8} color={interactionState.isDisliked ? "var(--chan-blue)" : "var(--chan-ink)"} />
                   </button>
