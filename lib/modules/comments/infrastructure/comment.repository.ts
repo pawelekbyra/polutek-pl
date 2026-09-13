@@ -23,6 +23,13 @@ export interface CreateCommentInput {
 const visibleCommentStatusFilter = (includeHidden?: boolean) =>
   includeHidden ? { not: CommentStatus.DELETED } : CommentStatus.VISIBLE;
 
+export const commentReportInclude = Prisma.validator<Prisma.CommentReportInclude>()({
+  comment: { include: { author: { select: publicCommentAuthorSelect }, video: { select: { id: true, title: true, slug: true } } } },
+  reporter: { select: publicCommentAuthorSelect },
+});
+
+export type CommentReportWithRelations = Prisma.CommentReportGetPayload<{ include: typeof commentReportInclude }>;
+
 export const commentInclude = (userId?: string | null, includeHidden?: boolean) => ({
   author: { select: publicCommentAuthorSelect },
   replies: {
@@ -179,8 +186,21 @@ export class CommentRepository {
     await (this.db as WriteTx).$executeRaw`UPDATE "Comment" SET "isHearted" = ${nextValue} WHERE id = ${id}`;
     return { isHearted: nextValue };
   }
-  async findReports(status?: CommentReportStatus) {
-    return await this.db.commentReport.findMany({ where: status ? { status } : {}, include: { comment: { include: { author: { select: publicCommentAuthorSelect }, video: { select: { id: true, title: true, slug: true } } } }, reporter: { select: publicCommentAuthorSelect } }, orderBy: { createdAt: 'desc' } });
+  async findReports(options: { status?: CommentReportStatus; page?: number; pageSize?: number } = {}) {
+    const { status, page = 1, pageSize = 20 } = options;
+    const where = status ? { status } : {};
+    const skip = (Math.max(1, page) - 1) * pageSize;
+    const [items, total] = await Promise.all([
+      this.db.commentReport.findMany({
+        where,
+        include: commentReportInclude,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize,
+      }),
+      this.db.commentReport.count({ where }),
+    ]);
+    return { items, total };
   }
   async findReportById(id: string) {
     return await this.db.commentReport.findUnique({ where: { id }, include: { comment: true } });

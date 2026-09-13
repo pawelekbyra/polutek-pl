@@ -4,6 +4,7 @@ import { listCommentReports } from "@/lib/modules/comments";
 import { CommentReportStatus } from "@prisma/client";
 import { handleApiError } from "@/lib/errors";
 import { createAppContext } from "@/lib/modules/shared/app-context";
+import { parsePaginationParams } from "@/lib/admin/query-parser";
 export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const { adminUserId, response } = await requireAdminForApi(
@@ -13,10 +14,13 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const status =
     (searchParams.get("status") as CommentReportStatus) || undefined;
+  // Reuses the shared admin pagination-parsing pattern (page/pageSize) for
+  // consistency with the other admin list endpoints (videos/users/payments).
+  const { page, pageSize } = parsePaginationParams(req, "createdAt");
   try {
     const actor = { type: "admin" as const, userId: adminUserId! };
     const result = await listCommentReports(
-      status,
+      { status, page, pageSize },
       createAppContext({ actor }),
     );
     if (result.ok) return NextResponse.json(result.data);

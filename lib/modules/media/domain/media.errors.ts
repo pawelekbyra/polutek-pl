@@ -6,6 +6,16 @@ export class MediaSourceNotFoundError extends AppError {
   }
 }
 
+export class MediaAccessDeniedError extends AppError {
+  constructor(videoId: string, reason?: string) {
+    super(
+      `Access denied for media ${videoId}${reason ? ` (${reason})` : ''}`,
+      403,
+      'MEDIA_ACCESS_DENIED'
+    );
+  }
+}
+
 export class UnsafePublicMediaDtoError extends AppError {
   constructor(reason: string) {
     super(`Public media DTO is unsafe: ${reason}`, 400, 'UNSAFE_PUBLIC_MEDIA_DTO');
