@@ -15,3 +15,4 @@ export * from "./domain/admin-payment.dto";
 export * from "./domain/payment.errors";
 export * from "./domain/payment.policy";
 export * from "./domain/stripe-event.dto";
+export * from "./infrastructure/stripe-client";

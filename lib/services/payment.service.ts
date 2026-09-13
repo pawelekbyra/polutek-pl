@@ -2,6 +2,7 @@ import { logger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import { PaymentStatus, WebhookEventStatus, Prisma } from '@prisma/client';
 import Stripe from 'stripe';
+import { getStripeClient } from '@/lib/modules/payments/infrastructure/stripe-client';
 import { recalculatePatronStatus } from '@/lib/modules/patron';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { syncClerkAccess } from '@/lib/modules/users/application/sync-clerk-access';
@@ -13,12 +14,6 @@ import {
   decrementUserNetPaymentTotals,
 } from '@/lib/modules/payments/domain/payment-adjustments';
 import { recordAlert, recordDurationMetric, recordMetric, startTimer } from '@/lib/observability';
-
-function getStripe() {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) throw new Error('STRIPE_SECRET_KEY is missing');
-  return new Stripe(key);
-}
 
 function getSafeStripeEventPayload(event: Stripe.Event): Prisma.InputJsonValue {
   return {
@@ -49,7 +44,7 @@ export class PaymentService {
 
   static async handleWebhook(body: string, sig: string) {
     const startedAt = startTimer();
-    const stripe = getStripe();
+    const stripe = getStripeClient();
     const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!endpointSecret) throw new Error('STRIPE_WEBHOOK_SECRET is missing');
 
