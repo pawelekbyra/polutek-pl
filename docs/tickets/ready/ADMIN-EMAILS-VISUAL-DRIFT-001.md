@@ -1,4 +1,4 @@
-# ADMIN-EMAILS-VISUAL-DRIFT-001 — `/admin/emails` odjechało od reszty panelu admina
+# ADMIN-EMAILS-VISUAL-DRIFT-001 — `/admin/emails` i `/admin/notifications` odjechały od reszty panelu admina
 
 Status: READY_FOR_BUILDER
 Priority: LOW (kosmetyka/spójność, nie bug)
@@ -14,23 +14,37 @@ CTA, wskaźnik kroków kreatora — podczas gdy videos/users/comments/channel
 używają domyślnego wyglądu shadcn (`text-2xl font-bold`, płaski `Card`,
 `Badge`). Czyta się to jak osobna pod-aplikacja, nie ten sam shell.
 
+**Update (runda 3, 2026-09-13):** dokładnie ten sam dryf znaleziono w
+`app/admin/notifications/NotificationBroadcastForm.tsx` — te same klasy
+(`bg-white ... border-neutral-200 shadow-sm`, `font-black uppercase
+tracking-tight/wide`, `text-neutral-500/600`), ręcznie robiony pigułkowy
+toggle (`<button>` zamiast `Toggle`/grupy `Button`) i przycisk submit w
+tym samym `bg-black hover:bg-neutral-800 ... rounded-full` stylu. To
+najwyraźniej ten sam autor/wzorzec co `/admin/emails`, więc rozwiązanie
+tego ticketu powinno objąć oba moduły naraz, nie tylko emaile.
+
 To nie jest błąd — CLAUDE.md §1 mówi tylko, że "admin shell keeps its
 approved scoped treatment" bez sprecyzowania, że każda podstrona ma wyglądać
 identycznie. Ale to na tyle duży kontrast, że warto świadomej decyzji: czy
-ujednolicić `/admin/emails` do wspólnego wyglądu, czy zostawić jako celowo
-odrębny "moduł marketingowy" (i wtedy udokumentować to w CLAUDE.md zamiast
-zostawiać jako niewyjaśniony dryf).
+ujednolicić `/admin/emails` i `/admin/notifications` do wspólnego wyglądu,
+czy zostawić jako celowo odrębny "moduł marketingowy" (i wtedy udokumentować
+to w CLAUDE.md zamiast zostawiać jako niewyjaśniony dryf).
 
 ## Scope
 
-1. Decyzja właściciela: ujednolicić styl `/admin/emails` do reszty panelu,
-   czy zachować jako świadomie odrębny.
+1. Decyzja właściciela: ujednolicić styl `/admin/emails` i
+   `/admin/notifications` do reszty panelu, czy zachować jako celowo odrębne.
 2. Jeśli ujednolicić: przepisać `EmailTemplateEditor.tsx`/`BroadcastWizard.tsx`/
-   `TemplatesList.tsx` na te same prymitywy co reszta admina (`Card`, `Badge`,
-   standardowe warianty przycisków shadcn) bez zmiany funkcjonalności.
+   `TemplatesList.tsx`/`NotificationBroadcastForm.tsx` na te same prymitywy co
+   reszta admina (`Card`, `Badge`, `Toggle`, standardowe warianty przycisków
+   shadcn) bez zmiany funkcjonalności. Przy okazji: napraw
+   `NotificationBroadcastForm.tsx:131`, gdzie przycisk wysyłki broadcastu
+   (akcja niedestrukcyjna) używa `variant="destructive"` — powinien używać
+   zwykłego wariantu podstawowego, `destructive` zarezerwowane dla realnych
+   usunięć (jak w `app/admin/videos/page.tsx`).
 3. Jeśli zachować: dodać do `CLAUDE.md` §5 jedno zdanie wyjaśniające, że
-   `/admin/emails` jest celowo odrębnym modułem wizualnym, żeby przyszłe AI
-   nie próbowało tego "naprawiać" jako niespójność.
+   `/admin/emails` i `/admin/notifications` są celowo odrębnym modułem
+   wizualnym, żeby przyszłe AI nie próbowało tego "naprawiać" jako niespójność.
 
 ## Invariants that must survive
 
