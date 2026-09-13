@@ -31,17 +31,28 @@ describe('GET /api/admin/comments', () => {
     } as any);
   });
 
-  it('returns the raw comment list (no success/comments envelope) on success', async () => {
-    const comments = [{ id: 'c1' }, { id: 'c2' }];
-    vi.mocked(listAdminComments).mockResolvedValue({ ok: true, data: comments } as any);
+  it('returns the paginated { items, total, page, pageSize, totalPages } envelope on success', async () => {
+    const data = { items: [{ id: 'c1' }, { id: 'c2' }], total: 2, page: 1, pageSize: 50, totalPages: 1 };
+    vi.mocked(listAdminComments).mockResolvedValue({ ok: true, data } as any);
 
     const res = await GET(makeRequest());
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body).toEqual(comments);
+    expect(body).toEqual(data);
     expect(body.success).toBeUndefined();
     expect(body.comments).toBeUndefined();
+  });
+
+  it('passes page/pageSize parsed from the query string through to listAdminComments', async () => {
+    vi.mocked(listAdminComments).mockResolvedValue({ ok: true, data: { items: [], total: 0, page: 2, pageSize: 10, totalPages: 0 } } as any);
+
+    await GET(makeRequest('?page=2&pageSize=10'));
+
+    expect(listAdminComments).toHaveBeenCalledWith(
+      expect.objectContaining({ page: 2, pageSize: 10 }),
+      expect.anything(),
+    );
   });
 
   it('maps a FORBIDDEN use-case error to a 403 with an { error } body', async () => {

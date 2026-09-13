@@ -272,7 +272,7 @@ Located in `app/admin/`. Key areas:
 | `/admin/channel` | Channel settings (name, bio, banner, default thumbnail URL) |
 | `/admin/settings` | Media settings (default thumbnail file upload via Vercel Blob) |
 
-`AdminLayoutShell` wraps all admin pages. `AdminNavigation` provides breadcrumb back-navigation.
+`AdminLayoutShell` (`app/admin/videos/components/AdminLayoutShell.tsx`) does **not** wrap all admin pages — it is only used by the videos surfaces: `app/admin/videos/page.tsx`, `app/admin/videos/[id]/edit/page.tsx`, and `AdminVideoEditView.tsx`/`AdminVideoErrorView.tsx`. Every other admin page (users, comments, comment reports, channel, settings, emails, the videos `[id]` detail page) hand-rolls its own `Navbar` + container wrapper, with inconsistent background/padding treatments — there is no single shared page-shell component across the admin panel today. See `docs/tickets/ready/ADMIN-LIST-SCAFFOLD-CONSOLIDATION-001.md` for the tracked consolidation work. `AdminNavigation` (a separate, actually-shared component) provides breadcrumb back-navigation and is used consistently across admin pages.
 
 Default thumbnail fallback priority:
 

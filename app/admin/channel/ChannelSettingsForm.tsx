@@ -122,17 +122,21 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
                       type="button"
                       onClick={async () => {
                         setStatus("saving");
+                        setError(null);
                         try {
                           const res = await fetch('/api/admin/subscribers/resync', { method: 'POST' });
-                          if (res.ok) {
-                            const data = await res.json();
-                            const updated = data.updated.find((c: any) => c.creatorId === creator.id);
-                            if (updated) {
-                                setCreator({ ...creator, subscribersCount: updated.subscribersCount });
-                                setStatus("saved");
-                            }
+                          if (!res.ok) {
+                            throw new Error("Nie udało się zsynchronizować licznika subskrybentów.");
                           }
+                          const data = await res.json();
+                          const updated = data.updated.find((c: any) => c.creatorId === creator.id);
+                          if (!updated) {
+                            throw new Error("Nie znaleziono kanału w odpowiedzi synchronizacji licznika.");
+                          }
+                          setCreator({ ...creator, subscribersCount: updated.subscribersCount });
+                          setStatus("saved");
                         } catch (e) {
+                          setError(e instanceof Error ? e.message : "Nie udało się zsynchronizować licznika subskrybentów.");
                           setStatus("error");
                         }
                       }}

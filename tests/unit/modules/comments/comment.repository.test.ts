@@ -59,6 +59,51 @@ describe('CommentRepository', () => {
     });
   });
 
+  describe('findAdminComments pagination', () => {
+    it('bounds the query with take/skip and returns items + total instead of an unbounded array', async () => {
+      mockPrisma.comment.findMany.mockResolvedValue([{ id: 'c1' }]);
+      mockPrisma.comment.count.mockResolvedValue(120);
+
+      const result = await repository.findAdminComments({ page: 3, pageSize: 50 });
+
+      expect(mockPrisma.comment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 50, skip: 100 })
+      );
+      expect(mockPrisma.comment.count).toHaveBeenCalled();
+      expect(result).toEqual({ items: [{ id: 'c1' }], total: 120 });
+    });
+
+    it('defaults to page 1 / pageSize 50 when no options are given', async () => {
+      mockPrisma.comment.findMany.mockResolvedValue([]);
+      mockPrisma.comment.count.mockResolvedValue(0);
+
+      await repository.findAdminComments({});
+
+      expect(mockPrisma.comment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 50, skip: 0 })
+      );
+    });
+
+    it('applies q/status/videoId filters identically to both findMany and count', async () => {
+      mockPrisma.comment.findMany.mockResolvedValue([]);
+      mockPrisma.comment.count.mockResolvedValue(0);
+
+      await repository.findAdminComments({ q: 'spam', status: CommentStatus.HIDDEN, videoId: 'video-1', page: 2, pageSize: 20 });
+
+      const expectedWhere = {
+        AND: [
+          { text: { contains: 'spam', mode: 'insensitive' } },
+          { status: CommentStatus.HIDDEN },
+          { videoId: 'video-1' },
+        ],
+      };
+      expect(mockPrisma.comment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expectedWhere, take: 20, skip: 20 })
+      );
+      expect(mockPrisma.comment.count).toHaveBeenCalledWith({ where: expectedWhere });
+    });
+  });
+
   describe('visibleCommentStatusFilter (via findMany/count)', () => {
     it('count({ includeHidden: false }) should count only VISIBLE comments', async () => {
       mockPrisma.comment.count.mockResolvedValue(5);

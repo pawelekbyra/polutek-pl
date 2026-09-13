@@ -27,7 +27,7 @@ export default function AdminCommentReportsPage() {
     setIsLoading(true);
     try {
       const res = await fetch(
-        `/api/admin/comments/reports?page=${targetPage}&pageSize=${PAGE_SIZE}`,
+        `/api/admin/comments/reports?status=PENDING&page=${targetPage}&pageSize=${PAGE_SIZE}`,
       );
       if (res.ok) {
         const data = await res.json();

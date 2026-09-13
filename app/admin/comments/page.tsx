@@ -26,6 +26,8 @@ const commentActionLabels = {
 
 type CommentAction = keyof typeof commentActionLabels;
 
+const PAGE_SIZE = 50;
+
 export default function AdminCommentsPage() {
   const [comments, setComments] = useState<CommentDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,6 +35,9 @@ export default function AdminCommentsPage() {
   const [pendingActions, setPendingActions] = useState<Record<string, CommentAction>>({});
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkPending, setIsBulkPending] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   const initialParams = useMemo(() => {
     if (typeof window === "undefined") return { q: "", videoId: "" };
@@ -52,18 +57,23 @@ export default function AdminCommentsPage() {
     return () => window.clearTimeout(timeout);
   }, [search]);
 
-  const fetchComments = useCallback(async (searchOverride?: string) => {
+  const fetchComments = useCallback(async (targetPage: number = 1, searchOverride?: string) => {
     setIsLoading(true);
     setSelectedIds(new Set());
     const query = searchOverride ?? debouncedSearch;
     const params = new URLSearchParams();
     if (query.trim()) params.set("q", query.trim());
     if (videoId) params.set("videoId", videoId);
+    params.set("page", String(targetPage));
+    params.set("pageSize", String(PAGE_SIZE));
     try {
       const res = await fetch(`/api/admin/comments?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        setComments(Array.isArray(data) ? data : []);
+        setComments(Array.isArray(data.items) ? data.items : []);
+        setTotal(data.total ?? 0);
+        setTotalPages(data.totalPages ?? 1);
+        setPage(data.page ?? targetPage);
       }
     } catch (err) {
       console.error(err);
@@ -72,7 +82,8 @@ export default function AdminCommentsPage() {
     }
   }, [debouncedSearch, videoId]);
 
-  useEffect(() => { fetchComments(); }, [fetchComments]);
+  // Filters changed (search debounced or videoId) — always reset to page 1.
+  useEffect(() => { fetchComments(1); }, [fetchComments]);
 
   useEffect(() => {
     fetch("/api/admin/comments/reports?status=PENDING")
@@ -81,7 +92,7 @@ export default function AdminCommentsPage() {
       .catch(err => console.error("Failed to fetch reports count", err));
   }, []);
 
-  const refreshComments = () => fetchComments(search);
+  const refreshComments = () => fetchComments(1, search);
 
   const handleAction = async (commentId: string, action: CommentAction) => {
     setPendingActions(prev => ({ ...prev, [commentId]: action }));
@@ -89,7 +100,7 @@ export default function AdminCommentsPage() {
       const res = await fetch(`/api/admin/comments/${commentId}/${action}`, { method: 'POST' });
       if (res.ok) {
         toast(`Zakończono: ${commentActionLabels[action]}.`, 'success');
-        fetchComments();
+        fetchComments(page);
       } else {
         toast('Nie udało się wykonać akcji.', 'error');
       }
@@ -131,7 +142,7 @@ export default function AdminCommentsPage() {
     }
     setIsBulkPending(false);
     setSelectedIds(new Set());
-    fetchComments();
+    fetchComments(page);
   };
 
   const allSelected = comments.length > 0 && selectedIds.size === comments.length;
@@ -210,7 +221,9 @@ export default function AdminCommentsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Wszystkie Komentarze</CardTitle>
-            <CardDescription>{videoId ? "Zarządzaj komentarzami pod wybranym filmem." : "Zarządzaj dyskusjami w całej aplikacji."}</CardDescription>
+            <CardDescription>
+              {videoId ? "Zarządzaj komentarzami pod wybranym filmem." : "Zarządzaj dyskusjami w całej aplikacji."} {total > 0 && `(${total} łącznie)`}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -291,9 +304,9 @@ export default function AdminCommentsPage() {
                               </>
                             )}
                             {(comment.status === 'HIDDEN' || comment.status === 'DELETED') && (
-                              <Button onClick={() => handleAction(comment.id, 'restore')} variant="ghost" size="icon" className="h-8 w-8" disabled={isBulkPending}><RotateCcw size={14} /></Button>
+                              <Button onClick={() => handleAction(comment.id, 'restore')} variant="ghost" size="icon" className="h-8 w-8" title="Przywróć" aria-label="Przywróć komentarz" disabled={isBulkPending}><RotateCcw size={14} /></Button>
                             )}
-                            <Button onClick={() => handleAction(comment.id, 'delete')} variant="ghost" size="icon" className="h-8 w-8 text-red-600" disabled={isBulkPending}><Trash2 size={14} /></Button>
+                            <Button onClick={() => handleAction(comment.id, 'delete')} variant="ghost" size="icon" className="h-8 w-8 text-red-600" title="Usuń" aria-label="Usuń komentarz" disabled={isBulkPending}><Trash2 size={14} /></Button>
                           </>
                         )}
                       </TableCell>
@@ -302,6 +315,33 @@ export default function AdminCommentsPage() {
                 })}
               </TableBody>
             </Table>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t px-4 py-3">
+                <span className="text-xs text-muted-foreground">
+                  Strona {page} z {totalPages}
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[10px]"
+                    disabled={isLoading || page <= 1}
+                    onClick={() => fetchComments(page - 1)}
+                  >
+                    Poprzednia
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[10px]"
+                    disabled={isLoading || page >= totalPages}
+                    onClick={() => fetchComments(page + 1)}
+                  >
+                    Następna
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>

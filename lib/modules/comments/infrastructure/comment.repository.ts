@@ -90,9 +90,15 @@ export class CommentRepository {
   async findCommentById(id: string) {
     return await this.db.comment.findUnique({ where: { id }, include: { author: { select: publicCommentAuthorSelect } } });
   }
-  async findAdminComments(options: { q?: string; status?: CommentStatus; videoId?: string; limit: number }) {
-    const { q, status, videoId, limit } = options;
-    return await this.db.comment.findMany({ where: { AND: [ q ? { text: { contains: q, mode: 'insensitive' } } : {}, status ? { status } : {}, videoId ? { videoId } : {} ] }, take: limit, orderBy: { createdAt: 'desc' }, include: { author: { select: publicCommentAuthorSelect } } });
+  async findAdminComments(options: { q?: string; status?: CommentStatus; videoId?: string; page?: number; pageSize?: number }) {
+    const { q, status, videoId, page = 1, pageSize = 50 } = options;
+    const where: Prisma.CommentWhereInput = { AND: [ q ? { text: { contains: q, mode: 'insensitive' } } : {}, status ? { status } : {}, videoId ? { videoId } : {} ] };
+    const skip = (Math.max(1, page) - 1) * pageSize;
+    const [items, total] = await Promise.all([
+      this.db.comment.findMany({ where, skip, take: pageSize, orderBy: { createdAt: 'desc' }, include: { author: { select: publicCommentAuthorSelect } } }),
+      this.db.comment.count({ where }),
+    ]);
+    return { items, total };
   }
   async findCommentReaction(userId: string, commentId: string): Promise<CommentReaction | null> {
     return await this.db.commentReaction.findUnique({ where: { userId_commentId: { userId, commentId } } });
