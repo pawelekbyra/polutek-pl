@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/errors";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { listVideoComments } from "@/lib/modules/comments";
+import { listVideoComments, commentErrorStatus } from "@/lib/modules/comments";
 import { requireAdminForApi } from "@/lib/auth-utils";
 
 export const dynamic = "force-dynamic";
@@ -35,19 +35,13 @@ export async function GET(
     );
 
     if (!result.ok) {
-      const status = result.error.type === "NOT_FOUND" ? 404 : 403;
       return NextResponse.json(
-        { success: false, message: result.error.message },
-        { status },
+        { error: result.error.message },
+        { status: commentErrorStatus(result.error) },
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      comments: result.data.comments,
-      totalCount: result.data.totalCount,
-      nextCursor: result.data.nextCursor,
-    });
+    return NextResponse.json(result.data);
   } catch (error: unknown) {
     return handleApiError(error);
   }

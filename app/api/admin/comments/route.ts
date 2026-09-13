@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/errors";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { listAdminComments } from "@/lib/modules/comments";
+import { listAdminComments, commentErrorStatus } from "@/lib/modules/comments";
 import { CommentStatus } from "@prisma/client";
 import { requireAdminForApi } from "@/lib/auth-utils";
 
@@ -26,15 +26,12 @@ export async function GET(request: NextRequest) {
 
     if (!result.ok) {
       return NextResponse.json(
-        { success: false, message: result.error.message },
-        { status: 403 },
+        { error: result.error.message },
+        { status: commentErrorStatus(result.error) },
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      comments: result.data,
-    });
+    return NextResponse.json(result.data);
   } catch (error: unknown) {
     return handleApiError(error);
   }

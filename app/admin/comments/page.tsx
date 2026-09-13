@@ -63,7 +63,7 @@ export default function AdminCommentsPage() {
       const res = await fetch(`/api/admin/comments?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        setComments(data.comments);
+        setComments(Array.isArray(data) ? data : []);
       }
     } catch (err) {
       console.error(err);
@@ -77,7 +77,7 @@ export default function AdminCommentsPage() {
   useEffect(() => {
     fetch("/api/admin/comments/reports?status=PENDING")
       .then(res => res.json())
-      .then(data => { if (Array.isArray(data)) setPendingReportsCount(data.length); })
+      .then(data => { if (typeof data.total === "number") setPendingReportsCount(data.total); })
       .catch(err => console.error("Failed to fetch reports count", err));
   }, []);
 
