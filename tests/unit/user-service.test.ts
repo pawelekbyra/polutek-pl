@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getOrCreateUser, getOrCreateUserFromAuth, syncUser } from '@/lib/modules/users/application/sync-user.use-case';
-import { UserLanguageService } from '@/lib/modules/users/application/user-language.service';
 import { prisma } from '@/lib/prisma';
 import { clerkClient, currentUser } from '@clerk/nextjs/server';
 
@@ -206,38 +205,65 @@ describe('syncUser', () => {
     expect(result).toEqual(existingUser);
     expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { id: 'user_race' } });
   });
-});
 
-describe('UserLanguageService.updateUserLanguage', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('upserts language preferences for an existing local user', async () => {
-    const updatedUser = { id: 'user_lang', email: 'lang@example.com', language: 'pl' };
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({ email: 'lang@example.com' } as never);
-    vi.mocked(prisma.user.upsert).mockResolvedValue(updatedUser as never);
-    vi.mocked(clerkClient).mockResolvedValue({
-      users: {
-        updateUserMetadata: vi.fn().mockResolvedValue({}),
+  it('frees the email from a stale row and moves payments and patron grants to the new id', async () => {
+    // Regression guard for the entry points that used to run a naive repo
+    // upsert with no email-conflict handling: an email owned by an older row
+    // must be released and the historical financial/access records repointed,
+    // never left orphaned on the stale identity.
+    const tx = {
+      user: {
+        findUnique: vi.fn()
+          // by id — no local row yet for the new Clerk id
+          .mockResolvedValueOnce(null)
+          // by email — owned by an older, non-deleted row
+          .mockResolvedValueOnce({
+            id: 'user_old',
+            role: 'USER',
+            email: 'shared@example.com',
+            isDeleted: false,
+          }),
+        update: vi.fn().mockResolvedValue({ id: 'user_old' }),
+        upsert: vi.fn().mockResolvedValue({ id: 'user_new', email: 'shared@example.com' }),
       },
-    } as never);
+      comment: { updateMany: vi.fn().mockResolvedValue({ count: 2 }) },
+      commentReaction: { findMany: vi.fn().mockResolvedValue([]), upsert: vi.fn(), deleteMany: vi.fn() },
+      commentReport: { findMany: vi.fn().mockResolvedValue([]), upsert: vi.fn(), deleteMany: vi.fn() },
+      commentLike: { findMany: vi.fn().mockResolvedValue([]), deleteMany: vi.fn(), updateMany: vi.fn() },
+      commentDislike: { findMany: vi.fn().mockResolvedValue([]), deleteMany: vi.fn(), updateMany: vi.fn() },
+      auditLog: { updateMany: vi.fn() },
+      payment: { updateMany: vi.fn() },
+      userPaymentTotal: { findMany: vi.fn().mockResolvedValue([]), upsert: vi.fn(), deleteMany: vi.fn() },
+      patronGrant: { updateMany: vi.fn() },
+      subscription: { findMany: vi.fn().mockResolvedValue([]), deleteMany: vi.fn(), count: vi.fn() },
+      creator: { updateMany: vi.fn() },
+      emailPreference: { deleteMany: vi.fn() },
+    };
 
-    const result = await UserLanguageService.updateUserLanguage('user_lang', 'pl');
+    vi.mocked(prisma.$transaction).mockImplementation((fn: any) => fn(tx));
 
-    expect(result).toEqual(updatedUser);
-    expect(prisma.user.upsert).toHaveBeenCalledWith({
-      where: { id: 'user_lang' },
-      update: { language: 'pl' },
-      create: expect.objectContaining({
-        id: 'user_lang',
-        email: 'lang@example.com',
-        language: 'pl',
-      }),
+    const result = await syncUser('user_new', 'shared@example.com', 'New User');
+
+    // Stale row loses the email instead of the write failing on the unique constraint
+    expect(tx.user.update).toHaveBeenCalledWith({
+      where: { id: 'user_old' },
+      data: { email: expect.stringContaining('shared@example.com_stale_') },
     });
+
+    // Money and access history follow the surviving identity
+    expect(tx.payment.updateMany).toHaveBeenCalledWith({
+      where: { userId: 'user_old' },
+      data: { userId: 'user_new' },
+    });
+    expect(tx.patronGrant.updateMany).toHaveBeenCalledWith({
+      where: { userId: 'user_old' },
+      data: { userId: 'user_new' },
+    });
+
+    // Mailing consent is explicit and must never be inherited
+    expect(tx.subscription.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user_old' } });
+    expect(tx.emailPreference.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user_old' } });
+
+    expect(result).toEqual({ id: 'user_new', email: 'shared@example.com' });
   });
 });

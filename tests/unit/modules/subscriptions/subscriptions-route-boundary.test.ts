@@ -5,7 +5,7 @@ import { getActorFromAuth } from '@/lib/api/auth';
 import { auth } from '@clerk/nextjs/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { GetSubscriptionStatusUseCase, SubscribeUseCase, UnsubscribeUseCase } from "@/lib/modules/subscriptions";
-import { GetOrCreateUserUseCase } from '@/lib/modules/users';
+import { getOrCreateCurrentUser } from '@/lib/modules/users';
 import { NextRequest } from 'next/server';
 import { AppError } from '@/lib/modules/shared/app-error';
 
@@ -53,7 +53,7 @@ describe('subscriptions route behavior', () => {
 
       expect(res.status).toBe(200);
       expect(GetSubscriptionStatusUseCase.execute).toHaveBeenCalled();
-      expect(GetOrCreateUserUseCase.execute).not.toHaveBeenCalled();
+      expect(getOrCreateCurrentUser).not.toHaveBeenCalled();
     });
   });
 
@@ -82,9 +82,11 @@ describe('subscriptions route behavior', () => {
       const res = await POST(req);
 
       expect(res.status).toBe(200);
-      expect(GetOrCreateUserUseCase.execute).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
-        email: 'test@example.com'
-      }));
+      expect(getOrCreateCurrentUser).toHaveBeenCalledWith(
+        expect.anything(),
+        'user_1',
+        expect.objectContaining({ email: 'test@example.com' })
+      );
       expect(SubscribeUseCase.execute).toHaveBeenCalledWith(expect.anything(), { trustedEmail: 'test@example.com' });
     });
 

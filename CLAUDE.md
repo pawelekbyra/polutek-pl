@@ -225,6 +225,7 @@ Three distinct per-currency minimums must not be conflated:
 - Priority: signed-in user's DB `User.language` → `app-language` cookie → Vercel geolocation header → `Accept-Language` → `en`.
 - `LanguageContext.tsx` mirrors every change to both `localStorage` and a one-year `app-language` cookie.
 - Logged-in changes additionally persist to DB via `PATCH /api/user/language` and to Clerk metadata. Transactional/broadcast emails send in stored `User.language`.
+- **Update 2026-09-13:** both language write paths — the `PATCH /api/user/language` route and the `updateUserLanguage` server action in `lib/actions/user.ts` (used by `ClerkLocalizationProvider.tsx`) — now go through the single `updateUserLanguage` use case (`lib/modules/users/application/update-user-language.use-case.ts`) with a `ClerkIdentityProvider`. The parallel `UserLanguageService` that the server action used to call was deleted; it bypassed `UserRepository`/domain errors and let a soft-deleted user write a language, which the route rejected. That use case also no longer passes an explicit `null` for `name`/`username`/`imageUrl` when the local row already exists — it did, which meant every language change blanked the stored display profile. Keep those fields `undefined` unless they were actually resolved from the identity provider.
 
 ### 4.12 Auth UI
 
@@ -248,6 +249,7 @@ Three distinct per-currency minimums must not be conflated:
 - Do not expose playable video URLs/tokens/provider IDs, mount players, or log views for denied playback plans.
 - Do not replace the custom/headless Clerk UI with default widgets or a custom auth backend unless explicitly asked.
 - Do not add persistent/offline caches for auth, payments, media-source, playback, or user-specific data without a focused cache-safety design.
+- Do not add a second get-or-create-user path. `getOrCreateCurrentUser()` (→ `sync-user.use-case`) is the only one: it runs in a transaction that renames a stale row holding the same email and repoints that row's comments, payments and patron grants onto the surviving Clerk id. A plain `user.upsert`/`create` with the Clerk email instead hits the `User.email` unique constraint and leaves the history orphaned. The naive `GetOrCreateUserUseCase` that `/api/user/sync` and `/api/subscriptions` used was deleted on 2026-09-13 for exactly this.
 
 ---
 

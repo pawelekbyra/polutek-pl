@@ -34,9 +34,12 @@ export async function updateUserLanguage(
   }
 
   let email = existingUser?.email ?? null;
-  let name: string | null = null;
-  let username: string | null = null;
-  let imageUrl: string | null = null;
+  // Left undefined (not null) when the local row already exists: these are only
+  // resolved from the identity provider for a first-time row, and passing an
+  // explicit null would blank the stored profile on every language change.
+  let name: string | undefined;
+  let username: string | undefined;
+  let imageUrl: string | undefined;
 
   if (!email) {
     const syncData = await identityProvider.getUserSyncData(userId);
@@ -44,13 +47,13 @@ export async function updateUserLanguage(
 
     if (!email) throw new UserHasNoEmailError(userId);
 
-    username = syncData.username;
+    username = syncData.username ?? undefined;
     const displayUsername = isGeneratedClerkUsername(username)
       ? null
       : username;
 
     name = syncData.name || displayUsername || email.split("@")[0];
-    imageUrl = syncData.imageUrl;
+    imageUrl = syncData.imageUrl ?? undefined;
   }
 
   const user = await repository.upsertUser({
