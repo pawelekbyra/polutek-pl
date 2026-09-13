@@ -7,7 +7,7 @@
 - The upload pipeline is partially managed but not a complete single-upload, multi-provider orchestration yet. Current create/edit/admin flows support Cloudflare Stream, existing provider IDs/URLs, and the multi-source foundation; the R2 original/master and provider mirroring architecture remains future work.
 - Captions/subtitles are optional WebVTT URL fields (`Video.subtitleUrlPl`, `Video.subtitleUrlEn`) editable in the admin video form. File upload/validation/hosting for subtitle files is not a complete managed workflow.
 - Automated unit tests, typecheck and lint pass locally when environment prerequisites are present; full E2E smoke coverage still depends on installing Playwright browsers in the environment, and production build requires real Clerk public env.
-- Vitest coverage is configured with minimum thresholds (30% Statements/Lines, 25% Branches, 40% Functions) in `vitest.config.ts`.
+- Vitest coverage reporting is configured in `vitest.config.ts` (v8 provider, scoped to `app/api`, `lib/modules`, `lib/services`, `lib/access`, `lib/webhooks`), but no minimum coverage thresholds are enforced — a coverage drop cannot fail CI today.
 - Playwright smoke scaffolding exists, but local attempts to install Playwright Chromium can fail when the CDN returns 403; full E2E/screenshot checks must be run in CI/Vercel/staging or another environment with browser access and `E2E_*` state.
 - `db:smoke` and `db:migrate:deploy` require real `DATABASE_URL` and `DATABASE_URL_UNPOOLED`; without them local results are environment failures, not release PASS.
 - Production rate limiting requires writable Upstash Redis or Vercel KV REST credentials. Memory fallback is allowed only outside production.
