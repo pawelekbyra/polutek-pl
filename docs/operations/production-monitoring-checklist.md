@@ -31,7 +31,7 @@ This checklist defines the signals, thresholds, and responsibilities for monitor
 ### 4. Patron Access
 | Signal | Source | Normal State | Warning | Critical | Owner | Frequency |
 | --- | --- | --- | --- | --- | --- | --- |
-| Access Truth | Access Diagnostics | Grant is source | `User.isPatron` drift| Grant ignored | Operator | Daily |
+| Access Truth | Access Diagnostics | Grant is source | Clerk metadata drift from grant | Grant ignored | Operator | Daily |
 | Clerk Sync | Admin UI | Metadata == Grant | Drift found | N/A | Operator | Weekly |
 | Denied Access | Support / Logs | Denied works | Intermittent | Access Leak | Operator | Daily |
 

@@ -32,7 +32,7 @@ Payment record, StripeEvent ledger, Patron eligibility policy, PatronGrant use-c
 
 ## Forbidden shortcuts
 
-- Stripe webhook -> User.isPatron = true.
+- Stripe webhook -> write a patron flag on User (no such column exists; use `fulfillPayment()` -> `PatronGrant`).
 - Payment alone grants access.
 - Client-side amount trust.
 - Manual grant without reason/audit.

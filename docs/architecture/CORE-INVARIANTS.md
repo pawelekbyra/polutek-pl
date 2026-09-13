@@ -19,11 +19,11 @@ The **sole backend source of truth** for patron-only access is:
 Access **must NOT** be inferred from:
 - `Subscription` (mailing consent).
 - `Payment` alone (financial fact).
-- `User.isPatron` (denormalized read-model/cache field).
+- Any `isPatron` field on a User-shaped DTO — it is a derived/computed value (see `buildPatronTruthReadModel`), not a stored column; `User.isPatron` was removed from the schema in migration `20260630000000_remove_legacy_user_patron_cache`.
 - Clerk metadata or Stripe metadata.
 - Frontend state.
 
-`User.isPatron` and Clerk metadata are **READ MODELS / CACHE ONLY**. They must never be the authority for playback gating.
+Clerk metadata is a **READ MODEL / CACHE ONLY**. A derived `isPatron` value computed from active `PatronGrant` rows is fine to display, but neither it nor Clerk metadata may ever be the authority for playback gating.
 
 ### 1.3. Subscription Source of Truth
 - Local database state (`Subscription`, `EmailPreference`) is the **authoritative truth** for consent.
@@ -40,8 +40,7 @@ Access **must NOT** be inferred from:
 - It is **not** a recurring paid subscription service.
 
 ### 2.2. Qualifying Support
-- **Qualifying Minimum:** 10 units of an active currency (PLN, EUR, USD, GBP).
-- **CHF:** Included only when enabled/active.
+- **Qualifying Minimum:** 10 units of an active currency (PLN, EUR, USD, CHF, GBP) — see `SUPPORTED_CURRENCIES` in `lib/constants.ts`.
 - **Indefinite Access:** A qualifying tip grants patron access that is indefinite while the service and Patron Zone exist. (Do not use "Lifetime Access" in legal text).
 
 ### 2.3. Refund and Dispute Lifecycle

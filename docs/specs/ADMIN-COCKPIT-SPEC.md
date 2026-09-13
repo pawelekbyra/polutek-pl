@@ -28,7 +28,7 @@ Read-only diagnostics first; corrective use-cases later through domain modules w
 
 - Generic dashboard before Access Diagnostics.
 - Direct DB mutation from UI.
-- Setting User.isPatron as access fix.
+- Setting a `User`-table patron flag as an access fix (no such column exists; the only correct fix is granting/revoking a `PatronGrant`).
 - Unaudited manual access repair.
 
 ## Test strategy

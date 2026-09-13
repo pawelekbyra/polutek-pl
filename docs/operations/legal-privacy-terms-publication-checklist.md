@@ -8,7 +8,7 @@ This checklist distinguishes content approval, implementation, and production ev
 
 | # | Item | Required evidence | Status |
 | ---: | --- | --- | --- |
-| 1 | Owner answers completed | `docs/operations/legal-owner-decision-questionnaire.md` filled with owner answers. | OWNER_DECISION_REQUIRED |
+| 1 | Owner answers completed | `docs/operations/legal-owner-decision-questionnaire.md` does not exist in this repo and no file by that exact name/purpose has replaced it; the closest existing record of owner answers on legal/patron/privacy topics is `docs/strategy/OWNER-LAUNCH-DECISIONS-001.md` (see its sections B/C/D/J/K) plus `docs/strategy/OWNER-DECISIONS.md` — confirm against those, or have the owner complete a proper questionnaire, before treating this item as satisfied. | OWNER_DECISION_REQUIRED |
 | 2 | Provider inventory verified | Owner-reviewed provider/data inventory with unknowns resolved or explicitly left as legal-review questions. | OWNER_DECISION_REQUIRED / LEGAL_REVIEW_REQUIRED |
 | 3 | Legal review completed or explicitly waived by owner where appropriate | Repository evidence of legal review decision/path; no agent assumption. | LEGAL_REVIEW_REQUIRED |
 | 4 | Final copy approved for publication | Owner-provided final terms, privacy, cookie, refund/support, and community copy. | OWNER_DECISION_REQUIRED |

@@ -106,7 +106,7 @@ Required negative proof:
 - duplicate webhook does not create duplicate Payment/grant,
 - payment alone does not grant access,
 - Clerk metadata does not grant access,
-- `User.isPatron` does not grant backend access,
+- there is no `User.isPatron` column to grant backend access from — access must come only from an active `PatronGrant`,
 - newsletter subscription does not grant access,
 - guest and non-patron remain denied.
 

@@ -32,7 +32,7 @@ This runbook provides procedures for detecting, classifying, containing, and res
 
 ## Payment & Access Rules
 
-1. **Restore Truth:** Never "fix" access by manually setting `User.isPatron = true` or Clerk metadata.
+1. **Restore Truth:** Never "fix" access via a `User`-table patron field — it does not exist (`User.isPatron`/`patronSince`/`patronSource` were removed from the schema in migration `20260630000000_remove_legacy_user_patron_cache`) — or by editing Clerk metadata.
 2. **Correct Fact:** Recovery must involve creating or correcting the `Payment` record and `PatronGrant`.
 3. **Audit Trail:** Every manual correction requires a documented reason and audit log entry.
 
@@ -77,8 +77,8 @@ This runbook provides procedures for detecting, classifying, containing, and res
 
 ### G. User has access without active PatronGrant
 - **Detection:** Audit logs show access for user with no active grant.
-- **Checks:** Check for legacy `User.isPatron` status or Clerk metadata bypass.
-- **Containment:** Manually set `User.isPatron = false` and clear Clerk metadata; ensure backend logic uses `PatronGrant`.
+- **Checks:** Confirm `checkVideoAccess()`/`PlaybackPlan` are actually reading `PatronGrant` and not some ad hoc bypass; check Clerk metadata isn't being trusted as access truth anywhere in the code path.
+- **Containment:** Call `revokePatron()` (`lib/modules/patron/application/revoke-patron.use-case.ts`, exposed via `app/api/admin/users/[userId]/patron/route.ts` and used from the `/admin/users/[id]` detail page) to revoke the erroneous grant — this sets the grant's `revokedAt` timestamp and is replay-safe/audited. Then force-refresh/clear the Clerk metadata cache so it stops disagreeing with the database. There is no `User.isPatron` field to clear; `PatronGrant` is the only thing to correct.
 
 ### H. Cloudflare asset is stuck processing
 - **Detection:** Admin Media Tab shows `PROCESSING` for > 4 hours.
