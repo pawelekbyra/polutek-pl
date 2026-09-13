@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type { PublicVideoDTO } from "@/app/types/video";
 import type { SecretProjectFunding } from "@/lib/modules/campaign/secret-project-funding";
+import { splitTitleForHighlight } from "@/lib/modules/campaign/secret-project-title";
 import PremiumWrapper from "../PremiumWrapper";
 import VideoPlayer from "../VideoPlayer";
 import { useAuthModal } from "../auth/AuthModalProvider";
@@ -49,6 +50,7 @@ export default function SecretProjectExperience({
   const percent = funding.goalPln > 0 ? Math.min(100, (funding.raisedPln / funding.goalPln) * 100) : 0;
   const percentLabel = percent >= 10 ? Math.round(percent).toString() : percent.toFixed(1);
   const daysLeft = Math.max(0, funding.daysLeft);
+  const titleParts = splitTitleForHighlight(PROJECT_TITLE, "secret");
 
   const nav = [
     { href: "#projekt", label: isPl ? "O projekcie" : "About" },
@@ -168,9 +170,15 @@ export default function SecretProjectExperience({
           </p>
 
           <h1 className="max-w-3xl font-brand text-[34px] font-extrabold leading-[1.06] tracking-[-0.035em] text-[var(--sp-ink)] sm:text-[46px] lg:text-[56px]">
-            {PROJECT_TITLE.split(" secret ")[0]}{" "}
-            <span className={styles.goldText}>secret</span>{" "}
-            {PROJECT_TITLE.split(" secret ")[1]}
+            {titleParts.matched ? (
+              <>
+                {titleParts.before}{" "}
+                <span className={styles.goldText}>{titleParts.highlight}</span>{" "}
+                {titleParts.after}
+              </>
+            ) : (
+              PROJECT_TITLE
+            )}
           </h1>
 
           <p className="mt-5 max-w-2xl text-[16px] leading-relaxed text-[var(--sp-body)] sm:text-[17px]">
