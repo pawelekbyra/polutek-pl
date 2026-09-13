@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useAuthModal } from "@/app/components/auth/AuthModalProvider";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -112,9 +112,6 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
   const [patronThresholds, setPatronThresholds] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
   const [patronBoxMinimums, setPatronBoxMinimums] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
 
-  const logPrefixRef = useRef(logPrefix);
-  logPrefixRef.current = logPrefix;
-
   useEffect(() => {
     fetch("/api/payment-settings", { cache: "no-store" })
       .then((response) => (response.ok ? response.json() : null))
@@ -141,8 +138,11 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
         }
         setPatronBoxMinimums(nextBoxMins);
       })
-      .catch((error) => logger.warn(`[${logPrefixRef.current}] Failed to fetch payment minimums:`, error))
+      .catch((error) => logger.warn(`[${logPrefix}] Failed to fetch payment minimums:`, error))
       .finally(() => setIsInitialLoading(false));
+    // logPrefix is a fixed literal per caller (e.g. "DonationBox") and never changes across
+    // this component's lifetime, so this intentionally still runs only once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Stripe return-URL handling: trust Stripe's own redirect_status for the visible message,
@@ -229,7 +229,7 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
           // grant lands so the on-close reload reflects live Patron access, but never change copy.
           return isTerminal || attempts >= maxAttempts;
         } catch (e) {
-          logger.error(`[${logPrefixRef.current}] Reconcile error`, e);
+          logger.error(`[${logPrefix}] Reconcile error`, e);
           if (cancelled) return true;
           if (attempts >= maxAttempts) {
             if (!redirectSucceeded) {
@@ -269,12 +269,12 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
       setPaymentUiStatus(nextStatus ?? "TIMED_OUT");
       if (nextStatus === "SUCCEEDED") setPaymentSucceeded(true);
     } catch (e) {
-      logger.error(`[${logPrefixRef.current}] Manual status check error`, e);
+      logger.error(`[${logPrefix}] Manual status check error`, e);
       setPaymentUiStatus("TIMED_OUT");
     } finally {
       setIsSyncing(false);
     }
-  }, [paymentId]);
+  }, [paymentId, logPrefix]);
 
   // Closing the success screen (either the X or "back to site"): if the payment went through,
   // do a full reload to the clean URL so every server-rendered surface comes back reflecting the
@@ -355,7 +355,7 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
           }
         }
       } catch (error: unknown) {
-        logger.error(`[${logPrefixRef.current}] Payment error`, error);
+        logger.error(`[${logPrefix}] Payment error`, error);
         toast(
           isPl
             ? "Błąd połączenia z systemem płatności. Spróbuj odświeżyć stronę."
@@ -376,6 +376,7 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
       title,
       getMinAmountTooLowMessage,
       attemptFinishedMessage,
+      logPrefix,
     ],
   );
 
