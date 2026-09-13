@@ -23,6 +23,9 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
   'lib/modules/channel/infrastructure/creator-content.service.ts': {
     'video/infrastructure/video-content.service': 'VideoContentService is an infra service; exporting via video index causes channel↔video circular dep through MainChannelService.',
   },
+  'lib/modules/users/application/patron-read-model.ts': {
+    'patron/domain/patron-read-model': 'Pure, no-side-effect derivation helper re-exported for admin user read models; routing through the patron module\'s public index would entangle it with tests that mock the whole @/lib/modules/patron barrel (grantPatron/revokePatron).',
+  },
 };
 
 function checkModules() {

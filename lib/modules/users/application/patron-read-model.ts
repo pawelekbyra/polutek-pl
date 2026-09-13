@@ -1,62 +1,14 @@
-export interface PatronTruthReadModel {
-  isPatron: boolean;
-  activeGrantCount: number;
-  activeGrantIds: string[];
-  activeGrantSince: Date | null;
-  activeGrantSource: string | null;
-  firstActiveGrantAt: Date | null;
-  latestActiveGrantAt: Date | null;
-  source: string | null;
-  truthSource: 'ACTIVE_PATRON_GRANT';
-}
-
-export interface PatronDiagnosticsReadModel {
-  finalPatronStatus: 'ACTIVE_GRANT' | 'NO_ACTIVE_GRANT';
-  finalPatronStatusSource: 'ACTIVE_PATRON_GRANT';
-  truth: PatronTruthReadModel;
-}
-
-export function buildPatronTruthReadModel(
-  patronGrants: Array<{
-    id: string;
-    source: string;
-    createdAt: Date;
-    revokedAt: Date | null;
-  }>
-): PatronTruthReadModel {
-  const activeGrants = patronGrants
-    .filter((grant) => grant.revokedAt === null)
-    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-
-  const firstActiveGrant = activeGrants[0] ?? null;
-  const latestActiveGrant = activeGrants.length > 0 ? activeGrants[activeGrants.length - 1] : null;
-
-  return {
-    isPatron: activeGrants.length > 0,
-    activeGrantCount: activeGrants.length,
-    activeGrantIds: activeGrants.map((grant) => grant.id),
-    activeGrantSince: firstActiveGrant?.createdAt ?? null,
-    activeGrantSource: firstActiveGrant?.source ?? null,
-    firstActiveGrantAt: firstActiveGrant?.createdAt ?? null,
-    latestActiveGrantAt: latestActiveGrant?.createdAt ?? null,
-    source: firstActiveGrant?.source ?? null,
-    truthSource: 'ACTIVE_PATRON_GRANT',
-  };
-}
-
-export function buildPatronDiagnosticsReadModel(
-  patronGrants: Array<{
-    id: string;
-    source: string;
-    createdAt: Date;
-    revokedAt: Date | null;
-  }>
-): PatronDiagnosticsReadModel {
-  const truth = buildPatronTruthReadModel(patronGrants);
-
-  return {
-    finalPatronStatus: truth.isPatron ? 'ACTIVE_GRANT' : 'NO_ACTIVE_GRANT',
-    finalPatronStatusSource: 'ACTIVE_PATRON_GRANT',
-    truth,
-  };
-}
+// The patron-truth derivation (PatronGrant rows -> isPatron/patronSince/patronSource)
+// is patron-module domain logic (CLAUDE.md §4.1: PatronGrant is the sole source of
+// truth), so the canonical implementation lives in
+// `lib/modules/patron/domain/patron-read-model.ts`. This file re-exports it so
+// existing imports of `@/lib/modules/users/application/patron-read-model` (admin
+// user read models, tests) keep working unchanged.
+//
+// Imported from the deep `domain/` path rather than the patron module's public
+// index (`@/lib/modules/patron`) deliberately: that index also re-exports
+// grantPatron/revokePatron/etc., and several tests mock the whole `@/lib/modules/patron`
+// barrel wholesale — routing this pure, no-side-effect derivation helper through
+// that barrel would entangle it with those mocks. Allowlisted in
+// scripts/check-architecture.ts.
+export * from "@/lib/modules/patron/domain/patron-read-model";

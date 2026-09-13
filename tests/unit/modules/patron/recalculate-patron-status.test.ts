@@ -32,6 +32,7 @@ describe('recalculatePatronStatus use case', () => {
       id: 'grant-1',
       source: PatronGrantSource.STRIPE_TIP,
       createdAt: grantDate,
+      revokedAt: null,
     }]);
 
     const result = await recalculatePatronStatus('user-1', ctx);
