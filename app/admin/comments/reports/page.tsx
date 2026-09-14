@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MessageSquare, Shield, CheckCircle2, XCircle, ExternalLink, Clock } from "@/app/components/icons";
+import { cn } from "@/lib/utils";
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
 import { logger } from "@/lib/logger";
 import { formatDistanceToNow } from "date-fns";
@@ -259,8 +260,4 @@ export default function AdminCommentReportsPage() {
       </main>
     </div>
   );
-}
-
-function cn(...classes: any[]) {
-    return classes.filter(Boolean).join(' ');
 }

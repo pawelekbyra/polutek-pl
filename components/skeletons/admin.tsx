@@ -189,6 +189,34 @@ export function AdminPaymentsPageSkeleton() {
   );
 }
 
+export function AdminCommentsPageSkeleton() {
+  return (
+    <div className="p-8">
+      <AdminPageHeaderSkeleton />
+      <AdminTableSkeleton cols={5} />
+    </div>
+  );
+}
+
+export function AdminCommentReportsPageSkeleton() {
+  return (
+    <div className="p-8">
+      <AdminPageHeaderSkeleton />
+      <AdminTableSkeleton cols={5} />
+    </div>
+  );
+}
+
+export function AdminNotificationsPageSkeleton() {
+  return (
+    <div className="p-8">
+      <AdminPageHeaderSkeleton />
+      <StatCardsSkeleton count={3} />
+      <AdminTableSkeleton cols={4} />
+    </div>
+  );
+}
+
 export function AdminVideoLayoutSkeleton() {
   return (
     <div className="p-8 space-y-8">
