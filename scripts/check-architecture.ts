@@ -26,6 +26,9 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
   'lib/modules/users/application/patron-read-model.ts': {
     'patron/domain/patron-read-model': 'Pure, no-side-effect derivation helper re-exported for admin user read models; routing through the patron module\'s public index would entangle it with tests that mock the whole @/lib/modules/patron barrel (grantPatron/revokePatron).',
   },
+  'lib/modules/access/application/check-video-access.use-case.ts': {
+    'channel/domain/channel.policy': 'Pure, no-side-effect policy class; many tests narrowly mock the whole @/lib/modules/channel barrel for MainChannelService only, and routing this through it would force every such test to also mock MainChannelPolicy.',
+  },
 };
 
 function checkModules() {

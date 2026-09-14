@@ -10,7 +10,6 @@ import { AlertCircle } from "../icons";
 import { PublicVideoDTO } from "@/app/types/video";
 import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
-import { logger } from "@/lib/logger";
 import AccessLockOverlay from "../AccessLockOverlay";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { NajsIcon } from "../najs/primitives";
@@ -18,27 +17,16 @@ import DonationBox from "./DonationBox";
 import { useAppPreload } from "../preload/AppPreloadProvider";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  acquireSidebarLayout,
+  releaseSidebarLayout,
+  sidebarLayoutViewerKey,
+  type SidebarLayout,
+  type SidebarLayoutItem,
+} from "./sidebar-layout-request";
 
 type Translations = {
   views: string;
-};
-
-type SidebarLayoutItem = PublicVideoDTO & {
-  isLocked?: boolean;
-  creatorId?: string | null;
-};
-
-type SidebarLayoutSection = {
-  id: string;
-  type: "FREE" | "LOGGED_IN" | "PATRON" | "ANNOUNCEMENT";
-  title: string;
-  items: SidebarLayoutItem[];
-};
-
-type SidebarLayout = {
-  viewerState: "ANONYMOUS" | "LOGGED_IN" | "PATRON" | "ADMIN";
-  sections: SidebarLayoutSection[];
-  currentVideoId?: string;
 };
 
 interface SidebarPlaylistProps {
@@ -138,38 +126,33 @@ export function SidebarPlaylist({
   useEffect(() => {
     if (!authLoaded) return;
 
-    const controller = new AbortController();
+    // Keyed by viewer identity so the two simultaneously mounted instances share
+    // one request, while any auth-state change starts a fresh one.
+    const viewerKey = sidebarLayoutViewerKey(authUserId, isSignedIn);
+    const request = acquireSidebarLayout(viewerKey);
+    let cancelled = false;
 
-    async function fetchLayout() {
+    async function applyLayout() {
       setLayout(null);
       setLoading(true);
       setError(false);
 
-      try {
-        const res = await fetch("/api/channel/sidebar", {
-          cache: "no-store",
-          signal: controller.signal,
-        });
-        if (res.ok) {
-          const data: SidebarLayout = await res.json();
-          if (controller.signal.aborted) return;
-          setLayout(data);
-          setError(false);
-        } else {
-          logger.warn(`Sidebar layout fetch failed with status: ${res.status}`);
-          setError(true);
-        }
-      } catch (err) {
-        if (controller.signal.aborted) return;
-        logger.error("Failed to fetch sidebar layout", err);
+      const result = await request.promise;
+      if (cancelled || result.status === "aborted") return;
+      if (result.status === "ok") {
+        setLayout(result.layout);
+        setError(false);
+      } else {
         setError(true);
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
       }
+      setLoading(false);
     }
-    void fetchLayout();
+    void applyLayout();
 
-    return () => controller.abort();
+    return () => {
+      cancelled = true;
+      releaseSidebarLayout(viewerKey, request);
+    };
   }, [authLoaded, authUserId, isSignedIn]);
 
   const renderVideoItem = (video: SidebarLayoutItem, isPublicSection = false) => {

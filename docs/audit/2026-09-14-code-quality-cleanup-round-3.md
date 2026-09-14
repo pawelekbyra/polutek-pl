@@ -35,9 +35,9 @@ właściciela albo większego nakładu niż jedna runda.
   udokumentowanym "always-mounted" fixem), a każda instancja niezależnie
   odpytuje `/api/channel/sidebar` — podwaja obciążenie bazy na stronie już
   oznaczonej w `KNOWN_LIMITATIONS.md` jako wąskie gardło skalowalności.
-  **Naprawa w toku** — zlecona dedykowanemu agentowi z pełnym kontekstem
-  inwariantów do zachowania (mobile tab handoff, duplikat `#donations`);
-  nie ukończona w tej rundzie z powodu limitów sesji, patrz sekcja 3.
+  **Naprawione 2026-09-14** (współdzielone żądanie in-flight w
+  `app/components/channel/sidebar-layout-request.ts`) — szczegóły i
+  zachowane inwarianty: sekcja 3.
 - **Dwie krytyczne poprawki dostępności w żywym checkoucie** (z rundy
   poprzedzającej tę, ale część tej samej fali): `CheckoutModal` nie miał
   semantyki dialogu/pułapki fokusu/Escape; pole kwoty napiwku miało
@@ -127,6 +127,18 @@ Patrz `docs/tickets/ready/`:
   per udokumentowany fix), każda instancja robi własny fetch
   `/api/channel/sidebar`. Trzeba zdedupować fetch bez cofania
   always-mounted pattern ani łamania mobile tab handoff/`#donations` fixów.
+
+  **Uzupełnienie 2026-09-14 — zrobione.** Nowy moduł
+  `app/components/channel/sidebar-layout-request.ts`: mapa **wyłącznie
+  trwających** żądań, kluczowana tożsamością widza; drugi mount dołącza do
+  żądania pierwszego zamiast wysyłać własne. Wpis znika w momencie
+  rozstrzygnięcia żądania (to nie jest cache wyniku), więc zmiana stanu
+  auth zawsze pobiera dane od nowa — zero ryzyka pokazania cudzego stanu
+  blokad. Abort zachowany przez licznik subskrybentów (odpala się dopiero
+  gdy odłączy się ostatni). `ChannelHome.tsx` nietknięty, więc
+  always-mounted, `getVisibleDonationsElement()` i mobile tab handoff bez
+  zmian. Testy: `tests/unit/components/channel/SidebarPlaylist-shared-fetch.test.tsx`
+  (zweryfikowane, że padają na kodzie sprzed fixu: 2 fetche zamiast 1).
 
 ## 4. Czego wciąż NIE sprawdzono
 
