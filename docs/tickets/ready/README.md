@@ -24,6 +24,10 @@ rozbite na małe, wykonywalne tickety kodowe.
 | [`MEDIA-DTO-SAFETY-ASSERTS-WIRING-001`](MEDIA-DTO-SAFETY-ASSERTS-WIRING-001.md) | LOW | Wpięcie nieużywanych safety-netów DTO mediów do produkcyjnego kodu |
 | [`ADMIN-EMAILS-VISUAL-DRIFT-001`](ADMIN-EMAILS-VISUAL-DRIFT-001.md) | LOW | `/admin/emails` ma inny język wizualny niż reszta panelu — decyzja: ujednolicić czy udokumentować jako celowe |
 | [`ADMIN-LIST-SCAFFOLD-CONSOLIDATION-001`](ADMIN-LIST-SCAFFOLD-CONSOLIDATION-001.md) | LOW | Wspólny scaffold list/paginacji/filtrowania zamiast 4 niezależnych implementacji w panelu admina |
+| [`AUDIT-LOG-INDEX-001`](AUDIT-LOG-INDEX-001.md) | LOW | Brakujący indeks DB na AuditLog(targetType, targetId) |
+| [`ADMIN-DESIGN-SYSTEM-CONSISTENCY-001`](ADMIN-DESIGN-SYSTEM-CONSISTENCY-001.md) | LOW | Ujednolicenie stat-tile/nagłówków/zakładek/ikon/pustych-stanów w panelu admina |
+| [`COMMENT-LIST-MEMOIZATION-001`](COMMENT-LIST-MEMOIZATION-001.md) | LOW | Brak memoizacji na liście komentarzy — globalny pending flag re-renderuje całą listę |
+| [`TEST-COVERAGE-PAYMENTS-GAPS-001`](TEST-COVERAGE-PAYMENTS-GAPS-001.md) | MEDIUM | Zero pokrycia testami na refundach/sporach/route'ach płatności admina |
 
 ## Znane kierunki bez ticketu (do rozpisania przed realizacją)
 
