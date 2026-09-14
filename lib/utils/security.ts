@@ -100,9 +100,11 @@ export function generateCSP() {
     'https://cdn.jsdelivr.net',
     'https://js.stripe.com',
   ].join(' ');
-  const relaxedPrefix = 'un' + 'safe';
-  const inlineDirective = `'${relaxedPrefix}-inline'`;
-  const evalDirective = `'${relaxedPrefix}-${'eval'}'`;
+  // Real, permanent CSP weakness — script-src/style-src allow 'unsafe-inline' in every
+  // environment, not just development. Written as literal strings (not built via string
+  // concatenation) so this stays grep-visible to future security review.
+  const inlineDirective = "'unsafe-inline'";
+  const evalDirective = "'unsafe-eval'";
   const devScriptSource = process.env.NODE_ENV === 'development' ? ` ${evalDirective}` : '';
   const frameHosts = Array.from(new Set([
     ...clerkDomains,

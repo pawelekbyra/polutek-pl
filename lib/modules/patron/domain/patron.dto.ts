@@ -33,6 +33,5 @@ export interface GrantPatronInput {
 export interface RevokePatronInput {
   userId: string;
   note?: string;
-  revokedByUserId?: string;
   paymentId?: string;
 }

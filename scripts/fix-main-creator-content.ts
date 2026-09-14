@@ -8,6 +8,15 @@ const creatorDisplayName = process.env.MAIN_CREATOR_NAME || creatorSlug;
 async function main() {
   console.log("=== NAPRAWA I POPULACJA TREŚCI MVP DLA SKONFIGUROWANEGO TWÓRCY ===");
 
+  // This script seeds hardcoded fake engagement numbers and demo video URLs via
+  // upsert-by-slug — safe for local/dev MVP setup, but it would silently overwrite
+  // real production video metadata/stats for any matching slug. Require an explicit
+  // opt-in before running against a production environment.
+  if (process.env.NODE_ENV === 'production' && process.env.CONFIRM_FIX_MAIN_CREATOR !== 'yes') {
+    console.log("BŁĄD: Ten skrypt nadpisuje treści demo (fałszywe statystyki, przykładowe wideo) i nie powinien być uruchamiany na produkcji bez świadomego potwierdzenia. Ustaw CONFIRM_FIX_MAIN_CREATOR=yes, jeśli na pewno tego chcesz.");
+    return;
+  }
+
   if (!creatorSlug) {
     console.log("BŁĄD: Brak MAIN_CREATOR_SLUG w środowisku. Ustaw slug twórcy przed uruchomieniem skryptu.");
     return;
