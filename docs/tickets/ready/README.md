@@ -18,6 +18,7 @@ rozbite na małe, wykonywalne tickety kodowe.
 
 | Ticket | Priorytet | Temat |
 |---|---|---|
+| [`DEPS-SECURITY-VULN-REMEDIATION-001`](DEPS-SECURITY-VULN-REMEDIATION-001.md) | HIGH | Krytyczny unauthenticated RCE w zainstalowanej wersji `next` + 9 innych wysokich podatności (`npm audit/security` czerwony na `main`) |
 | [`MEDIA-THUMBNAILS-R2-MIGRATION-001`](MEDIA-THUMBNAILS-R2-MIGRATION-001.md) | MEDIUM | Migracja custom miniaturek z Vercel Blob do Cloudflare R2 (koszt/skala, nie correctness blocker) |
 | [`VIDEO-PLAYBACK-SESSION-RETENTION-001`](VIDEO-PLAYBACK-SESSION-RETENTION-001.md) | LOW | Retencja/czyszczenie tabeli VideoPlaybackSession (rośnie bez ograniczeń przez preload) |
 | [`PRISMA-MIGRATION-TIMESTAMP-DEDUP-001`](PRISMA-MIGRATION-TIMESTAMP-DEDUP-001.md) | LOW | Normalizacja duplikatów timestampów w historii migracji Prisma |
