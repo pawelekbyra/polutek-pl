@@ -64,7 +64,6 @@ export async function PATCH(request: NextRequest, props: Context) {
       const result = await revokePatron(
         {
           userId: params.userId,
-          revokedByUserId: adminUserId!,
           note: reason,
         },
         ctx,

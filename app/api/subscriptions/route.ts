@@ -6,7 +6,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { handleApiError } from "@/lib/errors";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { GetOrCreateUserUseCase } from "@/lib/modules/users";
+import { getOrCreateCurrentUser } from "@/lib/modules/users";
 import {
   GetSubscriptionStatusUseCase,
   SubscribeUseCase,
@@ -103,14 +103,14 @@ async function requireTrustedEmail(ctx: any) {
     };
   }
 
-  // Sync user profile on write operations
-  await GetOrCreateUserUseCase.execute(ctx, {
-    id: ctx.actor.userId,
+  // Sync user profile on write operations. The claims are forwarded with the
+  // already-normalized trusted email so the local row keeps the same address
+  // the subscription is recorded under, while still going through the
+  // transactional sync path that resolves email collisions with an existing
+  // row instead of failing on the unique constraint.
+  await getOrCreateCurrentUser(ctx, ctx.actor.userId, {
+    ...((sessionClaims as Record<string, unknown> | null) ?? {}),
     email,
-    name: (sessionClaims as any)?.name,
-    username: (sessionClaims as any)?.username,
-    imageUrl:
-      (sessionClaims as any)?.image_url || (sessionClaims as any)?.picture,
   });
 
   return { email };

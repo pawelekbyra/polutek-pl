@@ -220,6 +220,7 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                             <button
                                 key={group.id}
                                 onClick={() => setRecipientGroup(group.id)}
+                                aria-pressed={recipientGroup === group.id}
                                 className={cn(
                                     "flex items-center gap-4 p-6 rounded-2xl border-2 text-left transition-all",
                                     recipientGroup === group.id ? "border-blue-600 bg-blue-50 shadow-md" : "border-neutral-100 bg-white hover:border-neutral-300"

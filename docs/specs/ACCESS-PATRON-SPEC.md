@@ -11,7 +11,7 @@ Ustalić reguły, model docelowy, forbidden shortcuts, strategię testów, kandy
 - Deny by default.
 - Backend validates every sensitive request.
 - Active PatronGrant is source of truth.
-- `User.isPatron` is target-deprecated legacy diagnostic.
+- `User.isPatron` does not exist (removed from `prisma/schema.prisma` in migration `20260630000000_remove_legacy_user_patron_cache`); any `isPatron` on a DTO/read model is derived live from active `PatronGrant` rows, never a stored/settable field.
 - Clerk metadata is UI/cache only.
 - Subscription never grants access.
 - Admin override explicit and audited.
@@ -21,7 +21,7 @@ Ustalić reguły, model docelowy, forbidden shortcuts, strategię testów, kandy
 - All playback-sensitive paths ask Access module.
 - Denied PlaybackPlan has no token/source.
 - No provider call on denial.
-- Mismatch diagnostics show User.isPatron/Clerk/Subscription differences without trusting them.
+- Mismatch diagnostics show Clerk/Subscription differences against the `PatronGrant` truth without trusting them.
 
 ## Target model
 
@@ -29,7 +29,7 @@ Access module centralizes decisions and returns explicit allow/deny reason consu
 
 ## Forbidden shortcuts
 
-- Access based on User.isPatron.
+- Access based on a `User`-table patron cache field (none exists in the schema).
 - Access based on Clerk metadata.
 - Access based on Subscription.
 - Frontend-only access checks.

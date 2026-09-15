@@ -1,28 +1,17 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
-import { useAuth, useUser } from "@clerk/nextjs";
-import { useAuthModal } from "../auth/AuthModalProvider";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
-import { loadStripe } from "@stripe/stripe-js";
-import { logger } from "@/lib/logger";
-import { MIN_PAYMENT_BY_CURRENCY, SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
+import { SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
 import { detectDefaultCurrency } from "@/lib/payments/detect-currency";
 import { useLanguage } from "../LanguageContext";
-import { useToast } from "@/app/hooks/useToast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "../icons";
 import { ArrowRight, Lock, ShieldCheck } from "lucide-react";
 import CheckoutModal from "../playlist/CheckoutModal";
 import DonationLegalDialog from "../channel/DonationLegalDialog";
 import { RegulaminContent, PolitykaContent } from "../legal/LegalDocs";
+import { useCheckoutFlow, checkoutStripePromise } from "@/lib/hooks/useCheckoutFlow";
 import styles from "./SecretProject2.module.css";
-
-const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
-  : null;
 
 interface SecretPledgeBox2Props {
   /** True when the signed-in viewer already holds an active Patron grant. */
@@ -42,50 +31,64 @@ function roundNice(value: number): number {
  * the homepage DonationBox and the /secretproject SecretPledgeBox — same
  * /api/checkout/create-intent entry, the same CheckoutModal + Stripe
  * Elements, and the same return-URL reconciliation that trusts Stripe's
- * redirect_status. Only the presentation differs: a tier-card amount picker
- * instead of a free-typed number field for non-patron viewers.
+ * redirect_status (all shared via useCheckoutFlow). Only the presentation
+ * differs: a tier-card amount picker instead of a free-typed number field for
+ * non-patron viewers.
  */
 export default function SecretPledgeBox2({ viewerIsPatron = false }: SecretPledgeBox2Props) {
   const { language } = useLanguage();
   const isPl = language === "pl";
-  const toast = useToast();
-  const { userId } = useAuth();
-  const { user } = useUser();
-  const userEmail = user?.primaryEmailAddress?.emailAddress;
-  const { open: openAuthModal } = useAuthModal();
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const queryClient = useQueryClient();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [selectedCurrency, setSelectedCurrency] = useState<string>(isPl ? "PLN" : "EUR");
   const [amount, setAmount] = useState<number | "">("");
   const [customAmount, setCustomAmount] = useState<number | "">("");
   const [useCustomAmount, setUseCustomAmount] = useState(false);
-  const [isTermsAccepted, setIsTermsAccepted] = useState(false);
-  const [showTermsError, setShowTermsError] = useState(false);
   const [isRegulaminOpen, setIsRegulaminOpen] = useState(false);
   const [isPolitykaOpen, setIsPolitykaOpen] = useState(false);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [paymentId, setPaymentId] = useState<string | null>(null);
-  const [checkoutRequestId, setCheckoutRequestId] = useState<string | null>(null);
-  const [paymentUiStatus, setPaymentUiStatus] = useState<string | null>(null);
-  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [paymentSucceeded, setPaymentSucceeded] = useState(false);
-  const [minimums, setMinimums] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
-  const [patronThresholds, setPatronThresholds] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
-  const [patronBoxMinimums, setPatronBoxMinimums] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
+
+  const termsErrorId = "secret2-pledge-terms-error";
+
+  const {
+    userEmail,
+    isInitialLoading,
+    minimums,
+    patronThresholds,
+    patronBoxMinimums,
+    isTermsAccepted,
+    showTermsError,
+    onTermsCheckedChange,
+    isLoading,
+    clientSecret,
+    paymentId,
+    paymentUiStatus,
+    isCheckoutModalOpen,
+    isMounted,
+    isSuccess,
+    isSyncing,
+    handleRetryStatusCheck,
+    closeSuccessAndSync,
+    submit,
+  } = useCheckoutFlow({
+    isPl,
+    logPrefix: "SecretPledgeBox2",
+    title: "Secret Project",
+    getMinAmountTooLowMessage: useCallback(
+      (minAmount: number, currency: string) =>
+        isPl
+          ? `Minimalna kwota wsparcia to ${minAmount} ${currency}`
+          : `Minimum pledge amount is ${minAmount} ${currency}`,
+      [isPl],
+    ),
+    attemptFinishedMessage: isPl
+      ? "Ta próba płatności jest zakończona. Rozpocznij nowe wsparcie."
+      : "This payment attempt is finished. Start a new pledge.",
+  });
 
   const currencyKey = selectedCurrency.toUpperCase() as SupportedCurrency;
   const checkoutMinAmount = minimums[currencyKey] ?? minimums.PLN;
   const patronThreshold = patronThresholds[currencyKey] ?? checkoutMinAmount;
   const patronBoxMin = patronBoxMinimums[currencyKey] ?? checkoutMinAmount;
   const minAmount = viewerIsPatron ? patronBoxMin : patronThreshold;
-  const termsErrorId = "secret2-pledge-terms-error";
 
   const tiers = useMemo(() => {
     const base = roundNice(minAmount);
@@ -105,171 +108,6 @@ export default function SecretPledgeBox2({ viewerIsPatron = false }: SecretPledg
   const amountTooLow = typeof effectiveAmount === "number" && effectiveAmount < minAmount;
 
   useEffect(() => {
-    fetch("/api/payment-settings", { cache: "no-store" })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
-        if (!data?.limits) return;
-        const nextMinimums = { ...MIN_PAYMENT_BY_CURRENCY } as Record<SupportedCurrency, number>;
-        for (const currency of SUPPORTED_CURRENCIES) {
-          const min = Number(data.limits[currency]?.minAmount);
-          if (Number.isFinite(min) && min > 0) nextMinimums[currency] = min;
-        }
-        setMinimums(nextMinimums);
-
-        const nextThresholds = { ...nextMinimums } as Record<SupportedCurrency, number>;
-        for (const currency of SUPPORTED_CURRENCIES) {
-          const threshold = Number(data.patronThresholds?.[currency]?.threshold);
-          if (Number.isFinite(threshold) && threshold > 0) nextThresholds[currency] = threshold;
-        }
-        setPatronThresholds(nextThresholds);
-
-        const nextBoxMins = { ...nextMinimums } as Record<SupportedCurrency, number>;
-        for (const currency of SUPPORTED_CURRENCIES) {
-          const boxMin = Number(data.patronBoxMinimums?.[currency]?.min);
-          if (Number.isFinite(boxMin) && boxMin > 0) nextBoxMins[currency] = boxMin;
-        }
-        setPatronBoxMinimums(nextBoxMins);
-      })
-      .catch((error) => logger.warn("[SecretPledgeBox2] Failed to fetch payment minimums:", error))
-      .finally(() => setIsInitialLoading(false));
-  }, []);
-
-  // Stripe return-URL handling — identical contract to DonationBox / the v1
-  // SecretPledgeBox: trust Stripe's redirect_status for the visible message,
-  // reconcile access in the background via GET /api/payments/[id] (which runs
-  // fulfillPayment() when needed), and never downgrade an already-shown success.
-  useEffect(() => {
-    setIsMounted(true);
-    let interval: ReturnType<typeof setInterval> | undefined;
-    let cancelled = false;
-
-    const returnedPaymentId = searchParams.get("payment_id");
-    if (searchParams.get("success") === "true" && returnedPaymentId) {
-      const redirectStatus = searchParams.get("redirect_status");
-
-      setIsCheckoutModalOpen(true);
-      setIsSuccess(true);
-      setPaymentId(returnedPaymentId);
-      queryClient.invalidateQueries();
-
-      if (redirectStatus === "failed") {
-        setIsSyncing(false);
-        setPaymentUiStatus("FAILED_CANCELED");
-        return () => {
-          cancelled = true;
-        };
-      }
-
-      const redirectSucceeded = redirectStatus === "succeeded" || redirectStatus === null;
-      if (redirectSucceeded) {
-        setPaymentUiStatus("SUCCEEDED");
-        setPaymentSucceeded(true);
-        setIsSyncing(false);
-      } else {
-        setPaymentUiStatus("PROCESSING");
-        setIsSyncing(true);
-      }
-
-      let attempts = 0;
-      const maxAttempts = 10;
-
-      const reconcile = async (): Promise<boolean> => {
-        attempts++;
-        try {
-          const res = await fetch(`/api/payments/${encodeURIComponent(returnedPaymentId)}`, { cache: "no-store" });
-          if (!res.ok) throw new Error(`Status check failed (${res.status})`);
-          const data = await res.json();
-          const nextStatus: string | null = data.uiStatus || null;
-          const isTerminal =
-            nextStatus === "SUCCEEDED" ||
-            nextStatus === "FAILED_CANCELED" ||
-            nextStatus === "REFUNDED_DISPUTED";
-
-          if (cancelled) return true;
-
-          if (nextStatus === "SUCCEEDED") {
-            setPaymentSucceeded(true);
-            setIsSyncing(false);
-            setPaymentUiStatus("SUCCEEDED");
-            return true;
-          }
-
-          if (!redirectSucceeded) {
-            if (isTerminal || attempts >= maxAttempts) {
-              setIsSyncing(false);
-              setPaymentUiStatus(nextStatus ?? "TIMED_OUT");
-              return true;
-            }
-            setPaymentUiStatus(nextStatus ?? "PROCESSING");
-            return false;
-          }
-
-          return isTerminal || attempts >= maxAttempts;
-        } catch (e) {
-          logger.error("[SecretPledgeBox2] Reconcile error", e);
-          if (cancelled) return true;
-          if (attempts >= maxAttempts) {
-            if (!redirectSucceeded) {
-              setIsSyncing(false);
-              setPaymentUiStatus((current) => current ?? "TIMED_OUT");
-            }
-            return true;
-          }
-          return false;
-        }
-      };
-
-      reconcile().then((done) => {
-        if (done || cancelled) return;
-        interval = setInterval(async () => {
-          const finished = await reconcile();
-          if (finished && interval) clearInterval(interval);
-        }, 2000);
-      });
-    }
-
-    return () => {
-      cancelled = true;
-      if (interval) clearInterval(interval);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
-
-  const handleRetryStatusCheck = useCallback(async () => {
-    if (!paymentId) return;
-    setIsSyncing(true);
-    try {
-      const res = await fetch(`/api/payments/${encodeURIComponent(paymentId)}`, { cache: "no-store" });
-      if (!res.ok) throw new Error(`Status check failed (${res.status})`);
-      const data = await res.json();
-      const nextStatus: string | null = data.uiStatus || null;
-      setPaymentUiStatus(nextStatus ?? "TIMED_OUT");
-      if (nextStatus === "SUCCEEDED") setPaymentSucceeded(true);
-    } catch (e) {
-      logger.error("[SecretPledgeBox2] Manual status check error", e);
-      setPaymentUiStatus("TIMED_OUT");
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [paymentId]);
-
-  const closeSuccessAndSync = useCallback(() => {
-    setIsCheckoutModalOpen(false);
-    if (paymentSucceeded) {
-      window.location.replace(window.location.pathname);
-    } else {
-      router.replace(window.location.pathname);
-    }
-  }, [paymentSucceeded, router]);
-
-  useEffect(() => {
-    document.body.style.overflow = isCheckoutModalOpen ? "hidden" : "unset";
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isCheckoutModalOpen]);
-
-  useEffect(() => {
     setSelectedCurrency(detectDefaultCurrency(language));
   }, [language]);
 
@@ -280,80 +118,10 @@ export default function SecretPledgeBox2({ viewerIsPatron = false }: SecretPledg
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tiers, minAmount]);
 
-  const onPledge = useCallback(async () => {
-    if (!userId) {
-      openAuthModal("sign-in");
-      return;
-    }
-    if (!isTermsAccepted) {
-      setShowTermsError(true);
-      return;
-    }
-    setShowTermsError(false);
-
-    if (!effectiveAmount || effectiveAmount < minAmount) {
-      toast(
-        isPl
-          ? `Minimalna kwota wsparcia to ${minAmount} ${selectedCurrency}`
-          : `Minimum pledge amount is ${minAmount} ${selectedCurrency}`,
-        "error",
-      );
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const requestId = checkoutRequestId || crypto.randomUUID();
-      setCheckoutRequestId(requestId);
-
-      const response = await fetch("/api/checkout/create-intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amountMinor: Number(effectiveAmount) * 100,
-          currency: selectedCurrency.toUpperCase(),
-          title: "Secret Project",
-          requestId,
-        }),
-        cache: "no-store",
-      });
-
-      const data = await response.json();
-
-      if (data?.clientSecret) {
-        setClientSecret(data.clientSecret);
-        setPaymentId(data.paymentId || null);
-        setIsCheckoutModalOpen(true);
-      } else if (data?.terminal) {
-        setPaymentId(data.paymentId || null);
-        setPaymentUiStatus(data.status || "FAILED_CANCELED");
-        toast(
-          isPl
-            ? "Ta próba płatności jest zakończona. Rozpocznij nowe wsparcie."
-            : "This payment attempt is finished. Start a new pledge.",
-          "error",
-        );
-        setCheckoutRequestId(null);
-      } else if (data?.error) {
-        if (response.status === 401 || String(data.error).includes("AUTH_REQUIRED")) {
-          toast(isPl ? "Twoja sesja wygasła. Zaloguj się ponownie." : "Your session has expired. Please sign in again.", "error");
-          openAuthModal("sign-in");
-        } else {
-          toast(isPl ? `Błąd: ${data.message || data.error}` : `Error: ${data.message || data.error}`, "error");
-        }
-      }
-    } catch (error: unknown) {
-      logger.error("[SecretPledgeBox2] Payment error", error);
-      toast(
-        isPl
-          ? "Błąd połączenia z systemem płatności. Spróbuj odświeżyć stronę."
-          : "Payment system connection error. Please refresh the page.",
-        "error",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userId, openAuthModal, isTermsAccepted, effectiveAmount, minAmount, toast, isPl, selectedCurrency, checkoutRequestId]);
+  const onPledge = useCallback(
+    () => submit(effectiveAmount, selectedCurrency, minAmount),
+    [submit, effectiveAmount, selectedCurrency, minAmount],
+  );
 
   return (
     <div id="wesprzyj" className={`${styles.card} relative scroll-mt-24 overflow-hidden rounded-[24px] p-6 sm:p-9`}>
@@ -476,10 +244,7 @@ export default function SecretPledgeBox2({ viewerIsPatron = false }: SecretPledg
           <Checkbox
             id="secret2-pledge-terms"
             checked={isTermsAccepted}
-            onCheckedChange={(checked) => {
-              setIsTermsAccepted(!!checked);
-              if (checked) setShowTermsError(false);
-            }}
+            onCheckedChange={onTermsCheckedChange}
             aria-invalid={showTermsError}
             aria-describedby={showTermsError ? termsErrorId : undefined}
             className="mt-[2px] shrink-0"
@@ -540,29 +305,25 @@ export default function SecretPledgeBox2({ viewerIsPatron = false }: SecretPledg
         <Lock size={12} className="ml-1" aria-hidden="true" />
       </p>
 
-      {isMounted &&
-        isCheckoutModalOpen &&
-        (clientSecret || isSuccess) &&
-        createPortal(
-          <CheckoutModal
-            isSuccess={isSuccess}
-            isSyncing={isSyncing}
-            language={language}
-            amount={effectiveAmount}
-            selectedCurrency={selectedCurrency}
-            videoTitle="Secret Project"
-            viewerIsPatron={viewerIsPatron}
-            clientSecret={clientSecret}
-            paymentId={paymentId}
-            paymentUiStatus={paymentUiStatus}
-            userEmail={userEmail}
-            onRetryStatusCheck={handleRetryStatusCheck}
-            stripePromise={stripePromise}
-            onClose={closeSuccessAndSync}
-            onBackToSite={closeSuccessAndSync}
-          />,
-          document.body,
-        )}
+      {isMounted && isCheckoutModalOpen && (clientSecret || isSuccess) && (
+        <CheckoutModal
+          isSuccess={isSuccess}
+          isSyncing={isSyncing}
+          language={language}
+          amount={effectiveAmount}
+          selectedCurrency={selectedCurrency}
+          videoTitle="Secret Project"
+          viewerIsPatron={viewerIsPatron}
+          clientSecret={clientSecret}
+          paymentId={paymentId}
+          paymentUiStatus={paymentUiStatus}
+          userEmail={userEmail}
+          onRetryStatusCheck={handleRetryStatusCheck}
+          stripePromise={checkoutStripePromise}
+          onClose={closeSuccessAndSync}
+          onBackToSite={closeSuccessAndSync}
+        />
+      )}
 
       <DonationLegalDialog
         open={isRegulaminOpen}

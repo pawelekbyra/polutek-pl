@@ -2,6 +2,11 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok } from "@/lib/modules/shared/result";
 import { AccessDecisionDto } from "../domain/access-decision.dto";
 import { MainChannelService } from "@/lib/modules/channel";
+// Deep import deliberate: many tests mock the whole @/lib/modules/channel barrel
+// narrowly (for MainChannelService only), and this is a pure, side-effect-free
+// policy class — routing it through that barrel would force every such test to
+// also mock MainChannelPolicy. Allowlisted in scripts/check-architecture.ts.
+import { MainChannelPolicy } from "@/lib/modules/channel/domain/channel.policy";
 import { getPatronStatus } from "@/lib/modules/patron";
 import { AccessTier, VideoStatus } from "@prisma/client";
 import { canUseDemoFallbacks } from "@/lib/feature-flags";
@@ -60,9 +65,9 @@ export async function checkVideoAccess(
 
   // 3. Main-channel scoping & Approved Primary Check
   // Admin bypass is scoped to the main channel. Off-channel video remains NOT_FOUND in strict single-channel mode.
-  const isMainChannelVideo = video.creatorId === mainChannel.id &&
-                             video.creator?.isApproved &&
-                             video.creator?.isPrimary;
+  const isMainChannelVideo = MainChannelPolicy.isVideoOnMainChannel(video, mainChannel.id) &&
+                             !!video.creator &&
+                             MainChannelPolicy.isPublicMainChannel(video.creator);
 
   // For fallbacks, we might not have a full creator object in the same way, but MainChannelService.getRequired ensures mainChannel is valid.
   if (!isMainChannelVideo && !canUseDemoFallbacks()) {

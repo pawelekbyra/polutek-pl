@@ -9,14 +9,25 @@ export interface ListAdminCommentsInput {
   q?: string;
   status?: CommentStatus;
   videoId?: string;
-  limit: number;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface ListAdminCommentsResult {
+  items: CommentDto[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 }
 
 export async function listAdminComments(
   input: ListAdminCommentsInput,
   ctx: AppContext
-): Promise<UseCaseResult<CommentDto[], CommentError>> {
-  const { q, status, videoId, limit } = input;
+): Promise<UseCaseResult<ListAdminCommentsResult, CommentError>> {
+  const { q, status, videoId } = input;
+  const page = Math.max(1, input.page || 1);
+  const pageSize = Math.max(1, Math.min(100, input.pageSize || 50));
   const { actor, prisma } = ctx;
 
   if (actor.type !== 'admin') {
@@ -26,10 +37,10 @@ export async function listAdminComments(
   const userId = actor.userId;
   const repo = new CommentRepository(prisma);
 
-  const comments = await repo.findAdminComments({ q, status, videoId, limit });
+  const { items, total } = await repo.findAdminComments({ q, status, videoId, page, pageSize });
 
   const context = { userId, canModerate: true, videoCreatorId: null, hasVideoAccess: true };
-  const mappedComments = comments.map(c => mapCommentToDto(c, context));
+  const mappedComments = items.map(c => mapCommentToDto(c, context));
 
-  return ok(mappedComments);
+  return ok({ items: mappedComments, total, page, pageSize, totalPages: Math.ceil(total / pageSize) });
 }

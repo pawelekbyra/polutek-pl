@@ -21,7 +21,7 @@ Active PatronGrant is the target backend source of truth for patron access.
 Consequences:
 - Payment is financial evidence, not access itself.
 - Subscription is email consent, not patron status.
-- User.isPatron and Clerk metadata may exist only as legacy/read-model/cache until cleaned up.
+- `User.isPatron` does not exist as a stored column (removed in migration `20260630000000_remove_legacy_user_patron_cache`); any `isPatron` seen on a DTO/read model (e.g. `buildPatronTruthReadModel`) is derived live from active `PatronGrant` rows, never a cached column. Clerk metadata remains a sync cache only, never the authority.
 - Playback/access decisions must not rely on frontend state.
 
 ## ADR-0003 — Cloudflare Stream first, Mux later per VideoAsset
@@ -37,7 +37,7 @@ Consequences:
 ## ADR-0004 — Patronat is one-time support, not recurring subscription
 
 Decision:
-Patronat is a reward for qualifying one-time support/donation, not a recurring subscription. Launch thresholds are 10 PLN, 10 USD, 10 EUR and 10 CHF by default, admin-configurable per currency.
+Patronat is a reward for qualifying one-time support/donation, not a recurring subscription. Launch thresholds are 10 PLN, 10 EUR, 10 USD, 10 CHF and 10 GBP by default, admin-configurable per currency.
 
 Consequences:
 - Do not build recurring patron subscription scope without a new owner decision.

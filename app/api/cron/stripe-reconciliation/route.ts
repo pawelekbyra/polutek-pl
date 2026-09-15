@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from "@/lib/logger";
 import { PaymentStatus } from "@prisma/client";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { fulfillPayment } from "@/lib/modules/payments";
-import Stripe from "stripe";
+import { fulfillPayment, getStripeClient } from "@/lib/modules/payments";
 import { timingSafeEqual } from "crypto";
 
 export const dynamic = 'force-dynamic';
@@ -16,13 +15,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
-  if (!stripeKey) {
+  let stripe;
+  try {
+    stripe = getStripeClient();
+  } catch {
     logger.error("[Cron:StripeReconciliation] STRIPE_SECRET_KEY is missing");
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-
-  const stripe = new Stripe(stripeKey, { apiVersion: '2024-12-18.acacia' as any });
   const ctx = createAppContext({
     actor: { type: 'system', reason: 'stripe-reconciliation-cron' },
   });

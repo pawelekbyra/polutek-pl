@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/errors";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { listAdminComments } from "@/lib/modules/comments";
+import { listAdminComments, commentErrorStatus } from "@/lib/modules/comments";
 import { CommentStatus } from "@prisma/client";
 import { requireAdminForApi } from "@/lib/auth-utils";
+import { parsePaginationParams } from "@/lib/admin/query-parser";
 
 export const dynamic = "force-dynamic";
 
@@ -17,24 +18,23 @@ export async function GET(request: NextRequest) {
     const q = searchParams.get("q") || undefined;
     const status = searchParams.get("status") as CommentStatus | undefined;
     const videoId = searchParams.get("videoId") || undefined;
-    const limit = parseInt(searchParams.get("limit") || "50", 10);
+    // Reuses the shared admin pagination-parsing pattern (page/pageSize) for
+    // consistency with the other admin list endpoints (videos/users/payments/reports).
+    const { page, pageSize } = parsePaginationParams(request, "createdAt");
 
     const ctx = createAppContext({
       actor: { type: "admin", userId: adminUserId! },
     });
-    const result = await listAdminComments({ q, status, videoId, limit }, ctx);
+    const result = await listAdminComments({ q, status, videoId, page, pageSize }, ctx);
 
     if (!result.ok) {
       return NextResponse.json(
-        { success: false, message: result.error.message },
-        { status: 403 },
+        { error: result.error.message },
+        { status: commentErrorStatus(result.error) },
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      comments: result.data,
-    });
+    return NextResponse.json(result.data);
   } catch (error: unknown) {
     return handleApiError(error);
   }

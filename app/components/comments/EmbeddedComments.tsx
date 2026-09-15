@@ -59,7 +59,32 @@ interface EmbeddedCommentsProps {
   videoTier?: AccessTierDto;
 }
 
-const CommentsLoadingState = () => <CommentLoadingSkeleton />;
+/**
+ * The shared CommentLoadingSkeleton is purely decorative (aria-hidden), so on its
+ * own it never tells assistive tech that comments are loading. Wrap it with a
+ * visible, readable pending label announced via role="status"/aria-live so screen
+ * reader users (and anyone glancing at the panel) get the same "comments are
+ * loading" signal the skeleton bars only convey visually.
+ */
+const CommentsLoadingState = ({ language }: { language: "pl" | "en" }) => (
+  <div className="space-y-4">
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex items-center gap-2 text-[13px] font-bold text-[var(--chan-muted)]"
+    >
+      <Loader2
+        size={16}
+        className="animate-spin motion-reduce:animate-none"
+        aria-hidden="true"
+      />
+      {language === "pl"
+        ? "Rozgrzewamy dyskusję…"
+        : "Warming up the discussion…"}
+    </div>
+    <CommentLoadingSkeleton />
+  </div>
+);
 
 const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   userProfile: propUserProfile,
@@ -386,7 +411,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
       <div className="space-y-[22px]">
         {isLoading ? (
-          <CommentsLoadingState />
+          <CommentsLoadingState language={language} />
         ) : isError ? (
           <div className="py-12 flex flex-col items-center justify-center text-center space-y-4 bg-red-50/50 rounded-2xl border border-red-100">
             <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
@@ -416,7 +441,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           </div>
         ) : comments.length === 0 ? (
           <div className="py-16 flex flex-col items-center justify-center text-center space-y-3 opacity-60">
-            <MessageSquare size={48} className="text-neutral-300" />
+            <MessageSquare size={48} className="text-[var(--chan-line-soft)]" />
             <div className="space-y-1">
               <p className="font-black uppercase tracking-widest text-[11px]">
                 {language === "pl" ? "Brak komentarzy" : "No comments yet"}

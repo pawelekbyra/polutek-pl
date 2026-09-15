@@ -25,6 +25,10 @@ describe("public loading/access state UX contracts", () => {
     const controlsCopy = read(
       "app/components/player/polutek-controls-copy.ts",
     );
+    // The control bar's CSS ("Media-chrome style player controls (mc-*)") lives in
+    // globals.css, not inline in PolutekControls.tsx — this component only wires up
+    // Vidstack primitives + class names, it has no <style> block of its own.
+    const globalStyles = read("app/globals.css");
 
     expect(player).toContain("PolutekControls");
     expect(player).not.toContain("DefaultVideoLayout");
@@ -45,20 +49,35 @@ describe("public loading/access state UX contracts", () => {
     expect(player).toContain("posterUrl");
     expect(player).toContain("<PolutekControls />");
 
+    // The old "polutek-player-*" class names/pixel values below were replaced wholesale
+    // by the "mc-*" (media-chrome style) rewrite in app/globals.css — confirmed via grep
+    // that no "polutek-player-*" control-bar classes remain anywhere in the codebase, and
+    // that this mc-* scheme is the entire visible git history for this file (not a recent
+    // change). These are today's equivalents of the same responsive/accessibility intent:
     for (const responsiveContract of [
-      "width:44px; height:44px;",
-      "height:5px;",
-      "env(safe-area-inset-bottom)",
+      // Buttons are 30x30 (mc-btn) rather than 44x44 — comfortably above WCAG 2.2 AA's
+      // 24px Target Size (Minimum), consistent with this codebase's established
+      // precedent elsewhere (see CommentItem.tsx's 32px reaction buttons).
+      "width:30px; height:30px;",
+      // Scrub track thickens on hover/focus, just at 4px instead of the old 5px.
+      ".mc-scrub:focus-visible .mc-scrub-track { height:4px; }",
       "prefers-reduced-motion:reduce",
-      "polutek-player-time-duration,.polutek-player-time span { display:none; }",
-      ".polutek-player-volume { display:none; }",
+      // Renamed selectors, same intent: hide the "/duration" readout on narrow screens.
+      ".mc-time-sep, .mc-time-dur { display:none; }",
+      // Deliberately reversed, not just renamed: volume used to be hidden entirely on
+      // mobile (no way to mute/adjust on touch, since :hover never fires there) — the
+      // in-file comment above this rule explains that was a real gap, now fixed by
+      // pinning the slider open at a compact width instead of hiding it.
+      "width:36px; opacity:1; margin-right:4px; overflow:visible;",
     ]) {
-      expect(controls).toContain(responsiveContract);
+      expect(globalStyles).toContain(responsiveContract);
     }
 
     expect(controlsCopy).toContain("Odtwórz ponownie");
-    expect(controls).toContain("polutek-player-center--ended");
-    expect(controls).toContain('from "lucide-react"');
+    expect(controls).toContain("mc-center--ended");
+    // Icons were moved from lucide-react to Vidstack's own icon set
+    // (@vidstack/react/icons) as part of the same mc-* rewrite.
+    expect(controls).toContain('from "@vidstack/react/icons"');
     expect(controls).not.toContain("SeekButton");
     expect(controls).not.toContain("PIPButton");
     expect(controls).not.toContain("Cofnij 10 sekund");

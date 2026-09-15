@@ -23,6 +23,13 @@ export interface CreateCommentInput {
 const visibleCommentStatusFilter = (includeHidden?: boolean) =>
   includeHidden ? { not: CommentStatus.DELETED } : CommentStatus.VISIBLE;
 
+export const commentReportInclude = Prisma.validator<Prisma.CommentReportInclude>()({
+  comment: { include: { author: { select: publicCommentAuthorSelect }, video: { select: { id: true, title: true, slug: true } } } },
+  reporter: { select: publicCommentAuthorSelect },
+});
+
+export type CommentReportWithRelations = Prisma.CommentReportGetPayload<{ include: typeof commentReportInclude }>;
+
 export const commentInclude = (userId?: string | null, includeHidden?: boolean) => ({
   author: { select: publicCommentAuthorSelect },
   replies: {
@@ -83,9 +90,15 @@ export class CommentRepository {
   async findCommentById(id: string) {
     return await this.db.comment.findUnique({ where: { id }, include: { author: { select: publicCommentAuthorSelect } } });
   }
-  async findAdminComments(options: { q?: string; status?: CommentStatus; videoId?: string; limit: number }) {
-    const { q, status, videoId, limit } = options;
-    return await this.db.comment.findMany({ where: { AND: [ q ? { text: { contains: q, mode: 'insensitive' } } : {}, status ? { status } : {}, videoId ? { videoId } : {} ] }, take: limit, orderBy: { createdAt: 'desc' }, include: { author: { select: publicCommentAuthorSelect } } });
+  async findAdminComments(options: { q?: string; status?: CommentStatus; videoId?: string; page?: number; pageSize?: number }) {
+    const { q, status, videoId, page = 1, pageSize = 50 } = options;
+    const where: Prisma.CommentWhereInput = { AND: [ q ? { text: { contains: q, mode: 'insensitive' } } : {}, status ? { status } : {}, videoId ? { videoId } : {} ] };
+    const skip = (Math.max(1, page) - 1) * pageSize;
+    const [items, total] = await Promise.all([
+      this.db.comment.findMany({ where, skip, take: pageSize, orderBy: { createdAt: 'desc' }, include: { author: { select: publicCommentAuthorSelect } } }),
+      this.db.comment.count({ where }),
+    ]);
+    return { items, total };
   }
   async findCommentReaction(userId: string, commentId: string): Promise<CommentReaction | null> {
     return await this.db.commentReaction.findUnique({ where: { userId_commentId: { userId, commentId } } });
@@ -179,8 +192,21 @@ export class CommentRepository {
     await (this.db as WriteTx).$executeRaw`UPDATE "Comment" SET "isHearted" = ${nextValue} WHERE id = ${id}`;
     return { isHearted: nextValue };
   }
-  async findReports(status?: CommentReportStatus) {
-    return await this.db.commentReport.findMany({ where: status ? { status } : {}, include: { comment: { include: { author: { select: publicCommentAuthorSelect }, video: { select: { id: true, title: true, slug: true } } } }, reporter: { select: publicCommentAuthorSelect } }, orderBy: { createdAt: 'desc' } });
+  async findReports(options: { status?: CommentReportStatus; page?: number; pageSize?: number } = {}) {
+    const { status, page = 1, pageSize = 20 } = options;
+    const where = status ? { status } : {};
+    const skip = (Math.max(1, page) - 1) * pageSize;
+    const [items, total] = await Promise.all([
+      this.db.commentReport.findMany({
+        where,
+        include: commentReportInclude,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize,
+      }),
+      this.db.commentReport.count({ where }),
+    ]);
+    return { items, total };
   }
   async findReportById(id: string) {
     return await this.db.commentReport.findUnique({ where: { id }, include: { comment: true } });

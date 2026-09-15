@@ -929,6 +929,7 @@ enum BroadcastRecipientGroup {
   SUBSCRIBERS
   PATRONS
   MANUAL
+  NON_PATRONS
 }
 
 model BroadcastEmail {

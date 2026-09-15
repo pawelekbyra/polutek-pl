@@ -6,16 +6,8 @@ import { PaymentPolicy } from "../domain/payment.policy";
 import { InvalidPaymentRequestError, UserNotFoundError, PaymentProviderError } from "../domain/payment.errors";
 import { PaymentRepository } from "../infrastructure/payment.repository";
 import { MainChannelService } from "@/lib/modules/channel";
-import Stripe from 'stripe';
+import { getStripeClient } from "../infrastructure/stripe-client";
 import { logger } from "@/lib/logger";
-
-function getStripe() {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) {
-    throw new Error('STRIPE_SECRET_KEY is missing');
-  }
-  return new Stripe(key);
-}
 
 export async function createCheckoutIntent(
   input: CreateCheckoutIntentInput,
@@ -26,7 +18,7 @@ export async function createCheckoutIntent(
   }
 
   const repo = new PaymentRepository();
-  const stripe = getStripe();
+  const stripe = getStripeClient();
 
   // 1. Resolve user and main channel
   const user = await repo.findUser(input.userId, ctx.db.read);

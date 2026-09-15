@@ -23,7 +23,7 @@ export function LegalSection({ nr, title, children }: { nr: string; title: strin
         <span className="text-primary tabular-nums">{nr}.</span>
         {title}
       </h2>
-      <div className="space-y-3 text-[15px] leading-[1.7] text-[#333]">{children}</div>
+      <div className="space-y-3 text-[15px] leading-[1.7] text-[var(--chan-body)]">{children}</div>
     </section>
   );
 }

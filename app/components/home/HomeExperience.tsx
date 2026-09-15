@@ -129,7 +129,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
           <h1 className="text-2xl font-bold mb-4">
             {isError ? 'Błąd wczytywania' : 'Brak materiałów'}
           </h1>
-          <p className="text-neutral-600 mb-8">
+          <p className="text-[var(--chan-muted)] mb-8">
             {isError
               ? content.publicMessage
               : 'Nie znaleziono żadnych filmów. Dodaj film w panelu admina, aby go tutaj zobaczyć.'}

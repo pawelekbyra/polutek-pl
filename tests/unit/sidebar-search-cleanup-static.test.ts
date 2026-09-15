@@ -70,10 +70,18 @@ describe("#1104 search/sidebar cleanup contracts", () => {
 
     expect(channelHome).toContain("selectionState.routeVideoId !== currentVideoId");
     expect(channelHome).toContain("selectedVideoId: currentVideoId");
-    expect(sidebar).toContain('fetch("/api/channel/sidebar"');
-    expect(sidebar).toContain("const controller = new AbortController();");
-    expect(sidebar).toContain("signal: controller.signal");
-    expect(sidebar).toContain("return () => controller.abort();");
+    // ChannelHome mounts SidebarPlaylist twice at once (always-mounted mobile
+    // "videos" panel + desktop aside), so the layout request lives in a shared
+    // in-flight module instead of being fired per instance. The abort cleanup is
+    // preserved there — it just runs once the LAST subscriber detaches.
+    const sidebarRequest = source("app/components/channel/sidebar-layout-request.ts");
+    expect(sidebarRequest).toContain('fetch("/api/channel/sidebar"');
+    expect(sidebarRequest).toContain("const controller = new AbortController();");
+    expect(sidebarRequest).toContain("signal: controller.signal");
+    expect(sidebarRequest).toContain("request.controller.abort();");
+    expect(sidebar).not.toContain('fetch("/api/channel/sidebar"');
+    expect(sidebar).toContain("acquireSidebarLayout(viewerKey)");
+    expect(sidebar).toContain("releaseSidebarLayout(viewerKey, request)");
     expect(sidebar).toContain("[authLoaded, authUserId, isSignedIn]");
     expect(sidebar).toContain("? !(isSignedIn && viewerIsPatron)");
     expect(sidebar).toContain('? !isSignedIn');

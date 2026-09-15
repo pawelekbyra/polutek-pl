@@ -159,7 +159,10 @@ export default function NotificationsMenu({
                         {isPl ? notification.titlePl : notification.titleEn}
                       </span>
                       {!notification.read && (
-                        <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--chan-blue)]" />
+                        <>
+                          <span aria-hidden="true" className="h-[7px] w-[7px] shrink-0 rounded-full bg-[var(--chan-blue)]" />
+                          <span className="sr-only">{isPl ? "(nieprzeczytane)" : "(unread)"}</span>
+                        </>
                       )}
                     </span>
                     <span className="mt-[2px] line-clamp-2 block text-[12px] leading-snug text-[var(--chan-body)]">

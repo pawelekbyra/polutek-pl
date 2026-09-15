@@ -9,6 +9,7 @@ import { PaymentError } from "../domain/payment.errors";
 import { logger } from "@/lib/logger";
 import { startTimer, recordDurationMetric, recordAlert } from "@/lib/observability";
 import Stripe from 'stripe';
+import { getStripeClient } from "../infrastructure/stripe-client";
 import { PaymentStatus } from "@prisma/client";
 
 export interface HandleStripeWebhookInput {
@@ -24,7 +25,7 @@ export async function handleStripeWebhook(
   const repo = new PaymentRepository();
   const lockService = new StripeEventLockService({ read: ctx.db.read, write: ctx.prisma });
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-12-18.acacia' as any });
+  const stripe = getStripeClient();
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!endpointSecret) {

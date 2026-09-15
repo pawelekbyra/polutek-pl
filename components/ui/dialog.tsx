@@ -80,6 +80,16 @@ function DialogContent({
   )
 }
 
+/**
+ * Unstyled dialog surface, for dialogs that own their whole layout instead of the centered
+ * `DialogContent` card (e.g. the full-viewport checkout modal). Callers supply every class,
+ * but still get the primitive's focus trap, Escape handling and return-focus-on-close.
+ * Render it inside `<DialogPortal>` exactly like `DialogContent` does internally.
+ */
+function DialogPopup({ ...props }: DialogPrimitive.Popup.Props) {
+  return <DialogPrimitive.Popup data-slot="dialog-popup" {...props} />
+}
+
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -154,6 +164,7 @@ export {
   DialogFooter,
   DialogHeader,
   DialogOverlay,
+  DialogPopup,
   DialogPortal,
   DialogTitle,
   DialogTrigger,

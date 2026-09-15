@@ -217,6 +217,25 @@ describe('sendAdminBroadcastEmail use case - hardening', () => {
     if (result.ok) expect(result.data.recipientCount).toBe(0);
   });
 
+  it('stores NON_PATRONS audience under its own recipientGroup, not ALL', async () => {
+    prismaMock.user.findMany.mockResolvedValue([
+      { id: 'u1', email: 'nonpatron@ex.com', language: 'pl', name: 'Non Patron', patronGrants: [] },
+    ]);
+    prismaMock.broadcastEmail.create.mockResolvedValue({ id: 'b1' });
+
+    const result = await sendAdminBroadcastEmail(ctx, {
+      subject: 'Non patron only',
+      body: 'Body',
+      audience: 'NON_PATRONS',
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data.recipientCount).toBe(1);
+    expect(prismaMock.broadcastEmail.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ recipientGroup: 'NON_PATRONS' }),
+    }));
+  });
+
   it('skips suppressed TEST recipients', async () => {
     prismaMock.emailSuppression.findUnique.mockResolvedValue({ id: 'sup1', active: true });
 

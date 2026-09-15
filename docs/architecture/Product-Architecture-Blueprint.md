@@ -19,7 +19,7 @@ Polutek.pl is a place.
 
 ## Business model
 
-Patronat jest reward za kwalifikujące jednorazowe wsparcie/donację. Nie jest recurring subscription. Domyślny próg kwalifikacji jest admin-konfigurowalny per waluta: 10 PLN, 10 USD, 10 EUR, 10 CHF. Dostęp patrona jest permanentny domyślnie, chyba że zostanie zawieszony/cofnięty polityką.
+Patronat jest reward za kwalifikujące jednorazowe wsparcie/donację. Nie jest recurring subscription. Domyślny próg kwalifikacji jest admin-konfigurowalny per waluta: 10 PLN, 10 EUR, 10 USD, 10 CHF, 10 GBP (`SUPPORTED_CURRENCIES` w `lib/constants.ts`). Dostęp patrona jest permanentny domyślnie, chyba że zostanie zawieszony/cofnięty polityką.
 
 ## Access tiers
 
@@ -40,7 +40,7 @@ Subscription = mailing/follow/newsletter consent
 Zakazane modele:
 
 ```txt
-Stripe webhook -> User.isPatron = true
+Stripe webhook -> write a patron flag on User (no such column exists; use PatronGrant)
 Subscription -> patron access
 Clerk metadata -> backend access truth
 Payment alone -> patron access
@@ -65,7 +65,7 @@ Stripe webhook
 exists ACTIVE PatronGrant
 ```
 
-Nie: `User.isPatron`, Clerk metadata, Subscription, Payment alone, Stripe state alone ani frontend state. `User.isPatron` może istnieć migracyjnie, ale docelowo jest legacy/mismatch diagnostic, nie backend source of truth.
+Nie: pole cache patrona na `User`, Clerk metadata, Subscription, Payment alone, Stripe state alone ani frontend state. `User.isPatron`/`patronSince`/`patronSource` zostały usunięte ze schematu w migracji `20260630000000_remove_legacy_user_patron_cache` — nie istnieją już jako kolumny. Ewentualne pole `isPatron` w DTO/read-modelu jest wyłącznie computed z aktywnych `PatronGrant` (patrz `buildPatronTruthReadModel`), nigdy backend source of truth.
 
 Payment module zapisuje fakty finansowe. Patron module tworzy `PatronGrant`. Access module czyta aktywny `PatronGrant`. Stripe pozostaje źródłem finansowym, ale nie jest bezpośrednim źródłem access decision.
 
@@ -139,7 +139,7 @@ Po aktywacji: one ticket = one task = one branch = one PR. Builderzy nie dotykaj
 
 ## Do-not-build list
 
-Nie budować: marketplace, white-label CMS, tenant onboarding, recurring patron subscription model, active R2/S3 private fallback playback, player hidden under overlay, provider call before access check, access on User.isPatron/Clerk/Subscription, generic admin dashboard before Access Diagnostics, AI mega-refactor.
+Nie budować: marketplace, white-label CMS, tenant onboarding, recurring patron subscription model, active R2/S3 private fallback playback, player hidden under overlay, provider call before access check, access based on a User-table patron cache field (none exists)/Clerk metadata/Subscription, generic admin dashboard before Access Diagnostics, AI mega-refactor.
 
 ## Phase order
 

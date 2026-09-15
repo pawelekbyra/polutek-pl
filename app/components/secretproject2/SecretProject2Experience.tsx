@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type { PublicVideoDTO } from "@/app/types/video";
 import type { SecretProjectFunding } from "@/lib/modules/campaign/secret-project-funding";
+import { splitTitleForHighlight } from "@/lib/modules/campaign/secret-project-title";
 import PremiumWrapper from "../PremiumWrapper";
 import VideoPlayer from "../VideoPlayer";
 import { useAuthModal } from "../auth/AuthModalProvider";
@@ -107,6 +108,7 @@ export default function SecretProject2Experience({
 
   const percent = funding.goalPln > 0 ? Math.min(100, (funding.raisedPln / funding.goalPln) * 100) : 0;
   const daysLeft = Math.max(0, funding.daysLeft);
+  const titleParts = splitTitleForHighlight(PROJECT_TITLE, "secret");
 
   const nav = [
     { href: "#projekt", label: isPl ? "O projekcie" : "About" },
@@ -230,12 +232,18 @@ export default function SecretProject2Experience({
             </p>
 
             <h1 className="max-w-2xl font-brand text-[34px] font-extrabold leading-[1.06] tracking-[-0.035em] text-[var(--sp2-ink)] sm:text-[44px] lg:text-[52px]">
-              {PROJECT_TITLE.split(" secret ")[0]}{" "}
-              <span className="relative inline-block">
-                <span className="relative z-10">secret</span>
-                <span aria-hidden="true" className="absolute inset-x-0 bottom-1 h-3 -rotate-1 bg-[var(--sp2-accent-soft)]" />
-              </span>{" "}
-              {PROJECT_TITLE.split(" secret ")[1]}
+              {titleParts.matched ? (
+                <>
+                  {titleParts.before}{" "}
+                  <span className="relative inline-block">
+                    <span className="relative z-10">{titleParts.highlight}</span>
+                    <span aria-hidden="true" className="absolute inset-x-0 bottom-1 h-3 -rotate-1 bg-[var(--sp2-accent-soft)]" />
+                  </span>{" "}
+                  {titleParts.after}
+                </>
+              ) : (
+                PROJECT_TITLE
+              )}
             </h1>
 
             <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-[var(--sp2-body)]">
@@ -265,7 +273,7 @@ export default function SecretProject2Experience({
             <div className="flex items-center gap-6">
               <div className="relative shrink-0">
                 <FundingRing percent={percent} />
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className="absolute inset-0 flex flex-col items-center justify-center" aria-hidden="true">
                   <span className="font-brand text-[26px] font-extrabold tabular-nums text-[var(--sp2-ink)]">
                     {Math.round(percent)}%
                   </span>

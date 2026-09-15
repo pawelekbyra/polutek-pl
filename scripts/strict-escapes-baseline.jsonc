@@ -211,13 +211,6 @@
       "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
     },
     {
-      "file": "lib/modules/comments/application/list-comment-reports.use-case.ts",
-      "line": 6,
-      "label": "explicit any annotation",
-      "text": "export async function listCommentReports(status: CommentReportStatus | undefined, ctx: AppContext): Promise<UseCaseResult<any[], CommentError>> {",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
       "file": "lib/modules/comments/domain/comment.dto.ts",
       "line": 95,
       "label": "explicit any annotation",

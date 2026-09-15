@@ -66,9 +66,6 @@ const isPublicRoute = createRouteMatcher([
   '/api/channel/sidebar',
   // Only GET comments is public if product requires it
   '/api/comments',
-  // TEMPORARY: design-review gallery of AccessLockOverlay concepts, not part
-  // of the production app shell. Remove alongside the design review.
-  '/nakladki',
 ]);
 
 const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);
@@ -91,12 +88,6 @@ function isLogoExperimentRoute(pathname: string): boolean {
   return /^\/logo\d+\/?$/.test(pathname);
 }
 
-// TEMPORARY: /nakladki is a design-review gallery, top-level and public, and
-// must not be locale-rewritten. Remove alongside the design review.
-function isNakladkiRoute(pathname: string): boolean {
-  return /^\/nakladki\/?$/.test(pathname);
-}
-
 // Exact top-level paths that must never get a /pl or /en prefix.
 // - /manifest.json, /robots.txt, /sitemap.xml: static root files served from
 //   /public. The matcher's static-extension exclusion skips most file types
@@ -115,9 +106,6 @@ function shouldRewriteForPolish(pathname: string): boolean {
 
   // TEMPORARY logo bake-off routes are top-level and must not be prefixed.
   if (isLogoExperimentRoute(pathname)) return false;
-
-  // TEMPORARY nakladki design-review gallery is top-level and must not be prefixed.
-  if (isNakladkiRoute(pathname)) return false;
 
   // Check if pathname is already localized or is a route that should not be locale-prefixed.
   const startsWithLocaleOrSystemRoute = /^\/(?:pl|en|admin|api|\.)(?:\/|$)/.test(pathname);

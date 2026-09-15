@@ -6,6 +6,7 @@ import { handleRefund } from "./handle-refund.use-case";
 import { logger } from "@/lib/logger";
 import { PaymentStatus } from "@prisma/client";
 import Stripe from "stripe";
+import { getStripeClient } from "../infrastructure/stripe-client";
 
 export interface AdminRefundInput {
   paymentId: string;
@@ -24,12 +25,6 @@ const REFUNDABLE_STATUSES: PaymentStatus[] = [
   PaymentStatus.PARTIALLY_REFUNDED,
   PaymentStatus.DISPUTED,
 ];
-
-function getStripe() {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) throw new Error("STRIPE_SECRET_KEY is missing");
-  return new Stripe(key, { apiVersion: "2024-12-18.acacia" as any });
-}
 
 export async function adminRefund(
   input: AdminRefundInput,
@@ -81,7 +76,7 @@ export async function adminRefund(
 
   let stripeRefund: Stripe.Refund;
   try {
-    const stripe = getStripe();
+    const stripe = getStripeClient();
     stripeRefund = await stripe.refunds.create({
       payment_intent: payment.stripeIntentId,
       amount: requestedAmount,

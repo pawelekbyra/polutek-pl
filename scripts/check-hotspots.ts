@@ -93,6 +93,16 @@ const hotspotExceptions: Record<string, HotspotException> = {
     reason:
       "Added subtitleUrlPl/subtitleUrlEn fields for WebVTT track support and distribution system relations; tracked for extraction once subtitle management is modularized.",
   },
+  "app/components/legal/LegalDocs.tsx": {
+    maxLines: 650,
+    reason:
+      "Pre-existing large PL/EN regulamin/polityka-prywatnosci legal-copy component, already over the source budget before this file was touched for --chan-* token cleanup; tracked for a split by document/locale before launch certification.",
+  },
+  "app/components/secretproject2/SecretProject2Experience.tsx": {
+    maxLines: 500,
+    reason:
+      "Pre-existing large secretproject2 campaign client component, already over the client-component budget before accessibility fixes (aria-valuenow/aria-hidden) and the shared title-highlight extraction added a few more lines; tracked for extraction into smaller subcomponents.",
+  },
 };
 
 type Violation = {

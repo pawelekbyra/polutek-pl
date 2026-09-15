@@ -8,6 +8,7 @@ describe('listAdminUsers API contract', () => {
       findMany: vi.fn(),
       count: vi.fn(),
     },
+    $queryRaw: vi.fn(),
   };
 
   const ctx = createAppContext({
@@ -109,7 +110,7 @@ describe('listAdminUsers API contract', () => {
   });
 
 
-  it('maps orderBy=patronSince to grant-backed first active PatronGrant sorting for compatibility', async () => {
+  it('maps orderBy=patronSince to grant-backed first active PatronGrant sorting for compatibility, resolved at the DB level', async () => {
     const earlyGrant = new Date('2024-01-01');
     const lateGrant = new Date('2024-03-01');
     const staleCacheDate = new Date('2020-01-01');
@@ -126,8 +127,8 @@ describe('listAdminUsers API contract', () => {
       payments: [],
     };
 
-    mockPrisma.user.findMany.mockResolvedValue([
-      {
+    const userRecords: Record<string, any> = {
+      'u-late-grant-stale-cache': {
         ...baseUser,
         id: 'u-late-grant-stale-cache',
         email: 'late@example.com',
@@ -137,7 +138,7 @@ describe('listAdminUsers API contract', () => {
         createdAt: new Date('2022-01-01'),
         patronGrants: [{ id: 'pg-late', source: 'ADMIN', createdAt: lateGrant, revokedAt: null }],
       },
-      {
+      'u-early-grant': {
         ...baseUser,
         id: 'u-early-grant',
         email: 'early@example.com',
@@ -147,7 +148,7 @@ describe('listAdminUsers API contract', () => {
         createdAt: new Date('2022-02-01'),
         patronGrants: [{ id: 'pg-early', source: 'STRIPE_TIP', createdAt: earlyGrant, revokedAt: null }],
       },
-      {
+      'u-cache-only': {
         ...baseUser,
         id: 'u-cache-only',
         email: 'cache-only@example.com',
@@ -157,12 +158,35 @@ describe('listAdminUsers API contract', () => {
         createdAt: new Date('2022-03-01'),
         patronGrants: [],
       },
+    };
+
+    // The raw ID-ordering query decides sort order (earliest active grant
+    // first); findMany is asked only for these 3 ids, not the whole table,
+    // and is stubbed to return them in a different order to prove the use
+    // case re-orders by the DB-decided id order rather than trusting
+    // whatever order findMany happens to return.
+    mockPrisma.$queryRaw.mockResolvedValue([
+      { id: 'u-early-grant' },
+      { id: 'u-late-grant-stale-cache' },
+      { id: 'u-cache-only' },
+    ]);
+    mockPrisma.user.findMany.mockResolvedValue([
+      userRecords['u-cache-only'],
+      userRecords['u-late-grant-stale-cache'],
+      userRecords['u-early-grant'],
     ]);
     mockPrisma.user.count.mockResolvedValue(3);
 
     const result = await listAdminUsers({ orderBy: 'patronSince', orderDir: 'asc' }, ctx);
 
-    expect(mockPrisma.user.findMany).toHaveBeenCalledWith(expect.not.objectContaining({
+    expect(mockPrisma.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: { in: ['u-early-grant', 'u-late-grant-stale-cache', 'u-cache-only'] } },
+    }));
+    // The bounded findMany call must not also carry the unbounded/whole-table
+    // shape (no orderBy on a raw column, no separate skip/take here — paging
+    // already happened in the raw query above).
+    expect(mockPrisma.user.findMany).not.toHaveBeenCalledWith(expect.objectContaining({
       orderBy: { patronSince: 'asc' },
     }));
     expect(result.items.map((item) => item.id)).toEqual([
@@ -187,14 +211,73 @@ describe('listAdminUsers API contract', () => {
   });
 
   it('supports activeGrantSince as the explicit grant-backed patron sort field', async () => {
+    mockPrisma.$queryRaw.mockResolvedValue([]);
     mockPrisma.user.findMany.mockResolvedValue([]);
     mockPrisma.user.count.mockResolvedValue(0);
 
     await listAdminUsers({ orderBy: 'activeGrantSince', orderDir: 'desc' }, ctx);
 
-    expect(mockPrisma.user.findMany).toHaveBeenCalledWith(expect.not.objectContaining({
-      orderBy: { activeGrantSince: 'desc' },
+    expect(mockPrisma.$queryRaw).toHaveBeenCalledTimes(1);
+    // No matching ids came back, so the second (hydration) findMany call
+    // must be skipped entirely rather than fetching with an empty/unbounded
+    // filter.
+    expect(mockPrisma.user.findMany).not.toHaveBeenCalled();
+  });
+
+  it('bounds the grant-backed sort to one page at the database level (does not fetch the whole filtered table)', async () => {
+    // 5 patrons total, but we ask for page 2 of a 2-per-page listing.
+    // Only the 2 ids for that page should ever reach findMany.
+    mockPrisma.$queryRaw.mockResolvedValue([
+      { id: 'u-page2-a' },
+      { id: 'u-page2-b' },
+    ]);
+    const baseUser = {
+      name: null,
+      username: null,
+      imageUrl: null,
+      role: 'USER',
+      isDeleted: false,
+      isPatron: true,
+      patronSource: 'STRIPE_TIP',
+      language: 'pl',
+      createdAt: new Date('2022-01-01'),
+      updatedAt: new Date('2022-01-02'),
+      paymentTotals: [],
+      _count: { payments: 0, subscriptions: 0 },
+      payments: [],
+    };
+    mockPrisma.user.findMany.mockResolvedValue([
+      { ...baseUser, id: 'u-page2-a', email: 'a@example.com', patronSince: new Date('2024-02-01'), patronGrants: [{ id: 'pg-a', source: 'STRIPE_TIP', createdAt: new Date('2024-02-01'), revokedAt: null }] },
+      { ...baseUser, id: 'u-page2-b', email: 'b@example.com', patronSince: new Date('2024-03-01'), patronGrants: [{ id: 'pg-b', source: 'STRIPE_TIP', createdAt: new Date('2024-03-01'), revokedAt: null }] },
+    ]);
+    // Total across the whole filtered set is 5 — much bigger than the 2 ids
+    // that should ever be hydrated for this one page.
+    mockPrisma.user.count.mockResolvedValue(5);
+
+    const result = await listAdminUsers({ orderBy: 'patronSince', orderDir: 'asc', page: 2, pageSize: 2 }, ctx);
+
+    // The raw query itself must carry this page's bounded LIMIT/OFFSET
+    // (pageSize=2, skip=(2-1)*2=2), proving pagination happens in SQL, not
+    // in a JS slice over a fully-fetched array.
+    expect(mockPrisma.$queryRaw).toHaveBeenCalledTimes(1);
+    const rawSqlArg = mockPrisma.$queryRaw.mock.calls[0][0];
+    expect(rawSqlArg.values).toContain(2); // pageSize (LIMIT)
+    expect(rawSqlArg.values).toContain(2); // skip (OFFSET) — also 2 for page 2/pageSize 2
+    expect(rawSqlArg.sql).toMatch(/LIMIT/);
+    expect(rawSqlArg.sql).toMatch(/OFFSET/);
+
+    // findMany must only ever be asked to hydrate the 2 ids this page needs
+    // — never the full 5-row filtered table.
+    expect(mockPrisma.user.findMany).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: { in: ['u-page2-a', 'u-page2-b'] } },
     }));
+
+    expect(result.total).toBe(5);
+    expect(result.page).toBe(2);
+    expect(result.pageSize).toBe(2);
+    expect(result.totalPages).toBe(3);
+    expect(result.items.map((item) => item.id)).toEqual(['u-page2-a', 'u-page2-b']);
   });
 
   it('uses active PatronGrant-backed filters for patron status and source', async () => {

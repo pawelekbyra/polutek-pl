@@ -3,11 +3,13 @@ import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { checkVideoAccess } from "@/lib/modules/access";
 import { canUseDemoFallbacks } from "@/lib/feature-flags";
 import { INITIAL_VIDEOS } from "@/lib/data/initial-content";
-import { MediaSourceNotFoundError } from "../domain/media.errors";
+import { MediaSourceNotFoundError, MediaAccessDeniedError } from "../domain/media.errors";
 
 export type GetGatedMediaInput = {
   videoIdOrSlug: string;
 };
+
+export type GetGatedMediaError = MediaSourceNotFoundError | MediaAccessDeniedError;
 
 export type GatedMediaResult = {
   id: string;
@@ -21,7 +23,7 @@ export type GatedMediaResult = {
 export async function getGatedMedia(
   input: GetGatedMediaInput,
   ctx: AppContext
-): Promise<UseCaseResult<GatedMediaResult, MediaSourceNotFoundError>> {
+): Promise<UseCaseResult<GatedMediaResult, GetGatedMediaError>> {
   const { videoIdOrSlug } = input;
   const { prisma } = ctx;
 
@@ -48,8 +50,9 @@ export async function getGatedMedia(
   const accessResult = await checkVideoAccess({ videoIdOrSlug: video.id }, ctx);
 
   if (!accessResult.ok) {
-    // This should ideally not happen
-    return ok({ id: video.id, videoUrl: "" });
+    // This should ideally not happen (checkVideoAccess never fails today), but
+    // fail closed rather than ever returning a videoUrl without a confirmed grant.
+    return fail(new MediaAccessDeniedError(video.id));
   }
 
   const decision = accessResult.data;
@@ -57,6 +60,12 @@ export async function getGatedMedia(
   // If NOT_FOUND was returned by access check, we treat it as media not found.
   if (decision.reason === "NOT_FOUND") {
       return fail(new MediaSourceNotFoundError(videoIdOrSlug));
+  }
+
+  // Access denied (LOGIN_REQUIRED, PATRON_REQUIRED, FORBIDDEN, DELETED, ...):
+  // never return a playable URL for a decision that isn't an explicit grant.
+  if (!decision.hasAccess) {
+    return fail(new MediaAccessDeniedError(video.id, decision.reason));
   }
 
   return ok({

@@ -397,7 +397,14 @@ export class PlaybackService {
             const token = muxClient.createSignedPlaybackToken(playbackId);
             playbackUrl = `https://stream.mux.com/${playbackId}.m3u8?token=${token}`;
             isSignedUrl = true;
-          } else if (tier === 'PATRON') {
+          } else if (tier === 'PATRON' || tier === 'LOGGED_IN') {
+            // LOGGED_IN is blocked here too, not just PATRON: an unsigned
+            // stream.mux.com URL never expires and requires no session, so
+            // once emitted it permanently bypasses the "must be logged in"
+            // check that checkVideoAccess() would otherwise re-run on every
+            // future visit. PUBLIC tier has no such requirement to bypass
+            // (access is unconditional for that tier already), so it still
+            // falls through to the unsigned URL below.
             return {
               videoId,
               status: 'ERROR',
@@ -405,7 +412,7 @@ export class PlaybackService {
               access: { allowed: true },
               player: playerFor({ thumbnailUrl, title }, false),
               diagnostics: {
-                warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'Mux signing is not configured; patron-only playback is blocked to avoid public URL exposure.'],
+                warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'Mux signing is not configured; non-public tier playback is blocked to avoid a permanent unsigned URL bypassing login/patron checks.'],
                 sourceConfidence: 'HIGH',
                 providerResolutionAllowed: true,
                 providerResolutionAttempted: true,

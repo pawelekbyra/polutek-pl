@@ -3,10 +3,9 @@ import { auth } from "@clerk/nextjs/server";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import {
   SyncCurrentUserUseCase,
-  GetOrCreateUserUseCase,
+  getOrCreateCurrentUser,
 } from "@/lib/modules/users";
 import { handleApiError } from "@/lib/errors";
-import { clerkClient } from "@clerk/nextjs/server";
 
 export const dynamic = "force-dynamic";
 
@@ -21,22 +20,11 @@ export async function GET(req: NextRequest) {
       actor: { type: "user", userId },
     });
 
-    // Ensure user exists using modular use case
-    const client = await clerkClient();
-    const clerkUser = await client.users.getUser(userId);
-    const email =
-      clerkUser.primaryEmailAddress?.emailAddress ||
-      clerkUser.emailAddresses[0]?.emailAddress;
-
-    if (email) {
-      await GetOrCreateUserUseCase.execute(ctx, {
-        id: userId,
-        email,
-        name: clerkUser.fullName,
-        username: clerkUser.username,
-        imageUrl: clerkUser.imageUrl,
-      });
-    }
+    // Ensure the local user row exists. getOrCreateCurrentUser resolves the
+    // Clerk profile itself and delegates to the transactional sync path, which
+    // is the only one that resolves email collisions with an existing row
+    // (stale-record renaming + merging comments/payments/patron grants).
+    await getOrCreateCurrentUser(ctx, userId);
 
     const result = await SyncCurrentUserUseCase.execute(ctx);
 

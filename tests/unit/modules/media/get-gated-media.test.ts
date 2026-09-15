@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getGatedMedia } from '@/lib/modules/media/application/get-gated-media.use-case';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { checkVideoAccess } from '@/lib/modules/access';
-import { MediaSourceNotFoundError } from '@/lib/modules/media/domain/media.errors';
+import { MediaSourceNotFoundError, MediaAccessDeniedError } from '@/lib/modules/media/domain/media.errors';
 
 vi.mock('@/lib/modules/access', () => ({
   checkVideoAccess: vi.fn(),
@@ -37,7 +37,7 @@ describe('getGatedMedia Use Case', () => {
     }
   });
 
-  it('returns video metadata even if access is denied (decided by route/gatedBlobResponse)', async () => {
+  it('fails (does NOT return the videoUrl) when access is PATRON_REQUIRED', async () => {
       const video = { id: 'v1', videoUrl: 'https://example.com/video.mp4' };
       mockPrisma.video.findFirst.mockResolvedValue(video);
       vi.mocked(checkVideoAccess).mockResolvedValue({
@@ -48,11 +48,33 @@ describe('getGatedMedia Use Case', () => {
       const ctx = createAppContext({ actor: { type: 'guest' }, prisma: mockPrisma });
       const result = await getGatedMedia({ videoIdOrSlug: 'v1' }, ctx);
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-          expect(result.data.id).toBe('v1');
-          expect(result.data.videoUrl).toBe(video.videoUrl);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toBeInstanceOf(MediaAccessDeniedError);
+        expect((result.error as any).statusCode).toBe(403);
       }
+      // Belt-and-suspenders: no branch of this function may ever hand back
+      // the real videoUrl alongside a denied decision.
+      expect(JSON.stringify(result)).not.toContain(video.videoUrl);
+  });
+
+  it('fails (does NOT return the videoUrl) when access is LOGIN_REQUIRED', async () => {
+      const video = { id: 'v1', videoUrl: 'https://example.com/video.mp4' };
+      mockPrisma.video.findFirst.mockResolvedValue(video);
+      vi.mocked(checkVideoAccess).mockResolvedValue({
+        ok: true,
+        data: { hasAccess: false, reason: 'LOGIN_REQUIRED' } as any,
+      });
+
+      const ctx = createAppContext({ actor: { type: 'guest' }, prisma: mockPrisma });
+      const result = await getGatedMedia({ videoIdOrSlug: 'v1' }, ctx);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toBeInstanceOf(MediaAccessDeniedError);
+        expect((result.error as any).statusCode).toBe(403);
+      }
+      expect(JSON.stringify(result)).not.toContain(video.videoUrl);
   });
 
   it('returns fail(MediaSourceNotFoundError) when video does not exist', async () => {

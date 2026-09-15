@@ -1,7 +1,7 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { VideoStatus } from "@prisma/client";
 import { MediaPolicy } from "@/lib/modules/media";
-import { getMainChannel } from "@/lib/modules/channel";
+import { MainChannelService } from "@/lib/modules/channel";
 
 export interface HealthCheckResult {
   ok: boolean;
@@ -43,7 +43,7 @@ export async function checkHealth(
     where: { isPrimary: true, isApproved: true },
   });
 
-  const mainChannel = await getMainChannel(ctx);
+  const mainChannel = await MainChannelService.getOptional(ctx);
   const publicWhere = {
     status: VideoStatus.PUBLISHED,
     creatorId: mainChannel?.id || 'none',

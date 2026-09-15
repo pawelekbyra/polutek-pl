@@ -4,7 +4,6 @@ import { auth } from '@clerk/nextjs/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { GET, POST, DELETE } from '@/app/api/subscriptions/route';
 import { GetSubscriptionStatusUseCase, SubscribeUseCase, UnsubscribeUseCase } from '@/lib/modules/subscriptions';
-import { GetOrCreateUserUseCase } from '@/lib/modules/users';
 import { getActorFromAuth } from '@/lib/api/auth';
 
 vi.mock('@clerk/nextjs/server', () => ({
@@ -28,7 +27,7 @@ vi.mock('@/lib/modules/subscriptions', () => ({
 }));
 
 vi.mock('@/lib/modules/users', () => ({
-  GetOrCreateUserUseCase: { execute: vi.fn() },
+  getOrCreateCurrentUser: vi.fn(),
 }));
 
 describe('/api/subscriptions', () => {

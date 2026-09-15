@@ -12,7 +12,7 @@ const mockRepo = {
       paymentTotals: []
   }),
   createGrant: vi.fn(),
-  listActiveGrants: vi.fn().mockResolvedValue([{ id: 'grant-1', createdAt: new Date(), source: 'ADMIN' }]),
+  listActiveGrants: vi.fn().mockResolvedValue([{ id: 'grant-1', createdAt: new Date(), source: 'ADMIN', revokedAt: null }]),
 };
 
 vi.mock('@/lib/modules/patron/infrastructure/patron.repository', () => {
@@ -65,7 +65,7 @@ describe('grantPatron use case', () => {
   it('calls createGrant with correct parameters', async () => {
     vi.clearAllMocks();
     mockRepo.findUserWithPaymentTotals.mockResolvedValue({ id: 'user-1', paymentTotals: [] });
-    mockRepo.listActiveGrants.mockResolvedValue([{ id: 'grant-1', createdAt: new Date(), source: 'ADMIN' }]);
+    mockRepo.listActiveGrants.mockResolvedValue([{ id: 'grant-1', createdAt: new Date(), source: 'ADMIN', revokedAt: null }]);
 
     const actor: Actor = { type: 'admin', userId: 'admin-1' };
     const ctx = createAppContext({

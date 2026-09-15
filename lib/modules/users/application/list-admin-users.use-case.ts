@@ -101,6 +101,102 @@ export interface ListAdminUsersResult {
   patronQuerySortContract: AdminPatronQuerySortContractDto;
 }
 
+/**
+ * Escapes ILIKE wildcard metacharacters so free-text search behaves as a
+ * literal substring match (matching Prisma's `contains` semantics) instead of
+ * letting a user-typed `%`/`_` act as a SQL wildcard.
+ */
+function escapeLikePattern(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+}
+
+/**
+ * Builds the WHERE-clause fragment for the raw, DB-paginated grant-backed
+ * patron sort query below. Mirrors the `where` object built in
+ * `listAdminUsers` field-for-field so both code paths (the typed Prisma
+ * `orderBy` branch and this raw-SQL branch) filter identically. Every
+ * user-supplied value is passed as a bound query parameter via
+ * `Prisma.sql`/`Prisma.join` — never string-interpolated into the SQL text —
+ * so this stays injection-safe.
+ */
+function buildAdminUserRawWhere(input: ListAdminUsersInput): Prisma.Sql {
+  const conditions: Prisma.Sql[] = [];
+
+  if (input.query) {
+    const pattern = `%${escapeLikePattern(input.query)}%`;
+    conditions.push(Prisma.sql`(u.email ILIKE ${pattern} ESCAPE '\\' OR u.name ILIKE ${pattern} ESCAPE '\\' OR u.username ILIKE ${pattern} ESCAPE '\\')`);
+  }
+  if (input.role) {
+    conditions.push(Prisma.sql`u.role = ${input.role}::"SystemRole"`);
+  }
+  if (input.isPatron !== undefined) {
+    conditions.push(
+      input.isPatron
+        ? Prisma.sql`EXISTS (SELECT 1 FROM "PatronGrant" pg WHERE pg."userId" = u.id AND pg."revokedAt" IS NULL)`
+        : Prisma.sql`NOT EXISTS (SELECT 1 FROM "PatronGrant" pg WHERE pg."userId" = u.id AND pg."revokedAt" IS NULL)`
+    );
+  }
+  if (input.language) {
+    conditions.push(Prisma.sql`u.language = ${input.language}`);
+  }
+  if (input.isDeleted !== undefined) {
+    conditions.push(Prisma.sql`u."isDeleted" = ${input.isDeleted}`);
+  }
+  if (input.patronSource) {
+    conditions.push(Prisma.sql`EXISTS (SELECT 1 FROM "PatronGrant" pg2 WHERE pg2."userId" = u.id AND pg2.source = ${input.patronSource}::"PatronGrantSource" AND pg2."revokedAt" IS NULL)`);
+  }
+  if (input.hasPayments) {
+    conditions.push(Prisma.sql`EXISTS (SELECT 1 FROM "Payment" p WHERE p."userId" = u.id)`);
+  }
+  if (input.hasSubscriptions) {
+    conditions.push(Prisma.sql`EXISTS (SELECT 1 FROM "Subscription" s WHERE s."userId" = u.id)`);
+  }
+
+  return conditions.length ? Prisma.join(conditions, ' AND ') : Prisma.sql`TRUE`;
+}
+
+/**
+ * Resolves one page of user IDs for the grant-backed patron sort
+ * (`orderBy` = `patronSince` / `activeGrantSince`), entirely at the database
+ * level. The sort key — the earliest still-active PatronGrant.createdAt per
+ * user — lives on a related table and can't be expressed via Prisma's typed
+ * `orderBy` (relation-aggregate ordering only supports `_count`, not
+ * `_min`/`_max` — confirmed against the generated `PatronGrantOrderByRelationAggregateInput`,
+ * which exposes only `_count`). This uses a raw query with a LEFT JOIN
+ * against a per-user MIN(createdAt) aggregate (over active grants only),
+ * ORDER BY that aggregate, and LIMIT/OFFSET pushed down to Postgres — so only
+ * this page's IDs come back, never the full filtered table. Nulls (no active
+ * grant) always sort last regardless of orderDir, matching the previous
+ * in-memory comparator's behavior.
+ */
+async function fetchGrantBackedSortedUserIds(
+  ctx: AppContext,
+  input: ListAdminUsersInput,
+  orderDir: 'asc' | 'desc',
+  skip: number,
+  pageSize: number
+): Promise<string[]> {
+  const whereSql = buildAdminUserRawWhere(input);
+  const orderDirSql = orderDir === 'asc' ? Prisma.sql`ASC` : Prisma.sql`DESC`;
+
+  const rows = await ctx.prisma.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+    SELECT u.id
+    FROM "User" u
+    LEFT JOIN (
+      SELECT "userId", MIN("createdAt") AS "activeGrantSince"
+      FROM "PatronGrant"
+      WHERE "revokedAt" IS NULL
+      GROUP BY "userId"
+    ) ag ON ag."userId" = u.id
+    WHERE ${whereSql}
+    ORDER BY ag."activeGrantSince" ${orderDirSql} NULLS LAST, u."createdAt" ASC, u.id ASC
+    LIMIT ${pageSize}
+    OFFSET ${skip}
+  `);
+
+  return rows.map((row) => row.id);
+}
+
 export async function listAdminUsers(
   input: ListAdminUsersInput,
   ctx: AppContext
@@ -138,36 +234,36 @@ export async function listAdminUsers(
   const orderDir = input.orderDir || 'desc';
   const usesGrantBackedPatronSort = GRANT_BACKED_PATRON_SORT_FIELDS.has(orderBy);
 
-  const [fetchedUsers, total] = await Promise.all([
-    prisma.user.findMany({
-      where,
-      include: adminUserListInclude,
-      ...(usesGrantBackedPatronSort
-        ? {}
-        : {
-            orderBy: { [orderBy]: orderDir },
-            skip,
-            take: pageSize,
-          }),
-    }),
+  const [users, total] = await Promise.all([
+    (async (): Promise<AdminUserListRecord[]> => {
+      if (!usesGrantBackedPatronSort) {
+        return prisma.user.findMany({
+          where,
+          include: adminUserListInclude,
+          orderBy: { [orderBy]: orderDir },
+          skip,
+          take: pageSize,
+        });
+      }
+
+      // Grant-backed sort: resolve the page's user IDs via a bounded raw
+      // query (see fetchGrantBackedSortedUserIds), then hydrate just those
+      // records — never the full filtered table — preserving that DB-decided
+      // order.
+      const orderedIds = await fetchGrantBackedSortedUserIds(ctx, input, orderDir, skip, pageSize);
+      if (orderedIds.length === 0) return [];
+
+      const records = await prisma.user.findMany({
+        where: { id: { in: orderedIds } },
+        include: adminUserListInclude,
+      });
+      const byId = new Map(records.map((record) => [record.id, record]));
+      return orderedIds
+        .map((id) => byId.get(id))
+        .filter((record): record is AdminUserListRecord => Boolean(record));
+    })(),
     prisma.user.count({ where })
   ]);
-
-  const users: AdminUserListRecord[] = usesGrantBackedPatronSort
-    ? fetchedUsers
-        .slice()
-        .sort((a, b) => {
-          const aTime = a.patronGrants[0]?.createdAt?.getTime() ?? null;
-          const bTime = b.patronGrants[0]?.createdAt?.getTime() ?? null;
-
-          if (aTime === null && bTime === null) return a.createdAt.getTime() - b.createdAt.getTime();
-          if (aTime === null) return 1;
-          if (bTime === null) return -1;
-
-          return orderDir === 'asc' ? aTime - bTime : bTime - aTime;
-        })
-        .slice(skip, skip + pageSize)
-    : fetchedUsers;
 
   return {
     items: users.map(u => {

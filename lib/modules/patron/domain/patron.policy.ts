@@ -10,8 +10,4 @@ export class PatronPolicy {
     // Currently only admin and system can revoke patron status
     return actor.type === 'admin' || actor.type === 'system';
   }
-
-  static shouldPreservePatronSince(isAlreadyPatron: boolean, existingPatronSince: Date | null): boolean {
-    return isAlreadyPatron && existingPatronSince !== null;
-  }
 }

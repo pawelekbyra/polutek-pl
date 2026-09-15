@@ -166,11 +166,11 @@ export async function sendAdminBroadcastEmail(
     }
 
     // 5. Map audience to DB Enum (BroadcastRecipientGroup)
-    let dbGroup: 'ALL' | 'SUBSCRIBERS' | 'PATRONS' | 'MANUAL' = 'SUBSCRIBERS';
+    let dbGroup: 'ALL' | 'SUBSCRIBERS' | 'PATRONS' | 'MANUAL' | 'NON_PATRONS' = 'SUBSCRIBERS';
     if (audience === 'ALL_SUBSCRIBERS') dbGroup = 'ALL';
     else if (audience === 'PATRONS') dbGroup = 'PATRONS';
     else if (audience === 'MANUAL') dbGroup = 'MANUAL';
-    else if (audience === 'NON_PATRONS') dbGroup = 'ALL';
+    else if (audience === 'NON_PATRONS') dbGroup = 'NON_PATRONS';
 
     // 6. Create BroadcastEmail record
     const broadcast = await ctx.prisma.broadcastEmail.create({

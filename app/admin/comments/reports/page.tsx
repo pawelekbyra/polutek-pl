@@ -8,23 +8,34 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MessageSquare, Shield, CheckCircle2, XCircle, ExternalLink, Clock } from "@/app/components/icons";
+import { cn } from "@/lib/utils";
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
 import { logger } from "@/lib/logger";
 import { formatDistanceToNow } from "date-fns";
 import { pl } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const PAGE_SIZE = 20;
+
 export default function AdminCommentReportsPage() {
   const [reports, setReports] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchReports = async () => {
+  const fetchReports = async (targetPage: number = page) => {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/admin/comments/reports");
+      const res = await fetch(
+        `/api/admin/comments/reports?status=PENDING&page=${targetPage}&pageSize=${PAGE_SIZE}`,
+      );
       if (res.ok) {
         const data = await res.json();
-        setReports(data);
+        setReports(data.items ?? []);
+        setTotal(data.total ?? 0);
+        setTotalPages(data.totalPages ?? 1);
+        setPage(data.page ?? targetPage);
       }
     } catch (err) {
       logger.error("Failed to fetch reports", err);
@@ -34,7 +45,8 @@ export default function AdminCommentReportsPage() {
   };
 
   useEffect(() => {
-    fetchReports();
+    fetchReports(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleResolve = async (reportId: string, status: 'DISMISSED' | 'ACTION_TAKEN') => {
@@ -91,7 +103,7 @@ export default function AdminCommentReportsPage() {
           <CardHeader className="border-b pb-4">
             <CardTitle className="text-lg">Aktywne zgłoszenia</CardTitle>
             <CardDescription className="text-xs">
-              {reports.length} zgłoszeń oczekujących na reakcję.
+              {total} zgłoszeń oczekujących na reakcję.
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
@@ -216,13 +228,36 @@ export default function AdminCommentReportsPage() {
                 </TableBody>
               </Table>
             </div>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t px-4 py-3">
+                <span className="text-xs text-muted-foreground">
+                  Strona {page} z {totalPages}
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[10px]"
+                    disabled={isLoading || page <= 1}
+                    onClick={() => fetchReports(page - 1)}
+                  >
+                    Poprzednia
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[10px]"
+                    disabled={isLoading || page >= totalPages}
+                    onClick={() => fetchReports(page + 1)}
+                  >
+                    Następna
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </main>
     </div>
   );
-}
-
-function cn(...classes: any[]) {
-    return classes.filter(Boolean).join(' ');
 }

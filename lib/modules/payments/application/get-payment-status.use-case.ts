@@ -1,9 +1,9 @@
 import { PaymentStatus } from '@prisma/client';
-import Stripe from 'stripe';
 import { AppContext } from '@/lib/modules/shared/app-context';
 import { UseCaseResult, ok, fail } from '@/lib/modules/shared/result';
 import { PaymentError } from '../domain/payment.errors';
 import { fulfillPayment } from './fulfill-payment.use-case';
+import { getStripeClient } from '../infrastructure/stripe-client';
 import { logger } from '@/lib/logger';
 
 export type PaymentUiStatus = 'PENDING_WEBHOOK' | 'SUCCEEDED' | 'ACCESS_SYNC_PENDING' | 'FAILED_CANCELED' | 'REFUNDED_DISPUTED';
@@ -40,11 +40,10 @@ function toUiStatus(status: PaymentStatus, hasActiveGrant: boolean): PaymentUiSt
 async function reconcilePendingPaymentWithStripe(payment: OwnedPendingPayment, ctx: AppContext): Promise<void> {
   if (payment.status !== PaymentStatus.PENDING || !payment.stripeIntentId) return;
 
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
-  if (!stripeKey) return;
+  if (!process.env.STRIPE_SECRET_KEY) return;
 
   try {
-    const stripe = new Stripe(stripeKey);
+    const stripe = getStripeClient();
     const intent = await stripe.paymentIntents.retrieve(payment.stripeIntentId);
 
     if (intent.status === 'succeeded') {

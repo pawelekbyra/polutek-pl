@@ -6,6 +6,7 @@ import { PatronPolicy } from "../domain/patron.policy";
 import { InvalidPatronActionError, UserNotFoundError } from "../domain/patron.errors";
 import { PatronRepository } from "../infrastructure/patron.repository";
 import { normalizePaymentTotals } from "@/lib/modules/users";
+import { buildPatronStatusDto } from "../domain/patron-read-model";
 import { Prisma } from "@prisma/client";
 import { WriteTx } from "@/lib/modules/shared/db";
 import { recordAuditEvent } from "@/lib/modules/audit";
@@ -38,14 +39,11 @@ export async function grantPatron(
 
         const activeGrants = await repo.listActiveGrants(input.userId, currentTx);
 
-        return success({
+        return success(buildPatronStatusDto({
           userId: user.id,
-          isPatron: activeGrants.length > 0,
-          patronSince: activeGrants[0]?.createdAt ?? null,
-          patronSource: activeGrants[0]?.source ?? null,
           activeGrants,
           normalizedTotal: normalizePaymentTotals(user.paymentTotals),
-        });
+        }));
       }
     }
     if (input.paymentId) {
@@ -56,14 +54,11 @@ export async function grantPatron(
 
         const activeGrants = await repo.listActiveGrants(input.userId, currentTx);
 
-        return success({
+        return success(buildPatronStatusDto({
           userId: user.id,
-          isPatron: activeGrants.length > 0,
-          patronSince: activeGrants[0]?.createdAt ?? null,
-          patronSource: activeGrants[0]?.source ?? null,
           activeGrants,
           normalizedTotal: normalizePaymentTotals(user.paymentTotals),
-        });
+        }));
       }
     }
     const user = await repo.findUserWithPaymentTotals(input.userId, currentTx);
@@ -100,14 +95,11 @@ export async function grantPatron(
 
     const activeGrants = await repo.listActiveGrants(input.userId, currentTx);
 
-    return success({
+    return success(buildPatronStatusDto({
       userId: user.id,
-      isPatron: activeGrants.length > 0,
-      patronSince: activeGrants[0]?.createdAt ?? null,
-      patronSource: activeGrants[0]?.source ?? null,
       activeGrants,
       normalizedTotal: normalizePaymentTotals(user.paymentTotals),
-    });
+    }));
   };
 
   try {
@@ -125,14 +117,11 @@ export async function grantPatron(
                   const user = await repo.findUserWithPaymentTotals(input.userId, db);
                   if (!user) return failure(new UserNotFoundError(input.userId));
                   const activeGrants = await repo.listActiveGrants(input.userId, db);
-                  return success({
+                  return success(buildPatronStatusDto({
                       userId: user.id,
-                      isPatron: activeGrants.length > 0,
-                      patronSince: activeGrants[0]?.createdAt ?? null,
-                      patronSource: activeGrants[0]?.source ?? null,
                       activeGrants,
                       normalizedTotal: normalizePaymentTotals(user.paymentTotals),
-                  });
+                  }));
               }
           }
       }

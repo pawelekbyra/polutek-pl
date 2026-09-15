@@ -67,8 +67,8 @@ describe('revokePatron use case', () => {
 
   it('successfully revokes specific grant if paymentId provided', async () => {
     mockRepo.findUserWithPaymentTotals.mockResolvedValue({ id: 'user-1', paymentTotals: [] });
-    mockRepo.findFirstActiveGrant.mockResolvedValue({ id: 'g2', source: 'admin', createdAt: new Date() });
-    mockRepo.listActiveGrants.mockResolvedValue([{ id: 'g2', createdAt: new Date(), source: 'admin' }]);
+    mockRepo.findFirstActiveGrant.mockResolvedValue({ id: 'g2', source: 'admin', createdAt: new Date(), revokedAt: null });
+    mockRepo.listActiveGrants.mockResolvedValue([{ id: 'g2', createdAt: new Date(), source: 'admin', revokedAt: null }]);
 
     const result = await revokePatron({ userId: 'user-1', paymentId: 'pay_123', note: 'refund' }, ctx);
 

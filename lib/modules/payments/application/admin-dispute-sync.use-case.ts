@@ -5,6 +5,7 @@ import { PaymentError, PaymentProviderError } from "../domain/payment.errors";
 import { handleDispute } from "./handle-dispute.use-case";
 import { logger } from "@/lib/logger";
 import Stripe from "stripe";
+import { getStripeClient } from "../infrastructure/stripe-client";
 
 export interface AdminDisputeSyncInput {
   paymentId: string;
@@ -15,12 +16,6 @@ export interface AdminDisputeSyncResult {
   disputeStatus: string | null;
   synced: boolean;
   message: string;
-}
-
-function getStripe() {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) throw new Error("STRIPE_SECRET_KEY is missing");
-  return new Stripe(key, { apiVersion: "2024-12-18.acacia" as any });
 }
 
 function mapStripeDisputeStatus(status: string): {
@@ -69,7 +64,7 @@ export async function adminDisputeSync(
 
   let dispute: Stripe.Dispute | null = null;
   try {
-    const stripe = getStripe();
+    const stripe = getStripeClient();
     const charges = await stripe.charges.list({ payment_intent: payment.stripeIntentId, limit: 1 });
     const charge = charges.data[0];
 

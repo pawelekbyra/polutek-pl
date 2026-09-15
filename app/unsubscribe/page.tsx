@@ -12,14 +12,14 @@ export default async function UnsubscribePage(props: UnsubscribePageProps) {
   const searchParams = await props.searchParams;
   const token = getToken(searchParams);
   return (
-    <main className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 py-16 text-center">
+    <main className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center bg-background px-6 py-16 text-center text-foreground">
       <h1 className="text-3xl font-black tracking-tight">Manage content notifications</h1>
-      <p className="mt-4 text-sm text-neutral-600">
+      <p className="mt-4 text-sm text-muted-foreground">
         To stop content notification emails, confirm below. This page does not reveal whether a link or recipient is valid.
       </p>
       <form className="mt-8" action="/api/subscriptions/unsubscribe" method="post">
         <input type="hidden" name="token" value={token} />
-        <button className="rounded-full bg-neutral-950 px-6 py-3 text-sm font-bold text-white" type="submit">
+        <button className="rounded-full bg-foreground px-6 py-3 text-sm font-bold text-background" type="submit">
           Stop content notifications
         </button>
       </form>

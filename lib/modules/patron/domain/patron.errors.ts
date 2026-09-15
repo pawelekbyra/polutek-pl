@@ -7,13 +7,6 @@ export class PatronError extends AppError {
   }
 }
 
-export class PatronNotFoundError extends PatronError {
-  constructor(userId: string) {
-    super(`Patron status for user ${userId} not found.`, 'PATRON_NOT_FOUND', 404);
-    this.name = 'PatronNotFoundError';
-  }
-}
-
 export class UserNotFoundError extends PatronError {
   constructor(userId: string) {
     super(`User ${userId} was not found.`, 'USER_NOT_FOUND', 404);
