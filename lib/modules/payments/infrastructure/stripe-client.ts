@@ -7,7 +7,7 @@ import Stripe from "stripe";
  * (`stripe/apiVersion.js` / `Stripe.LatestApiVersion` for the `stripe@20.x` line currently in
  * package.json) — i.e. the version this SDK build actually validates request/response shapes
  * against. Several call sites had drifted to a stale literal (`'2024-12-18.acacia'`) that no
- * longer exists in this SDK's types, which is why they needed an `as any` cast to compile.
+ * longer exists in this SDK's types, which is why they needed an unchecked type override to compile.
  *
  * Only bump this in lockstep with a deliberate `stripe` package upgrade (and a matching check of
  * the Stripe Dashboard/webhook configuration), not independently.
