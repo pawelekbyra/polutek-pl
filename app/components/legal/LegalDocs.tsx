@@ -5,15 +5,15 @@ export const LEGAL_EFFECTIVE_DATE = 'Obowiązuje od 3 lipca 2026 r.';
 export const LEGAL_EFFECTIVE_DATE_EN = 'Effective as of 3 July 2026.';
 
 export const LEGAL_OWNER = {
-  name: 'Paweł Perfect Inc.',
-  street: 'ul. Złota 7/28',
-  postalCode: '80-019',
-  city: 'Warszawa',
-  cityEn: 'Warsaw',
-  countryEn: 'Poland',
-  nip: '886-289-10-01',
-  regon: '022374976',
-  email: 'support@pawelperfect.pl',
+  name: 'Kutashi Holdings LLC',
+  street: '1201 Third Avenue, Suite 2200',
+  cityStateZip: 'Seattle, WA 98101',
+  countryPl: 'Stany Zjednoczone',
+  countryEn: 'United States',
+  llcId: '2026-001487321',
+  ein: '99-4471268',
+  email: 'contact@kutashiholdings.com',
+  phone: '+1 (307) 555-0148',
 };
 
 export function LegalSection({ nr, title, children }: { nr: string; title: string; children: React.ReactNode }) {
@@ -53,12 +53,25 @@ export function LegalOwnerBlock({ leadIn }: { leadIn: string }) {
         <p className="mt-1">
           {OWNER.street}
           <br />
-          {OWNER.postalCode} {OWNER.city}
+          {OWNER.cityStateZip}
+          <br />
+          {OWNER.countryPl}
         </p>
         <p className="mt-2">
-          NIP <span className="tabular-nums">{OWNER.nip}</span>
+          Wyoming LLC ID <span className="tabular-nums">{OWNER.llcId}</span>
           <br />
-          REGON <span className="tabular-nums">{OWNER.regon}</span>
+          EIN <span className="tabular-nums">{OWNER.ein}</span>
+        </p>
+        <p className="mt-2">
+          E-mail:{' '}
+          <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">
+            {OWNER.email}
+          </a>
+          <br />
+          Telefon:{' '}
+          <a href={`tel:${OWNER.phone.replace(/[^\d+]/g, '')}`} className="underline hover:text-primary">
+            {OWNER.phone}
+          </a>
         </p>
       </div>
     </>
@@ -75,12 +88,25 @@ export function LegalOwnerBlockEn({ leadIn }: { leadIn: string }) {
         <p className="mt-1">
           {OWNER.street}
           <br />
-          {OWNER.postalCode} {OWNER.cityEn}, {OWNER.countryEn}
+          {OWNER.cityStateZip}
+          <br />
+          {OWNER.countryEn}
         </p>
         <p className="mt-2">
-          NIP <span className="tabular-nums">{OWNER.nip}</span>
+          Wyoming LLC ID <span className="tabular-nums">{OWNER.llcId}</span>
           <br />
-          REGON <span className="tabular-nums">{OWNER.regon}</span>
+          EIN <span className="tabular-nums">{OWNER.ein}</span>
+        </p>
+        <p className="mt-2">
+          Email:{' '}
+          <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">
+            {OWNER.email}
+          </a>
+          <br />
+          Phone:{' '}
+          <a href={`tel:${OWNER.phone.replace(/[^\d+]/g, '')}`} className="underline hover:text-primary">
+            {OWNER.phone}
+          </a>
         </p>
       </div>
     </>
@@ -102,7 +128,7 @@ export function RegulaminContent() {
 
       <div className="space-y-10">
         <LegalSection nr="1" title="Kto prowadzi serwis">
-          <LegalOwnerBlock leadIn="Administratorem serwisu www.pawelperfect.pl jest" />
+          <LegalOwnerBlock leadIn="Sprzedawcą serwisu www.pawelperfect.pl jest" />
         </LegalSection>
 
         <LegalSection nr="2" title="Co znajdziesz w serwisie i wymagania techniczne">
@@ -365,7 +391,7 @@ export function TermsContentEn() {
 
       <div className="space-y-10">
         <LegalSection nr="1" title="Who runs the service">
-          <LegalOwnerBlockEn leadIn={`${APP_NAME} is operated by`} />
+          <LegalOwnerBlockEn leadIn="The Seller operating www.pawelperfect.pl is" />
         </LegalSection>
 
         <LegalSection nr="2" title="What you'll find in the service and technical requirements">
