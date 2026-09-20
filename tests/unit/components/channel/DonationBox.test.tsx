@@ -127,11 +127,18 @@ describe('DonationBox', () => {
     }) as unknown as typeof fetch;
 
     const { container } = renderDonationBox({ viewerIsPatron: false });
+    const submitButton = screen.getByText('Wspieram').closest('button')!;
+    // Wait for the button to actually become clickable, not just for the amount text to
+    // appear — isInitialLoading (which alone gates the disabled attribute at this point)
+    // can still be true for a render or two after the amount field already shows "20",
+    // since setAmount() and setIsInitialLoading(false) land in separate promise-callback
+    // flushes. A click on a still-disabled button is silently swallowed by the DOM, which
+    // made this assertion flaky before this wait was tied to the button itself.
     await waitFor(() => {
       expect(screen.getByText('20')).toBeInTheDocument();
+      expect(submitButton).not.toBeDisabled();
     });
 
-    const submitButton = screen.getByText('Wspieram').closest('button')!;
     const termsCheckbox = container.querySelector('#donation-accept-terms')!;
     const withdrawalCheckbox = container.querySelector('#donation-accept-withdrawal')!;
 
