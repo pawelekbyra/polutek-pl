@@ -1,5 +1,10 @@
 import React from 'react';
 
+// TEMPORARY (test setup only) — see CLAUDE.md "TEMPORARY CHANGES REGISTRY" for the exact
+// revert steps. Set to `false` (or delete this flag and the conditional that reads it) to
+// restore the "W skrócie" summary block in the English Terms of Service.
+const TEMP_HIDE_TERMS_EN_SUMMARY = true;
+
 export const LEGAL_EFFECTIVE_DATE = 'Obowiązuje od 3 lipca 2026 r.';
 export const LEGAL_EFFECTIVE_DATE_EN = 'Effective as of 3 July 2026.';
 
@@ -379,14 +384,16 @@ export function PolitykaContent() {
 export function TermsContentEn() {
   return (
     <>
-      <LegalSummary
-        items={[
-          'Watching public videos is free and does not require an account.',
-          'A one-time payment in the amount shown in the service grants lifetime access to the Thank You Zone for as long as the service (or that part of the service) operates. No subscription.',
-          'You get access right away, so — with your explicit consent — once access is fully activated you no longer have the right to withdraw from the contract.',
-          <>Complaints: email {OWNER.email}, we reply within 14 days.</>,
-        ]}
-      />
+      {!TEMP_HIDE_TERMS_EN_SUMMARY && (
+        <LegalSummary
+          items={[
+            'Watching public videos is free and does not require an account.',
+            'A one-time payment in the amount shown in the service grants lifetime access to the Thank You Zone for as long as the service (or that part of the service) operates. No subscription.',
+            'You get access right away, so — with your explicit consent — once access is fully activated you no longer have the right to withdraw from the contract.',
+            <>Complaints: email {OWNER.email}, we reply within 14 days.</>,
+          ]}
+        />
+      )}
 
       <div className="space-y-10">
         <LegalSection nr="1" title="Who runs the service">
