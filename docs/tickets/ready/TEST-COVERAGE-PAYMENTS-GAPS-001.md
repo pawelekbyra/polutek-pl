@@ -1,7 +1,7 @@
 # TEST-COVERAGE-PAYMENTS-GAPS-001 — Zero pokrycia na krytycznych ścieżkach płatności/admina
 
-Status: READY_FOR_BUILDER
-Priority: MEDIUM (brak testów na wysokokonsekwencyjnym kodzie, nie znany bug)
+Status: READY_FOR_BUILDER (Priorytety 1-3 zamknięte 2026-09-20; zostaje tylko Priorytet 4)
+Priority: LOW (pozostały zakres to zewnętrzne adaptery providerów, mniej własnej logiki)
 
 ## Why
 
@@ -10,59 +10,37 @@ test:coverage`, wcześniej nikt tego nie zmierzył — wiadomo było tylko, że
 brak wymuszonych progów, `KNOWN_LIMITATIONS.md`). Wynik ogólny: 57-63%
 (statements/branches/functions/lines) w zakresie `app/api`, `lib/modules`,
 `lib/services`, `lib/api`, `lib/webhooks`. Rdzeń use-case'ów płatności/
-patrona jest nieźle pokryty (`fulfillPayment` 81%, `handle-stripe-webhook`
-82%, `check-video-access` 84%, `revoke-patron` 88%), ale konkretne,
-wysokokonsekwencyjne pliki mają **zero** testów:
+patrona jest nieźle pokryty, ale kilka konkretnych, wysokokonsekwencyjnych
+plików miało **zero** testów.
 
-- `app/api/payments/[paymentId]/route.ts` — 0% — backuje return-page fast
-  path z `CLAUDE.md` §4.2 (może sam wywołać `fulfillPayment()` z pollingu
-  klienta).
-- `app/api/access/route.ts` — 0% — publiczny endpoint owijający
-  `checkVideoAccess` (sam use-case ma 84%, ale warstwa HTTP/resolucji
-  actora — nie).
-- `lib/modules/payments/application/admin-refund.use-case.ts` — 3.6%.
-- `lib/modules/payments/application/admin-dispute-sync.use-case.ts` — 0%.
-- `app/api/admin/payments/route.ts`, `.../[id]/refund/route.ts`,
-  `.../[id]/dispute-sync/route.ts` — 0% każdy — cała HTTP-warstwa
-  refundów/sporów w adminie bez testów na poziomie route'a.
-- `app/api/admin/payment-settings/route.ts`, `app/api/payment-settings/route.ts`
-  — 0% każdy — endpointy zwracające trzy odrębne minima walutowe z
-  `CLAUDE.md` §4.10 (checkout floor / patron threshold / patron-box
-  minimum) bez testów na poziomie route'a.
-- `lib/modules/users/application/sync-clerk-access.ts` — 0%.
-- `app/api/admin/users/[userId]/patron/route.ts` — 51.6%.
-- `lib/modules/playback/application/playback.service.ts` — 59.4% (główny
-  plik resolvujący playable source, §4.3).
-- `lib/modules/video/infrastructure/mux.client.ts`/`mux.provider.ts`/
-  `cloudflare-stream.provider.ts` — 0% każdy.
+**Zrobione 2026-09-20 (Priorytety 1-3, 59 nowych testów):**
 
-Dodatkowo: `lib/api/auth.ts`/`lib/auth-utils.ts` (faktyczny gatekeeper
-autoryzacji admina używany przez każdą trasę `/api/admin/*` i `/api/access`)
-nie był w ogóle w zasięgu pomiaru coverage do tej pory — naprawione
-osobno (patrz commit "Fix critical seed-script bug, coverage config gaps..."
-z rundy 3), więc od teraz przynajmniej widać jego realną liczbę.
+- `admin-refund.use-case.ts` — z 3.6% do ~91% (`tests/unit/modules/payments/admin-refund.use-case.test.ts`).
+- `admin-dispute-sync.use-case.ts` — z 0% do 100% (`tests/unit/modules/payments/admin-dispute-sync.use-case.test.ts`).
+- `app/api/admin/payments/[id]/refund/route.ts` — z 0% do ~88% (`tests/unit/api/admin/payments-refund-route.test.ts`).
+- `app/api/admin/payments/[id]/dispute-sync/route.ts` — z 0% do ~87% (`tests/unit/api/admin/payments-dispute-sync-route.test.ts`).
+- `app/api/payments/[paymentId]/route.ts` (return-page fast path, CLAUDE.md §4.2) — testy warstwy HTTP (`tests/unit/api/payments/payment-status-route.test.ts`).
+- `app/api/access/route.ts` — z 0% do ~95% (`tests/unit/api/access-route.test.ts`).
+- `lib/modules/users/application/sync-clerk-access.ts` — z 0% (`tests/unit/modules/users/sync-clerk-access.test.ts`, w tym retry/backoff i ścieżkę `CLERK_SYNC_FAILED`).
+- `app/api/payment-settings/route.ts` — z 0% (`tests/unit/api/payment-settings-route.test.ts`).
+- `app/api/admin/payment-settings/route.ts` — z 0% (`tests/unit/api/admin/payment-settings-route.test.ts`, GET+PATCH, walidacja zod).
 
-## Scope
+## Scope (pozostałe — Priorytet 4)
 
-1. Priorytet 1 (bezpośrednio dotyka pieniędzy/dostępu): testy dla
-   `admin-refund.use-case.ts`, `admin-dispute-sync.use-case.ts`, i ich
-   tras API (`app/api/admin/payments/[id]/refund`,
-   `.../dispute-sync`) — mockowany Stripe, jak istniejące testy
-   `handle-refund`/`handle-dispute`.
-2. Priorytet 2: testy HTTP-warstwy dla `GET /api/payments/[paymentId]`
-   (fast-path reconciliation) i `GET /api/access` — te use-case'y pod spodem
-   są już przetestowane, brakuje tylko testu samego route handlera
-   (auth resolution, response shaping, status codes).
-3. Priorytet 3: `sync-clerk-access.ts`, `app/api/payment-settings/route.ts`,
-   `app/api/admin/payment-settings/route.ts`.
-4. Priorytet 4 (niżej, bo to zewnętrzne adaptery, mniej logiki własnej):
-   `mux.client.ts`, `mux.provider.ts`, `cloudflare-stream.provider.ts`.
+Zewnętrzne adaptery providerów, niżej priorytetowe bo to głównie cienkie
+wrappery nad SDK, mniej własnej logiki biznesowej:
+
+- `lib/modules/video/infrastructure/mux.client.ts` (161 linii) — 0%.
+- `lib/modules/video/infrastructure/mux.provider.ts` (62 linie) — 0%.
+- `lib/modules/video/infrastructure/cloudflare-stream.provider.ts` (46 linii) — 0%.
 
 ## Invariants that must survive
 
-- Nowe testy nie mogą wymagać prawdziwego `DATABASE_URL`/Stripe/Clerk —
-  całość musi być mockowana jak istniejący suite (`tests/unit/`), zgodnie
-  z konwencją reszty testów płatności.
+- Nowe testy nie mogą wymagać prawdziwego `DATABASE_URL`/Stripe/Clerk/Mux/
+  Cloudflare — całość musi być mockowana jak istniejący suite (`tests/unit/`),
+  zgodnie z konwencją reszty testów płatności (patrz przykłady z Priorytetów
+  1-3: mock `PaymentRepository`/`getStripeClient`/`getClerkClient` przez
+  `vi.mock` na poziomie modułu infrastruktury).
 - Nie dodawać progów pokrycia w `vitest.config.ts` jako część tego ticketu
   — to osobna decyzja właściciela (dziś świadomie brak progów, patrz
   `KNOWN_LIMITATIONS.md`); ten ticket tylko podnosi realne pokrycie.
