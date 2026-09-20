@@ -1,5 +1,4 @@
 import React from 'react';
-import { APP_NAME } from '@/lib/constants';
 import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/Footer';
 import Link from 'next/link';
@@ -9,8 +8,8 @@ import { notFound } from 'next/navigation';
 import { getLocalizedHref } from '@/lib/i18n/routing';
 
 export const metadata = {
-  title: APP_NAME,
-  description: `Regulamin serwisu ${APP_NAME}: zasady korzystania, wsparcie twórcy, dostęp do Strefy Fenkju, reklamacje.`,
+  title: 'Regulamin serwisu www.kutashi.com',
+  description: 'Regulamin serwisu www.kutashi.com: zasady korzystania, wsparcie twórcy, dostęp do Strefy Fenkju, reklamacje.',
 };
 
 export default async function RegulaminPage(props: { params: Promise<{ locale: string }> }) {
@@ -21,7 +20,7 @@ export default async function RegulaminPage(props: { params: Promise<{ locale: s
       <Navbar />
       <main className="mx-auto max-w-3xl px-4 py-16">
         <header className="mb-10 border-b-2 border-[var(--chan-ink)]/10 pb-8">
-          <h1 className="text-3xl font-black uppercase tracking-tighter">Regulamin serwisu {APP_NAME}</h1>
+          <h1 className="text-3xl font-black uppercase tracking-tighter">Regulamin serwisu www.kutashi.com</h1>
           <p className="mt-2 text-sm text-[var(--chan-muted)]">{LEGAL_EFFECTIVE_DATE}</p>
         </header>
 
