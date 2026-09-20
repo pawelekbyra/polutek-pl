@@ -28,7 +28,7 @@ interface SecretPledgeBoxProps {
  * campaign and unlocking the secret reward.
  */
 export default function SecretPledgeBox({ viewerIsPatron = false }: SecretPledgeBoxProps) {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const isPl = language === "pl";
 
   const [selectedCurrency, setSelectedCurrency] = useState<string>(isPl ? "PLN" : "EUR");
@@ -37,6 +37,7 @@ export default function SecretPledgeBox({ viewerIsPatron = false }: SecretPledge
   const [isPolitykaOpen, setIsPolitykaOpen] = useState(false);
 
   const termsErrorId = "secret-pledge-terms-error";
+  const withdrawalErrorId = "secret-pledge-withdrawal-error";
 
   const {
     userEmail,
@@ -47,6 +48,9 @@ export default function SecretPledgeBox({ viewerIsPatron = false }: SecretPledge
     isTermsAccepted,
     showTermsError,
     onTermsCheckedChange,
+    isWithdrawalAcknowledged,
+    showWithdrawalError,
+    onWithdrawalCheckedChange,
     isLoading,
     clientSecret,
     paymentId,
@@ -209,7 +213,13 @@ export default function SecretPledgeBox({ viewerIsPatron = false }: SecretPledge
           </p>
         )}
 
-        <div className="mt-5 flex flex-col gap-3 border-t border-[var(--sp-line)] pt-5 sm:flex-row sm:items-center sm:justify-between">
+        {showWithdrawalError && (
+          <p id={withdrawalErrorId} role="alert" className="mt-4 text-[11px] font-bold uppercase tracking-widest text-red-400">
+            {t.pleaseAcceptWithdrawal}
+          </p>
+        )}
+
+        <div className="mt-5 flex flex-col gap-3 border-t border-[var(--sp-line)] pt-5">
           <label className="flex cursor-pointer items-start gap-2.5">
             <Checkbox
               id="secret-pledge-terms"
@@ -244,6 +254,21 @@ export default function SecretPledgeBox({ viewerIsPatron = false }: SecretPledge
                 </>
               )}
             </span>
+          </label>
+
+          {/* Separate, explicit consent — distinct from the Terms/Privacy checkbox above — required
+              by art. 38(1)(13) of the Polish Consumer Rights Act before a purchase that grants
+              immediate digital-content access can waive the 14-day withdrawal right. */}
+          <label className="flex cursor-pointer items-start gap-2.5">
+            <Checkbox
+              id="secret-pledge-withdrawal"
+              checked={isWithdrawalAcknowledged}
+              onCheckedChange={onWithdrawalCheckedChange}
+              aria-invalid={showWithdrawalError}
+              aria-describedby={showWithdrawalError ? withdrawalErrorId : undefined}
+              className="mt-[2px] shrink-0 border-[var(--sp-line-strong)] data-[state=unchecked]:bg-black/30"
+            />
+            <span className="text-[12px] leading-[1.5] text-[var(--sp-muted)]">{t.acceptWithdrawal}</span>
           </label>
 
           <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--sp-muted)]">
