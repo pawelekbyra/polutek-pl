@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient, InfiniteData } from "@tanstack/react-query";
 import { parseJsonResponse } from "@/lib/client/api";
 import { CommentView } from "../types";
@@ -307,18 +308,18 @@ export function useComments(videoId: string, sortBy: "newest" | "top", language:
     },
   });
 
-  const findCachedComment = (commentId: string): CommentView | undefined => {
+  const findCachedComment = useCallback((commentId: string): CommentView | undefined => {
     const allComments = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] })
       .flatMap(q => q[1]?.pages.flatMap(p => p.comments) || []);
     return allComments.find(c => c?.id === commentId) ||
       allComments.flatMap(c => c?.repliesPreview || []).find(r => r?.id === commentId);
-  };
+  }, [queryClient, videoId]);
 
   // Toggle semantics: clicking the active reaction clears it, otherwise the
   // new reaction replaces the previous one (LIKE ⇄ DISLIKE are exclusive).
-  const getCommentReactionAction = (commentId: string, reaction: "LIKE" | "DISLIKE"): "LIKE" | "DISLIKE" | "CLEAR" => {
+  const getCommentReactionAction = useCallback((commentId: string, reaction: "LIKE" | "DISLIKE"): "LIKE" | "DISLIKE" | "CLEAR" => {
     return findCachedComment(commentId)?.viewerReaction === reaction ? "CLEAR" : reaction;
-  };
+  }, [findCachedComment]);
 
   const likeMutation = useMutation({
     mutationKey: ["comment-reaction", videoId],
@@ -348,6 +349,22 @@ export function useComments(videoId: string, sortBy: "newest" | "top", language:
       }
     },
   });
+
+  const likeMutate = useCallback((commentId: string) => {
+    likeMutation.mutate({ commentId, action: getCommentReactionAction(commentId, "LIKE") });
+  }, [likeMutation.mutate, getCommentReactionAction]);
+
+  const likeMutateAsync = useCallback((commentId: string) => {
+    return likeMutation.mutateAsync({ commentId, action: getCommentReactionAction(commentId, "LIKE") });
+  }, [likeMutation.mutateAsync, getCommentReactionAction]);
+
+  const dislikeMutate = useCallback((commentId: string) => {
+    likeMutation.mutate({ commentId, action: getCommentReactionAction(commentId, "DISLIKE") });
+  }, [likeMutation.mutate, getCommentReactionAction]);
+
+  const dislikeMutateAsync = useCallback((commentId: string) => {
+    return likeMutation.mutateAsync({ commentId, action: getCommentReactionAction(commentId, "DISLIKE") });
+  }, [likeMutation.mutateAsync, getCommentReactionAction]);
 
   const pinMutation = useMutation({
     mutationFn: async ({
@@ -508,16 +525,8 @@ export function useComments(videoId: string, sortBy: "newest" | "top", language:
     isError,
     error,
     postMutation,
-    likeMutation: {
-      ...likeMutation,
-      mutate: (commentId: string) => likeMutation.mutate({ commentId, action: getCommentReactionAction(commentId, "LIKE") }),
-      mutateAsync: (commentId: string) => likeMutation.mutateAsync({ commentId, action: getCommentReactionAction(commentId, "LIKE") }),
-    },
-    dislikeMutation: {
-      ...likeMutation,
-      mutate: (commentId: string) => likeMutation.mutate({ commentId, action: getCommentReactionAction(commentId, "DISLIKE") }),
-      mutateAsync: (commentId: string) => likeMutation.mutateAsync({ commentId, action: getCommentReactionAction(commentId, "DISLIKE") }),
-    },
+    likeMutation: { ...likeMutation, mutate: likeMutate, mutateAsync: likeMutateAsync },
+    dislikeMutation: { ...likeMutation, mutate: dislikeMutate, mutateAsync: dislikeMutateAsync },
     pinMutation,
     deleteMutation,
     editMutation,
