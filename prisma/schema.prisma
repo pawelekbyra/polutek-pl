@@ -147,6 +147,7 @@ model AuditLog {
   @@index([actorUserId])
   @@index([action])
   @@index([createdAt])
+  @@index([targetType, targetId])
 }
 
 model AppSetting {
