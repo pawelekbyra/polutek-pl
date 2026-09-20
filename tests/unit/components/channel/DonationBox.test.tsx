@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup, waitFor } from '@testing-library/react';
+import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import DonationBox from '@/app/components/channel/DonationBox';
@@ -43,6 +43,8 @@ vi.mock('@/app/components/LanguageContext', () => ({
     t: {
       currency: 'PLN',
       pleaseAcceptTerms: 'Zaakceptuj regulamin, aby otrzymać dostęp do Strefy Fenkju',
+      acceptWithdrawal: 'Wyrażam zgodę na natychmiastowy dostęp i utratę prawa odstąpienia',
+      pleaseAcceptWithdrawal: 'Potwierdź zgodę na natychmiastowy dostęp i utratę prawa odstąpienia',
       tipTheGuy: 'Wspieram',
     },
   }),
@@ -108,5 +110,55 @@ describe('DonationBox', () => {
     // The amount field must start empty (just the cursor/placeholder) rather than
     // pre-filled with a suggested amount — a patron picks their own amount freely.
     expect(screen.getByLabelText('Wpisz kwotę napiwku')).toHaveValue(null);
+  });
+
+  it('requires the withdrawal-consent checkbox separately from the Terms/Privacy checkbox before checkout proceeds', async () => {
+    global.fetch = vi.fn().mockImplementation((url: string) => {
+      if (url === '/api/checkout/create-intent') {
+        return Promise.resolve({ ok: true, json: async () => ({ clientSecret: 'cs_test', paymentId: 'pay_1' }) });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          limits: { PLN: { minAmount: 10 }, USD: { minAmount: 10 }, EUR: { minAmount: 10 }, CHF: { minAmount: 10 }, GBP: { minAmount: 10 } },
+          patronThresholds: { PLN: { threshold: 20 }, USD: { threshold: 20 }, EUR: { threshold: 20 }, CHF: { threshold: 20 }, GBP: { threshold: 20 } },
+        }),
+      });
+    }) as unknown as typeof fetch;
+
+    const { container } = renderDonationBox({ viewerIsPatron: false });
+    const submitButton = screen.getByText('Wspieram').closest('button')!;
+    // Wait for the button to actually become clickable, not just for the amount text to
+    // appear — isInitialLoading (which alone gates the disabled attribute at this point)
+    // can still be true for a render or two after the amount field already shows "20",
+    // since setAmount() and setIsInitialLoading(false) land in separate promise-callback
+    // flushes. A click on a still-disabled button is silently swallowed by the DOM, which
+    // made this assertion flaky before this wait was tied to the button itself.
+    await waitFor(() => {
+      expect(screen.getByText('20')).toBeInTheDocument();
+      expect(submitButton).not.toBeDisabled();
+    });
+
+    const termsCheckbox = container.querySelector('#donation-accept-terms')!;
+    const withdrawalCheckbox = container.querySelector('#donation-accept-withdrawal')!;
+
+    // Neither checkbox checked yet: clicking submit surfaces the Terms error first.
+    fireEvent.click(submitButton);
+    expect(await screen.findByText('Zaakceptuj regulamin, aby otrzymać dostęp do Strefy Fenkju')).toBeInTheDocument();
+    expect(global.fetch).not.toHaveBeenCalledWith('/api/checkout/create-intent', expect.anything());
+
+    // Accepting only the Terms/Privacy checkbox is not enough — the separate withdrawal
+    // consent (required by art. 38(1)(13) of the Polish Consumer Rights Act) must also be given.
+    fireEvent.click(termsCheckbox);
+    fireEvent.click(submitButton);
+    expect(await screen.findByText('Potwierdź zgodę na natychmiastowy dostęp i utratę prawa odstąpienia')).toBeInTheDocument();
+    expect(global.fetch).not.toHaveBeenCalledWith('/api/checkout/create-intent', expect.anything());
+
+    // With both explicit consents given, checkout proceeds.
+    fireEvent.click(withdrawalCheckbox);
+    fireEvent.click(submitButton);
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/checkout/create-intent', expect.anything());
+    });
   });
 });

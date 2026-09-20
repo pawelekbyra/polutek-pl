@@ -137,12 +137,50 @@ describe('useCheckoutFlow', () => {
     expect(result.current.showTermsError).toBe(false);
   });
 
+  it('sets showWithdrawalError instead of calling create-intent when terms are accepted but withdrawal consent is not', async () => {
+    const { result } = renderCheckoutFlow();
+    await waitFor(() => expect(result.current.isInitialLoading).toBe(false));
+
+    act(() => {
+      result.current.onTermsCheckedChange(true);
+    });
+    expect(result.current.isWithdrawalAcknowledged).toBe(false);
+
+    await act(async () => {
+      await result.current.submit(50, 'PLN', 20);
+    });
+
+    expect(result.current.showWithdrawalError).toBe(true);
+    expect(global.fetch).not.toHaveBeenCalledWith('/api/checkout/create-intent', expect.anything());
+  });
+
+  it('onWithdrawalCheckedChange accepts the withdrawal consent and clears a shown error', async () => {
+    const { result } = renderCheckoutFlow();
+    await waitFor(() => expect(result.current.isInitialLoading).toBe(false));
+
+    act(() => {
+      result.current.onTermsCheckedChange(true);
+    });
+    await act(async () => {
+      await result.current.submit(50, 'PLN', 20);
+    });
+    expect(result.current.showWithdrawalError).toBe(true);
+
+    act(() => {
+      result.current.onWithdrawalCheckedChange(true);
+    });
+
+    expect(result.current.isWithdrawalAcknowledged).toBe(true);
+    expect(result.current.showWithdrawalError).toBe(false);
+  });
+
   it('toasts the caller-provided min-amount message and skips create-intent when the amount is too low', async () => {
     const { result } = renderCheckoutFlow();
     await waitFor(() => expect(result.current.isInitialLoading).toBe(false));
 
     act(() => {
       result.current.onTermsCheckedChange(true);
+      result.current.onWithdrawalCheckedChange(true);
     });
 
     await act(async () => {
@@ -179,6 +217,7 @@ describe('useCheckoutFlow', () => {
 
     act(() => {
       result.current.onTermsCheckedChange(true);
+      result.current.onWithdrawalCheckedChange(true);
     });
 
     await act(async () => {
@@ -231,6 +270,7 @@ describe('useCheckoutFlow', () => {
 
     act(() => {
       result.current.onTermsCheckedChange(true);
+      result.current.onWithdrawalCheckedChange(true);
     });
 
     await act(async () => {
