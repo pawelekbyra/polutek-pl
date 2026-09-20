@@ -24,7 +24,15 @@ function isLanguage(value: string | null | undefined): value is AppLanguage {
  * The cookie mirror (2) is what lets a logged-out choice survive reloads, and it is also written
  * client-side alongside localStorage so this server read stays consistent with the client.
  */
+// TEMPORARY (test setup only) — see CLAUDE.md "2026-09-20: temporary test-mode UI changes"
+// for the exact revert steps. Forces every viewer to English regardless of DB/cookie/geo/
+// browser preference below. Set to `false` (or delete this flag and the early return) to
+// restore normal resolution.
+const TEMP_FORCE_ENGLISH = true;
+
 export async function resolveInitialLanguage(): Promise<AppLanguage> {
+  if (TEMP_FORCE_ENGLISH) return "en";
+
   // 1. Logged-in preference from the database.
   try {
     const { userId } = await auth();

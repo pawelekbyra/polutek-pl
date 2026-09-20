@@ -1,18 +1,17 @@
 import React from 'react';
-import { APP_NAME } from '@/lib/constants';
 
 export const LEGAL_EFFECTIVE_DATE = 'Obowiązuje od 3 lipca 2026 r.';
 export const LEGAL_EFFECTIVE_DATE_EN = 'Effective as of 3 July 2026.';
 
 export const LEGAL_OWNER = {
-  name: 'Kutashi Holdings LLC',
+  name: 'Kutashi Yakimoto LLC',
   street: '1201 Third Avenue, Suite 2200',
   cityStateZip: 'Seattle, WA 98101',
   countryPl: 'Stany Zjednoczone',
   countryEn: 'United States',
   llcId: '2026-001487321',
   ein: '99-4471268',
-  email: 'contact@kutashiholdings.com',
+  email: 'contact@kutashi.com',
   phone: '+1 (307) 555-0148',
 };
 
@@ -128,12 +127,12 @@ export function RegulaminContent() {
 
       <div className="space-y-10">
         <LegalSection nr="1" title="Kto prowadzi serwis">
-          <LegalOwnerBlock leadIn="Sprzedawcą serwisu www.kutashi.com jest" />
+          <LegalOwnerBlock leadIn="Sprzedawcą serwisu KUTASHI.COM jest" />
         </LegalSection>
 
         <LegalSection nr="2" title="Co znajdziesz w serwisie i wymagania techniczne">
           <p>
-            {APP_NAME} to autorski kanał wideo jednego twórcy. Publiczne filmy oglądasz za darmo i bez konta.
+            KUTASHI.COM to monokanał wideo — jeden, spójny kanał z materiałami wideo. Publiczne filmy oglądasz za darmo i bez konta.
             Część funkcji (komentarze, materiały dla zalogowanych) wymaga bezpłatnego konta.
             Strefa Fenkjuu to sekcja z materiałami dodatkowymi, dostępna dla wspierających (§ 4).
           </p>
@@ -275,7 +274,7 @@ export function PolitykaContent() {
 
       <div className="space-y-10">
         <LegalSection nr="1" title="Administrator danych">
-          <LegalOwnerBlock leadIn="Administratorem serwisu www.kutashi.com jest" />
+          <LegalOwnerBlock leadIn="Administratorem serwisu KUTASHI.COM jest" />
           <p>W sprawach danych osobowych pisz na adres <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>.</p>
         </LegalSection>
 
@@ -391,12 +390,12 @@ export function TermsContentEn() {
 
       <div className="space-y-10">
         <LegalSection nr="1" title="Who runs the service">
-          <LegalOwnerBlockEn leadIn="The Seller operating www.kutashi.com is" />
+          <LegalOwnerBlockEn leadIn="The Seller operating KUTASHI.COM is" />
         </LegalSection>
 
         <LegalSection nr="2" title="What you'll find in the service and technical requirements">
           <p>
-            {APP_NAME} is a single creator&rsquo;s video channel. Public videos can be watched for free and without an
+            KUTASHI.COM operates as a single video channel — one, unified channel of video content. Public videos can be watched for free and without an
             account. Some features (comments, content for signed-in users) require a free account. The Thank You Zone
             is a section with bonus content, available to supporters (§ 4).
           </p>
