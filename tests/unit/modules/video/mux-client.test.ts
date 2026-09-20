@@ -11,6 +11,11 @@ function setMuxEnv(overrides: Partial<NodeJS.ProcessEnv> = {}) {
     ...ORIGINAL_ENV,
     MUX_TOKEN_ID: TOKEN_ID,
     MUX_TOKEN_SECRET: TOKEN_SECRET,
+    // Explicitly cleared (not just omitted) so these tests are deterministic
+    // regardless of ambient MUX_SIGNING_* env vars in the host environment
+    // (e.g. CI sets them for other test files) — callers opt back in via overrides.
+    MUX_SIGNING_KEY_ID: "",
+    MUX_SIGNING_PRIVATE_KEY: "",
     ...overrides,
   };
 }
