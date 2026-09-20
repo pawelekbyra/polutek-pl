@@ -20,7 +20,6 @@ rozbite na małe, wykonywalne tickety kodowe.
 |---|---|---|
 | [`PRISMA-SCHEMA-MIGRATION-DRIFT-001`](PRISMA-SCHEMA-MIGRATION-DRIFT-001.md) | HIGH | `schema.prisma` odjechał od historii migracji — 7 brakujących indeksów + drift NOT NULL/default, jeden pole (`VideoPlaybackSession.maxProgressMs`) ma już nieformalny null-handling w kodzie |
 | [`MEDIA-THUMBNAILS-R2-MIGRATION-001`](MEDIA-THUMBNAILS-R2-MIGRATION-001.md) | MEDIUM | Migracja custom miniaturek z Vercel Blob do Cloudflare R2 (koszt/skala, nie correctness blocker) |
-| [`VIDEO-PLAYBACK-SESSION-RETENTION-001`](VIDEO-PLAYBACK-SESSION-RETENTION-001.md) | LOW | Retencja/czyszczenie tabeli VideoPlaybackSession (rośnie bez ograniczeń przez preload) |
 | [`PRISMA-MIGRATION-TIMESTAMP-DEDUP-001`](PRISMA-MIGRATION-TIMESTAMP-DEDUP-001.md) | LOW | Normalizacja duplikatów timestampów w historii migracji Prisma |
 | [`ADMIN-EMAILS-VISUAL-DRIFT-001`](ADMIN-EMAILS-VISUAL-DRIFT-001.md) | LOW | `/admin/emails` ma inny język wizualny niż reszta panelu — decyzja: ujednolicić czy udokumentować jako celowe |
 | [`ADMIN-LIST-SCAFFOLD-CONSOLIDATION-001`](ADMIN-LIST-SCAFFOLD-CONSOLIDATION-001.md) | LOW | Wspólny scaffold list/paginacji/filtrowania zamiast 4 niezależnych implementacji w panelu admina |
