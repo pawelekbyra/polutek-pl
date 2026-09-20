@@ -1,5 +1,4 @@
 import React from 'react';
-import { APP_NAME } from '@/lib/constants';
 import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/Footer';
 import Link from 'next/link';
@@ -9,8 +8,8 @@ import { notFound } from 'next/navigation';
 import { getLocalizedHref } from '@/lib/i18n/routing';
 
 export const metadata = {
-  title: APP_NAME,
-  description: `Terms of Service for ${APP_NAME}: usage rules, supporting the creator, access to the Thank You Zone, complaints.`,
+  title: 'Terms of Service — www.kutashi.com',
+  description: 'Terms of Service for www.kutashi.com: usage rules, supporting the creator, access to the Thank You Zone, complaints.',
 };
 
 export default async function TermsPage(props: { params: Promise<{ locale: string }> }) {
@@ -21,7 +20,7 @@ export default async function TermsPage(props: { params: Promise<{ locale: strin
       <Navbar />
       <main className="mx-auto max-w-3xl px-4 py-16">
         <header className="mb-10 border-b-2 border-[var(--chan-ink)]/10 pb-8">
-          <h1 className="text-3xl font-black uppercase tracking-tighter">Terms of Service — {APP_NAME}</h1>
+          <h1 className="text-3xl font-black uppercase tracking-tighter">Terms of Service — www.kutashi.com</h1>
           <p className="mt-2 text-sm text-[var(--chan-muted)]">{LEGAL_EFFECTIVE_DATE_EN}</p>
           <p className="mt-1 text-sm text-[var(--chan-muted)]">
             This is a translation provided for convenience. In case of any discrepancy, the Polish-language version
