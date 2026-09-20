@@ -395,7 +395,7 @@ export function TermsContentEn() {
 
         <LegalSection nr="2" title="What you'll find in the service and technical requirements">
           <p>
-            KUTASHI.COM operates as a single video channel — one, unified channel of video content. Public videos can be watched for free and without an
+            KUTASHI.COM is an online platform presenting video content. Public videos can be watched for free and without an
             account. Some features (comments, content for signed-in users) require a free account. The Thank You Zone
             is a section with bonus content, available to supporters (§ 4).
           </p>
@@ -432,7 +432,7 @@ export function TermsContentEn() {
             material publication.
           </p>
           <p>
-            People who already have active access to the Thank You Zone may additionally support the channel with
+            People who already have active access to the Thank You Zone may additionally support the project with
             any amount. Such an additional payment is voluntary support for the project; it is not a price or
             remuneration for new digital content, additional access, extended access, or any other reciprocal
             performance, and it does not grant any additional benefits beyond those the user already has. The
