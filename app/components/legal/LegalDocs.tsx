@@ -128,7 +128,7 @@ export function RegulaminContent() {
 
       <div className="space-y-10">
         <LegalSection nr="1" title="Kto prowadzi serwis">
-          <LegalOwnerBlock leadIn="Sprzedawcą serwisu www.pawelperfect.pl jest" />
+          <LegalOwnerBlock leadIn="Sprzedawcą serwisu www.kutashi.com jest" />
         </LegalSection>
 
         <LegalSection nr="2" title="Co znajdziesz w serwisie i wymagania techniczne">
@@ -391,7 +391,7 @@ export function TermsContentEn() {
 
       <div className="space-y-10">
         <LegalSection nr="1" title="Who runs the service">
-          <LegalOwnerBlockEn leadIn="The Seller operating www.pawelperfect.pl is" />
+          <LegalOwnerBlockEn leadIn="The Seller operating www.kutashi.com is" />
         </LegalSection>
 
         <LegalSection nr="2" title="What you'll find in the service and technical requirements">
