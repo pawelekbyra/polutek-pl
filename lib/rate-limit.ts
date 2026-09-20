@@ -13,6 +13,8 @@ interface RateLimitRecord {
 export interface RateLimitStore {
   hit(key: string, windowMs: number): Promise<RateLimitRecord>;
   setNxEx(key: string, value: string, seconds: number): Promise<boolean>;
+  /** Read-only peek — no side effects, unlike hit(). Returns null if the key is absent/expired. */
+  get(key: string): Promise<string | null>;
 }
 
 export class MemoryStore implements RateLimitStore {
@@ -58,6 +60,15 @@ export class MemoryStore implements RateLimitStore {
 
     this.cache.set(redisKey, { value, expiresAt: now + (seconds * 1000) });
     return true;
+  }
+
+  async get(key: string): Promise<string | null> {
+    this.cleanup();
+    const now = Date.now();
+    const redisKey = `nx:${key}`;
+    const record = this.cache.get(redisKey);
+    if (!record || now >= record.expiresAt) return null;
+    return record.value;
   }
 }
 
@@ -116,6 +127,11 @@ export class UpstashRedisStore implements RateLimitStore {
   async setNxEx(key: string, value: string, seconds: number): Promise<boolean> {
     const result = await this.command<string>(['SET', key, value, 'NX', 'EX', seconds]);
     return result === 'OK';
+  }
+
+  async get(key: string): Promise<string | null> {
+    const result = await this.command<string | null>(['GET', key]);
+    return result ?? null;
   }
 }
 
@@ -187,4 +203,9 @@ export async function rateLimit({ key, limit, windowMs }: RateLimitOptions) {
 
 export async function setNxEx(key: string, value: string, seconds: number): Promise<boolean> {
   return await getStore().setNxEx(key, value, seconds);
+}
+
+/** Read-only peek at a setNxEx() flag — does not increment or create anything. */
+export async function peek(key: string): Promise<string | null> {
+  return await getStore().get(key);
 }

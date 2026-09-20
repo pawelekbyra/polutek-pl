@@ -2,6 +2,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult } from "@/lib/modules/shared/result";
 import { checkVideoAccess } from "@/lib/modules/access";
 import { setNxEx } from "@/lib/rate-limit";
+import { recordGlobalMuxPlaybackEvent } from "../infrastructure/mux-circuit-breaker";
 import { RecordPlaybackEventInput, PLAYBACK_EVENT_TYPES } from "../domain/video.dto";
 import {
     InvalidPlaybackSessionError,
@@ -125,6 +126,13 @@ export async function recordPlaybackEventUseCase(
     const access = accessResult.data;
     if (!access.hasAccess && type !== 'ACCESS_ERROR') {
         return { ok: false, error: new PlaybackAccessDeniedError(access.reason) };
+    }
+
+    // Feeds the global Mux delivery circuit breaker (see mux-circuit-breaker.ts). Fire-and-forget:
+    // it swallows its own errors and is a no-op unless MUX_GLOBAL_SOFT_LIMIT_PER_HOUR is
+    // configured, so this never adds latency or a failure mode to normal playback-event recording.
+    if (input.sourceKind === 'mux') {
+        void recordGlobalMuxPlaybackEvent();
     }
 
     const repo = new VideoPlaybackRepository(rawPrisma);
