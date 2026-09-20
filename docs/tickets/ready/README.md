@@ -27,7 +27,7 @@ rozbite na małe, wykonywalne tickety kodowe.
 | [`AUDIT-LOG-INDEX-001`](AUDIT-LOG-INDEX-001.md) | LOW | Brakujący indeks DB na AuditLog(targetType, targetId) |
 | [`ADMIN-DESIGN-SYSTEM-CONSISTENCY-001`](ADMIN-DESIGN-SYSTEM-CONSISTENCY-001.md) | LOW | Ujednolicenie stat-tile/nagłówków/zakładek/ikon/pustych-stanów w panelu admina |
 | [`COMMENT-LIST-MEMOIZATION-001`](COMMENT-LIST-MEMOIZATION-001.md) | LOW | Brak memoizacji na liście komentarzy — globalny pending flag re-renderuje całą listę |
-| [`TEST-COVERAGE-PAYMENTS-GAPS-001`](TEST-COVERAGE-PAYMENTS-GAPS-001.md) | MEDIUM | Zero pokrycia testami na refundach/sporach/route'ach płatności admina |
+| [`TEST-COVERAGE-PAYMENTS-GAPS-001`](TEST-COVERAGE-PAYMENTS-GAPS-001.md) | LOW | Priorytety 1-3 zamknięte 2026-09-20; zostały tylko testy dla adapterów Mux/Cloudflare Stream |
 
 ## Znane kierunki bez ticketu (do rozpisania przed realizacją)
 
