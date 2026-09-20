@@ -7,6 +7,7 @@ import { getCanonicalVideoTitle } from '@/lib/video-title-overrides';
 import { getAdminClerkUserIds } from '@/lib/admin-config';
 import { MainChannelService } from '@/lib/modules/channel';
 import { createAppContext } from '@/lib/modules/shared/app-context';
+import { MediaPolicy } from '@/lib/modules/media';
 
 export const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
   OR: [
@@ -123,11 +124,10 @@ export class VideoContentService {
         } : undefined,
     };
 
-    // Safety redaction
-    const forbidden = ['videoUrl', 'sourceUrl', 'rawUrl', 'signedUrl', 'providerUrl', 's3Url', 'blobUrl'];
-    for (const field of forbidden) {
-        if (field in dto) delete (dto as any)[field];
-    }
+    // Fail-safe: throws if this DTO ever carries a raw/internal media field. mapToPublicVideoDTO
+    // is the single point where every PublicVideoDTO in the app is built, so this is the one
+    // place that guarantees the CLAUDE.md §4.3 invariant even if a future edit here regresses it.
+    MediaPolicy.assertPublicVideoDtoSafe(dto);
 
     return dto;
   }
