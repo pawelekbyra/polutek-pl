@@ -304,8 +304,11 @@ Co robi ten cron: co 15 minut szuka płatności `PENDING` starszych niż 15 min 
 |---|---|---|
 | `/api/cron/stripe-reconciliation` | `*/15 * * * *` | Recovers stuck `PENDING` payments by re-running `fulfillPayment()` or marking as failed |
 | `/api/cron/video-provider-jobs/reconcile` | `0 4 * * *` (registered; daily works on Hobby) | Polls provider status for stuck import jobs (missed webhooks), restarts imports that never reached the provider, fails them with a clear reason after max attempts |
+| `/api/cron/prune-playback-sessions` | `0 5 * * *` (registered; daily works on Hobby) | Deletes `VideoPlaybackSession` rows older than 30 days that were never counted as a view (`pruneStalePlaybackSessions()`, `lib/modules/video/`) |
 
 The daily cron is only the safety net for video provider jobs. The primary recovery path is on-demand: `POST /api/admin/videos/[id]/reconcile` now runs the provider-job reconciler scoped to that video before route policy, and the admin media panel calls it from the "Odśwież" button plus an automatic 15s poll while the pipeline is in `CREATING_SOURCES`/`PARTIALLY_READY`. Do not revert the media panel to a passive DB-state read — without provider polling, a missed webhook leaves targets in "Tworzę źródło" forever.
+
+**`prune-playback-sessions` (added 2026-09-20):** `AppPreloadProvider`'s hover/idle prefetch creates a real `VideoPlaybackSession` row via the same `PlaybackService.createPlaybackPlanWithContext` path as actual playback, for every preloaded video regardless of whether the viewer ever plays it — so the table grows with page traffic, not just views. This cron deletes rows older than `STALE_PLAYBACK_SESSION_RETENTION_DAYS` (30) where `countedAsView` is still `false`; it never touches a session that was ever counted as a real view, and never touches `countedAsView`/aggregated view-count logic elsewhere. Confirmed before adding this: no admin diagnostics, patron read model, or Stripe dispute logic reads `VideoPlaybackSession` — it's pure telemetry with no downstream consumer that needs long retention. `VideoPlaybackEvent.session` is `onDelete: SetNull`, so deleting a session never cascades into deleting its events; they just lose the session link.
 
 ---
 
