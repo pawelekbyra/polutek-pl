@@ -248,7 +248,7 @@ const Navbar = () => {
               ) : isLoaded ? (
                 <button
                   onClick={() => openAuthModal("sign-in")}
-                  className="flex h-[32px] w-[32px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-[var(--cm-ink-55)] bg-[var(--chan-ink)] px-0 font-sans text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_6px_16px_-6px_rgba(23,23,23,0.42)] transition-[transform,background-color,border-color,box-shadow] duration-200 hover:-translate-y-px hover:bg-[var(--cm-ink-88-black)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_11px_24px_-8px_rgba(23,23,23,0.48)] active:translate-y-0 active:scale-[0.97]"
+                  className="flex h-[36px] w-[36px] shrink-0 items-center justify-center gap-1.5 rounded-[12px] border border-[var(--cm-ink-55)] bg-[var(--chan-ink)] px-0 font-sans text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_6px_16px_-6px_rgba(23,23,23,0.42)] transition-[transform,background-color,border-color,box-shadow] duration-200 hover:-translate-y-px hover:bg-[var(--cm-ink-88-black)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_11px_24px_-8px_rgba(23,23,23,0.48)] active:translate-y-0 active:scale-[0.97]"
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
