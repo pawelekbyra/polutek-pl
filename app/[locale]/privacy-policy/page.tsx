@@ -8,8 +8,8 @@ import { notFound } from 'next/navigation';
 import { getLocalizedHref } from '@/lib/i18n/routing';
 
 export const metadata = {
-  title: 'Privacy Policy — www.kutashi.com',
-  description: 'Privacy Policy for www.kutashi.com: what data we collect, why, and what rights you have.',
+  title: 'Privacy Policy — KUTASHI.COM',
+  description: 'Privacy Policy for KUTASHI.COM: what data we collect, why, and what rights you have.',
 };
 
 export default async function PrivacyPolicyPage(props: { params: Promise<{ locale: string }> }) {
@@ -20,7 +20,7 @@ export default async function PrivacyPolicyPage(props: { params: Promise<{ local
       <Navbar />
       <main className="mx-auto max-w-3xl px-4 py-16">
         <header className="mb-10 border-b-2 border-[var(--chan-ink)]/10 pb-8">
-          <h1 className="text-3xl font-black uppercase tracking-tighter">Privacy Policy — www.kutashi.com</h1>
+          <h1 className="text-3xl font-black uppercase tracking-tighter">Privacy Policy — KUTASHI.COM</h1>
           <p className="mt-2 text-sm text-[var(--chan-muted)]">{LEGAL_EFFECTIVE_DATE_EN}</p>
           <p className="mt-1 text-sm text-[var(--chan-muted)]">
             This is a translation provided for convenience. In case of any discrepancy, the Polish-language version

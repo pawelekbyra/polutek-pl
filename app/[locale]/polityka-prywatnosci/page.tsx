@@ -8,8 +8,8 @@ import { notFound } from 'next/navigation';
 import { getLocalizedHref } from '@/lib/i18n/routing';
 
 export const metadata = {
-  title: 'Polityka prywatności www.kutashi.com',
-  description: 'Polityka prywatności serwisu www.kutashi.com: jakie dane zbieramy, po co i jakie masz prawa.',
+  title: 'Polityka prywatności KUTASHI.COM',
+  description: 'Polityka prywatności serwisu KUTASHI.COM: jakie dane zbieramy, po co i jakie masz prawa.',
 };
 
 export default async function PolitykaPrywatnosciPage(props: { params: Promise<{ locale: string }> }) {
@@ -20,7 +20,7 @@ export default async function PolitykaPrywatnosciPage(props: { params: Promise<{
       <Navbar />
       <main className="mx-auto max-w-3xl px-4 py-16">
         <header className="mb-10 border-b-2 border-[var(--chan-ink)]/10 pb-8">
-          <h1 className="text-3xl font-black uppercase tracking-tighter">Polityka prywatności www.kutashi.com</h1>
+          <h1 className="text-3xl font-black uppercase tracking-tighter">Polityka prywatności KUTASHI.COM</h1>
           <p className="mt-2 text-sm text-[var(--chan-muted)]">{LEGAL_EFFECTIVE_DATE}</p>
         </header>
 
