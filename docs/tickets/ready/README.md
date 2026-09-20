@@ -24,7 +24,6 @@ rozbite na małe, wykonywalne tickety kodowe.
 | [`ADMIN-EMAILS-VISUAL-DRIFT-001`](ADMIN-EMAILS-VISUAL-DRIFT-001.md) | LOW | `/admin/emails` ma inny język wizualny niż reszta panelu — decyzja: ujednolicić czy udokumentować jako celowe |
 | [`ADMIN-LIST-SCAFFOLD-CONSOLIDATION-001`](ADMIN-LIST-SCAFFOLD-CONSOLIDATION-001.md) | LOW | Wspólny scaffold list/paginacji/filtrowania zamiast 4 niezależnych implementacji w panelu admina |
 | [`ADMIN-DESIGN-SYSTEM-CONSISTENCY-001`](ADMIN-DESIGN-SYSTEM-CONSISTENCY-001.md) | LOW | Ujednolicenie stat-tile/nagłówków/zakładek/ikon/pustych-stanów w panelu admina |
-| [`COMMENT-LIST-MEMOIZATION-001`](COMMENT-LIST-MEMOIZATION-001.md) | LOW | Brak memoizacji na liście komentarzy — globalny pending flag re-renderuje całą listę |
 | [`TEST-COVERAGE-PAYMENTS-GAPS-001`](TEST-COVERAGE-PAYMENTS-GAPS-001.md) | LOW | Priorytety 1-3 zamknięte 2026-09-20; zostały tylko testy dla adapterów Mux/Cloudflare Stream |
 
 ## Znane kierunki bez ticketu (do rozpisania przed realizacją)

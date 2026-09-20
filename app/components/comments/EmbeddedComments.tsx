@@ -18,7 +18,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AccessTierDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
+import { AccessTierDto, CommentReportReasonDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { CommentComposer } from "./components/CommentComposer";
 import { CommentItem } from "./components/CommentItem";
 import { AnimatePresence } from "framer-motion";
@@ -199,7 +199,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollToTop = () => {
+  const scrollToTop = useCallback(() => {
     if (commentsTopRef.current) {
       const yOffset = -360; // Scroll higher, around the video title area
       const y =
@@ -214,7 +214,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         behavior: shouldReduceMotion ? "auto" : "smooth",
       });
     }
-  };
+  }, []);
 
   const { mutate: postComment } = postMutation;
 
@@ -225,6 +225,45 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const replyingToAuthor = replyTo
     ? comments.find((c) => c.id === replyTo)?.author?.displayName
     : null;
+
+  const { mutate: likeMutate } = likeMutation;
+  const { mutate: dislikeMutate } = dislikeMutation;
+  const { mutate: deleteMutate } = deleteMutation;
+  const { mutate: pinMutate } = pinMutation;
+  const { mutate: editMutate } = editMutation;
+  const { mutate: reportMutate } = reportMutation;
+
+  const handleLike = useCallback((id: string) => likeMutate(id), [likeMutate]);
+  const handleDislike = useCallback((id: string) => dislikeMutate(id), [dislikeMutate]);
+  const handleReply = useCallback(
+    (id: string) => {
+      setReplyTo(id);
+      scrollToTop();
+    },
+    [scrollToTop],
+  );
+  const handleDelete = useCallback((id: string) => deleteMutate(id), [deleteMutate]);
+  const handlePin = useCallback(
+    (id: string, pinned: boolean) => pinMutate({ commentId: id, pinned }),
+    [pinMutate],
+  );
+  const handleEdit = useCallback(
+    (id: string, text: string) => editMutate({ commentId: id, text }),
+    [editMutate],
+  );
+  const handleReport = useCallback(
+    (id: string, reason: CommentReportReasonDto, note?: string) =>
+      reportMutate({ commentId: id, reason, note }),
+    [reportMutate],
+  );
+  const noop = useCallback(() => {}, []);
+
+  // likeMutation and dislikeMutation share the same underlying react-query
+  // mutation (see useComments.ts), so isPending/variables are identical on
+  // both; reading either tells us which single comment is being mutated.
+  const pendingReactionCommentId = likeMutation.isPending
+    ? (likeMutation.variables as { commentId: string } | undefined)?.commentId
+    : undefined;
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -468,26 +507,14 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                 language={language}
                 t={t}
                 canComment={viewer?.canComment ?? false}
-                onLike={(id) => likeMutation.mutate(id)}
-                onDislike={(id) => dislikeMutation.mutate(id)}
-                onReply={(id) => {
-                  setReplyTo(id);
-                  scrollToTop();
-                }}
-                onDelete={(id) => deleteMutation.mutate(id)}
-                onPin={(id, pinned) =>
-                  pinMutation.mutate({ commentId: id, pinned })
-                }
-                isPinPending={pinMutation.isPending}
-                isReactionPending={
-                  likeMutation.isPending || dislikeMutation.isPending
-                }
-                onEdit={(id, text) =>
-                  editMutation.mutate({ commentId: id, text })
-                }
-                onReport={(id, reason, note) =>
-                  reportMutation.mutate({ commentId: id, reason, note })
-                }
+                onLike={handleLike}
+                onDislike={handleDislike}
+                onReply={handleReply}
+                onDelete={handleDelete}
+                onPin={handlePin}
+                isReactionPending={pendingReactionCommentId === comment.id}
+                onEdit={handleEdit}
+                onReport={handleReport}
               />
 
               {/* NESTED REPLIES */}
@@ -502,21 +529,14 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                       language={language}
                       t={t}
                       canComment={viewer?.canComment ?? false}
-                      onLike={(id) => likeMutation.mutate(id)}
-                      onDislike={(id) => dislikeMutation.mutate(id)}
-                      onReply={() => {}}
-                      onDelete={(id) => deleteMutation.mutate(id)}
-                      onPin={() => {}}
-                      isPinPending={false}
-                      isReactionPending={
-                        likeMutation.isPending || dislikeMutation.isPending
-                      }
-                      onEdit={(id, text) =>
-                        editMutation.mutate({ commentId: id, text })
-                      }
-                      onReport={(id, reason, note) =>
-                        reportMutation.mutate({ commentId: id, reason, note })
-                      }
+                      onLike={handleLike}
+                      onDislike={handleDislike}
+                      onReply={noop}
+                      onDelete={handleDelete}
+                      onPin={noop}
+                      isReactionPending={pendingReactionCommentId === reply.id}
+                      onEdit={handleEdit}
+                      onReport={handleReport}
                       isReply={true}
                     />
                   ))}

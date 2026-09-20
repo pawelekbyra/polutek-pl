@@ -33,7 +33,6 @@ interface CommentItemProps {
   onPin: (id: string, pinned: boolean) => void;
   onEdit: (id: string, text: string) => void;
   onReport: (id: string, reason: CommentReportReasonDto, note?: string) => void;
-  isPinPending: boolean;
   isReactionPending: boolean;
   isReply?: boolean;
 }
@@ -47,7 +46,7 @@ function formatCommentAge(date: Date, language: string) {
   return language === "pl" ? formatted.replace("około", "ok.") : formatted;
 }
 
-export function CommentItem({
+function CommentItemComponent({
   comment,
   userProfile,
   isClient,
@@ -471,3 +470,5 @@ export function CommentItem({
     </div>
   );
 }
+
+export const CommentItem = React.memo(CommentItemComponent);
