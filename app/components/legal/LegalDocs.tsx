@@ -124,22 +124,31 @@ export function RegulaminContent() {
       <LegalSummary
         items={[
           'Oglądanie publicznych filmów jest darmowe i nie wymaga konta.',
-          'Jednorazowa wpłata w kwocie wskazanej w serwisie daje bezterminowy dostęp do Strefy Fenkjuu na czas funkcjonowania serwisu lub tej części serwisu. Bez subskrypcji.',
+          'Jednorazowa wpłata w kwocie wskazanej w serwisie daje bezterminowy dostęp do Thank You Zone na czas funkcjonowania serwisu lub tej części serwisu. Bez subskrypcji.',
+          'Sprzedaż, płatności, podatki (w tym VAT) i faktury obsługuje Lemon Squeezy, LLC jako Merchant of Record.',
           'Dostęp dostajesz od razu, dlatego — za Twoją wyraźną zgodą — po jego pełnym uruchomieniu nie przysługuje odstąpienie od umowy.',
           <>Reklamacje: napisz na {OWNER.email}, odpowiadamy do 14 dni.</>,
         ]}
       />
 
       <div className="space-y-10">
-        <LegalSection nr="1" title="Kto prowadzi serwis">
-          <LegalOwnerBlock leadIn="Sprzedawcą serwisu KUTASHI.COM jest" />
+        <LegalSection nr="1" title="Kto prowadzi serwis i kto jest Sprzedawcą">
+          <LegalOwnerBlock leadIn="Operatorem serwisu KUTASHI.COM oraz dostawcą treści cyfrowych jest" />
+          <p>
+            Sprzedaż płatnego dostępu do treści cyfrowych w serwisie realizowana jest w modelu Merchant of Record
+            (Podmiot Pośredniczący w Sprzedaży). Sprzedawcą realizującym transakcje płatnicze, pobierającym
+            i rozliczającym podatki (w tym VAT) oraz wystawiającym dokumenty potwierdzające zakup jest{' '}
+            <strong className="text-[var(--chan-ink)]">Lemon Squeezy, LLC</strong> (dalej: „Lemon Squeezy” lub
+            „Merchant of Record”). Dokonując zakupu, użytkownik zawiera umowę sprzedaży/dostarczenia treści
+            cyfrowych bezpośrednio z Lemon Squeezy jako sprzedawcą formalnym.
+          </p>
         </LegalSection>
 
         <LegalSection nr="2" title="Co znajdziesz w serwisie i wymagania techniczne">
           <p>
-            KUTASHI.COM to monokanał wideo — jeden, spójny kanał z materiałami wideo. Publiczne filmy oglądasz za darmo i bez konta.
-            Część funkcji (komentarze, materiały dla zalogowanych) wymaga bezpłatnego konta.
-            Strefa Fenkjuu to sekcja z materiałami dodatkowymi, dostępna dla wspierających (§ 4).
+            KUTASHI.COM to platforma internetowa prezentująca materiały wideo. Publiczne filmy oglądasz za darmo
+            i bez konta. Część funkcji (komentarze, materiały dla zalogowanych) wymaga bezpłatnego konta.
+            Thank You Zone to sekcja z materiałami bonusowymi, dostępna dla wspierających (§ 4).
           </p>
           <p>
             Do korzystania z serwisu wystarczy urządzenie z aktualną przeglądarką internetową, włączoną obsługą
@@ -160,95 +169,94 @@ export function RegulaminContent() {
           </p>
         </LegalSection>
 
-        <LegalSection nr="4" title="Wsparcie i dostęp do Strefy Fenkjuu">
+        <LegalSection nr="4" title="Wsparcie i dostęp do Thank You Zone">
           <p>
-            Jednorazowa wpłata w kwocie wskazanej w serwisie w momencie wpłaty stanowi cenę za zawarcie umowy
-            o dostarczanie treści cyfrowych i daje Ci <strong>bezterminowy dostęp do Strefy Fenkjuu</strong> — wszystkich
-            obecnych i przyszłych materiałów dodatkowych — na czas funkcjonowania serwisu lub tej części serwisu.
-            Dostęp uruchamiamy niezwłocznie po zaksięgowaniu płatności, na koncie, z którego dokonano wpłaty.
+            Jednorazowa płatność w wysokości widocznej w serwisie (w formularzu zamówienia) w momencie dokonywania
+            zakupu stanowi cenę za zawarcie umowy o dostarczenie treści cyfrowych i przyznaje Ci{' '}
+            <strong>wieczysty dostęp do Thank You Zone</strong> — wszystkich aktualnych i przyszłych materiałów
+            bonusowych — tak długo, jak serwis (lub dana jego część) funkcjonuje. Aktywacja dostępu następuje
+            niezwłocznie po zaksięgowaniu płatności przez Lemon Squeezy, na koncie, z którego dokonano płatności.
           </p>
           <p>
-            Nie ma subskrypcji, płatności cyklicznych ani ukrytych kosztów. Jeżeli w przyszłości kwota wsparcia się zmieni,
-            nie wpływa to na dostęp już przyznany. Twoja wpłata finansuje rozwój projektu — biblioteka materiałów
-            dodatkowych dopiero rośnie i nie gwarantujemy częstotliwości publikacji nowych materiałów.
-          </p>
-          <p>
-            Osoby, które mają już aktywny dostęp do Strefy Fenkjuu, mogą dodatkowo wspierać kanał dowolną kwotą.
-            Taka dodatkowa wpłata jest dobrowolnym wsparciem projektu, nie stanowi ceny ani wynagrodzenia za nowe
-            treści cyfrowe, dodatkowy dostęp, wydłużenie dostępu ani inne świadczenie wzajemne i nie daje żadnych
-            dodatkowych korzyści poza tymi, które użytkownik już posiada. Wpłata jest realizowana jako transakcja
-            płatnicza przez operatora płatności, ale nie zwiększa zakresu praw użytkownika w serwisie.
+            W serwisie nie ma subskrypcji, płatności cyklicznych ani ukrytych kosztów. Ewentualne zmiany ceny
+            dostępu w przyszłości nie wpływają na prawa wcześniej nabyte. Płatność finansuje rozwój projektu —
+            biblioteka materiałów bonusowych jest sukcesywnie rozbudowywana, przy czym nie gwarantujemy stałej
+            częstotliwości publikacji nowych materiałów.
           </p>
         </LegalSection>
 
         <LegalSection nr="5" title="Płatności, ceny i faktury">
+          <ol className="list-decimal space-y-2 pl-5">
+            <li>Płatności oraz proces realizacji transakcji obsługiwane są przez Lemon Squeezy jako Merchant of Record.</li>
+            <li>
+              Ceny prezentowane w serwisie i w formularzu płatności są całkowitymi cenami brutto należnymi od
+              konsumenta, uwzględniającymi właściwe podatki (np. VAT) naliczone przez Lemon Squeezy w zależności
+              od lokalizacji kupującego.
+            </li>
+            <li>Dane kart płatniczych nie są przechowywane przez {OWNER.name} ani w bazie serwisu KUTASHI.COM.</li>
+            <li>
+              Po udanej transakcji użytkownik otrzymuje e-mail z potwierdzeniem zakupu wysłany przez Lemon Squeezy.
+              Potwierdzenie zawiera w szczególności: nazwę usługi/treści, kwotę płatności, informację
+              o jednorazowym charakterze płatności, datę, identyfikator transakcji oraz potwierdzenie zgód
+              dotyczących natychmiastowego dostarczenia treści cyfrowych.
+            </li>
+            <li>
+              Dokumenty sprzedaży (w tym faktury/rachunki) wystawiane są bezpośrednio przez Lemon Squeezy zgodnie
+              z zasadami i przepisami podatkowymi właściwymi dla Lemon Squeezy oraz wybraną lokalizacją kupującego.
+            </li>
+          </ol>
+        </LegalSection>
+
+        <LegalSection nr="6" title="Prawo do odstąpienia od umowy">
           <p>
-            Płatności obsługuje Stripe. Kwoty podawane w serwisie są cenami całkowitymi do zapłaty przez konsumenta.
-            Po udanej płatności otrzymasz potwierdzenie e-mailem. Nie przechowujemy danych Twojej karty.
+            Konsumentowi przysługuje co do zasady 14-dniowe prawo do odstąpienia od umowy zawartej na odległość.
+            Ponieważ jednak dostęp do Thank You Zone aktywowany jest niezwłocznie po dokonaniu płatności, przed
+            złożeniem zamówienia prosimy o wyrażenie wyraźnej zgody na rozpoczęcie świadczenia treści cyfrowych
+            przed upływem terminu do odstąpienia od umowy oraz o potwierdzenie przyjęcia do wiadomości utraty
+            prawa do odstąpienia od umowy z momentem pełnego aktywowania dostępu.
           </p>
           <p>
-            Potwierdzenie zakupu dostępu może obejmować w szczególności: nazwę świadczenia, kwotę płatności,
-            informację o jednorazowym charakterze płatności, datę płatności, identyfikator płatności, informację
-            o uruchomieniu dostępu oraz potwierdzenie zgód dotyczących natychmiastowego dostarczenia treści cyfrowych.
+            Jeżeli wyraziłeś te zgody, a dostęp został w pełni aktywowany, tracisz prawo do odstąpienia od umowy
+            o dostarczenie treści cyfrowych niedostarczanych na nośniku materialnym (zgodnie z art. 38 ust. 1 pkt 13
+            ustawy o prawach konsumenta lub analogicznymi przepisami właściwymi dla miejsca zamieszkania). Zawarcie
+            umowy i udzielone zgody potwierdzane są drogą e-mailową.
           </p>
           <p>
-            Na żądanie nabywcy wystawiamy fakturę zgodnie z obowiązującymi przepisami prawa podatkowego.
-            Żądanie wystawienia faktury może zostać zgłoszone w terminie i na zasadach wynikających z tych przepisów.
-            Status VAT, sposób dokumentowania sprzedaży oraz ewentualne rozliczenia transgraniczne zależą od
-            obowiązujących przepisów podatkowych i statusu sprzedawcy w chwili sprzedaży.
-          </p>
-          <p>
-            Dodatkowe dobrowolne wpłaty osób, które mają już dostęp do Strefy Fenkjuu, nie są dokumentowane jako cena
-            za dostęp do treści cyfrowych, jeżeli nie wiążą się z żadnym świadczeniem wzajemnym po stronie sprzedawcy.
-            Ich kwalifikacja podatkowa i sposób dokumentowania zależą od charakteru danej wpłaty oraz obowiązujących
-            przepisów podatkowych.
+            W przypadku wystąpienia problemów technicznych (np. płatność została pobrana, a dostęp nie został
+            aktywowany) — skontaktuj się z nami pod adresem <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>; niezwłocznie naprawimy błąd lub zwrócimy środki.
           </p>
         </LegalSection>
 
-        <LegalSection nr="6" title="Odstąpienie od umowy">
-          <p>
-            Konsumentowi przysługuje 14 dni na odstąpienie od umowy zawartej na odległość. Ponieważ jednak dostęp
-            do Strefy Fenkjuu uruchamiamy natychmiast po płatności, przed wpłatą prosimy Cię o wyraźną zgodę na
-            rozpoczęcie dostarczania treści cyfrowych przed upływem terminu do odstąpienia od umowy oraz o potwierdzenie,
-            że przyjmujesz do wiadomości utratę prawa odstąpienia po pełnym uruchomieniu dostępu.
-          </p>
-          <p>
-            Jeżeli wyrazisz te zgody i dostęp zostanie w pełni uruchomiony, tracisz prawo odstąpienia od umowy
-            o dostarczanie treści cyfrowych niedostarczanych na nośniku materialnym (art. 38 ust. 1 pkt 13 ustawy
-            o prawach konsumenta). Informację o zawarciu umowy i udzielonych zgodach możemy potwierdzić e-mailem.
-          </p>
-          <p>
-            Jeżeli zapłaciłeś, a dostęp nie został uruchomiony — napisz na <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>; naprawimy to albo zwrócimy pieniądze.
-          </p>
+        <LegalSection nr="7" title="Reklamacje i pozasądowe sposoby rozwiązywania sporów">
+          <ol className="list-decimal space-y-2 pl-5">
+            <li>
+              Coś nie działa? Napisz na adres <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a> —
+              opisz problem i podaj adres e-mail powiązany z kontem. Odpowiemy nie później niż w terminie 14 dni.
+              Odpowiadamy za zgodność treści cyfrowych z umową na zasadach określonych w przepisach o prawach
+              konsumenta.
+            </li>
+            <li>
+              W przypadku braku zgodności treści cyfrowej z umową, konsument może żądać doprowadzenia jej do
+              zgodności z umową lub — w przypadkach przewidzianych prawem — złożyć oświadczenie o obniżeniu ceny
+              albo odstąpieniu od umowy.
+            </li>
+            <li>
+              Użytkownik może skorzystać z pozasądowych sposobów rozpatrywania reklamacji i dochodzenia roszczeń
+              (np. z pomocy miejskiego lub powiatowego rzecznika konsumentów). Informacje o dostępie do tych
+              procedur dostępne są m.in. na stronach właściwych organów ochrony konsumentów (np. UOKiK).
+              O ewentualnym udziale w postępowaniu polubownym decydujemy po analizie konkretnej sprawy.
+            </li>
+          </ol>
         </LegalSection>
 
-        <LegalSection nr="7" title="Reklamacje i pozasądowe rozwiązywanie sporów">
+        <LegalSection nr="8" title="Zmiany Regulaminu i prawo właściwe">
           <p>
-            Coś nie działa? Napisz na <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a> —
-            opisz problem i podaj e-mail konta. Odpowiemy najpóźniej w ciągu 14 dni. Odpowiadamy za zgodność treści
-            cyfrowych z umową na zasadach ustawy o prawach konsumenta.
-          </p>
-          <p>
-            Jeżeli treści cyfrowe są niezgodne z umową, konsument może żądać doprowadzenia ich do zgodności z umową.
-            W przypadkach przewidzianych prawem konsument może również złożyć oświadczenie o obniżeniu ceny albo
-            odstąpieniu od umowy.
-          </p>
-          <p>
-            Konsument może skorzystać z pozasądowych sposobów rozpatrywania reklamacji i dochodzenia roszczeń,
-            w szczególności z pomocy miejskiego lub powiatowego rzecznika konsumentów oraz właściwego Wojewódzkiego
-            Inspektoratu Inspekcji Handlowej. Informacje o zasadach dostępu do tych procedur oraz wykazie podmiotów
-            uprawnionych są dostępne w serwisie UOKiK dotyczącym polubownego rozwiązywania sporów konsumenckich.
-            Sprzedawca nie zobowiązuje się z góry do udziału w postępowaniu ADR; decyzję podejmujemy po zapoznaniu się
-            z konkretną sprawą.
-          </p>
-        </LegalSection>
-
-        <LegalSection nr="8" title="Zmiany regulaminu i prawo właściwe">
-          <p>
-            Regulamin możemy zmienić z ważnych powodów (np. zmiana prawa lub funkcji serwisu). O zmianach poinformujemy
-            w serwisie z wyprzedzeniem, a zmiany nie odbierają praw już nabytych — w szczególności przyznanego dostępu
-            do Strefy Fenkjuu. Umowy podlegają prawu polskiemu, co nie pozbawia konsumenta ochrony wynikającej
-            z przepisów bezwzględnie obowiązujących.
+            Regulamin może ulec zmianie z ważnych przyczyn (np. zmiana przepisów prawa, zmiana funkcjonalności
+            serwisu lub zmiana operatora płatności). O zmianach będziemy informować w serwisie z odpowiednim
+            wyprzedzeniem. Zmiany Regulaminu nie naruszają praw wcześniej nabytych — w szczególności raz przyznany
+            dostęp do Thank You Zone pozostaje aktywny. Umowy podlegają prawu właściwemu dla siedziby operatora
+            serwisu lub właściwemu ze względu na bezwzględnie obowiązujące przepisy chroniące konsumenta w jego
+            kraju zamieszkania.
           </p>
         </LegalSection>
       </div>
