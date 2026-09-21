@@ -303,7 +303,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
           )}
         </button>
 
-        <label className="mt-3 flex cursor-pointer items-start justify-center gap-2 px-1 text-center">
+        <label className="mt-3 flex cursor-pointer items-start gap-2">
           <Checkbox
             id="donation-accept-terms"
             checked={isTermsAccepted}
@@ -342,7 +342,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
         {/* Separate, explicit consent — distinct from the Terms/Privacy checkbox above — required
             by art. 38(1)(13) of the Polish Consumer Rights Act before a purchase that grants
             immediate digital-content access can waive the 14-day withdrawal right. */}
-        <label className="mt-2 flex cursor-pointer items-start justify-center gap-2 px-1 text-center">
+        <label className="mt-2 flex cursor-pointer items-start gap-2">
           <Checkbox
             id="donation-accept-withdrawal"
             checked={isWithdrawalAcknowledged}
