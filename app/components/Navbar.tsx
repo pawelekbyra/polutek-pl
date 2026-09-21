@@ -16,10 +16,8 @@ import { appendQueryString, getLocalizedHref, switchLocalePath, type Locale } fr
 import { Skeleton } from "@/components/ui/skeleton";
 
 // TEMPORARY (test setup only) — see CLAUDE.md "2026-09-20: temporary test-mode UI changes"
-// for the exact revert steps. Set both back to `false` (or delete the flags and the code
-// that reads them) once testing is done; this hides the navbar language switcher and the
-// notifications bell without removing either component.
-const TEMP_HIDE_LANGUAGE_SWITCHER = true;
+// for the exact revert steps. Set back to `false` (or delete the flag and the code that
+// reads it) once testing is done; this hides the notifications bell without removing it.
 const TEMP_HIDE_NOTIFICATIONS_BELL = true;
 
 type NavbarMetadata = {
@@ -198,41 +196,37 @@ const Navbar = () => {
                 </button>
               </div>
 
-              {/* Language switcher — compact segmented pill, sized to align with the account actions.
-                  TEMPORARY (test setup only): hidden behind TEMP_HIDE_LANGUAGE_SWITCHER, see
-                  CLAUDE.md "2026-09-20: temporary test-mode UI changes" to revert. */}
-              {!TEMP_HIDE_LANGUAGE_SWITCHER && (
-                <div
-                  role="radiogroup"
-                  aria-label={language === "pl" ? "Wybierz język" : "Choose language"}
-                  className="relative flex h-[38px] w-[78px] shrink-0 items-center rounded-full border border-[var(--cm-line-84)] bg-[var(--cm-card-82-white)] p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[0_4px_14px_rgba(37,99,235,0.08)]"
-                >
-                  <span
-                    aria-hidden="true"
+              {/* Language switcher — compact segmented pill, sized to align with the account actions. */}
+              <div
+                role="radiogroup"
+                aria-label={language === "pl" ? "Wybierz język" : "Choose language"}
+                className="relative flex h-[38px] w-[78px] shrink-0 items-center rounded-full border border-[var(--cm-line-84)] bg-[var(--cm-card-82-white)] p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[0_4px_14px_rgba(37,99,235,0.08)]"
+              >
+                <span
+                  aria-hidden="true"
+                  className={
+                    "chan-lang-pill-active absolute bottom-[3px] left-[3px] top-[3px] w-9 rounded-full transition-transform duration-200 ease-out " +
+                    (language === "en" ? "translate-x-9" : "translate-x-0")
+                  }
+                />
+                {(["pl", "en"] as const).map((locale) => (
+                  <button
+                    key={locale}
+                    type="button"
+                    role="radio"
+                    aria-checked={language === locale}
+                    aria-label={locale === "pl" ? "Polski" : "English"}
+                    title={locale === "pl" ? "Polski" : "English"}
+                    onClick={() => switchLanguage(locale)}
                     className={
-                      "chan-lang-pill-active absolute bottom-[3px] left-[3px] top-[3px] w-9 rounded-full transition-transform duration-200 ease-out " +
-                      (language === "en" ? "translate-x-9" : "translate-x-0")
+                      "relative z-10 flex h-full flex-1 items-center justify-center rounded-full text-[10px] font-extrabold uppercase tracking-[0.08em] transition-colors " +
+                      (language === locale ? "text-white" : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]")
                     }
-                  />
-                  {(["pl", "en"] as const).map((locale) => (
-                    <button
-                      key={locale}
-                      type="button"
-                      role="radio"
-                      aria-checked={language === locale}
-                      aria-label={locale === "pl" ? "Polski" : "English"}
-                      title={locale === "pl" ? "Polski" : "English"}
-                      onClick={() => switchLanguage(locale)}
-                      className={
-                        "relative z-10 flex h-full flex-1 items-center justify-center rounded-full text-[10px] font-extrabold uppercase tracking-[0.08em] transition-colors " +
-                        (language === locale ? "text-white" : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]")
-                      }
-                    >
-                      {locale.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-              )}
+                  >
+                    {locale.toUpperCase()}
+                  </button>
+                ))}
+              </div>
 
               {/* Messages — only relevant once you have an account.
                   TEMPORARY (test setup only): bell hidden behind TEMP_HIDE_NOTIFICATIONS_BELL,
