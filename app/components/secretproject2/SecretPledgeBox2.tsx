@@ -47,7 +47,6 @@ export default function SecretPledgeBox2({ viewerIsPatron = false }: SecretPledg
   const [isPolitykaOpen, setIsPolitykaOpen] = useState(false);
 
   const termsErrorId = "secret2-pledge-terms-error";
-  const withdrawalErrorId = "secret2-pledge-withdrawal-error";
 
   const {
     userEmail,
@@ -58,9 +57,6 @@ export default function SecretPledgeBox2({ viewerIsPatron = false }: SecretPledg
     isTermsAccepted,
     showTermsError,
     onTermsCheckedChange,
-    isWithdrawalAcknowledged,
-    showWithdrawalError,
-    onWithdrawalCheckedChange,
     isLoading,
     clientSecret,
     paymentId,
@@ -243,12 +239,6 @@ export default function SecretPledgeBox2({ viewerIsPatron = false }: SecretPledg
         </p>
       )}
 
-      {showWithdrawalError && (
-        <p id={withdrawalErrorId} role="alert" className="mt-2 text-[11px] font-bold uppercase tracking-widest text-red-600">
-          {t.pleaseAcceptWithdrawal}
-        </p>
-      )}
-
       <div className="mt-6 flex flex-col gap-4 border-t border-[var(--sp2-line)] pt-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex flex-col gap-3">
           <label className="flex cursor-pointer items-start gap-2.5">
@@ -285,21 +275,6 @@ export default function SecretPledgeBox2({ viewerIsPatron = false }: SecretPledg
                 </>
               )}
             </span>
-          </label>
-
-          {/* Separate, explicit consent — distinct from the Terms/Privacy checkbox above — required
-              by art. 38(1)(13) of the Polish Consumer Rights Act before a purchase that grants
-              immediate digital-content access can waive the 14-day withdrawal right. */}
-          <label className="flex cursor-pointer items-start gap-2.5">
-            <Checkbox
-              id="secret2-pledge-withdrawal"
-              checked={isWithdrawalAcknowledged}
-              onCheckedChange={onWithdrawalCheckedChange}
-              aria-invalid={showWithdrawalError}
-              aria-describedby={showWithdrawalError ? withdrawalErrorId : undefined}
-              className="mt-[2px] shrink-0"
-            />
-            <span className="text-[12px] leading-[1.5] text-[var(--sp2-muted)]">{t.acceptWithdrawal}</span>
           </label>
         </div>
 

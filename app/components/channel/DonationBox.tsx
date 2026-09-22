@@ -43,7 +43,6 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
   const [isPolitykaOpen, setIsPolitykaOpen] = useState(false);
 
   const termsErrorId = "donation-terms-error";
-  const withdrawalErrorId = "donation-withdrawal-error";
 
   const {
     userId,
@@ -55,9 +54,6 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
     isTermsAccepted,
     showTermsError,
     onTermsCheckedChange,
-    isWithdrawalAcknowledged,
-    showWithdrawalError,
-    onWithdrawalCheckedChange,
     isLoading,
     clientSecret,
     paymentId,
@@ -125,26 +121,26 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
   // Deep-link support: Navbar's "Wspieraj"/"Support" button links here with ?support=1#donations
   // instead of duplicating any checkout logic — the browser's native anchor scroll handles
   // #donations, and this just calls the same onSupport() the box's own button uses. Only
-  // auto-calls it when onSupport() would actually proceed to checkout (signed in, terms and
-  // withdrawal consent already accepted, valid amount) rather than unconditionally —
-  // isTermsAccepted/isWithdrawalAcknowledged always start false on a fresh mount, so calling
-  // onSupport() unconditionally here surfaced its "accept the terms" error immediately on
-  // essentially every click, before the viewer had even seen the box. This still fast-paths a
-  // repeat tip when everything is already filled in; otherwise it's a no-op beyond revealing the
-  // box. Runs once per param, then strips it so a refresh/back-nav doesn't retrigger it.
+  // auto-calls it when onSupport() would actually proceed to checkout (signed in, terms already
+  // accepted, valid amount) rather than unconditionally — isTermsAccepted always starts false on
+  // a fresh mount, so calling onSupport() unconditionally here surfaced its "accept the terms"
+  // error immediately on essentially every click, before the viewer had even seen the box. This
+  // still fast-paths a repeat tip when everything is already filled in; otherwise it's a no-op
+  // beyond revealing the box. Runs once per param, then strips it so a refresh/back-nav doesn't
+  // retrigger it.
   const autoOpenTriggeredRef = useRef(false);
   useEffect(() => {
     if (autoOpenTriggeredRef.current) return;
     if (searchParams.get("support") !== "1") return;
     autoOpenTriggeredRef.current = true;
-    if (userId && isTermsAccepted && isWithdrawalAcknowledged && amount !== "" && amount >= minAmount) {
+    if (userId && isTermsAccepted && amount !== "" && amount >= minAmount) {
       onSupport();
     }
     const params = new URLSearchParams(searchParams.toString());
     params.delete("support");
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [searchParams, onSupport, router, pathname, userId, isTermsAccepted, isWithdrawalAcknowledged, amount, minAmount]);
+  }, [searchParams, onSupport, router, pathname, userId, isTermsAccepted, amount, minAmount]);
 
   // Existing patrons get a deliberately different surface. They already own everything the
   // non-patron box sells, so this variant stops being a sales/access gate and becomes a plain
@@ -269,12 +265,6 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
           </p>
         )}
 
-        {showWithdrawalError && (
-          <p id={withdrawalErrorId} role="alert" className="mb-2 text-[11px] font-bold uppercase tracking-widest text-destructive">
-            {t.pleaseAcceptWithdrawal}
-          </p>
-        )}
-
         <DonationAmountField
           viewerIsPatron={viewerIsPatron}
           isPl={isPl}
@@ -339,23 +329,6 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
                 </button>
               </>
             )}
-          </span>
-        </label>
-
-        {/* Separate, explicit consent — distinct from the Terms/Privacy checkbox above — required
-            by art. 38(1)(13) of the Polish Consumer Rights Act before a purchase that grants
-            immediate digital-content access can waive the 14-day withdrawal right. */}
-        <label className="mt-2 flex cursor-pointer items-start gap-2">
-          <Checkbox
-            id="donation-accept-withdrawal"
-            checked={isWithdrawalAcknowledged}
-            onCheckedChange={onWithdrawalCheckedChange}
-            aria-invalid={showWithdrawalError}
-            aria-describedby={showWithdrawalError ? withdrawalErrorId : undefined}
-            className="mt-[2px] shrink-0"
-          />
-          <span className="font-sans text-[11px] leading-[1.4] text-[var(--chan-muted)]">
-            {t.acceptWithdrawal}
           </span>
         </label>
       </div>

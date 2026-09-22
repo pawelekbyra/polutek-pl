@@ -51,20 +51,6 @@ export interface UseCheckoutFlowResult {
   /** Radix Checkbox onCheckedChange handler: sets acceptance and clears any shown error. */
   onTermsCheckedChange: (checked: boolean | "indeterminate") => void;
 
-  /**
-   * Separate from `isTermsAccepted` on purpose: art. 38(1)(13) of the Polish Consumer Rights
-   * Act only lets a trader treat the withdrawal right as waived when the consumer gave this
-   * exact consent (immediate digital-content delivery + acknowledged loss of withdrawal)
-   * explicitly, before payment — a single bundled "I accept the Terms" checkbox does not
-   * satisfy that on its own, since the consumer never affirmatively confirms this specific
-   * point. Gated in `submit()` exactly like `isTermsAccepted`.
-   */
-  isWithdrawalAcknowledged: boolean;
-  setIsWithdrawalAcknowledged: (value: boolean) => void;
-  showWithdrawalError: boolean;
-  setShowWithdrawalError: (value: boolean) => void;
-  onWithdrawalCheckedChange: (checked: boolean | "indeterminate") => void;
-
   isLoading: boolean;
   clientSecret: string | null;
   paymentId: string | null;
@@ -110,8 +96,6 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isTermsAccepted, setIsTermsAccepted] = useState(false);
   const [showTermsError, setShowTermsError] = useState(false);
-  const [isWithdrawalAcknowledged, setIsWithdrawalAcknowledged] = useState(false);
-  const [showWithdrawalError, setShowWithdrawalError] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const [checkoutRequestId, setCheckoutRequestId] = useState<string | null>(null);
@@ -317,11 +301,6 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
     if (checked) setShowTermsError(false);
   }, []);
 
-  const onWithdrawalCheckedChange = useCallback((checked: boolean | "indeterminate") => {
-    setIsWithdrawalAcknowledged(!!checked);
-    if (checked) setShowWithdrawalError(false);
-  }, []);
-
   const submit = useCallback(
     async (amount: number | "", currency: string, minAmount: number) => {
       if (!userId) {
@@ -333,12 +312,6 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
         return;
       }
       setShowTermsError(false);
-
-      if (!isWithdrawalAcknowledged) {
-        setShowWithdrawalError(true);
-        return;
-      }
-      setShowWithdrawalError(false);
 
       if (!amount || amount < minAmount) {
         toast(getMinAmountTooLowMessage(minAmount, currency), "error");
@@ -397,7 +370,6 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
       userId,
       openAuthModal,
       isTermsAccepted,
-      isWithdrawalAcknowledged,
       toast,
       isPl,
       checkoutRequestId,
@@ -422,12 +394,6 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
     showTermsError,
     setShowTermsError,
     onTermsCheckedChange,
-
-    isWithdrawalAcknowledged,
-    setIsWithdrawalAcknowledged,
-    showWithdrawalError,
-    setShowWithdrawalError,
-    onWithdrawalCheckedChange,
 
     isLoading,
     clientSecret,

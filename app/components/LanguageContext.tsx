@@ -157,8 +157,6 @@ export const translations = {
     no: 'NIE',
     acceptTerms: 'Akceptuję Regulamin i Politykę Prywatności',
     pleaseAcceptTerms: 'Zaakceptuj regulamin, aby otrzymać dostęp do Strefy Fenkju',
-    acceptWithdrawal: 'Wyrażam zgodę na natychmiastowe rozpoczęcie dostarczania treści cyfrowych przed upływem 14-dniowego terminu do odstąpienia od umowy i przyjmuję do wiadomości, że po pełnym uruchomieniu dostępu tracę prawo odstąpienia od umowy',
-    pleaseAcceptWithdrawal: 'Potwierdź zgodę na natychmiastowy dostęp i utratę prawa odstąpienia',
     tipTheGuy: 'Wspieram'
   },
   en: {
@@ -220,8 +218,6 @@ export const translations = {
     no: 'NO',
     acceptTerms: 'I accept the Terms and Privacy Policy',
     pleaseAcceptTerms: 'Accept the terms to receive access to the Thank You Zone',
-    acceptWithdrawal: 'I consent to immediate delivery of the digital content before the 14-day withdrawal period expires, and I acknowledge that once access is fully activated I lose my right to withdraw from the contract',
-    pleaseAcceptWithdrawal: 'Please confirm your consent to immediate access and loss of the withdrawal right',
     tipTheGuy: 'Support'
   }
 };
