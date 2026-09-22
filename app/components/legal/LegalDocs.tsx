@@ -190,19 +190,7 @@ export function RegulaminContent() {
           </ol>
         </LegalSection>
 
-        <LegalSection nr="5" title="Reklamacje">
-          <p>
-            Jeśli coś w serwisie nie działa, napisz na{' '}
-            <a href={`mailto:${REGULAMIN_CONTACT_EMAIL}`} className="underline hover:text-primary">{REGULAMIN_CONTACT_EMAIL}</a>.
-            Opisz problem i podaj adres e-mail konta, jeśli je masz. Odpowiemy najpóźniej w ciągu 14 dni.
-          </p>
-        </LegalSection>
-
-        <LegalSection nr="6" title="Dane osobowe">
-          <p>Administratorem danych osobowych jest Twórca. Zasady przetwarzania danych opisuje Polityka prywatności.</p>
-        </LegalSection>
-
-        <LegalSection nr="7" title="Zmiany regulaminu i prawo właściwe">
+        <LegalSection nr="5" title="Zmiany regulaminu i prawo właściwe">
           <ol className="list-decimal space-y-2 pl-5">
             <li>Twórca może zmienić regulamin z ważnych przyczyn, np. zmiany przepisów lub funkcji serwisu.</li>
             <li>O zmianach informuje w serwisie z co najmniej 14-dniowym wyprzedzeniem.</li>
@@ -419,20 +407,7 @@ export function TermsContentEn() {
           </ol>
         </LegalSection>
 
-        <LegalSection nr="5" title="Complaints">
-          <p>
-            If something in the service is not working, write to{' '}
-            <a href={`mailto:${TERMS_EN_CONTACT_EMAIL}`} className="underline hover:text-primary">{TERMS_EN_CONTACT_EMAIL}</a>.
-            Describe the problem and provide your account email address, if you have one. We will respond within 14
-            days at the latest.
-          </p>
-        </LegalSection>
-
-        <LegalSection nr="6" title="Personal data">
-          <p>The Creator is the controller of personal data. The rules for processing data are described in the Privacy Policy.</p>
-        </LegalSection>
-
-        <LegalSection nr="7" title="Changes to the Terms and governing law">
+        <LegalSection nr="5" title="Changes to the Terms and governing law">
           <ol className="list-decimal space-y-2 pl-5">
             <li>The Creator may change the Terms for important reasons, e.g. changes in law or in the service&rsquo;s features.</li>
             <li>Changes will be announced in the service at least 14 days in advance.</li>
