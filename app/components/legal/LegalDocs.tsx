@@ -132,10 +132,13 @@ export function RegulaminContent() {
         <LegalSection nr="2" title="Co znajdziesz w serwisie i wymagania techniczne">
           <ol className="list-decimal space-y-2 pl-5">
             <li>
-              Serwis udostępnia materiały wideo, które można oglądać bezpłatnie. Wszystkie materiały są dostępne dla
-              wszystkich użytkowników na tych samych zasadach, niezależnie od tego, czy przekazali wsparcie.
+              Serwis udostępnia materiały wideo. Dostęp do treści nigdy nie wymaga płatności — dobrowolne wsparcie
+              Twórcy (§ 4) nie wpływa na to, co użytkownik może oglądać.
             </li>
-            <li>Niektóre funkcje, np. komentowanie, wymagają bezpłatnego konta.</li>
+            <li>
+              Część materiałów wideo oraz niektóre funkcje, np. komentowanie, wymagają założenia bezpłatnego konta.
+              Pozostałe materiały są dostępne bez logowania.
+            </li>
             <li>
               Do korzystania z serwisu potrzebne są urządzenie z aktualną przeglądarką internetową z włączoną obsługą
               JavaScript oraz dostęp do internetu. Założenie konta wymaga podania adresu e-mail.
@@ -169,8 +172,8 @@ export function RegulaminContent() {
         <LegalSection nr="4" title="Wsparcie Twórcy">
           <ol className="list-decimal space-y-2 pl-5">
             <li>
-              Każdy, z kontem lub bez, może przekazać Twórcy dobrowolne wsparcie w dowolnej kwocie jako wyraz
-              podziękowania za bezpłatnie udostępnione materiały.
+              Osoba posiadająca konto może przekazać Twórcy dobrowolne wsparcie w dowolnej kwocie jako wyraz
+              podziękowania za udostępnione materiały. Przekazanie wsparcia wymaga zalogowania się do serwisu.
             </li>
             <li>Wsparcie jest darowizną na rzecz Twórcy. Nie jest ceną ani wynagrodzeniem za jakiekolwiek treści lub usługi.</li>
             <li>
@@ -356,10 +359,13 @@ export function TermsContentEn() {
         <LegalSection nr="2" title="What you'll find in the service and technical requirements">
           <ol className="list-decimal space-y-2 pl-5">
             <li>
-              The service provides video content that can be watched free of charge. All content is available to all
-              users on the same terms, regardless of whether they have given support.
+              The service provides video content. Access to content never requires payment — voluntarily supporting
+              the Creator (§ 4) has no effect on what a user can watch.
             </li>
-            <li>Some features, such as commenting, require a free account.</li>
+            <li>
+              Some video content and some features, such as commenting, require creating a free account. Other
+              content is available without signing in.
+            </li>
             <li>
               Using the service requires a device with an up-to-date web browser with JavaScript enabled and an
               internet connection. Creating an account requires an email address.
@@ -394,8 +400,8 @@ export function TermsContentEn() {
         <LegalSection nr="4" title="Supporting the Creator">
           <ol className="list-decimal space-y-2 pl-5">
             <li>
-              Anyone, with or without an account, may give the Creator voluntary support in any amount as a token of
-              thanks for the materials made available free of charge.
+              A user with an account may give the Creator voluntary support in any amount as a token of thanks for
+              the materials made available. Giving support requires signing in to the service.
             </li>
             <li>Support is a gift (donation) to the Creator. It is not a price or remuneration for any content or services.</li>
             <li>
