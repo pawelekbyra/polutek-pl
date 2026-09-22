@@ -8,8 +8,8 @@ import { notFound } from 'next/navigation';
 import { getLocalizedHref } from '@/lib/i18n/routing';
 
 export const metadata = {
-  title: 'Regulamin serwisu KUTASHI.COM',
-  description: 'Regulamin serwisu KUTASHI.COM: zasady korzystania, wsparcie twórcy, dostęp do Strefy Fenkju, reklamacje.',
+  title: 'Regulamin serwisu WWW.PAWELPERFECT.PL',
+  description: 'Regulamin serwisu WWW.PAWELPERFECT.PL: zasady korzystania, wsparcie twórcy, dostęp do Strefy Fenkju, reklamacje.',
 };
 
 export default async function RegulaminPage(props: { params: Promise<{ locale: string }> }) {
@@ -20,7 +20,7 @@ export default async function RegulaminPage(props: { params: Promise<{ locale: s
       <Navbar />
       <main className="mx-auto max-w-3xl px-4 py-16">
         <header className="mb-10 border-b-2 border-[var(--chan-ink)]/10 pb-8">
-          <h1 className="text-3xl font-black uppercase tracking-tighter">Regulamin serwisu KUTASHI.COM</h1>
+          <h1 className="text-3xl font-black uppercase tracking-tighter">Regulamin serwisu WWW.PAWELPERFECT.PL</h1>
           <p className="mt-2 text-sm text-[var(--chan-muted)]">{LEGAL_EFFECTIVE_DATE}</p>
         </header>
 

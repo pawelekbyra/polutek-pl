@@ -1,10 +1,5 @@
 import React from 'react';
 
-// TEMPORARY (test setup only) — see CLAUDE.md "TEMPORARY CHANGES REGISTRY" for the exact
-// revert steps. Set to `false` (or delete this flag and the conditional that reads it) to
-// restore the "W skrócie" summary block in the English Terms of Service.
-const TEMP_HIDE_TERMS_EN_SUMMARY = true;
-
 export const LEGAL_EFFECTIVE_DATE = 'Obowiązuje od 3 lipca 2026 r.';
 export const LEGAL_EFFECTIVE_DATE_EN = 'Effective as of 3 July 2026.';
 
@@ -121,23 +116,14 @@ export function LegalOwnerBlockEn({ leadIn }: { leadIn: string }) {
 export function RegulaminContent() {
   return (
     <>
-      <LegalSummary
-        items={[
-          'Oglądanie publicznych filmów jest darmowe i nie wymaga konta.',
-          'Jednorazowa wpłata w kwocie wskazanej w serwisie daje bezterminowy dostęp do Strefy Fenkjuu na czas funkcjonowania serwisu lub tej części serwisu. Bez subskrypcji.',
-          'Dostęp dostajesz od razu, dlatego — za Twoją wyraźną zgodą — po jego pełnym uruchomieniu nie przysługuje odstąpienie od umowy.',
-          <>Reklamacje: napisz na {OWNER.email}, odpowiadamy do 14 dni.</>,
-        ]}
-      />
-
       <div className="space-y-10">
         <LegalSection nr="1" title="Kto prowadzi serwis">
-          <LegalOwnerBlock leadIn="Sprzedawcą serwisu KUTASHI.COM jest" />
+          <LegalOwnerBlock leadIn="Sprzedawcą serwisu WWW.PAWELPERFECT.PL jest" />
         </LegalSection>
 
         <LegalSection nr="2" title="Co znajdziesz w serwisie i wymagania techniczne">
           <p>
-            KUTASHI.COM to monokanał wideo — jeden, spójny kanał z materiałami wideo. Publiczne filmy oglądasz za darmo i bez konta.
+            WWW.PAWELPERFECT.PL to platforma internetowa prezentująca materiały wideo. Publiczne filmy oglądasz za darmo i bez konta.
             Część funkcji (komentarze, materiały dla zalogowanych) wymaga bezpłatnego konta.
             Strefa Fenkjuu to sekcja z materiałami dodatkowymi, dostępna dla wspierających (§ 4).
           </p>
@@ -279,7 +265,7 @@ export function PolitykaContent() {
 
       <div className="space-y-10">
         <LegalSection nr="1" title="Administrator danych">
-          <LegalOwnerBlock leadIn="Administratorem serwisu KUTASHI.COM jest" />
+          <LegalOwnerBlock leadIn="Administratorem serwisu WWW.PAWELPERFECT.PL jest" />
           <p>W sprawach danych osobowych pisz na adres <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>.</p>
         </LegalSection>
 
@@ -384,25 +370,14 @@ export function PolitykaContent() {
 export function TermsContentEn() {
   return (
     <>
-      {!TEMP_HIDE_TERMS_EN_SUMMARY && (
-        <LegalSummary
-          items={[
-            'Watching public videos is free and does not require an account.',
-            'A one-time payment in the amount shown in the service grants lifetime access to the Thank You Zone for as long as the service (or that part of the service) operates. No subscription.',
-            'You get access right away, so — with your explicit consent — once access is fully activated you no longer have the right to withdraw from the contract.',
-            <>Complaints: email {OWNER.email}, we reply within 14 days.</>,
-          ]}
-        />
-      )}
-
       <div className="space-y-10">
         <LegalSection nr="1" title="Who runs the service">
-          <LegalOwnerBlockEn leadIn="The Seller operating KUTASHI.COM is" />
+          <LegalOwnerBlockEn leadIn="The Seller operating WWW.PAWELPERFECT.PL is" />
         </LegalSection>
 
         <LegalSection nr="2" title="What you'll find in the service and technical requirements">
           <p>
-            KUTASHI.COM is an online platform presenting video content. Public videos can be watched for free and without an
+            WWW.PAWELPERFECT.PL is an online platform presenting video content. Public videos can be watched for free and without an
             account. Some features (comments, content for signed-in users) require a free account. The Thank You Zone
             is a section with bonus content, available to supporters (§ 4).
           </p>
