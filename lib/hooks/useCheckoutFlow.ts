@@ -12,9 +12,9 @@ import { MIN_PAYMENT_BY_CURRENCY, SUPPORTED_CURRENCIES, type SupportedCurrency }
 import { useToast } from "@/app/hooks/useToast";
 
 /**
- * Shared Stripe.js loader for every checkout surface (DonationBox, SecretPledgeBox,
- * SecretPledgeBox2). `loadStripe()` is idempotent for a given publishable key, so a single
- * module-level promise reused across all callers is equivalent to each having its own.
+ * Shared Stripe.js loader for every checkout surface (currently just DonationBox).
+ * `loadStripe()` is idempotent for a given publishable key, so a single module-level promise
+ * reused across all callers is equivalent to each having its own.
  */
 export const checkoutStripePromise: Promise<Stripe | null> | null = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
@@ -72,13 +72,12 @@ export interface UseCheckoutFlowResult {
 }
 
 /**
- * Checkout plumbing shared by every tip/pledge surface (DonationBox, SecretPledgeBox,
- * SecretPledgeBox2): fetching per-currency minimums, the terms/modal state machine, the
- * scroll lock while the modal is open, the Stripe return-URL reconciliation loop, and the
- * /api/checkout/create-intent → CheckoutModal handoff. Presentation (copy, layout, amount
- * picker UI) and any surface-specific behavior (DonationBox's own `?support=1` deep link)
- * stay in the calling component — this hook only owns the parts that were byte-for-byte
- * identical across all three.
+ * Checkout plumbing for the tip surface (DonationBox): fetching per-currency minimums, the
+ * terms/modal state machine, the scroll lock while the modal is open, the Stripe return-URL
+ * reconciliation loop, and the /api/checkout/create-intent → CheckoutModal handoff.
+ * Presentation (copy, layout, amount picker UI) and surface-specific behavior (DonationBox's
+ * own `?support=1` deep link) stay in the calling component. This hook used to be shared with
+ * the now-removed /secretproject and /secretproject2 pledge boxes.
  */
 export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlowResult {
   const { isPl, logPrefix, title, getMinAmountTooLowMessage, attemptFinishedMessage } = options;

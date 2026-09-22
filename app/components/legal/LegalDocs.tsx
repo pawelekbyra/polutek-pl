@@ -204,7 +204,7 @@ export function RegulaminContent() {
 
 const DATA_ROWS = [
   { what: 'Konto i logowanie', data: 'e-mail, nazwa, avatar', why: 'prowadzenie konta i zapewnienie dostępu do funkcji serwisu' },
-  { what: 'Płatności', data: 'kwota, data, identyfikator płatności, e-mail, status dostępu', why: 'realizacja płatności, nadanie dostępu, potwierdzenia i obowiązki podatkowe' },
+  { what: 'Wsparcie (płatności)', data: 'kwota, data, identyfikator płatności, e-mail, status płatności', why: 'obsługa dobrowolnego wsparcia, potwierdzenia i obowiązki podatkowe' },
   { what: 'Komentarze', data: 'treść, nazwa, data', why: 'publiczna dyskusja pod filmami i moderacja' },
   { what: 'E-maile transakcyjne', data: 'adres e-mail', why: 'potwierdzenia wpłat, dostępu, reklamacji i istotnych informacji o usłudze' },
   { what: 'Powiadomienia marketingowe', data: 'adres e-mail', why: 'wysyłka newslettera lub informacji marketingowych, wyłącznie gdy udzielisz odrębnej zgody' },
@@ -421,7 +421,7 @@ export function TermsContentEn() {
 
 const DATA_ROWS_EN = [
   { what: 'Account and sign-in', data: 'email, name, avatar', why: 'managing the account and providing access to service features' },
-  { what: 'Payments', data: 'amount, date, payment identifier, email, access status', why: 'processing payments, granting access, confirmations and tax obligations' },
+  { what: 'Support (payments)', data: 'amount, date, payment identifier, email, payment status', why: 'processing voluntary support, confirmations and tax obligations' },
   { what: 'Comments', data: 'content, name, date', why: 'public discussion under videos and moderation' },
   { what: 'Transactional emails', data: 'email address', why: 'confirmations of payments, access, complaints and other important service information' },
   { what: 'Marketing notifications', data: 'email address', why: 'sending a newsletter or marketing information, only when you give separate consent' },
