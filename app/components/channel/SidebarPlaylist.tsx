@@ -92,18 +92,14 @@ export function SidebarPlaylist({
       return { text: isPl ? "Publiczne" : "Public", variant: "public" };
     }
 
-    if (video.tier === "LOGGED_IN") {
+    // 2026-09-22: PATRON tier no longer requires payment, only sign-in — same badge as
+    // LOGGED_IN (see CLAUDE.md, checkVideoAccess).
+    if (video.tier === "LOGGED_IN" || video.tier === "PATRON") {
       if (!hasAccess)
         return {
           text: "Login",
           variant: "locked",
         };
-      return { text: isPl ? "Odblok." : "Unlocked", variant: "unlocked" };
-    }
-
-    if (video.tier === "PATRON") {
-      if (!hasAccess)
-        return { text: isPl ? "Patron" : "Patron", variant: "locked" };
       return { text: isPl ? "Odblok." : "Unlocked", variant: "unlocked" };
     }
 
@@ -160,11 +156,8 @@ export function SidebarPlaylist({
     const isCurrent = video.id === selectedVideoId;
     const isPatronVideo = video.tier === "PATRON";
     const hasAccess = !video.isLocked;
-    const lockState = !hasAccess
-      ? video.tier === "PATRON"
-        ? "PATRON_REQUIRED"
-        : "LOGIN_REQUIRED"
-      : null;
+    // 2026-09-22: signing in is the only gate now, even for PATRON tier (see CLAUDE.md).
+    const lockState = !hasAccess ? "LOGIN_REQUIRED" : null;
     const warmVideoOnIntent = () => {
       void preloader?.warmVideo(video.id, {
         includeComments: true,

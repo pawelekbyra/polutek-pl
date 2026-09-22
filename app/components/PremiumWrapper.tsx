@@ -81,8 +81,9 @@ export default function PremiumWrapper({
   const effectiveTier = (initialTier || dbTier || "PUBLIC") as AccessTierDto;
   const isPublic = effectiveTier === "PUBLIC";
 
-  const deniedState =
-    effectiveTier === "PATRON" ? "PATRON_REQUIRED" : "LOGIN_REQUIRED";
+  // 2026-09-22: PATRON tier no longer gates on payment, only sign-in — same denied state as
+  // LOGGED_IN (see checkVideoAccess and CLAUDE.md).
+  const deniedState = "LOGIN_REQUIRED";
 
   const getPreloadedPlaybackPlan = preloader?.getPlaybackPlan;
   const warmPreloadedVideo = preloader?.warmVideo;
@@ -286,10 +287,7 @@ export default function PremiumWrapper({
   return (
     <VideoAccessContext.Provider value={contextValue}>
       <PlaybackPlanStateOverlay
-        state={
-          safePlaybackState ||
-          (effectiveTier === "PATRON" ? "PATRON_REQUIRED" : "LOGIN_REQUIRED")
-        }
+        state={safePlaybackState || "LOGIN_REQUIRED"}
         onRetry={refreshPlaybackPlan}
         variant={variant}
       />

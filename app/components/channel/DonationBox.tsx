@@ -15,27 +15,30 @@ import { useCheckoutFlow, checkoutStripePromise } from "@/lib/hooks/useCheckoutF
 
 interface DonationBoxProps {
   videoTitle?: string;
-  /** True when the signed-in viewer already holds an active Patron grant. */
+  /**
+   * @deprecated Unused since 2026-09-22 — support no longer gates access (see CLAUDE.md), so
+   * every signed-in viewer sees the same tip-jar variant regardless of Patron status. Kept in
+   * the prop type only so existing callers don't need to change; the component ignores it.
+   */
   viewerIsPatron?: boolean;
 }
 
-function getSuggestedAmount(currency: string) {
-  return currency === "PLN" ? 25 : 10;
-}
-
-export default function DonationBox({ videoTitle, viewerIsPatron = false }: DonationBoxProps) {
+export default function DonationBox({ videoTitle }: DonationBoxProps) {
   const { t, language } = useLanguage();
   const isPl = language === "pl";
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
+  // 2026-09-22: support is a voluntary, non-refundable donation that grants nothing (see
+  // CLAUDE.md) — DonationBox always renders the tip-jar variant (free amount, "Bramka
+  // Napiwkowa"), never the old pay-to-unlock variant, for every signed-in viewer.
+  const viewerIsPatron = true;
+
   const [selectedCurrency, setSelectedCurrency] = useState<string>(t.currency);
-  // Patrons see an empty field (just the cursor/placeholder) rather than a pre-filled
-  // suggested amount — they're free to tip any amount, so nothing should look "chosen for
-  // them". Non-patrons get the fixed gate price here regardless (overridden by the
-  // non-editable-amount effect below anyway).
-  const [amount, setAmount] = useState<number | "">(viewerIsPatron ? "" : getSuggestedAmount(t.currency));
+  // Free-form amount field: the viewer is never buying access, so nothing should look
+  // "chosen for them".
+  const [amount, setAmount] = useState<number | "">("");
   const [isRegulaminOpen, setIsRegulaminOpen] = useState(false);
   const [isPolitykaOpen, setIsPolitykaOpen] = useState(false);
 
@@ -84,9 +87,9 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
 
   const currencyKey = selectedCurrency.toUpperCase() as SupportedCurrency;
   const checkoutMinAmount = minimums[currencyKey] ?? minimums.PLN;
-  // Non-patrons pay a fixed gate price (the patron threshold), so a successful tip always grants
-  // access as the copy promises. Existing patrons already have access, so they may support with any
-  // amount down to the admin-configured free-amount box minimum (independent of the gate price).
+  // patronThreshold/the non-patron branch below are unused now that every viewer gets the
+  // free-amount box minimum (see viewerIsPatron above) — kept only so this file stays a small
+  // diff if the fixed-price gate ever needs to come back.
   const patronThreshold = patronThresholds[currencyKey] ?? checkoutMinAmount;
   const patronBoxMin = patronBoxMinimums[currencyKey] ?? checkoutMinAmount;
   const minAmount = viewerIsPatron ? patronBoxMin : patronThreshold;
@@ -103,8 +106,8 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
 
-  // Non-patrons pay the fixed, admin-set patron threshold — the amount is not user-editable,
-  // so a successful tip always grants access as the copy promises.
+  // Dead with viewerIsPatron always true (see above) — kept for the same reason as
+  // patronThreshold.
   useEffect(() => {
     if (!viewerIsPatron) setAmount(minAmount);
   }, [viewerIsPatron, minAmount]);
