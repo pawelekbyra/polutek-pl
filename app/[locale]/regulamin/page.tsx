@@ -9,7 +9,7 @@ import { getLocalizedHref } from '@/lib/i18n/routing';
 
 export const metadata = {
   title: 'Regulamin serwisu WWW.PAWELPERFECT.PL',
-  description: 'Regulamin serwisu WWW.PAWELPERFECT.PL: zasady korzystania, wsparcie twórcy, dostęp do Strefy Fenkju, reklamacje.',
+  description: 'Regulamin serwisu WWW.PAWELPERFECT.PL: zasady korzystania, dobrowolne wsparcie Twórcy, reklamacje.',
 };
 
 export default async function RegulaminPage(props: { params: Promise<{ locale: string }> }) {

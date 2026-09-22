@@ -9,7 +9,7 @@ import { getLocalizedHref } from '@/lib/i18n/routing';
 
 export const metadata = {
   title: 'Terms of Service — WWW.PAWELPERFECT.PL',
-  description: 'Terms of Service for WWW.PAWELPERFECT.PL: usage rules, supporting the creator, access to the Thank You Zone, complaints.',
+  description: 'Terms of Service for WWW.PAWELPERFECT.PL: usage rules, voluntary support for the Creator, complaints.',
 };
 
 export default async function TermsPage(props: { params: Promise<{ locale: string }> }) {
