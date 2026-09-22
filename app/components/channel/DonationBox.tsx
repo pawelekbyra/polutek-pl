@@ -155,25 +155,21 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
     : (isPl ? "Strefa Fenkjuu 👑" : "Thank You Zone 👑");
 
   const subtitle = isTipGate
-    ? (isPl ? "Nic tu nie kupujesz. Tu się tylko dziękuje." : "Nothing to buy here. Just a thank-you.")
+    ? ""
     : (isPl
         ? "Wspieraj tworzenie wartościowych treści"
         : "Support valuable independent content");
 
   const bodyCopy = isTipGate
     ? (isPl
-        ? "Masz komplet. Dożywotni dostęp, cała Strefa Fenkjuu i wszystko, co dopiero powstanie — już Twoje. Tutaj nie kupujesz absolutnie niczego. To jest bramka napiwkowa: wrzucasz tyle, ile uznasz, że było warte, klepiesz mnie po plecach i lecisz dalej. Bez subskrypcji, bez haczyków, w stu procentach z czystej sympatii. 🎉"
-        : "You have the full set. Lifetime access, the whole Thank You Zone, plus everything still to come — already yours. There is absolutely nothing to buy here. This is the tip gate: drop in whatever you reckon it was worth, give me a pat on the back and carry on. No subscription, no catch, one hundred percent good vibes. 🎉")
+        ? "Bez wsparcia widzów tego projektu by nie było. Dziękuję."
+        : "This project wouldn't exist without viewers' support. Thank you.")
     : (isPl
         ? "Jednorazowe wsparcie pomaga rozwijać kanał i odblokowuje dożywotni dostęp do Strefy Fenkjuu."
         : "A one-time tip helps grow the channel and unlocks lifetime Thank You Zone access.");
 
   const bullets: { text: string; emoji?: string }[] = isTipGate
-    ? [
-        { emoji: "👑", text: isPl ? "Zero nowych obietnic — masz już wszystko" : "Zero new promises — you already own it all" },
-        { emoji: "🎚️", text: isPl ? "Kwota dowolna: od symbolicznej po legendarną" : "Any amount: from symbolic to legendary" },
-        { emoji: "🚀", text: isPl ? "Wszystko leci w kolejne materiały (i w kawę)" : "It all goes into the next videos (and coffee)" },
-      ]
+    ? []
     : [
         { text: isPl ? "Twoje wsparcie pomaga w rozwoju kanału" : "Your support helps the channel grow" },
         { text: isPl ? "Dostęp do specjalnych materiałów" : "Access to special materials" },
@@ -223,7 +219,6 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
                 <h4 className="font-brand m-0 text-[21px] font-extrabold leading-tight tracking-[-0.035em] text-[var(--chan-ink)]">
                   {title}
                 </h4>
-                <p className="mt-1 font-sans text-[13px] font-medium tracking-[-0.015em] text-[var(--chan-body)]">{subtitle}</p>
               </div>
             </div>
             <p className="m-[0_0_14px] font-sans text-[13px] leading-[1.6] text-[var(--chan-body)]">{bodyCopy}</p>
@@ -243,21 +238,23 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
           </>
         )}
 
-        <ul className="m-[0_0_16px] flex flex-col gap-[9px] font-sans text-[13px]">
-          {bullets.map((bullet) => (
-            <li
-              key={bullet.text}
-              className="flex items-start gap-[9px] text-[var(--chan-ink)]"
-            >
-              {bullet.emoji ? (
-                <span aria-hidden="true" className="shrink-0 text-[15px] leading-[1.25]">{bullet.emoji}</span>
-              ) : (
-                <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full bg-[var(--chan-amber)] text-[9px] font-black text-[var(--chan-amber-ink)] shadow-[0_2px_5px_-1px_var(--cm-amber-48)]">✓</span>
-              )}
-              {bullet.text}
-            </li>
-          ))}
-        </ul>
+        {bullets.length > 0 && (
+          <ul className="m-[0_0_16px] flex flex-col gap-[9px] font-sans text-[13px]">
+            {bullets.map((bullet) => (
+              <li
+                key={bullet.text}
+                className="flex items-start gap-[9px] text-[var(--chan-ink)]"
+              >
+                {bullet.emoji ? (
+                  <span aria-hidden="true" className="shrink-0 text-[15px] leading-[1.25]">{bullet.emoji}</span>
+                ) : (
+                  <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full bg-[var(--chan-amber)] text-[9px] font-black text-[var(--chan-amber-ink)] shadow-[0_2px_5px_-1px_var(--cm-amber-48)]">✓</span>
+                )}
+                {bullet.text}
+              </li>
+            ))}
+          </ul>
+        )}
 
         {showTermsError && (
           <p id={termsErrorId} role="alert" className="mb-2 text-[11px] font-bold uppercase tracking-widest text-destructive">
