@@ -437,7 +437,7 @@
   /* Cyberpunk direction (2026-09-23, owner request: "cyberpunk od deski do
      deski") — a full dark-terminal palette, scoped to the public app shell
      only. Admin (.admin-visual-shell) is a sibling scope and never sees
-     these: it keeps :root's light values untouched. Every --chan-*/--cm-*
+     these: it keeps :root's light values untouched. Every --chan-* / --cm-*
      consumer in public components already reads these tokens rather than
      literal colors, so overriding the base tokens here is enough to flip
      the whole browsing experience — the same lever pass 2's blue->violet
