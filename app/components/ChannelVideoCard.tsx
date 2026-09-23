@@ -18,6 +18,8 @@ interface ChannelVideoCardProps {
   isLoggedIn: boolean;
   isPatron?: boolean;
   role?: string;
+  /** Position in the grid, used for a staggered mount-in animation. Optional so callers that don't care about ordering can omit it. */
+  index?: number;
 }
 
 function getViewsLabel(count: number, language: string) {
@@ -34,6 +36,7 @@ export default function ChannelVideoCard({
   isLoggedIn,
   isPatron: propIsPatron,
   role,
+  index = 0,
 }: ChannelVideoCardProps) {
   const { t, language } = useLanguage();
   const [mounted, setMounted] = useState(false);
@@ -79,7 +82,10 @@ export default function ChannelVideoCard({
   const lockState = !hasAccess ? "LOGIN_REQUIRED" : null;
 
   return (
-    <div className="channel-video-card group cursor-pointer flex flex-col">
+    <div
+      className="channel-video-card group cursor-pointer flex flex-col motion-safe:animate-[polutek-surface-enter_360ms_cubic-bezier(0.16,1,0.3,1)_both]"
+      style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
+    >
       <div className="block relative">
         <Link href={appendQueryString(getLocalizedHref(language, "home"), `v=${video.id}`)} className="absolute inset-0 z-0" />
         <div className="channel-video-card-media relative aspect-video rounded-[13px] bg-black mb-3 z-10 overflow-hidden">

@@ -336,6 +336,12 @@
     animation: chan-boot-flicker 900ms steps(1, end) both;
   }
 
+  @keyframes polutek-reaction-pop {
+    0% { transform: scale(1); }
+    45% { transform: scale(1.32); }
+    100% { transform: scale(1); }
+  }
+
   @keyframes polutek-skeleton-sweep {
     to { transform: translateX(110%); }
   }

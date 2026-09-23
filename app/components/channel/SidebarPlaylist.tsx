@@ -156,6 +156,7 @@ export function SidebarPlaylist({
     video: SidebarLayoutItem,
     isPublicSection = false,
     forceComingSoon = false,
+    index = 0,
   ) => {
     const displayTitle = getVideoDisplayTitle(video, language);
     const isCurrent = video.id === selectedVideoId;
@@ -189,7 +190,8 @@ export function SidebarPlaylist({
           onVideoMouseEnter(video.id);
           warmVideoOnIntent();
         }}
-        className="relative group/item lg:flex-1 lg:h-full"
+        className="relative group/item lg:flex-1 lg:h-full motion-safe:animate-[polutek-surface-enter_360ms_cubic-bezier(0.16,1,0.3,1)_both]"
+        style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
       >
         <Link
           href={feedVideoHref}
@@ -392,16 +394,21 @@ export function SidebarPlaylist({
           language === "pl" ? "Dostępne filmy" : "Available videos",
           <AlertCircle size={14} className="text-[var(--chan-amber-strong)]" />,
         )}
-        {fallbackItems.map((v) =>
-          renderVideoItem({
-            ...v,
-            isLocked:
-              v.tier === "PATRON"
-                ? !(isSignedIn && viewerIsPatron)
-                : v.tier === "LOGGED_IN"
-                  ? !isSignedIn
-                  : false,
-          }),
+        {fallbackItems.map((v, i) =>
+          renderVideoItem(
+            {
+              ...v,
+              isLocked:
+                v.tier === "PATRON"
+                  ? !(isSignedIn && viewerIsPatron)
+                  : v.tier === "LOGGED_IN"
+                    ? !isSignedIn
+                    : false,
+            },
+            false,
+            false,
+            i,
+          ),
         )}
         {showSupportBox && patronBox}
       </div>
@@ -417,13 +424,13 @@ export function SidebarPlaylist({
       {publicSection && (
         <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
           {renderSectionHeader(publicSection.title)}
-          {publicSection.items.map((v) => renderVideoItem(v, true))}
+          {publicSection.items.map((v, i) => renderVideoItem(v, true, false, i))}
         </div>
       )}
       {loggedInSection && (
         <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
           {renderSectionHeader(loggedInSection.title)}
-          {loggedInSection.items.map((v) => renderVideoItem(v))}
+          {loggedInSection.items.map((v, i) => renderVideoItem(v, false, false, i))}
         </div>
       )}
 
@@ -436,7 +443,7 @@ export function SidebarPlaylist({
               className="inline-flex h-1.5 w-1.5 rounded-full bg-[var(--chan-amber)] shadow-[0_0_0_3px_var(--cm-amber-20)]"
             />,
           )}
-          {patronSection.items.map((v) => renderVideoItem(v, false, true))}
+          {patronSection.items.map((v, i) => renderVideoItem(v, false, true, i))}
         </div>
       )}
 
