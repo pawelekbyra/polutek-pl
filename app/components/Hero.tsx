@@ -180,7 +180,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
   return (
     <section className="bg-transparent">
-      <div className="w-full lg:rounded-[26px] lg:border lg:border-[var(--cm-line-80)] lg:bg-[var(--cm-card-92-white)] lg:p-3 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_2px_6px_rgba(23,23,23,0.03),0_30px_60px_-26px_var(--cm-blue-28)]">
+      <div className="w-full lg:rounded-[26px] lg:border lg:border-[var(--cm-line-80)] lg:bg-[var(--cm-card-92-white)] lg:p-3 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_2px_6px_rgba(23,23,23,0.03),0_18px_36px_-22px_var(--cm-amber-28),0_36px_70px_-28px_var(--cm-blue-34)]">
         {/* FEATURED MEDIA — full-bleed edge-to-edge on phone/tablet (standard mobile video-platform layout), contained card on desktop */}
         <div className="relative -mx-4 mb-3 aspect-video overflow-hidden bg-black md:-mx-6 md:mb-4 lg:mx-0 lg:rounded-[22px]">
           <PremiumWrapper
@@ -194,7 +194,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* INFO SECTION */}
         <div className="space-y-3 pb-1 lg:px-2">
-          <h1 className="font-brand font-bold not-italic text-[22px] md:text-[30px] tracking-[-0.021em] text-[var(--chan-ink)] leading-[1.16] mb-2">
+          <h1 className="font-brand font-extrabold not-italic text-[23px] md:text-[32px] tracking-[-0.025em] text-[var(--chan-ink)] leading-[1.14] mb-2">
              {displayTitle}
           </h1>
 

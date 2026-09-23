@@ -206,8 +206,8 @@ export function SidebarPlaylist({
             "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-[background-color,box-shadow] duration-160 motion-reduce:transition-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[88px] lg:items-center lg:gap-3 lg:p-2",
             isCurrent
               ? isPatronVideo
-                ? "bg-[var(--chan-amber-soft)]"
-                : "bg-[var(--chan-blue)]/20"
+                ? "bg-[var(--chan-amber-soft)] shadow-[inset_0_0_0_1px_var(--cm-amber-38)]"
+                : "bg-[var(--chan-blue)]/20 shadow-[inset_0_0_0_1px_var(--cm-blue-32)]"
               : isPublicSection
                 ? "bg-gradient-to-br from-[var(--cm-blue-10-card)] to-[var(--cm-blue-18-card)] transition-[background-color,transform] duration-160 hover:brightness-[1.03]"
                 : "transition-[background-color,box-shadow] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_2px_8px_rgba(23,23,23,0.06)]",
@@ -224,7 +224,7 @@ export function SidebarPlaylist({
               )}
             />
           )}
-          <div className="w-[130px] h-[73px] shrink-0 rounded-[12px] bg-black relative overflow-hidden group/thumb lg:w-[135px] lg:h-[76px] xl:w-[145px] xl:h-[82px]">
+          <div className="w-[130px] h-[73px] shrink-0 rounded-[12px] bg-black relative overflow-hidden group/thumb shadow-[0_2px_5px_rgba(23,23,23,0.06),0_8px_18px_-8px_rgba(23,23,23,0.22)] ring-1 ring-inset ring-[var(--cm-white-30)] transition-shadow duration-200 group-hover:shadow-[0_4px_10px_rgba(23,23,23,0.08),0_14px_28px_-10px_var(--cm-blue-46)] lg:w-[135px] lg:h-[76px] xl:w-[145px] xl:h-[82px]">
               {video.thumbnailUrl ? (
                 <Image
                   src={video.thumbnailUrl}

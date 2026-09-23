@@ -108,8 +108,12 @@ const Navbar = () => {
 
   return (
     <div
-      className="polutek-watch-nav sticky top-0 z-[1000] flex w-full flex-col"
+      className="polutek-watch-nav relative sticky top-0 z-[1000] flex w-full flex-col"
     >
+      <div
+        aria-hidden="true"
+        className="chan-brand-bar pointer-events-none absolute inset-x-0 bottom-0 h-[2px] opacity-70"
+      />
       <div className="flex min-h-[54px] w-full items-center justify-between gap-3 overflow-visible px-2 py-2 md:gap-5 md:px-6 lg:px-8">
         {isMobileSearchOpen ? (
           <div className="flex-1 flex items-center gap-2 px-1 animate-in slide-in-from-top-4 duration-200">
@@ -200,7 +204,7 @@ const Navbar = () => {
               <div
                 role="radiogroup"
                 aria-label={language === "pl" ? "Wybierz język" : "Choose language"}
-                className="relative flex h-[38px] w-[78px] shrink-0 items-center rounded-full border border-[var(--cm-line-84)] bg-[var(--cm-card-82-white)] p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[0_4px_14px_rgba(124,58,237,0.08)]"
+                className="relative flex h-[38px] w-[78px] shrink-0 items-center rounded-full border border-[var(--cm-line-84)] bg-[linear-gradient(180deg,var(--cm-card-88-white),var(--cm-card-82-white))] p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.65),inset_0_-1px_0_rgba(23,23,23,0.03)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_4px_14px_rgba(124,58,237,0.1)]"
               >
                 <span
                   aria-hidden="true"
@@ -242,7 +246,7 @@ const Navbar = () => {
               ) : isLoaded ? (
                 <button
                   onClick={() => openAuthModal("sign-in")}
-                  className="flex h-[32px] w-[32px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-[var(--cm-ink-55)] bg-[var(--chan-ink)] px-0 font-sans text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_6px_16px_-6px_rgba(23,23,23,0.42)] transition-[transform,background-color,border-color,box-shadow] duration-200 hover:-translate-y-px hover:bg-[var(--cm-ink-88-black)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_11px_24px_-8px_rgba(23,23,23,0.48)] active:translate-y-0 active:scale-[0.97] sm:h-[38px] sm:w-auto sm:px-4"
+                  className="flex h-[32px] w-[32px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-[var(--cm-ink-55)] bg-[linear-gradient(160deg,var(--cm-ink-88-black),var(--chan-ink))] px-0 font-sans text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_6px_16px_-6px_rgba(23,23,23,0.42)] transition-[transform,background-color,border-color,box-shadow] duration-200 hover:-translate-y-px hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_4px_14px_-4px_var(--cm-blue-40),0_11px_24px_-8px_rgba(23,23,23,0.48)] active:translate-y-0 active:scale-[0.97] sm:h-[38px] sm:w-auto sm:px-4"
                   aria-label={t.signIn}
                   title={t.signIn}
                 >

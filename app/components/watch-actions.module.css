@@ -22,7 +22,17 @@
   box-shadow:
     0 0 0 3px var(--watch-control-bg),
     0 0 0 4px var(--watch-control-border),
-    0 4px 12px rgba(23, 23, 23, 0.08);
+    0 3px 8px rgba(23, 23, 23, 0.08),
+    0 8px 20px -8px var(--cm-blue-46);
+  transition: box-shadow 200ms ease;
+}
+
+.creatorStrip > a:hover {
+  box-shadow:
+    0 0 0 3px var(--watch-control-bg),
+    0 0 0 4px var(--cm-blue-38-line),
+    0 3px 8px rgba(23, 23, 23, 0.08),
+    0 10px 24px -8px var(--cm-blue-55);
 }
 
 .actionRail {
