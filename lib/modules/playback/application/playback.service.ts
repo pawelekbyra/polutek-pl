@@ -154,7 +154,7 @@ export class PlaybackService {
         return unavailablePlan({
             videoId,
             status: 'ERROR',
-            video,
+            video: { thumbnailUrl: video?.thumbnailUrl, title: video?.title },
             accessReason: 'FORBIDDEN',
             warnings: ['Internal error during access check'],
         });
@@ -175,7 +175,7 @@ export class PlaybackService {
         return unavailablePlan({
             videoId,
             status: toStatus(decision.reason),
-            video,
+            video: { thumbnailUrl: video?.thumbnailUrl, title: video?.title },
             accessReason: decision.reason as any,
             requiredTier: decision.requiredTier,
             warnings: [decision.reason || 'Access denied'],
