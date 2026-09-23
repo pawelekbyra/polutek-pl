@@ -47,10 +47,15 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
 
   useEffect(() => {
     if (templateSlug !== "new") {
+        let cancelled = false;
         setStatus("loading");
         fetch(`/api/admin/templates?slug=${templateSlug}`)
-            .then(res => res.json())
-            .then(data => {
+            .then((res) => {
+                if (!res.ok) throw new Error(`Failed to load template (status ${res.status})`);
+                return res.json();
+            })
+            .then((data) => {
+                if (cancelled) return;
                 setSlug(data.slug);
                 setName(data.name || "");
                 setDescription(data.description || "");
@@ -62,7 +67,15 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
                 setSubjectEn(data.subjectEn || "");
                 setHtmlEn(data.htmlEn || "");
                 setStatus("idle");
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setError("Nie udało się wczytać szablonu.");
+                setStatus("error");
             });
+        return () => {
+            cancelled = true;
+        };
     }
   }, [templateSlug]);
 

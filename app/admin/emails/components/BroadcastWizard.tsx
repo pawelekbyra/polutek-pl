@@ -52,8 +52,24 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
     const [selectedTemplate, setSelectedTemplate] = useState<string>("");
 
     useEffect(() => {
-        fetch("/api/admin/templates").then(res => res.json()).then(setTemplates);
-    }, []);
+        let cancelled = false;
+        fetch("/api/admin/templates")
+            .then((res) => {
+                if (!res.ok) throw new Error(`Failed to load templates (${res.status})`);
+                return res.json();
+            })
+            .then((data) => {
+                if (!cancelled) setTemplates(Array.isArray(data) ? data : []);
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    toast("Nie udało się wczytać szablonów wiadomości.", "error");
+                }
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [toast]);
 
     const selectedRecipientGroup = useMemo(
         () => RECIPIENT_GROUP_OPTIONS.find((group) => group.id === recipientGroup) ?? RECIPIENT_GROUP_OPTIONS[1],
