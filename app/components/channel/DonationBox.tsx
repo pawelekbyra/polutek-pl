@@ -180,7 +180,7 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
   return (
     <div
       id="donations"
-      className={`group relative my-[10px] mb-3 scroll-mt-20 overflow-hidden rounded-[20px] border p-[22px_24px_18px] ${
+      className={`group chan-scanlines relative my-[10px] mb-3 scroll-mt-20 rounded-[3px] border p-[22px_24px_18px] ${
         isTipGate
           ? "border-[var(--cm-amber-38)] bg-[linear-gradient(168deg,var(--chan-amber-soft),var(--cm-card-92-white)_62%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_1px_2px_rgba(23,23,23,0.03),0_14px_30px_-20px_var(--cm-blue-28),0_24px_50px_-26px_var(--cm-amber-58)]"
           : "border-[var(--cm-line-82)] bg-[var(--cm-card-92-white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(23,23,23,0.03),0_24px_50px_-26px_rgba(23,23,23,0.2)]"
@@ -279,7 +279,7 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
           onClick={onSupport}
           disabled={isLoading || isInitialLoading || amount === "" || amount < minAmount}
           aria-busy={isLoading}
-          className="font-sans flex h-[46px] w-full cursor-pointer items-center justify-center gap-2 rounded-[13px] bg-[linear-gradient(135deg,var(--chan-amber-bright),var(--chan-amber))] text-[16px] font-extrabold tracking-[-0.02em] text-[var(--chan-amber-ink)] shadow-[0_1px_0_var(--cm-amber-66-black),0_10px_22px_-10px_var(--cm-amber-62)] transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:brightness-[1.04] hover:shadow-[0_2px_0_var(--cm-amber-66-black),0_14px_28px_-10px_var(--cm-amber-68)] active:translate-y-0 active:scale-[0.98] disabled:cursor-wait disabled:opacity-60 motion-reduce:transition-none"
+          className="font-sans flex h-[46px] w-full cursor-pointer items-center justify-center gap-2 rounded-[3px] bg-[linear-gradient(135deg,var(--chan-amber-bright),var(--chan-amber))] text-[16px] font-extrabold tracking-[-0.02em] text-[var(--chan-amber-ink)] shadow-[0_1px_0_var(--cm-amber-66-black),0_10px_22px_-10px_var(--cm-amber-62)] transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:brightness-[1.04] hover:shadow-[0_2px_0_var(--cm-amber-66-black),0_14px_28px_-10px_var(--cm-amber-68)] active:translate-y-0 active:scale-[0.98] disabled:cursor-wait disabled:opacity-60 motion-reduce:transition-none"
         >
           {isLoading ? (
             <span className="inline-flex items-center gap-2">

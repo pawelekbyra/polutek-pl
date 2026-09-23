@@ -180,9 +180,9 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
   return (
     <section className="bg-transparent">
-      <div className="w-full lg:rounded-[26px] lg:border lg:border-[var(--cm-line-80)] lg:bg-[var(--cm-card-92-white)] lg:p-3 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_2px_6px_rgba(23,23,23,0.03),0_18px_36px_-22px_var(--cm-amber-28),0_36px_70px_-28px_var(--cm-blue-34)]">
+      <div className="w-full lg:rounded-[3px] lg:border lg:border-[var(--cm-line-80)] lg:bg-[var(--cm-card-92-white)] lg:p-3 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_2px_6px_rgba(23,23,23,0.03),0_18px_36px_-22px_var(--cm-amber-28),0_36px_70px_-28px_var(--cm-blue-34)]">
         {/* FEATURED MEDIA — full-bleed edge-to-edge on phone/tablet (standard mobile video-platform layout), contained card on desktop */}
-        <div className="relative -mx-4 mb-3 aspect-video overflow-hidden bg-black md:-mx-6 md:mb-4 lg:mx-0 lg:rounded-[22px]">
+        <div className="relative -mx-4 mb-3 aspect-video overflow-hidden bg-black md:-mx-6 md:mb-4 lg:mx-0 lg:rounded-[3px]">
           <PremiumWrapper
             videoId={video.id}
             requiredTier={video.tier}
@@ -194,7 +194,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* INFO SECTION */}
         <div className="space-y-3 pb-1 lg:px-2">
-          <h1 className="font-brand font-extrabold not-italic text-[23px] md:text-[32px] tracking-[-0.025em] text-[var(--chan-ink)] leading-[1.14] mb-2">
+          <h1 className="chan-boot-flicker font-brand font-extrabold not-italic text-[23px] md:text-[32px] tracking-[-0.025em] text-[var(--chan-ink)] leading-[1.14] mb-2 [text-shadow:0_0_18px_var(--cm-blue-32)]">
              {displayTitle}
           </h1>
 
@@ -330,11 +330,11 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         >
            <div>
              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mb-1.5">
-                <span className="font-sans text-[12px] font-bold not-italic tabular-nums text-[var(--chan-ink)]">
+                <span className="font-mono text-[12px] font-bold not-italic tabular-nums text-[var(--chan-blue)]">
                    {mounted ? localViewsCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : localViewsCount} {t.views}
                 </span>
                 <span aria-hidden="true" className="h-[3px] w-[3px] rounded-full bg-[var(--chan-line-soft)]" />
-                <span className="font-sans text-[12px] font-semibold not-italic text-[var(--chan-muted)]">
+                <span className="font-mono text-[12px] font-semibold not-italic text-[var(--chan-muted)]">
                    {video.publishedAt ? new Date(video.publishedAt).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : t.noDate}
                 </span>
              </div>

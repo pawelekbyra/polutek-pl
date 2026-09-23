@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
+import CyberpunkThemeScope from "@/app/components/CyberpunkThemeScope";
 import { VideoSearchService } from "@/lib/modules/video/application/video-search.service";
 import { getLocalizedHref, isLocale, type Locale } from "@/lib/i18n/routing";
 import { notFound } from "next/navigation";
@@ -26,6 +27,7 @@ export default async function SearchPage(props: SearchPageProps) {
 
   return (
     <div className="public-visual-shell min-h-screen bg-[var(--chan-nav)] font-sans text-[var(--chan-ink)]">
+      <CyberpunkThemeScope />
       <Navbar />
       <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-8 border-b border-[var(--chan-line)] pb-6">
@@ -59,7 +61,7 @@ export default async function SearchPage(props: SearchPageProps) {
                 href={getLocalizedHref(locale, "watch", { slug: video.slug || video.id })}
                 className="group flex gap-4 rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-3 transition hover:bg-[var(--chan-surface)]"
               >
-                <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded-xl bg-[var(--chan-ink)] sm:h-32 sm:w-56">
+                <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded-xl bg-[var(--chan-surface)] sm:h-32 sm:w-56">
                   {video.thumbnailUrl ? (
                     <Image
                       src={video.thumbnailUrl}
@@ -100,7 +102,7 @@ function EmptySearchState({ message, locale }: { message: string; locale: Locale
       <p className="mb-6 text-sm text-[var(--chan-muted)]">{message}</p>
       <Link
         href={getLocalizedHref(locale, "home")}
-        className="inline-flex rounded-full bg-[var(--chan-ink)] px-6 py-3 font-brand text-xs font-bold uppercase tracking-widest text-white transition hover:opacity-90"
+        className="inline-flex rounded-full border border-[var(--chan-blue)] bg-[linear-gradient(160deg,var(--cm-blue-80-black),var(--chan-blue))] px-6 py-3 font-brand text-xs font-bold uppercase tracking-widest text-[hsl(var(--primary-foreground))] transition hover:opacity-90"
       >
         {locale === "pl" ? "Wróć na kanał" : "Back to channel"}
       </Link>

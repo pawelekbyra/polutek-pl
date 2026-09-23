@@ -1,6 +1,7 @@
 import React from 'react';
 import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/Footer';
+import CyberpunkThemeScope from '@/app/components/CyberpunkThemeScope';
 import { auth } from '@clerk/nextjs/server';
 import { Metadata } from 'next';
 import { PublicVideoDTO } from '@/app/types/video';
@@ -161,6 +162,7 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
 
   return (
     <div className="channel-page-shell min-h-screen bg-[var(--chan-nav)] text-[var(--chan-ink)] font-sans">
+      <CyberpunkThemeScope />
       <Navbar />
 
       <div className="max-w-[1284px] mx-auto px-0 md:px-4 lg:px-6">

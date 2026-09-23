@@ -63,7 +63,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
                   onClick={() => setSection(s.id)}
                   className={
                     "rounded-full px-3 py-1 font-sans text-[12px] font-bold uppercase tracking-wide transition-colors " +
-                    (section === s.id ? "bg-[var(--chan-ink)] text-white" : "text-[var(--chan-muted)] hover:bg-[var(--chan-surface)]")
+                    (section === s.id ? "chan-lang-pill-active text-white" : "text-[var(--chan-muted)] hover:bg-[var(--chan-surface)]")
                   }
                 >
                   {s.label}

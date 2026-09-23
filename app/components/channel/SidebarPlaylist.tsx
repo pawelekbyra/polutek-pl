@@ -203,7 +203,7 @@ export function SidebarPlaylist({
           }}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
-            "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-[background-color,box-shadow] duration-160 motion-reduce:transition-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[88px] lg:items-center lg:gap-3 lg:p-2",
+            "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[3px] p-2 transition-[background-color,box-shadow] duration-160 motion-reduce:transition-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[88px] lg:items-center lg:gap-3 lg:p-2",
             isCurrent
               ? isPatronVideo
                 ? "bg-[var(--chan-amber-soft)] shadow-[inset_0_0_0_1px_var(--cm-amber-38)]"
@@ -224,7 +224,7 @@ export function SidebarPlaylist({
               )}
             />
           )}
-          <div className="w-[130px] h-[73px] shrink-0 rounded-[12px] bg-black relative overflow-hidden group/thumb shadow-[0_2px_5px_rgba(23,23,23,0.06),0_8px_18px_-8px_rgba(23,23,23,0.22)] ring-1 ring-inset ring-[var(--cm-white-30)] transition-shadow duration-200 group-hover:shadow-[0_4px_10px_rgba(23,23,23,0.08),0_14px_28px_-10px_var(--cm-blue-46)] lg:w-[135px] lg:h-[76px] xl:w-[145px] xl:h-[82px]">
+          <div className="w-[130px] h-[73px] shrink-0 rounded-[3px] bg-black relative overflow-hidden group/thumb shadow-[0_2px_5px_rgba(23,23,23,0.06),0_8px_18px_-8px_rgba(23,23,23,0.22)] ring-1 ring-inset ring-[var(--cm-white-30)] transition-shadow duration-200 group-hover:shadow-[0_0_0_1px_var(--chan-blue),0_0_18px_-2px_var(--chan-blue)] lg:w-[135px] lg:h-[76px] xl:w-[145px] xl:h-[82px]">
               {video.thumbnailUrl ? (
                 <Image
                   src={video.thumbnailUrl}
@@ -262,11 +262,11 @@ export function SidebarPlaylist({
                       className={cn(
                         "absolute right-[6px] top-[6px] z-30 max-w-[86px] truncate rounded-full px-[7px] py-[3px] text-[8px] font-black uppercase leading-none tracking-[0.1em] pointer-events-none",
                         badge.variant === "public" &&
-                          "bg-white/92 text-[var(--chan-ink)]",
+                          "bg-white/92 text-black",
                         badge.variant === "unlocked" &&
                           "bg-[var(--chan-blue-soft)] text-[var(--chan-blue)]",
                         badge.variant === "locked" &&
-                          "bg-[var(--chan-ink)] text-white",
+                          "bg-black/80 text-white",
                       )}
                     >
                       {badge.text}
@@ -278,7 +278,7 @@ export function SidebarPlaylist({
             <h4 className="font-sans text-[13px] font-bold text-[var(--chan-ink)] line-clamp-2 leading-[1.2] group-hover:opacity-80 transition-opacity lg:text-[12px]">
               {displayTitle}
             </h4>
-            <div className="text-[12px] text-[var(--chan-muted)] flex flex-col mt-0">
+            <div className="font-mono text-[12px] text-[var(--chan-muted)] flex flex-col mt-0">
               <div className="transition-colors w-fit relative z-20 leading-[1.4]">
                 {video.creator?.name || "PawelPerfect"}
               </div>

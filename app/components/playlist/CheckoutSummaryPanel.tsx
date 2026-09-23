@@ -134,7 +134,7 @@ export default function CheckoutSummaryPanel({
               {bullet.soft ? (
                 <span className="mt-[3px] shrink-0 text-[10px] text-primary">◆</span>
               ) : (
-                <span className="mt-[2px] flex h-[16px] w-[16px] shrink-0 items-center justify-center rounded-full bg-[var(--chan-ink)] text-[9px] font-bold text-white">✓</span>
+                <span className="mt-[2px] flex h-[16px] w-[16px] shrink-0 items-center justify-center rounded-full bg-black/80 text-[9px] font-bold text-white">✓</span>
               )}
               {bullet.text}
             </li>

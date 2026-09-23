@@ -12,6 +12,7 @@ import { getLocalizedHref, type Locale } from '@/lib/i18n/routing';
 import { redirect } from 'next/navigation';
 import ChannelHome from '@/app/components/ChannelHome';
 import Navbar from '@/app/components/Navbar';
+import CyberpunkThemeScope from '@/app/components/CyberpunkThemeScope';
 
 interface HomeExperienceProps {
   locale: Locale;
@@ -124,6 +125,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
     const isError = content.status === 'error';
     return (
       <div className="public-visual-shell min-h-screen bg-background text-foreground">
+        <CyberpunkThemeScope />
         <Navbar />
         <main className="max-w-3xl mx-auto px-6 py-20 text-center">
           <h1 className="text-2xl font-bold mb-4">
@@ -177,6 +179,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
 
   return (
     <div className="public-visual-shell min-h-screen bg-background text-foreground">
+      <CyberpunkThemeScope />
       <Navbar />
       <main className="relative">
         <ChannelHome

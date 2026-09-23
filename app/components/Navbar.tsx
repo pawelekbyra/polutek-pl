@@ -108,7 +108,7 @@ const Navbar = () => {
 
   return (
     <div
-      className="polutek-watch-nav relative sticky top-0 z-[1000] flex w-full flex-col"
+      className="polutek-watch-nav chan-scanlines sticky top-0 z-[1000] flex w-full flex-col shadow-[0_1px_24px_-4px_var(--cm-blue-32)]"
     >
       <div
         aria-hidden="true"
@@ -124,7 +124,7 @@ const Navbar = () => {
               <X className="h-5 w-5 shrink-0" strokeWidth={1.8} />
             </button>
             <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
-              <div className="relative flex h-[38px] min-w-0 flex-1 items-center rounded-full border border-[var(--cm-line-82)] bg-[var(--cm-card-74-white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[var(--cm-blue-55)] focus-within:bg-[var(--cm-card-45-white)] focus-within:shadow-[0_0_0_3px_var(--cm-blue-14)]">
+              <div className="relative flex h-[38px] min-w-0 flex-1 items-center rounded-[4px] border border-[var(--cm-line-82)] bg-[var(--cm-card-74-white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[var(--cm-blue-55)] focus-within:bg-[var(--cm-card-45-white)] focus-within:shadow-[0_0_0_3px_var(--cm-blue-14)]">
                 <input
                   type="text"
                   autoFocus
@@ -162,7 +162,7 @@ const Navbar = () => {
             {/* Desktop search */}
             <div className="flex-1 max-w-[548px] hidden md:flex mx-2 min-w-0">
               <form onSubmit={handleSearch} className="flex w-full">
-                <div className="relative flex h-[38px] min-w-0 flex-1 items-center rounded-full border border-[var(--cm-line-82)] bg-[var(--cm-card-74-white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[var(--cm-blue-55)] focus-within:bg-[var(--cm-card-45-white)] focus-within:shadow-[0_0_0_3px_var(--cm-blue-14)]">
+                <div className="relative flex h-[38px] min-w-0 flex-1 items-center rounded-[4px] border border-[var(--cm-line-82)] bg-[var(--cm-card-74-white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[var(--cm-blue-55)] focus-within:bg-[var(--cm-card-45-white)] focus-within:shadow-[0_0_0_3px_var(--cm-blue-14)]">
                   <input
                     type="text"
                     placeholder={searchLabel}
@@ -194,7 +194,7 @@ const Navbar = () => {
               <div className="flex items-center sm:hidden -mr-[5px]">
                 <button
                   onClick={() => setIsMobileSearchOpen(true)}
-                  className="flex h-[38px] w-[38px] items-center justify-center rounded-full text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95"
+                  className="flex h-[38px] w-[38px] items-center justify-center rounded-[4px] text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95"
                 >
                   <Search className="h-5 w-5 shrink-0" strokeWidth={1.8} />
                 </button>
@@ -204,12 +204,12 @@ const Navbar = () => {
               <div
                 role="radiogroup"
                 aria-label={language === "pl" ? "Wybierz język" : "Choose language"}
-                className="relative flex h-[38px] w-[78px] shrink-0 items-center rounded-full border border-[var(--cm-line-84)] bg-[linear-gradient(180deg,var(--cm-card-88-white),var(--cm-card-82-white))] p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.65),inset_0_-1px_0_rgba(23,23,23,0.03)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_4px_14px_rgba(124,58,237,0.1)]"
+                className="relative flex h-[38px] w-[78px] shrink-0 items-center rounded-[4px] border border-[var(--cm-line-84)] bg-[linear-gradient(180deg,var(--cm-card-88-white),var(--cm-card-82-white))] p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.65),inset_0_-1px_0_rgba(23,23,23,0.03)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_4px_14px_rgba(124,58,237,0.1)]"
               >
                 <span
                   aria-hidden="true"
                   className={
-                    "chan-lang-pill-active absolute bottom-[3px] left-[3px] top-[3px] w-9 rounded-full transition-transform duration-200 ease-out " +
+                    "chan-lang-pill-active absolute bottom-[3px] left-[3px] top-[3px] w-9 rounded-[2px] transition-transform duration-200 ease-out " +
                     (language === "en" ? "translate-x-9" : "translate-x-0")
                   }
                 />
@@ -223,7 +223,7 @@ const Navbar = () => {
                     title={locale === "pl" ? "Polski" : "English"}
                     onClick={() => switchLanguage(locale)}
                     className={
-                      "relative z-10 flex h-full flex-1 items-center justify-center rounded-full text-[10px] font-extrabold uppercase tracking-[0.08em] transition-colors " +
+                      "relative z-10 flex h-full flex-1 items-center justify-center rounded-[2px] text-[10px] font-extrabold uppercase tracking-[0.08em] transition-colors " +
                       (language === locale ? "text-white" : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]")
                     }
                   >
@@ -246,12 +246,12 @@ const Navbar = () => {
               ) : isLoaded ? (
                 <button
                   onClick={() => openAuthModal("sign-in")}
-                  className="flex h-[32px] w-[32px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-[var(--cm-ink-55)] bg-[linear-gradient(160deg,var(--cm-ink-88-black),var(--chan-ink))] px-0 font-sans text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_6px_16px_-6px_rgba(23,23,23,0.42)] transition-[transform,background-color,border-color,box-shadow] duration-200 hover:-translate-y-px hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.14),0_4px_14px_-4px_var(--cm-blue-40),0_11px_24px_-8px_rgba(23,23,23,0.48)] active:translate-y-0 active:scale-[0.97] sm:h-[38px] sm:w-auto sm:px-4"
+                  className="flex h-[32px] w-[32px] shrink-0 items-center justify-center gap-1.5 rounded-[4px] border border-[var(--chan-blue)] bg-[linear-gradient(160deg,var(--cm-blue-80-black),var(--chan-blue))] px-0 font-sans text-[hsl(var(--primary-foreground))] shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_0_18px_-4px_var(--chan-blue)] transition-[transform,background-color,border-color,box-shadow] duration-200 hover:-translate-y-px hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_0_26px_-2px_var(--chan-blue)] active:translate-y-0 active:scale-[0.97] sm:h-[38px] sm:w-auto sm:px-4"
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
-                  <LogIn className="h-5 w-5 shrink-0 text-white" strokeWidth={1.8} aria-hidden="true" />
-                  <span className="hidden sm:inline leading-none text-[13px] font-semibold text-white">{t.signIn}</span>
+                  <LogIn className="h-5 w-5 shrink-0 text-[hsl(var(--primary-foreground))]" strokeWidth={1.8} aria-hidden="true" />
+                  <span className="hidden sm:inline leading-none text-[13px] font-semibold text-[hsl(var(--primary-foreground))]">{t.signIn}</span>
                 </button>
               ) : (
                 <div className="flex gap-1.5">

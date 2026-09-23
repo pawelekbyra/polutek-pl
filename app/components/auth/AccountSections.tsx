@@ -55,7 +55,7 @@ function LanguageField({ isPl }: { isPl: boolean }) {
             className={
               "rounded-full px-3 py-1 text-[12px] font-bold uppercase tracking-wide transition-colors " +
               (language === locale
-                ? "bg-[var(--chan-ink)] text-white"
+                ? "chan-lang-pill-active text-white"
                 : "text-[var(--chan-muted)] hover:bg-[var(--chan-surface)]")
             }
           >

@@ -182,7 +182,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       )}
                       <Button
                         onClick={onBackToSite}
-                        className="h-16 w-full rounded-[16px] bg-[var(--chan-ink)] font-brand text-xs font-bold uppercase tracking-[0.2em] text-white transition-all duration-300 hover:opacity-90"
+                        className="h-16 w-full rounded-[16px] border border-[var(--chan-blue)] bg-[linear-gradient(160deg,var(--cm-blue-80-black),var(--chan-blue))] font-brand text-xs font-bold uppercase tracking-[0.2em] text-[hsl(var(--primary-foreground))] transition-all duration-300 hover:opacity-90"
                       >
                         {language === 'pl' ? 'Wróć do serwisu' : 'Back to site'}
                       </Button>
@@ -218,7 +218,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                           appearance: {
                             theme: 'flat',
                             variables: {
-                              colorPrimary: '#7c3aed',
+                              colorPrimary: '#00e5ff',
                               colorBackground: '#ffffff',
                               colorText: '#1a1a1a',
                               borderRadius: '12px',

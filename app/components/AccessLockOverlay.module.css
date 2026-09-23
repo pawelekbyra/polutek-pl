@@ -11,9 +11,10 @@
 }
 
 .scene.login {
-  /* Main login-overlay background, per owner request — kept the same deep,
-     moody panel tone, hue shifted to match the site's new violet accent. */
-  background: #4c1d95;
+  /* Main login-overlay background — deep, moody panel tone derived from
+     --chan-blue so it tracks the active accent (violet on admin, electric
+     cyan in the cyberpunk public theme) instead of a hardcoded hex. */
+  background: var(--cm-blue-88-black);
 }
 
 .scene.patron {

@@ -42,13 +42,13 @@ export function PlayerLoadingIndicator({ compact = false }: { compact?: boolean 
         .polutek-player-loader::before { content:""; position:absolute; inset:12px; border:1px solid var(--cm-line-76); border-radius:18px; box-shadow:inset 0 1px 0 rgba(255,255,255,.5); }
         .polutek-player-loader--compact { min-height:0; gap:8px; }
         .polutek-player-loader--compact::before { inset:5px; border-radius:10px; }
-        .polutek-player-loader-mark { position:relative; display:grid; width:54px; height:54px; place-items:center; border:1px solid var(--cm-blue-22); border-radius:16px; background:var(--cm-card-90-white); color:var(--chan-blue,#7c3aed); box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 16px 32px -12px var(--cm-blue-45); }
+        .polutek-player-loader-mark { position:relative; display:grid; width:54px; height:54px; place-items:center; border:1px solid var(--cm-blue-22); border-radius:16px; background:var(--cm-card-90-white); color:var(--chan-blue,#00e5ff); box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 16px 32px -12px var(--cm-blue-45); }
         .polutek-player-loader-mark svg { width:24px; height:24px; animation:polutek-loader-spin .9s linear infinite; }
         .polutek-player-loader--compact .polutek-player-loader-mark { width:34px; height:34px; border-radius:11px; }
         .polutek-player-loader--compact .polutek-player-loader-mark svg { width:17px; height:17px; }
         .polutek-player-loader-track { position:relative; width:min(160px,42%); height:4px; overflow:hidden; border-radius:999px; background:var(--cm-blue-15); }
         .polutek-player-loader--compact .polutek-player-loader-track { width:60px; height:3px; }
-        .polutek-player-loader-progress { position:absolute; inset:0 auto 0 -38%; width:38%; border-radius:999px; background:var(--chan-blue,#7c3aed); animation:polutek-loader-sweep 1.05s ease-in-out infinite; }
+        .polutek-player-loader-progress { position:absolute; inset:0 auto 0 -38%; width:38%; border-radius:999px; background:var(--chan-blue,#00e5ff); animation:polutek-loader-sweep 1.05s ease-in-out infinite; }
         .polutek-player-loader-label { position:relative; margin:0; color:var(--chan-muted,#4b5563); font-size:10.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
         @keyframes polutek-loader-sweep { 0% { transform:translateX(0); } 100% { transform:translateX(320%); } }
         @keyframes polutek-loader-spin { to { transform:rotate(360deg); } }
