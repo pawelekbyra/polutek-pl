@@ -33,12 +33,18 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
     const [video, setVideo] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<VideoDetailsTab>(() =>
-        typeof window === "undefined"
-            ? "summary"
-            : resolveInitialVideoDetailsTab(window.location.search, window.location.hash)
-    );
+    // Always start on "summary" so the client's first render matches the
+    // server-rendered HTML — reading window.location in the useState
+    // initializer would make the client's first pass diverge from SSR
+    // (which always sees typeof window === "undefined") and trigger a
+    // hydration mismatch. Resolve the real tab from the URL after mount
+    // instead, once hydration has already settled.
+    const [activeTab, setActiveTab] = useState<VideoDetailsTab>("summary");
     const toast = useToast();
+
+    useEffect(() => {
+        setActiveTab(resolveInitialVideoDetailsTab(window.location.search, window.location.hash));
+    }, []);
 
     const fetchVideo = useCallback(async () => {
       try {
@@ -73,6 +79,14 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
             const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             if (res.ok) { toast(`Akcja ${action} wykonana pomyślnie.`, 'success'); fetchVideo(); }
             else { const err = await res.json(); toast(`Błąd: ${readAdminApiError(err, 'Nieznany błąd')}`, 'error'); }
+        } catch (err) { toast("Błąd połączenia.", 'error'); }
+    };
+
+    const patchVideo = async (body: Record<string, unknown>) => {
+        try {
+            const res = await fetch(`/api/admin/videos/${params.id}/actions`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            if (res.ok) { fetchVideo(); }
+            else { const err = await res.json().catch(() => null); toast(`Błąd: ${readAdminApiError(err, 'Nie udało się zapisać zmiany.')}`, 'error'); }
         } catch (err) { toast("Błąd połączenia.", 'error'); }
     };
 
@@ -142,9 +156,9 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                                 <div className="flex flex-col gap-2 py-2 border-b">
                                     <div className="flex justify-between items-center"><span className="text-xs">Sidebar</span><span className="text-xs font-medium">{video.showInSidebar ? `Widoczny (${video.sidebarOrder})` : 'Ukryty'}</span></div>
                                     <div className="flex gap-2">
-                                        <Button variant="outline" size="sm" className="h-7 text-[10px] flex-1" onClick={() => { const current = video.showInSidebar; fetch(`/api/admin/videos/${params.id}/actions`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ showInSidebar: !current }) }).then(res => { if (res.ok) fetchVideo(); }); }}>{video.showInSidebar ? 'Ukryj' : 'Pokaż'}</Button>
+                                        <Button variant="outline" size="sm" className="h-7 text-[10px] flex-1" onClick={() => { const current = video.showInSidebar; void patchVideo({ showInSidebar: !current }); }}>{video.showInSidebar ? 'Ukryj' : 'Pokaż'}</Button>
                                         <div className="flex items-center gap-1 flex-1">
-                                            <input type="number" defaultValue={video.sidebarOrder} className="w-12 h-7 text-[10px] border rounded px-1" onBlur={(e) => { const val = parseInt(e.target.value); if (!isNaN(val)) { fetch(`/api/admin/videos/${params.id}/actions`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sidebarOrder: val }) }).then(res => { if (res.ok) fetchVideo(); }); } }} />
+                                            <input type="number" defaultValue={video.sidebarOrder} className="w-12 h-7 text-[10px] border rounded px-1" onBlur={(e) => { const val = parseInt(e.target.value); if (!isNaN(val)) { void patchVideo({ sidebarOrder: val }); } }} />
                                             <span className="text-[9px] text-muted-foreground">Poz.</span>
                                         </div>
                                     </div>

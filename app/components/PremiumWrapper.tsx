@@ -46,7 +46,6 @@ interface PremiumWrapperProps {
   children: React.ReactNode;
   videoId: string;
   requiredTier?: AccessTierDto;
-  isMainFeatured?: boolean;
   variant?: "default" | "thumbnail" | "thumbnailCompact";
   onAccessLoad?: (hasAccess: boolean) => void;
 }
@@ -170,6 +169,7 @@ export default function PremiumWrapper({
       setPlaybackPlan(null);
       setPlaybackState("ERROR");
       setFetchError("SOURCE_ERROR");
+      onAccessLoad?.(false);
     } finally {
       if (isCurrentRequest()) {
         setResolvedViewerKey(requestViewerKey);
@@ -266,7 +266,7 @@ export default function PremiumWrapper({
       );
     }
 
-    if (!isPlayablePlaybackPlan(playbackPlan)) {
+    if (!isPlayablePlaybackPlan(playbackPlan, videoId)) {
       return (
         <PlaybackPlanStateOverlay
           state={safePlaybackState || playbackPlan.status || "ERROR"}

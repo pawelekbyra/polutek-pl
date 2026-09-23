@@ -42,7 +42,7 @@ describe('PremiumWrapper playback plan state messaging', () => {
     for (const state of requiredStates) {
       expect(stateSource).toContain(`  "${state}",`);
     }
-    expect(source).toContain('if (!isPlayablePlaybackPlan(playbackPlan))');
+    expect(source).toContain('if (!isPlayablePlaybackPlan(playbackPlan, videoId))');
     expect(source).toContain('<PlaybackPlanStateOverlay');
     expect(source).toContain('{children}');
     expect(stateSource).toContain('plan.status === "READY"');
