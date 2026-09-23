@@ -2,6 +2,13 @@
 
 Status: ACTIVE — POST-R AI DELIVERY CONTROL PLANE.
 
+> **Runtime note (2026-09-22):** the "patron access oparte o Payment alone"
+> and similar forbidden-shortcut lines below still hold as engineering rules
+> (payment status alone must never be trusted directly), but the broader
+> premise — that `PatronGrant` decides access — no longer matches runtime.
+> As of 2026-09-22 `PatronGrant` doesn't gate access at all; sign-in alone
+> does. See `CLAUDE.md` §4.1/§4.4/§4.10.
+
 ## Purpose
 
 Ten dokument jest twardą listą zakazów produktowych i architektonicznych dla faz X1-X7. Ma chronić Polutek.pl przed scope creep, access leaks, overengineeringiem i myleniem target architecture z aktualnym runtime.

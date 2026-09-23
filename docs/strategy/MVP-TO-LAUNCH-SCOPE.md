@@ -2,6 +2,15 @@
 
 Status: ACTIVE CURRENT STATE — living launch scope, not historical control-plane backlog.
 
+> **Runtime note (2026-09-22):** despite the "ACTIVE CURRENT STATE" status
+> line, "dożywotni patron access przez kwalifikujący jednorazowy tip Stripe"
+> and "`PatronGrant` jako jedyne źródło prawdy dla patron access" below are
+> now stale — this file was not updated when the business model changed.
+> Since 2026-09-22, access never requires payment: `PATRON` behaves like
+> `LOGGED_IN` for any signed-in user, and a qualifying tip only creates a
+> bookkeeping `PatronGrant` row that no access check reads. See `CLAUDE.md`
+> §4.1/§4.4/§4.10 for the current, actually-live model.
+
 ## Executive summary
 
 Launch Polutek.pl jest publiczny, nie private beta. MVP-to-launch oznacza

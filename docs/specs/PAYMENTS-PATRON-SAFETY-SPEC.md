@@ -2,6 +2,18 @@
 
 Status: ACTIVE — POST-R AI DELIVERY CONTROL PLANE. Ta specyfikacja jest target/product standard w aktywnym control plane, ale nie dowód aktualnego runtime.
 
+> **Runtime note (2026-09-22):** "Payment is financial fact; PatronGrant is
+> access right" poniżej opisuje stary, zarzucony model. Od 2026-09-22
+> `PatronGrant` **nie jest już prawem dostępu** — `checkVideoAccess()` w ogóle
+> go nie czyta. Stripe/`fulfillPayment()`/`PatronGrant` nadal fizycznie
+> działają dokładnie tak jak opisano niżej (webhook → Payment → eligibility
+> policy → `fulfillPayment()` → `PatronGrant`), ale wynikowy grant jest teraz
+> czystą księgowością "kto wsparł kanał" — nie odblokowuje żadnej treści ani
+> funkcji. Wsparcie to dobrowolny, bezzwrotny napiwek bez świadczenia
+> wzajemnego, zgodnie z aktualnym Regulaminem (oparte m.in. na wyroku NSA z
+> 7 lipca 2026, III FSK 113/26, o darowiznach streamerskich). Aktualny stan:
+> `CLAUDE.md` §4.1, §4.2, §4.4, §4.10.
+
 ## Purpose
 
 Ustalić reguły, model docelowy, forbidden shortcuts, strategię testów, kandydatów ticketów i kryteria certyfikacji dla domeny: Payments / Patron Safety.

@@ -4,6 +4,12 @@
 Target architecture != current implementation.
 ```
 
+> **Runtime note (2026-09-22):** this file's `PatronGrant = access/right/status`
+> and `PATRON_REQUIRED` framing describe the pre-2026-09-22 target model.
+> Current runtime: `PatronGrant` no longer decides access (`checkVideoAccess()`
+> doesn't read it), `PATRON_REQUIRED` is never emitted, and support is a
+> voluntary donation that grants nothing — see `CLAUDE.md` §4.1/§4.4/§4.10.
+
 Ten dokument opisuje docelową architekturę Polutek.pl po R-phase i podczas faz X. Nie jest dowodem, że runtime już tak działa.
 
 ## Product identity

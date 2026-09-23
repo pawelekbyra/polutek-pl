@@ -2,6 +2,19 @@
 
 Status: ACTIVE — POST-R AI DELIVERY CONTROL PLANE. Ta specyfikacja jest target/product standard w aktywnym control plane, ale nie dowód aktualnego runtime.
 
+> **Runtime note (2026-09-22):** ten dokument opisuje przedpłatny model docelowy
+> ("Active PatronGrant is source of truth" dla dostępu do PATRON). **To już nie
+> jest aktualny runtime.** Od 2026-09-22 `checkVideoAccess()` nie czyta
+> `PatronGrant` przy bramkowaniu wideo w ogóle — `PATRON` jest traktowany
+> identycznie jak `LOGGED_IN` (dowolny zalogowany użytkownik ma dostęp; gość
+> zawsze widzi `LOGIN_REQUIRED`, nigdy `PATRON_REQUIRED`). Dostęp nigdy nie
+> wymaga płatności; wsparcie to dobrowolny, niebramkujący napiwek, zgodnie z
+> aktualnym Regulaminem. System `PatronGrant`/Stripe/`fulfillPayment()`
+> pozostaje w kodzie jako księgowość wsparcia, ale przestał być źródłem prawdy
+> dla dostępu — reguły "Product rules"/"Forbidden shortcuts" poniżej opisują
+> stary, zarzucony model, nie obecne zachowanie. Aktualny stan i uzasadnienie:
+> `CLAUDE.md` §4.1, §4.4, §4.10.
+
 ## Purpose
 
 Ustalić reguły, model docelowy, forbidden shortcuts, strategię testów, kandydatów ticketów i kryteria certyfikacji dla domeny: Access / Patron Hard Reset.
