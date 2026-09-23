@@ -17,6 +17,7 @@ import { AccessTierDto } from "@/lib/modules/comments/domain/comment-frontend.dt
 import { PlayerLoadingState } from "./PlayerLoadingState";
 import { PlayerStateFrame } from "./PlayerStateFrame";
 import AccessLockOverlay from "./AccessLockOverlay";
+import { TEMP_PATRON_COMING_SOON } from "@/lib/temp-patron-coming-soon";
 import {
   resolvePlaybackViewerKey,
   useAppPreload,
@@ -49,6 +50,13 @@ interface PremiumWrapperProps {
   isMainFeatured?: boolean;
   variant?: "default" | "thumbnail" | "thumbnailCompact";
   onAccessLoad?: (hasAccess: boolean) => void;
+  /**
+   * TEMPORARY (2026-09-22) — opt-in for the public main-feed player only (see
+   * lib/temp-patron-coming-soon.ts). Admin previews (`/admin/videos/[id]`)
+   * and the `/secretproject`/`/secretproject2` campaign pages must keep
+   * working normally, so this defaults to false and only Hero.tsx sets it.
+   */
+  showPatronComingSoon?: boolean;
 }
 
 export default function PremiumWrapper({
@@ -56,6 +64,7 @@ export default function PremiumWrapper({
   videoId,
   requiredTier: initialTier,
   variant = "default",
+  showPatronComingSoon = false,
   onAccessLoad,
 }: PremiumWrapperProps) {
   const { userId, isLoaded, sessionId } = useAuth();
@@ -81,8 +90,9 @@ export default function PremiumWrapper({
   const effectiveTier = (initialTier || dbTier || "PUBLIC") as AccessTierDto;
   const isPublic = effectiveTier === "PUBLIC";
 
-  const deniedState =
-    effectiveTier === "PATRON" ? "PATRON_REQUIRED" : "LOGIN_REQUIRED";
+  // 2026-09-22: PATRON tier no longer gates on payment, only sign-in — same denied state as
+  // LOGGED_IN (see checkVideoAccess and CLAUDE.md).
+  const deniedState = "LOGIN_REQUIRED";
 
   const getPreloadedPlaybackPlan = preloader?.getPlaybackPlan;
   const warmPreloadedVideo = preloader?.warmVideo;
@@ -232,6 +242,14 @@ export default function PremiumWrapper({
     refreshPlaybackPlan,
   };
 
+  // TEMPORARY (2026-09-22): "coming soon" placeholder for the whole PATRON
+  // tier — see lib/temp-patron-coming-soon.ts. Purely a display gate, checked
+  // before any real access-state branching below; doesn't touch playback
+  // fetch/access logic at all.
+  if (TEMP_PATRON_COMING_SOON && showPatronComingSoon && effectiveTier === "PATRON") {
+    return <AccessLockOverlay state="COMING_SOON" variant={variant} />;
+  }
+
   if (safeIsLoading) {
     if (isLoaded && !userId && !isPublic) {
       return (
@@ -286,10 +304,7 @@ export default function PremiumWrapper({
   return (
     <VideoAccessContext.Provider value={contextValue}>
       <PlaybackPlanStateOverlay
-        state={
-          safePlaybackState ||
-          (effectiveTier === "PATRON" ? "PATRON_REQUIRED" : "LOGIN_REQUIRED")
-        }
+        state={safePlaybackState || "LOGIN_REQUIRED"}
         onRetry={refreshPlaybackPlan}
         variant={variant}
       />

@@ -10,7 +10,7 @@ interface BrandNameProps {
 // TEMPORARY (test setup only) — see CLAUDE.md "2026-09-20: temporary test-mode UI changes"
 // for the exact revert steps. Set to `false` (or delete this flag and the branch that reads
 // it) to restore the permanent glasses-mark logo (public/logo-glasses.svg) below.
-const TEMP_LOGO_AS_TEXT = true;
+const TEMP_LOGO_AS_TEXT = false;
 
 // www.pawelperfect.pl logo mark: the glasses graphic (public/logo-glasses.svg).
 export default function BrandName({

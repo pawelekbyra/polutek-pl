@@ -1,20 +1,21 @@
 "use client";
 
-import { useId, type MouseEvent } from "react";
+import { useEffect, useId, useState, type MouseEvent } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { motion, useReducedMotion } from "framer-motion";
 import { Star, Rocket, Gem } from "lucide-react";
 import type { PlaybackPlanStatus } from "@/lib/modules/playback";
 import { cn } from "@/lib/utils";
+import { formatPremiereCountdown } from "@/lib/temp-patron-coming-soon";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import { useLanguage } from "./LanguageContext";
 import { PlayerStateFrame } from "./PlayerStateFrame";
 import styles from "./AccessLockOverlay.module.css";
 
-type AccessLockState = Extract<
-  PlaybackPlanStatus,
-  "LOGIN_REQUIRED" | "PATRON_REQUIRED"
->;
+// "COMING_SOON" is not a real PlaybackPlanStatus — see lib/temp-patron-coming-soon.ts.
+type AccessLockState =
+  | Extract<PlaybackPlanStatus, "LOGIN_REQUIRED" | "PATRON_REQUIRED">
+  | "COMING_SOON";
 
 interface AccessLockOverlayProps {
   state: AccessLockState;
@@ -29,7 +30,16 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
   const titleId = useId();
   const isPl = language === "pl";
   const isCompact = variant !== "default";
-  const isPatron = state === "PATRON_REQUIRED";
+  const isComingSoon = state === "COMING_SOON";
+  const isPatron = state === "PATRON_REQUIRED" || isComingSoon;
+
+  const [countdownNow, setCountdownNow] = useState<Date>(() => new Date());
+  useEffect(() => {
+    if (!isComingSoon) return;
+    const id = setInterval(() => setCountdownNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, [isComingSoon]);
+  const countdownLabel = formatPremiereCountdown(isPl, undefined, countdownNow);
 
   const handleSupport = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
@@ -43,14 +53,16 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
   };
 
   if (isCompact) {
-    const label = isPatron
-      ? isPl
-        ? "Strefa Fenkju"
-        : "Thank You Zone"
-      : isPl
-        ? "Zaloguj się"
-        : "Sign in";
-    const Icon = isPatron ? Gem : Star;
+    const label = isComingSoon
+      ? countdownLabel
+      : isPatron
+        ? isPl
+          ? "Strefa Fenkju"
+          : "Thank You Zone"
+        : isPl
+          ? "Zaloguj się"
+          : "Sign in";
+    const Icon = isComingSoon ? Rocket : isPatron ? Gem : Star;
 
     return (
       <PlayerStateFrame
@@ -88,7 +100,14 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         </div>
         <span className={styles.sheen} aria-hidden="true" />
         <span className={styles.noise} aria-hidden="true" />
-        {isPatron ? (
+        {isComingSoon ? (
+          <ComingSoonScene
+            isPl={isPl}
+            reduceMotion={Boolean(reduceMotion)}
+            titleId={titleId}
+            countdownLabel={countdownLabel}
+          />
+        ) : isPatron ? (
           <PatronScene
             isPl={isPl}
             isSignedIn={isSignedIn === true}
@@ -168,6 +187,65 @@ function LoginScene({
           {isPl ? "Zaloguj się, aby obczaić" : "Sign in to keep watching"}
         </span>
       </motion.button>
+    </div>
+  );
+}
+
+function ComingSoonScene({
+  isPl,
+  reduceMotion,
+  titleId,
+  countdownLabel,
+}: {
+  isPl: boolean;
+  reduceMotion: boolean;
+  titleId: string;
+  countdownLabel: string;
+}) {
+  return (
+    <div className={styles.content}>
+      <motion.div
+        initial={reduceMotion ? false : { opacity: 0, scale: 0.6, rotate: 10 }}
+        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+        transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 210, damping: 16 }}
+      >
+        <Rocket aria-hidden="true" className={styles.mark} />
+      </motion.div>
+      <h2 id={titleId} className={styles.heading}>
+        <motion.span
+          className={cn(styles.word, styles.wordAmber)}
+          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.1 }}
+        >
+          {isPl ? "Już" : "Coming"}
+        </motion.span>
+        <motion.span
+          className={styles.divider}
+          aria-hidden="true"
+          initial={reduceMotion ? false : { scaleX: 0, opacity: 0 }}
+          animate={{ scaleX: 1, opacity: 1 }}
+          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.22 }}
+        />
+        <motion.span
+          className={cn(styles.word, styles.wordWhite)}
+          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.28 }}
+        >
+          {isPl ? "wkrótce" : "soon"}
+        </motion.span>
+      </h2>
+      <motion.div
+        className={styles.cta}
+        style={{ cursor: "default" }}
+        initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: reduceMotion ? 0 : 0.4, delay: reduceMotion ? 0 : 0.44 }}
+      >
+        <span className={styles.ctaLine} aria-hidden="true" />
+        <span className={styles.ctaText}>{countdownLabel}</span>
+      </motion.div>
     </div>
   );
 }
