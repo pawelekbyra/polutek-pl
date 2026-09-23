@@ -72,6 +72,12 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     likesCount: video.likesCount || 0,
     dislikesCount: video.dislikesCount || 0,
   });
+  // Brief "pop" on the icon right after a like/dislike click lands, kept separate
+  // from interactionState.isLiked/isDisliked so it never replays on mount or on
+  // unrelated re-renders — only on the user's own action, and only for the
+  // "on" direction (liking, not un-liking).
+  const [likePulse, setLikePulse] = useState(false);
+  const [dislikePulse, setDislikePulse] = useState(false);
 
   useEffect(() => {
     setInteractionState({
@@ -88,6 +94,10 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
     const previousState = interactionState;
     const nextIsLiked = !previousState.isLiked;
+    if (nextIsLiked) {
+        setLikePulse(true);
+        window.setTimeout(() => setLikePulse(false), 320);
+    }
     // Optimistic update: reflect the click immediately, reconcile with the server after.
     setInteractionState({
         isLiked: nextIsLiked,
@@ -136,6 +146,10 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
     const previousState = interactionState;
     const nextIsDisliked = !previousState.isDisliked;
+    if (nextIsDisliked) {
+        setDislikePulse(true);
+        window.setTimeout(() => setDislikePulse(false), 320);
+    }
     // Optimistic update: reflect the click immediately, reconcile with the server after.
     setInteractionState({
         isDisliked: nextIsDisliked,
@@ -256,7 +270,14 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     aria-label={interactionState.isLiked ? (language === 'pl' ? 'Cofnij polubienie filmu' : 'Remove like from video') : (language === 'pl' ? 'Polub film' : 'Like video')}
                     aria-pressed={interactionState.isLiked}
                   >
-                     <ThumbsUp className="h-4 w-4 shrink-0" strokeWidth={1.8} color={interactionState.isLiked ? "var(--chan-blue)" : "var(--chan-ink)"} />
+                     <ThumbsUp
+                       className={cn(
+                         "h-4 w-4 shrink-0",
+                         likePulse && "motion-safe:animate-[polutek-reaction-pop_320ms_cubic-bezier(0.34,1.56,0.64,1)_both]",
+                       )}
+                       strokeWidth={1.8}
+                       color={interactionState.isLiked ? "var(--chan-blue)" : "var(--chan-ink)"}
+                     />
                      <span className="text-[12px] font-bold">{interactionState.likesCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US')}</span>
                   </button>
                   <span className="h-4 w-px bg-[var(--chan-line-soft)]" />
@@ -273,7 +294,14 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     aria-label={interactionState.isDisliked ? (language === 'pl' ? 'Cofnij reakcję nie lubię filmu' : 'Remove dislike from video') : (language === 'pl' ? 'Nie lubię filmu' : 'Dislike video')}
                     aria-pressed={interactionState.isDisliked}
                   >
-                     <ThumbsDown className="h-4 w-4 shrink-0" strokeWidth={1.8} color={interactionState.isDisliked ? "var(--chan-blue)" : "var(--chan-ink)"} />
+                     <ThumbsDown
+                       className={cn(
+                         "h-4 w-4 shrink-0",
+                         dislikePulse && "motion-safe:animate-[polutek-reaction-pop_320ms_cubic-bezier(0.34,1.56,0.64,1)_both]",
+                       )}
+                       strokeWidth={1.8}
+                       color={interactionState.isDisliked ? "var(--chan-blue)" : "var(--chan-ink)"}
+                     />
                   </button>
                </div>
                <ShareButton
