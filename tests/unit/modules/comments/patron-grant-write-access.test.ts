@@ -7,24 +7,26 @@ import { reportComment } from '@/lib/modules/comments/application/report-comment
 import { toggleVideoLike } from '@/lib/modules/comments/application/toggle-video-like.use-case';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { MainChannelService } from '@/lib/modules/channel';
-import { getPatronStatus } from '@/lib/modules/patron';
-import { ok } from '@/lib/modules/shared/result';
 
+// 2026-09-22 model (see CLAUDE.md §4.4): checkVideoAccess() no longer reads PatronGrant at
+// all. PATRON-tier videos are handled identically to LOGGED_IN — any signed-in, non-deleted
+// user gets access, guests are always LOGIN_REQUIRED. This file used to assert the opposite
+// (PatronGrant-gated write access via getPatronStatus()); it was rewritten to match current
+// behavior after that access-gate removal made the old assertions permanently red on `main`.
+// PatronGrant itself still exists as supporter bookkeeping (§4.1) and still drives the
+// decorative "PATRON" comment badge (lib/comments-public-author.ts) — that part is unrelated
+// to write access and is covered separately below.
 vi.mock('@/lib/modules/channel', () => ({
   MainChannelService: {
     getRequired: vi.fn(),
   },
 }));
 
-vi.mock('@/lib/modules/patron', () => ({
-  getPatronStatus: vi.fn(),
-}));
-
 vi.mock('@/lib/modules/audit', () => ({
   recordAuditEvent: vi.fn(),
 }));
 
-describe('Comments PatronGrant-backed write access', () => {
+describe('Comments write access on PATRON-tier videos (sign-in only, no PatronGrant gate)', () => {
   const now = new Date('2026-01-01T12:00:00Z');
   const mainChannel = { id: 'main-channel-id', slug: 'polutek', isApproved: true, isPrimary: true };
   const videoId = '11111111-1111-4111-8111-111111111111';
@@ -132,8 +134,8 @@ describe('Comments PatronGrant-backed write access', () => {
     mockPrisma.video.findFirst.mockResolvedValue(video);
   }
 
-  function mockLocalUser(isPatron: boolean) {
-    mockPrisma.user.findUnique.mockResolvedValue({ id: userId, isDeleted: false, isPatron });
+  function mockLocalUser(isDeleted = false) {
+    mockPrisma.user.findUnique.mockResolvedValue({ id: userId, isDeleted });
   }
 
   function mockVideoMetadata() {
@@ -145,10 +147,9 @@ describe('Comments PatronGrant-backed write access', () => {
     mockPrisma.comment.findUnique.mockResolvedValue(commentWithAuthor);
   }
 
-  it('allows comment creation on patron-only video from active PatronGrant even when User.isPatron is stale false', async () => {
+  it('allows any signed-in user to comment on a PATRON-tier video, with no PatronGrant lookup', async () => {
     mockPublishedVideo();
-    mockLocalUser(false);
-    vi.mocked(getPatronStatus).mockResolvedValue(ok({ activeGrants: [{ id: 'grant-1' }] } as any));
+    mockLocalUser();
     mockVideoMetadata();
     mockCreatedComment();
 
@@ -158,31 +159,31 @@ describe('Comments PatronGrant-backed write access', () => {
     );
 
     expect(result.ok).toBe(true);
-    expect(getPatronStatus).toHaveBeenCalledWith(userId, expect.any(Object));
+    expect(mockPrisma.patronGrant.findMany).not.toHaveBeenCalled();
     expect(mockPrisma.comment.create).toHaveBeenCalled();
   });
 
-  it('denies comment creation on patron-only video without active PatronGrant even when User.isPatron is stale true', async () => {
+  it('denies comment creation for a deleted local user, even on a PATRON-tier video', async () => {
     mockPublishedVideo();
     mockLocalUser(true);
-    vi.mocked(getPatronStatus).mockResolvedValue(ok({ activeGrants: [] } as any));
 
     const result = await createVideoComment(
       { videoId, text: 'hello' },
       createCtx({ type: 'user', userId }),
     );
 
+    // createVideoComment maps the DELETED access reason to NOT_FOUND (to avoid leaking
+    // whether a video exists to an actor whose own account is deleted).
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error.type).toBe('FORBIDDEN');
-    expect(getPatronStatus).toHaveBeenCalledWith(userId, expect.any(Object));
+    if (!result.ok) expect(result.error.type).toBe('NOT_FOUND');
+    expect(mockPrisma.patronGrant.findMany).not.toHaveBeenCalled();
     expect(mockPrisma.comment.create).not.toHaveBeenCalled();
   });
 
-  it('allows comment reaction on patron-only video from active PatronGrant even when User.isPatron is stale false', async () => {
+  it('allows any signed-in user to react to a comment on a PATRON-tier video, with no PatronGrant lookup', async () => {
     mockPrisma.comment.findUnique.mockResolvedValue({ ...commentWithAuthor, authorId: 'other-user' });
     mockPublishedVideo();
-    mockLocalUser(false);
-    vi.mocked(getPatronStatus).mockResolvedValue(ok({ activeGrants: [{ id: 'grant-1' }] } as any));
+    mockLocalUser();
     mockPrisma.commentReaction.findUnique.mockResolvedValue(null);
 
     const result = await toggleCommentLike(
@@ -191,15 +192,14 @@ describe('Comments PatronGrant-backed write access', () => {
     );
 
     expect(result.ok).toBe(true);
-    expect(getPatronStatus).toHaveBeenCalledWith(userId, expect.any(Object));
+    expect(mockPrisma.patronGrant.findMany).not.toHaveBeenCalled();
     expect(mockPrisma.commentReaction.create).toHaveBeenCalled();
   });
 
-  it('denies comment reaction on patron-only video without active PatronGrant even when User.isPatron is stale true', async () => {
+  it('denies comment reactions for a deleted local user, even on a PATRON-tier video', async () => {
     mockPrisma.comment.findUnique.mockResolvedValue({ ...commentWithAuthor, authorId: 'other-user' });
     mockPublishedVideo();
     mockLocalUser(true);
-    vi.mocked(getPatronStatus).mockResolvedValue(ok({ activeGrants: [] } as any));
 
     const result = await toggleCommentLike(
       { commentId, action: 'LIKE' },
@@ -208,14 +208,13 @@ describe('Comments PatronGrant-backed write access', () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.type).toBe('FORBIDDEN');
-    expect(getPatronStatus).toHaveBeenCalledWith(userId, expect.any(Object));
+    expect(mockPrisma.patronGrant.findMany).not.toHaveBeenCalled();
     expect(mockPrisma.commentReaction.create).not.toHaveBeenCalled();
   });
 
-  it('allows video reaction on patron-only video from active PatronGrant even when User.isPatron is stale false', async () => {
+  it('allows any signed-in user to react to a PATRON-tier video itself, with no PatronGrant lookup', async () => {
     mockPublishedVideo();
-    mockLocalUser(false);
-    vi.mocked(getPatronStatus).mockResolvedValue(ok({ activeGrants: [{ id: 'grant-1' }] } as any));
+    mockLocalUser();
     mockPrisma.videoLike.findUnique.mockResolvedValue(null);
     mockPrisma.videoDislike.findUnique.mockResolvedValue(null);
 
@@ -225,7 +224,7 @@ describe('Comments PatronGrant-backed write access', () => {
     );
 
     expect(result.ok).toBe(true);
-    expect(getPatronStatus).toHaveBeenCalledWith(userId, expect.any(Object));
+    expect(mockPrisma.patronGrant.findMany).not.toHaveBeenCalled();
     expect(mockPrisma.videoLike.create).toHaveBeenCalled();
   });
 
@@ -255,7 +254,6 @@ describe('Comments PatronGrant-backed write access', () => {
 
     expect(writeResult.ok).toBe(false);
     if (!writeResult.ok) expect(writeResult.error.type).toBe('UNAUTHORIZED');
-    expect(getPatronStatus).not.toHaveBeenCalled();
     expect(mockPrisma.comment.create).not.toHaveBeenCalled();
   });
 
@@ -283,7 +281,6 @@ describe('Comments PatronGrant-backed write access', () => {
 
     expect(reactionResult.ok).toBe(false);
     if (!reactionResult.ok) expect(reactionResult.error.type).toBe('UNAUTHORIZED');
-    expect(getPatronStatus).not.toHaveBeenCalled();
     expect(mockPrisma.commentReaction.create).not.toHaveBeenCalled();
   });
 
@@ -311,46 +308,12 @@ describe('Comments PatronGrant-backed write access', () => {
 
     expect(reportResult.ok).toBe(false);
     if (!reportResult.ok) expect(reportResult.error.type).toBe('UNAUTHORIZED');
-    expect(getPatronStatus).not.toHaveBeenCalled();
     expect(mockPrisma.commentReport.create).not.toHaveBeenCalled();
   });
 
-  it('keeps patron-only comments readable for logged-in non-patrons while denying comment creation', async () => {
+  it('lets any signed-in user read, comment on, react to, and report patron-only comments', async () => {
     mockPublishedVideo();
-    mockLocalUser(false);
-    vi.mocked(getPatronStatus).mockResolvedValue(ok({ activeGrants: [] } as any));
-    mockPrisma.video.findUnique.mockResolvedValue({ creator: { userId: 'creator-1' } });
-    mockPrisma.comment.findMany.mockResolvedValue([commentWithAuthor]);
-    mockPrisma.comment.count.mockResolvedValue(1);
-
-    const readResult = await listVideoComments(
-      { videoId, sortBy: 'newest', limit: 10 },
-      createCtx({ type: 'user', userId }),
-    );
-
-    expect(readResult.ok).toBe(true);
-    if (readResult.ok) {
-      expect(readResult.data.comments).toHaveLength(1);
-      expect(readResult.data.viewer.canComment).toBe(false);
-      expect(readResult.data.viewer.canReact).toBe(false);
-      expect(readResult.data.viewer.canReport).toBe(false);
-    }
-
-    const writeResult = await createVideoComment(
-      { videoId, text: 'non-patron should not write' },
-      createCtx({ type: 'user', userId }),
-    );
-
-    expect(writeResult.ok).toBe(false);
-    if (!writeResult.ok) expect(writeResult.error.type).toBe('FORBIDDEN');
-    expect(getPatronStatus).toHaveBeenCalledWith(userId, expect.any(Object));
-    expect(mockPrisma.comment.create).not.toHaveBeenCalled();
-  });
-
-  it('keeps patron-only comments readable for logged-in non-patrons while denying reactions and reports', async () => {
-    mockPublishedVideo();
-    mockLocalUser(false);
-    vi.mocked(getPatronStatus).mockResolvedValue(ok({ activeGrants: [] } as any));
+    mockLocalUser();
     mockPrisma.video.findUnique.mockResolvedValue({ creator: { userId: 'creator-1' } });
     mockPrisma.comment.findMany.mockResolvedValue([commentWithAuthor]);
     mockPrisma.comment.count.mockResolvedValue(1);
@@ -364,9 +327,14 @@ describe('Comments PatronGrant-backed write access', () => {
     expect(readResult.ok).toBe(true);
     if (readResult.ok) {
       expect(readResult.data.comments).toHaveLength(1);
-      expect(readResult.data.viewer.canReact).toBe(false);
-      expect(readResult.data.viewer.canReport).toBe(false);
+      expect(readResult.data.viewer.canComment).toBe(true);
+      expect(readResult.data.viewer.canReact).toBe(true);
+      expect(readResult.data.viewer.canReport).toBe(true);
     }
+
+    mockPrisma.commentReaction.findUnique.mockResolvedValue(null);
+    mockPrisma.commentReport.findUnique.mockResolvedValue(null);
+    mockPrisma.comment.update.mockResolvedValue({ reportsCount: 1, status: 'VISIBLE' });
 
     const reactionResult = await toggleCommentLike(
       { commentId, action: 'LIKE' },
@@ -377,33 +345,28 @@ describe('Comments PatronGrant-backed write access', () => {
       createCtx({ type: 'user', userId }),
     );
 
-    expect(reactionResult.ok).toBe(false);
-    if (!reactionResult.ok) expect(reactionResult.error.type).toBe('FORBIDDEN');
-    expect(reportResult.ok).toBe(false);
-    if (!reportResult.ok) expect(reportResult.error.type).toBe('FORBIDDEN');
-    expect(getPatronStatus).toHaveBeenCalledWith(userId, expect.any(Object));
-    expect(mockPrisma.commentReaction.create).not.toHaveBeenCalled();
-    expect(mockPrisma.commentReport.create).not.toHaveBeenCalled();
+    expect(reactionResult.ok).toBe(true);
+    expect(reportResult.ok).toBe(true);
+    expect(mockPrisma.patronGrant.findMany).not.toHaveBeenCalled();
+    expect(mockPrisma.commentReaction.create).toHaveBeenCalled();
+    expect(mockPrisma.commentReport.create).toHaveBeenCalled();
   });
 
-  it('does not let stale User.isPatron grant badges, write, or react access', async () => {
-    const staleBadgeComment = {
+  it('only shows the decorative PATRON badge when the author has an active PatronGrant, independent of write access', async () => {
+    const badgeComment = {
       ...commentWithAuthor,
       authorId: userId,
       author: {
         ...commentWithAuthor.author,
-        isPatron: true,
-        patronGrants: [],
+        patronGrants: [], // no active grant -> no badge, even though this author can still write freely
       },
     };
 
     mockPublishedVideo();
-    mockLocalUser(true);
-    vi.mocked(getPatronStatus).mockResolvedValue(ok({ activeGrants: [] } as any));
+    mockLocalUser();
     mockPrisma.video.findUnique.mockResolvedValue({ creator: { userId: 'creator-1' } });
-    mockPrisma.comment.findMany.mockResolvedValue([staleBadgeComment]);
+    mockPrisma.comment.findMany.mockResolvedValue([badgeComment]);
     mockPrisma.comment.count.mockResolvedValue(1);
-    mockPrisma.comment.findUnique.mockResolvedValue(staleBadgeComment);
 
     const readResult = await listVideoComments(
       { videoId, sortBy: 'newest', limit: 10 },
@@ -413,68 +376,14 @@ describe('Comments PatronGrant-backed write access', () => {
     expect(readResult.ok).toBe(true);
     if (readResult.ok) {
       expect(readResult.data.comments[0].author?.badges).not.toContain('PATRON');
-      expect(readResult.data.comments[0].viewerCanEdit).toBe(false);
-      expect(readResult.data.comments[0].viewerCanDelete).toBe(false);
-      expect(readResult.data.comments[0].viewerCanReport).toBe(false);
-      expect(readResult.data.viewer.canComment).toBe(false);
-      expect(readResult.data.viewer.canReact).toBe(false);
+      // Write access is unaffected by the missing grant under the current model.
+      expect(readResult.data.comments[0].viewerCanEdit).toBe(true);
+      expect(readResult.data.viewer.canComment).toBe(true);
+      expect(readResult.data.viewer.canReact).toBe(true);
     }
-
-    const writeResult = await createVideoComment(
-      { videoId, text: 'stale patron flag should not write' },
-      createCtx({ type: 'user', userId }),
-    );
-
-    const reactionResult = await toggleCommentLike(
-      { commentId, action: 'LIKE' },
-      createCtx({ type: 'user', userId }),
-    );
-
-    expect(writeResult.ok).toBe(false);
-    if (!writeResult.ok) expect(writeResult.error.type).toBe('FORBIDDEN');
-    expect(reactionResult.ok).toBe(false);
-    if (!reactionResult.ok) expect(reactionResult.error.type).toBe('FORBIDDEN');
-    expect(getPatronStatus).toHaveBeenCalledWith(userId, expect.any(Object));
-    expect(mockPrisma.comment.create).not.toHaveBeenCalled();
-    expect(mockPrisma.commentReaction.create).not.toHaveBeenCalled();
   });
 
-  it('allows patrons to create, react, and report on patron-only comments where policy allows', async () => {
-    mockPublishedVideo();
-    mockLocalUser(false);
-    vi.mocked(getPatronStatus).mockResolvedValue(ok({ activeGrants: [{ id: 'grant-1' }] } as any));
-    mockVideoMetadata();
-    mockCreatedComment();
-    mockPrisma.commentReaction.findUnique.mockResolvedValue(null);
-    mockPrisma.commentReport.findUnique.mockResolvedValue(null);
-    mockPrisma.comment.update.mockResolvedValue({ reportsCount: 1, status: 'VISIBLE' });
-
-    const createResult = await createVideoComment(
-      { videoId, text: 'patron smoke comment' },
-      createCtx({ type: 'user', userId }),
-    );
-
-    mockPrisma.comment.findUnique.mockResolvedValue({ ...commentWithAuthor, authorId: 'other-user' });
-
-    const reactionResult = await toggleCommentLike(
-      { commentId, action: 'LIKE' },
-      createCtx({ type: 'user', userId }),
-    );
-    const reportResult = await reportComment(
-      { commentId, reason: 'SPAM' },
-      createCtx({ type: 'user', userId }),
-    );
-
-    expect(createResult.ok).toBe(true);
-    expect(reactionResult.ok).toBe(true);
-    expect(reportResult.ok).toBe(true);
-    expect(getPatronStatus).toHaveBeenCalledWith(userId, expect.any(Object));
-    expect(mockPrisma.comment.create).toHaveBeenCalled();
-    expect(mockPrisma.commentReaction.create).toHaveBeenCalled();
-    expect(mockPrisma.commentReport.create).toHaveBeenCalled();
-  });
-
-  it('keeps admin comment creation, reaction, and report behavior allowed without PatronGrant lookup', async () => {
+  it('keeps admin comment creation, reaction, and report behavior allowed without any PatronGrant lookup', async () => {
     mockPublishedVideo();
     mockVideoMetadata();
     mockCreatedComment();
@@ -501,13 +410,13 @@ describe('Comments PatronGrant-backed write access', () => {
     expect(createResult.ok).toBe(true);
     expect(reactionResult.ok).toBe(true);
     expect(reportResult.ok).toBe(true);
-    expect(getPatronStatus).not.toHaveBeenCalled();
+    expect(mockPrisma.patronGrant.findMany).not.toHaveBeenCalled();
     expect(mockPrisma.comment.create).toHaveBeenCalled();
     expect(mockPrisma.commentReaction.create).toHaveBeenCalled();
     expect(mockPrisma.commentReport.create).toHaveBeenCalled();
   });
 
-  it('keeps admin comment creation behavior unchanged without PatronGrant lookup', async () => {
+  it('keeps admin comment creation behavior unchanged without any PatronGrant lookup', async () => {
     mockPublishedVideo();
     mockVideoMetadata();
     mockCreatedComment();
@@ -518,7 +427,7 @@ describe('Comments PatronGrant-backed write access', () => {
     );
 
     expect(result.ok).toBe(true);
-    expect(getPatronStatus).not.toHaveBeenCalled();
+    expect(mockPrisma.patronGrant.findMany).not.toHaveBeenCalled();
     expect(mockPrisma.comment.create).toHaveBeenCalled();
   });
 
@@ -539,7 +448,6 @@ describe('Comments PatronGrant-backed write access', () => {
       expect(result.data.viewer.canComment).toBe(false);
       expect(result.data.viewer.canReact).toBe(false);
     }
-    expect(getPatronStatus).not.toHaveBeenCalled();
     expect(mockPrisma.comment.findMany).toHaveBeenCalled();
   });
 });

@@ -123,7 +123,7 @@ export function RegulaminContent() {
           <ol className="list-decimal space-y-2 pl-5">
             <li>
               Serwis WWW.PAWELPERFECT.PL prowadzi Paweł Perfect, osoba fizyczna, adres do korespondencji: ul. Złota 75,
-              00-819 Warszawa, e-mail: <a href={`mailto:${REGULAMIN_CONTACT_EMAIL}`} className="underline hover:text-primary">{REGULAMIN_CONTACT_EMAIL}</a> (dalej: „Twórca").
+              00-819 Warszawa, e-mail: <a href={`mailto:${REGULAMIN_CONTACT_EMAIL}`} className="underline hover:text-primary">{REGULAMIN_CONTACT_EMAIL}</a> (dalej: „Twórca”).
             </li>
             <li>Serwis ma charakter niekomercyjny. Twórca nie sprzedaje w nim towarów, usług ani treści cyfrowych.</li>
           </ol>
