@@ -83,19 +83,25 @@ function renderEmbeddedComments() {
 
 describe('EmbeddedComments reaction pending isolation', () => {
   let resolveReaction: (() => void) | undefined;
+  let resolveReactionByCommentId: Record<string, () => void>;
 
   beforeEach(() => {
     resolveReaction = undefined;
+    resolveReactionByCommentId = {};
     global.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
 
-      if (url.includes('/api/comments/') && url.includes('/reaction')) {
+      const reactionMatch = url.match(/\/api\/comments\/([^/]+)\/reaction/);
+      if (reactionMatch) {
+        const commentId = reactionMatch[1];
         return new Promise((resolve) => {
-          resolveReaction = () =>
+          const resolveThis = () =>
             resolve({
               ok: true,
               json: async () => ({ success: true }),
             } as Response);
+          resolveReaction = resolveThis;
+          resolveReactionByCommentId[commentId] = resolveThis;
         });
       }
 
@@ -146,6 +152,45 @@ describe('EmbeddedComments reaction pending isolation', () => {
 
     await waitFor(() => {
       expect(likeA).not.toBeDisabled();
+    });
+  });
+
+  it('keeps a comment disabled while its own request is still in flight, even after reacting to a different comment', async () => {
+    renderEmbeddedComments();
+
+    await waitFor(() => {
+      expect(screen.getByText('Comment a')).toBeInTheDocument();
+      expect(screen.getByText('Comment b')).toBeInTheDocument();
+    });
+
+    const [likeA, likeB] = screen.getAllByRole('button', { name: 'Polub komentarz' });
+
+    likeA.click();
+    await waitFor(() => {
+      expect(likeA).toBeDisabled();
+      expect(resolveReactionByCommentId.a).toBeDefined();
+    });
+
+    // Before A's request settles, react to B too — a shared single-mutation
+    // pending flag would flip its own "pending" target to B and silently
+    // re-enable A, even though A's own network request is still in flight.
+    likeB.click();
+    await waitFor(() => {
+      expect(likeB).toBeDisabled();
+      expect(resolveReactionByCommentId.b).toBeDefined();
+    });
+
+    expect(likeA).toBeDisabled();
+
+    resolveReactionByCommentId.a();
+    await waitFor(() => {
+      expect(likeA).not.toBeDisabled();
+    });
+    expect(likeB).toBeDisabled();
+
+    resolveReactionByCommentId.b();
+    await waitFor(() => {
+      expect(likeB).not.toBeDisabled();
     });
   });
 });
