@@ -186,7 +186,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
           <PremiumWrapper
             videoId={video.id}
             requiredTier={video.tier}
-            isMainFeatured={video.isMainFeatured}
             showPatronComingSoon
           >
             <VideoPlayer video={video} onViewCounted={() => setLocalViewsCount((views) => views + 1)} />
@@ -278,7 +277,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                   </button>
                </div>
                <ShareButton
-                 url={typeof window !== 'undefined' ? `${window.location.origin}/?v=${encodeURIComponent(video.slug)}` : ''}
+                 url={mounted ? `${window.location.origin}/?v=${encodeURIComponent(video.slug)}` : ''}
                  title={displayTitle}
                  text={video.description || undefined}
                  className={styles.secondaryAction}
