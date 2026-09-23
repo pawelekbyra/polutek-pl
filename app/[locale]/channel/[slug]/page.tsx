@@ -225,13 +225,14 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
 
         {allVideos.length > 0 ? (
           <div className="channel-video-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-8 py-7">
-            {allVideos.map((video) => (
+            {allVideos.map((video, index) => (
               <ChannelVideoCard
                 key={video.id}
                 video={video}
                 isLoggedIn={!!userId}
                 isPatron={isPatronUser}
                 role={userDb?.role}
+                index={index}
               />
             ))}
           </div>
