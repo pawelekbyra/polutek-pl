@@ -218,7 +218,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                           appearance: {
                             theme: 'flat',
                             variables: {
-                              colorPrimary: '#2563eb',
+                              colorPrimary: '#7c3aed',
                               colorBackground: '#ffffff',
                               colorText: '#1a1a1a',
                               borderRadius: '12px',

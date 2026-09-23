@@ -4,8 +4,8 @@
 
 export const APP_ICON_BACKGROUND = "#f7f9fc";
 export const APP_ICON_INK = "#111827";
-// Brand blue — the primary action accent used by the site's buttons and logo.
-export const APP_ICON_BLUE = "#2563eb";
+// Brand accent — the primary action color used by the site's buttons and logo.
+export const APP_ICON_BLUE = "#7c3aed";
 
 // Stable, deterministic contour variation for the launcher icon border.
 function wobble(seed: number, i: number, amp = 1.4) {

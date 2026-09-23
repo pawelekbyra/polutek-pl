@@ -200,7 +200,7 @@ const Navbar = () => {
               <div
                 role="radiogroup"
                 aria-label={language === "pl" ? "Wybierz język" : "Choose language"}
-                className="relative flex h-[38px] w-[78px] shrink-0 items-center rounded-full border border-[var(--cm-line-84)] bg-[var(--cm-card-82-white)] p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[0_4px_14px_rgba(37,99,235,0.08)]"
+                className="relative flex h-[38px] w-[78px] shrink-0 items-center rounded-full border border-[var(--cm-line-84)] bg-[var(--cm-card-82-white)] p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[0_4px_14px_rgba(124,58,237,0.08)]"
               >
                 <span
                   aria-hidden="true"

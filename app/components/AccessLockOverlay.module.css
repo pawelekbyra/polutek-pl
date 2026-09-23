@@ -11,8 +11,9 @@
 }
 
 .scene.login {
-  /* Main login-overlay background, per owner request. */
-  background: #1e3a8a;
+  /* Main login-overlay background, per owner request — kept the same deep,
+     moody panel tone, hue shifted to match the site's new violet accent. */
+  background: #4c1d95;
 }
 
 .scene.patron {

@@ -257,7 +257,13 @@
   }
 
   .channel-page-shell :is(a, button):focus-visible,
-  .public-visual-shell :is(a, button):focus-visible,
+  .public-visual-shell :is(a, button):focus-visible {
+    outline: 3px solid rgba(124, 58, 237, .45);
+    outline-offset: 3px;
+  }
+
+  /* Admin keeps its own approved (blue) treatment — intentionally not
+     following the public-shell accent swap above. */
   .admin-visual-shell :is(a, button):focus-visible {
     outline: 3px solid rgba(37, 99, 235, .45);
     outline-offset: 3px;
@@ -308,12 +314,12 @@
 
 @layer base {
   :root {
-    /* Blue drives actions; amber is reserved for patron/premium meaning. */
-    --primary: 221.2 83.2% 53.3%;
+    /* Violet drives actions; amber is reserved for patron/premium meaning. */
+    --primary: 262.1 83.3% 57.8%;
     --primary-foreground: 0 0% 100%;
-    --ring: 221.2 83.2% 53.3%;
-    --accent-soft: 222 90% 96%;
-    --accent-ring: 221 83% 53% / 0.18;
+    --ring: 262.1 83.3% 57.8%;
+    --accent-soft: 262 90% 96%;
+    --accent-ring: 262 83% 53% / 0.18;
 
     /* ===== Neutral background ===== */
     --background: 220 33% 98%;
@@ -345,14 +351,14 @@
     --chan-muted: #667085;
     --chan-muted-2: #475467;
     --chan-body: #344054;
-    --chan-blue: #2563eb;
-    --chan-blue-soft: #eff3fe;
+    --chan-blue: #7c3aed;
+    --chan-blue-soft: #f7f3fe;
     --chan-amber: #f59e0b;
     --chan-amber-bright: #fbbf24;
     --chan-amber-strong: #d97706;
     --chan-amber-soft: #fff3d6;
     --chan-amber-ink: #4a2a03;
-    --chan-avatar-gradient: linear-gradient(135deg, #f59e0b 0%, #2563eb 72%);
+    --chan-avatar-gradient: linear-gradient(135deg, #f59e0b 0%, #7c3aed 72%);
     --chan-support-shadow: 0 12px 32px -20px rgba(15, 23, 42, .28);
     --motion-instant: 100ms;
     --motion-fast: 160ms;
@@ -396,17 +402,17 @@
     --cm-amber-strong-82-black: color-mix(in srgb, var(--chan-amber-strong) 82%, black);
     --cm-blue-10: color-mix(in srgb, var(--chan-blue) 10%, transparent);
     --cm-blue-10-card: color-mix(in srgb, var(--chan-blue) 10%, var(--chan-card));
-    --cm-blue-12: color-mix(in srgb, var(--chan-blue, #2563eb) 12%, transparent);
+    --cm-blue-12: color-mix(in srgb, var(--chan-blue, #7c3aed) 12%, transparent);
     --cm-blue-12-white: color-mix(in srgb, var(--chan-blue) 12%, white);
     --cm-blue-14: color-mix(in srgb, var(--chan-blue) 14%, transparent);
-    --cm-blue-15: color-mix(in srgb, var(--chan-blue, #2563eb) 15%, transparent);
+    --cm-blue-15: color-mix(in srgb, var(--chan-blue, #7c3aed) 15%, transparent);
     --cm-blue-16: color-mix(in srgb, var(--chan-blue) 16%, transparent);
     --cm-blue-18: color-mix(in srgb, var(--chan-blue) 18%, transparent);
     --cm-blue-18-card: color-mix(in srgb, var(--chan-blue) 18%, var(--chan-card));
     --cm-blue-18-line: color-mix(in srgb, var(--chan-blue) 18%, var(--chan-line));
     --cm-blue-20: color-mix(in srgb, var(--chan-blue) 20%, transparent);
     --cm-blue-20-white: color-mix(in srgb, var(--chan-blue) 20%, white);
-    --cm-blue-22: color-mix(in srgb, var(--chan-blue, #2563eb) 22%, transparent);
+    --cm-blue-22: color-mix(in srgb, var(--chan-blue, #7c3aed) 22%, transparent);
     --cm-blue-22-2: color-mix(in srgb, var(--chan-blue) 22%, transparent);
     --cm-blue-22-line: color-mix(in srgb, var(--chan-blue) 22%, var(--chan-line));
     --cm-blue-22-white: color-mix(in srgb, var(--chan-blue) 22%, white);
@@ -420,7 +426,7 @@
     --cm-blue-38-line: color-mix(in srgb, var(--chan-blue) 38%, var(--chan-line));
     --cm-blue-40: color-mix(in srgb, var(--chan-blue) 40%, transparent);
     --cm-blue-42: color-mix(in srgb, var(--chan-blue) 42%, transparent);
-    --cm-blue-45: color-mix(in srgb, var(--chan-blue, #2563eb) 45%, transparent);
+    --cm-blue-45: color-mix(in srgb, var(--chan-blue, #7c3aed) 45%, transparent);
     --cm-blue-46: color-mix(in srgb, var(--chan-blue) 46%, transparent);
     --cm-blue-50: color-mix(in srgb, var(--chan-blue) 50%, transparent);
     --cm-blue-55: color-mix(in srgb, var(--chan-blue) 55%, transparent);
@@ -511,56 +517,56 @@
       --cm-amber-strong-68-black: rgb(148, 81, 4);
       --cm-amber-strong-80-black: rgb(174, 95, 5);
       --cm-amber-strong-82-black: rgb(178, 98, 5);
-      --cm-blue-10: rgba(37, 99, 235, 0.1);
-      --cm-blue-10-card: rgb(233, 239, 253);
-      --cm-blue-12: rgba(37, 99, 235, 0.12);
-      --cm-blue-12-white: rgb(229, 236, 253);
-      --cm-blue-14: rgba(37, 99, 235, 0.14);
-      --cm-blue-15: rgba(37, 99, 235, 0.15);
-      --cm-blue-16: rgba(37, 99, 235, 0.16);
-      --cm-blue-18: rgba(37, 99, 235, 0.18);
-      --cm-blue-18-card: rgb(216, 227, 251);
-      --cm-blue-18-line: rgb(191, 206, 238);
-      --cm-blue-20: rgba(37, 99, 235, 0.2);
-      --cm-blue-20-white: rgb(211, 224, 251);
-      --cm-blue-22: rgba(37, 99, 235, 0.22);
-      --cm-blue-22-2: rgba(37, 99, 235, 0.22);
-      --cm-blue-22-line: rgb(184, 201, 238);
-      --cm-blue-22-white: rgb(207, 221, 251);
-      --cm-blue-25: rgba(37, 99, 235, 0.25);
-      --cm-blue-28: rgba(37, 99, 235, 0.28);
-      --cm-blue-28-wc-border: rgb(139, 161, 206);
-      --cm-blue-32: rgba(37, 99, 235, 0.32);
-      --cm-blue-34: rgba(37, 99, 235, 0.34);
-      --cm-blue-35: rgba(37, 99, 235, 0.35);
-      --cm-blue-36-line: rgb(157, 183, 238);
-      --cm-blue-38-line: rgb(154, 180, 237);
-      --cm-blue-40: rgba(37, 99, 235, 0.4);
-      --cm-blue-42: rgba(37, 99, 235, 0.42);
-      --cm-blue-45: rgba(37, 99, 235, 0.45);
-      --cm-blue-46: rgba(37, 99, 235, 0.46);
-      --cm-blue-50: rgba(37, 99, 235, 0.5);
-      --cm-blue-55: rgba(37, 99, 235, 0.55);
-      --cm-blue-55-white: rgb(135, 169, 244);
-      --cm-blue-58: rgba(37, 99, 235, 0.58);
-      --cm-blue-60: rgba(37, 99, 235, 0.6);
-      --cm-blue-60-black: rgb(22, 59, 141);
-      --cm-blue-60-white: rgb(124, 161, 243);
-      --cm-blue-62: rgba(37, 99, 235, 0.62);
-      --cm-blue-62-black: rgb(23, 61, 146);
-      --cm-blue-65-black: rgb(24, 64, 153);
-      --cm-blue-7: rgba(37, 99, 235, 0.07);
-      --cm-blue-70: rgba(37, 99, 235, 0.7);
-      --cm-blue-70-black: rgb(26, 69, 165);
-      --cm-blue-78-ink: rgb(33, 83, 192);
-      --cm-blue-8: rgba(37, 99, 235, 0.08);
-      --cm-blue-8-white: rgb(238, 243, 253);
-      --cm-blue-80-black: rgb(30, 79, 188);
-      --cm-blue-86-black: rgb(32, 85, 202);
-      --cm-blue-88-black: rgb(33, 87, 207);
-      --cm-blue-9: rgba(37, 99, 235, 0.09);
-      --cm-blue-90-black: rgb(33, 89, 212);
-      --cm-blue-soft-48-wc-bg: rgb(247, 249, 255);
+      --cm-blue-10: rgba(124, 58, 237, 0.1);
+      --cm-blue-10-card: rgb(242, 235, 253);
+      --cm-blue-12: rgba(124, 58, 237, 0.12);
+      --cm-blue-12-white: rgb(239, 231, 253);
+      --cm-blue-14: rgba(124, 58, 237, 0.14);
+      --cm-blue-15: rgba(124, 58, 237, 0.15);
+      --cm-blue-16: rgba(124, 58, 237, 0.16);
+      --cm-blue-18: rgba(124, 58, 237, 0.18);
+      --cm-blue-18-card: rgb(231, 220, 252);
+      --cm-blue-18-line: rgb(207, 199, 239);
+      --cm-blue-20: rgba(124, 58, 237, 0.2);
+      --cm-blue-20-white: rgb(229, 216, 251);
+      --cm-blue-22: rgba(124, 58, 237, 0.22);
+      --cm-blue-22-2: rgba(124, 58, 237, 0.22);
+      --cm-blue-22-line: rgb(203, 192, 239);
+      --cm-blue-22-white: rgb(226, 212, 251);
+      --cm-blue-25: rgba(124, 58, 237, 0.25);
+      --cm-blue-28: rgba(124, 58, 237, 0.28);
+      --cm-blue-28-wc-border: rgb(164, 149, 207);
+      --cm-blue-32: rgba(124, 58, 237, 0.32);
+      --cm-blue-34: rgba(124, 58, 237, 0.34);
+      --cm-blue-35: rgba(124, 58, 237, 0.35);
+      --cm-blue-36-line: rgb(189, 168, 238);
+      --cm-blue-38-line: rgb(187, 165, 238);
+      --cm-blue-40: rgba(124, 58, 237, 0.4);
+      --cm-blue-42: rgba(124, 58, 237, 0.42);
+      --cm-blue-45: rgba(124, 58, 237, 0.45);
+      --cm-blue-46: rgba(124, 58, 237, 0.46);
+      --cm-blue-50: rgba(124, 58, 237, 0.5);
+      --cm-blue-55: rgba(124, 58, 237, 0.55);
+      --cm-blue-55-white: rgb(183, 147, 245);
+      --cm-blue-58: rgba(124, 58, 237, 0.58);
+      --cm-blue-60: rgba(124, 58, 237, 0.6);
+      --cm-blue-60-black: rgb(74, 35, 142);
+      --cm-blue-60-white: rgb(176, 137, 244);
+      --cm-blue-62: rgba(124, 58, 237, 0.62);
+      --cm-blue-62-black: rgb(77, 36, 147);
+      --cm-blue-65-black: rgb(81, 38, 154);
+      --cm-blue-7: rgba(124, 58, 237, 0.07);
+      --cm-blue-70: rgba(124, 58, 237, 0.7);
+      --cm-blue-70-black: rgb(87, 41, 166);
+      --cm-blue-78-ink: rgb(100, 51, 193);
+      --cm-blue-8: rgba(124, 58, 237, 0.08);
+      --cm-blue-8-white: rgb(245, 239, 254);
+      --cm-blue-80-black: rgb(99, 46, 190);
+      --cm-blue-86-black: rgb(107, 50, 204);
+      --cm-blue-88-black: rgb(109, 51, 209);
+      --cm-blue-9: rgba(124, 58, 237, 0.09);
+      --cm-blue-90-black: rgb(112, 52, 213);
+      --cm-blue-soft-48-wc-bg: rgb(251, 249, 254);
       --cm-card-45-white: rgb(255, 255, 255);
       --cm-card-48: rgba(255, 255, 255, 0.48);
       --cm-card-58-white: rgb(255, 255, 255);

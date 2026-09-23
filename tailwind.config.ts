@@ -39,7 +39,7 @@ const config = {
         charcoal: '#1a1a1a',
         primary: {
           DEFAULT: 'hsl(var(--primary))',
-          dark: '#1d4ed8',
+          dark: '#5b21b6',
           foreground: 'hsl(var(--primary-foreground))'
         },
         secondary: {
