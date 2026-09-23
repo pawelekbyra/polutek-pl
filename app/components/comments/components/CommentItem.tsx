@@ -79,6 +79,14 @@ function CommentItemComponent({
   const [isHighlighted, setIsHighlighted] = useState(false);
   const commentRef = useRef<HTMLDivElement>(null);
 
+  // CommentItem is keyed by comment.id, so React reuses this instance across
+  // refetches — resync from the prop whenever the server's own value changes
+  // (e.g. another tab toggling the heart, or an unrelated cache invalidation)
+  // instead of only ever reading it once on mount.
+  useEffect(() => {
+    setIsHearted(comment.isHearted || false);
+  }, [comment.isHearted]);
+
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.hash === `#comment-${comment.id}`) {
       setIsHighlighted(true);

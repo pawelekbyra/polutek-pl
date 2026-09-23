@@ -226,15 +226,44 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     ? comments.find((c) => c.id === replyTo)?.author?.displayName
     : null;
 
-  const { mutate: likeMutate } = likeMutation;
-  const { mutate: dislikeMutate } = dislikeMutation;
+  const { mutateAsync: likeMutateAsync } = likeMutation;
+  const { mutateAsync: dislikeMutateAsync } = dislikeMutation;
   const { mutate: deleteMutate } = deleteMutation;
   const { mutate: pinMutate } = pinMutation;
   const { mutate: editMutate } = editMutation;
   const { mutate: reportMutate } = reportMutation;
 
-  const handleLike = useCallback((id: string) => likeMutate(id), [likeMutate]);
-  const handleDislike = useCallback((id: string) => dislikeMutate(id), [dislikeMutate]);
+  // likeMutation and dislikeMutation share the same underlying react-query
+  // mutation (see useComments.ts), so its own isPending/variables only ever
+  // reflect the single most recent call — reacting to comment B while
+  // comment A's request is still in flight would otherwise re-enable A's
+  // buttons before A's request has settled. Track per-comment pending state
+  // locally instead, keyed off each call's own settlement.
+  const [pendingReactionIds, setPendingReactionIds] = useState<Set<string>>(new Set());
+
+  const markReactionSettled = useCallback((id: string) => {
+    setPendingReactionIds((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }, []);
+
+  const handleLike = useCallback(
+    (id: string) => {
+      setPendingReactionIds((prev) => new Set(prev).add(id));
+      void likeMutateAsync(id).finally(() => markReactionSettled(id));
+    },
+    [likeMutateAsync, markReactionSettled],
+  );
+  const handleDislike = useCallback(
+    (id: string) => {
+      setPendingReactionIds((prev) => new Set(prev).add(id));
+      void dislikeMutateAsync(id).finally(() => markReactionSettled(id));
+    },
+    [dislikeMutateAsync, markReactionSettled],
+  );
   const handleReply = useCallback(
     (id: string) => {
       setReplyTo(id);
@@ -257,13 +286,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     [reportMutate],
   );
   const noop = useCallback(() => {}, []);
-
-  // likeMutation and dislikeMutation share the same underlying react-query
-  // mutation (see useComments.ts), so isPending/variables are identical on
-  // both; reading either tells us which single comment is being mutated.
-  const pendingReactionCommentId = likeMutation.isPending
-    ? (likeMutation.variables as { commentId: string } | undefined)?.commentId
-    : undefined;
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -512,7 +534,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                 onReply={handleReply}
                 onDelete={handleDelete}
                 onPin={handlePin}
-                isReactionPending={pendingReactionCommentId === comment.id}
+                isReactionPending={pendingReactionIds.has(comment.id)}
                 onEdit={handleEdit}
                 onReport={handleReport}
               />
@@ -534,7 +556,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                       onReply={noop}
                       onDelete={handleDelete}
                       onPin={noop}
-                      isReactionPending={pendingReactionCommentId === reply.id}
+                      isReactionPending={pendingReactionIds.has(reply.id)}
                       onEdit={handleEdit}
                       onReport={handleReport}
                       isReply={true}

@@ -72,8 +72,9 @@ const hotspotExceptions: Record<string, HotspotException> = {
     reason: knownUiHotspotReason,
   },
   "app/components/comments/EmbeddedComments.tsx": {
-    maxLines: 600,
-    reason: knownUiHotspotReason,
+    maxLines: 610,
+    reason:
+      "Pre-existing large UI module tracked in #948, tolerated temporarily after Next 15 recovery; nudged up slightly for per-comment reaction-pending tracking (fixes a cross-comment race in the shared react-query mutation state) — should be split before raising product launch readiness.",
   },
   "app/components/channel/SidebarPlaylist.tsx": {
     maxLines: 470,
