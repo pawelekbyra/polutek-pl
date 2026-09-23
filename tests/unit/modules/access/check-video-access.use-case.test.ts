@@ -2,18 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { checkVideoAccess } from '@/lib/modules/access/application/check-video-access.use-case';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { MainChannelService } from '@/lib/modules/channel';
-import { getPatronStatus } from '@/lib/modules/patron';
 import { AccessTier, VideoStatus } from '@prisma/client';
-import { ok } from '@/lib/modules/shared/result';
 
 vi.mock('@/lib/modules/channel', () => ({
   MainChannelService: {
     getRequired: vi.fn(),
   },
-}));
-
-vi.mock('@/lib/modules/patron', () => ({
-  getPatronStatus: vi.fn(),
 }));
 
 describe('checkVideoAccess Use Case Matrix', () => {
@@ -101,53 +95,26 @@ describe('checkVideoAccess Use Case Matrix', () => {
     });
   });
 
-  describe('Patron Tier', () => {
+  describe('Patron Tier (2026-09-22: no longer payment-gated, only sign-in — see CLAUDE.md)', () => {
     const patronVideo = { ...baseVideo, tier: AccessTier.PATRON };
 
-    it('denies guest with PATRON_REQUIRED (standard project behavior)', async () => {
+    it('denies guest with LOGIN_REQUIRED (support no longer gates access)', async () => {
       mockPrisma.video.findFirst.mockResolvedValue(patronVideo);
       const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'guest' }));
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.hasAccess).toBe(false);
-        expect(result.data.reason).toBe('PATRON_REQUIRED');
+        expect(result.data.reason).toBe('LOGIN_REQUIRED');
       }
     });
 
-    it('denies logged-in non-patron with PATRON_REQUIRED (no active grants)', async () => {
+    it('allows any signed-in user regardless of PatronGrant', async () => {
       mockPrisma.video.findFirst.mockResolvedValue(patronVideo);
       mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false });
-      (getPatronStatus as any).mockResolvedValue(ok({ activeGrants: [] }));
-
-      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.hasAccess).toBe(false);
-        expect(result.data.reason).toBe('PATRON_REQUIRED');
-      }
-    });
-
-    it('allows patron based on active PatronGrant (ignoring User.isPatron false)', async () => {
-      mockPrisma.video.findFirst.mockResolvedValue(patronVideo);
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false });
-      (getPatronStatus as any).mockResolvedValue(ok({ activeGrants: [{ id: 'grant-1' }] }));
 
       const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
       expect(result.ok).toBe(true);
       if (result.ok) expect(result.data.hasAccess).toBe(true);
-    });
-
-    it('denies patron based on missing active PatronGrant (ignoring User.isPatron true)', async () => {
-      mockPrisma.video.findFirst.mockResolvedValue(patronVideo);
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false });
-      (getPatronStatus as any).mockResolvedValue(ok({ activeGrants: [] }));
-
-      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.hasAccess).toBe(false);
-        expect(result.data.reason).toBe('PATRON_REQUIRED');
-      }
     });
 
     it('denies for missing local user', async () => {
@@ -158,6 +125,17 @@ describe('checkVideoAccess Use Case Matrix', () => {
       if (result.ok) {
         expect(result.data.hasAccess).toBe(false);
         expect(result.data.reason).toBe('FORBIDDEN');
+      }
+    });
+
+    it('denies deleted user with DELETED', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue(patronVideo);
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: true });
+      const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.hasAccess).toBe(false);
+        expect(result.data.reason).toBe('DELETED');
       }
     });
   });

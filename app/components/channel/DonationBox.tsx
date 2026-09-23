@@ -15,32 +15,34 @@ import { useCheckoutFlow, checkoutStripePromise } from "@/lib/hooks/useCheckoutF
 
 interface DonationBoxProps {
   videoTitle?: string;
-  /** True when the signed-in viewer already holds an active Patron grant. */
+  /**
+   * @deprecated Unused since 2026-09-22 — support no longer gates access (see CLAUDE.md), so
+   * every signed-in viewer sees the same tip-jar variant regardless of Patron status. Kept in
+   * the prop type only so existing callers don't need to change; the component ignores it.
+   */
   viewerIsPatron?: boolean;
 }
 
-function getSuggestedAmount(currency: string) {
-  return currency === "PLN" ? 25 : 10;
-}
-
-export default function DonationBox({ videoTitle, viewerIsPatron = false }: DonationBoxProps) {
+export default function DonationBox({ videoTitle }: DonationBoxProps) {
   const { t, language } = useLanguage();
   const isPl = language === "pl";
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
+  // 2026-09-22: support is a voluntary, non-refundable donation that grants nothing (see
+  // CLAUDE.md) — DonationBox always renders the tip-jar variant (free amount, "Bramka
+  // Napiwkowa"), never the old pay-to-unlock variant, for every signed-in viewer.
+  const viewerIsPatron = true;
+
   const [selectedCurrency, setSelectedCurrency] = useState<string>(t.currency);
-  // Patrons see an empty field (just the cursor/placeholder) rather than a pre-filled
-  // suggested amount — they're free to tip any amount, so nothing should look "chosen for
-  // them". Non-patrons get the fixed gate price here regardless (overridden by the
-  // non-editable-amount effect below anyway).
-  const [amount, setAmount] = useState<number | "">(viewerIsPatron ? "" : getSuggestedAmount(t.currency));
+  // Free-form amount field: the viewer is never buying access, so nothing should look
+  // "chosen for them".
+  const [amount, setAmount] = useState<number | "">("");
   const [isRegulaminOpen, setIsRegulaminOpen] = useState(false);
   const [isPolitykaOpen, setIsPolitykaOpen] = useState(false);
 
   const termsErrorId = "donation-terms-error";
-  const withdrawalErrorId = "donation-withdrawal-error";
 
   const {
     userId,
@@ -52,9 +54,6 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
     isTermsAccepted,
     showTermsError,
     onTermsCheckedChange,
-    isWithdrawalAcknowledged,
-    showWithdrawalError,
-    onWithdrawalCheckedChange,
     isLoading,
     clientSecret,
     paymentId,
@@ -84,9 +83,9 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
 
   const currencyKey = selectedCurrency.toUpperCase() as SupportedCurrency;
   const checkoutMinAmount = minimums[currencyKey] ?? minimums.PLN;
-  // Non-patrons pay a fixed gate price (the patron threshold), so a successful tip always grants
-  // access as the copy promises. Existing patrons already have access, so they may support with any
-  // amount down to the admin-configured free-amount box minimum (independent of the gate price).
+  // patronThreshold/the non-patron branch below are unused now that every viewer gets the
+  // free-amount box minimum (see viewerIsPatron above) — kept only so this file stays a small
+  // diff if the fixed-price gate ever needs to come back.
   const patronThreshold = patronThresholds[currencyKey] ?? checkoutMinAmount;
   const patronBoxMin = patronBoxMinimums[currencyKey] ?? checkoutMinAmount;
   const minAmount = viewerIsPatron ? patronBoxMin : patronThreshold;
@@ -103,8 +102,8 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
 
-  // Non-patrons pay the fixed, admin-set patron threshold — the amount is not user-editable,
-  // so a successful tip always grants access as the copy promises.
+  // Dead with viewerIsPatron always true (see above) — kept for the same reason as
+  // patronThreshold.
   useEffect(() => {
     if (!viewerIsPatron) setAmount(minAmount);
   }, [viewerIsPatron, minAmount]);
@@ -122,26 +121,26 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
   // Deep-link support: Navbar's "Wspieraj"/"Support" button links here with ?support=1#donations
   // instead of duplicating any checkout logic — the browser's native anchor scroll handles
   // #donations, and this just calls the same onSupport() the box's own button uses. Only
-  // auto-calls it when onSupport() would actually proceed to checkout (signed in, terms and
-  // withdrawal consent already accepted, valid amount) rather than unconditionally —
-  // isTermsAccepted/isWithdrawalAcknowledged always start false on a fresh mount, so calling
-  // onSupport() unconditionally here surfaced its "accept the terms" error immediately on
-  // essentially every click, before the viewer had even seen the box. This still fast-paths a
-  // repeat tip when everything is already filled in; otherwise it's a no-op beyond revealing the
-  // box. Runs once per param, then strips it so a refresh/back-nav doesn't retrigger it.
+  // auto-calls it when onSupport() would actually proceed to checkout (signed in, terms already
+  // accepted, valid amount) rather than unconditionally — isTermsAccepted always starts false on
+  // a fresh mount, so calling onSupport() unconditionally here surfaced its "accept the terms"
+  // error immediately on essentially every click, before the viewer had even seen the box. This
+  // still fast-paths a repeat tip when everything is already filled in; otherwise it's a no-op
+  // beyond revealing the box. Runs once per param, then strips it so a refresh/back-nav doesn't
+  // retrigger it.
   const autoOpenTriggeredRef = useRef(false);
   useEffect(() => {
     if (autoOpenTriggeredRef.current) return;
     if (searchParams.get("support") !== "1") return;
     autoOpenTriggeredRef.current = true;
-    if (userId && isTermsAccepted && isWithdrawalAcknowledged && amount !== "" && amount >= minAmount) {
+    if (userId && isTermsAccepted && amount !== "" && amount >= minAmount) {
       onSupport();
     }
     const params = new URLSearchParams(searchParams.toString());
     params.delete("support");
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [searchParams, onSupport, router, pathname, userId, isTermsAccepted, isWithdrawalAcknowledged, amount, minAmount]);
+  }, [searchParams, onSupport, router, pathname, userId, isTermsAccepted, amount, minAmount]);
 
   // Existing patrons get a deliberately different surface. They already own everything the
   // non-patron box sells, so this variant stops being a sales/access gate and becomes a plain
@@ -156,25 +155,21 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
     : (isPl ? "Strefa Fenkjuu 👑" : "Thank You Zone 👑");
 
   const subtitle = isTipGate
-    ? (isPl ? "Nic tu nie kupujesz. Tu się tylko dziękuje." : "Nothing to buy here. Just a thank-you.")
+    ? ""
     : (isPl
         ? "Wspieraj tworzenie wartościowych treści"
         : "Support valuable independent content");
 
   const bodyCopy = isTipGate
     ? (isPl
-        ? "Masz komplet. Dożywotni dostęp, cała Strefa Fenkjuu i wszystko, co dopiero powstanie — już Twoje. Tutaj nie kupujesz absolutnie niczego. To jest bramka napiwkowa: wrzucasz tyle, ile uznasz, że było warte, klepiesz mnie po plecach i lecisz dalej. Bez subskrypcji, bez haczyków, w stu procentach z czystej sympatii. 🎉"
-        : "You have the full set. Lifetime access, the whole Thank You Zone, plus everything still to come — already yours. There is absolutely nothing to buy here. This is the tip gate: drop in whatever you reckon it was worth, give me a pat on the back and carry on. No subscription, no catch, one hundred percent good vibes. 🎉")
+        ? "Bez wsparcia widzów tego projektu by nie było. Dziękuję."
+        : "This project wouldn't exist without viewers' support. Thank you.")
     : (isPl
         ? "Jednorazowe wsparcie pomaga rozwijać kanał i odblokowuje dożywotni dostęp do Strefy Fenkjuu."
         : "A one-time tip helps grow the channel and unlocks lifetime Thank You Zone access.");
 
   const bullets: { text: string; emoji?: string }[] = isTipGate
-    ? [
-        { emoji: "👑", text: isPl ? "Zero nowych obietnic — masz już wszystko" : "Zero new promises — you already own it all" },
-        { emoji: "🎚️", text: isPl ? "Kwota dowolna: od symbolicznej po legendarną" : "Any amount: from symbolic to legendary" },
-        { emoji: "🚀", text: isPl ? "Wszystko leci w kolejne materiały (i w kawę)" : "It all goes into the next videos (and coffee)" },
-      ]
+    ? []
     : [
         { text: isPl ? "Twoje wsparcie pomaga w rozwoju kanału" : "Your support helps the channel grow" },
         { text: isPl ? "Dostęp do specjalnych materiałów" : "Access to special materials" },
@@ -224,7 +219,6 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
                 <h4 className="font-brand m-0 text-[21px] font-extrabold leading-tight tracking-[-0.035em] text-[var(--chan-ink)]">
                   {title}
                 </h4>
-                <p className="mt-1 font-sans text-[13px] font-medium tracking-[-0.015em] text-[var(--chan-body)]">{subtitle}</p>
               </div>
             </div>
             <p className="m-[0_0_14px] font-sans text-[13px] leading-[1.6] text-[var(--chan-body)]">{bodyCopy}</p>
@@ -244,31 +238,27 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
           </>
         )}
 
-        <ul className="m-[0_0_16px] flex flex-col gap-[9px] font-sans text-[13px]">
-          {bullets.map((bullet) => (
-            <li
-              key={bullet.text}
-              className="flex items-start gap-[9px] text-[var(--chan-ink)]"
-            >
-              {bullet.emoji ? (
-                <span aria-hidden="true" className="shrink-0 text-[15px] leading-[1.25]">{bullet.emoji}</span>
-              ) : (
-                <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full bg-[var(--chan-amber)] text-[9px] font-black text-[var(--chan-amber-ink)] shadow-[0_2px_5px_-1px_var(--cm-amber-48)]">✓</span>
-              )}
-              {bullet.text}
-            </li>
-          ))}
-        </ul>
+        {bullets.length > 0 && (
+          <ul className="m-[0_0_16px] flex flex-col gap-[9px] font-sans text-[13px]">
+            {bullets.map((bullet) => (
+              <li
+                key={bullet.text}
+                className="flex items-start gap-[9px] text-[var(--chan-ink)]"
+              >
+                {bullet.emoji ? (
+                  <span aria-hidden="true" className="shrink-0 text-[15px] leading-[1.25]">{bullet.emoji}</span>
+                ) : (
+                  <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full bg-[var(--chan-amber)] text-[9px] font-black text-[var(--chan-amber-ink)] shadow-[0_2px_5px_-1px_var(--cm-amber-48)]">✓</span>
+                )}
+                {bullet.text}
+              </li>
+            ))}
+          </ul>
+        )}
 
         {showTermsError && (
           <p id={termsErrorId} role="alert" className="mb-2 text-[11px] font-bold uppercase tracking-widest text-destructive">
             {t.pleaseAcceptTerms}
-          </p>
-        )}
-
-        {showWithdrawalError && (
-          <p id={withdrawalErrorId} role="alert" className="mb-2 text-[11px] font-bold uppercase tracking-widest text-destructive">
-            {t.pleaseAcceptWithdrawal}
           </p>
         )}
 
@@ -303,7 +293,7 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
           )}
         </button>
 
-        <label className="mt-3 flex cursor-pointer items-start justify-center gap-2 px-1 text-center">
+        <label className="mt-3 flex cursor-pointer items-start gap-2">
           <Checkbox
             id="donation-accept-terms"
             checked={isTermsAccepted}
@@ -336,23 +326,6 @@ export default function DonationBox({ videoTitle, viewerIsPatron = false }: Dona
                 </button>
               </>
             )}
-          </span>
-        </label>
-
-        {/* Separate, explicit consent — distinct from the Terms/Privacy checkbox above — required
-            by art. 38(1)(13) of the Polish Consumer Rights Act before a purchase that grants
-            immediate digital-content access can waive the 14-day withdrawal right. */}
-        <label className="mt-2 flex cursor-pointer items-start justify-center gap-2 px-1 text-center">
-          <Checkbox
-            id="donation-accept-withdrawal"
-            checked={isWithdrawalAcknowledged}
-            onCheckedChange={onWithdrawalCheckedChange}
-            aria-invalid={showWithdrawalError}
-            aria-describedby={showWithdrawalError ? withdrawalErrorId : undefined}
-            className="mt-[2px] shrink-0"
-          />
-          <span className="font-sans text-[11px] leading-[1.4] text-[var(--chan-muted)]">
-            {t.acceptWithdrawal}
           </span>
         </label>
       </div>

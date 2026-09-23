@@ -23,7 +23,7 @@ const Footer = () => {
 
         <span className="font-brand order-2 flex items-center gap-2 text-center text-[12px] font-bold uppercase tracking-[0.22em] text-[var(--chan-muted-2)] md:order-none">
           <span aria-hidden="true" className="inline-flex h-1 w-1 rounded-full bg-[var(--chan-blue)]" />
-          KUTASHI.COM
+          WWW.PAWELPERFECT.PL
           <span aria-hidden="true" className="inline-flex h-1 w-1 rounded-full bg-[var(--chan-blue)]" />
         </span>
 

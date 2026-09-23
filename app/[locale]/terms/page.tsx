@@ -8,8 +8,8 @@ import { notFound } from 'next/navigation';
 import { getLocalizedHref } from '@/lib/i18n/routing';
 
 export const metadata = {
-  title: 'Terms of Service — KUTASHI.COM',
-  description: 'Terms of Service for KUTASHI.COM: usage rules, supporting the creator, access to the Thank You Zone, complaints.',
+  title: 'Terms of Service — WWW.PAWELPERFECT.PL',
+  description: 'Terms of Service for WWW.PAWELPERFECT.PL: usage rules, voluntary support for the Creator, complaints.',
 };
 
 export default async function TermsPage(props: { params: Promise<{ locale: string }> }) {
@@ -20,7 +20,7 @@ export default async function TermsPage(props: { params: Promise<{ locale: strin
       <Navbar />
       <main className="mx-auto max-w-3xl px-4 py-16">
         <header className="mb-10 border-b-2 border-[var(--chan-ink)]/10 pb-8">
-          <h1 className="text-3xl font-black uppercase tracking-tighter">Terms of Service — KUTASHI.COM</h1>
+          <h1 className="text-3xl font-black uppercase tracking-tighter">Terms of Service — WWW.PAWELPERFECT.PL</h1>
           <p className="mt-2 text-sm text-[var(--chan-muted)]">{LEGAL_EFFECTIVE_DATE_EN}</p>
           <p className="mt-1 text-sm text-[var(--chan-muted)]">
             This is a translation provided for convenience. In case of any discrepancy, the Polish-language version

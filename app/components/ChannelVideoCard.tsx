@@ -42,13 +42,14 @@ export default function ChannelVideoCard({
     setMounted(true);
   }, []);
 
-  const isPatron = role === "ADMIN" || propIsPatron === true;
   const displayTitle = getVideoDisplayTitle(video, language);
 
+  // 2026-09-22: PATRON tier no longer requires payment, only sign-in (see CLAUDE.md,
+  // checkVideoAccess) — same gate as LOGGED_IN.
   const clientHasAccess =
     video.tier === "PUBLIC" ||
     (video.tier === "LOGGED_IN" && isLoggedIn) ||
-    (video.tier === "PATRON" && isPatron);
+    (video.tier === "PATRON" && isLoggedIn);
 
   const hasAccess = clientHasAccess;
 
@@ -66,7 +67,7 @@ export default function ChannelVideoCard({
     }
 
     if (video.tier === "PATRON") {
-      if (!hasAccess) return { text: t.patronOnly, variant: "locked" };
+      if (!hasAccess) return { text: isPl ? "Login" : "Login", variant: "locked" };
       return { text: isPl ? "Odblok." : "Unlocked", variant: "unlocked" };
     }
 
@@ -74,11 +75,8 @@ export default function ChannelVideoCard({
   };
 
   const badge = getAccessBadge();
-  const lockState = !hasAccess
-    ? video.tier === "PATRON"
-      ? "PATRON_REQUIRED"
-      : "LOGIN_REQUIRED"
-    : null;
+  // 2026-09-22: signing in is the only gate now, even for PATRON tier (see CLAUDE.md).
+  const lockState = !hasAccess ? "LOGIN_REQUIRED" : null;
 
   return (
     <div className="channel-video-card group cursor-pointer flex flex-col">

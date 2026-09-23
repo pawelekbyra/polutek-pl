@@ -1,11 +1,5 @@
 /** @vitest-environment jsdom */
 
-// NOTE: BrandName currently renders a temporary text wordmark ("KUTASHI.COM") behind the
-// TEMP_LOGO_AS_TEXT flag in app/components/BrandName.tsx — see CLAUDE.md "2026-09-20:
-// temporary test-mode UI changes" for the exact revert steps. These tests cover that
-// temporary behavior; when TEMP_LOGO_AS_TEXT is reverted to `false`, restore the original
-// assertions (an accessible <img src="/logo-glasses.svg"> with alt "www.pawelperfect.pl").
-
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -14,17 +8,20 @@ import BrandName from "@/app/components/BrandName";
 describe("BrandName", () => {
   afterEach(() => cleanup());
 
-  it("renders the KUTASHI.COM text wordmark by default", () => {
+  it("renders the glasses-mark logo image by default", () => {
     render(<BrandName />);
-    expect(screen.getByText("KUTASHI")).not.toBeNull();
-    expect(screen.getByText(".COM")).not.toBeNull();
+    const img = screen.getByAltText("www.pawelperfect.pl");
+
+    expect(img).not.toBeNull();
+    expect(img.getAttribute("src")).toBe("/logo-glasses.svg");
   });
 
-  it("is decorative (aria-hidden) when its parent already supplies the accessible name", () => {
+  it("is decorative (aria-hidden, empty alt) when its parent already supplies the accessible name", () => {
     const { container } = render(<BrandName decorative />);
     const mark = container.firstElementChild;
 
     expect(mark?.getAttribute("aria-hidden")).toBe("true");
+    expect(mark?.getAttribute("alt")).toBe("");
   });
 
   it("is not aria-hidden when not decorative", () => {

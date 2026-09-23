@@ -7,7 +7,6 @@ import { MainChannelService } from "@/lib/modules/channel";
 // policy class — routing it through that barrel would force every such test to
 // also mock MainChannelPolicy. Allowlisted in scripts/check-architecture.ts.
 import { MainChannelPolicy } from "@/lib/modules/channel/domain/channel.policy";
-import { getPatronStatus } from "@/lib/modules/patron";
 import { AccessTier, VideoStatus } from "@prisma/client";
 import { canUseDemoFallbacks } from "@/lib/feature-flags";
 
@@ -93,12 +92,12 @@ export async function checkVideoAccess(
   if (video.tier === AccessTier.PUBLIC) return ok({ hasAccess: true });
 
   if (actor.type === 'guest') {
-    // If the frontend expects PATRON_REQUIRED reason even for guest on PATRON videos, we return it.
-    // Otherwise LOGIN_REQUIRED is the first barrier.
-    const reason = video.tier === AccessTier.PATRON ? "PATRON_REQUIRED" : "LOGIN_REQUIRED";
+    // 2026-09-22: support no longer gates access (see CLAUDE.md) — signing in is the only
+    // barrier for PATRON-tier videos too, so guests always see LOGIN_REQUIRED, never
+    // PATRON_REQUIRED.
     return ok({
         hasAccess: false,
-        reason,
+        reason: "LOGIN_REQUIRED",
         requiredTier: video.tier
     });
   }
@@ -117,20 +116,12 @@ export async function checkVideoAccess(
   if (!user) return ok({ hasAccess: false, reason: "FORBIDDEN" });
   if (user.isDeleted) return ok({ hasAccess: false, reason: "DELETED" });
 
-  if (video.tier === AccessTier.LOGGED_IN) return ok({ hasAccess: true });
-
-  if (video.tier === AccessTier.PATRON) {
-    const patronStatusResult = await getPatronStatus(user.id, ctx);
-
-    if (patronStatusResult.ok && patronStatusResult.data.activeGrants.length > 0) {
-      return ok({ hasAccess: true });
-    }
-
-    return ok({
-        hasAccess: false,
-        reason: "PATRON_REQUIRED",
-        requiredTier: AccessTier.PATRON
-    });
+  // 2026-09-22: the Regulamin/Terms no longer sell access — every signed-in user gets
+  // PATRON-tier content, same as LOGGED_IN. Support is a voluntary, non-refundable donation
+  // that grants nothing extra (see CLAUDE.md). Do not reintroduce a PatronGrant check here
+  // without an explicit business-model decision to revert.
+  if (video.tier === AccessTier.LOGGED_IN || video.tier === AccessTier.PATRON) {
+    return ok({ hasAccess: true });
   }
 
   return ok({ hasAccess: false, reason: "FORBIDDEN" });

@@ -112,139 +112,90 @@ export function LegalOwnerBlockEn({ leadIn }: { leadIn: string }) {
   );
 }
 
+const REGULAMIN_CONTACT_EMAIL = 'support@pawelperfect.pl';
+
 /** Full Terms of Service body (no page chrome), shared by the /regulamin page and the support-box modal. */
 export function RegulaminContent() {
   return (
     <>
-      <LegalSummary
-        items={[
-          'Oglądanie publicznych filmów jest darmowe i nie wymaga konta.',
-          'Jednorazowa wpłata w kwocie wskazanej w serwisie daje bezterminowy dostęp do Strefy Fenkjuu na czas funkcjonowania serwisu lub tej części serwisu. Bez subskrypcji.',
-          'Dostęp dostajesz od razu, dlatego — za Twoją wyraźną zgodą — po jego pełnym uruchomieniu nie przysługuje odstąpienie od umowy.',
-          <>Reklamacje: napisz na {OWNER.email}, odpowiadamy do 14 dni.</>,
-        ]}
-      />
-
       <div className="space-y-10">
         <LegalSection nr="1" title="Kto prowadzi serwis">
-          <LegalOwnerBlock leadIn="Sprzedawcą serwisu KUTASHI.COM jest" />
+          <ol className="list-decimal space-y-2 pl-5">
+            <li>
+              Serwis WWW.PAWELPERFECT.PL prowadzi Paweł Perfect, osoba fizyczna, adres do korespondencji: ul. Złota 75,
+              00-819 Warszawa, e-mail: <a href={`mailto:${REGULAMIN_CONTACT_EMAIL}`} className="underline hover:text-primary">{REGULAMIN_CONTACT_EMAIL}</a> (dalej: „Twórca").
+            </li>
+            <li>Serwis ma charakter niekomercyjny. Twórca nie sprzedaje w nim towarów, usług ani treści cyfrowych.</li>
+          </ol>
         </LegalSection>
 
         <LegalSection nr="2" title="Co znajdziesz w serwisie i wymagania techniczne">
-          <p>
-            KUTASHI.COM to monokanał wideo — jeden, spójny kanał z materiałami wideo. Publiczne filmy oglądasz za darmo i bez konta.
-            Część funkcji (komentarze, materiały dla zalogowanych) wymaga bezpłatnego konta.
-            Strefa Fenkjuu to sekcja z materiałami dodatkowymi, dostępna dla wspierających (§ 4).
-          </p>
-          <p>
-            Do korzystania z serwisu wystarczy urządzenie z aktualną przeglądarką internetową, włączoną obsługą
-            JavaScript i dostępem do internetu. Do założenia konta potrzebny jest adres e-mail. Logowanie obsługuje
-            zewnętrzny dostawca Clerk, a materiały wideo mogą być dostarczane z wykorzystaniem zewnętrznej
-            infrastruktury hostingowej i streamingowej. Nie gwarantujemy poprawnego działania serwisu na nieaktualnych
-            przeglądarkach, urządzeniach bez obsługi współczesnych standardów wideo ani przy blokowaniu skryptów,
-            logowania lub elementów niezbędnych do odtworzenia materiałów.
-          </p>
+          <ol className="list-decimal space-y-2 pl-5">
+            <li>
+              Serwis udostępnia materiały wideo. Dostęp do treści nigdy nie wymaga płatności — dobrowolne wsparcie
+              Twórcy (§ 4) nie wpływa na to, co użytkownik może oglądać.
+            </li>
+            <li>
+              Część materiałów wideo oraz niektóre funkcje, np. komentowanie, wymagają założenia bezpłatnego konta.
+              Pozostałe materiały są dostępne bez logowania.
+            </li>
+            <li>
+              Do korzystania z serwisu potrzebne są urządzenie z aktualną przeglądarką internetową z włączoną obsługą
+              JavaScript oraz dostęp do internetu. Założenie konta wymaga podania adresu e-mail.
+            </li>
+            <li>
+              Logowanie obsługuje zewnętrzny dostawca Clerk. Materiały wideo mogą być dostarczane przez zewnętrzną
+              infrastrukturę hostingową i streamingową.
+            </li>
+            <li>
+              Twórca nie gwarantuje poprawnego działania serwisu w przestarzałych przeglądarkach, na urządzeniach
+              nieobsługujących nowoczesnych standardów wideo ani przy zablokowanych skryptach lub elementach
+              potrzebnych do logowania i odtwarzania.
+            </li>
+          </ol>
         </LegalSection>
 
         <LegalSection nr="3" title="Konto i zasady korzystania">
-          <p>
-            Konto jest bezpłatne i możesz je w każdej chwili usunąć (wystarczy e-mail na adres <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>).
-            Korzystając z serwisu — w szczególności komentując — nie wolno publikować treści bezprawnych,
-            obraźliwych ani spamu. Takie treści możemy usuwać, a w razie powtarzających się naruszeń zablokować konto.
-            Filmy i pozostałe materiały są chronione prawem autorskim i przeznaczone wyłącznie do osobistego użytku.
-          </p>
+          <ol className="list-decimal space-y-2 pl-5">
+            <li>
+              Konto jest bezpłatne i można je usunąć w każdej chwili. Wystarczy wiadomość na adres{' '}
+              <a href={`mailto:${REGULAMIN_CONTACT_EMAIL}`} className="underline hover:text-primary">{REGULAMIN_CONTACT_EMAIL}</a>.
+            </li>
+            <li>
+              W serwisie, w szczególności w komentarzach, nie wolno publikować treści bezprawnych, obraźliwych ani
+              spamu. Twórca może usuwać takie treści, a przy powtarzających się naruszeniach zablokować konto.
+            </li>
+            <li>Materiały w serwisie są chronione prawem autorskim i przeznaczone wyłącznie do użytku osobistego.</li>
+          </ol>
         </LegalSection>
 
-        <LegalSection nr="4" title="Wsparcie i dostęp do Strefy Fenkjuu">
-          <p>
-            Jednorazowa wpłata w kwocie wskazanej w serwisie w momencie wpłaty stanowi cenę za zawarcie umowy
-            o dostarczanie treści cyfrowych i daje Ci <strong>bezterminowy dostęp do Strefy Fenkjuu</strong> — wszystkich
-            obecnych i przyszłych materiałów dodatkowych — na czas funkcjonowania serwisu lub tej części serwisu.
-            Dostęp uruchamiamy niezwłocznie po zaksięgowaniu płatności, na koncie, z którego dokonano wpłaty.
-          </p>
-          <p>
-            Nie ma subskrypcji, płatności cyklicznych ani ukrytych kosztów. Jeżeli w przyszłości kwota wsparcia się zmieni,
-            nie wpływa to na dostęp już przyznany. Twoja wpłata finansuje rozwój projektu — biblioteka materiałów
-            dodatkowych dopiero rośnie i nie gwarantujemy częstotliwości publikacji nowych materiałów.
-          </p>
-          <p>
-            Osoby, które mają już aktywny dostęp do Strefy Fenkjuu, mogą dodatkowo wspierać kanał dowolną kwotą.
-            Taka dodatkowa wpłata jest dobrowolnym wsparciem projektu, nie stanowi ceny ani wynagrodzenia za nowe
-            treści cyfrowe, dodatkowy dostęp, wydłużenie dostępu ani inne świadczenie wzajemne i nie daje żadnych
-            dodatkowych korzyści poza tymi, które użytkownik już posiada. Wpłata jest realizowana jako transakcja
-            płatnicza przez operatora płatności, ale nie zwiększa zakresu praw użytkownika w serwisie.
-          </p>
+        <LegalSection nr="4" title="Wsparcie Twórcy">
+          <ol className="list-decimal space-y-2 pl-5">
+            <li>
+              Osoba posiadająca konto może przekazać Twórcy dobrowolne wsparcie w dowolnej kwocie jako wyraz
+              podziękowania za udostępnione materiały. Przekazanie wsparcia wymaga zalogowania się do serwisu.
+            </li>
+            <li>Wsparcie jest darowizną na rzecz Twórcy. Nie jest ceną ani wynagrodzeniem za jakiekolwiek treści lub usługi.</li>
+            <li>
+              Wsparcie nie daje dostępu do żadnych treści, funkcji, wyróżnień ani innych korzyści. Nie zobowiązuje też
+              Twórcy do żadnego świadczenia, np. do publikowania nowych materiałów.
+            </li>
+            <li>Płatności obsługuje Stripe. Twórca nie przechowuje danych kart płatniczych. Potwierdzenie wpłaty wysyła operator płatności.</li>
+            <li>
+              Wsparcie nie podlega zwrotowi, z wyjątkiem wpłat dokonanych omyłkowo (np. podwójna płatność lub błędna
+              kwota) albo bez zgody posiadacza karty. W takim przypadku napisz niezwłocznie na{' '}
+              <a href={`mailto:${REGULAMIN_CONTACT_EMAIL}`} className="underline hover:text-primary">{REGULAMIN_CONTACT_EMAIL}</a>.
+            </li>
+            <li>Wsparcie nie jest zapłatą za sprzedaż, dlatego Twórca nie wystawia do niego faktur ani rachunków.</li>
+          </ol>
         </LegalSection>
 
-        <LegalSection nr="5" title="Płatności, ceny i faktury">
-          <p>
-            Płatności obsługuje Stripe. Kwoty podawane w serwisie są cenami całkowitymi do zapłaty przez konsumenta.
-            Po udanej płatności otrzymasz potwierdzenie e-mailem. Nie przechowujemy danych Twojej karty.
-          </p>
-          <p>
-            Potwierdzenie zakupu dostępu może obejmować w szczególności: nazwę świadczenia, kwotę płatności,
-            informację o jednorazowym charakterze płatności, datę płatności, identyfikator płatności, informację
-            o uruchomieniu dostępu oraz potwierdzenie zgód dotyczących natychmiastowego dostarczenia treści cyfrowych.
-          </p>
-          <p>
-            Na żądanie nabywcy wystawiamy fakturę zgodnie z obowiązującymi przepisami prawa podatkowego.
-            Żądanie wystawienia faktury może zostać zgłoszone w terminie i na zasadach wynikających z tych przepisów.
-            Status VAT, sposób dokumentowania sprzedaży oraz ewentualne rozliczenia transgraniczne zależą od
-            obowiązujących przepisów podatkowych i statusu sprzedawcy w chwili sprzedaży.
-          </p>
-          <p>
-            Dodatkowe dobrowolne wpłaty osób, które mają już dostęp do Strefy Fenkjuu, nie są dokumentowane jako cena
-            za dostęp do treści cyfrowych, jeżeli nie wiążą się z żadnym świadczeniem wzajemnym po stronie sprzedawcy.
-            Ich kwalifikacja podatkowa i sposób dokumentowania zależą od charakteru danej wpłaty oraz obowiązujących
-            przepisów podatkowych.
-          </p>
-        </LegalSection>
-
-        <LegalSection nr="6" title="Odstąpienie od umowy">
-          <p>
-            Konsumentowi przysługuje 14 dni na odstąpienie od umowy zawartej na odległość. Ponieważ jednak dostęp
-            do Strefy Fenkjuu uruchamiamy natychmiast po płatności, przed wpłatą prosimy Cię o wyraźną zgodę na
-            rozpoczęcie dostarczania treści cyfrowych przed upływem terminu do odstąpienia od umowy oraz o potwierdzenie,
-            że przyjmujesz do wiadomości utratę prawa odstąpienia po pełnym uruchomieniu dostępu.
-          </p>
-          <p>
-            Jeżeli wyrazisz te zgody i dostęp zostanie w pełni uruchomiony, tracisz prawo odstąpienia od umowy
-            o dostarczanie treści cyfrowych niedostarczanych na nośniku materialnym (art. 38 ust. 1 pkt 13 ustawy
-            o prawach konsumenta). Informację o zawarciu umowy i udzielonych zgodach możemy potwierdzić e-mailem.
-          </p>
-          <p>
-            Jeżeli zapłaciłeś, a dostęp nie został uruchomiony — napisz na <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>; naprawimy to albo zwrócimy pieniądze.
-          </p>
-        </LegalSection>
-
-        <LegalSection nr="7" title="Reklamacje i pozasądowe rozwiązywanie sporów">
-          <p>
-            Coś nie działa? Napisz na <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a> —
-            opisz problem i podaj e-mail konta. Odpowiemy najpóźniej w ciągu 14 dni. Odpowiadamy za zgodność treści
-            cyfrowych z umową na zasadach ustawy o prawach konsumenta.
-          </p>
-          <p>
-            Jeżeli treści cyfrowe są niezgodne z umową, konsument może żądać doprowadzenia ich do zgodności z umową.
-            W przypadkach przewidzianych prawem konsument może również złożyć oświadczenie o obniżeniu ceny albo
-            odstąpieniu od umowy.
-          </p>
-          <p>
-            Konsument może skorzystać z pozasądowych sposobów rozpatrywania reklamacji i dochodzenia roszczeń,
-            w szczególności z pomocy miejskiego lub powiatowego rzecznika konsumentów oraz właściwego Wojewódzkiego
-            Inspektoratu Inspekcji Handlowej. Informacje o zasadach dostępu do tych procedur oraz wykazie podmiotów
-            uprawnionych są dostępne w serwisie UOKiK dotyczącym polubownego rozwiązywania sporów konsumenckich.
-            Sprzedawca nie zobowiązuje się z góry do udziału w postępowaniu ADR; decyzję podejmujemy po zapoznaniu się
-            z konkretną sprawą.
-          </p>
-        </LegalSection>
-
-        <LegalSection nr="8" title="Zmiany regulaminu i prawo właściwe">
-          <p>
-            Regulamin możemy zmienić z ważnych powodów (np. zmiana prawa lub funkcji serwisu). O zmianach poinformujemy
-            w serwisie z wyprzedzeniem, a zmiany nie odbierają praw już nabytych — w szczególności przyznanego dostępu
-            do Strefy Fenkjuu. Umowy podlegają prawu polskiemu, co nie pozbawia konsumenta ochrony wynikającej
-            z przepisów bezwzględnie obowiązujących.
-          </p>
+        <LegalSection nr="5" title="Zmiany regulaminu i prawo właściwe">
+          <ol className="list-decimal space-y-2 pl-5">
+            <li>Twórca może zmienić regulamin z ważnych przyczyn, np. zmiany przepisów lub funkcji serwisu.</li>
+            <li>O zmianach informuje w serwisie z co najmniej 14-dniowym wyprzedzeniem.</li>
+            <li>Regulamin podlega prawu polskiemu.</li>
+          </ol>
         </LegalSection>
       </div>
     </>
@@ -253,7 +204,7 @@ export function RegulaminContent() {
 
 const DATA_ROWS = [
   { what: 'Konto i logowanie', data: 'e-mail, nazwa, avatar', why: 'prowadzenie konta i zapewnienie dostępu do funkcji serwisu' },
-  { what: 'Płatności', data: 'kwota, data, identyfikator płatności, e-mail, status dostępu', why: 'realizacja płatności, nadanie dostępu, potwierdzenia i obowiązki podatkowe' },
+  { what: 'Wsparcie (płatności)', data: 'kwota, data, identyfikator płatności, e-mail, status płatności', why: 'obsługa dobrowolnego wsparcia, potwierdzenia i obowiązki podatkowe' },
   { what: 'Komentarze', data: 'treść, nazwa, data', why: 'publiczna dyskusja pod filmami i moderacja' },
   { what: 'E-maile transakcyjne', data: 'adres e-mail', why: 'potwierdzenia wpłat, dostępu, reklamacji i istotnych informacji o usłudze' },
   { what: 'Powiadomienia marketingowe', data: 'adres e-mail', why: 'wysyłka newslettera lub informacji marketingowych, wyłącznie gdy udzielisz odrębnej zgody' },
@@ -274,7 +225,7 @@ export function PolitykaContent() {
 
       <div className="space-y-10">
         <LegalSection nr="1" title="Administrator danych">
-          <LegalOwnerBlock leadIn="Administratorem serwisu KUTASHI.COM jest" />
+          <LegalOwnerBlock leadIn="Administratorem serwisu WWW.PAWELPERFECT.PL jest" />
           <p>W sprawach danych osobowych pisz na adres <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>.</p>
         </LegalSection>
 
@@ -375,145 +326,93 @@ export function PolitykaContent() {
   );
 }
 
+const TERMS_EN_CONTACT_EMAIL = 'support@pawelperfect.pl';
+
 /** Full Terms of Service body (English translation, no page chrome), used by the /en/terms page. */
 export function TermsContentEn() {
   return (
     <>
-      <LegalSummary
-        items={[
-          'Watching public videos is free and does not require an account.',
-          'A one-time payment in the amount shown in the service grants lifetime access to the Thank You Zone for as long as the service (or that part of the service) operates. No subscription.',
-          'You get access right away, so — with your explicit consent — once access is fully activated you no longer have the right to withdraw from the contract.',
-          <>Complaints: email {OWNER.email}, we reply within 14 days.</>,
-        ]}
-      />
-
       <div className="space-y-10">
         <LegalSection nr="1" title="Who runs the service">
-          <LegalOwnerBlockEn leadIn="The Seller operating KUTASHI.COM is" />
+          <ol className="list-decimal space-y-2 pl-5">
+            <li>
+              The service WWW.PAWELPERFECT.PL is run by Paweł Perfect, a private individual, correspondence address:
+              ul. Złota 75, 00-819 Warsaw, Poland, email:{' '}
+              <a href={`mailto:${TERMS_EN_CONTACT_EMAIL}`} className="underline hover:text-primary">{TERMS_EN_CONTACT_EMAIL}</a> (hereinafter: the &ldquo;Creator&rdquo;).
+            </li>
+            <li>The service is non-commercial. The Creator does not sell any goods, services, or digital content through it.</li>
+          </ol>
         </LegalSection>
 
         <LegalSection nr="2" title="What you'll find in the service and technical requirements">
-          <p>
-            KUTASHI.COM operates as a single video channel — one, unified channel of video content. Public videos can be watched for free and without an
-            account. Some features (comments, content for signed-in users) require a free account. The Thank You Zone
-            is a section with bonus content, available to supporters (§ 4).
-          </p>
-          <p>
-            Using the service only requires a device with an up-to-date web browser, JavaScript enabled, and an
-            internet connection. Creating an account requires an email address. Sign-in is handled by the external
-            provider Clerk, and video content may be delivered using external hosting and streaming infrastructure.
-            We do not guarantee correct operation of the service on outdated browsers, on devices that do not support
-            modern video standards, or when scripts, sign-in, or elements required to play content are blocked.
-          </p>
+          <ol className="list-decimal space-y-2 pl-5">
+            <li>
+              The service provides video content. Access to content never requires payment — voluntarily supporting
+              the Creator (§ 4) has no effect on what a user can watch.
+            </li>
+            <li>
+              Some video content and some features, such as commenting, require creating a free account. Other
+              content is available without signing in.
+            </li>
+            <li>
+              Using the service requires a device with an up-to-date web browser with JavaScript enabled and an
+              internet connection. Creating an account requires an email address.
+            </li>
+            <li>
+              Sign-in is handled by the external provider Clerk. Video content may be delivered using external
+              hosting and streaming infrastructure.
+            </li>
+            <li>
+              The Creator does not guarantee correct operation of the service on outdated browsers, on devices that
+              do not support modern video standards, or when scripts or elements needed for sign-in and playback are
+              blocked.
+            </li>
+          </ol>
         </LegalSection>
 
         <LegalSection nr="3" title="Account and usage rules">
-          <p>
-            The account is free and you can delete it at any time (an email to <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a> is enough). When
-            using the service — in particular when commenting — you must not publish unlawful or offensive content,
-            or spam. We may remove such content and, in the case of repeated violations, block the account. Videos
-            and other materials are protected by copyright and are intended solely for personal use.
-          </p>
+          <ol className="list-decimal space-y-2 pl-5">
+            <li>
+              The account is free and can be deleted at any time. A message to{' '}
+              <a href={`mailto:${TERMS_EN_CONTACT_EMAIL}`} className="underline hover:text-primary">{TERMS_EN_CONTACT_EMAIL}</a> is enough.
+            </li>
+            <li>
+              Within the service, in particular in comments, it is not allowed to publish unlawful or offensive
+              content, or spam. The Creator may remove such content and, in the case of repeated violations, block
+              the account.
+            </li>
+            <li>Content in the service is protected by copyright and intended solely for personal use.</li>
+          </ol>
         </LegalSection>
 
-        <LegalSection nr="4" title="Support and access to the Thank You Zone">
-          <p>
-            A one-time payment in the amount shown in the service at the moment of payment constitutes the price for
-            entering into an agreement for the supply of digital content and grants you <strong>lifetime access to
-            the Thank You Zone</strong> — all current and future bonus materials — for as long as the service (or
-            that part of the service) operates. We activate access immediately after the payment is credited, on the
-            account the payment was made from.
-          </p>
-          <p>
-            There is no subscription, no recurring payments, and no hidden costs. If the support amount changes in
-            the future, this does not affect access already granted. Your payment funds the development of the
-            project — the library of bonus content is still growing, and we do not guarantee the frequency of new
-            material publication.
-          </p>
-          <p>
-            People who already have active access to the Thank You Zone may additionally support the channel with
-            any amount. Such an additional payment is voluntary support for the project; it is not a price or
-            remuneration for new digital content, additional access, extended access, or any other reciprocal
-            performance, and it does not grant any additional benefits beyond those the user already has. The
-            payment is processed as a payment transaction through the payment operator, but it does not expand the
-            user&rsquo;s rights in the service.
-          </p>
+        <LegalSection nr="4" title="Supporting the Creator">
+          <ol className="list-decimal space-y-2 pl-5">
+            <li>
+              A user with an account may give the Creator voluntary support in any amount as a token of thanks for
+              the materials made available. Giving support requires signing in to the service.
+            </li>
+            <li>Support is a gift (donation) to the Creator. It is not a price or remuneration for any content or services.</li>
+            <li>
+              Support does not grant access to any content, features, distinctions, or other benefits. Nor does it
+              obligate the Creator to any performance, e.g. to publish new materials.
+            </li>
+            <li>Payments are handled by Stripe. The Creator does not store card data. Confirmation of payment is sent by the payment operator.</li>
+            <li>
+              Support is non-refundable, except for payments made by mistake (e.g. a duplicate payment or an
+              incorrect amount) or made without the cardholder&rsquo;s authorization. In such a case, write to us
+              promptly at{' '}
+              <a href={`mailto:${TERMS_EN_CONTACT_EMAIL}`} className="underline hover:text-primary">{TERMS_EN_CONTACT_EMAIL}</a>.
+            </li>
+            <li>Support is not payment for a sale, so the Creator does not issue invoices or receipts for it.</li>
+          </ol>
         </LegalSection>
 
-        <LegalSection nr="5" title="Payments, prices and invoices">
-          <p>
-            Payments are handled by Stripe. Amounts shown in the service are total prices payable by the consumer.
-            After a successful payment you will receive an email confirmation. We do not store your card data.
-          </p>
-          <p>
-            Confirmation of the access purchase may include, in particular: the name of the service, the payment
-            amount, information about the one-time nature of the payment, the payment date, the payment identifier,
-            information about the activation of access, and confirmation of consents relating to the immediate
-            delivery of digital content.
-          </p>
-          <p>
-            Upon the buyer&rsquo;s request we issue an invoice in accordance with applicable tax law. A request to
-            issue an invoice may be made within the timeframe and on the terms resulting from those provisions. VAT
-            status, the manner of documenting sales, and any cross-border settlements depend on the applicable tax
-            regulations and the seller&rsquo;s status at the time of sale.
-          </p>
-          <p>
-            Additional voluntary payments made by people who already have access to the Thank You Zone are not
-            documented as a price for access to digital content, provided they are not linked to any reciprocal
-            performance on the seller&rsquo;s part. Their tax treatment and the manner of documenting them depend on
-            the nature of the given payment and the applicable tax regulations.
-          </p>
-        </LegalSection>
-
-        <LegalSection nr="6" title="Right of withdrawal">
-          <p>
-            A consumer has 14 days to withdraw from a contract concluded at a distance. However, because we activate
-            access to the Thank You Zone immediately after payment, before you pay we ask you for explicit consent to
-            begin supplying digital content before the withdrawal period expires, and for confirmation that you
-            acknowledge you will lose the right of withdrawal once access has been fully activated.
-          </p>
-          <p>
-            If you give these consents and access is fully activated, you lose the right to withdraw from the
-            agreement for the supply of digital content not delivered on a tangible medium (Article 38(1)(13) of the
-            Polish Consumer Rights Act). We may confirm the conclusion of the agreement and the consents given by
-            email.
-          </p>
-          <p>
-            If you paid and access was not activated — email us at <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a>; we will fix it or refund your money.
-          </p>
-        </LegalSection>
-
-        <LegalSection nr="7" title="Complaints and out-of-court dispute resolution">
-          <p>
-            Something not working? Email{' '}
-            <a href={`mailto:${OWNER.email}`} className="underline hover:text-primary">{OWNER.email}</a> —
-            describe the problem and provide the account email. We will respond within 14 days at the latest. We are
-            liable for the conformity of digital content with the contract under the terms of the Polish Consumer
-            Rights Act.
-          </p>
-          <p>
-            If digital content is not in conformity with the contract, the consumer may demand that it be brought
-            into conformity with the contract. In cases provided for by law, the consumer may also make a statement
-            on price reduction or withdrawal from the contract.
-          </p>
-          <p>
-            The consumer may use out-of-court methods of handling complaints and pursuing claims, in particular the
-            assistance of the municipal or district consumer ombudsman and the competent Provincial Trade
-            Inspectorate. Information on access to these procedures and the list of authorized entities is available
-            on the UOKiK website on out-of-court consumer dispute resolution. The seller does not commit in advance
-            to participate in ADR proceedings; we decide after reviewing the specific case.
-          </p>
-        </LegalSection>
-
-        <LegalSection nr="8" title="Changes to the Terms and governing law">
-          <p>
-            We may change these Terms for important reasons (e.g. a change in law or in the service&rsquo;s
-            features). We will announce changes within the service in advance, and changes do not take away rights
-            already acquired — in particular, access already granted to the Thank You Zone. Agreements are governed
-            by Polish law, which does not deprive the consumer of the protection resulting from mandatory legal
-            provisions.
-          </p>
+        <LegalSection nr="5" title="Changes to the Terms and governing law">
+          <ol className="list-decimal space-y-2 pl-5">
+            <li>The Creator may change the Terms for important reasons, e.g. changes in law or in the service&rsquo;s features.</li>
+            <li>Changes will be announced in the service at least 14 days in advance.</li>
+            <li>The Terms are governed by Polish law.</li>
+          </ol>
         </LegalSection>
       </div>
     </>
@@ -522,7 +421,7 @@ export function TermsContentEn() {
 
 const DATA_ROWS_EN = [
   { what: 'Account and sign-in', data: 'email, name, avatar', why: 'managing the account and providing access to service features' },
-  { what: 'Payments', data: 'amount, date, payment identifier, email, access status', why: 'processing payments, granting access, confirmations and tax obligations' },
+  { what: 'Support (payments)', data: 'amount, date, payment identifier, email, payment status', why: 'processing voluntary support, confirmations and tax obligations' },
   { what: 'Comments', data: 'content, name, date', why: 'public discussion under videos and moderation' },
   { what: 'Transactional emails', data: 'email address', why: 'confirmations of payments, access, complaints and other important service information' },
   { what: 'Marketing notifications', data: 'email address', why: 'sending a newsletter or marketing information, only when you give separate consent' },

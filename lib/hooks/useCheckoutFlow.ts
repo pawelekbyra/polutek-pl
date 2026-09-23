@@ -12,9 +12,9 @@ import { MIN_PAYMENT_BY_CURRENCY, SUPPORTED_CURRENCIES, type SupportedCurrency }
 import { useToast } from "@/app/hooks/useToast";
 
 /**
- * Shared Stripe.js loader for every checkout surface (DonationBox, SecretPledgeBox,
- * SecretPledgeBox2). `loadStripe()` is idempotent for a given publishable key, so a single
- * module-level promise reused across all callers is equivalent to each having its own.
+ * Shared Stripe.js loader for every checkout surface (currently just DonationBox).
+ * `loadStripe()` is idempotent for a given publishable key, so a single module-level promise
+ * reused across all callers is equivalent to each having its own.
  */
 export const checkoutStripePromise: Promise<Stripe | null> | null = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
@@ -51,20 +51,6 @@ export interface UseCheckoutFlowResult {
   /** Radix Checkbox onCheckedChange handler: sets acceptance and clears any shown error. */
   onTermsCheckedChange: (checked: boolean | "indeterminate") => void;
 
-  /**
-   * Separate from `isTermsAccepted` on purpose: art. 38(1)(13) of the Polish Consumer Rights
-   * Act only lets a trader treat the withdrawal right as waived when the consumer gave this
-   * exact consent (immediate digital-content delivery + acknowledged loss of withdrawal)
-   * explicitly, before payment — a single bundled "I accept the Terms" checkbox does not
-   * satisfy that on its own, since the consumer never affirmatively confirms this specific
-   * point. Gated in `submit()` exactly like `isTermsAccepted`.
-   */
-  isWithdrawalAcknowledged: boolean;
-  setIsWithdrawalAcknowledged: (value: boolean) => void;
-  showWithdrawalError: boolean;
-  setShowWithdrawalError: (value: boolean) => void;
-  onWithdrawalCheckedChange: (checked: boolean | "indeterminate") => void;
-
   isLoading: boolean;
   clientSecret: string | null;
   paymentId: string | null;
@@ -86,13 +72,12 @@ export interface UseCheckoutFlowResult {
 }
 
 /**
- * Checkout plumbing shared by every tip/pledge surface (DonationBox, SecretPledgeBox,
- * SecretPledgeBox2): fetching per-currency minimums, the terms/modal state machine, the
- * scroll lock while the modal is open, the Stripe return-URL reconciliation loop, and the
- * /api/checkout/create-intent → CheckoutModal handoff. Presentation (copy, layout, amount
- * picker UI) and any surface-specific behavior (DonationBox's own `?support=1` deep link)
- * stay in the calling component — this hook only owns the parts that were byte-for-byte
- * identical across all three.
+ * Checkout plumbing for the tip surface (DonationBox): fetching per-currency minimums, the
+ * terms/modal state machine, the scroll lock while the modal is open, the Stripe return-URL
+ * reconciliation loop, and the /api/checkout/create-intent → CheckoutModal handoff.
+ * Presentation (copy, layout, amount picker UI) and surface-specific behavior (DonationBox's
+ * own `?support=1` deep link) stay in the calling component. This hook used to be shared with
+ * the now-removed /secretproject and /secretproject2 pledge boxes.
  */
 export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlowResult {
   const { isPl, logPrefix, title, getMinAmountTooLowMessage, attemptFinishedMessage } = options;
@@ -110,8 +95,6 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isTermsAccepted, setIsTermsAccepted] = useState(false);
   const [showTermsError, setShowTermsError] = useState(false);
-  const [isWithdrawalAcknowledged, setIsWithdrawalAcknowledged] = useState(false);
-  const [showWithdrawalError, setShowWithdrawalError] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const [checkoutRequestId, setCheckoutRequestId] = useState<string | null>(null);
@@ -317,11 +300,6 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
     if (checked) setShowTermsError(false);
   }, []);
 
-  const onWithdrawalCheckedChange = useCallback((checked: boolean | "indeterminate") => {
-    setIsWithdrawalAcknowledged(!!checked);
-    if (checked) setShowWithdrawalError(false);
-  }, []);
-
   const submit = useCallback(
     async (amount: number | "", currency: string, minAmount: number) => {
       if (!userId) {
@@ -333,12 +311,6 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
         return;
       }
       setShowTermsError(false);
-
-      if (!isWithdrawalAcknowledged) {
-        setShowWithdrawalError(true);
-        return;
-      }
-      setShowWithdrawalError(false);
 
       if (!amount || amount < minAmount) {
         toast(getMinAmountTooLowMessage(minAmount, currency), "error");
@@ -397,7 +369,6 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
       userId,
       openAuthModal,
       isTermsAccepted,
-      isWithdrawalAcknowledged,
       toast,
       isPl,
       checkoutRequestId,
@@ -422,12 +393,6 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
     showTermsError,
     setShowTermsError,
     onTermsCheckedChange,
-
-    isWithdrawalAcknowledged,
-    setIsWithdrawalAcknowledged,
-    showWithdrawalError,
-    setShowWithdrawalError,
-    onWithdrawalCheckedChange,
 
     isLoading,
     clientSecret,

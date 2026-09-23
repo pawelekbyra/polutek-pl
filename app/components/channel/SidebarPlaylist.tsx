@@ -17,6 +17,7 @@ import DonationBox from "./DonationBox";
 import { useAppPreload } from "../preload/AppPreloadProvider";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TEMP_PATRON_COMING_SOON } from "@/lib/temp-patron-coming-soon";
 import {
   acquireSidebarLayout,
   releaseSidebarLayout,
@@ -92,18 +93,14 @@ export function SidebarPlaylist({
       return { text: isPl ? "Publiczne" : "Public", variant: "public" };
     }
 
-    if (video.tier === "LOGGED_IN") {
+    // 2026-09-22: PATRON tier no longer requires payment, only sign-in — same badge as
+    // LOGGED_IN (see CLAUDE.md, checkVideoAccess).
+    if (video.tier === "LOGGED_IN" || video.tier === "PATRON") {
       if (!hasAccess)
         return {
           text: "Login",
           variant: "locked",
         };
-      return { text: isPl ? "Odblok." : "Unlocked", variant: "unlocked" };
-    }
-
-    if (video.tier === "PATRON") {
-      if (!hasAccess)
-        return { text: isPl ? "Patron" : "Patron", variant: "locked" };
       return { text: isPl ? "Odblok." : "Unlocked", variant: "unlocked" };
     }
 
@@ -155,16 +152,21 @@ export function SidebarPlaylist({
     };
   }, [authLoaded, authUserId, isSignedIn]);
 
-  const renderVideoItem = (video: SidebarLayoutItem, isPublicSection = false) => {
+  const renderVideoItem = (
+    video: SidebarLayoutItem,
+    isPublicSection = false,
+    forceComingSoon = false,
+  ) => {
     const displayTitle = getVideoDisplayTitle(video, language);
     const isCurrent = video.id === selectedVideoId;
     const isPatronVideo = video.tier === "PATRON";
     const hasAccess = !video.isLocked;
-    const lockState = !hasAccess
-      ? video.tier === "PATRON"
-        ? "PATRON_REQUIRED"
-        : "LOGIN_REQUIRED"
-      : null;
+    // TEMPORARY (2026-09-22): "coming soon" placeholder for the whole PATRON
+    // tier — see lib/temp-patron-coming-soon.ts. Overrides the normal
+    // access-based lock state below.
+    const isComingSoon = forceComingSoon && TEMP_PATRON_COMING_SOON;
+    // 2026-09-22: signing in is the only gate now, even for PATRON tier (see CLAUDE.md).
+    const lockState = isComingSoon ? "COMING_SOON" : !hasAccess ? "LOGIN_REQUIRED" : null;
     const warmVideoOnIntent = () => {
       void preloader?.warmVideo(video.id, {
         includeComments: true,
@@ -192,7 +194,13 @@ export function SidebarPlaylist({
         <Link
           href={feedVideoHref}
           scroll={false}
-          onClick={() => onVideoSelect?.(video.id)}
+          onClick={(event) => {
+            if (isComingSoon) {
+              event.preventDefault();
+              return;
+            }
+            onVideoSelect?.(video.id);
+          }}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
             "group relative mb-0.5 flex gap-3 overflow-hidden rounded-[14px] p-2 transition-[background-color,box-shadow] duration-160 motion-reduce:transition-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[88px] lg:items-center lg:gap-3 lg:p-2",
@@ -245,6 +253,7 @@ export function SidebarPlaylist({
                 </div>
               )}
               {mounted &&
+                !isComingSoon &&
                 (() => {
                   const badge = getSidebarAccessBadge(video, hasAccess, language);
                   if (!badge) return null;
@@ -323,6 +332,16 @@ export function SidebarPlaylist({
     ? <DonationBox videoTitle={supportItem.title} viewerIsPatron={viewerIsPatron} />
     : null;
 
+  // TEMPORARY (2026-09-22): "coming soon" placeholder for the whole PATRON
+  // tier — see lib/temp-patron-coming-soon.ts.
+  const patronSectionTitle = TEMP_PATRON_COMING_SOON
+    ? language === "pl"
+      ? "Już wkrótce"
+      : "Coming soon"
+    : language === "pl"
+      ? "Strefa Fenkjuu"
+      : "Thank You Zone";
+
   if (loading) {
     const renderSkeletonSection = (title: string) => (
       <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
@@ -342,7 +361,7 @@ export function SidebarPlaylist({
       <div className="flex flex-col gap-1 lg:h-full lg:gap-1.5" aria-busy="true">
         {renderSkeletonSection(language === "pl" ? "Publiczne" : "Public")}
         {renderSkeletonSection(language === "pl" ? "Dla zalogowanych" : "For logged in")}
-        {renderSkeletonSection(language === "pl" ? "Strefa Fenkjuu" : "Thank You Zone")}
+        {renderSkeletonSection(patronSectionTitle)}
         {showSupportBox && (
           <div className="mt-2 shrink-0 rounded-lg bg-[var(--chan-surface)] p-4">
             <Skeleton className="h-8 w-full rounded-[10px]" />
@@ -411,13 +430,13 @@ export function SidebarPlaylist({
       {patronSection && (
         <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
           {renderSectionHeader(
-            language === "pl" ? "Strefa Fenkjuu" : "Thank You Zone",
+            patronSectionTitle,
             <span
               aria-hidden="true"
               className="inline-flex h-1.5 w-1.5 rounded-full bg-[var(--chan-amber)] shadow-[0_0_0_3px_var(--cm-amber-20)]"
             />,
           )}
-          {patronSection.items.map((v) => renderVideoItem(v))}
+          {patronSection.items.map((v) => renderVideoItem(v, false, true))}
         </div>
       )}
 

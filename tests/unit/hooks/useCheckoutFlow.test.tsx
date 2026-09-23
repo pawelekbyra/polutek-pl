@@ -7,9 +7,9 @@ import React from 'react';
 import { useCheckoutFlow } from '@/lib/hooks/useCheckoutFlow';
 
 // This exercises the shared checkout plumbing (useCheckoutFlow) in isolation — the settings
-// fetch, terms/modal state, and the create-intent -> CheckoutModal handoff — independent of any
-// of the three components (DonationBox, SecretPledgeBox, SecretPledgeBox2) that consume it. Their
-// own component tests already cover the Stripe return-URL reconciliation loop end-to-end
+// fetch, terms/modal state, and the create-intent -> CheckoutModal handoff — independent of
+// DonationBox, the component that consumes it. DonationBox's own component tests already cover
+// the Stripe return-URL reconciliation loop end-to-end
 // (tests/unit/components/channel/DonationBox-return-flow.test.tsx) and the ?support=1 deep-link
 // guard (DonationBox-deep-link-terms.test.tsx), which stays out of this hook entirely.
 
