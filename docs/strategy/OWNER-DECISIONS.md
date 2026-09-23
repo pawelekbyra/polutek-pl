@@ -2,6 +2,16 @@
 
 Status: ACTIVE — POST-R AI DELIVERY CONTROL PLANE.
 
+> **Runtime note (2026-09-22):** sekcja "Patronat / payments / access" poniżej
+> ("napiwek... musi utworzyć albo uzgodnić dokładnie jeden aktywny
+> PatronGrant" jako podstawa dostępu) opisuje model sprzed 2026-09-22. Od tej
+> daty `PatronGrant` przestał być czytany przy sprawdzaniu dostępu do wideo —
+> `PATRON` działa identycznie jak `LOGGED_IN` dla każdego zalogowanego
+> użytkownika, a napiwek jest w pełni dobrowolny i nie nadaje dostępu. System
+> `PatronGrant`/Stripe pozostaje w kodzie jako księgowość wsparcia. Aktualna
+> decyzja właściciela i uzasadnienie: `CLAUDE.md` §4.1/§4.4/§4.10 (sekcja
+> "major, owner-authored" z 2026-09-22).
+
 ## Obowiązujące decyzje właściciela
 
 Decyzje obowiązujące dopóki właściciel jawnie ich nie zmieni. Szczegóły techniczne i operacyjne dotyczące launchu zostały skonsolidowane w: [docs/strategy/OWNER-LAUNCH-DECISIONS-001.md](OWNER-LAUNCH-DECISIONS-001.md). Ten plik pozostaje krótkim, obowiązującym indeksem decyzji i inwariantów; konsolidacja launchowa nie usuwa wcześniejszych guardrails z `AGENTS.md` ani z historycznego pre-PR #890 `OWNER-DECISIONS.md`.

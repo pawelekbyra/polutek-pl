@@ -4,6 +4,14 @@ Date: 2026-06-12
 Owner: Paweł Perfect
 Status: DECIDED
 Implementation status: NOT IMPLEMENTED / PARTIAL
+
+> **Runtime note (2026-09-22):** this record predates the 2026-09-22 business
+> model change. Napiwek still works as described (voluntary, not a
+> subscription, not a purchase of a specific film), but the assumption that a
+> qualifying napiwek unlocks Patron Zone access no longer holds — access to
+> `PATRON`-tier content now requires only sign-in, not a napiwek. `PatronGrant`
+> is created exactly as described here, but is no longer read for access
+> decisions. See `CLAUDE.md` §4.1/§4.4/§4.10 for the current model.
 Legal status: PROFESSIONAL REVIEW REQUIRED
 Launch status: NO_GO
 

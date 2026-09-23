@@ -1,18 +1,38 @@
 # Polutek.pl — dokumentacja produktu
 
 Polutek.pl to jednokanałowa platforma VOD jednego twórcy. Widzowie oglądają
-filmy (poziomy dostępu: PUBLIC / LOGGED_IN / PATRON), a jednorazowy napiwek
-Stripe powyżej progu nadaje **dożywotni status patrona** (`PatronGrant`).
-Brak subskrypcji cyklicznych, brak multi-tenant, brak marketplace.
+filmy (poziomy dostępu: PUBLIC / LOGGED_IN / PATRON), a od 2026-09-22 dostęp
+do treści nigdy nie wymaga płatności — `PATRON` działa identycznie jak
+`LOGGED_IN`, wystarczy darmowe konto. Wsparcie/napiwek Stripe jest w pełni
+dobrowolne, nie nadaje żadnego dostępu ani benefitu; `PatronGrant` nadal
+istnieje w kodzie (`fulfillPayment()` nadal go tworzy) wyłącznie jako
+księgowość wsparcia/etykieta w adminie — nie jest już czytany przy
+sprawdzaniu dostępu do wideo. Szczegóły i uzasadnienie: `CLAUDE.md` §4.1,
+§4.4, §4.10. Brak subskrypcji cyklicznych, brak multi-tenant, brak
+marketplace.
 
 **Punkt wejścia dla agentów i deweloperów: [`CLAUDE.md`](../CLAUDE.md)**
 (stack, mapa modułów, krytyczne inwarianty, czego nie robić).
 
 ## Stan obecny
 
-- Runtime jest po stabilizacji wokół `PatronGrant` jako jedynego źródła prawdy
-  dla patron access; legacy pola `User.isPatron`, `User.patronSince` i
-  `User.patronSource` zostały usunięte ze schematu.
+- **2026-09-22 — model dostępu zmieniony na darmowy.** `checkVideoAccess()`
+  już nie czyta `PatronGrant`/statusu patrona przy bramkowaniu wideo —
+  `PATRON` i `LOGGED_IN` są traktowane identycznie, gość zawsze widzi
+  `LOGIN_REQUIRED` (nigdy `PATRON_REQUIRED`). System `PatronGrant`/Stripe/
+  `fulfillPayment()` fizycznie zostaje w kodzie pod spodem (nadal tworzy
+  rekordy wsparcia, nadal jest jedynym źródłem prawdy dla tego, kto
+  wspierał), ale przestał bramkować cokolwiek. Model biznesowy to teraz
+  darowizna/napiwek bez świadczenia wzajemnego, zgodnie z aktualnym
+  Regulaminem — nie sprzedaż dostępu. Zanim uwierzysz w opis "PatronGrant
+  jako źródło prawdy dla dostępu" w starszych dokumentach w `specs/`,
+  `architecture/` i `strategy/`, sprawdź `CLAUDE.md` §4.1/§4.4/§4.10 —
+  to on jest aktualny; wiele z tamtych plików to zamrożone dokumenty
+  "control plane" sprzed tej zmiany i opisują stary, płatny model.
+- Legacy pola `User.isPatron`, `User.patronSince` i `User.patronSource`
+  zostały usunięte ze schematu; `PatronGrant` pozostaje jedynym źródłem
+  prawdy dla tego, kto kiedykolwiek wsparł kanał (do celów księgowych/
+  diagnostycznych/e-mailowych), nawet jeśli już nie decyduje o dostępie.
 - Publiczny frontend jest na Next.js 16/React 19, używa custom/headless Clerk
   auth UI, progressive app shell, in-memory preloadu (`AppPreloadProvider`) i
   jednego application-grade systemu VOD/PWA (Geist, neutralne powierzchnie,

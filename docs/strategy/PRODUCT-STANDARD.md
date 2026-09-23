@@ -2,6 +2,13 @@
 
 Status: ACTIVE — POST-R AI DELIVERY CONTROL PLANE.
 
+> **Runtime note (2026-09-22):** lines below such as "Active `PatronGrant`
+> jest docelowym backendowym źródłem prawdy dla patron access" and the
+> `PATRON_REQUIRED` `PlaybackPlan` state describe the pre-2026-09-22 target.
+> Current runtime: `PatronGrant` no longer gates access, `PATRON_REQUIRED` is
+> never emitted, and every signed-in user has full `PATRON`-tier access —
+> support is a voluntary donation only. See `CLAUDE.md` §4.1/§4.4/§4.10.
+
 ## Cel
 
 Ten dokument jest aktywnym standardem jakości produktu dla faz X1-X7. Ma służyć jako filtr dla ticketów, PR-ów, review, certyfikacji i decyzji scope przed publicznym launchem Polutek.pl.

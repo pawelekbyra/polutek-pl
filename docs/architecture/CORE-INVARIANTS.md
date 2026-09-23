@@ -2,6 +2,21 @@
 
 Status: APPROVED_CANONICAL — becomes effective on repository merge
 
+> **Runtime note (2026-09-22):** §1.2 below ("the sole backend source of
+> truth for patron-only access is active PatronGrant") and §2.2's "qualifying
+> tip grants patron access" describe the model as it stood before 2026-09-22.
+> As of that date `checkVideoAccess()` no longer reads `PatronGrant` at all —
+> `PATRON`-tier videos are granted to any signed-in user exactly like
+> `LOGGED_IN`, and payment grants nothing beyond what sign-in already grants.
+> §2.1's "avoid categorical use of `darowizna`" is also superseded: the
+> current Regulamin (owner-authored, 2026-09-22) explicitly frames support as
+> a non-refundable gift/`darowizna` with zero reciprocal benefit — that
+> framing is what makes it a real gift for tax purposes (NSA, 7 lipca 2026,
+> III FSK 113/26). `PatronGrant`/Stripe/`fulfillPayment()` remain in the code
+> as supporter bookkeeping only. This document was not rewritten in that
+> change; treat `CLAUDE.md` §4.1/§4.4/§4.10 as current and this file as
+> historical/target for anything about patron access or donation framing.
+
 This document records the non-negotiable architectural and product invariants for Polutek.pl. Any implementation deviating from these must be recorded as a risk or architectural drift.
 
 ## 1. Domain Invariants (The "DNA")
