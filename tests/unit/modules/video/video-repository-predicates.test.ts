@@ -99,6 +99,30 @@ describe('VideoRepository Predicates', () => {
         })
       }));
     });
+
+    it('should combine migrationStatus MIGRATION_REQUIRED with a search query instead of dropping the migration filter', async () => {
+      mockDb.video.findMany = vi.fn().mockResolvedValue([]);
+      mockDb.video.count = vi.fn().mockResolvedValue(0);
+
+      await repository.findAdminList(mainChannelId, { migrationStatus: 'MIGRATION_REQUIRED', query: 'foo' });
+
+      const { where } = mockDb.video.findMany.mock.calls[0][0];
+      expect(where.OR).toBeUndefined();
+      expect(where.AND).toEqual([
+        {
+          OR: [
+            { assets: { some: { isPrimary: true, provider: { in: [VIDEO_PROVIDER.R2, VIDEO_PROVIDER.S3, VIDEO_PROVIDER.VERCEL_BLOB] } } } },
+            { AND: [ { assets: { none: {} } }, { videoUrl: { not: '' } } ] }
+          ]
+        },
+        {
+          OR: [
+            { title: { contains: 'foo', mode: 'insensitive' } },
+            { slug: { contains: 'foo', mode: 'insensitive' } }
+          ]
+        }
+      ]);
+    });
   });
 });
 

@@ -207,10 +207,19 @@ export class VideoRepository {
     }
 
     if (filters.query) {
-      where.OR = [
+      const queryOr: Prisma.VideoWhereInput[] = [
         { title: { contains: filters.query, mode: 'insensitive' } },
         { slug: { contains: filters.query, mode: 'insensitive' } }
       ];
+      // migrationStatus === 'MIGRATION_REQUIRED' above may have already set
+      // where.OR; combine both conditions with AND instead of letting this
+      // block silently overwrite the migration-status filter.
+      if (where.OR) {
+        where.AND = [{ OR: where.OR }, { OR: queryOr }];
+        delete where.OR;
+      } else {
+        where.OR = queryOr;
+      }
     }
 
     const page = filters.page || 1;
