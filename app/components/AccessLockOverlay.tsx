@@ -36,7 +36,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
   const [countdownNow, setCountdownNow] = useState<Date>(() => new Date());
   useEffect(() => {
     if (!isComingSoon) return;
-    const id = setInterval(() => setCountdownNow(new Date()), 60_000);
+    const id = setInterval(() => setCountdownNow(new Date()), 1_000);
     return () => clearInterval(id);
   }, [isComingSoon]);
   const countdownLabel = formatPremiereCountdown(isPl, undefined, countdownNow);
