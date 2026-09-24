@@ -25,8 +25,12 @@ export function formatPremiereCountdown(
   now: Date = new Date(),
 ): string {
   const diffMs = Math.max(0, target.getTime() - now.getTime());
-  const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const days = Math.floor(totalHours / 24);
-  const hours = totalHours % 24;
-  return isPl ? `PREMIERA ZA ${days}D ${hours}H` : `PREMIERES IN ${days}D ${hours}H`;
+  const totalSeconds = Math.floor(diffMs / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return isPl
+    ? `PREMIERA ZA ${days}D ${hours}H ${minutes}M ${seconds}S`
+    : `PREMIERES IN ${days}D ${hours}H ${minutes}M ${seconds}S`;
 }

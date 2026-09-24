@@ -196,11 +196,11 @@ export function SidebarPlaylist({
         <Link
           href={feedVideoHref}
           scroll={false}
-          onClick={(event) => {
-            if (isComingSoon) {
-              event.preventDefault();
-              return;
-            }
+          onClick={() => {
+            // 2026-09-24 (prototype): a "coming soon" video is still fully
+            // navigable — selecting it shows the same lock overlay full-size
+            // in the main feed (PremiumWrapper/Hero already do this purely
+            // from the video's tier, see lib/temp-patron-coming-soon.ts).
             onVideoSelect?.(video.id);
           }}
           aria-current={isCurrent ? "page" : undefined}
