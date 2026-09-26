@@ -19,6 +19,7 @@ import { logger } from "@/lib/logger";
 import Image from "next/image";
 import { AdminUserListItemDto as AdminUserListItem } from "@/lib/modules/users";
 import { AdminUsersPageSkeleton } from "@/components/skeletons/admin";
+import { useAdminListQuery } from "@/lib/admin/use-admin-list-query";
 
 function formatDate(value: string | Date | null) {
   if (!value) return "—";
@@ -26,13 +27,8 @@ function formatDate(value: string | Date | null) {
 }
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<AdminUserListItem[]>([]);
+  const { items: users, total, page, totalPages, isLoading, error, fetchPage } = useAdminListQuery<AdminUserListItem>();
   const [stats, setStats] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -58,36 +54,17 @@ export default function AdminUsersPage() {
   };
 
   const fetchUsers = useCallback(async (p = page) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      let url = `/api/admin/users?page=${p}&query=${encodeURIComponent(searchQuery)}&orderBy=${orderBy}`;
-      if (roleFilter !== "ALL") url += `&role=${roleFilter}`;
-      if (patronFilter !== "ALL") url += `&isPatron=${patronFilter === "PATRON"}`;
-      if (languageFilter !== "ALL") url += `&language=${languageFilter}`;
-      if (patronSourceFilter !== "ALL") url += `&patronSource=${patronSourceFilter}`;
-      if (isDeletedFilter) url += `&isDeleted=true`;
-      if (hasPaymentsFilter) url += `&hasPayments=true`;
-      if (hasSubscriptionsFilter) url += `&hasSubscriptions=true`;
+    let url = `/api/admin/users?page=${p}&query=${encodeURIComponent(searchQuery)}&orderBy=${orderBy}`;
+    if (roleFilter !== "ALL") url += `&role=${roleFilter}`;
+    if (patronFilter !== "ALL") url += `&isPatron=${patronFilter === "PATRON"}`;
+    if (languageFilter !== "ALL") url += `&language=${languageFilter}`;
+    if (patronSourceFilter !== "ALL") url += `&patronSource=${patronSourceFilter}`;
+    if (isDeletedFilter) url += `&isDeleted=true`;
+    if (hasPaymentsFilter) url += `&hasPayments=true`;
+    if (hasSubscriptionsFilter) url += `&hasSubscriptions=true`;
 
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        setUsers(data.items);
-        setTotal(data.total);
-        setTotalPages(data.totalPages);
-        setPage(data.page);
-      } else {
-        const err = await res.json();
-        setError(err.error || "Nie udało się pobrać listy użytkowników.");
-      }
-    } catch (err) {
-      logger.error("Failed to fetch users", err);
-      setError("Wystąpił błąd połączenia.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page, searchQuery, roleFilter, patronFilter, languageFilter, patronSourceFilter, isDeletedFilter, hasPaymentsFilter, hasSubscriptionsFilter, orderBy]);
+    return fetchPage(url, p, { fallbackMessage: "Nie udało się pobrać listy użytkowników." });
+  }, [page, searchQuery, roleFilter, patronFilter, languageFilter, patronSourceFilter, isDeletedFilter, hasPaymentsFilter, hasSubscriptionsFilter, orderBy, fetchPage]);
 
   useEffect(() => {
     fetchStats();
@@ -207,7 +184,7 @@ export default function AdminUsersPage() {
                         </SelectContent>
                     </Select>
 
-                    <Select value={patronSourceFilter} onValueChange={(v: string) => { setPatronSourceFilter(v || "ALL"); setPage(1); }}>
+                    <Select value={patronSourceFilter} onValueChange={(v: string) => setPatronSourceFilter(v || "ALL")}>
                         <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue placeholder="Źródło Patronatu" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="ALL">Dowolne źródło</SelectItem>

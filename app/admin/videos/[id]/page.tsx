@@ -23,7 +23,7 @@ import { AdminVideoDetailsSkeleton } from "@/components/skeletons/admin";
 import { formatDate } from "../components/utils";
 import { VideoAuditLog } from "../components/VideoAuditLog";
 import { VideoDetailsPanel } from "../components/VideoDetailsPanel";
-import { readAdminApiError } from "../components/api-error";
+import { readAdminApiError } from "@/lib/admin/api-error";
 import { VideoStudio } from "../components/VideoStudio";
 import { resolveInitialVideoDetailsTab, type VideoDetailsTab } from "./details-tab-state";
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";

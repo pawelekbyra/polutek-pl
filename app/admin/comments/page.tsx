@@ -15,6 +15,7 @@ import { SafeAvatar } from "@/app/components/SafeAvatar";
 import { useToast } from "@/app/hooks/useToast";
 import { CommentDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAdminListQuery } from "@/lib/admin/use-admin-list-query";
 
 const commentActionLabels = {
   hide: "ukrycia komentarza",
@@ -29,15 +30,11 @@ type CommentAction = keyof typeof commentActionLabels;
 const PAGE_SIZE = 50;
 
 export default function AdminCommentsPage() {
-  const [comments, setComments] = useState<CommentDto[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { items: comments, total, page, totalPages, isLoading, fetchPage } = useAdminListQuery<CommentDto>();
   const [pendingReportsCount, setPendingReportsCount] = useState<number | null>(null);
   const [pendingActions, setPendingActions] = useState<Record<string, CommentAction>>({});
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBulkPending, setIsBulkPending] = useState(false);
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
 
   const initialParams = useMemo(() => {
     if (typeof window === "undefined") return { q: "", videoId: "" };
@@ -58,7 +55,6 @@ export default function AdminCommentsPage() {
   }, [search]);
 
   const fetchComments = useCallback(async (targetPage: number = 1, searchOverride?: string) => {
-    setIsLoading(true);
     setSelectedIds(new Set());
     const query = searchOverride ?? debouncedSearch;
     const params = new URLSearchParams();
@@ -66,21 +62,10 @@ export default function AdminCommentsPage() {
     if (videoId) params.set("videoId", videoId);
     params.set("page", String(targetPage));
     params.set("pageSize", String(PAGE_SIZE));
-    try {
-      const res = await fetch(`/api/admin/comments?${params.toString()}`);
-      if (res.ok) {
-        const data = await res.json();
-        setComments(Array.isArray(data.items) ? data.items : []);
-        setTotal(data.total ?? 0);
-        setTotalPages(data.totalPages ?? 1);
-        setPage(data.page ?? targetPage);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [debouncedSearch, videoId]);
+    return fetchPage(`/api/admin/comments?${params.toString()}`, targetPage, {
+      fallbackMessage: "Nie udało się pobrać listy komentarzy.",
+    });
+  }, [debouncedSearch, videoId, fetchPage]);
 
   // Filters changed (search debounced or videoId) — always reset to page 1.
   useEffect(() => { fetchComments(1); }, [fetchComments]);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readAdminApiError } from '@/app/admin/videos/components/api-error';
+import { readAdminApiError } from '@/lib/admin/api-error';
 
 describe('readAdminApiError', () => {
   it('prefers top-level message', () => {
