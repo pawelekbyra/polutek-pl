@@ -39,16 +39,16 @@ export default function AdminEmailsPage() {
   }, [activeTab]);
 
   return (
-    <div className="min-h-screen bg-neutral-50 text-foreground pb-20">
+    <div className="min-h-screen bg-muted/20 text-foreground pb-20">
       <Navbar />
 
       <main className="max-w-6xl mx-auto px-6 py-12">
         <AdminNavigation backHref="/admin" backLabel="Wróć do panelu admina" currentLabel="Poczta" />
 
-        <header className="mb-12">
-          <h1 className="text-4xl font-black uppercase tracking-tighter text-neutral-900 mb-2">Poczta Admina</h1>
-          <p className="text-neutral-500 font-medium italic">Zarządzanie komunikacją, szablonami i odpowiedziami od użytkowników.</p>
-        </header>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Poczta Admina</h1>
+          <p className="mt-1 text-sm text-muted-foreground leading-relaxed">Zarządzanie komunikacją, szablonami i odpowiedziami od użytkowników.</p>
+        </div>
 
         {editingTemplate ? (
             <EmailTemplateEditor
@@ -70,24 +70,24 @@ export default function AdminEmailsPage() {
             />
         ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-                <TabsList className="bg-white border border-neutral-200 p-1 h-14 rounded-2xl shadow-sm inline-flex mb-8 overflow-x-auto max-w-full no-scrollbar">
-                    <TabsTrigger value="dashboard" className="rounded-xl px-6 font-black uppercase tracking-widest text-[10px] flex items-center gap-2">
-                        <LayoutDashboard className="w-4 h-4" /> Dashboard
+                <TabsList className="w-full justify-start bg-background border rounded-lg p-1 mb-8 h-auto flex-wrap inline-flex">
+                    <TabsTrigger value="dashboard" className="px-4 py-2 flex items-center gap-2">
+                        <LayoutDashboard className="h-4 w-4" /> Dashboard
                     </TabsTrigger>
-                    <TabsTrigger value="templates" className="rounded-xl px-6 font-black uppercase tracking-widest text-[10px] flex items-center gap-2">
-                        <FileText className="w-4 h-4" /> Szablony
+                    <TabsTrigger value="templates" className="px-4 py-2 flex items-center gap-2">
+                        <FileText className="h-4 w-4" /> Szablony
                     </TabsTrigger>
-                    <TabsTrigger value="broadcast" className="rounded-xl px-6 font-black uppercase tracking-widest text-[10px] flex items-center gap-2 bg-blue-50 text-blue-700 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-                        <Send className="w-4 h-4" /> Nowa wysyłka
+                    <TabsTrigger value="broadcast" className="px-4 py-2 flex items-center gap-2">
+                        <Send className="h-4 w-4" /> Nowa wysyłka
                     </TabsTrigger>
-                    <TabsTrigger value="history" className="rounded-xl px-6 font-black uppercase tracking-widest text-[10px] flex items-center gap-2">
-                        <History className="w-4 h-4" /> Historia
+                    <TabsTrigger value="history" className="px-4 py-2 flex items-center gap-2">
+                        <History className="h-4 w-4" /> Historia
                     </TabsTrigger>
-                    <TabsTrigger value="responses" className="rounded-xl px-6 font-black uppercase tracking-widest text-[10px] flex items-center gap-2">
-                        <MessageSquare className="w-4 h-4" /> Odpowiedzi
+                    <TabsTrigger value="responses" className="px-4 py-2 flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" /> Odpowiedzi
                     </TabsTrigger>
-                    <TabsTrigger value="settings" className="rounded-xl px-6 font-black uppercase tracking-widest text-[10px] flex items-center gap-2">
-                        <Settings className="w-4 h-4" /> Ustawienia
+                    <TabsTrigger value="settings" className="px-4 py-2 flex items-center gap-2">
+                        <Settings className="h-4 w-4" /> Ustawienia
                     </TabsTrigger>
                 </TabsList>
 
@@ -104,14 +104,14 @@ export default function AdminEmailsPage() {
 
                 <TabsContent value="broadcast" className="focus-visible:outline-none">
                     <div className="max-w-2xl mx-auto py-12 text-center space-y-6">
-                        <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto">
-                            <Send className="w-10 h-10" />
+                        <div className="flex h-16 w-16 items-center justify-center rounded-xl border bg-blue-100 text-blue-600 mx-auto">
+                            <Send className="h-8 w-8" />
                         </div>
                         <div className="space-y-2">
-                            <h2 className="text-2xl font-black uppercase tracking-tight">Kreator wysyłki</h2>
-                            <p className="text-neutral-500 italic">Przygotuj i wyślij wiadomość do swoich subskrybentów lub patronów.</p>
+                            <h2 className="text-2xl font-bold tracking-tight">Kreator wysyłki</h2>
+                            <p className="text-muted-foreground">Przygotuj i wyślij wiadomość do swoich subskrybentów lub patronów.</p>
                         </div>
-                        <Button onClick={() => setIsCreatingBroadcast(true)} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-12 h-14 font-black uppercase tracking-widest shadow-xl transition-all">
+                        <Button size="lg" onClick={() => setIsCreatingBroadcast(true)}>
                             Rozpocznij kreator
                         </Button>
                     </div>
@@ -131,9 +131,9 @@ export default function AdminEmailsPage() {
                             <CardTitle>Konfiguracja Resend</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="p-4 bg-neutral-100 rounded-lg text-sm">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-neutral-500 mb-1">Audience ID</p>
-                                <p className="font-bold text-neutral-900">
+                            <div className="p-4 bg-muted/50 rounded-lg text-sm border">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Audience ID</p>
+                                <p className="font-bold">
                                     {settingsStatus
                                         ? settingsStatus.audience.configured
                                             ? "Skonfigurowane po stronie serwera"
@@ -141,7 +141,7 @@ export default function AdminEmailsPage() {
                                         : "Sprawdzanie konfiguracji..."}
                                 </p>
                             </div>
-                            <p className="text-xs text-neutral-500 italic">Panel pokazuje wyłącznie bezpieczny status konfiguracji. Nie ujawnia wartości zmiennych środowiskowych ani sekretów.</p>
+                            <p className="text-xs text-muted-foreground">Panel pokazuje wyłącznie bezpieczny status konfiguracji. Nie ujawnia wartości zmiennych środowiskowych ani sekretów.</p>
                         </CardContent>
                     </Card>
                 </TabsContent>

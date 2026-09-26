@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { User, Heart, CreditCard, MessageSquare, History, Share2, ShieldCheck, Mail, ExternalLink, Trash2 } from "@/app/components/icons";
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
 import { logger } from "@/lib/logger";
@@ -161,12 +162,12 @@ export default function UserDetailsPage(props: { params: Promise<{ userId: strin
 
             <div className="lg:flex-1">
               <Tabs defaultValue="summary" className="w-full">
-                <TabsList className="w-full justify-start gap-2 bg-transparent rounded-none h-auto p-0 mb-6 flex-wrap">
-                  <TabsTrigger value="summary" className="rounded-xl border-0 px-4 py-3">Podsumowanie</TabsTrigger>
-                  <TabsTrigger value="payments" className="rounded-xl border-0 px-4 py-3">Wpłaty</TabsTrigger>
-                  <TabsTrigger value="grants" className="rounded-xl border-0 px-4 py-3">Granty</TabsTrigger>
-                  <TabsTrigger value="activity" className="rounded-xl border-0 px-4 py-3">Aktywność</TabsTrigger>
-                  <TabsTrigger value="audit" className="rounded-xl border-0 px-4 py-3">Historia zmian</TabsTrigger>
+                <TabsList className="w-full justify-start bg-background border rounded-lg p-1 mb-6 h-auto flex-wrap">
+                  <TabsTrigger value="summary" className="px-4 py-2">Podsumowanie</TabsTrigger>
+                  <TabsTrigger value="payments" className="px-4 py-2">Wpłaty</TabsTrigger>
+                  <TabsTrigger value="grants" className="px-4 py-2">Granty</TabsTrigger>
+                  <TabsTrigger value="activity" className="px-4 py-2">Aktywność</TabsTrigger>
+                  <TabsTrigger value="audit" className="px-4 py-2">Historia zmian</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="summary" className="space-y-6">
@@ -216,33 +217,33 @@ export default function UserDetailsPage(props: { params: Promise<{ userId: strin
                       <CardHeader>
                           <CardTitle className="text-base">Historia wpłat (Ostatnie 50)</CardTitle>
                       </CardHeader>
-                      <CardContent>
-                          <div className="rounded-lg border overflow-hidden">
-                              <table className="w-full text-sm">
-                                  <thead className="bg-muted text-muted-foreground">
-                                      <tr>
-                                          <th className="px-4 py-2 text-left font-medium">Data</th>
-                                          <th className="px-4 py-2 text-left font-medium">Kwota</th>
-                                          <th className="px-4 py-2 text-left font-medium">Status</th>
-                                          <th className="px-4 py-2 text-left font-medium">ID Stripe</th>
-                                      </tr>
-                                  </thead>
-                                  <tbody className="divide-y">
+                      <CardContent className="p-0">
+                          <div className="overflow-x-auto">
+                              <Table>
+                                  <TableHeader>
+                                      <TableRow className="bg-muted/30 hover:bg-muted/30">
+                                          <TableHead className="text-[10px] uppercase font-bold">Data</TableHead>
+                                          <TableHead className="text-[10px] uppercase font-bold">Kwota</TableHead>
+                                          <TableHead className="text-[10px] uppercase font-bold">Status</TableHead>
+                                          <TableHead className="text-[10px] uppercase font-bold">ID Stripe</TableHead>
+                                      </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
                                       {user.payments.map((p: any) => (
-                                          <tr key={p.id}>
-                                              <td className="px-4 py-3 whitespace-nowrap text-xs">{formatDate(p.createdAt)}</td>
-                                              <td className="px-4 py-3 font-medium">{(p.amountMinor / 100).toFixed(2)} {p.currency}</td>
-                                              <td className="px-4 py-3">
+                                          <TableRow key={p.id}>
+                                              <TableCell className="whitespace-nowrap text-xs">{formatDate(p.createdAt)}</TableCell>
+                                              <TableCell className="font-medium">{(p.amountMinor / 100).toFixed(2)} {p.currency}</TableCell>
+                                              <TableCell>
                                                   <Badge variant="outline" className={p.status === 'SUCCEEDED' ? 'bg-green-50 text-green-700 border-green-200' : ''}>{p.status}</Badge>
-                                              </td>
-                                              <td className="px-4 py-3 text-[10px] text-muted-foreground">{p.stripeIntentId || p.stripeSessionId || "—"}</td>
-                                          </tr>
+                                              </TableCell>
+                                              <TableCell className="text-[10px] text-muted-foreground">{p.stripeIntentId || p.stripeSessionId || "—"}</TableCell>
+                                          </TableRow>
                                       ))}
                                       {user.payments.length === 0 && (
-                                          <tr><td colSpan={4} className="px-4 py-10 text-center text-muted-foreground italic">Brak wpłat.</td></tr>
+                                          <TableRow><TableCell colSpan={4} className="py-20 text-center text-muted-foreground italic border-b-0">Brak wpłat.</TableCell></TableRow>
                                       )}
-                                  </tbody>
-                              </table>
+                                  </TableBody>
+                              </Table>
                           </div>
                       </CardContent>
                   </Card>

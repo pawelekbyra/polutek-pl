@@ -3,10 +3,10 @@ import { AdminTableSkeleton, AdminPageHeaderSkeleton } from "@/components/skelet
 
 export default function AdminEmailsLoading() {
   return (
-    <div className="min-h-screen bg-neutral-50 p-8">
+    <div className="min-h-screen bg-muted/20 p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <AdminPageHeaderSkeleton />
-        <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
+        <div className="bg-card p-6 rounded-xl border">
           <AdminTableSkeleton rows={6} cols={5} />
         </div>
       </div>

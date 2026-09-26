@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Heart, CreditCard, MessageSquare, TrendingUp, TrendingDown, DollarSign } from "@/app/components/icons";
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
+import { AdminStatTile } from "@/app/admin/components/AdminStatTile";
 import { logger } from "@/lib/logger";
 import { AdminUsersDashboardSkeleton } from "@/components/skeletons/admin";
 
@@ -54,10 +55,10 @@ export default function UserDashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard title="Wszyscy Użytkownicy" value={stats.totalUsers} icon={<Users className="h-6 w-6" />} color="blue" />
-          <StatCard title="Aktywni (Nieusunięci)" value={stats.activeUsers} icon={<TrendingUp className="h-6 w-6" />} color="green" />
-          <StatCard title="Patroni" value={stats.patrons} icon={<Heart className="h-6 w-6" />} color="amber" />
-          <StatCard title="Wszystkie Wpłaty" value={stats.totalPayments} icon={<CreditCard className="h-6 w-6" />} color="purple" />
+          <AdminStatTile label="Wszyscy Użytkownicy" value={stats.totalUsers} icon={<Users className="h-5 w-5" />} color="blue" />
+          <AdminStatTile label="Aktywni (Nieusunięci)" value={stats.activeUsers} icon={<TrendingUp className="h-5 w-5" />} color="green" />
+          <AdminStatTile label="Patroni" value={stats.patrons} icon={<Heart className="h-5 w-5" />} color="amber" />
+          <AdminStatTile label="Wszystkie Wpłaty" value={stats.totalPayments} icon={<CreditCard className="h-5 w-5" />} color="purple" />
         </div>
 
         <h2 className="text-xl font-bold mb-4">Finanse per waluta</h2>
@@ -82,27 +83,4 @@ export default function UserDashboardPage() {
       </main>
     </div>
   );
-}
-
-function StatCard({ title, value, icon, color }: { title: string, value: number | string, icon: React.ReactNode, color: string }) {
-    const colorClasses: Record<string, string> = {
-        blue: "bg-blue-100 text-blue-600",
-        green: "bg-green-100 text-green-600",
-        amber: "bg-amber-100 text-amber-600",
-        purple: "bg-purple-100 text-purple-600",
-    };
-
-    return (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className={`p-2 rounded-lg ${colorClasses[color]}`}>{icon}</div>
-              <div>
-                <p className="text-sm text-muted-foreground">{title}</p>
-                <p className="text-2xl font-bold">{value}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-    );
 }

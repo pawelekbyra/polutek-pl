@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Copy, Trash2, Edit, AlertCircle, Mail, Shield } from "@/app/components/icons";
-import { cn } from "@/lib/utils";
+import { Plus, Copy, Trash2, Edit, AlertCircle, Mail, Shield, Loader2 } from "@/app/components/icons";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 
@@ -83,79 +84,82 @@ export function TemplatesList({ onEdit, onNew }: TemplatesListProps) {
     if (res.ok) fetchTemplates();
   }
 
-  if (isLoading) return <div className="animate-pulse space-y-4"><div className="h-12 bg-neutral-100 rounded-xl" /><div className="h-12 bg-neutral-100 rounded-xl" /></div>;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-20 text-sm text-muted-foreground animate-pulse">
+        <Loader2 className="h-4 w-4 animate-spin" /> Pobieranie szablonów...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-black uppercase tracking-tight">Twoje Szablony</h2>
-        <Button onClick={onNew} className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6">
-          <Plus className="w-4 h-4 mr-2" /> Nowy szablon
+        <h2 className="text-xl font-bold tracking-tight">Twoje Szablony</h2>
+        <Button onClick={onNew}>
+          <Plus className="h-4 w-4 mr-2" /> Nowy szablon
         </Button>
       </div>
 
       {error ? (
-        <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-900">
+        <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-destructive">
           <div className="flex items-start gap-3">
             <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
             <div className="space-y-3">
               <div>
-                <h3 className="font-black uppercase tracking-tight">Nie można załadować szablonów</h3>
-                <p className="text-sm text-red-800">{error}</p>
+                <h3 className="font-bold tracking-tight">Nie można załadować szablonów</h3>
+                <p className="text-sm">{error}</p>
               </div>
-              <Button type="button" variant="outline" onClick={fetchTemplates} className="border-red-300 bg-white text-red-900 hover:bg-red-100">
+              <Button type="button" variant="outline" onClick={fetchTemplates}>
                 Spróbuj ponownie
               </Button>
             </div>
           </div>
         </div>
       ) : templates.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-neutral-300 bg-white p-10 text-center">
-          <Mail className="mx-auto h-10 w-10 text-neutral-400" />
-          <h3 className="mt-4 text-lg font-black uppercase tracking-tight text-neutral-900">Brak szablonów email</h3>
-          <p className="mx-auto mt-2 max-w-md text-sm text-neutral-500">
+        <div className="rounded-xl border border-dashed p-10 text-center">
+          <Mail className="mx-auto h-10 w-10 text-muted-foreground" />
+          <h3 className="mt-4 text-lg font-bold tracking-tight">Brak szablonów email</h3>
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
             Nie znaleziono żadnych szablonów. Dodaj pierwszy szablon ręcznie albo uruchom seed wymaganych emaili w procesie administracyjnym.
           </p>
-          <Button onClick={onNew} className="mt-6 rounded-full bg-blue-600 px-6 text-white hover:bg-blue-700">
+          <Button onClick={onNew} className="mt-6">
             <Plus className="mr-2 h-4 w-4" /> Dodaj szablon
           </Button>
         </div>
       ) : (
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         {templates.map((t) => (
-          <div key={t.id} className="bg-white border border-neutral-200 p-4 rounded-xl shadow-sm flex items-center justify-between group hover:border-neutral-900 transition-all">
+          <Card key={t.id} className="p-4 flex items-center justify-between group">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <span className={cn(
-                    "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border",
-                    t.isSystem ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-blue-50 text-blue-700 border-blue-200"
-                )}>
-                  {t.isSystem ? <Shield className="w-3 h-3 inline mr-1" /> : null}
+                <Badge variant="outline" className={t.isSystem ? "text-[10px] gap-1 bg-amber-50 text-amber-700 border-amber-200" : "text-[10px] gap-1 bg-blue-50 text-blue-700 border-blue-200"}>
+                  {t.isSystem && <Shield className="h-3 w-3" />}
                   {t.category}
-                </span>
-                {!t.isActive && <span className="bg-neutral-100 text-neutral-500 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border border-neutral-200">Nieaktywny</span>}
-                <h4 className="font-bold text-sm text-neutral-900 truncate">{t.name || t.slug}</h4>
+                </Badge>
+                {!t.isActive && <Badge variant="secondary" className="text-[10px]">Nieaktywny</Badge>}
+                <h4 className="font-bold text-sm truncate">{t.name || t.slug}</h4>
               </div>
-              <p className="text-xs text-neutral-500 line-clamp-1">{t.subject}</p>
-              <p className="text-[10px] text-neutral-400 uppercase font-black tracking-widest mt-1">
+              <p className="text-xs text-muted-foreground line-clamp-1">{t.subject}</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider mt-1">
                 Ostatnia zmiana: {format(new Date(t.updatedAt), 'PPp', { locale: pl })}
               </p>
             </div>
 
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
               <Button size="icon" variant="ghost" onClick={() => onEdit(t.slug)} title="Edytuj">
-                <Edit className="w-4 h-4" />
+                <Edit className="h-4 w-4" />
               </Button>
               <Button size="icon" variant="ghost" onClick={() => handleDuplicate(t)} title="Duplikuj">
-                <Copy className="w-4 h-4" />
+                <Copy className="h-4 w-4" />
               </Button>
               {!t.isSystem && (
                 <Button size="icon" variant="ghost" onClick={() => setTemplateToDelete(t)} title="Usuń" className="text-destructive">
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               )}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
       )}

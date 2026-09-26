@@ -1,6 +1,6 @@
 # ADMIN-LIST-SCAFFOLD-CONSOLIDATION-001 — Wspólny scaffold list/paginacja/filtrowanie w panelu admina
 
-Status: READY_FOR_BUILDER
+Status: DONE (2026-09-26) — zobacz CLAUDE.md §5.2 dla szczegółów implementacji, w tym dlaczego `useAdminVideos.ts` został wyłączony z migracji.
 Priority: LOW (maintenance cost, nie bug)
 
 ## Why

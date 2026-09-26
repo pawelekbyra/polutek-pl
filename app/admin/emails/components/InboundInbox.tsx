@@ -48,19 +48,19 @@ export function InboundInbox() {
         if (res.ok) fetchEmails();
     };
 
-    if (isLoading) return <div className="animate-pulse space-y-4"><div className="h-20 bg-neutral-100 rounded-xl" /></div>;
+    if (isLoading) return <div className="animate-pulse space-y-4"><div className="h-20 bg-muted rounded-xl" /></div>;
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-xl font-black uppercase tracking-tight">Wiadomości przychodzące</h2>
+                <h2 className="text-xl font-bold tracking-tight">Wiadomości przychodzące</h2>
                 <Button variant="outline" size="sm" onClick={fetchEmails}><RotateCcw className="w-4 h-4 mr-2" /> Odśwież</Button>
             </div>
 
             <div className="grid gap-4">
                 {emails.length === 0 && (
                     <Card className="border-dashed">
-                        <CardContent className="p-12 text-center text-neutral-400">
+                        <CardContent className="p-12 text-center text-muted-foreground">
                             <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-20" />
                             <p>Brak nowych wiadomości.</p>
                         </CardContent>
@@ -68,26 +68,26 @@ export function InboundInbox() {
                 )}
                 {emails.map((email) => (
                     <div key={email.id} className={cn(
-                        "bg-white border rounded-2xl p-6 shadow-sm flex flex-col gap-4",
-                        email.status === 'NEW' ? 'border-blue-200 ring-1 ring-blue-50' : 'border-neutral-200'
+                        "bg-card border rounded-2xl p-6 shadow-sm flex flex-col gap-4",
+                        email.status === 'NEW' ? 'border-blue-200 ring-1 ring-blue-50' : 'border'
                     )}>
                         <div className="flex justify-between items-start">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-500">
+                                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
                                     <UserIcon className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <p className="font-bold text-neutral-900">{email.fromName || email.fromEmail}</p>
-                                    <p className="text-xs text-neutral-500">{email.fromEmail}</p>
+                                    <p className="font-bold text-foreground">{email.fromName || email.fromEmail}</p>
+                                    <p className="text-xs text-muted-foreground">{email.fromEmail}</p>
                                 </div>
                             </div>
                             <div className="flex flex-col items-end gap-1">
-                                <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                                     {format(new Date(email.createdAt), 'PPp', { locale: pl })}
                                 </span>
                                 <span className={cn(
-                                    "text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border",
-                                    email.status === 'NEW' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-neutral-100 text-neutral-500 border-neutral-200'
+                                    "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                                    email.status === 'NEW' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-muted text-muted-foreground border'
                                 )}>
                                     {email.status}
                                 </span>
@@ -96,7 +96,7 @@ export function InboundInbox() {
 
                         <div className="space-y-2">
                             <p className="font-bold text-sm">{email.subject || '(Brak tematu)'}</p>
-                            <p className="text-sm text-neutral-600 leading-relaxed whitespace-pre-wrap">{email.text}</p>
+                            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{email.text}</p>
                         </div>
 
                         <div className="flex justify-between items-center pt-4 border-t">
@@ -109,14 +109,14 @@ export function InboundInbox() {
                             </div>
                             <div className="flex gap-2">
                                 {email.status === 'NEW' && (
-                                    <Button size="sm" variant="ghost" onClick={() => updateStatus(email.id, 'READ')} className="text-xs font-bold text-neutral-500">
+                                    <Button size="sm" variant="ghost" onClick={() => updateStatus(email.id, 'READ')} className="text-xs font-bold text-muted-foreground">
                                         Oznacz jako przeczytane
                                     </Button>
                                 )}
                                 <Button size="sm" variant="outline" onClick={() => updateStatus(email.id, 'RESOLVED')} className="text-xs font-bold text-green-600 border-green-200 hover:bg-green-50">
                                     <Check className="w-4 h-4 mr-2" /> Załatwione
                                 </Button>
-                                <Button size="sm" variant="ghost" onClick={() => updateStatus(email.id, 'ARCHIVED')} className="text-xs font-bold text-neutral-400">
+                                <Button size="sm" variant="ghost" onClick={() => updateStatus(email.id, 'ARCHIVED')} className="text-xs font-bold text-muted-foreground">
                                     Archiwizuj
                                 </Button>
                             </div>

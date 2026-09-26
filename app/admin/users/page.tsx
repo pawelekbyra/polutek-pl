@@ -13,11 +13,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ArrowRight, Search, ShieldCheck, Users, Heart, CreditCard, MessageSquare, Download, Filter, Globe, Mail } from "@/app/components/icons";
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
+import { AdminStatTile } from "@/app/admin/components/AdminStatTile";
 import { UserPatronActions } from "./UserPatronActions";
 import { logger } from "@/lib/logger";
 import Image from "next/image";
 import { AdminUserListItemDto as AdminUserListItem } from "@/lib/modules/users";
 import { AdminUsersPageSkeleton } from "@/components/skeletons/admin";
+import { useAdminListQuery } from "@/lib/admin/use-admin-list-query";
 
 function formatDate(value: string | Date | null) {
   if (!value) return "—";
@@ -25,13 +27,8 @@ function formatDate(value: string | Date | null) {
 }
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<AdminUserListItem[]>([]);
+  const { items: users, total, page, totalPages, isLoading, error, fetchPage } = useAdminListQuery<AdminUserListItem>();
   const [stats, setStats] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,36 +54,17 @@ export default function AdminUsersPage() {
   };
 
   const fetchUsers = useCallback(async (p = page) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      let url = `/api/admin/users?page=${p}&query=${encodeURIComponent(searchQuery)}&orderBy=${orderBy}`;
-      if (roleFilter !== "ALL") url += `&role=${roleFilter}`;
-      if (patronFilter !== "ALL") url += `&isPatron=${patronFilter === "PATRON"}`;
-      if (languageFilter !== "ALL") url += `&language=${languageFilter}`;
-      if (patronSourceFilter !== "ALL") url += `&patronSource=${patronSourceFilter}`;
-      if (isDeletedFilter) url += `&isDeleted=true`;
-      if (hasPaymentsFilter) url += `&hasPayments=true`;
-      if (hasSubscriptionsFilter) url += `&hasSubscriptions=true`;
+    let url = `/api/admin/users?page=${p}&query=${encodeURIComponent(searchQuery)}&orderBy=${orderBy}`;
+    if (roleFilter !== "ALL") url += `&role=${roleFilter}`;
+    if (patronFilter !== "ALL") url += `&isPatron=${patronFilter === "PATRON"}`;
+    if (languageFilter !== "ALL") url += `&language=${languageFilter}`;
+    if (patronSourceFilter !== "ALL") url += `&patronSource=${patronSourceFilter}`;
+    if (isDeletedFilter) url += `&isDeleted=true`;
+    if (hasPaymentsFilter) url += `&hasPayments=true`;
+    if (hasSubscriptionsFilter) url += `&hasSubscriptions=true`;
 
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        setUsers(data.items);
-        setTotal(data.total);
-        setTotalPages(data.totalPages);
-        setPage(data.page);
-      } else {
-        const err = await res.json();
-        setError(err.error || "Nie udało się pobrać listy użytkowników.");
-      }
-    } catch (err) {
-      logger.error("Failed to fetch users", err);
-      setError("Wystąpił błąd połączenia.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page, searchQuery, roleFilter, patronFilter, languageFilter, patronSourceFilter, isDeletedFilter, hasPaymentsFilter, hasSubscriptionsFilter, orderBy]);
+    return fetchPage(url, p, { fallbackMessage: "Nie udało się pobrać listy użytkowników." });
+  }, [page, searchQuery, roleFilter, patronFilter, languageFilter, patronSourceFilter, isDeletedFilter, hasPaymentsFilter, hasSubscriptionsFilter, orderBy, fetchPage]);
 
   useEffect(() => {
     fetchStats();
@@ -141,10 +119,10 @@ export default function AdminUsersPage() {
 
         {stats && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <StatCard label="Wszyscy" value={stats.totalUsers} icon={<Users className="h-5 w-5" />} color="blue" />
-            <StatCard label="Patroni" value={stats.patrons} icon={<Heart className="h-5 w-5" />} color="amber" />
-            <StatCard label="Wpłaty" value={stats.totalPayments} icon={<CreditCard className="h-5 w-5" />} color="green" />
-            <StatCard label="Komentarze" value={stats.totalComments} icon={<MessageSquare className="h-5 w-5" />} color="purple" />
+            <AdminStatTile label="Wszyscy" value={stats.totalUsers} icon={<Users className="h-5 w-5" />} color="blue" />
+            <AdminStatTile label="Patroni" value={stats.patrons} icon={<Heart className="h-5 w-5" />} color="amber" />
+            <AdminStatTile label="Wpłaty" value={stats.totalPayments} icon={<CreditCard className="h-5 w-5" />} color="green" />
+            <AdminStatTile label="Komentarze" value={stats.totalComments} icon={<MessageSquare className="h-5 w-5" />} color="purple" />
           </div>
         )}
 
@@ -206,7 +184,7 @@ export default function AdminUsersPage() {
                         </SelectContent>
                     </Select>
 
-                    <Select value={patronSourceFilter} onValueChange={(v: string) => { setPatronSourceFilter(v || "ALL"); setPage(1); }}>
+                    <Select value={patronSourceFilter} onValueChange={(v: string) => setPatronSourceFilter(v || "ALL")}>
                         <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue placeholder="Źródło Patronatu" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="ALL">Dowolne źródło</SelectItem>
@@ -248,7 +226,7 @@ export default function AdminUsersPage() {
             </div>
         </div>
 
-        <Card className="shadow-sm border-0">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
             <div>
                 <CardTitle className="text-lg flex items-center gap-2">Lista użytkowników</CardTitle>
@@ -388,31 +366,9 @@ export default function AdminUsersPage() {
   );
 }
 
-function StatCard({ label, value, icon, color }: { label: string, value: number, icon: React.ReactNode, color: string }) {
-    const colors: any = {
-        blue: "bg-blue-100 text-blue-600 border-blue-200",
-        amber: "bg-amber-100 text-amber-600 border-amber-200",
-        green: "bg-green-100 text-green-600 border-green-200",
-        purple: "bg-purple-100 text-purple-600 border-purple-200"
-    };
-    return (
-        <Card className="shadow-sm border-0">
-            <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                    <div className={`p-2.5 rounded-xl border ${colors[color] || colors.blue}`}>{icon}</div>
-                    <div>
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{label}</p>
-                        <p className="text-2xl font-black">{value.toLocaleString()}</p>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
 function AdminActionCard({ title, description, href, icon }: { title: string, description: string, href: string, icon: React.ReactNode }) {
     return (
-        <Card className="shadow-sm border-0">
+        <Card>
             <CardContent className="flex h-full items-start justify-between gap-4 p-5">
                 <div className="flex gap-4">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-blue-100 text-blue-600">{icon}</div>

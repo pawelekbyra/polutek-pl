@@ -155,20 +155,20 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
     }
   };
 
-  if (status === "loading") return <div className="animate-pulse h-96 bg-neutral-100 rounded-xl" />;
+  if (status === "loading") return <div className="animate-pulse h-96 bg-muted rounded-xl" />;
 
   return (
     <div className="space-y-6">
         <div className="flex items-center justify-between">
-            <Button variant="ghost" onClick={onBack} className="text-neutral-500 hover:text-neutral-900">
+            <Button variant="ghost" onClick={onBack}>
                 <ArrowLeft className="w-4 h-4 mr-2" /> Wróć do listy
             </Button>
             <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 bg-white border rounded-lg px-3 py-1.5 shadow-sm">
+                <div className="flex items-center gap-2 bg-background border rounded-lg px-3 py-1.5">
                     <Checkbox id="active-switch" checked={isActive} onCheckedChange={(checked: boolean | "indeterminate") => setIsActive(!!checked)} />
-                    <Label htmlFor="active-switch" className="text-[10px] font-black uppercase text-neutral-500 cursor-pointer">Aktywny</Label>
+                    <Label htmlFor="active-switch" className="text-[10px] font-bold uppercase text-muted-foreground cursor-pointer">Aktywny</Label>
                 </div>
-                <Button onClick={handleSave} disabled={status === "saving" || !subject.trim() || !html.trim()} className="bg-neutral-900 hover:bg-black text-white rounded-xl px-8 h-10">
+                <Button onClick={handleSave} disabled={status === "saving" || !subject.trim() || !html.trim()}>
                     <Save className="w-4 h-4 mr-2" /> {status === "saving" ? "Zapisuję..." : "Zapisz szablon"}
                 </Button>
             </div>
@@ -183,11 +183,11 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
                     <CardContent className="space-y-4">
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2">
-                                <Label className="text-xs font-bold uppercase text-neutral-500">Slug (ID unikalne)</Label>
+                                <Label className="text-xs font-bold uppercase text-muted-foreground">Slug (ID unikalne)</Label>
                                 <Input value={slug} onChange={e => setSlug(e.target.value)} disabled={templateSlug !== 'new'} placeholder="np. promo-jesien" />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-xs font-bold uppercase text-neutral-500">Kategoria</Label>
+                                <Label className="text-xs font-bold uppercase text-muted-foreground">Kategoria</Label>
                                 <Select value={category} onValueChange={(val) => setCategory(val || 'OTHER')}>
                                     <SelectTrigger>
                                         <SelectValue />
@@ -199,11 +199,11 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-xs font-bold uppercase text-neutral-500">Nazwa wewnętrzna</Label>
+                            <Label className="text-xs font-bold uppercase text-muted-foreground">Nazwa wewnętrzna</Label>
                             <Input value={name} onChange={e => setName(e.target.value)} placeholder="Przyjazna nazwa szablonu" />
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-xs font-bold uppercase text-neutral-500">Opis</Label>
+                            <Label className="text-xs font-bold uppercase text-muted-foreground">Opis</Label>
                             <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Do czego służy ten szablon?" />
                         </div>
                     </CardContent>
@@ -307,13 +307,13 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
                                 <button
                                     key={v.key}
                                     onClick={() => insertVariable(v.key)}
-                                    className="flex items-center justify-between p-2 rounded border border-neutral-100 hover:bg-blue-50 hover:border-blue-200 transition-all text-left"
+                                    className="flex items-center justify-between p-2 rounded border hover:bg-blue-50 hover:border-blue-200 transition-all text-left"
                                 >
                                     <div>
                                         <code className="text-xs font-bold text-blue-700">{v.key}</code>
-                                        <p className="text-[10px] text-neutral-500 uppercase font-black tracking-widest">{v.label}</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">{v.label}</p>
                                     </div>
-                                    <Plus className="w-3 h-3 text-neutral-300" />
+                                    <Plus className="w-3 h-3 text-muted-foreground/50" />
                                 </button>
                             ))}
                         </div>
@@ -332,12 +332,12 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
                     </div>
                 )}
 
-                <div className="p-4 bg-white border border-neutral-200 rounded-xl shadow-sm space-y-2">
-                    <p className="text-[10px] font-black uppercase text-neutral-400 tracking-widest">Status operacji</p>
+                <div className="p-4 bg-card border rounded-xl space-y-2">
+                    <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Status operacji</p>
                     {status === "saved" && <p className="text-green-600 font-bold text-xs">✓ Szablon został zapisany</p>}
                     {status === "error" && <p className="text-destructive font-bold text-xs">✕ {error}</p>}
-                    {status === "saving" && <p className="text-blue-600 animate-pulse font-bold text-xs italic">Zapisywanie...</p>}
-                    {status === "idle" && <p className="text-neutral-400 text-xs">Gotowy do zmian</p>}
+                    {status === "saving" && <p className="text-blue-600 animate-pulse font-bold text-xs">Zapisywanie...</p>}
+                    {status === "idle" && <p className="text-muted-foreground text-xs">Gotowy do zmian</p>}
                 </div>
             </div>
         </div>

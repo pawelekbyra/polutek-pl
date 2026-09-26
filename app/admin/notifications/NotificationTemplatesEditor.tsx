@@ -82,7 +82,7 @@ export function NotificationTemplatesEditor() {
   }
 
   if (isLoading) {
-    return <div className="animate-pulse h-40 bg-neutral-100 rounded-xl" />;
+    return <div className="animate-pulse h-40 bg-muted rounded-xl" />;
   }
 
   return (
@@ -96,21 +96,21 @@ export function NotificationTemplatesEditor() {
 
       <div className="grid gap-3">
         {templates.map((t) => (
-          <div key={t.kind} className="bg-white border border-neutral-200 rounded-xl p-4">
+          <div key={t.kind} className="bg-card border rounded-xl p-4">
             {editingKind === t.kind && draft ? (
               <div className="space-y-4">
                 <h4 className="font-bold text-sm">{KIND_LABELS[t.kind] || t.kind}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-neutral-500">Tytuł (PL)</label>
+                    <label className="text-xs font-bold uppercase text-muted-foreground">Tytuł (PL)</label>
                     <Input value={draft.titlePl} onChange={(e) => setDraft({ ...draft, titlePl: e.target.value })} />
-                    <label className="text-xs font-bold uppercase text-neutral-500">Treść (PL)</label>
+                    <label className="text-xs font-bold uppercase text-muted-foreground">Treść (PL)</label>
                     <Textarea value={draft.bodyPl} onChange={(e) => setDraft({ ...draft, bodyPl: e.target.value })} className="min-h-[100px]" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-neutral-500">Title (EN)</label>
+                    <label className="text-xs font-bold uppercase text-muted-foreground">Title (EN)</label>
                     <Input value={draft.titleEn} onChange={(e) => setDraft({ ...draft, titleEn: e.target.value })} />
-                    <label className="text-xs font-bold uppercase text-neutral-500">Body (EN)</label>
+                    <label className="text-xs font-bold uppercase text-muted-foreground">Body (EN)</label>
                     <Textarea value={draft.bodyEn} onChange={(e) => setDraft({ ...draft, bodyEn: e.target.value })} className="min-h-[100px]" />
                   </div>
                 </div>
@@ -129,12 +129,12 @@ export function NotificationTemplatesEditor() {
                   <div className="flex items-center gap-2 mb-1">
                     <h4 className="font-bold text-sm">{KIND_LABELS[t.kind] || t.kind}</h4>
                     {t.isCustomized && (
-                      <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                         Zmodyfikowany
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-neutral-600 truncate">{t.titlePl}</p>
+                  <p className="text-sm text-muted-foreground truncate">{t.titlePl}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {t.isCustomized && (

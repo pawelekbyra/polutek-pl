@@ -1,6 +1,6 @@
 # ADMIN-DESIGN-SYSTEM-CONSISTENCY-001 — Ujednolicenie drobnych niespójności wizualnych panelu admina
 
-Status: READY_FOR_BUILDER
+Status: DONE (2026-09-26) — zobacz CLAUDE.md §5.1 dla szczegółów implementacji.
 Priority: LOW (kosmetyka/spójność, nie bug)
 
 ## Why

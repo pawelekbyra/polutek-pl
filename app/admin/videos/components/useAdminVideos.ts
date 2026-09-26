@@ -2,20 +2,9 @@ import { useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { AdminVideoListItem } from "@/lib/modules/video/domain/admin-video-list.dto";
 import { logger } from "@/lib/logger";
+import { readAdminApiError } from "@/lib/admin/api-error";
 import { CreateVideoSourceMode } from "./VideoForm";
 import { INITIAL_FORM_DATA } from "./video-utils";
-
-function readVideoLoadError(data: unknown) {
-  if (data && typeof data === "object") {
-    const record = data as { error?: unknown; message?: unknown };
-    const message = typeof record.error === "string" ? record.error : record.message;
-    if (typeof message === "string" && message.trim()) {
-      return `Nie udało się pobrać listy filmów: ${message}`;
-    }
-  }
-
-  return "Nie udało się pobrać listy filmów z powodu błędu serwera.";
-}
 
 export function useAdminVideos(isAdmin: boolean) {
   const searchParams = useSearchParams();
@@ -92,7 +81,7 @@ export function useAdminVideos(isAdmin: boolean) {
         return { ok: false as const, kind: "auth" as const };
       }
 
-      setError(readVideoLoadError(data));
+      setError(readAdminApiError(data, "Nie udało się pobrać listy filmów z powodu błędu serwera."));
       return { ok: false as const, kind: "load" as const };
     } catch (err) {
       logger.error("Failed to fetch videos", err);

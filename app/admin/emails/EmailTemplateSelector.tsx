@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 const TEMPLATES = [
   { slug: 'welcome-email', label: 'Powitanie (Rejestracja)' },
@@ -20,18 +20,14 @@ export function EmailTemplateSelector({ currentSlug, onSelect }: EmailTemplateSe
   return (
     <div className="flex flex-wrap gap-2 mb-8">
       {TEMPLATES.map((t) => (
-        <button
+        <Button
           key={t.slug}
+          size="sm"
+          variant={currentSlug === t.slug ? "default" : "outline"}
           onClick={() => onSelect(t.slug)}
-          className={cn(
-            "px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest border transition-all",
-            currentSlug === t.slug
-              ? "bg-neutral-900 text-white border-neutral-900 shadow-lg"
-              : "bg-white text-neutral-500 border-neutral-200 hover:border-neutral-900 hover:text-neutral-900"
-          )}
         >
           {t.label}
-        </button>
+        </Button>
       ))}
     </div>
   );
