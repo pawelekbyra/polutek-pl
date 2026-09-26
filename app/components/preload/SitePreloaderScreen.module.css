@@ -1,0 +1,126 @@
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 50% 42%, var(--cm-blue-9, rgba(37, 99, 235, 0.09)), transparent 46%),
+    var(--chan-nav, #f7f9fc);
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s linear 0s;
+}
+
+/* Last-resort safety net: if JS never hydrates (or the reveal gate somehow never
+   fires), the page underneath must not stay hidden forever. */
+.failsafe {
+  animation: preloader-failsafe 400ms ease 6s forwards;
+}
+
+.leaving {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s linear 420ms;
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.leaving .inner {
+  transform: scale(1.04);
+}
+
+.logo {
+  display: block;
+  height: 44px;
+  width: auto;
+  animation: preloader-breathe 1.8s ease-in-out infinite;
+}
+
+.track {
+  position: relative;
+  width: 112px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--cm-blue-15, rgba(37, 99, 235, 0.15));
+}
+
+.bar {
+  position: absolute;
+  inset: 0 auto 0 -40%;
+  width: 40%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--chan-blue, #2563eb), var(--chan-amber-bright, #f59e0b));
+  animation: preloader-sweep 1.1s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes preloader-breathe {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(0.985);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes preloader-sweep {
+  to {
+    transform: translateX(350%);
+  }
+}
+
+@keyframes preloader-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .logo {
+    height: 52px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen,
+  .leaving,
+  .inner {
+    transition: none;
+  }
+
+  .leaving .inner {
+    transform: none;
+  }
+
+  .logo,
+  .bar {
+    animation: none;
+  }
+
+  .logo {
+    opacity: 1;
+  }
+
+  .bar {
+    inset: 0 30%;
+    width: 40%;
+  }
+}

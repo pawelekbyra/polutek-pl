@@ -26,6 +26,7 @@ import { CommentMotionItem, AnimatedCount } from "./components/comment-motion";
 import { useComments } from "./hooks/useComments";
 import { useClientReady } from "@/app/hooks/useClientEnvironment";
 import { CommentLoadingSkeleton } from "@/components/skeletons";
+import { usePageRevealReady } from "../preload/PageRevealGate";
 
 type ClerkCommentMetadata = {
   totalPaid?: unknown;
@@ -173,6 +174,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     editMutation,
     reportMutation,
   } = useComments(videoId, sortBy, language, userProfile);
+  usePageRevealReady("comments", !isLoading);
 
   useEffect(() => {
     const observer = new IntersectionObserver(

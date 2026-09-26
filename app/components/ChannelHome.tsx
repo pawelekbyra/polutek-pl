@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { useLanguage } from "./LanguageContext";
 import { SidebarPlaylist, SidebarSupportBox } from "./channel/SidebarPlaylist";
+import type { SidebarLayout } from "./channel/sidebar-layout-request";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
 import { AppPreloadProvider, useAppPreload } from "./preload/AppPreloadProvider";
@@ -40,6 +41,10 @@ interface ChannelHomeProps {
     isPatronDecorative?: boolean;
     role?: string;
   } | null;
+  /** Server-rendered sidebar layout, so the playlist is in the first HTML (see HomeExperience). */
+  initialSidebarLayout?: SidebarLayout | null;
+  /** Viewer the server-rendered layout was built for (`sidebarLayoutViewerKey`). */
+  initialSidebarViewerKey?: string;
 }
 
 type ChannelViewState = {
@@ -54,6 +59,8 @@ export default function ChannelHome({
   allVideos = [],
   currentVideoId,
   userProfile,
+  initialSidebarLayout,
+  initialSidebarViewerKey,
 }: ChannelHomeProps) {
   const selectedVideo =
     (allVideos || []).find(
@@ -67,6 +74,8 @@ export default function ChannelHome({
         allVideos={allVideos}
         currentVideoId={currentVideoId}
         userProfile={userProfile}
+        initialSidebarLayout={initialSidebarLayout}
+        initialSidebarViewerKey={initialSidebarViewerKey}
       />
     </AppPreloadProvider>
   );
@@ -101,6 +110,8 @@ function ChannelHomeContent({
   allVideos = [],
   currentVideoId,
   userProfile,
+  initialSidebarLayout,
+  initialSidebarViewerKey,
 }: ChannelHomeProps) {
   const { t, language } = useLanguage();
   const [selectionState, setSelectionState] = useState<ChannelViewState>(() => ({
@@ -192,13 +203,16 @@ function ChannelHomeContent({
 
   const sortedVideos = [...(allVideos || [])].sort(compareSidebarItems);
 
+  // Intent (hover/focus/touch-start) warms everything the switch will need —
+  // playback plan, poster AND the first page of comments — so a click lands on a
+  // ready player and ready comments instead of a spinner and a skeleton.
   const prefetchVideoIntent = (vidId: string) => {
-    void preloader?.warmVideo(vidId, { includeComments: false, includePoster: true, priority: "intent" });
+    void preloader?.warmVideo(vidId, { includeComments: true, includePoster: true, priority: "intent" });
   };
 
   const handleVideoSelect = (clickedId?: string) => {
     if (clickedId && clickedId !== selectedVideo.id) {
-      void preloader?.warmVideo(clickedId, { includeComments: false, includePoster: true, priority: "intent" });
+      void preloader?.warmVideo(clickedId, { includeComments: true, includePoster: true, priority: "intent" });
       setSelectionState({
         routeVideoId: currentVideoId,
         selectedVideoId: clickedId,
@@ -218,6 +232,8 @@ function ChannelHomeContent({
     mounted,
     onVideoMouseEnter: prefetchVideoIntent,
     onVideoSelect: handleVideoSelect,
+    initialLayout: initialSidebarLayout,
+    initialLayoutViewerKey: initialSidebarViewerKey,
   };
 
   const comments = (

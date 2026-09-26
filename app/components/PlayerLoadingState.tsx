@@ -10,6 +10,57 @@ interface PlayerLoadingStateProps {
   className?: string;
   fill?: boolean;
   variant?: "default" | "thumbnail" | "thumbnailCompact";
+  /**
+   * Poster of the video being prepared. When set (full-size player only), the
+   * loading state is the poster itself with a delayed spinner — a video switch
+   * then reads as "the new video is already here" instead of a loader card.
+   */
+  posterUrl?: string | null;
+}
+
+/**
+ * Poster-first loading view: the video's own thumbnail fills the frame at once,
+ * and a small spinner fades in only if loading takes longer than ~0.5s, so fast
+ * switches (the common case, thanks to intent preloading) never flash a spinner.
+ * `hidden` fades the whole layer out (e.g. once the first real frame plays).
+ */
+export function PlayerPosterLoading({
+  posterUrl,
+  hidden = false,
+}: {
+  posterUrl: string;
+  hidden?: boolean;
+}) {
+  const language = useOptionalLanguage();
+  return (
+    <div
+      className={cn("polutek-poster-loader", hidden && "polutek-poster-loader--hidden")}
+      role={hidden ? undefined : "status"}
+      aria-live="polite"
+      aria-label={hidden ? undefined : language === "pl" ? "Ładowanie filmu…" : "Loading video…"}
+      aria-hidden={hidden || undefined}
+      data-testid="player-poster-loading"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element -- same URL the preloader already warmed; next/image would request a different, uncached variant */}
+      <img src={posterUrl} alt="" decoding="async" className="polutek-poster-loader-img" />
+      <div className="polutek-poster-loader-spinner" aria-hidden="true" />
+      <style jsx global>{`
+        .polutek-poster-loader { position:absolute; inset:0; overflow:hidden; background:#000; opacity:1; transition:opacity 260ms cubic-bezier(0.16,1,0.3,1); }
+        .polutek-poster-loader--hidden { opacity:0; }
+        .polutek-poster-loader-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+        .polutek-poster-loader::after { content:""; position:absolute; inset:0; background:rgba(0,0,0,.18); opacity:0; animation:polutek-poster-scrim 300ms ease 450ms forwards; }
+        .polutek-poster-loader-spinner { position:absolute; left:50%; top:50%; z-index:1; width:44px; height:44px; margin:-22px 0 0 -22px; border-radius:999px; border:3px solid rgba(255,255,255,.28); border-top-color:#fff; opacity:0; animation:polutek-poster-spinner-in 300ms ease 450ms forwards, polutek-poster-spin .85s linear infinite; }
+        .polutek-poster-loader--hidden .polutek-poster-loader-spinner, .polutek-poster-loader--hidden::after { animation:none; opacity:0; }
+        @keyframes polutek-poster-scrim { to { opacity:1; } }
+        @keyframes polutek-poster-spinner-in { to { opacity:1; } }
+        @keyframes polutek-poster-spin { to { transform:rotate(360deg); } }
+        @media (prefers-reduced-motion:reduce) {
+          .polutek-poster-loader { transition:none; }
+          .polutek-poster-loader-spinner { animation:polutek-poster-spinner-in 1ms linear 450ms forwards; }
+        }
+      `}</style>
+    </div>
+  );
 }
 
 /**
@@ -74,8 +125,17 @@ export function PlayerLoadingState({
   className,
   fill = false,
   variant = "default",
+  posterUrl,
 }: PlayerLoadingStateProps) {
   const isThumbnail = variant === "thumbnail" || variant === "thumbnailCompact";
+
+  if (posterUrl && !isThumbnail) {
+    return (
+      <PlayerStateFrame className={className} fill={fill}>
+        <PlayerPosterLoading posterUrl={posterUrl} />
+      </PlayerStateFrame>
+    );
+  }
 
   return (
     <PlayerStateFrame

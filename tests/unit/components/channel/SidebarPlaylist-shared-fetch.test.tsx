@@ -175,4 +175,37 @@ describe("SidebarPlaylist shared /api/channel/sidebar request", () => {
     expect(document.querySelectorAll('[aria-busy="true"]').length).toBe(0);
     expect(screen.getAllByText("Prop fallback title")).toHaveLength(2);
   });
+
+  it("renders a server-provided layout at once and skips the fetch for the same viewer", async () => {
+    const initialLayout = layoutPayload("Server title") as never;
+    render(
+      <>
+        <SidebarPlaylist {...baseProps} initialLayout={initialLayout} initialLayoutViewerKey="anonymous:out" />
+        <SidebarPlaylist {...baseProps} showSupportBox={false} initialLayout={initialLayout} initialLayoutViewerKey="anonymous:out" />
+      </>,
+    );
+
+    // No skeleton pass at all — the list is in the very first render.
+    expect(document.querySelectorAll('[aria-busy="true"]').length).toBe(0);
+    expect(screen.getAllByText("Server title")).toHaveLength(2);
+    await act(async () => {});
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("refetches when the client viewer differs from the one the server layout was built for", async () => {
+    mocks.auth.isSignedIn = true;
+    mocks.auth.userId = "user_1";
+    render(
+      <SidebarPlaylist
+        {...baseProps}
+        initialLayout={layoutPayload("Server title") as never}
+        initialLayoutViewerKey="anonymous:out"
+      />,
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await act(async () => {});
+    expect(screen.getByText("Layout title")).toBeTruthy();
+    expect(screen.queryByText("Server title")).toBeNull();
+  });
 });

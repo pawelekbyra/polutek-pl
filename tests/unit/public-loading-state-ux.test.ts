@@ -9,7 +9,7 @@ describe("public loading/access state UX contracts", () => {
     const player = read("app/components/VideoPlayer.tsx");
 
     expect(wrapper).toContain(
-      "return <PlayerLoadingState variant={variant} />;",
+      "return <PlayerLoadingState variant={variant} posterUrl={posterUrl} />;",
     );
     expect(wrapper).not.toContain("setMounted(true)");
     expect(player).toContain(

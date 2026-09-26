@@ -4,13 +4,14 @@ import { describe, expect, it } from "vitest";
 const read = (path: string) => readFileSync(path, "utf8");
 
 describe("shared visual system contracts", () => {
-  it("shows the full homepage skeleton only after locale resolution", () => {
+  it("shows the full homepage preloader only after locale resolution", () => {
     const rootLoading = read("app/loading.tsx");
     const localizedLoading = read("app/[locale]/(home)/loading.tsx");
     const channelHome = read("app/components/ChannelHome.tsx");
 
     expect(rootLoading).not.toContain("HomePageSkeleton");
-    expect(localizedLoading).toContain("HomePageSkeleton");
+    expect(rootLoading).not.toContain("SitePreloaderScreen");
+    expect(localizedLoading).toContain("SitePreloaderScreen");
     expect(channelHome).toContain("CommentsMountPlaceholder");
     expect(channelHome).not.toContain("CommentsShellSkeleton");
   });
