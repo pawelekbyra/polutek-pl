@@ -49,6 +49,8 @@ interface CheckoutModalProps {
   onClose: () => void;
   onBackToSite: () => void;
   onRetryStatusCheck?: () => void;
+  /** Optional progress caption above the payment form, e.g. "Step 2 of 2" in the support modal. */
+  stepLabel?: string;
 }
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({
@@ -67,6 +69,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   onClose,
   onBackToSite,
   onRetryStatusCheck,
+  stepLabel,
 }) => {
   // A terminal non-success outcome — show a red "something went wrong" header instead of the
   // green thank-you check, so the icon/headline never contradict a failure/refund message.
@@ -195,6 +198,11 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   </div>
                 ) : (
                   <div className="flex flex-col pt-10">
+                    {stepLabel && (
+                      <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--chan-muted)]">
+                        {stepLabel}
+                      </p>
+                    )}
                     {/* Hidden on phones by design, but still the dialog's accessible name there —
                         aria-labelledby resolves text from a visually hidden element. */}
                     <div className="mb-6 hidden md:block">

@@ -7,6 +7,10 @@ import type { AccessTier, VideoStatus } from '@prisma/client';
 import ChannelHome from '@/app/components/ChannelHome';
 import type { PublicVideoDTO } from '@/app/types/video';
 
+vi.mock('next/navigation', () => ({ useSearchParams: () => new URLSearchParams() }));
+// This file covers the sidebar tip-gate handoff, i.e. the non-modal path of the
+// TEMP_SUPPORT_AS_MODAL experiment (the modal path is covered in channel-home-support-modal).
+vi.mock('@/lib/temp-support-modal', () => ({ TEMP_SUPPORT_AS_MODAL: false }));
 vi.mock('@/app/components/preload/AppPreloadProvider', () => ({
   AppPreloadProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useAppPreload: () => ({ warmVideo: vi.fn() }),

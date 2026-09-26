@@ -18,6 +18,7 @@ import { useAppPreload } from "../preload/AppPreloadProvider";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TEMP_PATRON_COMING_SOON } from "@/lib/temp-patron-coming-soon";
+import { TEMP_SUPPORT_AS_MODAL } from "@/lib/temp-support-modal";
 import {
   acquireSidebarLayout,
   releaseSidebarLayout,
@@ -26,9 +27,7 @@ import {
   type SidebarLayoutItem,
 } from "./sidebar-layout-request";
 
-type Translations = {
-  views: string;
-};
+type Translations = { views: string };
 
 interface SidebarPlaylistProps {
   sortedVideos: PublicVideoDTO[];
@@ -64,7 +63,7 @@ export function SidebarSupportBox({
 }) {
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const supportItem = useSupportItem(sortedVideos);
-  if (!authLoaded || !isSignedIn) return null;
+  if (TEMP_SUPPORT_AS_MODAL || !authLoaded || !isSignedIn) return null;
   if (!supportItem?.creatorId) return null;
   return <DonationBox videoTitle={supportItem?.title} viewerIsPatron={viewerIsPatron} />;
 }
@@ -342,7 +341,7 @@ export function SidebarPlaylist({
     </div>
   );
 
-  const patronBox = authLoaded && isSignedIn && supportItem?.creatorId
+  const patronBox = !TEMP_SUPPORT_AS_MODAL && authLoaded && isSignedIn && supportItem?.creatorId
     ? <DonationBox videoTitle={supportItem.title} viewerIsPatron={viewerIsPatron} />
     : null;
 
@@ -376,7 +375,7 @@ export function SidebarPlaylist({
         {renderSkeletonSection(language === "pl" ? "Publiczne" : "Public")}
         {renderSkeletonSection(language === "pl" ? "Dla zalogowanych" : "For logged in")}
         {renderSkeletonSection(patronSectionTitle)}
-        {showSupportBox && (
+        {showSupportBox && !TEMP_SUPPORT_AS_MODAL && (
           <div className="mt-2 shrink-0 rounded-lg bg-[var(--chan-surface)] p-4">
             <Skeleton className="h-8 w-full rounded-[10px]" />
           </div>
