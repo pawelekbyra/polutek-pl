@@ -42,9 +42,11 @@
   transform: scale(1.04);
 }
 
+/* Same size as the navbar logo (BrandName h-[28px] md:h-[34px]), so the mark
+   doesn't jump in size when the preloader hands over to the page. */
 .logo {
   display: block;
-  height: 44px;
+  height: 28px;
   width: auto;
 }
 
@@ -82,7 +84,7 @@
 
 @media (min-width: 768px) {
   .logo {
-    height: 52px;
+    height: 34px;
   }
 }
 
