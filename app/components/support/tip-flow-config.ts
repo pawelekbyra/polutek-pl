@@ -23,6 +23,8 @@ export const TIP_FALLBACK_METHOD = "stripe_all";
 const METHOD_COPY: Record<string, { icon: string; title: string; hintPl: string; hintEn: string }> = {
   blik: { icon: "📱", title: "BLIK", hintPl: "Kod z aplikacji banku", hintEn: "Code from your banking app" },
   p24: { icon: "🏦", title: "Przelewy24", hintPl: "Szybki przelew z Twojego banku", hintEn: "Instant transfer from your bank" },
+  apple_pay: { icon: "", title: "Apple Pay", hintPl: "Szybko z Twojego urządzenia", hintEn: "Quick from your device" },
+  google_pay: { icon: "📲", title: "Google Pay", hintPl: "Szybko z Twojego telefonu", hintEn: "Quick from your phone" },
   card: { icon: "💳", title: "Karta", hintPl: "Visa, Mastercard…", hintEn: "Visa, Mastercard…" },
   paypal: { icon: "🅿️", title: "PayPal", hintPl: "Konto PayPal", hintEn: "Your PayPal account" },
   revolut_pay: { icon: "🔁", title: "Revolut Pay", hintPl: "Aplikacja Revolut", hintEn: "Revolut app" },
@@ -37,18 +39,26 @@ const METHOD_COPY: Record<string, { icon: string; title: string; hintPl: string;
 };
 
 // Local instant methods first, then card, then accounts/wallets. Unknown methods go last.
-const METHOD_ORDER = ["blik", "p24", "ideal", "bancontact", "eps", "twint", "swish", "mobilepay", "card", "paypal", "revolut_pay", "klarna"];
+const METHOD_ORDER = ["blik", "apple_pay", "google_pay", "p24", "ideal", "bancontact", "eps", "twint", "swish", "mobilepay", "card", "paypal", "revolut_pay", "klarna"];
 
-// Not shown as tiles: Link is Stripe's own saved-details network, and Apple/Google Pay get
-// Stripe's real wallet button above the tiles instead.
+// Not shown as a tile: Link is Stripe's own saved-details network.
 const HIDDEN_TILE_METHODS = new Set(["link"]);
 
-export function getTipMethodTiles(paymentMethodTypes: string[]): string[] {
+export type TipWallet = "apple_pay" | "google_pay";
+
+export const TIP_WALLETS: readonly TipWallet[] = ["apple_pay", "google_pay"];
+
+/**
+ * Apple Pay / Google Pay are card payments to Stripe, so they only get a tile when the intent
+ * allows cards and the browser says the wallet is set up on this device.
+ */
+export function getTipMethodTiles(paymentMethodTypes: string[], wallets: readonly TipWallet[] = []): string[] {
   const rank = (type: string) => {
     const index = METHOD_ORDER.indexOf(type);
     return index === -1 ? METHOD_ORDER.length : index;
   };
-  const tiles = [...new Set(paymentMethodTypes)]
+  const withWallets = paymentMethodTypes.includes("card") ? [...paymentMethodTypes, ...wallets] : paymentMethodTypes;
+  const tiles = [...new Set(withWallets)]
     .filter((type) => !HIDDEN_TILE_METHODS.has(type))
     .sort((a, b) => rank(a) - rank(b));
   return tiles.length > 0 ? tiles : [TIP_FALLBACK_METHOD];

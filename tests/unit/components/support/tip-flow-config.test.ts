@@ -12,6 +12,11 @@ describe('tip gate method tiles (list comes from Stripe)', () => {
     expect(describeTipMethod('some_new_method', true).title).toBe('Some New Method');
   });
 
+  it('adds Apple Pay / Google Pay as ordinary tiles only when the device has them and cards are allowed', () => {
+    expect(getTipMethodTiles(['card', 'p24', 'blik'], ['google_pay'])).toEqual(['blik', 'google_pay', 'p24', 'card']);
+    expect(getTipMethodTiles(['blik'], ['apple_pay'])).toEqual(['blik']);
+  });
+
   it('falls back to Stripe\'s full form when no list came back', () => {
     expect(getTipMethodTiles([])).toEqual([TIP_FALLBACK_METHOD]);
   });

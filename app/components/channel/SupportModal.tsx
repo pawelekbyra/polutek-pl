@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import type { StripeElementsOptions } from "@stripe/stripe-js";
 import { X, ArrowLeft } from "../icons";
@@ -8,10 +8,17 @@ import { Dialog, DialogOverlay, DialogPopup, DialogPortal, DialogTitle } from "@
 import { useLanguage } from "../LanguageContext";
 import { useAuthModal } from "../auth/AuthModalProvider";
 import { cn } from "@/lib/utils";
-import type { SupportedCurrency } from "@/lib/constants";
+import { MAIN_CREATOR_NAME, type SupportedCurrency } from "@/lib/constants";
 import { detectDefaultCurrency } from "@/lib/payments/detect-currency";
 import { checkoutStripePromise, useCheckoutFlow } from "@/lib/hooks/useCheckoutFlow";
-import { getTipMethodTiles, readLastTipMethod, rememberTipMethod, type TipStep } from "../support/tip-flow-config";
+import {
+  TIP_WALLETS,
+  getTipMethodTiles,
+  readLastTipMethod,
+  rememberTipMethod,
+  type TipStep,
+  type TipWallet,
+} from "../support/tip-flow-config";
 import { TipAmountStep } from "../support/TipAmountStep";
 import { TipMethodStep } from "../support/TipMethodStep";
 import { TipPayStep } from "../support/TipPayStep";
@@ -31,8 +38,9 @@ const STEPS: TipStep[] = ["amount", "method", "pay"];
  * changes size between steps.
  *
  * Stripe decides which methods a tip can use: the intent is created with automatic payment
- * methods after step 1 and its `payment_method_types` become the tiles; the chosen one is then
- * confirmed with its own Stripe.js call on the same intent. Success still reconciles through
+ * methods after step 1 and its `payment_method_types` become the tiles (plus Apple Pay /
+ * Google Pay when the device has one); the chosen one is then confirmed with its own Stripe.js
+ * call on the same intent. Success still reconciles through
  * /api/payments/[id] → fulfillPayment(). Mounted only while open, so each opening starts fresh.
  */
 export default function SupportModal({ videoTitle, onClose }: SupportModalProps) {
@@ -60,9 +68,33 @@ export default function SupportModal({ videoTitle, onClose }: SupportModalProps)
   const [step, setStep] = useState<TipStep>("amount");
   const [pickedMethod, setPickedMethod] = useState<string | null>(() => readLastTipMethod());
   const [creatingIntent, setCreatingIntent] = useState(false);
+  const [wallets, setWallets] = useState<TipWallet[]>([]);
+
+  // Apple Pay / Google Pay get a tile only when this browser has one set up.
+  useEffect(() => {
+    let active = true;
+    checkoutStripePromise
+      ?.then((stripe) =>
+        stripe
+          ?.paymentRequest({
+            country: "PL",
+            currency: currency.toLowerCase(),
+            total: { label: MAIN_CREATOR_NAME, amount: 100 },
+            disableWallets: ["link", "browserCard"],
+          })
+          .canMakePayment(),
+      )
+      .then((result) => {
+        if (active) setWallets(TIP_WALLETS.filter((wallet) => (wallet === "apple_pay" ? result?.applePay : result?.googlePay)));
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [currency]);
 
   const minAmount = flow.patronBoxMinimums[currency] ?? flow.minimums[currency];
-  const methods = getTipMethodTiles(flow.paymentMethodTypes);
+  const methods = getTipMethodTiles(flow.paymentMethodTypes, wallets);
   // The viewer's pick (or last-used method) when Stripe allows it for this tip, else the first tile.
   const method = pickedMethod && methods.includes(pickedMethod) ? pickedMethod : methods[0] ?? null;
 
@@ -139,14 +171,13 @@ export default function SupportModal({ videoTitle, onClose }: SupportModalProps)
     );
   } else if (step !== "amount" && elementsOptions && amount !== "") {
     body = (
-      // One Elements group per intent, shared by the wallet button (step 2) and the fallback form (step 3).
+      // One Elements group per intent; the per-method forms confirm against its client secret.
       <Elements key={flow.clientSecret} stripe={checkoutStripePromise} options={elementsOptions}>
         {step === "method" || !method ? (
           <TipMethodStep
             language={language}
             amount={amount}
             currency={currency}
-            paymentId={flow.paymentId}
             methods={methods}
             selected={method}
             onSelect={setPickedMethod}
@@ -156,7 +187,6 @@ export default function SupportModal({ videoTitle, onClose }: SupportModalProps)
               setStep("pay");
             }}
             onChangeAmount={backToAmount}
-            onWalletConfirmed={handleConfirmed}
           />
         ) : (
           <TipPayStep

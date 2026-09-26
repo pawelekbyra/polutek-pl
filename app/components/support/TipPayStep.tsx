@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { CardElement, Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
-import type { PaymentIntentResult, Stripe } from "@stripe/stripe-js";
+import type { PaymentIntentResult, PaymentRequest, Stripe } from "@stripe/stripe-js";
 import type { SupportedCurrency } from "@/lib/constants";
 import { MAIN_CREATOR_NAME } from "@/lib/constants";
 import { Loader2 } from "../icons";
@@ -26,7 +26,8 @@ interface TipPayStepProps {
 /**
  * The last step: a form for the method picked on "Metoda napiwku" only, confirmed against the
  * same automatic intent with that method's Stripe.js confirm call. Methods without a dedicated
- * form (added later in the Stripe dashboard) fall back to Stripe's full Payment Element.
+ * form (added later in the Stripe dashboard) get Stripe's Payment Element limited to that one
+ * method; only the "Karta i inne" fallback tile shows Stripe's full list.
  * Must render inside <Elements> bound to the intent.
  */
 export function TipPayStep(props: TipPayStepProps) {
@@ -34,7 +35,9 @@ export function TipPayStep(props: TipPayStepProps) {
   if (method === "blik") return <BlikForm {...props} />;
   if (method === "p24") return <RedirectForm {...props} />;
   if (method === "card") return <CardForm {...props} />;
-  return <FallbackForm {...props} />;
+  if (method === "apple_pay" || method === "google_pay") return <WalletForm {...props} />;
+  if (method === TIP_FALLBACK_METHOD) return <FallbackForm {...props} />;
+  return <SingleMethodForm {...props} />;
 }
 
 /** Heading + "20 zł · BLIK · Zmień" strip shared by every per-method form. */
@@ -105,6 +108,10 @@ function ErrorLine({ error }: { error: string | null }) {
       {error}
     </p>
   );
+}
+
+function toMinor(amount: number) {
+  return Math.round(amount * 100);
 }
 
 function sendLabel(isPl: boolean, amount: number, currency: SupportedCurrency, language: string) {
@@ -250,8 +257,9 @@ function CardFormInner(props: TipPayStepProps) {
   );
 }
 
-function FallbackForm(props: TipPayStepProps) {
-  const { language, amount, currency, method, paymentId, userEmail, onConfirmed } = props;
+/** Stripe's Payment Element; `deferred` when it sits in its own Elements group limited to one method. */
+function FallbackForm({ deferred, ...props }: TipPayStepProps & { deferred?: boolean }) {
+  const { language, amount, currency, clientSecret, paymentId, userEmail, onConfirmed } = props;
   const isPl = language === "pl";
   const stripe = useStripe();
   const elements = useElements();
@@ -260,16 +268,21 @@ function FallbackForm(props: TipPayStepProps) {
   const send = () =>
     stripe &&
     elements &&
-    run(() =>
-      stripe.confirmPayment({
+    run(async () => {
+      if (deferred) {
+        const { error: submitError } = await elements.submit();
+        if (submitError) return { error: submitError } as PaymentIntentResult;
+      }
+      return stripe.confirmPayment({
         elements,
+        ...(deferred ? { clientSecret } : {}),
         confirmParams: {
           return_url: buildTipReturnUrl(paymentId),
           ...(userEmail ? { payment_method_data: { billing_details: { email: userEmail } } } : {}),
         },
         redirect: "if_required",
-      }),
-    );
+      });
+    });
 
   return (
     <PayStepFrame
@@ -281,7 +294,6 @@ function FallbackForm(props: TipPayStepProps) {
       <PaymentElement
         options={{
           layout: { type: "accordion", defaultCollapsed: false },
-          ...(method !== TIP_FALLBACK_METHOD ? { paymentMethodOrder: [method] } : {}),
           business: { name: MAIN_CREATOR_NAME },
           wallets: { applePay: "never", googlePay: "never", link: "never" },
           fields: { billingDetails: { email: userEmail ? "never" : "auto" } },
@@ -289,5 +301,93 @@ function FallbackForm(props: TipPayStepProps) {
       />
       <ErrorLine error={error} />
     </PayStepFrame>
+  );
+}
+
+/** Apple Pay / Google Pay via the browser's payment sheet, opened by our own send button. */
+function WalletForm(props: TipPayStepProps) {
+  const { language, amount, currency, method, clientSecret, onConfirmed } = props;
+  const isPl = language === "pl";
+  const stripe = useStripe();
+  const [request, setRequest] = useState<PaymentRequest | null>(null);
+  const [unavailable, setUnavailable] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const onConfirmedRef = useRef(onConfirmed);
+  useEffect(() => {
+    onConfirmedRef.current = onConfirmed;
+  }, [onConfirmed]);
+
+  useEffect(() => {
+    if (!stripe) return;
+    let active = true;
+    const paymentRequest = stripe.paymentRequest({
+      country: "PL",
+      currency: currency.toLowerCase(),
+      total: { label: MAIN_CREATOR_NAME, amount: toMinor(amount) },
+      disableWallets: ["link", "browserCard", method === "apple_pay" ? "googlePay" : "applePay"],
+    });
+    paymentRequest.on("paymentmethod", async (event) => {
+      const first = await stripe.confirmCardPayment(clientSecret, { payment_method: event.paymentMethod.id }, { handleActions: false });
+      event.complete(first.error ? "fail" : "success");
+      const result = !first.error && first.paymentIntent?.status === "requires_action" ? await stripe.confirmCardPayment(clientSecret) : first;
+      const read = readConfirmResult(result, isPl);
+      setBusy(false);
+      if ("outcome" in read) onConfirmedRef.current(read.outcome);
+      else setError(read.error);
+    });
+    paymentRequest.on("cancel", () => setBusy(false));
+    void paymentRequest.canMakePayment().then((result) => {
+      if (!active) return;
+      if (result) setRequest(paymentRequest);
+      else setUnavailable(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, [stripe, clientSecret, amount, currency, method, isPl]);
+
+  const send = () => {
+    if (!request) return;
+    setError(null);
+    setBusy(true);
+    request.show();
+  };
+
+  return (
+    <PayStepFrame
+      props={props}
+      footer={<SendButton busy={busy} disabled={!request} isPl={isPl} label={sendLabel(isPl, amount, currency, language)} onClick={send} />}
+    >
+      <p className="text-[14px] leading-[1.6] text-[var(--chan-body)]">
+        {unavailable
+          ? isPl
+            ? "Ta metoda nie jest dostępna na tym urządzeniu. Wróć i wybierz inną."
+            : "This method isn't available on this device. Go back and pick another one."
+          : isPl
+            ? "Po kliknięciu otworzy się okno portfela, w którym potwierdzisz napiwek."
+            : "Your wallet will open so you can confirm the tip."}
+      </p>
+      <ErrorLine error={error} />
+    </PayStepFrame>
+  );
+}
+
+/** A method without our own form: Stripe's Payment Element showing only that method. */
+function SingleMethodForm(props: TipPayStepProps) {
+  const { language, amount, currency, method } = props;
+  return (
+    <Elements
+      stripe={props.stripePromise}
+      options={{
+        mode: "payment",
+        amount: toMinor(amount),
+        currency: currency.toLowerCase(),
+        paymentMethodTypes: [method],
+        locale: language === "pl" ? "pl" : "en",
+      }}
+    >
+      <FallbackForm {...props} deferred />
+    </Elements>
   );
 }
