@@ -4,9 +4,9 @@ import React, { useState } from "react";
 import type { SupportedCurrency } from "@/lib/constants";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown } from "../icons";
 import { TIP_CURRENCIES, TIP_CURRENCY_LABELS, formatTipAmount } from "./tip-flow-config";
 import { TipPrimaryButton, TipStepHeading, TipStepLayout } from "./TipStepLayout";
+import { TipSelect } from "./TipSelect";
 
 interface TipAmountStepProps {
   language: string;
@@ -104,23 +104,16 @@ export function TipAmountStep({
         }
       />
 
-      <label className="block">
-        <span className="mb-1.5 block text-[12px] font-bold text-[var(--chan-body)]">{isPl ? "Waluta" : "Currency"}</span>
-        <div className="relative">
-          <select
-            value={currency}
-            onChange={(event) => onCurrencyChange(event.target.value as SupportedCurrency)}
-            className="h-12 w-full cursor-pointer appearance-none rounded-[14px] border-2 border-[var(--chan-line)] bg-white pl-4 pr-10 text-[15px] font-bold text-[var(--chan-ink)] outline-none transition-colors focus:border-[var(--chan-blue)]"
-          >
-            {TIP_CURRENCIES.map((code) => (
-              <option key={code} value={code}>
-                {isPl ? TIP_CURRENCY_LABELS[code].pl : TIP_CURRENCY_LABELS[code].en}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--chan-muted)]" />
-        </div>
-      </label>
+      <TipSelect
+        label={isPl ? "Waluta" : "Currency"}
+        value={currency}
+        onChange={(code) => onCurrencyChange(code as SupportedCurrency)}
+        options={TIP_CURRENCIES.map((code) => ({
+          value: code,
+          icon: TIP_CURRENCY_LABELS[code].symbol,
+          title: isPl ? TIP_CURRENCY_LABELS[code].pl : TIP_CURRENCY_LABELS[code].en,
+        }))}
+      />
 
       <label className="mt-4 block">
         <span className="mb-1.5 block text-[12px] font-bold text-[var(--chan-body)]">{isPl ? "Kwota" : "Amount"}</span>

@@ -2,9 +2,9 @@
 
 import React from "react";
 import type { SupportedCurrency } from "@/lib/constants";
-import { ChevronDown } from "../icons";
 import { describeTipMethod, formatTipAmount } from "./tip-flow-config";
 import { TipPrimaryButton, TipStepHeading, TipStepLayout } from "./TipStepLayout";
+import { TipSelect } from "./TipSelect";
 
 interface TipMethodStepProps {
   language: string;
@@ -34,7 +34,6 @@ export function TipMethodStep({
   onChangeAmount,
 }: TipMethodStepProps) {
   const isPl = language === "pl";
-  const selectedCopy = selected ? describeTipMethod(selected, isPl) : null;
   return (
     <TipStepLayout
       footer={
@@ -54,29 +53,12 @@ export function TipMethodStep({
         </button>
       </div>
 
-      <label className="block">
-        <span className="mb-1.5 block text-[12px] font-bold text-[var(--chan-body)]">
-          {isPl ? "Wybierz metodę napiwku" : "Choose a tip method"}
-        </span>
-        <div className="relative">
-          <select
-            value={selected ?? ""}
-            onChange={(event) => onSelect(event.target.value)}
-            className="h-12 w-full cursor-pointer appearance-none rounded-[14px] border-2 border-[var(--chan-line)] bg-white pl-4 pr-10 text-[15px] font-bold text-[var(--chan-ink)] outline-none transition-colors focus:border-[var(--chan-blue)]"
-          >
-            {methods.map((method) => {
-              const copy = describeTipMethod(method, isPl);
-              return (
-                <option key={method} value={method}>
-                  {copy.icon ? `${copy.icon} ${copy.title}` : copy.title}
-                </option>
-              );
-            })}
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--chan-muted)]" />
-        </div>
-      </label>
-      {selectedCopy && <p className="mt-1.5 text-[12px] text-[var(--chan-muted)]">{selectedCopy.hint}</p>}
+      <TipSelect
+        label={isPl ? "Wybierz metodę napiwku" : "Choose a tip method"}
+        value={selected}
+        onChange={onSelect}
+        options={methods.map((method) => ({ value: method, ...describeTipMethod(method, isPl) }))}
+      />
     </TipStepLayout>
   );
 }

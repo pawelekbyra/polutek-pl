@@ -4,12 +4,12 @@ export type TipStep = "amount" | "method" | "pay";
 
 export const TIP_CURRENCIES = SUPPORTED_CURRENCIES;
 
-export const TIP_CURRENCY_LABELS: Record<SupportedCurrency, { pl: string; en: string }> = {
-  PLN: { pl: "Złoty (PLN)", en: "Polish złoty (PLN)" },
-  EUR: { pl: "Euro (EUR)", en: "Euro (EUR)" },
-  USD: { pl: "Dolar amerykański (USD)", en: "US dollar (USD)" },
-  GBP: { pl: "Funt brytyjski (GBP)", en: "British pound (GBP)" },
-  CHF: { pl: "Frank szwajcarski (CHF)", en: "Swiss franc (CHF)" },
+export const TIP_CURRENCY_LABELS: Record<SupportedCurrency, { symbol: string; pl: string; en: string }> = {
+  PLN: { symbol: "zł", pl: "Złoty (PLN)", en: "Polish złoty (PLN)" },
+  EUR: { symbol: "€", pl: "Euro (EUR)", en: "Euro (EUR)" },
+  USD: { symbol: "$", pl: "Dolar amerykański (USD)", en: "US dollar (USD)" },
+  GBP: { symbol: "£", pl: "Funt brytyjski (GBP)", en: "British pound (GBP)" },
+  CHF: { symbol: "Fr", pl: "Frank szwajcarski (CHF)", en: "Swiss franc (CHF)" },
 };
 
 /** Tile used when Stripe didn't report a method list: opens Stripe's full form. */

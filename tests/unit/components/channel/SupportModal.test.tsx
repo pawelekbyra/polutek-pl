@@ -93,7 +93,13 @@ describe('SupportModal (tip gate)', () => {
     expect(screen.getAllByText('Bramka napiwkowa').length).toBeGreaterThan(0);
     expect(screen.getByText('Kwota napiwku')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Wstecz' })).not.toBeInTheDocument();
-    expect(screen.getByRole('combobox')).toHaveValue('PLN');
+    const currency = screen.getByRole('combobox', { name: 'Waluta' });
+    expect(currency).toHaveTextContent('Złoty (PLN)');
+    fireEvent.click(currency);
+    fireEvent.click(screen.getByRole('option', { name: /Euro \(EUR\)/ }));
+    expect(currency).toHaveTextContent('Euro (EUR)');
+    fireEvent.click(currency);
+    fireEvent.click(screen.getByRole('option', { name: /Złoty \(PLN\)/ }));
     expect(screen.getByRole('link', { name: 'Regulamin' })).toHaveAttribute('target', '_blank');
     expect(screen.getByRole('link', { name: 'Politykę Prywatności' })).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Widzi to tylko twórca')).not.toBeInTheDocument();
@@ -124,9 +130,12 @@ describe('SupportModal (tip gate)', () => {
     expect(body).toMatchObject({ amountMinor: 2000, currency: 'PLN' });
     expect(body).not.toHaveProperty('paymentMethod');
     const select = screen.getByRole('combobox', { name: 'Wybierz metodę napiwku' });
-    const options = Array.from((select as HTMLSelectElement).options).map((option) => option.textContent);
+    expect(select).toHaveTextContent('BLIK');
+    fireEvent.click(select);
+    const options = screen.getAllByRole('option').map((option) => option.textContent);
     expect(options).toEqual([expect.stringMatching(/BLIK/), expect.stringMatching(/Przelewy24/), expect.stringMatching(/Karta/), expect.stringMatching(/Crypto/)]);
-    expect(select).toHaveValue('blik');
+    expect(screen.getByRole('option', { name: /BLIK/ })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(screen.getByRole('option', { name: /BLIK/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
 
     // Step 3: our own BLIK code field, confirmed with Stripe's BLIK call.
@@ -151,7 +160,7 @@ describe('SupportModal (tip gate)', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: /Dalej/ })).not.toBeDisabled());
     fireEvent.click(screen.getByRole('button', { name: /Dalej/ }));
 
-    expect(await screen.findByRole('combobox', { name: 'Wybierz metodę napiwku' })).toHaveValue('stripe_all');
+    expect(await screen.findByRole('combobox', { name: 'Wybierz metodę napiwku' })).toHaveTextContent('Karta i inne');
     fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
     expect(await screen.findByTestId('payment-element')).toBeInTheDocument();
   });
@@ -162,7 +171,8 @@ describe('SupportModal (tip gate)', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: /Dalej/ })).not.toBeDisabled());
     fireEvent.click(screen.getByRole('button', { name: /Dalej/ }));
 
-    fireEvent.change(await screen.findByRole('combobox', { name: 'Wybierz metodę napiwku' }), { target: { value: 'crypto' } });
+    fireEvent.click(await screen.findByRole('combobox', { name: 'Wybierz metodę napiwku' }));
+    fireEvent.click(screen.getByRole('option', { name: /Crypto/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
     expect(await screen.findByText(/kryptowalutach będą dostępne już wkrótce/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Wybierz inną metodę' }));
