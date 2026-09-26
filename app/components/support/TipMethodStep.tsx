@@ -2,7 +2,7 @@
 
 import React from "react";
 import type { SupportedCurrency } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { ChevronDown } from "../icons";
 import { describeTipMethod, formatTipAmount } from "./tip-flow-config";
 import { TipPrimaryButton, TipStepHeading, TipStepLayout } from "./TipStepLayout";
 
@@ -10,7 +10,7 @@ interface TipMethodStepProps {
   language: string;
   amount: number;
   currency: SupportedCurrency;
-  /** Tiles, already filtered/ordered from Stripe's `payment_method_types`. */
+  /** Methods, already filtered/ordered from Stripe's `payment_method_types`. */
   methods: string[];
   selected: string | null;
   onSelect: (method: string) => void;
@@ -19,8 +19,9 @@ interface TipMethodStepProps {
 }
 
 /**
- * "Metoda napiwku": one tile per method Stripe allows for this intent, plus Apple Pay /
- * Google Pay when the device has one set up. Picking only selects; paying is the next step.
+ * "Metoda napiwku": a dropdown (so nothing needs scrolling) of the methods Stripe allows for
+ * this intent, plus Apple Pay / Google Pay when the device has one set up. Picking only
+ * selects; paying is the next step.
  */
 export function TipMethodStep({
   language,
@@ -33,6 +34,7 @@ export function TipMethodStep({
   onChangeAmount,
 }: TipMethodStepProps) {
   const isPl = language === "pl";
+  const selectedCopy = selected ? describeTipMethod(selected, isPl) : null;
   return (
     <TipStepLayout
       footer={
@@ -52,44 +54,29 @@ export function TipMethodStep({
         </button>
       </div>
 
-      <div role="radiogroup" aria-label={isPl ? "Metoda napiwku" : "Tip method"} className="flex flex-col gap-2.5">
-        {methods.map((method) => {
-          const copy = describeTipMethod(method, isPl);
-          const isSelected = method === selected;
-          return (
-            <button
-              key={method}
-              type="button"
-              role="radio"
-              aria-checked={isSelected}
-              onClick={() => onSelect(method)}
-              className={cn(
-                "flex min-h-[60px] items-center gap-4 rounded-[16px] border-2 px-4 text-left transition-[border-color,background-color,transform] duration-150 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transition-none",
-                isSelected
-                  ? "border-[var(--chan-amber)] bg-[var(--chan-amber-soft)]"
-                  : "border-[var(--chan-line)] bg-white hover:border-[var(--cm-amber-38)]",
-              )}
-            >
-              <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--chan-surface)] text-[20px]">
-                {copy.icon}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-extrabold text-[var(--chan-ink)]">{copy.title}</span>
-                <span className="block text-[12px] text-[var(--chan-muted)]">{copy.hint}</span>
-              </span>
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
-                  isSelected ? "border-[var(--chan-amber)] bg-[var(--chan-amber)]" : "border-[var(--chan-line)]",
-                )}
-              >
-                {isSelected && <span className="h-2 w-2 rounded-full bg-white" />}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      <label className="block">
+        <span className="mb-1.5 block text-[12px] font-bold text-[var(--chan-body)]">
+          {isPl ? "Wybierz metodę napiwku" : "Choose a tip method"}
+        </span>
+        <div className="relative">
+          <select
+            value={selected ?? ""}
+            onChange={(event) => onSelect(event.target.value)}
+            className="h-12 w-full cursor-pointer appearance-none rounded-[14px] border-2 border-[var(--chan-line)] bg-white pl-4 pr-10 text-[15px] font-bold text-[var(--chan-ink)] outline-none transition-colors focus:border-[var(--chan-blue)]"
+          >
+            {methods.map((method) => {
+              const copy = describeTipMethod(method, isPl);
+              return (
+                <option key={method} value={method}>
+                  {copy.icon ? `${copy.icon} ${copy.title}` : copy.title}
+                </option>
+              );
+            })}
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--chan-muted)]" />
+        </div>
+      </label>
+      {selectedCopy && <p className="mt-1.5 text-[12px] text-[var(--chan-muted)]">{selectedCopy.hint}</p>}
     </TipStepLayout>
   );
 }

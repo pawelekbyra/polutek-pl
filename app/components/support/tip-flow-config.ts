@@ -15,6 +15,9 @@ export const TIP_CURRENCY_LABELS: Record<SupportedCurrency, { pl: string; en: st
 /** Tile used when Stripe didn't report a method list: opens Stripe's full form. */
 export const TIP_FALLBACK_METHOD = "stripe_all";
 
+/** Placeholder only (owner's request): listed last, its pay step just says it's coming soon. */
+export const TIP_CRYPTO_PLACEHOLDER = "crypto";
+
 /**
  * Stripe decides WHICH methods a tip can use (dashboard settings, currency, amount) and returns
  * them as `payment_method_types`; this only decides how a known method looks. A method Stripe
@@ -35,6 +38,7 @@ const METHOD_COPY: Record<string, { icon: string; title: string; hintPl: string;
   mobilepay: { icon: "📱", title: "MobilePay", hintPl: "Aplikacja MobilePay", hintEn: "MobilePay app" },
   swish: { icon: "📱", title: "Swish", hintPl: "Aplikacja Swish", hintEn: "Swish app" },
   klarna: { icon: "🩷", title: "Klarna", hintPl: "Konto Klarna", hintEn: "Your Klarna account" },
+  [TIP_CRYPTO_PLACEHOLDER]: { icon: "🪙", title: "Crypto", hintPl: "Już wkrótce", hintEn: "Coming soon" },
   [TIP_FALLBACK_METHOD]: { icon: "💳", title: "Karta i inne", hintPl: "Wszystkie dostępne metody", hintEn: "All available methods" },
 };
 
@@ -61,7 +65,7 @@ export function getTipMethodTiles(paymentMethodTypes: string[], wallets: readonl
   const tiles = [...new Set(withWallets)]
     .filter((type) => !HIDDEN_TILE_METHODS.has(type))
     .sort((a, b) => rank(a) - rank(b));
-  return tiles.length > 0 ? tiles : [TIP_FALLBACK_METHOD];
+  return [...(tiles.length > 0 ? tiles : [TIP_FALLBACK_METHOD]), TIP_CRYPTO_PLACEHOLDER];
 }
 
 export function describeTipMethod(type: string, isPl: boolean) {
@@ -100,6 +104,7 @@ export function readLastTipMethod(): string | null {
 }
 
 export function rememberTipMethod(type: string) {
+  if (type === TIP_CRYPTO_PLACEHOLDER) return;
   try {
     window.localStorage.setItem(LAST_METHOD_KEY, type);
   } catch {

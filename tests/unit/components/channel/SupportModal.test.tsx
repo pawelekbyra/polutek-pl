@@ -123,12 +123,10 @@ describe('SupportModal (tip gate)', () => {
     const body = createIntentBody();
     expect(body).toMatchObject({ amountMinor: 2000, currency: 'PLN' });
     expect(body).not.toHaveProperty('paymentMethod');
-    const tiles = screen.getAllByRole('radio').map((tile) => tile.textContent);
-    expect(tiles[0]).toMatch(/BLIK/);
-    expect(tiles[1]).toMatch(/Przelewy24/);
-    expect(tiles[2]).toMatch(/Karta/);
-    expect(tiles).toHaveLength(3);
-    expect(screen.getByRole('radio', { name: /BLIK/ })).toHaveAttribute('aria-checked', 'true');
+    const select = screen.getByRole('combobox', { name: 'Wybierz metodę napiwku' });
+    const options = Array.from((select as HTMLSelectElement).options).map((option) => option.textContent);
+    expect(options).toEqual([expect.stringMatching(/BLIK/), expect.stringMatching(/Przelewy24/), expect.stringMatching(/Karta/), expect.stringMatching(/Crypto/)]);
+    expect(select).toHaveValue('blik');
     fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
 
     // Step 3: our own BLIK code field, confirmed with Stripe's BLIK call.
@@ -153,9 +151,22 @@ describe('SupportModal (tip gate)', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: /Dalej/ })).not.toBeDisabled());
     fireEvent.click(screen.getByRole('button', { name: /Dalej/ }));
 
-    expect(await screen.findByRole('radio', { name: /Karta i inne/ })).toBeInTheDocument();
+    expect(await screen.findByRole('combobox', { name: 'Wybierz metodę napiwku' })).toHaveValue('stripe_all');
     fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
     expect(await screen.findByTestId('payment-element')).toBeInTheDocument();
+  });
+
+  it('lists a Crypto placeholder that only says it is coming soon', async () => {
+    renderModal();
+    await fillAmountStep('20');
+    await waitFor(() => expect(screen.getByRole('button', { name: /Dalej/ })).not.toBeDisabled());
+    fireEvent.click(screen.getByRole('button', { name: /Dalej/ }));
+
+    fireEvent.change(await screen.findByRole('combobox', { name: 'Wybierz metodę napiwku' }), { target: { value: 'crypto' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
+    expect(await screen.findByText(/kryptowalutach będą dostępne już wkrótce/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Wybierz inną metodę' }));
+    expect(await screen.findByText('Metoda napiwku')).toBeInTheDocument();
   });
 
   it('asks a signed-out viewer to sign in instead of continuing', async () => {

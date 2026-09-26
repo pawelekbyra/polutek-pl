@@ -7,7 +7,7 @@ import type { SupportedCurrency } from "@/lib/constants";
 import { MAIN_CREATOR_NAME } from "@/lib/constants";
 import { Loader2 } from "../icons";
 import { buildTipReturnUrl, readConfirmResult, type TipConfirmOutcome } from "./tip-confirm";
-import { TIP_FALLBACK_METHOD, describeTipMethod, formatTipAmount } from "./tip-flow-config";
+import { TIP_CRYPTO_PLACEHOLDER, TIP_FALLBACK_METHOD, describeTipMethod, formatTipAmount } from "./tip-flow-config";
 import { TipPrimaryButton, TipStepHeading, TipStepLayout } from "./TipStepLayout";
 
 interface TipPayStepProps {
@@ -34,6 +34,7 @@ export function TipPayStep(props: TipPayStepProps) {
   const { method } = props;
   if (method === "blik") return <BlikForm {...props} />;
   if (method === "p24") return <RedirectForm {...props} />;
+  if (method === TIP_CRYPTO_PLACEHOLDER) return <CryptoPlaceholder {...props} />;
   if (method === "card") return <CardForm {...props} />;
   if (method === "apple_pay" || method === "google_pay") return <WalletForm {...props} />;
   if (method === TIP_FALLBACK_METHOD) return <FallbackForm {...props} />;
@@ -389,5 +390,22 @@ function SingleMethodForm(props: TipPayStepProps) {
     >
       <FallbackForm {...props} deferred />
     </Elements>
+  );
+}
+
+/** Placeholder until crypto tips exist: explains and sends the viewer back to pick another method. */
+function CryptoPlaceholder(props: TipPayStepProps) {
+  const isPl = props.language === "pl";
+  return (
+    <PayStepFrame
+      props={props}
+      footer={<TipPrimaryButton onClick={props.onChangeMethod}>{isPl ? "Wybierz inną metodę" : "Choose another method"}</TipPrimaryButton>}
+    >
+      <p className="text-[14px] leading-[1.6] text-[var(--chan-body)]">
+        {isPl
+          ? "Napiwki w kryptowalutach będą dostępne już wkrótce. Na razie wybierz inną metodę."
+          : "Crypto tips are coming soon. For now, please choose another method."}
+      </p>
+    </PayStepFrame>
   );
 }
