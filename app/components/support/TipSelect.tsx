@@ -150,7 +150,7 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
           aria-controls={listId}
           onClick={toggle}
           onKeyDown={onKeyDown}
-          className="flex min-h-[52px] w-full items-center gap-3 px-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--chan-blue)]"
+          className="flex min-h-[52px] w-full items-center gap-3 px-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--chan-amber)]"
         >
           {selected?.icon && (
             <span aria-hidden="true" className="text-[20px] leading-none">
@@ -194,7 +194,7 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
                   )}
                 >
                   {option.icon && (
-                    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--chan-surface)] text-[17px]">
+                    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--chan-amber-soft)] text-[17px]">
                       {option.icon}
                     </span>
                   )}

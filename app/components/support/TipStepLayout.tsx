@@ -26,14 +26,14 @@ export function TipStepLayout({
     <>
       <div className={cn("tip-select-scroll min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-2 md:px-7", bodyClassName)}>{children}</div>
       {footer && (
-        <div className="shrink-0 border-t border-[var(--chan-line)] bg-[var(--chan-card)] px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 md:px-7 md:pb-5">
+        <div className="shrink-0 border-t border-[var(--cm-amber-20)] px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 md:px-7 md:pb-5">
           {back ? (
             <div className="flex items-end gap-2.5">
               <button
                 type="button"
                 onClick={back.onBack}
                 aria-label={back.label}
-                className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[14px] border-2 border-[var(--chan-line)] bg-white text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
+                className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-[var(--chan-amber-soft)] text-[var(--chan-amber-ink)] transition-colors hover:border-[var(--chan-amber)] hover:bg-[var(--cm-amber-28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-amber)]"
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>

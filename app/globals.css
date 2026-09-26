@@ -710,6 +710,16 @@
   .tip-select-scroll::-webkit-scrollbar-thumb:hover {
     background: var(--chan-amber);
   }
+
+  /* The gate itself: a warm cream surface instead of plain white. Fields you type into
+     (amount, BLIK code, card) stay white so it's obvious where to type; choices (dropdowns,
+     the amount strip, the back button) use the soft amber. */
+  .tip-gate-surface {
+    background:
+      radial-gradient(120% 60% at 50% 0%, var(--cm-amber-14), transparent 70%),
+      linear-gradient(180deg, var(--cm-amber-5), var(--cm-amber-14)),
+      var(--chan-card);
+  }
 }
 
 @layer components {

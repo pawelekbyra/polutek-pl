@@ -44,7 +44,7 @@ export function TipMethodStep({
     >
       <TipStepHeading title={isPl ? "Metoda napiwku" : "Tip method"} />
 
-      <div className="mb-5 flex items-center justify-between gap-3 rounded-[14px] bg-[var(--chan-amber-soft)] px-4 py-3">
+      <div className="mb-5 flex items-center justify-between gap-3 rounded-[14px] border border-[var(--cm-amber-28)] bg-[var(--chan-amber-soft)] px-4 py-3">
         <p className="m-0 text-[14px] font-bold tabular-nums text-[var(--chan-ink)]">
           {isPl ? "Napiwek" : "Tip"} {formatTipAmount(amount, currency, language)}
         </p>

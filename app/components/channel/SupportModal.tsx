@@ -230,7 +230,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
         <DialogOverlay className="z-[9990] bg-black/40 supports-backdrop-filter:backdrop-blur-sm" />
         <DialogPopup
           data-testid="support-modal"
-          className="fixed inset-0 z-[9991] flex h-[100dvh] w-screen flex-col overflow-hidden bg-[var(--chan-card)] outline-none md:inset-auto md:left-1/2 md:top-1/2 md:h-[min(640px,90dvh)] md:w-[440px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[24px] md:border md:border-[var(--chan-line)] md:shadow-[0_30px_80px_-30px_rgba(23,23,23,0.45)]"
+          className="fixed inset-0 z-[9991] flex h-[100dvh] w-screen tip-gate-surface flex-col overflow-hidden outline-none md:inset-auto md:left-1/2 md:top-1/2 md:h-[min(640px,90dvh)] md:w-[440px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[24px] md:border md:border-[var(--cm-amber-28)] md:shadow-[0_30px_80px_-30px_rgba(74,42,3,0.45)]"
         >
           <DialogTitle className="sr-only">{isPl ? "Bramka napiwkowa" : "Tip gate"}</DialogTitle>
 
@@ -246,7 +246,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
                   className={cn(
                     "h-1.5 rounded-full transition-[width,background-color] duration-300 motion-reduce:transition-none",
                     index === activeIndex ? "w-6 bg-[var(--chan-amber)]" : "w-1.5",
-                    index < activeIndex ? "bg-[var(--chan-amber)]" : index > activeIndex && "bg-[var(--chan-line)]",
+                    index < activeIndex ? "bg-[var(--chan-amber)]" : index > activeIndex && "bg-[var(--cm-amber-28)]",
                   )}
                 />
               ))}
@@ -255,7 +255,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
               type="button"
               onClick={handleClose}
               aria-label={isPl ? "Zamknij" : "Close"}
-              className="-mr-2 ml-1 flex h-10 w-10 items-center justify-center rounded-full text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
+              className="-mr-2 ml-1 flex h-10 w-10 items-center justify-center rounded-full text-[var(--chan-amber-ink)] transition-colors hover:bg-[var(--cm-amber-20)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-amber)]"
             >
               <X className="h-5 w-5" />
             </button>

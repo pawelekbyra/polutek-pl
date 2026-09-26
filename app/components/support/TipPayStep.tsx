@@ -1,27 +1,16 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { CardElement, Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
-import type { PaymentIntentResult, PaymentRequest, Stripe } from "@stripe/stripe-js";
+import type { PaymentIntentResult } from "@stripe/stripe-js";
 import type { SupportedCurrency } from "@/lib/constants";
 import { APP_NAME } from "@/lib/constants";
 import { Loader2 } from "../icons";
 import { buildTipReturnUrl, readConfirmResult, type TipConfirmOutcome } from "./tip-confirm";
-import { TIP_CRYPTO_PLACEHOLDER, TIP_FALLBACK_METHOD, describeTipMethod, formatTipAmount } from "./tip-flow-config";
-import { TipPrimaryButton, TipStepHeading, TipStepLayout } from "./TipStepLayout";
-
-interface TipPayStepProps {
-  language: string;
-  amount: number;
-  currency: SupportedCurrency;
-  method: string;
-  clientSecret: string;
-  paymentId: string | null;
-  userEmail?: string;
-  stripePromise: Promise<Stripe | null> | null;
-  onChangeMethod: () => void;
-  onConfirmed: (outcome: TipConfirmOutcome) => void;
-}
+import { TIP_CRYPTO_PLACEHOLDER, TIP_FALLBACK_METHOD, formatTipAmount } from "./tip-flow-config";
+import { TipPrimaryButton } from "./TipStepLayout";
+import { ErrorLine, PayStepFrame, type TipPayStepProps } from "./TipPayFrame";
+import { TipWalletForm } from "./TipWalletForm";
 
 /**
  * The last step: a form for the method picked on "Metoda napiwku" only, confirmed against the
@@ -36,40 +25,9 @@ export function TipPayStep(props: TipPayStepProps) {
   if (method === "p24") return <RedirectForm {...props} />;
   if (method === TIP_CRYPTO_PLACEHOLDER) return <CryptoPlaceholder {...props} />;
   if (method === "card") return <CardForm {...props} />;
-  if (method === "apple_pay" || method === "google_pay") return <WalletForm {...props} />;
+  if (method === "apple_pay" || method === "google_pay") return <TipWalletForm {...props} />;
   if (method === TIP_FALLBACK_METHOD) return <FallbackForm {...props} />;
   return <SingleMethodForm {...props} />;
-}
-
-/** Heading + "20 zł · BLIK · Zmień" strip shared by every per-method form. */
-function PayStepFrame({
-  props,
-  footer,
-  children,
-}: {
-  props: TipPayStepProps;
-  footer: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  const { language, amount, currency, method, onChangeMethod } = props;
-  const isPl = language === "pl";
-  const copy = describeTipMethod(method, isPl);
-  return (
-    <TipStepLayout footer={footer}>
-      <TipStepHeading title={copy.title} />
-      <div className="mb-5 flex items-center justify-between gap-3 rounded-[14px] bg-[var(--chan-amber-soft)] px-4 py-3">
-        <p className="m-0 text-[14px] font-bold text-[var(--chan-ink)]">
-          <span className="tabular-nums">{formatTipAmount(amount, currency, language)}</span>
-          <span className="mx-1.5 text-[var(--chan-muted)]">·</span>
-          {copy.title}
-        </p>
-        <button type="button" onClick={onChangeMethod} className="text-[13px] font-bold text-[var(--chan-blue)] hover:underline">
-          {isPl ? "Zmień" : "Change"}
-        </button>
-      </div>
-      {children}
-    </TipStepLayout>
-  );
 }
 
 /** Shared submit state + result handling for the per-method forms. */
@@ -121,14 +79,6 @@ function SendButton({
   );
 }
 
-function ErrorLine({ error }: { error: string | null }) {
-  if (!error) return null;
-  return (
-    <p role="alert" className="mt-4 rounded-[12px] border border-red-100 bg-red-50 px-4 py-3 text-center text-[13px] font-medium text-red-600">
-      {error}
-    </p>
-  );
-}
 
 function toMinor(amount: number) {
   return Math.round(amount * 100);
@@ -183,7 +133,7 @@ function BlikForm(props: TipPayStepProps) {
           autoComplete="one-time-code"
           placeholder="000000"
           aria-label={isPl ? "Kod BLIK" : "BLIK code"}
-          className="h-16 w-full rounded-[14px] border-2 border-[var(--chan-line)] bg-white text-center text-[28px] font-extrabold tracking-[0.35em] tabular-nums text-[var(--chan-ink)] outline-none placeholder:text-[var(--chan-line-soft)] focus:border-[var(--chan-blue)]"
+          className="h-16 w-full rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-white text-center text-[28px] font-extrabold tracking-[0.35em] tabular-nums text-[var(--chan-ink)] outline-none transition-[border-color,box-shadow] placeholder:text-[var(--cm-amber-46)] focus:border-[var(--chan-amber)] focus:shadow-[0_0_0_4px_var(--cm-amber-18)]"
         />
       </label>
       <p className="mt-2 text-[12px] text-[var(--chan-muted)]">
@@ -278,7 +228,7 @@ function CardFormInner(props: TipPayStepProps) {
         <SendButton busy={busy} disabled={!complete || !stripe} isPl={isPl} label={sendLabel(isPl, amount, currency, language)} onClick={send} />
       }
     >
-      <div className="rounded-[14px] border-2 border-[var(--chan-line)] bg-white px-4 py-4 focus-within:border-[var(--chan-blue)]">
+      <div className="rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-white px-4 py-4 transition-[border-color,box-shadow] focus-within:border-[var(--chan-amber)] focus-within:shadow-[0_0_0_4px_var(--cm-amber-18)]">
         <CardElement
           onChange={(event) => setComplete(event.complete)}
           options={{
@@ -334,75 +284,6 @@ function FallbackForm({ deferred, ...props }: TipPayStepProps & { deferred?: boo
           fields: { billingDetails: { email: userEmail ? "never" : "auto" } },
         }}
       />
-      <ErrorLine error={error} />
-    </PayStepFrame>
-  );
-}
-
-/** Apple Pay / Google Pay via the browser's payment sheet, opened by our own send button. */
-function WalletForm(props: TipPayStepProps) {
-  const { language, amount, currency, method, clientSecret, onConfirmed } = props;
-  const isPl = language === "pl";
-  const stripe = useStripe();
-  const [request, setRequest] = useState<PaymentRequest | null>(null);
-  const [unavailable, setUnavailable] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const onConfirmedRef = useRef(onConfirmed);
-  useEffect(() => {
-    onConfirmedRef.current = onConfirmed;
-  }, [onConfirmed]);
-
-  useEffect(() => {
-    if (!stripe) return;
-    let active = true;
-    const paymentRequest = stripe.paymentRequest({
-      country: "PL",
-      currency: currency.toLowerCase(),
-      total: { label: APP_NAME, amount: toMinor(amount) },
-      disableWallets: ["link", "browserCard", method === "apple_pay" ? "googlePay" : "applePay"],
-    });
-    paymentRequest.on("paymentmethod", async (event) => {
-      const first = await stripe.confirmCardPayment(clientSecret, { payment_method: event.paymentMethod.id }, { handleActions: false });
-      event.complete(first.error ? "fail" : "success");
-      const result = !first.error && first.paymentIntent?.status === "requires_action" ? await stripe.confirmCardPayment(clientSecret) : first;
-      const read = readConfirmResult(result, isPl);
-      setBusy(false);
-      if ("outcome" in read) onConfirmedRef.current(read.outcome);
-      else setError(read.error);
-    });
-    paymentRequest.on("cancel", () => setBusy(false));
-    void paymentRequest.canMakePayment().then((result) => {
-      if (!active) return;
-      if (result) setRequest(paymentRequest);
-      else setUnavailable(true);
-    });
-    return () => {
-      active = false;
-    };
-  }, [stripe, clientSecret, amount, currency, method, isPl]);
-
-  const send = () => {
-    if (!request) return;
-    setError(null);
-    setBusy(true);
-    request.show();
-  };
-
-  return (
-    <PayStepFrame
-      props={props}
-      footer={<SendButton busy={busy} disabled={!request} isPl={isPl} label={sendLabel(isPl, amount, currency, language)} onClick={send} />}
-    >
-      <p className="text-[14px] leading-[1.6] text-[var(--chan-body)]">
-        {unavailable
-          ? isPl
-            ? "Ta metoda nie jest dostępna na tym urządzeniu. Wróć i wybierz inną."
-            : "This method isn't available on this device. Go back and pick another one."
-          : isPl
-            ? "Po kliknięciu otworzy się okno portfela, w którym potwierdzisz napiwek."
-            : "Your wallet will open so you can confirm the tip."}
-      </p>
       <ErrorLine error={error} />
     </PayStepFrame>
   );
