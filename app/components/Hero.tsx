@@ -19,7 +19,6 @@ import SubscribeButton from './SubscribeButton';
 import ShareButton from './ShareButton';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import { ThumbsUp, ThumbsDown, Coins } from 'lucide-react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import styles from './watch-actions.module.css';
 
 interface HeroProps {
@@ -33,9 +32,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   const toast = useToast();
   const { userId } = useAuth();
   const { open: openAuthModal } = useAuthModal();
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -88,8 +84,30 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     });
   }, [video.id, userId, initialInteraction?.liked, initialInteraction?.disliked, video.likesCount, video.dislikesCount]);
 
+  // No server-rendered like/dislike for this video (it was selected with a shallow
+  // switch): fetch the viewer's own state, unless they already clicked meanwhile.
+  const userActedRef = React.useRef(false);
+  const hasInitialInteraction = initialInteraction !== undefined;
+  useEffect(() => {
+    userActedRef.current = false;
+    if (!userId || hasInitialInteraction) return;
+    const controller = new AbortController();
+    fetch(`/api/videos/${encodeURIComponent(video.id)}/viewer-state`, {
+      cache: 'no-store',
+      signal: controller.signal,
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { liked?: boolean; disliked?: boolean } | null) => {
+        if (!data || userActedRef.current) return;
+        setInteractionState((current) => ({ ...current, isLiked: !!data.liked, isDisliked: !!data.disliked }));
+      })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [video.id, userId, hasInitialInteraction]);
+
   const handleLike = async () => {
     if (!userId) return openAuthModal("sign-in");
+    userActedRef.current = true;
     if (isPending) return;
 
     const previousState = interactionState;
@@ -142,6 +160,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
   const handleDislike = async () => {
     if (!userId) return openAuthModal("sign-in");
+    userActedRef.current = true;
     if (isPending) return;
 
     const previousState = interactionState;
@@ -316,14 +335,9 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                    event dispatched here is always heard by ChannelHome's own listener
                    (the same one AccessLockOverlay's CTA uses) — it switches the mobile
                    "videos" tab (where the donation box lives) and scrolls to it,
-                   synchronously and independent of any router/searchParams timing. The
-                   ?support=1 merge into the CURRENT path/query (keeping ?v= for the video
-                   already open) is a separate, secondary signal purely so DonationBox's
-                   own effect can call its existing onSupport() once mounted — never a
-                   second payment flow. A bare-URL push (the original implementation) used
-                   to drop the open video and reset the mobile tab back to "comments"
-                   (ChannelHome resets state when its routed video id changes), which is
-                   what produced the jarring instant jump this event-based approach fixes.
+                   synchronously. It deliberately does not touch the URL: a router
+                   navigation (the old ?support=1 merge) re-rendered the whole page on the
+                   server and flashed the route's loading screen on every click.
                    Signed-out click opens sign-in first, since DonationBox only mounts for
                    signed-in viewers. Now the row's last item, so it takes over Share's old
                    "fill remaining space" role (flex-1 below lg:, fixed above it). */}
@@ -335,9 +349,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                      return;
                    }
                    window.dispatchEvent(new CustomEvent("polutek:open-support"));
-                   const params = new URLSearchParams(searchParams.toString());
-                   params.set("support", "1");
-                   router.replace(`${pathname}?${params.toString()}#donations`, { scroll: false });
                  }}
                  className={cn(
                    "relative flex h-9 flex-1 items-center justify-center gap-1.5 rounded-[12px] bg-[var(--chan-surface)] px-3 font-sans text-sm font-bold text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95 lg:flex-none",

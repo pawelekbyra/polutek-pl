@@ -11,7 +11,7 @@ describe("shared visual system contracts", () => {
 
     expect(rootLoading).not.toContain("HomePageSkeleton");
     expect(rootLoading).not.toContain("SitePreloaderScreen");
-    expect(localizedLoading).toContain("SitePreloaderScreen");
+    expect(localizedLoading).toContain("HomeRouteLoading");
     expect(channelHome).toContain("CommentsMountPlaceholder");
     expect(channelHome).not.toContain("CommentsShellSkeleton");
   });

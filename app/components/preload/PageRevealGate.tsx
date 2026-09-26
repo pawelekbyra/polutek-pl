@@ -49,6 +49,14 @@ const LEAVE_ANIMATION_MS = 420;
 // Only ever written in effects, so server rendering never sees it.
 let revealedInThisDocument = false;
 
+/**
+ * Whether the first-load preloader has already been shown and lifted in this
+ * document. Client navigations use it to skip the full-screen preloader.
+ */
+export function hasRevealedPageInThisDocument(): boolean {
+  return revealedInThisDocument;
+}
+
 /** @internal test helper */
 export function resetPageRevealForTests() {
   revealedInThisDocument = false;

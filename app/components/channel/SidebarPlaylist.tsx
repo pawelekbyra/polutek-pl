@@ -207,12 +207,13 @@ export function SidebarPlaylist({
         <Link
           href={feedVideoHref}
           scroll={false}
-          onClick={() => {
-            // 2026-09-24 (prototype): a "coming soon" video is still fully
-            // navigable — selecting it shows the same lock overlay full-size
-            // in the main feed (PremiumWrapper/Hero already do this purely
-            // from the video's tier, see lib/temp-patron-coming-soon.ts).
-            onVideoSelect?.(video.id);
+          onClick={(event) => {
+            // Plain clicks switch in place (ChannelHome does a shallow URL update);
+            // modified/middle clicks keep the real link for new tabs. Coming-soon
+            // videos are selectable too (see lib/temp-patron-coming-soon.ts).
+            if (!onVideoSelect || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            event.preventDefault();
+            onVideoSelect(video.id);
           }}
           aria-current={isCurrent ? "page" : undefined}
           className={cn(
