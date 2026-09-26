@@ -28,12 +28,18 @@ import { useOptionalLanguage } from "../LanguageContext";
 
 type PageRevealContextValue = {
   reportReady: (key: string) => void;
+  /** True while the preloader still hides the page. */
+  covering: boolean;
 };
 
 const PageRevealContext = createContext<PageRevealContextValue | null>(null);
 
-/** Upper bound on how long the preloader may hold the page, measured from navigation start. */
-export const PAGE_REVEAL_MAX_WAIT_MS = 2000;
+/**
+ * Upper bound on how long the preloader may hold the page, measured from navigation start.
+ * Long enough for the featured video's stream to buffer its first frames on a normal
+ * connection (the player is one of the awaited pieces), short enough not to feel stuck.
+ */
+export const PAGE_REVEAL_MAX_WAIT_MS = 3000;
 /** On a late mount (e.g. hydration was slow) still give the page this long to settle. */
 export const PAGE_REVEAL_MIN_WAIT_AFTER_MOUNT_MS = 700;
 const LEAVE_ANIMATION_MS = 420;
@@ -57,6 +63,14 @@ export function usePageRevealReady(key: string | undefined, ready: boolean) {
   useEffect(() => {
     if (key && ready) context?.reportReady(key);
   }, [context, key, ready]);
+}
+
+/**
+ * Whether the preloader is still covering the page. `false` outside a gate, so
+ * callers behave normally anywhere else (admin previews, later client navigations).
+ */
+export function usePageRevealCovering(): boolean {
+  return useContext(PageRevealContext)?.covering ?? false;
 }
 
 function useDecodedImage(src: string | null | undefined, onDone: () => void) {
@@ -139,7 +153,7 @@ export function PageRevealGate({ children, waitFor = [], posterUrl }: PageReveal
     return () => window.clearTimeout(timer);
   }, [leaving]);
 
-  const contextValue = useMemo(() => ({ reportReady }), [reportReady]);
+  const contextValue = useMemo(() => ({ reportReady, covering }), [reportReady, covering]);
 
   return (
     <PageRevealContext.Provider value={contextValue}>

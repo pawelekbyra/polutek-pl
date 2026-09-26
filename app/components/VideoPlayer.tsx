@@ -18,11 +18,14 @@ import { PlayerPosterLoading } from './PlayerLoadingState';
 import { resolvePlaybackSource } from './playback-source';
 import { shouldSendViewForPlaybackPosition } from './video-view-threshold';
 import { usePlaybackTelemetry } from '@/lib/hooks/usePlaybackTelemetry';
+import { usePageRevealCovering, usePageRevealReady } from './preload/PageRevealGate';
 
 interface VideoPlayerProps {
     video: VideoType;
     variant?: 'hero' | 'thumbnail';
     onViewCounted?: () => void;
+    /** PageRevealGate key to report once the stream can play (first frames buffered). */
+    revealKey?: string;
 }
 
 
@@ -37,7 +40,7 @@ function normalizeTextTracks(tracks: VideoTextTrackDTO[] | undefined): VideoText
     });
 }
 
-export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: VideoPlayerProps) {
+export default function VideoPlayer({ video, variant = 'hero', onViewCounted, revealKey }: VideoPlayerProps) {
     const { playbackPlan, refreshPlaybackPlan, isLoading } = useVideoAccess();
     const { orgRole } = useAuth();
     const isAdmin = orgRole === 'admin' || orgRole === 'org:admin';
@@ -54,6 +57,11 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
     const [loadError, setLoadError] = useState<string | null>(null);
     const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
     const [bufferingOverlayTimedOut, setBufferingOverlayTimedOut] = useState(false);
+    const [canPlay, setCanPlay] = useState(false);
+    // While the first-load preloader still covers the page, hold autoplay back so the
+    // video starts from its first frame when the viewer actually sees it, not behind
+    // the preloader. Buffering still happens meanwhile, so playback starts instantly.
+    const revealCovering = usePageRevealCovering();
     const hasReached10s = useRef(false);
     const viewCountRequestInFlight = useRef(false);
     const reachedThresholds = useRef<Record<number, boolean>>({});
@@ -91,6 +99,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
 
     useEffect(() => {
         setHasStartedPlayback(false);
+        setCanPlay(false);
         setLoadError(null);
         setPlayerKey((key) => key + 1);
         hasReached10s.current = false;
@@ -111,6 +120,22 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
         }, (tracking.heartbeatIntervalSeconds || 15) * 1000);
         return () => clearInterval(interval);
     }, [isMounted, tracking, sendEvent]);
+
+    const autoPlayWanted = playerConfig ? (playerConfig.autoplayAllowed && playerConfig.mutedAutoplay) : variant === 'hero';
+    const resolvedSource = resolvePlaybackSource({
+        kind: videoSourceKind,
+        playbackUrl: videoUrl,
+        embedUrl: videoEmbedUrl,
+    });
+    const showsErrorState = isMounted && !isLoading && (!playbackPlan || resolvedSource.mode === 'unavailable');
+    usePageRevealReady(revealKey, canPlay || !!loadError || bufferingOverlayTimedOut || showsErrorState);
+
+    // Start the held-back autoplay the moment the preloader lifts.
+    useEffect(() => {
+        if (revealCovering || !autoPlayWanted || !canPlay || hasStartedPlayback) return;
+        const instance = player.current;
+        if (instance?.paused) void instance.play().catch(() => undefined);
+    }, [revealCovering, autoPlayWanted, canPlay, hasStartedPlayback]);
 
     // PremiumWrapper owns the single player loading placeholder; avoid stacking a second one here.
     if (!isMounted || isLoading) return null;
@@ -140,12 +165,6 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
             </PlayerStateFrame>
         );
     }
-
-    const resolvedSource = resolvePlaybackSource({
-        kind: videoSourceKind,
-        playbackUrl: videoUrl,
-        embedUrl: videoEmbedUrl,
-    });
 
     if (resolvedSource.mode === 'unavailable') {
         const errorCode = resolvedSource.reason.startsWith('missing') ? 'NO_PLAYBACK_URL' : 'UNSUPPORTED_SOURCE';
@@ -180,11 +199,13 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                         title={playerConfig?.title || video.title || 'Video'}
                         src={src}
                         muted={playerConfig ? playerConfig.mutedAutoplay : variant === 'hero'}
-                        autoPlay={playerConfig ? (playerConfig.autoplayAllowed && playerConfig.mutedAutoplay) : variant === 'hero'}
+                        autoPlay={autoPlayWanted && !revealCovering}
+                        preload={autoPlayWanted ? 'auto' : undefined}
                         playsInline
                         aspectRatio="16/9"
                         controlsDelay={4000}
                         onCanPlay={() => {
+                            setCanPlay(true);
                             if (player.current?.muted && typeof navigator !== 'undefined' && navigator.userActivation?.hasBeenActive) {
                                 player.current.muted = false;
                             }
@@ -262,7 +283,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                         <div className="absolute inset-0 z-30 pointer-events-none">
                             <PlayerPosterLoading
                                 posterUrl={video.thumbnailUrl || posterUrl}
-                                hidden={hasStartedPlayback}
+                                hidden={hasStartedPlayback || (canPlay && !autoPlayWanted)}
                             />
                         </div>
                     )}
