@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import type { SupportedCurrency } from "@/lib/constants";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -34,8 +34,19 @@ export function TipAmountStep({
   busy,
 }: TipAmountStepProps) {
   const isPl = language === "pl";
-  const amountTooLow = amount !== "" && amount < minAmount;
-  const canContinue = amount !== "" && !amountTooLow && termsAccepted && !busy;
+  // The button is always active; a click with a missing/too-low amount or unticked terms
+  // explains what's missing instead of continuing.
+  const [attempted, setAttempted] = useState(false);
+  const amountMissing = amount === "" || amount <= 0;
+  const amountTooLow = !amountMissing && amount < minAmount;
+  const showAmountError = amountTooLow || (attempted && amountMissing);
+  const showTermsError = attempted && !termsAccepted;
+
+  const handleNext = () => {
+    setAttempted(true);
+    if (amountMissing || amountTooLow || !termsAccepted || busy) return;
+    onNext();
+  };
 
   const legalLink = (key: "terms" | "privacy", label: string) => (
     <a
@@ -67,10 +78,15 @@ export function TipAmountStep({
               )}
             </span>
           </label>
-          <TipPrimaryButton onClick={onNext} disabled={!canContinue} busy={busy}>
+          {showTermsError && (
+            <p role="alert" className="-mt-1 mb-3 text-[12px] font-semibold text-destructive">
+              {isPl ? "Zaakceptuj Regulamin i Politykę Prywatności." : "Please accept the Terms and Privacy Policy."}
+            </p>
+          )}
+          <TipPrimaryButton onClick={handleNext} busy={busy}>
             {busy
               ? isPl ? "Chwileczkę…" : "One moment…"
-              : amount === "" || amountTooLow
+              : amountMissing || amountTooLow
                 ? isPl ? "Dalej" : "Next"
                 : isPl
                   ? `Dalej · ${formatTipAmount(amount, currency, language)}`
@@ -117,14 +133,18 @@ export function TipAmountStep({
             value={amount}
             placeholder={String(minAmount)}
             onChange={(event) => onAmountChange(event.target.value === "" ? "" : Number(event.target.value))}
-            aria-invalid={amountTooLow}
+            aria-invalid={showAmountError}
             className="w-full bg-transparent text-[22px] font-extrabold tabular-nums text-[var(--chan-ink)] outline-none placeholder:font-semibold placeholder:text-[var(--chan-line-soft)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
           <span className="ml-2 text-[15px] font-bold text-[var(--chan-muted)]">{currency}</span>
         </div>
       </label>
-      <p role={amountTooLow ? "alert" : undefined} className={amountTooLow ? "mt-1.5 text-[12px] font-semibold text-destructive" : "mt-1.5 text-[12px] text-[var(--chan-muted)]"}>
-        {isPl
+      <p role={showAmountError ? "alert" : undefined} className={showAmountError ? "mt-1.5 text-[12px] font-semibold text-destructive" : "mt-1.5 text-[12px] text-[var(--chan-muted)]"}>
+        {attempted && amountMissing
+          ? isPl
+            ? `Wpisz kwotę napiwku (co najmniej ${formatTipAmount(minAmount, currency, language)}).`
+            : `Enter a tip amount (at least ${formatTipAmount(minAmount, currency, language)}).`
+          : isPl
           ? `Najmniejszy napiwek to ${formatTipAmount(minAmount, currency, language)}.`
           : `The smallest tip is ${formatTipAmount(minAmount, currency, language)}.`}
       </p>

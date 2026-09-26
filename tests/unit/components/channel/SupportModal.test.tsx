@@ -87,7 +87,7 @@ describe('SupportModal (tip gate)', () => {
   });
   afterEach(() => cleanup());
 
-  it('shows the badge, currency select, legal links and keeps Next locked until terms are accepted', async () => {
+  it('shows the badge, currency select and legal links; Next explains what is missing instead of continuing', async () => {
     renderModal();
 
     expect(screen.getAllByText('Bramka napiwkowa').length).toBeGreaterThan(0);
@@ -97,10 +97,16 @@ describe('SupportModal (tip gate)', () => {
     expect(screen.getByRole('link', { name: 'Politykę Prywatności' })).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Widzi to tylko twórca')).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '20' } });
-    expect(await screen.findByRole('button', { name: /Dalej/ })).toBeDisabled();
-    fireEvent.click(document.getElementById('tip-accept-terms')!);
-    await waitFor(() => expect(screen.getByRole('button', { name: /Dalej/ })).not.toBeDisabled());
+    const next = await screen.findByRole('button', { name: /^Dalej/ });
+    expect(next).not.toBeDisabled();
+    fireEvent.click(next);
+    expect(await screen.findByText(/Wpisz kwotę napiwku/)).toBeInTheDocument();
+    expect(screen.getByText('Zaakceptuj Regulamin i Politykę Prywatności.')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '2' } });
+    expect(screen.getByText(/Najmniejszy napiwek to 5\szł/)).toHaveAttribute('role', 'alert');
+    expect(createIntentBody()).toBeNull();
+    expect(screen.queryByText('Metoda napiwku')).not.toBeInTheDocument();
   });
 
   it('builds the method tiles from the methods Stripe returns and pays with BLIK', async () => {
