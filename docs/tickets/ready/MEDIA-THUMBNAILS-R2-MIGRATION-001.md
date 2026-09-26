@@ -67,22 +67,27 @@ the deploy that would pick up the new env vars hasn't happened yet (see below).
       `CLOUDFLARE_R2_BUCKET_THUMBNAILS_PUBLIC=polutek-thumbnails` added.
       `CLOUDFLARE_R2_ACCOUNT_ID` / `_ACCESS_KEY_ID` / `_SECRET_ACCESS_KEY` already
       existed (shared with the video-originals bucket).
-- [x] **No redeploy was triggered on purpose.** The next production deploy, including
-      any push to `main`, activates R2 uploads (private bucket, served through the proxy).
+- [x] The next production deploy, including any push to `main`, activates R2 uploads
+      (private bucket, served through the proxy, Blob fallback on R2 errors).
+      Public direct serving stays dormant until `NEXT_PUBLIC_R2_PUBLIC_HOST` is set.
 
 ### Blockers — need the owner in the Cloudflare dashboard
 
 The Cloudflare connector can only create, list and delete buckets. It cannot
 manage API tokens or public access, so these two steps need the dashboard:
 
-1. **R2 token scope unknown.** It is not known whether the existing R2 API token
-   (the one behind `CLOUDFLARE_R2_ACCESS_KEY_ID`) covers the two new buckets.
-   Check Cloudflare → R2 → Manage API tokens. "All buckets" is fine. If it lists
-   specific buckets, add both thumbnail buckets with Object Read & Write.
-   **Risk:** if the token doesn't cover them, the next deploy breaks admin cover
-   uploads (500 from `/api/admin/videos/cover-upload`) until this is fixed. To
-   back out, delete `CLOUDFLARE_R2_BUCKET_THUMBNAILS_PRIVATE` in Vercel and
-   redeploy; uploads then fall back to Blob.
+1. **R2 token scope unknown, but no longer a deploy risk.** It is not known
+   whether the existing R2 API token (the one behind `CLOUDFLARE_R2_ACCESS_KEY_ID`)
+   covers the two new buckets, and Vercel's Hobby log retention (1h) doesn't let
+   an agent find out after the fact. Since the follow-up PR, both upload routes
+   **fall back to Vercel Blob when the R2 write fails**, logging
+   `[ADMIN_VIDEO_COVER_UPLOAD_R2_FAILED_FALLING_BACK_TO_BLOB]` /
+   `[DEFAULT_VIDEO_THUMBNAIL_R2_FAILED_FALLING_BACK_TO_BLOB]`. Deploying with the
+   bucket env vars set is therefore safe. To find out whether R2 actually works,
+   upload a cover in the admin and within the hour check the Vercel runtime logs
+   for that tag, or check whether the saved `thumbnailUrl` is an
+   `r2.cloudflarestorage.com` URL. If it falls back, the token needs Object
+   Read & Write on both thumbnail buckets (Cloudflare → R2 → Manage API tokens).
 2. **No public host yet.** Enable R2 → `polutek-thumbnails` → Settings →
    Public Development URL, which gives a `pub-<hash>.r2.dev` host. Never enable
    public access on `polutek-thumbnails-private`. A custom subdomain such as
@@ -92,7 +97,9 @@ manage API tokens or public access, so these two steps need the dashboard:
 
 ### Remaining steps, in order
 
-1. Owner confirms the token scope (blocker 1) and sends the `pub-….r2.dev` host (blocker 2).
+1. Someone with Cloudflare dashboard access enables the `r2.dev` URL (blocker 2);
+   the owner has said they won't go into the dashboard, so this is parked until
+   they or someone else can. Without it, thumbnails keep working via the proxy.
 2. Set `NEXT_PUBLIC_R2_PUBLIC_HOST=<pub-….r2.dev>` in Vercel (Production + Preview),
    then redeploy production. The `NEXT_PUBLIC_` value is baked into the
    CSP/`next/image` config at build time. Verify that `curl -I https://<host>/`
