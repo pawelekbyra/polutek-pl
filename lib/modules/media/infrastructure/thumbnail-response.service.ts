@@ -1,6 +1,8 @@
 import { get } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { MediaPolicy } from "@/lib/modules/media";
+import { parsePrivateThumbnailStorageUrl } from "../domain/r2-thumbnail";
+import { R2ThumbnailStorageClient } from "./r2-thumbnail-storage.client";
 import { logger } from "@/lib/logger";
 
 // Published thumbnails are identical for every viewer, so the CDN may cache
@@ -67,13 +69,35 @@ export class ThumbnailResponseService {
         }
       }
 
-      // 2. For other external URLs, validate against MediaPolicy first
+      // 2. Our private R2 thumbnail bucket — authenticated S3 read, never a plain fetch.
+      const r2Key = parsePrivateThumbnailStorageUrl(thumbnailUrl, process.env);
+      if (r2Key) {
+        try {
+          const object = await new R2ThumbnailStorageClient().getPrivate(r2Key);
+          if (!object) {
+            return new NextResponse("Thumbnail not found in storage", { status: 404 });
+          }
+
+          const resHeaders = new Headers();
+          if (object.contentType) resHeaders.set("Content-Type", object.contentType);
+          if (object.contentLength !== null) resHeaders.set("Content-Length", String(object.contentLength));
+          if (object.etag) resHeaders.set("ETag", object.etag);
+          resHeaders.set("Cache-Control", effectiveCacheControl);
+
+          return new NextResponse(object.body, { status: 200, headers: resHeaders });
+        } catch (error) {
+          logger.error("[ThumbnailResponseService] R2 fetch failed", { videoId, error });
+          return new NextResponse("Internal Storage Error", { status: 502 });
+        }
+      }
+
+      // 3. For other external URLs, validate against MediaPolicy first
       if (!MediaPolicy.isAllowedThumbnailUrl(thumbnailUrl, process.env)) {
         logger.warn("[ThumbnailResponseService] Blocked unauthorized thumbnail host", { videoId, thumbnailUrl });
         return new NextResponse("Unauthorized Thumbnail Host", { status: 403 });
       }
 
-      // 3. Stream external URL to avoid Next Image config restrictions
+      // 4. Stream external URL to avoid Next Image config restrictions
       try {
         const response = await fetch(thumbnailUrl);
 

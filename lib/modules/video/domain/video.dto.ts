@@ -1,5 +1,6 @@
 import type { AccessTier, StorageProvider, VideoAssetProcessingState, VideoStatus } from "@prisma/client";
 import { selectPrimaryVideoAsset } from "./video-asset-selection";
+import { resolvePublicThumbnailSrc } from "@/lib/modules/media";
 
 export interface BaseVideoDto {
   id: string;
@@ -174,11 +175,15 @@ export function toPublicVideoDto(video: PublicVideoInput): PublicVideoDto {
     titleEn: video.titleEn,
     description: video.description,
     descriptionEn: video.descriptionEn,
-    // Always route through the thumbnail proxy (same pattern as the sidebar
-    // layout DTO): the raw stored value may be a private Vercel Blob URL that
-    // browsers can't fetch directly, and the proxy also resolves the global
-    // fallback thumbnail when a video has none set.
-    thumbnailUrl: `/api/videos/${video.id}/thumbnail`,
+    // Never the raw stored value (it may be a private Blob/R2 URL). A published
+    // video with a synced public R2 copy gets that URL; everything else goes
+    // through the thumbnail proxy, which also resolves the global fallback.
+    thumbnailUrl: resolvePublicThumbnailSrc({
+      id: video.id,
+      status: video.status as string | undefined,
+      thumbnailUrl: video.thumbnailUrl,
+      thumbnailPublicUrl: video.thumbnailPublicUrl as string | null | undefined,
+    }, process.env),
     subtitleUrlPl: video.subtitleUrlPl ?? null,
     subtitleUrlEn: video.subtitleUrlEn ?? null,
     duration: video.duration,

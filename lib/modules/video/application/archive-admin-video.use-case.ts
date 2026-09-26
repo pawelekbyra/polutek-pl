@@ -6,6 +6,7 @@ import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { VideoNotFoundError, VideoNotOnMainChannelError } from "../domain/video.errors";
 import { VideoPolicy } from "../domain/video.policy";
+import { syncPublicThumbnail } from "./sync-public-thumbnail.service";
 
 export async function archiveAdminVideo(
   videoId: string,
@@ -32,6 +33,8 @@ export async function archiveAdminVideo(
 
     return video;
   });
+
+  await syncPublicThumbnail(archived, ctx);
 
   return ok(toAdminVideoDto(archived));
 }

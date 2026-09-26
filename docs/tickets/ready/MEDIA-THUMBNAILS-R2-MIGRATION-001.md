@@ -1,6 +1,6 @@
 # MEDIA-THUMBNAILS-R2-MIGRATION-001 — Move thumbnail storage from Vercel Blob to Cloudflare R2
 
-Status: READY_FOR_BUILDER
+Status: CODE_DONE — waiting on ops (see "Rollout" below)
 Priority: MEDIUM (cost/scalability; not a correctness bug)
 
 ## Why
@@ -44,3 +44,22 @@ egress and the project already carries R2 plumbing (CSP entries,
 - Moving video files (already on Cloudflare Stream).
 - Replacing Cloudflare Stream's generated preview frames — custom cover
   images stay the primary thumbnail source.
+
+## Rollout (after the code lands)
+
+Code is done (see CLAUDE.md §4.8). Remaining owner/ops steps, in order:
+
+1. R2 buckets `polutek-thumbnails-private` and `polutek-thumbnails` exist (created 2026-09-26).
+   Enable public access on `polutek-thumbnails` **only**: a custom domain
+   (recommended, e.g. `thumbs.pawelperfect.pl`) or its `r2.dev` URL.
+   `polutek-thumbnails-private` must stay private.
+2. R2 API token with Object Read & Write on both thumbnail buckets (the existing
+   originals token can be extended instead).
+3. Vercel env: `CLOUDFLARE_R2_BUCKET_THUMBNAILS_PRIVATE`,
+   `CLOUDFLARE_R2_BUCKET_THUMBNAILS_PUBLIC`, `NEXT_PUBLIC_R2_PUBLIC_HOST` (the exact
+   public host), plus `CLOUDFLARE_R2_ACCOUNT_ID` / `_ACCESS_KEY_ID` /
+   `_SECRET_ACCESS_KEY` if not already set. Redeploy (the `NEXT_PUBLIC_` value
+   is baked into CSP/`next/image` config at build time).
+4. `npm run media:migrate-thumbnails-r2` (dry run), then `-- --apply`. Keep the
+   journal JSON and verify thumbnails on the live site.
+5. Only then delete the old Blob thumbnails. Then move this ticket to `done/`.

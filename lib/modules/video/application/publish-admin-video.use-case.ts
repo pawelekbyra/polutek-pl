@@ -7,6 +7,7 @@ import { recordAuditEvent } from "@/lib/modules/audit";
 import { toAdminVideoDto } from "../domain/video.dto";
 import { VideoNotFoundError, VideoNotReadyForPublicationError } from "../domain/video.errors";
 import { VideoPolicy } from "../domain/video.policy";
+import { syncPublicThumbnail } from "./sync-public-thumbnail.service";
 
 export async function publishAdminVideo(
   videoId: string,
@@ -51,6 +52,8 @@ export async function publishAdminVideo(
 
     return result;
   });
+
+  await syncPublicThumbnail(updated, ctx);
 
   return ok(toAdminVideoDto(updated));
 }

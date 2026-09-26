@@ -250,12 +250,23 @@ Clerk provides user identity (userId, email, name). It does not control patron a
 
 ### 4.8 Thumbnail Display Path
 
-- All video thumbnails are served through `/api/videos/[id]/thumbnail`, which streams the blob/server-side source and enforces its own policy: published videos are public, drafts are admin-only.
+**Update 2026-09-26 (MEDIA-THUMBNAILS-R2-MIGRATION-001 — thumbnails on Cloudflare R2):** storage is split across two R2 buckets (helpers in `lib/modules/media/domain/r2-thumbnail.ts`, S3 client in `lib/modules/media/infrastructure/r2-thumbnail-storage.client.ts`):
+
+- **Private bucket** (`CLOUDFLARE_R2_BUCKET_THUMBNAILS_PRIVATE`, `polutek-thumbnails-private`) — every admin upload lands here (`cover-upload` route, default-thumbnail setting route), drafts included, under a content-hashed key (`videos/<videoId|new>/covers/<sha256>.<ext>`). `Video.thumbnailUrl` / the `default_video_thumbnail` AppSetting store the object's S3-endpoint URL (`https://<account>.r2.cloudflarestorage.com/<bucket>/<key>`): absolute, but only readable with credentials. `ThumbnailResponseService` streams it via authenticated `GetObject`, never a plain `fetch`. This bucket must **never** get public access.
+- **Public bucket** (`CLOUDFLARE_R2_BUCKET_THUMBNAILS_PUBLIC`, `polutek-thumbnails`, served at `NEXT_PUBLIC_R2_PUBLIC_HOST`) — holds **only** copies of `PUBLISHED` videos' thumbnails, same key, `Cache-Control: public, max-age=31536000, immutable`. `Video.thumbnailPublicUrl` records the copy.
+- **Sync** (`lib/modules/video/application/sync-public-thumbnail.service.ts`): `publishAdminVideo` copies the thumbnail to the public bucket; `updateAdminVideo` (unpublish or new cover), `archiveAdminVideo` and `deleteAdminVideo` remove the public copy. When removing, the DB column is cleared **before** the object is deleted, so a failed delete never leaves a draft advertised. These hooks never throw — a failed sync just leaves the video on the proxy. `/api/cron/sync-public-thumbnails` (daily) re-syncs every video and deletes public objects no video advertises (older than 1h). Every status change that leaves `PUBLISHED` must go through one of those use cases or call `syncPublicThumbnail()` — do not add a new unpublish path without it.
+- **Public DTOs** (`toPublicVideoDto`, `VideoContentService.mapToPublicVideoDTO`, the sidebar layout) use `resolvePublicThumbnailSrc()`: the public R2 URL only when the video is `PUBLISHED` **and** `thumbnailPublicUrl`'s key matches the current private key. Otherwise it's `/api/videos/[id]/thumbnail` (drafts, legacy Blob thumbnails, default fallback, a copy not synced yet). Never put a private storage URL in a public DTO.
+- Uploads fall back to Vercel Blob while the R2 env vars aren't set; Blob URLs keep working through the proxy exactly as before. `scripts/migrate-thumbnails-to-r2.ts` (`npm run media:migrate-thumbnails-r2`, dry-run by default, `--apply`, `--rollback=<journal.json>`) copies existing Blob thumbnails to R2 and repoints the DB. It never deletes Blob objects: the previous values are kept in the journal until the R2 copies are verified.
+- R2 credentials are shared with the video-originals bucket (`CLOUDFLARE_R2_ACCOUNT_ID` / `_ACCESS_KEY_ID` / `_SECRET_ACCESS_KEY`); the token needs Object Read & Write on both thumbnail buckets.
+
+Still true:
+
+- `/api/videos/[id]/thumbnail` streams the server-side source and enforces its own policy: published videos are public, drafts are admin-only.
 - The route is listed as **public** in `middleware.ts` — do not remove it from `isPublicRoute`.
 - Admin components render this proxy with `unoptimized` on `next/image` so draft thumbnails stay visible in the panel with admin cookies.
-- `resolveVideoThumbnailUrl()` returns the raw storage/external URL for server-side streaming — never a relative proxy path.
-- Published-video thumbnails are CDN-cacheable (`PUBLIC_THUMBNAIL_CACHE_CONTROL`, includes `s-maxage`); draft thumbnails must always use `PRIVATE_THUMBNAIL_CACHE_CONTROL`.
-- Planned: custom thumbnail storage moves from Vercel Blob to Cloudflare R2 (free egress) — see `docs/tickets/ready/MEDIA-THUMBNAILS-R2-MIGRATION-001.md`.
+- `resolveVideoThumbnailUrl()` returns the raw storage/external URL for server-side streaming (a private R2 URL is absolute) — never a relative proxy path.
+- Published-video thumbnails served by the proxy are CDN-cacheable (`PUBLIC_THUMBNAIL_CACHE_CONTROL`, includes `s-maxage`); draft thumbnails must always use `PRIVATE_THUMBNAIL_CACHE_CONTROL`.
+- Default fallback chain is unchanged: `Creator.defaultThumbnailUrl` → `default_video_thumbnail` AppSetting (now an R2 or Blob URL) → `null`, always resolved via the proxy.
 
 ### 4.9 Comment Reactions
 
@@ -393,6 +404,7 @@ Co robi ten cron: co 15 minut szuka płatności `PENDING` starszych niż 15 min 
 | `/api/cron/stripe-reconciliation` | `*/15 * * * *` | Recovers stuck `PENDING` payments by re-running `fulfillPayment()` or marking as failed |
 | `/api/cron/video-provider-jobs/reconcile` | `0 4 * * *` (registered; daily works on Hobby) | Polls provider status for stuck import jobs (missed webhooks), restarts imports that never reached the provider, fails them with a clear reason after max attempts |
 | `/api/cron/prune-playback-sessions` | `0 5 * * *` (registered; daily works on Hobby) | Deletes `VideoPlaybackSession` rows older than 30 days that were never counted as a view (`pruneStalePlaybackSessions()`, `lib/modules/video/`) |
+| `/api/cron/sync-public-thumbnails` | `0 6 * * *` (registered; daily works on Hobby) | Safety net for R2 thumbnail sync: makes the public thumbnail bucket hold exactly the published videos' thumbnails (`reconcilePublicThumbnails()`, see §4.8). No-op until the public bucket/host env vars are set |
 
 The daily cron is only the safety net for video provider jobs. The primary recovery path is on-demand: `POST /api/admin/videos/[id]/reconcile` now runs the provider-job reconciler scoped to that video before route policy, and the admin media panel calls it from the "Odśwież" button plus an automatic 15s poll while the pipeline is in `CREATING_SOURCES`/`PARTIALLY_READY`. Do not revert the media panel to a passive DB-state read — without provider polling, a missed webhook leaves targets in "Tworzę źródło" forever.
 

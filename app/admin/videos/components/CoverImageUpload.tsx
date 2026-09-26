@@ -17,8 +17,13 @@ interface CoverImageUploadProps {
 }
 
 
+// Blob and private R2 storage URLs aren't browser-viewable; show them via the
+// admin-aware thumbnail proxy (needs a saved video id).
 function toDisplayUrl(url: string | undefined, videoId?: string): string | null {
   if (!url) return null;
+  if (url.includes('.r2.cloudflarestorage.com')) {
+    return videoId ? `/api/videos/${videoId}/thumbnail` : null;
+  }
   if (url.includes('.blob.vercel-storage.com') && videoId) {
     return `/api/videos/${videoId}/thumbnail`;
   }

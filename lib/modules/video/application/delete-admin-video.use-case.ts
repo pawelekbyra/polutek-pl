@@ -11,6 +11,7 @@ import {
   VideoNotOnMainChannelError,
 } from "../domain/video.errors";
 import { VideoPolicy } from "../domain/video.policy";
+import { removePublicThumbnailCopy } from "./sync-public-thumbnail.service";
 import { VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { CloudflareStreamDeleteClient, DeleteCloudflareStreamAssetResult } from "../infrastructure/cloudflare-stream-delete.client";
 
@@ -74,6 +75,8 @@ export async function deleteAdminVideo(
 
     return video;
   });
+
+  await removePublicThumbnailCopy(deleted.thumbnailPublicUrl, ctx);
 
   return ok(toAdminVideoDto(deleted));
 }

@@ -4,6 +4,7 @@ import { requireAdminForApi } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/errors";
 import { createScopedLogger } from "@/lib/logger";
 import { getBlobAccess } from "@/lib/blob-config";
+import { R2ThumbnailStorageClient, THUMBNAIL_EXTENSION_BY_MIME } from "@/lib/modules/media";
 
 export const dynamic = "force-dynamic";
 
@@ -40,11 +41,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const videoPath = videoId ? videoId : "new";
+
+    // R2 (private bucket) once configured; Vercel Blob remains the fallback so
+    // uploads keep working before the R2 env vars are set.
+    if (R2ThumbnailStorageClient.isConfigured()) {
+      const { key, storageUrl } = await new R2ThumbnailStorageClient().putPrivate({
+        scope: `videos/${videoPath}/covers`,
+        bytes: new Uint8Array(await file.arrayBuffer()),
+        contentType: file.type,
+        extension: THUMBNAIL_EXTENSION_BY_MIME[file.type] ?? "webp",
+      });
+
+      scopedLogger.info("[ADMIN_VIDEO_COVER_UPLOAD_SUCCESS]", { key, storage: "r2" });
+
+      // The private object is only viewable through the admin-aware proxy.
+      return NextResponse.json({
+        url: videoId ? `/api/videos/${videoId}/thumbnail` : null,
+        storageUrl,
+      });
+    }
+
     const access = getBlobAccess();
 
     const uuid = crypto.randomUUID();
     const extension = file.type.split("/")[1] || "webp";
-    const videoPath = videoId ? videoId : "new";
     const pathname = `videos/${videoPath}/covers/${uuid}.${extension}`;
 
     const blob = await put(pathname, file, {
