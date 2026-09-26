@@ -1,1 +1,0 @@
-import { redirect } from "next/navigation";import { resolveInitialLanguage } from "@/lib/i18n/server-language";import { getLocalizedHref } from "@/lib/i18n/routing";export default async function R(){redirect(getLocalizedHref(await resolveInitialLanguage(),"shop"));}

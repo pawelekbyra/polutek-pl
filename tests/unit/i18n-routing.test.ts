@@ -7,7 +7,7 @@ const middleware = () => readFileSync('middleware.ts', 'utf8');
 describe('locale-first public routing', () => {
   it('builds localized hrefs and preserves query strings', () => {
     expect(getLocalizedHref('pl', 'watch', { slug: 'film-test' })).toBe('/watch/film-test');
-    expect(getLocalizedHref('en', 'shop')).toBe('/en/shop');
+    expect(getLocalizedHref('en', 'terms')).toBe('/en/terms');
     expect(appendQueryString('/en/search', 'q=test')).toBe('/en/search?q=test');
   });
 
@@ -16,18 +16,18 @@ describe('locale-first public routing', () => {
     expect(localizedPathFromLegacyPath('/channel/main', 'en')).toBe('/en/channel/main');
     expect(localizedPathFromLegacyPath('/regulamin', 'en')).toBe('/en/terms');
     expect(localizedPathFromLegacyPath('/polityka-prywatnosci', 'pl')).toBe('/polityka-prywatnosci');
-    expect(localizedPathFromLegacyPath('/shop', 'pl')).toBe('/sklep');
+    expect(localizedPathFromLegacyPath('/sklep', 'pl')).toBeNull();
   });
 
   it('switches between equivalent localized public routes', () => {
     expect(switchLocalePath('/watch/my-video', 'en')).toBe('/en/watch/my-video');
-    expect(switchLocalePath('/en/shop', 'pl')).toBe('/sklep');
+    expect(switchLocalePath('/en/privacy-policy', 'pl')).toBe('/polityka-prywatnosci');
     expect(switchLocalePath('/regulamin', 'en')).toBe('/en/terms');
   });
 
   it('keeps localized public routes public without exposing admin routes', () => {
     const source = middleware();
-    for (const route of ['/watch/(.*)', '/en/watch/(.*)', '/sklep', '/en/shop']) {
+    for (const route of ['/watch/(.*)', '/en/watch/(.*)', '/regulamin', '/en/terms']) {
       expect(source).toContain(route);
     }
     expect(source).toContain("const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);");

@@ -9,7 +9,6 @@ export const ROUTES = {
   channel: { pl: "/channel/:slug", en: "/en/channel/:slug" },
   terms: { pl: "/regulamin", en: "/en/terms" },
   privacy: { pl: "/polityka-prywatnosci", en: "/en/privacy-policy" },
-  shop: { pl: "/sklep", en: "/en/shop" },
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;
@@ -49,7 +48,6 @@ export function localizedPathFromLegacyPath(pathname: string, locale: Locale): s
   if (channel) return getLocalizedHref(locale, "channel", { slug: decodeURIComponent(channel[1] ?? "") });
   if (pathname === "/regulamin") return getLocalizedHref(locale, "terms");
   if (pathname === "/polityka-prywatnosci") return getLocalizedHref(locale, "privacy");
-  if (pathname === "/sklep" || pathname === "/shop") return getLocalizedHref(locale, "shop");
   return null;
 }
 
@@ -65,7 +63,6 @@ export function switchLocalePath(pathname: string, targetLocale: Locale): string
   if (segment === "search") return getLocalizedHref(targetLocale, "search");
   if (segment === "regulamin" || segment === "terms") return getLocalizedHref(targetLocale, "terms");
   if (segment === "polityka-prywatnosci" || segment === "privacy-policy") return getLocalizedHref(targetLocale, "privacy");
-  if (segment === "sklep" || segment === "shop") return getLocalizedHref(targetLocale, "shop");
   return getLocalizedHref(targetLocale, "home");
 }
 

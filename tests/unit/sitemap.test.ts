@@ -44,8 +44,7 @@ describe('sitemap', () => {
       expect.objectContaining({ url: 'https://test.local/en/channel/main' }),
       expect.objectContaining({ url: 'https://test.local/watch/my-video' }),
       expect.objectContaining({ url: 'https://test.local/en/watch/my-video' }),
-      expect.objectContaining({ url: 'https://test.local/sklep' }),
-      expect.objectContaining({ url: 'https://test.local/en/shop' }),
     ]));
+    expect(result.map((entry) => entry.url).join(' ')).not.toMatch(/sklep|\/shop/);
   });
 });
