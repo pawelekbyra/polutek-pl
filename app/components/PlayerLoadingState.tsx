@@ -27,14 +27,21 @@ interface PlayerLoadingStateProps {
 export function PlayerPosterLoading({
   posterUrl,
   hidden = false,
+  ready = false,
 }: {
   posterUrl: string;
   hidden?: boolean;
+  /** The media can already play: keep the plain poster, never show the spinner/scrim. */
+  ready?: boolean;
 }) {
   const language = useOptionalLanguage();
   return (
     <div
-      className={cn("polutek-poster-loader", hidden && "polutek-poster-loader--hidden")}
+      className={cn(
+        "polutek-poster-loader",
+        ready && "polutek-poster-loader--ready",
+        hidden && "polutek-poster-loader--hidden",
+      )}
       role={hidden ? undefined : "status"}
       aria-live="polite"
       aria-label={hidden ? undefined : language === "pl" ? "Ładowanie filmu…" : "Loading video…"}
@@ -50,7 +57,8 @@ export function PlayerPosterLoading({
         .polutek-poster-loader-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
         .polutek-poster-loader::after { content:""; position:absolute; inset:0; background:rgba(0,0,0,.18); opacity:0; animation:polutek-poster-scrim 300ms ease 450ms forwards; }
         .polutek-poster-loader-spinner { position:absolute; left:50%; top:50%; z-index:1; width:44px; height:44px; margin:-22px 0 0 -22px; border-radius:999px; border:3px solid rgba(255,255,255,.28); border-top-color:#fff; opacity:0; animation:polutek-poster-spinner-in 300ms ease 450ms forwards, polutek-poster-spin .85s linear infinite; }
-        .polutek-poster-loader--hidden .polutek-poster-loader-spinner, .polutek-poster-loader--hidden::after { animation:none; opacity:0; }
+        .polutek-poster-loader--hidden .polutek-poster-loader-spinner, .polutek-poster-loader--hidden::after,
+        .polutek-poster-loader--ready .polutek-poster-loader-spinner, .polutek-poster-loader--ready::after { animation:none; opacity:0; }
         @keyframes polutek-poster-scrim { to { opacity:1; } }
         @keyframes polutek-poster-spinner-in { to { opacity:1; } }
         @keyframes polutek-poster-spin { to { transform:rotate(360deg); } }
