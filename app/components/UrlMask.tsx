@@ -8,7 +8,7 @@ import { usePathname, useSearchParams } from "next/navigation";
  *
  * The owner wants the address bar to always read `pawelperfect.pl` while browsing
  * the channel — home, a shared `?v=` video link, `/watch/*`, `/channel/*`,
- * `/search`, `/sklep`, etc. all resolve normally on the server, but once the
+ * `/search`, `/regulamin`, etc. all resolve normally on the server, but once the
  * client has mounted the visible URL is collapsed to `/`.
  *
  * Only a small allowlist keeps a real, copyable URL:

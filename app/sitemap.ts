@@ -21,7 +21,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...localizedEntry(baseUrl, 'search', 0.5),
     ...localizedEntry(baseUrl, 'terms', 0.4),
     ...localizedEntry(baseUrl, 'privacy', 0.4),
-    ...localizedEntry(baseUrl, 'shop', 0.5),
   ];
   const creator = await ContentService.getConfiguredOrDefaultCreator().catch(() => null);
   if (creator) routes.push(...localizedEntry(baseUrl, 'channel', 0.7, { slug: creator.slug }));
