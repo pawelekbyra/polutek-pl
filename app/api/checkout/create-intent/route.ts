@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const { amountMinor, currency, title, requestId: inputRequestId } = result.data;
+    const { amountMinor, currency, title, requestId: inputRequestId, paymentMethod, message } = result.data;
 
     const amountError = await validatePaymentAmountMinorAsync(amountMinor, currency);
 
@@ -74,6 +74,8 @@ export async function POST(req: NextRequest) {
       currency,
       title,
       requestId: inputRequestId,
+      paymentMethod,
+      message: message || undefined,
     }, ctx);
 
     if (!checkoutResult.ok) {

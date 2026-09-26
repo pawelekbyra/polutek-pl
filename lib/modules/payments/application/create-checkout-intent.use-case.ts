@@ -78,7 +78,11 @@ export async function createCheckoutIntent(
     amountMinor: input.amountMinor,
     currency: PaymentPolicy.getDbCurrency(input.currency),
     status: PaymentStatus.PENDING,
-    metadata: input.requestId ? { requestId: input.requestId } : {},
+    metadata: {
+      ...(input.requestId ? { requestId: input.requestId } : {}),
+      ...(input.paymentMethod ? { paymentMethod: input.paymentMethod } : {}),
+      ...(input.message ? { message: input.message } : {}),
+    },
     requestId: input.requestId ?? null,
   }, ctx.prisma);
 
@@ -94,8 +98,12 @@ export async function createCheckoutIntent(
         paymentId: payment.id,
         ...(input.requestId ? { requestId: input.requestId } : {}),
         creatorId,
+        ...(input.message ? { message: input.message } : {}),
       },
-      automatic_payment_methods: { enabled: true },
+      // The tip gate picks the method up front, so the Payment Element shows only that one.
+      ...(input.paymentMethod
+        ? { payment_method_types: [input.paymentMethod] }
+        : { automatic_payment_methods: { enabled: true } }),
     }, {
       idempotencyKey: input.requestId ? `payment-intent-${user.id}-${input.requestId}` : undefined
     });
