@@ -250,6 +250,8 @@ Clerk provides user identity (userId, email, name). It does not control patron a
 
 ### 4.8 Thumbnail Display Path
 
+**Rollout status 2026-09-26: not live yet.** The code is merged, but production still serves thumbnails through the proxy and uploads to Blob. The bucket env vars are set in Vercel, and the next deploy activates R2 uploads. Still blocked on the owner: confirming the R2 token covers the new buckets, and enabling the public `r2.dev` URL, since the `pawelperfect.pl` DNS is at home.pl, so a custom domain isn't possible. After that, set `NEXT_PUBLIC_R2_PUBLIC_HOST`, redeploy and run the migration script. The exact current state and next steps are in `docs/tickets/ready/MEDIA-THUMBNAILS-R2-MIGRATION-001.md` → "Rollout status"; read it before touching this.
+
 **Update 2026-09-26 (MEDIA-THUMBNAILS-R2-MIGRATION-001 — thumbnails on Cloudflare R2):** storage is split across two R2 buckets (helpers in `lib/modules/media/domain/r2-thumbnail.ts`, S3 client in `lib/modules/media/infrastructure/r2-thumbnail-storage.client.ts`):
 
 - **Private bucket** (`CLOUDFLARE_R2_BUCKET_THUMBNAILS_PRIVATE`, `polutek-thumbnails-private`) — every admin upload lands here (`cover-upload` route, default-thumbnail setting route), drafts included, under a content-hashed key (`videos/<videoId|new>/covers/<sha256>.<ext>`). `Video.thumbnailUrl` / the `default_video_thumbnail` AppSetting store the object's S3-endpoint URL (`https://<account>.r2.cloudflarestorage.com/<bucket>/<key>`): absolute, but only readable with credentials. `ThumbnailResponseService` streams it via authenticated `GetObject`, never a plain `fetch`. This bucket must **never** get public access.

@@ -1,6 +1,6 @@
 # MEDIA-THUMBNAILS-R2-MIGRATION-001 — Move thumbnail storage from Vercel Blob to Cloudflare R2
 
-Status: CODE_DONE — waiting on ops (see "Rollout" below)
+Status: IN_PROGRESS — code merged (#1506), ops rollout blocked on owner (see "Rollout status" below)
 Priority: MEDIUM (cost/scalability; not a correctness bug)
 
 ## Why
@@ -45,21 +45,74 @@ egress and the project already carries R2 plumbing (CSP entries,
 - Replacing Cloudflare Stream's generated preview frames — custom cover
   images stay the primary thumbnail source.
 
-## Rollout (after the code lands)
+## Rollout status (as of 2026-09-26) — IN PROGRESS, pick up here
 
-Code is done (see CLAUDE.md §4.8). Remaining owner/ops steps, in order:
+Code merged in PR #1506 (squash commit `ab45f59`) and deployed to production;
+the `Video.thumbnailPublicUrl` migration ran with that deploy. **Production
+behaviour is still unchanged**: thumbnails are served through
+`/api/videos/[id]/thumbnail` and admin uploads still go to Vercel Blob, because
+the deploy that would pick up the new env vars hasn't happened yet (see below).
 
-1. R2 buckets `polutek-thumbnails-private` and `polutek-thumbnails` exist (created 2026-09-26).
-   Enable public access on `polutek-thumbnails` **only**: a custom domain
-   (recommended, e.g. `thumbs.pawelperfect.pl`) or its `r2.dev` URL.
-   `polutek-thumbnails-private` must stay private.
-2. R2 API token with Object Read & Write on both thumbnail buckets (the existing
-   originals token can be extended instead).
-3. Vercel env: `CLOUDFLARE_R2_BUCKET_THUMBNAILS_PRIVATE`,
-   `CLOUDFLARE_R2_BUCKET_THUMBNAILS_PUBLIC`, `NEXT_PUBLIC_R2_PUBLIC_HOST` (the exact
-   public host), plus `CLOUDFLARE_R2_ACCOUNT_ID` / `_ACCESS_KEY_ID` /
-   `_SECRET_ACCESS_KEY` if not already set. Redeploy (the `NEXT_PUBLIC_` value
-   is baked into CSP/`next/image` config at build time).
-4. `npm run media:migrate-thumbnails-r2` (dry run), then `-- --apply`. Keep the
-   journal JSON and verify thumbnails on the live site.
-5. Only then delete the old Blob thumbnails. Then move this ticket to `done/`.
+### Done
+
+- [x] Code, tests, CLAUDE.md §4.8, cron `/api/cron/sync-public-thumbnails` (PR #1506).
+- [x] R2 buckets created via the Cloudflare connector: `polutek-thumbnails`
+      (public-to-be) and `polutek-thumbnails-private`. Both ended up in location
+      **ENAM** (the connector can't set a location hint; the older `polutek`
+      bucket is EEUR). Empty — recreate them with a Europe hint in the dashboard
+      if that matters, but only before the first upload.
+- [x] Vercel project `polutek.pl` (`prj_e7YawXp53b22uIMsiyW2NkccZgMz`, team
+      `team_sc16PptMTGc4ip47phctR79J`), Production + Preview:
+      `CLOUDFLARE_R2_BUCKET_THUMBNAILS_PRIVATE=polutek-thumbnails-private` and
+      `CLOUDFLARE_R2_BUCKET_THUMBNAILS_PUBLIC=polutek-thumbnails` added.
+      `CLOUDFLARE_R2_ACCOUNT_ID` / `_ACCESS_KEY_ID` / `_SECRET_ACCESS_KEY` already
+      existed (shared with the video-originals bucket).
+- [x] **No redeploy was triggered on purpose.** The next production deploy, including
+      any push to `main`, activates R2 uploads (private bucket, served through the proxy).
+
+### Blockers — need the owner in the Cloudflare dashboard
+
+The Cloudflare connector can only create, list and delete buckets. It cannot
+manage API tokens or public access, so these two steps need the dashboard:
+
+1. **R2 token scope unknown.** It is not known whether the existing R2 API token
+   (the one behind `CLOUDFLARE_R2_ACCESS_KEY_ID`) covers the two new buckets.
+   Check Cloudflare → R2 → Manage API tokens. "All buckets" is fine. If it lists
+   specific buckets, add both thumbnail buckets with Object Read & Write.
+   **Risk:** if the token doesn't cover them, the next deploy breaks admin cover
+   uploads (500 from `/api/admin/videos/cover-upload`) until this is fixed. To
+   back out, delete `CLOUDFLARE_R2_BUCKET_THUMBNAILS_PRIVATE` in Vercel and
+   redeploy; uploads then fall back to Blob.
+2. **No public host yet.** Enable R2 → `polutek-thumbnails` → Settings →
+   Public Development URL, which gives a `pub-<hash>.r2.dev` host. Never enable
+   public access on `polutek-thumbnails-private`. A custom subdomain such as
+   `thumbs.pawelperfect.pl` is **not** possible right now: `pawelperfect.pl` DNS is
+   at home.pl (`dns.home.pl`), and R2 custom domains need the zone on Cloudflare.
+   `www.pawelperfect.pl` is the Vercel app itself and must never be used as the R2 host.
+
+### Remaining steps, in order
+
+1. Owner confirms the token scope (blocker 1) and sends the `pub-….r2.dev` host (blocker 2).
+2. Set `NEXT_PUBLIC_R2_PUBLIC_HOST=<pub-….r2.dev>` in Vercel (Production + Preview),
+   then redeploy production. The `NEXT_PUBLIC_` value is baked into the
+   CSP/`next/image` config at build time. Verify that `curl -I https://<host>/`
+   responds, the deploy is READY and the home page renders thumbnails.
+3. Verify a real upload: an admin uploads a cover, and the object appears in
+   `polutek-thumbnails-private`. After publish, a copy appears in
+   `polutek-thumbnails`, and `/api/channel/sidebar` returns `https://<host>/…`
+   URLs for published videos.
+4. Migrate existing Blob thumbnails: `npm run media:migrate-thumbnails-r2` (dry run),
+   then `-- --apply`. This needs the production `DATABASE_URL` and R2 credentials,
+   which the cloud agent session doesn't have: run it locally, or add those vars
+   to the agent environment. Keep the journal JSON. Rollback:
+   `-- --rollback=<journal>`.
+5. After verifying on the live site, delete the old Blob thumbnails, update the
+   "Planned/current migration target" wording in CLAUDE.md §2 and the admin table
+   in §5, then move this ticket to `docs/tickets/done/`.
+
+### Known follow-up (not blocking)
+
+- Public thumbnails still go through `next/image` optimisation, so Vercel image
+  optimisation fetches from R2 on a cache miss. The thumbnail function is out of
+  the path, but the optimiser is not. Possible follow-up: a Cloudflare image
+  loader, or `unoptimized` for R2 URLs.
