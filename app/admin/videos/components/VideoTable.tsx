@@ -1,6 +1,6 @@
 "use client";
 
-import { Video, Globe, Lock, ShieldCheck, Edit, Plus, Trash2, AlertTriangle, Eye, ExternalLink as LinkIcon, FileVideo } from "@/app/components/icons";
+import { Video, Globe, Lock, ShieldCheck, Edit, Plus, Trash2, AlertTriangle, Eye, ExternalLink as LinkIcon, FileVideo, ThumbsUp, ThumbsDown, MessageSquare } from "@/app/components/icons";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -133,9 +133,9 @@ export function VideoTable({ videos, onEdit, onDuplicate, onDelete, deletingVide
                 </div>
               </TableCell>
               <TableCell className="text-[10px] text-muted-foreground leading-relaxed">
-                <div>👁 {vid.views.toLocaleString()}</div>
-                <div>👍 {vid.likesCount} / 👎 {vid.dislikesCount}</div>
-                <div>💬 {vid.commentsCount}</div>
+                <div className="flex items-center gap-1"><Eye className="h-3 w-3" /> {vid.views.toLocaleString()}</div>
+                <div className="flex items-center gap-1"><ThumbsUp className="h-3 w-3" /> {vid.likesCount} / <ThumbsDown className="h-3 w-3" /> {vid.dislikesCount}</div>
+                <div className="flex items-center gap-1"><MessageSquare className="h-3 w-3" /> {vid.commentsCount}</div>
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1">
@@ -152,7 +152,7 @@ export function VideoTable({ videos, onEdit, onDuplicate, onDelete, deletingVide
           ))}
           {videos.length === 0 && (
               <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground italic">Brak filmów spełniających kryteria.</TableCell>
+                  <TableCell colSpan={7} className="py-20 text-center text-muted-foreground italic border-b-0">Brak filmów spełniających kryteria.</TableCell>
               </TableRow>
           )}
         </TableBody>

@@ -2,6 +2,8 @@ import { AdminLayoutShell } from "./AdminLayoutShell";
 import { AdminFormSkeleton } from "@/components/skeletons/admin";
 import { VideoForm, type CreateVideoSourceMode } from "./VideoForm";
 import { VideoUploadSection } from "./VideoUploadSection";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "@/app/components/icons";
 
 interface AdminVideoEditViewProps {
   isSubmitting: boolean;
@@ -99,14 +101,10 @@ export function AdminVideoEditView({
               <p className="text-sm font-bold uppercase tracking-wide text-blue-600">Trwa przesyłanie</p>
               <p className="text-xs text-muted-foreground">Możesz teraz uzupełnić metadane filmu.</p>
             </div>
-            <button
-              onClick={onMetadataSaveDuringUpload}
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-            >
-              {isSubmitting && <div className="h-3 w-3 border-2 border-white/30 border-t-white animate-spin rounded-full" />}
+            <Button onClick={onMetadataSaveDuringUpload} disabled={isSubmitting} className="gap-2">
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
               Zapisz zmiany metadanych
-            </button>
+            </Button>
           </div>
           <VideoUploadSection
             videoId={createUploadState.videoId}

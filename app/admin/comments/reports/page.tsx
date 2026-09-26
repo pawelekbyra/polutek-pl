@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
+import { useAdminListQuery } from "@/lib/admin/use-admin-list-query";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -18,31 +19,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 const PAGE_SIZE = 20;
 
 export default function AdminCommentReportsPage() {
-  const [reports, setReports] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const { items: reports, total, page, totalPages, isLoading, fetchPage } = useAdminListQuery<any>();
 
-  const fetchReports = async (targetPage: number = page) => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(
-        `/api/admin/comments/reports?status=PENDING&page=${targetPage}&pageSize=${PAGE_SIZE}`,
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setReports(data.items ?? []);
-        setTotal(data.total ?? 0);
-        setTotalPages(data.totalPages ?? 1);
-        setPage(data.page ?? targetPage);
-      }
-    } catch (err) {
-      logger.error("Failed to fetch reports", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const fetchReports = useCallback((targetPage: number = page) => {
+    return fetchPage(
+      `/api/admin/comments/reports?status=PENDING&page=${targetPage}&pageSize=${PAGE_SIZE}`,
+      targetPage,
+      { fallbackMessage: "Nie udało się pobrać zgłoszeń komentarzy." },
+    );
+  }, [fetchPage, page]);
 
   useEffect(() => {
     fetchReports(1);
@@ -99,7 +84,7 @@ export default function AdminCommentReportsPage() {
           </p>
         </div>
 
-        <Card className="shadow-sm border-0">
+        <Card>
           <CardHeader className="border-b pb-4">
             <CardTitle className="text-lg">Aktywne zgłoszenia</CardTitle>
             <CardDescription className="text-xs">
@@ -175,7 +160,7 @@ export default function AdminCommentReportsPage() {
                                 className="flex items-center gap-1 text-xs font-medium hover:underline text-blue-600"
                                 target="_blank"
                             >
-                                {report.comment.video.title} <ExternalLink size={10} />
+                                {report.comment.video.title} <ExternalLink className="h-2.5 w-2.5" />
                             </Link>
                         </TableCell>
                         <TableCell>
@@ -200,7 +185,7 @@ export default function AdminCommentReportsPage() {
                                         className="h-7 text-[10px] text-green-600 border-green-200 hover:bg-green-50"
                                         onClick={() => handleResolve(report.id, 'DISMISSED')}
                                     >
-                                        <CheckCircle2 size={12} className="mr-1" /> Oddal
+                                        <CheckCircle2 className="mr-1 h-3 w-3" /> Oddal
                                     </Button>
                                     <Button
                                         size="sm"
@@ -208,7 +193,7 @@ export default function AdminCommentReportsPage() {
                                         className="h-7 text-[10px] text-amber-600 border-amber-200 hover:bg-amber-50"
                                         onClick={() => handleHoldComment(report.comment.id, report.id)}
                                     >
-                                        <Clock size={12} className="mr-1" /> Wstrzymaj
+                                        <Clock className="mr-1 h-3 w-3" /> Wstrzymaj
                                     </Button>
                                     <Button
                                         size="sm"
@@ -216,7 +201,7 @@ export default function AdminCommentReportsPage() {
                                         className="h-7 text-[10px] text-red-600 border-red-200 hover:bg-red-50"
                                         onClick={() => handleHideComment(report.comment.id, report.id)}
                                     >
-                                        <Shield size={12} className="mr-1" /> Ukryj i zamknij
+                                        <Shield className="mr-1 h-3 w-3" /> Ukryj i zamknij
                                     </Button>
                                 </>
                             )}

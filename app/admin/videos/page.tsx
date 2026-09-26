@@ -11,7 +11,7 @@ import { VideoForm, type CreateVideoSourceMode } from "./components/VideoForm";
 import { AdminVideoListItem } from "@/lib/modules/video/domain/admin-video-list.dto";
 import { AdminLayoutShell } from "./components/AdminLayoutShell";
 import { VideoTableWrapper } from "./components/VideoTableWrapper";
-import { readAdminApiError } from "./components/api-error";
+import { readAdminApiError } from "@/lib/admin/api-error";
 import { buildCreatedVideoUploadUrl } from "./[id]/details-tab-state";
 import { AdminVideoErrorView } from "./components/AdminVideoErrorView";
 import { AdminVideoEditView } from "./components/AdminVideoEditView";

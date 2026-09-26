@@ -45,7 +45,7 @@ export function EmailDashboard() {
             <div className="grid gap-6 md:grid-cols-2">
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-xs font-black uppercase tracking-widest text-neutral-500">Wysłane Broadcasty</CardTitle>
+                        <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Wysłane Broadcasty</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="flex items-center gap-3">
@@ -56,7 +56,7 @@ export function EmailDashboard() {
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-xs font-black uppercase tracking-widest text-neutral-500">Łącznie Odbiorców</CardTitle>
+                        <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Łącznie Odbiorców</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="flex items-center gap-3">
@@ -76,10 +76,10 @@ export function EmailDashboard() {
                         <CardContent className="space-y-4">
                             <div className="flex justify-between items-center border-b pb-2">
                                 <span className="font-bold">{stats.lastBroadcast.subjectPl}</span>
-                                <span className="text-[10px] font-black uppercase px-2 py-1 rounded bg-green-100 text-green-700">{stats.lastBroadcast.status}</span>
+                                <span className="text-[10px] font-bold uppercase px-2 py-1 rounded bg-green-100 text-green-700">{stats.lastBroadcast.status}</span>
                             </div>
                             <div className="flex justify-between text-xs">
-                                <span className="text-neutral-500">{format(new Date(stats.lastBroadcast.sentAt), 'PPp', { locale: pl })}</span>
+                                <span className="text-muted-foreground">{format(new Date(stats.lastBroadcast.sentAt), 'PPp', { locale: pl })}</span>
                                 <span className="font-bold">{stats.lastBroadcast.recipientCount} odbiorców</span>
                             </div>
                         </CardContent>

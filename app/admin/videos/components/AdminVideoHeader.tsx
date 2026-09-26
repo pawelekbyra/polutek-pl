@@ -13,7 +13,7 @@ export function AdminVideoHeader({ onCreateNew }: AdminVideoHeaderProps) {
       <div className="space-y-3">
         <AdminNavigation backHref="/admin" backLabel="Wróć do panelu admina" currentLabel="Filmy" />
         <div className="space-y-1">
-        <h1 className="text-4xl font-bold tracking-tight">Filmy</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Filmy</h1>
         <p className="text-sm text-muted-foreground">Dodawanie, edycja, status publikacji, miniatury i dostęp.</p>
         </div>
       </div>

@@ -8,7 +8,7 @@ import { AdminLayoutShell } from "../../components/AdminLayoutShell";
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
 import { AdminFormSkeleton } from "@/components/skeletons/admin";
 import { VideoForm } from "../../components/VideoForm";
-import { readAdminApiError } from "../../components/api-error";
+import { readAdminApiError } from "@/lib/admin/api-error";
 import { INITIAL_FORM_DATA, slugify } from "../../components/video-utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

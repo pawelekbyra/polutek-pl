@@ -255,7 +255,7 @@ export default function AdminPaymentsListPage() {
             </div>
         </div>
 
-        <Card className="shadow-sm border-0">
+        <Card>
             <CardHeader className="border-b pb-4">
                 <CardTitle className="text-lg">Lista transakcji</CardTitle>
                 <CardDescription className="text-xs">Znaleziono {total} wyników.</CardDescription>

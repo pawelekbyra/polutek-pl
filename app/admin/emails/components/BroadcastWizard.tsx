@@ -155,14 +155,14 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
         <>
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <Button variant="ghost" onClick={() => onBack()} className="text-neutral-500 hover:text-neutral-900">
+                <Button variant="ghost" onClick={() => onBack()}>
                     <ArrowLeft className="w-4 h-4 mr-2" /> Anuluj
                 </Button>
                 <div className="flex gap-2">
                     {[1, 2, 3].map(s => (
                         <div key={s} className={cn(
                             "w-8 h-1 rounded-full",
-                            step >= s ? "bg-blue-600" : "bg-neutral-200"
+                            step >= s ? "bg-blue-600" : "bg-muted"
                         )} />
                     ))}
                 </div>
@@ -171,13 +171,13 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
             {step === 1 && (
                 <div className="max-w-3xl mx-auto space-y-6">
                     <div className="text-center space-y-2">
-                        <h2 className="text-3xl font-black uppercase tracking-tight">Krok 1: Treść wiadomości</h2>
-                        <p className="text-neutral-500">Wybierz szablon lub wpisz treść od zera.</p>
+                        <h2 className="text-3xl font-bold tracking-tight">Krok 1: Treść wiadomości</h2>
+                        <p className="text-muted-foreground">Wybierz szablon lub wpisz treść od zera.</p>
                     </div>
 
                     <Card>
                         <CardContent className="p-6 space-y-4">
-                            <Label className="text-xs font-bold uppercase text-neutral-500">Zacznij od szablonu (opcjonalnie)</Label>
+                            <Label className="text-xs font-bold uppercase text-muted-foreground">Zacznij od szablonu (opcjonalnie)</Label>
                             <Select value={selectedTemplate} onValueChange={(val) => val && handleTemplateSelect(val)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Wybierz szablon..." />
@@ -217,7 +217,7 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                     </Tabs>
 
                     <div className="flex justify-end">
-                        <Button onClick={() => setStep(2)} disabled={!subjectPl || !htmlPl} className="bg-neutral-900 text-white rounded-xl px-10">
+                        <Button onClick={() => setStep(2)} disabled={!subjectPl || !htmlPl}>
                             Dalej: Odbiorcy
                         </Button>
                     </div>
@@ -227,8 +227,8 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
             {step === 2 && (
                 <div className="max-w-2xl mx-auto space-y-6">
                     <div className="text-center space-y-2">
-                        <h2 className="text-3xl font-black uppercase tracking-tight">Krok 2: Odbiorcy</h2>
-                        <p className="text-neutral-500">Do kogo ma trafić ta wiadomość?</p>
+                        <h2 className="text-3xl font-bold tracking-tight">Krok 2: Odbiorcy</h2>
+                        <p className="text-muted-foreground">Do kogo ma trafić ta wiadomość?</p>
                     </div>
 
                     <div className="grid gap-4">
@@ -239,18 +239,18 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                                 aria-pressed={recipientGroup === group.id}
                                 className={cn(
                                     "flex items-center gap-4 p-6 rounded-2xl border-2 text-left transition-all",
-                                    recipientGroup === group.id ? "border-blue-600 bg-blue-50 shadow-md" : "border-neutral-100 bg-white hover:border-neutral-300"
+                                    recipientGroup === group.id ? "border-blue-600 bg-blue-50 shadow-md" : "border-border bg-card hover:border-muted-foreground/30"
                                 )}
                             >
                                 <div className={cn(
                                     "w-12 h-12 rounded-full flex items-center justify-center",
-                                    recipientGroup === group.id ? "bg-blue-600 text-white" : "bg-neutral-100 text-neutral-400"
+                                    recipientGroup === group.id ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground"
                                 )}>
                                     <group.icon className="w-6 h-6" />
                                 </div>
                                 <div className="flex-1">
                                     <p className="font-bold">{group.label}</p>
-                                    <p className="text-xs text-neutral-500">{group.desc}</p>
+                                    <p className="text-xs text-muted-foreground">{group.desc}</p>
                                 </div>
                                 {recipientGroup === group.id && <Check className="w-6 h-6 text-blue-600" />}
                             </button>
@@ -267,14 +267,14 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                                     onChange={e => setManualEmails(e.target.value)}
                                     className="min-h-[100px]"
                                 />
-                                <p className="text-[10px] text-neutral-400 italic">Odbiorcy zostaną dodani do bazy jeśli jeszcze w niej nie istnieją.</p>
+                                <p className="text-[10px] text-muted-foreground italic">Odbiorcy zostaną dodani do bazy jeśli jeszcze w niej nie istnieją.</p>
                             </CardContent>
                         </Card>
                     )}
 
                     <div className="flex justify-between pt-6 border-t">
                         <Button variant="outline" onClick={() => setStep(1)}>Wróć</Button>
-                        <Button onClick={() => setStep(3)} className="bg-neutral-900 text-white rounded-xl px-10">
+                        <Button onClick={() => setStep(3)}>
                             Dalej: Test i wysyłka
                         </Button>
                     </div>
@@ -284,8 +284,8 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
             {step === 3 && (
                 <div className="max-w-2xl mx-auto space-y-6">
                     <div className="text-center space-y-2">
-                        <h2 className="text-3xl font-black uppercase tracking-tight">Krok 3: Podsumowanie</h2>
-                        <p className="text-neutral-500">Sprawdź wszystko przed wysyłką.</p>
+                        <h2 className="text-3xl font-bold tracking-tight">Krok 3: Podsumowanie</h2>
+                        <p className="text-muted-foreground">Sprawdź wszystko przed wysyłką.</p>
                     </div>
 
                     <Card className="border-amber-200 bg-amber-50">
@@ -308,47 +308,49 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                         </CardContent>
                     </Card>
 
-                    <div className="bg-white border rounded-2xl p-6 space-y-4 shadow-sm">
+                    <Card>
+                        <CardContent className="p-6 space-y-4">
                         <div className="flex justify-between border-b pb-2 gap-4">
-                            <span className="text-xs font-bold uppercase text-neutral-400 tracking-widest">Odbiorcy</span>
+                            <span className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Odbiorcy</span>
                             <span className="text-sm font-black text-right">{selectedRecipientGroup.label}</span>
                         </div>
                         {recipientGroup === 'MANUAL' && (
                             <div className="flex justify-between border-b pb-2 gap-4">
-                                <span className="text-xs font-bold uppercase text-neutral-400 tracking-widest">Liczba ręcznych adresów</span>
+                                <span className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Liczba ręcznych adresów</span>
                                 <span className="text-sm font-black text-right">{manualRecipientCount}</span>
                             </div>
                         )}
                         <div className="flex justify-between border-b pb-2 gap-4">
-                            <span className="text-xs font-bold uppercase text-neutral-400 tracking-widest">Temat PL</span>
+                            <span className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Temat PL</span>
                             <span className="text-sm font-medium text-right">{subjectPl}</span>
                         </div>
                         <div className="flex justify-between border-b pb-2 gap-4">
-                            <span className="text-xs font-bold uppercase text-neutral-400 tracking-widest">Temat EN</span>
+                            <span className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Temat EN</span>
                             <span className="text-sm font-medium text-right">{subjectEn || '(Brak)'}</span>
                         </div>
                         <div className="space-y-2">
-                            <span className="text-xs font-bold uppercase text-neutral-400 tracking-widest">Podgląd HTML PL</span>
-                            <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-4 max-h-[320px] overflow-y-auto prose prose-sm prose-neutral">
+                            <span className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Podgląd HTML PL</span>
+                            <div className="bg-muted/50 border rounded-xl p-4 max-h-[320px] overflow-y-auto prose prose-sm">
                                 <div dangerouslySetInnerHTML={{ __html: sanitizedHtmlPl }} />
                             </div>
                         </div>
                         {htmlEn && (
                             <div className="space-y-2">
-                                <span className="text-xs font-bold uppercase text-neutral-400 tracking-widest">Podgląd HTML EN</span>
-                                <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-4 max-h-[320px] overflow-y-auto prose prose-sm prose-neutral">
+                                <span className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Podgląd HTML EN</span>
+                                <div className="bg-muted/50 border rounded-xl p-4 max-h-[320px] overflow-y-auto prose prose-sm">
                                     <div dangerouslySetInnerHTML={{ __html: sanitizedHtmlEn }} />
                                 </div>
                             </div>
                         )}
-                    </div>
+                        </CardContent>
+                    </Card>
 
                     <div className="flex justify-between pt-6 border-t">
                         <Button variant="outline" onClick={() => setStep(2)}>Wróć</Button>
                         <Button
+                            size="lg"
                             onClick={() => setIsSendDialogOpen(true)}
                             disabled={isSending}
-                            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-14 h-14 font-black uppercase tracking-widest shadow-xl transition-all active:scale-95"
                         >
                             {isSending ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Send className="w-5 h-5 mr-2" />}
                             {isSending ? "Wysyłanie..." : "Wyślij Broadcast"}
@@ -370,7 +372,7 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                     <DialogClose render={<Button variant="outline" />}>
                         Anuluj
                     </DialogClose>
-                    <Button variant="destructive" onClick={handleFinalSend} disabled={isSending}>
+                    <Button onClick={handleFinalSend} disabled={isSending}>
                         {isSending ? "Wysyłanie…" : "Wyślij broadcast"}
                     </Button>
                 </DialogFooter>

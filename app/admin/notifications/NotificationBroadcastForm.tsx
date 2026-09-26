@@ -2,8 +2,10 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/app/hooks/useToast";
 import { Loader2, Send } from "@/app/components/icons";
@@ -49,53 +51,49 @@ export function NotificationBroadcastForm() {
   };
 
   return (
-    <div className="space-y-6 bg-white p-6 rounded-xl border border-neutral-200 shadow-sm">
-      <div>
-        <h2 className="text-xl font-bold">Wyślij powiadomienie</h2>
-        <p className="text-sm text-gray-600 mt-1">
+    <Card>
+      <CardHeader>
+        <CardTitle>Wyślij powiadomienie</CardTitle>
+        <CardDescription>
           Niestandardowe powiadomienie w aplikacji dla wybranej grupy użytkowników.
-        </p>
-      </div>
-
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
       <div className="flex gap-2">
         {(["ALL", "PATRONS"] as const).map((a) => (
-          <button
+          <Button
             key={a}
             type="button"
+            size="sm"
+            variant={audience === a ? "default" : "outline"}
             onClick={() => setAudience(a)}
-            className={
-              "rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors border " +
-              (audience === a
-                ? "bg-black text-white border-black"
-                : "bg-white text-neutral-600 border-neutral-300 hover:border-neutral-900")
-            }
           >
             {a === "ALL" ? "Wszyscy zalogowani" : "Tylko Patroni"}
-          </button>
+          </Button>
         ))}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-3">
-          <h3 className="font-black uppercase tracking-tight text-sm border-b pb-2">Wersja Polska (PL)</h3>
+          <h3 className="font-bold tracking-tight text-sm border-b pb-2">Wersja Polska (PL)</h3>
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-neutral-500">Tytuł</label>
+            <Label className="text-xs font-bold uppercase text-muted-foreground">Tytuł</Label>
             <Input value={titlePl} onChange={(e) => setTitlePl(e.target.value)} placeholder="Np. Nowy film!" />
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-neutral-500">Treść</label>
+            <Label className="text-xs font-bold uppercase text-muted-foreground">Treść</Label>
             <Textarea value={bodyPl} onChange={(e) => setBodyPl(e.target.value)} className="min-h-[120px]" />
           </div>
         </div>
 
         <div className="space-y-3">
-          <h3 className="font-black uppercase tracking-tight text-sm border-b pb-2 text-blue-600">English (EN)</h3>
+          <h3 className="font-bold tracking-tight text-sm border-b pb-2 text-blue-600">English (EN)</h3>
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-neutral-500">Title</label>
+            <Label className="text-xs font-bold uppercase text-muted-foreground">Title</Label>
             <Input value={titleEn} onChange={(e) => setTitleEn(e.target.value)} placeholder="e.g. New video!" />
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase text-neutral-500">Body</label>
+            <Label className="text-xs font-bold uppercase text-muted-foreground">Body</Label>
             <Textarea value={bodyEn} onChange={(e) => setBodyEn(e.target.value)} className="min-h-[120px]" />
           </div>
         </div>
@@ -111,12 +109,12 @@ export function NotificationBroadcastForm() {
             setIsSendDialogOpen(true);
           }}
           disabled={isSending}
-          className="bg-black hover:bg-neutral-800 text-white px-8 rounded-full font-bold uppercase tracking-wide"
         >
           {isSending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Send className="w-4 h-4 mr-2" />}
           {isSending ? "Wysyłanie…" : "Wyślij powiadomienie"}
         </Button>
       </div>
+      </CardContent>
 
       <Dialog open={isSendDialogOpen} onOpenChange={setIsSendDialogOpen}>
         <DialogContent>
@@ -128,12 +126,12 @@ export function NotificationBroadcastForm() {
           </DialogHeader>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>Anuluj</DialogClose>
-            <Button variant="destructive" onClick={handleSend} disabled={isSending}>
+            <Button onClick={handleSend} disabled={isSending}>
               {isSending ? "Wysyłanie…" : "Wyślij"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </Card>
   );
 }

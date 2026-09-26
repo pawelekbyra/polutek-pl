@@ -1,6 +1,6 @@
 # ADMIN-EMAILS-VISUAL-DRIFT-001 — `/admin/emails` i `/admin/notifications` odjechały od reszty panelu admina
 
-Status: READY_FOR_BUILDER
+Status: DONE (2026-09-26) — zobacz CLAUDE.md §5.1 dla szczegółów implementacji.
 Priority: LOW (kosmetyka/spójność, nie bug)
 
 ## Why
