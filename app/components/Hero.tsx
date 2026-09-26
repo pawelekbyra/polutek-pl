@@ -204,7 +204,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             posterUrl={video.thumbnailUrl}
             revealKey="player"
           >
-            <VideoPlayer video={video} onViewCounted={() => setLocalViewsCount((views) => views + 1)} />
+            <VideoPlayer video={video} revealKey="player" onViewCounted={() => setLocalViewsCount((views) => views + 1)} />
           </PremiumWrapper>
         </div>
 

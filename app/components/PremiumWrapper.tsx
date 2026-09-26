@@ -255,7 +255,17 @@ export default function PremiumWrapper({
   const showsComingSoon =
     TEMP_PATRON_COMING_SOON && showPatronComingSoon && effectiveTier === "PATRON";
   const showsGuestLock = isLoaded && !userId && !isPublic;
-  usePageRevealReady(revealKey, showsComingSoon || showsGuestLock || !safeIsLoading);
+  // Mirrors the branch below that mounts the player. When it does, the player itself
+  // reports readiness (first frames buffered); every other settled state is final here.
+  const rendersPlayer =
+    safeHasAccess &&
+    !safeFetchError &&
+    resolvedViewerKey === viewerKey &&
+    isPlayablePlaybackPlan(playbackPlan, videoId);
+  usePageRevealReady(
+    revealKey,
+    showsComingSoon || showsGuestLock || (!safeIsLoading && !rendersPlayer),
+  );
 
   // TEMPORARY (2026-09-22): "coming soon" placeholder for the whole PATRON
   // tier — see lib/temp-patron-coming-soon.ts. Purely a display gate, checked
