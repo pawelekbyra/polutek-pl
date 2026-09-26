@@ -57,6 +57,25 @@ describe('POST /api/admin/videos/cover-upload', () => {
     expect(put).not.toHaveBeenCalled();
   });
 
+  it('falls back to Vercel Blob when the R2 write fails (e.g. token lacks bucket access)', async () => {
+    r2Configured.value = true;
+    vi.mocked(requireAdminForApi).mockResolvedValue({ adminUserId: 'admin-1', response: null as any });
+    vi.mocked(getBlobAccess).mockReturnValue('private');
+    r2PutPrivate.mockRejectedValue(Object.assign(new Error('Access Denied'), { name: 'AccessDenied' }));
+    vi.mocked(put).mockResolvedValue({ url: 'https://store.private.blob.vercel-storage.com/c.jpg' } as any);
+
+    const formData = new FormData();
+    formData.append('file', new File(['dummy'], 'cover.jpg', { type: 'image/jpeg' }));
+    formData.append('videoId', 'v1');
+
+    const res = await POST(new NextRequest('http://localhost/api/admin/videos/cover-upload', { method: 'POST', body: formData }));
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.storageUrl).toBe('https://store.private.blob.vercel-storage.com/c.jpg');
+    expect(put).toHaveBeenCalledWith(expect.stringContaining('videos/v1/covers/'), expect.any(File), { access: 'private' });
+  });
+
   it('never returns a browser URL for an R2 cover of a not-yet-saved video', async () => {
     r2Configured.value = true;
     vi.mocked(requireAdminForApi).mockResolvedValue({ adminUserId: 'admin-1', response: null as any });

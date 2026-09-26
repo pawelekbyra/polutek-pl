@@ -72,19 +72,26 @@ export async function POST(req: NextRequest) {
 
     const existing = await prisma.appSetting.findUnique({ where: { key: SETTING_KEY } });
 
-    let storageUrl: string;
+    let storageUrl: string | null = null;
     if (R2ThumbnailStorageClient.isConfigured()) {
-      ({ storageUrl } = await new R2ThumbnailStorageClient().putPrivate({
-        scope: "settings/default-video-thumbnail",
-        bytes: new Uint8Array(await file.arrayBuffer()),
-        contentType: file.type,
-        extension: THUMBNAIL_EXTENSION_BY_MIME[file.type] ?? "jpg",
-      }));
+      try {
+        ({ storageUrl } = await new R2ThumbnailStorageClient().putPrivate({
+          scope: "settings/default-video-thumbnail",
+          bytes: new Uint8Array(await file.arrayBuffer()),
+          contentType: file.type,
+          extension: THUMBNAIL_EXTENSION_BY_MIME[file.type] ?? "jpg",
+        }));
+      } catch (r2Error) {
+        // Fall back to Blob (e.g. the R2 token doesn't cover the bucket) rather than fail the upload.
+        console.error("[DEFAULT_VIDEO_THUMBNAIL_R2_FAILED_FALLING_BACK_TO_BLOB]", r2Error);
+      }
       // Content-hashed key: re-uploading the same file yields the same object.
-      if (existing && existing.value !== storageUrl) {
+      if (storageUrl && existing && existing.value !== storageUrl) {
         await deleteStoredThumbnail(existing.value);
       }
-    } else {
+    }
+
+    if (!storageUrl) {
       const ext = file.type.split("/")[1] || "jpg";
       const pathname = `settings/default-video-thumbnail.${ext}`;
       if (existing) {
