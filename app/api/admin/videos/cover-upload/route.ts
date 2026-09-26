@@ -43,23 +43,28 @@ export async function POST(req: NextRequest) {
 
     const videoPath = videoId ? videoId : "new";
 
-    // R2 (private bucket) once configured; Vercel Blob remains the fallback so
-    // uploads keep working before the R2 env vars are set.
+    // R2 (private bucket) once configured. Vercel Blob remains the fallback,
+    // both before the R2 env vars are set and when the R2 write fails (e.g. the
+    // API token doesn't cover the thumbnail bucket), so uploads never break.
     if (R2ThumbnailStorageClient.isConfigured()) {
-      const { key, storageUrl } = await new R2ThumbnailStorageClient().putPrivate({
-        scope: `videos/${videoPath}/covers`,
-        bytes: new Uint8Array(await file.arrayBuffer()),
-        contentType: file.type,
-        extension: THUMBNAIL_EXTENSION_BY_MIME[file.type] ?? "webp",
-      });
+      try {
+        const { key, storageUrl } = await new R2ThumbnailStorageClient().putPrivate({
+          scope: `videos/${videoPath}/covers`,
+          bytes: new Uint8Array(await file.arrayBuffer()),
+          contentType: file.type,
+          extension: THUMBNAIL_EXTENSION_BY_MIME[file.type] ?? "webp",
+        });
 
-      scopedLogger.info("[ADMIN_VIDEO_COVER_UPLOAD_SUCCESS]", { key, storage: "r2" });
+        scopedLogger.info("[ADMIN_VIDEO_COVER_UPLOAD_SUCCESS]", { key, storage: "r2" });
 
-      // The private object is only viewable through the admin-aware proxy.
-      return NextResponse.json({
-        url: videoId ? `/api/videos/${videoId}/thumbnail` : null,
-        storageUrl,
-      });
+        // The private object is only viewable through the admin-aware proxy.
+        return NextResponse.json({
+          url: videoId ? `/api/videos/${videoId}/thumbnail` : null,
+          storageUrl,
+        });
+      } catch (r2Error: unknown) {
+        scopedLogger.error("[ADMIN_VIDEO_COVER_UPLOAD_R2_FAILED_FALLING_BACK_TO_BLOB]", r2Error);
+      }
     }
 
     const access = getBlobAccess();
