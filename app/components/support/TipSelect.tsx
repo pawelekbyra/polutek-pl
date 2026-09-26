@@ -177,7 +177,7 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
             role="listbox"
             aria-labelledby={labelId}
             style={position.style}
-            className="z-50 m-0 list-none overflow-y-auto rounded-[16px] border-2 border-[var(--chan-amber)] bg-white p-1.5 shadow-[0_18px_40px_-16px_rgba(23,23,23,0.35)] animate-in fade-in zoom-in-95 duration-150 motion-reduce:animate-none"
+            className="tip-select-scroll z-50 m-0 list-none overflow-y-auto overscroll-contain rounded-[16px] border-2 border-[var(--chan-amber)] bg-white p-1.5 shadow-[0_18px_40px_-16px_rgba(23,23,23,0.35)] animate-in fade-in zoom-in-95 duration-150 motion-reduce:animate-none"
           >
             {options.map((option, index) => {
               const isSelected = option.value === value;

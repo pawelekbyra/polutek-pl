@@ -687,6 +687,31 @@
   }
 }
 
+/* Tip gate: a slim warm scrollbar in its dropdown lists and step bodies instead of the
+   system one. `scrollbar-color` covers Firefox and current Chrome/Edge; the ::-webkit
+   rules cover Safari. */
+@layer components {
+  .tip-select-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--cm-amber-38) transparent;
+  }
+  .tip-select-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .tip-select-scroll::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 10px 0;
+  }
+  .tip-select-scroll::-webkit-scrollbar-thumb {
+    background: var(--cm-amber-38);
+    border: 0;
+    border-radius: 999px;
+  }
+  .tip-select-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--chan-amber);
+  }
+}
+
 @layer components {
   .polutek-watch-nav {
     background:
