@@ -77,7 +77,8 @@ export async function getPaymentCurrencyLimits(): Promise<Record<SupportedCurren
  *
  * This is intentionally separate from `getPaymentCurrencyLimits()`, which controls the
  * *checkout minimum* (the smallest tip a user may send). The patron threshold is the amount
- * at or above which a successful tip grants lifetime patron access. When
+ * at or above which a successful tip records a PatronGrant (supporter bookkeeping/badge only;
+ * it no longer gates any content — CLAUDE.md §4.1). When
  * `PATRON_MIN_TIP_AMOUNT` / `PATRON_MIN_TIP_CURRENCY` are configured and match the payment
  * currency, they raise the threshold above the checkout minimum without blocking smaller tips.
  * For any other currency (or when the env is unset), the threshold falls back to the checkout

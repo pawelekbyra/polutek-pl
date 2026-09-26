@@ -356,7 +356,7 @@ function PlaybackPlanStateOverlay({
     ];
   const isThumbnail = variant === "thumbnail" || variant === "thumbnailCompact";
 
-  if (safeState === "LOGIN_REQUIRED" || safeState === "PATRON_REQUIRED") {
+  if (safeState === "LOGIN_REQUIRED") {
     return <AccessLockOverlay state={safeState} variant={variant} />;
   }
 

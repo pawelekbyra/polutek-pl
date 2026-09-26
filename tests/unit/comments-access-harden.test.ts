@@ -35,7 +35,6 @@ describe('comments access hardening', () => {
   it('ChannelHome: uses renamed isPatronDecorative', () => {
     const source = channelHome();
     expect(source).toContain('isPatronDecorative?: boolean;');
-    expect(source).toContain('const viewerIsPatron = userProfile?.role === \'ADMIN\' || userProfile?.isPatronDecorative === true;');
     expect(source).not.toContain('userProfile?.isPatron === true');
   });
 

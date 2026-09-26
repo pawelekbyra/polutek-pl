@@ -77,7 +77,7 @@ describe('PlaybackService Safety', () => {
     vi.clearAllMocks();
   });
 
-  it('should not return source, session, or provider data if access is denied (PATRON_REQUIRED)', async () => {
+  it('should not return source, session, or provider data if access is denied (LOGIN_REQUIRED)', async () => {
     vi.mocked(prisma.video.findUnique).mockResolvedValue({
       ...baseVideo,
       asset: cloudflareAsset,
@@ -85,12 +85,12 @@ describe('PlaybackService Safety', () => {
 
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
-      data: { hasAccess: false, reason: 'PATRON_REQUIRED', requiredTier: 'PATRON' } as any,
+      data: { hasAccess: false, reason: 'LOGIN_REQUIRED', requiredTier: 'PATRON' } as any,
     });
 
     const plan = await PlaybackService.createPlaybackPlanWithContext('v1', ctx);
 
-    expect(plan.status).toBe('PATRON_REQUIRED');
+    expect(plan.status).toBe('LOGIN_REQUIRED');
     expect(plan.access.allowed).toBe(false);
     expect(plan.source).toBeUndefined();
     expect(plan.tracking.playbackSessionId).toBe('');
@@ -98,32 +98,7 @@ describe('PlaybackService Safety', () => {
     expect(plan.diagnostics.providerResolutionAttempted).toBe(false);
     expect(StorageService.getPresignedUrl).not.toHaveBeenCalled();
     expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
-    expect(plan.diagnostics.warnings).toContain('PATRON_REQUIRED');
-  });
-
-  it('should not return source, session, or provider data for logged-in non-patron denied on patron-only video', async () => {
-    const userCtx = createAppContext({
-      actor: { type: 'user', userId: 'u1' },
-    });
-
-    vi.mocked(prisma.video.findUnique).mockResolvedValue({
-      ...baseVideo,
-      asset: cloudflareAsset,
-    } as any);
-
-    vi.mocked(checkVideoAccess).mockResolvedValue({
-      ok: true,
-      data: { hasAccess: false, reason: 'PATRON_REQUIRED', requiredTier: 'PATRON' } as any,
-    });
-
-    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', userCtx);
-
-    expect(plan.status).toBe('PATRON_REQUIRED');
-    expect(plan.access.allowed).toBe(false);
-    expect(plan.source).toBeUndefined();
-    expect(plan.tracking.playbackSessionId).toBe('');
-    expect(StorageService.getPresignedUrl).not.toHaveBeenCalled();
-    expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
+    expect(plan.diagnostics.warnings).toContain('LOGIN_REQUIRED');
   });
 
   it('should not return source, session, or provider data if access is denied (LOGIN_REQUIRED)', async () => {
@@ -587,17 +562,9 @@ describe('PlaybackService private playback leakage regression coverage', () => {
       name: 'guest denied on PATRON Cloudflare video',
       ctx: guestCtx,
       tier: 'PATRON',
-      decision: { hasAccess: false, reason: 'PATRON_REQUIRED', requiredTier: 'PATRON' },
-      expectedStatus: 'PATRON_REQUIRED',
+      decision: { hasAccess: false, reason: 'LOGIN_REQUIRED', requiredTier: 'PATRON' },
+      expectedStatus: 'LOGIN_REQUIRED',
       videoUrl: 'https://kraufanding-media.s3.amazonaws.com/patron-legacy-secret.mp4?token=legacy-guest',
-    },
-    {
-      name: 'logged-in non-patron denied on PATRON Cloudflare video',
-      ctx: loggedInCtx,
-      tier: 'PATRON',
-      decision: { hasAccess: false, reason: 'PATRON_REQUIRED', requiredTier: 'PATRON' },
-      expectedStatus: 'PATRON_REQUIRED',
-      videoUrl: 'https://kraufanding-media.s3.amazonaws.com/patron-user-legacy-secret.mp4?token=legacy-user',
     },
   ])('$name never receives private playback fields, tokens, provider IDs, or fallback sources', async ({ ctx, tier, decision, expectedStatus, videoUrl }) => {
     vi.mocked(prisma.video.findUnique).mockResolvedValue({
@@ -714,7 +681,7 @@ describe('PlaybackService private playback leakage regression coverage', () => {
     expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
   });
 
-  it('fails closed for legacy private fallback and does not bypass the patron paywall or sign storage URLs', async () => {
+  it('fails closed for legacy private fallback and does not bypass the sign-in gate or sign storage URLs', async () => {
     vi.mocked(prisma.video.findUnique).mockResolvedValue({
       ...baseVideo,
       tier: 'PATRON',
@@ -722,11 +689,11 @@ describe('PlaybackService private playback leakage regression coverage', () => {
       assets: [],
       asset: undefined,
     } as any);
-    vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'PATRON_REQUIRED', requiredTier: 'PATRON' } as any });
+    vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'LOGIN_REQUIRED', requiredTier: 'PATRON' } as any });
 
-    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', loggedInCtx);
+    const plan = await PlaybackService.createPlaybackPlanWithContext('v1', guestCtx);
 
-    expect(plan.status).toBe('PATRON_REQUIRED');
+    expect(plan.status).toBe('LOGIN_REQUIRED');
     assertDeniedPlanHasNoPrivatePlaybackLeak(plan, [
       'private-fallback.mp4',
       'signature=legacy-secret',

@@ -13,11 +13,11 @@ describe("AccessLockOverlay CTA and accessibility verification", () => {
     expect(source).toContain("Zaloguj się");
   });
 
-  it("has visible support button in PATRON_REQUIRED state", () => {
+  it("never offers a pay-to-unlock CTA (support grants nothing, CLAUDE.md §4.4)", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
-    expect(source).toContain('href="#donations"');
-    expect(source).toContain("scrollIntoView");
-    expect(source).toContain("Odblokuj dostęp");
+    expect(source).not.toContain('href="#donations"');
+    expect(source).not.toContain("Odblokuj dostęp");
+    expect(source).not.toContain("PATRON_REQUIRED");
   });
 
   it("uses the shared action and patron tokens", () => {

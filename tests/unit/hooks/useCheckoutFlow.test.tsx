@@ -79,7 +79,7 @@ describe('useCheckoutFlow', () => {
     vi.clearAllMocks();
   });
 
-  it('fetches /api/payment-settings once and populates minimums/thresholds', async () => {
+  it('fetches /api/payment-settings once and populates the minimums', async () => {
     const { result } = renderCheckoutFlow();
 
     expect(result.current.isInitialLoading).toBe(true);
@@ -88,7 +88,6 @@ describe('useCheckoutFlow', () => {
       expect(result.current.isInitialLoading).toBe(false);
     });
 
-    expect(result.current.patronThresholds.PLN).toBe(20);
     expect(result.current.patronBoxMinimums.PLN).toBe(5);
     expect(global.fetch).toHaveBeenCalledWith('/api/payment-settings', { cache: 'no-store' });
   });
@@ -137,41 +136,12 @@ describe('useCheckoutFlow', () => {
     expect(result.current.showTermsError).toBe(false);
   });
 
-  it('sets showWithdrawalError instead of calling create-intent when terms are accepted but withdrawal consent is not', async () => {
+  it('proceeds with only the Terms/Privacy checkbox — support is a gift, no withdrawal waiver', async () => {
     const { result } = renderCheckoutFlow();
     await waitFor(() => expect(result.current.isInitialLoading).toBe(false));
 
-    act(() => {
-      result.current.onTermsCheckedChange(true);
-    });
-    expect(result.current.isWithdrawalAcknowledged).toBe(false);
-
-    await act(async () => {
-      await result.current.submit(50, 'PLN', 20);
-    });
-
-    expect(result.current.showWithdrawalError).toBe(true);
-    expect(global.fetch).not.toHaveBeenCalledWith('/api/checkout/create-intent', expect.anything());
-  });
-
-  it('onWithdrawalCheckedChange accepts the withdrawal consent and clears a shown error', async () => {
-    const { result } = renderCheckoutFlow();
-    await waitFor(() => expect(result.current.isInitialLoading).toBe(false));
-
-    act(() => {
-      result.current.onTermsCheckedChange(true);
-    });
-    await act(async () => {
-      await result.current.submit(50, 'PLN', 20);
-    });
-    expect(result.current.showWithdrawalError).toBe(true);
-
-    act(() => {
-      result.current.onWithdrawalCheckedChange(true);
-    });
-
-    expect(result.current.isWithdrawalAcknowledged).toBe(true);
-    expect(result.current.showWithdrawalError).toBe(false);
+    expect(result.current).not.toHaveProperty('onWithdrawalCheckedChange');
+    expect(result.current).not.toHaveProperty('isWithdrawalAcknowledged');
   });
 
   it('toasts the caller-provided min-amount message and skips create-intent when the amount is too low', async () => {
@@ -180,7 +150,6 @@ describe('useCheckoutFlow', () => {
 
     act(() => {
       result.current.onTermsCheckedChange(true);
-      result.current.onWithdrawalCheckedChange(true);
     });
 
     await act(async () => {
@@ -212,12 +181,11 @@ describe('useCheckoutFlow', () => {
     });
     global.fetch = fetchMock as unknown as typeof fetch;
 
-    const { result } = renderCheckoutFlow({ title: 'Napiwek / Patron' });
+    const { result } = renderCheckoutFlow({ title: 'Napiwek' });
     await waitFor(() => expect(result.current.isInitialLoading).toBe(false));
 
     act(() => {
       result.current.onTermsCheckedChange(true);
-      result.current.onWithdrawalCheckedChange(true);
     });
 
     await act(async () => {
@@ -235,7 +203,7 @@ describe('useCheckoutFlow', () => {
     expect(JSON.parse(init.body as string)).toEqual({
       amountMinor: 5000,
       currency: 'PLN',
-      title: 'Napiwek / Patron',
+      title: 'Napiwek',
       requestId: expect.any(String),
     });
 
@@ -270,7 +238,6 @@ describe('useCheckoutFlow', () => {
 
     act(() => {
       result.current.onTermsCheckedChange(true);
-      result.current.onWithdrawalCheckedChange(true);
     });
 
     await act(async () => {

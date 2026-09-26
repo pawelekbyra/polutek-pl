@@ -32,7 +32,6 @@ type Translations = { views: string };
 interface SidebarPlaylistProps {
   sortedVideos: PublicVideoDTO[];
   selectedVideoId?: string;
-  viewerIsPatron: boolean;
   t: Translations;
   language: string;
   mounted: boolean;
@@ -54,24 +53,17 @@ function useSupportItem(sortedVideos: PublicVideoDTO[], layoutItems?: SidebarLay
  * height-clamped desktop playlist box — it must live in normal document
  * flow below the video list, not compete with it for the fixed height.
  */
-export function SidebarSupportBox({
-  sortedVideos,
-  viewerIsPatron,
-}: {
-  sortedVideos: PublicVideoDTO[];
-  viewerIsPatron: boolean;
-}) {
+export function SidebarSupportBox({ sortedVideos }: { sortedVideos: PublicVideoDTO[] }) {
   const { isLoaded: authLoaded, isSignedIn } = useAuth();
   const supportItem = useSupportItem(sortedVideos);
   if (TEMP_SUPPORT_AS_MODAL || !authLoaded || !isSignedIn) return null;
   if (!supportItem?.creatorId) return null;
-  return <DonationBox videoTitle={supportItem?.title} viewerIsPatron={viewerIsPatron} />;
+  return <DonationBox videoTitle={supportItem?.title} />;
 }
 
 export function SidebarPlaylist({
   sortedVideos,
   selectedVideoId,
-  viewerIsPatron,
   t,
   language,
   mounted,
@@ -342,7 +334,7 @@ export function SidebarPlaylist({
   );
 
   const patronBox = !TEMP_SUPPORT_AS_MODAL && authLoaded && isSignedIn && supportItem?.creatorId
-    ? <DonationBox videoTitle={supportItem.title} viewerIsPatron={viewerIsPatron} />
+    ? <DonationBox videoTitle={supportItem.title} />
     : null;
 
   // TEMPORARY (2026-09-22): "coming soon" placeholder for the whole PATRON
@@ -409,12 +401,8 @@ export function SidebarPlaylist({
           renderVideoItem(
             {
               ...v,
-              isLocked:
-                v.tier === "PATRON"
-                  ? !(isSignedIn && viewerIsPatron)
-                  : v.tier === "LOGGED_IN"
-                    ? !isSignedIn
-                    : false,
+              // PATRON and LOGGED_IN only need sign-in (CLAUDE.md §4.4).
+              isLocked: v.tier !== "PUBLIC" && !isSignedIn,
             },
             false,
             false,

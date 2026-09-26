@@ -52,8 +52,8 @@ describe('Comments Core Use Cases', () => {
       if (!result.ok) expect(result.error.type).toBe('NOT_FOUND');
     });
 
-    it('allows public read when PATRON_REQUIRED while keeping guest interactions disabled', async () => {
-      (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'PATRON_REQUIRED' } });
+    it('allows public read when LOGIN_REQUIRED while keeping guest interactions disabled', async () => {
+      (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'LOGIN_REQUIRED' } });
       mockPrisma.video.findUnique.mockResolvedValue({ creator: { userId: 'admin' } });
       mockPrisma.comment.findMany.mockResolvedValue([]);
       mockPrisma.comment.count.mockResolvedValue(0);
@@ -71,13 +71,13 @@ describe('Comments Core Use Cases', () => {
 
   describe('createVideoComment', () => {
     it('denies non-patron on patron-only video (returns FORBIDDEN)', async () => {
-      (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'PATRON_REQUIRED' } });
+      (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'LOGIN_REQUIRED' } });
       mockPrisma.video.findUnique.mockResolvedValue({ id: videoId, creatorId: 'c1' });
       const result = await createVideoComment({ videoId, text: 'hello' }, createCtx({ type: 'user', userId }));
       expect(result.ok).toBe(false);
       if (!result.ok) {
           expect(result.error.type).toBe('FORBIDDEN');
-          expect(result.error.message).toContain('Patronów');
+          expect(result.error.message).toBe('Brak uprawnień do komentowania.');
       }
     });
 

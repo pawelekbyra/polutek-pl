@@ -159,7 +159,8 @@ export class LegacyEmailServiceProvider implements EmailProvider {
                 appName: APP_NAME,
                 appUrl,
                 unsubscribeLink,
-                preferencesLink: `${appUrl}/profile/settings`,
+                // There is no preferences page; the signed unsubscribe page is where email settings live.
+                preferencesLink: unsubscribeLink,
                 userLanguage: recipient.language
             };
 

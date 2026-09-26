@@ -221,7 +221,7 @@ describe('recordPlaybackEventUseCase', () => {
     const { ctx, createPlaybackEvent, createVideoView, updateVideo } = createDb();
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
-      data: { hasAccess: false, reason: 'PATRON_REQUIRED' as const }
+      data: { hasAccess: false, reason: 'LOGIN_REQUIRED' as const }
     });
 
     const result = await recordPlaybackEventUseCase({
@@ -238,7 +238,7 @@ describe('recordPlaybackEventUseCase', () => {
       expect(result.error).toBeInstanceOf(PlaybackAccessDeniedError);
       expect(result.error.statusCode).toBe(403);
       expect(result.error.code).toBe('ACCESS_DENIED');
-      expect(result.error.message).toBe('PATRON_REQUIRED');
+      expect(result.error.message).toBe('LOGIN_REQUIRED');
     }
     expect(createPlaybackEvent).not.toHaveBeenCalled();
     expect(ctx.db.writeTransaction).not.toHaveBeenCalled();
@@ -250,7 +250,7 @@ describe('recordPlaybackEventUseCase', () => {
     const { ctx, createPlaybackEvent } = createDb();
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
-      data: { hasAccess: false, reason: 'PATRON_REQUIRED' as const }
+      data: { hasAccess: false, reason: 'LOGIN_REQUIRED' as const }
     });
 
     const result = await recordPlaybackEventUseCase({
@@ -260,7 +260,7 @@ describe('recordPlaybackEventUseCase', () => {
       ipHash: 'ip1',
       uaHash: 'ua1',
       fingerprint: 'f1',
-      errorCode: 'PATRON_REQUIRED',
+      errorCode: 'LOGIN_REQUIRED',
       errorMessage: 'locked'
     }, ctx);
 
@@ -269,7 +269,7 @@ describe('recordPlaybackEventUseCase', () => {
     expect(createPlaybackEvent).toHaveBeenCalledWith({
       data: expect.objectContaining({
         type: 'ACCESS_ERROR',
-        errorCode: 'PATRON_REQUIRED',
+        errorCode: 'LOGIN_REQUIRED',
         errorMessage: 'locked'
       })
     });
@@ -280,7 +280,7 @@ describe('recordPlaybackEventUseCase', () => {
     const { ctx, createPlaybackEvent, createVideoView, updateVideo } = createDb();
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
-      data: { hasAccess: false, reason: 'PATRON_REQUIRED' as const }
+      data: { hasAccess: false, reason: 'LOGIN_REQUIRED' as const }
     });
 
     const result = await recordPlaybackEventUseCase({
@@ -297,7 +297,7 @@ describe('recordPlaybackEventUseCase', () => {
       expect(result.error).toBeInstanceOf(PlaybackAccessDeniedError);
       expect(result.error.statusCode).toBe(403);
       expect(result.error.code).toBe('ACCESS_DENIED');
-      expect(result.error.message).toBe('PATRON_REQUIRED');
+      expect(result.error.message).toBe('LOGIN_REQUIRED');
     }
     expect(createPlaybackEvent).not.toHaveBeenCalled();
     expect(ctx.db.writeTransaction).not.toHaveBeenCalled();

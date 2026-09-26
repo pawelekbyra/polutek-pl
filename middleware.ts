@@ -75,12 +75,6 @@ function isHealthTokenAuthorized(req: NextRequest): boolean {
   return Boolean(process.env.HEALTHCHECK_TOKEN) && token === process.env.HEALTHCHECK_TOKEN;
 }
 
-// TEMPORARY: /logo1 … /logo20 logo font bake-off pages are public and must not
-// be locale-rewritten. Remove alongside the experiment.
-function isLogoExperimentRoute(pathname: string): boolean {
-  return /^\/logo\d+\/?$/.test(pathname);
-}
-
 // Exact top-level paths that must never get a /pl or /en prefix.
 // - /manifest.json, /robots.txt, /sitemap.xml: static root files served from
 //   /public. The matcher's static-extension exclusion skips most file types
@@ -96,9 +90,6 @@ const LOCALE_EXEMPT_PATHS = new Set(['/manifest.json', '/robots.txt', '/sitemap.
 
 function shouldRewriteForPolish(pathname: string): boolean {
   if (LOCALE_EXEMPT_PATHS.has(pathname)) return false;
-
-  // TEMPORARY logo bake-off routes are top-level and must not be prefixed.
-  if (isLogoExperimentRoute(pathname)) return false;
 
   // Check if pathname is already localized or is a route that should not be locale-prefixed.
   const startsWithLocaleOrSystemRoute = /^\/(?:pl|en|admin|api|\.)(?:\/|$)/.test(pathname);
@@ -142,7 +133,7 @@ export default clerkMiddleware(async (auth, req) => {
     if (!isClerkHealthBreakGlass) {
       await auth.protect();
     }
-  } else if (!isPublicRoute(req) && !isLogoExperimentRoute(req.nextUrl.pathname)) {
+  } else if (!isPublicRoute(req)) {
     await auth.protect();
   }
 

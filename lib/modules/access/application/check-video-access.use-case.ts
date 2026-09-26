@@ -92,9 +92,8 @@ export async function checkVideoAccess(
   if (video.tier === AccessTier.PUBLIC) return ok({ hasAccess: true });
 
   if (actor.type === 'guest') {
-    // 2026-09-22: support no longer gates access (see CLAUDE.md) — signing in is the only
-    // barrier for PATRON-tier videos too, so guests always see LOGIN_REQUIRED, never
-    // PATRON_REQUIRED.
+    // Support no longer gates access (CLAUDE.md §4.4): signing in is the only barrier for
+    // PATRON-tier videos too.
     return ok({
         hasAccess: false,
         reason: "LOGIN_REQUIRED",

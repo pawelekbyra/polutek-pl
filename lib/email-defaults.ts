@@ -81,12 +81,9 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
 
   <div style="${INFO_BOX_STYLE}">
     <strong>Co masz teraz dostępne:</strong><br/>
-    ✓ Oglądanie wszystkich publicznych materiałów<br/>
-    ✓ Komentowanie i reagowanie na filmy<br/>
-    ✓ Dostęp do materiałów dla zalogowanych
+    ✓ Wszystkie filmy — bez opłat<br/>
+    ✓ Komentowanie i reagowanie na filmy
   </div>
-
-  <p>Jeśli chcesz zobaczyć <strong>Strefę Patrona</strong> — ekskluzywne materiały dostępne tylko dla wspierających — wystarczy wesprzeć projekt jednorazowym napiwkiem.</p>
 
   <a href="{{appUrl}}" style="${BUTTON_STYLE}">Przejdź do {{appName}} →</a>
 
@@ -104,12 +101,9 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
 
   <div style="${INFO_BOX_STYLE}">
     <strong>What you have access to now:</strong><br/>
-    ✓ All public videos<br/>
-    ✓ Commenting and reacting to videos<br/>
-    ✓ Logged-in member content
+    ✓ Every video — free of charge<br/>
+    ✓ Commenting and reacting to videos
   </div>
-
-  <p>If you'd like access to the <strong>Patron Zone</strong> — exclusive content available only to supporters — just leave a one-time tip to support the project.</p>
 
   <a href="{{appUrl}}" style="${BUTTON_STYLE}">Go to {{appName}} →</a>
 
@@ -123,8 +117,8 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
   },
 
   'become-patron': {
-    subject: 'Jesteś teraz Patronem {{appName}}! 🎉',
-    subjectEn: 'You are now a Patron of {{appName}}! 🎉',
+    subject: 'Dziękuję za wsparcie, {{firstName}}! 🎉',
+    subjectEn: 'Thank you for your support, {{firstName}}! 🎉',
     html: `<div style="${BASE_STYLE}">
   <h1 style="${HEADER_STYLE}">Dziękuję, {{firstName}}!</h1>
 
@@ -135,18 +129,9 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
     <span style="font-size: 13px; opacity: 0.7;">Otrzymano i zaksięgowano</span>
   </div>
 
-  <p>W uznaniu Twojego wsparcia, masz teraz stały dostęp do <strong>Strefy Patrona</strong> — ekskluzywnych materiałów dostępnych tylko dla wspierających.</p>
+  <p style="font-size: 14px; color: #555;">Wsparcie jest dobrowolnym napiwkiem i niczego nie odblokowuje — wszystkie filmy są dostępne dla każdego zalogowanego. Po prostu dziękuję.</p>
 
-  <div style="${INFO_BOX_STYLE}">
-    <strong>Twój status Patrona:</strong><br/>
-    ✓ Aktywny — dostęp do całego katalogu<br/>
-    ✓ Dostęp do materiałów PATRON<br/>
-    ✓ Dożywotni — jednorazowe wsparcie, stały dostęp
-  </div>
-
-  <a href="{{appUrl}}" style="${BUTTON_STYLE}">Przejdź do Strefy Patrona →</a>
-
-  <p style="font-size: 14px; color: #555;">Jeśli masz pytania dotyczące swojego statusu, odpowiedz na tego maila.</p>
+  <a href="{{appUrl}}" style="${BUTTON_STYLE}">Wróć do {{appName}} →</a>
 
   <p style="${FOOTER_STYLE}">
     Ten email dotyczył transakcji na koncie {{email}} w {{appName}}.<br/>
@@ -163,18 +148,9 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
     <span style="font-size: 13px; opacity: 0.7;">Received and recorded</span>
   </div>
 
-  <p>In recognition of your support, you now have permanent access to the <strong>Patron Zone</strong> — exclusive content available only to supporters.</p>
+  <p style="font-size: 14px; color: #555;">Your support is a voluntary tip and unlocks nothing — every video is available to anyone who signs in. Simply: thank you.</p>
 
-  <div style="${INFO_BOX_STYLE}">
-    <strong>Your Patron status:</strong><br/>
-    ✓ Active — full catalogue access<br/>
-    ✓ Access to PATRON tier content<br/>
-    ✓ Lifetime — one-time support, permanent access
-  </div>
-
-  <a href="{{appUrl}}" style="${BUTTON_STYLE}">Go to the Patron Zone →</a>
-
-  <p style="font-size: 14px; color: #555;">If you have questions about your patron status, reply to this email.</p>
+  <a href="{{appUrl}}" style="${BUTTON_STYLE}">Back to {{appName}} →</a>
 
   <p style="${FOOTER_STYLE}">
     This email relates to a transaction on account {{email}} at {{appName}}.<br/>
@@ -196,8 +172,6 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
     <span style="font-size: 13px; opacity: 0.7;">Otrzymano i zaksięgowano</span>
   </div>
 
-  <p style="font-size: 14px; color: #555;">Twoje wsparcie nie kwalifikowało do statusu Patrona (wymagany jest próg minimalny), ale jest dla mnie równie ważne. Dzięki!</p>
-
   <a href="{{appUrl}}" style="${BUTTON_STYLE}">Wróć do {{appName}} →</a>
 
   <p style="${FOOTER_STYLE}">
@@ -214,8 +188,6 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
     <strong style="font-size: 18px;">Tip: {{amount}} {{currency}}</strong><br/>
     <span style="font-size: 13px; opacity: 0.7;">Received and recorded</span>
   </div>
-
-  <p style="font-size: 14px; color: #555;">Your support didn't qualify for Patron status (a minimum threshold is required), but it means just as much to me. Thank you!</p>
 
   <a href="{{appUrl}}" style="${BUTTON_STYLE}">Back to {{appName}} →</a>
 

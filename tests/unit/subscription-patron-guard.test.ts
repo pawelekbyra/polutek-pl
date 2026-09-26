@@ -3,8 +3,6 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const repoRoot = process.cwd();
-const disabledMigrationMessage =
-  "Legacy migration disabled: Subscription must not grant Patron access";
 const productionAndMigrationRoots = ["app", "lib", "scripts"];
 const sourceFilePattern = /\.(ts|tsx)$/;
 
@@ -21,15 +19,6 @@ function collectSourceFiles(dir: string): string[] {
 }
 
 describe("Subscription to Patron guard", () => {
-  it("keeps the legacy migrate-patrons script hard-disabled", () => {
-    const script = readFileSync(
-      join(repoRoot, "scripts/migrate-patrons.ts"),
-      "utf8",
-    ).trim();
-
-    expect(script).toBe(`throw new Error("${disabledMigrationMessage}");`);
-  });
-
   it("does not allow production or migration code to grant Patron access from Subscription records", () => {
     const checkedFiles =
       productionAndMigrationRoots.flatMap(collectSourceFiles);

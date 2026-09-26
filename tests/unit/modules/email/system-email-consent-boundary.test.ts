@@ -95,13 +95,42 @@ describe('system email consent boundary', () => {
     const sendInput = emailsSend.mock.calls[0][0];
     expect(userFindUnique).toHaveBeenCalledWith({
       where: { email: 'patron@example.com' },
-      select: { id: true },
+      select: { id: true, name: true, username: true },
     });
     expect(sendInput.headers).toEqual(expect.objectContaining({
       'List-Unsubscribe': expect.stringMatching(/^<https:\/\/polutek\.example\/unsubscribe\?token=.+>$/),
     }));
     expect(sendInput.headers['List-Unsubscribe']).not.toContain('patron@example.com');
     expect(sendInput.headers).not.toHaveProperty('List-Unsubscribe-Post');
+  });
+
+  it('system emails fill every template variable and never link to a missing preferences page', async () => {
+    const email = await import('@/lib/modules/email');
+    userFindUnique.mockResolvedValue({ id: 'user_opaque_1', name: 'Anna Nowak', username: null });
+
+    await email.sendBecomePatronEmail('patron@example.com', 10, 'PLN');
+    await email.sendDonationThankYouEmail('tipper@example.com', 5, 'PLN', 'en');
+    await email.sendWelcomeEmail('new@example.com', null);
+
+    expect(emailsSend).toHaveBeenCalledTimes(3);
+    for (const [input] of emailsSend.mock.calls) {
+      expect(input.html).not.toMatch(/\{\{\w+\}\}/);
+      expect(input.subject).not.toMatch(/\{\{\w+\}\}/);
+      expect(input.html).not.toContain('/profile/settings');
+    }
+    expect(emailsSend.mock.calls[0][0].html).toContain('Anna');
+  });
+
+  it('support emails promise no access in return for a tip', async () => {
+    const email = await import('@/lib/modules/email');
+
+    await email.sendBecomePatronEmail('patron@example.com', 10, 'PLN');
+    await email.sendBecomePatronEmail('patron@example.com', 10, 'PLN', 'en');
+    await email.sendWelcomeEmail('new@example.com', 'User');
+
+    for (const [input] of emailsSend.mock.calls) {
+      expect(input.html).not.toMatch(/Strefy Patrona|Strefę Patrona|Patron Zone|dostęp do materiałów PATRON|permanent access/);
+    }
   });
 
   it('account deleted email sends without Resend Contacts', async () => {

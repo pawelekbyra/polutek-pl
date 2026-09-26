@@ -43,9 +43,7 @@ export async function getCommentContext(
     }
     return fail({
         type: "FORBIDDEN",
-        message: accessResult.data.reason === "PATRON_REQUIRED"
-            ? "Komentarze pod tym filmem są dostępne tylko dla Patronów."
-            : "Brak dostępu do komentarzy."
+        message: "Brak dostępu do komentarzy."
     });
   }
 

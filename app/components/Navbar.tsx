@@ -92,7 +92,8 @@ const Navbar = () => {
   const [notifications, setNotifications] = React.useState<NotificationDTO[]>([]);
 
   React.useEffect(() => {
-    if (isSignedIn) {
+    // Nothing reads the list while the bell is hidden, so don't fetch it either.
+    if (isSignedIn && !TEMP_HIDE_NOTIFICATIONS_BELL) {
       fetch("/api/notifications")
         .then((res) => res.ok ? res.json() : [])
         .then((data) => setNotifications(Array.isArray(data) ? data : []))

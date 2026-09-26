@@ -120,9 +120,9 @@ describe("public loading/access state UX contracts", () => {
     const overlayStyles = read("app/components/AccessLockOverlay.module.css");
 
     expect(overlay).toContain("Zaloguj się");
-    expect(overlay).toContain("Odblokuj dostęp");
-    expect(overlay).toContain('href="#donations"');
-    expect(overlay).toContain('getElementById("donations")');
+    // No pay-to-unlock CTA: support never unlocks content (CLAUDE.md §4.4).
+    expect(overlay).not.toContain("Odblokuj dostęp");
+    expect(overlay).not.toContain('href="#donations"');
     expect(overlay).toContain("useReducedMotion");
     expect(overlay).not.toContain("repeat: Infinity");
     expect(overlay).not.toContain("text-transparent");

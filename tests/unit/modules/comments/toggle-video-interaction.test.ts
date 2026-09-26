@@ -50,12 +50,12 @@ describe('Video Interaction Use Cases', () => {
     });
 
     it('denies user without video access', async () => {
-      (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'PATRON_REQUIRED' } });
+      (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'LOGIN_REQUIRED' } });
       const result = await toggleVideoLike({ videoId }, createCtx({ type: 'user', userId }));
       expect(result.ok).toBe(false);
       if (!result.ok) {
           expect(result.error.type).toBe('FORBIDDEN');
-          expect(result.error.message).toContain('Patronów');
+          expect(result.error.message).toContain('Brak dostępu do interakcji');
       }
     });
 

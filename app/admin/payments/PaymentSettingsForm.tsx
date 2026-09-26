@@ -99,11 +99,11 @@ export function PaymentSettingsForm({ initialLimits }: Props) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">1</span>
-              Próg zostania Patronem
+              Próg odznaki Patrona
             </CardTitle>
             <CardDescription>
-              Kwota, którą musi wpłacić <strong>osoba niebędąca patronem</strong>, aby odblokować dożywotni dostęp do Strefy
-              Fenkju. To ta kwota widnieje w support boxie dla niepatronów i decyduje o nadaniu statusu patrona po udanej płatności.
+              Wpłata od tej kwoty zapisuje wspierającego jako Patrona (odznaka przy komentarzach, lista w panelu).
+              Niczego nie odblokowuje — wszystkie filmy są dostępne po zalogowaniu.
             </CardDescription>
           </CardHeader>
           <CardContent>{fieldGrid("patronThreshold")}</CardContent>
@@ -113,11 +113,10 @@ export function PaymentSettingsForm({ initialLimits }: Props) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">2</span>
-              Minimalna wpłata patrona (dowolna kwota)
+              Minimalny napiwek
             </CardTitle>
             <CardDescription>
-              Najniższa kwota, jaką <strong>istniejący patron</strong> może wpłacić w support boxie z dowolną kwotą. To osobny
-              mechanizm — nie ma nic wspólnego z progiem zostania patronem powyżej.
+              Najniższa kwota, jaką każdy zalogowany może wpisać w bramce napiwkowej. Niezależna od progu odznaki powyżej.
             </CardDescription>
           </CardHeader>
           <CardContent>{fieldGrid("patronBoxMin")}</CardContent>

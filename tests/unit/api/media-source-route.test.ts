@@ -86,8 +86,8 @@ describe('Media-Source Route Access', () => {
     (getActorFromAuth as any).mockResolvedValue({ type: 'guest' });
     (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
       videoId: 'v1',
-      access: { allowed: false, reason: 'PATRON_REQUIRED' },
-      diagnostics: { warnings: ['PATRON_REQUIRED'] },
+      access: { allowed: false, reason: 'LOGIN_REQUIRED' },
+      diagnostics: { warnings: ['LOGIN_REQUIRED'] },
       tracking: { playbackSessionId: '' }
     });
 
@@ -95,11 +95,11 @@ describe('Media-Source Route Access', () => {
     expect(res.status).toBe(403);
     const data = await res.json();
     expect(data.hasAccess).toBe(false);
-    expect(data.access.reason).toBe('PATRON_REQUIRED');
+    expect(data.access.reason).toBe('LOGIN_REQUIRED');
     expect(data.source).toBeUndefined();
     expect(data.playbackUrl).toBeUndefined();
     expect(data.embedUrl).toBeUndefined();
-    expect(data.diagnostics.warnings).toEqual(['PATRON_REQUIRED']);
+    expect(data.diagnostics.warnings).toEqual(['LOGIN_REQUIRED']);
   });
 
   it('returns 403 when LOGIN_REQUIRED and redacts all source fields', async () => {
@@ -123,15 +123,15 @@ describe('Media-Source Route Access', () => {
     (getActorFromAuth as any).mockResolvedValue({ type: 'guest' });
     (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
       videoId: 'v1',
-      status: 'PATRON_REQUIRED',
+      status: 'LOGIN_REQUIRED',
       canPlay: false,
-      access: { allowed: false, reason: 'PATRON_REQUIRED' },
+      access: { allowed: false, reason: 'LOGIN_REQUIRED' },
       source: {
         kind: 'cloudflare_stream',
         playbackUrl: 'https://videodelivery.net/should-not-leak/manifest/video.m3u8',
         embedUrl: 'https://iframe.videodelivery.net/should-not-leak',
       },
-      diagnostics: { warnings: ['PATRON_REQUIRED'] },
+      diagnostics: { warnings: ['LOGIN_REQUIRED'] },
       tracking: { playbackSessionId: 'should-not-count', heartbeatIntervalSeconds: 15 },
     });
 

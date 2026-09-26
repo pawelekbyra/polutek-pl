@@ -62,7 +62,7 @@ export async function getGatedMedia(
       return fail(new MediaSourceNotFoundError(videoIdOrSlug));
   }
 
-  // Access denied (LOGIN_REQUIRED, PATRON_REQUIRED, FORBIDDEN, DELETED, ...):
+  // Access denied (LOGIN_REQUIRED, FORBIDDEN, DELETED, ...):
   // never return a playable URL for a decision that isn't an explicit grant.
   if (!decision.hasAccess) {
     return fail(new MediaAccessDeniedError(video.id, decision.reason));

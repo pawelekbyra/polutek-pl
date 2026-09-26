@@ -51,9 +51,7 @@ export async function createVideoComment(
     }
     return fail({
         type: "FORBIDDEN",
-        message: accessResult.data.reason === "PATRON_REQUIRED"
-            ? "Ten film jest dostępny tylko dla Patronów."
-            : "Brak uprawnień do komentowania."
+        message: "Brak uprawnień do komentowania."
     });
   }
 

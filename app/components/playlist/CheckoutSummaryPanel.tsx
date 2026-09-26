@@ -10,7 +10,6 @@ interface CheckoutSummaryPanelProps {
   amount: number | '';
   selectedCurrency: string;
   videoTitle?: string;
-  viewerIsPatron: boolean;
 }
 
 // Hand-drawn "heart in an open hand" — the support mark for the payment screen, in the site's
@@ -61,33 +60,22 @@ export default function CheckoutSummaryPanel({
   amount,
   selectedCurrency,
   videoTitle,
-  viewerIsPatron,
 }: CheckoutSummaryPanelProps) {
   const isPl = language === 'pl';
 
-  const heading = viewerIsPatron
-    ? (isPl ? 'Dzięki, że wspierasz dalej' : 'Thanks for supporting again')
-    : (isPl ? 'Zostajesz Patronem Projektu' : 'You are becoming a Project Patron');
+  // Support is a voluntary gift that unlocks nothing (CLAUDE.md §4.10) — the copy must never
+  // promise access or other benefits in return.
+  const heading = isPl ? 'Dzięki za wsparcie' : 'Thanks for your support';
 
-  const lead = viewerIsPatron
-    ? (isPl
-        ? 'Masz już dożywotni dostęp do Strefy Fenkjuu — ta wpłata niczego nie odblokowuje. To czysty gest wsparcia i realne paliwo dla kanału.'
-        : 'You already hold lifetime access to the Thank You Zone — this tip unlocks nothing new. It is pure support and real fuel for the channel.')
-    : (isPl
-        ? 'Jedna wpłata — i Strefa Fenkjuu jest Twoja na zawsze: wszystkie obecne i przyszłe materiały dodatkowe. Bez subskrypcji, bez ukrytych kosztów.'
-        : 'One payment — and the Thank You Zone is yours for good: every current and future bonus. No subscription, no hidden costs.');
+  const lead = isPl
+    ? 'Wszystkie filmy są dostępne bez opłat, a ta wpłata niczego nie odblokowuje. To dobrowolny napiwek i realne paliwo dla kanału.'
+    : 'Every video is free to watch, and this tip unlocks nothing. It is a voluntary gift and real fuel for the channel.';
 
-  const bullets: { text: string; soft?: boolean }[] = viewerIsPatron
-    ? [
-        { text: isPl ? 'Dostęp masz już zapewniony' : 'Your access is already secured' },
-        { text: isPl ? 'Dowolna kwota — bez nowych obietnic' : 'Any amount — no new promises' },
-        { text: isPl ? 'Całość idzie w rozwój kanału' : 'Everything goes into the channel', soft: true },
-      ]
-    : [
-        { text: isPl ? 'Dożywotni dostęp do Strefy Fenkjuu' : 'Lifetime access to the Thank You Zone' },
-        { text: isPl ? 'Jedna wpłata, zero subskrypcji' : 'One payment, zero subscriptions' },
-        { text: isPl ? 'Napędzasz kolejne materiały' : 'You power the next videos', soft: true },
-      ];
+  const bullets: { text: string; soft?: boolean }[] = [
+    { text: isPl ? 'Dowolna kwota' : 'Any amount you choose' },
+    { text: isPl ? 'Jednorazowo, bez subskrypcji' : 'One-time, no subscription' },
+    { text: isPl ? 'Całość idzie w rozwój kanału' : 'Everything goes into the channel', soft: true },
+  ];
 
   return (
     <div className="relative hidden h-full flex-col justify-between overflow-hidden border-r border-[var(--chan-line)] bg-[var(--chan-surface)] px-10 py-10 text-[var(--chan-ink)] md:flex md:w-[45%] lg:px-14">

@@ -50,8 +50,7 @@ export async function listVideoComments(
   // Comments inherit video access for writing/interacting, but are publicly readable
   // if the video is published (even if it's patron-only).
   if (!accessResult.data.hasAccess) {
-    const isPubliclyReadableReason = accessResult.data.reason === 'PATRON_REQUIRED' ||
-                                     accessResult.data.reason === 'LOGIN_REQUIRED';
+    const isPubliclyReadableReason = accessResult.data.reason === 'LOGIN_REQUIRED';
 
     if (!isPubliclyReadableReason) {
       if (accessResult.data.reason === 'NOT_FOUND' || accessResult.data.reason === 'DELETED') {

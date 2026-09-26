@@ -37,12 +37,12 @@ describe('getGatedMedia Use Case', () => {
     }
   });
 
-  it('fails (does NOT return the videoUrl) when access is PATRON_REQUIRED', async () => {
+  it('fails (does NOT return the videoUrl) when access is LOGIN_REQUIRED', async () => {
       const video = { id: 'v1', videoUrl: 'https://example.com/video.mp4' };
       mockPrisma.video.findFirst.mockResolvedValue(video);
       vi.mocked(checkVideoAccess).mockResolvedValue({
         ok: true,
-        data: { hasAccess: false, reason: 'PATRON_REQUIRED' } as any,
+        data: { hasAccess: false, reason: 'LOGIN_REQUIRED' } as any,
       });
 
       const ctx = createAppContext({ actor: { type: 'guest' }, prisma: mockPrisma });

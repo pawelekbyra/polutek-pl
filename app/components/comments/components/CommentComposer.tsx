@@ -19,7 +19,6 @@ interface CommentComposerProps {
   isInputFocused: boolean;
   setIsInputFocused: (val: boolean) => void;
   canComment: boolean;
-  isPatronGated: boolean;
   isPatronDecorative: boolean;
   isPending: boolean;
   isViewerLoading?: boolean;
@@ -54,7 +53,6 @@ export function CommentComposer({
   isInputFocused,
   setIsInputFocused,
   canComment,
-  isPatronGated,
   isPatronDecorative,
   isPending,
   isViewerLoading = false,
@@ -181,30 +179,17 @@ export function CommentComposer({
             <div
               className={cn(
                 fieldClassName,
-                isPatronGated
-                  ? "bg-[var(--chan-amber-soft)] ring-1 ring-inset ring-[var(--cm-amber-28)]"
-                  : "bg-[var(--chan-blue-soft)] ring-1 ring-inset ring-[var(--cm-blue-20)]",
+                "bg-[var(--chan-blue-soft)] ring-1 ring-inset ring-[var(--cm-blue-20)]",
               )}
             >
               <div className="relative flex min-h-[2.75rem] w-full items-center justify-center py-2.5">
-                {isPatronGated && userProfile ? (
-                  <a
-                    href="#donations"
-                    className="inline-flex min-h-11 items-center justify-center rounded-lg border border-[var(--cm-amber-38)] bg-white/75 px-4 text-center text-[13px] font-bold text-[var(--chan-amber-ink)] shadow-[0_8px_20px_-14px_var(--cm-amber-65)] transition-[transform,background-color,box-shadow] hover:-translate-y-px hover:bg-white active:translate-y-0 active:scale-[0.98]"
-                  >
-                    {language === "pl"
-                      ? "Zostaw napiwek, aby komentować"
-                      : "Leave a tip to comment"}
-                  </a>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => openAuthModal("sign-in")}
-                    className="inline-flex min-h-11 items-center justify-center rounded-lg border border-[var(--cm-blue-28)] bg-white/75 px-4 text-center text-[13px] font-bold text-[var(--chan-blue)] shadow-[0_8px_20px_-14px_var(--cm-blue-58)] transition-[transform,background-color,box-shadow] hover:-translate-y-px hover:bg-white active:translate-y-0 active:scale-[0.98]"
-                  >
-                    {t.signInToComment}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => openAuthModal("sign-in")}
+                  className="inline-flex min-h-11 items-center justify-center rounded-lg border border-[var(--cm-blue-28)] bg-white/75 px-4 text-center text-[13px] font-bold text-[var(--chan-blue)] shadow-[0_8px_20px_-14px_var(--cm-blue-58)] transition-[transform,background-color,box-shadow] hover:-translate-y-px hover:bg-white active:translate-y-0 active:scale-[0.98]"
+                >
+                  {t.signInToComment}
+                </button>
               </div>
             </div>
           ) : (
