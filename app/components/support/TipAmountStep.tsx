@@ -63,6 +63,11 @@ export function TipAmountStep({
     <TipStepLayout
       footer={
         <>
+          {showTermsError && (
+            <p role="alert" className="mb-2 text-[12px] font-semibold text-destructive">
+              {isPl ? "Zaakceptuj Regulamin i Politykę Prywatności." : "Please accept the Terms and Privacy Policy."}
+            </p>
+          )}
           <label className="mb-3 flex cursor-pointer items-start gap-2.5">
             <Checkbox
               id="tip-accept-terms"
@@ -78,11 +83,6 @@ export function TipAmountStep({
               )}
             </span>
           </label>
-          {showTermsError && (
-            <p role="alert" className="-mt-1 mb-3 text-[12px] font-semibold text-destructive">
-              {isPl ? "Zaakceptuj Regulamin i Politykę Prywatności." : "Please accept the Terms and Privacy Policy."}
-            </p>
-          )}
           <TipPrimaryButton onClick={handleNext} busy={busy}>
             {busy
               ? isPl ? "Chwileczkę…" : "One moment…"
