@@ -68,7 +68,7 @@ export function TipAmountStep({
               id="tip-accept-terms"
               checked={termsAccepted}
               onCheckedChange={(checked) => onTermsChange(checked === true)}
-              className="mt-[2px] shrink-0"
+              className="mt-[2px] shrink-0 border-[var(--cm-amber-46)] bg-white"
             />
             <span className="text-[13px] leading-[1.5] text-[var(--chan-body)]">
               {isPl ? (
@@ -118,7 +118,6 @@ export function TipAmountStep({
       <label className="mt-4 block">
         <span className="mb-1.5 block text-[12px] font-bold text-[var(--chan-body)]">{isPl ? "Kwota" : "Amount"}</span>
         <div className="flex h-14 items-center rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-white px-4 transition-[border-color,box-shadow] focus-within:border-[var(--chan-amber)] focus-within:shadow-[0_0_0_4px_var(--cm-amber-18)]">
-          <span aria-hidden="true" className="invisible mr-2 text-[15px] font-bold">{currency}</span>
           <input
             type="number"
             inputMode="decimal"
@@ -128,7 +127,7 @@ export function TipAmountStep({
             placeholder={String(minAmount)}
             onChange={(event) => onAmountChange(event.target.value === "" ? "" : Number(event.target.value))}
             aria-invalid={showAmountError}
-            className="w-full min-w-0 bg-transparent text-center text-[22px] font-extrabold tabular-nums text-[var(--chan-ink)] outline-none placeholder:font-semibold placeholder:text-[var(--cm-amber-46)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            className="w-full min-w-0 bg-transparent text-left text-[22px] font-extrabold tabular-nums text-[var(--chan-ink)] outline-none placeholder:font-semibold placeholder:text-[var(--cm-amber-46)] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
           <span className="ml-2 text-[15px] font-bold text-[var(--chan-muted)]">{currency}</span>
         </div>

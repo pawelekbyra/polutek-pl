@@ -355,6 +355,8 @@
     --chan-blue-soft: #eff3fe;
     --chan-amber: #f59e0b;
     --chan-amber-bright: #fbbf24;
+    /* Clean lemon yellow — the tip gate surface (not the orange-leaning amber). */
+    --chan-yellow: #fde047;
     --chan-amber-strong: #d97706;
     --chan-amber-soft: #fff3d6;
     --chan-amber-ink: #4a2a03;
@@ -711,7 +713,7 @@
     background: var(--chan-amber);
   }
 
-  /* The gate itself: a yellow surface. The orange main button stays as it is; fields you type
+  /* The gate itself: a lemon-yellow surface (--chan-yellow). The orange main button stays as it is; fields you type
      into (amount, BLIK code, card) stay white so it's obvious where to type; choices (dropdowns,
      the amount strip, the back button) are light cream chips. The amber mixes used for borders
      and dots are darkened here (scoped to the gate), and grey body text turns warm brown, so
@@ -721,14 +723,16 @@
     --cm-amber-28: color-mix(in srgb, var(--chan-amber-strong) 32%, transparent);
     --cm-amber-38: color-mix(in srgb, var(--chan-amber-strong) 45%, transparent);
     --cm-amber-46: color-mix(in srgb, var(--chan-amber-strong) 50%, transparent);
-    --chan-muted: color-mix(in srgb, var(--chan-amber-ink) 72%, var(--chan-amber-bright));
-    --chan-body: color-mix(in srgb, var(--chan-amber-ink) 85%, var(--chan-amber-bright));
+    --chan-muted: color-mix(in srgb, var(--chan-amber-ink) 72%, var(--chan-yellow));
+    --chan-body: color-mix(in srgb, var(--chan-amber-ink) 85%, var(--chan-yellow));
+    /* Light chips (dropdowns, amount strip, back button, badge) in the same lemon family. */
+    --chan-amber-soft: color-mix(in srgb, var(--chan-yellow) 22%, var(--chan-card));
     background:
-      radial-gradient(120% 55% at 50% 0%, color-mix(in srgb, var(--chan-card) 45%, transparent), transparent 70%),
+      radial-gradient(120% 55% at 50% 0%, color-mix(in srgb, var(--chan-card) 40%, transparent), transparent 70%),
       linear-gradient(
         180deg,
-        color-mix(in srgb, var(--chan-amber-bright) 36%, var(--chan-card)),
-        color-mix(in srgb, var(--chan-amber-bright) 52%, var(--chan-card))
+        color-mix(in srgb, var(--chan-yellow) 62%, var(--chan-card)),
+        color-mix(in srgb, var(--chan-yellow) 88%, var(--chan-card))
       );
   }
 }
