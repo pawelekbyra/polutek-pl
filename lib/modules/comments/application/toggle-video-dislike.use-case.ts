@@ -34,9 +34,7 @@ export async function toggleVideoDislike(
   if (!CommentPolicy.canReactToVideo(actor, accessResult.data)) {
     return fail({
         type: "FORBIDDEN",
-        message: accessResult.data.reason === "PATRON_REQUIRED"
-            ? "Ten film jest dostępny tylko dla Patronów."
-            : "Brak dostępu do interakcji z tym filmem."
+        message: "Brak dostępu do interakcji z tym filmem."
     });
   }
 

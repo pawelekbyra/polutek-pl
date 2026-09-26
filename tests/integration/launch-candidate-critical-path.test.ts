@@ -523,14 +523,13 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     expect(harness.state.playbackEvents[0].metadata).toEqual({ quality: '720p' });
   });
 
-  it('Scenario B/C/D: below-threshold, cache/payment/subscription-only, guest and non-patron signals remain denied with zero playback side effects', async () => {
+  it('Scenario B/C/D: payments and patron signals never change access — guests are asked to sign in with zero playback side effects, signed-in users play regardless of grants', async () => {
     harness.seedUser('below');
     harness.seedPayment('pay_below', 'below', 999);
     const below = await fulfillPayment({ paymentId: 'pay_below', userId: 'below', amountMinor: 999, currency: 'PLN' }, harness.ctx(null, 'system'));
     expect(below.ok).toBe(true);
     expect(harness.state.payments.get('pay_below')?.status).toBe(PaymentStatus.SUCCEEDED);
     expect(harness.activeGrants('below')).toHaveLength(0);
-    expect((await harness.attemptPlayback('below')).status).toBe('PATRON_REQUIRED');
 
     harness.seedUser('signals', { isPatron: true, publicMetadata: { isPatron: true } });
     harness.seedPayment('pay_signals', 'signals', 2500, PaymentStatus.SUCCEEDED);
@@ -538,14 +537,16 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     harness.state.subscriptions.push({ userId: 'signals', creatorId: 'creator_main' });
     const signalsStatus = await getPatronStatus('signals', harness.ctx('signals'));
     expect(signalsStatus.ok && signalsStatus.data.isPatron).toBe(false);
-    expect((await harness.attemptPlayback('signals')).status).toBe('PATRON_REQUIRED');
 
-    expect((await harness.attemptPlayback(null)).status).toBe('PATRON_REQUIRED');
+    expect((await harness.attemptPlayback(null)).status).toBe('LOGIN_REQUIRED');
     expect((await harness.attemptPlayback('missing-user')).status).toBe('ERROR');
-    harness.seedUser('nonpatron');
-    expect((await harness.attemptPlayback('nonpatron')).status).toBe('PATRON_REQUIRED');
-
     harness.assertNoPlaybackSideEffects();
+
+    // Support grants nothing (CLAUDE.md §4.4): every signed-in user plays, grant or not.
+    harness.seedUser('nonpatron');
+    for (const userId of ['below', 'signals', 'nonpatron']) {
+      expect((await harness.attemptPlayback(userId)).status).toBe('READY');
+    }
   });
 
   it('Scenario E: non-ready and missing primary assets block playback without Cloudflare calls, sessions, views, legacy fallback, or provider id leakage', async () => {
@@ -593,7 +594,7 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     expect(grantA.reason).toContain('dp_same');
     expect(grantB.revokedAt).toBeNull();
     expect(manualA.revokedAt).toBeNull();
-    expect((await harness.attemptPlayback('user_a')).status).toBe('READY'); // manual unrelated grant still keeps user A active
+    expect(harness.activeGrants('user_a')).toEqual([manualA]); // manual unrelated grant stays active
 
     const firstSuspension = grantA.revokedAt;
     await handleDispute({ stripeIntentId: 'pi_pay_a', disputeId: 'dp_same', status: 'needs_response', isLost: false, isWon: false }, harness.ctx('user_a'));
@@ -620,9 +621,8 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     expect(harness.activeGrants('user_a')).toHaveLength(0);
     await handleDispute({ stripeIntentId: 'pi_pay_a', disputeId: 'dp_same', status: 'won', isLost: false, isWon: true }, harness.ctx('user_a'));
     expect(harness.activeGrants('user_a')).toHaveLength(0);
-    expect((await harness.attemptPlayback('user_a')).status).toBe('PATRON_REQUIRED');
-    expect(cloudflareTokenCalls).toHaveLength(0);
-    expect(harness.state.sessions).toHaveLength(0);
+    // Losing every grant only removes the badge; a signed-in user still plays.
+    expect((await harness.attemptPlayback('user_a')).status).toBe('READY');
 
     await handleDispute({ stripeIntentId: 'pi_pay_b', disputeId: 'dp_lost', status: 'lost', isLost: true, isWon: false }, harness.ctx('user_b'));
     expect(harness.state.payments.get('pay_b')?.status).toBe(PaymentStatus.CHARGEBACK_LOST);
@@ -645,18 +645,18 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     expect(actionsSource).toContain('trimmedReason');
     expect(actionsSource).toContain('pendingRequestRef.current');
     expect(actionsSource).toContain('variant={dialogAction === "revoke" ? "destructive" : "default"}');
-    expect(actionsSource).toContain('użytkownik straci dostęp Patrona');
-    expect(actionsSource).toContain('Źródłem prawdy dostępu pozostaje aktywne uprawnienie PatronGrant');
-    expect(diagnosticsSource).toContain('Prawda dostępu PatronGrant');
-    expect(diagnosticsSource).toContain('Fakty płatności (nie prawda dostępu)');
-    expect(diagnosticsSource).toContain('Newsletter/subskrypcja (niezwiązane z dostępem)');
+    expect(actionsSource).toContain('użytkownik straci odznakę Patrona');
+    expect(actionsSource).toContain('Status Patrona wynika wyłącznie z aktywnego uprawnienia PatronGrant');
+    expect(diagnosticsSource).toContain('PatronGrant (źródło odznaki)');
+    expect(diagnosticsSource).toContain('dostęp do filmów zależy wyłącznie od zalogowania');
+    expect(diagnosticsSource).not.toContain('ZABLOKOWANY');
 
-    for (const state of ['LOGIN_REQUIRED', 'PATRON_REQUIRED', 'VIDEO_NOT_READY', 'PROCESSING', 'NO_PRIMARY_ASSET', 'UNAVAILABLE', 'ERROR']) {
+    for (const state of ['LOGIN_REQUIRED', 'VIDEO_NOT_READY', 'PROCESSING', 'NO_PRIMARY_ASSET', 'UNAVAILABLE', 'ERROR']) {
       expect(playbackStateSource).toContain(`${state}: {`);
       expect(playbackStateSource).toContain(`  "${state}",`);
     }
-    expect(playbackStateSource).toContain('Dostęp patrona jest nagrodą za kwalifikujące jednorazowe wsparcie. To nie jest subskrypcja cykliczna.');
-    expect(wrapperSource).toContain('if (!isPlayablePlaybackPlan(playbackPlan))');
+    expect(playbackStateSource).not.toContain('PATRON_REQUIRED');
+    expect(wrapperSource).toContain('if (!isPlayablePlaybackPlan(playbackPlan, videoId))');
     expect(wrapperSource).toContain('<PlaybackPlanStateOverlay');
     expect(wrapperSource).toContain('{children}');
     expect(wrapperSource).toContain('focus-visible:outline');

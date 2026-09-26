@@ -38,9 +38,7 @@ export async function updateComment(
   if (!accessResult.data.hasAccess) {
     return fail({
         type: "FORBIDDEN",
-        message: accessResult.data.reason === "PATRON_REQUIRED"
-            ? "Ten film jest dostępny tylko dla Patronów."
-            : "Brak dostępu."
+        message: "Brak dostępu."
     });
   }
 

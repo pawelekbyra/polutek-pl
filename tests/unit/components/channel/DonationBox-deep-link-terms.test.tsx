@@ -45,7 +45,7 @@ vi.mock('@/app/components/LanguageContext', () => ({
     language: 'pl',
     t: {
       currency: 'PLN',
-      pleaseAcceptTerms: 'Zaakceptuj regulamin, aby otrzymać dostęp do Strefy Fenkju',
+      pleaseAcceptTerms: 'Zaakceptuj regulamin i politykę prywatności',
       tipTheGuy: 'Wspieram',
     },
   }),
@@ -77,23 +77,26 @@ describe('DonationBox ?support=1 deep-link auto-submit', () => {
   });
 
   it('does not surface the "accept the terms" error just from the deep-link mount, before any real payment attempt', async () => {
-    renderDonationBox({ viewerIsPatron: false });
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+    renderDonationBox();
 
-    // Give the amount-loading effect and the ?support=1 effect a chance to run.
+    // Give the settings-loading effect and the ?support=1 effect a chance to run.
     await waitFor(() => {
-      expect(screen.getByText('20')).toBeInTheDocument();
+      expect(screen.getByLabelText('Wpisz kwotę napiwku')).toBeInTheDocument();
+      expect(replaceState).toHaveBeenCalled();
     });
 
     // Terms start unchecked (no persistence across mounts) — the deep-link effect must
     // not call the full onSupport() unconditionally, which would flag this error before
     // the viewer has even seen the box.
-    expect(screen.queryByText('Zaakceptuj regulamin, aby otrzymać dostęp do Strefy Fenkju')).not.toBeInTheDocument();
+    expect(screen.queryByText('Zaakceptuj regulamin i politykę prywatności')).not.toBeInTheDocument();
     expect(global.fetch as ReturnType<typeof vi.fn>).not.toHaveBeenCalledWith(
       '/api/checkout/create-intent',
       expect.anything(),
     );
 
-    // The ?support=1 param is still stripped from the URL even when nothing was submitted.
-    expect(mockReplace).toHaveBeenCalledWith('/', { scroll: false });
+    // The ?support=1 param is still stripped — shallowly, without a server re-render.
+    expect(replaceState).toHaveBeenCalledWith(null, '', '/');
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 });

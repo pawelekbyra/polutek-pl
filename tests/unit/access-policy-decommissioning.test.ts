@@ -62,8 +62,9 @@ describe('Access Policy Decommissioning Guardrails', () => {
          const content = fs.readFileSync(checkAccessFile, 'utf-8');
          // It should NOT use user.isPatron for the final decision.
          // It CAN contain "user.isPatron" in comments or logs, but let's check for the logic.
-         // We know it should use getPatronStatus.
-         expect(content).toContain('getPatronStatus');
+         // Since 2026-09-22 access never depends on patron status at all (CLAUDE.md §4.4).
+         expect(content).not.toContain('getPatronStatus');
+         expect(content).not.toContain('isPatron');
 
          // Check that it doesn't do something like: if (user.isPatron) return ok({ hasAccess: true });
          const legacyDecisionPattern = /if\s*\(user\.isPatron\)\s*{\s*return\s*ok\({\s*hasAccess:\s*true\s*}\);?\s*}/;

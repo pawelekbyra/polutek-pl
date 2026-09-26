@@ -145,7 +145,7 @@ export const translations = {
     yes: 'TAK',
     no: 'NIE',
     acceptTerms: 'Akceptuję Regulamin i Politykę Prywatności',
-    pleaseAcceptTerms: 'Zaakceptuj regulamin, aby otrzymać dostęp do Strefy Fenkju',
+    pleaseAcceptTerms: 'Zaakceptuj regulamin i politykę prywatności',
     tipTheGuy: 'Wspieram'
   },
   en: {
@@ -195,7 +195,7 @@ export const translations = {
     yes: 'YES',
     no: 'NO',
     acceptTerms: 'I accept the Terms and Privacy Policy',
-    pleaseAcceptTerms: 'Accept the terms to receive access to the Thank You Zone',
+    pleaseAcceptTerms: 'Please accept the Terms and Privacy Policy',
     tipTheGuy: 'Support'
   }
 };

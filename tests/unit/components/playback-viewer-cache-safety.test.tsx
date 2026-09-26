@@ -97,11 +97,11 @@ function createReadyPlan(videoId = "video-1"): PlaybackPlan {
 function createDeniedPlan(videoId = "video-1"): PlaybackPlan {
   return {
     ...createReadyPlan(videoId),
-    status: "PATRON_REQUIRED",
+    status: "LOGIN_REQUIRED",
     canPlay: false,
     access: {
       allowed: false,
-      reason: "PATRON_REQUIRED",
+      reason: "LOGIN_REQUIRED",
       requiredTier: "PATRON",
     },
     source: undefined,
@@ -200,7 +200,7 @@ describe("playback viewer cache safety", () => {
     await act(async () => {
       deferredRequests[1].resolve(jsonResponse(createDeniedPlan(), 403));
     });
-    expect((await screen.findByTestId("player-locked")).textContent).toContain("PATRON_REQUIRED");
+    expect((await screen.findByTestId("player-locked")).textContent).toContain("LOGIN_REQUIRED");
     expect(screen.queryByTestId("mounted-player")).toBeNull();
   });
 
@@ -227,7 +227,7 @@ describe("playback viewer cache safety", () => {
     await act(async () => {
       deferredRequests[1].resolve(jsonResponse(createDeniedPlan(), 403));
     });
-    expect((await screen.findByTestId("player-locked")).textContent).toContain("PATRON_REQUIRED");
+    expect((await screen.findByTestId("player-locked")).textContent).toContain("LOGIN_REQUIRED");
     expect(screen.queryByTestId("mounted-player")).toBeNull();
   });
 

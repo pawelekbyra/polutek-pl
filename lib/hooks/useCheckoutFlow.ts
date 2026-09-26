@@ -52,7 +52,6 @@ export interface UseCheckoutFlowResult {
 
   isInitialLoading: boolean;
   minimums: Record<SupportedCurrency, number>;
-  patronThresholds: Record<SupportedCurrency, number>;
   patronBoxMinimums: Record<SupportedCurrency, number>;
 
   isTermsAccepted: boolean;
@@ -115,10 +114,9 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
   const [isSyncing, setIsSyncing] = useState(false);
   // True once a confirmed-success screen has been shown for this return (either Stripe's own
   // redirect_status said "succeeded", or the backend later confirmed it). Drives the full reload
-  // on close so the page comes back with live Patron access, video unlocks and support-box copy.
+  // on close so server-rendered supporter state (e.g. the comment Patron badge) is fresh.
   const [paymentSucceeded, setPaymentSucceeded] = useState(false);
   const [minimums, setMinimums] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
-  const [patronThresholds, setPatronThresholds] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
   const [patronBoxMinimums, setPatronBoxMinimums] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
 
   useEffect(() => {
@@ -132,13 +130,6 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
           if (Number.isFinite(min) && min > 0) nextMinimums[currency] = min;
         }
         setMinimums(nextMinimums);
-
-        const nextThresholds = { ...nextMinimums } as Record<SupportedCurrency, number>;
-        for (const currency of SUPPORTED_CURRENCIES) {
-          const threshold = Number(data.patronThresholds?.[currency]?.threshold);
-          if (Number.isFinite(threshold) && threshold > 0) nextThresholds[currency] = threshold;
-        }
-        setPatronThresholds(nextThresholds);
 
         const nextBoxMins = { ...nextMinimums } as Record<SupportedCurrency, number>;
         for (const currency of SUPPORTED_CURRENCIES) {
@@ -235,7 +226,7 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
           }
 
           // Already showing success from the redirect signal: keep quietly reconciling until the
-          // grant lands so the on-close reload reflects live Patron access, but never change copy.
+          // grant lands so the on-close reload reflects the fresh supporter state, but never change copy.
           return isTerminal || attempts >= maxAttempts;
         } catch (e) {
           logger.error(`[${logPrefix}] Reconcile error`, e);
@@ -406,7 +397,6 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
 
     isInitialLoading,
     minimums,
-    patronThresholds,
     patronBoxMinimums,
 
     isTermsAccepted,

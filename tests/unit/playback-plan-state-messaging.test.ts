@@ -13,7 +13,6 @@ const accessLockOverlaySource = readFileSync(
 
 const requiredStates = [
   'LOGIN_REQUIRED',
-  'PATRON_REQUIRED',
   'VIDEO_NOT_READY',
   'PROCESSING',
   'NO_PRIMARY_ASSET',
@@ -29,7 +28,8 @@ describe('PremiumWrapper playback plan state messaging', () => {
 
     expect(stateSource).toContain('Zaloguj się, aby obejrzeć materiał.');
     expect(stateSource).toContain('Zaloguj się');
-    expect(stateSource).toContain('Dostęp patrona jest nagrodą za kwalifikujące jednorazowe wsparcie. To nie jest subskrypcja cykliczna.');
+    // No payment-gated state exists anymore (CLAUDE.md §4.4).
+    expect(stateSource).not.toContain('PATRON_REQUIRED');
     expect(stateSource).toContain('Materiał jest przygotowywany.');
     expect(stateSource).toContain('Trwa przetwarzanie wideo.');
     expect(stateSource).toContain('Materiał nie ma jeszcze aktywnego pliku wideo.');
@@ -100,14 +100,13 @@ describe('PremiumWrapper playback plan state messaging', () => {
     expect(accessLockOverlaySource).toContain('motion.button');
     expect(accessLockOverlaySource).toContain('type="button"');
     expect(accessLockOverlaySource).toContain('Zaloguj się');
-    expect(accessLockOverlaySource).toContain('motion.a');
-    expect(accessLockOverlaySource).toContain('href="#donations"');
+    expect(accessLockOverlaySource).not.toContain('href="#donations"');
     expect(accessLockOverlaySource).not.toContain('Wesprzyj, aby obczaić');
   });
 
   it('keeps compact playlist locks distinct from the full hero overlay', () => {
     expect(accessLockOverlaySource).toContain('variant === "thumbnailCompact"');
-    expect(accessLockOverlaySource).toContain('PATRON');
+    expect(accessLockOverlaySource).toContain('COMING_SOON');
     expect(accessLockOverlaySource).toContain('LOGIN_REQUIRED');
   });
 });

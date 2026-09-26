@@ -36,7 +36,7 @@ export async function listCommentReplies(
     if (reason === 'NOT_FOUND' || reason === 'DELETED') {
       return fail({ type: "NOT_FOUND", message: "Film nie istnieje lub został usunięty." });
     }
-    // PATRON_REQUIRED / LOGIN_REQUIRED: allow read, viewer permissions will restrict writes.
+    // LOGIN_REQUIRED: allow read, viewer permissions will restrict writes.
   }
 
   const userId = actor.type === 'user' || actor.type === 'admin' ? actor.userId : null;

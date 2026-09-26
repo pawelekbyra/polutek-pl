@@ -13,8 +13,8 @@ describe("admin user patron access action UI", () => {
     expect(actionsSource).toContain("<Dialog open={dialogAction !== null}");
     expect(actionsSource).toContain("openDialog(\"grant\")");
     expect(actionsSource).toContain("openDialog(\"revoke\")");
-    expect(actionsSource).toContain("Potwierdź nadanie dostępu Patrona");
-    expect(actionsSource).toContain("Potwierdź cofnięcie dostępu Patrona");
+    expect(actionsSource).toContain("Potwierdź nadanie statusu Patrona");
+    expect(actionsSource).toContain("Potwierdź cofnięcie statusu Patrona");
   });
 
   it("allows cancel without sending the PATCH request", () => {
@@ -44,12 +44,13 @@ describe("admin user patron access action UI", () => {
     expect(actionsSource).toContain("disabled={!canSubmit}");
   });
 
-  it("makes revoke visually destructive and explains patron access loss before confirmation", () => {
+  it("makes revoke visually destructive and explains the effect before confirmation", () => {
     expect(actionsSource).toContain("variant={dialogAction === \"revoke\" ? \"destructive\" : \"default\"}");
     expect(actionsSource).toContain("text-destructive");
-    expect(actionsSource).toContain("użytkownik straci dostęp Patrona");
-    expect(actionsSource).toContain("odtwarzanie premium");
-    expect(actionsSource).toContain("uprawnienia komentowania/reagowania dla patronów");
+    expect(actionsSource).toContain("użytkownik straci odznakę Patrona");
+    // Patron status is a badge only; the copy must not claim it gates playback (CLAUDE.md §4.4).
+    expect(actionsSource).toContain("Dostęp do filmów się nie zmienia");
+    expect(actionsSource).not.toContain("odtwarzanie premium");
   });
 
   it("keeps API failure visible and retryable", () => {
@@ -60,22 +61,20 @@ describe("admin user patron access action UI", () => {
   });
 });
 
-describe("admin user paid-but-locked diagnostics", () => {
-  it("uses active PatronGrant truth instead of cache, payment or subscription truth", () => {
+describe("admin user support diagnostics", () => {
+  it("derives the Patron badge from active PatronGrant, never from cache, payment or subscription", () => {
     expect(pageSource).toContain("const isPatronByGrantTruth = patronTruth?.isPatron === true;");
     expect(pageSource).toContain("<AdminAccessDiagnostics user={user} formatDate={formatDate} />");
-    expect(diagnosticsSource).toContain("Prawda dostępu PatronGrant");
-    expect(diagnosticsSource).toContain("Fakty płatności (nie prawda dostępu)");
+    expect(diagnosticsSource).toContain("PatronGrant (źródło odznaki)");
     expect(diagnosticsSource).not.toContain("Cache User.isPatron");
     expect(diagnosticsSource).not.toContain("tylko cache");
-    expect(diagnosticsSource).toContain("Newsletter/subskrypcja (niezwiązane z dostępem)");
-    expect(diagnosticsSource).toContain("nie nadaje ani nie cofa dostępu Patrona");
+    expect(diagnosticsSource).toContain("nie nadaje ani nie cofa statusu Patrona");
   });
 
-  it("shows paid-but-locked as a read-only diagnostic when payments exist without active grants", () => {
-    expect(diagnosticsSource).toContain("const paidButLocked = hasPaymentFacts && activeGrantCount === 0;");
-    expect(diagnosticsSource).toContain("Paid-but-locked: istnieją fakty płatności, ale nie ma aktywnego PatronGrant");
-    expect(diagnosticsSource).toContain("diagnostykę supportową, nie automatyczny dostęp");
+  it("does not describe anyone as locked out — access depends on sign-in only", () => {
+    expect(diagnosticsSource).toContain("dostęp do filmów zależy wyłącznie od zalogowania");
+    expect(diagnosticsSource).not.toContain("paidButLocked");
+    expect(diagnosticsSource).not.toContain("ZABLOKOWANY");
     expect(diagnosticsSource).not.toContain("fetch(");
   });
 });

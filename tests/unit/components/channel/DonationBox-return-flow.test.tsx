@@ -81,7 +81,7 @@ describe('DonationBox — Stripe return flow', () => {
     await waitFor(() => {
       expect(screen.getByText('Wielkie dzięki!')).toBeInTheDocument();
     });
-    expect(screen.getByText('Wpłata potwierdzona, a dostęp Patrona jest aktywny.')).toBeInTheDocument();
+    expect(screen.getByText('Wpłata potwierdzona. Dziękuję za wsparcie!')).toBeInTheDocument();
 
     // No internal jargon or pending-style captions leak to the user.
     expect(document.body.textContent).not.toMatch(/webhook/i);

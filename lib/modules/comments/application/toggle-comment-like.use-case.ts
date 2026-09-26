@@ -40,9 +40,7 @@ export async function toggleCommentLike(
   if (!CommentPolicy.canReactToComment(actor, accessResult.data)) {
     return fail({
       type: "FORBIDDEN",
-      message: accessResult.data.reason === "PATRON_REQUIRED"
-        ? "Interakcje pod tym filmem są dostępne tylko dla Patronów."
-        : "Brak dostępu do interakcji pod tym filmem."
+      message: "Brak dostępu do interakcji pod tym filmem."
     });
   }
 

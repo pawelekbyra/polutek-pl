@@ -1,36 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function PageShellSkeleton() {
-  return (
-    <div className="flex flex-col min-h-screen">
-      <div className="h-14 border-b flex items-center px-4 gap-4">
-        <Skeleton className="h-8 w-8 rounded-full" />
-        <Skeleton className="h-6 w-32" />
-        <div className="flex-1" />
-        <Skeleton className="h-8 w-24" />
-      </div>
-      <div className="flex-1 p-4 md:p-8">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <Skeleton className="h-10 w-1/3" />
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Skeleton className="h-32 rounded-xl" />
-            <Skeleton className="h-32 rounded-xl" />
-            <Skeleton className="h-32 rounded-xl" />
-            <Skeleton className="h-32 rounded-xl" />
-          </div>
-          <Skeleton className="h-[400px] w-full rounded-xl" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Standing in for the public home/channel shell (Navbar + Hero player card +
- * comments card + sidebar playlist). It mirrors the real layout's tokens,
- * container widths, card frames and element proportions so the hand-off from
- * skeleton to hydrated content lands without a colour flash or geometry jump.
- */
 export function HomePageSkeleton() {
   return (
     <div className="public-visual-shell flex min-h-screen flex-col bg-[var(--chan-nav)]">
@@ -175,12 +144,6 @@ export function ChannelPageSkeleton() {
   );
 }
 
-export function PlayerSkeleton() {
-  return (
-    <div aria-hidden="true" className="app-skeleton aspect-video w-full rounded-[14px] bg-neutral-200/70 relative isolate overflow-hidden" />
-  );
-}
-
 export function VideoCardSkeleton() {
   // Mirrors ChannelVideoCard: a rounded-[13px] thumbnail then title + meta.
   // The real card has no avatar, so the placeholder must not draw one either.
@@ -201,50 +164,6 @@ export function VideoGridSkeleton({ count = 8 }: { count?: number }) {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-8 py-7">
       {Array.from({ length: count }).map((_, i) => (
         <VideoCardSkeleton key={i} />
-      ))}
-    </div>
-  );
-}
-
-export function SidebarPlaylistSkeleton() {
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between px-2">
-        <Skeleton className="h-6 w-32" />
-        <Skeleton className="h-4 w-16" />
-      </div>
-      <div className="space-y-2">
-        {[1, 2, 3, 4, 5, 6].map(i => (
-          <div key={i} className="flex gap-3 p-2">
-            <Skeleton className="w-32 aspect-video rounded-lg shrink-0" />
-            <div className="flex-1 space-y-2 py-1">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-3 w-2/3" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-export function TipsListSkeleton() {
-  return (
-    <div className="space-y-3">
-      {[1, 2, 3].map(i => (
-        <div
-          key={i}
-          className="flex items-center justify-between gap-4 rounded-[18px] border border-[var(--cm-line-80)] bg-[var(--chan-card)] p-5"
-        >
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-11 w-11 shrink-0 rounded-full" />
-            <div className="space-y-2">
-              <Skeleton className="h-3 w-28" />
-              <Skeleton className="h-4 w-40" />
-            </div>
-          </div>
-          <Skeleton className="h-5 w-20" />
-        </div>
       ))}
     </div>
   );

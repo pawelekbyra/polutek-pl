@@ -156,7 +156,6 @@ function ChannelHomeContent({
   // The server computed the viewer's like/dislike only for the video it rendered;
   // after a shallow switch Hero fetches it for the newly selected video itself.
   const serverInteractionVideoId = resolveVideoId(currentVideoId);
-  const viewerIsPatron = userProfile?.role === 'ADMIN' || userProfile?.isPatronDecorative === true;
   const activeTab = selectionState.activeTab;
   const mounted = useClientReady();
   const preloader = useAppPreload();
@@ -304,7 +303,6 @@ function ChannelHomeContent({
   const commonSidebarProps = {
     sortedVideos,
     selectedVideoId: selectedVideo.id,
-    viewerIsPatron,
     t,
     language,
     mounted,
@@ -391,7 +389,7 @@ function ChannelHomeContent({
               <SidebarPlaylist {...commonSidebarProps} showSupportBox={false} />
             </aside>
             <div className="lg:shrink-0">
-              <SidebarSupportBox sortedVideos={sortedVideos} viewerIsPatron={viewerIsPatron} />
+              <SidebarSupportBox sortedVideos={sortedVideos} />
             </div>
           </div>
         </div>

@@ -83,8 +83,9 @@ describe("#1104 search/sidebar cleanup contracts", () => {
     expect(sidebar).toContain("acquireSidebarLayout(viewerKey)");
     expect(sidebar).toContain("releaseSidebarLayout(viewerKey, request)");
     expect(sidebar).toContain("[authLoaded, authUserId, isSignedIn]");
-    expect(sidebar).toContain("? !(isSignedIn && viewerIsPatron)");
-    expect(sidebar).toContain('? !isSignedIn');
+    // Fallback locks: PATRON and LOGGED_IN only need sign-in (CLAUDE.md §4.4).
+    expect(sidebar).toContain('isLocked: v.tier !== "PUBLIC" && !isSignedIn');
+    expect(sidebar).not.toContain("viewerIsPatron");
     expect(sidebar).not.toContain("currentVideoId=${selectedVideoId");
     expect(sidebar).not.toContain("window.scrollTo");
   });

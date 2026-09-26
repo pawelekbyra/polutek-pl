@@ -1,7 +1,6 @@
 export type PlaybackPlanStatus =
   | "READY"
   | "LOGIN_REQUIRED"
-  | "PATRON_REQUIRED"
   | "VIDEO_NOT_READY"
   | "NO_PRIMARY_ASSET"
   | "PROCESSING"

@@ -30,7 +30,7 @@ describe('listCommentReplies public read access', () => {
   });
 
   it('allows guests to read replies when video access is gated by patron status', async () => {
-    vi.mocked(checkVideoAccess).mockResolvedValue(ok({ hasAccess: false, reason: 'PATRON_REQUIRED' } as any));
+    vi.mocked(checkVideoAccess).mockResolvedValue(ok({ hasAccess: false, reason: 'LOGIN_REQUIRED' } as any));
 
     const result = await listCommentReplies(
       { commentId: parentComment.id, limit: 10 },

@@ -47,9 +47,7 @@ export async function reportComment(
   if (!CommentPolicy.canReportComment(actor, accessResult.data)) {
       return fail({
           type: "FORBIDDEN",
-          message: accessResult.data.reason === "PATRON_REQUIRED"
-            ? "Zgłaszanie komentarzy pod tym filmem jest dostępne tylko dla Patronów."
-            : "Brak dostępu do zgłaszania komentarzy pod tym filmem."
+          message: "Brak dostępu do zgłaszania komentarzy pod tym filmem."
       });
   }
 

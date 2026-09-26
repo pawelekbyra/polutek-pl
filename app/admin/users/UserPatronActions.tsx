@@ -33,21 +33,21 @@ const actionCopy: Record<PatronAction, {
 }> = {
   grant: {
     buttonLabel: "Nadaj Patrona",
-    title: "Potwierdź nadanie dostępu Patrona",
+    title: "Potwierdź nadanie statusu Patrona",
     description: "Ta akcja utworzy lub aktywuje uprawnienie PatronGrant dla użytkownika.",
-    effect: "Efekt dostępu: użytkownik otrzyma dostęp Patrona i będzie mógł korzystać z odtwarzania premium oraz uprawnień komentowania dla patronów.",
+    effect: "Efekt: użytkownik dostanie odznakę Patrona. Dostęp do filmów się nie zmienia — wszystkie są dostępne po zalogowaniu.",
     confirmLabel: "Potwierdź nadanie",
     success: "Nadano status Patrona.",
-    pending: "Nadaję dostęp…",
+    pending: "Nadaję status…",
   },
   revoke: {
     buttonLabel: "Cofnij Patrona",
-    title: "Potwierdź cofnięcie dostępu Patrona",
+    title: "Potwierdź cofnięcie statusu Patrona",
     description: "Ta akcja cofnie aktywne uprawnienie PatronGrant dla użytkownika.",
-    effect: "Efekt dostępu: użytkownik straci dostęp Patrona, co może zablokować odtwarzanie premium oraz uprawnienia komentowania/reagowania dla patronów.",
-    confirmLabel: "Cofnij dostęp Patrona",
+    effect: "Efekt: użytkownik straci odznakę Patrona. Dostęp do filmów się nie zmienia.",
+    confirmLabel: "Cofnij status Patrona",
     success: "Cofnięto status Patrona.",
-    pending: "Cofam dostęp…",
+    pending: "Cofam status…",
   },
 };
 
@@ -175,10 +175,10 @@ export function UserPatronActions({ userId, isPatron, onActionComplete }: UserPa
                     : "border-amber-200 bg-amber-50 text-amber-900"
                 }`}
               >
-                <p className="font-bold">Efekt dostępu przed potwierdzeniem</p>
+                <p className="font-bold">Efekt przed potwierdzeniem</p>
                 <p>{currentCopy.effect}</p>
                 <p className="mt-2 text-xs">
-                  Źródłem prawdy dostępu pozostaje aktywne uprawnienie PatronGrant. Płatność oraz newsletter/subskrypcja nie są źródłem prawdy dostępu.
+                  Status Patrona wynika wyłącznie z aktywnego uprawnienia PatronGrant (płatność ani newsletter go nie nadają).
                 </p>
               </div>
 
@@ -193,7 +193,7 @@ export function UserPatronActions({ userId, isPatron, onActionComplete }: UserPa
                 required
                 rows={4}
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                placeholder="Wpisz konkretny powód ręcznej zmiany dostępu…"
+                placeholder="Wpisz konkretny powód ręcznej zmiany statusu…"
               />
               {!trimmedReason && (
                 <p className="text-xs text-muted-foreground">Wpisz niepusty powód, aby odblokować potwierdzenie.</p>

@@ -12,13 +12,15 @@ function withoutComments(value: string) {
 }
 
 describe('access source contract', () => {
-  it('keeps patron video access tied to grant status instead of cache flags', () => {
+  it('keeps video access independent of payments and patron cache flags', () => {
     const code = withoutComments(
       source('lib/modules/access/application/check-video-access.use-case.ts'),
     );
 
-    expect(code).toContain('getPatronStatus');
-    expect(code).toContain('activeGrants.length > 0');
+    // Support grants nothing (CLAUDE.md §4.4): access must not read grants or payments.
+    expect(code).not.toContain('getPatronStatus');
+    expect(code).not.toContain('patronGrant');
+    expect(code).not.toContain('activeGrants');
     expect(code).not.toMatch(/\bactor\.isPatron\b/);
     expect(code).not.toMatch(/\buser\.isPatron\b/);
     expect(code).not.toMatch(/\buser\.patronSince\b/);

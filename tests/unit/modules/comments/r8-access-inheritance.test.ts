@@ -98,7 +98,7 @@ describe('R8 Comments Access and Permissions', () => {
 
   describe('Patron-only Video Inheritance', () => {
     beforeEach(() => {
-        (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'PATRON_REQUIRED' } });
+        (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'LOGIN_REQUIRED' } });
     });
 
     it('allows guest to list comments on patron-only video but blocks interaction', async () => {

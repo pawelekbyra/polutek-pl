@@ -275,7 +275,7 @@ describe('API Contracts', () => {
       vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' } as any);
 
       const mockPlaybackPlan = {
-          access: { allowed: false, reason: 'PATRON_REQUIRED', requiredTier: 'PATRON' },
+          access: { allowed: false, reason: 'LOGIN_REQUIRED', requiredTier: 'PATRON' },
           diagnostics: { warnings: [] },
           tracking: {}
       };
@@ -290,7 +290,7 @@ describe('API Contracts', () => {
       expect(data).toMatchObject({
         hasAccess: false,
         access: {
-            reason: 'PATRON_REQUIRED',
+            reason: 'LOGIN_REQUIRED',
             requiredTier: 'PATRON'
         }
       });

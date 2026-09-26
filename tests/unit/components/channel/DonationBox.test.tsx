@@ -42,9 +42,7 @@ vi.mock('@/app/components/LanguageContext', () => ({
     language: 'pl',
     t: {
       currency: 'PLN',
-      pleaseAcceptTerms: 'Zaakceptuj regulamin, aby otrzymać dostęp do Strefy Fenkju',
-      acceptWithdrawal: 'Wyrażam zgodę na natychmiastowy dostęp i utratę prawa odstąpienia',
-      pleaseAcceptWithdrawal: 'Potwierdź zgodę na natychmiastowy dostęp i utratę prawa odstąpienia',
+      pleaseAcceptTerms: 'Zaakceptuj regulamin i politykę prywatności',
       tipTheGuy: 'Wspieram',
     },
   }),
@@ -75,44 +73,21 @@ describe('DonationBox', () => {
     vi.clearAllMocks();
   });
 
-  it('renders the access-granting copy and a fixed, non-editable amount for a non-patron viewer', async () => {
-    const { container } = renderDonationBox({ viewerIsPatron: false });
-
-    expect(container.textContent).toContain('Jednorazowe wsparcie pomaga rozwijać kanał i odblokowuje dożywotni dostęp');
-    expect(screen.getByText('Wspieraj tworzenie wartościowych treści')).toBeInTheDocument();
-    expect(
-      screen.getByText(/Twoje wsparcie pomaga w rozwoju kanału/),
-    ).toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(screen.getByText('20')).toBeInTheDocument();
-    });
-    expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument();
-  });
-
-  it('renders the tip-gate variant and an editable amount for an existing patron', async () => {
-    const { container } = renderDonationBox({ viewerIsPatron: true });
+  it('renders the tip jar, promises nothing in return and starts with an empty free amount', async () => {
+    const { container } = renderDonationBox();
 
     expect(screen.getByText('Bramka Napiwkowa 💰')).toBeInTheDocument();
-    expect(screen.getByText('Nic tu nie kupujesz. Tu się tylko dziękuje.')).toBeInTheDocument();
-    // The explanation is visible copy here (not sr-only as in the non-patron variant) and must
-    // keep stating that this tip unlocks nothing.
-    expect(container.textContent).toContain('Tutaj nie kupujesz absolutnie niczego');
-    expect(container.textContent).toContain('Zero nowych obietnic — masz już wszystko');
-    // The gate's sales bullets must not leak into the tip jar.
-    expect(container.textContent).not.toContain('Dostęp do specjalnych materiałów');
+    expect(container.textContent).toContain('Bez wsparcia widzów tego projektu by nie było. Dziękuję.');
+    // Support is a gift (CLAUDE.md §4.10): no access/benefit promises anywhere in the box.
+    expect(container.textContent).not.toMatch(/Strefy Fenkjuu|dożywotni|Dostęp do specjalnych materiałów/);
 
     await waitFor(() => {
-      expect(screen.getByText('Wpisz kwotę napiwku')).toBeInTheDocument();
       expect(screen.getByLabelText('Wpisz kwotę napiwku')).toBeInTheDocument();
     });
-
-    // The amount field must start empty (just the cursor/placeholder) rather than
-    // pre-filled with a suggested amount — a patron picks their own amount freely.
     expect(screen.getByLabelText('Wpisz kwotę napiwku')).toHaveValue(null);
   });
 
-  it('requires the withdrawal-consent checkbox separately from the Terms/Privacy checkbox before checkout proceeds', async () => {
+  it('requires only the Terms/Privacy checkbox before checkout proceeds', async () => {
     global.fetch = vi.fn().mockImplementation((url: string) => {
       if (url === '/api/checkout/create-intent') {
         return Promise.resolve({ ok: true, json: async () => ({ clientSecret: 'cs_test', paymentId: 'pay_1' }) });
@@ -121,41 +96,21 @@ describe('DonationBox', () => {
         ok: true,
         json: async () => ({
           limits: { PLN: { minAmount: 10 }, USD: { minAmount: 10 }, EUR: { minAmount: 10 }, CHF: { minAmount: 10 }, GBP: { minAmount: 10 } },
-          patronThresholds: { PLN: { threshold: 20 }, USD: { threshold: 20 }, EUR: { threshold: 20 }, CHF: { threshold: 20 }, GBP: { threshold: 20 } },
         }),
       });
     }) as unknown as typeof fetch;
 
-    const { container } = renderDonationBox({ viewerIsPatron: false });
-    const submitButton = screen.getByText('Wspieram').closest('button')!;
-    // Wait for the button to actually become clickable, not just for the amount text to
-    // appear — isInitialLoading (which alone gates the disabled attribute at this point)
-    // can still be true for a render or two after the amount field already shows "20",
-    // since setAmount() and setIsInitialLoading(false) land in separate promise-callback
-    // flushes. A click on a still-disabled button is silently swallowed by the DOM, which
-    // made this assertion flaky before this wait was tied to the button itself.
-    await waitFor(() => {
-      expect(screen.getByText('20')).toBeInTheDocument();
-      expect(submitButton).not.toBeDisabled();
-    });
+    const { container } = renderDonationBox();
+    const submitButton = screen.getByText('Wyślij napiwek').closest('button')!;
+    fireEvent.change(await screen.findByLabelText('Wpisz kwotę napiwku'), { target: { value: '25' } });
+    await waitFor(() => expect(submitButton).not.toBeDisabled());
 
-    const termsCheckbox = container.querySelector('#donation-accept-terms')!;
-    const withdrawalCheckbox = container.querySelector('#donation-accept-withdrawal')!;
-
-    // Neither checkbox checked yet: clicking submit surfaces the Terms error first.
     fireEvent.click(submitButton);
-    expect(await screen.findByText('Zaakceptuj regulamin, aby otrzymać dostęp do Strefy Fenkju')).toBeInTheDocument();
+    expect(await screen.findByText('Zaakceptuj regulamin i politykę prywatności')).toBeInTheDocument();
     expect(global.fetch).not.toHaveBeenCalledWith('/api/checkout/create-intent', expect.anything());
+    expect(container.querySelector('#donation-accept-withdrawal')).toBeNull();
 
-    // Accepting only the Terms/Privacy checkbox is not enough — the separate withdrawal
-    // consent (required by art. 38(1)(13) of the Polish Consumer Rights Act) must also be given.
-    fireEvent.click(termsCheckbox);
-    fireEvent.click(submitButton);
-    expect(await screen.findByText('Potwierdź zgodę na natychmiastowy dostęp i utratę prawa odstąpienia')).toBeInTheDocument();
-    expect(global.fetch).not.toHaveBeenCalledWith('/api/checkout/create-intent', expect.anything());
-
-    // With both explicit consents given, checkout proceeds.
-    fireEvent.click(withdrawalCheckbox);
+    fireEvent.click(container.querySelector('#donation-accept-terms')!);
     fireEvent.click(submitButton);
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith('/api/checkout/create-intent', expect.anything());

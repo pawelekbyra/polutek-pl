@@ -9,7 +9,7 @@ describe('CommentPolicy Boundary', () => {
   const admin: Actor = { type: 'admin', userId: 'a1' };
 
   const accessAllowed: AccessDecisionDto = { hasAccess: true };
-  const accessDeniedPatron: AccessDecisionDto = { hasAccess: false, reason: 'PATRON_REQUIRED' };
+  const accessDeniedPatron: AccessDecisionDto = { hasAccess: false, reason: 'LOGIN_REQUIRED' };
   const accessDeniedLogin: AccessDecisionDto = { hasAccess: false, reason: 'LOGIN_REQUIRED' };
 
   describe('canReactToVideo', () => {

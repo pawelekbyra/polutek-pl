@@ -17,15 +17,11 @@ describe("access lock overlay source contract", () => {
     expect(source).toContain("Zaloguj się");
   });
 
-  it("keeps PATRON_REQUIRED on the patron branded lock path", () => {
+  it("keeps the amber branded treatment for the coming-soon placeholder", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
 
-    expect(source).toContain('const isPatron = state === "PATRON_REQUIRED"');
-    expect(source).toContain('isSignedIn={isSignedIn === true}');
-    expect(source).toContain('href="#donations"');
-    expect(source).toContain("scrollIntoView");
-    expect(source).toContain("Odblokuj dostęp");
-    expect(source).toContain("Fenkjuu");
+    expect(source).toContain('isComingSoon ? styles.patron : styles.login');
+    expect(source).toContain("ComingSoonScene");
   });
 
   it("uses deterministic, reduced-motion-safe ambient art", () => {

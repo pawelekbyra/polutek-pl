@@ -45,7 +45,7 @@ describe('PlaybackService denied plans never leak subtitle URLs', () => {
     expect(plan.player.textTracks).toBeUndefined();
   });
 
-  it('omits subtitle text tracks from a PATRON_REQUIRED denied plan', async () => {
+  it('omits subtitle text tracks from a LOGIN_REQUIRED denied plan', async () => {
     const videoId = 'video-2';
     mockPrisma.video.findUnique.mockResolvedValue({
       id: videoId,
@@ -57,7 +57,7 @@ describe('PlaybackService denied plans never leak subtitle URLs', () => {
 
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
-      data: { hasAccess: false, reason: 'PATRON_REQUIRED', requiredTier: 'PATRON' },
+      data: { hasAccess: false, reason: 'LOGIN_REQUIRED', requiredTier: 'PATRON' },
     } as any);
 
     const plan = await PlaybackService.createPlaybackPlanWithContext(videoId, ctx);

@@ -6,7 +6,6 @@ import type {
 const SAFE_PLAYBACK_STATES: PlaybackPlanStatus[] = [
   "READY",
   "LOGIN_REQUIRED",
-  "PATRON_REQUIRED",
   "VIDEO_NOT_READY",
   "NO_PRIMARY_ASSET",
   "PROCESSING",
@@ -16,7 +15,6 @@ const SAFE_PLAYBACK_STATES: PlaybackPlanStatus[] = [
 
 export const BLOCKED_PLAYBACK_STATES = new Set<PlaybackPlanStatus>([
   "LOGIN_REQUIRED",
-  "PATRON_REQUIRED",
   "VIDEO_NOT_READY",
   "NO_PRIMARY_ASSET",
   "PROCESSING",
@@ -40,16 +38,9 @@ export const PLAYBACK_PLAN_STATE_MESSAGES: Record<
   LOGIN_REQUIRED: {
     title: "Zaloguj się, aby obejrzeć materiał.",
     description:
-      "Ten film jest dostępny po zalogowaniu. Samo logowanie nie nadaje patronatu ani zgody mailingowej.",
+      "Ten film jest dostępny po zalogowaniu. Konto jest bezpłatne.",
     action: "login",
     actionLabel: "Zaloguj się",
-  },
-  PATRON_REQUIRED: {
-    title: "Materiał dla Patronów.",
-    description:
-      "Dostęp patrona jest nagrodą za kwalifikujące jednorazowe wsparcie. To nie jest subskrypcja cykliczna.",
-    action: "support",
-    actionLabel: "Wesprzyj jednorazowo",
   },
   VIDEO_NOT_READY: {
     title: "Materiał jest przygotowywany.",
@@ -92,16 +83,9 @@ export const PLAYBACK_PLAN_STATE_MESSAGES_EN: typeof PLAYBACK_PLAN_STATE_MESSAGE
   LOGIN_REQUIRED: {
     title: "Sign in to watch this video.",
     description:
-      "This video is available after signing in. Signing in does not grant Patron access or mailing consent.",
+      "This video is available after signing in. An account is free.",
     action: "login",
     actionLabel: "Sign in",
-  },
-  PATRON_REQUIRED: {
-    title: "A release for Patrons.",
-    description:
-      "Patron access is a reward for a qualifying one-time tip. It is not a recurring subscription.",
-    action: "support",
-    actionLabel: "Support once",
   },
   VIDEO_NOT_READY: {
     title: "This video is being prepared.",

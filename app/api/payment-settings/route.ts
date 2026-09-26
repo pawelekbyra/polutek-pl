@@ -10,8 +10,9 @@ export async function GET() {
     const limits = await getPaymentCurrencyLimits();
 
     // Two distinct minimums, both per-currency and admin-configurable:
-    //  - patronThresholds: the fixed gate price a non-patron must pay to unlock lifetime access.
-    //  - patronBoxMinimums: the smallest amount an existing patron may add via the free-amount box.
+    //  - patronThresholds: a tip at or above this records a PatronGrant (supporter badge only —
+    //    it unlocks nothing, CLAUDE.md §4.1).
+    //  - patronBoxMinimums: the smallest tip the free-amount box accepts.
     const patronThresholds = Object.fromEntries(
       SUPPORTED_CURRENCIES.map((currency: SupportedCurrency) => [
         currency,

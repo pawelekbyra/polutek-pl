@@ -6,21 +6,23 @@ import { SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
 import { detectDefaultCurrency } from "@/lib/payments/detect-currency";
 import { useLanguage } from "../LanguageContext";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Heart } from "../icons";
+import { Loader2 } from "../icons";
 import CheckoutModal from "../playlist/CheckoutModal";
 import DonationAmountField from "./DonationAmountField";
 import DonationLegalDialog from "./DonationLegalDialog";
-import { RegulaminContent, PolitykaContent } from "../legal/LegalDocs";
+import {
+  RegulaminContent,
+  PolitykaContent,
+  TermsContentEn,
+  PrivacyContentEn,
+  LEGAL_EFFECTIVE_DATE,
+  LEGAL_EFFECTIVE_DATE_EN,
+} from "../legal/LegalDocs";
+import { getLocalizedHref } from "@/lib/i18n/routing";
 import { useCheckoutFlow, checkoutStripePromise } from "@/lib/hooks/useCheckoutFlow";
 
 interface DonationBoxProps {
   videoTitle?: string;
-  /**
-   * @deprecated Unused since 2026-09-22 — support no longer gates access (see CLAUDE.md), so
-   * every signed-in viewer sees the same tip-jar variant regardless of Patron status. Kept in
-   * the prop type only so existing callers don't need to change; the component ignores it.
-   */
-  viewerIsPatron?: boolean;
   /**
    * "card" (default): the sidebar tip-gate card. "modal": step 1 of the full-page support
    * modal (SupportModal) — same fields and checkout flow, without the card chrome/#donations
@@ -36,11 +38,6 @@ export default function DonationBox({ videoTitle, variant = "card" }: DonationBo
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  // 2026-09-22: support is a voluntary, non-refundable donation that grants nothing (see
-  // CLAUDE.md) — DonationBox always renders the tip-jar variant (free amount, "Bramka
-  // Napiwkowa"), never the old pay-to-unlock variant, for every signed-in viewer.
-  const viewerIsPatron = true;
-
   const [selectedCurrency, setSelectedCurrency] = useState<string>(t.currency);
   // Free-form amount field: the viewer is never buying access, so nothing should look
   // "chosen for them".
@@ -55,7 +52,6 @@ export default function DonationBox({ videoTitle, variant = "card" }: DonationBo
     userEmail,
     isInitialLoading,
     minimums,
-    patronThresholds,
     patronBoxMinimums,
     isTermsAccepted,
     showTermsError,
@@ -74,7 +70,7 @@ export default function DonationBox({ videoTitle, variant = "card" }: DonationBo
   } = useCheckoutFlow({
     isPl,
     logPrefix: "DonationBox",
-    title: videoTitle || "Napiwek / Patron",
+    title: videoTitle || "Napiwek",
     getMinAmountTooLowMessage: useCallback(
       (minAmount: number, currency: string) =>
         isPl
@@ -89,12 +85,9 @@ export default function DonationBox({ videoTitle, variant = "card" }: DonationBo
 
   const currencyKey = selectedCurrency.toUpperCase() as SupportedCurrency;
   const checkoutMinAmount = minimums[currencyKey] ?? minimums.PLN;
-  // patronThreshold/the non-patron branch below are unused now that every viewer gets the
-  // free-amount box minimum (see viewerIsPatron above) — kept only so this file stays a small
-  // diff if the fixed-price gate ever needs to come back.
-  const patronThreshold = patronThresholds[currencyKey] ?? checkoutMinAmount;
-  const patronBoxMin = patronBoxMinimums[currencyKey] ?? checkoutMinAmount;
-  const minAmount = viewerIsPatron ? patronBoxMin : patronThreshold;
+  // Support is a voluntary tip that grants nothing (CLAUDE.md §4.10), so the amount is always
+  // free-form, bounded below by the tip-box minimum.
+  const minAmount = patronBoxMinimums[currencyKey] ?? checkoutMinAmount;
   // Currency switcher is available in both languages; only the pre-selected default differs.
   const availableCurrencies = [...SUPPORTED_CURRENCIES];
   const amountTooLow = typeof amount === "number" && amount < minAmount;
@@ -104,19 +97,12 @@ export default function DonationBox({ videoTitle, variant = "card" }: DonationBo
   useEffect(() => {
     const nextCurrency = detectDefaultCurrency(language);
     setSelectedCurrency(nextCurrency);
-    if (viewerIsPatron) setAmount("");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setAmount("");
   }, [language]);
-
-  // Dead with viewerIsPatron always true (see above) — kept for the same reason as
-  // patronThreshold.
-  useEffect(() => {
-    if (!viewerIsPatron) setAmount(minAmount);
-  }, [viewerIsPatron, minAmount]);
 
   const handleCurrencyChange = (curr: string) => {
     setSelectedCurrency(curr);
-    if (viewerIsPatron) setAmount("");
+    setAmount("");
   };
 
   const onSupport = useCallback(
@@ -155,51 +141,21 @@ export default function DonationBox({ videoTitle, variant = "card" }: DonationBo
     }
   }, [searchParams, onSupport, pathname, userId, isTermsAccepted, amount, minAmount]);
 
-  // Existing patrons get a deliberately different surface. They already own everything the
-  // non-patron box sells, so this variant stops being a sales/access gate and becomes a plain
-  // tip jar — "Bramka Napiwkowa" — with its own name, warmer card treatment and cheerful copy
-  // that promises nothing new. Keep it that way: any benefit-style promise here would be a lie.
-  const isTipGate = viewerIsPatron;
-
+  // A plain tip jar — "Bramka Napiwkowa". It promises nothing in return: any benefit-style
+  // promise here would contradict the Terms (support is a gift, CLAUDE.md §4.10).
   // 💰 rather than 🪙 (COIN): the latter is Unicode 13.0 and rendered as a tofu box on the
   // owner's system, while MONEY BAG has been around since Unicode 6.0 and is widely covered.
-  const title = isTipGate
-    ? (isPl ? "Bramka Napiwkowa 💰" : "The Tip Gate 💰")
-    : (isPl ? "Strefa Fenkjuu 👑" : "Thank You Zone 👑");
-
-  const subtitle = isTipGate
-    ? ""
-    : (isPl
-        ? "Wspieraj tworzenie wartościowych treści"
-        : "Support valuable independent content");
-
-  const bodyCopy = isTipGate
-    ? (isPl
-        ? "Bez wsparcia widzów tego projektu by nie było. Dziękuję."
-        : "This project wouldn't exist without viewers' support. Thank you.")
-    : (isPl
-        ? "Jednorazowe wsparcie pomaga rozwijać kanał i odblokowuje dożywotni dostęp do Strefy Fenkjuu."
-        : "A one-time tip helps grow the channel and unlocks lifetime Thank You Zone access.");
-
-  const bullets: { text: string; emoji?: string }[] = isTipGate
-    ? []
-    : [
-        { text: isPl ? "Twoje wsparcie pomaga w rozwoju kanału" : "Your support helps the channel grow" },
-        { text: isPl ? "Dostęp do specjalnych materiałów" : "Access to special materials" },
-        { text: isPl ? "Wcześniejszy dostęp do nowych filmów" : "Early access to new videos" },
-        { text: isPl ? "Twoje imię w odcinkach dla wspierających" : "Your name in supporter episodes" },
-      ];
+  const title = isPl ? "Bramka Napiwkowa 💰" : "The Tip Gate 💰";
+  const bodyCopy = isPl
+    ? "Bez wsparcia widzów tego projektu by nie było. Dziękuję."
+    : "This project wouldn't exist without viewers' support. Thank you.";
 
   return (
     <div
       id={isModal ? undefined : "donations"}
-      className={isModal ? "group relative" : `group relative my-[10px] mb-3 scroll-mt-20 overflow-hidden rounded-[20px] border p-[22px_24px_18px] ${
-        isTipGate
-          ? "border-[var(--cm-amber-38)] bg-[linear-gradient(168deg,var(--chan-amber-soft),var(--cm-card-92-white)_62%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_1px_2px_rgba(23,23,23,0.03),0_24px_50px_-26px_var(--cm-amber-58)]"
-          : "border-[var(--cm-line-82)] bg-[var(--cm-card-92-white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(23,23,23,0.03),0_24px_50px_-26px_rgba(23,23,23,0.2)]"
-      }`}
+      className={isModal ? "group relative" : "group relative my-[10px] mb-3 scroll-mt-20 overflow-hidden rounded-[20px] border border-[var(--cm-amber-38)] bg-[linear-gradient(168deg,var(--chan-amber-soft),var(--cm-card-92-white)_62%)] p-[22px_24px_18px] shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_1px_2px_rgba(23,23,23,0.03),0_24px_50px_-26px_var(--cm-amber-58)]"}
     >
-      {isModal ? null : isTipGate ? (
+      {!isModal && (
         <>
           {/* Festive ribbon along the very top edge — the tip jar's signature. Sits in the
               card's own padding so it can never collide with the copy underneath. */}
@@ -212,62 +168,22 @@ export default function DonationBox({ videoTitle, variant = "card" }: DonationBo
             className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_20%_0%,var(--cm-amber-38),transparent_62%),radial-gradient(circle_at_84%_0%,var(--cm-blue-10),transparent_52%)]"
           />
         </>
-      ) : (
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_18%_0%,var(--cm-amber-17),transparent_58%),radial-gradient(circle_at_82%_0%,var(--cm-blue-7),transparent_55%)]"
-        />
       )}
       <div className="relative">
-        {isTipGate ? (
-          <>
-            <div className="mb-3 flex items-center gap-4">
-              <span
-                aria-hidden="true"
-                className="relative flex h-12 w-12 shrink-0 -rotate-6 items-center justify-center rounded-full bg-[linear-gradient(140deg,var(--chan-amber-bright),var(--chan-amber))] text-[26px] shadow-[0_8px_20px_-6px_var(--cm-amber-58),inset_0_1px_0_rgba(255,255,255,0.45)] transition-transform duration-300 ease-out group-hover:rotate-6 group-hover:scale-110 motion-reduce:transition-none motion-reduce:group-hover:-rotate-6 motion-reduce:group-hover:scale-100"
-              >
-                🐷
-              </span>
-              <div className="min-w-0">
-                <h4 className="font-brand m-0 text-[21px] font-extrabold leading-tight tracking-[-0.035em] text-[var(--chan-ink)]">
-                  {title}
-                </h4>
-              </div>
-            </div>
-            <p className="m-[0_0_14px] font-sans text-[13px] leading-[1.6] text-[var(--chan-body)]">{bodyCopy}</p>
-          </>
-        ) : (
-          <>
-            <div className="mb-1.5 flex items-center gap-4">
-              <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-[linear-gradient(140deg,var(--chan-amber-bright),var(--chan-amber))] text-[var(--chan-amber-ink)] shadow-[0_8px_20px_-6px_var(--cm-amber-58),inset_0_1px_0_rgba(255,255,255,0.45)]">
-                <Heart size={24} className="fill-current" />
-              </span>
-              <h4 className="font-brand m-0 text-[21px] font-extrabold leading-tight tracking-[-0.035em] text-[var(--chan-ink)]">
-                <span>{title}</span>
-              </h4>
-            </div>
-            <p className="m-[-22px_0_16px_64px] font-sans text-[13px] font-medium tracking-[-0.015em] text-[var(--chan-body)]">{subtitle}</p>
-            <p className="sr-only">{bodyCopy}</p>
-          </>
-        )}
-
-        {bullets.length > 0 && (
-          <ul className="m-[0_0_16px] flex flex-col gap-[9px] font-sans text-[13px]">
-            {bullets.map((bullet) => (
-              <li
-                key={bullet.text}
-                className="flex items-start gap-[9px] text-[var(--chan-ink)]"
-              >
-                {bullet.emoji ? (
-                  <span aria-hidden="true" className="shrink-0 text-[15px] leading-[1.25]">{bullet.emoji}</span>
-                ) : (
-                  <span className="mt-[2px] flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full bg-[var(--chan-amber)] text-[9px] font-black text-[var(--chan-amber-ink)] shadow-[0_2px_5px_-1px_var(--cm-amber-48)]">✓</span>
-                )}
-                {bullet.text}
-              </li>
-            ))}
-          </ul>
-        )}
+        <div className="mb-3 flex items-center gap-4">
+          <span
+            aria-hidden="true"
+            className="relative flex h-12 w-12 shrink-0 -rotate-6 items-center justify-center rounded-full bg-[linear-gradient(140deg,var(--chan-amber-bright),var(--chan-amber))] text-[26px] shadow-[0_8px_20px_-6px_var(--cm-amber-58),inset_0_1px_0_rgba(255,255,255,0.45)] transition-transform duration-300 ease-out group-hover:rotate-6 group-hover:scale-110 motion-reduce:transition-none motion-reduce:group-hover:-rotate-6 motion-reduce:group-hover:scale-100"
+          >
+            🐷
+          </span>
+          <div className="min-w-0">
+            <h4 className="font-brand m-0 text-[21px] font-extrabold leading-tight tracking-[-0.035em] text-[var(--chan-ink)]">
+              {title}
+            </h4>
+          </div>
+        </div>
+        <p className="m-[0_0_14px] font-sans text-[13px] leading-[1.6] text-[var(--chan-body)]">{bodyCopy}</p>
 
         {showTermsError && (
           <p id={termsErrorId} role="alert" className="mb-2 text-[11px] font-bold uppercase tracking-widest text-destructive">
@@ -276,7 +192,6 @@ export default function DonationBox({ videoTitle, variant = "card" }: DonationBo
         )}
 
         <DonationAmountField
-          viewerIsPatron={viewerIsPatron}
           isPl={isPl}
           amount={amount}
           setAmount={setAmount}
@@ -305,7 +220,7 @@ export default function DonationBox({ videoTitle, variant = "card" }: DonationBo
             <span>
               {isModal
                 ? (isPl ? "Dalej — płatność" : "Continue to payment")
-                : isTipGate ? (isPl ? "Wyślij napiwek" : "Tip the Guy") : t.tipTheGuy}
+                : (isPl ? "Wyślij napiwek" : "Tip the Guy")}
             </span>
           )}
         </button>
@@ -355,7 +270,6 @@ export default function DonationBox({ videoTitle, variant = "card" }: DonationBo
           amount={amount}
           selectedCurrency={selectedCurrency}
           videoTitle={videoTitle}
-          viewerIsPatron={viewerIsPatron}
           clientSecret={clientSecret}
           paymentId={paymentId}
           paymentUiStatus={paymentUiStatus}
@@ -372,22 +286,22 @@ export default function DonationBox({ videoTitle, variant = "card" }: DonationBo
         open={isRegulaminOpen}
         onOpenChange={setIsRegulaminOpen}
         title={isPl ? "Regulamin serwisu" : "Terms of Service"}
-        intro={isPl ? undefined : "The full legal document is available in Polish."}
-        href="/regulamin"
+        effectiveDate={isPl ? LEGAL_EFFECTIVE_DATE : LEGAL_EFFECTIVE_DATE_EN}
+        href={getLocalizedHref(isPl ? "pl" : "en", "terms")}
         hrefLabel={isPl ? "Otwórz regulamin na osobnej stronie" : "Open the full terms on a separate page"}
       >
-        <RegulaminContent />
+        {isPl ? <RegulaminContent /> : <TermsContentEn />}
       </DonationLegalDialog>
 
       <DonationLegalDialog
         open={isPolitykaOpen}
         onOpenChange={setIsPolitykaOpen}
         title={isPl ? "Polityka Prywatności" : "Privacy Policy"}
-        intro={isPl ? undefined : "The full legal document is available in Polish."}
-        href="/polityka-prywatnosci"
+        effectiveDate={isPl ? LEGAL_EFFECTIVE_DATE : LEGAL_EFFECTIVE_DATE_EN}
+        href={getLocalizedHref(isPl ? "pl" : "en", "privacy")}
         hrefLabel={isPl ? "Otwórz politykę na osobnej stronie" : "Open the full privacy policy on a separate page"}
       >
-        <PolitykaContent />
+        {isPl ? <PolitykaContent /> : <PrivacyContentEn />}
       </DonationLegalDialog>
     </div>
   );

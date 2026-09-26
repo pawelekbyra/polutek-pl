@@ -55,14 +55,14 @@ describe('GET /api/access', () => {
   it('still returns 200 with the denial reason/tier when access is denied (not an HTTP error)', async () => {
     vi.mocked(checkVideoAccess).mockResolvedValue({
       ok: true,
-      data: { hasAccess: false, reason: 'PATRON_REQUIRED', requiredTier: AccessTier.PATRON },
+      data: { hasAccess: false, reason: 'LOGIN_REQUIRED', requiredTier: AccessTier.PATRON },
     } as any);
 
     const res = await GET(makeRequest('?videoId=vid_1'));
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body).toEqual({ hasAccess: false, reason: 'PATRON_REQUIRED', requiredTier: AccessTier.PATRON });
+    expect(body).toEqual({ hasAccess: false, reason: 'LOGIN_REQUIRED', requiredTier: AccessTier.PATRON });
   });
 
   it('returns a 500 if checkVideoAccess throws unexpectedly', async () => {

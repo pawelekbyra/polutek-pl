@@ -18,7 +18,7 @@ function getStatusCaption(paymentUiStatus: string | null | undefined, isPl: bool
     case 'SUCCEEDED':
       return isPl ? 'Płatność potwierdzona' : 'Payment confirmed';
     case 'ACCESS_SYNC_PENDING':
-      return isPl ? 'Finalizowanie dostępu' : 'Finalizing access';
+      return isPl ? 'Płatność potwierdzona' : 'Payment confirmed';
     case 'FAILED_CANCELED':
       return isPl ? 'Płatność nieudana' : 'Payment unsuccessful';
     case 'REFUNDED_DISPUTED':
@@ -39,8 +39,6 @@ interface CheckoutModalProps {
   amount: number | '';
   selectedCurrency: string;
   videoTitle?: string;
-  /** True when the signed-in viewer already holds an active Patron grant. */
-  viewerIsPatron?: boolean;
   clientSecret: string | null;
   paymentId?: string | null;
   paymentUiStatus?: string | null;
@@ -60,7 +58,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   amount,
   selectedCurrency,
   videoTitle,
-  viewerIsPatron = false,
   clientSecret,
   paymentId,
   paymentUiStatus,
@@ -99,7 +96,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
             amount={amount}
             selectedCurrency={selectedCurrency}
             videoTitle={videoTitle}
-            viewerIsPatron={viewerIsPatron}
           />
 
           {/* Right Column (Form Area) */}
@@ -155,10 +151,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                           : (language === 'pl' ? 'Wielkie dzięki!' : 'Thank you!')}
                       </DialogTitle>
                       <p className="mx-auto max-w-sm text-lg leading-relaxed text-[var(--chan-muted)]">
-                        {paymentUiStatus === 'SUCCEEDED'
-                          ? (language === 'pl' ? 'Wpłata potwierdzona, a dostęp Patrona jest aktywny.' : 'Payment confirmed and Patron access is active.')
-                          : paymentUiStatus === 'ACCESS_SYNC_PENDING'
-                            ? (language === 'pl' ? 'Wpłata potwierdzona. Kończymy synchronizację dostępu Patrona.' : 'Payment confirmed. Patron access sync is finishing.')
+                        {paymentUiStatus === 'SUCCEEDED' || paymentUiStatus === 'ACCESS_SYNC_PENDING'
+                          ? (language === 'pl' ? 'Wpłata potwierdzona. Dziękuję za wsparcie!' : 'Payment confirmed. Thank you for your support!')
                             : paymentUiStatus === 'FAILED_CANCELED'
                               ? (language === 'pl' ? 'Płatność nie została ukończona albo została anulowana.' : 'The payment was not completed or was canceled.')
                               : paymentUiStatus === 'REFUNDED_DISPUTED'
@@ -207,9 +201,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
                         aria-labelledby resolves text from a visually hidden element. */}
                     <div className="mb-6 hidden md:block">
                       <DialogTitle className="font-brand text-2xl font-bold leading-tight text-[var(--chan-ink)]">
-                        {viewerIsPatron
-                          ? (language === 'pl' ? 'Przekaż jednorazowy napiwek' : 'Send a one-time tip')
-                          : (language === 'pl' ? 'Dostęp do Strefy Fenkjuu' : 'Access to the Thank You Zone')}
+                        {language === 'pl' ? 'Przekaż jednorazowy napiwek' : 'Send a one-time tip'}
                       </DialogTitle>
                       <p className="text-sm text-[var(--chan-muted)]">{language === 'pl' ? 'Bezpieczna transakcja obsługiwana przez Stripe.' : 'Secure transaction handled by Stripe.'}</p>
                     </div>

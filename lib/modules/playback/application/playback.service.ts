@@ -19,7 +19,6 @@ export type PlaybackErrorCode =
   | "VIDEO_ARCHIVED"
   | "VIDEO_NOT_PUBLISHED"
   | "LOGIN_REQUIRED"
-  | "PATRON_REQUIRED"
   | "VIDEO_SOURCE_MISSING"
   | "VIDEO_SOURCE_NOT_ALLOWED"
   | "UNKNOWN_PLAYBACK_ERROR";
@@ -61,7 +60,6 @@ function playerFor(video?: { thumbnailUrl?: string | null; title?: string | null
 
 function toStatus(reason?: string): PlaybackPlanStatus {
   if (reason === 'LOGIN_REQUIRED') return 'LOGIN_REQUIRED';
-  if (reason === 'PATRON_REQUIRED') return 'PATRON_REQUIRED';
   if (reason === 'NOT_FOUND' || reason === 'VIDEO_NOT_FOUND') return 'UNAVAILABLE';
   return 'ERROR';
 }

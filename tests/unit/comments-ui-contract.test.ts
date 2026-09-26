@@ -20,14 +20,14 @@ describe('comments UI production contract', () => {
     expect(source).toContain('e.currentTarget.form?.requestSubmit()');
   });
 
-  it('keeps guest sign-in CTA and provides a real Patron CTA link for non-patrons', () => {
+  it('keeps the guest sign-in CTA and never asks for a tip to comment', () => {
     const source = composer();
 
     expect(source).toContain('openAuthModal("sign-in")');
-    expect(source).toContain('isPatronGated && userProfile');
-    expect(source).toContain('href="#donations"');
-    expect(source).toContain('Zostaw napiwek, aby komentować');
-    expect(source).toContain('Leave a tip to comment');
+    // Commenting only needs sign-in (CLAUDE.md §4.4) — no tip/patron gate.
+    expect(source).not.toContain('isPatronGated');
+    expect(source).not.toContain('Zostaw napiwek, aby komentować');
+    expect(source).not.toContain('Leave a tip to comment');
     expect(source).not.toContain('<span className="text-[14px] font-bold text-blue-600 underline underline-offset-4 hover:opacity-80 transition-all text-center">');
   });
 

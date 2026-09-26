@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useId, useState, type MouseEvent } from "react";
-import { useAuth } from "@clerk/nextjs";
+import { useEffect, useId, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Star, Rocket, Gem } from "lucide-react";
+import { Star, Rocket } from "lucide-react";
 import type { PlaybackPlanStatus } from "@/lib/modules/playback";
 import { cn } from "@/lib/utils";
 import { formatPremiereCountdown } from "@/lib/temp-patron-coming-soon";
@@ -13,9 +12,7 @@ import { PlayerStateFrame } from "./PlayerStateFrame";
 import styles from "./AccessLockOverlay.module.css";
 
 // "COMING_SOON" is not a real PlaybackPlanStatus — see lib/temp-patron-coming-soon.ts.
-type AccessLockState =
-  | Extract<PlaybackPlanStatus, "LOGIN_REQUIRED" | "PATRON_REQUIRED">
-  | "COMING_SOON";
+type AccessLockState = Extract<PlaybackPlanStatus, "LOGIN_REQUIRED"> | "COMING_SOON";
 
 interface AccessLockOverlayProps {
   state: AccessLockState;
@@ -24,14 +21,12 @@ interface AccessLockOverlayProps {
 
 export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
   const { language } = useLanguage();
-  const { isSignedIn } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const reduceMotion = useReducedMotion();
   const titleId = useId();
   const isPl = language === "pl";
   const isCompact = variant !== "default";
   const isComingSoon = state === "COMING_SOON";
-  const isPatron = state === "PATRON_REQUIRED" || isComingSoon;
 
   const [countdownNow, setCountdownNow] = useState<Date>(() => new Date());
   useEffect(() => {
@@ -41,28 +36,9 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
   }, [isComingSoon]);
   const countdownLabel = formatPremiereCountdown(isPl, undefined, countdownNow);
 
-  const handleSupport = (event: MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
-    window.dispatchEvent(new CustomEvent("polutek:open-support"));
-    window.requestAnimationFrame(() => {
-      document.getElementById("donations")?.scrollIntoView({
-        behavior: reduceMotion ? "auto" : "smooth",
-        block: "center",
-      });
-    });
-  };
-
   if (isCompact) {
-    const label = isComingSoon
-      ? countdownLabel
-      : isPatron
-        ? isPl
-          ? "Strefa Fenkju"
-          : "Thank You Zone"
-        : isPl
-          ? "Zaloguj się"
-          : "Sign in";
-    const Icon = isComingSoon ? Rocket : isPatron ? Gem : Star;
+    const label = isComingSoon ? countdownLabel : isPl ? "Zaloguj się" : "Sign in";
+    const Icon = isComingSoon ? Rocket : Star;
 
     return (
       <PlayerStateFrame
@@ -72,7 +48,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         <div
           className={cn(
             styles.compact,
-            isPatron ? styles.patron : styles.login,
+            isComingSoon ? styles.patron : styles.login,
             variant === "thumbnailCompact" && styles.compactTiny,
           )}
           role="img"
@@ -90,7 +66,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
   return (
     <PlayerStateFrame className="rounded-[18px]">
       <section
-        className={cn(styles.scene, isPatron ? styles.patron : styles.login)}
+        className={cn(styles.scene, isComingSoon ? styles.patron : styles.login)}
         aria-labelledby={titleId}
       >
         <div className={styles.aurora} aria-hidden="true">
@@ -106,15 +82,6 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             reduceMotion={Boolean(reduceMotion)}
             titleId={titleId}
             countdownLabel={countdownLabel}
-          />
-        ) : isPatron ? (
-          <PatronScene
-            isPl={isPl}
-            isSignedIn={isSignedIn === true}
-            reduceMotion={Boolean(reduceMotion)}
-            titleId={titleId}
-            onSignIn={() => openAuthModal("sign-in")}
-            onSupport={handleSupport}
           />
         ) : (
           <LoginScene
@@ -246,88 +213,6 @@ function ComingSoonScene({
         <span className={styles.ctaLine} aria-hidden="true" />
         <span className={styles.ctaText}>{countdownLabel}</span>
       </motion.div>
-    </div>
-  );
-}
-
-function PatronScene({
-  isPl,
-  isSignedIn,
-  reduceMotion,
-  titleId,
-  onSignIn,
-  onSupport,
-}: {
-  isPl: boolean;
-  isSignedIn: boolean;
-  reduceMotion: boolean;
-  titleId: string;
-  onSignIn: () => void;
-  onSupport: (event: MouseEvent<HTMLAnchorElement>) => void;
-}) {
-  return (
-    <div className={styles.content}>
-      <motion.div
-        initial={reduceMotion ? false : { opacity: 0, scale: 0.6, rotate: 10 }}
-        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-        transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 210, damping: 16 }}
-      >
-        <Gem aria-hidden="true" className={styles.mark} />
-      </motion.div>
-      <h2 id={titleId} className={styles.heading}>
-        <motion.span
-          className={cn(styles.word, styles.wordAmber)}
-          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.1 }}
-        >
-          {isPl ? "Strefa" : "Thank You"}
-        </motion.span>
-        <motion.span
-          className={styles.divider}
-          aria-hidden="true"
-          initial={reduceMotion ? false : { scaleX: 0, opacity: 0 }}
-          animate={{ scaleX: 1, opacity: 1 }}
-          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.22 }}
-        />
-        <motion.span
-          className={cn(styles.word, styles.wordWhite)}
-          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.28 }}
-        >
-          {isPl ? "Fenkjuu" : "Zone"}
-        </motion.span>
-      </h2>
-      {isSignedIn ? (
-        <motion.a
-          href="#donations"
-          onClick={onSupport}
-          className={styles.cta}
-          initial={reduceMotion ? false : { opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduceMotion ? 0 : 0.4, delay: reduceMotion ? 0 : 0.44 }}
-        >
-          <span className={styles.ctaLine} aria-hidden="true" />
-          <span className={styles.ctaText}>
-            {isPl ? "Odblokuj dostęp" : "Unlock access"}
-          </span>
-        </motion.a>
-      ) : (
-        <motion.button
-          type="button"
-          onClick={onSignIn}
-          className={styles.cta}
-          initial={reduceMotion ? false : { opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduceMotion ? 0 : 0.4, delay: reduceMotion ? 0 : 0.44 }}
-        >
-          <span className={styles.ctaLine} aria-hidden="true" />
-          <span className={styles.ctaText}>
-            {isPl ? "Zostań Patronem Projektu" : "Become a Project Patron"}
-          </span>
-        </motion.button>
-      )}
     </div>
   );
 }
