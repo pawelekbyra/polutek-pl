@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ArrowRight, Search, ShieldCheck, Users, Heart, CreditCard, MessageSquare, Download, Filter, Globe, Mail } from "@/app/components/icons";
 import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
+import { AdminStatTile } from "@/app/admin/components/AdminStatTile";
 import { UserPatronActions } from "./UserPatronActions";
 import { logger } from "@/lib/logger";
 import Image from "next/image";
@@ -141,10 +142,10 @@ export default function AdminUsersPage() {
 
         {stats && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <StatCard label="Wszyscy" value={stats.totalUsers} icon={<Users className="h-5 w-5" />} color="blue" />
-            <StatCard label="Patroni" value={stats.patrons} icon={<Heart className="h-5 w-5" />} color="amber" />
-            <StatCard label="Wpłaty" value={stats.totalPayments} icon={<CreditCard className="h-5 w-5" />} color="green" />
-            <StatCard label="Komentarze" value={stats.totalComments} icon={<MessageSquare className="h-5 w-5" />} color="purple" />
+            <AdminStatTile label="Wszyscy" value={stats.totalUsers} icon={<Users className="h-5 w-5" />} color="blue" />
+            <AdminStatTile label="Patroni" value={stats.patrons} icon={<Heart className="h-5 w-5" />} color="amber" />
+            <AdminStatTile label="Wpłaty" value={stats.totalPayments} icon={<CreditCard className="h-5 w-5" />} color="green" />
+            <AdminStatTile label="Komentarze" value={stats.totalComments} icon={<MessageSquare className="h-5 w-5" />} color="purple" />
           </div>
         )}
 
@@ -248,7 +249,7 @@ export default function AdminUsersPage() {
             </div>
         </div>
 
-        <Card className="shadow-sm border-0">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
             <div>
                 <CardTitle className="text-lg flex items-center gap-2">Lista użytkowników</CardTitle>
@@ -388,31 +389,9 @@ export default function AdminUsersPage() {
   );
 }
 
-function StatCard({ label, value, icon, color }: { label: string, value: number, icon: React.ReactNode, color: string }) {
-    const colors: any = {
-        blue: "bg-blue-100 text-blue-600 border-blue-200",
-        amber: "bg-amber-100 text-amber-600 border-amber-200",
-        green: "bg-green-100 text-green-600 border-green-200",
-        purple: "bg-purple-100 text-purple-600 border-purple-200"
-    };
-    return (
-        <Card className="shadow-sm border-0">
-            <CardContent className="pt-6">
-                <div className="flex items-center gap-4">
-                    <div className={`p-2.5 rounded-xl border ${colors[color] || colors.blue}`}>{icon}</div>
-                    <div>
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{label}</p>
-                        <p className="text-2xl font-black">{value.toLocaleString()}</p>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
 function AdminActionCard({ title, description, href, icon }: { title: string, description: string, href: string, icon: React.ReactNode }) {
     return (
-        <Card className="shadow-sm border-0">
+        <Card>
             <CardContent className="flex h-full items-start justify-between gap-4 p-5">
                 <div className="flex gap-4">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-blue-100 text-blue-600">{icon}</div>

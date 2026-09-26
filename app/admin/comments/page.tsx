@@ -156,7 +156,7 @@ export default function AdminCommentsPage() {
 
         <div className="flex flex-col justify-between gap-4 mb-8 md:flex-row md:items-center">
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
               <MessageSquare className="h-6 w-6" /> Moderacja Komentarzy
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">Przeglądaj, ukrywaj, przywracaj i usuwaj komentarze.</p>
@@ -183,7 +183,7 @@ export default function AdminCommentsPage() {
                 if (e.key === 'Enter') { setDebouncedSearch(search); refreshComments(); }
               }}
             />
-            <Button onClick={refreshComments} variant="secondary"><Search size={16} /></Button>
+            <Button onClick={refreshComments} variant="secondary"><Search className="h-4 w-4" /></Button>
           </div>
         </div>
 
@@ -198,7 +198,7 @@ export default function AdminCommentsPage() {
                 disabled={isBulkPending}
                 className="gap-1.5"
               >
-                {isBulkPending ? <Loader2 size={13} className="animate-spin" /> : <EyeOff size={13} />}
+                {isBulkPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <EyeOff className="h-3.5 w-3.5" />}
                 Ukryj zaznaczone
               </Button>
               <Button
@@ -208,7 +208,7 @@ export default function AdminCommentsPage() {
                 disabled={isBulkPending}
                 className="gap-1.5"
               >
-                {isBulkPending ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                {isBulkPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
                 Usuń zaznaczone
               </Button>
               <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())} disabled={isBulkPending}>
@@ -260,7 +260,7 @@ export default function AdminCommentsPage() {
                     </TableRow>
                   ))
                 ) : comments.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-10 opacity-50">Brak komentarzy.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="py-20 text-center text-muted-foreground italic border-b-0">Brak komentarzy.</TableCell></TableRow>
                 ) : comments.map((comment) => {
                   const isPending = !!pendingActions[comment.id];
                   const isSelected = selectedIds.has(comment.id);
@@ -287,26 +287,26 @@ export default function AdminCommentsPage() {
                       <TableCell className="text-right space-x-1">
                         {isPending ? (
                           <span className="inline-flex items-center justify-end w-full pr-1">
-                            <Loader2 size={16} className="animate-spin text-muted-foreground" />
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                           </span>
                         ) : (
                           <>
                             {comment.status === 'VISIBLE' && (
                               <>
-                                <Button onClick={() => handleAction(comment.id, 'hold')} variant="ghost" size="icon" className="h-8 w-8 text-amber-600" title="Wstrzymaj do przeglądu" disabled={isBulkPending}><Clock size={14} /></Button>
-                                <Button onClick={() => handleAction(comment.id, 'hide')} variant="ghost" size="icon" className="h-8 w-8" title="Ukryj" disabled={isBulkPending}><EyeOff size={14} /></Button>
+                                <Button onClick={() => handleAction(comment.id, 'hold')} variant="ghost" size="icon" className="h-8 w-8 text-amber-600" title="Wstrzymaj do przeglądu" disabled={isBulkPending}><Clock className="h-3.5 w-3.5" /></Button>
+                                <Button onClick={() => handleAction(comment.id, 'hide')} variant="ghost" size="icon" className="h-8 w-8" title="Ukryj" disabled={isBulkPending}><EyeOff className="h-3.5 w-3.5" /></Button>
                               </>
                             )}
                             {comment.status === 'HELD_FOR_REVIEW' && (
                               <>
-                                <Button onClick={() => handleAction(comment.id, 'approve')} variant="ghost" size="icon" className="h-8 w-8 text-green-600" title="Zatwierdź" disabled={isBulkPending}><CheckCircle2 size={14} /></Button>
-                                <Button onClick={() => handleAction(comment.id, 'hide')} variant="ghost" size="icon" className="h-8 w-8" title="Ukryj" disabled={isBulkPending}><EyeOff size={14} /></Button>
+                                <Button onClick={() => handleAction(comment.id, 'approve')} variant="ghost" size="icon" className="h-8 w-8 text-green-600" title="Zatwierdź" disabled={isBulkPending}><CheckCircle2 className="h-3.5 w-3.5" /></Button>
+                                <Button onClick={() => handleAction(comment.id, 'hide')} variant="ghost" size="icon" className="h-8 w-8" title="Ukryj" disabled={isBulkPending}><EyeOff className="h-3.5 w-3.5" /></Button>
                               </>
                             )}
                             {(comment.status === 'HIDDEN' || comment.status === 'DELETED') && (
-                              <Button onClick={() => handleAction(comment.id, 'restore')} variant="ghost" size="icon" className="h-8 w-8" title="Przywróć" aria-label="Przywróć komentarz" disabled={isBulkPending}><RotateCcw size={14} /></Button>
+                              <Button onClick={() => handleAction(comment.id, 'restore')} variant="ghost" size="icon" className="h-8 w-8" title="Przywróć" aria-label="Przywróć komentarz" disabled={isBulkPending}><RotateCcw className="h-3.5 w-3.5" /></Button>
                             )}
-                            <Button onClick={() => handleAction(comment.id, 'delete')} variant="ghost" size="icon" className="h-8 w-8 text-red-600" title="Usuń" aria-label="Usuń komentarz" disabled={isBulkPending}><Trash2 size={14} /></Button>
+                            <Button onClick={() => handleAction(comment.id, 'delete')} variant="ghost" size="icon" className="h-8 w-8 text-red-600" title="Usuń" aria-label="Usuń komentarz" disabled={isBulkPending}><Trash2 className="h-3.5 w-3.5" /></Button>
                           </>
                         )}
                       </TableCell>
