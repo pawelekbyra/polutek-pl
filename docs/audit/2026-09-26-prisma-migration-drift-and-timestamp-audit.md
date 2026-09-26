@@ -92,11 +92,40 @@ diff is still empty. This matches the established pattern already used in
 this repo for exactly this risk (`20260625121500_add_payment_request_id`'s
 own `IF NOT EXISTS` comment).
 
+**Second follow-up (same day): the idempotent rewrite alone was not enough
+— the real database was left in a P3009 failed-migration state by the
+first (non-idempotent) push.** `vercel-build` runs `db:migrate:repair`
+(`scripts/resolve-failed-migrations.ts`) before `db:migrate:deploy`. That
+script queries `_prisma_migrations` for any row with `finished_at IS NULL`
+and hard-exits (`process.exit(1)`) unless the migration's name is in its
+`ROLLBACK_SAFE_FAILED_MIGRATIONS` allowlist — by design, so an unknown
+failed migration always needs a human to look before auto-repairing. The
+original non-idempotent `20260926120000_add_missing_schema_indexes` had
+already partially applied and then failed (`relation ... already exists`,
+Postgres `42P07`) on the real database during the first push, before the
+idempotent fix was pushed — so the *second* push still failed, not because
+the SQL was wrong now, but because the repair script correctly refused to
+auto-resolve a migration it didn't recognize as safe.
+
+Reproduced this exact sequence locally end-to-end: applied the original 40
+migrations to a fresh DB, pre-created one index out-of-band, applied the
+*original non-idempotent* version of the new migration (fails with
+`42P07`, confirmed identical to the real error class), then ran
+`resolve-failed-migrations.ts` unmodified against it — it hard-exited
+non-zero, exactly reproducing the stuck build. Added
+`20260926120000_add_missing_schema_indexes` to
+`ROLLBACK_SAFE_FAILED_MIGRATIONS` (same pattern as the two existing entries
+there, which document this identical failure mode for two other
+migrations), confirmed the repair script now marks it rolled back and
+exits 0, then re-ran `migrate deploy` with the real idempotent migration
+files and confirmed all three apply cleanly with the diff still empty
+afterward.
+
 Not investigated further (per the ticket's own non-goals): which past
 commit originally hand-edited `schema.prisma` without a matching migration,
 or exactly which of the 9 objects already existed out-of-band on the real
-database (no access to it in this environment; the idempotent rewrite makes
-this unnecessary to pin down before shipping).
+database (no access to it in this environment; the idempotent rewrite plus
+the allowlist entry make this unnecessary to pin down before shipping).
 
 ## PRISMA-MIGRATION-TIMESTAMP-DEDUP-001 — audited, no migration file changes
 
