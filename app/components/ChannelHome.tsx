@@ -15,6 +15,10 @@ import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
 import { AppPreloadProvider, useAppPreload } from "./preload/AppPreloadProvider";
 import { PreloadProgressBar } from "./preload/PreloadProgressBar";
 import { CommentLoadingSkeleton } from "@/components/skeletons";
+import { useSearchParams } from "next/navigation";
+import { TEMP_SUPPORT_AS_MODAL } from "@/lib/temp-support-modal";
+
+const SupportModal = dynamic(() => import("./channel/SupportModal"), { ssr: false });
 import {
   useClientReady,
 } from "@/app/hooks/useClientEnvironment";
@@ -198,7 +202,14 @@ function ChannelHomeContent({
   // the DOM once signed in, regardless of which tab is showing. That removes the need
   // to wait for anything to mount: switching tabs is just a class toggle, so a single
   // scroll shortly after is enough.
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const revealDonations = useCallback(() => {
+    // TEMPORARY experiment (lib/temp-support-modal.ts): open the full-page support modal
+    // instead of revealing the (hidden) sidebar tip gate.
+    if (TEMP_SUPPORT_AS_MODAL) {
+      setIsSupportModalOpen(true);
+      return;
+    }
     if (!window.matchMedia("(min-width: 1024px)").matches) {
       setActiveTab("videos");
     }
@@ -217,6 +228,17 @@ function ChannelHomeContent({
     window.addEventListener("polutek:open-support", revealDonations);
     return () => window.removeEventListener("polutek:open-support", revealDonations);
   }, [revealDonations]);
+
+  // With the sidebar tip gate hidden, the modal must also mount for URLs that DonationBox
+  // reacts to on load: an external ?support=1 deep link, and a Stripe redirect return
+  // (?success=true&payment_id=…) whose success screen DonationBox's checkout flow renders.
+  const searchParams = useSearchParams();
+  const hasSupportUrlIntent =
+    searchParams.get("support") === "1" ||
+    (searchParams.get("success") === "true" && Boolean(searchParams.get("payment_id")));
+  useEffect(() => {
+    if (TEMP_SUPPORT_AS_MODAL && userProfile && hasSupportUrlIntent) setIsSupportModalOpen(true);
+  }, [hasSupportUrlIntent, userProfile]);
 
   if (!selectedVideo)
     return (
@@ -374,6 +396,9 @@ function ChannelHomeContent({
           </div>
         </div>
       </div>
+      {isSupportModalOpen && (
+        <SupportModal videoTitle={selectedVideo.title} onClose={() => setIsSupportModalOpen(false)} />
+      )}
     </main>
     </>
   );

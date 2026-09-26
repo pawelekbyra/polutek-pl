@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   lastPlayerProps: null as Record<string, unknown> | null,
-  instance: { paused: true, muted: true, currentTime: 0, duration: 60, play: vi.fn() },
+  instance: { paused: true, muted: true, currentTime: 0, duration: 60 },
 }));
 
 vi.mock("@clerk/nextjs", () => ({ useAuth: () => ({ isLoaded: true, orgRole: null }) }));
@@ -72,8 +72,6 @@ describe("VideoPlayer under the first-load preloader", () => {
     vi.spyOn(performance, "now").mockReturnValue(0);
     resetPageRevealForTests();
     mocks.lastPlayerProps = null;
-    mocks.instance.paused = true;
-    mocks.instance.play.mockReset().mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -82,22 +80,41 @@ describe("VideoPlayer under the first-load preloader", () => {
     vi.restoreAllMocks();
   });
 
-  it("buffers without autoplaying, holds the preloader until it can play, then starts playback on reveal", async () => {
+  const fire = (name: string) => (mocks.lastPlayerProps?.[name] as () => void)();
+  const preloaderState = () => screen.getByTestId("site-preloader").getAttribute("data-state");
+  const posterOverlay = () => screen.getByTestId("player-poster-loading");
+
+  it("autoplays under the preloader and reveals only once a real frame is on screen", async () => {
     renderUnderGate();
     await act(async () => {});
 
-    expect(screen.getByTestId("site-preloader").getAttribute("data-state")).toBe("covering");
-    expect(mocks.lastPlayerProps?.autoPlay).toBe(false);
+    expect(mocks.lastPlayerProps?.autoPlay).toBe(true);
     expect(mocks.lastPlayerProps?.preload).toBe("auto");
-    expect(mocks.instance.play).not.toHaveBeenCalled();
 
-    // Stream buffered its first frames → the gate may reveal.
-    await act(async () => {
-      (mocks.lastPlayerProps?.onCanPlay as () => void)();
-    });
+    // Buffered but no frame yet: still covered, poster still up (spinner suppressed).
+    await act(async () => fire("onCanPlay"));
+    expect(preloaderState()).toBe("covering");
+    expect(posterOverlay().className).toContain("polutek-poster-loader--ready");
+    expect(posterOverlay().className).not.toContain("polutek-poster-loader--hidden");
 
-    expect(screen.getByTestId("site-preloader").getAttribute("data-state")).toBe("leaving");
-    expect(mocks.instance.play).toHaveBeenCalledTimes(1);
+    // `play` is only a request: the poster must stay, or the gap flashes black.
+    await act(async () => fire("onPlay"));
+    expect(preloaderState()).toBe("covering");
+    expect(posterOverlay().className).not.toContain("polutek-poster-loader--hidden");
+
+    // First frame rendered → poster fades out and the page is revealed on a stable player.
+    await act(async () => fire("onPlaying"));
+    expect(posterOverlay().className).toContain("polutek-poster-loader--hidden");
+    expect(preloaderState()).toBe("leaving");
+  });
+
+  it("reveals on a ready, paused player when the browser blocks autoplay", async () => {
+    renderUnderGate();
+    await act(async () => fire("onCanPlay"));
+    await act(async () => fire("onAutoPlayFail"));
+
+    expect(preloaderState()).toBe("leaving");
+    expect(posterOverlay().className).toContain("polutek-poster-loader--hidden");
   });
 
   it("does not reveal on the access check alone while the stream is still loading", async () => {
@@ -105,6 +122,6 @@ describe("VideoPlayer under the first-load preloader", () => {
     await act(async () => {
       vi.advanceTimersByTime(1500);
     });
-    expect(screen.getByTestId("site-preloader").getAttribute("data-state")).toBe("covering");
+    expect(preloaderState()).toBe("covering");
   });
 });

@@ -18,7 +18,7 @@ import { PlayerPosterLoading } from './PlayerLoadingState';
 import { resolvePlaybackSource } from './playback-source';
 import { shouldSendViewForPlaybackPosition } from './video-view-threshold';
 import { usePlaybackTelemetry } from '@/lib/hooks/usePlaybackTelemetry';
-import { usePageRevealCovering, usePageRevealReady } from './preload/PageRevealGate';
+import { usePageRevealReady } from './preload/PageRevealGate';
 
 interface VideoPlayerProps {
     video: VideoType;
@@ -58,10 +58,11 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
     const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
     const [bufferingOverlayTimedOut, setBufferingOverlayTimedOut] = useState(false);
     const [canPlay, setCanPlay] = useState(false);
-    // While the first-load preloader still covers the page, hold autoplay back so the
-    // video starts from its first frame when the viewer actually sees it, not behind
-    // the preloader. Buffering still happens meanwhile, so playback starts instantly.
-    const revealCovering = usePageRevealCovering();
+    // `play` fires when playback is requested, before a frame is on screen; the poster
+    // overlay must stay until a frame actually renders, or the gap shows as a black
+    // flash. `hasRenderedFrame` tracks the real first frame (`playing` / time > 0).
+    const [hasRenderedFrame, setHasRenderedFrame] = useState(false);
+    const [autoPlayFailed, setAutoPlayFailed] = useState(false);
     const hasReached10s = useRef(false);
     const viewCountRequestInFlight = useRef(false);
     const reachedThresholds = useRef<Record<number, boolean>>({});
@@ -100,6 +101,8 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
     useEffect(() => {
         setHasStartedPlayback(false);
         setCanPlay(false);
+        setHasRenderedFrame(false);
+        setAutoPlayFailed(false);
         setLoadError(null);
         setPlayerKey((key) => key + 1);
         hasReached10s.current = false;
@@ -128,14 +131,12 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
         embedUrl: videoEmbedUrl,
     });
     const showsErrorState = isMounted && !isLoading && (!playbackPlan || resolvedSource.mode === 'unavailable');
-    usePageRevealReady(revealKey, canPlay || !!loadError || bufferingOverlayTimedOut || showsErrorState);
-
-    // Start the held-back autoplay the moment the preloader lifts.
-    useEffect(() => {
-        if (revealCovering || !autoPlayWanted || !canPlay || hasStartedPlayback) return;
-        const instance = player.current;
-        if (instance?.paused) void instance.play().catch(() => undefined);
-    }, [revealCovering, autoPlayWanted, canPlay, hasStartedPlayback]);
+    // Settled = what the viewer should see from now on is already on screen: a playing
+    // frame, or (no autoplay / autoplay blocked) the ready, paused player. The first-load
+    // preloader waits for this, so the page is revealed with the player already stable
+    // instead of switching from poster to video right after the reveal.
+    const playbackSettled = hasRenderedFrame || (canPlay && (!autoPlayWanted || autoPlayFailed));
+    usePageRevealReady(revealKey, playbackSettled || !!loadError || bufferingOverlayTimedOut || showsErrorState);
 
     // PremiumWrapper owns the loading placeholder before this mounts. For the one
     // pre-mount frame here, keep showing the same poster rather than an empty (black)
@@ -208,7 +209,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
                         title={playerConfig?.title || video.title || 'Video'}
                         src={src}
                         muted={playerConfig ? playerConfig.mutedAutoplay : variant === 'hero'}
-                        autoPlay={autoPlayWanted && !revealCovering}
+                        autoPlay={autoPlayWanted}
                         preload={autoPlayWanted ? 'auto' : undefined}
                         playsInline
                         aspectRatio="16/9"
@@ -237,8 +238,10 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
                             sendEvent('SEEKED', { positionMs: Math.floor(currentTime * 1000) });
                         }}
                         onWaiting={() => sendEvent('BUFFERING_STARTED')}
+                        onAutoPlayFail={() => setAutoPlayFailed(true)}
                         onPlaying={() => {
                             setHasStartedPlayback(true);
+                            setHasRenderedFrame(true);
                             sendEvent('BUFFERING_ENDED');
                         }}
                         onTimeUpdate={(event: any) => {
@@ -248,6 +251,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
                             const currentTime = Number.isFinite(detail.currentTime) ? detail.currentTime : player.current?.currentTime || 0;
                             const duration = Number.isFinite(detail.duration) ? detail.duration : player.current?.duration;
                             if (currentTime > 0 && !hasStartedPlayback) setHasStartedPlayback(true);
+                            if (currentTime > 0 && !hasRenderedFrame) setHasRenderedFrame(true);
 
                             void maybeSendView(currentTime, duration);
 
@@ -292,7 +296,8 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
                         <div className="absolute inset-0 z-30 pointer-events-none">
                             <PlayerPosterLoading
                                 posterUrl={video.thumbnailUrl || posterUrl}
-                                hidden={hasStartedPlayback || (canPlay && !autoPlayWanted)}
+                                hidden={playbackSettled}
+                                ready={canPlay}
                             />
                         </div>
                     )}

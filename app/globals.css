@@ -624,6 +624,13 @@
     overflow-x: clip;
   }
 
+  /* Always reserve the (10px, custom-styled below) scrollbar's space, so content —
+     notably the fixed, centered preloader — doesn't shift sideways the moment the
+     page grows tall enough to scroll, or between short and long pages. */
+  html {
+    scrollbar-gutter: stable;
+  }
+
   body {
     @apply bg-background text-foreground;
     overscroll-behavior-y: contain;

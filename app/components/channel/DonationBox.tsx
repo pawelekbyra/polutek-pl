@@ -21,9 +21,16 @@ interface DonationBoxProps {
    * the prop type only so existing callers don't need to change; the component ignores it.
    */
   viewerIsPatron?: boolean;
+  /**
+   * "card" (default): the sidebar tip-gate card. "modal": step 1 of the full-page support
+   * modal (SupportModal) — same fields and checkout flow, without the card chrome/#donations
+   * anchor, and the CTA continues to step 2 (the Stripe CheckoutModal).
+   */
+  variant?: "card" | "modal";
 }
 
-export default function DonationBox({ videoTitle }: DonationBoxProps) {
+export default function DonationBox({ videoTitle, variant = "card" }: DonationBoxProps) {
+  const isModal = variant === "modal";
   const { t, language } = useLanguage();
   const isPl = language === "pl";
   const searchParams = useSearchParams();
@@ -185,14 +192,14 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
 
   return (
     <div
-      id="donations"
-      className={`group relative my-[10px] mb-3 scroll-mt-20 overflow-hidden rounded-[20px] border p-[22px_24px_18px] ${
+      id={isModal ? undefined : "donations"}
+      className={isModal ? "group relative" : `group relative my-[10px] mb-3 scroll-mt-20 overflow-hidden rounded-[20px] border p-[22px_24px_18px] ${
         isTipGate
           ? "border-[var(--cm-amber-38)] bg-[linear-gradient(168deg,var(--chan-amber-soft),var(--cm-card-92-white)_62%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_1px_2px_rgba(23,23,23,0.03),0_24px_50px_-26px_var(--cm-amber-58)]"
           : "border-[var(--cm-line-82)] bg-[var(--cm-card-92-white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_1px_2px_rgba(23,23,23,0.03),0_24px_50px_-26px_rgba(23,23,23,0.2)]"
       }`}
     >
-      {isTipGate ? (
+      {isModal ? null : isTipGate ? (
         <>
           {/* Festive ribbon along the very top edge — the tip jar's signature. Sits in the
               card's own padding so it can never collide with the copy underneath. */}
@@ -295,7 +302,11 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
               </span>
             </span>
           ) : (
-            <span>{isTipGate ? (isPl ? "Wyślij napiwek" : "Tip the Guy") : t.tipTheGuy}</span>
+            <span>
+              {isModal
+                ? (isPl ? "Dalej — płatność" : "Continue to payment")
+                : isTipGate ? (isPl ? "Wyślij napiwek" : "Tip the Guy") : t.tipTheGuy}
+            </span>
           )}
         </button>
 
@@ -353,6 +364,7 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
           stripePromise={checkoutStripePromise}
           onClose={closeSuccessAndSync}
           onBackToSite={closeSuccessAndSync}
+          stepLabel={isModal ? (isPl ? "Krok 2 z 2" : "Step 2 of 2") : undefined}
         />
       )}
 

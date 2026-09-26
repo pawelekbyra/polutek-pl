@@ -3,13 +3,24 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useAuthModal } from "@/app/components/auth/AuthModalProvider";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { loadStripe } from "@stripe/stripe-js";
 import type { Stripe } from "@stripe/stripe-js";
 import { logger } from "@/lib/logger";
 import { MIN_PAYMENT_BY_CURRENCY, SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
 import { useToast } from "@/app/hooks/useToast";
+
+// Query params Stripe/our return URL add after a redirect-based payment method.
+const STRIPE_RETURN_PARAMS = [
+  "payment_intent",
+  "payment_intent_client_secret",
+  "redirect_status",
+  "payment_id",
+  "success",
+  "canceled",
+  "session_id",
+];
 
 /**
  * Shared Stripe.js loader for every checkout surface (currently just DonationBox).
@@ -88,7 +99,6 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
   const userEmail = user?.primaryEmailAddress?.emailAddress;
   const { open: openAuthModal } = useAuthModal();
   const searchParams = useSearchParams();
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -277,16 +287,27 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
 
   // Closing the success screen (either the X or "back to site"): if the payment went through,
   // do a full reload to the clean URL so every server-rendered surface comes back reflecting the
-  // freshly granted access at once, and all client caches are rebuilt. For a non-success close we
-  // only need to strip the return params, so a soft navigation is enough.
+  // freshly granted access at once, and all client caches are rebuilt. For a non-success close
+  // (e.g. "Back" before paying) only Stripe's return params need stripping, and that must stay
+  // shallow: a router.replace here re-rendered the whole page on the server (flashing the
+  // route's loading screen) and, with UrlMask's "/" address, even dropped the open video.
   const closeSuccessAndSync = useCallback(() => {
     setIsCheckoutModalOpen(false);
     if (paymentSucceeded) {
       window.location.replace(window.location.pathname);
-    } else {
-      router.replace(window.location.pathname);
+      return;
     }
-  }, [paymentSucceeded, router]);
+    const params = new URLSearchParams(window.location.search);
+    const hadReturnParams = STRIPE_RETURN_PARAMS.some((key) => params.has(key));
+    if (!hadReturnParams) return;
+    STRIPE_RETURN_PARAMS.forEach((key) => params.delete(key));
+    const query = params.toString();
+    try {
+      window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
+    } catch {
+      // Cosmetic; the checkout is already closed.
+    }
+  }, [paymentSucceeded]);
 
   useEffect(() => {
     document.body.style.overflow = isCheckoutModalOpen ? "hidden" : "unset";

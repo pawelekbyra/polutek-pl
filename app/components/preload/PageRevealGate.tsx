@@ -28,8 +28,6 @@ import { useOptionalLanguage } from "../LanguageContext";
 
 type PageRevealContextValue = {
   reportReady: (key: string) => void;
-  /** True while the preloader still hides the page. */
-  covering: boolean;
 };
 
 const PageRevealContext = createContext<PageRevealContextValue | null>(null);
@@ -71,14 +69,6 @@ export function usePageRevealReady(key: string | undefined, ready: boolean) {
   useEffect(() => {
     if (key && ready) context?.reportReady(key);
   }, [context, key, ready]);
-}
-
-/**
- * Whether the preloader is still covering the page. `false` outside a gate, so
- * callers behave normally anywhere else (admin previews, later client navigations).
- */
-export function usePageRevealCovering(): boolean {
-  return useContext(PageRevealContext)?.covering ?? false;
 }
 
 function useDecodedImage(src: string | null | undefined, onDone: () => void) {
@@ -161,7 +151,7 @@ export function PageRevealGate({ children, waitFor = [], posterUrl }: PageReveal
     return () => window.clearTimeout(timer);
   }, [leaving]);
 
-  const contextValue = useMemo(() => ({ reportReady, covering }), [reportReady, covering]);
+  const contextValue = useMemo(() => ({ reportReady }), [reportReady]);
 
   return (
     <PageRevealContext.Provider value={contextValue}>

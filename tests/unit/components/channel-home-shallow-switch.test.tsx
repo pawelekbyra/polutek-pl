@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   heroProps: [] as Array<{ videoId: string; initialInteraction: unknown }>,
 }));
 
+vi.mock('next/navigation', () => ({ useSearchParams: () => new URLSearchParams() }));
 vi.mock('@/app/components/preload/AppPreloadProvider', () => ({
   AppPreloadProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useAppPreload: () => ({ warmVideo: vi.fn() }),
