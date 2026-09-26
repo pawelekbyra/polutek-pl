@@ -13,6 +13,16 @@ vi.mock('@/lib/auth-utils', () => ({
   requireAdminForApi: vi.fn(),
 }));
 
+const r2PutPrivate = vi.hoisted(() => vi.fn());
+const r2Configured = vi.hoisted(() => ({ value: false }));
+vi.mock('@/lib/modules/media', () => ({
+  THUMBNAIL_EXTENSION_BY_MIME: { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' },
+  R2ThumbnailStorageClient: class {
+    static isConfigured = () => r2Configured.value;
+    putPrivate = r2PutPrivate;
+  },
+}));
+
 vi.mock('@/lib/blob-config', () => ({
   getBlobAccess: vi.fn(),
 }));
@@ -20,7 +30,46 @@ vi.mock('@/lib/blob-config', () => ({
 describe('POST /api/admin/videos/cover-upload', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    r2Configured.value = false;
     vi.mocked(getBlobAccess).mockReturnValue('public');
+  });
+
+  it('stores covers in the private R2 bucket once configured and returns the proxy URL', async () => {
+    r2Configured.value = true;
+    vi.mocked(requireAdminForApi).mockResolvedValue({ adminUserId: 'admin-1', response: null as any });
+    const storageUrl = 'https://acct.r2.cloudflarestorage.com/priv/videos/v1/covers/abc.jpg';
+    r2PutPrivate.mockResolvedValue({ key: 'videos/v1/covers/abc.jpg', storageUrl });
+
+    const formData = new FormData();
+    formData.append('file', new File(['dummy'], 'cover.jpg', { type: 'image/jpeg' }));
+    formData.append('videoId', 'v1');
+
+    const res = await POST(new NextRequest('http://localhost/api/admin/videos/cover-upload', { method: 'POST', body: formData }));
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data).toEqual({ url: '/api/videos/v1/thumbnail', storageUrl });
+    expect(r2PutPrivate).toHaveBeenCalledWith(expect.objectContaining({
+      scope: 'videos/v1/covers',
+      contentType: 'image/jpeg',
+      extension: 'jpg',
+    }));
+    expect(put).not.toHaveBeenCalled();
+  });
+
+  it('never returns a browser URL for an R2 cover of a not-yet-saved video', async () => {
+    r2Configured.value = true;
+    vi.mocked(requireAdminForApi).mockResolvedValue({ adminUserId: 'admin-1', response: null as any });
+    r2PutPrivate.mockResolvedValue({ key: 'videos/new/covers/abc.jpg', storageUrl: 'https://acct.r2.cloudflarestorage.com/priv/videos/new/covers/abc.jpg' });
+
+    const formData = new FormData();
+    formData.append('file', new File(['dummy'], 'cover.jpg', { type: 'image/jpeg' }));
+
+    const res = await POST(new NextRequest('http://localhost/api/admin/videos/cover-upload', { method: 'POST', body: formData }));
+    const data = await res.json();
+
+    expect(data.url).toBeNull();
+    expect(r2PutPrivate).toHaveBeenCalledWith(expect.objectContaining({ scope: 'videos/new/covers' }));
   });
 
   it('rejects non-admin requests', async () => {

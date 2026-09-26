@@ -55,3 +55,4 @@ export * from './application/video-provider-reconciler.service';
 export * from './application/video-distribution-backfill.service';
 export * from './infrastructure/provider-webhook-mappers';
 export * from './application/prune-stale-playback-sessions.use-case';
+export * from './application/sync-public-thumbnail.service';

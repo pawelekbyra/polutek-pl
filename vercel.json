@@ -2,6 +2,7 @@
   "buildCommand": "npm run vercel-build",
   "crons": [
     { "path": "/api/cron/video-provider-jobs/reconcile", "schedule": "0 4 * * *" },
-    { "path": "/api/cron/prune-playback-sessions", "schedule": "0 5 * * *" }
+    { "path": "/api/cron/prune-playback-sessions", "schedule": "0 5 * * *" },
+    { "path": "/api/cron/sync-public-thumbnails", "schedule": "0 6 * * *" }
   ]
 }

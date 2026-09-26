@@ -7,7 +7,7 @@ import { getCanonicalVideoTitle } from '@/lib/video-title-overrides';
 import { getAdminClerkUserIds } from '@/lib/admin-config';
 import { MainChannelService } from '@/lib/modules/channel';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { MediaPolicy } from '@/lib/modules/media';
+import { MediaPolicy, resolvePublicThumbnailSrc } from '@/lib/modules/media';
 
 export const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
   OR: [
@@ -105,7 +105,7 @@ export class VideoContentService {
         slug: video.slug,
         description: video.description,
         descriptionEn: video.descriptionEn,
-        thumbnailUrl: `/api/videos/${video.id}/thumbnail`,
+        thumbnailUrl: resolvePublicThumbnailSrc(video, process.env),
         duration: video.duration,
         tier: video.tier,
         status: video.status ?? VideoStatus.PUBLISHED,

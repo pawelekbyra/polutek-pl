@@ -4,13 +4,34 @@ import { prisma } from "../../../../../../lib/prisma";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/errors";
 import { getBlobAccess } from "@/lib/blob-config";
-import { invalidateDefaultThumbnailCache } from "@/lib/modules/media";
+import {
+  invalidateDefaultThumbnailCache,
+  MediaStorageService,
+  R2ThumbnailStorageClient,
+  parsePrivateThumbnailStorageUrl,
+  THUMBNAIL_EXTENSION_BY_MIME,
+} from "@/lib/modules/media";
 
 export const dynamic = "force-dynamic";
 
 const SETTING_KEY = "default_video_thumbnail";
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const PROXY_URL = "/api/admin/settings/media/default-video-thumbnail/proxy";
+
+async function deleteStoredThumbnail(storageUrl: string) {
+  if (parsePrivateThumbnailStorageUrl(storageUrl, process.env)) {
+    await MediaStorageService.deleteOwnedThumbnail(storageUrl);
+    return;
+  }
+  await del(storageUrl).catch(() => null);
+}
+
+// Private Blob and R2 objects can't be shown to the browser directly.
+function toAdminPreviewUrl(storageUrl: string): string {
+  if (parsePrivateThumbnailStorageUrl(storageUrl, process.env)) return PROXY_URL;
+  return getBlobAccess() === "private" ? PROXY_URL : storageUrl;
+}
 
 export async function GET() {
   try {
@@ -23,10 +44,7 @@ export async function GET() {
       return NextResponse.json({ url: null });
     }
 
-    const access = getBlobAccess();
-    const proxyUrl = access === "private" ? "/api/admin/settings/media/default-video-thumbnail/proxy" : setting.value;
-
-    return NextResponse.json({ url: proxyUrl, storageUrl: setting.value });
+    return NextResponse.json({ url: toAdminPreviewUrl(setting.value), storageUrl: setting.value });
   } catch (error) {
     return handleApiError(error);
   }
@@ -52,21 +70,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "File too large. Max: 5 MB" }, { status: 400 });
     }
 
-    const ext = file.type.split("/")[1] || "jpg";
-    const pathname = `settings/default-video-thumbnail.${ext}`;
-    const access = getBlobAccess();
-
     const existing = await prisma.appSetting.findUnique({ where: { key: SETTING_KEY } });
-    if (existing) {
-      await del(existing.value).catch(() => null);
-    }
 
-    const blob = await put(pathname, file, { access });
+    let storageUrl: string;
+    if (R2ThumbnailStorageClient.isConfigured()) {
+      ({ storageUrl } = await new R2ThumbnailStorageClient().putPrivate({
+        scope: "settings/default-video-thumbnail",
+        bytes: new Uint8Array(await file.arrayBuffer()),
+        contentType: file.type,
+        extension: THUMBNAIL_EXTENSION_BY_MIME[file.type] ?? "jpg",
+      }));
+      // Content-hashed key: re-uploading the same file yields the same object.
+      if (existing && existing.value !== storageUrl) {
+        await deleteStoredThumbnail(existing.value);
+      }
+    } else {
+      const ext = file.type.split("/")[1] || "jpg";
+      const pathname = `settings/default-video-thumbnail.${ext}`;
+      if (existing) {
+        await deleteStoredThumbnail(existing.value);
+      }
+      const blob = await put(pathname, file, { access: getBlobAccess() });
+      storageUrl = blob.url;
+    }
 
     await prisma.appSetting.upsert({
       where: { key: SETTING_KEY },
-      create: { key: SETTING_KEY, value: blob.url, updatedBy: adminUserId ?? undefined },
-      update: { value: blob.url, updatedBy: adminUserId ?? undefined },
+      create: { key: SETTING_KEY, value: storageUrl, updatedBy: adminUserId ?? undefined },
+      update: { value: storageUrl, updatedBy: adminUserId ?? undefined },
     });
 
     await prisma.auditLog.create({
@@ -80,9 +111,7 @@ export async function POST(req: NextRequest) {
 
     invalidateDefaultThumbnailCache();
 
-    const proxyUrl = access === "private" ? "/api/admin/settings/media/default-video-thumbnail/proxy" : blob.url;
-
-    return NextResponse.json({ url: proxyUrl, storageUrl: blob.url });
+    return NextResponse.json({ url: toAdminPreviewUrl(storageUrl), storageUrl });
   } catch (error) {
     return handleApiError(error);
   }
@@ -99,7 +128,7 @@ export async function DELETE() {
       return NextResponse.json({ ok: true, deleted: false });
     }
 
-    await del(setting.value).catch(() => null);
+    await deleteStoredThumbnail(setting.value);
     await prisma.appSetting.delete({ where: { key: SETTING_KEY } });
     invalidateDefaultThumbnailCache();
 

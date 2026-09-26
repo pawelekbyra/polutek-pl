@@ -257,6 +257,8 @@ model Video {
   descriptionEn                     String?
   videoUrl                          String? // Legacy field
   thumbnailUrl                      String
+  // Public R2 copy of a PUBLISHED video's thumbnail (content-hashed key); null for drafts. See §4.8 of CLAUDE.md.
+  thumbnailPublicUrl                String?
   subtitleUrlPl                     String?
   subtitleUrlEn                     String?
   duration                          String? // e.g. "12:45"

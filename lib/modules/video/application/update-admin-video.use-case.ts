@@ -6,6 +6,7 @@ import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { MediaPolicy, MediaStorageService } from "@/lib/modules/media";
 import { VideoPolicy } from "../domain/video.policy";
+import { syncPublicThumbnail } from "./sync-public-thumbnail.service";
 import {
     VideoNotFoundError,
     VideoNotOnMainChannelError,
@@ -74,9 +75,13 @@ export async function updateAdminVideo(
     return video;
   });
 
-  // Cleanup old cover if it was replaced and it was our owned blob
+  // Unpublishing drops the public R2 copy; a new cover on a published video
+  // gets copied there. Runs before the old private object is deleted below.
+  await syncPublicThumbnail(updated, ctx);
+
+  // Cleanup old cover if it was replaced and it was our owned storage (R2 or Blob)
   if (input.thumbnailUrl && existing.thumbnailUrl && input.thumbnailUrl !== existing.thumbnailUrl) {
-    await MediaStorageService.deleteOwnedBlob(existing.thumbnailUrl);
+    await MediaStorageService.deleteOwnedThumbnail(existing.thumbnailUrl);
   }
 
   return ok(toAdminVideoDto(updated));

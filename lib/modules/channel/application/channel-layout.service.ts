@@ -3,6 +3,7 @@ import { AccessTier, VideoStatus } from '@prisma/client';
 import { MainChannelService } from '@/lib/modules/channel/application/main-channel.service';
 import { compareSidebarItems } from '@/lib/modules/video';
 import { createAppContext } from '@/lib/modules/shared/app-context';
+import { resolvePublicThumbnailSrc } from '@/lib/modules/media';
 
 export type SidebarViewerState = "ANONYMOUS" | "LOGGED_IN" | "PATRON" | "ADMIN";
 
@@ -88,7 +89,7 @@ export class ChannelLayoutService {
             slug: v.slug,
             title: v.title,
             titleEn: v.titleEn,
-            thumbnailUrl: `/api/videos/${v.id}/thumbnail`,
+            thumbnailUrl: resolvePublicThumbnailSrc(v, process.env),
             tier: v.tier,
             status: v.status,
             duration: v.duration,

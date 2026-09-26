@@ -18,3 +18,4 @@ coverage/
 /app/generated/prisma
 tsconfig.tsbuildinfo
 tsconfig.typecheck.tsbuildinfo
+thumbnail-r2-migration-*.json
