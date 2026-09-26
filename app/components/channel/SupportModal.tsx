@@ -203,41 +203,38 @@ export default function SupportModal({ videoTitle, onClose }: SupportModalProps)
         >
           <DialogTitle className="sr-only">{isPl ? "Bramka napiwkowa" : "Tip gate"}</DialogTitle>
 
-          <header className="flex shrink-0 items-center justify-between px-3 pb-2 pt-[max(12px,env(safe-area-inset-top))] md:px-4 md:pt-4">
-            <button
-              type="button"
-              onClick={goBack}
-              aria-label={isPl ? "Wstecz" : "Back"}
-              className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-full text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]",
-                !canGoBack && "invisible",
-              )}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <div className="flex flex-col items-center gap-1.5">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--chan-amber-soft)] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--chan-amber-ink)]">
-                <span aria-hidden="true">💰</span>
-                {isPl ? "Bramka napiwkowa" : "Tip gate"}
-              </span>
-              <div className="flex items-center gap-1.5" aria-hidden="true">
-                {STEPS.map((key, index) => (
-                  <span
-                    key={key}
-                    className={cn(
-                      "h-1.5 rounded-full transition-[width,background-color] duration-300 motion-reduce:transition-none",
-                      index === activeIndex ? "w-6 bg-[var(--chan-amber)]" : "w-1.5",
-                      index < activeIndex ? "bg-[var(--chan-amber)]" : index > activeIndex && "bg-[var(--chan-line)]",
-                    )}
-                  />
-                ))}
-              </div>
+          <header className="flex shrink-0 items-center gap-2 px-5 pb-2 pt-[max(12px,env(safe-area-inset-top))] md:px-7 md:pt-4">
+            {canGoBack && (
+              <button
+                type="button"
+                onClick={goBack}
+                aria-label={isPl ? "Wstecz" : "Back"}
+                className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+            )}
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--chan-amber-soft)] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--chan-amber-ink)]">
+              <span aria-hidden="true">💰</span>
+              {isPl ? "Bramka napiwkowa" : "Tip gate"}
+            </span>
+            <div className="ml-auto flex items-center gap-1.5" aria-hidden="true">
+              {STEPS.map((key, index) => (
+                <span
+                  key={key}
+                  className={cn(
+                    "h-1.5 rounded-full transition-[width,background-color] duration-300 motion-reduce:transition-none",
+                    index === activeIndex ? "w-6 bg-[var(--chan-amber)]" : "w-1.5",
+                    index < activeIndex ? "bg-[var(--chan-amber)]" : index > activeIndex && "bg-[var(--chan-line)]",
+                  )}
+                />
+              ))}
             </div>
             <button
               type="button"
               onClick={handleClose}
               aria-label={isPl ? "Zamknij" : "Close"}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
+              className="-mr-2 ml-1 flex h-10 w-10 items-center justify-center rounded-full text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
             >
               <X className="h-5 w-5" />
             </button>

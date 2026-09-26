@@ -51,15 +51,32 @@ export function TipAmountStep({
   return (
     <TipStepLayout
       footer={
-        <TipPrimaryButton onClick={onNext} disabled={!canContinue} busy={busy}>
-          {busy
-            ? isPl ? "Chwileczkę…" : "One moment…"
-            : amount === "" || amountTooLow
-              ? isPl ? "Dalej" : "Next"
-              : isPl
-                ? `Dalej · ${formatTipAmount(amount, currency, language)}`
-                : `Next · ${formatTipAmount(amount, currency, language)}`}
-        </TipPrimaryButton>
+        <>
+          <label className="mb-3 flex cursor-pointer items-start gap-2.5">
+            <Checkbox
+              id="tip-accept-terms"
+              checked={termsAccepted}
+              onCheckedChange={(checked) => onTermsChange(checked === true)}
+              className="mt-[2px] shrink-0"
+            />
+            <span className="text-[13px] leading-[1.5] text-[var(--chan-body)]">
+              {isPl ? (
+                <>Akceptuję {legalLink("terms", "Regulamin")} i {legalLink("privacy", "Politykę Prywatności")}</>
+              ) : (
+                <>I accept the {legalLink("terms", "Terms")} and {legalLink("privacy", "Privacy Policy")}</>
+              )}
+            </span>
+          </label>
+          <TipPrimaryButton onClick={onNext} disabled={!canContinue} busy={busy}>
+            {busy
+              ? isPl ? "Chwileczkę…" : "One moment…"
+              : amount === "" || amountTooLow
+                ? isPl ? "Dalej" : "Next"
+                : isPl
+                  ? `Dalej · ${formatTipAmount(amount, currency, language)}`
+                  : `Next · ${formatTipAmount(amount, currency, language)}`}
+          </TipPrimaryButton>
+        </>
       }
     >
       <TipStepHeading
@@ -81,7 +98,7 @@ export function TipAmountStep({
           >
             {TIP_CURRENCIES.map((code) => (
               <option key={code} value={code}>
-                {TIP_CURRENCY_LABELS[code].flag} {isPl ? TIP_CURRENCY_LABELS[code].pl : TIP_CURRENCY_LABELS[code].en}
+                {isPl ? TIP_CURRENCY_LABELS[code].pl : TIP_CURRENCY_LABELS[code].en}
               </option>
             ))}
           </select>
@@ -112,21 +129,6 @@ export function TipAmountStep({
           : `The smallest tip is ${formatTipAmount(minAmount, currency, language)}.`}
       </p>
 
-      <label className="mt-6 flex cursor-pointer items-start gap-2.5">
-        <Checkbox
-          id="tip-accept-terms"
-          checked={termsAccepted}
-          onCheckedChange={(checked) => onTermsChange(checked === true)}
-          className="mt-[2px] shrink-0"
-        />
-        <span className="text-[13px] leading-[1.5] text-[var(--chan-body)]">
-          {isPl ? (
-            <>Akceptuję {legalLink("terms", "Regulamin")} i {legalLink("privacy", "Politykę Prywatności")}</>
-          ) : (
-            <>I accept the {legalLink("terms", "Terms")} and {legalLink("privacy", "Privacy Policy")}</>
-          )}
-        </span>
-      </label>
     </TipStepLayout>
   );
 }
