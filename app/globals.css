@@ -711,14 +711,25 @@
     background: var(--chan-amber);
   }
 
-  /* The gate itself: a warm cream surface instead of plain white. Fields you type into
-     (amount, BLIK code, card) stay white so it's obvious where to type; choices (dropdowns,
-     the amount strip, the back button) use the soft amber. */
+  /* The gate itself: a yellow surface. The orange main button stays as it is; fields you type
+     into (amount, BLIK code, card) stay white so it's obvious where to type; choices (dropdowns,
+     the amount strip, the back button) are light cream chips. The amber mixes used for borders
+     and dots are darkened here (scoped to the gate), and grey body text turns warm brown, so
+     everything reads on yellow. */
   .tip-gate-surface {
+    --cm-amber-20: color-mix(in srgb, var(--chan-amber-strong) 22%, transparent);
+    --cm-amber-28: color-mix(in srgb, var(--chan-amber-strong) 32%, transparent);
+    --cm-amber-38: color-mix(in srgb, var(--chan-amber-strong) 45%, transparent);
+    --cm-amber-46: color-mix(in srgb, var(--chan-amber-strong) 50%, transparent);
+    --chan-muted: color-mix(in srgb, var(--chan-amber-ink) 72%, var(--chan-amber-bright));
+    --chan-body: color-mix(in srgb, var(--chan-amber-ink) 85%, var(--chan-amber-bright));
     background:
-      radial-gradient(120% 60% at 50% 0%, var(--cm-amber-14), transparent 70%),
-      linear-gradient(180deg, var(--cm-amber-5), var(--cm-amber-14)),
-      var(--chan-card);
+      radial-gradient(120% 55% at 50% 0%, color-mix(in srgb, var(--chan-card) 45%, transparent), transparent 70%),
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--chan-amber-bright) 36%, var(--chan-card)),
+        color-mix(in srgb, var(--chan-amber-bright) 52%, var(--chan-card))
+      );
   }
 }
 

@@ -24,10 +24,7 @@ export function TipStepLayout({
   const back = useContext(TipBackContext);
   return (
     <>
-      <div className={cn("tip-select-scroll flex min-h-0 flex-1 flex-col overflow-y-auto px-5 pb-4 pt-2 md:px-7", bodyClassName)}>
-        {/* my-auto centres a short step vertically and still scrolls normally when it's taller. */}
-        <div className="my-auto">{children}</div>
-      </div>
+      <div className={cn("tip-select-scroll min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-2 md:px-7", bodyClassName)}>{children}</div>
       {footer && (
         <div className="shrink-0 border-t border-[var(--cm-amber-20)] px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 md:px-7 md:pb-5">
           {back ? (
