@@ -1,25 +1,19 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
+import { Elements } from "@stripe/react-stripe-js";
+import type { StripeElementsOptions } from "@stripe/stripe-js";
 import { X, ArrowLeft } from "../icons";
 import { Dialog, DialogOverlay, DialogPopup, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "../LanguageContext";
 import { useAuthModal } from "../auth/AuthModalProvider";
 import { cn } from "@/lib/utils";
-import { MAIN_CREATOR_NAME, type SupportedCurrency } from "@/lib/constants";
+import type { SupportedCurrency } from "@/lib/constants";
 import { detectDefaultCurrency } from "@/lib/payments/detect-currency";
 import { checkoutStripePromise, useCheckoutFlow } from "@/lib/hooks/useCheckoutFlow";
-import {
-  getDefaultTipAmount,
-  getTipMethodChoices,
-  readLastTipMethod,
-  rememberTipMethod,
-  toServerPaymentMethod,
-  type TipMethodChoice,
-  type TipStep,
-} from "../support/tip-flow-config";
+import { getTipMethodTiles, readLastTipMethod, rememberTipMethod, type TipStep } from "../support/tip-flow-config";
 import { TipAmountStep } from "../support/TipAmountStep";
-import { TipMethodStep, type WalletKind } from "../support/TipMethodStep";
+import { TipMethodStep } from "../support/TipMethodStep";
 import { TipPayStep } from "../support/TipPayStep";
 import { TipThanksStep } from "../support/TipThanksStep";
 
@@ -28,12 +22,18 @@ interface SupportModalProps {
   onClose: () => void;
 }
 
+const STEPS: TipStep[] = ["amount", "method", "pay"];
+
 /**
- * The tip gate (TEMP_SUPPORT_AS_MODAL experiment, see lib/temp-support-modal.ts): "How much?"
- * → "How?" → send, then a thank-you. A fixed-size window on desktop, full screen on phones; the
- * frame (header, dots, footer button) never changes size between steps. The payment itself runs
- * through the canonical path: create-intent (restricted to the chosen method) → Stripe →
- * reconciliation → fulfillPayment(). Mounted only while open, so each opening starts fresh.
+ * The tip gate (TEMP_SUPPORT_AS_MODAL experiment, see lib/temp-support-modal.ts):
+ * "Kwota napiwku" → "Metoda napiwku" → the chosen method's form → thank-you. A fixed-size window
+ * on desktop, full screen on phones; the frame (badge, dots, back, ✕, footer button) never
+ * changes size between steps.
+ *
+ * Stripe decides which methods a tip can use: the intent is created with automatic payment
+ * methods after step 1 and its `payment_method_types` become the tiles; the chosen one is then
+ * confirmed with its own Stripe.js call on the same intent. Success still reconciles through
+ * /api/payments/[id] → fulfillPayment(). Mounted only while open, so each opening starts fresh.
  */
 export default function SupportModal({ videoTitle, onClose }: SupportModalProps) {
   const { language } = useLanguage();
@@ -55,71 +55,37 @@ export default function SupportModal({ videoTitle, onClose }: SupportModalProps)
   });
 
   const [currency, setCurrency] = useState<SupportedCurrency>(() => detectDefaultCurrency(isPl ? "pl" : "en"));
-  // null until the viewer picks one: the second preset is highlighted by default.
-  const [pickedAmount, setPickedAmount] = useState<number | "" | null>(null);
-  const [message, setMessage] = useState("");
+  const [amount, setAmount] = useState<number | "">("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [step, setStep] = useState<TipStep>("amount");
-  const [pickedChoice, setPickedChoice] = useState<TipMethodChoice | null>(() => readLastTipMethod());
-  const [walletKind, setWalletKind] = useState<WalletKind>(null);
-  const [pendingPay, setPendingPay] = useState(false);
+  const [pickedMethod, setPickedMethod] = useState<string | null>(() => readLastTipMethod());
+  const [creatingIntent, setCreatingIntent] = useState(false);
 
   const minAmount = flow.patronBoxMinimums[currency] ?? flow.minimums[currency];
-  const choices = getTipMethodChoices(currency, walletKind !== null);
-  const skipMethodStep = choices.length === 1;
-  const amount: number | "" =
-    pickedAmount ?? (flow.isInitialLoading ? "" : getDefaultTipAmount(currency, minAmount));
-  // The viewer's pick (or last-used method) when it's valid for this currency, else the first tile.
-  const choice: TipMethodChoice | null =
-    pickedChoice && choices.includes(pickedChoice) ? pickedChoice : choices[0] ?? null;
+  const methods = getTipMethodTiles(flow.paymentMethodTypes);
+  // The viewer's pick (or last-used method) when Stripe allows it for this tip, else the first tile.
+  const method = pickedMethod && methods.includes(pickedMethod) ? pickedMethod : methods[0] ?? null;
 
-  // Offer Apple Pay / Google Pay only when this browser can actually use one.
-  useEffect(() => {
-    let active = true;
-    checkoutStripePromise
-      ?.then((stripe) =>
-        stripe
-          ?.paymentRequest({ country: "PL", currency: currency.toLowerCase(), total: { label: MAIN_CREATOR_NAME, amount: 100 } })
-          .canMakePayment(),
-      )
-      .then((result) => {
-        if (active) setWalletKind(result?.applePay ? "apple" : result?.googlePay ? "google" : null);
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [currency]);
-
-  // The pay step opens once the intent (restricted to the chosen method) exists.
-  const startPayment = async (selected: TipMethodChoice) => {
-    if (amount === "") return;
-    rememberTipMethod(selected);
-    setPendingPay(true);
-    const ready = await flow.submit(amount, currency, minAmount, {
-      paymentMethod: toServerPaymentMethod(selected),
-      message,
-      requireTerms: false,
-    });
-    setPendingPay(false);
-    if (ready) setStep("pay");
-  };
-
-  const handleAmountNext = () => {
+  const handleAmountNext = async () => {
     if (!flow.userId) {
       openAuthModal("sign-in");
       return;
     }
-    if (skipMethodStep && choices[0]) void startPayment(choices[0]);
-    else setStep("method");
+    if (amount === "") return;
+    setCreatingIntent(true);
+    const ready = await flow.submit(amount, currency, minAmount, { requireTerms: false });
+    setCreatingIntent(false);
+    if (ready) setStep("method");
+  };
+
+  const backToAmount = () => {
+    flow.resetCheckout();
+    setStep("amount");
   };
 
   const goBack = () => {
-    if (step === "pay") {
-      flow.resetCheckout();
-      setStep(skipMethodStep ? "amount" : "method");
-    } else if (step === "method") {
-      setStep("amount");
-    }
+    if (step === "pay") setStep("method");
+    else if (step === "method") backToAmount();
   };
 
   const handleClose = () => {
@@ -131,14 +97,99 @@ export default function SupportModal({ videoTitle, onClose }: SupportModalProps)
 
   const handleTryAgain = () => {
     flow.closeSuccessAndSync();
-    flow.resetCheckout();
-    setStep("amount");
+    backToAmount();
   };
 
+  const handleConfirmed = (outcome: "succeeded" | "processing") => {
+    if (flow.paymentId) flow.trackConfirmedPayment(flow.paymentId, outcome);
+  };
+
+  const elementsOptions: StripeElementsOptions | null = flow.clientSecret
+    ? {
+        clientSecret: flow.clientSecret,
+        locale: isPl ? "pl" : "en",
+        appearance: {
+          theme: "flat",
+          variables: {
+            colorPrimary: "#2563eb",
+            colorBackground: "#ffffff",
+            colorText: "#1a1a1a",
+            borderRadius: "12px",
+            fontFamily: "var(--font-geist-sans)",
+          },
+        },
+      }
+    : null;
+
   const showThanks = flow.isSuccess;
-  const steps: TipStep[] = skipMethodStep ? ["amount", "pay"] : ["amount", "method", "pay"];
-  const activeIndex = showThanks ? steps.length : steps.indexOf(step);
+  const activeIndex = showThanks ? STEPS.length : STEPS.indexOf(step);
   const canGoBack = !showThanks && step !== "amount";
+
+  let body: React.ReactNode;
+  if (showThanks) {
+    body = (
+      <TipThanksStep
+        language={language}
+        paymentUiStatus={flow.paymentUiStatus}
+        isSyncing={flow.isSyncing}
+        onRetryStatusCheck={flow.handleRetryStatusCheck}
+        onTryAgain={handleTryAgain}
+        onDone={handleClose}
+      />
+    );
+  } else if (step !== "amount" && elementsOptions && amount !== "") {
+    body = (
+      // One Elements group per intent, shared by the wallet button (step 2) and the fallback form (step 3).
+      <Elements key={flow.clientSecret} stripe={checkoutStripePromise} options={elementsOptions}>
+        {step === "method" || !method ? (
+          <TipMethodStep
+            language={language}
+            amount={amount}
+            currency={currency}
+            paymentId={flow.paymentId}
+            methods={methods}
+            selected={method}
+            onSelect={setPickedMethod}
+            onNext={() => {
+              if (!method) return;
+              rememberTipMethod(method);
+              setStep("pay");
+            }}
+            onChangeAmount={backToAmount}
+            onWalletConfirmed={handleConfirmed}
+          />
+        ) : (
+          <TipPayStep
+            language={language}
+            amount={amount}
+            currency={currency}
+            method={method}
+            clientSecret={flow.clientSecret!}
+            paymentId={flow.paymentId}
+            userEmail={flow.userEmail}
+            stripePromise={checkoutStripePromise}
+            onChangeMethod={() => setStep("method")}
+            onConfirmed={handleConfirmed}
+          />
+        )}
+      </Elements>
+    );
+  } else {
+    body = (
+      <TipAmountStep
+        language={language}
+        currency={currency}
+        onCurrencyChange={setCurrency}
+        amount={amount}
+        onAmountChange={setAmount}
+        minAmount={minAmount}
+        termsAccepted={termsAccepted}
+        onTermsChange={setTermsAccepted}
+        onNext={() => void handleAmountNext()}
+        busy={creatingIntent || flow.isInitialLoading}
+      />
+    );
+  }
 
   return (
     // `disablePointerDismissal`: Stripe's 3DS/wallet/BLIK overlays are appended to <body> and
@@ -150,7 +201,7 @@ export default function SupportModal({ videoTitle, onClose }: SupportModalProps)
           data-testid="support-modal"
           className="fixed inset-0 z-[9991] flex h-[100dvh] w-screen flex-col overflow-hidden bg-[var(--chan-card)] outline-none md:inset-auto md:left-1/2 md:top-1/2 md:h-[min(640px,90dvh)] md:w-[440px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[24px] md:border md:border-[var(--chan-line)] md:shadow-[0_30px_80px_-30px_rgba(23,23,23,0.45)]"
         >
-          <DialogTitle className="sr-only">{isPl ? "Wyślij napiwek" : "Send a tip"}</DialogTitle>
+          <DialogTitle className="sr-only">{isPl ? "Bramka napiwkowa" : "Tip gate"}</DialogTitle>
 
           <header className="flex shrink-0 items-center justify-between px-3 pb-2 pt-[max(12px,env(safe-area-inset-top))] md:px-4 md:pt-4">
             <button
@@ -164,17 +215,23 @@ export default function SupportModal({ videoTitle, onClose }: SupportModalProps)
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <div className="flex items-center gap-1.5" aria-hidden="true">
-              {steps.map((key, index) => (
-                <span
-                  key={key}
-                  className={cn(
-                    "h-1.5 rounded-full transition-[width,background-color] duration-300 motion-reduce:transition-none",
-                    index === activeIndex ? "w-6 bg-[var(--chan-amber)]" : "w-1.5",
-                    index < activeIndex ? "bg-[var(--chan-amber)]" : index > activeIndex && "bg-[var(--chan-line)]",
-                  )}
-                />
-              ))}
+            <div className="flex flex-col items-center gap-1.5">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--chan-amber-soft)] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--chan-amber-ink)]">
+                <span aria-hidden="true">💰</span>
+                {isPl ? "Bramka napiwkowa" : "Tip gate"}
+              </span>
+              <div className="flex items-center gap-1.5" aria-hidden="true">
+                {STEPS.map((key, index) => (
+                  <span
+                    key={key}
+                    className={cn(
+                      "h-1.5 rounded-full transition-[width,background-color] duration-300 motion-reduce:transition-none",
+                      index === activeIndex ? "w-6 bg-[var(--chan-amber)]" : "w-1.5",
+                      index < activeIndex ? "bg-[var(--chan-amber)]" : index > activeIndex && "bg-[var(--chan-line)]",
+                    )}
+                  />
+                ))}
+              </div>
             </div>
             <button
               type="button"
@@ -190,66 +247,7 @@ export default function SupportModal({ videoTitle, onClose }: SupportModalProps)
             key={showThanks ? "thanks" : step}
             className="flex min-h-0 flex-1 flex-col animate-in fade-in slide-in-from-right-4 duration-200 motion-reduce:animate-none"
           >
-            {showThanks ? (
-              <TipThanksStep
-                language={language}
-                paymentUiStatus={flow.paymentUiStatus}
-                isSyncing={flow.isSyncing}
-                onRetryStatusCheck={flow.handleRetryStatusCheck}
-                onTryAgain={handleTryAgain}
-                onDone={handleClose}
-              />
-            ) : step === "pay" && flow.clientSecret && choice && amount !== "" ? (
-              <TipPayStep
-                language={language}
-                amount={amount}
-                currency={currency}
-                choice={choice}
-                walletKind={walletKind}
-                clientSecret={flow.clientSecret}
-                paymentId={flow.paymentId}
-                userEmail={flow.userEmail}
-                stripePromise={checkoutStripePromise}
-                onChange={() => {
-                  flow.resetCheckout();
-                  setStep("amount");
-                }}
-                onConfirmed={(outcome) => {
-                  if (flow.paymentId) flow.trackConfirmedPayment(flow.paymentId, outcome);
-                }}
-              />
-            ) : step === "method" && amount !== "" ? (
-              <TipMethodStep
-                language={language}
-                amount={amount}
-                currency={currency}
-                choices={choices}
-                selected={choice}
-                onSelect={setPickedChoice}
-                walletKind={walletKind}
-                onNext={() => {
-                  if (choice) void startPayment(choice);
-                }}
-                busy={pendingPay}
-              />
-            ) : (
-              <TipAmountStep
-                language={language}
-                currency={currency}
-                onCurrencyChange={(next) => {
-                  setCurrency(next);
-                  setPickedAmount(null);
-                }}
-                amount={amount}
-                onAmountChange={setPickedAmount}
-                // Until the per-currency minimums arrive, show the plain presets (no flicker).
-                minAmount={flow.isInitialLoading ? 0 : minAmount}
-                message={message}
-                onMessageChange={setMessage}
-                onNext={handleAmountNext}
-                busy={pendingPay || flow.isInitialLoading}
-              />
-            )}
+            {body}
           </div>
         </DialogPopup>
       </DialogPortal>

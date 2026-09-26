@@ -63,6 +63,8 @@ export interface UseCheckoutFlowResult {
 
   isLoading: boolean;
   clientSecret: string | null;
+  /** Methods Stripe allows for the current intent (from create-intent); drives the tip gate tiles. */
+  paymentMethodTypes: string[];
   paymentId: string | null;
   paymentUiStatus: string | null;
   isCheckoutModalOpen: boolean;
@@ -90,11 +92,7 @@ export interface UseCheckoutFlowResult {
 }
 
 export interface CheckoutSubmitOptions {
-  /** Restrict the intent to one method (tip gate). Omitted → Stripe's automatic methods. */
-  paymentMethod?: "card" | "blik" | "p24";
-  /** Optional private note to the creator. */
-  message?: string;
-  /** The tip gate asks for the Terms consent on its last step, next to the pay button. */
+  /** False when the caller keeps its own Terms consent (the tip gate asks for it on step 1). */
   requireTerms?: boolean;
 }
 
@@ -122,8 +120,9 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
   const [isTermsAccepted, setIsTermsAccepted] = useState(false);
   const [showTermsError, setShowTermsError] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentMethodTypes, setPaymentMethodTypes] = useState<string[]>([]);
   const [paymentId, setPaymentId] = useState<string | null>(null);
-  // One idempotency key per distinct request: a changed amount, currency or method must create a
+  // One idempotency key per distinct request: a changed amount or currency must create a
   // new intent (reusing the key returned the old intent with the old amount).
   const checkoutRequestRef = useRef<{ signature: string; id: string } | null>(null);
   const [paymentUiStatus, setPaymentUiStatus] = useState<string | null>(null);
@@ -355,6 +354,7 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
   const resetCheckout = useCallback(() => {
     stopTrackingRef.current?.();
     setClientSecret(null);
+    setPaymentMethodTypes([]);
     setPaymentId(null);
     setIsCheckoutModalOpen(false);
     setIsSuccess(false);
@@ -364,7 +364,7 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
 
   const submit = useCallback(
     async (amount: number | "", currency: string, minAmount: number, submitOptions: CheckoutSubmitOptions = {}) => {
-      const { paymentMethod, message, requireTerms = true } = submitOptions;
+      const { requireTerms = true } = submitOptions;
       if (!userId) {
         openAuthModal("sign-in");
         return false;
@@ -383,8 +383,7 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
       try {
         setIsLoading(true);
         const normalizedCurrency = currency.toUpperCase();
-        const trimmedMessage = message?.trim() || undefined;
-        const signature = [Number(amount), normalizedCurrency, paymentMethod ?? "auto", trimmedMessage ?? ""].join("|");
+        const signature = [Number(amount), normalizedCurrency].join("|");
         if (checkoutRequestRef.current?.signature !== signature) {
           checkoutRequestRef.current = { signature, id: crypto.randomUUID() };
         }
@@ -398,8 +397,6 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
             currency: normalizedCurrency,
             title,
             requestId,
-            ...(paymentMethod ? { paymentMethod } : {}),
-            ...(trimmedMessage ? { message: trimmedMessage } : {}),
           }),
           cache: "no-store",
         });
@@ -408,6 +405,7 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
 
         if (data?.clientSecret) {
           setClientSecret(data.clientSecret);
+          setPaymentMethodTypes(Array.isArray(data.paymentMethodTypes) ? data.paymentMethodTypes : []);
           setPaymentId(data.paymentId || null);
           setIsCheckoutModalOpen(true);
           return true;
@@ -466,6 +464,7 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
 
     isLoading,
     clientSecret,
+    paymentMethodTypes,
     paymentId,
     paymentUiStatus,
     isCheckoutModalOpen,

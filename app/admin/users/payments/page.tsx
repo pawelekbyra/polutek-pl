@@ -316,11 +316,6 @@ export default function AdminPaymentsListPage() {
                                             {p.refundedAmountMinor > 0 && (
                                                 <div className="text-[9px] text-red-600 font-bold uppercase mt-0.5">Zwrócono: {(p.refundedAmountMinor / 100).toFixed(2)}</div>
                                             )}
-                                            {typeof (p.metadata as { message?: unknown } | null)?.message === 'string' && (
-                                                <div className="mt-1 max-w-[220px] text-[11px] italic text-muted-foreground" title="Prywatna wiadomość od wspierającego">
-                                                    „{(p.metadata as { message: string }).message}”
-                                                </div>
-                                            )}
                                         </div>
                                     </TableCell>
                                     <TableCell>

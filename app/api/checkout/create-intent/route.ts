@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const { amountMinor, currency, title, requestId: inputRequestId, paymentMethod, message } = result.data;
+    const { amountMinor, currency, title, requestId: inputRequestId } = result.data;
 
     const amountError = await validatePaymentAmountMinorAsync(amountMinor, currency);
 
@@ -74,8 +74,6 @@ export async function POST(req: NextRequest) {
       currency,
       title,
       requestId: inputRequestId,
-      paymentMethod,
-      message: message || undefined,
     }, ctx);
 
     if (!checkoutResult.ok) {
@@ -85,6 +83,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
         clientSecret: checkoutResult.data.clientSecret,
         paymentId: checkoutResult.data.paymentId,
+        paymentMethodTypes: checkoutResult.data.paymentMethodTypes,
         status: checkoutResult.data.status,
         terminal: checkoutResult.data.terminal,
     });

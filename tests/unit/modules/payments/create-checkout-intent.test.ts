@@ -88,31 +88,20 @@ describe('createCheckoutIntent use case', () => {
     }
   });
 
-  it('keeps Stripe automatic payment methods when no method is chosen (sidebar box)', async () => {
+  it('creates the intent with Stripe automatic methods and returns the list Stripe allows', async () => {
     mockStripe.paymentIntents.create.mockClear();
+    mockStripe.paymentIntents.create.mockResolvedValueOnce({
+      id: 'pi_123',
+      client_secret: 'secret_123',
+      payment_method_types: ['card', 'blik', 'p24'],
+    });
     const ctx = createAppContext({ actor: { type: 'user', userId: 'user-1' }, prisma: {} as any });
 
-    await createCheckoutIntent({ userId: 'user-1', amountMinor: 1000, currency: 'PLN', title: 'Test' }, ctx);
+    const result = await createCheckoutIntent({ userId: 'user-1', amountMinor: 1000, currency: 'PLN', title: 'Test' }, ctx);
 
     const params = mockStripe.paymentIntents.create.mock.calls[0][0];
     expect(params.automatic_payment_methods).toEqual({ enabled: true });
     expect(params).not.toHaveProperty('payment_method_types');
-  });
-
-  it('restricts the intent to the method chosen in the tip gate and stores the private message', async () => {
-    mockStripe.paymentIntents.create.mockClear();
-    mockRepo.createPayment.mockClear();
-    const ctx = createAppContext({ actor: { type: 'user', userId: 'user-1' }, prisma: {} as any });
-
-    await createCheckoutIntent(
-      { userId: 'user-1', amountMinor: 2000, currency: 'PLN', title: 'Test', paymentMethod: 'blik', message: 'Dzięki!' },
-      ctx,
-    );
-
-    const params = mockStripe.paymentIntents.create.mock.calls[0][0];
-    expect(params.payment_method_types).toEqual(['blik']);
-    expect(params).not.toHaveProperty('automatic_payment_methods');
-    expect(params.metadata.message).toBe('Dzięki!');
-    expect(mockRepo.createPayment.mock.calls[0][0].metadata).toMatchObject({ paymentMethod: 'blik', message: 'Dzięki!' });
+    expect(result.ok && result.data.paymentMethodTypes).toEqual(['card', 'blik', 'p24']);
   });
 });

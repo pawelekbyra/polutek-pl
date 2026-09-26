@@ -21,15 +21,16 @@ export interface CreateCheckoutIntentInput {
   currency: string;
   title: string;
   requestId?: string;
-  /** Restricts the PaymentIntent to one method; omitted → Stripe's automatic methods. */
-  paymentMethod?: "card" | "blik" | "p24";
-  /** Optional private note from the supporter. */
-  message?: string;
 }
 
 export interface CheckoutResultDto {
   paymentId: string;
   clientSecret: string | null;
+  /**
+   * The methods Stripe allows for this intent (dashboard settings + currency + amount), used by
+   * the tip gate to draw its method tiles. Wallets (Apple/Google Pay) show up as `card`.
+   */
+  paymentMethodTypes?: string[];
   status?: PaymentStatus;
   terminal?: boolean;
 }
