@@ -12,10 +12,10 @@ describe("public loading/access state UX contracts", () => {
       "return <PlayerLoadingState variant={variant} posterUrl={posterUrl} />;",
     );
     expect(wrapper).not.toContain("setMounted(true)");
-    expect(player).toContain(
-      "PremiumWrapper owns the single player loading placeholder",
-    );
-    expect(player).toContain("if (!isMounted || isLoading) return null;");
+    expect(player).toContain("PremiumWrapper owns the loading placeholder before this mounts");
+    // The pre-mount frame shows the same poster, never an empty box or a second loader card.
+    expect(player).toContain("if (!isMounted || isLoading) {");
+    expect(player).toContain("<PlayerPosterLoading posterUrl={video.thumbnailUrl || posterUrl} />");
     expect(player).not.toContain("<PlayerLoadingState");
   });
 

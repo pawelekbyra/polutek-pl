@@ -105,6 +105,16 @@ function getVisibleDonationsElement(): HTMLElement | null {
   return candidates[0] ?? null;
 }
 
+// Key under which a shallow video switch stores the selected video in the history
+// entry's state, so Back/Forward can restore it without a server round trip.
+const VIDEO_HISTORY_STATE_KEY = "polutekVideoId";
+
+function readHistoryVideoId(state: unknown): string | undefined {
+  if (!state || typeof state !== "object") return undefined;
+  const value = (state as Record<string, unknown>)[VIDEO_HISTORY_STATE_KEY];
+  return typeof value === "string" ? value : undefined;
+}
+
 function ChannelHomeContent({
   mainVideo,
   allVideos = [],
@@ -119,11 +129,16 @@ function ChannelHomeContent({
     selectedVideoId: currentVideoId,
     activeTab: "comments",
   }));
+  const resolveVideoId = (idOrSlug: string | undefined) =>
+    ((allVideos || []).find((v) => v.id === idOrSlug || v.slug === idOrSlug) || mainVideo)?.id;
   if (selectionState.routeVideoId !== currentVideoId) {
+    // The server route changed (a real navigation, or a refresh of the URL a shallow
+    // switch already pushed). Keep the open tab when it's still the same video.
+    const sameVideo = resolveVideoId(currentVideoId) === resolveVideoId(selectionState.selectedVideoId);
     setSelectionState({
       routeVideoId: currentVideoId,
       selectedVideoId: currentVideoId,
-      activeTab: "comments",
+      activeTab: sameVideo ? selectionState.activeTab : "comments",
     });
   }
   const clientSelectedVideoId =
@@ -134,6 +149,9 @@ function ChannelHomeContent({
     (allVideos || []).find(
       (v) => v.id === clientSelectedVideoId || v.slug === clientSelectedVideoId,
     ) || mainVideo;
+  // The server computed the viewer's like/dislike only for the video it rendered;
+  // after a shallow switch Hero fetches it for the newly selected video itself.
+  const serverInteractionVideoId = resolveVideoId(currentVideoId);
   const viewerIsPatron = userProfile?.role === 'ADMIN' || userProfile?.isPatronDecorative === true;
   const activeTab = selectionState.activeTab;
   const mounted = useClientReady();
@@ -148,6 +166,30 @@ function ChannelHomeContent({
       scrollToMediaOnMobile();
     }
   }, [selectedVideo?.id]);
+
+  // Back/Forward across shallow video switches: restore the video recorded in the
+  // history entry. The first entry is tagged on mount so Back can return to it.
+  useEffect(() => {
+    try {
+      if (!readHistoryVideoId(window.history.state) && selectedVideo?.id) {
+        window.history.replaceState(
+          { ...(window.history.state ?? {}), [VIDEO_HISTORY_STATE_KEY]: selectedVideo.id },
+          "",
+        );
+      }
+    } catch {
+      // History state is a convenience; never let it break the page.
+    }
+    const onPopState = (event: PopStateEvent) => {
+      const videoId = readHistoryVideoId(event.state);
+      if (!videoId) return;
+      setSelectionState((current) => ({ ...current, selectedVideoId: videoId, activeTab: "comments" }));
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+    // Tagging the initial entry must happen once, for the video the page opened with.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Shared by the "polutek:open-support" event, dispatched by both AccessLockOverlay's
   // CTA and Hero's "Wspieraj" button. The mobile "videos" tab panel (see its render
@@ -218,6 +260,20 @@ function ChannelHomeContent({
         selectedVideoId: clickedId,
         activeTab: "comments",
       });
+      // Shallow switch: update the address and history without a server round trip.
+      // A router navigation here re-rendered the whole page on the server and showed
+      // the route's loading screen on every click. Next.js syncs its router with
+      // history.pushState, so useSearchParams, refreshes and deep links stay correct.
+      const clicked = (allVideos || []).find((v) => v.id === clickedId);
+      try {
+        window.history.pushState(
+          { [VIDEO_HISTORY_STATE_KEY]: clickedId },
+          "",
+          `${getLocalizedHref(language, "home")}?v=${encodeURIComponent(clicked?.slug || clickedId)}`,
+        );
+      } catch {
+        // Selection already switched locally; a failed URL update is only cosmetic.
+      }
       return;
     }
     setActiveTab("comments");
@@ -257,7 +313,9 @@ function ChannelHomeContent({
             >
               <Hero
                 video={selectedVideo}
-                initialInteraction={userProfile?.initialInteraction}
+                initialInteraction={
+                  selectedVideo.id === serverInteractionVideoId ? userProfile?.initialInteraction : undefined
+                }
                 initialIsSubscribed={userProfile?.initialIsSubscribed}
               />
             </div>

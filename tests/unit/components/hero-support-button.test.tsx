@@ -81,7 +81,7 @@ describe('Hero "Wspieraj" button', () => {
     vi.clearAllMocks();
   });
 
-  it('dispatches polutek:open-support and merges ?support=1 into the current path/query for a signed-in click', () => {
+  it('dispatches polutek:open-support for a signed-in click without any router navigation', () => {
     render(<Hero video={video} />);
 
     const button = screen.getByRole('button', { name: /wspieraj/i });
@@ -92,10 +92,9 @@ describe('Hero "Wspieraj" button', () => {
       .filter((event: Event) => event.type === 'polutek:open-support');
     expect(dispatchedEvents).toHaveLength(1);
 
-    expect(mockReplace).toHaveBeenCalledTimes(1);
-    const [url, options] = mockReplace.mock.calls[0];
-    expect(url).toBe('/pl?v=video-1&support=1#donations');
-    expect(options).toEqual({ scroll: false });
+    // A router navigation re-rendered the whole page on the server and flashed the
+    // route's loading screen; the event alone reveals the donation box.
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 
   it('opens the sign-in modal instead, without dispatching anything, for a signed-out click', () => {

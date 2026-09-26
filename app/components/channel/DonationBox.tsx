@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useSearchParams, usePathname } from "next/navigation";
 import { SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
 import { detectDefaultCurrency } from "@/lib/payments/detect-currency";
 import { useLanguage } from "../LanguageContext";
@@ -27,7 +27,6 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
   const { t, language } = useLanguage();
   const isPl = language === "pl";
   const searchParams = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
 
   // 2026-09-22: support is a voluntary, non-refundable donation that grants nothing (see
@@ -118,7 +117,7 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
     [submit, amount, selectedCurrency, minAmount],
   );
 
-  // Deep-link support: Navbar's "Wspieraj"/"Support" button links here with ?support=1#donations
+  // Deep-link support: an external link can arrive with ?support=1#donations
   // instead of duplicating any checkout logic — the browser's native anchor scroll handles
   // #donations, and this just calls the same onSupport() the box's own button uses. Only
   // auto-calls it when onSupport() would actually proceed to checkout (signed in, terms already
@@ -139,8 +138,15 @@ export default function DonationBox({ videoTitle }: DonationBoxProps) {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("support");
     const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [searchParams, onSupport, router, pathname, userId, isTermsAccepted, amount, minAmount]);
+    // Shallow cleanup: Next.js syncs its router with history.replaceState, so this
+    // drops the param without re-rendering the page on the server (router.replace did,
+    // flashing the route's loading screen).
+    try {
+      window.history.replaceState(null, "", query ? `${pathname}?${query}` : pathname);
+    } catch {
+      // Cosmetic; the ref above already prevents re-triggering.
+    }
+  }, [searchParams, onSupport, pathname, userId, isTermsAccepted, amount, minAmount]);
 
   // Existing patrons get a deliberately different surface. They already own everything the
   // non-patron box sells, so this variant stops being a sales/access gate and becomes a plain

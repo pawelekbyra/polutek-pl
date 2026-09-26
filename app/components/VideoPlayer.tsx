@@ -137,8 +137,17 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
         if (instance?.paused) void instance.play().catch(() => undefined);
     }, [revealCovering, autoPlayWanted, canPlay, hasStartedPlayback]);
 
-    // PremiumWrapper owns the single player loading placeholder; avoid stacking a second one here.
-    if (!isMounted || isLoading) return null;
+    // PremiumWrapper owns the loading placeholder before this mounts. For the one
+    // pre-mount frame here, keep showing the same poster rather than an empty (black)
+    // box, so the handoff from PremiumWrapper to the player never flashes.
+    if (!isMounted || isLoading) {
+        if (variant === 'thumbnail') return null;
+        return (
+            <div className="relative h-full w-full">
+                <PlayerPosterLoading posterUrl={video.thumbnailUrl || posterUrl} />
+            </div>
+        );
+    }
 
     if (variant === 'thumbnail') {
         return (
