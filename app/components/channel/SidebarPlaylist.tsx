@@ -41,9 +41,8 @@ interface SidebarPlaylistProps {
   onVideoMouseEnter: (id: string) => void;
   onVideoSelect?: (videoId?: string) => void;
   showSupportBox?: boolean;
-  /** Layout the server already built for this page (HomeExperience) — skips the first fetch. */
+  /** Server-built layout (HomeExperience) + the viewer it was built for; skips the first fetch. */
   initialLayout?: SidebarLayout | null;
-  /** Viewer `initialLayout` was built for; a different client viewer refetches. */
   initialLayoutViewerKey?: string;
 }
 
@@ -125,12 +124,8 @@ export function SidebarPlaylist({
   const [layout, setLayout] = useState<SidebarLayout | null>(initialLayout ?? null);
   const [loading, setLoading] = useState(!initialLayout);
   const [error, setError] = useState<boolean>(false);
-  // Viewer the layout currently in state was built for. Starts as the server's
-  // viewer when the page shipped a layout, so the first client pass doesn't
-  // refetch (and re-skeleton) a list that is already on screen.
-  const layoutViewerKeyRef = useRef<string | null>(
-    initialLayout ? initialLayoutViewerKey ?? null : null,
-  );
+  // Viewer the layout in state was built for; seeded from the server so the first pass doesn't refetch.
+  const layoutViewerKeyRef = useRef<string | null>(initialLayout ? initialLayoutViewerKey ?? null : null);
 
   useEffect(() => {
     if (!authLoaded) return;
