@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useAuthModal } from "@/app/components/auth/AuthModalProvider";
 import { useSearchParams } from "next/navigation";
@@ -78,7 +78,24 @@ export interface UseCheckoutFlowResult {
    * Runs the shared auth/terms/amount checks and, if they pass, calls
    * /api/checkout/create-intent and hands the result to CheckoutModal.
    */
-  submit: (amount: number | "", currency: string, minAmount: number) => Promise<void>;
+  /** Resolves true once an intent (clientSecret) is ready for the checkout step. */
+  submit: (amount: number | "", currency: string, minAmount: number, options?: CheckoutSubmitOptions) => Promise<boolean>;
+  /** Drops the current intent (e.g. the viewer went back to change the amount or method). */
+  resetCheckout: () => void;
+  /**
+   * Shows the result of a payment confirmed without leaving the page (card, BLIK, wallets) and
+   * reconciles it in the background, exactly like a redirect return.
+   */
+  trackConfirmedPayment: (paymentId: string, outcome: "succeeded" | "processing") => void;
+}
+
+export interface CheckoutSubmitOptions {
+  /** Restrict the intent to one method (tip gate). Omitted → Stripe's automatic methods. */
+  paymentMethod?: "card" | "blik" | "p24";
+  /** Optional private note to the creator. */
+  message?: string;
+  /** The tip gate asks for the Terms consent on its last step, next to the pay button. */
+  requireTerms?: boolean;
 }
 
 /**
@@ -106,7 +123,9 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
   const [showTermsError, setShowTermsError] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentId, setPaymentId] = useState<string | null>(null);
-  const [checkoutRequestId, setCheckoutRequestId] = useState<string | null>(null);
+  // One idempotency key per distinct request: a changed amount, currency or method must create a
+  // new intent (reusing the key returned the old intent with the old amount).
+  const checkoutRequestRef = useRef<{ signature: string; id: string } | null>(null);
   const [paymentUiStatus, setPaymentUiStatus] = useState<string | null>(null);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -145,58 +164,23 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Stripe return-URL handling: trust Stripe's own redirect_status for the visible message,
-  // reconcile access in the background via GET /api/payments/[id] (which runs fulfillPayment()
-  // when still PENDING), and never downgrade an already-shown success.
-  useEffect(() => {
-    setIsMounted(true);
-    let interval: ReturnType<typeof setInterval> | undefined;
-    let cancelled = false;
-
-    const returnedPaymentId = searchParams.get("payment_id");
-    if (searchParams.get("success") === "true" && returnedPaymentId) {
-      const redirectStatus = searchParams.get("redirect_status");
-
-      setIsCheckoutModalOpen(true);
-      setIsSuccess(true);
-      setPaymentId(returnedPaymentId);
-      queryClient.invalidateQueries();
-
-      if (redirectStatus === "failed") {
-        // Stripe says the payment failed — show the failure message, nothing to reconcile.
-        setIsSyncing(false);
-        setPaymentUiStatus("FAILED_CANCELED");
-        return () => {
-          cancelled = true;
-        };
-      }
-
-      // Treat "succeeded" (and the common case where Stripe omits the param on a plain card
-      // confirmation) as an immediate success: show the thank-you now, reconcile access quietly
-      // in the background. Genuinely async methods that come back "pending"/"processing" get a
-      // neutral processing screen until the backend confirms.
-      const redirectSucceeded = redirectStatus === "succeeded" || redirectStatus === null;
-      if (redirectSucceeded) {
-        setPaymentUiStatus("SUCCEEDED");
-        setPaymentSucceeded(true);
-        setIsSyncing(false);
-      } else {
-        setPaymentUiStatus("PROCESSING");
-        setIsSyncing(true);
-      }
-
+  // Background reconciliation shared by the redirect return and in-page confirmations: the status
+  // endpoint retrieves the PaymentIntent from Stripe and runs fulfillPayment() when still PENDING.
+  // It never downgrades an already-shown success; it only upgrades a "processing" screen to
+  // success (or surfaces a real failure).
+  const stopTrackingRef = useRef<(() => void) | null>(null);
+  const startTracking = useCallback(
+    (trackedPaymentId: string, redirectSucceeded: boolean) => {
+      stopTrackingRef.current?.();
+      let interval: ReturnType<typeof setInterval> | undefined;
+      let cancelled = false;
       let attempts = 0;
       const maxAttempts = 10;
 
-      // Background reconciliation: ensures the PatronGrant actually lands (the status endpoint
-      // retrieves the PaymentIntent from Stripe and runs fulfillPayment() when still PENDING).
-      // This runs silently — it never downgrades an already-shown success message; it only
-      // upgrades a "processing" screen to success (or surfaces a real failure). Returns true
-      // once there's nothing left to wait for.
       const reconcile = async (): Promise<boolean> => {
         attempts++;
         try {
-          const res = await fetch(`/api/payments/${encodeURIComponent(returnedPaymentId)}`, { cache: "no-store" });
+          const res = await fetch(`/api/payments/${encodeURIComponent(trackedPaymentId)}`, { cache: "no-store" });
           if (!res.ok) throw new Error(`Status check failed (${res.status})`);
           const data = await res.json();
           const nextStatus: string | null = data.uiStatus || null;
@@ -225,8 +209,8 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
             return false;
           }
 
-          // Already showing success from the redirect signal: keep quietly reconciling until the
-          // grant lands so the on-close reload reflects the fresh supporter state, but never change copy.
+          // Already showing success: keep quietly reconciling until the grant lands so the
+          // on-close reload reflects the fresh supporter state, but never change copy.
           return isTerminal || attempts >= maxAttempts;
         } catch (e) {
           logger.error(`[${logPrefix}] Reconcile error`, e);
@@ -249,12 +233,68 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
           if (finished && interval) clearInterval(interval);
         }, 2000);
       });
+
+      const stop = () => {
+        cancelled = true;
+        if (interval) clearInterval(interval);
+      };
+      stopTrackingRef.current = stop;
+      return stop;
+    },
+    [logPrefix],
+  );
+
+  useEffect(() => () => stopTrackingRef.current?.(), []);
+
+  const showOutcome = useCallback(
+    (trackedPaymentId: string, outcome: "succeeded" | "processing") => {
+      setIsCheckoutModalOpen(true);
+      setIsSuccess(true);
+      setPaymentId(trackedPaymentId);
+      queryClient.invalidateQueries();
+      if (outcome === "succeeded") {
+        setPaymentUiStatus("SUCCEEDED");
+        setPaymentSucceeded(true);
+        setIsSyncing(false);
+      } else {
+        setPaymentUiStatus("PROCESSING");
+        setIsSyncing(true);
+      }
+      return startTracking(trackedPaymentId, outcome === "succeeded");
+    },
+    [queryClient, startTracking],
+  );
+
+  const trackConfirmedPayment = useCallback(
+    (trackedPaymentId: string, outcome: "succeeded" | "processing") => {
+      checkoutRequestRef.current = null;
+      showOutcome(trackedPaymentId, outcome);
+    },
+    [showOutcome],
+  );
+
+  // Stripe return-URL handling: trust Stripe's own redirect_status for the visible message and
+  // reconcile in the background. "succeeded" (or no param, as on a plain card confirmation)
+  // shows the thank-you at once; genuinely async methods that come back "pending"/"processing"
+  // get a neutral processing screen until the backend confirms.
+  useEffect(() => {
+    setIsMounted(true);
+    const returnedPaymentId = searchParams.get("payment_id");
+    if (searchParams.get("success") !== "true" || !returnedPaymentId) return;
+
+    const redirectStatus = searchParams.get("redirect_status");
+    if (redirectStatus === "failed") {
+      // Stripe says the payment failed — show the failure message, nothing to reconcile.
+      setIsCheckoutModalOpen(true);
+      setIsSuccess(true);
+      setPaymentId(returnedPaymentId);
+      setIsSyncing(false);
+      setPaymentUiStatus("FAILED_CANCELED");
+      return;
     }
 
-    return () => {
-      cancelled = true;
-      if (interval) clearInterval(interval);
-    };
+    const redirectSucceeded = redirectStatus === "succeeded" || redirectStatus === null;
+    return showOutcome(returnedPaymentId, redirectSucceeded ? "succeeded" : "processing");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
@@ -312,36 +352,54 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
     if (checked) setShowTermsError(false);
   }, []);
 
+  const resetCheckout = useCallback(() => {
+    stopTrackingRef.current?.();
+    setClientSecret(null);
+    setPaymentId(null);
+    setIsCheckoutModalOpen(false);
+    setIsSuccess(false);
+    setIsSyncing(false);
+    setPaymentUiStatus(null);
+  }, []);
+
   const submit = useCallback(
-    async (amount: number | "", currency: string, minAmount: number) => {
+    async (amount: number | "", currency: string, minAmount: number, submitOptions: CheckoutSubmitOptions = {}) => {
+      const { paymentMethod, message, requireTerms = true } = submitOptions;
       if (!userId) {
         openAuthModal("sign-in");
-        return;
+        return false;
       }
-      if (!isTermsAccepted) {
+      if (requireTerms && !isTermsAccepted) {
         setShowTermsError(true);
-        return;
+        return false;
       }
       setShowTermsError(false);
 
       if (!amount || amount < minAmount) {
         toast(getMinAmountTooLowMessage(minAmount, currency), "error");
-        return;
+        return false;
       }
 
       try {
         setIsLoading(true);
-        const requestId = checkoutRequestId || crypto.randomUUID();
-        setCheckoutRequestId(requestId);
+        const normalizedCurrency = currency.toUpperCase();
+        const trimmedMessage = message?.trim() || undefined;
+        const signature = [Number(amount), normalizedCurrency, paymentMethod ?? "auto", trimmedMessage ?? ""].join("|");
+        if (checkoutRequestRef.current?.signature !== signature) {
+          checkoutRequestRef.current = { signature, id: crypto.randomUUID() };
+        }
+        const requestId = checkoutRequestRef.current.id;
 
         const response = await fetch("/api/checkout/create-intent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            amountMinor: Number(amount) * 100,
-            currency: currency.toUpperCase(),
+            amountMinor: Math.round(Number(amount) * 100),
+            currency: normalizedCurrency,
             title,
             requestId,
+            ...(paymentMethod ? { paymentMethod } : {}),
+            ...(trimmedMessage ? { message: trimmedMessage } : {}),
           }),
           cache: "no-store",
         });
@@ -352,11 +410,12 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
           setClientSecret(data.clientSecret);
           setPaymentId(data.paymentId || null);
           setIsCheckoutModalOpen(true);
+          return true;
         } else if (data?.terminal) {
           setPaymentId(data.paymentId || null);
           setPaymentUiStatus(data.status || "FAILED_CANCELED");
           toast(attemptFinishedMessage, "error");
-          setCheckoutRequestId(null);
+          checkoutRequestRef.current = null;
         } else if (data?.error) {
           if (response.status === 401 || String(data.error).includes("AUTH_REQUIRED")) {
             toast(isPl ? "Twoja sesja wygasła. Zaloguj się ponownie." : "Your session has expired. Please sign in again.", "error");
@@ -376,6 +435,7 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
       } finally {
         setIsLoading(false);
       }
+      return false;
     },
     [
       userId,
@@ -383,7 +443,6 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
       isTermsAccepted,
       toast,
       isPl,
-      checkoutRequestId,
       title,
       getMinAmountTooLowMessage,
       attemptFinishedMessage,
@@ -417,5 +476,7 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
     handleRetryStatusCheck,
     closeSuccessAndSync,
     submit,
+    resetCheckout,
+    trackConfirmedPayment,
   };
 }

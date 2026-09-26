@@ -21,6 +21,10 @@ export interface CreateCheckoutIntentInput {
   currency: string;
   title: string;
   requestId?: string;
+  /** Restricts the PaymentIntent to one method; omitted → Stripe's automatic methods. */
+  paymentMethod?: "card" | "blik" | "p24";
+  /** Optional private note from the supporter. */
+  message?: string;
 }
 
 export interface CheckoutResultDto {

@@ -23,16 +23,9 @@ import { useCheckoutFlow, checkoutStripePromise } from "@/lib/hooks/useCheckoutF
 
 interface DonationBoxProps {
   videoTitle?: string;
-  /**
-   * "card" (default): the sidebar tip-gate card. "modal": step 1 of the full-page support
-   * modal (SupportModal) — same fields and checkout flow, without the card chrome/#donations
-   * anchor, and the CTA continues to step 2 (the Stripe CheckoutModal).
-   */
-  variant?: "card" | "modal";
 }
 
-export default function DonationBox({ videoTitle, variant = "card" }: DonationBoxProps) {
-  const isModal = variant === "modal";
+export default function DonationBox({ videoTitle }: DonationBoxProps) {
   const { t, language } = useLanguage();
   const isPl = language === "pl";
   const searchParams = useSearchParams();
@@ -152,23 +145,19 @@ export default function DonationBox({ videoTitle, variant = "card" }: DonationBo
 
   return (
     <div
-      id={isModal ? undefined : "donations"}
-      className={isModal ? "group relative" : "group relative my-[10px] mb-3 scroll-mt-20 overflow-hidden rounded-[20px] border border-[var(--cm-amber-38)] bg-[linear-gradient(168deg,var(--chan-amber-soft),var(--cm-card-92-white)_62%)] p-[22px_24px_18px] shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_1px_2px_rgba(23,23,23,0.03),0_24px_50px_-26px_var(--cm-amber-58)]"}
+      id="donations"
+      className="group relative my-[10px] mb-3 scroll-mt-20 overflow-hidden rounded-[20px] border border-[var(--cm-amber-38)] bg-[linear-gradient(168deg,var(--chan-amber-soft),var(--cm-card-92-white)_62%)] p-[22px_24px_18px] shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_1px_2px_rgba(23,23,23,0.03),0_24px_50px_-26px_var(--cm-amber-58)]"
     >
-      {!isModal && (
-        <>
-          {/* Festive ribbon along the very top edge — the tip jar's signature. Sits in the
-              card's own padding so it can never collide with the copy underneath. */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-[5px] bg-[linear-gradient(90deg,var(--chan-amber-bright),var(--chan-amber),var(--chan-blue),var(--chan-amber),var(--chan-amber-bright))]"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_20%_0%,var(--cm-amber-38),transparent_62%),radial-gradient(circle_at_84%_0%,var(--cm-blue-10),transparent_52%)]"
-          />
-        </>
-      )}
+      {/* Festive ribbon along the very top edge — the tip jar's signature. Sits in the
+          card's own padding so it can never collide with the copy underneath. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[5px] bg-[linear-gradient(90deg,var(--chan-amber-bright),var(--chan-amber),var(--chan-blue),var(--chan-amber),var(--chan-amber-bright))]"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_20%_0%,var(--cm-amber-38),transparent_62%),radial-gradient(circle_at_84%_0%,var(--cm-blue-10),transparent_52%)]"
+      />
       <div className="relative">
         <div className="mb-3 flex items-center gap-4">
           <span
@@ -218,9 +207,7 @@ export default function DonationBox({ videoTitle, variant = "card" }: DonationBo
             </span>
           ) : (
             <span>
-              {isModal
-                ? (isPl ? "Dalej — płatność" : "Continue to payment")
-                : (isPl ? "Wyślij napiwek" : "Tip the Guy")}
+              {isPl ? "Wyślij napiwek" : "Tip the Guy"}
             </span>
           )}
         </button>
@@ -278,7 +265,6 @@ export default function DonationBox({ videoTitle, variant = "card" }: DonationBo
           stripePromise={checkoutStripePromise}
           onClose={closeSuccessAndSync}
           onBackToSite={closeSuccessAndSync}
-          stepLabel={isModal ? (isPl ? "Krok 2 z 2" : "Step 2 of 2") : undefined}
         />
       )}
 
