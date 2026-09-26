@@ -1,9 +1,10 @@
-import { HomePageSkeleton } from "@/components/skeletons";
+import { SitePreloaderScreen } from "@/app/components/preload/SitePreloaderScreen";
 
+/**
+ * Same full-screen preloader PageRevealGate keeps on top of the page after it
+ * streams in, so "server still rendering" and "page settling on the client" read
+ * as one continuous screen instead of a skeleton that swaps into another state.
+ */
 export default function LocalizedHomeLoading() {
-  return (
-    <div className="animate-in fade-in duration-300" suppressHydrationWarning>
-      <HomePageSkeleton />
-    </div>
-  );
+  return <SitePreloaderScreen />;
 }

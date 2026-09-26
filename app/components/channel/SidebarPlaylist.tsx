@@ -9,7 +9,7 @@ import Image from "next/image";
 import { AlertCircle } from "../icons";
 import { PublicVideoDTO } from "@/app/types/video";
 import { useAuth } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AccessLockOverlay from "../AccessLockOverlay";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { NajsIcon } from "../najs/primitives";
@@ -41,6 +41,10 @@ interface SidebarPlaylistProps {
   onVideoMouseEnter: (id: string) => void;
   onVideoSelect?: (videoId?: string) => void;
   showSupportBox?: boolean;
+  /** Layout the server already built for this page (HomeExperience) — skips the first fetch. */
+  initialLayout?: SidebarLayout | null;
+  /** Viewer `initialLayout` was built for; a different client viewer refetches. */
+  initialLayoutViewerKey?: string;
 }
 
 function useSupportItem(sortedVideos: PublicVideoDTO[], layoutItems?: SidebarLayoutItem[]) {
@@ -76,6 +80,8 @@ export function SidebarPlaylist({
   onVideoMouseEnter,
   onVideoSelect,
   showSupportBox = true,
+  initialLayout,
+  initialLayoutViewerKey,
 }: SidebarPlaylistProps) {
   const {
     isLoaded: authLoaded,
@@ -116,9 +122,15 @@ export function SidebarPlaylist({
     return "wyświetleń";
   };
 
-  const [layout, setLayout] = useState<SidebarLayout | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [layout, setLayout] = useState<SidebarLayout | null>(initialLayout ?? null);
+  const [loading, setLoading] = useState(!initialLayout);
   const [error, setError] = useState<boolean>(false);
+  // Viewer the layout currently in state was built for. Starts as the server's
+  // viewer when the page shipped a layout, so the first client pass doesn't
+  // refetch (and re-skeleton) a list that is already on screen.
+  const layoutViewerKeyRef = useRef<string | null>(
+    initialLayout ? initialLayoutViewerKey ?? null : null,
+  );
 
   useEffect(() => {
     if (!authLoaded) return;
@@ -126,10 +138,13 @@ export function SidebarPlaylist({
     // Keyed by viewer identity so the two simultaneously mounted instances share
     // one request, while any auth-state change starts a fresh one.
     const viewerKey = sidebarLayoutViewerKey(authUserId, isSignedIn);
+    if (layoutViewerKeyRef.current === viewerKey) return;
+
     const request = acquireSidebarLayout(viewerKey);
     let cancelled = false;
 
     async function applyLayout() {
+      layoutViewerKeyRef.current = null;
       setLayout(null);
       setLoading(true);
       setError(false);
@@ -137,6 +152,7 @@ export function SidebarPlaylist({
       const result = await request.promise;
       if (cancelled || result.status === "aborted") return;
       if (result.status === "ok") {
+        layoutViewerKeyRef.current = viewerKey;
         setLayout(result.layout);
         setError(false);
       } else {

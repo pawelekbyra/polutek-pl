@@ -201,6 +201,8 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             videoId={video.id}
             requiredTier={video.tier}
             showPatronComingSoon
+            posterUrl={video.thumbnailUrl}
+            revealKey="player"
           >
             <VideoPlayer video={video} onViewCounted={() => setLocalViewsCount((views) => views + 1)} />
           </PremiumWrapper>

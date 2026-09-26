@@ -12,6 +12,12 @@ import { getLocalizedHref, type Locale } from '@/lib/i18n/routing';
 import { redirect } from 'next/navigation';
 import ChannelHome from '@/app/components/ChannelHome';
 import Navbar from '@/app/components/Navbar';
+import { PageRevealGate } from '@/app/components/preload/PageRevealGate';
+import { ChannelLayoutService } from '@/lib/modules/channel';
+import {
+  sidebarLayoutViewerKey,
+  type SidebarLayout,
+} from '@/app/components/channel/sidebar-layout-request';
 
 interface HomeExperienceProps {
   locale: Locale;
@@ -64,8 +70,23 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
     }
   }
 
+  // Sidebar layout is loaded here, with the page, rather than by a client-side fetch
+  // after hydration — that fetch was one of the pieces popping in on its own. The
+  // JSON round-trip gives exactly the shape `/api/channel/sidebar` returns (dates as
+  // strings). On failure the client falls back to fetching it itself.
+  const loadSidebarLayout = async (): Promise<SidebarLayout | null> => {
+    try {
+      const layout = await ChannelLayoutService.getSidebarLayout(userId ?? null);
+      return JSON.parse(JSON.stringify(layout)) as SidebarLayout;
+    } catch (e) {
+      logger.error("[HOME_SIDEBAR_LAYOUT_ERROR]", e);
+      return null;
+    }
+  };
+
   let userDb = null;
   let hasActivePatronGrant = false;
+  let initialSidebarLayout: SidebarLayout | null = null;
   let initialInteraction = { liked: false, disliked: false };
   let initialIsSubscribed = false;
 
@@ -79,7 +100,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
       logger.error("[HOME_USER_FETCH_ERROR]", e);
     });
 
-    const [dbResult, activeGrant, like, dislike, sub] = await Promise.all([
+    const [dbResult, activeGrant, like, dislike, sub, sidebarLayout] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         include: { paymentTotals: true }
@@ -98,13 +119,20 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
         where: { userId_creatorId: { userId, creatorId: targetVideo.creatorId } },
         select: { id: true }
       }).catch(() => null) : null,
+      loadSidebarLayout(),
     ]);
 
     userDb = dbResult;
     hasActivePatronGrant = Boolean(activeGrant);
     initialInteraction = { liked: !!like, disliked: !!dislike };
     initialIsSubscribed = !!sub;
+    initialSidebarLayout = sidebarLayout;
+  } else if (content.status !== 'error' && content.status !== 'empty') {
+    initialSidebarLayout = await loadSidebarLayout();
   }
+
+  const selectedVideo =
+    (videoId ? allVideos.find(v => v.id === videoId || v.slug === videoId) : null) || mainVideo;
 
   const userProfile = userId ? {
     id: userId,
@@ -176,17 +204,21 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
   }
 
   return (
-    <div className="public-visual-shell min-h-screen bg-background text-foreground">
-      <Navbar />
-      <main className="relative">
-        <ChannelHome
-          mainVideo={mainVideo}
-          allVideos={allVideos}
-          currentVideoId={videoId}
-          userProfile={userProfile}
-        />
-      </main>
-      <Footer />
-    </div>
+    <PageRevealGate waitFor={['player', 'comments']} posterUrl={selectedVideo?.thumbnailUrl}>
+      <div className="public-visual-shell min-h-screen bg-background text-foreground">
+        <Navbar />
+        <main className="relative">
+          <ChannelHome
+            mainVideo={mainVideo}
+            allVideos={allVideos}
+            currentVideoId={videoId}
+            userProfile={userProfile}
+            initialSidebarLayout={initialSidebarLayout}
+            initialSidebarViewerKey={sidebarLayoutViewerKey(userId, Boolean(userId))}
+          />
+        </main>
+        <Footer />
+      </div>
+    </PageRevealGate>
   );
 }

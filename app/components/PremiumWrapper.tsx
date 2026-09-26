@@ -24,6 +24,7 @@ import {
 } from "./preload/AppPreloadProvider";
 import { VideoAccessContext, useVideoAccess } from "./VideoAccessContext";
 import { useOptionalLanguage } from "./LanguageContext";
+import { usePageRevealReady } from "./preload/PageRevealGate";
 import {
   BLOCKED_PLAYBACK_STATES,
   PLAYBACK_PLAN_STATE_MESSAGES,
@@ -56,6 +57,13 @@ interface PremiumWrapperProps {
    * working normally, so this defaults to false and only Hero.tsx sets it.
    */
   showPatronComingSoon?: boolean;
+  /** Poster shown while the playback plan resolves (full-size player only). */
+  posterUrl?: string | null;
+  /**
+   * Reports to an enclosing PageRevealGate under this key once the player area
+   * has settled into its final first state (player, lock, error or coming soon).
+   */
+  revealKey?: string;
 }
 
 export default function PremiumWrapper({
@@ -64,6 +72,8 @@ export default function PremiumWrapper({
   requiredTier: initialTier,
   variant = "default",
   showPatronComingSoon = false,
+  posterUrl,
+  revealKey,
   onAccessLoad,
 }: PremiumWrapperProps) {
   const { userId, isLoaded, sessionId } = useAuth();
@@ -242,16 +252,21 @@ export default function PremiumWrapper({
     refreshPlaybackPlan,
   };
 
+  const showsComingSoon =
+    TEMP_PATRON_COMING_SOON && showPatronComingSoon && effectiveTier === "PATRON";
+  const showsGuestLock = isLoaded && !userId && !isPublic;
+  usePageRevealReady(revealKey, showsComingSoon || showsGuestLock || !safeIsLoading);
+
   // TEMPORARY (2026-09-22): "coming soon" placeholder for the whole PATRON
   // tier — see lib/temp-patron-coming-soon.ts. Purely a display gate, checked
   // before any real access-state branching below; doesn't touch playback
   // fetch/access logic at all.
-  if (TEMP_PATRON_COMING_SOON && showPatronComingSoon && effectiveTier === "PATRON") {
+  if (showsComingSoon) {
     return <AccessLockOverlay state="COMING_SOON" variant={variant} />;
   }
 
   if (safeIsLoading) {
-    if (isLoaded && !userId && !isPublic) {
+    if (showsGuestLock) {
       return (
         <PlaybackPlanStateOverlay
           state={deniedState}
@@ -260,7 +275,7 @@ export default function PremiumWrapper({
         />
       );
     }
-    return <PlayerLoadingState variant={variant} />;
+    return <PlayerLoadingState variant={variant} posterUrl={posterUrl} />;
   }
 
   if (safeHasAccess) {

@@ -14,7 +14,7 @@ import { PublicVideoDTO as VideoType, type VideoTextTrackDTO } from '@/app/types
 import { cn } from '@/lib/utils';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
-import { PlayerLoadingIndicator } from './PlayerLoadingState';
+import { PlayerPosterLoading } from './PlayerLoadingState';
 import { resolvePlaybackSource } from './playback-source';
 import { shouldSendViewForPlaybackPosition } from './video-view-threshold';
 import { usePlaybackTelemetry } from '@/lib/hooks/usePlaybackTelemetry';
@@ -255,9 +255,15 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted }: 
                         </MediaProvider>
                         {(playerConfig ? playerConfig.controls : true) && <PolutekControls />}
                     </MediaPlayer>
-                    {!hasStartedPlayback && !bufferingOverlayTimedOut && (
+                    {!bufferingOverlayTimedOut && (
+                        // Same poster the access-check state showed (video.thumbnailUrl), so
+                        // the handoff from PremiumWrapper to the mounted player is seamless;
+                        // it fades out on the first real frame instead of cutting away.
                         <div className="absolute inset-0 z-30 pointer-events-none">
-                            <PlayerLoadingIndicator />
+                            <PlayerPosterLoading
+                                posterUrl={video.thumbnailUrl || posterUrl}
+                                hidden={hasStartedPlayback}
+                            />
                         </div>
                     )}
                 </div>

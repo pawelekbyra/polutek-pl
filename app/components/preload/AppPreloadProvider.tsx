@@ -274,7 +274,9 @@ export function AppPreloadProvider({
       scheduleIdle(() => {
         if (cancelled) return;
         const next = allVideos.filter((video) => video.id !== selectedVideo.id).slice(0, 3);
-        next.forEach((video) => void warmVideo(video.id, { includePoster: true, priority: "nearby" }));
+        // Comments too: on touch devices there is no hover intent, so the idle warm-up
+        // is what makes a tap on a nearby video land on ready comments.
+        next.forEach((video) => void warmVideo(video.id, { includePoster: true, includeComments: true, priority: "nearby" }));
       });
     }
 
