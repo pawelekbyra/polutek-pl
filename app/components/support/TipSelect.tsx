@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown } from "../icons";
 
@@ -18,26 +19,82 @@ interface TipSelectProps {
   onChange: (value: string) => void;
 }
 
+interface ListPosition {
+  container: HTMLElement;
+  style: React.CSSProperties;
+}
+
+const LIST_GAP = 6;
+const EDGE = 8;
+
 /**
- * The gate's own dropdown (instead of the browser's system list): a warm field that expands in
- * place, so it never gets clipped by the fixed-size frame and the footer button stays put.
+ * Where the floating list goes: portalled into the gate's dialog (so it stays inside the
+ * modal and isn't clipped by the scrolling step body), below the field or above it when
+ * there's more room there. Measured on open; the list closes on scroll/resize instead of
+ * following the field.
+ */
+function measureList(trigger: HTMLElement): ListPosition {
+  const dialog = trigger.closest<HTMLElement>('[role="dialog"]');
+  const container = dialog ?? document.body;
+  const field = trigger.getBoundingClientRect();
+  const box = dialog?.getBoundingClientRect();
+  // Absolute offsets start inside the dialog's border.
+  const frame = box
+    ? { top: box.top + dialog!.clientTop, left: box.left + dialog!.clientLeft, bottom: box.bottom }
+    : { top: 0, left: 0, bottom: window.innerHeight };
+  const below = frame.bottom - field.bottom - LIST_GAP - EDGE;
+  const above = field.top - frame.top - LIST_GAP - EDGE;
+  const openDown = below >= 240 || below >= above;
+  return {
+    container,
+    style: {
+      position: dialog ? "absolute" : "fixed",
+      left: field.left - frame.left,
+      width: field.width,
+      maxHeight: Math.max(120, openDown ? below : above),
+      ...(openDown
+        ? { top: field.bottom - frame.top + LIST_GAP }
+        : { bottom: frame.bottom - field.top + LIST_GAP }),
+    },
+  };
+}
+
+/**
+ * The gate's own dropdown (instead of the browser's system list): a warm field whose list
+ * floats on top of the step, so nothing below it moves.
  */
 export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
-  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState<ListPosition | null>(null);
+  const open = position !== null;
   const [active, setActive] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
   const listId = useId();
   const labelId = useId();
   const selected = options.find((option) => option.value === value) ?? null;
 
   useEffect(() => {
     if (!open) return;
+    const close = () => setPosition(null);
     const onPointerDown = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+      const target = event.target as Node;
+      if (!rootRef.current?.contains(target) && !listRef.current?.contains(target)) close();
+    };
+    const onScroll = (event: Event) => {
+      if (!listRef.current?.contains(event.target as Node)) close();
     };
     document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
+    document.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", close);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", close);
+    };
   }, [open]);
+
+  const setOpen = (next: boolean) => setPosition(next && triggerRef.current ? measureList(triggerRef.current) : null);
 
   const toggle = () => {
     if (!open) setActive(Math.max(0, options.findIndex((option) => option.value === value)));
@@ -77,13 +134,14 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
       </span>
       <div
         className={cn(
-          "overflow-hidden rounded-[16px] border-2 bg-[var(--chan-amber-soft)] transition-[border-color,box-shadow] duration-150 motion-reduce:transition-none",
+          "rounded-[16px] border-2 bg-[var(--chan-amber-soft)] transition-[border-color,box-shadow] duration-150 motion-reduce:transition-none",
           open
             ? "border-[var(--chan-amber)] shadow-[0_10px_24px_-14px_var(--cm-amber-62)]"
             : "border-[var(--cm-amber-38)] hover:border-[var(--chan-amber)]",
         )}
       >
         <button
+          ref={triggerRef}
           type="button"
           role="combobox"
           aria-labelledby={labelId}
@@ -110,12 +168,16 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
             )}
           />
         </button>
-        {open && (
+      </div>
+      {position &&
+        createPortal(
           <ul
+            ref={listRef}
             id={listId}
             role="listbox"
             aria-labelledby={labelId}
-            className="m-0 list-none border-t border-[var(--cm-amber-38)] bg-white p-1.5 animate-in fade-in slide-in-from-top-1 duration-150 motion-reduce:animate-none"
+            style={position.style}
+            className="z-50 m-0 list-none overflow-y-auto rounded-[16px] border-2 border-[var(--chan-amber)] bg-white p-1.5 shadow-[0_18px_40px_-16px_rgba(23,23,23,0.35)] animate-in fade-in zoom-in-95 duration-150 motion-reduce:animate-none"
           >
             {options.map((option, index) => {
               const isSelected = option.value === value;
@@ -144,9 +206,9 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
                 </li>
               );
             })}
-          </ul>
+          </ul>,
+          position.container,
         )}
-      </div>
     </div>
   );
 }
