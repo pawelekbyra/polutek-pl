@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import type { StripeElementsOptions } from "@stripe/stripe-js";
-import { X, ArrowLeft } from "../icons";
+import { X } from "../icons";
 import { Dialog, DialogOverlay, DialogPopup, DialogPortal, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "../LanguageContext";
 import { useAuthModal } from "../auth/AuthModalProvider";
@@ -23,6 +23,7 @@ import { TipAmountStep } from "../support/TipAmountStep";
 import { TipMethodStep } from "../support/TipMethodStep";
 import { TipPayStep } from "../support/TipPayStep";
 import { TipThanksStep } from "../support/TipThanksStep";
+import { TipBackContext } from "../support/TipStepLayout";
 
 interface SupportModalProps {
   videoTitle?: string;
@@ -234,16 +235,6 @@ export default function SupportModal({ videoTitle, onClose }: SupportModalProps)
           <DialogTitle className="sr-only">{isPl ? "Bramka napiwkowa" : "Tip gate"}</DialogTitle>
 
           <header className="flex shrink-0 items-center gap-2 px-5 pb-2 pt-[max(12px,env(safe-area-inset-top))] md:px-7 md:pt-4">
-            {canGoBack && (
-              <button
-                type="button"
-                onClick={goBack}
-                aria-label={isPl ? "Wstecz" : "Back"}
-                className="-ml-2 flex h-10 w-10 items-center justify-center rounded-full text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-            )}
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--chan-amber-soft)] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--chan-amber-ink)]">
               <span aria-hidden="true">💰</span>
               {isPl ? "Bramka napiwkowa" : "Tip gate"}
@@ -274,7 +265,9 @@ export default function SupportModal({ videoTitle, onClose }: SupportModalProps)
             key={showThanks ? "thanks" : step}
             className="flex min-h-0 flex-1 flex-col animate-in fade-in slide-in-from-right-4 duration-200 motion-reduce:animate-none"
           >
-            {body}
+            <TipBackContext.Provider value={canGoBack ? { onBack: goBack, label: isPl ? "Wstecz" : "Back" } : null}>
+              {body}
+            </TipBackContext.Provider>
           </div>
         </DialogPopup>
       </DialogPortal>

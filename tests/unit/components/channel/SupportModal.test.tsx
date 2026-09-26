@@ -92,6 +92,7 @@ describe('SupportModal (tip gate)', () => {
 
     expect(screen.getAllByText('Bramka napiwkowa').length).toBeGreaterThan(0);
     expect(screen.getByText('Kwota napiwku')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Wstecz' })).not.toBeInTheDocument();
     expect(screen.getByRole('combobox')).toHaveValue('PLN');
     expect(screen.getByRole('link', { name: 'Regulamin' })).toHaveAttribute('target', '_blank');
     expect(screen.getByRole('link', { name: 'Politykę Prywatności' })).toBeInTheDocument();
@@ -117,6 +118,8 @@ describe('SupportModal (tip gate)', () => {
 
     // Step 2: automatic intent, tiles in our order from Stripe's list, Link hidden.
     expect(await screen.findByText('Metoda napiwku')).toBeInTheDocument();
+    // Back sits in the footer, next to the main button.
+    expect(screen.getByRole('button', { name: 'Wstecz' }).nextElementSibling).toContainElement(screen.getByRole('button', { name: 'Dalej' }));
     const body = createIntentBody();
     expect(body).toMatchObject({ amountMinor: 2000, currency: 'PLN' });
     expect(body).not.toHaveProperty('paymentMethod');
