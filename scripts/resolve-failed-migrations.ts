@@ -15,6 +15,14 @@ const ROLLBACK_SAFE_FAILED_MIGRATIONS = new Set([
   // failed while trying that transient migration, rolling it back unblocks the
   // canonical migration set without applying obsolete schema changes.
   '20260627000000_video_sources_youtube',
+  // PRISMA-SCHEMA-MIGRATION-DRIFT-001: the original push of this migration used
+  // plain CREATE INDEX/DROP CONSTRAINT with no IF [NOT] EXISTS guard, and at
+  // least one of those objects already existed on a real database out-of-band
+  // (the exact drift this ticket exists to fix), so it failed partway through
+  // and was left in _prisma_migrations with finished_at NULL. It has since been
+  // rewritten to be fully idempotent, so it is safe to mark rolled back and
+  // retry.
+  '20260926120000_add_missing_schema_indexes',
 ]);
 
 type FailedMigrationRow = {
