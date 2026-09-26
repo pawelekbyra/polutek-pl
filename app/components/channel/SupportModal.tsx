@@ -8,7 +8,7 @@ import { Dialog, DialogOverlay, DialogPopup, DialogPortal, DialogTitle } from "@
 import { useLanguage } from "../LanguageContext";
 import { useAuthModal } from "../auth/AuthModalProvider";
 import { cn } from "@/lib/utils";
-import { MAIN_CREATOR_NAME, type SupportedCurrency } from "@/lib/constants";
+import { APP_NAME, type SupportedCurrency } from "@/lib/constants";
 import { detectDefaultCurrency } from "@/lib/payments/detect-currency";
 import { checkoutStripePromise, useCheckoutFlow } from "@/lib/hooks/useCheckoutFlow";
 import {
@@ -26,7 +26,6 @@ import { TipThanksStep } from "../support/TipThanksStep";
 import { TipBackContext } from "../support/TipStepLayout";
 
 interface SupportModalProps {
-  videoTitle?: string;
   onClose: () => void;
 }
 
@@ -44,7 +43,7 @@ const STEPS: TipStep[] = ["amount", "method", "pay"];
  * call on the same intent. Success still reconciles through
  * /api/payments/[id] → fulfillPayment(). Mounted only while open, so each opening starts fresh.
  */
-export default function SupportModal({ videoTitle, onClose }: SupportModalProps) {
+export default function SupportModal({ onClose }: SupportModalProps) {
   const { language } = useLanguage();
   const isPl = language === "pl";
   const { open: openAuthModal } = useAuthModal();
@@ -52,7 +51,8 @@ export default function SupportModal({ videoTitle, onClose }: SupportModalProps)
   const flow = useCheckoutFlow({
     isPl,
     logPrefix: "TipFlow",
-    title: videoTitle || "Napiwek",
+    // The PaymentIntent description: shown in the BLIK banking app and on statements.
+    title: isPl ? `Napiwek dla ${APP_NAME}` : `Tip for ${APP_NAME}`,
     getMinAmountTooLowMessage: useCallback(
       (min: number, currency: string) =>
         isPl ? `Minimalna kwota napiwku to ${min} ${currency}` : `Minimum tip amount is ${min} ${currency}`,
@@ -80,7 +80,7 @@ export default function SupportModal({ videoTitle, onClose }: SupportModalProps)
           ?.paymentRequest({
             country: "PL",
             currency: currency.toLowerCase(),
-            total: { label: MAIN_CREATOR_NAME, amount: 100 },
+            total: { label: APP_NAME, amount: 100 },
             disableWallets: ["link", "browserCard"],
           })
           .canMakePayment(),

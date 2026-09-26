@@ -395,7 +395,7 @@ function ChannelHomeContent({
         </div>
       </div>
       {isSupportModalOpen && (
-        <SupportModal videoTitle={selectedVideo.title} onClose={() => setIsSupportModalOpen(false)} />
+        <SupportModal onClose={() => setIsSupportModalOpen(false)} />
       )}
     </main>
     </>

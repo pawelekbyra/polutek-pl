@@ -16,7 +16,8 @@ export const TIP_CURRENCY_LABELS: Record<SupportedCurrency, { symbol: string; pl
 export const TIP_FALLBACK_METHOD = "stripe_all";
 
 /** Placeholder only (owner's request): listed last, its pay step just says it's coming soon. */
-export const TIP_CRYPTO_PLACEHOLDER = "crypto";
+// Not "crypto": that is a real Stripe payment method type and must never be shadowed.
+export const TIP_CRYPTO_PLACEHOLDER = "crypto_placeholder";
 
 /**
  * Stripe decides WHICH methods a tip can use (dashboard settings, currency, amount) and returns

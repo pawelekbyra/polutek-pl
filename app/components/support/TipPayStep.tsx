@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { CardElement, Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import type { PaymentIntentResult, PaymentRequest, Stripe } from "@stripe/stripe-js";
 import type { SupportedCurrency } from "@/lib/constants";
-import { MAIN_CREATOR_NAME } from "@/lib/constants";
+import { APP_NAME } from "@/lib/constants";
 import { Loader2 } from "../icons";
 import { buildTipReturnUrl, readConfirmResult, type TipConfirmOutcome } from "./tip-confirm";
 import { TIP_CRYPTO_PLACEHOLDER, TIP_FALLBACK_METHOD, describeTipMethod, formatTipAmount } from "./tip-flow-config";
@@ -76,24 +76,43 @@ function PayStepFrame({
 function useTipConfirm(isPl: boolean, onConfirmed: (outcome: TipConfirmOutcome) => void) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Resolves true when the tip went through. */
   const run = async (confirm: () => Promise<PaymentIntentResult>) => {
     setBusy(true);
     setError(null);
     const read = readConfirmResult(await confirm(), isPl);
     setBusy(false);
-    if ("outcome" in read) onConfirmed(read.outcome);
-    else setError(read.error);
+    if ("outcome" in read) {
+      onConfirmed(read.outcome);
+      return true;
+    }
+    setError(read.error);
+    return false;
   };
   return { busy, error, run };
 }
 
-function SendButton({ busy, disabled, label, isPl, onClick }: { busy: boolean; disabled?: boolean; label: string; isPl: boolean; onClick: () => void }) {
+function SendButton({
+  busy,
+  disabled,
+  label,
+  busyLabel,
+  isPl,
+  onClick,
+}: {
+  busy: boolean;
+  disabled?: boolean;
+  label: string;
+  busyLabel?: string;
+  isPl: boolean;
+  onClick: () => void;
+}) {
   return (
     <TipPrimaryButton onClick={onClick} disabled={disabled || busy} busy={busy}>
       {busy ? (
         <>
           <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-          {isPl ? "Wysyłam…" : "Sending…"}
+          {busyLabel ?? (isPl ? "Wysyłam…" : "Sending…")}
         </>
       ) : (
         label
@@ -121,7 +140,7 @@ function sendLabel(isPl: boolean, amount: number, currency: SupportedCurrency, l
 }
 
 function BlikForm(props: TipPayStepProps) {
-  const { language, amount, currency, clientSecret, onConfirmed } = props;
+  const { language, amount, currency, clientSecret, userEmail, onConfirmed } = props;
   const isPl = language === "pl";
   const stripe = useStripe();
   const [code, setCode] = useState("");
@@ -137,15 +156,19 @@ function BlikForm(props: TipPayStepProps) {
           disabled={!valid || !stripe}
           isPl={isPl}
           label={sendLabel(isPl, amount, currency, language)}
-          onClick={() =>
-            stripe &&
-            run(() =>
+          // Stripe.js waits here (up to 60 s) until the payment is approved in the banking app.
+          busyLabel={isPl ? "Potwierdź w aplikacji banku…" : "Approve in your banking app…"}
+          onClick={async () => {
+            if (!stripe) return;
+            const sent = await run(() =>
               stripe.confirmBlikPayment(clientSecret, {
-                payment_method: { blik: {} },
+                payment_method: { blik: {}, ...(userEmail ? { billing_details: { email: userEmail } } : {}) },
                 payment_method_options: { blik: { code } },
               }),
-            )
-          }
+            );
+            // A BLIK code works once; a failed attempt needs a fresh one.
+            if (!sent) setCode("");
+          }}
         />
       }
     >
@@ -164,7 +187,9 @@ function BlikForm(props: TipPayStepProps) {
         />
       </label>
       <p className="mt-2 text-[12px] text-[var(--chan-muted)]">
-        {isPl ? "Po wysłaniu potwierdź napiwek w aplikacji banku." : "After sending, confirm the tip in your banking app."}
+        {isPl
+          ? "Po wysłaniu masz 60 sekund na potwierdzenie napiwku w aplikacji banku."
+          : "After sending, you have 60 seconds to confirm the tip in your banking app."}
       </p>
       <ErrorLine error={error} />
     </PayStepFrame>
@@ -204,6 +229,15 @@ function RedirectForm(props: TipPayStepProps) {
           ? "Przeniesiemy Cię do Przelewy24, gdzie wybierzesz swój bank. Po zapłacie wrócisz tutaj."
           : "You'll go to Przelewy24 to pick your bank, then come right back here."}
       </p>
+      {!userEmail && (
+        <ErrorLine
+          error={
+            isPl
+              ? "Przelewy24 wymaga adresu e-mail na koncie. Dodaj go w ustawieniach konta albo wybierz inną metodę."
+              : "Przelewy24 needs an email address on your account. Add one in your account settings or choose another method."
+          }
+        />
+      )}
       <ErrorLine error={error} />
     </PayStepFrame>
   );
@@ -295,7 +329,7 @@ function FallbackForm({ deferred, ...props }: TipPayStepProps & { deferred?: boo
       <PaymentElement
         options={{
           layout: { type: "accordion", defaultCollapsed: false },
-          business: { name: MAIN_CREATOR_NAME },
+          business: { name: APP_NAME },
           wallets: { applePay: "never", googlePay: "never", link: "never" },
           fields: { billingDetails: { email: userEmail ? "never" : "auto" } },
         }}
@@ -325,7 +359,7 @@ function WalletForm(props: TipPayStepProps) {
     const paymentRequest = stripe.paymentRequest({
       country: "PL",
       currency: currency.toLowerCase(),
-      total: { label: MAIN_CREATOR_NAME, amount: toMinor(amount) },
+      total: { label: APP_NAME, amount: toMinor(amount) },
       disableWallets: ["link", "browserCard", method === "apple_pay" ? "googlePay" : "applePay"],
     });
     paymentRequest.on("paymentmethod", async (event) => {
@@ -384,7 +418,9 @@ function SingleMethodForm(props: TipPayStepProps) {
         mode: "payment",
         amount: toMinor(amount),
         currency: currency.toLowerCase(),
-        paymentMethodTypes: [method],
+        // The intent uses automatic payment methods, so narrow with allowedPaymentMethodTypes;
+        // paymentMethodTypes would declare manual methods and not match the intent.
+        allowedPaymentMethodTypes: [method],
         locale: language === "pl" ? "pl" : "en",
       }}
     >

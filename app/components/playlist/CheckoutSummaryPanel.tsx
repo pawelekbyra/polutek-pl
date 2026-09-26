@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { MAIN_CREATOR_NAME } from '@/lib/constants';
+import { APP_NAME } from '@/lib/constants';
 
 const INK = '#211d18';
 
@@ -132,7 +132,7 @@ export default function CheckoutSummaryPanel({
 
       {/* footer */}
       <div className="relative z-10 flex items-center justify-between text-[10px] font-extrabold uppercase tracking-[0.25em] text-[var(--chan-muted)]">
-        <span>{MAIN_CREATOR_NAME} &copy; {new Date().getFullYear()}</span>
+        <span>{APP_NAME} &copy; {new Date().getFullYear()}</span>
         <span>{isPl ? 'Bezpieczna płatność · Stripe' : 'Secure payment · Stripe'}</span>
       </div>
     </div>

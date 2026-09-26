@@ -58,7 +58,7 @@ function mockFetch() {
 function renderModal(onClose = vi.fn()) {
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <SupportModal videoTitle="Film" onClose={onClose} />
+      <SupportModal onClose={onClose} />
     </QueryClientProvider>,
   );
   return onClose;
@@ -127,7 +127,7 @@ describe('SupportModal (tip gate)', () => {
     // Back sits in the footer, next to the main button.
     expect(screen.getByRole('button', { name: 'Wstecz' }).nextElementSibling).toContainElement(screen.getByRole('button', { name: 'Dalej' }));
     const body = createIntentBody();
-    expect(body).toMatchObject({ amountMinor: 2000, currency: 'PLN' });
+    expect(body).toMatchObject({ amountMinor: 2000, currency: 'PLN', title: 'Napiwek dla www.pawelperfect.pl' });
     expect(body).not.toHaveProperty('paymentMethod');
     const select = screen.getByRole('combobox', { name: 'Wybierz metodę napiwku' });
     expect(select).toHaveTextContent('BLIK');
@@ -148,9 +148,25 @@ describe('SupportModal (tip gate)', () => {
 
     expect(await screen.findByText('Dziękuję!')).toBeInTheDocument();
     expect(mocks.confirmBlikPayment).toHaveBeenCalledWith('cs_1', {
-      payment_method: { blik: {} },
+      payment_method: { blik: {}, billing_details: { email: 'fan@example.com' } },
       payment_method_options: { blik: { code: '123456' } },
     });
+  });
+
+  it('clears a used BLIK code after a failed attempt and shows the error', async () => {
+    renderModal();
+    await fillAmountStep('20');
+    await waitFor(() => expect(screen.getByRole('button', { name: /Dalej/ })).not.toBeDisabled());
+    fireEvent.click(screen.getByRole('button', { name: /Dalej/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Dalej' }));
+
+    const code = await screen.findByLabelText('Kod BLIK');
+    fireEvent.change(code, { target: { value: '123456' } });
+    mocks.confirmBlikPayment.mockResolvedValue({ error: { message: 'Kod BLIK wygasł.' } });
+    fireEvent.click(screen.getByRole('button', { name: /Wyślij/ }));
+
+    expect(await screen.findByText('Kod BLIK wygasł.')).toBeInTheDocument();
+    expect(code).toHaveValue('');
   });
 
   it("falls back to Stripe's form when Stripe reports no methods", async () => {

@@ -17,6 +17,11 @@ describe('tip gate method tiles (list comes from Stripe)', () => {
     expect(getTipMethodTiles(['blik'], ['apple_pay'])).toEqual(['blik', TIP_CRYPTO_PLACEHOLDER]);
   });
 
+  it("never lets the Crypto placeholder shadow Stripe's real crypto method", () => {
+    expect(getTipMethodTiles(['card', 'crypto'])).toEqual(['card', 'crypto', TIP_CRYPTO_PLACEHOLDER]);
+    expect(TIP_CRYPTO_PLACEHOLDER).not.toBe('crypto');
+  });
+
   it('falls back to Stripe\'s full form when no list came back', () => {
     expect(getTipMethodTiles([])).toEqual([TIP_FALLBACK_METHOD, TIP_CRYPTO_PLACEHOLDER]);
   });
