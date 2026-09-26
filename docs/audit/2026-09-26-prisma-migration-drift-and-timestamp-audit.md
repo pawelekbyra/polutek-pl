@@ -65,8 +65,38 @@ Re-ran the same clean-DB reconstruction after applying these three
 migrations: `prisma migrate diff` against `schema.prisma` now returns an
 empty migration — zero remaining drift.
 
+**Follow-up (same day): the first version of this fix broke both Vercel
+deployments on its own PR.** `vercel-build` (`package.json`) runs
+`db:migrate:repair && db:migrate:deploy && ...` — i.e. every PR preview
+build actually applies pending migrations to whatever real database that
+Vercel project is configured with, not a throwaway one. The initial
+`CREATE INDEX`/`DROP INDEX`/`DROP CONSTRAINT` statements had no
+`IF [NOT] EXISTS` guards, and both `Vercel – polutek-pl` and, notably,
+`Vercel – polutek.pl` (normally green on every prior PR) failed on this
+PR's first push — strong evidence that at least one of these objects
+already exists on the real database, created out-of-band exactly the way
+this ticket's own "Why" section theorizes the original drift happened.
+Rewrote all three migrations to be idempotent: `CREATE INDEX IF NOT
+EXISTS`, `DROP INDEX IF EXISTS`, `DROP CONSTRAINT IF EXISTS` before each
+`ADD CONSTRAINT` (the `ADD` always follows an unconditional drop in the
+same migration, so it can never collide). The `ALTER COLUMN` statements in
+the nullable/default migration needed no change — `DROP NOT NULL`,
+`DROP DEFAULT`, and `SET DEFAULT`/`SET NOT NULL` are all no-ops in Postgres
+when the column is already in the target state, unlike `CREATE INDEX`/
+`ADD CONSTRAINT`, which error on a duplicate. Re-verified locally by
+simulating the exact failure: applied the original 40 migrations, then
+manually created one of the 7 indexes and manually fixed one of the two FKs
+out-of-band (mimicking a real DB with partial out-of-band drift), then
+confirmed the idempotent migrations apply cleanly on top and the final
+diff is still empty. This matches the established pattern already used in
+this repo for exactly this risk (`20260625121500_add_payment_request_id`'s
+own `IF NOT EXISTS` comment).
+
 Not investigated further (per the ticket's own non-goals): which past
-commit originally hand-edited `schema.prisma` without a matching migration.
+commit originally hand-edited `schema.prisma` without a matching migration,
+or exactly which of the 9 objects already existed out-of-band on the real
+database (no access to it in this environment; the idempotent rewrite makes
+this unnecessary to pin down before shipping).
 
 ## PRISMA-MIGRATION-TIMESTAMP-DEDUP-001 — audited, no migration file changes
 

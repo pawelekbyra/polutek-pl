@@ -11,12 +11,19 @@
 -- this column, but User.id is a stable UUID primary key that is never
 -- updated in application code, so this is inert in practice; it only brings
 -- these two FKs in line with schema.prisma and every other relation.
+--
+-- DROP CONSTRAINT IF EXISTS makes the drop safe regardless of whether the
+-- constraint's current definition already matches (or differs from) what
+-- this migration adds; the immediately-following ADD CONSTRAINT then always
+-- starts from a clean, constraint-free column, so this is idempotent to
+-- re-run and safe even if the real database's drift differs slightly from
+-- the from-scratch replica this migration was verified against.
 
 -- DropForeignKey
-ALTER TABLE "Notification" DROP CONSTRAINT "Notification_userId_fkey";
+ALTER TABLE "Notification" DROP CONSTRAINT IF EXISTS "Notification_userId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "NotificationPreference" DROP CONSTRAINT "NotificationPreference_userId_fkey";
+ALTER TABLE "NotificationPreference" DROP CONSTRAINT IF EXISTS "NotificationPreference_userId_fkey";
 
 -- AddForeignKey
 ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
