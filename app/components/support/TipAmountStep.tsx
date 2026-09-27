@@ -57,7 +57,7 @@ export function TipAmountStep({
 
       <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--cm-amber-28)] bg-[var(--chan-amber-soft)] px-3 py-1.5">
         <span className="text-[12px] text-[var(--chan-body)]">{isPl ? "Dla:" : "For:"}</span>
-        <span className="text-[12px] font-extrabold text-[var(--chan-ink)]">Paweł Perfect</span>
+        <span className="text-[12px] font-extrabold text-[var(--chan-ink)]">{isPl ? "Pawłowi Perfectowi" : "Paweł Perfect"}</span>
       </div>
 
       <TipSelect
@@ -101,9 +101,11 @@ export function TipAmountStep({
       <div className="mt-4 flex items-start gap-2.5 rounded-[12px] border border-[var(--cm-amber-28)] bg-[var(--chan-amber-soft)] px-3.5 py-3">
         <span aria-hidden="true" className="mt-[1px] shrink-0 text-[15px]">💛</span>
         <p className="text-[12px] leading-[1.5] text-[var(--chan-body)]">
-          {isPl
-            ? "Napiwek jest dobrowolny i niczego nie odblokowuje. Po prostu dziękuję."
-            : "A tip is voluntary and unlocks nothing. Simply: thank you."}
+          {isPl ? (
+            <>Napiwek jest dobrowolny i niczego nie odblokowuje.<br />Po prostu dziękuję.</>
+          ) : (
+            <>A tip is voluntary and unlocks nothing.<br />Simply: thank you.</>
+          )}
         </p>
       </div>
     </TipStepLayout>
