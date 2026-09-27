@@ -39,7 +39,7 @@ export function MatrixRain() {
       const cols = Math.floor(canvas.width / FONT_SIZE);
       columns = Array.from(
         { length: cols },
-        () => -Math.floor(Math.random() * (canvas.height / FONT_SIZE)),
+        () => Math.floor(Math.random() * (canvas.height / FONT_SIZE)),
       );
     };
 
