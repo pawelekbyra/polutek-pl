@@ -76,7 +76,7 @@ export function TipPrimaryButton({
 
 export function TipStepHeading({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="mb-3">
+    <div className={subtitle ? "mb-3" : "mb-1"}>
       <h2 className="font-brand m-0 text-center text-[24px] font-extrabold leading-tight tracking-[-0.035em] text-[var(--chan-ink)]">
         {title}
       </h2>
