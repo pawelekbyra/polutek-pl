@@ -50,6 +50,7 @@ export function TipRecipientStep({
 
   return (
     <TipStepLayout
+      bodyClassName="flex flex-col"
       footer={
         <>
           <label className="mb-3 flex cursor-pointer items-start gap-2.5">
@@ -109,8 +110,10 @@ export function TipRecipientStep({
         </button>
       </div>
 
+      <div className="flex-1" />
+
       {showTermsError && (
-        <p role="alert" className="mt-3 text-[12px] font-semibold text-destructive">
+        <p role="alert" className="mb-1 text-[12px] font-semibold text-destructive">
           {isPl
             ? "Zaakceptuj Regulamin i Politykę Prywatności."
             : "Please accept the Terms and Privacy Policy."}
