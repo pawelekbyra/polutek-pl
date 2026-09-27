@@ -11,7 +11,6 @@ import React, {
 import { useAuth } from "@clerk/nextjs";
 import { SitePreloaderScreen } from "./SitePreloaderScreen";
 import { useOptionalLanguage } from "../LanguageContext";
-import styles from "./PageRevealGate.module.css";
 
 /**
  * Coordinated first reveal of the public home page.
@@ -94,8 +93,6 @@ export function PageRevealGate({ children, waitFor = [], posterUrl }: PageReveal
   const [phase, setPhase] = useState<"covering" | "gate" | "leaving" | "done">(() =>
     revealedInThisDocument ? "done" : "covering"
   );
-  // White burst flash state: idle → burst (circle expands) → fade (circle fades out)
-  const [flashPhase, setFlashPhase] = useState<"idle" | "burst" | "fade">("idle");
   const [timedOut, setTimedOut] = useState(false);
   const [readyKeys, setReadyKeys] = useState<ReadonlySet<string>>(() => new Set());
 
@@ -159,21 +156,10 @@ export function PageRevealGate({ children, waitFor = [], posterUrl }: PageReveal
     // silently fails in regular browser tabs where fullscreen is not active).
     try { screen.orientation?.lock?.("portrait").catch(() => {}); } catch { /* unsupported */ }
     window.dispatchEvent(new Event("polutek:gate-enter"));
-    // White burst: circle expands from centre over 300ms, then fades out as the page emerges.
-    setFlashPhase("burst");
-    window.setTimeout(() => {
-      setPhase("leaving");
-      setFlashPhase("fade");
-    }, 300);
+    setPhase("leaving");
   }, [phase]);
 
   const contextValue = useMemo(() => ({ reportReady }), [reportReady]);
-
-  const flashClass = [
-    styles.flash,
-    flashPhase === "burst" && styles.flashBurst,
-    flashPhase === "fade" && styles.flashFade,
-  ].filter(Boolean).join(" ");
 
   return (
     <PageRevealContext.Provider value={contextValue}>
@@ -187,7 +173,6 @@ export function PageRevealGate({ children, waitFor = [], posterUrl }: PageReveal
           onGateClick={handleGateClick}
         />
       )}
-      {flashPhase !== "idle" && <div className={flashClass} />}
     </PageRevealContext.Provider>
   );
 }
