@@ -68,7 +68,7 @@ export function TipMethodStep({
                 <span className="font-semibold text-[var(--chan-ink)]">{methodTitle}</span>
               </p>
             </div>
-            <button type="button" onClick={onChangeAmount} className="text-[13px] font-bold text-[var(--chan-ink)] hover:underline">
+            <button type="button" onClick={onChangeAmount} className="mt-[3px] text-[13px] font-bold text-[var(--chan-ink)] hover:underline">
               {isPl ? "Zmień" : "Change"}
             </button>
           </div>
