@@ -164,7 +164,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
 
   const showThanks = flow.isSuccess;
   const activeIndex = showThanks ? STEPS.length : STEPS.indexOf(step);
-  const canGoBack = !showThanks && step !== "recipient" && step !== "disclaimer";
+  const canGoBack = !showThanks && step !== "recipient";
 
   let body: React.ReactNode;
   if (showThanks) {
