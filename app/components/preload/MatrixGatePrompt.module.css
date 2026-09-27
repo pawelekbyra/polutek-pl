@@ -42,7 +42,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 300ms ease, transform 160ms ease;
+  transition: opacity 1200ms ease, transform 160ms ease;
   outline: none;
 }
 

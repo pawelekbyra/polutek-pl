@@ -10,6 +10,7 @@ export function MatrixGatePrompt({ onEnter }: { onEnter: () => void }) {
   const [charCount, setCharCount] = useState(0);
   const [cursorOn, setCursorOn] = useState(true);
   const doneTyping = charCount >= TEXT.length;
+  const [showButton, setShowButton] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -30,6 +31,12 @@ export function MatrixGatePrompt({ onEnter }: { onEnter: () => void }) {
     return () => clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    if (!doneTyping) return;
+    const timer = setTimeout(() => setShowButton(true), 700);
+    return () => clearTimeout(timer);
+  }, [doneTyping]);
+
   return (
     <div className={styles.overlay}>
       <p className={styles.text}>
@@ -43,7 +50,7 @@ export function MatrixGatePrompt({ onEnter }: { onEnter: () => void }) {
         className={styles.btn}
         onClick={doneTyping ? onEnter : undefined}
         aria-label="Enter"
-        style={{ opacity: doneTyping ? 1 : 0, pointerEvents: doneTyping ? "auto" : "none" }}
+        style={{ opacity: showButton ? 1 : 0, pointerEvents: showButton ? "auto" : "none" }}
       >
         <img src="/rabbit.png" alt="" className={styles.rabbitImg} />
       </button>
