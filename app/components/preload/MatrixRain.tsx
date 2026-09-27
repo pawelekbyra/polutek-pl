@@ -2,18 +2,30 @@
 
 import { useEffect, useRef } from "react";
 
-const FONT_SIZE = 14;
-const COL_W = 16;
-const BASE_SPEED = 0.5;   // rows/frame at 60 fps (base; each column varies ±25%)
-const TRAIL_ROWS = 28;    // bright-trail length in grid rows
-const BASE_ALPHA = 0.14;  // minimum opacity — keeps entire screen filled
-const HEAD_ALPHA = 0.86;  // peak extra opacity added at the head
+// Half-width katakana (U+FF65–FF9F) — same width as ASCII in monospace,
+// so columns stay aligned. Matches the classic Matrix aesthetic.
+const CHARS =
+  "ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ" +
+  "0123456789";
+
+const FONT_SIZE = 13;
+const COL_W = 14;
+const BASE_SPEED = 0.45;  // rows/frame at 60 fps; each column ±25%
+const TRAIL = 26;          // bright-trail length in rows
+const DIM = 0.08;          // opacity of background fill (always-visible coverage)
+const BRIGHT = 0.65;       // peak extra opacity added at the trail head
 
 /**
- * Binary Matrix rain: 0/1 characters, dark on the site's light background.
- * Every column always has characters visible (BASE_ALPHA fill), with a
- * bright falling trail moving continuously from top to bottom — no gaps,
- * no teleporting, no stutter. Full RAF at 60fps.
+ * Matrix-style falling characters: half-width katakana + digits on the
+ * site's light background (inverse colour scheme).
+ *
+ * Rendering model: each column runs a cyclic head from 0 to (rows+TRAIL),
+ * then wraps modularly. This means the trail at the bottom fades out
+ * naturally over TRAIL rows BEFORE the head reappears at the top —
+ * zero flicker, zero sudden-frame discontinuity.
+ *
+ * Every cell is always drawn at DIM opacity so the whole screen stays
+ * filled. The bright trail rides on top.
  */
 export function MatrixRain() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -28,8 +40,11 @@ export function MatrixRain() {
 
     let cols = 0;
     let rows = 0;
+    // Fractional row position of each column's head.
     let heads: number[] = [];
+    // Per-column speed multiplier for organic variety.
     let speeds: number[] = [];
+    // Character index (into CHARS) for each grid cell.
     let grid: Uint8Array[] = [];
     let raf: number;
 
@@ -39,16 +54,17 @@ export function MatrixRain() {
       cols = Math.floor(canvas.width / COL_W);
       rows = Math.ceil(canvas.height / FONT_SIZE) + 2;
 
-      // Spread heads across the whole height so the screen is full from frame 1.
+      // Scatter heads across [0, rows] so the screen is full from frame 1.
       heads = Array.from({ length: cols }, () => Math.random() * rows);
-      // Slightly different speed per column for organic variety.
       speeds = Array.from(
         { length: cols },
         () => BASE_SPEED * (0.75 + Math.random() * 0.5),
       );
       grid = Array.from({ length: cols }, () => {
         const arr = new Uint8Array(rows);
-        for (let r = 0; r < rows; r++) arr[r] = Math.round(Math.random());
+        for (let r = 0; r < rows; r++) {
+          arr[r] = Math.floor(Math.random() * CHARS.length);
+        }
         return arr;
       });
     };
@@ -64,17 +80,19 @@ export function MatrixRain() {
       ctx.fillStyle = "#f7f9fc";
       ctx.fillRect(0, 0, w, h);
 
-      ctx.font = `bold ${FONT_SIZE}px monospace`;
+      ctx.font = `${FONT_SIZE}px monospace`;
       ctx.fillStyle = "#111827";
 
       for (let c = 0; c < cols; c++) {
-        // Advance head; wrap immediately at bottom — no pause, no gap.
-        heads[c] += speeds[c];
-        if (heads[c] > rows + 1) heads[c] = 0;
+        // Modular wrap over rows+TRAIL: the tail fades out off-screen before
+        // the head re-enters from the top → no sudden brightness jump.
+        heads[c] = (heads[c] + speeds[c]) % (rows + TRAIL);
 
-        // Randomly flip a bit per column for the classic "changing digit" feel.
-        if (Math.random() < 0.2) {
-          grid[c][Math.floor(Math.random() * rows)] ^= 1;
+        // Occasionally swap one character in this column for the "changing
+        // digits" flicker effect.
+        if (Math.random() < 0.12) {
+          const r = Math.floor(Math.random() * rows);
+          grid[c][r] = Math.floor(Math.random() * CHARS.length);
         }
 
         const hd = heads[c];
@@ -83,18 +101,18 @@ export function MatrixRain() {
           const y = r * FONT_SIZE;
           if (y > h + FONT_SIZE) break;
 
-          const dist = hd - r; // positive = r is behind the head
+          const dist = hd - r; // positive → r is behind the head
           let alpha: number;
 
-          if (dist >= 0 && dist <= TRAIL_ROWS) {
-            // Bright at head (dist=0), linearly fades to BASE_ALPHA at trail end.
-            alpha = BASE_ALPHA + HEAD_ALPHA * (1 - dist / TRAIL_ROWS);
+          if (dist >= 0 && dist <= TRAIL) {
+            // Linear fade: full brightness at head, down to DIM at trail end.
+            alpha = DIM + BRIGHT * (1 - dist / TRAIL);
           } else {
-            alpha = BASE_ALPHA;
+            alpha = DIM;
           }
 
           ctx.globalAlpha = alpha;
-          ctx.fillText(grid[c][r] === 0 ? "0" : "1", c * COL_W, y);
+          ctx.fillText(CHARS[grid[c][r]], c * COL_W, y);
         }
       }
 
