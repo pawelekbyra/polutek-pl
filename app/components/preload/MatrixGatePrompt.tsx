@@ -32,21 +32,17 @@ export function MatrixGatePrompt({ onEnter }: { onEnter: () => void }) {
 
   return (
     <div className={styles.overlay}>
-      <div className={styles.terminal}>
-        <p className={styles.text}>
-          {TEXT.slice(0, charCount)}
+      <p className={styles.text}>
+        {TEXT.slice(0, charCount)}
+        {!doneTyping && (
           <span className={styles.cursor} style={{ opacity: cursorOn ? 1 : 0 }} />
-        </p>
-        {doneTyping && (
-          <button
-            className={styles.btn}
-            onClick={onEnter}
-            aria-label="Enter"
-          >
-            🐇
-          </button>
         )}
-      </div>
+      </p>
+      {doneTyping && (
+        <button className={styles.btn} onClick={onEnter} aria-label="Enter">
+          🐇
+        </button>
+      )}
     </div>
   );
 }
