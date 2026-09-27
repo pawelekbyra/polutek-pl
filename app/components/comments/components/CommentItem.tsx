@@ -187,17 +187,17 @@ function CommentItemComponent({
       </div>
       <div className={cn("relative z-[5] flex-1 space-y-[2px] min-w-0 pt-0", !isReply && comment.isPinned && "pr-8")}>
         <div className={cn("relative flex items-start justify-between", userProfile && "pr-9")}>
-          <div className="flex items-center gap-1.5 leading-none">
+          <div className="flex min-w-0 items-center gap-1.5 leading-none">
             <span
               className={cn(
-                "font-bold text-[var(--chan-ink)] leading-tight text-[13px]",
+                "truncate font-bold text-[var(--chan-ink)] leading-tight text-[13px]",
               )}
             >
               {comment.author?.displayName || "Użytkownik"}
             </span>
 
             <time
-              className="text-[12px] leading-none text-[var(--chan-muted)]"
+              className="shrink-0 whitespace-nowrap text-[12px] leading-none text-[var(--chan-muted)]"
               dateTime={validCreatedAt ? comment.createdAt : undefined}
             >
               {relativeCreatedAt}
