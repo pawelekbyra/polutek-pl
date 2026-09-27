@@ -19,7 +19,7 @@ import {
   VisaIcon,
 } from "@/app/components/icons/brand-icons";
 
-export type TipStep = "recipient" | "amount" | "method" | "pay";
+export type TipStep = "recipient" | "disclaimer" | "amount" | "method" | "pay";
 
 export const TIP_CURRENCIES = SUPPORTED_CURRENCIES;
 

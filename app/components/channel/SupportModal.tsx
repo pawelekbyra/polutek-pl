@@ -20,6 +20,7 @@ import {
   type TipWallet,
 } from "../support/tip-flow-config";
 import { TipRecipientStep } from "../support/TipRecipientStep";
+import { TipDisclaimerStep } from "../support/TipDisclaimerStep";
 import { TipAmountStep } from "../support/TipAmountStep";
 import { TipMethodStep } from "../support/TipMethodStep";
 import { TipPayStep } from "../support/TipPayStep";
@@ -30,7 +31,7 @@ interface SupportModalProps {
   onClose: () => void;
 }
 
-const STEPS: TipStep[] = ["recipient", "amount", "method", "pay"];
+const STEPS: TipStep[] = ["recipient", "disclaimer", "amount", "method", "pay"];
 
 /**
  * The tip gate (TEMP_SUPPORT_AS_MODAL experiment, see lib/temp-support-modal.ts):
@@ -125,7 +126,8 @@ export default function SupportModal({ onClose }: SupportModalProps) {
   const goBack = () => {
     if (step === "pay") setStep("method");
     else if (step === "method") backToAmount();
-    else if (step === "amount") setStep("recipient");
+    else if (step === "amount") setStep("disclaimer");
+    else if (step === "disclaimer") setStep("recipient");
   };
 
   const handleClose = useCallback(() => {
@@ -162,7 +164,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
 
   const showThanks = flow.isSuccess;
   const activeIndex = showThanks ? STEPS.length : STEPS.indexOf(step);
-  const canGoBack = !showThanks && step !== "recipient";
+  const canGoBack = !showThanks && step !== "recipient" && step !== "disclaimer";
 
   let body: React.ReactNode;
   if (showThanks) {
@@ -217,6 +219,14 @@ export default function SupportModal({ onClose }: SupportModalProps) {
         language={language}
         termsAccepted={termsAccepted}
         onTermsChange={setTermsAccepted}
+        onNext={() => setStep("disclaimer")}
+        onClose={handleClose}
+      />
+    );
+  } else if (step === "disclaimer") {
+    body = (
+      <TipDisclaimerStep
+        language={language}
         onNext={() => setStep("amount")}
         onClose={handleClose}
       />

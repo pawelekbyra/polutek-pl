@@ -57,7 +57,7 @@ export function TipAmountStep({
 
       <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--cm-amber-28)] bg-[var(--chan-amber-soft)] px-3 py-1.5">
         <span className="text-[12px] text-[var(--chan-body)]">{isPl ? "Dla:" : "For:"}</span>
-        <span className="text-[12px] font-extrabold text-[var(--chan-ink)]">{isPl ? "Pawłowi Perfectowi" : "Paweł Perfect"}</span>
+        <span className="text-[12px] font-extrabold text-[var(--chan-ink)]">Paweł Perfect</span>
       </div>
 
       <TipSelect
