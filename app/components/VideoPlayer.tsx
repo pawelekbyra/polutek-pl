@@ -63,6 +63,12 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
     // flash. `hasRenderedFrame` tracks the real first frame (`playing` / time > 0).
     const [hasRenderedFrame, setHasRenderedFrame] = useState(false);
     const [autoPlayFailed, setAutoPlayFailed] = useState(false);
+    // True once the browser has buffered at least TARGET_BUFFER_SECONDS of video.
+    // The preloader waits for this alongside the first rendered frame so the page
+    // is revealed onto a player that already has a few seconds queued.
+    const TARGET_BUFFER_SECONDS = 3;
+    const [bufferedEnoughForReveal, setBufferedEnoughForReveal] = useState(false);
+    const bufferedEnoughRef = useRef(false);
     const hasReached10s = useRef(false);
     const viewCountRequestInFlight = useRef(false);
     const reachedThresholds = useRef<Record<number, boolean>>({});
@@ -103,6 +109,8 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
         setCanPlay(false);
         setHasRenderedFrame(false);
         setAutoPlayFailed(false);
+        setBufferedEnoughForReveal(false);
+        bufferedEnoughRef.current = false;
         setLoadError(null);
         setPlayerKey((key) => key + 1);
         hasReached10s.current = false;
@@ -135,7 +143,12 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
     // frame, or (no autoplay / autoplay blocked) the ready, paused player. The first-load
     // preloader waits for this, so the page is revealed with the player already stable
     // instead of switching from poster to video right after the reveal.
-    const playbackSettled = hasRenderedFrame || (canPlay && (!autoPlayWanted || autoPlayFailed));
+    // When autoplay is running we also require a few seconds of video buffered so the
+    // page is revealed onto a player that won't stall immediately (falls back via
+    // bufferingOverlayTimedOut / PAGE_REVEAL_MAX_WAIT_MS if buffering is slow).
+    const playbackSettled =
+        (hasRenderedFrame && (!autoPlayWanted || bufferedEnoughForReveal)) ||
+        (canPlay && (!autoPlayWanted || autoPlayFailed));
     usePageRevealReady(revealKey, playbackSettled || !!loadError || bufferingOverlayTimedOut || showsErrorState);
 
     // PremiumWrapper owns the loading placeholder before this mounts. For the one
@@ -220,6 +233,26 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
                                 player.current.muted = false;
                             }
                             sendEvent('PLAYER_READY');
+                            // Check buffered amount immediately at canPlay too.
+                            if (!bufferedEnoughRef.current) {
+                                try {
+                                    const buf = player.current?.buffered;
+                                    if (buf && buf.length > 0 && buf.end(0) >= TARGET_BUFFER_SECONDS) {
+                                        bufferedEnoughRef.current = true;
+                                        setBufferedEnoughForReveal(true);
+                                    }
+                                } catch {}
+                            }
+                        }}
+                        onProgress={() => {
+                            if (bufferedEnoughRef.current) return;
+                            try {
+                                const buf = player.current?.buffered;
+                                if (buf && buf.length > 0 && buf.end(0) >= TARGET_BUFFER_SECONDS) {
+                                    bufferedEnoughRef.current = true;
+                                    setBufferedEnoughForReveal(true);
+                                }
+                            } catch {}
                         }}
                         onPlay={() => {
                             if (!hasStartedPlayback) {

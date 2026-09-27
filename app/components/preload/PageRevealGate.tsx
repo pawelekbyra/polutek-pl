@@ -34,10 +34,10 @@ const PageRevealContext = createContext<PageRevealContextValue | null>(null);
 
 /**
  * Upper bound on how long the preloader may hold the page, measured from navigation start.
- * Long enough for the featured video's stream to buffer its first frames on a normal
+ * Long enough for the featured video's stream to buffer a few seconds on a normal
  * connection (the player is one of the awaited pieces), short enough not to feel stuck.
  */
-export const PAGE_REVEAL_MAX_WAIT_MS = 3000;
+export const PAGE_REVEAL_MAX_WAIT_MS = 6000;
 /** On a late mount (e.g. hydration was slow) still give the page this long to settle. */
 export const PAGE_REVEAL_MIN_WAIT_AFTER_MOUNT_MS = 700;
 const LEAVE_ANIMATION_MS = 420;
