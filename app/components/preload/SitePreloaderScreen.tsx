@@ -37,9 +37,6 @@ export function SitePreloaderScreen({
       <div className={styles.inner}>
         {/* eslint-disable-next-line @next/next/no-img-element -- small static local vector, same as BrandName */}
         <img src="/logo-glasses.svg" alt="" className={styles.logo} />
-        <div className={styles.bar} aria-hidden="true">
-          <span className={styles.barFill} />
-        </div>
       </div>
     </div>
   );

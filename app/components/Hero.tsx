@@ -27,6 +27,13 @@ interface HeroProps {
   initialIsSubscribed?: boolean;
 }
 
+function truncateAtWord(text: string, max: number): string {
+  if (text.length <= max) return text;
+  let i = max;
+  while (i > 0 && !/\s/.test(text[i])) i--;
+  return (i > 0 ? text.slice(0, i) : text.slice(0, max)).trimEnd();
+}
+
 const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscribed }) => {
   const { t, language } = useLanguage();
   const toast = useToast();
@@ -383,7 +390,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
              <div className="text-[12px] text-[var(--chan-body)] leading-[1.5] whitespace-pre-wrap">
                 {isExpanded ? (
                   <>
-                    {displayDescription}
+                    {displayDescription.trimEnd()}
                     {" "}
                     <span
                       className="text-[12px] font-bold text-[var(--chan-blue)] hover:underline cursor-pointer"
@@ -397,7 +404,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                   </>
                 ) : (
                   <>
-                    {displayDescription.slice(0, 160).trim()}
+                    {truncateAtWord(displayDescription, 160)}
                     {displayDescription.length > 160 && (
                       <span
                         className="text-[12px] font-bold text-[var(--chan-blue)] ml-1 hover:underline cursor-pointer inline"

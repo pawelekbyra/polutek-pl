@@ -5,8 +5,9 @@ import { useEffect, useRef } from "react";
 const CHARS =
   "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン" +
   "0123456789ABCDEF";
-const FONT_SIZE = 14;
-const FPS = 20;
+const FONT_SIZE = 12;
+const COL_W = 13;
+const FPS = 24;
 const INTERVAL = 1000 / FPS;
 
 /**
@@ -36,7 +37,7 @@ export function MatrixRain() {
       canvas.height = window.innerHeight;
       ctx.fillStyle = BG;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      const cols = Math.floor(canvas.width / FONT_SIZE);
+      const cols = Math.floor(canvas.width / COL_W);
       columns = Array.from(
         { length: cols },
         () => Math.floor(Math.random() * (canvas.height / FONT_SIZE)),
@@ -54,18 +55,18 @@ export function MatrixRain() {
       const { width: w, height: h } = canvas;
 
       // Fade towards background — controls trail length
-      ctx.fillStyle = "rgba(247, 249, 252, 0.1)";
+      ctx.fillStyle = "rgba(247, 249, 252, 0.13)";
       ctx.fillRect(0, 0, w, h);
 
       ctx.font = `${FONT_SIZE}px monospace`;
-      ctx.fillStyle = "rgba(17, 24, 39, 0.82)";
+      ctx.fillStyle = "rgba(17, 24, 39, 0.85)";
 
       for (let i = 0; i < columns.length; i++) {
         const y = columns[i] * FONT_SIZE;
         if (y > 0 && y < h + FONT_SIZE) {
-          ctx.fillText(CHARS[Math.floor(Math.random() * CHARS.length)], i * FONT_SIZE, y);
+          ctx.fillText(CHARS[Math.floor(Math.random() * CHARS.length)], i * COL_W, y);
         }
-        if (y > h && Math.random() > 0.975) columns[i] = 0;
+        if (y > h && Math.random() > 0.97) columns[i] = 0;
         columns[i]++;
       }
     };
