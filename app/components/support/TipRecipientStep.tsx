@@ -52,13 +52,6 @@ export function TipRecipientStep({
     <TipStepLayout
       footer={
         <>
-          {showTermsError && (
-            <p role="alert" className="mb-2 text-[12px] font-semibold text-destructive">
-              {isPl
-                ? "Zaakceptuj Regulamin i Politykę Prywatności."
-                : "Please accept the Terms and Privacy Policy."}
-            </p>
-          )}
           <label className="mb-3 flex cursor-pointer items-start gap-2.5">
             <Checkbox
               id="tip-accept-terms-recipient"
@@ -115,6 +108,14 @@ export function TipRecipientStep({
           </div>
         </button>
       </div>
+
+      {showTermsError && (
+        <p role="alert" className="mt-3 text-[12px] font-semibold text-destructive">
+          {isPl
+            ? "Zaakceptuj Regulamin i Politykę Prywatności."
+            : "Please accept the Terms and Privacy Policy."}
+        </p>
+      )}
 
       <TipLegalDialog doc={legalDoc} language={language} onClose={() => setLegalDoc(null)} />
     </TipStepLayout>
