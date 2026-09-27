@@ -28,11 +28,39 @@
     visibility 0s linear 700ms;
 }
 
+/* Logo sits at the exact position the BrandName img occupies in the sticky navbar:
+   py-2 (8px) outer padding + (38px slot - 28px img) / 2 = 13px from top on mobile.
+   px-2 (8px) outer padding matches the navbar's left gutter. */
+.logo {
+  position: absolute;
+  top: 13px;
+  left: 8px;
+  display: block;
+  height: 28px;
+  width: auto;
+}
+
 @keyframes preloader-failsafe {
   to {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
+  }
+}
+
+@media (min-width: 768px) {
+  /* Navbar switches to px-6 (24px) and logo becomes h-[34px] → (38-34)/2 = 2px offset → top: 10px */
+  .logo {
+    top: 10px;
+    left: 24px;
+    height: 34px;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Navbar switches to px-8 (32px) */
+  .logo {
+    left: 32px;
   }
 }
 
