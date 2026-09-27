@@ -49,11 +49,11 @@
 }
 
 .btn:hover {
-  filter: brightness(0.85);
+  filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.55));
 }
 
 .btn:active {
-  filter: brightness(0.7);
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.25)) brightness(0.92);
 }
 
 .btn:focus-visible {

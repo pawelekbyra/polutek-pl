@@ -8,7 +8,6 @@ import { APP_NAME } from '@/lib/constants';
 import { ServiceWorkerCleanup } from "@/app/components/ServiceWorkerCleanup";
 import { UrlMask } from "@/app/components/UrlMask";
 import { AppVersionCheck } from "@/app/components/AppVersionCheck";
-import { OrientationLock } from "@/app/components/OrientationLock";
 import { resolveInitialLanguage } from "@/lib/i18n/server-language";
 import { AuthModalProvider } from "@/app/components/auth/AuthModalProvider";
 import { Analytics } from '@vercel/analytics/next';
@@ -25,13 +24,11 @@ export const metadata = {
   },
   icons: {
     icon: [
-      { url: '/icon-brand.svg', type: 'image/svg+xml' },
-      { url: '/icon', type: 'image/png', sizes: '192x192' },
-      { url: '/icon-512', type: 'image/png', sizes: '512x512' },
+      { url: '/rabbit.png', type: 'image/png' },
     ],
-    shortcut: ['/icon-brand.svg'],
+    shortcut: ['/rabbit.png'],
     apple: [
-      { url: '/icon', type: 'image/png', sizes: '192x192' },
+      { url: '/rabbit.png', type: 'image/png' },
     ],
   },
 };
@@ -58,7 +55,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="apple-touch-icon" href="/icon" />
       </head>
       <body className="font-sans bg-background text-foreground min-h-[100dvh] relative" suppressHydrationWarning>
-        <OrientationLock />
         <ServiceWorkerCleanup />
         <UrlMask />
         <AppVersionCheck />
