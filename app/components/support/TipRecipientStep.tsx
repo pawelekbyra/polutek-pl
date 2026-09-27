@@ -79,9 +79,9 @@ export function TipRecipientStep({
         subtitle={isPl ? "Komu chciałbyś przekazać napiwek?" : "Who would you like to tip?"}
       />
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         {/* Primary option — Paweł Perfect: visually selected, clicking Dalej proceeds */}
-        <div className="rounded-[16px] border-2 border-[var(--chan-ink)] bg-[var(--chan-amber-soft)] px-4 py-4 shadow-[0_6px_18px_-10px_var(--cm-amber-62)]">
+        <div className="rounded-[16px] border-2 border-[var(--chan-ink)] bg-[var(--chan-amber-soft)] px-4 py-3 shadow-[0_6px_18px_-10px_var(--cm-amber-62)]">
           <div className="flex items-center gap-3">
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-[var(--chan-ink)] bg-[var(--chan-ink)]">
               <Check className="h-3 w-3 text-white" strokeWidth={3} />
@@ -95,7 +95,7 @@ export function TipRecipientStep({
           type="button"
           onClick={onClose}
           className={cn(
-            "rounded-[16px] border-2 border-[var(--cm-amber-28)] bg-transparent px-4 py-4 text-left",
+            "rounded-[16px] border-2 border-[var(--cm-amber-28)] bg-transparent px-4 py-3 text-left",
             "transition-[border-color,background-color] duration-150",
             "hover:border-[var(--chan-ink)] hover:bg-[var(--chan-amber-soft)]",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)]",

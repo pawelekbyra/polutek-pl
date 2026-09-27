@@ -24,7 +24,7 @@ export function TipStepLayout({
   const back = useContext(TipBackContext);
   return (
     <>
-      <div className={cn("tip-select-scroll min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-2 md:px-7", bodyClassName)}>{children}</div>
+      <div className={cn("tip-select-scroll min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-0 md:px-7", bodyClassName)}>{children}</div>
       {footer && (
         <div className="shrink-0 border-t border-[var(--chan-line)] px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 md:px-7 md:pb-5">
           {back ? (
@@ -76,11 +76,11 @@ export function TipPrimaryButton({
 
 export function TipStepHeading({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className={subtitle ? "mb-3" : "mb-1"}>
+    <div className={subtitle ? "mb-2" : "mb-1"}>
       <h2 className="font-brand m-0 text-center text-[24px] font-extrabold leading-tight tracking-[-0.035em] text-[var(--chan-ink)]">
         {title}
       </h2>
-      {subtitle && <p className="mt-1.5 text-[13px] leading-[1.55] text-[var(--chan-body)]">{subtitle}</p>}
+      {subtitle && <p className="mt-1 text-[13px] leading-[1.55] text-[var(--chan-body)]">{subtitle}</p>}
     </div>
   );
 }
