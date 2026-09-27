@@ -110,17 +110,16 @@ export function TipRecipientStep({
         </button>
       </div>
 
-      {showTermsError && (
-        <p role="alert" className="mt-2 text-[12px] font-semibold text-destructive">
-          {isPl
-            ? "Zaakceptuj Regulamin i Politykę Prywatności."
-            : "Please accept the Terms and Privacy Policy."}
-        </p>
-      )}
-
-      <div className="flex-1 overflow-hidden">
+      <div className="relative flex-1 overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/tip-character.png" alt="" aria-hidden="true" className="h-full w-full object-contain object-bottom" />
+        {showTermsError && (
+          <p role="alert" className="absolute left-0 right-0 top-2 px-2 text-center text-[12px] font-semibold text-destructive">
+            {isPl
+              ? "Zaakceptuj Regulamin i Politykę Prywatności."
+              : "Please accept the Terms and Privacy Policy."}
+          </p>
+        )}
       </div>
 
       <TipLegalDialog doc={legalDoc} language={language} onClose={() => setLegalDoc(null)} />
