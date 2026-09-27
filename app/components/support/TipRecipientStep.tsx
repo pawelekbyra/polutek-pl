@@ -112,7 +112,7 @@ export function TipRecipientStep({
 
       <div className="relative flex-1 overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/tip-character.png" alt="" aria-hidden="true" className="absolute inset-x-0 bottom-0 w-full h-auto" />
+        <img src="/tip-character.png" alt="" aria-hidden="true" className="w-full max-h-full object-contain object-bottom" />
         {showTermsError && (
           <p role="alert" className="absolute left-0 right-0 top-2 px-2 text-center text-[12px] font-semibold text-destructive">
             {isPl
