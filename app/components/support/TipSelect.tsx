@@ -44,7 +44,8 @@ function measureList(trigger: HTMLElement): ListPosition {
     : { top: 0, left: 0, bottom: window.innerHeight };
   const below = frame.bottom - field.bottom - LIST_GAP - EDGE;
   const above = field.top - frame.top - LIST_GAP - EDGE;
-  const openDown = below >= 240 || below >= above;
+  void above;
+  const openDown = true;
   return {
     container,
     style: {
