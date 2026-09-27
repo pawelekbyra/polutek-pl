@@ -122,7 +122,7 @@ export function TipRecipientStep({
         </div>
         <div className="relative flex-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/tip-character.png" alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-contain" />
+          <img src="/tip-character.png" alt="" aria-hidden="true" className="absolute inset-0 w-full h-full translate-y-2 object-contain" />
         </div>
       </div>
 
