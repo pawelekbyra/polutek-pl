@@ -7,13 +7,14 @@ const CHARS =
   "0123456789ABCDEF";
 const FONT_SIZE = 12;
 const COL_W = 13;
-const FPS = 24;
-const INTERVAL = 1000 / FPS;
+// Rows advanced per frame at 60 fps — tune this to change rain speed.
+const SPEED = 0.45;
 
 /**
  * Full-screen Matrix-style rain: katakana + hex digits, dark chars on the
  * site's light background (inverse of the classic green-on-black).
- * Client-only; respects prefers-reduced-motion.
+ * Runs at full RAF speed (60 fps) with fractional row positions so the
+ * motion is perfectly smooth. Respects prefers-reduced-motion.
  */
 export function MatrixRain() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -26,11 +27,9 @@ export function MatrixRain() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const BG = "#f7f9fc";
     let columns: number[] = [];
     let raf: number;
-    let last = 0;
-
-    const BG = "#f7f9fc";
 
     const resize = () => {
       canvas.width = window.innerWidth;
@@ -38,36 +37,36 @@ export function MatrixRain() {
       ctx.fillStyle = BG;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       const cols = Math.floor(canvas.width / COL_W);
-      columns = Array.from(
-        { length: cols },
-        () => Math.floor(Math.random() * (canvas.height / FONT_SIZE)),
-      );
+      const rows = canvas.height / FONT_SIZE;
+      // Spread across the entire visible height from frame 1.
+      columns = Array.from({ length: cols }, () => Math.random() * rows);
     };
 
     resize();
     window.addEventListener("resize", resize);
 
-    const tick = (ts: number) => {
+    const tick = () => {
       raf = requestAnimationFrame(tick);
-      if (ts - last < INTERVAL) return;
-      last = ts;
-
       const { width: w, height: h } = canvas;
 
-      // Fade towards background — controls trail length
-      ctx.fillStyle = "rgba(247, 249, 252, 0.13)";
+      // Fade to background — alpha controls trail length.
+      ctx.fillStyle = "rgba(247, 249, 252, 0.12)";
       ctx.fillRect(0, 0, w, h);
 
       ctx.font = `${FONT_SIZE}px monospace`;
-      ctx.fillStyle = "rgba(17, 24, 39, 0.85)";
+      ctx.fillStyle = "rgba(17, 24, 39, 0.88)";
 
       for (let i = 0; i < columns.length; i++) {
+        columns[i] += SPEED;
         const y = columns[i] * FONT_SIZE;
-        if (y > 0 && y < h + FONT_SIZE) {
+        // Draw as long as the head is within (or just about to enter) the canvas.
+        if (y >= 0 && y < h + FONT_SIZE) {
           ctx.fillText(CHARS[Math.floor(Math.random() * CHARS.length)], i * COL_W, y);
         }
-        if (y > h && Math.random() > 0.97) columns[i] = 0;
-        columns[i]++;
+        // Reset immediately once off-screen; tiny stagger keeps columns out of sync.
+        if (y > h) {
+          columns[i] = -(Math.random() * 4);
+        }
       }
     };
 
