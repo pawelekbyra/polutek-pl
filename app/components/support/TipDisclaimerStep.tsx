@@ -67,10 +67,6 @@ export function TipDisclaimerStep({ language, onNext, onClose }: TipDisclaimerSt
         </button>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/tip-character-2.png" alt="" aria-hidden="true" className="h-full w-full object-contain object-bottom" />
-      </div>
     </TipStepLayout>
   );
 }

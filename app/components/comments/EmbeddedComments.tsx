@@ -201,20 +201,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   }, []);
 
   const scrollToTop = useCallback(() => {
-    if (commentsTopRef.current) {
-      const yOffset = -360; // Scroll higher, around the video title area
-      const y =
-        commentsTopRef.current.getBoundingClientRect().top +
-        window.pageYOffset +
-        yOffset;
-      const shouldReduceMotion = window.matchMedia(
-        "(prefers-reduced-motion: reduce)",
-      ).matches;
-      window.scrollTo({
-        top: y,
-        behavior: shouldReduceMotion ? "auto" : "smooth",
-      });
-    }
+    const shouldReduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: 0, behavior: shouldReduceMotion ? "auto" : "smooth" });
   }, []);
 
   const { mutate: postComment } = postMutation;

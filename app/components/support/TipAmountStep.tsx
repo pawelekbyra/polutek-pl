@@ -84,24 +84,18 @@ export function TipAmountStep({
           <span className="ml-2 text-[15px] font-bold text-[var(--chan-muted)]">{currency}</span>
         </div>
       </label>
-      <div className="flex-1 overflow-hidden flex flex-col">
-        <div className="shrink-0 h-[22px] flex items-center justify-center">
-          {showAmountError && (
-            <p role="alert" className="px-2 text-center text-[12px] font-semibold text-destructive">
-              {attempted && amountMissing
-                ? isPl
-                  ? `Wpisz kwotę napiwku (co najmniej ${formatTipAmount(minAmount, currency, language)}).`
-                  : `Enter a tip amount (at least ${formatTipAmount(minAmount, currency, language)}).`
-                : isPl
-                ? `Kwota jest za niska. Minimum: ${formatTipAmount(minAmount, currency, language)}.`
-                : `Amount too low. Minimum: ${formatTipAmount(minAmount, currency, language)}.`}
-            </p>
-          )}
-        </div>
-        <div className="relative flex-1">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/tip-character-3.png" alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-contain" />
-        </div>
+      <div className="mt-1 min-h-[22px] flex items-center justify-center">
+        {showAmountError && (
+          <p role="alert" className="px-2 text-center text-[12px] font-semibold text-destructive">
+            {attempted && amountMissing
+              ? isPl
+                ? `Wpisz kwotę napiwku (co najmniej ${formatTipAmount(minAmount, currency, language)}).`
+                : `Enter a tip amount (at least ${formatTipAmount(minAmount, currency, language)}).`
+              : isPl
+              ? `Kwota jest za niska. Minimum: ${formatTipAmount(minAmount, currency, language)}.`
+              : `Amount too low. Minimum: ${formatTipAmount(minAmount, currency, language)}.`}
+          </p>
+        )}
       </div>
     </TipStepLayout>
   );
