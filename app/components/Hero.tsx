@@ -366,7 +366,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* DESCRIPTION PANEL */}
         <div
-          className={cn("mt-2 cursor-pointer rounded-[18px] border px-4 pt-[9px] pb-3 transition-[border-color,background-color,box-shadow] duration-200 hover:border-[var(--cm-blue-36-line)] md:px-5", styles.descPanel)}
+          className={cn("mt-2 cursor-pointer rounded-[18px] border px-4 pt-[9px] pb-[9px] transition-[border-color,background-color,box-shadow] duration-200 hover:border-[var(--cm-blue-36-line)] md:px-5", styles.descPanel)}
           onClick={() => setIsExpanded(!isExpanded)}
         >
            <div>
@@ -382,7 +382,19 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
              <div className="text-[12px] text-[var(--chan-body)] leading-[1.5] whitespace-pre-wrap">
                 {isExpanded ? (
-                  displayDescription
+                  <>
+                    {displayDescription}
+                    {" "}
+                    <span
+                      className="text-[12px] font-bold text-[var(--chan-blue)] hover:underline cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsExpanded(false);
+                      }}
+                    >
+                      {t.showLess}
+                    </span>
+                  </>
                 ) : (
                   <>
                     {displayDescription.slice(0, 160).trim()}
@@ -400,18 +412,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                   </>
                 )}
              </div>
-
-             {isExpanded && (
-               <button
-                 className="text-[12px] font-bold text-[var(--chan-blue)] mt-1 hover:underline inline-block"
-                 onClick={(e) => {
-                   e.stopPropagation();
-                   setIsExpanded(false);
-                 }}
-               >
-                  {t.showLess}
-               </button>
-             )}
            </div>
         </div>
       </div>
