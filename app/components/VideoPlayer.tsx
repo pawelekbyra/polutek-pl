@@ -158,7 +158,10 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
     // the viewer always sees it from 0, not from wherever it buffered to.
     useEffect(() => {
         const handleGateEnter = () => {
-            if (player.current) player.current.currentTime = 0;
+            if (player.current) {
+                player.current.currentTime = 0;
+                player.current.muted = false;
+            }
         };
         window.addEventListener("polutek:gate-enter", handleGateEnter);
         return () => window.removeEventListener("polutek:gate-enter", handleGateEnter);
