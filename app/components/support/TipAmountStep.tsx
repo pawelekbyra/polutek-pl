@@ -85,7 +85,7 @@ export function TipAmountStep({
         </div>
       </label>
       {showAmountError && (
-        <p role="alert" className="mt-1.5 text-[12px] font-semibold text-destructive">
+        <p role="alert" className="mt-1.5 text-center text-[12px] font-semibold text-destructive">
           {attempted && amountMissing
             ? isPl
               ? `Wpisz kwotę napiwku (co najmniej ${formatTipAmount(minAmount, currency, language)}).`
