@@ -262,13 +262,17 @@ export default function SupportModal({ onClose }: SupportModalProps) {
             <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--chan-ink)] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-white">
               {isPl ? "Bramka napiwkowa" : "Tip gate"}
             </span>
-            <div className="ml-auto w-[80px]" aria-hidden="true">
-              <div className="h-[3px] w-full overflow-hidden rounded-full bg-[var(--chan-line)]">
-                <div
-                  className="h-full rounded-full bg-[var(--chan-ink)] transition-[width] duration-500 ease-out motion-reduce:transition-none"
-                  style={{ width: `${Math.round((activeIndex / STEPS.length) * 100)}%` }}
+            <div className="ml-auto flex items-center gap-1.5" aria-hidden="true">
+              {STEPS.map((key, index) => (
+                <span
+                  key={key}
+                  className={cn(
+                    "h-1.5 rounded-full transition-[width,background-color] duration-300 motion-reduce:transition-none",
+                    index === activeIndex ? "w-6 bg-[var(--chan-ink)]" : "w-1.5",
+                    index < activeIndex ? "bg-[var(--chan-ink)]" : index > activeIndex && "bg-[var(--chan-line)]",
+                  )}
                 />
-              </div>
+              ))}
             </div>
             <button
               type="button"
