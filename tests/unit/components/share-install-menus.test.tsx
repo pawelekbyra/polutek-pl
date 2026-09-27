@@ -66,7 +66,7 @@ describe("ShareButton menu", () => {
     fireEvent.click(screen.getByRole("button", { name: "Udostępnij" }));
 
     expect(await screen.findByRole("menu")).toBeTruthy();
-    expect(screen.getAllByRole("menuitem")).toHaveLength(5);
+    expect(screen.getAllByRole("menuitem")).toHaveLength(11);
     expect(
       screen.getByRole("menuitem", { name: "Udostępnij na X" }).getAttribute("href"),
     ).toContain("https://x.com/intent/tweet");

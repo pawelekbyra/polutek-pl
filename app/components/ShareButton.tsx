@@ -1,7 +1,17 @@
 "use client";
 
-import { Check, Copy, Facebook, Mail, MessageCircle, Send } from "lucide-react";
+import { Check, Copy, Mail, Send } from "lucide-react";
 
+import {
+  BlueSkyIcon,
+  FacebookIcon,
+  LinkedInIcon,
+  PinterestIcon,
+  RedditIcon,
+  TelegramIcon,
+  WhatsAppIcon,
+  WykopIcon,
+} from "@/app/components/icons/brand-icons";
 import { useShare } from "@/app/hooks/useShare";
 import {
   DropdownMenu,
@@ -31,6 +41,12 @@ const COPY = {
     shareOnX: "Udostępnij na X",
     shareOnFacebook: "Udostępnij na Facebook",
     shareOnWhatsApp: "Wyślij przez WhatsApp",
+    shareOnTelegram: "Wyślij na Telegram",
+    shareOnLinkedIn: "Udostępnij na LinkedIn",
+    shareOnReddit: "Udostępnij na Reddit",
+    shareOnBluesky: "Udostępnij na Bluesky",
+    shareOnWykop: "Udostępnij na Wykop",
+    shareOnPinterest: "Zapisz na Pinterest",
     shareByEmail: "Wyślij emailem",
   },
   en: {
@@ -40,6 +56,12 @@ const COPY = {
     shareOnX: "Share on X",
     shareOnFacebook: "Share on Facebook",
     shareOnWhatsApp: "Send via WhatsApp",
+    shareOnTelegram: "Send via Telegram",
+    shareOnLinkedIn: "Share on LinkedIn",
+    shareOnReddit: "Share on Reddit",
+    shareOnBluesky: "Share on Bluesky",
+    shareOnWykop: "Share on Wykop",
+    shareOnPinterest: "Save on Pinterest",
     shareByEmail: "Send by email",
   },
 } as const;
@@ -49,7 +71,7 @@ function XIcon({ className }: { className?: string }) {
     <svg
       aria-hidden="true"
       viewBox="0 0 24 24"
-      className={cn("h-4 w-4 fill-current", className)}
+      className={cn("h-5 w-5 shrink-0 fill-current", className)}
     >
       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
     </svg>
@@ -86,6 +108,8 @@ export default function ShareButton({
   const itemClassName =
     "flex min-h-10 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[var(--chan-ink)] transition-colors duration-100 hover:bg-[var(--chan-surface)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)] motion-reduce:transition-none";
 
+  const e = encodeURIComponent;
+
   return (
     <DropdownMenu open={isOpen} onOpenChange={handleOpenChange}>
       <div className={cn("relative", fill ? "flex-1 lg:flex-none" : "inline-block")}>
@@ -106,7 +130,7 @@ export default function ShareButton({
         align="end"
         side="top"
         sideOffset={8}
-        className="z-[1100] w-[244px] rounded-2xl border border-[var(--cm-line-80)] bg-[var(--cm-card-94-white)] p-1.5 text-[var(--chan-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_18px_44px_-16px_rgba(23,23,23,0.26)] ring-0 backdrop-blur-xl"
+        className="z-[1100] w-[248px] rounded-2xl border border-[var(--cm-line-80)] bg-[var(--cm-card-94-white)] p-1.5 text-[var(--chan-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_18px_44px_-16px_rgba(23,23,23,0.26)] ring-0 backdrop-blur-xl"
       >
         <DropdownMenuItem
           closeOnClick={false}
@@ -126,54 +150,136 @@ export default function ShareButton({
         <DropdownMenuItem
           render={
             <a
-              href={`https://x.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`}
+              href={`https://x.com/intent/tweet?text=${e(title)}&url=${e(url)}`}
               target="_blank"
               rel="noopener noreferrer"
             />
           }
           className={itemClassName}
         >
-          <XIcon className="text-[var(--chan-ink)]" />
+          <XIcon />
           <span>{copy.shareOnX}</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem
           render={
             <a
-              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}
+              href={`https://www.facebook.com/sharer/sharer.php?u=${e(url)}`}
               target="_blank"
               rel="noopener noreferrer"
             />
           }
           className={itemClassName}
         >
-          <Facebook aria-hidden="true" className="text-[var(--chan-blue)]" />
+          <FacebookIcon />
           <span>{copy.shareOnFacebook}</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem
           render={
             <a
-              href={`https://wa.me/?text=${encodeURIComponent(`${title} ${url}`)}`}
+              href={`https://wa.me/?text=${e(`${title} ${url}`)}`}
               target="_blank"
               rel="noopener noreferrer"
             />
           }
           className={itemClassName}
         >
-          <MessageCircle aria-hidden="true" className="text-[var(--chan-muted)]" />
+          <WhatsAppIcon />
           <span>{copy.shareOnWhatsApp}</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem
           render={
             <a
-              href={`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(url)}`}
+              href={`https://t.me/share/url?url=${e(url)}&text=${e(title)}`}
+              target="_blank"
+              rel="noopener noreferrer"
             />
+          }
+          className={itemClassName}
+        >
+          <TelegramIcon />
+          <span>{copy.shareOnTelegram}</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          render={
+            <a
+              href={`https://www.linkedin.com/sharing/share-offsite/?url=${e(url)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            />
+          }
+          className={itemClassName}
+        >
+          <LinkedInIcon />
+          <span>{copy.shareOnLinkedIn}</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          render={
+            <a
+              href={`https://www.reddit.com/submit?url=${e(url)}&title=${e(title)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            />
+          }
+          className={itemClassName}
+        >
+          <RedditIcon />
+          <span>{copy.shareOnReddit}</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          render={
+            <a
+              href={`https://bsky.app/intent/compose?text=${e(`${title} ${url}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            />
+          }
+          className={itemClassName}
+        >
+          <BlueSkyIcon />
+          <span>{copy.shareOnBluesky}</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          render={
+            <a
+              href={`https://www.wykop.pl/dodaj/link/?url=${e(url)}&title=${e(title)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            />
+          }
+          className={itemClassName}
+        >
+          <WykopIcon />
+          <span>{copy.shareOnWykop}</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          render={
+            <a
+              href={`https://pinterest.com/pin/create/button/?url=${e(url)}&description=${e(title)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            />
+          }
+          className={itemClassName}
+        >
+          <PinterestIcon />
+          <span>{copy.shareOnPinterest}</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          render={
+            <a href={`mailto:?subject=${e(title)}&body=${e(url)}`} />
           }
           className={cn(itemClassName, "text-[var(--chan-muted)] focus:text-[var(--chan-muted)]")}
         >
-          <Mail aria-hidden="true" />
+          <Mail aria-hidden="true" className="h-5 w-5 shrink-0" />
           <span>{copy.shareByEmail}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

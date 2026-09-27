@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useId, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState, type ComponentType } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown } from "../icons";
@@ -9,7 +9,7 @@ export interface TipSelectOption {
   value: string;
   title: string;
   hint?: string;
-  icon?: string;
+  icon?: ComponentType<{ className?: string }>;
 }
 
 interface TipSelectProps {
@@ -73,6 +73,7 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
   const listId = useId();
   const labelId = useId();
   const selected = options.find((option) => option.value === value) ?? null;
+  const SelectedIcon = selected?.icon;
 
   useEffect(() => {
     if (!open) return;
@@ -152,9 +153,9 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
           onKeyDown={onKeyDown}
           className="flex min-h-[52px] w-full items-center gap-3 px-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--chan-ink)]"
         >
-          {selected?.icon && (
-            <span aria-hidden="true" className="text-[20px] leading-none">
-              {selected.icon}
+          {SelectedIcon && (
+            <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
+              <SelectedIcon className="h-6 w-6" />
             </span>
           )}
           <span className="min-w-0 flex-1">
@@ -181,6 +182,7 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
           >
             {options.map((option, index) => {
               const isSelected = option.value === value;
+              const ItemIcon = option.icon;
               return (
                 <li
                   key={option.value}
@@ -193,9 +195,9 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
                     index === active && "bg-[var(--chan-amber-soft)]",
                   )}
                 >
-                  {option.icon && (
-                    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--chan-amber-soft)] text-[17px]">
-                      {option.icon}
+                  {ItemIcon && (
+                    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--chan-amber-soft)]">
+                      <ItemIcon className="h-5 w-5" />
                     </span>
                   )}
                   <span className="min-w-0 flex-1">
