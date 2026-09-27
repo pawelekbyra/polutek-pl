@@ -67,7 +67,7 @@ export function TipAmountStep({
       />
 
       <label className="mt-2 block">
-        <span className="mb-2 block text-[13px] leading-[1.55] text-[var(--chan-body)]">{isPl ? "Wybierz kwotę napiwku" : "Choose tip amount"}</span>
+        <span className="mb-3 block text-[13px] leading-[1.55] text-[var(--chan-body)]">{isPl ? "Wybierz kwotę napiwku" : "Choose tip amount"}</span>
         <div className="flex h-14 items-center rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-white px-4 transition-[border-color,box-shadow] focus-within:border-[var(--chan-ink)] focus-within:shadow-[0_0_0_4px_var(--cm-amber-18)]">
           <input
             type="number"
