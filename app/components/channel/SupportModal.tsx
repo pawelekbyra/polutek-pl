@@ -259,10 +259,10 @@ export default function SupportModal({ onClose }: SupportModalProps) {
           <DialogTitle className="sr-only">{isPl ? "Bramka napiwkowa" : "Tip gate"}</DialogTitle>
 
           <header className="flex shrink-0 items-center gap-2 px-5 pb-2 pt-[max(12px,env(safe-area-inset-top))] md:px-7 md:pt-4">
-            <span className="inline-flex items-center rounded-full bg-[var(--chan-ink)] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-white">
+            <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--chan-ink)] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-white">
               {isPl ? "Bramka napiwkowa" : "Tip gate"}
             </span>
-            <div className="ml-auto w-[100px]" aria-hidden="true">
+            <div className="ml-auto w-[80px]" aria-hidden="true">
               <div className="h-[3px] w-full overflow-hidden rounded-full bg-[var(--chan-line)]">
                 <div
                   className="h-full rounded-full bg-[var(--chan-ink)] transition-[width] duration-500 ease-out motion-reduce:transition-none"
