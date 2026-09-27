@@ -18,6 +18,7 @@ export function TipDisclaimerStep({ language, onNext, onClose }: TipDisclaimerSt
 
   return (
     <TipStepLayout
+      bodyClassName="flex flex-col pb-0"
       footer={
         <TipPrimaryButton onClick={onNext}>
           {isPl ? "Dalej" : "Next"}
@@ -64,6 +65,11 @@ export function TipDisclaimerStep({ language, onNext, onClose }: TipDisclaimerSt
             </span>
           </div>
         </button>
+      </div>
+
+      <div className="flex-1 overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/tip-character-2.png" alt="" aria-hidden="true" className="h-full w-full object-contain object-bottom" />
       </div>
     </TipStepLayout>
   );
