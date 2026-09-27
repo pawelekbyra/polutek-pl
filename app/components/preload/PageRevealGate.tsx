@@ -154,7 +154,7 @@ export function PageRevealGate({ children, waitFor = [], posterUrl }: PageReveal
       {phase !== "done" && (
         <SitePreloaderScreen
           leaving={phase === "leaving"}
-          failsafe
+          failsafe={phase === "covering"}
           label={language === "pl" ? "Ładowanie strony…" : "Loading…"}
           showGate={phase === "gate"}
           onGateClick={handleGateClick}
