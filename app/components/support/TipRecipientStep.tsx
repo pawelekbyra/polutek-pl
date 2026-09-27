@@ -110,13 +110,14 @@ export function TipRecipientStep({
         </button>
       </div>
 
-      {showTermsError && (
-        <p role="alert" className="px-2 text-center text-[12px] font-semibold text-destructive">
-          {isPl
-            ? "Zaakceptuj Regulamin i Politykę Prywatności."
-            : "Please accept the Terms and Privacy Policy."}
-        </p>
-      )}
+      <p
+        role="alert"
+        className={`mt-auto pt-3 px-2 text-center text-[12px] font-semibold text-destructive transition-opacity duration-150 ${showTermsError ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+      >
+        {isPl
+          ? "Zaakceptuj Regulamin i Politykę Prywatności."
+          : "Please accept the Terms and Privacy Policy."}
+      </p>
 
       <TipLegalDialog doc={legalDoc} language={language} onClose={() => setLegalDoc(null)} />
     </TipStepLayout>
