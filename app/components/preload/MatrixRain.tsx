@@ -2,19 +2,18 @@
 
 import { useEffect, useRef } from "react";
 
-const CHARS =
-  "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン" +
-  "0123456789ABCDEF";
-const FONT_SIZE = 12;
-const COL_W = 13;
-// Rows advanced per frame at 60 fps — tune this to change rain speed.
-const SPEED = 0.45;
+const FONT_SIZE = 14;
+const COL_W = 16;
+const BASE_SPEED = 0.5;   // rows/frame at 60 fps (base; each column varies ±25%)
+const TRAIL_ROWS = 28;    // bright-trail length in grid rows
+const BASE_ALPHA = 0.14;  // minimum opacity — keeps entire screen filled
+const HEAD_ALPHA = 0.86;  // peak extra opacity added at the head
 
 /**
- * Full-screen Matrix-style rain: katakana + hex digits, dark chars on the
- * site's light background (inverse of the classic green-on-black).
- * Runs at full RAF speed (60 fps) with fractional row positions so the
- * motion is perfectly smooth. Respects prefers-reduced-motion.
+ * Binary Matrix rain: 0/1 characters, dark on the site's light background.
+ * Every column always has characters visible (BASE_ALPHA fill), with a
+ * bright falling trail moving continuously from top to bottom — no gaps,
+ * no teleporting, no stutter. Full RAF at 60fps.
  */
 export function MatrixRain() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -27,54 +26,86 @@ export function MatrixRain() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const BG = "#f7f9fc";
-    let columns: number[] = [];
+    let cols = 0;
+    let rows = 0;
+    let heads: number[] = [];
+    let speeds: number[] = [];
+    let grid: Uint8Array[] = [];
     let raf: number;
 
-    const resize = () => {
+    const setup = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      ctx.fillStyle = BG;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      const cols = Math.floor(canvas.width / COL_W);
-      const rows = canvas.height / FONT_SIZE;
-      // Spread across the entire visible height from frame 1.
-      columns = Array.from({ length: cols }, () => Math.random() * rows);
+      cols = Math.floor(canvas.width / COL_W);
+      rows = Math.ceil(canvas.height / FONT_SIZE) + 2;
+
+      // Spread heads across the whole height so the screen is full from frame 1.
+      heads = Array.from({ length: cols }, () => Math.random() * rows);
+      // Slightly different speed per column for organic variety.
+      speeds = Array.from(
+        { length: cols },
+        () => BASE_SPEED * (0.75 + Math.random() * 0.5),
+      );
+      grid = Array.from({ length: cols }, () => {
+        const arr = new Uint8Array(rows);
+        for (let r = 0; r < rows; r++) arr[r] = Math.round(Math.random());
+        return arr;
+      });
     };
 
-    resize();
-    window.addEventListener("resize", resize);
+    setup();
+    window.addEventListener("resize", setup);
 
     const tick = () => {
       raf = requestAnimationFrame(tick);
-      const { width: w, height: h } = canvas;
+      const w = canvas.width;
+      const h = canvas.height;
 
-      // Fade to background — alpha controls trail length.
-      ctx.fillStyle = "rgba(247, 249, 252, 0.12)";
+      ctx.fillStyle = "#f7f9fc";
       ctx.fillRect(0, 0, w, h);
 
-      ctx.font = `${FONT_SIZE}px monospace`;
-      ctx.fillStyle = "rgba(17, 24, 39, 0.88)";
+      ctx.font = `bold ${FONT_SIZE}px monospace`;
+      ctx.fillStyle = "#111827";
 
-      for (let i = 0; i < columns.length; i++) {
-        columns[i] += SPEED;
-        const y = columns[i] * FONT_SIZE;
-        // Draw as long as the head is within (or just about to enter) the canvas.
-        if (y >= 0 && y < h + FONT_SIZE) {
-          ctx.fillText(CHARS[Math.floor(Math.random() * CHARS.length)], i * COL_W, y);
+      for (let c = 0; c < cols; c++) {
+        // Advance head; wrap immediately at bottom — no pause, no gap.
+        heads[c] += speeds[c];
+        if (heads[c] > rows + 1) heads[c] = 0;
+
+        // Randomly flip a bit per column for the classic "changing digit" feel.
+        if (Math.random() < 0.2) {
+          grid[c][Math.floor(Math.random() * rows)] ^= 1;
         }
-        // Reset immediately once off-screen; tiny stagger keeps columns out of sync.
-        if (y > h) {
-          columns[i] = -(Math.random() * 4);
+
+        const hd = heads[c];
+
+        for (let r = 0; r < rows; r++) {
+          const y = r * FONT_SIZE;
+          if (y > h + FONT_SIZE) break;
+
+          const dist = hd - r; // positive = r is behind the head
+          let alpha: number;
+
+          if (dist >= 0 && dist <= TRAIL_ROWS) {
+            // Bright at head (dist=0), linearly fades to BASE_ALPHA at trail end.
+            alpha = BASE_ALPHA + HEAD_ALPHA * (1 - dist / TRAIL_ROWS);
+          } else {
+            alpha = BASE_ALPHA;
+          }
+
+          ctx.globalAlpha = alpha;
+          ctx.fillText(grid[c][r] === 0 ? "0" : "1", c * COL_W, y);
         }
       }
+
+      ctx.globalAlpha = 1;
     };
 
     raf = requestAnimationFrame(tick);
 
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
+      window.removeEventListener("resize", setup);
     };
   }, []);
 
