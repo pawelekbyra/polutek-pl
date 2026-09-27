@@ -5,21 +5,31 @@
   z-index: 10001; /* above SitePreloaderScreen (10000) */
   background: #ffffff;
   pointer-events: none;
-  /* starts as an invisible dot at centre */
+  /* invisible until animation class is applied */
   clip-path: circle(0% at 50% 50%);
 }
 
-/* Rabbit clicked — circle expands to cover the whole screen. */
+/* Rabbit clicked — circle expands to cover the whole screen.
+   Uses @keyframes (not transition) so the animation always starts from 0%
+   even when the element is mounted with this class already applied. */
 .flashBurst {
-  clip-path: circle(150% at 50% 50%);
-  transition: clip-path 300ms cubic-bezier(0.15, 0, 0.35, 1);
+  animation: flash-burst 300ms cubic-bezier(0.15, 0, 0.35, 1) forwards;
 }
 
-/* White covers screen — now fade out to reveal the page beneath. */
+/* White covers screen — fade out to reveal the page beneath. */
 .flashFade {
   clip-path: circle(150% at 50% 50%);
-  opacity: 0;
-  transition: opacity 420ms ease-in 60ms;
+  animation: flash-fade 420ms ease-in 60ms forwards;
+}
+
+@keyframes flash-burst {
+  from { clip-path: circle(0% at 50% 50%); }
+  to   { clip-path: circle(150% at 50% 50%); }
+}
+
+@keyframes flash-fade {
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
