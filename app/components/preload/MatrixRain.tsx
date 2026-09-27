@@ -2,8 +2,6 @@
 
 import { useEffect, useRef } from "react";
 
-// Half-width katakana (U+FF65–FF9F) — same width as ASCII in monospace,
-// so columns stay aligned. Matches the classic Matrix aesthetic.
 const CHARS =
   "ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ" +
   "0123456789";
@@ -14,9 +12,10 @@ const BASE_SPEED = 0.45;
 const TRAIL = 26;
 const DIM = 0.08;
 const BRIGHT = 0.65;
+// Columns fall 3× faster when draining so the wipe finishes in ~1.5s.
+const DRAIN_SPEED_MULT = 3;
 
-// Module-level snapshot: survives the loading.tsx → PageRevealGate remount so the
-// second instance continues exactly where the first left off (no frame jump).
+// Module-level snapshot — survives the loading.tsx → PageRevealGate remount.
 let snap: {
   cols: number;
   rows: number;
@@ -25,8 +24,19 @@ let snap: {
   grid: Uint8Array[];
 } | null = null;
 
-export function MatrixRain() {
+interface MatrixRainProps {
+  /** When true, columns drain downward without restarting, revealing the page. */
+  leaving?: boolean;
+}
+
+export function MatrixRain({ leaving = false }: MatrixRainProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const leavingRef = useRef(leaving);
+
+  // Keep the ref in sync without restarting the animation loop.
+  useEffect(() => {
+    leavingRef.current = leaving;
+  }, [leaving]);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -49,14 +59,8 @@ export function MatrixRain() {
       const newCols = Math.floor(canvas.width / COL_W);
       const newRows = Math.ceil(canvas.height / FONT_SIZE) + 2;
 
-      // On the initial mount (not a resize), restore the saved snapshot if dimensions match —
-      // this makes the second mount (PageRevealGate) continue where loading.tsx left off.
-      if (
-        !isResize &&
-        snap &&
-        snap.cols === newCols &&
-        snap.rows === newRows
-      ) {
+      // On initial mount restore snapshot so the animation continues where loading.tsx left off.
+      if (!isResize && snap && snap.cols === newCols && snap.rows === newRows) {
         cols = newCols;
         rows = newRows;
         heads = snap.heads.slice();
@@ -89,6 +93,53 @@ export function MatrixRain() {
       const w = canvas.width;
       const h = canvas.height;
 
+      if (leavingRef.current) {
+        // ── Drain mode ─────────────────────────────────────────────────────────
+        // Columns advance faster with no modular wrap. The page is revealed
+        // above the highest (smallest y) trail top still on screen.
+        ctx.clearRect(0, 0, w, h); // full canvas transparent
+
+        let minTrailTopRow = Infinity;
+        let allDone = true;
+
+        for (let c = 0; c < cols; c++) {
+          heads[c] += speeds[c] * DRAIN_SPEED_MULT; // no modulo — drain off screen
+          const trailTop = heads[c] - TRAIL;
+          if (trailTop < minTrailTopRow) minTrailTopRow = trailTop;
+          if (trailTop < rows) allDone = false;
+        }
+
+        const revealPx = Math.max(0, Math.min(h, minTrailTopRow * FONT_SIZE));
+
+        if (revealPx < h) {
+          // White background for still-covered region (below reveal line).
+          ctx.fillStyle = "#f7f9fc";
+          ctx.fillRect(0, revealPx, w, h - revealPx);
+
+          // Draw symbols only in the covered region.
+          ctx.font = `${FONT_SIZE}px monospace`;
+          ctx.fillStyle = "#111827";
+          const startRow = Math.max(0, Math.floor(revealPx / FONT_SIZE) - 1);
+          for (let c = 0; c < cols; c++) {
+            const hd = heads[c];
+            for (let r = startRow; r < rows; r++) {
+              const y = r * FONT_SIZE;
+              if (y > h + FONT_SIZE) break;
+              const dist = hd - r;
+              const alpha =
+                dist >= 0 && dist <= TRAIL ? DIM + BRIGHT * (1 - dist / TRAIL) : DIM;
+              ctx.globalAlpha = alpha;
+              ctx.fillText(CHARS[grid[c][r]], c * COL_W, y);
+            }
+          }
+          ctx.globalAlpha = 1;
+        }
+
+        if (allDone) cancelAnimationFrame(raf);
+        return;
+      }
+
+      // ── Normal rain ─────────────────────────────────────────────────────────
       ctx.fillStyle = "#f7f9fc";
       ctx.fillRect(0, 0, w, h);
 
@@ -96,7 +147,6 @@ export function MatrixRain() {
       ctx.fillStyle = "#111827";
 
       for (let c = 0; c < cols; c++) {
-        // Modular wrap over rows+TRAIL: tail fades off-screen before head re-enters.
         heads[c] = (heads[c] + speeds[c]) % (rows + TRAIL);
 
         if (Math.random() < 0.12) {
@@ -108,13 +158,9 @@ export function MatrixRain() {
         for (let r = 0; r < rows; r++) {
           const y = r * FONT_SIZE;
           if (y > h + FONT_SIZE) break;
-
           const dist = hd - r;
           const alpha =
-            dist >= 0 && dist <= TRAIL
-              ? DIM + BRIGHT * (1 - dist / TRAIL)
-              : DIM;
-
+            dist >= 0 && dist <= TRAIL ? DIM + BRIGHT * (1 - dist / TRAIL) : DIM;
           ctx.globalAlpha = alpha;
           ctx.fillText(CHARS[grid[c][r]], c * COL_W, y);
         }
@@ -128,7 +174,6 @@ export function MatrixRain() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", handleResize);
-      // Save state so the next mount (if any) can continue seamlessly.
       snap = { cols, rows, heads: heads.slice(), speeds: speeds.slice(), grid };
     };
   }, []);

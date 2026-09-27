@@ -5,12 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--chan-nav, #f7f9fc);
-  opacity: 1;
-  visibility: visible;
-  transition:
-    opacity 700ms ease-in-out,
-    visibility 0s linear 0s;
+  /* No background — the canvas fills it entirely. */
 }
 
 /* Last-resort safety net: if JS never hydrates (or the reveal gate somehow never
@@ -20,12 +15,9 @@
 }
 
 .leaving {
-  opacity: 0;
-  visibility: hidden;
+  /* Canvas handles the visual drain — no CSS opacity/fade.
+     Pointer-events off so clicks reach the page immediately. */
   pointer-events: none;
-  transition:
-    opacity 700ms ease-in-out,
-    visibility 0s linear 700ms;
 }
 
 /* Logo sits at the exact position the BrandName img occupies in the sticky navbar:
@@ -65,8 +57,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .screen,
-  .leaving {
-    transition: none;
-  }
+  /* Nothing to suppress — no CSS transitions remain. */
 }
