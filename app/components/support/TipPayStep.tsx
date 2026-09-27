@@ -123,7 +123,7 @@ function BlikForm(props: TipPayStepProps) {
       }
     >
       <label className="block">
-        <span className="mb-1.5 block text-[12px] font-bold text-[var(--chan-body)]">
+        <span className="mb-2 block text-[13px] leading-[1.55] text-[var(--chan-body)]">
           {isPl ? "Kod BLIK z aplikacji banku" : "BLIK code from your banking app"}
         </span>
         <input
