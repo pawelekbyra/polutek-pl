@@ -19,6 +19,7 @@
   line-height: 1.4;
   white-space: nowrap;
   margin: 0;
+  animation: appear 500ms ease both, pulse-text 2.8s ease-in-out 1.5s infinite;
 }
 
 .cursor {
@@ -42,16 +43,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 2400ms ease, transform 160ms ease;
+  transition: opacity 2400ms ease, filter 160ms ease;
   outline: none;
+  animation: pulse-rabbit 2.8s ease-in-out 1.5s infinite;
 }
 
 .btn:hover {
-  transform: scale(1.08);
+  filter: brightness(0.85);
 }
 
 .btn:active {
-  transform: scale(0.94);
+  filter: brightness(0.7);
 }
 
 .btn:focus-visible {
@@ -70,7 +72,18 @@
   to   { opacity: 1; transform: translateY(0);   }
 }
 
+@keyframes pulse-text {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+@keyframes pulse-rabbit {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.07); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .overlay { animation: none; }
-  .btn { transition: none; }
+  .text    { animation: none; }
+  .btn     { animation: none; transition: none; }
 }
