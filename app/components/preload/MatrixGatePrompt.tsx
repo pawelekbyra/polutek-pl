@@ -40,7 +40,8 @@ export function MatrixGatePrompt({ onEnter }: { onEnter: () => void }) {
       </p>
       {doneTyping && (
         <button className={styles.btn} onClick={onEnter} aria-label="Enter">
-          🐇
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/rabbit.png" alt="" className={styles.rabbitImg} />
         </button>
       )}
     </div>
