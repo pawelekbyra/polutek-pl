@@ -110,7 +110,10 @@ export function TipRecipientStep({
         </button>
       </div>
 
-      <div className="flex-1" />
+      <div className="flex flex-1 items-center justify-center overflow-hidden py-2">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/tip-character.jpg" alt="" aria-hidden="true" className="max-h-full w-auto object-contain" />
+      </div>
 
       {showTermsError && (
         <p role="alert" className="mb-1 text-[12px] font-semibold text-destructive">
