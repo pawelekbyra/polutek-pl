@@ -355,8 +355,8 @@
     --chan-blue-soft: #eff3fe;
     --chan-amber: #f59e0b;
     --chan-amber-bright: #fbbf24;
-    /* Warm mustard gold — the tip gate surface (owner-picked from a mock-up). */
-    --chan-gold: #d9bc68;
+    /* Sunny yellow — the tip gate surface. */
+    --chan-gold: #ffd23f;
     --chan-amber-strong: #d97706;
     --chan-amber-soft: #fff3d6;
     --chan-amber-ink: #4a2a03;
@@ -713,7 +713,7 @@
     background: var(--chan-amber);
   }
 
-  /* The gate itself: a warm mustard-gold surface (--chan-gold). The orange main button stays as it is; fields you type
+  /* The gate itself: a sunny-yellow surface (--chan-gold). The orange main button stays as it is; fields you type
      into (amount, BLIK code, card) stay white so it's obvious where to type; choices (dropdowns,
      the amount strip, the back button) are light cream chips. The amber mixes used for borders
      and dots are darkened here (scoped to the gate), and grey body text turns warm brown, so
@@ -726,13 +726,13 @@
     --chan-muted: color-mix(in srgb, var(--chan-amber-ink) 80%, var(--chan-gold));
     --chan-body: color-mix(in srgb, var(--chan-amber-ink) 90%, var(--chan-gold));
     /* Light chips (dropdowns, amount strip, back button) in a pale version of the same gold. */
-    --chan-amber-soft: color-mix(in srgb, var(--chan-gold) 28%, var(--chan-card));
+    --chan-amber-soft: color-mix(in srgb, var(--chan-gold) 24%, var(--chan-card));
     background:
-      radial-gradient(120% 55% at 50% 0%, color-mix(in srgb, var(--chan-card) 18%, transparent), transparent 70%),
+      radial-gradient(120% 55% at 50% 0%, color-mix(in srgb, var(--chan-card) 30%, transparent), transparent 70%),
       linear-gradient(
         180deg,
-        color-mix(in srgb, var(--chan-gold) 90%, var(--chan-card)),
-        color-mix(in srgb, var(--chan-gold) 92%, var(--chan-amber-ink))
+        var(--chan-gold),
+        color-mix(in srgb, var(--chan-gold) 78%, var(--chan-card))
       );
   }
 }
