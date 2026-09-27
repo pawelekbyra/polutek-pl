@@ -50,7 +50,7 @@ export function TipRecipientStep({
 
   return (
     <TipStepLayout
-      bodyClassName="flex flex-col"
+      bodyClassName="flex flex-col pb-0"
       footer={
         <>
           <label className="mb-3 flex cursor-pointer items-start gap-2.5">
@@ -110,18 +110,17 @@ export function TipRecipientStep({
         </button>
       </div>
 
-      <div className="flex flex-1 items-center justify-center overflow-hidden">
+      <div className="relative flex-1 overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/tip-character.png" alt="" aria-hidden="true" className="h-full w-full object-contain" />
+        <img src="/tip-character.png" alt="" aria-hidden="true" className="h-full w-full object-contain object-bottom" />
+        {showTermsError && (
+          <p role="alert" className="absolute bottom-1 left-0 right-0 px-2 text-center text-[12px] font-semibold text-destructive">
+            {isPl
+              ? "Zaakceptuj Regulamin i Politykę Prywatności."
+              : "Please accept the Terms and Privacy Policy."}
+          </p>
+        )}
       </div>
-
-      {showTermsError && (
-        <p role="alert" className="mb-1 text-[12px] font-semibold text-destructive">
-          {isPl
-            ? "Zaakceptuj Regulamin i Politykę Prywatności."
-            : "Please accept the Terms and Privacy Policy."}
-        </p>
-      )}
 
       <TipLegalDialog doc={legalDoc} language={language} onClose={() => setLegalDoc(null)} />
     </TipStepLayout>
