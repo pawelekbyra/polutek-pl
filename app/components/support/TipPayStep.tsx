@@ -133,7 +133,7 @@ function BlikForm(props: TipPayStepProps) {
           autoComplete="one-time-code"
           placeholder="000000"
           aria-label={isPl ? "Kod BLIK" : "BLIK code"}
-          className="h-16 w-full rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-white text-center text-[28px] font-extrabold tracking-[0.35em] tabular-nums text-[var(--chan-ink)] outline-none transition-[border-color,box-shadow] placeholder:text-[var(--cm-amber-46)] focus:border-[var(--chan-amber)] focus:shadow-[0_0_0_4px_var(--cm-amber-18)]"
+          className="h-16 w-full rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-white text-center text-[28px] font-extrabold tracking-[0.35em] tabular-nums text-[var(--chan-ink)] outline-none transition-[border-color,box-shadow] placeholder:text-[var(--cm-amber-46)] focus:border-[var(--chan-ink)] focus:shadow-[0_0_0_4px_var(--cm-amber-18)]"
         />
       </label>
       <p className="mt-2 text-[12px] text-[var(--chan-muted)]">
@@ -228,7 +228,7 @@ function CardFormInner(props: TipPayStepProps) {
         <SendButton busy={busy} disabled={!complete || !stripe} isPl={isPl} label={sendLabel(isPl, amount, currency, language)} onClick={send} />
       }
     >
-      <div className="rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-white px-4 py-4 transition-[border-color,box-shadow] focus-within:border-[var(--chan-amber)] focus-within:shadow-[0_0_0_4px_var(--cm-amber-18)]">
+      <div className="rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-white px-4 py-4 transition-[border-color,box-shadow] focus-within:border-[var(--chan-ink)] focus-within:shadow-[0_0_0_4px_var(--cm-amber-18)]">
         <CardElement
           onChange={(event) => setComplete(event.complete)}
           options={{

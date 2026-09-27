@@ -2,11 +2,11 @@
 
 import React, { useState } from "react";
 import type { SupportedCurrency } from "@/lib/constants";
-import { getLocalizedHref } from "@/lib/i18n/routing";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TIP_CURRENCIES, TIP_CURRENCY_LABELS, formatTipAmount } from "./tip-flow-config";
 import { TipPrimaryButton, TipStepHeading, TipStepLayout } from "./TipStepLayout";
 import { TipSelect } from "./TipSelect";
+import { TipLegalDialog, type TipLegalDoc } from "./TipLegalDialog";
 
 interface TipAmountStepProps {
   language: string;
@@ -48,15 +48,19 @@ export function TipAmountStep({
     onNext();
   };
 
-  const legalLink = (key: "terms" | "privacy", label: string) => (
-    <a
-      href={getLocalizedHref(isPl ? "pl" : "en", key)}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="font-semibold text-[var(--chan-ink)] underline underline-offset-2 hover:text-[var(--chan-blue)]"
+  const [legalDoc, setLegalDoc] = useState<TipLegalDoc | null>(null);
+  const legalLink = (key: TipLegalDoc, label: string) => (
+    <button
+      type="button"
+      onClick={(event) => {
+        // Inside the checkbox <label>: open the document without toggling consent.
+        event.preventDefault();
+        setLegalDoc(key);
+      }}
+      className="font-semibold text-[var(--chan-ink)] underline underline-offset-2 hover:text-[var(--chan-ink)]"
     >
       {label}
-    </a>
+    </button>
   );
 
   return (
@@ -68,7 +72,7 @@ export function TipAmountStep({
               id="tip-accept-terms"
               checked={termsAccepted}
               onCheckedChange={(checked) => onTermsChange(checked === true)}
-              className="mt-[2px] shrink-0 border-[var(--cm-amber-46)] bg-white"
+              className="mt-[2px] shrink-0 border-[var(--cm-amber-46)] bg-white data-checked:border-[var(--chan-ink)] data-checked:bg-[var(--chan-ink)] data-checked:text-white"
             />
             <span className="text-[13px] leading-[1.5] text-[var(--chan-body)]">
               {isPl ? (
@@ -112,7 +116,7 @@ export function TipAmountStep({
 
       <label className="mt-4 block">
         <span className="mb-1.5 block text-[12px] font-bold text-[var(--chan-body)]">{isPl ? "Kwota" : "Amount"}</span>
-        <div className="flex h-14 items-center rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-white px-4 transition-[border-color,box-shadow] focus-within:border-[var(--chan-amber)] focus-within:shadow-[0_0_0_4px_var(--cm-amber-18)]">
+        <div className="flex h-14 items-center rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-white px-4 transition-[border-color,box-shadow] focus-within:border-[var(--chan-ink)] focus-within:shadow-[0_0_0_4px_var(--cm-amber-18)]">
           <input
             type="number"
             inputMode="decimal"
@@ -142,6 +146,7 @@ export function TipAmountStep({
         </p>
       )}
 
+      <TipLegalDialog doc={legalDoc} language={language} onClose={() => setLegalDoc(null)} />
     </TipStepLayout>
   );
 }

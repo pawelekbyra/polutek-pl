@@ -710,23 +710,25 @@
     border-radius: 999px;
   }
   .tip-select-scroll::-webkit-scrollbar-thumb:hover {
-    background: var(--chan-amber);
+    background: var(--chan-ink);
   }
 
-  /* The gate itself: a canary-yellow surface (--chan-gold, #FFEF00). The orange main button stays as it is; fields you type
-     into (amount, BLIK code, card) stay white so it's obvious where to type; choices (dropdowns,
-     the amount strip, the back button) are light cream chips. The amber mixes used for borders
-     and dots are darkened here (scoped to the gate), and grey body text turns warm brown, so
-     everything reads on yellow. */
+  /* The gate itself: a canary-yellow surface (--chan-gold) with black accents — black main
+     button with white text, black badge, dots, focus and selection; ink-tinted borders and
+     warm-grey text (the amber mixes below are re-pointed at --chan-ink inside the gate).
+     Fields you type into stay white; choices (dropdowns, amount strip, back button) are
+     pale-yellow chips. */
   .tip-gate-surface {
-    --cm-amber-20: color-mix(in srgb, var(--chan-amber-strong) 22%, transparent);
-    --cm-amber-28: color-mix(in srgb, var(--chan-amber-strong) 32%, transparent);
-    --cm-amber-38: color-mix(in srgb, var(--chan-amber-strong) 45%, transparent);
-    --cm-amber-46: color-mix(in srgb, var(--chan-amber-strong) 50%, transparent);
-    --chan-muted: color-mix(in srgb, var(--chan-amber-ink) 80%, var(--chan-gold));
-    --chan-body: color-mix(in srgb, var(--chan-amber-ink) 90%, var(--chan-gold));
+    --cm-amber-18: color-mix(in srgb, var(--chan-ink) 14%, transparent);
+    --cm-amber-20: color-mix(in srgb, var(--chan-ink) 14%, transparent);
+    --cm-amber-28: color-mix(in srgb, var(--chan-ink) 20%, transparent);
+    --cm-amber-38: color-mix(in srgb, var(--chan-ink) 30%, transparent);
+    --cm-amber-46: color-mix(in srgb, var(--chan-ink) 40%, transparent);
+    --cm-amber-62: color-mix(in srgb, var(--chan-ink) 45%, transparent);
+    --chan-muted: color-mix(in srgb, var(--chan-ink) 68%, var(--chan-gold));
+    --chan-body: color-mix(in srgb, var(--chan-ink) 85%, var(--chan-gold));
     /* Light chips (dropdowns, amount strip, back button) in a pale version of the same gold. */
-    --chan-amber-soft: color-mix(in srgb, var(--chan-gold) 24%, var(--chan-card));
+    --chan-amber-soft: color-mix(in srgb, var(--chan-gold) 30%, var(--chan-card));
     background: var(--chan-gold);
   }
 }

@@ -136,8 +136,8 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
         className={cn(
           "rounded-[16px] border-2 bg-[var(--chan-amber-soft)] transition-[border-color,box-shadow] duration-150 motion-reduce:transition-none",
           open
-            ? "border-[var(--chan-amber)] shadow-[0_10px_24px_-14px_var(--cm-amber-62)]"
-            : "border-[var(--cm-amber-38)] hover:border-[var(--chan-amber)]",
+            ? "border-[var(--chan-ink)] shadow-[0_10px_24px_-14px_var(--cm-amber-62)]"
+            : "border-[var(--cm-amber-38)] hover:border-[var(--chan-ink)]",
         )}
       >
         <button
@@ -150,7 +150,7 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
           aria-controls={listId}
           onClick={toggle}
           onKeyDown={onKeyDown}
-          className="flex min-h-[52px] w-full items-center gap-3 px-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--chan-amber)]"
+          className="flex min-h-[52px] w-full items-center gap-3 px-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--chan-ink)]"
         >
           {selected?.icon && (
             <span aria-hidden="true" className="text-[20px] leading-none">
@@ -163,7 +163,7 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
           </span>
           <ChevronDown
             className={cn(
-              "h-4 w-4 shrink-0 text-[var(--chan-amber-ink)] transition-transform duration-200 motion-reduce:transition-none",
+              "h-4 w-4 shrink-0 text-[var(--chan-ink)] transition-transform duration-200 motion-reduce:transition-none",
               open && "rotate-180",
             )}
           />
@@ -177,7 +177,7 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
             role="listbox"
             aria-labelledby={labelId}
             style={position.style}
-            className="tip-select-scroll z-50 m-0 list-none overflow-y-auto overscroll-contain rounded-[16px] border-2 border-[var(--chan-amber)] bg-white p-1.5 shadow-[0_18px_40px_-16px_rgba(23,23,23,0.35)] animate-in fade-in zoom-in-95 duration-150 motion-reduce:animate-none"
+            className="tip-select-scroll z-50 m-0 list-none overflow-y-auto overscroll-contain rounded-[16px] border-2 border-[var(--chan-ink)] bg-white p-1.5 shadow-[0_18px_40px_-16px_rgba(23,23,23,0.35)] animate-in fade-in zoom-in-95 duration-150 motion-reduce:animate-none"
           >
             {options.map((option, index) => {
               const isSelected = option.value === value;
@@ -202,7 +202,7 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
                     <span className="block text-[14px] font-bold text-[var(--chan-ink)]">{option.title}</span>
                     {option.hint && <span className="block text-[12px] text-[var(--chan-muted)]">{option.hint}</span>}
                   </span>
-                  {isSelected && <Check className="h-4 w-4 shrink-0 text-[var(--chan-amber-ink)]" />}
+                  {isSelected && <Check className="h-4 w-4 shrink-0 text-[var(--chan-ink)]" />}
                 </li>
               );
             })}

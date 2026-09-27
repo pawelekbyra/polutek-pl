@@ -42,7 +42,7 @@ export function PayStepFrame({
           <span className="mx-1.5 text-[var(--chan-muted)]">·</span>
           {copy.title}
         </p>
-        <button type="button" onClick={onChangeMethod} className="text-[13px] font-bold text-[var(--chan-blue)] hover:underline">
+        <button type="button" onClick={onChangeMethod} className="text-[13px] font-bold text-[var(--chan-ink)] hover:underline">
           {isPl ? "Zmień" : "Change"}
         </button>
       </div>

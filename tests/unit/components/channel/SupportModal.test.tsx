@@ -100,8 +100,13 @@ describe('SupportModal (tip gate)', () => {
     expect(currency).toHaveTextContent('Euro (EUR)');
     fireEvent.click(currency);
     fireEvent.click(screen.getByRole('option', { name: /Złoty \(PLN\)/ }));
-    expect(screen.getByRole('link', { name: 'Regulamin' })).toHaveAttribute('target', '_blank');
-    expect(screen.getByRole('link', { name: 'Politykę Prywatności' })).toBeInTheDocument();
+    // Legal documents open as a second modal on top of the gate, not a new tab.
+    fireEvent.click(screen.getByRole('button', { name: 'Regulamin' }));
+    expect(await screen.findByRole('heading', { name: 'Regulamin serwisu' })).toBeInTheDocument();
+    expect(document.getElementById('tip-accept-terms')).not.toHaveAttribute('data-checked');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Zamknij' }).at(-1)!);
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Regulamin serwisu' })).not.toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'Politykę Prywatności' })).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Widzi to tylko twórca')).not.toBeInTheDocument();
 
     const next = await screen.findByRole('button', { name: /^Dalej/ });

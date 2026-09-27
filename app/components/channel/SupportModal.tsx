@@ -235,7 +235,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
           <DialogTitle className="sr-only">{isPl ? "Bramka napiwkowa" : "Tip gate"}</DialogTitle>
 
           <header className="flex shrink-0 items-center gap-2 px-5 pb-2 pt-[max(12px,env(safe-area-inset-top))] md:px-7 md:pt-4">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--chan-amber-ink)_62%,var(--chan-gold))] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--chan-amber-soft)]">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--chan-ink)] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--chan-gold)]">
               <span aria-hidden="true">💰</span>
               {isPl ? "Bramka napiwkowa" : "Tip gate"}
             </span>
@@ -245,8 +245,8 @@ export default function SupportModal({ onClose }: SupportModalProps) {
                   key={key}
                   className={cn(
                     "h-1.5 rounded-full transition-[width,background-color] duration-300 motion-reduce:transition-none",
-                    index === activeIndex ? "w-6 bg-[var(--chan-amber)]" : "w-1.5",
-                    index < activeIndex ? "bg-[var(--chan-amber)]" : index > activeIndex && "bg-[var(--cm-amber-28)]",
+                    index === activeIndex ? "w-6 bg-[var(--chan-ink)]" : "w-1.5",
+                    index < activeIndex ? "bg-[var(--chan-ink)]" : index > activeIndex && "bg-[var(--cm-amber-28)]",
                   )}
                 />
               ))}
@@ -255,7 +255,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
               type="button"
               onClick={handleClose}
               aria-label={isPl ? "Zamknij" : "Close"}
-              className="-mr-2 ml-1 flex h-10 w-10 items-center justify-center rounded-full text-[var(--chan-amber-ink)] transition-colors hover:bg-[var(--cm-amber-20)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-amber)]"
+              className="-mr-2 ml-1 flex h-10 w-10 items-center justify-center rounded-full text-[var(--chan-ink)] transition-colors hover:bg-[var(--cm-amber-20)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)]"
             >
               <X className="h-5 w-5" />
             </button>

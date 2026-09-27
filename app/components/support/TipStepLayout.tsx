@@ -33,7 +33,7 @@ export function TipStepLayout({
                 type="button"
                 onClick={back.onBack}
                 aria-label={back.label}
-                className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-[var(--chan-amber-soft)] text-[var(--chan-amber-ink)] transition-colors hover:border-[var(--chan-amber)] hover:bg-[var(--cm-amber-28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-amber)]"
+                className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-[var(--chan-amber-soft)] text-[var(--chan-ink)] transition-colors hover:border-[var(--chan-ink)] hover:bg-[var(--cm-amber-28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)]"
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
@@ -67,7 +67,7 @@ export function TipPrimaryButton({
       onClick={onClick}
       disabled={disabled}
       aria-busy={busy || undefined}
-      className="font-sans flex h-[52px] w-full items-center justify-center gap-2 rounded-[14px] bg-[linear-gradient(135deg,var(--chan-amber-bright),var(--chan-amber))] text-[16px] font-extrabold tracking-[-0.02em] text-[var(--chan-amber-ink)] shadow-[0_1px_0_var(--cm-amber-66-black),0_10px_22px_-10px_var(--cm-amber-62)] transition-[filter,transform] duration-200 hover:brightness-[1.04] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none"
+      className="font-sans flex h-[52px] w-full items-center justify-center gap-2 rounded-[14px] bg-[var(--chan-ink)] text-[16px] font-extrabold tracking-[-0.02em] text-white shadow-[0_10px_22px_-12px_rgba(17,24,39,0.55)] transition-[background-color,transform] duration-200 hover:bg-black active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55 motion-reduce:transition-none"
     >
       {children}
     </button>

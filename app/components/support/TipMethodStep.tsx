@@ -48,7 +48,7 @@ export function TipMethodStep({
         <p className="m-0 text-[14px] font-bold tabular-nums text-[var(--chan-ink)]">
           {isPl ? "Napiwek" : "Tip"} {formatTipAmount(amount, currency, language)}
         </p>
-        <button type="button" onClick={onChangeAmount} className="text-[13px] font-bold text-[var(--chan-blue)] hover:underline">
+        <button type="button" onClick={onChangeAmount} className="text-[13px] font-bold text-[var(--chan-ink)] hover:underline">
           {isPl ? "Zmień" : "Change"}
         </button>
       </div>

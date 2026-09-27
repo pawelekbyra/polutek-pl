@@ -73,7 +73,7 @@ export function TipThanksStep({
               type="button"
               onClick={onRetryStatusCheck}
               disabled={isSyncing}
-              className="h-12 rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-[var(--chan-amber-soft)] text-[14px] font-bold text-[var(--chan-amber-ink)] hover:bg-[var(--cm-amber-28)] disabled:opacity-60"
+              className="h-12 rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-[var(--chan-amber-soft)] text-[14px] font-bold text-[var(--chan-ink)] hover:bg-[var(--cm-amber-28)] disabled:opacity-60"
             >
               {isPl ? "Sprawdź ponownie" : "Check again"}
             </button>
@@ -82,7 +82,7 @@ export function TipThanksStep({
             <button
               type="button"
               onClick={onTryAgain}
-              className="h-12 rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-[var(--chan-amber-soft)] text-[14px] font-bold text-[var(--chan-amber-ink)] hover:bg-[var(--cm-amber-28)]"
+              className="h-12 rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-[var(--chan-amber-soft)] text-[14px] font-bold text-[var(--chan-ink)] hover:bg-[var(--cm-amber-28)]"
             >
               {isPl ? "Spróbuj jeszcze raz" : "Try again"}
             </button>
