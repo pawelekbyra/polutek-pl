@@ -10,7 +10,6 @@ import { UrlMask } from "@/app/components/UrlMask";
 import { AppVersionCheck } from "@/app/components/AppVersionCheck";
 import { resolveInitialLanguage } from "@/lib/i18n/server-language";
 import { AuthModalProvider } from "@/app/components/auth/AuthModalProvider";
-import { RotateDeviceGuard } from "@/app/components/RotateDeviceGuard";
 import { Analytics } from '@vercel/analytics/next';
 
 export const metadata = {
@@ -65,7 +64,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Providers initialLanguage={initialLanguage}>
             <ClerkLocalizationProvider>
               <AuthModalProvider>
-                <RotateDeviceGuard />
                 {children}
               </AuthModalProvider>
             </ClerkLocalizationProvider>

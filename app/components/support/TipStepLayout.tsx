@@ -26,7 +26,7 @@ export function TipStepLayout({
     <>
       <div className={cn("tip-select-scroll min-h-0 flex-1 overflow-y-auto px-5 pb-4 pt-2 md:px-7", bodyClassName)}>{children}</div>
       {footer && (
-        <div className="shrink-0 border-t border-[var(--cm-amber-20)] px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 md:px-7 md:pb-5">
+        <div className="shrink-0 border-t border-[var(--chan-line)] px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 md:px-7 md:pb-5">
           {back ? (
             <div className="flex items-end gap-2.5">
               <button
