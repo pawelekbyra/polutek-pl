@@ -38,27 +38,25 @@ const LEAVE_ANIMATION_MS = 700;
 
 let revealedInThisDocument = false;
 
-// How long after clicking the rabbit we suppress the gate on the next page load.
-// This covers Clerk auth redirects (typically < 10s) without permanently hiding
-// the gate on every refresh — after AUTH_REDIRECT_WINDOW_MS the gate shows again.
-const AUTH_REDIRECT_WINDOW_MS = 45_000;
-const SESSION_KEY = "polutek:revealed:ts";
+const SESSION_KEY = "polutek:revealed";
 
 function hasRevealedThisSession(): boolean {
-  try {
-    const ts = sessionStorage.getItem(SESSION_KEY);
-    if (!ts) return false;
-    return Date.now() - parseInt(ts, 10) < AUTH_REDIRECT_WINDOW_MS;
-  } catch { return false; }
+  try { return sessionStorage.getItem(SESSION_KEY) === "1"; } catch { return false; }
 }
 
 function markRevealedThisSession() {
   revealedInThisDocument = true;
-  try { sessionStorage.setItem(SESSION_KEY, String(Date.now())); } catch {}
+  try { sessionStorage.setItem(SESSION_KEY, "1"); } catch {}
 }
 
 export function hasRevealedPageInThisDocument(): boolean {
   return revealedInThisDocument;
+}
+
+/** True if the gate should be skipped — used by HomeRouteLoading to avoid showing
+ *  the full preloader during in-session back-navigations. */
+export function shouldSkipGate(): boolean {
+  return revealedInThisDocument || hasRevealedThisSession();
 }
 
 /** @internal test helper */
