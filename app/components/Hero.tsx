@@ -18,7 +18,7 @@ import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import SubscribeButton from './SubscribeButton';
 import ShareButton from './ShareButton';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
-import { ThumbsUp, ThumbsDown, Coins } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Rocket } from 'lucide-react';
 import styles from './watch-actions.module.css';
 
 interface HeroProps {
@@ -357,7 +357,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                  aria-label={language === "pl" ? "Wspieraj" : "Support"}
                  title={language === "pl" ? "Wspieraj" : "Support"}
                >
-                 <Coins aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={1.8} />
+                 <Rocket aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={1.8} />
                  <span className="leading-none">{language === "pl" ? "Wspieraj" : "Support"}</span>
                </button>
             </div>
