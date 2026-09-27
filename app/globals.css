@@ -355,6 +355,8 @@
     --chan-blue-soft: #eff3fe;
     --chan-amber: #f59e0b;
     --chan-amber-bright: #fbbf24;
+    /* Canary yellow — the tip gate surface (owner-picked). */
+    --chan-gold: #ffef00;
     --chan-amber-strong: #d97706;
     --chan-amber-soft: #fff3d6;
     --chan-amber-ink: #4a2a03;
@@ -684,6 +686,81 @@
   }
   ::-webkit-scrollbar-thumb:hover {
     background: var(--chan-muted);
+  }
+}
+
+/* Tip gate: a slim scrollbar in its dropdown lists and step bodies instead of the system one.
+   `scrollbar-color` covers Firefox and current Chrome/Edge; the ::-webkit rules cover Safari. */
+@layer components {
+  .tip-select-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--chan-line) transparent;
+  }
+  .tip-select-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .tip-select-scroll::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 10px 0;
+  }
+  .tip-select-scroll::-webkit-scrollbar-thumb {
+    background: var(--chan-line);
+    border: 0;
+    border-radius: 999px;
+  }
+  .tip-select-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--chan-ink);
+  }
+
+  /* The gate itself: neutral card surface matching the rest of the app — white background,
+     black accents (button, badge, dots, focus, selection), cool-gray chips, standard borders.
+     The amber mixes are re-pointed to ink-based values so all border/focus utilities stay
+     neutral without touching each individual component. */
+  .tip-gate-surface {
+    --cm-amber-18: color-mix(in srgb, var(--chan-ink) 14%, transparent);
+    --cm-amber-20: color-mix(in srgb, var(--chan-ink) 14%, transparent);
+    --cm-amber-28: color-mix(in srgb, var(--chan-ink) 20%, transparent);
+    --cm-amber-38: color-mix(in srgb, var(--chan-ink) 30%, transparent);
+    --cm-amber-46: color-mix(in srgb, var(--chan-ink) 40%, transparent);
+    --cm-amber-62: color-mix(in srgb, var(--chan-ink) 45%, transparent);
+    /* Chips (dropdowns, currency strip, back button): cool-gray surface instead of pale yellow. */
+    --chan-amber-soft: var(--chan-surface);
+    background: var(--chan-card);
+  }
+
+  /* Slide-from-top open / slide-back-up close animation for the tip gate dialog.
+     Uses the CSS `translate` property (separate from Tailwind's `transform`) so it never
+     conflicts with the centering `translateX(-50%) translateY(-50%)` applied on desktop. */
+  .tip-gate-slide {
+    translate: 0 -100%;
+    opacity: 0;
+    transition:
+      translate 380ms cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 220ms ease;
+  }
+  .tip-gate-slide[data-open] {
+    translate: 0 0;
+    opacity: 1;
+  }
+  .tip-gate-slide[data-closed] {
+    translate: 0 -100%;
+    opacity: 0;
+    transition:
+      translate 250ms ease-in,
+      opacity 200ms ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tip-gate-slide {
+      translate: 0 0;
+      opacity: 0;
+      transition: opacity 150ms;
+    }
+    .tip-gate-slide[data-open] {
+      opacity: 1;
+    }
+    .tip-gate-slide[data-closed] {
+      opacity: 0;
+    }
   }
 }
 

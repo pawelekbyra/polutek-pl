@@ -87,4 +87,21 @@ describe('createCheckoutIntent use case', () => {
       expect(result.data.clientSecret).toBe('secret_123');
     }
   });
+
+  it('creates the intent with Stripe automatic methods and returns the list Stripe allows', async () => {
+    mockStripe.paymentIntents.create.mockClear();
+    mockStripe.paymentIntents.create.mockResolvedValueOnce({
+      id: 'pi_123',
+      client_secret: 'secret_123',
+      payment_method_types: ['card', 'blik', 'p24'],
+    });
+    const ctx = createAppContext({ actor: { type: 'user', userId: 'user-1' }, prisma: {} as any });
+
+    const result = await createCheckoutIntent({ userId: 'user-1', amountMinor: 1000, currency: 'PLN', title: 'Test' }, ctx);
+
+    const params = mockStripe.paymentIntents.create.mock.calls[0][0];
+    expect(params.automatic_payment_methods).toEqual({ enabled: true });
+    expect(params).not.toHaveProperty('payment_method_types');
+    expect(result.ok && result.data.paymentMethodTypes).toEqual(['card', 'blik', 'p24']);
+  });
 });

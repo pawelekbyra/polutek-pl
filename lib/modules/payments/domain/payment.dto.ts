@@ -26,6 +26,11 @@ export interface CreateCheckoutIntentInput {
 export interface CheckoutResultDto {
   paymentId: string;
   clientSecret: string | null;
+  /**
+   * The methods Stripe allows for this intent (dashboard settings + currency + amount), used by
+   * the tip gate to draw its method tiles. Wallets (Apple/Google Pay) show up as `card`.
+   */
+  paymentMethodTypes?: string[];
   status?: PaymentStatus;
   terminal?: boolean;
 }

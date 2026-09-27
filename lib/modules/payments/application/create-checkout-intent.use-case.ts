@@ -47,6 +47,7 @@ export async function createCheckoutIntent(
           return success({
             paymentId: existing.id,
             clientSecret: intent.client_secret,
+            paymentMethodTypes: intent.payment_method_types,
           });
         } catch (e) {
           logger.error(`[createCheckoutIntent] Error retrieving existing intent ${existing.stripeIntentId}`, e);
@@ -95,6 +96,8 @@ export async function createCheckoutIntent(
         ...(input.requestId ? { requestId: input.requestId } : {}),
         creatorId,
       },
+      // Stripe decides which methods apply (dashboard settings, currency, amount); the tip gate
+      // reads them back from `payment_method_types` to draw its tiles.
       automatic_payment_methods: { enabled: true },
     }, {
       idempotencyKey: input.requestId ? `payment-intent-${user.id}-${input.requestId}` : undefined
@@ -105,6 +108,7 @@ export async function createCheckoutIntent(
     return success({
       paymentId: payment.id,
       clientSecret: paymentIntent.client_secret,
+      paymentMethodTypes: paymentIntent.payment_method_types,
     });
   } catch (error) {
     logger.error(`[createCheckoutIntent] Error creating Stripe intent`, error);

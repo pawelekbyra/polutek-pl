@@ -83,6 +83,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
         clientSecret: checkoutResult.data.clientSecret,
         paymentId: checkoutResult.data.paymentId,
+        paymentMethodTypes: checkoutResult.data.paymentMethodTypes,
         status: checkoutResult.data.status,
         terminal: checkoutResult.data.terminal,
     });
