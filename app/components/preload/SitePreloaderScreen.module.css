@@ -5,9 +5,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background:
-    radial-gradient(circle at 50% 42%, var(--cm-blue-9, rgba(37, 99, 235, 0.09)), transparent 46%),
-    var(--chan-nav, #f7f9fc);
+  background: var(--chan-nav, #f7f9fc);
   opacity: 1;
   visibility: visible;
   transition:
@@ -30,53 +28,6 @@
     visibility 0s linear 700ms;
 }
 
-.inner {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 22px;
-  transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.leaving .inner {
-  transform: scale(1.04);
-}
-
-/* Same size as the navbar logo (BrandName h-[28px] md:h-[34px]), so the mark
-   doesn't jump in size when the preloader hands over to the page. */
-.logo {
-  display: block;
-  height: 28px;
-  width: auto;
-}
-
-.bar {
-  width: 120px;
-  height: 3px;
-  border-radius: 999px;
-  background: var(--chan-line, rgba(17, 24, 39, 0.1));
-  overflow: hidden;
-}
-
-.barFill {
-  display: block;
-  width: 40%;
-  height: 100%;
-  border-radius: 999px;
-  background: var(--chan-ink, #111827);
-  animation: preloader-bar 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes preloader-bar {
-  0% {
-    transform: translateX(-150%);
-  }
-  100% {
-    transform: translateX(350%);
-  }
-}
-
 @keyframes preloader-failsafe {
   to {
     opacity: 0;
@@ -85,26 +36,9 @@
   }
 }
 
-@media (min-width: 768px) {
-  .logo {
-    height: 34px;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .screen,
-  .leaving,
-  .inner {
+  .leaving {
     transition: none;
-  }
-
-  .leaving .inner {
-    transform: none;
-  }
-
-  .barFill {
-    animation: none;
-    opacity: 0.5;
-    transform: translateX(75%);
   }
 }

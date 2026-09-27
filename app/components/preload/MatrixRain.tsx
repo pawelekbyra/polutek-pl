@@ -10,23 +10,21 @@ const CHARS =
 
 const FONT_SIZE = 13;
 const COL_W = 14;
-const BASE_SPEED = 0.45;  // rows/frame at 60 fps; each column ±25%
-const TRAIL = 26;          // bright-trail length in rows
-const DIM = 0.08;          // opacity of background fill (always-visible coverage)
-const BRIGHT = 0.65;       // peak extra opacity added at the trail head
+const BASE_SPEED = 0.45;
+const TRAIL = 26;
+const DIM = 0.08;
+const BRIGHT = 0.65;
 
-/**
- * Matrix-style falling characters: half-width katakana + digits on the
- * site's light background (inverse colour scheme).
- *
- * Rendering model: each column runs a cyclic head from 0 to (rows+TRAIL),
- * then wraps modularly. This means the trail at the bottom fades out
- * naturally over TRAIL rows BEFORE the head reappears at the top —
- * zero flicker, zero sudden-frame discontinuity.
- *
- * Every cell is always drawn at DIM opacity so the whole screen stays
- * filled. The bright trail rides on top.
- */
+// Module-level snapshot: survives the loading.tsx → PageRevealGate remount so the
+// second instance continues exactly where the first left off (no frame jump).
+let snap: {
+  cols: number;
+  rows: number;
+  heads: Float64Array;
+  speeds: Float64Array;
+  grid: Uint8Array[];
+} | null = null;
+
 export function MatrixRain() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -40,37 +38,51 @@ export function MatrixRain() {
 
     let cols = 0;
     let rows = 0;
-    // Fractional row position of each column's head.
-    let heads: number[] = [];
-    // Per-column speed multiplier for organic variety.
-    let speeds: number[] = [];
-    // Character index (into CHARS) for each grid cell.
+    let heads: Float64Array = new Float64Array(0);
+    let speeds: Float64Array = new Float64Array(0);
     let grid: Uint8Array[] = [];
     let raf: number;
 
-    const setup = () => {
+    const setup = (isResize = false) => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      cols = Math.floor(canvas.width / COL_W);
-      rows = Math.ceil(canvas.height / FONT_SIZE) + 2;
+      const newCols = Math.floor(canvas.width / COL_W);
+      const newRows = Math.ceil(canvas.height / FONT_SIZE) + 2;
 
-      // Scatter heads across [0, rows] so the screen is full from frame 1.
-      heads = Array.from({ length: cols }, () => Math.random() * rows);
-      speeds = Array.from(
-        { length: cols },
-        () => BASE_SPEED * (0.75 + Math.random() * 0.5),
-      );
-      grid = Array.from({ length: cols }, () => {
+      // On the initial mount (not a resize), restore the saved snapshot if dimensions match —
+      // this makes the second mount (PageRevealGate) continue where loading.tsx left off.
+      if (
+        !isResize &&
+        snap &&
+        snap.cols === newCols &&
+        snap.rows === newRows
+      ) {
+        cols = newCols;
+        rows = newRows;
+        heads = snap.heads.slice();
+        speeds = snap.speeds.slice();
+        grid = snap.grid.map((col) => col.slice() as Uint8Array);
+        return;
+      }
+
+      cols = newCols;
+      rows = newRows;
+      heads = new Float64Array(cols);
+      speeds = new Float64Array(cols);
+      grid = [];
+      for (let c = 0; c < cols; c++) {
+        heads[c] = Math.random() * rows;
+        speeds[c] = BASE_SPEED * (0.75 + Math.random() * 0.5);
         const arr = new Uint8Array(rows);
-        for (let r = 0; r < rows; r++) {
-          arr[r] = Math.floor(Math.random() * CHARS.length);
-        }
-        return arr;
-      });
+        for (let r = 0; r < rows; r++) arr[r] = Math.floor(Math.random() * CHARS.length);
+        grid.push(arr);
+      }
     };
 
-    setup();
-    window.addEventListener("resize", setup);
+    setup(false);
+
+    const handleResize = () => setup(true);
+    window.addEventListener("resize", handleResize);
 
     const tick = () => {
       raf = requestAnimationFrame(tick);
@@ -84,32 +96,24 @@ export function MatrixRain() {
       ctx.fillStyle = "#111827";
 
       for (let c = 0; c < cols; c++) {
-        // Modular wrap over rows+TRAIL: the tail fades out off-screen before
-        // the head re-enters from the top → no sudden brightness jump.
+        // Modular wrap over rows+TRAIL: tail fades off-screen before head re-enters.
         heads[c] = (heads[c] + speeds[c]) % (rows + TRAIL);
 
-        // Occasionally swap one character in this column for the "changing
-        // digits" flicker effect.
         if (Math.random() < 0.12) {
           const r = Math.floor(Math.random() * rows);
           grid[c][r] = Math.floor(Math.random() * CHARS.length);
         }
 
         const hd = heads[c];
-
         for (let r = 0; r < rows; r++) {
           const y = r * FONT_SIZE;
           if (y > h + FONT_SIZE) break;
 
-          const dist = hd - r; // positive → r is behind the head
-          let alpha: number;
-
-          if (dist >= 0 && dist <= TRAIL) {
-            // Linear fade: full brightness at head, down to DIM at trail end.
-            alpha = DIM + BRIGHT * (1 - dist / TRAIL);
-          } else {
-            alpha = DIM;
-          }
+          const dist = hd - r;
+          const alpha =
+            dist >= 0 && dist <= TRAIL
+              ? DIM + BRIGHT * (1 - dist / TRAIL)
+              : DIM;
 
           ctx.globalAlpha = alpha;
           ctx.fillText(CHARS[grid[c][r]], c * COL_W, y);
@@ -123,7 +127,9 @@ export function MatrixRain() {
 
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener("resize", setup);
+      window.removeEventListener("resize", handleResize);
+      // Save state so the next mount (if any) can continue seamlessly.
+      snap = { cols, rows, heads: heads.slice(), speeds: speeds.slice(), grid };
     };
   }, []);
 
