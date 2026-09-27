@@ -173,7 +173,8 @@ export function PageRevealGate({ children, waitFor = [], posterUrl }: PageReveal
     if (phase !== "gate") return;
     // Best-effort orientation lock on user gesture (works in PWA standalone;
     // silently fails in regular browser tabs where fullscreen is not active).
-    try { screen.orientation?.lock?.("portrait").catch(() => {}); } catch { /* unsupported */ }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    try { (screen.orientation as any)?.lock?.("portrait").catch(() => {}); } catch { /* unsupported */ }
     window.dispatchEvent(new Event("polutek:gate-enter"));
     setPhase("leaving");
   }, [phase]);
