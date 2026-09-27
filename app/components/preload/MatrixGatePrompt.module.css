@@ -1,0 +1,91 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  animation: fadeIn 600ms ease both;
+}
+
+.terminal {
+  background: rgba(0, 8, 0, 0.88);
+  border: 1px solid rgba(0, 255, 65, 0.35);
+  border-radius: 10px;
+  padding: 36px 56px;
+  text-align: center;
+  box-shadow:
+    0 0 60px rgba(0, 255, 65, 0.12),
+    inset 0 0 40px rgba(0, 0, 0, 0.6);
+  min-width: min(480px, 88vw);
+}
+
+.text {
+  font-family: "Geist Mono", "Courier New", monospace;
+  font-size: clamp(16px, 3.5vw, 26px);
+  color: #00ff41;
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 12px rgba(0, 255, 65, 0.7), 0 0 28px rgba(0, 255, 65, 0.3);
+  line-height: 1.6;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  background: #00ff41;
+  margin-left: 3px;
+  vertical-align: text-bottom;
+  box-shadow: 0 0 8px rgba(0, 255, 65, 0.9);
+}
+
+.btn {
+  margin-top: 32px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(0, 255, 65, 0.08);
+  border: 2px solid rgba(0, 255, 65, 0.45);
+  font-size: 38px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 0 24px rgba(0, 255, 65, 0.18);
+  transition: background 200ms ease, box-shadow 200ms ease, transform 180ms ease;
+  animation: btnIn 400ms ease 200ms both;
+  line-height: 1;
+}
+
+.btn:hover,
+.btn:focus-visible {
+  background: rgba(0, 255, 65, 0.18);
+  box-shadow: 0 0 40px rgba(0, 255, 65, 0.4), 0 0 12px rgba(0, 255, 65, 0.6);
+  transform: scale(1.1);
+  outline: none;
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes btnIn {
+  from { opacity: 0; transform: scale(0.75); }
+  to   { opacity: 1; transform: scale(1);    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .btn {
+    animation: none;
+  }
+}
