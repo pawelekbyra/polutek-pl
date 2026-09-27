@@ -84,9 +84,11 @@ export function TipAmountStep({
           <span className="ml-2 text-[15px] font-bold text-[var(--chan-muted)]">{currency}</span>
         </div>
       </label>
-      <div className="mt-1.5 min-h-[22px]">
+      <div className="relative flex-1 overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/tip-character-3.png" alt="" aria-hidden="true" className="absolute bottom-0 right-0 h-full w-auto" />
         {showAmountError && (
-          <p role="alert" className="text-center text-[12px] font-semibold text-destructive">
+          <p role="alert" className="absolute left-0 right-0 top-2 px-2 text-center text-[12px] font-semibold text-destructive">
             {attempted && amountMissing
               ? isPl
                 ? `Wpisz kwotę napiwku (co najmniej ${formatTipAmount(minAmount, currency, language)}).`
@@ -96,11 +98,6 @@ export function TipAmountStep({
               : `Amount too low. Minimum: ${formatTipAmount(minAmount, currency, language)}.`}
           </p>
         )}
-      </div>
-
-      <div className="flex-1 overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/tip-character-3.png" alt="" aria-hidden="true" className="h-full w-full object-contain object-bottom" />
       </div>
     </TipStepLayout>
   );
