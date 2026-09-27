@@ -134,6 +134,14 @@ export function PageRevealGate({ children, waitFor = [], posterUrl }: PageReveal
     if (covering && (allReady || timedOut)) setPhase("gate");
   }, [covering, allReady, timedOut]);
 
+  // Block body scroll and touch-scroll while the preloader is covering the page.
+  useEffect(() => {
+    if (phase === "done") return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [phase]);
+
   // Once leaving: wait for the blur-fade animation, then unmount.
   useEffect(() => {
     if (phase !== "leaving") return;
@@ -143,7 +151,10 @@ export function PageRevealGate({ children, waitFor = [], posterUrl }: PageReveal
   }, [phase]);
 
   const handleGateClick = useCallback(() => {
-    if (phase === "gate") setPhase("leaving");
+    if (phase === "gate") {
+      window.dispatchEvent(new Event("polutek:gate-enter"));
+      setPhase("leaving");
+    }
   }, [phase]);
 
   const contextValue = useMemo(() => ({ reportReady }), [reportReady]);

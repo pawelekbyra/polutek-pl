@@ -8,6 +8,7 @@ import { APP_NAME } from '@/lib/constants';
 import { ServiceWorkerCleanup } from "@/app/components/ServiceWorkerCleanup";
 import { UrlMask } from "@/app/components/UrlMask";
 import { AppVersionCheck } from "@/app/components/AppVersionCheck";
+import { OrientationLock } from "@/app/components/OrientationLock";
 import { resolveInitialLanguage } from "@/lib/i18n/server-language";
 import { AuthModalProvider } from "@/app/components/auth/AuthModalProvider";
 import { Analytics } from '@vercel/analytics/next';
@@ -57,6 +58,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="apple-touch-icon" href="/icon" />
       </head>
       <body className="font-sans bg-background text-foreground min-h-[100dvh] relative" suppressHydrationWarning>
+        <OrientationLock />
         <ServiceWorkerCleanup />
         <UrlMask />
         <AppVersionCheck />

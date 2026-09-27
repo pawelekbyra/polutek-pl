@@ -273,45 +273,6 @@
   }
 }
 
-/* Phone landscape has very little vertical space. A full-bleed 16:9 box sized
-   purely from viewport width (see Hero.tsx's -mx-4/-mx-6 bleed) can end up taller
-   than the whole viewport, pushing the title/actions/comments below it off-screen
-   or forcing a scroll before any chrome is visible. Below 1024px, in landscape
-   with a short viewport, size the player from height instead and letterbox it
-   (centered, no longer edge-to-edge) so the rest of the layout stays reachable.
-   Deliberately plain `vh` here, not `dvh`/`calc()`: a unit the browser doesn't
-   recognize invalidates the whole declaration (falling back silently to the
-   width-driven sizing this query exists to prevent), so keep this value boring. */
-@media (max-width: 1023px) and (orientation: landscape) and (max-height: 560px) {
-  :global(main):has(.metaRow) :global(section:has(.polutek-vidstack-player) > div > div:first-child) {
-    width: auto !important;
-    max-width: 100% !important;
-    aspect-ratio: 16 / 9 !important;
-    height: 88vh !important;
-    margin: 0 auto !important;
-  }
-
-  /* The info row below the player has room to sit side-by-side at these widths
-     instead of staying stacked the way it does in narrow portrait. */
-  .metaRow {
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 16px !important;
-  }
-
-  .creatorStrip {
-    border-bottom: 0 !important;
-    padding-bottom: 0 !important;
-    min-width: 0 !important;
-  }
-
-  .actionRail {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    justify-content: flex-end !important;
-    width: auto !important;
-  }
-}
 
 @media (max-width: 639px) {
   .metaRow {

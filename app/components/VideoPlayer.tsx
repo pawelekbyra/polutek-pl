@@ -153,6 +153,16 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
         (hasRenderedFrame && (!autoPlayWanted || bufferedEnoughForReveal)) ||
         (canPlay && (!autoPlayWanted || autoPlayFailed));
     usePageRevealReady(revealKey, playbackSettled || !!loadError || bufferingOverlayTimedOut || showsErrorState);
+
+    // When the rabbit gate is clicked, restart the video from the beginning so
+    // the viewer always sees it from 0, not from wherever it buffered to.
+    useEffect(() => {
+        const handleGateEnter = () => {
+            if (player.current) player.current.currentTime = 0;
+        };
+        window.addEventListener("polutek:gate-enter", handleGateEnter);
+        return () => window.removeEventListener("polutek:gate-enter", handleGateEnter);
+    }, []);
     // Poster: hides as soon as the first frame renders — independent of buffering so
     // the cover photo doesn't linger for the full buffer-wait period after the reveal.
     const posterHidden =
