@@ -85,6 +85,17 @@ export function TipRecipientStep({
         subtitle={isPl ? "Komu chciałbyś przekazać napiwek?" : "Who would you like to tip?"}
       />
 
+      <div className="mb-4 flex items-start gap-2.5 rounded-[12px] border border-[var(--cm-amber-28)] bg-[var(--chan-amber-soft)] px-3.5 py-3">
+        <span aria-hidden="true" className="mt-[1px] shrink-0 text-[15px]">💛</span>
+        <p className="text-[12px] leading-[1.5] text-[var(--chan-body)]">
+          {isPl ? (
+            <>Napiwek jest dobrowolny i niczego nie odblokowuje.<br />Po prostu dziękuję.</>
+          ) : (
+            <>A tip is voluntary and unlocks nothing.<br />Simply: thank you.</>
+          )}
+        </p>
+      </div>
+
       <div className="flex flex-col gap-3">
         {/* Primary option — Paweł Perfect: visually selected, clicking Dalej proceeds */}
         <div className="rounded-[16px] border-2 border-[var(--chan-ink)] bg-[var(--chan-amber-soft)] px-4 py-4 shadow-[0_6px_18px_-10px_var(--cm-amber-62)]">

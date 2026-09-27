@@ -61,7 +61,7 @@ export function TipAmountStep({
       </div>
 
       <TipSelect
-        label={isPl ? "Waluta" : "Currency"}
+        label={isPl ? "Wybierz walutę napiwku" : "Choose tip currency"}
         value={currency}
         onChange={(code) => onCurrencyChange(code as SupportedCurrency)}
         options={TIP_CURRENCIES.map((code) => ({
@@ -72,7 +72,7 @@ export function TipAmountStep({
       />
 
       <label className="mt-4 block">
-        <span className="mb-1.5 block text-[12px] font-bold text-[var(--chan-body)]">{isPl ? "Kwota" : "Amount"}</span>
+        <span className="mb-1.5 block text-[12px] font-bold text-[var(--chan-body)]">{isPl ? "Wybierz kwotę napiwku" : "Choose tip amount"}</span>
         <div className="flex h-14 items-center rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-white px-4 transition-[border-color,box-shadow] focus-within:border-[var(--chan-ink)] focus-within:shadow-[0_0_0_4px_var(--cm-amber-18)]">
           <input
             type="number"
@@ -98,16 +98,6 @@ export function TipAmountStep({
           : `The smallest tip is ${formatTipAmount(minAmount, currency, language)}.`}
       </p>
 
-      <div className="mt-4 flex items-start gap-2.5 rounded-[12px] border border-[var(--cm-amber-28)] bg-[var(--chan-amber-soft)] px-3.5 py-3">
-        <span aria-hidden="true" className="mt-[1px] shrink-0 text-[15px]">💛</span>
-        <p className="text-[12px] leading-[1.5] text-[var(--chan-body)]">
-          {isPl ? (
-            <>Napiwek jest dobrowolny i niczego nie odblokowuje.<br />Po prostu dziękuję.</>
-          ) : (
-            <>A tip is voluntary and unlocks nothing.<br />Simply: thank you.</>
-          )}
-        </p>
-      </div>
     </TipStepLayout>
   );
 }
