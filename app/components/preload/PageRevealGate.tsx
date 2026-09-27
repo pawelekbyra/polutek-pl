@@ -38,15 +38,23 @@ const LEAVE_ANIMATION_MS = 700;
 
 let revealedInThisDocument = false;
 
-const SESSION_KEY = "polutek:revealed";
+// How long after clicking the rabbit we suppress the gate on the next page load.
+// This covers Clerk auth redirects (typically < 10s) without permanently hiding
+// the gate on every refresh — after AUTH_REDIRECT_WINDOW_MS the gate shows again.
+const AUTH_REDIRECT_WINDOW_MS = 45_000;
+const SESSION_KEY = "polutek:revealed:ts";
 
 function hasRevealedThisSession(): boolean {
-  try { return sessionStorage.getItem(SESSION_KEY) === "1"; } catch { return false; }
+  try {
+    const ts = sessionStorage.getItem(SESSION_KEY);
+    if (!ts) return false;
+    return Date.now() - parseInt(ts, 10) < AUTH_REDIRECT_WINDOW_MS;
+  } catch { return false; }
 }
 
 function markRevealedThisSession() {
   revealedInThisDocument = true;
-  try { sessionStorage.setItem(SESSION_KEY, "1"); } catch {}
+  try { sessionStorage.setItem(SESSION_KEY, String(Date.now())); } catch {}
 }
 
 export function hasRevealedPageInThisDocument(): boolean {
