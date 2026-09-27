@@ -152,21 +152,9 @@ export function PageRevealGate({ children, waitFor = [], posterUrl }: PageReveal
 
   const handleGateClick = useCallback(() => {
     if (phase !== "gate") return;
-    // User gesture — best moment to request fullscreen + orientation lock.
-    // requestFullscreen is required on Android Chrome before screen.orientation.lock()
-    // works in a regular browser tab (PWA standalone mode skips this need).
-    // On iOS and unsupported browsers every step fails silently.
-    const tryLockOrientation = async () => {
-      try {
-        if (document.documentElement.requestFullscreen) {
-          await document.documentElement.requestFullscreen();
-        }
-      } catch { /* fullscreen unsupported or denied */ }
-      try {
-        await screen.orientation?.lock?.("portrait");
-      } catch { /* lock unsupported */ }
-    };
-    void tryLockOrientation();
+    // Best-effort orientation lock on user gesture (works in PWA standalone;
+    // silently fails in regular browser tabs where fullscreen is not active).
+    try { screen.orientation?.lock?.("portrait").catch(() => {}); } catch { /* unsupported */ }
     window.dispatchEvent(new Event("polutek:gate-enter"));
     setPhase("leaving");
   }, [phase]);
