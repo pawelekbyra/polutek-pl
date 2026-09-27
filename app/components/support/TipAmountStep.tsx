@@ -41,6 +41,7 @@ export function TipAmountStep({
 
   return (
     <TipStepLayout
+      bodyClassName="flex flex-col pb-0"
       footer={
         <TipPrimaryButton onClick={handleNext} busy={busy}>
           {busy
@@ -95,6 +96,10 @@ export function TipAmountStep({
         </p>
       )}
 
+      <div className="flex-1 overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/tip-character-3.png" alt="" aria-hidden="true" className="h-full w-full object-contain object-bottom" />
+      </div>
     </TipStepLayout>
   );
 }
