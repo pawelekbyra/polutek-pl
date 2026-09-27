@@ -72,7 +72,7 @@ export function TipAmountStep({
       />
 
       <label className="mt-4 block">
-        <span className="mb-1.5 block text-[12px] font-bold text-[var(--chan-body)]">{isPl ? "Wybierz kwotę napiwku" : "Choose tip amount"}</span>
+        <span className="mb-2 block text-[13px] leading-[1.55] text-[var(--chan-body)]">{isPl ? "Wybierz kwotę napiwku" : "Choose tip amount"}</span>
         <div className="flex h-14 items-center rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-white px-4 transition-[border-color,box-shadow] focus-within:border-[var(--chan-ink)] focus-within:shadow-[0_0_0_4px_var(--cm-amber-18)]">
           <input
             type="number"
@@ -88,15 +88,17 @@ export function TipAmountStep({
           <span className="ml-2 text-[15px] font-bold text-[var(--chan-muted)]">{currency}</span>
         </div>
       </label>
-      <p role={showAmountError ? "alert" : undefined} className={showAmountError ? "mt-1.5 text-[12px] font-semibold text-destructive" : "mt-1.5 text-[12px] text-[var(--chan-muted)]"}>
-        {attempted && amountMissing
-          ? isPl
-            ? `Wpisz kwotę napiwku (co najmniej ${formatTipAmount(minAmount, currency, language)}).`
-            : `Enter a tip amount (at least ${formatTipAmount(minAmount, currency, language)}).`
-          : isPl
-          ? `Najmniejszy napiwek to ${formatTipAmount(minAmount, currency, language)}.`
-          : `The smallest tip is ${formatTipAmount(minAmount, currency, language)}.`}
-      </p>
+      {showAmountError && (
+        <p role="alert" className="mt-1.5 text-[12px] font-semibold text-destructive">
+          {attempted && amountMissing
+            ? isPl
+              ? `Wpisz kwotę napiwku (co najmniej ${formatTipAmount(minAmount, currency, language)}).`
+              : `Enter a tip amount (at least ${formatTipAmount(minAmount, currency, language)}).`
+            : isPl
+            ? `Kwota jest za niska. Minimum: ${formatTipAmount(minAmount, currency, language)}.`
+            : `Amount too low. Minimum: ${formatTipAmount(minAmount, currency, language)}.`}
+        </p>
+      )}
 
     </TipStepLayout>
   );

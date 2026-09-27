@@ -132,7 +132,7 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
 
   return (
     <div ref={rootRef} className="block">
-      <span id={labelId} className="mb-1.5 block text-[12px] font-bold text-[var(--chan-body)]">
+      <span id={labelId} className="mb-2 block text-[13px] leading-[1.55] text-[var(--chan-body)]">
         {label}
       </span>
       <div
