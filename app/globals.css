@@ -729,38 +729,33 @@
   }
 
   /* Slide-from-top open / slide-back-up close animation for the tip gate dialog.
-     Uses the CSS `translate` property (separate from Tailwind's `transform`) so it never
-     conflicts with the centering `translateX(-50%) translateY(-50%)` applied on desktop. */
-  .tip-gate-slide {
-    translate: 0 -100%;
-    opacity: 0;
-    transition:
-      translate 380ms cubic-bezier(0.16, 1, 0.3, 1),
-      opacity 220ms ease;
+     @keyframes (not transition): plays even when data-open is set from the very first render
+     (component mounts with open=true; transition would be a no-op because there is no prior
+     state to transition from). The CSS `translate` property (individual transform, separate
+     from Tailwind's `transform`) stacks with the desktop centering translateX(-50%)
+     translateY(-50%) without conflict. */
+  @keyframes tip-gate-open {
+    from { translate: 0 -100%; opacity: 0; }
+    to   { translate: 0 0;     opacity: 1; }
+  }
+  @keyframes tip-gate-close {
+    from { translate: 0 0;     opacity: 1; }
+    to   { translate: 0 -100%; opacity: 0; }
   }
   .tip-gate-slide[data-open] {
-    translate: 0 0;
-    opacity: 1;
+    animation: tip-gate-open 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
   .tip-gate-slide[data-closed] {
-    translate: 0 -100%;
-    opacity: 0;
-    transition:
-      translate 250ms ease-in,
-      opacity 200ms ease;
+    animation: tip-gate-close 250ms ease-in both;
+    pointer-events: none;
+  }
+  /* Stop the closing backdrop from blocking clicks while it fades out. */
+  [data-slot="dialog-overlay"][data-closed] {
+    pointer-events: none;
   }
   @media (prefers-reduced-motion: reduce) {
-    .tip-gate-slide {
-      translate: 0 0;
-      opacity: 0;
-      transition: opacity 150ms;
-    }
-    .tip-gate-slide[data-open] {
-      opacity: 1;
-    }
-    .tip-gate-slide[data-closed] {
-      opacity: 0;
-    }
+    .tip-gate-slide[data-open]  { animation: none; translate: 0 0;     opacity: 1; }
+    .tip-gate-slide[data-closed]{ animation: none; translate: 0 -100%; opacity: 0; }
   }
 }
 

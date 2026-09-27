@@ -63,6 +63,11 @@ export default function SupportModal({ onClose }: SupportModalProps) {
       : "This payment attempt is finished. Start a new support attempt.",
   });
 
+  // Controls the Base UI dialog open state. Starts true (component only mounts when open).
+  // On close we set false first so Base UI can apply data-closed and play the slide-up
+  // animation before the parent unmounts the component.
+  const [localOpen, setLocalOpen] = useState(true);
+
   const [currency, setCurrency] = useState<SupportedCurrency>(() => detectDefaultCurrency(isPl ? "pl" : "en"));
   const [amount, setAmount] = useState<number | "">("");
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -121,17 +126,18 @@ export default function SupportModal({ onClose }: SupportModalProps) {
     else if (step === "method") backToAmount();
   };
 
-  const handleClose = () => {
-    // After a payment attempt this reloads on success (fresh supporter state) or strips
-    // Stripe's return params; before one it's a no-op.
+  const handleClose = useCallback(() => {
     if (flow.isSuccess) flow.closeSuccessAndSync();
-    onClose();
-  };
+    // Trigger the slide-up exit animation by closing the dialog first, then unmount
+    // the component after the animation (250ms) has finished.
+    setLocalOpen(false);
+    setTimeout(onClose, 270);
+  }, [flow, onClose]);
 
-  const handleTryAgain = () => {
+  const handleTryAgain = useCallback(() => {
     flow.closeSuccessAndSync();
     backToAmount();
-  };
+  }, [flow]);
 
   const handleConfirmed = (outcome: "succeeded" | "processing") => {
     if (flow.paymentId) flow.trackConfirmedPayment(flow.paymentId, outcome);
@@ -225,7 +231,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
   return (
     // `disablePointerDismissal`: Stripe's 3DS/wallet/BLIK overlays are appended to <body> and
     // must never count as outside presses that close the gate mid-payment.
-    <Dialog open onOpenChange={(open) => { if (!open) handleClose(); }} disablePointerDismissal>
+    <Dialog open={localOpen} onOpenChange={(open) => { if (!open) handleClose(); }} disablePointerDismissal>
       <DialogPortal>
         <DialogOverlay className="z-[9990] bg-black/40 supports-backdrop-filter:backdrop-blur-sm" />
         <DialogPopup
