@@ -54,7 +54,7 @@ export function TipMethodStep({
       {selected && (() => {
         const { icon: MethodIcon, title: methodTitle } = describeTipMethod(selected, isPl);
         return (
-          <div className="mt-5 flex items-end justify-between gap-3 rounded-[14px] border border-[var(--cm-amber-28)] bg-[var(--chan-amber-soft)] px-4 py-3">
+          <div className="mt-5 flex items-start justify-between gap-3 rounded-[14px] border border-[var(--cm-amber-28)] bg-[var(--chan-amber-soft)] px-4 py-3">
             <div className="flex flex-col gap-0.5">
               <p className="m-0 text-[14px] font-bold tabular-nums text-[var(--chan-ink)]">
                 {isPl ? "Napiwek" : "Tip"} {formatTipAmount(amount, currency, language)}
