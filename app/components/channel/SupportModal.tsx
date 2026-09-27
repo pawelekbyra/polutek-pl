@@ -128,10 +128,8 @@ export default function SupportModal({ onClose }: SupportModalProps) {
 
   const handleClose = useCallback(() => {
     if (flow.isSuccess) flow.closeSuccessAndSync();
-    // Trigger the slide-up exit animation by closing the dialog first, then unmount
-    // the component after the animation (250ms) has finished.
     setLocalOpen(false);
-    setTimeout(onClose, 270);
+    onClose();
   }, [flow, onClose]);
 
   const handleTryAgain = useCallback(() => {
@@ -236,7 +234,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
         <DialogOverlay className="tip-gate-overlay z-[9990] bg-black/40 supports-backdrop-filter:backdrop-blur-sm" />
         <DialogPopup
           data-testid="support-modal"
-          className="tip-gate-slide fixed inset-0 z-[9991] flex h-[100dvh] w-screen tip-gate-surface flex-col overflow-hidden outline-none md:inset-auto md:left-1/2 md:top-1/2 md:h-[min(640px,90dvh)] md:w-[440px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[24px] md:border md:border-[var(--chan-line)] md:shadow-[0_30px_80px_-30px_rgba(17,24,39,0.14)]"
+          className="fixed inset-0 z-[9991] flex h-[100dvh] w-screen tip-gate-surface flex-col overflow-hidden outline-none md:inset-auto md:left-1/2 md:top-1/2 md:h-[min(640px,90dvh)] md:w-[440px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[24px] md:border md:border-[var(--chan-line)] md:shadow-[0_30px_80px_-30px_rgba(17,24,39,0.14)]"
         >
           <DialogTitle className="sr-only">{isPl ? "Bramka napiwkowa" : "Tip gate"}</DialogTitle>
 
@@ -269,7 +267,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
 
           <div
             key={showThanks ? "thanks" : step}
-            className="flex min-h-0 flex-1 flex-col animate-in fade-in slide-in-from-right-4 duration-200 motion-reduce:animate-none"
+            className="flex min-h-0 flex-1 flex-col"
           >
             <TipBackContext.Provider value={canGoBack ? { onBack: goBack, label: isPl ? "Wstecz" : "Back" } : null}>
               {body}

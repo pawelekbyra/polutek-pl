@@ -130,7 +130,7 @@ export default function ShareButton({
         align="end"
         side="top"
         sideOffset={8}
-        className="z-[1100] w-[248px] rounded-2xl border border-[var(--cm-line-80)] bg-[var(--cm-card-94-white)] p-1.5 text-[var(--chan-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_18px_44px_-16px_rgba(23,23,23,0.26)] ring-0 backdrop-blur-xl"
+        className="tip-select-scroll z-[1100] w-[248px] overflow-y-auto rounded-2xl border border-[var(--cm-line-80)] bg-[var(--cm-card-94-white)] p-1.5 text-[var(--chan-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_18px_44px_-16px_rgba(23,23,23,0.26)] ring-0 backdrop-blur-xl"
       >
         <DropdownMenuItem
           closeOnClick={false}

@@ -9,7 +9,7 @@ export interface TipSelectOption {
   value: string;
   title: string;
   hint?: string;
-  icon?: ComponentType<{ className?: string }>;
+  icon?: ComponentType<{ className?: string }> | string;
 }
 
 interface TipSelectProps {
@@ -73,7 +73,9 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
   const listId = useId();
   const labelId = useId();
   const selected = options.find((option) => option.value === value) ?? null;
-  const SelectedIcon = selected?.icon;
+  const selectedIcon = selected?.icon;
+  const SelectedIcon = typeof selectedIcon === "function" ? selectedIcon : null;
+  const selectedIconStr = typeof selectedIcon === "string" ? selectedIcon : null;
 
   useEffect(() => {
     if (!open) return;
@@ -153,11 +155,13 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
           onKeyDown={onKeyDown}
           className="flex min-h-[52px] w-full items-center gap-3 px-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--chan-ink)]"
         >
-          {SelectedIcon && (
+          {SelectedIcon ? (
             <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center">
               <SelectedIcon className="h-6 w-6" />
             </span>
-          )}
+          ) : selectedIconStr ? (
+            <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center text-[15px] font-bold text-[var(--chan-ink)]">{selectedIconStr}</span>
+          ) : null}
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[15px] font-extrabold text-[var(--chan-ink)]">{selected?.title ?? "—"}</span>
             {selected?.hint && <span className="block truncate text-[12px] text-[var(--chan-body)]">{selected.hint}</span>}
@@ -182,7 +186,9 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
           >
             {options.map((option, index) => {
               const isSelected = option.value === value;
-              const ItemIcon = option.icon;
+              const itemIconRaw = option.icon;
+              const ItemIcon = typeof itemIconRaw === "function" ? itemIconRaw : null;
+              const itemIconStr = typeof itemIconRaw === "string" ? itemIconRaw : null;
               return (
                 <li
                   key={option.value}
@@ -195,11 +201,13 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
                     index === active && "bg-[var(--chan-amber-soft)]",
                   )}
                 >
-                  {ItemIcon && (
+                  {ItemIcon ? (
                     <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--chan-amber-soft)]">
                       <ItemIcon className="h-5 w-5" />
                     </span>
-                  )}
+                  ) : itemIconStr ? (
+                    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--chan-amber-soft)] text-[14px] font-bold text-[var(--chan-ink)]">{itemIconStr}</span>
+                  ) : null}
                   <span className="min-w-0 flex-1">
                     <span className="block text-[14px] font-bold text-[var(--chan-ink)]">{option.title}</span>
                     {option.hint && <span className="block text-[12px] text-[var(--chan-muted)]">{option.hint}</span>}
