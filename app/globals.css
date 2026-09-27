@@ -751,8 +751,11 @@
     animation: tip-gate-close 250ms ease-in both;
     pointer-events: none;
   }
-  /* Stop the closing backdrop from blocking clicks while it fades out. */
-  [data-slot="dialog-overlay"][data-closed] {
+  /* Sync the overlay's fade-out with the popup's slide-up (both 250ms).
+     The default duration-100 class on DialogOverlay makes the backdrop
+     disappear 150ms before the popup finishes — causing a flash. */
+  .tip-gate-overlay[data-closed] {
+    animation-duration: 250ms;
     pointer-events: none;
   }
   @media (prefers-reduced-motion: reduce) {

@@ -233,7 +233,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
     // must never count as outside presses that close the gate mid-payment.
     <Dialog open={localOpen} onOpenChange={(open) => { if (!open) handleClose(); }} disablePointerDismissal>
       <DialogPortal>
-        <DialogOverlay className="z-[9990] bg-black/40 supports-backdrop-filter:backdrop-blur-sm" />
+        <DialogOverlay className="tip-gate-overlay z-[9990] bg-black/40 supports-backdrop-filter:backdrop-blur-sm" />
         <DialogPopup
           data-testid="support-modal"
           className="tip-gate-slide fixed inset-0 z-[9991] flex h-[100dvh] w-screen tip-gate-surface flex-col overflow-hidden outline-none md:inset-auto md:left-1/2 md:top-1/2 md:h-[min(640px,90dvh)] md:w-[440px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[24px] md:border md:border-[var(--chan-line)] md:shadow-[0_30px_80px_-30px_rgba(17,24,39,0.14)]"
