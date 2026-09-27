@@ -17,10 +17,6 @@ interface SitePreloaderScreenProps {
  * `PageRevealGate` (while the page's client-side pieces settle), so the two
  * phases look like one continuous screen instead of a skeleton that swaps into a
  * different skeleton. No hooks — safe in server components.
- *
- * The logo is pinned to the same pixel position it occupies in the sticky navbar
- * (px-2/md:px-6/lg:px-8 left, py-2 + centering top) so it doesn't move when the
- * preloader fades out and the real navbar appears underneath.
  */
 export function SitePreloaderScreen({
   leaving = false,
@@ -37,7 +33,7 @@ export function SitePreloaderScreen({
       data-state={leaving ? "leaving" : "covering"}
       className={cn(styles.screen, failsafe && styles.failsafe, leaving && styles.leaving)}
     >
-      <MatrixRain leaving={leaving} />
+      <MatrixRain />
     </div>
   );
 }

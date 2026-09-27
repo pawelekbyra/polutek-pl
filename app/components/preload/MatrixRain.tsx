@@ -12,11 +12,6 @@ const BASE_SPEED = 0.45;
 const TRAIL = 26;
 const DIM = 0.08;
 const BRIGHT = 0.65;
-// Drain: reveal line sweeps downward at this speed (px/s).
-// ~450 px/s means a ~2s wipe on a 900px-tall screen — a gentle, natural pace.
-const REVEAL_PX_PER_S = 450;
-// Soft gradient zone at the leading edge of the sweep (px).
-const GRAD_H = 160;
 
 // Module-level snapshot — survives the loading.tsx → PageRevealGate remount
 // so the second instance continues exactly where the first left off.
@@ -28,18 +23,8 @@ let snap: {
   grid: Uint8Array[];
 } | null = null;
 
-interface MatrixRainProps {
-  /** When true the rain drains off the bottom, revealing the page from the top. */
-  leaving?: boolean;
-}
-
-export function MatrixRain({ leaving = false }: MatrixRainProps) {
+export function MatrixRain() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const leavingRef = useRef(leaving);
-
-  useEffect(() => {
-    leavingRef.current = leaving;
-  }, [leaving]);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -55,16 +40,14 @@ export function MatrixRain({ leaving = false }: MatrixRainProps) {
     let speeds: Float64Array = new Float64Array(0);
     let grid: Uint8Array[] = [];
     let raf: number;
-    // Timestamp when leaving first became true (initialised inside tick).
-    let leaveStartMs = -1;
 
-    const setup = (isResize = false) => {
+    const setup = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       const newCols = Math.floor(canvas.width / COL_W);
       const newRows = Math.ceil(canvas.height / FONT_SIZE) + 2;
 
-      if (!isResize && snap && snap.cols === newCols && snap.rows === newRows) {
+      if (snap && snap.cols === newCols && snap.rows === newRows) {
         cols = newCols;
         rows = newRows;
         heads = snap.heads.slice();
@@ -87,20 +70,60 @@ export function MatrixRain({ leaving = false }: MatrixRainProps) {
       }
     };
 
-    setup(false);
+    // Resize: keep existing column positions — only adjust for new dimensions.
+    // A full re-randomize would flash all heads to new random positions.
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const newCols = Math.floor(canvas.width / COL_W);
+      const newRows = Math.ceil(canvas.height / FONT_SIZE) + 2;
 
-    const handleResize = () => setup(true);
+      if (newCols === cols && newRows === rows) return;
+
+      if (newCols !== cols) {
+        const newHeads = new Float64Array(newCols);
+        const newSpeeds = new Float64Array(newCols);
+        const copyLen = Math.min(cols, newCols);
+        newHeads.set(heads.subarray(0, copyLen));
+        newSpeeds.set(speeds.subarray(0, copyLen));
+        for (let c = copyLen; c < newCols; c++) {
+          // Start new columns off-screen so they enter naturally from the top.
+          newHeads[c] = newRows + Math.random() * TRAIL;
+          newSpeeds[c] = BASE_SPEED * (0.75 + Math.random() * 0.5);
+        }
+        heads = newHeads;
+        speeds = newSpeeds;
+        while (grid.length < newCols) {
+          const arr = new Uint8Array(newRows);
+          for (let r = 0; r < newRows; r++) arr[r] = Math.floor(Math.random() * CHARS.length);
+          grid.push(arr);
+        }
+        grid.length = newCols;
+      }
+
+      if (newRows > rows) {
+        for (let c = 0; c < cols; c++) {
+          const newArr = new Uint8Array(newRows);
+          newArr.set(grid[c]);
+          for (let r = grid[c].length; r < newRows; r++) {
+            newArr[r] = Math.floor(Math.random() * CHARS.length);
+          }
+          grid[c] = newArr;
+        }
+      }
+
+      cols = newCols;
+      rows = newRows;
+    };
+
     window.addEventListener("resize", handleResize);
 
-    const tick = () => {
-      raf = requestAnimationFrame(tick);
+    const drawFrame = () => {
       const w = canvas.width;
       const h = canvas.height;
 
-      // ── Normal rain ──────────────────────────────────────────────────────────
       ctx.fillStyle = "#f7f9fc";
       ctx.fillRect(0, 0, w, h);
-
       ctx.font = `${FONT_SIZE}px monospace`;
       ctx.fillStyle = "#111827";
 
@@ -124,46 +147,17 @@ export function MatrixRain({ leaving = false }: MatrixRainProps) {
         }
       }
       ctx.globalAlpha = 1;
-
-      // ── Drain wipe (applied on top of normal rain) ───────────────────────────
-      // When leaving, erase the canvas from the top downward using destination-out
-      // compositing. The rain beneath is drawn normally; the wipe erases it above
-      // the sweep line. A gradient zone at the leading edge softens the boundary.
-      if (leavingRef.current) {
-        if (leaveStartMs < 0) leaveStartMs = performance.now();
-        const elapsed = (performance.now() - leaveStartMs) / 1000;
-        // clearLine: how many px from the top have been revealed so far.
-        const clearLine = elapsed * REVEAL_PX_PER_S;
-
-        if (clearLine >= h + GRAD_H) {
-          // Entire canvas is now transparent — done.
-          ctx.clearRect(0, 0, w, h);
-          cancelAnimationFrame(raf);
-          return;
-        }
-
-        ctx.globalCompositeOperation = "destination-out";
-
-        // Solid erase above the gradient zone.
-        const gradTop = Math.max(0, clearLine - GRAD_H);
-        if (gradTop > 0) {
-          ctx.fillStyle = "rgba(0,0,0,1)";
-          ctx.fillRect(0, 0, w, gradTop);
-        }
-
-        // Gradient erase: from fully transparent (top) to not-erased (bottom).
-        if (clearLine > gradTop) {
-          const grad = ctx.createLinearGradient(0, gradTop, 0, clearLine);
-          grad.addColorStop(0, "rgba(0,0,0,1)");
-          grad.addColorStop(1, "rgba(0,0,0,0)");
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, gradTop, w, clearLine - gradTop);
-        }
-
-        ctx.globalCompositeOperation = "source-over";
-      }
     };
 
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      drawFrame();
+    };
+
+    setup();
+    // Draw one frame immediately so the canvas is never blank between mount and
+    // the first RAF callback — prevents a single white/transparent flash.
+    drawFrame();
     raf = requestAnimationFrame(tick);
 
     return () => {

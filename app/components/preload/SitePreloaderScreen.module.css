@@ -5,7 +5,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* No background — the canvas fills it entirely. */
+  /* Solid background matches the canvas fill — prevents a flash if the canvas
+     is momentarily blank during mount or the loading.tsx → PageRevealGate swap. */
+  background: #f7f9fc;
+  transition: opacity 700ms ease-in-out;
 }
 
 /* Last-resort safety net: if JS never hydrates (or the reveal gate somehow never
@@ -15,21 +18,9 @@
 }
 
 .leaving {
-  /* Canvas handles the visual drain — no CSS opacity/fade.
-     Pointer-events off so clicks reach the page immediately. */
+  opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-}
-
-/* Logo sits at the exact position the BrandName img occupies in the sticky navbar:
-   py-2 (8px) outer padding + (38px slot - 28px img) / 2 = 13px from top on mobile.
-   px-2 (8px) outer padding matches the navbar's left gutter. */
-.logo {
-  position: absolute;
-  top: 13px;
-  left: 8px;
-  display: block;
-  height: 28px;
-  width: auto;
 }
 
 @keyframes preloader-failsafe {
@@ -40,22 +31,8 @@
   }
 }
 
-@media (min-width: 768px) {
-  /* Navbar switches to px-6 (24px) and logo becomes h-[34px] → (38-34)/2 = 2px offset → top: 10px */
-  .logo {
-    top: 10px;
-    left: 24px;
-    height: 34px;
-  }
-}
-
-@media (min-width: 1024px) {
-  /* Navbar switches to px-8 (32px) */
-  .logo {
-    left: 32px;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  /* Nothing to suppress — no CSS transitions remain. */
+  .screen {
+    transition: none;
+  }
 }

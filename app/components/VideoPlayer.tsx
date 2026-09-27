@@ -146,10 +146,18 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
     // When autoplay is running we also require a few seconds of video buffered so the
     // page is revealed onto a player that won't stall immediately (falls back via
     // bufferingOverlayTimedOut / PAGE_REVEAL_MAX_WAIT_MS if buffering is slow).
+    // Gate: preloader stays up until the stream has a few seconds buffered (or falls
+    // back). Requires bufferedEnoughForReveal when autoplaying so the page is revealed
+    // onto a player that won't stall immediately.
     const playbackSettled =
         (hasRenderedFrame && (!autoPlayWanted || bufferedEnoughForReveal)) ||
         (canPlay && (!autoPlayWanted || autoPlayFailed));
     usePageRevealReady(revealKey, playbackSettled || !!loadError || bufferingOverlayTimedOut || showsErrorState);
+    // Poster: hides as soon as the first frame renders — independent of buffering so
+    // the cover photo doesn't linger for the full buffer-wait period after the reveal.
+    const posterHidden =
+        hasRenderedFrame ||
+        (canPlay && (!autoPlayWanted || autoPlayFailed));
 
     // PremiumWrapper owns the loading placeholder before this mounts. For the one
     // pre-mount frame here, keep showing the same poster rather than an empty (black)
@@ -329,7 +337,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
                         <div className="absolute inset-0 z-30 pointer-events-none">
                             <PlayerPosterLoading
                                 posterUrl={video.thumbnailUrl || posterUrl}
-                                hidden={playbackSettled}
+                                hidden={posterHidden}
                                 ready={canPlay}
                             />
                         </div>
