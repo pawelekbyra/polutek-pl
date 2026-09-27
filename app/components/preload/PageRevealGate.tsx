@@ -40,9 +40,9 @@ const PageRevealContext = createContext<PageRevealContextValue | null>(null);
 export const PAGE_REVEAL_MAX_WAIT_MS = 6000;
 /** On a late mount (e.g. hydration was slow) still give the page this long to settle. */
 export const PAGE_REVEAL_MIN_WAIT_AFTER_MOUNT_MS = 700;
-// Canvas drain animation takes up to ~2s (3× speed, worst-case starting positions).
-// Keep the preloader mounted that long so React doesn't cut it off mid-drain.
-const LEAVE_ANIMATION_MS = 2200;
+// Canvas drain wipe: 450 px/s on a ~900px screen = ~2s + 160px gradient tail.
+// Keep the preloader mounted long enough for the sweep to finish on tall screens.
+const LEAVE_ANIMATION_MS = 2800;
 
 // Once the page has been revealed in this document, later mounts (client-side
 // navigation back to the home page) skip the preloader: the app is already warm.

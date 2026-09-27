@@ -12,10 +12,14 @@ const BASE_SPEED = 0.45;
 const TRAIL = 26;
 const DIM = 0.08;
 const BRIGHT = 0.65;
-// Columns fall 3× faster when draining so the wipe finishes in ~1.5s.
-const DRAIN_SPEED_MULT = 3;
+// Drain: reveal line sweeps downward at this speed (px/s).
+// ~450 px/s means a ~2s wipe on a 900px-tall screen — a gentle, natural pace.
+const REVEAL_PX_PER_S = 450;
+// Soft gradient zone at the leading edge of the sweep (px).
+const GRAD_H = 160;
 
-// Module-level snapshot — survives the loading.tsx → PageRevealGate remount.
+// Module-level snapshot — survives the loading.tsx → PageRevealGate remount
+// so the second instance continues exactly where the first left off.
 let snap: {
   cols: number;
   rows: number;
@@ -25,7 +29,7 @@ let snap: {
 } | null = null;
 
 interface MatrixRainProps {
-  /** When true, columns drain downward without restarting, revealing the page. */
+  /** When true the rain drains off the bottom, revealing the page from the top. */
   leaving?: boolean;
 }
 
@@ -33,7 +37,6 @@ export function MatrixRain({ leaving = false }: MatrixRainProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const leavingRef = useRef(leaving);
 
-  // Keep the ref in sync without restarting the animation loop.
   useEffect(() => {
     leavingRef.current = leaving;
   }, [leaving]);
@@ -52,6 +55,8 @@ export function MatrixRain({ leaving = false }: MatrixRainProps) {
     let speeds: Float64Array = new Float64Array(0);
     let grid: Uint8Array[] = [];
     let raf: number;
+    // Timestamp when leaving first became true (initialised inside tick).
+    let leaveStartMs = -1;
 
     const setup = (isResize = false) => {
       canvas.width = window.innerWidth;
@@ -59,7 +64,6 @@ export function MatrixRain({ leaving = false }: MatrixRainProps) {
       const newCols = Math.floor(canvas.width / COL_W);
       const newRows = Math.ceil(canvas.height / FONT_SIZE) + 2;
 
-      // On initial mount restore snapshot so the animation continues where loading.tsx left off.
       if (!isResize && snap && snap.cols === newCols && snap.rows === newRows) {
         cols = newCols;
         rows = newRows;
@@ -93,53 +97,7 @@ export function MatrixRain({ leaving = false }: MatrixRainProps) {
       const w = canvas.width;
       const h = canvas.height;
 
-      if (leavingRef.current) {
-        // ── Drain mode ─────────────────────────────────────────────────────────
-        // Columns advance faster with no modular wrap. The page is revealed
-        // above the highest (smallest y) trail top still on screen.
-        ctx.clearRect(0, 0, w, h); // full canvas transparent
-
-        let minTrailTopRow = Infinity;
-        let allDone = true;
-
-        for (let c = 0; c < cols; c++) {
-          heads[c] += speeds[c] * DRAIN_SPEED_MULT; // no modulo — drain off screen
-          const trailTop = heads[c] - TRAIL;
-          if (trailTop < minTrailTopRow) minTrailTopRow = trailTop;
-          if (trailTop < rows) allDone = false;
-        }
-
-        const revealPx = Math.max(0, Math.min(h, minTrailTopRow * FONT_SIZE));
-
-        if (revealPx < h) {
-          // White background for still-covered region (below reveal line).
-          ctx.fillStyle = "#f7f9fc";
-          ctx.fillRect(0, revealPx, w, h - revealPx);
-
-          // Draw symbols only in the covered region.
-          ctx.font = `${FONT_SIZE}px monospace`;
-          ctx.fillStyle = "#111827";
-          const startRow = Math.max(0, Math.floor(revealPx / FONT_SIZE) - 1);
-          for (let c = 0; c < cols; c++) {
-            const hd = heads[c];
-            for (let r = startRow; r < rows; r++) {
-              const y = r * FONT_SIZE;
-              if (y > h + FONT_SIZE) break;
-              const dist = hd - r;
-              const alpha =
-                dist >= 0 && dist <= TRAIL ? DIM + BRIGHT * (1 - dist / TRAIL) : DIM;
-              ctx.globalAlpha = alpha;
-              ctx.fillText(CHARS[grid[c][r]], c * COL_W, y);
-            }
-          }
-          ctx.globalAlpha = 1;
-        }
-
-        if (allDone) cancelAnimationFrame(raf);
-        return;
-      }
-
-      // ── Normal rain ─────────────────────────────────────────────────────────
+      // ── Normal rain ──────────────────────────────────────────────────────────
       ctx.fillStyle = "#f7f9fc";
       ctx.fillRect(0, 0, w, h);
 
@@ -165,8 +123,45 @@ export function MatrixRain({ leaving = false }: MatrixRainProps) {
           ctx.fillText(CHARS[grid[c][r]], c * COL_W, y);
         }
       }
-
       ctx.globalAlpha = 1;
+
+      // ── Drain wipe (applied on top of normal rain) ───────────────────────────
+      // When leaving, erase the canvas from the top downward using destination-out
+      // compositing. The rain beneath is drawn normally; the wipe erases it above
+      // the sweep line. A gradient zone at the leading edge softens the boundary.
+      if (leavingRef.current) {
+        if (leaveStartMs < 0) leaveStartMs = performance.now();
+        const elapsed = (performance.now() - leaveStartMs) / 1000;
+        // clearLine: how many px from the top have been revealed so far.
+        const clearLine = elapsed * REVEAL_PX_PER_S;
+
+        if (clearLine >= h + GRAD_H) {
+          // Entire canvas is now transparent — done.
+          ctx.clearRect(0, 0, w, h);
+          cancelAnimationFrame(raf);
+          return;
+        }
+
+        ctx.globalCompositeOperation = "destination-out";
+
+        // Solid erase above the gradient zone.
+        const gradTop = Math.max(0, clearLine - GRAD_H);
+        if (gradTop > 0) {
+          ctx.fillStyle = "rgba(0,0,0,1)";
+          ctx.fillRect(0, 0, w, gradTop);
+        }
+
+        // Gradient erase: from fully transparent (top) to not-erased (bottom).
+        if (clearLine > gradTop) {
+          const grad = ctx.createLinearGradient(0, gradTop, 0, clearLine);
+          grad.addColorStop(0, "rgba(0,0,0,1)");
+          grad.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, gradTop, w, clearLine - gradTop);
+        }
+
+        ctx.globalCompositeOperation = "source-over";
+      }
     };
 
     raf = requestAnimationFrame(tick);
