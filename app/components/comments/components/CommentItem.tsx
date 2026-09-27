@@ -162,9 +162,11 @@ function CommentItemComponent({
       )}
     >
       {!isReply && comment.isPinned && (
-        <span className="absolute right-1 top-[18px] z-[6] inline-flex items-center gap-1 rounded-full bg-[var(--chan-blue-soft)] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-[var(--chan-blue)]">
-          <Star size={14} className="fill-[var(--chan-blue)]" />
-          {language === "pl" ? "Przypięty" : "Pinned"}
+        <span
+          aria-label={language === "pl" ? "Przypięty" : "Pinned"}
+          className="absolute right-1 top-[18px] z-[6] inline-flex items-center justify-center rounded-full bg-[var(--chan-blue-soft)] p-1.5 text-[var(--chan-blue)]"
+        >
+          <Star size={12} className="fill-[var(--chan-blue)]" />
         </span>
       )}
       <div className={cn("relative z-[5] flex shrink-0 flex-col items-center gap-1", isReply ? "w-[38px]" : "w-[38px]")}>
@@ -183,7 +185,7 @@ function CommentItemComponent({
           </span>
         )}
       </div>
-      <div className={cn("relative z-[5] flex-1 space-y-[2px] min-w-0 pt-0", !isReply && comment.isPinned && "pr-[86px]")}>
+      <div className={cn("relative z-[5] flex-1 space-y-[2px] min-w-0 pt-0", !isReply && comment.isPinned && "pr-8")}>
         <div className={cn("relative flex items-start justify-between", userProfile && "pr-9")}>
           <div className="flex items-center gap-1.5 leading-none">
             <span
