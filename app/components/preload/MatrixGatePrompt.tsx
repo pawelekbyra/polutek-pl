@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import styles from "./MatrixGatePrompt.module.css";
 
 const TEXT = "Follow the white rabbit";
-const CHAR_DELAY_MS = 65;
+const CHAR_DELAY_MS = 95;
 
 export function MatrixGatePrompt({ onEnter }: { onEnter: () => void }) {
   const [charCount, setCharCount] = useState(0);
@@ -38,12 +38,15 @@ export function MatrixGatePrompt({ onEnter }: { onEnter: () => void }) {
           <span className={styles.cursor} style={{ opacity: cursorOn ? 1 : 0 }} />
         )}
       </p>
-      {doneTyping && (
-        <button className={styles.btn} onClick={onEnter} aria-label="Enter">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/rabbit.png" alt="" className={styles.rabbitImg} />
-        </button>
-      )}
+      {/* Always in DOM so the text position never shifts when the button appears */}
+      <button
+        className={styles.btn}
+        onClick={doneTyping ? onEnter : undefined}
+        aria-label="Enter"
+        style={{ opacity: doneTyping ? 1 : 0, pointerEvents: doneTyping ? "auto" : "none" }}
+      >
+        <img src="/rabbit.png" alt="" className={styles.rabbitImg} />
+      </button>
     </div>
   );
 }

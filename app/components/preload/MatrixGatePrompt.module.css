@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   z-index: 1;
-  gap: 36px;
+  gap: 32px;
   animation: appear 500ms ease both;
 }
 
@@ -34,26 +34,28 @@
   width: 96px;
   height: 96px;
   border-radius: 50%;
-  background: transparent;
+  background: none;
   border: none;
   padding: 0;
+  margin: 0;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 160ms ease, filter 160ms ease;
-  animation: btnIn 350ms ease 150ms both;
+  transition: opacity 300ms ease, transform 160ms ease;
+  outline: none;
 }
 
-.btn:hover,
-.btn:focus-visible {
-  transform: scale(1.1);
-  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.18));
-  outline: none;
+.btn:hover {
+  transform: scale(1.08);
 }
 
 .btn:active {
   transform: scale(0.94);
+}
+
+.btn:focus-visible {
+  outline: none;
 }
 
 .rabbitImg {
@@ -68,11 +70,7 @@
   to   { opacity: 1; transform: translateY(0);   }
 }
 
-@keyframes btnIn {
-  from { opacity: 0; transform: scale(0.7); }
-  to   { opacity: 1; transform: scale(1);   }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .overlay, .btn { animation: none; }
+  .overlay { animation: none; }
+  .btn { transition: none; }
 }
