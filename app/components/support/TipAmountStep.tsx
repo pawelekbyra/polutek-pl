@@ -2,11 +2,9 @@
 
 import React, { useState } from "react";
 import type { SupportedCurrency } from "@/lib/constants";
-import { Checkbox } from "@/components/ui/checkbox";
 import { TIP_CURRENCIES, TIP_CURRENCY_LABELS, formatTipAmount } from "./tip-flow-config";
 import { TipPrimaryButton, TipStepHeading, TipStepLayout } from "./TipStepLayout";
 import { TipSelect } from "./TipSelect";
-import { TipLegalDialog, type TipLegalDoc } from "./TipLegalDialog";
 
 interface TipAmountStepProps {
   language: string;
@@ -15,8 +13,6 @@ interface TipAmountStepProps {
   amount: number | "";
   onAmountChange: (amount: number | "") => void;
   minAmount: number;
-  termsAccepted: boolean;
-  onTermsChange: (accepted: boolean) => void;
   onNext: () => void;
   busy?: boolean;
 }
@@ -28,80 +24,41 @@ export function TipAmountStep({
   amount,
   onAmountChange,
   minAmount,
-  termsAccepted,
-  onTermsChange,
   onNext,
   busy,
 }: TipAmountStepProps) {
   const isPl = language === "pl";
-  // The button is always active; a click with a missing/too-low amount or unticked terms
-  // explains what's missing instead of continuing.
   const [attempted, setAttempted] = useState(false);
   const amountMissing = amount === "" || amount <= 0;
   const amountTooLow = !amountMissing && amount < minAmount;
   const showAmountError = amountTooLow || (attempted && amountMissing);
-  const showTermsError = attempted && !termsAccepted;
 
   const handleNext = () => {
     setAttempted(true);
-    if (amountMissing || amountTooLow || !termsAccepted || busy) return;
+    if (amountMissing || amountTooLow || busy) return;
     onNext();
   };
-
-  const [legalDoc, setLegalDoc] = useState<TipLegalDoc | null>(null);
-  const legalLink = (key: TipLegalDoc, label: string) => (
-    <button
-      type="button"
-      onClick={(event) => {
-        // Inside the checkbox <label>: open the document without toggling consent.
-        event.preventDefault();
-        setLegalDoc(key);
-      }}
-      className="font-semibold text-[var(--chan-ink)] underline underline-offset-2 hover:text-[var(--chan-ink)]"
-    >
-      {label}
-    </button>
-  );
 
   return (
     <TipStepLayout
       footer={
-        <>
-          <label className="mb-3 flex cursor-pointer items-start gap-2.5">
-            <Checkbox
-              id="tip-accept-terms"
-              checked={termsAccepted}
-              onCheckedChange={(checked) => onTermsChange(checked === true)}
-              className="mt-[2px] shrink-0 border-[var(--cm-amber-46)] bg-white data-checked:border-[var(--chan-ink)] data-checked:bg-[var(--chan-ink)] data-checked:text-white"
-            />
-            <span className="text-[13px] leading-[1.5] text-[var(--chan-body)]">
-              {isPl ? (
-                <>Akceptuję {legalLink("terms", "Regulamin")} i {legalLink("privacy", "Politykę Prywatności")}</>
-              ) : (
-                <>I accept the {legalLink("terms", "Terms")} and {legalLink("privacy", "Privacy Policy")}</>
-              )}
-            </span>
-          </label>
-          <TipPrimaryButton onClick={handleNext} busy={busy}>
-            {busy
-              ? isPl ? "Chwileczkę…" : "One moment…"
-              : amountMissing || amountTooLow
-                ? isPl ? "Dalej" : "Next"
-                : isPl
-                  ? `Dalej · ${formatTipAmount(amount, currency, language)}`
-                  : `Next · ${formatTipAmount(amount, currency, language)}`}
-          </TipPrimaryButton>
-        </>
+        <TipPrimaryButton onClick={handleNext} busy={busy}>
+          {busy
+            ? isPl ? "Chwileczkę…" : "One moment…"
+            : amountMissing || amountTooLow
+              ? isPl ? "Dalej" : "Next"
+              : isPl
+                ? `Dalej · ${formatTipAmount(amount, currency, language)}`
+                : `Next · ${formatTipAmount(amount, currency, language)}`}
+        </TipPrimaryButton>
       }
     >
-      <TipStepHeading
-        title={isPl ? "Kwota napiwku" : "Tip amount"}
-        subtitle={
-          isPl
-            ? "Napiwek jest dobrowolny i niczego nie odblokowuje. Po prostu dziękuję."
-            : "A tip is voluntary and unlocks nothing. Simply: thank you."
-        }
-      />
+      <TipStepHeading title={isPl ? "Kwota napiwku" : "Tip amount"} />
+
+      <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--cm-amber-28)] bg-[var(--chan-amber-soft)] px-3 py-1.5">
+        <span className="text-[12px] text-[var(--chan-body)]">{isPl ? "Dla:" : "For:"}</span>
+        <span className="text-[12px] font-extrabold text-[var(--chan-ink)]">Paweł Perfect</span>
+      </div>
 
       <TipSelect
         label={isPl ? "Waluta" : "Currency"}
@@ -140,13 +97,15 @@ export function TipAmountStep({
           ? `Najmniejszy napiwek to ${formatTipAmount(minAmount, currency, language)}.`
           : `The smallest tip is ${formatTipAmount(minAmount, currency, language)}.`}
       </p>
-      {showTermsError && (
-        <p role="alert" className="mt-1 text-[12px] font-semibold text-destructive">
-          {isPl ? "Zaakceptuj Regulamin i Politykę Prywatności." : "Please accept the Terms and Privacy Policy."}
-        </p>
-      )}
 
-      <TipLegalDialog doc={legalDoc} language={language} onClose={() => setLegalDoc(null)} />
+      <div className="mt-4 flex items-start gap-2.5 rounded-[12px] border border-[var(--cm-amber-28)] bg-[var(--chan-amber-soft)] px-3.5 py-3">
+        <span aria-hidden="true" className="mt-[1px] shrink-0 text-[15px]">💛</span>
+        <p className="text-[12px] leading-[1.5] text-[var(--chan-body)]">
+          {isPl
+            ? "Napiwek jest dobrowolny i niczego nie odblokowuje. Po prostu dziękuję."
+            : "A tip is voluntary and unlocks nothing. Simply: thank you."}
+        </p>
+      </div>
     </TipStepLayout>
   );
 }

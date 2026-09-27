@@ -93,7 +93,7 @@ export function WykopIcon({ className }: { className?: string }) {
 
 export function PayPalIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
+    <svg viewBox="0 0 24 24" fill="#003087" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
       <path d="M15.607 4.653H8.941L6.645 19.251H1.82L4.862 0h7.995c3.754 0 6.375 2.294 6.473 5.513-.648-.478-2.105-.86-3.722-.86m6.57 5.546c0 3.41-3.01 6.853-6.958 6.853h-2.493L11.595 24H6.74l1.845-11.538h3.592c4.208 0 7.346-3.634 7.153-6.949a5.24 5.24 0 0 1 2.848 4.686M9.653 5.546h6.408c.907 0 1.942.222 2.363.541-.195 2.741-2.655 5.483-6.441 5.483H8.714Z" />
     </svg>
   );
@@ -101,7 +101,7 @@ export function PayPalIcon({ className }: { className?: string }) {
 
 export function VisaIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
+    <svg viewBox="0 0 24 24" fill="#1A1F71" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
       <path d="M9.112 8.262L5.97 15.758H3.92L2.374 9.775c-.094-.368-.175-.503-.461-.658C1.447 8.864.677 8.627 0 8.479l.046-.217h3.3a.904.904 0 01.894.764l.817 4.338 2.018-5.102zm8.033 5.049c.008-1.979-2.736-2.088-2.717-2.972.006-.269.262-.555.822-.628a3.66 3.66 0 011.913.336l.34-1.59a5.207 5.207 0 00-1.814-.333c-1.917 0-3.266 1.02-3.278 2.479-.012 1.079.963 1.68 1.698 2.04.756.367 1.01.603 1.006.931-.005.504-.602.725-1.16.734-.975.015-1.54-.263-1.992-.473l-.351 1.642c.453.208 1.289.39 2.156.398 2.037 0 3.37-1.006 3.377-2.564m5.061 2.447H24l-1.565-7.496h-1.656a.883.883 0 00-.826.55l-2.909 6.946h2.036l.405-1.12h2.488zm-2.163-2.656l1.02-2.815.588 2.815zm-8.16-4.84l-1.603 7.496H8.34l1.605-7.496z" />
     </svg>
   );
@@ -109,7 +109,7 @@ export function VisaIcon({ className }: { className?: string }) {
 
 export function MastercardIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
+    <svg viewBox="0 0 24 24" fill="#EB001B" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
       <path d="M11.343 18.031c.058.049.12.098.181.146-1.177.783-2.59 1.238-4.107 1.238C3.32 19.416 0 16.096 0 12c0-4.095 3.32-7.416 7.416-7.416 1.518 0 2.931.456 4.105 1.238-.06.051-.12.098-.165.15C9.6 7.489 8.595 9.688 8.595 12c0 2.311 1.001 4.51 2.748 6.031zm5.241-13.447c-1.52 0-2.931.456-4.105 1.238.06.051.12.098.165.15C14.4 7.489 15.405 9.688 15.405 12c0 2.31-1.001 4.507-2.748 6.031-.058.049-.12.098-.181.146 1.177.783 2.588 1.238 4.107 1.238C20.68 19.416 24 16.096 24 12c0-4.094-3.32-7.416-7.416-7.416zM12 6.174c-.096.075-.189.15-.28.231C10.156 7.764 9.169 9.765 9.169 12c0 2.236.987 4.236 2.551 5.595.09.08.185.158.28.232.096-.074.189-.152.28-.232 1.563-1.359 2.551-3.359 2.551-5.595 0-2.235-.987-4.236-2.551-5.595-.09-.08-.184-.156-.28-.231z" />
     </svg>
   );
@@ -117,7 +117,7 @@ export function MastercardIcon({ className }: { className?: string }) {
 
 export function ApplePayIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
+    <svg viewBox="0 0 24 24" fill="#000000" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
       <path d="M7.078 23.55c-.473-.316-.893-.703-1.244-1.15-.383-.463-.738-.95-1.064-1.454-.766-1.12-1.365-2.345-1.78-3.636-.5-1.502-.743-2.94-.743-4.347 0-1.57.34-2.94 1.002-4.09.49-.9 1.22-1.653 2.1-2.182.85-.53 1.84-.82 2.84-.84.35 0 .73.05 1.13.15.29.08.64.21 1.07.37.55.21.85.34.96.34.08 0 .39-.13 1-.38.57-.23 1.07-.32 1.51-.27 1.12.09 1.96.49 2.54 1.23-.99.56-1.6 1.37-1.74 2.51-.12.99.26 1.93.98 2.65.33.32.7.59 1.12.82-.13.34-.27.67-.43.99-.45.83-.81 1.43-1.09 1.78-.47.57-.94.85-1.42.86-.35 0-.83-.14-1.44-.45-.59-.3-1.12-.45-1.6-.45-.5 0-1.05.15-1.67.45-.63.31-1.14.47-1.52.48-.45.02-.97-.27-1.56-.86zm6.32-18.85c-.69.28-1.42.26-2.15-.06-.06-.28-.09-.56-.09-.85 0-.77.27-1.53.8-2.27.27-.37.63-.68 1.08-.94.44-.25.86-.39 1.24-.41.05.31.07.62.07.93 0 .76-.27 1.53-.79 2.29-.24.33-.57.64-1 .92z" />
     </svg>
   );
@@ -125,7 +125,7 @@ export function ApplePayIcon({ className }: { className?: string }) {
 
 export function GooglePayIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
+    <svg viewBox="0 0 24 24" fill="#4285F4" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
       <path d="M3.963 7.235A3.963 3.963 0 00.422 9.419a3.963 3.963 0 000 3.559 3.963 3.963 0 003.541 2.184c1.07 0 1.97-.352 2.627-.957.748-.69 1.18-1.71 1.18-2.916a4.722 4.722 0 00-.07-.806H3.964v1.526h2.14a1.835 1.835 0 01-.79 1.205c-.356.241-.814.379-1.35.379-1.034 0-1.911-.697-2.225-1.636a2.375 2.375 0 010-1.517c.314-.94 1.191-1.636 2.225-1.636a2.152 2.152 0 011.52.594l1.132-1.13a3.808 3.808 0 00-2.652-1.033zm6.501.55v6.9h.886V11.89h1.465c.603 0 1.11-.196 1.522-.588a1.911 1.911 0 00.635-1.464 1.92 1.92 0 00-.635-1.456 2.125 2.125 0 00-1.522-.598zm2.427.85a1.156 1.156 0 01.823.365 1.176 1.176 0 010 1.686 1.171 1.171 0 01-.877.357H11.35V8.635h1.487a1.156 1.156 0 01.054 0zm4.124 1.175c-.842 0-1.477.308-1.907.925l.781.491c.288-.417.68-.626 1.175-.626a1.255 1.255 0 01.856.323 1.009 1.009 0 01.366.785v.202c-.34-.193-.774-.289-1.3-.289-.617 0-1.11.145-1.479.434-.37.288-.554.677-.554 1.165a1.476 1.476 0 00.525 1.156c.35.308.785.463 1.305.463.61 0 1.098-.27 1.465-.81h.038v.655h.848v-2.909c0-.61-.19-1.09-.568-1.44-.38-.35-.896-.525-1.551-.525zm2.263.154l1.946 4.422-1.098 2.38h.915L24 9.963h-.965l-1.368 3.391h-.02l-1.406-3.39zm-2.146 2.368c.494 0 .88.11 1.156.33 0 .372-.147.696-.44.973a1.413 1.413 0 01-.997.414 1.081 1.081 0 01-.69-.232.708.708 0 01-.293-.578c0-.257.12-.47.363-.647.24-.173.54-.26.9-.26Z" />
     </svg>
   );
@@ -133,7 +133,7 @@ export function GooglePayIcon({ className }: { className?: string }) {
 
 export function KlarnaIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
+    <svg viewBox="0 0 24 24" fill="#FFB3C7" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
       <path d="M4.592 2v20H0V2h4.592zm11.46 0c0 4.194-1.583 8.105-4.415 11.068l-.278.283L17.702 22h-5.668l-6.893-9.4 1.779-1.332c2.858-2.14 4.535-5.378 4.637-8.924L11.562 2h4.49zM21.5 17a2.5 2.5 0 110 5 2.5 2.5 0 010-5z" />
     </svg>
   );
@@ -141,7 +141,7 @@ export function KlarnaIcon({ className }: { className?: string }) {
 
 export function RevolutIcon({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
+    <svg viewBox="0 0 24 24" fill="#0075EB" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
       <path d="M20.9133 6.9566C20.9133 3.1208 17.7898 0 13.9503 0H2.424v3.8605h10.9782c1.7376 0 3.177 1.3651 3.2087 3.043.016.84-.2994 1.633-.8878 2.2324-.5886.5998-1.375.9303-2.2144.9303H9.2322a.2756.2756 0 0 0-.2755.2752v3.431c0 .0585.018.1142.052.1612L16.2646 24h5.3114l-7.2727-10.094c3.6625-.1838 6.61-3.2612 6.61-6.9494zM6.8943 5.9229H2.424V24h4.4704z" />
     </svg>
   );
@@ -155,7 +155,7 @@ export function RevolutIcon({ className }: { className?: string }) {
 export function BLIKIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
-      <rect width="24" height="24" rx="4" fill="#4b5563" />
+      <rect width="24" height="24" rx="4" fill="#CC0000" />
       <text x="12" y="15.5" textAnchor="middle" fill="white" fontSize="7.5" fontWeight="bold" fontFamily="system-ui,-apple-system,sans-serif" letterSpacing="0.5">BLIK</text>
     </svg>
   );

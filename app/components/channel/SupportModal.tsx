@@ -19,6 +19,7 @@ import {
   type TipStep,
   type TipWallet,
 } from "../support/tip-flow-config";
+import { TipRecipientStep } from "../support/TipRecipientStep";
 import { TipAmountStep } from "../support/TipAmountStep";
 import { TipMethodStep } from "../support/TipMethodStep";
 import { TipPayStep } from "../support/TipPayStep";
@@ -29,7 +30,7 @@ interface SupportModalProps {
   onClose: () => void;
 }
 
-const STEPS: TipStep[] = ["amount", "method", "pay"];
+const STEPS: TipStep[] = ["recipient", "amount", "method", "pay"];
 
 /**
  * The tip gate (TEMP_SUPPORT_AS_MODAL experiment, see lib/temp-support-modal.ts):
@@ -71,7 +72,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
   const [currency, setCurrency] = useState<SupportedCurrency>(() => detectDefaultCurrency(isPl ? "pl" : "en"));
   const [amount, setAmount] = useState<number | "">("");
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [step, setStep] = useState<TipStep>("amount");
+  const [step, setStep] = useState<TipStep>("recipient");
   const [pickedMethod, setPickedMethod] = useState<string | null>(() => readLastTipMethod());
   const [creatingIntent, setCreatingIntent] = useState(false);
   const [wallets, setWallets] = useState<TipWallet[]>([]);
@@ -124,6 +125,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
   const goBack = () => {
     if (step === "pay") setStep("method");
     else if (step === "method") backToAmount();
+    else if (step === "amount") setStep("recipient");
   };
 
   const handleClose = useCallback(() => {
@@ -160,7 +162,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
 
   const showThanks = flow.isSuccess;
   const activeIndex = showThanks ? STEPS.length : STEPS.indexOf(step);
-  const canGoBack = !showThanks && step !== "amount";
+  const canGoBack = !showThanks && step !== "recipient";
 
   let body: React.ReactNode;
   if (showThanks) {
@@ -209,6 +211,16 @@ export default function SupportModal({ onClose }: SupportModalProps) {
         )}
       </Elements>
     );
+  } else if (step === "recipient") {
+    body = (
+      <TipRecipientStep
+        language={language}
+        termsAccepted={termsAccepted}
+        onTermsChange={setTermsAccepted}
+        onNext={() => setStep("amount")}
+        onClose={handleClose}
+      />
+    );
   } else {
     body = (
       <TipAmountStep
@@ -218,8 +230,6 @@ export default function SupportModal({ onClose }: SupportModalProps) {
         amount={amount}
         onAmountChange={setAmount}
         minAmount={minAmount}
-        termsAccepted={termsAccepted}
-        onTermsChange={setTermsAccepted}
         onNext={() => void handleAmountNext()}
         busy={creatingIntent || flow.isInitialLoading}
       />
