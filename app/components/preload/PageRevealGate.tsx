@@ -38,6 +38,17 @@ const LEAVE_ANIMATION_MS = 700;
 
 let revealedInThisDocument = false;
 
+const SESSION_KEY = "polutek:revealed";
+
+function hasRevealedThisSession(): boolean {
+  try { return sessionStorage.getItem(SESSION_KEY) === "1"; } catch { return false; }
+}
+
+function markRevealedThisSession() {
+  revealedInThisDocument = true;
+  try { sessionStorage.setItem(SESSION_KEY, "1"); } catch {}
+}
+
 export function hasRevealedPageInThisDocument(): boolean {
   return revealedInThisDocument;
 }
@@ -45,6 +56,7 @@ export function hasRevealedPageInThisDocument(): boolean {
 /** @internal test helper */
 export function resetPageRevealForTests() {
   revealedInThisDocument = false;
+  try { sessionStorage.removeItem(SESSION_KEY); } catch {}
 }
 
 export function usePageRevealReady(key: string | undefined, ready: boolean) {
@@ -90,8 +102,9 @@ export function PageRevealGate({ children, waitFor = [], posterUrl }: PageReveal
   const language = useOptionalLanguage();
 
   // Phase machine: covering → gate (user sees rabbit) → leaving → done
+  // Also check sessionStorage so auth redirects (Clerk sign-in) don't re-show the preloader.
   const [phase, setPhase] = useState<"covering" | "gate" | "leaving" | "done">(() =>
-    revealedInThisDocument ? "done" : "covering"
+    revealedInThisDocument || hasRevealedThisSession() ? "done" : "covering"
   );
   const [timedOut, setTimedOut] = useState(false);
   const [readyKeys, setReadyKeys] = useState<ReadonlySet<string>>(() => new Set());
@@ -145,7 +158,7 @@ export function PageRevealGate({ children, waitFor = [], posterUrl }: PageReveal
   // Once leaving: wait for the blur-fade animation, then unmount.
   useEffect(() => {
     if (phase !== "leaving") return;
-    revealedInThisDocument = true;
+    markRevealedThisSession();
     const timer = window.setTimeout(() => setPhase("done"), LEAVE_ANIMATION_MS);
     return () => window.clearTimeout(timer);
   }, [phase]);
