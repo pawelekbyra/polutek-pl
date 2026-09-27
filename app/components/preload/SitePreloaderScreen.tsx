@@ -38,8 +38,6 @@ export function SitePreloaderScreen({
       className={cn(styles.screen, failsafe && styles.failsafe, leaving && styles.leaving)}
     >
       <MatrixRain leaving={leaving} />
-      {/* eslint-disable-next-line @next/next/no-img-element -- small static local vector, same as BrandName */}
-      <img src="/logo-glasses.svg" alt="" className={styles.logo} />
     </div>
   );
 }
