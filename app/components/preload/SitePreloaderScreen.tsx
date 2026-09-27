@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import { MatrixRain } from "./MatrixRain";
 import styles from "./SitePreloaderScreen.module.css";
 
 interface SitePreloaderScreenProps {
@@ -32,6 +33,7 @@ export function SitePreloaderScreen({
       data-state={leaving ? "leaving" : "covering"}
       className={cn(styles.screen, failsafe && styles.failsafe, leaving && styles.leaving)}
     >
+      <MatrixRain />
       <div className={styles.inner}>
         {/* eslint-disable-next-line @next/next/no-img-element -- small static local vector, same as BrandName */}
         <img src="/logo-glasses.svg" alt="" className={styles.logo} />
