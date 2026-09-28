@@ -52,36 +52,31 @@ function Warpfield({ still, readoutRef }: { still: boolean; readoutRef: React.Re
       });
     };
 
-    const draw = (speed: number) => {
+    const draw = () => {
       const cx = w / 2;
       const cy = h / 2;
       const s = Math.max(w, h) / 2;
       ctx.clearRect(0, 0, w, h);
-      ctx.lineCap = "round";
 
       for (const star of stars) {
         const sx = cx + (star.x / star.z) * s;
         const sy = cy + (star.y / star.z) * s;
-        const tailZ = Math.min(1, star.z + speed * 0.18);
-        const px = cx + (star.x / tailZ) * s;
-        const py = cy + (star.y / tailZ) * s;
         const near = 1 - star.z;
-        const alpha = Math.min(1, near * 1.35);
-        const width = 0.35 + near * near * 2.6;
+        const alpha = Math.min(1, 0.15 + near * 1.2);
+        const radius = 0.4 + near * near * 1.9;
 
-        ctx.strokeStyle = `rgba(${star.tint},${alpha})`;
-        ctx.lineWidth = width;
-        ctx.beginPath();
-        ctx.moveTo(px, py);
-        ctx.lineTo(sx, sy);
-        ctx.stroke();
-
-        if (star.z < 0.22) {
-          ctx.fillStyle = `rgba(${star.tint},${alpha * 0.9})`;
+        // Soft halo on the closest stars so they read as light, not flat discs.
+        if (star.z < 0.35) {
+          ctx.fillStyle = `rgba(${star.tint},${alpha * 0.12})`;
           ctx.beginPath();
-          ctx.arc(sx, sy, width * 0.75, 0, Math.PI * 2);
+          ctx.arc(sx, sy, radius * 3, 0, Math.PI * 2);
           ctx.fill();
         }
+
+        ctx.fillStyle = `rgba(${star.tint},${alpha})`;
+        ctx.beginPath();
+        ctx.arc(sx, sy, radius, 0, Math.PI * 2);
+        ctx.fill();
       }
     };
 
@@ -107,7 +102,7 @@ function Warpfield({ still, readoutRef }: { still: boolean; readoutRef: React.Re
           spawn(star, 0.92 + Math.random() * 0.08);
         }
       }
-      draw(speed);
+      draw();
 
       if (readoutRef.current && now - lastReadout > 140) {
         lastReadout = now;
@@ -120,7 +115,7 @@ function Warpfield({ still, readoutRef }: { still: boolean; readoutRef: React.Re
     ro.observe(canvas);
 
     if (still) {
-      draw(0.05);
+      draw();
       return () => ro.disconnect();
     }
 
