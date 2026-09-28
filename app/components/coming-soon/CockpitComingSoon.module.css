@@ -45,7 +45,7 @@
   --hud-accent-glow: 0 0 6px rgba(255, 140, 60, 0.8), 0 0 20px rgba(255, 110, 40, 0.4);
   --hud-font: "Oxanium HUD", var(--font-geist-mono), ui-monospace, monospace;
   --seg-lit: #9ff0ff;
-  --seg-ghost: rgba(120, 222, 255, 0.07);
+  --seg-ghost: rgba(120, 222, 255, 0.13);
   /* Backlit LCD, not neon: a tight glow that stays on the segments. */
   --seg-glow: 0 0 4px rgba(90, 215, 255, 0.55), 0 0 14px rgba(40, 170, 255, 0.25);
 
@@ -152,7 +152,7 @@
 .date {
   font-size: clamp(14px, 3.4cqi, 30px);
   --seg-lit: #ff9442;
-  --seg-ghost: rgba(255, 148, 66, 0.08);
+  --seg-ghost: rgba(255, 148, 66, 0.14);
   --seg-glow: 0 0 4px rgba(255, 140, 60, 0.6), 0 0 14px rgba(255, 110, 40, 0.25);
 }
 
