@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { formatPremiereDate } from "@/lib/temp-patron-coming-soon";
 import styles from "./CockpitComingSoon.module.css";
@@ -11,7 +11,7 @@ const EASE = [0.2, 0.7, 0.2, 1] as const;
 
 const TINTS = ["255,255,255", "255,255,255", "255,255,255", "255,255,255", "205,225,255", "205,225,255", "255,228,196"];
 
-function Warpfield({ still, readoutRef }: { still: boolean; readoutRef: React.RefObject<HTMLSpanElement | null> }) {
+function Warpfield({ still }: { still: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -25,7 +25,6 @@ function Warpfield({ still, readoutRef }: { still: boolean; readoutRef: React.Re
     let raf = 0;
     let last = 0;
     let t = 0;
-    let lastReadout = 0;
     let visible = true;
 
     const spawn = (star: Star, z: number) => {
@@ -103,11 +102,6 @@ function Warpfield({ still, readoutRef }: { still: boolean; readoutRef: React.Re
         }
       }
       draw();
-
-      if (readoutRef.current && now - lastReadout > 140) {
-        lastReadout = now;
-        readoutRef.current.textContent = (1.5 + speed * 12).toFixed(2);
-      }
     };
 
     resize();
@@ -135,71 +129,9 @@ function Warpfield({ still, readoutRef }: { still: boolean; readoutRef: React.Re
       io.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [still, readoutRef]);
+  }, [still]);
 
   return <canvas ref={canvasRef} className={styles.warp} aria-hidden="true" />;
-}
-
-function HudRing() {
-  const ticks = useMemo(
-    () =>
-      Array.from({ length: 72 }, (_, i) => {
-        const a = (i / 72) * Math.PI * 2;
-        const major = i % 6 === 0;
-        const r1 = major ? 88 : 92;
-        return {
-          key: i,
-          x1: 100 + Math.cos(a) * r1,
-          y1: 100 + Math.sin(a) * r1,
-          x2: 100 + Math.cos(a) * 97,
-          y2: 100 + Math.sin(a) * 97,
-          major,
-        };
-      }),
-    [],
-  );
-
-  return (
-    <div className={styles.ring} aria-hidden="true">
-      <svg viewBox="0 0 200 200" className={styles.ringOuter}>
-        <circle cx="100" cy="100" r="97" />
-        {ticks.map(({ key, major, ...line }) => (
-          <line key={key} {...line} className={major ? styles.tickMajor : undefined} />
-        ))}
-      </svg>
-      <svg viewBox="0 0 200 200" className={styles.ringInner}>
-        <circle cx="100" cy="100" r="78" strokeDasharray="2 6" />
-        <path d="M100 14 L104 22 L96 22 Z" className={styles.ringPointer} />
-      </svg>
-    </div>
-  );
-}
-
-const LOG_LINES = {
-  pl: ["kurs ustalony: PREMIERA", "napęd nadświetlny stabilny", "osłony: 100%", "transmisja w przygotowaniu", "cel namierzony"],
-  en: ["course locked: PREMIERE", "hyperdrive stable", "shields: 100%", "transmission in preparation", "target acquired"],
-};
-
-function FlightLog({ isPl, still }: { isPl: boolean; still: boolean }) {
-  const lines = LOG_LINES[isPl ? "pl" : "en"];
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    if (still) return;
-    const id = setInterval(() => setIndex((i) => (i + 1) % lines.length), 3400);
-    return () => clearInterval(id);
-  }, [still, lines.length]);
-
-  const line = lines[index];
-  return (
-    <span className={styles.log}>
-      <span className={styles.logPrompt}>&gt;</span>
-      <span key={`${isPl}-${index}`} className={styles.logLine} style={{ "--len": line.length } as React.CSSProperties}>
-        {line}
-      </span>
-      <span className={styles.caret}>▍</span>
-    </span>
-  );
 }
 
 export function CockpitComingSoon({
@@ -215,7 +147,6 @@ export function CockpitComingSoon({
   units: string[];
   countdownLabel: string;
 }) {
-  const readoutRef = useRef<HTMLSpanElement>(null);
   const unitLabels = isPl ? ["DNI", "GODZ", "MIN", "SEK"] : ["DAYS", "HRS", "MIN", "SEC"];
   const premiereDate = formatPremiereDate();
   const enter = (delay: number) =>
@@ -226,9 +157,8 @@ export function CockpitComingSoon({
   return (
     <div className={styles.cockpit}>
       <div className={styles.nebula} aria-hidden="true" />
-      <Warpfield still={reduceMotion} readoutRef={readoutRef} />
+      <Warpfield still={reduceMotion} />
       <div className={styles.focus} aria-hidden="true" />
-      <HudRing />
       <div className={styles.glass} aria-hidden="true" />
       <div className={styles.scanlines} aria-hidden="true" />
 
@@ -237,34 +167,8 @@ export function CockpitComingSoon({
       <span className={`${styles.corner} ${styles.cornerBl}`} aria-hidden="true" />
       <span className={`${styles.corner} ${styles.cornerBr}`} aria-hidden="true" />
 
-      <header className={styles.topBar} aria-hidden="true">
-        <span>
-          NAV-COMP <span className={styles.dim}>//</span> {isPl ? "KURS" : "HEADING"}:{" "}
-          <span className={styles.accent}>{isPl ? "PREMIERA" : "PREMIERE"}</span>
-        </span>
-        <span className={styles.status}>
-          <span className={styles.statusDot} />
-          SYS ONLINE
-        </span>
-      </header>
-
-      <div className={`${styles.tape} ${styles.tapeLeft}`} aria-hidden="true">
-        <span className={styles.tapeScale} />
-        <span className={styles.tapeReadout}>
-          <span className={styles.tapeLabel}>WARP</span>
-          <span ref={readoutRef} className={styles.tapeValue}>3.20</span>
-        </span>
-      </div>
-      <div className={`${styles.tape} ${styles.tapeRight}`} aria-hidden="true">
-        <span className={`${styles.tapeScale} ${styles.tapeScaleUp}`} />
-        <span className={styles.tapeReadout}>
-          <span className={styles.tapeLabel}>{isPl ? "CEL" : "TARGET"}</span>
-          <span className={`${styles.tapeValue} ${styles.lock}`}>LOCK</span>
-        </span>
-      </div>
-
       <div className={styles.content}>
-        <motion.span className={styles.kicker} aria-hidden="true" {...enter(0.1)}>
+        <motion.span className={styles.date} {...enter(0.1)}>
           {premiereDate}
         </motion.span>
 
@@ -311,14 +215,6 @@ export function CockpitComingSoon({
           ))}
         </motion.div>
       </div>
-
-      <footer className={styles.bottomBar} aria-hidden="true">
-        <FlightLog isPl={isPl} still={reduceMotion} />
-        <span>
-          ETA <span className={styles.dim}>//</span> <span className={styles.accent}>{premiereDate}</span>{" "}
-          <span className={styles.dim}>00:00</span>
-        </span>
-      </footer>
     </div>
   );
 }
