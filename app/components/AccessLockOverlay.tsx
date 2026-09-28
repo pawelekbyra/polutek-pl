@@ -116,8 +116,8 @@ function LoginScene({
       <motion.h2
         id={titleId}
         className={styles.graffitiText}
-        initial={reduceMotion ? false : { opacity: 0, scale: 0.88, rotate: -4 }}
-        animate={{ opacity: 1, scale: 1, rotate: -2.5 }}
+        initial={reduceMotion ? false : { opacity: 0, scale: 0.88 }}
+        animate={{ opacity: 1, scale: 1 }}
         transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 160, damping: 18, delay: 0.05 }}
       >
         {isPl ? "NIE MASZ PSYCHY SIĘ ZALOGOWAĆ" : "NO GUTS TO LOG IN"}

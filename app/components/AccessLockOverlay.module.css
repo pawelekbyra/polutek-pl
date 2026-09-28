@@ -203,7 +203,6 @@
 }
 
 .graffitiText {
-  /* Clean, readable sans-serif — like text painted on a wall */
   font-family: 'Helvetica Neue', Helvetica, 'Arial Narrow', Arial, sans-serif;
   font-size: clamp(1.5rem, 9cqi, 3.6rem);
   font-weight: 800;
@@ -212,12 +211,24 @@
   text-transform: uppercase;
   text-wrap: balance;
   color: #1a1008;
-  /* Subtle depth: bright edge top-left, shadow bottom-right — "painted on" */
-  text-shadow:
-    -1px -1px 0 rgba(255, 255, 255, 0.55),
-    2px 2px 5px rgba(0, 0, 0, 0.18);
-  transform: rotate(-1.2deg);
   display: block;
+  /* "painted on" shadow — animates to pulse gently like wet paint */
+  animation: wall-text-breathe 4s ease-in-out infinite;
+}
+
+@keyframes wall-text-breathe {
+  0%, 100% {
+    text-shadow:
+      -1px -1px 0 rgba(255, 255, 255, 0.55),
+      2px  2px  5px rgba(0, 0, 0, 0.18),
+      4px  4px 14px rgba(0, 0, 0, 0.10);
+  }
+  50% {
+    text-shadow:
+      -1px -1px 0 rgba(255, 255, 255, 0.65),
+      3px  3px  9px rgba(0, 0, 0, 0.30),
+      6px  6px 22px rgba(0, 0, 0, 0.16);
+  }
 }
 
 .graffitiCta {
@@ -395,7 +406,8 @@
   .sheen,
   .mark,
   .ctaLine,
-  .cta {
+  .cta,
+  .graffitiText {
     animation: none;
     transition: none;
   }
