@@ -18,6 +18,16 @@
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
+/* Orbitron (SIL OFL, app/fonts/OFL-orbitron.txt): wide geometric display face for
+   the title, date and digits. Latin only — the Polish flight log stays in Oxanium. */
+@font-face {
+  font-family: "Orbitron HUD";
+  src: url("../../fonts/orbitron-latin.woff2") format("woff2");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 .cockpit {
   --hud: #9eeeff;
   --hud-dim: rgba(120, 222, 255, 0.58);
@@ -26,6 +36,11 @@
   --hud-glow: 0 0 5px rgba(90, 215, 255, 0.9), 0 0 18px rgba(40, 170, 255, 0.55), 0 0 40px rgba(40, 150, 255, 0.25);
   --hud-accent-glow: 0 0 6px rgba(255, 140, 60, 0.8), 0 0 20px rgba(255, 110, 40, 0.4);
   --hud-font: "Oxanium HUD", var(--font-geist-mono), ui-monospace, monospace;
+  --hud-display: "Orbitron HUD", "Oxanium HUD", sans-serif;
+  /* Neon-tube lettering: bright stroke, dim hollow core, wide soft bloom. */
+  --neon-stroke: #d2f8ff;
+  --neon-core: rgba(40, 150, 210, 0.22);
+  --neon-bloom: 0 0 7px rgba(70, 205, 255, 0.85), 0 0 20px rgba(40, 165, 255, 0.55), 0 0 46px rgba(40, 140, 255, 0.3);
 
   position: absolute;
   inset: 0;
@@ -128,24 +143,28 @@
 }
 
 .date {
-  padding-left: 0.3em; /* optically recentres the trailing letter-spacing */
-  font-family: var(--hud-font);
-  font-size: clamp(13px, 3.1cqi, 28px);
-  font-weight: 500;
-  letter-spacing: 0.3em;
-  color: var(--hud-accent);
-  text-shadow: var(--hud-accent-glow);
+  padding-left: 0.1em;
+  font-family: var(--hud-display);
+  font-size: clamp(14px, 3.7cqi, 34px);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  color: #ff9442;
+  text-shadow: 0 0 6px rgba(255, 140, 60, 0.85), 0 0 20px rgba(255, 110, 40, 0.5), 0 0 40px rgba(255, 90, 30, 0.25);
 }
 
 .heading {
   margin: 0;
-  padding-left: 0.2em; /* optically recentres the trailing letter-spacing */
-  font-size: clamp(1.35rem, 7cqi, 4.4rem);
-  font-weight: 600;
+  padding-left: 0.08em; /* optically recentres the trailing letter-spacing */
+  font-family: var(--hud-display);
+  font-size: clamp(1.7rem, 10cqi, 6.2rem);
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: 0.2em;
-  color: #c4f6ff;
-  text-shadow: var(--hud-glow);
+  letter-spacing: 0.08em;
+  color: var(--neon-core);
+  -webkit-text-stroke: 0.028em var(--neon-stroke);
+  paint-order: stroke fill;
+  text-shadow: var(--neon-bloom);
 }
 
 .horizon {
@@ -219,10 +238,11 @@
 
 .tMinus {
   align-self: flex-start;
-  margin-right: clamp(6px, 1.4cqi, 16px);
-  padding-top: 0.35em;
-  font-size: clamp(9px, 1.5cqi, 14px);
-  letter-spacing: 0.12em;
+  margin: -0.2em clamp(4px, 1cqi, 10px) 0 0;
+  font-family: var(--hud-display);
+  font-size: clamp(10px, 1.9cqi, 18px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
   color: var(--hud-accent);
   text-shadow: var(--hud-accent-glow);
 }
@@ -239,32 +259,45 @@
   gap: clamp(4px, 0.9cqi, 9px);
 }
 
+/* Each value sits in a thin neon-edged readout window. */
 .unitValue {
-  font-size: clamp(1.4rem, 5.6cqi, 3.7rem);
-  /* Oxanium has proportional figures: a fixed box keeps the readout from jittering each second. */
-  min-width: 1.32em;
-  font-weight: 500;
+  /* Fixed window width so the readout never jitters as digits change. */
+  min-width: 2.05em;
+  padding: 0.16em 0.14em 0.12em;
+  border: 1.5px solid rgba(150, 232, 255, 0.85);
+  border-radius: 0.2em;
+  background: linear-gradient(180deg, rgba(10, 40, 64, 0.55), rgba(4, 16, 30, 0.7));
+  box-shadow: 0 0 8px rgba(70, 205, 255, 0.55), inset 0 0 12px rgba(70, 205, 255, 0.22);
+  font-family: var(--hud-display);
+  font-size: clamp(1.25rem, 5.4cqi, 3.6rem);
+  font-weight: 600;
   line-height: 1;
   letter-spacing: 0.04em;
-  font-variant-numeric: tabular-nums;
-  color: #c4f6ff;
-  text-shadow: var(--hud-glow);
+  text-align: center;
+  color: var(--neon-core);
+  -webkit-text-stroke: 0.03em var(--neon-stroke);
+  paint-order: stroke fill;
+  text-shadow: var(--neon-bloom);
 }
 
 .sep {
-  padding: 0 clamp(4px, 1.1cqi, 12px);
-  font-size: clamp(1.4rem, 5.6cqi, 3.7rem);
-  font-weight: 400;
+  align-self: flex-start;
+  /* Matches the window's top padding + border so the colon centres on the digits. */
+  padding: calc(0.16em + 1.5px) clamp(3px, 0.8cqi, 9px) 0;
+  font-family: var(--hud-display);
+  font-size: clamp(1.25rem, 5.4cqi, 3.6rem);
+  font-weight: 500;
   line-height: 1;
-  color: var(--hud-dim);
-  text-shadow: 0 0 8px rgba(90, 215, 255, 0.6);
+  color: #9eeeff;
+  text-shadow: 0 0 8px rgba(90, 215, 255, 0.7);
   animation: pulse 2s steps(1) infinite;
 }
 
 .unitLabel {
-  font-size: clamp(7px, 1.05cqi, 10px);
-  letter-spacing: 0.32em;
-  padding-left: 0.32em;
+  font-size: clamp(7px, 1.15cqi, 11px);
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  padding-left: 0.26em;
   color: var(--hud-dim);
 }
 

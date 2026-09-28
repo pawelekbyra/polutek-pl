@@ -215,8 +215,8 @@ export function CockpitComingSoon({
           {...(reduceMotion
             ? { initial: false, transition: { duration: 0 } }
             : {
-                initial: { opacity: 0, letterSpacing: "0.6em", filter: "blur(8px)" },
-                animate: { opacity: 1, letterSpacing: "0.2em", filter: "blur(0px)" },
+                initial: { opacity: 0, letterSpacing: "0.4em", filter: "blur(8px)" },
+                animate: { opacity: 1, letterSpacing: "0.08em", filter: "blur(0px)" },
                 transition: { duration: 1.1, delay: 0.2, ease: EASE },
               })}
         >
