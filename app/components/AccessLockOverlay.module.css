@@ -205,7 +205,7 @@
 .graffitiImageWrap {
   position: relative;
   z-index: 2;
-  width: clamp(220px, 80cqi, 580px);
+  width: clamp(120px, 40cqi, 280px);
 }
 
 .graffitiImage {
