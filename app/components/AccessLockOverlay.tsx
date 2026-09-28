@@ -94,10 +94,8 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             role="img"
             aria-label={countdownLabel}
           >
-            <span className={styles.compactMatrixLabel} aria-hidden="true">
-              {isPl ? "WKRÓTCE" : "SOON"}
-            </span>
-            <span className={styles.compactMatrixCountdown}>{units[0]}D {units[1]}H {units[2]}M</span>
+            <span className={styles.compactMatrixLabel} aria-hidden="true">PREMIERA</span>
+            <span className={styles.compactMatrixCountdown}>1.01.2027</span>
           </div>
         </PlayerStateFrame>
       );
