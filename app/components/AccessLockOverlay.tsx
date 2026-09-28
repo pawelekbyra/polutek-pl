@@ -122,7 +122,7 @@ function LoginScene({
     <div className={styles.graffitiContent}>
       <motion.h2
         id={titleId}
-        className={cn(styles.graffitiText, !isPl && styles.graffitiTextEn)}
+        className={styles.graffitiText}
         initial={reduceMotion ? false : { opacity: 0, scale: 0.88 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={
