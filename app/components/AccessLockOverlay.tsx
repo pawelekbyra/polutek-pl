@@ -2,7 +2,6 @@
 
 import { useEffect, useId, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Rocket } from "lucide-react";
 import type { PlaybackPlanStatus } from "@/lib/modules/playback";
 import { cn } from "@/lib/utils";
 import { formatPremiereCountdown } from "@/lib/temp-patron-coming-soon";
@@ -52,10 +51,10 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             role="img"
             aria-label={countdownLabel}
           >
-            <span className={styles.compactMark} aria-hidden="true">
-              <Rocket />
+            <span className={styles.compactCyberLabel} aria-hidden="true">
+              {isPl ? "WKRÓTCE" : "SOON"}
             </span>
-            <span className={styles.compactLabel}>{countdownLabel}</span>
+            <span className={styles.compactCyberCountdown}>{countdownLabel}</span>
           </div>
         </PlayerStateFrame>
       );
@@ -104,13 +103,8 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
       >
         {isComingSoon && (
           <>
-            <div className={styles.aurora} aria-hidden="true">
-              <span className={styles.blob1} />
-              <span className={styles.blob2} />
-              <span className={styles.blob3} />
-            </div>
-            <span className={styles.sheen} aria-hidden="true" />
-            <span className={styles.noise} aria-hidden="true" />
+            <span className={styles.cyberScanlines} aria-hidden="true" />
+            <span className={styles.cyberGrid} aria-hidden="true" />
           </>
         )}
         {isComingSoon ? (
@@ -179,49 +173,31 @@ function ComingSoonScene({
   countdownLabel: string;
 }) {
   return (
-    <div className={styles.content}>
-      <motion.div
-        initial={reduceMotion ? false : { opacity: 0, scale: 0.6, rotate: 10 }}
-        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-        transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 210, damping: 16 }}
-      >
-        <Rocket aria-hidden="true" className={styles.mark} />
-      </motion.div>
-      <h2 id={titleId} className={styles.heading}>
-        <motion.span
-          className={cn(styles.word, styles.wordAmber)}
-          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.1 }}
-        >
-          {isPl ? "Juu017c" : "Coming"}
-        </motion.span>
-        <motion.span
-          className={styles.divider}
-          aria-hidden="true"
-          initial={reduceMotion ? false : { scaleX: 0, opacity: 0 }}
-          animate={{ scaleX: 1, opacity: 1 }}
-          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.22 }}
-        />
-        <motion.span
-          className={cn(styles.word, styles.wordWhite)}
-          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.28 }}
-        >
-          {isPl ? "wkru00f3tce" : "soon"}
-        </motion.span>
-      </h2>
-      <motion.div
-        className={styles.cta}
-        style={{ cursor: "default" }}
-        initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+    <div className={styles.cyberContent}>
+      <motion.h2
+        id={titleId}
+        className={styles.cyberHeading}
+        initial={reduceMotion ? false : { opacity: 0, y: -14 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reduceMotion ? 0 : 0.4, delay: reduceMotion ? 0 : 0.44 }}
+        transition={{ duration: reduceMotion ? 0 : 0.7, ease: "easeOut" }}
       >
-        <span className={styles.ctaLine} aria-hidden="true" />
-        <span className={styles.ctaText}>{countdownLabel}</span>
-      </motion.div>
+        {isPl ? "JUŻ WKRÓTCE" : "COMING SOON"}
+      </motion.h2>
+      <motion.span
+        className={styles.cyberLine}
+        aria-hidden="true"
+        initial={reduceMotion ? false : { scaleX: 0, opacity: 0 }}
+        animate={{ scaleX: 1, opacity: 1 }}
+        transition={{ duration: reduceMotion ? 0 : 0.7, delay: reduceMotion ? 0 : 0.3 }}
+      />
+      <motion.p
+        className={styles.cyberCountdown}
+        initial={reduceMotion ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.55 }}
+      >
+        {countdownLabel}
+      </motion.p>
     </div>
   );
 }

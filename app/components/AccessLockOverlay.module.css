@@ -17,7 +17,11 @@
 }
 
 .scene.patron {
-  background: var(--cm-amber-strong-82-black);
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 45%, rgba(0, 240, 255, 0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 45% 45% at 12% 88%, rgba(255, 0, 128, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 45% 45% at 88% 12%, rgba(255, 0, 128, 0.08) 0%, transparent 55%),
+    #06060f;
 }
 
 .scene::after {
@@ -28,52 +32,32 @@
   pointer-events: none;
 }
 
-.aurora {
+/* ── Cyberpunk scanlines + grid (rendered when isComingSoon) ─────────────── */
+
+.cyberScanlines {
   position: absolute;
-  inset: -25%;
-  filter: blur(58px);
-  transition: transform .8s var(--ease-standard, ease);
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 240, 255, 0.022) 2px,
+    rgba(0, 240, 255, 0.022) 3px
+  );
+  pointer-events: none;
+  z-index: 1;
 }
 
-.login .aurora {
-  background: linear-gradient(135deg, var(--cm-blue-70-black) 0%, var(--chan-blue) 48%, var(--cm-blue-60-black) 100%);
-}
-
-.patron .aurora {
-  background: linear-gradient(135deg, var(--cm-amber-strong-68-black) 0%, var(--chan-amber) 46%, var(--cm-amber-strong-58-black) 100%);
-}
-
-.blob1, .blob2, .blob3 {
+.cyberGrid {
   position: absolute;
-  border-radius: 50%;
-  opacity: .62;
-  /* Extra softness on top of the .aurora blur so the puffs read as clouds. */
-  filter: blur(12px);
-  will-change: transform;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.038) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.038) 1px, transparent 1px);
+  background-size: clamp(28px, 7cqi, 56px) clamp(28px, 7cqi, 56px);
+  pointer-events: none;
+  z-index: 1;
 }
-
-/* Wide, low ellipses that drift slowly and mostly sideways, like clouds. */
-.blob1 { top: 4%; left: -14%; width: 64%; aspect-ratio: 1.9; animation: cloud-a 48s ease-in-out infinite; }
-.blob2 { right: -16%; bottom: 2%; width: 58%; aspect-ratio: 2.1; animation: cloud-b 60s ease-in-out infinite; }
-.blob3 { top: 34%; left: 24%; width: 42%; aspect-ratio: 1.7; animation: cloud-c 54s ease-in-out infinite; }
-
-.login .blob1 { background: radial-gradient(circle, var(--cm-blue-60-white), transparent 70%); }
-.login .blob2 { background: radial-gradient(circle, var(--chan-blue), transparent 72%); }
-.login .blob3 { background: radial-gradient(circle, rgba(255, 255, 255, .3), transparent 70%); }
-
-.patron .blob1 { background: radial-gradient(circle, var(--chan-amber-bright), transparent 70%); }
-.patron .blob2 { background: radial-gradient(circle, var(--chan-amber), transparent 72%); }
-.patron .blob3 { background: radial-gradient(circle, rgba(255, 255, 255, .32), transparent 70%); }
-
-.sheen {
-  position: absolute;
-  inset: -60% -20%;
-  background: linear-gradient(75deg, transparent 42%, rgba(255, 255, 255, .07) 48%, rgba(255, 255, 255, .13) 50%, rgba(255, 255, 255, .07) 52%, transparent 58%);
-  mix-blend-mode: screen;
-  animation: sheen-sweep 11s ease-in-out infinite;
-}
-
-.scene:hover .aurora { transform: scale(1.04); }
 
 .noise {
   position: absolute;
@@ -87,108 +71,78 @@
   opacity: .4;
 }
 
-.content {
+/* ── Cyberpunk ComingSoonScene content ───────────────────────────────────── */
+
+.cyberContent {
   position: relative;
   z-index: 2;
   display: flex;
-  width: 100%;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: clamp(16px, 4cqi, 26px);
+  padding: clamp(16px, 4cqi, 32px);
+  gap: clamp(10px, 2.5cqi, 22px);
 }
 
-.mark {
-  width: clamp(52px, 13cqi, 116px);
-  height: clamp(52px, 13cqi, 116px);
-  margin-bottom: clamp(14px, 4cqi, 34px);
-  color: #fff;
-  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, .35));
-  transition: transform .7s var(--ease-standard, ease);
-}
-
-.patron .mark {
-  color: #92400e;
-  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, .28));
-}
-
-.scene:hover .mark { transform: scale(1.06); }
-
-.heading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.cyberHeading {
   margin: 0;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: clamp(1.1rem, 7cqi, 3rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #00f0ff;
+  text-shadow:
+    0 0 6px rgba(0, 240, 255, 1),
+    0 0 18px rgba(0, 240, 255, 0.65),
+    0 0 40px rgba(0, 240, 255, 0.28);
+  animation: cyber-flicker 7s ease-in-out infinite;
 }
 
-.word {
+.cyberLine {
   display: block;
-  max-width: 22ch;
-  font-family: var(--font-geist-sans), sans-serif;
+  width: clamp(56px, 18cqi, 180px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, #00f0ff 35%, #ff0080 65%, transparent 100%);
+  box-shadow: 0 0 7px rgba(0, 240, 255, 0.55), 0 0 14px rgba(255, 0, 128, 0.3);
+  transform-origin: center;
+}
+
+.cyberCountdown {
+  margin: 0;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: clamp(0.85rem, 5cqi, 2rem);
   font-weight: 700;
-  letter-spacing: -.03em;
-  line-height: .94;
-  text-transform: uppercase;
-  text-wrap: balance;
-  text-shadow: 0 2px 18px rgba(0, 0, 0, .25);
-  font-size: clamp(1.9rem, 10cqi, 4.4rem);
+  letter-spacing: 0.1em;
+  color: #ff0080;
+  text-shadow:
+    0 0 5px rgba(255, 0, 128, 1),
+    0 0 14px rgba(255, 0, 128, 0.65),
+    0 0 30px rgba(255, 0, 128, 0.28);
+  animation: cyber-pulse 3s ease-in-out infinite;
 }
 
-.wordWhite { color: #fff; }
-.wordBlue { color: var(--cm-blue-22-white); }
-.wordAmber { color: #92400e; }
-
-.divider {
-  width: clamp(56px, 16cqi, 148px);
-  height: 2px;
-  margin: clamp(7px, 1.8cqi, 12px) 0 clamp(9px, 2cqi, 14px);
-  background: rgba(255, 255, 255, .28);
-  border-radius: 2px;
+@keyframes cyber-flicker {
+  0%, 93%, 95.5%, 98%, 100% { opacity: 1; }
+  94%   { opacity: 0.72; }
+  95%   { opacity: 0.9; }
+  97%   { opacity: 0.78; }
+  99%   { opacity: 0.85; }
 }
 
-.cta {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  margin-top: clamp(16px, 4cqi, 34px);
-  border: 0;
-  background: none;
-  padding: 0;
-  color: rgba(255, 255, 255, .72);
-  font: inherit;
-  text-decoration: none;
-  cursor: pointer;
-  transition: color .3s ease;
-}
-
-.cta:hover,
-.cta:focus-visible { color: #fff; }
-
-.cta:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, .6);
-  outline-offset: 4px;
-  border-radius: 4px;
-}
-
-.ctaLine {
-  width: 68px;
-  height: 2px;
-  background: rgba(255, 255, 255, .45);
-  border-radius: 2px;
-  transition: width .5s ease;
-}
-
-.cta:hover .ctaLine,
-.cta:focus-visible .ctaLine { width: 124px; }
-
-.ctaText {
-  max-width: 100%;
-  font-size: clamp(10px, 1.9cqi, 13px);
-  font-weight: 700;
-  letter-spacing: .24em;
-  text-transform: uppercase;
-  white-space: nowrap;
+@keyframes cyber-pulse {
+  0%, 100% {
+    text-shadow:
+      0 0 5px rgba(255, 0, 128, 1),
+      0 0 14px rgba(255, 0, 128, 0.65),
+      0 0 30px rgba(255, 0, 128, 0.28);
+  }
+  50% {
+    text-shadow:
+      0 0 8px rgba(255, 0, 128, 1),
+      0 0 22px rgba(255, 0, 128, 0.85),
+      0 0 48px rgba(255, 0, 128, 0.42);
+  }
 }
 
 /* ── Wall text LoginScene ────────────────────────────────────────────────── */
@@ -318,12 +272,12 @@
 .compact.login {
   background:
     linear-gradient(rgba(255,255,255,0.28), rgba(255,255,255,0.28)),
-    #f5f0e8 url('/brick-wall.jpg') center/cover no-repeat;
+    #f5f0e8 url('/brick-wall.jpg') center/auto repeat;
   isolation: isolate;
 }
 
 .compact.patron {
-  background: var(--cm-amber-strong-80-black);
+  background: #06060f;
 }
 
 .compact::before {
@@ -349,9 +303,7 @@
 }
 
 .compact.patron::before {
-  background:
-    radial-gradient(circle at 32% 24%, var(--chan-amber-bright), transparent 58%),
-    linear-gradient(135deg, var(--cm-amber-strong-62-black), var(--chan-amber));
+  background: radial-gradient(ellipse 130% 130% at 50% 50%, rgba(0, 240, 255, 0.12) 0%, transparent 65%);
 }
 
 .compactMark {
@@ -365,6 +317,32 @@
 }
 
 /* patron compact keeps white icon/label; login compact now uses image instead */
+
+.compactCyberLabel {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: clamp(9px, 10cqi, 13px);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+  color: #00f0ff;
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.9), 0 0 12px rgba(0, 240, 255, 0.4);
+}
+
+.compactCyberCountdown {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: clamp(8px, 9cqi, 12px);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: #ff0080;
+  text-shadow: 0 0 5px rgba(255, 0, 128, 0.9), 0 0 10px rgba(255, 0, 128, 0.4);
+}
 
 .compactMark svg {
   width: 100%;
@@ -405,37 +383,11 @@
   .ctaText { letter-spacing: .18em; }
 }
 
-/* Slow, mostly-horizontal cloud drift with a faint vertical bob. */
-@keyframes cloud-a {
-  0%, 100% { transform: translate(-6%, 0) scale(1); }
-  50% { transform: translate(9%, -2%) scale(1.06); }
-}
-
-@keyframes cloud-b {
-  0%, 100% { transform: translate(7%, 0) scale(1); }
-  50% { transform: translate(-10%, 2%) scale(1.08); }
-}
-
-@keyframes cloud-c {
-  0%, 100% { transform: translate(-3%, 0) scale(1); }
-  50% { transform: translate(8%, -1%) scale(1.05); }
-}
-
-@keyframes sheen-sweep {
-  0%, 100% { transform: translateX(-22%) rotate(0.001deg); }
-  50% { transform: translateX(22%) rotate(0.001deg); }
-}
 
 @media (prefers-reduced-motion: reduce) {
-  .aurora,
-  .blob1,
-  .blob2,
-  .blob3,
-  .sheen,
-  .mark,
-  .ctaLine,
-  .cta,
-  .graffitiImage {
+  .graffitiImage,
+  .cyberHeading,
+  .cyberCountdown {
     animation: none;
     transition: none;
   }
