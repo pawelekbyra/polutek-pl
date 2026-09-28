@@ -1,4 +1,4 @@
-.scene {
+﻿.scene {
   position: absolute;
   inset: 0;
   z-index: 50;
@@ -203,7 +203,7 @@
 }
 
 .graffitiText {
-  font-family: 'Helvetica Neue', Helvetica, 'Arial Narrow', Arial, sans-serif;
+  font-family: 'FloydTheWall', 'Helvetica Neue', Helvetica, sans-serif;
   font-size: clamp(1.5rem, 9cqi, 3.6rem);
   font-weight: 800;
   line-height: 1.08;
@@ -231,6 +231,9 @@
   }
 }
 
+.graffitiTextEn {
+  font-family: 'Floydian', 'Helvetica Neue', Helvetica, sans-serif;
+}
 .graffitiCta {
   display: inline-flex;
   flex-direction: column;
@@ -274,6 +277,33 @@
   white-space: nowrap;
 }
 
+
+/* ── Font-face declarations for overlay fonts ──────────────────────────────── */
+
+@font-face {
+  font-family: 'FloydTheWall';
+  src: url('/fonts/floyd-the-wall.ttf') format('truetype');
+  font-weight: 400;
+  font-display: block;
+}
+
+@font-face {
+  font-family: 'Floydian';
+  src: url('/fonts/floydian.ttf') format('truetype');
+  font-weight: 400;
+  font-display: block;
+}
+
+/* ── Clickable login overlay ──────────────────────────────────────────────── */
+
+.loginClickable {
+  cursor: pointer;
+}
+
+.loginClickable:focus-visible {
+  outline: 3px solid rgba(26, 16, 8, 0.5);
+  outline-offset: -3px;
+}
 @container (max-width: 420px) {
   .graffitiText { font-size: clamp(1.3rem, 11cqi, 2rem); }
 }

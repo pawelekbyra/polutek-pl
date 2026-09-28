@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useId, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
@@ -63,11 +63,21 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
     );
   }
 
+  const handleSignIn = () => openAuthModal("sign-in");
+
   return (
     <PlayerStateFrame className="rounded-[18px]">
       <section
-        className={cn(styles.scene, isComingSoon ? styles.patron : styles.login)}
+        className={cn(styles.scene, isComingSoon ? styles.patron : styles.login, !isComingSoon && styles.loginClickable)}
         aria-labelledby={titleId}
+        {...(!isComingSoon && {
+          role: "button",
+          tabIndex: 0,
+          onClick: handleSignIn,
+          onKeyDown: (e: React.KeyboardEvent) => {
+            if (e.key === "Enter" || e.key === " ") handleSignIn();
+          },
+        })}
       >
         {isComingSoon && (
           <>
@@ -92,7 +102,6 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             isPl={isPl}
             reduceMotion={Boolean(reduceMotion)}
             titleId={titleId}
-            onSignIn={() => openAuthModal("sign-in")}
           />
         )}
       </section>
@@ -104,37 +113,26 @@ function LoginScene({
   isPl,
   reduceMotion,
   titleId,
-  onSignIn,
 }: {
   isPl: boolean;
   reduceMotion: boolean;
   titleId: string;
-  onSignIn: () => void;
 }) {
   return (
     <div className={styles.graffitiContent}>
       <motion.h2
         id={titleId}
-        className={styles.graffitiText}
+        className={cn(styles.graffitiText, !isPl && styles.graffitiTextEn)}
         initial={reduceMotion ? false : { opacity: 0, scale: 0.88 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 160, damping: 18, delay: 0.05 }}
+        transition={
+          reduceMotion
+            ? { duration: 0 }
+            : { type: "spring", stiffness: 160, damping: 18, delay: 0.05 }
+        }
       >
-        {isPl ? "NIE MASZ PSYCHY SIĘ ZALOGOWAĆ" : "NO GUTS TO LOG IN"}
+        {isPl ? "NIE MASZ PSYCHY SIĘ ZALOGOWAĆ" : "YOU DON'T HAVE GUTS TO LOG IN"}
       </motion.h2>
-      <motion.button
-        type="button"
-        onClick={onSignIn}
-        className={styles.graffitiCta}
-        initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reduceMotion ? 0 : 0.4, delay: reduceMotion ? 0 : 0.35 }}
-      >
-        <span className={styles.graffitiCtaLine} aria-hidden="true" />
-        <span className={styles.graffitiCtaText}>
-          {isPl ? "Zaloguj się, aby obczaić" : "Sign in to keep watching"}
-        </span>
-      </motion.button>
     </div>
   );
 }
@@ -166,7 +164,7 @@ function ComingSoonScene({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.1 }}
         >
-          {isPl ? "Już" : "Coming"}
+          {isPl ? "Juu017c" : "Coming"}
         </motion.span>
         <motion.span
           className={styles.divider}
@@ -181,7 +179,7 @@ function ComingSoonScene({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.28 }}
         >
-          {isPl ? "wkrótce" : "soon"}
+          {isPl ? "wkru00f3tce" : "soon"}
         </motion.span>
       </h2>
       <motion.div
