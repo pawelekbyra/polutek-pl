@@ -282,7 +282,11 @@
 /* ── Clickable login overlay ──────────────────────────────────────────────── */
 
 .loginClickable {
-  cursor: pointer;
+  cursor: url('/cursor-hammer.svg') 5 14, pointer;
+}
+
+.loginClickable:active {
+  cursor: url('/cursor-hammer-tilt.svg') 5 14, pointer;
 }
 
 .loginClickable:focus-visible {

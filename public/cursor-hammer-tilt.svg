@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!-- Hammer rotated -70deg: swinging / mid-strike -->
+  <g transform="translate(16 16) rotate(-70) translate(-16 -16)">
+    <!-- Handle shadow -->
+    <rect x="13.5" y="10.5" width="5" height="19" rx="2.5" fill="rgba(0,0,0,0.22)"/>
+    <!-- Handle wood -->
+    <rect x="14" y="11" width="4" height="18" rx="2" fill="#9B6A42"/>
+    <!-- Handle grain highlight -->
+    <rect x="14.5" y="11.5" width="1.5" height="17" rx="0.75" fill="rgba(255,255,255,0.22)"/>
+    <!-- Handle dark side -->
+    <rect x="17" y="11" width="1" height="18" rx="0.5" fill="rgba(0,0,0,0.12)"/>
+    <!-- Head shadow -->
+    <rect x="8.5" y="3.5" width="15" height="9" rx="2.5" fill="rgba(0,0,0,0.28)"/>
+    <!-- Head steel body -->
+    <rect x="9" y="4" width="14" height="8" rx="2" fill="#5D5D5D"/>
+    <!-- Head top highlight -->
+    <rect x="9" y="4" width="14" height="2.5" rx="1.5" fill="#919191"/>
+    <!-- Head mid tone -->
+    <rect x="9" y="6.5" width="14" height="3" fill="#6A6A6A"/>
+    <!-- Head bottom strike face -->
+    <rect x="9" y="9.5" width="14" height="2.5" rx="0" fill="#454545"/>
+    <!-- Peen detail -->
+    <rect x="9" y="4" width="2.5" height="8" rx="1" fill="#474747"/>
+    <rect x="9.5" y="4.5" width="1" height="7" rx="0.5" fill="rgba(255,255,255,0.08)"/>
+  </g>
+</svg>
