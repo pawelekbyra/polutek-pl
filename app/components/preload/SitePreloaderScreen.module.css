@@ -14,29 +14,6 @@
   overscroll-behavior: none;
 }
 
-/* Immediate CSS-only scanlines — animate before the JS canvas hydrates so
-   there is visible motion from the very first frame. The canvas fades in on top. */
-.screen::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent 0px,
-    transparent 12px,
-    rgba(17, 24, 39, 0.045) 12px,
-    rgba(17, 24, 39, 0.045) 13px
-  );
-  background-size: 100% 13px;
-  animation: scanlines 3s linear infinite;
-  z-index: 0;
-}
-
-@keyframes scanlines {
-  from { background-position: 0 0; }
-  to   { background-position: 0 52px; }
-}
 
 /* Last-resort safety net: if JS never hydrates (or the reveal gate somehow never
    fires), the page underneath must not stay hidden forever. */

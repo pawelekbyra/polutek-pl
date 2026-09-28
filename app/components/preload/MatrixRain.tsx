@@ -158,9 +158,6 @@ export function MatrixRain() {
     // Draw one frame immediately so the canvas is never blank between mount and
     // the first RAF callback — prevents a single white/transparent flash.
     drawFrame();
-    // Fade the canvas in after the first frame is ready so it doesn't pop in
-    // abruptly over the CSS scanlines that were already running.
-    requestAnimationFrame(() => { canvas.style.opacity = "1"; });
     raf = requestAnimationFrame(tick);
 
     return () => {
@@ -174,15 +171,7 @@ export function MatrixRain() {
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      style={{
-        position: "absolute",
-        inset: 0,
-        width: "100%",
-        height: "100%",
-        opacity: 0,
-        transition: "opacity 600ms ease-in",
-        zIndex: 1,
-      }}
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
     />
   );
 }
