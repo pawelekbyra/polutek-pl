@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { formatPremiereDate } from "@/lib/temp-patron-coming-soon";
 import styles from "./CockpitComingSoon.module.css";
 import { PremieraLettering } from "./PremieraLettering";
+import { HudBackdrop } from "./HudBackdrop";
 
 type Star = { x: number; y: number; z: number; tint: string };
 
@@ -201,6 +202,7 @@ export function CockpitComingSoon({
       <div className={styles.nebula} aria-hidden="true" />
       <Warpfield still={reduceMotion} />
       <div className={styles.focus} aria-hidden="true" />
+      <HudBackdrop isPl={isPl} still={reduceMotion} />
       <div className={styles.glass} aria-hidden="true" />
       <div className={styles.scanlines} aria-hidden="true" />
 
@@ -227,16 +229,6 @@ export function CockpitComingSoon({
         >
           <PremieraLettering isPl={isPl} className={styles.headingMark} />
         </motion.h2>
-
-        <motion.div
-          className={styles.horizon}
-          aria-hidden="true"
-          {...(reduceMotion
-            ? { initial: false, transition: { duration: 0 } }
-            : { initial: { opacity: 0, scaleX: 0 }, animate: { opacity: 1, scaleX: 1 }, transition: { duration: 0.8, delay: 0.5 } })}
-        >
-          <span className={styles.scan} />
-        </motion.div>
 
         <motion.div className={styles.units} role="timer" aria-label={countdownLabel} {...enter(0.75)}>
           <span className={styles.tMinus} aria-hidden="true">T−</span>

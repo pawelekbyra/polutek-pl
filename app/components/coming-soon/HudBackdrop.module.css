@@ -1,0 +1,226 @@
+/*
+ * Hierarchy: the premiere readout is the only bright, sharp element. These planes are
+ * dimmed (plane opacity × element alpha ≈ 20–35 %), thin, and composited additively,
+ * so they read as ambient screen data. The far plane is also defocused for depth.
+ */
+
+.backdrop {
+  --px: 0;
+  --py: 0;
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.plane {
+  position: absolute;
+  inset: -14px;
+  width: calc(100% + 28px);
+  height: calc(100% + 28px);
+  transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+  will-change: transform;
+}
+
+.far {
+  opacity: 0.55;
+  filter: blur(0.8px);
+  transform: translate(calc(var(--px) * -9px), calc(var(--py) * -7px));
+}
+
+.mid {
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  transform: translate(calc(var(--px) * -4px), calc(var(--py) * -3px));
+}
+
+/* Power-on: each panel flickers on in turn, then settles. */
+.boot {
+  animation: bootOn 1.3s linear var(--boot, 0s) both;
+}
+
+@keyframes bootOn {
+  0% { opacity: 0; }
+  10% { opacity: 0.9; }
+  16% { opacity: 0.15; }
+  24% { opacity: 1; }
+  30% { opacity: 0.4; }
+  42%, 100% { opacity: 1; }
+}
+
+/* Far plane */
+
+.dot { fill: rgba(120, 222, 255, 0.1); }
+.farLine { fill: none; stroke: rgba(140, 225, 255, 0.16); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.farBright { fill: none; stroke: rgba(160, 235, 255, 0.28); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.farDash { fill: none; stroke: rgba(140, 225, 255, 0.14); stroke-width: 1; stroke-dasharray: 2 8; vector-effect: non-scaling-stroke; }
+
+/* Both ring groups are symmetric about their local origin, so the fill-box centre is the pivot. */
+.spinSlow,
+.spinReverse {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.spinSlow { animation: spin 140s linear infinite; }
+.spinReverse { animation: spin 90s linear infinite reverse; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Mid plane strokes */
+
+.line,
+.frame,
+.faint,
+.grid,
+.leader,
+.orbit,
+.orbitFaint,
+.route,
+.constellation,
+.wave {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.line { stroke: rgba(120, 222, 255, 0.45); stroke-width: 1; }
+.frame { stroke: rgba(170, 238, 255, 0.8); stroke-width: 1.2; }
+.faint { stroke: rgba(120, 222, 255, 0.25); stroke-width: 1; }
+.grid { stroke: rgba(120, 222, 255, 0.12); stroke-width: 1; }
+.leader { stroke: rgba(160, 235, 255, 0.55); stroke-width: 1; }
+.orbit { stroke: rgba(160, 235, 255, 0.7); stroke-width: 1.1; }
+.orbitFaint { stroke: rgba(120, 222, 255, 0.35); stroke-width: 1; stroke-dasharray: 3 6; }
+.route { stroke: rgba(255, 148, 66, 0.7); stroke-width: 1; stroke-dasharray: 4 5; }
+.constellation { stroke: rgba(160, 235, 255, 0.45); stroke-width: 1; }
+.wave { stroke: #a8f2ff; stroke-width: 1.2; }
+
+/* A short bright dash travelling along each trace (pathLength = 100). */
+.pulse {
+  fill: none;
+  stroke: #e0faff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 4 96;
+  animation: flow var(--d, 4s) linear var(--delay, 0s) infinite;
+}
+
+@keyframes flow {
+  from { stroke-dashoffset: 100; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Mid plane fills */
+
+.panelBg { fill: rgba(10, 28, 48, 0.5); }
+.node { fill: #b4f4ff; }
+.nodeRing { fill: none; stroke: rgba(160, 235, 255, 0.55); stroke-width: 1; }
+.amberFill { fill: #ff9442; }
+.star { fill: #e0faff; }
+.ship { fill: #ff9442; }
+.scanLine { fill: rgba(180, 240, 255, 0.7); }
+.sun { fill: #e0faff; }
+.sunHalo { fill: rgba(140, 225, 255, 0.45); }
+.planet { fill: #b4f4ff; }
+.planetAmber { fill: #ff9442; }
+.glyph { fill: rgba(140, 225, 255, 0.5); }
+.glyphDim { fill: rgba(140, 225, 255, 0.25); }
+.cellOn { fill: rgba(180, 242, 255, 0.9); }
+.cellOff { fill: rgba(120, 222, 255, 0.18); }
+.progressTrack { fill: rgba(120, 222, 255, 0.18); }
+.sweep { fill: rgba(140, 225, 255, 0.28); }
+
+.progressFill {
+  fill: rgba(180, 242, 255, 0.85);
+  transform-box: fill-box;
+  transform-origin: left center;
+  transition: transform 0.25s linear;
+}
+
+.bar {
+  fill: rgba(170, 238, 255, 0.7);
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: eq var(--d, 1.2s) ease-in-out var(--delay, 0s) infinite alternate;
+}
+
+@keyframes eq {
+  from { transform: scaleY(0.15); }
+  to { transform: scaleY(1); }
+}
+
+.blip {
+  fill: #ff9442;
+  opacity: 0;
+  animation: blip 1.4s ease-out both;
+}
+
+@keyframes blip {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Text */
+
+.txt {
+  font-family: "Oxanium HUD", var(--font-geist-mono), sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  fill: rgba(190, 242, 255, 0.95);
+}
+
+.txtHead { font-size: 15px; font-weight: 600; letter-spacing: 0.14em; }
+.txtSmall { font-size: 11px; letter-spacing: 0.16em; }
+.dim { fill: rgba(160, 230, 255, 0.6); }
+.amber { fill: #ff9442; }
+
+.mono {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  fill: rgba(160, 232, 255, 0.8);
+}
+
+/* Motion */
+
+.blink { animation: blink 2.4s steps(1) infinite; }
+.twinkle { animation: twinkle 3.2s ease-in-out infinite; }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+.paused,
+.paused * {
+  animation-play-state: paused !important;
+}
+
+/* On phones the panels would be unreadable specks: keep the reticle, dots and traces. */
+@container (max-width: 560px) {
+  .detail { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot,
+  .pulse,
+  .bar,
+  .blink,
+  .twinkle,
+  .blip,
+  .spinSlow,
+  .spinReverse {
+    animation: none;
+  }
+
+  .blip { opacity: 1; }
+}

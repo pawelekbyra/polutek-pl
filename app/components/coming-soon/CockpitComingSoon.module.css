@@ -75,6 +75,7 @@
   position: absolute;
   inset: 0;
   z-index: 1;
+  opacity: 0.5; /* the stars are depth behind the screen */
   width: 100%;
   height: 100%;
 }
@@ -154,54 +155,10 @@
 
 .headingMark {
   display: block;
-  width: clamp(170px, 60cqi, 600px);
+  width: clamp(170px, 48cqi, 600px);
   height: auto;
   overflow: visible;
   filter: drop-shadow(0 0 3px rgba(90, 215, 255, 0.6)) drop-shadow(0 0 12px rgba(40, 170, 255, 0.28));
-}
-
-/* Sensor strip between title and countdown: a dashed instrument line with end ticks
-   and a slow scanning glint, rather than a static divider graphic. */
-.horizon {
-  position: relative;
-  width: clamp(140px, 52cqi, 520px);
-  height: 9px;
-}
-
-.horizon::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 4px;
-  height: 1px;
-  background: repeating-linear-gradient(90deg, var(--hud-dim) 0 6px, transparent 6px 10px);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-          mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-}
-
-.horizon::after {
-  content: "";
-  position: absolute;
-  inset: 0 6%;
-  border-left: 1px solid var(--hud-dim);
-  border-right: 1px solid var(--hud-dim);
-}
-
-.scan {
-  position: absolute;
-  top: 3px;
-  left: 6%;
-  width: 18%;
-  height: 3px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, transparent, #d6f9ff 50%, transparent);
-  box-shadow: 0 0 10px rgba(90, 215, 255, 0.6);
-  animation: scanSweep 4.2s ease-in-out infinite alternate;
-}
-
-@keyframes scanSweep {
-  to { left: 76%; }
 }
 
 /* 7-segment readout (DSEG7). */
@@ -277,7 +234,7 @@
   border-radius: 0.14em;
   background: rgba(3, 12, 22, 0.78);
   box-shadow: inset 0 0 14px rgba(60, 190, 255, 0.1);
-  font-size: clamp(1.2rem, 5cqi, 3.3rem);
+  font-size: clamp(1.2rem, 4.4cqi, 3rem);
 }
 
 .sep {
@@ -285,7 +242,7 @@
   /* Matches the window's top padding + border so the colon centres on the digits. */
   padding: calc(0.2em + 1px) clamp(2px, 0.6cqi, 7px) 0;
   font-family: "DSEG7 HUD", var(--hud-font);
-  font-size: clamp(1.2rem, 5cqi, 3.3rem);
+  font-size: clamp(1.2rem, 4.4cqi, 3rem);
   font-weight: 700;
   line-height: 1;
   color: var(--seg-lit);
@@ -341,7 +298,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .nebula,
-  .scan,
   .sep,
   .caret {
     animation: none;
