@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Star, Rocket } from "lucide-react";
+import { Rocket } from "lucide-react";
 import type { PlaybackPlanStatus } from "@/lib/modules/playback";
 import { cn } from "@/lib/utils";
 import { formatPremiereCountdown } from "@/lib/temp-patron-coming-soon";
@@ -37,8 +37,29 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
   const countdownLabel = formatPremiereCountdown(isPl, undefined, countdownNow);
 
   if (isCompact) {
-    const label = isComingSoon ? countdownLabel : isPl ? "Zaloguj się" : "Sign in";
-    const Icon = isComingSoon ? Rocket : Star;
+    if (isComingSoon) {
+      return (
+        <PlayerStateFrame
+          fill
+          className={variant === "thumbnailCompact" ? "rounded-md" : "rounded-lg"}
+        >
+          <div
+            className={cn(
+              styles.compact,
+              styles.patron,
+              variant === "thumbnailCompact" && styles.compactTiny,
+            )}
+            role="img"
+            aria-label={countdownLabel}
+          >
+            <span className={styles.compactMark} aria-hidden="true">
+              <Rocket />
+            </span>
+            <span className={styles.compactLabel}>{countdownLabel}</span>
+          </div>
+        </PlayerStateFrame>
+      );
+    }
 
     return (
       <PlayerStateFrame
@@ -48,16 +69,18 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         <div
           className={cn(
             styles.compact,
-            isComingSoon ? styles.patron : styles.login,
+            styles.login,
             variant === "thumbnailCompact" && styles.compactTiny,
           )}
           role="img"
-          aria-label={label}
+          aria-label={isPl ? "Zaloguj się" : "Sign in"}
         >
-          <span className={styles.compactMark} aria-hidden="true">
-            <Icon />
-          </span>
-          <span className={styles.compactLabel}>{label}</span>
+          <img
+            src={isPl ? "/wall-login-pl.png" : "/wall-login-en.png"}
+            alt=""
+            className={styles.compactLoginImage}
+            draggable={false}
+          />
         </div>
       </PlayerStateFrame>
     );

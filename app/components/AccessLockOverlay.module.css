@@ -316,9 +316,7 @@
 }
 
 .compact.login {
-  background:
-    linear-gradient(rgba(255,255,255,0.28), rgba(255,255,255,0.28)),
-    #f5f0e8 url('/brick-wall.jpg') center/65% auto repeat;
+  background: #f5f0e8;
 }
 
 .compact.patron {
@@ -334,8 +332,17 @@
 }
 
 .compact.login::before {
-  /* No overlay — show the brick pattern directly */
   background: transparent;
+}
+
+.compactLoginImage {
+  width: 82%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  mix-blend-mode: multiply;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .compact.patron::before {
@@ -354,12 +361,7 @@
   color: #fff;
 }
 
-/* On the light brick wall the icon should be dark, not white */
-.compact.login .compactMark { color: #1a1008; }
-.compact.login .compactLabel {
-  color: #1a1008;
-  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.6);
-}
+/* patron compact keeps white icon/label; login compact now uses image instead */
 
 .compactMark svg {
   width: 100%;

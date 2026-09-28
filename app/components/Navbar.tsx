@@ -104,7 +104,16 @@ const Navbar = () => {
   const switchLanguage = (locale: Locale) => {
     if (locale === language) return;
     setLanguage(locale);
-    router.push(appendQueryString(switchLocalePath(pathname || "/", locale), searchParams));
+    const newPath = appendQueryString(switchLocalePath(pathname || "/", locale), searchParams);
+    // On the home page, avoid a server re-render (which triggers loading.tsx and flashes
+    // a blank screen). LanguageContext already updates all copy; history.replaceState updates
+    // the URL client-side without a navigation. Same pattern as video switching (CLAUDE.md §4.13).
+    const isHomePage = pathname === "/pl" || pathname === "/en" || pathname === "/";
+    if (isHomePage) {
+      window.history.replaceState(null, "", newPath);
+    } else {
+      router.push(newPath);
+    }
   };
 
   return (
