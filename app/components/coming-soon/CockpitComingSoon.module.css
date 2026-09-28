@@ -241,9 +241,55 @@
   color: var(--hud-dim);
 }
 
+/* Flight computer log, bottom-left of the canopy */
+
+.log {
+  position: absolute;
+  left: clamp(30px, 6.2cqi, 64px);
+  right: clamp(30px, 6.2cqi, 64px);
+  bottom: clamp(12px, 2.6cqi, 28px);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: var(--hud-mono);
+  font-size: clamp(8.5px, 1.35cqi, 12px);
+  letter-spacing: 0.08em;
+  color: var(--hud-dim);
+  pointer-events: none;
+}
+
+.logPrompt { color: var(--hud-accent); }
+
+.logLine {
+  display: inline-block;
+  overflow: hidden;
+  width: calc(var(--len) * (1ch + 0.08em));
+  max-width: 100%;
+  animation: typeIn 0.9s steps(var(--len)) both;
+}
+
+@keyframes typeIn {
+  from { width: 0; }
+}
+
+.caret {
+  color: var(--hud);
+  animation: pulse 1s steps(1) infinite;
+}
+
+/* Tiny players have no room for the log below the countdown. */
+@container (max-width: 420px) {
+  .log { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nebula,
-  .sep {
+  .sep,
+  .caret,
+  .logLine {
     animation: none;
   }
 }

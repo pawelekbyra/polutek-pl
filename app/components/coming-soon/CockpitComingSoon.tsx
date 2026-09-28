@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { formatPremiereDate } from "@/lib/temp-patron-coming-soon";
 import styles from "./CockpitComingSoon.module.css";
@@ -134,6 +134,33 @@ function Warpfield({ still }: { still: boolean }) {
   return <canvas ref={canvasRef} className={styles.warp} aria-hidden="true" />;
 }
 
+const LOG_LINES = {
+  pl: ["kurs ustalony: PREMIERA", "napęd nadświetlny stabilny", "osłony: 100%", "transmisja w przygotowaniu", "cel namierzony"],
+  en: ["course locked: PREMIERE", "hyperdrive stable", "shields: 100%", "transmission in preparation", "target acquired"],
+};
+
+function FlightLog({ isPl, still }: { isPl: boolean; still: boolean }) {
+  const lines = LOG_LINES[isPl ? "pl" : "en"];
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (still) return;
+    const id = setInterval(() => setIndex((i) => (i + 1) % lines.length), 3400);
+    return () => clearInterval(id);
+  }, [still, lines.length]);
+
+  const line = lines[index];
+  return (
+    <div className={styles.log} aria-hidden="true">
+      <span className={styles.logPrompt}>&gt;</span>
+      <span key={`${isPl}-${index}`} className={styles.logLine} style={{ "--len": line.length } as React.CSSProperties}>
+        {line}
+      </span>
+      <span className={styles.caret}>▍</span>
+    </div>
+  );
+}
+
 export function CockpitComingSoon({
   isPl,
   reduceMotion,
@@ -215,6 +242,8 @@ export function CockpitComingSoon({
           ))}
         </motion.div>
       </div>
+
+      <FlightLog isPl={isPl} still={reduceMotion} />
     </div>
   );
 }
