@@ -265,7 +265,7 @@ export function CockpitComingSoon({
 
       <div className={styles.content}>
         <motion.span className={styles.kicker} aria-hidden="true" {...enter(0.1)}>
-          {isPl ? "// transmisja przychodząca" : "// incoming transmission"}
+          {premiereDate}
         </motion.span>
 
         <motion.h2
@@ -279,7 +279,7 @@ export function CockpitComingSoon({
                 transition: { duration: 1.1, delay: 0.2, ease: EASE },
               })}
         >
-          {isPl ? "JUŻ WKRÓTCE" : "COMING SOON"}
+          {isPl ? "PREMIERA" : "PREMIERE"}
         </motion.h2>
 
         <motion.div
