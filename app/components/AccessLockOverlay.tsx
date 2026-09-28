@@ -120,10 +120,12 @@ function LoginScene({
 }) {
   return (
     <div className={styles.graffitiContent}>
-      <motion.h2
+      <motion.div
         id={titleId}
-        className={styles.graffitiText}
-        initial={reduceMotion ? false : { opacity: 0, scale: 0.88 }}
+        role="img"
+        aria-label={isPl ? "Nie masz psychy sie zalogowac" : "You don't have guts to log in"}
+        className={styles.graffitiImageWrap}
+        initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={
           reduceMotion
@@ -131,8 +133,13 @@ function LoginScene({
             : { type: "spring", stiffness: 160, damping: 18, delay: 0.05 }
         }
       >
-        {isPl ? "NIE MASZ PSYCHY SIĘ ZALOGOWAĆ" : "YOU DON'T HAVE GUTS TO LOG IN"}
-      </motion.h2>
+        <img
+          src={isPl ? "/wall-text-pl.png" : "/wall-text-en.png"}
+          alt=""
+          className={styles.graffitiImage}
+          draggable={false}
+        />
+      </motion.div>
     </div>
   );
 }
