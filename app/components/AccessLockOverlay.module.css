@@ -316,7 +316,10 @@
 }
 
 .compact.login {
-  background: #f5f0e8;
+  background:
+    linear-gradient(rgba(255,255,255,0.28), rgba(255,255,255,0.28)),
+    #f5f0e8 url('/brick-wall.jpg') center/180px auto repeat;
+  isolation: isolate;
 }
 
 .compact.patron {
@@ -340,6 +343,7 @@
   max-width: 100%;
   height: auto;
   display: block;
+  mix-blend-mode: multiply;
   user-select: none;
   -webkit-user-drag: none;
 }
