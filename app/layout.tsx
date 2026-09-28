@@ -42,6 +42,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       suppressHydrationWarning
       data-build-id={buildId}
       className={`${geistSans.variable} ${geistMono.variable} ${brandLogoFont.variable}`}
+      style={{ background: "#f7f9fc" }}
     >
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
