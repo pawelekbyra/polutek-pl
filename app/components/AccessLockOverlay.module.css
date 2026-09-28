@@ -11,16 +11,8 @@
 }
 
 .scene.login {
-  background: #1a1209 url('/brick-wall.jpg') center/cover no-repeat;
-}
-
-/* Dark tint so graffiti text stays readable over varied brick tones. */
-.scene.login::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.42);
-  z-index: 0;
+  /* Tile the bricks at a natural scale instead of stretching one tile to fill */
+  background: #f5f0e8 url('/brick-wall.jpg') center/40% auto repeat;
 }
 
 .scene.patron {
@@ -198,7 +190,7 @@
   white-space: nowrap;
 }
 
-/* ── Graffiti LoginScene ─────────────────────────────────────────────────── */
+/* ── Wall text LoginScene ────────────────────────────────────────────────── */
 
 .graffitiContent {
   position: relative;
@@ -208,26 +200,24 @@
   align-items: center;
   text-align: center;
   padding: clamp(16px, 4cqi, 28px);
-  gap: clamp(14px, 4cqi, 28px);
+  gap: clamp(12px, 3cqi, 22px);
 }
 
 .graffitiText {
-  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', Arial, sans-serif;
-  font-size: clamp(1.9rem, 13cqi, 5.2rem);
-  font-weight: 900;
-  line-height: 1.0;
-  letter-spacing: 0.03em;
+  /* Clean, readable sans-serif — like text painted on a wall */
+  font-family: 'Helvetica Neue', Helvetica, 'Arial Narrow', Arial, sans-serif;
+  font-size: clamp(1.5rem, 9cqi, 3.6rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
   text-wrap: balance;
-  /* Spray-paint white with thick black outline and orange glow */
-  color: #fff;
-  -webkit-text-stroke: clamp(2px, 0.7cqi, 4px) #0a0a0a;
+  color: #1a1008;
+  /* Subtle depth: bright edge top-left, shadow bottom-right — "painted on" */
   text-shadow:
-    0 0 18px rgba(255, 140, 0, 0.55),
-    0 0 40px rgba(255, 90, 0, 0.28),
-    3px 3px 0 rgba(0, 0, 0, 0.7),
-    -1px -1px 0 rgba(0, 0, 0, 0.5);
-  transform: rotate(-2.5deg) skewX(-1.5deg);
+    -1px -1px 0 rgba(255, 255, 255, 0.55),
+    2px 2px 5px rgba(0, 0, 0, 0.18);
+  transform: rotate(-1.2deg);
   display: block;
 }
 
@@ -239,17 +229,17 @@
   border: 0;
   background: none;
   padding: 0;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(26, 16, 8, 0.55);
   font: inherit;
   cursor: pointer;
   transition: color 0.3s ease;
 }
 
 .graffitiCta:hover,
-.graffitiCta:focus-visible { color: #fff; }
+.graffitiCta:focus-visible { color: #1a1008; }
 
 .graffitiCta:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline: 2px solid rgba(26, 16, 8, 0.5);
   outline-offset: 4px;
   border-radius: 4px;
 }
@@ -257,7 +247,7 @@
 .graffitiCtaLine {
   width: 68px;
   height: 2px;
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(26, 16, 8, 0.28);
   border-radius: 2px;
   transition: width 0.5s ease;
 }
@@ -268,14 +258,14 @@
 .graffitiCtaText {
   max-width: 100%;
   font-size: clamp(10px, 1.9cqi, 13px);
-  font-weight: 800;
-  letter-spacing: 0.24em;
+  font-weight: 700;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 @container (max-width: 420px) {
-  .graffitiText { font-size: clamp(1.5rem, 14cqi, 2.2rem); }
+  .graffitiText { font-size: clamp(1.3rem, 11cqi, 2rem); }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -295,7 +285,7 @@
 }
 
 .compact.login {
-  background: var(--cm-blue-80-black);
+  background: #f5f0e8 url('/brick-wall.jpg') center/cover no-repeat;
 }
 
 .compact.patron {
@@ -311,9 +301,8 @@
 }
 
 .compact.login::before {
-  background:
-    radial-gradient(circle at 32% 26%, var(--cm-blue-55-white), transparent 60%),
-    linear-gradient(135deg, var(--cm-blue-65-black), var(--chan-blue));
+  /* Subtle bright vignette so icon/label stay readable on the light brick */
+  background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.55), transparent 75%);
 }
 
 .compact.patron::before {
@@ -330,6 +319,13 @@
   aspect-ratio: 1;
   place-items: center;
   color: #fff;
+}
+
+/* On the light brick wall the icon should be dark, not white */
+.compact.login .compactMark { color: #1a1008; }
+.compact.login .compactLabel {
+  color: #1a1008;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.6);
 }
 
 .compactMark svg {
