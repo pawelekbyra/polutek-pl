@@ -159,6 +159,13 @@
   height: auto;
   overflow: visible;
   filter: drop-shadow(0 0 3px rgba(90, 215, 255, 0.6)) drop-shadow(0 0 12px rgba(40, 170, 255, 0.28));
+  transition: filter 1.4s ease-out;
+}
+
+/* Target lock: the title flares for a moment when the reticle snaps onto it. */
+.headingLock .headingMark {
+  filter: drop-shadow(0 0 4px rgba(170, 240, 255, 0.95)) drop-shadow(0 0 22px rgba(60, 190, 255, 0.6));
+  transition: filter 0.08s ease-out;
 }
 
 /* 7-segment readout (DSEG7). */
@@ -263,7 +270,7 @@
 .log {
   position: absolute;
   left: clamp(30px, 6.2cqi, 64px);
-  right: clamp(30px, 6.2cqi, 64px);
+  right: clamp(120px, 22cqi, 260px);
   bottom: clamp(12px, 2.6cqi, 28px);
   z-index: 5;
   display: flex;
@@ -291,6 +298,73 @@
   animation: pulse 1s steps(1) infinite;
 }
 
+/* Sound toggle, bottom-right of the canopy — the one interactive control on the screen. */
+
+.sound {
+  position: absolute;
+  right: clamp(30px, 6.2cqi, 64px);
+  bottom: clamp(8px, 2.2cqi, 24px);
+  z-index: 7;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7em;
+  padding: 0.45em 0.7em;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--hud-dim);
+  font-family: var(--hud-font);
+  font-size: clamp(8.5px, 1.3cqi, 12px);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.sound:hover,
+.sound:focus-visible {
+  color: var(--hud);
+  border-color: var(--hud-faint);
+}
+
+.sound:focus-visible {
+  outline: 1px solid var(--hud);
+  outline-offset: 2px;
+}
+
+.soundBars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 0.95em;
+}
+
+.soundBars i {
+  display: block;
+  width: 2px;
+  height: 30%;
+  background: currentColor;
+}
+
+.soundLive i {
+  animation: soundBar 0.9s ease-in-out infinite alternate;
+}
+
+.soundLive i:nth-child(2) { animation-delay: -0.3s; }
+.soundLive i:nth-child(3) { animation-delay: -0.6s; }
+.soundLive i:nth-child(4) { animation-delay: -0.15s; }
+
+@keyframes soundBar {
+  from { height: 25%; }
+  to { height: 100%; }
+}
+
+.paused,
+.paused * {
+  animation-play-state: paused !important;
+}
+
 /* Tiny players have no room for the log below the countdown. */
 @container (max-width: 420px) {
   .log { display: none; }
@@ -299,7 +373,8 @@
 @media (prefers-reduced-motion: reduce) {
   .nebula,
   .sep,
-  .caret {
+  .caret,
+  .soundLive i {
     animation: none;
   }
 }
