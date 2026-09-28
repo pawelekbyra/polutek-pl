@@ -142,20 +142,30 @@ const LOG_LINES = {
 function FlightLog({ isPl, still }: { isPl: boolean; still: boolean }) {
   const lines = LOG_LINES[isPl ? "pl" : "en"];
   const [index, setIndex] = useState(0);
+  const [typed, setTyped] = useState(still ? Infinity : 0);
 
   useEffect(() => {
     if (still) return;
-    const id = setInterval(() => setIndex((i) => (i + 1) % lines.length), 3400);
+    const id = setInterval(() => {
+      setIndex((i) => (i + 1) % lines.length);
+      setTyped(0);
+    }, 3400);
     return () => clearInterval(id);
   }, [still, lines.length]);
 
   const line = lines[index];
+
+  // Typed in JS rather than a CSS width animation: the HUD font is proportional.
+  useEffect(() => {
+    if (still || typed >= line.length) return;
+    const id = setTimeout(() => setTyped((n) => n + 1), 38);
+    return () => clearTimeout(id);
+  }, [still, typed, line.length]);
+
   return (
     <div className={styles.log} aria-hidden="true">
       <span className={styles.logPrompt}>&gt;</span>
-      <span key={`${isPl}-${index}`} className={styles.logLine} style={{ "--len": line.length } as React.CSSProperties}>
-        {line}
-      </span>
+      <span className={styles.logLine}>{line.slice(0, typed)}</span>
       <span className={styles.caret}>▍</span>
     </div>
   );

@@ -211,26 +211,29 @@
 
 /* Premiere compact thumbnail: a static patch of deep space */
 
+/* "Oxanium HUD" is declared in coming-soon/CockpitComingSoon.module.css. */
 .compactPremiereLabel {
   position: relative;
   z-index: 1;
-  padding-left: 0.28em;
-  font-size: clamp(9px, 10cqi, 14px);
+  padding-left: 0.2em;
+  font-family: "Oxanium HUD", var(--font-geist-mono), monospace;
+  font-size: clamp(10px, 11cqi, 16px);
   font-weight: 600;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.2em;
   text-align: center;
-  color: #f5f9ff;
-  text-shadow: 0 0 10px rgba(150, 190, 255, 0.55);
+  color: #c4f6ff;
+  text-shadow: 0 0 5px rgba(90, 215, 255, 0.9), 0 0 14px rgba(40, 170, 255, 0.55);
 }
 
 .compactPremiereDate {
   position: relative;
   z-index: 1;
-  font-family: var(--font-geist-mono), monospace;
+  font-family: "Oxanium HUD", var(--font-geist-mono), monospace;
   font-size: clamp(8px, 8.5cqi, 12px);
-  letter-spacing: 0.12em;
-  font-variant-numeric: tabular-nums;
-  color: var(--chan-amber-bright, #fbbf24);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: #ff9442;
+  text-shadow: 0 0 6px rgba(255, 140, 60, 0.7);
 }
 
 .compactMark svg {
