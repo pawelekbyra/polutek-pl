@@ -426,7 +426,7 @@
   font-size: clamp(1.4rem, 5.6cqi, 3.7rem);
   font-weight: 300;
   line-height: 1;
-  color: var(--hud-faint);
+  color: var(--hud-dim);
   animation: pulse 2s steps(1) infinite;
 }
 
