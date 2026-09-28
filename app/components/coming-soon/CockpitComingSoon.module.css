@@ -245,7 +245,7 @@
   background-repeat: repeat-y;
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 25%, #000 75%, transparent);
           mask-image: linear-gradient(to bottom, transparent, #000 25%, #000 75%, transparent);
-  animation: tapeScroll 0.9s linear infinite;
+  animation: tapeScroll 2.6s linear infinite;
 }
 
 .tapeRight .tapeScale {
@@ -254,7 +254,7 @@
   background-position: 0 0, left 0;
 }
 
-.tapeScaleUp { animation-direction: reverse; animation-duration: 2.4s; }
+.tapeScaleUp { animation-direction: reverse; animation-duration: 6s; }
 
 @keyframes tapeScroll {
   to { background-position: 0 12px, right 4px; }

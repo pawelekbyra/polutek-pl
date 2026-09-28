@@ -62,7 +62,7 @@ function Warpfield({ still, readoutRef }: { still: boolean; readoutRef: React.Re
       for (const star of stars) {
         const sx = cx + (star.x / star.z) * s;
         const sy = cy + (star.y / star.z) * s;
-        const tailZ = Math.min(1, star.z + speed * 0.07);
+        const tailZ = Math.min(1, star.z + speed * 0.18);
         const px = cx + (star.x / tailZ) * s;
         const py = cy + (star.y / tailZ) * s;
         const near = 1 - star.z;
@@ -97,7 +97,7 @@ function Warpfield({ still, readoutRef }: { still: boolean; readoutRef: React.Re
 
       // Slow throttle surges so the flight breathes instead of running at a flat speed.
       const surge = 0.5 + 0.5 * Math.sin(t * 0.32) * Math.sin(t * 0.11 + 1.3);
-      const speed = 0.42 + surge * 0.55;
+      const speed = 0.12 + surge * 0.16;
 
       for (const star of stars) {
         star.z -= speed * dt;
@@ -111,7 +111,7 @@ function Warpfield({ still, readoutRef }: { still: boolean; readoutRef: React.Re
 
       if (readoutRef.current && now - lastReadout > 140) {
         lastReadout = now;
-        readoutRef.current.textContent = (6.2 + speed * 3.6).toFixed(2);
+        readoutRef.current.textContent = (1.5 + speed * 12).toFixed(2);
       }
     };
 
@@ -120,7 +120,7 @@ function Warpfield({ still, readoutRef }: { still: boolean; readoutRef: React.Re
     ro.observe(canvas);
 
     if (still) {
-      draw(0.12);
+      draw(0.05);
       return () => ro.disconnect();
     }
 
@@ -257,7 +257,7 @@ export function CockpitComingSoon({
         <span className={styles.tapeScale} />
         <span className={styles.tapeReadout}>
           <span className={styles.tapeLabel}>WARP</span>
-          <span ref={readoutRef} className={styles.tapeValue}>8.40</span>
+          <span ref={readoutRef} className={styles.tapeValue}>3.20</span>
         </span>
       </div>
       <div className={`${styles.tape} ${styles.tapeRight}`} aria-hidden="true">
