@@ -11,8 +11,16 @@
 }
 
 .scene.login {
-  /* Main login-overlay background, per owner request. */
-  background: #1e3a8a;
+  background: #1a1209 url('/brick-wall.jpg') center/cover no-repeat;
+}
+
+/* Dark tint so graffiti text stays readable over varied brick tones. */
+.scene.login::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+  z-index: 0;
 }
 
 .scene.patron {
@@ -189,6 +197,88 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
+
+/* ── Graffiti LoginScene ─────────────────────────────────────────────────── */
+
+.graffitiContent {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: clamp(16px, 4cqi, 28px);
+  gap: clamp(14px, 4cqi, 28px);
+}
+
+.graffitiText {
+  font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', Arial, sans-serif;
+  font-size: clamp(1.9rem, 13cqi, 5.2rem);
+  font-weight: 900;
+  line-height: 1.0;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  /* Spray-paint white with thick black outline and orange glow */
+  color: #fff;
+  -webkit-text-stroke: clamp(2px, 0.7cqi, 4px) #0a0a0a;
+  text-shadow:
+    0 0 18px rgba(255, 140, 0, 0.55),
+    0 0 40px rgba(255, 90, 0, 0.28),
+    3px 3px 0 rgba(0, 0, 0, 0.7),
+    -1px -1px 0 rgba(0, 0, 0, 0.5);
+  transform: rotate(-2.5deg) skewX(-1.5deg);
+  display: block;
+}
+
+.graffitiCta {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font: inherit;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.graffitiCta:hover,
+.graffitiCta:focus-visible { color: #fff; }
+
+.graffitiCta:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.graffitiCtaLine {
+  width: 68px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.graffitiCta:hover .graffitiCtaLine,
+.graffitiCta:focus-visible .graffitiCtaLine { width: 124px; }
+
+.graffitiCtaText {
+  max-width: 100%;
+  font-size: clamp(10px, 1.9cqi, 13px);
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@container (max-width: 420px) {
+  .graffitiText { font-size: clamp(1.5rem, 14cqi, 2.2rem); }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
 
 .compact {
   position: absolute;

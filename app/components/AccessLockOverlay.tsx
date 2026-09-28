@@ -69,13 +69,17 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         className={cn(styles.scene, isComingSoon ? styles.patron : styles.login)}
         aria-labelledby={titleId}
       >
-        <div className={styles.aurora} aria-hidden="true">
-          <span className={styles.blob1} />
-          <span className={styles.blob2} />
-          <span className={styles.blob3} />
-        </div>
-        <span className={styles.sheen} aria-hidden="true" />
-        <span className={styles.noise} aria-hidden="true" />
+        {isComingSoon && (
+          <>
+            <div className={styles.aurora} aria-hidden="true">
+              <span className={styles.blob1} />
+              <span className={styles.blob2} />
+              <span className={styles.blob3} />
+            </div>
+            <span className={styles.sheen} aria-hidden="true" />
+            <span className={styles.noise} aria-hidden="true" />
+          </>
+        )}
         {isComingSoon ? (
           <ComingSoonScene
             isPl={isPl}
@@ -108,49 +112,26 @@ function LoginScene({
   onSignIn: () => void;
 }) {
   return (
-    <div className={styles.content}>
-      <motion.div
-        initial={reduceMotion ? false : { opacity: 0, scale: 0.6, rotate: -10 }}
-        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-        transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 210, damping: 16 }}
+    <div className={styles.graffitiContent}>
+      <motion.h2
+        id={titleId}
+        className={styles.graffitiText}
+        initial={reduceMotion ? false : { opacity: 0, scale: 0.88, rotate: -4 }}
+        animate={{ opacity: 1, scale: 1, rotate: -2.5 }}
+        transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 160, damping: 18, delay: 0.05 }}
       >
-        <Star aria-hidden="true" className={styles.mark} />
-      </motion.div>
-      <h2 id={titleId} className={styles.heading}>
-        <motion.span
-          className={cn(styles.word, styles.wordWhite)}
-          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.1 }}
-        >
-          {isPl ? "Strefa" : "Signed"}
-        </motion.span>
-        <motion.span
-          className={styles.divider}
-          aria-hidden="true"
-          initial={reduceMotion ? false : { scaleX: 0, opacity: 0 }}
-          animate={{ scaleX: 1, opacity: 1 }}
-          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.22 }}
-        />
-        <motion.span
-          className={cn(styles.word, styles.wordBlue)}
-          initial={reduceMotion ? false : { opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.28 }}
-        >
-          {isPl ? "Zalogowanych" : "In"}
-        </motion.span>
-      </h2>
+        {isPl ? "NIE MASZ PSYCHY SIĘ ZALOGOWAĆ" : "NO GUTS TO LOG IN"}
+      </motion.h2>
       <motion.button
         type="button"
         onClick={onSignIn}
-        className={styles.cta}
-        initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+        className={styles.graffitiCta}
+        initial={reduceMotion ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reduceMotion ? 0 : 0.4, delay: reduceMotion ? 0 : 0.44 }}
+        transition={{ duration: reduceMotion ? 0 : 0.4, delay: reduceMotion ? 0 : 0.35 }}
       >
-        <span className={styles.ctaLine} aria-hidden="true" />
-        <span className={styles.ctaText}>
+        <span className={styles.graffitiCtaLine} aria-hidden="true" />
+        <span className={styles.graffitiCtaText}>
           {isPl ? "Zaloguj się, aby obczaić" : "Sign in to keep watching"}
         </span>
       </motion.button>
