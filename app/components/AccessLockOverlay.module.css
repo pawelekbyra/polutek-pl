@@ -28,9 +28,9 @@
   pointer-events: none;
 }
 
-/* Matrix rain */
+/* Space flight background */
 
-.matrixRainWrap {
+.spaceBg {
   position: absolute;
   inset: 0;
   overflow: hidden;
@@ -38,26 +38,27 @@
   z-index: 0;
 }
 
-.matrixCol {
+.spaceStar {
   position: absolute;
-  top: 0;
-  transform: translate(-50%, -100%);
-  white-space: pre-line;
-  text-align: center;
-  line-height: 1.1;
-  font-family: var(--font-geist-mono), ui-monospace, monospace;
-  color: #39ff6a;
-  text-shadow: 0 0 6px #39ff6a;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 75%);
-          mask-image: linear-gradient(to bottom, transparent 0%, #000 75%);
-  animation-name: matrixFall;
+  top: 50%;
+  left: 50%;
+  width: var(--sz);
+  height: var(--sz);
+  margin-left: calc(var(--sz) / -2);
+  margin-top: calc(var(--sz) / -2);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 2px rgba(180, 210, 255, 0.7);
+  animation-name: spaceWarp;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
 }
 
-@keyframes matrixFall {
-  from { transform: translate(-50%, -100%); }
-  to   { transform: translate(-50%, 100cqb); }
+@keyframes spaceWarp {
+  0%   { transform: translate(var(--sx), var(--sy)) scale(0.2); opacity: 0; }
+  12%  { opacity: 0.9; }
+  85%  { opacity: 0.85; }
+  100% { transform: translate(var(--ex), var(--ey)) scale(2); opacity: 0; }
 }
 
 /* Matrix overlay layers */
@@ -457,8 +458,14 @@
 @media (prefers-reduced-motion: reduce) {
   .graffitiImage,
   .matrixHeading,
-  .matrixBlink {
+  .matrixBlink,
+  .spaceStar {
     animation: none;
     transition: none;
+  }
+
+  .spaceStar {
+    opacity: 0.4;
+    transform: translate(calc((var(--sx) + var(--ex)) / 2), calc((var(--sy) + var(--ey)) / 2)) scale(1);
   }
 }

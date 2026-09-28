@@ -1,7 +1,7 @@
 'use client';
 
 import { logger } from "@/lib/logger";
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { APP_NAME } from '@/lib/constants';
 
 type Language = 'pl' | 'en';
@@ -35,29 +35,43 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode; initialLang
   // so we start from that value: correct first paint, no hydration mismatch.
   const [language, setLanguageState] = useState<Language>(forcedLanguage ?? initialLanguage ?? "pl");
   const [isInitialized, setIsInitialized] = useState(false);
+  // Ref avoids stale-closure issues: tracks whether the effect has already run once,
+  // so subsequent re-runs (e.g. when UrlMask clears the locale from the URL, changing
+  // forcedLanguage from "en"/"pl" to undefined) don't revert the user's choice.
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     const routeOrInitialLanguage = forcedLanguage ?? initialLanguage;
     if (routeOrInitialLanguage) {
-      // Mirror the server decision into cookie + localStorage so client reads and the next
-      // SSR pass agree, and so a logged-out choice survives future visits.
-      persistLanguage(routeOrInitialLanguage);
-      setLanguageState(routeOrInitialLanguage);
-      document.documentElement.lang = routeOrInitialLanguage;
-      setIsInitialized(true);
+      // On first mount: always apply the server/route decision.
+      // After that: only apply when forcedLanguage is explicitly set (real locale prefix
+      // in the URL). If forcedLanguage dropped to undefined (URL masked to "/"), skip the
+      // state update so the user's explicit language choice is not overwritten.
+      if (!initializedRef.current || forcedLanguage != null) {
+        persistLanguage(routeOrInitialLanguage);
+        setLanguageState(routeOrInitialLanguage);
+        document.documentElement.lang = routeOrInitialLanguage;
+      }
+      if (!initializedRef.current) {
+        initializedRef.current = true;
+        setIsInitialized(true);
+      }
       return;
     }
 
     // Fallback for when no server value was provided: prior client-only detection.
-    const saved = localStorage.getItem('app-language');
-    if (saved === 'pl' || saved === 'en') {
-      setLanguageState(saved as Language);
-    } else if (navigator.language.startsWith('pl')) {
-      setLanguageState('pl');
-    } else {
-      setLanguageState('en');
+    if (!initializedRef.current) {
+      const saved = localStorage.getItem('app-language');
+      if (saved === 'pl' || saved === 'en') {
+        setLanguageState(saved as Language);
+      } else if (navigator.language.startsWith('pl')) {
+        setLanguageState('pl');
+      } else {
+        setLanguageState('en');
+      }
+      initializedRef.current = true;
+      setIsInitialized(true);
     }
-    setIsInitialized(true);
   }, [initialLanguage, forcedLanguage]);
 
   const setLanguage = useCallback(async (lang: Language, skipSync: boolean = false) => {

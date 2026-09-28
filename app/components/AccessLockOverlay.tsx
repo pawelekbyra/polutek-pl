@@ -18,31 +18,37 @@ interface AccessLockOverlayProps {
   variant: "default" | "thumbnail" | "thumbnailCompact";
 }
 
-const GLYPHS = "ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789ZXCV:=+*<>";
-
-function MatrixRain({ columns = 28, seed = 7 }: { columns?: number; seed?: number }) {
-  const cols = useMemo(() => {
+function SpaceFlightBg({ count = 80, seed = 13 }: { count?: number; seed?: number }) {
+  const stars = useMemo(() => {
     let s = seed;
     const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
-    return Array.from({ length: columns }, (_, i) => {
-      const len = 10 + Math.floor(rnd() * 20);
-      const text = Array.from({ length: len }, () => GLYPHS[Math.floor(rnd() * GLYPHS.length)]).join("\n");
+    return Array.from({ length: count }, (_, i) => {
+      const angle = rnd() * Math.PI * 2;
+      const dx = Math.cos(angle);
+      const dy = Math.sin(angle);
+      const startR = 1 + rnd() * 4;
+      const endR = 65 + rnd() * 50;
       return {
         key: i,
-        text,
-        left: `${((i + 0.5) / columns) * 100}%`,
-        fontSize: `${13 + Math.floor(rnd() * 6)}px`,
-        opacity: +(0.28 + rnd() * 0.5).toFixed(2),
-        animationDuration: `${(5.5 + rnd() * 10).toFixed(2)}s`,
-        animationDelay: `${(-rnd() * 16).toFixed(2)}s`,
+        sx: `${(dx * startR).toFixed(2)}cqi`,
+        sy: `${(dy * startR).toFixed(2)}cqi`,
+        ex: `${(dx * endR).toFixed(2)}cqi`,
+        ey: `${(dy * endR).toFixed(2)}cqi`,
+        sz: `${(0.5 + rnd() * 1.8).toFixed(1)}px`,
+        animationDuration: `${(4 + rnd() * 11).toFixed(2)}s`,
+        animationDelay: `${(-rnd() * 14).toFixed(2)}s`,
       };
     });
-  }, [columns, seed]);
+  }, [count, seed]);
 
   return (
-    <div className={styles.matrixRainWrap} aria-hidden="true">
-      {cols.map(({ key, text, ...style }) => (
-        <span key={key} className={styles.matrixCol} style={style}>{text}</span>
+    <div className={styles.spaceBg} aria-hidden="true">
+      {stars.map(({ key, sx, sy, ex, ey, sz, animationDuration, animationDelay }) => (
+        <span
+          key={key}
+          className={styles.spaceStar}
+          style={{ '--sx': sx, '--sy': sy, '--ex': ex, '--ey': ey, '--sz': sz, animationDuration, animationDelay } as React.CSSProperties}
+        />
       ))}
     </div>
   );
@@ -219,7 +225,7 @@ function ComingSoonScene({
 
   return (
     <>
-      {!reduceMotion && <MatrixRain columns={28} />}
+      {!reduceMotion && <SpaceFlightBg count={80} />}
 
       <div className={styles.matrixVignette} aria-hidden="true" />
       <div className={styles.matrixScanlines} aria-hidden="true" />
