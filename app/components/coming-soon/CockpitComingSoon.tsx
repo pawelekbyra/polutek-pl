@@ -135,13 +135,13 @@ function Warpfield({ still }: { still: boolean }) {
 }
 
 /**
- * Segment-display text: the lit characters drawn over their unlit segments, like a real
- * LCD/LED readout. DSEG draws every segment for "8" (7-segment) and "~" (14-segment).
+ * 7-segment readout: the lit digits drawn over their unlit segments, like a real LCD.
+ * DSEG7 draws every segment for "8".
  */
-function Segments({ text, kind, className }: { text: string; kind: 7 | 14; className?: string }) {
-  const ghost = kind === 7 ? text.replace(/[0-9]/g, "8") : text.replace(/[A-Z0-9]/g, "~");
+function Segments({ text, className }: { text: string; className?: string }) {
+  const ghost = text.replace(/[0-9]/g, "8");
   return (
-    <span className={`${styles.seg} ${kind === 7 ? styles.seg7 : styles.seg14} ${className ?? ""}`}>
+    <span className={`${styles.seg} ${className ?? ""}`}>
       <span className={styles.segGhost} aria-hidden="true">{ghost}</span>
       <span className={styles.segLit}>{text}</span>
     </span>
@@ -220,7 +220,7 @@ export function CockpitComingSoon({
 
       <div className={styles.content}>
         <motion.span className={styles.date} {...enter(0.1)}>
-          <Segments text={premiereDate} kind={7} />
+          <Segments text={premiereDate} />
         </motion.span>
 
         <motion.h2
@@ -234,7 +234,7 @@ export function CockpitComingSoon({
                 transition: { duration: 1.1, delay: 0.2, ease: EASE },
               })}
         >
-          <Segments text={isPl ? "PREMIERA" : "PREMIERE"} kind={14} />
+          {isPl ? "PREMIERA" : "PREMIERE"}
         </motion.h2>
 
         <motion.div
@@ -259,7 +259,7 @@ export function CockpitComingSoon({
             <span key={unitLabels[i]} className={styles.unitGroup} aria-hidden="true">
               {i > 0 && <span className={styles.sep}>:</span>}
               <span className={styles.unit}>
-                <Segments text={value} kind={7} className={styles.unitValue} />
+                <Segments text={value} className={styles.unitValue} />
                 <span className={styles.unitLabel}>{unitLabels[i]}</span>
               </span>
             </span>

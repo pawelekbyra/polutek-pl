@@ -211,14 +211,15 @@
 
 /* Premiere compact thumbnail: a static patch of deep space */
 
-/* "DSEG7 HUD", "DSEG14 HUD" and "Oxanium HUD" are declared in coming-soon/CockpitComingSoon.module.css. */
+/* "DSEG7 HUD" and "Oxanium HUD" are declared in coming-soon/CockpitComingSoon.module.css. */
 .compactPremiereLabel {
   position: relative;
   z-index: 1;
-  font-family: "DSEG14 HUD", "Oxanium HUD", sans-serif;
+  padding-left: 0.16em;
+  font-family: "Oxanium HUD", sans-serif;
   font-size: clamp(10px, 11cqi, 16px);
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-weight: 600;
+  letter-spacing: 0.16em;
   text-align: center;
   color: #9ff0ff;
   text-shadow: 0 0 4px rgba(90, 215, 255, 0.55), 0 0 12px rgba(40, 170, 255, 0.25);

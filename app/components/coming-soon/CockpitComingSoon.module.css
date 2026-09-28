@@ -18,19 +18,11 @@
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
-/* DSEG (SIL OFL, app/fonts/OFL-dseg.txt): real 7- and 14-segment display faces.
-   Digits/latin only — the Polish flight log and small labels stay in Oxanium. */
+/* DSEG7 (SIL OFL, app/fonts/OFL-dseg.txt): a real 7-segment display face for the
+   date and countdown. Digits only — the title, labels and flight log use Oxanium. */
 @font-face {
   font-family: "DSEG7 HUD";
   src: url("../../fonts/dseg7-classic-bold.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "DSEG14 HUD";
-  src: url("../../fonts/dseg14-classic-bold.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -158,9 +150,13 @@
 
 .heading {
   margin: 0;
-  font-size: clamp(1.5rem, 8.4cqi, 5.2rem);
-  font-weight: 700;
+  padding-left: 0.16em; /* optically recentres the trailing letter-spacing */
+  font-size: clamp(1.5rem, 8cqi, 5rem);
+  font-weight: 600;
   line-height: 1;
+  letter-spacing: 0.16em;
+  color: var(--seg-lit);
+  text-shadow: var(--seg-glow);
 }
 
 .horizon {
@@ -202,10 +198,11 @@
   box-shadow: 0 0 6px rgba(90, 215, 255, 0.7);
 }
 
-/* Segment display: unlit segments underneath, lit characters on top. */
+/* 7-segment readout: unlit segments underneath, lit digits on top. */
 
 .seg {
   display: inline-grid;
+  font-family: "DSEG7 HUD", var(--hud-font);
   font-weight: 700;
   font-style: normal;
   line-height: 1;
@@ -213,8 +210,6 @@
   white-space: pre;
 }
 
-.seg7 { font-family: "DSEG7 HUD", var(--hud-font); }
-.seg14 { font-family: "DSEG14 HUD", var(--hud-font); }
 
 .segGhost,
 .segLit {
