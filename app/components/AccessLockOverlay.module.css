@@ -1,4 +1,4 @@
-﻿.scene {
+.scene {
   position: absolute;
   inset: 0;
   z-index: 50;
@@ -17,11 +17,7 @@
 }
 
 .scene.patron {
-  background:
-    radial-gradient(ellipse 90% 70% at 50% 45%, rgba(0, 240, 255, 0.07) 0%, transparent 65%),
-    radial-gradient(ellipse 45% 45% at 12% 88%, rgba(255, 0, 128, 0.08) 0%, transparent 55%),
-    radial-gradient(ellipse 45% 45% at 88% 12%, rgba(255, 0, 128, 0.08) 0%, transparent 55%),
-    #06060f;
+  background: #000;
 }
 
 .scene::after {
@@ -32,120 +28,196 @@
   pointer-events: none;
 }
 
-/* ── Cyberpunk scanlines + grid (rendered when isComingSoon) ─────────────── */
+/* Matrix rain */
 
-.cyberScanlines {
+.matrixRainWrap {
   position: absolute;
   inset: 0;
-  background-image: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 240, 255, 0.022) 2px,
-    rgba(0, 240, 255, 0.022) 3px
-  );
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.matrixCol {
+  position: absolute;
+  top: 0;
+  transform: translate(-50%, -100%);
+  white-space: pre-line;
+  text-align: center;
+  line-height: 1.1;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  color: #39ff6a;
+  text-shadow: 0 0 6px #39ff6a;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 75%);
+          mask-image: linear-gradient(to bottom, transparent 0%, #000 75%);
+  animation-name: matrixFall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes matrixFall {
+  from { transform: translate(-50%, -100%); }
+  to   { transform: translate(-50%, 100cqb); }
+}
+
+/* Matrix overlay layers */
+
+.matrixVignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(0,0,0,.88) 0%, rgba(0,0,0,.6) 55%, transparent 100%);
   pointer-events: none;
   z-index: 1;
 }
 
-.cyberGrid {
+.matrixScanlines {
   position: absolute;
   inset: 0;
-  background-image:
-    linear-gradient(rgba(0, 240, 255, 0.038) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.038) 1px, transparent 1px);
-  background-size: clamp(28px, 7cqi, 56px) clamp(28px, 7cqi, 56px);
+  background-image: repeating-linear-gradient(0deg, rgba(0,0,0,.32) 0 1px, transparent 1px 3px);
   pointer-events: none;
   z-index: 1;
 }
 
-.noise {
+/* Matrix top and bottom bars */
+
+.matrixTopBar,
+.matrixBottomBar {
   position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, .04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, .03) 1px, transparent 1px);
-  background-size: 30px 30px;
-  mask-image: radial-gradient(circle, black, transparent 80%);
-  -webkit-mask-image: radial-gradient(circle, black, transparent 80%);
-  opacity: .4;
+  left: clamp(14px, 4cqi, 48px);
+  right: clamp(14px, 4cqi, 48px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 3;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: clamp(10px, 1.8cqi, 14px);
+  letter-spacing: 0.14em;
+  color: rgba(57, 255, 106, 0.6);
 }
 
-/* ── Cyberpunk ComingSoonScene content ───────────────────────────────────── */
+.matrixTopBar { top: clamp(12px, 2.5cqi, 28px); }
+.matrixBottomBar { bottom: clamp(12px, 2.5cqi, 28px); }
 
-.cyberContent {
+.matrixBadge {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.matrixBlink {
+  animation: matrixBlink 1s steps(1) infinite;
+  color: #39ff6a;
+}
+
+@keyframes matrixBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.matrixAccent { color: #39ff6a; }
+
+/* Matrix main content */
+
+.matrixContent {
   position: relative;
   z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: clamp(16px, 4cqi, 32px);
-  gap: clamp(10px, 2.5cqi, 22px);
+  gap: clamp(10px, 2.5cqi, 28px);
+  padding: clamp(16px, 4cqi, 40px);
 }
 
-.cyberHeading {
+.matrixKicker {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: clamp(10px, 1.6cqi, 14px);
+  letter-spacing: 0.28em;
+  color: rgba(57, 255, 106, 0.45);
+}
+
+.matrixHeading {
   margin: 0;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: clamp(1.1rem, 7cqi, 3rem);
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #00f0ff;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-weight: 400;
+  font-size: clamp(1.4rem, 9cqi, 5rem);
+  letter-spacing: 0.12em;
+  line-height: 1;
+  color: #eafff0;
   text-shadow:
-    0 0 6px rgba(0, 240, 255, 1),
-    0 0 18px rgba(0, 240, 255, 0.65),
-    0 0 40px rgba(0, 240, 255, 0.28);
-  animation: cyber-flicker 7s ease-in-out infinite;
+    0 0 8px #39ff6a,
+    0 0 28px #39ff6a,
+    0 0 60px rgba(57, 255, 106, 0.35);
+  animation: matrixGlitch 5s linear 1s infinite;
 }
 
-.cyberLine {
+.matrixLine {
   display: block;
-  width: clamp(56px, 18cqi, 180px);
+  width: clamp(60px, 60cqi, 480px);
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, #00f0ff 35%, #ff0080 65%, transparent 100%);
-  box-shadow: 0 0 7px rgba(0, 240, 255, 0.55), 0 0 14px rgba(255, 0, 128, 0.3);
+  background: linear-gradient(90deg, transparent, #39ff6a, transparent);
+  box-shadow: 0 0 12px #39ff6a;
   transform-origin: center;
 }
 
-.cyberCountdown {
-  margin: 0;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: clamp(0.85rem, 5cqi, 2rem);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: #ff0080;
-  text-shadow:
-    0 0 5px rgba(255, 0, 128, 1),
-    0 0 14px rgba(255, 0, 128, 0.65),
-    0 0 30px rgba(255, 0, 128, 0.28);
-  animation: cyber-pulse 3s ease-in-out infinite;
+/* Matrix countdown units */
+
+.matrixUnits {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(4px, 1.5cqi, 16px);
 }
 
-@keyframes cyber-flicker {
-  0%, 93%, 95.5%, 98%, 100% { opacity: 1; }
-  94%   { opacity: 0.72; }
-  95%   { opacity: 0.9; }
-  97%   { opacity: 0.78; }
-  99%   { opacity: 0.85; }
+.matrixUnitWrap {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(4px, 1.5cqi, 14px);
 }
 
-@keyframes cyber-pulse {
-  0%, 100% {
-    text-shadow:
-      0 0 5px rgba(255, 0, 128, 1),
-      0 0 14px rgba(255, 0, 128, 0.65),
-      0 0 30px rgba(255, 0, 128, 0.28);
-  }
-  50% {
-    text-shadow:
-      0 0 8px rgba(255, 0, 128, 1),
-      0 0 22px rgba(255, 0, 128, 0.85),
-      0 0 48px rgba(255, 0, 128, 0.42);
-  }
+.matrixUnit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(4px, 1cqi, 8px);
+  min-width: clamp(36px, 8cqi, 96px);
 }
 
-/* ── Wall text LoginScene ────────────────────────────────────────────────── */
+.matrixUnitValue {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: clamp(1.5rem, 6cqi, 4rem);
+  font-weight: 400;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #39ff6a;
+  text-shadow: 0 0 14px #39ff6a, 0 0 28px rgba(57, 255, 106, 0.5);
+}
+
+.matrixSep {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: clamp(1.5rem, 6cqi, 4rem);
+  line-height: 1;
+  color: rgba(57, 255, 106, 0.45);
+  align-self: flex-start;
+  padding-top: 2px;
+}
+
+.matrixUnitLabel {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: clamp(8px, 1.3cqi, 12px);
+  letter-spacing: 0.28em;
+  color: rgba(57, 255, 106, 0.45);
+}
+
+@keyframes matrixGlitch {
+  0%, 92%, 100% { transform: translate(0, 0); filter: none; }
+  93% { transform: translate(-3px, 1px); filter: hue-rotate(90deg); }
+  95% { transform: translate(2px, -1px); }
+  97% { transform: translate(-2px, 0); filter: hue-rotate(-30deg); }
+}
+
+/* Wall text LoginScene */
 
 .graffitiContent {
   position: relative;
@@ -233,9 +305,7 @@
   white-space: nowrap;
 }
 
-
-
-/* ── Clickable login overlay ──────────────────────────────────────────────── */
+/* Clickable login overlay */
 
 .loginClickable {
   cursor: url('/cursor-hammer.svg') 5 14, pointer;
@@ -253,7 +323,7 @@
   .graffitiText { font-size: clamp(1.3rem, 11cqi, 2rem); }
 }
 
-/* ─────────────────────────────────────────────────────────────────────────── */
+/* Compact overlay */
 
 .compact {
   position: absolute;
@@ -277,7 +347,7 @@
 }
 
 .compact.patron {
-  background: #06060f;
+  background: #000;
 }
 
 .compact::before {
@@ -303,7 +373,7 @@
 }
 
 .compact.patron::before {
-  background: radial-gradient(ellipse 130% 130% at 50% 50%, rgba(0, 240, 255, 0.12) 0%, transparent 65%);
+  background: radial-gradient(ellipse 130% 130% at 50% 50%, rgba(57, 255, 106, 0.1) 0%, transparent 65%);
 }
 
 .compactMark {
@@ -316,9 +386,9 @@
   color: #fff;
 }
 
-/* patron compact keeps white icon/label; login compact now uses image instead */
+/* Matrix compact labels */
 
-.compactCyberLabel {
+.compactMatrixLabel {
   position: relative;
   z-index: 1;
   font-family: var(--font-geist-mono), monospace;
@@ -327,11 +397,11 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   text-align: center;
-  color: #00f0ff;
-  text-shadow: 0 0 6px rgba(0, 240, 255, 0.9), 0 0 12px rgba(0, 240, 255, 0.4);
+  color: #39ff6a;
+  text-shadow: 0 0 6px rgba(57, 255, 106, 0.9), 0 0 12px rgba(57, 255, 106, 0.4);
 }
 
-.compactCyberCountdown {
+.compactMatrixCountdown {
   position: relative;
   z-index: 1;
   font-family: var(--font-geist-mono), monospace;
@@ -340,8 +410,8 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-align: center;
-  color: #ff0080;
-  text-shadow: 0 0 5px rgba(255, 0, 128, 0.9), 0 0 10px rgba(255, 0, 128, 0.4);
+  color: rgba(57, 255, 106, 0.75);
+  text-shadow: 0 0 5px rgba(57, 255, 106, 0.6);
 }
 
 .compactMark svg {
@@ -386,8 +456,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .graffitiImage,
-  .cyberHeading,
-  .cyberCountdown {
+  .matrixHeading,
+  .matrixBlink {
     animation: none;
     transition: none;
   }
