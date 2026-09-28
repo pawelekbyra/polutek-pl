@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { PlaybackPlanStatus } from "@/lib/modules/playback";
 import { cn } from "@/lib/utils";
-import { PATRON_COMING_SOON_TARGET, formatPremiereCountdown } from "@/lib/temp-patron-coming-soon";
+import { PATRON_COMING_SOON_TARGET, formatPremiereCountdown, formatPremiereDate } from "@/lib/temp-patron-coming-soon";
+import { CockpitComingSoon } from "./coming-soon/CockpitComingSoon";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import { useLanguage } from "./LanguageContext";
 import { PlayerStateFrame } from "./PlayerStateFrame";
@@ -16,42 +17,6 @@ type AccessLockState = Extract<PlaybackPlanStatus, "LOGIN_REQUIRED"> | "COMING_S
 interface AccessLockOverlayProps {
   state: AccessLockState;
   variant: "default" | "thumbnail" | "thumbnailCompact";
-}
-
-function SpaceFlightBg({ count = 80, seed = 13 }: { count?: number; seed?: number }) {
-  const stars = useMemo(() => {
-    let s = seed;
-    const rnd = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
-    return Array.from({ length: count }, (_, i) => {
-      const angle = rnd() * Math.PI * 2;
-      const dx = Math.cos(angle);
-      const dy = Math.sin(angle);
-      const startR = 1 + rnd() * 4;
-      const endR = 65 + rnd() * 50;
-      return {
-        key: i,
-        sx: `${(dx * startR).toFixed(2)}cqi`,
-        sy: `${(dy * startR).toFixed(2)}cqi`,
-        ex: `${(dx * endR).toFixed(2)}cqi`,
-        ey: `${(dy * endR).toFixed(2)}cqi`,
-        sz: `${(0.5 + rnd() * 1.8).toFixed(1)}px`,
-        animationDuration: `${(1.5 + rnd() * 3.5).toFixed(2)}s`,
-        animationDelay: `${(-rnd() * 5).toFixed(2)}s`,
-      };
-    });
-  }, [count, seed]);
-
-  return (
-    <div className={styles.spaceBg} aria-hidden="true">
-      {stars.map(({ key, sx, sy, ex, ey, sz, animationDuration, animationDelay }) => (
-        <span
-          key={key}
-          className={styles.spaceStar}
-          style={{ '--sx': sx, '--sy': sy, '--ex': ex, '--ey': ey, '--sz': sz, animationDuration, animationDelay } as React.CSSProperties}
-        />
-      ))}
-    </div>
-  );
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -100,8 +65,8 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             role="img"
             aria-label={countdownLabel}
           >
-            <span className={styles.compactMatrixLabel} aria-hidden="true">PREMIERA</span>
-            <span className={styles.compactMatrixCountdown}>1.01.2027</span>
+            <span className={styles.compactPremiereLabel} aria-hidden="true">PREMIERA</span>
+            <span className={styles.compactPremiereDate} aria-hidden="true">{formatPremiereDate()}</span>
           </div>
         </PlayerStateFrame>
       );
@@ -149,13 +114,12 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
         })}
       >
         {isComingSoon ? (
-          <ComingSoonScene
+          <CockpitComingSoon
             isPl={isPl}
             reduceMotion={Boolean(reduceMotion)}
             titleId={titleId}
             units={units}
             countdownLabel={countdownLabel}
-            target={PATRON_COMING_SOON_TARGET}
           />
         ) : (
           <LoginScene
@@ -201,89 +165,6 @@ function LoginScene({
         />
       </motion.div>
     </div>
-  );
-}
-
-function ComingSoonScene({
-  isPl,
-  reduceMotion,
-  titleId,
-  units,
-  countdownLabel,
-  target,
-}: {
-  isPl: boolean;
-  reduceMotion: boolean;
-  titleId: string;
-  units: string[];
-  countdownLabel: string;
-  target: Date;
-}) {
-  const pad2 = (n: number) => String(n).padStart(2, "0");
-  const dateLabel = `${target.getFullYear()}.${pad2(target.getMonth() + 1)}.${pad2(target.getDate())}`;
-  const unitLabels = isPl ? ["DNI", "GODZ", "MIN", "SEK"] : ["DAYS", "HRS", "MIN", "SEC"];
-
-  return (
-    <>
-      {!reduceMotion && <SpaceFlightBg count={200} />}
-
-      <div className={styles.matrixVignette} aria-hidden="true" />
-      <div className={styles.matrixScanlines} aria-hidden="true" />
-
-      <header className={styles.matrixTopBar} aria-hidden="true">
-        <span className={styles.matrixBadge}>
-          {isPl ? "> połączenie ustanowione" : "> connection established"}
-          <span className={styles.matrixBlink}> █</span>
-        </span>
-      </header>
-
-      <div className={styles.matrixContent}>
-        <span className={styles.matrixKicker} aria-hidden="true">
-          // {isPl ? "inicjalizacja systemu" : "system initializing"}
-        </span>
-
-        <motion.h2
-          id={titleId}
-          className={styles.matrixHeading}
-          initial={reduceMotion ? false : { opacity: 0, filter: "blur(6px)", letterSpacing: "0.35em" }}
-          animate={{ opacity: 1, filter: "blur(0px)", letterSpacing: "0.12em" }}
-          transition={{ duration: reduceMotion ? 0 : 0.9, ease: "easeOut" }}
-        >
-          {isPl ? "JUŻ WKRÓTCE" : "COMING SOON"}
-        </motion.h2>
-
-        <motion.span
-          className={styles.matrixLine}
-          aria-hidden="true"
-          initial={reduceMotion ? false : { scaleX: 0, opacity: 0 }}
-          animate={{ scaleX: 1, opacity: 1 }}
-          transition={{ duration: reduceMotion ? 0 : 0.7, delay: reduceMotion ? 0 : 0.3 }}
-        />
-
-        <motion.div
-          className={styles.matrixUnits}
-          initial={reduceMotion ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: reduceMotion ? 0 : 0.5, delay: reduceMotion ? 0 : 0.55 }}
-          aria-label={countdownLabel}
-        >
-          {units.map((val, i) => (
-            <span key={i} className={styles.matrixUnitWrap} aria-hidden="true">
-              <span className={styles.matrixUnit}>
-                <span className={styles.matrixUnitValue}>{val}</span>
-                <span className={styles.matrixUnitLabel}>{unitLabels[i]}</span>
-              </span>
-              {i < units.length - 1 && <span className={styles.matrixSep}>:</span>}
-            </span>
-          ))}
-        </motion.div>
-      </div>
-
-      <footer className={styles.matrixBottomBar} aria-hidden="true">
-        <span>&gt; T-MINUS // {dateLabel}</span>
-        <span>STATUS: <span className={styles.matrixAccent}>{isPl ? "ŁADOWANIE" : "LOADING"}</span></span>
-      </footer>
-    </>
   );
 }
 

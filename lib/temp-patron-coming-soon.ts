@@ -17,7 +17,17 @@ export const TEMP_PATRON_COMING_SOON = true;
  * This is not a real per-video premiere date (no such field exists yet) —
  * update this constant whenever the actual premiere date changes.
  */
-export const PATRON_COMING_SOON_TARGET = new Date("2026-09-26T07:00:00.000Z");
+// 1 January 2027, 00:00 Europe/Warsaw (CET, UTC+1).
+export const PATRON_COMING_SOON_TARGET = new Date("2026-12-31T23:00:00.000Z");
+
+export function formatPremiereDate(target: Date = PATRON_COMING_SOON_TARGET): string {
+  return new Intl.DateTimeFormat("pl-PL", {
+    timeZone: "Europe/Warsaw",
+    day: "numeric",
+    month: "2-digit",
+    year: "numeric",
+  }).format(target);
+}
 
 export function formatPremiereCountdown(
   isPl: boolean,
