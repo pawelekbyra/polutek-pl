@@ -11,7 +11,9 @@
 }
 
 .scene.login {
-  background: #f5f0e8 url('/brick-wall.jpg') center/65% auto repeat;
+  background:
+    linear-gradient(rgba(255,255,255,0.28), rgba(255,255,255,0.28)),
+    #f5f0e8 url('/brick-wall.jpg') center/65% auto repeat;
 }
 
 .scene.patron {
@@ -314,7 +316,9 @@
 }
 
 .compact.login {
-  background: #f5f0e8 url('/brick-wall.jpg') center/65% auto repeat;
+  background:
+    linear-gradient(rgba(255,255,255,0.28), rgba(255,255,255,0.28)),
+    #f5f0e8 url('/brick-wall.jpg') center/65% auto repeat;
 }
 
 .compact.patron {
