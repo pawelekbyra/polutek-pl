@@ -134,18 +134,8 @@ function Warpfield({ still }: { still: boolean }) {
   return <canvas ref={canvasRef} className={styles.warp} aria-hidden="true" />;
 }
 
-/**
- * 7-segment readout: the lit digits drawn over their unlit segments, like a real LCD.
- * DSEG7 draws every segment for "8".
- */
 function Segments({ text, className }: { text: string; className?: string }) {
-  const ghost = text.replace(/[0-9]/g, "8");
-  return (
-    <span className={`${styles.seg} ${className ?? ""}`}>
-      <span className={styles.segGhost} aria-hidden="true">{ghost}</span>
-      <span className={styles.segLit}>{text}</span>
-    </span>
-  );
+  return <span className={`${styles.seg} ${className ?? ""}`}>{text}</span>;
 }
 
 const LOG_LINES = {
