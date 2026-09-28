@@ -234,13 +234,7 @@ export function CockpitComingSoon({
             ? { initial: false, transition: { duration: 0 } }
             : { initial: { opacity: 0, scaleX: 0 }, animate: { opacity: 1, scaleX: 1 }, transition: { duration: 0.8, delay: 0.5 } })}
         >
-          <span className={styles.horizonLine} />
-          <span className={styles.marker}>
-            <span className={styles.markerWing} />
-            <span className={styles.markerBody} />
-            <span className={styles.markerWing} />
-          </span>
-          <span className={styles.horizonLine} />
+          <span className={styles.scan} />
         </motion.div>
 
         <motion.div className={styles.units} role="timer" aria-label={countdownLabel} {...enter(0.75)}>
