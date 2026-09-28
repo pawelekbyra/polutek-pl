@@ -148,13 +148,16 @@
 
 .heading {
   margin: 0;
-  padding-left: 0.16em; /* optically recentres the trailing letter-spacing */
-  font-size: clamp(1.5rem, 8cqi, 5rem);
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: 0.16em;
+  line-height: 0;
   color: var(--seg-lit);
-  text-shadow: var(--seg-glow);
+}
+
+.headingMark {
+  display: block;
+  width: clamp(170px, 60cqi, 600px);
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 0 3px rgba(90, 215, 255, 0.6)) drop-shadow(0 0 12px rgba(40, 170, 255, 0.28));
 }
 
 /* Sensor strip between title and countdown: a dashed instrument line with end ticks

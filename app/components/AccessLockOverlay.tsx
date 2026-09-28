@@ -6,6 +6,7 @@ import type { PlaybackPlanStatus } from "@/lib/modules/playback";
 import { cn } from "@/lib/utils";
 import { PATRON_COMING_SOON_TARGET, formatPremiereCountdown, formatPremiereDate } from "@/lib/temp-patron-coming-soon";
 import { CockpitComingSoon } from "./coming-soon/CockpitComingSoon";
+import { PremieraLettering } from "./coming-soon/PremieraLettering";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import { useLanguage } from "./LanguageContext";
 import { PlayerStateFrame } from "./PlayerStateFrame";
@@ -65,7 +66,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             role="img"
             aria-label={countdownLabel}
           >
-            <span className={styles.compactPremiereLabel} aria-hidden="true">PREMIERA</span>
+            <PremieraLettering isPl={isPl} className={styles.compactPremiereLabel} />
             <span className={styles.compactPremiereDate} aria-hidden="true">{formatPremiereDate()}</span>
           </div>
         </PlayerStateFrame>

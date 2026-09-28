@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { formatPremiereDate } from "@/lib/temp-patron-coming-soon";
 import styles from "./CockpitComingSoon.module.css";
+import { PremieraLettering } from "./PremieraLettering";
 
 type Star = { x: number; y: number; z: number; tint: string };
 
@@ -224,7 +225,7 @@ export function CockpitComingSoon({
                 transition: { duration: 1.1, delay: 0.2, ease: EASE },
               })}
         >
-          {isPl ? "PREMIERA" : "PREMIERE"}
+          <PremieraLettering isPl={isPl} className={styles.headingMark} />
         </motion.h2>
 
         <motion.div

@@ -215,14 +215,12 @@
 .compactPremiereLabel {
   position: relative;
   z-index: 1;
-  padding-left: 0.16em;
-  font-family: "Oxanium HUD", sans-serif;
-  font-size: clamp(10px, 11cqi, 16px);
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-align: center;
+  display: block;
+  width: 72%;
+  height: auto;
+  overflow: visible;
   color: #9ff0ff;
-  text-shadow: 0 0 4px rgba(90, 215, 255, 0.55), 0 0 12px rgba(40, 170, 255, 0.25);
+  filter: drop-shadow(0 0 2px rgba(90, 215, 255, 0.6)) drop-shadow(0 0 8px rgba(40, 170, 255, 0.25));
 }
 
 .compactPremiereDate {
