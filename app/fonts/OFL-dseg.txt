@@ -1,4 +1,6 @@
-Copyright 2018 The Orbitron Project Authors (https://github.com/theleagueof/orbitron), with Reserved Font Name: "Orbitron"
+Copyright (c) 2017, keshikan (http://www.keshikan.net),
+with Reserved Font Name "DSEG".
+
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:

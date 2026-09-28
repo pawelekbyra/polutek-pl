@@ -134,6 +134,20 @@ function Warpfield({ still }: { still: boolean }) {
   return <canvas ref={canvasRef} className={styles.warp} aria-hidden="true" />;
 }
 
+/**
+ * Segment-display text: the lit characters drawn over their unlit segments, like a real
+ * LCD/LED readout. DSEG draws every segment for "8" (7-segment) and "~" (14-segment).
+ */
+function Segments({ text, kind, className }: { text: string; kind: 7 | 14; className?: string }) {
+  const ghost = kind === 7 ? text.replace(/[0-9]/g, "8") : text.replace(/[A-Z0-9]/g, "~");
+  return (
+    <span className={`${styles.seg} ${kind === 7 ? styles.seg7 : styles.seg14} ${className ?? ""}`}>
+      <span className={styles.segGhost} aria-hidden="true">{ghost}</span>
+      <span className={styles.segLit}>{text}</span>
+    </span>
+  );
+}
+
 const LOG_LINES = {
   pl: ["kurs ustalony: PREMIERA", "napęd nadświetlny stabilny", "osłony: 100%", "transmisja w przygotowaniu", "cel namierzony"],
   en: ["course locked: PREMIERE", "hyperdrive stable", "shields: 100%", "transmission in preparation", "target acquired"],
@@ -206,7 +220,7 @@ export function CockpitComingSoon({
 
       <div className={styles.content}>
         <motion.span className={styles.date} {...enter(0.1)}>
-          {premiereDate}
+          <Segments text={premiereDate} kind={7} />
         </motion.span>
 
         <motion.h2
@@ -215,12 +229,12 @@ export function CockpitComingSoon({
           {...(reduceMotion
             ? { initial: false, transition: { duration: 0 } }
             : {
-                initial: { opacity: 0, letterSpacing: "0.4em", filter: "blur(8px)" },
-                animate: { opacity: 1, letterSpacing: "0.08em", filter: "blur(0px)" },
+                initial: { opacity: 0, filter: "blur(6px)" },
+                animate: { opacity: 1, filter: "blur(0px)" },
                 transition: { duration: 1.1, delay: 0.2, ease: EASE },
               })}
         >
-          {isPl ? "PREMIERA" : "PREMIERE"}
+          <Segments text={isPl ? "PREMIERA" : "PREMIERE"} kind={14} />
         </motion.h2>
 
         <motion.div
@@ -245,7 +259,7 @@ export function CockpitComingSoon({
             <span key={unitLabels[i]} className={styles.unitGroup} aria-hidden="true">
               {i > 0 && <span className={styles.sep}>:</span>}
               <span className={styles.unit}>
-                <span className={styles.unitValue}>{value}</span>
+                <Segments text={value} kind={7} className={styles.unitValue} />
                 <span className={styles.unitLabel}>{unitLabels[i]}</span>
               </span>
             </span>
