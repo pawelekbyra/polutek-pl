@@ -35,8 +35,8 @@ function SpaceFlightBg({ count = 80, seed = 13 }: { count?: number; seed?: numbe
         ex: `${(dx * endR).toFixed(2)}cqi`,
         ey: `${(dy * endR).toFixed(2)}cqi`,
         sz: `${(0.5 + rnd() * 1.8).toFixed(1)}px`,
-        animationDuration: `${(4 + rnd() * 11).toFixed(2)}s`,
-        animationDelay: `${(-rnd() * 14).toFixed(2)}s`,
+        animationDuration: `${(1.5 + rnd() * 3.5).toFixed(2)}s`,
+        animationDelay: `${(-rnd() * 5).toFixed(2)}s`,
       };
     });
   }, [count, seed]);
@@ -225,7 +225,7 @@ function ComingSoonScene({
 
   return (
     <>
-      {!reduceMotion && <SpaceFlightBg count={80} />}
+      {!reduceMotion && <SpaceFlightBg count={200} />}
 
       <div className={styles.matrixVignette} aria-hidden="true" />
       <div className={styles.matrixScanlines} aria-hidden="true" />
