@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { formatPremiereDate } from "@/lib/temp-patron-coming-soon";
 import styles from "./CockpitComingSoon.module.css";
 import { PremieraLettering } from "./PremieraLettering";
+import { HudBackdrop } from "./HudBackdrop";
 
 type Star = { x: number; y: number; z: number; tint: string };
 
@@ -201,6 +202,7 @@ export function CockpitComingSoon({
       <div className={styles.nebula} aria-hidden="true" />
       <Warpfield still={reduceMotion} />
       <div className={styles.focus} aria-hidden="true" />
+      <HudBackdrop isPl={isPl} still={reduceMotion} />
       <div className={styles.glass} aria-hidden="true" />
       <div className={styles.scanlines} aria-hidden="true" />
 
