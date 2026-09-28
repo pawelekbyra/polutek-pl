@@ -299,12 +299,14 @@ export function CockpitComingSoon({
         </motion.div>
 
         <motion.div className={styles.units} role="timer" aria-label={countdownLabel} {...enter(0.75)}>
+          <span className={styles.tMinus} aria-hidden="true">T−</span>
           {units.map((value, i) => (
-            <span key={unitLabels[i]} className={styles.unit} aria-hidden="true">
-              <span key={reduceMotion ? "static" : value} className={styles.unitValue}>
-                {value}
+            <span key={unitLabels[i]} className={styles.unitGroup} aria-hidden="true">
+              {i > 0 && <span className={styles.sep}>:</span>}
+              <span className={styles.unit}>
+                <span className={styles.unitValue}>{value}</span>
+                <span className={styles.unitLabel}>{unitLabels[i]}</span>
               </span>
-              <span className={styles.unitLabel}>{unitLabels[i]}</span>
             </span>
           ))}
         </motion.div>

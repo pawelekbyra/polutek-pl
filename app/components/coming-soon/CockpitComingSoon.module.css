@@ -360,58 +360,80 @@
   background: var(--hud-accent);
 }
 
+/* Countdown: an instrument readout projected on the canopy glass, not a UI card */
+
 .units {
+  position: relative;
   display: flex;
+  align-items: flex-start;
   justify-content: center;
-  gap: clamp(5px, 1.2cqi, 14px);
+  padding: 0 clamp(8px, 2cqi, 22px) clamp(10px, 1.8cqi, 18px);
+  font-family: var(--hud-mono);
+}
+
+/* Instrument ruler under the digits: fine ticks with a major tick every fifth. */
+.units::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 6px;
+  background-image:
+    repeating-linear-gradient(90deg, var(--hud-dim) 0 1px, transparent 1px 40px),
+    repeating-linear-gradient(90deg, var(--hud-faint) 0 1px, transparent 1px 8px);
+  background-size: 100% 6px, 100% 3px;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  border-bottom: 1px solid var(--hud-faint);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+}
+
+.tMinus {
+  align-self: flex-start;
+  margin-right: clamp(6px, 1.4cqi, 16px);
+  padding-top: 0.35em;
+  font-size: clamp(9px, 1.5cqi, 14px);
+  letter-spacing: 0.12em;
+  color: var(--hud-accent);
+}
+
+.unitGroup {
+  display: flex;
+  align-items: flex-start;
 }
 
 .unit {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(3px, 0.7cqi, 8px);
-  min-width: clamp(46px, 10.5cqi, 116px);
-  padding: clamp(6px, 1.3cqi, 14px) clamp(4px, 1cqi, 12px);
-  border: 1px solid var(--hud-faint);
-  border-radius: 3px;
-  background: linear-gradient(180deg, rgba(22, 32, 58, 0.55), rgba(6, 9, 20, 0.6));
-  -webkit-backdrop-filter: blur(5px);
-          backdrop-filter: blur(5px);
+  gap: clamp(4px, 0.9cqi, 9px);
 }
-
-.unit::before,
-.unit::after {
-  content: "";
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border: 0 solid var(--hud-accent);
-}
-
-.unit::before { top: -1px; left: -1px; border-top-width: 1.5px; border-left-width: 1.5px; }
-.unit::after { bottom: -1px; right: -1px; border-bottom-width: 1.5px; border-right-width: 1.5px; }
 
 .unitValue {
-  font-family: var(--hud-mono);
-  font-size: clamp(1.2rem, 5.2cqi, 3.4rem);
-  font-weight: 500;
+  font-size: clamp(1.4rem, 5.6cqi, 3.7rem);
+  font-weight: 300;
   line-height: 1;
+  letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
-  color: #f5f9ff;
-  text-shadow: 0 0 16px rgba(150, 190, 255, 0.4);
-  animation: digitIn 0.45s ease-out;
+  color: #eef5ff;
+  text-shadow: 0 0 10px rgba(150, 190, 255, 0.5), 0 0 1px rgba(255, 255, 255, 0.8);
 }
 
-@keyframes digitIn {
-  from { opacity: 0.35; transform: translateY(-6%); filter: blur(1.5px); }
+.sep {
+  padding: 0 clamp(4px, 1.1cqi, 12px);
+  font-size: clamp(1.4rem, 5.6cqi, 3.7rem);
+  font-weight: 300;
+  line-height: 1;
+  color: var(--hud-faint);
+  animation: pulse 2s steps(1) infinite;
 }
 
 .unitLabel {
-  font-family: var(--hud-mono);
-  font-size: clamp(7px, 1.1cqi, 11px);
-  letter-spacing: 0.3em;
+  font-size: clamp(7px, 1.05cqi, 10px);
+  letter-spacing: 0.32em;
+  padding-left: 0.32em;
   color: var(--hud-dim);
 }
 
@@ -438,7 +460,7 @@
   .caret,
   .tapeScale,
   .lock,
-  .unitValue,
+  .sep,
   .logLine {
     animation: none;
   }
