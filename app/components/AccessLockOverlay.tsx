@@ -66,7 +66,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
   const handleSignIn = () => openAuthModal("sign-in");
 
   return (
-    <PlayerStateFrame className="rounded-[18px]">
+    <PlayerStateFrame className="lg:rounded-[18px]">
       <section
         className={cn(styles.scene, isComingSoon ? styles.patron : styles.login, !isComingSoon && styles.loginClickable)}
         aria-labelledby={titleId}
