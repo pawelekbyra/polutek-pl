@@ -141,8 +141,8 @@
 .topBar,
 .bottomBar {
   position: absolute;
-  left: clamp(22px, 5cqi, 56px);
-  right: clamp(22px, 5cqi, 56px);
+  left: clamp(30px, 6.2cqi, 64px);
+  right: clamp(30px, 6.2cqi, 64px);
   z-index: 5;
   display: flex;
   align-items: center;
@@ -200,7 +200,7 @@
 .logLine {
   display: inline-block;
   overflow: hidden;
-  width: calc(var(--len) * 1ch);
+  width: calc(var(--len) * (1ch + 0.08em));
   max-width: 100%;
   animation: typeIn 0.9s steps(var(--len)) both;
 }
