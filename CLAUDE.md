@@ -523,6 +523,19 @@ See `.env.example` for all variables. Critical ones:
 | `ADMIN_CLERK_USER_IDS` | Comma-separated Clerk user IDs with admin access |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` or `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Production rate limiting |
 
+### 8.1 Local secrets for AI agents (2026-09-29)
+
+Owner-run local machine only (Windows). API tokens for the tools the AI manages live **outside the repo**, in `%USERPROFILE%\.ai-secrets\` (`C:\Users\Administrator\.ai-secrets\`), readable only by the owner's Windows account:
+
+- `secrets.env` — `NAME=value` lines (Cloudflare, Vercel, GitHub, Resend, Stripe, Clerk, DB). Empty value = not provided yet; ask the owner rather than guessing.
+- `load-secrets.ps1` — loads the file into the **current process** environment without printing anything. Use it, or read the variable from the environment (`CLOUDFLARE_API_TOKEN`, `VERCEL_TOKEN`, …).
+
+Rules:
+- Never copy these values into the repo, `.env*`, docs, commits, logs, PR text or chat output. Never echo them; mask when summarizing.
+- Prefer scoped, short-lived tokens. Payment (Stripe live) and production database credentials are used only after the owner agrees for that action.
+- The Vercel CLI is installed and linked to `polutek.pl` (team `pawelperfect-5617s-projects`) via `vercel login` on this machine; `.vercel` and `.env*` are git-ignored. Writes to Vercel env vars (`vercel env add`) need a Claude Code permission rule or the owner's approval.
+- The Cloudflare zone `pawelperfect.pl` is active on Cloudflare DNS (moved from home.pl on 2026-09-29; registration stays at home.pl). R2 public thumbnails use the custom domain `thumbs.pawelperfect.pl` (see `docs/tickets/ready/MEDIA-THUMBNAILS-R2-MIGRATION-001.md`).
+
 ---
 
 ## 9. Documentation and Issue Hygiene
