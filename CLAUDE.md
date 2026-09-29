@@ -532,6 +532,7 @@ See `.env.example` for all variables. Critical ones:
 Owner-run local machine only (Windows). API tokens for the tools the AI manages live **outside the repo**, in `%USERPROFILE%\.ai-secrets\` (`C:\Users\Administrator\.ai-secrets\`), readable only by the owner's Windows account:
 
 - `secrets.env` — `NAME=value` lines (Cloudflare, Vercel, GitHub, Resend, Stripe, Clerk, DB). Empty value = not provided yet; ask the owner rather than guessing.
+- `google-ai-agent.json` — key of the Google service account that may read (and draft in) the `hello@` mailbox; see `docs/operations/EMAIL_SETUP.md`.
 - `load-secrets.ps1` — loads the file into the **current process** environment without printing anything. Use it, or read the variable from the environment (`CLOUDFLARE_API_TOKEN`, `VERCEL_TOKEN`, …).
 
 Rules:
