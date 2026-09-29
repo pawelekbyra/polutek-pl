@@ -534,6 +534,7 @@ Rules:
 - Never copy these values into the repo, `.env*`, docs, commits, logs, PR text or chat output. Never echo them; mask when summarizing.
 - Prefer scoped, short-lived tokens. Payment (Stripe live) and production database credentials are used only after the owner agrees for that action.
 - The Vercel CLI is installed and linked to `polutek.pl` (team `pawelperfect-5617s-projects`) via `vercel login` on this machine; `.vercel` and `.env*` are git-ignored. Writes to Vercel env vars (`vercel env add`) need a Claude Code permission rule or the owner's approval.
+- **Full Vercel how-to (ids, CLI login, blocked actions and what to do about them): `docs/operations/VERCEL_ACCESS.md`. Read it before any Vercel task.**
 - The Cloudflare zone `pawelperfect.pl` is active on Cloudflare DNS (moved from home.pl on 2026-09-29; registration stays at home.pl). R2 public thumbnails use the custom domain `thumbs.pawelperfect.pl` (see `docs/tickets/ready/MEDIA-THUMBNAILS-R2-MIGRATION-001.md`).
 
 ---
