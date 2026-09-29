@@ -45,7 +45,19 @@ egress and the project already carries R2 plumbing (CSP entries,
 - Replacing Cloudflare Stream's generated preview frames — custom cover
   images stay the primary thumbnail source.
 
-## Rollout status (as of 2026-09-26) — IN PROGRESS, pick up here
+## Update 2026-09-29 — supersedes the blockers below; where things stand
+
+- **DNS moved to Cloudflare**, so the custom-domain blocker is gone. `thumbs.pawelperfect.pl` is attached to the public bucket `polutek-thumbnails` (SSL and ownership `active`). `r2.dev` is intentionally **not** enabled. Do not enable it.
+- **Vercel Production** now has `NEXT_PUBLIC_R2_PUBLIC_HOST=thumbs.pawelperfect.pl`; production was redeployed and CSP / `next/image` accept the host. The private bucket has no public access and no custom domain (keep it that way).
+- **Crons work** since PR #1516 (`/api/cron/*` was blocked by Clerk middleware before). `sync-public-thumbnails` runs daily at 06:00 UTC and copies published videos' thumbnails that are already in R2 to the public bucket.
+- **Data (production DB, checked 2026-09-29):** 24 videos, 7 published, 24 with a thumbnail, **6 still on Vercel Blob**, 0 on R2, 0 public copies. New uploads from the admin go to R2 already.
+- **Not done:** migrating those 6 Blob thumbnails. Two ways, owner not decided yet: re-upload the 6 covers in `/admin/videos/[id]/edit` (no secrets needed), or run `npm run media:migrate-thumbnails-r2` (dry run, then `-- --apply`). The script needs a production `DATABASE_URL` plus R2 S3 keys with Object Read & Write on both thumbnail buckets. Claude Code's classifier blocked an agent from decrypting Vercel secrets or deriving R2 keys from the Cloudflare token ("Credential Materialization"); it can only run if the owner puts those values in `%USERPROFILE%\.ai-secrets\secrets.env` themselves (or adds a permission rule). Do not try to get around that block.
+- Bucket `polutek` (video originals) CORS now also allows `https://pawelperfect.pl` and `https://www.pawelperfect.pl`.
+- After migrating: verify `/api/channel/sidebar` returns `https://thumbs.pawelperfect.pl/…` for published videos, delete the Blob copies by hand, then move this ticket to `docs/tickets/done/`.
+
+Full operational status: `docs/operations/STATUS-2026-09-29.md`.
+
+## Rollout status (as of 2026-09-26) — historical, partly superseded by the update above
 
 Code merged in PR #1506 (squash commit `ab45f59`) and deployed to production;
 the `Video.thumbnailPublicUrl` migration ran with that deploy. **Production
