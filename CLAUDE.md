@@ -460,6 +460,8 @@ Registered in `vercel.json` under `crons`. All cron routes live in `app/api/cron
 
 Co robi ten cron: co 15 minut szuka płatności `PENDING` starszych niż 15 min (do 7 dni) i odpala `fulfillPayment()` ponownie — zabezpieczenie na wypadek utraty webhooka Stripe. Bez crona patron może czekać na dostęp do czasu ręcznej interwencji lub ponownej próby webhooka przez Stripe.
 
+**Update 2026-09-29:** `/api/cron/(.*)` is a public route in `middleware.ts` (each handler authorizes itself with `Bearer $CRON_SECRET` and returns 401 when the secret is missing). Before this, the routes were not listed there, so Vercel Cron (no Clerk session) hit `auth.protect()` and got the site's HTML page (HTTP 200) instead of the handler: every cron silently did nothing. `CRON_SECRET` must be set in Vercel Production. `tests/unit/security/cron-routes-reach-handler.test.ts` guards both halves. To check a cron from outside: without the token it must return 401 JSON, not HTML.
+
 | Route | Schedule (Pro) | Purpose |
 |---|---|---|
 | `/api/cron/stripe-reconciliation` | `*/15 * * * *` | Recovers stuck `PENDING` payments by re-running `fulfillPayment()` or marking as failed |
@@ -522,6 +524,20 @@ See `.env.example` for all variables. Critical ones:
 | `CRON_SECRET` | Authenticates cron API routes (≥32 random chars) |
 | `ADMIN_CLERK_USER_IDS` | Comma-separated Clerk user IDs with admin access |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` or `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Production rate limiting |
+
+### 8.1 Local secrets for AI agents (2026-09-29)
+
+Owner-run local machine only (Windows). API tokens for the tools the AI manages live **outside the repo**, in `%USERPROFILE%\.ai-secrets\` (`C:\Users\Administrator\.ai-secrets\`), readable only by the owner's Windows account:
+
+- `secrets.env` — `NAME=value` lines (Cloudflare, Vercel, GitHub, Resend, Stripe, Clerk, DB). Empty value = not provided yet; ask the owner rather than guessing.
+- `load-secrets.ps1` — loads the file into the **current process** environment without printing anything. Use it, or read the variable from the environment (`CLOUDFLARE_API_TOKEN`, `VERCEL_TOKEN`, …).
+
+Rules:
+- Never copy these values into the repo, `.env*`, docs, commits, logs, PR text or chat output. Never echo them; mask when summarizing.
+- Prefer scoped, short-lived tokens. Payment (Stripe live) and production database credentials are used only after the owner agrees for that action.
+- The Vercel CLI is installed and linked to `polutek.pl` (team `pawelperfect-5617s-projects`) via `vercel login` on this machine; `.vercel` and `.env*` are git-ignored. Writes to Vercel env vars (`vercel env add`) need a Claude Code permission rule or the owner's approval.
+- **Full Vercel how-to (ids, CLI login, blocked actions and what to do about them): `docs/operations/VERCEL_ACCESS.md`. Read it before any Vercel task.**
+- The Cloudflare zone `pawelperfect.pl` is active on Cloudflare DNS (moved from home.pl on 2026-09-29; registration stays at home.pl). R2 public thumbnails use the custom domain `thumbs.pawelperfect.pl` (see `docs/tickets/ready/MEDIA-THUMBNAILS-R2-MIGRATION-001.md`).
 
 ---
 

@@ -19,3 +19,5 @@ coverage/
 tsconfig.tsbuildinfo
 tsconfig.typecheck.tsbuildinfo
 thumbnail-r2-migration-*.json
+.vercel
+.env*

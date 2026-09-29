@@ -42,6 +42,10 @@ const isPublicRoute = createRouteMatcher([
   '/unsubscribe',
   '/api/subscriptions/unsubscribe',
   '/api/webhooks(.*)',
+  // Vercel Cron calls these without a Clerk session. Every handler authorizes
+  // itself with `Authorization: Bearer $CRON_SECRET` and fails closed (401) when
+  // the secret is missing, so they must reach the handler instead of auth.protect().
+  '/api/cron/(.*)',
   '/api/health',
   '/api/__version',
   '/api/access(.*)',
