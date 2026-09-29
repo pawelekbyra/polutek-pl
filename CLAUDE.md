@@ -532,13 +532,16 @@ See `.env.example` for all variables. Critical ones:
 Owner-run local machine only (Windows). API tokens for the tools the AI manages live **outside the repo**, in `%USERPROFILE%\.ai-secrets\` (`C:\Users\Administrator\.ai-secrets\`), readable only by the owner's Windows account:
 
 - `secrets.env` — `NAME=value` lines (Cloudflare, Vercel, GitHub, Resend, Stripe, Clerk, DB). Empty value = not provided yet; ask the owner rather than guessing.
+- `google-ai-agent.json` — key of the Google service account that may read (and draft in) the `hello@` mailbox; see `docs/operations/EMAIL_SETUP.md`.
 - `load-secrets.ps1` — loads the file into the **current process** environment without printing anything. Use it, or read the variable from the environment (`CLOUDFLARE_API_TOKEN`, `VERCEL_TOKEN`, …).
 
 Rules:
 - Never copy these values into the repo, `.env*`, docs, commits, logs, PR text or chat output. Never echo them; mask when summarizing.
 - Prefer scoped, short-lived tokens. Payment (Stripe live) and production database credentials are used only after the owner agrees for that action.
 - The Vercel CLI is installed and linked to `polutek.pl` (team `pawelperfect-5617s-projects`) via `vercel login` on this machine; `.vercel` and `.env*` are git-ignored. Writes to Vercel env vars (`vercel env add`) need a Claude Code permission rule or the owner's approval.
+- **Google (2026-09-30): agents have `gcloud` logged in as `hello@pawelperfect.pl` plus a Workspace service account; use them instead of asking the owner to click in consoles. How, limits and what stays owner-only: `docs/operations/GOOGLE_ACCESS.md`.**
 - **Full Vercel how-to (ids, CLI login, blocked actions and what to do about them): `docs/operations/VERCEL_ACCESS.md`. Read it before any Vercel task.**
+- **Email (2026-09-30): the one public contact address is `hello@pawelperfect.pl`** (`LEGAL_CONTACT_EMAIL`; `support@pawelperfect.pl`, mentioned in older notes above, is no longer used). Incoming mail is a Google Workspace mailbox (MX at Google); automatic mail from the app still goes through Resend. Full layout, DNS records and the plan for a future AI support agent: `docs/operations/EMAIL_SETUP.md`.
 - The Cloudflare zone `pawelperfect.pl` is active on Cloudflare DNS (moved from home.pl on 2026-09-29; registration stays at home.pl). R2 public thumbnails use the custom domain `thumbs.pawelperfect.pl` (see `docs/tickets/ready/MEDIA-THUMBNAILS-R2-MIGRATION-001.md`).
 
 ---

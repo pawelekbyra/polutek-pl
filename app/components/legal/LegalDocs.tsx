@@ -7,7 +7,7 @@ export const LEGAL_EFFECTIVE_DATE_EN = 'Effective as of 26 September 2026.';
  * The service is run by a private individual (see § 1 of the Terms). Every legal document —
  * Terms and Privacy Policy, PL and EN — names the same person and this one contact address.
  */
-export const LEGAL_CONTACT_EMAIL = 'support@pawelperfect.pl';
+export const LEGAL_CONTACT_EMAIL = 'hello@pawelperfect.pl';
 
 export function LegalSection({ nr, title, children }: { nr: string; title: string; children: React.ReactNode }) {
   return (
