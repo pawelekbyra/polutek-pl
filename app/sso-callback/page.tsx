@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useAuth, useSignIn, useSignUp } from "@clerk/nextjs";
+import { useAuth, useClerk, useSignIn, useSignUp } from "@clerk/nextjs";
 import { readReturnPath, SSO_CALLBACK_TIMEOUT_MS } from "@/lib/auth/sso-return";
 import { usernameFromNickname } from "@/lib/auth/generate-username";
 import { checkNicknameAvailability, nicknameCheckMessage, nicknameProblemMessage, validateNickname } from "@/lib/auth/nickname";
@@ -20,6 +20,7 @@ export default function SSOCallbackPage() {
   const { isLoaded, isSignedIn } = useAuth();
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
+  const clerk = useClerk();
   // The language the visitor had picked on the site: this page, the new account and its emails use it.
   const { language } = useLanguage();
   const isPl = language === "pl";
@@ -103,6 +104,13 @@ export default function SSOCallbackPage() {
     if (error) {
       setSaving(false);
       return setProblem(describeError(error));
+    }
+    // Clerk keeps the Google surname when the sign-up update carries an empty lastName, so the
+    // display name became "<nickname> Perfect". Clear it on the finished account.
+    try {
+      await clerk.user?.update({ firstName: validation.value, lastName: "" });
+    } catch {
+      // cosmetic: the account exists either way
     }
     window.location.replace(readReturnPath());
   }

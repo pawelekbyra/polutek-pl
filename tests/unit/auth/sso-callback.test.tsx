@@ -9,6 +9,7 @@ const signUp = { status: "missing_requirements", emailAddress: "new@x.pl", first
 vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en" }) }));
 vi.mock("@clerk/nextjs", () => ({
   useAuth: () => auth,
+  useClerk: () => ({ user: { update: vi.fn().mockResolvedValue({}) } }),
   useSignIn: () => ({ signIn }),
   useSignUp: () => ({ signUp }),
 }));

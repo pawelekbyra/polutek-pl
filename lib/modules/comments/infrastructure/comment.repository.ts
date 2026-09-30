@@ -134,7 +134,8 @@ export class CommentRepository {
   }
   async findMany(options: ListCommentsOptions) {
     const { videoId, userId, sortBy, cursor, limit, includeHidden } = options;
-    const where: Prisma.CommentWhereInput = { videoId, parentId: null, status: visibleCommentStatusFilter(includeHidden) };
+    // Comments of deleted accounts disappear from the public thread (the author row is only a tombstone).
+    const where: Prisma.CommentWhereInput = { videoId, parentId: null, status: visibleCommentStatusFilter(includeHidden), author: { isDeleted: false } };
     const orderBy: Prisma.CommentOrderByWithRelationInput[] = [];
     if (sortBy === 'top') { orderBy.push({ pinnedAt: { sort: 'desc', nulls: 'last' } }); orderBy.push({ likesCount: 'desc' }); orderBy.push({ createdAt: 'desc' }); }
     else if (sortBy === 'oldest') { orderBy.push({ pinnedAt: { sort: 'desc', nulls: 'last' } }); orderBy.push({ createdAt: 'asc' }); }
@@ -142,11 +143,11 @@ export class CommentRepository {
     return await this.db.comment.findMany({ where, take: limit, skip: cursor ? 1 : 0, cursor: cursor ? { id: cursor } : undefined, orderBy, include: commentInclude(userId, includeHidden) });
   }
   async findReplies(parentId: string, userId: string | null, includeHidden: boolean, cursor?: string, limit: number = 10) {
-    return await this.db.comment.findMany({ where: { parentId, status: visibleCommentStatusFilter(includeHidden) }, take: limit, skip: cursor ? 1 : 0, cursor: cursor ? { id: cursor } : undefined, orderBy: { createdAt: 'asc' }, include: { author: { select: publicCommentAuthorSelect }, reactions: userId ? { where: { userId } } : false } });
+    return await this.db.comment.findMany({ where: { parentId, status: visibleCommentStatusFilter(includeHidden), author: { isDeleted: false } }, take: limit, skip: cursor ? 1 : 0, cursor: cursor ? { id: cursor } : undefined, orderBy: { createdAt: 'asc' }, include: { author: { select: publicCommentAuthorSelect }, reactions: userId ? { where: { userId } } : false } });
   }
   async count(options: Partial<ListCommentsOptions>) {
     const { videoId, includeHidden } = options;
-    return await this.db.comment.count({ where: { videoId, parentId: null, status: visibleCommentStatusFilter(includeHidden) } });
+    return await this.db.comment.count({ where: { videoId, parentId: null, status: visibleCommentStatusFilter(includeHidden), author: { isDeleted: false } } });
   }
   async create(input: CreateCommentInput): Promise<Comment> {
     const { authorId, videoId, creatorId, text, parentId, imageUrl } = input;
