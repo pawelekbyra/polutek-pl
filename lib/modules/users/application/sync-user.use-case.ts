@@ -325,6 +325,30 @@ export async function getOrCreateUserFromAuth(userId: string, sessionClaims?: Au
   return syncUserFromClaims(userId, sessionClaims, existing, true);
 }
 
+/**
+ * Display name when syncing from session claims. The stored name (Clerk first name = the nickname
+ * the user chose) must win over the username: the token usually carries no name, and falling back
+ * to the generated username first overwrote the nickname on every sync, so comments showed the
+ * username.
+ */
+export function pickClaimsDisplayName(input: {
+  claimName?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  existingName?: string | null;
+  displayUsername?: string | null;
+  fallbackEmailName?: string | null;
+}): string | null {
+  return (
+    input.claimName
+    || [input.firstName, input.lastName].filter(Boolean).join(' ')
+    || input.existingName
+    || input.displayUsername
+    || input.fallbackEmailName
+    || null
+  );
+}
+
 async function syncUserFromClaims(
   userId: string,
   sessionClaims: AuthSessionClaims,
@@ -353,11 +377,14 @@ async function syncUserFromClaims(
   const rawClaimName = stringClaim(sessionClaims, 'name', 'full_name', 'fullName');
   const claimName = isGeneratedClerkUsername(rawClaimName) ? null : rawClaimName;
   const existingName = isGeneratedClerkUsername(existing?.name) ? null : existing?.name;
-  const name = claimName
-    || [firstName, lastName].filter(Boolean).join(' ')
-    || displayUsername
-    || existingName
-    || (isPlaceholderEmail ? null : emailLocalPart(email));
+  const name = pickClaimsDisplayName({
+    claimName,
+    firstName,
+    lastName,
+    existingName,
+    displayUsername,
+    fallbackEmailName: isPlaceholderEmail ? null : emailLocalPart(email),
+  });
   const imageUrl = stringClaim(sessionClaims, 'picture', 'img', 'image_url', 'imageUrl', 'avatar_url', 'avatarUrl')
     || existing?.imageUrl
     || null;
