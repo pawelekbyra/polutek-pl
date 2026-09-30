@@ -31,8 +31,11 @@ describe("sanitizeReturnPath", () => {
 
 describe("/sso-callback page", () => {
   const replace = vi.fn();
+  const fetchMock = vi.fn();
   beforeEach(() => {
     vi.useFakeTimers();
+    fetchMock.mockReset().mockImplementation(async () => new Response(JSON.stringify({ available: true }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
     replace.mockReset();
     auth.isLoaded = false;
     auth.isSignedIn = false;
@@ -49,6 +52,7 @@ describe("/sso-callback page", () => {
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it("is never blank: shows a spinner while the handshake runs", () => {
@@ -111,15 +115,60 @@ describe("/sso-callback page", () => {
       render(<SSOCallbackPage />);
     });
     expect(signUp.update).not.toHaveBeenCalled();
-    const usernameInput = screen.getByLabelText(/Username/) as HTMLInputElement;
-    expect(usernameInput.value).toBe("");
+    // Only the nickname is asked for: no username or first-name fields.
+    expect(screen.queryByLabelText(/Username/)).toBeNull();
+    expect(screen.queryByLabelText(/First name/)).toBeNull();
+    const nicknameInput = screen.getByLabelText(/Nickname/) as HTMLInputElement;
+    expect(nicknameInput.value).toBe("");
     await act(async () => {
-      fireEvent.change(usernameInput, { target: { value: "moj_nick" } });
-      fireEvent.change(screen.getByLabelText(/First name/), { target: { value: "Jan" } });
+      fireEvent.change(nicknameInput, { target: { value: "  Żółty   Kot " } });
       fireEvent.click(screen.getByRole("button", { name: /Save and continue/ }));
     });
-    expect(signUp.update).toHaveBeenCalledWith({ username: "moj_nick", unsafeMetadata: { language: "en" }, firstName: "Jan" });
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/users/nickname-available?name=${encodeURIComponent("Żółty Kot")}`,
+      expect.anything(),
+    );
+    expect(signUp.update).toHaveBeenCalledWith({
+      username: expect.stringMatching(/^zolty_kot_[a-z0-9]{6}$/),
+      firstName: "Żółty Kot",
+      lastName: "",
+      unsafeMetadata: { language: "en" },
+    });
+    const { username } = signUp.update.mock.calls[0][0] as { username: string };
+    expect(username).toMatch(/^[a-z0-9_]{4,64}$/);
     expect(signUp.finalize).toHaveBeenCalled();
     expect(replace).toHaveBeenCalledWith("/?v=w");
+  });
+
+  it("blocks a nickname that is too short without calling Clerk", async () => {
+    auth.isLoaded = true;
+    signIn.isTransferable = true;
+    signUp.missingFields = ["username"];
+    await act(async () => {
+      render(<SSOCallbackPage />);
+    });
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText(/Nickname/), { target: { value: "ab" } });
+      fireEvent.click(screen.getByRole("button", { name: /Save and continue/ }));
+    });
+    expect(screen.getByRole("alert").textContent).toMatch(/at least 3/);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(signUp.update).not.toHaveBeenCalled();
+  });
+
+  it("blocks a nickname another user already has", async () => {
+    auth.isLoaded = true;
+    signIn.isTransferable = true;
+    signUp.missingFields = ["username"];
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ available: false, reason: "taken" }), { status: 200 }));
+    await act(async () => {
+      render(<SSOCallbackPage />);
+    });
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText(/Nickname/), { target: { value: "Paweł Perfect" } });
+      fireEvent.click(screen.getByRole("button", { name: /Save and continue/ }));
+    });
+    expect(screen.getByRole("alert").textContent).toMatch(/already taken/);
+    expect(signUp.update).not.toHaveBeenCalled();
   });
 });

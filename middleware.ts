@@ -49,6 +49,9 @@ const isPublicRoute = createRouteMatcher([
   // itself with `Authorization: Bearer $CRON_SECRET` and fails closed (401) when
   // the secret is missing, so they must reach the handler instead of auth.protect().
   '/api/cron/(.*)',
+  // Nickname check for the first-sign-in form on /sso-callback, which runs before the
+  // sign-up is finalized (no session yet). Rate-limited per IP, returns only a boolean.
+  '/api/users/nickname-available',
   '/api/health',
   '/api/__version',
   '/api/access(.*)',

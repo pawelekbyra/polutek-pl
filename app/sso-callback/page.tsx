@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth, useSignIn, useSignUp } from "@clerk/nextjs";
 import { readReturnPath, SSO_CALLBACK_TIMEOUT_MS } from "@/lib/auth/sso-return";
-import { isValidUsername } from "@/lib/auth/generate-username";
+import { usernameFromNickname } from "@/lib/auth/generate-username";
+import { checkNicknameAvailability, nicknameCheckMessage, nicknameProblemMessage, validateNickname } from "@/lib/auth/nickname";
 import { useLanguage } from "@/app/components/LanguageContext";
 
 // Landing page for the Google/OAuth redirect. Clerk finalizes the sign-in here and then
@@ -27,10 +28,11 @@ export default function SSOCallbackPage() {
   const [captchaShown, setCaptchaShown] = useState(false);
   const captchaRef = useRef<HTMLDivElement>(null);
   const started = useRef(false);
-  // First sign-in of a new Google user: we ask for their own username and name before finishing.
+  // First sign-in of a new Google user: we ask only for a nickname before finishing. It becomes
+  // the Clerk first name (last name cleared), so it is the name shown everywhere on the site;
+  // the username Clerk requires is derived from it and never shown.
   const [profileStep, setProfileStep] = useState(false);
-  const [username, setUsername] = useState("");
-  const [firstName, setFirstName] = useState("");
+  const [nickname, setNickname] = useState("");
   const [saving, setSaving] = useState(false);
 
   // A session that already exists (handshake finished, or page reloaded) needs no callback.
@@ -54,9 +56,8 @@ export default function SSOCallbackPage() {
         const { error: createError } = await signUp.create({ transfer: true });
         if (createError) return setProblem(describeError(createError));
         // Clerk requires a username for new accounts and Google doesn't provide one: show the
-        // first-sign-in screen where the new user picks it (and can correct their name).
+        // first-sign-in screen where the new user picks a nickname.
         if (signUp.status === "missing_requirements" && signUp.missingFields.includes("username")) {
-          setFirstName(signUp.firstName ?? "");
           setProfileStep(true);
           return;
         }
@@ -75,19 +76,20 @@ export default function SSOCallbackPage() {
   async function submitProfile(e: React.FormEvent) {
     e.preventDefault();
     if (!signUp) return;
-    const clean = username.trim().toLowerCase();
-    if (!isValidUsername(clean)) {
-      setProblem(isPl
-        ? "Nazwa użytkownika: 4–64 znaki, małe litery, cyfry lub _."
-        : "Username: 4–64 characters, lowercase letters, digits or _.");
-      return;
-    }
+    const validation = validateNickname(nickname);
+    if (!validation.ok) return setProblem(nicknameProblemMessage(validation.reason, isPl));
     setSaving(true);
     setProblem(null);
+    const check = await checkNicknameAvailability(validation.value);
+    if (!check.available) {
+      setSaving(false);
+      return setProblem(nicknameCheckMessage(check.reason, isPl));
+    }
     const { error: updateError } = await signUp.update({
-      username: clean,
+      username: usernameFromNickname(validation.value),
+      firstName: validation.value,
+      lastName: "",
       unsafeMetadata: { ...(signUp.unsafeMetadata ?? {}), language },
-      ...(firstName.trim() ? { firstName: firstName.trim() } : {}),
     });
     if (updateError) {
       setSaving(false);
@@ -130,26 +132,17 @@ export default function SSOCallbackPage() {
           <div>
             <h1 className="text-lg font-bold text-[var(--chan-ink)]">{isPl ? "Witaj!" : "Welcome!"}</h1>
             <p className="mt-1 text-[13px] text-[var(--chan-muted)]">
-              {isPl ? "Uzupełnij swoje dane, żeby dokończyć zakładanie konta." : "Complete your details to finish creating your account."}
+              {isPl ? "Wybierz pseudonim. To nazwa widoczna na stronie, np. przy Twoich komentarzach." : "Choose a nickname. It is the name shown on the site, e.g. with your comments."}
             </p>
           </div>
           <label className="block text-[12px] font-semibold text-[var(--chan-ink)]">
-            {isPl ? "Nazwa użytkownika" : "Username"}
+            {isPl ? "Pseudonim" : "Nickname"}
             <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoComplete="username"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              autoComplete="nickname"
               autoFocus
               required
-              className="mt-1 block w-full rounded-lg border border-[var(--chan-line)] bg-background px-3 py-2 text-sm font-normal"
-            />
-          </label>
-          <label className="block text-[12px] font-semibold text-[var(--chan-ink)]">
-            {isPl ? "Imię (opcjonalnie)" : "First name (optional)"}
-            <input
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              autoComplete="given-name"
               className="mt-1 block w-full rounded-lg border border-[var(--chan-line)] bg-background px-3 py-2 text-sm font-normal"
             />
           </label>
