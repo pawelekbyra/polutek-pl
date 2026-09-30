@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { adminVideoFundraisingGoalSchema, adminVideoWriteSchema } from "@/lib/api/admin-schemas";
+import { adminVideoFundraisingGoalSchema, adminVideoFundraisingManualPercentSchema, adminVideoWriteSchema } from "@/lib/api/admin-schemas";
 import { buildAdminVideoUpdatePayload, fundraisingGoalUpdateFields } from "@/lib/modules/video/application/admin-video-payload";
-import { buildFundraisingPayload, fundraisingFormFields } from "@/app/admin/videos/components/video-utils";
+import { buildFundraisingPayload, buildManualPercentPayload, fundraisingFormFields } from "@/app/admin/videos/components/video-utils";
 
 const ok = (v: unknown) => adminVideoFundraisingGoalSchema.safeParse(v).success;
 
@@ -50,7 +50,7 @@ describe("admin fundraising form", () => {
   });
 
   it("builds set / remove / unchanged payloads and rejects bad amounts", () => {
-    const base = { currency: "PLN" as const, startDate: "", hadGoal: false };
+    const base = { currency: "PLN" as const, startDate: "", hadGoal: false, manualPercent: "", hadManualPercent: false };
     expect(buildFundraisingPayload({ ...base, amount: "50 000,50" })).toEqual({
       fundraisingGoal: { amountMinor: 5_000_050, currency: "PLN", startAt: null },
     });
@@ -61,5 +61,41 @@ describe("admin fundraising form", () => {
     expect(buildFundraisingPayload({ ...base, amount: "20000000" })).toHaveProperty("error");
     const withDate = buildFundraisingPayload({ ...base, amount: "100", startDate: "2026-09-30" });
     expect("fundraisingGoal" in withDate && withDate.fundraisingGoal?.startAt).toBe(new Date(2026, 8, 30).toISOString());
+  });
+});
+
+describe("admin hand-set fill (fundraisingManualPercent)", () => {
+  const ok = (v: unknown) => adminVideoFundraisingManualPercentSchema.safeParse(v).success;
+
+  it("accepts whole percents 0..100, null (off) or absent", () => {
+    for (const value of [0, 1, 65, 100, null, undefined]) expect(ok(value)).toBe(true);
+  });
+
+  it("rejects out-of-range, fractional and non-numeric values", () => {
+    for (const value of [-1, 101, 65.5, "65", true]) expect(ok(value)).toBe(false);
+    expect(adminVideoWriteSchema.safeParse({ title: "x", fundraisingManualPercent: 101 }).success).toBe(false);
+    expect(adminVideoWriteSchema.safeParse({ title: "x", fundraisingManualPercent: 65 }).success).toBe(true);
+  });
+
+  it("maps onto the video column in the legacy POST payload, ignoring invalid values", () => {
+    expect(buildAdminVideoUpdatePayload({ id: "v1", fundraisingManualPercent: 65 })).toMatchObject({ fundraisingManualPercent: 65 });
+    expect(buildAdminVideoUpdatePayload({ id: "v1", fundraisingManualPercent: null })).toMatchObject({ fundraisingManualPercent: null });
+    expect(buildAdminVideoUpdatePayload({ id: "v1", fundraisingManualPercent: 101 })).not.toHaveProperty("fundraisingManualPercent");
+    expect(buildAdminVideoUpdatePayload({ id: "v1" })).not.toHaveProperty("fundraisingManualPercent");
+  });
+
+  it("form: loads, sets, clears and validates the percent", () => {
+    expect(fundraisingFormFields({ fundraisingManualPercent: 65 })).toMatchObject({ manualPercent: "65", hadManualPercent: true });
+    expect(fundraisingFormFields(null)).toMatchObject({ manualPercent: "", hadManualPercent: false });
+    expect(buildManualPercentPayload({ manualPercent: "65", hadManualPercent: false })).toEqual({ fundraisingManualPercent: 65 });
+    expect(buildManualPercentPayload({ manualPercent: "0", hadManualPercent: false })).toEqual({ fundraisingManualPercent: 0 });
+    expect(buildManualPercentPayload({ manualPercent: "100", hadManualPercent: false })).toEqual({ fundraisingManualPercent: 100 });
+    expect(buildManualPercentPayload({ manualPercent: "", hadManualPercent: true })).toEqual({ fundraisingManualPercent: null });
+    expect(buildManualPercentPayload({ manualPercent: "", hadManualPercent: false })).toEqual({});
+    for (const bad of ["101", "-1", "6.5", "abc"]) {
+      expect(buildManualPercentPayload({ manualPercent: bad, hadManualPercent: false })).toHaveProperty("error");
+    }
+    const both = buildFundraisingPayload({ manualPercent: "65", hadManualPercent: false, amount: "", currency: "PLN", startDate: "", hadGoal: false });
+    expect(both).toEqual({ fundraisingManualPercent: 65 });
   });
 });

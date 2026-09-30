@@ -113,9 +113,19 @@ export const adminVideoFundraisingGoalSchema = z
   .nullable()
   .optional();
 
+/**
+ * Hand-set fill of the fundraising bar (whole percent 0..100): `null` turns it
+ * off (the goal computation, if any, applies again), absent = unchanged.
+ */
+export const adminVideoFundraisingManualPercentSchema = z.number().int().min(0).max(100).nullable().optional();
+
 /** Video metadata writes: any object (fields whitelisted by the use case) with a valid premiereAt/goal. */
 export const adminVideoWriteSchema = z
-  .object({ premiereAt: adminVideoPremiereAtSchema, fundraisingGoal: adminVideoFundraisingGoalSchema })
+  .object({
+    premiereAt: adminVideoPremiereAtSchema,
+    fundraisingGoal: adminVideoFundraisingGoalSchema,
+    fundraisingManualPercent: adminVideoFundraisingManualPercentSchema,
+  })
   .passthrough();
 
 export const adminVideoResyncSchema = z.object({

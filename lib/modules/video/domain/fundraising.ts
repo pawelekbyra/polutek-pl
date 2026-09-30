@@ -21,6 +21,8 @@ export type FundraisingGoalFields = {
   fundraisingGoalMinor?: number | null;
   fundraisingGoalCurrency?: string | null;
   fundraisingStartAt?: Date | null;
+  /** Bar fill set by hand, 0..100; when set it replaces the goal computation. */
+  fundraisingManualPercent?: number | null;
 };
 
 /** Net successful tips in one currency (minor units). */
@@ -85,11 +87,27 @@ export function computeFundraisingProgress(
   return Math.max(0.01, Math.floor(raw * 100) / 100);
 }
 
+/**
+ * The hand-set bar fill as a 0..1 fraction, or null when it is off. Values
+ * outside 0..100 are clamped (the admin schema already rejects them).
+ */
+export function manualFundraisingProgress(video: FundraisingGoalFields): number | null {
+  const percent = video.fundraisingManualPercent;
+  if (typeof percent !== "number" || !Number.isFinite(percent)) return null;
+  return Math.round(Math.min(100, Math.max(0, percent))) / 100;
+}
+
+/** True when the video shows a bar at all: a hand-set fill or a usable goal. */
+export function hasFundraisingBar(video: FundraisingGoalFields): boolean {
+  return manualFundraisingProgress(video) !== null || hasFundraisingGoal(video);
+}
+
 /** Only the fundraising fields that are present, for a Prisma video update. */
 export function pickFundraisingUpdate(input: FundraisingGoalFields): FundraisingGoalFields {
   const data: FundraisingGoalFields = {};
   if (input.fundraisingGoalMinor !== undefined) data.fundraisingGoalMinor = input.fundraisingGoalMinor;
   if (input.fundraisingGoalCurrency !== undefined) data.fundraisingGoalCurrency = input.fundraisingGoalCurrency;
   if (input.fundraisingStartAt !== undefined) data.fundraisingStartAt = input.fundraisingStartAt;
+  if (input.fundraisingManualPercent !== undefined) data.fundraisingManualPercent = input.fundraisingManualPercent;
   return data;
 }

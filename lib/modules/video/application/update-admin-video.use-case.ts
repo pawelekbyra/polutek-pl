@@ -104,6 +104,7 @@ export async function updateAdminVideo(
             startAt: safeInput.fundraisingStartAt?.toISOString() ?? null,
           },
         } : {}),
+        ...(safeInput.fundraisingManualPercent !== undefined ? { fundraisingManualPercent: safeInput.fundraisingManualPercent } : {}),
       }
     }, tx);
 

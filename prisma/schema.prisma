@@ -290,6 +290,9 @@ model Video {
   fundraisingGoalCurrency           String?
   // Tips counted from this moment; null = all tips ever.
   fundraisingStartAt                DateTime?
+  // Provisional bar fill set by hand, 0-100 (owner decision 2026-09-30). When set it
+  // wins over the goal computation above; null = off.
+  fundraisingManualPercent          Int?
   publishAfterAssetReady           Boolean     @default(false)
   publishAfterAssetReadyProvider    String?
   publishAfterAssetReadyRequestedAt DateTime?

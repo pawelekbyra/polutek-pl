@@ -110,6 +110,8 @@ export interface AdminVideoDto extends BaseVideoDto {
   fundraisingGoalMinor: number | null;
   fundraisingGoalCurrency: string | null;
   fundraisingStartAt: Date | null;
+  /** Hand-set bar fill 0..100 (wins over the goal), null = off. */
+  fundraisingManualPercent: number | null;
 }
 
 export type PublicVideoInput = BaseVideoDto & Record<string, unknown>;
@@ -319,6 +321,7 @@ export function toAdminVideoDto(input: AdminVideoInput | unknown): AdminVideoDto
     fundraisingGoalMinor: typeof video.fundraisingGoalMinor === "number" ? video.fundraisingGoalMinor : null,
     fundraisingGoalCurrency: typeof video.fundraisingGoalCurrency === "string" ? video.fundraisingGoalCurrency : null,
     fundraisingStartAt: video.fundraisingStartAt instanceof Date ? video.fundraisingStartAt : null,
+    fundraisingManualPercent: typeof video.fundraisingManualPercent === "number" ? video.fundraisingManualPercent : null,
   };
 }
 
