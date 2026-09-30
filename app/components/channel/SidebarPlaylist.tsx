@@ -79,29 +79,6 @@ export function SidebarPlaylist({
     userId: authUserId,
   } = useAuth();
   const preloader = useAppPreload();
-  const getSidebarAccessBadge = (
-    video: SidebarLayoutItem,
-    hasAccess: boolean,
-    lang: string,
-  ) => {
-    const isPl = lang === "pl";
-    if (!video.tier || video.tier === "PUBLIC") {
-      return { text: isPl ? "Publiczne" : "Public", variant: "public" };
-    }
-
-    // 2026-09-22: PATRON tier no longer requires payment, only sign-in — same badge as
-    // LOGGED_IN (see CLAUDE.md, checkVideoAccess).
-    if (video.tier === "LOGGED_IN" || video.tier === "PATRON") {
-      if (!hasAccess)
-        return {
-          text: "Login",
-          variant: "locked",
-        };
-      return { text: isPl ? "Odblok." : "Unlocked", variant: "unlocked" };
-    }
-
-    return null;
-  };
 
   const getViewsLabel = (count: number) => {
     if (language !== "pl") return count === 1 ? "view" : "views";
@@ -257,27 +234,6 @@ export function SidebarPlaylist({
                   {video.duration}
                 </div>
               )}
-              {mounted &&
-                !isComingSoon &&
-                (() => {
-                  const badge = getSidebarAccessBadge(video, hasAccess, language);
-                  if (!badge) return null;
-                  return (
-                    <div
-                      className={cn(
-                        "absolute right-[6px] top-[6px] z-30 max-w-[110px] truncate rounded-full px-[9px] py-[4px] text-[11px] font-black uppercase leading-none tracking-[0.08em] pointer-events-none",
-                        badge.variant === "public" &&
-                          "bg-white/92 text-[var(--chan-ink)]",
-                        badge.variant === "unlocked" &&
-                          "bg-[var(--chan-blue-soft)] text-[var(--chan-blue)]",
-                        badge.variant === "locked" &&
-                          "bg-[var(--chan-ink)] text-white",
-                      )}
-                    >
-                      {badge.text}
-                    </div>
-                  );
-                })()}
           </div>
           <div className="flex-1 min-w-0 flex flex-col justify-center pt-[1px] gap-0.5 z-10 relative">
             <h4 className="font-sans text-[13px] font-bold text-[var(--chan-ink)] line-clamp-2 leading-[1.2] group-hover:opacity-80 transition-opacity lg:text-[12px]">

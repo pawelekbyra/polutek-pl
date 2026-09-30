@@ -91,6 +91,9 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             src={isPl ? "/wall-login-pl.png" : "/wall-login-en.png"}
             alt=""
             className={styles.compactLoginImage}
+            // The lettering sits off-centre inside the PNG (measured: PL centre at 52.1% / 49%,
+            // EN at 56.7% / 49%), so nudge the image to put the words in the middle of the tile.
+            style={{ transform: isPl ? "translate(-2.1%, 1%)" : "translate(-6.7%, 1%)" }}
             draggable={false}
           />
         </div>
