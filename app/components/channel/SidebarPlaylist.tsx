@@ -235,7 +235,7 @@ export function SidebarPlaylist({
                 </div>
               )}
           </div>
-          <div className="flex-1 min-w-0 flex flex-col justify-start -mt-[2px] gap-0.5 z-10 relative">
+          <div className="flex-1 min-w-0 flex flex-col justify-start mt-[1px] gap-0.5 z-10 relative">
             <h4 className="font-sans text-[13px] font-bold text-[var(--chan-ink)] line-clamp-2 leading-[1.2] group-hover:opacity-80 transition-opacity lg:text-[12px]">
               {displayTitle}
             </h4>
@@ -243,7 +243,7 @@ export function SidebarPlaylist({
               <div className="transition-colors w-fit relative z-20 leading-[1.4]">
                 {video.creator?.name || "PawelPerfect"}
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex flex-col leading-[1.4]">
                 <span>
                   {mounted
                     ? video.views?.toLocaleString(
@@ -254,7 +254,6 @@ export function SidebarPlaylist({
                 </span>
                 {video.publishedAt && (
                   <>
-                    <span>·</span>
                     <span>
                       {mounted
                         ? formatDistanceToNow(new Date(video.publishedAt), {

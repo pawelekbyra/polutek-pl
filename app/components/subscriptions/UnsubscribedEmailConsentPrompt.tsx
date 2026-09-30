@@ -20,8 +20,28 @@ export default function UnsubscribedEmailConsentPrompt() {
 
   const DISMISSED_KEY = userId ? `polutek:email-consent-prompt-dismissed:${userId}` : null;
 
+  // The home page's entry gate (z-index above any dialog) covers the site right after sign-in.
+  // Opening under it made the gate's own click count as a click outside the dialog, which
+  // dismissed it unseen. Wait until the gate is gone.
+  const [gateGone, setGateGone] = useState(false);
   useEffect(() => {
-    if (isLoaded && userId && !hasCheckedStatus) {
+    const check = () => !document.querySelector('[data-testid="site-preloader"]');
+    if (check()) {
+      setGateGone(true);
+      return;
+    }
+    const timer = window.setInterval(() => {
+      if (check()) {
+        setGateGone(true);
+        window.clearInterval(timer);
+      }
+    }, 300);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    // user (with createdAt) must be loaded too, or a fresh sign-up would be judged "not fresh".
+    if (isLoaded && userId && user && gateGone && !hasCheckedStatus) {
       const isDismissed = DISMISSED_KEY ? localStorage.getItem(DISMISSED_KEY) === 'true' : false;
 
       const isFreshRegistration = Boolean(
@@ -54,7 +74,7 @@ export default function UnsubscribedEmailConsentPrompt() {
           setHasCheckedStatus(true);
         });
     }
-  }, [isLoaded, userId, hasCheckedStatus, DISMISSED_KEY, user?.createdAt]);
+  }, [isLoaded, userId, user, gateGone, hasCheckedStatus, DISMISSED_KEY]);
 
   const handleConfirm = () => {
     setErrorMessage(null);
