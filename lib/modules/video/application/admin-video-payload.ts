@@ -138,6 +138,11 @@ export function buildAdminVideoUpdatePayload(body: AdminVideoRequestBody): Updat
 
   Object.assign(payload, fundraisingGoalUpdateFields(body.fundraisingGoal));
 
+  const manualPercent = body.fundraisingManualPercent;
+  if (manualPercent === null || (typeof manualPercent === "number" && Number.isInteger(manualPercent) && manualPercent >= 0 && manualPercent <= 100)) {
+    payload.fundraisingManualPercent = manualPercent;
+  }
+
   return payload;
 }
 

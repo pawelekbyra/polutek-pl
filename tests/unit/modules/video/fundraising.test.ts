@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { computeFundraisingProgress, hasFundraisingGoal } from "@/lib/modules/video/domain/fundraising";
+import { computeFundraisingProgress, hasFundraisingGoal, manualFundraisingProgress, pickFundraisingUpdate } from "@/lib/modules/video/domain/fundraising";
 
 const groupBy = vi.fn();
 vi.mock("@/lib/prisma", () => ({ prisma: { payment: { groupBy: (...args: unknown[]) => groupBy(...args) } } }));
@@ -100,5 +100,51 @@ describe("withFundraisingProgress", () => {
   it("skips the query entirely when no video has a goal", async () => {
     await withFundraisingProgress([dtos[1]], [rows[1]]);
     expect(groupBy).not.toHaveBeenCalled();
+  });
+});
+
+describe("hand-set fill (fundraisingManualPercent)", () => {
+  beforeEach(() => {
+    groupBy.mockReset();
+    __resetFundraisingTotalsCacheForTests();
+  });
+
+  it("maps whole percents to a 0..1 fraction, including the 0 and 100 bounds", () => {
+    expect(manualFundraisingProgress({ fundraisingManualPercent: 65 })).toBe(0.65);
+    expect(manualFundraisingProgress({ fundraisingManualPercent: 0 })).toBe(0);
+    expect(manualFundraisingProgress({ fundraisingManualPercent: 100 })).toBe(1);
+    expect(manualFundraisingProgress({ fundraisingManualPercent: 150 })).toBe(1);
+    expect(manualFundraisingProgress({ fundraisingManualPercent: -3 })).toBe(0);
+    expect(manualFundraisingProgress({ fundraisingManualPercent: null })).toBeNull();
+    expect(manualFundraisingProgress({})).toBeNull();
+  });
+
+  it("overrides the goal computation and skips the payment query", async () => {
+    groupBy.mockResolvedValue([{ currency: "PLN", _sum: { amountMinor: 1_000_00, refundedAmountMinor: 0 } }]);
+    const rows = [
+      { id: "manual", creatorId: "c1", fundraisingGoalMinor: 1_000_00, fundraisingGoalCurrency: "PLN", fundraisingManualPercent: 65 },
+      { id: "zero", creatorId: "c1", fundraisingManualPercent: 0 },
+      { id: "full", creatorId: "c1", fundraisingManualPercent: 100 },
+    ];
+    const result = await withFundraisingProgress(rows.map(({ id }) => ({ id })), rows);
+    expect(result).toEqual([
+      { id: "manual", fundraisingProgress: 0.65 },
+      { id: "zero", fundraisingProgress: 0 },
+      { id: "full", fundraisingProgress: 1 },
+    ]);
+    expect(groupBy).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the goal when the hand-set fill is off", async () => {
+    groupBy.mockResolvedValue([{ currency: "PLN", _sum: { amountMinor: 250_00, refundedAmountMinor: 0 } }]);
+    const rows = [{ id: "goal", creatorId: "c1", fundraisingGoalMinor: 1_000_00, fundraisingGoalCurrency: "PLN", fundraisingManualPercent: null }];
+    const [dto] = await withFundraisingProgress([{ id: "goal" }], rows);
+    expect(dto.fundraisingProgress).toBe(0.25);
+  });
+
+  it("is written to the video only when sent", () => {
+    expect(pickFundraisingUpdate({ fundraisingManualPercent: 65 })).toEqual({ fundraisingManualPercent: 65 });
+    expect(pickFundraisingUpdate({ fundraisingManualPercent: null })).toEqual({ fundraisingManualPercent: null });
+    expect(pickFundraisingUpdate({})).toEqual({});
   });
 });

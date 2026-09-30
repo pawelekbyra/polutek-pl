@@ -110,6 +110,10 @@ export function buildPublicationPayload(form: {
 
 /** "Cel zbiórki" form state (CLAUDE.md "Fundraising progress bar"). Amount in main units as typed. */
 export type FundraisingFormState = {
+  /** Hand-set bar fill in whole percent, as typed; empty = off. Wins over the goal. */
+  manualPercent: string;
+  /** The loaded video already had a hand-set fill (so an empty field turns it off). */
+  hadManualPercent: boolean;
   amount: string;
   currency: SupportedCurrency;
   /** `<input type="date">` value; empty = count every tip ever. */
@@ -127,15 +131,19 @@ export function fundraisingFormFields(video: {
   fundraisingGoalMinor?: unknown;
   fundraisingGoalCurrency?: unknown;
   fundraisingStartAt?: unknown;
+  fundraisingManualPercent?: unknown;
 } | null): FundraisingFormState {
+  const manual = typeof video?.fundraisingManualPercent === "number" ? video.fundraisingManualPercent : null;
+  const manualFields = { manualPercent: manual === null ? "" : String(manual), hadManualPercent: manual !== null };
   const minor = typeof video?.fundraisingGoalMinor === "number" ? video.fundraisingGoalMinor : null;
   const currency = typeof video?.fundraisingGoalCurrency === "string"
     && (SUPPORTED_CURRENCIES as readonly string[]).includes(video.fundraisingGoalCurrency)
     ? video.fundraisingGoalCurrency as SupportedCurrency
     : "PLN";
-  if (minor === null) return { amount: "", currency, startDate: todayLocalDate(), hadGoal: false };
+  if (minor === null) return { ...manualFields, amount: "", currency, startDate: todayLocalDate(), hadGoal: false };
   const start = typeof video?.fundraisingStartAt === "string" ? new Date(video.fundraisingStartAt) : null;
   return {
+    ...manualFields,
     amount: String(minor / 100),
     currency,
     startDate: start && !Number.isNaN(start.getTime()) ? todayLocalDate(start) : "",
@@ -143,13 +151,40 @@ export function fundraisingFormFields(video: {
   };
 }
 
+type FundraisingGoalPayload = { amountMinor: number; currency: SupportedCurrency; startAt: string | null };
+
 /**
- * Fundraising part of a video write: `{ fundraisingGoal: {...} }` to set it,
- * `{ fundraisingGoal: null }` to remove it (amount cleared), `{}` when there was
- * none and none is entered. Returns an error message for an invalid amount.
+ * Hand-set fill part of a video write: `{ fundraisingManualPercent: n }` to set
+ * it, `null` to turn it off (field cleared), `{}` when there was none and none
+ * is entered. Whole percent 0..100 only.
+ */
+export function buildManualPercentPayload(form: Pick<FundraisingFormState, "manualPercent" | "hadManualPercent">):
+  | { fundraisingManualPercent?: number | null }
+  | { error: string } {
+  const raw = form.manualPercent.replace(/\s|%/g, "");
+  if (!raw) return form.hadManualPercent ? { fundraisingManualPercent: null } : {};
+  if (!/^\d+$/.test(raw) || Number(raw) > 100) return { error: "Wypełnienie paska musi być liczbą całkowitą od 0 do 100." };
+  return { fundraisingManualPercent: Number(raw) };
+}
+
+/**
+ * Fundraising part of a video write: the hand-set fill (see above) plus
+ * `{ fundraisingGoal: {...} }` to set the goal, `{ fundraisingGoal: null }` to
+ * remove it (amount cleared), nothing when there was none and none is entered.
+ * Returns an error message for an invalid percent or amount.
  */
 export function buildFundraisingPayload(form: FundraisingFormState):
-  | { fundraisingGoal?: { amountMinor: number; currency: SupportedCurrency; startAt: string | null } | null }
+  | { fundraisingGoal?: FundraisingGoalPayload | null; fundraisingManualPercent?: number | null }
+  | { error: string } {
+  const manual = buildManualPercentPayload(form);
+  if ("error" in manual) return manual;
+  const goal = buildGoalPayload(form);
+  if ("error" in goal) return goal;
+  return { ...manual, ...goal };
+}
+
+function buildGoalPayload(form: FundraisingFormState):
+  | { fundraisingGoal?: FundraisingGoalPayload | null }
   | { error: string } {
   const raw = form.amount.replace(/\s/g, "").replace(",", ".");
   if (!raw) return form.hadGoal ? { fundraisingGoal: null } : {};

@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import {
   computeFundraisingProgress,
-  hasFundraisingGoal,
+  hasFundraisingBar,
+  manualFundraisingProgress,
   type CurrencyTotal,
   type FundraisingGoalFields,
 } from "../domain/fundraising";
@@ -53,13 +54,19 @@ export function loadTipTotals(startAt: Date | null, creatorId: string | null, no
 type FundraisingRow = FundraisingGoalFields & { id: string; creatorId?: string | null };
 
 /**
- * Fraction (0..1) of each video's goal reached, keyed by video id; videos without
- * a goal are absent. Never throws: on a database error the bar is simply hidden.
+ * Fraction (0..1) of each video's bar, keyed by video id; videos without a bar
+ * are absent. A hand-set fill (`fundraisingManualPercent`) wins and skips the
+ * payment query. Never throws: on a database error the bar is simply hidden.
  */
 export async function loadFundraisingProgress(rows: FundraisingRow[]): Promise<Map<string, number>> {
   const progress = new Map<string, number>();
   await Promise.all(
-    rows.filter(hasFundraisingGoal).map(async (row) => {
+    rows.filter(hasFundraisingBar).map(async (row) => {
+      const manual = manualFundraisingProgress(row);
+      if (manual !== null) {
+        progress.set(row.id, manual);
+        return;
+      }
       try {
         const totals = await loadTipTotals(row.fundraisingStartAt ?? null, row.creatorId ?? null);
         const fraction = computeFundraisingProgress(row, totals);
