@@ -6,7 +6,7 @@ Durable how-to so any agent can manage Vercel for this project without re-discov
 
 - Team: `pawelperfect-5617s-projects` (id `team_sc16PptMTGc4ip47phctR79J`, Hobby plan)
 - Project: `polutek.pl` (id `prj_e7YawXp53b22uIMsiyW2NkccZgMz`), production from `main` of `pawelekbyra/polutek-pl`
-- Domains (2026-09-30): `www.pawelperfect.com`, `www.pawelperfect.pl`; apex `pawelperfect.com`/`pawelperfect.pl` redirect to their www. DNS for both is on Cloudflare (zones `02cb23af5c0000a110f6915b00bbb8ef` .com, `746be2887d179f7742171a605a9b797d` .pl).
+- Domains (2026-09-30): the app is served on `www.pawelperfect.com`. `pawelperfect.com` 301 → `www.pawelperfect.com`; `pawelperfect.pl` and `www.pawelperfect.pl` 308 → `www.pawelperfect.com` (path and query kept; project domain `redirect` + `redirectStatusCode`, set via `PATCH /v9/projects/<id>/domains/<name>`). A domain that another domain redirects to cannot itself redirect, so change a chain from the apex end first. DNS for both is on Cloudflare (zones `02cb23af5c0000a110f6915b00bbb8ef` .com, `746be2887d179f7742171a605a9b797d` .pl).
 - Crons (daily, Hobby-compatible): `/api/cron/video-provider-jobs/reconcile`, `/prune-playback-sessions`, `/sync-public-thumbnails`. They authenticate with `CRON_SECRET`; without it every cron returns 401.
 
 ## Ways in, in order of preference
