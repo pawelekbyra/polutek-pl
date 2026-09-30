@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth, useSignIn, useSignUp } from "@clerk/nextjs";
 import { readReturnPath, SSO_CALLBACK_TIMEOUT_MS } from "@/lib/auth/sso-return";
+import { generateUsername } from "@/lib/auth/generate-username";
 
 // Landing page for the Google/OAuth redirect. Clerk finalizes the sign-in here and then
 // navigates back to the page the user started from.
@@ -34,6 +35,11 @@ export default function SSOCallbackPage() {
         started.current = true;
         const { error: createError } = await signUp.create({ transfer: true });
         if (createError) return;
+        // Clerk requires a username for new accounts; Google doesn't provide one, so add it here.
+        if (signUp.status === "missing_requirements" && signUp.missingFields.includes("username")) {
+          const { error: updateError } = await signUp.update({ username: generateUsername(signUp.emailAddress) });
+          if (updateError) return;
+        }
         if (signUp.status === "complete") {
           const { error } = await signUp.finalize();
           if (!error) window.location.replace(readReturnPath());
