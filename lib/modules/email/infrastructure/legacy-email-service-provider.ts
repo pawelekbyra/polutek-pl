@@ -12,6 +12,20 @@ import { EmailPolicy } from "../domain/email.policy";
  * the real support mailbox (Google Workspace, hello@), so every send carries this Reply-To.
  * Override with EMAIL_REPLY_TO; the default is the single public contact address.
  */
+/** Display name every automatic email shows as its sender (owner's choice). */
+export const EMAIL_SENDER_NAME = 'WWW.PAWELPERFECT.PL';
+
+/**
+ * Sender address. EMAIL_FROM may be a bare address ("no-reply@pawelperfect.pl"); then inboxes
+ * showed "no-reply" as the sender, so a bare address gets the brand display name added.
+ */
+export function getEmailFrom(): string {
+  const raw = (process.env.EMAIL_FROM || '').trim();
+  if (!raw) return `${EMAIL_SENDER_NAME} <no-reply@pawelperfect.pl>`;
+  if (raw.includes('<')) return raw;
+  return `${EMAIL_SENDER_NAME} <${raw}>`;
+}
+
 function getEmailReplyTo(): string {
   return process.env.EMAIL_REPLY_TO?.trim() || 'hello@pawelperfect.pl';
 }
@@ -50,7 +64,7 @@ export class LegacyEmailServiceProvider implements EmailProvider {
 
   async sendTransactionalEmail(input: { to: string; subject: string; html: string; unsubscribeUrl?: string | null }) {
     const resend = this.getResendClient();
-    const from = process.env.EMAIL_FROM || `${APP_NAME} <no-reply@pawelperfect.pl>`;
+    const from = getEmailFrom();
     const headers = buildTransactionalEmailHeaders(input.unsubscribeUrl);
 
     if (!process.env.EMAIL_FROM && process.env.NODE_ENV === 'production') {
@@ -89,7 +103,7 @@ export class LegacyEmailServiceProvider implements EmailProvider {
     });
 
     const resend = this.getResendClient();
-    const from = process.env.EMAIL_FROM || `${APP_NAME} <no-reply@pawelperfect.pl>`;
+    const from = getEmailFrom();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
     // Batching logic: 50 at a time to be safe with Resend rate limits
@@ -244,7 +258,7 @@ export class LegacyEmailServiceProvider implements EmailProvider {
   async sendTestEmail(input: { to: string; subject: string; body: string }) {
     try {
       const resend = this.getResendClient();
-      const from = process.env.EMAIL_FROM || `${APP_NAME} <no-reply@pawelperfect.pl>`;
+      const from = getEmailFrom();
 
       const { data, error } = await resend.emails.send({
         from,
