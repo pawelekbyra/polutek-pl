@@ -1,4 +1,4 @@
-import { logger } from "@/lib/logger";
+﻿import { logger } from "@/lib/logger";
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { clerkClient, currentUser as getCurrentClerkUser } from '@clerk/nextjs/server';
@@ -73,7 +73,8 @@ export async function syncUser(
   _clerkRole?: string | null
 ) {
   try {
-    return await prisma.$transaction(async (tx) => {
+    let createdNow = false;
+    const synced = await prisma.$transaction(async (tx) => {
       const existingUserById = await tx.user.findUnique({
         where: { id },
         select: { id: true, role: true, email: true }
@@ -115,6 +116,7 @@ export async function syncUser(
       if (username) updateData.username = username;
       if (imageUrl) updateData.imageUrl = imageUrl;
 
+      createdNow = !existingUserById;
       const user = await tx.user.upsert({
         where: { id },
         update: updateData,
@@ -206,7 +208,7 @@ export async function syncUser(
         // PatronGrants
         await tx.patronGrant.updateMany({ where: { userId: oldId }, data: { userId: id } });
 
-        // Patron status is derived from PatronGrant records — no User fields to update.
+        // Patron status is derived from PatronGrant records â€” no User fields to update.
 
         // Subscription is explicit mailing consent only. Identity sync must never
         // transfer newsletter consent from an old/stale identity to a new Clerk id.
@@ -226,6 +228,20 @@ export async function syncUser(
 
       return user;
     }, { timeout: 30000 });
+
+    // The Clerk webhook is not guaranteed to arrive (endpoint/secret misconfiguration), so the
+    // first sync that creates the row sends the welcome email. The webhook only sends it when
+    // it creates the row itself, so the user never gets two.
+    if (createdNow && !email.endsWith('@clerk.local')) {
+      try {
+        // Lazy import keeps the email/Resend module graph out of every identity-sync caller.
+        const { sendWelcomeEmail } = await import('@/lib/modules/email/application/send-transactional-email.use-case');
+        await sendWelcomeEmail(email, name || undefined, language || 'en');
+      } catch (e) {
+        logger.error('[SyncUser] Failed to send welcome email:', e instanceof Error ? e.message : String(e));
+      }
+    }
+    return synced;
   } catch (err: unknown) {
     if (isPrismaErrorCode(err, 'P2002')) {
       const userCreatedByParallelRequest = await prisma.user.findUnique({ where: { id } });

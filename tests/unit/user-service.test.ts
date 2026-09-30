@@ -14,6 +14,10 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
+vi.mock('@/lib/modules/email/application/send-transactional-email.use-case', () => ({
+  sendWelcomeEmail: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock('@clerk/nextjs/server', () => ({
   currentUser: vi.fn(),
   clerkClient: vi.fn(),
