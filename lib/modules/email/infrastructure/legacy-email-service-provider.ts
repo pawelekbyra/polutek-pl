@@ -27,7 +27,7 @@ export function getEmailFrom(): string {
 }
 
 function getEmailReplyTo(): string {
-  return process.env.EMAIL_REPLY_TO?.trim() || 'hello@pawelperfect.pl';
+  return process.env.EMAIL_REPLY_TO?.trim() || 'hello@pawelperfect.com';
 }
 
 function replaceTemplateVariables(value: string, variables: Record<string, string>) {

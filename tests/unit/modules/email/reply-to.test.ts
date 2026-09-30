@@ -22,12 +22,12 @@ describe('automatic mail carries Reply-To to the support mailbox', () => {
 
   it('transactional mail replies go to hello@ by default', async () => {
     await new LegacyEmailServiceProvider().sendTransactionalEmail({ to: 'a@example.com', subject: 's', html: '<p>x</p>' });
-    expect(emailsSend).toHaveBeenCalledWith(expect.objectContaining({ replyTo: 'hello@pawelperfect.pl' }));
+    expect(emailsSend).toHaveBeenCalledWith(expect.objectContaining({ replyTo: 'hello@pawelperfect.com' }));
   });
 
   it('test mail replies go to hello@ by default', async () => {
     await new LegacyEmailServiceProvider().sendTestEmail({ to: 'a@example.com', subject: 's', body: '<p>x</p>' });
-    expect(emailsSend).toHaveBeenCalledWith(expect.objectContaining({ replyTo: 'hello@pawelperfect.pl' }));
+    expect(emailsSend).toHaveBeenCalledWith(expect.objectContaining({ replyTo: 'hello@pawelperfect.com' }));
   });
 
   it('EMAIL_REPLY_TO overrides the default', async () => {
