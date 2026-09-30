@@ -1,4 +1,4 @@
-import { AppContext } from "@/lib/modules/shared/app-context";
+﻿import { AppContext } from "@/lib/modules/shared/app-context";
 import * as EmailService from "@/lib/modules/email";
 import { AccountDeletionCleanupUseCase } from "./account-deletion-cleanup.use-case";
 import { isGeneratedClerkUsername } from "@/lib/utils/auth";
@@ -22,6 +22,7 @@ export interface WebhookUserSyncData {
  */
 export class SyncUserFromWebhookUseCase {
   static async execute(ctx: AppContext, data: WebhookUserSyncData, eventType: string): Promise<void> {
+    let createdNow = false;
     await ctx.db.writeTransaction(async (tx) => {
       const existingUser = await tx.user.findUnique({ where: { id: data.id } });
       const conflictingEmailUser = await tx.user.findUnique({
@@ -38,6 +39,7 @@ export class SyncUserFromWebhookUseCase {
       }
 
       if (existingUser) {
+        createdNow = existingUser.isDeleted === true; // reactivated tombstone counts as a new sign-up
         // Identity sync: preserves DB isPatron and reactivates the same Clerk id after a previous tombstone.
         await tx.user.update({
           where: { id: data.id },
@@ -52,6 +54,7 @@ export class SyncUserFromWebhookUseCase {
         });
       } else {
         // New user creation
+        createdNow = true;
         await tx.user.create({
           data: {
             id: data.id,
@@ -80,7 +83,9 @@ export class SyncUserFromWebhookUseCase {
     });
 
     // Handle side effects (R5/R9 boundary)
-    if (eventType === 'user.created') {
+    // Only when this call created the row: the lazy sync in syncUser() may already have created
+    // the user (and sent the welcome email) before this webhook arrived.
+    if (eventType === 'user.created' && createdNow) {
         await EmailService.sendWelcomeEmail(data.email, data.name || undefined, data.language as any).catch(e => {
             console.error('[ClerkWebhook] Failed to send welcome email:', e);
         });

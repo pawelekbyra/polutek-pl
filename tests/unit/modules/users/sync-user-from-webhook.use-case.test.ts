@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+﻿import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { SyncUserFromWebhookUseCase } from '@/lib/modules/users/application/sync-user-from-webhook.use-case';
 import { sendWelcomeEmail, sendPasswordChangedEmail } from '@/lib/modules/email';
@@ -39,11 +39,12 @@ describe('SyncUserFromWebhookUseCase', () => {
       .mockResolvedValueOnce({
         id: 'user_1',
         email: 'deleted_old@deleted.com',
-        name: 'Usunięty Użytkownik',
+        name: 'UsuniÄ™ty UĹĽytkownik',
         username: 'deleted_old',
         imageUrl: null,
         language: 'pl',
         isPatron: true,
+        isDeleted: true,
       })
       .mockResolvedValueOnce(null);
 
