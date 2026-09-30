@@ -294,6 +294,9 @@ export function SidebarPlaylist({
 
   // TEMPORARY (2026-09-22): "coming soon" placeholder for the whole PATRON
   // tier — see lib/temp-patron-coming-soon.ts.
+  // Section titles follow the viewer's language (the server layout only carries Polish ones).
+  const publicSectionTitle = language === "pl" ? "Publiczne" : "Public";
+  const loggedInSectionTitle = language === "pl" ? "Dla zalogowanych" : "For signed-in users";
   const patronSectionTitle = TEMP_PATRON_COMING_SOON
     ? language === "pl"
       ? "Już wkrótce"
@@ -319,8 +322,8 @@ export function SidebarPlaylist({
 
     return (
       <div className="flex flex-col gap-1 lg:h-full lg:gap-1.5" aria-busy="true">
-        {renderSkeletonSection(language === "pl" ? "Publiczne" : "Public")}
-        {renderSkeletonSection(language === "pl" ? "Dla zalogowanych" : "For logged in")}
+        {renderSkeletonSection(publicSectionTitle)}
+        {renderSkeletonSection(loggedInSectionTitle)}
         {renderSkeletonSection(patronSectionTitle)}
         {showSupportBox && !TEMP_SUPPORT_AS_MODAL && (
           <div className="mt-2 shrink-0 rounded-lg bg-[var(--chan-surface)] p-4">
@@ -377,13 +380,13 @@ export function SidebarPlaylist({
     <div className="flex flex-col gap-1 lg:h-full lg:gap-0.5">
       {publicSection && (
         <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
-          {renderSectionHeader(publicSection.title)}
+          {renderSectionHeader(publicSectionTitle)}
           {publicSection.items.map((v, i) => renderVideoItem(v, true, false, i))}
         </div>
       )}
       {loggedInSection && (
         <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
-          {renderSectionHeader(loggedInSection.title)}
+          {renderSectionHeader(loggedInSectionTitle)}
           {loggedInSection.items.map((v, i) => renderVideoItem(v, false, false, i))}
         </div>
       )}
