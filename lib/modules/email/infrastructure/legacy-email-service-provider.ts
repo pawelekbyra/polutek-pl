@@ -20,12 +20,12 @@ import { EmailPolicy } from "../domain/email.policy";
 export const EMAIL_SENDER_NAME = 'PAWELPERFECT.COM';
 
 /**
- * Sender address. EMAIL_FROM may be a bare address ("no-reply@pawelperfect.pl"); then inboxes
+ * Sender address. EMAIL_FROM may be a bare address ("no-reply@pawelperfect.com"); then inboxes
  * showed "no-reply" as the sender, so a bare address gets the brand display name added.
  */
 export function getEmailFrom(): string {
   const raw = (process.env.EMAIL_FROM || '').trim();
-  if (!raw) return `${EMAIL_SENDER_NAME} <no-reply@pawelperfect.pl>`;
+  if (!raw) return `${EMAIL_SENDER_NAME} <no-reply@pawelperfect.com>`;
   if (raw.includes('<')) return raw;
   return `${EMAIL_SENDER_NAME} <${raw}>`;
 }
