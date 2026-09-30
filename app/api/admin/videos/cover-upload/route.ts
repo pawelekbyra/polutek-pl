@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { requireAdminForApi } from "@/lib/auth-utils";
+import { recordAuditEventSafe } from "@/lib/modules/audit";
+import { createAppContext } from "@/lib/modules/shared/app-context";
 import { handleApiError } from "@/lib/errors";
 import { createScopedLogger } from "@/lib/logger";
 import { getBlobAccess } from "@/lib/blob-config";
@@ -15,7 +17,7 @@ export async function POST(req: NextRequest) {
   const requestId = req.headers.get("x-request-id") || "unknown";
   const scopedLogger = createScopedLogger(requestId);
 
-  const { response: adminResponse } = await requireAdminForApi("POST_ADMIN_VIDEO_COVER_UPLOAD");
+  const { adminUserId, response: adminResponse } = await requireAdminForApi("POST_ADMIN_VIDEO_COVER_UPLOAD");
   if (adminResponse) return adminResponse;
 
   try {
@@ -43,6 +45,22 @@ export async function POST(req: NextRequest) {
 
     const videoPath = videoId ? videoId : "new";
 
+    const auditCover = (storage: "r2" | "blob") =>
+      recordAuditEventSafe(
+        createAppContext({
+          actor: adminUserId
+            ? { type: "admin", userId: adminUserId }
+            : { type: "system", reason: "admin_session_unresolved" },
+          requestId,
+        }),
+        {
+          action: "VIDEO_COVER_UPLOADED",
+          targetType: "Video",
+          targetId: videoId ?? null,
+          metadata: { storage, sizeBytes: file.size, contentType: file.type, draftVideo: !videoId },
+        }
+      );
+
     // R2 (private bucket) once configured. Vercel Blob remains the fallback,
     // both before the R2 env vars are set and when the R2 write fails (e.g. the
     // API token doesn't cover the thumbnail bucket), so uploads never break.
@@ -56,6 +74,7 @@ export async function POST(req: NextRequest) {
         });
 
         scopedLogger.info("[ADMIN_VIDEO_COVER_UPLOAD_SUCCESS]", { key, storage: "r2" });
+        await auditCover("r2");
 
         // The private object is only viewable through the admin-aware proxy.
         return NextResponse.json({
@@ -82,6 +101,8 @@ export async function POST(req: NextRequest) {
       url: blob.url,
       access,
     });
+
+    await auditCover("blob");
 
     const displayUrl = access === "private" && videoId
       ? `/api/videos/${videoId}/thumbnail`

@@ -4,6 +4,7 @@ import { AppContext } from '@/lib/modules/shared/app-context';
 import { Actor } from '@/lib/modules/shared/actor';
 import { PaymentStatus } from '@prisma/client';
 import { revokePatron, recalculatePatronStatus } from '@/lib/modules/patron';
+import { recordAuditEvent } from '@/lib/modules/audit';
 import { syncClerkAccess } from '@/lib/modules/users/application/sync-clerk-access';
 
 vi.mock('@/lib/modules/patron', () => ({
@@ -13,6 +14,10 @@ vi.mock('@/lib/modules/patron', () => ({
 
 vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
   syncClerkAccess: vi.fn(),
+}));
+
+vi.mock('@/lib/modules/audit', () => ({
+  recordAuditEvent: vi.fn().mockResolvedValue({}),
 }));
 
 vi.mock('@/lib/observability', () => ({
@@ -122,6 +127,48 @@ describe('handleRefund', () => {
     expect(mockTx.$executeRaw).toHaveBeenCalled();
     expect(recalculatePatronStatus).toHaveBeenCalledWith(userId, ctx, mockTx);
     expect(syncClerkAccess).toHaveBeenCalledWith(userId, true, 500);
+  });
+
+  describe('refund attribution', () => {
+    beforeEach(() => {
+      mockTx.payment.findUnique.mockResolvedValue({
+        id: 'pay_1', userId: 'u1', amountMinor: 1000, refundedAmountMinor: 0,
+        currency: 'PLN', status: PaymentStatus.SUCCEEDED,
+      });
+      mockTx.payment.updateMany.mockResolvedValue({ count: 1 });
+      (recalculatePatronStatus as any).mockResolvedValue({ ok: true, data: { isPatron: true, normalizedTotal: 500 } });
+    });
+
+    it('stores who/when/why and audits PAYMENT_REFUNDED on the admin path, in the same tx', async () => {
+      await handleRefund({
+        paymentId: 'pay_1',
+        reportedRefundedMinor: 500,
+        admin: { refundedById: 'admin_1', reason: 'duplicate', stripeRefundId: 're_1' },
+      }, ctx);
+
+      const data = mockTx.payment.updateMany.mock.calls[0][0].data;
+      expect(data).toMatchObject({ refundedById: 'admin_1', refundReason: 'duplicate' });
+      expect(data.refundedAt).toBeInstanceOf(Date);
+      expect(recordAuditEvent).toHaveBeenCalledWith(
+        ctx,
+        expect.objectContaining({
+          action: 'PAYMENT_REFUNDED',
+          targetType: 'Payment',
+          targetId: 'pay_1',
+          metadata: expect.objectContaining({ deltaMinor: 500, stripeRefundId: 're_1' }),
+        }),
+        mockTx
+      );
+    });
+
+    it('does not fabricate an admin actor for a webhook-reported refund', async () => {
+      await handleRefund({ paymentId: 'pay_1', reportedRefundedMinor: 500 }, ctx);
+
+      const data = mockTx.payment.updateMany.mock.calls[0][0].data;
+      expect(data).not.toHaveProperty('refundedById');
+      expect(data).not.toHaveProperty('refundedAt');
+      expect(recordAuditEvent).not.toHaveBeenCalled();
+    });
   });
 
   it('should be idempotent and not perform sync if no delta', async () => {

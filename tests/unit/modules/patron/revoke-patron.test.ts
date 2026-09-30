@@ -58,11 +58,41 @@ describe('revokePatron use case', () => {
     const result = await revokePatron({ userId: 'user-1', note: 'test revoke' }, ctx);
 
     expect(result.ok).toBe(true);
-    expect(mockRepo.revokeActiveGrants).toHaveBeenCalledWith('user-1', 'test revoke', expect.anything());
+    expect(mockRepo.revokeActiveGrants).toHaveBeenCalledWith('user-1', 'test revoke', expect.anything(), expect.objectContaining({ revokeReason: 'test revoke' }));
     expect(mockRepo.revokeGrantByPaymentId).not.toHaveBeenCalled();
     if (result.ok === true) {
       expect(result.data.isPatron).toBe(false);
     }
+  });
+
+  it('records the admin as revoker and prefers an explicit reason over the note', async () => {
+    mockRepo.findUserWithPaymentTotals.mockResolvedValue({ id: 'user-1', paymentTotals: [] });
+    mockRepo.findFirstActiveGrant.mockResolvedValue(null);
+    mockRepo.listActiveGrants.mockResolvedValue([]);
+
+    await revokePatron({ userId: 'user-1', note: 'n', reason: 'chargeback abuse' }, ctx);
+
+    expect(mockRepo.revokeActiveGrants).toHaveBeenCalledWith(
+      'user-1', 'n', expect.anything(),
+      { revokedById: 'admin-1', revokeReason: 'chargeback abuse' }
+    );
+  });
+
+  it('does not fabricate a revoker for a system actor', async () => {
+    mockRepo.findUserWithPaymentTotals.mockResolvedValue({ id: 'user-1', paymentTotals: [] });
+    mockRepo.findFirstActiveGrant.mockResolvedValue(null);
+    mockRepo.listActiveGrants.mockResolvedValue([]);
+    const sysCtx = createAppContext({
+      actor: { type: 'system', reason: 'stripe_webhook' },
+      prisma: { $transaction: async (fn: any) => await fn({}) } as any,
+    });
+
+    await revokePatron({ userId: 'user-1', note: 'refunded' }, sysCtx);
+
+    expect(mockRepo.revokeActiveGrants).toHaveBeenCalledWith(
+      'user-1', 'refunded', expect.anything(),
+      { revokedById: null, revokeReason: 'refunded' }
+    );
   });
 
   it('successfully revokes specific grant if paymentId provided', async () => {
@@ -73,7 +103,7 @@ describe('revokePatron use case', () => {
     const result = await revokePatron({ userId: 'user-1', paymentId: 'pay_123', note: 'refund' }, ctx);
 
     expect(result.ok).toBe(true);
-    expect(mockRepo.revokeGrantByPaymentId).toHaveBeenCalledWith('pay_123', 'refund', expect.anything());
+    expect(mockRepo.revokeGrantByPaymentId).toHaveBeenCalledWith('pay_123', 'refund', expect.anything(), expect.objectContaining({ revokeReason: 'refund' }));
     expect(mockRepo.revokeActiveGrants).not.toHaveBeenCalled();
     if (result.ok === true) {
       expect(result.data.isPatron).toBe(true);

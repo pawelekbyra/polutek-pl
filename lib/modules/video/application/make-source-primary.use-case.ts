@@ -7,6 +7,7 @@ import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { VideoPlaybackRouteService } from "./video-playback-route.service";
+import { recordAuditEventSafe } from "@/lib/modules/audit";
 
 export interface MakeSourcePrimaryInput {
   videoId: string;
@@ -75,6 +76,13 @@ export async function makeSourcePrimary(
     if (error instanceof AppError) return fail(error);
     throw error;
   }
+
+  await recordAuditEventSafe(ctx, {
+    action: "VIDEO_SOURCE_MADE_PRIMARY",
+    targetType: "Video",
+    targetId: video.id,
+    metadata: { assetId: input.assetId, provider: target.provider },
+  });
 
   const updatedVideo = await repository.findByIdForMainChannel(video.id, mainChannel.id);
   if (!updatedVideo) return fail(new VideoNotFoundError(input.videoId));

@@ -91,7 +91,15 @@ export async function adminRefund(
   // Apply refund in DB immediately — webhook is idempotent via CAS and will be a no-op
   const newTotalRefunded = alreadyRefunded + requestedAmount;
   const refundResult = await handleRefund(
-    { paymentId: payment.id, reportedRefundedMinor: newTotalRefunded },
+    {
+      paymentId: payment.id,
+      reportedRefundedMinor: newTotalRefunded,
+      admin: {
+        refundedById: ctx.actor.type === "admin" ? ctx.actor.userId : "unknown",
+        reason: input.reason ?? null,
+        stripeRefundId: stripeRefund.id,
+      },
+    },
     ctx
   );
 

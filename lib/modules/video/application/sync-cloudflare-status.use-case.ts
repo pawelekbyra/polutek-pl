@@ -5,6 +5,7 @@ import { CloudflareStreamClient } from "../infrastructure/cloudflare-stream.clie
 import { handleCloudflareStreamWebhook } from "./handle-cloudflare-webhook.use-case";
 import { VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { CloudflareNotFoundError } from "../domain/video.errors";
+import { recordAuditEventSafe } from "@/lib/modules/audit";
 
 export async function syncCloudflareStatus(
   videoId: string,
@@ -26,13 +27,20 @@ export async function syncCloudflareStatus(
     }
 
     // Use the webhook handler logic to process the status
-    return await handleCloudflareStreamWebhook({
+    const result = await handleCloudflareStreamWebhook({
       uid: details.result.uid,
       status: details.result.status,
       playback: details.result.playback,
       duration: details.result.duration,
       size: details.result.size,
     }, ctx);
+    await recordAuditEventSafe(ctx, {
+      action: "VIDEO_CLOUDFLARE_STATUS_SYNCED",
+      targetType: "Video",
+      targetId: videoId,
+      metadata: { cloudflareState: details.result.status?.state ?? null, ok: Boolean((result as { ok?: boolean }).ok) },
+    });
+    return result;
   } catch (error: any) {
     if (error instanceof CloudflareNotFoundError) {
         // Asset not found on Cloudflare - mark as FAILED

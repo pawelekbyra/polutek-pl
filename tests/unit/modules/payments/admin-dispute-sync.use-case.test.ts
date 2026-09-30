@@ -5,6 +5,11 @@ import { getStripeClient } from '@/lib/modules/payments/infrastructure/stripe-cl
 import { AppContext } from '@/lib/modules/shared/app-context';
 import { Actor } from '@/lib/modules/shared/actor';
 import { PaymentStatus } from '@prisma/client';
+import { recordAuditEvent } from '@/lib/modules/audit';
+
+vi.mock('@/lib/modules/audit', () => ({
+  recordAuditEvent: vi.fn().mockResolvedValue({}),
+}));
 
 const mockRepo = {
   findById: vi.fn(),
@@ -114,6 +119,29 @@ describe('adminDisputeSync', () => {
       expect(result.data.message).toBe('No dispute found for this payment');
     }
     expect(handleDispute).not.toHaveBeenCalled();
+  });
+
+  it('records PAYMENT_DISPUTE_SYNCED after a successful sync and none when nothing was synced', async () => {
+    mockRepo.findById.mockResolvedValue(mockPayment());
+    chargesList.mockResolvedValue({ data: [{ id: 'ch_1' }] });
+    disputesList.mockResolvedValue({ data: [{ id: 'dp_1', status: 'won' }] });
+    (handleDispute as any).mockResolvedValue({ ok: true, data: {} });
+
+    await adminDisputeSync({ paymentId: 'pay_1' }, ctx);
+
+    expect(recordAuditEvent).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({
+        action: 'PAYMENT_DISPUTE_SYNCED',
+        targetId: 'pay_1',
+        metadata: expect.objectContaining({ disputeId: 'dp_1', disputeStatus: 'won' }),
+      })
+    );
+
+    vi.mocked(recordAuditEvent).mockClear();
+    disputesList.mockResolvedValue({ data: [] });
+    await adminDisputeSync({ paymentId: 'pay_1' }, ctx);
+    expect(recordAuditEvent).not.toHaveBeenCalled();
   });
 
   it('syncs a lost dispute, mapping status and flags correctly', async () => {
