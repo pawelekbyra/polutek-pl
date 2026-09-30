@@ -1,6 +1,7 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { VideoStatus } from "@prisma/client";
 import { MediaPolicy } from "@/lib/modules/media";
+import { isHealthTokenValue } from "@/lib/api/health-token";
 import { MainChannelService } from "@/lib/modules/channel";
 
 export interface HealthCheckResult {
@@ -22,9 +23,7 @@ export async function checkHealth(
   ctx: AppContext,
   tokenProvided: string | null | undefined
 ): Promise<HealthCheckResult> {
-  const isAuthorized =
-    !!process.env.HEALTHCHECK_TOKEN &&
-    tokenProvided === process.env.HEALTHCHECK_TOKEN;
+  const isAuthorized = isHealthTokenValue(tokenProvided);
 
   if (!isAuthorized) {
     return { ok: true };

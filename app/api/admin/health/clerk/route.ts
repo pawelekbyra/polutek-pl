@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { generateCSP } from "@/lib/utils/security";
+import { isHealthTokenAuthorized } from "@/lib/api/health-token";
 
 export const dynamic = "force-dynamic";
 
@@ -92,12 +93,8 @@ function getRuntimeDiagnostics() {
 }
 
 function isAuthorizedByHealthToken(request: NextRequest) {
-  // Query-param form exists so this is reachable by pasting a URL straight
-  // into a browser address bar — no terminal/curl needed — for the exact
-  // scenario this endpoint exists for: Clerk itself is down, so there's no
-  // way to run a Clerk-authenticated admin session to reach it any other way.
-  const provided = request.headers.get("x-health-token") || request.nextUrl.searchParams.get("token");
-  return Boolean(process.env.HEALTHCHECK_TOKEN) && provided === process.env.HEALTHCHECK_TOKEN;
+  // Header-only (x-health-token): a query-param token would end up in logs.
+  return isHealthTokenAuthorized(request);
 }
 
 export async function GET(request: NextRequest) {

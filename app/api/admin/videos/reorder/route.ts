@@ -5,6 +5,8 @@ import { handleApiError } from "@/lib/errors";
 import { reorderAdminVideos } from "@/lib/modules/video";
 import { fromUseCaseResult } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
+import { parseAdminBody } from "@/lib/api/admin-body";
+import { adminVideoReorderSchema } from "@/lib/api/admin-schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -17,8 +19,9 @@ export async function POST(req: NextRequest) {
   try {
     const actor = { type: "admin" as const, userId: adminUserId! };
     const ctx = createAppContext({ actor });
-    const body = await req.json();
-    const { videos } = body;
+    const parsed = await parseAdminBody(req, adminVideoReorderSchema);
+    if (!parsed.ok) return parsed.response;
+    const { videos } = parsed.data;
 
     const result = await reorderAdminVideos(videos, ctx);
     return fromUseCaseResult(result);

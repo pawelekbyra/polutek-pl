@@ -5,6 +5,8 @@ import { grantPatron, revokePatron } from "@/lib/modules/patron";
 import { syncClerkAccess } from "@/lib/modules/users";
 import { handleApiError } from "@/lib/errors";
 import { createAppContext } from "@/lib/modules/shared/app-context";
+import { parseAdminBody } from "@/lib/api/admin-body";
+import { adminPatronActionSchema } from "@/lib/api/admin-schemas";
 
 type Context = { params: Promise<{ userId: string }> };
 
@@ -21,9 +23,10 @@ export async function PATCH(request: NextRequest, props: Context) {
   const ctx = createAppContext({ type: "admin", userId: adminUserId! });
 
   try {
-    const body = await request.json().catch(() => ({}));
-    const action = body?.action;
-    const reason = (body?.reason || body?.note || "").trim();
+    const parsed = await parseAdminBody(request, adminPatronActionSchema, { errorMessage: "Invalid action" });
+    if (!parsed.ok) return parsed.response;
+    const action = parsed.data.action;
+    const reason = (parsed.data.reason || parsed.data.note || "").trim();
 
     if (!reason) {
       return NextResponse.json(

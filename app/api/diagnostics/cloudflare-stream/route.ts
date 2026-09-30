@@ -1,5 +1,6 @@
 import { createPrivateKey, createSign } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { isHealthTokenAuthorized } from "@/lib/api/health-token";
 
 export const dynamic = "force-dynamic";
 
@@ -41,14 +42,6 @@ function normalizePrivateKey(raw: string): string {
   ) ? trimmed.slice(1, -1) : trimmed;
 
   return unquoted.includes("\\n") ? unquoted.replace(/\\n/g, "\n") : unquoted;
-}
-
-function getToken(req: NextRequest): string | null {
-  return (
-    req.headers.get("x-healthcheck-token") ||
-    req.headers.get("x-diagnostics-token") ||
-    req.nextUrl.searchParams.get("token")
-  );
 }
 
 function getPemSummary(raw: string, normalized: string) {
@@ -121,10 +114,7 @@ function validatePrivateKey(raw: string) {
 }
 
 export async function GET(req: NextRequest) {
-  const expectedToken = process.env.HEALTHCHECK_TOKEN;
-  const token = getToken(req);
-
-  if (!hasValue(expectedToken) || token !== expectedToken) {
+  if (!isHealthTokenAuthorized(req)) {
     return NextResponse.json(
       {
         status: "unauthorized" satisfies DiagnosticStatus,

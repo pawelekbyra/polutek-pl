@@ -5,6 +5,8 @@ import { createAppContext } from "@/lib/modules/shared/app-context";
 import { getAdminVideoMediaState } from "@/lib/modules/video";
 import { VideoProviderJobService } from "@/lib/modules/video";
 import { getCorrelationId } from "@/lib/utils/correlation";
+import { parseAdminBody } from "@/lib/api/admin-body";
+import { adminProviderJobRetrySchema } from "@/lib/api/admin-schemas";
 
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string; jobId: string }> }) {
   const params = await props.params;
@@ -12,7 +14,9 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   if (response) return response;
 
   try {
-    const body = await req.json().catch(() => ({}));
+    const parsed = await parseAdminBody(req, adminProviderJobRetrySchema, { allowEmpty: true });
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.data;
     const ctx = createAppContext({ actor: { type: "admin", userId: adminUserId! }, requestId: getCorrelationId() ?? undefined });
     const jobService = new VideoProviderJobService();
     await jobService.retryJob({ jobId: params.jobId, requestedByAdminId: adminUserId!, force: Boolean(body.force) }, ctx);
