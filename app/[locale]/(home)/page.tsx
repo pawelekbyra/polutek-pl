@@ -51,7 +51,7 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   const canonicalSlug = selectedVideoId ? selectedVideo?.slug ?? selectedVideoId : undefined;
 
   return {
-    // Browser tab always reads www.pawelperfect.pl regardless of the selected video; the
+    // Browser tab always reads www.pawelperfect.com regardless of the selected video; the
     // per-video title is kept only for social/OG previews below.
     title: APP_NAME,
     description: selectedVideo?.title ?? creator?.bio ?? `${APP_NAME} — kanał wideo`,

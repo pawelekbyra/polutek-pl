@@ -12,8 +12,12 @@ import { EmailPolicy } from "../domain/email.policy";
  * the real support mailbox (Google Workspace, hello@), so every send carries this Reply-To.
  * Override with EMAIL_REPLY_TO; the default is the single public contact address.
  */
-/** Display name every automatic email shows as its sender (owner's choice). */
-export const EMAIL_SENDER_NAME = 'PAWELPERFECT.PL';
+/**
+ * Display name every automatic email shows as its sender (owner's choice). The name follows the
+ * primary site (www.pawelperfect.com); the address stays @pawelperfect.pl because that is the
+ * domain verified for sending in Resend.
+ */
+export const EMAIL_SENDER_NAME = 'PAWELPERFECT.COM';
 
 /**
  * Sender address. EMAIL_FROM may be a bare address ("no-reply@pawelperfect.pl"); then inboxes
