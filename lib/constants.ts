@@ -52,14 +52,14 @@ export const MAIN_CREATOR_NAME = process.env.MAIN_CREATOR_NAME || 'Configured Cr
 // not break the public home page or admin video list at runtime.
 export const MAIN_CREATOR_SLUG = process.env.MAIN_CREATOR_SLUG || 'polutek';
 const configuredAppName = process.env.NEXT_PUBLIC_APP_NAME?.trim();
-// Display brand string is "www.pawelperfect.pl" (owner decision, 2026-08-01: lowercased from
+// Display brand string is "www.pawelperfect.com" (2026-09-30: new primary domain; was .pl; owner decision, 2026-08-01: lowercased from
 // the earlier all-caps "WWW.PAWELPERFECT.PL") — matches the Stripe statement descriptor and is
 // used site-wide (page titles, legal docs, email subjects). Normalize a bare
 // "pawelperfect.pl"/"www.pawelperfect.pl" env override to the canonical form too, same as
 // before; a genuinely different configured name still passes through untouched.
-export const APP_NAME = !configuredAppName || /^(www\.)?pawelperfect\.pl$/i.test(configuredAppName)
-  ? 'www.pawelperfect.pl'
+export const APP_NAME = !configuredAppName || /^(www\.)?pawelperfect\.(pl|com)$/i.test(configuredAppName)
+  ? 'www.pawelperfect.com'
   : configuredAppName;
 export const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_URL
   ? new URL(process.env.NEXT_PUBLIC_APP_URL).hostname.toUpperCase().replace(/^(WWW\.)+/, '')
-  : 'PAWELPERFECT.PL';
+  : 'PAWELPERFECT.COM';

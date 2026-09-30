@@ -3,7 +3,7 @@ import { CreatorContentService as ContentService } from '@/lib/modules/channel/i
 import { VideoContentService } from '@/lib/modules/video/infrastructure/video-content.service';
 import { getLocalizedHref, type RouteKey } from '@/lib/i18n/routing';
 
-const DEFAULT_BASE_URL = 'https://pawelperfect.pl';
+const DEFAULT_BASE_URL = 'https://www.pawelperfect.com';
 function getBaseUrl() { try { return new URL(process.env.NEXT_PUBLIC_APP_URL || DEFAULT_BASE_URL).origin; } catch { return DEFAULT_BASE_URL; } }
 function localizedEntry(baseUrl: string, routeKey: RouteKey, priority: number, params: { slug?: string } = {}, lastModified = new Date()): MetadataRoute.Sitemap[number][] {
   return (["pl", "en"] as const).map((locale) => ({

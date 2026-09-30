@@ -10,7 +10,7 @@ describe("BrandName", () => {
 
   it("renders the glasses-mark logo image by default", () => {
     render(<BrandName />);
-    const img = screen.getByAltText("www.pawelperfect.pl");
+    const img = screen.getByAltText("www.pawelperfect.com");
 
     expect(img).not.toBeNull();
     expect(img.getAttribute("src")).toBe("/logo-glasses.svg");

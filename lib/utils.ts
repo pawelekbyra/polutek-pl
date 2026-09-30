@@ -16,7 +16,7 @@ export function formatCount(count: number): string {
 }
 
 export function getBaseUrl() {
-  const DEFAULT_BASE_URL = 'https://pawelperfect.pl';
+  const DEFAULT_BASE_URL = 'https://www.pawelperfect.com';
   const configuredUrl = process.env.NEXT_PUBLIC_APP_URL || DEFAULT_BASE_URL;
 
   try {
