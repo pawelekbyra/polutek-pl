@@ -300,7 +300,8 @@
 }
 
 .compactTiny {
-  gap: 4px;
+  /* was 4px: the lettering and the date blended together */
+  gap: 7px;
 }
 
 .compactTiny .compactMark { width: clamp(12px, 10cqi, 20px); }
