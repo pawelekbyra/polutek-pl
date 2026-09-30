@@ -48,6 +48,25 @@ function readPremiereAt(body: AdminVideoRequestBody): Date | null | undefined {
   return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
+/**
+ * Fundraising goal (CLAUDE.md "Fundraising progress bar") → video columns.
+ * `null` clears the goal, a `{ amountMinor, currency, startAt }` object sets it,
+ * anything else = not sent. Routes validate the shape first
+ * (`adminVideoFundraisingGoalSchema`).
+ */
+export function fundraisingGoalUpdateFields(value: unknown): Pick<UpdateVideoInput, "fundraisingGoalMinor" | "fundraisingGoalCurrency" | "fundraisingStartAt"> {
+  if (value === null) return { fundraisingGoalMinor: null, fundraisingGoalCurrency: null, fundraisingStartAt: null };
+  if (!value || typeof value !== "object") return {};
+  const goal = value as { amountMinor?: unknown; currency?: unknown; startAt?: unknown };
+  if (typeof goal.amountMinor !== "number" || typeof goal.currency !== "string") return {};
+  const startAt = typeof goal.startAt === "string" ? new Date(goal.startAt) : null;
+  return {
+    fundraisingGoalMinor: goal.amountMinor,
+    fundraisingGoalCurrency: goal.currency.toUpperCase(),
+    fundraisingStartAt: startAt && !Number.isNaN(startAt.getTime()) ? startAt : null,
+  };
+}
+
 function readAccessTier(body: AdminVideoRequestBody, key: string): AccessTier | undefined {
   const value = body[key];
   if (typeof value !== "string") return undefined;
@@ -116,6 +135,8 @@ export function buildAdminVideoUpdatePayload(body: AdminVideoRequestBody): Updat
 
   const premiereAt = readPremiereAt(body);
   if (premiereAt !== undefined) payload.premiereAt = premiereAt;
+
+  Object.assign(payload, fundraisingGoalUpdateFields(body.fundraisingGoal));
 
   return payload;
 }

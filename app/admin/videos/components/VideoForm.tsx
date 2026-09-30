@@ -62,6 +62,8 @@ interface VideoFormProps {
   onPreferredProviderChange?: (value: string) => void;
   /** Current video tier — needed to gate YouTube/Vimeo options */
   currentTier?: string;
+  /** Extra cards under the right column (the edit page's "Cel zbiórki"). */
+  sidebarExtra?: React.ReactNode;
 }
 
 export function VideoForm({
@@ -86,6 +88,7 @@ export function VideoForm({
   preferredProvider = "CLOUDFLARE_STREAM",
   onPreferredProviderChange,
   currentTier,
+  sidebarExtra,
 }: VideoFormProps) {
   const isCreate = !formData.id;
   const wantsPublish = formData.status === "PUBLISHED";
@@ -427,6 +430,7 @@ export function VideoForm({
               </p>
             </CardContent>
           </Card>
+          {sidebarExtra}
         </div>
       </div>
     </form>

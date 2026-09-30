@@ -5,6 +5,7 @@ import { AppError } from "@/lib/modules/shared/app-error";
 import { VideoNotFoundError, VideoNotOnMainChannelError, VideoInvalidHeroError, VideoInvalidSidebarError } from "../domain/video.errors";
 import { VideoPolicy } from "../domain/video.policy";
 import { selectPrimaryVideoAsset, withPrimaryAsset } from "../domain/video-asset-selection";
+import { pickFundraisingUpdate, type FundraisingGoalFields } from "../domain/fundraising";
 
 type VideoWithAssetsAndOriginal = Video & {
   assets: VideoAsset[];
@@ -40,7 +41,7 @@ export interface CreateVideoInput {
   premiereAt?: Date | null;
 }
 
-export interface AdminUpdateVideoInput extends Partial<CreateVideoInput> {
+export interface AdminUpdateVideoInput extends Partial<CreateVideoInput>, FundraisingGoalFields {
   /** Set by updateAdminVideo only (cancelling an upcoming premiere publishes now). */
   publishedAt?: Date | null;
   videoUrl?: string | null;
@@ -324,6 +325,7 @@ export class VideoRepository {
     if (data.subtitleUrlEn !== undefined) updateData.subtitleUrlEn = data.subtitleUrlEn;
     if (data.premiereAt !== undefined) updateData.premiereAt = data.premiereAt;
     if (data.publishedAt !== undefined) updateData.publishedAt = data.publishedAt;
+    Object.assign(updateData, pickFundraisingUpdate(data));
 
     if (status && status !== VideoStatus.PUBLISHED) {
       updateData.status = status;

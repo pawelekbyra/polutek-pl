@@ -106,6 +106,10 @@ export interface AdminVideoDto extends BaseVideoDto {
   publishAfterAssetReadyRequestedAt: Date | null;
   publishAfterAssetReadyCompletedAt: Date | null;
   publishAfterAssetReadyError: string | null;
+  /** Fundraising goal (admin only; the public DTO carries just the progress fraction). */
+  fundraisingGoalMinor: number | null;
+  fundraisingGoalCurrency: string | null;
+  fundraisingStartAt: Date | null;
 }
 
 export type PublicVideoInput = BaseVideoDto & Record<string, unknown>;
@@ -312,6 +316,9 @@ export function toAdminVideoDto(input: AdminVideoInput | unknown): AdminVideoDto
     publishAfterAssetReadyRequestedAt: video.publishAfterAssetReadyRequestedAt || null,
     publishAfterAssetReadyCompletedAt: video.publishAfterAssetReadyCompletedAt || null,
     publishAfterAssetReadyError: video.publishAfterAssetReadyError || null,
+    fundraisingGoalMinor: typeof video.fundraisingGoalMinor === "number" ? video.fundraisingGoalMinor : null,
+    fundraisingGoalCurrency: typeof video.fundraisingGoalCurrency === "string" ? video.fundraisingGoalCurrency : null,
+    fundraisingStartAt: video.fundraisingStartAt instanceof Date ? video.fundraisingStartAt : null,
   };
 }
 

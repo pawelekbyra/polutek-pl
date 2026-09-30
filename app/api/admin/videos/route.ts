@@ -14,7 +14,7 @@ import {
 import { fromUseCaseResult } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { parseVideoQueryParams } from "@/lib/admin/query-parser";
-import { adminVideoPremiereAtSchema } from "@/lib/api/admin-schemas";
+import { adminVideoFundraisingGoalSchema, adminVideoPremiereAtSchema } from "@/lib/api/admin-schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +69,14 @@ export async function POST(req: NextRequest) {
     if (!premiereAt.success) {
       return NextResponse.json(
         { error: "Invalid data", details: { fieldErrors: { premiereAt: premiereAt.error.issues.map((issue) => issue.message) } } },
+        { status: 400 },
+      );
+    }
+
+    const fundraisingGoal = adminVideoFundraisingGoalSchema.safeParse(body.fundraisingGoal);
+    if (!fundraisingGoal.success) {
+      return NextResponse.json(
+        { error: "Invalid data", details: { fieldErrors: { fundraisingGoal: fundraisingGoal.error.issues.map((issue) => issue.message) } } },
         { status: 400 },
       );
     }

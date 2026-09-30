@@ -17,6 +17,7 @@ import { logger } from '@/lib/logger';
 import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import SubscribeButton from './SubscribeButton';
 import ShareButton from './ShareButton';
+import { FundraisingProgressBar } from './FundraisingProgressBar';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import { ThumbsUp, ThumbsDown, Coins } from 'lucide-react';
 import styles from './watch-actions.module.css';
@@ -239,6 +240,9 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
           <h1 className="font-brand font-bold not-italic text-[22px] md:text-[30px] tracking-[-0.021em] text-[var(--chan-ink)] leading-[1.16] mb-2">
              {displayTitle}
           </h1>
+          {typeof video.fundraisingProgress === 'number' && (
+            <FundraisingProgressBar key={video.id} progress={video.fundraisingProgress} isPl={language === 'pl'} />
+          )}
 
           <div className={cn("flex flex-col justify-between gap-2 lg:flex-row lg:items-center", styles.metaRow)}>
             <div className={cn("flex w-full items-center gap-[13px] min-w-0 lg:w-auto", styles.creatorStrip)}>

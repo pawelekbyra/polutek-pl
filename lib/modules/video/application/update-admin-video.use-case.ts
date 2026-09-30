@@ -97,6 +97,13 @@ export async function updateAdminVideo(
       metadata: {
         changed: Object.keys(safeInput).filter(k => k !== 'id'),
         ...(safeInput.premiereAt !== undefined ? { premiereAt: safeInput.premiereAt?.toISOString() ?? null } : {}),
+        ...(safeInput.fundraisingGoalMinor !== undefined ? {
+          fundraisingGoal: safeInput.fundraisingGoalMinor === null ? null : {
+            amountMinor: safeInput.fundraisingGoalMinor,
+            currency: safeInput.fundraisingGoalCurrency ?? null,
+            startAt: safeInput.fundraisingStartAt?.toISOString() ?? null,
+          },
+        } : {}),
       }
     }, tx);
 

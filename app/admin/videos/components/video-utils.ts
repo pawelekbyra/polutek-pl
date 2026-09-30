@@ -1,3 +1,5 @@
+import { SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
+
 export const slugify = (text: string) => {
   return text.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
 };
@@ -104,4 +106,63 @@ export function buildPublicationPayload(form: {
     return { error: "Data premiery musi być w przyszłości." };
   }
   return { premiereAt: iso };
+}
+
+/** "Cel zbiórki" form state (CLAUDE.md "Fundraising progress bar"). Amount in main units as typed. */
+export type FundraisingFormState = {
+  amount: string;
+  currency: SupportedCurrency;
+  /** `<input type="date">` value; empty = count every tip ever. */
+  startDate: string;
+  /** The loaded video already had a goal (so an empty amount removes it). */
+  hadGoal: boolean;
+};
+
+function todayLocalDate(now: Date = new Date()): string {
+  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+}
+
+/** Fundraising fields loaded from an admin video DTO. A new goal counts from today by default. */
+export function fundraisingFormFields(video: {
+  fundraisingGoalMinor?: unknown;
+  fundraisingGoalCurrency?: unknown;
+  fundraisingStartAt?: unknown;
+} | null): FundraisingFormState {
+  const minor = typeof video?.fundraisingGoalMinor === "number" ? video.fundraisingGoalMinor : null;
+  const currency = typeof video?.fundraisingGoalCurrency === "string"
+    && (SUPPORTED_CURRENCIES as readonly string[]).includes(video.fundraisingGoalCurrency)
+    ? video.fundraisingGoalCurrency as SupportedCurrency
+    : "PLN";
+  if (minor === null) return { amount: "", currency, startDate: todayLocalDate(), hadGoal: false };
+  const start = typeof video?.fundraisingStartAt === "string" ? new Date(video.fundraisingStartAt) : null;
+  return {
+    amount: String(minor / 100),
+    currency,
+    startDate: start && !Number.isNaN(start.getTime()) ? todayLocalDate(start) : "",
+    hadGoal: true,
+  };
+}
+
+/**
+ * Fundraising part of a video write: `{ fundraisingGoal: {...} }` to set it,
+ * `{ fundraisingGoal: null }` to remove it (amount cleared), `{}` when there was
+ * none and none is entered. Returns an error message for an invalid amount.
+ */
+export function buildFundraisingPayload(form: FundraisingFormState):
+  | { fundraisingGoal?: { amountMinor: number; currency: SupportedCurrency; startAt: string | null } | null }
+  | { error: string } {
+  const raw = form.amount.replace(/\s/g, "").replace(",", ".");
+  if (!raw) return form.hadGoal ? { fundraisingGoal: null } : {};
+  const value = Number(raw);
+  const amountMinor = Math.round(value * 100);
+  if (!Number.isFinite(value) || amountMinor <= 0) return { error: "Cel zbiórki musi być kwotą większą od zera." };
+  if (amountMinor > 1_000_000_000) return { error: "Cel zbiórki może wynosić najwyżej 10 000 000." };
+  let startAt: string | null = null;
+  if (form.startDate) {
+    const [y, m, d] = form.startDate.split("-").map(Number);
+    const date = new Date(y, (m ?? 1) - 1, d ?? 1, 0, 0, 0, 0);
+    if (!Number.isFinite(y) || Number.isNaN(date.getTime())) return { error: "Podaj poprawną datę początku zbiórki." };
+    startAt = date.toISOString();
+  }
+  return { fundraisingGoal: { amountMinor, currency: form.currency, startAt } };
 }
