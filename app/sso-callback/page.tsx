@@ -1,21 +1,47 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AuthenticateWithRedirectCallback, useAuth } from "@clerk/nextjs";
+import { useEffect, useRef, useState } from "react";
+import { useAuth, useSignIn, useSignUp } from "@clerk/nextjs";
 import { readReturnPath, SSO_CALLBACK_TIMEOUT_MS } from "@/lib/auth/sso-return";
 
 // Landing page for the Google/OAuth redirect. Clerk finalizes the sign-in here and then
 // navigates back to the page the user started from.
-// It must never render blank: the callback component itself draws nothing, so without our
-// own UI a slow or stalled handshake looked like a dead page until the user reloaded.
+// It must never render blank: a slow or stalled handshake used to look like a dead page until
+// the user reloaded.
 export default function SSOCallbackPage() {
   const { isLoaded, isSignedIn } = useAuth();
+  const { signIn } = useSignIn();
+  const { signUp } = useSignUp();
   const [timedOut, setTimedOut] = useState(false);
+  const started = useRef(false);
 
   // A session that already exists (handshake finished, or page reloaded) needs no callback.
   useEffect(() => {
     if (isLoaded && isSignedIn) window.location.replace(readReturnPath());
   }, [isLoaded, isSignedIn]);
+
+  // The sign-in was started with the signals API (`signIn.sso`), so it has to be finished with
+  // it too. A returning user has a complete sign-in; a brand-new Google user comes back as a
+  // "transferable" sign-in that must be turned into a sign-up, otherwise no account is created.
+  useEffect(() => {
+    if (!isLoaded || isSignedIn || !signIn || !signUp || started.current) return;
+    const finish = async () => {
+      if (signIn.status === "complete") {
+        started.current = true;
+        const { error } = await signIn.finalize();
+        if (!error) window.location.replace(readReturnPath());
+      } else if (signIn.isTransferable) {
+        started.current = true;
+        const { error: createError } = await signUp.create({ transfer: true });
+        if (createError) return;
+        if (signUp.status === "complete") {
+          const { error } = await signUp.finalize();
+          if (!error) window.location.replace(readReturnPath());
+        }
+      }
+    };
+    void finish();
+  }, [isLoaded, isSignedIn, signIn, signUp]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setTimedOut(true), SSO_CALLBACK_TIMEOUT_MS);
@@ -41,9 +67,6 @@ export default function SSOCallbackPage() {
           aria-label="Logowanie / Signing in"
           className="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground"
         />
-      )}
-      {!(isLoaded && isSignedIn) && (
-        <AuthenticateWithRedirectCallback signInFallbackRedirectUrl="/" signUpFallbackRedirectUrl="/" />
       )}
     </div>
   );
