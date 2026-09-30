@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminForApi } from "@/lib/auth-utils";
+import { parseAdminBody } from "@/lib/api/admin-body";
+import { adminProbeSchema } from "@/lib/api/admin-schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -175,8 +177,8 @@ export async function POST(request: NextRequest) {
   const { response } = await requireAdminForApi(DIRECT_UPLOAD_SCOPE);
   if (response) return response;
 
-  const body = await request.json().catch(() => null);
-  if (!body || typeof body !== "object" || (body as { probe?: unknown }).probe !== "direct-upload") {
+  const parsed = await parseAdminBody(request, adminProbeSchema);
+  if (!parsed.ok) {
     return NextResponse.json({ ok: false, error: "Unsupported probe" }, { status: 400 });
   }
 

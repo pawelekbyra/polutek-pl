@@ -12,6 +12,8 @@ import {
 import { fromUseCaseResult, handleApiError } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { VideoStatus } from "@prisma/client";
+import { parseAdminBody } from "@/lib/api/admin-body";
+import { adminLooseObjectSchema, adminVideoActionSchema } from "@/lib/api/admin-schemas";
 
 export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -24,9 +26,11 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
   try {
     const actor = { type: "admin" as const, userId: adminUserId! };
     const ctx = createAppContext({ actor });
-    const body = await req.json();
+    const parsed = await parseAdminBody(req, adminLooseObjectSchema);
+    if (!parsed.ok) return parsed.response;
 
-    const result = await updateAdminVideo({ ...body, id: videoId }, ctx);
+    // Video metadata is validated by the updateAdminVideo use case.
+    const result = await updateAdminVideo({ ...parsed.data, id: videoId } as Parameters<typeof updateAdminVideo>[0], ctx);
     return fromUseCaseResult(result);
   } catch (error: unknown) {
     return handleApiError(error);
@@ -45,7 +49,9 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   try {
     const actor = { type: "admin" as const, userId: adminUserId! };
     const ctx = createAppContext({ actor });
-    const body = await req.json();
+    const parsedAction = await parseAdminBody(req, adminVideoActionSchema);
+    if (!parsedAction.ok) return parsedAction.response;
+    const body = parsedAction.data;
     const { action } = body;
 
     switch (action) {
@@ -85,6 +91,9 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
         );
       case "attach-asset": {
         const { providerAssetId, providerPlaybackId } = body;
+        if (!providerAssetId) {
+          return Response.json({ error: "Invalid data", details: { fieldErrors: { providerAssetId: ["Required"] } } }, { status: 400 });
+        }
         return fromUseCaseResult(
           await attachCloudflareAsset(
             { videoId, providerAssetId, providerPlaybackId, publishAfterAssetReady: body.publishAfterAssetReady === true },

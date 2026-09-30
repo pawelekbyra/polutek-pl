@@ -6,6 +6,8 @@ import { getAdminVideoMediaState } from "@/lib/modules/video";
 import { VideoDistributionPlanService } from "@/lib/modules/video";
 import { VideoProviderJobService } from "@/lib/modules/video";
 import { getCorrelationId } from "@/lib/utils/correlation";
+import { parseAdminBody } from "@/lib/api/admin-body";
+import { adminDistributionPlanSchema } from "@/lib/api/admin-schemas";
 
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -13,13 +15,15 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   if (response) return response;
 
   try {
-    const body = await req.json();
+    const parsed = await parseAdminBody(req, adminDistributionPlanSchema);
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.data;
     const ctx = createAppContext({ actor: { type: "admin", userId: adminUserId! }, requestId: getCorrelationId() ?? undefined });
     const planService = new VideoDistributionPlanService();
     const plan = await planService.createOrReplaceActivePlan({
       videoId: params.id,
       originalId: body.originalId ?? null,
-      strategy: body.strategy,
+      strategy: body.strategy as never,
       publishAfterReady: body.publishAfterReady,
       createdByAdminId: adminUserId!,
     }, ctx);

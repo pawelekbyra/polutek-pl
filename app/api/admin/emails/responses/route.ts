@@ -4,6 +4,8 @@ import { createScopedLogger } from '@/lib/logger';
 import { handleApiError } from '@/lib/errors';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { listInboundEmails, updateInboundEmail } from '@/lib/modules/email';
+import { parseAdminBody } from "@/lib/api/admin-body";
+import { adminInboundEmailPatchSchema } from "@/lib/api/admin-schemas";
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +43,9 @@ export async function PATCH(req: NextRequest) {
     if (response) return response;
 
     try {
-        const { id, status } = await req.json();
+        const parsed = await parseAdminBody(req, adminInboundEmailPatchSchema);
+        if (!parsed.ok) return parsed.response;
+        const { id, status } = parsed.data;
 
         const ctx = createAppContext({
             actor: { type: 'system', reason: 'Admin Response Update' }
