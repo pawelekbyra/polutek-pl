@@ -4,6 +4,8 @@ import { createAppContext } from "@/lib/modules/shared/app-context";
 import { adminRefund } from "@/lib/modules/payments";
 import { handleApiError } from "@/lib/errors";
 import { createScopedLogger } from "@/lib/logger";
+import { parseAdminBody } from "@/lib/api/admin-body";
+import { adminPaymentRefundSchema } from "@/lib/api/admin-schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -15,12 +17,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const scopedLogger = createScopedLogger(requestId);
 
   try {
-    let body: { amountMinor?: number; reason?: string } = {};
-    try {
-      body = await req.json();
-    } catch {
-      // empty body = full refund
-    }
+    // Empty body = full refund.
+    const parsed = await parseAdminBody(req, adminPaymentRefundSchema, { allowEmpty: true });
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.data;
 
     const { id } = await params;
     const ctx = createAppContext({ actor: { type: "admin", userId: adminUserId! } });

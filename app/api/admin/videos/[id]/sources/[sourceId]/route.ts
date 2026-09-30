@@ -3,6 +3,8 @@ import { requireAdminForApi } from "@/lib/auth-utils";
 import { makeSourcePrimary, removeVideoSource } from "@/lib/modules/video";
 import { fromUseCaseResult, handleApiError } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
+import { parseAdminBody } from "@/lib/api/admin-body";
+import { adminVideoSourceActionSchema } from "@/lib/api/admin-schemas";
 
 type Params = { id: string; sourceId: string };
 
@@ -14,7 +16,9 @@ export async function PATCH(req: NextRequest, props: { params: Promise<Params> }
   try {
     const actor = { type: "admin" as const, userId: adminUserId! };
     const ctx = createAppContext({ actor });
-    const body = await req.json();
+    const parsed = await parseAdminBody(req, adminVideoSourceActionSchema);
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.data;
 
     if (body.action === "set_primary") {
       const result = await makeSourcePrimary({ videoId: params.id, assetId: params.sourceId }, ctx);

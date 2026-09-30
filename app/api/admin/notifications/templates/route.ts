@@ -7,6 +7,8 @@ import {
   resetNotificationTemplate,
   NOTIFICATION_TEMPLATE_KINDS,
 } from "@/lib/modules/notifications";
+import { parseAdminBody } from "@/lib/api/admin-body";
+import { adminNotificationTemplateSchema } from "@/lib/api/admin-schemas";
 
 function isNotificationKind(value: unknown): value is NotificationKind {
   return typeof value === "string" && (NOTIFICATION_TEMPLATE_KINDS as string[]).includes(value);
@@ -24,14 +26,12 @@ export async function PUT(req: NextRequest) {
   const { adminUserId, response } = await requireAdminForApi("PUT_ADMIN_NOTIFICATION_TEMPLATES");
   if (response) return response;
 
-  const body = await req.json().catch(() => ({}));
-  const { kind, titlePl, titleEn, bodyPl, bodyEn } = body;
+  const parsed = await parseAdminBody(req, adminNotificationTemplateSchema);
+  if (!parsed.ok) return parsed.response;
+  const { kind, titlePl, titleEn, bodyPl, bodyEn } = parsed.data;
 
   if (!isNotificationKind(kind)) {
     return NextResponse.json({ error: "Invalid kind" }, { status: 400 });
-  }
-  if (!titlePl || !titleEn || !bodyPl || !bodyEn) {
-    return NextResponse.json({ error: "All PL/EN fields are required" }, { status: 400 });
   }
 
   const template = await upsertNotificationTemplate({

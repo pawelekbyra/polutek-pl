@@ -5,6 +5,8 @@ import { fromUseCaseResult } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { getCorrelationId } from "@/lib/utils/correlation";
 import { AppError } from "@/lib/modules/shared/app-error";
+import { parseAdminBody } from "@/lib/api/admin-body";
+import { adminCloudflareUploadSchema } from "@/lib/api/admin-schemas";
 
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -48,7 +50,9 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
       });
     }
 
-    const body = await req.json();
+    const parsed = await parseAdminBody(req, adminCloudflareUploadSchema);
+    if (!parsed.ok) return parsed.response;
+    const body = parsed.data;
 
     const result = await provisionCloudflareUpload({
         videoId,

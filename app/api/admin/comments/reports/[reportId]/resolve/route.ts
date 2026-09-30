@@ -4,6 +4,8 @@ import { resolveCommentReport } from "@/lib/modules/comments";
 import { CommentReportStatus } from "@prisma/client";
 import { handleApiError, fromUseCaseResult } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
+import { parseAdminBody } from "@/lib/api/admin-body";
+import { adminCommentReportResolveSchema } from "@/lib/api/admin-schemas";
 export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest, props: { params: Promise<{ reportId: string }> }) {
   const params = await props.params;
@@ -12,9 +14,9 @@ export async function POST(req: NextRequest, props: { params: Promise<{ reportId
   );
   if (response) return response;
   try {
-    const { status } = await req.json();
-    if (!["DISMISSED", "ACTION_TAKEN"].includes(status))
-      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    const parsed = await parseAdminBody(req, adminCommentReportResolveSchema, { errorMessage: "Invalid status" });
+    if (!parsed.ok) return parsed.response;
+    const { status } = parsed.data;
     const actor = { type: "admin" as const, userId: adminUserId! };
     const result = await resolveCommentReport(
       params.reportId,

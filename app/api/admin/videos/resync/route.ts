@@ -4,6 +4,8 @@ import { handleApiError } from "@/lib/errors";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { resyncAdminVideoStats } from "@/lib/modules/video";
 import { fromUseCaseResult } from "@/lib/api/api-response";
+import { parseAdminBody } from "@/lib/api/admin-body";
+import { adminVideoResyncSchema } from "@/lib/api/admin-schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -13,11 +15,9 @@ export async function POST(req: NextRequest) {
   if (response) return response;
 
   try {
-    const { videoId } = await req.json();
-
-    if (!videoId) {
-      return NextResponse.json({ error: "Missing videoId" }, { status: 400 });
-    }
+    const parsed = await parseAdminBody(req, adminVideoResyncSchema, { errorMessage: "Missing videoId" });
+    if (!parsed.ok) return parsed.response;
+    const { videoId } = parsed.data;
 
     const actor = { type: "admin" as const, userId: adminUserId! };
     const ctx = createAppContext({ actor });
