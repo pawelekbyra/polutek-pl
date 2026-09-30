@@ -1,6 +1,9 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { generateCSP } from "@/lib/utils/security";
+import { checkAdminCsrf } from "@/lib/api/csrf";
+import { checkAdminRateLimit, getAdminClientIp } from "@/lib/api/admin-rate-limit";
+import { isHealthTokenAuthorized } from "@/lib/api/health-token";
 
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -71,11 +74,6 @@ const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);
 // middleware lets the request through to it.
 const CLERK_HEALTH_ROUTE = '/api/admin/health/clerk';
 
-function isHealthTokenAuthorized(req: NextRequest): boolean {
-  const token = req.headers.get('x-health-token') || req.nextUrl.searchParams.get('token');
-  return Boolean(process.env.HEALTHCHECK_TOKEN) && token === process.env.HEALTHCHECK_TOKEN;
-}
-
 // Exact top-level paths that must never get a /pl or /en prefix.
 // - /manifest.json, /robots.txt, /sitemap.xml: static root files served from
 //   /public. The matcher's static-extension exclusion skips most file types
@@ -130,9 +128,36 @@ export default clerkMiddleware(async (auth, req) => {
   if (req.nextUrl.pathname === '/api/comments' && req.method !== 'GET') {
     await auth.protect();
   } else if (isAdminRoute(req)) {
+    const isApiAdmin = req.nextUrl.pathname.startsWith('/api/admin');
+
+    // CSRF is enforced here, once, for every mutating /api/admin request, so no
+    // individual route can forget it (see lib/api/csrf.ts).
+    if (isApiAdmin) {
+      const csrf = checkAdminCsrf(req);
+      if (csrf) return NextResponse.json(csrf.body, { status: csrf.status });
+    }
+
     const isClerkHealthBreakGlass = req.nextUrl.pathname === CLERK_HEALTH_ROUTE && isHealthTokenAuthorized(req);
     if (!isClerkHealthBreakGlass) {
       await auth.protect();
+    }
+
+    // Rate limiting (per admin user + IP) runs after auth so the user id is
+    // known; per-route limits live in lib/api/admin-rate-limit.ts.
+    if (isApiAdmin) {
+      const { userId } = await auth();
+      const limited = await checkAdminRateLimit({
+        pathname: req.nextUrl.pathname,
+        method: req.method,
+        userId: userId ?? null,
+        ip: getAdminClientIp(req.headers),
+      });
+      if (limited.limited) {
+        return NextResponse.json(
+          { error: 'Too many requests', message: 'Rate limit exceeded. Try again shortly.' },
+          { status: 429, headers: { 'Retry-After': String(limited.retryAfterSeconds) } },
+        );
+      }
     }
   } else if (!isPublicRoute(req)) {
     await auth.protect();
