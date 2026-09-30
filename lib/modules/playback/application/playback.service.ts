@@ -52,8 +52,7 @@ function isAdminPreviewSession(
   return videoStatus !== VideoStatus.PUBLISHED || isUpcomingPremiere({ status: videoStatus, premiereAt });
 }
 
-// The poster is sent to the browser, so it must be a public-safe src (public R2 copy or the
-// /api/videos/<id>/thumbnail proxy), never the raw private storage URL.
+// Poster goes to the browser: public R2 copy or the thumbnail proxy, never a private storage URL.
 function posterFor(video?: { id: string; status?: string | null; thumbnailUrl?: string | null; thumbnailPublicUrl?: string | null } | null): string {
   return video?.id ? resolvePublicThumbnailSrc(video, process.env) : '';
 }

@@ -26,8 +26,10 @@ vi.mock('@/lib/blob', () => ({
 
 vi.mock('@/lib/modules/media', async () => {
   const { MediaPolicy } = await import('@/lib/modules/media/domain/media.policy');
+  const { resolvePublicThumbnailSrc } = await import('@/lib/modules/media/domain/r2-thumbnail');
   return {
     MediaPolicy,
+    resolvePublicThumbnailSrc,
     StorageService: {
       getPresignedUrl: vi.fn(),
     },
