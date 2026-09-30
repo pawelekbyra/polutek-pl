@@ -68,7 +68,14 @@ describe('adminRefund', () => {
       expect(result.data).toEqual({ stripeRefundId: 're_1', amountMinor: 1000, status: 'succeeded' });
     }
     expect(stripeRefundsCreate).toHaveBeenCalledWith({ payment_intent: 'pi_123', amount: 1000 });
-    expect(handleRefund).toHaveBeenCalledWith({ paymentId: 'pay_1', reportedRefundedMinor: 1000 }, ctx);
+    expect(handleRefund).toHaveBeenCalledWith(
+      {
+        paymentId: 'pay_1',
+        reportedRefundedMinor: 1000,
+        admin: { refundedById: 'admin_1', reason: null, stripeRefundId: 're_1' },
+      },
+      ctx
+    );
   });
 
   it('creates a partial refund for the requested amount, adding the total to already-refunded', async () => {
@@ -84,7 +91,14 @@ describe('adminRefund', () => {
       amount: 300,
       reason: 'requested_by_customer',
     });
-    expect(handleRefund).toHaveBeenCalledWith({ paymentId: 'pay_1', reportedRefundedMinor: 500 }, ctx);
+    expect(handleRefund).toHaveBeenCalledWith(
+      {
+        paymentId: 'pay_1',
+        reportedRefundedMinor: 500,
+        admin: { refundedById: 'admin_1', reason: 'duplicate', stripeRefundId: 're_2' },
+      },
+      ctx
+    );
   });
 
   it('fails with PAYMENT_NOT_FOUND (404) when the payment does not exist', async () => {

@@ -4,6 +4,7 @@ import { PaymentRepository } from "../infrastructure/payment.repository";
 import { PaymentError, PaymentProviderError } from "../domain/payment.errors";
 import { handleDispute } from "./handle-dispute.use-case";
 import { logger } from "@/lib/logger";
+import { recordAuditEvent } from "@/lib/modules/audit";
 import Stripe from "stripe";
 import { getStripeClient } from "../infrastructure/stripe-client";
 
@@ -99,6 +100,18 @@ export async function adminDisputeSync(
   if (!syncResult.ok) {
     logger.error(`[AdminDisputeSync] handleDispute failed for payment ${payment.id}:`, syncResult.error);
     return fail(syncResult.error);
+  }
+
+  try {
+    await recordAuditEvent(ctx, {
+      action: "PAYMENT_DISPUTE_SYNCED",
+      targetType: "Payment",
+      targetId: payment.id,
+      metadata: { disputeId: dispute.id, disputeStatus: dispute.status, mappedStatus },
+    });
+  } catch (err) {
+    // The dispute is already applied; a failed audit write must not report it as failed.
+    logger.error(`[AdminDisputeSync] Audit write failed for payment ${payment.id}:`, err);
   }
 
   return ok({

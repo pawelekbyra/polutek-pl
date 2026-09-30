@@ -24,11 +24,16 @@ export async function revokePatron(
     if (!user) return failure(new UserNotFoundError(input.userId));
 
     const note = input.note || 'Patron status revoked';
+    // Only a human admin is recorded as the revoker; system actors (webhooks) stay null.
+    const meta = {
+      revokedById: ctx.actor.type === 'admin' ? ctx.actor.userId : null,
+      revokeReason: input.reason ?? input.note ?? null,
+    };
 
     if (input.paymentId) {
-      await repo.revokeGrantByPaymentId(input.paymentId, note, currentTx);
+      await repo.revokeGrantByPaymentId(input.paymentId, note, currentTx, meta);
     } else {
-      await repo.revokeActiveGrants(input.userId, note, currentTx);
+      await repo.revokeActiveGrants(input.userId, note, currentTx, meta);
     }
 
     const recalcResult = await recalculatePatronStatus(input.userId, ctx, currentTx);
@@ -42,6 +47,7 @@ export async function revokePatron(
       targetId: input.userId,
       metadata: {
         note: input.note,
+        reason: input.reason,
         paymentId: input.paymentId,
         targeted: !!input.paymentId
       },

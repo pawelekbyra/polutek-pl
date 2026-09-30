@@ -110,7 +110,7 @@ export class PaymentRepository {
     return count;
   }
 
-  async updateRefundStatusWithCAS(paymentId: string, oldRefundedMinor: number, data: { status: PaymentStatus; refundedAmountMinor: number }, tx: WriteTx): Promise<number> {
+  async updateRefundStatusWithCAS(paymentId: string, oldRefundedMinor: number, data: { status: PaymentStatus; refundedAmountMinor: number; refundedById?: string; refundedAt?: Date; refundReason?: string | null }, tx: WriteTx): Promise<number> {
     const { count } = await tx.payment.updateMany({
       where: { id: paymentId, refundedAmountMinor: oldRefundedMinor },
       data
