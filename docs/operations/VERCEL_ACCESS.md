@@ -1,12 +1,12 @@
 # Vercel access for AI agents (local machine)
 
-Durable how-to so any agent can manage Vercel for this project without re-discovering it. Contains **no secrets**; see CLAUDE.md §8.1 for where they live.
+Durable how-to so any agent can manage Vercel for this project without re-discovering it. Contains **no secrets**; see CLAUDE.md §8.1 for where they live. Standing authorization and the cross-service capability table: [AGENT_ACCESS.md](AGENT_ACCESS.md) (it supersedes the "ask the owner" advice below when the session runs in bypass-permissions mode).
 
 ## Fixed identifiers (not secrets)
 
 - Team: `pawelperfect-5617s-projects` (id `team_sc16PptMTGc4ip47phctR79J`, Hobby plan)
 - Project: `polutek.pl` (id `prj_e7YawXp53b22uIMsiyW2NkccZgMz`), production from `main` of `pawelekbyra/polutek-pl`
-- Domains: `www.pawelperfect.pl` (primary), `pawelperfect.pl` (301 to www). DNS is on Cloudflare (zone `746be2887d179f7742171a605a9b797d`).
+- Domains (2026-09-30): `www.pawelperfect.com`, `www.pawelperfect.pl`; apex `pawelperfect.com`/`pawelperfect.pl` redirect to their www. DNS for both is on Cloudflare (zones `02cb23af5c0000a110f6915b00bbb8ef` .com, `746be2887d179f7742171a605a9b797d` .pl).
 - Crons (daily, Hobby-compatible): `/api/cron/video-provider-jobs/reconcile`, `/prune-playback-sessions`, `/sync-public-thumbnails`. They authenticate with `CRON_SECRET`; without it every cron returns 401.
 
 ## Ways in, in order of preference
