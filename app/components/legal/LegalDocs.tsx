@@ -42,7 +42,7 @@ export function RegulaminContent() {
         <LegalSection nr="1" title="Kto prowadzi serwis">
           <ol className="list-decimal space-y-2 pl-5">
             <li>
-              Serwis WWW.PAWELPERFECT.PL prowadzi Paweł Perfect, osoba fizyczna, adres do korespondencji: ul. Złota 75,
+              Serwis WWW.PAWELPERFECT.COM prowadzi Paweł Perfect, osoba fizyczna, adres do korespondencji: ul. Złota 75,
               00-819 Warszawa, e-mail: <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a> (dalej: „Twórca”).
             </li>
             <li>Serwis ma charakter niekomercyjny. Twórca nie sprzedaje w nim towarów, usług ani treści cyfrowych.</li>
@@ -147,7 +147,7 @@ export function PolitykaContent() {
         <LegalSection nr="1" title="Administrator danych">
           <p>
             Administratorem Twoich danych osobowych jest Paweł Perfect, osoba fizyczna prowadząca serwis
-            WWW.PAWELPERFECT.PL, adres do korespondencji: ul. Złota 75, 00-819 Warszawa.
+            WWW.PAWELPERFECT.COM, adres do korespondencji: ul. Złota 75, 00-819 Warszawa.
           </p>
           <p>W sprawach danych osobowych pisz na adres <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a>.</p>
         </LegalSection>
@@ -258,7 +258,7 @@ export function TermsContentEn() {
         <LegalSection nr="1" title="Who runs the service">
           <ol className="list-decimal space-y-2 pl-5">
             <li>
-              The service WWW.PAWELPERFECT.PL is run by Paweł Perfect, a private individual, correspondence address:
+              The service WWW.PAWELPERFECT.COM is run by Paweł Perfect, a private individual, correspondence address:
               ul. Złota 75, 00-819 Warsaw, Poland, email:{' '}
               <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a> (hereinafter: the &ldquo;Creator&rdquo;).
             </li>
@@ -366,7 +366,7 @@ export function PrivacyContentEn() {
         <LegalSection nr="1" title="Data controller">
           <p>
             The controller of your personal data is Paweł Perfect, the private individual who runs the service
-            WWW.PAWELPERFECT.PL, correspondence address: ul. Złota 75, 00-819 Warsaw, Poland.
+            WWW.PAWELPERFECT.COM, correspondence address: ul. Złota 75, 00-819 Warsaw, Poland.
           </p>
           <p>For matters concerning personal data, write to <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a>.</p>
         </LegalSection>
