@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useUser, useClerk } from "@clerk/nextjs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "../LanguageContext";
+import { ProfileSection } from "./ProfileSection";
 import {
-  ProfileSection,
   EmailSection,
   ConnectionsSection,
   SecuritySection,

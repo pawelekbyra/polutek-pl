@@ -1,17 +1,15 @@
 "use client";
 
 // Account panel sections for AccountModal, split out to keep each module within the repo's
-// file-size hotspot budget. All operations use Clerk's headless UserResource (useUser/user.*).
+// file-size hotspot budget (the profile section lives in ProfileSection.tsx). All operations use
+// Clerk's headless UserResource (useUser/user.*).
 
 import React, { useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "../icons";
 import { OAUTH_PROVIDERS, useVisibleOAuthProviders, type OAuthStrategy } from "./oauth-providers";
-import { useLanguage } from "../LanguageContext";
-import { appendQueryString, switchLocalePath, type Locale } from "@/lib/i18n/routing";
 
-function clerkErr(e: unknown, isPl: boolean): string {
+export function clerkErr(e: unknown, isPl: boolean): string {
   if (e && typeof e === "object" && "errors" in e) {
     const first = (e as { errors?: Array<{ longMessage?: string; message?: string }> }).errors?.[0];
     if (first?.longMessage) return first.longMessage;
@@ -20,7 +18,7 @@ function clerkErr(e: unknown, isPl: boolean): string {
   return isPl ? "Coś poszło nie tak. Spróbuj ponownie." : "Something went wrong. Please try again.";
 }
 
-function useAccountUser() {
+export function useAccountUser() {
   const { user } = useUser();
   return user!;
 }
@@ -29,108 +27,6 @@ export function Feedback({ error, info }: { error: string | null; info: string |
   if (error) return <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-[13px] font-semibold text-red-600">{error}</p>;
   if (info) return <p className="rounded-lg bg-[var(--chan-blue-soft)] px-3 py-2 text-[13px] font-semibold text-[var(--chan-blue)]">{info}</p>;
   return null;
-}
-
-function LanguageField({ isPl }: { isPl: boolean }) {
-  const { language, setLanguage } = useLanguage();
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const switchLanguage = (locale: Locale) => {
-    if (locale === language) return;
-    setLanguage(locale);
-    router.push(appendQueryString(switchLocalePath(pathname || "/", locale), searchParams));
-  };
-
-  return (
-    <div className="flex items-center justify-between rounded-[12px] border border-[var(--chan-line)] px-3 py-2.5">
-      <span className="text-[13px] font-bold text-[var(--chan-ink)]">{isPl ? "Język" : "Language"}</span>
-      <div className="flex gap-1">
-        {(["pl", "en"] as const).map((locale) => (
-          <button
-            key={locale}
-            type="button"
-            onClick={() => switchLanguage(locale)}
-            className={
-              "rounded-full px-3 py-1 text-[12px] font-bold uppercase tracking-wide transition-colors " +
-              (language === locale
-                ? "bg-[var(--chan-ink)] text-white"
-                : "text-[var(--chan-muted)] hover:bg-[var(--chan-surface)]")
-            }
-          >
-            {locale}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-export function ProfileSection({ isPl }: { isPl: boolean }) {
-  const user = useAccountUser();
-  const [firstName, setFirstName] = useState(user.firstName ?? "");
-  const [username, setUsername] = useState(user.username ?? "");
-  const [loading, setLoading] = useState(false);
-  const [avatarLoading, setAvatarLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
-
-  async function save(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setInfo(null);
-    try {
-      await user.update({ firstName, ...(username ? { username } : {}) });
-      setInfo(isPl ? "Zapisano." : "Saved.");
-    } catch (err) {
-      setError(clerkErr(err, isPl));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function onAvatar(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = ""; // allow re-selecting the same file
-    if (!file) return;
-    setAvatarLoading(true);
-    setError(null);
-    setInfo(null);
-    try {
-      await user.setProfileImage({ file });
-      await user.reload();
-      setInfo(isPl ? "Zdjęcie zaktualizowane." : "Photo updated.");
-    } catch (err) {
-      setError(clerkErr(err, isPl));
-    } finally {
-      setAvatarLoading(false);
-    }
-  }
-
-  return (
-    <form onSubmit={save} className="space-y-3">
-      <Feedback error={error} info={info} />
-      <LanguageField isPl={isPl} />
-      <div className="flex items-center gap-3">
-        {/* Clerk-hosted avatar; plain img avoids next/image host config for the account panel. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={user.imageUrl}
-          alt=""
-          className="h-14 w-14 shrink-0 rounded-full border border-[var(--chan-line)] object-cover"
-        />
-        <label className="cursor-pointer text-[13px] font-bold text-[var(--chan-ink)] underline hover:opacity-70">
-          {avatarLoading ? (isPl ? "Wgrywanie..." : "Uploading...") : (isPl ? "Zmień zdjęcie" : "Change photo")}
-          <input type="file" accept="image/*" className="hidden" onChange={onAvatar} disabled={avatarLoading} />
-        </label>
-      </div>
-      <Field label={isPl ? "Nazwa" : "Name"} value={firstName} onChange={setFirstName} />
-      <Field label={isPl ? "Nazwa użytkownika" : "Username"} value={username} onChange={setUsername} />
-      <Primary loading={loading} label={isPl ? "Zapisz" : "Save"} />
-    </form>
-  );
 }
 
 export function EmailSection({ isPl }: { isPl: boolean }) {
@@ -392,18 +288,20 @@ export function DangerSection({ isPl, onDeleted }: { isPl: boolean; onDeleted: (
   );
 }
 
-function Field({
+export function Field({
   label,
   type = "text",
   value,
   onChange,
   inputMode,
+  autoComplete,
 }: {
   label: string;
   type?: string;
   value: string;
   onChange: (v: string) => void;
   inputMode?: "numeric" | "text";
+  autoComplete?: string;
 }) {
   return (
     <label className="block">
@@ -412,6 +310,7 @@ function Field({
         type={type}
         value={value}
         inputMode={inputMode}
+        autoComplete={autoComplete}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-[12px] border border-[var(--chan-line)] bg-[var(--chan-surface)] px-3 py-2 font-sans text-[15px] text-[var(--chan-ink)] outline-none transition-colors focus-visible:border-[var(--chan-blue)] focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
       />
@@ -419,7 +318,7 @@ function Field({
   );
 }
 
-function Primary({ loading, label }: { loading: boolean; label: string }) {
+export function Primary({ loading, label }: { loading: boolean; label: string }) {
   return (
     <button
       type="submit"

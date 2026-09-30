@@ -22,6 +22,11 @@ export function normalizeNickname(raw: string): string {
   return raw.normalize("NFC").trim().replace(/\s+/g, " ");
 }
 
+/** Same nickname for the taken check: compared after normalizing, ignoring letter case. */
+export function isSameNickname(a: string, b: string): boolean {
+  return normalizeNickname(a).toLocaleLowerCase() === normalizeNickname(b).toLocaleLowerCase();
+}
+
 export function validateNickname(raw: string): NicknameValidation {
   const value = normalizeNickname(raw);
   const length = Array.from(value).length;
