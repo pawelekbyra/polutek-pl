@@ -25,7 +25,11 @@ export default function UnsubscribedEmailConsentPrompt() {
   // dismissed it unseen. Wait until the gate is gone.
   const [gateGone, setGateGone] = useState(false);
   useEffect(() => {
-    const check = () => !document.querySelector('[data-testid="site-preloader"]');
+    // Also never on /sso-callback: that page redirects right after sign-up, which closed the
+    // dialog a split second after it opened and still counted it as "shown".
+    const check = () =>
+      !window.location.pathname.startsWith('/sso-callback') &&
+      !document.querySelector('[data-testid="site-preloader"]');
     if (check()) {
       setGateGone(true);
       return;
