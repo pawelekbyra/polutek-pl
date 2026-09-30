@@ -18,7 +18,7 @@ The owner decided on **one** address for everything users see (legal documents, 
 ## Automatic mail from the app: Resend
 
 - Domain `pawelperfect.pl` verified in Resend (DKIM `resend._domainkey`, bounce/SPF on the `send` subdomain). Sending only: the API key `polutek-production` is sending-only and scoped to this domain.
-- Vercel env: `RESEND_API_KEY`, `EMAIL_FROM` (should be `PAWELPERFECT.PL <hello@pawelperfect.pl>` so replies reach the real mailbox; changing it needs a redeploy), `RESEND_WEBHOOK_SECRET`.
+- Vercel env: `RESEND_API_KEY`, `EMAIL_FROM` (`PAWELPERFECT.PL <no-reply@pawelperfect.pl>`; automatic mail is sent from a no-reply address, no mailbox needed), optional `EMAIL_REPLY_TO` (default `hello@pawelperfect.pl`), `RESEND_WEBHOOK_SECRET`. Every mail from the app carries `Reply-To: hello@pawelperfect.pl`, so a user's reply lands in the real Google mailbox (`getEmailReplyTo()` in `legacy-email-service-provider.ts`). Changing env vars needs a redeploy.
 - Resend webhook `https://www.pawelperfect.pl/api/webhooks/resend` (delivery, delay, bounce, complaint). The `email.received` subscription is obsolete now that MX is at Google.
 - Free plan: 100 mails/day, 3000/month.
 
