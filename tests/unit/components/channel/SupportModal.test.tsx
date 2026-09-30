@@ -149,7 +149,7 @@ describe('SupportModal (tip gate)', () => {
     // Back sits in the footer, next to the main button.
     expect(screen.getByRole('button', { name: 'Wstecz' }).nextElementSibling).toContainElement(screen.getByRole('button', { name: 'Dalej' }));
     const body = createIntentBody();
-    expect(body).toMatchObject({ amountMinor: 2000, currency: 'PLN', title: 'Napiwek dla www.pawelperfect.pl' });
+    expect(body).toMatchObject({ amountMinor: 2000, currency: 'PLN', title: 'Napiwek dla www.pawelperfect.com' });
     expect(body).not.toHaveProperty('paymentMethod');
     const select = screen.getByRole('combobox', { name: 'Wybierz metodę napiwku' });
     expect(select).toHaveTextContent('BLIK');

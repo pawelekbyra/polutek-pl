@@ -87,7 +87,7 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
       .replaceAll("{{amount}}", "100.00")
       .replaceAll("{{currency}}", "PLN")
       .replaceAll("{{appName}}", APP_NAME)
-      .replaceAll("{{appUrl}}", "https://pawelperfect.pl")
+      .replaceAll("{{appUrl}}", "https://www.pawelperfect.com")
       .replaceAll("{{unsubscribeLink}}", "#");
   }, [html]);
 
@@ -99,7 +99,7 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
       .replaceAll("{{amount}}", "25.00")
       .replaceAll("{{currency}}", "USD")
       .replaceAll("{{appName}}", APP_NAME)
-      .replaceAll("{{appUrl}}", "https://pawelperfect.pl")
+      .replaceAll("{{appUrl}}", "https://www.pawelperfect.com")
       .replaceAll("{{unsubscribeLink}}", "#");
   }, [htmlEn]);
 
