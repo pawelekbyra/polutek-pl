@@ -265,7 +265,7 @@ export function SidebarPlaylist({
                   return (
                     <div
                       className={cn(
-                        "absolute right-[6px] top-[6px] z-30 max-w-[86px] truncate rounded-full px-[7px] py-[3px] text-[8px] font-black uppercase leading-none tracking-[0.1em] pointer-events-none",
+                        "absolute right-[6px] top-[6px] z-30 max-w-[110px] truncate rounded-full px-[9px] py-[4px] text-[11px] font-black uppercase leading-none tracking-[0.08em] pointer-events-none",
                         badge.variant === "public" &&
                           "bg-white/92 text-[var(--chan-ink)]",
                         badge.variant === "unlocked" &&
