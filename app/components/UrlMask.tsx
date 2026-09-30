@@ -6,7 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 /**
  * Public URL masking.
  *
- * The owner wants the address bar to always read `pawelperfect.pl` while browsing
+ * The owner wants the address bar to always read `pawelperfect.com` while browsing
  * the channel — home, a shared `?v=` video link, `/watch/*`, `/channel/*`,
  * `/search`, `/regulamin`, etc. all resolve normally on the server, but once the
  * client has mounted the visible URL is collapsed to `/`.
