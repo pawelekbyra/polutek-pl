@@ -12,8 +12,7 @@ import { useEffect } from "react";
 export function OrientationLock() {
   useEffect(() => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (screen.orientation as any)?.lock?.("portrait").catch(() => {});
+      (screen.orientation as unknown as { lock?: (orientation: string) => Promise<void> })?.lock?.("portrait").catch(() => {});
     } catch {
       // Unsupported — ignore.
     }

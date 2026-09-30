@@ -13,6 +13,7 @@ import { selectPrimaryVideoAsset } from '@/lib/modules/video';
 import { extractYouTubeVideoId, extractVimeoVideoId } from '@/lib/modules/video';
 import { MuxClient } from '@/lib/modules/video';
 import { isUpcomingPremiere, toPremiereDate } from '@/lib/modules/video/domain/premiere';
+import { resolvePublicThumbnailSrc } from '@/lib/modules/media';
 import { VideoStatus, type VideoAsset } from '@prisma/client';
 
 export type PlaybackErrorCode =
@@ -49,6 +50,12 @@ function isAdminPreviewSession(
   if (actorType !== 'admin') return false;
   // A published video whose premiere hasn't happened yet is still a preview.
   return videoStatus !== VideoStatus.PUBLISHED || isUpcomingPremiere({ status: videoStatus, premiereAt });
+}
+
+// The poster is sent to the browser, so it must be a public-safe src (public R2 copy or the
+// /api/videos/<id>/thumbnail proxy), never the raw private storage URL.
+function posterFor(video?: { id: string; status?: string | null; thumbnailUrl?: string | null; thumbnailPublicUrl?: string | null } | null): string {
+  return video?.id ? resolvePublicThumbnailSrc(video, process.env) : '';
 }
 
 function playerFor(video?: { thumbnailUrl?: string | null; title?: string | null; subtitleUrlPl?: string | null; subtitleUrlEn?: string | null } | null, controls = false): PlayerDefaults['player'] {
@@ -159,7 +166,7 @@ export class PlaybackService {
         return unavailablePlan({
             videoId,
             status: 'ERROR',
-            video: { thumbnailUrl: video?.thumbnailUrl, title: video?.title },
+            video: { thumbnailUrl: posterFor(video), title: video?.title },
             accessReason: 'FORBIDDEN',
             warnings: ['Internal error during access check'],
         });
@@ -175,7 +182,7 @@ export class PlaybackService {
         ...unavailablePlan({
           videoId,
           status: isGuest ? 'LOGIN_REQUIRED' : 'COMING_SOON',
-          video: { thumbnailUrl: video.thumbnailUrl, title: video.title },
+          video: { thumbnailUrl: posterFor(video), title: video.title },
           accessReason: isGuest ? 'LOGIN_REQUIRED' : 'COMING_SOON',
           warnings: ['Premiere not reached yet'],
         }),
@@ -198,7 +205,7 @@ export class PlaybackService {
         return unavailablePlan({
             videoId,
             status: toStatus(decision.reason),
-            video: { thumbnailUrl: video?.thumbnailUrl, title: video?.title },
+            video: { thumbnailUrl: posterFor(video), title: video?.title },
             accessReason: decision.reason as any,
             requiredTier: decision.requiredTier,
             warnings: [decision.reason || 'Access denied'],
@@ -208,7 +215,7 @@ export class PlaybackService {
     // At this point decision.hasAccess is true. Only now may playback-source
     // metadata be inspected or future provider resolution be permitted.
     let videoUrl = video?.videoUrl;
-    let thumbnailUrl = video?.thumbnailUrl || '';
+    let thumbnailUrl = posterFor(video);
     let title = video?.title || '';
     let tier = video?.tier || 'PUBLIC';
 
