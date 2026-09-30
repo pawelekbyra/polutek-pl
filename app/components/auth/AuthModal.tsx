@@ -9,7 +9,7 @@ import { useLanguage } from "../LanguageContext";
 import { useVisibleOAuthProviders, type OAuthStrategy } from "./oauth-providers";
 import type { AuthView } from "./AuthModalProvider";
 import { rememberReturnPath } from "@/lib/auth/sso-return";
-import { generateUsername } from "@/lib/auth/generate-username";
+import { isValidUsername } from "@/lib/auth/generate-username";
 
 type InternalView = "sign-in" | "sign-up" | "verify-email" | "forgot" | "reset";
 
@@ -42,6 +42,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -84,9 +85,16 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     if (!signUp) return;
+    const cleanUsername = username.trim().toLowerCase();
+    if (!isValidUsername(cleanUsername)) {
+      setError(isPl
+        ? "Nazwa użytkownika: 4–64 znaki, małe litery, cyfry lub _."
+        : "Username: 4–64 characters, lowercase letters, digits or _.");
+      return;
+    }
     setLoading(true);
     setError(null);
-    const { error: createError } = await signUp.create({ emailAddress: email, password, username: generateUsername(email), ...(name ? { firstName: name } : {}) });
+    const { error: createError } = await signUp.create({ emailAddress: email, password, username: cleanUsername, ...(name ? { firstName: name } : {}) });
     if (createError) return showError(createError as ClerkOpError);
     const { error: sendError } = await signUp.verifications.sendEmailCode();
     if (sendError) return showError(sendError as ClerkOpError);
@@ -217,6 +225,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
               <form onSubmit={handleSignUp} className="mt-5 space-y-3.5">
                 <OAuthButtons onSelect={handleOAuth} isPl={isPl} disabled={!ready} />
                 <Divider isPl={isPl} />
+                <Field label={isPl ? "Nazwa użytkownika" : "Username"} type="text" value={username} onChange={setUsername} autoComplete="username" required />
                 <Field label={isPl ? "Nazwa (opcjonalnie)" : "Name (optional)"} type="text" value={name} onChange={setName} autoComplete="name" />
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
                 <Field label={isPl ? "Hasło" : "Password"} type="password" value={password} onChange={setPassword} autoComplete="new-password" required />
