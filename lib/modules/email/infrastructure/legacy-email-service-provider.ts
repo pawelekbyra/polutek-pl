@@ -13,7 +13,7 @@ import { EmailPolicy } from "../domain/email.policy";
  * Override with EMAIL_REPLY_TO; the default is the single public contact address.
  */
 /** Display name every automatic email shows as its sender (owner's choice). */
-export const EMAIL_SENDER_NAME = 'WWW.PAWELPERFECT.PL';
+export const EMAIL_SENDER_NAME = 'PAWELPERFECT.PL';
 
 /**
  * Sender address. EMAIL_FROM may be a bare address ("no-reply@pawelperfect.pl"); then inboxes
