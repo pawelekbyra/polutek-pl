@@ -7,6 +7,15 @@ import { flags } from "@/lib/feature-flags";
 import { buildContentUnsubscribeUrl } from "@/lib/modules/subscriptions";
 import { EmailPolicy } from "../domain/email.policy";
 
+/**
+ * Automatic mail goes out from a no-reply address, but people do reply to it. Replies must land in
+ * the real support mailbox (Google Workspace, hello@), so every send carries this Reply-To.
+ * Override with EMAIL_REPLY_TO; the default is the single public contact address.
+ */
+function getEmailReplyTo(): string {
+  return process.env.EMAIL_REPLY_TO?.trim() || 'hello@pawelperfect.pl';
+}
+
 function replaceTemplateVariables(value: string, variables: Record<string, string>) {
   return Object.entries(variables).reduce((result, [key, replacement]) => {
     return result.split(`{{${key}}}`).join(replacement);
@@ -53,6 +62,7 @@ export class LegacyEmailServiceProvider implements EmailProvider {
       to: [input.to],
       subject: input.subject,
       html: input.html,
+      replyTo: getEmailReplyTo(),
       ...(headers ? { headers } : {}),
     });
   }
@@ -172,6 +182,7 @@ export class LegacyEmailServiceProvider implements EmailProvider {
                     to: [recipient.email],
                     subject,
                     html,
+                    replyTo: getEmailReplyTo(),
                     headers: {
                         'X-Broadcast-Id': broadcastId,
                         'X-Recipient-Id': recipient.id
@@ -239,7 +250,8 @@ export class LegacyEmailServiceProvider implements EmailProvider {
         from,
         to: [input.to],
         subject: `[TEST] ${input.subject}`,
-        html: input.body
+        html: input.body,
+        replyTo: getEmailReplyTo(),
       });
 
       if (error) throw error;
