@@ -10,6 +10,7 @@
  */
 import { z } from "zod";
 import { CommentDeletedReason, StorageProvider } from "@prisma/client";
+import { currencySchema } from "@/lib/payments/checkout.schema";
 
 /** Any JSON object (arrays, null and scalars are rejected). Keys are kept. */
 export const adminLooseObjectSchema = z.record(z.string(), z.unknown());
@@ -94,9 +95,27 @@ export const adminVideoReorderSchema = z.object({
  */
 export const adminVideoPremiereAtSchema = z.string().datetime({ offset: true }).nullable().optional();
 
-/** Video metadata writes: any object (fields whitelisted by the use case) with a valid premiereAt. */
+/** Largest fundraising goal accepted: 10 000 000 units (fits a Postgres INTEGER in minor units). */
+export const MAX_FUNDRAISING_GOAL_MINOR = 1_000_000_000;
+
+/**
+ * Fundraising goal on a video write (CLAUDE.md "Fundraising progress bar"):
+ * `null` removes the goal (no bar), absent = unchanged. `startAt` (ISO, or null
+ * = count every tip ever) is when tips start counting towards it.
+ */
+export const adminVideoFundraisingGoalSchema = z
+  .object({
+    amountMinor: z.number().int().positive().max(MAX_FUNDRAISING_GOAL_MINOR),
+    currency: currencySchema,
+    startAt: z.string().datetime({ offset: true }).nullable(),
+  })
+  .strict()
+  .nullable()
+  .optional();
+
+/** Video metadata writes: any object (fields whitelisted by the use case) with a valid premiereAt/goal. */
 export const adminVideoWriteSchema = z
-  .object({ premiereAt: adminVideoPremiereAtSchema })
+  .object({ premiereAt: adminVideoPremiereAtSchema, fundraisingGoal: adminVideoFundraisingGoalSchema })
   .passthrough();
 
 export const adminVideoResyncSchema = z.object({

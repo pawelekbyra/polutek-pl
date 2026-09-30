@@ -11,10 +11,14 @@ import { VideoForm } from "../../components/VideoForm";
 import { readAdminApiError } from "@/lib/admin/api-error";
 import {
   INITIAL_FORM_DATA,
+  buildFundraisingPayload,
   buildPublicationPayload,
+  fundraisingFormFields,
   publicationFormFields,
   slugify,
+  type FundraisingFormState,
 } from "../../components/video-utils";
+import { FundraisingGoalCard } from "../../components/FundraisingGoalCard";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -54,6 +58,7 @@ export default function AdminVideoEditPage(props: EditPageProps) {
   const router = useRouter();
   const toast = useToast();
   const [formData, setFormData] = useState<VideoFormData>(INITIAL_FORM_DATA);
+  const [fundraising, setFundraising] = useState<FundraisingFormState>(() => fundraisingFormFields(null));
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -73,6 +78,7 @@ export default function AdminVideoEditPage(props: EditPageProps) {
       }
 
       setFormData(toEditableFormData(data));
+      setFundraising(fundraisingFormFields(data));
       setIsSlugManual(true);
     } catch (error) {
       logger.error("Failed to load admin video edit page", error);
@@ -99,6 +105,11 @@ export default function AdminVideoEditPage(props: EditPageProps) {
     const publication = buildPublicationPayload(formData);
     if ("error" in publication) {
       setFormError(publication.error);
+      return;
+    }
+    const fundraisingGoal = buildFundraisingPayload(fundraising);
+    if ("error" in fundraisingGoal) {
+      setFormError(fundraisingGoal.error);
       return;
     }
     // "Premiera" on a draft publishes it (the server keeps the publication blockers).
@@ -128,6 +139,7 @@ export default function AdminVideoEditPage(props: EditPageProps) {
           subtitleUrlPl: formData.subtitleUrlPl.trim() || null,
           subtitleUrlEn: formData.subtitleUrlEn.trim() || null,
           ...publication,
+          ...fundraisingGoal,
         }),
       });
       const data = await res.json().catch(() => null);
@@ -206,6 +218,7 @@ export default function AdminVideoEditPage(props: EditPageProps) {
         onCreateSourceModeChange={() => {}}
         existingCloudflareSource=""
         onExistingCloudflareSourceChange={() => {}}
+        sidebarExtra={<FundraisingGoalCard value={fundraising} onChange={setFundraising} disabled={isSubmitting} />}
       />
     </AdminLayoutShell>
   );

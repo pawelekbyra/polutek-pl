@@ -83,6 +83,11 @@ export interface PublicVideoDTO {
   publishedAt?: Date | string | null;
   /** ISO time of a scheduled premiere, or null. Upcoming iff in the future (see lib/premiere.ts). */
   premiereAt?: string | null;
+  /**
+   * Share of the video's fundraising goal reached, 0..1 (whole percents), or null/absent
+   * when it has no goal. Never an amount: goals and totals stay server-side.
+   */
+  fundraisingProgress?: number | null;
   creator?: PublicCreatorDTO;
   textTracks?: VideoTextTrackDTO[];
   // Ensure no raw fields are present

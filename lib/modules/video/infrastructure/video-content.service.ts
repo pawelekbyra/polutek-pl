@@ -9,6 +9,7 @@ import { MainChannelService } from '@/lib/modules/channel';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { MediaPolicy, resolvePublicThumbnailSrc } from '@/lib/modules/media';
 import { effectivePublishedAt, toPremiereDate } from '../domain/premiere';
+import { withFundraisingProgress } from './fundraising-progress.service';
 
 export const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
   OR: [
@@ -170,7 +171,7 @@ export class VideoContentService {
 
       const mainCreatorSlug = flags.mainCreatorSlug;
 
-      return videos.map(v => {
+      const dtos = videos.map(v => {
           let imageUrl = v.creator?.user?.imageUrl || null;
           if (v.creator?.slug === mainCreatorSlug && adminData?.imageUrl) {
               imageUrl = adminData.imageUrl;
@@ -180,6 +181,8 @@ export class VideoContentService {
             creator: v.creator ? { ...v.creator, imageUrl } : null
           });
       });
+      // Amount-free goal progress (CLAUDE.md "Fundraising progress bar").
+      return await withFundraisingProgress(dtos, videos);
     } catch (e: unknown) {
       console.error("[GET_ALL_VIDEOS_ERROR]", e);
       if (canUseDemoFallbacks()) return INITIAL_VIDEOS.filter(v => (v.tier as string) !== 'ADMIN').map(v => this.mapToPublicVideoDTO(v));
@@ -242,10 +245,11 @@ export class VideoContentService {
           imageUrl = adminData.imageUrl;
       }
 
-      return this.mapToPublicVideoDTO({
+      const [dto] = await withFundraisingProgress([this.mapToPublicVideoDTO({
         ...selectedVideo,
         creator: selectedVideo.creator ? { ...selectedVideo.creator, imageUrl } : null
-      });
+      })], [selectedVideo]);
+      return dto;
     } catch (e: unknown) {
       console.error("[GET_MAIN_FEATURED_VIDEO_ERROR]", e);
       if (canUseDemoFallbacks()) return this.mapToPublicVideoDTO(INITIAL_VIDEOS[0]);

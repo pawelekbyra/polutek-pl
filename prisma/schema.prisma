@@ -284,7 +284,13 @@ model Video {
   // Scheduled premiere: while status = PUBLISHED and premiereAt > now the video is "upcoming"
   // (listed under "Coming soon", never playable). Null or past = ordinary video. See CLAUDE.md "Premieres".
   premiereAt                        DateTime?
-  publishAfterAssetReady            Boolean     @default(false)
+  // Fundraising goal shown as an amount-free progress bar under the title (CLAUDE.md
+  // "Fundraising progress bar"). Null goal = no bar. Never exposed in public DTOs.
+  fundraisingGoalMinor              Int?
+  fundraisingGoalCurrency           String?
+  // Tips counted from this moment; null = all tips ever.
+  fundraisingStartAt                DateTime?
+  publishAfterAssetReady           Boolean     @default(false)
   publishAfterAssetReadyProvider    String?
   publishAfterAssetReadyRequestedAt DateTime?
   publishAfterAssetReadyCompletedAt DateTime?

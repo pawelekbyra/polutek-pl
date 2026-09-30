@@ -2,7 +2,7 @@ import { createScopedLogger } from "@/lib/logger";
 import { NextRequest } from "next/server";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/errors";
-import { getAdminVideoDetails, updateAdminVideo } from "@/lib/modules/video";
+import { fundraisingGoalUpdateFields, getAdminVideoDetails, updateAdminVideo } from "@/lib/modules/video";
 import { fromUseCaseResult } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { getCorrelationId } from "@/lib/utils/correlation";
@@ -21,11 +21,14 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
     if (!parsed.ok) return parsed.response;
     const ctx = createAppContext({ actor: { type: "admin", userId: adminUserId! }, requestId: getCorrelationId() ?? undefined });
     // Video metadata is validated by the updateAdminVideo use case.
-    const { premiereAt, ...rest } = parsed.data;
+    const { premiereAt, fundraisingGoal, ...rest } = parsed.data as Record<string, unknown> & typeof parsed.data;
+    // The goal columns are only ever set from the validated `fundraisingGoal` object.
+    for (const key of ["fundraisingGoalMinor", "fundraisingGoalCurrency", "fundraisingStartAt"]) delete rest[key];
     const result = await updateAdminVideo({
       id: params.id,
       ...rest,
       ...(premiereAt !== undefined ? { premiereAt: premiereAt === null ? null : new Date(premiereAt) } : {}),
+      ...fundraisingGoalUpdateFields(fundraisingGoal),
     } as Parameters<typeof updateAdminVideo>[0], ctx);
     return fromUseCaseResult(result);
   } catch (error: unknown) {
