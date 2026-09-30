@@ -5,7 +5,7 @@ import { sanitizeReturnPath, rememberReturnPath, readReturnPath } from "@/lib/au
 
 const auth = { isLoaded: false, isSignedIn: false };
 const signIn = { status: "needs_identifier", isTransferable: false, finalize: vi.fn() };
-const signUp = { status: "missing_requirements", create: vi.fn(), finalize: vi.fn() };
+const signUp = { status: "missing_requirements", emailAddress: "new@x.pl", missingFields: [] as string[], create: vi.fn(), update: vi.fn(), finalize: vi.fn() };
 vi.mock("@clerk/nextjs", () => ({
   useAuth: () => auth,
   useSignIn: () => ({ signIn }),
@@ -39,6 +39,8 @@ describe("/sso-callback page", () => {
     signIn.isTransferable = false;
     signIn.finalize.mockReset().mockResolvedValue({ error: null });
     signUp.status = "missing_requirements";
+    signUp.missingFields = [];
+    signUp.update.mockReset().mockResolvedValue({ error: null });
     signUp.create.mockReset().mockResolvedValue({ error: null });
     signUp.finalize.mockReset().mockResolvedValue({ error: null });
     Object.defineProperty(window, "location", { value: { ...window.location, replace }, writable: true });
@@ -92,5 +94,21 @@ describe("/sso-callback page", () => {
     expect(signUp.create).toHaveBeenCalledWith({ transfer: true });
     expect(signUp.finalize).toHaveBeenCalled();
     expect(replace).toHaveBeenCalledWith("/?v=z");
+  });
+
+  it("adds the required username when a new Google user is missing it", async () => {
+    auth.isLoaded = true;
+    signIn.isTransferable = true;
+    signUp.status = "missing_requirements";
+    signUp.missingFields = ["username"];
+    signUp.update.mockImplementation(async () => {
+      signUp.status = "complete";
+      return { error: null };
+    });
+    await act(async () => {
+      render(<SSOCallbackPage />);
+    });
+    expect(signUp.update).toHaveBeenCalledWith({ username: expect.stringMatching(/^[a-z0-9_]{4,64}$/) });
+    expect(signUp.finalize).toHaveBeenCalled();
   });
 });

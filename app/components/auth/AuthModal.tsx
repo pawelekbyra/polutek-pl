@@ -9,6 +9,7 @@ import { useLanguage } from "../LanguageContext";
 import { useVisibleOAuthProviders, type OAuthStrategy } from "./oauth-providers";
 import type { AuthView } from "./AuthModalProvider";
 import { rememberReturnPath } from "@/lib/auth/sso-return";
+import { generateUsername } from "@/lib/auth/generate-username";
 
 type InternalView = "sign-in" | "sign-up" | "verify-email" | "forgot" | "reset";
 
@@ -85,7 +86,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     if (!signUp) return;
     setLoading(true);
     setError(null);
-    const { error: createError } = await signUp.create({ emailAddress: email, password, ...(name ? { firstName: name } : {}) });
+    const { error: createError } = await signUp.create({ emailAddress: email, password, username: generateUsername(email), ...(name ? { firstName: name } : {}) });
     if (createError) return showError(createError as ClerkOpError);
     const { error: sendError } = await signUp.verifications.sendEmailCode();
     if (sendError) return showError(sendError as ClerkOpError);
