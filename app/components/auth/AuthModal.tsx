@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSignIn, useSignUp } from "@clerk/nextjs";
+import { useClerk, useSignIn, useSignUp } from "@clerk/nextjs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Loader2 } from "../icons";
 import { useLanguage } from "../LanguageContext";
 import { useVisibleOAuthProviders, type OAuthStrategy } from "./oauth-providers";
 import type { AuthView } from "./AuthModalProvider";
 import { rememberReturnPath } from "@/lib/auth/sso-return";
+import { applyAvatar } from "@/lib/auth/avatar";
 import { usernameFromNickname } from "@/lib/auth/generate-username";
 import { checkNicknameAvailability, nicknameCheckMessage, nicknameProblemMessage, validateNickname } from "@/lib/auth/nickname";
 
@@ -38,6 +39,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
   // Clerk's signals API: these hooks return the future resources directly.
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
+  const clerk = useClerk();
 
   const [view, setView] = useState<InternalView>(initialView);
   const [email, setEmail] = useState("");
@@ -122,6 +124,8 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     if (verifyError) return showError(verifyError as ClerkOpError);
     const { error: finalizeError } = await signUp.finalize();
     if (finalizeError) return showError(finalizeError as ClerkOpError);
+    // Every new account starts with the site's default avatar.
+    await applyAvatar(clerk.user, null);
     onOpenChange(false);
     router.refresh();
   }

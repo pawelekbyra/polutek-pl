@@ -4,12 +4,15 @@ import { render, screen, act, cleanup, fireEvent } from "@testing-library/react"
 import { sanitizeReturnPath, rememberReturnPath, readReturnPath } from "@/lib/auth/sso-return";
 
 const auth = { isLoaded: false, isSignedIn: false };
+const clerkUser = { update: vi.fn(), setProfileImage: vi.fn() };
+vi.mock("@/lib/auth/avatar", async (orig) => ({ ...(await orig<typeof import("@/lib/auth/avatar")>()), applyAvatar: (user: unknown, file: unknown) => applyAvatarSpy(user, file) }));
+const applyAvatarSpy = vi.fn();
 const signIn = { status: "needs_identifier", isTransferable: false, finalize: vi.fn() };
 const signUp = { status: "missing_requirements", emailAddress: "new@x.pl", firstName: null as string | null, missingFields: [] as string[], unsafeMetadata: {}, create: vi.fn(), update: vi.fn(), finalize: vi.fn() };
 vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en" }) }));
 vi.mock("@clerk/nextjs", () => ({
   useAuth: () => auth,
-  useClerk: () => ({ user: { update: vi.fn().mockResolvedValue({}) } }),
+  useClerk: () => ({ user: clerkUser }),
   useSignIn: () => ({ signIn }),
   useSignUp: () => ({ signUp }),
 }));
@@ -138,6 +141,8 @@ describe("/sso-callback page", () => {
     const { username } = signUp.update.mock.calls[0][0] as { username: string };
     expect(username).toMatch(/^[a-z0-9_]{4,64}$/);
     expect(signUp.finalize).toHaveBeenCalled();
+    // no avatar chosen -> the default avatar is applied to the new account
+    expect(applyAvatarSpy).toHaveBeenCalledWith(clerkUser, null);
     expect(replace).toHaveBeenCalledWith("/?v=w");
   });
 

@@ -5,6 +5,7 @@ import { useAuth, useClerk, useSignIn, useSignUp } from "@clerk/nextjs";
 import { readReturnPath, SSO_CALLBACK_TIMEOUT_MS } from "@/lib/auth/sso-return";
 import { usernameFromNickname } from "@/lib/auth/generate-username";
 import { checkNicknameAvailability, nicknameCheckMessage, nicknameProblemMessage, validateNickname } from "@/lib/auth/nickname";
+import { avatarProblemMessage, applyAvatar, validateAvatarFile, AVATAR_ACCEPT } from "@/lib/auth/avatar";
 import { useLanguage } from "@/app/components/LanguageContext";
 
 // Landing page for the Google/OAuth redirect. Clerk finalizes the sign-in here and then
@@ -34,6 +35,8 @@ export default function SSOCallbackPage() {
   // the username Clerk requires is derived from it and never shown.
   const [profileStep, setProfileStep] = useState(false);
   const [nickname, setNickname] = useState("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   // A session that already exists (handshake finished, or page reloaded) needs no callback.
@@ -112,6 +115,8 @@ export default function SSOCallbackPage() {
     } catch {
       // cosmetic: the account exists either way
     }
+    // The chosen picture, or the default avatar (replacing the Google photo) when none was chosen.
+    await applyAvatar(clerk.user, avatarFile);
     window.location.replace(readReturnPath());
   }
 
@@ -154,6 +159,41 @@ export default function SSOCallbackPage() {
               className="mt-1 block w-full rounded-lg border border-[var(--chan-line)] bg-background px-3 py-2 text-sm font-normal"
             />
           </label>
+          <div className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={avatarPreview ?? "/default-avatar.jpg"}
+              alt=""
+              className="h-14 w-14 shrink-0 rounded-full border border-[var(--chan-line)] bg-black object-cover"
+            />
+            <label className="block flex-1 text-[12px] font-semibold text-[var(--chan-ink)]">
+              {isPl ? "Avatar (opcjonalnie)" : "Avatar (optional)"}
+              <input
+                type="file"
+                accept={AVATAR_ACCEPT}
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  if (!file) {
+                    setAvatarFile(null);
+                    setAvatarPreview(null);
+                    return;
+                  }
+                  const avatarProblem = validateAvatarFile(file);
+                  if (avatarProblem) {
+                    e.target.value = "";
+                    setAvatarFile(null);
+                    setAvatarPreview(null);
+                    setProblem(avatarProblemMessage(avatarProblem, isPl));
+                    return;
+                  }
+                  setProblem(null);
+                  setAvatarFile(file);
+                  setAvatarPreview(URL.createObjectURL(file));
+                }}
+                className="mt-1 block w-full text-xs font-normal file:mr-2 file:rounded-full file:border-0 file:bg-[var(--chan-surface)] file:px-3 file:py-1.5 file:text-xs file:font-semibold"
+              />
+            </label>
+          </div>
           {problem && <p role="alert" className="text-xs text-red-600">{problem}</p>}
           <button
             type="submit"
