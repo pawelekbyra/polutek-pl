@@ -36,6 +36,18 @@ function readNumberField(body: AdminVideoRequestBody, key: string): number | und
   return undefined;
 }
 
+/**
+ * Scheduled premiere: `null` = publish now (clears it), an ISO string = that
+ * moment, anything else = not sent. Routes validate the format first.
+ */
+function readPremiereAt(body: AdminVideoRequestBody): Date | null | undefined {
+  const value = body.premiereAt;
+  if (value === null) return null;
+  if (typeof value !== "string") return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
 function readAccessTier(body: AdminVideoRequestBody, key: string): AccessTier | undefined {
   const value = body[key];
   if (typeof value !== "string") return undefined;
@@ -102,6 +114,9 @@ export function buildAdminVideoUpdatePayload(body: AdminVideoRequestBody): Updat
   const subtitleUrlEn = readNullableTextField(body, "subtitleUrlEn");
   if (subtitleUrlEn !== undefined) payload.subtitleUrlEn = subtitleUrlEn;
 
+  const premiereAt = readPremiereAt(body);
+  if (premiereAt !== undefined) payload.premiereAt = premiereAt;
+
   return payload;
 }
 
@@ -130,6 +145,9 @@ export function buildAdminVideoCreatePayload(body: AdminVideoRequestBody): Creat
 
   const titleEn = readNullableTextField(body, "titleEn");
   if (titleEn !== undefined) payload.titleEn = titleEn;
+
+  const premiereAt = readPremiereAt(body);
+  if (premiereAt !== undefined) payload.premiereAt = premiereAt;
 
   return payload;
 }

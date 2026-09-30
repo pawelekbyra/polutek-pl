@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import Image from "next/image";
 import { AdminVideoListItem } from "@/lib/modules/video/domain/admin-video-list.dto";
+import { isUpcomingPremiere } from "@/lib/premiere";
 
 interface VideoTableProps {
   videos: AdminVideoListItem[];
@@ -73,6 +74,15 @@ export function VideoTable({ videos, onEdit, onDuplicate, onDelete, deletingVide
                   >
                     {vid.status}
                   </Badge>
+                  {vid.premiereAt && isUpcomingPremiere({ premiereAt: vid.premiereAt }) && (
+                    <Badge
+                      variant="outline"
+                      className="text-[9px] h-4 px-1 w-fit border-amber-500 text-amber-700 bg-amber-50"
+                      title={vid.status === 'PUBLISHED' ? "W sekcji „Już wkrótce” do chwili premiery" : "Premiera zadziała po publikacji"}
+                    >
+                      Premiera {new Date(vid.premiereAt).toLocaleString("pl-PL", { dateStyle: "short", timeStyle: "short" })}
+                    </Badge>
+                  )}
                   {vid.publishAfterAssetReady && !vid.publishAfterAssetReadyCompletedAt && !vid.publishAfterAssetReadyError && (
                     <Badge variant="outline" className="text-[9px] h-4 px-1 w-fit border-blue-500 text-blue-600 bg-blue-50 animate-pulse">
                       AUTO-PUBLIKACJA W TOKU

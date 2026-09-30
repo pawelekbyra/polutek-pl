@@ -105,4 +105,38 @@ describe('getGatedMedia Use Case', () => {
         expect(result.error).toBeInstanceOf(MediaSourceNotFoundError);
       }
   });
+
+  // CLAUDE.md "Premieres": the legacy media proxy must not stream an upcoming premiere.
+  it('refuses an upcoming premiere even when access is granted', async () => {
+      const video = {
+        id: 'v1',
+        videoUrl: 'https://example.com/video.mp4',
+        status: 'PUBLISHED',
+        premiereAt: new Date(Date.now() + 86_400_000),
+      };
+      mockPrisma.video.findFirst.mockResolvedValue(video);
+      vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true } as any });
+
+      const ctx = createAppContext({ actor: { type: 'user', userId: 'u1' }, prisma: mockPrisma });
+      const result = await getGatedMedia({ videoIdOrSlug: 'v1' }, ctx);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error).toBeInstanceOf(MediaAccessDeniedError);
+      expect(JSON.stringify(result)).not.toContain(video.videoUrl);
+  });
+
+  it('serves the video once the premiere has passed', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue({
+        id: 'v1',
+        videoUrl: 'https://example.com/video.mp4',
+        status: 'PUBLISHED',
+        premiereAt: new Date(Date.now() - 60_000),
+      });
+      vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true } as any });
+
+      const ctx = createAppContext({ actor: { type: 'user', userId: 'u1' }, prisma: mockPrisma });
+      const result = await getGatedMedia({ videoIdOrSlug: 'v1' }, ctx);
+
+      expect(result.ok).toBe(true);
+  });
 });

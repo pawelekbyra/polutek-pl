@@ -281,6 +281,9 @@ model Video {
   sidebarOrder                      Int         @default(0)
   status                            VideoStatus @default(DRAFT)
   publishedAt                       DateTime?
+  // Scheduled premiere: while status = PUBLISHED and premiereAt > now the video is "upcoming"
+  // (listed under "Coming soon", never playable). Null or past = ordinary video. See CLAUDE.md "Premieres".
+  premiereAt                        DateTime?
   publishAfterAssetReady            Boolean     @default(false)
   publishAfterAssetReadyProvider    String?
   publishAfterAssetReadyRequestedAt DateTime?
@@ -309,6 +312,7 @@ model Video {
   @@index([status, createdAt])
   @@index([creatorId, status])
   @@index([publishAfterAssetReady])
+  @@index([premiereAt])
   @@index([activeOriginalId])
   @@index([activePlaybackRouteId])
   @@index([creatorId])

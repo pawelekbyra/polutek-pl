@@ -7,7 +7,7 @@ import { fromUseCaseResult } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { getCorrelationId } from "@/lib/utils/correlation";
 import { parseAdminBody } from "@/lib/api/admin-body";
-import { adminLooseObjectSchema } from "@/lib/api/admin-schemas";
+import { adminVideoWriteSchema } from "@/lib/api/admin-schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -17,11 +17,16 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ id: str
   if (response) return response;
 
   try {
-    const parsed = await parseAdminBody(req, adminLooseObjectSchema);
+    const parsed = await parseAdminBody(req, adminVideoWriteSchema);
     if (!parsed.ok) return parsed.response;
     const ctx = createAppContext({ actor: { type: "admin", userId: adminUserId! }, requestId: getCorrelationId() ?? undefined });
     // Video metadata is validated by the updateAdminVideo use case.
-    const result = await updateAdminVideo({ id: params.id, ...parsed.data } as Parameters<typeof updateAdminVideo>[0], ctx);
+    const { premiereAt, ...rest } = parsed.data;
+    const result = await updateAdminVideo({
+      id: params.id,
+      ...rest,
+      ...(premiereAt !== undefined ? { premiereAt: premiereAt === null ? null : new Date(premiereAt) } : {}),
+    } as Parameters<typeof updateAdminVideo>[0], ctx);
     return fromUseCaseResult(result);
   } catch (error: unknown) {
     return handleApiError(error);

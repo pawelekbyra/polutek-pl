@@ -226,7 +226,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
           <PremiumWrapper
             videoId={video.id}
             requiredTier={video.tier}
-            showPatronComingSoon
+            premiereAt={video.premiereAt}
             posterUrl={video.thumbnailUrl}
             revealKey="player"
           >

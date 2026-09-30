@@ -7,12 +7,16 @@ import { recordAuditEvent } from "@/lib/modules/audit";
 import { MediaPolicy, MediaStorageService } from "@/lib/modules/media";
 import { VideoPolicy } from "../domain/video.policy";
 import { syncPublicThumbnail } from "./sync-public-thumbnail.service";
+import { publishAdminVideo } from "./publish-admin-video.use-case";
+import { isAllowedPremiereChange, isUpcomingPremiere } from "../domain/premiere";
 import {
     VideoNotFoundError,
     VideoNotOnMainChannelError,
     VideoUrlNotAllowedError,
     VideoInvalidHeroError,
-    VideoInvalidSidebarError
+    VideoInvalidSidebarError,
+    VideoInvalidPremiereError,
+    VideoNotReadyForPublicationError
 } from "../domain/video.errors";
 
 /** True for the site's own thumbnail proxy path, e.g. /api/videos/<id>/thumbnail. */
@@ -23,7 +27,7 @@ export function isThumbnailProxyPath(value: string | null | undefined): boolean 
 export async function updateAdminVideo(
   input: UpdateVideoInput,
   ctx: AppContext
-): Promise<UseCaseResult<AdminVideoDto, VideoNotFoundError | VideoNotOnMainChannelError | VideoUrlNotAllowedError | VideoInvalidHeroError | VideoInvalidSidebarError>> {
+): Promise<UseCaseResult<AdminVideoDto, VideoNotFoundError | VideoNotOnMainChannelError | VideoUrlNotAllowedError | VideoInvalidHeroError | VideoInvalidSidebarError | VideoInvalidPremiereError | VideoNotReadyForPublicationError>> {
   const mainChannel = await MainChannelService.getRequired(ctx);
   const repository = new VideoRepository(ctx.prisma);
 
@@ -36,6 +40,10 @@ export async function updateAdminVideo(
 
   if (input.videoUrl && !MediaPolicy.isAllowedVideoSourceUrl(input.videoUrl, process.env as any)) {
     return fail(new VideoUrlNotAllowedError(input.videoUrl));
+  }
+
+  if (!isAllowedPremiereChange(input.premiereAt, existing.premiereAt, ctx.now())) {
+      return fail(new VideoInvalidPremiereError());
   }
 
   const nextStatus = input.status || existing.status;
@@ -63,6 +71,13 @@ export async function updateAdminVideo(
   // self-reference, so the thumbnail broke. A proxy path is never a storage value: keep the
   // stored one.
   if (isThumbnailProxyPath(safeInput.thumbnailUrl)) delete safeInput.thumbnailUrl;
+  // publishedAt is never taken from the request.
+  delete safeInput.publishedAt;
+  // "Natychmiast" on a published video whose premiere hasn't happened yet: it goes
+  // live now, so it is dated now (not from when it was first published).
+  if (input.premiereAt === null && existing.status === 'PUBLISHED' && isUpcomingPremiere(existing, ctx.now())) {
+      safeInput.publishedAt = ctx.now();
+  }
   if (input.status && input.status !== 'PUBLISHED') {
       safeInput.isMainFeatured = false;
       safeInput.showInSidebar = false;
@@ -79,11 +94,15 @@ export async function updateAdminVideo(
       action: 'VIDEO_UPDATED',
       targetType: 'Video',
       targetId: video.id,
-      metadata: { changed: Object.keys(safeInput).filter(k => k !== 'id') }
+      metadata: {
+        changed: Object.keys(safeInput).filter(k => k !== 'id'),
+        ...(safeInput.premiereAt !== undefined ? { premiereAt: safeInput.premiereAt?.toISOString() ?? null } : {}),
+      }
     }, tx);
 
     return video;
   });
+
 
   // Unpublishing drops the public R2 copy; a new cover on a published video
   // gets copied there. Runs before the old private object is deleted below.
@@ -92,6 +111,13 @@ export async function updateAdminVideo(
   // Cleanup old cover if it was replaced and it was our owned storage (R2 or Blob)
   if (safeInput.thumbnailUrl && existing.thumbnailUrl && safeInput.thumbnailUrl !== existing.thumbnailUrl) {
     await MediaStorageService.deleteOwnedThumbnail(existing.thumbnailUrl);
+  }
+
+  // "Premiera" on a draft (the form sends status PUBLISHED with a premiere): publish
+  // it through the canonical publish use case, which keeps the publication
+  // blockers; the video then waits in "Coming soon" until premiereAt.
+  if (input.status === 'PUBLISHED' && existing.status !== 'PUBLISHED' && input.premiereAt instanceof Date) {
+    return publishAdminVideo(updated.id, ctx);
   }
 
   return ok(toAdminVideoDto(updated));

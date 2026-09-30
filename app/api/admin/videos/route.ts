@@ -14,6 +14,7 @@ import {
 import { fromUseCaseResult } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { parseVideoQueryParams } from "@/lib/admin/query-parser";
+import { adminVideoPremiereAtSchema } from "@/lib/api/admin-schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,14 @@ export async function POST(req: NextRequest) {
     const ctx = createAppContext({ actor });
     const parsedBody: unknown = await req.json();
     const body = isAdminVideoRequestBody(parsedBody) ? parsedBody : {};
+    // Scheduled premiere: a malformed timestamp is a 400, never silently ignored.
+    const premiereAt = adminVideoPremiereAtSchema.safeParse(body.premiereAt);
+    if (!premiereAt.success) {
+      return NextResponse.json(
+        { error: "Invalid data", details: { fieldErrors: { premiereAt: premiereAt.error.issues.map((issue) => issue.message) } } },
+        { status: 400 },
+      );
+    }
 
     if (body.id) {
       const result = await updateAdminVideo(buildAdminVideoUpdatePayload(body), ctx);

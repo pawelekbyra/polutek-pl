@@ -37,6 +37,7 @@ export * from './domain/video.dto';
 export * from './domain/video.policy';
 export * from './domain/video.errors';
 export * from './domain/sidebar-order';
+export * from './domain/premiere';
 export type { CreateVideoInput, UpdateVideoInput } from './infrastructure/video.repository';
 export * from './domain/video-asset-selection';
 export * from './domain/video-asset.constants';

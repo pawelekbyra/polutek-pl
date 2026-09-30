@@ -26,6 +26,8 @@ export type AdminVideoListItem = {
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;
+  /** Scheduled premiere (ISO); upcoming while in the future (CLAUDE.md "Premieres"). */
+  premiereAt?: string | null;
 };
 
 export type AdminVideosListResponse = {

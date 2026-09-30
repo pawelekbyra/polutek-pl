@@ -9,7 +9,12 @@ import { AdminNavigation } from "@/app/admin/components/AdminNavigation";
 import { AdminFormSkeleton } from "@/components/skeletons/admin";
 import { VideoForm } from "../../components/VideoForm";
 import { readAdminApiError } from "@/lib/admin/api-error";
-import { INITIAL_FORM_DATA, slugify } from "../../components/video-utils";
+import {
+  INITIAL_FORM_DATA,
+  buildPublicationPayload,
+  publicationFormFields,
+  slugify,
+} from "../../components/video-utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -40,6 +45,7 @@ function toEditableFormData(video: Record<string, unknown>): VideoFormData {
     sidebarOrder: Number(video.sidebarOrder || 0),
     subtitleUrlPl: String(video.subtitleUrlPl || ""),
     subtitleUrlEn: String(video.subtitleUrlEn || ""),
+    ...publicationFormFields(video),
   };
 }
 
@@ -90,6 +96,13 @@ export default function AdminVideoEditPage(props: EditPageProps) {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
+    const publication = buildPublicationPayload(formData);
+    if ("error" in publication) {
+      setFormError(publication.error);
+      return;
+    }
+    // "Premiera" on a draft publishes it (the server keeps the publication blockers).
+    const status = formData.publishMode === "PREMIERE" && formData.status === "DRAFT" ? "PUBLISHED" : formData.status;
     setIsSubmitting(true);
     setFormError(null);
 
@@ -108,12 +121,13 @@ export default function AdminVideoEditPage(props: EditPageProps) {
           thumbnailUrl: formData.thumbnailUrl.trim() || "",
           duration: formData.duration.trim() || null,
           tier: formData.tier,
-          status: formData.status,
+          status,
           isMainFeatured: formData.isMainFeatured,
           showInSidebar: formData.showInSidebar,
           sidebarOrder: formData.sidebarOrder,
           subtitleUrlPl: formData.subtitleUrlPl.trim() || null,
           subtitleUrlEn: formData.subtitleUrlEn.trim() || null,
+          ...publication,
         }),
       });
       const data = await res.json().catch(() => null);

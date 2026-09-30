@@ -86,6 +86,19 @@ export const adminVideoReorderSchema = z.object({
     .max(1000),
 });
 
+/**
+ * Scheduled premiere on a video write (CLAUDE.md "Premieres"): an ISO 8601
+ * timestamp with an offset (the admin form sends UTC), `null` = publish now,
+ * absent = unchanged. "Must be in the future" is checked by the use case,
+ * which knows the stored value.
+ */
+export const adminVideoPremiereAtSchema = z.string().datetime({ offset: true }).nullable().optional();
+
+/** Video metadata writes: any object (fields whitelisted by the use case) with a valid premiereAt. */
+export const adminVideoWriteSchema = z
+  .object({ premiereAt: adminVideoPremiereAtSchema })
+  .passthrough();
+
 export const adminVideoResyncSchema = z.object({
   videoId: z.string().min(1),
 });

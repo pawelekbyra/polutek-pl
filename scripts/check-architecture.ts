@@ -14,6 +14,9 @@ const FORBIDDEN_IMPORTS = [
   'lib/api/',
 ];
 
+const PREMIERE_HELPER_REASON =
+  'Pure, dependency-free isUpcomingPremiere() helper (CLAUDE.md "Premieres"); the video barrel pulls media/channel code (circular deps) and several tests mock the whole @/lib/modules/video barrel, which would silently drop the premiere gate.';
+
 // Allowlist for cross-module internal imports where extracting to shared would cause circular deps.
 // Key: file path; value: map of "module/subPath" → reason string.
 const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, string>> = {
@@ -25,6 +28,15 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
   },
   'lib/modules/users/application/patron-read-model.ts': {
     'patron/domain/patron-read-model': 'Pure, no-side-effect derivation helper re-exported for admin user read models; routing through the patron module\'s public index would entangle it with tests that mock the whole @/lib/modules/patron barrel (grantPatron/revokePatron).',
+  },
+  'lib/modules/playback/application/playback.service.ts': {
+    'video/domain/premiere': PREMIERE_HELPER_REASON,
+  },
+  'lib/modules/media/application/get-gated-media.use-case.ts': {
+    'video/domain/premiere': PREMIERE_HELPER_REASON,
+  },
+  'lib/modules/channel/application/channel-layout.service.ts': {
+    'video/domain/premiere': PREMIERE_HELPER_REASON,
   },
   'lib/modules/access/application/check-video-access.use-case.ts': {
     'channel/domain/channel.policy': 'Pure, no-side-effect policy class; many tests narrowly mock the whole @/lib/modules/channel barrel for MainChannelService only, and routing this through it would force every such test to also mock MainChannelPolicy.',

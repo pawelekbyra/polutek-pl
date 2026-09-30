@@ -1,6 +1,7 @@
 import type { AccessTier, StorageProvider, VideoAssetProcessingState, VideoStatus } from "@prisma/client";
 import { selectPrimaryVideoAsset } from "./video-asset-selection";
 import { resolvePublicThumbnailSrc } from "@/lib/modules/media";
+import { effectivePublishedAt, toPremiereDate } from "./premiere";
 
 export interface BaseVideoDto {
   id: string;
@@ -18,6 +19,8 @@ export interface BaseVideoDto {
   likesCount: number;
   dislikesCount: number;
   publishedAt: Date | null;
+  /** Scheduled premiere (see CLAUDE.md "Premieres"). Public DTOs carry it as an ISO string. */
+  premiereAt?: Date | string | null;
   isMainFeatured: boolean;
   showInSidebar: boolean;
   sidebarOrder: number;
@@ -191,7 +194,9 @@ export function toPublicVideoDto(video: PublicVideoInput): PublicVideoDto {
     views: video.views,
     likesCount: video.likesCount,
     dislikesCount: video.dislikesCount,
-    publishedAt: video.publishedAt,
+    // "Published" as viewers see it: the premiere time once one is scheduled.
+    publishedAt: effectivePublishedAt(video),
+    premiereAt: toPremiereDate(video.premiereAt)?.toISOString() ?? null,
     isMainFeatured: video.isMainFeatured,
     showInSidebar: video.showInSidebar,
     sidebarOrder: video.sidebarOrder,
@@ -288,6 +293,8 @@ export function toAdminVideoDto(input: AdminVideoInput | unknown): AdminVideoDto
 
   return {
     ...toPublicVideoDto(video),
+    // Admins see the stored publish time, not the viewer-facing effective one.
+    publishedAt: video.publishedAt ?? null,
     videoUrl: video.videoUrl,
     status: video.status,
     creatorId: video.creatorId,

@@ -4,7 +4,7 @@ import { useEffect, useId, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { PlaybackPlanStatus } from "@/lib/modules/playback";
 import { cn } from "@/lib/utils";
-import { PATRON_COMING_SOON_TARGET, formatPremiereCountdown, formatPremiereDate } from "@/lib/temp-patron-coming-soon";
+import { formatPremiereCountdown, formatPremiereDate, toPremiereDate } from "@/lib/premiere";
 import { CockpitComingSoon } from "./coming-soon/CockpitComingSoon";
 import { PremieraLettering } from "./coming-soon/PremieraLettering";
 import { useAuthModal } from "./auth/AuthModalProvider";
@@ -12,12 +12,15 @@ import { useLanguage } from "./LanguageContext";
 import { PlayerStateFrame } from "./PlayerStateFrame";
 import styles from "./AccessLockOverlay.module.css";
 
-// "COMING_SOON" is not a real PlaybackPlanStatus — see lib/temp-patron-coming-soon.ts.
-type AccessLockState = Extract<PlaybackPlanStatus, "LOGIN_REQUIRED"> | "COMING_SOON";
+// COMING_SOON = a scheduled premiere not reached yet (CLAUDE.md "Premieres"), shown to
+// signed-in viewers; guests get LOGIN_REQUIRED for the same video.
+type AccessLockState = Extract<PlaybackPlanStatus, "LOGIN_REQUIRED" | "COMING_SOON">;
 
 interface AccessLockOverlayProps {
   state: AccessLockState;
   variant: "default" | "thumbnail" | "thumbnailCompact";
+  /** The video's own premiere time; required for COMING_SOON. */
+  premiereAt?: Date | string | null;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -45,7 +48,7 @@ function useCountdownUnits(now: Date, target: Date) {
   return [pad(d), pad(h), pad(m), pad(s)];
 }
 
-export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
+export function AccessLockOverlay({ state, variant, premiereAt }: AccessLockOverlayProps) {
   const { language } = useLanguage();
   const { open: openAuthModal } = useAuthModal();
   const reduceMotion = useReducedMotion();
@@ -55,14 +58,19 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
   const isComingSoon = state === "COMING_SOON";
 
   const [countdownNow, setCountdownNow] = useState<Date>(() => new Date());
+  // A missing date (should not happen) degrades to a zeroed countdown instead of crashing.
+  const premiereDate = toPremiereDate(premiereAt) ?? countdownNow;
+  // Only the full-size cockpit ticks; compact thumbnails show a static date and many can
+  // be mounted at once in the playlist.
+  const ticks = isComingSoon && !isCompact;
   useEffect(() => {
-    if (!isComingSoon) return;
+    if (!ticks) return;
     const id = setInterval(() => setCountdownNow(new Date()), 1_000);
     return () => clearInterval(id);
-  }, [isComingSoon]);
+  }, [ticks]);
 
-  const countdownLabel = formatPremiereCountdown(isPl, undefined, countdownNow);
-  const units = useCountdownUnits(countdownNow, PATRON_COMING_SOON_TARGET);
+  const countdownLabel = formatPremiereCountdown(isPl, premiereDate, countdownNow);
+  const units = useCountdownUnits(countdownNow, premiereDate);
 
   if (isCompact) {
     if (isComingSoon) {
@@ -78,11 +86,11 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
               variant === "thumbnailCompact" && styles.compactTiny,
             )}
             role="img"
-            aria-label={countdownLabel}
+            aria-label={`${isPl ? "Premiera" : "Premiere"} ${formatPremiereDate(premiereDate)}`}
           >
             <PremieraLettering isPl={isPl} className={styles.compactPremiereLabel} />
             <span className={styles.compactPremiereDate} aria-hidden="true">
-              {tightenSegmentOnes(formatPremiereDate(), styles.compactPremiereDateOne)}
+              {tightenSegmentOnes(formatPremiereDate(premiereDate), styles.compactPremiereDateOne)}
             </span>
           </div>
         </PlayerStateFrame>
@@ -140,6 +148,7 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             titleId={titleId}
             units={units}
             countdownLabel={countdownLabel}
+            premiereAt={premiereDate}
           />
         ) : (
           <LoginScene

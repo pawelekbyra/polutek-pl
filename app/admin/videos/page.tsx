@@ -18,7 +18,7 @@ import { AdminVideoEditView } from "./components/AdminVideoEditView";
 import { AdminVideoHeader } from "./components/AdminVideoHeader";
 import { AdminVideoStats } from "./components/AdminVideoStats";
 import { AdminVideoFiltersView } from "./components/AdminVideoFiltersView";
-import { slugify, normalizeCloudflareSource, INITIAL_FORM_DATA } from "./components/video-utils";
+import { slugify, normalizeCloudflareSource, INITIAL_FORM_DATA, buildPublicationPayload, publicationFormFields } from "./components/video-utils";
 import { useAdminVideos } from "./components/useAdminVideos";
 
 export default function AdminVideosPage() {
@@ -106,6 +106,7 @@ export default function AdminVideosPage() {
       sidebarOrder: vid.sidebarOrder || 0,
       subtitleUrlPl: "",
       subtitleUrlEn: "",
+      ...publicationFormFields(vid),
     });
     setSelectedVideoFile(null);
     setExistingCloudflareSource("");
@@ -139,6 +140,7 @@ export default function AdminVideosPage() {
       sidebarOrder: 0,
       subtitleUrlPl: "",
       subtitleUrlEn: "",
+      ...publicationFormFields({}),
     });
     setSelectedVideoFile(null);
     setExistingCloudflareSource("");
@@ -175,6 +177,10 @@ export default function AdminVideosPage() {
       setFormError("Wybierz plik albo podaj URL źródła przed publikacją. Szkic możesz zapisać bez źródła.");
       return;
     }
+    const publication = buildPublicationPayload(formData);
+    if ("error" in publication) return setFormError(publication.error);
+    // Editing a draft with "Premiera" publishes it (the server keeps the publication blockers).
+    const editStatus = formData.publishMode === "PREMIERE" && formData.status === "DRAFT" ? "PUBLISHED" : formData.status;
     setIsSubmitting(true);
     setFormError(null);
     try {
@@ -191,10 +197,11 @@ export default function AdminVideosPage() {
           videoUrl: formData.videoUrl?.trim() || null,
           thumbnailUrl: formData.thumbnailUrl?.trim() || "",
           tier: formData.tier,
-          status: formData.status,
+          status: editStatus,
           isMainFeatured: formData.isMainFeatured,
           showInSidebar: formData.showInSidebar,
           sidebarOrder: formData.sidebarOrder,
+          ...publication,
         } : {
           title: formData.title?.trim(),
           slug: formData.slug?.trim(),
@@ -206,6 +213,7 @@ export default function AdminVideosPage() {
           tier: formData.tier,
           publishAfterAssetReady: intent === "PUBLISHED",
           publishAfterAssetReadyProvider: intent === "PUBLISHED" ? preferredProvider : null,
+          ...publication,
         })
       });
       const data = await res.json();

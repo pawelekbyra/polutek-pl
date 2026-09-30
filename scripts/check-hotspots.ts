@@ -68,9 +68,9 @@ const hotspotExceptions: Record<string, HotspotException> = {
       "Pre-existing large client player module after player-control repairs; tolerated temporarily so hotspot CI remains visible, but must be split in the dedicated player refactor before launch certification.",
   },
   "app/components/coming-soon/HudBackdrop.tsx": {
-    maxLines: 620,
+    maxLines: 630,
     reason:
-      "Temporary cockpit 'coming soon' visual prototype (canvas HUD synced to an audio timeline) under active design iteration; see the TEMPORARY CHANGES REGISTRY in CLAUDE.md. Do not split until the design settles or the prototype is removed.",
+      "Cockpit premiere countdown (canvas HUD synced to an audio timeline) under active design iteration; see \"Premieres\" in CLAUDE.md. Nudged up for the per-video premiere date prop (trajectory end). Do not split until the design settles.",
   },
   "app/components/comments/EmbeddedComments.tsx": {
     maxLines: 610,
@@ -91,9 +91,9 @@ const hotspotExceptions: Record<string, HotspotException> = {
       "Added Mux (signed JWT HLS) and Vimeo (embed) provider resolvers in the multi-source video feature (#1204); tracked for extraction into provider-specific adapter modules before launch certification.",
   },
   "lib/modules/video/infrastructure/video.repository.ts": {
-    maxLines: 580,
+    maxLines: 590,
     reason:
-      "Added subtitleUrlPl/subtitleUrlEn fields for WebVTT track support and distribution system relations; tracked for extraction once subtitle management is modularized.",
+      "Added subtitleUrlPl/subtitleUrlEn fields for WebVTT track support and distribution system relations, then premiereAt (scheduled premieres); tracked for extraction once subtitle management is modularized.",
   },
   "app/components/legal/LegalDocs.tsx": {
     maxLines: 660,

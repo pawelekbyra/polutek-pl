@@ -12,6 +12,7 @@ import { getPrimaryPlayableAsset } from '../domain/primary-playable-asset';
 import { selectPrimaryVideoAsset } from '@/lib/modules/video';
 import { extractYouTubeVideoId, extractVimeoVideoId } from '@/lib/modules/video';
 import { MuxClient } from '@/lib/modules/video';
+import { isUpcomingPremiere, toPremiereDate } from '@/lib/modules/video/domain/premiere';
 import { VideoStatus, type VideoAsset } from '@prisma/client';
 
 export type PlaybackErrorCode =
@@ -40,8 +41,14 @@ function emptyPlaybackRuntime(): PlayerDefaults['tracking'] {
 
 // Only draft/unpublished admin previews are excluded from view counts — once a
 // video is PUBLISHED, the admin's own genuine watches count like anyone else's.
-function isAdminPreviewSession(actorType: string, videoStatus: VideoStatus | string | null | undefined): boolean {
-  return actorType === 'admin' && videoStatus !== VideoStatus.PUBLISHED;
+function isAdminPreviewSession(
+  actorType: string,
+  videoStatus: VideoStatus | string | null | undefined,
+  premiereAt?: Date | string | null,
+): boolean {
+  if (actorType !== 'admin') return false;
+  // A published video whose premiere hasn't happened yet is still a preview.
+  return videoStatus !== VideoStatus.PUBLISHED || isUpcomingPremiere({ status: videoStatus, premiereAt });
 }
 
 function playerFor(video?: { thumbnailUrl?: string | null; title?: string | null; subtitleUrlPl?: string | null; subtitleUrlEn?: string | null } | null, controls = false): PlayerDefaults['player'] {
@@ -158,6 +165,24 @@ export class PlaybackService {
         });
     }
 
+    // Scheduled premiere gate (CLAUDE.md "Premieres"). Runs before any source,
+    // token, provider id or playback session is touched, so an upcoming video
+    // can never be played or counted early — whatever its tier. Admins may
+    // still preview it (like a draft); their sessions are marked as previews.
+    if (video && actor.type !== 'admin' && isUpcomingPremiere(video)) {
+      const isGuest = actor.type === 'guest';
+      return {
+        ...unavailablePlan({
+          videoId,
+          status: isGuest ? 'LOGIN_REQUIRED' : 'COMING_SOON',
+          video: { thumbnailUrl: video.thumbnailUrl, title: video.title },
+          accessReason: isGuest ? 'LOGIN_REQUIRED' : 'COMING_SOON',
+          warnings: ['Premiere not reached yet'],
+        }),
+        ...(isGuest ? {} : { premiereAt: toPremiereDate(video.premiereAt)!.toISOString() }),
+      };
+    }
+
     const decision = accessResult.data;
 
     if (!video && !decision.hasAccess && decision.reason === 'NOT_FOUND') {
@@ -246,7 +271,7 @@ export class PlaybackService {
             const playbackUrl = buildCloudflareSignedHlsManifestUrl(signedPlayback.token);
             const embedUrl = buildCloudflareSignedIframeUrl(signedPlayback.token);
 
-            const isAdminPreview = isAdminPreviewSession(actor.type, video?.status);
+            const isAdminPreview = isAdminPreviewSession(actor.type, video?.status, video?.premiereAt);
 
             // Create a session only after successful resolution
             const session = await prisma.videoPlaybackSession.create({
@@ -345,7 +370,7 @@ export class PlaybackService {
             userAgentHash,
             sourceKind: 'youtube',
             accessTier: tier as any,
-            isAdminPreview: isAdminPreviewSession(actor.type, video?.status),
+            isAdminPreview: isAdminPreviewSession(actor.type, video?.status, video?.premiereAt),
           }
         });
 
@@ -424,7 +449,7 @@ export class PlaybackService {
           }
 
           const posterUrl = `https://image.mux.com/${playbackId}/thumbnail.jpg`;
-          const isAdminPreview = isAdminPreviewSession(actor.type, video?.status);
+          const isAdminPreview = isAdminPreviewSession(actor.type, video?.status, video?.premiereAt);
 
           const session = await prisma.videoPlaybackSession.create({
             data: {
@@ -517,7 +542,7 @@ export class PlaybackService {
             userAgentHash,
             sourceKind: 'vimeo',
             accessTier: tier as any,
-            isAdminPreview: isAdminPreviewSession(actor.type, video?.status),
+            isAdminPreview: isAdminPreviewSession(actor.type, video?.status, video?.premiereAt),
           },
         });
 
@@ -616,7 +641,7 @@ export class PlaybackService {
         sourceInfo.playbackUrl = `/api/media/${videoId}`;
     }
 
-    const isAdminPreview = isAdminPreviewSession(actor.type, video?.status);
+    const isAdminPreview = isAdminPreviewSession(actor.type, video?.status, video?.premiereAt);
 
     // Create sessions only for a concrete playable legacy/embed plan. Denied,
     // not-ready, and provider-placeholder plans never get sessions and therefore

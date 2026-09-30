@@ -69,7 +69,8 @@ describe('ChannelLayoutService patron access truth', () => {
     expect(layout.sections.find((section) => section.type === 'PATRON')?.items[0]?.isLocked).toBe(false);
   });
 
-  it('keeps patron sidebar items locked when no active PatronGrant exists', async () => {
+  // CLAUDE.md §4.4: PATRON tier needs sign-in only, exactly like LOGGED_IN.
+  it('unlocks patron sidebar items for a signed-in user without an active PatronGrant', async () => {
     findUnique.mockResolvedValue({
       role: 'USER',
       patronGrants: [],
@@ -79,6 +80,14 @@ describe('ChannelLayoutService patron access truth', () => {
     const layout = await ChannelLayoutService.getSidebarLayout('user-1');
 
     expect(layout.viewerState).toBe('LOGGED_IN');
+    expect(layout.sections.find((section) => section.type === 'PATRON')?.items[0]?.isLocked).toBe(false);
+  });
+
+  it('keeps patron sidebar items locked for guests', async () => {
+    const { ChannelLayoutService } = await import('@/lib/modules/channel/application/channel-layout.service');
+    const layout = await ChannelLayoutService.getSidebarLayout(null);
+
+    expect(layout.viewerState).toBe('ANONYMOUS');
     expect(layout.sections.find((section) => section.type === 'PATRON')?.items[0]?.isLocked).toBe(true);
   });
 });

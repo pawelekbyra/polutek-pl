@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { PATRON_COMING_SOON_TARGET } from "@/lib/temp-patron-coming-soon";
 import { LOOP_SECONDS, engineAt } from "./cockpit-timeline";
 import { activeProgress, cuesOf, lastIndex, sinceLast, useClockValue, type CockpitClock } from "./useCockpitClock";
 import styles from "./HudBackdrop.module.css";
@@ -25,8 +24,12 @@ const H = 900;
 /** Hero box the reticle locks onto: date + title + countdown. */
 const HERO = { x: 380, y: 212, w: 840, h: 476 };
 
-/** Mission clock for the trajectory: departure → premiere. */
+/**
+ * Mission clock for the trajectory: departure → premiere. Departure is this fixed
+ * date, or one day before the premiere when a premiere is scheduled earlier than it.
+ */
 const MISSION_START = Date.UTC(2026, 8, 1);
+const MIN_MISSION_MS = 86_400_000;
 const MISSION_KM = 54.6e6;
 
 const COPY = {
@@ -117,8 +120,9 @@ function Header({ x, y, title, right }: { x: number; y: number; title: string; r
 
 // Real time only after mount (SSR and hydration render the departure state); the
 // panels are still powering on at that point, so the ship's jump to its position is unseen.
-function useMission() {
+function useMission(premiereAt: Date) {
   const [now, setNow] = useState<number | null>(null);
+  const end = premiereAt.getTime();
   useEffect(() => {
     setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -126,12 +130,12 @@ function useMission() {
   }, []);
   return useMemo(() => {
     if (now === null) return { p: 0, kmLeft: MISSION_KM, kms: 0 };
-    const end = PATRON_COMING_SOON_TARGET.getTime();
-    const p = clamp01((now - MISSION_START) / (end - MISSION_START));
+    const start = Math.min(MISSION_START, end - MIN_MISSION_MS);
+    const p = clamp01((now - start) / (end - start));
     const kmLeft = MISSION_KM * (1 - p);
     const secLeft = Math.max(1, (end - now) / 1000);
     return { p, kmLeft, kms: kmLeft / secLeft };
-  }, [now]);
+  }, [now, end]);
 }
 
 /* ---------- heading tape (top) ---------- */
@@ -586,10 +590,21 @@ function FarPlane({ dotsId }: { dotsId: string }) {
   );
 }
 
-export function HudBackdrop({ clock, isPl, running }: { clock: CockpitClock; isPl: boolean; running: boolean }) {
+export function HudBackdrop({
+  clock,
+  isPl,
+  running,
+  premiereAt,
+}: {
+  clock: CockpitClock;
+  isPl: boolean;
+  running: boolean;
+  /** End of the trajectory: this video's premiere. */
+  premiereAt: Date;
+}) {
   const uid = useId().replace(/:/g, "");
   const copy = COPY[isPl ? "pl" : "en"];
-  const mission = useMission();
+  const mission = useMission(premiereAt);
   return (
     <div className={`${styles.backdrop} ${running ? "" : styles.paused}`} aria-hidden="true">
       <svg className={`${styles.plane} ${styles.far}`} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice">

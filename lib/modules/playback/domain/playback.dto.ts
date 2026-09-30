@@ -1,6 +1,8 @@
 export type PlaybackPlanStatus =
   | "READY"
   | "LOGIN_REQUIRED"
+  // Scheduled premiere not reached yet (signed-in viewer). Guests get LOGIN_REQUIRED instead.
+  | "COMING_SOON"
   | "VIDEO_NOT_READY"
   | "NO_PRIMARY_ASSET"
   | "PROCESSING"
@@ -56,6 +58,8 @@ export type PlaybackPlan = {
   videoId: string;
   status: PlaybackPlanStatus;
   canPlay: boolean;
+  /** ISO premiere time; only set on a COMING_SOON plan. */
+  premiereAt?: string;
   access: {
     allowed: boolean;
     reason?: string;

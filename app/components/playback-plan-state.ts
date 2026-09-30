@@ -6,6 +6,7 @@ import type {
 const SAFE_PLAYBACK_STATES: PlaybackPlanStatus[] = [
   "READY",
   "LOGIN_REQUIRED",
+  "COMING_SOON",
   "VIDEO_NOT_READY",
   "NO_PRIMARY_ASSET",
   "PROCESSING",
@@ -15,6 +16,7 @@ const SAFE_PLAYBACK_STATES: PlaybackPlanStatus[] = [
 
 export const BLOCKED_PLAYBACK_STATES = new Set<PlaybackPlanStatus>([
   "LOGIN_REQUIRED",
+  "COMING_SOON",
   "VIDEO_NOT_READY",
   "NO_PRIMARY_ASSET",
   "PROCESSING",
@@ -41,6 +43,14 @@ export const PLAYBACK_PLAN_STATE_MESSAGES: Record<
       "Ten film jest dostępny po zalogowaniu. Konto jest bezpłatne.",
     action: "login",
     actionLabel: "Zaloguj się",
+  },
+  // Rendered as the premiere countdown (AccessLockOverlay); this copy is only the fallback text.
+  COMING_SOON: {
+    title: "Premiera już wkrótce.",
+    description:
+      "Ten film ma zaplanowaną premierę. Odtwarzanie ruszy automatycznie w chwili premiery.",
+    action: "retry",
+    actionLabel: "Sprawdź ponownie",
   },
   VIDEO_NOT_READY: {
     title: "Materiał jest przygotowywany.",
@@ -86,6 +96,13 @@ export const PLAYBACK_PLAN_STATE_MESSAGES_EN: typeof PLAYBACK_PLAN_STATE_MESSAGE
       "This video is available after signing in. An account is free.",
     action: "login",
     actionLabel: "Sign in",
+  },
+  COMING_SOON: {
+    title: "Premiere coming soon.",
+    description:
+      "This video has a scheduled premiere. Playback starts automatically at the premiere.",
+    action: "retry",
+    actionLabel: "Check again",
   },
   VIDEO_NOT_READY: {
     title: "This video is being prepared.",
