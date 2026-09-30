@@ -67,6 +67,11 @@ const hotspotExceptions: Record<string, HotspotException> = {
     reason:
       "Pre-existing large client player module after player-control repairs; tolerated temporarily so hotspot CI remains visible, but must be split in the dedicated player refactor before launch certification.",
   },
+  "app/components/coming-soon/HudBackdrop.tsx": {
+    maxLines: 620,
+    reason:
+      "Temporary cockpit 'coming soon' visual prototype (canvas HUD synced to an audio timeline) under active design iteration; see the TEMPORARY CHANGES REGISTRY in CLAUDE.md. Do not split until the design settles or the prototype is removed.",
+  },
   "app/components/comments/EmbeddedComments.tsx": {
     maxLines: 610,
     reason:
@@ -144,7 +149,9 @@ const violations: Violation[] = [];
 
 for (const root of sourceRoots) {
   for (const file of collectFiles(root)) {
-    const relativeFile = path.relative(repoRoot, file);
+    // Normalize to forward slashes so exception keys and the "/route.ts"
+    // check match on Windows as well as Linux CI.
+    const relativeFile = path.relative(repoRoot, file).split(path.sep).join("/");
     const source = readFileSync(file, "utf8");
     const lines = source.split("\n").length;
     const kind = classifyFile(relativeFile, source);
