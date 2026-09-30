@@ -186,11 +186,14 @@
 }
 
 .compactLoginImage {
-  width: 82%;
-  max-width: 100%;
+  /* ~35% larger than the old 82% so the hand-drawn lettering reads in the small sidebar
+     thumbnail; the PNG is raster, so contrast is boosted instead of upscaling past its size. */
+  width: 112%;
+  max-width: none;
   height: auto;
   display: block;
   mix-blend-mode: multiply;
+  filter: contrast(1.35) saturate(1.15);
   user-select: none;
   -webkit-user-drag: none;
 }
