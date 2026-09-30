@@ -272,7 +272,6 @@ export function CockpitComingSoon({
         </motion.h2>
 
         <motion.div className={styles.units} role="timer" aria-label={countdownLabel} {...enter(0.75)}>
-          <span className={styles.tMinus} aria-hidden="true">T−</span>
           {units.map((value, i) => (
             <span key={unitLabels[i]} className={styles.unitGroup} aria-hidden="true">
               {i > 0 && <span className={styles.sep}>:</span>}
