@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, act, cleanup } from "@testing-library/react";
+import { render, screen, act, cleanup, fireEvent } from "@testing-library/react";
 import { sanitizeReturnPath, rememberReturnPath, readReturnPath } from "@/lib/auth/sso-return";
 
 const auth = { isLoaded: false, isSignedIn: false };
 const signIn = { status: "needs_identifier", isTransferable: false, finalize: vi.fn() };
-const signUp = { status: "missing_requirements", emailAddress: "new@x.pl", missingFields: [] as string[], create: vi.fn(), update: vi.fn(), finalize: vi.fn() };
+const signUp = { status: "missing_requirements", emailAddress: "new@x.pl", firstName: null as string | null, missingFields: [] as string[], create: vi.fn(), update: vi.fn(), finalize: vi.fn() };
 vi.mock("@clerk/nextjs", () => ({
   useAuth: () => auth,
   useSignIn: () => ({ signIn }),
@@ -96,7 +96,7 @@ describe("/sso-callback page", () => {
     expect(replace).toHaveBeenCalledWith("/?v=z");
   });
 
-  it("adds the required username when a new Google user is missing it", async () => {
+  it("shows the first-sign-in form when a new Google user has no username, then finishes", async () => {
     auth.isLoaded = true;
     signIn.isTransferable = true;
     signUp.status = "missing_requirements";
@@ -105,10 +105,20 @@ describe("/sso-callback page", () => {
       signUp.status = "complete";
       return { error: null };
     });
+    rememberReturnPath("/?v=w");
     await act(async () => {
       render(<SSOCallbackPage />);
     });
-    expect(signUp.update).toHaveBeenCalledWith({ username: expect.stringMatching(/^[a-z0-9_]{4,64}$/) });
+    expect(signUp.update).not.toHaveBeenCalled();
+    const usernameInput = screen.getByLabelText(/Username/) as HTMLInputElement;
+    expect(usernameInput.value).toMatch(/^[a-z0-9_]{4,64}$/);
+    await act(async () => {
+      fireEvent.change(usernameInput, { target: { value: "moj_nick" } });
+      fireEvent.change(screen.getByLabelText(/First name/), { target: { value: "Jan" } });
+      fireEvent.click(screen.getByRole("button", { name: /Save and continue/ }));
+    });
+    expect(signUp.update).toHaveBeenCalledWith({ username: "moj_nick", firstName: "Jan" });
     expect(signUp.finalize).toHaveBeenCalled();
+    expect(replace).toHaveBeenCalledWith("/?v=w");
   });
 });

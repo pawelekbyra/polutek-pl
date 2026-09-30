@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth, useSignIn, useSignUp } from "@clerk/nextjs";
 import { readReturnPath, SSO_CALLBACK_TIMEOUT_MS } from "@/lib/auth/sso-return";
-import { generateUsername } from "@/lib/auth/generate-username";
+import { generateUsername, isValidUsername } from "@/lib/auth/generate-username";
 
 // Landing page for the Google/OAuth redirect. Clerk finalizes the sign-in here and then
 // navigates back to the page the user started from.
@@ -23,6 +23,11 @@ export default function SSOCallbackPage() {
   const [captchaShown, setCaptchaShown] = useState(false);
   const captchaRef = useRef<HTMLDivElement>(null);
   const started = useRef(false);
+  // First sign-in of a new Google user: we ask for their own username and name before finishing.
+  const [profileStep, setProfileStep] = useState(false);
+  const [username, setUsername] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [saving, setSaving] = useState(false);
 
   // A session that already exists (handshake finished, or page reloaded) needs no callback.
   useEffect(() => {
@@ -44,10 +49,13 @@ export default function SSOCallbackPage() {
         started.current = true;
         const { error: createError } = await signUp.create({ transfer: true });
         if (createError) return setProblem(describeError(createError));
-        // Clerk requires a username for new accounts; Google doesn't provide one, so add it here.
+        // Clerk requires a username for new accounts and Google doesn't provide one: show the
+        // first-sign-in screen where the new user picks it (and can correct their name).
         if (signUp.status === "missing_requirements" && signUp.missingFields.includes("username")) {
-          const { error: updateError } = await signUp.update({ username: generateUsername(signUp.emailAddress) });
-          if (updateError) return setProblem(describeError(updateError));
+          setUsername(generateUsername(signUp.emailAddress));
+          setFirstName(signUp.firstName ?? "");
+          setProfileStep(true);
+          return;
         }
         if (signUp.status === "complete") {
           const { error } = await signUp.finalize();
@@ -60,6 +68,36 @@ export default function SSOCallbackPage() {
     };
     void finish();
   }, [isLoaded, isSignedIn, signIn, signUp]);
+
+  async function submitProfile(e: React.FormEvent) {
+    e.preventDefault();
+    if (!signUp) return;
+    const clean = username.trim().toLowerCase();
+    if (!isValidUsername(clean)) {
+      setProblem("Nazwa użytkownika: 4–64 znaki, małe litery, cyfry lub _. / Username: 4–64 characters, lowercase letters, digits or _.");
+      return;
+    }
+    setSaving(true);
+    setProblem(null);
+    const { error: updateError } = await signUp.update({
+      username: clean,
+      ...(firstName.trim() ? { firstName: firstName.trim() } : {}),
+    });
+    if (updateError) {
+      setSaving(false);
+      return setProblem(describeError(updateError));
+    }
+    if (signUp.status !== "complete") {
+      setSaving(false);
+      return setProblem(`sign-up: ${signUp.status}; missing: ${signUp.missingFields.join(",")}`);
+    }
+    const { error } = await signUp.finalize();
+    if (error) {
+      setSaving(false);
+      return setProblem(describeError(error));
+    }
+    window.location.replace(readReturnPath());
+  }
 
   // When Clerk shows its bot check, tell the visitor what to do instead of "taking longer".
   useEffect(() => {
@@ -81,7 +119,43 @@ export default function SSOCallbackPage() {
     <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-background px-4 text-center">
       {/* Clerk's bot protection needs this element to render its challenge when the transfer creates the account. */}
       <div id="clerk-captcha" ref={captchaRef} />
-      {timedOut ? (
+      {profileStep ? (
+        <form onSubmit={submitProfile} className="w-full max-w-sm space-y-4 rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-6 py-7 text-left shadow-[0_20px_50px_rgba(23,23,23,0.10)]">
+          <div>
+            <h1 className="text-lg font-bold text-[var(--chan-ink)]">Witaj! / Welcome!</h1>
+            <p className="mt-1 text-[13px] text-[var(--chan-muted)]">
+              Uzupełnij swoje dane, żeby dokończyć zakładanie konta. / Complete your details to finish creating your account.
+            </p>
+          </div>
+          <label className="block text-[12px] font-semibold text-[var(--chan-ink)]">
+            Nazwa użytkownika / Username
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoComplete="username"
+              required
+              className="mt-1 block w-full rounded-lg border border-[var(--chan-line)] bg-background px-3 py-2 text-sm font-normal"
+            />
+          </label>
+          <label className="block text-[12px] font-semibold text-[var(--chan-ink)]">
+            Imię (opcjonalnie) / First name (optional)
+            <input
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              autoComplete="given-name"
+              className="mt-1 block w-full rounded-lg border border-[var(--chan-line)] bg-background px-3 py-2 text-sm font-normal"
+            />
+          </label>
+          {problem && <p role="alert" className="text-xs text-red-600">{problem}</p>}
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full rounded-full bg-foreground px-5 py-2.5 text-sm font-semibold text-background disabled:opacity-60"
+          >
+            {saving ? "Zapisuję… / Saving…" : "Zapisz i wejdź / Save and continue"}
+          </button>
+        </form>
+      ) : timedOut ? (
         <>
           <p className="text-sm text-muted-foreground" role="alert">
             {captchaShown

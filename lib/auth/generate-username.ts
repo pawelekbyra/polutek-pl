@@ -14,3 +14,8 @@ export function generateUsername(seed?: string | null): string {
   const suffix = Math.random().toString(36).slice(2, 8).replace(/[^a-z0-9]/g, "0").padEnd(6, "0");
   return `${base || "user"}_${suffix}`;
 }
+
+/** Clerk's username rule as configured for this instance: 4-64 of a-z, 0-9, _. */
+export function isValidUsername(value: string): boolean {
+  return /^[a-z0-9_]{4,64}$/.test(value);
+}
