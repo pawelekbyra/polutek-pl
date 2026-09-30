@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   checkNicknameAvailability,
+  isSameNickname,
   nicknameCheckMessage,
   nicknameProblemMessage,
   normalizeNickname,
@@ -72,5 +73,13 @@ describe("checkNicknameAvailability", () => {
 
     fetchMock.mockRejectedValueOnce(new Error("offline"));
     expect(await checkNicknameAvailability("Kot")).toEqual({ available: true });
+  });
+});
+
+describe("isSameNickname", () => {
+  it("ignores letter case and extra whitespace", () => {
+    expect(isSameNickname(" Stary   Nick", "stary nick")).toBe(true);
+    expect(isSameNickname("Łódź", "ŁÓDŹ")).toBe(true);
+    expect(isSameNickname("Kot", "Kotek")).toBe(false);
   });
 });
