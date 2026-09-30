@@ -361,6 +361,7 @@ Three distinct per-currency minimums must not be conflated:
 - Public auth/account UI is custom/headless: `AuthModalProvider`, `AuthModal`, `UserMenu`, `AccountModal`, and related OAuth helpers.
 - Do not replace the current custom UI with default Clerk widgets unless owner explicitly asks for a rollback.
 - Do not implement a custom auth backend; use Clerk headless APIs/hooks.
+- **OAuth callback (`/sso-callback`, 2026-09-30):** `app/sso-callback/page.tsx` must never render blank. It shows a spinner, redirects at once when `useAuth()` already reports a session, and after `SSO_CALLBACK_TIMEOUT_MS` (8s) shows a link home instead of hanging (`AuthenticateWithRedirectCallback` itself draws nothing, which looked like a dead page until reload). `AuthModal.handleOAuth` stores the return path via `lib/auth/sso-return.ts` (sessionStorage, sanitized to same-site relative paths). Redirect URLs stay relative on purpose: the callback must land on the same origin (apex or www) the flow started on; do not hardcode a canonical origin without adding it to Clerk's allowed redirect URLs first.
 
 ### 4.13 Public App Shell, Preload and Install UX
 

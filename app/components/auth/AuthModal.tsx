@@ -8,6 +8,7 @@ import { Loader2 } from "../icons";
 import { useLanguage } from "../LanguageContext";
 import { useVisibleOAuthProviders, type OAuthStrategy } from "./oauth-providers";
 import type { AuthView } from "./AuthModalProvider";
+import { rememberReturnPath } from "@/lib/auth/sso-return";
 
 type InternalView = "sign-in" | "sign-up" | "verify-email" | "forgot" | "reset";
 
@@ -141,6 +142,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     if (!signIn) return;
     setError(null);
     const returnTo = typeof window !== "undefined" ? window.location.pathname + window.location.search : "/";
+    rememberReturnPath(returnTo);
     const { error: ssoError } = await signIn.sso({
       strategy,
       redirectUrl: returnTo,
