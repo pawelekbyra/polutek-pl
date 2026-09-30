@@ -36,7 +36,7 @@
   --hud-glow: 0 0 5px rgba(90, 215, 255, 0.9), 0 0 18px rgba(40, 170, 255, 0.55), 0 0 40px rgba(40, 150, 255, 0.25);
   --hud-accent-glow: 0 0 6px rgba(255, 140, 60, 0.8), 0 0 20px rgba(255, 110, 40, 0.4);
   --hud-font: "Oxanium HUD", var(--font-geist-mono), ui-monospace, monospace;
-  --seg-lit: #9ff0ff;
+  --seg-lit: #7fd3f2;
   /* Backlit LCD, not neon: a tight glow that stays on the segments. */
   --seg-glow: 0 0 4px rgba(90, 215, 255, 0.55), 0 0 14px rgba(40, 170, 255, 0.25);
 
