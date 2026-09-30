@@ -29,6 +29,8 @@ export default function SSOCallbackPage() {
           <p className="text-sm text-muted-foreground" role="alert">
             Logowanie trwa dłużej niż zwykle. / Signing in is taking longer than usual.
           </p>
+          {/* Plain <a> on purpose: this is the escape hatch for a stalled Clerk handshake, so it must do a full page load that resets client state, not a client-side <Link> navigation. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a href="/" className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background">
             Wróć na stronę główną / Back to home
           </a>
