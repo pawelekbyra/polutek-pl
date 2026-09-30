@@ -12,7 +12,7 @@ describe('email sender display name', () => {
 
   it('adds the brand name to a bare EMAIL_FROM address', () => {
     process.env.EMAIL_FROM = 'no-reply@pawelperfect.pl';
-    expect(getEmailFrom()).toBe('WWW.PAWELPERFECT.PL <no-reply@pawelperfect.pl>');
+    expect(getEmailFrom()).toBe('PAWELPERFECT.PL <no-reply@pawelperfect.pl>');
   });
 
   it('keeps an EMAIL_FROM that already has a display name', () => {
@@ -21,6 +21,6 @@ describe('email sender display name', () => {
   });
 
   it('falls back to the brand sender when EMAIL_FROM is unset', () => {
-    expect(getEmailFrom()).toBe('WWW.PAWELPERFECT.PL <no-reply@pawelperfect.pl>');
+    expect(getEmailFrom()).toBe('PAWELPERFECT.PL <no-reply@pawelperfect.pl>');
   });
 });
