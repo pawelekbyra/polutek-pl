@@ -12,8 +12,9 @@ describe("access lock overlay source contract", () => {
 
     expect(source).toContain('LOGIN_REQUIRED');
     expect(source).toContain('openAuthModal("sign-in")');
-    expect(source).toContain("motion.button");
-    expect(source).toContain('type="button"');
+    expect(source).toContain('role: "button"');
+    expect(source).toContain("tabIndex: 0");
+    expect(source).toContain('e.key === "Enter" || e.key === " "');
     expect(source).toContain("Zaloguj się");
   });
 
@@ -21,16 +22,15 @@ describe("access lock overlay source contract", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
 
     expect(source).toContain('isComingSoon ? styles.patron : styles.login');
-    expect(source).toContain("ComingSoonScene");
+    expect(source).toContain("CockpitComingSoon");
   });
 
   it("uses deterministic, reduced-motion-safe ambient art", () => {
     const source = component("app/components/AccessLockOverlay.tsx");
     const styles = component("app/components/AccessLockOverlay.module.css");
 
-    expect(source).toContain("styles.aurora");
-    expect(source).toContain("styles.mark");
     expect(source).toContain("useReducedMotion");
+    expect(source).toContain("reduceMotion={Boolean(reduceMotion)}");
     expect(source).not.toContain("Math.random");
     expect(styles).toContain("@media (prefers-reduced-motion: reduce)");
     expect(styles).toContain("pointer-events: none");

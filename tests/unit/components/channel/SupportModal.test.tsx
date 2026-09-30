@@ -69,9 +69,13 @@ function createIntentBody() {
   return call ? JSON.parse((call[1] as RequestInit).body as string) : null;
 }
 
+// The gate opens on the recipient step (terms consent), then a disclaimer, then the amount.
 async function fillAmountStep(amount: string) {
+  fireEvent.click(document.getElementById('tip-accept-terms-recipient')!);
+  fireEvent.click(await screen.findByRole('button', { name: 'Dalej' }));
+  expect(await screen.findByText('Rozumiem, spoko.')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
   fireEvent.change(await screen.findByRole('spinbutton'), { target: { value: amount } });
-  fireEvent.click(document.getElementById('tip-accept-terms')!);
 }
 
 describe('SupportModal (tip gate)', () => {
@@ -87,36 +91,49 @@ describe('SupportModal (tip gate)', () => {
   });
   afterEach(() => cleanup());
 
-  it('shows the badge, currency select and legal links; Next explains what is missing instead of continuing', async () => {
+  it('walks recipient (terms consent) -> disclaimer -> amount, and Next explains what is missing instead of continuing', async () => {
     renderModal();
 
+    // Step 1: recipient. Consent to the Terms/Privacy is required before continuing.
     expect(screen.getAllByText('Bramka napiwkowa').length).toBeGreaterThan(0);
-    expect(screen.getByText('Kwota napiwku')).toBeInTheDocument();
+    expect(screen.getByText('Odbiorca napiwku')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Wstecz' })).not.toBeInTheDocument();
-    const currency = screen.getByRole('combobox', { name: 'Waluta' });
+    // Legal documents open as a second modal on top of the gate, not a new tab.
+    fireEvent.click(screen.getByRole('button', { name: 'Regulamin' }));
+    expect(await screen.findByRole('heading', { name: 'Regulamin serwisu' })).toBeInTheDocument();
+    expect(document.getElementById('tip-accept-terms-recipient')).not.toHaveAttribute('data-checked');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Zamknij' }).at(-1)!);
+    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Regulamin serwisu' })).not.toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'Politykę Prywatności' })).toBeInTheDocument();
+
+    const next = screen.getByRole('button', { name: 'Dalej' });
+    fireEvent.click(next);
+    expect(screen.getByText('Zaakceptuj Regulamin i Politykę Prywatności.').className).toContain('opacity-100');
+    expect(screen.queryByText('Rozumiem, spoko.')).not.toBeInTheDocument();
+
+    // Step 2: the disclaimer says a tip unlocks nothing.
+    fireEvent.click(document.getElementById('tip-accept-terms-recipient')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
+    expect(await screen.findByText('Napiwek jest dobrowolny i niczego nie odblokowuje.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Wstecz' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Dalej' }));
+
+    // Step 3: amount, with a currency dropdown pre-selected by locale.
+    expect(await screen.findByText('Kwota napiwku')).toBeInTheDocument();
+    const currency = screen.getByRole('combobox', { name: 'Wybierz walutę napiwku' });
     expect(currency).toHaveTextContent('Złoty (PLN)');
     fireEvent.click(currency);
     fireEvent.click(screen.getByRole('option', { name: /Euro \(EUR\)/ }));
     expect(currency).toHaveTextContent('Euro (EUR)');
     fireEvent.click(currency);
     fireEvent.click(screen.getByRole('option', { name: /Złoty \(PLN\)/ }));
-    // Legal documents open as a second modal on top of the gate, not a new tab.
-    fireEvent.click(screen.getByRole('button', { name: 'Regulamin' }));
-    expect(await screen.findByRole('heading', { name: 'Regulamin serwisu' })).toBeInTheDocument();
-    expect(document.getElementById('tip-accept-terms')).not.toHaveAttribute('data-checked');
-    fireEvent.click(screen.getAllByRole('button', { name: 'Zamknij' }).at(-1)!);
-    await waitFor(() => expect(screen.queryByRole('heading', { name: 'Regulamin serwisu' })).not.toBeInTheDocument());
-    expect(screen.getByRole('button', { name: 'Politykę Prywatności' })).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Widzi to tylko twórca')).not.toBeInTheDocument();
 
-    const next = await screen.findByRole('button', { name: /^Dalej/ });
-    expect(next).not.toBeDisabled();
-    fireEvent.click(next);
+    fireEvent.click(screen.getByRole('button', { name: /^Dalej/ }));
     expect(await screen.findByText(/Wpisz kwotę napiwku/)).toBeInTheDocument();
-    expect(screen.getByText('Zaakceptuj Regulamin i Politykę Prywatności.')).toBeInTheDocument();
 
     fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '2' } });
-    expect(screen.getByText(/Najmniejszy napiwek to 5\szł/)).toHaveAttribute('role', 'alert');
+    expect(screen.getByText(/Kwota jest za niska\. Minimum: 5\szł/)).toHaveAttribute('role', 'alert');
     expect(createIntentBody()).toBeNull();
     expect(screen.queryByText('Metoda napiwku')).not.toBeInTheDocument();
   });
