@@ -1,6 +1,6 @@
 # Vercel access for AI agents (local machine)
 
-Durable how-to so any agent can manage Vercel for this project without re-discovering it. Contains **no secrets**; see CLAUDE.md §8.1 for where they live. Standing authorization and the cross-service capability table: [AGENT_ACCESS.md](AGENT_ACCESS.md) (it supersedes the "ask the owner" advice below when the session runs in bypass-permissions mode).
+Durable how-to so any agent can manage Vercel for this project without re-discovering it. Contains **no secrets**; see CLAUDE.md §8.1 for where they live. Standing authorization and the cross-service capability table: [AGENT_ACCESS.md](AGENT_ACCESS.md).
 
 ## Fixed identifiers (not secrets)
 
@@ -19,13 +19,17 @@ Durable how-to so any agent can manage Vercel for this project without re-discov
 
 `vercel env ls production`, `vercel crons ls`, `vercel crons run <path>`, `vercel logs`, `vercel inspect <url>`, `vercel domains inspect pawelperfect.pl`.
 
-## What Claude Code will block (and what to do)
+## Env changes and redeploys: standing permission
 
-The auto-mode permission classifier refuses these even when the owner says yes in chat: writes to Vercel env vars (`vercel env add|rm`), production deploys/redeploys (`vercel redeploy`, `--prod`), and creating tokens (`vercel tokens add`). **Do not work around it** with another tool or by splitting the command. Instead:
+The owner has given agents standing permission to change env vars and redeploy production without asking (see [AGENT_ACCESS.md](AGENT_ACCESS.md)). Do it, then report what changed:
 
-- Tell the owner exactly which action and why, and either
-- ask them to do it in the Vercel dashboard (Settings → Environment Variables, Deployments → ⋯ → Redeploy, Account Settings → Tokens), or
-- ask them to add an allow rule to `%USERPROFILE%\.claude\settings.json`, e.g. `{"permissions":{"allow":["Bash(vercel env add:*)","Bash(vercel redeploy:*)"]}}`. Agents must never add such rules themselves.
+```bash
+printf '%s' "$VALUE" | vercel env update NAME production --sensitive --yes --scope pawelperfect-5617s-projects --project polutek.pl
+vercel ls polutek.pl --prod --scope pawelperfect-5617s-projects   # current prod URL
+vercel redeploy <deployment-url> --scope pawelperfect-5617s-projects
+```
+
+Only if a session runs in auto mode (not bypass) can the permission classifier still refuse these. Then **do not work around it** with another tool or by splitting the command; tell the owner which action is blocked and let him run it in the dashboard or add an allow rule to `%USERPROFILE%\.claude\settings.json` (agents must never add such rules themselves).
 
 ## Gotchas
 
