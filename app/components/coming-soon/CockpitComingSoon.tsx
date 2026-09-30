@@ -121,8 +121,21 @@ function Warpfield({ clock, running }: { clock: CockpitClock; running: boolean }
   return <canvas ref={canvasRef} className={styles.warp} aria-hidden="true" />;
 }
 
-function Segments({ text, className }: { text: string; className?: string }) {
-  return <span className={`${styles.seg} ${className ?? ""}`}>{text}</span>;
+function Segments({ text, className, tightOnes }: { text: string; className?: string; tightOnes?: boolean }) {
+  // DSEG7 draws "1" on the right of a full-width cell, leaving a hole before it. Only the static
+  // date is tightened: the countdown's fixed-width windows must not change width every tick.
+  const content = tightOnes
+    ? Array.from(text).map((ch, i) =>
+        ch === "1" ? (
+          <span key={i} className={styles.segOne}>
+            {ch}
+          </span>
+        ) : (
+          ch
+        ),
+      )
+    : text;
+  return <span className={`${styles.seg} ${className ?? ""}`}>{content}</span>;
 }
 
 /* Flight log: each line is written at its sound; the course line is typed on the keystrokes. */
@@ -241,7 +254,7 @@ export function CockpitComingSoon({
 
       <div className={styles.content}>
         <motion.span className={styles.date} {...enter(0.1)}>
-          <Segments text={premiereDate} />
+          <Segments text={premiereDate} tightOnes />
         </motion.span>
 
         <motion.h2

@@ -136,13 +136,22 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(8px, 2.2cqi, 24px);
+  /* One spacing unit joins date -> lettering -> countdown into a single block. */
+  --block-gap: clamp(8px, 1.9cqi, 20px);
+  --ruler-pad: clamp(10px, 1.8cqi, 18px);
+  gap: var(--block-gap);
   padding: clamp(16px, 4cqi, 40px);
+  /* The countdown's ruler adds empty space below the digits; balance it on top so
+     the visible group (not its box) is what sits in the centre of the frame. */
+  padding-top: calc(clamp(16px, 4cqi, 40px) + var(--ruler-pad));
   text-align: center;
 }
 
 .date {
   font-size: clamp(14px, 3.4cqi, 30px);
+  line-height: 1;
+  /* Pull the date down onto the lettering (the drawing has its own inner margin). */
+  margin-bottom: calc(var(--block-gap) * -0.3);
   --seg-lit: #ff9442;
   --seg-glow: 0 0 4px rgba(255, 140, 60, 0.6), 0 0 14px rgba(255, 110, 40, 0.25);
 }
@@ -182,6 +191,11 @@
   text-shadow: var(--seg-glow);
 }
 
+/* A DSEG7 "1" sits at the right of its cell; pull it back so the gap matches the other digits. */
+.segOne {
+  margin-left: -0.42em;
+}
+
 /* Countdown: an instrument readout projected on the canopy glass, not a UI card */
 
 .units {
@@ -189,7 +203,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 0 clamp(8px, 2cqi, 22px) clamp(10px, 1.8cqi, 18px);
+  padding: 0 clamp(8px, 2cqi, 22px) var(--ruler-pad);
   font-family: var(--hud-font);
 }
 
