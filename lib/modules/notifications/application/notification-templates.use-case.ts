@@ -1,7 +1,7 @@
 import { NotificationKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { recordAuditEvent } from "@/lib/modules/audit";
-import { resolveAdminAuditContext } from "@/lib/modules/audit/application/resolve-admin-audit-context";
+import { resolveAdminAuditContext } from "@/lib/modules/audit";
 import { NotificationTemplateDTO } from "../domain/notification.dto";
 import { notificationTemplates } from "./send-notification.use-case";
 

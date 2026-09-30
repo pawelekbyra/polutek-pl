@@ -15,12 +15,12 @@ const { recordAuditEvent, recordAuditEventSafe, prismaMock } = vi.hoisted(() => 
   };
 });
 
-vi.mock('@/lib/modules/audit', () => ({ recordAuditEvent: (...a: unknown[]) => recordAuditEvent(...a) }));
-vi.mock('@/lib/modules/audit/application/record-audit-event-safe', () => ({
+vi.mock('@/lib/modules/audit', () => ({
+  recordAuditEvent: (...a: unknown[]) => recordAuditEvent(...a),
   recordAuditEventSafe: (...a: unknown[]) => recordAuditEventSafe(...a),
-}));
-vi.mock('@/lib/modules/audit/application/resolve-admin-audit-context', () => ({
-  resolveAdminAuditContext: vi.fn(async (id?: string) => ({ actor: id ? { type: 'admin', userId: id } : { type: 'admin', userId: 'session-admin' } })),
+  resolveAdminAuditContext: vi.fn(async (id?: string) => ({
+    actor: id ? { type: 'admin', userId: id } : { type: 'admin', userId: 'session-admin' },
+  })),
 }));
 
 vi.mock('@/lib/prisma', () => ({ prisma: prismaMock }));

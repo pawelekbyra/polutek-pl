@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { recordAuditEvent } from "@/lib/modules/audit";
-import { resolveAdminAuditContext } from "@/lib/modules/audit/application/resolve-admin-audit-context";
+import { resolveAdminAuditContext } from "@/lib/modules/audit";
 
 export type BroadcastAudience = "ALL" | "PATRONS";
 

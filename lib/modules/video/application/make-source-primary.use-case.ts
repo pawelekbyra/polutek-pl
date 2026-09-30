@@ -7,7 +7,7 @@ import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { VideoPlaybackRouteService } from "./video-playback-route.service";
-import { recordAuditEventSafe } from "@/lib/modules/audit/application/record-audit-event-safe";
+import { recordAuditEventSafe } from "@/lib/modules/audit";
 
 export interface MakeSourcePrimaryInput {
   videoId: string;

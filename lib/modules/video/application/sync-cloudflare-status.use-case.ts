@@ -5,7 +5,7 @@ import { CloudflareStreamClient } from "../infrastructure/cloudflare-stream.clie
 import { handleCloudflareStreamWebhook } from "./handle-cloudflare-webhook.use-case";
 import { VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { CloudflareNotFoundError } from "../domain/video.errors";
-import { recordAuditEventSafe } from "@/lib/modules/audit/application/record-audit-event-safe";
+import { recordAuditEventSafe } from "@/lib/modules/audit";
 
 export async function syncCloudflareStatus(
   videoId: string,

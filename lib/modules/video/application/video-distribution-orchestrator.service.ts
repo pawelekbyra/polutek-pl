@@ -1,6 +1,6 @@
 import { StorageProvider, VideoAsset, VideoPlaybackRouteActivatedBy } from "@prisma/client";
 import { AppContext } from "@/lib/modules/shared/app-context";
-import { recordAuditEventSafe } from "@/lib/modules/audit/application/record-audit-event-safe";
+import { recordAuditEventSafe } from "@/lib/modules/audit";
 import { getProviderCostOrder } from "../domain/video-distribution.constants";
 import { VideoPlaybackRouteService } from "./video-playback-route.service";
 import { publishAdminVideo } from "./publish-admin-video.use-case";

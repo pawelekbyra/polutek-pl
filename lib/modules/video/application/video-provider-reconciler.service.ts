@@ -1,6 +1,6 @@
 import { Prisma, StorageProvider, VideoAssetProcessingState, VideoProviderJobStatus } from "@prisma/client";
 import { AppContext } from "@/lib/modules/shared/app-context";
-import { recordAuditEventSafe } from "@/lib/modules/audit/application/record-audit-event-safe";
+import { recordAuditEventSafe } from "@/lib/modules/audit";
 import { createDefaultPlaybackProviderRegistry, PlaybackProviderRegistry } from "../infrastructure/playback-provider-registry";
 import { redactSignedUrl } from "./original-source-url.service";
 import { VideoDistributionOrchestratorService } from "./video-distribution-orchestrator.service";

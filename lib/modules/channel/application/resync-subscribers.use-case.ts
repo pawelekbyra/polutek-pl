@@ -2,7 +2,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok as success, fail as failure } from "@/lib/modules/shared/result";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { ChannelRepository } from "../infrastructure/channel.repository";
-import { recordAuditEventSafe } from "@/lib/modules/audit/application/record-audit-event-safe";
+import { recordAuditEventSafe } from "@/lib/modules/audit";
 
 export interface ResyncSubscribersResult {
   updated: { creatorId: string; subscribersCount: number }[];

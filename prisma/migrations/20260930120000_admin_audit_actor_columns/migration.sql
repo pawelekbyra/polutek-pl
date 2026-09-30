@@ -1,4 +1,4 @@
-﻿-- AlterTable
+-- AlterTable
 ALTER TABLE "AuditLog" ADD COLUMN     "actorType" TEXT,
 ADD COLUMN     "ip" TEXT,
 ADD COLUMN     "requestId" TEXT,
