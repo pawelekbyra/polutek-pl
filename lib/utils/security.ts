@@ -92,11 +92,17 @@ export function generateCSP() {
     ...getR2UploadHosts(),
     'api.stripe.com',
     'fonts.googleapis.com',
+    'challenges.cloudflare.com',
     ...configuredMediaHosts,
   ])).flatMap(h => [`https://${h}`, `wss://${h}`]).join(' ');
 
+  // Clerk's sign-up bot protection is Cloudflare Turnstile. Without this host the captcha can't
+  // load and every new account fails ("The CAPTCHA failed to load"), including Google sign-ups.
+  const captchaHost = 'challenges.cloudflare.com';
+
   const scriptHosts = [
     ...clerkDomains.map(h => `https://${h}`),
+    `https://${captchaHost}`,
     'https://cdn.jsdelivr.net',
     'https://js.stripe.com',
   ].join(' ');
@@ -110,6 +116,7 @@ export function generateCSP() {
     ...clerkDomains,
     ...embedFrameHosts,
     'js.stripe.com',
+    captchaHost,
   ])).map(h => `https://${h}`).join(' ');
 
   return [
