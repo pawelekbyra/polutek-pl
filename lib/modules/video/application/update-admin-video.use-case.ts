@@ -15,6 +15,11 @@ import {
     VideoInvalidSidebarError
 } from "../domain/video.errors";
 
+/** True for the site's own thumbnail proxy path, e.g. /api/videos/<id>/thumbnail. */
+export function isThumbnailProxyPath(value: string | null | undefined): boolean {
+  return typeof value === 'string' && /^\/api\/videos\/[^/?#]+\/thumbnail\/?(?:[?#].*)?$/.test(value.trim());
+}
+
 export async function updateAdminVideo(
   input: UpdateVideoInput,
   ctx: AppContext
@@ -53,6 +58,11 @@ export async function updateAdminVideo(
   }
 
   const safeInput = { ...input };
+  // The edit form is loaded from the public DTO, whose thumbnailUrl is the proxy path
+  // (/api/videos/<id>/thumbnail). Saving it back replaced the real stored file with a
+  // self-reference, so the thumbnail broke. A proxy path is never a storage value: keep the
+  // stored one.
+  if (isThumbnailProxyPath(safeInput.thumbnailUrl)) delete safeInput.thumbnailUrl;
   if (input.status && input.status !== 'PUBLISHED') {
       safeInput.isMainFeatured = false;
       safeInput.showInSidebar = false;
@@ -80,7 +90,7 @@ export async function updateAdminVideo(
   await syncPublicThumbnail(updated, ctx);
 
   // Cleanup old cover if it was replaced and it was our owned storage (R2 or Blob)
-  if (input.thumbnailUrl && existing.thumbnailUrl && input.thumbnailUrl !== existing.thumbnailUrl) {
+  if (safeInput.thumbnailUrl && existing.thumbnailUrl && safeInput.thumbnailUrl !== existing.thumbnailUrl) {
     await MediaStorageService.deleteOwnedThumbnail(existing.thumbnailUrl);
   }
 
