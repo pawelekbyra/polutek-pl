@@ -23,6 +23,12 @@ const ROLLBACK_SAFE_FAILED_MIGRATIONS = new Set([
   // rewritten to be fully idempotent, so it is safe to mark rolled back and
   // retry.
   '20260926120000_add_missing_schema_indexes',
+  // Admin audit actor columns: the first push of this migration file started with a
+  // UTF-8 BOM, which PostgreSQL rejects (syntax error at position 1) before executing a
+  // single statement, so it was recorded as failed with applied_steps_count = 0 and no
+  // column was created. The file was rewritten without the BOM (and with IF NOT EXISTS),
+  // so marking it rolled back and retrying is safe.
+  '20260930120000_admin_audit_actor_columns',
 ]);
 
 type FailedMigrationRow = {

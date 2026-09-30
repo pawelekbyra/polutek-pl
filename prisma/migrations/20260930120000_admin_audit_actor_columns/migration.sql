@@ -1,15 +1,15 @@
 -- AlterTable
-ALTER TABLE "AuditLog" ADD COLUMN     "actorType" TEXT,
-ADD COLUMN     "ip" TEXT,
-ADD COLUMN     "requestId" TEXT,
-ADD COLUMN     "systemReason" TEXT,
-ADD COLUMN     "userAgent" TEXT;
+ALTER TABLE "AuditLog" ADD COLUMN IF NOT EXISTS "actorType" TEXT,
+ADD COLUMN IF NOT EXISTS "ip" TEXT,
+ADD COLUMN IF NOT EXISTS "requestId" TEXT,
+ADD COLUMN IF NOT EXISTS "systemReason" TEXT,
+ADD COLUMN IF NOT EXISTS "userAgent" TEXT;
 
 -- AlterTable
-ALTER TABLE "PatronGrant" ADD COLUMN     "revokeReason" TEXT,
-ADD COLUMN     "revokedById" TEXT;
+ALTER TABLE "PatronGrant" ADD COLUMN IF NOT EXISTS "revokeReason" TEXT,
+ADD COLUMN IF NOT EXISTS "revokedById" TEXT;
 
 -- AlterTable
-ALTER TABLE "Payment" ADD COLUMN     "refundReason" TEXT,
-ADD COLUMN     "refundedAt" TIMESTAMP(3),
-ADD COLUMN     "refundedById" TEXT;
+ALTER TABLE "Payment" ADD COLUMN IF NOT EXISTS "refundReason" TEXT,
+ADD COLUMN IF NOT EXISTS "refundedAt" TIMESTAMP(3),
+ADD COLUMN IF NOT EXISTS "refundedById" TEXT;
