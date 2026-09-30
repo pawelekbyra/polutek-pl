@@ -235,7 +235,7 @@ export function SidebarPlaylist({
                 </div>
               )}
           </div>
-          <div className="flex-1 min-w-0 flex flex-col justify-center pt-[1px] gap-0.5 z-10 relative">
+          <div className="flex-1 min-w-0 flex flex-col justify-start pt-0 gap-0.5 z-10 relative">
             <h4 className="font-sans text-[13px] font-bold text-[var(--chan-ink)] line-clamp-2 leading-[1.2] group-hover:opacity-80 transition-opacity lg:text-[12px]">
               {displayTitle}
             </h4>
