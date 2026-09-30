@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 import { buildPatronDiagnosticsReadModel } from '@/lib/modules/users/application/patron-read-model';
 import { CommentPolicy } from '@/lib/modules/comments/domain/comment.policy';
@@ -66,6 +66,13 @@ vi.mock('@/lib/observability', () => ({
 }));
 
 describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
+  // Warm the route modules once: their cold import graph is large and would otherwise
+  // eat the first tests' 5s budget under a fully parallel suite run.
+  beforeAll(async () => {
+    await import('@/app/api/admin/users/[userId]/patron/route');
+    await import('@/app/api/webhooks/cloudflare-stream/route');
+  }, 60_000);
+
   beforeEach(() => {
     vi.clearAllMocks();
     delete process.env.CLOUDFLARE_WEBHOOK_SECRET;

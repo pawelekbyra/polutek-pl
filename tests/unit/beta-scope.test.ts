@@ -28,7 +28,7 @@ function collectRouteFiles(dir: string, root = dir): string[] {
     if (stat.isDirectory()) return collectRouteFiles(fullPath, root);
     if (entry !== "page.tsx" && entry !== "route.ts") return [];
 
-    return relative(process.cwd(), fullPath);
+    return relative(process.cwd(), fullPath).replace(/\\/g, "/");
   });
 }
 
