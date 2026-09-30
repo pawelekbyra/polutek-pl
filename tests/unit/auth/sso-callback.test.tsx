@@ -5,7 +5,8 @@ import { sanitizeReturnPath, rememberReturnPath, readReturnPath } from "@/lib/au
 
 const auth = { isLoaded: false, isSignedIn: false };
 const signIn = { status: "needs_identifier", isTransferable: false, finalize: vi.fn() };
-const signUp = { status: "missing_requirements", emailAddress: "new@x.pl", firstName: null as string | null, missingFields: [] as string[], create: vi.fn(), update: vi.fn(), finalize: vi.fn() };
+const signUp = { status: "missing_requirements", emailAddress: "new@x.pl", firstName: null as string | null, missingFields: [] as string[], unsafeMetadata: {}, create: vi.fn(), update: vi.fn(), finalize: vi.fn() };
+vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en" }) }));
 vi.mock("@clerk/nextjs", () => ({
   useAuth: () => auth,
   useSignIn: () => ({ signIn }),
@@ -111,13 +112,13 @@ describe("/sso-callback page", () => {
     });
     expect(signUp.update).not.toHaveBeenCalled();
     const usernameInput = screen.getByLabelText(/Username/) as HTMLInputElement;
-    expect(usernameInput.value).toMatch(/^[a-z0-9_]{4,64}$/);
+    expect(usernameInput.value).toBe("");
     await act(async () => {
       fireEvent.change(usernameInput, { target: { value: "moj_nick" } });
       fireEvent.change(screen.getByLabelText(/First name/), { target: { value: "Jan" } });
       fireEvent.click(screen.getByRole("button", { name: /Save and continue/ }));
     });
-    expect(signUp.update).toHaveBeenCalledWith({ username: "moj_nick", firstName: "Jan" });
+    expect(signUp.update).toHaveBeenCalledWith({ username: "moj_nick", unsafeMetadata: { language: "en" }, firstName: "Jan" });
     expect(signUp.finalize).toHaveBeenCalled();
     expect(replace).toHaveBeenCalledWith("/?v=w");
   });

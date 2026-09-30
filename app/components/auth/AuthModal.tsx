@@ -94,7 +94,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     }
     setLoading(true);
     setError(null);
-    const { error: createError } = await signUp.create({ emailAddress: email, password, username: cleanUsername, ...(name ? { firstName: name } : {}) });
+    const { error: createError } = await signUp.create({ emailAddress: email, password, username: cleanUsername, unsafeMetadata: { language: isPl ? "pl" : "en" }, ...(name ? { firstName: name } : {}) });
     if (createError) return showError(createError as ClerkOpError);
     const { error: sendError } = await signUp.verifications.sendEmailCode();
     if (sendError) return showError(sendError as ClerkOpError);

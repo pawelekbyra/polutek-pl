@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuth, useSignIn, useSignUp } from "@clerk/nextjs";
 import { readReturnPath, SSO_CALLBACK_TIMEOUT_MS } from "@/lib/auth/sso-return";
-import { generateUsername, isValidUsername } from "@/lib/auth/generate-username";
+import { isValidUsername } from "@/lib/auth/generate-username";
+import { useLanguage } from "@/app/components/LanguageContext";
 
 // Landing page for the Google/OAuth redirect. Clerk finalizes the sign-in here and then
 // navigates back to the page the user started from.
@@ -18,6 +19,9 @@ export default function SSOCallbackPage() {
   const { isLoaded, isSignedIn } = useAuth();
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
+  // The language the visitor had picked on the site: this page, the new account and its emails use it.
+  const { language } = useLanguage();
+  const isPl = language === "pl";
   const [timedOut, setTimedOut] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [captchaShown, setCaptchaShown] = useState(false);
@@ -52,7 +56,6 @@ export default function SSOCallbackPage() {
         // Clerk requires a username for new accounts and Google doesn't provide one: show the
         // first-sign-in screen where the new user picks it (and can correct their name).
         if (signUp.status === "missing_requirements" && signUp.missingFields.includes("username")) {
-          setUsername(generateUsername(signUp.emailAddress));
           setFirstName(signUp.firstName ?? "");
           setProfileStep(true);
           return;
@@ -74,13 +77,16 @@ export default function SSOCallbackPage() {
     if (!signUp) return;
     const clean = username.trim().toLowerCase();
     if (!isValidUsername(clean)) {
-      setProblem("Nazwa użytkownika: 4–64 znaki, małe litery, cyfry lub _. / Username: 4–64 characters, lowercase letters, digits or _.");
+      setProblem(isPl
+        ? "Nazwa użytkownika: 4–64 znaki, małe litery, cyfry lub _."
+        : "Username: 4–64 characters, lowercase letters, digits or _.");
       return;
     }
     setSaving(true);
     setProblem(null);
     const { error: updateError } = await signUp.update({
       username: clean,
+      unsafeMetadata: { ...(signUp.unsafeMetadata ?? {}), language },
       ...(firstName.trim() ? { firstName: firstName.trim() } : {}),
     });
     if (updateError) {
@@ -122,23 +128,24 @@ export default function SSOCallbackPage() {
       {profileStep ? (
         <form onSubmit={submitProfile} className="w-full max-w-sm space-y-4 rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-6 py-7 text-left shadow-[0_20px_50px_rgba(23,23,23,0.10)]">
           <div>
-            <h1 className="text-lg font-bold text-[var(--chan-ink)]">Witaj! / Welcome!</h1>
+            <h1 className="text-lg font-bold text-[var(--chan-ink)]">{isPl ? "Witaj!" : "Welcome!"}</h1>
             <p className="mt-1 text-[13px] text-[var(--chan-muted)]">
-              Uzupełnij swoje dane, żeby dokończyć zakładanie konta. / Complete your details to finish creating your account.
+              {isPl ? "Uzupełnij swoje dane, żeby dokończyć zakładanie konta." : "Complete your details to finish creating your account."}
             </p>
           </div>
           <label className="block text-[12px] font-semibold text-[var(--chan-ink)]">
-            Nazwa użytkownika / Username
+            {isPl ? "Nazwa użytkownika" : "Username"}
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
+              autoFocus
               required
               className="mt-1 block w-full rounded-lg border border-[var(--chan-line)] bg-background px-3 py-2 text-sm font-normal"
             />
           </label>
           <label className="block text-[12px] font-semibold text-[var(--chan-ink)]">
-            Imię (opcjonalnie) / First name (optional)
+            {isPl ? "Imię (opcjonalnie)" : "First name (optional)"}
             <input
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
@@ -152,27 +159,27 @@ export default function SSOCallbackPage() {
             disabled={saving}
             className="w-full rounded-full bg-foreground px-5 py-2.5 text-sm font-semibold text-background disabled:opacity-60"
           >
-            {saving ? "Zapisuję… / Saving…" : "Zapisz i wejdź / Save and continue"}
+            {saving ? (isPl ? "Zapisuję…" : "Saving…") : isPl ? "Zapisz i wejdź" : "Save and continue"}
           </button>
         </form>
       ) : timedOut ? (
         <>
           <p className="text-sm text-muted-foreground" role="alert">
             {captchaShown
-              ? "Potwierdź powyżej, że jesteś człowiekiem, aby dokończyć logowanie. / Confirm above that you are human to finish signing in."
-              : "Logowanie trwa dłużej niż zwykle. / Signing in is taking longer than usual."}
+              ? (isPl ? "Potwierdź powyżej, że jesteś człowiekiem, aby dokończyć logowanie." : "Confirm above that you are human to finish signing in.")
+              : (isPl ? "Logowanie trwa dłużej niż zwykle." : "Signing in is taking longer than usual.")}
           </p>
           {problem && <p className="max-w-sm break-words text-xs text-muted-foreground/70">{problem}</p>}
           {/* Plain <a> on purpose: this is the escape hatch for a stalled Clerk handshake, so it must do a full page load that resets client state, not a client-side <Link> navigation. */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a href="/" className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background">
-            Wróć na stronę główną / Back to home
+            {isPl ? "Wróć na stronę główną" : "Back to home"}
           </a>
         </>
       ) : (
         <div
           role="status"
-          aria-label="Logowanie / Signing in"
+          aria-label={isPl ? "Logowanie" : "Signing in"}
           className="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground"
         />
       )}
