@@ -117,6 +117,15 @@ describe("parseAdminBody", () => {
     expect(empty).toEqual({ ok: true, data: {} });
   });
 
+  it("allowEmpty rejects malformed/truncated JSON (refund must not become a full refund)", async () => {
+    const r = await parseAdminBody(post('{"amountMinor": 50'), s.adminPaymentRefundSchema, { allowEmpty: true });
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.response.status).toBe(400);
+      expect((await r.response.json()).error).toBe("Invalid JSON body");
+    }
+  });
+
   it("strips unknown fields", async () => {
     const r = await parseAdminBody(post('{"status":"DISMISSED","junk":1}'), s.adminCommentReportResolveSchema);
     expect(r).toEqual({ ok: true, data: { status: "DISMISSED" } });

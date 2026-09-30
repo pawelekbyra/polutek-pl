@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { z } from "zod";
 
 type ParseOptions = {
-  /** Treat a missing/unparseable body as `{}` (routes where the body is optional). */
+  /** Treat a truly empty body as `{}` (routes where the body is optional). */
   allowEmpty?: boolean;
   /** Top-level error message (default "Invalid data"). */
   errorMessage?: string;
@@ -23,14 +23,25 @@ export async function parseAdminBody<S extends z.ZodTypeAny>(
 ): Promise<ParsedAdminBody<z.output<S>>> {
   const errorMessage = options.errorMessage ?? "Invalid data";
 
+  // allowEmpty accepts only a truly empty body; malformed JSON is always a 400
+  // (a truncated refund body must never fall back to a full refund).
+  const invalidJson = () =>
+    ({ ok: false, response: NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }) }) as const;
   let raw: unknown;
+  let text: string;
   try {
-    raw = await req.json();
+    text = await req.text();
   } catch {
-    if (!options.allowEmpty) {
-      return { ok: false, response: NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }) };
-    }
+    return invalidJson();
+  }
+  if (text.trim() === "" && options.allowEmpty) {
     raw = {};
+  } else {
+    try {
+      raw = JSON.parse(text);
+    } catch {
+      return invalidJson();
+    }
   }
 
   const parsed = schema.safeParse(raw);
