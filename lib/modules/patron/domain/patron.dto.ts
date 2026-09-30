@@ -33,5 +33,7 @@ export interface GrantPatronInput {
 export interface RevokePatronInput {
   userId: string;
   note?: string;
+  /** Optional operator-supplied reason, stored in PatronGrant.revokeReason. Falls back to `note`. */
+  reason?: string;
   paymentId?: string;
 }

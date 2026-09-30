@@ -64,6 +64,9 @@ model Payment {
   requestId           String?
   amountMinor         Int
   refundedAmountMinor Int           @default(0)
+  refundedById        String?
+  refundedAt          DateTime?
+  refundReason        String?
   currency            String
   status              PaymentStatus @default(PENDING)
   metadata            Json?
@@ -127,6 +130,8 @@ model PatronGrant {
   reason      String?
   createdAt   DateTime          @default(now())
   revokedAt   DateTime?
+  revokedById String?
+  revokeReason String?
 
   user User @relation(fields: [userId], references: [id])
 
@@ -142,6 +147,11 @@ model AuditLog {
   targetType  String?
   targetId    String?
   metadata    Json?
+  actorType   String?
+  systemReason String?
+  requestId   String?
+  ip          String?
+  userAgent   String?
   createdAt   DateTime @default(now())
 
   @@index([actorUserId])

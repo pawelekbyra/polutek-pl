@@ -16,7 +16,8 @@ vi.mock('../../lib/modules/channel', () => ({
 }));
 
 vi.mock('../../lib/modules/audit', () => ({
-  recordAuditEvent: vi.fn().mockResolvedValue({})
+  recordAuditEvent: vi.fn().mockResolvedValue({}),
+  recordAuditEventSafe: vi.fn().mockResolvedValue(undefined)
 }));
 
 const activateFirstReadyAssetIfNoneActive = vi.fn().mockResolvedValue({ id: 'route-id' });

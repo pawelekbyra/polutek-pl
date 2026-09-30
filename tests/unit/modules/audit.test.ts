@@ -31,6 +31,11 @@ describe('Audit Module', () => {
         targetType: 'TEST_TARGET',
         targetId: 'target-456',
         metadata: { key: 'value' },
+        actorType: 'admin',
+        systemReason: null,
+        requestId: null,
+        ip: null,
+        userAgent: null,
       },
     });
   });
@@ -60,6 +65,11 @@ describe('Audit Module', () => {
         targetType: undefined,
         targetId: undefined,
         metadata: expect.anything(), // Default JsonNull
+        actorType: 'guest',
+        systemReason: null,
+        requestId: null,
+        ip: null,
+        userAgent: null,
       },
     });
   });

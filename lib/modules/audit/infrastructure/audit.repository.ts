@@ -7,6 +7,13 @@ export interface CreateAuditLogInput {
   targetType?: string | null;
   targetId?: string | null;
   metadata?: Prisma.InputJsonValue;
+  /** guest | user | admin | system, taken from the AppContext actor. */
+  actorType?: string | null;
+  /** The reason carried by a system actor (e.g. "stripe_webhook"). */
+  systemReason?: string | null;
+  requestId?: string | null;
+  ip?: string | null;
+  userAgent?: string | null;
 }
 
 export class AuditRepository {
@@ -22,6 +29,11 @@ export class AuditRepository {
         targetType: data.targetType,
         targetId: data.targetId,
         metadata: data.metadata ?? Prisma.JsonNull,
+        actorType: data.actorType ?? null,
+        systemReason: data.systemReason ?? null,
+        requestId: data.requestId ?? null,
+        ip: data.ip ?? null,
+        userAgent: data.userAgent ?? null,
       },
     });
   }

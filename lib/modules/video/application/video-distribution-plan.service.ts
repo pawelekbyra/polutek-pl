@@ -1,6 +1,7 @@
 import { AccessTier, Prisma, StorageProvider, VideoDistributionTargetRole } from "@prisma/client";
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { AppError } from "@/lib/modules/shared/app-error";
+import { recordAuditEvent } from "@/lib/modules/audit";
 import { canProviderServeTier, getPlaybackProviderCapabilities, isAutomaticFilePlaybackProvider } from "../domain/video-provider-capabilities";
 import { normalizeVideoDistributionStrategy, VideoDistributionStrategyInput } from "../domain/video-distribution.types";
 
@@ -65,7 +66,7 @@ export class VideoDistributionPlanService {
         data: { isActive: false },
       });
 
-      return await tx.videoDistributionPlan.create({
+      const plan = await tx.videoDistributionPlan.create({
         data: {
           videoId: input.videoId,
           originalId: input.originalId ?? null,
@@ -81,6 +82,20 @@ export class VideoDistributionPlanService {
         },
         include: { targets: true },
       });
+
+      await recordAuditEvent(ctx, {
+        action: "VIDEO_DISTRIBUTION_PLAN_REPLACED",
+        targetType: "Video",
+        targetId: input.videoId,
+        metadata: {
+          planId: plan.id,
+          mode: normalized.mode,
+          selectionPolicy: normalized.selectionPolicy,
+          providers: plan.targets.map((target) => target.provider),
+        },
+      }, tx);
+
+      return plan;
     });
   }
 }

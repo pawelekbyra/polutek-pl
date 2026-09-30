@@ -2,6 +2,11 @@ import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
 import { PatronGrantSource } from "@prisma/client";
 import { PatronGrantDto } from "../domain/patron.dto";
 
+export interface RevokeMeta {
+  revokedById: string | null;
+  revokeReason: string | null;
+}
+
 export class PatronRepository {
   async findUserWithPaymentTotals(userId: string, db: ReadDb) {
     return await db.user.findUnique({
@@ -40,22 +45,24 @@ export class PatronRepository {
     });
   }
 
-  async revokeGrantByPaymentId(paymentId: string, reason: string, tx: WriteTx) {
+  async revokeGrantByPaymentId(paymentId: string, reason: string, tx: WriteTx, meta?: RevokeMeta) {
     return await tx.patronGrant.updateMany({
       where: { paymentId, revokedAt: null },
       data: {
         revokedAt: new Date(),
         reason: reason,
+        ...(meta ? { revokedById: meta.revokedById, revokeReason: meta.revokeReason } : {}),
       },
     });
   }
 
-  async revokeActiveGrants(userId: string, reason: string, tx: WriteTx) {
+  async revokeActiveGrants(userId: string, reason: string, tx: WriteTx, meta?: RevokeMeta) {
     return await tx.patronGrant.updateMany({
       where: { userId, revokedAt: null },
       data: {
         revokedAt: new Date(),
         reason: reason,
+        ...(meta ? { revokedById: meta.revokedById, revokeReason: meta.revokeReason } : {}),
       },
     });
   }

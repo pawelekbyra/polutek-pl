@@ -7,11 +7,17 @@ import { logger } from "@/lib/logger";
 import { recordMetric, recordAlert } from "@/lib/observability";
 import { syncClerkAccess } from "@/lib/modules/users";
 import { revokePatron, recalculatePatronStatus } from "@/lib/modules/patron";
+import { recordAuditEvent } from "@/lib/modules/audit";
 
 export interface HandleRefundInput {
   stripeIntentId?: string;
   paymentId?: string;
   reportedRefundedMinor: number;
+  /**
+   * Set ONLY by the admin refund path. A refund reported by the Stripe webhook
+   * must not fabricate an admin actor, so it leaves this out.
+   */
+  admin?: { refundedById: string; reason?: string | null; stripeRefundId?: string };
 }
 
 export async function handleRefund(
@@ -48,7 +54,14 @@ export async function handleRefund(
       // CAS check on refundedAmountMinor to avoid race conditions
       const count = await repo.updateRefundStatusWithCAS(payment.id, previousRefunded, {
         refundedAmountMinor: cappedRefunded,
-        status: newStatus
+        status: newStatus,
+        ...(input.admin
+          ? {
+              refundedById: input.admin.refundedById,
+              refundedAt: ctx.now(),
+              refundReason: input.admin.reason ?? null,
+            }
+          : {}),
       }, tx);
 
       if (count === 0) {
@@ -59,6 +72,23 @@ export async function handleRefund(
       recordMetric('payment.refund_received', { status: newStatus, deltaMinor: deltaRefundMinor, fullRefund: cappedRefunded >= payment.amountMinor });
 
       await repo.decrementUserPaymentTotal(payment.userId, payment.currency, deltaRefundMinor, tx);
+
+      if (input.admin) {
+        await recordAuditEvent(ctx, {
+          action: 'PAYMENT_REFUNDED',
+          targetType: 'Payment',
+          targetId: payment.id,
+          metadata: {
+            userId: payment.userId,
+            deltaMinor: deltaRefundMinor,
+            totalRefundedMinor: cappedRefunded,
+            amountMinor: payment.amountMinor,
+            currency: payment.currency,
+            status: newStatus,
+            stripeRefundId: input.admin.stripeRefundId ?? null,
+          },
+        }, tx);
+      }
 
       if (cappedRefunded >= payment.amountMinor) {
         // Full refund: Revoke Patron status linked to this payment

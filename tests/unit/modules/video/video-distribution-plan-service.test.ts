@@ -3,8 +3,9 @@ import { AccessTier, StorageProvider } from '@prisma/client';
 import { VideoDistributionPlanService } from '@/lib/modules/video/application/video-distribution-plan.service';
 
 function ctxForPlan() {
-  const calls: any = { deactivated: 0, created: null };
+  const calls: any = { deactivated: 0, created: null, audit: [] };
   const tx = {
+    auditLog: { create: async ({ data }: any) => { calls.audit.push(data); return {}; } },
     videoDistributionPlan: {
       updateMany: async () => { calls.deactivated += 1; },
       create: async ({ data }: any) => {
@@ -29,6 +30,20 @@ describe('VideoDistributionPlanService', () => {
     await new VideoDistributionPlanService().createOrReplaceActivePlan({ videoId: 'video-1', strategy: { mode: 'SINGLE_PROVIDER', provider: 'MUX' } }, ctx);
     expect(calls.created.targets.create).toHaveLength(1);
     expect(calls.created.targets.create[0]).toMatchObject({ provider: StorageProvider.MUX, role: 'PRIMARY', required: true, desiredPrimary: true });
+  });
+
+  it('audits the plan replacement in the same transaction', async () => {
+    const { ctx, calls } = ctxForPlan();
+    await new VideoDistributionPlanService().createOrReplaceActivePlan({ videoId: 'video-1', strategy: { mode: 'SINGLE_PROVIDER', provider: 'MUX' } }, ctx);
+    expect(calls.audit).toHaveLength(1);
+    expect(calls.audit[0]).toMatchObject({
+      action: 'VIDEO_DISTRIBUTION_PLAN_REPLACED',
+      targetType: 'Video',
+      targetId: 'video-1',
+      actorUserId: 'admin-1',
+      actorType: 'admin',
+    });
+    expect(calls.audit[0].metadata).toMatchObject({ planId: 'plan-new', providers: [StorageProvider.MUX] });
   });
 
   it('creates one Cloudflare target for Cloudflare-only strategy', async () => {

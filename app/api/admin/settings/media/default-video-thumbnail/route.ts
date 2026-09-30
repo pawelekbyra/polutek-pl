@@ -3,6 +3,8 @@ import { put, del } from "@vercel/blob";
 import { prisma } from "../../../../../../lib/prisma";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { handleApiError } from "@/lib/errors";
+import { recordAuditEvent } from "@/lib/modules/audit";
+import { createAppContext } from "@/lib/modules/shared/app-context";
 import { getBlobAccess } from "@/lib/blob-config";
 import {
   invalidateDefaultThumbnailCache,
@@ -101,19 +103,26 @@ export async function POST(req: NextRequest) {
       storageUrl = blob.url;
     }
 
-    await prisma.appSetting.upsert({
-      where: { key: SETTING_KEY },
-      create: { key: SETTING_KEY, value: storageUrl, updatedBy: adminUserId ?? undefined },
-      update: { value: storageUrl, updatedBy: adminUserId ?? undefined },
+    const auditCtx = createAppContext({
+      actor: adminUserId
+        ? { type: "admin", userId: adminUserId }
+        : { type: "system", reason: "admin_session_unresolved" },
+      requestId: req.headers.get("x-request-id") ?? undefined,
     });
 
-    await prisma.auditLog.create({
-      data: {
-        actorUserId: adminUserId ?? null,
-        action: "UPDATE_DEFAULT_VIDEO_THUMBNAIL",
+    await prisma.$transaction(async (tx) => {
+      await tx.appSetting.upsert({
+        where: { key: SETTING_KEY },
+        create: { key: SETTING_KEY, value: storageUrl, updatedBy: adminUserId ?? undefined },
+        update: { value: storageUrl, updatedBy: adminUserId ?? undefined },
+      });
+
+      await recordAuditEvent(auditCtx, {
+        action: "DEFAULT_THUMBNAIL_UPDATED",
         targetType: "AppSetting",
         targetId: SETTING_KEY,
-      },
+        metadata: { replaced: Boolean(existing), sizeBytes: file.size, contentType: file.type },
+      }, tx);
     });
 
     invalidateDefaultThumbnailCache();
@@ -136,17 +145,21 @@ export async function DELETE() {
     }
 
     await deleteStoredThumbnail(setting.value);
-    await prisma.appSetting.delete({ where: { key: SETTING_KEY } });
-    invalidateDefaultThumbnailCache();
+    const auditCtx = createAppContext({
+      actor: adminUserId
+        ? { type: "admin", userId: adminUserId }
+        : { type: "system", reason: "admin_session_unresolved" },
+    });
 
-    await prisma.auditLog.create({
-      data: {
-        actorUserId: adminUserId ?? null,
-        action: "DELETE_DEFAULT_VIDEO_THUMBNAIL",
+    await prisma.$transaction(async (tx) => {
+      await tx.appSetting.delete({ where: { key: SETTING_KEY } });
+      await recordAuditEvent(auditCtx, {
+        action: "DEFAULT_THUMBNAIL_DELETED",
         targetType: "AppSetting",
         targetId: SETTING_KEY,
-      },
+      }, tx);
     });
+    invalidateDefaultThumbnailCache();
 
     return NextResponse.json({ ok: true, deleted: true });
   } catch (error) {

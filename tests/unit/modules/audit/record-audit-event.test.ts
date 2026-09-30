@@ -30,7 +30,49 @@ describe('recordAuditEvent Use Case', () => {
         targetType: 'VIDEO',
         targetId: 'video-1',
         metadata: { foo: 'bar' },
+        actorType: 'user',
+        systemReason: null,
+        requestId: null,
+        ip: null,
+        userAgent: null,
       },
+    });
+  });
+
+  it('stores the system actor reason and the request context', async () => {
+    const create = vi.fn().mockResolvedValue({ id: 'log-2' });
+    const ctx = createAppContext({
+      prisma: { auditLog: { create } } as any,
+      actor: { type: 'system', reason: 'stripe_webhook' },
+      requestId: 'req-1',
+    });
+
+    await recordAuditEvent(ctx, { action: 'X', ip: '203.0.113.7', userAgent: 'jest' });
+
+    expect(create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        actorUserId: null,
+        actorType: 'system',
+        systemReason: 'stripe_webhook',
+        requestId: 'req-1',
+        ip: '203.0.113.7',
+        userAgent: 'jest',
+      }),
+    });
+  });
+
+  it('lets an explicit requestId win over the context one and records guests as guest', async () => {
+    const create = vi.fn().mockResolvedValue({ id: 'log-3' });
+    const ctx = createAppContext({
+      prisma: { auditLog: { create } } as any,
+      actor: { type: 'guest' },
+      requestId: 'ctx-req',
+    });
+
+    await recordAuditEvent(ctx, { action: 'X', requestId: 'explicit' });
+
+    expect(create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ actorType: 'guest', actorUserId: null, systemReason: null, requestId: 'explicit' }),
     });
   });
 });
