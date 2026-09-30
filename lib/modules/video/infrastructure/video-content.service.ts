@@ -8,6 +8,7 @@ import { getAdminClerkUserIds } from '@/lib/admin-config';
 import { MainChannelService } from '@/lib/modules/channel';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { MediaPolicy, resolvePublicThumbnailSrc } from '@/lib/modules/media';
+import { effectivePublishedAt, toPremiereDate } from '../domain/premiere';
 
 export const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
   OR: [
@@ -114,7 +115,8 @@ export class VideoContentService {
         dislikesCount: video.dislikesCount ?? 0,
         isMainFeatured: video.isMainFeatured ?? false,
         sidebarOrder: video.sidebarOrder ?? 0,
-        publishedAt: video.publishedAt ? new Date(video.publishedAt) : null,
+        publishedAt: effectivePublishedAt(video),
+        premiereAt: toPremiereDate(video.premiereAt)?.toISOString() ?? null,
         creator: video.creator ? {
             id: video.creator.id,
             name: video.creator.name,

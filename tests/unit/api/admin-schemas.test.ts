@@ -18,6 +18,25 @@ describe("admin schemas", () => {
     expect(ok(s.adminCommentDeleteSchema, { reason: "BOGUS" })).toBe(false);
   });
 
+  it("video premiereAt: ISO timestamp, null (publish now) or absent", () => {
+    expect(ok(s.adminVideoPremiereAtSchema, "2026-12-31T19:00:00.000Z")).toBe(true);
+    expect(ok(s.adminVideoPremiereAtSchema, "2026-12-31T20:00:00+01:00")).toBe(true);
+    expect(ok(s.adminVideoPremiereAtSchema, null)).toBe(true);
+    expect(ok(s.adminVideoPremiereAtSchema, undefined)).toBe(true);
+    // datetime-local values without an offset, dates only and junk are rejected.
+    expect(ok(s.adminVideoPremiereAtSchema, "2026-12-31T20:00")).toBe(false);
+    expect(ok(s.adminVideoPremiereAtSchema, "2026-12-31")).toBe(false);
+    expect(ok(s.adminVideoPremiereAtSchema, "tomorrow")).toBe(false);
+    expect(ok(s.adminVideoPremiereAtSchema, 1767207600000)).toBe(false);
+  });
+
+  it("video write keeps other metadata and validates premiereAt", () => {
+    const parsed = s.adminVideoWriteSchema.safeParse({ title: "T", premiereAt: "2026-12-31T19:00:00.000Z" });
+    expect(parsed.success && parsed.data).toEqual({ title: "T", premiereAt: "2026-12-31T19:00:00.000Z" });
+    expect(ok(s.adminVideoWriteSchema, { title: "T" })).toBe(true);
+    expect(ok(s.adminVideoWriteSchema, { premiereAt: "nope" })).toBe(false);
+  });
+
   it("inbound email patch", () => {
     expect(ok(s.adminInboundEmailPatchSchema, { id: "1", status: "READ" })).toBe(true);
     expect(ok(s.adminInboundEmailPatchSchema, { id: "", status: "READ" })).toBe(false);

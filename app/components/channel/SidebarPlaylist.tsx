@@ -17,7 +17,8 @@ import DonationBox from "./DonationBox";
 import { useAppPreload } from "../preload/AppPreloadProvider";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TEMP_PATRON_COMING_SOON } from "@/lib/temp-patron-coming-soon";
+import { isUpcomingPremiere } from "@/lib/premiere";
+import { usePremiereClock } from "@/lib/hooks/usePremiereClock";
 import { TEMP_SUPPORT_AS_MODAL } from "@/lib/temp-support-modal";
 import {
   acquireSidebarLayout,
@@ -35,7 +36,6 @@ interface SidebarPlaylistProps {
   t: Translations;
   language: string;
   mounted: boolean;
-  premiereCountdown?: string;
   onVideoMouseEnter: (id: string) => void;
   onVideoSelect?: (videoId?: string) => void;
   showSupportBox?: boolean;
@@ -95,6 +95,19 @@ export function SidebarPlaylist({
   // Viewer the layout in state was built for; seeded from the server so the first pass doesn't refetch.
   const layoutViewerKeyRef = useRef<string | null>(initialLayout ? initialLayoutViewerKey ?? null : null);
 
+  // Changes only when one of the listed premieres is reached; the layout is then
+  // refetched so that video moves from "Coming soon" into its normal section.
+  const premiereNow = usePremiereClock(
+    (layout?.sections.flatMap((section) => section.items) ?? sortedVideos).map((item) => item.premiereAt),
+  );
+  const premiereNowMs = premiereNow.getTime();
+  const lastPremiereRefreshRef = useRef(premiereNowMs);
+  useEffect(() => {
+    if (lastPremiereRefreshRef.current === premiereNowMs) return;
+    lastPremiereRefreshRef.current = premiereNowMs;
+    layoutViewerKeyRef.current = null;
+  }, [premiereNowMs]);
+
   useEffect(() => {
     if (!authLoaded) return;
 
@@ -129,24 +142,26 @@ export function SidebarPlaylist({
       cancelled = true;
       releaseSidebarLayout(viewerKey, request);
     };
-  }, [authLoaded, authUserId, isSignedIn]);
+  }, [authLoaded, authUserId, isSignedIn, premiereNowMs]);
 
   const renderVideoItem = (
     video: SidebarLayoutItem,
     isPublicSection = false,
-    forceComingSoon = false,
+    inUpcomingSection = false,
     index = 0,
   ) => {
     const displayTitle = getVideoDisplayTitle(video, language);
     const isCurrent = video.id === selectedVideoId;
     const isPatronVideo = video.tier === "PATRON";
     const hasAccess = !video.isLocked;
-    // TEMPORARY (2026-09-22): "coming soon" placeholder for the whole PATRON
-    // tier — see lib/temp-patron-coming-soon.ts. Overrides the normal
-    // access-based lock state below.
-    const isComingSoon = forceComingSoon && TEMP_PATRON_COMING_SOON;
-    // 2026-09-22: signing in is the only gate now, even for PATRON tier (see CLAUDE.md).
-    const lockState = isComingSoon ? "COMING_SOON" : !hasAccess ? "LOGIN_REQUIRED" : null;
+    // Scheduled premiere not reached yet (CLAUDE.md "Premieres"): signed-in viewers see
+    // the premiere tile with this video's date, guests the sign-in wall. The server's
+    // UPCOMING section wins over our clock until the layout is refetched.
+    const isUpcoming = inUpcomingSection || isUpcomingPremiere(video, premiereNow);
+    // Otherwise signing in is the only gate, PATRON tier included (CLAUDE.md §4.4).
+    const lockState = isUpcoming
+      ? isSignedIn ? "COMING_SOON" : "LOGIN_REQUIRED"
+      : !hasAccess ? "LOGIN_REQUIRED" : null;
     const warmVideoOnIntent = () => {
       void preloader?.warmVideo(video.id, {
         includeComments: true,
@@ -177,8 +192,8 @@ export function SidebarPlaylist({
           scroll={false}
           onClick={(event) => {
             // Plain clicks switch in place (ChannelHome does a shallow URL update);
-            // modified/middle clicks keep the real link for new tabs. Coming-soon
-            // videos are selectable too (see lib/temp-patron-coming-soon.ts).
+            // modified/middle clicks keep the real link for new tabs. Upcoming
+            // premieres are selectable too: the player shows their countdown.
             if (!onVideoSelect || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
             event.preventDefault();
             onVideoSelect(video.id);
@@ -224,7 +239,7 @@ export function SidebarPlaylist({
               {lockState && (
                 <div className="pointer-events-none">
                   <div className="absolute inset-0 z-20">
-                    <AccessLockOverlay state={lockState} variant="thumbnailCompact" />
+                    <AccessLockOverlay state={lockState} variant="thumbnailCompact" premiereAt={video.premiereAt} />
                   </div>
                 </div>
               )}
@@ -292,18 +307,17 @@ export function SidebarPlaylist({
     ? <DonationBox videoTitle={supportItem.title} />
     : null;
 
-  // TEMPORARY (2026-09-22): "coming soon" placeholder for the whole PATRON
-  // tier — see lib/temp-patron-coming-soon.ts.
   // Section titles follow the viewer's language (the server layout only carries Polish ones).
   const publicSectionTitle = language === "pl" ? "Publiczne" : "Public";
   const loggedInSectionTitle = language === "pl" ? "Dla zalogowanych" : "For signed-in users";
-  const patronSectionTitle = TEMP_PATRON_COMING_SOON
-    ? language === "pl"
-      ? "Już wkrótce"
-      : "Coming soon"
-    : language === "pl"
-      ? "Strefa Fenkjuu"
-      : "Thank You Zone";
+  const patronSectionTitle = language === "pl" ? "Strefa Fenkjuu" : "Thank You Zone";
+  const upcomingSectionTitle = language === "pl" ? "Już wkrótce" : "Coming soon";
+  const amberDot = (
+    <span
+      aria-hidden="true"
+      className="inline-flex h-1.5 w-1.5 rounded-full bg-[var(--chan-amber)] shadow-[0_0_0_3px_var(--cm-amber-20)]"
+    />
+  );
 
   if (loading) {
     const renderSkeletonSection = (title: string) => (
@@ -324,7 +338,7 @@ export function SidebarPlaylist({
       <div className="flex flex-col gap-1 lg:h-full lg:gap-1.5" aria-busy="true">
         {renderSkeletonSection(publicSectionTitle)}
         {renderSkeletonSection(loggedInSectionTitle)}
-        {renderSkeletonSection(patronSectionTitle)}
+        {renderSkeletonSection(upcomingSectionTitle)}
         {showSupportBox && !TEMP_SUPPORT_AS_MODAL && (
           <div className="mt-2 shrink-0 rounded-lg bg-[var(--chan-surface)] p-4">
             <Skeleton className="h-8 w-full rounded-[10px]" />
@@ -359,7 +373,8 @@ export function SidebarPlaylist({
           renderVideoItem(
             {
               ...v,
-              // PATRON and LOGGED_IN only need sign-in (CLAUDE.md §4.4).
+              // PATRON and LOGGED_IN only need sign-in (CLAUDE.md §4.4); upcoming
+              // premieres are locked by renderVideoItem from their premiereAt.
               isLocked: v.tier !== "PUBLIC" && !isSignedIn,
             },
             false,
@@ -375,6 +390,7 @@ export function SidebarPlaylist({
   const publicSection = layout.sections.find((s) => s.type === "FREE");
   const loggedInSection = layout.sections.find((s) => s.type === "LOGGED_IN");
   const patronSection = layout.sections.find((s) => s.type === "PATRON");
+  const upcomingSection = layout.sections.find((s) => s.type === "UPCOMING");
 
   return (
     <div className="flex flex-col gap-1 lg:h-full lg:gap-0.5">
@@ -391,16 +407,17 @@ export function SidebarPlaylist({
         </div>
       )}
 
-      {patronSection && (
+      {patronSection && patronSection.items.length > 0 && (
         <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
-          {renderSectionHeader(
-            patronSectionTitle,
-            <span
-              aria-hidden="true"
-              className="inline-flex h-1.5 w-1.5 rounded-full bg-[var(--chan-amber)] shadow-[0_0_0_3px_var(--cm-amber-20)]"
-            />,
-          )}
-          {patronSection.items.map((v, i) => renderVideoItem(v, false, true, i))}
+          {renderSectionHeader(patronSectionTitle, amberDot)}
+          {patronSection.items.map((v, i) => renderVideoItem(v, false, false, i))}
+        </div>
+      )}
+
+      {upcomingSection && upcomingSection.items.length > 0 && (
+        <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col" data-testid="sidebar-upcoming-section">
+          {renderSectionHeader(upcomingSectionTitle, amberDot)}
+          {upcomingSection.items.map((v, i) => renderVideoItem(v, false, true, i))}
         </div>
       )}
 

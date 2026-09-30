@@ -30,6 +30,12 @@ export class VideoInvalidSidebarError extends AppError {
   }
 }
 
+export class VideoInvalidPremiereError extends AppError {
+  constructor(message = 'Data premiery musi być w przyszłości.') {
+    super(message, 400, 'VIDEO_INVALID_PREMIERE');
+  }
+}
+
 export class VideoUrlNotAllowedError extends AppError {
   constructor(url: string) {
     super(`Video URL ${url} is not allowed by media policy`, 400, 'VIDEO_URL_NOT_ALLOWED');

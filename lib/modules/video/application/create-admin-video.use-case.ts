@@ -6,7 +6,8 @@ import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository, CreateVideoInput } from "../infrastructure/video.repository";
 import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
-import { VideoSlugConflictError } from "../domain/video.errors";
+import { VideoInvalidPremiereError, VideoSlugConflictError } from "../domain/video.errors";
+import { isAllowedPremiereChange } from "../domain/premiere";
 import { Prisma } from "@prisma/client";
 
 const DEFAULT_DRAFT_THUMBNAIL_URL = "/logo.png";
@@ -22,7 +23,12 @@ function normalizeCreateVideoInput(input: CreateVideoInput): CreateVideoInput | 
     return new AppError("Podaj lub wygeneruj slug filmu przed utworzeniem szkicu.", 400, "VIDEO_SLUG_REQUIRED");
   }
 
+  if (!isAllowedPremiereChange(input.premiereAt, null)) {
+    return new VideoInvalidPremiereError();
+  }
+
   return {
+    premiereAt: input.premiereAt ?? null,
     title,
     slug,
     thumbnailUrl: input.thumbnailUrl?.trim() || DEFAULT_DRAFT_THUMBNAIL_URL,
@@ -116,7 +122,11 @@ export async function createAdminVideo(
         action: 'VIDEO_CREATED',
         targetType: 'Video',
         targetId: video.id,
-        metadata: { title: video.title, publishAfterAssetReady: Boolean(normalizedInput.publishAfterAssetReady) }
+        metadata: {
+          title: video.title,
+          publishAfterAssetReady: Boolean(normalizedInput.publishAfterAssetReady),
+          premiereAt: normalizedInput.premiereAt?.toISOString() ?? null,
+        }
       });
     } catch (auditError) {
       logger.error("[ADMIN_VIDEO_CREATE_AUDIT_ERROR] Draft was created but audit log failed", auditError);

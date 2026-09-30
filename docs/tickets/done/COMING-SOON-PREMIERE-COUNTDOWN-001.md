@@ -1,7 +1,27 @@
 # COMING-SOON-PREMIERE-COUNTDOWN-001 — Docelowa wersja "Coming soon" z premierą per film
 
-Status: READY_FOR_BUILDER
+Status: DONE (2026-09-30) — zobacz CLAUDE.md §4.15 "Premieres" dla szczegółów implementacji.
 Priority: MEDIUM (zastępuje tymczasowy hack `TEMP_PATRON_COMING_SOON`)
+
+## Jak zostało zrobione (odstępstwa od zakresu poniżej — decyzje właściciela)
+
+- **Film z premierą to PUBLISHED z `premiereAt` w przyszłości**, nie DRAFT.
+  Dzięki temu nie trzeba osobnego, okrojonego DTO: film jest zwykłym
+  publicznym DTO z polem `premiereAt`, a bezpieczeństwo zapewnia bramka
+  serwerowa w `PlaybackService` (przed premierą: brak źródła, tokenów,
+  identyfikatorów dostawcy i sesji) oraz w `getGatedMedia()`.
+- **Kilka zapowiedzi naraz** (sekcja `UPCOMING`, najbliższa premiera
+  pierwsza) — zamiast "jeden film".
+- **Automatyczne wejście na żywo o czasie** — bez crona: stan "nadchodzący"
+  liczony przy każdym odczycie (`isUpcomingPremiere()`), a otwarta strona
+  przełącza się sama w chwili premiery (`usePremiereClock()`).
+- **Goście widzą nakładkę logowania** (miniatura i odtwarzacz), zalogowani
+  licznik/kokpit.
+- `publishedAt` nie jest przesuwane na datę premiery (każde publiczne
+  zapytanie ukrywa przyszłe `publishedAt`); DTO i kolejność używają
+  `effectivePublishedAt()` (późniejsza z dat).
+- Panel admina: karta "Publikacja" (Natychmiast / Premiera + data i
+  godzina); "Premiera" na szkicu publikuje go przez `publishAdminVideo()`.
 
 ## Why
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { formatPremiereDate } from "@/lib/temp-patron-coming-soon";
+import { formatPremiereDate } from "@/lib/premiere";
 import styles from "./CockpitComingSoon.module.css";
 import { PremieraLettering } from "./PremieraLettering";
 import { HudBackdrop } from "./HudBackdrop";
@@ -201,12 +201,15 @@ export function CockpitComingSoon({
   titleId,
   units,
   countdownLabel,
+  premiereAt,
 }: {
   isPl: boolean;
   reduceMotion: boolean;
   titleId: string;
   units: string[];
   countdownLabel: string;
+  /** This video's premiere (Video.premiereAt). */
+  premiereAt: Date;
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(true);
@@ -232,7 +235,7 @@ export function CockpitComingSoon({
   }, []);
 
   const unitLabels = isPl ? ["DNI", "GODZ", "MIN", "SEK"] : ["DAYS", "HRS", "MIN", "SEC"];
-  const premiereDate = formatPremiereDate();
+  const premiereDate = formatPremiereDate(premiereAt);
   const enter = (delay: number) =>
     reduceMotion
       ? { initial: false as const, animate: { opacity: 1, y: 0 }, transition: { duration: 0 } }
@@ -243,7 +246,7 @@ export function CockpitComingSoon({
       <div className={styles.nebula} aria-hidden="true" />
       <Warpfield clock={clock} running={running} />
       <div className={styles.focus} aria-hidden="true" />
-      <HudBackdrop clock={clock} isPl={isPl} running={running} />
+      <HudBackdrop clock={clock} isPl={isPl} running={running} premiereAt={premiereAt} />
       <div className={styles.glass} aria-hidden="true" />
       <div className={styles.scanlines} aria-hidden="true" />
 

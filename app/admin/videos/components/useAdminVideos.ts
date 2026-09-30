@@ -4,7 +4,7 @@ import { AdminVideoListItem } from "@/lib/modules/video/domain/admin-video-list.
 import { logger } from "@/lib/logger";
 import { readAdminApiError } from "@/lib/admin/api-error";
 import { CreateVideoSourceMode } from "./VideoForm";
-import { INITIAL_FORM_DATA } from "./video-utils";
+import { INITIAL_FORM_DATA, publicationFormFields } from "./video-utils";
 
 export function useAdminVideos(isAdmin: boolean) {
   const searchParams = useSearchParams();
@@ -117,6 +117,7 @@ export function useAdminVideos(isAdmin: boolean) {
           sidebarOrder: vid.sidebarOrder || 0,
           subtitleUrlPl: vid.subtitleUrlPl || "",
           subtitleUrlEn: vid.subtitleUrlEn || "",
+          ...publicationFormFields(vid),
         });
         setIsEditing(true);
         setIsSlugManual(true);

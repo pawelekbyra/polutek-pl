@@ -82,7 +82,8 @@ describe("#1104 search/sidebar cleanup contracts", () => {
     expect(sidebar).not.toContain('fetch("/api/channel/sidebar"');
     expect(sidebar).toContain("acquireSidebarLayout(viewerKey)");
     expect(sidebar).toContain("releaseSidebarLayout(viewerKey, request)");
-    expect(sidebar).toContain("[authLoaded, authUserId, isSignedIn]");
+    // premiereNowMs changes only when a listed premiere is reached (CLAUDE.md "Premieres").
+    expect(sidebar).toContain("[authLoaded, authUserId, isSignedIn, premiereNowMs]");
     // Fallback locks: PATRON and LOGGED_IN only need sign-in (CLAUDE.md §4.4).
     expect(sidebar).toContain('isLocked: v.tier !== "PUBLIC" && !isSignedIn');
     expect(sidebar).not.toContain("viewerIsPatron");

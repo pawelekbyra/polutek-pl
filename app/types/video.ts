@@ -81,6 +81,8 @@ export interface PublicVideoDTO {
   isMainFeatured: boolean;
   sidebarOrder?: number;
   publishedAt?: Date | string | null;
+  /** ISO time of a scheduled premiere, or null. Upcoming iff in the future (see lib/premiere.ts). */
+  premiereAt?: string | null;
   creator?: PublicCreatorDTO;
   textTracks?: VideoTextTrackDTO[];
   // Ensure no raw fields are present

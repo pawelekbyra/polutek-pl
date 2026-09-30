@@ -17,7 +17,8 @@ import { AccessTierDto } from "@/lib/modules/comments/domain/comment-frontend.dt
 import { PlayerLoadingState } from "./PlayerLoadingState";
 import { PlayerStateFrame } from "./PlayerStateFrame";
 import AccessLockOverlay from "./AccessLockOverlay";
-import { TEMP_PATRON_COMING_SOON } from "@/lib/temp-patron-coming-soon";
+import { isUpcomingPremiere, toPremiereDate } from "@/lib/premiere";
+import { usePremiereClock } from "@/lib/hooks/usePremiereClock";
 import {
   resolvePlaybackViewerKey,
   useAppPreload,
@@ -51,12 +52,13 @@ interface PremiumWrapperProps {
   variant?: "default" | "thumbnail" | "thumbnailCompact";
   onAccessLoad?: (hasAccess: boolean) => void;
   /**
-   * TEMPORARY (2026-09-22) — opt-in for the public main-feed player only (see
-   * lib/temp-patron-coming-soon.ts). Admin previews (`/admin/videos/[id]`)
-   * and the `/secretproject`/`/secretproject2` campaign pages must keep
-   * working normally, so this defaults to false and only Hero.tsx sets it.
+   * The video's scheduled premiere (PublicVideoDTO.premiereAt). While it is in the
+   * future no playback plan is requested: signed-in viewers see the premiere
+   * countdown, guests the sign-in lock (CLAUDE.md "Premieres"). At the premiere
+   * the plan is requested and the video plays without a reload. Admin previews
+   * omit it and rely on the server plan, which lets admins through.
    */
-  showPatronComingSoon?: boolean;
+  premiereAt?: string | Date | null;
   /** Poster shown while the playback plan resolves (full-size player only). */
   posterUrl?: string | null;
   /**
@@ -71,7 +73,7 @@ export default function PremiumWrapper({
   videoId,
   requiredTier: initialTier,
   variant = "default",
-  showPatronComingSoon = false,
+  premiereAt,
   posterUrl,
   revealKey,
   onAccessLoad,
@@ -86,6 +88,11 @@ export default function PremiumWrapper({
   const [playbackState, setPlaybackState] = useState<PlaybackPlanStatus | null>(
     null,
   );
+  // Premiere time the server reported on a COMING_SOON plan (defensive: the DTO
+  // is the primary signal, but the server clock has the last word).
+  const [planPremiereAt, setPlanPremiereAt] = useState<string | null>(null);
+  const premiereNow = usePremiereClock([premiereAt]);
+  const isUpcoming = isUpcomingPremiere({ premiereAt }, premiereNow);
   const preloader = useAppPreload();
   const authViewerKey = resolvePlaybackViewerKey({ isLoaded, userId, sessionId });
   const viewerKey = preloader
@@ -117,12 +124,22 @@ export default function PremiumWrapper({
     setPlaybackPlan(null);
     setResolvedViewerKey(null);
     setFetchError(null);
+    setPlanPremiereAt(null);
     setIsLoading(true);
 
     const isCurrentRequest = () =>
       requestGenerationRef.current === requestGeneration;
 
     if (!requestViewerKey) return;
+
+    // Upcoming premiere: nothing to request yet. This callback is re-created
+    // (and the effect below re-runs) when the premiere is reached.
+    if (isUpcoming) {
+      setResolvedViewerKey(requestViewerKey);
+      setIsLoading(false);
+      onAccessLoad?.(false);
+      return;
+    }
 
     if (!userId && !isPublic) {
       setHasAccess(false);
@@ -137,6 +154,12 @@ export default function PremiumWrapper({
 
     try {
       let rawData: unknown = getPreloadedPlaybackPlan?.(videoId) ?? null;
+      // A plan warmed before the premiere is stale once the page thinks it has
+      // passed; ask again instead of showing the countdown forever.
+      if ((rawData as Partial<PlaybackPlan> | null)?.status === "COMING_SOON") {
+        invalidatePreloadedPlaybackPlan?.(videoId);
+        rawData = null;
+      }
 
       if (!rawData && warmPreloadedVideo) {
         rawData = await warmPreloadedVideo(videoId, {
@@ -179,6 +202,7 @@ export default function PremiumWrapper({
       setHasAccess(nextHasAccess);
       onAccessLoad?.(nextHasAccess);
       setPlaybackState(nextState);
+      setPlanPremiereAt(nextState === "COMING_SOON" && typeof data.premiereAt === "string" ? data.premiereAt : null);
       setPlaybackPlan(nextHasAccess ? data as PlaybackPlan : null);
       if (isAccessTierDto(requiredTier)) setDbTier(requiredTier);
       setFetchError(null);
@@ -196,7 +220,7 @@ export default function PremiumWrapper({
         setIsLoading(false);
       }
     }
-  }, [deniedState, getPreloadedPlaybackPlan, isPublic, onAccessLoad, userId, videoId, viewerKey, warmPreloadedVideo]);
+  }, [deniedState, getPreloadedPlaybackPlan, invalidatePreloadedPlaybackPlan, isPublic, isUpcoming, onAccessLoad, userId, videoId, viewerKey, warmPreloadedVideo]);
 
   useEffect(() => {
     void checkAccess();
@@ -252,9 +276,21 @@ export default function PremiumWrapper({
     refreshPlaybackPlan,
   };
 
-  const showsComingSoon =
-    TEMP_PATRON_COMING_SOON && showPatronComingSoon && effectiveTier === "PATRON";
-  const showsGuestLock = isLoaded && !userId && !isPublic;
+  // Upcoming premiere, decided from the DTO before any plan fetch: signed-in
+  // viewers get the countdown, guests the sign-in lock (whatever the tier).
+  const showsComingSoon = isUpcoming && isLoaded && Boolean(userId);
+  const showsGuestLock = isLoaded && !userId && (!isPublic || isUpcoming);
+
+  // Server says COMING_SOON although our clock says the premiere passed (clock
+  // skew): ask again at the server's premiere time, at most every 5 s.
+  useEffect(() => {
+    if (isUpcoming || safePlaybackState !== "COMING_SOON") return;
+    const target = toPremiereDate(planPremiereAt)?.getTime() ?? 0;
+    const timer = setTimeout(() => {
+      void refreshPlaybackPlan();
+    }, Math.max(target - Date.now(), 5_000));
+    return () => clearTimeout(timer);
+  }, [isUpcoming, planPremiereAt, refreshPlaybackPlan, safePlaybackState]);
   // Mirrors the branch below that mounts the player. When it does, the player itself
   // reports readiness (first frames buffered); every other settled state is final here.
   const rendersPlayer =
@@ -267,12 +303,16 @@ export default function PremiumWrapper({
     showsComingSoon || showsGuestLock || (!safeIsLoading && !rendersPlayer),
   );
 
-  // TEMPORARY (2026-09-22): "coming soon" placeholder for the whole PATRON
-  // tier — see lib/temp-patron-coming-soon.ts. Purely a display gate, checked
-  // before any real access-state branching below; doesn't touch playback
-  // fetch/access logic at all.
   if (showsComingSoon) {
-    return <AccessLockOverlay state="COMING_SOON" variant={variant} />;
+    return <AccessLockOverlay state="COMING_SOON" variant={variant} premiereAt={premiereAt} />;
+  }
+
+  if (isUpcoming) {
+    return showsGuestLock ? (
+      <AccessLockOverlay state="LOGIN_REQUIRED" variant={variant} />
+    ) : (
+      <PlayerLoadingState variant={variant} posterUrl={posterUrl} />
+    );
   }
 
   if (safeIsLoading) {
@@ -332,6 +372,7 @@ export default function PremiumWrapper({
         state={safePlaybackState || "LOGIN_REQUIRED"}
         onRetry={refreshPlaybackPlan}
         variant={variant}
+        premiereAt={planPremiereAt}
       />
     </VideoAccessContext.Provider>
   );
@@ -341,12 +382,15 @@ interface PlaybackPlanStateOverlayProps {
   state: PlaybackPlanStatus;
   onRetry?: () => void;
   variant: "default" | "thumbnail" | "thumbnailCompact";
+  /** Only for COMING_SOON: the premiere time the server reported. */
+  premiereAt?: string | null;
 }
 
 function PlaybackPlanStateOverlay({
   state,
   onRetry,
   variant,
+  premiereAt,
 }: PlaybackPlanStateOverlayProps) {
   const language = useOptionalLanguage();
   const safeState = BLOCKED_PLAYBACK_STATES.has(state) ? state : "ERROR";
@@ -355,6 +399,10 @@ function PlaybackPlanStateOverlay({
       safeState as Exclude<PlaybackPlanStatus, "READY">
     ];
   const isThumbnail = variant === "thumbnail" || variant === "thumbnailCompact";
+
+  if (safeState === "COMING_SOON") {
+    return <AccessLockOverlay state="COMING_SOON" variant={variant} premiereAt={premiereAt} />;
+  }
 
   if (safeState === "LOGIN_REQUIRED") {
     return <AccessLockOverlay state={safeState} variant={variant} />;

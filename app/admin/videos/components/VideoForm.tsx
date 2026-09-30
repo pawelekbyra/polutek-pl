@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Globe, ShieldCheck, ImageIcon, AlertCircle, Save, FileVideo, Send, RotateCcw, Youtube } from "@/app/components/icons";
 import { CoverImageUpload } from "./CoverImageUpload";
+import type { PublishMode } from "./video-utils";
 
 export type CreateVideoSourceMode = "UPLOAD" | "EXISTING_CLOUDFLARE" | "YOUTUBE" | "VIMEO" | "NONE";
 
@@ -32,6 +33,9 @@ interface VideoFormData {
   sidebarOrder: number;
   subtitleUrlPl: string;
   subtitleUrlEn: string;
+  publishMode: PublishMode;
+  premiereLocal: string;
+  savedPremiereAt: string | null;
 }
 
 interface VideoFormProps {
@@ -374,6 +378,53 @@ export function VideoForm({
                     : "W tym formularzu możesz cofnąć film do szkicu albo go zarchiwizować. Publikacja pozostaje osobną akcją w szczegółach filmu, aby zachować backendowe blokady publikacji i walidację assetu."}
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Send className="h-5 w-5" /> Publikacja</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div role="radiogroup" aria-label="Publikacja" className="space-y-2">
+                {([
+                  ["NOW", "Natychmiast"],
+                  ["PREMIERE", "Premiera"],
+                ] as const).map(([mode, label]) => (
+                  <label key={mode} className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                    <input
+                      type="radio"
+                      name="publishMode"
+                      value={mode}
+                      checked={formData.publishMode === mode}
+                      onChange={() => setFormData(prev => ({ ...prev, publishMode: mode }))}
+                      disabled={isSubmitting}
+                      className="h-4 w-4 accent-primary"
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+              {formData.publishMode === "PREMIERE" && (
+                <div className="space-y-2">
+                  <Label htmlFor="premiereLocal">Data i godzina premiery (Twój czas lokalny)</Label>
+                  <Input
+                    id="premiereLocal"
+                    type="datetime-local"
+                    value={formData.premiereLocal}
+                    onChange={e => setFormData(prev => ({ ...prev, premiereLocal: e.target.value }))}
+                    disabled={isSubmitting}
+                    required
+                  />
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {formData.publishMode === "PREMIERE"
+                  ? isCreate
+                    ? "Po publikacji film trafi do sekcji „Już wkrótce” z odliczaniem i sam stanie się zwykłym filmem w chwili premiery. Do tego czasu nie da się go odtworzyć."
+                    : formData.status === "DRAFT"
+                      ? "Zapis opublikuje szkic (jeśli jest gotowy do publikacji) i ustawi go w sekcji „Już wkrótce” do chwili premiery."
+                      : "Film będzie w sekcji „Już wkrótce” z odliczaniem i sam stanie się zwykłym filmem w chwili premiery."
+                  : "Film jest dostępny od razu po publikacji. Zmiana z premiery na „Natychmiast” odblokowuje go od razu."}
+              </p>
             </CardContent>
           </Card>
         </div>

@@ -36,9 +36,13 @@ export interface CreateVideoInput {
   publishAfterAssetReadyRequestedAt?: Date | null;
   publishAfterAssetReadyCompletedAt?: Date | null;
   publishAfterAssetReadyError?: string | null;
+  /** Scheduled premiere (CLAUDE.md "Premieres"); null = publish now / no premiere. */
+  premiereAt?: Date | null;
 }
 
 export interface AdminUpdateVideoInput extends Partial<CreateVideoInput> {
+  /** Set by updateAdminVideo only (cancelling an upcoming premiere publishes now). */
+  publishedAt?: Date | null;
   videoUrl?: string | null;
   status?: VideoStatus;
   isMainFeatured?: boolean;
@@ -284,6 +288,7 @@ export class VideoRepository {
       likesCount: 0,
       dislikesCount: 0,
       publishedAt: null,
+      premiereAt: input.premiereAt ?? null,
       publishAfterAssetReady: Boolean(input.publishAfterAssetReady),
       publishAfterAssetReadyProvider: input.publishAfterAssetReady ? (input.publishAfterAssetReadyProvider ?? null) : null,
       publishAfterAssetReadyRequestedAt: input.publishAfterAssetReady ? (input.publishAfterAssetReadyRequestedAt || new Date()) : null,
@@ -317,6 +322,8 @@ export class VideoRepository {
     if (data.publishAfterAssetReadyError !== undefined) updateData.publishAfterAssetReadyError = data.publishAfterAssetReadyError;
     if (data.subtitleUrlPl !== undefined) updateData.subtitleUrlPl = data.subtitleUrlPl;
     if (data.subtitleUrlEn !== undefined) updateData.subtitleUrlEn = data.subtitleUrlEn;
+    if (data.premiereAt !== undefined) updateData.premiereAt = data.premiereAt;
+    if (data.publishedAt !== undefined) updateData.publishedAt = data.publishedAt;
 
     if (status && status !== VideoStatus.PUBLISHED) {
       updateData.status = status;
