@@ -20,6 +20,8 @@ export default function SSOCallbackPage() {
   const { signUp } = useSignUp();
   const [timedOut, setTimedOut] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [captchaShown, setCaptchaShown] = useState(false);
+  const captchaRef = useRef<HTMLDivElement>(null);
   const started = useRef(false);
 
   // A session that already exists (handshake finished, or page reloaded) needs no callback.
@@ -59,6 +61,17 @@ export default function SSOCallbackPage() {
     void finish();
   }, [isLoaded, isSignedIn, signIn, signUp]);
 
+  // When Clerk shows its bot check, tell the visitor what to do instead of "taking longer".
+  useEffect(() => {
+    const el = captchaRef.current;
+    if (!el) return;
+    const sync = () => setCaptchaShown(el.childElementCount > 0);
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(el, { childList: true });
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     const timer = window.setTimeout(() => setTimedOut(true), SSO_CALLBACK_TIMEOUT_MS);
     return () => window.clearTimeout(timer);
@@ -67,11 +80,13 @@ export default function SSOCallbackPage() {
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-background px-4 text-center">
       {/* Clerk's bot protection needs this element to render its challenge when the transfer creates the account. */}
-      <div id="clerk-captcha" />
+      <div id="clerk-captcha" ref={captchaRef} />
       {timedOut ? (
         <>
           <p className="text-sm text-muted-foreground" role="alert">
-            Logowanie trwa dłużej niż zwykle. / Signing in is taking longer than usual.
+            {captchaShown
+              ? "Potwierdź powyżej, że jesteś człowiekiem, aby dokończyć logowanie. / Confirm above that you are human to finish signing in."
+              : "Logowanie trwa dłużej niż zwykle. / Signing in is taking longer than usual."}
           </p>
           {problem && <p className="max-w-sm break-words text-xs text-muted-foreground/70">{problem}</p>}
           {/* Plain <a> on purpose: this is the escape hatch for a stalled Clerk handshake, so it must do a full page load that resets client state, not a client-side <Link> navigation. */}
