@@ -22,6 +22,20 @@ interface AccessLockOverlayProps {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
+// DSEG7 draws "1" at the right of a full-width cell, leaving a hole before it. Pull back only a
+// "1" that follows another digit; a leading "1" has nothing to close up to.
+function tightenSegmentOnes(text: string, className: string) {
+  return Array.from(text).map((ch, i) =>
+    ch === "1" && /\d/.test(text[i - 1] ?? "") ? (
+      <span key={i} className={className}>
+        {ch}
+      </span>
+    ) : (
+      ch
+    ),
+  );
+}
+
 function useCountdownUnits(now: Date, target: Date) {
   let diff = Math.max(0, target.getTime() - now.getTime());
   const d = Math.floor(diff / 86400000); diff -= d * 86400000;
@@ -67,7 +81,9 @@ export function AccessLockOverlay({ state, variant }: AccessLockOverlayProps) {
             aria-label={countdownLabel}
           >
             <PremieraLettering isPl={isPl} className={styles.compactPremiereLabel} />
-            <span className={styles.compactPremiereDate} aria-hidden="true">{formatPremiereDate()}</span>
+            <span className={styles.compactPremiereDate} aria-hidden="true">
+              {tightenSegmentOnes(formatPremiereDate(), styles.compactPremiereDateOne)}
+            </span>
           </div>
         </PlayerStateFrame>
       );
