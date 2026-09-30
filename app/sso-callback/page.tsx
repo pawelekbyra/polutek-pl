@@ -9,11 +9,17 @@ import { generateUsername } from "@/lib/auth/generate-username";
 // navigates back to the page the user started from.
 // It must never render blank: a slow or stalled handshake used to look like a dead page until
 // the user reloaded.
+function describeError(error: unknown): string {
+  const e = error as { code?: string; message?: string; longMessage?: string } | null;
+  return [e?.code, e?.longMessage || e?.message].filter(Boolean).join(": ") || "unknown error";
+}
+
 export default function SSOCallbackPage() {
   const { isLoaded, isSignedIn } = useAuth();
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
   const [timedOut, setTimedOut] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
   const started = useRef(false);
 
   // A session that already exists (handshake finished, or page reloaded) needs no callback.
@@ -30,19 +36,23 @@ export default function SSOCallbackPage() {
       if (signIn.status === "complete") {
         started.current = true;
         const { error } = await signIn.finalize();
-        if (!error) window.location.replace(readReturnPath());
+        if (error) setProblem(describeError(error));
+        else window.location.replace(readReturnPath());
       } else if (signIn.isTransferable) {
         started.current = true;
         const { error: createError } = await signUp.create({ transfer: true });
-        if (createError) return;
+        if (createError) return setProblem(describeError(createError));
         // Clerk requires a username for new accounts; Google doesn't provide one, so add it here.
         if (signUp.status === "missing_requirements" && signUp.missingFields.includes("username")) {
           const { error: updateError } = await signUp.update({ username: generateUsername(signUp.emailAddress) });
-          if (updateError) return;
+          if (updateError) return setProblem(describeError(updateError));
         }
         if (signUp.status === "complete") {
           const { error } = await signUp.finalize();
-          if (!error) window.location.replace(readReturnPath());
+          if (error) setProblem(describeError(error));
+          else window.location.replace(readReturnPath());
+        } else {
+          setProblem(`sign-up: ${signUp.status}; missing: ${signUp.missingFields.join(",")}`);
         }
       }
     };
@@ -56,11 +66,14 @@ export default function SSOCallbackPage() {
 
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-background px-4 text-center">
+      {/* Clerk's bot protection needs this element to render its challenge when the transfer creates the account. */}
+      <div id="clerk-captcha" />
       {timedOut ? (
         <>
           <p className="text-sm text-muted-foreground" role="alert">
             Logowanie trwa dłużej niż zwykle. / Signing in is taking longer than usual.
           </p>
+          {problem && <p className="max-w-sm break-words text-xs text-muted-foreground/70">{problem}</p>}
           {/* Plain <a> on purpose: this is the escape hatch for a stalled Clerk handshake, so it must do a full page load that resets client state, not a client-side <Link> navigation. */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a href="/" className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background">
