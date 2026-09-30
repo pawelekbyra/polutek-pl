@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const ORIGINAL_ENV = { ...process.env };
 
@@ -34,6 +34,12 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 describe('system email consent boundary', () => {
+  // The email module has a large import graph; warm it up once so the first test
+  // doesn't spend its 5s budget on a cold import when the whole suite runs in parallel.
+  beforeAll(async () => {
+    await import('@/lib/modules/email');
+  }, 60_000);
+
   beforeEach(() => {
     vi.clearAllMocks();
     process.env = {
