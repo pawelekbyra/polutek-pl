@@ -15,3 +15,4 @@ export * from "./domain/user.errors";
 export * from "./application/account-deletion-cleanup.use-case";
 export * from "./application/sync-clerk-access";
 export * from "./application/get-video-interaction.use-case";
+export * from "./application/check-nickname-availability.use-case";

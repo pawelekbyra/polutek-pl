@@ -9,7 +9,8 @@ import { useLanguage } from "../LanguageContext";
 import { useVisibleOAuthProviders, type OAuthStrategy } from "./oauth-providers";
 import type { AuthView } from "./AuthModalProvider";
 import { rememberReturnPath } from "@/lib/auth/sso-return";
-import { isValidUsername } from "@/lib/auth/generate-username";
+import { usernameFromNickname } from "@/lib/auth/generate-username";
+import { checkNicknameAvailability, nicknameCheckMessage, nicknameProblemMessage, validateNickname } from "@/lib/auth/nickname";
 
 type InternalView = "sign-in" | "sign-up" | "verify-email" | "forgot" | "reset";
 
@@ -41,8 +42,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
   const [view, setView] = useState<InternalView>(initialView);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
+  const [nickname, setNickname] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -85,16 +85,25 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     if (!signUp) return;
-    const cleanUsername = username.trim().toLowerCase();
-    if (!isValidUsername(cleanUsername)) {
-      setError(isPl
-        ? "Nazwa użytkownika: 4–64 znaki, małe litery, cyfry lub _."
-        : "Username: 4–64 characters, lowercase letters, digits or _.");
-      return;
-    }
+    // The nickname is the only name we ask for: it becomes the Clerk first name (so it is the
+    // name shown everywhere) and the required username is derived from it, never shown.
+    const validation = validateNickname(nickname);
+    if (!validation.ok) return setError(nicknameProblemMessage(validation.reason, isPl));
     setLoading(true);
     setError(null);
-    const { error: createError } = await signUp.create({ emailAddress: email, password, username: cleanUsername, unsafeMetadata: { language: isPl ? "pl" : "en" }, ...(name ? { firstName: name } : {}) });
+    const check = await checkNicknameAvailability(validation.value);
+    if (!check.available) {
+      setError(nicknameCheckMessage(check.reason, isPl));
+      setLoading(false);
+      return;
+    }
+    const { error: createError } = await signUp.create({
+      emailAddress: email,
+      password,
+      username: usernameFromNickname(validation.value),
+      firstName: validation.value,
+      unsafeMetadata: { language: isPl ? "pl" : "en" },
+    });
     if (createError) return showError(createError as ClerkOpError);
     const { error: sendError } = await signUp.verifications.sendEmailCode();
     if (sendError) return showError(sendError as ClerkOpError);
@@ -225,8 +234,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
               <form onSubmit={handleSignUp} className="mt-5 space-y-3.5">
                 <OAuthButtons onSelect={handleOAuth} isPl={isPl} disabled={!ready} />
                 <Divider isPl={isPl} />
-                <Field label={isPl ? "Nazwa użytkownika" : "Username"} type="text" value={username} onChange={setUsername} autoComplete="username" required />
-                <Field label={isPl ? "Nazwa (opcjonalnie)" : "Name (optional)"} type="text" value={name} onChange={setName} autoComplete="name" />
+                <Field label={isPl ? "Pseudonim" : "Nickname"} type="text" value={nickname} onChange={setNickname} autoComplete="nickname" required />
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
                 <Field label={isPl ? "Hasło" : "Password"} type="password" value={password} onChange={setPassword} autoComplete="new-password" required />
                 {/* Clerk bot protection renders into this element when Smart CAPTCHA is enabled. */}
