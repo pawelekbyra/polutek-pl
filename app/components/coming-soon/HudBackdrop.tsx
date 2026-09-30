@@ -90,6 +90,7 @@ function rng(seed: number) {
 /** Frame callback bound to the cockpit clock; the callback may change between renders. */
 function useFrame(clock: CockpitClock, cb: (phase: number) => void) {
   const ref = useRef(cb);
+  // eslint-disable-next-line react-hooks/refs -- intentional render-time ref sync for the cockpit clock/audio timeline; an effect would desync picture and sound (CLAUDE.md coming-soon entry)
   ref.current = cb;
   useEffect(() => {
     const off = clock.onFrame((p) => ref.current(p));

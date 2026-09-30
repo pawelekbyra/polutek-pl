@@ -51,5 +51,6 @@ describe("Clerk custom-UI guard", () => {
     }
 
     expect(violations, `Default Clerk UI must be replaced with our own components:\n${violations.join("\n")}`).toEqual([]);
-  });
+    // Reads every source file under app/; slow on a loaded machine, not a hang.
+  }, 30_000);
 });

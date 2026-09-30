@@ -4,9 +4,18 @@ import React from "react";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+// Canvas art is irrelevant here and jsdom has neither matchMedia nor a 2d context.
+vi.mock("@/app/components/preload/MatrixRain", () => ({ MatrixRain: () => null }));
+
 const mocks = vi.hoisted(() => ({
   lastPlayerProps: null as Record<string, unknown> | null,
-  instance: { paused: true, muted: true, currentTime: 0, duration: 60 },
+  instance: {
+    paused: true,
+    muted: true,
+    currentTime: 0,
+    duration: 60,
+    buffered: { length: 0, end: (_index: number) => 0 },
+  },
 }));
 
 vi.mock("@clerk/nextjs", () => ({ useAuth: () => ({ isLoaded: true, orgRole: null }) }));
@@ -72,6 +81,7 @@ describe("VideoPlayer under the first-load preloader", () => {
     vi.spyOn(performance, "now").mockReturnValue(0);
     resetPageRevealForTests();
     mocks.lastPlayerProps = null;
+    mocks.instance.buffered = { length: 0, end: () => 0 };
   });
 
   afterEach(() => {
@@ -84,7 +94,7 @@ describe("VideoPlayer under the first-load preloader", () => {
   const preloaderState = () => screen.getByTestId("site-preloader").getAttribute("data-state");
   const posterOverlay = () => screen.getByTestId("player-poster-loading");
 
-  it("autoplays under the preloader and reveals only once a real frame is on screen", async () => {
+  it("autoplays under the preloader and is ready for the gate only once a real frame is on screen", async () => {
     renderUnderGate();
     await act(async () => {});
 
@@ -102,22 +112,29 @@ describe("VideoPlayer under the first-load preloader", () => {
     expect(preloaderState()).toBe("covering");
     expect(posterOverlay().className).not.toContain("polutek-poster-loader--hidden");
 
-    // First frame rendered → poster fades out and the page is revealed on a stable player.
+    // First frame rendered → poster fades out, but while autoplaying the page still waits
+    // for a few seconds of buffered video so it isn't handed over to a player that stalls.
     await act(async () => fire("onPlaying"));
     expect(posterOverlay().className).toContain("polutek-poster-loader--hidden");
-    expect(preloaderState()).toBe("leaving");
+    expect(preloaderState()).toBe("covering");
+
+    mocks.instance.buffered = { length: 1, end: () => 5 };
+    await act(async () => fire("onProgress"));
+    // Settled: the preloader hands over to the "white rabbit" gate (page still covered until a click).
+    expect(preloaderState()).toBe("gate");
   });
 
-  it("reveals on a ready, paused player when the browser blocks autoplay", async () => {
+  it("is ready for the gate on a paused player when the browser blocks autoplay", async () => {
     renderUnderGate();
     await act(async () => fire("onCanPlay"));
     await act(async () => fire("onAutoPlayFail"));
 
-    expect(preloaderState()).toBe("leaving");
+    // Settled: the preloader hands over to the "white rabbit" gate (page still covered until a click).
+    expect(preloaderState()).toBe("gate");
     expect(posterOverlay().className).toContain("polutek-poster-loader--hidden");
   });
 
-  it("does not reveal on the access check alone while the stream is still loading", async () => {
+  it("is not ready on the access check alone while the stream is still loading", async () => {
     renderUnderGate();
     await act(async () => {
       vi.advanceTimersByTime(1500);
