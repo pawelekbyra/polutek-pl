@@ -257,8 +257,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
                             // Check buffered amount immediately at canPlay too.
                             if (!bufferedEnoughRef.current) {
                                 try {
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                    const buf = (player.current as any)?.buffered as TimeRanges | undefined;
+                                    const buf = (player.current as unknown as { buffered?: TimeRanges } | null)?.buffered;
                                     if (buf && buf.length > 0 && buf.end(0) >= TARGET_BUFFER_SECONDS) {
                                         bufferedEnoughRef.current = true;
                                         setBufferedEnoughForReveal(true);
@@ -269,8 +268,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
                         onProgress={() => {
                             if (bufferedEnoughRef.current) return;
                             try {
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                const buf = (player.current as any)?.buffered as TimeRanges | undefined;
+                                const buf = (player.current as unknown as { buffered?: TimeRanges } | null)?.buffered;
                                 if (buf && buf.length > 0 && buf.end(0) >= TARGET_BUFFER_SECONDS) {
                                     bufferedEnoughRef.current = true;
                                     setBufferedEnoughForReveal(true);
