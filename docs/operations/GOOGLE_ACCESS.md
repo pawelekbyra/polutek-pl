@@ -1,6 +1,6 @@
 # Google access for AI agents (local machine)
 
-No secrets here. The owner wants agents to do Google work themselves instead of sending them through the consoles (it is slow and tedious for a human). Two working routes exist on this machine as of 2026-09-30.
+No secrets here. Cross-service access overview and standing authorization: [AGENT_ACCESS.md](AGENT_ACCESS.md). The owner wants agents to do Google work themselves instead of sending them through the consoles (it is slow and tedious for a human). Two working routes exist on this machine as of 2026-09-30.
 
 ## 1. `gcloud` CLI, logged in as `hello@pawelperfect.pl`
 
