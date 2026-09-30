@@ -57,6 +57,7 @@ export function useCockpitClock({ running, initialPhase = 0 }: { running: boolea
     return wrap(p.ticking ? p.base + (performance.now() - p.start) / 1000 : p.base);
   }, []);
 
+  // eslint-disable-next-line react-hooks/refs -- intentional render-time ref sync for the cockpit clock/audio timeline; an effect would desync picture and sound (CLAUDE.md coming-soon entry)
   const clock = useRef<CockpitClock>({
     phase,
     onFrame: (cb) => {
@@ -213,6 +214,7 @@ export function useCockpitClock({ running, initialPhase = 0 }: { running: boolea
     };
   }, []);
 
+  // eslint-disable-next-line react-hooks/refs -- intentional render-time ref sync for the cockpit clock/audio timeline; an effect would desync picture and sound (CLAUDE.md coming-soon entry)
   return { clock, soundOn, setSoundOn, audible };
 }
 
@@ -250,6 +252,7 @@ export function sinceLast(type: CueType, phase: number): number {
 /** React state derived from the clock, updated only when the derived value changes. */
 export function useClockValue<T>(clock: CockpitClock, derive: (phase: number) => T): T {
   const deriveRef = useRef(derive);
+  // eslint-disable-next-line react-hooks/refs -- intentional render-time ref sync for the cockpit clock/audio timeline; an effect would desync picture and sound (CLAUDE.md coming-soon entry)
   deriveRef.current = derive;
   const [value, setValue] = useState<T>(() => derive(clock.phase()));
   useEffect(
