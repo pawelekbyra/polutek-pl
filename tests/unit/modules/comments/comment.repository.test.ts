@@ -116,6 +116,7 @@ describe('CommentRepository', () => {
           videoId,
           parentId: null,
           status: CommentStatus.VISIBLE,
+          author: { isDeleted: false },
         },
       });
     });
@@ -131,6 +132,7 @@ describe('CommentRepository', () => {
           videoId,
           parentId: null,
           status: { not: CommentStatus.DELETED },
+          author: { isDeleted: false },
         },
       });
     });
