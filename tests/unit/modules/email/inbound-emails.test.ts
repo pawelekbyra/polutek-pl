@@ -9,6 +9,9 @@ describe('Inbound Email Use Cases', () => {
       findMany: vi.fn(),
       update: vi.fn(),
     },
+    auditLog: {
+      create: vi.fn().mockResolvedValue({}),
+    },
   };
 
   const ctx = createAppContext({
@@ -62,6 +65,16 @@ describe('Inbound Email Use Cases', () => {
         expect(prismaMock.inboundEmail.update).toHaveBeenCalledWith({
           where: { id: '1' },
           data: { status: 'ARCHIVED' },
+        });
+        expect(prismaMock.auditLog.create).toHaveBeenCalledWith({
+          data: expect.objectContaining({
+            action: 'INBOUND_EMAIL_UPDATED',
+            targetType: 'InboundEmail',
+            targetId: '1',
+            actorUserId: 'admin1',
+            actorType: 'admin',
+            metadata: { status: 'ARCHIVED' },
+          }),
         });
       }
     });

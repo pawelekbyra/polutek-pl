@@ -1,5 +1,6 @@
 import { StorageProvider } from "@prisma/client";
 import { AppContext } from "@/lib/modules/shared/app-context";
+import { recordAuditEventSafe } from "@/lib/modules/audit/application/record-audit-event-safe";
 import { isAutomaticFilePlaybackProvider } from "../domain/video-provider-capabilities";
 import { VideoPlaybackRouteService } from "./video-playback-route.service";
 import { VideoDistributionPlanService } from "./video-distribution-plan.service";
@@ -68,6 +69,21 @@ export class VideoDistributionBackfillService {
           if (primary) { await this.routeService.activateRoute({ videoId: video.id, assetId: primary.id, planId: activePlan.id, activatedBy: "MIGRATION", reason: "legacy-primary-backfill" }, ctx); result.createdRoutes++; }
         }
       } catch (error) { result.errors.push({ videoId: video.id, error: error instanceof Error ? error.message : String(error) }); }
+    }
+    if (!input.dryRun) {
+      await recordAuditEventSafe(ctx, {
+        action: "VIDEO_DISTRIBUTION_BACKFILLED",
+        targetType: "Video",
+        targetId: input.videoId ?? null,
+        metadata: {
+          scannedVideos: result.scannedVideos,
+          updatedVideos: result.updatedVideos,
+          createdPlans: result.createdPlans,
+          createdRoutes: result.createdRoutes,
+          skippedVideos: result.skippedVideos,
+          errorCount: result.errors.length,
+        },
+      });
     }
     return result;
   }

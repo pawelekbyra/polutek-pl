@@ -1,5 +1,6 @@
 import { StorageProvider, VideoAsset, VideoPlaybackRouteActivatedBy } from "@prisma/client";
 import { AppContext } from "@/lib/modules/shared/app-context";
+import { recordAuditEventSafe } from "@/lib/modules/audit/application/record-audit-event-safe";
 import { getProviderCostOrder } from "../domain/video-distribution.constants";
 import { VideoPlaybackRouteService } from "./video-playback-route.service";
 import { publishAdminVideo } from "./publish-admin-video.use-case";
@@ -138,6 +139,15 @@ export class VideoDistributionOrchestratorService {
         await ctx.prisma.videoDistributionPlan.update({ where: { id: plan.id }, data: { publishError: message } });
         await ctx.prisma.video.update({ where: { id: video.id }, data: { publishAfterAssetReadyError: message } });
       }
+    }
+
+    if (activeRouteChanged || publishAttempted) {
+      await recordAuditEventSafe(ctx, {
+        action: "VIDEO_DISTRIBUTION_RECONCILED",
+        targetType: "Video",
+        targetId: video.id,
+        metadata: { planId: plan.id, reason: input.reason, activeRouteChanged, activatedAssetId, activatedProvider, publishAttempted, publishCompleted },
+      });
     }
 
     return { videoId: video.id, planId: plan.id, reason: input.reason, activeRouteChanged, activatedAssetId, activatedProvider, publishAttempted, publishCompleted, warnings };

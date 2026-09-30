@@ -2,6 +2,7 @@ import { AppContext } from "../../shared/app-context";
 import { UseCaseResult, ok, fail } from "../../shared/result";
 import { EmailError } from "../domain/email.errors";
 import { InboundEmailDto, UpdateInboundEmailInput } from "../domain/email.dto";
+import { recordAuditEvent } from "@/lib/modules/audit";
 
 /**
  * updateInboundEmail use case.
@@ -18,9 +19,18 @@ export async function updateInboundEmail(
   }
 
   try {
-    const updated = await ctx.prisma.inboundEmail.update({
-      where: { id },
-      data: { status }
+    const updated = await ctx.db.writeTransaction(async (tx) => {
+      const row = await tx.inboundEmail.update({
+        where: { id },
+        data: { status }
+      });
+      await recordAuditEvent(ctx, {
+        action: "INBOUND_EMAIL_UPDATED",
+        targetType: "InboundEmail",
+        targetId: id,
+        metadata: { status },
+      }, tx);
+      return row;
     });
 
     return ok(updated as InboundEmailDto);

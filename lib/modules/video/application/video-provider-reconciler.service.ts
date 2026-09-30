@@ -1,5 +1,6 @@
 import { Prisma, StorageProvider, VideoAssetProcessingState, VideoProviderJobStatus } from "@prisma/client";
 import { AppContext } from "@/lib/modules/shared/app-context";
+import { recordAuditEventSafe } from "@/lib/modules/audit/application/record-audit-event-safe";
 import { createDefaultPlaybackProviderRegistry, PlaybackProviderRegistry } from "../infrastructure/playback-provider-registry";
 import { redactSignedUrl } from "./original-source-url.service";
 import { VideoDistributionOrchestratorService } from "./video-distribution-orchestrator.service";
@@ -67,6 +68,23 @@ export class VideoProviderReconcilerService {
         result.skippedJobs++;
         if (!input.dryRun) await ctx.prisma.videoProviderJob.update({ where: { id: job.id }, data: { lastError: safe, lastReconciledAt: new Date(), metadata: Prisma.DbNull } });
       }
+    }
+    if (!input.dryRun && result.scannedJobs > 0) {
+      await recordAuditEventSafe(ctx, {
+        action: "VIDEO_RECONCILE_TRIGGERED",
+        targetType: "Video",
+        targetId: input.videoId ?? null,
+        metadata: {
+          provider: input.provider ?? null,
+          scannedJobs: result.scannedJobs,
+          syncedJobs: result.syncedJobs,
+          readyJobs: result.readyJobs,
+          failedJobs: result.failedJobs,
+          retriedJobs: result.retriedJobs,
+          skippedJobs: result.skippedJobs,
+          errorCount: result.errors.length,
+        },
+      });
     }
     return result;
   }

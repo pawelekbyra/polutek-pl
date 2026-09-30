@@ -1,6 +1,7 @@
 import { Prisma, StorageProvider, VideoAssetProcessingState, VideoProviderJob, VideoProviderJobStatus, VideoProviderJobType } from "@prisma/client";
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { AppError } from "@/lib/modules/shared/app-error";
+import { recordAuditEventSafe } from "@/lib/modules/audit/application/record-audit-event-safe";
 import { isAutomaticFilePlaybackProvider } from "../domain/video-provider-capabilities";
 import { OriginalSourceUrlService, redactSignedUrl } from "./original-source-url.service";
 import { createDefaultPlaybackProviderRegistry, PlaybackProviderRegistry } from "../infrastructure/playback-provider-registry";
@@ -193,6 +194,19 @@ export class VideoProviderJobService {
     if (job.targetId) {
       await ctx.prisma.videoDistributionTarget.update({ where: { id: job.targetId }, data: { status: "QUEUED", lastError: null, lastStatusAt: new Date() } });
     }
+    await recordAuditEventSafe(ctx, {
+      action: "VIDEO_PROVIDER_JOB_RETRIED",
+      targetType: "Video",
+      targetId: job.videoId,
+      metadata: {
+        jobId: job.id,
+        provider: job.provider,
+        previousStatus: job.status,
+        attemptCount: job.attemptCount,
+        forced: Boolean(input.force),
+        requestedByAdminId: input.requestedByAdminId ?? null,
+      },
+    });
     await this.startQueuedJob({ jobId: job.id }, ctx);
   }
 

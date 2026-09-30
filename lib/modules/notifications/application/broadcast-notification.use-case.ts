@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { recordAuditEvent } from "@/lib/modules/audit";
+import { resolveAdminAuditContext } from "@/lib/modules/audit/application/resolve-admin-audit-context";
 
 export type BroadcastAudience = "ALL" | "PATRONS";
 
@@ -33,16 +35,27 @@ export async function broadcastNotification(input: BroadcastNotificationInput): 
 
   if (targetUserIds.length === 0) return { recipientCount: 0 };
 
-  await prisma.notification.createMany({
-    data: targetUserIds.map((userId) => ({
-      userId,
-      kind: "SYSTEM" as const,
-      titlePl,
-      titleEn,
-      bodyPl,
-      bodyEn,
-      href: href || null,
-    })),
+  const ctx = await resolveAdminAuditContext();
+
+  await prisma.$transaction(async (tx) => {
+    await tx.notification.createMany({
+      data: targetUserIds.map((userId) => ({
+        userId,
+        kind: "SYSTEM" as const,
+        titlePl,
+        titleEn,
+        bodyPl,
+        bodyEn,
+        href: href || null,
+      })),
+    });
+
+    // Counts and audience only: never the message text or recipient ids.
+    await recordAuditEvent(ctx, {
+      action: "NOTIFICATION_BROADCAST_SENT",
+      targetType: "Notification",
+      metadata: { audience, recipientCount: targetUserIds.length, hasHref: Boolean(href) },
+    }, tx);
   });
 
   return { recipientCount: targetUserIds.length };
