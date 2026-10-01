@@ -152,8 +152,12 @@ akceptuje to ryzyko na obecnym etapie** (§B); przed launchem wraca temat podzia
 - **Kupione i zahartowane 2026-10-01:** serwer Hetzner "serwerek" (CPX22, nbg1,
   46.224.211.115). Start na jednym serwerze jest już realny. Stan, dostęp i
   zasady: [`../operations/SERWEREK.md`](../operations/SERWEREK.md).
-- **NIE wdrożone:** aplikacja, baza i worker FFmpeg na serwerze, Tunnel/Access,
-  pulpit zdalny, sejf sekretów, własny HLS, token na krawędzi, nic z §1–§11.
+- **Wdrożone 2026-10-01 (darmowe):** Hetzner Cloud Firewall + UFW, Cloudflare Tunnel
+  `serwerek` z Cloudflare Access (OTP, tylko e-maile właściciela), alerty zdrowia
+  e-mailem, backup nocny (lokalny + prywatny bucket R2). Szczegóły i plan dalszych
+  kroków (z oznaczeniem, co kosztuje): [`../operations/SERWEREK.md`](../operations/SERWEREK.md) §4, §11, §12.
+- **NIE wdrożone:** produkcyjna aplikacja i worker FFmpeg na serwerze (trwa test
+  wdrożenia `polutek-test`), pulpit zdalny, sejf sekretów, własny HLS, token na krawędzi, nic z §1–§11.
 
 ---
 
