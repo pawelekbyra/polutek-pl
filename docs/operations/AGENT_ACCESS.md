@@ -50,11 +50,11 @@ Never echo a value. When you must show one, mask it to the first 6 characters.
 | Clerk | `CLERK_SECRET_KEY` (live) + `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | works | Backend API on the production instance, domain `pawelperfect.com` (Frontend API `clerk.pawelperfect.com`, accounts `accounts.pawelperfect.com`). The publishable key in `secrets.env` now encodes `clerk.pawelperfect.com`. |
 | Resend | `RESEND_API_KEY` (full access) | works | Domains `pawelperfect.pl` and `pawelperfect.com` both verified (eu-west-1). App sender is `no-reply@pawelperfect.com` (`EMAIL_FROM`). `RESEND_WEBHOOK_SECRET` verifies incoming webhooks. Also the Resend MCP connector. |
 | Stripe | `STRIPE_SECRET_KEY` + `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (live) | works | Account `acct_1SOk8E…`, country PL, charges enabled. Also the Stripe MCP connector. |
-| Google Workspace | service account `ai-agent@pawelperfect-ai.iam.gserviceaccount.com` (client id `110005327437717812715`) | works | Domain-wide delegation, impersonating `hello@pawelperfect.pl`: `gmail.readonly`, `gmail.compose`, `gmail.send`, `admin.directory.domain`, `admin.directory.user`, `admin.directory.user.alias`. Admin SDK API is enabled in project `pawelperfect-ai`. |
-| Google Cloud | `gcloud` as `hello@pawelperfect.pl`, project `pawelperfect-ai` | works | e.g. `gcloud services enable …`. If a token refresh fails, see [GOOGLE_ACCESS.md](GOOGLE_ACCESS.md). |
+| Google Workspace | service account `ai-agent@pawelperfect-ai.iam.gserviceaccount.com` (client id `110005327437717812715`) | works | Domain-wide delegation, impersonating `hello@pawelperfect.com` (the Workspace login since 2026-10-01; `hello@pawelperfect.pl` is its alias): `gmail.readonly`, `gmail.compose`, `gmail.send`, `admin.directory.domain`, `admin.directory.user`, `admin.directory.user.alias`. Admin SDK API is enabled in project `pawelperfect-ai`. |
+| Google Cloud | `gcloud` as the Workspace admin (`hello@pawelperfect.com`; `gcloud auth list` may still show the old label `hello@pawelperfect.pl`, same user), project `pawelperfect-ai` | works | e.g. `gcloud services enable …`. ADC carries `cloud-platform` + `siteverification`; Admin SDK and Site Verification APIs are enabled. If a token refresh fails, see [GOOGLE_ACCESS.md](GOOGLE_ACCESS.md). |
 | GitHub | `gh` logged in as `pawelekbyra` (keyring) | works | PRs, merges, issues, workflow runs. `GITHUB_TOKEN` in `secrets.env` is not needed. |
 | Neon | Neon MCP connector | works | Project `restless-glade-19830690`. `DATABASE_URL_UNPOOLED` in `secrets.env` may be empty; use the connector or `vercel env pull`. |
-| Browser | Claude in Chrome extension | pinned in the owner's logged-in Chrome profile | For UI-only tasks with no API, e.g. Google OAuth redirect URIs in Cloud Console. Prefer APIs when they exist. |
+| Browser | Claude in Chrome extension | pinned in the owner's logged-in Chrome profile (`pawel.perfect@gmail.com` is account 0; the Workspace admin `hello@pawelperfect.com` is account 1: use `https://admin.google.com/u/1/...` and `console.cloud.google.com/?authuser=1`) | For UI-only tasks with no API, e.g. Google OAuth redirect URIs in Cloud Console. Prefer APIs when they exist. |
 
 ## Tricks that work
 
@@ -104,7 +104,7 @@ Google access token via domain-wide delegation (Python, `pip install pyjwt crypt
 import json, os, time, urllib.parse, urllib.request, jwt
 key = json.load(open(os.path.expandvars(r"%USERPROFILE%\.ai-secrets\google-ai-agent.json")))
 now = int(time.time())
-assertion = jwt.encode({"iss": key["client_email"], "sub": "hello@pawelperfect.pl",
+assertion = jwt.encode({"iss": key["client_email"], "sub": "hello@pawelperfect.com",
     "scope": "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/admin.directory.user",
     "aud": "https://oauth2.googleapis.com/token", "iat": now, "exp": now + 3600},
     key["private_key"], algorithm="RS256")
