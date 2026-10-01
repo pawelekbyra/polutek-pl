@@ -39,7 +39,7 @@ export function FundraisingProgressBar({ progress, isPl }: FundraisingProgressBa
       className="relative h-[7px] w-full overflow-hidden rounded-full bg-[var(--chan-surface)] shadow-[inset_0_0_0_1px_var(--chan-line-soft)]"
     >
       <div
-        className="h-full rounded-full bg-[linear-gradient(90deg,var(--chan-amber-strong),var(--chan-amber)_55%,var(--chan-amber-bright))] shadow-[0_0_10px_-2px_var(--chan-amber)] motion-safe:transition-[width] motion-safe:duration-700 motion-safe:ease-out"
+        className="h-full rounded-full bg-[linear-gradient(90deg,color-mix(in_srgb,var(--chan-blue)_78%,black),var(--chan-blue)_55%,color-mix(in_srgb,var(--chan-blue)_70%,white))] shadow-[0_0_10px_-2px_var(--chan-blue)] motion-safe:transition-[width] motion-safe:duration-700 motion-safe:ease-out"
         style={{ width: `${shown ? percent : 0}%` }}
       />
     </div>
