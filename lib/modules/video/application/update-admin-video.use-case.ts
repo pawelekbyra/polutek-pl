@@ -4,7 +4,7 @@ import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository, UpdateVideoInput } from "../infrastructure/video.repository";
 import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
-import { MediaPolicy, MediaStorageService } from "@/lib/modules/media";
+import { MediaPolicy, MediaStorageService, isDerivedThumbnailUrl, isThumbnailProxyPath } from "@/lib/modules/media";
 import { VideoPolicy } from "../domain/video.policy";
 import { syncPublicThumbnail } from "./sync-public-thumbnail.service";
 import { publishAdminVideo } from "./publish-admin-video.use-case";
@@ -19,10 +19,7 @@ import {
     VideoNotReadyForPublicationError
 } from "../domain/video.errors";
 
-/** True for the site's own thumbnail proxy path, e.g. /api/videos/<id>/thumbnail. */
-export function isThumbnailProxyPath(value: string | null | undefined): boolean {
-  return typeof value === 'string' && /^\/api\/videos\/[^/?#]+\/thumbnail\/?(?:[?#].*)?$/.test(value.trim());
-}
+export { isThumbnailProxyPath };
 
 export async function updateAdminVideo(
   input: UpdateVideoInput,
@@ -66,11 +63,14 @@ export async function updateAdminVideo(
   }
 
   const safeInput = { ...input };
-  // The edit form is loaded from the public DTO, whose thumbnailUrl is the proxy path
-  // (/api/videos/<id>/thumbnail). Saving it back replaced the real stored file with a
-  // self-reference, so the thumbnail broke. A proxy path is never a storage value: keep the
-  // stored one.
-  if (isThumbnailProxyPath(safeInput.thumbnailUrl)) delete safeInput.thumbnailUrl;
+  // The edit form is loaded from the admin DTO, whose thumbnailUrl is the public src: the
+  // proxy path (/api/videos/<id>/thumbnail) or, for a published video with a synced copy,
+  // the public R2 URL (https://<NEXT_PUBLIC_R2_PUBLIC_HOST>/<key>). Saving either back
+  // replaced the private storage URL; the public-thumbnail sync then saw no private key,
+  // cleared thumbnailPublicUrl and deleted the public object, and the old-cover cleanup
+  // below deleted the private one (incident 2026-09-30). Neither is a storage value:
+  // keep the stored one.
+  if (isDerivedThumbnailUrl(safeInput.thumbnailUrl, process.env as Record<string, string | undefined>)) delete safeInput.thumbnailUrl;
   // publishedAt is never taken from the request.
   delete safeInput.publishedAt;
   // "Natychmiast" on a published video whose premiere hasn't happened yet: it goes

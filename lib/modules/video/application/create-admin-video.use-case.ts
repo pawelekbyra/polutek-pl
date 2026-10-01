@@ -9,6 +9,7 @@ import { recordAuditEvent } from "@/lib/modules/audit";
 import { VideoInvalidPremiereError, VideoSlugConflictError } from "../domain/video.errors";
 import { isAllowedPremiereChange } from "../domain/premiere";
 import { Prisma } from "@prisma/client";
+import { isDerivedThumbnailUrl } from "@/lib/modules/media";
 
 const DEFAULT_DRAFT_THUMBNAIL_URL = "/logo.png";
 
@@ -31,7 +32,11 @@ function normalizeCreateVideoInput(input: CreateVideoInput): CreateVideoInput | 
     premiereAt: input.premiereAt ?? null,
     title,
     slug,
-    thumbnailUrl: input.thumbnailUrl?.trim() || DEFAULT_DRAFT_THUMBNAIL_URL,
+    // A proxy path or public-host URL (e.g. copied from another video) is never a
+    // storage value for a new video; fall back to the default instead of storing it.
+    thumbnailUrl: isDerivedThumbnailUrl(input.thumbnailUrl, process.env as Record<string, string | undefined>)
+      ? DEFAULT_DRAFT_THUMBNAIL_URL
+      : input.thumbnailUrl?.trim() || DEFAULT_DRAFT_THUMBNAIL_URL,
     duration: input.duration?.trim() || null,
     tier: input.tier,
     description: input.description?.trim() || null,

@@ -2,6 +2,8 @@ import { VideoStatus } from "@prisma/client";
 import { AppContext } from "@/lib/modules/shared/app-context";
 import {
   R2ThumbnailStorageClient,
+  buildPrivateThumbnailStorageUrl,
+  getR2ThumbnailConfig,
   parsePrivateThumbnailStorageUrl,
   parsePublicThumbnailUrl,
 } from "@/lib/modules/media";
@@ -24,7 +26,12 @@ function env() {
   return process.env as Record<string, string | undefined>;
 }
 
-/** Deletes a public copy unless another video still advertises the same object. */
+/**
+ * Deletes a public copy unless a video still references the same object:
+ * another video advertising it (`thumbnailPublicUrl`), any video storing the
+ * public URL itself in `thumbnailUrl` (bad data, but deleting would break its
+ * image), or another PUBLISHED video whose private thumbnail has the same key.
+ */
 async function deletePublicCopyIfUnreferenced(
   ctx: AppContext,
   client: R2ThumbnailStorageClient,
@@ -34,13 +41,23 @@ async function deletePublicCopyIfUnreferenced(
   const key = parsePublicThumbnailUrl(publicUrl, env());
   if (!key) return;
 
+  const notExcluded = excludeVideoId ? { id: { not: excludeVideoId } } : {};
+  const { accountId, privateBucket } = getR2ThumbnailConfig(env());
+  const privateUrl = accountId && privateBucket ? buildPrivateThumbnailStorageUrl(accountId, privateBucket, key) : null;
+
   const stillReferenced = await ctx.prisma.video.count({
     where: {
-      thumbnailPublicUrl: publicUrl,
-      ...(excludeVideoId ? { id: { not: excludeVideoId } } : {}),
+      OR: [
+        { thumbnailPublicUrl: publicUrl, ...notExcluded },
+        { thumbnailUrl: publicUrl },
+        ...(privateUrl ? [{ thumbnailUrl: privateUrl, status: VideoStatus.PUBLISHED, ...notExcluded }] : []),
+      ],
     },
   });
-  if (stillReferenced > 0) return;
+  if (stillReferenced > 0) {
+    logger.warn("Kept public thumbnail object that is still referenced", { key, excludeVideoId });
+    return;
+  }
 
   await client.deletePublic(key);
 }
@@ -62,6 +79,14 @@ export async function syncPublicThumbnail(
   const current = video.thumbnailPublicUrl;
 
   try {
+    // A public-host URL stored in thumbnailUrl is corrupt data (a derived src saved
+    // back, see isDerivedThumbnailUrl). Demoting would delete the very object it
+    // points at, so leave everything alone until it is repaired.
+    if (parsePublicThumbnailUrl(video.thumbnailUrl, env())) {
+      logger.error("Video.thumbnailUrl holds a public thumbnail URL; skipping public sync", { videoId: video.id });
+      return "skipped";
+    }
+
     const privateKey = parsePrivateThumbnailStorageUrl(video.thumbnailUrl, env());
     const shouldBePublic = video.status === VideoStatus.PUBLISHED && Boolean(privateKey);
 
@@ -116,19 +141,43 @@ export async function removePublicThumbnailCopy(publicUrl: string | null | undef
 
 export interface ReconcilePublicThumbnailsResult {
   configured: boolean;
+  dryRun: boolean;
   scanned: number;
   promoted: number;
   demoted: number;
+  /** Public objects deleted (or, in dry-run, that would be deleted). */
   orphansDeleted: number;
+  /** Unadvertised public objects kept because a video still references their key. */
+  orphansKeptReferenced: number;
+  /** Videos whose thumbnailUrl is a public-host URL (corrupt; needs repair). */
+  publicUrlInThumbnailUrl: number;
+}
+
+export interface ReconcilePublicThumbnailsOptions {
+  /** Report what would change without writing to the DB or deleting objects. */
+  dryRun?: boolean;
 }
 
 /**
  * Safety net for the per-use-case hooks: syncs every video, then deletes any
  * public-bucket object that no video advertises (e.g. a delete that failed
  * after the DB column was already cleared).
+ *
+ * An object is never deleted while a video still references its key: as
+ * `thumbnailPublicUrl`, as a public URL stored in `thumbnailUrl`, or as the
+ * private key of a PUBLISHED video's `thumbnailUrl` (its copy just isn't
+ * recorded yet). A draft's private key does not protect a public object:
+ * drafts must never have a public copy.
  */
-export async function reconcilePublicThumbnails(ctx: AppContext): Promise<ReconcilePublicThumbnailsResult> {
-  const result: ReconcilePublicThumbnailsResult = { configured: false, scanned: 0, promoted: 0, demoted: 0, orphansDeleted: 0 };
+export async function reconcilePublicThumbnails(
+  ctx: AppContext,
+  options: ReconcilePublicThumbnailsOptions = {},
+): Promise<ReconcilePublicThumbnailsResult> {
+  const dryRun = options.dryRun === true;
+  const result: ReconcilePublicThumbnailsResult = {
+    configured: false, dryRun, scanned: 0, promoted: 0, demoted: 0,
+    orphansDeleted: 0, orphansKeptReferenced: 0, publicUrlInThumbnailUrl: 0,
+  };
   if (!R2ThumbnailStorageClient.isPublicServingConfigured()) return result;
   result.configured = true;
 
@@ -138,30 +187,48 @@ export async function reconcilePublicThumbnails(ctx: AppContext): Promise<Reconc
 
   for (const video of videos) {
     result.scanned++;
+    if (parsePublicThumbnailUrl(video.thumbnailUrl, env())) result.publicUrlInThumbnailUrl++;
+    if (dryRun) continue;
     const action = await syncPublicThumbnail(video, ctx);
     if (action === "promoted") result.promoted++;
     if (action === "demoted") result.demoted++;
   }
 
-  const advertised = await ctx.prisma.video.findMany({
-    where: { thumbnailPublicUrl: { not: null } },
-    select: { thumbnailPublicUrl: true },
+  // Re-read after the sync above (it may have promoted/demoted rows).
+  const rows: SyncableVideo[] = dryRun ? videos : await ctx.prisma.video.findMany({
+    select: { id: true, status: true, thumbnailUrl: true, thumbnailPublicUrl: true },
   });
-  const advertisedKeys = new Set(
-    advertised
-      .map((row: { thumbnailPublicUrl: string | null }) => parsePublicThumbnailUrl(row.thumbnailPublicUrl, env()))
-      .filter((key: string | null): key is string => Boolean(key)),
-  );
+  const advertisedKeys = new Set<string>();
+  const referencedKeys = new Set<string>();
+  for (const row of rows) {
+    const advertised = parsePublicThumbnailUrl(row.thumbnailPublicUrl, env());
+    if (advertised) advertisedKeys.add(advertised);
+    const storedPublic = parsePublicThumbnailUrl(row.thumbnailUrl, env());
+    if (storedPublic) referencedKeys.add(storedPublic);
+    if (row.status === VideoStatus.PUBLISHED) {
+      const privateKey = parsePrivateThumbnailStorageUrl(row.thumbnailUrl, env());
+      if (privateKey) referencedKeys.add(privateKey);
+    }
+  }
 
   // Objects younger than the grace period may belong to a promotion whose DB
-  // write hasn't landed yet — leave them for the next run.
+  // write hasn't landed yet: leave them for the next run.
   const cutoff = Date.now() - ORPHAN_GRACE_PERIOD_MS;
   const client = new R2ThumbnailStorageClient();
   for (const { key, lastModified } of await client.listPublicObjects()) {
     if (advertisedKeys.has(key)) continue;
     if (!lastModified || lastModified.getTime() > cutoff) continue;
-    await client.deletePublic(key);
+    if (referencedKeys.has(key)) {
+      result.orphansKeptReferenced++;
+      logger.warn("Kept unadvertised public thumbnail still referenced by a video", { key });
+      continue;
+    }
+    if (!dryRun) await client.deletePublic(key);
     result.orphansDeleted++;
+  }
+
+  if (result.publicUrlInThumbnailUrl > 0) {
+    logger.error("Videos store a public thumbnail URL in thumbnailUrl; repair needed", { count: result.publicUrlInThumbnailUrl });
   }
 
   return result;

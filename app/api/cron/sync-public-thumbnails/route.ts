@@ -15,7 +15,8 @@ export async function GET(req: NextRequest) {
   const ctx = createAppContext({ actor: { type: "system", reason: "sync-public-thumbnails-cron" } });
 
   try {
-    return NextResponse.json(await reconcilePublicThumbnails(ctx));
+    const dryRun = req.nextUrl.searchParams.get("dryRun") === "1";
+    return NextResponse.json(await reconcilePublicThumbnails(ctx, { dryRun }));
   } catch {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

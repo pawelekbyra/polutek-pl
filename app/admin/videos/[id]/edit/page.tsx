@@ -64,6 +64,9 @@ export default function AdminVideoEditPage(props: EditPageProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isSlugManual, setIsSlugManual] = useState(true);
+  // The loaded thumbnailUrl is the display src (proxy path or public R2 URL), not the
+  // stored value; it is only sent back when the admin actually changed the cover.
+  const [loadedThumbnailUrl, setLoadedThumbnailUrl] = useState("");
 
   const loadVideo = useCallback(async () => {
     setIsLoading(true);
@@ -77,7 +80,9 @@ export default function AdminVideoEditPage(props: EditPageProps) {
         return;
       }
 
-      setFormData(toEditableFormData(data));
+      const editable = toEditableFormData(data);
+      setFormData(editable);
+      setLoadedThumbnailUrl(editable.thumbnailUrl);
       setFundraising(fundraisingFormFields(data));
       setIsSlugManual(true);
     } catch (error) {
@@ -129,7 +134,7 @@ export default function AdminVideoEditPage(props: EditPageProps) {
           titleEn: formData.titleEn.trim() || null,
           descriptionEn: formData.descriptionEn.trim() || null,
           videoUrl: formData.videoUrl.trim() || null,
-          thumbnailUrl: formData.thumbnailUrl.trim() || "",
+          ...(formData.thumbnailUrl !== loadedThumbnailUrl ? { thumbnailUrl: formData.thumbnailUrl.trim() || "" } : {}),
           duration: formData.duration.trim() || null,
           tier: formData.tier,
           status,
