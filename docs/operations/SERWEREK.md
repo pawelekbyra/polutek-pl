@@ -284,3 +284,25 @@ Instalacja: `install -m755 scripts/serwerek/cron-runner.sh /opt/serwerek/scripts
 ### Adres IP klienta (limity i audyt)
 
 Wszystkie limity i adres w audycie biorą IP z jednego helpera `lib/api/client-ip.ts` (`getClientIp`; `getAdminClientIp` i `getMediaClientIp` go opakowują). Domyślnie (Vercel) bez zmian: ostatni hop `X-Forwarded-For`, potem `X-Real-IP`. Z `TRUST_CF_CONNECTING_IP=true` używa `CF-Connecting-IP`, a gdy brak/zepsuty nagłówek wraca do domyślnego łańcucha. **Włączaj tylko gdy aplikacja jest osiągalna wyłącznie przez Cloudflare Tunnel (origin na 127.0.0.1)**; inaczej każdy mógłby podszyć się pod dowolne IP i ominąć limity.
+
+## 16. PRODUKCJA DZIAŁA NA SERWERKU (przełączone 2026-10-01)
+
+**`https://www.pawelperfect.com` jest serwowane z serwerka** (Cloudflare Tunnel `serwerek`, ingress `www.pawelperfect.com` -> `http://127.0.0.1:3000`). Vercel jest już tylko zapasem: projekt nadal istnieje, ale DNS `www` nie wskazuje na niego. Właściciel zdecydował, że przełączamy od razu (serwis nikomu nieznany, brak ruchu).
+
+**Układ na serwerze (`/opt/serwerek/apps/polutek/`, wszystko root, pliki z sekretami 600, nic z tego w gicie ani w kopiach):**
+- `docker-compose.yml` + `docker-compose.override.yml` (usługi: `db` Postgres 17 na `127.0.0.1:5432`, `app` na `127.0.0.1:3000`, `redis` + `srh` = bramka REST Redis zastępująca Upstash; aplikacja widzi ją jako `KV_REST_API_URL=http://srh:80`), `deploy.sh`, `src/` (git archive commita), `app.env` (runtime), `db.env`, `build.env` (tylko publiczne `NEXT_PUBLIC_*`), `.env` (SRH_TOKEN dla compose). Dane: `/opt/serwerek/data/polutek/{pg,redis}`.
+- Deploy: `cd /opt/serwerek/apps/polutek && rm -rf src && mkdir src && (git archive <commit> | tar -x -C src) && ./deploy.sh <tag>`; rollback: `./deploy.sh <tag> --rollback`.
+- Crony: timery systemd `polutek-cron-*` (stripe-reconciliation co 15 min, reszta raz dziennie), sekret w `/etc/serwerek/cron.env`. Vercel Crons nie są już potrzebne.
+- Baza: pg_dump z Neona (31 userów, 24 filmy, 57 migracji) przywrócony 2026-10-01. **Neon nie jest już używany przez produkcję** (zostaje jako zapas ze starym stanem; nie kasować bez zgody właściciela). Backup nocny (`backup.sh`, 02:30) obejmuje kontener `polutek-db-1`; archiwum configs **wyklucza `*.env`** (sekrety nie idą do R2).
+- `TRUST_CF_CONNECTING_IP=true` (IP klienta z `CF-Connecting-IP`).
+
+**Sekrety (jak powstały):** sekrety Vercela oznaczone jako sensitive nie dają się odczytać. Dlatego wygenerowano nowe: klucz podpisu Cloudflare Stream, token R2 (S3: access key = id tokenu, secret = sha256 wartości), token i klucz podpisujący Mux (panel Mux w Chrome), `CRON_SECRET`, `HEALTHCHECK_TOKEN`, `EMAIL_UNSUBSCRIBE_SIGNING_SECRET` (stare linki rezygnacji przestają działać), sekret webhooka Cloudflare Stream (przez API). Kopie lokalne: `%USERPROFILE%\.ai-secrets\secrets.env`. Nowy `ADMIN_CLERK_USER_IDS` = dwa konta właściciela z bazy.
+
+**Powrót do Vercela (rollback DNS, ~1 min):** w strefie `pawelperfect.com` (id `02cb23af5c0000a110f6915b00bbb8ef`) rekord `www` (id `fff4838d3443f8117f9f426a5f773147`) ustaw z powrotem na CNAME `73692360fe904624.vercel-dns-017.com`, `proxied: false`. Kopia rekordów: `/opt/serwerek/DNS_BACKUP_www_2026-10-01.json`. Uwaga: po powrocie baza na Vercelu to stary Neon (bez danych z serwerka od przełączenia).
+
+**Do zrobienia po przełączeniu (otwarte):**
+1. `CLERK_WEBHOOK_SECRET` w `app.env` to **atrapa** (`pending-clerk-webhook-secret`): panel webhooków Clerk ładuje się w osadzonej ramce, której agent nie odczytał. Wpisz prawdziwy sekret z panelu Clerk (Configure > Webhooks > endpoint `https://www.pawelperfect.com/api/webhooks/clerk`), potem `docker compose up -d --no-deps app`. Do tego czasu użytkownicy tworzą się leniwie przy logowaniu (działa), ale zmiany z Clerk nie synchronizują się.
+2. Webhook Mux nadal wskazuje na `https://polutek.pl/api/webhooks/mux` (stary adres; POST przez 308 może nie dojść). Zmień URL na `https://www.pawelperfect.com/api/webhooks/mux` w panelu Mux; sekret zapisany w `app.env` jest sekretem tego endpointu (`MUX_WEBHOOK_SECRET`).
+3. Stripe i Resend wskazują już na `www.pawelperfect.com` (bez zmian); `STRIPE_WEBHOOK_SECRET` i `RESEND_WEBHOOK_SECRET` przeniesione.
+4. Przetestować w przeglądarce: logowanie Google/e-mail, odtwarzanie filmu Cloudflare Stream i Mux, napiwek w trybie testowym.
+5. Redis (`srh`) i `polutek-db-1` nie są jeszcze w `health.sh` jako osobne kontrole.
