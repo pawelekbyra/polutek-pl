@@ -54,6 +54,7 @@ marketplace.
 | Znane ograniczenia i sufit skalowalności | [`KNOWN_LIMITATIONS.md`](../KNOWN_LIMITATIONS.md) |
 | Checklist wdrożeniowy | [`DEPLOY_CHECKLIST.md`](../DEPLOY_CHECKLIST.md) |
 | Architektura i zapisy decyzji (ADR) | [`architecture/`](architecture/) |
+| Plan serwera/pracowni agenta i własnego HLS (plan, nie wdrożone) | [`architecture/serwerek.md`](architecture/serwerek.md) |
 | Specyfikacje funkcjonalności | [`specs/`](specs/) |
 | Kontrakty API | [`API_CONTRACTS.md`](API_CONTRACTS.md) |
 | Decyzje właścicielskie (produktowe) | [`strategy/`](strategy/) |
