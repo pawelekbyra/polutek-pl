@@ -48,7 +48,7 @@ Pierwszy, jedyny serwer startowy ("serwerek"): tania maszyna do testowania syste
 - **Cloudflare Access (Zero Trust, plan Free)**: organizacja `pawelperfect` (login: `https://pawelperfect.cloudflareaccess.com`), IdP: One-time PIN, polityka `serwerek owners` (id `d83fe7c1-f52c-432a-80e5-d8dc5fe1851a`; allow: `hello@pawelperfect.com`, `pawel.perfect@gmail.com`), aplikacje `serwerek test` i `serwerek apptest`. Niezalogowany dostaje 302 na stronę logowania Access (sprawdzone). Organizację utworzono przez API bez karty i bez subskrypcji Zero Trust na liście subskrypcji konta (limit darmowy: 50 użytkowników); jeśli panel Cloudflare kiedykolwiek zażąda karty/planu, to jest decyzja właściciela.
 - **Alerty zdrowia e-mailem**: `/opt/serwerek/scripts/health.sh` (cron co 5 min, `/etc/cron.d/serwerek-health`). Przy WARN: wpis do `alerts.log` + JEDEN mail na `hello@pawelperfect.com` z `no-reply@pawelperfect.com` przez Resend (limit: 1 mail / 6 h / problem; po powrocie do OK następny incydent alarmuje od razu). Sprawdza: dysk >80%, RAM dostępny <300 MB, swap >2 GB, usługi `ssh fail2ban ufw docker cloudflared-serwerek`. Klucz Resend: **nowy, ograniczony** (`sending_access` tylko dla domeny `pawelperfect.com`, nazwa `serwerek-alerts`, id `3cf42b77-a458-4ac6-83a7-56ab0b41e6c0`) w `/etc/serwerek/alert.env` (600). Test: `SIMULATE_WARN=test /opt/serwerek/scripts/health.sh` (przetestowane: mail wysłany raz, drugie wywołanie zablokowane limitem; po teście usuń `/var/lib/serwerek/alert-state/simulated-test`).
 - **Backup nocny** `/opt/serwerek/scripts/backup.sh` (cron 02:30, `/etc/cron.d/serwerek-backup`, log `/var/log/serwerek/backup.log`): `pg_dumpall` każdego działającego kontenera z "postgres" w nazwie obrazu + tar `apps` (bez `apps/*/src`), `docs`, `scripts`, crona i naszych unitów systemd. Kopia lokalna 7 dni w `/opt/serwerek/backups` (plus `RESTORE.md`) i **kopia poza serwerem w Cloudflare R2**: prywatny bucket `serwerek-backups`, 14 dni, klucz ograniczony tylko do tego bucketu (token `serwerek-backups-r2`, dane w `/etc/serwerek/backup.env`, 600). Mieści się w darmowych 10 GB R2 (kopie ważą kilkadziesiąt KB do kilku MB). Test wykonany: wysyłka OK (pierwsza próba zwraca 501, rclone ponawia i przechodzi; to normalne).
-- **Nie ma jeszcze** produkcyjnej aplikacji ani workera. Trwa test wdrożenia w `/opt/serwerek/apps/polutek-test` (inny agent; jego notatki: `ai-log`).
+- **Nie ma jeszcze** produkcyjnej aplikacji ani workera. Test wdrożenia (`/opt/serwerek/apps/polutek-test`, stos **zatrzymany**, dane zostają) jest opisany w §14 wraz z pomiarami i werdyktem.
 
 **Pliki z sekretami na serwerze (jedyne dozwolone; wszystkie `root`, 600):** `/etc/serwerek/tunnel.env`, `/etc/serwerek/alert.env`, `/etc/serwerek/backup.env`. Backup ich NIE zawiera (odtwarzasz je z `.ai-secrets` właściciela / Cloudflare / Resend).
 
@@ -124,7 +124,7 @@ Status: done / in progress / waiting for owner / needs money.
 | 3 | Cloudflare Tunnel + Access (OTP, 2 e-maile właściciela) | done | dostęp do paneli bez otwierania portów |
 | 4 | Alerty zdrowia e-mailem (Resend, ograniczony klucz) | done | wiemy o awarii bez zaglądania |
 | 5 | Backup nocny: lokalny 7 d + R2 14 d | done | odtworzenie baz i konfiguracji po awarii |
-| 6 | Test wdrożenia aplikacji + Postgres (`polutek-test`) | in progress (inny agent) | zmierzyć RAM/CPU/dysk realnej aplikacji; z pomiarów wynikają progi z §12 |
+| 6 | Test wdrożenia aplikacji + Postgres (`polutek-test`) | done (wyniki w §14: CPX22 wystarcza, limitem jest CPU) | zmierzyć RAM/CPU/dysk realnej aplikacji; z pomiarów wynikają progi z §12 |
 | 7 | Decyzja o rozmiarze serwera na podstawie pomiarów | waiting for owner (po pkt 6) | nie kupujemy na zapas |
 | 8 | Hetzner Backups (+20%) lub snapshoty | needs money (decyzja właściciela) | kopia całego systemu; gdy jest co chronić |
 | 9 | Test odtworzenia z backupu na czystym kontenerze | not started (free) | kopia nieprzetestowana odtworzeniem jest nadzieją |
@@ -149,8 +149,94 @@ Cena CPX22 (≈ €24,59/mies. z VAT) pochodzi z konsoli/faktury Hetzner z 2026-
 
 ## 13. TODO
 
-- [ ] Wpiąć wyniki pomiarów z `polutek-test` w progi z §12
+- [x] Test wdrożenia aplikacji + Postgres (zrobione 2026-10-01, §14)
+- [ ] Wpiąć wyniki pomiarów z §14 w progi z §12 (rozmiar: zostać na CPX22; CPX32 gdy >30 renderów/s, równoległe lub 1080p+ transkodowania)
+- [ ] Worker wideo jako osobny kontener (ffmpeg pod `nice -n 19` + `MemoryMax`, §14)
+- [ ] Test z Clerk w trybie test i z Redisem (auth, płatności i limity nie były testowane)
 - [ ] Test odtworzenia z backupu na czystym kontenerze
 - [ ] Claude Code na serwerze (decyzja właściciela)
 - [ ] Sejf na sekrety
 - [ ] Aktualizować "Stan faktyczny" w `docs/architecture/serwerek.md` po każdym etapie
+
+## 14. Test wdrożenia aplikacji (2026-10-01)
+
+Cel: sprawdzić, jak cała aplikacja zachowuje się na tym serwerze i ile zasobów bierze. **Test, nie produkcja**: pusta lokalna baza (migracje + seed), atrapy zmiennych, bez prawdziwych sekretów i danych, bez publicznej ekspozycji.
+
+### Co stoi
+
+- Pliki w repo (odtwarzalne): `deploy/serwerek/Dockerfile`, `deploy/serwerek/docker-compose.yml`, `.dockerignore`. Jedyna zmiana w kodzie aplikacji: `next.config.mjs` włącza `output: 'standalone'` tylko gdy `NEXT_OUTPUT=standalone` (ustawia to Dockerfile; na Vercel nic się nie zmienia).
+- Na serwerze: `/opt/serwerek/apps/polutek-test/` (`docker-compose.yml`, `src/` = `git archive` repo), dane Postgresa w `/opt/serwerek/data/polutek-test/pg`, narzędzia testowe w `/opt/serwerek/data/polutek-test/bench/` (skrypty, `ff/src.mp4`, `stats.csv`).
+- Usługi: `app` (Next.js standalone, `mem_limit 1536m`, `127.0.0.1:3000`), `db` (postgres:17-alpine, `127.0.0.1:5433`), jednorazowe `migrate` (profil `tools`: `prisma migrate deploy` + `tsx prisma/seed.ts`). Redisa nie dodawano (brak danych logowania do REST Redis; aplikacja wstała bez niego).
+- **Stan końcowy: stos ZATRZYMANY (`docker compose down`), dane i obrazy zostają** (obrazy ok. 4,4 GB, dane testowe ok. 290 MB, zob. "Sprzątanie").
+- Żaden port firewalla nie został otwarty (UFW: dalej tylko 22/tcp), porty kontenerów tylko na 127.0.0.1.
+- Tunnel ma wpis `apptest.pawelperfect.com` -> `127.0.0.1:3000` (za Access, ustawiony przez innego agenta). Przy zatrzymanym stosie ten adres zwraca błąd bramy; żeby go ożywić: `cd /opt/serwerek/apps/polutek-test && docker compose up -d`. Uwaga: aplikacja ma atrapę Clerk i `NEXT_PUBLIC_APP_URL=http://localhost:3100`, więc logowanie tam nie zadziała.
+
+### Jak to odtworzyć
+
+```
+# z komputera (repo na wybranym commicie):
+git archive HEAD | ssh serwerek 'mkdir -p /opt/serwerek/apps/polutek-test/src && tar -x -C /opt/serwerek/apps/polutek-test/src'
+scp deploy/serwerek/docker-compose.yml serwerek:/opt/serwerek/apps/polutek-test/
+# na serwerze, w /opt/serwerek/apps/polutek-test:
+docker compose build app && docker compose --profile tools build migrate
+docker compose up -d db && docker compose --profile tools run --rm migrate
+docker compose up -d app
+# tunel z komputera:  ssh -L 3100:127.0.0.1:3000 serwerek   ->  http://localhost:3100/en
+```
+
+### Zmienne środowiskowe (atrapy)
+
+Aplikacja wstaje w trybie `NODE_ENV=production` bez prawdziwych sekretów. Użyte atrapy (pełna lista w compose): `DATABASE_URL`/`DATABASE_URL_UNPOOLED` (lokalny Postgres), `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (atrapa `pk_test_...` kodująca `dummy.clerk.local$`, wypalana w bundlu przy budowaniu), `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET`, `MAIN_CREATOR_SLUG=polutek`, `ADMIN_EMAIL`, `EMAIL_UNSUBSCRIBE_SIGNING_SECRET`, `HEALTHCHECK_TOKEN`. `validateAppEnv()` nie blokuje startu (używają jej tylko skrypty/diagnostyka), więc brak Stripe/Resend/Mux/Redis niczego nie wywraca przy starcie. **Nie testowano**: logowania (Clerk), płatności, e-maili, wideo z Cloudflare, limitowania żądań na Redisie.
+
+### Wyniki
+
+Środowisko: CPX22 (2 vCPU, 3,8 GB RAM + 4 GB swap), Ubuntu 26.04, Docker 29, Next.js 16.3.8 (Turbopack), baza z seedem (kilka filmów).
+
+| Pomiar | Wynik |
+|---|---|
+| Build obrazu (zimny: `npm ci` 35 s + `next build` 35 s + eksport warstw) | ok. 2 min 47 s; kolejny build runnera z cache: 17 s |
+| Rozmiar obrazu aplikacji (standalone) | 624 MB na dysku (164 MB skompresowane) |
+| Rozmiar obrazu narzędziowego (migracje/seed, pełne `node_modules`) | 3,4 GB (tylko do migracji; do usunięcia po testach) |
+| Zimny start aplikacji | restart -> `/api/health` 200 w 1,9 s; pierwszy `/en` 0,52 s, kolejne 0,06 s |
+| RAM aplikacji: spoczynek / szczyt | 122 MiB / 240 MiB |
+| RAM Postgresa: spoczynek / szczyt | 35 MiB / 69 MiB |
+| Swap | praktycznie nieużywany (szczyt 2 MB, także podczas ffmpeg) |
+| Szczyt RAM systemu (aplikacja + baza + ffmpeg + autocannon) | 1,37 GB z 3,8 GB |
+| CPU aplikacji | szczyt ok. 158% (z 200%) przy `/en` |
+| Lokalnie na serwerze (autocannon, 20 poł.), `/en` | 59 req/s, p50 330 ms, p99 448 ms (SSR, CPU-bound) |
+| Lokalnie, `/api/channel/sidebar` (20 poł.) | 422 req/s, p50 44 ms, p99 103 ms |
+| Przez tunel SSH z PC (10 poł., 45 s) | `/en` 28 req/s p50 332 ms; sidebar 80 req/s p50 122 ms; `/api/payment-settings` 92 req/s p50 102 ms; `/en/regulamin` 68 req/s p50 134 ms; 0 błędów |
+| Obciążenie ciągłe ok. 10 min (3 poł., przez tunel, mieszanka tras) | 0 błędów i timeoutów; sidebar p50 113 ms, regulamin p50 125 ms, `/en` p50 199 ms z ogonem p99 ok. 1,8 s (zob. uwaga) |
+
+Uwaga: pomiary przez tunel zależą od łącza domowego i jednego strumienia SSH (strona `/en` to 83 KB; ogon opóźnień jest w dużej mierze po stronie tunelu, bo lokalnie p99 to 448 ms). Dla samej aplikacji wiarygodne są pomiary lokalne na serwerze.
+
+**FFmpeg** (źródło syntetyczne 1080p30, 60 s, drabinka HLS 720p 2,8 Mb/s + 480p 1,4 Mb/s, `libx264 -preset veryfast`, segmenty 6 s; skrypt `/opt/serwerek/data/polutek-test/bench/ladder.sh`):
+
+| Scenariusz | Czas transkodowania | CPU ffmpeg | Szczyt RAM ffmpeg | Aplikacja w tym czasie (`/en`, 5 poł.) |
+|---|---|---|---|---|
+| Sama aplikacja (odniesienie) | n/d | n/d | n/d | 49 req/s, p50 97 ms, p99 171 ms |
+| ffmpeg sam | 19 s (3,2x czasu rzeczywistego) | 189% | 295 MB | n/d |
+| ffmpeg bez limitów + ruch | 37 s | 96% (rywalizacja o rdzenie) | 295 MB | 39 req/s, p50 122 ms, p99 245 ms, 0 błędów |
+| `nice -n 19` + `systemd-run --scope -p MemoryMax=1500M -p MemorySwapMax=0 -p CPUQuota=100%` + ruch | 43 s | 85% | 301 MB | 36 req/s, p50 128 ms, p99 306 ms, 0 błędów |
+
+Wnioski z ffmpeg: aplikacja pozostała responsywna przez cały czas (bez błędów), przepustowość SSR spadła o 20-28%, p50 wzrosło o 25-30 ms. `CPUQuota=100%` wydłużył transkodowanie o ok. 15% i **nie poprawił** widocznie opóźnień aplikacji (różnica p99 w granicach szumu), więc nie jest potrzebny; wystarczą `nice -n 19` i `MemoryMax` jako bezpiecznik pamięci. RAM ffmpeg przy 720p/480p to ok. 300 MB; wąskim gardłem jest CPU, nie pamięć.
+
+### Co się zepsuło / uwagi
+
+- Nic nie przerwało testu: 0 odpowiedzi innych niż 2xx, brak OOM, brak swapowania.
+- Podczas `next build` brak `DATABASE_URL` daje błędy Prisma w logu (strony generowane statycznie pytają bazę), ale build kończy się poprawnie. Szum, nie błąd.
+- Ostrzeżenia Next.js: `middleware` jest przestarzałe (nowa nazwa `proxy`), `themeColor` w metadata zamiast w viewport. Bez wpływu na test.
+- `typescript.ignoreBuildErrors: true` w `next.config.mjs`: build w obrazie nie sprawdza typów (robi to CI).
+- Nie sprawdzono: drabinki 1080p/4K (tylko 480/720), wielu równoczesnych transkodowań, realnego rozmiaru bazy, logowania i płatności. Źródło wideo było syntetyczne (testsrc2); materiał z kamery może iść szybciej lub wolniej.
+
+### Werdykt
+
+- **CPX22 wystarcza** na aplikację + Postgresa + jedno zadanie ffmpeg naraz przy małym ruchu: pamięć ma duży zapas (szczyt ok. 1,4 GB z 3,8 GB), a aplikacja wytrzymuje ok. 50-60 renderów strony głównej na sekundę lokalnie i setki żądań API na sekundę.
+- Ograniczeniem jest **CPU (2 vCPU)**, nie RAM: transkodowanie zajmuje oba rdzenie i spowalnia SSR o ok. jedną czwartą.
+- **Kiedy zwiększyć**: do CPX32 (4 vCPU, 8 GB), gdy (a) stały ruch przekracza ok. 30 renderów strony na sekundę, (b) transkodowania mają iść równolegle albo w 1080p+ (ffmpeg skaluje się z rdzeniami), albo (c) baza urośnie powyżej ok. 1 GB. Alternatywa bez zmiany rozmiaru: worker ffmpeg na osobnej, taniej maszynie (cel dwumaszynowy z `docs/architecture/serwerek.md`).
+- Zalecane limity w compose docelowym: `app` `mem_limit: 1g`, `db` `mem_limit: 512m` + `shared_buffers=128MB`, ffmpeg w osobnym kontenerze/skrypcie pod `nice -n 19` z `MemoryMax=1500M`, bez `CPUQuota`. Zostaw swap (4 GB).
+- Wideo dla widzów dalej idzie z Cloudflare, nie przez ten VPS, więc ruch wideo nie wlicza się do powyższych obciążeń.
+
+### Sprzątanie
+
+Stos jest zatrzymany, nie usunięty. Odzyskanie miejsca (nieobowiązkowe, wolne jest 58 GB): `docker rmi polutek-tools:test`, `rm -rf /opt/serwerek/data/polutek-test/bench/{ff,out_*}`. Całkowite usunięcie: `docker compose down -v` + `rm -rf /opt/serwerek/apps/polutek-test /opt/serwerek/data/polutek-test`.
