@@ -1,0 +1,11 @@
+[Unit]
+Description=polutek cron %i (GET /api/cron/<route> on the local app)
+After=docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+# CRON_SECRET=... (same value as in the app's app.env). root:root, mode 600.
+EnvironmentFile=/etc/serwerek/cron.env
+ExecStart=/opt/serwerek/scripts/cron-runner.sh %i
+TimeoutStartSec=300

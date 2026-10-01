@@ -1,0 +1,10 @@
+[Unit]
+Description=polutek cron stripe-reconciliation, every 15 minutes (vercel.json had it dropped on Hobby)
+
+[Timer]
+OnCalendar=*-*-* *:00/15:00 UTC
+Persistent=false
+Unit=polutek-cron@stripe-reconciliation.service
+
+[Install]
+WantedBy=timers.target

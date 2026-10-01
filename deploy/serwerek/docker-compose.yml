@@ -1,65 +1,45 @@
-# TEST stack of the app on serwerek. Lives on the server in /opt/serwerek/apps/polutek-test/.
-# Everything listens on 127.0.0.1 only; reach it with: ssh -L 3100:127.0.0.1:3000 serwerek
-# DUMMY third-party values only. Never put real secrets here. See docs/operations/SERWEREK.md.
-name: polutek-test
-
-x-app-env: &app-env
-  DATABASE_URL: postgresql://polutek:polutek_test@db:5432/polutek
-  DATABASE_URL_UNPOOLED: postgresql://polutek:polutek_test@db:5432/polutek
-  NEXT_PUBLIC_APP_URL: http://localhost:3100
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ZHVtbXkuY2xlcmsubG9jYWwk
-  CLERK_SECRET_KEY: sk_test_dummy
-  CLERK_WEBHOOK_SECRET: whsec_dummy
-  MAIN_CREATOR_SLUG: polutek
-  MAIN_CREATOR_NAME: Test Creator
-  ADMIN_EMAIL: admin@example.local
-  EMAIL_UNSUBSCRIBE_SIGNING_SECRET: dummy-dummy-dummy-dummy-dummy-dummy-dummy
-  HEALTHCHECK_TOKEN: dummy-health-token
-  # No Redis REST creds: rate limiting falls back (see findings in SERWEREK.md).
+# PRODUCTION stack of www.pawelperfect.com on serwerek. Lives on the server in /opt/serwerek/apps/polutek/.
+# Layout there:  docker-compose.yml  deploy.sh  app.env (600)  db.env (600)  src/ (git archive of the repo)
+# No secrets in this file: everything secret is in app.env / db.env (root, 600, never committed).
+# Everything listens on 127.0.0.1 only; the public path is Cloudflare Tunnel -> 127.0.0.1:3000.
+# Tunnel ingress for www.pawelperfect.com must point at http://127.0.0.1:3000. Runbook: docs/operations/SERWEREK.md.
+name: polutek
 
 services:
   db:
     image: postgres:17-alpine
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: polutek
-      POSTGRES_PASSWORD: polutek_test
-      POSTGRES_DB: polutek
+    env_file: ./db.env            # POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "max_connections=60"]
     volumes:
-      - /opt/serwerek/data/polutek-test/pg:/var/lib/postgresql/data
+      - /opt/serwerek/data/polutek/pg:/var/lib/postgresql/data
     ports:
-      - "127.0.0.1:5433:5432"
+      - "127.0.0.1:5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U polutek -d polutek"]
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 5s
       timeout: 3s
       retries: 20
-
-  migrate:
-    # One-off: prisma migrate deploy + seed on the EMPTY local database.
-    profiles: ["tools"]
-    build:
-      context: ./src
-      dockerfile: deploy/serwerek/Dockerfile
-      target: build
-    image: polutek-tools:test
-    environment: *app-env
-    depends_on:
-      db:
-        condition: service_healthy
-    command: ["sh", "-c", "npx prisma migrate deploy && npx tsx prisma/seed.ts"]
+    mem_limit: 512m
 
   app:
-    build:
-      context: ./src
-      dockerfile: deploy/serwerek/Dockerfile
-    image: polutek-app:test
+    # APP_IMAGE is set by deploy.sh to polutek-app:<git-sha>; "current" is only the manual fallback.
+    image: ${APP_IMAGE:-polutek-app:current}
     restart: unless-stopped
-    environment:
-      <<: *app-env
+    env_file: ./app.env           # DATABASE_URL (host "db"), CLERK_SECRET_KEY, STRIPE_*, TRUST_CF_CONNECTING_IP=true, CRON_SECRET ...
     depends_on:
       db:
         condition: service_healthy
     ports:
       - "127.0.0.1:3000:3000"
-    mem_limit: 1536m
+    mem_limit: 1g
+
+  migrate:
+    # One-off, run by deploy.sh:  docker compose --profile tools run --rm migrate
+    profiles: ["tools"]
+    image: ${MIGRATOR_IMAGE:-polutek-migrator:current}
+    env_file: ./app.env
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["npx", "prisma", "migrate", "deploy"]
