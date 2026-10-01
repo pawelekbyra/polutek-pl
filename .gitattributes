@@ -1,0 +1,4 @@
+
+# Server scripts and units must keep LF (they run on Linux)
+deploy/serwerek/** text eol=lf
+scripts/serwerek/** text eol=lf

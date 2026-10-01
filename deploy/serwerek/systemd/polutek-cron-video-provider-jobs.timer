@@ -1,0 +1,10 @@
+[Unit]
+Description=polutek cron video-provider-jobs/reconcile, daily 04:00 UTC (same as vercel.json)
+
+[Timer]
+OnCalendar=*-*-* 04:00:00 UTC
+Persistent=true
+Unit=polutek-cron@video-provider-jobs-reconcile.service
+
+[Install]
+WantedBy=timers.target

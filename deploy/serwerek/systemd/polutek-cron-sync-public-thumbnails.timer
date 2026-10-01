@@ -1,0 +1,10 @@
+[Unit]
+Description=polutek cron sync-public-thumbnails, daily 06:00 UTC (same as vercel.json)
+
+[Timer]
+OnCalendar=*-*-* 06:00:00 UTC
+Persistent=true
+Unit=polutek-cron@sync-public-thumbnails.service
+
+[Install]
+WantedBy=timers.target

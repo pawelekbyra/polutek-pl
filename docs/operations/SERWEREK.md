@@ -164,7 +164,7 @@ Cel: sprawdzić, jak cała aplikacja zachowuje się na tym serwerze i ile zasob�
 
 ### Co stoi
 
-- Pliki w repo (odtwarzalne): `deploy/serwerek/Dockerfile`, `deploy/serwerek/docker-compose.yml`, `.dockerignore`. Jedyna zmiana w kodzie aplikacji: `next.config.mjs` włącza `output: 'standalone'` tylko gdy `NEXT_OUTPUT=standalone` (ustawia to Dockerfile; na Vercel nic się nie zmienia).
+- Pliki w repo (odtwarzalne): `deploy/serwerek/Dockerfile`, `deploy/serwerek/docker-compose.test.yml` (teraz; wtedy `docker-compose.yml`), `.dockerignore`. Jedyna zmiana w kodzie aplikacji: `next.config.mjs` włącza `output: 'standalone'` tylko gdy `NEXT_OUTPUT=standalone` (ustawia to Dockerfile; na Vercel nic się nie zmienia).
 - Na serwerze: `/opt/serwerek/apps/polutek-test/` (`docker-compose.yml`, `src/` = `git archive` repo), dane Postgresa w `/opt/serwerek/data/polutek-test/pg`, narzędzia testowe w `/opt/serwerek/data/polutek-test/bench/` (skrypty, `ff/src.mp4`, `stats.csv`).
 - Usługi: `app` (Next.js standalone, `mem_limit 1536m`, `127.0.0.1:3000`), `db` (postgres:17-alpine, `127.0.0.1:5433`), jednorazowe `migrate` (profil `tools`: `prisma migrate deploy` + `tsx prisma/seed.ts`). Redisa nie dodawano (brak danych logowania do REST Redis; aplikacja wstała bez niego).
 - **Stan końcowy: stos ZATRZYMANY (`docker compose down`), dane i obrazy zostają** (obrazy ok. 4,4 GB, dane testowe ok. 290 MB, zob. "Sprzątanie").
@@ -176,7 +176,7 @@ Cel: sprawdzić, jak cała aplikacja zachowuje się na tym serwerze i ile zasob�
 ```
 # z komputera (repo na wybranym commicie):
 git archive HEAD | ssh serwerek 'mkdir -p /opt/serwerek/apps/polutek-test/src && tar -x -C /opt/serwerek/apps/polutek-test/src'
-scp deploy/serwerek/docker-compose.yml serwerek:/opt/serwerek/apps/polutek-test/
+scp deploy/serwerek/docker-compose.test.yml serwerek:/opt/serwerek/apps/polutek-test/docker-compose.yml
 # na serwerze, w /opt/serwerek/apps/polutek-test:
 docker compose build app && docker compose --profile tools build migrate
 docker compose up -d db && docker compose --profile tools run --rm migrate
@@ -240,3 +240,47 @@ Wnioski z ffmpeg: aplikacja pozostała responsywna przez cały czas (bez błęd�
 ### Sprzątanie
 
 Stos jest zatrzymany, nie usunięty. Odzyskanie miejsca (nieobowiązkowe, wolne jest 58 GB): `docker rmi polutek-tools:test`, `rm -rf /opt/serwerek/data/polutek-test/bench/{ff,out_*}`. Całkowite usunięcie: `docker compose down -v` + `rm -rf /opt/serwerek/apps/polutek-test /opt/serwerek/data/polutek-test`.
+
+## 15. Produkcja na serwerku: obraz, deploy, crony, IP klienta (kod gotowy 2026-10-01)
+
+Cel: `www.pawelperfect.com` z serwerka w Dockerze za Cloudflare Tunnel, bez Vercela. To jest **kod i procedura**; samo przełączenie (env, DNS, Tunnel, Clerk/Stripe webhooki) robi osobna sesja. Test z §14 używa teraz `deploy/serwerek/docker-compose.test.yml` (dawny `docker-compose.yml`); `docker-compose.yml` to już stos produkcyjny.
+
+### Obraz (`deploy/serwerek/Dockerfile`)
+
+- Cele: `runner` (domyślny, aplikacja, standalone), `migrator` (tylko `prisma` w wersji z `package-lock.json` + `prisma/`, bez `node_modules` aplikacji; używa go `deploy.sh`).
+- Build args `NEXT_PUBLIC_*` (wypalane w bundlu klienta, publiczne z założenia): `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_R2_PUBLIC_HOST`, `NEXT_PUBLIC_BLOB_PUBLIC_HOST`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_SUPPORT_EMAIL` (to wszystkie, które czyta kod; `NEXT_PUBLIC_TIP_*` są tylko w `.env.example`). Domyślne wartości to atrapy, więc zwykły `docker build` nadal działa. **Zmiana któregokolwiek wymaga przebudowania obrazu.** Sekrety (`CLERK_SECRET_KEY`, `STRIPE_*`, `DATABASE_URL`...) nigdy nie trafiają do obrazu, tylko do `app.env` w runtime.
+- `.next/cache` należy do `node` (cache optymalizatora `next/image`), użytkownik `node`, `HEALTHCHECK` na `/api/health` (status <500 = żyje; 15 s / start 40 s).
+
+### Układ na serwerze: `/opt/serwerek/apps/polutek/`
+
+`docker-compose.yml`, `deploy.sh` (z repo), `app.env`, `db.env`, `build.env` (root, 600, nie w repo), `src/` (`git archive` commita do wdrożenia), `.current-image`/`.previous-image`. Dane Postgresa 17: `/opt/serwerek/data/polutek/pg`. Porty tylko `127.0.0.1` (app `:3000`, db `:5432`); Tunnel dla `www.pawelperfect.com` -> `http://127.0.0.1:3000`.
+
+- `app.env`: `DATABASE_URL`/`DATABASE_URL_UNPOOLED` (`postgresql://...@db:5432/...`), Clerk, Stripe, Resend, R2, `CRON_SECRET`, `HEALTHCHECK_TOKEN`, Upstash/KV (limity), `NEXT_PUBLIC_*` (jak w build.env, tylko dla spójności) i **`TRUST_CF_CONNECTING_IP=true`**.
+- `db.env`: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`. `build.env`: tylko publiczne `NEXT_PUBLIC_*=...`.
+
+### Deploy (`deploy/serwerek/deploy.sh <tag>`, na serwerze)
+
+```
+git archive <sha> | ssh serwerek 'rm -rf /opt/serwerek/apps/polutek/src && mkdir -p /opt/serwerek/apps/polutek/src && tar -x -C /opt/serwerek/apps/polutek/src'
+scp deploy/serwerek/{deploy.sh,docker-compose.yml} serwerek:/opt/serwerek/apps/polutek/
+ssh serwerek 'cd /opt/serwerek/apps/polutek && ./deploy.sh <sha>'
+```
+
+Kroki: build `runner`+`migrator` (pomijany, gdy obrazy tego tagu już są), start `db`, **zrzut `pg_dump` przed migracją** (`/opt/serwerek/backups/pre-deploy-*.sql.gz`, 14 dni), `prisma migrate deploy` w jednorazowym kontenerze (błąd = aplikacja NIE jest restartowana), start `app` na nowym obrazie, czekanie na `healthy` (150 s). Gdy nie wstanie: automatyczny powrót do poprzedniego obrazu (`.previous-image`) i kod wyjścia 1. Ręczny powrót: `./deploy.sh <cokolwiek> --rollback`. Migracje w tym repo są addytywne, więc rollback przywraca tylko kod, nie schemat. Idempotentny: ponowne uruchomienie z tym samym tagiem nic nie psuje. Trzyma 3 ostatnie obrazy. **Nie testowano na serwerze** (kod pisany bez dostępu do Dockera; pierwszy deploy sprawdzić na `polutek-test`).
+
+### Crony (zamiast Vercel Crons)
+
+`scripts/serwerek/cron-runner.sh <nazwa>` wywołuje `GET http://127.0.0.1:3000/api/cron/<nazwa>` z `Authorization: Bearer $CRON_SECRET` (sekret przez stdin do curl, nie widać go w `ps`; kod HTTP inny niż 2xx = niezerowy kod wyjścia, więc `systemctl` pokazuje błąd). Jednostki w `deploy/serwerek/systemd/`: szablon `polutek-cron@.service` + 4 timery (godziny w UTC, jak na Vercel):
+
+| Timer | Trasa | Harmonogram |
+|---|---|---|
+| `polutek-cron-stripe-reconciliation` | `stripe-reconciliation` | co 15 min |
+| `polutek-cron-video-provider-jobs` | `video-provider-jobs/reconcile` (alias `video-provider-jobs-reconcile`) | 04:00 |
+| `polutek-cron-prune-playback-sessions` | `prune-playback-sessions` | 05:00 |
+| `polutek-cron-sync-public-thumbnails` | `sync-public-thumbnails` | 06:00 |
+
+Instalacja: `install -m755 scripts/serwerek/cron-runner.sh /opt/serwerek/scripts/`; `/etc/serwerek/cron.env` z jedną linią `CRON_SECRET=...` (root, 600; to piąty dozwolony plik z sekretem obok §4); `cp deploy/serwerek/systemd/* /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now polutek-cron-*.timer`. Podgląd: `systemctl list-timers 'polutek-cron-*'`, `journalctl -u 'polutek-cron@*' -n 50`. Po przełączeniu usuń sekcję `crons` z `vercel.json` albo wyłącz projekt Vercel, żeby crony nie szły podwójnie.
+
+### Adres IP klienta (limity i audyt)
+
+Wszystkie limity i adres w audycie biorą IP z jednego helpera `lib/api/client-ip.ts` (`getClientIp`; `getAdminClientIp` i `getMediaClientIp` go opakowują). Domyślnie (Vercel) bez zmian: ostatni hop `X-Forwarded-For`, potem `X-Real-IP`. Z `TRUST_CF_CONNECTING_IP=true` używa `CF-Connecting-IP`, a gdy brak/zepsuty nagłówek wraca do domyślnego łańcucha. **Włączaj tylko gdy aplikacja jest osiągalna wyłącznie przez Cloudflare Tunnel (origin na 127.0.0.1)**; inaczej każdy mógłby podszyć się pod dowolne IP i ominąć limity.

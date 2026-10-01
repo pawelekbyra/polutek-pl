@@ -1,0 +1,10 @@
+[Unit]
+Description=polutek cron prune-playback-sessions, daily 05:00 UTC (same as vercel.json)
+
+[Timer]
+OnCalendar=*-*-* 05:00:00 UTC
+Persistent=true
+Unit=polutek-cron@prune-playback-sessions.service
+
+[Install]
+WantedBy=timers.target

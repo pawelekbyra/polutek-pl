@@ -13,6 +13,7 @@
  * ADMIN_RATE_LIMIT_TIMEOUT_MS) - the admin routes are already auth-gated, and
  * locking the only admin out on an infra hiccup is worse than a missed limit.
  */
+import { getClientIp } from "@/lib/api/client-ip";
 import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -50,12 +51,7 @@ export function resolveAdminRateBucket(pathname: string, method: string): AdminR
 }
 
 export function getAdminClientIp(headers: Headers) {
-  const forwarded = headers
-    .get("x-forwarded-for")
-    ?.split(",")
-    .map((p) => p.trim())
-    .filter(Boolean);
-  return forwarded?.[forwarded.length - 1] || headers.get("x-real-ip")?.trim() || "unknown";
+  return getClientIp(headers);
 }
 
 export type AdminRateLimitResult =
