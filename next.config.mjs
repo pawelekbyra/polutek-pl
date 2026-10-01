@@ -23,6 +23,9 @@ const configuredImageHosts = Array.from(new Set([
 ]));
 
 const nextConfig = {
+  // Self-hosted container build (deploy/serwerek/Dockerfile) sets NEXT_OUTPUT=standalone.
+  // Unset on Vercel, so the normal build is unchanged.
+  ...(process.env.NEXT_OUTPUT === 'standalone' ? { output: 'standalone' } : {}),
   productionBrowserSourceMaps: false,
   typescript: {
     ignoreBuildErrors: true,
