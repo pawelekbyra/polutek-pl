@@ -6,6 +6,7 @@ import { VideoNotFoundError, VideoNotOnMainChannelError, VideoInvalidHeroError, 
 import { VideoPolicy } from "../domain/video.policy";
 import { selectPrimaryVideoAsset, withPrimaryAsset } from "../domain/video-asset-selection";
 import { pickFundraisingUpdate, type FundraisingGoalFields } from "../domain/fundraising";
+import { isDerivedThumbnailUrl } from "@/lib/modules/media"; // derived thumbnail srcs are never stored
 
 type VideoWithAssetsAndOriginal = Video & {
   assets: VideoAsset[];
@@ -307,7 +308,7 @@ export class VideoRepository {
     if (data.title !== undefined) updateData.title = data.title;
     if (data.slug !== undefined) updateData.slug = data.slug;
     if (data.videoUrl !== undefined) updateData.videoUrl = data.videoUrl ?? '';
-    if (data.thumbnailUrl !== undefined) updateData.thumbnailUrl = data.thumbnailUrl ?? '';
+    if (data.thumbnailUrl !== undefined && !isDerivedThumbnailUrl(data.thumbnailUrl, process.env)) updateData.thumbnailUrl = data.thumbnailUrl ?? '';
     if (data.tier !== undefined) updateData.tier = data.tier;
     if (data.description !== undefined) updateData.description = data.description;
     if (data.titleEn !== undefined) updateData.titleEn = data.titleEn;

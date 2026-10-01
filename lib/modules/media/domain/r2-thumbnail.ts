@@ -129,3 +129,22 @@ export function resolvePublicThumbnailSrc(video: PublicThumbnailSourceInput, env
 
   return video.thumbnailPublicUrl as string;
 }
+
+/** True for the site's own thumbnail proxy path, e.g. /api/videos/<id>/thumbnail. */
+export function isThumbnailProxyPath(value: string | null | undefined): boolean {
+  return typeof value === 'string' && /^\/api\/videos\/[^/?#]+\/thumbnail\/?(?:[?#].*)?$/.test(value.trim());
+}
+
+/**
+ * True for a thumbnail URL that is *derived* from the stored value and must
+ * never be written back into `Video.thumbnailUrl`: the `/api/videos/<id>/thumbnail`
+ * proxy path and any URL on the public thumbnail host (`NEXT_PUBLIC_R2_PUBLIC_HOST`).
+ * Public DTOs (which the admin edit form also loads) carry exactly these values.
+ * Storing one breaks the thumbnail: a proxy path points at itself, and a public
+ * URL is not a private-bucket key, so the next sync treats the video as having
+ * no public copy and deletes the object it points at.
+ */
+export function isDerivedThumbnailUrl(value: string | null | undefined, env: MediaHostEnv): boolean {
+  if (typeof value !== 'string' || !value.trim()) return false;
+  return isThumbnailProxyPath(value) || parsePublicThumbnailUrl(value.trim(), env) !== null;
+}
