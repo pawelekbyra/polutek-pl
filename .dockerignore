@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.claude
+.vercel
+.env*
+!.env.example
+tests
+docs
+coverage
+*.zip
+tsconfig*.tsbuildinfo
