@@ -149,8 +149,11 @@ akceptuje to ryzyko na obecnym etapie** (§B); przed launchem wraca temat podzia
   lokalnym komputerze właściciela z Windows**.
 - **Zdecydowane:** najpierw jeden serwer (pracownia + FFmpeg); układ dwumaszynowy
   jako zalecany cel; do tego czasu wdrażamy tylko rzeczy tanie/darmowe.
-- **NIE zbudowane:** żaden serwer, Tunnel/Access, pulpit zdalny, sejf sekretów,
-  worker FFmpeg, własny HLS, token na krawędzi, nic z §1–§11.
+- **Kupione i zahartowane 2026-10-01:** serwer Hetzner "serwerek" (CPX22, nbg1,
+  46.224.211.115). Start na jednym serwerze jest już realny. Stan, dostęp i
+  zasady: [`../operations/SERWEREK.md`](../operations/SERWEREK.md).
+- **NIE wdrożone:** aplikacja, baza i worker FFmpeg na serwerze, Tunnel/Access,
+  pulpit zdalny, sejf sekretów, własny HLS, token na krawędzi, nic z §1–§11.
 
 ---
 
