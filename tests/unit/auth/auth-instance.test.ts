@@ -6,9 +6,7 @@ vi.setConfig({ testTimeout: 30_000 });
 const sendEmail = vi.hoisted(() => ({
   queueVerificationEmail: vi.fn(),
   queuePasswordResetEmail: vi.fn(),
-  queueAccountExistsEmail: vi.fn(),
   queuePasswordChangedEmail: vi.fn(),
-  queueWelcomeEmail: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({ prisma: {} }));
@@ -23,10 +21,10 @@ type AuthOptions = {
   baseURL: string;
   trustedOrigins: string[];
   emailAndPassword: Record<string, unknown> & {
-    onExistingUserSignUp: (data: { user: { email: string } }) => Promise<void>;
+    onExistingUserSignUp?: unknown;
     sendResetPassword: (data: { user: { email: string }; url: string }) => Promise<void>;
   };
-  emailVerification: { sendVerificationEmail: (data: { user: { email: string }; url: string }) => Promise<void> };
+  emailVerification: { afterEmailVerification?: unknown; sendVerificationEmail: (data: { user: { email: string }; url: string }) => Promise<void> };
   socialProviders: { google?: { clientId: string } };
   account: { accountLinking: { enabled: boolean; trustedProviders: string[] } };
   session: { cookieCache: { enabled: boolean } };
@@ -138,10 +136,10 @@ describe("Better Auth e-mail callbacks", () => {
     expect(sendEmail.queuePasswordResetEmail).toHaveBeenCalledWith({ email: "a@b.pl" }, "https://x/reset");
   });
 
-  it("tells the owner of an address when somebody signs up with it again (and nothing else leaks)", async () => {
+  it("no longer sends an account-exists mail and sends the welcome mail only at onboarding", async () => {
     const options = await loadAuth(FULL_ENV);
-    const result = await options.emailAndPassword.onExistingUserSignUp({ user: { email: "owner@b.pl" } });
-    expect(result).toBeUndefined();
-    expect(sendEmail.queueAccountExistsEmail).toHaveBeenCalledWith({ email: "owner@b.pl" });
+    expect(options.emailAndPassword.onExistingUserSignUp).toBeUndefined();
+    expect((options.emailVerification as Record<string, unknown>).afterEmailVerification).toBeUndefined();
   });
+
 });

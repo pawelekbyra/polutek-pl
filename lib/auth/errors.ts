@@ -16,6 +16,11 @@ const MESSAGES: Record<string, { pl: string; en: string }> = {
     pl: "To hasło wyciekło w znanych włamaniach. Wybierz inne.",
     en: "This password appeared in known data breaches. Choose a different one.",
   },
+  EMAIL_TAKEN: { pl: "Ten e-mail jest już zajęty. Masz tu już konto.", en: "This email already has an account." },
+  EMAIL_TAKEN_GOOGLE: {
+    pl: "Ten e-mail jest już zajęty. Możliwe, że konto założono przez Google.",
+    en: "This email already has an account. You may have registered with Google.",
+  },
   INVALID_NICKNAME: { pl: "Nieprawidłowy pseudonim.", en: "Invalid nickname." },
   NICKNAME_TAKEN: { pl: "Ten pseudonim jest już zajęty. Wybierz inny.", en: "This nickname is already taken. Choose another one." },
   TOO_MANY_ATTEMPTS: { pl: "Za dużo prób. Spróbuj ponownie za kilkanaście minut.", en: "Too many attempts. Try again in a few minutes." },

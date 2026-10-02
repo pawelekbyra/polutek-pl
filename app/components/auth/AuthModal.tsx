@@ -11,7 +11,6 @@ import { authClient, captchaFetchOptions } from "@/lib/auth/client";
 import { authErrorMessage } from "@/lib/auth/errors";
 import { PASSWORD_MIN_LENGTH } from "@/lib/auth/config";
 import { rememberReturnPath } from "@/lib/auth/sso-return";
-import { checkNicknameAvailability, nicknameCheckMessage, nicknameProblemMessage, validateNickname } from "@/lib/auth/nickname";
 
 type InternalView = "sign-in" | "sign-up" | "verify-sent" | "forgot" | "forgot-sent" | "two-factor";
 
@@ -19,6 +18,10 @@ interface AuthModalProps {
   open: boolean;
   initialView: AuthView;
   onOpenChange: (open: boolean) => void;
+}
+
+function passwordMismatchMessage(isPl: boolean) {
+  return isPl ? "Hasła nie są takie same." : "The passwords do not match.";
 }
 
 type OpError = { code?: string; message?: string; status?: number } | null | undefined;
@@ -33,7 +36,8 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
   const [view, setView] = useState<InternalView>(initialView);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [nickname, setNickname] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [emailTaken, setEmailTaken] = useState<"google" | "password" | null>(null);
   const [code, setCode] = useState("");
   const [useBackupCode, setUseBackupCode] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -47,6 +51,8 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
       setError(null);
       setInfo(null);
       setCode("");
+      setConfirmPassword("");
+      setEmailTaken(null);
       setLoading(false);
     }
   }, [open, initialView]);
@@ -95,28 +101,26 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
 
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
-    // The nickname is the only name we ask for; it is stored as the account name and shown
-    // everywhere (user menu, comments).
-    const validation = validateNickname(nickname);
-    if (!validation.ok) return setError(nicknameProblemMessage(validation.reason, isPl));
+    if (password !== confirmPassword) return setError(passwordMismatchMessage(isPl));
     setLoading(true);
     setError(null);
-    const check = await checkNicknameAvailability(validation.value);
-    if (!check.available) {
-      setError(nicknameCheckMessage(check.reason, isPl));
-      setLoading(false);
-      return;
-    }
+    setEmailTaken(null);
+    // No nickname here: the server stores a placeholder name and the first-sign-in dialog asks for it.
     const { error: signUpError } = await authClient.signUp.email({
       email,
       password,
-      name: validation.value,
+      name: email.split("@")[0] || "user",
       language: isPl ? "pl" : "en",
       callbackURL: returnTo(),
       fetchOptions: captchaFetchOptions(captchaToken),
     });
-    if (signUpError) return fail(signUpError);
-    // Same screen whether or not the address was already registered (no account enumeration).
+    if (signUpError) {
+      // Owner decision 2026-10-02: say plainly when the address already has an account (see docs).
+      if (signUpError.code === "EMAIL_TAKEN" || signUpError.code === "EMAIL_TAKEN_GOOGLE") {
+        setEmailTaken(signUpError.code === "EMAIL_TAKEN_GOOGLE" ? "google" : "password");
+      }
+      return fail(signUpError);
+    }
     setInfo(null);
     setView("verify-sent");
     setLoading(false);
@@ -188,9 +192,12 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
   function switchView(next: InternalView) {
     setError(null);
     setInfo(null);
+    setEmailTaken(null);
+    setConfirmPassword("");
     setView(next);
   }
 
+  const revealLabels = isPl ? { show: "Pokaż", hide: "Ukryj" } : { show: "Show", hide: "Hide" };
   const captcha = <TurnstileWidget ref={captchaRef} onToken={setCaptchaToken} isPl={isPl} />;
   const waitingForCaptcha = !captchaReady;
 
@@ -219,6 +226,21 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
                 {error}
               </p>
             )}
+            {error && emailTaken && view === "sign-up" && (
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px]">
+                <button type="button" className="font-bold underline hover:text-[var(--chan-ink)]" onClick={() => switchView("sign-in")}>
+                  {isPl ? "Zaloguj się" : "Sign in"}
+                </button>
+                <button type="button" className="font-bold underline hover:text-[var(--chan-ink)]" onClick={() => switchView("forgot")}>
+                  {isPl ? "Nie pamiętam hasła" : "Forgot password"}
+                </button>
+                {emailTaken === "google" && (
+                  <span className="text-[var(--chan-muted)]">
+                    {isPl ? "Możesz też użyć przycisku Google." : "You can also use the Google button."}
+                  </span>
+                )}
+              </div>
+            )}
             {info && !error && (
               <p className="mt-3 rounded-lg bg-[var(--chan-blue-soft)] px-3 py-2 text-[13px] font-semibold text-[var(--chan-blue)]">{info}</p>
             )}
@@ -228,7 +250,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
                 <OAuthButtons onSelect={handleOAuth} isPl={isPl} />
                 <Divider isPl={isPl} />
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
-                <Field label={isPl ? "Hasło" : "Password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" required />
+                <Field label={isPl ? "Hasło" : "Password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" revealLabels={revealLabels} required />
                 {captcha}
                 <PrimaryButton loading={loading} disabled={waitingForCaptcha} label={isPl ? "Zaloguj się" : "Sign in"} />
                 <div className="flex items-center justify-between pt-1 text-[12px] text-[var(--chan-muted)]">
@@ -246,7 +268,6 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
               <form onSubmit={handleSignUp} className="mt-5 space-y-3.5">
                 <OAuthButtons onSelect={handleOAuth} isPl={isPl} />
                 <Divider isPl={isPl} />
-                <Field label={isPl ? "Pseudonim" : "Nickname"} type="text" value={nickname} onChange={setNickname} autoComplete="nickname" required />
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
                 <Field
                   label={isPl ? "Hasło (min. 10 znaków)" : "Password (min. 10 characters)"}
@@ -255,10 +276,28 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
                   onChange={setPassword}
                   autoComplete="new-password"
                   minLength={PASSWORD_MIN_LENGTH}
+                  revealLabels={revealLabels}
                   required
                 />
+                <Field
+                  label={isPl ? "Powtórz hasło" : "Repeat password"}
+                  type="password"
+                  value={confirmPassword}
+                  onChange={setConfirmPassword}
+                  autoComplete="new-password"
+                  minLength={PASSWORD_MIN_LENGTH}
+                  revealLabels={revealLabels}
+                  required
+                />
+                {confirmPassword && password !== confirmPassword && (
+                  <p role="alert" className="text-[12px] font-semibold text-red-600">{passwordMismatchMessage(isPl)}</p>
+                )}
                 {captcha}
-                <PrimaryButton loading={loading} disabled={waitingForCaptcha} label={isPl ? "Załóż konto" : "Create account"} />
+                <PrimaryButton
+                  loading={loading}
+                  disabled={waitingForCaptcha || password.length < PASSWORD_MIN_LENGTH || password !== confirmPassword}
+                  label={isPl ? "Załóż konto" : "Create account"}
+                />
                 <div className="pt-1 text-center text-[12px] text-[var(--chan-muted)]">
                   <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("sign-in")}>
                     {isPl ? "Masz już konto? Zaloguj się" : "Already have an account? Sign in"}

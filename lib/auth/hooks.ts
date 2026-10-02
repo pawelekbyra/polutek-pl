@@ -3,11 +3,10 @@ import { APIError, createAuthMiddleware } from "better-auth/api";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { DEFAULT_AVATAR_URL } from "@/lib/auth/avatar";
-import { validateNickname } from "@/lib/auth/nickname";
 import { recordAuthAudit } from "./audit";
 import { SIGN_IN_EMAIL_LIMIT, SIGN_IN_EMAIL_WINDOW_SECONDS } from "./config";
 import { hitAuthCounter } from "./rate-limit-storage";
-import { queuePasswordChangedEmail, queueWelcomeEmail } from "./emails";
+import { queuePasswordChangedEmail } from "./emails";
 
 type HookCtx = {
   path?: string;
@@ -20,38 +19,26 @@ function readLanguageCookie(ctx: HookCtx): "pl" | "en" {
   return /(?:^|;\s*)app-language=pl(?:;|$)/.test(cookie) ? "pl" : "en";
 }
 
-export async function isNicknameTaken(name: string, exceptUserId?: string): Promise<boolean> {
-  const taken = await prisma.user.findFirst({
-    where: {
-      isDeleted: false,
-      name: { equals: name, mode: "insensitive" },
-      ...(exceptUserId ? { id: { not: exceptUserId } } : {}),
-    },
-    select: { id: true },
-  });
-  return Boolean(taken);
-}
-
 type NewUser = Record<string, unknown> & { name?: string | null; email: string };
 
-/** databaseHooks.user.create.before: nickname rules, default avatar, onboarding flag, language. */
-export async function beforeUserCreate(user: NewUser, ctx: HookCtx) {
-  const isEmailSignUp = ctx?.path === "/sign-up/email";
-  const data: Record<string, unknown> = { ...user, image: DEFAULT_AVATAR_URL };
+/** Neutral stand-in name for accounts that have not picked a nickname yet (never shown as final). */
+export function placeholderNameFromEmail(email: string): string {
+  const local = email.split("@")[0]?.replace(/[^\p{L}\p{N}._ -]/gu, "").trim() ?? "";
+  return (local || "user").slice(0, 30);
+}
 
-  if (isEmailSignUp) {
-    const nickname = validateNickname(String(user.name ?? ""));
-    if (!nickname.ok) {
-      throw new APIError("BAD_REQUEST", { message: "INVALID_NICKNAME", code: "INVALID_NICKNAME" });
-    }
-    if (await isNicknameTaken(nickname.value)) {
-      throw new APIError("BAD_REQUEST", { message: "NICKNAME_TAKEN", code: "NICKNAME_TAKEN" });
-    }
-    data.name = nickname.value;
+/**
+ * databaseHooks.user.create.before: default avatar, onboarding flag, language. Nobody (e-mail or Google)
+ * picks a nickname at sign-up: every new account gets a placeholder name and `onboardingPending`, and
+ * chooses the nickname (checked for uniqueness in completeOnboarding) in the first-sign-in dialog.
+ */
+export async function beforeUserCreate(user: NewUser, ctx: HookCtx) {
+  const data: Record<string, unknown> = { ...user, image: DEFAULT_AVATAR_URL, onboardingPending: true };
+
+  if (ctx?.path === "/sign-up/email") {
+    data.name = placeholderNameFromEmail(user.email);
   } else {
-    // Google (redirect or One Tap): the provider name is only a placeholder until the viewer
-    // picks a nickname in the first-sign-in dialog.
-    data.onboardingPending = true;
+    // Google (redirect or One Tap): the provider name is only a placeholder as well.
     data.language = readLanguageCookie(ctx);
   }
   return { data };
@@ -60,10 +47,6 @@ export async function beforeUserCreate(user: NewUser, ctx: HookCtx) {
 /** databaseHooks.user.create.after: audit only. The welcome mail goes out after verification / onboarding. */
 export async function afterUserCreate(user: { id?: string }, ctx: HookCtx) {
   await recordAuthAudit({ action: "AUTH_SIGN_UP", userId: user.id ?? null, metadata: { path: ctx?.path ?? "unknown" } });
-}
-
-export function sendWelcomeOnce(user: { email: string; name?: string | null; language?: string | null }) {
-  queueWelcomeEmail(user);
 }
 
 /** databaseHooks.session.create.before: a soft-deleted account can never get a session. */
@@ -122,7 +105,31 @@ export const authBeforeHook = createAuthMiddleware(async (ctx) => {
   }
 });
 
+/**
+ * Owner decision 2026-10-02: sign-up with an address that already has an account says so
+ * (EMAIL_TAKEN) instead of the generic response. Runs as an AFTER hook on purpose: Better Auth runs
+ * `options.hooks.before` ahead of the captcha plugin, so a before hook would let this oracle answer
+ * without Turnstile; the endpoint itself runs after the rate limiter and the captcha. For an existing
+ * address the endpoint returns a synthetic user whose id differs from the stored one.
+ */
+export async function rejectExistingEmailSignUp(ctx: { context: { returned?: unknown }; body?: unknown }) {
+  const returned = ctx.context.returned as { user?: { id?: string } } | undefined;
+  const body = ctx.body as { email?: unknown } | undefined;
+  const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
+  if (!email || !returned?.user?.id || returned instanceof Error) return;
+  const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+  if (!existing || existing.id === returned.user.id) return;
+  const providers = await prisma.account.findMany({ where: { userId: existing.id }, select: { providerId: true } });
+  const ids = providers.map((p) => p.providerId);
+  const googleOnly = ids.includes("google") && !ids.includes("credential");
+  const code = googleOnly ? "EMAIL_TAKEN_GOOGLE" : "EMAIL_TAKEN";
+  throw new APIError("UNPROCESSABLE_ENTITY", { message: code, code });
+}
+
 export const authAfterHook = createAuthMiddleware(async (ctx) => {
+  if (ctx.path === "/sign-up/email") {
+    await rejectExistingEmailSignUp(ctx);
+  }
   if (ctx.path === "/change-password") {
     const user = ctx.context.session?.user;
     if (user) {

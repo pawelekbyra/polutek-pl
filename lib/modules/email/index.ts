@@ -4,7 +4,6 @@ export {
   sendPasswordChangedEmail,
   sendVerificationEmail,
   sendPasswordResetEmail,
-  sendAccountExistsEmail,
   sendAccountDeletedEmail,
   sendDonationThankYouEmail,
   sendBecomePatronEmail,

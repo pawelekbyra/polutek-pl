@@ -1,13 +1,10 @@
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import {
-  sendAccountExistsEmail,
   sendPasswordChangedEmail,
   sendPasswordResetEmail,
   sendVerificationEmail,
-  sendWelcomeEmail,
 } from "@/lib/modules/email";
-import { getAuthBaseUrl } from "./config";
 
 type MailUser = { email: string; name?: string | null };
 
@@ -40,17 +37,4 @@ export function queuePasswordResetEmail(user: MailUser, url: string) {
 
 export function queuePasswordChangedEmail(user: MailUser) {
   fire("password changed", async () => sendPasswordChangedEmail(user.email, await languageFor(user.email)));
-}
-
-/** Sent to the owner of an address when somebody tries to sign up with it again. */
-export function queueAccountExistsEmail(user: MailUser) {
-  fire("account exists", async () =>
-    sendAccountExistsEmail(user.email, `${getAuthBaseUrl()}/`, await languageFor(user.email)),
-  );
-}
-
-export function queueWelcomeEmail(user: MailUser & { language?: string | null }) {
-  fire("welcome", async () =>
-    sendWelcomeEmail(user.email, user.name || undefined, user.language === "pl" ? "pl" : "en"),
-  );
 }
