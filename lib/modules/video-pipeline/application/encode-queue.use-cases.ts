@@ -6,6 +6,7 @@ import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { EncodeJobError, STALE_HEARTBEAT_MS, isActiveStatus, parseVersionNumber, type EncodeJobStatus, type EncodeStage } from "../domain/encode-job.state";
 import { EncodeJobRepository } from "../infrastructure/encode-job.repository";
+import { actorId, requireVideo } from "./video-guard";
 
 /** AppSetting key the worker refreshes every ~30 s so the admin can tell "queued" from "no worker". */
 export const WORKER_HEARTBEAT_SETTING = "video_worker_heartbeat";
@@ -65,17 +66,6 @@ export function toEncodeJobDto(job: VideoEncodeJob, now: Date): EncodeJobDto {
     finishedAt: job.finishedAt?.toISOString() ?? null,
     heartbeatFresh: job.status === "RUNNING" && job.heartbeatAt !== null && now.getTime() - job.heartbeatAt.getTime() <= STALE_HEARTBEAT_MS,
   };
-}
-
-function actorId(ctx: AppContext): string | null {
-  return ctx.actor.type === "admin" ? ctx.actor.userId : null;
-}
-
-async function requireVideo(videoId: string, ctx: AppContext) {
-  const channel = await MainChannelService.getRequired(ctx);
-  const video = await ctx.prisma.video.findFirst({ where: { id: videoId, creatorId: channel.id }, select: { id: true, title: true, status: true, activeOriginalId: true } });
-  if (!video) throw new AppError("Film nie istnieje.", 404, "VIDEO_NOT_FOUND");
-  return video;
 }
 
 function repo(ctx: AppContext) {

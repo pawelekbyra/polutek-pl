@@ -585,6 +585,10 @@ model VideoOriginal {
   status            VideoOriginalStatus @default(UPLOADING)
   failureReason     String?
   version           Int                 @default(1)
+  /// Multipart upload to R2 in progress (own pipeline): UploadId and the part layout chosen at start.
+  uploadId          String?
+  uploadPartSize    Int?
+  uploadPartCount   Int?
   uploadStartedAt   DateTime?
   uploadCompletedAt DateTime?
   verifiedAt        DateTime?

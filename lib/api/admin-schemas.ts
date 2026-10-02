@@ -191,3 +191,22 @@ export const adminCloudflareUploadSchema = z.object({
   fileSize: z.number().optional(),
   contentType: z.string().optional(),
 });
+
+// ---- own video pipeline: resumable multipart upload to R2 (lib/modules/video-pipeline) ----
+
+export const adminMultipartStartSchema = z.object({
+  fileName: z.string().min(1).max(300),
+  fileSize: z.number().int().positive(),
+  contentType: z.string().max(100).optional(),
+});
+
+export const adminMultipartPartsSchema = z.object({
+  originalId: z.string().min(1).max(64),
+  partNumbers: z.array(z.number().int().min(1).max(10_000)).min(1).max(50),
+});
+
+export const adminMultipartCompleteSchema = z.object({
+  originalId: z.string().min(1).max(64),
+  parts: z.array(z.object({ partNumber: z.number().int().min(1).max(10_000), etag: z.string().min(1).max(200) })).min(1).max(10_000),
+  publishAfterReady: z.boolean().optional(),
+});
