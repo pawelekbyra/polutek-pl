@@ -61,7 +61,7 @@ describe("error messages (F-05, F-03)", () => {
     expect(authErrorMessage({ code: "SESSION_NOT_FRESH", status: 403 }, false)).not.toBe(GENERIC_EN);
   });
 
-  it.fails("F-03: TOKEN_EXPIRED (expired e-mail verification link) has its own message", () => {
+  it("F-03: TOKEN_EXPIRED (expired e-mail verification link) has its own message", () => {
     expect(authErrorMessage({ code: "TOKEN_EXPIRED" }, false)).not.toBe(GENERIC_EN);
   });
 });

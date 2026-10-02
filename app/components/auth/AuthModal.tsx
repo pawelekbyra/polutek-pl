@@ -4,19 +4,22 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "../LanguageContext";
-import type { AuthView } from "./AuthModalProvider";
+import type { AuthNotice, AuthView } from "./AuthModalProvider";
 import { Divider, Field, OAuthButtons, PrimaryButton } from "./AuthFormParts";
 import { TurnstileWidget, useCaptchaRequired, type CaptchaState, type TurnstileHandle } from "./TurnstileWidget";
 import { authClient, captchaFetchOptions } from "@/lib/auth/client";
+import { useAuth } from "@/lib/auth/react";
 import { authErrorMessage } from "@/lib/auth/errors";
 import { PASSWORD_MIN_LENGTH } from "@/lib/auth/config";
-import { clearReturnPath, peekReturnPath, rememberReturnPathIfNone } from "@/lib/auth/sso-return";
+import { clearReturnPath, peekReturnPath, rememberReturnPathIfNone, withQueryFlag } from "@/lib/auth/sso-return";
 
-type InternalView = "sign-in" | "sign-up" | "verify-sent" | "forgot" | "forgot-sent" | "two-factor";
+type InternalView = "sign-in" | "sign-up" | "verify-sent" | "link-expired" | "forgot" | "forgot-sent" | "two-factor";
 
 interface AuthModalProps {
   open: boolean;
   initialView: AuthView;
+  /** Explains what happened when the modal opens after an e-mail link was clicked. */
+  notice?: AuthNotice | null;
   onOpenChange: (open: boolean) => void;
 }
 
@@ -26,10 +29,11 @@ function passwordMismatchMessage(isPl: boolean) {
 
 type OpError = { code?: string; message?: string; status?: number } | null | undefined;
 
-export default function AuthModal({ open, initialView, onOpenChange }: AuthModalProps) {
+export default function AuthModal({ open, initialView, notice = null, onOpenChange }: AuthModalProps) {
   const router = useRouter();
   const { language } = useLanguage();
   const isPl = language === "pl";
+  const { isSignedIn } = useAuth();
   const captchaRequired = useCaptchaRequired();
   const captchaRef = useRef<TurnstileHandle>(null);
 
@@ -48,20 +52,36 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
 
   useEffect(() => {
     if (open) {
-      setView(initialView);
+      setView(notice === "link-expired" ? "link-expired" : initialView);
       setError(null);
-      setInfo(null);
+      setInfo(
+        notice === "verified"
+          ? (isPl ? "Adres e-mail potwierdzony. Zaloguj się." : "Email confirmed. Please sign in.")
+          : null,
+      );
       setCode("");
       setConfirmPassword("");
       setEmailTaken(null);
       setLoading(false);
     }
-  }, [open, initialView]);
+    // isPl is read only to localise the one-off notice text, not a reason to reset the form.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialView, notice]);
+
+  // The confirmation link was opened in another tab or browser: the session appears here on focus,
+  // so the "check your inbox" screen must not stay behind.
+  useEffect(() => {
+    if (open && isSignedIn && (view === "verify-sent" || view === "link-expired")) {
+      onOpenChange(false);
+      router.refresh();
+    }
+  }, [open, isSignedIn, view, onOpenChange, router]);
 
   const captchaReady = !captchaRequired || Boolean(captchaToken);
   const currentPath = () => (typeof window !== "undefined" ? window.location.pathname + window.location.search : "/");
   // Where the visitor ends up after signing in: the path the proxy asked for (`?next=`), else this page.
-  const returnTo = () => peekReturnPath() ?? currentPath();
+  // E-mail links (verification) bring the visitor back here with `?verified=1`, which shows a confirmation.
+  const returnTo = () => withQueryFlag(peekReturnPath() ?? currentPath(), "verified", "1");
 
   function fail(err: OpError) {
     setError(authErrorMessage(err, isPl));
@@ -85,6 +105,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     const { data, error: signInError } = await authClient.signIn.email({
       email,
       password,
+      callbackURL: returnTo(),
       fetchOptions: captchaFetchOptions(captchaToken),
     });
     if (signInError) {
@@ -133,7 +154,8 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     captchaRef.current?.reset();
   }
 
-  async function handleResend() {
+  async function handleResend(e?: React.FormEvent) {
+    e?.preventDefault();
     setLoading(true);
     setError(null);
     const { error: resendError } = await authClient.sendVerificationEmail({
@@ -191,6 +213,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     "sign-in": isPl ? "Zaloguj się" : "Sign in",
     "sign-up": isPl ? "Załóż konto" : "Create account",
     "verify-sent": isPl ? "Sprawdź skrzynkę" : "Check your inbox",
+    "link-expired": isPl ? "Link wygasł" : "Link expired",
     forgot: isPl ? "Reset hasła" : "Reset password",
     "forgot-sent": isPl ? "Sprawdź skrzynkę" : "Check your inbox",
     "two-factor": isPl ? "Weryfikacja dwuetapowa" : "Two-step verification",
@@ -327,7 +350,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
                 {captcha}
                 <button
                   type="button"
-                  onClick={handleResend}
+                  onClick={() => void handleResend()}
                   disabled={loading || waitingForCaptcha}
                   className="text-[12px] font-bold underline hover:text-[var(--chan-ink)] disabled:opacity-50"
                 >
@@ -339,6 +362,24 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
                   </button>
                 </div>
               </div>
+            )}
+
+            {view === "link-expired" && (
+              <form onSubmit={handleResend} className="mt-5 space-y-3.5">
+                <p className="text-[13px] text-[var(--chan-body)]">
+                  {isPl
+                    ? "Ten link potwierdzający wygasł albo został już użyty. Podaj e-mail, a wyślemy nowy."
+                    : "This confirmation link has expired or was already used. Enter your email and we'll send a new one."}
+                </p>
+                <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
+                {captcha}
+                <PrimaryButton loading={loading} busy={captchaChecking} disabled={waitingForCaptcha} label={isPl ? "Wyślij nowy link" : "Send a new link"} />
+                <div className="pt-1 text-center text-[12px] text-[var(--chan-muted)]">
+                  <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("sign-in")}>
+                    {isPl ? "Wróć do logowania" : "Back to sign in"}
+                  </button>
+                </div>
+              </form>
             )}
 
             {view === "forgot" && (

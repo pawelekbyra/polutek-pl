@@ -26,6 +26,10 @@ const MESSAGES: Record<string, { pl: string; en: string }> = {
   TOO_MANY_ATTEMPTS: { pl: "Za dużo prób. Spróbuj ponownie za kilkanaście minut.", en: "Too many attempts. Try again in a few minutes." },
   ACCOUNT_DELETED: { pl: "To konto zostało usunięte.", en: "This account has been deleted." },
   INVALID_TOKEN: { pl: "Link wygasł lub jest nieprawidłowy. Poproś o nowy.", en: "The link expired or is invalid. Request a new one." },
+  TOKEN_EXPIRED: {
+    pl: "Link potwierdzający wygasł. Poproś o nowy.",
+    en: "The confirmation link has expired. Request a new one.",
+  },
   INVALID_CODE: { pl: "Nieprawidłowy kod.", en: "Invalid code." },
   INVALID_BACKUP_CODE: { pl: "Nieprawidłowy kod zapasowy.", en: "Invalid backup code." },
   MISSING_RESPONSE: { pl: "Potwierdź, że nie jesteś robotem.", en: "Please confirm you are not a robot." },
