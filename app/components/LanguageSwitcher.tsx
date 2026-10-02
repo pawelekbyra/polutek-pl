@@ -19,9 +19,11 @@ export const LANGUAGE_OPTIONS: readonly LanguageOption[] = [
   { code: "PL", label: "Polski", locale: "pl" },
   { code: "EN", label: "English", locale: "en" },
   { code: "DE", label: "Deutsch", locale: null },
-  { code: "FR", label: "Français", locale: null },
   { code: "ES", label: "Español", locale: null },
+  { code: "FR", label: "Français", locale: null },
   { code: "IT", label: "Italiano", locale: null },
+  { code: "PT", label: "Português", locale: null },
+  { code: "ZH", label: "中文", locale: null },
 ];
 
 const NOTE_VISIBLE_MS = 4500;

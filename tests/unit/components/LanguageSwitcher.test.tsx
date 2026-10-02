@@ -14,11 +14,11 @@ describe("LanguageSwitcher", () => {
     expect(screen.getByRole("button").getAttribute("aria-expanded")).toBe("false");
   });
 
-  it("lists PL, EN, DE, FR, ES and IT and switches to a supported one", () => {
+  it("lists the eight languages and switches to a supported one", () => {
     const onSelect = vi.fn();
     render(<LanguageSwitcher language="pl" onSelect={onSelect} />);
     fireEvent.click(screen.getByRole("button"));
-    for (const label of ["Polski", "English", "Deutsch", "Français", "Español", "Italiano"]) {
+    for (const label of ["Polski", "English", "Deutsch", "Español", "Français", "Italiano", "Português", "中文"]) {
       expect(screen.getByText(label)).toBeTruthy();
     }
     fireEvent.click(screen.getByText("English"));
