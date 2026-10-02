@@ -2,7 +2,7 @@
  * Limits (per minute, per admin user and per IP):
  *   GET/HEAD default 120, mutations default 120 (bulk comment moderation fires
  *   up to 50 POSTs at once), refund 5, dispute-sync 5, emails/broadcast 3,
- *   notifications/broadcast 3, users/[userId]/patron 10, payment-settings 10.
+ *   notifications/broadcast 3, users/[userId]/patron 10, payment-settings 10, video upload start/complete/abort 20.
  *
  * Central rate limiting for /api/admin, enforced from middleware.ts.
  *
@@ -33,6 +33,7 @@ export const ADMIN_STRICT_RULES: StrictRule[] = [
   { name: "notifications-broadcast", pattern: /^\/api\/admin\/notifications\/broadcast\/?$/, limit: 3, mutationsOnly: true },
   { name: "users-patron", pattern: /^\/api\/admin\/users\/[^/]+\/patron\/?$/, limit: 10, mutationsOnly: true },
   { name: "payment-settings", pattern: /^\/api\/admin\/payment-settings\/?$/, limit: 10, mutationsOnly: true },
+  { name: "video-upload", pattern: /^\/api\/admin\/videos\/[^/]+\/original-upload\/multipart(\/complete)?\/?$/, limit: 20, mutationsOnly: true },
 ];
 
 export type AdminRateBucket = { bucket: string; limit: number };
