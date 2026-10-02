@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import type { VideoMediaState } from "./types";
 
 function label(provider: string) {
-  return provider === "CLOUDFLARE_STREAM" ? "Cloudflare Stream" : provider === "MUX" ? "Mux" : provider;
+  return provider === "CLOUDFLARE_STREAM" ? "Cloudflare Stream" : provider === "MUX" ? "Mux" : provider === "SELF_HLS" ? "Własny HLS" : provider;
 }
 
 export function ActivePlaybackRouteCard({ route }: { route: VideoMediaState["activeRoute"] }) {

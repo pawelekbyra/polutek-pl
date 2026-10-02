@@ -20,6 +20,7 @@ interface VideoSourcesPanelProps {
 function ProviderBadge({ provider }: { provider: string }) {
   if (provider === "CLOUDFLARE_STREAM") return <Badge variant="secondary" className="gap-1"><Globe className="h-3 w-3" />Cloudflare Stream</Badge>;
   if (provider === "MUX") return <Badge variant="secondary" className="gap-1 text-violet-700 bg-violet-50">▶ Mux</Badge>;
+  if (provider === "SELF_HLS") return <Badge variant="secondary" className="gap-1 text-emerald-700 bg-emerald-50">▶ Własny HLS</Badge>;
   if (provider === "YOUTUBE") return <Badge variant="secondary" className="gap-1 text-red-600"><Youtube className="h-3 w-3" />YouTube</Badge>;
   if (provider === "VIMEO") return <Badge variant="secondary" className="gap-1 text-sky-700 bg-sky-50">◈ Vimeo</Badge>;
   return <Badge variant="outline">{provider}</Badge>;

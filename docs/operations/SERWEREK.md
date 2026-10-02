@@ -323,3 +323,7 @@ Clerk jest usunięty z kodu. Logowanie działa w samej aplikacji na lokalnym Pos
 7. Webhook Clerk (`/api/webhooks/clerk`) już nie istnieje: wyłączyć endpoint w panelu Clerk, gdy konto Clerk przestanie być potrzebne.
 
 **Ryzyka:** nie testowano na żywo logowania Google/One Tap ani wysyłki e-maili Resend z serwerka (kod i testy jednostkowe są zielone); haveIBeenPwned jest fail-closed (gdy API HIBP niedostępne, rejestracja i zmiana hasła zwracają błąd); rotacja `BETTER_AUTH_SECRET` wylogowuje wszystkich i unieważnia zapisane sekrety TOTP (użytkownicy z 2FA potrzebują kodów zapasowych).
+
+## 18. Własny HLS (pilot 2026-10-02)
+
+Wideo z własnego HLS: kodowanie na serwerku (`/opt/serwerek/data/hls-work`, `node encode-hls.mjs`, `nice -n 10`), bucket R2 `polutek-hls`, Worker `polutek-hls-edge` na `video.pawelperfect.com` (Cloudflare Free), provider `SELF_HLS` w aplikacji z fallbackiem na poprzedniego dostawcę. **Pełny opis, polecenia deployu i rollbacku: `docs/operations/HLS-SELF-HOSTED.md`; decyzja i koszty: `docs/architecture/self-hosted-hls.md`.** W `app.env` doszły `HLS_TOKEN_SECRET` i `HLS_DELIVERY_BASE_URL` (kopia `app.env.bak-hls-20261002`; aplikacja niezrestartowana, wchodzą przy następnym `deploy.sh`). Wiersze `SELF_HLS` w bazie tworzymy dopiero po deployu (starszy kod nie zna nowej wartości enum).

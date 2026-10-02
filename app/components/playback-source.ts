@@ -21,7 +21,7 @@ export type ResolvedPlaybackSource =
         reason: string;
     };
 
-const CUSTOM_PLAYER_KINDS = new Set(['hls', 'dash', 'mp4', 'direct', 'vercel_blob', 'blob']);
+const CUSTOM_PLAYER_KINDS = new Set(['hls', 'dash', 'mp4', 'direct', 'vercel_blob', 'blob', 'mux', 'self_hls']);
 const EMBED_PROVIDER_KINDS = new Set(['youtube', 'vimeo']);
 
 function normalizeKind(kind: string | null | undefined): string {

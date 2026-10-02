@@ -5,7 +5,9 @@ import Image from 'next/image';
 import {
     MediaPlayer,
     MediaProvider,
+    isHLSProvider,
     type MediaPlayerInstance,
+    type MediaProviderAdapter,
 } from '@vidstack/react';
 import PolutekControls from './player/PolutekControls';
 import { useVideoAccess } from './PremiumWrapper';
@@ -46,8 +48,11 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
     const isAdmin = false;
     const [playerKey, setPlayerKey] = useState(0);
     const { source, tracking, player: playerConfig } = playbackPlan || {};
-    const videoUrl = source?.playbackUrl;
-    const videoSourceKind = source?.kind;
+    // Own HLS carries the previous provider as `source.fallback`: if it fails to load we switch to it once.
+    const [fallbackActive, setFallbackActive] = useState(false);
+    const activeFallback = fallbackActive ? source?.fallback : undefined;
+    const videoUrl = activeFallback?.playbackUrl ?? source?.playbackUrl;
+    const videoSourceKind = activeFallback?.kind ?? source?.kind;
     const videoEmbedUrl = source?.embedUrl;
     const textTracks = normalizeTextTracks(playerConfig?.textTracks || video.textTracks);
 
@@ -112,11 +117,12 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
         setBufferedEnoughForReveal(false);
         bufferedEnoughRef.current = false;
         setLoadError(null);
+        setFallbackActive(false);
         setPlayerKey((key) => key + 1);
         hasReached10s.current = false;
         viewCountRequestInFlight.current = false;
         reachedThresholds.current = {};
-    }, [video.id, videoUrl, videoEmbedUrl, videoSourceKind, tracking?.playbackSessionId]);
+    }, [video.id, source?.playbackUrl, videoEmbedUrl, source?.kind, tracking?.playbackSessionId]);
 
     useEffect(() => {
         setBufferingOverlayTimedOut(false);
@@ -324,7 +330,20 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
                                 }
                             }
                         }}
+                        onProviderChange={(provider: MediaProviderAdapter | null) => {
+                            // Quick start for short VOD: assume a decent connection, size quality to the player.
+                            if (isHLSProvider(provider) && videoSourceKind === 'self_hls') {
+                                provider.config = { startLevel: -1, abrEwmaDefaultEstimate: 4_000_000, capLevelToPlayerSize: true, lowLatencyMode: false, maxBufferLength: 30, backBufferLength: 30 };
+                            }
+                        }}
                         onError={() => {
+                            if (!fallbackActive && source?.fallback) {
+                                sendEvent('PLAYER_ERROR', { errorCode: 'SELF_HLS_FALLBACK' });
+                                setFallbackActive(true);
+                                setHasStartedPlayback(false);
+                                setPlayerKey((key) => key + 1);
+                                return;
+                            }
                             setLoadError('Nie udało się załadować materiału wideo. Sprawdź link, CORS lub dostępność źródła.');
                             sendEvent('PLAYER_ERROR', { errorCode: 'LOAD_FAILED' });
                         }}

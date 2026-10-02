@@ -28,6 +28,12 @@ export function generateCSP() {
     '*.cloudflarestream.com',
   ];
 
+  // Own HLS delivery (Worker on video.<domain>): manifests/segments via XHR/fetch (hls.js) and media-src.
+  const selfHlsHosts = Array.from(new Set([
+    'video.pawelperfect.com',
+    ...parseMediaHosts(process.env.HLS_DELIVERY_BASE_URL),
+  ]));
+
   const embedFrameHosts = [
     'iframe.videodelivery.net',
     '*.videodelivery.net',
@@ -46,6 +52,7 @@ export function generateCSP() {
   const mediaHosts = Array.from(new Set([
     ...configuredMediaHosts,
     ...cloudflareStreamPlaybackHosts,
+    ...selfHlsHosts,
   ])).map(h => `https://${h}`).join(' ');
 
   const imageHosts = Array.from(new Set([
@@ -63,6 +70,7 @@ export function generateCSP() {
     ...cloudflareStreamUploadHosts,
     ...cloudflareStreamPlaybackHosts,
     ...getR2UploadHosts(),
+    ...selfHlsHosts,
     'api.stripe.com',
     'fonts.googleapis.com',
     'challenges.cloudflare.com',
