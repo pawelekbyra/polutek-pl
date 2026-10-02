@@ -90,17 +90,16 @@ describe("AuthModal (F-01, F-07)", () => {
     return render(<AuthModal open initialView="sign-in" onOpenChange={() => undefined} />);
   }
 
-  it.fails("F-01: Google sign-in keeps the `next` path the proxy asked us to return to", async () => {
+  it("F-01: Google sign-in keeps the `next` path the proxy asked us to return to", async () => {
     window.sessionStorage.setItem(SSO_RETURN_STORAGE_KEY, "/admin");
     h.client.signIn.social.mockResolvedValue({ error: null });
     renderModal();
     fireEvent.click(screen.getByRole("button", { name: /continue with google/i }));
     await waitFor(() => expect(h.client.signIn.social).toHaveBeenCalled());
-    // handleOAuth() currently overwrites it with the current location ("/"), so /admin is lost.
     expect(window.sessionStorage.getItem(SSO_RETURN_STORAGE_KEY)).toBe("/admin");
   });
 
-  it.fails("F-01: e-mail sign-in returns the visitor to the remembered `next` path", async () => {
+  it("F-01: e-mail sign-in returns the visitor to the remembered `next` path", async () => {
     window.sessionStorage.setItem(SSO_RETURN_STORAGE_KEY, "/admin");
     h.client.signIn.email.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
     const assign = vi.fn();

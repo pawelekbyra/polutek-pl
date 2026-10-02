@@ -4,7 +4,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import AuthModal from "./AuthModal";
 import GoogleOneTapPrompt from "./GoogleOneTapPrompt";
 import OnboardingDialog from "./OnboardingDialog";
-import { rememberReturnPath } from "@/lib/auth/sso-return";
+import { clearReturnPath, rememberReturnPath } from "@/lib/auth/sso-return";
 
 export type AuthView = "sign-in" | "sign-up";
 
@@ -26,7 +26,14 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
     setIsOpen(true);
   }, []);
 
-  const close = useCallback(() => setIsOpen(false), []);
+  // Closing the modal without signing in drops a remembered `next` path, so it cannot send a later,
+  // unrelated sign-in somewhere unexpected.
+  const handleOpenChange = useCallback((nextOpen: boolean) => {
+    if (!nextOpen) clearReturnPath();
+    setIsOpen(nextOpen);
+  }, []);
+
+  const close = useCallback(() => handleOpenChange(false), [handleOpenChange]);
 
   // The proxy sends visitors without a session here (`/?signin=1&next=/path`) instead of a bare
   // 404/401: open the sign-in modal and tidy the URL.
@@ -48,7 +55,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthModalContext.Provider value={value}>
       {children}
-      <AuthModal open={isOpen} initialView={view} onOpenChange={setIsOpen} />
+      <AuthModal open={isOpen} initialView={view} onOpenChange={handleOpenChange} />
       <OnboardingDialog />
       {/* Google's native One Tap prompt for logged-out visitors (hidden when signed in). */}
       <GoogleOneTapPrompt />

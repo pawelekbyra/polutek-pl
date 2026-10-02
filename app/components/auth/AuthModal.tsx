@@ -10,7 +10,7 @@ import { TurnstileWidget, useCaptchaRequired, type CaptchaState, type TurnstileH
 import { authClient, captchaFetchOptions } from "@/lib/auth/client";
 import { authErrorMessage } from "@/lib/auth/errors";
 import { PASSWORD_MIN_LENGTH } from "@/lib/auth/config";
-import { rememberReturnPath } from "@/lib/auth/sso-return";
+import { clearReturnPath, peekReturnPath, rememberReturnPathIfNone } from "@/lib/auth/sso-return";
 
 type InternalView = "sign-in" | "sign-up" | "verify-sent" | "forgot" | "forgot-sent" | "two-factor";
 
@@ -59,7 +59,9 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
   }, [open, initialView]);
 
   const captchaReady = !captchaRequired || Boolean(captchaToken);
-  const returnTo = () => (typeof window !== "undefined" ? window.location.pathname + window.location.search : "/");
+  const currentPath = () => (typeof window !== "undefined" ? window.location.pathname + window.location.search : "/");
+  // Where the visitor ends up after signing in: the path the proxy asked for (`?next=`), else this page.
+  const returnTo = () => peekReturnPath() ?? currentPath();
 
   function fail(err: OpError) {
     setError(authErrorMessage(err, isPl));
@@ -69,7 +71,10 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
 
   function finishSignedIn() {
     setLoading(false);
+    const next = peekReturnPath();
+    clearReturnPath();
     onOpenChange(false);
+    if (next && next !== currentPath()) router.push(next);
     router.refresh();
   }
 
@@ -171,7 +176,8 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
 
   async function handleOAuth(provider: "google") {
     setError(null);
-    rememberReturnPath(returnTo());
+    // Keep a path the proxy asked for (`next`); only fall back to the current page when none is stored.
+    rememberReturnPathIfNone(currentPath());
     const { error: socialError } = await authClient.signIn.social({
       provider,
       callbackURL: "/sso-callback",

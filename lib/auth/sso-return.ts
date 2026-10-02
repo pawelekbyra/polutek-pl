@@ -26,3 +26,31 @@ export function readReturnPath(): string {
     return "/";
   }
 }
+
+/** The path remembered for after sign-in, or null when none was stored (or it is just "/"). */
+export function peekReturnPath(): string | null {
+  const path = readReturnPath();
+  return path === "/" ? null : path;
+}
+
+/** Remember `path` only when nothing is stored yet, so the proxy's `next` is not overwritten by the tidied-up URL. */
+export function rememberReturnPathIfNone(path: string): void {
+  if (peekReturnPath() === null) rememberReturnPath(path);
+}
+
+export function clearReturnPath(): void {
+  try {
+    window.sessionStorage.removeItem(SSO_RETURN_STORAGE_KEY);
+  } catch {
+    // storage unavailable: nothing to clear
+  }
+}
+
+/** Adds a query flag to a same-site path, keeping any query/hash it already has. */
+export function withQueryFlag(path: string, name: string, value: string): string {
+  const hashIndex = path.indexOf("#");
+  const hash = hashIndex >= 0 ? path.slice(hashIndex) : "";
+  const withoutHash = hashIndex >= 0 ? path.slice(0, hashIndex) : path;
+  const separator = withoutHash.includes("?") ? "&" : "?";
+  return `${withoutHash}${separator}${encodeURIComponent(name)}=${encodeURIComponent(value)}${hash}`;
+}
