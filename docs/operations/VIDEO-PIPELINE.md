@@ -16,6 +16,19 @@ Postgres: VideoEncodeJob (QUEUED) <---- worker (kontener "encoder") SELECT ... F
                                          6. (opcjonalnie) publikuje film
 ```
 
+## 0. Upload oryginału (przeglądarka -> R2, wznawialny)
+
+Admin wgrywa **oryginał** bezpośrednio do prywatnego bucketa `polutek` przez presigned **multipart** (nic nie idzie przez serwer aplikacji):
+
+1. `POST /api/admin/videos/<id>/original-upload/multipart` (`fileName`, `fileSize`, `contentType`): walidacja (rozszerzenie z listy: mp4, m4v, mov, webm, mkv, avi, ts, mts, m2ts; typ `video/*` lub pusty; rozmiar 64 KiB .. **10 GiB**, zmienna `VIDEO_UPLOAD_MAX_BYTES`, twardy sufit 50 GiB), `CreateMultipartUpload`, wiersz `VideoOriginal` (UPLOADING, `uploadId`, układ części: 16 MiB, więcej tylko gdy trzeba zmieścić się w 10 000 części). Odmawia, gdy film ma aktywne kodowanie; poprzedni niedokończony upload tego filmu jest porzucany (i abortowany w R2).
+2. Przeglądarka prosi o presigned PUT-y partiami po 50 (`.../multipart/parts`, ważne 2 h), wysyła 4 części równolegle (XHR, postęp/prędkość/ETA), każdą część ponawia 4 razy (odnawia URL). Po przeładowaniu strony `GET .../multipart?originalId=` mówi, które części R2 już ma, i wysyłane są tylko brakujące (klucz wznowienia w `localStorage`: film + nazwa + rozmiar + mtime).
+3. `POST .../multipart/complete` (lista części z ETagami): `CompleteMultipartUpload`, potem **weryfikacja tego, co naprawdę leży w R2**: rozmiar = zadeklarowany i <= limit, **magic bytes** (MP4/MOV, Matroska/WebM, AVI, MPEG-TS/M2TS; nazwa i typ z przeglądarki nie wystarczają). Plik, który nie przejdzie, jest **kasowany z R2**, oryginał dostaje `FAILED` z powodem, audit `VIDEO_ORIGINAL_UPLOAD_REJECTED`. Poprawny: oryginał `READY`, poprzednie `SUPERSEDED`, `Video.activeOriginalId`, zadanie kodowania w kolejce. Ponowne `complete` jest idempotentne.
+4. `DELETE .../multipart?originalId=` = Anuluj (abort w R2).
+
+Bucket `polutek` zostaje **prywatny** (bez `r2.dev`, bez domeny publicznej). Jednorazowo trzeba ustawić **CORS** (przeglądarka PUT-uje na adres S3 i musi odczytać `ETag`): `npx wrangler r2 bucket cors set polutek --file scripts/hls/originals-cors.json` (plik: dozwolone originy `https://www.pawelperfect.com`/`https://pawelperfect.com`, metody PUT/GET/HEAD, `ExposeHeaders: ETag`). Niedokończone multiparty R2 sprząta sam po 7 dniach.
+
+Audit (`lib/modules/audit`): `VIDEO_ORIGINAL_UPLOAD_PROVISIONED`, `_COMPLETED`, `_REJECTED`, `_ABORTED`, `VIDEO_ENCODE_ENQUEUED`, `_STARTED`, `_SUCCEEDED`, `_FAILED`, `_CANCEL_REQUESTED`, `_CANCELLED`. Trasy są za `requireAdminForApi`, CSRF i limitem żądań z middleware (start/complete/abort: 20/min).
+
 ## 1. Kolejka (Postgres, bez Redisa)
 
 Tabela `VideoEncodeJob` (migracja `20261003100000_add_video_encode_job`). Wybór: **zwykła tabela + `SELECT … FOR UPDATE SKIP LOCKED`**, nie pg-boss. Powód: potrzebujemy jednego typu zadania, jednego workera i widoku w adminie; pg-boss dokłada własny schemat i migracje, własne stany i zależność, a i tak musielibyśmy dopisać postęp, ETA, anulowanie i heartbeat. Tabela to ~200 linii kodu, w pełni pod kontrolą, w tej samej bazie i w tych samych kopiach zapasowych.
