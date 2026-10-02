@@ -1,13 +1,13 @@
 import { AdminLayoutShell } from "./AdminLayoutShell";
 import { AdminFormSkeleton } from "@/components/skeletons/admin";
 import { VideoForm, type CreateVideoSourceMode } from "./VideoForm";
-import { VideoUploadSection } from "./VideoUploadSection";
+import { VideoPipelinePanel } from "./pipeline/VideoPipelinePanel";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "@/app/components/icons";
 
 interface AdminVideoEditViewProps {
   isSubmitting: boolean;
-  createUploadState: any;
+  createUploadState: { videoId: string; publishAfterReady: boolean } | null;
   formData: any;
   setFormData: (data: any) => void;
   formError: string | null;
@@ -20,15 +20,8 @@ interface AdminVideoEditViewProps {
   onVideoFileChange: (file: File | null) => void;
   createSourceMode: CreateVideoSourceMode;
   onCreateSourceModeChange: (mode: CreateVideoSourceMode) => void;
-  existingCloudflareSource: string;
-  onExistingCloudflareSourceChange: (val: string) => void;
-  externalSourceId?: string;
-  onExternalSourceIdChange?: (val: string) => void;
-  currentTier?: string;
   fetchVideos: (page: number) => void;
   page: number;
-  preferredProvider?: string;
-  onPreferredProviderChange?: (value: string) => void;
   onMetadataSaveDuringUpload?: () => Promise<void>;
 }
 
@@ -47,15 +40,8 @@ export function AdminVideoEditView({
   onVideoFileChange,
   createSourceMode,
   onCreateSourceModeChange,
-  existingCloudflareSource,
-  onExistingCloudflareSourceChange,
-  externalSourceId,
-  onExternalSourceIdChange,
-  currentTier,
   fetchVideos,
   page,
-  preferredProvider,
-  onPreferredProviderChange,
   onMetadataSaveDuringUpload,
 }: AdminVideoEditViewProps) {
   const isCreateFlowLocked = Boolean(createUploadState);
@@ -79,24 +65,10 @@ export function AdminVideoEditView({
         onVideoFileChange={onVideoFileChange}
         createSourceMode={createSourceMode}
         onCreateSourceModeChange={onCreateSourceModeChange}
-        existingCloudflareSource={existingCloudflareSource}
-        onExistingCloudflareSourceChange={onExistingCloudflareSourceChange}
-        externalSourceId={externalSourceId}
-        onExternalSourceIdChange={onExternalSourceIdChange}
-        currentTier={currentTier}
-        preferredProvider={preferredProvider}
-        onPreferredProviderChange={onPreferredProviderChange}
       />
-      {createUploadState?.isAttachingExisting ? (
-        <div className="mx-auto max-w-4xl px-4 pb-8 md:px-8">
-          <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm font-medium text-sky-950">
-            Podpinam istniejący asset Cloudflare, synchronizuję status i sprawdzam, czy można wykonać publikację.
-          </div>
-        </div>
-      ) : null}
       {createUploadState && selectedVideoFile ? (
         <div className="mx-auto max-w-4xl px-4 pb-8 md:px-8">
-          <div className="mb-6 rounded-xl border bg-card p-4 shadow-sm flex items-center justify-between">
+          <div className="mb-6 flex items-center justify-between rounded-xl border bg-card p-4 shadow-sm">
             <div>
               <p className="text-sm font-bold uppercase tracking-wide text-blue-600">Trwa przesyłanie</p>
               <p className="text-xs text-muted-foreground">Możesz teraz uzupełnić metadane filmu.</p>
@@ -106,17 +78,16 @@ export function AdminVideoEditView({
               Zapisz zmiany metadanych
             </Button>
           </div>
-          <VideoUploadSection
+          <VideoPipelinePanel
             videoId={createUploadState.videoId}
             initialFile={selectedVideoFile}
             autoStart
-            onUploadComplete={() => fetchVideos(page)}
+            onChanged={() => fetchVideos(page)}
             publishAfterReady={createUploadState.publishAfterReady}
-            preferredProvider={preferredProvider}
           />
           {createUploadState.publishAfterReady ? (
             <p className="mt-3 text-sm text-muted-foreground">
-              Publikacja jest zaplanowana po stronie backendu. Możesz zamknąć przeglądarkę; szkic zostanie opublikowany automatycznie po stanie READY albo pokaże trwały błąd wymagający interwencji.
+              Publikacja jest zaplanowana po stronie backendu. Możesz zamknąć przeglądarkę po zakończeniu wysyłania pliku; film zostanie opublikowany automatycznie po zakodowaniu albo pokaże błąd wymagający interwencji.
             </p>
           ) : null}
         </div>

@@ -221,7 +221,11 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
 }
 
 /** Cancels the upload for good (server aborts the multipart upload) and forgets the resume point. */
-export async function cancelUpload(videoId: string, file: File, originalId: string, fetchFn: typeof fetch = fetch.bind(globalThis), storage?: UploaderOptions["storage"]): Promise<void> {
-  safeStorage(storage)?.removeItem(resumeKey(videoId, file));
+export async function cancelUpload(videoId: string, file: File, fetchFn: typeof fetch = fetch.bind(globalThis), storage?: UploaderOptions["storage"]): Promise<void> {
+  const store = safeStorage(storage);
+  const key = resumeKey(videoId, file);
+  const originalId = store?.getItem(key);
+  store?.removeItem(key);
+  if (!originalId) return;
   await fetchFn(`/api/admin/videos/${encodeURIComponent(videoId)}/original-upload/multipart?originalId=${encodeURIComponent(originalId)}`, { method: "DELETE" }).catch(() => undefined);
 }

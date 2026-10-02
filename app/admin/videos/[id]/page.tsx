@@ -180,7 +180,6 @@ export default function VideoDetailsPage(props: { params: Promise<{ id: string }
                         tier: video.tier,
                         thumbnailUrl: video.thumbnailUrl,
                         status: video.status,
-                        assets: video.assets ?? (video.asset ? [video.asset] : []),
                         original: video.original ?? null,
                       }}
                       onSaved={fetchVideo}

@@ -221,8 +221,6 @@ export default function AdminVideoEditPage(props: EditPageProps) {
         onVideoFileChange={() => {}}
         createSourceMode="UPLOAD"
         onCreateSourceModeChange={() => {}}
-        existingCloudflareSource=""
-        onExistingCloudflareSourceChange={() => {}}
         sidebarExtra={<FundraisingGoalCard value={fundraising} onChange={setFundraising} disabled={isSubmitting} />}
       />
     </AdminLayoutShell>

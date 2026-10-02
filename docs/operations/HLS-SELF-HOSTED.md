@@ -114,6 +114,6 @@ ssh serwerek 'bash /opt/serwerek/data/hls-work/run-sql-on-server.sh <video_id> /
 
 ## Utrzymanie
 
-- Nowy film: zakoduj -> `upload-hls.sh` -> wstaw `VideoAsset`/`VideoPlaybackRoute` (`activate-self-hls.sql` z innym `video_id`). Nie ma jeszcze automatycznej kolejki ani przycisku w adminie (pytanie otwarte).
+- Nowy film: upload w panelu admina, kodowanie robi worker (kolejka w Postgresie): **docs/operations/VIDEO-PIPELINE.md**. Ręczna ścieżka (encode-hls.mjs + upload-hls.sh + SQL) zostaje jako awaryjna.
 - Sprzątanie starych wersji z R2 ręcznie po okresie karencji.
 - Logi Workera: Cloudflare Dashboard (observability włączone).
