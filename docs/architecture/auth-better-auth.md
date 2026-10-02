@@ -61,14 +61,36 @@ stored user id with the synthetic id Better Auth returns for duplicates). Sign-i
 password reset ("if that account exists...") stay enumeration-safe. The old "account exists" e-mail and its
 template were removed.
 
-**Sign-in.** `signIn.email` (Turnstile, 5/min per IP, 10 per 15 min per e-mail). Unverified accounts get a new
-verification link and a 403 `EMAIL_NOT_VERIFIED`. A user with TOTP enabled gets `twoFactorRedirect` and
-finishes with a code or a backup code (`twoFactor.verifyTotp` / `verifyBackupCode`).
+**Sign-in.** `signIn.email` (Turnstile, 10 requests/min per IP). Lockout (audit F-06): only FAILED attempts
+(`INVALID_EMAIL_OR_PASSWORD`) count, 10 per 15 min per e-mail + client IP (so a third party cannot lock the owner
+out from another address) and a high ceiling of 100 per 15 min per e-mail across IPs (distributed guessing; each
+attempt costs a solved captcha). Counted in the after hook, checked read-only (`peek`) in the before hook.
+Unverified accounts get a new verification link and a 403 `EMAIL_NOT_VERIFIED`. A user with TOTP enabled gets
+`twoFactorRedirect` and finishes with a code or a backup code (`twoFactor.verifyTotp` / `verifyBackupCode`).
+"Remember this device" is an unticked checkbox on that step (`trustDevice`, cookie `trustDeviceMaxAge` 7 days).
+**Decision (F-07): 2FA applies to e-mail + password sign-in only.** Google and One Tap sign-in are trusted as
+strong on their own (Google's own 2-step verification), as in Better Auth's defaults; the app never adds a TOTP
+step on top. A wrong password shows a hint at Google / "Forgot password" for Clerk-era accounts without a password.
+
+**Return path (F-01).** The proxy sends gated pages to `/?signin=1&next=/path`. `AuthModalProvider` remembers `next`
+in `sessionStorage` (`lib/auth/sso-return.ts`, same-site relative paths only: `//`, absolute URLs, backslashes and
+`/sso-callback` fall back to `/`); e-mail sign-in navigates there, Google keeps it through `/sso-callback`
+(`rememberReturnPathIfNone`), and closing the modal clears it.
+
+**E-mail links (F-03).** Sign-up/resend/sign-in pass `callbackURL = <return path>?verified=1`. Better Auth redirects
+a good click there (the provider shows "Email confirmed" or, with no session in that browser, opens sign-in with the
+same message) and a bad one to `?error=TOKEN_EXPIRED|INVALID_TOKEN` (the provider opens the modal on a "link
+expired, send a new one" view). The "check your inbox" modal closes by itself when the session appears (the link
+was opened in another tab).
 
 **Google.** Redirect flow (`signIn.social`, callback `/api/auth/callback/google`, return page `/sso-callback`)
 and One Tap (`oneTap` plugin; the client id is handed to the browser at runtime through
 `AuthPublicConfigProvider`, so it is not baked into the bundle). Account linking is on with `google` as a trusted
 provider: a Google sign-in whose e-mail matches an existing row signs into that row (comments and payments stay).
+`requireLocalEmailVerified: false` (F-04), so this also works when the row only has a never-verified password
+sign-up (see the pre-hijack guard below). One Tap (F-10) is offered at most once per day per browser
+(`localStorage` `pp:one-tap-last`), after the home entry gate, never on `/sso-callback` or `/reset-password`; the CSP
+allows `https://accounts.google.com/gsi/style`.
 A brand-new Google user (like every new e-mail sign-up) gets `onboardingPending = true` and must pick a nickname (and optionally an avatar) in
 `OnboardingDialog`; the welcome e-mail is sent after that (`POST /api/user/first-sign-in`).
 
@@ -77,16 +99,32 @@ A brand-new Google user (like every new e-mail sign-up) gets `onboardingPending 
 gets a password; `resetPassword` creates the credential account. Resetting revokes all sessions.
 **Pre-hijack guard:** if someone registered an address by e-mail and never verified it, and the real owner later
 signs in with Google, `beforeAccountCreate` deletes the unverified password and sessions so the first registrant
-cannot keep access.
+cannot keep access. Unverified password sign-ups older than 7 days are deleted by
+`/api/cron/prune-unverified-accounts` (systemd timer `polutek-cron-prune-unverified-accounts`, 03:30 UTC; only rows
+with no payments, grants, channels or comments), so nobody can squat an address or nickname for long.
 
 **Change e-mail.** `changeEmail` sends a verification link to the new address; the address changes after the click.
 
-**Account deletion.** `DELETE /api/user/account` runs our anonymising cleanup (`AccountDeletionCleanupUseCase`),
-then deletes sessions, accounts and two-factor rows. The `User` row stays as an anonymised tombstone.
+**Account deletion.** `DELETE /api/user/account` needs re-authentication (F-12): a password account sends its
+password in the body (verified with Better Auth's hasher, rate limited 5 per 15 min per user), a Google-only account
+must have a session created in the last 10 minutes (`REAUTH_REQUIRED`; the UI offers "Confirm with Google", which
+signs in again), and the last remaining ADMIN cannot delete itself (`LAST_ADMIN`, 409). Then our anonymising cleanup
+(`AccountDeletionCleanupUseCase`) deletes sessions, accounts and two-factor rows. The `User` row stays as an
+anonymised tombstone.
 
-**Sessions.** DB sessions, 30 days, refreshed daily, cookie cache 60 s, `freshAge` 1 day. The account panel lists
-devices and can revoke one or all others (`listSessions`, `revokeSession`, `revokeOtherSessions`). Password change
-revokes other sessions.
+**Sessions.** DB sessions, 30 days, refreshed daily, cookie cache 60 s, `freshAge` 1 day (kept on purpose, F-05). The
+account panel lists devices and can revoke one or all others (`listSessions`, `revokeSession`,
+`revokeOtherSessions`) and disconnect Google; Better Auth refuses these on a session older than a day with
+`SESSION_NOT_FRESH`, and the UI then shows "sign in again" (`ReauthNotice`: signs out and reopens sign-in with the
+current page as `next`) instead of an empty list. Password change revokes other sessions.
+
+**2FA management (F-08).** Backup codes are shown with copy/download after setup and can be regenerated (password
+required, old codes stop working). Google-only accounts must first set a password ("Forgot password" link) before
+they can enable TOTP; the Security tab explains this.
+
+**Old accounts (F-09).** At every sign-in, accounts whose name is missing, breaks the nickname rules or duplicates an
+older account's name get `onboardingPending = true`, so the first-sign-in dialog asks for a nickname (the welcome
+e-mail is only sent for accounts younger than a day).
 
 ## Admin
 
@@ -143,7 +181,6 @@ trustworthy) to `account.accountLinking.trustedProviders`.
 
 - Passkeys (`@better-auth/passkey`): not added; fits a separate change (needs a `Passkey` table and a UI section).
 - Apple sign-in was dropped with Clerk (needs Apple credentials).
-- Account deletion does not ask for the password again (typed confirmation only, as before).
-- Google-only accounts cannot enable TOTP until they set a password.
+- Google-only accounts cannot enable TOTP until they set a password (explained in the UI).
 - haveIBeenPwned is fail-closed: if its API is unreachable, sign-up and password changes return an error.
 - Unauthenticated `/api/admin/*` and `/api/user/*` calls now get JSON 401 from the proxy.
