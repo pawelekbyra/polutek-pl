@@ -39,6 +39,14 @@ export default function AuthLifecycleProvider({ children }: { children: React.Re
     wasSignedInRef.current = isSignedIn;
   }, [isLoaded, user, router, queryClient]);
 
+  // A different person signing in during the same page session must get their own saved language
+  // applied (and not have the previous user's language written to their row).
+  const userId = user?.id ?? null;
+  useEffect(() => {
+    setSyncedOnce(false);
+    setPersistedLanguage(null);
+  }, [userId]);
+
   // Saved preference -> UI, once per login.
   useEffect(() => {
     if (isLoaded && user && isInitialized && !syncedOnce) {

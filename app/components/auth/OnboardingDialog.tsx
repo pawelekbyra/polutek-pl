@@ -69,6 +69,12 @@ export default function OnboardingDialog() {
     if (!response?.ok) {
       const body = (await response?.json().catch(() => null)) as { error?: string } | null;
       setSaving(false);
+      if (body?.error === "ONBOARDING_DONE") {
+        // Finished in another tab: just pick up the session state instead of showing an error.
+        await refreshSession();
+        router.refresh();
+        return;
+      }
       return setProblem(authErrorMessage({ code: body?.error, status: response?.status }, isPl));
     }
     await refreshSession();
