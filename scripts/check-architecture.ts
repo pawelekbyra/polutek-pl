@@ -119,7 +119,7 @@ function checkLegacyChannelAdapter() {
   return violations;
 }
 
-const CLOSED_MODULES = ['video', 'users', 'channel', 'audit', 'media', 'access', 'comments', 'subscriptions'];
+const CLOSED_MODULES = ['video', 'video-pipeline', 'users', 'channel', 'audit', 'media', 'access', 'comments', 'subscriptions'];
 
 const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {};
 

@@ -398,6 +398,7 @@ model Video {
   videoViews          VideoView[]
   playbackSessions    VideoPlaybackSession[]
   playbackEvents      VideoPlaybackEvent[]
+  encodeJobs          VideoEncodeJob[]
 
   @@index([status, publishedAt])
   @@index([status, createdAt])
@@ -595,6 +596,7 @@ model VideoOriginal {
   activeForVideo    Video?                  @relation("ActiveVideoOriginal")
   distributionPlans VideoDistributionPlan[]
   providerJobs      VideoProviderJob[]
+  encodeJobs        VideoEncodeJob[]
 
   @@unique([videoId, version])
   @@index([videoId])
@@ -695,6 +697,64 @@ model VideoProviderJob {
   @@index([provider, providerAssetId])
   @@index([providerUploadId])
   @@index([status, nextAttemptAt])
+}
+
+enum VideoEncodeJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum VideoEncodeStage {
+  QUEUED
+  DOWNLOADING
+  PROBING
+  ENCODING
+  UPLOADING
+  FINALIZING
+  DONE
+}
+
+/// One run of our own HLS encoder for one uploaded original (CLAUDE.md 4.17, docs/operations/VIDEO-PIPELINE.md).
+/// Claimed by the video worker with SELECT ... FOR UPDATE SKIP LOCKED; the Next.js request path only
+/// enqueues, cancels and reads.
+model VideoEncodeJob {
+  id              String               @id @default(uuid())
+  videoId         String
+  originalId      String
+  /// HLS output generation: objects land in videos/<videoId>/v/v<versionNumber>/ and are never overwritten.
+  versionNumber   Int
+  /// "<originalId>:<n>"; makes enqueue idempotent per original and generation.
+  idempotencyKey  String               @unique
+  status          VideoEncodeJobStatus @default(QUEUED)
+  stage           VideoEncodeStage     @default(QUEUED)
+  progressPercent Int                  @default(0)
+  etaSeconds      Int?
+  attemptCount    Int                  @default(0)
+  maxAttempts     Int                  @default(3)
+  cancelRequested Boolean              @default(false)
+  failureCode     String?
+  failureReason   String?
+  nextAttemptAt   DateTime?
+  workerId        String?
+  heartbeatAt     DateTime?
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  requestedById   String?
+  assetId         String?
+  sourceInfo      Json?
+  result          Json?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  video    Video         @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  original VideoOriginal @relation(fields: [originalId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt, createdAt])
+  @@index([videoId, createdAt])
+  @@index([originalId])
 }
 
 model VideoPlaybackRoute {
