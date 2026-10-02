@@ -46,7 +46,7 @@ describe("LanguageSwitcher inline variant", () => {
     expect(menu.className).not.toContain("absolute");
     expect(screen.queryByRole("searchbox")).toBeNull();
     expect(screen.getAllByRole("menuitemradio")).toHaveLength(8);
-    fireEvent.click(screen.getByText("Polski"));
+    fireEvent.click(screen.getByText("PL"));
     expect(onSelect).toHaveBeenCalledWith("pl");
   });
 
@@ -55,16 +55,16 @@ describe("LanguageSwitcher inline variant", () => {
     render(<LanguageSwitcher variant="inline" language="en" onSelect={onSelect} />);
     fireEvent.click(screen.getByRole("button"));
     const menu = screen.getByRole("menu");
-    expect(menu.className).toContain("text-[12px]");
+    expect(menu.className).not.toContain("overflow");
     expect(menu.className).not.toContain("shadow");
     expect(menu.className).not.toContain("border");
     const items = screen.getAllByRole("menuitemradio");
     expect(document.activeElement).toBe(items[1]);
     fireEvent.keyDown(items[1], { key: "ArrowRight" });
     expect(document.activeElement).toBe(items[2]);
-    fireEvent.click(screen.getByText("Deutsch"));
+    fireEvent.click(screen.getByText("DE"));
     expect(onSelect).not.toHaveBeenCalled();
-    expect(screen.getByText(/Deutsch translation is in progress/)).toBeTruthy();
+    expect(screen.getByText(/DE translation is in progress/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button"));
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("menu")).toBeNull();
