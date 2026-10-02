@@ -8,7 +8,7 @@ import React, { useEffect, useState } from "react";
 import { Loader2 } from "../icons";
 import { OAUTH_PROVIDERS } from "./oauth-providers";
 import { authClient } from "@/lib/auth/client";
-import { authErrorMessage } from "@/lib/auth/errors";
+import { authErrorMessage, isSessionNotFresh } from "@/lib/auth/errors";
 import { rememberReturnPath } from "@/lib/auth/sso-return";
 import { useUser } from "@/lib/auth/react";
 
@@ -21,6 +21,26 @@ export function Feedback({ error, info }: { error: string | null; info: string |
   if (error) return <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-[13px] font-semibold text-red-600">{error}</p>;
   if (info) return <p className="rounded-lg bg-[var(--chan-blue-soft)] px-3 py-2 text-[13px] font-semibold text-[var(--chan-blue)]">{info}</p>;
   return null;
+}
+
+/**
+ * Shown when Better Auth refuses a sensitive action because the session is older than `freshAge`.
+ * Signing in again creates a fresh session and brings the visitor back to this page.
+ */
+export function ReauthNotice({ isPl }: { isPl: boolean }) {
+  async function signInAgain() {
+    await authClient.signOut().catch(() => undefined);
+    const here = window.location.pathname + window.location.search;
+    window.location.assign(`${window.location.pathname}?signin=1&next=${encodeURIComponent(here)}`);
+  }
+  return (
+    <div role="alert" className="space-y-2 rounded-lg bg-red-50 px-3 py-2">
+      <p className="text-[13px] font-semibold text-red-600">{authErrorMessage({ code: "SESSION_NOT_FRESH" }, isPl)}</p>
+      <button type="button" onClick={signInAgain} className="text-[12px] font-bold text-red-700 underline">
+        {isPl ? "Zaloguj się ponownie" : "Sign in again"}
+      </button>
+    </div>
+  );
 }
 
 export function EmailSection({ isPl }: { isPl: boolean }) {
@@ -71,6 +91,7 @@ type LinkedAccount = { id: string; providerId: string; accountId: string };
 export function ConnectionsSection({ isPl }: { isPl: boolean }) {
   const [accounts, setAccounts] = useState<LinkedAccount[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [needsReauth, setNeedsReauth] = useState(false);
 
   async function load() {
     const { data } = await authClient.listAccounts();
@@ -90,8 +111,12 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
 
   async function disconnect(account: LinkedAccount) {
     setError(null);
+    setNeedsReauth(false);
     const { error: unlinkError } = await authClient.unlinkAccount({ accountId: account.id });
-    if (unlinkError) return setError(authErrorMessage(unlinkError, isPl));
+    if (unlinkError) {
+      if (isSessionNotFresh(unlinkError)) return setNeedsReauth(true);
+      return setError(authErrorMessage(unlinkError, isPl));
+    }
     await load();
   }
 
@@ -101,6 +126,7 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
   return (
     <div className="space-y-3">
       <Feedback error={error} info={null} />
+      {needsReauth && <ReauthNotice isPl={isPl} />}
       <ul className="space-y-2">
         {external.map((acc) => {
           const known = OAUTH_PROVIDERS.find((p) => p.provider === acc.providerId);

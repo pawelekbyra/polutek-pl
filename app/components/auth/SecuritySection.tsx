@@ -5,10 +5,10 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Feedback, Field, Primary, useAccountUser } from "./AccountSections";
+import { Feedback, Field, Primary, ReauthNotice, useAccountUser } from "./AccountSections";
 import { TurnstileWidget, useCaptchaRequired, type TurnstileHandle } from "./TurnstileWidget";
 import { authClient, captchaFetchOptions } from "@/lib/auth/client";
-import { authErrorMessage } from "@/lib/auth/errors";
+import { authErrorMessage, isSessionNotFresh } from "@/lib/auth/errors";
 import { PASSWORD_MIN_LENGTH } from "@/lib/auth/config";
 import { refreshSession } from "@/lib/auth/react";
 
@@ -171,9 +171,22 @@ function SessionsPart({ isPl }: { isPl: boolean }) {
   const [sessions, setSessions] = useState<DeviceSession[] | null>(null);
   const [currentToken, setCurrentToken] = useState<string | null>(null);
   const [msg, setMsg] = useState<Msg>(EMPTY);
+  const [needsReauth, setNeedsReauth] = useState(false);
+
+  // Better Auth only lists/revokes devices for a session younger than `freshAge`; an older one gets
+  // SESSION_NOT_FRESH and must sign in again (never a silently empty list).
+  function report(error: { code?: string; message?: string; status?: number }) {
+    if (isSessionNotFresh(error)) return setNeedsReauth(true);
+    setMsg({ error: authErrorMessage(error, isPl), info: null });
+  }
 
   async function load() {
     const [list, current] = await Promise.all([authClient.listSessions(), authClient.getSession()]);
+    if (list.error) {
+      setSessions([]);
+      return report(list.error);
+    }
+    setNeedsReauth(false);
     setSessions((list.data as DeviceSession[] | null) ?? []);
     setCurrentToken(current.data?.session?.token ?? null);
   }
@@ -184,13 +197,13 @@ function SessionsPart({ isPl }: { isPl: boolean }) {
 
   async function revoke(token: string) {
     const { error } = await authClient.revokeSession({ token });
-    if (error) return setMsg({ error: authErrorMessage(error, isPl), info: null });
+    if (error) return report(error);
     await load();
   }
 
   async function revokeOthers() {
     const { error } = await authClient.revokeOtherSessions();
-    if (error) return setMsg({ error: authErrorMessage(error, isPl), info: null });
+    if (error) return report(error);
     setMsg({ error: null, info: isPl ? "Wylogowano pozostałe urządzenia." : "Other devices were signed out." });
     await load();
   }
@@ -198,6 +211,7 @@ function SessionsPart({ isPl }: { isPl: boolean }) {
   return (
     <div className="space-y-2 border-t border-[var(--chan-line)] pt-3">
       <Feedback error={msg.error} info={msg.info} />
+      {needsReauth && <ReauthNotice isPl={isPl} />}
       <p className="text-[13px] font-bold text-[var(--chan-ink)]">{isPl ? "Zalogowane urządzenia" : "Signed-in devices"}</p>
       <ul className="space-y-2">
         {(sessions ?? []).map((s) => (

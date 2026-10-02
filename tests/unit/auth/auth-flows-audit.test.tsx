@@ -43,7 +43,6 @@ vi.mock("@/lib/auth/react", () => ({
 }));
 
 import { authErrorMessage } from "@/lib/auth/errors";
-import { SESSION_EXPIRES_IN_SECONDS, SESSION_FRESH_AGE_SECONDS } from "@/lib/auth/config";
 import { SSO_RETURN_STORAGE_KEY } from "@/lib/auth/sso-return";
 import AuthModal from "@/app/components/auth/AuthModal";
 import { SecuritySection } from "@/app/components/auth/SecuritySection";
@@ -57,7 +56,7 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe("error messages (F-05, F-03)", () => {
-  it.fails("F-05: SESSION_NOT_FRESH has its own message instead of the generic one", () => {
+  it("F-05: SESSION_NOT_FRESH has its own message instead of the generic one", () => {
     expect(authErrorMessage({ code: "SESSION_NOT_FRESH", status: 403 }, false)).not.toBe(GENERIC_EN);
   });
 
@@ -66,22 +65,26 @@ describe("error messages (F-05, F-03)", () => {
   });
 });
 
-describe("session freshness (F-05)", () => {
-  it.fails("F-05: the device list / unlink endpoints stay usable for the whole session life", () => {
-    // Better Auth's list-sessions and unlink-account require a session younger than freshAge. With
-    // freshAge = 1 day and sessions living 30 days, both silently stop working after the first day.
-    expect(SESSION_FRESH_AGE_SECONDS).toBeGreaterThanOrEqual(SESSION_EXPIRES_IN_SECONDS);
-  });
-});
-
 describe("Security tab (F-05)", () => {
-  it.fails("F-05: tells the user when the signed-in devices list cannot be loaded", async () => {
+  // freshAge stays at 1 day on purpose (sensitive endpoints keep their check); an older session must be
+  // told to sign in again instead of seeing an empty list.
+  it("F-05: a stale session gets a clear 'sign in again' prompt instead of an empty device list", async () => {
     h.client.listAccounts.mockResolvedValue({ data: [{ providerId: "credential" }] });
     h.client.listSessions.mockResolvedValue({ data: null, error: { code: "SESSION_NOT_FRESH", status: 403 } });
     h.client.getSession.mockResolvedValue({ data: { session: { token: "t" } } });
     render(<SecuritySection isPl={false} />);
     await screen.findByText("Signed-in devices");
-    await waitFor(() => expect(screen.getByRole("alert")).toBeTruthy(), { timeout: 800 });
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("sign in again");
+    expect(screen.getByRole("button", { name: /sign in again/i })).toBeTruthy();
+  });
+
+  it("F-05: other list errors show the generic message", async () => {
+    h.client.listAccounts.mockResolvedValue({ data: [{ providerId: "credential" }] });
+    h.client.listSessions.mockResolvedValue({ data: null, error: { code: "BOOM", status: 500 } });
+    h.client.getSession.mockResolvedValue({ data: { session: { token: "t" } } });
+    render(<SecuritySection isPl={false} />);
+    expect((await screen.findByRole("alert")).textContent).toBe(GENERIC_EN);
   });
 });
 

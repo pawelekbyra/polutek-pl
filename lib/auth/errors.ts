@@ -30,6 +30,10 @@ const MESSAGES: Record<string, { pl: string; en: string }> = {
     pl: "Link potwierdzający wygasł. Poproś o nowy.",
     en: "The confirmation link has expired. Request a new one.",
   },
+  SESSION_NOT_FRESH: {
+    pl: "Ze względów bezpieczeństwa zaloguj się ponownie, aby to zrobić.",
+    en: "For security, sign in again to do this.",
+  },
   INVALID_CODE: { pl: "Nieprawidłowy kod.", en: "Invalid code." },
   INVALID_BACKUP_CODE: { pl: "Nieprawidłowy kod zapasowy.", en: "Invalid backup code." },
   MISSING_RESPONSE: { pl: "Potwierdź, że nie jesteś robotem.", en: "Please confirm you are not a robot." },
@@ -52,4 +56,9 @@ export function authErrorMessage(error: AuthErrorLike, isPl: boolean): string {
 
 export function authErrorCode(error: AuthErrorLike): string | null {
   return error?.code ?? null;
+}
+
+/** Better Auth refuses sensitive actions on a session older than `freshAge` (1 day): the user must sign in again. */
+export function isSessionNotFresh(error: AuthErrorLike): boolean {
+  return error?.code === "SESSION_NOT_FRESH";
 }
