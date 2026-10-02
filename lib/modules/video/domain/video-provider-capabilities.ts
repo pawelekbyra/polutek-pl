@@ -9,7 +9,7 @@ export type PlaybackProviderKind =
 export type PlaybackProviderCapability = {
   provider: StorageProvider;
   label: string;
-  kind: "AUTOMATIC_FILE" | "EMBED_ONLY" | "ORIGINAL_STORAGE" | "UNSUPPORTED";
+  kind: "AUTOMATIC_FILE" | "EMBED_ONLY" | "ORIGINAL_STORAGE" | "SELF_HOSTED" | "UNSUPPORTED";
   supportsAutomaticFileImport: boolean;
   supportsDirectUpload: boolean;
   supportsAttachExisting: boolean;
@@ -77,6 +77,26 @@ const originalStorageProvider = (
   defaultCostRank: Number.MAX_SAFE_INTEGER,
 });
 
+/**
+ * Own HLS (R2 + token-checked Worker). Playable and tier-capable, but never an
+ * automatic import/upload target: assets are produced by scripts/hls and rows
+ * are created by an operator, so distribution strategy code must not pick it.
+ */
+const selfHostedProvider = (provider: StorageProvider, label: string): PlaybackProviderCapability => ({
+  provider,
+  label,
+  kind: "SELF_HOSTED",
+  supportsAutomaticFileImport: false,
+  supportsDirectUpload: false,
+  supportsAttachExisting: false,
+  supportsSignedPlayback: true,
+  supportsPublicPlayback: true,
+  supportsProviderAssetDeletion: false,
+  supportsStatusSync: false,
+  supportsPatronTier: true,
+  defaultCostRank: 5,
+});
+
 const unsupportedProvider = (provider: StorageProvider): PlaybackProviderCapability => ({
   provider,
   label: provider,
@@ -98,6 +118,7 @@ const PROVIDER_CAPABILITIES: Record<StorageProvider, PlaybackProviderCapability>
   [StorageProvider.VERCEL_BLOB]: originalStorageProvider(StorageProvider.VERCEL_BLOB, "Vercel Blob"),
   [StorageProvider.CLOUDFLARE_STREAM]: automaticFileProvider(StorageProvider.CLOUDFLARE_STREAM, "Cloudflare Stream", 10),
   [StorageProvider.MUX]: automaticFileProvider(StorageProvider.MUX, "Mux", 20),
+  [StorageProvider.SELF_HLS]: selfHostedProvider(StorageProvider.SELF_HLS, "Own HLS (R2 + Worker)"),
   [StorageProvider.YOUTUBE]: embedOnlyProvider(StorageProvider.YOUTUBE, "YouTube", 100),
   [StorageProvider.VIMEO]: embedOnlyProvider(StorageProvider.VIMEO, "Vimeo", 110),
 };
@@ -115,7 +136,7 @@ export function getPlaybackProviderCapabilities(provider: StorageProvider): Play
 
 export function isPlaybackProvider(provider: StorageProvider): boolean {
   const capabilities = getPlaybackProviderCapabilities(provider);
-  return capabilities.kind === "AUTOMATIC_FILE" || capabilities.kind === "EMBED_ONLY";
+  return capabilities.kind === "AUTOMATIC_FILE" || capabilities.kind === "EMBED_ONLY" || capabilities.kind === "SELF_HOSTED";
 }
 
 export function isAutomaticFilePlaybackProvider(provider: StorageProvider): boolean {

@@ -15,6 +15,8 @@ import { MuxClient } from '@/lib/modules/video';
 import { isUpcomingPremiere, toPremiereDate } from '@/lib/modules/video/domain/premiere';
 import { resolvePublicThumbnailSrc } from '@/lib/modules/media';
 import { VideoStatus, type VideoAsset } from '@prisma/client';
+import { buildSelfHlsPlan, pickFallbackAsset } from './self-hls-plan';
+import { SelfHlsTokenService } from '../infrastructure/self-hls-token.service';
 
 export type PlaybackErrorCode =
   | "VIDEO_NOT_FOUND"
@@ -33,7 +35,7 @@ type VideoWithAssets = Awaited<ReturnType<AppContext['prisma']['video']['findUni
 
 type PlayerDefaults = Pick<PlaybackPlan, 'player' | 'tracking'>;
 
-const PROVIDER_BACKED_PLAYBACK_PROVIDERS = new Set(['CLOUDFLARE_STREAM', 'MUX']);
+const PROVIDER_BACKED_PLAYBACK_PROVIDERS = new Set(['CLOUDFLARE_STREAM', 'MUX', 'SELF_HLS']);
 const LEGACY_STORAGE_PROVIDERS = new Set(['R2', 'S3', 'VERCEL_BLOB']);
 
 function emptyPlaybackRuntime(): PlayerDefaults['tracking'] {
@@ -231,7 +233,12 @@ export class PlaybackService {
 
     const routeAsset = video?.activePlaybackRoute?.asset?.processingState === 'READY' ? video.activePlaybackRoute.asset : null;
     const legacyAsset = selectPrimaryVideoAsset(video?.assets) ?? video?.asset;
-    const asset = routeAsset ?? legacyAsset;
+    let asset = routeAsset ?? legacyAsset;
+    // Own HLS that cannot be served (secret missing) behaves like it was never routed:
+    // play the previous provider instead of failing.
+    if (asset?.provider === 'SELF_HLS' && !SelfHlsTokenService.isConfigured()) {
+      asset = pickFallbackAsset(video?.assets) ?? asset;
+    }
     const legacyRouteWarning = !routeAsset && legacyAsset?.processingState === 'READY' ? 'No active playback route found; using legacy primary asset selection.' : null;
     const safeAsset = toSafeAssetContract(asset);
 
@@ -248,6 +255,42 @@ export class PlaybackService {
           sourceMode: 'PROVIDER_ASSET',
           asset: safeAsset,
         });
+      }
+
+      if (asset.provider === 'SELF_HLS') {
+        const selfHlsPlan = await buildSelfHlsPlan({
+          ctx,
+          videoId,
+          asset,
+          assets: video?.assets,
+          tier,
+          thumbnailUrl,
+          isAdminPreview: isAdminPreviewSession(actor.type, video?.status, video?.premiereAt),
+          ipHash,
+          userAgentHash,
+          safeAsset,
+          player: playerFor({ thumbnailUrl, title }, true),
+          warnings: legacyRouteWarning ? [legacyRouteWarning] : [],
+        }).catch((e) => {
+          console.error('[PLAYBACK_SERVICE] SELF_HLS resolution failed', e);
+          return null;
+        });
+        if (selfHlsPlan) return selfHlsPlan;
+        const fallbackAsset = pickFallbackAsset(video?.assets);
+        if (!fallbackAsset) {
+          return unavailablePlan({
+            videoId,
+            status: 'ERROR',
+            video: { thumbnailUrl, title },
+            accessAllowed: true,
+            warnings: ['Failed to resolve own HLS playback source'],
+            providerResolutionAllowed: true,
+            providerResolutionAttempted: true,
+            sourceMode: 'PROVIDER_ASSET',
+            asset: safeAsset,
+          });
+        }
+        asset = fallbackAsset;
       }
 
       if (asset.provider === 'CLOUDFLARE_STREAM') {

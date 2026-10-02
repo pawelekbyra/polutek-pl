@@ -12,6 +12,7 @@ export type PlaybackPlanStatus =
 export type PlaybackAssetProvider =
   | "CLOUDFLARE_STREAM"
   | "MUX"
+  | "SELF_HLS"
   | "R2"
   | "S3"
   | "VERCEL_BLOB"
@@ -52,6 +53,16 @@ export type PlaybackSourceContract = {
   isSignedUrl: boolean;
   expiresAt?: string;
   asset?: PlaybackAssetContract;
+  /**
+   * Previous provider's signed manifest, only on SELF_HLS plans for an allowed viewer.
+   * The player switches to it once if the primary source fails (instant rollback).
+   */
+  fallback?: {
+    provider: string;
+    kind: string;
+    playbackUrl: string;
+    expiresAt?: string;
+  };
 };
 
 export type PlaybackPlan = {

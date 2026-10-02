@@ -421,6 +421,9 @@ enum StorageProvider {
   CLOUDFLARE_STREAM
   /// Full VOD provider with signed HLS playback. Requires MUX_TOKEN_ID, MUX_TOKEN_SECRET, MUX_SIGNING_KEY_ID, MUX_SIGNING_PRIVATE_KEY.
   MUX
+  /// Our own HLS (encoded with scripts/hls, stored in R2 bucket polutek-hls, delivered by the
+  /// token-checked Worker at video.<domain>). objectKey = "videos/<videoId>/v/<version>", bucket = R2 bucket.
+  SELF_HLS
   /// YouTube embed source. Admin can enable for any tier.
   YOUTUBE
   /// Vimeo embed source. Admin can enable for any tier.
