@@ -8,6 +8,9 @@ import type { AuthNotice, AuthView } from "./AuthModalProvider";
 import { TwoFactorView } from "./TwoFactorView";
 import { LinkExpiredView } from "./LinkExpiredView";
 import { Divider, Field, OAuthButtons, PrimaryButton } from "./AuthFormParts";
+import CheckInboxView from "./CheckInboxView";
+import LanguageSwitcher from "../LanguageSwitcher";
+import { useSwitchLanguage } from "../useSwitchLanguage";
 import { TurnstileWidget, useCaptchaRequired, type CaptchaState, type TurnstileHandle } from "./TurnstileWidget";
 import { authClient, captchaFetchOptions } from "@/lib/auth/client";
 import { useAuth } from "@/lib/auth/react";
@@ -35,6 +38,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
   const router = useRouter();
   const { language } = useLanguage();
   const isPl = language === "pl";
+  const switchLanguage = useSwitchLanguage();
   const { isSignedIn } = useAuth();
   const captchaRequired = useCaptchaRequired();
   const captchaRef = useRef<TurnstileHandle>(null);
@@ -261,6 +265,12 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
               <DialogTitle className="font-brand text-2xl font-bold tracking-tight text-[var(--chan-ink)]">{title}</DialogTitle>
             </DialogHeader>
 
+            {view === "sign-up" && (
+              <div className="mt-1 flex justify-center">
+                <LanguageSwitcher variant="inline" language={language} onSelect={switchLanguage} />
+              </div>
+            )}
+
             {error && (
               <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-[13px] font-semibold text-red-600">
                 {error}
@@ -355,27 +365,17 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
             )}
 
             {view === "verify-sent" && (
-              <div className="mt-5 space-y-3.5">
-                <p className="text-[13px] text-[var(--chan-body)]">
-                  {isPl
-                    ? "Jeśli możesz założyć konto na ten adres, wysłaliśmy tam link potwierdzający. Kliknij go, aby dokończyć. Sprawdź też spam."
-                    : "If an account can be created for this address, we sent a confirmation link there. Click it to finish. Check your spam folder too."}
-                </p>
-                {captcha}
-                <button
-                  type="button"
-                  onClick={() => void handleResend()}
-                  disabled={loading || waitingForCaptcha}
-                  className="text-[12px] font-bold underline hover:text-[var(--chan-ink)] disabled:opacity-50"
-                >
-                  {isPl ? "Wyślij link ponownie" : "Send the link again"}
-                </button>
-                <div>
-                  <button type="button" className="text-[12px] text-[var(--chan-muted)] underline" onClick={() => switchView("sign-in")}>
-                    {isPl ? "Wróć do logowania" : "Back to sign in"}
-                  </button>
-                </div>
-              </div>
+              <CheckInboxView
+                isPl={isPl}
+                kind="verify"
+                email={email}
+                onResend={() => void handleResend()}
+                onChangeEmail={() => switchView("sign-up")}
+                onBack={() => switchView("sign-in")}
+                captcha={captcha}
+                loading={loading}
+                disabled={waitingForCaptcha}
+              />
             )}
 
             {view === "link-expired" && (
@@ -409,16 +409,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
             )}
 
             {view === "forgot-sent" && (
-              <div className="mt-5 space-y-3.5">
-                <p className="text-[13px] text-[var(--chan-body)]">
-                  {isPl
-                    ? "Jeśli to konto istnieje, wysłaliśmy link do ustawienia hasła. Działa przez godzinę."
-                    : "If that account exists, we sent a link to set a password. It works for one hour."}
-                </p>
-                <button type="button" className="text-[12px] text-[var(--chan-muted)] underline" onClick={() => switchView("sign-in")}>
-                  {isPl ? "Wróć do logowania" : "Back to sign in"}
-                </button>
-              </div>
+              <CheckInboxView isPl={isPl} kind="reset" email={email} onBack={() => switchView("sign-in")} />
             )}
 
             {view === "two-factor" && (

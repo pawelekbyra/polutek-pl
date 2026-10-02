@@ -2,7 +2,7 @@ import { logger } from "@/lib/logger";
 import { prisma } from '@/lib/prisma';
 import { APP_NAME } from '@/lib/constants';
 import { buildContentUnsubscribeUrl } from '@/lib/modules/subscriptions';
-import { LegacyEmailServiceProvider } from "../infrastructure/legacy-email-service-provider";
+import { EMAIL_SENDER_NAME, LegacyEmailServiceProvider } from "../infrastructure/legacy-email-service-provider";
 import { EMAIL_DEFAULTS, type SystemTemplateSlug } from '@/lib/email-defaults';
 
 const APP_URL = () => process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -64,6 +64,7 @@ async function sendTemplateEmail({ to, slug, variables = {}, language = 'pl', no
         .map(([key, value]) => [key, value as string]),
     ),
     appName: APP_NAME,
+    brandName: EMAIL_SENDER_NAME,
     appUrl: APP_URL(),
     email: to,
     userLanguage: language,
@@ -83,7 +84,7 @@ async function sendTemplateEmail({ to, slug, variables = {}, language = 'pl', no
   const html = replaceTemplateVariables(htmlBase, safeVariables);
 
   const provider = new LegacyEmailServiceProvider();
-  const { data, error } = await provider.sendTransactionalEmail({ to, subject, html, unsubscribeUrl });
+  const { data, error } = await provider.sendTransactionalEmail({ to, subject, html, unsubscribeUrl, language });
 
   if (error) {
     logger.error(`[email] Resend failed to send "${slug}" email to ${to}:`, error);

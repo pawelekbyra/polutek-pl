@@ -26,8 +26,8 @@ const h = vi.hoisted(() => {
   return { client, router: { refresh: vi.fn(), push: vi.fn(), replace: vi.fn() } };
 });
 
-vi.mock("next/navigation", () => ({ useRouter: () => h.router, useSearchParams: () => new URLSearchParams() }));
-vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en" }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => h.router, usePathname: () => "/en", useSearchParams: () => new URLSearchParams() }));
+vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en", setLanguage: () => {} }) }));
 vi.mock("@/lib/auth/client", () => ({ authClient: h.client, captchaFetchOptions: () => undefined }));
 vi.mock("@/lib/auth/public-config", () => ({
   useAuthPublicConfig: () => ({ googleClientId: null, turnstileSiteKey: null }),
@@ -92,6 +92,14 @@ describe("AuthModal (F-01, F-07)", () => {
   function renderModal() {
     return render(<AuthModal open initialView="sign-in" onOpenChange={() => undefined} />);
   }
+
+  it("shows the language picker only on the sign-up view", () => {
+    const { unmount } = render(<AuthModal open initialView="sign-in" onOpenChange={() => undefined} />);
+    expect(screen.queryByText("Language:")).toBeNull();
+    unmount();
+    render(<AuthModal open initialView="sign-up" onOpenChange={() => undefined} />);
+    expect(screen.getByText("Language:")).toBeTruthy();
+  });
 
   it("F-01: Google sign-in keeps the `next` path the proxy asked us to return to", async () => {
     window.sessionStorage.setItem(SSO_RETURN_STORAGE_KEY, "/admin");

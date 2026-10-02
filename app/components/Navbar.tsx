@@ -5,15 +5,16 @@ import { useUser } from "@/lib/auth/react";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import UserMenu from "./auth/UserMenu";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
 import BrandName from "./BrandName";
 import LanguageSwitcher from "./LanguageSwitcher";
+import { useSwitchLanguage } from "./useSwitchLanguage";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { Search, X, LogIn } from "lucide-react";
 import NotificationsMenu from "./notifications/NotificationsMenu";
 import { NotificationDTO } from "@/app/types/notification";
-import { appendQueryString, getLocalizedHref, switchLocalePath, type Locale } from "@/lib/i18n/routing";
+import { getLocalizedHref } from "@/lib/i18n/routing";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // TEMPORARY (test setup only) — see CLAUDE.md "2026-09-20: temporary test-mode UI changes"
@@ -32,7 +33,6 @@ const Navbar = () => {
   const { open: openAuthModal } = useAuthModal();
   const { user, isLoaded, isSignedIn } = useUser();
   const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [searchValue, setSearchValue] = useState(searchParams.get("q") || "");
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
@@ -97,20 +97,7 @@ const Navbar = () => {
     }
   }, [isSignedIn]);
 
-  const switchLanguage = (locale: Locale) => {
-    if (locale === language) return;
-    setLanguage(locale);
-    const newPath = appendQueryString(switchLocalePath(pathname || "/", locale), searchParams);
-    // On the home page, avoid a server re-render (which triggers loading.tsx and flashes
-    // a blank screen). LanguageContext already updates all copy; history.replaceState updates
-    // the URL client-side without a navigation. Same pattern as video switching (CLAUDE.md §4.13).
-    const isHomePage = pathname === "/pl" || pathname === "/en" || pathname === "/";
-    if (isHomePage) {
-      window.history.replaceState(null, "", newPath);
-    } else {
-      router.push(newPath);
-    }
-  };
+  const switchLanguage = useSwitchLanguage();
 
   return (
     <div

@@ -42,13 +42,20 @@ function filterLanguages(query: string): LanguageOption[] {
 type Props = {
   language: Locale;
   onSelect: (locale: Locale) => void;
+  /**
+   * "pill" (navbar): floating, searchable list under a globe pill. "inline" (inside dialogs): a
+   * small "Language: English" link that expands a compact one-line list of all languages (no
+   * search box, no frame) in the page flow, so a scrolling card cannot clip it.
+   */
+  variant?: "pill" | "inline";
 };
 
 /**
  * Navbar language switcher: one pill (globe, current code, chevron) that opens a short list.
  * It grows to any number of languages without widening the navbar.
  */
-export default function LanguageSwitcher({ language, onSelect }: Props) {
+export default function LanguageSwitcher({ language, onSelect, variant = "pill" }: Props) {
+  const inline = variant === "inline";
   const isPl = language === "pl";
   const [open, setOpen] = useState(false);
   // A listed-but-untranslated language the user picked: shown in the pill until reload.
@@ -79,8 +86,8 @@ export default function LanguageSwitcher({ language, onSelect }: Props) {
   }, [open]);
 
   useEffect(() => {
-    if (open) searchRef.current?.focus();
-  }, [open]);
+    if (open && !inline) searchRef.current?.focus();
+  }, [open, inline]);
 
   useEffect(() => {
     if (!noteVisible) return;
@@ -106,37 +113,107 @@ export default function LanguageSwitcher({ language, onSelect }: Props) {
     : `The ${current.label} translation is in progress. For now: ${real.label}.`;
 
   return (
-    <div ref={rootRef} className="relative shrink-0">
-      <button
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={open ? menuId : undefined}
-        aria-label={isPl ? `Język: ${current.label}. Zmień język` : `Language: ${current.label}. Change language`}
-        onClick={() => {
-          setQuery("");
-          setOpen((value) => !value);
-        }}
-        className="flex h-[38px] items-center gap-1.5 rounded-full border border-[var(--cm-line-84)] bg-[var(--cm-card-82-white)] pl-2.5 pr-2 text-[var(--chan-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[0_4px_14px_rgba(37,99,235,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
-      >
-        <Globe className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-        <span className="text-[11px] font-extrabold uppercase tracking-[0.08em]">{current.code}</span>
-        <ChevronDown
-          className={"h-3.5 w-3.5 shrink-0 text-[var(--chan-muted)] transition-transform duration-150 " + (open ? "rotate-180" : "")}
-          strokeWidth={2}
-          aria-hidden="true"
-        />
-      </button>
+    <div ref={rootRef} className={inline ? "relative w-full text-center" : "relative shrink-0"}>
+      {inline ? (
+        <button
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-controls={open ? menuId : undefined}
+          aria-label={isPl ? `Język: ${current.label}. Zmień język` : `Language: ${current.label}. Change language`}
+          onClick={() => {
+            setQuery("");
+            setOpen((value) => !value);
+          }}
+          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold text-[var(--chan-muted)] transition-colors hover:bg-[var(--chan-surface)] hover:text-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
+        >
+          <Globe className="h-3.5 w-3.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+          <span>{isPl ? "Język" : "Language"}:</span>
+          <span className="text-[var(--chan-ink)]">{current.label}</span>
+          <ChevronDown
+            className={"h-3 w-3 shrink-0 transition-transform duration-150 " + (open ? "rotate-180" : "")}
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+        </button>
+      ) : (
+        <button
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-controls={open ? menuId : undefined}
+          aria-label={isPl ? `Język: ${current.label}. Zmień język` : `Language: ${current.label}. Change language`}
+          onClick={() => {
+            setQuery("");
+            setOpen((value) => !value);
+          }}
+          className="flex h-[38px] items-center gap-1.5 rounded-full border border-[var(--cm-line-84)] bg-[var(--cm-card-82-white)] pl-2.5 pr-2 text-[var(--chan-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[0_4px_14px_rgba(37,99,235,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
+        >
+          <Globe className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+          <span className="text-[11px] font-extrabold uppercase tracking-[0.08em]">{current.code}</span>
+          <ChevronDown
+            className={"h-3.5 w-3.5 shrink-0 text-[var(--chan-muted)] transition-transform duration-150 " + (open ? "rotate-180" : "")}
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+        </button>
+      )}
 
       <div role="status" aria-live="polite" className="contents">
         {noteVisible && !open ? (
-          <div className="absolute right-0 top-[calc(100%+8px)] z-[1100] w-[232px] rounded-2xl border border-[var(--cm-line-84)] bg-white px-3 py-2 text-[12.5px] leading-snug text-[var(--chan-ink)] shadow-[0_12px_32px_rgba(23,23,23,0.14)]">
+          <div
+            className={
+              inline
+                ? "relative mx-auto mt-1 max-w-[300px] text-center text-[11.5px] leading-snug text-[var(--chan-muted)]"
+                : "absolute right-0 top-[calc(100%+8px)] z-[1100] w-[232px] rounded-2xl border border-[var(--cm-line-84)] bg-white px-3 py-2 text-left text-[12.5px] leading-snug text-[var(--chan-ink)] shadow-[0_12px_32px_rgba(23,23,23,0.14)]"
+            }
+          >
             {note}
           </div>
         ) : null}
       </div>
 
-      {open ? (
+      {open && inline ? (
+        <div
+          id={menuId}
+          role="menu"
+          aria-label={isPl ? "Wybierz język" : "Choose language"}
+          onKeyDown={(event) => {
+            const keys = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"];
+            if (!keys.includes(event.key)) return;
+            const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]'));
+            const index = items.indexOf(document.activeElement as HTMLButtonElement);
+            const step = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : -1;
+            event.preventDefault();
+            items[(index + step + items.length) % items.length]?.focus();
+          }}
+          className="relative mx-auto mt-1 grid w-full max-w-[280px] grid-cols-4 justify-items-center gap-y-0 text-[12px]"
+        >
+          {LANGUAGE_OPTIONS.map((option) => {
+            const selected = option.code === current.code;
+            return (
+              <button
+                key={option.code}
+                type="button"
+                role="menuitemradio"
+                aria-checked={selected}
+                autoFocus={selected}
+                onClick={() => pick(option)}
+                className={
+                  "rounded px-1 py-0.5 leading-tight transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--chan-blue)] " +
+                  (selected
+                    ? "font-semibold text-[var(--chan-ink)] underline underline-offset-2"
+                    : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]")
+                }
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {open && !inline ? (
         <div className="absolute right-0 top-[calc(100%+8px)] z-[1100] w-[220px] overflow-hidden rounded-2xl border border-[var(--cm-line-84)] bg-white shadow-[0_12px_32px_rgba(23,23,23,0.14)]">
           <div className="flex items-center gap-2 border-b border-[var(--cm-line-84)] px-3 py-2">
             <Search className="h-4 w-4 shrink-0 text-[var(--chan-muted)]" strokeWidth={1.8} aria-hidden="true" />
@@ -161,7 +238,7 @@ export default function LanguageSwitcher({ language, onSelect }: Props) {
             id={menuId}
             role="menu"
             aria-label={isPl ? "Wybierz język" : "Choose language"}
-            className="max-h-[min(228px,45vh)] overflow-y-auto overscroll-contain p-1.5"
+            className="max-h-[min(192px,40vh)] overflow-y-auto overscroll-contain p-1.5"
           >
             {results.length === 0 ? (
               <p className="px-2.5 py-3 text-[13px] text-[var(--chan-muted)]">{isPl ? "Brak wyników" : "No results"}</p>

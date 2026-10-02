@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { flags } from "@/lib/feature-flags";
 import { buildContentUnsubscribeUrl } from "@/lib/modules/subscriptions";
 import { EmailPolicy } from "../domain/email.policy";
+import { htmlToPlainText, wrapEmailDocument } from "../domain/email-content";
+import { randomUUID } from "node:crypto";
 
 /**
  * Automatic mail goes out from a no-reply address, but people do reply to it. Replies must land in
@@ -13,11 +15,16 @@ import { EmailPolicy } from "../domain/email.policy";
  * Override with EMAIL_REPLY_TO; the default is the single public contact address.
  */
 /**
- * Display name every automatic email shows as its sender (owner's choice). The name follows the
- * primary site (www.pawelperfect.com); the address stays @pawelperfect.pl because that is the
- * domain verified for sending in Resend.
+ * Display name every automatic email shows as its sender, and the brand name used in subjects and
+ * bodies ({{brandName}}). Normal case on purpose: an all-caps, domain-looking sender name and a
+ * "www.…" in the subject are classic spam/phishing signals (Hotmail/Outlook sent our first
+ * verification mail to Junk on a new domain). The address is @pawelperfect.com, the domain verified
+ * for sending in Resend.
  */
-export const EMAIL_SENDER_NAME = 'PAWELPERFECT.COM';
+export const EMAIL_SENDER_NAME = 'Pawel Perfect';
+
+/** Physical identity line under every automatic mail (same entity as the Terms and Privacy Policy). */
+export const EMAIL_IDENTITY_LINE = 'Paweł Perfect · ul. Złota 75, 00-819 Warszawa · hello@pawelperfect.com';
 
 /**
  * Sender address. EMAIL_FROM may be a bare address ("no-reply@pawelperfect.com"); then inboxes
@@ -40,11 +47,17 @@ function replaceTemplateVariables(value: string, variables: Record<string, strin
   }, value);
 }
 
-function buildTransactionalEmailHeaders(unsubscribeUrl?: string | null) {
-  if (!unsubscribeUrl) return undefined;
-
+/**
+ * Every transactional mail is machine-generated: say so (RFC 3834) so auto-responders stay quiet,
+ * and give each message a unique reference so mail clients never thread unrelated sends together.
+ * List-Unsubscribe is added only when the caller passes an unsubscribe URL; account-security mail
+ * (verification, reset, password changed) never does.
+ */
+function buildTransactionalEmailHeaders(unsubscribeUrl?: string | null): Record<string, string> {
   return {
-    'List-Unsubscribe': `<${unsubscribeUrl}>`,
+    'Auto-Submitted': 'auto-generated',
+    'X-Entity-Ref-ID': randomUUID(),
+    ...(unsubscribeUrl ? { 'List-Unsubscribe': `<${unsubscribeUrl}>` } : {}),
   };
 }
 
@@ -66,10 +79,22 @@ export class LegacyEmailServiceProvider implements EmailProvider {
     return this.resendClient;
   }
 
-  async sendTransactionalEmail(input: { to: string; subject: string; html: string; unsubscribeUrl?: string | null }) {
+  async sendTransactionalEmail(input: {
+    to: string;
+    subject: string;
+    html: string;
+    unsubscribeUrl?: string | null;
+    language?: string;
+  }) {
     const resend = this.getResendClient();
     const from = getEmailFrom();
     const headers = buildTransactionalEmailHeaders(input.unsubscribeUrl);
+    const html = wrapEmailDocument({
+      html: input.html,
+      language: input.language === 'en' ? 'en' : 'pl',
+      title: input.subject,
+      identityLine: EMAIL_IDENTITY_LINE,
+    });
 
     if (!process.env.EMAIL_FROM && process.env.NODE_ENV === 'production') {
       logger.error('[email] EMAIL_FROM environment variable is NOT SET. Using fallback: ' + from);
@@ -79,9 +104,10 @@ export class LegacyEmailServiceProvider implements EmailProvider {
       from,
       to: [input.to],
       subject: input.subject,
-      html: input.html,
+      html,
+      text: htmlToPlainText(html),
       replyTo: getEmailReplyTo(),
-      ...(headers ? { headers } : {}),
+      headers,
     });
   }
 
