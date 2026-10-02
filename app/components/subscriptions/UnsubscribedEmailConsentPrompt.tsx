@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect, useRef, useTransition } from 'react';
 import { useAuth, useUser } from "@/lib/auth/react";
 import { logger } from '@/lib/logger';
 import EmailSubscriptionConsentModal from './EmailSubscriptionConsentModal';
@@ -17,6 +17,13 @@ export default function UnsubscribedEmailConsentPrompt() {
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasCheckedStatus, setHasCheckedStatus] = useState(false);
+
+  // First Google sign-in: the nickname dialog (OnboardingDialog) must be finished before this
+  // prompt opens, otherwise the two overlap. Remember that onboarding happened in this session,
+  // so the "fresh registration" window below is not missed when picking a nickname takes a while.
+  const onboardingPending = Boolean(user?.onboardingPending);
+  const sawOnboarding = useRef(false);
+  if (onboardingPending) sawOnboarding.current = true;
 
   const DISMISSED_KEY = userId ? `polutek:email-consent-prompt-dismissed:${userId}` : null;
 
@@ -45,10 +52,10 @@ export default function UnsubscribedEmailConsentPrompt() {
 
   useEffect(() => {
     // user (with createdAt) must be loaded too, or a fresh sign-up would be judged "not fresh".
-    if (isLoaded && userId && user && gateGone && !hasCheckedStatus) {
+    if (isLoaded && userId && user && gateGone && !onboardingPending && !hasCheckedStatus) {
       const isDismissed = DISMISSED_KEY ? localStorage.getItem(DISMISSED_KEY) === 'true' : false;
 
-      const isFreshRegistration = Boolean(
+      const isFreshRegistration = sawOnboarding.current || Boolean(
         user?.createdAt &&
         Date.now() - new Date(user.createdAt).getTime() < FRESH_REGISTRATION_WINDOW_MS
       );
@@ -78,7 +85,7 @@ export default function UnsubscribedEmailConsentPrompt() {
           setHasCheckedStatus(true);
         });
     }
-  }, [isLoaded, userId, user, gateGone, hasCheckedStatus, DISMISSED_KEY]);
+  }, [isLoaded, userId, user, gateGone, onboardingPending, hasCheckedStatus, DISMISSED_KEY]);
 
   const handleConfirm = () => {
     setErrorMessage(null);
@@ -121,7 +128,7 @@ export default function UnsubscribedEmailConsentPrompt() {
     }
   };
 
-  if (!isLoaded || !userId || !isOpen) return null;
+  if (!isLoaded || !userId || !isOpen || onboardingPending) return null;
 
   return (
     <EmailSubscriptionConsentModal

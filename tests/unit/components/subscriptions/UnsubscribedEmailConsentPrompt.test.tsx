@@ -66,6 +66,23 @@ describe('UnsubscribedEmailConsentPrompt', () => {
     vi.restoreAllMocks();
   });
 
+  it('does not open while the nickname dialog (onboarding) is pending, and opens right after it', async () => {
+    mockUseAuth.mockReturnValue({ isLoaded: true, userId: 'user_1' });
+    (global.fetch as any).mockResolvedValue({ ok: true, status: 200, json: async () => ({ isSubscribed: false }) });
+    mockUseUser.mockReturnValue({ user: { createdAt: new Date(), onboardingPending: true } });
+
+    const { rerender } = render(<UnsubscribedEmailConsentPrompt />);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByText('CZY CHCESZ SUBSKRYBOWAĆ?')).toBeNull();
+    expect(global.fetch).not.toHaveBeenCalled();
+
+    // Nickname chosen: onboarding done. Even if it took longer than the "fresh registration"
+    // window, the prompt must still appear, because onboarding was seen in this session.
+    mockUseUser.mockReturnValue({ user: { createdAt: new Date(Date.now() - 60 * 60 * 1000), onboardingPending: false } });
+    rerender(<UnsubscribedEmailConsentPrompt />);
+    await waitFor(() => expect(screen.getByText('CZY CHCESZ SUBSKRYBOWAĆ?')).toBeTruthy());
+  });
+
   it('renders nothing for guests', () => {
     mockUseAuth.mockReturnValue({ isLoaded: true, userId: null });
     const { container } = render(<UnsubscribedEmailConsentPrompt />);
