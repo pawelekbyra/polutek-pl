@@ -1,7 +1,7 @@
 import React from 'react';
 import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/Footer';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from "@/lib/auth/server";
 import { Metadata } from 'next';
 import { PublicVideoDTO } from '@/app/types/video';
 import Link from 'next/link';

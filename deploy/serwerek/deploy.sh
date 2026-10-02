@@ -6,9 +6,9 @@
 #   <tag>        image tag, normally the short git sha; sources must be in ./src (git archive of that commit)
 #   --rollback   skip build/migrate, just start the previously deployed image
 # Files next to this script (all root, 600, NOT in git):
-#   app.env    runtime env of the app (DATABASE_URL, CLERK_SECRET_KEY, STRIPE_*, CRON_SECRET, TRUST_CF_CONNECTING_IP=true ...)
+#   app.env    runtime env of the app (DATABASE_URL, BETTER_AUTH_SECRET, GOOGLE_*, TURNSTILE_*, STRIPE_*, CRON_SECRET, TRUST_CF_CONNECTING_IP=true ...)
 #   db.env     POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB
-#   build.env  PUBLIC build args only: NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY, NEXT_PUBLIC_R2_PUBLIC_HOST ...
+#   build.env  PUBLIC build args only: NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY, NEXT_PUBLIC_R2_PUBLIC_HOST ...
 # State: .current-image / .previous-image (image refs). Migrations are additive in this repo, so rollback restores code only, never the schema.
 set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")"

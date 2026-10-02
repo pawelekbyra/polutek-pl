@@ -1,7 +1,7 @@
 /** Where an OAuth flow should send the user back to, remembered across the provider round trip. */
 export const SSO_RETURN_STORAGE_KEY = "sso-return-to";
 
-/** How long /sso-callback waits for Clerk before showing a way out instead of a spinner. */
+/** How long /sso-callback waits for the session before showing a way out instead of a spinner. */
 export const SSO_CALLBACK_TIMEOUT_MS = 8000;
 
 /** Only same-site relative paths are allowed; anything else falls back to "/". */

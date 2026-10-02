@@ -8,7 +8,6 @@ import {
     type MediaPlayerInstance,
 } from '@vidstack/react';
 import PolutekControls from './player/PolutekControls';
-import { useAuth } from "@clerk/nextjs";
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType, type VideoTextTrackDTO } from '@/app/types/video';
 import { cn } from '@/lib/utils';
@@ -42,8 +41,9 @@ function normalizeTextTracks(tracks: VideoTextTrackDTO[] | undefined): VideoText
 
 export default function VideoPlayer({ video, variant = 'hero', onViewCounted, revealKey }: VideoPlayerProps) {
     const { playbackPlan, refreshPlaybackPlan, isLoading } = useVideoAccess();
-    const { orgRole } = useAuth();
-    const isAdmin = orgRole === 'admin' || orgRole === 'org:admin';
+    // The player never receives admin status from the session (the server decides); admin-only
+    // diagnostics in the overlays stay off for viewers.
+    const isAdmin = false;
     const [playerKey, setPlayerKey] = useState(0);
     const { source, tracking, player: playerConfig } = playbackPlan || {};
     const videoUrl = source?.playbackUrl;

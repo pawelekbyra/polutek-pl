@@ -1,9 +1,8 @@
 "use client";
 
 // "Profil" section of the account panel. The only name a user edits is the nickname
-// ("Pseudonim"): the same rules and taken check as at sign-up (lib/auth/nickname.ts), saved as the
-// Clerk first name with the last name cleared. The Clerk username is technical (generated from the
-// nickname at sign-up) and is not shown here.
+// ("Pseudonim"): the same rules and taken check as at sign-up (lib/auth/nickname.ts), saved to
+// User.name through PATCH /api/user/nickname.
 
 import React, { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -17,7 +16,11 @@ import {
   normalizeNickname,
   validateNickname,
 } from "@/lib/auth/nickname";
-import { Feedback, Field, Primary, clerkErr, useAccountUser } from "./AccountSections";
+import { Feedback, Field, Primary, useAccountUser } from "./AccountSections";
+import { authErrorMessage } from "@/lib/auth/errors";
+import { refreshSession } from "@/lib/auth/react";
+import { avatarProblemMessage, validateAvatarFile } from "@/lib/auth/avatar";
+import { fileToAvatarDataUrl } from "@/lib/auth/avatar-client";
 
 function LanguageField({ isPl }: { isPl: boolean }) {
   const { language, setLanguage } = useLanguage();
@@ -57,8 +60,7 @@ function LanguageField({ isPl }: { isPl: boolean }) {
 
 export function ProfileSection({ isPl }: { isPl: boolean }) {
   const user = useAccountUser();
-  // Older accounts may still have a first + last name; they show (and save) as one nickname.
-  const currentName = normalizeNickname([user.firstName, user.lastName].filter(Boolean).join(" "));
+  const currentName = normalizeNickname(user.fullName ?? "");
   const [nickname, setNickname] = useState(currentName);
   const [loading, setLoading] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
@@ -79,13 +81,20 @@ export function ProfileSection({ isPl }: { isPl: boolean }) {
         const check = await checkNicknameAvailability(validation.value);
         if (!check.available) return setError(nicknameCheckMessage(check.reason, isPl));
       }
-      await user.update({ firstName: validation.value, lastName: "" });
+      const response = await fetch("/api/user/nickname", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nickname: validation.value }),
+      });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { error?: string } | null;
+        return setError(authErrorMessage({ code: body?.error, status: response.status }, isPl));
+      }
       setNickname(validation.value);
-      // The Clerk webhook (user.updated) also syncs it; this makes the local User.name follow at once.
-      void fetch("/api/user/sync", { cache: "no-store" }).catch(() => undefined);
+      await refreshSession();
       setInfo(isPl ? "Zapisano." : "Saved.");
     } catch (err) {
-      setError(clerkErr(err, isPl));
+      setError(authErrorMessage(null, isPl));
     } finally {
       setLoading(false);
     }
@@ -95,15 +104,22 @@ export function ProfileSection({ isPl }: { isPl: boolean }) {
     const file = e.target.files?.[0];
     e.target.value = ""; // allow re-selecting the same file
     if (!file) return;
+    const avatarProblem = validateAvatarFile(file);
+    if (avatarProblem) return setError(avatarProblemMessage(avatarProblem, isPl));
     setAvatarLoading(true);
     setError(null);
     setInfo(null);
     try {
-      await user.setProfileImage({ file });
-      await user.reload();
+      const response = await fetch("/api/user/avatar", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dataUrl: await fileToAvatarDataUrl(file) }),
+      });
+      if (!response.ok) throw new Error("avatar rejected");
+      await refreshSession();
       setInfo(isPl ? "Zdjęcie zaktualizowane." : "Photo updated.");
     } catch (err) {
-      setError(clerkErr(err, isPl));
+      setError(authErrorMessage(null, isPl));
     } finally {
       setAvatarLoading(false);
     }
@@ -114,7 +130,7 @@ export function ProfileSection({ isPl }: { isPl: boolean }) {
       <Feedback error={error} info={info} />
       <LanguageField isPl={isPl} />
       <div className="flex items-center gap-3">
-        {/* Clerk-hosted avatar; plain img avoids next/image host config for the account panel. */}
+        {/* Avatar is a small data URL or a local file; plain img avoids next/image config for the account panel. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={user.imageUrl}

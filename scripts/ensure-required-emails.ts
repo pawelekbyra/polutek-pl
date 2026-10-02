@@ -29,6 +29,21 @@ const TEMPLATE_METADATA: Record<SystemTemplateSlug, { name: string; description:
     description: 'Systemowe potwierdzenie przyznania dostępu patrona.',
     category: 'PATRON',
   },
+  'verify-email': {
+    name: 'System: Verify email',
+    description: 'Link potwierdzający adres e-mail po rejestracji lub zmianie adresu.',
+    category: 'SYSTEM',
+  },
+  'reset-password': {
+    name: 'System: Reset password',
+    description: 'Link do ustawienia nowego hasła.',
+    category: 'SYSTEM',
+  },
+  'account-exists': {
+    name: 'System: Account exists',
+    description: 'Wiadomość do właściciela adresu, gdy ktoś próbuje założyć drugie konto na ten sam e-mail.',
+    category: 'SYSTEM',
+  },
 };
 
 export async function ensureRequiredEmailTemplates(emailTemplate: EmailTemplateClient) {

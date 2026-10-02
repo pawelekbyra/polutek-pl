@@ -3,7 +3,7 @@ import { AppContext } from '@/lib/modules/shared/app-context';
 import { recordAuditEvent } from '@/lib/modules/audit';
 import { sendAccountDeletedEmail } from '@/lib/modules/email';
 
-export type AccountDeletionCleanupSource = 'CLERK_WEBHOOK' | 'APP_ACCOUNT_DELETION' | 'CLERK_RECONCILIATION';
+export type AccountDeletionCleanupSource = 'APP_ACCOUNT_DELETION';
 
 export interface AccountDeletionCleanupResult {
   cleaned: boolean;

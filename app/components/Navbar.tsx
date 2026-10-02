@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useUser } from "@/lib/auth/react";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import UserMenu from "./auth/UserMenu";
 import Link from "next/link";
@@ -20,14 +20,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 // reads it) once testing is done; this hides the notifications bell without removing it.
 const TEMP_HIDE_NOTIFICATIONS_BELL = true;
 
-type NavbarMetadata = {
-  isPatron?: unknown;
-  role?: unknown;
-};
-
 type ServerAdminState = {
   userId: string;
   isAdmin: boolean;
+  isPatron: boolean;
 };
 
 const Navbar = () => {
@@ -51,7 +47,6 @@ const Navbar = () => {
     }
   };
 
-  const metadata = (user?.publicMetadata || {}) as NavbarMetadata;
   const userId = user?.id;
   const [serverAdminState, setServerAdminState] =
     useState<ServerAdminState | null>(null);
@@ -67,7 +62,7 @@ const Navbar = () => {
       .then((response) => (response.ok ? response.json() : null))
       .then((profile) => {
         if (!controller.signal.aborted) {
-          setServerAdminState({ userId, isAdmin: profile?.isAdmin === true });
+          setServerAdminState({ userId, isAdmin: profile?.isAdmin === true, isPatron: profile?.isPatron === true });
         }
       })
       .catch((error: unknown) => {
@@ -75,7 +70,7 @@ const Navbar = () => {
           !controller.signal.aborted &&
           !(error instanceof DOMException && error.name === "AbortError")
         ) {
-          setServerAdminState({ userId, isAdmin: false });
+          setServerAdminState({ userId, isAdmin: false, isPatron: false });
         }
       });
 
@@ -85,8 +80,8 @@ const Navbar = () => {
   const serverIsAdmin =
     serverAdminState?.userId === userId && serverAdminState?.isAdmin === true;
 
-  const isAdmin = resolveNavbarAdminUiState(serverIsAdmin, metadata.role);
-  const isPatron = isAdmin || metadata.isPatron === true;
+  const isAdmin = resolveNavbarAdminUiState(serverIsAdmin, undefined);
+  const isPatron = isAdmin || (serverAdminState?.userId === userId && serverAdminState?.isPatron === true);
   const searchLabel = language === "pl" ? "Szukaj" : "Search";
   const messagesLabel = language === "pl" ? "Wiadomości" : "Messages";
   const [notifications, setNotifications] = React.useState<NotificationDTO[]>([]);

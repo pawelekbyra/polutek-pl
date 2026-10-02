@@ -7,7 +7,7 @@ import {
   AlertCircle,
   RefreshCcw,
 } from "../icons";
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useAuth, useUser } from "@/lib/auth/react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "../LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -27,24 +27,6 @@ import { useComments } from "./hooks/useComments";
 import { useClientReady } from "@/app/hooks/useClientEnvironment";
 import { CommentLoadingSkeleton } from "@/components/skeletons";
 import { usePageRevealReady } from "../preload/PageRevealGate";
-
-type ClerkCommentMetadata = {
-  totalPaid?: unknown;
-  isPatron?: unknown;
-  role?: unknown;
-};
-
-function numberMetadata(value: unknown, fallback = 0) {
-  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
-}
-
-function booleanMetadata(value: unknown, fallback = false) {
-  return typeof value === "boolean" ? value : fallback;
-}
-
-function stringMetadata(value: unknown, fallback: string) {
-  return typeof value === "string" && value ? value : fallback;
-}
 
 interface EmbeddedCommentsProps {
   userProfile?: {
@@ -96,7 +78,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const { isSignedIn, userId } = useAuth();
   const { user } = useUser();
 
-  const metadata = (user?.publicMetadata || {}) as ClerkCommentMetadata;
   const userProfile = React.useMemo(() => {
     const clerkUserProfile = isSignedIn
       ? {
@@ -104,13 +85,12 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           imageUrl: user?.imageUrl || null,
           name:
             user?.fullName ||
-            [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
-            user?.username ||
             null,
           username: user?.username || null,
-          totalPaid: numberMetadata(metadata.totalPaid),
-          isPatronDecorative: booleanMetadata(metadata.isPatron),
-          role: stringMetadata(metadata.role, "USER"),
+          // Decorative fields only; the server decides roles and badges for rendered comments.
+          totalPaid: 0,
+          isPatronDecorative: false,
+          role: "USER",
         }
       : null;
 
@@ -130,9 +110,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     isSignedIn,
     userId,
     user,
-    metadata.totalPaid,
-    metadata.isPatron,
-    metadata.role,
   ]);
 
   /** Decorative only. Authoritative permission comes from `viewer.canComment`. */

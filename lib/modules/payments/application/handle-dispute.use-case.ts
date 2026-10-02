@@ -5,7 +5,6 @@ import { PaymentRepository } from "../infrastructure/payment.repository";
 import { PaymentError } from "../domain/payment.errors";
 import { logger } from "@/lib/logger";
 import { recordMetric, recordAlert } from "@/lib/observability";
-import { syncClerkAccess } from "@/lib/modules/users";
 import { recalculatePatronStatus } from "@/lib/modules/patron";
 
 export interface HandleDisputeInput {
@@ -33,7 +32,7 @@ export async function handleDispute(
   const repo = new PaymentRepository();
 
   try {
-    const syncData = await ctx.db.writeTransaction(async (tx) => {
+    await ctx.db.writeTransaction(async (tx) => {
       const payment = await repo.findByIntentId(input.stripeIntentId, tx);
       if (!payment) {
         recordAlert('payment.dispute_unmatched', { stripeIntentId: input.stripeIntentId });
@@ -147,10 +146,6 @@ export async function handleDispute(
       recordAlert('payment.dispute_opened', { paymentId: payment.id, status: input.status });
       return { userId: payment.userId, isPatron, normalizedTotal };
     });
-
-    if (syncData) {
-      await syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal);
-    }
 
     return ok(undefined);
   } catch (error: any) {

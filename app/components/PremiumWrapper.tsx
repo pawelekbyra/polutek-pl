@@ -1,7 +1,7 @@
 "use client";
 
 import { logger } from "@/lib/logger";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/lib/auth/react";
 import React, {
   useEffect,
   useRef,

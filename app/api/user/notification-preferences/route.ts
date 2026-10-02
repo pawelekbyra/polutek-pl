@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { getNotificationPreferences, updateNotificationPreferences } from "@/lib/modules/notifications";
 
 export async function GET() {

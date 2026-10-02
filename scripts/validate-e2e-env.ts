@@ -1,7 +1,6 @@
 const hasRemoteTarget = Boolean(process.env.E2E_BASE_URL);
 const requiredForLocalServer = [
-  'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY',
-  'CLERK_SECRET_KEY',
+  'BETTER_AUTH_SECRET',
   'DATABASE_URL',
 ];
 

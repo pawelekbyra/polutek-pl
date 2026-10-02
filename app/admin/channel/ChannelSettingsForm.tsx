@@ -26,10 +26,10 @@ type ChannelCreator = {
 
 type ChannelSettingsFormProps = {
   initialCreator: ChannelCreator | null;
-  clerkFallbackImageUrl: string | null;
+  fallbackImageUrl: string | null;
 };
 
-export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: ChannelSettingsFormProps) {
+export function ChannelSettingsForm({ initialCreator, fallbackImageUrl }: ChannelSettingsFormProps) {
   const [creator, setCreator] = useState(initialCreator);
   const [name, setName] = useState(initialCreator?.name || "");
   const [bio, setBio] = useState(initialCreator?.bio || "");
@@ -83,7 +83,7 @@ export function ChannelSettingsForm({ initialCreator, clerkFallbackImageUrl }: C
     );
   }
 
-  const fallbackAvatar = creator.user?.imageUrl || clerkFallbackImageUrl;
+  const fallbackAvatar = creator.user?.imageUrl || fallbackImageUrl;
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">

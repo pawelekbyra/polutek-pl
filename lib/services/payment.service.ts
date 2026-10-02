@@ -5,7 +5,6 @@ import Stripe from 'stripe';
 import { getStripeClient } from '@/lib/modules/payments/infrastructure/stripe-client';
 import { recalculatePatronStatus } from '@/lib/modules/patron';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { syncClerkAccess } from '@/lib/modules/users/application/sync-clerk-access';
 import { fulfillPayment } from '@/lib/modules/payments/application/fulfill-payment.use-case';
 import {
   calculateRefundAdjustment,
@@ -114,10 +113,7 @@ export class PaymentService {
             case 'charge.dispute.created':
             case 'charge.dispute.closed': {
                 const dispute = event.data.object as Stripe.Dispute;
-                const syncData = await this.handleDispute(dispute);
-                if (syncData) {
-                    await syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal);
-                }
+                await this.handleDispute(dispute);
                 break;
             }
             case 'payment_intent.payment_failed': {
@@ -196,10 +192,6 @@ export class PaymentService {
         const { isPatron, normalizedTotal } = recalcResult.data;
         return { userId: payment.userId, isPatron, normalizedTotal };
     });
-
-    if (syncData) {
-        await syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal).catch(e => logger.error("[PaymentService] Post-refund sync failed:", e));
-    }
     return syncData;
   }
 
@@ -225,7 +217,6 @@ export class PaymentService {
             const { isPatron, normalizedTotal } = recalcResult.data;
             return { userId: payment.userId, isPatron, normalizedTotal };
         });
-        if (syncData) await syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal).catch(e => logger.error("[PaymentService] Post-dispute sync failed:", e));
         recordAlert('payment.dispute_lost', { currency: payment.currency });
         return syncData;
     }
@@ -242,7 +233,6 @@ export class PaymentService {
             const { isPatron, normalizedTotal } = recalcResult.data;
             return { userId: payment.userId, isPatron, normalizedTotal };
         });
-        if (syncData) await syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal).catch(e => logger.error("[PaymentService] Post-dispute-win sync failed:", e));
         logger.info(`[PaymentService] Dispute WON for payment ${payment.id}. Patron status restored if applicable.`);
         return syncData;
     }

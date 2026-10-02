@@ -2,6 +2,9 @@ export { sendAdminBroadcastEmail } from "./application/send-admin-broadcast-emai
 export {
   sendWelcomeEmail,
   sendPasswordChangedEmail,
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendAccountExistsEmail,
   sendAccountDeletedEmail,
   sendDonationThankYouEmail,
   sendBecomePatronEmail,

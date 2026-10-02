@@ -2,12 +2,11 @@
 # Build from the repo root:
 #   docker build -f deploy/serwerek/Dockerfile -t polutek-app:<tag> \
 #     --build-arg NEXT_PUBLIC_APP_URL=https://www.pawelperfect.com \
-#     --build-arg NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_... \
 #     --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_... \
 #     --build-arg NEXT_PUBLIC_R2_PUBLIC_HOST=thumbs.pawelperfect.pl .
 # Targets: runner (default, the app), migrator (prisma CLI + migrations only, ~300 MB; used by deploy.sh).
 # NEXT_PUBLIC_* values are PUBLIC by design (inlined into the client bundle), so passing them as build args is fine.
-# Real secrets (CLERK_SECRET_KEY, STRIPE_SECRET_KEY, DATABASE_URL ...) are NEVER baked in: they come from env_file at runtime.
+# Real secrets (BETTER_AUTH_SECRET, GOOGLE_CLIENT_SECRET, STRIPE_SECRET_KEY, DATABASE_URL ...) are NEVER baked in: they come from env_file at runtime.
 FROM node:22-bookworm-slim AS deps
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
@@ -18,14 +17,12 @@ RUN npm ci --no-audit --no-fund
 FROM deps AS build
 # Defaults are harmless dummies so a plain `docker build` still works (test stack); production passes real values.
 ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
-ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_ZHVtbXkuY2xlcmsubG9jYWwk
 ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 ARG NEXT_PUBLIC_R2_PUBLIC_HOST=
 ARG NEXT_PUBLIC_BLOB_PUBLIC_HOST=
 ARG NEXT_PUBLIC_APP_NAME=
 ARG NEXT_PUBLIC_SUPPORT_EMAIL=
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY \
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY \
     NEXT_PUBLIC_R2_PUBLIC_HOST=$NEXT_PUBLIC_R2_PUBLIC_HOST \
     NEXT_PUBLIC_BLOB_PUBLIC_HOST=$NEXT_PUBLIC_BLOB_PUBLIC_HOST \

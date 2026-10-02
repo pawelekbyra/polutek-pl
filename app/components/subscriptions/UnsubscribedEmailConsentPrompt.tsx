@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useTransition } from 'react';
-import { useAuth, useUser } from '@clerk/nextjs';
+import { useAuth, useUser } from "@/lib/auth/react";
 import { logger } from '@/lib/logger';
 import EmailSubscriptionConsentModal from './EmailSubscriptionConsentModal';
 

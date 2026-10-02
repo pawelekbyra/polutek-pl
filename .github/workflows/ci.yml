@@ -12,16 +12,18 @@ env:
   DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
   DATABASE_URL_UNPOOLED: postgresql://ci:ci@localhost:5432/ci
   NEXT_PUBLIC_APP_URL: https://example.com
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_YnVpbGQtdGltZS1vbmx5JGNsZXJrLmFjY291bnRzLmRldiQ
-  CLERK_SECRET_KEY: sk_test_example
-  CLERK_WEBHOOK_SECRET: whsec_clerk
+  BETTER_AUTH_SECRET: ci-better-auth-secret-0123456789abcdef0123
+  GOOGLE_CLIENT_ID: ci-google-client-id
+  GOOGLE_CLIENT_SECRET: ci-google-client-secret
+  TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+  TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
   STRIPE_SECRET_KEY: sk_test_stripe
   STRIPE_WEBHOOK_SECRET: whsec_stripe
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_stripe
   RESEND_API_KEY: re_example
   EMAIL_FROM: notifications@example.com
   ADMIN_EMAIL: admin@example.com
-  ADMIN_CLERK_USER_IDS: user_ci_admin
+  ADMIN_EMAILS: admin@example.com
   MAIN_CREATOR_SLUG: ci-creator
   PATRON_MIN_TIP_AMOUNT: "500"
   PATRON_MIN_TIP_CURRENCY: EUR

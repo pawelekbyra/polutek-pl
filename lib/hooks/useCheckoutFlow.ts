@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useAuth, useUser } from "@/lib/auth/react";
 import { useAuthModal } from "@/app/components/auth/AuthModalProvider";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";

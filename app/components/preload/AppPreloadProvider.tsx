@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/lib/auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { PublicVideoDTO } from "@/app/types/video";
 import type { PlaybackPlan } from "@/lib/modules/playback";

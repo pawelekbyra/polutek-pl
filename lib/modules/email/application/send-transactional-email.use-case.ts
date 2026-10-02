@@ -27,6 +27,8 @@ async function findRecipient(to: string, slug: string) {
 
 type SendTemplateEmailInput = {
   to: string;
+  /** Security emails (verification, reset) carry no marketing unsubscribe link. */
+  noUnsubscribe?: boolean;
   slug: SystemTemplateSlug;
   variables?: Record<string, string | null | undefined>;
   language?: string;
@@ -37,7 +39,7 @@ type SendTemplateEmailInput = {
  * lib/email-defaults.ts — the same text the admin editor shows as the default, so what the
  * admin sees is what gets sent.
  */
-async function sendTemplateEmail({ to, slug, variables = {}, language = 'pl' }: SendTemplateEmailInput) {
+async function sendTemplateEmail({ to, slug, variables = {}, language = 'pl', noUnsubscribe = false }: SendTemplateEmailInput) {
   const template = await prisma.emailTemplate.findUnique({
     where: { slug },
     select: { subject: true, html: true, subjectEn: true, htmlEn: true },
@@ -48,7 +50,7 @@ async function sendTemplateEmail({ to, slug, variables = {}, language = 'pl' }: 
   }
 
   const recipient = await findRecipient(to, slug);
-  const unsubscribeUrl = recipient ? buildContentUnsubscribeUrl(recipient.id, APP_URL()) : null;
+  const unsubscribeUrl = recipient && !noUnsubscribe ? buildContentUnsubscribeUrl(recipient.id, APP_URL()) : null;
   const firstName =
     recipient?.name?.trim().split(/\s+/)[0] ||
     recipient?.username ||
@@ -101,8 +103,8 @@ export async function sendWelcomeEmail(toEmail: string, firstName?: string | nul
   });
 }
 
-export async function sendPasswordChangedEmail(toEmail: string) {
-  return sendTemplateEmail({ to: toEmail, slug: 'password-changed' });
+export async function sendPasswordChangedEmail(toEmail: string, language?: string) {
+  return sendTemplateEmail({ to: toEmail, slug: 'password-changed', language, noUnsubscribe: true });
 }
 
 export async function sendAccountDeletedEmail(toEmail: string) {
@@ -125,4 +127,16 @@ export async function sendBecomePatronEmail(toEmail: string, amount: number, cur
     variables: { amount: amount.toFixed(2), currency },
     language,
   });
+}
+
+export async function sendVerificationEmail(toEmail: string, actionUrl: string, language: string = 'pl') {
+  return sendTemplateEmail({ to: toEmail, slug: 'verify-email', variables: { actionUrl }, language, noUnsubscribe: true });
+}
+
+export async function sendPasswordResetEmail(toEmail: string, actionUrl: string, language: string = 'pl') {
+  return sendTemplateEmail({ to: toEmail, slug: 'reset-password', variables: { actionUrl }, language, noUnsubscribe: true });
+}
+
+export async function sendAccountExistsEmail(toEmail: string, actionUrl: string, language: string = 'pl') {
+  return sendTemplateEmail({ to: toEmail, slug: 'account-exists', variables: { actionUrl }, language, noUnsubscribe: true });
 }

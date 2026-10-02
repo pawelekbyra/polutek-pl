@@ -2,16 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useUser, useClerk } from "@clerk/nextjs";
+import { useAuth, useUser } from "@/lib/auth/react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "../LanguageContext";
 import { ProfileSection } from "./ProfileSection";
-import {
-  EmailSection,
-  ConnectionsSection,
-  SecuritySection,
-  DangerSection,
-} from "./AccountSections";
+import { EmailSection, ConnectionsSection, DangerSection } from "./AccountSections";
+import { SecuritySection } from "./SecuritySection";
 import { NotificationsSection } from "./NotificationsAccountSection";
 
 interface AccountModalProps {
@@ -24,7 +20,7 @@ type Section = "profile" | "email" | "connections" | "security" | "notifications
 
 export default function AccountModal({ open, onOpenChange, isAdmin }: AccountModalProps) {
   const { user } = useUser();
-  const { signOut } = useClerk();
+  const { signOut } = useAuth();
   const { language } = useLanguage();
   const isPl = language === "pl";
   const [section, setSection] = useState<Section>("profile");

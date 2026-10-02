@@ -23,9 +23,20 @@ model User {
   stripeCustomerId              String?    @unique
   imageUrl                      String?
   canCreateChannel              Boolean    @default(false)
+  // Better Auth core field. Rows that predate Better Auth were verified by the old identity
+  // provider, so the migration marks them verified.
+  emailVerified                 Boolean    @default(false)
+  // Better Auth twoFactor plugin flag (TOTP).
+  twoFactorEnabled              Boolean?   @default(false)
+  // True for accounts created through Google until the user picks a nickname (and optionally an
+  // avatar) in the first-sign-in dialog. Email sign-ups choose both up front.
+  onboardingPending             Boolean    @default(false)
   createdAt                     DateTime   @default(now())
   updatedAt                     DateTime   @updatedAt
 
+  sessions         Session[]
+  accounts         Account[]
+  twoFactors       TwoFactor[]
   creators         Creator[]
   comments         Comment[]
   commentLikes     CommentLike[]
@@ -42,6 +53,63 @@ model User {
   notificationPreference NotificationPreference?
 
   @@index([email])
+}
+
+// Better Auth tables (docs/architecture/auth-better-auth.md). `User` above is the Better Auth
+// user; these four hold sessions, linked login methods (credential password, Google), one-time
+// tokens (email verification, password reset) and TOTP secrets.
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+model TwoFactor {
+  id          String @id
+  secret      String
+  backupCodes String
+  userId      String
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 enum PaymentStatus {

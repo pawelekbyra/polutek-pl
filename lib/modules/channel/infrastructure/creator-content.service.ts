@@ -3,7 +3,6 @@ import { VideoStatus } from '@prisma/client';
 import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { PublicCreatorPageDTO } from '@/app/types/video';
 import { canUseDemoFallbacks } from '@/lib/feature-flags';
-import { getAdminClerkUserIds } from '@/lib/admin-config';
 import { VideoContentService, publicVideoOrderBy } from '@/lib/modules/video/infrastructure/video-content.service';
 import { MainChannelService } from '@/lib/modules/channel/application/main-channel.service';
 
@@ -35,9 +34,9 @@ export class CreatorContentService {
         }
       });
 
-      const adminIds = getAdminClerkUserIds();
-      const adminData = (isMainCreator && adminIds.length > 0) ? await prisma.user.findFirst({
-        where: { id: { in: adminIds }, isDeleted: false },
+      const adminData = isMainCreator ? await prisma.user.findFirst({
+        where: { role: 'ADMIN', isDeleted: false },
+        orderBy: { createdAt: 'asc' },
         select: { imageUrl: true }
       }) : null;
 

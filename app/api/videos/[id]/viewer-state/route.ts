@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { handleApiError } from "@/lib/errors";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { getVideoInteraction } from "@/lib/modules/users";
 
 export const dynamic = "force-dynamic";

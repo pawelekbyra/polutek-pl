@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { auth } from "@/lib/auth/server";
 import { NextRequest, NextResponse } from 'next/server';
 import { ChannelLayoutService } from '@/lib/modules/channel';
 import { handleApiError } from '@/lib/errors';

@@ -1,12 +1,11 @@
 import { createScopedLogger } from "@/lib/logger";
 import { NextResponse, NextRequest } from "next/server";
 import { getCorrelationId } from "@/lib/utils/correlation";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { handleApiError } from "@/lib/errors";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { updateUserLanguage } from "@/lib/modules/users";
 import { getActorFromAuth } from "@/lib/api/auth";
-import { ClerkIdentityProvider } from "@/lib/api/identity-provider";
 
 export const dynamic = "force-dynamic";
 
@@ -28,11 +27,7 @@ export async function PATCH(req: NextRequest) {
     const actor = await getActorFromAuth();
     const ctx = createAppContext({ actor, requestId: requestId || undefined });
 
-    await updateUserLanguage(
-      ctx,
-      { userId, language },
-      new ClerkIdentityProvider(),
-    );
+    await updateUserLanguage(ctx, { userId, language });
 
     return NextResponse.json({ success: true });
   } catch (err) {

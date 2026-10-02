@@ -1,0 +1,67 @@
+"use client";
+
+import { logger } from "@/lib/logger";
+import { useLanguage } from "../LanguageContext";
+import { updateUserLanguage } from "@/lib/actions/user";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import React, { useEffect, useRef, useState } from "react";
+import UnsubscribedEmailConsentPrompt from "../subscriptions/UnsubscribedEmailConsentPrompt";
+import { useUser } from "@/lib/auth/react";
+
+/**
+ * App-wide reactions to the session: refresh server-rendered state on a live sign-in/sign-out,
+ * and keep the viewer's saved language (stored on the user row) in step with the UI language.
+ */
+export default function AuthLifecycleProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { language, setLanguage, isInitialized } = useLanguage();
+  const { user, isLoaded } = useUser();
+  const [syncedOnce, setSyncedOnce] = useState(false);
+  // The language already stored for the user, so a redundant write is skipped on mount.
+  const [persistedLanguage, setPersistedLanguage] = useState<string | null>(null);
+  // null = not yet observed. Used to detect a live sign-in/sign-out transition (as opposed to
+  // already being in that state on first mount) so server-rendered patron/access/comment state
+  // gets refetched instead of staying stale until a manual reload.
+  const wasSignedInRef = useRef<boolean | null>(null);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    const isSignedIn = Boolean(user);
+    if (wasSignedInRef.current !== null && wasSignedInRef.current !== isSignedIn) {
+      // Client-side caches (comments, viewer permissions, sidebar layout) are keyed independent
+      // of auth state, so a plain router.refresh() leaves them showing the previous session's
+      // data until they naturally go stale.
+      queryClient.clear();
+      router.refresh();
+    }
+    wasSignedInRef.current = isSignedIn;
+  }, [isLoaded, user, router, queryClient]);
+
+  // Saved preference -> UI, once per login.
+  useEffect(() => {
+    if (isLoaded && user && isInitialized && !syncedOnce) {
+      if (user.language !== language) setLanguage(user.language, true);
+      setPersistedLanguage(user.language);
+      setSyncedOnce(true);
+    }
+  }, [user, isLoaded, isInitialized, language, setLanguage, syncedOnce]);
+
+  // UI -> saved preference, only when the language actually changes after the first sync.
+  useEffect(() => {
+    if (!isLoaded || !user || !isInitialized || !syncedOnce) return;
+    if (language === persistedLanguage) return;
+    updateUserLanguage(language)
+      .then(() => setPersistedLanguage(language))
+      .catch((err) => logger.warn("[AuthLifecycleProvider] Failed to persist language choice:", err));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language, syncedOnce]);
+
+  return (
+    <>
+      {children}
+      <UnsubscribedEmailConsentPrompt />
+    </>
+  );
+}

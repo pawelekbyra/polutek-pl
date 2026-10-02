@@ -5,7 +5,7 @@ import { PublicVideoDTO } from '@/app/types/video';
 import { getHomeContentCached } from '@/lib/modules/channel/application/home-content.loader';
 import { normalizePaymentTotals } from '@/lib/modules/users/domain/payment-totals';
 import { prisma } from '@/lib/prisma';
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { auth, currentUser } from "@/lib/auth/server";
 import { getOrCreateCurrentUser } from '@/lib/modules/users';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { getLocalizedHref, type Locale } from '@/lib/i18n/routing';
@@ -136,9 +136,9 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
 
   const userProfile = userId ? {
     id: userId,
-    email: user?.primaryEmailAddress?.emailAddress || '',
-    name: userDb?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : null),
-    imageUrl: user?.imageUrl || null,
+    email: user?.email || '',
+    name: userDb?.name || user?.name || null,
+    imageUrl: userDb?.imageUrl || user?.image || null,
     // Use normalized totals from UserPaymentTotal if userDb is present
     totalPaid: (userDb && 'paymentTotals' in userDb) ? normalizePaymentTotals(userDb.paymentTotals) : 0,
     /** Decorative/display only. Authority for access-control is PatronGrant. */

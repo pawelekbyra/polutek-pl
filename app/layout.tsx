@@ -1,5 +1,7 @@
 import Providers from "@/app/components/Providers";
-import ClerkLocalizationProvider from "@/app/components/ClerkLocalizationProvider";
+import AuthLifecycleProvider from "@/app/components/auth/AuthLifecycleProvider";
+import { AuthPublicConfigProvider } from "@/lib/auth/public-config";
+import { readPublicAuthConfig } from "@/lib/auth/public-config.server";
 import { Suspense } from 'react';
 import { geistMono, geistSans, brandLogoFont } from "./fonts";
 import "./globals.css";
@@ -35,6 +37,7 @@ export const metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const initialLanguage = await resolveInitialLanguage();
+  const publicAuthConfig = readPublicAuthConfig();
   const buildId = process.env.VERCEL_GIT_COMMIT_SHA || 'development';
   return (
     <html
@@ -61,11 +64,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <AppVersionCheck />
         <Suspense fallback={<div className="min-h-[100dvh] bg-background" />}>
           <Providers initialLanguage={initialLanguage}>
-            <ClerkLocalizationProvider>
-              <AuthModalProvider>
-                {children}
-              </AuthModalProvider>
-            </ClerkLocalizationProvider>
+            <AuthPublicConfigProvider value={publicAuthConfig}>
+              <AuthLifecycleProvider>
+                <AuthModalProvider>
+                  {children}
+                </AuthModalProvider>
+              </AuthLifecycleProvider>
+            </AuthPublicConfigProvider>
           </Providers>
         </Suspense>
         <Analytics />

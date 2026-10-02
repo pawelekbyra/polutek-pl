@@ -29,7 +29,9 @@ describe('Security Headers', () => {
   it('generates CSP with default security hosts', () => {
     const csp = generateCSP();
 
-    expect(csp).toContain('https://clerk.com');
+    expect(csp).toContain('https://accounts.google.com');
+    expect(csp).toContain('https://challenges.cloudflare.com');
+    
     expect(csp).toContain('https://js.stripe.com');
     expect(csp).toContain('https://fonts.googleapis.com');
     expect(csp).toContain("default-src 'self'");
@@ -98,6 +100,6 @@ describe('Security Headers', () => {
     const csp = generateCSP();
 
     expect(csp).toContain('https://user-images.example.com');
-    expect(csp).toContain("img-src 'self' data: blob: https://img.clerk.com https://*.clerk.com https://images.unsplash.com https://www.dicebear.com https://user-images.example.com");
+    expect(csp).toContain("img-src 'self' data: blob: https://img.clerk.com https://images.unsplash.com https://www.dicebear.com https://user-images.example.com");
   });
 });

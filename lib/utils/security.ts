@@ -11,39 +11,10 @@ function getR2UploadHosts() {
   ].filter((host): host is string => Boolean(host))));
 }
 
-function getConfiguredAppHosts() {
-  const hosts = new Set<string>();
-
-  const rawAppUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (rawAppUrl) {
-    try {
-      hosts.add(new URL(rawAppUrl).hostname.toLowerCase().replace(/^www\./, ''));
-    } catch {
-      // Invalid NEXT_PUBLIC_APP_URL — fall through to the static fallbacks below
-      // so a bad env value can't take the CSP allow-list down to nothing.
-    }
-  }
-
-  // Static fallbacks cover both the pre- and post-rebrand production domains so
-  // a Clerk custom-domain cutover (Clerk dashboard side) can't silently get CSP
-  // blocked by a stale/missing NEXT_PUBLIC_APP_URL in Vercel. Keep both until the
-  // polutek.pl domain alias is fully retired — see CLAUDE.md rebrand notes.
-  hosts.add('polutek.pl');
-  hosts.add('pawelperfect.pl');
-
-  return Array.from(hosts);
-}
-
 export function generateCSP() {
-  const clerkDomains = Array.from(new Set([
-    'clerk.com',
-    '*.clerk.com',
-    '*.clerk.accounts.dev',
-    '*.clerk.dev',
-    'accounts.clerk.com',
-    'clerk.accounts.dev',
-    ...getConfiguredAppHosts().flatMap((host) => [`clerk.${host}`, `accounts.${host}`, host, `*.${host}`]),
-  ]));
+  // Google sign-in (redirect flow needs nothing here; One Tap loads Google's script, iframe and
+  // posts back to the app). Turnstile is the sign-up/sign-in bot check.
+  const googleAuthHosts = ['accounts.google.com'];
 
   const cloudflareStreamUploadHosts = [
     'upload.cloudflarestream.com',
@@ -76,8 +47,8 @@ export function generateCSP() {
   ])).map(h => `https://${h}`).join(' ');
 
   const imageHosts = Array.from(new Set([
+    // Avatars of accounts that predate Better Auth were hosted by the old identity provider.
     'img.clerk.com',
-    '*.clerk.com',
     'images.unsplash.com',
     'www.dicebear.com',
     ...parseMediaHosts(process.env.ALLOWED_COMMENT_IMAGE_HOSTS),
@@ -86,7 +57,7 @@ export function generateCSP() {
   ])).map(h => `https://${h}`).join(' ');
 
   const connectHosts = Array.from(new Set([
-    ...clerkDomains,
+    ...googleAuthHosts,
     ...cloudflareStreamUploadHosts,
     ...cloudflareStreamPlaybackHosts,
     ...getR2UploadHosts(),
@@ -96,12 +67,12 @@ export function generateCSP() {
     ...configuredMediaHosts,
   ])).flatMap(h => [`https://${h}`, `wss://${h}`]).join(' ');
 
-  // Clerk's sign-up bot protection is Cloudflare Turnstile. Without this host the captcha can't
-  // load and every new account fails ("The CAPTCHA failed to load"), including Google sign-ups.
+  // Better Auth's captcha plugin uses Cloudflare Turnstile on sign-up, sign-in and password
+  // reset. Without this host the widget can't load and those forms stay blocked.
   const captchaHost = 'challenges.cloudflare.com';
 
   const scriptHosts = [
-    ...clerkDomains.map(h => `https://${h}`),
+    ...googleAuthHosts.map(h => `https://${h}`),
     `https://${captchaHost}`,
     'https://cdn.jsdelivr.net',
     'https://js.stripe.com',
@@ -113,7 +84,7 @@ export function generateCSP() {
   const evalDirective = "'unsafe-eval'";
   const devScriptSource = process.env.NODE_ENV === 'development' ? ` ${evalDirective}` : '';
   const frameHosts = Array.from(new Set([
-    ...clerkDomains,
+    ...googleAuthHosts,
     ...embedFrameHosts,
     'js.stripe.com',
     captchaHost,

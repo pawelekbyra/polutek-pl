@@ -1,7 +1,6 @@
 /**
  * Nickname ("Pseudonim") rules for new accounts. The nickname is the only name a new user gives:
- * it is stored as the Clerk first name (last name empty), so Clerk's fullName, the DB `User.name`
- * and every public surface (user menu, comments) show it. Shared by the client forms and the
+ * it is stored as `User.name` (the Better Auth user name), so every public surface * shows it: the (user menu, comments) show it. Shared by the client forms and the
  * availability endpoint so both apply the same rules.
  */
 
