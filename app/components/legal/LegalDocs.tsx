@@ -1,13 +1,13 @@
 import React from 'react';
 
-export const LEGAL_EFFECTIVE_DATE = 'Obowiązuje od 26 września 2026 r.';
-export const LEGAL_EFFECTIVE_DATE_EN = 'Effective as of 26 September 2026.';
+export const LEGAL_EFFECTIVE_DATE = 'Obowiązuje od 2 października 2026 r.';
+export const LEGAL_EFFECTIVE_DATE_EN = 'Effective as of 2 October 2026.';
 
 /**
  * The service is run by a private individual (see § 1 of the Terms). Every legal document —
  * Terms and Privacy Policy, PL and EN — names the same person and this one contact address.
  */
-export const LEGAL_CONTACT_EMAIL = 'hello@pawelperfect.com';
+export const LEGAL_CONTACT_EMAIL = 'support@pawelperfect.com';
 
 export function LegalSection({ nr, title, children }: { nr: string; title: string; children: React.ReactNode }) {
   return (

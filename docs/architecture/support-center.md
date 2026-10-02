@@ -14,7 +14,7 @@ Stan: **dziala na serwerku od 2026-10-02** (Chatwoot CE, panel `https://support.
 
 ```
                   Internet
-   klient pisze na hello@pawelperfect.com
+   klient pisze na support@pawelperfect.com (alias Workspace -> przekazanie na adres inbound; MX bez zmian)
                      |
                      v   (po cutoverze MX; do tego czasu: adres testowy na subdomenie inbound.pawelperfect.com)
         Cloudflare Email Routing  (reguly: konkretny adres + catch-all)
@@ -70,8 +70,8 @@ Zasada: agent **czyta, szkicuje, notuje**; wysyla czlowiek (zatwierdza). Cala po
 ## Aplikacja mobilna (decyzja wlasciciela)
 
 Oficjalna aplikacja Chatwoot (iOS/Android) loguje sie do `https://support.pawelperfect.com` przez API (`/auth/sign_in`, `/api/v1/*`, `/cable`), a nie umie przejsc logowania Cloudflare Access (OTP w przegladarce). Opcje:
-- **A (obecnie): tylko panel w przegladarce** za Access (najbezpieczniej). Aplikacja mobilna nie zadziala.
-- **B: wyjatek Access dla sciezek API** (`/auth/sign_in`, `/api/*`, `/cable`, `/webhooks/*`) z wlasnym uwierzytelnianiem Chatwoot (haslo + wlaczone 2FA, limity Rack::Attack). Panel w przegladarce (`/app/*`) zostaje za Access. Slabsze: ktos z internetu moze probowac logowania do API. Skrypt i rollback: runbook, "Wlaczenie aplikacji mobilnej". Powiadomienia push przechodza przez przekaznik Chatwoot (zewnetrzna zaleznosc, tylko metadane).
+- **A: tylko panel w przegladarce** za Access (najbezpieczniej). Aplikacja mobilna nie zadziala. *(historyczne)*
+- **B (WYBRANA i wlaczona 2026-10-02, szczegoly w runbooku sekcja 7): wyjatek Access dla sciezek API** (`/auth/sign_in`, `/api/*`, `/cable`, `/webhooks/*`) z wlasnym uwierzytelnianiem Chatwoot (haslo + wlaczone 2FA, limity Rack::Attack). Panel w przegladarce (`/app/*`) zostaje za Access. Slabsze: ktos z internetu moze probowac logowania do API. Skrypt i rollback: runbook, "Wlaczenie aplikacji mobilnej". Powiadomienia push przechodza przez przekaznik Chatwoot (zewnetrzna zaleznosc, tylko metadane).
 
 ## Zalezne i zewnetrzne elementy (co zostaje na zewnatrz)
 

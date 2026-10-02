@@ -2,9 +2,9 @@
 
 No secrets here. Two separate jobs, two providers.
 
-## Single public contact address: `hello@pawelperfect.com`
+## Single public contact address: `support@pawelperfect.com` (since 2026-10-02)
 
-The owner decided on **one** address for everything users see (legal documents, support, replies): `hello@pawelperfect.com` (was `hello@pawelperfect.pl` until 2026-10-01; that address is still an alias of the same mailbox). `support@` is not used anymore. In code it is `LEGAL_CONTACT_EMAIL` in `app/components/legal/LegalDocs.tsx` (guarded by `tests/unit/legal-docs-consistency.test.ts`). Older notes in CLAUDE.md and `docs/strategy/OWNER-*` that mention `support@…` or `@polutek.pl` are historical.
+The owner decided on **one** address for everything users see (legal documents, support, replies): `support@pawelperfect.com`. It is a Workspace alias (Admin SDK, 2026-10-02) of the user `hello@pawelperfect.com`, which stays the private Workspace login/admin; mail to `support@` is forwarded to the Chatwoot ingest address on `inbound.pawelperfect.com` (see SUPPORT-CENTER.md; forwarding status there). MX is unchanged (Google). The Chatwoot inbox sends as `support@` through Resend. History: `hello@pawelperfect.pl` until 2026-10-01, `hello@pawelperfect.com` until 2026-10-02. In code it is `LEGAL_CONTACT_EMAIL` in `app/components/legal/LegalDocs.tsx` (guarded by `tests/unit/legal-docs-consistency.test.ts`). Older notes in CLAUDE.md and `docs/strategy/OWNER-*` that mention `support@…` or `@polutek.pl` are historical.
 
 ## Incoming mail and human replies: Google Workspace
 
@@ -19,7 +19,7 @@ The owner decided on **one** address for everything users see (legal documents, 
 ## Automatic mail from the app: Resend
 
 - Domain `pawelperfect.pl` verified in Resend (DKIM `resend._domainkey`, bounce/SPF on the `send` subdomain). Sending only: the API key `polutek-production` is sending-only and scoped to this domain.
-- Vercel env: `RESEND_API_KEY`, `EMAIL_FROM` (`Pawel Perfect <no-reply@pawelperfect.com> (normal-case name on purpose, see docs/operations/EMAIL_DELIVERABILITY.md)` since 2026-09-30, Resend domain `pawelperfect.com` verified; automatic mail is sent from a no-reply address, no mailbox needed), optional `EMAIL_REPLY_TO` (default `hello@pawelperfect.com`), `RESEND_WEBHOOK_SECRET`. Every mail from the app carries `Reply-To: hello@pawelperfect.com`, so a user's reply lands in the real Google mailbox (`getEmailReplyTo()` in `legacy-email-service-provider.ts`). Changing env vars needs a redeploy.
+- Vercel env: `RESEND_API_KEY`, `EMAIL_FROM` (`Pawel Perfect <no-reply@pawelperfect.com> (normal-case name on purpose, see docs/operations/EMAIL_DELIVERABILITY.md)` since 2026-09-30, Resend domain `pawelperfect.com` verified; automatic mail is sent from a no-reply address, no mailbox needed), optional `EMAIL_REPLY_TO` (default `support@pawelperfect.com`), `RESEND_WEBHOOK_SECRET`. Every mail from the app carries `Reply-To: support@pawelperfect.com`, so a user's reply lands in the Chatwoot inbox via the forwarded alias (`getEmailReplyTo()` in `legacy-email-service-provider.ts`). Changing env vars needs a redeploy.
 - Resend webhook `https://www.pawelperfect.pl/api/webhooks/resend` (delivery, delay, bounce, complaint). The `email.received` subscription is obsolete now that MX is at Google.
 - Free plan: 100 mails/day, 3000/month.
 
