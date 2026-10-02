@@ -161,7 +161,7 @@ export default function LanguageSwitcher({ language, onSelect }: Props) {
             id={menuId}
             role="menu"
             aria-label={isPl ? "Wybierz język" : "Choose language"}
-            className="max-h-[min(264px,50vh)] overflow-y-auto overscroll-contain p-1.5"
+            className="max-h-[min(228px,45vh)] overflow-y-auto overscroll-contain p-1.5"
           >
             {results.length === 0 ? (
               <p className="px-2.5 py-3 text-[13px] text-[var(--chan-muted)]">{isPl ? "Brak wyników" : "No results"}</p>
