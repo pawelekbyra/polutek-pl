@@ -15,6 +15,8 @@ export function generateCSP() {
   // Google sign-in (redirect flow needs nothing here; One Tap loads Google's script, iframe and
   // posts back to the app). Turnstile is the sign-up/sign-in bot check.
   const googleAuthHosts = ['accounts.google.com'];
+  // Google Identity Services (One Tap) injects its own stylesheet from this path (documented as required).
+  const googleOneTapStyle = 'https://accounts.google.com/gsi/style';
 
   const cloudflareStreamUploadHosts = [
     'upload.cloudflarestream.com',
@@ -100,8 +102,8 @@ export function generateCSP() {
     `connect-src 'self' ${connectHosts}`,
     `frame-src ${frameHosts}`,
     `img-src 'self' data: blob: ${imageHosts}`,
-    `style-src 'self' ${inlineDirective} https://fonts.googleapis.com`,
-    `style-src-elem 'self' ${inlineDirective} https://fonts.googleapis.com`,
+    `style-src 'self' ${inlineDirective} https://fonts.googleapis.com ${googleOneTapStyle}`,
+    `style-src-elem 'self' ${inlineDirective} https://fonts.googleapis.com ${googleOneTapStyle}`,
     `font-src 'self' data: https://fonts.gstatic.com`,
     `worker-src 'self' blob:`,
     `media-src 'self' blob: ${mediaHosts}`
