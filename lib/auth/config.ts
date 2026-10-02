@@ -10,10 +10,21 @@ export const SESSION_EXPIRES_IN_SECONDS = 60 * 60 * 24 * 30;
 export const SESSION_UPDATE_AGE_SECONDS = 60 * 60 * 24;
 export const SESSION_FRESH_AGE_SECONDS = 60 * 60 * 24;
 export const SESSION_COOKIE_CACHE_SECONDS = 60;
+/** "Remember this device" after a TOTP code skips 2FA for this long (user opt-in, default off). */
+export const TWO_FACTOR_TRUST_DEVICE_SECONDS = 60 * 60 * 24 * 7;
 export const EMAIL_TOKEN_TTL_SECONDS = 60 * 60;
-/** Sign-in attempts per e-mail address and window (on top of the per-IP rule). */
-export const SIGN_IN_EMAIL_LIMIT = 10;
-export const SIGN_IN_EMAIL_WINDOW_SECONDS = 15 * 60;
+/**
+ * Failed sign-in lockout (on top of Better Auth's per-IP request rule). Only FAILED attempts count
+ * (wrong password), so successful sign-ins on many devices never throttle anybody.
+ * - per e-mail + client IP: 10 failures / 15 min. The attacker's address is locked out, the real
+ *   owner signing in from elsewhere is not, so a third party cannot lock a known address out.
+ * - per e-mail across all IPs: a high ceiling (distributed guessing); each attempt costs a solved captcha.
+ */
+export const SIGN_IN_FAILURE_LIMIT_PER_IP = 10;
+export const SIGN_IN_FAILURE_LIMIT_PER_EMAIL = 100;
+export const SIGN_IN_FAILURE_WINDOW_SECONDS = 15 * 60;
+/** Per-IP request budget for /sign-in/email (requests per minute, any outcome); roomy enough for shared networks. */
+export const SIGN_IN_IP_RATE_PER_MINUTE = 10;
 
 /** Paths protected by Cloudflare Turnstile (Better Auth path, without /api/auth). */
 export const CAPTCHA_ENDPOINTS = [

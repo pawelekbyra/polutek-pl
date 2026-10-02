@@ -15,6 +15,8 @@ import {
   SESSION_EXPIRES_IN_SECONDS,
   SESSION_FRESH_AGE_SECONDS,
   SESSION_UPDATE_AGE_SECONDS,
+  TWO_FACTOR_TRUST_DEVICE_SECONDS,
+  SIGN_IN_IP_RATE_PER_MINUTE,
   getAuthBaseUrl,
   getTrustedOrigins,
   isCaptchaConfigured,
@@ -87,12 +89,19 @@ export const auth = betterAuth({
         google: {
           clientId: process.env.GOOGLE_CLIENT_ID as string,
           clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+          // Always show the account chooser: on a shared computer a repeat sign-in must not silently
+          // reuse the Google account that is already signed in in the browser.
+          prompt: "select_account",
         },
       }
     : {},
 
   account: {
-    accountLinking: { enabled: true, trustedProviders: ["google"] },
+    // requireLocalEmailVerified: false lets Google claim an address that only has a never-verified
+    // password sign-up (otherwise Google sign-in fails for ever with "account not linked").
+    // That is safe because beforeAccountCreate drops the squatter's password and sessions on
+    // link; unverified rows are also pruned by /api/cron/prune-unverified-accounts.
+    accountLinking: { enabled: true, trustedProviders: ["google"], requireLocalEmailVerified: false },
   },
 
   session: {
@@ -109,7 +118,7 @@ export const auth = betterAuth({
     customStorage: authRateLimitStorage,
     customRules: {
       "/get-session": false,
-      "/sign-in/email": { window: 60, max: 5 },
+      "/sign-in/email": { window: 60, max: SIGN_IN_IP_RATE_PER_MINUTE },
       "/sign-up/email": { window: 3600, max: 10 },
       "/request-password-reset": { window: 3600, max: 5 },
       "/send-verification-email": { window: 3600, max: 5 },
@@ -165,7 +174,10 @@ export const auth = betterAuth({
         ]
       : []),
     ...(googleEnabled ? [oneTap({ clientId: process.env.GOOGLE_CLIENT_ID as string })] : []),
-    twoFactor({ issuer: APP_NAME }),
+    // Decision (audit F-07): the TOTP step applies to e-mail + password sign-in only. Google and
+    // One Tap sign-in count as strong on their own (Google's own 2-step verification and device
+    // checks), which is also Better Auth's behaviour; the app never forces a second factor on top.
+    twoFactor({ issuer: APP_NAME, trustDeviceMaxAge: TWO_FACTOR_TRUST_DEVICE_SECONDS }),
     nextCookies(), // must stay last
   ],
 });

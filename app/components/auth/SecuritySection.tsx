@@ -5,10 +5,10 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Feedback, Field, Primary, useAccountUser } from "./AccountSections";
+import { Feedback, Field, Primary, ReauthNotice, useAccountUser } from "./AccountSections";
 import { TurnstileWidget, useCaptchaRequired, type TurnstileHandle } from "./TurnstileWidget";
 import { authClient, captchaFetchOptions } from "@/lib/auth/client";
-import { authErrorMessage } from "@/lib/auth/errors";
+import { authErrorMessage, isSessionNotFresh } from "@/lib/auth/errors";
 import { PASSWORD_MIN_LENGTH } from "@/lib/auth/config";
 import { refreshSession } from "@/lib/auth/react";
 
@@ -83,6 +83,47 @@ function PasswordPart({ isPl, hasPassword }: { isPl: boolean; hasPassword: boole
   );
 }
 
+/** Backup codes with copy and download, shown right after they were generated (they cannot be read again). */
+function BackupCodesBox({ codes, isPl }: { codes: string[]; isPl: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const text = codes.join("\n");
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  function download() {
+    const url = URL.createObjectURL(new Blob([`${text}\n`],{ type: "text/plain" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "pawelperfect-backup-codes.txt";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  return (
+    <div>
+      <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-[var(--chan-muted)]">
+        {isPl ? "Kody zapasowe (zapisz je, każdy działa raz)" : "Backup codes (save them, each works once)"}
+      </p>
+      <p className="break-all rounded-lg bg-[var(--chan-surface)] px-3 py-2 font-mono text-[12px]">{codes.join("  ")}</p>
+      <div className="mt-2 flex gap-3 text-[12px] font-bold">
+        <button type="button" onClick={copy} className="underline hover:text-[var(--chan-ink)]">
+          {copied ? (isPl ? "Skopiowano" : "Copied") : (isPl ? "Kopiuj" : "Copy")}
+        </button>
+        <button type="button" onClick={download} className="underline hover:text-[var(--chan-ink)]">
+          {isPl ? "Pobierz" : "Download"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function TwoFactorPart({ isPl, hasPassword }: { isPl: boolean; hasPassword: boolean }) {
   const user = useAccountUser();
   const [password, setPassword] = useState("");
@@ -90,13 +131,28 @@ function TwoFactorPart({ isPl, hasPassword }: { isPl: boolean; hasPassword: bool
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<Msg>(EMPTY);
+  const [newCodes, setNewCodes] = useState<string[] | null>(null);
 
   if (!hasPassword) {
     return (
       <p className="text-[13px] text-[var(--chan-muted)]">
-        {isPl ? "Weryfikacja dwuetapowa wymaga hasła. Ustaw je powyżej." : "Two-step verification needs a password. Set one above."}
+        {isPl
+          ? "Weryfikacja dwuetapowa dotyczy logowania hasłem. Ustaw hasło powyżej (link przyjdzie na e-mail), a potem będziesz mógł ją włączyć. Logowanie przez Google korzysta z zabezpieczeń Twojego konta Google."
+          : "Two-step verification protects password sign-in. Set a password above (a link is sent to your email), then you can turn it on. Signing in with Google uses your Google account's own protection."}
       </p>
     );
+  }
+
+  async function regenerateCodes(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setMsg(EMPTY);
+    const { data, error } = await authClient.twoFactor.generateBackupCodes({ password });
+    setLoading(false);
+    if (error || !data) return setMsg({ error: authErrorMessage(error, isPl), info: null });
+    setPassword("");
+    setNewCodes(data.backupCodes);
+    setMsg({ error: null, info: isPl ? "Wygenerowano nowe kody. Poprzednie przestały działać." : "New codes generated. The old ones no longer work." });
   }
 
   async function start(e: React.FormEvent) {
@@ -143,10 +199,7 @@ function TwoFactorPart({ isPl, hasPassword }: { isPl: boolean; hasPassword: bool
           {isPl ? "Zeskanuj kod w aplikacji uwierzytelniającej, a potem wpisz 6-cyfrowy kod." : "Scan the code in an authenticator app, then enter the 6-digit code."}
         </p>
         <div className="flex justify-center rounded-lg bg-white p-3"><QRCodeSVG value={setup.uri} size={160} /></div>
-        <div>
-          <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-[var(--chan-muted)]">{isPl ? "Kody zapasowe (zapisz je)" : "Backup codes (save them)"}</p>
-          <p className="break-all rounded-lg bg-[var(--chan-surface)] px-3 py-2 font-mono text-[12px]">{setup.backupCodes.join("  ")}</p>
-        </div>
+        <BackupCodesBox codes={setup.backupCodes} isPl={isPl} />
         <Field label={isPl ? "Kod z aplikacji" : "Code from the app"} value={code} onChange={setCode} inputMode="numeric" autoComplete="one-time-code" />
         <Primary loading={loading} label={isPl ? "Włącz" : "Turn on"} />
       </form>
@@ -161,6 +214,19 @@ function TwoFactorPart({ isPl, hasPassword }: { isPl: boolean; hasPassword: bool
       </p>
       <Field label={isPl ? "Hasło" : "Password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" />
       <Primary loading={loading} label={user.twoFactorEnabled ? (isPl ? "Wyłącz" : "Turn off") : (isPl ? "Włącz" : "Turn on")} />
+      {user.twoFactorEnabled && (
+        <div className="space-y-2 border-t border-[var(--chan-line)] pt-3">
+          {newCodes && <BackupCodesBox codes={newCodes} isPl={isPl} />}
+          <button
+            type="button"
+            disabled={loading || !password}
+            onClick={(e) => void regenerateCodes(e as unknown as React.FormEvent)}
+            className="text-[12px] font-bold underline hover:text-[var(--chan-ink)] disabled:opacity-50"
+          >
+            {isPl ? "Wygeneruj nowe kody zapasowe (wpisz hasło powyżej)" : "Generate new backup codes (enter your password above)"}
+          </button>
+        </div>
+      )}
     </form>
   );
 }
@@ -171,9 +237,22 @@ function SessionsPart({ isPl }: { isPl: boolean }) {
   const [sessions, setSessions] = useState<DeviceSession[] | null>(null);
   const [currentToken, setCurrentToken] = useState<string | null>(null);
   const [msg, setMsg] = useState<Msg>(EMPTY);
+  const [needsReauth, setNeedsReauth] = useState(false);
+
+  // Better Auth only lists/revokes devices for a session younger than `freshAge`; an older one gets
+  // SESSION_NOT_FRESH and must sign in again (never a silently empty list).
+  function report(error: { code?: string; message?: string; status?: number }) {
+    if (isSessionNotFresh(error)) return setNeedsReauth(true);
+    setMsg({ error: authErrorMessage(error, isPl), info: null });
+  }
 
   async function load() {
     const [list, current] = await Promise.all([authClient.listSessions(), authClient.getSession()]);
+    if (list.error) {
+      setSessions([]);
+      return report(list.error);
+    }
+    setNeedsReauth(false);
     setSessions((list.data as DeviceSession[] | null) ?? []);
     setCurrentToken(current.data?.session?.token ?? null);
   }
@@ -184,13 +263,13 @@ function SessionsPart({ isPl }: { isPl: boolean }) {
 
   async function revoke(token: string) {
     const { error } = await authClient.revokeSession({ token });
-    if (error) return setMsg({ error: authErrorMessage(error, isPl), info: null });
+    if (error) return report(error);
     await load();
   }
 
   async function revokeOthers() {
     const { error } = await authClient.revokeOtherSessions();
-    if (error) return setMsg({ error: authErrorMessage(error, isPl), info: null });
+    if (error) return report(error);
     setMsg({ error: null, info: isPl ? "Wylogowano pozostałe urządzenia." : "Other devices were signed out." });
     await load();
   }
@@ -198,6 +277,7 @@ function SessionsPart({ isPl }: { isPl: boolean }) {
   return (
     <div className="space-y-2 border-t border-[var(--chan-line)] pt-3">
       <Feedback error={msg.error} info={msg.info} />
+      {needsReauth && <ReauthNotice isPl={isPl} />}
       <p className="text-[13px] font-bold text-[var(--chan-ink)]">{isPl ? "Zalogowane urządzenia" : "Signed-in devices"}</p>
       <ul className="space-y-2">
         {(sessions ?? []).map((s) => (

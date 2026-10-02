@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "../LanguageContext";
 import { Field, PrimaryButton } from "./AuthFormParts";
-import { authClient } from "@/lib/auth/client";
+import { signOutCompletely } from "@/lib/auth/sign-out";
 import { refreshSession, useUser } from "@/lib/auth/react";
 import { avatarProblemMessage, validateAvatarFile, AVATAR_ACCEPT, DEFAULT_AVATAR_URL } from "@/lib/auth/avatar";
 import { fileToAvatarDataUrl } from "@/lib/auth/avatar-client";
@@ -69,6 +69,12 @@ export default function OnboardingDialog() {
     if (!response?.ok) {
       const body = (await response?.json().catch(() => null)) as { error?: string } | null;
       setSaving(false);
+      if (body?.error === "ONBOARDING_DONE") {
+        // Finished in another tab: just pick up the session state instead of showing an error.
+        await refreshSession();
+        router.refresh();
+        return;
+      }
       return setProblem(authErrorMessage({ code: body?.error, status: response?.status }, isPl));
     }
     await refreshSession();
@@ -105,7 +111,7 @@ export default function OnboardingDialog() {
           <PrimaryButton loading={saving} label={isPl ? "Zapisz i wejdź" : "Save and continue"} />
           <button
             type="button"
-            onClick={() => void authClient.signOut().then(() => router.refresh())}
+            onClick={() => void signOutCompletely().then(() => router.refresh())}
             className="w-full text-center text-[12px] text-[var(--chan-muted)] underline"
           >
             {isPl ? "Wyloguj się" : "Sign out"}

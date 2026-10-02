@@ -278,6 +278,7 @@ Kroki: build `runner`+`migrator` (pomijany, gdy obrazy tego tagu już są), star
 | `polutek-cron-video-provider-jobs` | `video-provider-jobs/reconcile` (alias `video-provider-jobs-reconcile`) | 04:00 |
 | `polutek-cron-prune-playback-sessions` | `prune-playback-sessions` | 05:00 |
 | `polutek-cron-sync-public-thumbnails` | `sync-public-thumbnails` | 06:00 |
+| `polutek-cron-prune-unverified-accounts` | `prune-unverified-accounts` | 03:30 (dodany w kodzie 2026-10-02; timer trzeba skopiować na serwerek i włączyć: `systemctl enable --now`) |
 
 Instalacja: `install -m755 scripts/serwerek/cron-runner.sh /opt/serwerek/scripts/`; `/etc/serwerek/cron.env` z jedną linią `CRON_SECRET=...` (root, 600; to piąty dozwolony plik z sekretem obok §4); `cp deploy/serwerek/systemd/* /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now polutek-cron-*.timer`. Podgląd: `systemctl list-timers 'polutek-cron-*'`, `journalctl -u 'polutek-cron@*' -n 50`. Po przełączeniu usuń sekcję `crons` z `vercel.json` albo wyłącz projekt Vercel, żeby crony nie szły podwójnie.
 

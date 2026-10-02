@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 import { authClient } from "./client";
+import { signOutCompletely } from "./sign-out";
 
 /**
  * Thin hooks over the Better Auth session that keep the shape the components already use
@@ -59,7 +60,7 @@ export function toAuthUser(user: SessionUser): AuthUser {
 export function useAuth() {
   const { data, isPending } = authClient.useSession();
   const signOut = useCallback(async () => {
-    await authClient.signOut();
+    await signOutCompletely();
   }, []);
   return {
     isLoaded: !isPending,

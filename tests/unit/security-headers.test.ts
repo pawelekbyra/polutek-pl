@@ -37,6 +37,14 @@ describe('Security Headers', () => {
     expect(csp).toContain("default-src 'self'");
   });
 
+  it('allows the Google One Tap stylesheet (F-10)', () => {
+    const csp = generateCSP();
+    const directive = (name: string) => csp.split('; ').find((part) => part.startsWith(`${name} `)) ?? '';
+
+    expect(directive('style-src')).toContain('https://accounts.google.com/gsi/style');
+    expect(directive('style-src-elem')).toContain('https://accounts.google.com/gsi/style');
+  });
+
   it('sets defensive browser boundary directives', () => {
     const csp = generateCSP();
 

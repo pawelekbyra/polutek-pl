@@ -12,6 +12,8 @@ interface RateLimitRecord {
 
 export interface RateLimitStore {
   hit(key: string, windowMs: number): Promise<RateLimitRecord>;
+  /** Current count of a `hit` counter without counting (0 when absent or expired). */
+  peek(key: string): Promise<number>;
   setNxEx(key: string, value: string, seconds: number): Promise<boolean>;
 }
 
@@ -47,6 +49,11 @@ export class MemoryStore implements RateLimitStore {
 
     record.count += 1;
     return record;
+  }
+
+  async peek(key: string) {
+    const record = this.cache.get(`rl:${key}`);
+    return record && Date.now() <= record.resetAt ? Number(record.count) : 0;
   }
 
   async setNxEx(key: string, value: string, seconds: number): Promise<boolean> {
@@ -111,6 +118,11 @@ export class UpstashRedisStore implements RateLimitStore {
       count: Number(count),
       resetAt: Date.now() + Math.max(Number(ttl), 0),
     };
+  }
+
+  async peek(key: string) {
+    const value = await this.command<string | number | null>(['GET', getRateLimitRedisKey(key)]);
+    return Number(value ?? 0) || 0;
   }
 
   async setNxEx(key: string, value: string, seconds: number): Promise<boolean> {

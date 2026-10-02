@@ -15,6 +15,7 @@ vi.mock("@/lib/auth/audit", () => ({ recordAuthAudit: vi.fn() }));
 vi.mock("@/lib/auth/rate-limit-storage", () => ({
   authRateLimitStorage: { consume: vi.fn() },
   hitAuthCounter: vi.fn(),
+  peekAuthCounter: vi.fn(),
 }));
 
 type AuthOptions = {
@@ -25,8 +26,8 @@ type AuthOptions = {
     sendResetPassword: (data: { user: { email: string }; url: string }) => Promise<void>;
   };
   emailVerification: { afterEmailVerification?: unknown; sendVerificationEmail: (data: { user: { email: string }; url: string }) => Promise<void> };
-  socialProviders: { google?: { clientId: string } };
-  account: { accountLinking: { enabled: boolean; trustedProviders: string[] } };
+  socialProviders: { google?: { clientId: string; prompt?: string } };
+  account: { accountLinking: { enabled: boolean; trustedProviders: string[]; requireLocalEmailVerified?: boolean } };
   session: { cookieCache: { enabled: boolean } };
   rateLimit: { enabled: boolean; customStorage: unknown; customRules: Record<string, unknown> };
   advanced: { cookiePrefix: string; useSecureCookies: boolean; defaultCookieAttributes: Record<string, unknown> };
@@ -64,7 +65,14 @@ describe("Better Auth instance configuration", () => {
   it("wires Google, linking by trusted provider, One Tap, 2FA, captcha and breach checks", async () => {
     const options = await loadAuth(FULL_ENV);
     expect(options.socialProviders.google?.clientId).toBe("google-id");
-    expect(options.account.accountLinking).toEqual({ enabled: true, trustedProviders: ["google"] });
+    // Shared computers: the Google account chooser is always shown.
+    expect(options.socialProviders.google?.prompt).toBe("select_account");
+    expect(options.account.accountLinking).toEqual({
+      enabled: true,
+      trustedProviders: ["google"],
+      // F-04: Google may claim an address that only has a never-verified password sign-up.
+      requireLocalEmailVerified: false,
+    });
     const ids = options.plugins.map((p) => p.id);
     expect(ids).toEqual(expect.arrayContaining(["captcha", "one-tap", "two-factor", "have-i-been-pwned"]));
     expect(ids[ids.length - 1]).toBe("next-cookies");
@@ -99,7 +107,7 @@ describe("Better Auth instance configuration", () => {
     const options = await loadAuth(FULL_ENV);
     expect(options.rateLimit.enabled).toBe(true);
     expect(options.rateLimit.customStorage).toBeDefined();
-    expect(options.rateLimit.customRules["/sign-in/email"]).toEqual({ window: 60, max: 5 });
+    expect(options.rateLimit.customRules["/sign-in/email"]).toEqual({ window: 60, max: 10 });
     expect(options.rateLimit.customRules["/request-password-reset"]).toBeDefined();
   });
 

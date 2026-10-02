@@ -1,11 +1,16 @@
 import crypto from "crypto";
-import { APIError, createAuthMiddleware } from "better-auth/api";
+import { APIError, createAuthMiddleware, getIP } from "better-auth/api";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { DEFAULT_AVATAR_URL } from "@/lib/auth/avatar";
+import { validateNickname } from "@/lib/auth/nickname";
 import { recordAuthAudit } from "./audit";
-import { SIGN_IN_EMAIL_LIMIT, SIGN_IN_EMAIL_WINDOW_SECONDS } from "./config";
-import { hitAuthCounter } from "./rate-limit-storage";
+import {
+  SIGN_IN_FAILURE_LIMIT_PER_EMAIL,
+  SIGN_IN_FAILURE_LIMIT_PER_IP,
+  SIGN_IN_FAILURE_WINDOW_SECONDS,
+} from "./config";
+import { hitAuthCounter, peekAuthCounter } from "./rate-limit-storage";
 import { queuePasswordChangedEmail } from "./emails";
 
 type HookCtx = {
@@ -57,6 +62,29 @@ export async function beforeSessionCreate(session: { userId: string }) {
   }
 }
 
+/**
+ * Accounts that predate the Better Auth nickname rules (no name, a name that breaks the rules, or one
+ * another older account already uses) are sent through the first-sign-in dialog at their next sign-in,
+ * so everybody ends up with a valid, unique nickname. The older of two duplicates keeps its name.
+ */
+export async function flagNicknameOnboardingIfNeeded(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true, onboardingPending: true, isDeleted: true, createdAt: true },
+  });
+  if (!user || user.isDeleted || user.onboardingPending) return;
+  const name = user.name?.trim() ?? "";
+  let needsNickname = name.length === 0 || !validateNickname(name).ok;
+  if (!needsNickname) {
+    const olderOwner = await prisma.user.findFirst({
+      where: { isDeleted: false, id: { not: userId }, createdAt: { lte: user.createdAt }, name: { equals: name, mode: "insensitive" } },
+      select: { id: true },
+    });
+    needsNickname = Boolean(olderOwner);
+  }
+  if (needsNickname) await prisma.user.update({ where: { id: userId }, data: { onboardingPending: true } });
+}
+
 export async function afterSessionCreate(session: { userId: string; ipAddress?: string | null; userAgent?: string | null }) {
   await recordAuthAudit({
     action: "AUTH_SIGN_IN",
@@ -64,6 +92,12 @@ export async function afterSessionCreate(session: { userId: string; ipAddress?: 
     ip: session.ipAddress ?? null,
     userAgent: session.userAgent ?? null,
   });
+  try {
+    await flagNicknameOnboardingIfNeeded(session.userId);
+  } catch (error) {
+    // Never block a sign-in over the nickname check.
+    logger.warn("[auth] nickname onboarding check failed", error instanceof Error ? error.message : String(error));
+  }
 }
 
 /**
@@ -83,8 +117,44 @@ export async function beforeAccountCreate(account: { userId: string; providerId:
   }
 }
 
-function emailKey(email: string) {
-  return crypto.createHash("sha256").update(email.trim().toLowerCase()).digest("hex").slice(0, 32);
+function hashKey(value: string) {
+  return crypto.createHash("sha256").update(value.trim().toLowerCase()).digest("hex").slice(0, 32);
+}
+
+type SignInCtx = { request?: Request | null; context?: { options?: unknown } };
+
+function clientIpKey(ctx: SignInCtx): string {
+  try {
+    const ip = ctx.request ? getIP(ctx.request, ctx.context?.options as never) : null;
+    return hashKey(ip ?? "unknown");
+  } catch {
+    return hashKey("unknown");
+  }
+}
+
+function signInFailureKeys(email: string, ctx: SignInCtx) {
+  const emailHash = hashKey(email);
+  return { perIp: `signin-fail:${emailHash}:${clientIpKey(ctx)}`, perEmail: `signin-fail:${emailHash}` };
+}
+
+/** Throws 429 when this e-mail (from this client, or overall) has had too many failed sign-ins recently. */
+export async function assertSignInNotLocked(email: string, ctx: SignInCtx) {
+  const keys = signInFailureKeys(email, ctx);
+  const [perIp, perEmail] = await Promise.all([peekAuthCounter(keys.perIp), peekAuthCounter(keys.perEmail)]);
+  if (perIp >= SIGN_IN_FAILURE_LIMIT_PER_IP || perEmail >= SIGN_IN_FAILURE_LIMIT_PER_EMAIL) {
+    throw new APIError("TOO_MANY_REQUESTS", { message: "TOO_MANY_ATTEMPTS", code: "TOO_MANY_ATTEMPTS" });
+  }
+}
+
+/** Counts a sign-in towards the lockout only when it failed because of a wrong e-mail/password. */
+export async function recordSignInOutcome(email: string, returned: unknown, ctx: SignInCtx) {
+  const code = (returned as { body?: { code?: string } } | undefined)?.body?.code;
+  if (code !== "INVALID_EMAIL_OR_PASSWORD") return;
+  const keys = signInFailureKeys(email, ctx);
+  await Promise.all([
+    hitAuthCounter(keys.perIp, SIGN_IN_FAILURE_WINDOW_SECONDS),
+    hitAuthCounter(keys.perEmail, SIGN_IN_FAILURE_WINDOW_SECONDS),
+  ]);
 }
 
 export const authBeforeHook = createAuthMiddleware(async (ctx) => {
@@ -92,16 +162,11 @@ export const authBeforeHook = createAuthMiddleware(async (ctx) => {
   if (ctx.path === "/change-password") {
     return { context: { ...ctx, body: { ...(ctx.body as object), revokeOtherSessions: true } } };
   }
-  // Per-account lockout on top of Better Auth's per-IP rule: a distributed guesser cannot hammer one address.
+  // Lockout after repeated FAILED sign-ins (see config.ts): checked here, counted in the after hook.
   if (ctx.path === "/sign-in/email") {
     const body = ctx.body as { email?: unknown } | undefined;
     const email = typeof body?.email === "string" ? body.email : "";
-    if (email) {
-      const record = await hitAuthCounter(`signin-email:${emailKey(email)}`, SIGN_IN_EMAIL_WINDOW_SECONDS);
-      if (record.count > SIGN_IN_EMAIL_LIMIT) {
-        throw new APIError("TOO_MANY_REQUESTS", { message: "TOO_MANY_ATTEMPTS", code: "TOO_MANY_ATTEMPTS" });
-      }
-    }
+    if (email) await assertSignInNotLocked(email, ctx as SignInCtx);
   }
 });
 
@@ -129,6 +194,11 @@ export async function rejectExistingEmailSignUp(ctx: { context: { returned?: unk
 export const authAfterHook = createAuthMiddleware(async (ctx) => {
   if (ctx.path === "/sign-up/email") {
     await rejectExistingEmailSignUp(ctx);
+  }
+  // Count a wrong password (and only that) towards the sign-in lockout.
+  if (ctx.path === "/sign-in/email") {
+    const body = ctx.body as { email?: unknown } | undefined;
+    if (typeof body?.email === "string") await recordSignInOutcome(body.email, ctx.context.returned, ctx as SignInCtx);
   }
   if (ctx.path === "/change-password") {
     const user = ctx.context.session?.user;

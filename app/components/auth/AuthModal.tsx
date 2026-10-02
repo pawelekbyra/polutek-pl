@@ -4,19 +4,24 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "../LanguageContext";
-import type { AuthView } from "./AuthModalProvider";
+import type { AuthNotice, AuthView } from "./AuthModalProvider";
+import { TwoFactorView } from "./TwoFactorView";
+import { LinkExpiredView } from "./LinkExpiredView";
 import { Divider, Field, OAuthButtons, PrimaryButton } from "./AuthFormParts";
 import { TurnstileWidget, useCaptchaRequired, type CaptchaState, type TurnstileHandle } from "./TurnstileWidget";
 import { authClient, captchaFetchOptions } from "@/lib/auth/client";
+import { useAuth } from "@/lib/auth/react";
 import { authErrorMessage } from "@/lib/auth/errors";
 import { PASSWORD_MIN_LENGTH } from "@/lib/auth/config";
-import { rememberReturnPath } from "@/lib/auth/sso-return";
+import { clearReturnPath, peekReturnPath, rememberReturnPathIfNone, withQueryFlag } from "@/lib/auth/sso-return";
 
-type InternalView = "sign-in" | "sign-up" | "verify-sent" | "forgot" | "forgot-sent" | "two-factor";
+type InternalView = "sign-in" | "sign-up" | "verify-sent" | "link-expired" | "forgot" | "forgot-sent" | "two-factor";
 
 interface AuthModalProps {
   open: boolean;
   initialView: AuthView;
+  /** Explains what happened when the modal opens after an e-mail link was clicked. */
+  notice?: AuthNotice | null;
   onOpenChange: (open: boolean) => void;
 }
 
@@ -26,10 +31,11 @@ function passwordMismatchMessage(isPl: boolean) {
 
 type OpError = { code?: string; message?: string; status?: number } | null | undefined;
 
-export default function AuthModal({ open, initialView, onOpenChange }: AuthModalProps) {
+export default function AuthModal({ open, initialView, notice = null, onOpenChange }: AuthModalProps) {
   const router = useRouter();
   const { language } = useLanguage();
   const isPl = language === "pl";
+  const { isSignedIn } = useAuth();
   const captchaRequired = useCaptchaRequired();
   const captchaRef = useRef<TurnstileHandle>(null);
 
@@ -40,28 +46,51 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
   const [emailTaken, setEmailTaken] = useState<"google" | "password" | null>(null);
   const [code, setCode] = useState("");
   const [useBackupCode, setUseBackupCode] = useState(false);
+  // Opt-in: skip the code on this browser for a few days (off by default, shared computers).
+  const [trustDevice, setTrustDevice] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  // After a wrong e-mail/password we hint at the other ways in (older accounts have no password yet).
+  const [wrongCredentials, setWrongCredentials] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaState, setCaptchaState] = useState<CaptchaState>("checking");
 
   useEffect(() => {
     if (open) {
-      setView(initialView);
+      setView(notice === "link-expired" ? "link-expired" : initialView);
       setError(null);
-      setInfo(null);
+      setInfo(
+        notice === "verified"
+          ? (isPl ? "Adres e-mail potwierdzony. Zaloguj się." : "Email confirmed. Please sign in.")
+          : null,
+      );
       setCode("");
       setConfirmPassword("");
       setEmailTaken(null);
       setLoading(false);
     }
-  }, [open, initialView]);
+    // isPl is read only to localise the one-off notice text, not a reason to reset the form.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialView, notice]);
+
+  // The confirmation link was opened in another tab or browser: the session appears here on focus,
+  // so the "check your inbox" screen must not stay behind.
+  useEffect(() => {
+    if (open && isSignedIn && (view === "verify-sent" || view === "link-expired")) {
+      onOpenChange(false);
+      router.refresh();
+    }
+  }, [open, isSignedIn, view, onOpenChange, router]);
 
   const captchaReady = !captchaRequired || Boolean(captchaToken);
-  const returnTo = () => (typeof window !== "undefined" ? window.location.pathname + window.location.search : "/");
+  const currentPath = () => (typeof window !== "undefined" ? window.location.pathname + window.location.search : "/");
+  // Where the visitor ends up after signing in: the path the proxy asked for (`?next=`), else this page.
+  // E-mail links (verification) bring the visitor back here with `?verified=1`, which shows a confirmation.
+  const returnTo = () => withQueryFlag(peekReturnPath() ?? currentPath(), "verified", "1");
 
   function fail(err: OpError) {
+    setWrongCredentials(err?.code === "INVALID_EMAIL_OR_PASSWORD");
     setError(authErrorMessage(err, isPl));
     setLoading(false);
     captchaRef.current?.reset();
@@ -69,7 +98,10 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
 
   function finishSignedIn() {
     setLoading(false);
+    const next = peekReturnPath();
+    clearReturnPath();
     onOpenChange(false);
+    if (next && next !== currentPath()) router.push(next);
     router.refresh();
   }
 
@@ -80,6 +112,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     const { data, error: signInError } = await authClient.signIn.email({
       email,
       password,
+      callbackURL: returnTo(),
       fetchOptions: captchaFetchOptions(captchaToken),
     });
     if (signInError) {
@@ -128,7 +161,8 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     captchaRef.current?.reset();
   }
 
-  async function handleResend() {
+  async function handleResend(e?: React.FormEvent) {
+    e?.preventDefault();
     setLoading(true);
     setError(null);
     const { error: resendError } = await authClient.sendVerificationEmail({
@@ -164,14 +198,15 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     setError(null);
     const result = useBackupCode
       ? await authClient.twoFactor.verifyBackupCode({ code: code.trim() })
-      : await authClient.twoFactor.verifyTotp({ code: code.trim(), trustDevice: true });
+      : await authClient.twoFactor.verifyTotp({ code: code.trim(), trustDevice });
     if (result.error) return fail(result.error);
     finishSignedIn();
   }
 
   async function handleOAuth(provider: "google") {
     setError(null);
-    rememberReturnPath(returnTo());
+    // Keep a path the proxy asked for (`next`); only fall back to the current page when none is stored.
+    rememberReturnPathIfNone(currentPath());
     const { error: socialError } = await authClient.signIn.social({
       provider,
       callbackURL: "/sso-callback",
@@ -185,6 +220,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     "sign-in": isPl ? "Zaloguj się" : "Sign in",
     "sign-up": isPl ? "Załóż konto" : "Create account",
     "verify-sent": isPl ? "Sprawdź skrzynkę" : "Check your inbox",
+    "link-expired": isPl ? "Link wygasł" : "Link expired",
     forgot: isPl ? "Reset hasła" : "Reset password",
     "forgot-sent": isPl ? "Sprawdź skrzynkę" : "Check your inbox",
     "two-factor": isPl ? "Weryfikacja dwuetapowa" : "Two-step verification",
@@ -228,6 +264,13 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
             {error && (
               <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-[13px] font-semibold text-red-600">
                 {error}
+              </p>
+            )}
+            {error && wrongCredentials && view === "sign-in" && (
+              <p className="mt-2 text-[12px] text-[var(--chan-muted)]">
+                {isPl
+                  ? "Masz starsze konto albo logowałeś się przez Google? Użyj przycisku Google albo „Nie pamiętam hasła”, żeby ustawić hasło."
+                  : "Have an older account, or signed in with Google before? Use the Google button, or “Forgot password” to set a password."}
               </p>
             )}
             {error && emailTaken && view === "sign-up" && (
@@ -321,7 +364,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
                 {captcha}
                 <button
                   type="button"
-                  onClick={handleResend}
+                  onClick={() => void handleResend()}
                   disabled={loading || waitingForCaptcha}
                   className="text-[12px] font-bold underline hover:text-[var(--chan-ink)] disabled:opacity-50"
                 >
@@ -333,6 +376,20 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
                   </button>
                 </div>
               </div>
+            )}
+
+            {view === "link-expired" && (
+              <LinkExpiredView
+                isPl={isPl}
+                email={email}
+                onEmailChange={setEmail}
+                onSubmit={handleResend}
+                captcha={captcha}
+                loading={loading}
+                busy={captchaChecking}
+                disabled={waitingForCaptcha}
+                onBack={() => switchView("sign-in")}
+              />
             )}
 
             {view === "forgot" && (
@@ -365,26 +422,17 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
             )}
 
             {view === "two-factor" && (
-              <form onSubmit={handleTwoFactor} className="mt-5 space-y-3.5">
-                <p className="text-[13px] text-[var(--chan-body)]">
-                  {useBackupCode
-                    ? (isPl ? "Wpisz jeden z kodów zapasowych." : "Enter one of your backup codes.")
-                    : (isPl ? "Wpisz 6-cyfrowy kod z aplikacji uwierzytelniającej." : "Enter the 6-digit code from your authenticator app.")}
-                </p>
-                <Field
-                  label={useBackupCode ? (isPl ? "Kod zapasowy" : "Backup code") : (isPl ? "Kod" : "Code")}
-                  type="text"
-                  value={code}
-                  onChange={setCode}
-                  inputMode={useBackupCode ? "text" : "numeric"}
-                  autoComplete="one-time-code"
-                  required
-                />
-                <PrimaryButton loading={loading} label={isPl ? "Potwierdź" : "Verify"} />
-                <button type="button" className="text-[12px] text-[var(--chan-muted)] underline" onClick={() => { setUseBackupCode(!useBackupCode); setCode(""); }}>
-                  {useBackupCode ? (isPl ? "Użyj aplikacji" : "Use the app") : (isPl ? "Użyj kodu zapasowego" : "Use a backup code")}
-                </button>
-              </form>
+              <TwoFactorView
+                isPl={isPl}
+                code={code}
+                onCodeChange={setCode}
+                useBackupCode={useBackupCode}
+                onToggleBackup={() => { setUseBackupCode(!useBackupCode); setCode(""); }}
+                trustDevice={trustDevice}
+                onTrustChange={setTrustDevice}
+                loading={loading}
+                onSubmit={handleTwoFactor}
+              />
             )}
           </div>
         </div>

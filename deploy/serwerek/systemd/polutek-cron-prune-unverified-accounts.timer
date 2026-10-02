@@ -1,0 +1,10 @@
+[Unit]
+Description=polutek cron prune-unverified-accounts, daily 03:30 UTC (drops password sign-ups never verified within 7 days)
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 UTC
+Persistent=true
+Unit=polutek-cron@prune-unverified-accounts.service
+
+[Install]
+WantedBy=timers.target

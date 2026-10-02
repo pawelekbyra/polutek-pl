@@ -8,7 +8,8 @@ import React, { useEffect, useState } from "react";
 import { Loader2 } from "../icons";
 import { OAUTH_PROVIDERS } from "./oauth-providers";
 import { authClient } from "@/lib/auth/client";
-import { authErrorMessage } from "@/lib/auth/errors";
+import { signOutCompletely } from "@/lib/auth/sign-out";
+import { authErrorMessage, isSessionNotFresh } from "@/lib/auth/errors";
 import { rememberReturnPath } from "@/lib/auth/sso-return";
 import { useUser } from "@/lib/auth/react";
 
@@ -21,6 +22,26 @@ export function Feedback({ error, info }: { error: string | null; info: string |
   if (error) return <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-[13px] font-semibold text-red-600">{error}</p>;
   if (info) return <p className="rounded-lg bg-[var(--chan-blue-soft)] px-3 py-2 text-[13px] font-semibold text-[var(--chan-blue)]">{info}</p>;
   return null;
+}
+
+/**
+ * Shown when Better Auth refuses a sensitive action because the session is older than `freshAge`.
+ * Signing in again creates a fresh session and brings the visitor back to this page.
+ */
+export function ReauthNotice({ isPl }: { isPl: boolean }) {
+  async function signInAgain() {
+    await signOutCompletely().catch(() => undefined);
+    const here = window.location.pathname + window.location.search;
+    window.location.assign(`${window.location.pathname}?signin=1&next=${encodeURIComponent(here)}`);
+  }
+  return (
+    <div role="alert" className="space-y-2 rounded-lg bg-red-50 px-3 py-2">
+      <p className="text-[13px] font-semibold text-red-600">{authErrorMessage({ code: "SESSION_NOT_FRESH" }, isPl)}</p>
+      <button type="button" onClick={signInAgain} className="text-[12px] font-bold text-red-700 underline">
+        {isPl ? "Zaloguj się ponownie" : "Sign in again"}
+      </button>
+    </div>
+  );
 }
 
 export function EmailSection({ isPl }: { isPl: boolean }) {
@@ -71,6 +92,7 @@ type LinkedAccount = { id: string; providerId: string; accountId: string };
 export function ConnectionsSection({ isPl }: { isPl: boolean }) {
   const [accounts, setAccounts] = useState<LinkedAccount[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [needsReauth, setNeedsReauth] = useState(false);
 
   async function load() {
     const { data } = await authClient.listAccounts();
@@ -90,8 +112,12 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
 
   async function disconnect(account: LinkedAccount) {
     setError(null);
+    setNeedsReauth(false);
     const { error: unlinkError } = await authClient.unlinkAccount({ accountId: account.id });
-    if (unlinkError) return setError(authErrorMessage(unlinkError, isPl));
+    if (unlinkError) {
+      if (isSessionNotFresh(unlinkError)) return setNeedsReauth(true);
+      return setError(authErrorMessage(unlinkError, isPl));
+    }
     await load();
   }
 
@@ -101,6 +127,7 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
   return (
     <div className="space-y-3">
       <Feedback error={error} info={null} />
+      {needsReauth && <ReauthNotice isPl={isPl} />}
       <ul className="space-y-2">
         {external.map((acc) => {
           const known = OAUTH_PROVIDERS.find((p) => p.provider === acc.providerId);
@@ -137,23 +164,51 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
 
 export function DangerSection({ isPl, onDeleted }: { isPl: boolean; onDeleted: () => void }) {
   const [confirm, setConfirm] = useState("");
+  const [password, setPassword] = useState("");
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+  const [needsGoogle, setNeedsGoogle] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const CONFIRM_WORD = isPl ? "USUŃ" : "DELETE";
+
+  useEffect(() => {
+    void authClient.listAccounts().then(({ data }) => {
+      setHasPassword(Boolean(data?.some((a: { providerId: string }) => a.providerId === "credential")));
+    });
+  }, []);
+
+  // Deleting is irreversible, so the server wants proof it is really the owner: the password, or (Google-only
+  // accounts) a sign-in from the last few minutes.
+  async function confirmWithGoogle() {
+    rememberReturnPath(window.location.pathname + window.location.search);
+    const { error: socialError } = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/sso-callback",
+      errorCallbackURL: "/sso-callback?error=1",
+    });
+    if (socialError) setError(authErrorMessage(socialError, isPl));
+  }
 
   async function del(e: React.FormEvent) {
     e.preventDefault();
     if (confirm !== CONFIRM_WORD) return;
     setLoading(true);
     setError(null);
-    const response = await fetch("/api/user/account", { method: "DELETE" }).catch(() => null);
+    setNeedsGoogle(false);
+    const response = await fetch("/api/user/account", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(hasPassword ? { password } : {}),
+    }).catch(() => null);
     if (!response?.ok) {
-      setError(authErrorMessage(null, isPl));
+      const body = (await response?.json().catch(() => null)) as { error?: string } | null;
+      if (body?.error === "REAUTH_REQUIRED") setNeedsGoogle(true);
+      setError(authErrorMessage({ code: body?.error, status: response?.status }, isPl));
       setLoading(false);
       return;
     }
     // Every session was dropped server-side; clear the local state and reload.
-    await authClient.signOut().catch(() => undefined);
+    await signOutCompletely().catch(() => undefined);
     onDeleted();
     window.location.assign("/");
   }
@@ -166,10 +221,18 @@ export function DangerSection({ isPl, onDeleted }: { isPl: boolean; onDeleted: (
           ? "Usunięcie konta jest nieodwracalne. Wpisz USUŃ, aby potwierdzić."
           : "Deleting your account is permanent. Type DELETE to confirm."}
       </p>
+      {hasPassword && (
+        <Field label={isPl ? "Twoje hasło" : "Your password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" />
+      )}
       <Field label={`${isPl ? "Wpisz" : "Type"} ${CONFIRM_WORD}`} value={confirm} onChange={setConfirm} />
+      {needsGoogle && (
+        <button type="button" onClick={confirmWithGoogle} className="text-[12px] font-bold underline hover:text-[var(--chan-ink)]">
+          {isPl ? "Potwierdź przez Google" : "Confirm with Google"}
+        </button>
+      )}
       <button
         type="submit"
-        disabled={loading || confirm !== CONFIRM_WORD}
+        disabled={loading || confirm !== CONFIRM_WORD || hasPassword === null || (hasPassword && !password)}
         className="flex h-[44px] w-full items-center justify-center rounded-[12px] bg-red-600 font-brand text-[15px] font-bold text-white transition-all hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span>{isPl ? "Usuń konto na zawsze" : "Delete account permanently"}</span>}

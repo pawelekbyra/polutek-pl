@@ -92,7 +92,7 @@ export async function completeOnboarding(
   const updated = await ctx.prisma.user.update({
     where: { id: input.userId },
     data: { name, onboardingPending: false, ...(avatar ? { imageUrl: avatarRouteUrl(input.userId) } : {}) },
-    select: { email: true, name: true, language: true },
+    select: { email: true, name: true, language: true, createdAt: true },
   });
   return updated;
 }

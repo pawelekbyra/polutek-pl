@@ -26,3 +26,8 @@ export const authRateLimitStorage = {
 export async function hitAuthCounter(key: string, windowSeconds: number) {
   return getStore().hit(`ba:${key}`, windowSeconds * 1000);
 }
+
+/** Reads an arbitrary counter without counting (see `hitAuthCounter`). */
+export async function peekAuthCounter(key: string) {
+  return getStore().peek(`ba:${key}`);
+}

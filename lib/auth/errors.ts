@@ -26,6 +26,24 @@ const MESSAGES: Record<string, { pl: string; en: string }> = {
   TOO_MANY_ATTEMPTS: { pl: "Za dużo prób. Spróbuj ponownie za kilkanaście minut.", en: "Too many attempts. Try again in a few minutes." },
   ACCOUNT_DELETED: { pl: "To konto zostało usunięte.", en: "This account has been deleted." },
   INVALID_TOKEN: { pl: "Link wygasł lub jest nieprawidłowy. Poproś o nowy.", en: "The link expired or is invalid. Request a new one." },
+  TOKEN_EXPIRED: {
+    pl: "Link potwierdzający wygasł. Poproś o nowy.",
+    en: "The confirmation link has expired. Request a new one.",
+  },
+  SESSION_NOT_FRESH: {
+    pl: "Ze względów bezpieczeństwa zaloguj się ponownie, aby to zrobić.",
+    en: "For security, sign in again to do this.",
+  },
+  PASSWORD_REQUIRED: { pl: "Wpisz swoje hasło.", en: "Enter your password." },
+  REAUTH_REQUIRED: {
+    pl: "Ze względów bezpieczeństwa potwierdź się ponownie przez Google, a potem wróć tutaj.",
+    en: "For security, confirm with Google again, then come back here.",
+  },
+  LAST_ADMIN: {
+    pl: "Jesteś ostatnim administratorem. Najpierw nadaj te uprawnienia komuś innemu.",
+    en: "You are the last administrator. Give someone else admin rights first.",
+  },
+  ONBOARDING_DONE: { pl: "Ten krok jest już ukończony.", en: "This step is already done." },
   INVALID_CODE: { pl: "Nieprawidłowy kod.", en: "Invalid code." },
   INVALID_BACKUP_CODE: { pl: "Nieprawidłowy kod zapasowy.", en: "Invalid backup code." },
   MISSING_RESPONSE: { pl: "Potwierdź, że nie jesteś robotem.", en: "Please confirm you are not a robot." },
@@ -48,4 +66,9 @@ export function authErrorMessage(error: AuthErrorLike, isPl: boolean): string {
 
 export function authErrorCode(error: AuthErrorLike): string | null {
   return error?.code ?? null;
+}
+
+/** Better Auth refuses sensitive actions on a session older than `freshAge` (1 day): the user must sign in again. */
+export function isSessionNotFresh(error: AuthErrorLike): boolean {
+  return error?.code === "SESSION_NOT_FRESH";
 }
