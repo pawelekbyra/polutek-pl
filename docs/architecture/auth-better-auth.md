@@ -92,6 +92,12 @@ session cookie plus the IP (the proxy cannot read the user id without a database
   outside production). Per-path rules in `lib/auth/auth.ts`; per-account sign-in lockout in `lib/auth/hooks.ts`.
 - Captcha: Turnstile on `/sign-up/email`, `/sign-in/email`, `/request-password-reset`, `/send-verification-email`.
   Enabled when `TURNSTILE_SECRET_KEY` is set (required in production by `env:validate:prod`).
+  The client widget (`app/components/auth/TurnstileWidget.tsx`) runs in `appearance: "interaction-only"`: invisible
+  and out of the layout (absolute, zero height) unless Cloudflare needs a challenge, then shown in flow
+  (`size: "flexible"`). Forms keep submit disabled until a token exists and show a spinner on the button while the
+  check runs (`PrimaryButton busy`); expiry/timeout refresh automatically, an error or a script that fails to load
+  shows a PL/EN message with "try again". The server verification and token header are unchanged. CSP already
+  allows `challenges.cloudflare.com` for script, frame and connect (`lib/utils/security.ts`).
 - IP: `cf-connecting-ip` when `TRUST_CF_CONNECTING_IP=true`, else `x-real-ip`.
 - Origins: `NEXT_PUBLIC_APP_URL` host in www and apex form plus `BETTER_AUTH_TRUSTED_ORIGINS`.
 - CSRF for `/api/user/*` mutations is checked in `middleware.ts` (same guard as admin).

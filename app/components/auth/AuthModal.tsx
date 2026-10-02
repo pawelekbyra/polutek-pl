@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useLanguage } from "../LanguageContext";
 import type { AuthView } from "./AuthModalProvider";
 import { Divider, Field, OAuthButtons, PrimaryButton } from "./AuthFormParts";
-import { TurnstileWidget, useCaptchaRequired, type TurnstileHandle } from "./TurnstileWidget";
+import { TurnstileWidget, useCaptchaRequired, type CaptchaState, type TurnstileHandle } from "./TurnstileWidget";
 import { authClient, captchaFetchOptions } from "@/lib/auth/client";
 import { authErrorMessage } from "@/lib/auth/errors";
 import { PASSWORD_MIN_LENGTH } from "@/lib/auth/config";
@@ -40,6 +40,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaState, setCaptchaState] = useState<CaptchaState>("checking");
 
   useEffect(() => {
     if (open) {
@@ -191,8 +192,11 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     setView(next);
   }
 
-  const captcha = <TurnstileWidget ref={captchaRef} onToken={setCaptchaToken} isPl={isPl} />;
+  const captcha = <TurnstileWidget ref={captchaRef} onToken={setCaptchaToken} onStateChange={setCaptchaState} isPl={isPl} />;
   const waitingForCaptcha = !captchaReady;
+  // Spinner on the button only while the invisible check is running; when the visitor has to act
+  // (or it failed) the widget/message is shown instead and the button just stays disabled.
+  const captchaChecking = waitingForCaptcha && captchaState === "checking";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -230,7 +234,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
                 <Field label={isPl ? "Hasło" : "Password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" required />
                 {captcha}
-                <PrimaryButton loading={loading} disabled={waitingForCaptcha} label={isPl ? "Zaloguj się" : "Sign in"} />
+                <PrimaryButton loading={loading} busy={captchaChecking} disabled={waitingForCaptcha} label={isPl ? "Zaloguj się" : "Sign in"} />
                 <div className="flex items-center justify-between pt-1 text-[12px] text-[var(--chan-muted)]">
                   <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("forgot")}>
                     {isPl ? "Nie pamiętam hasła" : "Forgot password"}
@@ -258,7 +262,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
                   required
                 />
                 {captcha}
-                <PrimaryButton loading={loading} disabled={waitingForCaptcha} label={isPl ? "Załóż konto" : "Create account"} />
+                <PrimaryButton loading={loading} busy={captchaChecking} disabled={waitingForCaptcha} label={isPl ? "Załóż konto" : "Create account"} />
                 <div className="pt-1 text-center text-[12px] text-[var(--chan-muted)]">
                   <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("sign-in")}>
                     {isPl ? "Masz już konto? Zaloguj się" : "Already have an account? Sign in"}
@@ -298,7 +302,7 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
                 </p>
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
                 {captcha}
-                <PrimaryButton loading={loading} disabled={waitingForCaptcha} label={isPl ? "Wyślij link" : "Send link"} />
+                <PrimaryButton loading={loading} busy={captchaChecking} disabled={waitingForCaptcha} label={isPl ? "Wyślij link" : "Send link"} />
                 <div className="pt-1 text-center text-[12px] text-[var(--chan-muted)]">
                   <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("sign-in")}>
                     {isPl ? "Wróć do logowania" : "Back to sign in"}
