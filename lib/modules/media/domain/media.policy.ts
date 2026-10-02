@@ -103,6 +103,23 @@ export class MediaPolicy {
     }
   }
 
+  /**
+   * Our own HLS delivery (the token-checked Cloudflare Worker): https, the configured delivery host
+   * (HLS_DELIVERY_BASE_URL, default https://video.pawelperfect.com), path /h/<token>/<videoId>/<version>/master.m3u8.
+   * It is a signed, short-lived URL meant for the player, so it must not be redacted to /api/media/<id>.
+   */
+  static isSelfHlsDeliveryUrl(url: string, env: NodeJS.ProcessEnv = process.env): boolean {
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol !== 'https:') return false;
+      const base = new URL((env.HLS_DELIVERY_BASE_URL?.trim() || 'https://video.pawelperfect.com').replace(/\/+$/, ''));
+      if (parsed.hostname.toLowerCase() !== base.hostname.toLowerCase()) return false;
+      return /^\/h\/[^/]+\/[^/]+\/[^/]+\/master\.m3u8$/i.test(parsed.pathname);
+    } catch {
+      return false;
+    }
+  }
+
   static isAllowedThumbnailUrl(rawUrl: string, env: MediaHostEnv) {
     if (isSafeLocalPath(rawUrl)) return true;
     if (rawUrl.startsWith("//")) return false;
@@ -239,6 +256,7 @@ export class MediaPolicy {
     if (!url) return false;
 
     if (this.isCloudflareStreamManifestUrl(url)) return false;
+    if (this.isSelfHlsDeliveryUrl(url)) return false;
 
     const lowerUrl = url.toLowerCase();
 
