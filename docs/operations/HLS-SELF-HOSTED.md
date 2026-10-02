@@ -74,7 +74,33 @@ ssh serwerek 'cd /opt/serwerek/data/hls-work && docker exec -i polutek-db-1 sh -
 ssh serwerek 'ai-log "HLS pilot: activated SELF_HLS route for video c52f0407 (activate-self-hls.sql)"'
 ```
 
-(`activate-self-hls.sql` kończy się `COMMIT;`; na sucho zamień go na `ROLLBACK;` w kopii.) Sprawdzenie: otwórz film `czesc` na `www.pawelperfect.com`, w DevTools/Network żądania idą do `video.pawelperfect.com/h/…`; panel admina `/admin/videos/<id>` pokazuje aktywną trasę "Własny HLS".
+(Próba na sucho: dodaj `-v finish=ROLLBACK`; skrypt wykonuje wszystko, pokazuje stan po zmianie i wycofuje transakcję. Bez tego parametru kończy `COMMIT`. To samo dla `rollback-self-hls.sql`.) Sprawdzenie: otwórz film `czesc` na `www.pawelperfect.com`, w DevTools/Network żądania idą do `video.pawelperfect.com/h/…`; panel admina `/admin/videos/<id>` pokazuje aktywną trasę "Własny HLS".
+
+## Wszystkie trzy filmy na własnym HLS (2026-10-02)
+
+Decyzja właściciela: na stronie zostają dokładnie 3 filmy i grają wyłącznie z własnego HLS. Stan bazy produkcyjnej po aktywacji (`activate-self-hls.sql`, wersja `v1`, trasa poprzednia = Cloudflare Stream zostaje jako `PREVIOUS` i jako fallback odtwarzacza):
+
+| Film | id | Tier / bramka | Źródło | Wynik kodowania |
+|---|---|---|---|---|
+| `czesc` | `c52f0407-b0e8-4b5c-b6d3-a9f152653002` | PUBLIC | CF `downloads/default.mp4` 720p ok. 1,3 Mb/s | pilot, 4,7 MB |
+| `jj` | `5ab531a4-54ad-4d4e-8c92-870fd42f445e` | LOGGED_IN | CF `downloads/default.mp4` 720p ok. 3,2 Mb/s, **ścieżka audio to cyfrowa cisza** (-91 dB) | 3 rendycje, 8,4 MB, 20 s, szczyt RAM 348 MB |
+| `dla-patronow` | `aa229b35-e37d-46a2-959b-d016ad7b6a68` | PUBLIC + premiera 2026-12-31 (bramka bez zmian) | CF `downloads/default.mp4` 720p ok. 1,4 Mb/s | 3 rendycje, 4,4 MB, 15 s, szczyt RAM 346 MB |
+
+**Jakość źródeł:** dla `jj` i `dla-patronow` nie ma oryginałów w R2 (`polutek`), nie ma assetów Mux, `Video.videoUrl` jest pusty. Jedyne dostępne źródło to wygenerowany przez Cloudflare Stream `downloads/default.mp4` (`POST /stream/<uid>/downloads`, potem pobranie z `-L`, bo adres przekierowuje). Cloudflare przechowuje większy oryginał (`jj`: 19,6 MB / 10 s, 1280x720), ale nie wydaje go przez API, więc kodowano ze skompresowanego pliku (jakość nie wzrośnie ponad to, co było). Dla przyszłych filmów trzymaj oryginał w R2.
+
+**Błąd naprawiony przy okazji:** `encode-hls.mjs` przerywał pracę na źródle z cyfrową ciszą w audio (`loudnorm` zwraca `-inf`). Teraz pomiar głośności jest pomijany, audio kodowane jak jest (test `encode-hls.test.ts`).
+
+Weryfikacja po aktywacji (bez sesji zalogowanego użytkownika, bo nie tworzymy kont na produkcji):
+- `GET /api/media-source/<id>` jako gość: `jj` -> `LOGIN_REQUIRED` (`requiredTier: LOGGED_IN`) bez żadnego URL; `dla-patronow` -> `LOGIN_REQUIRED`, diagnostyka "Premiere not reached yet", bez URL; `czesc` -> `SELF_HLS` z `playbackUrl` na `video.pawelperfect.com`. Podpisany plan dla zalogowanego (i brak URL dla odmowy / przed premierą) pokrywa `tests/unit/playback-self-hls.test.ts`.
+- Dostarczanie z tokenem wystawionym ręcznie tym samym sekretem (jak `SelfHlsTokenService`): master/wariant/init/segment 200, `Range` 206, CORS dla `https://www.pawelperfect.com`, brak/zły podpis/token innego filmu/wygasły 403, `meta.json` 404; pełne zdekodowanie strumienia przez `ffmpeg` z adresu HLS (audio+wideo, bez błędów) w ok. 4 s dla 10-sekundowego filmu. Pierwszy bajt mastera ok. 0,2 s, segment 720p 0,3 s z serwerka.
+
+Rollback jednego filmu (sekundy, bez deployu; kopia bazy przed aktywacją: `/opt/serwerek/backups/pre-hls-jj-patronow-20261002T111908.sql.gz`):
+
+```bash
+ssh serwerek 'bash /opt/serwerek/data/hls-work/run-sql-on-server.sh <video_id> /opt/serwerek/data/hls-work/rollback-self-hls.sql'
+```
+
+(`run-sql-on-server.sh` (z `scripts/hls/`) = `docker exec -i polutek-db-1 psql ... -v video_id=<id> -v version=v1 < plik.sql`; wgraj go razem ze skryptami SQL. Ponowna aktywacja: `activate-self-hls.sql` tym samym wywołaniem, dodaj `-v finish=ROLLBACK` na próbę.)
 
 ## Rollback
 

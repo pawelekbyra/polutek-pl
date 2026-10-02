@@ -4,10 +4,12 @@
 -- would fail to read the new enum value.
 --
 --   psql -v ON_ERROR_STOP=1 -v video_id=<uuid> -v version=v1 -f activate-self-hls.sql
+--   dry run (everything executed and shown, then rolled back): add  -v finish=ROLLBACK
 --
 -- Effect: new READY VideoAsset (SELF_HLS) + ACTIVE VideoPlaybackRoute, the previous
 -- ACTIVE route becomes PREVIOUS, the old provider asset stays READY (it is the
 -- fallback the player switches to on error). Rollback: rollback-self-hls.sql.
+\if :{?finish}\else\set finish COMMIT\endif
 BEGIN;
 
 INSERT INTO "VideoAsset" (id, "videoId", provider, "objectKey", bucket, "mimeType", "updatedAt", "processingState", "isPrimary", "fallbackPriority")
@@ -41,4 +43,11 @@ UPDATE "Video" SET "activePlaybackRouteId" = (
 UPDATE "VideoAsset" SET "isPrimary" = (provider = 'SELF_HLS' AND "objectKey" = 'videos/' || :'video_id' || '/v/' || :'version')
 WHERE "videoId" = :'video_id';
 
-COMMIT;
+\echo --- state after (before :finish):
+SELECT v.slug, v."activePlaybackRouteId" = r.id AS active_route_is_this, r.provider AS route_provider, r.status,
+       a.provider AS asset_provider, a."objectKey", a."isPrimary"
+FROM "Video" v
+JOIN "VideoPlaybackRoute" r ON r."videoId" = v.id
+JOIN "VideoAsset" a ON a.id = r."assetId"
+WHERE v.id = :'video_id' ORDER BY r."createdAt";
+:finish;

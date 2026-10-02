@@ -72,6 +72,11 @@ describe('encode-hls', () => {
     expect(() => parseLoudnormJson('nothing')).toThrow();
   });
 
+  it('treats a digitally silent audio track as "nothing to normalise" instead of failing', () => {
+    const silent = parseLoudnormJson('{"input_i":"-inf","input_tp":"-inf","input_lra":"0.00","input_thresh":"-70.00","target_offset":"inf"}');
+    expect(silent).toBeNull();
+  });
+
   it('puts keyframes every 2 s with closed GOP and fMP4 output', () => {
     const [rung] = planLadder(1280, 720);
     const args = buildRungArgs({ input: 'in.mp4', rung, frameRate: 24, interlaced: false, hasAudio: true, loudness: null, opts: DEFAULTS, outDir: 'o' }) as string[];
