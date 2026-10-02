@@ -48,7 +48,7 @@ x-chatwoot: &chatwoot
     SMTP_DOMAIN: pawelperfect.com
     SMTP_ENABLE_STARTTLS_AUTO: "true"
     SMTP_OPENSSL_VERIFY_MODE: peer
-    MAILER_SENDER_EMAIL: "Obsluga PAWELPERFECT.COM <hello@pawelperfect.com>"
+    MAILER_SENDER_EMAIL: "Obsluga PAWELPERFECT.COM <support@pawelperfect.com>"
 
 services:
   db:
@@ -93,7 +93,7 @@ services:
       - "127.0.0.1:3010:3000"
     mem_limit: 700m
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://127.0.0.1:3000/api || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/api || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5

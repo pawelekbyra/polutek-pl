@@ -14,6 +14,36 @@
  */
 const MAX_RAW_BYTES = 25 * 1024 * 1024;
 
+// Recipients that become Chatwoot conversations. Everything else that reaches the catch-all
+// (guessed addresses, spam to random@...) is only forwarded to the archive, so the inbox stays clean.
+// Replies to conversations arrive at reply+<uuid>@inbound.<domain> and the forward address at
+// <uuid>@inbound.<domain>: any address on an `inbound.` subdomain is ingested.
+const INGEST_LOCAL_PARTS = new Set(['support', 'hello']);
+
+// Chatwoot matches a message to its inbox by the To/Cc addresses and the X-Original-To header
+// (EmailChannelFinder). The inbox channel address is support@pawelperfect.com, so mail that arrived for
+// hello@ or for the .pl aliases gets this header prepended; the stored message otherwise stays untouched.
+export const CHANNEL_ADDRESS = 'support@pawelperfect.com';
+
+export function withChannelHeader(raw) {
+  const head = new TextEncoder().encode(`X-Original-To: ${CHANNEL_ADDRESS}
+`);
+  const body = new Uint8Array(raw);
+  const out = new Uint8Array(head.length + body.length);
+  out.set(head, 0);
+  out.set(body, head.length);
+  return out;
+}
+
+export function shouldIngest(to) {
+  const at = String(to || '').toLowerCase().lastIndexOf('@');
+  if (at < 1) return false;
+  const local = String(to).toLowerCase().slice(0, at);
+  const domain = String(to).toLowerCase().slice(at + 1);
+  if (domain.startsWith('inbound.')) return true;
+  return INGEST_LOCAL_PARTS.has(local);
+}
+
 async function ingest(env, raw) {
   const auth = 'Basic ' + btoa(`actionmailbox:${env.CHATWOOT_INGEST_PASSWORD}`);
   let last = 'no-attempt';
@@ -45,13 +75,16 @@ async function ingest(env, raw) {
 export default {
   async email(message, env) {
     let status;
-    if (message.rawSize > MAX_RAW_BYTES) {
+    if (!shouldIngest(message.to)) {
+      status = 'skipped:unlisted-recipient';
+    } else if (message.rawSize > MAX_RAW_BYTES) {
       status = 'failed:too-large';
     } else {
       const raw = await new Response(message.raw).arrayBuffer();
-      status = await ingest(env, raw);
+      const domain = String(message.to || '').toLowerCase().split('@')[1] || '';
+      status = await ingest(env, domain.startsWith('inbound.') ? raw : withChannelHeader(raw));
     }
-    if (status !== 'ok') console.error(`support-mail-ingest ${status} from=${message.from} to=${message.to}`);
+    if (status.startsWith('failed')) console.error(`support-mail-ingest ${status} from=${message.from} to=${message.to}`);
     await message.forward(env.ARCHIVE_TO, new Headers({ 'X-Support-Ingest': status }));
   },
 };

@@ -13,7 +13,7 @@ describe('legal documents consistency', () => {
   const docs = ['RegulaminContent', 'PolitykaContent', 'TermsContentEn', 'PrivacyContentEn'];
 
   it('every document names the same operator, address and contact email', () => {
-    expect(source).toContain("export const LEGAL_CONTACT_EMAIL = 'hello@pawelperfect.com';");
+    expect(source).toContain("export const LEGAL_CONTACT_EMAIL = 'support@pawelperfect.com';");
     for (const doc of docs) {
       const text = body(doc);
       expect(text, doc).toContain('Paweł Perfect');

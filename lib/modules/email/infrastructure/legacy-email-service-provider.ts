@@ -11,7 +11,7 @@ import { randomUUID } from "node:crypto";
 
 /**
  * Automatic mail goes out from a no-reply address, but people do reply to it. Replies must land in
- * the real support mailbox (Google Workspace, hello@), so every send carries this Reply-To.
+ * the real support mailbox (support@ alias, forwarded to the Chatwoot inbox), so every send carries this Reply-To.
  * Override with EMAIL_REPLY_TO; the default is the single public contact address.
  */
 /**
@@ -24,7 +24,7 @@ import { randomUUID } from "node:crypto";
 export const EMAIL_SENDER_NAME = 'Pawel Perfect';
 
 /** Physical identity line under every automatic mail (same entity as the Terms and Privacy Policy). */
-export const EMAIL_IDENTITY_LINE = 'Paweł Perfect · ul. Złota 75, 00-819 Warszawa · hello@pawelperfect.com';
+export const EMAIL_IDENTITY_LINE = 'Paweł Perfect · ul. Złota 75, 00-819 Warszawa · support@pawelperfect.com';
 
 /**
  * Sender address. EMAIL_FROM may be a bare address ("no-reply@pawelperfect.com"); then inboxes
@@ -38,7 +38,7 @@ export function getEmailFrom(): string {
 }
 
 function getEmailReplyTo(): string {
-  return process.env.EMAIL_REPLY_TO?.trim() || 'hello@pawelperfect.com';
+  return process.env.EMAIL_REPLY_TO?.trim() || 'support@pawelperfect.com';
 }
 
 function replaceTemplateVariables(value: string, variables: Record<string, string>) {

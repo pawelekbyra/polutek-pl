@@ -5,7 +5,7 @@ Stan: **dziala na serwerku od 2026-10-02** (Chatwoot CE, panel `https://support.
 ## Cele i zasady (decyzje wlasciciela)
 
 1. Wspolna skrzynka (shared inbox) na poczte `hello@pawelperfect.com`: czlowiek teraz, agent AI pozniej.
-2. Jak najmniej zaleznosci od zewnetrznych uslug. **Google Workspace zostaje na razie, ale projekt od niego nie zalezy**: po jego anulowaniu nic tu nie trzeba przebudowywac.
+2. Jak najmniej zaleznosci od zewnetrznych uslug. **Poczta nie korzysta juz z Google Workspace** (cutover MX 2026-10-02); wlasciciel anuluje Workspace sam po ok. 7 dniach stabilnej pracy.
 3. Zero nowych platnych uslug. Serwer ma 4 GB RAM i dzieli go z aplikacja, baza, Redisem i enkoderem wideo: twarde limity pamieci.
 4. Poczta wychodzaca nigdy z IP serwera (Hetzner blokuje porty 25 i 465, a IP serwera nie ma reputacji pocztowej): idzie przez Resend jako `hello@pawelperfect.com`.
 5. Agent AI to **pozniejszy** etap: tu tylko punkty zaczepienia (sekcja "Agent AI").
@@ -14,9 +14,9 @@ Stan: **dziala na serwerku od 2026-10-02** (Chatwoot CE, panel `https://support.
 
 ```
                   Internet
-   klient pisze na hello@pawelperfect.com
+   klient pisze na support@pawelperfect.com (MX Cloudflare na apexie; hello@ i aliasy .pl tak samo)
                      |
-                     v   (po cutoverze MX; do tego czasu: adres testowy na subdomenie inbound.pawelperfect.com)
+                     v   (cutover wykonany 2026-10-02)
         Cloudflare Email Routing  (reguly: konkretny adres + catch-all)
                      |
                      v
@@ -70,9 +70,9 @@ Zasada: agent **czyta, szkicuje, notuje**; wysyla czlowiek (zatwierdza). Cala po
 ## Aplikacja mobilna (decyzja wlasciciela)
 
 Oficjalna aplikacja Chatwoot (iOS/Android) loguje sie do `https://support.pawelperfect.com` przez API (`/auth/sign_in`, `/api/v1/*`, `/cable`), a nie umie przejsc logowania Cloudflare Access (OTP w przegladarce). Opcje:
-- **A (obecnie): tylko panel w przegladarce** za Access (najbezpieczniej). Aplikacja mobilna nie zadziala.
-- **B: wyjatek Access dla sciezek API** (`/auth/sign_in`, `/api/*`, `/cable`, `/webhooks/*`) z wlasnym uwierzytelnianiem Chatwoot (haslo + wlaczone 2FA, limity Rack::Attack). Panel w przegladarce (`/app/*`) zostaje za Access. Slabsze: ktos z internetu moze probowac logowania do API. Skrypt i rollback: runbook, "Wlaczenie aplikacji mobilnej". Powiadomienia push przechodza przez przekaznik Chatwoot (zewnetrzna zaleznosc, tylko metadane).
+- **A: tylko panel w przegladarce** za Access (najbezpieczniej). Aplikacja mobilna nie zadziala. *(historyczne)*
+- **B (WYBRANA i wlaczona 2026-10-02, szczegoly w runbooku sekcja 7): wyjatek Access dla sciezek API** (`/auth/sign_in`, `/api/*`, `/cable`, `/webhooks/*`) z wlasnym uwierzytelnianiem Chatwoot (haslo + wlaczone 2FA, limity Rack::Attack). Panel w przegladarce (`/app/*`) zostaje za Access. Slabsze: ktos z internetu moze probowac logowania do API. Skrypt i rollback: runbook, "Wlaczenie aplikacji mobilnej". Powiadomienia push przechodza przez przekaznik Chatwoot (zewnetrzna zaleznosc, tylko metadane).
 
 ## Zalezne i zewnetrzne elementy (co zostaje na zewnatrz)
 
-Cloudflare (DNS, Email Routing, Tunnel, Access, Workers Free), Resend (wysylka), Gmail pawel.perfect@gmail.com (archiwum kopii). Google Workspace: nic tu od niego nie zalezy, poza tym, ze dzis apex MX nadal tam wskazuje (cutover: runbook).
+Cloudflare (DNS, Email Routing, Tunnel, Access, Workers Free), Resend (wysylka), Gmail pawel.perfect@gmail.com (archiwum kopii). Google Workspace: nic tu od niego nie zalezy; MX przeniesione, szczegoly i rollback w runbooku (sekcja 6).
