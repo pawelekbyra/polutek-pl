@@ -10,7 +10,7 @@ Architektura i decyzje: [`../architecture/support-center.md`](../architecture/su
 | Panel | `https://support.pawelperfect.com` -> Tunnel -> `127.0.0.1:3010` | za Cloudflare Access (aplikacja `serwerek support`, id `273775f8-e33a-40f6-bfd1-dd256bf588c6`, polityka `serwerek owners`) |
 | Ingress poczty | `/rails/action_mailbox/relay/inbound_emails` | osobna aplikacja Access `serwerek support mail ingest` (id `b13af5cd-4bd1-4f51-8069-f41e88a86990`), tylko service token `support-mail-ingest` (id `986f99d4-8b70-41bb-8ef0-8cd58ec464d1`) + haslo basic auth |
 | Email Worker | `polutek-support-mail` (kod: `workers/support-mail-ingest/`, deploy: `node workers/support-mail-ingest/deploy.mjs`) | archiwum: `pawel.perfect@gmail.com` (adres zweryfikowany w Email Routing konta) |
-| Email Routing | strefa `pawelperfect.com`: subdomena `inbound.pawelperfect.com` (MX Cloudflare), regula literalna na adres `<uuid>@inbound...` i catch-all -> Worker | **apex ma dalej MX Google; zone-level status "misconfigured" jest oczekiwany** |
+| Email Routing | strefy `pawelperfect.com` i `pawelperfect.pl`: MX Cloudflare na apexie (od 2026-10-02, sekcja 6), reguly `support@`/`hello@`/catch-all -> Worker; `.com` ma tez subdomene `inbound.pawelperfect.com` | Worker ma allowliste odbiorcow |
 | Dane | `/opt/serwerek/data/chatwoot/{pg,redis,storage}` | Postgres `pgvector/pgvector:0.8.7-pg17` (baza/rola `chatwoot`), Redis 7 `noeviction` |
 | Sekrety | `/opt/serwerek/apps/chatwoot/.env` (root, 600): `SECRET_KEY_BASE`, `POSTGRES_PASSWORD`, `RAILS_INBOUND_EMAIL_PASSWORD`, `SMTP_PASSWORD` (klucz Resend `chatwoot-smtp`, sending-only, domena `pawelperfect.com`) | **szosty dozwolony plik z sekretem na serwerze** (obok SERWEREK.md §4 i `cron.env`); kopia u wlasciciela: `%USERPROFILE%\.ai-secrets\chatwoot.env` (+ `SUPPORT_ACCESS_CLIENT_ID/SECRET` w `secrets.env`). Backup nocny NIE zawiera `.env` |
 | Skrzynka | konto "PAWELPERFECT.COM", skrzynka "Wsparcie" (kanal e-mail `support@pawelperfect.com` od 2026-10-02, SMTP Resend 587 STARTTLS ustawione na kanale) | uzytkownik `hello@pawelperfect.com` (SuperAdmin + administrator) |
@@ -64,26 +64,17 @@ Bez `SECRET_KEY_BASE` z kopii wlasciciela: sesje i zaszyfrowane pola (np. haslo 
 - **Diagnoza**: kopia w archiwum Gmail ma naglowek `X-Support-Ingest`: `ok` albo `failed:<powod>` (`http-401` = zle haslo/token, `http-403` = Access, `error-...` = Chatwoot nie odpowiada). Logi Workera: panel Cloudflare, Workers, `polutek-support-mail`, Logs (observability wlaczone). Nieudany ingest: mail jest w archiwum; wrzuc go recznie: `curl -u actionmailbox:<haslo> -H 'content-type: message/rfc822' --data-binary @wiadomosc.eml https://support.pawelperfect.com/rails/action_mailbox/relay/inbound_emails` z naglowkami `CF-Access-Client-Id/Secret` (Chatwoot odrzuca duplikaty po Message-ID).
 - **Rotacja sekretow ingress**: nowe haslo w `.env` (`RAILS_INBOUND_EMAIL_PASSWORD`) + `docker compose up -d web`; `SUPPORT_INGEST_PASSWORD=<nowe> node workers/support-mail-ingest/deploy.mjs` (reszta z `secrets.env`). Service token: panel Zero Trust, Access, Service Auth (tokeny wygasaja po roku: 2027-10-02; odnow i ponow deploy Workera).
 
-## 6. CUTOVER MX (krok NIEWYKONANY, wymaga zgody wlasciciela)
+## 6. Cutover MX (WYKONANY 2026-10-02)
 
-Dzis **produkcyjny MX nie zostal zmieniony**: `hello@pawelperfect.com` nadal trafia do Google Workspace. Test poczty przychodzacej idzie przez `inbound.pawelperfect.com`. Cutover = skierowanie `hello@pawelperfect.com` przez Cloudflare do Chatwoota; Workspace przestaje odbierac te poczte (kopia trafia do Gmaila pawel.perfect).
+Poczta dla `pawelperfect.com` i `pawelperfect.pl` idzie przez Cloudflare Email Routing -> Worker `polutek-support-mail` -> Chatwoot (+ kopia do Gmaila). Google Workspace nie odbiera juz poczty. Wlasciciel zrobil Takeout skrzynki `hello@` przed zmiana.
 
-Przed:
-1. Zrob kopie rekordow DNS strefy: `GET /zones/02cb23af5c0000a110f6915b00bbb8ef/dns_records?per_page=200` zapisz do `DNS_BACKUP_mx_<data>.json` w `.ai-secrets`/na serwerze.
-2. Upewnij sie, ze test z sekcji 5 przechodzi, a odpowiedz z Chatwoot dochodzi (zrob go dzien wczesniej).
-3. Zapytaj: czy kontynuowac (to zatrzyma odbior w Workspace).
+- Reguly (obie strefy): `support@` i `hello@` -> Worker; catch-all -> Worker. **Worker ma allowliste**: do Chatwoota trafia tylko `support@`, `hello@` (dowolna domena) i adresy na `inbound.*`; reszta (catch-all) tylko do archiwum z `X-Support-Ingest: skipped:unlisted-recipient`. Dla `hello@` i aliasow `.pl` Worker dopisuje `X-Original-To: support@pawelperfect.com`, bo Chatwoot dopasowuje skrzynke po To/Cc/X-Original-To (kanal ma adres `support@pawelperfect.com`); bez tego mail na `hello@` jest cicho gubiony (204 bez rozmowy). Test: `worker.mjs` eksportuje `shouldIngest()`.
+- DNS: MX Cloudflare (route1-3) na obu apexach, SPF `v=spf1 include:_spf.mx.cloudflare.net ~all`, DMARC rua -> `pawel.perfect@gmail.com`. Dawne wartosci i rollback: [`DNS_BACKUP_mail_2026-10-02.md`](DNS_BACKUP_mail_2026-10-02.md) (pelne JSON-y poza repo: `%USERPROFILE%\.ai-secrets\dns-backup\`).
+- Testy (po cutoverze): Gmail -> `support@`, `hello@pawelperfect.com`, `hello@pawelperfect.pl` = 3 rozmowy w Chatwoot; nadawca zewnetrzny (Resend) -> `support@` = rozmowa + kopia w INBOX Gmaila; odpowiedz z Chatwoot dochodzi jako `support@pawelperfect.com`.
 
-Kroki (API Cloudflare, token `CLOUDFLARE_API_TOKEN`):
-1. Regula adresu: `POST /zones/<zone>/email/routing/rules` `{"name":"hello -> support worker","enabled":true,"matchers":[{"type":"literal","field":"to","value":"hello@pawelperfect.com"}],"actions":[{"type":"worker","value":["polutek-support-mail"]}]}` (catch-all jest juz ustawiony na Workera).
-2. Usun 5 rekordow MX `aspmx.l.google.com`, `alt1..alt4.aspmx.l.google.com` na `pawelperfect.com` (`DELETE /zones/<zone>/dns_records/<id>`; id w kopii z pkt 1).
-3. Dodaj MX: `route1.mx.cloudflare.net` (16), `route2.mx.cloudflare.net` (49), `route3.mx.cloudflare.net` (87) na `pawelperfect.com` (to samo robi `POST /zones/<zone>/email/routing/enable`; wtedy sprawdz, czy nie zmienil SPF).
-4. SPF (TXT na `pawelperfect.com`): zmien na `v=spf1 include:_spf.google.com include:_spf.mx.cloudflare.net ~all` (Google zostaje, dopoki Workspace cos wysyla; po jego zamknieciu usun `_spf.google.com`). SPF dla wysylki Resend jest na subdomenie `send.` i nie jest ruszany.
-5. Test: mail z zewnatrz na `hello@pawelperfect.com` -> rozmowa w Chatwoot + kopia w Gmailu; odpowiedz -> dochodzi do nadawcy.
-6. Ustaw w Chatwoot `MAILER_INBOUND_EMAIL_DOMAIN` bez zmian (zostaje `inbound.pawelperfect.com`, odpowiedzi klientow dalej na `reply+...@inbound...`).
+**Rollback (ok. 5 minut + propagacja DNS):** w kazdej strefie usun MX `route*.mx.cloudflare.net` z apexu, dodaj 5 MX Google (priorytety 1, 5, 5, 10, 10: `aspmx.l.google.com`, `alt1..alt4.aspmx.l.google.com`), SPF z powrotem `v=spf1 include:_spf.google.com ~all`, DMARC rua z powrotem na `hello@` (opcjonalnie). Reguly Email Routing zostaja (nieszkodliwe). Poczta wyslana w oknie cutovera jest w Chatwoot i w archiwum Gmail. Po anulowaniu Workspace rollback nie jest mozliwy.
 
-**Rollback (ok. 5 minut + propagacja DNS):** usun 3 rekordy MX Cloudflare z apex, odtworz 5 rekordow MX Google z kopii (priorytety 1, 5, 5, 10, 10), przywroc SPF `v=spf1 include:_spf.google.com ~all`, usun regule `hello -> support worker`. Poczta wysłana w oknie cutovera jest w archiwum Gmail (kopia z Workera) oraz w Chatwoot.
-
-Po anulowaniu Workspace przez wlasciciela: zaden element tego systemu nie wymaga zmian (usun `_spf.google.com` z SPF; Gmail archiwum i Resend dzialaja niezaleznie). Zmien jedynie "Reply-To"/loginy, ktore wskazywalyby na skrzynke Workspace, jesli takie sa (np. polityka Access ma `hello@pawelperfect.com` jako e-mail OTP: po zamknieciu Workspace ten adres musi odbierac poczte, czyli przez Chatwoot, albo dodaj inny e-mail do polityki wczesniej).
+**Anulowanie Workspace robi wlasciciel** (nie agent), po ok. 7 dniach stabilnej pracy. Potem: usun `google._domainkey` i TXT `google-site-verification`, klucz konta serwisowego `ai-agent`; polityka Access ma `hello@` i Gmail jako e-mail OTP (hello@ odbiera przez Chatwoot).
 
 ## 7. Aplikacja mobilna (wlaczona 2026-10-02)
 
@@ -107,8 +98,7 @@ Po anulowaniu Workspace przez wlasciciela: zaden element tego systemu nie wymaga
 
 ## 10. support@pawelperfect.com i Agent AI
 
-- **Adres publiczny: `support@pawelperfect.com`** (od 2026-10-02). Alias uzytkownika Workspace `hello@pawelperfect.com` (Admin SDK `users.aliases.insert`; `hello@` zostaje prywatnym loginem/adminem). Skrzynka Chatwoot "Wsparcie" ma kanal `support@pawelperfect.com` i wysyla jako `support@` przez Resend. Routing wejscia sprawdzony: mail z naglowkiem `To: support@pawelperfect.com` wrzucony do ingressu trafia do skrzynki (rozmowa nr 2).
-- **Przekazywanie `support@` -> Chatwoot (MX bez zmian)**: Gmail forwarding na `c998b27389bd3764b0a226e90b433a18@inbound.pawelperfect.com` + filtr `deliveredto:support@pawelperfect.com` -> przekaz dalej. Wymaga zakresow `gmail.settings.sharing` i `gmail.settings.basic` w delegacji domeny (admin.google.com, Security, API controls); jesli ich brak, mozna to zrobic recznie w Gmailu `hello@` (Ustawienia, Przekierowanie i POP/IMAP; kod potwierdzajacy przyjdzie do Chatwoota/archiwum) albo regula Admin console, Aplikacje, Gmail, Routing. Status: patrz raport/ai-log.
+- **Adres publiczny: `support@pawelperfect.com`** (od 2026-10-02); `hello@` i te same nazwy na `.pl` trafiaja do tej samej skrzynki (sekcja 6). Kanal Chatwoot ma adres `support@` i wysyla jako `support@` przez Resend. Przekazywanie z Gmaila Workspace nie jest juz potrzebne (MX na Cloudflare).
 - **Agent AI**: uzytkownik Chatwoot `Agent AI` (`agent-ai@pawelperfect.com`, id 7, rola `agent`, czlonek skrzynki Wsparcie; haslo losowe, nieznane, logowanie nie jest potrzebne). Token API: serwer `/opt/serwerek/secrets/chatwoot-ai-agent.token` (root, 600) i lokalnie `%USERPROFILE%\.ai-secrets\chatwoot.env` jako `CHATWOOT_AI_AGENT_TOKEN`. Nigdy nie wypisuj. Uzycie (na serwerze lub przez publiczny adres, ktory omija Access dla `/api`):
   - lista: `curl -H "api_access_token: $T" http://127.0.0.1:3010/api/v1/accounts/1/conversations?status=open`
   - odczyt: `GET /api/v1/accounts/1/conversations/<display_id>/messages`

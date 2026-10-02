@@ -5,7 +5,7 @@ Stan: **dziala na serwerku od 2026-10-02** (Chatwoot CE, panel `https://support.
 ## Cele i zasady (decyzje wlasciciela)
 
 1. Wspolna skrzynka (shared inbox) na poczte `hello@pawelperfect.com`: czlowiek teraz, agent AI pozniej.
-2. Jak najmniej zaleznosci od zewnetrznych uslug. **Google Workspace zostaje na razie, ale projekt od niego nie zalezy**: po jego anulowaniu nic tu nie trzeba przebudowywac.
+2. Jak najmniej zaleznosci od zewnetrznych uslug. **Poczta nie korzysta juz z Google Workspace** (cutover MX 2026-10-02); wlasciciel anuluje Workspace sam po ok. 7 dniach stabilnej pracy.
 3. Zero nowych platnych uslug. Serwer ma 4 GB RAM i dzieli go z aplikacja, baza, Redisem i enkoderem wideo: twarde limity pamieci.
 4. Poczta wychodzaca nigdy z IP serwera (Hetzner blokuje porty 25 i 465, a IP serwera nie ma reputacji pocztowej): idzie przez Resend jako `hello@pawelperfect.com`.
 5. Agent AI to **pozniejszy** etap: tu tylko punkty zaczepienia (sekcja "Agent AI").
@@ -14,9 +14,9 @@ Stan: **dziala na serwerku od 2026-10-02** (Chatwoot CE, panel `https://support.
 
 ```
                   Internet
-   klient pisze na support@pawelperfect.com (alias Workspace -> przekazanie na adres inbound; MX bez zmian)
+   klient pisze na support@pawelperfect.com (MX Cloudflare na apexie; hello@ i aliasy .pl tak samo)
                      |
-                     v   (po cutoverze MX; do tego czasu: adres testowy na subdomenie inbound.pawelperfect.com)
+                     v   (cutover wykonany 2026-10-02)
         Cloudflare Email Routing  (reguly: konkretny adres + catch-all)
                      |
                      v
@@ -75,4 +75,4 @@ Oficjalna aplikacja Chatwoot (iOS/Android) loguje sie do `https://support.pawelp
 
 ## Zalezne i zewnetrzne elementy (co zostaje na zewnatrz)
 
-Cloudflare (DNS, Email Routing, Tunnel, Access, Workers Free), Resend (wysylka), Gmail pawel.perfect@gmail.com (archiwum kopii). Google Workspace: nic tu od niego nie zalezy, poza tym, ze dzis apex MX nadal tam wskazuje (cutover: runbook).
+Cloudflare (DNS, Email Routing, Tunnel, Access, Workers Free), Resend (wysylka), Gmail pawel.perfect@gmail.com (archiwum kopii). Google Workspace: nic tu od niego nie zalezy; MX przeniesione, szczegoly i rollback w runbooku (sekcja 6).

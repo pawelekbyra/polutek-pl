@@ -2,19 +2,16 @@
 
 No secrets here. Two separate jobs, two providers.
 
-## Single public contact address: `support@pawelperfect.com` (since 2026-10-02)
+## Mail is NOT on Google Workspace any more (cutover 2026-10-02)
 
-The owner decided on **one** address for everything users see (legal documents, support, replies): `support@pawelperfect.com`. It is a Workspace alias (Admin SDK, 2026-10-02) of the user `hello@pawelperfect.com`, which stays the private Workspace login/admin; mail to `support@` is forwarded to the Chatwoot ingest address on `inbound.pawelperfect.com` (see SUPPORT-CENTER.md; forwarding status there). MX is unchanged (Google). The Chatwoot inbox sends as `support@` through Resend. History: `hello@pawelperfect.pl` until 2026-10-01, `hello@pawelperfect.com` until 2026-10-02. In code it is `LEGAL_CONTACT_EMAIL` in `app/components/legal/LegalDocs.tsx` (guarded by `tests/unit/legal-docs-consistency.test.ts`). Older notes in CLAUDE.md and `docs/strategy/OWNER-*` that mention `support@…` or `@polutek.pl` are historical.
+Owner decision: stop using Google Workspace for mail. **All inbound mail for `pawelperfect.com` and `pawelperfect.pl` goes through Cloudflare Email Routing -> the Email Worker `polutek-support-mail` -> Chatwoot**, and the Worker always forwards a copy to the archive `pawel.perfect@gmail.com`. Design and runbook: [SUPPORT-CENTER.md](SUPPORT-CENTER.md), [../architecture/support-center.md](../architecture/support-center.md).
 
-## Incoming mail and human replies: Google Workspace
-
-- One Business Starter seat: `hello@pawelperfect.com` (login renamed from `hello@pawelperfect.pl` on 2026-10-01; the `.pl` address is now an automatic alias and still receives mail). Also the Workspace super admin; keep 2-step verification on.
-- Workspace domains: `pawelperfect.pl` primary, `pawelperfect.com` verified secondary domain.
-- DNS at Cloudflare (set by Google's own integration): five `MX` records on `@` (`aspmx.l.google.com` and four `alt*.aspmx.l.google.com`), `TXT google-site-verification=…`, SPF `v=spf1 include:_spf.google.com ~all` on `@`.
-- Gmail DKIM (`google._domainkey` TXT) is set in Cloudflare, including the `pawelperfect.com` zone (2026-10-01), which also has the Google site-verification TXT.
-- Aliases are free and land in the same inbox if more names are ever wanted (`halo@`, `pomoc@`…); none are required.
-- There is **no** helpdesk and no inbox inside the app. The admin inbound viewer (`/admin/emails`, `InboundEmail`) is no longer fed, because inbound mail no longer goes through Resend.
-- Future AI support agent: build it on the Gmail API against this mailbox (threads, drafts, replies), drafts approved by the owner first. Treat every inbound message as untrusted input (prompt injection), avoid auto-reply loops (`Auto-Submitted`, skip `no-reply`), escalate payments/legal to the owner.
+- **Public address: `support@pawelperfect.com`** (legal documents, `LEGAL_CONTACT_EMAIL` in `app/components/legal/LegalDocs.tsx`, default `Reply-To`, Chatwoot channel). `hello@pawelperfect.com` and the same names on `pawelperfect.pl` still work and land in the same Chatwoot inbox (the Worker adds `X-Original-To: support@pawelperfect.com`, which is how Chatwoot matches its channel). Anything else at the apex (the catch-all) is only forwarded to the Gmail archive with `X-Support-Ingest: skipped:unlisted-recipient`; this keeps guessed addresses and spam out of Chatwoot without losing mail. Rules: one literal rule per address (`support@`, `hello@`) on both zones, catch-all -> Worker.
+- **DNS now**: MX `route1/2/3.mx.cloudflare.net` on both apexes (+ `inbound.` subdomain on `.com`), SPF `v=spf1 include:_spf.mx.cloudflare.net ~all` (Google include removed; Resend sends from the `send.` subdomain, its own SPF/DKIM unchanged), DMARC `p=none` with `rua=mailto:pawel.perfect@gmail.com` (aggregate reports must not land in Chatwoot). Kept on purpose: `google._domainkey` and the `google-site-verification` TXTs (harmless; remove after Workspace is cancelled). Old values and rollback: [DNS_BACKUP_mail_2026-10-02.md](DNS_BACKUP_mail_2026-10-02.md).
+- **Outbound** replies: Chatwoot -> Resend SMTP :587 as `support@pawelperfect.com`. App mail: Resend, `no-reply@pawelperfect.com`, `Reply-To: support@pawelperfect.com`.
+- **Takeout**: the owner exported the `hello@` Workspace mailbox before the cutover (kept by the owner). Mail sent to Workspace after the MX change no longer arrives there.
+- **Cancelling Workspace (owner, not an agent)**: after about 7 days of stable operation (watch that mail arrives in Chatwoot, archive copies keep coming, no bounces), the owner cancels Google Workspace himself in admin.google.com (Billing -> Subscriptions). Before that: the Cloudflare Access policy `serwerek owners` has `hello@pawelperfect.com` and `pawel.perfect@gmail.com` as OTP e-mails (hello@ now lands in Chatwoot, so the PIN mail arrives there and in the Gmail archive); the site's Google sign-in must already run on a personal-account OAuth client (see GOOGLE_ACCESS.md). After cancelling: remove `google._domainkey` and the Google site-verification TXTs, delete the service account key `ai-agent` and stop using Gmail API access to `hello@` (it dies with the mailbox).
+- Older notes (`hello@pawelperfect.pl`, Workspace aliases, "future AI agent on the Gmail API") are historical: the AI agent works against Chatwoot (SUPPORT-CENTER.md section 10).
 
 ## Automatic mail from the app: Resend
 
