@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import { logger } from "@/lib/logger";
-import { auth as betterAuthInstance } from "./auth";
 
 /**
  * The only place server code asks "who is signed in?". Everything else (route handlers, server
@@ -28,6 +27,9 @@ const EMPTY: ServerSession = { userId: null, sessionId: null, user: null };
 
 async function readSession(requestHeaders: Headers, fresh: boolean): Promise<ServerSession> {
   try {
+    // Loaded on first use so modules that only import this file (and tests that mock the
+    // database) do not pay for initializing Better Auth and its plugins.
+    const { auth: betterAuthInstance } = await import("./auth");
     const result = await betterAuthInstance.api.getSession({
       headers: requestHeaders,
       query: fresh ? { disableCookieCache: true } : undefined,

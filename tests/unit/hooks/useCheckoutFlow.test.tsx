@@ -17,7 +17,7 @@ const openAuthModal = vi.fn();
 const toast = vi.fn();
 let authState: { userId: string | null } = { userId: 'user_123' };
 
-vi.mock('@clerk/nextjs', () => ({
+vi.mock('@/lib/auth/react', () => ({
   useAuth: () => authState,
   useUser: () => ({ user: { primaryEmailAddress: { emailAddress: 'user@example.com' } } }),
 }));

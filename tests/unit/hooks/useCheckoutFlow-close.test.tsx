@@ -6,7 +6,7 @@ import React from 'react';
 
 const mocks = vi.hoisted(() => ({ routerReplace: vi.fn(), routerPush: vi.fn() }));
 
-vi.mock('@clerk/nextjs', () => ({
+vi.mock('@/lib/auth/react', () => ({
   useAuth: () => ({ userId: 'user_123' }),
   useUser: () => ({ user: { primaryEmailAddress: { emailAddress: 'user@example.com' } } }),
 }));

@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/app/components/LanguageContext', () => ({ useLanguage: () => ({ language: mocks.language }) }));
 vi.mock('@/app/components/auth/AuthModalProvider', () => ({ useAuthModal: () => ({ open: mocks.openAuthModal }) }));
-vi.mock('@clerk/nextjs', () => ({
+vi.mock('@/lib/auth/react', () => ({
   useAuth: () => ({ userId: mocks.userId }),
   useUser: () => ({ user: { primaryEmailAddress: { emailAddress: 'fan@example.com' } } }),
 }));

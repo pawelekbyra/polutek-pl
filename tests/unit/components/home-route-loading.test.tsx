@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Canvas art is irrelevant here and jsdom has neither matchMedia nor a 2d context.
 vi.mock("@/app/components/preload/MatrixRain", () => ({ MatrixRain: () => null }));
 
-vi.mock("@clerk/nextjs", () => ({ useAuth: () => ({ isLoaded: true }) }));
+vi.mock("@/lib/auth/react", () => ({ useAuth: () => ({ isLoaded: true }) }));
 vi.mock("@/components/skeletons", () => ({
   HomePageSkeleton: () => <div data-testid="home-skeleton" />,
 }));

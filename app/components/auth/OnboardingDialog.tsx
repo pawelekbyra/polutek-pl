@@ -61,7 +61,7 @@ export default function OnboardingDialog() {
       setSaving(false);
       return setProblem(nicknameCheckMessage(check.reason, isPl));
     }
-    const response = await fetch("/api/user/onboarding", {
+    const response = await fetch("/api/user/first-sign-in", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nickname: validation.value, avatarDataUrl }),

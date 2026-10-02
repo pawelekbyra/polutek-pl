@@ -3,11 +3,11 @@ import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/checkout/create-intent/route';
 import { createCheckoutIntent } from '@/lib/modules/payments';
 import { getOrCreateCurrentUser } from '@/lib/modules/users';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth/server';
 import { ok } from '@/lib/modules/shared/result';
 import { PaymentStatus } from '@prisma/client';
 
-vi.mock('@clerk/nextjs/server', () => ({
+vi.mock('@/lib/auth/server', () => ({
   auth: vi.fn(),
 }));
 

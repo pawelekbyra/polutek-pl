@@ -8,8 +8,13 @@ const ALLOWED_TYPES = new Set(AVATAR_ACCEPT.split(","));
 
 /** Avatars are resized to this square in the browser and stored as a small data URL. */
 export const AVATAR_SIZE_PX = 256;
-/** Upper bound of the stored data URL (the resized image is normally 15-40 KB). */
+/** Upper bound of the uploaded data URL (the resized image is normally 15-40 KB). */
 export const AVATAR_MAX_DATA_URL_CHARS = 120_000;
+
+/** Public URL of a stored avatar; `version` changes with every upload so caches never go stale. */
+export function avatarRouteUrl(userId: string, version: number = Date.now()): string {
+  return `/api/avatars/${encodeURIComponent(userId)}?v=${version}`;
+}
 
 export type AvatarProblem = "type" | "size";
 
@@ -30,7 +35,9 @@ const DATA_URL_PATTERN = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/]+={0
  * Server-side check of an avatar data URL sent by the browser: right type, plain base64, small,
  * and the decoded bytes start with the matching image signature.
  */
-export function validateAvatarDataUrl(value: unknown): { ok: true; value: string } | { ok: false } {
+export function validateAvatarDataUrl(
+  value: unknown,
+): { ok: true; value: string; mime: string; bytes: Buffer } | { ok: false } {
   if (typeof value !== "string" || value.length > AVATAR_MAX_DATA_URL_CHARS) return { ok: false };
   const match = DATA_URL_PATTERN.exec(value);
   if (!match) return { ok: false };
@@ -39,5 +46,5 @@ export function validateAvatarDataUrl(value: unknown): { ok: true; value: string
   const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47;
   const isWebp = bytes.subarray(0, 4).toString("ascii") === "RIFF" && bytes.subarray(8, 12).toString("ascii") === "WEBP";
   const signatureOk = match[1] === "jpeg" ? isJpeg : match[1] === "png" ? isPng : isWebp;
-  return signatureOk ? { ok: true, value } : { ok: false };
+  return signatureOk ? { ok: true, value, mime: `image/${match[1]}`, bytes } : { ok: false };
 }

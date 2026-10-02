@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { GET as getAdminStats } from "@/app/api/admin/stats/route";
 
-vi.mock("@clerk/nextjs/server", () => ({
+vi.mock("@/lib/auth/server", () => ({
   auth: vi.fn(),
   currentUser: vi.fn(),
 }));
@@ -27,20 +27,11 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
-vi.mock("@/lib/modules/users/application/sync-user.use-case", () => ({
-  getOrCreateUser: vi.fn(),
-}));
-
-import { getOrCreateUser } from "@/lib/modules/users/application/sync-user.use-case";
-
 describe("admin API access protection", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.ADMIN_EMAIL = "admin@example.com";
-    process.env.ADMIN_CLERK_USER_IDS = "";
-    vi.mocked(getOrCreateUser).mockResolvedValue({
-      id: "user_1",
-    } as never);
+    process.env.ADMIN_EMAILS = "";
   });
 
   it("returns 401 for guests before any admin database reads", async () => {
@@ -54,7 +45,6 @@ describe("admin API access protection", () => {
     expect(adminUserId).toBeNull();
     expect(response?.status).toBe(401);
     expect(await response?.json()).toEqual({ error: "Unauthorized" });
-    expect(getOrCreateUser).not.toHaveBeenCalled();
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
   });
 
@@ -114,25 +104,27 @@ describe("admin API access protection", () => {
     expect(prisma.user.update).not.toHaveBeenCalled();
   });
 
-  it("allows active users from ADMIN_CLERK_USER_IDS without mutating role", async () => {
-    process.env.ADMIN_CLERK_USER_IDS = "admin_1,admin_2";
+  it("promotes a verified user listed in ADMIN_EMAILS (one-time bootstrap)", async () => {
+    process.env.ADMIN_EMAILS = "viewer@example.com";
     vi.mocked(auth).mockResolvedValue({ userId: "admin_1" } as Awaited<
       ReturnType<typeof auth>
     >);
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "admin_1",
       role: "USER",
       isDeleted: false,
       email: "viewer@example.com",
+      emailVerified: true,
     } as never);
     vi.mocked(prisma.user.update).mockResolvedValue({} as never);
 
     const { adminUserId, response } = await requireAdminForApi(
-      "TEST_ADMIN_ID_ALLOWLIST",
+      "TEST_ADMIN_EMAIL_BOOTSTRAP",
     );
 
     expect(adminUserId).toBe("admin_1");
     expect(response).toBeNull();
-    expect(prisma.user.update).not.toHaveBeenCalled();
+    expect(prisma.user.update).toHaveBeenCalledWith({ where: { id: "admin_1" }, data: { role: "ADMIN" } });
   });
 
   it("protects representative admin API routes before route-specific work starts", async () => {

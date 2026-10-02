@@ -261,7 +261,7 @@ export default function AdminUsersPage() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                             <div className="relative h-9 w-9 rounded-full overflow-hidden bg-muted border shrink-0">
-                                {user.imageUrl && <Image src={user.imageUrl} alt={user.name || ""} fill className="object-cover" />}
+                                {user.imageUrl && <Image src={user.imageUrl} alt={user.name || ""} fill className="object-cover" unoptimized />}
                             </div>
                             <div className="flex flex-col min-w-0">
                                 <Link href={`/admin/users/${user.id}`} className="font-bold text-sm hover:underline decoration-primary truncate">{user.email}</Link>

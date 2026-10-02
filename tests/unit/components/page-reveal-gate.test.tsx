@@ -9,7 +9,7 @@ vi.mock("@/app/components/preload/MatrixRain", () => ({ MatrixRain: () => null }
 
 const mocks = vi.hoisted(() => ({ auth: { isLoaded: true } }));
 
-vi.mock("@clerk/nextjs", () => ({ useAuth: () => mocks.auth }));
+vi.mock("@/lib/auth/react", () => ({ useAuth: () => mocks.auth }));
 
 import {
   PAGE_REVEAL_MAX_WAIT_MS,

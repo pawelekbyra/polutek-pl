@@ -7,7 +7,6 @@ import {
   normalizeNickname,
   validateNickname,
 } from "@/lib/auth/nickname";
-import { isValidUsername, usernameFromNickname } from "@/lib/auth/generate-username";
 
 describe("validateNickname", () => {
   it("trims and collapses inner whitespace", () => {
@@ -39,19 +38,6 @@ describe("validateNickname", () => {
       expect(nicknameProblemMessage(reason, false)).toBeTruthy();
     }
     expect(nicknameCheckMessage("rate_limited", false)).toMatch(/Too many/);
-  });
-});
-
-describe("usernameFromNickname", () => {
-  it("derives a valid hidden Clerk username", () => {
-    const cases = ["Żółty Kot", "Łukasz", "a", "!!!", "x".repeat(40), "Jan Kowalski-Nowak.pl"];
-    for (const nick of cases) {
-      const username = usernameFromNickname(nick);
-      expect(isValidUsername(username)).toBe(true);
-    }
-    expect(usernameFromNickname("Żółty Kot")).toMatch(/^zolty_kot_[a-z0-9]{6}$/);
-    expect(usernameFromNickname("Łukasz")).toMatch(/^lukasz_/);
-    expect(usernameFromNickname("x".repeat(40)).split("_")[0]).toHaveLength(20);
   });
 });
 

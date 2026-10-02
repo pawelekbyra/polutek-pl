@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { prisma } from "@/lib/prisma";
 import { getActorFromAuth, requireAdminSession } from "@/lib/api/auth";
 import { createAppContextFromRequest } from "@/lib/api/app-context-factory";
 import { requireAdminForApi } from "@/lib/auth-utils";
 
-vi.mock("@clerk/nextjs/server", () => ({
+vi.mock("@/lib/auth/server", () => ({
   auth: vi.fn(),
   currentUser: vi.fn(),
 }));
@@ -40,7 +40,7 @@ function mockAuth(userId: string | null, role?: string) {
 describe("canonical server actor resolution", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.ADMIN_CLERK_USER_IDS = "";
+    process.env.ADMIN_EMAILS = "";
   });
 
   it("allows DB ADMIN without an admin claim for page/API actor resolution", async () => {
@@ -124,28 +124,49 @@ describe("canonical server actor resolution", () => {
     expect(response?.status).toBe(403);
   });
 
-  it("allows configured admin ID only when the local User is active", async () => {
-    process.env.ADMIN_CLERK_USER_IDS = "configured_1";
-    mockAuth("configured_1");
+  it("promotes a listed admin e-mail only when the account is verified and active", async () => {
+    process.env.ADMIN_EMAILS = "owner@example.com";
+    mockAuth("owner_1");
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      id: "configured_1",
+      id: "owner_1",
       role: "USER",
       isDeleted: false,
+      email: "owner@example.com",
+      emailVerified: true,
     } as never);
+    vi.mocked(prisma.user.update).mockResolvedValue({} as never);
 
     await expect(getActorFromAuth({ allowGuest: false })).resolves.toEqual({
       type: "admin",
-      userId: "configured_1",
+      userId: "owner_1",
     });
+    expect(prisma.user.update).toHaveBeenCalledWith({ where: { id: "owner_1" }, data: { role: "ADMIN" } });
   });
 
-  it("denies configured admin ID when the local User is deleted", async () => {
-    process.env.ADMIN_CLERK_USER_IDS = "configured_1";
-    mockAuth("configured_1");
+  it("does not promote a listed admin e-mail that was never verified", async () => {
+    process.env.ADMIN_EMAILS = "owner@example.com";
+    mockAuth("owner_1");
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      id: "configured_1",
+      id: "owner_1",
+      role: "USER",
+      isDeleted: false,
+      email: "owner@example.com",
+      emailVerified: false,
+    } as never);
+
+    await expect(getActorFromAuth({ allowGuest: false })).resolves.toEqual({ type: "user", userId: "owner_1" });
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it("denies a listed admin e-mail when the local User is deleted", async () => {
+    process.env.ADMIN_EMAILS = "owner@example.com";
+    mockAuth("owner_1");
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      id: "owner_1",
       role: "USER",
       isDeleted: true,
+      email: "owner@example.com",
+      emailVerified: true,
     } as never);
 
     await expect(getActorFromAuth({ allowGuest: false })).rejects.toMatchObject(
@@ -174,34 +195,16 @@ describe("canonical server actor resolution", () => {
       code: "FORBIDDEN",
     });
   });
-
-  it("does not persist ADMIN_CLERK_USER_IDS into local role during authorization", async () => {
-    process.env.ADMIN_CLERK_USER_IDS = "configured_1";
-    mockAuth("configured_1");
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      id: "configured_1",
-      role: "USER",
-      isDeleted: false,
-    } as never);
-
-    const { adminUserId, response } = await requireAdminForApi(
-      "TEST_CONFIGURED_ADMIN_ACTIVE",
-    );
-
-    expect(adminUserId).toBe("configured_1");
-    expect(response).toBeNull();
-    expect(prisma.user.update).not.toHaveBeenCalled();
-  });
 });
 
 describe("requireAdminForApi canonical privileged boundary regressions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.ADMIN_CLERK_USER_IDS = "";
+    process.env.ADMIN_EMAILS = "";
   });
 
-  it("returns 403 for configured admin ID with no local User", async () => {
-    process.env.ADMIN_CLERK_USER_IDS = "configured_missing";
+  it("returns 403 for a listed admin e-mail with no local User", async () => {
+    process.env.ADMIN_EMAILS = "owner@example.com";
     mockAuth("configured_missing");
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null as never);
 

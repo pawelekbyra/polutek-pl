@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth/server';
 import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/rate-limit';
 import { toggleCommentLike } from '@/lib/modules/comments';
 import { PUT as likeComment } from '@/app/api/comments/[commentId]/reaction/route';
 import { getActorFromAuth } from '@/lib/api/auth';
 
-vi.mock('@clerk/nextjs/server', () => ({
+vi.mock('@/lib/auth/server', () => ({
   auth: vi.fn(),
 }));
 
@@ -29,17 +29,10 @@ vi.mock('@/lib/modules/comments', () => ({
   toggleCommentLike: vi.fn(),
 }));
 
-vi.mock('@/lib/modules/users/application/sync-user.use-case', () => ({
-  getOrCreateUserFromAuth: vi.fn(),
-}));
-
-import { getOrCreateUserFromAuth } from '@/lib/modules/users/application/sync-user.use-case';
-
 describe('/api/comments/like', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(rateLimit).mockResolvedValue({ success: true, remaining: 59 });
-    vi.mocked(getOrCreateUserFromAuth).mockResolvedValue({ id: 'local-user-id' } as any);
     vi.mocked(getActorFromAuth).mockResolvedValue({
       type: 'user',
       userId: 'local-user-id',

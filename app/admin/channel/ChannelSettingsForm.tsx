@@ -185,7 +185,7 @@ export function ChannelSettingsForm({ initialCreator, fallbackImageUrl }: Channe
               <div className="space-y-2">
                 <Label htmlFor="channel-banner">Cover photo / banner URL</Label>
                 <Input id="channel-banner" value={bannerUrl} onChange={(event) => setBannerUrl(event.target.value)} placeholder="https://..." />
-                <p className="text-xs text-muted-foreground">Cover photo należy do kanału i nie jest pobierane z Clerk.</p>
+                <p className="text-xs text-muted-foreground">Cover photo należy do kanału i nie jest pobierane z konta.</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="default-thumbnail-url">Domyślna miniatura (URL)</Label>
@@ -219,8 +219,8 @@ export function ChannelSettingsForm({ initialCreator, fallbackImageUrl }: Channe
                   {fallbackAvatar ? <Image src={fallbackAvatar} alt="Fallback avatara kanału" fill sizes="64px" className="object-cover" unoptimized /> : <ImageIcon className="h-7 w-7 text-muted-foreground" />}
                 </div>
                 <div className="min-w-0">
-                  <Badge variant="outline">Fallback Clerk</Badge>
-                  <p className="mt-2 text-xs leading-5 text-muted-foreground">Jeśli nie ustawisz avatara kanału, zostanie użyte zdjęcie profilowe z konta właściciela kanału w Clerk.</p>
+                  <Badge variant="outline">Fallback: konto</Badge>
+                  <p className="mt-2 text-xs leading-5 text-muted-foreground">Jeśli nie ustawisz avatara kanału, zostanie użyte zdjęcie profilowe z konta właściciela kanału.</p>
                 </div>
               </div>
             </CardContent>

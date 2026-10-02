@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { GET, POST, DELETE } from '@/app/api/subscriptions/route';
 import { GetSubscriptionStatusUseCase, SubscribeUseCase, UnsubscribeUseCase } from '@/lib/modules/subscriptions';
 import { getActorFromAuth } from '@/lib/api/auth';
 
-vi.mock('@clerk/nextjs/server', () => ({
+vi.mock('@/lib/auth/server', () => ({
   auth: vi.fn(),
   currentUser: vi.fn(),
   clerkClient: vi.fn(),
@@ -44,12 +44,7 @@ describe('/api/subscriptions', () => {
     vi.clearAllMocks();
     vi.mocked(auth).mockResolvedValue({
         userId: 'user_1',
-        sessionClaims: {
-            email: 'user1@example.com',
-            name: 'User One',
-            username: 'user1',
-            image_url: 'http://example.com/image.png'
-        }
+        user: { email: 'user1@example.com', emailVerified: true },
     } as any);
     vi.mocked(getActorFromAuth).mockResolvedValue({
       type: 'user',

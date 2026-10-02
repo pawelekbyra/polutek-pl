@@ -66,6 +66,14 @@ CREATE TABLE IF NOT EXISTS "TwoFactor" (
 );
 CREATE INDEX IF NOT EXISTS "TwoFactor_userId_idx" ON "TwoFactor"("userId");
 
+CREATE TABLE IF NOT EXISTS "UserAvatar" (
+  "userId" TEXT NOT NULL,
+  "mime" TEXT NOT NULL,
+  "data" BYTEA NOT NULL,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "UserAvatar_pkey" PRIMARY KEY ("userId")
+);
+
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Session_userId_fkey') THEN
@@ -74,6 +82,10 @@ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Account_userId_fkey') THEN
     ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey"
+      FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'UserAvatar_userId_fkey') THEN
+    ALTER TABLE "UserAvatar" ADD CONSTRAINT "UserAvatar_userId_fkey"
       FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'TwoFactor_userId_fkey') THEN

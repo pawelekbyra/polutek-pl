@@ -5,7 +5,6 @@ import Stripe from 'stripe';
 import { WebhookEventStatus, Prisma } from '@prisma/client';
 import { fulfillPayment } from '@/lib/modules/payments/application/fulfill-payment.use-case';
 import { recalculatePatronStatus } from '@/lib/modules/patron';
-import { syncClerkAccess } from '@/lib/modules/users/application/sync-clerk-access';
 
 const mockConstructEvent = vi.fn();
 
@@ -67,9 +66,6 @@ vi.mock('@/lib/modules/patron', () => ({
   recalculatePatronStatus: vi.fn().mockResolvedValue({ ok: true, data: { isPatron: true, normalizedTotal: 100 } }),
 }));
 
-vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
-  syncClerkAccess: vi.fn().mockResolvedValue(undefined),
-}));
 
 // LEGACY COVERAGE ONLY:
 // PaymentService is a deprecated compatibility facade. The current runtime Stripe
@@ -147,7 +143,6 @@ describe('Stripe Webhook Idempotency and Status (legacy PaymentService)', () => 
 
       expect(prisma.user.findUnique).not.toHaveBeenCalled();
       expect(recalculatePatronStatus).toHaveBeenCalledWith('user_1', expect.any(Object), prisma);
-      expect(syncClerkAccess).toHaveBeenCalledWith('user_1', false, 5);
   });
 
 });

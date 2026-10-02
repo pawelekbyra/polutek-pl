@@ -13,7 +13,7 @@ class ResizeObserverStub {
 }
 global.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver;
 
-vi.mock('@clerk/nextjs', () => ({
+vi.mock('@/lib/auth/react', () => ({
   useAuth: () => ({ userId: 'user_123' }),
   useUser: () => ({ user: { primaryEmailAddress: { emailAddress: 'user@example.com' } } }),
   useClerk: () => ({ openSignIn: vi.fn() }),

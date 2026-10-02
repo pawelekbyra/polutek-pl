@@ -7,7 +7,7 @@ import type { AccessTier, VideoStatus } from '@prisma/client';
 import Hero from '@/app/components/Hero';
 import type { PublicVideoDTO } from '@/app/types/video';
 
-vi.mock('@clerk/nextjs', () => ({
+vi.mock('@/lib/auth/react', () => ({
   useAuth: () => ({ userId: 'user_123' as string | null }),
 }));
 

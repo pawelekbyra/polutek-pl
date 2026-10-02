@@ -38,9 +38,6 @@ vi.mock('@/lib/observability', () => ({
   recordDurationMetric: vi.fn(),
 }));
 
-vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
-  syncClerkAccess: vi.fn(),
-}));
 
 vi.mock('@/lib/modules/email/application/send-transactional-email.use-case', () => ({
   sendBecomePatronEmail: vi.fn(),

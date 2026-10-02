@@ -10,7 +10,7 @@ const activeBuildFiles = [
   'app/globals.css',
   'app/sitemap.ts',
   'app/robots.ts',
-  'app/components/ClerkLocalizationProvider.tsx',
+  'app/components/auth/AuthLifecycleProvider.tsx',
   'app/components/Providers.tsx',
   'scripts/validate-env.ts',
 ];
@@ -53,7 +53,7 @@ describe('current main build safety', () => {
     }
   });
 
-  it('does not add fake Clerk keys, secrets, or database URLs to active build files', () => {
+  it('does not add fake provider keys, secrets, or database URLs to active build files', () => {
     const source = activeBuildFiles.map((file) => read(file)).join('\n');
 
     expect(source).not.toMatch(/pk_(test|live)_[A-Za-z0-9_$-]+/);

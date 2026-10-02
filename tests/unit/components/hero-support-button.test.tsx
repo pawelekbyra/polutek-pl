@@ -8,7 +8,7 @@ import Hero from '@/app/components/Hero';
 import type { PublicVideoDTO } from '@/app/types/video';
 
 const mockUseAuth = vi.fn(() => ({ userId: 'user_123' as string | null }));
-vi.mock('@clerk/nextjs', () => ({
+vi.mock('@/lib/auth/react', () => ({
   useAuth: () => mockUseAuth(),
 }));
 

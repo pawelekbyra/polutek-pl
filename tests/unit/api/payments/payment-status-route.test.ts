@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth/server';
 import { GET } from '@/app/api/payments/[paymentId]/route';
 import { getOwnedPaymentStatus } from '@/lib/modules/payments';
 import { PaymentError } from '@/lib/modules/payments/domain/payment.errors';
 import { PaymentStatus } from '@prisma/client';
 
-vi.mock('@clerk/nextjs/server', () => ({
+vi.mock('@/lib/auth/server', () => ({
   auth: vi.fn(),
 }));
 

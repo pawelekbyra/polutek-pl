@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PaymentStatus } from '@prisma/client';
 import { fulfillPayment } from '@/lib/modules/payments/application/fulfill-payment.use-case';
 
-const { mockRepo, mockGrantPatron, mockSyncClerkAccess, mockSendBecomePatronEmail, mockSendDonationThankYouEmail } = vi.hoisted(() => ({
+const { mockRepo, mockGrantPatron, mockSendBecomePatronEmail, mockSendDonationThankYouEmail } = vi.hoisted(() => ({
   mockRepo: {
     findById: vi.fn(),
     findUserWithPaymentTotalsAndActivePatronGrants: vi.fn(),
@@ -10,7 +10,6 @@ const { mockRepo, mockGrantPatron, mockSyncClerkAccess, mockSendBecomePatronEmai
     incrementUserPaymentTotal: vi.fn(),
   },
   mockGrantPatron: vi.fn(),
-  mockSyncClerkAccess: vi.fn(),
   mockSendBecomePatronEmail: vi.fn(),
   mockSendDonationThankYouEmail: vi.fn(),
 }));
@@ -40,9 +39,6 @@ vi.mock('@/lib/payments/currency-settings', () => ({
   resolvePatronThresholdMinor: (_currency: string, fallbackMinor: number) => fallbackMinor,
 }));
 
-vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
-  syncClerkAccess: mockSyncClerkAccess,
-}));
 
 vi.mock('@/lib/modules/email/application/send-transactional-email.use-case', () => ({
   sendBecomePatronEmail: mockSendBecomePatronEmail,
@@ -97,7 +93,6 @@ describe('fulfillPayment Stripe intent recovery', () => {
         normalizedTotal: [{ currency: 'PLN', amountMinor: 1000 }],
       },
     });
-    mockSyncClerkAccess.mockResolvedValue(undefined);
     mockSendBecomePatronEmail.mockResolvedValue(undefined);
     mockSendDonationThankYouEmail.mockResolvedValue(undefined);
   });
@@ -120,7 +115,6 @@ describe('fulfillPayment Stripe intent recovery', () => {
       currency: 'PLN',
     }), expect.anything());
     expect(mockGrantPatron).toHaveBeenCalled();
-    expect(mockSyncClerkAccess).toHaveBeenCalledWith('user_1', true, [{ currency: 'PLN', amountMinor: 1000 }]);
   });
 
   it('replays fulfilled payments using active PatronGrant truth instead of User.isPatron cache', async () => {
@@ -145,7 +139,6 @@ describe('fulfillPayment Stripe intent recovery', () => {
 
     expect(result.ok).toBe(true);
     expect(mockGrantPatron).not.toHaveBeenCalled();
-    expect(mockSyncClerkAccess).toHaveBeenCalledWith('user_1', false, 10);
   });
 
   it('keeps replayed fulfilled payments patron-active when an active PatronGrant exists', async () => {
@@ -170,7 +163,6 @@ describe('fulfillPayment Stripe intent recovery', () => {
 
     expect(result.ok).toBe(true);
     expect(mockGrantPatron).not.toHaveBeenCalled();
-    expect(mockSyncClerkAccess).toHaveBeenCalledWith('user_1', true, 10);
   });
 
   it('rejects fulfillment when an existing local stripeIntentId differs from the webhook intent id', async () => {

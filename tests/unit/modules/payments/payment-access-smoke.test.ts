@@ -7,7 +7,6 @@ import { PaymentStatus, PatronGrantSource } from '@prisma/client';
 vi.mock('@/lib/logger');
 vi.mock('@/lib/observability');
 vi.mock('@/lib/modules/email/application/send-transactional-email.use-case');
-vi.mock('@/lib/modules/users/application/sync-clerk-access');
 vi.mock('@/lib/modules/audit');
 
 // Mock getPaymentCurrencyLimits to control thresholds for smoke test

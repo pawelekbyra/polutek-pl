@@ -63,6 +63,8 @@ const isPublicRoute = createRouteMatcher([
   // optimizer fetches it without auth cookies.
   '/api/videos/(.*)/thumbnail',
   '/api/channel/sidebar',
+  // User avatars shown next to public comments; the route hides deleted accounts itself.
+  '/api/avatars/(.*)',
   // Only GET comments is public if product requires it
   '/api/comments',
 ]);
