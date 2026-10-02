@@ -7,17 +7,24 @@ import type { Locale } from "@/lib/i18n/routing";
 type LanguageOption = {
   code: string;
   label: string;
-  /** Locales we can switch to today. Others are listed as "coming soon" and cannot be picked. */
+  /** Locale the site can really switch to today; null = listed, but no translation yet. */
   locale: Locale | null;
 };
 
-// Italian is listed on purpose but does not work yet: it needs a full translation of the site
-// (UI copy, e-mails, legal documents) and an `it` entry in lib/i18n/routing.ts before it can be a locale.
+// Only PL and EN are real locales. The other languages are listed so the switcher looks complete:
+// picking one shows its code in the pill and a short "translation in progress" note, and the site
+// stays in the current language. To make one real, add it to lib/i18n/routing.ts, translate the
+// UI/e-mails/legal documents, then set its `locale` here.
 export const LANGUAGE_OPTIONS: readonly LanguageOption[] = [
   { code: "PL", label: "Polski", locale: "pl" },
   { code: "EN", label: "English", locale: "en" },
+  { code: "DE", label: "Deutsch", locale: null },
+  { code: "FR", label: "Français", locale: null },
+  { code: "ES", label: "Español", locale: null },
   { code: "IT", label: "Italiano", locale: null },
 ];
+
+const NOTE_VISIBLE_MS = 4500;
 
 type Props = {
   language: Locale;
@@ -31,9 +38,13 @@ type Props = {
 export default function LanguageSwitcher({ language, onSelect }: Props) {
   const isPl = language === "pl";
   const [open, setOpen] = useState(false);
+  // A listed-but-untranslated language the user picked: shown in the pill until reload.
+  const [preview, setPreview] = useState<LanguageOption | null>(null);
+  const [noteVisible, setNoteVisible] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
-  const current = LANGUAGE_OPTIONS.find((o) => o.locale === language) ?? LANGUAGE_OPTIONS[0];
+  const real = LANGUAGE_OPTIONS.find((o) => o.locale === language) ?? LANGUAGE_OPTIONS[0];
+  const current = preview ?? real;
 
   useEffect(() => {
     if (!open) return;
@@ -50,6 +61,28 @@ export default function LanguageSwitcher({ language, onSelect }: Props) {
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
+
+  useEffect(() => {
+    if (!noteVisible) return;
+    const timer = window.setTimeout(() => setNoteVisible(false), NOTE_VISIBLE_MS);
+    return () => window.clearTimeout(timer);
+  }, [noteVisible]);
+
+  const pick = (option: LanguageOption) => {
+    setOpen(false);
+    if (option.locale) {
+      setPreview(null);
+      setNoteVisible(false);
+      onSelect(option.locale);
+      return;
+    }
+    setPreview(option);
+    setNoteVisible(true);
+  };
+
+  const note = isPl
+    ? `Tłumaczenie na ${current.label} jest w przygotowaniu. Na razie ${real.label}.`
+    : `The ${current.label} translation is in progress. For now: ${real.label}.`;
 
   return (
     <div ref={rootRef} className="relative shrink-0">
@@ -71,6 +104,14 @@ export default function LanguageSwitcher({ language, onSelect }: Props) {
         />
       </button>
 
+      <div role="status" aria-live="polite" className="contents">
+        {noteVisible && !open ? (
+          <div className="absolute right-0 top-[calc(100%+8px)] z-[1100] w-[232px] rounded-2xl border border-[var(--cm-line-84)] bg-white px-3 py-2 text-[12.5px] leading-snug text-[var(--chan-ink)] shadow-[0_12px_32px_rgba(23,23,23,0.14)]">
+            {note}
+          </div>
+        ) : null}
+      </div>
+
       {open ? (
         <div
           id={menuId}
@@ -79,39 +120,24 @@ export default function LanguageSwitcher({ language, onSelect }: Props) {
           className="absolute right-0 top-[calc(100%+8px)] z-[1100] min-w-[188px] rounded-2xl border border-[var(--cm-line-84)] bg-white p-1.5 shadow-[0_12px_32px_rgba(23,23,23,0.14)]"
         >
           {LANGUAGE_OPTIONS.map((option) => {
-            const selectable = option.locale !== null;
-            const selected = option.locale === language;
+            const selected = option.code === current.code;
             return (
               <button
                 key={option.code}
                 type="button"
                 role="menuitemradio"
                 aria-checked={selected}
-                aria-disabled={!selectable}
-                disabled={!selectable}
-                onClick={() => {
-                  if (!option.locale) return;
-                  setOpen(false);
-                  onSelect(option.locale);
-                }}
+                onClick={() => pick(option)}
                 className={
                   "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left text-[14px] transition-colors " +
                   (selected
                     ? "bg-[var(--chan-surface)] text-[var(--chan-blue)]"
-                    : selectable
-                      ? "text-[var(--chan-ink)] hover:bg-[var(--chan-surface)]"
-                      : "cursor-not-allowed text-[var(--chan-muted)] opacity-70")
+                    : "text-[var(--chan-ink)] hover:bg-[var(--chan-surface)]")
                 }
               >
                 <span className="w-6 text-[11px] font-extrabold tracking-[0.08em] text-[var(--chan-muted)]">{option.code}</span>
                 <span className="flex-1">{option.label}</span>
-                {!selectable ? (
-                  <span className="rounded-full bg-[var(--chan-surface)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.06em]">
-                    {isPl ? "wkrótce" : "soon"}
-                  </span>
-                ) : selected ? (
-                  <Check className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
-                ) : null}
+                {selected ? <Check className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" /> : null}
               </button>
             );
           })}
