@@ -1,0 +1,114 @@
+# Centrum obslugi (Chatwoot CE, MIT) na serwerku. Zyje na serwerze w /opt/serwerek/apps/chatwoot/.
+# Uklad tam:  docker-compose.yml  .env (600, sekrety, NIE w repo)  README (kopia runbooka)
+# Wszystko slucha tylko na 127.0.0.1; droga publiczna: Cloudflare Tunnel -> 127.0.0.1:3010 (za Access).
+# Runbook: docs/operations/SUPPORT-CENTER.md. Architektura: docs/architecture/support-center.md.
+# Limity pamieci sa twarde: serwer ma 4 GB RAM i dzieli je z aplikacja, baza, Redisem i enkoderem wideo.
+name: chatwoot
+
+x-chatwoot: &chatwoot
+  image: chatwoot/chatwoot:v4.18.0-ce          # CE = bez katalogu enterprise (czysty MIT)
+  restart: unless-stopped
+  env_file: ./.env
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  volumes:
+    - /opt/serwerek/data/chatwoot/storage:/app/storage
+  environment: &chatwoot-env
+    NODE_ENV: production
+    RAILS_ENV: production
+    INSTALLATION_ENV: docker
+    RAILS_LOG_TO_STDOUT: "true"
+    LOG_LEVEL: warn
+    FRONTEND_URL: https://support.pawelperfect.com
+    FORCE_SSL: "false"                        # TLS konczy Cloudflare; bez tego petla przekierowan
+    ENABLE_ACCOUNT_SIGNUP: "false"
+    DEFAULT_LOCALE: pl
+    POSTGRES_HOST: db
+    POSTGRES_PORT: "5432"
+    POSTGRES_DATABASE: chatwoot
+    POSTGRES_USERNAME: chatwoot
+    REDIS_URL: redis://redis:6379
+    ACTIVE_STORAGE_SERVICE: local
+    # Pamiec: jeden proces puma, malo watkow; sidekiq z niska wspolbieznoscia.
+    WEB_CONCURRENCY: "0"
+    RAILS_MAX_THREADS: "3"
+    SIDEKIQ_CONCURRENCY: "3"
+    MALLOC_ARENA_MAX: "2"
+    # Poczta przychodzaca: Cloudflare Email Worker -> POST do ingress Action Mailbox (relay).
+    RAILS_INBOUND_EMAIL_SERVICE: relay
+    MAILER_INBOUND_EMAIL_DOMAIN: inbound.pawelperfect.com
+    # Poczta wychodzaca (systemowa): Resend SMTP. Haslo (klucz Resend) i nadawca w .env.
+    SMTP_ADDRESS: smtp.resend.com
+    SMTP_PORT: "587"                          # Hetzner blokuje 25 i 465 wychodzace; 587 (STARTTLS) dziala
+    SMTP_USERNAME: resend
+    SMTP_AUTHENTICATION: login
+    SMTP_DOMAIN: pawelperfect.com
+    SMTP_ENABLE_STARTTLS_AUTO: "true"
+    SMTP_OPENSSL_VERIFY_MODE: peer
+    MAILER_SENDER_EMAIL: "Obsluga PAWELPERFECT.COM <hello@pawelperfect.com>"
+
+services:
+  db:
+    # pgvector jest wymagany przez migracje Chatwoota; produkcyjny Postgres aplikacji go nie ma i go nie ruszamy.
+    image: pgvector/pgvector:0.8.7-pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: chatwoot
+      POSTGRES_DB: chatwoot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}      # z .env (compose czyta je automatycznie)
+    command: ["postgres", "-c", "shared_buffers=64MB", "-c", "max_connections=40", "-c", "work_mem=4MB", "-c", "maintenance_work_mem=32MB"]
+    volumes:
+      - /opt/serwerek/data/chatwoot/pg:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chatwoot -d chatwoot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    mem_limit: 256m
+
+  redis:
+    # Osobny Redis (nie ten od aplikacji): Sidekiq wymaga noeviction, a ten od aplikacji ma allkeys-lru.
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "96mb", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - /opt/serwerek/data/chatwoot/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    mem_limit: 128m
+
+  web:
+    <<: *chatwoot
+    entrypoint: docker/entrypoints/rails.sh
+    command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
+    ports:
+      - "127.0.0.1:3010:3000"
+    mem_limit: 700m
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://127.0.0.1:3000/api || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  sidekiq:
+    <<: *chatwoot
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+    mem_limit: 640m
+
+  prepare:
+    # Jednorazowo: docker compose --profile tools run --rm prepare   (migracje + seed przy pierwszym uruchomieniu)
+    <<: *chatwoot
+    profiles: ["tools"]
+    entrypoint: docker/entrypoints/rails.sh
+    command: ["bundle", "exec", "rails", "db:chatwoot_prepare"]
+    restart: "no"
+    mem_limit: 900m
