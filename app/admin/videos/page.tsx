@@ -1,7 +1,7 @@
 "use client";
 
 import { logger } from "@/lib/logger";
-import { useUser, useAuth } from "@clerk/nextjs";
+import { useUser, useAuth } from "@/lib/auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/app/hooks/useToast";

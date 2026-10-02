@@ -1,4 +1,4 @@
-import { currentUser } from "@clerk/nextjs/server";
+import { currentUser } from "@/lib/auth/server";
 import Navbar from "@/app/components/Navbar";
 import { ChannelSettingsForm } from "./ChannelSettingsForm";
 import { createAppContext } from "@/lib/modules/shared/app-context";
@@ -12,7 +12,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function AdminChannelPage() {
-  const clerkUser = await currentUser();
+  const sessionUser = await currentUser();
 
   try {
     const adminUserId = await requireAdmin();
@@ -27,7 +27,7 @@ export default async function AdminChannelPage() {
         <Navbar />
         <ChannelSettingsForm
           initialCreator={creator}
-          clerkFallbackImageUrl={clerkUser?.imageUrl || null}
+          fallbackImageUrl={sessionUser?.image || null}
         />
       </div>
     );

@@ -8,7 +8,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/lib/auth/react";
 import { SitePreloaderScreen } from "./SitePreloaderScreen";
 import { useOptionalLanguage } from "../LanguageContext";
 

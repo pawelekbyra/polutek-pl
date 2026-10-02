@@ -4,7 +4,6 @@ import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { PublicVideoDTO } from '@/app/types/video';
 import { canUseDemoFallbacks, flags } from '@/lib/feature-flags';
 import { getCanonicalVideoTitle } from '@/lib/video-title-overrides';
-import { getAdminClerkUserIds } from '@/lib/admin-config';
 import { MainChannelService } from '@/lib/modules/channel';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { MediaPolicy, resolvePublicThumbnailSrc } from '@/lib/modules/media';
@@ -163,11 +162,11 @@ export class VideoContentService {
             .map(v => this.mapToPublicVideoDTO(v));
       }
 
-      const adminIds = getAdminClerkUserIds();
-      const adminData = adminIds.length > 0 ? await prisma.user.findFirst({
-        where: { id: { in: adminIds }, isDeleted: false },
+      const adminData = await prisma.user.findFirst({
+        where: { role: 'ADMIN', isDeleted: false },
+        orderBy: { createdAt: 'asc' },
         select: { imageUrl: true }
-      }) : null;
+      });
 
       const mainCreatorSlug = flags.mainCreatorSlug;
 
@@ -233,11 +232,11 @@ export class VideoContentService {
       }
       if (!selectedVideo) return null;
 
-      const adminIds = getAdminClerkUserIds();
-      const adminData = adminIds.length > 0 ? await prisma.user.findFirst({
-        where: { id: { in: adminIds }, isDeleted: false },
+      const adminData = await prisma.user.findFirst({
+        where: { role: 'ADMIN', isDeleted: false },
+        orderBy: { createdAt: 'asc' },
         select: { imageUrl: true }
-      }) : null;
+      });
 
       const mainCreatorSlug = flags.mainCreatorSlug;
       let imageUrl = selectedVideo.creator?.user?.imageUrl || null;

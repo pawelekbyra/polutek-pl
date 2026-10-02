@@ -14,9 +14,6 @@ vi.mock('@/lib/observability', () => ({
   recordAlert: vi.fn(),
 }));
 
-vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
-  syncClerkAccess: vi.fn(),
-}));
 
 type UserRecord = {
   id: string;

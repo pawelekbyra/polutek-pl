@@ -14,7 +14,7 @@ class IntersectionObserverStub {
 }
 global.IntersectionObserver = IntersectionObserverStub as unknown as typeof IntersectionObserver;
 
-vi.mock('@clerk/nextjs', () => ({
+vi.mock('@/lib/auth/react', () => ({
   useAuth: () => ({ isSignedIn: false, userId: null }),
   useUser: () => ({ user: null }),
 }));

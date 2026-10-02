@@ -6,7 +6,7 @@ import { GET as mediaSourceGET } from '@/app/api/media-source/[videoId]/route';
 import { POST as checkoutIntentPOST } from '@/app/api/checkout/create-intent/route';
 import { MainChannelService } from '@/lib/modules/channel';
 import { NextRequest } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth/server';
 import { prisma } from '@/lib/prisma';
 import { getOrCreateCurrentUser, updateUserLanguage, SyncCurrentUserUseCase } from '@/lib/modules/users';
 import { PlaybackService } from '@/lib/modules/playback';
@@ -14,7 +14,7 @@ import { createCheckoutIntent } from '@/lib/modules/payments';
 import { getActorFromAuth } from '@/lib/api/auth';
 import { GetSubscriptionStatusUseCase, SubscribeUseCase, UnsubscribeUseCase } from "@/lib/modules/subscriptions";
 
-vi.mock('@clerk/nextjs/server', () => ({
+vi.mock('@/lib/auth/server', () => ({
   auth: vi.fn(),
   clerkClient: vi.fn(),
 }));
@@ -130,7 +130,7 @@ describe('API Contracts', () => {
   describe('/api/subscriptions', () => {
     it('GET matches the documented response shape', async () => {
       vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' } as any);
-      vi.mocked(auth).mockResolvedValue({ sessionClaims: { email: 'test@example.com' } } as any);
+      vi.mocked(auth).mockResolvedValue({ userId: 'user_1', user: { email: 'test@example.com', emailVerified: true } } as any);
       vi.mocked(getOrCreateCurrentUser).mockResolvedValue({ id: 'user_1' } as any);
 
       const mockResult = {
@@ -154,7 +154,7 @@ describe('API Contracts', () => {
 
     it('POST matches the documented response shape', async () => {
         vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' } as any);
-        vi.mocked(auth).mockResolvedValue({ sessionClaims: { email: 'test@example.com' } } as any);
+        vi.mocked(auth).mockResolvedValue({ userId: 'user_1', user: { email: 'test@example.com', emailVerified: true } } as any);
         vi.mocked(getOrCreateCurrentUser).mockResolvedValue({ id: 'user_1' } as any);
 
         const mockResult = {
@@ -181,7 +181,7 @@ describe('API Contracts', () => {
 
     it('DELETE matches the documented response shape', async () => {
         vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' } as any);
-        vi.mocked(auth).mockResolvedValue({ sessionClaims: { email: 'test@example.com' } } as any);
+        vi.mocked(auth).mockResolvedValue({ userId: 'user_1', user: { email: 'test@example.com', emailVerified: true } } as any);
         vi.mocked(getOrCreateCurrentUser).mockResolvedValue({ id: 'user_1' } as any);
 
         const mockResult = {

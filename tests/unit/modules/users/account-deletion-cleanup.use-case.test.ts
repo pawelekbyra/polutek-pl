@@ -25,6 +25,10 @@ describe('AccountDeletionCleanupUseCase', () => {
       },
       creator: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
       emailPreference: { deleteMany: vi.fn().mockResolvedValue({ count: 2 }) },
+      session: { deleteMany: vi.fn().mockResolvedValue({ count: 2 }) },
+      account: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
+      twoFactor: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+      userAvatar: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
       auditLog: { create: vi.fn().mockResolvedValue({}) },
       $transaction: vi.fn((fn) => fn(prisma)),
     };
@@ -35,12 +39,17 @@ describe('AccountDeletionCleanupUseCase', () => {
   }
 
   it('anonymizes user, revokes access, removes consent, resyncs subscriber count, and audits', async () => {
-    await AccountDeletionCleanupUseCase.execute(ctx(), { userId: 'u1', source: 'CLERK_WEBHOOK', reason: 'deleted' });
+    await AccountDeletionCleanupUseCase.execute(ctx(), { userId: 'u1', source: 'APP_ACCOUNT_DELETION', reason: 'deleted' });
 
     expect(prisma.patronGrant.updateMany).toHaveBeenCalledWith({
       where: { userId: 'u1', revokedAt: null },
       data: { revokedAt: new Date('2026-06-26T00:00:00.000Z'), reason: 'deleted' },
     });
+    // Nothing may sign in to the tombstone again.
+    expect(prisma.session.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1' } });
+    expect(prisma.account.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1' } });
+    expect(prisma.twoFactor.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1' } });
+    expect(prisma.userAvatar.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1' } });
     expect(prisma.subscription.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1' } });
     expect(prisma.emailPreference.deleteMany).toHaveBeenCalledWith({
       where: { OR: [{ userId: 'u1' }, { email: 'user@example.com' }] },
@@ -58,7 +67,7 @@ describe('AccountDeletionCleanupUseCase', () => {
   it('treats missing local user as successful idempotent cleanup', async () => {
     prisma.user.findUnique.mockResolvedValue(null);
 
-    const result = await AccountDeletionCleanupUseCase.execute(ctx(), { userId: 'missing', source: 'CLERK_WEBHOOK' });
+    const result = await AccountDeletionCleanupUseCase.execute(ctx(), { userId: 'missing', source: 'APP_ACCOUNT_DELETION' });
 
     expect(result).toEqual({ cleaned: false, alreadyDeleted: true, originalEmail: null });
     expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -67,7 +76,7 @@ describe('AccountDeletionCleanupUseCase', () => {
   it('is idempotent for an already anonymized deleted user', async () => {
     prisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'deleted_abc@deleted.com', isDeleted: true });
 
-    await AccountDeletionCleanupUseCase.execute(ctx(), { userId: 'u1', source: 'CLERK_WEBHOOK' });
+    await AccountDeletionCleanupUseCase.execute(ctx(), { userId: 'u1', source: 'APP_ACCOUNT_DELETION' });
 
     expect(prisma.user.update.mock.calls[0][0].data.email).toBe('deleted_abc@deleted.com');
     expect(sendAccountDeletedEmail).not.toHaveBeenCalled();

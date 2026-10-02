@@ -98,7 +98,7 @@ export default function UserDetailsPage(props: { params: Promise<{ userId: strin
                 <CardContent className="pt-6">
                   <div className="flex flex-col items-center text-center">
                     <div className="relative h-24 w-24 rounded-full overflow-hidden bg-muted mb-4 border-2 border-primary/20">
-                      {user.imageUrl && <Image src={user.imageUrl} alt={user.name || ""} fill className="object-cover" />}
+                      {user.imageUrl && <Image src={user.imageUrl} alt={user.name || ""} fill className="object-cover" unoptimized />}
                     </div>
                     <h1 className="text-xl font-bold">{user.name || user.username || "Anonim"}</h1>
                     <p className="text-sm text-muted-foreground">{user.email}</p>
@@ -115,7 +115,7 @@ export default function UserDetailsPage(props: { params: Promise<{ userId: strin
 
                   <div className="mt-8 space-y-4 pt-6 border-t">
                       <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Clerk ID:</span>
+                          <span className="text-muted-foreground">ID:</span>
                           <code className="bg-muted px-1 rounded text-[10px]">{user.id}</code>
                       </div>
                       <div className="flex justify-between text-sm">
@@ -133,11 +133,6 @@ export default function UserDetailsPage(props: { params: Promise<{ userId: strin
                   </div>
 
                   <div className="mt-8 space-y-2">
-                      <Button variant="outline" className="w-full justify-start" asChild>
-                          <a href={`https://dashboard.clerk.com/users/${user.id}`} target="_blank" rel="noreferrer">
-                              <ShieldCheck className="mr-2 h-4 w-4" /> Zobacz w Clerk
-                          </a>
-                      </Button>
                       {user.stripeCustomerId && (
                           <Button variant="outline" className="w-full justify-start" asChild>
                               <a href={`https://dashboard.stripe.com/customers/${user.stripeCustomerId}`} target="_blank" rel="noreferrer">

@@ -127,7 +127,7 @@ describe('Users Module', () => {
         updateUserMetadata: vi.fn().mockResolvedValue(undefined)
     };
 
-    it('should update language and sync to identity provider', async () => {
+    it('should update the stored language', async () => {
       const mockUser = { id: 'user_123', email: 'test@example.com', isDeleted: false };
       const mockPrisma = {
         user: {
@@ -137,11 +137,10 @@ describe('Users Module', () => {
       } as any;
 
       const ctx = createAppContext({ prisma: mockPrisma });
-      const result = await updateUserLanguage(ctx, { userId: 'user_123', language: 'pl' }, mockIdentityProvider);
+      const result = await updateUserLanguage(ctx, { userId: 'user_123', language: 'pl' });
 
       expect(result.language).toBe('pl');
       expect(mockPrisma.user.upsert).toHaveBeenCalled();
-      expect(mockIdentityProvider.updateUserMetadata).toHaveBeenCalledWith('user_123', { language: 'pl' });
     });
 
     it('should throw for deleted user', async () => {
@@ -153,7 +152,7 @@ describe('Users Module', () => {
         } as any;
 
         const ctx = createAppContext({ prisma: mockPrisma });
-        await expect(updateUserLanguage(ctx, { userId: 'user_123', language: 'pl' }, mockIdentityProvider))
+        await expect(updateUserLanguage(ctx, { userId: 'user_123', language: 'pl' }))
           .rejects.toThrow('User user_123 is deleted');
       });
   });
@@ -175,10 +174,12 @@ describe('Users Module', () => {
         user: {
           findUnique: vi.fn().mockResolvedValue(mockUser),
         },
+        patronGrant: { findFirst: vi.fn().mockResolvedValue({ id: 'grant-1' }) },
       } as any;
 
       const ctx = createAppContext({ prisma: mockPrisma, actor: { type: 'user', userId: 'user_1' } });
       const profile = await GetUserProfileUseCase.execute(ctx, 'user_1');
+      expect(profile?.hasActivePatronGrant).toBe(true);
 
       expect(profile).toBeDefined();
       expect(profile?.id).toBe('user_1');

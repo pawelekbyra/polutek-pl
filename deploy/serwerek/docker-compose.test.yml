@@ -7,9 +7,7 @@ x-app-env: &app-env
   DATABASE_URL: postgresql://polutek:polutek_test@db:5432/polutek
   DATABASE_URL_UNPOOLED: postgresql://polutek:polutek_test@db:5432/polutek
   NEXT_PUBLIC_APP_URL: http://localhost:3100
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ZHVtbXkuY2xlcmsubG9jYWwk
-  CLERK_SECRET_KEY: sk_test_dummy
-  CLERK_WEBHOOK_SECRET: whsec_dummy
+  BETTER_AUTH_SECRET: dummy-dummy-dummy-dummy-dummy-dummy-dummy-dummy
   MAIN_CREATOR_SLUG: polutek
   MAIN_CREATOR_NAME: Test Creator
   ADMIN_EMAIL: admin@example.local

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useTransition } from 'react';
 import { PublicVideoDTO } from '../types/video';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth } from "@/lib/auth/react";
 import { useAuthModal } from './auth/AuthModalProvider';
 import { cn, formatCount } from '@/lib/utils';
 import PremiumWrapper from './PremiumWrapper';
@@ -142,8 +142,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                 setInteractionState(previousState);
                 if (result.error === 'AUTH_REQUIRED') {
                     openAuthModal("sign-in");
-                } else if (result.error === 'CLERK_ERROR') {
-                    toast(`BŁĄD KONFIGURACJI CLERK: ${result.message}`, 'error');
                 } else if (result.error === 'DATABASE_ERROR') {
                     toast(`BŁĄD BAZY DANYCH: ${result.message}`, 'error');
                 } else {
@@ -195,8 +193,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                 setInteractionState(previousState);
                 if (result.error === 'AUTH_REQUIRED') {
                     openAuthModal("sign-in");
-                } else if (result.error === 'CLERK_ERROR') {
-                    toast(`BŁĄD KONFIGURACJI CLERK: ${result.message}`, 'error');
                 } else if (result.error === 'DATABASE_ERROR') {
                     toast(`BŁĄD BAZY DANYCH: ${result.message}`, 'error');
                 } else {

@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       language: user.language,
       isAdmin: actor.type === "admin",
+      isPatron: user.hasActivePatronGrant,
     });
   } catch (error) {
     return handleApiError(error);

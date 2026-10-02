@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({
   getVideoInteraction: vi.fn(),
 }));
 
-vi.mock("@clerk/nextjs/server", () => ({ auth: mocks.auth }));
+vi.mock("@/lib/auth/server", () => ({ auth: mocks.auth }));
 vi.mock("@/lib/modules/users", () => ({ getVideoInteraction: mocks.getVideoInteraction }));
 
 import { GET } from "@/app/api/videos/[id]/viewer-state/route";

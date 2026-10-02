@@ -13,7 +13,7 @@ vi.mock('@/lib/modules/email', () => ({
   listAdminBroadcastEmails: vi.fn(),
 }));
 
-vi.mock('@clerk/nextjs/server', () => ({
+vi.mock('@/lib/auth/server', () => ({
     auth: vi.fn().mockResolvedValue({ sessionClaims: { email: 'admin@test.com' } }),
 }));
 

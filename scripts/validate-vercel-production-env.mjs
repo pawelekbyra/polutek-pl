@@ -20,11 +20,13 @@ function hasPair(pairs) {
 
 const checks = [
   {
-    name: 'Clerk',
+    name: 'Better Auth',
     ok: () => hasAll([
-      'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY',
-      'CLERK_SECRET_KEY',
-      'CLERK_WEBHOOK_SECRET',
+      'BETTER_AUTH_SECRET',
+      'GOOGLE_CLIENT_ID',
+      'GOOGLE_CLIENT_SECRET',
+      'TURNSTILE_SITE_KEY',
+      'TURNSTILE_SECRET_KEY',
     ]),
   },
   {
@@ -67,7 +69,6 @@ const checks = [
   {
     name: 'webhook secrets',
     ok: () => hasAll([
-      'CLERK_WEBHOOK_SECRET',
       'STRIPE_WEBHOOK_SECRET',
       'RESEND_WEBHOOK_SECRET',
       'CLOUDFLARE_WEBHOOK_SECRET',
@@ -76,7 +77,7 @@ const checks = [
   {
     name: 'launch policy/admin',
     ok: () => hasAll([
-      'ADMIN_CLERK_USER_IDS',
+      'ADMIN_EMAILS',
       'MAIN_CREATOR_SLUG',
       'PATRON_MIN_TIP_AMOUNT',
       'PATRON_MIN_TIP_CURRENCY',

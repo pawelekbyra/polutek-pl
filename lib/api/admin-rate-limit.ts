@@ -6,7 +6,7 @@
  *
  * Central rate limiting for /api/admin, enforced from middleware.ts.
  *
- * Keyed by admin user id (when the Clerk session is known) AND by IP, so both
+ * Keyed by admin user id (when the session is known) AND by IP, so both
  * a stolen session and a single host are bounded. Fail-open: if the store is
  * unavailable (e.g. missing Redis env in production, Upstash outage) we log and
  * let the request through (same for a store call slower than

@@ -14,7 +14,6 @@ const source = (path: string) => readFileSync(join(repoRoot, path), 'utf8');
 const mockRequireAdminForApi = vi.fn();
 const mockGrantPatron = vi.fn();
 const mockRevokePatron = vi.fn();
-const mockSyncClerkAccess = vi.fn();
 const mockHandleCloudflareStreamWebhook = vi.fn();
 
 vi.mock('@/lib/auth-utils', () => ({
@@ -26,9 +25,6 @@ vi.mock('@/lib/modules/patron', () => ({
   revokePatron: mockRevokePatron,
 }));
 
-vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
-  syncClerkAccess: mockSyncClerkAccess,
-}));
 
 vi.mock('@/lib/modules/video', () => ({
   handleCloudflareStreamWebhook: mockHandleCloudflareStreamWebhook,
@@ -97,7 +93,6 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
     expect(mockRequireAdminForApi).toHaveBeenCalledWith('PATCH_ADMIN_USER_PATRON');
     expect(mockGrantPatron).not.toHaveBeenCalled();
     expect(mockRevokePatron).not.toHaveBeenCalled();
-    expect(mockSyncClerkAccess).not.toHaveBeenCalled();
   });
 
   it('denies a non-admin admin patron mutation before grant/revoke side effects', async () => {
@@ -261,13 +256,10 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
 
   it('keeps public webhook and playback error responses free of stack traces in route contracts', () => {
     const stripeRoute = source('app/api/webhooks/stripe/route.ts');
-    const clerkRoute = source('app/api/webhooks/clerk/route.ts');
     const mediaRoute = source('app/api/media-source/[videoId]/route.ts');
 
     expect(stripeRoute).toContain('return handleApiError(err)');
     expect(stripeRoute).not.toContain('err.stack');
-    expect(clerkRoute).toContain('safeErrorMessage(error)');
-    expect(clerkRoute).not.toContain('stack');
     expect(mediaRoute).toContain('MediaPolicy.isProbablyRawMediaUrl');
     expect(mediaRoute).not.toContain('playbackToken');
     expect(handleApiError).toBeDefined();

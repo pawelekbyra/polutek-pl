@@ -1,5 +1,5 @@
 import { cookies, headers } from "next/headers";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 

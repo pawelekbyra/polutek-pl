@@ -18,7 +18,7 @@ const mocks = vi.hoisted(() => ({
   },
 }));
 
-vi.mock("@clerk/nextjs", () => ({ useAuth: () => ({ isLoaded: true, orgRole: null }) }));
+vi.mock("@/lib/auth/react", () => ({ useAuth: () => ({ isLoaded: true, orgRole: null }) }));
 vi.mock("next/image", () => ({ default: () => null }));
 vi.mock("@/app/components/player/PolutekControls", () => ({ default: () => null }));
 vi.mock("@/lib/hooks/usePlaybackTelemetry", () => ({

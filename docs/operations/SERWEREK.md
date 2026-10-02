@@ -301,8 +301,24 @@ Wszystkie limity i adres w audycie biorą IP z jednego helpera `lib/api/client-i
 **Powrót do Vercela (rollback DNS, ~1 min):** w strefie `pawelperfect.com` (id `02cb23af5c0000a110f6915b00bbb8ef`) rekord `www` (id `fff4838d3443f8117f9f426a5f773147`) ustaw z powrotem na CNAME `73692360fe904624.vercel-dns-017.com`, `proxied: false`. Kopia rekordów: `/opt/serwerek/DNS_BACKUP_www_2026-10-01.json`. Uwaga: po powrocie baza na Vercelu to stary Neon (bez danych z serwerka od przełączenia).
 
 **Do zrobienia po przełączeniu (otwarte):**
-1. `CLERK_WEBHOOK_SECRET` w `app.env` to **atrapa** (`pending-clerk-webhook-secret`): panel webhooków Clerk ładuje się w osadzonej ramce, której agent nie odczytał. Wpisz prawdziwy sekret z panelu Clerk (Configure > Webhooks > endpoint `https://www.pawelperfect.com/api/webhooks/clerk`), potem `docker compose up -d --no-deps app`. Do tego czasu użytkownicy tworzą się leniwie przy logowaniu (działa), ale zmiany z Clerk nie synchronizują się.
+1. **(Nieaktualne od 2026-10-02: Clerk usunięty, patrz §17.)** `CLERK_WEBHOOK_SECRET` w `app.env` to **atrapa** (`pending-clerk-webhook-secret`): panel webhooków Clerk ładuje się w osadzonej ramce, której agent nie odczytał. Wpisz prawdziwy sekret z panelu Clerk (Configure > Webhooks > endpoint `https://www.pawelperfect.com/api/webhooks/clerk`), potem `docker compose up -d --no-deps app`. Do tego czasu użytkownicy tworzą się leniwie przy logowaniu (działa), ale zmiany z Clerk nie synchronizują się.
 2. Webhook Mux nadal wskazuje na `https://polutek.pl/api/webhooks/mux` (stary adres; POST przez 308 może nie dojść). Zmień URL na `https://www.pawelperfect.com/api/webhooks/mux` w panelu Mux; sekret zapisany w `app.env` jest sekretem tego endpointu (`MUX_WEBHOOK_SECRET`).
 3. Stripe i Resend wskazują już na `www.pawelperfect.com` (bez zmian); `STRIPE_WEBHOOK_SECRET` i `RESEND_WEBHOOK_SECRET` przeniesione.
 4. Przetestować w przeglądarce: logowanie Google/e-mail, odtwarzanie filmu Cloudflare Stream i Mux, napiwek w trybie testowym.
 5. Redis (`srh`) i `polutek-db-1` nie są jeszcze w `health.sh` jako osobne kontrole.
+
+## 17. Logowanie: Better Auth zamiast Clerk (kod gotowy 2026-10-02)
+
+Clerk jest usunięty z kodu. Logowanie działa w samej aplikacji na lokalnym Postgresie (opis: `docs/architecture/auth-better-auth.md`, zasady dla agentów: `CLAUDE.md` §4.12). Serwis nie był publiczny, więc użytkowników nie migrowano; istniejące wiersze `User` zostają, a logowanie Google łączy się z nimi po zweryfikowanym e-mailu.
+
+**Co zrobić przy wdrożeniu (deployer; nic z tego nie jest w repo):**
+
+1. W `app.env` dodać (wartości z `%USERPROFILE%\.ai-secrets\secrets.env`, nie wklejać do czatu ani repo): `BETTER_AUTH_SECRET` (min. 32 znaki), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `ADMIN_EMAILS` (e-maile właściciela, np. `pawel.perfect@gmail.com,hello@pawelperfect.com`). Opcjonalnie `BETTER_AUTH_TRUSTED_ORIGINS` (np. `https://apptest.pawelperfect.com`) i `BETTER_AUTH_URL`. Usunąć `CLERK_*`, `ADMIN_CLERK_USER_IDS`.
+2. Z `build.env` usunąć `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (nic go już nie czyta). Klucze Google i Turnstile (site key) są czytane w runtime, **nie** wymagają przebudowania obrazu.
+3. Migracja `20261002100000_add_better_auth` (nowe tabele `Session`, `Account`, `Verification`, `TwoFactor` i kolumny w `User`; istniejący użytkownicy dostają `emailVerified = true`) uruchomi się w `deploy.sh` (`migrator`).
+4. Google Cloud Console: w kliencie OAuth dodać Authorized redirect URI `https://www.pawelperfect.com/api/auth/callback/google` (oraz `https://apptest.pawelperfect.com/api/auth/callback/google` dla testu) i Authorized JavaScript origins (te same hosty, dla One Tap).
+5. Turnstile: w widżecie dodać hostnames `www.pawelperfect.com` (i apex/`apptest`, jeśli używane).
+6. Po wdrożeniu wszyscy są wylogowani (stare sesje Clerk nie działają). Wejść na stronę, zalogować się Google kontem z listy `ADMIN_EMAILS`: konto zostanie awansowane na ADMIN przy pierwszym użyciu (wpis `AUTH_ADMIN_BOOTSTRAP` w audycie).
+7. Webhook Clerk (`/api/webhooks/clerk`) już nie istnieje: wyłączyć endpoint w panelu Clerk, gdy konto Clerk przestanie być potrzebne.
+
+**Ryzyka:** nie testowano na żywo logowania Google/One Tap ani wysyłki e-maili Resend z serwerka (kod i testy jednostkowe są zielone); haveIBeenPwned jest fail-closed (gdy API HIBP niedostępne, rejestracja i zmiana hasła zwracają błąd); rotacja `BETTER_AUTH_SECRET` wylogowuje wszystkich i unieważnia zapisane sekrety TOTP (użytkownicy z 2FA potrzebują kodów zapasowych).

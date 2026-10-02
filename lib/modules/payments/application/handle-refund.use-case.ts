@@ -5,7 +5,6 @@ import { PaymentRepository } from "../infrastructure/payment.repository";
 import { PaymentError } from "../domain/payment.errors";
 import { logger } from "@/lib/logger";
 import { recordMetric, recordAlert } from "@/lib/observability";
-import { syncClerkAccess } from "@/lib/modules/users";
 import { revokePatron, recalculatePatronStatus } from "@/lib/modules/patron";
 import { recordAuditEvent } from "@/lib/modules/audit";
 
@@ -27,7 +26,7 @@ export async function handleRefund(
   const repo = new PaymentRepository();
 
   try {
-    const syncData = await ctx.db.writeTransaction(async (tx) => {
+    await ctx.db.writeTransaction(async (tx) => {
       const payment = input.paymentId
         ? await repo.findById(input.paymentId, tx)
         : input.stripeIntentId
@@ -112,10 +111,6 @@ export async function handleRefund(
         return { userId: payment.userId, isPatron: recalcResult.data.isPatron, normalizedTotal: recalcResult.data.normalizedTotal };
       }
     });
-
-    if (syncData) {
-      await syncClerkAccess(syncData.userId, syncData.isPatron, syncData.normalizedTotal);
-    }
 
     return ok(undefined);
   } catch (error: any) {

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { updateUserLanguage } from '@/lib/actions/user';
 import { prisma } from '@/lib/prisma';
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth/server';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -12,9 +12,8 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@clerk/nextjs/server', () => ({
+vi.mock('@/lib/auth/server', () => ({
   auth: vi.fn(),
-  clerkClient: vi.fn(),
   currentUser: vi.fn(),
 }));
 
@@ -39,59 +38,39 @@ describe('updateUserLanguage server action', () => {
     vi.restoreAllMocks();
   });
 
-  it('updates both database and Clerk metadata', async () => {
+  it('stores the language on the user row (the database is the only copy)', async () => {
     const language = 'pl';
     const mockUser = { id: userId, email: 'test@example.com', language: 'en', isDeleted: false };
 
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
     vi.mocked(prisma.user.upsert).mockResolvedValue({ ...mockUser, language } as any);
 
-    const mockUpdateUserMetadata = vi.fn().mockResolvedValue({});
-    vi.mocked(clerkClient).mockResolvedValue({
-      users: {
-        updateUserMetadata: mockUpdateUserMetadata,
-      },
-    } as any);
-
     const result = await updateUserLanguage(language);
 
     expect(result).toEqual({ success: true });
-
-    // Verify DB update
     expect(prisma.user.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: userId },
         update: expect.objectContaining({ language }),
       })
     );
-
-    // Verify Clerk update
-    expect(mockUpdateUserMetadata).toHaveBeenCalledWith(userId, {
-      publicMetadata: {
-        language,
-      },
-    });
   });
 
   it('does not blank the stored profile of an existing user', async () => {
-    // Regression: the shared use case used to pass an explicit null for
-    // name/username/imageUrl whenever the local row already had an email,
-    // which wiped the display profile on every language change.
+    // Regression: the use case used to pass an explicit null for name/username/imageUrl, which
+    // wiped the display profile on every language change.
     const mockUser = {
       id: userId,
       email: 'test@example.com',
       name: 'Test User',
       username: 'tester',
-      imageUrl: 'https://img.clerk.com/avatar.png',
+      imageUrl: '/default-avatar.jpg',
       language: 'en',
       isDeleted: false,
     };
 
     vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
     vi.mocked(prisma.user.upsert).mockResolvedValue({ ...mockUser, language: 'pl' } as any);
-    vi.mocked(clerkClient).mockResolvedValue({
-      users: { updateUserMetadata: vi.fn().mockResolvedValue({}) },
-    } as any);
 
     await updateUserLanguage('pl');
 
@@ -101,29 +80,7 @@ describe('updateUserLanguage server action', () => {
     expect(updatePayload.imageUrl).toBeUndefined();
   });
 
-  it('continues if Clerk update fails', async () => {
-    const language = 'en';
-    const mockUser = { id: userId, email: 'test@example.com', language: 'pl', isDeleted: false };
-
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any);
-    vi.mocked(prisma.user.upsert).mockResolvedValue({ ...mockUser, language } as any);
-
-    vi.mocked(clerkClient).mockResolvedValue({
-      users: {
-        updateUserMetadata: vi.fn().mockRejectedValue(new Error('Clerk API Error')),
-      },
-    } as any);
-
-    const result = await updateUserLanguage(language);
-
-    expect(result).toEqual({ success: true });
-    expect(prisma.user.upsert).toHaveBeenCalled();
-  });
-
   it('rejects a deleted user the same way the API route does', async () => {
-    // Both entry points now share update-user-language.use-case, so a
-    // soft-deleted account can no longer resurrect itself through the
-    // server action while being rejected by PATCH /api/user/language.
     vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: userId, isDeleted: true } as any);
 
     const result = await updateUserLanguage('pl');

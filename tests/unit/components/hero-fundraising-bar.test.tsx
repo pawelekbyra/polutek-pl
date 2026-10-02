@@ -8,7 +8,7 @@ import Hero from '@/app/components/Hero';
 import { toProgressPercent } from '@/app/components/FundraisingProgressBar';
 import type { PublicVideoDTO } from '@/app/types/video';
 
-vi.mock('@clerk/nextjs', () => ({ useAuth: () => ({ userId: null }) }));
+vi.mock('@/lib/auth/react', () => ({ useAuth: () => ({ userId: null }) }));
 vi.mock('@/app/components/auth/AuthModalProvider', () => ({
   useAuthModal: () => ({ open: vi.fn(), close: vi.fn(), isOpen: false }),
 }));

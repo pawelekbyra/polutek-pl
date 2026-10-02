@@ -3,7 +3,7 @@ import { AppContext } from '@/lib/modules/shared/app-context';
 import { recordAuditEvent } from '@/lib/modules/audit';
 import { sendAccountDeletedEmail } from '@/lib/modules/email';
 
-export type AccountDeletionCleanupSource = 'CLERK_WEBHOOK' | 'APP_ACCOUNT_DELETION' | 'CLERK_RECONCILIATION';
+export type AccountDeletionCleanupSource = 'APP_ACCOUNT_DELETION';
 
 export interface AccountDeletionCleanupResult {
   cleaned: boolean;
@@ -52,6 +52,12 @@ export class AccountDeletionCleanupUseCase {
         },
       });
 
+      // The row stays as an anonymized tombstone (comments and payments keep their owner), but
+      // nothing may sign in to it again: drop every session and login method.
+      await tx.session.deleteMany({ where: { userId: input.userId } });
+      await tx.account.deleteMany({ where: { userId: input.userId } });
+      await tx.twoFactor.deleteMany({ where: { userId: input.userId } });
+      await tx.userAvatar.deleteMany({ where: { userId: input.userId } });
       await tx.subscription.deleteMany({ where: { userId: input.userId } });
       await tx.emailPreference.deleteMany({
         where: {

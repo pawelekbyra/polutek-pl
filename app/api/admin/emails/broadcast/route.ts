@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { z } from "zod";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import {
@@ -95,8 +95,8 @@ export async function POST(req: NextRequest) {
 
   // If testEmail is missing and it's a test, try to get it from session
   if (input.audience === "TEST" && !input.testRecipientEmail) {
-    const { sessionClaims } = await auth();
-    input.testRecipientEmail = sessionClaims?.email as string;
+    const { user } = await auth();
+    input.testRecipientEmail = user?.email;
   }
 
   const result = await sendAdminBroadcastEmail(ctx, input);

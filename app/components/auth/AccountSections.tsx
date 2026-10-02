@@ -1,22 +1,16 @@
 "use client";
 
 // Account panel sections for AccountModal, split out to keep each module within the repo's
-// file-size hotspot budget (the profile section lives in ProfileSection.tsx). All operations use
-// Clerk's headless UserResource (useUser/user.*).
+// file-size hotspot budget (profile: ProfileSection.tsx, password/2FA/sessions: SecuritySection.tsx).
+// All operations go through the Better Auth client (lib/auth/client.ts) or our own /api/user routes.
 
-import React, { useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import React, { useEffect, useState } from "react";
 import { Loader2 } from "../icons";
-import { OAUTH_PROVIDERS, useVisibleOAuthProviders, type OAuthStrategy } from "./oauth-providers";
-
-export function clerkErr(e: unknown, isPl: boolean): string {
-  if (e && typeof e === "object" && "errors" in e) {
-    const first = (e as { errors?: Array<{ longMessage?: string; message?: string }> }).errors?.[0];
-    if (first?.longMessage) return first.longMessage;
-    if (first?.message) return first.message;
-  }
-  return isPl ? "Coś poszło nie tak. Spróbuj ponownie." : "Something went wrong. Please try again.";
-}
+import { OAUTH_PROVIDERS } from "./oauth-providers";
+import { authClient } from "@/lib/auth/client";
+import { authErrorMessage } from "@/lib/auth/errors";
+import { rememberReturnPath } from "@/lib/auth/sso-return";
+import { useUser } from "@/lib/auth/react";
 
 export function useAccountUser() {
   const { user } = useUser();
@@ -32,176 +26,105 @@ export function Feedback({ error, info }: { error: string | null; info: string |
 export function EmailSection({ isPl }: { isPl: boolean }) {
   const user = useAccountUser();
   const [newEmail, setNewEmail] = useState("");
-  const [pendingId, setPendingId] = useState<string | null>(null);
-  const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
-  async function addEmail(e: React.FormEvent) {
+  async function changeEmail(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setInfo(null);
-    try {
-      const created = await user.createEmailAddress({ email: newEmail });
-      await created.prepareVerification({ strategy: "email_code" });
-      setPendingId(created.id);
-      setInfo(isPl ? "Wysłaliśmy kod na nowy adres." : "We sent a code to the new address.");
-      setNewEmail("");
-    } catch (err) {
-      setError(clerkErr(err, isPl));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function verify(e: React.FormEvent) {
-    e.preventDefault();
-    if (!pendingId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const target = user.emailAddresses.find((a) => a.id === pendingId);
-      await target?.attemptVerification({ code });
-      await user.reload();
-      setPendingId(null);
-      setCode("");
-      setInfo(isPl ? "Adres potwierdzony." : "Address verified.");
-    } catch (err) {
-      setError(clerkErr(err, isPl));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function makePrimary(id: string) {
-    setError(null);
-    try {
-      await user.update({ primaryEmailAddressId: id });
-      await user.reload();
-    } catch (err) {
-      setError(clerkErr(err, isPl));
-    }
-  }
-
-  async function remove(id: string) {
-    setError(null);
-    try {
-      const target = user.emailAddresses.find((a) => a.id === id);
-      await target?.destroy();
-      await user.reload();
-    } catch (err) {
-      setError(clerkErr(err, isPl));
-    }
+    const { error: changeError } = await authClient.changeEmail({
+      newEmail,
+      callbackURL: window.location.pathname + window.location.search,
+    });
+    setLoading(false);
+    if (changeError) return setError(authErrorMessage(changeError, isPl));
+    setNewEmail("");
+    setInfo(
+      isPl
+        ? "Wysłaliśmy link potwierdzający na nowy adres. Zmiana nastąpi po kliknięciu w link."
+        : "We sent a confirmation link to the new address. The change happens once you click it.",
+    );
   }
 
   return (
     <div className="space-y-3">
       <Feedback error={error} info={info} />
-      <ul className="space-y-2">
-        {user.emailAddresses.map((addr) => {
-          const isPrimary = addr.id === user.primaryEmailAddressId;
-          const verified = addr.verification?.status === "verified";
-          return (
-            <li key={addr.id} className="flex items-center justify-between gap-2 rounded-lg border border-[var(--chan-line)] px-3 py-2">
-              <div className="min-w-0">
-                <p className="truncate text-[14px] font-semibold">{addr.emailAddress}</p>
-                <p className="text-[11px] text-[var(--chan-muted)]">
-                  {isPrimary ? (isPl ? "Główny" : "Primary") : verified ? (isPl ? "Potwierdzony" : "Verified") : (isPl ? "Niepotwierdzony" : "Unverified")}
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-2 text-[12px]">
-                {!isPrimary && verified && (
-                  <button type="button" onClick={() => makePrimary(addr.id)} className="font-bold underline hover:text-[var(--chan-ink)]">
-                    {isPl ? "Ustaw główny" : "Make primary"}
-                  </button>
-                )}
-                {!isPrimary && (
-                  <button type="button" onClick={() => remove(addr.id)} className="font-bold text-red-600 hover:underline">
-                    {isPl ? "Usuń" : "Remove"}
-                  </button>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-
-      {pendingId ? (
-        <form onSubmit={verify} className="space-y-3 border-t border-[var(--chan-line)] pt-3">
-          <Field label={isPl ? "Kod z e-maila" : "Email code"} value={code} onChange={setCode} inputMode="numeric" />
-          <Primary loading={loading} label={isPl ? "Potwierdź" : "Verify"} />
-        </form>
-      ) : (
-        <form onSubmit={addEmail} className="space-y-3 border-t border-[var(--chan-line)] pt-3">
-          <Field label={isPl ? "Dodaj adres e-mail" : "Add email address"} type="email" value={newEmail} onChange={setNewEmail} />
-          <Primary loading={loading} label={isPl ? "Dodaj" : "Add"} />
-        </form>
-      )}
+      <div className="rounded-lg border border-[var(--chan-line)] px-3 py-2">
+        <p className="truncate text-[14px] font-semibold">{user.primaryEmailAddress?.emailAddress}</p>
+        <p className="text-[11px] text-[var(--chan-muted)]">
+          {user.emailVerified ? (isPl ? "Potwierdzony" : "Verified") : (isPl ? "Niepotwierdzony" : "Unverified")}
+        </p>
+      </div>
+      <form onSubmit={changeEmail} className="space-y-3 border-t border-[var(--chan-line)] pt-3">
+        <Field label={isPl ? "Nowy adres e-mail" : "New email address"} type="email" value={newEmail} onChange={setNewEmail} autoComplete="email" />
+        <Primary loading={loading} label={isPl ? "Zmień adres" : "Change address"} />
+      </form>
     </div>
   );
 }
 
+type LinkedAccount = { id: string; providerId: string; accountId: string };
+
 export function ConnectionsSection({ isPl }: { isPl: boolean }) {
-  const user = useAccountUser();
+  const [accounts, setAccounts] = useState<LinkedAccount[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function connect(strategy: OAuthStrategy) {
-    setError(null);
-    try {
-      const returnTo = window.location.pathname + window.location.search;
-      const ext = await user.createExternalAccount({ strategy, redirectUrl: returnTo });
-      const url = ext.verification?.externalVerificationRedirectURL;
-      if (url) window.location.href = url.toString();
-    } catch (err) {
-      setError(clerkErr(err, isPl));
-    }
+  async function load() {
+    const { data } = await authClient.listAccounts();
+    setAccounts((data as LinkedAccount[] | null) ?? []);
   }
 
-  async function disconnect(id: string) {
+  useEffect(() => {
+    void load();
+  }, []);
+
+  async function connect(provider: "google") {
     setError(null);
-    try {
-      const acc = user.externalAccounts.find((a) => a.id === id);
-      await acc?.destroy();
-      await user.reload();
-    } catch (err) {
-      setError(clerkErr(err, isPl));
-    }
+    rememberReturnPath(window.location.pathname + window.location.search);
+    const { error: linkError } = await authClient.linkSocial({ provider, callbackURL: "/sso-callback" });
+    if (linkError) setError(authErrorMessage(linkError, isPl));
   }
 
-  const visibleProviders = useVisibleOAuthProviders();
-  const connectable = visibleProviders.filter(
-    (p) => !user.externalAccounts.some((a) => a.provider === p.provider),
-  );
+  async function disconnect(account: LinkedAccount) {
+    setError(null);
+    const { error: unlinkError } = await authClient.unlinkAccount({ accountId: account.id });
+    if (unlinkError) return setError(authErrorMessage(unlinkError, isPl));
+    await load();
+  }
+
+  const external = (accounts ?? []).filter((a) => a.providerId !== "credential");
+  const connectable = OAUTH_PROVIDERS.filter((p) => !external.some((a) => a.providerId === p.provider));
 
   return (
     <div className="space-y-3">
       <Feedback error={error} info={null} />
       <ul className="space-y-2">
-        {user.externalAccounts.map((acc) => {
-          const known = OAUTH_PROVIDERS.find((p) => p.provider === acc.provider);
+        {external.map((acc) => {
+          const known = OAUTH_PROVIDERS.find((p) => p.provider === acc.providerId);
           return (
             <li key={acc.id} className="flex items-center justify-between gap-2 rounded-lg border border-[var(--chan-line)] px-3 py-2">
               <div className="flex items-center gap-2">
                 {known && <known.Icon className="h-[18px] w-[18px]" />}
-                <p className="text-[14px] font-semibold capitalize">{known?.label ?? acc.provider}</p>
+                <p className="text-[14px] font-semibold capitalize">{known?.label ?? acc.providerId}</p>
               </div>
-              <button type="button" onClick={() => disconnect(acc.id)} className="text-[12px] font-bold text-red-600 hover:underline">
+              <button type="button" onClick={() => disconnect(acc)} className="text-[12px] font-bold text-red-600 hover:underline">
                 {isPl ? "Odłącz" : "Disconnect"}
               </button>
             </li>
           );
         })}
-        {user.externalAccounts.length === 0 && (
+        {accounts && external.length === 0 && (
           <li className="text-[13px] text-[var(--chan-muted)]">{isPl ? "Brak połączonych kont." : "No connected accounts."}</li>
         )}
       </ul>
-      {connectable.map(({ strategy, label, Icon }) => (
+      {connectable.map(({ provider, label, Icon }) => (
         <button
-          key={strategy}
+          key={provider}
           type="button"
-          onClick={() => connect(strategy)}
+          onClick={() => connect(provider)}
           className="flex h-[42px] w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--chan-surface)] font-sans text-[14px] font-bold text-[var(--chan-ink)] transition-all hover:-translate-y-px active:scale-[0.98]"
         >
           <Icon className="h-[18px] w-[18px]" />
@@ -212,43 +135,7 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
   );
 }
 
-export function SecuritySection({ isPl }: { isPl: boolean }) {
-  const user = useAccountUser();
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
-
-  async function save(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setInfo(null);
-    try {
-      await user.updatePassword({ currentPassword, newPassword, signOutOfOtherSessions: true });
-      setInfo(isPl ? "Hasło zmienione." : "Password changed.");
-      setCurrentPassword("");
-      setNewPassword("");
-    } catch (err) {
-      setError(clerkErr(err, isPl));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <form onSubmit={save} className="space-y-3">
-      <Feedback error={error} info={info} />
-      <Field label={isPl ? "Obecne hasło" : "Current password"} type="password" value={currentPassword} onChange={setCurrentPassword} />
-      <Field label={isPl ? "Nowe hasło" : "New password"} type="password" value={newPassword} onChange={setNewPassword} />
-      <Primary loading={loading} label={isPl ? "Zmień hasło" : "Change password"} />
-    </form>
-  );
-}
-
 export function DangerSection({ isPl, onDeleted }: { isPl: boolean; onDeleted: () => void }) {
-  const user = useAccountUser();
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -259,13 +146,16 @@ export function DangerSection({ isPl, onDeleted }: { isPl: boolean; onDeleted: (
     if (confirm !== CONFIRM_WORD) return;
     setLoading(true);
     setError(null);
-    try {
-      await user.delete();
-      onDeleted();
-    } catch (err) {
-      setError(clerkErr(err, isPl));
+    const response = await fetch("/api/user/account", { method: "DELETE" }).catch(() => null);
+    if (!response?.ok) {
+      setError(authErrorMessage(null, isPl));
       setLoading(false);
+      return;
     }
+    // Every session was dropped server-side; clear the local state and reload.
+    await authClient.signOut().catch(() => undefined);
+    onDeleted();
+    window.location.assign("/");
   }
 
   return (

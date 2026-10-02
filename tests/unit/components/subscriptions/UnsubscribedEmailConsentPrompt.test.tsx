@@ -35,7 +35,7 @@ vi.mock('@/app/components/subscriptions/EmailSubscriptionConsentModal', () => ({
 // Mock Clerk useAuth / useUser
 const mockUseAuth = vi.fn();
 const mockUseUser = vi.fn();
-vi.mock('@clerk/nextjs', () => ({
+vi.mock('@/lib/auth/react', () => ({
   useAuth: () => mockUseAuth(),
   useUser: () => mockUseUser(),
 }));

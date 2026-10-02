@@ -1,19 +1,19 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useClerk, useSignIn, useSignUp } from "@clerk/nextjs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2 } from "../icons";
 import { useLanguage } from "../LanguageContext";
-import { useVisibleOAuthProviders, type OAuthStrategy } from "./oauth-providers";
 import type { AuthView } from "./AuthModalProvider";
+import { Divider, Field, OAuthButtons, PrimaryButton } from "./AuthFormParts";
+import { TurnstileWidget, useCaptchaRequired, type TurnstileHandle } from "./TurnstileWidget";
+import { authClient, captchaFetchOptions } from "@/lib/auth/client";
+import { authErrorMessage } from "@/lib/auth/errors";
+import { PASSWORD_MIN_LENGTH } from "@/lib/auth/config";
 import { rememberReturnPath } from "@/lib/auth/sso-return";
-import { applyAvatar } from "@/lib/auth/avatar";
-import { usernameFromNickname } from "@/lib/auth/generate-username";
 import { checkNicknameAvailability, nicknameCheckMessage, nicknameProblemMessage, validateNickname } from "@/lib/auth/nickname";
 
-type InternalView = "sign-in" | "sign-up" | "verify-email" | "forgot" | "reset";
+type InternalView = "sign-in" | "sign-up" | "verify-sent" | "forgot" | "forgot-sent" | "two-factor";
 
 interface AuthModalProps {
   open: boolean;
@@ -21,35 +21,25 @@ interface AuthModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-type ClerkOpError = { message?: string; longMessage?: string; errors?: Array<{ longMessage?: string; message?: string }> } | null;
-
-// Extract a human message from a Clerk headless error without leaking internals.
-function errorMessage(error: ClerkOpError, isPl: boolean): string {
-  if (error) {
-    const nested = error.errors?.[0];
-    return nested?.longMessage || nested?.message || error.longMessage || error.message ||
-      (isPl ? "Coś poszło nie tak. Spróbuj ponownie." : "Something went wrong. Please try again.");
-  }
-  return isPl ? "Coś poszło nie tak. Spróbuj ponownie." : "Something went wrong. Please try again.";
-}
+type OpError = { code?: string; message?: string; status?: number } | null | undefined;
 
 export default function AuthModal({ open, initialView, onOpenChange }: AuthModalProps) {
   const router = useRouter();
-  const { isPl } = useLanguageFlags();
-  // Clerk's signals API: these hooks return the future resources directly.
-  const { signIn } = useSignIn();
-  const { signUp } = useSignUp();
-  const clerk = useClerk();
+  const { language } = useLanguage();
+  const isPl = language === "pl";
+  const captchaRequired = useCaptchaRequired();
+  const captchaRef = useRef<TurnstileHandle>(null);
 
   const [view, setView] = useState<InternalView>(initialView);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nickname, setNickname] = useState("");
   const [code, setCode] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [useBackupCode, setUseBackupCode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -57,38 +47,56 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
       setError(null);
       setInfo(null);
       setCode("");
-      setNewPassword("");
       setLoading(false);
     }
   }, [open, initialView]);
 
-  const ready = Boolean(signIn && signUp);
+  const captchaReady = !captchaRequired || Boolean(captchaToken);
+  const returnTo = () => (typeof window !== "undefined" ? window.location.pathname + window.location.search : "/");
 
-  function showError(err: ClerkOpError) {
-    setError(errorMessage(err, isPl));
+  function fail(err: OpError) {
+    setError(authErrorMessage(err, isPl));
     setLoading(false);
+    captchaRef.current?.reset();
   }
 
-  async function handlePasswordSignIn(e: React.FormEvent) {
-    e.preventDefault();
-    if (!signIn) return;
-    setLoading(true);
-    setError(null);
-    const { error: signInError } = await signIn.password({ identifier: email, password });
-    if (signInError) return showError(signInError as ClerkOpError);
-    // Turn the completed sign-in into the active session. ClerkLocalizationProvider then
-    // refreshes session data in place; we simply close (no hard redirect — PWA note).
-    const { error: finalizeError } = await signIn.finalize();
-    if (finalizeError) return showError(finalizeError as ClerkOpError);
+  function finishSignedIn() {
+    setLoading(false);
     onOpenChange(false);
     router.refresh();
   }
 
+  async function handlePasswordSignIn(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    const { data, error: signInError } = await authClient.signIn.email({
+      email,
+      password,
+      fetchOptions: captchaFetchOptions(captchaToken),
+    });
+    if (signInError) {
+      if (signInError.code === "EMAIL_NOT_VERIFIED") {
+        setInfo(isPl ? "Potwierdź adres e-mail. Wysłaliśmy nowy link." : "Please verify your email. We sent a new link.");
+        setView("verify-sent");
+        setLoading(false);
+        captchaRef.current?.reset();
+        return;
+      }
+      return fail(signInError);
+    }
+    if (data && "twoFactorRedirect" in data && data.twoFactorRedirect) {
+      setView("two-factor");
+      setLoading(false);
+      return;
+    }
+    finishSignedIn();
+  }
+
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
-    if (!signUp) return;
-    // The nickname is the only name we ask for: it becomes the Clerk first name (so it is the
-    // name shown everywhere) and the required username is derived from it, never shown.
+    // The nickname is the only name we ask for; it is stored as the account name and shown
+    // everywhere (user menu, comments).
     const validation = validateNickname(nickname);
     if (!validation.ok) return setError(nicknameProblemMessage(validation.reason, isPl));
     setLoading(true);
@@ -99,86 +107,82 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
       setLoading(false);
       return;
     }
-    const { error: createError } = await signUp.create({
-      emailAddress: email,
+    const { error: signUpError } = await authClient.signUp.email({
+      email,
       password,
-      username: usernameFromNickname(validation.value),
-      firstName: validation.value,
-      unsafeMetadata: { language: isPl ? "pl" : "en" },
+      name: validation.value,
+      language: isPl ? "pl" : "en",
+      callbackURL: returnTo(),
+      fetchOptions: captchaFetchOptions(captchaToken),
     });
-    if (createError) return showError(createError as ClerkOpError);
-    const { error: sendError } = await signUp.verifications.sendEmailCode();
-    if (sendError) return showError(sendError as ClerkOpError);
-    setInfo(isPl ? "Wysłaliśmy kod na Twój e-mail." : "We sent a code to your email.");
-    setView("verify-email");
+    if (signUpError) return fail(signUpError);
+    // Same screen whether or not the address was already registered (no account enumeration).
+    setInfo(null);
+    setView("verify-sent");
     setLoading(false);
-    router.refresh();
+    captchaRef.current?.reset();
   }
 
-  async function handleVerifyEmail(e: React.FormEvent) {
-    e.preventDefault();
-    if (!signUp) return;
+  async function handleResend() {
     setLoading(true);
     setError(null);
-    const { error: verifyError } = await signUp.verifications.verifyEmailCode({ code });
-    if (verifyError) return showError(verifyError as ClerkOpError);
-    const { error: finalizeError } = await signUp.finalize();
-    if (finalizeError) return showError(finalizeError as ClerkOpError);
-    // Every new account starts with the site's default avatar.
-    await applyAvatar(clerk.user, null);
-    onOpenChange(false);
-    router.refresh();
+    const { error: resendError } = await authClient.sendVerificationEmail({
+      email,
+      callbackURL: returnTo(),
+      fetchOptions: captchaFetchOptions(captchaToken),
+    });
+    if (resendError) return fail(resendError);
+    setInfo(isPl ? "Wysłaliśmy link ponownie." : "We sent the link again.");
+    setLoading(false);
+    captchaRef.current?.reset();
   }
 
   async function handleForgot(e: React.FormEvent) {
     e.preventDefault();
-    if (!signIn) return;
     setLoading(true);
     setError(null);
-    // Establish a sign-in context for the identifier, then send the reset code.
-    const { error: createError } = await signIn.create({ identifier: email });
-    if (createError) return showError(createError as ClerkOpError);
-    const { error: sendError } = await signIn.resetPasswordEmailCode.sendCode();
-    if (sendError) return showError(sendError as ClerkOpError);
-    setInfo(isPl ? "Wysłaliśmy kod resetujący na Twój e-mail." : "We sent a reset code to your email.");
-    setView("reset");
-    setLoading(false);
-  }
-
-  async function handleReset(e: React.FormEvent) {
-    e.preventDefault();
-    if (!signIn) return;
-    setLoading(true);
-    setError(null);
-    const { error: verifyError } = await signIn.resetPasswordEmailCode.verifyCode({ code });
-    if (verifyError) return showError(verifyError as ClerkOpError);
-    const { error: submitError } = await signIn.resetPasswordEmailCode.submitPassword({ password: newPassword });
-    if (submitError) return showError(submitError as ClerkOpError);
-    const { error: finalizeError } = await signIn.finalize();
-    if (finalizeError) return showError(finalizeError as ClerkOpError);
-    onOpenChange(false);
-    router.refresh();
-  }
-
-  async function handleOAuth(strategy: OAuthStrategy) {
-    if (!signIn) return;
-    setError(null);
-    const returnTo = typeof window !== "undefined" ? window.location.pathname + window.location.search : "/";
-    rememberReturnPath(returnTo);
-    const { error: ssoError } = await signIn.sso({
-      strategy,
-      redirectUrl: returnTo,
-      redirectCallbackUrl: "/sso-callback",
+    const { error: resetError } = await authClient.requestPasswordReset({
+      email,
+      redirectTo: "/reset-password",
+      fetchOptions: captchaFetchOptions(captchaToken),
     });
-    if (ssoError) showError(ssoError as ClerkOpError);
+    if (resetError) return fail(resetError);
+    // Always the same answer, so the form cannot be used to find out which addresses have accounts.
+    setView("forgot-sent");
+    setLoading(false);
+    captchaRef.current?.reset();
+  }
+
+  async function handleTwoFactor(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    const result = useBackupCode
+      ? await authClient.twoFactor.verifyBackupCode({ code: code.trim() })
+      : await authClient.twoFactor.verifyTotp({ code: code.trim(), trustDevice: true });
+    if (result.error) return fail(result.error);
+    finishSignedIn();
+  }
+
+  async function handleOAuth(provider: "google") {
+    setError(null);
+    rememberReturnPath(returnTo());
+    const { error: socialError } = await authClient.signIn.social({
+      provider,
+      callbackURL: "/sso-callback",
+      newUserCallbackURL: "/sso-callback",
+      errorCallbackURL: "/sso-callback?error=1",
+    });
+    if (socialError) fail(socialError);
   }
 
   const title = {
     "sign-in": isPl ? "Zaloguj się" : "Sign in",
     "sign-up": isPl ? "Załóż konto" : "Create account",
-    "verify-email": isPl ? "Potwierdź e-mail" : "Verify your email",
+    "verify-sent": isPl ? "Sprawdź skrzynkę" : "Check your inbox",
     forgot: isPl ? "Reset hasła" : "Reset password",
-    reset: isPl ? "Ustaw nowe hasło" : "Set a new password",
+    "forgot-sent": isPl ? "Sprawdź skrzynkę" : "Check your inbox",
+    "two-factor": isPl ? "Weryfikacja dwuetapowa" : "Two-step verification",
   }[view];
 
   function switchView(next: InternalView) {
@@ -186,6 +190,9 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
     setInfo(null);
     setView(next);
   }
+
+  const captcha = <TurnstileWidget ref={captchaRef} onToken={setCaptchaToken} isPl={isPl} />;
+  const waitingForCaptcha = !captchaReady;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -218,11 +225,12 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
 
             {view === "sign-in" && (
               <form onSubmit={handlePasswordSignIn} className="mt-5 space-y-3.5">
-                <OAuthButtons onSelect={handleOAuth} isPl={isPl} disabled={!ready} />
+                <OAuthButtons onSelect={handleOAuth} isPl={isPl} />
                 <Divider isPl={isPl} />
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
                 <Field label={isPl ? "Hasło" : "Password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" required />
-                <PrimaryButton loading={loading} disabled={!ready} label={isPl ? "Zaloguj się" : "Sign in"} />
+                {captcha}
+                <PrimaryButton loading={loading} disabled={waitingForCaptcha} label={isPl ? "Zaloguj się" : "Sign in"} />
                 <div className="flex items-center justify-between pt-1 text-[12px] text-[var(--chan-muted)]">
                   <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("forgot")}>
                     {isPl ? "Nie pamiętam hasła" : "Forgot password"}
@@ -236,14 +244,21 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
 
             {view === "sign-up" && (
               <form onSubmit={handleSignUp} className="mt-5 space-y-3.5">
-                <OAuthButtons onSelect={handleOAuth} isPl={isPl} disabled={!ready} />
+                <OAuthButtons onSelect={handleOAuth} isPl={isPl} />
                 <Divider isPl={isPl} />
                 <Field label={isPl ? "Pseudonim" : "Nickname"} type="text" value={nickname} onChange={setNickname} autoComplete="nickname" required />
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
-                <Field label={isPl ? "Hasło" : "Password"} type="password" value={password} onChange={setPassword} autoComplete="new-password" required />
-                {/* Clerk bot protection renders into this element when Smart CAPTCHA is enabled. */}
-                <div id="clerk-captcha" />
-                <PrimaryButton loading={loading} disabled={!ready} label={isPl ? "Załóż konto" : "Create account"} />
+                <Field
+                  label={isPl ? "Hasło (min. 10 znaków)" : "Password (min. 10 characters)"}
+                  type="password"
+                  value={password}
+                  onChange={setPassword}
+                  autoComplete="new-password"
+                  minLength={PASSWORD_MIN_LENGTH}
+                  required
+                />
+                {captcha}
+                <PrimaryButton loading={loading} disabled={waitingForCaptcha} label={isPl ? "Załóż konto" : "Create account"} />
                 <div className="pt-1 text-center text-[12px] text-[var(--chan-muted)]">
                   <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("sign-in")}>
                     {isPl ? "Masz już konto? Zaloguj się" : "Already have an account? Sign in"}
@@ -252,23 +267,38 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
               </form>
             )}
 
-            {view === "verify-email" && (
-              <form onSubmit={handleVerifyEmail} className="mt-5 space-y-3.5">
+            {view === "verify-sent" && (
+              <div className="mt-5 space-y-3.5">
                 <p className="text-[13px] text-[var(--chan-body)]">
-                  {isPl ? "Wpisz kod, który wysłaliśmy na " : "Enter the code we sent to "}<strong>{email}</strong>.
+                  {isPl
+                    ? "Jeśli możesz założyć konto na ten adres, wysłaliśmy tam link potwierdzający. Kliknij go, aby dokończyć. Sprawdź też spam."
+                    : "If an account can be created for this address, we sent a confirmation link there. Click it to finish. Check your spam folder too."}
                 </p>
-                <Field label={isPl ? "Kod z e-maila" : "Email code"} type="text" value={code} onChange={setCode} inputMode="numeric" required />
-                <PrimaryButton loading={loading} disabled={!ready} label={isPl ? "Potwierdź" : "Verify"} />
-              </form>
+                {captcha}
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={loading || waitingForCaptcha}
+                  className="text-[12px] font-bold underline hover:text-[var(--chan-ink)] disabled:opacity-50"
+                >
+                  {isPl ? "Wyślij link ponownie" : "Send the link again"}
+                </button>
+                <div>
+                  <button type="button" className="text-[12px] text-[var(--chan-muted)] underline" onClick={() => switchView("sign-in")}>
+                    {isPl ? "Wróć do logowania" : "Back to sign in"}
+                  </button>
+                </div>
+              </div>
             )}
 
             {view === "forgot" && (
               <form onSubmit={handleForgot} className="mt-5 space-y-3.5">
                 <p className="text-[13px] text-[var(--chan-body)]">
-                  {isPl ? "Podaj e-mail — wyślemy kod do zresetowania hasła." : "Enter your email — we'll send a reset code."}
+                  {isPl ? "Podaj e-mail — wyślemy link do ustawienia nowego hasła." : "Enter your email — we'll send a link to set a new password."}
                 </p>
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
-                <PrimaryButton loading={loading} disabled={!ready} label={isPl ? "Wyślij kod" : "Send code"} />
+                {captcha}
+                <PrimaryButton loading={loading} disabled={waitingForCaptcha} label={isPl ? "Wyślij link" : "Send link"} />
                 <div className="pt-1 text-center text-[12px] text-[var(--chan-muted)]">
                   <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("sign-in")}>
                     {isPl ? "Wróć do logowania" : "Back to sign in"}
@@ -277,101 +307,44 @@ export default function AuthModal({ open, initialView, onOpenChange }: AuthModal
               </form>
             )}
 
-            {view === "reset" && (
-              <form onSubmit={handleReset} className="mt-5 space-y-3.5">
-                <Field label={isPl ? "Kod z e-maila" : "Email code"} type="text" value={code} onChange={setCode} inputMode="numeric" required />
-                <Field label={isPl ? "Nowe hasło" : "New password"} type="password" value={newPassword} onChange={setNewPassword} autoComplete="new-password" required />
-                <PrimaryButton loading={loading} disabled={!ready} label={isPl ? "Ustaw hasło" : "Set password"} />
+            {view === "forgot-sent" && (
+              <div className="mt-5 space-y-3.5">
+                <p className="text-[13px] text-[var(--chan-body)]">
+                  {isPl
+                    ? "Jeśli to konto istnieje, wysłaliśmy link do ustawienia hasła. Działa przez godzinę."
+                    : "If that account exists, we sent a link to set a password. It works for one hour."}
+                </p>
+                <button type="button" className="text-[12px] text-[var(--chan-muted)] underline" onClick={() => switchView("sign-in")}>
+                  {isPl ? "Wróć do logowania" : "Back to sign in"}
+                </button>
+              </div>
+            )}
+
+            {view === "two-factor" && (
+              <form onSubmit={handleTwoFactor} className="mt-5 space-y-3.5">
+                <p className="text-[13px] text-[var(--chan-body)]">
+                  {useBackupCode
+                    ? (isPl ? "Wpisz jeden z kodów zapasowych." : "Enter one of your backup codes.")
+                    : (isPl ? "Wpisz 6-cyfrowy kod z aplikacji uwierzytelniającej." : "Enter the 6-digit code from your authenticator app.")}
+                </p>
+                <Field
+                  label={useBackupCode ? (isPl ? "Kod zapasowy" : "Backup code") : (isPl ? "Kod" : "Code")}
+                  type="text"
+                  value={code}
+                  onChange={setCode}
+                  inputMode={useBackupCode ? "text" : "numeric"}
+                  autoComplete="one-time-code"
+                  required
+                />
+                <PrimaryButton loading={loading} label={isPl ? "Potwierdź" : "Verify"} />
+                <button type="button" className="text-[12px] text-[var(--chan-muted)] underline" onClick={() => { setUseBackupCode(!useBackupCode); setCode(""); }}>
+                  {useBackupCode ? (isPl ? "Użyj aplikacji" : "Use the app") : (isPl ? "Użyj kodu zapasowego" : "Use a backup code")}
+                </button>
               </form>
             )}
           </div>
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function useLanguageFlags() {
-  const { language } = useLanguage();
-  return { isPl: language === "pl" };
-}
-
-function Field({
-  label,
-  type,
-  value,
-  onChange,
-  ...rest
-}: {
-  label: string;
-  type: string;
-  value: string;
-  onChange: (v: string) => void;
-  autoComplete?: string;
-  inputMode?: "numeric" | "text";
-  required?: boolean;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[var(--chan-muted)]">{label}</span>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-[12px] border border-[var(--chan-line)] bg-[var(--chan-surface)] px-3 py-2 font-sans text-[15px] text-[var(--chan-ink)] outline-none transition-colors focus:border-[var(--chan-blue)]"
-        {...rest}
-      />
-    </label>
-  );
-}
-
-function PrimaryButton({ loading, disabled, label }: { loading: boolean; disabled?: boolean; label: string }) {
-  return (
-    <button
-      type="submit"
-      disabled={loading || disabled}
-      className="flex h-[44px] w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--chan-blue)] font-brand text-[15px] font-bold text-white transition-[background-color,box-shadow,transform] duration-160 hover:-translate-y-px hover:shadow-[0_8px_20px_var(--cm-blue-25)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
-    >
-      {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <span>{label}</span>}
-    </button>
-  );
-}
-
-function OAuthButtons({
-  onSelect,
-  isPl,
-  disabled,
-}: {
-  onSelect: (strategy: OAuthStrategy) => void;
-  isPl: boolean;
-  disabled?: boolean;
-}) {
-  const providers = useVisibleOAuthProviders();
-
-  return (
-    <div className="space-y-2">
-      {providers.map(({ strategy, label, Icon }) => (
-        <button
-          key={strategy}
-          type="button"
-          onClick={() => onSelect(strategy)}
-          disabled={disabled}
-          className="flex h-[44px] w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--chan-surface)] font-sans text-[14px] font-bold text-[var(--chan-ink)] transition-[background-color,box-shadow,transform] duration-160 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-[0.98] disabled:opacity-60"
-        >
-          <Icon className="h-[18px] w-[18px]" />
-          <span>{isPl ? `Kontynuuj z ${label}` : `Continue with ${label}`}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function Divider({ isPl }: { isPl: boolean }) {
-  return (
-    <div className="flex items-center gap-3 py-1">
-      <span className="h-px flex-1 bg-[var(--chan-line)]" />
-      <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--chan-muted)]">{isPl ? "lub" : "or"}</span>
-      <span className="h-px flex-1 bg-[var(--chan-line)]" />
-    </div>
   );
 }

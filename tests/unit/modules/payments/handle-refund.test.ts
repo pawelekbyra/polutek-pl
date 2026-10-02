@@ -5,16 +5,12 @@ import { Actor } from '@/lib/modules/shared/actor';
 import { PaymentStatus } from '@prisma/client';
 import { revokePatron, recalculatePatronStatus } from '@/lib/modules/patron';
 import { recordAuditEvent } from '@/lib/modules/audit';
-import { syncClerkAccess } from '@/lib/modules/users/application/sync-clerk-access';
 
 vi.mock('@/lib/modules/patron', () => ({
   revokePatron: vi.fn(),
   recalculatePatronStatus: vi.fn(),
 }));
 
-vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
-  syncClerkAccess: vi.fn(),
-}));
 
 vi.mock('@/lib/modules/audit', () => ({
   recordAuditEvent: vi.fn().mockResolvedValue({}),
@@ -95,7 +91,6 @@ describe('handleRefund', () => {
       ctx,
       mockTx // Critical: verify tx sharing
     );
-    expect(syncClerkAccess).toHaveBeenCalledWith(userId, false, 0);
   });
 
   it('should perform partial refund and recalculate patron status in the same transaction', async () => {
@@ -126,7 +121,6 @@ describe('handleRefund', () => {
     expect(result.ok).toBe(true);
     expect(mockTx.$executeRaw).toHaveBeenCalled();
     expect(recalculatePatronStatus).toHaveBeenCalledWith(userId, ctx, mockTx);
-    expect(syncClerkAccess).toHaveBeenCalledWith(userId, true, 500);
   });
 
   describe('refund attribution', () => {
@@ -191,7 +185,6 @@ describe('handleRefund', () => {
     expect(mockTx.payment.updateMany).not.toHaveBeenCalled();
     expect(mockTx.$executeRaw).not.toHaveBeenCalled();
     expect(revokePatron).not.toHaveBeenCalled();
-    expect(syncClerkAccess).not.toHaveBeenCalled();
   });
 
   it('should handle CAS conflict by not performing further actions', async () => {
@@ -216,7 +209,6 @@ describe('handleRefund', () => {
     expect(result.ok).toBe(true);
     expect(mockTx.$executeRaw).not.toHaveBeenCalled();
     expect(revokePatron).not.toHaveBeenCalled();
-    expect(syncClerkAccess).not.toHaveBeenCalled();
   });
 
   it('should handle zero delta refund', async () => {
@@ -239,6 +231,5 @@ describe('handleRefund', () => {
     expect(mockTx.payment.updateMany).not.toHaveBeenCalled();
     expect(mockTx.$executeRaw).not.toHaveBeenCalled();
     expect(revokePatron).not.toHaveBeenCalled();
-    expect(syncClerkAccess).not.toHaveBeenCalled();
   });
 });

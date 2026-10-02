@@ -17,7 +17,7 @@ global.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver;
 let returnParams = new URLSearchParams();
 const routerReplace = vi.fn();
 
-vi.mock('@clerk/nextjs', () => ({
+vi.mock('@/lib/auth/react', () => ({
   useAuth: () => ({ userId: 'user_123' }),
   useUser: () => ({ user: { primaryEmailAddress: { emailAddress: 'user@example.com' } } }),
   useClerk: () => ({ openSignIn: vi.fn() }),

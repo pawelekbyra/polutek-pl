@@ -48,7 +48,8 @@ export function SafeAvatar({
         sizes={`${size}px`}
         className="object-cover"
         onError={() => setError(true)}
-        unoptimized={showFallback && finalFallback.includes("dicebear.com")}
+        // Our own avatar route has a version query string and is already a tiny image.
+        unoptimized={(showFallback && finalFallback.includes("dicebear.com")) || (!showFallback && String(src).startsWith("/api/avatars/"))}
       />
     </div>
   );

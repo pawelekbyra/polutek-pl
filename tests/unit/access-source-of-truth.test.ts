@@ -24,7 +24,7 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-vi.mock('@clerk/nextjs/server', () => ({
+vi.mock('@/lib/auth/server', () => ({
   auth: vi.fn().mockResolvedValue({ userId: null }),
 }));
 

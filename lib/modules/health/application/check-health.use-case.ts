@@ -73,7 +73,7 @@ export async function checkHealth(
     env: {
       DATABASE_URL: !!process.env.DATABASE_URL,
       DATABASE_URL_UNPOOLED: !!process.env.DATABASE_URL_UNPOOLED,
-      CLERK_SECRET_KEY: !!process.env.CLERK_SECRET_KEY,
+      BETTER_AUTH_SECRET: !!process.env.BETTER_AUTH_SECRET,
       STRIPE_SECRET_KEY: !!process.env.STRIPE_SECRET_KEY,
       STRIPE_WEBHOOK_SECRET: !!process.env.STRIPE_WEBHOOK_SECRET,
     },

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useTransition } from "react";
 import { motion } from "framer-motion";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/lib/auth/react";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import { logger } from "@/lib/logger";
 import { cn } from "@/lib/utils";

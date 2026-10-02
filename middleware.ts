@@ -1,12 +1,17 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse, type NextRequest } from "next/server";
+import { getSessionCookie } from "better-auth/cookies";
+import { createRouteMatcher } from "@/lib/auth/route-matcher";
+import { SESSION_COOKIE_PREFIX } from "@/lib/auth/config";
 import { generateCSP } from "@/lib/utils/security";
 import { checkAdminCsrf } from "@/lib/api/csrf";
 import { checkAdminRateLimit, getAdminClientIp } from "@/lib/api/admin-rate-limit";
-import { isHealthTokenAuthorized } from "@/lib/api/health-token";
 
 const isPublicRoute = createRouteMatcher([
   '/',
+  // Better Auth endpoints (sign-in, sign-up, OAuth callback, session, ...): they authorize themselves.
+  '/api/auth(.*)',
+  // Landing page of the password-reset e-mail link (the token is the credential).
+  '/reset-password',
   '/pl',
   '/pl/search',
   '/pl/watch/(.*)',
@@ -27,17 +32,11 @@ const isPublicRoute = createRouteMatcher([
   // PWA manifest: the middleware matcher excludes .webmanifest but not .json,
   // so /manifest.json must be explicitly public or anonymous visitors get 404.
   '/manifest.json',
-  // Crawlers fetch these at the bare root; without an explicit public entry
-  // they'd hit auth.protect() once locale-rewrite is skipped (see
-  // LOCALE_EXEMPT_STATIC_PATHS), which previously made bots get 404s.
+  // Crawlers fetch these at the bare root.
   '/robots.txt',
   '/sitemap.xml',
-  // Google/OAuth redirect lands here mid-handshake, before the session is fully
-  // established — auth.protect() gating this route bounces the visitor back to
-  // sign-in instead of letting AuthenticateWithRedirectCallback finish the flow.
-  // Most visible on mobile browsers with strict cross-site cookie policies
-  // (e.g. iOS Safari ITP), which are less forgiving of an interrupted redirect
-  // chain than desktop browsers with an existing Clerk cookie already in place.
+  // The Google/OAuth flow returns here right after Better Auth set the session cookie; the
+  // page itself decides where to send the visitor, so it must never be gated.
   '/sso-callback',
   // Email unsubscribe must work without login: List-Unsubscribe headers and
   // email footer links target /unsubscribe?token=..., and the page posts the
@@ -45,12 +44,12 @@ const isPublicRoute = createRouteMatcher([
   '/unsubscribe',
   '/api/subscriptions/unsubscribe',
   '/api/webhooks(.*)',
-  // Vercel Cron calls these without a Clerk session. Every handler authorizes
-  // itself with `Authorization: Bearer $CRON_SECRET` and fails closed (401) when
-  // the secret is missing, so they must reach the handler instead of auth.protect().
+  // Cron calls these without a user session. Every handler authorizes itself with
+  // `Authorization: Bearer $CRON_SECRET` and fails closed (401) when the secret is missing,
+  // so they must reach the handler instead of being gated.
   '/api/cron/(.*)',
-  // Nickname check for the first-sign-in form on /sso-callback, which runs before the
-  // sign-up is finalized (no session yet). Rate-limited per IP, returns only a boolean.
+  // Nickname check for the sign-up and first-sign-in forms, which run before the account
+  // exists (no session). Rate-limited per IP, returns only a boolean.
   '/api/users/nickname-available',
   '/api/health',
   '/api/__version',
@@ -64,31 +63,22 @@ const isPublicRoute = createRouteMatcher([
   // optimizer fetches it without auth cookies.
   '/api/videos/(.*)/thumbnail',
   '/api/channel/sidebar',
+  // User avatars shown next to public comments; the route hides deleted accounts itself.
+  '/api/avatars/(.*)',
   // Only GET comments is public if product requires it
   '/api/comments',
 ]);
 
 const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);
 
-// Break-glass diagnostics: this one route must stay reachable even when Clerk
-// itself is broken (its whole purpose is diagnosing that), so it can't be
-// gated behind Clerk's auth.protect() like every other /api/admin route. The
-// route handler re-checks the same token itself — this only decides whether
-// middleware lets the request through to it.
-const CLERK_HEALTH_ROUTE = '/api/admin/health/clerk';
-
 // Exact top-level paths that must never get a /pl or /en prefix.
 // - /manifest.json, /robots.txt, /sitemap.xml: static root files served from
 //   /public. The matcher's static-extension exclusion skips most file types
 //   but not .json, so /manifest.json falls through to this rewrite check.
-// - /sso-callback: the Google/OAuth redirect target (see AuthModal.tsx's
-//   redirectCallbackUrl and app/sso-callback/page.tsx, a top-level route with
-//   no [locale]-scoped counterpart). Without this exemption the rewrite sent
-//   it to /pl/sso-callback, which has no matching page and 404s, breaking
-//   OAuth sign-in entirely — most visible on mobile, where users are less
-//   likely to already have an existing session from a prior desktop visit
-//   masking the failure.
-const LOCALE_EXEMPT_PATHS = new Set(['/manifest.json', '/robots.txt', '/sitemap.xml', '/sso-callback']);
+// - /sso-callback and /reset-password: top-level routes with no [locale]-scoped counterpart
+//   (the Google/OAuth return page and the password-reset e-mail link target). Without this
+//   exemption the rewrite sent them to /pl/..., which has no matching page and 404s.
+const LOCALE_EXEMPT_PATHS = new Set(['/manifest.json', '/robots.txt', '/sitemap.xml', '/sso-callback', '/reset-password']);
 
 function shouldRewriteForPolish(pathname: string): boolean {
   if (LOCALE_EXEMPT_PATHS.has(pathname)) return false;
@@ -105,7 +95,7 @@ function rewriteForPolish(pathname: string, _search: string): string {
   return pathname === "/" ? "/pl" : `/pl${pathname}`;
 }
 
-function clerkMiddlewareWrapper(req: NextRequest) {
+function rewriteLocale(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
   // Rewrite non-prefixed Polish routes to localized versions
@@ -118,19 +108,52 @@ function clerkMiddlewareWrapper(req: NextRequest) {
   return null;
 }
 
-export default clerkMiddleware(async (auth, req) => {
+/**
+ * Optimistic gate: only checks that a session cookie exists (no database call in the proxy).
+ * The cookie is not proof of identity; every handler and server component validates the
+ * session for real (lib/auth/server.ts, lib/api/auth.ts).
+ */
+function requireSessionCookie(req: NextRequest): NextResponse | null {
+  if (getSessionCookie(req, { cookiePrefix: SESSION_COOKIE_PREFIX })) return null;
+  const { pathname, search } = req.nextUrl;
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const target = new URL('/', req.url);
+  target.searchParams.set('signin', '1');
+  target.searchParams.set('next', pathname + search);
+  return NextResponse.redirect(target);
+}
+
+async function sessionRateKey(req: NextRequest): Promise<string | null> {
+  const cookie = getSessionCookie(req, { cookiePrefix: SESSION_COOKIE_PREFIX });
+  if (!cookie) return null;
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(cookie));
+  const hex = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+  return `session:${hex.slice(0, 24)}`;
+}
+
+export default async function middleware(req: NextRequest) {
   // Handle Polish URL rewriting (non-prefixed to /pl-prefixed)
-  const rewriteResponse = clerkMiddlewareWrapper(req);
+  const rewriteResponse = rewriteLocale(req);
   if (rewriteResponse) {
     return rewriteResponse;
+  }
+
+  // Account mutations (nickname, avatar, language, deletion, ...) get the same cross-origin guard
+  // as the admin API. Better Auth's own endpoints check the origin themselves.
+  if (req.nextUrl.pathname.startsWith('/api/user/')) {
+    const csrf = checkAdminCsrf(req);
+    if (csrf) return NextResponse.json(csrf.body, { status: csrf.status });
   }
 
   // Specific GET exception for comments (if product needs public comments).
   // Mutations are protected but still flow through the shared response setup
   // below so request IDs and security headers are attached consistently.
   if (req.nextUrl.pathname === '/api/comments' && req.method !== 'GET') {
-    await auth.protect();
-  } else if (isAdminRoute(req)) {
+    const blocked = requireSessionCookie(req);
+    if (blocked) return blocked;
+  } else if (isAdminRoute(req.nextUrl.pathname)) {
     const isApiAdmin = req.nextUrl.pathname.startsWith('/api/admin');
 
     // CSRF is enforced here, once, for every mutating /api/admin request, so no
@@ -140,19 +163,16 @@ export default clerkMiddleware(async (auth, req) => {
       if (csrf) return NextResponse.json(csrf.body, { status: csrf.status });
     }
 
-    const isClerkHealthBreakGlass = req.nextUrl.pathname === CLERK_HEALTH_ROUTE && isHealthTokenAuthorized(req);
-    if (!isClerkHealthBreakGlass) {
-      await auth.protect();
-    }
+    const blocked = requireSessionCookie(req);
+    if (blocked) return blocked;
 
-    // Rate limiting (per admin user + IP) runs after auth so the user id is
-    // known; per-route limits live in lib/api/admin-rate-limit.ts.
+    // Rate limiting (per admin session + IP) runs after the cookie check; per-route limits
+    // live in lib/api/admin-rate-limit.ts.
     if (isApiAdmin) {
-      const { userId } = await auth();
       const limited = await checkAdminRateLimit({
         pathname: req.nextUrl.pathname,
         method: req.method,
-        userId: userId ?? null,
+        userId: await sessionRateKey(req),
         ip: getAdminClientIp(req.headers),
       });
       if (limited.limited) {
@@ -162,8 +182,9 @@ export default clerkMiddleware(async (auth, req) => {
         );
       }
     }
-  } else if (!isPublicRoute(req)) {
-    await auth.protect();
+  } else if (!isPublicRoute(req.nextUrl.pathname)) {
+    const blocked = requireSessionCookie(req);
+    if (blocked) return blocked;
   }
 
   if (req.method === 'GET' && req.nextUrl.pathname === '/admin/videos') {
@@ -187,7 +208,7 @@ export default clerkMiddleware(async (auth, req) => {
   response.headers.set('x-request-id', requestId);
   response.headers.set('Content-Security-Policy', generateCSP());
   return response;
-});
+}
 
 export const config = {
   matcher: [

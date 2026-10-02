@@ -1,0 +1,34 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getActorFromAuth } from "@/lib/api/auth";
+import { createAppContext } from "@/lib/modules/shared/app-context";
+import { completeOnboarding } from "@/lib/modules/users";
+import { sendWelcomeEmail } from "@/lib/modules/email";
+import { handleApiError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
+
+export const dynamic = "force-dynamic";
+
+/** First-sign-in step for Google accounts: nickname + optional avatar, then the welcome e-mail. */
+export async function POST(req: NextRequest) {
+  try {
+    const actor = await getActorFromAuth({ allowGuest: false });
+    if (actor.type !== "user" && actor.type !== "admin") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const body = (await req.json().catch(() => null)) as { nickname?: unknown; avatarDataUrl?: unknown } | null;
+    if (typeof body?.nickname !== "string") {
+      return NextResponse.json({ error: "INVALID_NICKNAME" }, { status: 400 });
+    }
+    const user = await completeOnboarding(createAppContext({ actor }), {
+      userId: actor.userId,
+      nickname: body.nickname,
+      avatarDataUrl: typeof body.avatarDataUrl === "string" ? body.avatarDataUrl : null,
+    });
+    void sendWelcomeEmail(user.email, user.name, user.language === "pl" ? "pl" : "en").catch((error) => {
+      logger.error("[onboarding] welcome email failed", error instanceof Error ? error.message : String(error));
+    });
+    return NextResponse.json({ success: true, name: user.name });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}

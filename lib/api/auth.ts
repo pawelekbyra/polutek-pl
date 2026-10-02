@@ -1,27 +1,36 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { AppError } from "@/lib/errors";
 import { Actor } from "@/lib/modules/shared/actor";
 import { prisma } from "@/lib/prisma";
-import { isConfiguredAdminUserId } from "@/lib/admin-config";
+import { isAdminEmail } from "@/lib/auth/config";
+import { recordAuthAudit } from "@/lib/auth/audit";
 
-
-function metadataValue(claims: unknown, key: string): unknown {
-  if (!claims || typeof claims !== "object") return undefined;
-  const metadata = (claims as { metadata?: Record<string, unknown> }).metadata;
-  return metadata?.[key];
-}
 
 export async function getAuthSession() {
-  const { userId, sessionClaims } = await auth();
-  const role = metadataValue(sessionClaims, "role");
-  const isPatron = metadataValue(sessionClaims, "isPatron");
+  const { userId } = await auth();
   return {
     userId,
     /** Non-authoritative UI hint only. Never use for server authorization. */
-    role: typeof role === "string" ? role : undefined,
+    role: undefined as string | undefined,
     /** Non-authoritative UI hint only. Never use for access-control decisions. */
-    isPatron: typeof isPatron === "boolean" ? isPatron : undefined,
+    isPatron: undefined as boolean | undefined,
   };
+}
+
+/**
+ * Admin = `User.role === ADMIN` in our database. One-time bootstrap: a verified account whose
+ * e-mail is listed in ADMIN_EMAILS is promoted on first use (and the promotion is audited).
+ * A never-verified address cannot be promoted, so nobody can claim an admin e-mail by signing
+ * up with it first.
+ */
+async function isAdminUser(user: { id: string; role: string; email: string; emailVerified: boolean }): Promise<boolean> {
+  if (user.role === "ADMIN") return true;
+  if (user.emailVerified && isAdminEmail(user.email)) {
+    await prisma.user.update({ where: { id: user.id }, data: { role: "ADMIN" } });
+    await recordAuthAudit({ action: "AUTH_ADMIN_BOOTSTRAP", userId: user.id, metadata: { source: "ADMIN_EMAILS" } });
+    return true;
+  }
+  return false;
 }
 
 type ActorResolverOptions = {
@@ -31,14 +40,14 @@ type ActorResolverOptions = {
 export async function resolveDbBackedActor(userId: string): Promise<Actor> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, role: true, isDeleted: true },
+    select: { id: true, role: true, isDeleted: true, email: true, emailVerified: true },
   });
 
   if (!user || user.isDeleted) {
     throw new AppError("Forbidden", 403, "FORBIDDEN");
   }
 
-  if (user.role === "ADMIN" || isConfiguredAdminUserId(userId)) {
+  if (await isAdminUser(user)) {
     return { type: "admin", userId };
   }
 
@@ -53,14 +62,14 @@ async function resolveDbBackedAdminActor(
 ): Promise<{ type: "admin"; userId: string }> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, role: true, isDeleted: true },
+    select: { id: true, role: true, isDeleted: true, email: true, emailVerified: true },
   });
 
   if (!user || user.isDeleted) {
     throw new AppError("Forbidden", 403, "FORBIDDEN");
   }
 
-  if (user.role === "ADMIN" || isConfiguredAdminUserId(userId)) {
+  if (await isAdminUser(user)) {
     return { type: "admin", userId };
   }
 
@@ -73,10 +82,10 @@ export async function requireAdminSession() {
 }
 
 /**
- * Builds a server-side Actor from Clerk identity plus current local DB truth.
+ * Builds a server-side Actor from the Better Auth session plus current local DB truth.
  *
- * Clerk confirms identity. The local DB confirms role/account status. Session
- * claims and publicMetadata are never authoritative for server authorization.
+ * The session confirms identity. The local DB confirms role/account status. Nothing in
+ * the session cookie is authoritative for roles.
  * Patron state is resolved from the current DB read model without changing
  * PatronGrant semantics.
  */
@@ -98,7 +107,7 @@ export async function requireAdminActor(): Promise<{
   type: "admin";
   userId: string;
 }> {
-  const { userId } = await auth();
+  const { userId } = await auth({ fresh: true });
   if (!userId) {
     throw new AppError("Unauthorized", 401, "UNAUTHORIZED");
   }

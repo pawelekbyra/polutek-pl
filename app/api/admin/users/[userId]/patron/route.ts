@@ -2,7 +2,6 @@ import { createScopedLogger } from "@/lib/logger";
 import { NextResponse, NextRequest } from "next/server";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { grantPatron, revokePatron } from "@/lib/modules/patron";
-import { syncClerkAccess } from "@/lib/modules/users";
 import { handleApiError } from "@/lib/errors";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { parseAdminBody } from "@/lib/api/admin-body";
@@ -48,13 +47,6 @@ export async function PATCH(request: NextRequest, props: Context) {
 
       if (!result.ok) return handleApiError(result.error);
 
-      await syncClerkAccess(
-        params.userId,
-        true,
-        result.data.normalizedTotal,
-      ).catch((error) => {
-        scopedLogger.error("[ADMIN_PATRON_GRANT_CLERK_SYNC_ERROR]", error);
-      });
 
       return NextResponse.json({
         isPatron: true,
@@ -74,13 +66,6 @@ export async function PATCH(request: NextRequest, props: Context) {
 
       if (!result.ok) return handleApiError(result.error);
 
-      await syncClerkAccess(
-        params.userId,
-        false,
-        result.data.normalizedTotal,
-      ).catch((error) => {
-        scopedLogger.error("[ADMIN_PATRON_REVOKE_CLERK_SYNC_ERROR]", error);
-      });
 
       return NextResponse.json({
         isPatron: false,

@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { createVideoComment, listVideoComments } from '@/lib/modules/comments';
 import { GET, POST } from '@/app/api/videos/[id]/comments/route';
 import { getActorFromAuth } from '@/lib/api/auth';
 
-vi.mock('@clerk/nextjs/server', () => ({
+vi.mock('@/lib/auth/server', () => ({
   auth: vi.fn(),
 }));
 

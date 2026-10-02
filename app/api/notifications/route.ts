@@ -1,4 +1,4 @@
-import { getAuth } from "@clerk/nextjs/server";
+import { getAuth } from "@/lib/auth/server";
 import { NextRequest, NextResponse } from "next/server";
 import { listUserNotifications, markNotificationRead } from "@/lib/modules/notifications";
 

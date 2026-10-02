@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import fs from 'fs';
 import { GET, POST, DELETE } from '@/app/api/subscriptions/route';
 import { getActorFromAuth } from '@/lib/api/auth';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { GetSubscriptionStatusUseCase, SubscribeUseCase, UnsubscribeUseCase } from "@/lib/modules/subscriptions";
 import { getOrCreateCurrentUser } from '@/lib/modules/users';
@@ -10,7 +10,7 @@ import { NextRequest } from 'next/server';
 import { AppError } from '@/lib/modules/shared/app-error';
 
 vi.mock('@/lib/api/auth');
-vi.mock('@clerk/nextjs/server');
+vi.mock('@/lib/auth/server');
 vi.mock('@/lib/rate-limit');
 vi.mock('@/lib/modules/subscriptions');
 vi.mock('@/lib/modules/users');
@@ -38,7 +38,7 @@ describe('subscriptions route behavior', () => {
 
     it('returns status for authenticated user without requiring email claim', async () => {
       vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' });
-      vi.mocked(auth).mockResolvedValue({ sessionClaims: {} } as any);
+      vi.mocked(auth).mockResolvedValue({ userId: 'user_1', user: null } as any);
       vi.mocked(GetSubscriptionStatusUseCase.execute).mockResolvedValue({
         isSubscribed: true,
         subscribedAt: new Date(),
@@ -60,7 +60,7 @@ describe('subscriptions route behavior', () => {
   describe('POST', () => {
     it('returns 400 when trusted email is missing from claims', async () => {
       vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' });
-      vi.mocked(auth).mockResolvedValue({ sessionClaims: {} } as any);
+      vi.mocked(auth).mockResolvedValue({ userId: 'user_1', user: null } as any);
 
       const req = new NextRequest('http://localhost/api/subscriptions', { method: 'POST' });
       const res = await POST(req);
@@ -73,28 +73,20 @@ describe('subscriptions route behavior', () => {
 
     it('syncs user and subscribes when trusted email is present', async () => {
       vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' });
-      vi.mocked(auth).mockResolvedValue({
-        sessionClaims: { email: 'test@example.com', name: 'Test' }
-      } as any);
+      vi.mocked(auth).mockResolvedValue({ userId: 'user_1', user: { email: 'test@example.com', emailVerified: true } } as any);
       vi.mocked(SubscribeUseCase.execute).mockResolvedValue({ isSubscribed: true } as any);
 
       const req = new NextRequest('http://localhost/api/subscriptions', { method: 'POST' });
       const res = await POST(req);
 
       expect(res.status).toBe(200);
-      expect(getOrCreateCurrentUser).toHaveBeenCalledWith(
-        expect.anything(),
-        'user_1',
-        expect.objectContaining({ email: 'test@example.com' })
-      );
+      expect(getOrCreateCurrentUser).toHaveBeenCalledWith(expect.anything(), 'user_1');
       expect(SubscribeUseCase.execute).toHaveBeenCalledWith(expect.anything(), { trustedEmail: 'test@example.com' });
     });
 
     it('maps EMAIL_PREFERENCE_IDENTITY_CONFLICT to HTTP 409', async () => {
       vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' });
-      vi.mocked(auth).mockResolvedValue({
-        sessionClaims: { email: 'test@example.com' }
-      } as any);
+      vi.mocked(auth).mockResolvedValue({ userId: 'user_1', user: { email: 'test@example.com', emailVerified: true } } as any);
       vi.mocked(SubscribeUseCase.execute).mockRejectedValue(new AppError(
         "Email notification preferences could not be updated for this account.",
         409,
@@ -113,7 +105,7 @@ describe('subscriptions route behavior', () => {
   describe('DELETE', () => {
     it('returns 400 when trusted email is missing', async () => {
       vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' });
-      vi.mocked(auth).mockResolvedValue({ sessionClaims: {} } as any);
+      vi.mocked(auth).mockResolvedValue({ userId: 'user_1', user: null } as any);
 
       const req = new NextRequest('http://localhost/api/subscriptions', { method: 'DELETE' });
       const res = await DELETE(req);
@@ -124,9 +116,7 @@ describe('subscriptions route behavior', () => {
 
     it('syncs user and unsubscribes when trusted email is present', async () => {
       vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' });
-      vi.mocked(auth).mockResolvedValue({
-        sessionClaims: { primary_email_address: 'test@example.com' }
-      } as any);
+      vi.mocked(auth).mockResolvedValue({ userId: 'user_1', user: { email: 'test@example.com', emailVerified: true } } as any);
       vi.mocked(UnsubscribeUseCase.execute).mockResolvedValue({ isSubscribed: false } as any);
 
       const req = new NextRequest('http://localhost/api/subscriptions', { method: 'DELETE' });
@@ -138,9 +128,7 @@ describe('subscriptions route behavior', () => {
 
     it('remains fail-safe and returns success even if conflict occurred (behavioral proof)', async () => {
       vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'user', userId: 'user_1' });
-      vi.mocked(auth).mockResolvedValue({
-        sessionClaims: { primary_email_address: 'test@example.com' }
-      } as any);
+      vi.mocked(auth).mockResolvedValue({ userId: 'user_1', user: { email: 'test@example.com', emailVerified: true } } as any);
       // UnsubscribeUseCase is internally fail-safe, so it should return a normal response
       vi.mocked(UnsubscribeUseCase.execute).mockResolvedValue({
         isSubscribed: false,

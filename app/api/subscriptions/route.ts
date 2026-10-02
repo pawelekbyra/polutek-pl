@@ -1,7 +1,7 @@
 import { logger, createScopedLogger } from "@/lib/logger";
 import { NextRequest, NextResponse } from "next/server";
 import { getCorrelationId } from "@/lib/utils/correlation";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { rateLimit } from "@/lib/rate-limit";
 import { handleApiError } from "@/lib/errors";
 import { getActorFromAuth } from "@/lib/api/auth";
@@ -73,22 +73,9 @@ async function requireAuthenticatedActor() {
 }
 
 async function requireTrustedEmail(ctx: any) {
-  const { sessionClaims } = await auth();
-  const claims = sessionClaims as any;
-  let email = normalizeTrustedEmail(
-    claims?.email ||
-      claims?.primary_email_address ||
-      claims?.email_address ||
-      claims?.primaryEmailAddress,
-  );
-
-  if (!email) {
-    const clerkUser = await import("@clerk/nextjs/server")
-      .then((mod) => mod.currentUser?.())
-      .then((user) => user ?? null)
-      .catch(() => null);
-    email = normalizeTrustedEmail(clerkUser?.primaryEmailAddress?.emailAddress);
-  }
+  // Only a verified address of the signed-in account is trusted for mailing consent.
+  const { user } = await auth();
+  const email = user?.emailVerified ? normalizeTrustedEmail(user.email) : null;
 
   if (!email) {
     return {
@@ -103,15 +90,7 @@ async function requireTrustedEmail(ctx: any) {
     };
   }
 
-  // Sync user profile on write operations. The claims are forwarded with the
-  // already-normalized trusted email so the local row keeps the same address
-  // the subscription is recorded under, while still going through the
-  // transactional sync path that resolves email collisions with an existing
-  // row instead of failing on the unique constraint.
-  await getOrCreateCurrentUser(ctx, ctx.actor.userId, {
-    ...((sessionClaims as Record<string, unknown> | null) ?? {}),
-    email,
-  });
+  await getOrCreateCurrentUser(ctx, ctx.actor.userId);
 
   return { email };
 }

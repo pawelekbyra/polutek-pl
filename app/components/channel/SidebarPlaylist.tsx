@@ -8,7 +8,7 @@ import { pl } from "date-fns/locale";
 import Image from "next/image";
 import { AlertCircle } from "../icons";
 import { PublicVideoDTO } from "@/app/types/video";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/lib/auth/react";
 import { useEffect, useRef, useState } from "react";
 import AccessLockOverlay from "../AccessLockOverlay";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";

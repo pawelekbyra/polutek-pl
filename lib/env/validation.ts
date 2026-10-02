@@ -12,22 +12,23 @@ export type EnvValidationResult = {
 
 type EnvRecord = Record<string, string | undefined>;
 
-const requiredRuntimeVars = [
-  'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY',
-] as const;
+const requiredRuntimeVars = [] as const;
 
 const requiredProductionVars = [
   'DATABASE_URL',
   'DATABASE_URL_UNPOOLED',
   'NEXT_PUBLIC_APP_URL',
-  'CLERK_SECRET_KEY',
-  'CLERK_WEBHOOK_SECRET',
+  'BETTER_AUTH_SECRET',
+  'GOOGLE_CLIENT_ID',
+  'GOOGLE_CLIENT_SECRET',
+  'TURNSTILE_SITE_KEY',
+  'TURNSTILE_SECRET_KEY',
   'STRIPE_SECRET_KEY',
   'STRIPE_WEBHOOK_SECRET',
   'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
   'RESEND_API_KEY',
   'EMAIL_FROM',
-  'ADMIN_CLERK_USER_IDS',
+  'ADMIN_EMAILS',
   'MAIN_CREATOR_SLUG',
   'PATRON_MIN_TIP_AMOUNT',
   'PATRON_MIN_TIP_CURRENCY',
@@ -119,6 +120,10 @@ export function validateAppEnv(env: EnvRecord = process.env, mode: EnvValidation
 
   if (hasValue(env, 'EMAIL_UNSUBSCRIBE_SIGNING_SECRET') && env.EMAIL_UNSUBSCRIBE_SIGNING_SECRET!.trim().length < 32) {
     errors.push('EMAIL_UNSUBSCRIBE_SIGNING_SECRET must be at least 32 characters.');
+  }
+
+  if (hasValue(env, 'BETTER_AUTH_SECRET') && env.BETTER_AUTH_SECRET!.trim().length < 32) {
+    errors.push('BETTER_AUTH_SECRET must be at least 32 characters.');
   }
 
   if (hasValue(env, 'MUX_SIGNING_PRIVATE_KEY')) {

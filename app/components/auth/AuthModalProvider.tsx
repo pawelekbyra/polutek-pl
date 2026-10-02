@@ -1,8 +1,10 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { GoogleOneTap } from "@clerk/nextjs";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import AuthModal from "./AuthModal";
+import GoogleOneTapPrompt from "./GoogleOneTapPrompt";
+import OnboardingDialog from "./OnboardingDialog";
+import { rememberReturnPath } from "@/lib/auth/sso-return";
 
 export type AuthView = "sign-in" | "sign-up";
 
@@ -26,23 +28,37 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
 
   const close = useCallback(() => setIsOpen(false), []);
 
+  // The proxy sends visitors without a session here (`/?signin=1&next=/path`) instead of a bare
+  // 404/401: open the sign-in modal and tidy the URL.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("signin") !== "1") return;
+    const next = params.get("next");
+    if (next) rememberReturnPath(next);
+    params.delete("signin");
+    params.delete("next");
+    const query = params.toString();
+    window.history.replaceState(null, "", window.location.pathname + (query ? `?${query}` : "") + window.location.hash);
+    setView("sign-in");
+    setIsOpen(true);
+  }, []);
+
   const value = useMemo(() => ({ open, close, isOpen }), [open, close, isOpen]);
 
   return (
     <AuthModalContext.Provider value={value}>
       {children}
       <AuthModal open={isOpen} initialView={view} onOpenChange={setIsOpen} />
-      {/* Google's native One Tap prompt for logged-out visitors (auto-hides when signed in).
-          Renders Google's own UI, not Clerk-branded UI. */}
-      <GoogleOneTap />
+      <OnboardingDialog />
+      {/* Google's native One Tap prompt for logged-out visitors (hidden when signed in). */}
+      <GoogleOneTapPrompt />
     </AuthModalContext.Provider>
   );
 }
 
 /**
- * Opens our own PAWELPERFECT-styled auth modal (Clerk headless underneath). Use this everywhere
- * instead of Clerk's built-in sign-in modal/button. See
- * docs/tickets/active/CLERK-CUSTOM-AUTH-UI-001.md.
+ * Opens our own PAWELPERFECT-styled auth modal (Better Auth underneath). Use this everywhere
+ * instead of building sign-in UI elsewhere.
  */
 export function useAuthModal(): AuthModalContextValue {
   const ctx = useContext(AuthModalContext);

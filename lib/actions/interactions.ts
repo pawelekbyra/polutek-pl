@@ -1,7 +1,7 @@
 'use server';
 
 import { logger } from "@/lib/logger";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { getOrCreateCurrentUser } from "@/lib/modules/users";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { revalidatePath } from "next/cache";
@@ -23,8 +23,7 @@ export async function toggleVideoLike(videoId: string) {
       // 1. Sync/Fetch user record (Legacy requirement for Server Actions to ensure user exists in DB)
       if (actor.type === 'user') {
           try {
-              const { sessionClaims } = await auth();
-              await getOrCreateCurrentUser(ctx, actor.userId, sessionClaims);
+              await getOrCreateCurrentUser(ctx, actor.userId);
           } catch (err: unknown) {
               logger.error("[Interaction] UserService sync issue:", getErrorMessage(err));
               return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika." };
@@ -55,8 +54,7 @@ export async function toggleVideoDislike(videoId: string) {
 
       if (actor.type === 'user') {
           try {
-              const { sessionClaims } = await auth();
-              await getOrCreateCurrentUser(ctx, actor.userId, sessionClaims);
+              await getOrCreateCurrentUser(ctx, actor.userId);
           } catch (err: unknown) {
               logger.error("[Interaction] UserService sync issue:", getErrorMessage(err));
               return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika." };

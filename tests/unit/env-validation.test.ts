@@ -6,15 +6,17 @@ const productionEnv = {
   DATABASE_URL: 'postgresql://user:pass@example.com:5432/app',
   DATABASE_URL_UNPOOLED: 'postgresql://user:pass@example.com:5432/app',
   NEXT_PUBLIC_APP_URL: 'https://example.com',
-  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: 'pk_test_YnVpbGQtdGltZS1vbmx5JGNsZXJrLmFjY291bnRzLmRldiQ',
-  CLERK_SECRET_KEY: 'sk_test_example',
-  CLERK_WEBHOOK_SECRET: 'whsec_clerk',
+  BETTER_AUTH_SECRET: '0123456789abcdef0123456789abcdef0123',
+  GOOGLE_CLIENT_ID: 'google-client-id',
+  GOOGLE_CLIENT_SECRET: 'google-client-secret',
+  TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
+  TURNSTILE_SECRET_KEY: '1x0000000000000000000000000000000AA',
   STRIPE_SECRET_KEY: 'sk_test_stripe',
   STRIPE_WEBHOOK_SECRET: 'whsec_stripe',
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_stripe',
   RESEND_API_KEY: 're_example',
   EMAIL_FROM: 'notifications@example.com',
-  ADMIN_CLERK_USER_IDS: 'user_admin_1',
+  ADMIN_EMAILS: 'owner@example.com',
   MAIN_CREATOR_SLUG: 'creator-slug',
   PATRON_MIN_TIP_AMOUNT: '500',
   PATRON_MIN_TIP_CURRENCY: 'EUR',
@@ -39,11 +41,11 @@ describe('validateAppEnv', () => {
     expect(result.errors).toEqual([]);
   });
 
-  it('requires immutable admin Clerk IDs in production', () => {
-    const result = validateAppEnv({ ...productionEnv, ADMIN_CLERK_USER_IDS: '' }, 'production');
+  it('requires the admin bootstrap e-mails in production', () => {
+    const result = validateAppEnv({ ...productionEnv, ADMIN_EMAILS: '' }, 'production');
 
     expect(result.success).toBe(false);
-    expect(result.errors).toContain('ADMIN_CLERK_USER_IDS is required in production.');
+    expect(result.errors).toContain('ADMIN_EMAILS is required in production.');
   });
 
   it('requires the main creator slug in production', () => {
@@ -62,11 +64,21 @@ describe('validateAppEnv', () => {
     expect(result.errors).toContain('Writable Redis/KV REST credentials are required in production for rate limiting: UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN or KV_REST_API_URL/KV_REST_API_TOKEN.');
   });
 
-  it('requires Clerk publishable key in every runtime mode', () => {
-    const result = validateAppEnv({ NODE_ENV: 'development' }, 'development');
+  it('requires the auth secrets in production and a long enough BETTER_AUTH_SECRET', () => {
+    const missing = validateAppEnv({ ...productionEnv, BETTER_AUTH_SECRET: '', GOOGLE_CLIENT_ID: '', TURNSTILE_SECRET_KEY: '' }, 'production');
+    expect(missing.success).toBe(false);
+    expect(missing.errors).toEqual(expect.arrayContaining([
+      'BETTER_AUTH_SECRET is required in production.',
+      'GOOGLE_CLIENT_ID is required in production.',
+      'TURNSTILE_SECRET_KEY is required in production.',
+    ]));
 
-    expect(result.success).toBe(false);
-    expect(result.errors).toContain('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is required for application runtime.');
+    const short = validateAppEnv({ ...productionEnv, BETTER_AUTH_SECRET: 'short' }, 'production');
+    expect(short.errors).toContain('BETTER_AUTH_SECRET must be at least 32 characters.');
+  });
+
+  it('does not require any auth variable outside production', () => {
+    expect(validateAppEnv({ NODE_ENV: 'development' }, 'development').success).toBe(true);
   });
 
   it('requires MUX_TOKEN_ID in production', () => {
@@ -107,7 +119,6 @@ describe('validateAppEnv', () => {
   it('warns but does not fail when MAIN_CREATOR_SLUG is missing outside production', () => {
     const result = validateAppEnv({
       NODE_ENV: 'development',
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: 'pk_test_YnVpbGQtdGltZS1vbmx5JGNsZXJrLmFjY291bnRzLmRldiQ',
     }, 'development');
 
     expect(result.success).toBe(true);

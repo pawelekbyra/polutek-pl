@@ -1,6 +1,5 @@
 import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
-import { isConfiguredAdminUserId } from '@/lib/admin-config';
 import { MAIN_CREATOR_NAME, ADMIN_EMAIL } from '@/lib/constants';
 export class UserAdminService {
   /**
@@ -23,9 +22,5 @@ export class UserAdminService {
             language: "pl",
         }
     });
-  }
-
-  static isConfiguredAdmin(userId: string) {
-    return isConfiguredAdminUserId(userId);
   }
 }

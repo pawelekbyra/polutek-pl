@@ -8,10 +8,6 @@ import { fail } from '@/lib/modules/shared/result';
 import { PaymentError } from '@/lib/modules/payments/domain/payment.errors';
 import Stripe from 'stripe';
 
-const { mockSyncClerkAccess } = vi.hoisted(() => ({
-  mockSyncClerkAccess: vi.fn().mockResolvedValue(undefined),
-}));
-
 // Mock Stripe correctly using a dummy class
 const mockConstructEvent = vi.fn().mockReturnValue({
     id: 'evt_123',
@@ -19,13 +15,9 @@ const mockConstructEvent = vi.fn().mockReturnValue({
     data: { object: { id: 'pi_123', amount: 1000, currency: 'pln', metadata: { paymentId: 'pay_123', userId: 'user_123' } } }
 });
 
-vi.mock('@/lib/modules/users/application/sync-clerk-access', () => ({
-  syncClerkAccess: mockSyncClerkAccess,
-}));
 
 vi.mock('@/lib/modules/users', () => ({
   normalizePaymentTotals: vi.fn().mockReturnValue(10),
-  syncClerkAccess: mockSyncClerkAccess,
 }));
 
 vi.mock('@/lib/modules/email', () => ({

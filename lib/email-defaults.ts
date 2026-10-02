@@ -5,7 +5,10 @@ export const SYSTEM_TEMPLATE_SLUGS = [
   'become-patron',
   'thank-you-donation',
   'password-changed',
-  'account-deleted'
+  'account-deleted',
+  'verify-email',
+  'reset-password',
+  'account-exists'
 ] as const;
 
 export type SystemTemplateSlug = typeof SYSTEM_TEMPLATE_SLUGS[number];
@@ -273,6 +276,74 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
   <p style="${FOOTER_STYLE}">
     This email is the sole confirmation of account deletion at {{appName}}.
   </p>
+</div>`,
+  },
+  'verify-email': {
+    subject: 'Potwierdź swój e-mail — {{appName}}',
+    subjectEn: 'Confirm your email — {{appName}}',
+    html: `<div style="${BASE_STYLE}">
+  <h1 style="${HEADER_STYLE}">Potwierdź e-mail</h1>
+
+  <p style="font-size: 16px;">Kliknij przycisk, aby potwierdzić adres {{email}} i aktywować konto w <strong>{{appName}}</strong>. Link działa przez godzinę.</p>
+
+  <a href="{{actionUrl}}" style="${BUTTON_STYLE}">Potwierdzam e-mail →</a>
+
+  <p style="font-size: 14px; color: #555;">Jeśli to nie Ty zakładałeś/-aś konto, zignoruj tę wiadomość.</p>
+</div>`,
+    htmlEn: `<div style="${BASE_STYLE}">
+  <h1 style="${HEADER_STYLE}">Confirm your email</h1>
+
+  <p style="font-size: 16px;">Click the button to confirm {{email}} and activate your <strong>{{appName}}</strong> account. The link is valid for one hour.</p>
+
+  <a href="{{actionUrl}}" style="${BUTTON_STYLE}">Confirm email →</a>
+
+  <p style="font-size: 14px; color: #555;">If you did not create an account, you can ignore this message.</p>
+</div>`,
+  },
+
+  'reset-password': {
+    subject: 'Reset hasła — {{appName}}',
+    subjectEn: 'Password reset — {{appName}}',
+    html: `<div style="${BASE_STYLE}">
+  <h1 style="${HEADER_STYLE}">Reset hasła</h1>
+
+  <p style="font-size: 16px;">Otrzymaliśmy prośbę o ustawienie nowego hasła do konta <strong>{{appName}}</strong> ({{email}}). Link działa przez godzinę.</p>
+
+  <a href="{{actionUrl}}" style="${BUTTON_STYLE}">Ustaw nowe hasło →</a>
+
+  <p style="font-size: 14px; color: #555;">Jeśli to nie Ty prosiłeś/-aś o reset, zignoruj tę wiadomość — Twoje hasło się nie zmieni.</p>
+</div>`,
+    htmlEn: `<div style="${BASE_STYLE}">
+  <h1 style="${HEADER_STYLE}">Reset your password</h1>
+
+  <p style="font-size: 16px;">We received a request to set a new password for your <strong>{{appName}}</strong> account ({{email}}). The link is valid for one hour.</p>
+
+  <a href="{{actionUrl}}" style="${BUTTON_STYLE}">Set a new password →</a>
+
+  <p style="font-size: 14px; color: #555;">If you did not request this, ignore this message — your password will not change.</p>
+</div>`,
+  },
+
+  'account-exists': {
+    subject: 'Ktoś próbował założyć konto na Twój e-mail — {{appName}}',
+    subjectEn: 'Someone tried to sign up with your email — {{appName}}',
+    html: `<div style="${BASE_STYLE}">
+  <h1 style="${HEADER_STYLE}">Masz już konto</h1>
+
+  <p style="font-size: 16px;">Ktoś próbował założyć konto w <strong>{{appName}}</strong> na adres {{email}}, który jest już zarejestrowany. Możesz się zalogować lub (jeśli logujesz się przez Google albo nie pamiętasz hasła) ustawić hasło przyciskiem poniżej.</p>
+
+  <a href="{{actionUrl}}" style="${BUTTON_STYLE}">Przejdź do strony →</a>
+
+  <p style="font-size: 14px; color: #555;">Jeśli to nie Ty, zignoruj tę wiadomość. Nikt nie uzyskał dostępu do Twojego konta.</p>
+</div>`,
+    htmlEn: `<div style="${BASE_STYLE}">
+  <h1 style="${HEADER_STYLE}">You already have an account</h1>
+
+  <p style="font-size: 16px;">Someone tried to create an account at <strong>{{appName}}</strong> with {{email}}, which is already registered. You can sign in, or (if you use Google or forgot your password) set a password with the button below.</p>
+
+  <a href="{{actionUrl}}" style="${BUTTON_STYLE}">Go to the site →</a>
+
+  <p style="font-size: 14px; color: #555;">If this was not you, ignore this message. Nobody gained access to your account.</p>
 </div>`,
   },
 };

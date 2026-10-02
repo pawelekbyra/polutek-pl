@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useClerk, useUser } from "@clerk/nextjs";
+import { useAuth, useUser } from "@/lib/auth/react";
 import { ShieldCheck } from "../icons";
 import {
   DropdownMenu,
@@ -21,11 +21,10 @@ interface UserMenuProps {
   isPatron: boolean;
 }
 
-// Custom replacement for Clerk's default user button. Clerk remains the
-// identity backend; the application owns all visible account UI.
+// Account menu. Better Auth is the identity backend; the application owns all visible account UI.
 export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
   const { user } = useUser();
-  const { signOut } = useClerk();
+  const { signOut } = useAuth();
   const { language } = useLanguage();
   const isPl = language === "pl";
   const [menuOpen, setMenuOpen] = useState(false);
@@ -35,7 +34,6 @@ export default function UserMenu({ isAdmin, isPatron }: UserMenuProps) {
 
   const displayName =
     user.fullName ||
-    user.username ||
     user.primaryEmailAddress?.emailAddress ||
     "";
   const email = user.primaryEmailAddress?.emailAddress || "";

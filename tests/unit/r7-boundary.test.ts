@@ -30,7 +30,7 @@ describe('R7 Module Boundaries', () => {
       expect(content).not.toContain("from 'stripe'");
       expect(content).not.toContain("from \"stripe\"");
       expect(content).not.toContain("from 'next/server'");
-      expect(content).not.toContain("from '@clerk/nextjs'");
+      expect(content).not.toContain("from '@/lib/auth/react'");
     });
   });
 
@@ -42,7 +42,7 @@ describe('R7 Module Boundaries', () => {
       expect(content).not.toContain("from '@/lib/modules/email'");
       expect(content).not.toContain("from '@/lib/modules/comments'");
       expect(content).not.toContain("from 'next/server'");
-      expect(content).not.toContain("from '@clerk/nextjs'");
+      expect(content).not.toContain("from '@/lib/auth/react'");
     });
   });
 

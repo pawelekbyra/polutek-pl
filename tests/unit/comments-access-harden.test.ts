@@ -14,8 +14,8 @@ describe('comments access hardening', () => {
     expect(source).toContain('isPatronDecorative?: boolean;');
     expect(source).not.toContain('isPatron?: boolean;');
 
-    // Mapping from Clerk metadata
-    expect(source).toContain('isPatronDecorative: booleanMetadata(metadata.isPatron)');
+    // The own-comment preview carries no session-derived patron/role data (the server decides badges)
+    expect(source).toContain('isPatronDecorative: false');
 
     // Defensive default for commenting
     expect(source).toContain('canComment={viewer?.canComment ?? false}');

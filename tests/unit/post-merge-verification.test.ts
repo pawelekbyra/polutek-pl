@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { prisma } from "@/lib/prisma";
 import { getActorFromAuth, requireAdminSession } from "@/lib/api/auth";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 
-vi.mock("@clerk/nextjs/server", () => ({
+vi.mock("@/lib/auth/server", () => ({
   auth: vi.fn(),
   currentUser: vi.fn(),
 }));
@@ -40,7 +40,7 @@ function mockAuth(userId: string | null, role?: string) {
 describe("Post-merge Admin Auth Canonicalization Verification", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.ADMIN_CLERK_USER_IDS = "";
+    process.env.ADMIN_EMAILS = "";
   });
 
   it("VERIFY: DB admin without claim has access", async () => {
@@ -95,8 +95,8 @@ describe("Post-merge Admin Auth Canonicalization Verification", () => {
     expect(response?.status).toBe(403);
   });
 
-  it("VERIFY: Configured admin works exclusively with active local User", async () => {
-    process.env.ADMIN_CLERK_USER_IDS = "configured_admin";
+  it("VERIFY: Listed admin e-mail works exclusively with an active, verified local User", async () => {
+    process.env.ADMIN_EMAILS = "owner@example.com";
 
     // Active case
     mockAuth("configured_admin");
@@ -104,7 +104,10 @@ describe("Post-merge Admin Auth Canonicalization Verification", () => {
       id: "configured_admin",
       isDeleted: false,
       role: "USER",
+      email: "owner@example.com",
+      emailVerified: true,
     } as any);
+    vi.mocked(prisma.user.update).mockResolvedValue({} as any);
 
     const actor = await getActorFromAuth({ allowGuest: false });
     expect(actor.type).toBe("admin");

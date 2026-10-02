@@ -1,11 +1,10 @@
 'use server';
 
 import { logger } from "@/lib/logger";
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth/server";
 import { revalidatePath } from "next/cache";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { updateUserLanguage as updateUserLanguageUseCase } from "@/lib/modules/users";
-import { ClerkIdentityProvider } from "@/lib/api/identity-provider";
 
 export async function updateUserLanguage(language: 'en' | 'pl') {
   const { userId } = await auth();
@@ -13,13 +12,9 @@ export async function updateUserLanguage(language: 'en' | 'pl') {
 
   try {
     // Same use case as PATCH /api/user/language so both entry points share one
-    // set of rules (deleted-user rejection, domain errors, Clerk metadata sync).
+    // set of rules (deleted-user rejection, domain errors).
     const ctx = createAppContext({ actor: { type: "user", userId } });
-    await updateUserLanguageUseCase(
-      ctx,
-      { userId, language },
-      new ClerkIdentityProvider(),
-    );
+    await updateUserLanguageUseCase(ctx, { userId, language });
     revalidatePath('/', 'layout');
     return { success: true };
   } catch (error: unknown) {

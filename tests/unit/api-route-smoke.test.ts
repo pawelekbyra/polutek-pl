@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth } from '@/lib/auth/server';
 import { rateLimit } from '@/lib/rate-limit';
 import { GET as getMedia } from '@/app/api/media/[...path]/route';
 import { POST as createCheckoutIntent } from '@/app/api/checkout/create-intent/route';
@@ -8,7 +8,7 @@ import { getGatedMedia } from '@/lib/modules/media';
 import { fail } from '@/lib/modules/shared/result';
 import { MediaSourceNotFoundError } from '@/lib/modules/media/domain/media.errors';
 
-vi.mock('@clerk/nextjs/server', () => ({
+vi.mock('@/lib/auth/server', () => ({
   auth: vi.fn(),
 }));
 
