@@ -123,7 +123,7 @@ describe("AuthModal (F-01, F-07)", () => {
     }
   });
 
-  it.fails("F-07: a TOTP code does not silently trust the device for 30 days", async () => {
+  async function reachTwoFactorStep() {
     h.client.signIn.email.mockResolvedValue({ data: { twoFactorRedirect: true }, error: null });
     h.client.twoFactor.verifyTotp.mockResolvedValue({ data: {}, error: null });
     renderModal();
@@ -132,9 +132,21 @@ describe("AuthModal (F-01, F-07)", () => {
     fireEvent.submit(screen.getByLabelText("Password").closest("form") as HTMLFormElement);
     const code = await screen.findByLabelText("Code");
     fireEvent.change(code, { target: { value: "123456" } });
+    return code;
+  }
+
+  it("F-07: a TOTP code does not silently trust the device (opt-in, off by default)", async () => {
+    const code = await reachTwoFactorStep();
     fireEvent.submit(code.closest("form") as HTMLFormElement);
     await waitFor(() => expect(h.client.twoFactor.verifyTotp).toHaveBeenCalled());
-    // handleTwoFactor() hard-codes trustDevice: true (Better Auth: 30-day cookie that skips 2FA).
-    expect(h.client.twoFactor.verifyTotp.mock.calls[0][0]).not.toMatchObject({ trustDevice: true });
+    expect(h.client.twoFactor.verifyTotp.mock.calls[0][0]).toMatchObject({ trustDevice: false });
+  });
+
+  it("F-07: ticking 'Remember this device' sends trustDevice", async () => {
+    const code = await reachTwoFactorStep();
+    fireEvent.click(screen.getByLabelText(/remember this device/i));
+    fireEvent.submit(code.closest("form") as HTMLFormElement);
+    await waitFor(() => expect(h.client.twoFactor.verifyTotp).toHaveBeenCalled());
+    expect(h.client.twoFactor.verifyTotp.mock.calls[0][0]).toMatchObject({ trustDevice: true });
   });
 });

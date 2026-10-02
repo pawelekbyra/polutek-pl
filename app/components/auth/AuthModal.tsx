@@ -44,6 +44,8 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
   const [emailTaken, setEmailTaken] = useState<"google" | "password" | null>(null);
   const [code, setCode] = useState("");
   const [useBackupCode, setUseBackupCode] = useState(false);
+  // Opt-in: skip the code on this browser for a few days (off by default, shared computers).
+  const [trustDevice, setTrustDevice] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -191,7 +193,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
     setError(null);
     const result = useBackupCode
       ? await authClient.twoFactor.verifyBackupCode({ code: code.trim() })
-      : await authClient.twoFactor.verifyTotp({ code: code.trim(), trustDevice: true });
+      : await authClient.twoFactor.verifyTotp({ code: code.trim(), trustDevice });
     if (result.error) return fail(result.error);
     finishSignedIn();
   }
@@ -427,6 +429,12 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
                   autoComplete="one-time-code"
                   required
                 />
+                {!useBackupCode && (
+                  <label className="flex items-center gap-2 text-[12px] text-[var(--chan-body)]">
+                    <input type="checkbox" checked={trustDevice} onChange={(e) => setTrustDevice(e.target.checked)} />
+                    {isPl ? "Zapamiętaj to urządzenie na 7 dni" : "Remember this device for 7 days"}
+                  </label>
+                )}
                 <PrimaryButton loading={loading} label={isPl ? "Potwierdź" : "Verify"} />
                 <button type="button" className="text-[12px] text-[var(--chan-muted)] underline" onClick={() => { setUseBackupCode(!useBackupCode); setCode(""); }}>
                   {useBackupCode ? (isPl ? "Użyj aplikacji" : "Use the app") : (isPl ? "Użyj kodu zapasowego" : "Use a backup code")}

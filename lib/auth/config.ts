@@ -10,6 +10,8 @@ export const SESSION_EXPIRES_IN_SECONDS = 60 * 60 * 24 * 30;
 export const SESSION_UPDATE_AGE_SECONDS = 60 * 60 * 24;
 export const SESSION_FRESH_AGE_SECONDS = 60 * 60 * 24;
 export const SESSION_COOKIE_CACHE_SECONDS = 60;
+/** "Remember this device" after a TOTP code skips 2FA for this long (user opt-in, default off). */
+export const TWO_FACTOR_TRUST_DEVICE_SECONDS = 60 * 60 * 24 * 7;
 export const EMAIL_TOKEN_TTL_SECONDS = 60 * 60;
 /**
  * Failed sign-in lockout (on top of Better Auth's per-IP request rule). Only FAILED attempts count

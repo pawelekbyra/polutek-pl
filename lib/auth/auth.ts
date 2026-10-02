@@ -15,6 +15,7 @@ import {
   SESSION_EXPIRES_IN_SECONDS,
   SESSION_FRESH_AGE_SECONDS,
   SESSION_UPDATE_AGE_SECONDS,
+  TWO_FACTOR_TRUST_DEVICE_SECONDS,
   SIGN_IN_IP_RATE_PER_MINUTE,
   getAuthBaseUrl,
   getTrustedOrigins,
@@ -170,7 +171,7 @@ export const auth = betterAuth({
         ]
       : []),
     ...(googleEnabled ? [oneTap({ clientId: process.env.GOOGLE_CLIENT_ID as string })] : []),
-    twoFactor({ issuer: APP_NAME }),
+    twoFactor({ issuer: APP_NAME, trustDeviceMaxAge: TWO_FACTOR_TRUST_DEVICE_SECONDS }),
     nextCookies(), // must stay last
   ],
 });
