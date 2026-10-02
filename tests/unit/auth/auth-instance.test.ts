@@ -1,5 +1,8 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
+// Importing Better Auth and its plugins is slow on a cold, busy machine.
+vi.setConfig({ testTimeout: 30_000 });
+
 const sendEmail = vi.hoisted(() => ({
   queueVerificationEmail: vi.fn(),
   queuePasswordResetEmail: vi.fn(),

@@ -105,6 +105,10 @@ function emailKey(email: string) {
 }
 
 export const authBeforeHook = createAuthMiddleware(async (ctx) => {
+  // A password change always signs the other devices out, whatever the client asked for.
+  if (ctx.path === "/change-password") {
+    return { context: { ...ctx, body: { ...(ctx.body as object), revokeOtherSessions: true } } };
+  }
   // Per-account lockout on top of Better Auth's per-IP rule: a distributed guesser cannot hammer one address.
   if (ctx.path === "/sign-in/email") {
     const body = ctx.body as { email?: unknown } | undefined;
