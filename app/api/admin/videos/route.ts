@@ -11,6 +11,7 @@ import {
   buildAdminVideoUpdatePayload,
   isAdminVideoRequestBody,
 } from "@/lib/modules/video";
+import { purgeVideoStorage, snapshotVideoStorage } from "@/lib/modules/video-pipeline";
 import { fromUseCaseResult } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { parseVideoQueryParams } from "@/lib/admin/query-parser";
@@ -120,7 +121,10 @@ export async function DELETE(req: NextRequest) {
   try {
     const actor = { type: "admin" as const, userId: adminUserId! };
     const ctx = createAppContext({ actor });
+    // Own pipeline: note what the video owns in R2 before the rows are gone, remove it after a successful delete.
+    const storage = await snapshotVideoStorage(id, ctx).catch(() => null);
     const result = await deleteAdminVideo(id, ctx);
+    if (result.ok && storage) await purgeVideoStorage(id, storage);
     return fromUseCaseResult(result);
   } catch (error: unknown) {
     scopedLogger.error("[ADMIN_VIDEO_DELETE_ERROR]", error);

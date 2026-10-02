@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Edit } from "@/app/components/icons";
 import { useToast } from "@/app/hooks/useToast";
 import { CoverImageUpload } from "./CoverImageUpload";
-import { VideoMediaManager } from "./media/VideoMediaManager";
-import { AdminVideoAssetDto } from "@/lib/modules/video/domain/video.dto";
+import { VideoPipelinePanel } from "./pipeline/VideoPipelinePanel";
 import Link from "next/link";
 
 interface StudioOriginal {
@@ -27,7 +26,6 @@ interface VideoStudioProps {
     tier: string;
     thumbnailUrl?: string | null;
     status: string;
-    assets?: AdminVideoAssetDto[];
     original?: StudioOriginal | null;
   };
   onSaved?: () => void;
@@ -46,7 +44,6 @@ function getErrorMessage(error: unknown): string {
 export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps) {
   const toast = useToast();
   const [thumbnailUrl, setThumbnailUrl] = useState(initialVideo.thumbnailUrl ?? "");
-  const assets = initialVideo.assets ?? [];
 
   const handleThumbnailUpload = async (url: string) => {
     setThumbnailUrl(url);
@@ -69,7 +66,7 @@ export function VideoStudio({ videoId, initialVideo, onSaved }: VideoStudioProps
 
   return (
     <div className="grid grid-cols-1 gap-6 p-4 md:grid-cols-[1fr_360px] md:p-6">
-      <VideoMediaManager videoId={videoId} assets={assets} tier={initialVideo.tier} onChanged={onSaved} />
+      <VideoPipelinePanel videoId={videoId} videoStatus={initialVideo.status} onChanged={onSaved} />
 
       <div className="space-y-5">
         <div className="space-y-2">

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { AdminVideoListItem } from "@/lib/modules/video/domain/admin-video-list.dto";
 import { logger } from "@/lib/logger";
@@ -6,7 +6,7 @@ import { readAdminApiError } from "@/lib/admin/api-error";
 import { CreateVideoSourceMode } from "./VideoForm";
 import { INITIAL_FORM_DATA, publicationFormFields } from "./video-utils";
 
-export function useAdminVideos(isAdmin: boolean) {
+export function useAdminVideos(_isAdmin: boolean) {
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [videos, setVideos] = useState<AdminVideoListItem[]>([]);
@@ -19,13 +19,9 @@ export function useAdminVideos(isAdmin: boolean) {
   const [isSlugManual, setIsSlugManual] = useState<boolean>(false);
   const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
   const [createSourceMode, setCreateSourceMode] = useState<CreateVideoSourceMode>("UPLOAD");
-  const [preferredProvider, setPreferredProvider] = useState("CLOUDFLARE_STREAM");
-  const [existingCloudflareSource, setExistingCloudflareSource] = useState("");
   const [createUploadState, setCreateUploadState] = useState<{
     videoId: string;
     publishAfterReady: boolean;
-    isPublishing: boolean;
-    isAttachingExisting?: boolean;
   } | null>(null);
 
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
@@ -42,14 +38,6 @@ export function useAdminVideos(isAdmin: boolean) {
   const [isMainFeatured, setIsMainFeatured] = useState<string>("ALL");
   const [showInSidebar, setShowInSidebar] = useState<string>("ALL");
   const [orderBy, setOrderBy] = useState<string>("createdAt");
-  const [cloudflareHealth, setCloudflareHealth] = useState<{ configured: boolean; missing?: string[] } | null>(null);
-
-  useEffect(() => {
-    if (!isAdmin) return;
-    fetch("/api/admin/health/cloudflare")
-      .then(async (res) => (res.ok ? setCloudflareHealth(await res.json()) : null))
-      .catch((err) => logger.error("Failed to fetch Cloudflare health", err));
-  }, [isAdmin]);
 
   const fetchVideos = useCallback(async (p = page, options?: { pending?: boolean }) => {
     const showPending = options?.pending ?? false;
@@ -131,12 +119,12 @@ export function useAdminVideos(isAdmin: boolean) {
     error, setError, videos, setVideos, stats, setStats, isInitialLoading, setIsInitialLoading, isRefetching, setIsRefetching,
     isEditing, setIsEditing, isSubmitting, setIsSubmitting, formError, setFormError,
     isSlugManual, setIsSlugManual, selectedVideoFile, setSelectedVideoFile,
-    createSourceMode, setCreateSourceMode, preferredProvider, setPreferredProvider, existingCloudflareSource, setExistingCloudflareSource,
+    createSourceMode, setCreateSourceMode,
     createUploadState, setCreateUploadState, formData, setFormData, total, setTotal,
     page, setPage, totalPages, setTotalPages, searchQuery, setSearchQuery,
     statusFilter, setStatusFilter, tierFilter, setTierFilter, sourceKindFilter, setSourceKindFilter,
     migrationStatusFilter, setMigrationStatusFilter, needsAttention, setNeedsAttention,
     isMainFeatured, setIsMainFeatured, showInSidebar, setShowInSidebar, orderBy, setOrderBy,
-    cloudflareHealth, setCloudflareHealth, fetchVideos, fetchVideoForEdit
+    fetchVideos, fetchVideoForEdit
   };
 }

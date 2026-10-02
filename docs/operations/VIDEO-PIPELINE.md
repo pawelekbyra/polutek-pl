@@ -95,3 +95,27 @@ Ręczne awaryjne czyszczenie zadania: `update "VideoEncodeJob" set status='CANCE
 **Restart workera:** `cd /opt/serwerek/apps/polutek && docker compose restart encoder` (bieżące zadanie wraca do kolejki bez zużycia próby i kodowanie startuje od nowa). Aktualizacja: zwykły `./deploy.sh <tag>`.
 
 **Rollback:** `./deploy.sh <tag> --rollback` przywraca poprzedni obraz aplikacji **i** workera (`.previous-worker-image`). Samo zatrzymanie kodowania: `docker compose stop encoder` (zadania czekają w `QUEUED`, nic się nie psuje). Migracja `VideoEncodeJob` jest addytywna i zostaje.
+
+## 5. Panel admina
+
+- **Nowy film** (`/admin/videos`, "Nowy film"): źródło to tylko "Wgraj plik wideo" albo "szkic bez pliku". Nie ma wyboru Mux/Stream/YouTube/Vimeo/URL ani UID. Po zapisie szkicu plik jedzie od razu (komponent `VideoPipelinePanel`).
+- **Szczegóły filmu -> Media** (`/admin/videos/<id>?tab=media`): karta uploadu (wybór pliku, wstrzymaj/wznów/anuluj, procent, części, prędkość, ETA, checkbox "opublikuj automatycznie po zakodowaniu") i karta "Przetwarzanie" (stan, etap, procent, ETA, próby, przyczyna błędu, ostrzeżenie "worker nie odpowiada", "Anuluj kodowanie", "Zakoduj ponownie", lista wersji HLS z usuwaniem; wersji, która gra opublikowany film, nie da się usunąć).
+- Trasy: `GET /api/admin/videos/<id>/pipeline`, `POST .../pipeline/encode`, `DELETE .../pipeline/jobs/<jobId>`, `DELETE .../pipeline/assets/<assetId>`; usunięcie filmu kasuje też jego obiekty w R2 (oryginały i HLS, best-effort po udanym usunięciu z bazy).
+- Publikacja: bez zmian (blokady `VideoPolicy.getPublicationBlockers`); film jest publikowalny dopiero, gdy worker utworzył asset `SELF_HLS` READY i aktywną trasę. "Opublikuj po zakodowaniu" używa `Video.publishAfterAssetReady`.
+- Napisy (`subtitleUrlPl/En`) bez zmian; stare providery (Mux/Stream/Vimeo/YouTube) zostają w kodzie do osobnego sprzątania, ale nic nowego od nich nie zależy.
+
+## 6. Włączenie na serwerze (kolejność)
+
+1. Scal PR-y, `deploy.sh <tag>` (migracje `VideoEncodeJob` i `VideoOriginal.upload*`, obraz `worker`).
+2. CORS bucketa oryginałów: `npx wrangler r2 bucket cors set polutek --file scripts/hls/originals-cors.json` (potrzebny token Cloudflare z uprawnieniem do R2).
+3. Upewnij się, że token R2 ma odczyt i zapis na `polutek`, `polutek-hls` i bucketach miniatur; w `app.env` muszą być `CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS=polutek` i (opcjonalnie) `CLOUDFLARE_R2_BUCKET_HLS=polutek-hls`.
+4. Na serwerze: `cd /opt/serwerek/apps/polutek && grep -E '^(DATABASE_URL|CLOUDFLARE_R2_|MAIN_CREATOR_SLUG|NEXT_PUBLIC_R2_PUBLIC_HOST)' app.env > worker.env && chmod 600 worker.env && mkdir -p /opt/serwerek/data/video-work && chown 1000:1000 /opt/serwerek/data/video-work`
+5. `ENCODER_IMAGE=polutek-worker:<tag> docker compose up -d --no-deps encoder` (albo ponowny `./deploy.sh <tag>`), `docker compose logs -f encoder` ma pokazać `started`. `ai-log "enabled video encoder"`.
+6. Test: nowy szkic, wgraj krótki plik, obserwuj Media -> Przetwarzanie.
+
+## 7. Limity i uwagi
+
+- Maks. rozmiar uploadu 10 GiB (`VIDEO_UPLOAD_MAX_BYTES`, sufit 50 GiB). Dysk 75 GB: w trakcie zadania `oryginał + wynik` (do ok. 2-3× oryginału), po zadaniu kasowane; wynik HLS w R2 (nie na dysku serwera).
+- Kodowanie: jedno naraz; ok. 1-3× czasu rzeczywistego filmu (preset `slow`, 2 vCPU); strona zwalnia o ok. 25% w tym czasie (SERWEREK.md §14). `HLS_PRESET=medium` przyspiesza.
+- Poprzednie oryginały zostają w R2 (status SUPERSEDED) do ręcznego sprzątania albo usunięcia filmu.
+- Nieobsłużone: HDR (tone-mapping), napisy i wiele ścieżek audio w HLS, trick play.

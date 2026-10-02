@@ -7,11 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Globe, ShieldCheck, ImageIcon, AlertCircle, Save, FileVideo, Send, RotateCcw, Youtube } from "@/app/components/icons";
+import { ArrowLeft, Globe, ShieldCheck, ImageIcon, AlertCircle, Save, FileVideo, Send, RotateCcw } from "@/app/components/icons";
 import { CoverImageUpload } from "./CoverImageUpload";
 import type { PublishMode } from "./video-utils";
 
-export type CreateVideoSourceMode = "UPLOAD" | "EXISTING_CLOUDFLARE" | "YOUTUBE" | "VIMEO" | "NONE";
+/** The only source is our own pipeline: upload a file now, or save a draft and upload later. */
+export type CreateVideoSourceMode = "UPLOAD" | "NONE";
 
 interface VideoFormData {
   id: string;
@@ -54,14 +55,6 @@ interface VideoFormProps {
   onVideoFileChange?: (file: File | null) => void;
   createSourceMode?: CreateVideoSourceMode;
   onCreateSourceModeChange?: (mode: CreateVideoSourceMode) => void;
-  existingCloudflareSource?: string;
-  onExistingCloudflareSourceChange?: (value: string) => void;
-  externalSourceId?: string;
-  onExternalSourceIdChange?: (value: string) => void;
-  preferredProvider?: string;
-  onPreferredProviderChange?: (value: string) => void;
-  /** Current video tier — needed to gate YouTube/Vimeo options */
-  currentTier?: string;
   /** Extra cards under the right column (the edit page's "Cel zbiórki"). */
   sidebarExtra?: React.ReactNode;
 }
@@ -81,23 +74,13 @@ export function VideoForm({
   onVideoFileChange,
   createSourceMode = "UPLOAD",
   onCreateSourceModeChange,
-  existingCloudflareSource = "",
-  onExistingCloudflareSourceChange,
-  externalSourceId = "",
-  onExternalSourceIdChange,
-  preferredProvider = "CLOUDFLARE_STREAM",
-  onPreferredProviderChange,
-  currentTier,
   sidebarExtra,
 }: VideoFormProps) {
   const isCreate = !formData.id;
   const wantsPublish = formData.status === "PUBLISHED";
-  const isPatron = (currentTier || formData.tier) === "PATRON";
 
   function hasCreateSource(): boolean {
     if (createSourceMode === "UPLOAD") return Boolean(selectedVideoFile);
-    if (createSourceMode === "EXISTING_CLOUDFLARE") return existingCloudflareSource.trim().length > 0;
-    if (createSourceMode === "YOUTUBE" || createSourceMode === "VIMEO") return externalSourceId.trim().length > 0;
     if (createSourceMode === "NONE") return true;
     return false;
   }
@@ -112,8 +95,8 @@ export function VideoForm({
           <h1 className="text-3xl font-bold tracking-tight">{isCreate ? "Nowy film" : "Edycja filmu"}</h1>
           <p className="text-sm text-muted-foreground">
             {isCreate
-              ? "Ustaw opis, tłumaczenia, dostęp i plik wideo w jednym miejscu. Zapisz jako szkic albo poproś o publikację po przetworzeniu Cloudflare."
-              : "Edytuj metadane filmu. Media Cloudflare są zarządzane w szczegółach filmu."}
+              ? "Ustaw opis, tłumaczenia, dostęp i plik wideo w jednym miejscu. Zapisz jako szkic albo poproś o publikację po zakodowaniu."
+              : "Edytuj metadane filmu. Plik wideo i kodowanie są w szczegółach filmu (zakładka Media)."}
           </p>
         </div>
         <div className="flex gap-3">
@@ -193,24 +176,21 @@ export function VideoForm({
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><FileVideo className="h-5 w-5" /> Źródła wideo</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-lg flex items-center gap-2"><FileVideo className="h-5 w-5" /> Wideo</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               {isCreate ? (
                 <>
                   <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">
-                    <p className="font-semibold">Wybierz źródło główne</p>
-                    <p className="mt-1 text-xs">Pierwsze źródło stanie się primary. Kolejne źródła alternatywne możesz dodać po zapisie w zakładce Media.</p>
+                    <p className="font-semibold">Własne kodowanie i odtwarzanie</p>
+                    <p className="mt-1 text-xs">Plik trafia prosto do naszego magazynu, potem sami go kodujemy do HLS. Postęp i ewentualne błędy zobaczysz w szczegółach filmu.</p>
                   </div>
                   <div className="space-y-2">
-                    <Label>Typ źródła</Label>
+                    <Label>Źródło</Label>
                     <Select value={createSourceMode} onValueChange={(value) => onCreateSourceModeChange?.(value as CreateVideoSourceMode)} disabled={isSubmitting || isSourceLocked}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="UPLOAD">Cloudflare Stream — upload pliku</SelectItem>
-                        <SelectItem value="EXISTING_CLOUDFLARE">Cloudflare Stream — istniejący UID</SelectItem>
-                        {!isPatron && <SelectItem value="YOUTUBE">YouTube — URL lub ID</SelectItem>}
-                        {!isPatron && <SelectItem value="VIMEO">Vimeo — URL lub ID</SelectItem>}
-                        <SelectItem value="NONE">Brak źródła — zapisz szkic</SelectItem>
+                        <SelectItem value="UPLOAD">Wgraj plik wideo</SelectItem>
+                        <SelectItem value="NONE">Brak pliku: zapisz szkic, wgram później</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -221,7 +201,7 @@ export function VideoForm({
                       <Input
                         id="videoFile"
                         type="file"
-                        accept="video/*"
+                        accept="video/*,.mkv,.ts,.mts,.m2ts"
                         disabled={isSubmitting || isSourceLocked}
                         onChange={(event) => onVideoFileChange?.(event.target.files?.[0] || null)}
                       />
@@ -233,76 +213,14 @@ export function VideoForm({
                     </div>
                   )}
 
-                  {createSourceMode === "UPLOAD" && (
-                    <div className="space-y-2">
-                      <Label>Primary provider</Label>
-                      <Select value={preferredProvider} onValueChange={onPreferredProviderChange} disabled={isSubmitting || isSourceLocked}>
-                        <SelectTrigger><SelectValue placeholder="Wybierz provider..." /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="CLOUDFLARE_STREAM">Cloudflare Stream</SelectItem>
-                          <SelectItem value="MUX">Mux</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground">
-                        Plik trafi na R2, następnie zostanie zmirrorowany na oba providery. Wybrany stanie się primary — z niego będzie serwowane wideo.
-                      </p>
-                    </div>
-                  )}
-
-                  {createSourceMode === "EXISTING_CLOUDFLARE" && (
-                    <div className="space-y-2">
-                      <Label htmlFor="existingCloudflareSource">Cloudflare Stream UID albo adres</Label>
-                      <Input
-                        id="existingCloudflareSource"
-                        value={existingCloudflareSource}
-                        onChange={(event) => onExistingCloudflareSourceChange?.(event.target.value)}
-                        placeholder="np. 31c9291ab41fac05471db4e73aa11717"
-                        disabled={isSubmitting || isSourceLocked}
-                      />
-                      {existingCloudflareSource.trim() && (
-                        <p className="text-xs text-muted-foreground">Po zapisie sprawdzę status assetu w Cloudflare i opublikuję tylko jeśli jest READY.</p>
-                      )}
-                    </div>
-                  )}
-
-                  {createSourceMode === "YOUTUBE" && (
-                    <div className="space-y-2">
-                      <Label htmlFor="externalSourceId" className="flex items-center gap-1"><Youtube className="h-3 w-3 text-red-600" />YouTube URL lub ID</Label>
-                      <Input
-                        id="externalSourceId"
-                        value={externalSourceId}
-                        onChange={(event) => onExternalSourceIdChange?.(event.target.value)}
-                        placeholder="np. https://youtube.com/watch?v=abc lub abc123"
-                        disabled={isSubmitting || isSourceLocked}
-                      />
-                    </div>
-                  )}
-
-                  {createSourceMode === "VIMEO" && (
-                    <div className="space-y-2">
-                      <Label htmlFor="externalSourceId" className="flex items-center gap-1"><span className="text-sky-700 font-bold text-sm">◈</span>Vimeo URL lub ID</Label>
-                      <Input
-                        id="externalSourceId"
-                        value={externalSourceId}
-                        onChange={(event) => onExternalSourceIdChange?.(event.target.value)}
-                        placeholder="np. https://vimeo.com/123456789 lub 123456789"
-                        disabled={isSubmitting || isSourceLocked}
-                      />
-                    </div>
-                  )}
-
                   {createSourceMode === "NONE" && (
                     <p className="text-xs text-muted-foreground rounded-lg border border-amber-200 bg-amber-50 p-3">
-                      Film zostanie zapisany jako szkic bez źródła. Źródła możesz dodać później w szczegółach filmu.
+                      Film zostanie zapisany jako szkic bez pliku. Plik wgrasz później w szczegółach filmu (zakładka Media).
                     </p>
-                  )}
-
-                  {isPatron && (createSourceMode === "YOUTUBE" || createSourceMode === "VIMEO") && (
-                    <p className="text-xs text-destructive">YouTube i Vimeo niedostępne dla tieru PATRON — brak bezpiecznego prywatnego playbacku.</p>
                   )}
                 </>
               ) : (
-                <p className="text-sm text-muted-foreground">Upload i zarządzanie źródłami są dostępne w zakładce Media szczegółów filmu.</p>
+                <p className="text-sm text-muted-foreground">Upload i kodowanie są dostępne w zakładce Media szczegółów filmu.</p>
               )}
             </CardContent>
           </Card>

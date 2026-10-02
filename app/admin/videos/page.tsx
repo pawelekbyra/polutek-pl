@@ -18,7 +18,7 @@ import { AdminVideoEditView } from "./components/AdminVideoEditView";
 import { AdminVideoHeader } from "./components/AdminVideoHeader";
 import { AdminVideoStats } from "./components/AdminVideoStats";
 import { AdminVideoFiltersView } from "./components/AdminVideoFiltersView";
-import { slugify, normalizeCloudflareSource, INITIAL_FORM_DATA, buildPublicationPayload, publicationFormFields } from "./components/video-utils";
+import { slugify, INITIAL_FORM_DATA, buildPublicationPayload, publicationFormFields } from "./components/video-utils";
 import { useAdminVideos } from "./components/useAdminVideos";
 
 export default function AdminVideosPage() {
@@ -31,19 +31,17 @@ export default function AdminVideosPage() {
   const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
   const [deleteDialogVideoId, setDeleteDialogVideoId] = useState<string | null>(null);
 
-  const [externalSourceId, setExternalSourceId] = useState("");
-
   const {
     error, setError, videos, stats, isInitialLoading, setIsInitialLoading, isRefetching,
     isEditing, setIsEditing, isSubmitting, setIsSubmitting, formError, setFormError,
     isSlugManual, setIsSlugManual, selectedVideoFile, setSelectedVideoFile,
-    createSourceMode, setCreateSourceMode, preferredProvider, setPreferredProvider, existingCloudflareSource, setExistingCloudflareSource,
+    createSourceMode, setCreateSourceMode,
     createUploadState, setCreateUploadState, formData, setFormData, total,
     page, totalPages, searchQuery, setSearchQuery,
     statusFilter, setStatusFilter, tierFilter, setTierFilter, sourceKindFilter, setSourceKindFilter,
     migrationStatusFilter, setMigrationStatusFilter, needsAttention, setNeedsAttention,
     isMainFeatured, setIsMainFeatured, showInSidebar, setShowInSidebar, orderBy, setOrderBy,
-    cloudflareHealth, fetchVideos, fetchVideoForEdit
+    fetchVideos, fetchVideoForEdit
   } = useAdminVideos(isAdmin);
 
   const loadAdminVideos = useCallback(async () => {
@@ -109,8 +107,6 @@ export default function AdminVideosPage() {
       ...publicationFormFields(vid),
     });
     setSelectedVideoFile(null);
-    setExistingCloudflareSource("");
-    setExternalSourceId("");
     setCreateSourceMode("UPLOAD");
     setCreateUploadState(null);
     setIsEditing(true);
@@ -143,8 +139,6 @@ export default function AdminVideosPage() {
       ...publicationFormFields({}),
     });
     setSelectedVideoFile(null);
-    setExistingCloudflareSource("");
-    setExternalSourceId("");
     setCreateSourceMode("UPLOAD");
     setCreateUploadState(null);
     setIsEditing(true);
@@ -155,8 +149,6 @@ export default function AdminVideosPage() {
     setIsSlugManual(false);
     setFormData(INITIAL_FORM_DATA);
     setSelectedVideoFile(null);
-    setExistingCloudflareSource("");
-    setExternalSourceId("");
     setCreateSourceMode("UPLOAD");
     setCreateUploadState(null);
     setIsEditing(true);
@@ -166,15 +158,12 @@ export default function AdminVideosPage() {
     e.preventDefault();
     const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLElement | null;
     const intent = submitter?.dataset.intent === "PUBLISHED" || (!submitter && formData.status === "PUBLISHED") ? "PUBLISHED" : "DRAFT";
-    const existingProviderAssetId = normalizeCloudflareSource(existingCloudflareSource);
     const hasCreateSource = (() => {
       if (createSourceMode === "UPLOAD") return Boolean(selectedVideoFile);
-      if (createSourceMode === "EXISTING_CLOUDFLARE") return Boolean(existingProviderAssetId);
-      if (createSourceMode === "YOUTUBE" || createSourceMode === "VIMEO") return Boolean(externalSourceId?.trim());
       return false; // NONE
     })();
     if (!formData.id && intent === "PUBLISHED" && !hasCreateSource && createSourceMode !== "NONE") {
-      setFormError("Wybierz plik albo podaj URL źródła przed publikacją. Szkic możesz zapisać bez źródła.");
+      setFormError("Wybierz plik przed publikacją. Szkic możesz zapisać bez źródła.");
       return;
     }
     const publication = buildPublicationPayload(formData);
@@ -212,7 +201,6 @@ export default function AdminVideosPage() {
           duration: formData.duration?.trim() || null,
           tier: formData.tier,
           publishAfterAssetReady: intent === "PUBLISHED",
-          publishAfterAssetReadyProvider: intent === "PUBLISHED" ? preferredProvider : null,
           ...publication,
         })
       });
@@ -224,7 +212,6 @@ export default function AdminVideosPage() {
           setCreateUploadState({
             videoId: data.id,
             publishAfterReady: intent === "PUBLISHED",
-            isPublishing: false,
           });
           toast(
             intent === "PUBLISHED"
@@ -232,16 +219,6 @@ export default function AdminVideosPage() {
               : "Szkic utworzony. Rozpoczynam upload pliku.",
             "success",
           );
-        } else if (createSourceMode === "EXISTING_CLOUDFLARE" && existingProviderAssetId) {
-          setCreateUploadState({
-            videoId: data.id,
-            publishAfterReady: intent === "PUBLISHED",
-            isPublishing: false,
-            isAttachingExisting: true,
-          });
-          await attachExistingCloudflareAsset(data.id, existingProviderAssetId, intent === "PUBLISHED");
-        } else if ((createSourceMode === "YOUTUBE" || createSourceMode === "VIMEO") && externalSourceId?.trim()) {
-          await addExternalSource(data.id, createSourceMode, externalSourceId.trim(), intent === "PUBLISHED");
         } else {
           setIsEditing(false);
         }
@@ -261,50 +238,6 @@ export default function AdminVideosPage() {
       setIsSubmitting(false);
     }
   };
-
-  const attachExistingCloudflareAsset = useCallback(async (videoId: string, providerAssetId: string, publishAfterReady: boolean) => {
-    try {
-      const attachRes = await fetch(`/api/admin/videos/${videoId}/actions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "attach-asset", providerAssetId, publishAfterAssetReady: publishAfterReady }),
-      });
-      const attachData = await attachRes.json();
-      if (!attachRes.ok) {
-        setFormError(readAdminApiError(attachData, "Nie udało się podpiąć istniejącego assetu Cloudflare."));
-        setCreateUploadState(null);
-        return;
-      }
-
-      const syncRes = await fetch(`/api/admin/videos/${videoId}/actions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "sync-cloudflare" }),
-      });
-      if (!syncRes.ok) {
-        const syncData = await syncRes.json();
-        setFormError(readAdminApiError(syncData, "Asset został podpięty, ale nie udało się potwierdzić statusu Cloudflare."));
-        setCreateUploadState(null);
-        return;
-      }
-
-      if (publishAfterReady) {
-        toast("Istniejący asset Cloudflare został podpięty. Jeśli nie jest jeszcze READY, backend opublikuje film automatycznie po synchronizacji/webhooku albo zapisze błąd do diagnostyki.", "success");
-      } else {
-        toast("Istniejący asset Cloudflare został podpięty do szkicu.", "success");
-      }
-
-      setIsEditing(false);
-      setCreateUploadState(null);
-      setExistingCloudflareSource("");
-      router.push(`/admin/videos/${encodeURIComponent(videoId)}?tab=media#media`);
-    } catch (err) {
-      logger.error("Attach existing Cloudflare asset failed", err);
-      setFormError("Nie udało się podpiąć istniejącego assetu Cloudflare przez błąd połączenia.");
-    } finally {
-      setCreateUploadState((prev) => prev ? { ...prev, isAttachingExisting: false } : prev);
-    }
-  }, [router, toast, setCreateUploadState, setExistingCloudflareSource, setFormError, setIsEditing]);
 
   const handleMetadataSaveDuringUpload = async () => {
     if (!createUploadState?.videoId) return;
@@ -339,41 +272,6 @@ export default function AdminVideosPage() {
     }
   };
 
-  const addExternalSource = useCallback(async (videoId: string, provider: "YOUTUBE" | "VIMEO", url: string, publishAfterReady: boolean) => {
-    try {
-      const res = await fetch(`/api/admin/videos/${videoId}/sources`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, externalVideoId: url, primaryIntent: true }),
-      });
-      const resData = await res.json();
-      if (!res.ok) {
-        setFormError(readAdminApiError(resData, `Nie udało się dodać źródła ${provider}.`));
-        return;
-      }
-      if (publishAfterReady) {
-        const pubRes = await fetch(`/api/admin/videos/${videoId}/actions`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "publish" }),
-        });
-        if (!pubRes.ok) {
-          toast("Źródło dodane, ale publikacja nie powiodła się.", "error");
-        } else {
-          toast("Źródło dodane i film opublikowany.", "success");
-        }
-      } else {
-        toast(`Źródło ${provider} dodane do szkicu.`, "success");
-      }
-      setIsEditing(false);
-      setExternalSourceId("");
-      router.push(`/admin/videos/${encodeURIComponent(videoId)}?tab=media#media`);
-    } catch (err) {
-      logger.error("Add external source failed", err);
-      setFormError("Błąd połączenia podczas dodawania źródła.");
-    }
-  }, [router, toast, setFormError, setIsEditing]);
-
   const handleDelete = async (id: string) => {
       setDeleteDialogVideoId(null);
       setDeletingVideoId(id);
@@ -381,14 +279,14 @@ export default function AdminVideosPage() {
           const res = await fetch(`/api/admin/videos?id=${id}`, { method: 'DELETE' });
           if (res.ok) {
               await fetchVideos(page, { pending: true });
-              toast("Pomyślnie usunięto film oraz powiązany asset Cloudflare Stream, jeśli był podpięty.", 'success');
+              toast("Pomyślnie usunięto film wraz z plikami.", 'success');
           } else {
               const err = await res.json();
-              toast("Błąd usuwania filmu/Cloudflare Stream: " + readAdminApiError(err, "Nie udało się usunąć filmu albo assetu Cloudflare Stream."), 'error');
+              toast("Błąd usuwania filmu: " + readAdminApiError(err, "Nie udało się usunąć filmu."), 'error');
           }
       } catch (err) {
           logger.error("Delete failed", err);
-          toast("Błąd połączenia podczas usuwania filmu i assetu Cloudflare Stream.", 'error');
+          toast("Błąd połączenia podczas usuwania filmu.", 'error');
       } finally {
           setDeletingVideoId(null);
       }
@@ -419,18 +317,9 @@ export default function AdminVideosPage() {
         onCreateSourceModeChange={(mode) => {
           setCreateSourceMode(mode);
           setSelectedVideoFile(null);
-          setExistingCloudflareSource("");
-          setExternalSourceId("");
         }}
-        existingCloudflareSource={existingCloudflareSource}
-        onExistingCloudflareSourceChange={setExistingCloudflareSource}
-        externalSourceId={externalSourceId}
-        onExternalSourceIdChange={setExternalSourceId}
-        currentTier={formData.tier}
         fetchVideos={fetchVideos}
         page={page}
-        preferredProvider={preferredProvider}
-        onPreferredProviderChange={setPreferredProvider}
         onMetadataSaveDuringUpload={handleMetadataSaveDuringUpload}
       />
     );
@@ -441,12 +330,6 @@ export default function AdminVideosPage() {
       <div className="bg-background text-foreground p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         <AdminVideoHeader onCreateNew={handleCreateNew} />
-
-        {cloudflareHealth && !cloudflareHealth.configured && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-900">
-            Cloudflare Stream nie jest skonfigurowany — upload nowych filmów nie będzie działał.
-          </div>
-        )}
 
         {stats && <AdminVideoStats stats={stats} />}
 
@@ -472,7 +355,7 @@ export default function AdminVideosPage() {
             <DialogHeader>
               <DialogTitle>Usunąć film?</DialogTitle>
               <DialogDescription>
-                Usunięcie obejmuje film w bazie oraz powiązany asset Cloudflare Stream, jeśli istnieje. Jeśli Cloudflare zwróci błąd, operacja zostanie przerwana i film nie zostanie usunięty.
+                Usunięcie obejmuje film w bazie oraz jego pliki w naszym magazynie (oryginał i zakodowane wersje HLS). Tego nie da się cofnąć.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
