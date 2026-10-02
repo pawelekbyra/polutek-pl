@@ -15,6 +15,7 @@ import {
   SESSION_EXPIRES_IN_SECONDS,
   SESSION_FRESH_AGE_SECONDS,
   SESSION_UPDATE_AGE_SECONDS,
+  SIGN_IN_IP_RATE_PER_MINUTE,
   getAuthBaseUrl,
   getTrustedOrigins,
   isCaptchaConfigured,
@@ -113,7 +114,7 @@ export const auth = betterAuth({
     customStorage: authRateLimitStorage,
     customRules: {
       "/get-session": false,
-      "/sign-in/email": { window: 60, max: 5 },
+      "/sign-in/email": { window: 60, max: SIGN_IN_IP_RATE_PER_MINUTE },
       "/sign-up/email": { window: 3600, max: 10 },
       "/request-password-reset": { window: 3600, max: 5 },
       "/send-verification-email": { window: 3600, max: 5 },

@@ -15,6 +15,7 @@ vi.mock("@/lib/auth/audit", () => ({ recordAuthAudit: vi.fn() }));
 vi.mock("@/lib/auth/rate-limit-storage", () => ({
   authRateLimitStorage: { consume: vi.fn() },
   hitAuthCounter: vi.fn(),
+  peekAuthCounter: vi.fn(),
 }));
 
 type AuthOptions = {
@@ -104,7 +105,7 @@ describe("Better Auth instance configuration", () => {
     const options = await loadAuth(FULL_ENV);
     expect(options.rateLimit.enabled).toBe(true);
     expect(options.rateLimit.customStorage).toBeDefined();
-    expect(options.rateLimit.customRules["/sign-in/email"]).toEqual({ window: 60, max: 5 });
+    expect(options.rateLimit.customRules["/sign-in/email"]).toEqual({ window: 60, max: 10 });
     expect(options.rateLimit.customRules["/request-password-reset"]).toBeDefined();
   });
 

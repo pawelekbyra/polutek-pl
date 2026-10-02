@@ -10,9 +10,17 @@ const prisma = vi.hoisted(() => ({
 vi.mock("@/lib/prisma", () => ({ prisma }));
 vi.mock("@/lib/auth/audit", () => ({ recordAuthAudit: vi.fn() }));
 vi.mock("@/lib/auth/emails", () => ({ queuePasswordChangedEmail: vi.fn(), queueWelcomeEmail: vi.fn() }));
-vi.mock("@/lib/auth/rate-limit-storage", () => ({ hitAuthCounter: vi.fn() }));
+vi.mock("@/lib/auth/rate-limit-storage", () => ({ hitAuthCounter: vi.fn(), peekAuthCounter: vi.fn() }));
 
-import { beforeAccountCreate, beforeSessionCreate, beforeUserCreate, rejectExistingEmailSignUp } from "@/lib/auth/hooks";
+import {
+  assertSignInNotLocked,
+  beforeAccountCreate,
+  beforeSessionCreate,
+  beforeUserCreate,
+  recordSignInOutcome,
+  rejectExistingEmailSignUp,
+} from "@/lib/auth/hooks";
+import { hitAuthCounter, peekAuthCounter } from "@/lib/auth/rate-limit-storage";
 import { recordAuthAudit } from "@/lib/auth/audit";
 
 function ctx(path: string, cookie = "") {
@@ -115,5 +123,44 @@ describe("beforeAccountCreate (pre-hijack guard)", () => {
 describe("audit import is wired", () => {
   it("is mockable for hooks", () => {
     expect(recordAuthAudit).toBeDefined();
+  });
+});
+
+describe("sign-in lockout counts only failures and is keyed per client (F-06)", () => {
+  const request = (ip: string) => new Request("http://localhost/api/auth/sign-in/email", { headers: { "x-forwarded-for": ip } });
+  const wrongPassword = { body: { code: "INVALID_EMAIL_OR_PASSWORD" } };
+
+  it("counts a wrong password under the e-mail+client key and the e-mail-wide key", async () => {
+    await recordSignInOutcome("User@Example.com", wrongPassword, { request: request("203.0.113.5") });
+    expect(hitAuthCounter).toHaveBeenCalledTimes(2);
+    const keys = vi.mocked(hitAuthCounter).mock.calls.map((call) => call[0]);
+    expect(keys.some((key) => /^signin-fail:[0-9a-f]{32}:[0-9a-f]{32}$/.test(key))).toBe(true);
+    expect(keys.some((key) => /^signin-fail:[0-9a-f]{32}$/.test(key))).toBe(true);
+  });
+
+  it("does not count successful sign-ins, unverified e-mails or other errors", async () => {
+    await recordSignInOutcome("a@b.pl", { user: { id: "u1" } }, { request: request("203.0.113.5") });
+    await recordSignInOutcome("a@b.pl", { body: { code: "EMAIL_NOT_VERIFIED" } }, { request: request("203.0.113.5") });
+    await recordSignInOutcome("a@b.pl", undefined, { request: request("203.0.113.5") });
+    expect(hitAuthCounter).not.toHaveBeenCalled();
+  });
+
+  it("locks out a client after 10 failures for that e-mail", async () => {
+    vi.mocked(peekAuthCounter).mockResolvedValueOnce(10).mockResolvedValueOnce(10);
+    await expect(assertSignInNotLocked("a@b.pl", { request: request("203.0.113.5") })).rejects.toMatchObject({
+      body: { code: "TOO_MANY_ATTEMPTS" },
+    });
+  });
+
+  it("does not lock out the owner when only another client failed (different per-IP key)", async () => {
+    vi.mocked(peekAuthCounter).mockImplementation(async (key: string) => (/:[0-9a-f]{32}:[0-9a-f]{32}$/.test(key) ? 0 : 12));
+    await expect(assertSignInNotLocked("a@b.pl", { request: request("198.51.100.9") })).resolves.toBeUndefined();
+  });
+
+  it("locks everyone out only past the e-mail-wide ceiling", async () => {
+    vi.mocked(peekAuthCounter).mockImplementation(async (key: string) => (/:[0-9a-f]{32}:[0-9a-f]{32}$/.test(key) ? 0 : 100));
+    await expect(assertSignInNotLocked("a@b.pl", { request: request("198.51.100.9") })).rejects.toMatchObject({
+      body: { code: "TOO_MANY_ATTEMPTS" },
+    });
   });
 });
