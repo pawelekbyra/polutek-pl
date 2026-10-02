@@ -23,7 +23,9 @@ export default function UnsubscribedEmailConsentPrompt() {
   // so the "fresh registration" window below is not missed when picking a nickname takes a while.
   const onboardingPending = Boolean(user?.onboardingPending);
   const sawOnboarding = useRef(false);
-  if (onboardingPending) sawOnboarding.current = true;
+  useEffect(() => {
+    if (onboardingPending) sawOnboarding.current = true;
+  }, [onboardingPending]);
 
   const DISMISSED_KEY = userId ? `polutek:email-consent-prompt-dismissed:${userId}` : null;
 
