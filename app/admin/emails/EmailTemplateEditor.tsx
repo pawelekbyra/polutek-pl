@@ -26,6 +26,7 @@ const VARIABLES = [
     { key: '{{amount}}', label: 'Kwota' },
     { key: '{{currency}}', label: 'Waluta' },
     { key: '{{appName}}', label: 'Nazwa aplikacji' },
+    { key: '{{brandName}}', label: 'Nazwa marki (do tematów i treści)' },
     { key: '{{appUrl}}', label: 'URL aplikacji' },
     { key: '{{unsubscribeLink}}', label: 'Link wypisu' },
 ];
@@ -87,6 +88,7 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
       .replaceAll("{{amount}}", "100.00")
       .replaceAll("{{currency}}", "PLN")
       .replaceAll("{{appName}}", APP_NAME)
+      .replaceAll("{{brandName}}", "Pawel Perfect")
       .replaceAll("{{appUrl}}", "https://www.pawelperfect.com")
       .replaceAll("{{unsubscribeLink}}", "#");
   }, [html]);
@@ -99,6 +101,7 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
       .replaceAll("{{amount}}", "25.00")
       .replaceAll("{{currency}}", "USD")
       .replaceAll("{{appName}}", APP_NAME)
+      .replaceAll("{{brandName}}", "Pawel Perfect")
       .replaceAll("{{appUrl}}", "https://www.pawelperfect.com")
       .replaceAll("{{unsubscribeLink}}", "#");
   }, [htmlEn]);
