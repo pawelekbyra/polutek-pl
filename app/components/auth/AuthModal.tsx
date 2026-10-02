@@ -265,7 +265,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
               <DialogTitle className="font-brand text-2xl font-bold tracking-tight text-[var(--chan-ink)]">{title}</DialogTitle>
             </DialogHeader>
 
-            {(view === "sign-in" || view === "sign-up" || view === "forgot") && (
+            {view === "sign-up" && (
               <div className="mt-1 flex justify-center">
                 <LanguageSwitcher variant="inline" language={language} onSelect={switchLanguage} />
               </div>

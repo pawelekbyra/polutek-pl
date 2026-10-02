@@ -43,9 +43,9 @@ type Props = {
   language: Locale;
   onSelect: (locale: Locale) => void;
   /**
-   * "pill" (navbar): floating list under a globe pill. "inline" (inside dialogs): a small
-   * "Language: English" link that expands the same searchable list in the page flow, so a
-   * scrolling card cannot clip it.
+   * "pill" (navbar): floating, searchable list under a globe pill. "inline" (inside dialogs): a
+   * small "Language: English" link that expands a compact one-line list of all languages (no
+   * search box, no frame) in the page flow, so a scrolling card cannot clip it.
    */
   variant?: "pill" | "inline";
 };
@@ -86,8 +86,8 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
   }, [open]);
 
   useEffect(() => {
-    if (open) searchRef.current?.focus();
-  }, [open]);
+    if (open && !inline) searchRef.current?.focus();
+  }, [open, inline]);
 
   useEffect(() => {
     if (!noteVisible) return;
@@ -161,20 +161,60 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
 
       <div role="status" aria-live="polite" className="contents">
         {noteVisible && !open ? (
-          <div className={(inline ? "relative mx-auto mt-2 " : "absolute right-0 top-[calc(100%+8px)] z-[1100] ") + "w-[232px] rounded-2xl border border-[var(--cm-line-84)] bg-white px-3 py-2 text-left text-[12.5px] leading-snug text-[var(--chan-ink)] shadow-[0_12px_32px_rgba(23,23,23,0.14)]"}>
+          <div
+            className={
+              inline
+                ? "relative mx-auto mt-1 max-w-[300px] text-center text-[11.5px] leading-snug text-[var(--chan-muted)]"
+                : "absolute right-0 top-[calc(100%+8px)] z-[1100] w-[232px] rounded-2xl border border-[var(--cm-line-84)] bg-white px-3 py-2 text-left text-[12.5px] leading-snug text-[var(--chan-ink)] shadow-[0_12px_32px_rgba(23,23,23,0.14)]"
+            }
+          >
             {note}
           </div>
         ) : null}
       </div>
 
-      {open ? (
+      {open && inline ? (
         <div
-          className={
-            inline
-              ? "relative mx-auto mt-2 w-full max-w-[260px] overflow-hidden rounded-2xl border border-[var(--cm-line-84)] bg-white text-left shadow-[0_6px_18px_rgba(23,23,23,0.08)]"
-              : "absolute right-0 top-[calc(100%+8px)] z-[1100] w-[220px] overflow-hidden rounded-2xl border border-[var(--cm-line-84)] bg-white shadow-[0_12px_32px_rgba(23,23,23,0.14)]"
-          }
+          id={menuId}
+          role="menu"
+          aria-label={isPl ? "Wybierz język" : "Choose language"}
+          onKeyDown={(event) => {
+            const keys = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"];
+            if (!keys.includes(event.key)) return;
+            const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]'));
+            const index = items.indexOf(document.activeElement as HTMLButtonElement);
+            const step = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : -1;
+            event.preventDefault();
+            items[(index + step + items.length) % items.length]?.focus();
+          }}
+          className="relative mx-auto mt-1 grid w-full max-w-[280px] grid-cols-4 justify-items-center gap-y-0 text-[12px]"
         >
+          {LANGUAGE_OPTIONS.map((option) => {
+            const selected = option.code === current.code;
+            return (
+              <button
+                key={option.code}
+                type="button"
+                role="menuitemradio"
+                aria-checked={selected}
+                autoFocus={selected}
+                onClick={() => pick(option)}
+                className={
+                  "rounded px-1 py-0.5 leading-tight transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--chan-blue)] " +
+                  (selected
+                    ? "font-semibold text-[var(--chan-ink)] underline underline-offset-2"
+                    : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]")
+                }
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+
+      {open && !inline ? (
+        <div className="absolute right-0 top-[calc(100%+8px)] z-[1100] w-[220px] overflow-hidden rounded-2xl border border-[var(--cm-line-84)] bg-white shadow-[0_12px_32px_rgba(23,23,23,0.14)]">
           <div className="flex items-center gap-2 border-b border-[var(--cm-line-84)] px-3 py-2">
             <Search className="h-4 w-4 shrink-0 text-[var(--chan-muted)]" strokeWidth={1.8} aria-hidden="true" />
             <input
