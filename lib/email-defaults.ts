@@ -7,8 +7,7 @@ export const SYSTEM_TEMPLATE_SLUGS = [
   'password-changed',
   'account-deleted',
   'verify-email',
-  'reset-password',
-  'account-exists'
+  'reset-password'
 ] as const;
 
 export type SystemTemplateSlug = typeof SYSTEM_TEMPLATE_SLUGS[number];
@@ -324,26 +323,4 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
 </div>`,
   },
 
-  'account-exists': {
-    subject: 'Ktoś próbował założyć konto na Twój e-mail — {{appName}}',
-    subjectEn: 'Someone tried to sign up with your email — {{appName}}',
-    html: `<div style="${BASE_STYLE}">
-  <h1 style="${HEADER_STYLE}">Masz już konto</h1>
-
-  <p style="font-size: 16px;">Ktoś próbował założyć konto w <strong>{{appName}}</strong> na adres {{email}}, który jest już zarejestrowany. Możesz się zalogować lub (jeśli logujesz się przez Google albo nie pamiętasz hasła) ustawić hasło przyciskiem poniżej.</p>
-
-  <a href="{{actionUrl}}" style="${BUTTON_STYLE}">Przejdź do strony →</a>
-
-  <p style="font-size: 14px; color: #555;">Jeśli to nie Ty, zignoruj tę wiadomość. Nikt nie uzyskał dostępu do Twojego konta.</p>
-</div>`,
-    htmlEn: `<div style="${BASE_STYLE}">
-  <h1 style="${HEADER_STYLE}">You already have an account</h1>
-
-  <p style="font-size: 16px;">Someone tried to create an account at <strong>{{appName}}</strong> with {{email}}, which is already registered. You can sign in, or (if you use Google or forgot your password) set a password with the button below.</p>
-
-  <a href="{{actionUrl}}" style="${BUTTON_STYLE}">Go to the site →</a>
-
-  <p style="font-size: 14px; color: #555;">If this was not you, ignore this message. Nobody gained access to your account.</p>
-</div>`,
-  },
 };

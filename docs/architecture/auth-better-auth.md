@@ -28,8 +28,8 @@ and the operations.
 |---|---|
 | `lib/auth/auth.ts` | The Better Auth instance (plugins, hooks, rate limits, cookies). |
 | `lib/auth/config.ts` | Constants and pure helpers (base URL, trusted origins, admin e-mails). |
-| `lib/auth/hooks.ts` | Hook bodies: nickname rule, default avatar, onboarding flag, sign-in lockout, session guard, pre-hijack guard, audit. |
-| `lib/auth/emails.ts` | Fire-and-forget e-mails (verification, reset, password changed, account exists, welcome). |
+| `lib/auth/hooks.ts` | Hook bodies: placeholder name, default avatar, onboarding flag, EMAIL_TAKEN answer, sign-in lockout, session guard, pre-hijack guard, audit. |
+| `lib/auth/emails.ts` | Fire-and-forget e-mails (verification, reset, password changed; the welcome mail goes out from the onboarding route). |
 | `lib/auth/rate-limit-storage.ts` | Better Auth `customStorage.consume` on our Redis REST store (atomic Lua INCR). |
 | `lib/auth/server.ts` | `auth()`, `getAuth(req)`, `currentUser()`: the only server-side session readers. |
 | `lib/api/auth.ts` | DB-backed actor (`getActorFromAuth`, `requireAdminActor`); admin bootstrap by `ADMIN_EMAILS`. |
@@ -42,12 +42,24 @@ and the operations.
 
 ## Flows
 
-**Email sign-up.** Modal asks nickname, e-mail, password (min 10, haveIBeenPwned checked in production),
-Turnstile. `signUp.email` stores the nickname as `name` (validated and checked for uniqueness in
-`beforeUserCreate`). `requireEmailVerification` is on and `autoSignIn` off, so the response is identical
-whether or not the address already exists (no enumeration). A new address gets a verification link
-(valid 1 hour; clicking it verifies and signs in, then the welcome e-mail is sent). An existing address gets
-an "account exists" e-mail instead (sign in, or set a password via reset).
+**Email sign-up.** Modal asks e-mail, password (min 10, haveIBeenPwned checked in production) and "Repeat
+password" (client-side match; the button stays disabled until both match and are long enough; show/hide toggle),
+plus Turnstile. There is no nickname field: the server stores a neutral placeholder name derived from the
+e-mail local part (`placeholderNameFromEmail`) and sets `onboardingPending = true`, exactly like Google users.
+`requireEmailVerification` is on and `autoSignIn` off; a new address gets a verification link (valid 1 hour;
+clicking it verifies and signs in). On that first signed-in page `OnboardingDialog` asks for the nickname (checked
+for uniqueness in `completeOnboarding`) and an optional avatar, then `POST /api/user/first-sign-in` sends the welcome
+e-mail (the single place it is sent, so exactly once; the subscription prompt waits for onboarding).
+
+**Existing e-mail at sign-up (owner decision 2026-10-02).** Sign-up with an address that already has an account
+answers HTTP 422 with code `EMAIL_TAKEN` (or `EMAIL_TAKEN_GOOGLE` when the account has a Google link and no password),
+shown as "this e-mail already has an account" with "Sign in" and "Forgot password" actions (the e-mail stays
+prefilled). This is a deliberate convenience-over-privacy trade-off: the sign-up form is now an e-mail enumeration
+oracle. It is limited by Better Auth's per-IP rate limit and Turnstile (the check is an *after* hook in
+`lib/auth/hooks.ts` precisely because `options.hooks.before` runs ahead of the captcha plugin; it compares the
+stored user id with the synthetic id Better Auth returns for duplicates). Sign-in (`INVALID_EMAIL_OR_PASSWORD`) and
+password reset ("if that account exists...") stay enumeration-safe. The old "account exists" e-mail and its
+template were removed.
 
 **Sign-in.** `signIn.email` (Turnstile, 5/min per IP, 10 per 15 min per e-mail). Unverified accounts get a new
 verification link and a 403 `EMAIL_NOT_VERIFIED`. A user with TOTP enabled gets `twoFactorRedirect` and
@@ -57,7 +69,7 @@ finishes with a code or a backup code (`twoFactor.verifyTotp` / `verifyBackupCod
 and One Tap (`oneTap` plugin; the client id is handed to the browser at runtime through
 `AuthPublicConfigProvider`, so it is not baked into the bundle). Account linking is on with `google` as a trusted
 provider: a Google sign-in whose e-mail matches an existing row signs into that row (comments and payments stay).
-A brand-new Google user gets `onboardingPending = true` and must pick a nickname (and optionally an avatar) in
+A brand-new Google user (like every new e-mail sign-up) gets `onboardingPending = true` and must pick a nickname (and optionally an avatar) in
 `OnboardingDialog`; the welcome e-mail is sent after that (`POST /api/user/first-sign-in`).
 
 **Password reset / set a password.** `requestPasswordReset` always answers the same way. The e-mail link opens

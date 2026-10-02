@@ -137,6 +137,3 @@ export async function sendPasswordResetEmail(toEmail: string, actionUrl: string,
   return sendTemplateEmail({ to: toEmail, slug: 'reset-password', variables: { actionUrl }, language, noUnsubscribe: true });
 }
 
-export async function sendAccountExistsEmail(toEmail: string, actionUrl: string, language: string = 'pl') {
-  return sendTemplateEmail({ to: toEmail, slug: 'account-exists', variables: { actionUrl }, language, noUnsubscribe: true });
-}

@@ -9,6 +9,7 @@ export function Field({
   type,
   value,
   onChange,
+  revealLabels,
   ...rest
 }: {
   label: string;
@@ -19,17 +20,32 @@ export function Field({
   inputMode?: "numeric" | "text";
   required?: boolean;
   minLength?: number;
+  revealLabels?: { show: string; hide: string };
 }) {
+  const [revealed, setRevealed] = React.useState(false);
+  const isPassword = type === "password" && Boolean(revealLabels);
   return (
     <label className="block">
       <span className="mb-1 block text-[11px] font-bold uppercase tracking-wide text-[var(--chan-muted)]">{label}</span>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-[12px] border border-[var(--chan-line)] bg-[var(--chan-surface)] px-3 py-2 font-sans text-[15px] text-[var(--chan-ink)] outline-none transition-colors focus:border-[var(--chan-blue)]"
-        {...rest}
-      />
+      <span className="relative block">
+        <input
+          type={isPassword && revealed ? "text" : type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`w-full rounded-[12px] border border-[var(--chan-line)] bg-[var(--chan-surface)] py-2 pl-3 font-sans text-[15px] text-[var(--chan-ink)] outline-none transition-colors focus:border-[var(--chan-blue)] ${isPassword ? "pr-16" : "pr-3"}`}
+          {...rest}
+        />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setRevealed((v) => !v)}
+            aria-pressed={revealed}
+            className="absolute inset-y-0 right-2 my-auto h-7 rounded-md px-2 text-[11px] font-bold uppercase tracking-wide text-[var(--chan-muted)] hover:text-[var(--chan-ink)]"
+          >
+            {revealed ? revealLabels?.hide : revealLabels?.show}
+          </button>
+        )}
+      </span>
     </label>
   );
 }

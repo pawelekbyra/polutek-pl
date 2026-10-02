@@ -29,9 +29,8 @@ import {
   beforeSessionCreate,
   beforeUserCreate,
   onPasswordReset,
-  sendWelcomeOnce,
 } from "./hooks";
-import { queueAccountExistsEmail, queuePasswordResetEmail, queueVerificationEmail } from "./emails";
+import { queuePasswordResetEmail, queueVerificationEmail } from "./emails";
 import { authRateLimitStorage } from "./rate-limit-storage";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -73,7 +72,6 @@ export const auth = betterAuth({
     resetPasswordTokenExpiresIn: EMAIL_TOKEN_TTL_SECONDS,
     sendResetPassword: async ({ user, url }) => queuePasswordResetEmail(user, url),
     onPasswordReset: async ({ user }) => onPasswordReset(user),
-    onExistingUserSignUp: async ({ user }) => queueAccountExistsEmail(user),
   },
 
   emailVerification: {
@@ -82,9 +80,6 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
     expiresIn: EMAIL_TOKEN_TTL_SECONDS,
     sendVerificationEmail: async ({ user, url }) => queueVerificationEmail(user, url),
-    afterEmailVerification: async (user) => {
-      sendWelcomeOnce({ email: user.email, name: user.name, language: (user as { language?: string }).language });
-    },
   },
 
   socialProviders: googleEnabled

@@ -39,11 +39,6 @@ const TEMPLATE_METADATA: Record<SystemTemplateSlug, { name: string; description:
     description: 'Link do ustawienia nowego hasła.',
     category: 'SYSTEM',
   },
-  'account-exists': {
-    name: 'System: Account exists',
-    description: 'Wiadomość do właściciela adresu, gdy ktoś próbuje założyć drugie konto na ten sam e-mail.',
-    category: 'SYSTEM',
-  },
 };
 
 export async function ensureRequiredEmailTemplates(emailTemplate: EmailTemplateClient) {
