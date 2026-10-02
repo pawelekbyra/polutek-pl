@@ -59,6 +59,41 @@ describe("LanguageSwitcher", () => {
     expect(screen.queryByText(/w przygotowaniu/)).toBeNull();
   });
 
+  it("has a search field that filters the list, ignoring accents and case", () => {
+    render(<LanguageSwitcher language="pl" onSelect={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button"));
+    const search = screen.getByPlaceholderText("Szukaj języka") as HTMLInputElement;
+    fireEvent.change(search, { target: { value: "francais" } });
+    expect(screen.getByText("Français")).toBeTruthy();
+    expect(screen.queryByText("Deutsch")).toBeNull();
+
+    fireEvent.change(search, { target: { value: "zh" } });
+    expect(screen.getByText("中文")).toBeTruthy();
+    expect(screen.queryByText("Polski")).toBeNull();
+  });
+
+  it("shows a message when nothing matches and picks the first result on Enter", () => {
+    const onSelect = vi.fn();
+    render(<LanguageSwitcher language="en" onSelect={onSelect} />);
+    fireEvent.click(screen.getByRole("button"));
+    const search = screen.getByPlaceholderText("Search language") as HTMLInputElement;
+    fireEvent.change(search, { target: { value: "xyz" } });
+    expect(screen.getByText("No results")).toBeTruthy();
+
+    fireEvent.change(search, { target: { value: "pol" } });
+    fireEvent.keyDown(search, { key: "Enter" });
+    expect(onSelect).toHaveBeenCalledWith("pl");
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+
+  it("makes the list scrollable with a capped height", () => {
+    render(<LanguageSwitcher language="pl" onSelect={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button"));
+    const menu = screen.getByRole("menu");
+    expect(menu.className).toContain("overflow-y-auto");
+    expect(menu.className).toContain("max-h-");
+  });
+
   it("marks the current language and closes on Escape and on outside click", () => {
     render(<LanguageSwitcher language="en" onSelect={vi.fn()} />);
     fireEvent.click(screen.getByRole("button"));
