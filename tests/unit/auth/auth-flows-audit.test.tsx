@@ -93,6 +93,14 @@ describe("AuthModal (F-01, F-07)", () => {
     return render(<AuthModal open initialView="sign-in" onOpenChange={() => undefined} />);
   }
 
+  it("shows the language picker only on the sign-up view", () => {
+    const { unmount } = render(<AuthModal open initialView="sign-in" onOpenChange={() => undefined} />);
+    expect(screen.queryByText("Language:")).toBeNull();
+    unmount();
+    render(<AuthModal open initialView="sign-up" onOpenChange={() => undefined} />);
+    expect(screen.getByText("Language:")).toBeTruthy();
+  });
+
   it("F-01: Google sign-in keeps the `next` path the proxy asked us to return to", async () => {
     window.sessionStorage.setItem(SSO_RETURN_STORAGE_KEY, "/admin");
     h.client.signIn.social.mockResolvedValue({ error: null });

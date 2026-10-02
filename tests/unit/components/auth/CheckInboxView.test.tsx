@@ -42,9 +42,31 @@ describe("LanguageSwitcher inline variant", () => {
     expect(screen.getByText("Language:")).toBeTruthy();
     fireEvent.click(screen.getByRole("button"));
     const menu = screen.getByRole("menu");
-    expect(menu.parentElement?.className).toContain("relative");
-    expect(menu.parentElement?.className).not.toContain("absolute");
+    expect(menu.className).toContain("relative");
+    expect(menu.className).not.toContain("absolute");
+    expect(screen.queryByRole("searchbox")).toBeNull();
+    expect(screen.getAllByRole("menuitemradio")).toHaveLength(8);
     fireEvent.click(screen.getByText("Polski"));
     expect(onSelect).toHaveBeenCalledWith("pl");
+  });
+
+  it("is compact, supports arrow keys and Esc, and keeps placeholder languages non-switching", () => {
+    const onSelect = vi.fn();
+    render(<LanguageSwitcher variant="inline" language="en" onSelect={onSelect} />);
+    fireEvent.click(screen.getByRole("button"));
+    const menu = screen.getByRole("menu");
+    expect(menu.className).toContain("text-[12px]");
+    expect(menu.className).not.toContain("shadow");
+    expect(menu.className).not.toContain("border");
+    const items = screen.getAllByRole("menuitemradio");
+    expect(document.activeElement).toBe(items[1]);
+    fireEvent.keyDown(items[1], { key: "ArrowRight" });
+    expect(document.activeElement).toBe(items[2]);
+    fireEvent.click(screen.getByText("Deutsch"));
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(screen.getByText(/Deutsch translation is in progress/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button"));
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("menu")).toBeNull();
   });
 });
