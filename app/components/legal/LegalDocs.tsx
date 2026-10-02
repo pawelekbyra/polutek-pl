@@ -42,10 +42,15 @@ export function RegulaminContent() {
         <LegalSection nr="1" title="Kto prowadzi serwis">
           <ol className="list-decimal space-y-2 pl-5">
             <li>
-              Serwis WWW.PAWELPERFECT.COM prowadzi Paweł Perfect, osoba fizyczna, adres do korespondencji: ul. Złota 75,
-              00-819 Warszawa, e-mail: <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a> (dalej: „Twórca”).
+              Twórcą i administratorem serwisu WWW.PAWELPERFECT.COM jest Paweł Perfect (dalej: „Twórca”). Adres do
+              doręczeń: ul. Złota 75, 00-819 Warszawa, e-mail w sprawach technicznych:{' '}
+              <a href="mailto:support@pawelperfect.com" className="underline hover:text-primary">support@pawelperfect.com</a>.
             </li>
-            <li>Serwis ma charakter niekomercyjny. Twórca nie sprzedaje w nim towarów, usług ani treści cyfrowych.</li>
+            <li>
+              Serwis ma charakter niekomercyjny. Twórca nie prowadzi za pośrednictwem Serwisu sprzedaży towarów, usług
+              ani treści cyfrowych. Wszelkie wpłaty dokonywane na rzecz Twórcy mają charakter dobrowolnego wsparcia
+              (darowizny) i nie stanowią zapłaty za towary, usługi ani treści cyfrowe.
+            </li>
           </ol>
         </LegalSection>
 
@@ -258,11 +263,16 @@ export function TermsContentEn() {
         <LegalSection nr="1" title="Who runs the service">
           <ol className="list-decimal space-y-2 pl-5">
             <li>
-              The service WWW.PAWELPERFECT.COM is run by Paweł Perfect, a private individual, correspondence address:
-              ul. Złota 75, 00-819 Warsaw, Poland, email:{' '}
-              <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a> (hereinafter: the &ldquo;Creator&rdquo;).
+              The creator and administrator of the service WWW.PAWELPERFECT.COM is Paweł Perfect (hereinafter: the
+              &ldquo;Creator&rdquo;). Address for service: ul. Złota 75, 00-819 Warsaw, Poland, email for technical
+              matters:{' '}
+              <a href="mailto:support@pawelperfect.com" className="underline hover:text-primary">support@pawelperfect.com</a>.
             </li>
-            <li>The service is non-commercial. The Creator does not sell any goods, services, or digital content through it.</li>
+            <li>
+              The service is non-commercial. The Creator does not sell goods, services, or digital content through the
+              service. All payments made to the Creator are voluntary support (a donation) and do not constitute payment
+              for goods, services, or digital content.
+            </li>
           </ol>
         </LegalSection>
 
