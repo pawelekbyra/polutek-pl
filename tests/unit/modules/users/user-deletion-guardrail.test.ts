@@ -15,6 +15,8 @@ describe('User Deletion Guardrail', () => {
   // Allowed paths for hard user deletion (e.g. legal/admin destructive tools)
   const allowedPaths: string[] = [
     // Add paths here if they are explicitly reviewed and intended for hard-delete
+    // Reviewed: only drops never-verified password sign-ups (no payments/grants/channels/comments) after 7 days.
+    'lib/auth/prune-unverified.ts',
   ];
 
   function getFiles(dir: string): string[] {
@@ -41,7 +43,7 @@ describe('User Deletion Guardrail', () => {
       const files = getFiles(fullSearchDir);
 
       for (const file of files) {
-        const relativePath = path.relative(rootDir, file);
+        const relativePath = path.relative(rootDir, file).split(path.sep).join('/');
         if (allowedPaths.some(p => relativePath.startsWith(p))) continue;
 
         const content = fs.readFileSync(file, 'utf8');

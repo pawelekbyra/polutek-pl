@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "../LanguageContext";
 import type { AuthNotice, AuthView } from "./AuthModalProvider";
+import { TwoFactorView } from "./TwoFactorView";
+import { LinkExpiredView } from "./LinkExpiredView";
 import { Divider, Field, OAuthButtons, PrimaryButton } from "./AuthFormParts";
 import { TurnstileWidget, useCaptchaRequired, type CaptchaState, type TurnstileHandle } from "./TurnstileWidget";
 import { authClient, captchaFetchOptions } from "@/lib/auth/client";
@@ -377,21 +379,17 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
             )}
 
             {view === "link-expired" && (
-              <form onSubmit={handleResend} className="mt-5 space-y-3.5">
-                <p className="text-[13px] text-[var(--chan-body)]">
-                  {isPl
-                    ? "Ten link potwierdzający wygasł albo został już użyty. Podaj e-mail, a wyślemy nowy."
-                    : "This confirmation link has expired or was already used. Enter your email and we'll send a new one."}
-                </p>
-                <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
-                {captcha}
-                <PrimaryButton loading={loading} busy={captchaChecking} disabled={waitingForCaptcha} label={isPl ? "Wyślij nowy link" : "Send a new link"} />
-                <div className="pt-1 text-center text-[12px] text-[var(--chan-muted)]">
-                  <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("sign-in")}>
-                    {isPl ? "Wróć do logowania" : "Back to sign in"}
-                  </button>
-                </div>
-              </form>
+              <LinkExpiredView
+                isPl={isPl}
+                email={email}
+                onEmailChange={setEmail}
+                onSubmit={handleResend}
+                captcha={captcha}
+                loading={loading}
+                busy={captchaChecking}
+                disabled={waitingForCaptcha}
+                onBack={() => switchView("sign-in")}
+              />
             )}
 
             {view === "forgot" && (
@@ -424,32 +422,17 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
             )}
 
             {view === "two-factor" && (
-              <form onSubmit={handleTwoFactor} className="mt-5 space-y-3.5">
-                <p className="text-[13px] text-[var(--chan-body)]">
-                  {useBackupCode
-                    ? (isPl ? "Wpisz jeden z kodów zapasowych." : "Enter one of your backup codes.")
-                    : (isPl ? "Wpisz 6-cyfrowy kod z aplikacji uwierzytelniającej." : "Enter the 6-digit code from your authenticator app.")}
-                </p>
-                <Field
-                  label={useBackupCode ? (isPl ? "Kod zapasowy" : "Backup code") : (isPl ? "Kod" : "Code")}
-                  type="text"
-                  value={code}
-                  onChange={setCode}
-                  inputMode={useBackupCode ? "text" : "numeric"}
-                  autoComplete="one-time-code"
-                  required
-                />
-                {!useBackupCode && (
-                  <label className="flex items-center gap-2 text-[12px] text-[var(--chan-body)]">
-                    <input type="checkbox" checked={trustDevice} onChange={(e) => setTrustDevice(e.target.checked)} />
-                    {isPl ? "Zapamiętaj to urządzenie na 7 dni" : "Remember this device for 7 days"}
-                  </label>
-                )}
-                <PrimaryButton loading={loading} label={isPl ? "Potwierdź" : "Verify"} />
-                <button type="button" className="text-[12px] text-[var(--chan-muted)] underline" onClick={() => { setUseBackupCode(!useBackupCode); setCode(""); }}>
-                  {useBackupCode ? (isPl ? "Użyj aplikacji" : "Use the app") : (isPl ? "Użyj kodu zapasowego" : "Use a backup code")}
-                </button>
-              </form>
+              <TwoFactorView
+                isPl={isPl}
+                code={code}
+                onCodeChange={setCode}
+                useBackupCode={useBackupCode}
+                onToggleBackup={() => { setUseBackupCode(!useBackupCode); setCode(""); }}
+                trustDevice={trustDevice}
+                onTrustChange={setTrustDevice}
+                loading={loading}
+                onSubmit={handleTwoFactor}
+              />
             )}
           </div>
         </div>

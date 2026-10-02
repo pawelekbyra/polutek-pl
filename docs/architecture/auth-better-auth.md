@@ -72,6 +72,12 @@ Unverified accounts get a new verification link and a 403 `EMAIL_NOT_VERIFIED`. 
 strong on their own (Google's own 2-step verification), as in Better Auth's defaults; the app never adds a TOTP
 step on top. A wrong password shows a hint at Google / "Forgot password" for Clerk-era accounts without a password.
 
+**Shared computers.** Google redirect sign-in always shows the account chooser (`prompt: "select_account"`), One
+Tap never auto-selects (`autoSelect: false`), and every sign-out goes through `signOutCompletely()`
+(`lib/auth/sign-out.ts`): it ends the session, calls `google.accounts.id.disableAutoSelect()` and drops the remembered
+return path, so the next person is not continued as the previous user. Nickname/onboarding is asked only at the
+first sign-in of an account.
+
 **Return path (F-01).** The proxy sends gated pages to `/?signin=1&next=/path`. `AuthModalProvider` remembers `next`
 in `sessionStorage` (`lib/auth/sso-return.ts`, same-site relative paths only: `//`, absolute URLs, backslashes and
 `/sso-callback` fall back to `/`); e-mail sign-in navigates there, Google keeps it through `/sso-callback`

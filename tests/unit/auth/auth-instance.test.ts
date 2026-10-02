@@ -26,7 +26,7 @@ type AuthOptions = {
     sendResetPassword: (data: { user: { email: string }; url: string }) => Promise<void>;
   };
   emailVerification: { afterEmailVerification?: unknown; sendVerificationEmail: (data: { user: { email: string }; url: string }) => Promise<void> };
-  socialProviders: { google?: { clientId: string } };
+  socialProviders: { google?: { clientId: string; prompt?: string } };
   account: { accountLinking: { enabled: boolean; trustedProviders: string[]; requireLocalEmailVerified?: boolean } };
   session: { cookieCache: { enabled: boolean } };
   rateLimit: { enabled: boolean; customStorage: unknown; customRules: Record<string, unknown> };
@@ -65,6 +65,8 @@ describe("Better Auth instance configuration", () => {
   it("wires Google, linking by trusted provider, One Tap, 2FA, captcha and breach checks", async () => {
     const options = await loadAuth(FULL_ENV);
     expect(options.socialProviders.google?.clientId).toBe("google-id");
+    // Shared computers: the Google account chooser is always shown.
+    expect(options.socialProviders.google?.prompt).toBe("select_account");
     expect(options.account.accountLinking).toEqual({
       enabled: true,
       trustedProviders: ["google"],

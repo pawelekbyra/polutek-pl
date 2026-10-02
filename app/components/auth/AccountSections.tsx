@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 import { Loader2 } from "../icons";
 import { OAUTH_PROVIDERS } from "./oauth-providers";
 import { authClient } from "@/lib/auth/client";
+import { signOutCompletely } from "@/lib/auth/sign-out";
 import { authErrorMessage, isSessionNotFresh } from "@/lib/auth/errors";
 import { rememberReturnPath } from "@/lib/auth/sso-return";
 import { useUser } from "@/lib/auth/react";
@@ -29,7 +30,7 @@ export function Feedback({ error, info }: { error: string | null; info: string |
  */
 export function ReauthNotice({ isPl }: { isPl: boolean }) {
   async function signInAgain() {
-    await authClient.signOut().catch(() => undefined);
+    await signOutCompletely().catch(() => undefined);
     const here = window.location.pathname + window.location.search;
     window.location.assign(`${window.location.pathname}?signin=1&next=${encodeURIComponent(here)}`);
   }
@@ -207,7 +208,7 @@ export function DangerSection({ isPl, onDeleted }: { isPl: boolean; onDeleted: (
       return;
     }
     // Every session was dropped server-side; clear the local state and reload.
-    await authClient.signOut().catch(() => undefined);
+    await signOutCompletely().catch(() => undefined);
     onDeleted();
     window.location.assign("/");
   }

@@ -89,6 +89,9 @@ export const auth = betterAuth({
         google: {
           clientId: process.env.GOOGLE_CLIENT_ID as string,
           clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+          // Always show the account chooser: on a shared computer a repeat sign-in must not silently
+          // reuse the Google account that is already signed in in the browser.
+          prompt: "select_account",
         },
       }
     : {},
