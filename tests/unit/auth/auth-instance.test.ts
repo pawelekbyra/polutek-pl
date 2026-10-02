@@ -39,6 +39,8 @@ type AuthOptions = {
 
 async function loadAuth(env: Record<string, string>) {
   vi.resetModules();
+  // CI exports real-looking auth variables; start from a clean slate so each case is explicit.
+  for (const key of ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "TURNSTILE_SECRET_KEY", "BETTER_AUTH_SECRET", "BETTER_AUTH_URL", "BETTER_AUTH_TRUSTED_ORIGINS", "NEXT_PUBLIC_APP_URL"]) vi.stubEnv(key, "");
   for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
   const mod = await import("@/lib/auth/auth");
   return mod.auth.options as unknown as AuthOptions;

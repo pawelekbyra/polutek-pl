@@ -111,6 +111,13 @@ describe("authErrorMessage", () => {
 });
 
 describe("authRateLimitStorage.consume", () => {
+  // CI sets Redis REST variables; this test must use the in-memory store.
+  beforeEach(() => {
+    for (const name of ["UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN", "KV_REST_API_URL", "KV_REST_API_TOKEN"]) {
+      vi.stubEnv(name, "");
+    }
+  });
+
   it("allows up to max requests per window and then reports a retry delay", async () => {
     const key = `test-${Math.random()}`;
     const rule = { window: 60, max: 2 };
