@@ -224,17 +224,40 @@ export function buildRungArgs({ input, rung, frameRate, interlaced, hasAudio, lo
   return args;
 }
 
-function run(cmd, args, { niceLevel } = {}) {
+/**
+ * Runs a child process. Options: `niceLevel` (not on Windows), `signal` (AbortSignal: kills the
+ * child and rejects with name "AbortError"), `onProgressSeconds` (ffmpeg only: called with the
+ * encoded media seconds parsed from `-progress pipe:1`; stdout is then not buffered).
+ */
+function run(cmd, args, { niceLevel, signal, onProgressSeconds } = {}) {
   return new Promise((resolve, reject) => {
+    const abortError = () => Object.assign(new Error('aborted'), { name: 'AbortError' });
+    if (signal?.aborted) return reject(abortError());
+    const finalArgs = onProgressSeconds ? ['-progress', 'pipe:1', '-nostats', ...args] : args;
     const useNice = niceLevel && process.platform !== 'win32';
-    const child = useNice ? spawn('nice', ['-n', String(niceLevel), cmd, ...args]) : spawn(cmd, args);
+    const child = useNice ? spawn('nice', ['-n', String(niceLevel), cmd, ...finalArgs]) : spawn(cmd, finalArgs);
     let stdout = '';
     let stderr = '';
-    child.stdout.on('data', (d) => { stdout += d; });
+    let pending = '';
+    let aborted = false;
+    const onAbort = () => { aborted = true; child.kill('SIGKILL'); };
+    signal?.addEventListener('abort', onAbort, { once: true });
+    child.stdout.on('data', (d) => {
+      if (!onProgressSeconds) { stdout += d; return; }
+      pending += d;
+      const lines = pending.split('\n');
+      pending = lines.pop() ?? '';
+      for (const line of lines) {
+        const m = /^out_time_us=(\d+)$/.exec(line.trim());
+        if (m) onProgressSeconds(Number(m[1]) / 1e6);
+      }
+    });
     child.stderr.on('data', (d) => { stderr += d; if (stderr.length > 2_000_000) stderr = stderr.slice(-1_000_000); });
-    child.on('error', reject);
+    child.on('error', (err) => { signal?.removeEventListener('abort', onAbort); reject(err); });
     child.on('close', (code) => {
-      if (code === 0) resolve({ stdout, stderr });
+      signal?.removeEventListener('abort', onAbort);
+      if (aborted) reject(abortError());
+      else if (code === 0) resolve({ stdout, stderr });
       else reject(new Error(`${cmd} exited with ${code}\n${stderr.slice(-2000)}`));
     });
   });
@@ -263,10 +286,10 @@ export async function probeSource(input) {
   };
 }
 
-async function measureLoudness(input, opts) {
+async function measureLoudness(input, opts, runOpts = {}) {
   const { stderr } = await run('ffmpeg', [
     '-hide_banner', '-nostdin', '-i', input, '-map', '0:a:0', '-af', loudnormFilter(null, opts), '-f', 'null', '-',
-  ], { niceLevel: opts.nice });
+  ], { niceLevel: opts.nice, ...runOpts });
   return parseLoudnormJson(stderr);
 }
 
@@ -359,46 +382,81 @@ export function parseArgs(argv) {
 const HELP = `Usage: node encode-hls.mjs --input <file> --out <dir> [--preset slow] [--segment 6] [--keyframe 2]
        [--lufs -16] [--no-loudnorm] [--max-height 1080] [--nice 10] [--dry-run]`;
 
-export async function main(argv) {
-  const args = parseArgs(argv);
-  if (args.help || !args.input || !args.out) {
-    console.log(HELP);
-    return args.help ? 0 : 2;
-  }
-  const { opts } = args;
+/** Relative CPU cost of each step, used to turn per-step progress into one 0..1 fraction. */
+export function stepWeights(ladder, hasLoudness) {
+  const rungWeights = ladder.map((r) => r.height * r.height);
+  return hasLoudness ? [rungWeights[0] * 0.1, ...rungWeights] : rungWeights;
+}
+
+/**
+ * Encodes `input` into `out` (see the header). Library entry point used by the CLI below and by
+ * the video worker (lib/modules/video-pipeline). Throws on bad input (HDR, no video); returns
+ * `{ meta, issues }` where non-empty `issues` means the output failed validation and must not
+ * be published. `meta` is null for a dry run.
+ *
+ * options: { input, out, opts?, maxHeight?, noLoudnorm?, dryRun?, signal?, log?,
+ *   onProgress?: ({ step: 'loudness'|'rung', name, stepIndex, stepCount, fraction, overall }) }
+ */
+export async function encodeHls(options) {
+  const { input, out, maxHeight, noLoudnorm, dryRun, signal, onProgress } = options;
+  const log = options.log ?? (() => {});
+  const opts = { ...DEFAULTS, ...(options.opts ?? {}) };
   const t0 = Date.now();
-  const info = await probeSource(args.input);
+  const info = await probeSource(input);
   if (info.hdr) throw new Error('HDR sources are not supported yet (SDR output only); tone-map first.');
   const frameRate = chooseFrameRate(info.avgFrameRate);
   let ladder = planLadder(info.width, info.height);
-  if (args.maxHeight) ladder = ladder.filter((r) => r.height <= args.maxHeight);
-  console.log(`source ${info.width}x${info.height} ${frameRate}fps ${info.duration.toFixed(1)}s audio=${info.hasAudio} interlaced=${info.interlaced}`);
-  console.log(`ladder ${ladder.map((r) => r.name).join(', ')}, preset ${opts.preset}, segments ${opts.segmentSeconds}s, IDR ${opts.keyframeSeconds}s`);
-  if (args.dryRun) {
-    for (const rung of ladder) console.log(['ffmpeg', ...buildRungArgs({ input: args.input, rung, frameRate, interlaced: info.interlaced, hasAudio: info.hasAudio, loudness: null, opts, outDir: path.join(args.out, rung.name) })].join(' '));
-    return 0;
+  if (maxHeight) ladder = ladder.filter((r) => r.height <= maxHeight);
+  if (ladder.length === 0) throw new Error('No rung fits --max-height');
+  log(`source ${info.width}x${info.height} ${frameRate}fps ${info.duration.toFixed(1)}s audio=${info.hasAudio} interlaced=${info.interlaced}`);
+  log(`ladder ${ladder.map((r) => r.name).join(', ')}, preset ${opts.preset}, segments ${opts.segmentSeconds}s, IDR ${opts.keyframeSeconds}s`);
+  if (dryRun) {
+    for (const rung of ladder) log(['ffmpeg', ...buildRungArgs({ input, rung, frameRate, interlaced: info.interlaced, hasAudio: info.hasAudio, loudness: null, opts, outDir: path.join(out, rung.name) })].join(' '));
+    return { meta: null, issues: [] };
   }
 
-  await rm(args.out, { recursive: true, force: true });
-  await mkdir(args.out, { recursive: true });
+  await rm(out, { recursive: true, force: true });
+  await mkdir(out, { recursive: true });
+
+  const useLoudness = info.hasAudio && !noLoudnorm;
+  const weights = stepWeights(ladder, useLoudness);
+  const weightTotal = weights.reduce((a, b) => a + b, 0);
+  const report = (stepIndex, step, name, fraction) => {
+    if (!onProgress) return;
+    const f = Math.min(1, Math.max(0, fraction));
+    const done = weights.slice(0, stepIndex).reduce((a, b) => a + b, 0) + weights[stepIndex] * f;
+    onProgress({ step, name, stepIndex, stepCount: weights.length, fraction: f, overall: done / weightTotal });
+  };
+  const secondsToFraction = (seconds) => (info.duration > 0 ? Math.min(1, seconds / info.duration) : 0);
 
   const timings = {};
   let loudness = null;
-  if (info.hasAudio && !args.noLoudnorm) {
+  let stepIndex = 0;
+  if (useLoudness) {
     const t = Date.now();
-    loudness = await measureLoudness(args.input, opts);
+    report(0, 'loudness', 'loudness', 0);
+    loudness = await measureLoudness(input, opts, { signal, onProgressSeconds: (sec) => report(0, 'loudness', 'loudness', secondsToFraction(sec)) });
     timings.loudnessPassSeconds = (Date.now() - t) / 1000;
-    if (loudness) console.log(`loudness measured: ${loudness.input_i} LUFS, TP ${loudness.input_tp} dBTP -> ${opts.targetLufs} LUFS`);
-    else console.log('audio is digital silence: loudness normalisation skipped, audio encoded as is');
+    if (loudness) log(`loudness measured: ${loudness.input_i} LUFS, TP ${loudness.input_tp} dBTP -> ${opts.targetLufs} LUFS`);
+    else log('audio is digital silence: loudness normalisation skipped, audio encoded as is');
+    stepIndex = 1;
   }
 
   const variants = [];
   const rungSummaries = [];
   for (const rung of ladder) {
-    const outDir = path.join(args.out, rung.name);
+    const outDir = path.join(out, rung.name);
     await mkdir(outDir, { recursive: true });
     const t = Date.now();
-    await run('ffmpeg', buildRungArgs({ input: args.input, rung, frameRate, interlaced: info.interlaced, hasAudio: info.hasAudio, loudness, opts, outDir }), { niceLevel: opts.nice });
+    const idx = stepIndex;
+    report(idx, 'rung', rung.name, 0);
+    await run('ffmpeg', buildRungArgs({ input, rung, frameRate, interlaced: info.interlaced, hasAudio: info.hasAudio, loudness, opts, outDir }), {
+      niceLevel: opts.nice,
+      signal,
+      onProgressSeconds: (sec) => report(idx, 'rung', rung.name, secondsToFraction(sec)),
+    });
+    stepIndex += 1;
+    report(idx, 'rung', rung.name, 1);
     const seconds = (Date.now() - t) / 1000;
     timings[`encode_${rung.name}_seconds`] = seconds;
     const parsed = await describeRung(outDir);
@@ -415,24 +473,24 @@ export async function main(argv) {
       codecs,
     });
     rungSummaries.push({ name: rung.name, width: probed.width, height: probed.height, codecs, segments: parsed.segments.length, averageKbps: Math.round(rates.average / 1000), peakKbps: Math.round(rates.peak / 1000), encodeSeconds: seconds });
-    console.log(`  ${rung.name}: ${seconds.toFixed(1)}s, avg ${Math.round(rates.average / 1000)} kbps, peak ${Math.round(rates.peak / 1000)} kbps, ${parsed.segments.length} segments`);
+    log(`  ${rung.name}: ${seconds.toFixed(1)}s, avg ${Math.round(rates.average / 1000)} kbps, peak ${Math.round(rates.peak / 1000)} kbps, ${parsed.segments.length} segments`);
   }
 
-  await writeFile(path.join(args.out, 'master.m3u8'), buildMasterPlaylist(variants, opts.defaultVariantKbps));
+  await writeFile(path.join(out, 'master.m3u8'), buildMasterPlaylist(variants, opts.defaultVariantKbps));
 
   const posterAt = Math.min(1, info.duration / 2).toFixed(2);
-  await run('ffmpeg', ['-hide_banner', '-nostdin', '-y', '-ss', posterAt, '-i', args.input, '-frames:v', '1', '-vf', 'scale=1280:-2', '-q:v', '3', path.join(args.out, 'poster.jpg')], { niceLevel: opts.nice });
+  await run('ffmpeg', ['-hide_banner', '-nostdin', '-y', '-ss', posterAt, '-i', input, '-frames:v', '1', '-vf', 'scale=1280:-2', '-q:v', '3', path.join(out, 'poster.jpg')], { niceLevel: opts.nice, signal });
 
-  const issues = await validateOutput(args.out, info.duration);
+  const issues = await validateOutput(out, info.duration);
   let totalBytes = 0;
-  for (const f of await readdir(args.out, { recursive: true })) {
-    const st = await stat(path.join(args.out, f));
+  for (const f of await readdir(out, { recursive: true })) {
+    const st = await stat(path.join(out, f));
     if (st.isFile()) totalBytes += st.size;
   }
   const meta = {
     createdAt: new Date().toISOString(),
     tool: 'scripts/hls/encode-hls.mjs',
-    source: { width: info.width, height: info.height, frameRate, durationSeconds: info.duration, sizeBytes: info.sizeBytes, codec: info.videoCodec },
+    source: { width: info.width, height: info.height, frameRate, durationSeconds: info.duration, sizeBytes: info.sizeBytes, codec: info.videoCodec, hasAudio: info.hasAudio },
     options: opts,
     loudness,
     rungs: rungSummaries,
@@ -441,8 +499,27 @@ export async function main(argv) {
     totalBytes,
     validationIssues: issues,
   };
-  await writeFile(path.join(args.out, 'meta.json'), JSON.stringify(meta, null, 2));
-  console.log(`done in ${meta.totalEncodeSeconds.toFixed(1)}s, ${(totalBytes / 1e6).toFixed(2)} MB total`);
+  await writeFile(path.join(out, 'meta.json'), JSON.stringify(meta, null, 2));
+  return { meta, issues };
+}
+
+export async function main(argv) {
+  const args = parseArgs(argv);
+  if (args.help || !args.input || !args.out) {
+    console.log(HELP);
+    return args.help ? 0 : 2;
+  }
+  const { meta, issues } = await encodeHls({
+    input: args.input,
+    out: args.out,
+    opts: args.opts,
+    maxHeight: args.maxHeight,
+    noLoudnorm: args.noLoudnorm,
+    dryRun: args.dryRun,
+    log: (line) => console.log(line),
+  });
+  if (!meta) return 0;
+  console.log(`done in ${meta.totalEncodeSeconds.toFixed(1)}s, ${(meta.totalBytes / 1e6).toFixed(2)} MB total`);
   if (issues.length) {
     console.error('VALIDATION FAILED:\n - ' + issues.join('\n - '));
     return 1;

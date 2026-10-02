@@ -14,12 +14,13 @@ export const VIDEO_PROVIDER: Record<string, StorageProvider> = {
   VERCEL_BLOB: 'VERCEL_BLOB',
   CLOUDFLARE_STREAM: 'CLOUDFLARE_STREAM',
   MUX: 'MUX',
+  SELF_HLS: 'SELF_HLS',
   YOUTUBE: 'YOUTUBE',
   VIMEO: 'VIMEO',
 };
 
 /** Providers that can serve as the active primary playback source. */
-export const PLAYABLE_PROVIDERS: StorageProvider[] = ['CLOUDFLARE_STREAM', 'MUX', 'YOUTUBE', 'VIMEO'];
+export const PLAYABLE_PROVIDERS: StorageProvider[] = ['SELF_HLS', 'CLOUDFLARE_STREAM', 'MUX', 'YOUTUBE', 'VIMEO'];
 
 /** Embed-only providers that cannot be used for PATRON-tier videos (no private playback). */
 export const EMBED_ONLY_PROVIDERS: StorageProvider[] = ['YOUTUBE', 'VIMEO'];

@@ -25,6 +25,7 @@ for f in app.env db.env docker-compose.yml; do [[ -f "$f" ]] || die "missing $f"
 
 new_image="polutek-app:$tag"
 migrator_image="polutek-migrator:$tag"
+worker_image="polutek-worker:$tag"
 prev_image="$(cat .current-image 2>/dev/null || true)"
 
 wait_healthy() { # $1 = image ref (for logs)
@@ -42,17 +43,28 @@ wait_healthy() { # $1 = image ref (for logs)
 
 start_app() { APP_IMAGE="$1" docker compose up -d --no-deps app; }
 
+# The video encoder (own HLS pipeline) is optional and best-effort: it only runs when worker.env exists, and a failure
+# here never fails or rolls back an app deploy. A running job is handed back to the queue when the container stops.
+start_encoder() { # $1 = worker image ref
+  [[ -f worker.env ]] || { log "worker.env missing, encoder not started (see docs/operations/VIDEO-PIPELINE.md)"; return 0; }
+  docker image inspect "$1" >/dev/null 2>&1 || { log "worker image $1 missing, encoder not started"; return 0; }
+  mkdir -p /opt/serwerek/data/video-work && chown 1000:1000 /opt/serwerek/data/video-work 2>/dev/null || true
+  if ENCODER_IMAGE="$1" docker compose up -d --no-deps encoder; then log "encoder running on $1"; else log "WARN: encoder failed to start on $1"; fi
+}
+
 if [[ "$mode" == "--rollback" ]]; then
   prev="$(cat .previous-image 2>/dev/null || true)"; [[ -n "$prev" ]] || die "no previous image recorded"
   log "rollback to $prev"
   start_app "$prev"; wait_healthy "$prev" || die "rollback image is not healthy either"
   cp .current-image .rolled-back-from 2>/dev/null || true
   printf '%s' "$prev" > .current-image
+  prev_worker="$(cat .previous-worker-image 2>/dev/null || true)"
+  if [[ -n "$prev_worker" ]]; then start_encoder "$prev_worker"; printf '%s' "$prev_worker" > .current-worker-image; fi
   exit 0
 fi
 
 # 1. Build (skipped when the image for this tag already exists).
-if docker image inspect "$new_image" >/dev/null 2>&1 && docker image inspect "$migrator_image" >/dev/null 2>&1; then
+if docker image inspect "$new_image" >/dev/null 2>&1 && docker image inspect "$migrator_image" >/dev/null 2>&1 && docker image inspect "$worker_image" >/dev/null 2>&1; then
   log "images for $tag already built, skipping build"
 else
   [[ -d src ]] || die "missing ./src (git archive of the commit to deploy)"
@@ -64,6 +76,7 @@ else
   log "building $new_image (${#args[@]} public build args)"
   docker build -f src/deploy/serwerek/Dockerfile --target runner "${args[@]}" -t "$new_image" src
   docker build -f src/deploy/serwerek/Dockerfile --target migrator -t "$migrator_image" src
+  docker build -f src/deploy/serwerek/Dockerfile --target worker -t "$worker_image" src
 fi
 
 # 2. Database up, safety dump, migrations in a one-off container. A failure here leaves the running app untouched.
@@ -87,7 +100,14 @@ if wait_healthy "$new_image"; then
     printf '%s' "$new_image" > .current-image
   fi
   # Keep the last N app/migrator images for rollbacks, drop the rest and dangling layers.
-  for repo in polutek-app polutek-migrator; do
+  # Encoder next to the app (after the app is healthy, so a broken worker image never delays the site).
+  prev_worker="$(cat .current-worker-image 2>/dev/null || true)"
+  start_encoder "$worker_image"
+  if [[ "$prev_worker" != "$worker_image" ]]; then
+    [[ -n "$prev_worker" ]] && printf '%s' "$prev_worker" > .previous-worker-image
+    printf '%s' "$worker_image" > .current-worker-image
+  fi
+  for repo in polutek-app polutek-migrator polutek-worker; do
     docker images "$repo" --format '{{.Tag}}' | grep -v '^current$' | tail -n +$((KEEP_IMAGES + 1)) | while read -r t; do
       [[ "$repo:$t" == "$new_image" || "$repo:$t" == "$prev_image" ]] && continue
       docker rmi "$repo:$t" >/dev/null 2>&1 || true

@@ -14,6 +14,7 @@ type ContractVideo = {
       processingState?: string | null;
       providerAssetId?: string | null;
       externalVideoId?: string | null;
+      objectKey?: string | null;
     } | null;
   } | null;
   asset?: {
@@ -78,9 +79,16 @@ export class VideoPolicy {
     const isVimeo = asset.provider === VIDEO_PROVIDER.VIMEO;
     const isCfStream = asset.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM;
     const isMux = asset.provider === VIDEO_PROVIDER.MUX;
+    const isSelfHls = asset.provider === VIDEO_PROVIDER.SELF_HLS;
 
-    if (!isCfStream && !isMux && !isYoutube && !isVimeo) {
-      blockers.push({ code: 'VIDEO_PUBLICATION_NON_PLAYABLE_PROVIDER', message: 'Aktywne źródło musi pochodzić z Cloudflare Stream, Mux, YouTube lub Vimeo.', field: 'activePlaybackRoute' });
+    if (!isCfStream && !isMux && !isYoutube && !isVimeo && !isSelfHls) {
+      blockers.push({ code: 'VIDEO_PUBLICATION_NON_PLAYABLE_PROVIDER', message: 'Aktywne źródło musi pochodzić z własnego HLS, Cloudflare Stream, Mux, YouTube lub Vimeo.', field: 'activePlaybackRoute' });
+    }
+
+    if (isSelfHls) {
+      // Own HLS: the encode worker creates the asset READY only after every object is verified in R2.
+      if (asset.processingState !== VIDEO_ASSET_PROCESSING_STATE.READY) blockers.push({ code: 'VIDEO_PUBLICATION_ASSET_NOT_READY', message: 'Wideo jest jeszcze kodowane albo kodowanie się nie powiodło.', field: 'activePlaybackRoute' });
+      if (!asset.objectKey) blockers.push({ code: 'VIDEO_PUBLICATION_MISSING_PROVIDER_ASSET_ID', message: 'Brakuje klucza obiektu własnego HLS.', field: 'activePlaybackRoute' });
     }
 
     if (isCfStream) {

@@ -4,7 +4,7 @@
 #     --build-arg NEXT_PUBLIC_APP_URL=https://www.pawelperfect.com \
 #     --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_... \
 #     --build-arg NEXT_PUBLIC_R2_PUBLIC_HOST=thumbs.pawelperfect.pl .
-# Targets: runner (default, the app), migrator (prisma CLI + migrations only, ~300 MB; used by deploy.sh).
+# Targets: runner (default = last stage, the app), migrator (prisma CLI + migrations only, ~300 MB), worker (video encoder; both used by deploy.sh).
 # NEXT_PUBLIC_* values are PUBLIC by design (inlined into the client bundle), so passing them as build args is fine.
 # Real secrets (BETTER_AUTH_SECRET, GOOGLE_CLIENT_SECRET, STRIPE_SECRET_KEY, DATABASE_URL ...) are NEVER baked in: they come from env_file at runtime.
 FROM node:22-bookworm-slim AS deps
@@ -45,6 +45,28 @@ COPY prisma ./prisma
 ENV NEXT_TELEMETRY_DISABLED=1
 USER node
 CMD ["npx", "prisma", "migrate", "deploy"]
+
+# Own video pipeline worker (scripts/video-worker.ts): pulls encode jobs from Postgres, runs ffmpeg, uploads HLS to R2.
+# Static ffmpeg of the same version the encoder was validated with (8.0.1); needs the full node_modules (tsx, prisma client, aws sdk).
+# Never part of the Next.js process. Runbook: docs/operations/VIDEO-PIPELINE.md.
+FROM mwader/static-ffmpeg:8.0.1 AS ffmpeg
+
+FROM node:22-bookworm-slim AS worker
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+COPY --from=ffmpeg /ffmpeg /usr/local/bin/ffmpeg
+COPY --from=ffmpeg /ffprobe /usr/local/bin/ffprobe
+WORKDIR /app
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 VIDEO_WORKER_WORK_DIR=/work
+COPY --from=deps --chown=node:node /app/node_modules ./node_modules
+COPY --chown=node:node package.json tsconfig.json ./
+COPY --chown=node:node prisma ./prisma
+COPY --chown=node:node lib ./lib
+COPY --chown=node:node app ./app
+COPY --chown=node:node components ./components
+COPY --chown=node:node scripts ./scripts
+RUN mkdir -p /work && chown node:node /work
+USER node
+CMD ["node_modules/.bin/tsx", "scripts/video-worker.ts"]
 
 FROM node:22-bookworm-slim AS runner
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*

@@ -34,6 +34,27 @@ services:
       - "127.0.0.1:3000:3000"
     mem_limit: 1g
 
+  encoder:
+    # Own video pipeline worker: pulls encode jobs from Postgres, runs ffmpeg (nice 10), uploads HLS to R2.
+    # Runbook: docs/operations/VIDEO-PIPELINE.md. A separate container (not the app process) so a long ffmpeg
+    # run can be limited, restarted and rolled back on its own.
+    # ENCODER_IMAGE is set by deploy.sh to polutek-worker:<sha>. Own env file with only what it needs (no Stripe/auth secrets).
+    image: ${ENCODER_IMAGE:-polutek-worker:current}
+    restart: unless-stopped
+    env_file: ./worker.env        # DATABASE_URL (host "db"), CLOUDFLARE_R2_* (incl. _BUCKET_VIDEO_ORIGINALS, _BUCKET_HLS, _BUCKET_THUMBNAILS_PRIVATE), MAIN_CREATOR_SLUG, NEXT_PUBLIC_R2_PUBLIC_HOST
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - /opt/serwerek/data/video-work:/work   # chown 1000:1000; one original + its HLS output at a time, wiped per job
+    init: true                    # reaps ffmpeg children
+    stop_grace_period: 60s        # on stop the running job is handed back to the queue (no attempt used)
+    mem_limit: 1500m              # SERWEREK.md section 14: ffmpeg needs ~300-500 MB; the limit is only a fuse
+    cpu_shares: 256               # lower weight than app/db when the 2 vCPUs are contended (plus nice 10 inside)
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "3" }
+
   migrate:
     # One-off, run by deploy.sh:  docker compose --profile tools run --rm migrate
     profiles: ["tools"]
