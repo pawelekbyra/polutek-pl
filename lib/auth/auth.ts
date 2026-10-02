@@ -171,6 +171,9 @@ export const auth = betterAuth({
         ]
       : []),
     ...(googleEnabled ? [oneTap({ clientId: process.env.GOOGLE_CLIENT_ID as string })] : []),
+    // Decision (audit F-07): the TOTP step applies to e-mail + password sign-in only. Google and
+    // One Tap sign-in count as strong on their own (Google's own 2-step verification and device
+    // checks), which is also Better Auth's behaviour; the app never forces a second factor on top.
     twoFactor({ issuer: APP_NAME, trustDeviceMaxAge: TWO_FACTOR_TRUST_DEVICE_SECONDS }),
     nextCookies(), // must stay last
   ],
