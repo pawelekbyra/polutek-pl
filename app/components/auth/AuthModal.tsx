@@ -49,6 +49,8 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  // After a wrong e-mail/password we hint at the other ways in (older accounts have no password yet).
+  const [wrongCredentials, setWrongCredentials] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaState, setCaptchaState] = useState<CaptchaState>("checking");
 
@@ -86,6 +88,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
   const returnTo = () => withQueryFlag(peekReturnPath() ?? currentPath(), "verified", "1");
 
   function fail(err: OpError) {
+    setWrongCredentials(err?.code === "INVALID_EMAIL_OR_PASSWORD");
     setError(authErrorMessage(err, isPl));
     setLoading(false);
     captchaRef.current?.reset();
@@ -259,6 +262,13 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
             {error && (
               <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-[13px] font-semibold text-red-600">
                 {error}
+              </p>
+            )}
+            {error && wrongCredentials && view === "sign-in" && (
+              <p className="mt-2 text-[12px] text-[var(--chan-muted)]">
+                {isPl
+                  ? "Masz starsze konto albo logowałeś się przez Google? Użyj przycisku Google albo „Nie pamiętam hasła”, żeby ustawić hasło."
+                  : "Have an older account, or signed in with Google before? Use the Google button, or “Forgot password” to set a password."}
               </p>
             )}
             {error && emailTaken && view === "sign-up" && (

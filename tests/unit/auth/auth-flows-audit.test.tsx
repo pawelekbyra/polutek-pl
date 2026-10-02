@@ -149,4 +149,15 @@ describe("AuthModal (F-01, F-07)", () => {
     await waitFor(() => expect(h.client.twoFactor.verifyTotp).toHaveBeenCalled());
     expect(h.client.twoFactor.verifyTotp.mock.calls[0][0]).toMatchObject({ trustDevice: true });
   });
+
+  it("F-09: a wrong e-mail/password hints at Google and 'Forgot password' for older accounts", async () => {
+    h.client.signIn.email.mockResolvedValue({ data: null, error: { code: "INVALID_EMAIL_OR_PASSWORD", status: 401 } });
+    renderModal();
+    fireEvent.change(screen.getByLabelText("E-mail"), { target: { value: "old@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "whatever password" } });
+    fireEvent.submit(screen.getByLabelText("Password").closest("form") as HTMLFormElement);
+    expect((await screen.findByRole("alert")).textContent).toBe("Incorrect email or password.");
+    expect(screen.getByText(/older account/i).textContent).toMatch(/Google/);
+    expect(screen.getByText(/older account/i).textContent).toMatch(/Forgot password/);
+  });
 });

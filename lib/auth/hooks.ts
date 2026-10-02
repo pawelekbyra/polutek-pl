@@ -3,6 +3,7 @@ import { APIError, createAuthMiddleware, getIP } from "better-auth/api";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { DEFAULT_AVATAR_URL } from "@/lib/auth/avatar";
+import { validateNickname } from "@/lib/auth/nickname";
 import { recordAuthAudit } from "./audit";
 import {
   SIGN_IN_FAILURE_LIMIT_PER_EMAIL,
@@ -61,6 +62,29 @@ export async function beforeSessionCreate(session: { userId: string }) {
   }
 }
 
+/**
+ * Accounts that predate the Better Auth nickname rules (no name, a name that breaks the rules, or one
+ * another older account already uses) are sent through the first-sign-in dialog at their next sign-in,
+ * so everybody ends up with a valid, unique nickname. The older of two duplicates keeps its name.
+ */
+export async function flagNicknameOnboardingIfNeeded(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true, onboardingPending: true, isDeleted: true, createdAt: true },
+  });
+  if (!user || user.isDeleted || user.onboardingPending) return;
+  const name = user.name?.trim() ?? "";
+  let needsNickname = name.length === 0 || !validateNickname(name).ok;
+  if (!needsNickname) {
+    const olderOwner = await prisma.user.findFirst({
+      where: { isDeleted: false, id: { not: userId }, createdAt: { lte: user.createdAt }, name: { equals: name, mode: "insensitive" } },
+      select: { id: true },
+    });
+    needsNickname = Boolean(olderOwner);
+  }
+  if (needsNickname) await prisma.user.update({ where: { id: userId }, data: { onboardingPending: true } });
+}
+
 export async function afterSessionCreate(session: { userId: string; ipAddress?: string | null; userAgent?: string | null }) {
   await recordAuthAudit({
     action: "AUTH_SIGN_IN",
@@ -68,6 +92,12 @@ export async function afterSessionCreate(session: { userId: string; ipAddress?: 
     ip: session.ipAddress ?? null,
     userAgent: session.userAgent ?? null,
   });
+  try {
+    await flagNicknameOnboardingIfNeeded(session.userId);
+  } catch (error) {
+    // Never block a sign-in over the nickname check.
+    logger.warn("[auth] nickname onboarding check failed", error instanceof Error ? error.message : String(error));
+  }
 }
 
 /**

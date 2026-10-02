@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 const prisma = vi.hoisted(() => ({
-  user: { findFirst: vi.fn(), findUnique: vi.fn() },
+  user: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
   account: { deleteMany: vi.fn().mockReturnValue("delete-accounts"), findMany: vi.fn() },
   session: { deleteMany: vi.fn().mockReturnValue("delete-sessions") },
   $transaction: vi.fn().mockResolvedValue([]),
@@ -17,6 +17,7 @@ import {
   beforeAccountCreate,
   beforeSessionCreate,
   beforeUserCreate,
+  flagNicknameOnboardingIfNeeded,
   recordSignInOutcome,
   rejectExistingEmailSignUp,
 } from "@/lib/auth/hooks";
@@ -162,5 +163,54 @@ describe("sign-in lockout counts only failures and is keyed per client (F-06)", 
     await expect(assertSignInNotLocked("a@b.pl", { request: request("198.51.100.9") })).rejects.toMatchObject({
       body: { code: "TOO_MANY_ATTEMPTS" },
     });
+  });
+});
+
+describe("flagNicknameOnboardingIfNeeded (F-09: Clerk-era names)", () => {
+  const user = (over: Record<string, unknown> = {}) => ({
+    name: "Jan Kowalski",
+    onboardingPending: false,
+    isDeleted: false,
+    createdAt: new Date("2025-01-01"),
+    ...over,
+  });
+
+  it("asks for a nickname when the stored name is missing", async () => {
+    prisma.user.findUnique.mockResolvedValueOnce(user({ name: null }));
+    await flagNicknameOnboardingIfNeeded("u1");
+    expect(prisma.user.update).toHaveBeenCalledWith({ where: { id: "u1" }, data: { onboardingPending: true } });
+  });
+
+  it("asks for a nickname when the name breaks the nickname rules", async () => {
+    prisma.user.findUnique.mockResolvedValueOnce(user({ name: "ab" }));
+    await flagNicknameOnboardingIfNeeded("u1");
+    expect(prisma.user.update).toHaveBeenCalled();
+  });
+
+  it("asks the newer of two accounts sharing a name, but not the older one", async () => {
+    prisma.user.findUnique.mockResolvedValueOnce(user());
+    prisma.user.findFirst.mockResolvedValueOnce({ id: "older" });
+    await flagNicknameOnboardingIfNeeded("u2");
+    expect(prisma.user.update).toHaveBeenCalledTimes(1);
+    expect(prisma.user.findFirst.mock.calls[0][0].where).toMatchObject({
+      isDeleted: false,
+      id: { not: "u2" },
+      createdAt: { lte: new Date("2025-01-01") },
+    });
+    prisma.user.update.mockClear();
+    prisma.user.findUnique.mockResolvedValueOnce(user());
+    prisma.user.findFirst.mockResolvedValueOnce(null);
+    await flagNicknameOnboardingIfNeeded("u1");
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it("leaves valid unique names, already-pending and deleted accounts alone", async () => {
+    prisma.user.findUnique.mockResolvedValueOnce(user({ onboardingPending: true, name: null }));
+    prisma.user.findUnique.mockResolvedValueOnce(user({ isDeleted: true, name: null }));
+    prisma.user.findUnique.mockResolvedValueOnce(null);
+    await flagNicknameOnboardingIfNeeded("u1");
+    await flagNicknameOnboardingIfNeeded("u1");
+    await flagNicknameOnboardingIfNeeded("u1");
+    expect(prisma.user.update).not.toHaveBeenCalled();
   });
 });

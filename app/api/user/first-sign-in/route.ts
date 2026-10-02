@@ -24,7 +24,9 @@ export async function POST(req: NextRequest) {
       nickname: body.nickname,
       avatarDataUrl: typeof body.avatarDataUrl === "string" ? body.avatarDataUrl : null,
     });
-    void sendWelcomeEmail(user.email, user.name, user.language === "pl" ? "pl" : "en").catch((error) => {
+    // Older accounts that are only asked for a (new) nickname were welcomed long ago.
+    const isNewAccount = Date.now() - user.createdAt.getTime() < 24 * 60 * 60 * 1000;
+    if (isNewAccount) void sendWelcomeEmail(user.email, user.name, user.language === "pl" ? "pl" : "en").catch((error) => {
       logger.error("[onboarding] welcome email failed", error instanceof Error ? error.message : String(error));
     });
     return NextResponse.json({ success: true, name: user.name });
