@@ -801,11 +801,6 @@
       0 8px 20px var(--cm-amber-14);
   }
 
-  .chan-lang-pill-active {
-    background: var(--chan-blue);
-    box-shadow: 0 1px 10px var(--cm-blue-35);
-  }
-
   .polutek-vidstack-player {
     border-radius: 14px;
     overflow: hidden;

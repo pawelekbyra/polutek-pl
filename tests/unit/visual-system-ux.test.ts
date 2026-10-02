@@ -24,7 +24,8 @@ describe("shared visual system contracts", () => {
     const player = read("app/components/VideoPlayer.tsx");
 
     expect(navbar).toContain("polutek-watch-nav");
-    expect(navbar).toContain("var(--chan-blue)");
+    expect(read("app/components/LanguageSwitcher.tsx")).toContain("var(--chan-blue)");
+    expect(navbar).toContain("LanguageSwitcher");
     expect(subscribe).toContain("border-[var(--cm-");
     expect(authModal).toContain("!max-w-[390px]");
     expect(comments).toContain("bg-[var(--chan-blue-soft)]");
