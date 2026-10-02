@@ -6,7 +6,6 @@ const mockVideo = {
   id: 'v1',
   slug: 'video-1',
   title: 'Video 1',
-  videoUrl: 'https://example.com/video.mp4',
   thumbnailUrl: 'https://example.com/thumb.jpg',
   tier: AccessTier.PUBLIC,
   status: VideoStatus.PUBLISHED,
@@ -39,24 +38,24 @@ describe('Video DTOs', () => {
     expect(dto.title).toBe('Video 1');
   });
 
-  it('toAdminVideoDto should contain videoUrl', () => {
+  it('toAdminVideoDto no longer carries the legacy videoUrl', () => {
     const dto = toAdminVideoDto(mockVideo);
-    expect(dto.videoUrl).toBe('https://example.com/video.mp4');
+    expect((dto as any).videoUrl).toBeUndefined();
     expect(dto.status).toBe(VideoStatus.PUBLISHED);
     expect(dto.commentsCount).toBe(5);
     expect(dto.asset).toBeNull();
   });
 
-  it('toAdminVideoAssetDto represents a Cloudflare Stream asset without playback runtime fields', () => {
+  it('toAdminVideoAssetDto represents an own-HLS asset without playback runtime fields', () => {
     const syncedAt = new Date('2026-06-11T00:00:00Z');
     const asset = {
       id: 'asset-1',
       videoId: 'v1',
-      provider: StorageProvider.CLOUDFLARE_STREAM,
-      objectKey: 'cloudflare-stream/cf-video-uid',
-      bucket: null,
-      providerAssetId: 'cf-video-uid',
-      providerPlaybackId: 'cf-playback-uid',
+      provider: StorageProvider.SELF_HLS,
+      objectKey: 'videos/v1/v/v1',
+      bucket: 'polutek-hls',
+      providerAssetId: null,
+      providerPlaybackId: null,
       processingState: VideoAssetProcessingState.PROCESSING,
       isPrimary: true,
       failureReason: null,
@@ -67,21 +66,20 @@ describe('Video DTOs', () => {
       sizeBytes: 1234,
       createdAt: syncedAt,
       updatedAt: syncedAt,
-      playbackUrl: 'https://customer.cloudflarestream.com/leak',
+      playbackUrl: 'https://video.example/leak',
       playbackToken: 'secret-token',
       signedUrl: 'https://signed.example/leak',
     };
 
     const dto = toAdminVideoAssetDto(asset)!;
 
-    expect(dto.provider).toBe('CLOUDFLARE_STREAM');
-    expect(dto.providerAssetId).toBe('cf-video-uid');
-    expect(dto.providerPlaybackId).toBe('cf-playback-uid');
+    expect(dto.provider).toBe('SELF_HLS');
     expect(dto.processingState).toBe('PROCESSING');
     expect(dto.status).toBe('PROCESSING');
     expect(dto.isPrimary).toBe(true);
     expect(dto.requiresSignedUrl).toBe(true);
-    expect(dto.sourceMode).toBe('CLOUDFLARE_STREAM');
+    expect(dto.sourceMode).toBe('SELF_HLS');
+    expect(dto.isPlayable).toBe(false);
     expect(dto.lastSyncAt).toBe(syncedAt);
     expect(dto.providerSyncedAt).toBe(syncedAt);
     expect((dto as any).playbackUrl).toBeUndefined();
@@ -123,15 +121,15 @@ describe('Video DTOs', () => {
     }
   });
 
-  it('toPublicVideoDto still does not expose playback behavior when a Cloudflare import is pending', () => {
+  it('toPublicVideoDto still does not expose playback behavior while an own-HLS encode is pending', () => {
     const dto = toPublicVideoDto({
       ...mockVideo,
       asset: {
-        provider: StorageProvider.CLOUDFLARE_STREAM,
-        providerAssetId: 'cloudflare-uid-1',
+        provider: StorageProvider.SELF_HLS,
+        objectKey: 'videos/v1/v/v1',
         processingState: VideoAssetProcessingState.PENDING,
       },
-      playbackUrl: 'https://customer.cloudflarestream.com/leak',
+      playbackUrl: 'https://video.example/leak',
       playbackToken: 'token-leak',
     });
 
@@ -141,7 +139,7 @@ describe('Video DTOs', () => {
     expect((dto as any).asset).toBeUndefined();
   });
 
-  it('toAdminVideoDto includes asset metadata but does not introduce playback/upload behavior', () => {
+  it('toAdminVideoDto still represents a leftover legacy-provider asset (Mux) without playback/upload behavior', () => {
     const providerSyncedAt = new Date('2026-06-11T00:00:00Z');
     const dto = toAdminVideoDto({
       ...mockVideo,
@@ -176,18 +174,18 @@ describe('Video DTOs', () => {
     expect((dto.asset as any).playbackToken).toBeUndefined();
   });
 
-  it('toAdminVideoDto exposes safe provider diagnostics for failed Cloudflare assets', () => {
+  it('toAdminVideoDto exposes safe diagnostics for a failed own-HLS encode', () => {
     const updatedAt = new Date('2026-06-26T00:00:00Z');
     const dto = toAdminVideoDto({
       ...mockVideo,
       asset: {
         id: 'asset-failed',
         videoId: 'v1',
-        provider: StorageProvider.CLOUDFLARE_STREAM,
-        objectKey: 'cloudflare-stream/cf-failed',
-        bucket: null,
-        providerAssetId: 'cf-failed',
-        providerPlaybackId: 'cf-playback',
+        provider: StorageProvider.SELF_HLS,
+        objectKey: 'videos/v1/v/v2',
+        bucket: 'polutek-hls',
+        providerAssetId: null,
+        providerPlaybackId: null,
         processingState: VideoAssetProcessingState.FAILED,
         isPrimary: true,
         failureReason: 'transcode failed',
@@ -202,19 +200,19 @@ describe('Video DTOs', () => {
       },
     });
 
-    expect(dto.asset?.provider).toBe('CLOUDFLARE_STREAM');
+    expect(dto.asset?.provider).toBe('SELF_HLS');
     expect(dto.asset?.status).toBe('FAILED');
     expect(dto.asset?.failureReason).toBe('transcode failed');
     expect(dto.asset?.requiresSignedUrl).toBe(true);
-    expect(dto.asset?.sourceMode).toBe('CLOUDFLARE_STREAM');
+    expect(dto.asset?.sourceMode).toBe('SELF_HLS');
     expect((dto.asset as any).playbackToken).toBeUndefined();
   });
 
   describe('migrationStatus calculation', () => {
-    it('READY when Cloudflare Stream asset is READY', () => {
+    it('READY when the own-HLS asset is READY', () => {
       const dto = toAdminVideoDto({
         ...mockVideo,
-        asset: { provider: StorageProvider.CLOUDFLARE_STREAM, processingState: VideoAssetProcessingState.READY }
+        asset: { provider: StorageProvider.SELF_HLS, processingState: VideoAssetProcessingState.READY }
       });
       expect(dto.migrationStatus).toBe('READY');
     });
@@ -227,37 +225,36 @@ describe('Video DTOs', () => {
       expect(dto.migrationStatus).toBe('MIGRATION_REQUIRED');
     });
 
-    it('MIGRATION_REQUIRED when no asset but has videoUrl', () => {
+    it.each([StorageProvider.CLOUDFLARE_STREAM, StorageProvider.MUX, StorageProvider.YOUTUBE, StorageProvider.VIMEO])('MIGRATION_REQUIRED (upload again) for a leftover %s asset', (provider) => {
       const dto = toAdminVideoDto({
         ...mockVideo,
-        videoUrl: 'https://example.com/video.mp4',
-        asset: null
+        asset: { provider, processingState: VideoAssetProcessingState.READY }
       });
       expect(dto.migrationStatus).toBe('MIGRATION_REQUIRED');
     });
 
-    it('PROCESSING when Cloudflare Stream asset is PROCESSING', () => {
+    it('PROCESSING when the own-HLS asset is PROCESSING', () => {
       const dto = toAdminVideoDto({
         ...mockVideo,
-        asset: { provider: StorageProvider.CLOUDFLARE_STREAM, processingState: VideoAssetProcessingState.PROCESSING }
+        asset: { provider: StorageProvider.SELF_HLS, processingState: VideoAssetProcessingState.PROCESSING }
       });
       expect(dto.migrationStatus).toBe('PROCESSING');
     });
 
-    it('FAILED when Cloudflare Stream asset is FAILED', () => {
+    it('FAILED when the own-HLS asset is FAILED', () => {
       const dto = toAdminVideoDto({
         ...mockVideo,
-        asset: { provider: StorageProvider.CLOUDFLARE_STREAM, processingState: VideoAssetProcessingState.FAILED }
+        asset: { provider: StorageProvider.SELF_HLS, processingState: VideoAssetProcessingState.FAILED }
       });
       expect(dto.migrationStatus).toBe('FAILED');
     });
 
-    it('MISSING_SOURCE when no asset and no videoUrl', () => {
+    it('MISSING_SOURCE when there is no asset (a legacy videoUrl is never a source)', () => {
       const dto = toAdminVideoDto({
         ...mockVideo,
-        videoUrl: '',
+        videoUrl: 'https://example.com/video.mp4',
         asset: null
-      });
+      } as never);
       expect(dto.migrationStatus).toBe('MISSING_SOURCE');
     });
   });

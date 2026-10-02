@@ -1,10 +1,10 @@
-import { Video, VideoAsset, Prisma, AccessTier, VideoStatus, StorageProvider, VideoAssetProcessingState } from "@prisma/client";
+import { Video, VideoAsset, Prisma, AccessTier, VideoStatus } from "@prisma/client";
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { VideoNotFoundError, VideoNotOnMainChannelError, VideoInvalidHeroError, VideoInvalidSidebarError } from "../domain/video.errors";
 import { VideoPolicy } from "../domain/video.policy";
-import { selectPrimaryVideoAsset, withPrimaryAsset } from "../domain/video-asset-selection";
+import { withPrimaryAsset } from "../domain/video-asset-selection";
 import { pickFundraisingUpdate, type FundraisingGoalFields } from "../domain/fundraising";
 import { isDerivedThumbnailUrl } from "@/lib/modules/media"; // derived thumbnail srcs are never stored
 
@@ -20,7 +20,6 @@ const ACTIVE_PLAYBACK_ROUTE_INCLUDE = { activePlaybackRoute: { include: { asset:
 export interface CreateVideoInput {
   title: string;
   slug: string;
-  videoUrl?: string | null;
   thumbnailUrl?: string | null;
   tier: AccessTier;
   status?: VideoStatus;
@@ -45,7 +44,6 @@ export interface CreateVideoInput {
 export interface AdminUpdateVideoInput extends Partial<CreateVideoInput>, FundraisingGoalFields {
   /** Set by updateAdminVideo only (cancelling an upcoming premiere publishes now). */
   publishedAt?: Date | null;
-  videoUrl?: string | null;
   status?: VideoStatus;
   isMainFeatured?: boolean;
   showInSidebar?: boolean;
@@ -194,21 +192,19 @@ export class VideoRepository {
     if (filters.showInSidebar === 'true') where.showInSidebar = true;
     if (filters.showInSidebar === 'false') where.showInSidebar = false;
 
+    // migrationStatus is the state of the own-HLS source: READY / PROCESSING / FAILED, no source at all,
+    // or "needs re-upload" (a leftover asset of a provider we no longer support).
     if (filters.migrationStatus && filters.migrationStatus !== 'ALL') {
       if (filters.migrationStatus === 'READY') {
-        where.assets = { some: { isPrimary: true, provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.READY } };
+        where.assets = { some: { isPrimary: true, provider: VIDEO_PROVIDER.SELF_HLS, processingState: VIDEO_ASSET_PROCESSING_STATE.READY } };
       } else if (filters.migrationStatus === 'PROCESSING') {
-        where.assets = { some: { isPrimary: true, provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: { in: [VIDEO_ASSET_PROCESSING_STATE.PENDING, VIDEO_ASSET_PROCESSING_STATE.UPLOADING, VIDEO_ASSET_PROCESSING_STATE.PROCESSING] } } };
+        where.assets = { some: { isPrimary: true, provider: VIDEO_PROVIDER.SELF_HLS, processingState: { in: [VIDEO_ASSET_PROCESSING_STATE.PENDING, VIDEO_ASSET_PROCESSING_STATE.UPLOADING, VIDEO_ASSET_PROCESSING_STATE.PROCESSING] } } };
       } else if (filters.migrationStatus === 'FAILED') {
-        where.assets = { some: { isPrimary: true, provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.FAILED } };
+        where.assets = { some: { isPrimary: true, provider: VIDEO_PROVIDER.SELF_HLS, processingState: VIDEO_ASSET_PROCESSING_STATE.FAILED } };
       } else if (filters.migrationStatus === 'MISSING_SOURCE') {
         where.assets = { none: {} };
-        where.videoUrl = '';
       } else if (filters.migrationStatus === 'MIGRATION_REQUIRED') {
-        where.OR = [
-          { assets: { some: { isPrimary: true, provider: { in: [VIDEO_PROVIDER.R2, VIDEO_PROVIDER.S3, VIDEO_PROVIDER.VERCEL_BLOB] } } } },
-          { AND: [ { assets: { none: {} } }, { videoUrl: { not: '' } } ] }
-        ];
+        where.assets = { some: { isPrimary: true, provider: { not: VIDEO_PROVIDER.SELF_HLS } } };
       }
     }
 
@@ -217,15 +213,7 @@ export class VideoRepository {
         { title: { contains: filters.query, mode: 'insensitive' } },
         { slug: { contains: filters.query, mode: 'insensitive' } }
       ];
-      // migrationStatus === 'MIGRATION_REQUIRED' above may have already set
-      // where.OR; combine both conditions with AND instead of letting this
-      // block silently overwrite the migration-status filter.
-      if (where.OR) {
-        where.AND = [{ OR: where.OR }, { OR: queryOr }];
-        delete where.OR;
-      } else {
-        where.OR = queryOr;
-      }
+      where.OR = queryOr;
     }
 
     const page = filters.page || 1;
@@ -280,7 +268,6 @@ export class VideoRepository {
       thumbnailUrl: input.thumbnailUrl ?? '',
       duration: input.duration ?? null,
       tier: input.tier || 'PUBLIC',
-      videoUrl: input.videoUrl?.trim() || '',
       creator: { connect: { id: mainChannelId } },
       status: 'DRAFT',
       showInSidebar: false,
@@ -307,7 +294,6 @@ export class VideoRepository {
 
     if (data.title !== undefined) updateData.title = data.title;
     if (data.slug !== undefined) updateData.slug = data.slug;
-    if (data.videoUrl !== undefined) updateData.videoUrl = data.videoUrl ?? '';
     if (data.thumbnailUrl !== undefined && !isDerivedThumbnailUrl(data.thumbnailUrl, process.env)) updateData.thumbnailUrl = data.thumbnailUrl ?? '';
     if (data.tier !== undefined) updateData.tier = data.tier;
     if (data.description !== undefined) updateData.description = data.description;
@@ -432,152 +418,6 @@ export class VideoRepository {
       });
     }
   }
-
-  async findAssetByProviderId(provider: StorageProvider, providerAssetId: string): Promise<VideoAsset | null> {
-    return await this.db.videoAsset.findFirst({
-      where: { provider, providerAssetId },
-    });
-  }
-
-  async listAssetsForVideo(videoId: string): Promise<VideoAsset[]> {
-    return await this.db.videoAsset.findMany({
-      where: { videoId },
-      orderBy: [{ isPrimary: 'desc' }, { updatedAt: 'desc' }, { createdAt: 'desc' }, { id: 'asc' }],
-    });
-  }
-
-  async findPrimaryAssetForVideo(videoId: string): Promise<VideoAsset | null> {
-    return selectPrimaryVideoAsset(await this.listAssetsForVideo(videoId));
-  }
-
-  async updateAsset(assetId: string, input: VideoAssetUpsertInput, tx: WriteTx): Promise<VideoAsset> {
-    return await tx.videoAsset.update({
-      where: { id: assetId },
-      data: buildVideoAssetUpdateData(input),
-    });
-  }
-
-  async updateVideoAsset(videoId: string, input: VideoAssetUpsertInput, tx: WriteTx): Promise<VideoAsset> {
-    return await this.upsertPrimaryAsset(videoId, input, tx);
-  }
-
-  async upsertPrimaryAsset(videoId: string, input: VideoAssetUpsertInput, tx: WriteTx): Promise<VideoAsset> {
-    const assets = await tx.videoAsset.findMany({
-      where: { videoId },
-      orderBy: [{ isPrimary: 'desc' }, { updatedAt: 'desc' }, { createdAt: 'desc' }, { id: 'asc' }],
-    });
-    const existing = selectPrimaryVideoAsset(assets);
-
-    if (existing) {
-      return await tx.videoAsset.update({
-        where: { id: existing.id },
-        data: { ...buildVideoAssetUpdateData(input), isPrimary: true },
-      });
-    }
-
-    return await tx.videoAsset.create({
-      data: {
-        videoId,
-        provider: input.provider || VIDEO_PROVIDER.CLOUDFLARE_STREAM,
-        objectKey: input.objectKey || input.providerAssetId || videoId,
-        bucket: input.bucket,
-        providerAssetId: input.providerAssetId,
-        providerPlaybackId: input.providerPlaybackId,
-        processingState: input.processingState || VIDEO_ASSET_PROCESSING_STATE.PENDING,
-        isPrimary: true,
-        failureReason: input.failureReason,
-        providerSyncedAt: input.providerSyncedAt,
-        processingStartedAt: input.processingStartedAt,
-        processingEndedAt: input.processingEndedAt,
-        mimeType: input.mimeType,
-        sizeBytes: input.sizeBytes,
-      },
-    });
-  }
-
-  async upsertAsset(videoId: string, input: VideoAssetUpsertInput, tx: WriteTx): Promise<VideoAsset> {
-    if (input.isPrimary === false) {
-      return await tx.videoAsset.create({
-        data: {
-          videoId,
-          provider: input.provider || VIDEO_PROVIDER.CLOUDFLARE_STREAM,
-          objectKey: input.objectKey || input.providerAssetId || videoId,
-          bucket: input.bucket,
-          providerAssetId: input.providerAssetId,
-          providerPlaybackId: input.providerPlaybackId,
-          processingState: input.processingState || VIDEO_ASSET_PROCESSING_STATE.PENDING,
-          isPrimary: false,
-          failureReason: input.failureReason,
-          providerSyncedAt: input.providerSyncedAt,
-          processingStartedAt: input.processingStartedAt,
-          processingEndedAt: input.processingEndedAt,
-          mimeType: input.mimeType,
-          sizeBytes: input.sizeBytes,
-        },
-      });
-    }
-
-    return await this.updateVideoAsset(videoId, input, tx);
-  }
-
-  async ensureSinglePrimaryAsset(videoId: string, tx: WriteTx): Promise<VideoAsset | null> {
-    const assets = await tx.videoAsset.findMany({
-      where: { videoId },
-      orderBy: [{ isPrimary: 'desc' }, { updatedAt: 'desc' }, { createdAt: 'desc' }, { id: 'asc' }],
-    });
-    if (assets.length === 0) return null;
-
-    const selected = selectPrimaryVideoAsset(assets);
-    if (!selected) return null;
-
-    await tx.videoAsset.updateMany({
-      where: { videoId, id: { not: selected.id }, isPrimary: true },
-      data: { isPrimary: false },
-    });
-
-    if (!selected.isPrimary) {
-      return await tx.videoAsset.update({
-        where: { id: selected.id },
-        data: { isPrimary: true },
-      });
-    }
-
-    return selected;
-  }
-}
-
-export type VideoAssetUpsertInput = {
-  provider?: StorageProvider;
-  objectKey?: string;
-  bucket?: string | null;
-  providerAssetId?: string | null;
-  providerPlaybackId?: string | null;
-  processingState?: VideoAssetProcessingState;
-  isPrimary?: boolean;
-  failureReason?: string | null;
-  providerSyncedAt?: Date | null;
-  processingStartedAt?: Date | null;
-  processingEndedAt?: Date | null;
-  mimeType?: string | null;
-  sizeBytes?: number | null;
-};
-
-function buildVideoAssetUpdateData(input: VideoAssetUpsertInput): Prisma.VideoAssetUpdateInput {
-  return {
-    provider: input.provider,
-    objectKey: input.objectKey,
-    bucket: input.bucket,
-    providerAssetId: input.providerAssetId,
-    providerPlaybackId: input.providerPlaybackId,
-    processingState: input.processingState,
-    isPrimary: input.isPrimary,
-    failureReason: input.failureReason,
-    providerSyncedAt: input.providerSyncedAt,
-    processingStartedAt: input.processingStartedAt,
-    processingEndedAt: input.processingEndedAt,
-    mimeType: input.mimeType,
-    sizeBytes: input.sizeBytes,
-  };
 }
 
 function isVideoStatus(value: string): value is VideoStatus {

@@ -102,7 +102,7 @@ Ręczne awaryjne czyszczenie zadania: `update "VideoEncodeJob" set status='CANCE
 - **Szczegóły filmu -> Media** (`/admin/videos/<id>?tab=media`): karta uploadu (wybór pliku, wstrzymaj/wznów/anuluj, procent, części, prędkość, ETA, checkbox "opublikuj automatycznie po zakodowaniu") i karta "Przetwarzanie" (stan, etap, procent, ETA, próby, przyczyna błędu, ostrzeżenie "worker nie odpowiada", "Anuluj kodowanie", "Zakoduj ponownie", lista wersji HLS z usuwaniem; wersji, która gra opublikowany film, nie da się usunąć).
 - Trasy: `GET /api/admin/videos/<id>/pipeline`, `POST .../pipeline/encode`, `DELETE .../pipeline/jobs/<jobId>`, `DELETE .../pipeline/assets/<assetId>`; usunięcie filmu kasuje też jego obiekty w R2 (oryginały i HLS, best-effort po udanym usunięciu z bazy).
 - Publikacja: bez zmian (blokady `VideoPolicy.getPublicationBlockers`); film jest publikowalny dopiero, gdy worker utworzył asset `SELF_HLS` READY i aktywną trasę. "Opublikuj po zakodowaniu" używa `Video.publishAfterAssetReady`.
-- Napisy (`subtitleUrlPl/En`) bez zmian; stare providery (Mux/Stream/Vimeo/YouTube) zostają w kodzie do osobnego sprzątania, ale nic nowego od nich nie zależy.
+- Napisy (`subtitleUrlPl/En`) bez zmian. Kod dostawców (Mux/Stream/Vimeo/YouTube) został usunięty (2026-10-02); ich stare wiersze w bazie są ignorowane, a usuwa je `scripts/hls/delete-legacy-provider-rows.sql` (HLS-SELF-HOSTED.md, "Po usunięciu dostawców").
 
 ## 6. Włączenie na serwerze (kolejność)
 

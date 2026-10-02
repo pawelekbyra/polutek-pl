@@ -1,21 +1,13 @@
-// R6/R3 delivery: Playback now uses modular access.
+// Playback plans: own HLS (SELF_HLS) is the only video source (CLAUDE.md 4.17).
 import { checkVideoAccess } from '@/lib/modules/access';
-import { getVideoSourceInfo } from '@/lib/media/video-source';
-import { isAllowedVideoSourceUrl } from '@/lib/blob';
-import { StorageService } from '@/lib/modules/media';
 import type { PlaybackAssetContract, PlaybackPlan, PlaybackPlanStatus } from '../domain/playback.dto';
 import { AppContext } from '@/lib/modules/shared/app-context';
-import { MediaPolicy } from '@/lib/modules/media';
-import { shouldBlockLegacyPrivatePlaybackFallback } from '../domain/playback-policy';
-import { CloudflareSignedPlaybackTokenService } from '../infrastructure/cloudflare-signed-playback-token.service';
 import { getPrimaryPlayableAsset } from '../domain/primary-playable-asset';
 import { selectPrimaryVideoAsset } from '@/lib/modules/video';
-import { extractYouTubeVideoId, extractVimeoVideoId } from '@/lib/modules/video';
-import { MuxClient } from '@/lib/modules/video';
 import { isUpcomingPremiere, toPremiereDate } from '@/lib/modules/video/domain/premiere';
 import { resolvePublicThumbnailSrc } from '@/lib/modules/media';
 import { VideoStatus, type VideoAsset } from '@prisma/client';
-import { buildSelfHlsPlan, pickFallbackAsset } from './self-hls-plan';
+import { buildSelfHlsPlan } from './self-hls-plan';
 import { SelfHlsTokenService } from '../infrastructure/self-hls-token.service';
 
 export type PlaybackErrorCode =
@@ -35,8 +27,7 @@ type VideoWithAssets = Awaited<ReturnType<AppContext['prisma']['video']['findUni
 
 type PlayerDefaults = Pick<PlaybackPlan, 'player' | 'tracking'>;
 
-const PROVIDER_BACKED_PLAYBACK_PROVIDERS = new Set(['CLOUDFLARE_STREAM', 'MUX', 'SELF_HLS']);
-const LEGACY_STORAGE_PROVIDERS = new Set(['R2', 'S3', 'VERCEL_BLOB']);
+const SELF_HLS_PROVIDER = 'SELF_HLS';
 
 function emptyPlaybackRuntime(): PlayerDefaults['tracking'] {
   return { playbackSessionId: '', heartbeatIntervalSeconds: 0 };
@@ -79,20 +70,6 @@ function toStatus(reason?: string): PlaybackPlanStatus {
   return 'ERROR';
 }
 
-function encodeCloudflarePlaybackToken(token: string): string {
-  const trimmed = token.trim();
-  if (!trimmed) throw new Error('Cloudflare signed playback token missing');
-  return encodeURIComponent(trimmed);
-}
-
-function buildCloudflareSignedHlsManifestUrl(token: string): string {
-  return `https://videodelivery.net/${encodeCloudflarePlaybackToken(token)}/manifest/video.m3u8`;
-}
-
-function buildCloudflareSignedIframeUrl(token: string): string {
-  return `https://iframe.videodelivery.net/${encodeCloudflarePlaybackToken(token)}`;
-}
-
 function toSafeAssetContract(asset: VideoAsset | null | undefined): PlaybackAssetContract | undefined {
   if (!asset) return undefined;
 
@@ -100,9 +77,9 @@ function toSafeAssetContract(asset: VideoAsset | null | undefined): PlaybackAsse
     provider: asset.provider,
     processingState: asset.processingState,
     isPrimary: Boolean(asset.isPrimary),
-    // Public playback plans intentionally redact provider identifiers. Even
+    // Public playback plans intentionally redact storage identifiers. Even
     // denied/non-ready states may include diagnostics.asset for safe state
-    // messaging, so never expose private Cloudflare/Mux asset IDs here.
+    // messaging, so never expose object keys or provider ids here.
     providerAssetId: null,
     providerPlaybackId: null,
     mimeType: asset.mimeType ?? null,
@@ -147,13 +124,25 @@ function unavailablePlan(args: {
   };
 }
 
+/**
+ * The asset that plays: the active route's asset when it is READY own HLS, else the
+ * primary/newest own-HLS asset. Rows of any other provider (legacy Mux/Stream/YouTube/
+ * Vimeo/storage rows that may still sit in the DB until the cleanup SQL runs) are ignored.
+ */
+function pickSelfHlsAsset(video: VideoWithAssets | null): VideoAsset | null {
+  const routeAsset = video?.activePlaybackRoute?.asset;
+  if (routeAsset?.provider === SELF_HLS_PROVIDER && routeAsset.processingState === 'READY') return routeAsset;
+  const own = [...(video?.assets ?? []), ...(video?.asset ? [video.asset] : [])].filter((a) => a.provider === SELF_HLS_PROVIDER);
+  return selectPrimaryVideoAsset(own);
+}
+
 export class PlaybackService {
   static async createPlaybackPlanWithContext(videoId: string, ctx: AppContext, ipHash?: string, userAgentHash?: string): Promise<PlaybackPlan> {
-    const { prisma, actor } = ctx;
+    const { actor } = ctx;
 
     // Provider-gating order: load safe video metadata first, then make the
     // backend access decision before inspecting or resolving any playable source.
-    const video = await prisma.video.findUnique({
+    const video = await ctx.prisma.video.findUnique({
       where: { id: videoId },
       include: {
         assets: true,
@@ -207,536 +196,101 @@ export class PlaybackService {
             videoId,
             status: toStatus(decision.reason),
             video: { thumbnailUrl: posterFor(video), title: video?.title },
-            accessReason: decision.reason as any,
+            accessReason: decision.reason as string | undefined,
             requiredTier: decision.requiredTier,
             warnings: [decision.reason || 'Access denied'],
         });
     }
 
     // At this point decision.hasAccess is true. Only now may playback-source
-    // metadata be inspected or future provider resolution be permitted.
-    let videoUrl = video?.videoUrl;
-    let thumbnailUrl = posterFor(video);
-    let title = video?.title || '';
-    let tier = video?.tier || 'PUBLIC';
-
-    if (!video && decision.hasAccess) {
-        const { INITIAL_VIDEOS } = await import('@/lib/data/initial-content');
-        const fallback = INITIAL_VIDEOS.find(v => v.id === videoId || v.slug === videoId);
-        if (fallback) {
-            videoUrl = fallback.videoUrl;
-            thumbnailUrl = fallback.thumbnailUrl || '';
-            title = fallback.title;
-            tier = fallback.tier as any;
-        }
-    }
-
-    const routeAsset = video?.activePlaybackRoute?.asset?.processingState === 'READY' ? video.activePlaybackRoute.asset : null;
-    const legacyAsset = selectPrimaryVideoAsset(video?.assets) ?? video?.asset;
-    let asset = routeAsset ?? legacyAsset;
-    // Own HLS that cannot be served (secret missing) behaves like it was never routed:
-    // play the previous provider instead of failing.
-    if (asset?.provider === 'SELF_HLS' && !SelfHlsTokenService.isConfigured()) {
-      asset = pickFallbackAsset(video?.assets) ?? asset;
-    }
-    const legacyRouteWarning = !routeAsset && legacyAsset?.processingState === 'READY' ? 'No active playback route found; using legacy primary asset selection.' : null;
-    const safeAsset = toSafeAssetContract(asset);
-
-    if (asset) {
-      const primaryAsset = getPrimaryPlayableAsset(asset);
-
-      if (!primaryAsset.canResolveProviderSource) {
-        return unavailablePlan({
-          videoId,
-          status: primaryAsset.state === 'FAILED' ? 'UNAVAILABLE' : primaryAsset.state,
-          video: { thumbnailUrl, title },
-          accessAllowed: true,
-          warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), ...primaryAsset.warnings],
-          sourceMode: 'PROVIDER_ASSET',
-          asset: safeAsset,
-        });
-      }
-
-      if (asset.provider === 'SELF_HLS') {
-        const selfHlsPlan = await buildSelfHlsPlan({
-          ctx,
-          videoId,
-          asset,
-          assets: video?.assets,
-          tier,
-          thumbnailUrl,
-          isAdminPreview: isAdminPreviewSession(actor.type, video?.status, video?.premiereAt),
-          ipHash,
-          userAgentHash,
-          safeAsset,
-          player: playerFor({ thumbnailUrl, title }, true),
-          warnings: legacyRouteWarning ? [legacyRouteWarning] : [],
-        }).catch((e) => {
-          console.error('[PLAYBACK_SERVICE] SELF_HLS resolution failed', e);
-          return null;
-        });
-        if (selfHlsPlan) return selfHlsPlan;
-        const fallbackAsset = pickFallbackAsset(video?.assets);
-        if (!fallbackAsset) {
-          return unavailablePlan({
-            videoId,
-            status: 'ERROR',
-            video: { thumbnailUrl, title },
-            accessAllowed: true,
-            warnings: ['Failed to resolve own HLS playback source'],
-            providerResolutionAllowed: true,
-            providerResolutionAttempted: true,
-            sourceMode: 'PROVIDER_ASSET',
-            asset: safeAsset,
-          });
-        }
-        asset = fallbackAsset;
-      }
-
-      if (asset.provider === 'CLOUDFLARE_STREAM') {
-        try {
-            const providerId = asset.providerPlaybackId || asset.providerAssetId;
-
-            if (!providerId) {
-                throw new Error('Cloudflare asset missing provider identifiers');
-            }
-
-            if (!CloudflareSignedPlaybackTokenService.isConfigured()) {
-                return unavailablePlan({
-                    videoId,
-                    status: 'ERROR',
-                    video: { thumbnailUrl, title },
-                    accessAllowed: true,
-                    warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'Cloudflare Stream signing is not configured'],
-                    providerResolutionAllowed: true,
-                    providerResolutionAttempted: true,
-                    sourceMode: 'PROVIDER_ASSET',
-                    asset: safeAsset,
-                });
-            }
-
-            const signedPlayback = CloudflareSignedPlaybackTokenService.createSignedPlaybackToken({ videoUid: providerId });
-
-            const playbackUrl = buildCloudflareSignedHlsManifestUrl(signedPlayback.token);
-            const embedUrl = buildCloudflareSignedIframeUrl(signedPlayback.token);
-
-            const isAdminPreview = isAdminPreviewSession(actor.type, video?.status, video?.premiereAt);
-
-            // Create a session only after successful resolution
-            const session = await prisma.videoPlaybackSession.create({
-                data: {
-                    videoId,
-                    userId: actor.type === 'user' ? actor.userId : (actor.type === 'admin' ? actor.userId : null),
-                    ipHash,
-                    userAgentHash,
-                    sourceKind: 'cloudflare_stream',
-                    accessTier: tier as any,
-                    isAdminPreview: isAdminPreview
-                }
-            });
-
-            return {
-                videoId,
-                status: 'READY',
-                canPlay: true,
-                access: { allowed: true },
-                source: {
-                    provider: 'CLOUDFLARE_STREAM',
-                    kind: 'cloudflare_stream',
-                    playbackUrl: playbackUrl,
-                    embedUrl,
-                    posterUrl: thumbnailUrl,
-                    mimeType: asset.mimeType ?? undefined,
-                    needsProxy: false,
-                    isExternalEmbed: true,
-                    isSignedUrl: true,
-                    expiresAt: signedPlayback.expiresAt.toISOString(),
-                    asset: safeAsset,
-                },
-                player: playerFor({ thumbnailUrl, title }, true),
-                diagnostics: {
-                    warnings: legacyRouteWarning ? [legacyRouteWarning] : [],
-                    sourceConfidence: 'HIGH',
-                    providerResolutionAllowed: true,
-                    providerResolutionAttempted: true,
-                    sourceMode: 'PROVIDER_ASSET',
-                    asset: safeAsset,
-                },
-                tracking: {
-                    playbackSessionId: session.id,
-                    heartbeatIntervalSeconds: 60
-                }
-            };
-        } catch (e) {
-            console.error('[PLAYBACK_SERVICE] Cloudflare resolution failed', e);
-            return unavailablePlan({
-                videoId,
-                status: 'ERROR',
-                video: { thumbnailUrl, title },
-                accessAllowed: true,
-                warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'Failed to resolve secure playback source'],
-                providerResolutionAllowed: true,
-                providerResolutionAttempted: true,
-                sourceMode: 'PROVIDER_ASSET',
-                asset: safeAsset,
-            });
-        }
-      }
-
-      if (asset.provider === 'YOUTUBE') {
-        const ytVideoId = (asset as VideoAsset & { externalVideoId?: string | null }).externalVideoId
-          || extractYouTubeVideoId((asset as VideoAsset & { externalUrl?: string | null }).externalUrl || '');
-
-        if (!ytVideoId) {
-          return unavailablePlan({
-            videoId,
-            status: 'UNAVAILABLE',
-            video: { thumbnailUrl, title },
-            accessAllowed: true,
-            warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'YouTube asset is missing a valid video ID'],
-            sourceMode: 'PROVIDER_ASSET',
-            asset: safeAsset,
-          });
-        }
-
-        if (tier === 'PATRON') {
-          return unavailablePlan({
-            videoId,
-            status: 'UNAVAILABLE',
-            video: { thumbnailUrl, title },
-            accessAllowed: true,
-            warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'YouTube playback is not permitted for PATRON-tier videos'],
-            sourceMode: 'PROVIDER_ASSET',
-            asset: safeAsset,
-          });
-        }
-
-        const session = await prisma.videoPlaybackSession.create({
-          data: {
-            videoId,
-            userId: actor.type === 'user' ? actor.userId : (actor.type === 'admin' ? actor.userId : null),
-            ipHash,
-            userAgentHash,
-            sourceKind: 'youtube',
-            accessTier: tier as any,
-            isAdminPreview: isAdminPreviewSession(actor.type, video?.status, video?.premiereAt),
-          }
-        });
-
-        const embedUrl = `https://www.youtube-nocookie.com/embed/${ytVideoId}`;
-
-        return {
-          videoId,
-          status: 'READY',
-          canPlay: true,
-          access: { allowed: true },
-          source: {
-            provider: 'YOUTUBE',
-            kind: 'youtube',
-            embedUrl,
-            posterUrl: thumbnailUrl,
-            needsProxy: false,
-            isExternalEmbed: true,
-            isSignedUrl: false,
-            asset: safeAsset,
-          },
-          player: playerFor({ thumbnailUrl, title }, true),
-          diagnostics: {
-            warnings: legacyRouteWarning ? [legacyRouteWarning] : [],
-            sourceConfidence: 'HIGH',
-            providerResolutionAllowed: true,
-            providerResolutionAttempted: false,
-            sourceMode: 'PROVIDER_ASSET',
-            asset: safeAsset,
-          },
-          tracking: {
-            playbackSessionId: session.id,
-            heartbeatIntervalSeconds: 60,
-          },
-        };
-      }
-
-      if (asset.provider === 'MUX') {
-        try {
-          const playbackId = asset.providerPlaybackId || asset.providerAssetId;
-          if (!playbackId) throw new Error('Mux asset missing playback ID');
-
-          let playbackUrl: string;
-          let isSignedUrl = false;
-
-          if (MuxClient.isSigningConfigured()) {
-            const muxClient = new MuxClient();
-            const token = muxClient.createSignedPlaybackToken(playbackId);
-            playbackUrl = `https://stream.mux.com/${playbackId}.m3u8?token=${token}`;
-            isSignedUrl = true;
-          } else if (tier === 'PATRON' || tier === 'LOGGED_IN') {
-            // LOGGED_IN is blocked here too, not just PATRON: an unsigned
-            // stream.mux.com URL never expires and requires no session, so
-            // once emitted it permanently bypasses the "must be logged in"
-            // check that checkVideoAccess() would otherwise re-run on every
-            // future visit. PUBLIC tier has no such requirement to bypass
-            // (access is unconditional for that tier already), so it still
-            // falls through to the unsigned URL below.
-            return {
-              videoId,
-              status: 'ERROR',
-              canPlay: false,
-              access: { allowed: true },
-              player: playerFor({ thumbnailUrl, title }, false),
-              diagnostics: {
-                warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'Mux signing is not configured; non-public tier playback is blocked to avoid a permanent unsigned URL bypassing login/patron checks.'],
-                sourceConfidence: 'HIGH',
-                providerResolutionAllowed: true,
-                providerResolutionAttempted: true,
-                sourceMode: 'PROVIDER_ASSET',
-                asset: safeAsset,
-              },
-              tracking: emptyPlaybackRuntime(),
-            };
-          } else {
-            playbackUrl = `https://stream.mux.com/${playbackId}.m3u8`;
-          }
-
-          const posterUrl = `https://image.mux.com/${playbackId}/thumbnail.jpg`;
-          const isAdminPreview = isAdminPreviewSession(actor.type, video?.status, video?.premiereAt);
-
-          const session = await prisma.videoPlaybackSession.create({
-            data: {
-              videoId,
-              userId: actor.type === 'user' ? actor.userId : (actor.type === 'admin' ? actor.userId : null),
-              ipHash,
-              userAgentHash,
-              sourceKind: 'mux',
-              accessTier: tier as any,
-              isAdminPreview,
-            },
-          });
-
-          return {
-            videoId,
-            status: 'READY',
-            canPlay: true,
-            access: { allowed: true },
-            source: {
-              provider: 'MUX',
-              kind: 'mux',
-              playbackUrl,
-              posterUrl: thumbnailUrl || posterUrl,
-              mimeType: 'application/x-mpegURL',
-              needsProxy: false,
-              isExternalEmbed: false,
-              isSignedUrl,
-              asset: safeAsset,
-            },
-            player: playerFor({ thumbnailUrl, title }, true),
-            diagnostics: {
-              warnings: legacyRouteWarning ? [legacyRouteWarning] : [],
-              sourceConfidence: 'HIGH',
-              providerResolutionAllowed: true,
-              providerResolutionAttempted: true,
-              sourceMode: 'PROVIDER_ASSET',
-              asset: safeAsset,
-            },
-            tracking: { playbackSessionId: session.id, heartbeatIntervalSeconds: 60 },
-          };
-        } catch (e) {
-          console.error('[PLAYBACK_SERVICE] Mux resolution failed', e);
-          return unavailablePlan({
-            videoId,
-            status: 'ERROR',
-            video: { thumbnailUrl, title },
-            accessAllowed: true,
-            warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'Failed to resolve Mux playback source'],
-            providerResolutionAllowed: true,
-            providerResolutionAttempted: true,
-            sourceMode: 'PROVIDER_ASSET',
-            asset: safeAsset,
-          });
-        }
-      }
-
-      if (asset.provider === 'VIMEO') {
-        const vimeoId = (asset as VideoAsset & { externalVideoId?: string | null }).externalVideoId
-          || extractVimeoVideoId((asset as VideoAsset & { externalUrl?: string | null }).externalUrl || '');
-
-        if (!vimeoId) {
-          return unavailablePlan({
-            videoId,
-            status: 'UNAVAILABLE',
-            video: { thumbnailUrl, title },
-            accessAllowed: true,
-            warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'Vimeo asset is missing a valid video ID'],
-            sourceMode: 'PROVIDER_ASSET',
-            asset: safeAsset,
-          });
-        }
-
-        if (tier === 'PATRON') {
-          return unavailablePlan({
-            videoId,
-            status: 'UNAVAILABLE',
-            video: { thumbnailUrl, title },
-            accessAllowed: true,
-            warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'Vimeo playback is not permitted for PATRON-tier videos'],
-            sourceMode: 'PROVIDER_ASSET',
-            asset: safeAsset,
-          });
-        }
-
-        const session = await prisma.videoPlaybackSession.create({
-          data: {
-            videoId,
-            userId: actor.type === 'user' ? actor.userId : (actor.type === 'admin' ? actor.userId : null),
-            ipHash,
-            userAgentHash,
-            sourceKind: 'vimeo',
-            accessTier: tier as any,
-            isAdminPreview: isAdminPreviewSession(actor.type, video?.status, video?.premiereAt),
-          },
-        });
-
-        return {
-          videoId,
-          status: 'READY',
-          canPlay: true,
-          access: { allowed: true },
-          source: {
-            provider: 'VIMEO',
-            kind: 'vimeo',
-            embedUrl: `https://player.vimeo.com/video/${vimeoId}`,
-            posterUrl: thumbnailUrl,
-            needsProxy: false,
-            isExternalEmbed: true,
-            isSignedUrl: false,
-            asset: safeAsset,
-          },
-          player: playerFor({ thumbnailUrl, title }, true),
-          diagnostics: {
-            warnings: legacyRouteWarning ? [legacyRouteWarning] : [],
-            sourceConfidence: 'HIGH',
-            providerResolutionAllowed: true,
-            providerResolutionAttempted: false,
-            sourceMode: 'PROVIDER_ASSET',
-            asset: safeAsset,
-          },
-          tracking: { playbackSessionId: session.id, heartbeatIntervalSeconds: 60 },
-        };
-      }
-    }
-
-    if (shouldBlockLegacyPrivatePlaybackFallback({ tier, asset })) {
-        return unavailablePlan({
-          videoId,
-          status: 'NO_PRIMARY_ASSET',
-          video: { thumbnailUrl, title },
-          accessAllowed: true,
-          warnings: [...(legacyRouteWarning ? [legacyRouteWarning] : []), 'Patron-only legacy playback fallback is disabled until a READY provider-backed asset is available'],
-          sourceMode: asset ? 'PROVIDER_ASSET' : 'LEGACY_URL',
-          asset: safeAsset,
-        });
-    }
-
-    // Legacy Video.videoUrl fallback starts here. Provider assets above are
-    // intentionally handled first so READY Cloudflare Stream playback never
-    // silently regresses to /api/media or raw object-storage/direct URLs.
-    if (!videoUrl) {
-        return unavailablePlan({
-          videoId,
-          status: 'NO_PRIMARY_ASSET',
-          video: { thumbnailUrl, title },
-          accessAllowed: true,
-          warnings: asset ? ['No playable legacy source for this asset'] : ['No primary or legacy video asset is available'],
-          sourceMode: asset ? 'PROVIDER_ASSET' : 'LEGACY_URL',
-          asset: safeAsset,
-        });
-    }
-
-    if (!isAllowedVideoSourceUrl(videoUrl)) {
-        return unavailablePlan({
-          videoId,
-          status: 'UNAVAILABLE',
-          video: { thumbnailUrl, title },
-          accessAllowed: true,
-          warnings: ['Video URL not allowed'],
-          sourceMode: 'LEGACY_URL',
-          asset: safeAsset,
-        });
-    }
-
-    let sourceUrl = videoUrl;
-    let isSignedUrl = false;
-    let expiresAt: string | undefined = undefined;
-
-    if (asset && LEGACY_STORAGE_PROVIDERS.has(asset.provider)) {
-        try {
-            const signedData = await StorageService.getPresignedUrl(
-                asset.provider,
-                asset.bucket || process.env.R2_BUCKET_NAME || '',
-                asset.objectKey,
-                900
-            );
-            sourceUrl = signedData.url;
-            isSignedUrl = true;
-            expiresAt = signedData.expiresAt.toISOString();
-        } catch (e) {
-            console.error('[PLAYBACK_SERVICE] Failed to sign URL', e);
-        }
-    }
-
-    const sourceInfo = getVideoSourceInfo(sourceUrl, `/api/media/${videoId}`);
-
-    // Leak safety: ensure playbackUrl is redacted if it's a raw URL
-    if (MediaPolicy.isProbablyRawMediaUrl(sourceInfo.playbackUrl) && !sourceInfo.playbackUrl.startsWith('/api/media/')) {
-        sourceInfo.playbackUrl = `/api/media/${videoId}`;
-    }
-
-    const isAdminPreview = isAdminPreviewSession(actor.type, video?.status, video?.premiereAt);
-
-    // Create sessions only for a concrete playable legacy/embed plan. Denied,
-    // not-ready, and provider-placeholder plans never get sessions and therefore
-    // cannot count playback/view events.
-    const session = await prisma.videoPlaybackSession.create({
-        data: {
-            videoId,
-            userId: actor.type === 'user' ? actor.userId : (actor.type === 'admin' ? actor.userId : null),
-            ipHash,
-            userAgentHash,
-            sourceKind: sourceInfo.kind,
-            accessTier: tier as any,
-            isAdminPreview: isAdminPreview
-        }
-    });
-
-    return {
+    // metadata be inspected or a delivery token be issued.
+    if (!video) {
+      return unavailablePlan({
         videoId,
-        status: 'READY',
-        canPlay: true,
-        access: { allowed: true },
-        source: {
-            provider: asset?.provider || sourceInfo.kind,
-            kind: sourceInfo.kind,
-            playbackUrl: sourceInfo.playbackUrl,
-            embedUrl: sourceInfo.embedUrl,
-            posterUrl: thumbnailUrl,
-            needsProxy: sourceInfo.needsProxy,
-            isExternalEmbed: sourceInfo.kind === 'youtube' || sourceInfo.kind === 'vimeo',
-            isSignedUrl,
-            expiresAt,
-            asset: safeAsset,
-        },
-        player: playerFor({ thumbnailUrl, title }, true),
-        diagnostics: {
-            warnings: [],
-            sourceConfidence: 'HIGH',
-            providerResolutionAllowed: false,
-            providerResolutionAttempted: false,
-            sourceMode: 'LEGACY_URL',
-            asset: safeAsset,
-        },
-        tracking: {
-            playbackSessionId: session.id,
-            heartbeatIntervalSeconds: 60
-        }
-    };
+        status: 'UNAVAILABLE',
+        accessAllowed: true,
+        accessReason: 'VIDEO_NOT_FOUND',
+        warnings: ['Video not found'],
+      });
+    }
+
+    const thumbnailUrl = posterFor(video);
+    const title = video.title || '';
+    const tier = video.tier || 'PUBLIC';
+
+    const asset = pickSelfHlsAsset(video);
+    if (!asset) {
+      return unavailablePlan({
+        videoId,
+        status: 'NO_PRIMARY_ASSET',
+        video: { thumbnailUrl, title },
+        accessAllowed: true,
+        warnings: ['No own HLS video asset is available'],
+        sourceMode: 'NONE',
+      });
+    }
+
+    const safeAsset = toSafeAssetContract(asset);
+    const legacyRouteWarning = video.activePlaybackRoute?.asset?.id !== asset.id && asset.processingState === 'READY'
+      ? 'No active playback route found; using primary asset selection.'
+      : null;
+    const warnings = legacyRouteWarning ? [legacyRouteWarning] : [];
+
+    const primaryAsset = getPrimaryPlayableAsset(asset);
+    if (!primaryAsset.canResolveProviderSource) {
+      return unavailablePlan({
+        videoId,
+        status: primaryAsset.state === 'FAILED' ? 'UNAVAILABLE' : primaryAsset.state,
+        video: { thumbnailUrl, title },
+        accessAllowed: true,
+        warnings: [...warnings, ...primaryAsset.warnings],
+        sourceMode: 'PROVIDER_ASSET',
+        asset: safeAsset,
+      });
+    }
+
+    if (!SelfHlsTokenService.isConfigured()) {
+      return unavailablePlan({
+        videoId,
+        status: 'ERROR',
+        video: { thumbnailUrl, title },
+        accessAllowed: true,
+        warnings: [...warnings, 'Own HLS signing is not configured'],
+        providerResolutionAllowed: true,
+        providerResolutionAttempted: true,
+        sourceMode: 'PROVIDER_ASSET',
+        asset: safeAsset,
+      });
+    }
+
+    const plan = await buildSelfHlsPlan({
+      ctx,
+      videoId,
+      asset,
+      tier,
+      thumbnailUrl,
+      isAdminPreview: isAdminPreviewSession(actor.type, video.status, video.premiereAt),
+      ipHash,
+      userAgentHash,
+      safeAsset,
+      player: playerFor({ thumbnailUrl, title }, true),
+      warnings,
+    }).catch((e) => {
+      console.error('[PLAYBACK_SERVICE] SELF_HLS resolution failed', e);
+      return null;
+    });
+    if (plan) return plan;
+
+    return unavailablePlan({
+      videoId,
+      status: 'ERROR',
+      video: { thumbnailUrl, title },
+      accessAllowed: true,
+      warnings: [...warnings, 'Failed to resolve own HLS playback source'],
+      providerResolutionAllowed: true,
+      providerResolutionAttempted: true,
+      sourceMode: 'PROVIDER_ASSET',
+      asset: safeAsset,
+    });
   }
 }

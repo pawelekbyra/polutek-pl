@@ -71,35 +71,22 @@ describe('Security Headers', () => {
     expect(csp).toContain(devOnlyScriptKeyword);
   });
 
-  it('allows Cloudflare Stream direct creator uploads in connect-src', () => {
-    const csp = generateCSP();
+  it('allows our own HLS delivery host and hls.js dependencies in CSP', () => {
+    const directive = (name: string) => generateCSP().split('; ').find((part) => part.startsWith(`${name} `)) ?? '';
 
-    expect(csp).toContain('connect-src');
-    expect(csp).toContain('https://upload.cloudflarestream.com');
+    expect(directive('script-src')).toContain('https://cdn.jsdelivr.net');
+    expect(directive('script-src-elem')).toContain('https://cdn.jsdelivr.net');
+    expect(directive('connect-src')).toContain('https://video.pawelperfect.com');
+    expect(directive('media-src')).toContain("'self' blob:");
+    expect(directive('media-src')).toContain('https://video.pawelperfect.com');
   });
 
-  it('allows custom HLS playback dependencies in CSP', () => {
+  it('does not allow any former third-party video provider (Cloudflare Stream, Mux, YouTube, Vimeo)', () => {
     const csp = generateCSP();
 
-    expect(csp).toContain('script-src');
-    expect(csp).toContain('script-src-elem');
-    expect(csp).toContain('https://cdn.jsdelivr.net');
-    expect(csp).toContain('connect-src');
-    expect(csp).toContain('https://videodelivery.net');
-    expect(csp).toContain('https://*.videodelivery.net');
-    expect(csp).toContain('https://*.cloudflarestream.com');
-    expect(csp).toContain('media-src');
-    expect(csp).toContain("media-src 'self' blob:");
-    expect(csp).toContain('https://videodelivery.net');
-  });
-
-  it('allows playback provider frames in frame-src', () => {
-    const csp = generateCSP();
-
-    expect(csp).toContain('frame-src');
-    expect(csp).toContain('https://iframe.videodelivery.net');
-    expect(csp).toContain('https://www.youtube-nocookie.com');
-    expect(csp).toContain('https://player.vimeo.com');
+    for (const host of ['videodelivery.net', 'cloudflarestream.com', 'mux.com', 'youtube', 'vimeo']) {
+      expect(csp).not.toContain(host);
+    }
   });
 
   it('includes allowed image hosts in img-src', () => {

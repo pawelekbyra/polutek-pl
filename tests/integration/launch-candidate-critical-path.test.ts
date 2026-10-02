@@ -16,8 +16,7 @@ import { getPatronStatus, grantPatron, revokePatron } from '@/lib/modules/patron
 import { PlaybackService } from '@/lib/modules/playback';
 import { recordPlaybackEventUseCase } from '@/lib/modules/video/application/record-playback-event.use-case';
 
-const { cloudflareTokenCalls, rateLimitLocks } = vi.hoisted(() => ({
-  cloudflareTokenCalls: [] as string[],
+const { rateLimitLocks } = vi.hoisted(() => ({
   rateLimitLocks: new Map<string, string>(),
 }));
 
@@ -48,20 +47,6 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     paymentCurrencySetting: { findMany: vi.fn(async () => []) },
     auditLog: { create: vi.fn(async ({ data }) => ({ id: 'audit-global', ...data })) },
-  },
-}));
-
-vi.mock('@/lib/modules/playback/infrastructure/cloudflare-signed-playback-token.service', () => ({
-  CloudflareSignedPlaybackTokenService: {
-    isConfigured: vi.fn(() => true),
-    createSignedPlaybackToken: vi.fn(({ videoUid }: { videoUid: string }) => {
-      cloudflareTokenCalls.push(videoUid);
-      return {
-        token: `signed-token-for-${videoUid}`,
-        expiresAt: new Date('2026-01-01T13:00:00.000Z'),
-        expiresInSeconds: 3600,
-      };
-    }),
   },
 }));
 
@@ -433,11 +418,11 @@ function createHarness() {
       state.assets.set(id, {
         id: `asset_${id}`,
         videoId: id,
-        provider: StorageProvider.CLOUDFLARE_STREAM,
-        objectKey: `private/${id}`,
-        bucket: null,
-        providerAssetId: `cf-asset-${id}`,
-        providerPlaybackId: `cf-playback-${id}`,
+        provider: StorageProvider.SELF_HLS,
+        objectKey: `videos/${id}/v/v1`,
+        bucket: 'polutek-hls',
+        providerAssetId: null,
+        providerPlaybackId: null,
         processingState: VideoAssetProcessingState.READY,
         isPrimary: true,
         mimeType: 'video/mp4',
@@ -449,16 +434,15 @@ function createHarness() {
   };
 
   const activeGrants = (userId: string) => state.grants.filter((grant) => grant.userId === userId && grant.revokedAt === null);
-  const attemptPlayback = (userId: string | null, videoId = 'video_ready') =>
+  const attemptPlayback = (userId: string | null, videoId = 'video-ready') =>
     PlaybackService.createPlaybackPlanWithContext(videoId, ctx(userId), 'ip_hash', 'ua_hash');
   const assertNoPlaybackSideEffects = () => {
-    expect(cloudflareTokenCalls).toHaveLength(0);
     expect(state.sessions).toHaveLength(0);
     expect(state.playbackEvents).toHaveLength(0);
     expect(state.views).toHaveLength(0);
   };
 
-  seedVideo('video_ready');
+  seedVideo('video-ready');
 
   return { state, events, ctx, seedUser, seedPayment, seedGrant, seedVideo, activeGrants, attemptPlayback, assertNoPlaybackSideEffects };
 }
@@ -468,12 +452,12 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
 
   beforeEach(() => {
     vi.clearAllMocks();
-    cloudflareTokenCalls.length = 0;
+    process.env.HLS_TOKEN_SECRET = 's'.repeat(40);
     rateLimitLocks.clear();
     harness = createHarness();
   });
 
-  it('Scenario A: qualifying one-time support creates one payment-linked active grant and resolves Cloudflare playback only after access/readiness', async () => {
+  it('Scenario A: qualifying one-time support creates one payment-linked active grant and resolves own-HLS playback only after access/readiness', async () => {
     harness.seedUser('user_a');
     harness.seedPayment('pay_a', 'user_a', 1000);
 
@@ -487,17 +471,16 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     expect(patronStatus.ok && patronStatus.data.isPatron).toBe(true);
     expect(patronStatus.ok && patronStatus.data.activeGrants).toHaveLength(1);
 
-    const access = await checkVideoAccess({ videoIdOrSlug: 'video_ready' }, harness.ctx('user_a'));
+    const access = await checkVideoAccess({ videoIdOrSlug: 'video-ready' }, harness.ctx('user_a'));
     expect(access.ok && access.data.hasAccess).toBe(true);
 
     const plan = await harness.attemptPlayback('user_a');
     expect(plan.status).toBe('READY');
     expect(plan.canPlay).toBe(true);
-    expect(plan.source?.provider).toBe('CLOUDFLARE_STREAM');
-    expect(plan.source?.playbackUrl).toBe('https://videodelivery.net/signed-token-for-cf-playback-video_ready/manifest/video.m3u8');
-    expect(plan.source?.embedUrl).toBe('https://iframe.videodelivery.net/signed-token-for-cf-playback-video_ready');
+    expect(plan.source?.provider).toBe('SELF_HLS');
+    expect(plan.source?.playbackUrl).toMatch(/^https:\/\/video\.pawelperfect\.com\/h\/\d+\.[A-Za-z0-9_-]+\/video-ready\/v1\/master\.m3u8$/);
+    expect(JSON.stringify(plan)).not.toContain('legacy.example.test');
     expect(plan.tracking.playbackSessionId).toBe('session_1');
-    expect(cloudflareTokenCalls).toEqual(['cf-playback-video_ready']);
     expect(harness.events).toEqual(['session:create']);
 
     const replay = await fulfillPayment({ paymentId: 'pay_a', userId: 'user_a', amountMinor: 1000, currency: 'PLN' }, harness.ctx(null, 'system'));
@@ -505,7 +488,7 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     expect(harness.state.grants.filter((grant) => grant.paymentId === 'pay_a')).toHaveLength(1);
 
     const viewed = await recordPlaybackEventUseCase({
-      videoId: 'video_ready',
+      videoId: 'video-ready',
       sessionId: plan.tracking.playbackSessionId,
       type: 'WATCHED_10_SECONDS',
       positionMs: 10000,
@@ -546,7 +529,7 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     }
   });
 
-  it('Scenario E: non-ready and missing primary assets block playback without Cloudflare calls, sessions, views, legacy fallback, or provider id leakage', async () => {
+  it('Scenario E: non-ready and missing primary assets block playback without URLs, sessions, views, legacy fallback, or storage key leakage', async () => {
     harness.seedUser('patron');
     harness.seedPayment('pay_patron', 'patron', 1000, PaymentStatus.SUCCEEDED);
     harness.seedGrant('grant_patron', 'patron', 'pay_patron');
@@ -560,7 +543,6 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     ];
 
     for (const [id, asset, expectedStatus] of cases) {
-      cloudflareTokenCalls.length = 0;
       harness.state.sessions.length = 0;
       harness.seedVideo(id, asset);
       const plan = await harness.attemptPlayback('patron', id);
@@ -569,9 +551,8 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
       expect(plan.source).toBeUndefined();
       expect(plan.tracking.playbackSessionId).toBe('');
       expect(JSON.stringify(plan)).not.toContain('legacy.example.test');
-      expect(JSON.stringify(plan)).not.toContain('cf-asset-');
-      expect(JSON.stringify(plan)).not.toContain('cf-playback-');
-      expect(cloudflareTokenCalls).toHaveLength(0);
+      expect(JSON.stringify(plan)).not.toContain('/h/');
+      expect(JSON.stringify(plan)).not.toContain('polutek-hls');
       expect(harness.state.sessions).toHaveLength(0);
     }
   });
@@ -613,7 +594,6 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     expect(harness.activeGrants('user_a')).toEqual([manualA]);
 
     await revokePatron({ userId: 'user_a', paymentId: null as any, note: 'Manual owner revoke' }, { ...harness.ctx('admin_1', 'admin') });
-    cloudflareTokenCalls.length = 0;
     harness.state.sessions.length = 0;
     expect(harness.activeGrants('user_a')).toHaveLength(0);
     await handleDispute({ stripeIntentId: 'pi_pay_a', disputeId: 'dp_same', status: 'won', isLost: false, isWon: true }, harness.ctx('user_a'));

@@ -46,11 +46,9 @@ const checks = [
     ]),
   },
   {
-    name: 'Cloudflare Stream',
+    name: 'Own HLS',
     ok: () => hasAll([
-      'CLOUDFLARE_ACCOUNT_ID',
-      'CLOUDFLARE_API_TOKEN',
-      'CLOUDFLARE_WEBHOOK_SECRET',
+      'HLS_TOKEN_SECRET',
     ]),
   },
   {
@@ -71,7 +69,6 @@ const checks = [
     ok: () => hasAll([
       'STRIPE_WEBHOOK_SECRET',
       'RESEND_WEBHOOK_SECRET',
-      'CLOUDFLARE_WEBHOOK_SECRET',
     ]),
   },
   {
@@ -90,16 +87,6 @@ const checks = [
     ok: () => hasPair([
       ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN'],
       ['KV_REST_API_URL', 'KV_REST_API_TOKEN'],
-    ]),
-  },
-  {
-    name: 'Mux',
-    ok: () => hasAll([
-      'MUX_TOKEN_ID',
-      'MUX_TOKEN_SECRET',
-      'MUX_WEBHOOK_SECRET',
-      'MUX_SIGNING_KEY_ID',
-      'MUX_SIGNING_PRIVATE_KEY',
     ]),
   },
   {

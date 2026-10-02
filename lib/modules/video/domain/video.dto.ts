@@ -64,7 +64,7 @@ export interface AdminVideoAssetDto {
   mimeType?: string | null;
   sizeBytes?: number | null;
   requiresSignedUrl: boolean;
-  sourceMode: "CLOUDFLARE_STREAM" | "MUX" | "YOUTUBE" | "VIMEO" | "LEGACY_PROVIDER_ASSET";
+  sourceMode: "SELF_HLS" | "LEGACY_PROVIDER_ASSET";
   durationSeconds?: number | null;
   thumbnailUrl?: string | null;
   previewUrl?: string | null;
@@ -91,7 +91,6 @@ export type MigrationStatus =
   | "FAILED";
 
 export interface AdminVideoDto extends BaseVideoDto {
-  videoUrl: string | null;
   status: VideoStatus;
   creatorId: string;
   createdAt: Date;
@@ -159,7 +158,6 @@ export type AdminVideoOriginalInput = {
 };
 
 export type AdminVideoInput = PublicVideoInput & {
-  videoUrl: string | null;
   status: VideoStatus;
   creatorId: string;
   createdAt: Date;
@@ -210,17 +208,11 @@ export function toPublicVideoDto(video: PublicVideoInput): PublicVideoDto {
 }
 
 function resolveSourceMode(provider: StorageProvider): AdminVideoAssetDto["sourceMode"] {
-  if (provider === "CLOUDFLARE_STREAM") return "CLOUDFLARE_STREAM";
-  if (provider === "MUX") return "MUX";
-  if (provider === "YOUTUBE") return "YOUTUBE";
-  if (provider === "VIMEO") return "VIMEO";
-  return "LEGACY_PROVIDER_ASSET";
+  return provider === "SELF_HLS" ? "SELF_HLS" : "LEGACY_PROVIDER_ASSET";
 }
 
-function resolveIsPlayable(provider: StorageProvider, processingState: VideoAssetProcessingState, externalVideoId?: string | null): boolean {
-  if (provider === "YOUTUBE" || provider === "VIMEO") return Boolean(externalVideoId);
-  if (provider === "CLOUDFLARE_STREAM" || provider === "MUX") return processingState === "READY";
-  return false;
+function resolveIsPlayable(provider: StorageProvider, processingState: VideoAssetProcessingState): boolean {
+  return provider === "SELF_HLS" && processingState === "READY";
 }
 
 export function toAdminVideoOriginalDto(original: AdminVideoOriginalInput | null | undefined): AdminVideoOriginalDto | null {
@@ -252,14 +244,14 @@ export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefi
     status: asset.processingState,
     processingState: asset.processingState,
     isPrimary: asset.isPrimary,
-    isPlayable: resolveIsPlayable(asset.provider, asset.processingState, asset.externalVideoId),
+    isPlayable: resolveIsPlayable(asset.provider, asset.processingState),
     failureReason: asset.failureReason,
     providerSyncedAt: asset.providerSyncedAt,
     processingStartedAt: asset.processingStartedAt,
     processingEndedAt: asset.processingEndedAt,
     mimeType: asset.mimeType,
     sizeBytes: asset.sizeBytes,
-    requiresSignedUrl: asset.provider === "CLOUDFLARE_STREAM" || asset.provider === "MUX",
+    requiresSignedUrl: asset.provider === "SELF_HLS",
     sourceMode: resolveSourceMode(asset.provider),
     durationSeconds: asset.durationSeconds ?? null,
     thumbnailUrl: asset.thumbnailUrl ?? null,
@@ -284,24 +276,20 @@ export function toAdminVideoDto(input: AdminVideoInput | unknown): AdminVideoDto
   let migrationStatus: MigrationStatus = "MISSING_SOURCE";
 
   if (asset) {
-    if (asset.provider === "CLOUDFLARE_STREAM" || asset.provider === "MUX") {
+    if (asset.provider === "SELF_HLS") {
       if (asset.processingState === "READY") migrationStatus = "READY";
       else if (asset.processingState === "FAILED") migrationStatus = "FAILED";
       else migrationStatus = "PROCESSING";
-    } else if (asset.provider === "YOUTUBE" || asset.provider === "VIMEO") {
-      migrationStatus = asset.externalVideoId ? "READY" : "MISSING_SOURCE";
     } else {
+      // A leftover asset of a provider we no longer support: the video must be uploaded again.
       migrationStatus = "MIGRATION_REQUIRED";
     }
-  } else if (video.videoUrl) {
-    migrationStatus = "MIGRATION_REQUIRED";
   }
 
   return {
     ...toPublicVideoDto(video),
     // Admins see the stored publish time, not the viewer-facing effective one.
     publishedAt: video.publishedAt ?? null,
-    videoUrl: video.videoUrl,
     status: video.status,
     creatorId: video.creatorId,
     createdAt: video.createdAt,

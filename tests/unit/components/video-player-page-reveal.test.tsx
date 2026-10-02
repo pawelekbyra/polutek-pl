@@ -52,7 +52,7 @@ const VIDEO = {
 
 const PLAN = {
   status: "READY",
-  source: { kind: "cloudflare_stream", playbackUrl: "https://stream.example/v/manifest/video.m3u8" },
+  source: { kind: "self_hls", playbackUrl: "https://video.example/h/1.sig/video-1/v1/master.m3u8" },
   player: { autoplayAllowed: true, mutedAutoplay: true, controls: true },
   tracking: {},
 } as never;

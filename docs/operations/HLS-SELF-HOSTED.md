@@ -1,8 +1,8 @@
-# Własny HLS: kodowanie, dostarczanie, wdrożenie i rollback (pilot 2026-10-02)
+# Własny HLS: kodowanie, dostarczanie, wdrożenie (jedyne źródło wideo od 2026-10-02)
 
 Decyzja i uzasadnienie: `docs/architecture/self-hosted-hls.md`. Badania: `docs/research/serwerek/01-hls-encoding.md`, `02-hls-delivery-cloudflare.md`.
 
-Pilot: film `c52f0407-b0e8-4b5c-b6d3-a9f152653002` (slug `czesc`, tier PUBLIC). Poprzedni dostawca (Cloudflare Stream) zostaje jako natychmiastowy zapas.
+**Własny HLS jest jedynym źródłem wideo.** Decyzja właściciela 2026-10-02: Mux, Cloudflare Stream, YouTube, Vimeo i każdy zewnętrzny URL/embed/surowy plik zostały wycięte z kodu (PR "remove third-party video providers"). Nie ma już poprzedniego dostawcy jako zapasu ani fallbacku w odtwarzaczu: jeśli własny HLS nie działa, film nie gra (plan `ERROR`/`NO_PRIMARY_ASSET`). Początek: pilot na filmie `c52f0407-b0e8-4b5c-b6d3-a9f152653002` (slug `czesc`, tier PUBLIC).
 
 ## Co działa (stan 2026-10-02)
 
@@ -11,8 +11,8 @@ Pilot: film `c52f0407-b0e8-4b5c-b6d3-a9f152653002` (slug `czesc`, tier PUBLIC). 
 | Bucket R2 `polutek-hls` (prywatny, `r2.dev` wyłączony) | utworzony, pilot wgrany: `videos/c52f0407-…/v/v1/` (3 rendycje 720/540/360, master, poster) |
 | Worker `polutek-hls-edge` + domena `video.pawelperfect.com` (strefa `pawelperfect.com`) | wdrożony (plan Free), sprawdzony: 200 z tokenem, 403 bez/zły/wygasły, 206 dla Range, CORS dla `https://www.pawelperfect.com` |
 | Sekret `HLS_TOKEN_SECRET` | w `%USERPROFILE%\.ai-secrets\secrets.env`, w Workerze i w `/opt/serwerek/apps/polutek/app.env` (kopia `app.env.bak-hls-20261002`); aplikacja NIE restartowana |
-| Kod aplikacji (provider `SELF_HLS`, plan odtwarzania, fallback, CSP) | w PR; **nie wdrożony** |
-| Wiersze w bazie (asset + route `SELF_HLS`) | **celowo nieutworzone**: starsza aplikacja nie zna nowej wartości enum i wywaliłaby się przy odczycie filmu. Tworzy je `activate-self-hls.sql` po deployu |
+| Kod aplikacji (provider `SELF_HLS`, plan odtwarzania, CSP) | wdrożony; od usunięcia dostawców jedyna ścieżka odtwarzania |
+| Wiersze w bazie | asset + trasa `SELF_HLS` dla 3 filmów (od teraz tworzy je worker kodowania, `activate-self-hls.sql` tylko ręcznie); stare wiersze dostawców usuwa jednorazowo `delete-legacy-provider-rows.sql` (sekcja "Po usunięciu dostawców") |
 
 ## Kodowanie (`scripts/hls/encode-hls.mjs`)
 
@@ -49,16 +49,15 @@ URL: `https://video.pawelperfect.com/h/<exp>.<sig>/<videoId>/<wersja>/<plik>`; `
 - Dozwolone tylko rozszerzenia m3u8/m4s/mp4/ts/vtt/jpg/webp i ścieżki `[A-Za-z0-9_-]`; `meta.json` nie jest serwowany. CORS tylko dla `ALLOWED_ORIGINS` (`https://www.pawelperfect.com`, `https://pawelperfect.com`); metody GET/HEAD/OPTIONS; Range przez cache.
 - To kontrola dostępu, nie DRM: zalogowany widz może skopiować URL na czas TTL i pobrać pliki.
 - Wdrożenie / aktualizacja Workera (idempotentne): `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `HLS_TOKEN_SECRET` w środowisku, potem `node workers/hls-edge/deploy.mjs`.
-- **Plan Free: 100 000 żądań Workera na dobę** (każdy plik to żądanie, także z cache). Film 3 min = ok. 35 żądań na odtworzenie, czyli ok. 2,8 tys. odtworzeń na dobę. Po przekroczeniu Worker zwraca błąd, a odtwarzacz przełącza się na poprzedniego dostawcę (fallback). Powyżej limitu: Workers Paid 5 USD/mies. (decyzja właściciela, nic nie kupiono).
+- **Plan Free: 100 000 żądań Workera na dobę** (każdy plik to żądanie, także z cache). Film 3 min = ok. 35 żądań na odtworzenie, czyli ok. 2,8 tys. odtworzeń na dobę. Po przekroczeniu Worker zwraca błąd, a film przestaje grać (nie ma już fallbacku na dostawcę zewnętrznego). Powyżej limitu: Workers Paid 5 USD/mies. (decyzja właściciela, nic nie kupiono).
 
 ## Aplikacja
 
 - Prisma: wartość `SELF_HLS` w enum `StorageProvider` (migracja `20261002140000_add_self_hls_storage_provider`, addytywna, bez BOM). `VideoAsset`: `provider=SELF_HLS`, `objectKey=videos/<videoId>/v/<wersja>`, `bucket=polutek-hls`.
-- `PlaybackService`: po decyzji dostępu i bramce premiery asset `SELF_HLS` daje podpisany `master.m3u8` (`source.kind=self_hls`); odmowa nie ma żadnego URL (test). Gdy brak `HLS_TOKEN_SECRET` albo zły klucz obiektu, gra poprzedni dostawca.
-- `source.fallback` = podpisany manifest poprzedniego dostawcy (Cloudflare Stream/Mux, READY); `VideoPlayer` przełącza się na niego **raz**, gdy własny HLS zgłosi błąd (ruch/limit Workera/awaria/zły token). Sesje i liczenie wyświetleń bez zmian (`sourceKind=self_hls`).
+- `PlaybackService`: po decyzji dostępu i bramce premiery asset `SELF_HLS` daje podpisany `master.m3u8` (`source.kind=self_hls`); odmowa nie ma żadnego URL (test). Gdy brak `HLS_TOKEN_SECRET` albo zły klucz obiektu, plan to `ERROR` bez URL, tokenu i sesji (fail closed). Wiersze innych dostawców (stare trasy `PREVIOUS`, assety Mux/Stream/YouTube/Vimeo) są ignorowane, nigdy nie powodują błędu i nigdy nie są odtwarzane. Sesje i liczenie wyświetleń bez zmian (`sourceKind=self_hls`). `VideoPlayer` gra wyłącznie `source.kind=self_hls` z adresem `.m3u8`; błąd ładowania pokazuje komunikat z ponowieniem, bez przełączania na inne źródło.
 - CSP: `video.pawelperfect.com` (i host z `HLS_DELIVERY_BASE_URL`) w `connect-src`/`media-src`.
 - Env: `HLS_TOKEN_SECRET` (>= 32 znaki, ten sam co w Workerze; rotacja = nowy sekret w Workerze i aplikacji naraz, aktywne tokeny wygasną), `HLS_DELIVERY_BASE_URL` (domyślnie `https://video.pawelperfect.com`).
-- Admin: panel źródeł i karta aktywnej trasy pokazują "Własny HLS".
+- Admin: nowy film = upload pliku (panel "Media"), brak wyboru dostawcy, URL-a ani UID (VIDEO-PIPELINE.md §5).
 
 ## Wdrożenie pilota (robi główna sesja, po scaleniu PR)
 
@@ -67,18 +66,18 @@ URL: `https://video.pawelperfect.com/h/<exp>.<sig>/<videoId>/<wersja>/<plik>`; `
 cd /opt/serwerek/apps/polutek && rm -rf src && mkdir src && (git archive <commit> | tar -x -C src) && ./deploy.sh <tag>
 
 # 2. skrypty SQL na serwer
-scp scripts/hls/{activate,rollback}-self-hls.sql serwerek:/opt/serwerek/data/hls-work/
+scp scripts/hls/activate-self-hls.sql serwerek:/opt/serwerek/data/hls-work/
 
 # 3. próba na sucho (transakcja wycofana), potem prawdziwa aktywacja
 ssh serwerek 'cd /opt/serwerek/data/hls-work && docker exec -i polutek-db-1 sh -c "psql -U \$POSTGRES_USER -d \$POSTGRES_DB -v ON_ERROR_STOP=1 -v video_id=c52f0407-b0e8-4b5c-b6d3-a9f152653002 -v version=v1" < activate-self-hls.sql'
 ssh serwerek 'ai-log "HLS pilot: activated SELF_HLS route for video c52f0407 (activate-self-hls.sql)"'
 ```
 
-(Próba na sucho: dodaj `-v finish=ROLLBACK`; skrypt wykonuje wszystko, pokazuje stan po zmianie i wycofuje transakcję. Bez tego parametru kończy `COMMIT`. To samo dla `rollback-self-hls.sql`.) Sprawdzenie: otwórz film `czesc` na `www.pawelperfect.com`, w DevTools/Network żądania idą do `video.pawelperfect.com/h/…`; panel admina `/admin/videos/<id>` pokazuje aktywną trasę "Własny HLS".
+(Próba na sucho: dodaj `-v finish=ROLLBACK`; skrypt wykonuje wszystko, pokazuje stan po zmianie i wycofuje transakcję. Bez tego parametru kończy `COMMIT`. Skrypt służy do ręcznej aktywacji; zwykle robi to worker.) Sprawdzenie: otwórz film `czesc` na `www.pawelperfect.com`, w DevTools/Network żądania idą do `video.pawelperfect.com/h/…`; panel admina `/admin/videos/<id>` pokazuje aktywną trasę "Własny HLS".
 
 ## Wszystkie trzy filmy na własnym HLS (2026-10-02)
 
-Decyzja właściciela: na stronie zostają dokładnie 3 filmy i grają wyłącznie z własnego HLS. Stan bazy produkcyjnej po aktywacji (`activate-self-hls.sql`, wersja `v1`, trasa poprzednia = Cloudflare Stream zostaje jako `PREVIOUS` i jako fallback odtwarzacza):
+Decyzja właściciela: na stronie zostają dokładnie 3 filmy i grają wyłącznie z własnego HLS. Stan bazy produkcyjnej po aktywacji (`activate-self-hls.sql`, wersja `v1`; poprzednie trasy dostawców zostały jako `PREVIOUS` do czasu `delete-legacy-provider-rows.sql`):
 
 | Film | id | Tier / bramka | Źródło | Wynik kodowania |
 |---|---|---|---|---|
@@ -94,23 +93,27 @@ Weryfikacja po aktywacji (bez sesji zalogowanego użytkownika, bo nie tworzymy k
 - `GET /api/media-source/<id>` jako gość: `jj` -> `LOGIN_REQUIRED` (`requiredTier: LOGGED_IN`) bez żadnego URL; `dla-patronow` -> `LOGIN_REQUIRED`, diagnostyka "Premiere not reached yet", bez URL; `czesc` -> `SELF_HLS` z `playbackUrl` na `video.pawelperfect.com`. Podpisany plan dla zalogowanego (i brak URL dla odmowy / przed premierą) pokrywa `tests/unit/playback-self-hls.test.ts`.
 - Dostarczanie z tokenem wystawionym ręcznie tym samym sekretem (jak `SelfHlsTokenService`): master/wariant/init/segment 200, `Range` 206, CORS dla `https://www.pawelperfect.com`, brak/zły podpis/token innego filmu/wygasły 403, `meta.json` 404; pełne zdekodowanie strumienia przez `ffmpeg` z adresu HLS (audio+wideo, bez błędów) w ok. 4 s dla 10-sekundowego filmu. Pierwszy bajt mastera ok. 0,2 s, segment 720p 0,3 s z serwerka.
 
-Rollback jednego filmu (sekundy, bez deployu; kopia bazy przed aktywacją: `/opt/serwerek/backups/pre-hls-jj-patronow-20261002T111908.sql.gz`):
+Kopia bazy sprzed aktywacji: `/opt/serwerek/backups/pre-hls-jj-patronow-20261002T111908.sql.gz`. `run-sql-on-server.sh` (z `scripts/hls/`) = `docker exec -i polutek-db-1 psql ... -v video_id=<id> -v version=v1 < plik.sql`.
 
-```bash
-ssh serwerek 'bash /opt/serwerek/data/hls-work/run-sql-on-server.sh <video_id> /opt/serwerek/data/hls-work/rollback-self-hls.sql'
-```
+## Po usunięciu dostawców (2026-10-02): SQL i sprzątanie
 
-(`run-sql-on-server.sh` (z `scripts/hls/`) = `docker exec -i polutek-db-1 psql ... -v video_id=<id> -v version=v1 < plik.sql`; wgraj go razem ze skryptami SQL. Ponowna aktywacja: `activate-self-hls.sql` tym samym wywołaniem, dodaj `-v finish=ROLLBACK` na próbę.)
+Kod ignoruje wiersze dostawców, więc kolejność jest bezpieczna: najpierw deploy, potem SQL, potem sprzątanie u dostawców.
+
+1. Deploy aplikacji (`deploy.sh <tag>`). Migracji nie ma: kolejne wartości enum `StorageProvider` (`R2`, `S3`, `VERCEL_BLOB`, `CLOUDFLARE_STREAM`, `MUX`, `YOUTUBE`, `VIMEO`) i tabele dystrybucji/jobów dostawców zostają w schemacie jako LEGACY (komentarze w `schema.prisma`); migracje są tylko addytywne.
+2. Z serwerka, na sucho i na prawdę (skrypt odmawia, gdy jakiś film z legacy assetem nie ma aktywnej trasy do gotowego `SELF_HLS`):
+   ```bash
+   scp scripts/hls/delete-legacy-provider-rows.sql serwerek:/opt/serwerek/data/hls-work/
+   ssh serwerek 'cd /opt/serwerek/data/hls-work && docker exec -i polutek-db-1 sh -c "psql -U \$POSTGRES_USER -d \$POSTGRES_DB -v ON_ERROR_STOP=1 -v finish=ROLLBACK" < delete-legacy-provider-rows.sql'   # na sucho
+   ssh serwerek 'cd /opt/serwerek/data/hls-work && docker exec -i polutek-db-1 sh -c "psql -U \$POSTGRES_USER -d \$POSTGRES_DB -v ON_ERROR_STOP=1" < delete-legacy-provider-rows.sql'                          # naprawdę
+   ssh serwerek 'ai-log "deleted legacy provider rows (delete-legacy-provider-rows.sql)"'
+   ```
+3. Sprzątanie u dostawców (webhooki, assety, tokeny): lista w `docs/operations/SERWEREK.md`, sekcja "Sprzątanie po dostawcach wideo".
 
 ## Rollback
 
-- **Natychmiastowy, jednego filmu (sekundy, bez deployu):**
-  ```bash
-  ssh serwerek 'cd /opt/serwerek/data/hls-work && docker exec -i polutek-db-1 sh -c "psql -U \$POSTGRES_USER -d \$POSTGRES_DB -v ON_ERROR_STOP=1 -v video_id=c52f0407-b0e8-4b5c-b6d3-a9f152653002" < rollback-self-hls.sql'
-  ```
-  Aktywna trasa wraca na Cloudflare Stream. Plany odtwarzania są budowane przy każdym żądaniu, więc zmiana działa od razu (ewentualnie zamknięte karty dostają plan z poprzedniej trasy do wygaśnięcia, co jest nieszkodliwe).
-- **Bez dotykania bazy:** usuń `HLS_TOKEN_SECRET` z `app.env` i `docker compose up -d --no-deps app`: aplikacja gra poprzedniego dostawcę dla wszystkich filmów. Albo wyłącz Workera (Cloudflare Dashboard -> Workers -> `polutek-hls-edge` -> usuń domenę): odtwarzacz przełączy się na fallback po błędzie.
-- **Aplikacja:** `./deploy.sh <tag> --rollback`. Migracja enum jest addytywna i zostaje; stare wiersze `SELF_HLS` w bazie wywaliłyby starszy kod, więc przed rollbackiem kodu najpierw `rollback-self-hls.sql` i `DELETE` wierszy `SELF_HLS` (asset i trasa).
+- **Jednego filmu:** nie ma już poprzedniego dostawcy, do którego można wrócić. Własną wersję przełącza się ręcznie na wcześniejszą wersję HLS (`activate-self-hls.sql` z `-v version=v<N>`; stare wersje zostają w R2) albo w panelu "Zakoduj ponownie" (nowa wersja HLS, stara gra do przełączenia trasy).
+- **Awaria Workera/limit:** wideo nie gra do czasu naprawy (Workers Paid 5 USD/mies. znosi limit dobowy; decyzja właściciela). Brak `HLS_TOKEN_SECRET` w `app.env` = plan `ERROR` dla wszystkich filmów (fail closed), nie pomaga jako "wyłącznik".
+- **Aplikacja:** `./deploy.sh <tag> --rollback` wraca do poprzedniego obrazu (z kodem dostawców; ich wiersze w bazie mogą być już usunięte, więc stary kod i tak zagra tylko własny HLS po `activate-self-hls.sql`).
 
 ## Utrzymanie
 

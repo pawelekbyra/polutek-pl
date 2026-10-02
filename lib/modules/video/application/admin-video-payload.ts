@@ -109,9 +109,6 @@ export function buildAdminVideoUpdatePayload(body: AdminVideoRequestBody): Updat
   const titleEn = readNullableTextField(body, "titleEn");
   if (titleEn !== undefined) payload.titleEn = titleEn;
 
-  const videoUrl = readNullableTextField(body, "videoUrl");
-  if (videoUrl !== undefined) payload.videoUrl = videoUrl;
-
   const tier = readAccessTier(body, "tier");
   if (tier !== undefined) payload.tier = tier;
 

@@ -2,8 +2,12 @@ import { StorageProvider, VideoAssetProcessingState, VideoPlaybackRoute, VideoPl
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { recordAuditEvent } from "@/lib/modules/audit";
-import { canProviderServeTier, isPlaybackProvider } from "../domain/video-provider-capabilities";
 
+/**
+ * The active playback route says which asset plays a video. Own HLS (SELF_HLS) is the
+ * only provider that can be routed (CLAUDE.md 4.17); the encode worker activates the
+ * route when it finishes (finalize-self-hls.ts).
+ */
 export class VideoPlaybackRouteService {
   async activateRoute(input: {
     videoId: string;
@@ -19,8 +23,8 @@ export class VideoPlaybackRouteService {
     if (!video) throw new AppError("Video not found.", 404, "VIDEO_NOT_FOUND");
     if (!asset || asset.videoId !== input.videoId) throw new AppError("Asset does not belong to this video.", 400, "VIDEO_ASSET_MISMATCH");
     if (asset.processingState !== VideoAssetProcessingState.READY) throw new AppError("Only READY assets can be activated.", 409, "VIDEO_ASSET_NOT_READY");
-    if (!isPlaybackProvider(asset.provider as StorageProvider) || !canProviderServeTier(asset.provider as StorageProvider, video.tier)) {
-      throw new AppError(`${asset.provider} cannot be activated for ${video.tier} playback.`, 400, "PROVIDER_CANNOT_SERVE_TIER");
+    if (asset.provider !== StorageProvider.SELF_HLS) {
+      throw new AppError(`${asset.provider} cannot be activated: only own HLS is supported.`, 400, "PROVIDER_CANNOT_SERVE_TIER");
     }
 
     const route = await ctx.db.writeTransaction(async (tx) => {
@@ -68,52 +72,5 @@ export class VideoPlaybackRouteService {
   async getActiveRoute(videoId: string, ctx: AppContext): Promise<VideoPlaybackRoute | null> {
     const video = await ctx.prisma.video.findUnique({ where: { id: videoId }, include: { activePlaybackRoute: true } });
     return video?.activePlaybackRoute ?? null;
-  }
-
-  async repairLegacyPrimaryFromRoute(videoId: string, ctx: AppContext): Promise<void> {
-    const video = await ctx.prisma.video.findUnique({ where: { id: videoId }, include: { activePlaybackRoute: true } });
-    if (!video?.activePlaybackRoute) return;
-    await ctx.db.writeTransaction(async (tx) => {
-      await tx.videoAsset.updateMany({ where: { videoId }, data: { isPrimary: false } });
-      await tx.videoAsset.update({ where: { id: video.activePlaybackRoute!.assetId }, data: { isPrimary: true } });
-    });
-  }
-
-  /**
-   * Ingestion/webhook entry point for "a single-asset (plan-less) video's asset just
-   * became READY — should it become the playback source?" This is the guarded on-ramp
-   * that keeps `activateRoute()` the sole write path for `isPrimary`/`activePlaybackRouteId`
-   * outside admin- or plan-driven activation: it only activates when the video has no
-   * active route yet AND no other asset is already the READY primary, mirroring the
-   * legacy "first ready asset wins" rule. Returns the created route, or null if a route/
-   * primary already exists (no-op) or the asset turns out not to be eligible.
-   */
-  async activateFirstReadyAssetIfNoneActive(
-    input: { videoId: string; assetId: string; reason?: string },
-    ctx: AppContext,
-  ): Promise<VideoPlaybackRoute | null> {
-    const [existingActiveRoute, existingReadyPrimary] = await Promise.all([
-      this.getActiveRoute(input.videoId, ctx),
-      ctx.prisma.videoAsset.findFirst({
-        where: {
-          videoId: input.videoId,
-          isPrimary: true,
-          processingState: VideoAssetProcessingState.READY,
-          id: { not: input.assetId },
-        },
-      }),
-    ]);
-    if (existingActiveRoute || existingReadyPrimary) return null;
-
-    try {
-      return await this.activateRoute(
-        { videoId: input.videoId, assetId: input.assetId, activatedBy: "POLICY", reason: input.reason ?? "first-ready-asset" },
-        ctx,
-      );
-    } catch {
-      // Not eligible (e.g. provider can't serve this video's tier, or the asset
-      // turned out not to be READY) — legacy primary-asset fallback still covers playback.
-      return null;
-    }
   }
 }

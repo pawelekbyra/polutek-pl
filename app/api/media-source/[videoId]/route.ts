@@ -55,22 +55,18 @@ export async function GET(req: NextRequest, props: { params: Promise<{ videoId: 
     const uaHash = crypto.createHash("sha256").update(ua).digest("hex");
 
     const ctx = createAppContext({ actor, requestId: requestId || undefined });
-    const playbackPlan = await PlaybackService.createPlaybackPlanWithContext(
+    let playbackPlan = await PlaybackService.createPlaybackPlanWithContext(
       videoId,
       ctx,
       ipHash,
       uaHash,
     );
 
-    // Safety: ensure no raw URLs leak in the public response
-    if (playbackPlan.source?.playbackUrl) {
-      if (MediaPolicy.isProbablyRawMediaUrl(playbackPlan.source.playbackUrl)) {
-        // If it's a raw URL that wasn't proxied or handled, redact it for public safety
-        // We expect PlaybackService to already use /api/media proxy for most cases.
-        if (!playbackPlan.source.playbackUrl.startsWith("/api/media/")) {
-          playbackPlan.source.playbackUrl = `/api/media/${videoId}`;
-        }
-      }
+    // Safety net: a raw storage/provider URL must never reach the browser. Own HLS plans carry
+    // only the token-checked delivery URL; anything else is dropped, the plan is not playable.
+    if (playbackPlan.source?.playbackUrl && MediaPolicy.isProbablyRawMediaUrl(playbackPlan.source.playbackUrl)) {
+      scopedLogger.error("[MEDIA_SOURCE_RAW_URL_BLOCKED]", { videoId });
+      playbackPlan = { ...playbackPlan, status: "ERROR", canPlay: false, source: undefined };
     }
 
     // Ensure diagnostics don't leak anything sensitive
@@ -84,7 +80,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ videoId: 
       playbackPlan.access.allowed
         && playbackPlan.canPlay
         && playbackPlan.status === "READY"
-        && (playbackPlan.source?.playbackUrl || playbackPlan.source?.embedUrl),
+        && playbackPlan.source?.playbackUrl,
     );
 
     const safePlaybackPlan = hasPlayableSource
@@ -106,7 +102,6 @@ export async function GET(req: NextRequest, props: { params: Promise<{ videoId: 
       hasAccess: safePlaybackPlan.access.allowed,
       kind: hasPlayableSource ? safePlaybackPlan.source?.kind : undefined,
       playbackUrl: hasPlayableSource ? safePlaybackPlan.source?.playbackUrl : undefined,
-      embedUrl: hasPlayableSource ? safePlaybackPlan.source?.embedUrl : undefined,
     };
 
     if (!safePlaybackPlan.access.allowed) {

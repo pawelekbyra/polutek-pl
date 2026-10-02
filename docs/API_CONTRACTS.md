@@ -81,11 +81,9 @@ Zwraca bezpieczny URL do odtwarzania materiału wideo.
   ```json
   {
     "hasAccess": true,
-    "kind": "direct" | "hls" | "dash" | "youtube" | "vimeo" | "unknown",
-    "label": string,
-    "playbackUrl": string,
-    "embedUrl": string, // opcjonalnie
-    "needsProxy": boolean
+    "kind": "self_hls",
+    "playbackUrl": string, // podpisany master.m3u8 własnego HLS (token w ścieżce), tylko dla dozwolonego i gotowego planu
+    "source": { "provider": "SELF_HLS", "kind": "self_hls", "playbackUrl": string, "isSignedUrl": true, "expiresAt": string }
   }
   ```
 - **Error (403)**: `{ "hasAccess": false, "reason": string, "requiredTier": string }`

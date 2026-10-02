@@ -47,7 +47,6 @@ export function parseVideoQueryParams(req: NextRequest) {
     tier: searchParams.get('tier') as AccessTier || undefined,
     isMainFeatured: searchParams.get('isMainFeatured') === 'true' ? true : searchParams.get('isMainFeatured') === 'false' ? false : undefined,
     showInSidebar: searchParams.get('showInSidebar') === 'true' ? true : searchParams.get('showInSidebar') === 'false' ? false : undefined,
-    sourceKind: searchParams.get('sourceKind') || undefined,
     migrationStatus: searchParams.get('migrationStatus') || undefined,
     needsAttention: searchParams.get('needsAttention') === 'true' ? true : undefined,
   };

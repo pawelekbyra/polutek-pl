@@ -11,7 +11,7 @@ układ na dwie maszyny to zalecany cel na później, tylko opisany.**
 Powiązane: `CLAUDE.md` §0 (jak pracuje właściciel), §4.3 (bezpieczeństwo
 odtwarzania), §4.4 (dostęp), §4.15 (premiery),
 `docs/operations/AGENT_ACCESS.md`, `GOOGLE_ACCESS.md`, `VERCEL_ACCESS.md`,
-`docs/architecture/vod-cloudflare-stream-hot-path.md` (obecna ścieżka Cloudflare Stream).
+`docs/architecture/self-hosted-hls.md` (własny HLS, jedyne źródło wideo od 2026-10-02; dawna ścieżka Cloudflare Stream jest usunięta).
 
 Układ pliku: §A–§G to decyzje i plan pracowni z 2026-10-01 (nowe); §1–§11 to
 wcześniejszy plan własnego pipeline'u wideo (research, koszty, źródła, etapy).

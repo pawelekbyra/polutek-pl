@@ -7,8 +7,8 @@
 --   dry run (everything executed and shown, then rolled back): add  -v finish=ROLLBACK
 --
 -- Effect: new READY VideoAsset (SELF_HLS) + ACTIVE VideoPlaybackRoute, the previous
--- ACTIVE route becomes PREVIOUS, the old provider asset stays READY (it is the
--- fallback the player switches to on error). Rollback: rollback-self-hls.sql.
+-- ACTIVE route becomes PREVIOUS. Manual activation of an already encoded version (the encode worker
+-- does this itself in the normal flow). There is no previous-provider fallback or rollback any more.
 \if :{?finish}\else\set finish COMMIT\endif
 BEGIN;
 

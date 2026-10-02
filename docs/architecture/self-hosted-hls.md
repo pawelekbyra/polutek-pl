@@ -1,10 +1,10 @@
 # Decyzja: własny HLS zamiast Mux / Cloudflare Stream (2026-10-02)
 
-Status: pilot wdrożony po stronie Cloudflare, kod w PR, aktywacja po deployu (procedura: `docs/operations/HLS-SELF-HOSTED.md`).
+Status: **własny HLS jest jedynym źródłem wideo.** Mux, Cloudflare Stream, YouTube, Vimeo i każdy zewnętrzny URL zostały usunięte z kodu (2026-10-02, decyzja właściciela); fallback na poprzedniego dostawcę opisany niżej już nie istnieje (procedura: `docs/operations/HLS-SELF-HOSTED.md`).
 
 ## Decyzja
 
-Wideo serwujemy sami: kodujemy FFmpeg-iem na serwerku, trzymamy w prywatnym buckecie R2 `polutek-hls`, dostarczamy przez Worker na `video.pawelperfect.com` (Cloudflare Free). Poprzedni dostawca (Cloudflare Stream/Mux) zostaje jako zapas per film i jako automatyczny fallback w odtwarzaczu.
+Wideo serwujemy sami: kodujemy FFmpeg-iem na serwerku, trzymamy w prywatnym buckecie R2 `polutek-hls`, dostarczamy przez Worker na `video.pawelperfect.com` (Cloudflare Free). Początkowo poprzedni dostawca (Cloudflare Stream/Mux) miał zostać jako zapas i automatyczny fallback w odtwarzaczu; po pilocie właściciel zdecydował o całkowitym odcięciu dostawców, więc zapasu nie ma.
 
 ## Dlaczego tak, a nie inaczej
 
@@ -15,7 +15,7 @@ Wideo serwujemy sami: kodujemy FFmpeg-iem na serwerku, trzymamy w prywatnym buck
 | Własny master | ffmpeg nie pisze `FRAME-RATE` i nie dolicza audio do `BANDWIDTH` | muxer ffmpeg bez poprawek |
 | Worker + token HMAC w ścieżce | **działa na planie Free**; dla hls.js i Safari identycznie; cache bez tokenu | WAF `is_timed_hmac_valid_v0` + Transform Rules (wymaga planu **Pro**, 20-25 USD/mies., rekomendacja z `02`, ale nie wolno nam wydawać pieniędzy bez właściciela) |
 | R2 przez binding Workera (nie S3, nie r2.dev) | bucket w ogóle nieosiągalny z zewnątrz poza Workerem | publiczny bucket + niezgadywalne ścieżki (słabsza ochrona) |
-| Fallback w odtwarzaczu | limit/awaria Workera nie zatrzymuje filmu; rollback bez deployu | brak zapasu |
+| ~~Fallback w odtwarzaczu~~ (usunięty 2026-10-02) | był: limit/awaria Workera nie zatrzymywały filmu | teraz: brak zapasu świadomie, jedno źródło prawdy |
 
 ## Ochrona: uczciwie
 
@@ -48,5 +48,5 @@ Chrome (headless) + hls.js 1.6, ta sama maszyna i łącze (Warszawa, Cloudflare 
 3. **Automatyzacja:** dziś ręcznie (kodowanie, upload, SQL). Czy robić kolejkę (pg-boss) i przycisk w adminie, kiedy i na której maszynie (CPU serwerka jest wąskim gardłem, SERWEREK.md §14)?
 4. **Ochrona:** czy wystarczy "token, nie DRM"? Dla treści płatnych/ekskluzywnych potrzebny packager z DRM i licencje (koszt, nie robić bez decyzji).
 5. **Napisy i wiele ścieżek audio:** nie obsłużone w HLS (napisy dziś z `subtitleUrlPl/En` poza HLS); trick play (I-frame) i podgląd na pasku (sprite) niezrobione.
-6. **Skalowanie:** limity Free Workera są dobowe i twarde; fallback na poprzedniego dostawcę działa tylko dopóki on istnieje (usunięcie Mux/Stream = brak zapasu).
-7. **Webhook Mux / Cloudflare Stream dla filmów z własnym HLS:** nadal wskażą stary asset; zostaje jako zapas.
+6. **Skalowanie:** limity Free Workera są dobowe i twarde; po przekroczeniu film nie gra (zapasu u dostawcy już nie ma): przy premierze rozważyć Workers Paid (5 USD/mies.).
+7. ~~Webhook Mux / Cloudflare Stream~~: usunięte razem z kodem dostawców; sprzątanie po ich stronie: `docs/operations/SERWEREK.md` §20.

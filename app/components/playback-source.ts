@@ -1,7 +1,6 @@
 export type PlaybackSourceInput = {
     kind?: string | null;
     playbackUrl?: string | null;
-    embedUrl?: string | null;
 };
 
 export type ResolvedPlaybackSource =
@@ -9,32 +8,21 @@ export type ResolvedPlaybackSource =
         mode: 'custom-player';
         kind: string;
         src: string;
-        embedFallbackUrl?: string;
-    }
-    | {
-        mode: 'embed';
-        provider: 'youtube' | 'vimeo';
-        src: string;
     }
     | {
         mode: 'unavailable';
         reason: string;
     };
 
-const CUSTOM_PLAYER_KINDS = new Set(['hls', 'dash', 'mp4', 'direct', 'vercel_blob', 'blob', 'mux', 'self_hls']);
-const EMBED_PROVIDER_KINDS = new Set(['youtube', 'vimeo']);
+/**
+ * The only video source is our own HLS (kind "self_hls", CLAUDE.md 4.17): an https
+ * .m3u8 master playlist. Anything else (embeds, other providers, raw files) is
+ * never played, even if a plan carried it.
+ */
+const SELF_HLS_KIND = 'self_hls';
 
 function normalizeKind(kind: string | null | undefined): string {
     return String(kind || '').trim().toLowerCase();
-}
-
-function firstPresentUrl(...values: Array<string | null | undefined>): string | null {
-    for (const value of values) {
-        const trimmed = value?.trim();
-        if (trimmed) return trimmed;
-    }
-
-    return null;
 }
 
 function isHttpUrl(value: string): boolean {
@@ -46,74 +34,23 @@ function isHttpUrl(value: string): boolean {
     }
 }
 
-function hasManifestExtension(value: string, extensions: string[]): boolean {
-    if (!isHttpUrl(value)) return false;
-
+export function isHlsManifestUrl(value: string | null | undefined): value is string {
+    if (!value || !isHttpUrl(value)) return false;
     try {
-        const url = new URL(value);
-        const pathname = url.pathname.toLowerCase();
-        return extensions.some((extension) => pathname.endsWith(extension));
+        return new URL(value).pathname.toLowerCase().endsWith('.m3u8');
     } catch {
         return false;
     }
 }
 
-export function isHlsManifestUrl(value: string | null | undefined): value is string {
-    return Boolean(value && hasManifestExtension(value, ['.m3u8']));
-}
-
-export function isDashManifestUrl(value: string | null | undefined): value is string {
-    return Boolean(value && hasManifestExtension(value, ['.mpd']));
-}
-
-function isSupportedManifestUrl(value: string | null | undefined): value is string {
-    return isHlsManifestUrl(value) || isDashManifestUrl(value);
-}
-
 export function resolvePlaybackSource(input: PlaybackSourceInput): ResolvedPlaybackSource {
     const kind = normalizeKind(input.kind);
     const playbackUrl = input.playbackUrl?.trim() || null;
-    const embedUrl = input.embedUrl?.trim() || null;
 
-    if (EMBED_PROVIDER_KINDS.has(kind)) {
-        const src = firstPresentUrl(embedUrl, playbackUrl);
-        if (!src) return { mode: 'unavailable', reason: 'missing-embed-url' };
+    if (!kind) return { mode: 'unavailable', reason: 'missing-source-kind' };
+    if (kind !== SELF_HLS_KIND) return { mode: 'unavailable', reason: 'unsupported-source-kind' };
+    if (!playbackUrl) return { mode: 'unavailable', reason: 'missing-playback-url' };
+    if (!isHlsManifestUrl(playbackUrl)) return { mode: 'unavailable', reason: 'unsupported-manifest' };
 
-        return { mode: 'embed', provider: kind as 'youtube' | 'vimeo', src };
-    }
-
-    if (kind === 'cloudflare_stream') {
-        if (isSupportedManifestUrl(playbackUrl)) {
-            return {
-                mode: 'custom-player',
-                kind,
-                src: playbackUrl,
-            };
-        }
-
-        if (playbackUrl && isSupportedManifestUrl(embedUrl)) {
-            return {
-                mode: 'custom-player',
-                kind,
-                src: embedUrl,
-            };
-        }
-
-        if (!firstPresentUrl(embedUrl, playbackUrl)) {
-            return { mode: 'unavailable', reason: 'missing-cloudflare-source' };
-        }
-
-        return {
-            mode: 'unavailable',
-            reason: playbackUrl ? 'unsupported-cloudflare-manifest' : 'missing-cloudflare-manifest',
-        };
-    }
-
-    if (CUSTOM_PLAYER_KINDS.has(kind)) {
-        if (!playbackUrl) return { mode: 'unavailable', reason: 'missing-playback-url' };
-
-        return { mode: 'custom-player', kind, src: playbackUrl };
-    }
-
-    return { mode: 'unavailable', reason: kind ? 'unsupported-source-kind' : 'missing-source-kind' };
+    return { mode: 'custom-player', kind, src: playbackUrl };
 }

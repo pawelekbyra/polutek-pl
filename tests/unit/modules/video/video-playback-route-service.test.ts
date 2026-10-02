@@ -16,7 +16,7 @@ function ctxForRoute(assetOverrides: any = {}) {
     actor: { type: 'admin', userId: 'admin-1' },
     prisma: {
       video: { findUnique: async () => ({ id: 'video-1', tier: AccessTier.PUBLIC }) },
-      videoAsset: { findUnique: async () => ({ id: 'asset-1', videoId: 'video-1', provider: StorageProvider.MUX, processingState: VideoAssetProcessingState.READY, ...assetOverrides }) },
+      videoAsset: { findUnique: async () => ({ id: 'asset-1', videoId: 'video-1', provider: StorageProvider.SELF_HLS, processingState: VideoAssetProcessingState.READY, ...assetOverrides }) },
       auditLog: { create: async () => ({ id: 'audit-1' }) },
     },
     db: { writeTransaction: async (fn: any) => fn(tx) },
@@ -40,9 +40,11 @@ describe('VideoPlaybackRouteService', () => {
     await expect(new VideoPlaybackRouteService().activateRoute({ videoId: 'video-1', assetId: 'asset-1', activatedBy: 'POLICY' }, ctx)).rejects.toThrow(/READY assets/);
   });
 
-  it('rejects patron playback for embed-only providers', async () => {
-    const { ctx } = ctxForRoute({ provider: StorageProvider.YOUTUBE });
-    ctx.prisma.video.findUnique = async () => ({ id: 'video-1', tier: AccessTier.PATRON });
-    await expect(new VideoPlaybackRouteService().activateRoute({ videoId: 'video-1', assetId: 'asset-1', activatedBy: 'ADMIN' }, ctx)).rejects.toThrow(/cannot be activated/);
+  it.each([StorageProvider.CLOUDFLARE_STREAM, StorageProvider.MUX, StorageProvider.YOUTUBE, StorageProvider.VIMEO, StorageProvider.VERCEL_BLOB, StorageProvider.R2, StorageProvider.S3])('refuses to route a legacy %s asset, for any tier', async (provider) => {
+    for (const tier of [AccessTier.PUBLIC, AccessTier.PATRON]) {
+      const { ctx } = ctxForRoute({ provider });
+      ctx.prisma.video.findUnique = async () => ({ id: 'video-1', tier });
+      await expect(new VideoPlaybackRouteService().activateRoute({ videoId: 'video-1', assetId: 'asset-1', activatedBy: 'ADMIN' }, ctx)).rejects.toThrow(/cannot be activated/);
+    }
   });
 });

@@ -30,7 +30,6 @@ describe('getAdminVideoById Use Case', () => {
       slug: 'v1-slug',
       title: 'Video',
       creatorId: mainChannel.id,
-      videoUrl: 'https://example.com/video.mp4',
       status: 'PUBLISHED',
       tier: 'PUBLIC',
       views: 0,
@@ -52,7 +51,7 @@ describe('getAdminVideoById Use Case', () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data.id).toBe('v1');
-      expect(result.data.videoUrl).toBe(video.videoUrl);
+      expect((result.data as any).videoUrl).toBeUndefined();
       expect(result.data.commentsCount).toBe(5);
     }
   });

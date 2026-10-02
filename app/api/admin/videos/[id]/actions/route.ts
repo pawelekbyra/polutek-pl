@@ -4,10 +4,6 @@ import {
   updateAdminVideo,
   publishAdminVideo,
   archiveAdminVideo,
-  getCloudflareUploadUrl,
-  attachCloudflareAsset,
-  importLegacyVideoToCloudflare,
-  syncCloudflareStatus,
 } from "@/lib/modules/video";
 import { fromUseCaseResult, handleApiError } from "@/lib/api/api-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
@@ -84,36 +80,6 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
             },
             ctx,
           ),
-        );
-      case "create-upload-url":
-        return fromUseCaseResult(
-          await getCloudflareUploadUrl({ videoId }, ctx),
-        );
-      case "attach-asset": {
-        const { providerAssetId, providerPlaybackId } = body;
-        if (!providerAssetId) {
-          return Response.json({ error: "Invalid data", details: { fieldErrors: { providerAssetId: ["Required"] } } }, { status: 400 });
-        }
-        return fromUseCaseResult(
-          await attachCloudflareAsset(
-            { videoId, providerAssetId, providerPlaybackId, publishAfterAssetReady: body.publishAfterAssetReady === true },
-            ctx,
-          ),
-        );
-      }
-      case "import-legacy-to-cloudflare":
-        return fromUseCaseResult(
-          await importLegacyVideoToCloudflare(
-            {
-              videoId,
-              publishAfterAssetReady: body.publishAfterAssetReady === true,
-            },
-            ctx,
-          ),
-        );
-      case "sync-cloudflare":
-        return fromUseCaseResult(
-          await syncCloudflareStatus(videoId, ctx),
         );
       default:
 

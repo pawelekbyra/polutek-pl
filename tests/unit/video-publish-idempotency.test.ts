@@ -24,7 +24,7 @@ const readyRouteVideo = {
   tier: 'PUBLIC',
   status: 'DRAFT',
   activePlaybackRoute: {
-    asset: { provider: 'CLOUDFLARE_STREAM', processingState: 'READY', providerAssetId: 'cf-uid' },
+    asset: { provider: 'SELF_HLS', processingState: 'READY', objectKey: 'videos/video-123/v/v1' },
   },
 };
 
@@ -151,13 +151,13 @@ describe('attemptPublishAfterAssetReady Idempotency', () => {
   });
 });
 
-describe('attemptPublishAfterAssetReady is provider-agnostic (readiness-driven)', () => {
+describe('attemptPublishAfterAssetReady is readiness-driven', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPrisma.video.findFirst.mockResolvedValue(readyRouteVideo);
   });
 
-  it('publishes as soon as a READY active playback route exists, regardless of which provider triggered', async () => {
+  it('publishes as soon as a READY active playback route exists, whoever triggered it', async () => {
     const videoId = 'video-xyz';
     mockPrisma.video.findUnique.mockResolvedValue({
       id: videoId,
@@ -167,14 +167,12 @@ describe('attemptPublishAfterAssetReady is provider-agnostic (readiness-driven)'
     });
     vi.mocked(publishAdminVideo).mockResolvedValue({ ok: true } as any);
 
-    // A Cloudflare webhook triggers publication even though (historically) Mux may have been
-    // the "preferred" provider — a broken Mux webhook must no longer block a ready Cloudflare asset.
-    await attemptPublishAfterAssetReady(videoId, mockCtx, 'cloudflare_stream');
+    await attemptPublishAfterAssetReady(videoId, mockCtx, 'self_hls');
 
     expect(publishAdminVideo).toHaveBeenCalledWith(videoId, mockCtx);
     expect(recordAuditEvent).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
       action: 'VIDEO_PUBLISH_AFTER_ASSET_READY_COMPLETED',
-      metadata: expect.objectContaining({ triggeredByProvider: 'cloudflare_stream' }),
+      metadata: expect.objectContaining({ triggeredByProvider: 'self_hls' }),
     }));
   });
 
@@ -188,7 +186,7 @@ describe('attemptPublishAfterAssetReady is provider-agnostic (readiness-driven)'
     });
     mockPrisma.video.findFirst.mockResolvedValue(noRouteVideo); // nothing playable yet
 
-    await attemptPublishAfterAssetReady(videoId, mockCtx, 'mux');
+    await attemptPublishAfterAssetReady(videoId, mockCtx);
 
     expect(publishAdminVideo).not.toHaveBeenCalled();
   });

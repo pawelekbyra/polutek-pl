@@ -67,12 +67,10 @@ function createReadyPlan(videoId = "video-1"): PlaybackPlan {
     canPlay: true,
     access: { allowed: true },
     source: {
-      provider: "CLOUDFLARE_STREAM",
-      kind: "cloudflare_stream",
-      playbackUrl: "/api/media/video-1",
-      needsProxy: true,
-      isExternalEmbed: false,
-      isSignedUrl: false,
+      provider: "SELF_HLS",
+      kind: "self_hls",
+      playbackUrl: "https://video.pawelperfect.com/h/1.sig/video-1/v1/master.m3u8",
+      isSignedUrl: true,
     },
     player: {
       autoplayAllowed: false,

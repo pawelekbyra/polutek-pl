@@ -6,8 +6,8 @@ describe('VideoPolicy', () => {
   const validAsset = {
     isPrimary: true,
     processingState: 'READY',
-    provider: 'CLOUDFLARE_STREAM',
-    providerAssetId: 'v123'
+    provider: 'SELF_HLS',
+    objectKey: 'videos/v123/v/v1'
   };
   const activeRoute = { asset: validAsset };
 
@@ -51,7 +51,7 @@ describe('VideoPolicy', () => {
 
       expect(blockers).toContainEqual({
         code: 'VIDEO_PUBLICATION_ASSET_NOT_READY',
-        message: 'Aktywne źródło Cloudflare Stream nie jest jeszcze gotowe.',
+        message: 'Wideo jest jeszcze kodowane albo kodowanie się nie powiodło.',
         field: 'activePlaybackRoute',
       });
     });
@@ -164,5 +164,34 @@ describe('VideoPolicy', () => {
             publishedAt: new Date('2024-01-02')
         }, now)).toBe(false);
       });
+  });
+});
+
+describe('VideoPolicy: only own HLS can be published', () => {
+  const base = { title: 'Title', slug: 'slug', tier: AccessTier.PUBLIC, status: VideoStatus.DRAFT };
+
+  it.each(['CLOUDFLARE_STREAM', 'MUX', 'YOUTUBE', 'VIMEO', 'VERCEL_BLOB', 'R2', 'S3'])('blocks a %s active route (legacy provider)', (provider) => {
+    const blockers = VideoPolicy.getPublicationBlockers({
+      ...base,
+      activePlaybackRoute: { asset: { provider, processingState: 'READY', providerAssetId: 'x', externalVideoId: 'y', objectKey: 'k' } },
+    });
+
+    expect(blockers.map((b) => b.code)).toContain('VIDEO_PUBLICATION_NON_PLAYABLE_PROVIDER');
+    expect(VideoPolicy.canBeHero({ ...base, status: VideoStatus.PUBLISHED, activePlaybackRoute: { asset: { provider, processingState: 'READY', objectKey: 'k' } } })).toBe(false);
+  });
+
+  it('blocks an own-HLS asset without an object key', () => {
+    const blockers = VideoPolicy.getPublicationBlockers({
+      ...base,
+      activePlaybackRoute: { asset: { provider: 'SELF_HLS', processingState: 'READY', objectKey: '' } },
+    });
+
+    expect(blockers.map((b) => b.code)).toContain('VIDEO_PUBLICATION_MISSING_PROVIDER_ASSET_ID');
+  });
+
+  it('treats a missing or unfinished own-HLS asset as an asset-readiness blocker (keep waiting), not a structural one', () => {
+    expect(VideoPolicy.isAssetReadinessBlocker('VIDEO_PUBLICATION_ASSET_NOT_READY')).toBe(true);
+    expect(VideoPolicy.isAssetReadinessBlocker('VIDEO_PUBLICATION_MISSING_ACTIVE_ROUTE')).toBe(true);
+    expect(VideoPolicy.isAssetReadinessBlocker('VIDEO_PUBLICATION_MISSING_TITLE')).toBe(false);
   });
 });

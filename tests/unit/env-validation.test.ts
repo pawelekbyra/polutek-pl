@@ -26,11 +26,7 @@ const productionEnv = {
   MEDIA_BUCKET_HOST: 'media.example.com',
   UPSTASH_REDIS_REST_URL: 'https://redis.example.com',
   UPSTASH_REDIS_REST_TOKEN: 'redis-token',
-  MUX_TOKEN_ID: 'mux-token-id',
-  MUX_TOKEN_SECRET: 'mux-token-secret',
-  MUX_WEBHOOK_SECRET: 'mux-webhook-secret',
-  MUX_SIGNING_KEY_ID: 'mux-signing-key-id',
-  MUX_SIGNING_PRIVATE_KEY: Buffer.from('-----BEGIN RSA PRIVATE KEY-----\nMIIEfake==\n-----END RSA PRIVATE KEY-----').toString('base64'),
+  HLS_TOKEN_SECRET: 'hls-token-secret-0123456789abcdef0123456789',
 };
 
 describe('validateAppEnv', () => {
@@ -81,39 +77,25 @@ describe('validateAppEnv', () => {
     expect(validateAppEnv({ NODE_ENV: 'development' }, 'development').success).toBe(true);
   });
 
-  it('requires MUX_TOKEN_ID in production', () => {
-    const result = validateAppEnv({ ...productionEnv, MUX_TOKEN_ID: '' }, 'production');
+  it('requires HLS_TOKEN_SECRET (our own HLS is the only video source) in production', () => {
+    const result = validateAppEnv({ ...productionEnv, HLS_TOKEN_SECRET: '' }, 'production');
 
     expect(result.success).toBe(false);
-    expect(result.errors).toContain('MUX_TOKEN_ID is required in production.');
+    expect(result.errors).toContain('HLS_TOKEN_SECRET is required in production.');
   });
 
-  it('requires MUX_TOKEN_SECRET in production', () => {
-    const result = validateAppEnv({ ...productionEnv, MUX_TOKEN_SECRET: '' }, 'production');
+  it('rejects a too short HLS_TOKEN_SECRET', () => {
+    const result = validateAppEnv({ ...productionEnv, HLS_TOKEN_SECRET: 'short' }, 'production');
 
     expect(result.success).toBe(false);
-    expect(result.errors).toContain('MUX_TOKEN_SECRET is required in production.');
+    expect(result.errors).toContain('HLS_TOKEN_SECRET must be at least 32 characters.');
   });
 
-  it('requires MUX_SIGNING_PRIVATE_KEY in production', () => {
-    const result = validateAppEnv({ ...productionEnv, MUX_SIGNING_PRIVATE_KEY: '' }, 'production');
-
-    expect(result.success).toBe(false);
-    expect(result.errors).toContain('MUX_SIGNING_PRIVATE_KEY is required in production.');
-  });
-
-  it('fails validation when MUX_SIGNING_PRIVATE_KEY is not a base64-encoded PEM key', () => {
-    const result = validateAppEnv({ ...productionEnv, MUX_SIGNING_PRIVATE_KEY: 'not-valid-base64-pem' }, 'production');
-
-    expect(result.success).toBe(false);
-    expect(result.errors.some((e) => e.includes('MUX_SIGNING_PRIVATE_KEY') && e.includes('base64'))).toBe(true);
-  });
-
-  it('passes validation when MUX_SIGNING_PRIVATE_KEY is a valid base64-encoded PEM key', () => {
+  it('no longer asks for any Mux or Cloudflare Stream variable', () => {
     const result = validateAppEnv(productionEnv, 'production');
 
     expect(result.success).toBe(true);
-    expect(result.errors.some((e) => e.includes('MUX_SIGNING_PRIVATE_KEY'))).toBe(false);
+    expect(result.errors.some((e) => /MUX|CLOUDFLARE_(ACCOUNT|API|WEBHOOK)/.test(e))).toBe(false);
   });
 
   it('warns but does not fail when MAIN_CREATOR_SLUG is missing outside production', () => {

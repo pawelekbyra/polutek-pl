@@ -4,22 +4,11 @@ import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
-import {
-  CloudflareApiError,
-  CloudflareConfigurationError,
-  VideoNotFoundError,
-  VideoNotOnMainChannelError,
-} from "../domain/video.errors";
+import { VideoNotFoundError, VideoNotOnMainChannelError } from "../domain/video.errors";
 import { VideoPolicy } from "../domain/video.policy";
 import { removePublicThumbnailCopy } from "./sync-public-thumbnail.service";
-import { VIDEO_PROVIDER } from "../domain/video-asset.constants";
-import { CloudflareStreamDeleteClient, DeleteCloudflareStreamAssetResult } from "../infrastructure/cloudflare-stream-delete.client";
 
-export type DeleteAdminVideoError =
-  | VideoNotFoundError
-  | VideoNotOnMainChannelError
-  | CloudflareApiError
-  | CloudflareConfigurationError;
+export type DeleteAdminVideoError = VideoNotFoundError | VideoNotOnMainChannelError;
 
 export async function deleteAdminVideo(
   videoId: string,
@@ -36,18 +25,6 @@ export async function deleteAdminVideo(
   }
 
   const asset = existing.asset;
-  let cloudflareDeletion: DeleteCloudflareStreamAssetResult | null = null;
-  const shouldDeleteCloudflareAsset =
-    asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM && Boolean(asset.providerAssetId);
-
-  if (shouldDeleteCloudflareAsset) {
-    try {
-      const client = new CloudflareStreamDeleteClient();
-      cloudflareDeletion = await client.deleteAsset(asset!.providerAssetId!);
-    } catch (error: unknown) {
-      return fail(error as DeleteAdminVideoError);
-    }
-  }
 
   const deleted = await ctx.db.writeTransaction(async (tx) => {
     const video = await tx.video.delete({
@@ -66,10 +43,6 @@ export async function deleteAdminVideo(
         title: existing.title,
         slug: existing.slug,
         provider: asset?.provider ?? null,
-        providerAssetId: asset?.providerAssetId ?? null,
-        cloudflareDeleted: Boolean(cloudflareDeletion && !cloudflareDeletion.alreadyDeleted),
-        cloudflareAlreadyDeleted: Boolean(cloudflareDeletion?.alreadyDeleted),
-        cloudflareDeletionRequired: shouldDeleteCloudflareAsset,
       },
     }, tx);
 

@@ -71,15 +71,15 @@ describe('Admin Video Details & Diagnostics', () => {
         }
       });
 
-    it('flags legacy storage source when no CF asset', async () => {
+    it('flags a leftover asset of a provider that is no longer supported', async () => {
       const video = {
         id: 'v1',
         title: 'Video',
         slug: 'slug',
         status: VideoStatus.PUBLISHED,
         tier: AccessTier.PUBLIC,
-        videoUrl: 'https://example.com/legacy.mp4',
-        asset: null
+        videoUrl: 'https://bucket.s3.amazonaws.com/raw.mp4',
+        asset: { provider: 'CLOUDFLARE_STREAM', processingState: 'READY', isPrimary: true }
       };
       mockPrisma.video.findUnique.mockResolvedValue(video);
       mockPrisma.video.count.mockResolvedValue(0);
@@ -89,11 +89,12 @@ describe('Admin Video Details & Diagnostics', () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data.some(i => i.message.includes('Wykryto stary link videoUrl (legacy)'))).toBe(true);
+        expect(result.data.some(i => i.message.includes('nie jest już obsługiwane') && i.message.includes('CLOUDFLARE_STREAM'))).toBe(true);
+        expect(result.data.some(i => i.code === 'VIDEO_PUBLICATION_MISSING_ACTIVE_ROUTE')).toBe(true);
       }
     });
 
-    it('flags insecure private source for patron video', async () => {
+    it('does not treat a legacy videoUrl as a source: no asset means no video', async () => {
       const video = {
         id: 'v1',
         title: 'Video',
@@ -111,12 +112,12 @@ describe('Admin Video Details & Diagnostics', () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data.some(i => i.message.includes('obsługa starych linków (legacy playback fallback) jest wyłączona'))).toBe(true);
-        expect(result.data.some(i => i.message.includes('bezpośredniego, potencjalnie niezabezpieczonego starego linku (legacy)'))).toBe(true);
+        expect(result.data.some(i => i.severity === 'ERROR' && i.message.includes('Brak wideo'))).toBe(true);
+        expect(result.data.some(i => i.message.includes('videoUrl'))).toBe(false);
       }
     });
 
-    it('flags patron Cloudflare asset that is not ready as unplayable until migration completes', async () => {
+    it('warns while the own-HLS asset is still encoding', async () => {
       const video = {
         id: 'v1',
         title: 'Video',
@@ -124,11 +125,7 @@ describe('Admin Video Details & Diagnostics', () => {
         status: VideoStatus.PUBLISHED,
         tier: AccessTier.PATRON,
         videoUrl: 'https://bucket.s3.amazonaws.com/raw.mp4',
-        asset: {
-          provider: 'CLOUDFLARE_STREAM',
-          processingState: 'PROCESSING',
-          isPrimary: true,
-        },
+        asset: { provider: 'SELF_HLS', processingState: 'PROCESSING', isPrimary: true, objectKey: 'videos/v1/v/v1' }
       };
       mockPrisma.video.findUnique.mockResolvedValue(video);
       mockPrisma.video.count.mockResolvedValue(0);
@@ -138,20 +135,19 @@ describe('Admin Video Details & Diagnostics', () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data.some(i => i.message.includes('Zasób Cloudflare jest w stanie: PROCESSING'))).toBe(true);
-        expect(result.data.some(i => i.message.includes('obsługa starych linków (legacy playback fallback) jest wyłączona'))).toBe(true);
+        expect(result.data.some(i => i.severity === 'WARNING' && i.message.includes('PROCESSING'))).toBe(true);
       }
     });
 
-    it('returns missing source error when neither asset nor url exists', async () => {
+    it('errors when the own-HLS encode failed', async () => {
       const video = {
         id: 'v1',
         title: 'Video',
         slug: 'slug',
-        status: VideoStatus.DRAFT,
+        status: VideoStatus.PUBLISHED,
         tier: AccessTier.PUBLIC,
-        videoUrl: '',
-        asset: null
+        videoUrl: 'https://bucket.s3.amazonaws.com/raw.mp4',
+        asset: { provider: 'SELF_HLS', processingState: 'FAILED', isPrimary: true, objectKey: 'videos/v1/v/v1' }
       };
       mockPrisma.video.findUnique.mockResolvedValue(video);
       mockPrisma.video.count.mockResolvedValue(0);
@@ -161,7 +157,29 @@ describe('Admin Video Details & Diagnostics', () => {
 
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data.some(i => i.message.includes('Brak źródła wideo'))).toBe(true);
+        expect(result.data.some(i => i.severity === 'ERROR' && i.message.includes('Kodowanie nie powiodło się'))).toBe(true);
+      }
+    });
+
+    it('has no source issue for a READY own-HLS asset', async () => {
+      const video = {
+        id: 'v1',
+        title: 'Video',
+        slug: 'slug',
+        status: VideoStatus.PUBLISHED,
+        tier: AccessTier.PUBLIC,
+        videoUrl: 'https://bucket.s3.amazonaws.com/raw.mp4',
+        asset: { provider: 'SELF_HLS', processingState: 'READY', isPrimary: true, objectKey: 'videos/v1/v/v1' }
+      };
+      mockPrisma.video.findUnique.mockResolvedValue(video);
+      mockPrisma.video.count.mockResolvedValue(0);
+
+      const ctx = createAppContext({ actor: { type: 'admin', userId: 'admin-1' }, prisma: mockPrisma });
+      const result = await getAdminVideoDiagnostics({ videoId: 'v1' }, ctx);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.some(i => i.field === 'asset')).toBe(false);
       }
     });
   });

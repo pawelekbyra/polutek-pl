@@ -79,12 +79,12 @@ describe('VideoRepository Predicates', () => {
 
       expect(mockDb.video.findMany).toHaveBeenCalledWith(expect.objectContaining({
         where: expect.objectContaining({
-          assets: { some: { isPrimary: true, provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.READY } }
+          assets: { some: { isPrimary: true, provider: VIDEO_PROVIDER.SELF_HLS, processingState: VIDEO_ASSET_PROCESSING_STATE.READY } }
         })
       }));
     });
 
-    it('should correctly filter by migrationStatus MIGRATION_REQUIRED', async () => {
+    it('should correctly filter by migrationStatus MIGRATION_REQUIRED (leftover asset of an unsupported provider)', async () => {
       mockDb.video.findMany = vi.fn().mockResolvedValue([]);
       mockDb.video.count = vi.fn().mockResolvedValue(0);
 
@@ -92,35 +92,33 @@ describe('VideoRepository Predicates', () => {
 
       expect(mockDb.video.findMany).toHaveBeenCalledWith(expect.objectContaining({
         where: expect.objectContaining({
-          OR: [
-            { assets: { some: { isPrimary: true, provider: { in: [VIDEO_PROVIDER.R2, VIDEO_PROVIDER.S3, VIDEO_PROVIDER.VERCEL_BLOB] } } } },
-            { AND: [ { assets: { none: {} } }, { videoUrl: { not: '' } } ] }
-          ]
+          assets: { some: { isPrimary: true, provider: { not: VIDEO_PROVIDER.SELF_HLS } } }
         })
       }));
     });
 
-    it('should combine migrationStatus MIGRATION_REQUIRED with a search query instead of dropping the migration filter', async () => {
+    it('should correctly filter by migrationStatus MISSING_SOURCE (no asset at all)', async () => {
+      mockDb.video.findMany = vi.fn().mockResolvedValue([]);
+      mockDb.video.count = vi.fn().mockResolvedValue(0);
+
+      await repository.findAdminList(mainChannelId, { migrationStatus: 'MISSING_SOURCE' });
+
+      expect(mockDb.video.findMany).toHaveBeenCalledWith(expect.objectContaining({
+        where: expect.objectContaining({ assets: { none: {} } })
+      }));
+    });
+
+    it('should combine a migrationStatus filter with a search query', async () => {
       mockDb.video.findMany = vi.fn().mockResolvedValue([]);
       mockDb.video.count = vi.fn().mockResolvedValue(0);
 
       await repository.findAdminList(mainChannelId, { migrationStatus: 'MIGRATION_REQUIRED', query: 'foo' });
 
       const { where } = mockDb.video.findMany.mock.calls[0][0];
-      expect(where.OR).toBeUndefined();
-      expect(where.AND).toEqual([
-        {
-          OR: [
-            { assets: { some: { isPrimary: true, provider: { in: [VIDEO_PROVIDER.R2, VIDEO_PROVIDER.S3, VIDEO_PROVIDER.VERCEL_BLOB] } } } },
-            { AND: [ { assets: { none: {} } }, { videoUrl: { not: '' } } ] }
-          ]
-        },
-        {
-          OR: [
-            { title: { contains: 'foo', mode: 'insensitive' } },
-            { slug: { contains: 'foo', mode: 'insensitive' } }
-          ]
-        }
+      expect(where.assets).toEqual({ some: { isPrimary: true, provider: { not: VIDEO_PROVIDER.SELF_HLS } } });
+      expect(where.OR).toEqual([
+        { title: { contains: 'foo', mode: 'insensitive' } },
+        { slug: { contains: 'foo', mode: 'insensitive' } }
       ]);
     });
   });
@@ -131,10 +129,10 @@ describe('VideoRepository asset foundation queries', () => {
     const asset = {
       id: 'asset-1',
       videoId: 'v1',
-      provider: 'CLOUDFLARE_STREAM',
-      objectKey: 'cloudflare-stream/cf-video-uid',
-      providerAssetId: 'cf-video-uid',
-      providerPlaybackId: 'cf-playback-uid',
+      provider: 'SELF_HLS',
+      objectKey: 'videos/v1/v/v1',
+      providerAssetId: null,
+      providerPlaybackId: null,
       processingState: 'READY',
       isPrimary: true,
       failureReason: null,
@@ -152,9 +150,8 @@ describe('VideoRepository asset foundation queries', () => {
       where: { id: 'v1' },
       include: { assets: true, activePlaybackRoute: { include: { asset: true } } },
     });
-    expect(result?.asset?.provider).toBe('CLOUDFLARE_STREAM');
-    expect(result?.asset?.providerAssetId).toBe('cf-video-uid');
-    expect(result?.asset?.providerPlaybackId).toBe('cf-playback-uid');
+    expect(result?.asset?.provider).toBe('SELF_HLS');
+    expect(result?.asset?.objectKey).toBe('videos/v1/v/v1');
     expect(result?.asset?.processingState).toBe('READY');
   });
 });
