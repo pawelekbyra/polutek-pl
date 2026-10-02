@@ -169,6 +169,9 @@ export function parseLoudnormJson(stderr) {
   const end = stderr.lastIndexOf('}');
   if (start < 0 || end < start) throw new Error('loudnorm did not print measurements');
   const raw = JSON.parse(stderr.slice(start, end + 1));
+  // Digital silence (e.g. a silent audio track) measures as "-inf" LUFS: there is nothing to
+  // normalise, so report "no measurement" instead of failing the whole encode.
+  if (/^\s*-inf/i.test(String(raw.input_i))) return null;
   const num = (k) => {
     const v = Number(raw[k]);
     if (!Number.isFinite(v)) throw new Error(`loudnorm measurement ${k} is not finite`);
@@ -385,7 +388,8 @@ export async function main(argv) {
     const t = Date.now();
     loudness = await measureLoudness(args.input, opts);
     timings.loudnessPassSeconds = (Date.now() - t) / 1000;
-    console.log(`loudness measured: ${loudness.input_i} LUFS, TP ${loudness.input_tp} dBTP -> ${opts.targetLufs} LUFS`);
+    if (loudness) console.log(`loudness measured: ${loudness.input_i} LUFS, TP ${loudness.input_tp} dBTP -> ${opts.targetLufs} LUFS`);
+    else console.log('audio is digital silence: loudness normalisation skipped, audio encoded as is');
   }
 
   const variants = [];
