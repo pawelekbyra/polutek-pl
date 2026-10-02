@@ -92,7 +92,11 @@ export const auth = betterAuth({
     : {},
 
   account: {
-    accountLinking: { enabled: true, trustedProviders: ["google"] },
+    // requireLocalEmailVerified: false lets Google claim an address that only has a never-verified
+    // password sign-up (otherwise Google sign-in fails for ever with "account not linked").
+    // That is safe because beforeAccountCreate drops the squatter's password and sessions on
+    // link; unverified rows are also pruned by /api/cron/prune-unverified-accounts.
+    accountLinking: { enabled: true, trustedProviders: ["google"], requireLocalEmailVerified: false },
   },
 
   session: {
