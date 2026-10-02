@@ -163,18 +163,46 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
 
 export function DangerSection({ isPl, onDeleted }: { isPl: boolean; onDeleted: () => void }) {
   const [confirm, setConfirm] = useState("");
+  const [password, setPassword] = useState("");
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+  const [needsGoogle, setNeedsGoogle] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const CONFIRM_WORD = isPl ? "USUŃ" : "DELETE";
+
+  useEffect(() => {
+    void authClient.listAccounts().then(({ data }) => {
+      setHasPassword(Boolean(data?.some((a: { providerId: string }) => a.providerId === "credential")));
+    });
+  }, []);
+
+  // Deleting is irreversible, so the server wants proof it is really the owner: the password, or (Google-only
+  // accounts) a sign-in from the last few minutes.
+  async function confirmWithGoogle() {
+    rememberReturnPath(window.location.pathname + window.location.search);
+    const { error: socialError } = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/sso-callback",
+      errorCallbackURL: "/sso-callback?error=1",
+    });
+    if (socialError) setError(authErrorMessage(socialError, isPl));
+  }
 
   async function del(e: React.FormEvent) {
     e.preventDefault();
     if (confirm !== CONFIRM_WORD) return;
     setLoading(true);
     setError(null);
-    const response = await fetch("/api/user/account", { method: "DELETE" }).catch(() => null);
+    setNeedsGoogle(false);
+    const response = await fetch("/api/user/account", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(hasPassword ? { password } : {}),
+    }).catch(() => null);
     if (!response?.ok) {
-      setError(authErrorMessage(null, isPl));
+      const body = (await response?.json().catch(() => null)) as { error?: string } | null;
+      if (body?.error === "REAUTH_REQUIRED") setNeedsGoogle(true);
+      setError(authErrorMessage({ code: body?.error, status: response?.status }, isPl));
       setLoading(false);
       return;
     }
@@ -192,10 +220,18 @@ export function DangerSection({ isPl, onDeleted }: { isPl: boolean; onDeleted: (
           ? "Usunięcie konta jest nieodwracalne. Wpisz USUŃ, aby potwierdzić."
           : "Deleting your account is permanent. Type DELETE to confirm."}
       </p>
+      {hasPassword && (
+        <Field label={isPl ? "Twoje hasło" : "Your password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" />
+      )}
       <Field label={`${isPl ? "Wpisz" : "Type"} ${CONFIRM_WORD}`} value={confirm} onChange={setConfirm} />
+      {needsGoogle && (
+        <button type="button" onClick={confirmWithGoogle} className="text-[12px] font-bold underline hover:text-[var(--chan-ink)]">
+          {isPl ? "Potwierdź przez Google" : "Confirm with Google"}
+        </button>
+      )}
       <button
         type="submit"
-        disabled={loading || confirm !== CONFIRM_WORD}
+        disabled={loading || confirm !== CONFIRM_WORD || hasPassword === null || (hasPassword && !password)}
         className="flex h-[44px] w-full items-center justify-center rounded-[12px] bg-red-600 font-brand text-[15px] font-bold text-white transition-all hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
       >
         {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span>{isPl ? "Usuń konto na zawsze" : "Delete account permanently"}</span>}

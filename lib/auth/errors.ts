@@ -34,6 +34,16 @@ const MESSAGES: Record<string, { pl: string; en: string }> = {
     pl: "Ze względów bezpieczeństwa zaloguj się ponownie, aby to zrobić.",
     en: "For security, sign in again to do this.",
   },
+  PASSWORD_REQUIRED: { pl: "Wpisz swoje hasło.", en: "Enter your password." },
+  REAUTH_REQUIRED: {
+    pl: "Ze względów bezpieczeństwa potwierdź się ponownie przez Google, a potem wróć tutaj.",
+    en: "For security, confirm with Google again, then come back here.",
+  },
+  LAST_ADMIN: {
+    pl: "Jesteś ostatnim administratorem. Najpierw nadaj te uprawnienia komuś innemu.",
+    en: "You are the last administrator. Give someone else admin rights first.",
+  },
+  ONBOARDING_DONE: { pl: "Ten krok jest już ukończony.", en: "This step is already done." },
   INVALID_CODE: { pl: "Nieprawidłowy kod.", en: "Invalid code." },
   INVALID_BACKUP_CODE: { pl: "Nieprawidłowy kod zapasowy.", en: "Invalid backup code." },
   MISSING_RESPONSE: { pl: "Potwierdź, że nie jesteś robotem.", en: "Please confirm you are not a robot." },
