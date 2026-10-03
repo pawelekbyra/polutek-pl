@@ -100,7 +100,7 @@ describe('Security Headers', () => {
 
   it('allows thumbnails from the public R2 host in img-src', () => {
     const directive = (name: string) => generateCSP().split('; ').find((part) => part.startsWith(`${name} `)) ?? '';
-    expect(directive('img-src')).toContain('https://thumbs.pawelperfect.pl');
+    expect(directive('img-src')).toContain('https://thumbs.pawelperfect.com');
   });
 
   it('allows the hosts Stripe.js needs (script, frames incl. 3-D Secure) and restricts form targets', () => {
