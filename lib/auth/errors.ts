@@ -49,6 +49,10 @@ const MESSAGES: Record<string, { pl: string; en: string }> = {
   MISSING_RESPONSE: { pl: "Potwierdź, że nie jesteś robotem.", en: "Please confirm you are not a robot." },
   VERIFICATION_FAILED: { pl: "Weryfikacja anty-botowa nie powiodła się. Spróbuj ponownie.", en: "The bot check failed. Please try again." },
   UNKNOWN_ERROR: { pl: "Weryfikacja anty-botowa nie powiodła się. Spróbuj ponownie.", en: "The bot check failed. Please try again." },
+  NETWORK_ERROR: {
+    pl: "Brak połączenia z serwerem. Sprawdź internet i spróbuj ponownie.",
+    en: "Can't reach the server. Check your connection and try again.",
+  },
   FAILED_TO_UNLINK_LAST_ACCOUNT: {
     pl: "Nie możesz odłączyć ostatniego sposobu logowania.",
     en: "You cannot unlink your last sign-in method.",

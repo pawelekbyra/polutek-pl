@@ -1,11 +1,16 @@
 import crypto from "crypto";
-import { APIError, createAuthMiddleware, getIP } from "better-auth/api";
+import { APIError, createAuthMiddleware, getIP, getSessionFromCtx } from "better-auth/api";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { DEFAULT_AVATAR_URL } from "@/lib/auth/avatar";
 import { validateNickname } from "@/lib/auth/nickname";
 import { recordAuthAudit } from "./audit";
+import { checkSensitiveReauth } from "./reauth";
 import {
+  CHANGE_EMAIL_LIMIT_PER_USER,
+  CHANGE_EMAIL_WINDOW_SECONDS,
+  MAIL_TO_ADDRESS_LIMIT,
+  MAIL_TO_ADDRESS_WINDOW_SECONDS,
   SIGN_IN_FAILURE_LIMIT_PER_EMAIL,
   SIGN_IN_FAILURE_LIMIT_PER_IP,
   SIGN_IN_FAILURE_WINDOW_SECONDS,
@@ -77,7 +82,7 @@ export async function flagNicknameOnboardingIfNeeded(userId: string) {
   let needsNickname = name.length === 0 || !validateNickname(name).ok;
   if (!needsNickname) {
     const olderOwner = await prisma.user.findFirst({
-      where: { isDeleted: false, id: { not: userId }, createdAt: { lte: user.createdAt }, name: { equals: name, mode: "insensitive" } },
+      where: { isDeleted: false, onboardingPending: false, id: { not: userId }, createdAt: { lte: user.createdAt }, name: { equals: name, mode: "insensitive" } },
       select: { id: true },
     });
     needsNickname = Boolean(olderOwner);
@@ -157,10 +162,78 @@ export async function recordSignInOutcome(email: string, returned: unknown, ctx:
   ]);
 }
 
+type ChangeEmailCtx = Parameters<typeof getSessionFromCtx>[0] & {
+  body?: unknown;
+  context: { password: { verify: (input: { hash: string; password: string }) => Promise<boolean> } };
+};
+
+/**
+ * `/change-email` needs more than a valid session (audit AUTH-02/SEC-04): the password (or, for a
+ * Google-only account, a sign-in from the last few minutes), at most CHANGE_EMAIL_LIMIT_PER_USER requests
+ * per user per hour (each one sends an e-mail, AUTH-03), and the change itself must be approved from
+ * the current address (`sendChangeEmailConfirmation` in auth.ts) before the new one is verified.
+ */
+export async function guardChangeEmail(ctx: ChangeEmailCtx) {
+  const session = await getSessionFromCtx(ctx);
+  if (!session) return; // the endpoint answers 401 itself
+  const userId = session.user.id;
+  const attempts = await hitAuthCounter(`change-email:${userId}`, CHANGE_EMAIL_WINDOW_SECONDS);
+  if (attempts > CHANGE_EMAIL_LIMIT_PER_USER) {
+    throw new APIError("TOO_MANY_REQUESTS", { message: "TOO_MANY_ATTEMPTS", code: "TOO_MANY_ATTEMPTS" });
+  }
+  const body = ctx.body as { password?: unknown } | undefined;
+  const result = await checkSensitiveReauth({
+    userId,
+    sessionId: session.session.id,
+    password: typeof body?.password === "string" ? body.password : null,
+    verifyPassword: (input) => ctx.context.password.verify(input),
+  });
+  if (result !== "ok") {
+    throw new APIError(result === "PASSWORD_REQUIRED" ? "UNAUTHORIZED" : "FORBIDDEN", { message: result, code: result });
+  }
+}
+
+/** Paths that send a mail to an address typed into a public form; also limited per target address (AUTH-30). */
+const MAIL_TO_ADDRESS_PATHS = new Set(["/request-password-reset", "/send-verification-email"]);
+
+function mailToAddressKey(email: string) {
+  return `mail-to:${hashKey(email)}`;
+}
+
+/** Throws 429 once an address got MAIL_TO_ADDRESS_LIMIT mails from these forms within the window. */
+export async function assertMailToAddressAllowed(email: string) {
+  if ((await peekAuthCounter(mailToAddressKey(email))) >= MAIL_TO_ADDRESS_LIMIT) {
+    throw new APIError("TOO_MANY_REQUESTS", { message: "TOO_MANY_ATTEMPTS", code: "TOO_MANY_ATTEMPTS" });
+  }
+}
+
+/**
+ * Counted in the AFTER hook, i.e. only for requests that passed Turnstile and the endpoint, so a bot
+ * without a solved check cannot burn the budget of somebody else's address.
+ */
+export async function countMailToAddress(email: string, returned: unknown) {
+  if (returned instanceof Error || (returned as { status?: unknown } | undefined)?.status === false) return;
+  await hitAuthCounter(mailToAddressKey(email), MAIL_TO_ADDRESS_WINDOW_SECONDS);
+}
+
+function bodyEmail(ctx: { body?: unknown }) {
+  const email = (ctx.body as { email?: unknown } | undefined)?.email;
+  return typeof email === "string" ? email : "";
+}
+
 export const authBeforeHook = createAuthMiddleware(async (ctx) => {
   // A password change always signs the other devices out, whatever the client asked for.
   if (ctx.path === "/change-password") {
     return { context: { ...ctx, body: { ...(ctx.body as object), revokeOtherSessions: true } } };
+  }
+  if (ctx.path === "/change-email") {
+    await guardChangeEmail(ctx as unknown as ChangeEmailCtx);
+    return;
+  }
+  if (MAIL_TO_ADDRESS_PATHS.has(ctx.path)) {
+    const email = bodyEmail(ctx);
+    if (email) await assertMailToAddressAllowed(email);
+    return;
   }
   // Lockout after repeated FAILED sign-ins (see config.ts): checked here, counted in the after hook.
   if (ctx.path === "/sign-in/email") {
@@ -199,6 +272,10 @@ export const authAfterHook = createAuthMiddleware(async (ctx) => {
   if (ctx.path === "/sign-in/email") {
     const body = ctx.body as { email?: unknown } | undefined;
     if (typeof body?.email === "string") await recordSignInOutcome(body.email, ctx.context.returned, ctx as SignInCtx);
+  }
+  if (MAIL_TO_ADDRESS_PATHS.has(ctx.path)) {
+    const email = bodyEmail(ctx);
+    if (email) await countMailToAddress(email, ctx.context.returned);
   }
   if (ctx.path === "/change-password") {
     const user = ctx.context.session?.user;
