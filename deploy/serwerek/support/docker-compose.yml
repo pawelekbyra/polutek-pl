@@ -1,4 +1,4 @@
-# PP Support (wspolna skrzynka obslugi) na serwerku. Zyje na serwerze w /opt/serwerek/apps/chatwoot/ (sciezka historyczna, NIE zmieniac: dane i sekrety).
+# PP Support (wspolna skrzynka obslugi) na serwerku. Zyje na serwerze w /opt/serwerek/apps/pp-support/ (dane: /opt/serwerek/data/pp-support/).
 # Uklad tam:  docker-compose.yml  .env (600, sekrety, NIE w repo)  overrides/ (nadpisania marki, ten katalog z repo)
 # Wszystko slucha tylko na 127.0.0.1; droga publiczna: Cloudflare Tunnel -> 127.0.0.1:3010 (za Access).
 # Runbook: docs/operations/SUPPORT-CENTER.md. Architektura: docs/architecture/support-center.md.
@@ -15,7 +15,7 @@ x-pp-support: &pp-support
     redis:
       condition: service_healthy
   volumes:
-    - /opt/serwerek/data/chatwoot/storage:/app/storage
+    - /opt/serwerek/data/pp-support/storage:/app/storage
     # Marka PP Support: pojedyncze pliki nadpisywane woluminami (read-only), zob. SUPPORT-CENTER.md "Marka".
     - ./overrides/config/schedule.yml:/app/config/schedule.yml:ro
     - ./overrides/config/locales/zz_pp_support.yml:/app/config/locales/zz_pp_support.yml:ro
@@ -42,8 +42,8 @@ x-pp-support: &pp-support
     DEFAULT_LOCALE: pl
     POSTGRES_HOST: db
     POSTGRES_PORT: "5432"
-    POSTGRES_DATABASE: chatwoot
-    POSTGRES_USERNAME: chatwoot
+    POSTGRES_DATABASE: pp_support
+    POSTGRES_USERNAME: pp_support
     REDIS_URL: redis://redis:6379
     ACTIVE_STORAGE_SERVICE: local
     # Pamiec: jeden proces puma, malo watkow; sidekiq z niska wspolbieznoscia.
@@ -68,20 +68,20 @@ x-pp-support: &pp-support
 
 services:
   db:
-    # pgvector jest wymagany przez migracje; produkcyjny Postgres strony go nie ma i go nie ruszamy. Nazwy bazy/roli "chatwoot" sa historyczne i NIE moga byc zmieniane (dane).
+    # pgvector jest wymagany przez migracje; produkcyjny Postgres strony go nie ma i go nie ruszamy. Baza i rola nazywaja sie pp_support (zmienione 2026-10-03, zob. SUPPORT-CENTER.md).
     image: pgvector/pgvector:0.8.7-pg17
     restart: unless-stopped
     environment:
-      POSTGRES_USER: chatwoot
-      POSTGRES_DB: chatwoot
+      POSTGRES_USER: pp_support
+      POSTGRES_DB: pp_support
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}      # z .env (compose czyta je automatycznie)
     command: ["postgres", "-c", "shared_buffers=64MB", "-c", "max_connections=40", "-c", "work_mem=4MB", "-c", "maintenance_work_mem=32MB"]
     volumes:
-      - /opt/serwerek/data/chatwoot/pg:/var/lib/postgresql/data
+      - /opt/serwerek/data/pp-support/pg:/var/lib/postgresql/data
     ports:
       - "127.0.0.1:5434:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U chatwoot -d chatwoot"]
+      test: ["CMD-SHELL", "pg_isready -U pp_support -d pp_support"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -93,7 +93,7 @@ services:
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes", "--maxmemory", "96mb", "--maxmemory-policy", "noeviction"]
     volumes:
-      - /opt/serwerek/data/chatwoot/redis:/data
+      - /opt/serwerek/data/pp-support/redis:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -125,6 +125,6 @@ services:
     <<: *pp-support
     profiles: ["tools"]
     entrypoint: docker/entrypoints/rails.sh
-    command: ["bundle", "exec", "rails", "db:chatwoot_prepare"]
+    command: ["bundle", "exec", "rails", "db:chatwoot_prepare"] # nazwa zadania jest czescia silnika, nie do zmiany
     restart: "no"
     mem_limit: 900m
