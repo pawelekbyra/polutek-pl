@@ -87,7 +87,8 @@ export default function AdminCommentsPage() {
         toast(`Zakończono: ${commentActionLabels[action]}.`, 'success');
         fetchComments(page);
       } else {
-        toast('Nie udało się wykonać akcji.', 'error');
+        const body = await res.json().catch(() => null) as { message?: string } | null;
+        toast(body?.message || 'Nie udało się wykonać akcji.', 'error');
       }
     } catch {
       toast('Błąd sieci podczas wykonywania akcji.', 'error');
@@ -261,7 +262,7 @@ export default function AdminCommentsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <SafeAvatar src={comment.author?.imageUrl} alt={comment.author?.displayName || ""} size={24} fallbackSeed={comment.author?.id} />
+                          <SafeAvatar src={comment.author?.imageUrl} alt={comment.author?.displayName || ""} size={24} />
                           <span className="text-xs font-medium">{comment.author?.displayName}</span>
                         </div>
                       </TableCell>
@@ -288,10 +289,13 @@ export default function AdminCommentsPage() {
                                 <Button onClick={() => handleAction(comment.id, 'hide')} variant="ghost" size="icon" className="h-8 w-8" title="Ukryj" disabled={isBulkPending}><EyeOff className="h-3.5 w-3.5" /></Button>
                               </>
                             )}
-                            {(comment.status === 'HIDDEN' || comment.status === 'DELETED') && (
+                            {/* Only what moderation hid can come back; a deleted comment is final. */}
+                            {comment.status === 'HIDDEN' && (
                               <Button onClick={() => handleAction(comment.id, 'restore')} variant="ghost" size="icon" className="h-8 w-8" title="Przywróć" aria-label="Przywróć komentarz" disabled={isBulkPending}><RotateCcw className="h-3.5 w-3.5" /></Button>
                             )}
-                            <Button onClick={() => handleAction(comment.id, 'delete')} variant="ghost" size="icon" className="h-8 w-8 text-red-600" title="Usuń" aria-label="Usuń komentarz" disabled={isBulkPending}><Trash2 className="h-3.5 w-3.5" /></Button>
+                            {comment.status !== 'DELETED' && (
+                              <Button onClick={() => handleAction(comment.id, 'delete')} variant="ghost" size="icon" className="h-8 w-8 text-red-600" title="Usuń" aria-label="Usuń komentarz" disabled={isBulkPending}><Trash2 className="h-3.5 w-3.5" /></Button>
+                            )}
                           </>
                         )}
                       </TableCell>

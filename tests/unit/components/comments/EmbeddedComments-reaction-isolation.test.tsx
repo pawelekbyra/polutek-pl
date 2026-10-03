@@ -40,7 +40,6 @@ function makeComment(id: string): CommentView {
     videoId: 'video-1',
     parentId: null,
     text: `Comment ${id}`,
-    imageUrl: null,
     status: 'VISIBLE',
     author: {
       id: `author-${id}`,
@@ -65,6 +64,7 @@ function makeComment(id: string): CommentView {
     viewerCanModerate: false,
     viewerCanPin: false,
     isPinned: false,
+    isHearted: false,
     repliesPreview: [],
   };
 }

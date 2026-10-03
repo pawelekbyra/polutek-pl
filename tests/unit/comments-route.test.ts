@@ -18,7 +18,8 @@ vi.mock('@/lib/api/auth', () => ({
   getActorFromAuth: vi.fn(),
 }));
 
-vi.mock('@/lib/modules/comments', () => ({
+vi.mock('@/lib/modules/comments', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/modules/comments')>()),
   createVideoComment: vi.fn(),
   listVideoComments: vi.fn(),
 }));
@@ -58,7 +59,6 @@ describe('/api/videos/[id]/comments POST', () => {
         videoId: 'video-id',
         text: 'Komentarz fana',
         parentId: undefined,
-        imageUrl: undefined
     }, expect.anything());
   });
 

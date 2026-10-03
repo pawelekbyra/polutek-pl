@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { DEFAULT_AVATAR_URL } from "@/lib/auth/avatar";
 
 interface SafeAvatarProps {
   src?: string | null;
   alt: string;
   size: number;
-  fallbackSeed?: string | null;
+  /** Shown when `src` is missing or fails to load; defaults to our own local default avatar. */
   fallbackSrc?: string;
   className?: string;
 }
@@ -17,8 +18,7 @@ export function SafeAvatar({
   src,
   alt,
   size,
-  fallbackSeed,
-  fallbackSrc,
+  fallbackSrc = DEFAULT_AVATAR_URL,
   className
 }: SafeAvatarProps) {
   const [error, setError] = useState(false);
@@ -28,10 +28,8 @@ export function SafeAvatar({
     setError(false);
   }, [src]);
 
-  const defaultFallback = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fallbackSeed || alt || "default")}`;
-  const finalFallback = fallbackSrc || defaultFallback;
-
   const showFallback = error || !src;
+  const imageSrc = showFallback ? fallbackSrc : src!;
 
   return (
     <div
@@ -42,14 +40,14 @@ export function SafeAvatar({
       style={{ width: size, height: size }}
     >
       <Image
-        src={showFallback ? finalFallback : src!}
+        src={imageSrc}
         alt={alt}
         fill
         sizes={`${size}px`}
         className="object-cover"
         onError={() => setError(true)}
         // Our own avatar route has a version query string and is already a tiny image.
-        unoptimized={(showFallback && finalFallback.includes("dicebear.com")) || (!showFallback && String(src).startsWith("/api/avatars/"))}
+        unoptimized={imageSrc.startsWith("/api/avatars/")}
       />
     </div>
   );

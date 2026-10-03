@@ -28,8 +28,8 @@ describe('comments access hardening', () => {
 
   it('useComments: optimistic UI uses isPatronDecorative badge truth', () => {
     const source = hook();
-    expect(source).toContain('if (userProfile?.isPatronDecorative) badges.push({ type: "PATRON", label: "Patron" });');
-    expect(source).not.toContain('if (userProfile?.isPatron) badges.push');
+    expect(source).toContain('badges: userProfile?.isPatronDecorative ? ["PATRON"] : []');
+    expect(source).not.toContain('userProfile?.isPatron ?');
   });
 
   it('ChannelHome: uses renamed isPatronDecorative', () => {
@@ -38,10 +38,10 @@ describe('comments access hardening', () => {
     expect(source).not.toContain('userProfile?.isPatron === true');
   });
 
-  it('Root Page: maps DB truth to isPatronDecorative', () => {
+  it('Root Page: maps DB truth to isPatronDecorative (supporters only; an admin is not a patron)', () => {
     const source = page();
-    expect(source).toContain('isPatronDecorative: userDb?.role === \'ADMIN\' || hasActivePatronGrant');
-    expect(source).not.toContain('isPatron: userDb?.role === \'ADMIN\' || hasActivePatronGrant');
+    expect(source).toContain('isPatronDecorative: hasActivePatronGrant');
+    expect(source).not.toContain("userDb?.role === 'ADMIN' || hasActivePatronGrant");
   });
 
   it('EmbeddedComments: does NOT use publicMetadata.isPatron for canComment', () => {

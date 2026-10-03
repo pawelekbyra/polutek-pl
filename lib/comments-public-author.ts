@@ -15,7 +15,7 @@ export const publicCommentAuthorSelect = Prisma.validator<Prisma.UserSelect>()({
   role: true,
 });
 
-type PublicCommentAuthor = Prisma.UserGetPayload<{ select: typeof publicCommentAuthorSelect }>;
+export type PublicCommentAuthor = Prisma.UserGetPayload<{ select: typeof publicCommentAuthorSelect }>;
 
 export function toPublicCommentAuthor(author?: PublicCommentAuthor | null, videoCreatorId?: string | null) {
   if (!author) return null;
@@ -44,7 +44,8 @@ export function toPublicCommentAuthor(author?: PublicCommentAuthor | null, video
   return {
     id: author.id,
     displayName,
-    username: author.username,
+    // Filtered value only: the raw column can hold a generated id (`user_…`, `deleted_…`).
+    username,
     imageUrl: author.imageUrl,
     badges,
   };

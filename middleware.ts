@@ -75,6 +75,7 @@ const isPublicRoute = createRouteMatcher([
   '/api/avatars/(.*)',
   // Only GET comments is public if product requires it
   '/api/comments',
+  '/api/comments/(.*)/replies',
 ]);
 
 const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);

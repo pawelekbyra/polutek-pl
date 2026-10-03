@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback } from "react";
-import { useInfiniteQuery, useMutation, useQueryClient, InfiniteData } from "@tanstack/react-query";
+import { useCallback, useRef } from "react";
+import { useInfiniteQuery, useMutation, useQueryClient, InfiniteData, QueryClient } from "@tanstack/react-query";
 import { parseJsonResponse } from "@/lib/client/api";
 import { CommentView } from "../types";
 
@@ -11,11 +11,32 @@ type CommentsPage = {
   totalCount: number;
 };
 
+type RepliesPage = {
+  replies: CommentView[];
+  nextCursor: string | null;
+};
+
 type CommentsData = InfiniteData<CommentsPage>;
+type RepliesData = InfiniteData<RepliesPage>;
 
 type PostCommentResponse = {
   success: true;
   comment: CommentView;
+};
+
+type ReactionResponse = {
+  viewerReaction?: CommentView["viewerReaction"];
+  likesCount?: number;
+};
+
+/** Page size of "show more replies". */
+export const REPLIES_PAGE_SIZE = 20;
+
+/** Cache keys. Replies have their own prefix: their pages have a different shape than the list. */
+export const commentKeys = {
+  list: (videoId: string) => ["comments", videoId] as const,
+  replies: (videoId: string, parentId?: string) =>
+    (parentId ? ["comment-replies", videoId, parentId] : ["comment-replies", videoId]) as readonly string[],
 };
 
 export class CommentPostError extends Error {
@@ -87,24 +108,20 @@ function createOptimisticComment({
   userProfile?: any;
 }): CommentView {
   const now = new Date().toISOString();
-  const badges = [];
-  if (userProfile?.role === "ADMIN") badges.push({ type: "ADMIN", label: "Admin" });
-  /** Decorative only - optimistic UI follows cached isPatronDecorative for immediate feedback. */
-  if (userProfile?.isPatronDecorative) badges.push({ type: "PATRON", label: "Patron" });
 
   return {
     id: `optimistic-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     videoId,
     parentId: parentId ?? null,
     text,
-    imageUrl: null,
     status: "VISIBLE",
     author: {
       id: userProfile?.id || "viewer",
       displayName: userProfile?.name || "Ty",
       username: userProfile?.username || null,
       imageUrl: userProfile?.imageUrl || null,
-      badges: badges as any[],
+      // Decorative until the server answers; the server decides the real badges.
+      badges: userProfile?.isPatronDecorative ? ["PATRON"] : [],
     },
     createdAt: now,
     updatedAt: now,
@@ -122,77 +139,141 @@ function createOptimisticComment({
     viewerCanModerate: false,
     viewerCanPin: false,
     isPinned: false,
+    isHearted: false,
     repliesPreview: [],
   };
 }
 
-function updateCommentReactionInCache(
-  queryClient: ReturnType<typeof useQueryClient>,
-  videoId: string,
-  commentId: string,
-  action: "LIKE" | "DISLIKE" | "CLEAR",
-) {
-  // We must target all variants of sortBy to prevent rollback when switching views
-  const queries = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] });
-
-  const updateComment = (c: CommentView): CommentView => {
-    if (c.id === commentId) {
-      const wasLiked = c.viewerReaction === "LIKE";
-      const likes = c.likesCount ?? 0;
-
-      if (action === "LIKE") {
-        return {
-          ...c,
-          viewerReaction: "LIKE",
-          likesCount: wasLiked ? likes : likes + 1,
-        };
-      }
-      // DISLIKE has no counter, but replaces a LIKE; CLEAR removes any reaction
-      return {
-        ...c,
-        viewerReaction: action === "DISLIKE" ? "DISLIKE" : null,
-        likesCount: wasLiked ? Math.max(0, likes - 1) : likes,
-      };
-    }
-    if (c.repliesPreview) return { ...c, repliesPreview: c.repliesPreview.map(updateComment) };
-    return c;
+/** Applies `update` to one comment (top-level or reply); returning null removes it. */
+function mapComment(comment: CommentView, update: (c: CommentView) => CommentView | null): CommentView | null {
+  const next = update(comment);
+  if (!next) return null;
+  if (!next.repliesPreview?.length) return next;
+  return {
+    ...next,
+    repliesPreview: next.repliesPreview
+      .map((reply) => mapComment(reply, update))
+      .filter((reply): reply is CommentView => reply !== null),
   };
-
-  for (const [queryKey] of queries) {
-    queryClient.setQueryData<CommentsData>(queryKey, (old) => {
-      if (!old) return old;
-      return {
-        ...old,
-        pages: old.pages.map((page) => ({
-          ...page,
-          comments: page.comments.map(updateComment),
-        })),
-      };
-    });
-  }
-
-  return queries;
 }
 
+/**
+ * Applies `update` to every cached copy of every comment of a video: all sort orders of the
+ * list and every loaded page of every thread's replies.
+ */
+function updateCachedComments(
+  queryClient: QueryClient,
+  videoId: string,
+  update: (c: CommentView) => CommentView | null,
+  updatePage?: (page: CommentsPage, index: number) => CommentsPage,
+) {
+  const apply = (list: CommentView[]) =>
+    list.map((c) => mapComment(c, update)).filter((c): c is CommentView => c !== null);
+
+  for (const [queryKey] of queryClient.getQueriesData<CommentsData>({ queryKey: commentKeys.list(videoId) })) {
+    queryClient.setQueryData<CommentsData>(queryKey, (old) =>
+      old && {
+        ...old,
+        pages: old.pages.map((page, index) => {
+          const updated = { ...page, comments: apply(page.comments) };
+          return updatePage ? updatePage(updated, index) : updated;
+        }),
+      },
+    );
+  }
+  for (const [queryKey] of queryClient.getQueriesData<RepliesData>({ queryKey: commentKeys.replies(videoId) })) {
+    queryClient.setQueryData<RepliesData>(queryKey, (old) =>
+      old && { ...old, pages: old.pages.map((page) => ({ ...page, replies: apply(page.replies) })) },
+    );
+  }
+}
+
+function findCachedComment(queryClient: QueryClient, videoId: string, commentId: string): CommentView | undefined {
+  const lists = queryClient
+    .getQueriesData<CommentsData>({ queryKey: commentKeys.list(videoId) })
+    .flatMap(([, data]) => data?.pages.flatMap((page) => page.comments) ?? []);
+  const replies = queryClient
+    .getQueriesData<RepliesData>({ queryKey: commentKeys.replies(videoId) })
+    .flatMap(([, data]) => data?.pages.flatMap((page) => page.replies) ?? []);
+  const all = [...lists, ...lists.flatMap((c) => c.repliesPreview ?? []), ...replies];
+  return all.find((c) => c?.id === commentId);
+}
+
+/** Stops in-flight refetches so they cannot overwrite an optimistic update. */
+async function cancelCommentQueries(queryClient: QueryClient, videoId: string) {
+  await Promise.all([
+    queryClient.cancelQueries({ queryKey: commentKeys.list(videoId) }),
+    queryClient.cancelQueries({ queryKey: commentKeys.replies(videoId) }),
+  ]);
+}
+
+function snapshotCaches(queryClient: QueryClient, videoId: string) {
+  return [
+    ...queryClient.getQueriesData({ queryKey: commentKeys.list(videoId) }),
+    ...queryClient.getQueriesData({ queryKey: commentKeys.replies(videoId) }),
+  ];
+}
+
+function restoreCaches(queryClient: QueryClient, snapshot: ReturnType<typeof snapshotCaches>) {
+  for (const [queryKey, data] of snapshot) queryClient.setQueryData(queryKey, data);
+}
+
+function applyReactionLocally(comment: CommentView, action: "LIKE" | "DISLIKE" | "CLEAR"): CommentView {
+  const wasLiked = comment.viewerReaction === "LIKE";
+  const likes = comment.likesCount ?? 0;
+  if (action === "LIKE") {
+    return { ...comment, viewerReaction: "LIKE", likesCount: wasLiked ? likes : likes + 1 };
+  }
+  // DISLIKE has no counter, but replaces a LIKE; CLEAR removes any reaction
+  return {
+    ...comment,
+    viewerReaction: action === "DISLIKE" ? "DISLIKE" : null,
+    likesCount: wasLiked ? Math.max(0, likes - 1) : likes,
+  };
+}
+
+/**
+ * Every reply of one thread, paged through `/api/comments/[id]/replies` (public: guests read
+ * replies too). Only runs once the viewer expands the thread.
+ */
+export function useCommentReplies(videoId: string, parentId: string, enabled: boolean) {
+  return useInfiniteQuery({
+    queryKey: commentKeys.replies(videoId, parentId),
+    queryFn: async ({ pageParam, signal }) => {
+      const params = new URLSearchParams({ limit: String(REPLIES_PAGE_SIZE) });
+      if (pageParam) params.set("cursor", pageParam);
+      const res = await fetch(`/api/comments/${encodeURIComponent(parentId)}/replies?${params}`, { signal });
+      return parseJsonResponse<RepliesPage>(res);
+    },
+    initialPageParam: "",
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    enabled,
+  });
+}
 
 export function useComments(videoId: string, sortBy: "newest" | "top", language: string = "pl", userProfile?: any) {
   const queryClient = useQueryClient();
 
   const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage, isError, error, refetch } =
     useInfiniteQuery({
-      queryKey: ["comments", videoId, sortBy],
-      queryFn: async ({ pageParam }) => {
+      queryKey: [...commentKeys.list(videoId), sortBy],
+      queryFn: async ({ pageParam, signal }) => {
         const url = new URL('/api/comments', window.location.origin);
         url.searchParams.set('videoId', videoId);
         url.searchParams.set('sortBy', sortBy);
         if (pageParam) url.searchParams.set('cursor', String(pageParam));
-        const res = await fetch(url.toString());
+        const res = await fetch(url.toString(), { signal });
         return parseJsonResponse<CommentsPage & { viewer: any; totalCount: number }>(res);
       },
       initialPageParam: "",
       getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
       enabled: !!videoId,
     });
+
+  const invalidateAll = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: commentKeys.list(videoId) });
+    void queryClient.invalidateQueries({ queryKey: commentKeys.replies(videoId) });
+  }, [queryClient, videoId]);
 
   const postMutation = useMutation({
     mutationFn: async ({
@@ -213,140 +294,87 @@ export function useComments(videoId: string, sortBy: "newest" | "top", language:
       return parseCommentPostResponse(res, language);
     },
     onMutate: async ({ text, parentId }) => {
-      await queryClient.cancelQueries({ queryKey: ["comments", videoId] });
-      const queries = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] });
+      await cancelCommentQueries(queryClient, videoId);
+      const previousData = snapshotCaches(queryClient, videoId);
       const optimisticComment = createOptimisticComment({ videoId, text, parentId, userProfile });
 
-      for (const [queryKey] of queries) {
-        queryClient.setQueryData<CommentsData>(queryKey, (old) => {
-          if (!old) return old;
-
-          const pages = [...old.pages];
-          if (pages[0]) {
-             pages[0] = {
-               ...pages[0],
-               totalCount: pages[0].totalCount + 1
-             };
-          }
-
-          if (parentId) {
-            const updatedPages = pages.map(page => ({
-              ...page,
-              comments: page.comments.map(c => {
-                if (c.id === parentId) {
-                  return {
-                    ...c,
-                    repliesCount: (c.repliesCount ?? 0) + 1,
-                    repliesPreview: [...(c.repliesPreview ?? []), optimisticComment],
-                  };
-                }
-                // Check if the parent is in repliesPreview (though we only support 1 level deep in UI usually)
-                if (c.repliesPreview?.some(r => r.id === parentId)) {
-                  return {
-                    ...c,
-                    repliesPreview: c.repliesPreview.map(r => {
-                      if (r.id === parentId) {
-                        return {
-                          ...r,
-                          repliesCount: (r.repliesCount ?? 0) + 1,
-                          repliesPreview: [...(r.repliesPreview ?? []), optimisticComment],
-                        };
-                      }
-                      return r;
-                    })
-                  };
-                }
-                return c;
-              })
-            }));
-            return { ...old, pages: updatedPages };
-          }
-
-          if (String(queryKey[2]) === "newest" && pages[0]) {
-            pages[0] = {
-              ...pages[0],
-              comments: [optimisticComment, ...pages[0].comments],
-            };
-          }
-
-          return { ...old, pages };
-        });
+      if (parentId) {
+        // The header counts top-level comments only (like the server), so a reply leaves it as is.
+        updateCachedComments(queryClient, videoId, (c) =>
+          c.id === parentId
+            ? { ...c, repliesCount: (c.repliesCount ?? 0) + 1, repliesPreview: [...(c.repliesPreview ?? []), optimisticComment] }
+            : c,
+        );
+      } else {
+        for (const [queryKey] of queryClient.getQueriesData<CommentsData>({ queryKey: commentKeys.list(videoId) })) {
+          queryClient.setQueryData<CommentsData>(queryKey, (old) => {
+            if (!old?.pages[0]) return old;
+            const first = old.pages[0];
+            const comments = String(queryKey[2]) === "newest" ? [optimisticComment, ...first.comments] : first.comments;
+            return { ...old, pages: [{ ...first, totalCount: first.totalCount + 1, comments }, ...old.pages.slice(1)] };
+          });
+        }
       }
 
-      return { previousData: queries, optimisticId: optimisticComment.id };
+      return { previousData, optimisticId: optimisticComment.id };
     },
     onSuccess: (data, _variables, context) => {
       if (!context?.optimisticId || !data?.comment) return;
-      const queries = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] });
-      const replace = (comment: CommentView): CommentView => {
-        if (comment.id === context.optimisticId) return data.comment;
-        return {
-          ...comment,
-          repliesPreview: comment.repliesPreview?.map(replace) ?? [],
-        };
-      };
-
-      for (const [queryKey] of queries) {
-        queryClient.setQueryData<CommentsData>(queryKey, (old) => old && {
-          ...old,
-          pages: old.pages.map(page => ({
-            ...page,
-            comments: page.comments.map(replace),
-          })),
-        });
-      }
+      updateCachedComments(queryClient, videoId, (c) => (c.id === context.optimisticId ? data.comment : c));
     },
-    onError: (err, variables, context) => {
-      if (context?.previousData) {
-        for (const [queryKey, data] of context.previousData) {
-          queryClient.setQueryData(queryKey, data);
-        }
-      }
+    onError: (_err, _variables, context) => {
+      if (context?.previousData) restoreCaches(queryClient, context.previousData);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments", videoId], refetchType: "inactive" });
+      queryClient.invalidateQueries({ queryKey: commentKeys.list(videoId), refetchType: "inactive" });
     },
   });
-
-  const findCachedComment = useCallback((commentId: string): CommentView | undefined => {
-    const allComments = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] })
-      .flatMap(q => q[1]?.pages.flatMap(p => p.comments) || []);
-    return allComments.find(c => c?.id === commentId) ||
-      allComments.flatMap(c => c?.repliesPreview || []).find(r => r?.id === commentId);
-  }, [queryClient, videoId]);
 
   // Toggle semantics: clicking the active reaction clears it, otherwise the
   // new reaction replaces the previous one (LIKE ⇄ DISLIKE are exclusive).
   const getCommentReactionAction = useCallback((commentId: string, reaction: "LIKE" | "DISLIKE"): "LIKE" | "DISLIKE" | "CLEAR" => {
-    return findCachedComment(commentId)?.viewerReaction === reaction ? "CLEAR" : reaction;
-  }, [findCachedComment]);
+    return findCachedComment(queryClient, videoId, commentId)?.viewerReaction === reaction ? "CLEAR" : reaction;
+  }, [queryClient, videoId]);
+
+  // Requests for the same comment run one after another, so the server always ends with the
+  // state of the last click (the API sets a target state, it does not toggle).
+  const reactionChains = useRef(new Map<string, Promise<unknown>>());
 
   const likeMutation = useMutation({
     mutationKey: ["comment-reaction", videoId],
     mutationFn: async ({ commentId, action }: { commentId: string; action: "LIKE" | "DISLIKE" | "CLEAR" }) => {
-      const res = await fetch(`/api/comments/${commentId}/reaction`, {
-        method: action === "CLEAR" ? "DELETE" : "PUT",
-        headers: { "Content-Type": "application/json" },
-        ...(action === "CLEAR" ? {} : { body: JSON.stringify({ type: action }) }),
+      const previous = reactionChains.current.get(commentId) ?? Promise.resolve();
+      const request = previous.catch(() => undefined).then(async () => {
+        const res = await fetch(`/api/comments/${commentId}/reaction`, {
+          method: action === "CLEAR" ? "DELETE" : "PUT",
+          headers: { "Content-Type": "application/json" },
+          ...(action === "CLEAR" ? {} : { body: JSON.stringify({ type: action }) }),
+        });
+        return parseJsonResponse<ReactionResponse>(res);
       });
-      return parseJsonResponse(res);
+      reactionChains.current.set(commentId, request);
+      try {
+        return await request;
+      } finally {
+        if (reactionChains.current.get(commentId) === request) reactionChains.current.delete(commentId);
+      }
     },
     onMutate: async ({ commentId, action }) => {
-      await queryClient.cancelQueries({ queryKey: ["comments", videoId] });
-      const previousData = updateCommentReactionInCache(queryClient, videoId, commentId, action);
-      return { previousData };
+      await cancelCommentQueries(queryClient, videoId);
+      updateCachedComments(queryClient, videoId, (c) => (c.id === commentId ? applyReactionLocally(c, action) : c));
     },
-    onError: (err, variables, context) => {
-      if (context?.previousData) {
-        for (const [queryKey, data] of context.previousData) {
-          queryClient.setQueryData(queryKey, data);
-        }
-      }
+    onSuccess: (response, { commentId }) => {
+      // The answer is authoritative for this comment: write it into the cache instead of
+      // refetching every loaded page.
+      if (typeof response?.likesCount !== "number" || response.viewerReaction === undefined) return;
+      if (reactionChains.current.has(commentId)) return; // a newer click is still on its way
+      updateCachedComments(queryClient, videoId, (c) =>
+        c.id === commentId ? { ...c, likesCount: response.likesCount!, viewerReaction: response.viewerReaction ?? null } : c,
+      );
     },
-    onSettled: () => {
-      if (queryClient.isMutating({ mutationKey: ["comment-reaction", videoId] }) === 1) {
-        queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
-      }
+    onError: () => {
+      // Concurrent optimistic updates make a snapshot rollback unsafe; ask the server instead.
+      invalidateAll();
     },
   });
 
@@ -381,44 +409,22 @@ export function useComments(videoId: string, sortBy: "newest" | "top", language:
       return parseJsonResponse(res);
     },
     onMutate: async ({ commentId, pinned }) => {
-      await queryClient.cancelQueries({ queryKey: ["comments", videoId] });
-      const queryKey = ["comments", videoId, sortBy];
-      const previousData = queryClient.getQueryData(queryKey);
-
-      queryClient.setQueryData<CommentsData>(queryKey, (old) => {
-        if (!old) return old;
-
-        return {
-          ...old,
-          pages: old.pages.map((page) => ({
-            ...page,
-            comments: page.comments.map((comment) => ({
-              ...comment,
-              isPinned: pinned
-                ? comment.id === commentId
-                : comment.id === commentId
-                  ? false
-                  : comment.isPinned,
-              pinnedAt:
-                pinned && comment.id === commentId
-                  ? new Date().toISOString()
-                  : comment.id === commentId
-                    ? null
-                    : comment.pinnedAt,
-            })),
-          })),
-        };
+      await cancelCommentQueries(queryClient, videoId);
+      const previousData = snapshotCaches(queryClient, videoId);
+      const pinnedAt = new Date().toISOString();
+      // One pinned comment per video (the server unpins the previous one).
+      updateCachedComments(queryClient, videoId, (c) => {
+        if (c.parentId) return c;
+        if (c.id === commentId) return { ...c, isPinned: pinned, pinnedAt: pinned ? pinnedAt : null };
+        return pinned && c.isPinned ? { ...c, isPinned: false, pinnedAt: null } : c;
       });
-
-      return { previousData, queryKey };
+      return { previousData };
     },
-    onError: (err, variables, context) => {
-      if (context?.previousData) {
-        queryClient.setQueryData(context.queryKey, context.previousData);
-      }
+    onError: (_err, _variables, context) => {
+      if (context?.previousData) restoreCaches(queryClient, context.previousData);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
+      queryClient.invalidateQueries({ queryKey: commentKeys.list(videoId) });
     },
   });
 
@@ -430,64 +436,30 @@ export function useComments(videoId: string, sortBy: "newest" | "top", language:
       return parseJsonResponse(res);
     },
     onMutate: async (commentId) => {
-      await queryClient.cancelQueries({ queryKey: ["comments", videoId] });
+      await cancelCommentQueries(queryClient, videoId);
+      const previousData = snapshotCaches(queryClient, videoId);
+      const target = findCachedComment(queryClient, videoId, commentId);
+      const isTopLevel = !target?.parentId;
 
-      const queries = queryClient.getQueriesData<CommentsData>({ queryKey: ["comments", videoId] });
+      updateCachedComments(
+        queryClient,
+        videoId,
+        (c) => {
+          if (c.id === commentId) return null;
+          if (target?.parentId && c.id === target.parentId) return { ...c, repliesCount: Math.max(0, (c.repliesCount ?? 0) - 1) };
+          return c;
+        },
+        // The header counts top-level comments only.
+        (page, index) => (index === 0 && isTopLevel && target ? { ...page, totalCount: Math.max(0, page.totalCount - 1) } : page),
+      );
 
-      const removeComment = (c: CommentView, parent?: CommentView): CommentView | null => {
-        if (c.id === commentId) {
-          return null;
-        }
-
-        const next = { ...c };
-        if (next.repliesPreview) {
-          const originalCount = next.repliesPreview.length;
-          next.repliesPreview = next.repliesPreview
-            .map(r => removeComment(r, next))
-            .filter((r): r is CommentView => r !== null);
-
-          if (next.repliesPreview.length < originalCount) {
-             next.repliesCount = Math.max(0, (next.repliesCount ?? 0) - (originalCount - next.repliesPreview.length));
-          }
-        }
-        return next;
-      };
-
-      for (const [queryKey] of queries) {
-        queryClient.setQueryData<CommentsData>(queryKey, (old) => {
-          if (!old) return old;
-
-          const pages = [...old.pages];
-          if (pages[0]) {
-             pages[0] = {
-               ...pages[0],
-               totalCount: Math.max(0, pages[0].totalCount - 1)
-             };
-          }
-
-          return {
-            ...old,
-            pages: pages.map((page) => ({
-              ...page,
-              comments: page.comments
-                .map(c => removeComment(c))
-                .filter((c): c is CommentView => c !== null),
-            })),
-          };
-        });
-      }
-
-      return { previousData: queries };
+      return { previousData };
     },
-    onError: (err, commentId, context) => {
-      if (context?.previousData) {
-        for (const [queryKey, data] of context.previousData) {
-          queryClient.setQueryData(queryKey, data);
-        }
-      }
+    onError: (_err, _commentId, context) => {
+      if (context?.previousData) restoreCaches(queryClient, context.previousData);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
+      invalidateAll();
     },
   });
 
@@ -498,10 +470,14 @@ export function useComments(videoId: string, sortBy: "newest" | "top", language:
         body: JSON.stringify({ text }),
         headers: { "Content-Type": "application/json" },
       });
-      return parseJsonResponse(res);
+      return parseJsonResponse<{ comment?: CommentView }>(res);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["comments", videoId] });
+    onSuccess: (response, { commentId }) => {
+      const updated = response?.comment;
+      if (!updated) return invalidateAll();
+      updateCachedComments(queryClient, videoId, (c) =>
+        c.id === commentId ? { ...c, text: updated.text, editedAt: updated.editedAt, updatedAt: updated.updatedAt } : c,
+      );
     },
   });
 

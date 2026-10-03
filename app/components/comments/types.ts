@@ -1,53 +1,17 @@
-"use client";
+import type { CommentAuthorDto, CommentDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 
-export type CommentAuthorDto = {
-  id: string;
-  displayName: string;
-  username: string | null;
-  imageUrl: string | null;
-  badges: Array<"ADMIN" | "PATRON" | "AUTHOR">;
-};
+/** A comment as the API returns it (the single DTO definition lives in comment-frontend.dto.ts). */
+export type CommentView = CommentDto;
 
-export type CommentView = {
-  id: string;
-  videoId: string;
-  parentId: string | null;
-  text: string | null;
-  imageUrl: string | null;
-  status: "VISIBLE" | "HELD_FOR_REVIEW" | "HIDDEN" | "DELETED";
-  author: CommentAuthorDto | null;
-  createdAt: string;
-  updatedAt: string;
-  editedAt: string | null;
-  deletedAt: string | null;
-  deletedReason: string | null;
-  pinnedAt: string | null;
-  likesCount: number;
-  repliesCount: number;
-  reportsCount?: number;
-  viewerReaction: "LIKE" | "DISLIKE" | null;
-  viewerCanEdit: boolean;
-  viewerCanDelete: boolean;
-  viewerCanReport: boolean;
-  viewerCanModerate: boolean;
-  viewerCanPin: boolean;
-  isPinned: boolean;
-  isHearted?: boolean;
-  repliesPreview: CommentView[];
-};
+export type CommentBadgeKind = "AUTHOR" | "PATRON";
 
-export function getAvatarSeed(comment: CommentView) {
-  return (
-    comment.author?.displayName ||
-    comment.author?.username ||
-    comment.author?.id ||
-    comment.id
-  );
-}
-
-export function isPatronAuthor(author?: CommentAuthorDto | null) {
-  return (
-    !!author &&
-    author.badges.some(b => b === "ADMIN" || b === "PATRON")
-  );
+/**
+ * The badge shown next to an author's name: "AUTHOR" for the video's creator, otherwise "PATRON"
+ * for supporters. Being an admin is a role, not a badge, so it never shows as "PATRON".
+ */
+export function getAuthorBadge(author?: CommentAuthorDto | null): CommentBadgeKind | null {
+  if (!author) return null;
+  if (author.badges.includes("AUTHOR")) return "AUTHOR";
+  if (author.badges.includes("PATRON")) return "PATRON";
+  return null;
 }

@@ -41,17 +41,6 @@ describe('comments UI production contract', () => {
     expect(source).toContain('errorMessage={composerError}');
   });
 
-  it('optimistically inserts top-level newest comments and reply previews with exact rollback data', () => {
-    const source = hook();
-
-    expect(source).toContain('createOptimisticComment');
-    expect(source).toContain('String(queryKey[2]) === "newest"');
-    expect(source).toContain('comments: [optimisticComment, ...pages[0].comments]');
-    expect(source).toContain('repliesPreview: [...(c.repliesPreview ?? []), optimisticComment]');
-    expect(source).toContain('return { previousData: queries, optimisticId: optimisticComment.id };');
-    expect(source).toContain('queryClient.setQueryData(queryKey, data);');
-  });
-
   it('posts the supported text contract and does not expose image attachment UI', () => {
     const composerSource = composer();
     const hookSource = hook();

@@ -1,5 +1,21 @@
+import { CommentStatus } from "@prisma/client";
 import { Actor } from "@/lib/modules/shared/actor";
 import { AccessDecisionDto } from "@/lib/modules/access";
+
+export type ModerationAction = "hide" | "hold" | "approve" | "restore" | "delete";
+
+/**
+ * The moderation state machine, in one place: the statuses each action may start from.
+ * DELETED is final. "restore" brings back only what moderation hid or held; a comment its
+ * author deleted (or a moderator deleted) never comes back.
+ */
+const MODERATION_TRANSITIONS: Record<ModerationAction, readonly CommentStatus[]> = {
+  hide: [CommentStatus.VISIBLE, CommentStatus.HELD_FOR_REVIEW],
+  hold: [CommentStatus.VISIBLE],
+  approve: [CommentStatus.HELD_FOR_REVIEW],
+  restore: [CommentStatus.HIDDEN, CommentStatus.HELD_FOR_REVIEW],
+  delete: [CommentStatus.VISIBLE, CommentStatus.HELD_FOR_REVIEW, CommentStatus.HIDDEN],
+};
 
 export class CommentPolicy {
   /**
@@ -9,9 +25,6 @@ export class CommentPolicy {
   static canInteractWithVideo(actor: Actor, videoAccess: AccessDecisionDto): boolean {
     if (actor.type === 'system') return true;
     if (actor.type === 'guest') return false;
-
-    // Admin bypass is usually handled within checkVideoAccess (returning hasAccess: true)
-    // but we can be explicit here if needed.
     return videoAccess.hasAccess;
   }
 
@@ -33,10 +46,10 @@ export class CommentPolicy {
     return videoAccess.hasAccess;
   }
 
+  /** Only the author edits a comment. Moderators hide or delete; they never rewrite someone's words. */
   static canUpdateComment(actor: Actor, commentAuthorId: string): boolean {
-    if (actor.type === 'admin') return true;
-    if (actor.type === 'user') {
-        return actor.userId === commentAuthorId;
+    if (actor.type === 'user' || actor.type === 'admin') {
+      return actor.userId === commentAuthorId;
     }
     return false;
   }
@@ -53,5 +66,14 @@ export class CommentPolicy {
   static canModerateComment(actor: Actor, isModeratorOfVideo: boolean): boolean {
     if (actor.type === 'admin') return true;
     return isModeratorOfVideo;
+  }
+
+  /** Statuses a moderation action may start from. */
+  static moderationSources(action: ModerationAction): readonly CommentStatus[] {
+    return MODERATION_TRANSITIONS[action];
+  }
+
+  static canTransition(action: ModerationAction, from: CommentStatus): boolean {
+    return MODERATION_TRANSITIONS[action].includes(from);
   }
 }

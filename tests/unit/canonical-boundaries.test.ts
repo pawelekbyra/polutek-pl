@@ -97,7 +97,9 @@ describe("Canonical Boundaries Verification", () => {
 
         expect(CommentPolicy.canModerateComment(adminActor, false)).toBe(true);
         expect(CommentPolicy.canDeleteComment(adminActor, "other_author", false)).toBe(true);
-        expect(CommentPolicy.canUpdateComment(adminActor, "other_author")).toBe(true);
+        // Moderators hide or delete; they never rewrite someone else's words.
+        expect(CommentPolicy.canUpdateComment(adminActor, "other_author")).toBe(false);
+        expect(CommentPolicy.canUpdateComment(adminActor, "admin_1")).toBe(true);
     });
   });
 });

@@ -5,6 +5,7 @@ import { createAppContext } from "@/lib/modules/shared/app-context";
 import { reportComment } from "@/lib/modules/comments";
 import { rateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
+import { commentErrorResponse } from "@/lib/api/comment-response";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ comm
       );
     }
 
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
     const resultJson = reportSchema.safeParse(body);
     if (!resultJson.success) {
       return NextResponse.json(
@@ -56,18 +57,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ comm
       ctx,
     );
 
-    if (!result.ok) {
-      const status =
-        result.error.type === "UNAUTHORIZED"
-          ? 401
-          : result.error.type === "FORBIDDEN"
-            ? 403
-            : 400;
-      return NextResponse.json(
-        { success: false, message: result.error.message },
-        { status },
-      );
-    }
+    if (!result.ok) return commentErrorResponse(result.error);
 
     return NextResponse.json({
       success: true,

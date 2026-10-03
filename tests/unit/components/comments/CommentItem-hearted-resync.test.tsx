@@ -16,7 +16,6 @@ function makeComment(overrides: Partial<CommentView> = {}): CommentView {
     videoId: 'video-1',
     parentId: null,
     text: 'Hello world',
-    imageUrl: null,
     status: 'VISIBLE',
     author: {
       id: 'author-1',

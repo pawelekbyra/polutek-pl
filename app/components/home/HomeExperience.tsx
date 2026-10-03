@@ -142,7 +142,8 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
     // Use normalized totals from UserPaymentTotal if userDb is present
     totalPaid: (userDb && 'paymentTotals' in userDb) ? normalizePaymentTotals(userDb.paymentTotals) : 0,
     /** Decorative/display only. Authority for access-control is PatronGrant. */
-    isPatronDecorative: userDb?.role === 'ADMIN' || hasActivePatronGrant,
+    // Supporters only; being an admin is a role, not a patron badge.
+    isPatronDecorative: hasActivePatronGrant,
     role: userDb?.role || 'USER',
     initialInteraction,
     initialIsSubscribed

@@ -18,12 +18,13 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AccessTierDto, CommentReportReasonDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
+import type { CommentReportReasonDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { CommentComposer } from "./components/CommentComposer";
 import { CommentItem } from "./components/CommentItem";
 import { AnimatePresence } from "framer-motion";
 import { CommentMotionItem, AnimatedCount } from "./components/comment-motion";
 import { useComments } from "./hooks/useComments";
+import { CommentThread } from "./components/CommentThread";
 import { useClientReady } from "@/app/hooks/useClientEnvironment";
 import { CommentLoadingSkeleton } from "@/components/skeletons";
 import { usePageRevealReady } from "../preload/PageRevealGate";
@@ -34,12 +35,10 @@ interface EmbeddedCommentsProps {
     imageUrl?: string | null;
     name?: string | null;
     username?: string | null;
-    totalPaid?: number;
     isPatronDecorative?: boolean;
     role?: string;
   } | null;
   videoId: string;
-  videoTier?: AccessTierDto;
 }
 
 /**
@@ -72,7 +71,6 @@ const CommentsLoadingState = ({ language }: { language: "pl" | "en" }) => (
 const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   userProfile: propUserProfile,
   videoId,
-  videoTier = "PUBLIC",
 }) => {
   const { t, language } = useLanguage();
   const { isSignedIn, userId } = useAuth();
@@ -88,7 +86,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             null,
           username: user?.username || null,
           // Decorative fields only; the server decides roles and badges for rendered comments.
-          totalPaid: 0,
           isPatronDecorative: false,
           role: "USER",
         }
@@ -113,15 +110,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   ]);
 
   /** Decorative only. Authoritative permission comes from `viewer.canComment`. */
-  const isPatronDecorative =
-    userProfile?.role === "ADMIN" || userProfile?.isPatronDecorative === true;
-  const userAvatarSeed = userProfile
-    ? userProfile.username || userProfile.name || userProfile.id
-    : null;
-  const userAvatarUrl = userProfile
-    ? userProfile.imageUrl ||
-      `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(String(userAvatarSeed || userProfile.id))}`
-    : null;
+  const isPatronDecorative = userProfile?.isPatronDecorative === true;
+  // SafeAvatar falls back to our own local default avatar.
+  const userAvatarUrl = userProfile?.imageUrl || null;
 
   const [sortBy, setSortBy] = useState<"newest" | "top">("newest");
   const [newComment, setNewComment] = useState("");
@@ -130,6 +121,17 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const isClient = useClientReady();
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   const [composerError, setComposerError] = useState<string | null>(null);
+
+  // A reply target, draft or error belongs to one video: drop them when the video changes
+  // (adjusting state during render, so the old reply target is never sent to the new video).
+  const [stateVideoId, setStateVideoId] = useState(videoId);
+  if (stateVideoId !== videoId) {
+    setStateVideoId(videoId);
+    setReplyTo(null);
+    setNewComment("");
+    setComposerError(null);
+    setIsInputFocused(false);
+  }
 
   const commentsTopRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -177,9 +179,11 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollToTop = useCallback(() => {
-    const shouldReduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.scrollTo({ top: 0, behavior: shouldReduceMotion ? "auto" : "smooth" });
+  const scrollBehavior = (): ScrollBehavior =>
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+
+  const scrollToCommentsTop = useCallback(() => {
+    commentsTopRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
   }, []);
 
   const { mutate: postComment } = postMutation;
@@ -196,8 +200,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const { mutateAsync: dislikeMutateAsync } = dislikeMutation;
   const { mutate: deleteMutate } = deleteMutation;
   const { mutate: pinMutate } = pinMutation;
-  const { mutate: editMutate } = editMutation;
-  const { mutate: reportMutate } = reportMutation;
+  const { mutateAsync: editMutateAsync } = editMutation;
+  const { mutateAsync: reportMutateAsync } = reportMutation;
 
   // likeMutation and dislikeMutation share the same underlying react-query
   // mutation (see useComments.ts), so its own isPending/variables only ever
@@ -230,28 +234,30 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     },
     [dislikeMutateAsync, markReactionSettled],
   );
-  const handleReply = useCallback(
-    (id: string) => {
-      setReplyTo(id);
-      scrollToTop();
-    },
-    [scrollToTop],
-  );
+  const composerRef = useRef<HTMLDivElement>(null);
+  const handleReply = useCallback((id: string) => {
+    setReplyTo(id);
+    // Bring the reply field into view and put the cursor in it (not the top of the page).
+    requestAnimationFrame(() => {
+      composerRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
+      composerRef.current?.querySelector("textarea")?.focus({ preventScroll: true });
+    });
+  }, []);
   const handleDelete = useCallback((id: string) => deleteMutate(id), [deleteMutate]);
   const handlePin = useCallback(
     (id: string, pinned: boolean) => pinMutate({ commentId: id, pinned }),
     [pinMutate],
   );
   const handleEdit = useCallback(
-    (id: string, text: string) => editMutate({ commentId: id, text }),
-    [editMutate],
+    (id: string, text: string) => editMutateAsync({ commentId: id, text }).then(() => undefined),
+    [editMutateAsync],
   );
   const handleReport = useCallback(
     (id: string, reason: CommentReportReasonDto, note?: string) =>
-      reportMutate({ commentId: id, reason, note }),
-    [reportMutate],
+      reportMutateAsync({ commentId: id, reason, note }).then(() => undefined),
+    [reportMutateAsync],
   );
-  const noop = useCallback(() => {}, []);
+  const isReactionPending = useCallback((id: string) => pendingReactionIds.has(id), [pendingReactionIds]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -309,19 +315,21 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     setSortBy(nextSort);
   };
 
+  // Spacing has one owner: the `gap` of each column below (no margins on the children, no
+  // overrides in CSS modules). Header, composer and list 16 px apart; threads 16 px apart.
   return (
     <div
       ref={commentsTopRef}
-      className="space-y-[24px] sm:space-y-[30px] max-w-full bg-transparent rounded-none border-none shadow-none mb-[30px] relative"
+      className="relative flex max-w-full flex-col gap-4 pb-4"
     >
       {/* Back to comments top */}
       {showStickyHeader && (
         <div className="fixed bottom-5 right-5 z-50 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-200 sm:bottom-6 sm:right-6">
           <button
             type="button"
-            onClick={scrollToTop}
+            onClick={scrollToCommentsTop}
             aria-label={language === "pl" ? "Wróć do początku komentarzy" : "Back to the top of comments"}
-            className="group flex h-12 w-12 items-center justify-center rounded-full bg-[var(--chan-blue)] text-white shadow-[0_10px_30px_var(--cm-blue-35)] ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:bg-[var(--cm-blue-86-black)] hover:shadow-[0_14px_36px_var(--cm-blue-42)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:translate-y-0 active:scale-95"
+            className="group flex h-12 w-12 items-center justify-center rounded-full bg-[var(--chan-blue)] text-white shadow-[0_10px_30px_var(--cm-blue-35)] ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:bg-[var(--cm-blue-86-black)] hover:shadow-[0_14px_36px_var(--cm-blue-42)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:translate-y-0 active:scale-95 motion-reduce:transition-none"
           >
             <svg
               width="22"
@@ -341,7 +349,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         </div>
       )}
 
-      <div className="flex flex-row items-center justify-between gap-2 sm:gap-3 mb-[14px] sm:mb-[20px]">
+      <div className="flex flex-row items-center justify-between gap-2 sm:gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <h3 className="font-brand text-[15px] font-bold text-[var(--chan-ink)] truncate">
             <AnimatedCount value={totalCount} /> {getCommentsLabel(totalCount)}
@@ -411,31 +419,33 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         </div>
       </div>
 
-      <CommentComposer
-        userProfile={userProfile}
-        userAvatarUrl={userAvatarUrl}
-        replyTo={replyTo}
-        replyingToAuthor={replyingToAuthor}
-        newComment={newComment}
-        setNewComment={(value) => {
-          setNewComment(value);
-          if (composerError) setComposerError(null);
-        }}
-        setReplyTo={setReplyTo}
-        isInputFocused={isInputFocused}
-        setIsInputFocused={setIsInputFocused}
-        /** ground truth for the UI permission: */
-        canComment={viewer?.canComment ?? false}
-        isPatronDecorative={isPatronDecorative}
-        isPending={postMutation.isPending}
-        isViewerLoading={isLoading}
-        errorMessage={composerError}
-        handleSubmit={handleSubmit}
-        t={t}
-        language={language}
-      />
+      <div ref={composerRef}>
+        <CommentComposer
+          userProfile={userProfile}
+          userAvatarUrl={userAvatarUrl}
+          replyTo={replyTo}
+          replyingToAuthor={replyingToAuthor}
+          newComment={newComment}
+          setNewComment={(value) => {
+            setNewComment(value);
+            if (composerError) setComposerError(null);
+          }}
+          setReplyTo={setReplyTo}
+          isInputFocused={isInputFocused}
+          setIsInputFocused={setIsInputFocused}
+          /** ground truth for the UI permission: */
+          canComment={viewer?.canComment ?? false}
+          isPatronDecorative={isPatronDecorative}
+          isPending={postMutation.isPending}
+          isViewerLoading={isLoading}
+          errorMessage={composerError}
+          handleSubmit={handleSubmit}
+          t={t}
+          language={language}
+        />
+      </div>
 
-      <div className="space-y-[22px]">
+      <div className="flex flex-col gap-4">
         {isLoading ? (
           <CommentsLoadingState language={language} />
         ) : isError ? (
@@ -486,8 +496,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         ) : (
           <AnimatePresence initial={false}>
           {comments.map((comment) => (
-            <CommentMotionItem key={comment.id} className="space-y-[22px]">
-              <CommentItem
+            <CommentMotionItem key={comment.id}>
+              <CommentThread
+                videoId={videoId}
                 comment={comment}
                 userProfile={userProfile}
                 isClient={isClient}
@@ -499,45 +510,18 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                 onReply={handleReply}
                 onDelete={handleDelete}
                 onPin={handlePin}
-                isReactionPending={pendingReactionIds.has(comment.id)}
                 onEdit={handleEdit}
                 onReport={handleReport}
+                isReactionPending={isReactionPending}
               />
-
-              {/* NESTED REPLIES */}
-              {comment.repliesPreview && comment.repliesPreview.length > 0 && (
-                <div className="pl-6 md:pl-13 space-y-[22px] border-l border-[var(--chan-line)] ml-4 md:ml-[19px] mt-4">
-                  {comment.repliesPreview.map((reply) => (
-                    <CommentItem
-                      key={reply.id}
-                      comment={reply}
-                      userProfile={userProfile}
-                      isClient={isClient}
-                      language={language}
-                      t={t}
-                      canComment={viewer?.canComment ?? false}
-                      onLike={handleLike}
-                      onDislike={handleDislike}
-                      onReply={noop}
-                      onDelete={handleDelete}
-                      onPin={noop}
-                      isReactionPending={pendingReactionIds.has(reply.id)}
-                      onEdit={handleEdit}
-                      onReport={handleReport}
-                      isReply={true}
-                    />
-                  ))}
-                </div>
-              )}
             </CommentMotionItem>
           ))}
           </AnimatePresence>
         )}
 
-        <div ref={loadMoreRef} className="h-4" />
-
         {hasNextPage && (
-          <div className="pt-6 flex justify-center">
+          // Also the infinite-scroll sentinel: reaching it loads the next page.
+          <div ref={loadMoreRef} className="flex justify-center">
             <Button
               variant="outline"
               onClick={() => fetchNextPage()}
@@ -560,8 +544,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             </Button>
           </div>
         )}
-
-
       </div>
     </div>
   );

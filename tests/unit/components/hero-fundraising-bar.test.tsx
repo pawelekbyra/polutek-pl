@@ -22,7 +22,7 @@ vi.mock('@/app/components/LanguageContext', () => ({
 }));
 vi.mock('@/app/hooks/useToast', () => ({ useToast: () => vi.fn() }));
 vi.mock('@/lib/logger', () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() } }));
-vi.mock('@/lib/actions/interactions', () => ({ toggleVideoLike: vi.fn(), toggleVideoDislike: vi.fn() }));
+vi.mock('@/lib/actions/interactions', () => ({ setVideoReaction: vi.fn() }));
 vi.mock('@/app/components/PremiumWrapper', () => ({ default: () => <div>player-stub</div> }));
 vi.mock('@/app/components/SubscribeButton', () => ({ default: () => <button type="button">subscribe-stub</button> }));
 vi.mock('@/app/components/ShareButton', () => ({ default: () => <button type="button">share-stub</button> }));

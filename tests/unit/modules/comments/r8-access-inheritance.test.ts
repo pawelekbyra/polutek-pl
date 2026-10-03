@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { pinComment } from '@/lib/modules/comments/application/pin-comment.use-case';
 import { unpinComment } from '@/lib/modules/comments/application/unpin-comment.use-case';
 import { reportComment } from '@/lib/modules/comments/application/report-comment.use-case';
-import { toggleCommentLike } from '@/lib/modules/comments/application/toggle-comment-like.use-case';
+import { setCommentReaction } from '@/lib/modules/comments/application/set-comment-reaction.use-case';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { checkVideoAccess } from '@/lib/modules/access';
 import { CommentStatus } from '@prisma/client';
@@ -13,6 +13,7 @@ vi.mock('@/lib/modules/access', () => ({
 
 vi.mock('@/lib/modules/audit', () => ({
   recordAuditEvent: vi.fn(),
+  recordAuditEventSafe: vi.fn(),
 }));
 
 describe('R8 Comments Access and Permissions', () => {
@@ -29,17 +30,23 @@ describe('R8 Comments Access and Permissions', () => {
         findMany: vi.fn(),
         count: vi.fn(),
         update: vi.fn(),
-        updateMany: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       video: {
         findUnique: vi.fn(),
       },
       commentReaction: {
+        createMany: vi.fn().mockResolvedValue({ count: 1 }),
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
         findUnique: vi.fn(),
         create: vi.fn(),
         delete: vi.fn(),
       },
       commentReport: {
+        createMany: vi.fn().mockResolvedValue({ count: 1 }),
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
         findUnique: vi.fn(),
         create: vi.fn(),
       },
@@ -84,7 +91,7 @@ describe('R8 Comments Access and Permissions', () => {
 
   describe('Guest Interaction Blocking', () => {
     it('blocks guest from liking a comment', async () => {
-      const result = await toggleCommentLike({ commentId: 'c1', action: 'LIKE' }, createCtx({ type: 'guest' }));
+      const result = await setCommentReaction({ commentId: 'c1', reaction: 'LIKE' }, createCtx({ type: 'guest' }));
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.error.type).toBe('UNAUTHORIZED');
     });
@@ -139,7 +146,7 @@ describe('R8 Comments Access and Permissions', () => {
 
     it('blocks non-patron from liking a comment on patron-only video', async () => {
       mockPrisma.comment.findUnique.mockResolvedValue({ id: 'c1', videoId });
-      const result = await toggleCommentLike({ commentId: 'c1', action: 'LIKE' }, createCtx({ type: 'user', userId }));
+      const result = await setCommentReaction({ commentId: 'c1', reaction: 'LIKE' }, createCtx({ type: 'user', userId }));
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.error.type).toBe('FORBIDDEN');
     });

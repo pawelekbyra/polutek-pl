@@ -1,11 +1,12 @@
 import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
-import { VideoLike, VideoDislike, CommentReaction, CommentReactionType, CommentStatus, CommentDeletedReason, Comment, CommentReportStatus, Prisma, PrismaClient } from "@prisma/client";
+import { CommentReactionType, CommentStatus, CommentDeletedReason, Comment, CommentReportReason, CommentReportStatus, Prisma } from "@prisma/client";
 import { publicCommentAuthorSelect } from "@/lib/comments-public-author";
+import type { ReactionTarget } from "../domain/comment.dto";
 
 export interface ListCommentsOptions {
   videoId: string;
   userId?: string | null;
-  sortBy: 'newest' | 'top' | 'oldest';
+  sortBy: 'newest' | 'top';
   cursor?: string;
   limit: number;
   includeHidden?: boolean;
@@ -17,11 +18,22 @@ export interface CreateCommentInput {
   creatorId: string;
   text: string;
   parentId?: string | null;
-  imageUrl?: string | null;
 }
 
-const visibleCommentStatusFilter = (includeHidden?: boolean) =>
-  includeHidden ? { not: CommentStatus.DELETED } : CommentStatus.VISIBLE;
+/** Replies embedded with every top-level comment; the rest is paged through `findReplies`. */
+export const REPLIES_PREVIEW_LIMIT = 3;
+
+/**
+ * The one visibility rule for threads: viewers see VISIBLE comments, moderators also see
+ * HIDDEN and HELD_FOR_REVIEW, nobody sees DELETED ones, and comments of deleted accounts
+ * are gone for everyone (the author row is only a tombstone).
+ */
+export function threadCommentWhere(includeHidden?: boolean): Prisma.CommentWhereInput {
+  return {
+    status: includeHidden ? { not: CommentStatus.DELETED } : CommentStatus.VISIBLE,
+    author: { isDeleted: false },
+  };
+}
 
 export const commentReportInclude = Prisma.validator<Prisma.CommentReportInclude>()({
   comment: { include: { author: { select: publicCommentAuthorSelect }, video: { select: { id: true, title: true, slug: true } } } },
@@ -30,55 +42,71 @@ export const commentReportInclude = Prisma.validator<Prisma.CommentReportInclude
 
 export type CommentReportWithRelations = Prisma.CommentReportGetPayload<{ include: typeof commentReportInclude }>;
 
+const viewerReactionInclude = (userId?: string | null) =>
+  userId ? { where: { userId }, select: { type: true } } : false;
+
+/** Oldest first; `id` breaks ties so cursor pagination never repeats or skips a reply. */
+const replyOrderBy: Prisma.CommentOrderByWithRelationInput[] = [{ createdAt: 'asc' }, { id: 'asc' }];
+
 export const commentInclude = (userId?: string | null, includeHidden?: boolean) => ({
   author: { select: publicCommentAuthorSelect },
   replies: {
-    where: { status: visibleCommentStatusFilter(includeHidden) },
-    take: 3,
-    orderBy: { createdAt: 'asc' as const },
+    where: threadCommentWhere(includeHidden),
+    take: REPLIES_PREVIEW_LIMIT,
+    orderBy: replyOrderBy,
     include: {
       author: { select: publicCommentAuthorSelect },
-      reactions: userId ? { where: { userId } } : false
-    }
+      reactions: viewerReactionInclude(userId),
+    },
   },
-  reactions: userId ? { where: { userId } } : false
+  reactions: viewerReactionInclude(userId),
+  _count: { select: { replies: { where: threadCommentWhere(includeHidden) } } },
 });
+
+/** Comment row as the DTO mapper needs it (see `mapCommentToDto`). */
+export type CommentWithRelations = Prisma.CommentGetPayload<{ include: ReturnType<typeof commentInclude> }>;
+
 
 export class CommentRepository {
   constructor(private db: ReadDb) {}
 
-  async findVideoLike(userId: string, videoId: string): Promise<VideoLike | null> {
-    return await this.db.videoLike.findUnique({ where: { userId_videoId: { userId, videoId } } });
+  private get write(): WriteTx {
+    return this.db as WriteTx;
   }
-  async findVideoDislike(userId: string, videoId: string): Promise<VideoDislike | null> {
-    return await this.db.videoDislike.findUnique({ where: { userId_videoId: { userId, videoId } } });
+
+  /**
+   * Sets the viewer's reaction to a video to exactly `target` (LIKE, DISLIKE or none) and moves
+   * the counters by what actually changed. Idempotent and safe under concurrent requests: the
+   * insert is `ON CONFLICT DO NOTHING` and every counter delta comes from the affected row count.
+   * Must run inside a transaction.
+   */
+  async setVideoReaction(userId: string, videoId: string, target: ReactionTarget): Promise<void> {
+    const removedLikes = target === "LIKE" ? 0 : (await this.write.videoLike.deleteMany({ where: { userId, videoId } })).count;
+    const removedDislikes = target === "DISLIKE" ? 0 : (await this.write.videoDislike.deleteMany({ where: { userId, videoId } })).count;
+    const addedLikes = target === "LIKE"
+      ? (await this.write.videoLike.createMany({ data: [{ userId, videoId }], skipDuplicates: true })).count
+      : 0;
+    const addedDislikes = target === "DISLIKE"
+      ? (await this.write.videoDislike.createMany({ data: [{ userId, videoId }], skipDuplicates: true })).count
+      : 0;
+
+    const likesDelta = addedLikes - removedLikes;
+    const dislikesDelta = addedDislikes - removedDislikes;
+    if (likesDelta === 0 && dislikesDelta === 0) return;
+
+    await this.write.video.update({
+      where: { id: videoId },
+      data: { likesCount: { increment: likesDelta }, dislikesCount: { increment: dislikesDelta } },
+    });
+    if (likesDelta < 0) await this.write.video.updateMany({ where: { id: videoId, likesCount: { lt: 0 } }, data: { likesCount: 0 } });
+    if (dislikesDelta < 0) await this.write.video.updateMany({ where: { id: videoId, dislikesCount: { lt: 0 } }, data: { dislikesCount: 0 } });
   }
-  async createVideoLike(userId: string, videoId: string): Promise<VideoLike> {
-    const like = await (this.db as WriteTx).videoLike.create({ data: { userId, videoId } });
-    await (this.db as WriteTx).video.update({ where: { id: videoId }, data: { likesCount: { increment: 1 } } });
-    return like;
-  }
-  async deleteVideoLike(id: string, videoId: string): Promise<void> {
-    await (this.db as WriteTx).videoLike.delete({ where: { id } });
-    await (this.db as WriteTx).video.updateMany({ where: { id: videoId, likesCount: { gt: 0 } }, data: { likesCount: { decrement: 1 } } });
-  }
-  async createVideoDislike(userId: string, videoId: string): Promise<VideoDislike> {
-    const dislike = await (this.db as WriteTx).videoDislike.create({ data: { userId, videoId } });
-    await (this.db as WriteTx).video.update({ where: { id: videoId }, data: { dislikesCount: { increment: 1 } } });
-    return dislike;
-  }
-  async deleteVideoDislike(id: string, videoId: string): Promise<void> {
-    await (this.db as WriteTx).videoDislike.delete({ where: { id } });
-    await (this.db as WriteTx).video.updateMany({ where: { id: videoId, dislikesCount: { gt: 0 } }, data: { dislikesCount: { decrement: 1 } } });
-  }
+
   async getVideoReactionSnapshot(userId: string, videoId: string) {
     const [like, dislike, video] = await Promise.all([
-      this.findVideoLike(userId, videoId),
-      this.findVideoDislike(userId, videoId),
-      this.db.video.findUnique?.({
-        where: { id: videoId },
-        select: { likesCount: true, dislikesCount: true },
-      }) ?? Promise.resolve(null),
+      this.db.videoLike.findUnique({ where: { userId_videoId: { userId, videoId } }, select: { id: true } }),
+      this.db.videoDislike.findUnique({ where: { userId_videoId: { userId, videoId } }, select: { id: true } }),
+      this.db.video.findUnique({ where: { id: videoId }, select: { likesCount: true, dislikesCount: true } }),
     ]);
     return {
       liked: !!like,
@@ -87,9 +115,16 @@ export class CommentRepository {
       dislikesCount: Math.max(0, video?.dislikesCount ?? 0),
     };
   }
+
   async findCommentById(id: string) {
     return await this.db.comment.findUnique({ where: { id }, include: { author: { select: publicCommentAuthorSelect } } });
   }
+
+  /** One comment with everything the DTO needs (preview replies, visible reply count, viewer reaction). */
+  async findCommentForDto(id: string, userId: string | null, includeHidden: boolean) {
+    return await this.db.comment.findUnique({ where: { id }, include: commentInclude(userId, includeHidden) });
+  }
+
   async findAdminComments(options: { q?: string; status?: CommentStatus; videoId?: string; page?: number; pageSize?: number }) {
     const { q, status, videoId, page = 1, pageSize = 50 } = options;
     const where: Prisma.CommentWhereInput = { AND: [ q ? { text: { contains: q, mode: 'insensitive' } } : {}, status ? { status } : {}, videoId ? { videoId } : {} ] };
@@ -100,99 +135,136 @@ export class CommentRepository {
     ]);
     return { items, total };
   }
-  async findCommentReaction(userId: string, commentId: string): Promise<CommentReaction | null> {
-    return await this.db.commentReaction.findUnique({ where: { userId_commentId: { userId, commentId } } });
+
+  /**
+   * Sets the viewer's reaction to a comment to exactly `target` and moves `likesCount` by what
+   * actually changed (dislikes have no public counter). Idempotent and race-safe like
+   * `setVideoReaction`. Must run inside a transaction. Returns the change of `likesCount`.
+   */
+  async setCommentReaction(userId: string, commentId: string, target: ReactionTarget): Promise<{ likeDelta: number }> {
+    let likeDelta = 0;
+    if (target === null) {
+      likeDelta -= (await this.write.commentReaction.deleteMany({ where: { userId, commentId, type: "LIKE" } })).count;
+      await this.write.commentReaction.deleteMany({ where: { userId, commentId } });
+    } else {
+      const other: CommentReactionType = target === "LIKE" ? "DISLIKE" : "LIKE";
+      const switched = (await this.write.commentReaction.updateMany({ where: { userId, commentId, type: other }, data: { type: target } })).count;
+      const inserted = switched > 0
+        ? 0
+        : (await this.write.commentReaction.createMany({ data: [{ userId, commentId, type: target }], skipDuplicates: true })).count;
+      likeDelta = target === "LIKE" ? switched + inserted : -switched;
+    }
+
+    if (likeDelta !== 0) {
+      await this.write.comment.update({ where: { id: commentId }, data: { likesCount: { increment: likeDelta } } });
+      if (likeDelta < 0) await this.write.comment.updateMany({ where: { id: commentId, likesCount: { lt: 0 } }, data: { likesCount: 0 } });
+    }
+    return { likeDelta };
   }
-  async createCommentLike(userId: string, commentId: string): Promise<CommentReaction> {
-    const reaction = await (this.db as WriteTx).commentReaction.create({ data: { userId, commentId, type: "LIKE" } });
-    await (this.db as WriteTx).comment.update({ where: { id: commentId }, data: { likesCount: { increment: 1 }, score: { increment: 1 } } });
-    return reaction;
-  }
-  // Dislike has no public counter (like on YT) — likesCount/score stay untouched
-  async createCommentDislike(userId: string, commentId: string): Promise<CommentReaction> {
-    return await (this.db as WriteTx).commentReaction.create({ data: { userId, commentId, type: "DISLIKE" } });
-  }
-  async deleteCommentReaction(id: string, commentId: string, type: CommentReactionType = "LIKE"): Promise<void> {
-    await (this.db as WriteTx).commentReaction.delete({ where: { id } });
-    if (type !== "LIKE") return;
-    await (this.db as WriteTx).comment.update({ where: { id: commentId }, data: { likesCount: { decrement: 1 }, score: { increment: -1 } } });
-    await (this.db as WriteTx).comment.updateMany({ where: { id: commentId, likesCount: { lt: 0 } }, data: { likesCount: 0, score: 0 } });
-  }
+
   async getCommentReactionSnapshot(userId: string, commentId: string) {
     const [reaction, comment] = await Promise.all([
-      this.findCommentReaction(userId, commentId),
-      this.db.comment.findUnique({
-        where: { id: commentId },
-        select: { likesCount: true },
-      }),
+      this.db.commentReaction.findUnique({ where: { userId_commentId: { userId, commentId } }, select: { type: true } }),
+      this.db.comment.findUnique({ where: { id: commentId }, select: { likesCount: true } }),
     ]);
     return {
-      liked: reaction?.type === "LIKE",
       viewerReaction: reaction?.type ?? null,
       likesCount: Math.max(0, comment?.likesCount ?? 0),
     };
   }
+
   async findMany(options: ListCommentsOptions) {
     const { videoId, userId, sortBy, cursor, limit, includeHidden } = options;
-    // Comments of deleted accounts disappear from the public thread (the author row is only a tombstone).
-    const where: Prisma.CommentWhereInput = { videoId, parentId: null, status: visibleCommentStatusFilter(includeHidden), author: { isDeleted: false } };
-    const orderBy: Prisma.CommentOrderByWithRelationInput[] = [];
-    if (sortBy === 'top') { orderBy.push({ pinnedAt: { sort: 'desc', nulls: 'last' } }); orderBy.push({ likesCount: 'desc' }); orderBy.push({ createdAt: 'desc' }); }
-    else if (sortBy === 'oldest') { orderBy.push({ pinnedAt: { sort: 'desc', nulls: 'last' } }); orderBy.push({ createdAt: 'asc' }); }
-    else { orderBy.push({ pinnedAt: { sort: 'desc', nulls: 'last' } }); orderBy.push({ createdAt: 'desc' }); }
+    const where: Prisma.CommentWhereInput = { videoId, parentId: null, ...threadCommentWhere(includeHidden) };
+    const orderBy: Prisma.CommentOrderByWithRelationInput[] = [{ pinnedAt: { sort: 'desc', nulls: 'last' } }];
+    if (sortBy === 'top') orderBy.push({ likesCount: 'desc' });
+    orderBy.push({ createdAt: 'desc' }, { id: 'desc' });
     return await this.db.comment.findMany({ where, take: limit, skip: cursor ? 1 : 0, cursor: cursor ? { id: cursor } : undefined, orderBy, include: commentInclude(userId, includeHidden) });
   }
-  async findReplies(parentId: string, userId: string | null, includeHidden: boolean, cursor?: string, limit: number = 10) {
-    return await this.db.comment.findMany({ where: { parentId, status: visibleCommentStatusFilter(includeHidden), author: { isDeleted: false } }, take: limit, skip: cursor ? 1 : 0, cursor: cursor ? { id: cursor } : undefined, orderBy: { createdAt: 'asc' }, include: { author: { select: publicCommentAuthorSelect }, reactions: userId ? { where: { userId } } : false } });
+
+  /** Replies of one comment, oldest first. Pass `take = limit + 1` to learn whether more exist. */
+  async findReplies(parentId: string, userId: string | null, includeHidden: boolean, cursor: string | undefined, take: number) {
+    return await this.db.comment.findMany({
+      where: { parentId, ...threadCommentWhere(includeHidden) },
+      take,
+      skip: cursor ? 1 : 0,
+      cursor: cursor ? { id: cursor } : undefined,
+      orderBy: replyOrderBy,
+      include: { author: { select: publicCommentAuthorSelect }, reactions: viewerReactionInclude(userId) },
+    });
   }
-  async count(options: Partial<ListCommentsOptions>) {
+
+  async count(options: { videoId: string; includeHidden?: boolean }) {
     const { videoId, includeHidden } = options;
-    return await this.db.comment.count({ where: { videoId, parentId: null, status: visibleCommentStatusFilter(includeHidden), author: { isDeleted: false } } });
+    return await this.db.comment.count({ where: { videoId, parentId: null, ...threadCommentWhere(includeHidden) } });
   }
+
   async create(input: CreateCommentInput): Promise<Comment> {
-    const { authorId, videoId, creatorId, text, parentId, imageUrl } = input;
-    return await (this.db as WriteTx).comment.create({ data: { authorId, videoId, creatorId, text, parentId, imageUrl, status: CommentStatus.VISIBLE } });
+    const { authorId, videoId, creatorId, text, parentId } = input;
+    return await this.write.comment.create({ data: { authorId, videoId, creatorId, text, parentId, status: CommentStatus.VISIBLE } });
   }
-  async incrementRepliesCount(commentId: string): Promise<void> {
-    await (this.db as WriteTx).comment.update({ where: { id: commentId }, data: { repliesCount: { increment: 1 } } });
-  }
+
   async update(id: string, data: { text: string; editedAt: Date }): Promise<Comment> {
-    return await (this.db as WriteTx).comment.update({ where: { id }, data });
+    return await this.write.comment.update({ where: { id }, data });
   }
-  async findVideoByCommentId(commentId: string) {
-    const comment = await this.db.comment.findUnique({ where: { id: commentId }, select: { videoId: true } });
-    if (!comment) return null;
-    return await this.db.video.findUnique({ where: { id: comment.videoId }, select: { creator: { select: { userId: true } } } });
-  }
+
   async findVideoCreatorId(videoId: string): Promise<string | null> {
     const video = await this.db.video.findUnique({ where: { id: videoId }, select: { creator: { select: { userId: true } } } });
     return video?.creator?.userId || null;
   }
-  async pin(commentId: string): Promise<void> {
-    await (this.db as WriteTx).comment.update({ where: { id: commentId }, data: { pinnedAt: new Date() } });
-  }
-  async unpin(commentId: string): Promise<void> {
-    await (this.db as WriteTx).comment.update({ where: { id: commentId }, data: { pinnedAt: null } });
-  }
-  async softDelete(id: string, data: { status: CommentStatus; deletedAt: Date; deletedById: string; deletedReason: CommentDeletedReason }) {
-    const { status, deletedAt, deletedById, deletedReason } = data;
-    const comment = await this.db.comment.findUnique({ where: { id }, select: { parentId: true } });
-    const writeDb = this.db as unknown as PrismaClient;
-    return await writeDb.$transaction(async (tx: Prisma.TransactionClient) => {
-      const updated = await tx.comment.update({ where: { id }, data: { status, deletedAt, deletedById, deletedReason, text: "[deleted]", imageUrl: null } });
-      if (comment?.parentId) { await tx.comment.update({ where: { id: comment.parentId }, data: { repliesCount: { decrement: 1 } } }); }
-      return updated;
+
+  /** Pins one comment and unpins any other on the same video (one pinned comment per video). Must run inside a transaction. */
+  async pin(commentId: string, videoId: string, pinnedById: string): Promise<void> {
+    await this.write.comment.updateMany({
+      where: { videoId, pinnedAt: { not: null }, NOT: { id: commentId } },
+      data: { pinnedAt: null, pinnedById: null },
     });
+    await this.write.comment.update({ where: { id: commentId }, data: { pinnedAt: new Date(), pinnedById } });
   }
-  async updateCommentStatus(id: string, data: { status: CommentStatus; moderatedAt: Date | null; moderatedById: string | null }) {
-    return await (this.db as WriteTx).comment.update({ where: { id }, data });
+
+  async unpin(commentId: string): Promise<void> {
+    await this.write.comment.update({ where: { id: commentId }, data: { pinnedAt: null, pinnedById: null } });
   }
-  async toggleHeart(id: string): Promise<{ isHearted: boolean }> {
-    const comment = await this.db.comment.findUnique({ where: { id }, select: { isHearted: true } as any });
-    const nextValue = !(comment as any)?.isHearted;
-    await (this.db as WriteTx).$executeRaw`UPDATE "Comment" SET "isHearted" = ${nextValue} WHERE id = ${id}`;
-    return { isHearted: nextValue };
+
+  /**
+   * Marks a comment DELETED. The content stays in the database (status decides what anyone can
+   * see, see `mapCommentToDto`). Conditional on the comment not being deleted yet, so two
+   * concurrent deletes change it once. Returns whether this call deleted it.
+   */
+  async softDelete(id: string, data: { deletedAt: Date; deletedById: string; deletedReason: CommentDeletedReason }): Promise<boolean> {
+    const { count } = await this.write.comment.updateMany({
+      where: { id, status: { not: CommentStatus.DELETED } },
+      data: { status: CommentStatus.DELETED, ...data },
+    });
+    return count > 0;
   }
+
+  /**
+   * Moves a comment to `status` only if its current status is one of `from` (the moderation
+   * state machine lives in `CommentPolicy`). Returns whether the transition happened.
+   */
+  async transitionStatus(id: string, from: readonly CommentStatus[], data: { status: CommentStatus; moderatedAt: Date | null; moderatedById: string | null }): Promise<boolean> {
+    const { count } = await this.write.comment.updateMany({ where: { id, status: { in: [...from] } }, data });
+    return count > 0;
+  }
+
+  async setHeart(id: string, isHearted: boolean): Promise<void> {
+    await this.write.comment.update({ where: { id }, data: { isHearted } });
+  }
+
+  /** Records one report per user and comment; a repeated report is a no-op. Returns whether a new report was stored. */
+  async createReport(data: { commentId: string; reporterId: string; reason: CommentReportReason; note?: string }): Promise<boolean> {
+    const { count } = await this.write.commentReport.createMany({ data: [data], skipDuplicates: true });
+    return count > 0;
+  }
+
+  /** Recomputes `reportsCount` as the number of pending reports, so it always matches the queue. */
+  async refreshPendingReportsCount(commentId: string): Promise<number> {
+    const pending = await this.write.commentReport.count({ where: { commentId, status: CommentReportStatus.PENDING } });
+    await this.write.comment.update({ where: { id: commentId }, data: { reportsCount: pending } });
+    return pending;
+  }
+
   async findReports(options: { status?: CommentReportStatus; page?: number; pageSize?: number } = {}) {
     const { status, page = 1, pageSize = 20 } = options;
     const where = status ? { status } : {};
@@ -209,18 +281,12 @@ export class CommentRepository {
     ]);
     return { items, total };
   }
+
   async findReportById(id: string) {
-    return await this.db.commentReport.findUnique({ where: { id }, include: { comment: true } });
+    return await this.db.commentReport.findUnique({ where: { id }, select: { id: true, commentId: true } });
   }
+
   async resolveReport(id: string, data: { status: CommentReportStatus; resolvedAt: Date; resolvedById: string }) {
-    return await (this.db as WriteTx).commentReport.update({ where: { id }, data });
+    return await this.write.commentReport.update({ where: { id }, data });
   }
 }
-
-/**
- * R10 Cleanup Note:
- * Phase 1 (Admin Moderation) is complete.
- * R7 Certification Reconcile is complete.
- * Phase 2 (Dead Services) has been partially executed;
- * some services were retained for test stability.
- */

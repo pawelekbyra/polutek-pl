@@ -9,7 +9,6 @@ describe('Media Module Certification', () => {
     ALLOWED_MEDIA_HOSTS: 'external.com',
     ALLOWED_THUMBNAIL_HOSTS: 'thumbnails.com',
     ALLOWED_AVATAR_HOSTS: 'avatars.com',
-    ALLOWED_COMMENT_IMAGE_HOSTS: 'comments.com',
   };
 
   describe('General Media URLs', () => {
@@ -77,14 +76,6 @@ describe('Media Module Certification', () => {
 
     it('accepts allowed avatar hosts', () => {
       expect(MediaPolicy.isAllowedAvatarUrl('https://avatars.com/me.png', env)).toBe(true);
-    });
-
-    it('accepts allowed comment image hosts', () => {
-      expect(MediaPolicy.isAllowedCommentImageUrl('https://comments.com/upload.png', env)).toBe(true);
-    });
-
-    it('rejects media host for comment images if not explicitly allowed', () => {
-        expect(MediaPolicy.isAllowedCommentImageUrl('https://media.polutek.pl/img.png', env)).toBe(false);
     });
   });
 });

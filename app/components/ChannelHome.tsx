@@ -316,7 +316,6 @@ function ChannelHomeContent({
     <EmbeddedComments
       videoId={selectedVideo.id}
       userProfile={userProfile}
-      videoTier={selectedVideo.tier}
     />
   );
 

@@ -4,10 +4,10 @@ import { createScopedLogger } from "@/lib/logger";
 import { getCorrelationId } from "@/lib/utils/correlation";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { listVideoComments, createVideoComment } from "@/lib/modules/comments";
+import { listVideoComments, createVideoComment, commentErrorStatus } from "@/lib/modules/comments";
 import { rateLimit } from "@/lib/rate-limit";
+import { commentErrorResponse, commentSortSchema } from "@/lib/api/comment-response";
 import { z } from "zod";
-import { isAllowedCommentImageUrl } from "@/lib/blob";
 import {
   MalformedJsonBodyError,
   RequestBodyTooLargeError,
@@ -18,24 +18,10 @@ export const dynamic = "force-dynamic";
 
 const MAX_COMMENT_REQUEST_BODY_BYTES = 10_000;
 
-const postCommentSchema = z
-  .object({
-    text: z.string().trim().min(1).max(5000, "Komentarz jest za długi.").optional(),
-    parentId: z.string().optional().nullable(),
-    imageUrl: z
-      .string()
-      .url()
-      .refine(
-        (url) => isAllowedCommentImageUrl(url),
-        "Zablokowany host obrazka",
-      )
-      .optional()
-      .nullable(),
-  })
-  .refine((data) => data.text || data.imageUrl, {
-    message: "Treść komentarza lub obrazek jest wymagany",
-    path: ["text"],
-  });
+const postCommentSchema = z.object({
+  text: z.string().trim().min(1, "Komentarz nie może być pusty.").max(5000, "Komentarz jest za długi."),
+  parentId: z.string().max(64).optional().nullable(),
+});
 
 export async function GET(
   request: NextRequest,
@@ -46,7 +32,7 @@ export async function GET(
   const scopedLogger = createScopedLogger(requestId);
   const { searchParams } = new URL(request.url);
   const videoId = params.id;
-  const sortBy = (searchParams.get("sortBy") as any) || "newest";
+  const sortBy = commentSortSchema.parse(searchParams.get("sortBy") ?? undefined);
   const cursor = searchParams.get("cursor") || undefined;
   const parsedLimit = parseInt(searchParams.get("limit") || "20", 10);
   const limit = Math.min(
@@ -62,18 +48,7 @@ export async function GET(
       ctx,
     );
 
-    if (!result.ok) {
-      if (result.error.type === "NOT_FOUND") {
-        return NextResponse.json(
-          { success: false, message: result.error.message },
-          { status: 404 },
-        );
-      }
-      return NextResponse.json(
-        { success: false, message: result.error.message },
-        { status: 403 },
-      );
-    }
+    if (!result.ok) return commentErrorResponse(result.error);
 
     return NextResponse.json({
       success: true,
@@ -148,26 +123,16 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
       );
     }
 
-    const { text, parentId, imageUrl } = resultJson.data;
+    const { text, parentId } = resultJson.data;
 
     const ctx = createAppContext({ actor });
     const result = await createVideoComment(
-      {
-        videoId,
-        text: text || "",
-        parentId,
-        imageUrl,
-      },
+      { videoId, text, parentId },
       ctx,
     );
 
     if (!result.ok) {
-      const status =
-        result.error.type === "UNAUTHORIZED"
-          ? 401
-          : result.error.type === "FORBIDDEN"
-            ? 403
-            : 400;
+      const status = commentErrorStatus(result.error);
       const code =
         result.error.type === "UNAUTHORIZED"
           ? "AUTH_REQUIRED"

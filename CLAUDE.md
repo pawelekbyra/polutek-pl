@@ -306,7 +306,11 @@ Still true:
 
 - `CommentReactionType` enum is `LIKE | DISLIKE` (one reaction per user per comment via `@@unique([userId, commentId])`).
 - Dislike has **no public counter** — only `likesCount` is aggregated; deleting/replacing a DISLIKE must never touch `likesCount`.
-- `toggleCommentLike` handles `LIKE`/`DISLIKE`/`UNLIKE` (clear). API: `PUT /api/comments/[id]/reaction` with optional body `{ type: "LIKE" | "DISLIKE" }`, `DELETE` clears any reaction.
+- Reactions are a target state, not a toggle: `setCommentReaction` / `setVideoReaction` (`LIKE`, `DISLIKE` or `null`), idempotent and race-safe (`createMany({ skipDuplicates })`, counters move by affected row counts). API: `PUT /api/comments/[id]/reaction` with optional body `{ type: "LIKE" | "DISLIKE" }`, `DELETE` clears (60/min per user). Video likes: server action `setVideoReaction` in `lib/actions/interactions.ts`, which must never `revalidatePath` (Hero updates its own state from the result).
+- Visibility: `mapCommentToDto` is a whitelist. Text and author are returned only for `VISIBLE`; moderators also see `HIDDEN`/`HELD_FOR_REVIEW`; `DELETED` content stays in the database but is shown only in the admin panel and never when the author deleted it. `threadCommentWhere()` in the repository is the one list filter (also hides comments of deleted accounts). `repliesCount` in DTOs is computed (`_count`), the `Comment.repliesCount`/`score`/`imageUrl` columns are no longer read or written.
+- Moderation is a state machine in `CommentPolicy` (`restore` only from `HIDDEN`/`HELD_FOR_REVIEW`; `DELETED` is final); a disallowed action is `CONFLICT` (409). Every comments route maps errors through `commentErrorStatus` / `lib/api/comment-response.ts`; database messages never reach the client (`commentDatabaseError`).
+- Reports: one per user and comment; `reportsCount` = pending reports (recomputed on report and on resolve); 3 pending reports hold a viewer's comment for review, never one by an admin or the video's creator.
+- Threads: the list embeds the first 3 replies; the rest is paged through `GET /api/comments/[id]/replies` (public, also for guests).
 
 ### 4.10 Donation/Tip Widget — Always the Tip-Jar Variant (2026-09-22), One Payment Path
 
