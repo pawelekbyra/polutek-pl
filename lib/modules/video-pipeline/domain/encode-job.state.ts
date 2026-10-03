@@ -66,7 +66,6 @@ export class EncodeCancelledError extends Error {
 
 export const PERMANENT = {
   NO_VIDEO_STREAM: "NO_VIDEO_STREAM",
-  HDR_UNSUPPORTED: "HDR_UNSUPPORTED",
   INVALID_MEDIA: "INVALID_MEDIA",
   TOO_LONG: "TOO_LONG",
   TOO_LARGE_FRAME: "TOO_LARGE_FRAME",
@@ -107,9 +106,6 @@ export function classifyFailure(error: unknown): ClassifiedFailure {
     lower.includes("moov atom not found")
   ) {
     return { code: PERMANENT.INVALID_MEDIA, message: truncate(message), permanent: true };
-  }
-  if (lower.includes("hdr sources are not supported")) {
-    return { code: PERMANENT.HDR_UNSUPPORTED, message: truncate(message), permanent: true };
   }
   const errorName = error instanceof Error ? error.name : "";
   if (errorName === "NoSuchKey" || lower.includes("nosuchkey") || lower.includes("the specified key does not exist")) {
@@ -178,20 +174,6 @@ export function estimateEtaSeconds(input: { stageElapsedMs: number; fraction: nu
   const perFraction = stageElapsedMs / fraction;
   const remainingEncode = (perFraction * (1 - Math.min(fraction, 1))) / 1000;
   return Math.max(0, Math.round(remainingEncode + (input.remainingStagesSeconds ?? 0)));
-}
-
-/**
- * Weighted progress over the rungs of the ladder. A bigger rung costs more CPU time, so each
- * rung counts by its pixel height; `current` is the rung being encoded and `currentFraction`
- * its own progress. The loudness pre-pass is folded into the first rung by the caller.
- */
-export function ladderFraction(heights: number[], currentIndex: number, currentFraction: number): number {
-  const weights = heights.map((h) => h * h);
-  const total = weights.reduce((a, b) => a + b, 0);
-  if (total === 0) return 0;
-  const before = weights.slice(0, currentIndex).reduce((a, b) => a + b, 0);
-  const inside = (weights[currentIndex] ?? 0) * Math.min(1, Math.max(0, currentFraction));
-  return (before + inside) / total;
 }
 
 /** "v3" -> 3; anything else -> 0. Used to pick the next HLS output generation. */

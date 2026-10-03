@@ -9,7 +9,6 @@ import {
   estimateEtaSeconds,
   isHeartbeatStale,
   isTerminalStatus,
-  ladderFraction,
   overallProgress,
   parseVersionNumber,
   retryDelayMs,
@@ -48,7 +47,6 @@ describe("encode job state machine", () => {
   it("classifies ffmpeg/ffprobe messages about broken or audio-only files as permanent", () => {
     expect(classifyFailure(new Error("Source has no video stream"))).toMatchObject({ code: PERMANENT.NO_VIDEO_STREAM, permanent: true });
     expect(classifyFailure(new Error("ffprobe exited with 1\nInvalid data found when processing input"))).toMatchObject({ code: PERMANENT.INVALID_MEDIA, permanent: true });
-    expect(classifyFailure(new Error("HDR sources are not supported yet"))).toMatchObject({ code: PERMANENT.HDR_UNSUPPORTED, permanent: true });
     expect(classifyFailure(Object.assign(new Error("x"), { name: "NoSuchKey" }))).toMatchObject({ code: PERMANENT.ORIGINAL_MISSING, permanent: true });
   });
 
@@ -77,12 +75,10 @@ describe("encode job state machine", () => {
     expect(estimateEtaSeconds({ stageElapsedMs: 60_000, fraction: 0.5, remainingStagesSeconds: 30 })).toBe(90);
   });
 
-  it("weights the ladder by rung size so the big rungs dominate", () => {
-    const heights = [1080, 720, 540, 360];
-    expect(ladderFraction(heights, 0, 0)).toBe(0);
-    expect(ladderFraction(heights, 3, 1)).toBeCloseTo(1, 5);
-    expect(ladderFraction(heights, 1, 0)).toBeGreaterThan(0.4);
-    expect(stepWeights([{ height: 720 }, { height: 360 }], true)).toEqual([51840, 518400, 129600]);
+  it("weights the loudness pre-pass small against the one encode of all rungs", () => {
+    const ladder = [{ width: 1280, height: 720 }, { width: 640, height: 360 }];
+    expect(stepWeights(ladder, true)).toEqual([92160, 1152000]);
+    expect(stepWeights(ladder, false)).toEqual([1152000]);
   });
 
   it("parses HLS output generations", () => {
