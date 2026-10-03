@@ -222,4 +222,34 @@ describe('checkVideoAccess Use Case Matrix', () => {
         }
     });
   });
+
+  describe("Premiere (SEC-10: same decision for id and slug)", () => {
+    const premiereAt = new Date(now.getTime() + 86_400_000);
+    const upcoming = { ...baseVideo, id: "3f2a1b4c-0000-4000-8000-000000000001", slug: "premiera", premiereAt };
+
+    it("resolves a slug to the row id and reports the upcoming premiere", async () => {
+      mockPrisma.video.findFirst.mockResolvedValue(upcoming);
+      const result = await checkVideoAccess({ videoIdOrSlug: "premiera" }, createCtx({ type: "guest" }));
+      expect(mockPrisma.video.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { slug: "premiera", creatorId: mainChannel.id } }));
+      expect(result.ok && result.data).toEqual({ hasAccess: true, videoId: upcoming.id, premiereAt: premiereAt.toISOString() });
+    });
+
+    it("gives the same answer for the id", async () => {
+      mockPrisma.video.findFirst.mockResolvedValue({ ...upcoming, tier: AccessTier.PATRON });
+      mockPrisma.user.findUnique.mockResolvedValue({ id: "u1", isDeleted: false });
+      const result = await checkVideoAccess({ videoIdOrSlug: upcoming.id }, createCtx({ type: "user", userId: "u1" }));
+      expect(result.ok && result.data.hasAccess).toBe(true);
+      expect(result.ok && result.data.premiereAt).toBe(premiereAt.toISOString());
+      expect(result.ok && result.data.videoId).toBe(upcoming.id);
+    });
+
+    it("does not flag a premiere for admins or once it has passed", async () => {
+      mockPrisma.video.findFirst.mockResolvedValue(upcoming);
+      const admin = await checkVideoAccess({ videoIdOrSlug: "premiera" }, createCtx({ type: "admin", userId: "a1" }));
+      expect(admin.ok && admin.data.premiereAt).toBeUndefined();
+      mockPrisma.video.findFirst.mockResolvedValue({ ...upcoming, premiereAt: new Date(now.getTime() - 1000) });
+      const guest = await checkVideoAccess({ videoIdOrSlug: "premiera" }, createCtx({ type: "guest" }));
+      expect(guest.ok && guest.data.premiereAt).toBeUndefined();
+    });
+  });
 });
