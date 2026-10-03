@@ -28,17 +28,7 @@ function renderFlow() {
   const wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
-  return renderHook(
-    () =>
-      useCheckoutFlow({
-        isPl: true,
-        logPrefix: 'Test',
-        title: 'Test',
-        getMinAmountTooLowMessage: () => 'too low',
-        attemptFinishedMessage: 'finished',
-      }),
-    { wrapper },
-  );
+  return renderHook(() => useCheckoutFlow({ isPl: true }), { wrapper });
 }
 
 describe('useCheckoutFlow — closing the checkout without paying', () => {

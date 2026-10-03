@@ -3,21 +3,23 @@
 import React from "react";
 import { Loader2 } from "../icons";
 import { TipPrimaryButton, TipStepLayout } from "./TipStepLayout";
+import type { TipUiStatus } from "@/lib/hooks/useCheckoutFlow";
 
 interface TipThanksStepProps {
   language: string;
-  paymentUiStatus: string | null;
+  paymentUiStatus: TipUiStatus | null;
   isSyncing: boolean;
   onRetryStatusCheck: () => void;
   onTryAgain: () => void;
   onDone: () => void;
 }
 
-type Outcome = "thanks" | "pending" | "failed" | "timeout";
+type Outcome = "thanks" | "pending" | "failed" | "refunded" | "timeout";
 
-function outcomeOf(status: string | null): Outcome {
-  if (status === "SUCCEEDED" || status === "ACCESS_SYNC_PENDING") return "thanks";
-  if (status === "FAILED_CANCELED" || status === "REFUNDED_DISPUTED") return "failed";
+function outcomeOf(status: TipUiStatus | null): Outcome {
+  if (status === "SUCCEEDED") return "thanks";
+  if (status === "FAILED") return "failed";
+  if (status === "REFUNDED") return "refunded";
   if (status === "TIMED_OUT") return "timeout";
   return "pending";
 }
@@ -52,6 +54,13 @@ export function TipThanksStep({
       body: isPl
         ? "Sprawdź status za chwilę — nie musisz płacić ponownie."
         : "Check the status again in a moment — no need to pay twice.",
+    },
+    refunded: {
+      icon: "↩️",
+      title: isPl ? "Napiwek został zwrócony" : "This tip was refunded",
+      body: isPl
+        ? "Ta wpłata została zwrócona albo jest sporna. Szczegóły znajdziesz w potwierdzeniu z banku."
+        : "This payment was refunded or is disputed. Your bank statement has the details.",
     },
     failed: {
       icon: "😕",

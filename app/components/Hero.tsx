@@ -338,16 +338,12 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                  text={video.description || undefined}
                  className={styles.secondaryAction}
                />
-               {/* Hero only ever renders inside ChannelHome, so the "polutek:open-support"
-                   event dispatched here is always heard by ChannelHome's own listener
-                   (the same one AccessLockOverlay's CTA uses) — it switches the mobile
-                   "videos" tab (where the donation box lives) and scrolls to it,
-                   synchronously. It deliberately does not touch the URL: a router
-                   navigation (the old ?support=1 merge) re-rendered the whole page on the
-                   server and flashed the route's loading screen on every click.
-                   Signed-out click opens sign-in first, since DonationBox only mounts for
-                   signed-in viewers. Now the row's last item, so it takes over Share's old
-                   "fill remaining space" role (flex-1 below lg:, fixed above it). */}
+               {/* Hero only ever renders inside ChannelHome, whose listener for the
+                   "polutek:open-support" event (also used by AccessLockOverlay) opens the
+                   tip gate (SupportModal). It deliberately does not touch the URL: a router
+                   navigation re-renders the whole page on the server. Signed-out click opens
+                   sign-in first, since tipping needs an account. The row's last item, so it
+                   fills the remaining space (flex-1 below lg:, fixed above it). */}
                <button
                  type="button"
                  onClick={() => {

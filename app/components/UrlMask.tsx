@@ -41,9 +41,9 @@ function shouldKeepUrl(pathname: string): boolean {
   return KEEP_URL_PATTERNS.some((pattern) => pattern.test(pathname));
 }
 
-// Payment-return params must survive until DonationBox has read them and cleaned
-// the URL itself; stripping them here would swallow the Stripe success handoff.
-const PRESERVE_QUERY_KEYS = ["success", "payment_id", "canceled", "session_id"];
+// Payment-return params must survive until the tip gate (SupportModal) has read them and
+// cleaned the URL itself; stripping them here would swallow the Stripe return handoff.
+const PRESERVE_QUERY_KEYS = ["success", "payment_id"];
 
 function hasPreservedQuery(search: string): boolean {
   if (!search) return false;
@@ -65,7 +65,7 @@ function UrlMaskEffect() {
     const { pathname: currentPath, search, hash } = window.location;
     // Already a clean root URL — nothing to rewrite.
     if (currentPath === "/" && search === "" && hash === "") return;
-    // Defer to DonationBox on Stripe payment returns; it clears the URL itself.
+    // Defer to the tip gate on Stripe payment returns; it clears the URL itself.
     if (hasPreservedQuery(search)) return;
 
     try {
