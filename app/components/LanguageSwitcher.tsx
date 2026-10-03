@@ -32,7 +32,7 @@ type Props = {
   language: Locale;
   onSelect: (locale: Locale) => void;
   /**
-   * "pill" (navbar): a globe pill that opens a small floating panel with every language code.
+   * "pill" (navbar): a globe pill that opens a single column of same-size, lighter pills with every language code.
    * "inline" (inside dialogs): a small "Language: EN" link that expands the same codes in the
    * page flow, so a scrolling card cannot clip it. Both show all codes at once: no scrolling,
    * no search.
@@ -165,8 +165,8 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
           }}
           className={
             inline
-              ? "relative mx-auto mt-1 grid w-full max-w-[220px] grid-cols-4 justify-items-center gap-y-0.5"
-              : "absolute right-0 top-[calc(100%+8px)] z-[1100] grid w-[184px] grid-cols-4 gap-1 rounded-2xl border border-[var(--cm-line-84)] bg-white p-1.5 shadow-[0_12px_32px_rgba(23,23,23,0.14)]"
+              ? "relative mx-auto mt-1 flex w-full flex-col items-center gap-0.5"
+              : "absolute left-0 right-0 top-[calc(100%+6px)] z-[1100] flex flex-col gap-1"
           }
         >
           {LANGUAGE_OPTIONS.map((option) => {
@@ -181,10 +181,13 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
                 autoFocus={selected}
                 onClick={() => pick(option)}
                 className={
-                  "rounded-lg px-1.5 py-1 text-[11px] font-extrabold tracking-[0.08em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] " +
+                  (inline
+                    ? "inline-flex min-w-[96px] items-center justify-center rounded-full px-2.5 py-1 text-[12px] font-semibold "
+                    : "flex h-[38px] items-center justify-center rounded-full border border-[var(--cm-line-84)] bg-white/90 text-[11px] font-extrabold uppercase tracking-[0.08em] shadow-[0_6px_16px_rgba(23,23,23,0.08)] ") +
+                  "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] " +
                   (selected
-                    ? "bg-[var(--chan-surface)] text-[var(--chan-blue)]"
-                    : "text-[var(--chan-muted)] hover:bg-[var(--chan-surface)] hover:text-[var(--chan-ink)]")
+                    ? "text-[var(--chan-ink)]"
+                    : "text-[var(--chan-muted)] hover:border-[var(--chan-blue)] hover:text-[var(--chan-ink)]" + (inline ? " hover:bg-[var(--chan-surface)]" : ""))
                 }
               >
                 {option.code}
