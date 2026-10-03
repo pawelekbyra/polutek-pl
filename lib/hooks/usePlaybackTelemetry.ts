@@ -28,20 +28,20 @@ export type SendPlaybackEvent = (
 
 /**
  * Posts playback telemetry (heartbeats, progress, view events) for the active
- * playback session. On session-level 403s it refreshes the playback plan once
- * (a refresh mints a new session, so retrying on every failure would loop
- * forever when the server keeps rejecting) and stops sending entirely after
- * 3 consecutive rejections — playback itself keeps working either way.
+ * playback session. On session-level 403s it renews the playback plan once,
+ * silently (the server keeps the session when it may, or opens a new one; the
+ * player is not remounted), and stops sending entirely after 3 consecutive
+ * rejections — playback itself keeps working either way.
  */
 export function usePlaybackTelemetry({
     videoId,
     playbackSessionId,
-    refreshPlaybackPlan,
+    renewPlaybackPlan,
     playerRef,
 }: {
     videoId: string;
     playbackSessionId?: string;
-    refreshPlaybackPlan: () => void;
+    renewPlaybackPlan: () => unknown;
     playerRef: RefObject<PlaybackPositionSource | null>;
 }): SendPlaybackEvent {
     const consecutiveFailures = useRef(0);
@@ -78,7 +78,7 @@ export function usePlaybackTelemetry({
                 const { error } = await res.json().catch(() => ({ error: null }));
                 if (RECOVERABLE_SESSION_ERRORS.includes(error) && !sessionRecoveryAttempted.current) {
                     sessionRecoveryAttempted.current = true;
-                    refreshPlaybackPlan();
+                    void renewPlaybackPlan();
                 } else if (consecutiveFailures.current >= 3) {
                     trackingDisabled.current = true;
                 }
@@ -92,5 +92,5 @@ export function usePlaybackTelemetry({
             console.warn('Failed to send playback event', type, e);
             return { ok: false };
         }
-    }, [videoId, playbackSessionId, refreshPlaybackPlan, playerRef]);
+    }, [videoId, playbackSessionId, renewPlaybackPlan, playerRef]);
 }

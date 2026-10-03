@@ -66,7 +66,6 @@ export function generateCSP() {
   const scriptHosts = [
     ...googleAuthHosts.map(h => `https://${h}`),
     `https://${captchaHost}`,
-    'https://cdn.jsdelivr.net',
     // Stripe.js and its sub-frames (hosts required by Stripe's CSP guide; 3-D Secure uses hooks.stripe.com).
     'https://js.stripe.com',
     'https://*.js.stripe.com',
