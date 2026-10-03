@@ -1,12 +1,12 @@
-# Centrum obslugi (Chatwoot CE, MIT) na serwerku. Zyje na serwerze w /opt/serwerek/apps/chatwoot/.
-# Uklad tam:  docker-compose.yml  .env (600, sekrety, NIE w repo)  README (kopia runbooka)
+# PP Support (wspolna skrzynka obslugi) na serwerku. Zyje na serwerze w /opt/serwerek/apps/chatwoot/ (sciezka historyczna, NIE zmieniac: dane i sekrety).
+# Uklad tam:  docker-compose.yml  .env (600, sekrety, NIE w repo)  overrides/ (nadpisania marki, ten katalog z repo)
 # Wszystko slucha tylko na 127.0.0.1; droga publiczna: Cloudflare Tunnel -> 127.0.0.1:3010 (za Access).
 # Runbook: docs/operations/SUPPORT-CENTER.md. Architektura: docs/architecture/support-center.md.
 # Limity pamieci sa twarde: serwer ma 4 GB RAM i dzieli je z aplikacja, baza, Redisem i enkoderem wideo.
-name: chatwoot
+name: pp-support
 
-x-chatwoot: &chatwoot
-  image: chatwoot/chatwoot:v4.18.0-ce # wersja CE (czysty MIT)
+x-pp-support: &pp-support
+  image: pp-support:4.18.0 # lokalny tag obrazu opisanego w docs/operations/THIRD_PARTY_NOTICES.md (tam tez aktualizacja)
   restart: unless-stopped
   env_file: ./.env
   depends_on:
@@ -16,7 +16,21 @@ x-chatwoot: &chatwoot
       condition: service_healthy
   volumes:
     - /opt/serwerek/data/chatwoot/storage:/app/storage
-  environment: &chatwoot-env
+    # Marka PP Support: pojedyncze pliki nadpisywane woluminami (read-only), zob. SUPPORT-CENTER.md "Marka".
+    - ./overrides/config/schedule.yml:/app/config/schedule.yml:ro
+    - ./overrides/config/locales/zz_pp_support.yml:/app/config/locales/zz_pp_support.yml:ro
+    - ./overrides/views/super_admin/application/_javascript.html.erb:/app/app/views/super_admin/application/_javascript.html.erb:ro
+    - ./overrides/views/super_admin/application/_navigation.html.erb:/app/app/views/super_admin/application/_navigation.html.erb:ro
+    - ./overrides/views/super_admin/devise/sessions/new.html.erb:/app/app/views/super_admin/devise/sessions/new.html.erb:ro
+    - ./overrides/views/mailers/account_notification/account_deletion_for_inactivity.liquid:/app/app/views/mailers/administrator_notifications/account_notification_mailer/account_deletion_for_inactivity.liquid:ro
+    - ./overrides/views/mailers/account_notification/account_deletion_user_initiated.liquid:/app/app/views/mailers/administrator_notifications/account_notification_mailer/account_deletion_user_initiated.liquid:ro
+    - ./overrides/views/mailers/account_compliance/account_deleted.liquid:/app/app/views/mailers/administrator_notifications/account_compliance_mailer/account_deleted.liquid:ro
+    - ./overrides/public/brand-assets/logo.svg:/app/public/brand-assets/logo.svg:ro
+    - ./overrides/public/brand-assets/logo_dark.svg:/app/public/brand-assets/logo_dark.svg:ro
+    - ./overrides/public/brand-assets/logo_thumbnail.svg:/app/public/brand-assets/logo_thumbnail.svg:ro
+    - ./overrides/public/manifest.json:/app/public/manifest.json:ro
+    - ./overrides/public/android-icon-192x192.png:/app/public/android-icon-192x192.png:ro
+  environment: &pp-support-env
     NODE_ENV: production
     RAILS_ENV: production
     INSTALLATION_ENV: docker
@@ -48,11 +62,13 @@ x-chatwoot: &chatwoot
     SMTP_DOMAIN: pawelperfect.com
     SMTP_ENABLE_STARTTLS_AUTO: "true"
     SMTP_OPENSSL_VERIFY_MODE: peer
-    MAILER_SENDER_EMAIL: "Obsluga PAWELPERFECT.COM <support@pawelperfect.com>"
+    MAILER_SENDER_EMAIL: "PP Support <support@pawelperfect.com>"
+    # Bez telemetrii do serwerow producenta oprogramowania (metryki instancji, zdarzenia). Push mobilny: relay zostaje, zob. SUPPORT-CENTER.md.
+    DISABLE_TELEMETRY: "true"
 
 services:
   db:
-    # pgvector jest wymagany przez migracje Chatwoota; produkcyjny Postgres aplikacji go nie ma i go nie ruszamy.
+    # pgvector jest wymagany przez migracje; produkcyjny Postgres strony go nie ma i go nie ruszamy. Nazwy bazy/roli "chatwoot" sa historyczne i NIE moga byc zmieniane (dane).
     image: pgvector/pgvector:0.8.7-pg17
     restart: unless-stopped
     environment:
@@ -86,7 +102,7 @@ services:
     mem_limit: 128m
 
   web:
-    <<: *chatwoot
+    <<: *pp-support
     entrypoint: docker/entrypoints/rails.sh
     command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
     ports:
@@ -100,13 +116,13 @@ services:
       start_period: 90s
 
   sidekiq:
-    <<: *chatwoot
+    <<: *pp-support
     command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
     mem_limit: 640m
 
   prepare:
     # Jednorazowo: docker compose --profile tools run --rm prepare   (migracje + seed przy pierwszym uruchomieniu)
-    <<: *chatwoot
+    <<: *pp-support
     profiles: ["tools"]
     entrypoint: docker/entrypoints/rails.sh
     command: ["bundle", "exec", "rails", "db:chatwoot_prepare"]

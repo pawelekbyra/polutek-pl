@@ -11,7 +11,7 @@ import { randomUUID } from "node:crypto";
 
 /**
  * Automatic mail goes out from a no-reply address, but people do reply to it. Replies must land in
- * the real support mailbox (support@ alias, forwarded to the Chatwoot inbox), so every send carries this Reply-To.
+ * the real support mailbox (support@ alias, forwarded to the PP Support inbox), so every send carries this Reply-To.
  * Override with EMAIL_REPLY_TO; the default is the single public contact address.
  */
 /**

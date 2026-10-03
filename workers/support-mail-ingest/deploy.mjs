@@ -28,11 +28,11 @@ const metadata = {
   main_module: 'worker.mjs',
   compatibility_date: '2026-09-01',
   bindings: [
-    { type: 'plain_text', name: 'CHATWOOT_INGEST_URL', text: e.SUPPORT_INGEST_URL || 'https://support.pawelperfect.com/rails/action_mailbox/relay/inbound_emails' },
+    { type: 'plain_text', name: 'SUPPORT_INGEST_URL', text: e.SUPPORT_INGEST_URL || 'https://support.pawelperfect.com/rails/action_mailbox/relay/inbound_emails' },
     { type: 'plain_text', name: 'ARCHIVE_TO', text: e.SUPPORT_ARCHIVE_TO || 'pawel.perfect@gmail.com' },
     { type: 'plain_text', name: 'ACCESS_CLIENT_ID', text: e.SUPPORT_ACCESS_CLIENT_ID },
     { type: 'secret_text', name: 'ACCESS_CLIENT_SECRET', text: e.SUPPORT_ACCESS_CLIENT_SECRET },
-    { type: 'secret_text', name: 'CHATWOOT_INGEST_PASSWORD', text: e.SUPPORT_INGEST_PASSWORD },
+    { type: 'secret_text', name: 'INGEST_PASSWORD', text: e.SUPPORT_INGEST_PASSWORD },
   ],
   observability: { enabled: true },
 };
