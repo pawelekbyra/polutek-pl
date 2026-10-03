@@ -44,6 +44,9 @@ export function generateCSP() {
     ...parseMediaHosts(process.env.ALLOWED_COMMENT_IMAGE_HOSTS),
     ...parseMediaHosts(process.env.ALLOWED_THUMBNAIL_HOSTS),
     ...parseMediaHosts(process.env.NEXT_PUBLIC_BLOB_PUBLIC_HOST),
+    // Public thumbnails of published videos are served straight from the public R2 bucket.
+    'thumbs.pawelperfect.pl',
+    ...parseMediaHosts(process.env.NEXT_PUBLIC_R2_PUBLIC_HOST),
   ])).map(h => `https://${h}`).join(' ');
 
   const connectHosts = Array.from(new Set([
@@ -64,7 +67,9 @@ export function generateCSP() {
     ...googleAuthHosts.map(h => `https://${h}`),
     `https://${captchaHost}`,
     'https://cdn.jsdelivr.net',
+    // Stripe.js and its sub-frames (hosts required by Stripe's CSP guide; 3-D Secure uses hooks.stripe.com).
     'https://js.stripe.com',
+    'https://*.js.stripe.com',
   ].join(' ');
   // Real, permanent CSP weakness — script-src/style-src allow 'unsafe-inline' in every
   // environment, not just development. Written as literal strings (not built via string
@@ -75,6 +80,8 @@ export function generateCSP() {
   const frameHosts = Array.from(new Set([
     ...googleAuthHosts,
     'js.stripe.com',
+    '*.js.stripe.com',
+    'hooks.stripe.com',
     captchaHost,
   ])).map(h => `https://${h}`).join(' ');
 
@@ -83,6 +90,7 @@ export function generateCSP() {
     "base-uri 'self'",
     "object-src 'none'",
     "frame-ancestors 'none'",
+    "form-action 'self'",
     `script-src 'self' ${scriptHosts} ${inlineDirective}${devScriptSource}`,
     `script-src-elem 'self' ${scriptHosts} ${inlineDirective}`,
     `connect-src 'self' ${connectHosts}`,

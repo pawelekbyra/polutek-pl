@@ -18,17 +18,25 @@ const isPublicRoute = createRouteMatcher([
   '/pl/channel/(.*)',
   '/pl/regulamin',
   '/pl/polityka-prywatnosci',
+  '/pl/terms',
+  '/pl/privacy-policy',
   '/en',
   '/en/search',
   '/en/watch/(.*)',
   '/en/channel/(.*)',
   '/en/terms',
   '/en/privacy-policy',
+  '/en/regulamin',
+  '/en/polityka-prywatnosci',
+  // Bare paths are served from their /pl counterpart (see polishRewriteUrl) and pass the same gate,
+  // so every public page is listed here without a prefix too. Legal documents are always public.
   '/search',
   '/watch/(.*)',
   '/channel/(.*)',
   '/regulamin',
   '/polityka-prywatnosci',
+  '/terms',
+  '/privacy-policy',
   // PWA manifest: the middleware matcher excludes .webmanifest but not .json,
   // so /manifest.json must be explicitly public or anonymous visitors get 404.
   '/manifest.json',
@@ -78,7 +86,9 @@ const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);
 // - /sso-callback and /reset-password: top-level routes with no [locale]-scoped counterpart
 //   (the Google/OAuth return page and the password-reset e-mail link target). Without this
 //   exemption the rewrite sent them to /pl/..., which has no matching page and 404s.
-const LOCALE_EXEMPT_PATHS = new Set(['/manifest.json', '/robots.txt', '/sitemap.xml', '/sso-callback', '/reset-password']);
+// - /unsubscribe: the target of every e-mail unsubscribe link and List-Unsubscribe header; the page
+//   lives at the top level only.
+const LOCALE_EXEMPT_PATHS = new Set(['/manifest.json', '/robots.txt', '/sitemap.xml', '/sso-callback', '/reset-password', '/unsubscribe']);
 
 function shouldRewriteForPolish(pathname: string): boolean {
   if (LOCALE_EXEMPT_PATHS.has(pathname)) return false;
@@ -95,17 +105,13 @@ function rewriteForPolish(pathname: string, _search: string): string {
   return pathname === "/" ? "/pl" : `/pl${pathname}`;
 }
 
-function rewriteLocale(req: NextRequest) {
+/** The /pl-prefixed URL a bare (non-prefixed) path is served from, or null when no rewrite applies. */
+function polishRewriteUrl(req: NextRequest): URL | null {
   const pathname = req.nextUrl.pathname;
-
-  // Rewrite non-prefixed Polish routes to localized versions
-  if (shouldRewriteForPolish(pathname)) {
-    const rewriteUrl = new URL(req.nextUrl);
-    rewriteUrl.pathname = rewriteForPolish(pathname, "");
-    return NextResponse.rewrite(rewriteUrl);
-  }
-
-  return null;
+  if (!shouldRewriteForPolish(pathname)) return null;
+  const rewriteUrl = new URL(req.nextUrl);
+  rewriteUrl.pathname = rewriteForPolish(pathname, "");
+  return rewriteUrl;
 }
 
 /**
@@ -134,12 +140,6 @@ async function sessionRateKey(req: NextRequest): Promise<string | null> {
 }
 
 export default async function middleware(req: NextRequest) {
-  // Handle Polish URL rewriting (non-prefixed to /pl-prefixed)
-  const rewriteResponse = rewriteLocale(req);
-  if (rewriteResponse) {
-    return rewriteResponse;
-  }
-
   // Account mutations (nickname, avatar, language, deletion, ...) get the same cross-origin guard
   // as the admin API. Better Auth's own endpoints check the origin themselves.
   if (req.nextUrl.pathname.startsWith('/api/user/')) {
@@ -199,11 +199,12 @@ export default async function middleware(req: NextRequest) {
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set('x-request-id', requestId);
 
-  const response = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+  // Bare paths ("/", "/regulamin", ...) are served from their /pl counterpart. The rewrite happens
+  // here, after the gates above, so a rewritten page gets the same session gate, request id and
+  // security headers as every other response.
+  const rewriteUrl = polishRewriteUrl(req);
+  const init = { request: { headers: requestHeaders } };
+  const response = rewriteUrl ? NextResponse.rewrite(rewriteUrl, init) : NextResponse.next(init);
 
   response.headers.set('x-request-id', requestId);
   response.headers.set('Content-Security-Policy', generateCSP());

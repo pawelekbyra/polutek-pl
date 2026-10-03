@@ -19,6 +19,26 @@ describe("return path (F-01)", () => {
     }
   });
 
+  it("rejects paths that a URL parser would turn into another origin", () => {
+    const tab = String.fromCharCode(9);
+    const newline = String.fromCharCode(10);
+    const carriageReturn = String.fromCharCode(13);
+    for (const bad of [
+      `/${tab}/evil.example`,
+      `/${newline}/evil.example`,
+      `/${carriageReturn}/evil.example`,
+      `/${tab}${tab}/evil.example/path`,
+      "/ /evil.example",
+      `/ok${String.fromCharCode(0)}`,
+    ]) {
+      expect(sanitizeReturnPath(bad)).toBe("/");
+    }
+    for (const good of ["/admin/videos?edit=1#top", "/pl/watch/film-1", "/en?v=abc&x=%20y", "/a/b//c"]) {
+      expect(sanitizeReturnPath(good)).toBe(good);
+      expect(new URL(sanitizeReturnPath(good), "https://www.pawelperfect.com").origin).toBe("https://www.pawelperfect.com");
+    }
+  });
+
   it("peek ignores a missing or '/' path and never returns an unsafe stored value", () => {
     expect(peekReturnPath()).toBeNull();
     rememberReturnPath("/");

@@ -4,9 +4,21 @@ export const SSO_RETURN_STORAGE_KEY = "sso-return-to";
 /** How long /sso-callback waits for the session before showing a way out instead of a spinner. */
 export const SSO_CALLBACK_TIMEOUT_MS = 8000;
 
+// Any origin works here: it only has to be one a return path can never legitimately point at.
+const RETURN_PATH_BASE = "https://return-path.invalid";
+
 /** Only same-site relative paths are allowed; anything else falls back to "/". */
 export function sanitizeReturnPath(raw: string | null | undefined): string {
   if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return "/";
+  // URL parsers drop tabs and newlines, so a path with a tab after the first slash would resolve to
+  // "//evil.example". No legitimate path contains control characters or whitespace.
+  if (/[\x00-\x20\x7f]/.test(raw)) return "/";
+  // Final check with the same parser the browser uses for location.replace().
+  try {
+    if (new URL(raw, RETURN_PATH_BASE).origin !== RETURN_PATH_BASE) return "/";
+  } catch {
+    return "/";
+  }
   if (/^\/sso-callback(?:[/?#]|$)/.test(raw)) return "/";
   return raw;
 }
