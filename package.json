@@ -41,7 +41,7 @@
     "e2e": "tsx scripts/validate-e2e-env.ts && playwright test",
     "e2e:list": "playwright test --list",
     "e2e:install": "playwright install chromium",
-    "test:integration:postgres": "prisma migrate deploy && prisma generate && npm run db:smoke",
+    "test:integration:postgres": "prisma migrate deploy && prisma generate && npm run db:smoke && vitest run --config vitest.postgres.config.ts",
     "launch:diagnose": "tsx scripts/launch-diagnose.ts",
     "audit:high": "node scripts/audit-high.mjs"
   },
