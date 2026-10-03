@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { auth } from "@/lib/auth/server";
 import { prisma } from "@/lib/prisma";
-import { getActorFromAuth, requireAdminSession } from "@/lib/api/auth";
+import { getActorFromAuth, requireAdminActor } from "@/lib/api/auth";
 import { createAppContextFromRequest } from "@/lib/api/app-context-factory";
 import { requireAdminForApi } from "@/lib/auth-utils";
 
@@ -51,10 +51,7 @@ describe("canonical server actor resolution", () => {
       isDeleted: false,
     } as never);
 
-    await expect(requireAdminSession()).resolves.toMatchObject({
-      userId: "admin_1",
-      role: "admin",
-    });
+    await expect(requireAdminActor()).resolves.toEqual({ type: "admin", userId: "admin_1" });
     await expect(
       requireAdminForApi("TEST_DB_ADMIN_NO_CLAIM"),
     ).resolves.toMatchObject({ adminUserId: "admin_1", response: null });

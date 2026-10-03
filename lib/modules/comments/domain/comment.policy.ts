@@ -9,6 +9,8 @@ export class CommentPolicy {
   static canInteractWithVideo(actor: Actor, videoAccess: AccessDecisionDto): boolean {
     if (actor.type === 'system') return true;
     if (actor.type === 'guest') return false;
+    // No comments or reactions under a placeholder name (audit AUTH-11): finish onboarding first.
+    if (CommentPolicy.isOnboardingPending(actor)) return false;
 
     // Admin bypass is usually handled within checkVideoAccess (returning hasAccess: true)
     // but we can be explicit here if needed.
@@ -33,8 +35,13 @@ export class CommentPolicy {
     return videoAccess.hasAccess;
   }
 
+  static isOnboardingPending(actor: Actor): boolean {
+    return actor.type === 'user' && actor.onboardingPending === true;
+  }
+
   static canUpdateComment(actor: Actor, commentAuthorId: string): boolean {
     if (actor.type === 'admin') return true;
+    if (CommentPolicy.isOnboardingPending(actor)) return false;
     if (actor.type === 'user') {
         return actor.userId === commentAuthorId;
     }
