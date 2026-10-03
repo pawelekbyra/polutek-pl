@@ -1,7 +1,4 @@
 {
   "buildCommand": "npm run vercel-build",
-  "crons": [
-    { "path": "/api/cron/prune-playback-sessions", "schedule": "0 5 * * *" },
-    { "path": "/api/cron/sync-public-thumbnails", "schedule": "0 6 * * *" }
-  ]
+  "crons": []
 }
