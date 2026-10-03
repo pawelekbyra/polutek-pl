@@ -5,28 +5,17 @@ import { PaymentPolicy } from "../domain/payment.policy";
 import { PaymentError } from "../domain/payment.errors";
 import { SupportedCurrency } from "@/lib/constants";
 import { recordAuditEvent } from "@/lib/modules/audit";
-import { CurrencyLimitDto, getPaymentSettings } from "./get-payment-settings.use-case";
+import { CurrencyLimit, getPaymentCurrencyLimits } from "@/lib/payments/currency-settings";
 
 export interface UpdatePaymentSettingsInput {
-  limits: Array<{
-    currency: SupportedCurrency;
-    minAmount: number;
-    // Optional: patron gate price and free-amount patron-box minimum (major units).
-    patronThreshold?: number | null;
-    patronBoxMin?: number | null;
-  }>;
-}
-
-function toMinorOrNull(value: number | null | undefined): number | null {
-  if (value === null || value === undefined) return null;
-  if (!Number.isFinite(value) || value <= 0) return null;
-  return Math.round(value * 100);
+  /** The minimum tip per currency, in major units. */
+  limits: Array<{ currency: SupportedCurrency; minAmount: number }>;
 }
 
 export async function updatePaymentSettings(
   input: UpdatePaymentSettingsInput,
   ctx: AppContext
-): Promise<UseCaseResult<Record<SupportedCurrency, CurrencyLimitDto>, PaymentError>> {
+): Promise<UseCaseResult<Record<SupportedCurrency, CurrencyLimit>, PaymentError>> {
   if (!PaymentPolicy.canManagePaymentSettings(ctx.actor)) {
     return fail(new PaymentError("Forbidden: Cannot manage payment settings"));
   }
@@ -35,24 +24,16 @@ export async function updatePaymentSettings(
 
   await ctx.db.writeTransaction(async (tx) => {
     for (const limit of input.limits) {
-      await repo.upsertCurrencySetting(
-        limit.currency,
-        {
-          minAmountMinor: Math.round(limit.minAmount * 100),
-          patronThresholdMinor: toMinorOrNull(limit.patronThreshold),
-          patronBoxMinMinor: toMinorOrNull(limit.patronBoxMin),
-        },
-        tx,
-      );
+      await repo.upsertCurrencyMinimum(limit.currency, Math.round(limit.minAmount * 100), tx);
     }
 
     await recordAuditEvent(ctx, {
       action: 'PAYMENT_SETTINGS_UPDATED',
       targetType: 'PaymentCurrencySetting',
       targetId: 'global',
-      metadata: { currencies: input.limits.map((l) => l.currency) },
+      metadata: { minimums: input.limits.map((l) => ({ currency: l.currency, minAmount: l.minAmount })) },
     }, tx);
   });
 
-  return getPaymentSettings(ctx);
+  return ok(await getPaymentCurrencyLimits());
 }

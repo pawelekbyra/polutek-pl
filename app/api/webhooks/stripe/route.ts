@@ -1,37 +1,23 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { createScopedLogger } from "@/lib/logger";
-import { handleStripeWebhook } from '@/lib/modules/payments';
+import { logger } from "@/lib/logger";
+import { handleStripeWebhook, PaymentError } from '@/lib/modules/payments';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { handleApiError } from '@/lib/errors';
 import { getCorrelationId } from '@/lib/utils/correlation';
 
-function isSignatureFailure(error: unknown) {
-  if (!(error instanceof Error)) return false;
+export const dynamic = 'force-dynamic';
 
-  return error.message.toLowerCase().includes('signature');
-}
-
-function webhookFailureResponse(error: unknown) {
-  if (isSignatureFailure(error)) {
-    return handleApiError(error);
-  }
-
-  return NextResponse.json(
-    {
-      error: 'PAYMENT_WEBHOOK_PROCESSING_ERROR',
-      message: 'Webhook processing failed',
-    },
-    { status: 500 }
-  );
-}
-
+/**
+ * Stripe → app. Public route (middleware `isPublicRoute`), authenticated by the Stripe signature
+ * over the raw body, so the body is read once with `req.text()` and never parsed before
+ * verification. 2xx tells Stripe to stop; any other status makes it retry (up to 3 days).
+ */
 export async function POST(req: NextRequest) {
-  const requestId = getCorrelationId() || req.headers.get('stripe-signature')?.slice(-8) || 'stripe-webhook';
-  const scopedLogger = createScopedLogger(requestId);
+  const requestId = getCorrelationId() || req.headers.get('x-request-id') || 'stripe-webhook';
   const signature = req.headers.get('stripe-signature');
   const body = await req.text();
 
   if (!signature) {
+    logger.warn('[StripeWebhook] Rejected: request without a stripe-signature header.');
     return NextResponse.json({ error: 'Missing stripe-signature' }, { status: 400 });
   }
 
@@ -43,13 +29,24 @@ export async function POST(req: NextRequest) {
     const result = await handleStripeWebhook({ body, signature }, ctx);
 
     if (!result.ok) {
-      scopedLogger.error('Stripe Webhook Processing Error:', result.error);
-      return webhookFailureResponse(result.error);
+      const error = result.error;
+      const status = error instanceof PaymentError ? error.statusCode : 500;
+      // Only the error code goes back to Stripe; details stay in our log.
+      return NextResponse.json(
+        {
+          error: error instanceof PaymentError ? error.code : 'PAYMENT_WEBHOOK_PROCESSING_ERROR',
+          message: status >= 500 ? 'Webhook processing failed' : error.message,
+        },
+        { status },
+      );
     }
 
     return NextResponse.json(result.data);
   } catch (err: unknown) {
-    scopedLogger.error('Stripe Webhook Route Error:', err);
-    return handleApiError(err);
+    logger.error('[StripeWebhook] Unexpected route error:', err);
+    return NextResponse.json(
+      { error: 'PAYMENT_WEBHOOK_PROCESSING_ERROR', message: 'Webhook processing failed' },
+      { status: 500 },
+    );
   }
 }

@@ -1,18 +1,14 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { PaymentStatus } from "@prisma/client";
-import { PaymentDto } from "../domain/payment.dto";
 import { PaymentRepository } from "../infrastructure/payment.repository";
 import { PaymentError } from "../domain/payment.errors";
 import { logger } from "@/lib/logger";
-import { recordMetric, recordAlert } from "@/lib/observability";
-import { normalizePaymentTotals } from "@/lib/modules/users";
-import { grantPatron } from "@/lib/modules/patron";
-import { getPaymentCurrencyLimits } from "@/lib/payments/currency-settings";
-import { SupportedCurrency } from "@/lib/constants";
-import { PaymentPolicy } from "../domain/payment.policy";
+import { recordAlert } from "@/lib/observability";
+import { sendSupportThanksNotification } from "@/lib/modules/patron";
 import { sendBecomePatronEmail, sendDonationThankYouEmail } from "@/lib/modules/email";
 import { recordAuditEvent } from "@/lib/modules/audit";
+import { ensureSupporterGrant } from "./supporter-grant";
 
 export interface FulfillPaymentInput {
   paymentId: string;
@@ -22,8 +18,20 @@ export interface FulfillPaymentInput {
   metadataUserId?: string | null;
   amountMinor: number;
   currency: string;
+  /**
+   * False skips the thank-you e-mail and notification (used when old payments are recovered
+   * long after the fact, so nobody gets a "thanks" for a tip from months ago).
+   */
+  notifyPayer?: boolean;
 }
 
+/**
+ * The one canonical, replay-safe path that records a tip Stripe reports as `succeeded`
+ * (webhook, payment-status fast path, reconciliation cron). Validates the Stripe data against
+ * the local row, moves it to SUCCEEDED with a CAS (also from FAILED/CANCELED, see
+ * PaymentRepository.fulfillPaymentWithCAS), adds the supporter marker and, after the commit,
+ * thanks the payer exactly once.
+ */
 export async function fulfillPayment(
   input: FulfillPaymentInput,
   ctx: AppContext
@@ -31,7 +39,7 @@ export async function fulfillPayment(
   const repo = new PaymentRepository();
 
   try {
-    const result = await ctx.db.writeTransaction(async (tx): Promise<any> => {
+    const result = await ctx.db.writeTransaction(async (tx) => {
       if (!input.paymentId) throw new Error('PAYMENT_ID_MISSING');
       const payment = await repo.findById(input.paymentId, tx);
       if (!payment) {
@@ -54,14 +62,13 @@ export async function fulfillPayment(
         throw new Error(`PAYMENT_CURRENCY_MISMATCH: Expected ${payment.currency}, got ${input.currency}`);
       }
 
-      const user = await repo.findUserWithPaymentTotalsAndActivePatronGrants(payment.userId, tx);
+      const user = await repo.findUser(payment.userId, tx);
       if (!user) throw new Error('USER_NOT_FOUND');
 
-      // Atomic validated transition PENDING -> SUCCEEDED. All mutable Stripe inputs were
-      // checked against the local Payment before any status, totals, or grant mutation.
-      // If checkout created the Stripe intent but the local stripeIntentId write failed,
-      // recover the webhook-provided intent id in the same CAS update that fulfills payment.
-      const count = await repo.fulfillPendingPaymentWithCAS({
+      // All mutable Stripe inputs were checked against the local Payment above. If checkout
+      // created the Stripe intent but the local stripeIntentId write failed, the same CAS update
+      // recovers the intent id.
+      const count = await repo.fulfillPaymentWithCAS({
         id: payment.id,
         currentStripeIntentId: payment.stripeIntentId,
         stripeIntentId,
@@ -70,84 +77,25 @@ export async function fulfillPayment(
       }, tx);
 
       if (count === 0) {
-        if (payment.status !== PaymentStatus.SUCCEEDED) {
-          logger.info(`[FulfillPayment] Payment ${input.paymentId} already fulfilled or not in a fulfillable state.`);
-          return null;
-        }
-        logger.info(`[FulfillPayment] Payment ${input.paymentId} already SUCCEEDED; proceeding with replay-safe sync.`);
-        return {
-          userId: user.id,
-          email: user.email,
-          language: (user.language as 'pl' | 'en') || 'pl',
-          isPatron: user.patronGrants.length > 0,
-          normalizedTotal: normalizePaymentTotals(user.paymentTotals),
-          becamePatronNow: false,
-          isFirstFulfillment: false,
-          wasEligible: false
-        };
+        logger.info(`[FulfillPayment] Payment ${payment.id} already recorded (status ${payment.status}); nothing to do.`);
+        return null;
       }
 
       await repo.incrementUserPaymentTotal(payment.userId, payment.currency, payment.amountMinor, tx);
 
-      const limits = await getPaymentCurrencyLimits();
-      const currency = payment.currency.toUpperCase() as SupportedCurrency;
-      // Patron eligibility uses the resolved per-currency gate price (admin setting → env → floor),
-      // computed centrally in getPaymentCurrencyLimits so UI and fulfillment stay in lockstep.
-      const thresholdMinor = limits[currency]?.patronThresholdMinor;
+      // "wpłacił = patron": every successful tip marks the payer, no amount threshold.
+      const { created } = await ensureSupporterGrant({ userId: payment.userId, paymentId: payment.id }, ctx, tx);
 
-      const alreadyPatron = user.patronGrants.length > 0;
-
-      const eligibility = PaymentPolicy.evaluatePaymentPatronEligibility({
-        status: PaymentStatus.SUCCEEDED,
-        amountMinor: payment.amountMinor,
-        currency: payment.currency,
-        thresholdMinor,
-      });
-
-      // A user with an active grant is already a permanent patron — PatronGrant has no
-      // per-user uniqueness constraint (only per-paymentId), so without this guard a second
-      // qualifying tip (e.g. an existing patron's optional extra support) would create a
-      // redundant PatronGrant row and re-trigger the "become a patron" welcome email.
-      const shouldGrant = eligibility.eligible && !alreadyPatron;
-
-      let isPatron = alreadyPatron;
-      let normalizedTotal = normalizePaymentTotals(user.paymentTotals);
-      let becamePatronNow = false;
-
-      if (shouldGrant) {
-        const grantResult = await grantPatron({
-          userId: payment.userId,
-          source: 'stripe_tip',
-          paymentId: payment.id,
-          note: 'Granted after successful one-time Stripe tip',
-        }, ctx, tx);
-
-        if (!grantResult.ok) {
-          throw new Error(`PATRON_GRANT_FAILED: ${grantResult.error.message}`);
-        }
-
-        isPatron = grantResult.data.isPatron;
-        normalizedTotal = grantResult.data.normalizedTotal;
-        becamePatronNow = true;
-      } else {
-        const reason = alreadyPatron ? 'ALREADY_PATRON' : eligibility.code;
-        logger.info(`[FulfillPayment] Payment ${payment.id} did not trigger a new PatronGrant: ${reason}`);
-        const updatedUser = await repo.findUserWithPaymentTotalsAndActivePatronGrants(payment.userId, tx);
-        if (updatedUser) {
-          normalizedTotal = normalizePaymentTotals(updatedUser.paymentTotals);
-          isPatron = updatedUser.patronGrants.length > 0;
-        }
+      if (payment.status !== PaymentStatus.PENDING) {
+        logger.warn(`[FulfillPayment] Payment ${payment.id} recovered from ${payment.status}: Stripe reports it succeeded.`);
+        recordAlert('payment.recovered_from_terminal_status', { paymentId: payment.id, previousStatus: payment.status });
       }
 
       return {
         userId: user.id,
         email: user.email,
-        language: (user.language as 'pl' | 'en') || 'pl',
-        isPatron,
-        normalizedTotal,
-        becamePatronNow,
-        isFirstFulfillment: count > 0,
-        wasEligible: shouldGrant
+        language: user.language === 'en' ? 'en' as const : 'pl' as const,
+        becameSupporterNow: created,
       };
     });
 
@@ -155,35 +103,49 @@ export async function fulfillPayment(
       return ok({ isFirstFulfillment: false });
     }
 
-    if (result.isFirstFulfillment) {
-      const { email, language, userId, becamePatronNow, wasEligible, isPatron } = result;
-      const amount = input.amountMinor / 100;
-      const currency = input.currency.toUpperCase();
-      const shouldSendPatronEmail = becamePatronNow || (wasEligible && isPatron);
-
-      try {
-        if (shouldSendPatronEmail) {
-          await sendBecomePatronEmail(email, amount, currency, language);
-        } else {
-          await sendDonationThankYouEmail(email, amount, currency, language);
-        }
-      } catch (error) {
-        logger.error(`[EMAIL_FAILED] Payment fulfillment email failed for ${userId}`, error);
-        await recordAuditEvent(ctx, {
-          action: "EMAIL_SEND_FAILED",
-          targetType: "Payment",
-          targetId: input.paymentId,
-          metadata: {
-            emailType: shouldSendPatronEmail ? "become_patron" : "donation_thank_you",
-            error: error instanceof Error ? error.message : String(error),
-          },
-        });
-      }
+    if (input.notifyPayer !== false) {
+      await thankPayer(input, result, ctx);
     }
 
-    return ok({ isFirstFulfillment: result.isFirstFulfillment });
+    return ok({ isFirstFulfillment: true });
   } catch (error: any) {
     logger.error(`[FulfillPayment] Error fulfilling payment ${input.paymentId}:`, error);
     return fail(new PaymentError(error.message || 'Fulfillment failed'));
+  }
+}
+
+/**
+ * Runs after the commit and only for the first fulfilment (the CAS guarantees "at most once").
+ * Failures never undo the recorded payment: they are logged and audited.
+ */
+async function thankPayer(
+  input: FulfillPaymentInput,
+  payer: { userId: string; email: string; language: 'pl' | 'en'; becameSupporterNow: boolean },
+  ctx: AppContext,
+) {
+  const amount = input.amountMinor / 100;
+  const currency = input.currency.toUpperCase();
+
+  if (payer.becameSupporterNow) {
+    await sendSupportThanksNotification(payer.userId);
+  }
+
+  try {
+    if (payer.becameSupporterNow) {
+      await sendBecomePatronEmail(payer.email, amount, currency, payer.language);
+    } else {
+      await sendDonationThankYouEmail(payer.email, amount, currency, payer.language);
+    }
+  } catch (error) {
+    logger.error(`[EMAIL_FAILED] Payment fulfillment email failed for ${payer.userId}`, error);
+    await recordAuditEvent(ctx, {
+      action: "EMAIL_SEND_FAILED",
+      targetType: "Payment",
+      targetId: input.paymentId,
+      metadata: {
+        emailType: payer.becameSupporterNow ? "become_patron" : "donation_thank_you",
+        error: error instanceof Error ? error.message : String(error),
+      },
+    });
   }
 }

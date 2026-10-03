@@ -4,7 +4,8 @@ import { SUPPORTED_CURRENCIES } from '@/lib/constants';
 import { handleApiError } from '@/lib/errors';
 import { requireAdminForApi } from '@/lib/auth-utils';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { getPaymentSettings, updatePaymentSettings } from '@/lib/modules/payments';
+import { updatePaymentSettings } from '@/lib/modules/payments';
+import { getPaymentCurrencyLimits } from '@/lib/payments/currency-settings';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,24 +13,15 @@ const settingsSchema = z.object({
   limits: z.array(z.object({
     currency: z.enum(SUPPORTED_CURRENCIES),
     minAmount: z.number().positive().max(1_000_000),
-    patronThreshold: z.number().positive().max(1_000_000).nullable().optional(),
-    patronBoxMin: z.number().positive().max(1_000_000).nullable().optional(),
   })).min(1),
 });
 
-export async function GET(request: NextRequest) {
-  const { adminUserId, response } = await requireAdminForApi('GET_PAYMENT_SETTINGS');
+export async function GET() {
+  const { response } = await requireAdminForApi('GET_PAYMENT_SETTINGS');
   if (response) return response;
 
   try {
-    const ctx = createAppContext({ actor: { type: 'admin', userId: adminUserId! } });
-    const result = await getPaymentSettings(ctx);
-
-    if (!result.ok) {
-      return NextResponse.json({ error: result.error.message }, { status: result.error.statusCode ?? 400 });
-    }
-
-    return NextResponse.json({ limits: result.data });
+    return NextResponse.json({ limits: await getPaymentCurrencyLimits() });
   } catch (error) {
     return handleApiError(error);
   }

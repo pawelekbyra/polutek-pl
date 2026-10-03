@@ -1,254 +1,125 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GET } from '@/app/api/cron/stripe-reconciliation/route';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { PaymentStatus } from '@prisma/client';
-import Stripe from 'stripe';
-import * as fulfillModule from '@/lib/modules/payments/application/fulfill-payment.use-case';
-import { ok, fail } from '@/lib/modules/shared/result';
-import { PaymentError } from '@/lib/modules/payments/domain/payment.errors';
+import { createFakePaymentsDb } from '../modules/payments/fake-payments-db';
 
-vi.mock('@/lib/prisma', () => ({
-  prisma: {
-    payment: {
-      findMany: vi.fn(),
-      updateMany: vi.fn(),
-    },
-    $transaction: vi.fn(async (fn) => await fn(prisma)),
-  },
-}));
-
-vi.mock('@/lib/logger', () => ({
-  logger: {
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    debug: vi.fn(),
-  },
-  createScopedLogger: vi.fn().mockReturnValue({ info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() }),
-}));
-
-const mockRetrieve = vi.fn();
-
-vi.mock('stripe', () => {
-  return {
-    default: vi.fn().mockImplementation(function() {
-      return {
-        paymentIntents: {
-          retrieve: mockRetrieve,
-        },
-      };
+const db = createFakePaymentsDb();
+const intents = new Map<string, any>();
+const stripe = {
+  paymentIntents: {
+    retrieve: vi.fn(async (id: string) => ({ ...intents.get(id) })),
+    cancel: vi.fn(async (id: string) => {
+      intents.get(id).status = 'canceled';
+      return { ...intents.get(id) };
     }),
+  },
+};
+const sendBecomePatronEmail = vi.fn();
+const sendDonationThankYouEmail = vi.fn();
+
+vi.mock('@/lib/prisma', () => ({ prisma: db }));
+vi.mock('@/lib/modules/audit', () => ({ recordAuditEvent: vi.fn() }));
+vi.mock('@/lib/modules/email', () => ({
+  sendBecomePatronEmail: (...args: unknown[]) => sendBecomePatronEmail(...args),
+  sendDonationThankYouEmail: (...args: unknown[]) => sendDonationThankYouEmail(...args),
+}));
+vi.mock('@/lib/modules/notifications', () => ({
+  sendNotification: vi.fn(),
+  notificationTemplates: { supportThanks: { kind: 'PATRON', titlePl: 't', titleEn: 't', bodyPl: 'b', bodyEn: 'b' } },
+}));
+vi.mock('@/lib/modules/payments/infrastructure/stripe-client', () => ({ getStripeClient: () => stripe }));
+
+const { GET } = await import('@/app/api/cron/stripe-reconciliation/route');
+
+const HOUR = 60 * 60 * 1000;
+
+function seed(id: string, status: string, ageMs: number, intentStatus: string | null) {
+  const row = {
+    id,
+    userId: 'user_1',
+    creatorId: 'creator_1',
+    amountMinor: 1000,
+    currency: 'PLN',
+    status,
+    stripeIntentId: intentStatus ? `pi_${id}` : null,
+    refundedAmountMinor: 0,
+    createdAt: new Date(Date.now() - ageMs),
+    updatedAt: new Date(),
   };
+  db.payment.rows.push(row);
+  if (intentStatus) intents.set(`pi_${id}`, { id: `pi_${id}`, status: intentStatus, amount: 1000, currency: 'pln', metadata: { userId: 'user_1' } });
+  return row;
+}
+
+function cronRequest(query = '') {
+  return new NextRequest(`http://localhost/api/cron/stripe-reconciliation${query}`, {
+    headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` },
+  });
+}
+
+beforeEach(() => {
+  for (const name of ['payment', 'patronGrant', 'user', 'userPaymentTotal']) db[name].rows.length = 0;
+  db.user.rows.push({ id: 'user_1', email: 'payer@example.com', language: 'pl' });
+  intents.clear();
+  vi.clearAllMocks();
+  process.env.CRON_SECRET = 'a'.repeat(40);
+  process.env.STRIPE_SECRET_KEY = 'sk_test_dummy';
 });
 
-describe('Stripe Reconciliation Cron', () => {
-  const CRON_SECRET = 'test_cron_secret';
-  const STRIPE_SECRET_KEY = 'sk_test';
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    process.env.CRON_SECRET = CRON_SECRET;
-    process.env.STRIPE_SECRET_KEY = STRIPE_SECRET_KEY;
+describe('stripe-reconciliation cron', () => {
+  it('rejects calls without the cron secret', async () => {
+    const response = await GET(new NextRequest('http://localhost/api/cron/stripe-reconciliation'));
+    expect(response.status).toBe(401);
   });
 
-  it('returns 401 if Authorization header is missing or incorrect', async () => {
-    const req1 = new NextRequest('http://localhost/api/cron/stripe-reconciliation');
-    const res1 = await GET(req1);
-    expect(res1.status).toBe(401);
+  it('records a pending payment Stripe reports as succeeded, at any age', async () => {
+    const fresh = seed('fresh', 'PENDING', 1 * HOUR, 'succeeded');
+    const old = seed('old', 'PENDING', 90 * 24 * HOUR, 'succeeded');
 
-    const req2 = new NextRequest('http://localhost/api/cron/stripe-reconciliation', {
-      headers: { Authorization: 'Bearer wrong_token' },
-    });
-    const res2 = await GET(req2);
-    expect(res2.status).toBe(401);
+    const body = await (await GET(cronRequest())).json();
+
+    expect(fresh.status).toBe('SUCCEEDED');
+    expect(old.status).toBe('SUCCEEDED');
+    expect(body).toMatchObject({ checked: 2, fulfilled: 2 });
+    // A tip from months ago is recorded without a very late thank-you e-mail.
+    expect(sendBecomePatronEmail.mock.calls.length + sendDonationThankYouEmail.mock.calls.length).toBe(1);
   });
 
-  it('processes PENDING payments and fulfills if Stripe status is succeeded', async () => {
-    const mockPayment = {
-      id: 'pay_1',
-      stripeIntentId: 'pi_1',
-      amountMinor: 1000,
-      currency: 'PLN',
-      status: PaymentStatus.PENDING,
-      createdAt: new Date(Date.now() - 20 * 60 * 1000), // 20 mins ago
-      user: {
-        patronGrants: [],
-      },
-    };
+  it('cancels an abandoned intent in Stripe before marking it CANCELED (PAY-37)', async () => {
+    const abandoned = seed('abandoned', 'PENDING', 30 * HOUR, 'requires_payment_method');
+    const recent = seed('recent', 'PENDING', 2 * HOUR, 'requires_payment_method');
 
-    vi.mocked(prisma.payment.findMany).mockResolvedValue([mockPayment] as any);
+    await GET(cronRequest());
 
-    mockRetrieve.mockResolvedValue({ status: 'succeeded', amount: 1000, currency: 'PLN' } as any);
-
-    const fulfillSpy = vi.spyOn(fulfillModule, 'fulfillPayment').mockResolvedValue(ok({ isFirstFulfillment: true }));
-
-    const req = new NextRequest('http://localhost/api/cron/stripe-reconciliation', {
-      headers: { Authorization: `Bearer ${CRON_SECRET}` },
-    });
-
-    const res = await GET(req);
-    const body = await res.json();
-
-    expect(res.status).toBe(200);
-    expect(body).toEqual({ checked: 1, updated: 1, errors: 0 });
-    expect(fulfillSpy).toHaveBeenCalledWith({
-      paymentId: 'pay_1',
-      stripeIntentId: 'pi_1',
-      amountMinor: 1000,
-      currency: 'PLN',
-    }, expect.anything());
+    expect(stripe.paymentIntents.cancel).toHaveBeenCalledWith('pi_abandoned', { cancellation_reason: 'abandoned' });
+    expect(abandoned.status).toBe('CANCELED');
+    expect(recent.status).toBe('PENDING');
   });
 
-  it('updates status to FAILED if Stripe status is canceled', async () => {
-    const mockPayment = {
-      id: 'pay_2',
-      stripeIntentId: 'pi_2',
-      amountMinor: 1000,
-      currency: 'PLN',
-      status: PaymentStatus.PENDING,
-      createdAt: new Date(Date.now() - 20 * 60 * 1000),
-      user: {
-        patronGrants: [],
-      },
-    };
+  it('marks a canceled intent CANCELED, not FAILED', async () => {
+    const payment = seed('canceled', 'PENDING', 2 * HOUR, 'canceled');
 
-    vi.mocked(prisma.payment.findMany).mockResolvedValue([mockPayment] as any);
+    await GET(cronRequest());
 
-    mockRetrieve.mockResolvedValue({ status: 'canceled' } as any);
-
-    vi.mocked(prisma.payment.updateMany).mockResolvedValue({ count: 1 });
-
-    const req = new NextRequest('http://localhost/api/cron/stripe-reconciliation', {
-      headers: { Authorization: `Bearer ${CRON_SECRET}` },
-    });
-
-    const res = await GET(req);
-    const body = await res.json();
-
-    expect(res.status).toBe(200);
-    expect(body).toEqual({ checked: 1, updated: 1, errors: 0 });
-    expect(prisma.payment.updateMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'pay_2', status: PaymentStatus.PENDING },
-      data: { status: PaymentStatus.FAILED },
-    }));
+    expect(payment.status).toBe('CANCELED');
   });
 
-  it('updates status to FAILED if Stripe status is requires_payment_method and older than 24h', async () => {
-    const mockPayment = {
-      id: 'pay_3',
-      stripeIntentId: 'pi_3',
-      amountMinor: 1000,
-      currency: 'PLN',
-      status: PaymentStatus.PENDING,
-      createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000), // 25 hours ago
-      user: {
-        patronGrants: [],
-      },
-    };
+  it('leaves FAILED rows alone in a routine run, recovers them with ?scope=recover (PAY-01)', async () => {
+    const payment = seed('lost', 'FAILED', 40 * 24 * HOUR, 'succeeded');
 
-    vi.mocked(prisma.payment.findMany).mockResolvedValue([mockPayment] as any);
+    await GET(cronRequest());
+    expect(payment.status).toBe('FAILED');
 
-    mockRetrieve.mockResolvedValue({ status: 'requires_payment_method' } as any);
-
-    vi.mocked(prisma.payment.updateMany).mockResolvedValue({ count: 1 });
-
-    const req = new NextRequest('http://localhost/api/cron/stripe-reconciliation', {
-      headers: { Authorization: `Bearer ${CRON_SECRET}` },
-    });
-
-    const res = await GET(req);
-    const body = await res.json();
-
-    expect(res.status).toBe(200);
-    expect(body).toEqual({ checked: 1, updated: 1, errors: 0 });
-    expect(prisma.payment.updateMany).toHaveBeenCalled();
+    const body = await (await GET(cronRequest('?scope=recover'))).json();
+    expect(payment.status).toBe('SUCCEEDED');
+    expect(body).toMatchObject({ scope: 'recover', fulfilled: 1 });
+    expect(db.patronGrant.rows).toHaveLength(1);
   });
 
-  it('skips if Stripe status is requires_payment_method and younger than 24h', async () => {
-    const mockPayment = {
-      id: 'pay_4',
-      stripeIntentId: 'pi_4',
-      amountMinor: 1000,
-      currency: 'PLN',
-      status: PaymentStatus.PENDING,
-      createdAt: new Date(Date.now() - 20 * 60 * 1000), // 20 mins ago
-      user: {
-        patronGrants: [],
-      },
-    };
+  it('cancels a pending row whose intent was never created', async () => {
+    const payment = seed('orphan', 'PENDING', 30 * HOUR, null);
 
-    vi.mocked(prisma.payment.findMany).mockResolvedValue([mockPayment] as any);
+    await GET(cronRequest());
 
-    mockRetrieve.mockResolvedValue({ status: 'requires_payment_method' } as any);
-
-    const req = new NextRequest('http://localhost/api/cron/stripe-reconciliation', {
-      headers: { Authorization: `Bearer ${CRON_SECRET}` },
-    });
-
-    const res = await GET(req);
-    const body = await res.json();
-
-    expect(res.status).toBe(200);
-    expect(body).toEqual({ checked: 1, updated: 0, errors: 0 });
-    expect(prisma.payment.updateMany).not.toHaveBeenCalled();
-  });
-
-  it('increments errors if Stripe API fails for a payment', async () => {
-    const mockPayment = {
-      id: 'pay_5',
-      stripeIntentId: 'pi_5',
-      amountMinor: 1000,
-      currency: 'PLN',
-      status: PaymentStatus.PENDING,
-      createdAt: new Date(Date.now() - 20 * 60 * 1000),
-      user: {
-        patronGrants: [],
-      },
-    };
-
-    vi.mocked(prisma.payment.findMany).mockResolvedValue([mockPayment] as any);
-
-    mockRetrieve.mockRejectedValue(new Error('Stripe API Error'));
-
-    const req = new NextRequest('http://localhost/api/cron/stripe-reconciliation', {
-      headers: { Authorization: `Bearer ${CRON_SECRET}` },
-    });
-
-    const res = await GET(req);
-    const body = await res.json();
-
-    expect(res.status).toBe(200);
-    expect(body).toEqual({ checked: 1, updated: 0, errors: 1 });
-  });
-
-  it('increments errors if fulfillPayment fails', async () => {
-    const mockPayment = {
-      id: 'pay_6',
-      stripeIntentId: 'pi_6',
-      amountMinor: 1000,
-      currency: 'PLN',
-      status: PaymentStatus.PENDING,
-      createdAt: new Date(Date.now() - 20 * 60 * 1000),
-      user: {
-        patronGrants: [],
-      },
-    };
-
-    vi.mocked(prisma.payment.findMany).mockResolvedValue([mockPayment] as any);
-
-    mockRetrieve.mockResolvedValue({ status: 'succeeded' } as any);
-
-    vi.spyOn(fulfillModule, 'fulfillPayment').mockResolvedValue(fail(new PaymentError('Fulfillment failed')));
-
-    const req = new NextRequest('http://localhost/api/cron/stripe-reconciliation', {
-      headers: { Authorization: `Bearer ${CRON_SECRET}` },
-    });
-
-    const res = await GET(req);
-    const body = await res.json();
-
-    expect(res.status).toBe(200);
-    expect(body).toEqual({ checked: 1, updated: 0, errors: 1 });
+    expect(payment.status).toBe('CANCELED');
   });
 });

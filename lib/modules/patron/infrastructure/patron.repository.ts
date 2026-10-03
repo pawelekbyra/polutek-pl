@@ -48,10 +48,11 @@ export class PatronRepository {
   async revokeGrantByPaymentId(paymentId: string, reason: string, tx: WriteTx, meta?: RevokeMeta) {
     return await tx.patronGrant.updateMany({
       where: { paymentId, revokedAt: null },
+      // `reason` is why the grant was given; the revocation goes to revokeReason/revokedById.
       data: {
         revokedAt: new Date(),
-        reason: reason,
-        ...(meta ? { revokedById: meta.revokedById, revokeReason: meta.revokeReason } : {}),
+        revokedById: meta?.revokedById ?? null,
+        revokeReason: meta?.revokeReason ?? reason,
       },
     });
   }
@@ -59,10 +60,11 @@ export class PatronRepository {
   async revokeActiveGrants(userId: string, reason: string, tx: WriteTx, meta?: RevokeMeta) {
     return await tx.patronGrant.updateMany({
       where: { userId, revokedAt: null },
+      // `reason` is why the grant was given; the revocation goes to revokeReason/revokedById.
       data: {
         revokedAt: new Date(),
-        reason: reason,
-        ...(meta ? { revokedById: meta.revokedById, revokeReason: meta.revokeReason } : {}),
+        revokedById: meta?.revokedById ?? null,
+        revokeReason: meta?.revokeReason ?? reason,
       },
     });
   }

@@ -76,8 +76,6 @@ const checks = [
     ok: () => hasAll([
       'ADMIN_EMAILS',
       'MAIN_CREATOR_SLUG',
-      'PATRON_MIN_TIP_AMOUNT',
-      'PATRON_MIN_TIP_CURRENCY',
       'REFERRAL_PATRON_THRESHOLD',
       'HEALTHCHECK_TOKEN',
     ]),

@@ -7,7 +7,7 @@ import { notificationTemplates } from "./send-notification.use-case";
 
 const DEFAULTS: Record<NotificationKind, { titlePl: string; titleEn: string; bodyPl: string; bodyEn: string }> = {
   WELCOME: notificationTemplates.welcome,
-  PATRON: notificationTemplates.patronAccess,
+  PATRON: notificationTemplates.supportThanks,
   COMMENT: notificationTemplates.commentLike,
   SYSTEM: { titlePl: "Wiadomość systemowa", titleEn: "System message", bodyPl: "", bodyEn: "" },
   SUPPORT: { titlePl: "Wsparcie", titleEn: "Support", bodyPl: "", bodyEn: "" },

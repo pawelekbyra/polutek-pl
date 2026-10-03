@@ -71,15 +71,16 @@ export const notificationTemplates = {
     kind: "WELCOME" as NotificationKind,
     titlePl: "Witaj!",
     titleEn: "Welcome!",
-    bodyPl: "Dziękujemy za dołączenie! Odkryj naszą zawartość i dołącz do społeczności patronów.",
-    bodyEn: "Thank you for joining! Discover our content and join our patron community.",
+    bodyPl: "Dziękujemy za dołączenie! Wszystkie filmy są dostępne po zalogowaniu.",
+    bodyEn: "Thank you for joining! Every video is available once you are signed in.",
   },
-  patronAccess: {
+  // A tip is a voluntary gift that unlocks nothing (Regulamin §4): thanks only, no promise of access.
+  supportThanks: {
     kind: "PATRON" as NotificationKind,
-    titlePl: "Witaj, Patronie!",
-    titleEn: "Welcome, Patron!",
-    bodyPl: "Twoje wsparcie jest dla nas bardzo ważne! Teraz masz dostęp do pełnej zawartości.",
-    bodyEn: "Your support means everything to us! You now have access to all content.",
+    titlePl: "Dziękuję za wsparcie!",
+    titleEn: "Thank you for your support!",
+    bodyPl: "Twój napiwek dotarł. Dziękuję, to dla mnie wiele znaczy.",
+    bodyEn: "Your tip has arrived. Thank you, it means a lot to me.",
   },
   commentLike: {
     kind: "COMMENT" as NotificationKind,

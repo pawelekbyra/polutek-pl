@@ -1,4 +1,4 @@
-export { grantPatron } from './application/grant-patron.use-case';
+export { grantPatron, sendSupportThanksNotification } from './application/grant-patron.use-case';
 export { revokePatron } from './application/revoke-patron.use-case';
 export { getPatronStatus } from './application/get-patron-status.use-case';
 export { recalculatePatronStatus } from './application/recalculate-patron-status.use-case';

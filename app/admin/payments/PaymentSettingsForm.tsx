@@ -14,7 +14,7 @@ type Props = {
   initialLimits: Record<SupportedCurrency, CurrencyLimit>;
 };
 
-type EditableField = "patronThreshold" | "patronBoxMin" | "minAmount";
+type EditableField = "minAmount";
 
 export function PaymentSettingsForm({ initialLimits }: Props) {
   const [limits, setLimits] = useState<Record<SupportedCurrency, CurrencyLimit>>(initialLimits);
@@ -47,8 +47,6 @@ export function PaymentSettingsForm({ initialLimits }: Props) {
           limits: SUPPORTED_CURRENCIES.map((currency) => ({
             currency,
             minAmount: limits[currency].minAmount,
-            patronThreshold: limits[currency].patronThreshold,
-            patronBoxMin: limits[currency].patronBoxMin,
           })),
         }),
       });
@@ -90,7 +88,8 @@ export function PaymentSettingsForm({ initialLimits }: Props) {
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">Płatności</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">Bramka wsparcia</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-          Trzy niezależne kwoty na walutę. Nie mieszaj ich ze sobą — każda steruje czym innym.
+          Najniższy napiwek w każdej walucie. Bramka pokazuje dokładnie tę kwotę, a serwer jej pilnuje.
+          Każda udana wpłata zapisuje wspierającego (niczego nie odblokowuje, bez progu kwotowego).
         </p>
       </div>
 
@@ -98,38 +97,11 @@ export function PaymentSettingsForm({ initialLimits }: Props) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">1</span>
-              Próg odznaki Patrona
+              <Settings className="h-5 w-5" /> Minimalny napiwek
             </CardTitle>
             <CardDescription>
-              Wpłata od tej kwoty zapisuje wspierającego jako Patrona (odznaka przy komentarzach, lista w panelu).
-              Niczego nie odblokowuje — wszystkie filmy są dostępne po zalogowaniu.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>{fieldGrid("patronThreshold")}</CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">2</span>
-              Minimalny napiwek
-            </CardTitle>
-            <CardDescription>
-              Najniższa kwota, jaką każdy zalogowany może wpisać w bramce napiwkowej. Niezależna od progu odznaki powyżej.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>{fieldGrid("patronBoxMin")}</CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" /> Techniczne minimum checkoutu
-            </CardTitle>
-            <CardDescription>
-              Absolutny dolny limit, który akceptuje bramka płatności (Stripe). Zwykle nie ma potrzeby go zmieniać — obie kwoty
-              powyżej nie mogą zejść poniżej tej wartości.
+              Najniższa kwota, jaką każdy zalogowany może wpisać w bramce napiwkowej. Stripe ma własne minimum
+              (ok. 0,50 USD w danej walucie), więc nie schodź poniżej niego.
             </CardDescription>
           </CardHeader>
           <CardContent>{fieldGrid("minAmount")}</CardContent>

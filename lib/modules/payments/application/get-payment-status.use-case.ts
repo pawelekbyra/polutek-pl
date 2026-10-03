@@ -6,9 +6,10 @@ import { fulfillPayment } from './fulfill-payment.use-case';
 import { getStripeClient } from '../infrastructure/stripe-client';
 import { logger } from '@/lib/logger';
 
-export type PaymentUiStatus = 'PENDING_WEBHOOK' | 'SUCCEEDED' | 'ACCESS_SYNC_PENDING' | 'FAILED_CANCELED' | 'REFUNDED_DISPUTED';
+/** What the payer's screen needs to know about one tip. A tip never grants access, so there is no "access" state. */
+export type PaymentUiStatus = 'PROCESSING' | 'SUCCEEDED' | 'FAILED' | 'REFUNDED';
 
-type OwnedPendingPayment = {
+type OwnedPayment = {
   id: string;
   userId: string;
   amountMinor: number;
@@ -17,60 +18,55 @@ type OwnedPendingPayment = {
   stripeIntentId: string | null;
 };
 
-function toUiStatus(status: PaymentStatus, hasActiveGrant: boolean): PaymentUiStatus {
-  if (status === PaymentStatus.SUCCEEDED) return hasActiveGrant ? 'SUCCEEDED' : 'ACCESS_SYNC_PENDING';
-  if (status === PaymentStatus.FAILED || status === PaymentStatus.CANCELED) return 'FAILED_CANCELED';
-  if (status === PaymentStatus.REFUNDED || status === PaymentStatus.PARTIALLY_REFUNDED || status === PaymentStatus.DISPUTED || status === PaymentStatus.CHARGEBACK_LOST) return 'REFUNDED_DISPUTED';
-  return 'PENDING_WEBHOOK';
+/** Local statuses that the fast path re-checks with Stripe (a "failed" tip may still have succeeded on a later attempt). */
+const RECHECK_STATUSES: PaymentStatus[] = [PaymentStatus.PENDING, PaymentStatus.FAILED, PaymentStatus.CANCELED];
+
+export function toPaymentUiStatus(status: PaymentStatus): PaymentUiStatus {
+  switch (status) {
+    case PaymentStatus.SUCCEEDED:
+      return 'SUCCEEDED';
+    case PaymentStatus.FAILED:
+    case PaymentStatus.CANCELED:
+      return 'FAILED';
+    case PaymentStatus.REFUNDED:
+    case PaymentStatus.PARTIALLY_REFUNDED:
+    case PaymentStatus.DISPUTED:
+    case PaymentStatus.CHARGEBACK_LOST:
+      return 'REFUNDED';
+    default:
+      return 'PROCESSING';
+  }
 }
 
 /**
- * Actively reconciles a still-PENDING payment against the Stripe API instead of passively
- * waiting for the webhook. Stripe.js already knows the outcome the instant it redirects the
- * browser back (see `redirect_status` on the return URL), so there is no reason to leave the
- * user staring at a "waiting" screen until an async webhook happens to land. This is purely a
- * fast-path: fulfillment itself always goes through the canonical, idempotent `fulfillPayment()`
- * (never a manual status write), so it is safe to race with — or run redundantly alongside — the
- * webhook handler.
+ * Fast path: asks Stripe about a not-yet-recorded payment instead of waiting for the webhook, so
+ * the payer's thank-you screen resolves at once. Fulfilment still goes through the canonical,
+ * idempotent fulfillPayment(), so racing the webhook or the cron is safe.
  *
- * Ownership is enforced by the caller: this is only ever invoked with a payment row already
- * scoped to `where: { id, userId }` for the authenticated Clerk user, so there is no cross-user
- * Stripe lookup oracle here.
+ * Ownership is enforced by the caller (`{ id, userId }` lookup for the signed-in user), so this
+ * is no cross-user Stripe lookup oracle. fulfillPayment runs as a system actor because creating
+ * the supporter marker is a system action, exactly as in the webhook.
  */
-async function reconcilePendingPaymentWithStripe(payment: OwnedPendingPayment, ctx: AppContext): Promise<void> {
-  if (payment.status !== PaymentStatus.PENDING || !payment.stripeIntentId) return;
-
-  if (!process.env.STRIPE_SECRET_KEY) return;
+async function reconcileWithStripe(payment: OwnedPayment, ctx: AppContext): Promise<void> {
+  if (!payment.stripeIntentId || !process.env.STRIPE_SECRET_KEY) return;
 
   try {
-    const stripe = getStripeClient();
-    const intent = await stripe.paymentIntents.retrieve(payment.stripeIntentId);
+    const intent = await getStripeClient().paymentIntents.retrieve(payment.stripeIntentId);
+    if (intent.status !== 'succeeded') return;
 
-    if (intent.status === 'succeeded') {
-      // fulfillPayment() grants patron status via grantPatron(), which is gated to
-      // admin/system actors only (PatronPolicy.canGrantPatron). The caller's ctx here carries
-      // the paying user's own `user` actor, so running fulfillPayment with it verbatim always
-      // throws PATRON_GRANT_FAILED — and since fulfillPayment runs inside one DB transaction,
-      // that throw also rolls back the payment's SUCCEEDED status write, silently no-opping
-      // this entire fast path on every poll. Ownership (`{id, userId}` lookup by the caller)
-      // and payment success (the Stripe retrieve above) are already independently verified at
-      // this point, so switching to a system actor for this one trusted internal call is safe
-      // and mirrors exactly what the Stripe webhook route does for the same fulfillPayment() call.
-      const result = await fulfillPayment({
-        paymentId: payment.id,
-        stripeIntentId: intent.id,
-        metadataUserId: intent.metadata?.userId ?? null,
-        amountMinor: intent.amount,
-        currency: intent.currency,
-      }, { ...ctx, actor: { type: 'system', reason: 'payment-status-fast-path-reconciliation' } });
+    const result = await fulfillPayment({
+      paymentId: payment.id,
+      stripeIntentId: intent.id,
+      metadataUserId: intent.metadata?.userId ?? null,
+      amountMinor: intent.amount,
+      currency: intent.currency,
+    }, { ...ctx, actor: { type: 'system', reason: 'payment-status-fast-path-reconciliation' } });
 
-      if (!result.ok) {
-        logger.error(`[getOwnedPaymentStatus] Reconciliation fulfillPayment failed for ${payment.id}: ${result.error.message}`);
-      }
+    if (!result.ok) {
+      logger.error(`[getOwnedPaymentStatus] Reconciliation fulfillPayment failed for ${payment.id}: ${result.error.message}`);
     }
   } catch (error) {
-    // Best-effort fast path only — any failure here just falls back to the normal
-    // webhook-driven flow and the next poll tick (or the webhook itself) will resolve it.
+    // Best effort only; the webhook or the cron records the payment anyway.
     logger.error(`[getOwnedPaymentStatus] Stripe reconciliation failed for payment ${payment.id}`, error);
   }
 }
@@ -82,7 +78,6 @@ export async function getOwnedPaymentStatus(
   id: string;
   status: PaymentStatus;
   uiStatus: PaymentUiStatus;
-  accessSynced: boolean;
   amountMinor: number;
   currency: string;
   createdAt: string;
@@ -99,37 +94,22 @@ export async function getOwnedPaymentStatus(
       createdAt: true,
       updatedAt: true,
     } as const;
+    const where = { id: input.paymentId, userId: input.userId };
 
-    let payment = await ctx.db.read.payment.findFirst({
-      where: { id: input.paymentId, userId: input.userId },
-      select,
-    });
-
+    let payment = await ctx.db.read.payment.findFirst({ where, select });
     if (!payment) return ok(null);
 
-    if (payment.status === PaymentStatus.PENDING && payment.stripeIntentId) {
-      await reconcilePendingPaymentWithStripe(payment, ctx);
-      // Re-read after the reconciliation attempt so a fulfillment that just landed
-      // (from this fast path or a concurrent webhook) is reflected immediately.
-      const refreshed = await ctx.db.read.payment.findFirst({
-        where: { id: input.paymentId, userId: input.userId },
-        select,
-      });
+    if (RECHECK_STATUSES.includes(payment.status) && payment.stripeIntentId) {
+      await reconcileWithStripe(payment, ctx);
+      // Re-read so a fulfilment that just landed (here or in a concurrent webhook) shows at once.
+      const refreshed = await ctx.db.read.payment.findFirst({ where, select });
       if (refreshed) payment = refreshed;
     }
-
-    const activeGrant = await ctx.db.read.patronGrant.findFirst({
-      where: { paymentId: payment.id, userId: payment.userId, revokedAt: null },
-      select: { id: true },
-    });
-
-    const accessSynced = payment.status === PaymentStatus.SUCCEEDED && Boolean(activeGrant);
 
     return ok({
       id: payment.id,
       status: payment.status,
-      uiStatus: toUiStatus(payment.status, Boolean(activeGrant)),
-      accessSynced,
+      uiStatus: toPaymentUiStatus(payment.status),
       amountMinor: payment.amountMinor,
       currency: payment.currency,
       createdAt: payment.createdAt.toISOString(),

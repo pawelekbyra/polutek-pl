@@ -169,7 +169,7 @@ export default function AdminPaymentsListPage() {
                         <CardHeader className="pb-2">
                             <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                                 <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                                Suma {f.currency}
+                                Wpłacono brutto {f.currency}
                             </CardTitle>
                         </CardHeader>
                         <CardContent>

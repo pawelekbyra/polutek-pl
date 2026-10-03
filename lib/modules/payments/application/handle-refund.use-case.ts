@@ -5,8 +5,7 @@ import { PaymentRepository } from "../infrastructure/payment.repository";
 import { PaymentError } from "../domain/payment.errors";
 import { logger } from "@/lib/logger";
 import { recordMetric, recordAlert } from "@/lib/observability";
-import { revokePatron, recalculatePatronStatus } from "@/lib/modules/patron";
-import { recordAuditEvent } from "@/lib/modules/audit";
+import { revokeSupporterGrantIfNoPaidTips } from "./supporter-grant";
 
 export interface HandleRefundInput {
   stripeIntentId?: string;
@@ -16,7 +15,7 @@ export interface HandleRefundInput {
    * Set ONLY by the admin refund path. A refund reported by the Stripe webhook
    * must not fabricate an admin actor, so it leaves this out.
    */
-  admin?: { refundedById: string; reason?: string | null; stripeRefundId?: string };
+  admin?: { refundedById: string; reason?: string | null };
 }
 
 export async function handleRefund(
@@ -42,13 +41,26 @@ export async function handleRefund(
       const cappedRefunded = Math.max(0, Math.min(input.reportedRefundedMinor, payment.amountMinor));
       const deltaRefundMinor = Math.max(0, cappedRefunded - previousRefunded);
 
-      const newStatus = cappedRefunded >= payment.amountMinor
-        ? PaymentStatus.REFUNDED
-        : cappedRefunded > 0
-          ? PaymentStatus.PARTIALLY_REFUNDED
-          : payment.status;
+      // A disputed or lost payment keeps that status; only the refunded amount is recorded.
+      const keepsDisputeStatus = payment.status === PaymentStatus.DISPUTED || payment.status === PaymentStatus.CHARGEBACK_LOST;
+      const newStatus = keepsDisputeStatus
+        ? payment.status
+        : cappedRefunded >= payment.amountMinor
+          ? PaymentStatus.REFUNDED
+          : cappedRefunded > 0
+            ? PaymentStatus.PARTIALLY_REFUNDED
+            : payment.status;
 
-      if (deltaRefundMinor <= 0) return null;
+      if (deltaRefundMinor <= 0) {
+        // The webhook recorded this refund first: still attribute it to the admin who made it.
+        if (input.admin && cappedRefunded > 0 && !payment.refundedById) {
+          await tx.payment.updateMany({
+            where: { id: payment.id, refundedById: null },
+            data: { refundedById: input.admin.refundedById, refundedAt: ctx.now(), refundReason: input.admin.reason ?? null },
+          });
+        }
+        return null;
+      }
 
       // CAS check on refundedAmountMinor to avoid race conditions
       const count = await repo.updateRefundStatusWithCAS(payment.id, previousRefunded, {
@@ -72,44 +84,16 @@ export async function handleRefund(
 
       await repo.decrementUserPaymentTotal(payment.userId, payment.currency, deltaRefundMinor, tx);
 
-      if (input.admin) {
-        await recordAuditEvent(ctx, {
-          action: 'PAYMENT_REFUNDED',
-          targetType: 'Payment',
-          targetId: payment.id,
-          metadata: {
-            userId: payment.userId,
-            deltaMinor: deltaRefundMinor,
-            totalRefundedMinor: cappedRefunded,
-            amountMinor: payment.amountMinor,
-            currency: payment.currency,
-            status: newStatus,
-            stripeRefundId: input.admin.stripeRefundId ?? null,
-          },
-        }, tx);
-      }
-
-      if (cappedRefunded >= payment.amountMinor) {
-        // Full refund: Revoke Patron status linked to this payment
-        const revokeResult = await revokePatron({
+      if (newStatus === PaymentStatus.REFUNDED) {
+        // A fully refunded tip no longer counts; the supporter marker goes only when no other
+        // paid tip is left. A partial refund leaves the tip counting.
+        await revokeSupporterGrantIfNoPaidTips({
           userId: payment.userId,
           paymentId: payment.id,
-          note: `Payment ${payment.id} fully refunded`,
+          revokeReason: `Payment ${payment.id} fully refunded`,
         }, ctx, tx);
-
-        if (!revokeResult.ok) {
-          throw new Error(`PATRON_REVOKE_FAILED: ${revokeResult.error.message}`);
-        }
-
-        return { userId: payment.userId, isPatron: revokeResult.data.isPatron, normalizedTotal: revokeResult.data.normalizedTotal };
-      } else {
-        // Partial refund: Recalculate status (threshold might have changed)
-        const recalcResult = await recalculatePatronStatus(payment.userId, ctx, tx);
-        if (!recalcResult.ok) {
-            throw new Error(`PATRON_RECALC_FAILED: ${recalcResult.error.message}`);
-        }
-        return { userId: payment.userId, isPatron: recalcResult.data.isPatron, normalizedTotal: recalcResult.data.normalizedTotal };
       }
+      return { userId: payment.userId };
     });
 
     return ok(undefined);

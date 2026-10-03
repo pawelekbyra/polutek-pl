@@ -2,11 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from "@/lib/logger";
 import { PaymentStatus } from "@prisma/client";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { fulfillPayment, getStripeClient } from "@/lib/modules/payments";
+import { reconcilePaymentWithStripe } from "@/lib/modules/payments";
 import { timingSafeEqual } from "crypto";
 
 export const dynamic = 'force-dynamic';
 
+const BATCH_SIZE = 100;
+const RECOVERY_BATCH_SIZE = 500;
+
+/**
+ * Safety net next to the webhook and the payment-status fast path (systemd timer every 15 min).
+ *
+ * Routine run: every PENDING payment older than 15 minutes, oldest first, in batches. Stripe's
+ * answer decides: succeeded → fulfillPayment(); canceled → CANCELED; still unpaid after 24 h →
+ * the intent is canceled in Stripe and the row CANCELED, so abandoned tips don't stay open.
+ *
+ * `?scope=recover` (run once by hand after deploying the PAY-01 fix): also re-checks FAILED and
+ * CANCELED rows, which older code wrote after a single failed attempt even when a later attempt
+ * on the same intent succeeded.
+ */
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('Authorization') ?? '';
   const expectedToken = `Bearer ${process.env.CRON_SECRET ?? ''}`;
@@ -15,88 +29,37 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let stripe;
-  try {
-    stripe = getStripeClient();
-  } catch {
+  if (!process.env.STRIPE_SECRET_KEY) {
     logger.error("[Cron:StripeReconciliation] STRIPE_SECRET_KEY is missing");
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
+
+  const recover = req.nextUrl.searchParams.get('scope') === 'recover';
   const ctx = createAppContext({
     actor: { type: 'system', reason: 'stripe-reconciliation-cron' },
   });
 
-  const now = new Date();
+  const now = ctx.now();
   const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
-  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  const pendingPayments = await ctx.db.read.payment.findMany({
+  const payments = await ctx.db.read.payment.findMany({
     where: {
-      status: PaymentStatus.PENDING,
-      stripeIntentId: { not: null },
-      createdAt: {
-        lt: fifteenMinutesAgo,
-        gt: sevenDaysAgo,
-      },
+      status: { in: recover ? [PaymentStatus.PENDING, PaymentStatus.FAILED, PaymentStatus.CANCELED] : [PaymentStatus.PENDING] },
+      createdAt: { lt: fifteenMinutesAgo },
     },
+    orderBy: { createdAt: 'asc' },
+    take: recover ? RECOVERY_BATCH_SIZE : BATCH_SIZE,
+    select: { id: true, status: true, stripeIntentId: true, createdAt: true },
   });
 
-  let checked = 0;
-  let updated = 0;
-  let errors = 0;
+  const counts = { checked: 0, fulfilled: 0, canceled: 0, unchanged: 0, errors: 0 };
 
-  for (const payment of pendingPayments) {
-    checked++;
-    try {
-      if (!payment.stripeIntentId) continue;
-
-      const intent = await stripe.paymentIntents.retrieve(payment.stripeIntentId);
-
-      if (intent.status === 'succeeded') {
-        const result = await fulfillPayment({
-          paymentId: payment.id,
-          stripeIntentId: payment.stripeIntentId,
-          amountMinor: intent.amount,
-          currency: intent.currency,
-        }, ctx);
-
-        if (result.ok) {
-          logger.info(`[Cron:StripeReconciliation] Fulfilled payment ${payment.id} (Stripe succeeded)`);
-          updated++;
-        } else {
-          logger.error(`[Cron:StripeReconciliation] Failed to fulfill payment ${payment.id}: ${result.error.message}`);
-          errors++;
-        }
-      } else if (intent.status === 'canceled') {
-        await ctx.db.writeTransaction(async (tx) => {
-          await tx.payment.updateMany({
-              where: { id: payment.id, status: PaymentStatus.PENDING },
-              data: { status: PaymentStatus.FAILED }
-          });
-        });
-        logger.info(`[Cron:StripeReconciliation] Marked payment ${payment.id} as FAILED (Stripe ${intent.status})`);
-        updated++;
-      } else if (intent.status === 'requires_payment_method') {
-        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        if (payment.createdAt < twentyFourHoursAgo) {
-          await ctx.db.writeTransaction(async (tx) => {
-            await tx.payment.updateMany({
-                where: { id: payment.id, status: PaymentStatus.PENDING },
-                data: { status: PaymentStatus.FAILED }
-            });
-          });
-          logger.info(`[Cron:StripeReconciliation] Marked payment ${payment.id} as FAILED after 24h (Stripe ${intent.status})`);
-          updated++;
-        }
-      } else {
-        // Other statuses — skip
-        continue;
-      }
-    } catch (err: any) {
-      logger.error(`[Cron:StripeReconciliation] Error processing payment ${payment.id}:`, err);
-      errors++;
-    }
+  for (const payment of payments) {
+    counts.checked++;
+    const result = await reconcilePaymentWithStripe(payment, ctx);
+    counts[result]++;
   }
 
-  return NextResponse.json({ checked, updated, errors });
+  logger.info(`[Cron:StripeReconciliation] ${recover ? 'recover' : 'routine'} run: ${JSON.stringify(counts)}`);
+  return NextResponse.json({ scope: recover ? 'recover' : 'routine', ...counts });
 }

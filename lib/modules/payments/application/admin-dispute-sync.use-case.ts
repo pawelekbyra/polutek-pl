@@ -19,29 +19,6 @@ export interface AdminDisputeSyncResult {
   message: string;
 }
 
-function mapStripeDisputeStatus(status: string): {
-  mappedStatus: string;
-  isLost: boolean;
-  isWon: boolean;
-} {
-  switch (status) {
-    case "lost":
-      return { mappedStatus: "chargeback_lost", isLost: true, isWon: false };
-    case "won":
-      return { mappedStatus: "chargeback_won", isLost: false, isWon: true };
-    case "warning_needs_response":
-    case "warning_under_review":
-    case "warning_closed":
-      return { mappedStatus: "warning", isLost: false, isWon: false };
-    case "needs_response":
-      return { mappedStatus: "needs_response", isLost: false, isWon: false };
-    case "under_review":
-      return { mappedStatus: "under_review", isLost: false, isWon: false };
-    default:
-      return { mappedStatus: status, isLost: false, isWon: false };
-  }
-}
-
 export async function adminDisputeSync(
   input: AdminDisputeSyncInput,
   ctx: AppContext
@@ -79,20 +56,17 @@ export async function adminDisputeSync(
     }
     dispute = disputes.data[0];
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
     logger.error(`[AdminDisputeSync] Stripe API error for payment ${payment.id}:`, err);
-    return fail(new PaymentProviderError(`Stripe dispute fetch failed: ${msg}`));
+    return fail(new PaymentProviderError("Stripe dispute fetch failed. Details are in the server log."));
   }
 
-  const { mappedStatus, isLost, isWon } = mapStripeDisputeStatus(dispute.status);
-
+  // Stripe's raw status goes straight in: handleDispute classifies every status itself (mapping
+  // warning_closed to a generic "warning" used to re-open a closed inquiry).
   const syncResult = await handleDispute(
     {
       stripeIntentId: payment.stripeIntentId,
       disputeId: dispute.id,
-      status: mappedStatus,
-      isLost,
-      isWon,
+      status: dispute.status,
     },
     ctx
   );
@@ -107,7 +81,7 @@ export async function adminDisputeSync(
       action: "PAYMENT_DISPUTE_SYNCED",
       targetType: "Payment",
       targetId: payment.id,
-      metadata: { disputeId: dispute.id, disputeStatus: dispute.status, mappedStatus },
+      metadata: { disputeId: dispute.id, disputeStatus: dispute.status, outcome: syncResult.data.outcome, changed: syncResult.data.changed },
     });
   } catch (err) {
     // The dispute is already applied; a failed audit write must not report it as failed.

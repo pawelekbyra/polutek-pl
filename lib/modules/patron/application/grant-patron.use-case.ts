@@ -18,6 +18,19 @@ const SOURCE_MAP: Record<string, PatronGrantSource> = {
   migration: PatronGrantSource.MIGRATION,
 };
 
+/** Best-effort "thank you" notification; runs outside any transaction (sendNotification never throws). */
+export async function sendSupportThanksNotification(userId: string) {
+  const template = notificationTemplates.supportThanks;
+  await sendNotification({
+    userId,
+    kind: template.kind,
+    titlePl: template.titlePl,
+    titleEn: template.titleEn,
+    bodyPl: template.bodyPl,
+    bodyEn: template.bodyEn,
+  });
+}
+
 export async function grantPatron(
   input: GrantPatronInput,
   ctx: AppContext,
@@ -29,6 +42,7 @@ export async function grantPatron(
 
   const repo = new PatronRepository();
   const source = SOURCE_MAP[input.source];
+  let created = false;
 
   const work = async (currentTx: WriteTx) => {
     if (source === PatronGrantSource.ADMIN) {
@@ -84,14 +98,7 @@ export async function grantPatron(
       },
     }, currentTx);
 
-    await sendNotification({
-      userId: input.userId,
-      kind: notificationTemplates.patronAccess.kind,
-      titlePl: notificationTemplates.patronAccess.titlePl,
-      titleEn: notificationTemplates.patronAccess.titleEn,
-      bodyPl: notificationTemplates.patronAccess.bodyPl,
-      bodyEn: notificationTemplates.patronAccess.bodyEn,
-    }, currentTx);
+    created = true;
 
     const activeGrants = await repo.listActiveGrants(input.userId, currentTx);
 
@@ -103,7 +110,13 @@ export async function grantPatron(
   };
 
   try {
-    return tx ? await work(tx) : await ctx.db.writeTransaction(work);
+    if (tx) return await work(tx);
+    const result = await ctx.db.writeTransaction(work);
+    // After the commit, never inside it: a failed INSERT inside a Postgres transaction aborts the
+    // whole transaction even when the error is caught. When the caller owns the transaction
+    // (fulfillPayment) it sends its own notification after its commit.
+    if (created) await sendSupportThanksNotification(input.userId);
+    return result;
   } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
           const target = (error.meta?.target as string[]) || [];

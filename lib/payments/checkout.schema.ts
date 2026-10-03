@@ -17,8 +17,9 @@ export const currencySchema = z.preprocess(
 export const checkoutSchema = z.object({
   amountMinor: z.number().int().positive(),
   currency: currencySchema,
-  title: z.string().min(1).max(120),
-  requestId: z.string().uuid().optional(), // Client-side UUID for idempotency
+  // One UUID per tip attempt (kept while the payer changes the amount): the same attempt reuses
+  // and updates one PaymentIntent instead of creating a new one per amount.
+  requestId: z.string().uuid().optional(),
 });
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
