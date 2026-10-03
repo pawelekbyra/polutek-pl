@@ -1,6 +1,6 @@
 /**
  * Minimal path matcher for the proxy. Patterns are literal paths where `(.*)` matches anything
- * (the same notation the previous Clerk `createRouteMatcher` list used).
+ * (the notation the proxy route lists have always used).
  */
 export function createRouteMatcher(patterns: readonly string[]) {
   const expressions = patterns.map((pattern) => {
