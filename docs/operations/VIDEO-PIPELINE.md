@@ -113,6 +113,7 @@ Ręczne awaryjne czyszczenie zadania: `update "VideoEncodeJob" set status='CANCE
 4. Na serwerze: `cd /opt/serwerek/apps/polutek && grep -E '^(DATABASE_URL|CLOUDFLARE_R2_|MAIN_CREATOR_SLUG|NEXT_PUBLIC_R2_PUBLIC_HOST)' app.env > worker.env && chmod 600 worker.env && mkdir -p /opt/serwerek/data/video-work && chown 1000:1000 /opt/serwerek/data/video-work`
 5. `ENCODER_IMAGE=polutek-worker:<tag> docker compose up -d --no-deps encoder` (albo ponowny `./deploy.sh <tag>`), `docker compose logs -f encoder` ma pokazać `started`. `ai-log "enabled video encoder"`.
 6. Test: nowy szkic, wgraj krótki plik, obserwuj Media -> Przetwarzanie.
+7. Timer sprzątania uploadów: `cp deploy/serwerek/systemd/polutek-cron-abandon-stale-uploads.timer /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now polutek-cron-abandon-stale-uploads.timer`.
 
 ## 7. Limity i uwagi
 
