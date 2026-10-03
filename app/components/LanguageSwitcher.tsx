@@ -94,49 +94,45 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
     ? `Tłumaczenie na ${current.code} jest w przygotowaniu. Na razie ${real.code}.`
     : `The ${current.code} translation is in progress. For now: ${real.code}.`;
 
-  return (
-    <div ref={rootRef} className={inline ? "relative w-full text-center" : "relative shrink-0"}>
-      {inline ? (
-        <button
-          type="button"
-          aria-haspopup="menu"
-          aria-expanded={open}
-          aria-controls={open ? menuId : undefined}
-          aria-label={isPl ? `Język: ${current.label}. Zmień język` : `Language: ${current.label}. Change language`}
-          onClick={() => setOpen((value) => !value)}
-          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold text-[var(--chan-muted)] transition-colors hover:bg-[var(--chan-surface)] hover:text-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
-        >
-          <Globe className="h-3.5 w-3.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-          <span>{isPl ? "Język" : "Language"}:</span>
-          <span className="text-[var(--chan-ink)]">{current.code}</span>
-          <ChevronDown
-            className={"h-3 w-3 shrink-0 transition-transform duration-150 " + (open ? "rotate-180" : "")}
-            strokeWidth={2}
-            aria-hidden="true"
-          />
-        </button>
-      ) : (
-        <button
-          type="button"
-          aria-haspopup="menu"
-          aria-expanded={open}
-          aria-controls={open ? menuId : undefined}
-          aria-label={isPl ? `Język: ${current.label}. Zmień język` : `Language: ${current.label}. Change language`}
-          onClick={() => setOpen((value) => !value)}
-          className="flex h-[38px] items-center gap-1.5 rounded-full border border-[var(--cm-line-84)] bg-[var(--cm-card-82-white)] pl-2.5 pr-2 text-[var(--chan-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[0_4px_14px_rgba(37,99,235,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
-        >
-          <Globe className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-          <span className="text-[11px] font-extrabold uppercase tracking-[0.08em]">{current.code}</span>
-          <ChevronDown
-            className={"h-3.5 w-3.5 shrink-0 text-[var(--chan-muted)] transition-transform duration-150 " + (open ? "rotate-180" : "")}
-            strokeWidth={2}
-            aria-hidden="true"
-          />
-        </button>
-      )}
+  const triggerContent = inline ? (
+    <>
+      <Globe className="h-3.5 w-3.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+      <span>{isPl ? "Język" : "Language"}:</span>
+      <span className="text-[var(--chan-ink)]">{current.code}</span>
+      <ChevronDown
+        className={"h-3 w-3 shrink-0 transition-transform duration-150 " + (open ? "rotate-180" : "")}
+        strokeWidth={2}
+        aria-hidden="true"
+      />
+    </>
+  ) : (
+    <>
+      <Globe className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+      <span className="text-[11px] font-extrabold uppercase tracking-[0.08em]">{current.code}</span>
+      <ChevronDown
+        className={"h-3.5 w-3.5 shrink-0 text-[var(--chan-muted)] transition-transform duration-150 " + (open ? "rotate-180" : "")}
+        strokeWidth={2}
+        aria-hidden="true"
+      />
+    </>
+  );
 
-      <div role="status" aria-live="polite" className="contents">
-        {noteVisible && !open ? (
+  // One object: the trigger and the list share a single outline and shadow; horizontal hairlines
+  // separate the rows, and there is no gap between the trigger and the first language.
+  const triggerClass = inline
+    ? "inline-flex items-center gap-1.5 px-2.5 py-1 text-[12px] font-semibold text-[var(--chan-muted)] transition-colors hover:text-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] " +
+      (open ? "w-full justify-center rounded-none" : "rounded-full hover:bg-[var(--chan-surface)]")
+    : "flex h-[38px] items-center gap-1.5 border border-[var(--cm-line-84)] bg-[var(--cm-card-82-white)] pl-2.5 pr-2 text-[var(--chan-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] " +
+      (open ? "w-full rounded-b-none rounded-t-[19px]" : "rounded-full hover:shadow-[0_4px_14px_rgba(37,99,235,0.08)]");
+
+  const rootClass = inline
+    ? "relative mx-auto " +
+      (open ? "w-[148px] overflow-hidden rounded-2xl border border-[var(--cm-line-84)] bg-white shadow-[0_6px_18px_rgba(23,23,23,0.08)]" : "w-fit")
+    : "relative shrink-0 " + (open ? "rounded-[19px] shadow-[0_14px_34px_rgba(23,23,23,0.16)]" : "");
+
+  const statusNode = (
+    <div role="status" aria-live="polite" className="contents">
+      {noteVisible && !open ? (
           <div
             className={
               inline
@@ -148,54 +144,71 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
           </div>
         ) : null}
       </div>
+  );
 
-      {open ? (
-        <div
-          id={menuId}
-          role="menu"
-          aria-label={isPl ? "Wybierz język" : "Choose language"}
-          onKeyDown={(event) => {
-            const keys = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"];
-            if (!keys.includes(event.key)) return;
-            const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]'));
-            const index = items.indexOf(document.activeElement as HTMLButtonElement);
-            const step = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : -1;
-            event.preventDefault();
-            items[(index + step + items.length) % items.length]?.focus();
-          }}
-          className={
-            inline
-              ? "relative mx-auto mt-1 flex w-full flex-col items-center gap-0.5"
-              : "absolute left-0 right-0 top-[calc(100%+6px)] z-[1100] flex flex-col gap-1"
-          }
+  return (
+    <div ref={rootRef} className={inline ? "w-full text-center" : "contents"}>
+      <div className={rootClass}>
+        <button
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-controls={open ? menuId : undefined}
+          aria-label={isPl ? `Język: ${current.label}. Zmień język` : `Language: ${current.label}. Change language`}
+          onClick={() => setOpen((value) => !value)}
+          className={triggerClass}
         >
-          {LANGUAGE_OPTIONS.map((option) => {
-            const selected = option.code === current.code;
-            return (
-              <button
-                key={option.code}
-                type="button"
-                role="menuitemradio"
-                aria-checked={selected}
-                aria-label={option.label}
-                autoFocus={selected}
-                onClick={() => pick(option)}
-                className={
-                  (inline
-                    ? "inline-flex min-w-[96px] items-center justify-center rounded-full px-2.5 py-1 text-[12px] font-semibold "
-                    : "flex h-[38px] items-center justify-center rounded-full border border-[var(--cm-line-84)] bg-white/90 text-[11px] font-extrabold uppercase tracking-[0.08em] shadow-[0_6px_16px_rgba(23,23,23,0.08)] ") +
-                  "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] " +
-                  (selected
-                    ? "text-[var(--chan-ink)]"
-                    : "text-[var(--chan-muted)] hover:border-[var(--chan-blue)] hover:text-[var(--chan-ink)]" + (inline ? " hover:bg-[var(--chan-surface)]" : ""))
-                }
-              >
-                {option.code}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
+          {triggerContent}
+        </button>
+
+        {open ? (
+          <div
+            id={menuId}
+            role="menu"
+            aria-label={isPl ? "Wybierz język" : "Choose language"}
+            onKeyDown={(event) => {
+              const keys = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"];
+              if (!keys.includes(event.key)) return;
+              const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]'));
+              const index = items.indexOf(document.activeElement as HTMLButtonElement);
+              const step = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : -1;
+              event.preventDefault();
+              items[(index + step + items.length) % items.length]?.focus();
+            }}
+            className={
+              inline
+                ? "relative flex w-full flex-col"
+                : "absolute left-0 right-0 top-full z-[1100] flex flex-col rounded-b-[19px] border border-t-0 border-[var(--cm-line-84)] bg-white"
+            }
+          >
+            {LANGUAGE_OPTIONS.map((option) => {
+              const selected = option.code === current.code;
+              return (
+                <button
+                  key={option.code}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={selected}
+                  aria-label={option.label}
+                  autoFocus={selected}
+                  onClick={() => pick(option)}
+                  className={
+                    "flex w-full items-center justify-center border-t border-[var(--cm-line-84)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--chan-blue)] " +
+                    (inline ? "h-8 text-[12px] font-semibold " : "h-[34px] text-[11px] font-extrabold uppercase tracking-[0.08em] last:rounded-b-[18px] ") +
+                    (selected
+                      ? "bg-[var(--chan-surface)] text-[var(--chan-ink)]"
+                      : "text-[var(--chan-muted)] hover:bg-[var(--chan-surface)] hover:text-[var(--chan-ink)]")
+                  }
+                >
+                  {option.code}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+        {!inline ? statusNode : null}
+      </div>
+      {inline ? statusNode : null}
     </div>
   );
 }

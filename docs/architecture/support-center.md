@@ -43,7 +43,7 @@ Panel dla ludzi: `support.pawelperfect.com` za Cloudflare Access (polityka `serw
 
 | Decyzja | Powod |
 |---|---|
-| Chatwoot CE `v4.18.0-ce` (MIT, bez katalogu enterprise) | wspolna skrzynka z API/webhookami (pod agenta), aplikacja mobilna, mail jako kanal; lzejszy od Zammada/Helpdesk |
+| Chatwoot CE `v4.18.0-ce` (MIT) | wspolna skrzynka z API/webhookami (pod agenta), aplikacja mobilna, mail jako kanal; lzejszy od Zammada/Helpdesk |
 | **Osobny** Postgres `pgvector/pgvector:0.8.7-pg17` zamiast naszego Postgresa | migracje Chatwoota wymagaja rozszerzenia `pgvector`, a baza produkcyjna (`postgres:17-alpine`) go nie ma; dodawanie rozszerzen do bazy produkcyjnej ryzykowne. Koszt: ok. 70 MB RAM. Backup nocny obejmuje go automatycznie |
 | **Osobny** Redis (`noeviction`, 96 MB) zamiast naszego | nasz Redis ma `allkeys-lru` (limity zapytan aplikacji), a Sidekiq wymaga `noeviction`; wywlaszczenie kluczy gubiloby zadania. Koszt: 5 MB |
 | Poczta przychodzaca przez Email Worker + ingress "relay" Action Mailbox | brak IMAP/Gmaila w torze (niezalezne od Workspace); archiwum w Gmailu jako siatka bezpieczenstwa |

@@ -6,7 +6,7 @@
 name: chatwoot
 
 x-chatwoot: &chatwoot
-  image: chatwoot/chatwoot:v4.18.0-ce          # CE = bez katalogu enterprise (czysty MIT)
+  image: chatwoot/chatwoot:v4.18.0-ce # wersja CE (czysty MIT)
   restart: unless-stopped
   env_file: ./.env
   depends_on:
