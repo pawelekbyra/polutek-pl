@@ -122,13 +122,15 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
   const triggerClass = inline
     ? "inline-flex items-center gap-1.5 px-2.5 py-1 text-[12px] font-semibold text-[var(--chan-muted)] transition-colors hover:text-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] " +
       (open ? "w-full justify-center rounded-none" : "rounded-full hover:bg-[var(--chan-surface)]")
-    : "flex h-[38px] items-center gap-1.5 border border-[var(--cm-line-84)] bg-[var(--cm-card-82-white)] pl-2.5 pr-2 text-[var(--chan-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] " +
-      (open ? "w-full rounded-b-none rounded-t-[19px]" : "rounded-full hover:shadow-[0_4px_14px_rgba(37,99,235,0.08)]");
+    : "flex h-[38px] items-center gap-1.5 border bg-[var(--cm-card-82-white)] pl-2.5 pr-2 text-[var(--chan-ink)] transition-[border-color,box-shadow] duration-160 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] " +
+      (open
+        ? "w-full rounded-b-none rounded-t-[19px] border-[var(--chan-blue)] border-b-[var(--cm-line-84)]"
+        : "rounded-full border-[var(--cm-line-84)] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] hover:border-[var(--chan-blue)] hover:shadow-[0_4px_14px_rgba(37,99,235,0.08)]");
 
   const rootClass = inline
     ? "relative mx-auto " +
-      (open ? "w-[148px] overflow-hidden rounded-2xl border border-[var(--cm-line-84)] bg-white shadow-[0_6px_18px_rgba(23,23,23,0.08)]" : "w-fit")
-    : "relative shrink-0 " + (open ? "rounded-[19px] shadow-[0_14px_34px_rgba(23,23,23,0.16)]" : "");
+      (open ? "w-[148px] overflow-hidden rounded-2xl border border-[var(--chan-blue)] bg-white shadow-[0_6px_18px_rgba(23,23,23,0.08)]" : "w-fit")
+    : "relative shrink-0 " + (open ? "rounded-t-[19px]" : "");
 
   const statusNode = (
     <div role="status" aria-live="polite" className="contents">
@@ -178,7 +180,7 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
             className={
               inline
                 ? "relative flex w-full flex-col"
-                : "absolute left-0 right-0 top-full z-[1100] flex flex-col rounded-b-[19px] border border-t-0 border-[var(--cm-line-84)] bg-white"
+                : "absolute left-0 right-0 top-full z-[1100] flex flex-col rounded-b-[19px] border border-t-0 border-[var(--chan-blue)] bg-white shadow-[0_14px_34px_rgba(23,23,23,0.16)]"
             }
           >
             {LANGUAGE_OPTIONS.map((option) => {
@@ -194,7 +196,7 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
                   onClick={() => pick(option)}
                   className={
                     "flex w-full items-center justify-center border-t border-[var(--cm-line-84)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--chan-blue)] " +
-                    (inline ? "h-8 text-[12px] font-semibold " : "h-[34px] text-[11px] font-extrabold uppercase tracking-[0.08em] last:rounded-b-[18px] ") +
+                    (inline ? "h-8 text-[12px] font-semibold " : "h-[34px] first:border-t-0 text-[11px] font-extrabold uppercase tracking-[0.08em] last:rounded-b-[18px] ") +
                     (selected
                       ? "bg-[var(--chan-surface)] text-[var(--chan-ink)]"
                       : "text-[var(--chan-muted)] hover:bg-[var(--chan-surface)] hover:text-[var(--chan-ink)]")
