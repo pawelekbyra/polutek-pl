@@ -1,0 +1,11 @@
+{
+  "_comment": "JEDYNE zrodlo nazwy produktu. Zmien tutaj, potem: node workers/support-brand/deploy.mjs oraz deploy/serwerek/support/apply-brand.sh (patrz docs/operations/SUPPORT-CENTER.md, sekcja Marka).",
+  "name": "PP Support",
+  "shortName": "PP Support",
+  "url": "https://www.pawelperfect.com",
+  "termsUrl": "https://www.pawelperfect.com/regulamin",
+  "privacyUrl": "https://www.pawelperfect.com/polityka-prywatnosci",
+  "accent": "#2563eb",
+  "accentDark": "#1d4ed8",
+  "host": "support.pawelperfect.com"
+}
