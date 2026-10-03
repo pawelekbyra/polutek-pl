@@ -37,10 +37,9 @@ export function generateCSP() {
   ])).map(h => `https://${h}`).join(' ');
 
   const imageHosts = Array.from(new Set([
-    // Avatars of accounts that predate Better Auth were hosted by the old identity provider.
+    // Avatars of accounts that predate Better Auth were hosted by the old identity provider. Remove once
+    // no User.imageUrl points there any more (check: docs/architecture/auth-better-auth.md, "CSP").
     'img.clerk.com',
-    'images.unsplash.com',
-    'www.dicebear.com',
     ...parseMediaHosts(process.env.ALLOWED_COMMENT_IMAGE_HOSTS),
     ...parseMediaHosts(process.env.ALLOWED_THUMBNAIL_HOSTS),
     ...parseMediaHosts(process.env.NEXT_PUBLIC_BLOB_PUBLIC_HOST),
@@ -54,10 +53,10 @@ export function generateCSP() {
     ...getR2UploadHosts(),
     ...selfHlsHosts,
     'api.stripe.com',
-    'fonts.googleapis.com',
     'challenges.cloudflare.com',
     ...configuredMediaHosts,
-  ])).flatMap(h => [`https://${h}`, `wss://${h}`]).join(' ');
+    // No WebSocket hosts: nothing in the app opens a socket to another origin ("self" covers same-origin ws/wss).
+  ])).map(h => `https://${h}`).join(' ');
 
   // Better Auth's captcha plugin uses Cloudflare Turnstile on sign-up, sign-in and password
   // reset. Without this host the widget can't load and those forms stay blocked.
@@ -71,9 +70,13 @@ export function generateCSP() {
     'https://js.stripe.com',
     'https://*.js.stripe.com',
   ].join(' ');
-  // Real, permanent CSP weakness — script-src/style-src allow 'unsafe-inline' in every
-  // environment, not just development. Written as literal strings (not built via string
-  // concatenation) so this stays grep-visible to future security review.
+  // Known CSP weakness — script-src/style-src allow 'unsafe-inline' in every environment. Written
+  // as literal strings so it stays grep-visible to security review. A nonce + 'strict-dynamic' policy
+  // would remove it, but Next.js can only inject nonces into dynamically rendered pages (every static
+  // page and the prerendered shell would have to become per-request renders) and every third-party
+  // loader (Stripe.js, Google Identity, Turnstile) would have to be re-tested under strict-dynamic.
+  // Decision 2026-10-03 (audit SEC-06): keep it until that migration is planned on its own; see
+  // docs/architecture/auth-better-auth.md "CSP".
   const inlineDirective = "'unsafe-inline'";
   const evalDirective = "'unsafe-eval'";
   const devScriptSource = process.env.NODE_ENV === 'development' ? ` ${evalDirective}` : '';
@@ -96,10 +99,12 @@ export function generateCSP() {
     `connect-src 'self' ${connectHosts}`,
     `frame-src ${frameHosts}`,
     `img-src 'self' data: blob: ${imageHosts}`,
-    `style-src 'self' ${inlineDirective} https://fonts.googleapis.com ${googleOneTapStyle}`,
-    `style-src-elem 'self' ${inlineDirective} https://fonts.googleapis.com ${googleOneTapStyle}`,
-    `font-src 'self' data: https://fonts.gstatic.com`,
+    // Fonts are self-hosted (geist package, app/fonts); no Google Fonts.
+    `style-src 'self' ${inlineDirective} ${googleOneTapStyle}`,
+    `style-src-elem 'self' ${inlineDirective} ${googleOneTapStyle}`,
+    `font-src 'self' data:`,
     `worker-src 'self' blob:`,
-    `media-src 'self' blob: ${mediaHosts}`
+    `media-src 'self' blob: ${mediaHosts}`,
+    ...(process.env.NODE_ENV === 'production' ? ['upgrade-insecure-requests'] : []),
   ].join('; ');
 }

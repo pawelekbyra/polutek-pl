@@ -8,6 +8,7 @@ import {
   RefreshCcw,
 } from "../icons";
 import { useAuth, useUser } from "@/lib/auth/react";
+import { DEFAULT_AVATAR_URL } from "@/lib/auth/avatar";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "../LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -79,7 +80,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const { user } = useUser();
 
   const userProfile = React.useMemo(() => {
-    const clerkUserProfile = isSignedIn
+    const sessionUserProfile = isSignedIn
       ? {
           id: userId!,
           imageUrl: user?.imageUrl || null,
@@ -94,15 +95,15 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         }
       : null;
 
-    return propUserProfile || clerkUserProfile
+    return propUserProfile || sessionUserProfile
       ? {
-          ...(clerkUserProfile || {}),
+          ...(sessionUserProfile || {}),
           ...(propUserProfile || {}),
           imageUrl:
-            clerkUserProfile?.imageUrl || propUserProfile?.imageUrl || null,
-          name: clerkUserProfile?.name || propUserProfile?.name || null,
+            sessionUserProfile?.imageUrl || propUserProfile?.imageUrl || null,
+          name: sessionUserProfile?.name || propUserProfile?.name || null,
           username:
-            clerkUserProfile?.username || propUserProfile?.username || null,
+            sessionUserProfile?.username || propUserProfile?.username || null,
         }
       : null;
   }, [
@@ -115,12 +116,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   /** Decorative only. Authoritative permission comes from `viewer.canComment`. */
   const isPatronDecorative =
     userProfile?.role === "ADMIN" || userProfile?.isPatronDecorative === true;
-  const userAvatarSeed = userProfile
-    ? userProfile.username || userProfile.name || userProfile.id
-    : null;
   const userAvatarUrl = userProfile
-    ? userProfile.imageUrl ||
-      `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(String(userAvatarSeed || userProfile.id))}`
+    ? userProfile.imageUrl || DEFAULT_AVATAR_URL
     : null;
 
   const [sortBy, setSortBy] = useState<"newest" | "top">("newest");

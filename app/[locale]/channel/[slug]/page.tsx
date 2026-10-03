@@ -185,14 +185,12 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
                src={channelAvatar}
                alt={displayName}
                size={96}
-               fallbackSeed={displayName}
                className="md:hidden bg-[var(--chan-avatar-gradient)]"
              />
              <SafeAvatar
                src={channelAvatar}
                alt={displayName}
                size={144}
-               fallbackSeed={displayName}
                className="hidden md:block bg-[var(--chan-avatar-gradient)]"
              />
           </div>
