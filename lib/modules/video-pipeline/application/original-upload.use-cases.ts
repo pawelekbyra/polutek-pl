@@ -259,6 +259,53 @@ export async function completeOriginalMultipart(
 }
 
 /** Cancels an unfinished upload: aborts the multipart upload (R2 drops the parts) and abandons the row. */
+/** R2 aborts an unfinished multipart upload after 7 days; our row is closed at the same age. */
+export const STALE_UPLOAD_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Cron: closes uploads left UPLOADING (browser closed, admin never came back). Aborts the R2
+ * multipart upload (frees the stored parts at once; an already expired one is fine) and marks
+ * the row ABANDONED, so the panel stops showing "UPLOADING" forever. `dryRun` only counts.
+ */
+export async function abandonStaleOriginalUploads(
+  input: { dryRun?: boolean },
+  ctx: AppContext,
+  deps?: UploadDeps,
+): Promise<UseCaseResult<{ found: number; abandoned: number; abortFailures: number }, AppError>> {
+  try {
+    const now = deps?.now ? deps.now() : Date.now();
+    const cutoff = new Date(now - STALE_UPLOAD_MS);
+    const stale = await ctx.prisma.videoOriginal.findMany({
+      where: { status: "UPLOADING", OR: [{ uploadStartedAt: { lt: cutoff } }, { uploadStartedAt: null, createdAt: { lt: cutoff } }] },
+      select: { id: true, videoId: true, objectKey: true, uploadId: true },
+      take: 200,
+    });
+    if (input.dryRun || stale.length === 0) return ok({ found: stale.length, abandoned: 0, abortFailures: 0 });
+
+    const storage = storageOrFail(deps);
+    let abandoned = 0;
+    let abortFailures = 0;
+    for (const original of stale) {
+      if (original.uploadId) {
+        // NoSuchUpload (R2 already expired it) is the normal case here; any other failure is
+        // counted, and the row is still closed: the bucket lifecycle rule removes the parts.
+        await storage.abort(original.objectKey, original.uploadId).catch((error: unknown) => {
+          if (!/NoSuchUpload/i.test(String((error as { name?: string })?.name ?? error))) abortFailures += 1;
+        });
+      }
+      const r = await ctx.prisma.videoOriginal.updateMany({
+        where: { id: original.id, status: "UPLOADING" },
+        data: { status: "ABANDONED", failureReason: "Upload nie został dokończony w ciągu 7 dni.", uploadId: null },
+      });
+      abandoned += r.count;
+    }
+    if (abandoned > 0) await recordAuditEventSafe(ctx, { action: "VIDEO_ORIGINAL_UPLOADS_ABANDONED", targetType: "VideoOriginal", targetId: "stale", metadata: { abandoned, abortFailures } });
+    return ok({ found: stale.length, abandoned, abortFailures });
+  } catch (error) {
+    return fail(asFailure(error));
+  }
+}
+
 export async function abortOriginalUpload(input: { videoId: string; originalId: string }, ctx: AppContext, deps?: UploadDeps): Promise<UseCaseResult<{ originalId: string }, AppError>> {
   try {
     const storage = storageOrFail(deps);

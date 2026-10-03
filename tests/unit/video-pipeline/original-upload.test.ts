@@ -13,7 +13,7 @@ vi.mock("@/lib/modules/audit", () => ({ recordAuditEvent: audit, recordAuditEven
 vi.mock("@/lib/modules/video", () => ({ requestPublishAfterAssetReady: requestPublish }));
 vi.mock("@/lib/modules/video-pipeline/application/encode-queue.use-cases", () => ({ enqueueEncode: enqueue }));
 
-import { abortOriginalUpload, completeOriginalMultipart, presignOriginalParts, sanitizeFileName, startOriginalUpload } from "@/lib/modules/video-pipeline/application/original-upload.use-cases";
+import { STALE_UPLOAD_MS, abandonStaleOriginalUploads, abortOriginalUpload, completeOriginalMultipart, presignOriginalParts, sanitizeFileName, startOriginalUpload } from "@/lib/modules/video-pipeline/application/original-upload.use-cases";
 import { MIB } from "@/lib/modules/video-pipeline/domain/upload-policy";
 
 const MP4 = Uint8Array.from([0, 0, 0, 0x20, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 0x6f, 0x6d, 0, 0, 0, 0]);
@@ -187,5 +187,39 @@ describe("abortOriginalUpload / sanitizeFileName", () => {
     expect(sanitizeFileName("a\u0000b\n.mp4")).toBe("ab.mp4");
     expect(sanitizeFileName("x".repeat(500))?.length).toBe(200);
     expect(sanitizeFileName(undefined)).toBeNull();
+  });
+});
+
+describe("abandonStaleOriginalUploads", () => {
+  const stale = [
+    original({ id: "s1", uploadId: "up-a", objectKey: "originals/v1/a.mp4" }),
+    original({ id: "s2", uploadId: "up-b", objectKey: "originals/v1/b.mp4" }),
+  ];
+
+  it("aborts the multipart upload and closes uploads older than 7 days", async () => {
+    const t = setup(null, { stale });
+    t.prisma.videoOriginal.updateMany.mockResolvedValue({ count: 1 });
+    // The second upload was already expired by R2's own 7-day rule: that is not a failure.
+    t.storage.abort.mockResolvedValueOnce(undefined).mockRejectedValueOnce(Object.assign(new Error("gone"), { name: "NoSuchUpload" }));
+    const now = Date.UTC(2026, 9, 10);
+    const res = await abandonStaleOriginalUploads({}, t.ctx, { storage: t.storage, now: () => now });
+    expect(res).toEqual({ ok: true, data: { found: 2, abandoned: 2, abortFailures: 0 } });
+    expect(t.storage.abort).toHaveBeenCalledWith("originals/v1/a.mp4", "up-a");
+    const where = (t.prisma.videoOriginal.findMany.mock.calls[0] as unknown as [{ where: { status: string; OR: Array<Record<string, { lt: Date }>> } }])[0].where;
+    expect(where.status).toBe("UPLOADING");
+    expect(where.OR[0].uploadStartedAt.lt.getTime()).toBe(now - STALE_UPLOAD_MS);
+    expect(t.prisma.videoOriginal.updateMany).toHaveBeenCalledWith({
+      where: { id: "s1", status: "UPLOADING" },
+      data: expect.objectContaining({ status: "ABANDONED", uploadId: null }),
+    });
+    expect(auditSafe).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: "VIDEO_ORIGINAL_UPLOADS_ABANDONED" }));
+  });
+
+  it("only counts in dry-run mode and touches nothing", async () => {
+    const t = setup(null, { stale });
+    const res = await abandonStaleOriginalUploads({ dryRun: true }, t.ctx, t.deps);
+    expect(res).toEqual({ ok: true, data: { found: 2, abandoned: 0, abortFailures: 0 } });
+    expect(t.storage.abort).not.toHaveBeenCalled();
+    expect(t.prisma.videoOriginal.updateMany).not.toHaveBeenCalled();
   });
 });

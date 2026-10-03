@@ -1,0 +1,10 @@
+[Unit]
+Description=polutek cron abandon-stale-uploads (unfinished original-video uploads), daily 04:30 UTC
+
+[Timer]
+OnCalendar=*-*-* 04:30:00 UTC
+Persistent=true
+Unit=polutek-cron@abandon-stale-uploads.service
+
+[Install]
+WantedBy=timers.target
