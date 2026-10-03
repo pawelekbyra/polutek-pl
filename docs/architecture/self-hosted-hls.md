@@ -1,52 +1,40 @@
-# Decyzja: własny HLS zamiast Mux / Cloudflare Stream (2026-10-02)
+# Decyzja: własny HLS, bez zewnętrznych dostawców wideo
 
-Status: **własny HLS jest jedynym źródłem wideo.** Mux, Cloudflare Stream, YouTube, Vimeo i każdy zewnętrzny URL zostały usunięte z kodu (2026-10-02, decyzja właściciela); fallback na poprzedniego dostawcę opisany niżej już nie istnieje (procedura: `docs/operations/HLS-SELF-HOSTED.md`).
+Status: **własny HLS jest jedynym źródłem wideo** (decyzja właściciela 2026-10-02). Mux, Cloudflare Stream, YouTube, Vimeo i zewnętrzne URL-e zostały usunięte z kodu; zapasowego źródła nie ma. Procedury: `docs/operations/HLS-SELF-HOSTED.md` (kodowanie, dostarczanie, odtwarzacz) i `docs/operations/VIDEO-PIPELINE.md` (upload, kolejka, worker).
 
 ## Decyzja
 
-Wideo serwujemy sami: kodujemy FFmpeg-iem na serwerku, trzymamy w prywatnym buckecie R2 `polutek-hls`, dostarczamy przez Worker na `video.pawelperfect.com` (Cloudflare Free). Początkowo poprzedni dostawca (Cloudflare Stream/Mux) miał zostać jako zapas i automatyczny fallback w odtwarzaczu; po pilocie właściciel zdecydował o całkowitym odcięciu dostawców, więc zapasu nie ma.
+Oryginał trafia z przeglądarki admina do prywatnego R2 `polutek`, kolejka w Postgresie (`VideoEncodeJob`) zleca kodowanie FFmpeg-iem w kontenerze `encoder` na serwerku, wynik ląduje w prywatnym R2 `polutek-hls` i jest dostarczany przez Worker na `video.pawelperfect.com` (Cloudflare Free) z tokenem HMAC wydawanym tylko po kontroli dostępu.
 
 ## Dlaczego tak, a nie inaczej
 
 | Wybór | Uzasadnienie | Odrzucone |
 |---|---|---|
-| fMP4/CMAF, H.264 High, 2 s IDR, 6 s segmenty | działa w hls.js i natywnym Safari, jedna drabinka dla wszystkich; zgodne z tabelą Apple | HEVC/AV1 (zależne od sprzętu), TS (starsze, bez DRM-u) |
-| Audio w każdej rendycji | jedna ścieżka audio: o połowę mniej żądań niż osobne `EXT-X-MEDIA` | osobne audio (sensowne dopiero przy wielu językach) |
+| fMP4/CMAF, H.264 High, IDR co 2 s, segmenty 6 s | działa w hls.js i natywnym Safari; zgodne ze specyfikacją Apple (IDR co 2 s, segmenty 6 s, start od ~2 Mb/s) | HEVC/AV1 (zależne od sprzętu), TS |
+| Drabinka 1080/720/540/360/234 w prostokątach 16:9 obróconych do źródła | pion i ultrawide nie tracą rozdzielczości; 234p dla słabych łączy | drabinka po wysokości (pion 1080×1920 dostawał 608×1080) |
+| Jedno dekodowanie (`split`) na wszystkie rendycje | CPU serwerka (2 vCPU) idzie na kodowanie, nie na wielokrotne dekodowanie | proces ffmpeg na rendycję |
+| HDR -> SDR (`zscale` + `tonemap=hable`) | domyślne nagrania iPhone'a (HLG/Dolby Vision 8.4) działają; jedna drabinka SDR | odrzucanie HDR; druga drabinka HEVC HDR (dopiero przy dużej publiczności z iPhone'ów) |
+| Audio w każdej rendycji | jedna ścieżka: o połowę mniej żądań niż osobne `EXT-X-MEDIA` | osobne audio (sens dopiero przy wielu językach) |
 | Własny master | ffmpeg nie pisze `FRAME-RATE` i nie dolicza audio do `BANDWIDTH` | muxer ffmpeg bez poprawek |
-| Worker + token HMAC w ścieżce | **działa na planie Free**; dla hls.js i Safari identycznie; cache bez tokenu | WAF `is_timed_hmac_valid_v0` + Transform Rules (wymaga planu **Pro**, 20-25 USD/mies., rekomendacja z `02`, ale nie wolno nam wydawać pieniędzy bez właściciela) |
-| R2 przez binding Workera (nie S3, nie r2.dev) | bucket w ogóle nieosiągalny z zewnątrz poza Workerem | publiczny bucket + niezgadywalne ścieżki (słabsza ochrona) |
-| ~~Fallback w odtwarzaczu~~ (usunięty 2026-10-02) | był: limit/awaria Workera nie zatrzymywały filmu | teraz: brak zapasu świadomie, jedno źródło prawdy |
+| Kolejka w Postgresie (`FOR UPDATE SKIP LOCKED`) | jeden typ zadania, jeden worker, ta sama baza i kopie | pg-boss, Redis |
+| Worker + token HMAC w ścieżce | działa na planie Free; dla hls.js i Safari identycznie (względne URI); cache bez tokenu | WAF `is_timed_hmac_valid_v0` (plan Pro, 20-25 USD/mies.), signed cookies |
+| R2 przez binding Workera | bucket nieosiągalny z zewnątrz | publiczny bucket |
+| hls.js z własnego bundla, przypięty | zero zewnętrznych CDN, deterministyczna wersja, bez wyjątku w CSP | domyślny Vidstack: jsDelivr `hls.js@^1.x` |
 
 ## Ochrona: uczciwie
 
-- Token (HMAC-SHA256, TTL 6 h) wydawany wyłącznie po `checkVideoAccess()` i bramce premiery (CLAUDE.md §4.3/§4.15); odmowa nie niesie żadnego URL ani sekretu. Worker odrzuca brak/zły/wygasły token (403) przed jakimkolwiek dostępem do cache lub R2. Ścieżki i rozszerzenia są ścisłą białą listą.
-- Zalogowany widz **może skopiować URL i pobrać pliki** przez czas życia tokenu. To kontrola dostępu, nie DRM (Widevine/FairPlay wymagają packagera i licencji; poza zakresem). Przy filmach LOGGED_IN/PATRON, które i tak są darmowe po zalogowaniu (§4.4), akceptowalne.
-- Wyciek `HLS_TOKEN_SECRET` pozwala podpisywać tokeny: trzymany tylko w sekretach Workera, `app.env` (600) i `.ai-secrets`. Rotacja: nowy sekret w Workerze i aplikacji.
-- Brak limitu per IP/liczby tokenów (token jest bezosobowy; plan odtwarzania i tak podlega limitom aplikacji). Do ewentualnego dodania: Rate Limiting Rule (płatne).
+- Token (HMAC-SHA256, TTL 6 h) wydawany wyłącznie po `checkVideoAccess()` i bramce premiery (CLAUDE.md §4.3/§4.15); odmowa nie niesie żadnego URL. Odnowienie tokenu przechodzi tę samą pełną kontrolę. Worker odrzuca brak/zły/wygasły token (403) przed cache i R2; ścieżki i rozszerzenia to biała lista.
+- Token nie jest związany z widzem: zalogowany widz może skopiować URL i pobrać pliki na czas TTL. To kontrola dostępu, nie DRM. Przy treściach darmowych po zalogowaniu (§4.4) akceptowalne.
+- Jeden sekret `HLS_TOKEN_SECRET` (Worker, `app.env`, `.ai-secrets`); rotacja unieważnia naraz wszystkie trwające odtworzenia (odtwarzacz odnowi token sam przy 403).
 
-## Koszt (szacunek, USD/mies.)
+## Koszt i limity
 
-Założenia: film 3 min = ok. 55 MB w R2 (4 rendycje), ok. 35 żądań Workera na odtworzenie (master, playlista, init, 30 segmentów), widz ogląda ok. 3 filmy w miesiącu. Dane wejściowe: limity Cloudflare z `02` (Worker Free 100 tys. żądań/dobę; Paid 5 USD + 10 mln w cenie, potem 0,30 USD/mln; R2 10 GB i 10 mln odczytów klasy B gratis, egress 0 USD). Liczby cennika z dokumentacji, nie weryfikowane na fakturze.
+Każdy plik HLS to jedno wywołanie Workera, także trafienie w cache. Plan Free: **twarde 100 000 żądań na dobę**, potem do 00:00 UTC wideo nie gra. Odtworzenie 3 min ≈ 35 żądań, godzina ≈ 600; każde wejście na stronę główną z autoodtwarzaniem hero ≈ 6-10 żądań, więc limit wyczerpuje już ok. 10-15 tys. wejść dziennie. Workers Paid: 5 USD/mies. z 10 mln żądań w cenie. R2: kilkadziesiąt filmów to 1-3 GB (w darmowych 10 GB), transfer 0 USD. `caches.default` działa per centrum danych (bez Tiered Cache): każde PoP przy pierwszym chybieniu czyta R2 (klasa B, pomijalne przy obecnym ruchu).
 
-| Aktywni widzowie/mies. | odtworzeń | żądań Workera/mies. | żądań/dobę (średnio) | Koszt |
-|---|---|---|---|---|
-| 100 | 300 | 10 tys. | 350 | 0 USD (Free) |
-| 1 000 | 3 000 | 105 tys. | 3,5 tys. | 0 USD (Free) |
-| 10 000 | 30 000 | 1,05 mln | 35 tys. | 0 USD, ale szczyty (premiera) mogą przekroczyć 100 tys./dobę; wtedy Workers Paid 5 USD/mies. (10 mln w cenie) |
-| 100 000 | 300 000 | 10,5 mln | 350 tys. | ok. 5-6 USD (Paid) |
+## Otwarte decyzje właściciela
 
-R2: kilkadziesiąt filmów to ok. 1-3 GB (w darmowych 10 GB). Odczyty klasy B tylko przy braku w cache (rząd procenta żądań). Transfer 0 USD (R2 i Cloudflare). Pozostałe ryzyko to regulamin Cloudflare przy bardzo dużym ruchu wideo na Free (wideo z R2/Workera jest dozwolone, ale `02` §10 zostawia ryzyko kontaktu ze strony Cloudflare).
-
-## Pomiary pilota
-
-Chrome (headless) + hls.js 1.6, ta sama maszyna i łącze (Warszawa, Cloudflare WAW), film 10 s, 3 powtórzenia: czas do pierwszej klatki **własny HLS 354-385 ms (ciepły cache), Cloudflare Stream 279-405 ms**; zimny start własnego 1125 ms (pierwsze żądanie, miss + R2) vs 1274 ms; 0 błędów, 0 przerw (poza początkowym `waiting`), hls.js startuje na 360p (okno 640 px, `capLevelToPlayerSize`). `curl` (6 prób, średnia): master 385 ms vs 403 ms (Stream), segment 540p 0,8 MB 1,0 s całkowicie, TTFB 386 ms; trafienie w cache Workera i `CF-Cache-Status: HIT` w WAW. Kodowanie: 13,5 s na 10 s materiału (3 rendycje, preset slow, serwerek). Rozdzielczość na zwykłym łączu domowym jest ograniczona opóźnieniem sieci (RTT ok. 90-120 ms), nie dostawcą. Test nie obejmuje Safari/iOS ani słabych łączy.
-
-## Otwarte pytania do właściciela
-
-1. **Pieniądze:** (a) Workers Paid 5 USD/mies. dopiero gdy ruch przekroczy 100 tys. żądań/dobę (premiera/viral); (b) Cloudflare Pro 20-25 USD/mies. tylko jeśli chcemy token WAF bez Workera albo rate limiting.
-2. **Migracja pozostałych filmów:** potrzebne oryginały. Dziś oryginał trzyma tylko Cloudflare Stream/Mux (pilot kodowany z jego `default.mp4`, czyli już skompresowanego). Zasada na przyszłość: każdy upload najpierw do R2 `polutek`, potem kodowanie.
-3. **Automatyzacja:** dziś ręcznie (kodowanie, upload, SQL). Czy robić kolejkę (pg-boss) i przycisk w adminie, kiedy i na której maszynie (CPU serwerka jest wąskim gardłem, SERWEREK.md §14)?
-4. **Ochrona:** czy wystarczy "token, nie DRM"? Dla treści płatnych/ekskluzywnych potrzebny packager z DRM i licencje (koszt, nie robić bez decyzji).
-5. **Napisy i wiele ścieżek audio:** nie obsłużone w HLS (napisy dziś z `subtitleUrlPl/En` poza HLS); trick play (I-frame) i podgląd na pasku (sprite) niezrobione.
-6. **Skalowanie:** limity Free Workera są dobowe i twarde; po przekroczeniu film nie gra (zapasu u dostawcy już nie ma): przy premierze rozważyć Workers Paid (5 USD/mies.).
-7. ~~Webhook Mux / Cloudflare Stream~~: usunięte razem z kodem dostawców; sprzątanie po ich stronie: `docs/operations/SERWEREK.md` §21.
+1. **Workers Paid (5 USD/mies.)** przed większym ruchem (premiera); alternatywa bez wydatku: hero bez wstępnego buforowania przed kliknięciem bramki.
+2. **Monitoring:** powiadomienie Cloudflare o zużyciu Workers, sonda syntetyczna (master + segment co 5 min z serwerka) z alertem.
+3. **Retencja:** stare oryginały (SUPERSEDED) i nieaktywne wersje HLS zostają w R2 do ręcznego usunięcia.
+4. **DRM** tylko przy treściach płatnych/ekskluzywnych (packager + licencje).
+5. **Napisy w HLS** (`EXT-X-MEDIA TYPE=SUBTITLES`, pliki w `polutek-hls` za tym samym tokenem) zamiast zewnętrznych URL-i WebVTT; wymagają pełnego buildu hls.js zamiast `light`. Trick play: storyboard (sprite + WebVTT) i playlisty I-frame niezrobione.
