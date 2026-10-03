@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { AppContext } from '@/lib/modules/shared/app-context';
 import { recordAuditEvent } from '@/lib/modules/audit';
-import { sendAccountDeletedEmail } from '@/lib/modules/email';
+import { resolveEmailLanguage, sendAccountDeletedEmail } from '@/lib/modules/email';
 
 export type AccountDeletionCleanupSource = 'APP_ACCOUNT_DELETION';
 
@@ -31,7 +31,7 @@ export class AccountDeletionCleanupUseCase {
     const anonymousId = crypto.randomUUID();
     const user = await ctx.prisma.user.findUnique({
       where: { id: input.userId },
-      select: { id: true, email: true, isDeleted: true },
+      select: { id: true, email: true, isDeleted: true, language: true },
     });
 
     if (!user) return { cleaned: false, alreadyDeleted: true, originalEmail: null };
@@ -93,7 +93,7 @@ export class AccountDeletionCleanupUseCase {
     });
 
     if (originalEmail) {
-      await sendAccountDeletedEmail(originalEmail).catch((error) => {
+      await sendAccountDeletedEmail(originalEmail, resolveEmailLanguage(user.language)).catch((error) => {
         console.error('[AccountDeletionCleanup] Failed to send account deleted email:', error);
       });
     }

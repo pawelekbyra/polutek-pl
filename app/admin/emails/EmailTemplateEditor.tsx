@@ -7,37 +7,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Save, Globe, Info, Plus, Check, Shield } from "@/app/components/icons";
+import { ArrowLeft, Save, Info, Plus, Shield } from "@/app/components/icons";
 import { sanitizeEmailPreviewHtml } from "./sanitizeEmailPreviewHtml";
-import { APP_NAME } from "@/lib/constants";
 
 type EmailTemplateEditorProps = {
   templateSlug: string;
   onBack: () => void;
 };
 
-const CATEGORIES = ['SYSTEM', 'WELCOME', 'PAYMENT', 'PATRON', 'BROADCAST', 'MANUAL', 'OTHER'];
-const VARIABLES = [
-    { key: '{{firstName}}', label: 'Imię' },
-    { key: '{{name}}', label: 'Pełna nazwa' },
-    { key: '{{email}}', label: 'E-mail odbiorcy' },
-    { key: '{{amount}}', label: 'Kwota' },
-    { key: '{{currency}}', label: 'Waluta' },
-    { key: '{{appName}}', label: 'Nazwa aplikacji' },
-    { key: '{{brandName}}', label: 'Nazwa marki (do tematów i treści)' },
-    { key: '{{appUrl}}', label: 'URL aplikacji' },
-    { key: '{{unsubscribeLink}}', label: 'Link wypisu' },
-];
+type TemplateVariable = { key: string; label: string; sample: { pl: string; en: string } };
+
+/** Preview with the example values the server defines for each variable. */
+function fillSamples(text: string, variables: TemplateVariable[], language: "pl" | "en") {
+  const samples = new Map(variables.map((v) => [v.key, v.sample[language]]));
+  return text.replace(/\{\{\s*([A-Za-z0-9_]+)\s*\}\}/g, (match, key: string) => samples.get(key) ?? match);
+}
 
 export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEditorProps) {
-  const [slug, setSlug] = useState(templateSlug);
+  const isNew = templateSlug === "new";
+  const [slug, setSlug] = useState(isNew ? "" : templateSlug);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("OTHER");
-  const [isActive, setIsActive] = useState(true);
   const [isSystem, setIsSystem] = useState(false);
+  const [isCustomized, setIsCustomized] = useState(false);
+  const [variables, setVariables] = useState<TemplateVariable[]>([]);
   const [subject, setSubject] = useState("");
   const [html, setHtml] = useState("");
   const [subjectEn, setSubjectEn] = useState("");
@@ -45,75 +38,50 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
   const [activeTab, setActiveTab] = useState<"pl" | "en">("pl");
   const [status, setStatus] = useState<"idle" | "loading" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
-    if (templateSlug !== "new") {
-        let cancelled = false;
-        setStatus("loading");
-        fetch(`/api/admin/templates?slug=${templateSlug}`)
-            .then((res) => {
-                if (!res.ok) throw new Error(`Failed to load template (status ${res.status})`);
-                return res.json();
-            })
-            .then((data) => {
-                if (cancelled) return;
-                setSlug(data.slug);
-                setName(data.name || "");
-                setDescription(data.description || "");
-                setCategory(data.category || "OTHER");
-                setIsActive(data.isActive ?? true);
-                setIsSystem(data.isSystem ?? false);
-                setSubject(data.subject || "");
-                setHtml(data.html || "");
-                setSubjectEn(data.subjectEn || "");
-                setHtmlEn(data.htmlEn || "");
-                setStatus("idle");
-            })
-            .catch(() => {
-                if (cancelled) return;
-                setError("Nie udało się wczytać szablonu.");
-                setStatus("error");
-            });
-        return () => {
-            cancelled = true;
-        };
-    }
-  }, [templateSlug]);
-
-  const previewHtml = useMemo(() => {
-    return html
-      .replaceAll("{{firstName}}", "Jan")
-      .replaceAll("{{name}}", "Jan Kowalski")
-      .replaceAll("{{email}}", "jan@example.com")
-      .replaceAll("{{amount}}", "100.00")
-      .replaceAll("{{currency}}", "PLN")
-      .replaceAll("{{appName}}", APP_NAME)
-      .replaceAll("{{brandName}}", "Pawel Perfect")
-      .replaceAll("{{appUrl}}", "https://www.pawelperfect.com")
-      .replaceAll("{{unsubscribeLink}}", "#");
-  }, [html]);
-
-  const previewHtmlEn = useMemo(() => {
-    return htmlEn
-      .replaceAll("{{firstName}}", "John")
-      .replaceAll("{{name}}", "John Doe")
-      .replaceAll("{{email}}", "john@example.com")
-      .replaceAll("{{amount}}", "25.00")
-      .replaceAll("{{currency}}", "USD")
-      .replaceAll("{{appName}}", APP_NAME)
-      .replaceAll("{{brandName}}", "Pawel Perfect")
-      .replaceAll("{{appUrl}}", "https://www.pawelperfect.com")
-      .replaceAll("{{unsubscribeLink}}", "#");
-  }, [htmlEn]);
+    let cancelled = false;
+    setStatus("loading");
+    const url = isNew ? "/api/admin/templates?variables=custom" : `/api/admin/templates?slug=${encodeURIComponent(templateSlug)}`;
+    fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Failed to load template (status ${res.status})`);
+        return res.json();
+      })
+      .then((data) => {
+        if (cancelled) return;
+        setVariables(Array.isArray(data.variables) ? data.variables : []);
+        if (!isNew) {
+          setSlug(data.slug);
+          setName(data.name || "");
+          setDescription(data.description || "");
+          setIsSystem(Boolean(data.isSystem));
+          setIsCustomized(Boolean(data.isCustomized));
+          setSubject(data.subject || "");
+          setHtml(data.html || "");
+          setSubjectEn(data.subjectEn || "");
+          setHtmlEn(data.htmlEn || "");
+        }
+        setStatus("idle");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setError("Nie udało się wczytać szablonu.");
+        setStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [templateSlug, isNew, reloadToken]);
 
   const sanitizedPreviewHtml = useMemo(
-    () => sanitizeEmailPreviewHtml(previewHtml),
-    [previewHtml],
+    () => sanitizeEmailPreviewHtml(fillSamples(html, variables, "pl")),
+    [html, variables],
   );
-
   const sanitizedPreviewHtmlEn = useMemo(
-    () => sanitizeEmailPreviewHtml(previewHtmlEn),
-    [previewHtmlEn],
+    () => sanitizeEmailPreviewHtml(fillSamples(htmlEn, variables, "en")),
+    [htmlEn, variables],
   );
 
   async function handleSave() {
@@ -124,17 +92,7 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
       const response = await fetch("/api/admin/templates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            slug,
-            name,
-            description,
-            category,
-            isActive,
-            subject,
-            html,
-            subjectEn,
-            htmlEn
-        }),
+        body: JSON.stringify({ slug, name, description, subject, html, subjectEn, htmlEn }),
       });
 
       if (!response.ok) {
@@ -142,12 +100,25 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
         throw new Error(payload?.error || "Nie udało się zapisać szablonu.");
       }
 
+      setIsCustomized(true);
       setStatus("saved");
       setTimeout(() => setStatus("idle"), 3000);
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Nie udało się zapisać szablonu.");
       setStatus("error");
     }
+  }
+
+  async function handleRestoreDefault() {
+    setStatus("saving");
+    setError(null);
+    const response = await fetch(`/api/admin/templates?slug=${encodeURIComponent(slug)}`, { method: "DELETE" }).catch(() => null);
+    if (!response?.ok) {
+      setError("Nie udało się przywrócić tekstu domyślnego.");
+      setStatus("error");
+      return;
+    }
+    setReloadToken((token) => token + 1);
   }
 
   const insertVariable = (variable: string) => {
@@ -162,16 +133,17 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
 
   return (
     <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
             <Button variant="ghost" onClick={onBack}>
                 <ArrowLeft className="w-4 h-4 mr-2" /> Wróć do listy
             </Button>
-            <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 bg-background border rounded-lg px-3 py-1.5">
-                    <Checkbox id="active-switch" checked={isActive} onCheckedChange={(checked: boolean | "indeterminate") => setIsActive(!!checked)} />
-                    <Label htmlFor="active-switch" className="text-[10px] font-bold uppercase text-muted-foreground cursor-pointer">Aktywny</Label>
-                </div>
-                <Button onClick={handleSave} disabled={status === "saving" || !subject.trim() || !html.trim()}>
+            <div className="flex items-center gap-2">
+                {isSystem && isCustomized && (
+                    <Button variant="outline" onClick={handleRestoreDefault} disabled={status === "saving"}>
+                        Przywróć domyślny
+                    </Button>
+                )}
+                <Button onClick={handleSave} disabled={status === "saving" || !slug.trim() || !subject.trim() || !html.trim()}>
                     <Save className="w-4 h-4 mr-2" /> {status === "saving" ? "Zapisuję..." : "Zapisz szablon"}
                 </Button>
             </div>
@@ -179,38 +151,27 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
 
         <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
-                <Card>
-                    <CardHeader className="pb-4">
-                        <CardTitle className="text-lg">Podstawowe informacje</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid gap-4 md:grid-cols-2">
+                {!isSystem && (
+                    <Card>
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-lg">Podstawowe informacje</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
                             <div className="space-y-2">
                                 <Label className="text-xs font-bold uppercase text-muted-foreground">Slug (ID unikalne)</Label>
-                                <Input value={slug} onChange={e => setSlug(e.target.value)} disabled={templateSlug !== 'new'} placeholder="np. promo-jesien" />
+                                <Input value={slug} onChange={e => setSlug(e.target.value)} disabled={!isNew} placeholder="np. nowy-film" />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-xs font-bold uppercase text-muted-foreground">Kategoria</Label>
-                                <Select value={category} onValueChange={(val) => setCategory(val || 'OTHER')}>
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <Label className="text-xs font-bold uppercase text-muted-foreground">Nazwa wewnętrzna</Label>
+                                <Input value={name} onChange={e => setName(e.target.value)} placeholder="Przyjazna nazwa szablonu" />
                             </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-xs font-bold uppercase text-muted-foreground">Nazwa wewnętrzna</Label>
-                            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Przyjazna nazwa szablonu" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-xs font-bold uppercase text-muted-foreground">Opis</Label>
-                            <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Do czego służy ten szablon?" />
-                        </div>
-                    </CardContent>
-                </Card>
+                            <div className="space-y-2">
+                                <Label className="text-xs font-bold uppercase text-muted-foreground">Opis</Label>
+                                <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Do czego służy ten szablon?" />
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
 
                 <Tabs defaultValue="pl" onValueChange={(v) => setActiveTab(v as "pl" | "en")}>
                     <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -222,7 +183,7 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
                         <Card>
                             <CardHeader>
                                 <CardTitle>Temat wiadomości (PL)</CardTitle>
-                                <CardDescription>Obsługuje zmienne w formacie <code>{"{{firstName}}"}</code>.</CardDescription>
+                                <CardDescription>Obsługuje zmienne z listy obok, np. <code>{"{{brandName}}"}</code>.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <Input value={subject} onChange={(event) => setSubject(event.target.value)} />
@@ -303,17 +264,19 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
                         <CardTitle className="text-lg flex items-center gap-2">
                             <Info className="w-5 h-5 text-blue-600" /> Zmienne
                         </CardTitle>
+                        <CardDescription>Tylko te zmienne są wypełniane; zapis z inną zmienną zostanie odrzucony.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="grid gap-2">
-                            {VARIABLES.map(v => (
+                            {variables.map(v => (
                                 <button
                                     key={v.key}
-                                    onClick={() => insertVariable(v.key)}
+                                    type="button"
+                                    onClick={() => insertVariable(`{{${v.key}}}`)}
                                     className="flex items-center justify-between p-2 rounded border hover:bg-blue-50 hover:border-blue-200 transition-all text-left"
                                 >
                                     <div>
-                                        <code className="text-xs font-bold text-blue-700">{v.key}</code>
+                                        <code className="text-xs font-bold text-blue-700">{`{{${v.key}}}`}</code>
                                         <p className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">{v.label}</p>
                                     </div>
                                     <Plus className="w-3 h-3 text-muted-foreground/50" />
@@ -327,9 +290,13 @@ export function EmailTemplateEditor({ templateSlug, onBack }: EmailTemplateEdito
                     <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex gap-3 shadow-sm">
                         <Shield className="w-5 h-5 text-amber-600 shrink-0" />
                         <div>
-                            <p className="text-xs font-bold text-amber-900 uppercase tracking-tight">Szablon systemowy</p>
+                            <p className="text-xs font-bold text-amber-900 uppercase tracking-tight">
+                                {name || slug} · {isCustomized ? "zmieniony" : "domyślny"}
+                            </p>
                             <p className="text-[10px] leading-relaxed text-amber-700 mt-1">
-                                Używany przez aplikację. Edycja dozwolona, usuwanie zablokowane.
+                                {description} {isCustomized
+                                    ? "Wysyłana jest Twoja wersja. „Przywróć domyślny” wraca do tekstu z kodu."
+                                    : "Wysyłany jest tekst domyślny z kodu. Zapisanie zmian zastąpi go Twoją wersją."}
                             </p>
                         </div>
                     </div>

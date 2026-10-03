@@ -14,8 +14,8 @@ import { derivePreheader, htmlToPlainText, wrapEmailDocument } from '@/lib/modul
 import { EMAIL_DEFAULTS, SYSTEM_TEMPLATE_SLUGS } from '@/lib/email-defaults';
 import {
   EMAIL_IDENTITY_LINE,
-  LegacyEmailServiceProvider,
-} from '@/lib/modules/email/infrastructure/legacy-email-service-provider';
+  sendEmail,
+} from '@/lib/modules/email/infrastructure/resend-email.transport';
 
 describe('htmlToPlainText', () => {
   it('keeps link targets visible and turns blocks into lines', () => {
@@ -78,7 +78,7 @@ describe('default templates are not shouty', () => {
   });
 });
 
-describe('transactional send carries deliverability-friendly structure', () => {
+describe('the transport sends a deliverability-friendly message', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.RESEND_API_KEY = 'test_key';
@@ -86,14 +86,14 @@ describe('transactional send carries deliverability-friendly structure', () => {
   });
 
   it('sends multipart text + full HTML with Auto-Submitted and a unique X-Entity-Ref-ID, no List-Unsubscribe on security mail', async () => {
-    const provider = new LegacyEmailServiceProvider();
-    await provider.sendTransactionalEmail({
+    await sendEmail({
       to: 'a@example.com',
       subject: 'Confirm your email address',
       html: '<div><h1>Confirm</h1><p>Click.</p><a href="https://x.test/v">Confirm email</a></div>',
       language: 'en',
+      kind: 'verify-email',
     });
-    await provider.sendTransactionalEmail({ to: 'a@example.com', subject: 's', html: '<p>x</p>' });
+    await sendEmail({ to: 'a@example.com', subject: 's', html: '<p>x</p>', language: 'pl', kind: 'password-changed' });
 
     const [first, second] = emailsSend.mock.calls.map((c) => c[0]);
     expect(first.html).toContain('<!DOCTYPE html>');
@@ -107,13 +107,16 @@ describe('transactional send carries deliverability-friendly structure', () => {
     expect(first.headers['List-Unsubscribe']).toBeUndefined();
   });
 
-  it('keeps List-Unsubscribe when an unsubscribe URL is given (welcome mail)', async () => {
-    await new LegacyEmailServiceProvider().sendTransactionalEmail({
+  it('puts the mandatory footer into a complete HTML document an admin pasted', async () => {
+    await sendEmail({
       to: 'a@example.com',
       subject: 's',
-      html: '<p>x</p>',
-      unsubscribeUrl: 'https://x.test/unsubscribe?token=t',
+      html: '<html><body><p>Own layout</p></body></html>',
+      language: 'pl',
+      kind: 'broadcast',
+      unsubscribe: { oneClickUrl: 'https://x.test/api/u?token=t', footerHtml: '<p>FOOTER</p>' },
     });
-    expect(emailsSend.mock.calls[0][0].headers['List-Unsubscribe']).toBe('<https://x.test/unsubscribe?token=t>');
+    expect(emailsSend.mock.calls[0][0].html).toBe('<html><body><p>Own layout</p><p>FOOTER</p>\n</body></html>');
   });
 });
+

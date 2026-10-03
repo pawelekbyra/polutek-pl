@@ -5,6 +5,7 @@ const mail = vi.hoisted(() => ({
   sendVerificationEmail: vi.fn().mockResolvedValue({}),
   sendPasswordResetEmail: vi.fn().mockResolvedValue({}),
   sendPasswordChangedEmail: vi.fn().mockResolvedValue({}),
+  resolveEmailLanguage: (language: string | null | undefined) => (language === "pl" ? "pl" : "en"),
 }));
 
 vi.mock("@/lib/prisma", () => ({ prisma }));

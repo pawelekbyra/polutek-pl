@@ -1,154 +1,82 @@
 import { NextResponse, NextRequest } from "next/server";
 import { requireAdminForApi } from "@/lib/auth-utils";
-import { z } from "zod";
 import { createScopedLogger } from "@/lib/logger";
 import { handleApiError } from "@/lib/errors";
+import { parseAdminBody } from "@/lib/api/admin-body";
+import { adminEmailTemplateSchema } from "@/lib/api/admin-schemas";
 import {
   listEmailTemplates,
   getEmailTemplateBySlug,
   upsertEmailTemplate,
   deleteEmailTemplate,
+  getCustomTemplateVariables,
 } from "@/lib/modules/email";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 
 export const dynamic = "force-dynamic";
 
-const templateSchema = z.object({
-  slug: z
-    .string()
-    .trim()
-    .min(1)
-    .max(80)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  name: z.string().trim().min(1).max(100).optional().nullable(),
-  description: z.string().trim().max(255).optional().nullable(),
-  category: z
-    .enum([
-      "SYSTEM",
-      "WELCOME",
-      "PAYMENT",
-      "PATRON",
-      "BROADCAST",
-      "MANUAL",
-      "OTHER",
-    ])
-    .default("OTHER"),
-  isActive: z.boolean().default(true),
-  subject: z.string().trim().min(1).max(150),
-  html: z.string().min(1).max(50_000),
-  subjectEn: z.string().trim().max(150).optional().nullable(),
-  htmlEn: z.string().max(50_000).optional().nullable(),
-});
+function errorResponse(error: { message: string; code?: string; statusCode: number }) {
+  return NextResponse.json({ error: error.message, code: error.code }, { status: error.statusCode });
+}
 
 export async function GET(req: NextRequest) {
   const requestId = req.headers.get("x-request-id");
-  const scopedLogger = createScopedLogger(requestId);
-  const { adminUserId, response } = await requireAdminForApi(
-    "GET_ADMIN_TEMPLATES",
-  );
+  const { adminUserId, response } = await requireAdminForApi("GET_ADMIN_TEMPLATES");
   if (response) return response;
 
   try {
-    const ctx = createAppContext({
-      actor: { type: "admin", userId: adminUserId },
-      requestId: requestId || undefined,
-    });
-
+    const ctx = createAppContext({ actor: { type: "admin", userId: adminUserId }, requestId: requestId || undefined });
+    // The editor of a new (own) template asks which variables it may use.
+    if (req.nextUrl.searchParams.get("variables") === "custom") {
+      return NextResponse.json({ variables: getCustomTemplateVariables() });
+    }
     const slug = req.nextUrl.searchParams.get("slug");
     if (slug) {
       const result = await getEmailTemplateBySlug(ctx, slug);
-      if (!result.ok) {
-        return NextResponse.json(
-          { error: result.error.message, code: result.error.code },
-          { status: result.error.statusCode },
-        );
-      }
-      return NextResponse.json(result.data);
+      return result.ok ? NextResponse.json(result.data) : errorResponse(result.error);
     }
-
     const result = await listEmailTemplates(ctx);
-    if (!result.ok) {
-      // This should not happen as listEmailTemplates returns never as error type
-      return NextResponse.json({ error: "Internal Error" }, { status: 500 });
-    }
-
-    return NextResponse.json(result.data);
+    return NextResponse.json(result.ok ? result.data : []);
   } catch (err) {
-    scopedLogger.error("[GET_ADMIN_TEMPLATES_ERROR]", err);
+    createScopedLogger(requestId).error("[GET_ADMIN_TEMPLATES_ERROR]", err);
     return handleApiError(err);
   }
 }
 
+/** Saves an admin template, or an override of a system mail (validated against its variables). */
 export async function POST(req: NextRequest) {
   const requestId = req.headers.get("x-request-id");
-  const scopedLogger = createScopedLogger(requestId);
-  const { adminUserId, response } = await requireAdminForApi(
-    "POST_ADMIN_TEMPLATES",
-  );
+  const { adminUserId, response } = await requireAdminForApi("POST_ADMIN_TEMPLATES");
   if (response) return response;
 
   try {
-    const data = await req.json();
-    const parseResult = templateSchema.safeParse(data);
+    const parsed = await parseAdminBody(req, adminEmailTemplateSchema);
+    if (!parsed.ok) return parsed.response;
 
-    if (!parseResult.success) {
-      return NextResponse.json(
-        { error: "Invalid data", details: parseResult.error.flatten() },
-        { status: 400 },
-      );
-    }
-
-    const ctx = createAppContext({
-      actor: { type: "admin", userId: adminUserId },
-      requestId: requestId || undefined,
-    });
-
-    const result = await upsertEmailTemplate(ctx, parseResult.data);
-
-    if (!result.ok) {
-      return NextResponse.json(
-        { error: result.error.message, code: result.error.code },
-        { status: result.error.statusCode },
-      );
-    }
-
-    return NextResponse.json(result.data);
+    const ctx = createAppContext({ actor: { type: "admin", userId: adminUserId }, requestId: requestId || undefined });
+    const result = await upsertEmailTemplate(ctx, parsed.data);
+    return result.ok ? NextResponse.json(result.data) : errorResponse(result.error);
   } catch (err) {
-    scopedLogger.error("[POST_ADMIN_TEMPLATES_ERROR]", err);
+    createScopedLogger(requestId).error("[POST_ADMIN_TEMPLATES_ERROR]", err);
     return handleApiError(err);
   }
 }
 
+/** Deletes an admin template; for a system mail this restores the default text. */
 export async function DELETE(req: NextRequest) {
   const requestId = req.headers.get("x-request-id");
-  const scopedLogger = createScopedLogger(requestId);
-  const { adminUserId, response } = await requireAdminForApi(
-    "DELETE_ADMIN_TEMPLATES",
-  );
+  const { adminUserId, response } = await requireAdminForApi("DELETE_ADMIN_TEMPLATES");
   if (response) return response;
 
   try {
     const slug = req.nextUrl.searchParams.get("slug");
-    if (!slug)
-      return NextResponse.json({ error: "Missing slug" }, { status: 400 });
+    if (!slug) return NextResponse.json({ error: "Missing slug" }, { status: 400 });
 
-    const ctx = createAppContext({
-      actor: { type: "admin", userId: adminUserId },
-      requestId: requestId || undefined,
-    });
-
+    const ctx = createAppContext({ actor: { type: "admin", userId: adminUserId }, requestId: requestId || undefined });
     const result = await deleteEmailTemplate(ctx, slug);
-
-    if (!result.ok) {
-      return NextResponse.json(
-        { error: result.error.message, code: result.error.code },
-        { status: result.error.statusCode },
-      );
-    }
-
-    return NextResponse.json(result.data);
+    return result.ok ? NextResponse.json(result.data) : errorResponse(result.error);
   } catch (err) {
-    scopedLogger.error("[DELETE_ADMIN_TEMPLATES_ERROR]", err);
+    createScopedLogger(requestId).error("[DELETE_ADMIN_TEMPLATES_ERROR]", err);
     return handleApiError(err);
   }
 }

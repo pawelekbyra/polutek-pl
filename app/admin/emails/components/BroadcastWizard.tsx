@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Send, Loader2, Check, Info, Users, UserAdd, Gem, Mail } from "@/app/components/icons";
+import { ArrowLeft, Send, Loader2, Info, Users } from "@/app/components/icons";
 import { useToast } from "@/app/hooks/useToast";
 import { cn } from "@/lib/utils";
 import { sanitizeEmailPreviewHtml } from "../sanitizeEmailPreviewHtml";
@@ -18,37 +18,29 @@ type BroadcastWizardProps = {
     onBack: (result?: { broadcastSent?: boolean }) => void;
 };
 
-type RecipientGroup = 'ALL' | 'SUBSCRIBERS' | 'PATRONS' | 'MANUAL';
+type TemplateOption = { id: string; slug: string; name: string | null; isSystem: boolean; subject: string; html: string; subjectEn: string | null; htmlEn: string | null };
 
-type RecipientGroupOption = {
-    id: RecipientGroup;
-    label: string;
-    icon: typeof Users;
-    desc: string;
-};
-
-const RECIPIENT_GROUP_OPTIONS: RecipientGroupOption[] = [
-    { id: 'ALL', label: 'Wszyscy użytkownicy', icon: Users, desc: 'Wszystkie konta, które nie są usunięte' },
-    { id: 'SUBSCRIBERS', label: 'Subskrybenci', icon: UserAdd, desc: 'Osoby obserwujące Twój kanał' },
-    { id: 'PATRONS', label: 'Patroni', icon: Gem, desc: 'Aktywni wspierający' },
-    { id: 'MANUAL', label: 'Ręczna lista', icon: Mail, desc: 'Wpisz adresy email oddzielone przecinkami' },
-];
-
+/**
+ * Three steps: content, audience (the one lawful group, with the current count), test and send.
+ * "Send" only queues the broadcast; the server sends it in the background at a safe pace. The
+ * request key is fixed for the life of the wizard, so a double click or a retry never creates a
+ * second broadcast.
+ */
 export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
     const [step, setStep] = useState<1 | 2 | 3>(1);
     const [subjectPl, setSubjectPl] = useState("");
     const [htmlPl, setHtmlPl] = useState("");
     const [subjectEn, setSubjectEn] = useState("");
     const [htmlEn, setHtmlEn] = useState("");
-    const [recipientGroup, setRecipientGroup] = useState<RecipientGroup>('SUBSCRIBERS');
-    const [manualEmails, setManualEmails] = useState("");
-    const [testEmail, setTestEmail] = useState("");
+    const [testLanguage, setTestLanguage] = useState<"pl" | "en">("pl");
+    const [audienceCount, setAudienceCount] = useState<number | null>(null);
     const [isSending, setIsSending] = useState(false);
     const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
+    const [requestKey] = useState(() => crypto.randomUUID());
     const toast = useToast();
 
-    const [templates, setTemplates] = useState<any[]>([]);
+    const [templates, setTemplates] = useState<TemplateOption[]>([]);
     const [selectedTemplate, setSelectedTemplate] = useState<string>("");
 
     useEffect(() => {
@@ -59,7 +51,8 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                 return res.json();
             })
             .then((data) => {
-                if (!cancelled) setTemplates(Array.isArray(data) ? data : []);
+                // Own templates only: system mails (verification, reset…) are not broadcast content.
+                if (!cancelled) setTemplates(Array.isArray(data) ? data.filter((t: TemplateOption) => !t.isSystem) : []);
             })
             .catch(() => {
                 if (!cancelled) {
@@ -71,27 +64,26 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
         };
     }, [toast]);
 
-    const selectedRecipientGroup = useMemo(
-        () => RECIPIENT_GROUP_OPTIONS.find((group) => group.id === recipientGroup) ?? RECIPIENT_GROUP_OPTIONS[1],
-        [recipientGroup],
-    );
+    useEffect(() => {
+        if (step !== 2) return;
+        let cancelled = false;
+        setAudienceCount(null);
+        fetch("/api/admin/emails/broadcast/audience")
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+                if (!cancelled) setAudienceCount(typeof data?.recipientCount === "number" ? data.recipientCount : 0);
+            })
+            .catch(() => {
+                if (!cancelled) setAudienceCount(0);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [step]);
 
-    const manualRecipientCount = useMemo(() => {
-        return manualEmails
-            .split(',')
-            .map((email) => email.trim())
-            .filter(Boolean).length;
-    }, [manualEmails]);
-
-    const sanitizedHtmlPl = useMemo(
-        () => sanitizeEmailPreviewHtml(htmlPl),
-        [htmlPl],
-    );
-
-    const sanitizedHtmlEn = useMemo(
-        () => sanitizeEmailPreviewHtml(htmlEn),
-        [htmlEn],
-    );
+    const sanitizedHtmlPl = useMemo(() => sanitizeEmailPreviewHtml(htmlPl), [htmlPl]);
+    const sanitizedHtmlEn = useMemo(() => sanitizeEmailPreviewHtml(htmlEn), [htmlEn]);
+    const englishIncomplete = Boolean(subjectEn.trim()) !== Boolean(htmlEn.trim());
 
     const handleTemplateSelect = (slug: string) => {
         const t = templates.find(temp => temp.slug === slug);
@@ -104,20 +96,19 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
         }
     };
 
+    const content = { subjectPl, htmlPl, subjectEn: subjectEn || null, htmlEn: htmlEn || null };
+
     const handleSendTest = async () => {
         setIsTesting(true);
         try {
-            const res = await fetch("/api/admin/emails/broadcast", {
+            const res = await fetch("/api/admin/emails/broadcast/test", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    subjectPl, htmlPl, subjectEn, htmlEn,
-                    isTest: true, testEmail
-                })
+                body: JSON.stringify({ ...content, language: testLanguage }),
             });
             const data = await res.json().catch(() => null);
             if (res.ok) {
-                toast("Wysłano testowy e-mail", "success");
+                toast(`Wysłano test na ${data?.to ?? "Twój adres"}`, "success");
             } else {
                 toast(data?.error || "Nie udało się wysłać testowego e-maila", "error");
             }
@@ -135,17 +126,17 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
             const res = await fetch("/api/admin/emails/broadcast", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ subjectPl, htmlPl, subjectEn, htmlEn, recipientGroup, manualEmails })
+                body: JSON.stringify({ ...content, requestKey }),
             });
-            const data = await res.json();
+            const data = await res.json().catch(() => null);
             if (res.ok) {
-                toast(`Uruchomiono wysyłkę do ${data.recipientCount} osób`, "success");
+                toast(`Rozsyłka do ${data?.recipientCount ?? 0} osób jest w kolejce; postęp widać w historii.`, "success");
                 onBack({ broadcastSent: true });
             } else {
-                toast(data.error || "Błąd wysyłki", "error");
+                toast(data?.error || "Nie udało się utworzyć rozsyłki", "error");
             }
         } catch {
-            toast("Błąd wysyłki", "error");
+            toast("Brak odpowiedzi serwera. Kliknij „Wyślij” jeszcze raz: ta sama rozsyłka nie zostanie utworzona drugi raz.", "error");
         } finally {
             setIsSending(false);
         }
@@ -172,22 +163,26 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                 <div className="max-w-3xl mx-auto space-y-6">
                     <div className="text-center space-y-2">
                         <h2 className="text-3xl font-bold tracking-tight">Krok 1: Treść wiadomości</h2>
-                        <p className="text-muted-foreground">Wybierz szablon lub wpisz treść od zera.</p>
+                        <p className="text-muted-foreground">
+                            Wybierz własny szablon lub wpisz treść od zera. Stopkę z linkiem wypisu serwis dodaje sam.
+                        </p>
                     </div>
 
-                    <Card>
-                        <CardContent className="p-6 space-y-4">
-                            <Label className="text-xs font-bold uppercase text-muted-foreground">Zacznij od szablonu (opcjonalnie)</Label>
-                            <Select value={selectedTemplate} onValueChange={(val) => val && handleTemplateSelect(val)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Wybierz szablon..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {templates.map(t => <SelectItem key={t.id} value={t.slug}>{t.name || t.slug}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </CardContent>
-                    </Card>
+                    {templates.length > 0 && (
+                        <Card>
+                            <CardContent className="p-6 space-y-4">
+                                <Label className="text-xs font-bold uppercase text-muted-foreground">Zacznij od szablonu (opcjonalnie)</Label>
+                                <Select value={selectedTemplate} onValueChange={(val) => val && handleTemplateSelect(val)}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Wybierz szablon..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {templates.map(t => <SelectItem key={t.id} value={t.slug}>{t.name || t.slug}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     <Tabs defaultValue="pl">
                         <TabsList className="grid w-full grid-cols-2 mb-4">
@@ -205,6 +200,9 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                             </div>
                         </TabsContent>
                         <TabsContent value="en" className="space-y-4">
+                            <p className="text-xs text-muted-foreground">
+                                Opcjonalnie. Osoby z językiem angielskim dostaną tę wersję; bez niej dostaną wersję polską.
+                            </p>
                             <div className="space-y-2">
                                 <Label className="text-xs font-bold uppercase">Subject (EN)</Label>
                                 <Input value={subjectEn} onChange={e => setSubjectEn(e.target.value)} />
@@ -216,8 +214,12 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                         </TabsContent>
                     </Tabs>
 
+                    {englishIncomplete && (
+                        <p role="alert" className="text-sm text-destructive">Wersja angielska musi mieć i temat, i treść (albo zostaw obie puste).</p>
+                    )}
+
                     <div className="flex justify-end">
-                        <Button onClick={() => setStep(2)} disabled={!subjectPl || !htmlPl}>
+                        <Button onClick={() => setStep(2)} disabled={!subjectPl.trim() || !htmlPl.trim() || englishIncomplete}>
                             Dalej: Odbiorcy
                         </Button>
                     </div>
@@ -228,53 +230,28 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                 <div className="max-w-2xl mx-auto space-y-6">
                     <div className="text-center space-y-2">
                         <h2 className="text-3xl font-bold tracking-tight">Krok 2: Odbiorcy</h2>
-                        <p className="text-muted-foreground">Do kogo ma trafić ta wiadomość?</p>
                     </div>
 
-                    <div className="grid gap-4">
-                        {RECIPIENT_GROUP_OPTIONS.map((group) => (
-                            <button
-                                key={group.id}
-                                onClick={() => setRecipientGroup(group.id)}
-                                aria-pressed={recipientGroup === group.id}
-                                className={cn(
-                                    "flex items-center gap-4 p-6 rounded-2xl border-2 text-left transition-all",
-                                    recipientGroup === group.id ? "border-blue-600 bg-blue-50 shadow-md" : "border-border bg-card hover:border-muted-foreground/30"
-                                )}
-                            >
-                                <div className={cn(
-                                    "w-12 h-12 rounded-full flex items-center justify-center",
-                                    recipientGroup === group.id ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground"
-                                )}>
-                                    <group.icon className="w-6 h-6" />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="font-bold">{group.label}</p>
-                                    <p className="text-xs text-muted-foreground">{group.desc}</p>
-                                </div>
-                                {recipientGroup === group.id && <Check className="w-6 h-6 text-blue-600" />}
-                            </button>
-                        ))}
-                    </div>
-
-                    {recipientGroup === 'MANUAL' && (
-                        <Card className="mt-4 border-blue-200">
-                            <CardContent className="p-4 space-y-2">
-                                <Label className="text-xs font-bold uppercase text-blue-600">Adresy Email</Label>
-                                <Textarea
-                                    placeholder="email1@example.com, email2@example.com..."
-                                    value={manualEmails}
-                                    onChange={e => setManualEmails(e.target.value)}
-                                    className="min-h-[100px]"
-                                />
-                                <p className="text-[10px] text-muted-foreground italic">Odbiorcy zostaną dodani do bazy jeśli jeszcze w niej nie istnieją.</p>
-                            </CardContent>
-                        </Card>
-                    )}
+                    <Card className="border-blue-200 bg-blue-50">
+                        <CardContent className="p-6 flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-blue-600 text-white">
+                                <Users className="w-6 h-6" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="font-bold">Subskrybenci z włączonymi powiadomieniami</p>
+                                <p className="text-xs text-muted-foreground">
+                                    Osoby, które subskrybują kanał i zgodziły się na e-maile o nowych treściach. Pomijamy adresy zablokowane po odbiciu lub zgłoszeniu spamu.
+                                </p>
+                            </div>
+                            <p className="text-2xl font-black" aria-live="polite">
+                                {audienceCount === null ? <Loader2 className="w-5 h-5 animate-spin" /> : audienceCount}
+                            </p>
+                        </CardContent>
+                    </Card>
 
                     <div className="flex justify-between pt-6 border-t">
                         <Button variant="outline" onClick={() => setStep(1)}>Wróć</Button>
-                        <Button onClick={() => setStep(3)}>
+                        <Button onClick={() => setStep(3)} disabled={!audienceCount}>
                             Dalej: Test i wysyłka
                         </Button>
                     </div>
@@ -292,16 +269,21 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                         <CardContent className="p-6 flex gap-4">
                             <Info className="w-6 h-6 text-amber-600 shrink-0" />
                             <div className="space-y-4 w-full">
-                                <p className="text-sm text-amber-900 font-medium italic">Zawsze wysyłaj test do siebie przed masową wysyłką.</p>
+                                <p className="text-sm text-amber-900 font-medium">
+                                    Test przychodzi na adres Twojego konta i wygląda dokładnie jak prawdziwa wiadomość (ze stopką i linkiem wypisu).
+                                </p>
                                 <div className="flex gap-2">
-                                    <Input
-                                        placeholder="Twój e-mail..."
-                                        value={testEmail}
-                                        onChange={e => setTestEmail(e.target.value)}
-                                        className="bg-white border-amber-200"
-                                    />
+                                    <Select value={testLanguage} onValueChange={(val) => setTestLanguage(val === "en" ? "en" : "pl")}>
+                                        <SelectTrigger className="bg-white border-amber-200 w-40">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="pl">Wersja PL</SelectItem>
+                                            <SelectItem value="en">Wersja EN</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                     <Button onClick={handleSendTest} disabled={isTesting} variant="outline" className="border-amber-300 hover:bg-amber-100 text-amber-900 font-bold shrink-0">
-                                        {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Wyślij test"}
+                                        {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Wyślij test do siebie"}
                                     </Button>
                                 </div>
                             </div>
@@ -312,21 +294,15 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                         <CardContent className="p-6 space-y-4">
                         <div className="flex justify-between border-b pb-2 gap-4">
                             <span className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Odbiorcy</span>
-                            <span className="text-sm font-black text-right">{selectedRecipientGroup.label}</span>
+                            <span className="text-sm font-black text-right">{audienceCount ?? "…"} osób</span>
                         </div>
-                        {recipientGroup === 'MANUAL' && (
-                            <div className="flex justify-between border-b pb-2 gap-4">
-                                <span className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Liczba ręcznych adresów</span>
-                                <span className="text-sm font-black text-right">{manualRecipientCount}</span>
-                            </div>
-                        )}
                         <div className="flex justify-between border-b pb-2 gap-4">
                             <span className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Temat PL</span>
                             <span className="text-sm font-medium text-right">{subjectPl}</span>
                         </div>
                         <div className="flex justify-between border-b pb-2 gap-4">
                             <span className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Temat EN</span>
-                            <span className="text-sm font-medium text-right">{subjectEn || '(Brak)'}</span>
+                            <span className="text-sm font-medium text-right">{subjectEn || "(brak, wyślemy wersję PL)"}</span>
                         </div>
                         <div className="space-y-2">
                             <span className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Podgląd HTML PL</span>
@@ -353,7 +329,7 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                             disabled={isSending}
                         >
                             {isSending ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Send className="w-5 h-5 mr-2" />}
-                            {isSending ? "Wysyłanie..." : "Wyślij Broadcast"}
+                            {isSending ? "Zapisywanie…" : "Wyślij rozsyłkę"}
                         </Button>
                     </div>
                 </div>
@@ -363,9 +339,9 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
         <Dialog open={isSendDialogOpen} onOpenChange={setIsSendDialogOpen}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Wysłać broadcast?</DialogTitle>
+                    <DialogTitle>Wysłać rozsyłkę?</DialogTitle>
                     <DialogDescription>
-                        Ta akcja uruchomi wysyłkę do wybranej grupy odbiorców. Przed wysyłką upewnij się, że test i podgląd są poprawne.
+                        Wiadomość trafi do {audienceCount ?? "wybranych"} osób. Wysyłka idzie w tle, kilka maili na sekundę; postęp i przycisk „Anuluj” są w historii.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
@@ -373,7 +349,7 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                         Anuluj
                     </DialogClose>
                     <Button onClick={handleFinalSend} disabled={isSending}>
-                        {isSending ? "Wysyłanie…" : "Wyślij broadcast"}
+                        {isSending ? "Zapisywanie…" : "Wyślij rozsyłkę"}
                     </Button>
                 </DialogFooter>
             </DialogContent>

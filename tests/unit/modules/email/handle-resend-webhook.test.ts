@@ -1,312 +1,157 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleResendWebhook } from '@/lib/modules/email/application/handle-resend-webhook.use-case';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { EmailEventLockService } from '@/lib/modules/email/infrastructure/email-event-lock.service';
 
 vi.mock('@/lib/modules/email/infrastructure/email-event-lock.service');
 
-describe('handleResendWebhook use case - hardening', () => {
-  const prismaMock = {
-    emailEvent: {
-      create: vi.fn(),
-      findFirst: vi.fn(),
-    },
-    broadcastEmailRecipient: {
-      findFirst: vi.fn(),
-      update: vi.fn(),
-      updateMany: vi.fn(),
-    },
-    broadcastEmail: {
-      update: vi.fn(),
-    },
-    user: {
-      findUnique: vi.fn(),
-    },
-    emailPreference: {
-      upsert: vi.fn(),
-    },
-    inboundEmail: {
-      create: vi.fn(),
-    },
-    emailSuppression: {
-      upsert: vi.fn(),
-    },
-  };
+const OUR_TAGS = { app: 'pawelperfect', kind: 'broadcast' };
 
+function makeCtx() {
+  const recipients: Array<{ id: string; email: string; status: string; resendEmailId: string }> = [];
+  const prisma = {
+    broadcastEmailRecipient: {
+      findFirst: vi.fn(async ({ where }: any) => recipients.find((r) => r.resendEmailId === where.resendEmailId) ?? null),
+      updateMany: vi.fn(async ({ where, data }: any) => {
+        const row = recipients.find((r) => r.id === where.id && r.status === where.status);
+        if (!row) return { count: 0 };
+        Object.assign(row, data);
+        return { count: 1 };
+      }),
+    },
+    emailSuppression: { upsert: vi.fn() },
+  };
   const ctx = createAppContext({
-    prisma: prismaMock as any,
-    db: {
-        read: prismaMock as any,
-        writeTransaction: vi.fn((cb) => cb(prismaMock)),
-    } as any,
+    prisma: prisma as any,
+    db: { read: prisma as any, writeTransaction: vi.fn((cb: any) => cb(prisma)) } as any,
     actor: { type: 'system', reason: 'test' },
   });
+  return { ctx, prisma, recipients };
+}
 
+function event(type: string, data: Record<string, unknown> = {}, eventId = 'evt_1') {
+  return {
+    type,
+    eventId,
+    created_at: '2026-10-03T10:00:00.000Z',
+    data: { email_id: 're_1', to: ['Person@Example.com'], tags: OUR_TAGS, ...data },
+  } as any;
+}
+
+describe('handleResendWebhook', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(EmailEventLockService.prototype.acquireLock).mockResolvedValue('ACQUIRED');
+    vi.mocked(EmailEventLockService.prototype.releaseWithSuccess).mockResolvedValue();
+    vi.mocked(EmailEventLockService.prototype.releaseWithFailure).mockResolvedValue();
   });
 
-  it('rejects malformed payload (not an object)', async () => {
-    const result = await handleResendWebhook(ctx, "not-an-object" as any);
+  it('rejects a payload that is not an object or has no data', async () => {
+    const { ctx } = makeCtx();
+    const notObject = await handleResendWebhook(ctx, 'nope' as any);
+    const noData = await handleResendWebhook(ctx, { type: 'email.sent', eventId: 'e' } as any);
+    expect(notObject.ok || noData.ok).toBe(false);
+  });
+
+  it('rejects an event without svix-id (needed for idempotency)', async () => {
+    const { ctx } = makeCtx();
+    const result = await handleResendWebhook(ctx, { ...event('email.sent'), eventId: undefined });
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-        expect(result.error.code).toBe('EMAIL_WEBHOOK_INVALID_PAYLOAD');
+    expect(EmailEventLockService.prototype.acquireLock).not.toHaveBeenCalled();
+  });
+
+  it('acknowledges and ignores events it does not handle (incoming mail, opens, clicks)', async () => {
+    const { ctx, prisma } = makeCtx();
+    for (const type of ['email.received', 'email.opened', 'email.clicked', 'contact.updated']) {
+      const result = await handleResendWebhook(ctx, event(type));
+      expect(result.ok && result.data.ignored).toBe(true);
     }
+    expect(prisma.broadcastEmailRecipient.findFirst).not.toHaveBeenCalled();
+    expect(EmailEventLockService.prototype.acquireLock).not.toHaveBeenCalled();
   });
 
-  it('rejects payload with missing data', async () => {
-    const result = await handleResendWebhook(ctx, { type: 'email.sent' } as any);
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-        expect(result.error.code).toBe('EMAIL_WEBHOOK_INVALID_PAYLOAD');
-    }
+  it('ignores a bounce of mail this app did not send (PP Support shares the Resend account)', async () => {
+    const { ctx, prisma } = makeCtx();
+    const untagged = await handleResendWebhook(ctx, event('email.bounced', { tags: undefined }));
+    const otherApp = await handleResendWebhook(ctx, event('email.bounced', { tags: { app: 'pp-support' } }));
+    expect(untagged.ok && untagged.data.ignored).toBe(true);
+    expect(otherApp.ok && otherApp.data.ignored).toBe(true);
+    expect(prisma.emailSuppression.upsert).not.toHaveBeenCalled();
   });
 
-  it('accepts unsupported event type as ignored, not failure', async () => {
-    const result = await handleResendWebhook(ctx, {
-      type: 'email.unknown_type',
-      eventId: 'evt_1',
-      data: {
-        email_id: 're_456',
-        from: 'no-reply@polutek.pl',
-        to: ['user@example.com'],
-        subject: 'Hello',
-        created_at: new Date().toISOString(),
-      },
-    });
-
+  it('blocks the address (lowercased) on a permanent bounce of a system mail', async () => {
+    const { ctx, prisma } = makeCtx();
+    const result = await handleResendWebhook(ctx, event('email.bounced', { bounce: { type: 'Permanent' } }));
     expect(result.ok).toBe(true);
-    if (result.ok) {
-        expect(result.data.accepted).toBe(true);
-        expect(result.data.ignored).toBe(true);
-    }
+    expect(prisma.emailSuppression.upsert).toHaveBeenCalledWith(expect.objectContaining({
+      where: { email: 'person@example.com' },
+      create: expect.objectContaining({ email: 'person@example.com', reason: 'BOUNCE', active: true }),
+    }));
+    expect(EmailEventLockService.prototype.releaseWithSuccess).toHaveBeenCalledWith('evt_1', { resendEmailId: 're_1' });
   });
 
-  it('safely handles missing email_id in known event', async () => {
-      const result = await handleResendWebhook(ctx, {
-          type: 'email.sent',
-          eventId: 'evt_2',
-          data: {
-              from: 'no-reply@polutek.pl',
-              to: ['user@example.com'],
-              subject: 'Hello',
-              created_at: new Date().toISOString(),
-          } as any,
-      });
-
-      expect(result.ok).toBe(true);
-      // Status update should NOT be called if no email_id
-      expect(prismaMock.broadcastEmailRecipient.findFirst).not.toHaveBeenCalled();
+  it('does not block an address on a transient bounce', async () => {
+    const { ctx, prisma } = makeCtx();
+    await handleResendWebhook(ctx, event('email.bounced', { bounce: { type: 'Transient' } }));
+    expect(prisma.emailSuppression.upsert).not.toHaveBeenCalled();
   });
 
-  it('returns idempotency: available', async () => {
-    prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({ id: 'r1', broadcastEmailId: 'b1', status: 'PENDING' });
-    prismaMock.broadcastEmailRecipient.updateMany.mockResolvedValue({ count: 1 });
-
-    const result = await handleResendWebhook(ctx, {
-      type: 'email.sent',
-      eventId: 'evt_3',
-      data: {
-        email_id: 're_123',
-        from: 'no-reply@polutek.pl',
-        to: ['user@example.com'],
-        subject: 'Hello',
-        created_at: new Date().toISOString(),
-      },
-    });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-        expect(result.data.idempotency).toBe('available');
-    }
-  });
-
-  it('detects and ignores duplicate events', async () => {
-    vi.mocked(EmailEventLockService.prototype.acquireLock).mockResolvedValue('ALREADY_PROCESSED');
-
-    const result = await handleResendWebhook(ctx, {
-      type: 'email.sent',
-      eventId: 'duplicate_id',
-      data: {
-        email_id: 're_123',
-        from: 'no-reply@polutek.pl',
-        to: ['user@example.com'],
-        subject: 'Hello',
-        created_at: new Date().toISOString(),
-      },
-    });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-        expect(result.data.duplicate).toBe(true);
-    }
-    // Should NOT reach prisma create or updates
-    expect(prismaMock.broadcastEmailRecipient.findFirst).not.toHaveBeenCalled();
-  });
-
-  it('implements status hierarchy: OPENED does not overwrite CLICKED', async () => {
-    prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({
-      id: 'r1',
-      broadcastEmailId: 'b1',
-      status: 'CLICKED'
-    });
-
-    const result = await handleResendWebhook(ctx, {
-      type: 'email.opened',
-      eventId: 'evt_4',
-      data: {
-        email_id: 're_123',
-        from: 'no-reply@polutek.pl',
-        to: ['user@example.com'],
-        subject: 'Hello',
-        created_at: new Date().toISOString(),
-      },
-    });
-
-    expect(result.ok).toBe(true);
-    // updateMany should NOT be called because CLICKED (priority 5) > OPENED (priority 4)
-    expect(prismaMock.broadcastEmailRecipient.updateMany).not.toHaveBeenCalled();
-  });
-
-  it('terminal status protection: DELIVERED does not overwrite BOUNCED', async () => {
-    prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({
-      id: 'r1',
-      broadcastEmailId: 'b1',
-      status: 'BOUNCED'
-    });
-
-    const result = await handleResendWebhook(ctx, {
-      type: 'email.delivered',
-      eventId: 'evt_5',
-      data: {
-        email_id: 're_123',
-        from: 'no-reply@polutek.pl',
-        to: ['user@example.com'],
-        subject: 'Hello',
-        created_at: new Date().toISOString(),
-      },
-    });
-
-    expect(result.ok).toBe(true);
-    // updateMany should NOT be called because BOUNCED (priority 100) > DELIVERED (priority 3)
-    expect(prismaMock.broadcastEmailRecipient.updateMany).not.toHaveBeenCalled();
-  });
-
-  it('updates aggregate counts correctly on first SENT event', async () => {
-      prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({
-          id: 'r1',
-          broadcastEmailId: 'b1',
-          status: 'PENDING',
-          email: 'user@example.com'
-      });
-      prismaMock.broadcastEmailRecipient.updateMany.mockResolvedValue({ count: 1 });
-
-      const result = await handleResendWebhook(ctx, {
-          type: 'email.sent',
-          eventId: 'evt_6',
-          data: {
-              email_id: 're_123',
-              from: 'no-reply@polutek.pl',
-              to: ['user@example.com'],
-              subject: 'Hello',
-              created_at: new Date().toISOString(),
-          },
-      });
-
-      expect(result.ok).toBe(true);
-      expect(prismaMock.broadcastEmail.update).toHaveBeenCalledWith(expect.objectContaining({
-          where: { id: 'b1' },
-          data: { sentCount: { increment: 1 } }
-      }));
-  });
-
-  it('does NOT update aggregate counts if already SENT', async () => {
-      prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({
-          id: 'r1',
-          broadcastEmailId: 'b1',
-          status: 'SENT',
-          email: 'user@example.com'
-      });
-      prismaMock.broadcastEmailRecipient.updateMany.mockResolvedValue({ count: 1 });
-
-      const result = await handleResendWebhook(ctx, {
-          type: 'email.delivered',
-          eventId: 'evt_7',
-          data: {
-              email_id: 're_123',
-              from: 'no-reply@polutek.pl',
-              to: ['user@example.com'],
-              subject: 'Hello',
-              created_at: new Date().toISOString(),
-          },
-      });
-
-      expect(result.ok).toBe(true);
-      // It should update recipient to DELIVERED, but NOT increment BroadcastEmail.sentCount again
-      expect(prismaMock.broadcastEmailRecipient.updateMany).toHaveBeenCalled();
-      expect(prismaMock.broadcastEmail.update).not.toHaveBeenCalled();
-  });
-
-  it('creates durable suppression for BOUNCE event', async () => {
-    prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({
-        id: 'r1',
-        broadcastEmailId: 'b1',
-        status: 'SENT',
-        email: 'bounced@example.com'
-    });
-    prismaMock.broadcastEmailRecipient.updateMany.mockResolvedValue({ count: 1 });
-
-    const result = await handleResendWebhook(ctx, {
-        type: 'email.bounced',
-        eventId: 'evt_bounce_1',
-        data: {
-            email_id: 're_123',
-            from: 'no-reply@polutek.pl',
-            to: ['bounced@example.com'],
-            subject: 'Hello',
-            created_at: new Date().toISOString(),
-        },
-    });
-
-    expect(result.ok).toBe(true);
-    expect(prismaMock.emailSuppression.upsert).toHaveBeenCalledWith(expect.objectContaining({
-        where: { email: 'bounced@example.com' },
-        create: expect.objectContaining({
-            reason: 'BOUNCE',
-            active: true
-        })
+  it('blocks on a complaint and uses the broadcast recipient address when there is one', async () => {
+    const { ctx, prisma, recipients } = makeCtx();
+    recipients.push({ id: 'r1', email: 'real@example.com', status: 'DELIVERED', resendEmailId: 're_1' });
+    await handleResendWebhook(ctx, event('email.complained', { to: ['other@example.com'] }));
+    expect(recipients[0].status).toBe('COMPLAINED');
+    expect(prisma.emailSuppression.upsert).toHaveBeenCalledWith(expect.objectContaining({
+      where: { email: 'real@example.com' },
+      create: expect.objectContaining({ reason: 'COMPLAINT' }),
     }));
   });
 
-  it('creates durable suppression for COMPLAINT event', async () => {
-    prismaMock.broadcastEmailRecipient.findFirst.mockResolvedValue({
-        id: 'r1',
-        broadcastEmailId: 'b1',
-        status: 'SENT',
-        email: 'complainer@example.com'
-    });
-    prismaMock.broadcastEmailRecipient.updateMany.mockResolvedValue({ count: 1 });
+  it('moves a broadcast recipient forward and never backward', async () => {
+    const { ctx, recipients } = makeCtx();
+    recipients.push({ id: 'r1', email: 'a@example.com', status: 'SENT', resendEmailId: 're_1' });
+    await handleResendWebhook(ctx, event('email.delivered', {}, 'evt_d'));
+    expect(recipients[0].status).toBe('DELIVERED');
+    await handleResendWebhook(ctx, event('email.sent', {}, 'evt_s'));
+    expect(recipients[0].status).toBe('DELIVERED');
+  });
 
-    const result = await handleResendWebhook(ctx, {
-        type: 'email.complained',
-        eventId: 'evt_complaint_1',
-        data: {
-            email_id: 're_123',
-            from: 'no-reply@polutek.pl',
-            to: ['complainer@example.com'],
-            subject: 'Hello',
-            created_at: new Date().toISOString(),
-        },
-    });
+  it('marks a recipient FAILED on email.failed and email.suppressed', async () => {
+    const { ctx, recipients } = makeCtx();
+    recipients.push({ id: 'r1', email: 'a@example.com', status: 'SENT', resendEmailId: 're_1' });
+    recipients.push({ id: 'r2', email: 'b@example.com', status: 'SENT', resendEmailId: 're_2' });
+    await handleResendWebhook(ctx, event('email.failed', {}, 'evt_f'));
+    await handleResendWebhook(ctx, event('email.suppressed', { email_id: 're_2' }, 'evt_x'));
+    expect(recipients[0]).toMatchObject({ status: 'FAILED', error: 'PROVIDER_FAILED' });
+    expect(recipients[1]).toMatchObject({ status: 'FAILED', error: 'SUPPRESSED_BY_PROVIDER' });
+  });
 
-    expect(result.ok).toBe(true);
-    expect(prismaMock.emailSuppression.upsert).toHaveBeenCalledWith(expect.objectContaining({
-        where: { email: 'complainer@example.com' },
-        create: expect.objectContaining({
-            reason: 'COMPLAINT',
-            active: true
-        })
-    }));
+  it('does nothing for an already processed event and asks for a retry on a lock conflict', async () => {
+    const { ctx, prisma } = makeCtx();
+    vi.mocked(EmailEventLockService.prototype.acquireLock).mockResolvedValueOnce('ALREADY_PROCESSED');
+    const duplicate = await handleResendWebhook(ctx, event('email.bounced'));
+    expect(duplicate.ok && duplicate.data.duplicate).toBe(true);
+    expect(prisma.emailSuppression.upsert).not.toHaveBeenCalled();
+
+    vi.mocked(EmailEventLockService.prototype.acquireLock).mockResolvedValueOnce('CONFLICT');
+    const conflict = await handleResendWebhook(ctx, event('email.bounced'));
+    expect(!conflict.ok && conflict.error.statusCode).toBe(503);
+  });
+
+  it('records the failure on the lock when processing throws, so Resend retries', async () => {
+    const { ctx, prisma } = makeCtx();
+    prisma.emailSuppression.upsert.mockRejectedValueOnce(new Error('DB down'));
+    const result = await handleResendWebhook(ctx, event('email.bounced'));
+    expect(result.ok).toBe(false);
+    expect(EmailEventLockService.prototype.releaseWithFailure).toHaveBeenCalledWith('evt_1', 'DB down');
+  });
+
+  it('gives up with 503 when the recipient keeps changing under it', async () => {
+    const { ctx, prisma } = makeCtx();
+    prisma.broadcastEmailRecipient.findFirst.mockResolvedValue({ id: 'r1', status: 'SENT' } as any);
+    prisma.broadcastEmailRecipient.updateMany.mockResolvedValue({ count: 0 });
+    const result = await handleResendWebhook(ctx, event('email.delivered'));
+    expect(!result.ok && result.error.statusCode).toBe(503);
+    expect(prisma.broadcastEmailRecipient.updateMany).toHaveBeenCalledTimes(3);
   });
 });

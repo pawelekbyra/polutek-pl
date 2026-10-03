@@ -90,7 +90,7 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
 
   <p style="${FOOTER_STYLE}">
     Ten email został wysłany na adres {{email}} po założeniu konta w {{brandName}}.<br/>
-    <a href="{{preferencesLink}}" style="color: #888;">Zarządzaj preferencjami email</a>
+    <a href="{{preferencesLink}}" style="color: #888;">Wypisz się z e-maili o nowych treściach</a>
   </p>
 </div>`,
     htmlEn: `<div style="${BASE_STYLE}">
@@ -110,7 +110,7 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
 
   <p style="${FOOTER_STYLE}">
     This email was sent to {{email}} after creating an account at {{brandName}}.<br/>
-    <a href="{{preferencesLink}}" style="color: #888;">Manage email preferences</a>
+    <a href="{{preferencesLink}}" style="color: #888;">Unsubscribe from new-content emails</a>
   </p>
 </div>`,
   },
@@ -133,8 +133,7 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
   <a href="{{appUrl}}" style="${BUTTON_STYLE}">Wróć do {{brandName}} →</a>
 
   <p style="${FOOTER_STYLE}">
-    Ten email dotyczył transakcji na koncie {{email}} w {{brandName}}.<br/>
-    <a href="{{preferencesLink}}" style="color: #888;">Zarządzaj preferencjami email</a>
+    Ten email dotyczył transakcji na koncie {{email}} w {{brandName}}.
   </p>
 </div>`,
     htmlEn: `<div style="${BASE_STYLE}">
@@ -152,8 +151,7 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
   <a href="{{appUrl}}" style="${BUTTON_STYLE}">Back to {{brandName}} →</a>
 
   <p style="${FOOTER_STYLE}">
-    This email relates to a transaction on account {{email}} at {{brandName}}.<br/>
-    <a href="{{preferencesLink}}" style="color: #888;">Manage email preferences</a>
+    This email relates to a transaction on account {{email}} at {{brandName}}.
   </p>
 </div>`,
   },
@@ -174,8 +172,7 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
   <a href="{{appUrl}}" style="${BUTTON_STYLE}">Wróć do {{brandName}} →</a>
 
   <p style="${FOOTER_STYLE}">
-    Ten email dotyczył transakcji na koncie {{email}} w {{brandName}}.<br/>
-    <a href="{{preferencesLink}}" style="color: #888;">Zarządzaj preferencjami email</a>
+    Ten email dotyczył transakcji na koncie {{email}} w {{brandName}}.
   </p>
 </div>`,
     htmlEn: `<div style="${BASE_STYLE}">
@@ -191,8 +188,7 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
   <a href="{{appUrl}}" style="${BUTTON_STYLE}">Back to {{brandName}} →</a>
 
   <p style="${FOOTER_STYLE}">
-    This email relates to a transaction on account {{email}} at {{brandName}}.<br/>
-    <a href="{{preferencesLink}}" style="color: #888;">Manage email preferences</a>
+    This email relates to a transaction on account {{email}} at {{brandName}}.
   </p>
 </div>`,
   },
@@ -240,13 +236,14 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
     html: `<div style="${BASE_STYLE}">
   <h1 style="${HEADER_STYLE}">Twoje konto zostało usunięte</h1>
 
-  <p style="font-size: 16px;">Zgodnie z Twoją prośbą, Twoje konto i powiązane dane zostały trwale usunięte z platformy <strong>{{brandName}}</strong>.</p>
+  <p style="font-size: 16px;">Zgodnie z Twoją prośbą usunęliśmy Twoje konto w <strong>{{brandName}}</strong>. Nie da się już na nie zalogować.</p>
 
   <div style="${INFO_BOX_STYLE}">
-    Co zostało usunięte:<br/>
-    ✓ Dane profilu i konto<br/>
-    ✓ Historia komentarzy i reakcji<br/>
-    ✓ Preferencje email i zgody
+    Co się stało:<br/>
+    ✓ Usunęliśmy adres e-mail, pseudonim i zdjęcie profilu<br/>
+    ✓ Usunęliśmy subskrypcję oraz zgody i ustawienia e-mail<br/>
+    ✓ Komentarze zostają, podpisane jako „Usunięty Użytkownik”<br/>
+    ✓ Dane o wpłatach przechowujemy tak długo, jak wymagają tego przepisy (szczegóły w Polityce prywatności)
   </div>
 
   <p style="font-size: 14px; color: #555;">Jeśli usunąłeś/-aś konto przez pomyłkę lub masz pytania, odpowiedz na tego maila w ciągu 30 dni.</p>
@@ -258,13 +255,14 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
     htmlEn: `<div style="${BASE_STYLE}">
   <h1 style="${HEADER_STYLE}">Your account has been deleted</h1>
 
-  <p style="font-size: 16px;">As requested, your account and associated data have been permanently removed from <strong>{{brandName}}</strong>.</p>
+  <p style="font-size: 16px;">As requested, we deleted your <strong>{{brandName}}</strong> account. It can no longer be signed in to.</p>
 
   <div style="${INFO_BOX_STYLE}">
-    What was deleted:<br/>
-    ✓ Profile data and account<br/>
-    ✓ Comment and reaction history<br/>
-    ✓ Email preferences and consents
+    What happened:<br/>
+    ✓ We removed your email address, nickname and profile picture<br/>
+    ✓ We removed your subscription and your email consents and settings<br/>
+    ✓ Your comments stay, signed as “Usunięty Użytkownik” (deleted user)<br/>
+    ✓ Payment records are kept for as long as the law requires (details in the Privacy Policy)
   </div>
 
   <p style="font-size: 14px; color: #555;">If you deleted your account by mistake or have questions, reply to this email within 30 days.</p>

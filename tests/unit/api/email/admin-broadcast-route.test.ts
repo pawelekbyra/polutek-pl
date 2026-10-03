@@ -1,99 +1,74 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { POST, GET } from '@/app/api/admin/emails/broadcast/route';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import { sendAdminBroadcastEmail, listAdminBroadcastEmails } from '@/lib/modules/email';
-import { requireAdminForApi } from '@/lib/auth-utils';
 
-vi.mock('@/lib/auth-utils', () => ({
+const { requireAdminForApi, createBroadcast, sendBroadcastTest, listAdminBroadcastEmails, userFindUnique } = vi.hoisted(() => ({
   requireAdminForApi: vi.fn(),
-}));
-
-vi.mock('@/lib/modules/email', () => ({
-  sendAdminBroadcastEmail: vi.fn(),
+  createBroadcast: vi.fn(),
+  sendBroadcastTest: vi.fn(),
   listAdminBroadcastEmails: vi.fn(),
+  userFindUnique: vi.fn(),
 }));
 
-vi.mock('@/lib/auth/server', () => ({
-    auth: vi.fn().mockResolvedValue({ sessionClaims: { email: 'admin@test.com' } }),
-}));
+vi.mock('@/lib/auth-utils', () => ({ requireAdminForApi }));
+vi.mock('@/lib/modules/email', () => ({ createBroadcast, sendBroadcastTest, listAdminBroadcastEmails }));
+vi.mock('@/lib/prisma', () => ({ prisma: { user: { findUnique: userFindUnique } } }));
 
-describe('Admin Broadcast Route Contract', () => {
+import { GET, POST } from '@/app/api/admin/emails/broadcast/route';
+import { POST as POST_TEST } from '@/app/api/admin/emails/broadcast/test/route';
+
+const KEY = '6f1c1f9e-6c8c-4d8e-9a59-2f8f1b2b9c11';
+const post = (url: string, body: unknown) => new NextRequest(`http://localhost${url}`, { method: 'POST', body: JSON.stringify(body) });
+
+describe('admin broadcast routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    requireAdminForApi.mockResolvedValue({ adminUserId: 'admin_1', response: null });
   });
 
-  describe('POST', () => {
-    it('requires admin authentication', async () => {
-      vi.mocked(requireAdminForApi).mockResolvedValue({
-          adminUserId: '',
-          response: new Response('Unauthorized', { status: 401 })
-      } as any);
-
-      const req = new NextRequest('http://localhost/api/admin/emails/broadcast', {
-        method: 'POST',
-        body: JSON.stringify({}),
-      });
-
-      const res = await POST(req);
-      expect(res.status).toBe(401);
-    });
-
-    it('calls sendAdminBroadcastEmail with mapped DTO', async () => {
-      vi.mocked(requireAdminForApi).mockResolvedValue({
-          adminUserId: 'admin_1',
-          response: null
-      } as any);
-      vi.mocked(sendAdminBroadcastEmail).mockResolvedValue({ ok: true, data: { success: true } } as any);
-
-      const req = new NextRequest('http://localhost/api/admin/emails/broadcast', {
-        method: 'POST',
-        body: JSON.stringify({
-          subject: 'Test Subject',
-          body: 'Test Body',
-          audience: 'TEST',
-          testRecipientEmail: 'test@example.com'
-        }),
-      });
-
-      await POST(req);
-      expect(sendAdminBroadcastEmail).toHaveBeenCalledWith(
-          expect.anything(),
-          expect.objectContaining({
-              subject: 'Test Subject',
-              audience: 'TEST'
-          })
-      );
-    });
+  it('requires an admin', async () => {
+    requireAdminForApi.mockResolvedValue({ adminUserId: null, response: new Response('Unauthorized', { status: 401 }) });
+    const res = await POST(post('/api/admin/emails/broadcast', {}));
+    expect(res.status).toBe(401);
+    expect(createBroadcast).not.toHaveBeenCalled();
   });
 
-  describe('GET', () => {
-    it('requires admin authentication', async () => {
-      vi.mocked(requireAdminForApi).mockResolvedValue({
-          adminUserId: '',
-          response: new Response('Unauthorized', { status: 401 })
-      } as any);
+  it('queues the broadcast and answers 202 without sending in the request', async () => {
+    createBroadcast.mockResolvedValue({ ok: true, data: { broadcastId: 'b1', recipientCount: 3, duplicate: false } });
+    const res = await POST(post('/api/admin/emails/broadcast', { subjectPl: 'S', htmlPl: '<p>x</p>', requestKey: KEY, recipientGroup: 'MANUAL', manualEmails: 'a@b.c' }));
+    expect(res.status).toBe(202);
+    expect(createBroadcast).toHaveBeenCalledWith(expect.anything(), { subjectPl: 'S', htmlPl: '<p>x</p>', requestKey: KEY });
+  });
 
-      const req = new NextRequest('http://localhost/api/admin/emails/broadcast', {
-        method: 'GET',
-      });
+  it('answers 200 with the same broadcast for a repeated request', async () => {
+    createBroadcast.mockResolvedValue({ ok: true, data: { broadcastId: 'b1', recipientCount: 3, duplicate: true } });
+    const res = await POST(post('/api/admin/emails/broadcast', { subjectPl: 'S', htmlPl: '<p>x</p>', requestKey: KEY }));
+    expect(res.status).toBe(200);
+  });
 
-      const res = await GET(req);
-      expect(res.status).toBe(401);
-    });
+  it('rejects a request without a request key or with malformed JSON', async () => {
+    expect((await POST(post('/api/admin/emails/broadcast', { subjectPl: 'S', htmlPl: 'x' }))).status).toBe(400);
+    const malformed = new NextRequest('http://localhost/api/admin/emails/broadcast', { method: 'POST', body: '{' });
+    expect((await POST(malformed)).status).toBe(400);
+  });
 
-    it('calls listAdminBroadcastEmails', async () => {
-      vi.mocked(requireAdminForApi).mockResolvedValue({
-          adminUserId: 'admin_1',
-          response: null
-      } as any);
-      vi.mocked(listAdminBroadcastEmails).mockResolvedValue({ ok: true, data: [] } as any);
+  it('passes the use case error (e.g. a broadcast in progress) through', async () => {
+    createBroadcast.mockResolvedValue({ ok: false, error: { message: 'busy', code: 'EMAIL_BROADCAST_IN_PROGRESS', statusCode: 409 } });
+    const res = await POST(post('/api/admin/emails/broadcast', { subjectPl: 'S', htmlPl: 'x', requestKey: KEY }));
+    expect(res.status).toBe(409);
+    expect(await res.json()).toEqual({ error: 'busy', code: 'EMAIL_BROADCAST_IN_PROGRESS' });
+  });
 
-      const req = new NextRequest('http://localhost/api/admin/emails/broadcast', {
-        method: 'GET',
-      });
+  it('sends the test only to the admin account address, whatever the request says', async () => {
+    userFindUnique.mockResolvedValue({ email: 'owner@example.com' });
+    sendBroadcastTest.mockResolvedValue({ ok: true, data: { messageId: 'm1' } });
+    const res = await POST_TEST(post('/api/admin/emails/broadcast/test', { subjectPl: 'S', htmlPl: 'x', testEmail: 'victim@example.com', to: 'victim@example.com', language: 'en' }));
+    expect(res.status).toBe(200);
+    expect(sendBroadcastTest).toHaveBeenCalledWith(expect.anything(), { subjectPl: 'S', htmlPl: 'x', language: 'en', to: 'owner@example.com' });
+  });
 
-      await GET(req);
-      expect(listAdminBroadcastEmails).toHaveBeenCalled();
-    });
+  it('lists the history', async () => {
+    listAdminBroadcastEmails.mockResolvedValue({ ok: true, data: [{ id: 'b1' }] });
+    const res = await GET();
+    expect(await res.json()).toEqual([{ id: 'b1' }]);
   });
 });

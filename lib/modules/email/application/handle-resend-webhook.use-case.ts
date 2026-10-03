@@ -4,170 +4,140 @@ import { UseCaseResult, ok, fail } from "../../shared/result";
 import { EmailError, WebhookInvalidPayloadError } from "../domain/email.errors";
 import { logger } from "@/lib/logger";
 import { EmailEventLockService } from "../infrastructure/email-event-lock.service";
-import { isPrismaErrorCode } from "@/lib/utils/db";
+import { APP_EMAIL_TAG } from "../infrastructure/resend-email.transport";
 
 /**
- * handleResendWebhook use case.
- * R9 foundation: handles Resend webhook events after signature verification.
- * R10 hardened: atomic idempotency via EmailEventLockService.
+ * Delivery events we act on. Opens and clicks are not tracked (tracking is off in Resend), and
+ * incoming mail goes to PP Support, not here (MX is Cloudflare Email Routing since 2026-10-02).
+ * See https://resend.com/docs/dashboard/webhooks/event-types.
+ */
+export const HANDLED_RESEND_EVENTS = [
+  'email.sent',
+  'email.delivered',
+  'email.delivery_delayed',
+  'email.bounced',
+  'email.complained',
+  'email.failed',
+  'email.suppressed',
+] as const;
+
+/**
+ * The Resend account (and so its webhooks) is shared with PP Support. Only mail this app sent carries
+ * the `app=pawelperfect` tag; anything else is acknowledged and ignored, so a bounce on a support
+ * reply can never block a user here.
+ */
+function isOurEmail(input: ResendWebhookInput): boolean {
+  return input.data?.tags?.[APP_EMAIL_TAG.name] === APP_EMAIL_TAG.value;
+}
+
+/**
+ * handleResendWebhook: runs after the signature check in the route. Idempotent per svix-id
+ * (EmailEventLockService); a failed run is retried by Resend.
  */
 export async function handleResendWebhook(
   ctx: AppContext,
   input: ResendWebhookInput
 ): Promise<UseCaseResult<ResendWebhookResult, EmailError>> {
-  // 1. Robust validation
   if (!input || typeof input !== 'object') {
-      return fail(new WebhookInvalidPayloadError("Input must be an object"));
+    return fail(new WebhookInvalidPayloadError("Input must be an object"));
   }
 
   const { type, data, eventId } = input;
 
   if (!type || typeof type !== 'string') {
-      return fail(new WebhookInvalidPayloadError("Event type is required and must be a string"));
+    return fail(new WebhookInvalidPayloadError("Event type is required and must be a string"));
   }
 
   if (!data || typeof data !== 'object') {
-      return fail(new WebhookInvalidPayloadError("Event data is required and must be an object"));
+    return fail(new WebhookInvalidPayloadError("Event data is required and must be an object"));
   }
 
-  // 2. Atomic Idempotency check via Lock Service
-  // eventId (from svix-id) is REQUIRED for all events to ensure strict idempotency.
-  const providerEventId = eventId;
-
-  if (!providerEventId) {
-      logger.error(`[handleResendWebhook] Webhook rejected: missing eventId (svix-id) for type=${type}`);
-      return fail(new WebhookInvalidPayloadError("eventId (svix-id) is required for idempotency"));
+  if (!eventId) {
+    logger.error(`[handleResendWebhook] Webhook rejected: missing eventId (svix-id) for type=${type}`);
+    return fail(new WebhookInvalidPayloadError("eventId (svix-id) is required for idempotency"));
   }
 
-  const resendEmailId = data.email_id;
+  const handled = (HANDLED_RESEND_EVENTS as readonly string[]).includes(type);
+  if (!handled || !isOurEmail(input)) {
+    logger.info(`[handleResendWebhook] Ignored ${type} (${handled ? 'not sent by this app' : 'event not handled'})`);
+    return ok({ received: true, accepted: true, ignored: true, idempotency: "available" });
+  }
+
+  const resendEmailId = typeof data.email_id === 'string' ? data.email_id : undefined;
   if (!resendEmailId) {
-      logger.warn(`[handleResendWebhook] Event ${type} missing email_id`);
+    return fail(new WebhookInvalidPayloadError("email_id is required"));
   }
 
   const lockService = new EmailEventLockService({ read: ctx.db.read, write: ctx.prisma });
 
-  // Privacy: minimize stored payload to essential identifiers only
-  const minimalPayload = {
-      type,
-      created_at: (input as any).created_at,
-      email_id: resendEmailId,
-  };
-
+  // Privacy: store only identifiers, never addresses or content.
   const lockStatus = await lockService.acquireLock({
-      providerEventId,
-      type,
-      payload: minimalPayload
+    providerEventId: eventId,
+    type,
+    payload: { type, created_at: input.created_at, email_id: resendEmailId },
   });
 
   if (lockStatus === 'ALREADY_PROCESSED') {
-      return ok({
-          received: true,
-          accepted: true,
-          duplicate: true,
-          idempotency: "available"
-      });
+    return ok({ received: true, accepted: true, duplicate: true, idempotency: "available" });
   }
 
   if (lockStatus === 'CONFLICT') {
-      // 503 Service Unavailable triggers a retry by most webhook providers
-      return fail(new EmailError("Event lock conflict - another process is handling this event. Please retry.", 503, 'LOCK_CONFLICT'));
+    // 503 makes Resend retry later.
+    return fail(new EmailError("Event lock conflict - another process is handling this event. Please retry.", 503, 'LOCK_CONFLICT'));
   }
 
-  logger.info(`[handleResendWebhook] Processing event: ${type}`, { email_id: resendEmailId, event_id: eventId });
-
   try {
-    // 3. Normalize and handle specific events
-    const supportedTypes = [
-      'email.sent',
-      'email.delivered',
-      'email.delivery_delayed',
-      'email.bounced',
-      'email.complained',
-      'email.opened',
-      'email.clicked',
-      'email.unsubscribed',
-      'email.received'
-    ];
-
-    if (!supportedTypes.includes(type)) {
-      logger.info(`[handleResendWebhook] Accepted but ignored unsupported event type: ${type}`);
-      try {
-        await lockService.releaseWithSuccess(providerEventId, { resendEmailId });
-      } catch (releaseError) {
-        logger.error(`[handleResendWebhook] Failed to release lock with success for ignored event ${providerEventId}`, releaseError);
-        return fail(new EmailError("Failed to finalize event processing (lock release failure)", 503));
+    switch (type) {
+      case 'email.sent':
+        await updateRecipientStatus(ctx, resendEmailId, 'SENT', { sentAt: new Date() });
+        break;
+      case 'email.delivered':
+        await updateRecipientStatus(ctx, resendEmailId, 'DELIVERED', { deliveredAt: new Date() });
+        break;
+      case 'email.delivery_delayed':
+        break;
+      case 'email.bounced': {
+        // `email.bounced` is a permanent rejection; a transient one (if ever flagged) blocks nothing.
+        const transient = typeof data.bounce?.type === 'string' && data.bounce.type.toLowerCase() === 'transient';
+        await updateRecipientStatus(ctx, resendEmailId, 'BOUNCED', { bouncedAt: new Date() });
+        if (!transient) await handleSuppression(ctx, 'BOUNCE', data.to?.[0], resendEmailId);
+        break;
       }
-      return ok({
-          received: true,
-          accepted: true,
-          ignored: true,
-          idempotency: "available"
-      });
+      case 'email.complained':
+        await updateRecipientStatus(ctx, resendEmailId, 'COMPLAINED', { complainedAt: new Date() });
+        await handleSuppression(ctx, 'COMPLAINT', data.to?.[0], resendEmailId);
+        break;
+      case 'email.failed':
+        await updateRecipientStatus(ctx, resendEmailId, 'FAILED', { error: 'PROVIDER_FAILED' });
+        break;
+      case 'email.suppressed':
+        // Resend did not send: the address is on its suppression list (earlier bounce/complaint).
+        await updateRecipientStatus(ctx, resendEmailId, 'FAILED', { error: 'SUPPRESSED_BY_PROVIDER' });
+        break;
     }
 
-    if (resendEmailId) {
-        switch (type) {
-          case 'email.sent':
-            await updateRecipientStatus(ctx, resendEmailId, 'SENT', { sentAt: new Date() });
-            break;
-          case 'email.delivered':
-            await updateRecipientStatus(ctx, resendEmailId, 'DELIVERED', { deliveredAt: new Date() });
-            break;
-          case 'email.delivery_delayed':
-            break;
-          case 'email.bounced':
-            await updateRecipientStatus(ctx, resendEmailId, 'BOUNCED', { bouncedAt: new Date() }, true);
-            await handleSuppression(ctx, 'BOUNCE', data.to?.[0], resendEmailId);
-            break;
-          case 'email.complained':
-            await updateRecipientStatus(ctx, resendEmailId, 'COMPLAINED', { complainedAt: new Date() }, true);
-            await handleSuppression(ctx, 'COMPLAINT', data.to?.[0], resendEmailId);
-            break;
-          case 'email.opened':
-            await updateRecipientStatus(ctx, resendEmailId, 'OPENED', { openedAt: new Date() });
-            break;
-          case 'email.clicked':
-            await updateRecipientStatus(ctx, resendEmailId, 'CLICKED', { clickedAt: new Date() });
-            break;
-          case 'email.unsubscribed':
-            await handleUnsubscribe(ctx, data.to?.[0]);
-            break;
-          case 'email.received':
-            await handleInboundEmail(ctx, data);
-            break;
-        }
-    }
-
-    // 4. Success Release
     try {
-        await lockService.releaseWithSuccess(providerEventId, { resendEmailId });
+      await lockService.releaseWithSuccess(eventId, { resendEmailId });
     } catch (releaseError) {
-        logger.error(`[handleResendWebhook] Critical failure: could not release lock with success for ${providerEventId}`, releaseError);
-        return fail(new EmailError("Failed to finalize event processing (lock release failure)", 503));
+      logger.error(`[handleResendWebhook] Could not release lock with success for ${eventId}`, releaseError);
+      return fail(new EmailError("Failed to finalize event processing (lock release failure)", 503));
     }
 
-    return ok({
-        received: true,
-        accepted: true,
-        duplicate: false,
-        idempotency: "available"
-    });
+    return ok({ received: true, accepted: true, duplicate: false, idempotency: "available" });
   } catch (error: any) {
     logger.error("[handleResendWebhook] Error processing webhook", error);
 
-    // 5. Failure Release
     try {
-        await lockService.releaseWithFailure(providerEventId, error.message || String(error));
+      await lockService.releaseWithFailure(eventId, error.message || String(error));
     } catch (releaseError) {
-        logger.error(`[handleResendWebhook] Secondary failure: could not release lock with failure for ${providerEventId}`, {
-            originalError: error.message,
-            releaseError
-        });
-        // We log the secondary failure but proceed to return the primary failure (Audit 6)
+      logger.error(`[handleResendWebhook] Could not release lock with failure for ${eventId}`, {
+        originalError: error.message,
+        releaseError,
+      });
     }
 
     if (error instanceof EmailError) {
-        return fail(error);
+      return fail(error);
     }
 
     return fail(new EmailError(error.message || "Internal error during webhook handling", 500));
@@ -187,154 +157,66 @@ const STATUS_PRIORITY: Record<string, number> = {
   'UNSUBSCRIBED': 100, // Terminal
 };
 
-async function updateRecipientStatus(ctx: AppContext, resendEmailId: string, status: string, extraData: any = {}, isError = false) {
+/**
+ * Moves a broadcast recipient forward (never backward, never out of a terminal state). Mail that is
+ * not a broadcast (system mails) has no recipient row: nothing to update. Counts shown to the admin
+ * are computed from these statuses, so no counters are touched here.
+ */
+async function updateRecipientStatus(ctx: AppContext, resendEmailId: string, status: string, extraData: Record<string, unknown> = {}) {
   const newPriority = STATUS_PRIORITY[status] || 0;
-  let attempts = 0;
   const maxAttempts = 3;
 
-  while (attempts < maxAttempts) {
-    attempts++;
-
-    // Transactional consistency for status check, update, and counter increment.
-    // outer providerEventId lock handles same-event concurrency;
-    // db.writeTransaction handles cross-event concurrency on the same recipient/aggregate.
-    const result = await ctx.db.writeTransaction(async (tx) => {
-      // 1. Fetch current state
-      const recipient = await tx.broadcastEmailRecipient.findFirst({
-          where: { resendEmailId }
-      });
-
-      if (!recipient) return 'NOT_FOUND';
-
-      const currentPriority = STATUS_PRIORITY[recipient.status] || 0;
-
-      // 2. Priority check: don't downgrade or overwrite terminal states
-      if (newPriority <= currentPriority && currentPriority !== 0) {
-          logger.info(`[handleResendWebhook] Skipping stale or lower-priority event for recipient ${recipient.id}: ${recipient.status} -> ${status}`);
-          return 'NO_CHANGE';
-      }
-
-      // 3. Atomic transition using updateMany with status check (CAS)
-      const { count } = await tx.broadcastEmailRecipient.updateMany({
-          where: {
-              id: recipient.id,
-              status: recipient.status as any
-          },
-          data: {
-              status: status as any,
-              ...extraData
-          }
-      });
-
-      if (count === 0) {
-          // Conflict: someone else updated the status between findFirst and updateMany
-          return 'RETRY';
-      }
-
-      // 4. Update aggregate counts in BroadcastEmail
-      if (status === 'SENT' && recipient.status === 'PENDING') {
-          await tx.broadcastEmail.update({
-              where: { id: recipient.broadcastEmailId },
-              data: { sentCount: { increment: 1 } }
-          });
-      } else if (isError && currentPriority < 100) {
-          await tx.broadcastEmail.update({
-              where: { id: recipient.broadcastEmailId },
-              data: { errorCount: { increment: 1 } }
-          });
-      }
-
-      return 'UPDATED';
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const recipient = await ctx.prisma.broadcastEmailRecipient.findFirst({
+      where: { resendEmailId },
+      select: { id: true, status: true },
     });
+    if (!recipient) return;
 
-    if (result !== 'RETRY') {
-        return;
-    }
+    const currentPriority = STATUS_PRIORITY[recipient.status] || 0;
+    if (newPriority <= currentPriority && currentPriority !== 0) return;
 
-    if (attempts < maxAttempts) {
-        logger.warn(`[handleResendWebhook] Retrying status update for ${resendEmailId} due to concurrency conflict (attempt ${attempts})`);
-        // Small backoff could be added here if needed, but for webhooks simple retry is usually enough
-    }
+    // Compare-and-set on the status read above.
+    const { count } = await ctx.prisma.broadcastEmailRecipient.updateMany({
+      where: { id: recipient.id, status: recipient.status },
+      data: { status: status as any, ...extraData },
+    });
+    if (count > 0) return;
+    logger.warn(`[handleResendWebhook] Retrying status update for ${resendEmailId} (attempt ${attempt})`);
   }
 
   throw new EmailError(`Failed to update recipient status after ${maxAttempts} attempts due to concurrency conflicts`, 503, 'CONCURRENCY_ERROR');
 }
 
-async function handleUnsubscribe(ctx: AppContext, email: string) {
-    if (!email) return;
-    const user = await ctx.prisma.user.findUnique({ where: { email } });
-    await ctx.prisma.emailPreference.upsert({
-        where: { email },
-        create: {
-            email,
-            userId: user?.id,
-            marketingEmails: false,
-            unsubscribedAt: new Date()
-        },
-        update: {
-            marketingEmails: false,
-            unsubscribedAt: new Date()
-        }
-    });
-}
+async function handleSuppression(ctx: AppContext, reason: 'BOUNCE' | 'COMPLAINT', emailFromPayload: string | undefined, resendEmailId: string) {
+  // The recipient row is the most reliable address; system mails fall back to the event's `to`.
+  let email = emailFromPayload;
+  const recipient = await ctx.prisma.broadcastEmailRecipient.findFirst({
+    where: { resendEmailId },
+    select: { email: true },
+  });
+  if (recipient) email = recipient.email;
 
-async function handleInboundEmail(ctx: AppContext, data: any) {
-    const user = await ctx.prisma.user.findUnique({ where: { email: data.from } });
-    // inboundEmail has a unique constraint on resendId
-    try {
-        await ctx.prisma.inboundEmail.create({
-            data: {
-                fromEmail: data.from,
-                toEmail: data.to?.[0] || 'unknown',
-                subject: data.subject,
-                text: data.text,
-                html: data.html,
-                resendId: data.email_id,
-                status: 'NEW',
-                userId: user?.id
-            }
-        });
-    } catch (e: unknown) {
-        // If it already exists, just log and continue
-        if (isPrismaErrorCode(e, 'P2002')) {
-            logger.info(`[handleResendWebhook] Inbound email ${data.email_id} already exists (duplicate)`);
-            return;
-        }
-        // Rethrow other errors to fail the webhook processing and allow retry
-        throw e;
-    }
-}
+  const normalized = email?.trim().toLowerCase();
+  if (!normalized) {
+    // Fail so the event is retried rather than silently dropping a bounce.
+    throw new EmailError(`Failed to determine email for ${reason} suppression.`, 400, 'MISSING_EMAIL');
+  }
 
-async function handleSuppression(ctx: AppContext, reason: 'BOUNCE' | 'COMPLAINT', emailFromPayload?: string, resendEmailId?: string) {
-    // Try to get email from recipient first (more reliable/verifiable according to ticket)
-    let email = emailFromPayload;
-    if (resendEmailId) {
-        const recipient = await ctx.prisma.broadcastEmailRecipient.findFirst({
-            where: { resendEmailId },
-            select: { email: true }
-        });
-        if (recipient) email = recipient.email;
-    }
-
-    if (!email) {
-        // Fail-safe: if we can't determine the address, we must not mark the webhook as success
-        throw new EmailError(`Failed to determine email for ${reason} suppression. marking as retryable failure.`, 400, 'MISSING_EMAIL');
-    }
-
-    await ctx.prisma.emailSuppression.upsert({
-        where: { email },
-        create: {
-            email,
-            reason,
-            active: true,
-            providerEmailId: resendEmailId,
-            source: 'RESEND_WEBHOOK'
-        },
-        update: {
-            reason,
-            active: true,
-            providerEmailId: resendEmailId,
-        }
-    });
-    logger.info(`[handleResendWebhook] Durable suppression created/updated for ${email} (reason: ${reason})`);
+  await ctx.prisma.emailSuppression.upsert({
+    where: { email: normalized },
+    create: {
+      email: normalized,
+      reason,
+      active: true,
+      providerEmailId: resendEmailId,
+      source: 'RESEND_WEBHOOK',
+    },
+    update: {
+      reason,
+      active: true,
+      providerEmailId: resendEmailId,
+    },
+  });
+  logger.info(`[handleResendWebhook] Suppression recorded (reason: ${reason})`);
 }

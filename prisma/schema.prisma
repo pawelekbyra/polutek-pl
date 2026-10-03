@@ -1095,6 +1095,9 @@ model EmailTemplate {
   html        String                @db.Text
   subjectEn   String?
   htmlEn      String?               @db.Text
+  /// Set when an admin saves the template. For a system slug the row is used for sending only
+  /// when this is set; otherwise the default in lib/email-defaults.ts is sent.
+  customizedAt DateTime?
   createdAt   DateTime              @default(now())
   updatedAt   DateTime              @updatedAt
 
@@ -1134,6 +1137,12 @@ model BroadcastEmail {
   status         BroadcastStatus         @default(DRAFT)
   sentAt         DateTime?
   scheduledAt    DateTime?
+  /// Client-generated key of the "send" click: a repeated request returns the same broadcast.
+  requestKey     String?                 @unique
+  /// Lease of the send-broadcasts cron run that is sending this broadcast (crash = lease expires).
+  lockedUntil    DateTime?
+  /// Not before this time (set after a provider 429 / quota error).
+  nextRunAt      DateTime?
   createdAt      DateTime                @default(now())
   updatedAt      DateTime                @updatedAt
 
@@ -1172,21 +1181,27 @@ model BroadcastEmailRecipient {
   clickedAt        DateTime?
   bouncedAt        DateTime?
   complainedAt     DateTime?
+  /// Send attempts (provider errors are retried with backoff up to a limit).
+  attemptCount     Int                      @default(0)
+  nextAttemptAt    DateTime?
   createdAt        DateTime                 @default(now())
   updatedAt        DateTime                 @updatedAt
 
   broadcast BroadcastEmail @relation(fields: [broadcastEmailId], references: [id], onDelete: Cascade)
 
   @@index([broadcastEmailId])
+  @@index([broadcastEmailId, status])
   @@index([email])
   @@index([status])
+  @@index([resendEmailId])
 }
 
 model EmailPreference {
   id              String    @id @default(uuid())
   userId          String?   @unique
   email           String    @unique
-  marketingEmails Boolean   @default(true)
+  /// Consent to content-notification emails. No consent unless explicitly given.
+  marketingEmails Boolean   @default(false)
   systemEmails    Boolean   @default(true)
   unsubscribedAt  DateTime?
   resendContactId String?

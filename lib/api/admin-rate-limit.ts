@@ -1,7 +1,7 @@
 /**
  * Limits (per minute, per admin user and per IP):
  *   GET/HEAD default 120, mutations default 120 (bulk comment moderation fires
- *   up to 50 POSTs at once), refund 5, dispute-sync 5, emails/broadcast 3,
+ *   up to 50 POSTs at once), refund 5, dispute-sync 5, emails/broadcast 3, emails/broadcast/test 5,
  *   notifications/broadcast 3, users/[userId]/patron 10, payment-settings 10, video upload start/complete/abort 20.
  *
  * Central rate limiting for /api/admin, enforced from middleware.ts.
@@ -30,6 +30,7 @@ export const ADMIN_STRICT_RULES: StrictRule[] = [
   { name: "payments-refund", pattern: /^\/api\/admin\/payments\/[^/]+\/refund\/?$/, limit: 5 },
   { name: "payments-dispute-sync", pattern: /^\/api\/admin\/payments\/[^/]+\/dispute-sync\/?$/, limit: 5 },
   { name: "emails-broadcast", pattern: /^\/api\/admin\/emails\/broadcast\/?$/, limit: 3, mutationsOnly: true },
+  { name: "emails-broadcast-test", pattern: /^\/api\/admin\/emails\/broadcast\/test\/?$/, limit: 5, mutationsOnly: true },
   { name: "notifications-broadcast", pattern: /^\/api\/admin\/notifications\/broadcast\/?$/, limit: 3, mutationsOnly: true },
   { name: "users-patron", pattern: /^\/api\/admin\/users\/[^/]+\/patron\/?$/, limit: 10, mutationsOnly: true },
   { name: "payment-settings", pattern: /^\/api\/admin\/payment-settings\/?$/, limit: 10, mutationsOnly: true },

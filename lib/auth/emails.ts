@@ -1,6 +1,7 @@
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import {
+  resolveEmailLanguage,
   sendPasswordChangedEmail,
   sendPasswordResetEmail,
   sendVerificationEmail,
@@ -11,7 +12,7 @@ type MailUser = { email: string; name?: string | null };
 async function languageFor(email: string): Promise<"pl" | "en"> {
   try {
     const row = await prisma.user.findUnique({ where: { email }, select: { language: true } });
-    return row?.language === "pl" ? "pl" : "en";
+    return resolveEmailLanguage(row?.language);
   } catch {
     return "en";
   }
