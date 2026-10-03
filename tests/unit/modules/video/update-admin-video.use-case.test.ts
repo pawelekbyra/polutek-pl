@@ -85,11 +85,11 @@ describe('updateAdminVideo hero/sidebar contract', () => {
     process.env.MAIN_CREATOR_SLUG = 'polutek';
   });
 
-  it('allows hero only when public published video has READY primary Cloudflare asset', async () => {
+  it('allows hero only when public published video has READY own-HLS asset', async () => {
     const existing = {
       id: 'v1', creatorId: 'c1', title: 'Hero', slug: 'hero', tier: AccessTier.PUBLIC, status: VideoStatus.PUBLISHED,
-      asset: { isPrimary: true, provider: 'CLOUDFLARE_STREAM', processingState: 'READY', providerAssetId: 'cf-uid' },
-      activePlaybackRoute: { asset: { provider: 'CLOUDFLARE_STREAM', processingState: 'READY', providerAssetId: 'cf-uid' } }
+      asset: { isPrimary: true, provider: 'SELF_HLS', processingState: 'READY', objectKey: 'videos/v1/v/v1' },
+      activePlaybackRoute: { asset: { provider: 'SELF_HLS', processingState: 'READY', objectKey: 'videos/v1/v/v1' } }
     };
     mockPrisma.video.findUnique.mockResolvedValue(existing);
     mockPrisma.video.updateMany.mockResolvedValue({ count: 1 });
@@ -120,7 +120,7 @@ describe('updateAdminVideo hero/sidebar contract', () => {
     const existing = {
       id: 'v1', creatorId: 'c1', title: 'Old', slug: 'hero', tier: AccessTier.PUBLIC, status: VideoStatus.PUBLISHED,
       isMainFeatured: true,
-      asset: { isPrimary: true, provider: 'CLOUDFLARE_STREAM', processingState: 'READY', providerAssetId: 'cf-uid' },
+      asset: { isPrimary: true, provider: 'SELF_HLS', processingState: 'READY', objectKey: 'videos/v1/v/v1' },
       activePlaybackRoute: null,
     };
     mockPrisma.video.findUnique.mockResolvedValue(existing);

@@ -122,7 +122,7 @@ export function VideoTable({ videos, onEdit, onDuplicate, onDelete, deletingVide
                     {vid.tier === 'PUBLIC' ? 'Publiczny' : vid.tier === 'LOGGED_IN' ? 'Zalogowani' : 'Patroni'}
                     </Badge>
                     <div className="flex flex-col gap-1 mt-1">
-                        <div className="text-[10px] uppercase text-muted-foreground font-semibold">{vid.provider || vid.sourceKind}</div>
+                        <div className="text-[10px] uppercase text-muted-foreground font-semibold">{vid.provider}</div>
                         {vid.migrationStatus !== 'READY' && (
                             <Badge
                                 variant="outline"

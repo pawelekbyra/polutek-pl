@@ -89,9 +89,7 @@ Allowed statuses are:
 | Resend/email | `EMAIL_FROM` | Required in production |  |  |  | Approved sender address/domain; safe domain only if public | Must align with verified Resend sender domain |  |  |
 | Resend/email | `RESEND_AUDIENCE_ID` | Optional/feature-dependent in current code |  |  |  | Identifier redacted if sensitive | Needed only if audience sync/broadcast requires it |  |  |
 | Resend/email | `RESEND_WEBHOOK_SECRET` | Required for production Resend webhook route |  |  |  | Webhook signing secret present; value redacted | Resend endpoint must target canonical production domain |  |  |
-| Cloudflare Stream | `CLOUDFLARE_ACCOUNT_ID` | Required for Stream operations |  |  |  | Identifier redacted if sensitive | Must align with Stream account used for production assets |  |  |
-| Cloudflare Stream | `CLOUDFLARE_API_TOKEN` | Required for Stream operations |  |  |  | Server token only; value redacted | Must be distinct from webhook signing secret |  |  |
-| Cloudflare Stream | `CLOUDFLARE_WEBHOOK_SECRET` | Required for production Cloudflare webhook route |  |  |  | Webhook signing secret present; value redacted | Cloudflare endpoint must target canonical production domain |  |  |
+| Own HLS | `HLS_TOKEN_SECRET` | Required in production (>= 32 chars; same value as the Worker secret) |  |  |  | Value redacted | Without it no video plays (fail closed) |
 | Rate limiting | `UPSTASH_REDIS_REST_URL` | Required as part of complete Upstash pair, unless KV pair used |  |  |  | URL format; value redacted | Must pair with `UPSTASH_REDIS_REST_TOKEN` in same scope |  |  |
 | Rate limiting | `UPSTASH_REDIS_REST_TOKEN` | Required as part of complete Upstash pair, unless KV pair used |  |  |  | Server token only; value redacted | Must pair with `UPSTASH_REDIS_REST_URL` in same scope |  |  |
 | Rate limiting | `KV_REST_API_URL` | Required as part of complete KV pair, unless Upstash pair used |  |  |  | URL format; value redacted | Must pair with `KV_REST_API_TOKEN` in same scope |  |  |
@@ -140,13 +138,11 @@ curl -I https://<canonical-domain>/regulamin
 curl -i https://<canonical-domain>/api/health
 curl -i -X POST https://<canonical-domain>/api/webhooks/stripe
 curl -i -X POST https://<canonical-domain>/api/webhooks/clerk
-curl -i -X POST https://<canonical-domain>/api/webhooks/cloudflare-stream
 curl -i -X POST https://<canonical-domain>/api/webhooks/resend
 ```
 
 For webhook routes, `400`, `401`, or `405` can prove network reachability when no valid event/signature is sent. Do not send valid signatures, mutation payloads, customer data, payment events, Cloudflare status events, Clerk account events, or Resend delivery events.
 
-Because `LAUNCH-SECURITY-002` may change the Cloudflare webhook contract, record only network reachability for Cloudflare here; do not certify Cloudflare signature semantics in this checklist.
 
 ### 6. Production logs checklist
 

@@ -4,7 +4,7 @@ import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository, UpdateVideoInput } from "../infrastructure/video.repository";
 import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
-import { MediaPolicy, MediaStorageService, isDerivedThumbnailUrl, isThumbnailProxyPath } from "@/lib/modules/media";
+import { MediaStorageService, isDerivedThumbnailUrl, isThumbnailProxyPath } from "@/lib/modules/media";
 import { VideoPolicy } from "../domain/video.policy";
 import { syncPublicThumbnail } from "./sync-public-thumbnail.service";
 import { publishAdminVideo } from "./publish-admin-video.use-case";
@@ -12,7 +12,6 @@ import { isAllowedPremiereChange, isUpcomingPremiere } from "../domain/premiere"
 import {
     VideoNotFoundError,
     VideoNotOnMainChannelError,
-    VideoUrlNotAllowedError,
     VideoInvalidHeroError,
     VideoInvalidSidebarError,
     VideoInvalidPremiereError,
@@ -24,7 +23,7 @@ export { isThumbnailProxyPath };
 export async function updateAdminVideo(
   input: UpdateVideoInput,
   ctx: AppContext
-): Promise<UseCaseResult<AdminVideoDto, VideoNotFoundError | VideoNotOnMainChannelError | VideoUrlNotAllowedError | VideoInvalidHeroError | VideoInvalidSidebarError | VideoInvalidPremiereError | VideoNotReadyForPublicationError>> {
+): Promise<UseCaseResult<AdminVideoDto, VideoNotFoundError | VideoNotOnMainChannelError | VideoInvalidHeroError | VideoInvalidSidebarError | VideoInvalidPremiereError | VideoNotReadyForPublicationError>> {
   const mainChannel = await MainChannelService.getRequired(ctx);
   const repository = new VideoRepository(ctx.prisma);
 
@@ -33,10 +32,6 @@ export async function updateAdminVideo(
 
   if (!VideoPolicy.isOnMainChannel(existing, mainChannel.id)) {
     return fail(new VideoNotOnMainChannelError(input.id));
-  }
-
-  if (input.videoUrl && !MediaPolicy.isAllowedVideoSourceUrl(input.videoUrl, process.env as any)) {
-    return fail(new VideoUrlNotAllowedError(input.videoUrl));
   }
 
   if (!isAllowedPremiereChange(input.premiereAt, existing.premiereAt, ctx.now())) {

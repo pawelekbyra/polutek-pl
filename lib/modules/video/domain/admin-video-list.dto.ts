@@ -7,12 +7,10 @@ export type AdminVideoListItem = {
   descriptionEn?: string | null;
   status: string;
   tier: string;
-  videoUrl: string | null;
   thumbnailUrl: string | null;
   isMainFeatured: boolean;
   showInSidebar: boolean;
   sidebarOrder: number | null;
-  sourceKind: string | null;
   provider?: string | null;
   views: number;
   likesCount: number;

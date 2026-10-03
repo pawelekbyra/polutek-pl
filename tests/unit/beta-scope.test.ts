@@ -5,7 +5,6 @@ import { join, relative } from "node:path";
 const approvedRouteSubstrings = new Set([
   "original-" + "upload",
   "/" + "upload",
-  "mux-" + "upload",
   "cover-" + "upload",
   "image-" + "upload",
 ]);

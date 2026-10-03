@@ -85,16 +85,6 @@ const hotspotExceptions: Record<string, HotspotException> = {
     maxLines: 500,
     reason: knownUiHotspotReason,
   },
-  "lib/modules/playback/application/playback.service.ts": {
-    maxLines: 760,
-    reason:
-      "Added Mux (signed JWT HLS) and Vimeo (embed) provider resolvers in the multi-source video feature (#1204) and the SELF_HLS branch (own HLS pilot, logic lives in self-hls-plan.ts); tracked for extraction into provider-specific adapter modules before launch certification.",
-  },
-  "lib/modules/video/infrastructure/video.repository.ts": {
-    maxLines: 590,
-    reason:
-      "Added subtitleUrlPl/subtitleUrlEn fields for WebVTT track support and distribution system relations, then premiereAt (scheduled premieres); tracked for extraction once subtitle management is modularized.",
-  },
   "app/components/legal/LegalDocs.tsx": {
     maxLines: 660,
     reason:

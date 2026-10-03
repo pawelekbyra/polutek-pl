@@ -16,9 +16,6 @@ const e2e = {
     process.env.E2E_COMMENT_VIDEO_ID ||
     process.env.E2E_PUBLIC_VIDEO_ID ||
     "v_fallback_001",
-  adminCrudVideoUrl:
-    process.env.E2E_ADMIN_CRUD_VIDEO_URL ||
-    "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
   adminCrudThumbnailUrl:
     process.env.E2E_ADMIN_CRUD_THUMBNAIL_URL ||
     "/qr-code-placeholder.png",
@@ -337,7 +334,6 @@ test.describe("beta smoke: admin access", () => {
       title: "E2E beta CRUD draft",
       slug,
       description: "Temporary beta smoke video created by Playwright.",
-      videoUrl: e2e.adminCrudVideoUrl,
       thumbnailUrl: e2e.adminCrudThumbnailUrl,
       duration: "00:30",
       tier: "PUBLIC",

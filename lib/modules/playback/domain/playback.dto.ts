@@ -9,15 +9,7 @@ export type PlaybackPlanStatus =
   | "UNAVAILABLE"
   | "ERROR";
 
-export type PlaybackAssetProvider =
-  | "CLOUDFLARE_STREAM"
-  | "MUX"
-  | "SELF_HLS"
-  | "R2"
-  | "S3"
-  | "VERCEL_BLOB"
-  | "LEGACY_URL"
-  | string;
+export type PlaybackAssetProvider = "SELF_HLS" | string;
 
 export type PlaybackAssetContract = {
   provider: PlaybackAssetProvider;
@@ -41,28 +33,15 @@ export type PlaybackSourceContract = {
   provider: string;
   kind: string;
   /**
-   * Public playback endpoint or safe external embed URL only. Never a raw object-storage,
-   * provider-origin, or signed provider URL for private patron playback.
+   * Signed own-HLS master playlist URL (token in the path, CLAUDE.md 4.17). Never a raw
+   * object-storage URL.
    */
   playbackUrl?: string;
-  embedUrl?: string;
   posterUrl?: string;
   mimeType?: string;
-  needsProxy: boolean;
-  isExternalEmbed: boolean;
   isSignedUrl: boolean;
   expiresAt?: string;
   asset?: PlaybackAssetContract;
-  /**
-   * Previous provider's signed manifest, only on SELF_HLS plans for an allowed viewer.
-   * The player switches to it once if the primary source fails (instant rollback).
-   */
-  fallback?: {
-    provider: string;
-    kind: string;
-    playbackUrl: string;
-    expiresAt?: string;
-  };
 };
 
 export type PlaybackPlan = {

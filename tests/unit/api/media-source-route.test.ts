@@ -26,7 +26,7 @@ describe('Media-Source Route Access', () => {
 
   const createReq = () => new NextRequest('http://localhost/api/media-source/v1');
 
-  it('redacts raw URLs from public response', async () => {
+  it('drops raw storage URLs from the public response', async () => {
     (getActorFromAuth as any).mockResolvedValue({ type: 'guest' });
     (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
       videoId: 'v1',
@@ -44,11 +44,16 @@ describe('Media-Source Route Access', () => {
     const res = await GET(createReq(), { params: Promise.resolve({ videoId: 'v1' }) });
     const data = await res.json();
 
-    expect(data.playbackUrl).toBe('/api/media/v1');
-    expect(data.source.playbackUrl).toBe('/api/media/v1');
+    // A raw storage URL is never forwarded: the source is dropped and the plan is not playable.
+    expect(data.canPlay).toBe(false);
+    expect(data.source).toBeUndefined();
+    expect(data.playbackUrl).toBeUndefined();
+    expect(data.kind).toBeUndefined();
+    expect(data.tracking.playbackSessionId).toBe('');
+    expect(JSON.stringify(data)).not.toContain('amazonaws');
   });
 
-  it('does not redact safe Cloudflare Stream manifests from playable plans', async () => {
+  it('does not redact the signed own-HLS delivery URL of a playable plan', async () => {
     (getActorFromAuth as any).mockResolvedValue({ type: 'user', userId: 'patron-1' });
     (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
       videoId: 'v1',
@@ -56,14 +61,12 @@ describe('Media-Source Route Access', () => {
       canPlay: true,
       access: { allowed: true },
       source: {
-        provider: 'CLOUDFLARE_STREAM',
-        kind: 'cloudflare_stream',
-        playbackUrl: 'https://videodelivery.net/cf-signed-token/manifest/video.m3u8',
-        embedUrl: 'https://iframe.videodelivery.net/cf-signed-token',
+        provider: 'SELF_HLS',
+        kind: 'self_hls',
+        playbackUrl: 'https://video.pawelperfect.com/h/1790000000.sig/v1/v1/master.m3u8',
         asset: {
-          provider: 'CLOUDFLARE_STREAM',
+          provider: 'SELF_HLS',
           processingState: 'READY',
-          providerPlaybackId: 'cf-playback-id'
         }
       },
       diagnostics: { warnings: [] },
@@ -75,10 +78,10 @@ describe('Media-Source Route Access', () => {
     const data = await res.json();
     expect(data.access.allowed).toBe(true);
     expect(data.canPlay).toBe(true);
-    expect(data.source.provider).toBe('CLOUDFLARE_STREAM');
-    expect(data.playbackUrl).toBe('https://videodelivery.net/cf-signed-token/manifest/video.m3u8');
-    expect(data.source.playbackUrl).toBe('https://videodelivery.net/cf-signed-token/manifest/video.m3u8');
-    expect(data.embedUrl).toBe('https://iframe.videodelivery.net/cf-signed-token');
+    expect(data.source.provider).toBe('SELF_HLS');
+    expect(data.playbackUrl).toBe('https://video.pawelperfect.com/h/1790000000.sig/v1/v1/master.m3u8');
+    expect(data.source.playbackUrl).toBe('https://video.pawelperfect.com/h/1790000000.sig/v1/v1/master.m3u8');
+    expect(data.embedUrl).toBeUndefined();
     expect(data.tracking.playbackSessionId).toBe('s-cf-1');
   });
 
@@ -127,9 +130,8 @@ describe('Media-Source Route Access', () => {
       canPlay: false,
       access: { allowed: false, reason: 'LOGIN_REQUIRED' },
       source: {
-        kind: 'cloudflare_stream',
-        playbackUrl: 'https://videodelivery.net/should-not-leak/manifest/video.m3u8',
-        embedUrl: 'https://iframe.videodelivery.net/should-not-leak',
+        kind: 'self_hls',
+        playbackUrl: 'https://video.pawelperfect.com/h/1790000000.sig/v1/v1/master.m3u8?should-not-leak',
       },
       diagnostics: { warnings: ['LOGIN_REQUIRED'] },
       tracking: { playbackSessionId: 'should-not-count', heartbeatIntervalSeconds: 15 },
@@ -151,7 +153,7 @@ describe('Media-Source Route Access', () => {
     expect(res.status).toBe(400);
   });
 
-  it('redacts PROCESSING Cloudflare video for allowed patron', async () => {
+  it('redacts PROCESSING own-HLS video for allowed patron', async () => {
     (getActorFromAuth as any).mockResolvedValue({ type: 'user', userId: 'patron-1' });
     (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
       videoId: 'v1',
@@ -171,7 +173,7 @@ describe('Media-Source Route Access', () => {
     expect(data.playbackUrl).toBeUndefined();
   });
 
-  it('redacts FAILED Cloudflare video for allowed patron', async () => {
+  it('redacts FAILED own-HLS video for allowed patron', async () => {
     (getActorFromAuth as any).mockResolvedValue({ type: 'user', userId: 'patron-1' });
     (PlaybackService.createPlaybackPlanWithContext as any).mockResolvedValue({
       videoId: 'v1',

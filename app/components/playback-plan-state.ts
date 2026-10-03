@@ -189,7 +189,7 @@ export function isPlayablePlaybackPlan(
       plan.canPlay === true &&
       plan.access?.allowed === true &&
       plan.source &&
-      (plan.source.playbackUrl || plan.source.embedUrl) &&
+      plan.source.playbackUrl &&
       (!expectedVideoId || plan.videoId === expectedVideoId),
   );
 }

@@ -72,20 +72,7 @@ describe("admin schemas", () => {
     expect(ok(s.adminPatronActionSchema, { action: "delete" })).toBe(false);
   });
 
-  it("probe", () => {
-    expect(ok(s.adminProbeSchema, { probe: "direct-upload" })).toBe(true);
-    expect(ok(s.adminProbeSchema, { probe: "other" })).toBe(false);
-  });
-
-  it("provider jobs reconcile", () => {
-    expect(ok(s.adminProviderJobsReconcileSchema, {})).toBe(true);
-    expect(ok(s.adminProviderJobsReconcileSchema, { provider: "NOPE" })).toBe(false);
-    expect(ok(s.adminProviderJobsReconcileSchema, { limit: 10, dryRun: true })).toBe(true);
-  });
-
-  it("distribution backfill / reorder / resync", () => {
-    expect(ok(s.adminDistributionBackfillSchema, { limit: 25, dryRun: false, videoId: "v" })).toBe(true);
-    expect(ok(s.adminDistributionBackfillSchema, { limit: "25" })).toBe(false);
+  it("reorder / resync", () => {
     expect(ok(s.adminVideoReorderSchema, { videos: [{ id: "a", sidebarOrder: 1, showInSidebar: true }] })).toBe(true);
     expect(ok(s.adminVideoReorderSchema, { videos: [{ id: "a" }] })).toBe(false);
     expect(ok(s.adminVideoReorderSchema, {})).toBe(false);
@@ -93,18 +80,13 @@ describe("admin schemas", () => {
     expect(ok(s.adminVideoResyncSchema, { videoId: "" })).toBe(false);
   });
 
-  it("video action / plan / upload / route / retry / source", () => {
+  it("video action", () => {
     expect(ok(s.adminVideoActionSchema, { action: "publish" })).toBe(true);
     expect(ok(s.adminVideoActionSchema, { action: "explode" })).toBe(false);
-    expect(ok(s.adminDistributionPlanSchema, { originalId: null, strategy: { x: 1 }, publishAfterReady: true })).toBe(true);
-    expect(ok(s.adminOriginalUploadCompleteSchema, { originalId: "o" })).toBe(true);
-    expect(ok(s.adminOriginalUploadCompleteSchema, {})).toBe(false);
-    expect(ok(s.adminOriginalUploadProvisionSchema, { fileName: "a.mp4", fileSize: 1, contentType: "video/mp4" })).toBe(true);
-    expect(ok(s.adminPlaybackRouteSchema, { assetId: "a" })).toBe(true);
-    expect(ok(s.adminPlaybackRouteSchema, {})).toBe(false);
-    expect(ok(s.adminProviderJobRetrySchema, { force: true })).toBe(true);
-    expect(ok(s.adminMuxUploadSchema, { primaryIntent: "yes" })).toBe(false);
-    expect(ok(s.adminVideoSourceActionSchema, { action: "set_primary" })).toBe(true);
+    // Provider actions are gone with the providers.
+    expect(ok(s.adminVideoActionSchema, { action: "sync-cloudflare" })).toBe(false);
+    expect(ok(s.adminVideoActionSchema, { action: "import-legacy-to-cloudflare" })).toBe(false);
+    expect(ok(s.adminVideoActionSchema, { action: "attach-asset" })).toBe(false);
   });
 
   it("loose object rejects arrays and scalars", () => {

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { PlaybackService } from '@/lib/modules/playback';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { checkVideoAccess } from '@/lib/modules/access';
-import { parseSelfHlsObjectKey, pickFallbackAsset } from '@/lib/modules/playback/application/self-hls-plan';
+import { parseSelfHlsObjectKey } from '@/lib/modules/playback/application/self-hls-plan';
 import { SelfHlsTokenService } from '@/lib/modules/playback/infrastructure/self-hls-token.service';
 import { verifyToken } from '@/workers/hls-edge/worker.mjs';
 import { resolvePlaybackSource } from '@/app/components/playback-source';
@@ -16,9 +16,10 @@ const SECRET = 's'.repeat(40);
 const asset = (over: Record<string, unknown>) => ({
   id: 'a',
   videoId: VIDEO_ID,
-  provider: 'CLOUDFLARE_STREAM',
-  objectKey: 'cf-uid',
-  providerAssetId: 'cf-uid',
+  provider: 'SELF_HLS',
+  objectKey: `videos/${VIDEO_ID}/v/v1`,
+  bucket: 'polutek-hls',
+  providerAssetId: null,
   providerPlaybackId: null,
   processingState: 'READY',
   isPrimary: false,
@@ -35,11 +36,13 @@ describe('SELF_HLS playback plan', () => {
     videoPlaybackSession: { create: vi.fn() },
   };
 
-  const selfAsset = asset({ id: 'self', provider: 'SELF_HLS', objectKey: `videos/${VIDEO_ID}/v/v1`, bucket: 'polutek-hls', isPrimary: true });
-  const cfAsset = asset({ id: 'cf' });
+  const selfAsset = asset({ id: 'self', isPrimary: true });
+  // Legacy provider rows that still sit in the DB (inactive): they must be ignored.
+  const legacyAssets = ['CLOUDFLARE_STREAM', 'MUX', 'YOUTUBE', 'VIMEO', 'VERCEL_BLOB', 'R2'].map((provider, i) =>
+    asset({ id: `legacy-${i}`, provider, objectKey: 'legacy-key', providerAssetId: 'legacy-id', externalVideoId: 'legacy-yt', updatedAt: new Date(Date.now() + 1000 + i) }),
+  );
 
   function video(over: Record<string, unknown> = {}) {
-    const route = { asset: selfAsset };
     return {
       id: VIDEO_ID,
       title: 'Czesc',
@@ -48,9 +51,9 @@ describe('SELF_HLS playback plan', () => {
       status: 'PUBLISHED',
       publishedAt: new Date(Date.now() - 86_400_000),
       premiereAt: null,
-      videoUrl: null,
-      activePlaybackRoute: route,
-      assets: [selfAsset, cfAsset],
+      videoUrl: 'https://raw.example.com/legacy.mp4',
+      activePlaybackRoute: { asset: selfAsset },
+      assets: [selfAsset, ...legacyAssets],
       ...over,
     };
   }
@@ -85,14 +88,17 @@ describe('SELF_HLS playback plan', () => {
     expect(prisma.videoPlaybackSession.create.mock.calls[0][0].data.sourceKind).toBe('self_hls');
     // The client player can use it.
     expect(resolvePlaybackSource({ kind: result.source!.kind, playbackUrl: result.source!.playbackUrl }).mode).toBe('custom-player');
+    // Nothing of the legacy rows or the raw videoUrl leaks into the plan.
+    expect(JSON.stringify(result)).not.toMatch(/legacy|raw\.example\.com|fallback/);
   });
 
   it('never exposes any URL or token to a denied viewer', async () => {
     vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'LOGIN_REQUIRED' } } as never);
     const result = await plan({ type: 'guest' });
+    expect(result.status).toBe('LOGIN_REQUIRED');
     expect(result.canPlay).toBe(false);
     expect(result.source).toBeUndefined();
-    expect(JSON.stringify(result)).not.toMatch(/video\.pawelperfect\.com|self_hls|\/h\//);
+    expect(JSON.stringify(result)).not.toMatch(/video\.pawelperfect\.com|self_hls|\/h\/|raw\.example\.com/);
     expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
   });
 
@@ -101,22 +107,65 @@ describe('SELF_HLS playback plan', () => {
     const result = await plan({ type: 'user', userId: 'u1' });
     expect(result.status).toBe('COMING_SOON');
     expect(JSON.stringify(result)).not.toContain('/h/');
+    expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
   });
 
-  it('plays the previous provider when the delivery secret is not configured', async () => {
-    delete process.env.HLS_TOKEN_SECRET;
-    process.env.CLOUDFLARE_STREAM_SIGNING_KEY_ID = '';
+  it('ignores a legacy route and legacy assets: no own-HLS asset means nothing plays', async () => {
+    prisma.video.findUnique.mockResolvedValue(video({
+      activePlaybackRoute: { asset: legacyAssets[0] },
+      assets: legacyAssets,
+    }));
     const result = await plan({ type: 'user', userId: 'u1' });
-    expect(result.source?.kind).not.toBe('self_hls');
-    expect(JSON.stringify(result)).not.toContain('/h/');
+    expect(result.status).toBe('NO_PRIMARY_ASSET');
+    expect(result.canPlay).toBe(false);
+    expect(result.source).toBeUndefined();
+    expect(JSON.stringify(result)).not.toMatch(/legacy|raw\.example\.com|\/h\//);
+    expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
   });
 
-  it('selects only READY CLOUDFLARE_STREAM/MUX assets as fallback, newest first', () => {
-    const old = asset({ id: 'o', updatedAt: new Date(1000) });
-    const mux = asset({ id: 'm', provider: 'MUX', updatedAt: new Date(5000) });
-    const failed = asset({ id: 'f', provider: 'MUX', processingState: 'FAILED', updatedAt: new Date(9000) });
-    expect(pickFallbackAsset([old, failed, mux, selfAsset] as never)?.id).toBe('m');
-    expect(pickFallbackAsset([selfAsset] as never)).toBeNull();
+  it('plays own HLS even when the active route still points at a legacy provider', async () => {
+    prisma.video.findUnique.mockResolvedValue(video({ activePlaybackRoute: { asset: legacyAssets[1] } }));
+    const result = await plan({ type: 'user', userId: 'u1' });
+    expect(result.status).toBe('READY');
+    expect(result.source?.kind).toBe('self_hls');
+  });
+
+  it('reports PROCESSING (no URL) while the own-HLS asset is still encoding', async () => {
+    const encoding = asset({ id: 'enc', isPrimary: true, processingState: 'PROCESSING' });
+    prisma.video.findUnique.mockResolvedValue(video({ activePlaybackRoute: null, assets: [encoding, ...legacyAssets] }));
+    const result = await plan({ type: 'user', userId: 'u1' });
+    expect(result.status).toBe('PROCESSING');
+    expect(result.source).toBeUndefined();
+    expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
+  });
+
+  it('fails closed (ERROR, no URL, no session) when the delivery secret is not configured', async () => {
+    delete process.env.HLS_TOKEN_SECRET;
+    const result = await plan({ type: 'user', userId: 'u1' });
+    expect(result.status).toBe('ERROR');
+    expect(result.canPlay).toBe(false);
+    expect(result.source).toBeUndefined();
+    expect(JSON.stringify(result)).not.toMatch(/\/h\/|legacy/);
+    expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
+  });
+
+  it('returns ERROR when resolving the source fails unexpectedly', async () => {
+    prisma.videoPlaybackSession.create.mockRejectedValue(new Error('db down'));
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const result = await plan({ type: 'user', userId: 'u1' });
+    spy.mockRestore();
+    expect(result.status).toBe('ERROR');
+    expect(result.canPlay).toBe(false);
+    expect(result.source).toBeUndefined();
+    expect(result.diagnostics.warnings).toContain('Failed to resolve own HLS playback source');
+  });
+
+  it('says the video is unavailable when it does not exist', async () => {
+    prisma.video.findUnique.mockResolvedValue(null);
+    vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true } } as never);
+    const result = await plan({ type: 'user', userId: 'u1' });
+    expect(result.status).toBe('UNAVAILABLE');
+    expect(result.source).toBeUndefined();
   });
 
   it('only accepts object keys that belong to the video', () => {

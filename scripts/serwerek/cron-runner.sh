@@ -7,8 +7,6 @@
 set -euo pipefail
 
 name="${1:-}"
-# systemd instance names cannot contain '/', so the nested route has a flat alias.
-[[ "$name" == "video-provider-jobs-reconcile" ]] && name="video-provider-jobs/reconcile"
 if [[ ! "$name" =~ ^[a-z0-9][a-z0-9/-]*$ || "$name" == *..* ]]; then
   echo "usage: $0 <cron-route-name>" >&2
   exit 2

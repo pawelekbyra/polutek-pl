@@ -27,7 +27,7 @@ describe('createAdminVideo use-case', () => {
   it('fails with MainChannelNotFoundError if no main channel', async () => {
     mockPrisma.creator.findUnique.mockResolvedValue(null);
     await expect(createAdminVideo({
-        title: 'T', slug: 's', videoUrl: 'https://youtube.com/watch?v=123', thumbnailUrl: 't', tier: 'PUBLIC', status: 'PUBLISHED'
+        title: 'T', slug: 's', thumbnailUrl: 't', tier: 'PUBLIC', status: 'PUBLISHED'
     }, ctx)).rejects.toThrow('not found in database');
   });
 
@@ -36,7 +36,7 @@ describe('createAdminVideo use-case', () => {
     mockPrisma.video.create.mockImplementation(({ data }: any) => Promise.resolve({ ...data, id: 'v1' }));
 
     const result = await createAdminVideo({
-        title: 'T', slug: 's', videoUrl: 'https://youtube.com/watch?v=123', thumbnailUrl: 't', tier: 'PUBLIC', status: 'PUBLISHED'
+        title: 'T', slug: 's', thumbnailUrl: 't', tier: 'PUBLIC', status: 'PUBLISHED'
     }, ctx);
 
     expect(result.ok).toBe(true);
@@ -47,15 +47,14 @@ describe('createAdminVideo use-case', () => {
 
   it('creates a safe draft without requiring a legacy videoUrl', async () => {
     mockPrisma.creator.findUnique.mockResolvedValue(mockMainChannel);
-    mockPrisma.video.create.mockImplementation(({ data }: any) => Promise.resolve({ ...data, id: 'v-cloudflare-draft' }));
+    mockPrisma.video.create.mockImplementation(({ data }: any) => Promise.resolve({ ...data, id: 'v-draft' }));
 
     const result = await createAdminVideo({
-        title: 'Cloudflare Draft',
-        slug: 'cloudflare-draft',
+        title: 'Draft',
+        slug: 'draft',
         thumbnailUrl: 'https://example.com/thumb.jpg',
         tier: AccessTier.PUBLIC,
         status: VideoStatus.PUBLISHED,
-        videoUrl: null,
         isMainFeatured: true,
         showInSidebar: true
     }, ctx);
@@ -64,7 +63,6 @@ describe('createAdminVideo use-case', () => {
     expect(mockPrisma.video.create).toHaveBeenCalledWith(expect.objectContaining({
         data: expect.objectContaining({
             creator: { connect: { id: 'c1' } },
-            videoUrl: '',
             status: VideoStatus.DRAFT,
             showInSidebar: false,
             isMainFeatured: false,
@@ -73,17 +71,16 @@ describe('createAdminVideo use-case', () => {
     }));
   });
 
-  it('uses a default thumbnail for a new Cloudflare draft when thumbnail is blank', async () => {
+  it('uses a default thumbnail for a new draft when thumbnail is blank', async () => {
     mockPrisma.creator.findUnique.mockResolvedValue(mockMainChannel);
-    mockPrisma.video.create.mockImplementation(({ data }: any) => Promise.resolve({ ...data, id: 'v-cloudflare-draft' }));
+    mockPrisma.video.create.mockImplementation(({ data }: any) => Promise.resolve({ ...data, id: 'v-draft' }));
 
     const result = await createAdminVideo({
-        title: 'Cloudflare Draft',
-        slug: 'cloudflare-draft',
+        title: 'Draft',
+        slug: 'draft',
         thumbnailUrl: '',
         tier: AccessTier.PUBLIC,
         status: VideoStatus.DRAFT,
-        videoUrl: null,
     }, ctx);
 
     expect(result.ok).toBe(true);
@@ -95,11 +92,10 @@ describe('createAdminVideo use-case', () => {
   it('returns a readable validation error when title is missing', async () => {
     const result = await createAdminVideo({
         title: '   ',
-        slug: 'cloudflare-draft',
+        slug: 'draft',
         thumbnailUrl: '',
         tier: AccessTier.PUBLIC,
         status: VideoStatus.DRAFT,
-        videoUrl: null,
     }, ctx);
 
     expect(result.ok).toBe(false);
@@ -112,12 +108,11 @@ describe('createAdminVideo use-case', () => {
 
   it('returns a readable validation error when slug is missing', async () => {
     const result = await createAdminVideo({
-        title: 'Cloudflare Draft',
+        title: 'Draft',
         slug: '   ',
         thumbnailUrl: '',
         tier: AccessTier.PUBLIC,
         status: VideoStatus.DRAFT,
-        videoUrl: null,
     }, ctx);
 
     expect(result.ok).toBe(false);

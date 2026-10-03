@@ -18,29 +18,11 @@ export function generateCSP() {
   // Google Identity Services (One Tap) injects its own stylesheet from this path (documented as required).
   const googleOneTapStyle = 'https://accounts.google.com/gsi/style';
 
-  const cloudflareStreamUploadHosts = [
-    'upload.cloudflarestream.com',
-  ];
-
-  const cloudflareStreamPlaybackHosts = [
-    'videodelivery.net',
-    '*.videodelivery.net',
-    '*.cloudflarestream.com',
-  ];
-
   // Own HLS delivery (Worker on video.<domain>): manifests/segments via XHR/fetch (hls.js) and media-src.
   const selfHlsHosts = Array.from(new Set([
     'video.pawelperfect.com',
     ...parseMediaHosts(process.env.HLS_DELIVERY_BASE_URL),
   ]));
-
-  const embedFrameHosts = [
-    'iframe.videodelivery.net',
-    '*.videodelivery.net',
-    'www.youtube.com',
-    'www.youtube-nocookie.com',
-    'player.vimeo.com',
-  ];
 
   const configuredMediaHosts = [
     ...parseMediaHosts(process.env.MEDIA_BUCKET_HOST),
@@ -51,7 +33,6 @@ export function generateCSP() {
 
   const mediaHosts = Array.from(new Set([
     ...configuredMediaHosts,
-    ...cloudflareStreamPlaybackHosts,
     ...selfHlsHosts,
   ])).map(h => `https://${h}`).join(' ');
 
@@ -67,8 +48,6 @@ export function generateCSP() {
 
   const connectHosts = Array.from(new Set([
     ...googleAuthHosts,
-    ...cloudflareStreamUploadHosts,
-    ...cloudflareStreamPlaybackHosts,
     ...getR2UploadHosts(),
     ...selfHlsHosts,
     'api.stripe.com',
@@ -95,7 +74,6 @@ export function generateCSP() {
   const devScriptSource = process.env.NODE_ENV === 'development' ? ` ${evalDirective}` : '';
   const frameHosts = Array.from(new Set([
     ...googleAuthHosts,
-    ...embedFrameHosts,
     'js.stripe.com',
     captchaHost,
   ])).map(h => `https://${h}`).join(' ');

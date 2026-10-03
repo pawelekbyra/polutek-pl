@@ -411,23 +411,27 @@ model Video {
   @@index([slug])
 }
 
+/// Since 2026-10-02 the only live video source is SELF_HLS (our own HLS: encoded by the worker, stored in the
+/// private R2 bucket polutek-hls, delivered by the token-checked Worker at video.<domain>).
+/// Every other value is LEGACY: kept only so the migration history and old rows stay valid. Application code
+/// never writes them and never plays them (old rows are ignored; deleting them is a separate cleanup PR).
+/// Do not drop values or add new providers without an explicit owner decision.
 enum StorageProvider {
-  /// LEGACY/MIGRATION ONLY: object storage asset, not the active private patron playback target.
+  /// LEGACY, unused: object storage asset.
   R2
-  /// LEGACY/MIGRATION ONLY: object storage asset, not the active private patron playback target.
+  /// LEGACY, unused: object storage asset.
   S3
-  /// LEGACY/MIGRATION ONLY: object storage asset, not the active private patron playback target.
+  /// LEGACY, unused: object storage asset.
   VERCEL_BLOB
-  /// Owner-approved first private video provider for new video assets.
+  /// LEGACY, unused: former Cloudflare Stream provider (removed 2026-10-02).
   CLOUDFLARE_STREAM
-  /// Full VOD provider with signed HLS playback. Requires MUX_TOKEN_ID, MUX_TOKEN_SECRET, MUX_SIGNING_KEY_ID, MUX_SIGNING_PRIVATE_KEY.
+  /// LEGACY, unused: former Mux provider (removed 2026-10-02).
   MUX
-  /// Our own HLS (encoded with scripts/hls, stored in R2 bucket polutek-hls, delivered by the
-  /// token-checked Worker at video.<domain>). objectKey = "videos/<videoId>/v/<version>", bucket = R2 bucket.
+  /// Our own HLS. objectKey = "videos/<videoId>/v/<version>", bucket = R2 bucket polutek-hls.
   SELF_HLS
-  /// YouTube embed source. Admin can enable for any tier.
+  /// LEGACY, unused: former YouTube embed source (removed 2026-10-02).
   YOUTUBE
-  /// Vimeo embed source. Admin can enable for any tier.
+  /// LEGACY, unused: former Vimeo embed source (removed 2026-10-02).
   VIMEO
 }
 
@@ -543,7 +547,7 @@ model VideoAsset {
   processingState        VideoAssetProcessingState @default(READY)
   isPrimary              Boolean                   @default(true)
   pendingPrimaryIntent   Boolean                   @default(false)
-  muxUploadId            String?
+  muxUploadId            String? // LEGACY: Mux direct upload id, unused
   failureReason          String?
   providerSyncedAt       DateTime?
   processingStartedAt    DateTime?
@@ -608,6 +612,8 @@ model VideoOriginal {
   @@index([status])
 }
 
+/// LEGACY (2026-10-02): provider distribution plan. Only the removed third-party video providers used it; no code reads or writes it.
+/// Kept (additive-only migration policy); rows can be deleted, the table can be dropped by a later owner-approved migration.
 model VideoDistributionPlan {
   id                 String                       @id @default(uuid())
   videoId            String
@@ -635,6 +641,8 @@ model VideoDistributionPlan {
   @@index([preferredProvider])
 }
 
+/// LEGACY (2026-10-02): provider distribution target. Only the removed third-party video providers used it; no code reads or writes it.
+/// Kept (additive-only migration policy); rows can be deleted, the table can be dropped by a later owner-approved migration.
 model VideoDistributionTarget {
   id             String                        @id @default(uuid())
   planId         String
@@ -660,6 +668,8 @@ model VideoDistributionTarget {
   @@index([status])
 }
 
+/// LEGACY (2026-10-02): provider import job (Mux/Cloudflare Stream). Only the removed third-party video providers used it; no code reads or writes it.
+/// Kept (additive-only migration policy); rows can be deleted, the table can be dropped by a later owner-approved migration.
 model VideoProviderJob {
   id                 String                 @id @default(uuid())
   videoId            String
@@ -785,6 +795,8 @@ model VideoPlaybackRoute {
   @@index([provider])
 }
 
+/// LEGACY (2026-10-02): provider webhook event log. Only the removed third-party video providers used it; no code reads or writes it.
+/// Kept (additive-only migration policy); rows can be deleted, the table can be dropped by a later owner-approved migration.
 model VideoProviderWebhookEvent {
   id               String                     @id @default(uuid())
   provider         StorageProvider

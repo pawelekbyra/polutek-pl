@@ -26,87 +26,10 @@ export class MediaPolicy {
     return this.getAllowedMediaHosts(env).has(url.hostname.toLowerCase());
   }
 
-  static isAllowedVideoSourceUrl(rawUrl: string, env: MediaHostEnv) {
-    let url: URL;
-    try {
-      url = new URL(rawUrl);
-    } catch {
-      return false;
-    }
-
-    if (url.protocol !== 'https:') return false;
-
-    if (this.isAllowedYouTubeUrl(url) || this.isAllowedVimeoUrl(url)) {
-      return true;
-    }
-
-    if (isBlockedPrivateHostname(url.hostname)) return false;
-
-    return this.getAllowedMediaHosts(env).has(url.hostname.toLowerCase());
-  }
-
-  private static normalizeProviderPathname(pathname: string) {
-    const withoutTrailingSlash = pathname.replace(/[/]+$/g, '');
-    return withoutTrailingSlash || '/';
-  }
-
-  private static isAllowedYouTubeUrl(url: URL) {
-    const hostname = url.hostname.toLowerCase();
-    const pathname = this.normalizeProviderPathname(url.pathname);
-
-    if (hostname === 'youtu.be') {
-      return /^[/][A-Za-z0-9_-]+$/.test(pathname);
-    }
-
-    if (!['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtube-nocookie.com', 'www.youtube-nocookie.com'].includes(hostname)) {
-      return false;
-    }
-
-    if (pathname === '/watch') {
-      return !!url.searchParams.get('v');
-    }
-
-    return /^[/](shorts|live|embed)[/][A-Za-z0-9_-]+$/.test(pathname);
-  }
-
-  private static isAllowedVimeoUrl(url: URL) {
-    const hostname = url.hostname.toLowerCase();
-    const pathname = this.normalizeProviderPathname(url.pathname);
-
-    if (hostname === 'vimeo.com') {
-      return /^[/]\d+$/.test(pathname) || /[/]\d+$/.test(pathname) || /[/]\d+$/.test(pathname.split('/').pop() || '');
-    }
-
-    if (hostname === 'player.vimeo.com') {
-      return /^[/]video[/]\d+$/.test(pathname);
-    }
-
-    return false;
-  }
-
-  static isCloudflareStreamManifestUrl(url: string): boolean {
-    try {
-      const parsed = new URL(url);
-      if (parsed.protocol !== 'https:') return false;
-
-      const hostname = parsed.hostname.toLowerCase();
-      const isCloudflareStreamHost = hostname === 'videodelivery.net'
-        || hostname.endsWith('.videodelivery.net')
-        || hostname.endsWith('.cloudflarestream.com');
-
-      if (!isCloudflareStreamHost) return false;
-
-      const pathname = parsed.pathname.toLowerCase();
-      return pathname.endsWith('/manifest/video.m3u8') || pathname.endsWith('/manifest/video.mpd');
-    } catch {
-      return false;
-    }
-  }
-
   /**
    * Our own HLS delivery (the token-checked Cloudflare Worker): https, the configured delivery host
    * (HLS_DELIVERY_BASE_URL, default https://video.pawelperfect.com), path /h/<token>/<videoId>/<version>/master.m3u8.
-   * It is a signed, short-lived URL meant for the player, so it must not be redacted to /api/media/<id>.
+   * It is a signed, short-lived URL meant for the player, so it is not treated as a raw URL.
    */
   static isSelfHlsDeliveryUrl(url: string, env: NodeJS.ProcessEnv = process.env): boolean {
     try {
@@ -136,7 +59,7 @@ export class MediaPolicy {
 
     const allowedHosts = new Set([
       ...this.getAllowedMediaHosts(env),
-      ...parseMediaHosts(env.ALLOWED_THUMBNAIL_HOSTS || 'images.unsplash.com,i.ytimg.com,img.clerk.com'),
+      ...parseMediaHosts(env.ALLOWED_THUMBNAIL_HOSTS || 'images.unsplash.com,img.clerk.com'),
     ]);
 
     return allowedHosts.has(url.hostname.toLowerCase());
@@ -229,16 +152,6 @@ export class MediaPolicy {
   }
 
   /**
-   * Redacts an InternalMediaSource into a safe PublicMediaDescriptor.
-   */
-  static redactInternalMediaSource(source: InternalMediaSource): PublicMediaDescriptor {
-    return {
-      videoId: source.videoId,
-      playbackUrl: `/api/media/${source.videoId}`,
-    };
-  }
-
-  /**
    * Creates a GatedMediaReference for a video.
    */
   static createGatedMediaReference(videoId: string): GatedMediaReference {
@@ -255,7 +168,6 @@ export class MediaPolicy {
   static isProbablyRawMediaUrl(url: string): boolean {
     if (!url) return false;
 
-    if (this.isCloudflareStreamManifestUrl(url)) return false;
     if (this.isSelfHlsDeliveryUrl(url)) return false;
 
     const lowerUrl = url.toLowerCase();
@@ -285,14 +197,13 @@ export class MediaPolicy {
     }
 
     // Direct media extensions but NOT on our gated routes
-    const isGatedRoute = lowerUrl.startsWith('/api/media/') || lowerUrl.startsWith('/api/media-source/');
+    const isGatedRoute = lowerUrl.startsWith('/api/media-source/');
     if (!isGatedRoute) {
       const mediaExtensions = ['.mp4', '.m4v', '.webm', '.m3u8', '.mpd', '.mov'];
       const urlWithoutQuery = lowerUrl.split('?')[0];
       if (mediaExtensions.some(ext => urlWithoutQuery.endsWith(ext))) {
         // If it's a full URL (starts with http), it's probably raw if it's not our gated domain
         // For simplicity, we consider any full URL with media extension as potentially raw
-        // unless it's handled by a specific provider (YouTube/Vimeo) which is checked elsewhere.
         if (lowerUrl.startsWith('http')) {
           return true;
         }

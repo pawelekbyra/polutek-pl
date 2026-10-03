@@ -15,8 +15,6 @@ interface VideoFiltersProps {
     onStatusFilterChange: (val: string) => void;
     tierFilter: string;
     onTierFilterChange: (val: string) => void;
-    sourceKindFilter: string;
-    onSourceKindFilterChange: (val: string) => void;
     isMainFeatured: string;
     onIsMainFeaturedChange: (val: string) => void;
     showInSidebar: string;
@@ -38,8 +36,6 @@ export function VideoFilters({
     onStatusFilterChange,
     tierFilter,
     onTierFilterChange,
-    sourceKindFilter,
-    onSourceKindFilterChange,
     isMainFeatured,
     onIsMainFeaturedChange,
     showInSidebar,
@@ -135,25 +131,6 @@ export function VideoFilters({
             {isMoreFiltersOpen && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 rounded-xl border bg-muted/30 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="space-y-2">
-                        <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Źródło</Label>
-                        <Select value={sourceKindFilter} onValueChange={(v) => onSourceKindFilterChange(v || 'ALL')}>
-                            <SelectTrigger className="w-full h-9 bg-background">
-                                <SelectValue placeholder="Źródło" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="ALL">Wszystkie źródła</SelectItem>
-                                <SelectItem value="YOUTUBE">YouTube</SelectItem>
-                                <SelectItem value="VIMEO">Vimeo</SelectItem>
-                                <SelectItem value="VERCEL_BLOB">Vercel Blob</SelectItem>
-                                <SelectItem value="HLS">HLS</SelectItem>
-                                <SelectItem value="DASH">DASH</SelectItem>
-                                <SelectItem value="MP4">MP4</SelectItem>
-                                <SelectItem value="DIRECT">Bezpośredni URL</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    <div className="space-y-2">
                         <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Migracja</Label>
                         <Select value={migrationStatusFilter} onValueChange={(v) => onMigrationStatusFilterChange(v || 'ALL')}>
                             <SelectTrigger className="w-full h-9 bg-background">
@@ -161,10 +138,10 @@ export function VideoFilters({
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="ALL">Stan migracji</SelectItem>
-                                <SelectItem value="READY">Gotowe (CF)</SelectItem>
-                                <SelectItem value="MIGRATION_REQUIRED">Wymaga migracji</SelectItem>
-                                <SelectItem value="PROCESSING">Przetwarzanie (CF)</SelectItem>
-                                <SelectItem value="FAILED">Błąd (CF)</SelectItem>
+                                <SelectItem value="READY">Gotowe</SelectItem>
+                                <SelectItem value="MIGRATION_REQUIRED">Wymaga ponownego wgrania</SelectItem>
+                                <SelectItem value="PROCESSING">Kodowanie</SelectItem>
+                                <SelectItem value="FAILED">Błąd kodowania</SelectItem>
                                 <SelectItem value="MISSING_SOURCE">Brak źródła</SelectItem>
                             </SelectContent>
                         </Select>

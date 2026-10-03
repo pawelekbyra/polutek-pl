@@ -38,7 +38,7 @@ export default function AdminVideosPage() {
     createSourceMode, setCreateSourceMode,
     createUploadState, setCreateUploadState, formData, setFormData, total,
     page, totalPages, searchQuery, setSearchQuery,
-    statusFilter, setStatusFilter, tierFilter, setTierFilter, sourceKindFilter, setSourceKindFilter,
+    statusFilter, setStatusFilter, tierFilter, setTierFilter,
     migrationStatusFilter, setMigrationStatusFilter, needsAttention, setNeedsAttention,
     isMainFeatured, setIsMainFeatured, showInSidebar, setShowInSidebar, orderBy, setOrderBy,
     fetchVideos, fetchVideoForEdit
@@ -70,7 +70,7 @@ export default function AdminVideosPage() {
 
   useEffect(() => {
       if (isAdmin && !isInitialLoading) fetchVideos(1, { pending: true });
-  }, [statusFilter, tierFilter, sourceKindFilter, migrationStatusFilter, needsAttention, isMainFeatured, showInSidebar, orderBy, isAdmin, isInitialLoading, fetchVideos]);
+  }, [statusFilter, tierFilter, migrationStatusFilter, needsAttention, isMainFeatured, showInSidebar, orderBy, isAdmin, isInitialLoading, fetchVideos]);
 
 
   const handleTitleChange = (val: string) => {
@@ -91,7 +91,6 @@ export default function AdminVideosPage() {
       slug: vid.slug,
       description: vid.description || "",
       descriptionEn: vid.descriptionEn || "",
-      videoUrl: vid.videoUrl || "",
       thumbnailUrl: vid.thumbnailUrl || "",
       duration: "",
       tier: vid.tier,
@@ -123,7 +122,6 @@ export default function AdminVideosPage() {
       slug: slugify(newTitle) + "-" + Math.floor(Math.random() * 1000),
       description: vid.description || "",
       descriptionEn: vid.descriptionEn || "",
-      videoUrl: "",
       thumbnailUrl: vid.thumbnailUrl || "",
       duration: "",
       tier: vid.tier,
@@ -183,7 +181,6 @@ export default function AdminVideosPage() {
           description: formData.description?.trim() || null,
           titleEn: formData.titleEn?.trim() || null,
           descriptionEn: formData.descriptionEn?.trim() || null,
-          videoUrl: formData.videoUrl?.trim() || null,
           thumbnailUrl: formData.thumbnailUrl?.trim() || "",
           tier: formData.tier,
           status: editStatus,
@@ -337,7 +334,6 @@ export default function AdminVideosPage() {
             searchQuery={searchQuery} setSearchQuery={setSearchQuery} fetchVideos={fetchVideos}
             statusFilter={statusFilter} setStatusFilter={setStatusFilter}
             tierFilter={tierFilter} setTierFilter={setTierFilter}
-            sourceKindFilter={sourceKindFilter} setSourceKindFilter={setSourceKindFilter}
             migrationStatusFilter={migrationStatusFilter} setMigrationStatusFilter={setMigrationStatusFilter}
             isMainFeatured={isMainFeatured} setIsMainFeatured={setIsMainFeatured}
             showInSidebar={showInSidebar} setShowInSidebar={setShowInSidebar}

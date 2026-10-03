@@ -83,8 +83,8 @@ describe('VideoRepository Safety', () => {
         creatorId: mainChannelId,
         tier: AccessTier.PATRON,
         status: VideoStatus.PUBLISHED,
-        asset: { isPrimary: true, processingState: 'READY', provider: 'CLOUDFLARE_STREAM', providerAssetId: 'v123' },
-        activePlaybackRoute: { asset: { processingState: 'READY', provider: 'CLOUDFLARE_STREAM', providerAssetId: 'v123' } }
+        asset: { isPrimary: true, processingState: 'READY', provider: 'SELF_HLS', objectKey: 'videos/v123/v/v1' },
+        activePlaybackRoute: { asset: { processingState: 'READY', provider: 'SELF_HLS', objectKey: 'videos/v123/v/v1' } }
       });
 
       await expect(repository.setHero('v1', mainChannelId, mockPrisma))
@@ -99,8 +99,8 @@ describe('VideoRepository Safety', () => {
         creatorId: mainChannelId,
         tier: AccessTier.PUBLIC,
         status: VideoStatus.PUBLISHED,
-        asset: { isPrimary: true, processingState: 'READY', provider: 'CLOUDFLARE_STREAM', providerAssetId: 'v123' },
-        activePlaybackRoute: { asset: { processingState: 'READY', provider: 'CLOUDFLARE_STREAM', providerAssetId: 'v123' } }
+        asset: { isPrimary: true, processingState: 'READY', provider: 'SELF_HLS', objectKey: 'videos/v123/v/v1' },
+        activePlaybackRoute: { asset: { processingState: 'READY', provider: 'SELF_HLS', objectKey: 'videos/v123/v/v1' } }
       });
       mockPrisma.video.updateMany.mockResolvedValue({ count: 1 });
 

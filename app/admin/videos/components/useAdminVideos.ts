@@ -32,7 +32,6 @@ export function useAdminVideos(_isAdmin: boolean) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [tierFilter, setTierFilter] = useState<string>("ALL");
-  const [sourceKindFilter, setSourceKindFilter] = useState<string>("ALL");
   const [migrationStatusFilter, setMigrationStatusFilter] = useState<string>("ALL");
   const [needsAttention, setNeedsAttention] = useState<boolean>(false);
   const [isMainFeatured, setIsMainFeatured] = useState<string>("ALL");
@@ -46,7 +45,6 @@ export function useAdminVideos(_isAdmin: boolean) {
       let url = `/api/admin/videos?page=${p}&query=${encodeURIComponent(searchQuery)}&orderBy=${orderBy}`;
       if (statusFilter !== "ALL") url += `&status=${statusFilter}`;
       if (tierFilter !== "ALL") url += `&tier=${tierFilter}`;
-      if (sourceKindFilter !== "ALL") url += `&sourceKind=${sourceKindFilter}`;
       if (migrationStatusFilter !== "ALL") url += `&migrationStatus=${migrationStatusFilter}`;
       if (isMainFeatured !== "ALL") url += `&isMainFeatured=${isMainFeatured}`;
       if (showInSidebar !== "ALL") url += `&showInSidebar=${showInSidebar}`;
@@ -78,7 +76,7 @@ export function useAdminVideos(_isAdmin: boolean) {
     } finally {
       if (showPending) setIsRefetching(false);
     }
-  }, [page, searchQuery, statusFilter, tierFilter, sourceKindFilter, migrationStatusFilter, needsAttention, isMainFeatured, showInSidebar, orderBy]);
+  }, [page, searchQuery, statusFilter, tierFilter, migrationStatusFilter, needsAttention, isMainFeatured, showInSidebar, orderBy]);
 
   const fetchVideoForEdit = useCallback(async (id: string) => {
     try {
@@ -92,7 +90,6 @@ export function useAdminVideos(_isAdmin: boolean) {
           slug: vid.slug,
           description: vid.description || "",
           descriptionEn: vid.descriptionEn || "",
-          videoUrl: vid.videoUrl || "",
           thumbnailUrl: vid.thumbnailUrl || "",
           duration: vid.duration || "",
           tier: vid.tier,
@@ -122,7 +119,7 @@ export function useAdminVideos(_isAdmin: boolean) {
     createSourceMode, setCreateSourceMode,
     createUploadState, setCreateUploadState, formData, setFormData, total, setTotal,
     page, setPage, totalPages, setTotalPages, searchQuery, setSearchQuery,
-    statusFilter, setStatusFilter, tierFilter, setTierFilter, sourceKindFilter, setSourceKindFilter,
+    statusFilter, setStatusFilter, tierFilter, setTierFilter,
     migrationStatusFilter, setMigrationStatusFilter, needsAttention, setNeedsAttention,
     isMainFeatured, setIsMainFeatured, showInSidebar, setShowInSidebar, orderBy, setOrderBy,
     fetchVideos, fetchVideoForEdit

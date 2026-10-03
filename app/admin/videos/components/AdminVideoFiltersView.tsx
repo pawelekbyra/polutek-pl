@@ -8,8 +8,6 @@ interface AdminVideoFiltersViewProps {
   setStatusFilter: (val: string) => void;
   tierFilter: string;
   setTierFilter: (val: string) => void;
-  sourceKindFilter: string;
-  setSourceKindFilter: (val: string) => void;
   migrationStatusFilter: string;
   setMigrationStatusFilter: (val: string) => void;
   isMainFeatured: string;
@@ -26,7 +24,6 @@ export function AdminVideoFiltersView({
   searchQuery, setSearchQuery, fetchVideos,
   statusFilter, setStatusFilter,
   tierFilter, setTierFilter,
-  sourceKindFilter, setSourceKindFilter,
   migrationStatusFilter, setMigrationStatusFilter,
   isMainFeatured, setIsMainFeatured,
   showInSidebar, setShowInSidebar,
@@ -37,7 +34,6 @@ export function AdminVideoFiltersView({
     setSearchQuery("");
     setStatusFilter("ALL");
     setTierFilter("ALL");
-    setSourceKindFilter("ALL");
     setMigrationStatusFilter("ALL");
     setIsMainFeatured("ALL");
     setShowInSidebar("ALL");
@@ -51,7 +47,6 @@ export function AdminVideoFiltersView({
       searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} onSearchSubmit={() => fetchVideos(1, { pending: true })}
       statusFilter={statusFilter} onStatusFilterChange={setStatusFilter}
       tierFilter={tierFilter} onTierFilterChange={setTierFilter}
-      sourceKindFilter={sourceKindFilter} onSourceKindFilterChange={setSourceKindFilter}
       migrationStatusFilter={migrationStatusFilter} onMigrationStatusFilterChange={setMigrationStatusFilter}
       isMainFeatured={isMainFeatured} onIsMainFeaturedChange={setIsMainFeatured}
       showInSidebar={showInSidebar} onShowInSidebarChange={setShowInSidebar}

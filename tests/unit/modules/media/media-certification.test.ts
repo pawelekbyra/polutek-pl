@@ -70,24 +70,6 @@ describe('Media Module Certification', () => {
     });
   });
 
-  describe('Video Source URLs', () => {
-    it('accepts YouTube patterns', () => {
-      expect(MediaPolicy.isAllowedVideoSourceUrl('https://www.youtube.com/watch?v=123', env)).toBe(true);
-      expect(MediaPolicy.isAllowedVideoSourceUrl('https://youtu.be/123', env)).toBe(true);
-      expect(MediaPolicy.isAllowedVideoSourceUrl('https://www.youtube.com/shorts/123', env)).toBe(true);
-      expect(MediaPolicy.isAllowedVideoSourceUrl('https://www.youtube.com/embed/123', env)).toBe(true);
-    });
-
-    it('rejects bad YouTube patterns', () => {
-      expect(MediaPolicy.isAllowedVideoSourceUrl('https://www.youtube.com/user/channel', env)).toBe(false);
-    });
-
-    it('accepts Vimeo patterns', () => {
-      expect(MediaPolicy.isAllowedVideoSourceUrl('https://vimeo.com/123456', env)).toBe(true);
-      expect(MediaPolicy.isAllowedVideoSourceUrl('https://player.vimeo.com/video/123456', env)).toBe(true);
-    });
-  });
-
   describe('Avatar & Comment Images', () => {
     it('accepts Clerk avatars', () => {
       expect(MediaPolicy.isAllowedAvatarUrl('https://img.clerk.com/avatar.png', env)).toBe(true);

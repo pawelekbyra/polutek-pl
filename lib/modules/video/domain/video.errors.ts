@@ -19,7 +19,7 @@ export class VideoSlugConflictError extends AppError {
 }
 
 export class VideoInvalidHeroError extends AppError {
-  constructor(message = 'Hero video must be public, published, non-archived and backed by a READY primary Cloudflare Stream asset.') {
+  constructor(message = 'Hero video must be public, published, non-archived and backed by a READY own HLS asset.') {
     super(message, 400, 'VIDEO_INVALID_HERO');
   }
 }
@@ -33,12 +33,6 @@ export class VideoInvalidSidebarError extends AppError {
 export class VideoInvalidPremiereError extends AppError {
   constructor(message = 'Data premiery musi być w przyszłości.') {
     super(message, 400, 'VIDEO_INVALID_PREMIERE');
-  }
-}
-
-export class VideoUrlNotAllowedError extends AppError {
-  constructor(url: string) {
-    super(`Video URL ${url} is not allowed by media policy`, 400, 'VIDEO_URL_NOT_ALLOWED');
   }
 }
 
@@ -97,36 +91,8 @@ export class PlaybackAccessDeniedError extends AppError {
 }
 
 
-export class CloudflareConfigurationError extends AppError {
-  public readonly missing: string[];
-
-  constructor(missing: string[] = []) {
-    super(
-      'Cloudflare Stream nie jest skonfigurowany po stronie serwera. Skontaktuj się z administratorem technicznym przed uploadem nowych filmów.',
-      503,
-      'CLOUDFLARE_NOT_CONFIGURED'
-    );
-    this.name = 'CloudflareConfigurationError';
-    this.missing = missing;
-  }
-}
-
-export class CloudflareApiError extends AppError {
-  constructor(message = 'Cloudflare Stream zwrócił błąd podczas przygotowania uploadu. Spróbuj ponownie później.') {
-    super(message, 502, 'CLOUDFLARE_API_ERROR');
-    this.name = 'CloudflareApiError';
-  }
-}
-
-export class CloudflareNotFoundError extends AppError {
-  constructor(uid: string) {
-    super(`Cloudflare Stream asset ${uid} not found`, 404, 'CLOUDFLARE_NOT_FOUND');
-    this.name = 'CloudflareNotFoundError';
-  }
-}
-
 export class VideoNotReadyForPublicationError extends AppError {
-  constructor(message = 'Film nie jest gotowy do publikacji. Wymagany jest primary asset Cloudflare Stream w stanie READY.', code = 'VIDEO_NOT_READY_FOR_PUBLICATION') {
+  constructor(message = 'Film nie jest gotowy do publikacji. Wymagany jest gotowy (READY) zakodowany materiał własnego HLS.', code = 'VIDEO_NOT_READY_FOR_PUBLICATION') {
     super(message, 400, code);
     this.name = 'VideoNotReadyForPublicationError';
   }

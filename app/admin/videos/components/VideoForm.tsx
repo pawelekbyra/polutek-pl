@@ -21,7 +21,6 @@ interface VideoFormData {
   slug: string;
   description: string;
   descriptionEn: string;
-  videoUrl: string;
   thumbnailUrl: string;
   duration: string;
   tier: string;

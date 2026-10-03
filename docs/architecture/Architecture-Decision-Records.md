@@ -24,7 +24,9 @@ Consequences:
 - `User.isPatron` does not exist as a stored column (removed in migration `20260630000000_remove_legacy_user_patron_cache`); any `isPatron` seen on a DTO/read model (e.g. `buildPatronTruthReadModel`) is derived live from active `PatronGrant` rows, never a cached column. Clerk metadata remains a sync cache only, never the authority.
 - Playback/access decisions must not rely on frontend state.
 
-## ADR-0003 — Cloudflare Stream first, Mux later per VideoAsset
+## ADR-0003 — Cloudflare Stream first, Mux later per VideoAsset (SUPERSEDED 2026-10-02)
+
+Superseded: since 2026-10-02 all third-party video providers (Cloudflare Stream, Mux, YouTube, Vimeo) are removed; own HLS is the only source (`docs/architecture/self-hosted-hls.md`). Original decision kept for history:
 
 Decision:
 Cloudflare Stream is the first video provider. Mux must remain design-compatible per VideoAsset, but no heavy enterprise multi-provider framework is allowed now.

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { PlaybackService } from '@/lib/modules/playback';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { checkVideoAccess } from '@/lib/modules/access';
@@ -23,7 +23,7 @@ describe('PlaybackService premiere gate', () => {
 
   function video(overrides: Record<string, unknown> = {}) {
     return {
-      id: 'video-1',
+      id: 'video-0001',
       title: 'Premiere film',
       thumbnailUrl: '/thumb.jpg',
       tier: 'PUBLIC',
@@ -35,10 +35,10 @@ describe('PlaybackService premiere gate', () => {
       assets: [
         {
           id: 'asset-1',
-          provider: 'YOUTUBE',
+          provider: 'SELF_HLS',
+          objectKey: 'videos/video-0001/v/v1',
           processingState: 'READY',
           isPrimary: true,
-          externalVideoId: 'yt-secret-id',
           providerAssetId: null,
           providerPlaybackId: null,
           fallbackPriority: 0,
@@ -51,14 +51,19 @@ describe('PlaybackService premiere gate', () => {
   }
 
   const plan = (actor: Actor) =>
-    PlaybackService.createPlaybackPlanWithContext('video-1', createAppContext({ actor, prisma: prisma as never }));
+    PlaybackService.createPlaybackPlanWithContext('video-0001', createAppContext({ actor, prisma: prisma as never }));
 
   beforeEach(() => {
     vi.clearAllMocks();
+    process.env.HLS_TOKEN_SECRET = 's'.repeat(40);
     prisma.video.findUnique.mockResolvedValue(video());
     prisma.videoPlaybackSession.create.mockResolvedValue({ id: 'session-1' });
     // Even a full access grant must not let an upcoming premiere through.
     vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true } } as never);
+  });
+
+  afterEach(() => {
+    delete process.env.HLS_TOKEN_SECRET;
   });
 
   it('gives a guest LOGIN_REQUIRED with no source and no session', async () => {
@@ -70,7 +75,7 @@ describe('PlaybackService premiere gate', () => {
     expect(result.source).toBeUndefined();
     expect(result.premiereAt).toBeUndefined();
     expect(result.tracking.playbackSessionId).toBe('');
-    expect(JSON.stringify(result)).not.toContain('yt-secret-id');
+    expect(JSON.stringify(result)).not.toContain('videos/video-0001/v/v1');
     expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
   });
 
@@ -83,7 +88,7 @@ describe('PlaybackService premiere gate', () => {
     expect(result.access.allowed).toBe(false);
     expect(result.source).toBeUndefined();
     expect(result.tracking.playbackSessionId).toBe('');
-    expect(JSON.stringify(result)).not.toContain('yt-secret-id');
+    expect(JSON.stringify(result)).not.toContain('videos/video-0001/v/v1');
     expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
   });
 

@@ -21,8 +21,6 @@ const MAX_DEPTH = 5;
 
 /** Mutating admin handlers that intentionally do not write an audit event. */
 const ALLOWLIST: Record<string, string> = {
-  "app/api/admin/health/cloudflare/route.ts": "POST is a diagnostic direct-upload probe: it checks provider credentials and changes no application state.",
-  "app/api/admin/health/mux/route.ts": "POST is a diagnostic direct-upload probe: it checks provider credentials and changes no application state.",
   "app/api/admin/videos/[id]/original-upload/multipart/parts/route.ts": "POST only signs short-lived part URLs of an already audited upload session (start/complete/abort are audited); it changes no state and is called hundreds of times per file.",
 };
 

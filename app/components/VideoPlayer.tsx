@@ -48,12 +48,8 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
     const isAdmin = false;
     const [playerKey, setPlayerKey] = useState(0);
     const { source, tracking, player: playerConfig } = playbackPlan || {};
-    // Own HLS carries the previous provider as `source.fallback`: if it fails to load we switch to it once.
-    const [fallbackActive, setFallbackActive] = useState(false);
-    const activeFallback = fallbackActive ? source?.fallback : undefined;
-    const videoUrl = activeFallback?.playbackUrl ?? source?.playbackUrl;
-    const videoSourceKind = activeFallback?.kind ?? source?.kind;
-    const videoEmbedUrl = source?.embedUrl;
+    const videoUrl = source?.playbackUrl;
+    const videoSourceKind = source?.kind;
     const textTracks = normalizeTextTracks(playerConfig?.textTracks || video.textTracks);
 
     const player = useRef<MediaPlayerInstance>(null);
@@ -117,18 +113,17 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
         setBufferedEnoughForReveal(false);
         bufferedEnoughRef.current = false;
         setLoadError(null);
-        setFallbackActive(false);
         setPlayerKey((key) => key + 1);
         hasReached10s.current = false;
         viewCountRequestInFlight.current = false;
         reachedThresholds.current = {};
-    }, [video.id, source?.playbackUrl, videoEmbedUrl, source?.kind, tracking?.playbackSessionId]);
+    }, [video.id, source?.playbackUrl, source?.kind, tracking?.playbackSessionId]);
 
     useEffect(() => {
         setBufferingOverlayTimedOut(false);
         const timer = setTimeout(() => setBufferingOverlayTimedOut(true), 15000);
         return () => clearTimeout(timer);
-    }, [video.id, videoUrl, videoEmbedUrl, videoSourceKind]);
+    }, [video.id, videoUrl, videoSourceKind]);
 
     useEffect(() => {
         if (!isMounted || !tracking?.playbackSessionId) return;
@@ -142,7 +137,6 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
     const resolvedSource = resolvePlaybackSource({
         kind: videoSourceKind,
         playbackUrl: videoUrl,
-        embedUrl: videoEmbedUrl,
     });
     const showsErrorState = isMounted && !isLoading && (!playbackPlan || resolvedSource.mode === 'unavailable');
     // Settled = what the viewer should see from now on is already on screen: a playing
@@ -337,14 +331,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
                             }
                         }}
                         onError={() => {
-                            if (!fallbackActive && source?.fallback) {
-                                sendEvent('PLAYER_ERROR', { errorCode: 'SELF_HLS_FALLBACK' });
-                                setFallbackActive(true);
-                                setHasStartedPlayback(false);
-                                setPlayerKey((key) => key + 1);
-                                return;
-                            }
-                            setLoadError('Nie udało się załadować materiału wideo. Sprawdź link, CORS lub dostępność źródła.');
+                            setLoadError('Nie udało się załadować materiału wideo. Spróbuj ponownie za chwilę.');
                             sendEvent('PLAYER_ERROR', { errorCode: 'LOAD_FAILED' });
                         }}
                     >

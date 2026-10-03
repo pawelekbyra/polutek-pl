@@ -29,7 +29,7 @@ większej zmianie stanu — dokumentacja ma opisywać stan obecny, nie historię
 ## Stack
 
 Next.js 15 (App Router, Vercel) · Neon PostgreSQL + Prisma · Clerk
-(tożsamość) · Stripe (płatności) · Cloudflare Stream (wideo) · Resend
+(tożsamość) · Stripe (płatności) · własny HLS na R2 + Cloudflare Worker (wideo) · Resend
 (email) · Upstash Redis (rate limiting).
 
 ## Szybki start
@@ -61,23 +61,22 @@ npm run quality:hotspots                      # budżety rozmiaru plików
 
 ## Kierunki produktowe
 
-- Multi-source video: pełny system admin create/edit + provider switch +
-  playback end-to-end. Providerzy projektowani rozszerzalnie (Cloudflare
-  Stream, YouTube, strategicznie Mux, dalej R2 i Vimeo).
-- Player nie zna szczegółów providerów — renderuje zunifikowany playback
-  plan z backendu.
+- Wideo wyłącznie z własnego systemu: upload do R2, kolejka kodowania w
+  Postgresie, worker HLS, dostarczanie przez Worker z tokenem (decyzja
+  2026-10-02; bez Mux, Cloudflare Stream, YouTube i Vimeo).
+- Player renderuje playback plan z backendu i nie zna szczegółów
+  przechowywania.
 - Strefa podziękowań dla patronów jest bonusem za wsparcie, nie „zakupem
   płatnej treści".
 - Napisy PL/EN per film przez WebVTT (opcjonalny feature accessibility).
 
-## Operacje: Cloudflare Stream signed playback
+## Operacje: własny HLS
 
-Playback prywatnych/patrońskich materiałów Cloudflare Stream używa lokalnie
-generowanych signed playback tokenów; viewer hot path nie woła Cloudflare
-Admin API per widz. Wymagane env: signing key + TTL tokenów (sekretów nie
-logować i nie wklejać do issue/PR). Brak signing key = fail-closed (backend
-nie zwraca źródła odtwarzania). Po rotacji klucza zaktualizuj env w
-środowiskach produkcyjnych i preview.
+Playback używa lokalnie generowanych tokenów HMAC (`HLS_TOKEN_SECRET`, min. 32
+znaki): token wydaje wyłącznie backend po decyzji dostępu i bramce premiery,
+widz nie woła żadnego zewnętrznego API. Brak sekretu = fail-closed (plan bez
+źródła). Rotacja: nowy sekret w Workerze i w aplikacji naraz. Pełny opis:
+`docs/operations/HLS-SELF-HOSTED.md`, `docs/operations/VIDEO-PIPELINE.md`.
 
 ## Zasady zmian
 

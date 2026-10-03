@@ -1,14 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createAdminVideo } from '../../lib/modules/video/application/create-admin-video.use-case';
-import { provisionCloudflareUpload } from '../../lib/modules/video/application/provision-cloudflare-upload.use-case';
 import { publishAdminVideo } from '../../lib/modules/video/application/publish-admin-video.use-case';
-import { handleCloudflareStreamWebhook } from '../../lib/modules/video/application/handle-cloudflare-webhook.use-case';
-import { attachCloudflareAsset } from '../../lib/modules/video/application/attach-cloudflare-asset.use-case';
-import { syncCloudflareStatus } from '../../lib/modules/video/application/sync-cloudflare-status.use-case';
-import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from '../../lib/modules/video/domain/video-asset.constants';
 import { AccessTier, VideoStatus } from '@prisma/client';
 
-// Mocking dependencies
+// Admin video flow after the move to own HLS only (CLAUDE.md 4.17): a draft is created without
+// any source, the encode worker later creates the SELF_HLS asset + route, and publication is
+// gated on that route. Legacy provider routes can never publish.
+
 vi.mock('../../lib/modules/channel', () => ({
   MainChannelService: {
     getRequired: vi.fn().mockResolvedValue({ id: 'main-channel-id' })
@@ -20,32 +18,6 @@ vi.mock('../../lib/modules/audit', () => ({
   recordAuditEventSafe: vi.fn().mockResolvedValue(undefined)
 }));
 
-const activateFirstReadyAssetIfNoneActive = vi.fn().mockResolvedValue({ id: 'route-id' });
-vi.mock('../../lib/modules/video/application/video-playback-route.service', () => ({
-  VideoPlaybackRouteService: vi.fn().mockImplementation(function (this: any) {
-    this.activateFirstReadyAssetIfNoneActive = activateFirstReadyAssetIfNoneActive;
-  }),
-}));
-
-vi.mock('../../lib/modules/video/infrastructure/cloudflare-stream.client', () => {
-  return {
-    CloudflareStreamClient: vi.fn().mockImplementation(function() {
-      return {
-        createDirectUploadUrl: vi.fn().mockResolvedValue({
-          result: { uid: 'cf-uid-123', uploadURL: 'https://upload.cloudflare.com/123' }
-        }),
-        getAssetDetails: vi.fn().mockResolvedValue({
-            success: true,
-            result: {
-                uid: 'cf-uid-123',
-                status: { state: 'ready' }
-            }
-        })
-      };
-    })
-  };
-});
-
 const mockPrisma: any = {
   video: {
     create: vi.fn(),
@@ -55,7 +27,7 @@ const mockPrisma: any = {
     updateMany: vi.fn()
   },
   videoAsset: {
-      findMany: vi.fn(),
+    findMany: vi.fn(),
     findUnique: vi.fn(),
     findFirst: vi.fn(),
     create: vi.fn(),
@@ -71,14 +43,21 @@ const mockCtx: any = {
   actor: { type: 'admin', userId: 'admin-id' }
 };
 
-describe('Video Upload Flow', () => {
+const ownHlsAsset = (processingState: string) => ({
+  isPrimary: true,
+  provider: 'SELF_HLS',
+  processingState,
+  objectKey: 'videos/video-id/v/v1',
+});
+
+describe('Video admin flow (own HLS only)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPrisma.videoAsset.findMany?.mockResolvedValue([]);
   });
 
   describe('createAdminVideo', () => {
-    it('should create a draft with secure defaults', async () => {
+    it('should create a draft with secure defaults and no video source', async () => {
       mockPrisma.video.create.mockResolvedValue({
         id: 'new-video-id',
         title: 'Test Video',
@@ -99,184 +78,36 @@ describe('Video Upload Flow', () => {
       }, mockCtx);
 
       expect(result.ok).toBe(true);
-      expect(mockPrisma.video.create).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({
-          status: 'DRAFT',
-          showInSidebar: false,
-          isMainFeatured: false,
-          publishedAt: null
-        })
-      }));
-    });
-  });
-
-  describe('provisionCloudflareUpload', () => {
-    it('should provision upload for DRAFT video', async () => {
-      mockPrisma.video.findFirst.mockResolvedValue({
-        id: 'draft-id',
-        status: 'DRAFT',
-        creatorId: 'main-channel-id',
-        asset: null
-      });
-      mockPrisma.videoAsset.findUnique.mockResolvedValue(null);
-      mockPrisma.videoAsset.create.mockResolvedValue({ id: 'asset-id' });
-
-      const result = await provisionCloudflareUpload({ videoId: 'draft-id' }, mockCtx);
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-          expect(result.data.providerAssetId).toBe('cf-uid-123');
-      }
+      const data = mockPrisma.video.create.mock.calls[0][0].data;
+      expect(data).toMatchObject({ status: 'DRAFT', showInSidebar: false, isMainFeatured: false, publishedAt: null });
+      expect('videoUrl' in data).toBe(false);
     });
 
-    it('create with upload and publish intent stores pending publish', async () => {
-      mockPrisma.video.create.mockResolvedValue({
-        id: 'new-video-id', title: 'Test Video', slug: 'test-video', status: 'DRAFT',
-        publishAfterAssetReady: true, publishAfterAssetReadyRequestedAt: new Date(), publishAfterAssetReadyError: null,
-        creatorId: 'main-channel-id'
-      });
+    it('ignores a videoUrl in the input: external video URLs are not accepted any more', async () => {
+      mockPrisma.video.create.mockResolvedValue({ id: 'v', title: 'T', slug: 's', status: 'DRAFT', creatorId: 'main-channel-id' });
 
-      const result = await createAdminVideo({
-        title: 'Test Video', slug: 'test-video', thumbnailUrl: 'https://thumb.com',
-        tier: AccessTier.PUBLIC, publishAfterAssetReady: true,
-      }, mockCtx);
+      await createAdminVideo({
+        title: 'T',
+        slug: 's',
+        thumbnailUrl: 'https://thumb.com',
+        tier: AccessTier.PUBLIC,
+        videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      } as never, mockCtx);
 
-      expect(result.ok).toBe(true);
-      expect(mockPrisma.video.create).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({
-          status: 'DRAFT',
-          publishAfterAssetReady: true,
-          publishAfterAssetReadyRequestedAt: expect.any(Date),
-        })
-      }));
-    });
-
-    it('should fail if video is already PUBLISHED', async () => {
-      mockPrisma.video.findFirst.mockResolvedValue({
-        id: 'pub-id',
-        status: 'PUBLISHED',
-        creatorId: 'main-channel-id'
-      });
-
-      const result = await provisionCloudflareUpload({ videoId: 'pub-id' }, mockCtx);
-
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-          expect(result.error.code).toBe('VIDEO_NOT_DRAFT');
-      }
-    });
-  });
-
-  describe('handleCloudflareStreamWebhook', () => {
-    it('should update asset to READY and make it primary', async () => {
-      // Only one findFirst call happens now: findAssetByProviderId. Primary/route
-      // promotion moved into VideoPlaybackRouteService.activateFirstReadyAssetIfNoneActive
-      // (mocked above), the single write path for isPrimary/activePlaybackRouteId.
-      mockPrisma.videoAsset.findFirst.mockResolvedValueOnce({
-        id: 'asset-id',
-        videoId: 'video-id',
-        provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
-        processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING
-      });
-      mockPrisma.videoAsset.update.mockResolvedValue({ id: 'asset-id', videoId: 'video-id', processingState: 'READY' });
-
-      const result = await handleCloudflareStreamWebhook({
-        uid: 'cf-uid-123',
-        status: { state: 'ready' }
-      }, mockCtx);
-
-      expect(result.ok).toBe(true);
-      expect(activateFirstReadyAssetIfNoneActive).toHaveBeenCalledWith(
-        { videoId: 'video-id', assetId: 'asset-id', reason: 'cloudflare-sync-ready' },
-        mockCtx,
-      );
-    });
-
-    it('publishes video with pending publish intent when Cloudflare webhook reaches READY', async () => {
-      mockPrisma.videoAsset.findFirst.mockResolvedValue({
-        id: 'asset-id', videoId: 'video-id', provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
-        processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING
-      });
-      mockPrisma.videoAsset.update.mockResolvedValue({ id: 'asset-id', videoId: 'video-id', processingState: 'READY' });
-      mockPrisma.video.findUnique.mockResolvedValue({ id: 'video-id', status: 'DRAFT', publishAfterAssetReady: true, publishAfterAssetReadyCompletedAt: null });
-      mockPrisma.video.findFirst.mockResolvedValue({
-        id: 'video-id', title: 'Ready', slug: 'ready', tier: AccessTier.PUBLIC, status: 'DRAFT',
-        publishAfterAssetReady: true, asset: { isPrimary: true, provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.READY, providerAssetId: 'cf-uid-123' },
-        activePlaybackRoute: { asset: { provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.READY, providerAssetId: 'cf-uid-123' } }
-      });
-      mockPrisma.video.update.mockResolvedValue({ id: 'video-id', status: 'PUBLISHED' });
-
-      const result = await handleCloudflareStreamWebhook({ uid: 'cf-uid-123', status: { state: 'ready' } }, mockCtx);
-
-      expect(result.ok).toBe(true);
-      expect(mockPrisma.video.update).toHaveBeenCalledWith(expect.objectContaining({
-        where: { id: 'video-id' },
-        data: expect.objectContaining({ status: 'PUBLISHED', publishAfterAssetReady: false })
-      }));
-    });
-
-    it('webhook READY is idempotent for repeated calls', async () => {
-      mockPrisma.videoAsset.findFirst.mockResolvedValue({ id: 'asset-id', videoId: 'video-id', processingState: VIDEO_ASSET_PROCESSING_STATE.READY });
-      mockPrisma.video.findUnique.mockResolvedValue({ id: 'video-id', status: 'PUBLISHED', publishAfterAssetReady: false, publishAfterAssetReadyCompletedAt: new Date() });
-
-      const result = await handleCloudflareStreamWebhook({ uid: 'cf-uid-123', status: { state: 'ready' } }, mockCtx);
-
-      expect(result.ok).toBe(true);
-      expect(mockPrisma.videoAsset.update).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('existing Cloudflare asset pending publish', () => {
-    it('non-READY existing asset leaves pending publish and later READY sync publishes', async () => {
-      mockPrisma.video.findFirst.mockResolvedValueOnce({
-        id: 'video-id', status: 'DRAFT', creatorId: 'main-channel-id', asset: null, publishAfterAssetReady: false, publishAfterAssetReadyRequestedAt: null
-      }).mockResolvedValueOnce({ id: 'video-id', status: 'DRAFT', creatorId: 'main-channel-id', asset: { id: 'asset-id' }, publishAfterAssetReady: true });
-      mockPrisma.videoAsset.findUnique.mockResolvedValue(null);
-      mockPrisma.videoAsset.create.mockResolvedValue({ id: 'asset-id' });
-      mockPrisma.video.findUnique.mockResolvedValueOnce({ id: 'video-id', asset: { provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, providerAssetId: 'cf-uid-123' } });
-
-      const attachResult = await attachCloudflareAsset({ videoId: 'video-id', providerAssetId: 'cf-uid-123', publishAfterAssetReady: true }, mockCtx);
-
-      expect(attachResult.ok).toBe(true);
-      expect(mockPrisma.video.update).toHaveBeenCalledWith(expect.objectContaining({
-        where: { id: 'video-id' },
-        data: expect.objectContaining({ publishAfterAssetReady: true })
-      }));
-
-      mockPrisma.videoAsset.findFirst.mockResolvedValue({ id: 'asset-id', videoId: 'video-id', processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING });
-      mockPrisma.videoAsset.update.mockResolvedValue({ id: 'asset-id', videoId: 'video-id', processingState: VIDEO_ASSET_PROCESSING_STATE.READY });
-      mockPrisma.video.findUnique.mockResolvedValue({ id: 'video-id', status: 'DRAFT', publishAfterAssetReady: true, publishAfterAssetReadyCompletedAt: null });
-      mockPrisma.video.findFirst.mockResolvedValue({
-        id: 'video-id', title: 'Ready', slug: 'ready', tier: AccessTier.PUBLIC, status: 'DRAFT', publishAfterAssetReady: true,
-        asset: { isPrimary: true, provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.READY, providerAssetId: 'cf-uid-123' },
-        activePlaybackRoute: { asset: { provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.READY, providerAssetId: 'cf-uid-123' } }
-      });
-      mockPrisma.video.update.mockClear();
-      mockPrisma.video.update.mockResolvedValue({ id: 'video-id', status: 'PUBLISHED' });
-
-      const syncResult = await syncCloudflareStatus('video-id', mockCtx);
-
-      expect(syncResult.ok).toBe(true);
-      expect(mockPrisma.video.update).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({ status: 'PUBLISHED' })
-      }));
+      const data = mockPrisma.video.create.mock.calls[0][0].data;
+      expect(JSON.stringify(data)).not.toContain('youtube');
     });
   });
 
   describe('publishAdminVideo', () => {
-    it('should publish if primary asset is READY', async () => {
+    it('should publish if the own-HLS route asset is READY', async () => {
       mockPrisma.video.findFirst.mockResolvedValue({
         id: 'video-id',
         title: 'Ready Video',
         slug: 'ready-video',
         tier: AccessTier.PUBLIC,
-        asset: {
-          isPrimary: true,
-          provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
-          processingState: VIDEO_ASSET_PROCESSING_STATE.READY,
-          providerAssetId: 'uid'
-        },
-        activePlaybackRoute: { asset: { provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.READY, providerAssetId: 'uid' } }
+        asset: ownHlsAsset('READY'),
+        activePlaybackRoute: { asset: ownHlsAsset('READY') }
       });
       mockPrisma.video.update.mockResolvedValue({ id: 'video-id', status: 'PUBLISHED' });
 
@@ -284,8 +115,8 @@ describe('Video Upload Flow', () => {
 
       expect(result.ok).toBe(true);
       expect(mockPrisma.video.update).toHaveBeenCalledWith(expect.objectContaining({
-          where: { id: 'video-id' },
-          data: expect.objectContaining({ status: 'PUBLISHED' })
+        where: { id: 'video-id' },
+        data: expect.objectContaining({ status: 'PUBLISHED' })
       }));
     });
 
@@ -293,8 +124,8 @@ describe('Video Upload Flow', () => {
       const firstPublishedAt = new Date('2026-06-01T10:00:00.000Z');
       mockPrisma.video.findFirst.mockResolvedValue({
         id: 'video-id', title: 'Republish', slug: 'republish', tier: AccessTier.PUBLIC, status: VideoStatus.DRAFT, publishedAt: firstPublishedAt,
-        asset: { isPrimary: true, provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.READY, providerAssetId: 'uid' },
-        activePlaybackRoute: { asset: { provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.READY, providerAssetId: 'uid' } }
+        asset: ownHlsAsset('READY'),
+        activePlaybackRoute: { asset: ownHlsAsset('READY') }
       });
       mockPrisma.video.update.mockResolvedValue({ id: 'video-id', status: 'PUBLISHED', publishedAt: firstPublishedAt });
 
@@ -306,34 +137,42 @@ describe('Video Upload Flow', () => {
       }));
     });
 
-    it('should fail if asset is not READY', async () => {
-        mockPrisma.video.findFirst.mockResolvedValue({
-          id: 'video-id',
-          title: 'Not Ready',
-          slug: 'not-ready',
-          tier: AccessTier.PUBLIC,
-          asset: {
-            isPrimary: true,
-            provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM,
-            processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING,
-            providerAssetId: 'uid'
-          },
-          activePlaybackRoute: { asset: { provider: VIDEO_PROVIDER.CLOUDFLARE_STREAM, processingState: VIDEO_ASSET_PROCESSING_STATE.PROCESSING, providerAssetId: 'uid' } }
-        });
-
-        const result = await publishAdminVideo('video-id', mockCtx);
-
-        expect(result.ok).toBe(false);
-        if (!result.ok) {
-            expect(result.error.code).toBe('VIDEO_PUBLICATION_ASSET_NOT_READY');
-        }
+    it('should fail while the asset is still encoding', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue({
+        id: 'video-id',
+        title: 'Not Ready',
+        slug: 'not-ready',
+        tier: AccessTier.PUBLIC,
+        asset: ownHlsAsset('PROCESSING'),
+        activePlaybackRoute: { asset: ownHlsAsset('PROCESSING') }
       });
 
-    it('should fail if primary asset is not Cloudflare READY', async () => {
+      const result = await publishAdminVideo('video-id', mockCtx);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.code).toBe('VIDEO_PUBLICATION_ASSET_NOT_READY');
+      expect(mockPrisma.video.update).not.toHaveBeenCalled();
+    });
+
+    it('should fail without an active route', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue({
+        id: 'video-id', title: 'No route', slug: 'no-route', tier: AccessTier.PUBLIC,
+        asset: ownHlsAsset('READY'),
+        activePlaybackRoute: null
+      });
+
+      const result = await publishAdminVideo('video-id', mockCtx);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.code).toBe('VIDEO_PUBLICATION_MISSING_ACTIVE_ROUTE');
+    });
+
+    it.each(['CLOUDFLARE_STREAM', 'MUX', 'YOUTUBE', 'VIMEO', 'S3'])('should fail when the active route still points at a legacy %s asset', async (provider) => {
+      const legacy = { isPrimary: true, provider, processingState: 'READY', providerAssetId: 'uid', externalVideoId: 'yt', objectKey: 'k' };
       mockPrisma.video.findFirst.mockResolvedValue({
         id: 'video-id', title: 'Bad Provider', slug: 'bad-provider', tier: AccessTier.PUBLIC,
-        asset: { isPrimary: true, provider: VIDEO_PROVIDER.S3, processingState: VIDEO_ASSET_PROCESSING_STATE.READY, providerAssetId: 'uid' },
-        activePlaybackRoute: { asset: { provider: VIDEO_PROVIDER.S3, processingState: VIDEO_ASSET_PROCESSING_STATE.READY, providerAssetId: 'uid' } }
+        asset: legacy,
+        activePlaybackRoute: { asset: legacy }
       });
 
       const result = await publishAdminVideo('video-id', mockCtx);

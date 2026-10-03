@@ -2,22 +2,10 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth/server';
 import { rateLimit } from '@/lib/rate-limit';
-import { GET as getMedia } from '@/app/api/media/[...path]/route';
 import { POST as createCheckoutIntent } from '@/app/api/checkout/create-intent/route';
-import { getGatedMedia } from '@/lib/modules/media';
-import { fail } from '@/lib/modules/shared/result';
-import { MediaSourceNotFoundError } from '@/lib/modules/media/domain/media.errors';
 
 vi.mock('@/lib/auth/server', () => ({
   auth: vi.fn(),
-}));
-
-vi.mock('@/lib/modules/media', () => ({
-    getGatedMedia: vi.fn(),
-}));
-
-vi.mock('@/lib/blob', () => ({
-  getGatedBlobResponse: vi.fn(),
 }));
 
 vi.mock('@/lib/feature-flags', () => ({
@@ -40,17 +28,6 @@ describe('API route smoke checks', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(rateLimit).mockResolvedValue({ success: true, remaining: 239 });
-  });
-
-  it('/api/media returns a non-500 response when Redis-backed rate limiting allows the request', async () => {
-    vi.mocked(auth).mockResolvedValue({ userId: null } as Awaited<ReturnType<typeof auth>>);
-    vi.mocked(getGatedMedia).mockResolvedValue(fail(new MediaSourceNotFoundError('missing-video')));
-
-    const req = new NextRequest('http://localhost/api/media/missing-video');
-    const res = await getMedia(req, { params: Promise.resolve({ path: ['missing-video'] }) });
-
-    expect(res.status).toBe(404);
-    expect(res.status).not.toBe(500);
   });
 
   it('/api/checkout/create-intent returns a non-500 response for unauthenticated requests before Stripe work starts', async () => {

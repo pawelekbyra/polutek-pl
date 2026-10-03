@@ -40,17 +40,12 @@ export async function attemptPublishAfterAssetReady(videoId: string, ctx: AppCon
   });
   if (!current?.publishAfterAssetReady || current.publishAfterAssetReadyCompletedAt || current.status === "PUBLISHED") return;
 
-  // Publication is gated on readiness, not on which provider's webhook fired. A video is
-  // publishable as soon as it has a READY primary (playable) asset, regardless of the
-  // preferred provider. This keeps publication resilient to a broken/lost webhook on a
-  // *different* provider (e.g. Cloudflare succeeded while Mux never delivered): the
-  // triggerProvider is now informational only and never blocks publication.
-  //
-  // Auto-publish and manual publish (publish-admin-video.use-case.ts) must never diverge on
-  // what counts as "ready to publish" — both go through VideoPolicy.getPublicationBlockers
-  // against the exact same video shape here. If the only outstanding blockers are about the
-  // asset not being playable yet, keep waiting quietly for the next webhook/sync instead of
-  // recording an error; any other (structural) blocker is treated as a real failure below.
+  // Publication is gated on readiness (the encode worker calls this once the own-HLS asset is
+  // READY and routed). Auto-publish and manual publish (publish-admin-video.use-case.ts) must never
+  // diverge on what counts as "ready to publish": both go through VideoPolicy.getPublicationBlockers
+  // against the exact same video shape here. If the only outstanding blockers are about the asset
+  // not being playable yet, keep waiting quietly instead of recording an error; any other
+  // (structural) blocker is treated as a real failure below. triggerProvider is informational only.
   const mainChannel = await MainChannelService.getRequired(ctx);
   const repository = new VideoRepository(ctx.prisma);
   const video = await repository.findByIdForMainChannel(videoId, mainChannel.id);

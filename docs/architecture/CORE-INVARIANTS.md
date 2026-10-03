@@ -78,8 +78,7 @@ Clerk metadata is a **READ MODEL / CACHE ONLY**. A derived `isPatron` value comp
   - Redact `playbackUrl` and `playbackToken` from the API response.
 
 ### 3.2. Provider Hierarchy
-- **Cloudflare Stream:** Primary provider for private playback.
-- **Legacy Storage:** Vercel Blob, S3, and R2 are legacy/migration paths. They must not be automatically assumed to be active production providers or categorically labeled as insecure without bounded context and evidence.
+- **Own HLS (`SELF_HLS`):** the only video source since 2026-10-02 (CLAUDE.md 4.17). Mux, Cloudflare Stream, YouTube, Vimeo and external/Blob/R2 raw video URLs were removed from the code; their enum values and old rows are legacy and ignored.
 
 ## 4. Email and Consent Hardening
 

@@ -2,11 +2,9 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { VideoNotFoundError } from "../domain/video.errors";
-import { VideoStatus, AccessTier } from "@prisma/client";
+import { VideoStatus } from "@prisma/client";
 import { VIDEO_PROVIDER } from "../domain/video-asset.constants";
-import { isAllowedVideoSourceUrl, isAllowedThumbnailUrl } from "@/lib/blob";
-import { MediaPolicy } from "@/lib/modules/media";
-import { hasReadyProviderBackedPlaybackAsset, isLegacyPrivatePlaybackFallbackAllowed } from "@/lib/modules/playback";
+import { isAllowedThumbnailUrl } from "@/lib/blob";
 import { VideoPolicy } from "../domain/video.policy";
 
 export type DiagnosticIssue = {
@@ -40,62 +38,24 @@ export async function getAdminVideoDiagnostics(
 
   // 2. Publication Status vs Data
   if (video.status === VideoStatus.PUBLISHED) {
-      if (!video.videoUrl) issues.push({ severity: "ERROR", message: "Film jest opublikowany, ale nie ma linku do wideo.", field: "videoUrl" });
       if (!video.thumbnailUrl) issues.push({ severity: "ERROR", message: "Film jest opublikowany, ale nie ma miniatury.", field: "thumbnailUrl" });
   }
 
   // 3. URLs & Security
-  if (video.videoUrl && !isAllowedVideoSourceUrl(video.videoUrl)) {
-      issues.push({ severity: "ERROR", message: "Link do wideo pochodzi z niezaufanego hosta.", field: "videoUrl" });
-  }
   if (video.thumbnailUrl && !isAllowedThumbnailUrl(video.thumbnailUrl)) {
       issues.push({ severity: "WARNING", message: "Miniatura pochodzi z niezaufanego hosta.", field: "thumbnailUrl" });
   }
 
-  // 4. Migration & Storage
+  // 4. Source: own HLS is the only supported video source (CLAUDE.md 4.17).
   const asset = video.asset;
-  const isCloudflare = asset?.provider === VIDEO_PROVIDER.CLOUDFLARE_STREAM;
-  const isYouTube = asset?.provider === VIDEO_PROVIDER.YOUTUBE;
-
-  if (isCloudflare) {
-    if (asset.processingState === 'READY') {
-      // No warning needed for READY state.
-    } else if (asset.processingState === 'FAILED') {
-      issues.push({ severity: "ERROR", message: "Przetwarzanie Cloudflare Stream nie powiodło się. Sprawdź błąd w zakładce Media.", field: "asset" });
-    } else {
-      const isStale = asset.updatedAt && (new Date().getTime() - new Date(asset.updatedAt).getTime() > 60 * 60 * 1000);
-      issues.push({
-        severity: isStale ? "ERROR" : "WARNING",
-        message: `Zasób Cloudflare jest w stanie: ${asset.processingState}.${isStale ? " Przetwarzanie trwa zbyt długo - użyj 'Synchronizuj status' w zakładce Media." : ""}`,
-        field: "asset"
-      });
-    }
-  } else if (isYouTube) {
-    if (video.tier === AccessTier.PATRON) {
-      issues.push({ severity: "ERROR", message: "YouTube nie może być źródłem primary dla filmów PATRON. Ustaw Cloudflare Stream jako primary.", field: "asset" });
-    }
-    // YouTube READY is the only valid processing state for this provider.
-    if (asset.processingState !== 'READY') {
-      issues.push({ severity: "WARNING", message: `Zasób YouTube jest w stanie: ${asset.processingState}. Oczekiwano READY.`, field: "asset" });
-    }
-  } else if (asset) {
-    // R2, S3, VERCEL_BLOB
-    issues.push({ severity: "WARNING", message: `Wykryto starego dostawcę zasobów (legacy): ${asset.provider}. Wymagana migracja do Cloudflare Stream. Skorzystaj z opcji Importu w zakładce Media.`, field: "asset" });
-  } else if (video.videoUrl) {
-    issues.push({ severity: "WARNING", message: "Wykryto stary link videoUrl (legacy) bez zasobu Cloudflare. Użyj 'Importuj legacy URL' w zakładce Media.", field: "videoUrl" });
-  } else {
-    issues.push({ severity: "ERROR", message: "Brak źródła wideo (brak assetu i brak starego linku legacy).", field: "videoUrl" });
-  }
-
-  // Security Check for Private Legacy URLs
-  if (video.tier === AccessTier.PATRON && !hasReadyProviderBackedPlaybackAsset(asset)) {
-    if (!isLegacyPrivatePlaybackFallbackAllowed()) {
-      issues.push({ severity: "ERROR", message: "Film dla patronów nie ma gotowego zasobu Cloudflare Stream/Mux; obsługa starych linków (legacy playback fallback) jest wyłączona i film będzie nieodtwarzalny do czasu migracji.", field: asset ? "asset" : "videoUrl" });
-    }
-
-    if (!isCloudflare && video.videoUrl && MediaPolicy.isProbablyRawMediaUrl(video.videoUrl)) {
-      issues.push({ severity: "ERROR", message: "Film dla patronów korzysta z bezpośredniego, potencjalnie niezabezpieczonego starego linku (legacy).", field: "videoUrl" });
-    }
+  if (!asset) {
+    issues.push({ severity: "ERROR", message: "Brak wideo: wgraj plik w zakładce Media, a kodowanie utworzy źródło własnego HLS.", field: "asset" });
+  } else if (asset.provider !== VIDEO_PROVIDER.SELF_HLS) {
+    issues.push({ severity: "ERROR", message: `Wykryto stare źródło (${asset.provider}), które nie jest już obsługiwane. Wgraj plik ponownie w zakładce Media.`, field: "asset" });
+  } else if (asset.processingState === 'FAILED') {
+    issues.push({ severity: "ERROR", message: "Kodowanie nie powiodło się. Sprawdź błąd w zakładce Media.", field: "asset" });
+  } else if (asset.processingState !== 'READY') {
+    issues.push({ severity: "WARNING", message: `Materiał jest w stanie: ${asset.processingState}.`, field: "asset" });
   }
 
   // 5. Layout & Logic
@@ -106,7 +66,7 @@ export async function getAdminVideoDiagnostics(
       issues.push({ severity: "ERROR", code: "VIDEO_PUBLISH_AFTER_READY_ERROR", message: `Automatyczna publikacja po READY nie powiodła się: ${video.publishAfterAssetReadyError}`, field: "publishAfterAssetReady" });
   }
   if (asset?.processingState === 'FAILED') {
-      issues.push({ severity: "ERROR", code: "VIDEO_PROVIDER_SYNC_FAILED", message: "Synchronizacja dostawcy zgłasza błąd (FAILED) dla zasobu. Użyj synchronizacji Cloudflare albo sprawdź diagnostykę mediów.", field: "asset" });
+      issues.push({ severity: "ERROR", code: "VIDEO_PROVIDER_SYNC_FAILED", message: "Kodowanie zgłasza błąd (FAILED) dla zasobu. Sprawdź zakładkę Media.", field: "asset" });
   }
   if (video.isMainFeatured) {
       for (const blocker of VideoPolicy.getHeroBlockers(video)) {

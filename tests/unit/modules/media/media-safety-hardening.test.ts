@@ -24,20 +24,20 @@ describe('Media Safety Hardening', () => {
       expect(MediaPolicy.isProbablyRawMediaUrl('https://untrusted-cdn.com/playlist.m3u8')).toBe(true);
     });
 
-    it('allows Cloudflare Stream manifests for custom HLS/DASH playback', () => {
-      expect(MediaPolicy.isCloudflareStreamManifestUrl('https://videodelivery.net/signed-token/manifest/video.m3u8')).toBe(true);
-      expect(MediaPolicy.isCloudflareStreamManifestUrl('https://customer.cloudflarestream.com/signed-token/manifest/video.mpd')).toBe(true);
-      expect(MediaPolicy.isProbablyRawMediaUrl('https://videodelivery.net/signed-token/manifest/video.m3u8')).toBe(false);
-      expect(MediaPolicy.isProbablyRawMediaUrl('https://customer.cloudflarestream.com/signed-token/manifest/video.mpd')).toBe(false);
-    });
-
-    it('does not treat non-manifest Cloudflare media URLs as safe manifests', () => {
-      expect(MediaPolicy.isCloudflareStreamManifestUrl('https://videodelivery.net/signed-token/downloads/default.mp4')).toBe(false);
+    it('treats former provider delivery URLs (Cloudflare Stream, Mux) as raw: they must never reach the browser', () => {
+      expect(MediaPolicy.isProbablyRawMediaUrl('https://videodelivery.net/signed-token/manifest/video.m3u8')).toBe(true);
+      expect(MediaPolicy.isProbablyRawMediaUrl('https://customer.cloudflarestream.com/signed-token/manifest/video.mpd')).toBe(true);
+      expect(MediaPolicy.isProbablyRawMediaUrl('https://stream.mux.com/playback-id.m3u8?token=abc')).toBe(true);
       expect(MediaPolicy.isProbablyRawMediaUrl('https://videodelivery.net/signed-token/downloads/default.mp4')).toBe(true);
     });
 
+    it('allows only our own signed HLS delivery URL on the configured delivery host', () => {
+      expect(MediaPolicy.isProbablyRawMediaUrl('https://video.pawelperfect.com/h/1790000000.sig/video-id-0001/v1/master.m3u8')).toBe(false);
+      expect(MediaPolicy.isProbablyRawMediaUrl('https://video.pawelperfect.com/clip.mp4')).toBe(true);
+      expect(MediaPolicy.isProbablyRawMediaUrl('https://evil.example/h/1790000000.sig/video-id-0001/v1/master.m3u8')).toBe(true);
+    });
+
     it('allows gated API routes', () => {
-      expect(MediaPolicy.isProbablyRawMediaUrl('/api/media/video-123')).toBe(false);
       expect(MediaPolicy.isProbablyRawMediaUrl('/api/media-source/video-123')).toBe(false);
     });
 
@@ -46,11 +46,6 @@ describe('Media Safety Hardening', () => {
       expect(MediaPolicy.isProbablyRawMediaUrl('https://other-host.com/video.m3u8')).toBe(true);
     });
 
-    it('should allow YouTube and Vimeo as safe hosts (handled elsewhere)', () => {
-        // isProbablyRawMediaUrl is a heuristic, specific hosts are allowed in isAllowedVideoSourceUrl
-        // But isProbablyRawMediaUrl should generally return true for external .mp4 etc.
-        expect(MediaPolicy.isProbablyRawMediaUrl('https://www.youtube.com/watch?v=123')).toBe(false);
-    });
   });
 
   describe('assertPublicVideoDtoSafe', () => {
@@ -74,11 +69,15 @@ describe('Media Safety Hardening', () => {
       })).not.toThrow();
     });
 
-    it('allows Cloudflare Stream manifests as provider playback descriptors', () => {
+    it('allows our own signed HLS URL as the playback descriptor, rejects former provider manifests', () => {
+      expect(() => MediaPolicy.assertPublicMediaDescriptorSafe({
+        videoId: 'v1',
+        playbackUrl: 'https://video.pawelperfect.com/h/1790000000.sig/video-id-0001/v1/master.m3u8'
+      })).not.toThrow();
       expect(() => MediaPolicy.assertPublicMediaDescriptorSafe({
         videoId: 'v1',
         playbackUrl: 'https://videodelivery.net/signed-token/manifest/video.m3u8'
-      })).not.toThrow();
+      })).toThrow();
     });
 
     it('rejects descriptor with forbidden fields', () => {
@@ -100,23 +99,6 @@ describe('Media Safety Hardening', () => {
         videoId: 'v1',
         playbackUrl: 'https://s3.amazonaws.com/v1.mp4'
       })).toThrow(RawVideoUrlExposedError);
-    });
-  });
-
-  describe('redactInternalMediaSource', () => {
-    it('transforms internal source to safe public descriptor', () => {
-      const internal = {
-        videoId: 'v1',
-        sourceUrl: 'https://s3.amazonaws.com/v1.mp4',
-        provider: 's3' as const
-      };
-      const publicDto = MediaPolicy.redactInternalMediaSource(internal);
-
-      expect(publicDto).toEqual({
-        videoId: 'v1',
-        playbackUrl: '/api/media/v1'
-      });
-      expect((publicDto as any).sourceUrl).toBeUndefined();
     });
   });
 

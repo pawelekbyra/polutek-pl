@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { StorageProvider, VideoProviderJobStatus } from '@prisma/client';
 
 const { recordAuditEvent, recordAuditEventSafe, prismaMock } = vi.hoisted(() => {
   const prismaMock: any = {
@@ -32,9 +31,6 @@ import {
 } from '@/lib/modules/notifications/application/notification-templates.use-case';
 import { resyncSubscribers } from '@/lib/modules/channel/application/resync-subscribers.use-case';
 import { ChannelRepository } from '@/lib/modules/channel/infrastructure/channel.repository';
-import { VideoProviderJobService } from '@/lib/modules/video/application/video-provider-job.service';
-import { VideoProviderReconcilerService } from '@/lib/modules/video/application/video-provider-reconciler.service';
-import { PlaybackProviderRegistry } from '@/lib/modules/video/infrastructure/playback-provider-registry';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 
 beforeEach(() => {
@@ -101,49 +97,5 @@ describe('resyncSubscribers audit', () => {
       expect.anything(),
       expect.objectContaining({ action: 'SUBSCRIBERS_RESYNCED', metadata: { creatorCount: 1, subscribersCounts: [7] } }),
     );
-  });
-});
-
-describe('video provider audit', () => {
-  it('audits an admin job retry with the job and provider ids only', async () => {
-    const job = { id: 'job-1', videoId: 'v1', targetId: null, provider: StorageProvider.MUX, status: VideoProviderJobStatus.FAILED, attemptCount: 1, maxAttempts: 3 };
-    const ctx = {
-      actor: { type: 'admin', userId: 'a1' },
-      prisma: {
-        videoProviderJob: { findUnique: vi.fn(async () => job), update: vi.fn(async () => job) },
-        videoDistributionTarget: { update: vi.fn() },
-      },
-    } as any;
-    const service = new VideoProviderJobService(new PlaybackProviderRegistry([]), {} as any, { reconcileVideoDistribution: vi.fn() } as any);
-    vi.spyOn(service, 'startQueuedJob').mockResolvedValue(undefined);
-
-    await service.retryJob({ jobId: 'job-1', requestedByAdminId: 'a1', force: true }, ctx);
-
-    expect(recordAuditEventSafe).toHaveBeenCalledWith(ctx, expect.objectContaining({
-      action: 'VIDEO_PROVIDER_JOB_RETRIED',
-      targetId: 'v1',
-      metadata: expect.objectContaining({ jobId: 'job-1', provider: 'MUX', forced: true, requestedByAdminId: 'a1' }),
-    }));
-  });
-
-  it('audits a reconcile run only when it scanned jobs and was not a dry run', async () => {
-    const make = (jobs: any[]) => ({
-      prisma: {
-        videoProviderJob: { findMany: vi.fn(async () => jobs), update: vi.fn() },
-        videoAsset: { update: vi.fn() },
-        videoDistributionTarget: { update: vi.fn() },
-      },
-    } as any);
-    const service = new VideoProviderReconcilerService(new PlaybackProviderRegistry([]), { reconcileVideoDistribution: vi.fn() } as any, {} as any);
-
-    await service.reconcilePendingProviderJobs({}, make([]));
-    expect(recordAuditEventSafe).not.toHaveBeenCalled();
-
-    await service.reconcilePendingProviderJobs({ videoId: 'v1' }, make([{ id: 'j', videoId: 'v1', planId: null, provider: StorageProvider.MUX, status: 'WAITING_PROVIDER', providerAssetId: 'a', providerUploadId: null, updatedAt: new Date(), attemptCount: 0, maxAttempts: 3 }]));
-    expect(recordAuditEventSafe).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
-      action: 'VIDEO_RECONCILE_TRIGGERED',
-      targetId: 'v1',
-      metadata: expect.objectContaining({ scannedJobs: 1 }),
-    }));
   });
 });
