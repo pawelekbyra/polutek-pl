@@ -49,4 +49,4 @@ Chrome (headless) + hls.js 1.6, ta sama maszyna i łącze (Warszawa, Cloudflare 
 4. **Ochrona:** czy wystarczy "token, nie DRM"? Dla treści płatnych/ekskluzywnych potrzebny packager z DRM i licencje (koszt, nie robić bez decyzji).
 5. **Napisy i wiele ścieżek audio:** nie obsłużone w HLS (napisy dziś z `subtitleUrlPl/En` poza HLS); trick play (I-frame) i podgląd na pasku (sprite) niezrobione.
 6. **Skalowanie:** limity Free Workera są dobowe i twarde; po przekroczeniu film nie gra (zapasu u dostawcy już nie ma): przy premierze rozważyć Workers Paid (5 USD/mies.).
-7. ~~Webhook Mux / Cloudflare Stream~~: usunięte razem z kodem dostawców; sprzątanie po ich stronie: `docs/operations/SERWEREK.md` §20.
+7. ~~Webhook Mux / Cloudflare Stream~~: usunięte razem z kodem dostawców; sprzątanie po ich stronie: `docs/operations/SERWEREK.md` §21.

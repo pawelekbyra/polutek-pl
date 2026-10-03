@@ -127,7 +127,7 @@ function unavailablePlan(args: {
 /**
  * The asset that plays: the active route's asset when it is READY own HLS, else the
  * primary/newest own-HLS asset. Rows of any other provider (legacy Mux/Stream/YouTube/
- * Vimeo/storage rows that may still sit in the DB until the cleanup SQL runs) are ignored.
+ * Vimeo/storage rows that still sit in the DB as inactive legacy rows) are ignored.
  */
 function pickSelfHlsAsset(video: VideoWithAssets | null): VideoAsset | null {
   const routeAsset = video?.activePlaybackRoute?.asset;

@@ -37,7 +37,7 @@ describe('SELF_HLS playback plan', () => {
   };
 
   const selfAsset = asset({ id: 'self', isPrimary: true });
-  // Legacy rows that may still sit in the DB until the cleanup SQL runs: they must be ignored.
+  // Legacy provider rows that still sit in the DB (inactive): they must be ignored.
   const legacyAssets = ['CLOUDFLARE_STREAM', 'MUX', 'YOUTUBE', 'VIMEO', 'VERCEL_BLOB', 'R2'].map((provider, i) =>
     asset({ id: `legacy-${i}`, provider, objectKey: 'legacy-key', providerAssetId: 'legacy-id', externalVideoId: 'legacy-yt', updatedAt: new Date(Date.now() + 1000 + i) }),
   );

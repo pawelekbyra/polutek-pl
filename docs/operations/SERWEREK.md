@@ -304,7 +304,7 @@ Wszystkie limity i adres w audycie biorą IP z jednego helpera `lib/api/client-i
 
 **Do zrobienia po przełączeniu (otwarte):**
 1. **(Nieaktualne od 2026-10-02: Clerk usunięty, patrz §17.)** `CLERK_WEBHOOK_SECRET` w `app.env` to **atrapa** (`pending-clerk-webhook-secret`): panel webhooków Clerk ładuje się w osadzonej ramce, której agent nie odczytał. Wpisz prawdziwy sekret z panelu Clerk (Configure > Webhooks > endpoint `https://www.pawelperfect.com/api/webhooks/clerk`), potem `docker compose up -d --no-deps app`. Do tego czasu użytkownicy tworzą się leniwie przy logowaniu (działa), ale zmiany z Clerk nie synchronizują się.
-2. **(Nieaktualne od 2026-10-02: Mux usunięty z kodu, patrz §20.)** Webhook Mux.
+2. **(Nieaktualne od 2026-10-02: Mux usunięty z kodu, patrz §21.)** Webhook Mux.
 3. Stripe i Resend wskazują już na `www.pawelperfect.com` (bez zmian); `STRIPE_WEBHOOK_SECRET` i `RESEND_WEBHOOK_SECRET` przeniesione.
 4. Przetestować w przeglądarce: logowanie Google/e-mail, odtwarzanie filmu z własnego HLS, napiwek w trybie testowym.
 5. Redis (`srh`) i `polutek-db-1` nie są jeszcze w `health.sh` jako osobne kontrole.
@@ -327,21 +327,7 @@ Clerk jest usunięty z kodu. Logowanie działa w samej aplikacji na lokalnym Pos
 
 ## 18. Własny HLS (od 2026-10-02 jedyne źródło wideo)
 
-Wideo z własnego HLS: kodowanie na serwerku (`/opt/serwerek/data/hls-work`, `node encode-hls.mjs`, `nice -n 10`), bucket R2 `polutek-hls`, Worker `polutek-hls-edge` na `video.pawelperfect.com` (Cloudflare Free), provider `SELF_HLS` w aplikacji (bez fallbacku: dostawcy zewnętrzni są wycięci, §20). **Pełny opis, polecenia deployu: `docs/operations/HLS-SELF-HOSTED.md`; decyzja i koszty: `docs/architecture/self-hosted-hls.md`.** W `app.env` doszły `HLS_TOKEN_SECRET` i `HLS_DELIVERY_BASE_URL` (kopia `app.env.bak-hls-20261002`; aplikacja niezrestartowana, wchodzą przy następnym `deploy.sh`). Wiersze `SELF_HLS` w bazie tworzymy dopiero po deployu (starszy kod nie zna nowej wartości enum).
-
-## 20. Sprzątanie po dostawcach wideo (decyzja 2026-10-02: Mux, Cloudflare Stream, YouTube, Vimeo usunięte)
-
-Kod nie zależy już od żadnego z nich (PR "remove third-party video providers"). Kolejność po wdrożeniu: (1) `deploy.sh <tag>`, (2) `scripts/hls/delete-legacy-provider-rows.sql` na bazie serwerka (na sucho i naprawdę, polecenia w `docs/operations/HLS-SELF-HOSTED.md`, "Po usunięciu dostawców"), (3) lista poniżej. Nic z tej listy nie jest wykonywane przez kod ani przez deploy; robi to właściciel albo główna sesja (stały dostęp do usług, ale kasowanie nieodwracalne: sprawdź, że 3 filmy grają z własnego HLS, zanim cokolwiek usuniesz).
-
-1. **app.env na serwerku:** usunąć `MUX_TOKEN_ID`, `MUX_TOKEN_SECRET`, `MUX_WEBHOOK_SECRET`, `MUX_SIGNING_KEY_ID`, `MUX_SIGNING_PRIVATE_KEY`, `CLOUDFLARE_WEBHOOK_SECRET`, `CLOUDFLARE_ACCOUNT_ID`/`CLOUDFLARE_API_TOKEN` (aplikacja ich nie czyta: R2 używa `CLOUDFLARE_R2_*`), `VIDEO_PROVIDER_COST_ORDER` (jeśli jest); restart `docker compose up -d --no-deps app`. W `secrets.env` agentów (`%USERPROFILE%\.ai-secrets`) zostaje `CLOUDFLARE_API_TOKEN` (DNS, Worker, R2 przez wrangler), znikają klucze Mux.
-2. **Mux (panel/API):** usunąć webhook (endpoint `/api/webhooks/mux`), wszystkie assety i direct uploady, potem token API i klucz podpisujący; zamknąć konto, jeśli niepotrzebne.
-3. **Cloudflare Stream:** usunąć webhook Stream (adres `/api/webhooks/cloudflare-stream`), skasować wszystkie filmy z Stream (`jj`, `dla-patronow`, `czesc` mają kopie w R2/HLS; zapisz wcześniej `uid`-y z kopii bazy `/opt/serwerek/backups/pre-hls-jj-patronow-20261002T111908.sql.gz`, gdyby były potrzebne), usunąć klucz podpisu Stream (signing key). Po tym wyłączyć subskrypcję Stream, jeśli była płatna.
-4. **Tokeny Cloudflare:** token z uprawnieniem Stream (Edit) nie jest już potrzebny: zawęzić go lub zastąpić tokenem tylko R2/DNS/Workers. Token R2 (S3) zostaje.
-5. **Vercel:** zmienne `MUX_*`, `CLOUDFLARE_WEBHOOK_SECRET`, `CLOUDFLARE_STREAM_*` w projekcie (Production i Preview) są zbędne; projekt Vercel i tak nie serwuje już produkcji (§16).
-6. **Timer systemd:** `systemctl disable --now polutek-cron-video-provider-jobs.timer && rm /etc/systemd/system/polutek-cron-video-provider-jobs.timer && systemctl daemon-reload` (trasa `/api/cron/video-provider-jobs/reconcile` nie istnieje; timer zwracałby 404). Plik timera usunięto też z `deploy/serwerek/systemd/`.
-7. **YouTube/Vimeo:** nic do sprzątania po stronie dostawców (były tylko osadzeniami); jeśli któryś film miał takie źródło, jego wiersze usuwa `delete-legacy-provider-rows.sql`.
-8. **R2:** bucket `polutek` (oryginały) i `polutek-hls` zostają; stare surowe pliki wideo (jeśli leżały w innym buckecie/Blobie jako `videoUrl`) można usunąć ręcznie (Vercel Blob legacy: tylko miniatury są jeszcze używane).
-9. **CSP/DNS:** bez zmian po stronie DNS; `videodelivery.net`, `*.cloudflarestream.com`, `stream.mux.com`, YouTube i Vimeo zniknęły z CSP w kodzie.
+Wideo z własnego HLS: kodowanie na serwerku (`/opt/serwerek/data/hls-work`, `node encode-hls.mjs`, `nice -n 10`), bucket R2 `polutek-hls`, Worker `polutek-hls-edge` na `video.pawelperfect.com` (Cloudflare Free), provider `SELF_HLS` w aplikacji (bez fallbacku: dostawcy zewnętrzni są wycięci, §21). **Pełny opis, polecenia deployu: `docs/operations/HLS-SELF-HOSTED.md`; decyzja i koszty: `docs/architecture/self-hosted-hls.md`.** W `app.env` doszły `HLS_TOKEN_SECRET` i `HLS_DELIVERY_BASE_URL` (kopia `app.env.bak-hls-20261002`; aplikacja niezrestartowana, wchodzą przy następnym `deploy.sh`). Wiersze `SELF_HLS` w bazie tworzymy dopiero po deployu (starszy kod nie zna nowej wartości enum).
 
 ## 19. Worker wideo "encoder" (własny pipeline, 2026-10-03)
 
@@ -350,3 +336,17 @@ Kolejka kodowania (`VideoEncodeJob` w Postgresie) i **osobny kontener `encoder`*
 ## 20. Centrum obslugi (PP Support, 2026-10-02)
 
 Wspolna skrzynka na `hello@pawelperfect.com`: PP Support w `/opt/serwerek/apps/pp-support/` (web+sidekiq+osobny Postgres z pgvector+osobny Redis, razem ok. 0,93 GB RAM, twarde limity), panel `support.pawelperfect.com` za Access, poczta przychodzaca przez Email Worker (`polutek-support-mail`), wychodzaca przez Resend SMTP :587 (Hetzner blokuje 25/465). Tunnel ma dodatkowy wpis `support.pawelperfect.com -> 127.0.0.1:3010`. `backup.sh` i `health.sh` obejmuja ten stos. Produkcyjny MX NIE zostal zmieniony (cutover czeka na zgode wlasciciela). **Przewodnik uzytkownika: `PP-SUPPORT-GUIDE.md`. Pelny opis ops, limity, backup, cutover i rollback: `SUPPORT-CENTER.md`; architektura: `../architecture/support-center.md`.** **Od 2026-10-03: nazwa produktu PP Support, kontenery `pp-support-*`, warstwa marki (Worker `pp-support-brand`), telemetria wylaczona; `health.sh` sprawdza nowe nazwy; katalogi, sekrety, baza i rola nazywaja sie `pp-support`/`pp_support` (2026-10-03); patrz SUPPORT-CENTER.md sekcje 8-9 oraz THIRD_PARTY_NOTICES.md.**
+
+## 21. Sprzątanie po dostawcach wideo (decyzja 2026-10-02: Mux, Cloudflare Stream, YouTube, Vimeo usunięte)
+
+Kod nie zależy już od żadnego z nich (PR "remove third-party video providers"). Kolejność po wdrożeniu: (1) `deploy.sh <tag>`, (2) lista poniżej. Stare wiersze dostawców w bazie (nieaktywne trasy/assety, joby, zdarzenia webhooków) kod ignoruje; ich usunięcie i migracja czyszcząca schemat to osobny PR. Nic z tej listy nie jest wykonywane przez kod ani przez deploy; robi to właściciel albo główna sesja (stały dostęp do usług, ale kasowanie nieodwracalne: sprawdź, że 3 filmy grają z własnego HLS, zanim cokolwiek usuniesz).
+
+1. **app.env na serwerku:** usunąć `MUX_TOKEN_ID`, `MUX_TOKEN_SECRET`, `MUX_WEBHOOK_SECRET`, `MUX_SIGNING_KEY_ID`, `MUX_SIGNING_PRIVATE_KEY`, `CLOUDFLARE_WEBHOOK_SECRET`, `CLOUDFLARE_ACCOUNT_ID`/`CLOUDFLARE_API_TOKEN` (aplikacja ich nie czyta: R2 używa `CLOUDFLARE_R2_*`), `VIDEO_PROVIDER_COST_ORDER` (jeśli jest); restart `docker compose up -d --no-deps app`. W `secrets.env` agentów (`%USERPROFILE%\.ai-secrets`) zostaje `CLOUDFLARE_API_TOKEN` (DNS, Worker, R2 przez wrangler), znikają klucze Mux.
+2. **Mux (panel/API):** usunąć webhook (endpoint `/api/webhooks/mux`), wszystkie assety i direct uploady, potem token API i klucz podpisujący; zamknąć konto, jeśli niepotrzebne.
+3. **Cloudflare Stream:** usunąć webhook Stream (adres `/api/webhooks/cloudflare-stream`), skasować wszystkie filmy z Stream (`jj`, `dla-patronow`, `czesc` mają kopie w R2/HLS; zapisz wcześniej `uid`-y z kopii bazy `/opt/serwerek/backups/pre-hls-jj-patronow-20261002T111908.sql.gz`, gdyby były potrzebne), usunąć klucz podpisu Stream (signing key). Po tym wyłączyć subskrypcję Stream, jeśli była płatna.
+4. **Tokeny Cloudflare:** token z uprawnieniem Stream (Edit) nie jest już potrzebny: zawęzić go lub zastąpić tokenem tylko R2/DNS/Workers. Token R2 (S3) zostaje.
+5. **Vercel:** zmienne `MUX_*`, `CLOUDFLARE_WEBHOOK_SECRET`, `CLOUDFLARE_STREAM_*` w projekcie (Production i Preview) są zbędne; projekt Vercel i tak nie serwuje już produkcji (§16).
+6. **Timer systemd:** `systemctl disable --now polutek-cron-video-provider-jobs.timer && rm /etc/systemd/system/polutek-cron-video-provider-jobs.timer && systemctl daemon-reload` (trasa `/api/cron/video-provider-jobs/reconcile` nie istnieje; timer zwracałby 404). Plik timera usunięto też z `deploy/serwerek/systemd/`.
+7. **YouTube/Vimeo:** nic do sprzątania po stronie dostawców (były tylko osadzeniami); jeśli któryś film miał takie źródło, jego wiersze zostają w bazie (ignorowane) do osobnego PR czyszczącego.
+8. **R2:** bucket `polutek` (oryginały) i `polutek-hls` zostają; stare surowe pliki wideo (jeśli leżały w innym buckecie/Blobie jako `videoUrl`) można usunąć ręcznie (Vercel Blob legacy: tylko miniatury są jeszcze używane).
+9. **CSP/DNS:** bez zmian po stronie DNS; `videodelivery.net`, `*.cloudflarestream.com`, `stream.mux.com`, YouTube i Vimeo zniknęły z CSP w kodzie.

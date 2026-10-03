@@ -12,7 +12,7 @@ Decyzja i uzasadnienie: `docs/architecture/self-hosted-hls.md`. Badania: `docs/r
 | Worker `polutek-hls-edge` + domena `video.pawelperfect.com` (strefa `pawelperfect.com`) | wdrożony (plan Free), sprawdzony: 200 z tokenem, 403 bez/zły/wygasły, 206 dla Range, CORS dla `https://www.pawelperfect.com` |
 | Sekret `HLS_TOKEN_SECRET` | w `%USERPROFILE%\.ai-secrets\secrets.env`, w Workerze i w `/opt/serwerek/apps/polutek/app.env` (kopia `app.env.bak-hls-20261002`); aplikacja NIE restartowana |
 | Kod aplikacji (provider `SELF_HLS`, plan odtwarzania, CSP) | wdrożony; od usunięcia dostawców jedyna ścieżka odtwarzania |
-| Wiersze w bazie | asset + trasa `SELF_HLS` dla 3 filmów (od teraz tworzy je worker kodowania, `activate-self-hls.sql` tylko ręcznie); stare wiersze dostawców usuwa jednorazowo `delete-legacy-provider-rows.sql` (sekcja "Po usunięciu dostawców") |
+| Wiersze w bazie | asset + trasa `SELF_HLS` dla 3 filmów (od teraz tworzy je worker kodowania, `activate-self-hls.sql` tylko ręcznie); stare wiersze dostawców zostają w bazie jako nieaktywne (kod je ignoruje; usunięcie: osobny PR) |
 
 ## Kodowanie (`scripts/hls/encode-hls.mjs`)
 
@@ -77,7 +77,7 @@ ssh serwerek 'ai-log "HLS pilot: activated SELF_HLS route for video c52f0407 (ac
 
 ## Wszystkie trzy filmy na własnym HLS (2026-10-02)
 
-Decyzja właściciela: na stronie zostają dokładnie 3 filmy i grają wyłącznie z własnego HLS. Stan bazy produkcyjnej po aktywacji (`activate-self-hls.sql`, wersja `v1`; poprzednie trasy dostawców zostały jako `PREVIOUS` do czasu `delete-legacy-provider-rows.sql`):
+Decyzja właściciela: na stronie zostają dokładnie 3 filmy i grają wyłącznie z własnego HLS. Stan bazy produkcyjnej po aktywacji (`activate-self-hls.sql`, wersja `v1`; poprzednie trasy dostawców zostały jako `PREVIOUS`, kod je ignoruje):
 
 | Film | id | Tier / bramka | Źródło | Wynik kodowania |
 |---|---|---|---|---|
@@ -95,25 +95,18 @@ Weryfikacja po aktywacji (bez sesji zalogowanego użytkownika, bo nie tworzymy k
 
 Kopia bazy sprzed aktywacji: `/opt/serwerek/backups/pre-hls-jj-patronow-20261002T111908.sql.gz`. `run-sql-on-server.sh` (z `scripts/hls/`) = `docker exec -i polutek-db-1 psql ... -v video_id=<id> -v version=v1 < plik.sql`.
 
-## Po usunięciu dostawców (2026-10-02): SQL i sprzątanie
+## Po usunięciu dostawców (2026-10-02): wdrożenie i sprzątanie
 
-Kod ignoruje wiersze dostawców, więc kolejność jest bezpieczna: najpierw deploy, potem SQL, potem sprzątanie u dostawców.
+Kod ignoruje wiersze dostawców, więc kolejność jest bezpieczna: najpierw deploy, potem sprzątanie u dostawców.
 
-1. Deploy aplikacji (`deploy.sh <tag>`). Migracji nie ma: kolejne wartości enum `StorageProvider` (`R2`, `S3`, `VERCEL_BLOB`, `CLOUDFLARE_STREAM`, `MUX`, `YOUTUBE`, `VIMEO`) i tabele dystrybucji/jobów dostawców zostają w schemacie jako LEGACY (komentarze w `schema.prisma`); migracje są tylko addytywne.
-2. Z serwerka, na sucho i na prawdę (skrypt odmawia, gdy jakiś film z legacy assetem nie ma aktywnej trasy do gotowego `SELF_HLS`):
-   ```bash
-   scp scripts/hls/delete-legacy-provider-rows.sql serwerek:/opt/serwerek/data/hls-work/
-   ssh serwerek 'cd /opt/serwerek/data/hls-work && docker exec -i polutek-db-1 sh -c "psql -U \$POSTGRES_USER -d \$POSTGRES_DB -v ON_ERROR_STOP=1 -v finish=ROLLBACK" < delete-legacy-provider-rows.sql'   # na sucho
-   ssh serwerek 'cd /opt/serwerek/data/hls-work && docker exec -i polutek-db-1 sh -c "psql -U \$POSTGRES_USER -d \$POSTGRES_DB -v ON_ERROR_STOP=1" < delete-legacy-provider-rows.sql'                          # naprawdę
-   ssh serwerek 'ai-log "deleted legacy provider rows (delete-legacy-provider-rows.sql)"'
-   ```
-3. Sprzątanie u dostawców (webhooki, assety, tokeny): lista w `docs/operations/SERWEREK.md`, sekcja "Sprzątanie po dostawcach wideo".
+1. Deploy aplikacji (`deploy.sh <tag>`). Migracji nie ma: kolejne wartości enum `StorageProvider` (`R2`, `S3`, `VERCEL_BLOB`, `CLOUDFLARE_STREAM`, `MUX`, `YOUTUBE`, `VIMEO`) i tabele dystrybucji/jobów dostawców zostają w schemacie jako LEGACY (komentarze w `schema.prisma`); migracje są tylko addytywne. Stare wiersze (nieaktywne trasy `PREVIOUS`, assety, joby, zdarzenia webhooków) zostają w bazie; ich usunięcie i migracja czyszcząca to osobny PR.
+2. Sprzątanie u dostawców (webhooki, assety, tokeny, timer systemd): lista w `docs/operations/SERWEREK.md`, sekcja "Sprzątanie po dostawcach wideo".
 
 ## Rollback
 
 - **Jednego filmu:** nie ma już poprzedniego dostawcy, do którego można wrócić. Własną wersję przełącza się ręcznie na wcześniejszą wersję HLS (`activate-self-hls.sql` z `-v version=v<N>`; stare wersje zostają w R2) albo w panelu "Zakoduj ponownie" (nowa wersja HLS, stara gra do przełączenia trasy).
 - **Awaria Workera/limit:** wideo nie gra do czasu naprawy (Workers Paid 5 USD/mies. znosi limit dobowy; decyzja właściciela). Brak `HLS_TOKEN_SECRET` w `app.env` = plan `ERROR` dla wszystkich filmów (fail closed), nie pomaga jako "wyłącznik".
-- **Aplikacja:** `./deploy.sh <tag> --rollback` wraca do poprzedniego obrazu (z kodem dostawców; ich wiersze w bazie mogą być już usunięte, więc stary kod i tak zagra tylko własny HLS po `activate-self-hls.sql`).
+- **Aplikacja:** `./deploy.sh <tag> --rollback` wraca do poprzedniego obrazu (z kodem dostawców; aktywne trasy wskazują własny HLS, więc stary kod też gra własny HLS).
 
 ## Utrzymanie
 

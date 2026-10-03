@@ -414,7 +414,7 @@ model Video {
 /// Since 2026-10-02 the only live video source is SELF_HLS (our own HLS: encoded by the worker, stored in the
 /// private R2 bucket polutek-hls, delivered by the token-checked Worker at video.<domain>).
 /// Every other value is LEGACY: kept only so the migration history and old rows stay valid. Application code
-/// never writes them and never plays them (rows are ignored, then deleted by scripts/hls/delete-legacy-provider-rows.sql).
+/// never writes them and never plays them (old rows are ignored; deleting them is a separate cleanup PR).
 /// Do not drop values or add new providers without an explicit owner decision.
 enum StorageProvider {
   /// LEGACY, unused: object storage asset.
