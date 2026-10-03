@@ -3,7 +3,7 @@
 #   docker build -f deploy/serwerek/Dockerfile -t polutek-app:<tag> \
 #     --build-arg NEXT_PUBLIC_APP_URL=https://www.pawelperfect.com \
 #     --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_... \
-#     --build-arg NEXT_PUBLIC_R2_PUBLIC_HOST=thumbs.pawelperfect.pl .
+#     --build-arg NEXT_PUBLIC_R2_PUBLIC_HOST=thumbs.pawelperfect.com .
 # Targets: runner (default = last stage, the app), migrator (prisma CLI + migrations only, ~300 MB), worker (video encoder; both used by deploy.sh).
 # NEXT_PUBLIC_* values are PUBLIC by design (inlined into the client bundle), so passing them as build args is fine.
 # Real secrets (BETTER_AUTH_SECRET, GOOGLE_CLIENT_SECRET, STRIPE_SECRET_KEY, DATABASE_URL ...) are NEVER baked in: they come from env_file at runtime.

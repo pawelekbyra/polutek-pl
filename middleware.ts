@@ -60,7 +60,6 @@ const isPublicRoute = createRouteMatcher([
   // exists (no session). Rate-limited per IP, returns only a boolean.
   '/api/users/nickname-available',
   '/api/health',
-  '/api/__version',
   '/api/access(.*)',
   '/api/media-source/(.*)',
   '/api/videos/(.*)/playback-event',
