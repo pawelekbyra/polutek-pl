@@ -46,6 +46,30 @@ describe("proxy: public routes", () => {
     const response = await middleware(request("/regulamin"));
     expect(response.headers.get("x-middleware-rewrite")).toContain("/pl/regulamin");
   });
+
+  it("serves the unsubscribe page at its own path (no /pl rewrite, no session needed)", async () => {
+    const response = await middleware(request("/unsubscribe?token=abc"));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-middleware-rewrite")).toBeNull();
+  });
+
+  it.each(["/", "/regulamin", "/polityka-prywatnosci", "/terms", "/privacy-policy", "/watch/some-video"])(
+    "sends the security headers on the rewritten bare path %s",
+    async (path) => {
+      const response = await middleware(request(path));
+      expect(response.status).toBe(200);
+      expect(response.headers.get("x-middleware-rewrite")).toContain("/pl");
+      expect(response.headers.get("x-request-id")).toBeTruthy();
+      expect(response.headers.get("content-security-policy")).toContain("default-src 'self'");
+    },
+  );
+
+  it("gates a non-public bare path like any other protected page", async () => {
+    const response = await middleware(request("/profile"));
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toContain("signin=1");
+    expect(response.headers.get("x-middleware-rewrite")).toBeNull();
+  });
 });
 
 describe("proxy: protected routes", () => {

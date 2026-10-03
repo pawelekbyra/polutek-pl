@@ -97,4 +97,21 @@ describe('Security Headers', () => {
     expect(csp).toContain('https://user-images.example.com');
     expect(csp).toContain("img-src 'self' data: blob: https://img.clerk.com https://images.unsplash.com https://www.dicebear.com https://user-images.example.com");
   });
+
+  it('allows thumbnails from the public R2 host in img-src', () => {
+    const directive = (name: string) => generateCSP().split('; ').find((part) => part.startsWith(`${name} `)) ?? '';
+    expect(directive('img-src')).toContain('https://thumbs.pawelperfect.pl');
+  });
+
+  it('allows the hosts Stripe.js needs (script, frames incl. 3-D Secure) and restricts form targets', () => {
+    const csp = generateCSP();
+    const directive = (name: string) => csp.split('; ').find((part) => part.startsWith(`${name} `)) ?? '';
+    for (const host of ['https://js.stripe.com', 'https://*.js.stripe.com']) {
+      expect(directive('script-src')).toContain(host);
+      expect(directive('frame-src')).toContain(host);
+    }
+    expect(directive('frame-src')).toContain('https://hooks.stripe.com');
+    expect(directive('connect-src')).toContain('https://api.stripe.com');
+    expect(csp).toContain("form-action 'self'");
+  });
 });
