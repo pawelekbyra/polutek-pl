@@ -66,19 +66,26 @@ export default function OnboardingDialog() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nickname: validation.value, avatarDataUrl }),
     }).catch(() => null);
-    if (!response?.ok) {
-      const body = (await response?.json().catch(() => null)) as { error?: string } | null;
+    if (!response) {
       setSaving(false);
-      if (body?.error === "ONBOARDING_DONE") {
-        // Finished in another tab: just pick up the session state instead of showing an error.
-        await refreshSession();
-        router.refresh();
-        return;
-      }
-      return setProblem(authErrorMessage({ code: body?.error, status: response?.status }, isPl));
+      return setProblem(authErrorMessage({ code: "NETWORK_ERROR" }, isPl));
     }
-    await refreshSession();
-    router.refresh();
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { error?: string } | null;
+      setSaving(false);
+      if (body?.error !== "ONBOARDING_DONE") {
+        return setProblem(authErrorMessage({ code: body?.error, status: response.status }, isPl));
+      }
+      // Finished in another tab: just pick up the session state instead of showing an error.
+    }
+    try {
+      await refreshSession();
+      router.refresh();
+    } catch {
+      // Saved on the server; only re-reading the session failed (audit AUTH-08). A reload picks it up.
+      setSaving(false);
+      setProblem(authErrorMessage({ code: "NETWORK_ERROR" }, isPl));
+    }
   }
 
   return (
