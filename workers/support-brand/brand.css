@@ -1,0 +1,33 @@
+/* PP Support: warstwa wygladu (wstrzykiwana przez Cloudflare Worker). Spokojny jasny interfejs, akcent jak na stronie. */
+@font-face { font-family: "Inter"; font-weight: 400; font-style: normal; font-display: swap; src: url("/pp-support/fonts/Geist-Regular.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 500; font-style: normal; font-display: swap; src: url("/pp-support/fonts/Geist-Medium.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 600; font-style: normal; font-display: swap; src: url("/pp-support/fonts/Geist-SemiBold.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-weight: 700; font-style: normal; font-display: swap; src: url("/pp-support/fonts/Geist-SemiBold.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-weight: 400 700; font-style: normal; font-display: swap; src: url("/pp-support/fonts/Geist-Medium.woff2") format("woff2"); }
+
+:root {
+  --pp-accent: #2563eb;
+  --pp-accent-dark: #1d4ed8;
+  --blue-9: 37 99 235;
+  --blue-10: 29 78 216;
+  --blue-11: 29 78 216;
+  accent-color: #2563eb;
+}
+html, body, button, input, select, textarea { font-family: Inter, "Segoe UI", system-ui, -apple-system, Arial, sans-serif; }
+
+/* Akcent: panel ma na sztywno rgb(39 129 246) w klasach narzedziowych. */
+.bg-n-brand { background-color: rgb(37 99 235 / var(--tw-bg-opacity, 1)) !important; }
+.text-n-brand { color: rgb(37 99 235 / var(--tw-text-opacity, 1)) !important; }
+.border-n-brand { border-color: rgb(37 99 235 / var(--tw-border-opacity, 1)) !important; }
+.outline-n-brand { outline-color: rgb(37 99 235) !important; }
+.ring-n-brand { --tw-ring-color: rgb(37 99 235) !important; }
+.bg-woot-500, .bg-woot-600 { background-color: #2563eb !important; }
+.text-woot-500, .text-woot-600 { color: #2563eb !important; }
+.border-woot-500 { border-color: #2563eb !important; }
+.hover\:bg-woot-600:hover { background-color: #1d4ed8 !important; }
+
+/* Elementy ukrywane przez brand.js (upsell, odnosniki do dokumentacji/marketingu producenta, wersja). */
+.pp-hide { display: none !important; }
+a[href*="chatwoot.com"], a[href*="chwt.app"] { display: none !important; }
+/* Platne dodatki silnika (asystent AI z kredytami, rozliczenia): bez wejscia z menu. */
+a[href*="/captain"], a[href*="/billing"] { display: none !important; }

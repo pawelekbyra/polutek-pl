@@ -1,0 +1,19 @@
+# PP Support: nadpisania tekstow widocznych w panelu (ladowane po standardowych plikach locale).
+en:
+  integration_apps:
+    dyte:
+      short_description: 'Start video/voice calls with customers directly from PP Support.'
+      description: 'Cloudflare RealtimeKit lets your agents start video/voice calls with your customers directly from PP Support.'
+    slack:
+      description: "Integrate PP Support with Slack to keep your team in sync. This integration allows you to receive notifications for new conversations and respond to them directly within Slack's interface."
+    webhooks:
+      description: 'Webhook events provide real-time updates about activities in your PP Support account. You can subscribe to your preferred events, and PP Support will send you HTTP callbacks with the updates.'
+pl:
+  integration_apps:
+    dyte:
+      short_description: 'Rozpocznij rozmowy wideo/glosowe z klientami bezposrednio z PP Support.'
+      description: 'Dyte laczy funkcje audio i wideo z aplikacja. Dzieki tej integracji agenci moga rozpoczynac rozmowy wideo/glosowe z klientami bezposrednio z PP Support.'
+    slack:
+      description: 'Polacz PP Support ze Slackiem, aby zespol byl na biezaco. Integracja pozwala odbierac powiadomienia o nowych rozmowach i odpowiadac na nie w interfejsie Slacka.'
+    webhooks:
+      description: 'Zdarzenia webhook dostarczaja na zywo informacje o aktywnosci na koncie PP Support. Mozesz wybrac zdarzenia, a PP Support wysle do Ciebie wywolania HTTP z aktualizacjami.'

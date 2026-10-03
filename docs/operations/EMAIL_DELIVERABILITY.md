@@ -34,7 +34,7 @@ Czyli SPF (przez `send.pawelperfect.com`), DKIM własny (`d=pawelperfect.com`, s
 | Brak stopki z tożsamością | mail bez fizycznego nadawcy | linia `Paweł Perfect · ul. Złota 75, 00-819 Warszawa · hello@…` pod każdą wiadomością (ta sama osoba i adres co w Regulaminie) |
 | Brak `Auto-Submitted`, brak unikalnego ID | autorespondery mogą odpowiadać, kolejne maile łączą się w wątki | `Auto-Submitted: auto-generated`, `X-Entity-Ref-ID: <uuid>` |
 
-Zostawione bez zmian (celowo): `Reply-To: hello@pawelperfect.com` (prawdziwa skrzynka), link weryfikacyjny na `www.pawelperfect.com` (ta sama domena co nadawca, tekst linku nie udaje innego adresu), brak obrazków w mailach (stosunek tekst/HTML jest zdrowy).
+Zostawione bez zmian (celowo): `Reply-To: support@pawelperfect.com` (alias skrzynki, przekazywany do PP Support), link weryfikacyjny na `www.pawelperfect.com` (ta sama domena co nadawca, tekst linku nie udaje innego adresu), brak obrazków w mailach (stosunek tekst/HTML jest zdrowy).
 
 **Uwaga o szablonach z bazy.** Szablon zapisany w `/admin/emails` ma pierwszeństwo przed domyślnym. Jeśli ktoś kiedyś zapisał `verify-email`, `reset-password`, `password-changed` lub `welcome-email`, jego stary temat/treść nadal pójdzie w świat. Sprawdź w `/admin/emails` i usuń zapisane wersje (wróci domyślna) albo przepisz ręcznie. Nowa zmienna `{{brandName}}` jest dostępna w edytorze.
 

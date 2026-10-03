@@ -1,5 +1,16 @@
 # Google access for AI agents (local machine)
 
+> **2026-10-02: Workspace is no longer used for mail** (MX moved to Cloudflare Email Routing -> PP Support, see EMAIL_SETUP.md). Everything below about the `hello@` mailbox (Gmail API, aliases, DWD for Gmail) stays valid only until the owner cancels Workspace himself (planned after about 7 days of stable operation); do not build anything new on it. What still depends on the Google org: the Google OAuth client of the site sign-in (project `pawelperfect-ai`, org `pawelperfect.pl`; moving it to a personal-account project is an owner step, below), Cloud project `pawelperfect-ai` and its service account `ai-agent`, Search Console/site verification (not inspected: the Workspace admin session needs a password), and the Workspace admin login `hello@pawelperfect.com`.
+
+## Moving the site's Google sign-in off the organization (owner steps)
+
+Agents could not do this: a browser edit of the OAuth consent screen was blocked by the permission system, and the Workspace admin session needs a password. The personal account `pawel.perfect@gmail.com` already owns the Cloud project **Polutek** (id `polutek`, no organization; Google Auth Platform there is configured, status "Testing", an old web client `pawelperfect.com` from 2026-03-22). Steps in Chrome as `pawel.perfect@gmail.com`:
+
+1. `https://console.cloud.google.com/auth/branding?project=polutek`: app name `PAWELPERFECT.COM`, home `https://www.pawelperfect.com`, privacy `https://www.pawelperfect.com/en/privacy-policy`, terms `https://www.pawelperfect.com/en/terms`, authorized domains include `pawelperfect.com` (already there), Save.
+2. `.../auth/audience?project=polutek`: Publish app (In production; only basic scopes openid/email/profile, no verification needed). Without this only listed test users can sign in.
+3. `.../auth/clients?project=polutek`: Create client, type Web application, name `pawelperfect.com web`. Authorized JavaScript origins: `https://www.pawelperfect.com` (add `https://apptest.pawelperfect.com` if the test host is used). Authorized redirect URI: `https://www.pawelperfect.com/api/auth/callback/google`. Copy the client ID and secret.
+4. Give both values to an agent (or put them in `%USERPROFILE%\.ai-secrets\secrets.env` as `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`); the agent updates `app.env` on serwerek (`/opt/serwerek/apps/polutek/`), recreates the app (`docker compose up -d --no-deps --force-recreate app`) and checks Google sign-in in the browser. The old client in `pawelperfect-ai` stays until the new one is verified; delete the old project only when the owner decides.
+
 No secrets here. Cross-service access overview and standing authorization: [AGENT_ACCESS.md](AGENT_ACCESS.md). The owner wants agents to do Google work themselves instead of sending them through the consoles (it is slow and tedious for a human). Two working routes exist on this machine as of 2026-09-30.
 
 ## 0. Workspace account (renamed 2026-10-01)

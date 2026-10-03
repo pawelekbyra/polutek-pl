@@ -1,13 +1,13 @@
 import React from 'react';
 
-export const LEGAL_EFFECTIVE_DATE = 'Obowiązuje od 26 września 2026 r.';
-export const LEGAL_EFFECTIVE_DATE_EN = 'Effective as of 26 September 2026.';
+export const LEGAL_EFFECTIVE_DATE = 'Obowiązuje od 2 października 2026 r.';
+export const LEGAL_EFFECTIVE_DATE_EN = 'Effective as of 2 October 2026.';
 
 /**
  * The service is run by a private individual (see § 1 of the Terms). Every legal document —
  * Terms and Privacy Policy, PL and EN — names the same person and this one contact address.
  */
-export const LEGAL_CONTACT_EMAIL = 'hello@pawelperfect.com';
+export const LEGAL_CONTACT_EMAIL = 'support@pawelperfect.com';
 
 export function LegalSection({ nr, title, children }: { nr: string; title: string; children: React.ReactNode }) {
   return (
@@ -39,21 +39,26 @@ export function RegulaminContent() {
   return (
     <>
       <div className="space-y-10">
-        <LegalSection nr="1" title="Kto prowadzi serwis">
+        <LegalSection nr="1" title="Informacje o serwisie">
           <ol className="list-decimal space-y-2 pl-5">
             <li>
-              Serwis WWW.PAWELPERFECT.COM prowadzi Paweł Perfect, osoba fizyczna, adres do korespondencji: ul. Złota 75,
-              00-819 Warszawa, e-mail: <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a> (dalej: „Twórca”).
+              Twórcą i administratorem serwisu WWW.PAWELPERFECT.COM jest Paweł Perfect (dalej: „Twórca”). Adres do
+              doręczeń: ul. Złota 75, 00-819 Warszawa, e-mail w sprawach technicznych:{' '}
+              <a href="mailto:support@pawelperfect.com" className="underline hover:text-primary">support@pawelperfect.com</a>.
             </li>
-            <li>Serwis ma charakter niekomercyjny. Twórca nie sprzedaje w nim towarów, usług ani treści cyfrowych.</li>
+            <li>
+              Serwis ma charakter niekomercyjny. Twórca nie prowadzi za pośrednictwem Serwisu sprzedaży towarów, usług
+              ani treści cyfrowych. Wszelkie wpłaty dokonywane na rzecz Twórcy mają charakter dobrowolnego wsparcia
+              (darowizny) i nie stanowią zapłaty za towary, usługi ani treści cyfrowe.
+            </li>
           </ol>
         </LegalSection>
 
-        <LegalSection nr="2" title="Co znajdziesz w serwisie i wymagania techniczne">
+        <LegalSection nr="2" title="Zakres serwisu i wymagania techniczne">
           <ol className="list-decimal space-y-2 pl-5">
             <li>
               Serwis udostępnia materiały wideo. Dostęp do treści nigdy nie wymaga płatności — dobrowolne wsparcie
-              Twórcy (§ 4) nie wpływa na to, co użytkownik może oglądać.
+              Twórcy nie wpływa na to, co użytkownik może oglądać.
             </li>
             <li>
               Część materiałów wideo oraz niektóre funkcje, np. komentowanie, wymagają założenia bezpłatnego konta.
@@ -62,10 +67,6 @@ export function RegulaminContent() {
             <li>
               Do korzystania z serwisu potrzebne są urządzenie z aktualną przeglądarką internetową z włączoną obsługą
               JavaScript oraz dostęp do internetu. Założenie konta wymaga podania adresu e-mail.
-            </li>
-            <li>
-              Logowanie obsługuje zewnętrzny dostawca Clerk. Materiały wideo mogą być dostarczane przez zewnętrzną
-              infrastrukturę hostingową i streamingową.
             </li>
             <li>
               Twórca nie gwarantuje poprawnego działania serwisu w przestarzałych przeglądarkach, na urządzeniach
@@ -78,14 +79,12 @@ export function RegulaminContent() {
         <LegalSection nr="3" title="Konto i zasady korzystania">
           <ol className="list-decimal space-y-2 pl-5">
             <li>
-              Konto jest bezpłatne i można je usunąć w każdej chwili. Wystarczy wiadomość na adres{' '}
-              <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a>.
+              Konto jest bezpłatne i można je usunąć w każdej chwili.
             </li>
             <li>
               W serwisie, w szczególności w komentarzach, nie wolno publikować treści bezprawnych, obraźliwych ani
-              spamu. Twórca może usuwać takie treści, a przy powtarzających się naruszeniach zablokować konto.
+              spamu. Twórca może usuwać takie treści, a w przypadku rażących naruszeń zablokować konto bez wcześniejszego ostrzeżenia.
             </li>
-            <li>Materiały w serwisie są chronione prawem autorskim i przeznaczone wyłącznie do użytku osobistego.</li>
           </ol>
         </LegalSection>
 
@@ -95,26 +94,37 @@ export function RegulaminContent() {
               Osoba posiadająca konto może przekazać Twórcy dobrowolne wsparcie w dowolnej kwocie jako wyraz
               podziękowania za udostępnione materiały. Przekazanie wsparcia wymaga zalogowania się do serwisu.
             </li>
-            <li>Wsparcie jest darowizną na rzecz Twórcy. Nie jest ceną ani wynagrodzeniem za jakiekolwiek treści lub usługi.</li>
+            <li>
+              Wsparcie jest darowizną na rzecz Twórcy. Nie jest ceną ani wynagrodzeniem za jakiekolwiek treści lub usługi.
+            </li>
             <li>
               Wsparcie nie daje dostępu do żadnych treści, funkcji, wyróżnień ani innych korzyści. Nie zobowiązuje też
               Twórcy do żadnego świadczenia, np. do publikowania nowych materiałów.
             </li>
-            <li>Płatności obsługuje Stripe. Twórca nie przechowuje danych kart płatniczych. Potwierdzenie wpłaty wysyła operator płatności.</li>
+            <li>
+              Wsparcie nie jest zapłatą za sprzedaż, dlatego Twórca nie wystawia do niego faktur ani rachunków.
+            </li>
+            <li>
+              Płatności obsługuje Stripe. Twórca nie przechowuje danych kart płatniczych. Potwierdzenie wpłaty wysyła operator płatności.
+            </li>
             <li>
               Wsparcie nie podlega zwrotowi, z wyjątkiem wpłat dokonanych omyłkowo (np. podwójna płatność lub błędna
-              kwota) albo bez zgody posiadacza karty. W takim przypadku napisz niezwłocznie na{' '}
-              <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a>.
+              kwota) albo bez zgody posiadacza karty.
             </li>
-            <li>Wsparcie nie jest zapłatą za sprzedaż, dlatego Twórca nie wystawia do niego faktur ani rachunków.</li>
           </ol>
         </LegalSection>
 
-        <LegalSection nr="5" title="Zmiany regulaminu i prawo właściwe">
+        <LegalSection nr="5" title="Zmiany regulaminu">
           <ol className="list-decimal space-y-2 pl-5">
-            <li>Twórca może zmienić regulamin z ważnych przyczyn, np. zmiany przepisów lub funkcji serwisu.</li>
-            <li>O zmianach informuje w serwisie z co najmniej 14-dniowym wyprzedzeniem.</li>
-            <li>Regulamin podlega prawu polskiemu.</li>
+            <li>
+              Twórca może zmienić regulamin, w szczególności w razie zmiany przepisów, funkcji serwisu lub sposobu jego działania.
+            </li>
+            <li>
+              Zmiany regulaminu wchodzą w życie z chwilą ich opublikowania w serwisie.
+            </li>
+            <li>
+              Dalsze korzystanie z serwisu po opublikowaniu zmian oznacza ich akceptację.
+            </li>
           </ol>
         </LegalSection>
       </div>
@@ -255,85 +265,91 @@ export function TermsContentEn() {
   return (
     <>
       <div className="space-y-10">
-        <LegalSection nr="1" title="Who runs the service">
+        <LegalSection nr="1" title="Information about the service">
           <ol className="list-decimal space-y-2 pl-5">
             <li>
-              The service WWW.PAWELPERFECT.COM is run by Paweł Perfect, a private individual, correspondence address:
-              ul. Złota 75, 00-819 Warsaw, Poland, email:{' '}
-              <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a> (hereinafter: the &ldquo;Creator&rdquo;).
-            </li>
-            <li>The service is non-commercial. The Creator does not sell any goods, services, or digital content through it.</li>
-          </ol>
-        </LegalSection>
-
-        <LegalSection nr="2" title="What you'll find in the service and technical requirements">
-          <ol className="list-decimal space-y-2 pl-5">
-            <li>
-              The service provides video content. Access to content never requires payment — voluntarily supporting
-              the Creator (§ 4) has no effect on what a user can watch.
+              The creator and administrator of the service WWW.PAWELPERFECT.COM is Paweł Perfect (hereinafter: the &ldquo;Creator&rdquo;).
+              Address for service: ul. Złota 75, 00-819 Warsaw, Poland, email for technical matters:{' '}
+              <a href="mailto:support@pawelperfect.com" className="underline hover:text-primary">support@pawelperfect.com</a>.
             </li>
             <li>
-              Some video content and some features, such as commenting, require creating a free account. Other
-              content is available without signing in.
-            </li>
-            <li>
-              Using the service requires a device with an up-to-date web browser with JavaScript enabled and an
-              internet connection. Creating an account requires an email address.
-            </li>
-            <li>
-              Sign-in is handled by the external provider Clerk. Video content may be delivered using external
-              hosting and streaming infrastructure.
-            </li>
-            <li>
-              The Creator does not guarantee correct operation of the service on outdated browsers, on devices that
-              do not support modern video standards, or when scripts or elements needed for sign-in and playback are
-              blocked.
+              The service is non-commercial. The Creator does not sell goods, services, or digital content through the
+              service. All payments made to the Creator are voluntary support (a donation) and do not constitute payment
+              for goods, services, or digital content.
             </li>
           </ol>
         </LegalSection>
 
-        <LegalSection nr="3" title="Account and usage rules">
+        <LegalSection nr="2" title="Scope of the service and technical requirements">
           <ol className="list-decimal space-y-2 pl-5">
             <li>
-              The account is free and can be deleted at any time. A message to{' '}
-              <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a> is enough.
+              The service provides video content. Access to content never requires payment — voluntary support for the
+              Creator has no effect on what a user can watch.
             </li>
             <li>
-              Within the service, in particular in comments, it is not allowed to publish unlawful or offensive
-              content, or spam. The Creator may remove such content and, in the case of repeated violations, block
-              the account.
+              Some video content and some features, such as commenting, require a free account. Other content is
+              available without signing in.
             </li>
-            <li>Content in the service is protected by copyright and intended solely for personal use.</li>
+            <li>
+              Using the service requires a device with an up-to-date web browser with JavaScript enabled, and an internet
+              connection. Creating an account requires an email address.
+            </li>
+            <li>
+              The Creator does not guarantee that the service will work correctly in outdated browsers, on devices that do
+              not support modern video standards, or when scripts or elements needed for signing in and playback are blocked.
+            </li>
+          </ol>
+        </LegalSection>
+
+        <LegalSection nr="3" title="Account and rules of use">
+          <ol className="list-decimal space-y-2 pl-5">
+            <li>
+              An account is free and can be deleted at any time.
+            </li>
+            <li>
+              In the service, in particular in comments, it is not allowed to post unlawful or offensive content or spam.
+              The Creator may remove such content and, in the case of serious violations, block the account without prior warning.
+            </li>
           </ol>
         </LegalSection>
 
         <LegalSection nr="4" title="Supporting the Creator">
           <ol className="list-decimal space-y-2 pl-5">
             <li>
-              A user with an account may give the Creator voluntary support in any amount as a token of thanks for
-              the materials made available. Giving support requires signing in to the service.
+              A person with an account may give the Creator voluntary support in any amount as an expression of thanks for
+              the material provided. Giving support requires signing in to the service.
             </li>
-            <li>Support is a gift (donation) to the Creator. It is not a price or remuneration for any content or services.</li>
             <li>
-              Support does not grant access to any content, features, distinctions, or other benefits. Nor does it
-              obligate the Creator to any performance, e.g. to publish new materials.
+              Support is a donation to the Creator. It is not a price or remuneration for any content or services.
             </li>
-            <li>Payments are handled by Stripe. The Creator does not store card data. Confirmation of payment is sent by the payment operator.</li>
             <li>
-              Support is non-refundable, except for payments made by mistake (e.g. a duplicate payment or an
-              incorrect amount) or made without the cardholder&rsquo;s authorization. In such a case, write to us
-              promptly at{' '}
-              <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a>.
+              Support does not give access to any content, features, distinctions, or other benefits. Nor does it oblige the
+              Creator to provide anything, for example to publish new material.
             </li>
-            <li>Support is not payment for a sale, so the Creator does not issue invoices or receipts for it.</li>
+            <li>
+              Support is not payment for a sale, so the Creator does not issue invoices or receipts for it.
+            </li>
+            <li>
+              Payments are processed by Stripe. The Creator does not store payment card data. The payment confirmation is sent by the payment processor.
+            </li>
+            <li>
+              Support is non-refundable, except for payments made by mistake (for example a duplicate payment or a wrong
+              amount) or without the cardholder&apos;s consent.
+            </li>
           </ol>
         </LegalSection>
 
-        <LegalSection nr="5" title="Changes to the Terms and governing law">
+        <LegalSection nr="5" title="Changes to the Terms">
           <ol className="list-decimal space-y-2 pl-5">
-            <li>The Creator may change the Terms for important reasons, e.g. changes in law or in the service&rsquo;s features.</li>
-            <li>Changes will be announced in the service at least 14 days in advance.</li>
-            <li>The Terms are governed by Polish law.</li>
+            <li>
+              The Creator may change the Terms, in particular in the event of changes in law, in the features of the service, or in the way it works.
+            </li>
+            <li>
+              Changes to the Terms take effect when they are published in the service.
+            </li>
+            <li>
+              Continuing to use the service after changes are published means accepting them.
+            </li>
           </ol>
         </LegalSection>
       </div>

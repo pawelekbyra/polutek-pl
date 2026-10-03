@@ -1,12 +1,12 @@
-# Centrum obslugi (Chatwoot CE, MIT) na serwerku. Zyje na serwerze w /opt/serwerek/apps/chatwoot/.
-# Uklad tam:  docker-compose.yml  .env (600, sekrety, NIE w repo)  README (kopia runbooka)
+# PP Support (wspolna skrzynka obslugi) na serwerku. Zyje na serwerze w /opt/serwerek/apps/pp-support/ (dane: /opt/serwerek/data/pp-support/).
+# Uklad tam:  docker-compose.yml  .env (600, sekrety, NIE w repo)  overrides/ (nadpisania marki, ten katalog z repo)
 # Wszystko slucha tylko na 127.0.0.1; droga publiczna: Cloudflare Tunnel -> 127.0.0.1:3010 (za Access).
 # Runbook: docs/operations/SUPPORT-CENTER.md. Architektura: docs/architecture/support-center.md.
 # Limity pamieci sa twarde: serwer ma 4 GB RAM i dzieli je z aplikacja, baza, Redisem i enkoderem wideo.
-name: chatwoot
+name: pp-support
 
-x-chatwoot: &chatwoot
-  image: chatwoot/chatwoot:v4.18.0-ce          # CE = bez katalogu enterprise (czysty MIT)
+x-pp-support: &pp-support
+  image: pp-support:4.18.0 # lokalny tag obrazu opisanego w docs/operations/THIRD_PARTY_NOTICES.md (tam tez aktualizacja)
   restart: unless-stopped
   env_file: ./.env
   depends_on:
@@ -15,8 +15,22 @@ x-chatwoot: &chatwoot
     redis:
       condition: service_healthy
   volumes:
-    - /opt/serwerek/data/chatwoot/storage:/app/storage
-  environment: &chatwoot-env
+    - /opt/serwerek/data/pp-support/storage:/app/storage
+    # Marka PP Support: pojedyncze pliki nadpisywane woluminami (read-only), zob. SUPPORT-CENTER.md "Marka".
+    - ./overrides/config/schedule.yml:/app/config/schedule.yml:ro
+    - ./overrides/config/locales/zz_pp_support.yml:/app/config/locales/zz_pp_support.yml:ro
+    - ./overrides/views/super_admin/application/_javascript.html.erb:/app/app/views/super_admin/application/_javascript.html.erb:ro
+    - ./overrides/views/super_admin/application/_navigation.html.erb:/app/app/views/super_admin/application/_navigation.html.erb:ro
+    - ./overrides/views/super_admin/devise/sessions/new.html.erb:/app/app/views/super_admin/devise/sessions/new.html.erb:ro
+    - ./overrides/views/mailers/account_notification/account_deletion_for_inactivity.liquid:/app/app/views/mailers/administrator_notifications/account_notification_mailer/account_deletion_for_inactivity.liquid:ro
+    - ./overrides/views/mailers/account_notification/account_deletion_user_initiated.liquid:/app/app/views/mailers/administrator_notifications/account_notification_mailer/account_deletion_user_initiated.liquid:ro
+    - ./overrides/views/mailers/account_compliance/account_deleted.liquid:/app/app/views/mailers/administrator_notifications/account_compliance_mailer/account_deleted.liquid:ro
+    - ./overrides/public/brand-assets/logo.svg:/app/public/brand-assets/logo.svg:ro
+    - ./overrides/public/brand-assets/logo_dark.svg:/app/public/brand-assets/logo_dark.svg:ro
+    - ./overrides/public/brand-assets/logo_thumbnail.svg:/app/public/brand-assets/logo_thumbnail.svg:ro
+    - ./overrides/public/manifest.json:/app/public/manifest.json:ro
+    - ./overrides/public/android-icon-192x192.png:/app/public/android-icon-192x192.png:ro
+  environment: &pp-support-env
     NODE_ENV: production
     RAILS_ENV: production
     INSTALLATION_ENV: docker
@@ -28,8 +42,8 @@ x-chatwoot: &chatwoot
     DEFAULT_LOCALE: pl
     POSTGRES_HOST: db
     POSTGRES_PORT: "5432"
-    POSTGRES_DATABASE: chatwoot
-    POSTGRES_USERNAME: chatwoot
+    POSTGRES_DATABASE: pp_support
+    POSTGRES_USERNAME: pp_support
     REDIS_URL: redis://redis:6379
     ACTIVE_STORAGE_SERVICE: local
     # Pamiec: jeden proces puma, malo watkow; sidekiq z niska wspolbieznoscia.
@@ -48,24 +62,26 @@ x-chatwoot: &chatwoot
     SMTP_DOMAIN: pawelperfect.com
     SMTP_ENABLE_STARTTLS_AUTO: "true"
     SMTP_OPENSSL_VERIFY_MODE: peer
-    MAILER_SENDER_EMAIL: "Obsluga PAWELPERFECT.COM <hello@pawelperfect.com>"
+    MAILER_SENDER_EMAIL: "PP Support <support@pawelperfect.com>"
+    # Bez telemetrii do serwerow producenta oprogramowania (metryki instancji, zdarzenia). Push mobilny: relay zostaje, zob. SUPPORT-CENTER.md.
+    DISABLE_TELEMETRY: "true"
 
 services:
   db:
-    # pgvector jest wymagany przez migracje Chatwoota; produkcyjny Postgres aplikacji go nie ma i go nie ruszamy.
+    # pgvector jest wymagany przez migracje; produkcyjny Postgres strony go nie ma i go nie ruszamy. Baza i rola nazywaja sie pp_support (zmienione 2026-10-03, zob. SUPPORT-CENTER.md).
     image: pgvector/pgvector:0.8.7-pg17
     restart: unless-stopped
     environment:
-      POSTGRES_USER: chatwoot
-      POSTGRES_DB: chatwoot
+      POSTGRES_USER: pp_support
+      POSTGRES_DB: pp_support
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}      # z .env (compose czyta je automatycznie)
     command: ["postgres", "-c", "shared_buffers=64MB", "-c", "max_connections=40", "-c", "work_mem=4MB", "-c", "maintenance_work_mem=32MB"]
     volumes:
-      - /opt/serwerek/data/chatwoot/pg:/var/lib/postgresql/data
+      - /opt/serwerek/data/pp-support/pg:/var/lib/postgresql/data
     ports:
       - "127.0.0.1:5434:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U chatwoot -d chatwoot"]
+      test: ["CMD-SHELL", "pg_isready -U pp_support -d pp_support"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -77,7 +93,7 @@ services:
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes", "--maxmemory", "96mb", "--maxmemory-policy", "noeviction"]
     volumes:
-      - /opt/serwerek/data/chatwoot/redis:/data
+      - /opt/serwerek/data/pp-support/redis:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -86,29 +102,29 @@ services:
     mem_limit: 128m
 
   web:
-    <<: *chatwoot
+    <<: *pp-support
     entrypoint: docker/entrypoints/rails.sh
     command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
     ports:
       - "127.0.0.1:3010:3000"
     mem_limit: 700m
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://127.0.0.1:3000/api || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/api || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 90s
 
   sidekiq:
-    <<: *chatwoot
+    <<: *pp-support
     command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
     mem_limit: 640m
 
   prepare:
     # Jednorazowo: docker compose --profile tools run --rm prepare   (migracje + seed przy pierwszym uruchomieniu)
-    <<: *chatwoot
+    <<: *pp-support
     profiles: ["tools"]
     entrypoint: docker/entrypoints/rails.sh
-    command: ["bundle", "exec", "rails", "db:chatwoot_prepare"]
+    command: ["bundle", "exec", "rails", "db:chatwoot_prepare"] # nazwa zadania jest czescia silnika, nie do zmiany
     restart: "no"
     mem_limit: 900m
