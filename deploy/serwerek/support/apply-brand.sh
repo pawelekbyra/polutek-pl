@@ -1,6 +1,6 @@
 #!/bin/bash
 # PP Support: zastosuj nazwe i ustawienia marki z overrides/brand.config.json w bazie panelu.
-# Uruchamiac na serwerze: cd /opt/serwerek/apps/chatwoot && ./apply-brand.sh
+# Uruchamiac na serwerze: cd /opt/serwerek/apps/pp-support && ./apply-brand.sh
 # Po zmianie nazwy w brand.config.json uruchom tez: node workers/support-brand/deploy.mjs (z komputera wlasciciela).
 set -euo pipefail
 cd "$(dirname "$0")"
