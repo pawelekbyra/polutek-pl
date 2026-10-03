@@ -45,7 +45,7 @@ export function generateCSP() {
     ...parseMediaHosts(process.env.ALLOWED_THUMBNAIL_HOSTS),
     ...parseMediaHosts(process.env.NEXT_PUBLIC_BLOB_PUBLIC_HOST),
     // Public thumbnails of published videos are served straight from the public R2 bucket.
-    'thumbs.pawelperfect.pl',
+    'thumbs.pawelperfect.com',
     ...parseMediaHosts(process.env.NEXT_PUBLIC_R2_PUBLIC_HOST),
   ])).map(h => `https://${h}`).join(' ');
 

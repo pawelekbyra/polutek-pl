@@ -9,10 +9,8 @@ import "./globals.css";
 import { APP_NAME } from '@/lib/constants';
 import { ServiceWorkerCleanup } from "@/app/components/ServiceWorkerCleanup";
 import { UrlMask } from "@/app/components/UrlMask";
-import { AppVersionCheck } from "@/app/components/AppVersionCheck";
 import { resolveInitialLanguage } from "@/lib/i18n/server-language";
 import { AuthModalProvider } from "@/app/components/auth/AuthModalProvider";
-import { Analytics } from '@vercel/analytics/next';
 
 export const metadata = {
   title: APP_NAME,
@@ -61,7 +59,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="font-sans bg-background text-foreground min-h-[100dvh] relative" suppressHydrationWarning>
         <ServiceWorkerCleanup />
         <UrlMask />
-        <AppVersionCheck />
         <Suspense fallback={<div className="min-h-[100dvh] bg-background" />}>
           <Providers initialLanguage={initialLanguage}>
             <AuthPublicConfigProvider value={publicAuthConfig}>
@@ -73,7 +70,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </AuthPublicConfigProvider>
           </Providers>
         </Suspense>
-        <Analytics />
       </body>
     </html>
   );
