@@ -155,3 +155,34 @@ Marka dziala warstwowo: ustawienia instalacji w bazie (`apply-brand`), pliki nad
 3. **Automatyczny agent AI** (webhook zdarzen, kontekst z bazy, szkice jako notatki prywatne, zatwierdzanie przez czlowieka): projekt w `../architecture/support-center.md`.
 4. Ewentualnie wiekszy serwer (CPX32, 8 GB RAM) lub ograniczenie enkodera, jesli RAM bedzie sie konczyl (decyzja wlasciciela, koszt).
 5. Polskie tlumaczenia pozostalych napisow interfejsu w `brand.js` po decyzji wlasciciela.
+
+## 13. Potencjalne opcje do wcielenia w przyszlosci (nie zaplanowane, nie zbudowane)
+
+Lista funkcji, ktore moglibysmy dopisac sami w nakladce `/admin/support` (nasz kod, bez zewnetrznych licencji i bez zaleznosci od wersji silnika). To banka pomyslow do wyboru przez wlasciciela, nie plan prac. Kolejnosc ponizej to propozycja.
+
+### Rdzen (gdyby ruszyc najpierw)
+- **Role i uprawnienia pracownikow**: wlasne role, np. "odpowiada, nie widzi platnosci", "tylko czyta". Latwe.
+- **Dziennik dzialan**: wpis do naszej tabeli audytu przy kazdej akcji (kto, co, kiedy); mamy juz ten wzorzec w aplikacji. Latwe.
+- **Limity obciazenia i auto-przydzielanie**: maks. liczba otwartych rozmow na osobe, rozdzielanie nowych rozmow. Srednie.
+- **Polityki SLA**: cele czasu pierwszej odpowiedzi i rozwiazania, alerty o przekroczeniu. Srednie.
+- **Monitorowanie rozmow**: reguly typu "rozmowa bez odpowiedzi 4 godziny", "negatywny ton", z powiadomieniem. Srednie.
+- **Raporty**: czas pierwszej odpowiedzi, czas rozwiazania, liczba rozmow, obciazenie osob. Srednie.
+
+### Asystent AI (nasz agent z Claude)
+- **Szkice odpowiedzi** jako notatki prywatne, zatwierdzane przez czlowieka; pozniej automatyczne odpowiedzi tylko w bezpiecznych kategoriach.
+- **Baza wiedzy i FAQ** z naszych dokumentow i regulaminu, wyszukiwanie po znaczeniu (pgvector).
+- **Podpowiedzi FAQ** z rozwiazanych rozmow.
+- **Pomocnik pracownika (copilot)**: czat w panelu ("podsumuj rozmowe", "co odpowiedziec").
+- **Narzedzia asystenta** (tylko odczyt): status konta i weryfikacji w naszej bazie, wplaty ze Stripe, ostatnie bledy logowania; ewentualnie status uslug.
+- **Klasyfikacja wynikow rozmow** ("rozwiazane przez AI", "przez czlowieka", "bez odpowiedzi") i **statystyki asystenta**.
+- **Masowe akcje** (zamykanie, etykietowanie, przydzielanie wielu rozmow naraz).
+- **Pobieranie wlasnych stron do bazy wiedzy** (nasz crawler dla naszej strony i dokumentacji).
+
+### Pozniej albo wcale
+- **Kampanie wychodzace**: razem z wlasna wysylka poczty i drugim serwerem (docs/research/serwerek/07-self-hosted-mail.md).
+- **Publiczne centrum pomocy** (artykuly), np. strona `/pomoc` generowana z FAQ.
+- **Logowanie SAML i weryfikacja urzadzen**: niepotrzebne, mamy Cloudflare Access i Google.
+- **Rozmowy glosowe i WhatsApp**: wymagaja operatora telefonii, poza zakresem.
+- **Wlasne domeny, onboarding, integracje z zewnetrznymi CRM i kalendarzami**: tylko jesli kiedys beda potrzebne.
+
+Zasady dla kazdej z tych opcji: pisana od zera przez nas, bez kopiowania cudzego kodu; sekrety tylko w `.ai-secrets`; agent AI nie wysyla niczego do klienta bez zatwierdzenia; kazda zmiana opisana tutaj i w `CLAUDE.md`, jesli zmienia niezmienniki.
