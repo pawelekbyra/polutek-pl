@@ -5,7 +5,7 @@
 #     --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_... \
 #     --build-arg NEXT_PUBLIC_R2_PUBLIC_HOST=thumbs.pawelperfect.com .
 # Targets: runner (default = last stage, the app), migrator (prisma CLI + migrations only, ~300 MB), worker (video encoder),
-# collector (pp-collector, one 108 KB bundle on node:22-alpine, ~240 MB on disk, mostly the shared base layer); all used by deploy.sh.
+# collector (pp-collector, one 108 KB bundle on node:22-alpine, ~240 MB on disk, almost all of it the node base image); all used by deploy.sh.
 # NEXT_PUBLIC_* values are PUBLIC by design (inlined into the client bundle), so passing them as build args is fine.
 # Real secrets (BETTER_AUTH_SECRET, GOOGLE_CLIENT_SECRET, STRIPE_SECRET_KEY, DATABASE_URL ...) are NEVER baked in: they come from env_file at runtime.
 FROM node:22-bookworm-slim AS deps
