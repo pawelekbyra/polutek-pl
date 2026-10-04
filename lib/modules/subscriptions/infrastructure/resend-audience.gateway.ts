@@ -34,6 +34,7 @@ export interface ResendContactsClient {
     get(payload: { email: string; audienceId: string }): Promise<{ data: any; error: any }>;
     create(payload: { email: string; audienceId: string; unsubscribed?: boolean }): Promise<{ data: any; error: any }>;
     update(payload: { email: string; audienceId: string; unsubscribed?: boolean }): Promise<{ data: any; error: any }>;
+    remove(payload: { email: string; audienceId: string }): Promise<{ data: any; error: any }>;
   };
 }
 
@@ -83,6 +84,35 @@ export class ResendAudienceGateway {
     } catch (error) {
       logger.warn('[ResendAudienceGateway] explicit subscribe sync failed', {
         operation: 'explicit_subscribe',
+        email: maskEmailForLog(email),
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return 'FAILED';
+    }
+  }
+
+  /**
+   * Deletes the contact from the Resend Audience (account deletion). A contact that does not exist
+   * counts as removed. Never throws: FAILED means "try again later".
+   */
+  async removeContact(email: string): Promise<ProviderSyncStatus> {
+    const audienceId = process.env.RESEND_AUDIENCE_ID;
+    if (!audienceId) return 'NOT_CONFIGURED';
+
+    const client = this.getClient();
+    if (!client) {
+      logger.warn('[ResendAudienceGateway] contact removal skipped: RESEND_API_KEY missing');
+      return 'FAILED';
+    }
+
+    try {
+      const result = await client.contacts.remove({ email, audienceId });
+      if (result.error && !isMissingContactError(result.error)) throw result.error;
+      return 'SYNCED';
+    } catch (error) {
+      if (isMissingContactError(error)) return 'SYNCED';
+      logger.warn('[ResendAudienceGateway] contact removal failed', {
+        operation: 'remove_contact',
         email: maskEmailForLog(email),
         error: error instanceof Error ? error.message : String(error),
       });

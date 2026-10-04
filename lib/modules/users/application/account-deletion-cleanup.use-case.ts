@@ -1,7 +1,10 @@
 import crypto from 'crypto';
+import { BroadcastRecipientStatus, CommentDeletedReason, CommentStatus } from '@prisma/client';
 import { AppContext } from '@/lib/modules/shared/app-context';
 import { recordAuditEvent } from '@/lib/modules/audit';
 import { resolveEmailLanguage, sendAccountDeletedEmail } from '@/lib/modules/email';
+import { enqueueContactRemovals, processContactRemovals } from '@/lib/modules/subscriptions';
+import { logger } from '@/lib/logger';
 
 export type AccountDeletionCleanupSource = 'APP_ACCOUNT_DELETION';
 
@@ -11,8 +14,61 @@ export interface AccountDeletionCleanupResult {
   originalEmail: string | null;
 }
 
+/** How long the deletion request waits for Resend before leaving the contact removal to the daily cron. */
+const CONTACT_REMOVAL_WAIT_MS = 5000;
+
+/** `.invalid` is reserved (RFC 2606): a tombstone address can never reach a real mailbox. */
 function deletedEmail(anonymousId: string) {
-  return `deleted_${anonymousId}@deleted.com`;
+  return `deleted_${anonymousId}@deleted.invalid`;
+}
+
+/** Placeholder payload for e-mail webhook events whose recipient deleted the account. */
+const REDACTED_EMAIL_EVENT_PAYLOAD = { redacted: 'ACCOUNT_DELETED' };
+
+/**
+ * Comment content goes with the account; the rows stay (like a comment its author deleted), so
+ * replies by other people keep their thread and counters stay right. Comments already deleted keep
+ * their deletion reason, everything else becomes "deleted by the author".
+ */
+async function eraseCommentContent(tx: any, userId: string, now: Date) {
+  await tx.comment.updateMany({
+    where: { authorId: userId, status: { not: CommentStatus.DELETED } },
+    data: { status: CommentStatus.DELETED, deletedAt: now, deletedById: userId, deletedReason: CommentDeletedReason.AUTHOR_DELETED },
+  });
+  await tx.comment.updateMany({
+    where: { authorId: userId, OR: [{ text: { not: '' } }, { imageUrl: { not: null } }] },
+    data: { text: '', imageUrl: null },
+  });
+}
+
+/**
+ * E-mail history keeps its delivery facts (counts, statuses) but not the address: broadcast
+ * recipients get the tombstone address, webhook events lose the address and their payload.
+ */
+async function anonymizeEmailHistory(tx: any, userId: string, emails: string[], tombstoneEmail: string) {
+  const byOwner = [{ userId }, ...(emails.length ? [{ email: { in: emails } }] : [])];
+  await tx.broadcastEmailRecipient.updateMany({
+    where: { OR: byOwner, status: BroadcastRecipientStatus.PENDING },
+    data: { status: BroadcastRecipientStatus.SKIPPED, error: 'ACCOUNT_DELETED' },
+  });
+  await tx.broadcastEmailRecipient.updateMany({ where: { OR: byOwner }, data: { email: tombstoneEmail } });
+  await tx.emailEvent.updateMany({ where: { OR: byOwner }, data: { email: null, payload: REDACTED_EMAIL_EVENT_PAYLOAD } });
+}
+
+async function settleContactRemovals(ctx: AppContext, emails: string[]) {
+  if (emails.length === 0) return;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      processContactRemovals(ctx, { emails }),
+      new Promise((resolve) => { timer = setTimeout(resolve, CONTACT_REMOVAL_WAIT_MS); }),
+    ]);
+  } catch (error) {
+    // Still queued: /api/cron/retention retries it.
+    logger.warn('[AccountDeletionCleanup] Resend contact removal deferred to the retention cron', error instanceof Error ? error.message : String(error));
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 async function resyncCreatorSubscriberCounts(tx: any, creatorIds: string[]) {
@@ -37,6 +93,8 @@ export class AccountDeletionCleanupUseCase {
     if (!user) return { cleaned: false, alreadyDeleted: true, originalEmail: null };
 
     const originalEmail = user.email && !user.email.startsWith('deleted_') ? user.email : null;
+    const tombstoneEmail = user.isDeleted && user.email.startsWith('deleted_') ? user.email : deletedEmail(anonymousId);
+    let contactEmails: string[] = [];
     const result = await ctx.db.writeTransaction(async (tx) => {
       const subscriptions = await tx.subscription.findMany({
         where: { userId: input.userId },
@@ -59,21 +117,29 @@ export class AccountDeletionCleanupUseCase {
       await tx.twoFactor.deleteMany({ where: { userId: input.userId } });
       await tx.userAvatar.deleteMany({ where: { userId: input.userId } });
       await tx.subscription.deleteMany({ where: { userId: input.userId } });
-      await tx.emailPreference.deleteMany({
-        where: {
-          OR: [
-            { userId: input.userId },
-            ...(originalEmail ? [{ email: originalEmail }] : []),
-          ],
-        },
-      });
+
+      const preferenceWhere = {
+        OR: [
+          { userId: input.userId },
+          ...(originalEmail ? [{ email: originalEmail }] : []),
+        ],
+      };
+      // A preference row exists only for someone who answered the e-mail consent question, i.e. the
+      // only people who can have a contact in the Resend Audience: that contact is removed too.
+      const preferences: { email: string }[] = await tx.emailPreference.findMany({ where: preferenceWhere, select: { email: true } });
+      contactEmails = [...new Set(preferences.map((preference) => preference.email))];
+      await enqueueContactRemovals(tx, contactEmails, now);
+      await tx.emailPreference.deleteMany({ where: preferenceWhere });
 
       if (creatorIds.length > 0) await resyncCreatorSubscriberCounts(tx, creatorIds);
+
+      await eraseCommentContent(tx, input.userId, now);
+      await anonymizeEmailHistory(tx, input.userId, [...new Set([...(originalEmail ? [originalEmail] : []), ...contactEmails])], tombstoneEmail);
 
       await tx.user.update({
         where: { id: input.userId },
         data: {
-          email: user.isDeleted && user.email.startsWith('deleted_') ? user.email : deletedEmail(anonymousId),
+          email: tombstoneEmail,
           name: 'Usunięty Użytkownik',
           username: user.isDeleted ? undefined : `deleted_${anonymousId.split('-')[0]}`,
           imageUrl: null,
@@ -86,11 +152,19 @@ export class AccountDeletionCleanupUseCase {
         action: 'USER_ACCOUNT_DELETION_CLEANUP',
         targetType: 'User',
         targetId: input.userId,
-        metadata: { source: input.source, reason: input.reason ?? null, originalEmailRemoved: Boolean(originalEmail) },
+        metadata: {
+          source: input.source,
+          reason: input.reason ?? null,
+          originalEmailRemoved: Boolean(originalEmail),
+          contactRemovalsQueued: contactEmails.length,
+        },
       }, tx);
 
       return { cleaned: true, alreadyDeleted: user.isDeleted, originalEmail };
     });
+
+    // Best effort and bounded: a slow or unreachable Resend never blocks the deletion.
+    await settleContactRemovals(ctx, contactEmails);
 
     if (originalEmail) {
       await sendAccountDeletedEmail(originalEmail, resolveEmailLanguage(user.language)).catch((error) => {
