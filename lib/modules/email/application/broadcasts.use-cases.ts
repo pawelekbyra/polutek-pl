@@ -134,24 +134,29 @@ export async function createBroadcast(
 export async function sendBroadcastTest(
   ctx: AppContext,
   input: SendBroadcastTestInput,
-): Promise<UseCaseResult<{ messageId: string | null }, EmailError>> {
+): Promise<UseCaseResult<{ messageId: string | null; to: string }, EmailError>> {
   const problem = contentProblem(input);
   if (problem) return fail(new InvalidBroadcastPayloadError(problem));
 
+  // Only the signed-in admin's own account address, never one from the request.
   const adminUserId = ctx.actor.type === "admin" || ctx.actor.type === "user" ? ctx.actor.userId : null;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const pageUrl = (adminUserId && buildContentUnsubscribeUrl(adminUserId, appUrl)) || new URL("/unsubscribe", appUrl).toString();
-  const oneClickUrl = adminUserId ? buildOneClickUnsubscribeUrl(adminUserId, appUrl) : null;
   const admin = adminUserId
-    ? await ctx.prisma.user.findUnique({ where: { id: adminUserId }, select: { name: true } })
+    ? await ctx.prisma.user.findUnique({ where: { id: adminUserId }, select: { name: true, email: true } })
     : null;
+  if (!adminUserId || !admin?.email) {
+    return fail(new InvalidBroadcastPayloadError("Konto admina nie ma adresu e-mail."));
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const pageUrl = buildContentUnsubscribeUrl(adminUserId, appUrl) ?? new URL("/unsubscribe", appUrl).toString();
+  const oneClickUrl = buildOneClickUnsubscribeUrl(adminUserId, appUrl) ?? pageUrl;
 
   const message = renderBroadcastMessage(
     { subjectPl: input.subjectPl, htmlPl: input.htmlPl, subjectEn: input.subjectEn ?? "", htmlEn: input.htmlEn ?? "" },
     {
       language: input.language,
-      nickname: admin?.name ?? null,
-      email: input.to,
+      nickname: admin.name,
+      email: admin.email,
       appName: APP_NAME,
       brandName: EMAIL_SENDER_NAME,
       appUrl,
@@ -160,12 +165,12 @@ export async function sendBroadcastTest(
   );
 
   const sent = await sendEmail({
-    to: input.to,
+    to: admin.email,
     subject: `[TEST] ${message.subject}`,
     html: message.html,
     language: message.language,
     kind: "broadcast-test",
-    unsubscribe: oneClickUrl ? { oneClickUrl, footerHtml: message.footerHtml } : { oneClickUrl: pageUrl, footerHtml: message.footerHtml },
+    unsubscribe: { oneClickUrl, footerHtml: message.footerHtml },
   });
   if (!sent.ok) return fail(new EmailProviderError(`Resend odrzucił wiadomość testową (${sent.error.name ?? sent.error.message}).`));
 
@@ -174,7 +179,7 @@ export async function sendBroadcastTest(
     targetType: "Email",
     metadata: { language: input.language },
   });
-  return ok({ messageId: sent.id });
+  return ok({ messageId: sent.id, to: admin.email });
 }
 
 /** Stops a broadcast: recipients not sent yet are skipped. Mails already sent stay sent. */

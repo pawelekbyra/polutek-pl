@@ -10,7 +10,8 @@ import {
 } from "../domain/broadcast-queue.policy";
 import { renderBroadcastMessage } from "../domain/broadcast-message";
 import type { EmailSendResult } from "../domain/email-provider";
-import type { BroadcastQueueStore, ClaimedBroadcast, QueuedRecipient } from "../infrastructure/broadcast-queue.repository";
+import { prisma } from "@/lib/prisma";
+import { BroadcastQueueRepository, type BroadcastQueueStore, type ClaimedBroadcast, type QueuedRecipient } from "../infrastructure/broadcast-queue.repository";
 import { EMAIL_SENDER_NAME, sendEmail } from "../infrastructure/resend-email.transport";
 
 export type BroadcastRunResult = {
@@ -145,4 +146,9 @@ export async function processBroadcastQueue(deps: BroadcastQueueDeps): Promise<B
 
   result.pausedUntil = pauseUntil ? pauseUntil.toISOString() : null;
   return result;
+}
+
+/** One queue run against the application database (what the send-broadcasts cron calls). */
+export function runBroadcastQueue(): Promise<BroadcastRunResult> {
+  return processBroadcastQueue({ store: new BroadcastQueueRepository(prisma) });
 }

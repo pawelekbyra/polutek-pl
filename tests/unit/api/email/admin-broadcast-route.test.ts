@@ -1,17 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
-const { requireAdminForApi, createBroadcast, sendBroadcastTest, listAdminBroadcastEmails, userFindUnique } = vi.hoisted(() => ({
+const { requireAdminForApi, createBroadcast, sendBroadcastTest, listAdminBroadcastEmails } = vi.hoisted(() => ({
   requireAdminForApi: vi.fn(),
   createBroadcast: vi.fn(),
   sendBroadcastTest: vi.fn(),
   listAdminBroadcastEmails: vi.fn(),
-  userFindUnique: vi.fn(),
 }));
 
 vi.mock('@/lib/auth-utils', () => ({ requireAdminForApi }));
 vi.mock('@/lib/modules/email', () => ({ createBroadcast, sendBroadcastTest, listAdminBroadcastEmails }));
-vi.mock('@/lib/prisma', () => ({ prisma: { user: { findUnique: userFindUnique } } }));
 
 import { GET, POST } from '@/app/api/admin/emails/broadcast/route';
 import { POST as POST_TEST } from '@/app/api/admin/emails/broadcast/test/route';
@@ -58,12 +56,12 @@ describe('admin broadcast routes', () => {
     expect(await res.json()).toEqual({ error: 'busy', code: 'EMAIL_BROADCAST_IN_PROGRESS' });
   });
 
-  it('sends the test only to the admin account address, whatever the request says', async () => {
-    userFindUnique.mockResolvedValue({ email: 'owner@example.com' });
-    sendBroadcastTest.mockResolvedValue({ ok: true, data: { messageId: 'm1' } });
+  it('never passes a recipient address from the request to the test send', async () => {
+    sendBroadcastTest.mockResolvedValue({ ok: true, data: { messageId: 'm1', to: 'owner@example.com' } });
     const res = await POST_TEST(post('/api/admin/emails/broadcast/test', { subjectPl: 'S', htmlPl: 'x', testEmail: 'victim@example.com', to: 'victim@example.com', language: 'en' }));
     expect(res.status).toBe(200);
-    expect(sendBroadcastTest).toHaveBeenCalledWith(expect.anything(), { subjectPl: 'S', htmlPl: 'x', language: 'en', to: 'owner@example.com' });
+    expect(await res.json()).toEqual({ ok: true, to: 'owner@example.com' });
+    expect(sendBroadcastTest).toHaveBeenCalledWith(expect.anything(), { subjectPl: 'S', htmlPl: 'x', language: 'en' });
   });
 
   it('lists the history', async () => {

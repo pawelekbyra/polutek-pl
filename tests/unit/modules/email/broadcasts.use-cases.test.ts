@@ -140,16 +140,16 @@ describe('sendBroadcastTest', () => {
   it('renders like the real broadcast (footer, one-click header, chosen language) and audits no address', async () => {
     const { db } = makeDb([user('admin_1', { name: 'Paweł' })]);
     const result = await sendBroadcastTest(ctxFor(db), {
-      ...content, subjectEn: 'New video', htmlEn: '<p>Hi {{firstName}}</p>', language: 'en', to: 'admin@example.com',
+      ...content, subjectEn: 'New video', htmlEn: '<p>Hi {{firstName}}</p>', language: 'en',
     });
     expect(result.ok).toBe(true);
     const sent = emailsSend.mock.calls[0][0];
-    expect(sent.to).toEqual(['admin@example.com']);
+    expect(sent.to).toEqual(['admin_1@example.com']);
     expect(sent.subject).toBe('[TEST] New video');
     expect(sent.html).toContain('Hi Paweł');
     expect(sent.html).toContain('Unsubscribe</a>');
     expect(sent.headers['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click');
-    expect(JSON.stringify(db.auditLog.create.mock.calls)).not.toContain('admin@example.com');
+    expect(JSON.stringify(db.auditLog.create.mock.calls)).not.toContain('admin_1@example.com');
   });
 });
 

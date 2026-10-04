@@ -67,7 +67,6 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
     useEffect(() => {
         if (step !== 2) return;
         let cancelled = false;
-        setAudienceCount(null);
         fetch("/api/admin/emails/broadcast/audience")
             .then((res) => (res.ok ? res.json() : null))
             .then((data) => {
@@ -219,7 +218,7 @@ export function BroadcastWizard({ onBack }: BroadcastWizardProps) {
                     )}
 
                     <div className="flex justify-end">
-                        <Button onClick={() => setStep(2)} disabled={!subjectPl.trim() || !htmlPl.trim() || englishIncomplete}>
+                        <Button onClick={() => { setAudienceCount(null); setStep(2); }} disabled={!subjectPl.trim() || !htmlPl.trim() || englishIncomplete}>
                             Dalej: Odbiorcy
                         </Button>
                     </div>

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
-import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
-import { BroadcastQueueRepository, processBroadcastQueue } from "@/lib/modules/email";
+import { runBroadcastQueue } from "@/lib/modules/email";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +18,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const result = await processBroadcastQueue({ store: new BroadcastQueueRepository(prisma) });
+    const result = await runBroadcastQueue();
     if (result.broadcastId) logger.info("[cron] send-broadcasts", result);
     return NextResponse.json(result);
   } catch (error) {

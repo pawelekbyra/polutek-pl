@@ -26,9 +26,8 @@ export {
   cancelBroadcast,
   listAdminBroadcastEmails,
 } from "./application/broadcasts.use-cases";
-export { processBroadcastQueue } from "./application/process-broadcast-queue";
+export { processBroadcastQueue, runBroadcastQueue } from "./application/process-broadcast-queue";
 export type { BroadcastRunResult } from "./application/process-broadcast-queue";
-export { BroadcastQueueRepository } from "./infrastructure/broadcast-queue.repository";
 export type {
   AdminBroadcastEmailListItemDto,
   CreateBroadcastInput,

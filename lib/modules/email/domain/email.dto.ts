@@ -23,8 +23,6 @@ export type SendBroadcastTestInput = {
   subjectEn?: string | null;
   htmlEn?: string | null;
   language: "pl" | "en";
-  /** The signed-in admin's own address (taken from the session, never from the request). */
-  to: string;
 };
 
 export type BroadcastCounts = {
