@@ -55,6 +55,26 @@ services:
       driver: json-file
       options: { max-size: "20m", max-file: "3" }
 
+  collector:
+    # pp-collector: anonymous analytics beacons forwarded by the app (POST /api/t), batch insert into the
+    # Postgres schema "telemetry" as role pp_collector, rollups every 5 min, retention every 6 h.
+    # No published port: only the app reaches it, at http://collector:3200 (TELEMETRY_COLLECTOR_URL in app.env).
+    # Optional like the encoder: deploy.sh starts it only when collector.env exists. Docs: docs/architecture/admin-telemetry.md.
+    image: ${COLLECTOR_IMAGE:-polutek-collector:current}
+    restart: unless-stopped
+    env_file: ./collector.env     # TELEMETRY_DATABASE_URL=postgresql://pp_collector:...@db:5432/<db>, TELEMETRY_ALLOWED_HOSTS=www.pawelperfect.com
+    depends_on:
+      db:
+        condition: service_healthy
+    mem_limit: 96m
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    pids_limit: 64
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
   migrate:
     # One-off, run by deploy.sh:  docker compose --profile tools run --rm migrate
     profiles: ["tools"]

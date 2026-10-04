@@ -28,6 +28,7 @@ for f in app.env db.env docker-compose.yml; do [[ -f "$f" ]] || die "missing $f"
 new_image="polutek-app:$tag"
 migrator_image="polutek-migrator:$tag"
 worker_image="polutek-worker:$tag"
+collector_image="polutek-collector:$tag"
 prev_image="$(cat .current-image 2>/dev/null || true)"
 
 wait_healthy() { # $1 = image ref (for logs)
@@ -44,6 +45,14 @@ wait_healthy() { # $1 = image ref (for logs)
 }
 
 start_app() { APP_IMAGE="$1" docker compose up -d --no-deps app; }
+
+# pp-collector (analytics beacons -> schema "telemetry") is optional and best-effort like the encoder: it runs only
+# when collector.env exists (docs/operations/SERWEREK.md, "Telemetria") and never fails or rolls back an app deploy.
+start_collector() { # $1 = collector image ref
+  [[ -f collector.env ]] || { log "collector.env missing, collector not started (see docs/architecture/admin-telemetry.md)"; return 0; }
+  docker image inspect "$1" >/dev/null 2>&1 || { log "collector image $1 missing, collector not started"; return 0; }
+  if COLLECTOR_IMAGE="$1" docker compose up -d --no-deps collector; then log "collector running on $1"; else log "WARN: collector failed to start on $1"; fi
+}
 
 # The video encoder (own HLS pipeline) is optional and best-effort: it only runs when worker.env exists, and a failure
 # here never fails or rolls back an app deploy. A running job is handed back to the queue when the container stops.
@@ -62,11 +71,13 @@ if [[ "$mode" == "--rollback" ]]; then
   printf '%s' "$prev" > .current-image
   prev_worker="$(cat .previous-worker-image 2>/dev/null || true)"
   if [[ -n "$prev_worker" ]]; then start_encoder "$prev_worker"; printf '%s' "$prev_worker" > .current-worker-image; fi
+  prev_collector="$(cat .previous-collector-image 2>/dev/null || true)"
+  if [[ -n "$prev_collector" ]]; then start_collector "$prev_collector"; printf '%s' "$prev_collector" > .current-collector-image; fi
   exit 0
 fi
 
 # 1. Build (skipped when the image for this tag already exists).
-if docker image inspect "$new_image" >/dev/null 2>&1 && docker image inspect "$migrator_image" >/dev/null 2>&1 && docker image inspect "$worker_image" >/dev/null 2>&1; then
+if docker image inspect "$new_image" >/dev/null 2>&1 && docker image inspect "$migrator_image" >/dev/null 2>&1   && docker image inspect "$worker_image" >/dev/null 2>&1 && docker image inspect "$collector_image" >/dev/null 2>&1; then
   log "images for $tag already built, skipping build"
 else
   [[ -d src ]] || die "missing ./src (git archive of the commit to deploy)"
@@ -79,6 +90,7 @@ else
   docker build -f src/deploy/serwerek/Dockerfile --target runner "${args[@]}" -t "$new_image" src
   docker build -f src/deploy/serwerek/Dockerfile --target migrator -t "$migrator_image" src
   docker build -f src/deploy/serwerek/Dockerfile --target worker -t "$worker_image" src
+  docker build -f src/deploy/serwerek/Dockerfile --target collector -t "$collector_image" src
 fi
 
 # 2. Database up, safety dump, migrations in a one-off container. A failure here leaves the running app untouched.
@@ -117,7 +129,13 @@ if wait_healthy "$new_image"; then
     [[ -n "$prev_worker" ]] && printf '%s' "$prev_worker" > .previous-worker-image
     printf '%s' "$worker_image" > .current-worker-image
   fi
-  for repo in polutek-app polutek-migrator polutek-worker; do
+  prev_collector="$(cat .current-collector-image 2>/dev/null || true)"
+  start_collector "$collector_image"
+  if [[ "$prev_collector" != "$collector_image" ]]; then
+    [[ -n "$prev_collector" ]] && printf '%s' "$prev_collector" > .previous-collector-image
+    printf '%s' "$collector_image" > .current-collector-image
+  fi
+  for repo in polutek-app polutek-migrator polutek-worker polutek-collector; do
     docker images "$repo" --format '{{.Tag}}' | grep -v '^current$' | tail -n +$((KEEP_IMAGES + 1)) | while read -r t; do
       [[ "$repo:$t" == "$new_image" || "$repo:$t" == "$prev_image" ]] && continue
       docker rmi "$repo:$t" >/dev/null 2>&1 || true

@@ -21,3 +21,6 @@ tsconfig.typecheck.tsbuildinfo
 thumbnail-r2-migration-*.json
 .vercel
 .env*
+
+# bundled services (npm run collector:build)
+/dist
