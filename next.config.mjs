@@ -31,43 +31,15 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'yellow-elegant-porpoise-917.mypinata.cloud',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'api.dicebear.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.dicebear.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'img.clerk.com',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.public.blob.vercel-storage.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'i.ytimg.com',
-      },
-      ...configuredImageHosts.map((hostname) => ({
-        protocol: 'https',
-        hostname,
-        pathname: '/**',
-      })),
-    ],
+    // Only hosts the app really renders through the image optimizer (audit SEC-08): every allowed host is
+    // a host /_next/image will fetch and transcode on our server, so no wildcards and no demo hosts.
+    // Most remote images are `unoptimized` anyway; these remain: public video thumbnails (R2) and
+    // avatars of accounts that predate Better Auth (img.clerk.com, until no User.imageUrl points there).
+    remotePatterns: Array.from(new Set(['thumbs.pawelperfect.com', 'img.clerk.com', ...configuredImageHosts])).map((hostname) => ({
+      protocol: 'https',
+      hostname,
+      pathname: '/**',
+    })),
   },
   async headers() {
     return [
@@ -83,8 +55,9 @@ const nextConfig = {
             value: 'DENY',
           },
           {
+            // OWASP: the legacy XSS auditor is gone from current browsers and was itself an attack vector; 0 disables it.
             key: 'X-XSS-Protection',
-            value: '1; mode=block',
+            value: '0',
           },
           {
             key: 'Referrer-Policy',

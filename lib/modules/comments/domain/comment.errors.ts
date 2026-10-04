@@ -2,7 +2,8 @@ import { AppError } from "@/lib/modules/shared/app-error";
 
 export type CommentError =
   | { type: "NOT_FOUND"; message: string }
-  | { type: "FORBIDDEN"; message: string }
+  /** `code: ONBOARDING_REQUIRED`: the account has not picked a nickname yet (see Actor.onboardingPending). */
+  | { type: "FORBIDDEN"; message: string; code?: "ONBOARDING_REQUIRED" }
   | { type: "UNAUTHORIZED"; message: string }
   | { type: "VALIDATION_ERROR"; message: string; errors?: any }
   | { type: "DATABASE_ERROR"; message: string };

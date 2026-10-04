@@ -9,6 +9,7 @@ import { MainChannelService } from "@/lib/modules/channel";
 import { MainChannelPolicy } from "@/lib/modules/channel/domain/channel.policy";
 import { AccessTier, VideoStatus } from "@prisma/client";
 import { canUseDemoFallbacks } from "@/lib/feature-flags";
+import { isUpcomingPremiere, toPremiereDate } from "@/lib/modules/video/domain/premiere";
 
 export type CheckVideoAccessInput = {
   videoIdOrSlug: string;
@@ -85,16 +86,27 @@ export async function checkVideoAccess(
     return ok({ hasAccess: false, reason: "NOT_FOUND" });
   }
 
+  // From here on the decision is about this one row, whether it was asked for by id or by slug:
+  // callers load the video by `videoId` (never by their raw input) and apply the premiere gate
+  // from `premiereAt`, so a slug cannot skip it (audit SEC-10). The tier decision itself does not
+  // change: comments on an upcoming premiere stay usable (CLAUDE.md "Premieres").
+  const resolvedVideoId = video.id;
+  const upcomingPremiereAt = !isAdmin && isUpcomingPremiere(video, now)
+    ? toPremiereDate(video.premiereAt)?.toISOString()
+    : undefined;
+  const decide = (decision: AccessDecisionDto) =>
+    ok({ ...decision, videoId: resolvedVideoId, ...(upcomingPremiereAt ? { premiereAt: upcomingPremiereAt } : {}) });
+
   // Admin access granted for existing main-channel non-archived content
-  if (isAdmin) return ok({ hasAccess: true });
+  if (isAdmin) return decide({ hasAccess: true });
 
   // 5. Tier-based access
-  if (video.tier === AccessTier.PUBLIC) return ok({ hasAccess: true });
+  if (video.tier === AccessTier.PUBLIC) return decide({ hasAccess: true });
 
   if (actor.type === 'guest') {
     // Support no longer gates access (CLAUDE.md §4.4): signing in is the only barrier for
     // PATRON-tier videos too.
-    return ok({
+    return decide({
         hasAccess: false,
         reason: "LOGIN_REQUIRED",
         requiredTier: video.tier
@@ -104,7 +116,7 @@ export async function checkVideoAccess(
   // 6. User-specific checks (LOGGED_IN, PATRON)
   if (actor.type !== 'user') {
     // Should not happen for authenticated non-admin actors but for safety:
-    return ok({ hasAccess: false, reason: "FORBIDDEN" });
+    return decide({ hasAccess: false, reason: "FORBIDDEN" });
   }
 
   const user = await prisma.user.findUnique({
@@ -112,16 +124,16 @@ export async function checkVideoAccess(
   });
 
   // Missing or deleted local user
-  if (!user) return ok({ hasAccess: false, reason: "FORBIDDEN" });
-  if (user.isDeleted) return ok({ hasAccess: false, reason: "DELETED" });
+  if (!user) return decide({ hasAccess: false, reason: "FORBIDDEN" });
+  if (user.isDeleted) return decide({ hasAccess: false, reason: "DELETED" });
 
   // 2026-09-22: the Regulamin/Terms no longer sell access — every signed-in user gets
   // PATRON-tier content, same as LOGGED_IN. Support is a voluntary, non-refundable donation
   // that grants nothing extra (see CLAUDE.md). Do not reintroduce a PatronGrant check here
   // without an explicit business-model decision to revert.
   if (video.tier === AccessTier.LOGGED_IN || video.tier === AccessTier.PATRON) {
-    return ok({ hasAccess: true });
+    return decide({ hasAccess: true });
   }
 
-  return ok({ hasAccess: false, reason: "FORBIDDEN" });
+  return decide({ hasAccess: false, reason: "FORBIDDEN" });
 }

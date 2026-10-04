@@ -5,7 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import { enUS, pl } from "date-fns/locale";
 import { Star, Trash2, Heart, MoreVertical, Edit, Flag, Link as LinkIcon, EyeOff, RotateCcw } from "../../icons";
 import { cn } from "@/lib/utils";
-import { CommentView, getAvatarSeed, isPatronAuthor } from "../types";
+import { CommentView, isPatronAuthor } from "../types";
 import { SafeAvatar } from "../../SafeAvatar";
 import { ReportDialog } from "./ReportDialog";
 import { CommentReportReasonDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
@@ -175,7 +175,6 @@ function CommentItemComponent({
             src={comment.author?.imageUrl}
             alt={comment.author?.displayName || "Avatar"}
             size={38}
-            fallbackSeed={getAvatarSeed(comment)}
             className="w-full h-full object-cover"
             />
         </div>

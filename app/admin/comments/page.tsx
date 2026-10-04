@@ -261,7 +261,7 @@ export default function AdminCommentsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <SafeAvatar src={comment.author?.imageUrl} alt={comment.author?.displayName || ""} size={24} fallbackSeed={comment.author?.id} />
+                          <SafeAvatar src={comment.author?.imageUrl} alt={comment.author?.displayName || ""} size={24} />
                           <span className="text-xs font-medium">{comment.author?.displayName}</span>
                         </div>
                       </TableCell>

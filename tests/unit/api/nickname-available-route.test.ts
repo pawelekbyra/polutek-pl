@@ -29,7 +29,7 @@ describe("GET /api/users/nickname-available", () => {
     expect(await res.json()).toEqual({ available: true });
     expect(res.headers.get("Cache-Control")).toContain("no-store");
     expect(findFirst).toHaveBeenCalledWith({
-      where: { isDeleted: false, name: { equals: "Żółty Kot", mode: "insensitive" } },
+      where: { isDeleted: false, onboardingPending: false, name: { equals: "Żółty Kot", mode: "insensitive" } },
       select: { id: true },
     });
   });

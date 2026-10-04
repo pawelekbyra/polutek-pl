@@ -27,15 +27,8 @@ describe('comments privacy helpers', () => {
     expect(publicAuthor).not.toHaveProperty('referralPoints');
   });
 
-  it('keeps email out of the client author type and avatar seed logic', () => {
+  it('keeps email out of the client author type', () => {
     const source = readFileSync('app/components/comments/types.ts', 'utf8');
-    const avatarSeedBlock = source.slice(
-      source.indexOf('export function getAvatarSeed'),
-      source.indexOf('export function isPatronAuthor'),
-    );
-
     expect(source).not.toContain('email?: string | null');
-    expect(avatarSeedBlock).not.toContain('email');
-    expect(avatarSeedBlock).toContain('comment.author?.username');
   });
 });

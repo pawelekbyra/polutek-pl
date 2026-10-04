@@ -5,7 +5,10 @@ export const SYSTEM_TEMPLATE_SLUGS = [
   'password-changed',
   'account-deleted',
   'verify-email',
-  'reset-password'
+  'reset-password',
+  'change-email-confirm',
+  'change-email-verify',
+  'email-changed',
 ] as const;
 
 export type SystemTemplateSlug = typeof SYSTEM_TEMPLATE_SLUGS[number];
@@ -315,6 +318,94 @@ export const EMAIL_DEFAULTS: Record<SystemTemplateSlug, { subject: string; html:
   <a href="{{actionUrl}}" style="${BUTTON_STYLE}">Set a new password →</a>
 
   <p style="font-size: 14px; color: #555;">If you did not request this, ignore this message — your password will not change.</p>
+</div>`,
+  },
+
+  // E-mail change, step 1: sent to the CURRENT address, which must approve the change.
+  'change-email-confirm': {
+    subject: 'Potwierdź zmianę adresu e-mail',
+    subjectEn: 'Approve your email address change',
+    html: `<div style="${BASE_STYLE}">
+  <h1 style="${HEADER_STYLE}">Zmiana adresu e-mail</h1>
+
+  <p style="font-size: 16px;">Ktoś (najpewniej Ty) chce zmienić adres e-mail konta <strong>{{brandName}}</strong> z {{email}} na <strong>{{newEmail}}</strong>. Link działa przez godzinę.</p>
+
+  <a href="{{actionUrl}}" style="${BUTTON_STYLE}">Zatwierdzam zmianę →</a>
+
+  <div style="${INFO_BOX_STYLE}">
+    <strong>Jeśli to nie Ty:</strong><br/>
+    Nie klikaj w link, adres się nie zmieni. Zmień hasło i wyloguj pozostałe urządzenia w ustawieniach konta.
+  </div>
+</div>`,
+    htmlEn: `<div style="${BASE_STYLE}">
+  <h1 style="${HEADER_STYLE}">Email address change</h1>
+
+  <p style="font-size: 16px;">Someone (most likely you) wants to change the email address of your <strong>{{brandName}}</strong> account from {{email}} to <strong>{{newEmail}}</strong>. The link is valid for one hour.</p>
+
+  <a href="{{actionUrl}}" style="${BUTTON_STYLE}">Approve the change →</a>
+
+  <div style="${INFO_BOX_STYLE}">
+    <strong>If this wasn't you:</strong><br/>
+    Don't click the link and the address stays the same. Change your password and sign out other devices in your account settings.
+  </div>
+</div>`,
+  },
+
+  // E-mail change, step 2: sent to the NEW address after the current one approved.
+  'change-email-verify': {
+    subject: 'Potwierdź nowy adres e-mail',
+    subjectEn: 'Confirm your new email address',
+    html: `<div style="${BASE_STYLE}">
+  <h1 style="${HEADER_STYLE}">Nowy adres e-mail</h1>
+
+  <p style="font-size: 16px;">Kliknij przycisk, aby ustawić {{email}} jako adres konta w <strong>{{brandName}}</strong>. Link działa przez godzinę.</p>
+
+  <a href="{{actionUrl}}" style="${BUTTON_STYLE}">Potwierdzam nowy adres →</a>
+
+  <p style="font-size: 14px; color: #555;">Jeśli to nie Ty zmieniałeś/-aś adres, zignoruj tę wiadomość.</p>
+</div>`,
+    htmlEn: `<div style="${BASE_STYLE}">
+  <h1 style="${HEADER_STYLE}">New email address</h1>
+
+  <p style="font-size: 16px;">Click the button to make {{email}} the address of your <strong>{{brandName}}</strong> account. The link is valid for one hour.</p>
+
+  <a href="{{actionUrl}}" style="${BUTTON_STYLE}">Confirm the new address →</a>
+
+  <p style="font-size: 14px; color: #555;">If you did not change your address, you can ignore this message.</p>
+</div>`,
+  },
+
+  // E-mail change done: notice to the OLD address.
+  'email-changed': {
+    subject: 'Adres e-mail konta został zmieniony',
+    subjectEn: 'Your account email address was changed',
+    html: `<div style="${BASE_STYLE}">
+  <h1 style="${HEADER_STYLE}">Adres e-mail zmieniony</h1>
+
+  <p style="font-size: 16px;">Adres e-mail konta <strong>{{brandName}}</strong> zmienił się z {{email}} na <strong>{{newEmail}}</strong>.</p>
+
+  <div style="${INFO_BOX_STYLE}">
+    <strong>Jeśli to nie Ty:</strong><br/>
+    Odpowiedz na tę wiadomość jak najszybciej, pomożemy odzyskać konto.
+  </div>
+
+  <p style="${FOOTER_STYLE}">
+    Ten email wysłano na {{email}} w związku ze zmianą adresu e-mail w {{brandName}}.
+  </p>
+</div>`,
+    htmlEn: `<div style="${BASE_STYLE}">
+  <h1 style="${HEADER_STYLE}">Email address changed</h1>
+
+  <p style="font-size: 16px;">The email address of your <strong>{{brandName}}</strong> account changed from {{email}} to <strong>{{newEmail}}</strong>.</p>
+
+  <div style="${INFO_BOX_STYLE}">
+    <strong>If this wasn't you:</strong><br/>
+    Reply to this email as soon as possible and we will help you recover the account.
+  </div>
+
+  <p style="${FOOTER_STYLE}">
+    This email was sent to {{email}} in connection with an email address change at {{brandName}}.
+  </p>
 </div>`,
   },
 

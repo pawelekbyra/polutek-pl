@@ -5,19 +5,31 @@ const mail = vi.hoisted(() => ({
   sendVerificationEmail: vi.fn().mockResolvedValue({}),
   sendPasswordResetEmail: vi.fn().mockResolvedValue({}),
   sendPasswordChangedEmail: vi.fn().mockResolvedValue({}),
-  resolveEmailLanguage: (language: string | null | undefined) => (language === "pl" ? "pl" : "en"),
+  sendChangeEmailConfirmationEmail: vi.fn().mockResolvedValue({}),
+  sendChangeEmailVerificationEmail: vi.fn().mockResolvedValue({}),
+  sendEmailChangedEmail: vi.fn().mockResolvedValue({}),
 }));
+const audit = vi.hoisted(() => ({ recordAuthAudit: vi.fn() }));
 
 vi.mock("@/lib/prisma", () => ({ prisma }));
 vi.mock("@/lib/modules/email", () => mail);
+vi.mock("@/lib/auth/audit", () => audit);
 
 import {
+  onEmailVerified,
+  queueChangeEmailConfirmation,
   queuePasswordChangedEmail,
   queuePasswordResetEmail,
   queueVerificationEmail,
 } from "@/lib/auth/emails";
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+/** A Better Auth e-mail link with the given claims (the signature is irrelevant here). */
+function emailLink(claims: Record<string, string>) {
+  const payload = Buffer.from(JSON.stringify(claims)).toString("base64url");
+  return `https://www.pawelperfect.com/api/auth/verify-email?token=h.${payload}.s&callbackURL=%2F`;
+}
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -53,5 +65,36 @@ describe("auth e-mails", () => {
     expect(() => queueVerificationEmail({ email: "a@b.pl" }, "https://x/v")).not.toThrow();
     expect(queueVerificationEmail({ email: "a@b.pl" }, "https://x/v")).toBeUndefined();
     await flush();
+  });
+
+  it("approves an e-mail change from the CURRENT address, in the account language (AUTH-02, F-15)", async () => {
+    queueChangeEmailConfirmation({ id: "u1", email: "old@b.pl", language: "pl" }, "new@b.pl", "https://x/approve");
+    await flush();
+    expect(mail.sendChangeEmailConfirmationEmail).toHaveBeenCalledWith("old@b.pl", "new@b.pl", "https://x/approve", "pl");
+  });
+
+  it("confirms the NEW address with its own template and the language looked up by account id", async () => {
+    prisma.user.findUnique.mockResolvedValue({ language: "pl" });
+    const url = emailLink({ email: "old@b.pl", updateTo: "new@b.pl", requestType: "change-email-verification" });
+    queueVerificationEmail({ id: "u1", email: "new@b.pl" }, url);
+    await flush();
+    expect(prisma.user.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { id: "u1" } }));
+    expect(mail.sendChangeEmailVerificationEmail).toHaveBeenCalledWith("new@b.pl", url, "pl");
+    expect(mail.sendVerificationEmail).not.toHaveBeenCalled();
+  });
+
+  it("tells the OLD address once the change is done and audits it", async () => {
+    const request = new Request(emailLink({ email: "old@b.pl", updateTo: "new@b.pl", requestType: "change-email-verification" }));
+    await onEmailVerified({ id: "u1", email: "new@b.pl", language: "en" }, request);
+    await flush();
+    expect(mail.sendEmailChangedEmail).toHaveBeenCalledWith("old@b.pl", "new@b.pl", "en");
+    expect(audit.recordAuthAudit).toHaveBeenCalledWith({ action: "AUTH_EMAIL_CHANGED", userId: "u1" });
+  });
+
+  it("does nothing extra after a plain sign-up verification", async () => {
+    await onEmailVerified({ id: "u1", email: "a@b.pl" }, new Request(emailLink({ email: "a@b.pl" })));
+    await flush();
+    expect(mail.sendEmailChangedEmail).not.toHaveBeenCalled();
+    expect(audit.recordAuthAudit).not.toHaveBeenCalled();
   });
 });

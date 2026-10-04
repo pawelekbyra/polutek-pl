@@ -13,9 +13,45 @@ import { authErrorMessage, isSessionNotFresh } from "@/lib/auth/errors";
 import { rememberReturnPath } from "@/lib/auth/sso-return";
 import { useUser } from "@/lib/auth/react";
 
+const NETWORK_ERROR = { code: "NETWORK_ERROR" } as const;
+
 export function useAccountUser() {
   const { user } = useUser();
   return user!;
+}
+
+/**
+ * Whether the account has a password (a `credential` account). A failed lookup is reported as
+ * `failed` (audit AUTH-36), never read as "no password": that would hide the password field from
+ * an account that needs it.
+ */
+export function useHasPassword() {
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    authClient
+      .listAccounts()
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error || !data) return setFailed(true);
+        setHasPassword(data.some((a: { providerId: string }) => a.providerId === "credential"));
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [attempt]);
+
+  const retry = () => {
+    setFailed(false);
+    setAttempt((n) => n + 1);
+  };
+  return { hasPassword, failed, retry };
 }
 
 export function Feedback({ error, info }: { error: string | null; info: string | null }) {
@@ -25,8 +61,9 @@ export function Feedback({ error, info }: { error: string | null; info: string |
 }
 
 /**
- * Shown when Better Auth refuses a sensitive action because the session is older than `freshAge`.
- * Signing in again creates a fresh session and brings the visitor back to this page.
+ * Shown when the server refuses a sensitive action because the session is not recent enough
+ * (`SESSION_NOT_FRESH`, or `REAUTH_REQUIRED` for a Google-only account). Signing in again creates a
+ * fresh session and brings the visitor back to this page.
  */
 export function ReauthNotice({ isPl }: { isPl: boolean }) {
   async function signInAgain() {
@@ -44,45 +81,86 @@ export function ReauthNotice({ isPl }: { isPl: boolean }) {
   );
 }
 
+function RetryNotice({ isPl, onRetry }: { isPl: boolean; onRetry: () => void }) {
+  return (
+    <div role="alert" className="space-y-2 rounded-lg bg-red-50 px-3 py-2">
+      <p className="text-[13px] font-semibold text-red-600">{authErrorMessage(NETWORK_ERROR, isPl)}</p>
+      <button type="button" onClick={onRetry} className="text-[12px] font-bold text-red-700 underline">
+        {isPl ? "Spróbuj ponownie" : "Try again"}
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Changing the sign-in address (audit AUTH-02): the server wants the password (or, for a Google-only
+ * account, a sign-in from the last few minutes), then the CURRENT address must approve the change
+ * before the new one is confirmed. The password goes in the same request body as the new address.
+ */
 export function EmailSection({ isPl }: { isPl: boolean }) {
   const user = useAccountUser();
+  const { hasPassword, failed, retry } = useHasPassword();
   const [newEmail, setNewEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [needsReauth, setNeedsReauth] = useState(false);
 
   async function changeEmail(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setInfo(null);
-    const { error: changeError } = await authClient.changeEmail({
-      newEmail,
-      callbackURL: window.location.pathname + window.location.search,
-    });
-    setLoading(false);
-    if (changeError) return setError(authErrorMessage(changeError, isPl));
-    setNewEmail("");
-    setInfo(
-      isPl
-        ? "Wysłaliśmy link potwierdzający na nowy adres. Zmiana nastąpi po kliknięciu w link."
-        : "We sent a confirmation link to the new address. The change happens once you click it.",
-    );
+    setNeedsReauth(false);
+    try {
+      const { error: changeError } = await authClient.$fetch<{ status: boolean }>("/change-email", {
+        method: "POST",
+        body: {
+          newEmail,
+          callbackURL: window.location.pathname + window.location.search,
+          ...(hasPassword ? { password } : {}),
+        },
+      });
+      if (changeError) {
+        const code = (changeError as { code?: string }).code;
+        if (code === "REAUTH_REQUIRED" || isSessionNotFresh(changeError)) return setNeedsReauth(true);
+        return setError(authErrorMessage(changeError, isPl));
+      }
+      setNewEmail("");
+      setPassword("");
+      setInfo(
+        isPl
+          ? "Wysłaliśmy wiadomość na Twój obecny adres. Zatwierdź w niej zmianę, a potem kliknij link, który przyjdzie na nowy adres."
+          : "We sent a message to your current address. Approve the change there, then click the link we send to the new address.",
+      );
+    } catch {
+      setError(authErrorMessage(NETWORK_ERROR, isPl));
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="space-y-3">
       <Feedback error={error} info={info} />
+      {needsReauth && <ReauthNotice isPl={isPl} />}
       <div className="rounded-lg border border-[var(--chan-line)] px-3 py-2">
         <p className="truncate text-[14px] font-semibold">{user.primaryEmailAddress?.emailAddress}</p>
         <p className="text-[11px] text-[var(--chan-muted)]">
           {user.emailVerified ? (isPl ? "Potwierdzony" : "Verified") : (isPl ? "Niepotwierdzony" : "Unverified")}
         </p>
       </div>
-      <form onSubmit={changeEmail} className="space-y-3 border-t border-[var(--chan-line)] pt-3">
-        <Field label={isPl ? "Nowy adres e-mail" : "New email address"} type="email" value={newEmail} onChange={setNewEmail} autoComplete="email" />
-        <Primary loading={loading} label={isPl ? "Zmień adres" : "Change address"} />
-      </form>
+      {failed && <RetryNotice isPl={isPl} onRetry={retry} />}
+      {hasPassword !== null && (
+        <form onSubmit={changeEmail} className="space-y-3 border-t border-[var(--chan-line)] pt-3">
+          <Field label={isPl ? "Nowy adres e-mail" : "New email address"} type="email" value={newEmail} onChange={setNewEmail} autoComplete="email" />
+          {hasPassword && (
+            <Field label={isPl ? "Twoje hasło" : "Your password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" />
+          )}
+          <Primary loading={loading} label={isPl ? "Zmień adres" : "Change address"} />
+        </form>
+      )}
     </div>
   );
 }
@@ -92,11 +170,18 @@ type LinkedAccount = { id: string; providerId: string; accountId: string };
 export function ConnectionsSection({ isPl }: { isPl: boolean }) {
   const [accounts, setAccounts] = useState<LinkedAccount[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [needsReauth, setNeedsReauth] = useState(false);
 
   async function load() {
-    const { data } = await authClient.listAccounts();
-    setAccounts((data as LinkedAccount[] | null) ?? []);
+    setLoadFailed(false);
+    try {
+      const { data, error: listError } = await authClient.listAccounts();
+      if (listError || !data) return setLoadFailed(true);
+      setAccounts(data as LinkedAccount[]);
+    } catch {
+      setLoadFailed(true);
+    }
   }
 
   useEffect(() => {
@@ -106,19 +191,29 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
   async function connect(provider: "google") {
     setError(null);
     rememberReturnPath(window.location.pathname + window.location.search);
-    const { error: linkError } = await authClient.linkSocial({ provider, callbackURL: "/sso-callback" });
-    if (linkError) setError(authErrorMessage(linkError, isPl));
+    try {
+      // Errors (another e-mail in Google, account already linked elsewhere) come back to /sso-callback?error=<code>,
+      // which explains them before sending the user back here (audit AUTH-09).
+      const { error: linkError } = await authClient.linkSocial({ provider, callbackURL: "/sso-callback", errorCallbackURL: "/sso-callback" });
+      if (linkError) setError(authErrorMessage(linkError, isPl));
+    } catch {
+      setError(authErrorMessage(NETWORK_ERROR, isPl));
+    }
   }
 
   async function disconnect(account: LinkedAccount) {
     setError(null);
     setNeedsReauth(false);
-    const { error: unlinkError } = await authClient.unlinkAccount({ accountId: account.id });
-    if (unlinkError) {
-      if (isSessionNotFresh(unlinkError)) return setNeedsReauth(true);
-      return setError(authErrorMessage(unlinkError, isPl));
+    try {
+      const { error: unlinkError } = await authClient.unlinkAccount({ accountId: account.id });
+      if (unlinkError) {
+        if (isSessionNotFresh(unlinkError)) return setNeedsReauth(true);
+        return setError(authErrorMessage(unlinkError, isPl));
+      }
+      await load();
+    } catch {
+      setError(authErrorMessage(NETWORK_ERROR, isPl));
     }
-    await load();
   }
 
   const external = (accounts ?? []).filter((a) => a.providerId !== "credential");
@@ -128,6 +223,7 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
     <div className="space-y-3">
       <Feedback error={error} info={null} />
       {needsReauth && <ReauthNotice isPl={isPl} />}
+      {loadFailed && <RetryNotice isPl={isPl} onRetry={() => void load()} />}
       <ul className="space-y-2">
         {external.map((acc) => {
           const known = OAUTH_PROVIDERS.find((p) => p.provider === acc.providerId);
@@ -147,7 +243,7 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
           <li className="text-[13px] text-[var(--chan-muted)]">{isPl ? "Brak połączonych kont." : "No connected accounts."}</li>
         )}
       </ul>
-      {connectable.map(({ provider, label, Icon }) => (
+      {accounts && connectable.map(({ provider, label, Icon }) => (
         <button
           key={provider}
           type="button"
@@ -165,28 +261,26 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
 export function DangerSection({ isPl, onDeleted }: { isPl: boolean; onDeleted: () => void }) {
   const [confirm, setConfirm] = useState("");
   const [password, setPassword] = useState("");
-  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+  const { hasPassword, failed, retry } = useHasPassword();
   const [needsGoogle, setNeedsGoogle] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const CONFIRM_WORD = isPl ? "USUŃ" : "DELETE";
 
-  useEffect(() => {
-    void authClient.listAccounts().then(({ data }) => {
-      setHasPassword(Boolean(data?.some((a: { providerId: string }) => a.providerId === "credential")));
-    });
-  }, []);
-
   // Deleting is irreversible, so the server wants proof it is really the owner: the password, or (Google-only
   // accounts) a sign-in from the last few minutes.
   async function confirmWithGoogle() {
     rememberReturnPath(window.location.pathname + window.location.search);
-    const { error: socialError } = await authClient.signIn.social({
-      provider: "google",
-      callbackURL: "/sso-callback",
-      errorCallbackURL: "/sso-callback?error=1",
-    });
-    if (socialError) setError(authErrorMessage(socialError, isPl));
+    try {
+      const { error: socialError } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/sso-callback",
+        errorCallbackURL: "/sso-callback",
+      });
+      if (socialError) setError(authErrorMessage(socialError, isPl));
+    } catch {
+      setError(authErrorMessage(NETWORK_ERROR, isPl));
+    }
   }
 
   async function del(e: React.FormEvent) {
@@ -200,10 +294,15 @@ export function DangerSection({ isPl, onDeleted }: { isPl: boolean; onDeleted: (
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(hasPassword ? { password } : {}),
     }).catch(() => null);
-    if (!response?.ok) {
-      const body = (await response?.json().catch(() => null)) as { error?: string } | null;
+    if (!response) {
+      setError(authErrorMessage(NETWORK_ERROR, isPl));
+      setLoading(false);
+      return;
+    }
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { error?: string } | null;
       if (body?.error === "REAUTH_REQUIRED") setNeedsGoogle(true);
-      setError(authErrorMessage({ code: body?.error, status: response?.status }, isPl));
+      setError(authErrorMessage({ code: body?.error, status: response.status }, isPl));
       setLoading(false);
       return;
     }
@@ -216,6 +315,7 @@ export function DangerSection({ isPl, onDeleted }: { isPl: boolean; onDeleted: (
   return (
     <form onSubmit={del} className="space-y-3">
       <Feedback error={error} info={null} />
+      {failed && <RetryNotice isPl={isPl} onRetry={retry} />}
       <p className="text-[13px] leading-[1.5] text-[var(--chan-body)]">
         {isPl
           ? "Usunięcie konta jest nieodwracalne. Wpisz USUŃ, aby potwierdzić."

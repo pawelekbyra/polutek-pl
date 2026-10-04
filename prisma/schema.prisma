@@ -9,7 +9,8 @@ datasource db {
 }
 
 model User {
-  id                            String     @id // This is now the clerkUserId directly
+  // Better Auth user id (rows from before 2026-10-02 keep the id the old identity provider gave them).
+  id                            String     @id
   email                         String     @unique
   username                      String?
   name                          String?
@@ -28,8 +29,11 @@ model User {
   emailVerified                 Boolean    @default(false)
   // Better Auth twoFactor plugin flag (TOTP).
   twoFactorEnabled              Boolean?   @default(false)
-  // True for accounts created through Google until the user picks a nickname (and optionally an
-  // avatar) in the first-sign-in dialog. Email sign-ups choose both up front.
+  // True for every new account (e-mail or Google), and for older accounts whose name breaks the
+  // nickname rules, until the user picks a nickname in the first-sign-in dialog. While true, `name`
+  // is only a placeholder: it does not reserve the nickname and the account cannot comment or react.
+  // Nicknames of active, onboarded accounts are unique case-insensitively through the partial index
+  // "User_name_lower_active_key" (migration 20261003200000, not expressible in this schema).
   onboardingPending             Boolean    @default(false)
   createdAt                     DateTime   @default(now())
   updatedAt                     DateTime   @updatedAt

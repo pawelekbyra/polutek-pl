@@ -14,10 +14,6 @@ export class UserRepository {
     });
   }
 
-  async findByClerkId(clerkId: string) {
-    return await this.findById(clerkId);
-  }
-
   async findByEmail(email: string) {
     return await this.user.findUnique({
       where: { email },
@@ -79,20 +75,6 @@ export class UserRepository {
         imageUrl: data.imageUrl,
         language: data.language || 'en',
       },
-    });
-  }
-
-  async findWithPaymentTotalsAndActivePatronGrants(id: string) {
-    return await this.user.findUnique({
-      where: { id },
-      include: {
-        paymentTotals: true,
-        patronGrants: {
-          where: { revokedAt: null },
-          select: { id: true },
-          take: 1,
-        },
-      } as any
     });
   }
 

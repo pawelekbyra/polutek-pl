@@ -15,6 +15,8 @@ cd "$(dirname "$(readlink -f "$0")")"
 
 HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-150}"
 KEEP_IMAGES="${KEEP_IMAGES:-3}"
+BACKUP_KEEP="${BACKUP_KEEP:-10}"
+[[ "$BACKUP_KEEP" =~ ^[1-9][0-9]*$ ]] || { echo "BACKUP_KEEP must be a positive integer" >&2; exit 1; }
 log() { printf '[deploy %s] %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 die() { log "ERROR: $*" >&2; exit 1; }
 
@@ -83,11 +85,19 @@ fi
 log "starting db"
 docker compose up -d db
 for _ in $(seq 1 30); do [[ "$(docker inspect -f '{{.State.Health.Status}}' "$(docker compose ps -q db)" 2>/dev/null)" == "healthy" ]] && break; sleep 2; done
-mkdir -p /opt/serwerek/backups
-dump="/opt/serwerek/backups/pre-deploy-$tag-$(date -u +%Y%m%dT%H%M%S).sql.gz"
+# The dump holds e-mails, password hashes, encrypted 2FA secrets and payments: root-only (dir 700, files 600),
+# whatever the shell's umask. Only the last BACKUP_KEEP pre-deploy dumps are kept.
+backups=/opt/serwerek/backups
+dump="$backups/pre-deploy-$tag-$(date -u +%Y%m%dT%H%M%S).sql.gz"
 log "pre-deploy dump -> $dump"
-docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' | gzip > "$dump" || die "pre-deploy dump failed"
-find /opt/serwerek/backups -name 'pre-deploy-*.sql.gz' -mtime +14 -delete 2>/dev/null || true
+(
+  umask 077
+  mkdir -p "$backups"
+  chmod 700 "$backups"
+  docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' | gzip > "$dump"
+) || { rm -f "$dump"; die "pre-deploy dump failed"; }
+chmod 600 "$backups"/pre-deploy-*.sql.gz 2>/dev/null || true
+ls -1t "$backups"/pre-deploy-*.sql.gz 2>/dev/null | tail -n +$((BACKUP_KEEP + 1)) | xargs -r rm -f --
 log "prisma migrate deploy"
 MIGRATOR_IMAGE="$migrator_image" docker compose --profile tools run --rm migrate || die "migration failed; app NOT restarted (still on ${prev_image:-none})"
 

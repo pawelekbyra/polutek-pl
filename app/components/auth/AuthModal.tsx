@@ -61,19 +61,24 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
   const [captchaState, setCaptchaState] = useState<CaptchaState>("checking");
 
   useEffect(() => {
+    setCode("");
+    setConfirmPassword("");
     if (open) {
       setView(notice === "link-expired" ? "link-expired" : initialView);
       setError(null);
-      setInfo(
-        notice === "verified"
-          ? (isPl ? "Adres e-mail potwierdzony. Zaloguj się." : "Email confirmed. Please sign in.")
-          : null,
-      );
-      setCode("");
-      setConfirmPassword("");
+      setInfo(notice === "verified" ? (isPl ? "Adres e-mail potwierdzony. Zaloguj się." : "Email confirmed. Please sign in.") : null);
       setEmailTaken(null);
       setLoading(false);
+      return;
     }
+    // Shared computers (AUTH-04): the modal stays mounted for the whole visit, so whatever was typed is wiped
+    // whenever it closes (sign-in, "×", Escape); the "Show password" toggle unmounts with the dialog content.
+    setEmail("");
+    setPassword("");
+    setUseBackupCode(false);
+    setTrustDevice(false);
+    setWrongCredentials(false);
+    setCaptchaToken(null);
     // isPl is read only to localise the one-off notice text, not a reason to reset the form.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialView, notice]);
@@ -100,8 +105,21 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
     captchaRef.current?.reset();
   }
 
+  // Every auth call runs through here (AUTH-08): the spinner always stops, and a dropped connection
+  // (the auth client throws on network errors) shows a readable message.
+  async function run(task: () => Promise<void>) {
+    setLoading(true);
+    setError(null);
+    try {
+      await task();
+    } catch {
+      fail({ code: "NETWORK_ERROR" });
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function finishSignedIn() {
-    setLoading(false);
     const next = peekReturnPath();
     clearReturnPath();
     onOpenChange(false);
@@ -109,115 +127,111 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
     router.refresh();
   }
 
-  async function handlePasswordSignIn(e: React.FormEvent) {
+  function handlePasswordSignIn(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    const { data, error: signInError } = await authClient.signIn.email({
-      email,
-      password,
-      callbackURL: returnTo(),
-      fetchOptions: captchaFetchOptions(captchaToken),
-    });
-    if (signInError) {
-      if (signInError.code === "EMAIL_NOT_VERIFIED") {
-        setInfo(isPl ? "Potwierdź adres e-mail. Wysłaliśmy nowy link." : "Please verify your email. We sent a new link.");
-        setView("verify-sent");
-        setLoading(false);
-        captchaRef.current?.reset();
+    return run(async () => {
+      const { data, error: signInError } = await authClient.signIn.email({
+        email,
+        password,
+        callbackURL: returnTo(),
+        fetchOptions: captchaFetchOptions(captchaToken),
+      });
+      if (signInError) {
+        if (signInError.code === "EMAIL_NOT_VERIFIED") {
+          setInfo(isPl ? "Potwierdź adres e-mail. Wysłaliśmy nowy link." : "Please verify your email. We sent a new link.");
+          setView("verify-sent");
+          captchaRef.current?.reset();
+          return;
+        }
+        return fail(signInError);
+      }
+      if (data && "twoFactorRedirect" in data && data.twoFactorRedirect) {
+        setView("two-factor");
         return;
       }
-      return fail(signInError);
-    }
-    if (data && "twoFactorRedirect" in data && data.twoFactorRedirect) {
-      setView("two-factor");
-      setLoading(false);
-      return;
-    }
-    finishSignedIn();
+      finishSignedIn();
+    });
   }
 
-  async function handleSignUp(e: React.FormEvent) {
+  function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     if (password !== confirmPassword) return setError(passwordMismatchMessage(isPl));
-    setLoading(true);
-    setError(null);
     setEmailTaken(null);
-    // No nickname here: the server stores a placeholder name and the first-sign-in dialog asks for it.
-    const { error: signUpError } = await authClient.signUp.email({
-      email,
-      password,
-      name: email.split("@")[0] || "user",
-      language: isPl ? "pl" : "en",
-      callbackURL: returnTo(),
-      fetchOptions: captchaFetchOptions(captchaToken),
-    });
-    if (signUpError) {
-      // Owner decision 2026-10-02: say plainly when the address already has an account (see docs).
-      if (signUpError.code === "EMAIL_TAKEN" || signUpError.code === "EMAIL_TAKEN_GOOGLE") {
-        setEmailTaken(signUpError.code === "EMAIL_TAKEN_GOOGLE" ? "google" : "password");
+    return run(async () => {
+      // No nickname here: the server stores a placeholder name and the first-sign-in dialog asks for it.
+      const { error: signUpError } = await authClient.signUp.email({
+        email,
+        password,
+        name: email.split("@")[0] || "user",
+        language: isPl ? "pl" : "en",
+        callbackURL: returnTo(),
+        fetchOptions: captchaFetchOptions(captchaToken),
+      });
+      if (signUpError) {
+        // Owner decision 2026-10-02: say plainly when the address already has an account (see docs).
+        if (signUpError.code === "EMAIL_TAKEN" || signUpError.code === "EMAIL_TAKEN_GOOGLE") {
+          setEmailTaken(signUpError.code === "EMAIL_TAKEN_GOOGLE" ? "google" : "password");
+        }
+        return fail(signUpError);
       }
-      return fail(signUpError);
-    }
-    setInfo(null);
-    setView("verify-sent");
-    setLoading(false);
-    captchaRef.current?.reset();
+      setInfo(null);
+      setView("verify-sent");
+      captchaRef.current?.reset();
+    });
   }
 
-  async function handleResend(e?: React.FormEvent) {
+  function handleResend(e?: React.FormEvent) {
     e?.preventDefault();
-    setLoading(true);
-    setError(null);
-    const { error: resendError } = await authClient.sendVerificationEmail({
-      email,
-      callbackURL: returnTo(),
-      fetchOptions: captchaFetchOptions(captchaToken),
+    return run(async () => {
+      const { error: resendError } = await authClient.sendVerificationEmail({
+        email,
+        callbackURL: returnTo(),
+        fetchOptions: captchaFetchOptions(captchaToken),
+      });
+      if (resendError) return fail(resendError);
+      setInfo(isPl ? "Wysłaliśmy link ponownie." : "We sent the link again.");
+      captchaRef.current?.reset();
     });
-    if (resendError) return fail(resendError);
-    setInfo(isPl ? "Wysłaliśmy link ponownie." : "We sent the link again.");
-    setLoading(false);
-    captchaRef.current?.reset();
   }
 
-  async function handleForgot(e: React.FormEvent) {
+  function handleForgot(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    const { error: resetError } = await authClient.requestPasswordReset({
-      email,
-      redirectTo: "/reset-password",
-      fetchOptions: captchaFetchOptions(captchaToken),
+    return run(async () => {
+      const { error: resetError } = await authClient.requestPasswordReset({
+        email,
+        redirectTo: "/reset-password",
+        fetchOptions: captchaFetchOptions(captchaToken),
+      });
+      if (resetError) return fail(resetError);
+      // Always the same answer, so the form cannot be used to find out which addresses have accounts.
+      setView("forgot-sent");
+      captchaRef.current?.reset();
     });
-    if (resetError) return fail(resetError);
-    // Always the same answer, so the form cannot be used to find out which addresses have accounts.
-    setView("forgot-sent");
-    setLoading(false);
-    captchaRef.current?.reset();
   }
 
-  async function handleTwoFactor(e: React.FormEvent) {
+  function handleTwoFactor(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    const result = useBackupCode
-      ? await authClient.twoFactor.verifyBackupCode({ code: code.trim() })
-      : await authClient.twoFactor.verifyTotp({ code: code.trim(), trustDevice });
-    if (result.error) return fail(result.error);
-    finishSignedIn();
+    return run(async () => {
+      const result = useBackupCode
+        ? await authClient.twoFactor.verifyBackupCode({ code: code.trim() })
+        : await authClient.twoFactor.verifyTotp({ code: code.trim(), trustDevice });
+      if (result.error) return fail(result.error);
+      finishSignedIn();
+    });
   }
 
-  async function handleOAuth(provider: "google") {
-    setError(null);
+  function handleOAuth(provider: "google") {
     // Keep a path the proxy asked for (`next`); only fall back to the current page when none is stored.
     rememberReturnPathIfNone(currentPath());
-    const { error: socialError } = await authClient.signIn.social({
-      provider,
-      callbackURL: "/sso-callback",
-      newUserCallbackURL: "/sso-callback",
-      errorCallbackURL: "/sso-callback?error=1",
+    return run(async () => {
+      const { error: socialError } = await authClient.signIn.social({
+        provider,
+        callbackURL: "/sso-callback",
+        newUserCallbackURL: "/sso-callback",
+        errorCallbackURL: "/sso-callback",
+      });
+      if (socialError) fail(socialError);
     });
-    if (socialError) fail(socialError);
   }
 
   const title = {

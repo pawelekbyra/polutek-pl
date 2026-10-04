@@ -5,7 +5,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Feedback, Field, Primary, ReauthNotice, useAccountUser } from "./AccountSections";
+import { Feedback, Field, Primary, ReauthNotice, useAccountUser, useHasPassword } from "./AccountSections";
 import { TurnstileWidget, useCaptchaRequired, type TurnstileHandle } from "./TurnstileWidget";
 import { authClient, captchaFetchOptions } from "@/lib/auth/client";
 import { authErrorMessage, isSessionNotFresh } from "@/lib/auth/errors";
@@ -14,6 +14,28 @@ import { refreshSession } from "@/lib/auth/react";
 
 type Msg = { error: string | null; info: string | null };
 const EMPTY: Msg = { error: null, info: null };
+const NETWORK_ERROR = { code: "NETWORK_ERROR" } as const;
+
+/**
+ * Runs one account action (audit AUTH-08): the spinner always stops, and a dropped connection (the auth
+ * client throws on network errors) ends in a readable message instead of a button that spins for ever.
+ */
+async function guarded(
+  setLoading: (value: boolean) => void,
+  setMsg: (msg: Msg) => void,
+  isPl: boolean,
+  task: () => Promise<void>,
+) {
+  setLoading(true);
+  setMsg(EMPTY);
+  try {
+    await task();
+  } catch {
+    setMsg({ error: authErrorMessage(NETWORK_ERROR, isPl), info: null });
+  } finally {
+    setLoading(false);
+  }
+}
 
 function PasswordPart({ isPl, hasPassword }: { isPl: boolean; hasPassword: boolean }) {
   const user = useAccountUser();
@@ -25,32 +47,33 @@ function PasswordPart({ isPl, hasPassword }: { isPl: boolean; hasPassword: boole
   const captchaRef = useRef<TurnstileHandle>(null);
   const captchaRequired = useCaptchaRequired();
 
-  async function change(e: React.FormEvent) {
+  function change(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setMsg(EMPTY);
-    const { error } = await authClient.changePassword({ currentPassword, newPassword, revokeOtherSessions: true });
-    setLoading(false);
-    if (error) return setMsg({ error: authErrorMessage(error, isPl), info: null });
-    setCurrentPassword("");
-    setNewPassword("");
-    setMsg({ error: null, info: isPl ? "Hasło zmienione. Pozostałe urządzenia wylogowano." : "Password changed. Other devices were signed out." });
+    return guarded(setLoading, setMsg, isPl, async () => {
+      const { error } = await authClient.changePassword({ currentPassword, newPassword, revokeOtherSessions: true });
+      if (error) return setMsg({ error: authErrorMessage(error, isPl), info: null });
+      setCurrentPassword("");
+      setNewPassword("");
+      setMsg({ error: null, info: isPl ? "Hasło zmienione. Pozostałe urządzenia wylogowano." : "Password changed. Other devices were signed out." });
+    });
   }
 
-  async function sendSetLink() {
+  function sendSetLink() {
     const email = user.primaryEmailAddress?.emailAddress;
     if (!email) return;
-    setLoading(true);
-    setMsg(EMPTY);
-    const { error } = await authClient.requestPasswordReset({
-      email,
-      redirectTo: "/reset-password",
-      fetchOptions: captchaFetchOptions(captchaToken),
+    return guarded(setLoading, setMsg, isPl, async () => {
+      try {
+        const { error } = await authClient.requestPasswordReset({
+          email,
+          redirectTo: "/reset-password",
+          fetchOptions: captchaFetchOptions(captchaToken),
+        });
+        if (error) return setMsg({ error: authErrorMessage(error, isPl), info: null });
+        setMsg({ error: null, info: isPl ? "Wysłaliśmy link do ustawienia hasła na Twój e-mail." : "We sent a link to set a password to your email." });
+      } finally {
+        captchaRef.current?.reset();
+      }
     });
-    setLoading(false);
-    captchaRef.current?.reset();
-    if (error) return setMsg({ error: authErrorMessage(error, isPl), info: null });
-    setMsg({ error: null, info: isPl ? "Wysłaliśmy link do ustawienia hasła na Twój e-mail." : "We sent a link to set a password to your email." });
   }
 
   if (!hasPassword) {
@@ -124,9 +147,13 @@ function BackupCodesBox({ codes, isPl }: { codes: string[]; isPl: boolean }) {
   );
 }
 
-function TwoFactorPart({ isPl, hasPassword }: { isPl: boolean; hasPassword: boolean }) {
+export function TwoFactorPart({ isPl, hasPassword }: { isPl: boolean; hasPassword: boolean }) {
   const user = useAccountUser();
-  const [password, setPassword] = useState("");
+  // One password field per action (audit AUTH-13): typing the password to get new backup codes and
+  // pressing Enter must never turn two-step verification off.
+  const [enablePassword, setEnablePassword] = useState("");
+  const [codesPassword, setCodesPassword] = useState("");
+  const [disablePassword, setDisablePassword] = useState("");
   const [setup, setSetup] = useState<{ uri: string; backupCodes: string[] } | null>(null);
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -143,52 +170,49 @@ function TwoFactorPart({ isPl, hasPassword }: { isPl: boolean; hasPassword: bool
     );
   }
 
-  async function regenerateCodes(e: React.FormEvent) {
+  function start(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setMsg(EMPTY);
-    const { data, error } = await authClient.twoFactor.generateBackupCodes({ password });
-    setLoading(false);
-    if (error || !data) return setMsg({ error: authErrorMessage(error, isPl), info: null });
-    setPassword("");
-    setNewCodes(data.backupCodes);
-    setMsg({ error: null, info: isPl ? "Wygenerowano nowe kody. Poprzednie przestały działać." : "New codes generated. The old ones no longer work." });
+    return guarded(setLoading, setMsg, isPl, async () => {
+      const { data, error } = await authClient.twoFactor.enable({ password: enablePassword });
+      if (error || !data || !("totpURI" in data)) return setMsg({ error: authErrorMessage(error, isPl), info: null });
+      setSetup({ uri: data.totpURI, backupCodes: data.backupCodes });
+      setEnablePassword("");
+    });
   }
 
-  async function start(e: React.FormEvent) {
+  function confirm(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setMsg(EMPTY);
-    const { data, error } = await authClient.twoFactor.enable({ password });
-    setLoading(false);
-    if (error || !data || !("totpURI" in data)) return setMsg({ error: authErrorMessage(error, isPl), info: null });
-    setSetup({ uri: data.totpURI, backupCodes: data.backupCodes });
-    setPassword("");
+    return guarded(setLoading, setMsg, isPl, async () => {
+      const { error } = await authClient.twoFactor.verifyTotp({ code: code.trim() });
+      if (error) return setMsg({ error: authErrorMessage(error, isPl), info: null });
+      setSetup(null);
+      setCode("");
+      await refreshSession();
+      setMsg({ error: null, info: isPl ? "Weryfikacja dwuetapowa włączona." : "Two-step verification is on." });
+    });
   }
 
-  async function confirm(e: React.FormEvent) {
+  function regenerateCodes(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setMsg(EMPTY);
-    const { error } = await authClient.twoFactor.verifyTotp({ code: code.trim() });
-    setLoading(false);
-    if (error) return setMsg({ error: authErrorMessage(error, isPl), info: null });
-    setSetup(null);
-    setCode("");
-    await refreshSession();
-    setMsg({ error: null, info: isPl ? "Weryfikacja dwuetapowa włączona." : "Two-step verification is on." });
+    return guarded(setLoading, setMsg, isPl, async () => {
+      const { data, error } = await authClient.twoFactor.generateBackupCodes({ password: codesPassword });
+      if (error || !data) return setMsg({ error: authErrorMessage(error, isPl), info: null });
+      setCodesPassword("");
+      setNewCodes(data.backupCodes);
+      setMsg({ error: null, info: isPl ? "Wygenerowano nowe kody. Poprzednie przestały działać." : "New codes generated. The old ones no longer work." });
+    });
   }
 
-  async function disable(e: React.FormEvent) {
+  function disable(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
-    setMsg(EMPTY);
-    const { error } = await authClient.twoFactor.disable({ password });
-    setLoading(false);
-    if (error) return setMsg({ error: authErrorMessage(error, isPl), info: null });
-    setPassword("");
-    await refreshSession();
-    setMsg({ error: null, info: isPl ? "Weryfikacja dwuetapowa wyłączona." : "Two-step verification is off." });
+    return guarded(setLoading, setMsg, isPl, async () => {
+      const { error } = await authClient.twoFactor.disable({ password: disablePassword });
+      if (error) return setMsg({ error: authErrorMessage(error, isPl), info: null });
+      setDisablePassword("");
+      setNewCodes(null);
+      await refreshSession();
+      setMsg({ error: null, info: isPl ? "Weryfikacja dwuetapowa wyłączona." : "Two-step verification is off." });
+    });
   }
 
   if (setup) {
@@ -206,28 +230,43 @@ function TwoFactorPart({ isPl, hasPassword }: { isPl: boolean; hasPassword: bool
     );
   }
 
+  const status = (
+    <p className="text-[13px] font-bold text-[var(--chan-ink)]">
+      {isPl ? "Weryfikacja dwuetapowa (TOTP)" : "Two-step verification (TOTP)"}: {user.twoFactorEnabled ? (isPl ? "włączona" : "on") : (isPl ? "wyłączona" : "off")}
+    </p>
+  );
+
+  if (!user.twoFactorEnabled) {
+    return (
+      <form onSubmit={start} className="space-y-3 border-t border-[var(--chan-line)] pt-3">
+        <Feedback error={msg.error} info={msg.info} />
+        {status}
+        <Field label={isPl ? "Hasło" : "Password"} type="password" value={enablePassword} onChange={setEnablePassword} autoComplete="current-password" />
+        <Primary loading={loading} label={isPl ? "Włącz" : "Turn on"} />
+      </form>
+    );
+  }
+
   return (
-    <form onSubmit={user.twoFactorEnabled ? disable : start} className="space-y-3 border-t border-[var(--chan-line)] pt-3">
+    <div className="space-y-3 border-t border-[var(--chan-line)] pt-3">
       <Feedback error={msg.error} info={msg.info} />
-      <p className="text-[13px] font-bold text-[var(--chan-ink)]">
-        {isPl ? "Weryfikacja dwuetapowa (TOTP)" : "Two-step verification (TOTP)"}: {user.twoFactorEnabled ? (isPl ? "włączona" : "on") : (isPl ? "wyłączona" : "off")}
-      </p>
-      <Field label={isPl ? "Hasło" : "Password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" />
-      <Primary loading={loading} label={user.twoFactorEnabled ? (isPl ? "Wyłącz" : "Turn off") : (isPl ? "Włącz" : "Turn on")} />
-      {user.twoFactorEnabled && (
-        <div className="space-y-2 border-t border-[var(--chan-line)] pt-3">
-          {newCodes && <BackupCodesBox codes={newCodes} isPl={isPl} />}
-          <button
-            type="button"
-            disabled={loading || !password}
-            onClick={(e) => void regenerateCodes(e as unknown as React.FormEvent)}
-            className="text-[12px] font-bold underline hover:text-[var(--chan-ink)] disabled:opacity-50"
-          >
-            {isPl ? "Wygeneruj nowe kody zapasowe (wpisz hasło powyżej)" : "Generate new backup codes (enter your password above)"}
-          </button>
-        </div>
-      )}
-    </form>
+      {status}
+      <form onSubmit={regenerateCodes} aria-label={isPl ? "Nowe kody zapasowe" : "New backup codes"} className="space-y-2">
+        {newCodes && <BackupCodesBox codes={newCodes} isPl={isPl} />}
+        <Field label={isPl ? "Hasło do nowych kodów zapasowych" : "Password for new backup codes"} type="password" value={codesPassword} onChange={setCodesPassword} autoComplete="current-password" />
+        <Primary loading={loading} label={isPl ? "Wygeneruj nowe kody zapasowe" : "Generate new backup codes"} />
+      </form>
+      <form onSubmit={disable} aria-label={isPl ? "Wyłącz weryfikację dwuetapową" : "Turn off two-step verification"} className="space-y-2 border-t border-[var(--chan-line)] pt-3">
+        <Field label={isPl ? "Hasło do wyłączenia weryfikacji" : "Password to turn verification off"} type="password" value={disablePassword} onChange={setDisablePassword} autoComplete="current-password" />
+        <button
+          type="submit"
+          disabled={loading || !disablePassword}
+          className="flex h-[44px] w-full items-center justify-center rounded-[12px] border border-red-600 font-brand text-[15px] font-bold text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+        >
+          {isPl ? "Wyłącz weryfikację dwuetapową" : "Turn off two-step verification"}
+        </button>
+      </form>
+    </div>
   );
 }
 
@@ -247,14 +286,19 @@ function SessionsPart({ isPl }: { isPl: boolean }) {
   }
 
   async function load() {
-    const [list, current] = await Promise.all([authClient.listSessions(), authClient.getSession()]);
-    if (list.error) {
+    try {
+      const [list, current] = await Promise.all([authClient.listSessions(), authClient.getSession()]);
+      if (list.error) {
+        setSessions([]);
+        return report(list.error);
+      }
+      setNeedsReauth(false);
+      setSessions((list.data as DeviceSession[] | null) ?? []);
+      setCurrentToken(current.data?.session?.token ?? null);
+    } catch {
       setSessions([]);
-      return report(list.error);
+      report(NETWORK_ERROR);
     }
-    setNeedsReauth(false);
-    setSessions((list.data as DeviceSession[] | null) ?? []);
-    setCurrentToken(current.data?.session?.token ?? null);
   }
 
   useEffect(() => {
@@ -262,16 +306,24 @@ function SessionsPart({ isPl }: { isPl: boolean }) {
   }, []);
 
   async function revoke(token: string) {
-    const { error } = await authClient.revokeSession({ token });
-    if (error) return report(error);
-    await load();
+    try {
+      const { error } = await authClient.revokeSession({ token });
+      if (error) return report(error);
+      await load();
+    } catch {
+      report(NETWORK_ERROR);
+    }
   }
 
   async function revokeOthers() {
-    const { error } = await authClient.revokeOtherSessions();
-    if (error) return report(error);
-    setMsg({ error: null, info: isPl ? "Wylogowano pozostałe urządzenia." : "Other devices were signed out." });
-    await load();
+    try {
+      const { error } = await authClient.revokeOtherSessions();
+      if (error) return report(error);
+      setMsg({ error: null, info: isPl ? "Wylogowano pozostałe urządzenia." : "Other devices were signed out." });
+      await load();
+    } catch {
+      report(NETWORK_ERROR);
+    }
   }
 
   return (
@@ -306,14 +358,18 @@ function SessionsPart({ isPl }: { isPl: boolean }) {
 }
 
 export function SecuritySection({ isPl }: { isPl: boolean }) {
-  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+  const { hasPassword, failed, retry } = useHasPassword();
 
-  useEffect(() => {
-    void authClient.listAccounts().then(({ data }) => {
-      setHasPassword(Boolean(data?.some((a: { providerId: string }) => a.providerId === "credential")));
-    });
-  }, []);
-
+  if (failed) {
+    return (
+      <div role="alert" className="space-y-2 rounded-lg bg-red-50 px-3 py-2">
+        <p className="text-[13px] font-semibold text-red-600">{authErrorMessage(NETWORK_ERROR, isPl)}</p>
+        <button type="button" onClick={retry} className="text-[12px] font-bold text-red-700 underline">
+          {isPl ? "Spróbuj ponownie" : "Try again"}
+        </button>
+      </div>
+    );
+  }
   if (hasPassword === null) return null;
   return (
     <div className="space-y-4">

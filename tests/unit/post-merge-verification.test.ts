@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { auth } from "@/lib/auth/server";
 import { prisma } from "@/lib/prisma";
-import { getActorFromAuth, requireAdminSession } from "@/lib/api/auth";
+import { getActorFromAuth, requireAdminActor } from "@/lib/api/auth";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 
@@ -54,8 +54,7 @@ describe("Post-merge Admin Auth Canonicalization Verification", () => {
     const actor = await getActorFromAuth({ allowGuest: false });
     expect(actor).toEqual({ type: "admin", userId: "db_admin_1" });
 
-    const session = await requireAdminSession();
-    expect(session.role).toBe("admin");
+    await expect(requireAdminActor()).resolves.toEqual({ type: "admin", userId: "db_admin_1" });
   });
 
   it("VERIFY: Old admin claim at DB USER does not give access", async () => {

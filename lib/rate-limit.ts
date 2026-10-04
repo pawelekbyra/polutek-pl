@@ -68,10 +68,17 @@ export class MemoryStore implements RateLimitStore {
   }
 }
 
+/**
+ * Upper bound for one command to the Redis REST gateway. A hung gateway must turn into an error
+ * the caller can handle (see lib/auth/rate-limit-storage.ts), never into a hung request.
+ */
+export const REDIS_COMMAND_TIMEOUT_MS = 1500;
+
 export class UpstashRedisStore implements RateLimitStore {
   constructor(
     private readonly restUrl: string,
     private readonly token: string,
+    private readonly timeoutMs: number = REDIS_COMMAND_TIMEOUT_MS,
   ) {}
 
   private async command<T>(command: unknown[]) {
@@ -83,6 +90,7 @@ export class UpstashRedisStore implements RateLimitStore {
       },
       body: JSON.stringify(command),
       cache: 'no-store',
+      signal: AbortSignal.timeout(this.timeoutMs),
     });
 
     if (!response.ok) {

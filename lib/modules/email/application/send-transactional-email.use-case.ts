@@ -129,3 +129,19 @@ export async function sendVerificationEmail(toEmail: string, actionUrl: string, 
 export async function sendPasswordResetEmail(toEmail: string, actionUrl: string, language: EmailLanguage) {
   return sendTemplateEmail({ to: toEmail, slug: 'reset-password', variables: { actionUrl }, language });
 }
+
+/** E-mail change, step 1: the current address approves the change to `newEmail`. */
+export async function sendChangeEmailConfirmationEmail(toEmail: string, newEmail: string, actionUrl: string, language: EmailLanguage) {
+  return sendTemplateEmail({ to: toEmail, slug: 'change-email-confirm', variables: { actionUrl, newEmail }, language });
+}
+
+/** E-mail change, step 2: the new address confirms itself. */
+export async function sendChangeEmailVerificationEmail(toEmail: string, actionUrl: string, language: EmailLanguage) {
+  return sendTemplateEmail({ to: toEmail, slug: 'change-email-verify', variables: { actionUrl }, language });
+}
+
+/** E-mail change done: notice to the old address. */
+export async function sendEmailChangedEmail(toEmail: string, newEmail: string, language: EmailLanguage) {
+  return sendTemplateEmail({ to: toEmail, slug: 'email-changed', variables: { newEmail }, language });
+}
+

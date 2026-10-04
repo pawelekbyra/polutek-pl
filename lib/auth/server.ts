@@ -44,16 +44,14 @@ async function readSession(requestHeaders: Headers, fresh: boolean): Promise<Ser
 }
 
 /** Session of the current request (route handlers, server components, actions). */
-export async function auth(options: { fresh?: boolean } = {}): Promise<ServerSession & { sessionClaims: null }> {
+export async function auth(options: { fresh?: boolean } = {}): Promise<ServerSession> {
   const requestHeaders = await headers();
-  const session = await readSession(requestHeaders, options.fresh === true);
-  return { ...session, sessionClaims: null };
+  return readSession(requestHeaders, options.fresh === true);
 }
 
 /** Session for an explicit request object (e.g. when headers() is not available). */
-export async function getAuth(request: Request, options: { fresh?: boolean } = {}): Promise<ServerSession & { sessionClaims: null }> {
-  const session = await readSession(request.headers, options.fresh === true);
-  return { ...session, sessionClaims: null };
+export async function getAuth(request: Request, options: { fresh?: boolean } = {}): Promise<ServerSession> {
+  return readSession(request.headers, options.fresh === true);
 }
 
 /** Signed-in user's session profile, or null. */
