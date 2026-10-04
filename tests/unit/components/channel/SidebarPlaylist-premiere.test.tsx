@@ -36,10 +36,6 @@ vi.mock("@/app/components/AccessLockOverlay", () => ({
   ),
 }));
 
-vi.mock("@/app/components/channel/DonationBox", () => ({
-  default: () => <div id="donations">donation-box-stub</div>,
-}));
-
 vi.mock("@/app/components/preload/AppPreloadProvider", () => ({
   useAppPreload: () => ({ warmVideo: vi.fn() }),
 }));

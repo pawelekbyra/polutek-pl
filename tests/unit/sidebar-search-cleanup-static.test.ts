@@ -34,18 +34,15 @@ describe("#1104 search/sidebar cleanup contracts", () => {
     expect(source("app/components/ChannelHome.tsx")).toContain("compareSidebarItems");
   });
 
-  it("sidebar exposes top-level creatorId and support box does not send an empty creator id", () => {
+  it("sidebar exposes top-level creatorId and never sends an empty creator id", () => {
     const layout = source("lib/modules/channel/application/channel-layout.service.ts");
     const sidebar = source("app/components/channel/SidebarPlaylist.tsx");
     expect(layout).toContain("creatorId: string");
     expect(layout).toContain("creatorId: v.creatorId");
-    expect(sidebar).toContain("find((item) => item.creatorId)");
-    expect(sidebar).toContain("if (!supportItem?.creatorId) return null");
     expect(sidebar).not.toContain('creatorId={layout.sections[0]?.items[0]?.creatorId || ""}');
   });
 
   it("removes dead isPatron prop and tip gate language", () => {
-    expect(source("app/components/channel/DonationBox.tsx")).not.toContain("isPatron");
     const sidebar = source("app/components/channel/SidebarPlaylist.tsx");
     expect(sidebar).not.toContain("isPatron=");
     expect(sidebar).not.toContain("TIP GATE");

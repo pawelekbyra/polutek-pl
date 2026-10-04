@@ -194,7 +194,7 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
 
   it('keeps Stripe webhook verification and idempotency before fulfillment side effects', () => {
     const stripeUseCase = source('lib/modules/payments/application/handle-stripe-webhook.use-case.ts');
-    const constructIndex = stripeUseCase.indexOf('stripe.webhooks.constructEvent');
+    const constructIndex = stripeUseCase.indexOf('Stripe.webhooks.constructEvent');
     const lockIndex = stripeUseCase.indexOf('lockService.acquireLock');
     const fulfillIndex = stripeUseCase.indexOf('fulfillPayment({');
     const refundIndex = stripeUseCase.indexOf('handleRefund({');
@@ -212,8 +212,10 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
     const stripeRoute = source('app/api/webhooks/stripe/route.ts');
     const mediaRoute = source('app/api/media-source/[videoId]/route.ts');
 
-    expect(stripeRoute).toContain('return handleApiError(err)');
+    // Behaviour is covered with real signatures in tests/unit/modules/payments/stripe-webhook-signed.test.ts.
+    expect(stripeRoute).toContain("message: 'Webhook processing failed'");
     expect(stripeRoute).not.toContain('err.stack');
+    expect(stripeRoute).not.toContain('.stack');
     expect(mediaRoute).toContain('MediaPolicy.isProbablyRawMediaUrl');
     expect(mediaRoute).not.toContain('playbackToken');
     expect(handleApiError).toBeDefined();

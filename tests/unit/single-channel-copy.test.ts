@@ -20,10 +20,10 @@ const FILES_TO_CHECK = [
   'app/components/Hero.tsx',
   'app/[locale]/regulamin/page.tsx',
   'app/[locale]/polityka-prywatnosci/page.tsx',
-  'app/components/channel/DonationBox.tsx',
+  'app/components/channel/SupportModal.tsx',
   'app/admin/users/payments/page.tsx',
   'app/admin/users/[userId]/page.tsx',
-  'app/components/playlist/CheckoutModal.tsx',
+  'app/components/support/TipThanksStep.tsx',
 ];
 
 describe('Single-Channel Copy Consistency', () => {

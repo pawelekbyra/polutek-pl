@@ -17,10 +17,6 @@ function buildLimits() {
         minAmount: (1000 + index) / 100,
         maxAmountMinor: 999999,
         maxAmount: 9999.99,
-        patronThresholdMinor: 5000 + index,
-        patronThreshold: (5000 + index) / 100,
-        patronBoxMinMinor: 2000 + index,
-        patronBoxMin: (2000 + index) / 100,
       },
     ]),
   );
@@ -31,7 +27,7 @@ describe('GET /api/payment-settings', () => {
     vi.clearAllMocks();
   });
 
-  it('returns limits, patronThresholds and patronBoxMinimums for every supported currency', async () => {
+  it('returns only { limits }: one minimum per currency, the one the server enforces', async () => {
     const limits = buildLimits();
     vi.mocked(getPaymentCurrencyLimits).mockResolvedValue(limits as any);
 
@@ -39,31 +35,8 @@ describe('GET /api/payment-settings', () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.limits).toEqual(limits);
-    expect(Object.keys(body.patronThresholds)).toEqual([...SUPPORTED_CURRENCIES]);
-    expect(Object.keys(body.patronBoxMinimums)).toEqual([...SUPPORTED_CURRENCIES]);
-  });
-
-  it('keeps the checkout floor, patron threshold and patron-box minimum as three distinct values per currency', async () => {
-    const limits = buildLimits();
-    vi.mocked(getPaymentCurrencyLimits).mockResolvedValue(limits as any);
-
-    const res = await GET();
-    const body = await res.json();
-
-    const pln = limits.PLN;
-    expect(body.limits.PLN.minAmountMinor).toBe(pln.minAmountMinor);
-    expect(body.patronThresholds.PLN).toEqual({
-      thresholdMinor: pln.patronThresholdMinor,
-      threshold: pln.patronThreshold,
-    });
-    expect(body.patronBoxMinimums.PLN).toEqual({
-      minMinor: pln.patronBoxMinMinor,
-      min: pln.patronBoxMin,
-    });
-    // The three minimums must not collapse into the same value for this endpoint's contract.
-    expect(pln.minAmountMinor).not.toBe(pln.patronThresholdMinor);
-    expect(pln.patronThresholdMinor).not.toBe(pln.patronBoxMinMinor);
+    expect(body).toEqual({ limits });
+    expect(Object.keys(body.limits)).toEqual([...SUPPORTED_CURRENCIES]);
   });
 
   it('returns a 500 if getPaymentCurrencyLimits throws', async () => {

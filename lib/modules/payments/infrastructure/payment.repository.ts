@@ -21,20 +21,6 @@ export class PaymentRepository {
     });
   }
 
-  async findUserWithPaymentTotalsAndActivePatronGrants(userId: string, db: ReadDb) {
-    return await db.user.findUnique({
-      where: { id: userId },
-      include: {
-        paymentTotals: true,
-        patronGrants: {
-          where: { revokedAt: null },
-          select: { id: true },
-          take: 1,
-        },
-      },
-    });
-  }
-
   async findPaymentByRequestId(userId: string, requestId: string, db: ReadDb): Promise<PaymentDto | null> {
     return await db.payment.findFirst({
       where: {

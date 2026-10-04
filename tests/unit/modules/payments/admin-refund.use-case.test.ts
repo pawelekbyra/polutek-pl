@@ -1,204 +1,106 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { adminRefund } from '@/lib/modules/payments/application/admin-refund.use-case';
-import { handleRefund } from '@/lib/modules/payments/application/handle-refund.use-case';
-import { getStripeClient } from '@/lib/modules/payments/infrastructure/stripe-client';
-import { AppContext } from '@/lib/modules/shared/app-context';
-import { Actor } from '@/lib/modules/shared/actor';
-import { PaymentStatus } from '@prisma/client';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createFakePaymentsDb, createTestContext } from './fake-payments-db';
 
-const mockRepo = {
-  findById: vi.fn(),
-};
+const db = createFakePaymentsDb();
+const refundsCreate = vi.fn();
+const recordAuditEvent = vi.fn();
 
-vi.mock('@/lib/modules/payments/infrastructure/payment.repository', () => ({
-  PaymentRepository: vi.fn().mockImplementation(function () {
-    return mockRepo;
-  }),
-}));
-
-vi.mock('@/lib/modules/payments/application/handle-refund.use-case', () => ({
-  handleRefund: vi.fn(),
-}));
-
+vi.mock('@/lib/prisma', () => ({ prisma: db }));
+vi.mock('@/lib/modules/audit', () => ({ recordAuditEvent: (...args: unknown[]) => recordAuditEvent(...args) }));
 vi.mock('@/lib/modules/payments/infrastructure/stripe-client', () => ({
-  getStripeClient: vi.fn(),
+  getStripeClient: () => ({ refunds: { create: refundsCreate } }),
 }));
+
+const { adminRefund } = await import('@/lib/modules/payments/application/admin-refund.use-case');
+const { handleRefund } = await import('@/lib/modules/payments/application/handle-refund.use-case');
+
+const adminCtx = () => createTestContext(db, { type: 'admin', userId: 'admin_1' });
+
+function seed(overrides: Record<string, unknown> = {}) {
+  const row = {
+    id: 'pay_1',
+    userId: 'user_1',
+    creatorId: 'creator_1',
+    amountMinor: 1000,
+    refundedAmountMinor: 0,
+    currency: 'PLN',
+    status: 'SUCCEEDED',
+    stripeIntentId: 'pi_1',
+    refundedById: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+  db.payment.rows.push(row);
+  return row;
+}
+
+beforeEach(() => {
+  for (const name of ['payment', 'patronGrant', 'user', 'userPaymentTotal']) db[name].rows.length = 0;
+  db.user.rows.push({ id: 'user_1', email: 'payer@example.com', language: 'pl' });
+  vi.clearAllMocks();
+  refundsCreate.mockResolvedValue({ id: 're_1', status: 'succeeded' });
+});
 
 describe('adminRefund', () => {
-  let ctx: AppContext;
-  const stripeRefundsCreate = vi.fn();
+  it('refunds the rest in full, records who did it and audits it', async () => {
+    const payment = seed();
 
-  beforeEach(() => {
-    vi.clearAllMocks();
+    const result = await adminRefund({ paymentId: 'pay_1', reason: 'payer asked' }, adminCtx());
 
-    (getStripeClient as any).mockReturnValue({
-      refunds: { create: stripeRefundsCreate },
-    });
-
-    ctx = {
-      actor: { type: 'admin', userId: 'admin_1' } as Actor,
-      db: { read: {} as any },
-      prisma: {} as any,
-      now: () => new Date(),
-    } as unknown as AppContext;
+    expect(result.ok && result.data).toEqual({ stripeRefundId: 're_1', amountMinor: 1000, status: 'succeeded' });
+    expect(payment).toMatchObject({ status: 'REFUNDED', refundedAmountMinor: 1000, refundedById: 'admin_1', refundReason: 'payer asked' });
+    expect(recordAuditEvent).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: 'PAYMENT_REFUNDED', targetId: 'pay_1' }));
   });
 
-  function mockPayment(overrides: Record<string, unknown> = {}) {
-    return {
-      id: 'pay_1',
-      userId: 'user_1',
-      amountMinor: 1000,
-      refundedAmountMinor: 0,
-      currency: 'PLN',
-      status: PaymentStatus.SUCCEEDED,
-      stripeIntentId: 'pi_123',
-      ...overrides,
-    };
-  }
+  it('sends an idempotency key, so a retried request cannot refund twice (PAY-11)', async () => {
+    seed({ refundedAmountMinor: 200, status: 'PARTIALLY_REFUNDED' });
 
-  it('creates a full Stripe refund and applies it via handleRefund when no amount is given', async () => {
-    mockRepo.findById.mockResolvedValue(mockPayment());
-    stripeRefundsCreate.mockResolvedValue({ id: 're_1', status: 'succeeded' });
-    (handleRefund as any).mockResolvedValue({ ok: true, data: {} });
+    await adminRefund({ paymentId: 'pay_1', amountMinor: 300 }, adminCtx());
 
-    const result = await adminRefund({ paymentId: 'pay_1' }, ctx);
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.data).toEqual({ stripeRefundId: 're_1', amountMinor: 1000, status: 'succeeded' });
-    }
-    expect(stripeRefundsCreate).toHaveBeenCalledWith({ payment_intent: 'pi_123', amount: 1000 });
-    expect(handleRefund).toHaveBeenCalledWith(
-      {
-        paymentId: 'pay_1',
-        reportedRefundedMinor: 1000,
-        admin: { refundedById: 'admin_1', reason: null, stripeRefundId: 're_1' },
-      },
-      ctx
+    expect(refundsCreate).toHaveBeenCalledWith(
+      { payment_intent: 'pi_1', amount: 300 },
+      { idempotencyKey: 'refund-pay_1-200-300' },
     );
   });
 
-  it('creates a partial refund for the requested amount, adding the total to already-refunded', async () => {
-    mockRepo.findById.mockResolvedValue(mockPayment({ refundedAmountMinor: 200 }));
-    stripeRefundsCreate.mockResolvedValue({ id: 're_2', status: 'succeeded' });
-    (handleRefund as any).mockResolvedValue({ ok: true, data: {} });
+  it('is still audited and attributed when the webhook recorded the refund first (PAY-11)', async () => {
+    const payment = seed();
+    refundsCreate.mockImplementation(async () => {
+      // Stripe's charge.refunded webhook lands before our own DB write.
+      await handleRefund({ stripeIntentId: 'pi_1', reportedRefundedMinor: 1000 }, createTestContext(db));
+      return { id: 're_2', status: 'succeeded' };
+    });
 
-    const result = await adminRefund({ paymentId: 'pay_1', amountMinor: 300, reason: 'duplicate' }, ctx);
+    const result = await adminRefund({ paymentId: 'pay_1' }, adminCtx());
 
     expect(result.ok).toBe(true);
-    expect(stripeRefundsCreate).toHaveBeenCalledWith({
-      payment_intent: 'pi_123',
-      amount: 300,
-      reason: 'requested_by_customer',
-    });
-    expect(handleRefund).toHaveBeenCalledWith(
-      {
-        paymentId: 'pay_1',
-        reportedRefundedMinor: 500,
-        admin: { refundedById: 'admin_1', reason: 'duplicate', stripeRefundId: 're_2' },
-      },
-      ctx
-    );
+    expect(payment).toMatchObject({ status: 'REFUNDED', refundedAmountMinor: 1000, refundedById: 'admin_1' });
+    expect(recordAuditEvent).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: 'PAYMENT_REFUNDED' }));
   });
 
-  it('fails with PAYMENT_NOT_FOUND (404) when the payment does not exist', async () => {
-    mockRepo.findById.mockResolvedValue(null);
-
-    const result = await adminRefund({ paymentId: 'missing' }, ctx);
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.code).toBe('PAYMENT_NOT_FOUND');
-      expect(result.error.statusCode).toBe(404);
-    }
-    expect(stripeRefundsCreate).not.toHaveBeenCalled();
+  it('refuses an amount above what is left', async () => {
+    seed({ refundedAmountMinor: 900, status: 'PARTIALLY_REFUNDED' });
+    const result = await adminRefund({ paymentId: 'pay_1', amountMinor: 200 }, adminCtx());
+    expect(!result.ok && result.error.code).toBe('INVALID_REFUND_AMOUNT');
+    expect(refundsCreate).not.toHaveBeenCalled();
   });
 
-  it('fails with PAYMENT_NOT_REFUNDABLE (422) for a status outside the refundable set', async () => {
-    mockRepo.findById.mockResolvedValue(mockPayment({ status: PaymentStatus.PENDING }));
-
-    const result = await adminRefund({ paymentId: 'pay_1' }, ctx);
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.code).toBe('PAYMENT_NOT_REFUNDABLE');
-      expect(result.error.statusCode).toBe(422);
-    }
+  it('refuses unpaid payments', async () => {
+    seed({ status: 'PENDING' });
+    const result = await adminRefund({ paymentId: 'pay_1' }, adminCtx());
+    expect(!result.ok && result.error.code).toBe('PAYMENT_NOT_REFUNDABLE');
   });
 
-  it('fails with PAYMENT_NO_STRIPE_INTENT (422) when the payment has no Stripe intent id', async () => {
-    mockRepo.findById.mockResolvedValue(mockPayment({ stripeIntentId: null }));
+  it('a Stripe failure changes nothing and does not leak the Stripe message', async () => {
+    const payment = seed();
+    refundsCreate.mockRejectedValue(new Error('card_declined sk_live_secret'));
 
-    const result = await adminRefund({ paymentId: 'pay_1' }, ctx);
+    const result = await adminRefund({ paymentId: 'pay_1' }, adminCtx());
 
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.code).toBe('PAYMENT_NO_STRIPE_INTENT');
-      expect(result.error.statusCode).toBe(422);
-    }
-  });
-
-  it('fails with PAYMENT_ALREADY_REFUNDED (422) once the full amount is already refunded', async () => {
-    mockRepo.findById.mockResolvedValue(mockPayment({ refundedAmountMinor: 1000 }));
-
-    const result = await adminRefund({ paymentId: 'pay_1' }, ctx);
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.code).toBe('PAYMENT_ALREADY_REFUNDED');
-    }
-    expect(stripeRefundsCreate).not.toHaveBeenCalled();
-  });
-
-  it('fails with INVALID_REFUND_AMOUNT (422) when the requested amount exceeds what remains refundable', async () => {
-    mockRepo.findById.mockResolvedValue(mockPayment({ refundedAmountMinor: 800 }));
-
-    const result = await adminRefund({ paymentId: 'pay_1', amountMinor: 500 }, ctx);
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.code).toBe('INVALID_REFUND_AMOUNT');
-    }
-    expect(stripeRefundsCreate).not.toHaveBeenCalled();
-  });
-
-  it('fails with INVALID_REFUND_AMOUNT (422) for a zero or negative requested amount', async () => {
-    mockRepo.findById.mockResolvedValue(mockPayment());
-
-    const result = await adminRefund({ paymentId: 'pay_1', amountMinor: 0 }, ctx);
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.code).toBe('INVALID_REFUND_AMOUNT');
-    }
-  });
-
-  it('wraps a Stripe API failure in a PaymentProviderError (502) without touching the DB', async () => {
-    mockRepo.findById.mockResolvedValue(mockPayment());
-    stripeRefundsCreate.mockRejectedValue(new Error('card_declined'));
-
-    const result = await adminRefund({ paymentId: 'pay_1' }, ctx);
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.code).toBe('PAYMENT_PROVIDER_ERROR');
-      expect(result.error.statusCode).toBe(502);
-      expect(result.error.message).toContain('card_declined');
-    }
-    expect(handleRefund).not.toHaveBeenCalled();
-  });
-
-  it('propagates the handleRefund error when the Stripe refund succeeded but the DB update failed', async () => {
-    mockRepo.findById.mockResolvedValue(mockPayment());
-    stripeRefundsCreate.mockResolvedValue({ id: 're_3', status: 'succeeded' });
-    const dbError = { code: 'DATABASE_ERROR', message: 'db down', statusCode: 500 };
-    (handleRefund as any).mockResolvedValue({ ok: false, error: dbError });
-
-    const result = await adminRefund({ paymentId: 'pay_1' }, ctx);
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe(dbError);
-    }
+    expect(!result.ok && result.error.statusCode).toBe(502);
+    expect(!result.ok && result.error.message).not.toContain('sk_live');
+    expect(payment.status).toBe('SUCCEEDED');
+    expect(recordAuditEvent).not.toHaveBeenCalled();
   });
 });

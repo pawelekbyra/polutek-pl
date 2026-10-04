@@ -19,11 +19,9 @@ vi.mock('@/app/components/preload/PreloadProgressBar', () => ({ PreloadProgressB
 vi.mock('@/components/skeletons', () => ({ CommentLoadingSkeleton: () => null }));
 vi.mock('@/app/components/comments/EmbeddedComments', () => ({ default: () => null }));
 vi.mock('@/app/components/channel/SidebarPlaylist', () => ({
-  SidebarPlaylist: (props: { showSupportBox?: boolean; onVideoSelect?: (id: string) => void }) =>
-    props.showSupportBox === false ? null : (
-      <button type="button" onClick={() => props.onVideoSelect?.('video_2')}>pick-video-2</button>
-    ),
-  SidebarSupportBox: () => null,
+  SidebarPlaylist: (props: { onVideoSelect?: (id: string) => void }) => (
+    <button type="button" onClick={() => props.onVideoSelect?.('video_2')}>pick-video-2</button>
+  ),
 }));
 vi.mock('@/app/components/Hero', () => ({
   default: (props: { video: PublicVideoDTO; initialInteraction?: unknown }) => {
@@ -64,7 +62,7 @@ describe('ChannelHome shallow video switching', () => {
     );
     expect(screen.getByTestId('hero')).toHaveTextContent('video_1');
 
-    fireEvent.click(screen.getByText('pick-video-2'));
+    fireEvent.click(screen.getAllByText('pick-video-2')[0]);
 
     expect(screen.getByTestId('hero')).toHaveTextContent('video_2');
     expect(pushState).toHaveBeenCalledTimes(1);
@@ -80,7 +78,7 @@ describe('ChannelHome shallow video switching', () => {
 
   it('restores the video recorded in the history entry on Back/Forward', () => {
     render(<ChannelHome mainVideo={main} allVideos={[main, second]} />);
-    fireEvent.click(screen.getByText('pick-video-2'));
+    fireEvent.click(screen.getAllByText('pick-video-2')[0]);
     expect(screen.getByTestId('hero')).toHaveTextContent('video_2');
 
     act(() => {

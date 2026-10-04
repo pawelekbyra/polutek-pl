@@ -25,6 +25,9 @@ vi.mock('@/lib/api/auth', () => ({
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    paymentCurrencySetting: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
     creator: {
       findUnique: vi.fn(),
       updateMany: vi.fn(),
@@ -311,7 +314,6 @@ describe('API Contracts', () => {
         body: JSON.stringify({
           amountMinor: 2000,
           currency: 'PLN',
-          title: 'Tip',
           requestId: '00000000-0000-0000-0000-000000000000'
         }),
       });

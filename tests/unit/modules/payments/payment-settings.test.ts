@@ -1,107 +1,54 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getPaymentSettings } from '@/lib/modules/payments/application/get-payment-settings.use-case';
-import { updatePaymentSettings } from '@/lib/modules/payments/application/update-payment-settings.use-case';
-import { AppContext } from '@/lib/modules/shared/app-context';
-import { Actor } from '@/lib/modules/shared/actor';
-import { PaymentRepository } from '@/lib/modules/payments/infrastructure/payment.repository';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createFakePaymentsDb, createTestContext } from './fake-payments-db';
 
-const mockRepo = {
-    getCurrencySettings: vi.fn(),
-    upsertCurrencySetting: vi.fn(),
-};
+const db = createFakePaymentsDb();
+vi.mock('@/lib/prisma', () => ({ prisma: db }));
+vi.mock('@/lib/modules/audit', () => ({ recordAuditEvent: vi.fn() }));
 
-vi.mock('@/lib/modules/payments/infrastructure/payment.repository', () => {
-    return {
-        PaymentRepository: vi.fn().mockImplementation(function() {
-            return mockRepo;
-        }),
-    };
+const { getPaymentCurrencyLimits, validatePaymentAmountMinorAsync } = await import('@/lib/payments/currency-settings');
+const { updatePaymentSettings } = await import('@/lib/modules/payments/application/update-payment-settings.use-case');
+
+beforeEach(() => {
+  db.paymentCurrencySetting.rows.length = 0;
+  vi.restoreAllMocks();
 });
 
-vi.mock('@/lib/modules/audit', () => ({
-  recordAuditEvent: vi.fn(),
-}));
+describe('payment currency settings: one minimum per currency', () => {
+  it('uses the stored minimum the gate shows and the server enforces', async () => {
+    db.paymentCurrencySetting.rows.push({ currency: 'PLN', minAmountMinor: 700, patronThresholdMinor: 5000, patronBoxMinMinor: null });
 
-describe('Payment Settings Use Cases', () => {
-  let ctx: AppContext;
+    const limits = await getPaymentCurrencyLimits();
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-
-    ctx = {
-      actor: { type: 'admin', userId: 'admin_1' } as Actor,
-      db: {
-        read: {} as any,
-        writeTransaction: vi.fn((cb) => cb({} as any)),
-      },
-      prisma: {} as any,
-      now: () => new Date(),
-    } as unknown as AppContext;
+    expect(limits.PLN).toMatchObject({ minAmountMinor: 700, minAmount: 7 });
+    expect(limits.PLN).not.toHaveProperty('patronThresholdMinor');
+    expect(await validatePaymentAmountMinorAsync(699, 'PLN')).toMatch(/zbyt niska/);
+    expect(await validatePaymentAmountMinorAsync(700, 'PLN')).toBeNull();
   });
 
-  describe('getPaymentSettings', () => {
-    it('should return default settings when no overrides exist', async () => {
-      mockRepo.getCurrencySettings.mockResolvedValue([]);
-
-      const result = await getPaymentSettings(ctx);
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-          expect(result.data.PLN.minAmount).toBe(10); // Default for PLN from lib/constants.ts
-          expect(result.data.USD.minAmount).toBe(10); // Default for USD from lib/constants.ts
-          // Verify response shape
-          expect(result.data).toHaveProperty('PLN');
-          expect(result.data.PLN).toHaveProperty('currency', 'PLN');
-          expect(result.data.PLN).toHaveProperty('minAmountMinor');
-      }
-    });
-
-    it('should return overridden settings when they exist', async () => {
-      mockRepo.getCurrencySettings.mockResolvedValue([
-        { currency: 'PLN', minAmountMinor: 2000 },
-      ]);
-
-      const result = await getPaymentSettings(ctx);
-
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-          expect(result.data.PLN.minAmount).toBe(20);
-          expect(result.data.USD.minAmount).toBe(10); // Still default
-      }
-    });
+  it('a legacy tip-box minimum higher than the floor stays the minimum until the next save', async () => {
+    db.paymentCurrencySetting.rows.push({ currency: 'EUR', minAmountMinor: 300, patronThresholdMinor: 500, patronBoxMinMinor: 400 });
+    expect((await getPaymentCurrencyLimits()).EUR.minAmountMinor).toBe(400);
   });
 
-  describe('updatePaymentSettings', () => {
-    it('should reject non-admin actors', async () => {
-      ctx.actor = { type: 'user', userId: 'user_1' } as Actor;
+  it('saving writes the one minimum and clears the legacy columns', async () => {
+    db.paymentCurrencySetting.rows.push({ currency: 'EUR', minAmountMinor: 300, patronThresholdMinor: 500, patronBoxMinMinor: 400 });
 
-      const result = await updatePaymentSettings({
-        limits: [{ currency: 'PLN', minAmount: 20 }]
-      }, ctx);
+    const result = await updatePaymentSettings(
+      { limits: [{ currency: 'EUR', minAmount: 2.5 }] },
+      createTestContext(db, { type: 'admin', userId: 'admin_1' }),
+    );
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-          expect(result.error.message).toContain('Forbidden');
-      }
-    });
+    expect(result.ok && result.data.EUR.minAmountMinor).toBe(250);
+    expect(db.paymentCurrencySetting.rows[0]).toMatchObject({ minAmountMinor: 250, patronThresholdMinor: null, patronBoxMinMinor: null });
+  });
 
-    it('should upsert settings and record audit log for admin', async () => {
-      mockRepo.getCurrencySettings.mockResolvedValue([]);
+  it('only admins may change it', async () => {
+    const result = await updatePaymentSettings({ limits: [{ currency: 'EUR', minAmount: 1 }] }, createTestContext(db, { type: 'user', userId: 'u' }));
+    expect(result.ok).toBe(false);
+  });
 
-      const result = await updatePaymentSettings({
-        limits: [{ currency: 'PLN', minAmount: 30 }]
-      }, ctx);
-
-      expect(result.ok).toBe(true);
-      expect(mockRepo.upsertCurrencySetting).toHaveBeenCalledWith(
-        'PLN',
-        { minAmountMinor: 3000, patronThresholdMinor: null, patronBoxMinMinor: null },
-        expect.anything(),
-      );
-      // Verify response shape of update is same as get
-      if (result.ok) {
-        expect(result.data.PLN.minAmount).toBe(10); // Note: getPaymentSettings called with fresh mock repo result
-      }
-    });
+  it('a database error is not hidden behind built-in defaults (PAY-41)', async () => {
+    vi.spyOn(db.paymentCurrencySetting, 'findMany').mockRejectedValueOnce(new Error('db down'));
+    await expect(getPaymentCurrencyLimits()).rejects.toThrow('db down');
   });
 });
