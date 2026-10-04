@@ -98,23 +98,11 @@ Wszystkie PR-y były weryfikowane lokalnie (Actions nie działa). Przed scalenie
 
 ## Agent pracujący bezpośrednio na serwerku (instrukcja)
 
-Na serwerze leży kopia dokumentacji (`/opt/serwerek/docs/`, odświeżana przy każdym `deploy.sh`) i `/opt/serwerek/README.md`; **ten plik jest tam jako
-`/opt/serwerek/docs/operations/STATUS.md`**. Źródłem prawdy jest repo `pawelekbyra/polutek-pl` (gałąź `main`).
-
-**Co agent na serwerku może robić od razu:** wdrożenia z `./deploy.sh`/`./deploy-admin.sh` (z `src/` zbudowanego `git archive`; kod pochodzi z PC właściciela),
-diagnostyka (`docker compose ps/logs`, `systemctl`, `journalctl`, `health.sh`), odczyt bazy (`docker compose exec db psql`, tylko SELECT bez
-zgody właściciela), kopie i test odtworzenia (`/opt/serwerek/scripts/`), zadania z listy „Operacje”, akcje operatora (`scripts/ops/actions/`) i odprawa
-(`scripts/ops/briefing.mjs`) po zgodzie właściciela. Każda zmiana: kopia pliku, wpis `AI_AGENT=<nazwa> ai-log "..."`.
-
-**Czego brakuje do zmian w kodzie bezpośrednio z serwerka:** na serwerze nie ma klonu repozytorium ani poświadczeń GitHub (repo prywatne). Aby tam kodować:
-właściciel tworzy **fine-grained token GitHub** (repo `polutek-pl`: Contents read/write, Pull requests read/write) albo deploy key z zapisem i wkłada go do
-`/root/.ai-secrets/` (chmod 600; nigdy do repo ani czatu); potem `git clone` do `/opt/serwerek/repo` i praca na gałęziach z PR (`gh`). Do tego czasu zmiany
-w kodzie robi sesja na komputerze właściciela, a serwerek tylko wdraża. Nie uruchamiaj na serwerze pełnych testów ani budowy obok produkcji w godzinach ruchu
-(2 vCPU, 4 GB RAM, swap ~1,7 GB): testy lokalnie, na serwerze tylko `deploy.sh` (budowa z `nice`).
-
-**Kolejność prac dla takiego agenta:** (1) odczytać „Stan produkcji”, „Otwarte PR-y” i „Najbliższe kroki” poniżej i w wyniku `briefing.mjs`; (2) zrobić zadania
-operacyjne bez zmian w kodzie (np. weryfikacja wyniku nocnego restartu bazy `pg_stat_statements`, porządki z listy „Operacje”); (3) kod i PR-y tylko po
-przekazaniu tokenu GitHub; (4) po każdej zmianie zaktualizować ten plik w repo (PR) i wpis w `ai-log`.
+Agent na serwerku **nie widzi GitHuba ani komputera właściciela** i zakłada własne repozytorium od punktu, w którym skończyła ta sesja. **Pełny opis przekazania:
+[`HANDOFF-SERVER-AGENT.md`](HANDOFF-SERVER-AGENT.md)** (czytaj go najpierw). Na serwerze: bundle gita z pełną historią i wszystkimi gałęziami z pracą w toku
+(`/opt/serwerek/handoff/polutek-pl.bundle`), roboczy klon `/opt/serwerek/repo`, kopia dokumentacji `/opt/serwerek/docs/`, `/opt/serwerek/README.md`.
+Bez GitHuba nie ma PR-ów ani CI: scalanie to `git merge` w jego repo, weryfikacja lokalna (komenda i ograniczenia zasobów w HANDOFF), wdrożenie `deploy.sh` z `git archive`.
+Nie ma tam też tokenów Cloudflare/GitHub/Stripe/Google ani Claude Code (właściciel dostarcza, gdy zechce); lista nazw sekretów: `/opt/serwerek/handoff/secrets-names.txt`.
 
 ## Czeka na właściciela
 
