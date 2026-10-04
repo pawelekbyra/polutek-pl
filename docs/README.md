@@ -18,12 +18,14 @@ albo znika w tym samym PR. Historia jest w git.
 | Własny HLS: decyzje i budowa | [`architecture/self-hosted-hls.md`](architecture/self-hosted-hls.md) |
 | PP Support: architektura i projekt agenta AI | [`architecture/support-center.md`](architecture/support-center.md) |
 | Własna wysyłka poczty (plan na później) | [`architecture/self-hosted-mail-plan.md`](architecture/self-hosted-mail-plan.md) |
+| Nowy panel administratora `admin.pawelperfect.com`: wizja, decyzje, fazy (projekt) | [`architecture/admin-panel.md`](architecture/admin-panel.md) |
 
 ## Jak to obsługiwać (`operations/`)
 
 | Temat | Plik |
 |---|---|
 | Serwer: układ, deploy, rollback, kopie, crony | [`operations/SERWEREK.md`](operations/SERWEREK.md) |
+| Wydajność: test obciążenia, ilu widzów wytrzymuje serwer | [`operations/LOAD-TEST.md`](operations/LOAD-TEST.md) |
 | Wideo: upload, kodowanie, diagnostyka | [`operations/VIDEO-PIPELINE.md`](operations/VIDEO-PIPELINE.md) |
 | Wideo: dostarczanie HLS, Worker, R2 | [`operations/HLS-SELF-HOSTED.md`](operations/HLS-SELF-HOSTED.md) |
 | Poczta: domeny, DNS, Resend, routing | [`operations/EMAIL_SETUP.md`](operations/EMAIL_SETUP.md) |
