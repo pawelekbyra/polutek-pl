@@ -333,6 +333,55 @@ export function planModeration(action, status) {
   return { allowed, noop: false, from: status, to: target };
 }
 
+export const MANAGED_ROLES = ['ADMIN', 'USER'];
+
+export function parseRoleArgs(argv) {
+  const opts = parseActionArgs(argv, { values: ['user', 'role', 'reason', 'admin', 'host'] });
+  if (opts.help) return { opts };
+  const role = String(requireValue(opts.values, 'role')).toUpperCase();
+  if (!MANAGED_ROLES.includes(role)) throw new ActionInputError('--role to ADMIN albo USER');
+  return {
+    opts,
+    input: {
+      userId: parseUserId(requireValue(opts.values, 'user'), 'user'),
+      role,
+      reason: opts.values.reason !== undefined || opts.yes ? parseReason(opts.values.reason) : null,
+      adminUserId: resolveAdminArg(opts.values.admin),
+    },
+  };
+}
+
+/**
+ * Skutek zmiany roli przy danej liście aktywnych adminów. Odbicie reguł use case'u changeUserRoleAsAdmin (nigdy
+ * własna rola, nigdy usunięte konto, ADMIN tylko ze zweryfikowanym e-mailem, nigdy ostatni admin) plus ADMIN_EMAILS
+ * (bootstrap przywróciłby rolę). O wykonaniu decyduje use case pod blokadą; tu jest podgląd i lista adminów po zmianie.
+ */
+export function planRoleChange({ user, admins = [], actorId, role }) {
+  const problems = [];
+  if (!user) return { allowed: false, noop: false, problems: ['Konto o tym id nie istnieje.'], adminsAfter: admins.map((a) => a.id) };
+  const noop = user.role === role;
+  if (user.isDeleted) problems.push('Konto jest usunięte.');
+  if (actorId && user.id === actorId) problems.push('Operator działa jako to konto: nie zmienia się własnej roli (wybierz inne konto admina właściciela).');
+  if (!noop && role === 'ADMIN' && !user.emailVerified) problems.push('Rolę ADMIN może dostać tylko konto z potwierdzonym e-mailem.');
+  if (!noop && role === 'USER') {
+    if (!admins.some((a) => a.id !== user.id)) problems.push('To ostatni administrator: najpierw nadaj rolę ADMIN innemu kontu.');
+    if (user.inAdminEmails) problems.push('Adres konta jest w ADMIN_EMAILS: rola ADMIN wróciłaby przy następnym żądaniu.');
+  }
+  const ids = admins.map((a) => a.id);
+  const adminsAfter = noop || problems.length
+    ? ids
+    : role === 'USER' ? ids.filter((id) => id !== user.id) : [...new Set([...ids, user.id])];
+  return { allowed: problems.length === 0, noop, from: user.role, to: role, problems, adminsAfter };
+}
+
+/** Konto do podglądu: e-mail zamaskowany, nick jako treść niezaufana. */
+export function accountLine(account) {
+  if (!account) return '—';
+  const flags = [account.emailVerified ? 'e-mail potwierdzony' : 'e-mail NIEpotwierdzony'];
+  if (account.inAdminEmails) flags.push('w ADMIN_EMAILS');
+  return `${account.id} ${maskEmail(account.email ?? '')} ${untrusted(account.name, 40)} (${flags.join(', ')})`;
+}
+
 // ---------------------------------------------------------------------------------- formatowanie
 
 export function formatMinor(minor, currency) {
@@ -465,13 +514,21 @@ export function parseEnvText(text) {
   return out;
 }
 
+/** Klucze w secrets.env, które nie są sekretami (wynik ma je pokazywać, nie zamieniać na [SEKRET]). */
+export const NON_SECRET_KEYS = new Set(['OPS_ADMIN_USER_ID']);
+
+/** Wartości sekretów ze zmiennych env (bez kluczy jawnych), do redactSecrets. */
+export function secretValuesFrom(env) {
+  return Object.entries(env).filter(([key]) => !NON_SECRET_KEYS.has(key)).map(([, value]) => value);
+}
+
 /** Wartości sekretów z %USERPROFILE%\.ai-secrets (secrets.env, pp-support.env): tylko do redactSecrets, nigdy wypisywane. */
 export function loadSecretValues(dir = secretsDir()) {
   const values = [];
   for (const name of ['secrets.env', 'pp-support.env']) {
     const file = path.join(dir, name);
     if (!existsSync(file)) continue;
-    try { values.push(...Object.values(parseEnvText(readFileSync(file, 'utf8')))); } catch { /* brak dostępu: nic do maskowania */ }
+    try { values.push(...secretValuesFrom(parseEnvText(readFileSync(file, 'utf8')))); } catch { /* brak dostępu: nic do maskowania */ }
   }
   return values;
 }
