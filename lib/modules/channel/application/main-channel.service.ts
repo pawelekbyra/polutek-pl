@@ -1,13 +1,21 @@
+import { cache } from "react";
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { ChannelRepository } from "../infrastructure/channel.repository";
 import { MainChannelNotFoundError, MainChannelNotApprovedError, MainChannelNotPrimaryError } from "../domain/channel.errors";
 import { flags } from "@/lib/feature-flags";
-import { WriteTx } from "../../shared/db";
+import { ReadDb, WriteTx } from "../../shared/db";
+
+/**
+ * One main-channel read per server render and database client: the home page asks for it from the
+ * video list, the featured video, the sidebar and the access check. React `cache` is request-scoped
+ * and does not memoize outside a render (route handlers, actions, scripts), and a transaction
+ * client is a different key, so a write path never reads a stale row.
+ */
+const findMainChannel = cache((db: ReadDb) => new ChannelRepository(db).findMainChannel());
 
 export class MainChannelService {
   static async getOptional(ctx: AppContext) {
-    const repository = new ChannelRepository(ctx.prisma);
-    return await repository.findMainChannel();
+    return await findMainChannel(ctx.prisma);
   }
 
   static async getRequired(ctx: AppContext) {

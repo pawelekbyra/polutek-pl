@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { headers } from "next/headers";
 import { logger } from "@/lib/logger";
 
@@ -15,11 +16,15 @@ export type ServerSessionUser = {
   emailVerified: boolean;
   language?: string | null;
   onboardingPending?: boolean | null;
+  twoFactorEnabled?: boolean | null;
+  createdAt?: Date | string | null;
 };
 
 export type ServerSession = {
   userId: string | null;
   sessionId: string | null;
+  /** When the session ends (used only to hand the browser its own session, never a secret). */
+  sessionExpiresAt?: Date | null;
   user: ServerSessionUser | null;
 };
 
@@ -36,17 +41,31 @@ async function readSession(requestHeaders: Headers, fresh: boolean): Promise<Ser
     });
     if (!result?.user?.id) return EMPTY;
     const user = result.user as unknown as ServerSessionUser;
-    return { userId: user.id, sessionId: result.session?.id ?? null, user };
+    const expiresAt = (result.session as { expiresAt?: Date | string } | undefined)?.expiresAt;
+    return {
+      userId: user.id,
+      sessionId: result.session?.id ?? null,
+      sessionExpiresAt: expiresAt ? new Date(expiresAt) : null,
+      user,
+    };
   } catch (error) {
     logger.warn("[auth] session lookup failed", error instanceof Error ? error.message : String(error));
     return EMPTY;
   }
 }
 
+/**
+ * One session read per server render: the layout, the page, metadata and every server component
+ * of the same request share it (React `cache` is request-scoped). Outside a render (route
+ * handlers, server actions) `cache` does not memoize, so each call reads the session again.
+ */
+const readRequestSession = cache(async (fresh: boolean): Promise<ServerSession> => {
+  return readSession(await headers(), fresh);
+});
+
 /** Session of the current request (route handlers, server components, actions). */
 export async function auth(options: { fresh?: boolean } = {}): Promise<ServerSession> {
-  const requestHeaders = await headers();
-  return readSession(requestHeaders, options.fresh === true);
+  return readRequestSession(options.fresh === true);
 }
 
 /** Session for an explicit request object (e.g. when headers() is not available). */
