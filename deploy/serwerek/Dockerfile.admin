@@ -1,0 +1,35 @@
+# Image of the admin panel (apps/admin, admin.pawelperfect.com). Separate from the public app image on purpose:
+# the public image never contains panel code, and the panel can be deployed and rolled back on its own.
+# Build from the repo root (deploy/serwerek/deploy-admin.sh does this):
+#   docker build -f deploy/serwerek/Dockerfile.admin -t polutek-admin:<tag> .
+# No build args: the panel has no NEXT_PUBLIC_* values; everything (ADMIN_AUTH_SECRET, CF_ACCESS_*, DATABASE_URL)
+# comes from admin.env at runtime. Runbook: docs/operations/ADMIN-PANEL.md.
+FROM node:22-bookworm-slim AS deps
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY prisma ./prisma
+RUN npm ci --no-audit --no-fund
+
+FROM deps AS build
+ENV NEXT_OUTPUT=standalone NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=--max-old-space-size=2048
+COPY . .
+RUN npx prisma generate && npx next build apps/admin
+
+FROM node:22-bookworm-slim AS admin
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3100 HOSTNAME=0.0.0.0 NODE_OPTIONS=--max-old-space-size=256
+# Standalone output is traced from the repo root, so the server lives in apps/admin/ inside it.
+COPY --from=build --chown=node:node /app/apps/admin/.next/standalone ./
+COPY --from=build --chown=node:node /app/apps/admin/.next/static ./apps/admin/.next/static
+COPY --from=build --chown=node:node /app/apps/admin/public ./apps/admin/public
+# The enrollment CLI (run over SSH: docker compose --profile admin run --rm admin node apps/admin/scripts/admin-enroll.mjs ...).
+COPY --from=build --chown=node:node /app/apps/admin/scripts/admin-enroll.mjs ./apps/admin/scripts/admin-enroll.mjs
+RUN mkdir -p /app/apps/admin/.next/cache && chown -R node:node /app/apps/admin/.next
+USER node
+EXPOSE 3100
+# /api/health is the one path that skips Cloudflare Access (it only says the process answers).
+HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=5 \
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3100)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "apps/admin/server.js"]

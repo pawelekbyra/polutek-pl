@@ -1,0 +1,13 @@
+[Unit]
+Description=Write host status (containers, timers, backups) for the admin panel (read-only file, no docker.sock in the panel)
+Documentation=file:///opt/serwerek/docs/README.md
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/serwerek/scripts/host-status.py
+Nice=10
+# Reads Docker and systemd state, writes only /var/lib/serwerek/host-status.
+ProtectSystem=strict
+ReadWritePaths=/var/lib/serwerek/host-status
+PrivateTmp=true
+NoNewPrivileges=true
