@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Check, ChevronDown, Search } from "lucide-react";
+import { Check, ChevronDown, Globe } from "lucide-react";
 import type { Locale } from "@/lib/i18n/routing";
 import LanguageFlag from "./language-switcher/LanguageFlag";
 import { warmFlags, type LanguageOption } from "./language-switcher/languages";
@@ -12,10 +12,11 @@ type Props = {
   language: Locale;
   onSelect: (locale: Locale) => void;
   /**
-   * "pill" (navbar): a flag pill that opens a floating panel with a search field and a scrolling
-   * list. "inline" (inside dialogs): a small "Language: [flag] English" link that expands a compact
-   * grid of all languages (no search field, no frame) in the page flow, so a scrolling card cannot
-   * clip it. Its root is `display: contents`, so in a wrapping flex row the list takes a full line.
+   * "pill" (navbar): a globe pill with the current code that opens a floating, scrolling list.
+   * "inline" (inside dialogs): a small "[globe] Language: English" link that expands a compact grid
+   * of all languages (no frame) in the page flow, so a scrolling card cannot clip it. Its root is
+   * `display: contents`, so in a wrapping flex row the list takes a full line. Flags appear only in
+   * the list rows; the buttons keep the neutral globe (owner decision: flag colours clash there).
    */
   variant?: "pill" | "inline";
 };
@@ -76,8 +77,8 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
   const inline = variant === "inline";
   const isPl = language === "pl";
   const {
-    open, current, real, results, active, query, noteVisible, listId, optionId,
-    rootRef, triggerRef, inputRef, listRef, toggle, pick, updateQuery, setActiveIndex, onListKeyDown,
+    open, options, current, real, active, noteVisible, listId, optionId,
+    rootRef, triggerRef, listRef, toggle, pick, setActiveIndex, onListKeyDown,
   } = useLanguagePicker({ language, onSelect, inline });
 
   const buttonLabel = isPl ? `Język: ${current.label}. Zmień język` : `Language: ${current.label}. Change language`;
@@ -86,8 +87,8 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
     ? `Tłumaczenie na ${current.label} jest w przygotowaniu. Na razie ${real.label}.`
     : `The ${current.label} translation is in progress. For now: ${real.label}.`;
 
-  const options = (compact: boolean) =>
-    results.map((option, index) => (
+  const rows = (compact: boolean) =>
+    options.map((option, index) => (
       <LanguageOptionRow
         key={option.code}
         option={option}
@@ -107,6 +108,7 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
     "aria-label": listLabel,
     "aria-activedescendant": active ? optionId(active) : undefined,
     onKeyDown: onListKeyDown,
+    tabIndex: inline ? 0 : -1,
   } as const;
 
   const chevron = (className: string) => (
@@ -136,17 +138,17 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
           {...triggerProps}
           className="ml-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold text-[var(--chan-muted)] transition-colors hover:bg-[var(--chan-surface)] hover:text-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] pointer-coarse:min-h-11"
         >
+          <Globe className="h-3.5 w-3.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
           <span>{isPl ? "Język" : "Language"}:</span>
-          <LanguageFlag option={current} size={16} />
           <span className="text-[var(--chan-ink)]">{current.label}</span>
           {chevron("h-3 w-3")}
         </button>
       ) : (
         <button
           {...triggerProps}
-          className="flex h-[38px] items-center gap-1.5 rounded-full border border-[var(--cm-line-84)] bg-[var(--cm-card-82-white)] pl-2 pr-2 text-[var(--chan-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[0_4px_14px_rgba(37,99,235,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
+          className="flex h-[38px] items-center gap-1.5 rounded-full border border-[var(--cm-line-84)] bg-[var(--cm-card-82-white)] pl-2.5 pr-2 text-[var(--chan-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-[border-color,box-shadow] duration-160 hover:border-[var(--chan-blue)] hover:shadow-[0_4px_14px_rgba(37,99,235,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
         >
-          <LanguageFlag option={current} size={20} />
+          <Globe className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
           <span className="text-[11px] font-extrabold uppercase tracking-[0.08em]">{current.code}</span>
           {chevron("h-3.5 w-3.5 text-[var(--chan-muted)]")}
         </button>
@@ -169,54 +171,22 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
       {open && inline ? (
         <div
           {...listboxProps}
-          tabIndex={0}
           className="relative grid w-full basis-full grid-cols-[repeat(auto-fill,minmax(104px,1fr))] gap-0.5 rounded-lg focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--chan-blue)]"
         >
-          {options(true)}
+          {rows(true)}
         </div>
       ) : null}
 
       {open && !inline ? (
         <div
-          className={`${styles.panel} fixed left-2 right-2 top-[60px] z-[1100] flex flex-col overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.14)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+8px)] sm:w-[288px]`}
+          className={`${styles.panel} fixed left-2 right-2 top-[60px] z-[1100] flex flex-col overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.14)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+8px)] sm:w-[256px]`}
         >
-          <div className="p-1.5 pb-1">
-            <div className="flex h-11 items-center gap-2 rounded-xl border border-[var(--cm-line-82)] bg-[var(--chan-surface)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-[var(--cm-blue-55)] focus-within:bg-[var(--chan-card)] focus-within:shadow-[0_0_0_3px_var(--cm-blue-14)] sm:h-10">
-              <Search className="h-4 w-4 shrink-0 text-[var(--chan-muted)]" strokeWidth={1.8} aria-hidden="true" />
-              <input
-                ref={inputRef}
-                type="text"
-                inputMode="search"
-                enterKeyHint="done"
-                role="combobox"
-                aria-expanded="true"
-                aria-controls={listId}
-                aria-autocomplete="list"
-                aria-activedescendant={active ? optionId(active) : undefined}
-                value={query}
-                onChange={(event) => updateQuery(event.target.value)}
-                onKeyDown={onListKeyDown}
-                placeholder={isPl ? "Szukaj języka…" : "Search language…"}
-                aria-label={isPl ? "Szukaj języka" : "Search language"}
-                autoComplete="off"
-                autoCorrect="off"
-                spellCheck={false}
-                className="min-w-0 flex-1 bg-transparent text-[16px] text-[var(--chan-ink)] outline-none placeholder:text-[var(--chan-muted)] sm:text-[14px]"
-              />
-            </div>
-          </div>
           <div
             {...listboxProps}
-            tabIndex={-1}
-            className={`${styles.scroller} max-h-[min(15.5rem,calc(100dvh-140px))] overflow-y-auto overscroll-contain px-1.5 pb-1.5 pt-0.5 outline-none sm:max-h-[min(14.25rem,60vh)]`}
+            className={`${styles.scroller} max-h-[min(16rem,calc(100dvh-80px))] overflow-y-auto overscroll-contain p-1.5 outline-none sm:max-h-[min(14.5rem,60vh)]`}
           >
-            {options(false)}
+            {rows(false)}
           </div>
-          {results.length === 0 ? (
-            <p role="status" className="px-4 pb-3 pt-1 text-[13px] text-[var(--chan-muted)]">
-              {isPl ? "Brak wyników" : "No results"}
-            </p>
-          ) : null}
         </div>
       ) : null}
     </div>
