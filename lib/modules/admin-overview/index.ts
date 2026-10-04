@@ -16,3 +16,7 @@ export { parseMeminfo } from "./infrastructure/host-metrics";
 export { parseHostStatus, hostStatusSchema, type HostStatus, type HostStatusRead } from "./infrastructure/host-status-file";
 export { cachedProbe, clearProbeCache, probeHlsWorker, probePublicApp, probeRedis, type ProbeResult } from "./infrastructure/probes";
 export type { OverviewRepository, EncodeJobRow, RevenueRow, ActivityRows } from "./infrastructure/overview.repository";
+export { SERVER_CAPACITY, type ServerCapacity } from "./domain/server-capacity.config";
+export { computeServerHeadroom, usageKind, dailyViewsAt, recommendationFor, HEADROOM_WARN_AT, HEADROOM_CRIT_AT, type ServerHeadroom, type TelemetryPeaks, type PeakWindow } from "./domain/server-headroom";
+export { getServerHeadroom } from "./application/get-server-headroom";
+export { type TelemetryPeaksRead, clearTelemetryPeaksCache } from "./infrastructure/telemetry-peaks";

@@ -31,3 +31,7 @@
   .card-head h2 { flex-basis: 100%; }
   .popover-health, .popover-account { right: var(--s-4); left: var(--s-4); width: auto; }
 }
+.headroom-advice { font-size: var(--fs-13); font-weight: 500; }
+.headroom-advice.warn { color: var(--warn); }
+.headroom-advice.crit { color: var(--crit); }
+.stack-sm { display: grid; gap: var(--s-2); }

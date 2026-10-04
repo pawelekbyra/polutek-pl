@@ -29,8 +29,13 @@ Kolejność ma znaczenie; nic z tego nie dzieje się samo.
    KV_REST_API_TOKEN=...
    HLS_DELIVERY_BASE_URL=https://video.pawelperfect.com
    NEXT_PUBLIC_APP_URL=https://www.pawelperfect.com   # linki do starego panelu
+   ADMIN_TELEMETRY_DATABASE_URL=postgresql://pp_analytics_ro:...@db:5432/polutek   # opcjonalnie: „Zapas serwera”
    ```
    Panel celowo **nie** dostaje `BETTER_AUTH_SECRET`, kluczy Stripe, Resend ani R2.
+   Rola `pp_analytics_ro` jest z migracji `NOLOGIN`; dla wskaźnika „Zapas serwera” operator nadaje jej raz hasło:
+   `docker compose exec -T db psql -U polutek -d polutek -c "ALTER ROLE pp_analytics_ro LOGIN PASSWORD '<losowe>'"` (hasło tylko w `admin.env`).
+   Bez tego wskaźnik pokazuje „nie skonfigurowano”, reszta panelu działa. Po powiększeniu serwera: nowy test obciążenia i nowe liczby w
+   `lib/modules/admin-overview/domain/server-capacity.config.ts`.
 3. **Status hosta** (zamiast gniazda Dockera):
    ```
    install -m755 src/deploy/serwerek/admin/host-status.py /opt/serwerek/scripts/host-status.py

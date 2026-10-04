@@ -197,3 +197,4 @@ z `lib/modules/**` (wrapper `requireAdmin → zod (.strict) → limit → step-u
 | Dziennik audytu z filtrami i eksportem | Bezpieczeństwo → Dziennik | 3 | plan |
 | Logowania do panelu, sesje panelu | Bezpieczeństwo → Logowania (dane już w `AdminAuthEvent`) | 3 | plan |
 | Premiera na żywo | Premiera na żywo | A | plan |
+| Czy serwer wytrzyma szczyt (dziś: arkusz z testu obciążenia) | **Zapas serwera**: System → Serwer i kontenery (pełny), Dzisiaj (skrót); szczyt odsłon/s z telemetrii (1 h, 24 h, 7 dni) wobec granicy z `server-capacity.config.ts` (LOAD-TEST.md), progi 50/80%, rekomendacja, przelicznik na odsłony dziennie | 1 | zrobione (dane po włączeniu `ADMIN_TELEMETRY_DATABASE_URL`) |
