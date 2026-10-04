@@ -12,14 +12,7 @@ import LanguageSwitcher from "./LanguageSwitcher";
 import { useSwitchLanguage } from "./useSwitchLanguage";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { Search, X, LogIn } from "lucide-react";
-import NotificationsMenu from "./notifications/NotificationsMenu";
-import { NotificationDTO } from "@/app/types/notification";
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
-
-// TEMPORARY (test setup only) — see CLAUDE.md "2026-09-20: temporary test-mode UI changes"
-// for the exact revert steps. Set back to `false` (or delete the flag and the code that
-// reads it) once testing is done; this hides the notifications bell without removing it.
-const TEMP_HIDE_NOTIFICATIONS_BELL = true;
 
 type ServerAdminState = {
   userId: string;
@@ -92,18 +85,6 @@ const Navbar = ({ initialQuery = "" }: { initialQuery?: string }) => {
 
   const isAdmin = resolveNavbarAdminUiState(serverIsAdmin, undefined);
   const searchLabel = language === "pl" ? "Szukaj" : "Search";
-  const messagesLabel = language === "pl" ? "Wiadomości" : "Messages";
-  const [notifications, setNotifications] = React.useState<NotificationDTO[]>([]);
-
-  React.useEffect(() => {
-    // Nothing reads the list while the bell is hidden, so don't fetch it either.
-    if (isSignedIn && !TEMP_HIDE_NOTIFICATIONS_BELL) {
-      fetch("/api/notifications")
-        .then((res) => res.ok ? res.json() : [])
-        .then((data) => setNotifications(Array.isArray(data) ? data : []))
-        .catch(() => setNotifications([]));
-    }
-  }, [isSignedIn]);
 
   return (
     <div
@@ -200,18 +181,7 @@ const Navbar = ({ initialQuery = "" }: { initialQuery?: string }) => {
                 <NavbarLanguageSwitcher language={language} />
               </Suspense>
 
-              {/* Messages — only relevant once you have an account.
-                  TEMPORARY (test setup only): bell hidden behind TEMP_HIDE_NOTIFICATIONS_BELL,
-                  see CLAUDE.md "2026-09-20: temporary test-mode UI changes" to revert. */}
-              {isSignedIn ? (
-                TEMP_HIDE_NOTIFICATIONS_BELL ? null : (
-                  <NotificationsMenu
-                    notifications={notifications}
-                    language={language}
-                    messagesLabel={messagesLabel}
-                  />
-                )
-              ) : isLoaded ? (
+              {isSignedIn ? null : isLoaded ? (
                 <button
                   onClick={() => openAuthModal("sign-in")}
                   className="flex h-[32px] w-[32px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-[var(--cm-ink-55)] bg-[var(--chan-ink)] px-0 font-sans text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_6px_16px_-6px_rgba(23,23,23,0.42)] transition-[transform,background-color,border-color,box-shadow] duration-200 hover:-translate-y-px hover:bg-[var(--cm-ink-88-black)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_11px_24px_-8px_rgba(23,23,23,0.48)] active:translate-y-0 active:scale-[0.97] sm:h-[38px] sm:w-auto sm:px-4"

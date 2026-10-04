@@ -2,6 +2,7 @@ import type { AccessTier, StorageProvider, VideoAssetProcessingState, VideoStatu
 import { selectPrimaryVideoAsset } from "./video-asset-selection";
 import { resolvePublicThumbnailSrc } from "@/lib/modules/media";
 import { effectivePublishedAt, toPremiereDate } from "./premiere";
+import { toVideoAccessTier } from "@/lib/access-tier";
 
 export interface BaseVideoDto {
   id: string;
@@ -194,7 +195,7 @@ export function toPublicVideoDto(video: PublicVideoInput): PublicVideoDto {
     subtitleUrlPl: video.subtitleUrlPl ?? null,
     subtitleUrlEn: video.subtitleUrlEn ?? null,
     duration: video.duration,
-    tier: video.tier,
+    tier: toVideoAccessTier(video.tier),
     views: video.views,
     likesCount: video.likesCount,
     dislikesCount: video.dislikesCount,

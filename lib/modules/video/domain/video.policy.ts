@@ -1,4 +1,5 @@
 import { Prisma, AccessTier, VideoStatus } from "@prisma/client";
+import { accessTierWhere, toVideoAccessTier } from "@/lib/access-tier";
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "./video-asset.constants";
 
 export type VideoStateBlocker = { code: string; message: string; field?: string };
@@ -84,7 +85,7 @@ export class VideoPolicy {
   static getHeroBlockers(video: ContractVideo): VideoStateBlocker[] {
     const blockers = this.getPublicationBlockers(video);
     if (video.status !== 'PUBLISHED') blockers.push({ code: 'VIDEO_HERO_NOT_PUBLISHED', message: 'Film Hero musi być OPUBLIKOWANY.', field: 'status' });
-    if (video.tier !== 'PUBLIC') blockers.push({ code: 'VIDEO_HERO_NOT_PUBLIC', message: 'Film Hero musi być PUBLICZNY.', field: 'tier' });
+    if (toVideoAccessTier(video.tier) !== 'PUBLIC') blockers.push({ code: 'VIDEO_HERO_NOT_PUBLIC', message: 'Film Hero musi być PUBLICZNY.', field: 'tier' });
     if (video.status === 'ARCHIVED') blockers.push({ code: 'VIDEO_HERO_ARCHIVED', message: 'Zarchiwizowany film nie może być filmem Hero.', field: 'status' });
     return blockers;
   }
@@ -123,9 +124,8 @@ export class VideoPolicy {
     if (filters.status && filters.status !== 'ALL') {
       where.status = filters.status as VideoStatus;
     }
-    if (filters.tier && filters.tier !== 'ALL') {
-      where.tier = filters.tier as AccessTier;
-    }
+    const tierWhere = accessTierWhere(filters.tier);
+    if (tierWhere) where.tier = tierWhere;
     if (filters.query) {
       where.OR = [
         { title: { contains: filters.query, mode: 'insensitive' } },

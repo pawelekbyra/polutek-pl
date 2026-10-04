@@ -80,7 +80,7 @@ async function main() {
       videoUrl: "https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/intencja-swiadomosc-sprawczosci-michal-kicinski-qa-festiwal-wibracje.mp4",
       thumbnailUrl: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=2659&auto=format&fit=crop',
       duration: '15:30',
-      tier: AccessTier.PATRON,
+      tier: AccessTier.LOGGED_IN,
       isMainFeatured: false,
       views: 15000,
       likesCount: 3000,

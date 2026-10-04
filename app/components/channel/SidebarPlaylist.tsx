@@ -133,13 +133,12 @@ export function SidebarPlaylist({
   ) => {
     const displayTitle = getVideoDisplayTitle(video, language);
     const isCurrent = video.id === selectedVideoId;
-    const isPatronVideo = video.tier === "PATRON";
     const hasAccess = !video.isLocked;
     // Scheduled premiere not reached yet (CLAUDE.md "Premieres"): signed-in viewers see
     // the premiere tile with this video's date, guests the sign-in wall. The server's
     // UPCOMING section wins over our clock until the layout is refetched.
     const isUpcoming = inUpcomingSection || isUpcomingPremiere(video, premiereNow);
-    // Otherwise signing in is the only gate, PATRON tier included (CLAUDE.md §4.4).
+    // Otherwise signing in is the only gate (CLAUDE.md §4.4).
     const lockState = isUpcoming
       ? isSignedIn ? "COMING_SOON" : "LOGIN_REQUIRED"
       : !hasAccess ? "LOGIN_REQUIRED" : null;
@@ -185,9 +184,7 @@ export function SidebarPlaylist({
           className={cn(
             "group relative mb-0.5 flex items-start gap-3 overflow-hidden rounded-[14px] p-2 transition-[background-color,box-shadow] duration-160 motion-reduce:transition-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 lg:mb-0 lg:h-full lg:min-h-[88px] lg:gap-3 lg:p-2",
             isCurrent
-              ? isPatronVideo
-                ? "bg-[var(--chan-amber-soft)]"
-                : "bg-[var(--chan-blue)]/20"
+              ? "bg-[var(--chan-blue)]/20"
               : isPublicSection
                 ? "bg-gradient-to-br from-[var(--cm-blue-10-card)] to-[var(--cm-blue-18-card)] transition-[background-color,transform] duration-160 hover:brightness-[1.03]"
                 : "transition-[background-color,box-shadow] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_2px_8px_rgba(23,23,23,0.06)]",
@@ -198,9 +195,7 @@ export function SidebarPlaylist({
               aria-hidden="true"
               className={cn(
                 "absolute left-0 top-1/2 h-12 w-1 -translate-y-1/2 rounded-r-lg transition-all duration-160 motion-reduce:transition-none",
-                isPatronVideo
-                  ? "bg-[var(--chan-amber)] shadow-[0_0_12px_var(--cm-amber-46)]"
-                  : "bg-[var(--chan-blue)] shadow-[0_0_12px_var(--cm-blue-40)]",
+                "bg-[var(--chan-blue)] shadow-[0_0_12px_var(--cm-blue-40)]",
               )}
             />
           )}
@@ -279,7 +274,6 @@ export function SidebarPlaylist({
   // Section titles follow the viewer's language (the server layout only carries Polish ones).
   const publicSectionTitle = language === "pl" ? "Publiczne" : "Public";
   const loggedInSectionTitle = language === "pl" ? "Dla zalogowanych" : "For signed-in users";
-  const patronSectionTitle = language === "pl" ? "Strefa Fenkjuu" : "Thank You Zone";
   const upcomingSectionTitle = language === "pl" ? "Już wkrótce" : "Coming soon";
   const amberDot = (
     <span
@@ -337,7 +331,7 @@ export function SidebarPlaylist({
           renderVideoItem(
             {
               ...v,
-              // PATRON and LOGGED_IN only need sign-in (CLAUDE.md §4.4); upcoming
+              // Anything not PUBLIC needs sign-in (CLAUDE.md §4.4); upcoming
               // premieres are locked by renderVideoItem from their premiereAt.
               isLocked: v.tier !== "PUBLIC" && !isSignedIn,
             },
@@ -352,7 +346,6 @@ export function SidebarPlaylist({
 
   const publicSection = layout.sections.find((s) => s.type === "FREE");
   const loggedInSection = layout.sections.find((s) => s.type === "LOGGED_IN");
-  const patronSection = layout.sections.find((s) => s.type === "PATRON");
   const upcomingSection = layout.sections.find((s) => s.type === "UPCOMING");
 
   return (
@@ -367,13 +360,6 @@ export function SidebarPlaylist({
         <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
           {renderSectionHeader(loggedInSectionTitle)}
           {loggedInSection.items.map((v, i) => renderVideoItem(v, false, false, i))}
-        </div>
-      )}
-
-      {patronSection && patronSection.items.length > 0 && (
-        <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
-          {renderSectionHeader(patronSectionTitle, amberDot)}
-          {patronSection.items.map((v, i) => renderVideoItem(v, false, false, i))}
         </div>
       )}
 

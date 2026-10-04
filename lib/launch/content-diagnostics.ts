@@ -158,7 +158,7 @@ export async function runLaunchContentDiagnostics(options: {
     : { name: 'homepage featured inventory', status: 'FAIL', detail: 'Homepage cannot select a public featured/fallback video.', action: 'Set one visible PUBLIC video as main featured or provide any visible PUBLIC video fallback.' });
 
   const sidebarVideoCount = await options.db.video.count({
-    where: { ...baseWhere, showInSidebar: true, tier: { in: [AccessTier.PUBLIC, AccessTier.LOGGED_IN, AccessTier.PATRON] } },
+    where: { ...baseWhere, showInSidebar: true },
   });
   summary.sidebarVideoCount = sidebarVideoCount;
   push(checks, sidebarVideoCount > 0

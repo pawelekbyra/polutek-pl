@@ -1,6 +1,5 @@
 'use client';
 
-import { logger } from "@/lib/logger";
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { APP_NAME } from '@/lib/constants';
 
@@ -8,7 +7,7 @@ type Language = 'pl' | 'en';
 
 interface LanguageContextType {
   language: Language;
-  setLanguage: (lang: Language, skipSync?: boolean) => void;
+  setLanguage: (lang: Language) => void;
   isInitialized: boolean;
   t: typeof translations.pl;
 }
@@ -74,26 +73,12 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode; initialLang
     }
   }, [initialLanguage, forcedLanguage]);
 
-  const setLanguage = useCallback(async (lang: Language, skipSync: boolean = false) => {
-    const prevLang = language;
+  // Signed-in viewers' changes are saved on their account by AuthLifecycleProvider (the one writer).
+  const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
     persistLanguage(lang);
     document.documentElement.lang = lang;
-
-    // Logged-in users additionally persist to the database (authoritative on next load) and to
-    // Clerk metadata. A 401 just means the visitor is logged out — the cookie already covers them.
-    if (!skipSync && lang !== prevLang && isInitialized) {
-      try {
-        await fetch('/api/user/language', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ language: lang })
-        });
-      } catch (e) {
-        logger.warn('[LanguageContext] Failed to sync language with DB:', e);
-      }
-    }
-  }, [language, isInitialized]);
+  }, []);
 
   const t = useMemo(() => translations[language], [language]);
 

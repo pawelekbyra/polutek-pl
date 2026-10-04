@@ -38,7 +38,7 @@ describe('current main build safety', () => {
 
     expect(source).toContain('getSitemapVideos');
     expect(source).toContain('catch(() => [])');
-    expect(source).toContain('getLocalizedHref');
+    expect(source).toContain('getLocaleAlternates');
 
     for (const forbidden of [
       'playbackUrl',
