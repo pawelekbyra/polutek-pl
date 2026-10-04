@@ -324,7 +324,6 @@ function ChannelHomeContent({
             <div className="-mx-4 mt-5 flex border-b border-[var(--cm-line-80)] font-sans md:-mx-6 lg:hidden">
               {(["comments", "videos"] as const).map((tab) => {
                 const isActive = activeTab === tab;
-                const accent = tab === "videos" ? "var(--chan-amber)" : "var(--chan-blue)";
                 return (
                   <button
                     key={tab}
@@ -332,18 +331,14 @@ function ChannelHomeContent({
                     aria-pressed={isActive}
                     className={cn(
                       "relative flex-1 py-3.5 text-[12px] font-bold not-italic uppercase tracking-[0.14em] transition-colors duration-200 motion-reduce:transition-none",
-                      isActive
-                        ? tab === "videos"
-                          ? "text-[var(--chan-amber-strong)]"
-                          : "text-[var(--chan-blue)]"
-                        : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]",
+                      isActive ? "text-[var(--chan-blue)]" : "text-[var(--chan-muted)] hover:text-[var(--chan-ink)]",
                     )}
                   >
                     {tab === "comments" ? t.comments : t.videosTab}
                     <span
                       aria-hidden="true"
                       className="absolute inset-x-4 -bottom-px h-[2.5px] rounded-full transition-opacity duration-200 motion-reduce:transition-none"
-                      style={{ background: accent, opacity: isActive ? 1 : 0 }}
+                      style={{ background: "var(--chan-blue)", opacity: isActive ? 1 : 0 }}
                     />
                   </button>
                 );

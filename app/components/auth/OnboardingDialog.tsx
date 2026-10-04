@@ -103,7 +103,7 @@ export default function OnboardingDialog() {
               ? "Wybierz pseudonim. To nazwa widoczna na stronie, np. przy Twoich komentarzach."
               : "Choose a nickname. It is the name shown on the site, e.g. with your comments."}
           </p>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
             <span className="text-[12px] font-semibold text-[var(--chan-ink)]">
               {isPl ? "Język strony i wiadomości e-mail" : "Site and e-mail language"}
             </span>
