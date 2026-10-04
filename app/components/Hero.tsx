@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PublicVideoDTO } from '../types/video';
 import { useAuth } from "@/lib/auth/react";
 import { useAuthModal } from './auth/AuthModalProvider';
@@ -9,7 +9,6 @@ import PremiumWrapper from './PremiumWrapper';
 import Link from 'next/link';
 import VideoPlayer from './VideoPlayer';
 import { SafeAvatar } from './SafeAvatar';
-import { setVideoReaction } from '@/lib/actions/interactions';
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { useLanguage } from './LanguageContext';
 import { useToast } from '@/app/hooks/useToast';
@@ -47,13 +46,42 @@ function truncateAtWord(text: string, max: number): string {
   return (i > 0 ? text.slice(0, i) : text.slice(0, max)).trimEnd();
 }
 
+type ReactionTarget = "LIKE" | "DISLIKE" | null;
+type InteractionState = { isLiked: boolean; isDisliked: boolean; likesCount: number; dislikesCount: number };
+type ReactionOutcome = { kind: 'ok'; state: InteractionState } | { kind: 'unauthorized' } | { kind: 'failed'; status: number | 'network' };
+
+/** Sets the viewer's reaction on the server; retries once on a network error or a 5xx. */
+async function sendVideoReaction(videoId: string, target: ReactionTarget): Promise<ReactionOutcome> {
+  let last: ReactionOutcome = { kind: 'failed', status: 'network' };
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    if (attempt > 0) await new Promise((resolve) => window.setTimeout(resolve, 400));
+    try {
+      const response = await fetch(`/api/videos/${encodeURIComponent(videoId)}/reaction`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: target }),
+        cache: 'no-store',
+      });
+      if (response.status === 401) return { kind: 'unauthorized' };
+      if (response.ok) {
+        const data = (await response.json()) as { liked: boolean; disliked: boolean; likesCount: number; dislikesCount: number };
+        return { kind: 'ok', state: { isLiked: data.liked, isDisliked: data.disliked, likesCount: data.likesCount, dislikesCount: data.dislikesCount } };
+      }
+      last = { kind: 'failed', status: response.status };
+      if (response.status < 500) return last;
+    } catch {
+      last = { kind: 'failed', status: 'network' };
+    }
+  }
+  return last;
+}
+
 const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscribed }) => {
   const { t, language } = useLanguage();
   const toast = useToast();
   const { userId } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const [mounted, setMounted] = useState(false);
-  const [isPending, startTransition] = useTransition();
   const [isExpanded, setIsExpanded] = useState(false);
   const displayTitle = getVideoDisplayTitle(video, language);
   const [localViewsCount, setLocalViewsCount] = useState(video.views || 0);
@@ -125,9 +153,52 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     return () => controller.abort();
   }, [video.id, userId, hasInitialInteraction]);
 
-  // Sends the target state (not a toggle), so a repeated or retried request can never flip the
-  // reaction back; the server action does not re-render the page, the state below is the source.
-  const applyReaction = (target: "LIKE" | "DISLIKE" | null) => {
+  // The reaction the viewer ended up wanting is what counts, not every click: clicks are never
+  // dropped or refused while a request is in flight. Each request carries the target state (not a
+  // toggle), requests run one after another, only the newest result is shown, and a request
+  // superseded by a newer click never raises an error.
+  const currentVideoIdRef = React.useRef(video.id);
+  useEffect(() => {
+    currentVideoIdRef.current = video.id;
+  }, [video.id]);
+  const reactionSync = React.useRef<{ running: boolean; desired: ReactionTarget | undefined; confirmed: InteractionState | null }>({
+    running: false,
+    desired: undefined,
+    confirmed: null,
+  });
+
+  const flushReactions = async (videoId: string) => {
+    const sync = reactionSync.current;
+    sync.running = true;
+    try {
+      while (sync.desired !== undefined) {
+        const target = sync.desired;
+        sync.desired = undefined;
+        const outcome = await sendVideoReaction(videoId, target);
+        const showable = currentVideoIdRef.current === videoId;
+        if (outcome.kind === 'ok') {
+          sync.confirmed = outcome.state;
+          if (showable && sync.desired === undefined) setInteractionState(outcome.state);
+        } else if (outcome.kind === 'unauthorized') {
+          sync.desired = undefined;
+          if (showable && sync.confirmed) setInteractionState(sync.confirmed);
+          openAuthModal("sign-in");
+        } else if (sync.desired === undefined) {
+          logger.error("[Hero] Reaction failed:", outcome.status);
+          if (showable && sync.confirmed) setInteractionState(sync.confirmed);
+          toast(
+            language === 'pl' ? 'Nie udało się zapisać oceny. Spróbuj ponownie.' : 'Could not save your rating. Try again.',
+            'error',
+          );
+        }
+      }
+    } finally {
+      sync.running = false;
+      sync.confirmed = null;
+    }
+  };
+
+  const applyReaction = (target: ReactionTarget) => {
     const previousState = interactionState;
     const nextIsLiked = target === "LIKE";
     const nextIsDisliked = target === "DISLIKE";
@@ -147,44 +218,21 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         dislikesCount: Math.max(0, previousState.dislikesCount + Number(nextIsDisliked) - Number(previousState.isDisliked)),
     });
 
-    startTransition(async () => {
-        const failMessage = language === 'pl'
-            ? 'Nie udało się zapisać oceny. Spróbuj ponownie.'
-            : 'Could not save your rating. Try again.';
-        try {
-            const result = await setVideoReaction(video.id, target);
-            if (result.error !== undefined) {
-                logger.error("[Hero] Reaction failed:", result.error);
-                setInteractionState(previousState);
-                if (result.error === 'UNAUTHORIZED') openAuthModal("sign-in");
-                else toast(failMessage, 'error');
-                return;
-            }
-            setInteractionState({
-                isLiked: result.liked,
-                isDisliked: result.disliked,
-                likesCount: result.likesCount,
-                dislikesCount: result.dislikesCount,
-            });
-        } catch (error: unknown) {
-            logger.error("[Hero] Reaction request failed:", error);
-            setInteractionState(previousState);
-            toast(failMessage, 'error');
-        }
-    });
+    const sync = reactionSync.current;
+    if (!sync.running) sync.confirmed = previousState;
+    sync.desired = target;
+    if (!sync.running) void flushReactions(video.id);
   };
 
   const handleLike = () => {
     if (!userId) return openAuthModal("sign-in");
     userActedRef.current = true;
-    if (isPending) return;
     applyReaction(interactionState.isLiked ? null : "LIKE");
   };
 
   const handleDislike = () => {
     if (!userId) return openAuthModal("sign-in");
     userActedRef.current = true;
-    if (isPending) return;
     applyReaction(interactionState.isDisliked ? null : "DISLIKE");
   };
 
@@ -263,12 +311,10 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                <div className={cn("relative flex h-[36px] shrink-0 items-center rounded-[12px] bg-[var(--chan-surface)]", styles.actionCluster)}>
                   <button
                     onClick={handleLike}
-                    disabled={isPending}
                     className={cn(
                         "flex h-full items-center justify-center gap-1.5 px-2.5 font-sans transition-colors active:opacity-70 lg:px-3",
                         styles.actionButton,
-                        interactionState.isLiked ? "text-[var(--chan-blue)]" : "text-[var(--chan-ink)]",
-                        isPending && "opacity-50"
+                        interactionState.isLiked ? "text-[var(--chan-blue)]" : "text-[var(--chan-ink)]"
                     )}
                     title={interactionState.isLiked ? (language === 'pl' ? 'Cofnij polubienie' : 'Remove like') : (language === 'pl' ? 'Lubię to' : 'Like')}
                     aria-label={interactionState.isLiked ? (language === 'pl' ? 'Cofnij polubienie filmu' : 'Remove like from video') : (language === 'pl' ? 'Polub film' : 'Like video')}
@@ -287,12 +333,10 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                   <span className="h-4 w-px bg-[var(--chan-line-soft)]" />
                   <button
                     onClick={handleDislike}
-                    disabled={isPending}
                     className={cn(
                         "flex h-full items-center justify-center px-3 transition-colors active:opacity-70",
                         styles.actionButton,
-                        interactionState.isDisliked ? "text-[var(--chan-blue)]" : "text-[var(--chan-ink)]",
-                        isPending && "opacity-50"
+                        interactionState.isDisliked ? "text-[var(--chan-blue)]" : "text-[var(--chan-ink)]"
                     )}
                     title={interactionState.isDisliked ? (language === 'pl' ? 'Cofnij reakcję nie lubię' : 'Remove dislike') : (language === 'pl' ? 'Nie lubię' : 'Dislike')}
                     aria-label={interactionState.isDisliked ? (language === 'pl' ? 'Cofnij reakcję nie lubię filmu' : 'Remove dislike from video') : (language === 'pl' ? 'Nie lubię filmu' : 'Dislike video')}
