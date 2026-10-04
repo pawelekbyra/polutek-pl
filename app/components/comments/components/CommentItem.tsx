@@ -224,19 +224,27 @@ function CommentItemComponent({
         isHighlighted && "-mx-2 bg-[var(--chan-blue-soft)]/60 px-2",
       )}
     >
-      <SafeAvatar
-        src={comment.author?.imageUrl}
-        alt={comment.author?.displayName || "Avatar"}
-        size={avatarSize}
-        className="relative z-[5] border border-[var(--chan-line)]"
-      />
+      {/* Badges live under the avatar (never next to the name). The badge is positioned absolutely,
+          centred on the avatar, so it never changes the column width or the text alignment. */}
+      <div className="relative z-[5] shrink-0" style={{ width: avatarSize, height: avatarSize }}>
+        <SafeAvatar
+          src={comment.author?.imageUrl}
+          alt={comment.author?.displayName || "Avatar"}
+          size={avatarSize}
+          className="border border-[var(--chan-line)]"
+        />
+        {authorBadge && (
+          <span className="absolute left-1/2 top-full mt-1 -translate-x-1/2">
+            <AuthorBadge kind={authorBadge} language={language} />
+          </span>
+        )}
+      </div>
       <div className="relative z-[5] min-w-0 flex-1">
         <div className={cn("relative flex items-start justify-between", userProfile && "pr-9")}>
           <div className="flex min-w-0 items-center gap-1.5">
             <span className="truncate text-[13px] font-bold leading-[18px] text-[var(--chan-ink)]">
               {comment.author?.displayName || (language === "pl" ? "Użytkownik" : "User")}
             </span>
-            {authorBadge && <AuthorBadge kind={authorBadge} language={language} />}
             <time
               className="shrink-0 whitespace-nowrap text-[12px] leading-[18px] text-[var(--chan-muted)]"
               dateTime={validCreatedAt ? comment.createdAt : undefined}
