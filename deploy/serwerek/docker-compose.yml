@@ -10,7 +10,9 @@ services:
     image: postgres:17-alpine
     restart: unless-stopped
     env_file: ./db.env            # POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
-    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "max_connections=60"]
+    # pg_stat_statements (query statistics for the admin panel): preloading needs a restart, done once by
+    # scripts/serwerek/pg-stat-statements-enable.sh (SERWEREK.md section 23); keep this line identical to the one it writes.
+    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "max_connections=60", "-c", "shared_preload_libraries=pg_stat_statements", "-c", "pg_stat_statements.track=top"]
     volumes:
       - /opt/serwerek/data/polutek/pg:/var/lib/postgresql/data
     ports:
