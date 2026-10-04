@@ -1,0 +1,10 @@
+[Unit]
+Description=polutek cron prune-expired-auth, daily 03:45 UTC (deletes expired sign-in sessions and e-mail link tokens)
+
+[Timer]
+OnCalendar=*-*-* 03:45:00 UTC
+Persistent=true
+Unit=polutek-cron@prune-expired-auth.service
+
+[Install]
+WantedBy=timers.target

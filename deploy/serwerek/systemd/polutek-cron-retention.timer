@@ -1,0 +1,10 @@
+[Unit]
+Description=polutek cron retention, daily 04:15 UTC (clears IP addresses and browser data older than 90 days, retries Resend contact removals)
+
+[Timer]
+OnCalendar=*-*-* 04:15:00 UTC
+Persistent=true
+Unit=polutek-cron@retention.service
+
+[Install]
+WantedBy=timers.target

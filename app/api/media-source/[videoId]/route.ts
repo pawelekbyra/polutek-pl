@@ -10,7 +10,7 @@ import {
 } from "@/lib/media/rate-limit";
 import { recordAlert } from "@/lib/observability";
 import { handleApiError } from "@/lib/errors";
-import crypto from "crypto";
+import { clientFingerprint } from "@/lib/modules/privacy";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { MediaPolicy } from "@/lib/modules/media";
@@ -53,8 +53,8 @@ export async function GET(req: NextRequest, props: { params: Promise<{ videoId: 
 
     const ip = getMediaClientIp(req) || "unknown";
     const ua = req.headers.get("user-agent") || "unknown";
-    const ipHash = crypto.createHash("sha256").update(ip).digest("hex");
-    const uaHash = crypto.createHash("sha256").update(ua).digest("hex");
+    // Keyed hashes (HMAC): /api/videos/[id]/playback-event checks events against these.
+    const { ipHash, uaHash } = clientFingerprint(ip, ua);
 
     // `?session=<id>`: an open player renewing its delivery token keeps its playback session
     // (PlaybackService still runs the full access check and decides whether the id may be kept).
