@@ -1,6 +1,9 @@
 import { prisma } from "@/lib/prisma";
 
-/** A Google-only account may do a sensitive action only if the session was created this recently (the user just signed in again). */
+/**
+ * A Google-only account may do a sensitive action only if the session was created this recently (the user
+ * just signed in again). The same window gates destructive admin actions on other accounts (lib/api/admin-recent-sign-in.ts).
+ */
 export const RECENT_SIGN_IN_SECONDS = 10 * 60;
 
 export type ReauthResult = "ok" | "PASSWORD_REQUIRED" | "INVALID_PASSWORD" | "REAUTH_REQUIRED";
@@ -39,12 +42,19 @@ export async function checkSensitiveReauth(input: {
     const valid = await verify({ hash: credential.password, password: input.password });
     return valid ? "ok" : "INVALID_PASSWORD";
   }
-  const session = input.sessionId
-    ? await prisma.session.findUnique({ where: { id: input.sessionId }, select: { createdAt: true } })
-    : null;
-  const now = (input.now ?? new Date()).getTime();
-  if (session && now - session.createdAt.getTime() < RECENT_SIGN_IN_SECONDS * 1000) return "ok";
-  return "REAUTH_REQUIRED";
+  return (await isRecentSignIn(input.sessionId, input.now)) ? "ok" : "REAUTH_REQUIRED";
+}
+
+/**
+ * True when the session was created (= the user signed in, including the 2FA step) within the last
+ * RECENT_SIGN_IN_SECONDS. Session refreshes move `expiresAt`, never `createdAt`, so an old session
+ * kept alive by activity does not count as a recent sign-in.
+ */
+export async function isRecentSignIn(sessionId: string | null, now: Date = new Date()): Promise<boolean> {
+  if (!sessionId) return false;
+  const session = await prisma.session.findUnique({ where: { id: sessionId }, select: { createdAt: true } });
+  if (!session) return false;
+  return now.getTime() - session.createdAt.getTime() < RECENT_SIGN_IN_SECONDS * 1000;
 }
 
 /** True when `userId` is the only remaining (non-deleted) administrator. */

@@ -3,7 +3,13 @@ import { AppContext } from '@/lib/modules/shared/app-context';
 import { recordAuditEvent } from '@/lib/modules/audit';
 import { resolveEmailLanguage, sendAccountDeletedEmail } from '@/lib/modules/email';
 
-export type AccountDeletionCleanupSource = 'APP_ACCOUNT_DELETION';
+/** APP_ACCOUNT_DELETION: the user deleted their own account. ADMIN_USER_DELETION: an admin deleted it (/admin/users). */
+export type AccountDeletionCleanupSource = 'APP_ACCOUNT_DELETION' | 'ADMIN_USER_DELETION';
+
+const AUDIT_ACTION: Record<AccountDeletionCleanupSource, string> = {
+  APP_ACCOUNT_DELETION: 'USER_ACCOUNT_DELETION_CLEANUP',
+  ADMIN_USER_DELETION: 'ADMIN_USER_DELETED',
+};
 
 export interface AccountDeletionCleanupResult {
   cleaned: boolean;
@@ -83,7 +89,8 @@ export class AccountDeletionCleanupUseCase {
       });
 
       await recordAuditEvent(ctx, {
-        action: 'USER_ACCOUNT_DELETION_CLEANUP',
+        // One row per deletion, written in the same transaction; the actor (user, system or admin) comes from ctx.
+        action: AUDIT_ACTION[input.source],
         targetType: 'User',
         targetId: input.userId,
         metadata: { source: input.source, reason: input.reason ?? null, originalEmailRemoved: Boolean(originalEmail) },

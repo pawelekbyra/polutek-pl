@@ -83,6 +83,16 @@ export const adminPatronActionSchema = z.object({
   note: z.string().max(2000).nullish(),
 });
 
+/** DELETE /api/admin/users/[userId]: the user's e-mail typed back; the route checks it matches (case-insensitive). */
+export const adminUserDeleteSchema = z.object({
+  confirmEmail: z.string().trim().max(320).optional(),
+});
+
+/** PATCH /api/admin/users/[userId]/role */
+export const adminUserRoleSchema = z.object({
+  role: z.enum(["ADMIN", "USER"]),
+});
+
 export const adminVideoReorderSchema = z.object({
   videos: z
     .array(
