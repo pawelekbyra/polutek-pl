@@ -11,7 +11,7 @@ bo jego komputer zamulał).
 
 1. **Właściciel pisze po polsku, odpowiadaj po polsku.** Ma stały dostęp do usług (Vercel odcięty, Cloudflare, Stripe, GitHub,
    Google, Resend, Hetzner przez serwer). Pytaj tylko o: wydatki, hasła/2FA/odzyskiwanie, kasowanie całych kont/projektów/stref/
-   bazy produkcyjnej, to co każe e-mail lub strona. Sekrety: `%USERPROFILE%\.ai-secrets\` (nigdy do repo ani czatu).
+   bazy produkcyjnej, to co każe e-mail lub strona. Sekrety: od 2026-10-05 `/root/.ai-secrets/` na serwerze (wcześniej `%USERPROFILE%\.ai-secrets\` na komputerze właściciela, który już nie jest używany; nigdy do repo ani czatu).
    Zasady pracy i dostępy: `CLAUDE.md` §0, `AGENT_ACCESS.md`.
 2. **GitHub Actions nie działa** (od 2026-10-04 ~17:33: limit minut prywatnego repo wyczerpany, właściciel nie płaci).
    Weryfikacja jest LOKALNA: testy dotknięte zmianami (`npx vitest run <pliki> --testTimeout=120000 --hookTimeout=120000`:
@@ -102,7 +102,7 @@ Agent na serwerku **nie widzi GitHuba ani komputera właściciela** i zakłada w
 [`HANDOFF-SERVER-AGENT.md`](HANDOFF-SERVER-AGENT.md)** (czytaj go najpierw). Na serwerze: bundle gita z pełną historią i wszystkimi gałęziami z pracą w toku
 (`/opt/serwerek/handoff/polutek-pl.bundle`), roboczy klon `/opt/serwerek/repo`, kopia dokumentacji `/opt/serwerek/docs/`, `/opt/serwerek/README.md`.
 Bez GitHuba nie ma PR-ów ani CI: scalanie to `git merge` w jego repo, weryfikacja lokalna (komenda i ograniczenia zasobów w HANDOFF), wdrożenie `deploy.sh` z `git archive`.
-Nie ma tam też tokenów Cloudflare/GitHub/Stripe/Google ani Claude Code (właściciel dostarcza, gdy zechce); lista nazw sekretów: `/opt/serwerek/handoff/secrets-names.txt`.
+Sekrety właściciel skopiował do `/root/.ai-secrets/` (Cloudflare, Hetzner, Resend, Stripe, PP Support, klucz `age`, kopie konfiguracji; opis w HANDOFF §4); brakuje tylko `GITHUB_TOKEN` i Claude Code (uruchamia właściciel). **Właściciel pracuje odtąd tylko na serwerze.**
 
 ## Czeka na właściciela
 
