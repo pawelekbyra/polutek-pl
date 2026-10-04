@@ -271,6 +271,146 @@ model AuditLog {
   @@index([targetType, targetId])
 }
 
+// ---------------------------------------------------------------------------------------------
+// Admin panel identity (apps/admin, admin.pawelperfect.com). A SEPARATE Better Auth instance with its
+// own tables: a public-site session, password reset or Google sign-in never leads into the panel.
+// No sign-up and no e-mail reset: an account appears only through the server CLI `admin-enroll`
+// (one-time link), sign-in is passkey only, TOTP is the step-up fallback. docs/architecture/admin-panel.md.
+model AdminUser {
+  id               String    @id
+  email            String    @unique
+  name             String
+  emailVerified    Boolean   @default(true)
+  image            String?
+  twoFactorEnabled Boolean?  @default(false)
+  /// Set when the enrollment finished (TOTP verified and at least one passkey). Null = the account may
+  /// only reach the enrollment screen.
+  enrolledAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  sessions    AdminSession[]
+  accounts    AdminAccount[]
+  passkeys    AdminPasskey[]
+  twoFactors  AdminTwoFactor[]
+  enrollments AdminEnrollment[]
+}
+
+model AdminSession {
+  id        String    @id
+  expiresAt DateTime
+  token     String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  ipAddress String?
+  userAgent String?
+  /// Last successful step-up (TOTP) on this session; a passkey step-up creates a new session instead.
+  stepUpAt  DateTime?
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Required by Better Auth; the panel has no password or OAuth sign-in, so it normally stays empty.
+model AdminAccount {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model AdminVerification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+model AdminPasskey {
+  id           String    @id
+  name         String?
+  publicKey    String
+  userId       String
+  user         AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialID String    @unique
+  counter      Int
+  deviceType   String
+  backedUp     Boolean
+  transports   String?
+  createdAt    DateTime? @default(now())
+  aaguid       String?
+
+  @@index([userId])
+}
+
+model AdminTwoFactor {
+  id                      String    @id
+  secret                  String
+  backupCodes             String
+  userId                  String
+  verified                Boolean   @default(true)
+  failedVerificationCount Int       @default(0)
+  lockedUntil             DateTime?
+  user                    AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// One-time enrollment link printed by `admin-enroll` in the server terminal (never e-mailed).
+/// Only the SHA-256 of the token is stored; it expires after 15 minutes and works once.
+model AdminEnrollment {
+  id          String    @id @default(uuid())
+  userId      String
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+  user        AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Append-only log of panel sign-ins, step-ups and enrollment events. A database trigger refuses
+/// UPDATE and refuses DELETE of rows younger than 400 days; `hash` chains each row to the previous one
+/// (sha256 of the previous hash and the row), so a rewritten history is detectable.
+model AdminAuthEvent {
+  id          String   @id @default(uuid())
+  seq         BigInt   @unique @default(autoincrement())
+  action      String
+  adminUserId String?
+  email       String?
+  outcome     String
+  reason      String?
+  ip          String?
+  country     String?
+  userAgent   String?
+  requestId   String?
+  prevHash    String?
+  hash        String
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([adminUserId, createdAt])
+  @@index([action, createdAt])
+}
+
 model AppSetting {
   key       String   @id
   value     String
