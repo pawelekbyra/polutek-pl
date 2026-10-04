@@ -106,6 +106,59 @@ export function OAuthButtons({
   );
 }
 
+/** Owner decision 2026-10-02: a sign-up with an address that already has an account says so, with the ways in. */
+export function EmailTakenActions({
+  isPl,
+  kind,
+  onSignIn,
+  onForgot,
+}: {
+  isPl: boolean;
+  kind: "google" | "password";
+  onSignIn: () => void;
+  onForgot: () => void;
+}) {
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px]">
+      <button type="button" className="font-bold underline hover:text-[var(--chan-ink)]" onClick={onSignIn}>
+        {isPl ? "Zaloguj się" : "Sign in"}
+      </button>
+      <button type="button" className="font-bold underline hover:text-[var(--chan-ink)]" onClick={onForgot}>
+        {isPl ? "Nie pamiętam hasła" : "Forgot password"}
+      </button>
+      {kind === "google" && (
+        <span className="text-[var(--chan-muted)]">{isPl ? "Możesz też użyć przycisku Google." : "You can also use the Google button."}</span>
+      )}
+    </div>
+  );
+}
+
+/** Under "Continue with Google / a passkey": both create the account when there is none. */
+export function NewHereNote({ isPl }: { isPl: boolean }) {
+  return (
+    <p className="text-center text-[12px] text-[var(--chan-muted)]">
+      {isPl ? "Nowy tutaj? Konto założymy automatycznie." : "New here? We'll create your account automatically."}
+    </p>
+  );
+}
+
+/** Bottom of the sign-in view: password reset, and the way to the e-mail sign-up (question grey, action blue). */
+export function SignInLinks({ isPl, onForgot, onSignUp }: { isPl: boolean; onForgot: () => void; onSignUp: () => void }) {
+  return (
+    <div className="space-y-2 pt-1 text-center text-[12px] text-[var(--chan-muted)]">
+      <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={onForgot}>
+        {isPl ? "Nie pamiętam hasła" : "Forgot password"}
+      </button>
+      <p>
+        {isPl ? "Nie masz konta?" : "Don't have an account?"}{" "}
+        <button type="button" className="font-bold text-[var(--chan-blue)] hover:underline" onClick={onSignUp}>
+          {isPl ? "Załóż konto" : "Create account"}
+        </button>
+      </p>
+    </div>
+  );
+}
+
 export function Divider({ isPl }: { isPl: boolean }) {
   return (
     <div className="flex items-center gap-3 py-1">
