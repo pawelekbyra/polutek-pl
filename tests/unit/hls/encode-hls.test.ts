@@ -101,7 +101,7 @@ describe('encode-hls', () => {
 
   it('parses loudnorm output and rejects garbage', () => {
     const j = parseLoudnormJson('noise\n{"input_i":"-19.8","input_tp":"-3.4","input_lra":"4.9","input_thresh":"-30.8","target_offset":"-1.4"}');
-    expect(j.input_i).toBe(-19.8);
+    expect(j?.input_i).toBe(-19.8);
     expect(() => parseLoudnormJson('nothing')).toThrow();
   });
 

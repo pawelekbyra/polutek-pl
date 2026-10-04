@@ -168,7 +168,7 @@ describe('CommentRepository', () => {
     it('findReplies({ includeHidden: true }) should exclude DELETED status', async () => {
       mockPrisma.comment.findMany.mockResolvedValue([]);
 
-      await repository.findReplies('parent-1', 'user-1', true);
+      await repository.findReplies('parent-1', 'user-1', true, undefined, 10);
 
       expect(mockPrisma.comment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({

@@ -62,7 +62,7 @@ describe("EncodeJobRepository.requeueStale", () => {
   const stale = new Date(now.getTime() - STALE_HEARTBEAT_MS - 1000);
 
   function dbWith(rows: VideoEncodeJob[]) {
-    const updateMany = vi.fn(async () => ({ count: 1 }));
+    const updateMany = vi.fn(async (_args: { where: unknown; data: Record<string, unknown> }) => ({ count: 1 }));
     const db = { videoEncodeJob: { findMany: vi.fn(async () => rows), updateMany } } as unknown as PrismaClient;
     return { db, updateMany };
   }
@@ -89,7 +89,7 @@ describe("EncodeJobRepository.requeueStale", () => {
 describe("EncodeJobRepository.requestCancel", () => {
   it("cancels a queued job at once and flags a running one for the worker", async () => {
     const findFirst = vi.fn();
-    const updateMany = vi.fn(async () => ({ count: 1 }));
+    const updateMany = vi.fn(async (_args: { where: unknown; data: Record<string, unknown> }) => ({ count: 1 }));
     const db = { videoEncodeJob: { findFirst, updateMany } } as unknown as PrismaClient;
     const repo = new EncodeJobRepository(db);
 

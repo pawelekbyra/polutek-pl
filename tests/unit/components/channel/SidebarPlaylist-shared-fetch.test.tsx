@@ -95,7 +95,7 @@ function TwoMounts() {
   return (
     <>
       <SidebarPlaylist {...baseProps} />
-      <SidebarPlaylist {...baseProps} showSupportBox={false} />
+      <SidebarPlaylist {...baseProps} />
     </>
   );
 }
@@ -175,7 +175,7 @@ describe("SidebarPlaylist shared /api/channel/sidebar request", () => {
     render(
       <>
         <SidebarPlaylist {...baseProps} initialLayout={initialLayout} initialLayoutViewerKey="anonymous:out" />
-        <SidebarPlaylist {...baseProps} showSupportBox={false} initialLayout={initialLayout} initialLayoutViewerKey="anonymous:out" />
+        <SidebarPlaylist {...baseProps} initialLayout={initialLayout} initialLayoutViewerKey="anonymous:out" />
       </>,
     );
 

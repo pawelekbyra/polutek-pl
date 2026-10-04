@@ -6,6 +6,7 @@ import { WriteTx } from '@/lib/modules/shared/db';
 import { checkVideoAccess } from '@/lib/modules/access';
 import { setNxEx } from '@/lib/rate-limit';
 import { PlaybackAccessDeniedError } from '@/lib/modules/video/domain/video.errors';
+import type { PlaybackEventType } from '@/lib/modules/video/domain/video.dto';
 
 // These tests intentionally exercise duplicate view claims through repository-shaped mocks.
 vi.mock('@/lib/modules/access', () => ({
@@ -383,7 +384,7 @@ describe('recordPlaybackEventUseCase watch time (totalWatchMs)', () => {
       video: { update: vi.fn() },
     } as never)) as never;
 
-    const send = async (type: string, atSeconds: number) => {
+    const send = async (type: PlaybackEventType, atSeconds: number) => {
       nowMs = T0 + atSeconds * 1000;
       const result = await recordPlaybackEventUseCase({
         videoId: 'v1', sessionId: 's1', type, positionMs: 1000, durationMs: 600000,

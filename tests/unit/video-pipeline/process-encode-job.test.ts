@@ -78,14 +78,14 @@ function harness(opts: { job?: VideoEncodeJob; cancelAfterFirstProgress?: boolea
   };
   const encoder = {
     probe: vi.fn(async () => GOOD_PROBE),
-    encode: vi.fn(async ({ out, onProgress }: { out: string; onProgress: (p: { overall: number; step: string; name: string }) => void }): Promise<EncodeOutcome> => {
+    encode: vi.fn(async ({ out, onProgress }: { out: string; onProgress: (p: { overall: number; step: string; name: string }) => void; signal: AbortSignal }): Promise<EncodeOutcome> => {
       await writeOutput(out);
       onProgress({ overall: 0.5, step: "rung", name: "720p" });
       return { meta: { source: { durationSeconds: 30 }, rungs: [] }, issues: [] };
     }),
   };
   const finalizer = {
-    findExisting: vi.fn(async () => null),
+    findExisting: vi.fn(async (): Promise<string | null> => null),
     finalize: vi.fn(async () => { events.push("finalize"); return { assetId: "asset-1" }; }),
   };
   const audit = vi.fn(async (action: string) => { events.push(`audit:${action}`); });

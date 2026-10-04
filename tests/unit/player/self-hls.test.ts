@@ -66,7 +66,7 @@ describe('own HLS player helpers', () => {
   it('opens each request with the newest token, after making sure the token is fresh', async () => {
     const { cfg, ensureFreshToken } = config();
     const xhr = { open: vi.fn() } as unknown as XMLHttpRequest;
-    await cfg.xhrSetup!(xhr, OLD.replace('master.m3u8', '540p/index.m3u8'));
+    await cfg.xhrSetup!(xhr, OLD.replace('master.m3u8', '540p/index.m3u8'), {} as never);
     expect(ensureFreshToken).toHaveBeenCalled();
     expect(xhr.open).toHaveBeenCalledWith('GET', NEW.replace('master.m3u8', '540p/index.m3u8'), true);
   });

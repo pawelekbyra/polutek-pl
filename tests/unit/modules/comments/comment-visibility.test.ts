@@ -19,7 +19,7 @@ function row(overrides: Partial<CommentRow> = {}): CommentRow {
     likesCount: 2,
     reportsCount: 0,
     isHearted: false,
-    author: { id: 'author-1', name: 'Ala', username: null, imageUrl: null, isDeleted: false, role: 'USER', patronGrants: [] },
+    author: { id: 'author-1', name: 'Ala', username: null, imageUrl: null, isDeleted: false, role: 'USER' },
     ...overrides,
   };
 }
