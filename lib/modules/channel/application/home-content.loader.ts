@@ -85,7 +85,7 @@ export async function loadHomeContent(): Promise<HomeContent> {
 
 // NOTE: despite the name, this does not actually cache anything — it's a direct
 // passthrough to loadHomeContent(). The page(s) calling it are intentionally
-// force-dynamic (see KNOWN_LIMITATIONS.md's scalability note), so there's no
+// force-dynamic, so there's no
 // caching layer here today. Kept as its own function (not just an alias) since it's
 // the natural place to add real caching later; don't assume memoization exists
 // because of the name.
