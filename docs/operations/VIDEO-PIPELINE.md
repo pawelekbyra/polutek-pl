@@ -25,7 +25,7 @@ Admin wgrywa **oryginał** bezpośrednio do prywatnego bucketa `polutek` przez p
 3. `POST .../multipart/complete` (lista części z ETagami): `CompleteMultipartUpload`, potem **weryfikacja tego, co naprawdę leży w R2**: rozmiar = zadeklarowany i <= limit, **magic bytes** (MP4/MOV, Matroska/WebM, AVI, MPEG-TS/M2TS; nazwa i typ z przeglądarki nie wystarczają). Plik, który nie przejdzie, jest **kasowany z R2**, oryginał dostaje `FAILED` z powodem, audit `VIDEO_ORIGINAL_UPLOAD_REJECTED`. Poprawny: oryginał `READY`, poprzednie `SUPERSEDED`, `Video.activeOriginalId`, zadanie kodowania w kolejce. Ponowne `complete` jest idempotentne.
 4. `DELETE .../multipart?originalId=` = Anuluj (abort w R2).
 
-Bucket `polutek` zostaje **prywatny** (bez `r2.dev`, bez domeny publicznej). Jednorazowo trzeba ustawić **CORS** (przeglądarka PUT-uje na adres S3 i musi odczytać `ETag`): `npx wrangler r2 bucket cors set polutek --file scripts/hls/originals-cors.json` (plik: dozwolone originy `https://www.pawelperfect.com`/`https://pawelperfect.com`, metody PUT/GET/HEAD, `ExposeHeaders: ETag`). Niedokończone uploady: R2 kasuje części po 7 dniach, a cron `abandon-stale-uploads` (timer `polutek-cron-abandon-stale-uploads`, 04:30 UTC) w tym samym wieku abortuje multipart i ustawia wiersz `VideoOriginal` na `ABANDONED` (`?dryRun=1` tylko liczy).
+Bucket `polutek` zostaje **prywatny** (bez `r2.dev`, bez domeny publicznej). Jednorazowo trzeba ustawić **CORS** (przeglądarka PUT-uje na adres S3 i musi odczytać `ETag`): `npx wrangler r2 bucket cors set polutek --file scripts/hls/originals-cors.json` (plik: dozwolone originy `https://www.pawelperfect.com`/`https://pawelperfect.com`, metody PUT/GET/HEAD, `ExposeHeaders: ETag`). Niedokończone uploady: R2 kasuje części po 7 dniach, a cron `abandon-stale-originals` (timer `polutek-cron-abandon-stale-originals`, 04:30 UTC) w tym samym wieku abortuje multipart i ustawia wiersz `VideoOriginal` na `ABANDONED` (`?dryRun=1` tylko liczy).
 
 Audit (`lib/modules/audit`): `VIDEO_ORIGINAL_UPLOAD_PROVISIONED`, `_COMPLETED`, `_REJECTED`, `_ABORTED`, `VIDEO_ORIGINAL_UPLOADS_ABANDONED` (cron), `VIDEO_ENCODE_ENQUEUED`, `_STARTED`, `_SUCCEEDED`, `_FAILED`, `_CANCEL_REQUESTED`, `_CANCELLED`. Trasy są za `requireAdminForApi`, CSRF i limitem żądań z middleware (start/complete/abort: 20/min).
 
@@ -113,7 +113,7 @@ Ręczne awaryjne czyszczenie zadania: `update "VideoEncodeJob" set status='CANCE
 4. Na serwerze: `cd /opt/serwerek/apps/polutek && grep -E '^(DATABASE_URL|CLOUDFLARE_R2_|MAIN_CREATOR_SLUG|NEXT_PUBLIC_R2_PUBLIC_HOST)' app.env > worker.env && chmod 600 worker.env && mkdir -p /opt/serwerek/data/video-work && chown 1000:1000 /opt/serwerek/data/video-work`
 5. `ENCODER_IMAGE=polutek-worker:<tag> docker compose up -d --no-deps encoder` (albo ponowny `./deploy.sh <tag>`), `docker compose logs -f encoder` ma pokazać `started`. `ai-log "enabled video encoder"`.
 6. Test: nowy szkic, wgraj krótki plik, obserwuj Media -> Przetwarzanie.
-7. Timer sprzątania uploadów: `cp deploy/serwerek/systemd/polutek-cron-abandon-stale-uploads.timer /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now polutek-cron-abandon-stale-uploads.timer`.
+7. Timer sprzątania uploadów: `cp deploy/serwerek/systemd/polutek-cron-abandon-stale-originals.timer /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now polutek-cron-abandon-stale-originals.timer`.
 
 ## 7. Limity i uwagi
 

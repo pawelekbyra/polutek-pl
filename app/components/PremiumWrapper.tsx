@@ -26,6 +26,7 @@ import {
 import { VideoAccessContext, useVideoAccess } from "./VideoAccessContext";
 import { useOptionalLanguage } from "./LanguageContext";
 import { usePageRevealReady } from "./preload/PageRevealGate";
+import { usePlaybackTokenRenewal } from "./player/usePlaybackTokenRenewal";
 import {
   BLOCKED_PLAYBACK_STATES,
   PLAYBACK_PLAN_STATE_MESSAGES,
@@ -243,67 +244,14 @@ export default function PremiumWrapper({
     await checkAccess();
   }, [checkAccess, invalidatePreloadedPlaybackPlan, videoId]);
 
-  // Silent renewal (fresh delivery token) for the open player: same endpoint and the same full
-  // access check on the server, but the plan is swapped in place, so the player keeps playing.
-  // `?session=` lets the server keep this watch's playback session instead of opening a new one.
-  const playingSessionId = currentPlaybackPlan?.tracking?.playbackSessionId || "";
-  const renewInFlightRef = useRef<Promise<PlaybackPlan | null> | null>(null);
-  const renewPlaybackPlan = useCallback((): Promise<PlaybackPlan | null> => {
-    if (renewInFlightRef.current) return renewInFlightRef.current;
-    const generation = requestGenerationRef.current;
-    const query = playingSessionId ? `?session=${encodeURIComponent(playingSessionId)}` : "";
-    const request = (async () => {
-      let response: Response;
-      try {
-        response = await fetch(`/api/media-source/${encodeURIComponent(videoId)}${query}`, {
-          cache: "no-store",
-          credentials: "same-origin",
-        });
-      } catch (error) {
-        logger.warn("Playback token renewal failed (network)", error);
-        return null;
-      }
-      if (requestGenerationRef.current !== generation) return null;
-      // Rate limit / server trouble: keep the current plan, the player retries later.
-      if (response.status === 429 || response.status >= 500) return null;
-      const data = (await response.json().catch(() => null)) as PlaybackPlan | null;
-      if (requestGenerationRef.current !== generation) return null;
-      if (data && isPlayablePlaybackPlan(data, videoId)) {
-        invalidatePreloadedPlaybackPlan?.(videoId);
-        setPlaybackPlan(data);
-        return data;
-      }
-      // The viewer can no longer play this (signed out, access changed): show the right state.
-      void refreshPlaybackPlan();
-      return null;
-    })().finally(() => {
-      renewInFlightRef.current = null;
-    });
-    renewInFlightRef.current = request;
-    return request;
-  }, [invalidatePreloadedPlaybackPlan, playingSessionId, refreshPlaybackPlan, videoId]);
-
-  // Renew 2 minutes before the token expires, and at once when a tab that slept past that
-  // point becomes visible again (timers in background tabs are throttled or frozen).
-  const tokenExpiresAt = currentPlaybackPlan?.source?.expiresAt
-    ? new Date(currentPlaybackPlan.source.expiresAt).getTime()
-    : null;
-  useEffect(() => {
-    if (!tokenExpiresAt) return;
-    const refreshThresholdMs = 120 * 1000;
-    const renewIfDue = () => {
-      if (tokenExpiresAt - Date.now() <= refreshThresholdMs) void renewPlaybackPlan();
-    };
-    const timer = setTimeout(renewIfDue, Math.max(0, tokenExpiresAt - Date.now() - refreshThresholdMs));
-    const onVisible = () => {
-      if (document.visibilityState === "visible") renewIfDue();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
-  }, [renewPlaybackPlan, tokenExpiresAt]);
+  const renewPlaybackPlan = usePlaybackTokenRenewal({
+    videoId,
+    plan: currentPlaybackPlan,
+    generationRef: requestGenerationRef,
+    setPlan: setPlaybackPlan,
+    invalidatePreloaded: invalidatePreloadedPlaybackPlan,
+    refresh: refreshPlaybackPlan,
+  });
 
   const safePlaybackState = isCurrentViewerResolution ? playbackState : null;
   const safeFetchError = isCurrentViewerResolution ? fetchError : null;

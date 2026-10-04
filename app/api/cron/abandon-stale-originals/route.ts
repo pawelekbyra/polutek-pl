@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const ctx = createAppContext({ actor: { type: "system", reason: "abandon-stale-uploads-cron" } });
+  const ctx = createAppContext({ actor: { type: "system", reason: "abandon-stale-originals-cron" } });
   const result = await abandonStaleOriginalUploads({ dryRun: req.nextUrl.searchParams.get("dryRun") === "1" }, ctx);
   if (!result.ok) {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

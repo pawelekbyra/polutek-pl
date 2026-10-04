@@ -34,7 +34,7 @@ async function job(over: Record<string, unknown> = {}) {
 }
 
 beforeAll(async () => {
-  const user = await prisma.user.create({ data: { email: `${RUN}@example.test` } });
+  const user = await prisma.user.create({ data: { id: `${RUN}-user`, email: `${RUN}@example.test` } });
   const creator = await prisma.creator.create({ data: { userId: user.id, slug: `${RUN}-creator`, name: 'PG test' } });
   const video = await prisma.video.create({ data: { creatorId: creator.id, title: 'PG test', slug: `${RUN}-video` } });
   const original = await prisma.videoOriginal.create({ data: { videoId: video.id, bucket: 'polutek', objectKey: `originals/${video.id}/x.mp4`, status: 'READY' } });
