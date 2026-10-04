@@ -29,6 +29,7 @@ Postgres 17, Redis, kodowanie wideo (kontener `encoder`), kolektor telemetrii (`
 
 ## Agent pracujący na serwerku
 
+**Zacznij od `/opt/serwerek/docs/operations/HANDOFF-SERVER-AGENT.md`** (własne repozytorium z bundla `/opt/serwerek/handoff/polutek-pl.bundle`, klon w `/opt/serwerek/repo`).
 Wdrożenia, diagnostyka, kopie, odczyt bazy i zadania operacyjne możesz robić tu na miejscu (lista i zasady: sekcja „Agent pracujący bezpośrednio na serwerku”
 w `/opt/serwerek/docs/operations/STATUS.md`). **Kodu tu nie ma** (brak klonu repo i poświadczeń GitHub): zmiany w kodzie robi sesja na komputerze właściciela,
 chyba że właściciel da token GitHub (instrukcja w STATUS.md). Nie uruchamiaj tu pełnych testów ani budowy w godzinach ruchu (2 vCPU, 4 GB RAM).

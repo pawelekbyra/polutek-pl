@@ -8,6 +8,7 @@ albo znika w tym samym PR. Historia jest w git.
 | Co | Gdzie |
 |---|---|
 | Zasady dla agentów AI, mapa repo, niezmienniki | [`../CLAUDE.md`](../CLAUDE.md) |
+| Przekazanie projektu agentowi pracującemu na serwerku (własne repo bez GitHuba) | [`operations/HANDOFF-SERVER-AGENT.md`](operations/HANDOFF-SERVER-AGENT.md) |
 | Otwarte prace, decyzje do podjęcia, kolejność | [`operations/STATUS.md`](operations/STATUS.md) |
 
 ## Jak to jest zbudowane (`architecture/`)
