@@ -63,7 +63,6 @@ function SsoCallback() {
             {failed ? failedText : (isPl ? "Logowanie trwa dłużej niż zwykle." : "Signing in is taking longer than usual.")}
           </p>
           {/* Plain <a> on purpose: a full page load that resets client state, not a client-side <Link> navigation. */}
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a href={backHref} className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background">
             {backHref === "/" ? (isPl ? "Wróć na stronę główną" : "Back to home") : (isPl ? "Wróć" : "Go back")}
           </a>

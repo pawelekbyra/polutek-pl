@@ -7,6 +7,8 @@ const sendEmail = vi.hoisted(() => ({
   queueVerificationEmail: vi.fn(),
   queuePasswordResetEmail: vi.fn(),
   queuePasswordChangedEmail: vi.fn(),
+  queueChangeEmailConfirmation: vi.fn(),
+  onEmailVerified: vi.fn(),
 }));
 
 vi.mock("@/lib/prisma", () => ({ prisma: {} }));
@@ -144,10 +146,23 @@ describe("Better Auth e-mail callbacks", () => {
     expect(sendEmail.queuePasswordResetEmail).toHaveBeenCalledWith({ email: "a@b.pl" }, "https://x/reset");
   });
 
-  it("no longer sends an account-exists mail and sends the welcome mail only at onboarding", async () => {
+  it("no longer sends an account-exists mail; after verification only the e-mail-change notice runs", async () => {
     const options = await loadAuth(FULL_ENV);
     expect(options.emailAndPassword.onExistingUserSignUp).toBeUndefined();
-    expect((options.emailVerification as Record<string, unknown>).afterEmailVerification).toBeUndefined();
+    const after = (options.emailVerification as { afterEmailVerification?: (u: unknown, r: unknown) => Promise<void> }).afterEmailVerification;
+    await after?.({ id: "u1", email: "a@b.pl" }, null);
+    expect(sendEmail.onEmailVerified).toHaveBeenCalledWith({ id: "u1", email: "a@b.pl" }, null);
+  });
+
+  it("asks the current address to approve an e-mail change (AUTH-02)", async () => {
+    const options = (await loadAuth(FULL_ENV)) as unknown as {
+      user: { changeEmail: { enabled: boolean; sendChangeEmailConfirmation?: (d: unknown) => Promise<void> } };
+      rateLimit: { customRules: Record<string, unknown> };
+    };
+    expect(options.user.changeEmail.enabled).toBe(true);
+    await options.user.changeEmail.sendChangeEmailConfirmation?.({ user: { email: "old@b.pl" }, newEmail: "new@b.pl", url: "https://x/v" });
+    expect(sendEmail.queueChangeEmailConfirmation).toHaveBeenCalledWith({ email: "old@b.pl" }, "new@b.pl", "https://x/v");
+    expect(options.rateLimit.customRules["/change-email"]).toEqual({ window: 3600, max: 10 });
   });
 
 });
