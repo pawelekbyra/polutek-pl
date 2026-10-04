@@ -89,7 +89,7 @@ export interface PublicVideoDTO {
    */
   fundraisingProgress?: number | null;
   creator?: PublicCreatorDTO;
-  textTracks?: VideoTextTrackDTO[];
+  // Subtitles are not part of the public DTO: they come only with a playable plan.
   // Ensure no raw fields are present
   videoUrl?: never;
   sourceUrl?: never;

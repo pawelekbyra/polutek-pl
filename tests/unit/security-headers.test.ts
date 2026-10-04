@@ -70,11 +70,11 @@ describe('Security Headers', () => {
     expect(csp).toContain(devOnlyScriptKeyword);
   });
 
-  it('allows our own HLS delivery host and hls.js dependencies in CSP', () => {
+  it('allows our own HLS delivery host, and no script CDN (hls.js ships in our own bundle)', () => {
     const directive = (name: string) => generateCSP().split('; ').find((part) => part.startsWith(`${name} `)) ?? '';
 
-    expect(directive('script-src')).toContain('https://cdn.jsdelivr.net');
-    expect(directive('script-src-elem')).toContain('https://cdn.jsdelivr.net');
+    expect(generateCSP()).not.toContain('jsdelivr');
+    expect(directive('worker-src')).toContain('blob:'); // hls.js transmuxer worker
     expect(directive('connect-src')).toContain('https://video.pawelperfect.com');
     expect(directive('media-src')).toContain("'self' blob:");
     expect(directive('media-src')).toContain('https://video.pawelperfect.com');

@@ -2,6 +2,7 @@ import type { VideoAsset } from '@prisma/client';
 import type { AppContext } from '@/lib/modules/shared/app-context';
 import { SelfHlsTokenService } from '../infrastructure/self-hls-token.service';
 import type { PlaybackAssetContract, PlaybackPlan } from '../domain/playback.dto';
+import { PLAYBACK_HEARTBEAT_INTERVAL_SECONDS, PLAYBACK_SESSION_MAX_AGE_MS } from '@/lib/modules/video';
 
 /**
  * Own HLS playback (provider SELF_HLS), the only video source we have. Only
@@ -29,11 +30,13 @@ export type SelfHlsPlanArgs = {
   safeAsset: PlaybackAssetContract | undefined;
   player: PlaybackPlan['player'];
   warnings: string[];
+  /** Playback session of the open player asking for a fresh token (kept when it is the viewer's). */
+  reuseSessionId?: string;
 };
 
 /** Returns a READY plan, or null when our HLS cannot be served (caller answers with an ERROR plan). */
 export async function buildSelfHlsPlan(args: SelfHlsPlanArgs): Promise<PlaybackPlan | null> {
-  const { ctx, videoId, asset } = args;
+  const { videoId, asset } = args;
   const secret = SelfHlsTokenService.secret();
   const version = parseSelfHlsObjectKey(asset.objectKey, videoId);
   if (!secret || !version) {
@@ -42,19 +45,7 @@ export async function buildSelfHlsPlan(args: SelfHlsPlanArgs): Promise<PlaybackP
   }
 
   const signed = SelfHlsTokenService.sign({ videoId, version, secret }, SelfHlsTokenService.baseUrl());
-  const { actor, prisma } = ctx;
-
-  const session = await prisma.videoPlaybackSession.create({
-    data: {
-      videoId,
-      userId: actor.type === 'user' || actor.type === 'admin' ? actor.userId : null,
-      ipHash: args.ipHash,
-      userAgentHash: args.userAgentHash,
-      sourceKind: 'self_hls',
-      accessTier: args.tier as never,
-      isAdminPreview: args.isAdminPreview,
-    },
-  });
+  const sessionId = await reuseOrCreateSession(args);
 
   return {
     videoId,
@@ -80,6 +71,51 @@ export async function buildSelfHlsPlan(args: SelfHlsPlanArgs): Promise<PlaybackP
       sourceMode: 'PROVIDER_ASSET',
       asset: args.safeAsset,
     },
-    tracking: { playbackSessionId: session.id, heartbeatIntervalSeconds: 60 },
+    tracking: { playbackSessionId: sessionId, heartbeatIntervalSeconds: PLAYBACK_HEARTBEAT_INTERVAL_SECONDS },
   };
+}
+
+/**
+ * A token renewal of an open player (`reuseSessionId`) keeps its playback session, so one watch
+ * stays one session. The session is reused only when it is this viewer's (same user, or the same
+ * guest fingerprint), for this video, with the same preview flag, and still young enough for the
+ * event endpoint to accept it; otherwise a new one is created.
+ */
+async function reuseOrCreateSession(args: SelfHlsPlanArgs): Promise<string> {
+  const { ctx, videoId } = args;
+  const { actor, prisma } = ctx;
+  const userId = actor.type === 'user' || actor.type === 'admin' ? actor.userId : null;
+
+  if (args.reuseSessionId) {
+    const existing = await prisma.videoPlaybackSession.findUnique({
+      where: { id: args.reuseSessionId },
+      select: { id: true, videoId: true, userId: true, ipHash: true, userAgentHash: true, isAdminPreview: true, createdAt: true },
+    });
+    const now = ctx.now ? ctx.now() : new Date();
+    const ownedByViewer = userId
+      ? existing?.userId === userId
+      : existing?.userId === null && existing.ipHash === (args.ipHash ?? null) && existing.userAgentHash === (args.userAgentHash ?? null);
+    if (
+      existing &&
+      ownedByViewer &&
+      existing.videoId === videoId &&
+      existing.isAdminPreview === args.isAdminPreview &&
+      now.getTime() - existing.createdAt.getTime() < PLAYBACK_SESSION_MAX_AGE_MS
+    ) {
+      return existing.id;
+    }
+  }
+
+  const session = await prisma.videoPlaybackSession.create({
+    data: {
+      videoId,
+      userId,
+      ipHash: args.ipHash,
+      userAgentHash: args.userAgentHash,
+      sourceKind: 'self_hls',
+      accessTier: args.tier as never,
+      isAdminPreview: args.isAdminPreview,
+    },
+  });
+  return session.id;
 }

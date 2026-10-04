@@ -17,6 +17,8 @@ import { MediaPolicy } from "@/lib/modules/media";
 
 export const dynamic = "force-dynamic";
 
+const SESSION_ID_RE = /^[A-Za-z0-9_-]{8,64}$/;
+
 export async function GET(req: NextRequest, props: { params: Promise<{ videoId: string }> }) {
   const params = await props.params;
   const requestId = getCorrelationId();
@@ -54,12 +56,18 @@ export async function GET(req: NextRequest, props: { params: Promise<{ videoId: 
     const ipHash = crypto.createHash("sha256").update(ip).digest("hex");
     const uaHash = crypto.createHash("sha256").update(ua).digest("hex");
 
+    // `?session=<id>`: an open player renewing its delivery token keeps its playback session
+    // (PlaybackService still runs the full access check and decides whether the id may be kept).
+    const sessionParam = req.nextUrl.searchParams.get("session");
+    const reuseSessionId = sessionParam && SESSION_ID_RE.test(sessionParam) ? sessionParam : undefined;
+
     const ctx = createAppContext({ actor, requestId: requestId || undefined });
     let playbackPlan = await PlaybackService.createPlaybackPlanWithContext(
       videoId,
       ctx,
       ipHash,
       uaHash,
+      { reuseSessionId },
     );
 
     // Safety net: a raw storage/provider URL must never reach the browser. Own HLS plans carry
