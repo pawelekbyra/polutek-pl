@@ -1,6 +1,6 @@
 nevermind
 
-## Flagi w przełączniku języka (`public/flags/`)
+## Flagi w przełączniku języka (`public/flags/`, kopia w `apps/admin/public/flags/` dla ekranu Tłumaczenia panelu)
 
 Pliki `pl.svg`, `gb.svg`, `de.svg`, `es.svg`, `fr.svg`, `it.svg`, `pt.svg`, `cn.svg` pochodzą z projektu
 **circle-flags** (HatScripts), wydanie `v2.8.0`, katalog `flags/`

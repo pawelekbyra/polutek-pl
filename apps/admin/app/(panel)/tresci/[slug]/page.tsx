@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { fmtDateTime, fmtInt, fmtMoney } from "@/lib/modules/admin-overview";
 import { CopyLink } from "@admin/components/content/copy-link";
 import { EncodePanel } from "@admin/components/content/encode-panel";
+import { FilmTabs } from "@admin/components/content/film-tabs";
 import { FilmActions } from "@admin/components/content/film-actions";
 import { Icon } from "@admin/components/icons";
 import { Badge, Card, Empty, ExternalLink, PageHead, State, Tile } from "@admin/components/ui";
@@ -73,6 +74,7 @@ export default async function FilmPage({ params }: Props) {
           </>
         }
       />
+      <FilmTabs slug={v.slug} current="przeglad" />
       <div className="grid">
         <div className="span-8 stack">
           {v.status === "PUBLISHED" ? (

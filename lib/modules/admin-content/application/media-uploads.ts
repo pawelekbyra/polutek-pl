@@ -9,9 +9,11 @@ import { fail, ok, type UseCaseResult } from "@/lib/modules/shared/result";
 import { R2ThumbnailStorageClient, parsePublicThumbnailUrl } from "@/lib/modules/media";
 import { getAdminVideoById, updateAdminVideo } from "@/lib/modules/video";
 import { recordAuditEventSafe } from "@/lib/modules/audit";
+import { isSubtitleLanguage, setTranslationSubtitle } from "@/lib/modules/translations";
 import { COVER_MAX_BYTES, detectImage, validateVtt } from "../domain/files";
 
-export type SubtitleLang = "pl" | "en";
+/** "pl" (original) or a translation language code ("en", "de", ...). */
+export type SubtitleLang = string;
 
 const notConfigured = () => new AppError("Magazyn R2 nie jest skonfigurowany w panelu (CLOUDFLARE_R2_*).", 503, "R2_NOT_CONFIGURED");
 
@@ -41,28 +43,32 @@ const defaultSubtitleStorage = (): SubtitleStorage | null => (R2ThumbnailStorage
  * Subtitles are served from the public R2 host (the player fetches them like the thumbnails) under a
  * content-hashed key `videos/<id>/subtitles/<hash>.vtt`; the public-thumbnail reconcile leaves that prefix
  * alone. The previous file of the same language is removed after the row points at the new one.
+ * pl and en live in Video.subtitleUrlPl/En (the player reads them); en is mirrored into its translation row;
+ * other languages live on their VideoTranslation row, which must exist first (title saved).
  */
 export async function uploadVideoSubtitle(
   input: { videoId: string; lang: SubtitleLang; bytes: Uint8Array },
   ctx: AppContext,
   storage: SubtitleStorage | null = defaultSubtitleStorage(),
 ): Promise<UseCaseResult<{ url: string; cues: number }, AppError>> {
+  if (!isSubtitleLanguage(input.lang)) return fail(new AppError("Nieobsługiwany język napisów.", 400, "LANGUAGE_UNSUPPORTED"));
   const check = validateVtt(input.bytes);
   if (!check.ok) return fail(new AppError(check.reason, 400, "SUBTITLE_INVALID"));
   if (!storage) return fail(notConfigured());
   const current = await getAdminVideoById({ idOrSlug: input.videoId }, ctx);
   if (!current.ok) return fail(current.error as AppError);
-  const previous = input.lang === "pl" ? current.data.subtitleUrlPl : current.data.subtitleUrlEn;
+  const previous = await currentSubtitle(input.lang, current.data, ctx);
+  if (!previous.ok) return fail(previous.error);
 
   const bytes = new TextEncoder().encode(check.text);
-  const { key } = await storage.putPrivate({ scope: `videos/${input.videoId}/subtitles`, bytes, contentType: "text/vtt; charset=utf-8", extension: "vtt" });
+  const { key } = await storage.putPrivate({ scope: `videos/${current.data.id}/subtitles`, bytes, contentType: "text/vtt; charset=utf-8", extension: "vtt" });
   const url = await storage.copyToPublic(key);
   await storage.deletePrivate(key).catch(() => undefined);
 
-  const updated = await updateAdminVideo({ id: input.videoId, ...(input.lang === "pl" ? { subtitleUrlPl: url } : { subtitleUrlEn: url }) }, ctx);
-  if (!updated.ok) return fail(updated.error as AppError);
-  await removeOldSubtitleObject(previous, url, storage);
-  await recordAuditEventSafe(ctx, { action: "VIDEO_SUBTITLES_UPLOADED", targetType: "Video", targetId: input.videoId, metadata: { lang: input.lang, cues: check.cues, sizeBytes: bytes.length } });
+  const written = await writeSubtitle(input.lang, current.data.id, url, ctx);
+  if (!written.ok) return fail(written.error);
+  await removeOldSubtitleObject(previous.data, url, storage);
+  await recordAuditEventSafe(ctx, { action: "VIDEO_SUBTITLES_UPLOADED", targetType: "Video", targetId: current.data.id, metadata: { lang: input.lang, cues: check.cues, sizeBytes: bytes.length } });
   return ok({ url, cues: check.cues });
 }
 
@@ -71,15 +77,35 @@ export async function removeVideoSubtitle(
   ctx: AppContext,
   storage: SubtitleStorage | null = defaultSubtitleStorage(),
 ): Promise<UseCaseResult<{ removed: boolean }, AppError>> {
+  if (!isSubtitleLanguage(input.lang)) return fail(new AppError("Nieobsługiwany język napisów.", 400, "LANGUAGE_UNSUPPORTED"));
   const current = await getAdminVideoById({ idOrSlug: input.videoId }, ctx);
   if (!current.ok) return fail(current.error as AppError);
-  const previous = input.lang === "pl" ? current.data.subtitleUrlPl : current.data.subtitleUrlEn;
-  if (!previous) return ok({ removed: false });
-  const updated = await updateAdminVideo({ id: input.videoId, ...(input.lang === "pl" ? { subtitleUrlPl: null } : { subtitleUrlEn: null }) }, ctx);
-  if (!updated.ok) return fail(updated.error as AppError);
-  if (storage) await removeOldSubtitleObject(previous, null, storage);
-  await recordAuditEventSafe(ctx, { action: "VIDEO_SUBTITLES_REMOVED", targetType: "Video", targetId: input.videoId, metadata: { lang: input.lang } });
+  const previous = await currentSubtitle(input.lang, current.data, ctx);
+  if (!previous.ok || !previous.data) return ok({ removed: false });
+  const written = await writeSubtitle(input.lang, current.data.id, null, ctx);
+  if (!written.ok) return fail(written.error);
+  if (storage) await removeOldSubtitleObject(previous.data, null, storage);
+  await recordAuditEventSafe(ctx, { action: "VIDEO_SUBTITLES_REMOVED", targetType: "Video", targetId: current.data.id, metadata: { lang: input.lang } });
   return ok({ removed: true });
+}
+
+type FilmSubs = { id: string; subtitleUrlPl?: string | null; subtitleUrlEn?: string | null };
+
+async function currentSubtitle(lang: string, video: FilmSubs, ctx: AppContext): Promise<UseCaseResult<string | null, AppError>> {
+  if (lang === "pl") return ok(video.subtitleUrlPl ?? null);
+  if (lang === "en") return ok(video.subtitleUrlEn ?? null);
+  const row = await ctx.prisma.videoTranslation.findUnique({ where: { videoId_language: { videoId: video.id, language: lang } }, select: { subtitleUrl: true } });
+  if (!row) return fail(new AppError("Najpierw zapisz tytuł w tym języku, potem dodaj napisy.", 409, "TRANSLATION_MISSING"));
+  return ok(row.subtitleUrl);
+}
+
+async function writeSubtitle(lang: string, videoId: string, url: string | null, ctx: AppContext): Promise<UseCaseResult<unknown, AppError>> {
+  if (lang === "pl" || lang === "en") {
+    const updated = await updateAdminVideo({ id: videoId, ...(lang === "pl" ? { subtitleUrlPl: url } : { subtitleUrlEn: url }) }, ctx);
+    if (!updated.ok) return fail(updated.error as AppError);
+    if (lang === "pl") return ok(null);
+  }
+  return setTranslationSubtitle({ videoId, language: lang, url }, ctx);
 }
 
 async function removeOldSubtitleObject(previousUrl: string | null | undefined, keepUrl: string | null, storage: SubtitleStorage) {

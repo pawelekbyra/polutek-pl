@@ -7,11 +7,14 @@ const video = vi.hoisted(() => ({
 const audit = vi.hoisted(() => ({ recordAuditEventSafe: vi.fn(async () => undefined) }));
 vi.mock("@/lib/modules/video", () => video);
 vi.mock("@/lib/modules/audit", () => audit);
+const tr = vi.hoisted(() => ({ setTranslationSubtitle: vi.fn(async () => ({ ok: true as const, data: { previous: null } })) }));
+vi.mock("@/lib/modules/translations", async () => ({ ...(await vi.importActual<object>("@/lib/modules/translations")), ...tr }));
 
 import { removeVideoSubtitle, uploadVideoCover, uploadVideoSubtitle } from "@/lib/modules/admin-content";
 import type { AppContext } from "@/lib/modules/shared/app-context";
 
-const ctx = { actor: { type: "admin", userId: "adm1" } } as unknown as AppContext;
+const findTranslation = vi.fn();
+const ctx = { actor: { type: "admin", userId: "adm1" }, prisma: { videoTranslation: { findUnique: findTranslation } } } as unknown as AppContext;
 const ok = <T,>(data: T) => ({ ok: true as const, data });
 const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
 const VTT = new TextEncoder().encode("WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nCześć\n");
@@ -90,6 +93,38 @@ describe("uploadVideoSubtitle", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error.code).toBe("SUBTITLE_INVALID");
     expect(s.putPrivate).not.toHaveBeenCalled();
+  });
+});
+
+describe("subtitles of translation languages", () => {
+  it("en also mirrors the URL into its translation row", async () => {
+    await uploadVideoSubtitle({ videoId: "v1", lang: "en", bytes: VTT }, ctx, storage() as never);
+    expect(video.updateAdminVideo).toHaveBeenCalledWith(expect.objectContaining({ subtitleUrlEn: expect.any(String) }), ctx);
+    expect(tr.setTranslationSubtitle).toHaveBeenCalledWith({ videoId: "v1", language: "en", url: expect.stringContaining("/subtitles/") }, ctx);
+  });
+
+  it("de needs its translation row first and stores nothing without it", async () => {
+    findTranslation.mockResolvedValue(null);
+    const s = storage();
+    const r = await uploadVideoSubtitle({ videoId: "v1", lang: "de", bytes: VTT }, ctx, s as never);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error.code).toBe("TRANSLATION_MISSING");
+    expect(s.putPrivate).not.toHaveBeenCalled();
+  });
+
+  it("de with a row: stored on the translation, the old file removed, Video columns untouched", async () => {
+    findTranslation.mockResolvedValue({ subtitleUrl: "https://thumbs.example.com/videos/v1/subtitles/de-old.vtt" });
+    const s = storage();
+    const r = await uploadVideoSubtitle({ videoId: "v1", lang: "de", bytes: VTT }, ctx, s as never);
+    expect(r.ok).toBe(true);
+    expect(video.updateAdminVideo).not.toHaveBeenCalled();
+    expect(tr.setTranslationSubtitle).toHaveBeenCalledWith(expect.objectContaining({ language: "de" }), ctx);
+    expect(s.deletePublic).toHaveBeenCalledWith("videos/v1/subtitles/de-old.vtt");
+  });
+
+  it("refuses an unknown language", async () => {
+    const r = await uploadVideoSubtitle({ videoId: "v1", lang: "xx", bytes: VTT }, ctx, storage() as never);
+    expect(r.ok).toBe(false);
   });
 });
 

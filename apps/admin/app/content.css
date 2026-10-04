@@ -28,6 +28,8 @@
 .modal-form { display: flex; flex-direction: column; min-height: 0; flex: 1; }
 .tile-value-sm { font-size: var(--fs-16); font-weight: 600; letter-spacing: 0; }
 .preview-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--s-4); align-items: end; }
+.flag { width: 20px; height: 20px; border-radius: 50%; flex: none; vertical-align: -5px; }
+.lang-cell { display: inline-flex; align-items: center; gap: var(--s-2); }
 .film-meta { display: flex; gap: var(--s-2); align-items: center; flex-wrap: wrap; }
 @media (max-width: 760px) {
   .subgrid, .field-row, .preview-pair { grid-template-columns: 1fr; }

@@ -5,6 +5,7 @@
 import type { ContentDetail, ContentFilters, ContentListResult, LayoutItem, ThumbnailState } from "@/lib/modules/admin-content";
 import type { AdminVideoDetailsDto } from "@/lib/modules/video";
 import type { PipelineStateDto } from "@/lib/modules/video-pipeline";
+import { TRANSLATION_LANGUAGES, type FilmTranslationsDto } from "@/lib/modules/translations";
 
 const H = 3600_000;
 const D = 24 * H;
@@ -138,6 +139,26 @@ export function fixtureList(filters: ContentFilters): ContentListResult {
 
 export function fixtureDetail(slug: string): ContentDetail | null {
   return all().find((d) => d.video.slug === slug || d.video.id === slug) ?? null;
+}
+
+/** Sample translations: EN written by a person, DE a machine draft with subtitles, the rest missing. */
+export function fixtureTranslations(slug: string): FilmTranslationsDto | null {
+  const d = fixtureDetail(slug);
+  if (!d) return null;
+  const v = d.video;
+  const now = new Date().toISOString();
+  const sample: Record<string, { title: string; slug: string; status: "AI_DRAFT" | "APPROVED" | "EDITED"; subtitleUrl: string | null }> = {
+    en: { title: `${v.title} (EN)`, slug: v.slug, status: "EDITED", subtitleUrl: v.subtitleUrlEn ?? null },
+    de: { title: `${v.title}: Hinter den Kulissen`, slug: `${v.slug}-hinter-den-kulissen`, status: "AI_DRAFT", subtitleUrl: "https://thumbs.example/videos/x/subtitles/de.vtt" },
+    fr: { title: `${v.title} : coulisses`, slug: `${v.slug}-coulisses`, status: "APPROVED", subtitleUrl: null },
+  };
+  return {
+    video: { id: v.id, slug: v.slug, title: v.title, description: v.description ?? null, subtitleUrlPl: v.subtitleUrlPl ?? null, updatedAt: now },
+    rows: TRANSLATION_LANGUAGES.map((language) => {
+      const s = sample[language.code];
+      return { language, translation: s ? { id: `t-${language.code}`, title: s.title, slug: s.slug, description: null, subtitleUrl: s.subtitleUrl, status: s.status, reviewedAt: null, updatedAt: now } : null };
+    }),
+  };
 }
 
 export function fixtureLayout(): LayoutItem[] {

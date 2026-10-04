@@ -248,10 +248,10 @@ export async function encodeAction(input: { videoId: string; op: "reencode" | "c
   return { ok: true, message: { reencode: "Kodowanie w kolejce.", cancel: "Anulowanie zlecone: encoder przerwie przy następnym sygnale i posprząta pliki.", "delete-asset": "Wersja HLS usunięta." }[input.op] };
 }
 
-export async function removeSubtitleAction(input: { videoId: string; lang: "pl" | "en"; slug: string }): Promise<ActionResult> {
+export async function removeSubtitleAction(input: { videoId: string; lang: string; slug: string }): Promise<ActionResult> {
   const viewer = await requireAdmin("/tresci");
   if (isDevFixturesEnabled()) return sampleDataRefusal();
-  const result = await removeVideoSubtitle({ videoId: input.videoId, lang: input.lang === "en" ? "en" : "pl" }, await panelContext(viewer));
+  const result = await removeVideoSubtitle({ videoId: input.videoId, lang: String(input.lang).slice(0, 8) }, await panelContext(viewer));
   if (!result.ok) return { ok: false, ...errorMessage(result.error) };
   revalidateFilm(input.slug);
   return { ok: true, message: result.data.removed ? "Napisy usunięte." : "Ten film nie miał napisów." };
