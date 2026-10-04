@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { getHomeContentCached } from '@/lib/modules/channel/application/home-content.loader';
 import { APP_NAME } from '@/lib/constants';
-import { getLocalizedHref, isLocale, type Locale } from '@/lib/i18n/routing';
+import { getExplicitLocaleHref, getLocaleAlternates, isLocale, type Locale } from '@/lib/i18n/routing';
 import { getBaseUrl } from '@/lib/utils';
 import { notFound } from 'next/navigation';
 import HomeExperience from '@/app/components/home/HomeExperience';
@@ -18,9 +18,8 @@ function resolveSelectedVideo(
   return allVideos.find((v) => v.id === selectedVideoId || v.slug === selectedVideoId) || mainVideo;
 }
 
-function canonicalHomeHref(locale: Locale, videoSlug?: string): string {
-  const base = getLocalizedHref(locale, 'home');
-  return videoSlug ? `${base}?v=${encodeURIComponent(videoSlug)}` : base;
+function videoQuery(videoSlug?: string): string {
+  return videoSlug ? `v=${encodeURIComponent(videoSlug)}` : '';
 }
 
 // Cloudflare webhook stores duration as "M:SS"/"H:MM:SS"; VideoObject JSON-LD needs ISO 8601.
@@ -55,14 +54,7 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
     // per-video title is kept only for social/OG previews below.
     title: APP_NAME,
     description: selectedVideo?.title ?? creator?.bio ?? `${APP_NAME} — kanał wideo`,
-    alternates: {
-      canonical: `${baseUrl}${canonicalHomeHref(locale, canonicalSlug)}`,
-      languages: {
-        pl: `${baseUrl}${canonicalHomeHref('pl', canonicalSlug)}`,
-        en: `${baseUrl}${canonicalHomeHref('en', canonicalSlug)}`,
-        'x-default': `${baseUrl}${canonicalHomeHref('pl', canonicalSlug)}`,
-      },
-    },
+    alternates: getLocaleAlternates(locale, 'home', { query: videoQuery(canonicalSlug), baseUrl }),
     openGraph: {
       title: selectedVideo?.title ?? APP_NAME,
       description: selectedVideo?.title ?? creator?.bio ?? undefined,
@@ -97,7 +89,7 @@ export default async function Home(props: { params: Promise<{ locale: string }>;
         ],
         uploadDate: selectedVideo.publishedAt ? new Date(selectedVideo.publishedAt).toISOString() : undefined,
         duration: durationToIso8601(selectedVideo.duration),
-        embedUrl: `${getBaseUrl()}${canonicalHomeHref(locale, selectedVideo.slug)}`,
+        embedUrl: `${getBaseUrl()}${getExplicitLocaleHref(locale, 'home')}?${videoQuery(selectedVideo.slug)}`,
       }
     : null;
 

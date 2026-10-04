@@ -88,7 +88,6 @@ export function VideoFilters({
                             <SelectItem value="ALL">Wszystkie poziomy</SelectItem>
                             <SelectItem value="PUBLIC">Publiczne</SelectItem>
                             <SelectItem value="LOGGED_IN">Zalogowani</SelectItem>
-                            <SelectItem value="PATRON">Patroni</SelectItem>
                         </SelectContent>
                     </Select>
 

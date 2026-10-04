@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { AccessTier, VideoStatus } from '@prisma/client';
+import { VideoStatus } from '@prisma/client';
+import { toVideoAccessTier, type VideoAccessTier } from '@/lib/access-tier';
 import { MainChannelService } from '@/lib/modules/channel/application/main-channel.service';
 import { compareSidebarItems } from '@/lib/modules/video';
 import { createAppContext } from '@/lib/modules/shared/app-context';
@@ -16,7 +17,7 @@ export type SidebarItem = {
     title: string;
     titleEn?: string | null;
     thumbnailUrl: string;
-    tier: AccessTier;
+    tier: VideoAccessTier;
     status: VideoStatus;
     duration?: string | null;
     views: number;
@@ -38,7 +39,7 @@ export type SidebarItem = {
 export type SidebarSection = {
     id: string;
     // UPCOMING = scheduled premieres not reached yet (CLAUDE.md "Premieres").
-    type: "FREE" | "LOGGED_IN" | "PATRON" | "UPCOMING" | "ANNOUNCEMENT";
+    type: "FREE" | "LOGGED_IN" | "UPCOMING" | "ANNOUNCEMENT";
     title: string;
     items: SidebarItem[];
 };
@@ -90,9 +91,9 @@ export class ChannelLayoutService {
             .sort((a, b) => toPremiereDate(a.premiereAt)!.getTime() - toPremiereDate(b.premiereAt)!.getTime());
         const releasedVideos = sortedVideos.filter(v => !isUpcomingPremiere(v, now));
 
-        const freeVideos = releasedVideos.filter(v => v.tier === AccessTier.PUBLIC);
-        const loggedInVideos = releasedVideos.filter(v => v.tier === AccessTier.LOGGED_IN);
-        const patronVideos = releasedVideos.filter(v => v.tier === AccessTier.PATRON);
+        // Two levels (lib/access-tier.ts): a leftover PATRON row lands in "Dla zalogowanych".
+        const freeVideos = releasedVideos.filter(v => toVideoAccessTier(v.tier) === "PUBLIC");
+        const loggedInVideos = releasedVideos.filter(v => toVideoAccessTier(v.tier) === "LOGGED_IN");
 
         const mapItem = (v: any): SidebarItem => ({
             id: v.id,
@@ -100,7 +101,7 @@ export class ChannelLayoutService {
             title: v.title,
             titleEn: v.titleEn,
             thumbnailUrl: resolvePublicThumbnailSrc(v, process.env),
-            tier: v.tier,
+            tier: toVideoAccessTier(v.tier),
             status: v.status,
             duration: v.duration,
             views: v.views,
@@ -136,15 +137,6 @@ export class ChannelLayoutService {
             });
         }
 
-        if (patronVideos.length > 0) {
-            sections.push({
-                id: 'section-patron',
-                type: 'PATRON',
-                title: 'Strefa Fenkjuu',
-                items: patronVideos.map(mapItem)
-            });
-        }
-
         if (upcomingVideos.length > 0) {
             sections.push({
                 id: 'section-upcoming',
@@ -161,12 +153,8 @@ export class ChannelLayoutService {
         };
     }
 
-    private static isLocked(tier: AccessTier, state: SidebarViewerState): boolean {
+    private static isLocked(tier: unknown, state: SidebarViewerState): boolean {
         if (state === "ADMIN") return false;
-        if (tier === AccessTier.PUBLIC) return false;
-        if (tier === AccessTier.LOGGED_IN) return state === "ANONYMOUS";
-        // PATRON behaves like LOGGED_IN (CLAUDE.md §4.4): signing in is enough.
-        if (tier === AccessTier.PATRON) return state === "ANONYMOUS";
-        return true;
+        return toVideoAccessTier(tier) === "LOGGED_IN" && state === "ANONYMOUS";
     }
 }

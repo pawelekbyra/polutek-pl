@@ -1,7 +1,4 @@
 export { sendNotification, notificationTemplates } from './application/send-notification.use-case';
-export { listUserNotifications } from './application/list-user-notifications.use-case';
-export { markNotificationRead } from './application/mark-notification-read.use-case';
-export { getNotificationPreferences, updateNotificationPreferences } from './application/notification-preferences.use-case';
 export { listAdminNotifications } from './application/list-admin-notifications.use-case';
 export {
   listNotificationTemplates,

@@ -8,7 +8,7 @@ export type SidebarLayoutItem = PublicVideoDTO & {
 
 export type SidebarLayoutSection = {
   id: string;
-  type: "FREE" | "LOGGED_IN" | "PATRON" | "UPCOMING" | "ANNOUNCEMENT";
+  type: "FREE" | "LOGGED_IN" | "UPCOMING" | "ANNOUNCEMENT";
   title: string;
   items: SidebarLayoutItem[];
 };

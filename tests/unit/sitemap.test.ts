@@ -38,13 +38,32 @@ describe('sitemap', () => {
     const result = await sitemap();
 
     expect(result).toEqual(expect.arrayContaining([
-      expect.objectContaining({ url: 'https://test.local/' }),
+      expect.objectContaining({ url: 'https://test.local/pl' }),
       expect.objectContaining({ url: 'https://test.local/en' }),
-      expect.objectContaining({ url: 'https://test.local/channel/main' }),
+      expect.objectContaining({ url: 'https://test.local/pl/regulamin' }),
+      expect.objectContaining({ url: 'https://test.local/en/terms' }),
+      expect.objectContaining({ url: 'https://test.local/pl/channel/main' }),
       expect.objectContaining({ url: 'https://test.local/en/channel/main' }),
-      expect.objectContaining({ url: 'https://test.local/watch/my-video' }),
-      expect.objectContaining({ url: 'https://test.local/en/watch/my-video' }),
+      expect.objectContaining({ url: 'https://test.local/pl?v=my-video' }),
+      expect.objectContaining({ url: 'https://test.local/en?v=my-video' }),
     ]));
     expect(result.map((entry) => entry.url).join(' ')).not.toMatch(/sklep|\/shop/);
+  });
+
+  it('lists only language-explicit URLs, each with its hreflang pair and English as x-default', async () => {
+    vi.mocked(CreatorContentService.getConfiguredOrDefaultCreator).mockResolvedValue(null as any);
+    vi.mocked(VideoContentService.getSitemapVideos).mockResolvedValue([]);
+
+    const result = await sitemap();
+
+    for (const entry of result) {
+      expect(entry.url).toMatch(/^https:\/\/test\.local\/(pl|en)(\/|\?|$)/);
+    }
+    const home = result.find((entry) => entry.url === 'https://test.local/pl');
+    expect(home?.alternates?.languages).toEqual({
+      pl: 'https://test.local/pl',
+      en: 'https://test.local/en',
+      'x-default': 'https://test.local/en',
+    });
   });
 });

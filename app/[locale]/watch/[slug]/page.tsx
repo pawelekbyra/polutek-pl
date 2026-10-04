@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getBaseUrl } from "@/lib/utils";
-import { getLocalizedHref, isLocale, type Locale } from "@/lib/i18n/routing";
+import { getLocaleAlternates, getLocalizedHref, isLocale, type Locale } from "@/lib/i18n/routing";
 import { APP_NAME } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -18,19 +18,10 @@ export async function generateMetadata(props: WatchPageProps): Promise<Metadata>
   const { locale: rawLocale, slug } = await props.params;
   if (!isLocale(rawLocale)) return { title: APP_NAME };
 
-  const baseUrl = getBaseUrl();
-  const canonicalPath = getFeedVideoHref(rawLocale, slug);
-
+  // The watch URL only redirects to the feed, so the feed URL is the canonical one.
   return {
     title: APP_NAME,
-    alternates: {
-      canonical: `${baseUrl}${canonicalPath}`,
-      languages: {
-        pl: `${baseUrl}${getFeedVideoHref("pl", slug)}`,
-        en: `${baseUrl}${getFeedVideoHref("en", slug)}`,
-        "x-default": `${baseUrl}${getFeedVideoHref("pl", slug)}`,
-      },
-    },
+    alternates: getLocaleAlternates(rawLocale, "home", { query: `v=${encodeURIComponent(slug)}`, baseUrl: getBaseUrl() }),
   };
 }
 

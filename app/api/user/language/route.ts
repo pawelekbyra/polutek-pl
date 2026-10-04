@@ -6,9 +6,15 @@ import { handleApiError } from "@/lib/errors";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { updateUserLanguage } from "@/lib/modules/users";
 import { getActorFromAuth } from "@/lib/api/auth";
+import { isLocale } from "@/lib/i18n/routing";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Saves the signed-in viewer's site and e-mail language (`User.language`). The one write path for
+ * it, called by AuthLifecycleProvider on every change; same-origin only (middleware.ts guards
+ * every mutating /api/user/* request).
+ */
 export async function PATCH(req: NextRequest) {
   const requestId = getCorrelationId();
   const scopedLogger = createScopedLogger(requestId);
@@ -18,12 +24,13 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    const { language } = await req.json();
-    if (language !== "pl" && language !== "en") {
-      return NextResponse.json({ error: "Invalid language" }, { status: 400 });
-    }
+  const body = (await req.json().catch(() => null)) as { language?: unknown } | null;
+  const language = body?.language;
+  if (!isLocale(language)) {
+    return NextResponse.json({ error: "Invalid language" }, { status: 400 });
+  }
 
+  try {
     const actor = await getActorFromAuth();
     const ctx = createAppContext({ actor, requestId: requestId || undefined });
 
@@ -34,10 +41,4 @@ export async function PATCH(req: NextRequest) {
     scopedLogger.error("[LANGUAGE_UPDATE_ERROR]", err);
     return handleApiError(err);
   }
-}
-
-// Keep POST for backward compatibility during migration if needed,
-// but it should also use the new field and logic.
-export async function POST(req: NextRequest) {
-  return PATCH(req);
 }

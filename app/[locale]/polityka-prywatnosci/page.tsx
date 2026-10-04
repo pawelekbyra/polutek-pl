@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { ArrowLeft } from '@/app/components/icons';
 import { PolitykaContent, LEGAL_EFFECTIVE_DATE } from '@/app/components/legal/LegalDocs';
 import { notFound } from 'next/navigation';
-import { getLocalizedHref } from '@/lib/i18n/routing';
+import { getLocaleAlternates, getLocalizedHref } from '@/lib/i18n/routing';
+import { getBaseUrl } from '@/lib/utils';
 
 // The document is the same for every visitor, so the page is rendered once and served from the
 // cache (no per-request render, no `no-store`). Rendered at the first request, not at build time,
@@ -16,6 +17,7 @@ export const revalidate = 3600;
 export const metadata = {
   title: 'Polityka prywatności WWW.PAWELPERFECT.COM',
   description: 'Polityka prywatności serwisu WWW.PAWELPERFECT.COM: jakie dane zbieramy, po co i jakie masz prawa.',
+  alternates: getLocaleAlternates('pl', 'privacy', { baseUrl: getBaseUrl() }),
 };
 
 export default async function PolitykaPrywatnosciPage(props: { params: Promise<{ locale: string }> }) {
