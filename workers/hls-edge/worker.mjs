@@ -63,8 +63,34 @@ export async function verifyToken(secret, videoId, version, token, nowSeconds) {
   if (!/^\d{10}$/.test(expText) || !/^[A-Za-z0-9_-]{43}$/.test(sigText)) return false;
   const exp = Number(expText);
   if (exp <= nowSeconds) return false;
-  const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
+  const key = await hmacKey(secret);
   return crypto.subtle.verify('HMAC', key, base64urlDecode(sigText), enc.encode(tokenMessage(videoId, version, exp)));
+}
+
+/** The imported HMAC key, kept for the life of the isolate (re-imported only if the secret changes). */
+let cachedKey = null;
+function hmacKey(secret) {
+  if (cachedKey?.secret !== secret) {
+    cachedKey = { secret, key: crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']) };
+  }
+  return cachedKey.key;
+}
+
+/** "bytes start-end/size" for an R2 object read with a range. */
+export function contentRange(range, size) {
+  const offset = 'suffix' in range ? Math.max(0, size - range.suffix) : (range.offset ?? 0);
+  const length = 'suffix' in range ? size - offset : (range.length ?? size - offset);
+  return { offset, length, header: `bytes ${offset}-${offset + length - 1}/${size}` };
+}
+
+function objectHeaders(parsed, object) {
+  const headers = new Headers();
+  headers.set('Content-Type', CONTENT_TYPES[parsed.ext]);
+  headers.set('Cache-Control', parsed.ext === 'm3u8' ? SHORT : IMMUTABLE);
+  headers.set('ETag', object.httpEtag);
+  headers.set('Accept-Ranges', 'bytes');
+  headers.set('X-Content-Type-Options', 'nosniff');
+  return headers;
 }
 
 /** Splits "/h/<token>/<id>/<version>/<rest>" or returns null. */
@@ -128,21 +154,42 @@ export default {
     let cacheStatus = 'HIT';
     if (!response) {
       cacheStatus = 'MISS';
-      const object = await env.HLS.get(`videos/${parsed.videoId}/v/${parsed.version}/${parsed.rest}`);
-      if (!object) return plain(404, 'Not found', request, env);
-      const headers = new Headers();
-      headers.set('Content-Type', CONTENT_TYPES[parsed.ext]);
-      headers.set('Cache-Control', parsed.ext === 'm3u8' ? SHORT : IMMUTABLE);
-      headers.set('ETag', object.httpEtag);
-      headers.set('Accept-Ranges', 'bytes');
-      headers.set('X-Content-Type-Options', 'nosniff');
-      const full = new Response(object.body, { status: 200, headers });
-      if (range) {
-        // The cache can only store complete responses; store it, then let the
-        // cache answer the Range request.
-        await cache.put(new Request(cacheUrl, { method: 'GET' }), full);
-        response = (await cache.match(lookup)) ?? new Response('Range failed', { status: 500 });
+      const objectKey = `videos/${parsed.videoId}/v/${parsed.version}/${parsed.rest}`;
+      const fillCache = async () => {
+        const object = await env.HLS.get(objectKey);
+        if (object) await cache.put(new Request(cacheUrl, { method: 'GET' }), new Response(object.body, { status: 200, headers: objectHeaders(parsed, object) }));
+      };
+      if (method === 'HEAD') {
+        // Metadata only: no body read from R2 and nothing cached.
+        const object = await env.HLS.head(objectKey);
+        if (!object) return plain(404, 'Not found', request, env);
+        const headers = objectHeaders(parsed, object);
+        headers.set('Content-Length', String(object.size));
+        response = new Response(null, { status: 200, headers });
+      } else if (range) {
+        // Answer the range straight from R2 (no waiting for the whole object) and fill the
+        // cache with the complete object in the background; the cache only stores full bodies.
+        let object;
+        try {
+          object = await env.HLS.get(objectKey, { range: request.headers });
+        } catch {
+          return plain(416, 'Range not satisfiable', request, env);
+        }
+        if (!object) return plain(404, 'Not found', request, env);
+        const headers = objectHeaders(parsed, object);
+        if (object.range) {
+          const r = contentRange(object.range, object.size);
+          headers.set('Content-Range', r.header);
+          headers.set('Content-Length', String(r.length));
+          response = new Response(object.body, { status: 206, headers });
+        } else {
+          response = new Response(object.body, { status: 200, headers });
+        }
+        ctx.waitUntil(fillCache());
       } else {
+        const object = await env.HLS.get(objectKey);
+        if (!object) return plain(404, 'Not found', request, env);
+        const full = new Response(object.body, { status: 200, headers: objectHeaders(parsed, object) });
         ctx.waitUntil(cache.put(new Request(cacheUrl, { method: 'GET' }), full.clone()));
         response = full;
       }

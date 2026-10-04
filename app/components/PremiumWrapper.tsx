@@ -26,6 +26,7 @@ import {
 import { VideoAccessContext, useVideoAccess } from "./VideoAccessContext";
 import { useOptionalLanguage } from "./LanguageContext";
 import { usePageRevealReady } from "./preload/PageRevealGate";
+import { usePlaybackTokenRenewal } from "./player/usePlaybackTokenRenewal";
 import {
   BLOCKED_PLAYBACK_STATES,
   PLAYBACK_PLAN_STATE_MESSAGES,
@@ -243,25 +244,14 @@ export default function PremiumWrapper({
     await checkAccess();
   }, [checkAccess, invalidatePreloadedPlaybackPlan, videoId]);
 
-  useEffect(() => {
-    if (!currentPlaybackPlan?.source?.expiresAt) return;
-
-    const expiresAt = new Date(currentPlaybackPlan.source.expiresAt).getTime();
-    const refreshThresholdMs = 120 * 1000; // 2 minutes
-    const now = Date.now();
-    const msToRefresh = expiresAt - now - refreshThresholdMs;
-
-    if (msToRefresh <= 0) {
-      void refreshPlaybackPlan();
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      void refreshPlaybackPlan();
-    }, msToRefresh);
-
-    return () => clearTimeout(timer);
-  }, [currentPlaybackPlan, refreshPlaybackPlan]);
+  const renewPlaybackPlan = usePlaybackTokenRenewal({
+    videoId,
+    plan: currentPlaybackPlan,
+    generationRef: requestGenerationRef,
+    setPlan: setPlaybackPlan,
+    invalidatePreloaded: invalidatePreloadedPlaybackPlan,
+    refresh: refreshPlaybackPlan,
+  });
 
   const safePlaybackState = isCurrentViewerResolution ? playbackState : null;
   const safeFetchError = isCurrentViewerResolution ? fetchError : null;
@@ -274,6 +264,7 @@ export default function PremiumWrapper({
     isLoading: safeIsLoading,
     effectiveTier,
     refreshPlaybackPlan,
+    renewPlaybackPlan,
   };
 
   // Upcoming premiere, decided from the DTO before any plan fetch: signed-in
