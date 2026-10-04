@@ -13,6 +13,7 @@ import { resolveInitialLanguage } from "@/lib/i18n/server-language";
 import { AuthModalProvider } from "@/app/components/auth/AuthModalProvider";
 import { TelemetryBeacon } from "@/app/components/telemetry/TelemetryBeacon";
 import { isTelemetryBeaconEnabled } from "@/lib/telemetry/config";
+import { GATE_BOOT_SCRIPT } from "@/app/components/preload/matrix-rain-engine";
 
 export const metadata = {
   title: APP_NAME,
@@ -50,6 +51,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       style={{ background: "#f7f9fc" }}
     >
       <head>
+        {/* Entry gate: hides it before the first paint for a viewer who already entered in this
+            tab, otherwise draws the Matrix rain the moment its canvas is parsed (pre-hydration). */}
+        <script dangerouslySetInnerHTML={{ __html: GATE_BOOT_SCRIPT }} />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="application-name" content={APP_NAME} />
         <meta name="mobile-web-app-capable" content="yes" />

@@ -5,24 +5,32 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
 } from "react";
 import { useAuth } from "@/lib/auth/react";
 import { SitePreloaderScreen } from "./SitePreloaderScreen";
-import { useOptionalLanguage } from "../LanguageContext";
+import {
+  consumeQueuedGateEnter,
+  hasPassedGateThisSession,
+  hideGateFromNowOn,
+  markGatePassed,
+  RAIN_CONFIG,
+} from "./matrix-rain-engine";
 
 /**
- * Coordinated first reveal of the public home page.
+ * Entry gate of the public home page ("Follow the white rabbit").
  *
- * Once the page has settled (auth loaded, player buffered),
- * the preloader transitions to a "Follow the white rabbit" gate — the rain keeps
- * falling and the viewer must click the rabbit button to enter. Clicking triggers a
- * blur-fade exit and reveals the page underneath.
- *
- * It never blocks forever: the gate appears after {@link PAGE_REVEAL_MAX_WAIT_MS}
- * from navigation start whatever is still pending, and a CSS failsafe hides the
- * preloader after 30s even if JS never runs.
+ * The prompt and the rabbit button are on screen from the first paint (server HTML). Phases:
+ * - covering: the page underneath is still settling (auth loaded, player ready, comments); the
+ *   button says "loading" and a click is queued;
+ * - gate: settled, or {@link PAGE_REVEAL_MAX_WAIT_MS} from navigation start passed; a click
+ *   (or a click queued earlier) enters;
+ * - leaving: blur-fade exit; done: unmounted, no CPU left behind.
+ * A CSS failsafe hides the screen after 30 s even if JS never runs. Once entered, the gate is
+ * skipped for the rest of the tab session (sessionStorage + `data-gate-passed` on <html>, set
+ * before the first paint by the boot script in the root layout).
  */
 
 type PageRevealContextValue = {
@@ -38,31 +46,17 @@ const LEAVE_ANIMATION_MS = 700;
 
 let revealedInThisDocument = false;
 
-const SESSION_KEY = "polutek:revealed";
-
-function hasRevealedThisSession(): boolean {
-  try { return sessionStorage.getItem(SESSION_KEY) === "1"; } catch { return false; }
-}
-
-function markRevealedThisSession() {
-  revealedInThisDocument = true;
-  try { sessionStorage.setItem(SESSION_KEY, "1"); } catch {}
-}
-
-export function hasRevealedPageInThisDocument(): boolean {
-  return revealedInThisDocument;
-}
-
-/** True if the gate should be skipped — used by HomeRouteLoading to avoid showing
- *  the full preloader during in-session back-navigations. */
+/** True if the gate should be skipped (already entered in this document or tab session). */
 export function shouldSkipGate(): boolean {
-  return revealedInThisDocument || hasRevealedThisSession();
+  return revealedInThisDocument || hasPassedGateThisSession();
 }
 
 /** @internal test helper */
 export function resetPageRevealForTests() {
   revealedInThisDocument = false;
-  try { sessionStorage.removeItem(SESSION_KEY); } catch {}
+  try { sessionStorage.removeItem(RAIN_CONFIG.sessionKey); } catch {}
+  document.documentElement.removeAttribute(RAIN_CONFIG.passedAttribute);
+  consumeQueuedGateEnter();
 }
 
 export function usePageRevealReady(key: string | undefined, ready: boolean) {
@@ -72,6 +66,8 @@ export function usePageRevealReady(key: string | undefined, ready: boolean) {
   }, [context, key, ready]);
 }
 
+type Phase = "covering" | "gate" | "leaving" | "done";
+
 interface PageRevealGateProps {
   children: React.ReactNode;
   waitFor?: string[];
@@ -79,15 +75,22 @@ interface PageRevealGateProps {
 
 export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) {
   const { isLoaded: authLoaded } = useAuth();
-  const language = useOptionalLanguage();
 
-  // Phase machine: covering → gate (user sees rabbit) → leaving → done
-  // Also check sessionStorage so auth redirects (Google sign-in) don't re-show the preloader.
-  const [phase, setPhase] = useState<"covering" | "gate" | "leaving" | "done">(() =>
-    revealedInThisDocument || hasRevealedThisSession() ? "done" : "covering"
-  );
+  // Always "covering" on the first render so the client matches the server HTML; a viewer who
+  // already entered is switched to "done" before paint (and CSS hides the screen meanwhile).
+  const [phase, setPhase] = useState<Phase>("covering");
   const [timedOut, setTimedOut] = useState(false);
+  const [enterQueued, setEnterQueued] = useState(false);
   const [readyKeys, setReadyKeys] = useState<ReadonlySet<string>>(() => new Set());
+
+  useLayoutEffect(() => {
+    if (shouldSkipGate()) {
+      setPhase("done");
+      return;
+    }
+    // A click on the rabbit before hydration (caught by the boot script) counts.
+    if (consumeQueuedGateEnter()) setEnterQueued(true);
+  }, []);
 
   const reportReady = useCallback((key: string) => {
     setReadyKeys((current) => {
@@ -104,7 +107,7 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
 
   const covering = phase === "covering";
 
-  // Max wait — once expired the gate appears even if things are still loading.
+  // Max wait: once expired the button enters even if something is still loading.
   useEffect(() => {
     if (!covering) return;
     const sinceNavigationStart =
@@ -117,12 +120,22 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
     return () => window.clearTimeout(timer);
   }, [covering]);
 
-  // Transition covering → gate when content is ready or timed out.
+  const enter = useCallback(() => {
+    window.dispatchEvent(new Event("polutek:gate-enter"));
+    setPhase("leaving");
+  }, []);
+
+  // covering → gate when the page is ready (or the max wait expired).
   useEffect(() => {
     if (covering && (allReady || timedOut)) setPhase("gate");
   }, [covering, allReady, timedOut]);
 
-  // Block body scroll and touch-scroll while the preloader is covering the page.
+  // A click queued while loading enters as soon as the gate opens, never before.
+  useEffect(() => {
+    if (phase === "gate" && enterQueued) enter();
+  }, [phase, enterQueued, enter]);
+
+  // Block body scroll and touch-scroll while the gate is up.
   useEffect(() => {
     if (phase === "done") return;
     const prev = document.body.style.overflow;
@@ -130,22 +143,25 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
     return () => { document.body.style.overflow = prev; };
   }, [phase]);
 
-  // Once leaving: wait for the blur-fade animation, then unmount.
+  // Once leaving: remember the entry, wait for the blur-fade, then unmount.
   useEffect(() => {
     if (phase !== "leaving") return;
-    markRevealedThisSession();
-    const timer = window.setTimeout(() => setPhase("done"), LEAVE_ANIMATION_MS);
+    revealedInThisDocument = true;
+    markGatePassed();
+    const timer = window.setTimeout(() => {
+      hideGateFromNowOn();
+      setPhase("done");
+    }, LEAVE_ANIMATION_MS);
     return () => window.clearTimeout(timer);
   }, [phase]);
 
-  const handleGateClick = useCallback(() => {
-    if (phase !== "gate") return;
-    // Best-effort orientation lock on user gesture (works in PWA standalone;
-    // silently fails in regular browser tabs where fullscreen is not active).
+  const handleEnterClick = useCallback(() => {
+    // Best-effort orientation lock needs the click's own user activation (works in PWA
+    // standalone; silently fails in regular browser tabs).
     try { (screen.orientation as unknown as { lock?: (orientation: string) => Promise<void> })?.lock?.("portrait").catch(() => {}); } catch { /* unsupported */ }
-    window.dispatchEvent(new Event("polutek:gate-enter"));
-    setPhase("leaving");
-  }, [phase]);
+    if (phase === "gate") enter();
+    else if (phase === "covering") setEnterQueued(true);
+  }, [phase, enter]);
 
   const contextValue = useMemo(() => ({ reportReady }), [reportReady]);
 
@@ -156,9 +172,8 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
         <SitePreloaderScreen
           leaving={phase === "leaving"}
           failsafe={phase === "covering"}
-          label={language === "pl" ? "Ładowanie strony…" : "Loading…"}
-          showGate={phase === "gate"}
-          onGateClick={handleGateClick}
+          ready={phase !== "covering"}
+          onEnter={handleEnterClick}
         />
       )}
     </PageRevealContext.Provider>

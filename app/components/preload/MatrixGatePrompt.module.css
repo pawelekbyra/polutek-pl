@@ -6,84 +6,140 @@
   align-items: center;
   justify-content: center;
   z-index: 1;
-  gap: 32px;
-  animation: appear 500ms ease both;
+  gap: 18px;
+  padding: 0 16px;
+  /* No entrance animation: the prompt must be fully readable in the very first painted frame
+     (an opacity fade stalls while the main thread is busy hydrating on slow phones). */
 }
 
 .text {
-  font-family: "Geist Mono", "Courier New", monospace;
-  font-size: clamp(20px, 4vw, 36px);
-  font-weight: 700;
+  font-family: var(--font-gate, ui-monospace), "Courier New", monospace;
+  font-size: clamp(18px, 3.4vw, 30px);
+  font-weight: 400;
   color: #111827;
-  letter-spacing: 0.08em;
-  line-height: 1.4;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
   white-space: nowrap;
   margin: 0;
-  animation: appear 500ms ease both, pulse-text 2.8s ease-in-out 1.5s infinite;
+  /* Background-coloured halo lifts the prompt off the rain without a box. */
+  text-shadow: 0 0 4px #f7f9fc, 0 0 8px #f7f9fc, 0 0 12px #f7f9fc;
+  animation: pulse 2.8s ease-in-out 1.5s infinite;
 }
 
+/* Terminal block cursor after the prompt. */
 .cursor {
   display: inline-block;
   width: 0.5em;
-  height: 1em;
-  background: #111827;
-  margin-left: 3px;
-  vertical-align: text-bottom;
+  height: 0.95em;
+  margin-left: 0.12em;
+  vertical-align: -0.1em;
+  background: currentColor;
+  animation: blink 1.06s steps(1) infinite;
 }
 
 .btn {
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
   background: none;
   border: none;
   padding: 0;
   margin: 0;
-  cursor: url('/cursor-carrot.svg') 8 8, pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 2400ms ease, filter 160ms ease;
+  color: #374151;
+  cursor: pointer;
   outline: none;
-  animation: pulse-rabbit 2.8s ease-in-out 1.5s infinite;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.btn:hover {
-  filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.55));
+/* A small terminal "key": light while loading, inverted (dark) once a click enters. The plate
+   keeps it readable over the rain. */
+.caption {
+  font-family: var(--font-gate, ui-monospace), "Courier New", monospace;
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  padding: 0.3em 0.75em 0.3em 0.87em;
+  border: 1px solid rgba(17, 24, 39, 0.55);
+  border-radius: 3px;
+  background: rgba(247, 249, 252, 0.94);
+  color: #111827;
 }
 
-.btn:active {
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.25)) brightness(0.92);
+/* The caption is re-keyed on change, so "WEJDŹ" fades in where "WCZYTUJĘ…" was. */
+.btn[data-state="ready"] .caption {
+  background: #111827;
+  border-color: #111827;
+  color: #f7f9fc;
+  animation: appear 220ms ease-out both;
 }
 
-.btn:focus-visible {
-  outline: none;
+.btn[data-state="loading"] .caption {
+  animation: breathe 1.6s ease-in-out infinite;
 }
 
 .rabbitImg {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
   display: block;
+  width: 220px;
+  height: 220px;
+  object-fit: contain;
+  transition: filter 160ms ease, opacity 300ms ease;
+  animation: pulse 2.8s ease-in-out 1.5s infinite;
+}
+
+/* Visible and clickable while loading (the click is queued), just a touch quieter. */
+.btn[data-state="loading"] .rabbitImg {
+  opacity: 0.82;
+}
+
+.btn[data-state="ready"] .rabbitImg,
+.btn[data-queued] .rabbitImg {
+  opacity: 1;
+}
+
+.btn:hover .rabbitImg {
+  filter: drop-shadow(0 0 14px rgba(17, 24, 39, 0.25));
+}
+
+.btn:active .rabbitImg {
+  filter: drop-shadow(0 0 6px rgba(17, 24, 39, 0.2)) brightness(0.92);
+}
+
+.btn:focus-visible .rabbitImg {
+  filter: drop-shadow(0 0 0 #111827) drop-shadow(0 0 10px rgba(37, 99, 235, 0.55));
+}
+
+.btn:focus-visible .caption {
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 @keyframes appear {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0);   }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-@keyframes pulse-text {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.07); }
+@keyframes blink {
+  50% { opacity: 0; }
 }
 
-@keyframes pulse-rabbit {
+@keyframes breathe {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+@keyframes pulse {
   0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.07); }
+  50%      { transform: scale(1.07); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .overlay { animation: none; }
-  .text    { animation: none; }
-  .btn     { animation: none; transition: none; }
+  .text,
+  .rabbitImg,
+  .btn[data-state="loading"] .caption,
+  .btn[data-state="ready"] .caption,
+  .cursor {
+    animation: none;
+  }
 }
