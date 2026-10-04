@@ -172,6 +172,18 @@ if wait_healthy "$new_image"; then
   docker image prune -f >/dev/null 2>&1 || true
   # Build cache grows by GBs per build on this 75 GB disk (44 GB on 2026-10-04): keep a bounded warm cache.
   docker builder prune -f --keep-storage "$BUILD_CACHE_KEEP" >/dev/null 2>&1 || true
+  # Keep the human-readable documentation on the server in step with the deployed commit (docs/ plus the root guides and
+  # the server README). Best effort: a failure here never affects the deploy.
+  if [[ -d src/docs ]]; then
+    {
+      rm -rf /opt/serwerek/docs.new && mkdir /opt/serwerek/docs.new \
+        && cp -a src/docs/. /opt/serwerek/docs.new/ \
+        && cp -f src/CLAUDE.md src/AGENTS.md src/README.md /opt/serwerek/docs.new/ 2>/dev/null \
+        && { [[ -f src/deploy/serwerek/SERVER-README.md ]] && cp -f src/deploy/serwerek/SERVER-README.md /opt/serwerek/README.md; true; } \
+        && rm -rf /opt/serwerek/docs && mv /opt/serwerek/docs.new /opt/serwerek/docs \
+        && log "docs synced to /opt/serwerek/docs"
+    } || log "WARN: docs sync failed (ignored)"
+  fi
   record_deploy ok "live on $new_image"
   log "OK: $new_image is live"
   exit 0
