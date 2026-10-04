@@ -14,7 +14,7 @@ import ChannelVideoCard from '@/app/components/ChannelVideoCard';
 import { formatCount, getBaseUrl } from '@/lib/utils';
 import SubscribeButton from '@/app/components/SubscribeButton';
 import { prisma } from '@/lib/prisma';
-import { getLocalizedHref, isLocale, type Locale } from '@/lib/i18n/routing';
+import { getLocaleAlternates, getLocalizedHref, isLocale, type Locale } from '@/lib/i18n/routing';
 import { APP_NAME } from '@/lib/constants';
 import { notFound } from 'next/navigation';
 
@@ -46,14 +46,7 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   return {
     // Browser tab always reads www.pawelperfect.com; creator name stays in OG/twitter below.
     title: APP_NAME,
-    alternates: {
-      canonical: `${baseUrl}${getLocalizedHref(locale, "channel", { slug: params.slug })}`,
-      languages: {
-        pl: `${baseUrl}${getLocalizedHref("pl", "channel", { slug: params.slug })}`,
-        en: `${baseUrl}${getLocalizedHref("en", "channel", { slug: params.slug })}`,
-        "x-default": `${baseUrl}${getLocalizedHref("pl", "channel", { slug: params.slug })}`,
-      },
-    },
+    alternates: getLocaleAlternates(locale, "channel", { params: { slug: params.slug }, baseUrl }),
     description: creator.bio ?? (locale === "pl" ? `Kanał ${creator.name} — materiały wideo` : `${creator.name} video channel`),
     openGraph: {
       title: creator.name,

@@ -1,4 +1,4 @@
 import { redirect } from "next/navigation";
 import { resolveInitialLanguage } from "@/lib/i18n/server-language";
-import { getLocalizedHref } from "@/lib/i18n/routing";
-export default async function RedirectPrivacy(){ redirect(getLocalizedHref(await resolveInitialLanguage(), "privacy")); }
+import { getExplicitLocaleHref } from "@/lib/i18n/routing";
+export default async function RedirectPrivacy(){ redirect(getExplicitLocaleHref(await resolveInitialLanguage(), "privacy")); }

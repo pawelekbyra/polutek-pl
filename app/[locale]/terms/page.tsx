@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { ArrowLeft } from '@/app/components/icons';
 import { TermsContentEn, LEGAL_EFFECTIVE_DATE_EN } from '@/app/components/legal/LegalDocs';
 import { notFound } from 'next/navigation';
-import { getLocalizedHref } from '@/lib/i18n/routing';
+import { getLocaleAlternates, getLocalizedHref } from '@/lib/i18n/routing';
+import { getBaseUrl } from '@/lib/utils';
 
 // The document is the same for every visitor, so the page is rendered once and served from the
 // cache (no per-request render, no `no-store`). Rendered at the first request, not at build time,
@@ -16,6 +17,7 @@ export const revalidate = 3600;
 export const metadata = {
   title: 'Terms of Service — WWW.PAWELPERFECT.COM',
   description: 'Terms of Service for WWW.PAWELPERFECT.COM: usage rules, voluntary support for the Creator, complaints.',
+  alternates: getLocaleAlternates('en', 'terms', { baseUrl: getBaseUrl() }),
 };
 
 export default async function TermsPage(props: { params: Promise<{ locale: string }> }) {

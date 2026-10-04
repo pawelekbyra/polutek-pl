@@ -95,16 +95,17 @@ describe('checkVideoAccess Use Case Matrix', () => {
     });
   });
 
-  describe('Patron Tier (2026-09-22: no longer payment-gated, only sign-in — see CLAUDE.md)', () => {
+  describe('leftover PATRON tier value (two levels since 2026-10-04: read as LOGGED_IN)', () => {
     const patronVideo = { ...baseVideo, tier: AccessTier.PATRON };
 
-    it('denies guest with LOGIN_REQUIRED (support no longer gates access)', async () => {
+    it('denies guest with LOGIN_REQUIRED and reports LOGGED_IN as the required level', async () => {
       mockPrisma.video.findFirst.mockResolvedValue(patronVideo);
       const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'guest' }));
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.hasAccess).toBe(false);
         expect(result.data.reason).toBe('LOGIN_REQUIRED');
+        expect(result.data.requiredTier).toBe('LOGGED_IN');
       }
     });
 

@@ -1144,8 +1144,8 @@ model CommentDislike {
 
 enum AccessTier {
   PUBLIC // Everyone
-  LOGGED_IN // Minimum: Logged in (Clerk mail)
-  PATRON // Minimum: isPatron status granted
+  LOGGED_IN // Any signed-in account
+  PATRON // LEGACY: no video uses it since migration 20261004230000; read as LOGGED_IN (lib/access-tier.ts). Drop in a cleanup migration.
 }
 
 enum VideoStatus {

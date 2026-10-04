@@ -108,7 +108,7 @@ describe("public loading/access state UX contracts", () => {
     expect(card).not.toContain("PremiumWrapper");
     expect(card).not.toContain("VideoPlayer");
     expect(card).not.toContain("/api/media-source");
-    expect(card).toContain("const hasAccess = clientHasAccess;");
+    expect(card).toContain("const hasAccess = tier === \"PUBLIC\" || isLoggedIn;");
     expect(card).toContain("const lockState = !hasAccess");
     expect(card).toContain("{badge && (");
   });

@@ -53,12 +53,12 @@ describe("VideoSearchService", () => {
     expect(VideoSearchService.normalizeQuery(null)).toBe("");
   });
 
-  it("queries the public metadata catalog without showInSidebar and excludes patron-only metadata from the public search catalog", async () => {
+  it("queries the published catalog of both access levels (no tier filter) and lists a leftover PATRON row as signed-in", async () => {
     const { VideoSearchService } = await import("@/lib/modules/video/application/video-search.service");
     findMany.mockResolvedValue([
       row({ id: "public", title: "Szukaj", tier: AccessTier.PUBLIC }),
       row({ id: "logged", title: "Szukaj", tier: AccessTier.LOGGED_IN }),
-      row({ id: "patron", title: "Szukaj", tier: AccessTier.PATRON }),
+      row({ id: "legacy", title: "Szukaj", tier: AccessTier.PATRON }),
     ]);
 
     const results = await VideoSearchService.searchPublicVideos("szukaj");
@@ -67,13 +67,16 @@ describe("VideoSearchService", () => {
       where: expect.objectContaining({
         creatorId: "creator-main",
         status: VideoStatus.PUBLISHED,
-        tier: { in: [AccessTier.PUBLIC, AccessTier.LOGGED_IN] },
         creator: { isApproved: true, isPrimary: true },
       }),
     }));
     expect(findMany.mock.calls[0][0].where).not.toHaveProperty("showInSidebar");
-    expect(results.map((video) => video.id).sort()).toEqual(["logged", "patron", "public"]);
-    expect(findMany.mock.calls[0][0].where.tier.in).not.toContain(AccessTier.PATRON);
+    expect(findMany.mock.calls[0][0].where).not.toHaveProperty("tier");
+    expect(results.map((video) => [video.id, video.tier]).sort()).toEqual([
+      ["legacy", "LOGGED_IN"],
+      ["logged", "LOGGED_IN"],
+      ["public", "PUBLIC"],
+    ]);
   });
 
   it("matches title, titleEn, descriptions, slug and creator name", async () => {

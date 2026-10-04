@@ -10,6 +10,7 @@ import { createAppContext } from '@/lib/modules/shared/app-context';
 import { MediaPolicy, resolvePublicThumbnailSrc } from '@/lib/modules/media';
 import { effectivePublishedAt, toPremiereDate } from '../domain/premiere';
 import { withFundraisingProgress } from './fundraising-progress.service';
+import { toVideoAccessTier } from '@/lib/access-tier';
 
 export const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
   OR: [
@@ -53,7 +54,7 @@ export const publicVideoOrderBy: Prisma.VideoOrderByWithRelationInput[] = [
 export class VideoContentService {
   /**
    * Returns only PUBLIC and PUBLISHED videos for sitemap indexing.
-   * Strictly excludes PATRON and LOGGED_IN tiers.
+   * Strictly excludes LOGGED_IN videos.
    */
   static async getSitemapVideos(): Promise<PublicVideoDTO[]> {
     const mainChannel = await MainChannelService.getOptional(createAppContext());
@@ -122,7 +123,7 @@ export class VideoContentService {
         descriptionEn: video.descriptionEn,
         thumbnailUrl: resolvePublicThumbnailSrc(video, process.env),
         duration: video.duration,
-        tier: video.tier,
+        tier: toVideoAccessTier(video.tier),
         status: video.status ?? VideoStatus.PUBLISHED,
         views: video.views ?? 0,
         likesCount: video.likesCount ?? 0,
@@ -154,9 +155,6 @@ export class VideoContentService {
         where: {
           ...(await buildPublicVideoWhere()),
           showInSidebar: true,
-          tier: {
-            in: [AccessTier.PUBLIC, AccessTier.LOGGED_IN, AccessTier.PATRON]
-          }
         },
         include: {
           creator: {

@@ -7,7 +7,8 @@ import { MainChannelService } from "@/lib/modules/channel";
 // policy class — routing it through that barrel would force every such test to
 // also mock MainChannelPolicy. Allowlisted in scripts/check-architecture.ts.
 import { MainChannelPolicy } from "@/lib/modules/channel/domain/channel.policy";
-import { AccessTier, VideoStatus } from "@prisma/client";
+import { VideoStatus } from "@prisma/client";
+import { toVideoAccessTier } from "@/lib/access-tier";
 import { canUseDemoFallbacks } from "@/lib/feature-flags";
 import { isUpcomingPremiere, toPremiereDate } from "@/lib/modules/video/domain/premiere";
 
@@ -100,20 +101,19 @@ export async function checkVideoAccess(
   // Admin access granted for existing main-channel non-archived content
   if (isAdmin) return decide({ hasAccess: true });
 
-  // 5. Tier-based access
-  if (video.tier === AccessTier.PUBLIC) return decide({ hasAccess: true });
+  // 5. Tier-based access: two levels (lib/access-tier.ts); a leftover PATRON row counts as LOGGED_IN.
+  const tier = toVideoAccessTier(video.tier);
+  if (tier === "PUBLIC") return decide({ hasAccess: true });
 
   if (actor.type === 'guest') {
-    // Support no longer gates access (CLAUDE.md §4.4): signing in is the only barrier for
-    // PATRON-tier videos too.
     return decide({
         hasAccess: false,
         reason: "LOGIN_REQUIRED",
-        requiredTier: video.tier
+        requiredTier: tier
     });
   }
 
-  // 6. User-specific checks (LOGGED_IN, PATRON)
+  // 6. LOGGED_IN: any signed-in, not deleted account
   if (actor.type !== 'user') {
     // Should not happen for authenticated non-admin actors but for safety:
     return decide({ hasAccess: false, reason: "FORBIDDEN" });
@@ -127,13 +127,7 @@ export async function checkVideoAccess(
   if (!user) return decide({ hasAccess: false, reason: "FORBIDDEN" });
   if (user.isDeleted) return decide({ hasAccess: false, reason: "DELETED" });
 
-  // 2026-09-22: the Regulamin/Terms no longer sell access — every signed-in user gets
-  // PATRON-tier content, same as LOGGED_IN. Support is a voluntary, non-refundable donation
-  // that grants nothing extra (see CLAUDE.md). Do not reintroduce a PatronGrant check here
-  // without an explicit business-model decision to revert.
-  if (video.tier === AccessTier.LOGGED_IN || video.tier === AccessTier.PATRON) {
-    return decide({ hasAccess: true });
-  }
-
-  return decide({ hasAccess: false, reason: "FORBIDDEN" });
+  // Support is a voluntary donation that grants nothing (CLAUDE.md §4.4): never add a
+  // PatronGrant check here.
+  return decide({ hasAccess: true });
 }

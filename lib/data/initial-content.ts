@@ -56,7 +56,7 @@ export const INITIAL_VIDEOS: Video[] = [
     videoUrl: "https://pub-309ebc4b2d654f78b2a22e1d57917b94.r2.dev/intencja-swiadomosc-sprawczosci-michal-kicinski-qa-festiwal-wibracje.mp4",
     thumbnailUrl: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=2670&auto=format&fit=crop",
     duration: "22:15",
-    tier: AccessTier.PATRON,
+    tier: AccessTier.LOGGED_IN,
     isMainFeatured: false,
     status: VideoStatus.PUBLISHED,
     views: 15000,

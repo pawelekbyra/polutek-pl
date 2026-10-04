@@ -1,4 +1,5 @@
 import { Video, VideoAsset, Prisma, AccessTier, VideoStatus } from "@prisma/client";
+import { accessTierWhere, parseVideoAccessTier } from "@/lib/access-tier";
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
 import { AppError } from "@/lib/modules/shared/app-error";
@@ -168,7 +169,6 @@ export class VideoRepository {
             { publishedAt: { lte: now } }
         ],
         showInSidebar: true,
-        tier: { in: ['PUBLIC', 'LOGGED_IN', 'PATRON'] },
         creator: {
             isApproved: true,
             isPrimary: true
@@ -186,7 +186,8 @@ export class VideoRepository {
     const where: Prisma.VideoWhereInput = { creatorId: mainChannelId };
 
     if (filters.status && filters.status !== 'ALL' && isVideoStatus(filters.status)) where.status = filters.status;
-    if (filters.tier && filters.tier !== 'ALL' && isAccessTier(filters.tier)) where.tier = filters.tier;
+    const tierWhere = accessTierWhere(filters.tier);
+    if (tierWhere) where.tier = tierWhere;
     if (filters.isMainFeatured === 'true') where.isMainFeatured = true;
     if (filters.isMainFeatured === 'false') where.isMainFeatured = false;
     if (filters.showInSidebar === 'true') where.showInSidebar = true;
@@ -267,7 +268,7 @@ export class VideoRepository {
       descriptionEn: input.descriptionEn ?? null,
       thumbnailUrl: input.thumbnailUrl ?? '',
       duration: input.duration ?? null,
-      tier: input.tier || 'PUBLIC',
+      tier: parseVideoAccessTier(input.tier) ?? 'PUBLIC',
       creator: { connect: { id: mainChannelId } },
       status: 'DRAFT',
       showInSidebar: false,
@@ -295,7 +296,7 @@ export class VideoRepository {
     if (data.title !== undefined) updateData.title = data.title;
     if (data.slug !== undefined) updateData.slug = data.slug;
     if (data.thumbnailUrl !== undefined && !isDerivedThumbnailUrl(data.thumbnailUrl, process.env)) updateData.thumbnailUrl = data.thumbnailUrl ?? '';
-    if (data.tier !== undefined) updateData.tier = data.tier;
+    if (data.tier !== undefined) updateData.tier = parseVideoAccessTier(data.tier) ?? 'LOGGED_IN';
     if (data.description !== undefined) updateData.description = data.description;
     if (data.titleEn !== undefined) updateData.titleEn = data.titleEn;
     if (data.descriptionEn !== undefined) updateData.descriptionEn = data.descriptionEn;
@@ -424,6 +425,3 @@ function isVideoStatus(value: string): value is VideoStatus {
   return Object.values(VideoStatus).includes(value as VideoStatus);
 }
 
-function isAccessTier(value: string): value is AccessTier {
-  return Object.values(AccessTier).includes(value as AccessTier);
-}

@@ -20,9 +20,9 @@ Ostatnia aktualizacja: 2026-10-04.
 - Agenci weryfikują rozwiązania w internecie; audyty i naprawy robią agenci na Opusie, sesja główna
   koordynuje.
 
-- **Język (2026-10-04):** wykrywany automatycznie (zapisany wybór konta, cookie `app-language`, nagłówki przeglądarki/kraj, domyślnie angielski). Zmiana wyboru zapisuje się w cookie (niezalogowany) albo w koncie przy każdej zmianie (zalogowany). Flaga `TEMP_FORCE_ENGLISH` do usunięcia.
-- **Dzwonek powiadomień** (2026-10-04): usunąć (UI i flaga `TEMP_HIDE_NOTIFICATIONS_BELL`); podsystem powiadomień w bazie na później.
-- **Poziom dostępu `PATRON`** (2026-10-04): uprościć do dwóch poziomów (publiczny, po zalogowaniu); film z `PATRON` przechodzi na `LOGGED_IN`, wartość enuma usuwana w migracji czyszczącej.
+- **Język (2026-10-04):** wykrywany automatycznie (zapisany wybór konta, cookie `app-language`, nagłówki przeglądarki/kraj, domyślnie angielski). Zmiana wyboru zapisuje się w cookie (niezalogowany) albo w koncie przy każdej zmianie (zalogowany). **Zrobione** w gałęzi `feat/language-detect-remove-temp` (flaga `TEMP_FORCE_ENGLISH` usunięta; kraj tylko PL → polski, CLAUDE.md §4.11).
+- **Dzwonek powiadomień** (2026-10-04): usunąć (UI i flaga `TEMP_HIDE_NOTIFICATIONS_BELL`); podsystem powiadomień w bazie na później. **Zrobione** w `feat/language-detect-remove-temp` (też zakładka powiadomień w oknie konta i publiczne `/api/notifications`, `/api/user/notification-preferences`; tabele i API admina zostają).
+- **Poziom dostępu `PATRON`** (2026-10-04): uprościć do dwóch poziomów (publiczny, po zalogowaniu); film z `PATRON` przechodzi na `LOGGED_IN`, wartość enuma usuwana w migracji czyszczącej. **Zrobione w kodzie** w `feat/language-detect-remove-temp` (migracja danych `20261004230000_video_tier_patron_to_logged_in` wchodzi przy wdrożeniu; wartość `AccessTier.PATRON` do usunięcia osobną migracją czyszczącą po wdrożeniu).
 - **Pasek zbiórki:** zostaje ręcznie ustawiany (decyzja 2026-10-04).
 - **Resend:** zostaje jedynym nadawcą do czasu własnej poczty; plan Pro dopiero przy starcie publicznym. Nowa domena ma słabą reputację u Hotmaila (maile w spamie).
 - **Polityka prywatności** (2026-10-04): przepisać na krótką, zrozumiałą, zawierającą tylko to, co wymaga prawo (jak Regulamin); przed startem przegląd prawnika.
@@ -68,7 +68,8 @@ Ostatnia aktualizacja: 2026-10-04.
 | `fix/email-audit` | szablony (jedno źródło prawdy), wypis jednym kliknięciem, webhook Resend, kolejka rozsyłek |
 | `feat/admin-phase0-telemetry` | panel admina, faza 0: schemat `telemetry`, `pp-collector`, beacon (odsłony, Web Vitals, jakość odtwarzania), polityka prywatności 2026-10-05; po wdrożeniu włączyć `scripts/serwerek/telemetry-enable.sh` (SERWEREK.md §22) |
 | `feat/admin-phase0-ops` | faza 0, operacje: kopie (age, bucket lock, test odtworzenia, alerty), `pg_stat_statements`, obrazy z GHCR, strażnik `pp-watchdog`; zmiany na serwerze już wykonane (SERWEREK.md §23–25) |
-| `feat/daily-briefing` | dzienna odprawa „co słychać?” (skrypt tylko do odczytu + skill `odprawa`); następny krok: skrypty działań z audytem (odpowiedź-szkic, ukrycie komentarza, zwrot) uruchamiane po zgodzie właściciela |
+| `feat/daily-briefing` | dzienna odprawa „co słychać?” (skrypt tylko do odczytu + skill `odprawa`) |
+| `feat/briefing-actions` | działania po zgodzie właściciela (`scripts/ops/actions/`: szkic i wysyłka odpowiedzi PP Support, ukrycie/przywrócenie komentarza, zwrot), domyślnie podgląd, `--yes` wykonuje, audyt `OPERATOR_ACTION`; do decyzji: które z 4 kont ADMIN jest kontem właściciela (`OPS_ADMIN_USER_ID` w `secrets.env`) |
 | `feat/passkey-first-signup` | „Użyj klucza dostępu” zakłada konto jak Google (logowanie kluczem jest już na main); po wdrożeniu właściciel dodaje klucz na telefonie i komputerze (też jako 2. czynnik dla admina, punkt 4) |
 
 ## Do zrobienia (kolejność proponowana)
@@ -82,8 +83,7 @@ Ostatnia aktualizacja: 2026-10-04.
    (prawdziwy Postgres w testach, martwe i kruche testy, CI), `audit-ops.md`, `audit-legal-privacy.md`.
 5. Migracja czyszcząca bazę według `audit-database.md` (martwe tabele dostawców wideo, `ClerkEvent`,
    `CommentLike`/`CommentDislike`, martwe kolumny i wartości enumów), potem squash migracji.
-6. Usunięcie dwóch pozostałych flag: `TEMP_HIDE_NOTIFICATIONS_BELL`, `TEMP_FORCE_ENGLISH` (po decyzjach
-   z punktu 7 wyżej).
+6. ~~Usunięcie dwóch pozostałych flag~~: zrobione w `feat/language-detect-remove-temp` (rejestr TEMP pusty).
 7. Nowy, krótki `CLAUDE.md` opisujący wyłącznie stan obecny (po scaleniu gałęzi z punktu 1).
 8. Przepisać `SERWEREK.md` do stanu faktycznego (audyt operacji znalazł 21 rozbieżności). `backup.sh`, `health.sh`,
    `docker-compose.override.yml` są już w repo (`scripts/serwerek/`, `deploy/serwerek/`, gałąź `feat/admin-phase0-ops`).

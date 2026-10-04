@@ -32,7 +32,6 @@ describe('VideoRepository Predicates', () => {
             { publishedAt: { lte: now } }
           ],
           showInSidebar: true,
-          tier: { in: [AccessTier.PUBLIC, AccessTier.LOGGED_IN, AccessTier.PATRON] },
           creator: {
             isApproved: true,
             isPrimary: true

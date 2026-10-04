@@ -50,6 +50,15 @@ describe("beforeUserCreate (placeholder name, avatar, onboarding)", () => {
     expect(result.data).toMatchObject({ name: "jan.kowalskix", image: "/default-avatar.jpg", email: "jan.kowalski+x@b.pl", onboardingPending: true });
   });
 
+  it("keeps only a real language from the e-mail sign-up form, otherwise the site's language cookie", async () => {
+    const polish = await beforeUserCreate({ email: "a@b.pl", language: "pl" }, ctx("/sign-up/email", "app-language=en"));
+    expect(polish.data.language).toBe("pl");
+    const forged = await beforeUserCreate({ email: "a@b.pl", language: "x".repeat(5000) }, ctx("/sign-up/email", "app-language=pl"));
+    expect(forged.data.language).toBe("pl");
+    const missing = await beforeUserCreate({ email: "a@b.pl" }, ctx("/sign-up/email"));
+    expect(missing.data.language).toBe("en");
+  });
+
   it("falls back to a generic placeholder and caps its length", async () => {
     const odd = await beforeUserCreate({ email: "+++@b.pl" }, ctx("/sign-up/email"));
     expect(odd.data.name).toBe("user");

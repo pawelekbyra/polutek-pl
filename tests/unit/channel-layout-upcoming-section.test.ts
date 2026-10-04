@@ -74,8 +74,8 @@ describe('ChannelLayoutService UPCOMING section', () => {
     expect(tierIds).toEqual(expect.arrayContaining(['public-now', 'premiered-already']));
     expect(tierIds).not.toContain('premiere-soon');
     expect(tierIds).not.toContain('premiere-later');
-    // The only PATRON video is upcoming, so there is no PATRON section at all.
-    expect(layout.sections.find((s) => s.type === 'PATRON')).toBeUndefined();
+    // Two access levels only: no section of the old PATRON tier exists.
+    expect(layout.sections.map((s) => s.type)).not.toContain('PATRON');
   });
 
   it('treats a past premiere as an ordinary video dated from its premiere', async () => {
