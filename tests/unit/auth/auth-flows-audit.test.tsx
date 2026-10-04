@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Behaviour gaps found by the 2026-10-02 auth audit (docs/audit/2026-10-02-auth-flows-audit.md).
+ * Behaviour gaps found by the 2026-10-02 auth audit.
  *
  * Every `it.fails` below asserts the CORRECT behaviour and currently fails against the app code, so
  * the suite stays green. When a finding is fixed, the matching `it.fails` starts to "pass" and
