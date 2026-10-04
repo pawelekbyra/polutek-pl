@@ -107,7 +107,7 @@ describe("One Tap and the legal notice in the sign-in window", () => {
     for (const view of ["sign-in", "sign-up"]) {
       if (view === "sign-up") fireEvent.click(screen.getByRole("button", { name: /^create account$/i }));
       const notice = screen.getByTestId("signup-legal-notice");
-      expect(notice.textContent, view).toContain("By creating an account (also with Google), you accept the Terms");
+      expect(notice.textContent, view).toContain("By creating an account (also with Google), you accept:the Terms and the Privacy Policy");
       const terms = screen.getByRole("link", { name: "Terms" });
       const privacy = screen.getByRole("link", { name: "Privacy Policy" });
       expect(terms.getAttribute("href")).toBe("/en/terms");
