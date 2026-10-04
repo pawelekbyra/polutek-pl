@@ -1150,11 +1150,6 @@
   }
   .mc-menu-check { width:16px; height:16px; color:rgba(255,255,255,.7); }
 
-  .polutek-vidstack-player .vds-captions {
-    bottom:70px;
-    font-family:var(--font-geist-sans, ui-sans-serif), sans-serif;
-  }
-
   @keyframes mc-spin { to { transform:rotate(360deg); } }
 
   @media (max-width:640px) {
@@ -1174,7 +1169,6 @@
       width:36px; opacity:1; margin-right:4px; overflow:visible;
     }
     .mc-hero { width:52px; height:52px; }
-    .polutek-vidstack-player .vds-captions { bottom:64px; }
   }
 
   @media (prefers-reduced-motion:reduce) {
@@ -1184,4 +1178,30 @@
   }
 
   @media (hover:none) { .mc-scrub-preview { display:none; } }
+}
+
+/* Captions (Vidstack <Captions>). Deliberately outside @layer: Vidstack's own theme is imported
+   unlayered, so a layered rule here would always lose to its `inset:0` (cascade layers beat
+   specificity). White text on a dark box (contrast > 10:1 over any picture); the size follows the
+   player WIDTH (the height changes when the box moves up, which would make the text jump); the
+   captions rise above the control bar while it is visible ([data-controls] on the player). */
+.polutek-vidstack-player .vds-captions {
+  --media-cue-font-size: clamp(13px, calc(var(--overlay-width, 640px) / 100 * 2.6), 40px);
+  --media-cue-bg: rgba(0,0,0,.78);
+  --media-cue-backdrop: none;
+  --media-cue-border-radius: 4px;
+  --media-user-font-family: var(--font-geist-sans, ui-sans-serif), sans-serif;
+  --cue-text-shadow: 0 1px 2px rgba(0,0,0,.85);
+  bottom: 1%;
+  font-weight: 500;
+  transition: bottom .25s ease;
+}
+.polutek-vidstack-player[data-controls] .vds-captions { bottom: 44px; }
+/* iPhone native fullscreen draws captions itself (Vidstack switches to the native renderer). */
+.polutek-vidstack-player video::cue {
+  color: #fff;
+  background-color: rgba(0,0,0,.78);
+}
+@media (prefers-reduced-motion:reduce) {
+  .polutek-vidstack-player .vds-captions { transition: none; }
 }
