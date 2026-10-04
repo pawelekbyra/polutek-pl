@@ -245,7 +245,11 @@ export async function main(argv) {
   }
   const cfg = readJson(path.join(HERE, 'briefing.config.json'), {});
   const secrets = readEnvFile(path.join(SECRETS_DIR, 'secrets.env'));
-  const secretValues = [...Object.values(secrets), ...Object.values(readEnvFile(path.join(SECRETS_DIR, 'pp-support.env')))];
+  // OPS_ADMIN_USER_ID (id konta admina dla scripts/ops/actions) nie jest sekretem: nie maskujemy go w raporcie.
+  const secretValues = [
+    ...Object.entries(secrets).filter(([key]) => key !== 'OPS_ADMIN_USER_ID').map(([, value]) => value),
+    ...Object.values(readEnvFile(path.join(SECRETS_DIR, 'pp-support.env'))),
+  ];
   const state = readJson(STATE_FILE, {});
   const now = new Date();
   let window;

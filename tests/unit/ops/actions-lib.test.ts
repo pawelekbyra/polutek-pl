@@ -5,6 +5,7 @@ import { commentAction } from '@/scripts/ops/actions/comment-action.mjs';
 import { refundAction } from '@/scripts/ops/actions/refund-payment.mjs';
 import { draftAction } from '@/scripts/ops/actions/draft-reply.mjs';
 import { sendAction } from '@/scripts/ops/actions/send-reply.mjs';
+import { setRoleAction } from '@/scripts/ops/actions/set-role.mjs';
 import { outsideUntrusted } from '@/scripts/ops/briefing-lib.mjs';
 
 // lib.mjs is plain JS: TypeScript infers over-narrow types from its defaults (e.g. `{}` option bags,
@@ -28,6 +29,9 @@ const {
   parseDraftArgs,
   parseReason,
   parseRefundArgs,
+  parseRoleArgs,
+  planRoleChange,
+  secretValuesFrom,
   parseRemoteResult,
   parseSendArgs,
   planModeration,
@@ -427,5 +431,73 @@ describe('support actions', () => {
 
   it('redactSecrets is applied to known values (shared with the briefing)', () => {
     expect(redactSecrets('a whsec_abcdefghijkl b')).toBe('a [SEKRET] b');
+  });
+});
+
+// ------------------------------------------------------------------ zmiana roli
+
+const OWNER = { id: 'user_3FeY8okjicDKlWDGSSc4Q7bvaPZ', name: 'Właściciel', email: 'owner@example.com', role: 'ADMIN', isDeleted: false, emailVerified: true, inAdminEmails: false };
+const OTHER = { id: 'H0aCus81jxyEpuEFsCdYMPW0NftWCRiA', name: 'hello', email: 'hello@example.com', role: 'ADMIN', isDeleted: false, emailVerified: true, inAdminEmails: false };
+
+describe('role change', () => {
+  it('parses --user/--role and requires a reason to execute', () => {
+    const { input } = parseRoleArgs([`--user=${OTHER.id}`, '--role=user', `--admin=${OWNER.id}`]);
+    expect(input).toMatchObject({ userId: OTHER.id, role: 'USER', reason: null, adminUserId: OWNER.id });
+    expect(() => parseRoleArgs([`--user=${OTHER.id}`, '--role=OWNER'])).toThrow(/ADMIN albo USER/);
+    expect(() => parseRoleArgs([`--user=${OTHER.id}`, '--role=USER', '--yes'])).toThrow(/--reason/);
+  });
+
+  it('demotes another admin and keeps the operator as the only admin', () => {
+    const plan = planRoleChange({ user: OTHER, admins: [OWNER, OTHER], actorId: OWNER.id, role: 'USER' });
+    expect(plan).toMatchObject({ allowed: true, noop: false, from: 'ADMIN', to: 'USER', adminsAfter: [OWNER.id] });
+  });
+
+  it('never removes the last admin or the operator itself', () => {
+    const plan = planRoleChange({ user: OWNER, admins: [OWNER], actorId: OWNER.id, role: 'USER' });
+    expect(plan.allowed).toBe(false);
+    expect(plan.problems.join(' ')).toMatch(/własnej roli/);
+    expect(plan.problems.join(' ')).toMatch(/ostatni administrator/);
+    expect(plan.adminsAfter).toEqual([OWNER.id]);
+  });
+
+  it('refuses ADMIN for an unverified e-mail, deleted accounts and addresses in ADMIN_EMAILS', () => {
+    expect(planRoleChange({ user: { ...OTHER, role: 'USER', emailVerified: false }, admins: [OWNER], actorId: OWNER.id, role: 'ADMIN' }).problems.join(' ')).toMatch(/potwierdzonym/);
+    expect(planRoleChange({ user: { ...OTHER, isDeleted: true }, admins: [OWNER, OTHER], actorId: OWNER.id, role: 'USER' }).allowed).toBe(false);
+    expect(planRoleChange({ user: { ...OTHER, inAdminEmails: true }, admins: [OWNER, OTHER], actorId: OWNER.id, role: 'USER' }).problems.join(' ')).toMatch(/ADMIN_EMAILS/);
+    expect(planRoleChange({ user: OTHER, admins: [OWNER, OTHER], actorId: OWNER.id, role: 'ADMIN' })).toMatchObject({ noop: true, adminsAfter: [OWNER.id, OTHER.id] });
+  });
+
+  it('dry-run reads only, shows admins before/after with masked e-mails, and prints the command', async () => {
+    const { runApp, calls } = fakeApp({ 'user.inspect': { ok: true, user: OTHER, admins: [OWNER, OTHER], admin: { id: OWNER.id } } });
+    const r = await setRoleAction(parseRoleArgs([`--user=${OTHER.id}`, '--role=USER', '--reason=decyzja właściciela']), { runApp, record: vi.fn() });
+    expect(calls.map((c) => c.op)).toEqual(['user.inspect']);
+    expect(r.ok).toBe(true);
+    expect(r.preview.admini_po_zmianie).toHaveLength(1);
+    expect(r.preview.admini_po_zmianie[0]).toContain(OWNER.id);
+    expect(JSON.stringify(r.preview)).not.toContain('owner@example.com');
+    expect(r.next).toContain('--role=USER');
+  });
+
+  it('execution calls the use case operation once and records it', async () => {
+    const { runApp, calls } = fakeApp({
+      'user.inspect': { ok: true, user: OTHER, admins: [OWNER, OTHER], admin: { id: OWNER.id } },
+      'user.set-role': { ok: true, executed: true, outcome: { code: 'OK', from: 'ADMIN', to: 'USER' }, admins: [OWNER] },
+    });
+    const record = vi.fn(async (x: unknown) => x);
+    const r = await setRoleAction(parseRoleArgs([`--user=${OTHER.id}`, '--role=USER', '--reason=decyzja właściciela', '--yes']), { runApp, record });
+    expect(r).toMatchObject({ ok: true, executed: true });
+    expect(calls[1]).toMatchObject({ op: 'user.set-role', params: { userId: OTHER.id, role: 'USER', reason: 'decyzja właściciela' } });
+    expect(record).toHaveBeenCalledOnce();
+  });
+
+  it('execution of a last-admin demotion is refused before calling the server', async () => {
+    const { runApp, calls } = fakeApp({ 'user.inspect': { ok: true, user: OTHER, admins: [OTHER], admin: { id: OTHER.id } } });
+    const r = await setRoleAction(parseRoleArgs([`--user=${OTHER.id}`, '--role=USER', '--reason=test', '--yes']), { runApp, record: vi.fn() });
+    expect(r.executed).toBe(false);
+    expect(calls).toHaveLength(1);
+  });
+
+  it('OPS_ADMIN_USER_ID is not treated as a secret', () => {
+    expect(secretValuesFrom({ OPS_ADMIN_USER_ID: 'user_x', STRIPE_SECRET_KEY: 'sk' })).toEqual(['sk']);
   });
 });

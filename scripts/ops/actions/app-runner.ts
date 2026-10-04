@@ -8,6 +8,8 @@
  *                                       payment.inspect czyta też listę zwrotów ze Stripe (GET)
  *   comment.hide / comment.restore      istniejące use case'y hideAdminComment / restoreAdminComment
  *   payment.refund                      istniejący use case adminRefund (Stripe + baza + audyt PAYMENT_REFUNDED)
+ *   user.inspect                        tylko odczyt (READ ONLY): konto i lista aktywnych adminów
+ *   user.set-role                       istniejący use case changeUserRoleAsAdmin (audyt ADMIN_USER_ROLE_CHANGED)
  *
  * Aktor: konto administratora właściciela (jedyne aktywne konto ADMIN albo --admin=<id>). Każde wykonanie zapisuje
  * dodatkowo zdarzenie audytu OPERATOR_ACTION z opisem „operator (Claude Code) na polecenie właściciela”, powodem i
@@ -19,6 +21,7 @@ import { prisma } from "@/lib/prisma";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { CommentPolicy, hideAdminComment, restoreAdminComment } from "@/lib/modules/comments";
 import { adminRefund, getStripeClient } from "@/lib/modules/payments";
+import { changeUserRoleAsAdmin } from "@/lib/modules/users";
 import type { CommentStatus, Prisma } from "@prisma/client";
 
 const MARKER = "@@ops-result ";
@@ -36,6 +39,8 @@ type Params = {
   reason?: string;
   expectRefundedMinor?: number;
   adminUserId?: string | null;
+  userId?: string;
+  role?: string;
 };
 
 type Tx = Prisma.TransactionClient;
@@ -301,7 +306,94 @@ async function paymentRefund(p: Params) {
 
 // ------------------------------------------------------------------ main
 
+// ------------------------------------------------------------------ role kont
+
+/** ADMIN_EMAILS (bootstrap w lib/api/auth.ts) nadaje rolę ADMIN przy każdym żądaniu: zdjęcie roli z takiego adresu nie przetrwa. */
+function inAdminEmails(email: string | null | undefined): boolean {
+  if (!email) return false;
+  return String(process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+    .includes(email.trim().toLowerCase());
+}
+
+async function adminRoster(db: Tx | typeof prisma) {
+  const admins = await db.user.findMany({
+    where: { role: "ADMIN", isDeleted: false },
+    select: { id: true, name: true, email: true, emailVerified: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+    take: 20,
+  });
+  return admins.map((a) => ({ id: a.id, name: cut(a.name, 60), email: a.email, emailVerified: Boolean(a.emailVerified), inAdminEmails: inAdminEmails(a.email) }));
+}
+
+async function loadUser(db: Tx | typeof prisma, userId: string) {
+  const u = await db.user.findUnique({
+    where: { id: userId },
+    select: { id: true, name: true, email: true, role: true, isDeleted: true, emailVerified: true, createdAt: true },
+  });
+  if (!u) return null;
+  return { id: u.id, name: cut(u.name, 60), email: u.email, role: u.role, isDeleted: u.isDeleted, emailVerified: Boolean(u.emailVerified), createdAt: u.createdAt.toISOString(), inAdminEmails: inAdminEmails(u.email) };
+}
+
+async function userInspect(p: Params) {
+  const userId = requireUserId(p.userId);
+  return readOnly(async (tx) => {
+    const admin = await resolveAdmin(tx, p.adminUserId);
+    return {
+      ok: true,
+      user: await loadUser(tx, userId),
+      admins: await adminRoster(tx),
+      admin: admin.ok ? { id: admin.admin.id, name: cut(admin.admin.name, 60) } : null,
+      adminError: admin.ok ? null : admin.error,
+      adminCandidates: admin.ok ? null : admin.candidates ?? null,
+    };
+  });
+}
+
+/**
+ * Zmiana roli istniejącym use case'em changeUserRoleAsAdmin (blokada „admin-roster”, nigdy własna rola, nigdy
+ * ostatni admin, ADMIN tylko dla zweryfikowanego e-maila, audyt ADMIN_USER_ROLE_CHANGED w tej samej transakcji).
+ * Wymóg świeżego logowania sprawdza trasa HTTP (lib/api/admin-recent-sign-in.ts), nie use case: operator nie ma sesji
+ * przeglądarki, działa jako audytowane narzędzie na polecenie właściciela, więc tego kryterium tu nie ma.
+ */
+async function userSetRole(p: Params) {
+  const userId = requireUserId(p.userId);
+  const role = p.role;
+  const opId = String(p.opId ?? "");
+  const reason = String(p.reason ?? "").slice(0, 300);
+  if (role !== "ADMIN" && role !== "USER") throw new Rejected("niepoprawna rola");
+  if (!/^ops-[0-9a-f-]{36}$/.test(opId) || reason.length < 3) throw new Rejected("brak opId albo powodu");
+  const admin = await resolveAdmin(prisma, p.adminUserId);
+  if (!admin.ok) return { ok: false, executed: false, error: admin.error, adminCandidates: admin.candidates ?? null };
+  const before = await loadUser(prisma, userId);
+  if (!before) return { ok: false, executed: false, error: "Konto nie istnieje." };
+  if (role === "USER" && before.inAdminEmails) {
+    return { ok: false, executed: false, error: "Adres konta jest w ADMIN_EMAILS: rola ADMIN wróciłaby przy następnym żądaniu. Najpierw usuń go z ADMIN_EMAILS." };
+  }
+
+  const ctx = operatorContext(admin.admin.id, opId);
+  const result = await changeUserRoleAsAdmin(ctx, { adminUserId: admin.admin.id, userId, role });
+  const after = await loadUser(prisma, userId);
+  const code = result.ok ? (result.data.changed ? "OK" : "NOOP") : result.error.code ?? "ERROR";
+  const audited = await auditOperator(ctx, {
+    targetType: "User",
+    targetId: userId,
+    metadata: { operation: "user.set-role", opId, reason, from: before.role, to: after?.role ?? null, outcome: code },
+  });
+  return {
+    ok: result.ok,
+    executed: true,
+    outcome: { code, from: before.role, to: after?.role ?? null, message: result.ok ? null : result.error.message, auditOperatorAction: audited },
+    admins: await adminRoster(prisma),
+    admin: { id: admin.admin.id },
+  };
+}
+
 const OPS: Record<string, (p: Params) => Promise<Record<string, unknown>>> = {
+  "user.inspect": userInspect,
+  "user.set-role": userSetRole,
   "comment.inspect": commentInspect,
   "comment.hide": (p) => commentModerate(p, "hide"),
   "comment.restore": (p) => commentModerate(p, "restore"),
