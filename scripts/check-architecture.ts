@@ -54,7 +54,7 @@ function checkModules() {
 
   for (const file of files) {
     const content = fs.readFileSync(file, 'utf-8');
-    const relativePath = path.relative(ROOT, file);
+    const relativePath = rel(file);
 
     // 1. Forbidden Next.js/App/identity-library imports in modules
     // thumbnail-response.service.ts is a Next.js-specific HTTP response builder in infra layer
@@ -104,7 +104,7 @@ function checkLegacyChannelAdapter() {
 
   const files = getAllFiles(ROOT);
   for (const file of files) {
-    const relativePath = path.relative(ROOT, file);
+    const relativePath = rel(file);
     if (relativePath.startsWith('node_modules') || relativePath.startsWith('.next') || relativePath.startsWith('dist')) continue;
 
     const content = fs.readFileSync(file, 'utf-8');
@@ -147,7 +147,7 @@ function checkRoutes() {
   const files = getAllFiles(apiDir);
   for (const file of files) {
     const content = fs.readFileSync(file, 'utf-8');
-    const relativePath = path.relative(ROOT, file);
+    const relativePath = rel(file);
     const allowReason = KNOWN_ROUTE_VIOLATIONS_ALLOWLIST[relativePath];
 
     if (content.includes("@/lib/prisma")) {
@@ -235,6 +235,19 @@ function checkRoutes() {
   return violations;
 }
 
+/**
+ * Repo-relative path with forward slashes. Every check below compares against POSIX-style paths
+ * ('lib/modules/...', startsWith('tests/')); with native separators on Windows they never matched,
+ * which produced 6 false violations locally (exceptions and skips silently stopped applying).
+ */
+function rel(file: string): string {
+  return path.relative(ROOT, file).split(path.sep).join('/');
+}
+
+// Never scanned: dependencies, build output, VCS data, and agent worktrees (.claude/worktrees holds
+// full copies of the repo, which would be reported as violations of this checkout).
+const SKIPPED_DIRECTORIES = new Set(['node_modules', '.next', '.git', 'dist', 'coverage', '.claude']);
+
 function getAllFiles(dir: string): string[] {
   let results: string[] = [];
   const list = fs.readdirSync(dir);
@@ -242,6 +255,7 @@ function getAllFiles(dir: string): string[] {
     const fullPath = path.resolve(dir, file);
     const stat = fs.statSync(fullPath);
     if (stat && stat.isDirectory()) {
+      if (SKIPPED_DIRECTORIES.has(file)) return;
       results = results.concat(getAllFiles(fullPath));
     } else if (fullPath.endsWith('.ts') || fullPath.endsWith('.tsx')) {
       results.push(fullPath);
@@ -256,7 +270,7 @@ function checkUserProfileServiceUsage() {
 
   const files = getAllFiles(ROOT);
   for (const file of files) {
-    const relativePath = path.relative(ROOT, file);
+    const relativePath = rel(file);
     if (relativePath.startsWith('node_modules') || relativePath.startsWith('.next') || relativePath.startsWith('dist')) continue;
     if (relativePath === 'lib/services/user/profile.service.ts') continue;
     if (relativePath === 'lib/modules/users/application/sync-user.use-case.ts') continue;
@@ -301,7 +315,7 @@ function checkDecommissionedAccessPolicySurface() {
 
   const files = getAllFiles(ROOT);
   for (const file of files) {
-    const relativePath = path.relative(ROOT, file);
+    const relativePath = rel(file);
     if (relativePath.startsWith('node_modules') || relativePath.startsWith('.next') || relativePath.startsWith('dist') || relativePath.startsWith('.git')) continue;
     if (relativePath.startsWith('tests/')) continue;
     if (relativePath === 'scripts/check-architecture.ts') continue;
@@ -341,7 +355,7 @@ function checkAdminApp() {
   const files = getAllFiles(ADMIN_APP_DIR).filter((f) => !f.includes(`${path.sep}.next${path.sep}`) && !f.includes(`${path.sep}node_modules${path.sep}`));
   for (const file of files) {
     const content = fs.readFileSync(file, 'utf-8');
-    const relativePath = path.relative(ROOT, file).split(path.sep).join('/');
+    const relativePath = rel(file);
     for (const [pattern, what] of ADMIN_FORBIDDEN_IMPORTS) {
       if (pattern.test(content)) {
         console.error(`❌ Violation: ${relativePath} imports ${what}.`);

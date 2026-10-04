@@ -31,6 +31,8 @@ function runAudit(args) {
     cwd: process.cwd(),
     encoding: 'utf8',
     maxBuffer: 1024 * 1024 * 20,
+    // On Windows npm is npm.cmd, which Node only starts through a shell; the arguments are constants.
+    shell: process.platform === 'win32',
   });
 }
 
