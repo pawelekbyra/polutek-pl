@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { prisma } from '@/lib/prisma';
 import { AccessTier, VideoStatus, Prisma } from '@prisma/client';
 import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
@@ -29,6 +30,19 @@ export async function buildPublicVideoWhere(now: Date = new Date()): Promise<Pri
     ...visiblePublishedAtFilter(now),
   };
 }
+
+/**
+ * The first admin's avatar, shown as the main creator's picture. Read once per server render
+ * (the video list, the featured video and the creator page all ask for it); React `cache` does not
+ * memoize outside a render.
+ */
+export const findMainCreatorAdminAvatar = cache(() =>
+  prisma.user.findFirst({
+    where: { role: 'ADMIN', isDeleted: false },
+    orderBy: { createdAt: 'asc' },
+    select: { imageUrl: true },
+  }),
+);
 
 export const publicVideoOrderBy: Prisma.VideoOrderByWithRelationInput[] = [
   { sidebarOrder: 'asc' },
@@ -162,11 +176,7 @@ export class VideoContentService {
             .map(v => this.mapToPublicVideoDTO(v));
       }
 
-      const adminData = await prisma.user.findFirst({
-        where: { role: 'ADMIN', isDeleted: false },
-        orderBy: { createdAt: 'asc' },
-        select: { imageUrl: true }
-      });
+      const adminData = await findMainCreatorAdminAvatar();
 
       const mainCreatorSlug = flags.mainCreatorSlug;
 
@@ -232,11 +242,7 @@ export class VideoContentService {
       }
       if (!selectedVideo) return null;
 
-      const adminData = await prisma.user.findFirst({
-        where: { role: 'ADMIN', isDeleted: false },
-        orderBy: { createdAt: 'asc' },
-        select: { imageUrl: true }
-      });
+      const adminData = await findMainCreatorAdminAvatar();
 
       const mainCreatorSlug = flags.mainCreatorSlug;
       let imageUrl = selectedVideo.creator?.user?.imageUrl || null;

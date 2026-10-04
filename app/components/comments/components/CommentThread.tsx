@@ -11,7 +11,6 @@ interface CommentThreadProps {
   videoId: string;
   comment: CommentView;
   userProfile: { id?: string } | null;
-  isClient: boolean;
   language: string;
   t: Record<string, string>;
   canComment: boolean;

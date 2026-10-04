@@ -26,7 +26,9 @@ describe('current main build safety', () => {
     const layout = read('app/layout.tsx');
 
     expect(fonts).toContain('from "geist/font/sans"');
-    expect(fonts).toContain('from "geist/font/mono"');
+    // Geist Mono: the package's own file, declared locally only to turn its preload off.
+    expect(fonts).toContain('geist/dist/fonts/geist-mono/GeistMono-Variable.woff2');
+    expect(fonts).toContain('preload: false');
     expect(layout).toContain('geistSans.variable');
     expect(layout).toContain('geistMono.variable');
   });

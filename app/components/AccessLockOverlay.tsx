@@ -10,6 +10,7 @@ import { PremieraLettering } from "./coming-soon/PremieraLettering";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import { useLanguage } from "./LanguageContext";
 import { PlayerStateFrame } from "./PlayerStateFrame";
+import { useRenderClock } from "./RenderClock";
 import styles from "./AccessLockOverlay.module.css";
 
 // COMING_SOON = a scheduled premiere not reached yet (CLAUDE.md "Premieres"), shown to
@@ -57,7 +58,11 @@ export function AccessLockOverlay({ state, variant, premiereAt }: AccessLockOver
   const isCompact = variant !== "default";
   const isComingSoon = state === "COMING_SOON";
 
-  const [countdownNow, setCountdownNow] = useState<Date>(() => new Date());
+  // The cockpit is rendered on the server for a signed-in viewer (the session is in the page), so
+  // the first countdown uses the server's render time (RenderClock) to hydrate the same digits;
+  // the live clock takes over right after.
+  const renderNow = useRenderClock();
+  const [countdownNow, setCountdownNow] = useState<Date>(() => renderNow ?? new Date());
   // A missing date (should not happen) degrades to a zeroed countdown instead of crashing.
   const premiereDate = toPremiereDate(premiereAt) ?? countdownNow;
   // Only the full-size cockpit ticks; compact thumbnails show a static date and many can
@@ -65,8 +70,13 @@ export function AccessLockOverlay({ state, variant, premiereAt }: AccessLockOver
   const ticks = isComingSoon && !isCompact;
   useEffect(() => {
     if (!ticks) return;
-    const id = setInterval(() => setCountdownNow(new Date()), 1_000);
-    return () => clearInterval(id);
+    const tick = () => setCountdownNow(new Date());
+    const first = setTimeout(tick, 0);
+    const id = setInterval(tick, 1_000);
+    return () => {
+      clearTimeout(first);
+      clearInterval(id);
+    };
   }, [ticks]);
 
   const countdownLabel = formatPremiereCountdown(isPl, premiereDate, countdownNow);

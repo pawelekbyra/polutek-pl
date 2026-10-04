@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistance } from "date-fns";
 import { enUS, pl } from "date-fns/locale";
 import { Star, Trash2, Heart, MoreVertical, Edit, Flag, Link as LinkIcon, EyeOff, RotateCcw } from "../../icons";
 import { cn } from "@/lib/utils";
@@ -18,11 +18,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useRenderClock } from "../../RenderClock";
 
 interface CommentItemProps {
   comment: CommentView;
   userProfile: { id?: string } | null;
-  isClient: boolean;
   language: string;
   t: Record<string, string>;
   canComment: boolean;
@@ -43,8 +43,8 @@ interface CommentItemProps {
 const AVATAR_SIZE = 40;
 const REPLY_AVATAR_SIZE = 24;
 
-function formatCommentAge(date: Date, language: string) {
-  const formatted = formatDistanceToNow(date, {
+function formatCommentAge(date: Date, language: string, now: Date) {
+  const formatted = formatDistance(date, now, {
     addSuffix: true,
     locale: language === "pl" ? pl : enUS,
   });
@@ -55,7 +55,6 @@ function formatCommentAge(date: Date, language: string) {
 function CommentItemComponent({
   comment,
   userProfile,
-  isClient,
   language,
   t,
   canComment,
@@ -84,6 +83,8 @@ function CommentItemComponent({
   const [isHearted, setIsHearted] = React.useState<boolean>(comment.isHearted || false);
   const [isHighlighted, setIsHighlighted] = useState(false);
   const commentRef = useRef<HTMLDivElement>(null);
+  // Server render time during hydration, live time after (RenderClock): no text swap on load.
+  const now = useRenderClock();
 
   // CommentItem is keyed by comment.id, so React reuses this instance across
   // refetches — resync from the prop whenever the server's own value changes
@@ -198,9 +199,9 @@ function CommentItemComponent({
     createdAtDate && !Number.isNaN(createdAtDate.getTime())
       ? createdAtDate
       : null;
-  const relativeCreatedAt = isClient
+  const relativeCreatedAt = now
     ? validCreatedAt
-      ? formatCommentAge(validCreatedAt, language)
+      ? formatCommentAge(validCreatedAt, language, now)
       : isReply
         ? t.justNow
         : language === "pl"
@@ -224,19 +225,27 @@ function CommentItemComponent({
         isHighlighted && "-mx-2 bg-[var(--chan-blue-soft)]/60 px-2",
       )}
     >
-      <SafeAvatar
-        src={comment.author?.imageUrl}
-        alt={comment.author?.displayName || "Avatar"}
-        size={avatarSize}
-        className="relative z-[5] border border-[var(--chan-line)]"
-      />
+      {/* Badges live under the avatar (never next to the name). The badge is positioned absolutely,
+          centred on the avatar, so it never changes the column width or the text alignment. */}
+      <div className="relative z-[5] shrink-0" style={{ width: avatarSize, height: avatarSize }}>
+        <SafeAvatar
+          src={comment.author?.imageUrl}
+          alt={comment.author?.displayName || "Avatar"}
+          size={avatarSize}
+          className="border border-[var(--chan-line)]"
+        />
+        {authorBadge && (
+          <span className="absolute left-1/2 top-full mt-1 -translate-x-1/2">
+            <AuthorBadge kind={authorBadge} language={language} />
+          </span>
+        )}
+      </div>
       <div className="relative z-[5] min-w-0 flex-1">
         <div className={cn("relative flex items-start justify-between", userProfile && "pr-9")}>
           <div className="flex min-w-0 items-center gap-1.5">
             <span className="truncate text-[13px] font-bold leading-[18px] text-[var(--chan-ink)]">
               {comment.author?.displayName || (language === "pl" ? "Użytkownik" : "User")}
             </span>
-            {authorBadge && <AuthorBadge kind={authorBadge} language={language} />}
             <time
               className="shrink-0 whitespace-nowrap text-[12px] leading-[18px] text-[var(--chan-muted)]"
               dateTime={validCreatedAt ? comment.createdAt : undefined}

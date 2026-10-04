@@ -25,9 +25,9 @@ import { AnimatePresence } from "framer-motion";
 import { CommentMotionItem, AnimatedCount } from "./components/comment-motion";
 import { useComments } from "./hooks/useComments";
 import { CommentThread } from "./components/CommentThread";
-import { useClientReady } from "@/app/hooks/useClientEnvironment";
 import { CommentLoadingSkeleton } from "@/components/skeletons";
 import { usePageRevealReady } from "../preload/PageRevealGate";
+import type { InitialCommentsPage } from "./initial-comments";
 
 interface EmbeddedCommentsProps {
   userProfile?: {
@@ -38,6 +38,8 @@ interface EmbeddedCommentsProps {
     role?: string;
   } | null;
   videoId: string;
+  /** Server-rendered first page (newest) of this video's comments, when the page has it. */
+  initialComments?: InitialCommentsPage | null;
 }
 
 /**
@@ -70,6 +72,7 @@ const CommentsLoadingState = ({ language }: { language: "pl" | "en" }) => (
 const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   userProfile: propUserProfile,
   videoId,
+  initialComments,
 }) => {
   const { t, language } = useLanguage();
   const { isSignedIn, userId } = useAuth();
@@ -113,7 +116,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const [newComment, setNewComment] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const isClient = useClientReady();
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   const [composerError, setComposerError] = useState<string | null>(null);
 
@@ -146,7 +148,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     deleteMutation,
     editMutation,
     reportMutation,
-  } = useComments(videoId, sortBy, language, userProfile);
+    isPlaceholderData,
+  } = useComments(videoId, sortBy, language, userProfile, initialComments);
   usePageRevealReady("comments", !isLoading);
 
   useEffect(() => {
@@ -439,7 +442,16 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         />
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div
+        className={cn(
+          "flex flex-col gap-4 transition-opacity duration-200 motion-reduce:transition-none",
+          // The previous video's (or sort order's) list, kept while the new one loads: dimmed
+          // and inert, never a skeleton.
+          isPlaceholderData && "pointer-events-none opacity-50",
+        )}
+        aria-busy={isPlaceholderData || undefined}
+        inert={isPlaceholderData || undefined}
+      >
         {isLoading ? (
           <CommentsLoadingState language={language} />
         ) : isError ? (
@@ -495,7 +507,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                 videoId={videoId}
                 comment={comment}
                 userProfile={userProfile}
-                isClient={isClient}
                 language={language}
                 t={t}
                 canComment={viewer?.canComment ?? false}
