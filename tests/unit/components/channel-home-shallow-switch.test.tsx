@@ -7,13 +7,15 @@ import ChannelHome from '@/app/components/ChannelHome';
 import type { PublicVideoDTO } from '@/app/types/video';
 
 const mocks = vi.hoisted(() => ({
-  heroProps: [] as Array<{ videoId: string; initialInteraction: unknown }>,
+  heroProps: [] as Array<{ videoId: string; initialInteraction: unknown; startWithSound?: boolean }>,
+  selectVideo: vi.fn(),
+  warmVideo: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({ useSearchParams: () => new URLSearchParams() }));
 vi.mock('@/app/components/preload/AppPreloadProvider', () => ({
   AppPreloadProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  useAppPreload: () => ({ warmVideo: vi.fn() }),
+  useAppPreload: () => ({ warmVideo: mocks.warmVideo, selectVideo: mocks.selectVideo }),
 }));
 vi.mock('@/app/components/preload/PreloadProgressBar', () => ({ PreloadProgressBar: () => null }));
 vi.mock('@/components/skeletons', () => ({ CommentLoadingSkeleton: () => null }));
@@ -24,8 +26,8 @@ vi.mock('@/app/components/channel/SidebarPlaylist', () => ({
   ),
 }));
 vi.mock('@/app/components/Hero', () => ({
-  default: (props: { video: PublicVideoDTO; initialInteraction?: unknown }) => {
-    mocks.heroProps.push({ videoId: props.video.id, initialInteraction: props.initialInteraction });
+  default: (props: { video: PublicVideoDTO; initialInteraction?: unknown; startWithSound?: boolean }) => {
+    mocks.heroProps.push({ videoId: props.video.id, initialInteraction: props.initialInteraction, startWithSound: props.startWithSound });
     return <div data-testid="hero">{props.video.id}</div>;
   },
 }));
@@ -43,6 +45,8 @@ const second = makeVideo('video_2', 'second');
 describe('ChannelHome shallow video switching', () => {
   beforeEach(() => {
     mocks.heroProps.length = 0;
+    mocks.selectVideo.mockClear();
+    mocks.warmVideo.mockClear();
     window.scrollTo = vi.fn() as never;
     window.matchMedia = vi.fn().mockImplementation(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })) as never;
   });
@@ -85,5 +89,21 @@ describe('ChannelHome shallow video switching', () => {
       window.dispatchEvent(new PopStateEvent('popstate', { state: { polutekVideoId: 'video_1' } }));
     });
     expect(screen.getByTestId('hero')).toHaveTextContent('video_1');
+  });
+
+  it('starts a video picked with a click with sound, but not the first video or one restored by Back/Forward', () => {
+    render(<ChannelHome mainVideo={main} allVideos={[main, second]} />);
+    expect(mocks.heroProps.filter((p) => p.videoId === 'video_1').every((p) => !p.startWithSound)).toBe(true);
+
+    fireEvent.click(screen.getAllByText('pick-video-2')[0]);
+    expect(mocks.heroProps.at(-1)).toMatchObject({ videoId: 'video_2', startWithSound: true });
+    // The pick stops warm-ups of other videos and asks for the plan at once (no media warm-up).
+    expect(mocks.selectVideo).toHaveBeenCalledWith('video_2');
+    expect(mocks.warmVideo).toHaveBeenCalledWith('video_2', expect.objectContaining({ priority: 'critical' }));
+
+    act(() => {
+      window.dispatchEvent(new PopStateEvent('popstate', { state: { polutekVideoId: 'video_1' } }));
+    });
+    expect(mocks.heroProps.at(-1)).toMatchObject({ videoId: 'video_1', startWithSound: false });
   });
 });

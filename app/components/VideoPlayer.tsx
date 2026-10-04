@@ -14,7 +14,9 @@ import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType, type VideoTextTrackDTO } from '@/app/types/video';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
-import { PlayerPosterLoading } from './PlayerLoadingState';
+import { PlayerStartLoading } from './PlayerLoadingState';
+import { UnmuteHint } from './player/UnmuteHint';
+import { readUserMuted, writeUserMuted } from './player/sound-preference';
 import { resolvePlaybackSource } from './playback-source';
 import { shouldSendViewForPlaybackPosition } from './video-view-threshold';
 import { usePlaybackTelemetry } from '@/lib/hooks/usePlaybackTelemetry';
@@ -36,6 +38,12 @@ interface VideoPlayerProps {
     onViewCounted?: () => void;
     /** PageRevealGate key to report once the stream can play (first frames buffered). */
     revealKey?: string;
+    /**
+     * The viewer picked this video with a click or tap. That gesture lets the browser start it
+     * with sound, so it does, unless the viewer muted the player themselves earlier in this
+     * session (sound-preference.ts). Without it the video starts muted (autoplay policy).
+     */
+    startWithSound?: boolean;
 }
 
 
@@ -50,7 +58,7 @@ function normalizeTextTracks(tracks: VideoTextTrackDTO[] | undefined): VideoText
     });
 }
 
-export default function VideoPlayer({ video, onViewCounted, revealKey }: VideoPlayerProps) {
+export default function VideoPlayer({ video, onViewCounted, revealKey, startWithSound = false }: VideoPlayerProps) {
     const { playbackPlan, refreshPlaybackPlan, renewPlaybackPlan, isLoading } = useVideoAccess();
     // The player never receives admin status from the session (the server decides); admin-only
     // diagnostics in the overlays stay off for viewers.
@@ -80,7 +88,13 @@ export default function VideoPlayer({ video, onViewCounted, revealKey }: VideoPl
     const playStartedSentRef = useRef(false);
 
     const player = useRef<MediaPlayerInstance>(null);
-    const posterUrl = playerConfig?.poster || source?.posterUrl || video.thumbnailUrl || '/logo.png';
+    // Sound. `muted` mirrors the player (and is what a remounted player starts with); until the
+    // per-video reset below decides, the player is not mounted yet. `userMuted`: the viewer's own
+    // mute choice this session. `isPlaying` drives the unmute hint.
+    const startWithSoundRef = useRef(startWithSound);
+    const [muted, setMuted] = useState(true);
+    const [userMuted, setUserMuted] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [hasStartedPlayback, setHasStartedPlayback] = useState(false);
@@ -191,6 +205,11 @@ export default function VideoPlayer({ video, onViewCounted, revealKey }: VideoPl
         setBufferedEnoughForReveal(false);
         bufferedEnoughRef.current = false;
         setLoadError(null);
+        setIsPlaying(false);
+        // Read here, not during render: sessionStorage does not exist on the server.
+        const chosenMute = readUserMuted();
+        setUserMuted(chosenMute);
+        setMuted(!(startWithSoundRef.current && !chosenMute));
         setPlayerKey((key) => key + 1);
         hasReached10s.current = false;
         viewCountRequestInFlight.current = false;
@@ -236,31 +255,60 @@ export default function VideoPlayer({ video, onViewCounted, revealKey }: VideoPl
         (canPlay && (!autoPlayWanted || autoPlayFailed));
     usePageRevealReady(revealKey, playbackSettled || !!loadError || bufferingOverlayTimedOut || showsErrorState);
 
-    // When the rabbit gate is clicked, restart the video from the beginning so
-    // the viewer always sees it from 0, not from wherever it buffered to.
+    // The click on the entry gate ("Follow the white rabbit") is a user gesture: the hero, which
+    // autoplayed muted under the gate, restarts from 0 with sound (unless the viewer chose mute),
+    // and starts now if the browser had blocked even the muted autoplay. A player that is not
+    // mounted yet starts with sound when it mounts (and falls back to muted if refused).
     useEffect(() => {
         const handleGateEnter = () => {
-            if (player.current) {
-                player.current.currentTime = 0;
-                player.current.muted = false;
-            }
+            if (readUserMuted()) return;
+            setMuted(false);
+            const current = player.current;
+            if (!current) return;
+            current.currentTime = 0;
+            current.muted = false;
+            if (current.paused && current.state?.canPlay) void current.play().catch(() => undefined);
         };
         window.addEventListener("polutek:gate-enter", handleGateEnter);
         return () => window.removeEventListener("polutek:gate-enter", handleGateEnter);
     }, []);
-    // Poster: hides as soon as the first frame renders — independent of buffering so
-    // the cover photo doesn't linger for the full buffer-wait period after the reveal.
-    const posterHidden =
+
+    // The browser refused to start with sound (no gesture it accepts, e.g. Back/Forward, or a
+    // stricter policy): play muted instead and show the unmute hint, never a silent failure.
+    // A refused muted start leaves the paused player with its play button.
+    const handleAutoPlayFail = (detail: { muted?: boolean } | undefined) => {
+        const current = player.current;
+        if (detail?.muted === false && current) {
+            setMuted(true);
+            current.muted = true;
+            void current.play().catch(() => setAutoPlayFailed(true));
+            return;
+        }
+        setAutoPlayFailed(true);
+    };
+
+    const handleUnmuteHint = () => {
+        writeUserMuted(false);
+        setUserMuted(false);
+        setMuted(false);
+        const current = player.current;
+        if (!current) return;
+        current.muted = false;
+        if (current.volume === 0) current.volume = 1;
+    };
+
+    // The start-up frame hides as soon as the first frame renders (independent of buffering).
+    const startOverlayHidden =
         hasRenderedFrame ||
         (canPlay && (!autoPlayWanted || autoPlayFailed));
 
-    // PremiumWrapper owns the loading placeholder before this mounts. For the one
-    // pre-mount frame here, keep showing the same poster rather than an empty (black)
-    // box, so the handoff from PremiumWrapper to the player never flashes.
+    // PremiumWrapper owns the loading placeholder before this mounts. For the one pre-mount
+    // frame here, keep showing the same dark start-up frame rather than an empty box, so the
+    // handoff from PremiumWrapper to the player never flashes.
     if (!isMounted || isLoading) {
         return (
             <div className="relative h-full w-full">
-                <PlayerPosterLoading posterUrl={video.thumbnailUrl || posterUrl} />
+                <PlayerStartLoading />
             </div>
         );
     }
@@ -306,7 +354,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey }: VideoPl
                         className="polutek-vidstack-player h-full w-full"
                         title={playerConfig?.title || video.title || 'Video'}
                         src={src}
-                        muted={playerConfig ? playerConfig.mutedAutoplay : true}
+                        muted={muted}
                         autoPlay={autoPlayWanted}
                         preload={autoPlayWanted ? 'auto' : undefined}
                         playsInline
@@ -319,9 +367,6 @@ export default function VideoPlayer({ video, onViewCounted, revealKey }: VideoPl
                                 resumeRef.current = null;
                                 if (resume.time > 0) player.current.currentTime = resume.time;
                                 if (resume.play) void player.current.play().catch(() => undefined);
-                            }
-                            if (player.current?.muted && typeof navigator !== 'undefined' && navigator.userActivation?.hasBeenActive) {
-                                player.current.muted = false;
                             }
                             sendEvent('PLAYER_READY');
                             // Check buffered amount immediately at canPlay too.
@@ -352,8 +397,30 @@ export default function VideoPlayer({ video, onViewCounted, revealKey }: VideoPl
                             sendEvent(playStartedSentRef.current ? 'PLAY_RESUMED' : 'PLAY_STARTED');
                             playStartedSentRef.current = true;
                         }}
-                        onPause={() => sendEvent('PLAY_PAUSED')}
+                        onPause={() => {
+                            setIsPlaying(false);
+                            sendEvent('PLAY_PAUSED');
+                        }}
+                        onVolumeChange={(detail: { muted: boolean }) => {
+                            setMuted(detail.muted);
+                            // Our own code only unmutes when the viewer has not chosen mute, so an
+                            // unmute while that choice stands is the viewer's (e.g. volume slider).
+                            if (!detail.muted && userMuted) {
+                                writeUserMuted(false);
+                                setUserMuted(false);
+                            }
+                        }}
+                        // Only the viewer's own actions (mute button, "m" key) arrive as requests.
+                        onMediaMuteRequest={() => {
+                            writeUserMuted(true);
+                            setUserMuted(true);
+                        }}
+                        onMediaUnmuteRequest={() => {
+                            writeUserMuted(false);
+                            setUserMuted(false);
+                        }}
                         onEnded={() => {
+                            setIsPlaying(false);
                             void sendEvent('ENDED');
                             if (player.current) void maybeSendView(player.current.currentTime, player.current.duration);
                         }}
@@ -363,8 +430,9 @@ export default function VideoPlayer({ video, onViewCounted, revealKey }: VideoPl
                             sendEvent('SEEKED', { positionMs: Math.floor(currentTime * 1000) });
                         }}
                         onWaiting={() => sendEvent('BUFFERING_STARTED')}
-                        onAutoPlayFail={() => setAutoPlayFailed(true)}
+                        onAutoPlayFail={handleAutoPlayFail}
                         onPlaying={() => {
+                            setIsPlaying(true);
                             setHasStartedPlayback(true);
                             setHasRenderedFrame(true);
                             recoveryAttemptedRef.current = false;
@@ -415,17 +483,14 @@ export default function VideoPlayer({ video, onViewCounted, revealKey }: VideoPl
                         {(playerConfig ? playerConfig.controls : true) && <PolutekControls />}
                     </MediaPlayer>
                     {!bufferingOverlayTimedOut && (
-                        // Same poster the access-check state showed (video.thumbnailUrl), so
-                        // the handoff from PremiumWrapper to the mounted player is seamless;
-                        // it fades out on the first real frame instead of cutting away.
+                        // Same dark start-up frame the access check showed, so the handoff from
+                        // PremiumWrapper to the mounted player is seamless; it fades out on the
+                        // first real frame instead of cutting away.
                         <div className="absolute inset-0 z-30 pointer-events-none">
-                            <PlayerPosterLoading
-                                posterUrl={video.thumbnailUrl || posterUrl}
-                                hidden={posterHidden}
-                                ready={canPlay}
-                            />
+                            <PlayerStartLoading hidden={startOverlayHidden} ready={canPlay} />
                         </div>
                     )}
+                    <UnmuteHint visible={isPlaying && muted && !userMuted} onUnmute={handleUnmuteHint} />
                 </div>
             )}
         </div>

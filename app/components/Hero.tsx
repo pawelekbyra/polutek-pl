@@ -25,6 +25,8 @@ interface HeroProps {
   video: PublicVideoDTO;
   initialInteraction?: { liked: boolean; disliked: boolean };
   initialIsSubscribed?: boolean;
+  /** The viewer picked this video with a click or tap: start it with sound (see VideoPlayer). */
+  startWithSound?: boolean;
 }
 
 // Fixed locale and time zone: the server and the browser format these the same way, so the first
@@ -76,7 +78,7 @@ async function sendVideoReaction(videoId: string, target: ReactionTarget): Promi
   return last;
 }
 
-const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscribed }) => {
+const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscribed, startWithSound = false }) => {
   const { t, language } = useLanguage();
   const toast = useToast();
   const { userId } = useAuth();
@@ -240,15 +242,19 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     <section className="bg-transparent">
       <div className="w-full lg:rounded-[26px] lg:border lg:border-[var(--cm-line-80)] lg:bg-[var(--cm-card-92-white)] lg:p-3 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_2px_6px_rgba(23,23,23,0.03),0_30px_60px_-26px_rgba(23,23,23,0.24)]">
         {/* FEATURED MEDIA — full-bleed edge-to-edge on phone/tablet (standard mobile video-platform layout), contained card on desktop */}
-        <div className="relative -mx-4 mb-3 aspect-video overflow-hidden bg-black md:-mx-6 md:mb-4 lg:mx-0 lg:rounded-[22px]">
+        <div data-player-slot="" className="relative -mx-4 mb-3 aspect-video overflow-hidden bg-black md:-mx-6 md:mb-4 lg:mx-0 lg:rounded-[22px]">
           <PremiumWrapper
             videoId={video.id}
             requiredTier={video.tier}
             premiereAt={video.premiereAt}
-            posterUrl={video.thumbnailUrl}
             revealKey="player"
           >
-            <VideoPlayer video={video} revealKey="player" onViewCounted={() => setLocalViewsCount((views) => views + 1)} />
+            <VideoPlayer
+              video={video}
+              revealKey="player"
+              startWithSound={startWithSound}
+              onViewCounted={() => setLocalViewsCount((views) => views + 1)}
+            />
           </PremiumWrapper>
         </div>
 

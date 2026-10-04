@@ -28,7 +28,7 @@ vi.mock('next/dynamic', () => ({
 }));
 vi.mock('@/app/components/preload/AppPreloadProvider', () => ({
   AppPreloadProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  useAppPreload: () => ({ warmVideo: vi.fn() }),
+  useAppPreload: () => ({ warmVideo: vi.fn(), selectVideo: vi.fn() }),
 }));
 vi.mock('@/app/components/preload/PreloadProgressBar', () => ({ PreloadProgressBar: () => null }));
 vi.mock('@/components/skeletons', () => ({ CommentLoadingSkeleton: () => null }));

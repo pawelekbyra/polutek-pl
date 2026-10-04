@@ -95,8 +95,6 @@ interface PremiumWrapperProps {
    * omit it and rely on the server plan, which lets admins through.
    */
   premiereAt?: string | Date | null;
-  /** Poster shown while the playback plan resolves (full-size player only). */
-  posterUrl?: string | null;
   /**
    * Reports to an enclosing PageRevealGate under this key once the player area
    * has settled into its final first state (player, lock, error or coming soon).
@@ -110,7 +108,6 @@ export default function PremiumWrapper({
   requiredTier: initialTier,
   variant = "default",
   premiereAt,
-  posterUrl,
   revealKey,
   onAccessLoad,
 }: PremiumWrapperProps) {
@@ -209,10 +206,7 @@ export default function PremiumWrapper({
       }
 
       if (!rawData && warmPreloadedVideo) {
-        rawData = await warmPreloadedVideo(videoId, {
-          includePoster: true,
-          priority: "critical",
-        });
+        rawData = await warmPreloadedVideo(videoId, { priority: "critical" });
       } else if (!rawData) {
         const controller = new AbortController();
         directRequestControllerRef.current = controller;
@@ -333,7 +327,7 @@ export default function PremiumWrapper({
     return showsGuestLock ? (
       <AccessLockOverlay state="LOGIN_REQUIRED" variant={variant} />
     ) : (
-      <PlayerLoadingState variant={variant} posterUrl={posterUrl} />
+      <PlayerLoadingState variant={variant} />
     );
   }
 
@@ -347,7 +341,7 @@ export default function PremiumWrapper({
         />
       );
     }
-    return <PlayerLoadingState variant={variant} posterUrl={posterUrl} />;
+    return <PlayerLoadingState variant={variant} />;
   }
 
   if (safeHasAccess) {

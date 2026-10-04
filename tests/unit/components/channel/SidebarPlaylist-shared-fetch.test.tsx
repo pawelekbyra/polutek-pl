@@ -36,7 +36,7 @@ vi.mock("@/app/components/AccessLockOverlay", () => ({
 }));
 
 vi.mock("@/app/components/preload/AppPreloadProvider", () => ({
-  useAppPreload: () => ({ warmVideo: vi.fn() }),
+  useAppPreload: () => ({ warmVideo: vi.fn(), releaseVideoIntent: vi.fn() }),
 }));
 
 import { SidebarPlaylist } from "@/app/components/channel/SidebarPlaylist";
@@ -87,7 +87,6 @@ const baseProps = {
   viewerIsPatron: false,
   t: { views: "views" },
   language: "pl",
-  onVideoMouseEnter: () => {},
 };
 
 // Mirrors ChannelHome's real markup: the always-mounted mobile "videos" tab panel

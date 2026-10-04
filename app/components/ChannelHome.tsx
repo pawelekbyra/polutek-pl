@@ -52,6 +52,11 @@ type ChannelViewState = {
   routeVideoId: string | undefined;
   selectedVideoId: string | undefined;
   activeTab: "comments" | "videos";
+  /**
+   * The selected video was picked with a click or tap (a user gesture, so the browser lets it
+   * start with sound). Never set for the first video, a route change or Back/Forward.
+   */
+  startWithSound: boolean;
 };
 
 
@@ -122,6 +127,7 @@ function ChannelHomeContent({
     routeVideoId: currentVideoId,
     selectedVideoId: currentVideoId,
     activeTab: "comments",
+    startWithSound: false,
   }));
   const resolveVideoId = (idOrSlug: string | undefined) =>
     ((allVideos || []).find((v) => v.id === idOrSlug || v.slug === idOrSlug) || mainVideo)?.id;
@@ -133,6 +139,7 @@ function ChannelHomeContent({
       routeVideoId: currentVideoId,
       selectedVideoId: currentVideoId,
       activeTab: sameVideo ? selectionState.activeTab : "comments",
+      startWithSound: sameVideo && selectionState.startWithSound,
     });
   }
   const clientSelectedVideoId =
@@ -175,7 +182,8 @@ function ChannelHomeContent({
     const onPopState = (event: PopStateEvent) => {
       const videoId = readHistoryVideoId(event.state);
       if (!videoId) return;
-      setSelectionState((current) => ({ ...current, selectedVideoId: videoId, activeTab: "comments" }));
+      // Back/Forward is not a gesture on the player: the video starts muted (unmute hint shown).
+      setSelectionState((current) => ({ ...current, selectedVideoId: videoId, activeTab: "comments", startWithSound: false }));
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -241,20 +249,19 @@ function ChannelHomeContent({
 
   const sortedVideos = [...(allVideos || [])].sort(compareSidebarItems);
 
-  // Intent (hover/focus/touch-start) warms everything the switch will need —
-  // playback plan, poster AND the first page of comments — so a click lands on a
-  // ready player and ready comments instead of a spinner and a skeleton.
-  const prefetchVideoIntent = (vidId: string) => {
-    void preloader?.warmVideo(vidId, { includeComments: true, includePoster: true, priority: "intent" });
-  };
-
+  // Intent (hover/focus/touch) is handled by SidebarPlaylist: it warms the playback plan, the
+  // first seconds of the stream and the first page of comments, so a click lands on a ready
+  // player and ready comments instead of a spinner and a skeleton.
+  // Called from a click/tap (a user gesture), so the picked video starts with sound.
   const handleVideoSelect = (clickedId?: string) => {
     if (clickedId && clickedId !== selectedVideo.id) {
-      void preloader?.warmVideo(clickedId, { includeComments: true, includePoster: true, priority: "intent" });
+      preloader?.selectVideo(clickedId);
+      void preloader?.warmVideo(clickedId, { includeComments: true, priority: "critical" });
       setSelectionState({
         routeVideoId: currentVideoId,
         selectedVideoId: clickedId,
         activeTab: "comments",
+        startWithSound: true,
       });
       // Shallow switch: update the address and history without a server round trip.
       // A router navigation here re-rendered the whole page on the server and showed
@@ -280,7 +287,6 @@ function ChannelHomeContent({
     selectedVideoId: selectedVideo.id,
     t,
     language,
-    onVideoMouseEnter: prefetchVideoIntent,
     onVideoSelect: handleVideoSelect,
     initialLayout: initialSidebarLayout,
     initialLayoutViewerKey: initialSidebarViewerKey,
@@ -311,6 +317,7 @@ function ChannelHomeContent({
                   selectedVideo.id === serverInteractionVideoId ? userProfile?.initialInteraction : undefined
                 }
                 initialIsSubscribed={userProfile?.initialIsSubscribed}
+                startWithSound={selectionState.startWithSound}
               />
             </div>
 
