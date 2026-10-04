@@ -106,6 +106,17 @@ Ostatnia aktualizacja: 2026-10-04.
   potem usunąć `BLOB_READ_WRITE_TOKEN` i `@vercel/blob`.
 - Około 230 zdalnych gałęzi bez scalonego PR-a: do przejrzenia i skasowania.
 
+## Pomysły na później (koncepty, nie budujemy teraz)
+
+- **Tłumaczenia filmów i tłumacze w grupie** (decyzja 2026-10-04: koncept zatwierdzony, wracamy po fazie 2–3 panelu): [`architecture/translations-concept.md`](../architecture/translations-concept.md).
+- **Krótkie adresy filmów z nazwą w danym języku** bez maskowania adresu: wstrzymane decyzją właściciela (2026-10-04); opcja docelowa to `/pl/<nazwa>` i `/en/<name>` z historią nazw (patrz koncept tłumaczeń).
+- **Płatności krypto** (placeholder „Crypto” w bramce napiwkowej): Stripe stablecoin (jeśli dostępny w Polsce) albo BTCPay Server po powiększeniu serwera; wymaga uogólnienia modelu `Payment` i konsultacji podatkowej.
+- **Funkcje AI w stronie/panelu** (np. pierwszy filtr komentarzy): odłożone; start od Workers AI, odprawę robi Claude Code na żywo (`operations/DAILY-BRIEFING.md`).
+
+## GitHub Actions: limit wyczerpany (2026-10-04)
+
+Od ok. 17:33 CI na GitHubie nie startuje („recent account payments have failed or your spending limit needs to be increased”): limit minut prywatnego repo zjedzony w kilka dni przez PR-y agentów. Decyzja właściciela: **bez płacenia, tryb lokalny**: przed scaleniem testy, typecheck i lint uruchamiane lokalnie, `SKIP_CI=1 scripts/ops/mergedeploy.sh ...` pomija czekanie na CI GitHuba. Alternatywa: podnieść limit wydatków w GitHub (Settings, Billing and plans). Minuty zużywa też workflow obrazów GHCR.
+
 ## Pozostałe
 
 - Dostarczalność do Hotmaila: retest na świeżym koncie, Google Postmaster Tools; DMARC stoi na `p=none`.
