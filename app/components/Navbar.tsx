@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useUser } from "@/lib/auth/react";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import UserMenu from "./auth/UserMenu";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
 import BrandName from "./BrandName";
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -14,8 +14,7 @@ import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { Search, X, LogIn } from "lucide-react";
 import NotificationsMenu from "./notifications/NotificationsMenu";
 import { NotificationDTO } from "@/app/types/notification";
-import { getLocalizedHref } from "@/lib/i18n/routing";
-import { Skeleton } from "@/components/ui/skeleton";
+import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
 
 // TEMPORARY (test setup only) — see CLAUDE.md "2026-09-20: temporary test-mode UI changes"
 // for the exact revert steps. Set back to `false` (or delete the flag and the code that
@@ -27,13 +26,24 @@ type ServerAdminState = {
   isAdmin: boolean;
 };
 
-const Navbar = () => {
+/**
+ * The language switcher reads the current query string (to keep it when switching), which on a
+ * statically rendered page (legal documents) is only known in the browser. Its own Suspense
+ * boundary keeps that to the switcher: the static HTML shows the same pill, and the rest of the
+ * page is not dropped to client rendering.
+ */
+function NavbarLanguageSwitcher({ language }: { language: Locale }) {
+  const switchLanguage = useSwitchLanguage();
+  return <LanguageSwitcher language={language} onSelect={switchLanguage} />;
+}
+
+const Navbar = ({ initialQuery = "" }: { initialQuery?: string }) => {
   const { language, setLanguage, t } = useLanguage();
   const { open: openAuthModal } = useAuthModal();
   const { user, isLoaded, isSignedIn } = useUser();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [searchValue, setSearchValue] = useState(searchParams.get("q") || "");
+  // The search page passes its query; elsewhere the box starts empty.
+  const [searchValue, setSearchValue] = useState(initialQuery);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -94,8 +104,6 @@ const Navbar = () => {
         .catch(() => setNotifications([]));
     }
   }, [isSignedIn]);
-
-  const switchLanguage = useSwitchLanguage();
 
   return (
     <div
@@ -188,7 +196,9 @@ const Navbar = () => {
               </div>
 
               {/* Language switcher — one pill (globe, code, chevron) that opens the language list. */}
-              <LanguageSwitcher language={language} onSelect={switchLanguage} />
+              <Suspense fallback={<LanguageSwitcher language={language} onSelect={setLanguage} />}>
+                <NavbarLanguageSwitcher language={language} />
+              </Suspense>
 
               {/* Messages — only relevant once you have an account.
                   TEMPORARY (test setup only): bell hidden behind TEMP_HIDE_NOTIFICATIONS_BELL,
@@ -212,10 +222,10 @@ const Navbar = () => {
                   <span className="hidden sm:inline leading-none text-[13px] font-semibold text-white">{t.signIn}</span>
                 </button>
               ) : (
-                <div className="flex gap-1.5">
-                  <Skeleton className="h-[38px] w-[38px] shrink-0 rounded-full" />
-                  <Skeleton className="h-[38px] w-[38px] shrink-0 rounded-full" />
-                </div>
+                // Session not known yet: only on statically rendered pages (legal documents) on a
+                // fresh load; dynamic pages get the session from the server. The slot keeps its
+                // size, without a placeholder animation, until the button or the avatar is known.
+                <div aria-hidden="true" className="h-[32px] w-[32px] shrink-0 sm:h-[38px] sm:w-[38px]" />
               )}
 
               {isLoaded && isSignedIn && (
