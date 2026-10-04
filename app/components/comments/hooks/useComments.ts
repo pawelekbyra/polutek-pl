@@ -274,7 +274,7 @@ export function useComments(
   videoId: string,
   sortBy: "newest" | "top",
   language: string = "pl",
-  userProfile?: any,
+  userProfile?: { id?: string; name?: string | null; username?: string | null; imageUrl?: string | null } | null,
   initialComments?: InitialCommentsPage | null,
 ) {
   const queryClient = useQueryClient();
