@@ -27,8 +27,11 @@ Ostatnia aktualizacja: 2026-10-04.
    `upstashpolutek` (zastąpiony lokalnym Redisem) i `BLOB-krau` (patrz punkt o miniaturach niżej).
 2. **Domena `pawelperfect.pl`**: wygasła 2026-10-03, do przywrócenia w home.pl do 2026-11-02. Do tego
    czasu nie działają przekierowania z `.pl` (reguła w Cloudflare jest gotowa) i poczta na `@pawelperfect.pl`.
-3. **Workers Paid (5 USD/mies.)**: przed prawdziwym ruchem. Na planie darmowym limit 100 tys. żądań
-   dziennie; po jego przekroczeniu wideo nie działa do północy UTC.
+3. **Start publiczny (decyzja 2026-10-04):** do startu zostaje obecny serwer CPX22. Przy starcie
+   właściciel włącza Workers Paid (5 USD/mies.; na planie darmowym po 100 tys. żądań dziennie wideo
+   nie działa do północy UTC) i powiększa serwer. Opcje (ceny Hetznera od 15.06.2026, netto):
+   CX43 8 vCPU/16 GB 15,99 €, CPX32 4 vCPU/8 GB 35,49 €, dedykowany EX44 14 rdzeni/64 GB 57,30 €.
+   Zmiana rozmiaru w trybie „CPU i RAM” (bez dysku), żeby dało się wrócić.
 4. **2FA dla kont administratora**: żadne z 4 kont admina nie ma 2FA; adres `hello@` jest na liście
    `ADMIN_EMAILS`, a jego poczta trafia do PP Support.
 5. **Logowanie Google**: klient OAuth leży w projekcie organizacji Google Workspace. Przed anulowaniem
@@ -74,7 +77,8 @@ Ostatnia aktualizacja: 2026-10-04.
 - Baza: kopia raz na dobę (do 24 h utraty danych); częstsze zrzuty albo archiwizacja WAL do R2.
 - Oryginały wideo i HLS w R2 bez kopii i bez blokady usuwania.
 - Monitoring tylko z samego serwera; potrzebny zewnętrzny, plus alert po nieudanym backupie i cronie.
-- Obrazy budowane na serwerze produkcyjnym; docelowo budowa poza nim i pobranie gotowego obrazu.
+- Obrazy budowane na serwerze produkcyjnym (przy każdym wdrożeniu swap ok. 1,5 GB i większość CPU):
+  docelowo budowa poza nim i pobranie gotowego obrazu. Robimy przed startem, niezależnie od rozmiaru serwera.
   CI na GitHubie ma limit minut dla prywatnego repo: testy można uruchamiać na serwerze.
 - Rotacja logów kontenerów, twardsze ustawienia kontenerów, osobna rola bazy bez uprawnień superusera.
 - Deploy restartuje koder w trakcie kodowania (kodowanie zaczyna od zera).
