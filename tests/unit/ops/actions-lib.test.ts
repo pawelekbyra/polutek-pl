@@ -380,7 +380,7 @@ describe('support actions', () => {
 
   it('draft dry-run shows the note and never posts', async () => {
     const { runApp: runSupport, calls } = fakeSupport();
-    const r = await draftAction(parseDraftArgs(['--conversation=12', '--text=Dzień dobry']), { runSupport, record: vi.fn(), secretValues: [] });
+    const r: Record<string, any> = await draftAction(parseDraftArgs(['--conversation=12', '--text=Dzień dobry']), { runSupport, record: vi.fn(), secretValues: [] });
     expect(calls.map((c) => c.op)).toEqual(['conversation.inspect']);
     expect(r.preview.rozmowa.senderEmail).toBe('j***@example.com');
     expect(r.next).toContain('--yes');
@@ -396,7 +396,7 @@ describe('support actions', () => {
   it('send dry-run shows the full recipient and text and the exact --to/--sha to approve', async () => {
     const { runApp: runSupport } = fakeSupport();
     const text = 'Dzień dobry,\nodpowiedź.';
-    const r = await sendAction(parseSendArgs(['--conversation=12', `--text=${text}`]), { runSupport, record: vi.fn(), secretValues: [] });
+    const r: Record<string, any> = await sendAction(parseSendArgs(['--conversation=12', `--text=${text}`]), { runSupport, record: vi.fn(), secretValues: [] });
     expect(r.preview.ODBIORCA).toBe('jan@example.com');
     expect(r.preview.TREŚĆ_DO_WYSŁANIA).toBe(text);
     expect(r.next).toContain('--to=jan@example.com');
