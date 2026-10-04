@@ -1,9 +1,9 @@
-import { AccessTier } from "@prisma/client";
+import type { VideoAccessTier } from "@/lib/access-tier";
 import { AccessDecisionReason } from "./access-reason";
 
 export type AccessDecisionDto = {
   hasAccess: boolean;
-  requiredTier?: AccessTier;
+  requiredTier?: VideoAccessTier;
   reason?: AccessDecisionReason;
   /**
    * Id of the video the decision is about (set whenever the video was found), so a caller that was

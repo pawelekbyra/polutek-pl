@@ -1,6 +1,6 @@
 "use client";
 
-import { Video, Globe, Lock, ShieldCheck, Edit, Plus, Trash2, AlertTriangle, Eye, ExternalLink as LinkIcon, FileVideo, ThumbsUp, ThumbsDown, MessageSquare } from "@/app/components/icons";
+import { Video, Globe, Lock, Edit, Plus, Trash2, AlertTriangle, Eye, ExternalLink as LinkIcon, FileVideo, ThumbsUp, ThumbsDown, MessageSquare } from "@/app/components/icons";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -118,8 +118,8 @@ export function VideoTable({ videos, onEdit, onDuplicate, onDelete, deletingVide
               <TableCell>
                 <div className="flex flex-col gap-1">
                     <Badge variant="outline" className="gap-1 w-fit text-[10px]">
-                    {vid.tier === 'PUBLIC' ? <Globe className="h-2.5 w-2.5" /> : vid.tier === 'LOGGED_IN' ? <Lock className="h-2.5 w-2.5" /> : <ShieldCheck className="h-2.5 w-2.5" />}
-                    {vid.tier === 'PUBLIC' ? 'Publiczny' : vid.tier === 'LOGGED_IN' ? 'Zalogowani' : 'Patroni'}
+                    {vid.tier === 'PUBLIC' ? <Globe className="h-2.5 w-2.5" /> : <Lock className="h-2.5 w-2.5" />}
+                    {vid.tier === 'PUBLIC' ? 'Publiczny' : 'Zalogowani'}
                     </Badge>
                     <div className="flex flex-col gap-1 mt-1">
                         <div className="text-[10px] uppercase text-muted-foreground font-semibold">{vid.provider}</div>

@@ -9,7 +9,6 @@ import { ProfileSection } from "./ProfileSection";
 import { EmailSection, ConnectionsSection, DangerSection } from "./AccountSections";
 import { SecuritySection } from "./SecuritySection";
 import { PasskeysSection } from "./PasskeysSection";
-import { NotificationsSection } from "./NotificationsAccountSection";
 
 interface AccountModalProps {
   open: boolean;
@@ -17,7 +16,7 @@ interface AccountModalProps {
   isAdmin: boolean;
 }
 
-type Section = "profile" | "email" | "connections" | "security" | "passkeys" | "notifications" | "danger";
+type Section = "profile" | "email" | "connections" | "security" | "passkeys" | "danger";
 
 export default function AccountModal({ open, onOpenChange, isAdmin }: AccountModalProps) {
   const { user } = useUser();
@@ -38,7 +37,6 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
     { id: "connections", label: isPl ? "Konta" : "Connections" },
     { id: "security", label: isPl ? "Hasło" : "Security" },
     { id: "passkeys", label: isPl ? "Klucze dostępu" : "Passkeys" },
-    { id: "notifications", label: isPl ? "Powiadomienia" : "Notifications" },
     { id: "danger", label: isPl ? "Usuń" : "Delete" },
   ];
 
@@ -75,7 +73,6 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
               {section === "connections" && <ConnectionsSection isPl={isPl} />}
               {section === "security" && <SecuritySection isPl={isPl} />}
               {section === "passkeys" && <PasskeysSection isPl={isPl} />}
-              {section === "notifications" && <NotificationsSection isPl={isPl} />}
               {section === "danger" && <DangerSection isPl={isPl} onDeleted={() => onOpenChange(false)} />}
             </div>
 

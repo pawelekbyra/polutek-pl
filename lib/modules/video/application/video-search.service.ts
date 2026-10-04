@@ -1,6 +1,6 @@
 import type { PublicVideoDTO } from "@/app/types/video";
 import { prisma } from "@/lib/prisma";
-import { AccessTier, VideoStatus } from "@prisma/client";
+import { VideoStatus } from "@prisma/client";
 import { MainChannelService } from "@/lib/modules/channel";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { VideoContentService, visiblePublishedAtFilter } from "@/lib/modules/video/infrastructure/video-content.service";
@@ -21,7 +21,6 @@ export type VideoSearchResult = PublicVideoDTO & {
 
 type SearchableVideo = PublicVideoDTO & { createdAt?: Date | string | null };
 
-const SEARCHABLE_TIERS = [AccessTier.PUBLIC, AccessTier.LOGGED_IN];
 const POLISH_DIACRITICS: Record<string, string> = {
   ą: "a",
   ć: "c",
@@ -70,7 +69,6 @@ export class VideoSearchService {
       where: {
         creatorId: mainChannel?.id || "none",
         status: VideoStatus.PUBLISHED,
-        tier: { in: SEARCHABLE_TIERS },
         creator: {
           isApproved: true,
           isPrimary: true,

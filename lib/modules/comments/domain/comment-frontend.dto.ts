@@ -14,7 +14,7 @@ export type CommentReactionDto = 'LIKE' | 'DISLIKE';
 /** No supporter badge on purpose: tips never buy a public distinction (patron status is admin-only). */
 export type CommentAuthorBadgeDto = 'ADMIN' | 'AUTHOR';
 
-export type AccessTierDto = 'PUBLIC' | 'LOGGED_IN' | 'PATRON';
+export type AccessTierDto = 'PUBLIC' | 'LOGGED_IN';
 
 export type CommentAuthorDto = {
   id: string;

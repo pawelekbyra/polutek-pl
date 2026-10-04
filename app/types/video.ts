@@ -1,4 +1,5 @@
 import { AccessTier, VideoStatus } from "@prisma/client";
+import type { VideoAccessTier } from "@/lib/access-tier";
 
 export interface Creator {
   id: string;
@@ -71,7 +72,8 @@ export interface PublicVideoDTO {
   descriptionEn?: string | null;
   thumbnailUrl: string;
   duration?: string | null;
-  tier: AccessTier;
+  /** Effective access level (lib/access-tier.ts): a stored legacy PATRON arrives as LOGGED_IN. */
+  tier: VideoAccessTier;
   status: VideoStatus;
   views: number;
   likesCount: number;
