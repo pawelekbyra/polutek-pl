@@ -280,7 +280,9 @@ Broadcasts have one audience only (`lib/modules/email/infrastructure/broadcast-a
 ### 4.7 Video Subtitle Tracks
 
 - `Video.subtitleUrlPl` and `Video.subtitleUrlEn` are optional URL fields for WebVTT subtitle files.
-- The playback service puts them as `textTracks` into the `PlaybackPlan.player` of a playable plan only (https or same-site URLs; denied plans never carry them). `VideoPlayer` renders them as Vidstack `<Track>`; the `.vtt` host must be allowed in CSP `connect-src`.
+- The playback service puts them as `textTracks` into the `PlaybackPlan.player` of a playable plan only (https or same-site URLs; denied plans never carry them). `VideoPlayer` mounts only the track in the page language (`pickCaptionTrack()` in `app/components/player/captions.ts`, no cross-language fallback) as a Vidstack `<Track>`; the `.vtt` host must be allowed in CSP `connect-src`.
+- Player UI (`player/CaptionsToggle.tsx`): the CC button is only an on/off switch (plain icon = on, crossed = off, `aria-pressed`, key `c`), hidden when the video has no track in the page language; speed has its own odometer button. The choice is a viewer preference in localStorage (`polutek:captions`, on by default), written only from `onMediaTextTrackChangeRequest` (button and `c` key both go through it) and applied by `CaptionsSync`. Caption CSS lives unlayered at the end of `globals.css` (Vidstack's theme is unlayered, a layered rule would lose).
+- Same-site files: `public/subtitles/<slug>/<lang>.vtt` (middleware skips `.vtt`); `tests/unit/subtitles-files.test.ts` validates them against the video's length. Sample files exist for `czesc` (10 s).
 - Set them via the admin video create/edit form or API.
 - Managed subtitle upload/validation/hosting is not complete; see issue #1219 before expanding this.
 
