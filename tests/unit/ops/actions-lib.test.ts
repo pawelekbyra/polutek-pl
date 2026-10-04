@@ -1,6 +1,15 @@
 import { EventEmitter } from 'node:events';
 import { describe, expect, it, vi } from 'vitest';
-import {
+import * as actionsLib from '@/scripts/ops/actions/lib.mjs';
+import { commentAction } from '@/scripts/ops/actions/comment-action.mjs';
+import { refundAction } from '@/scripts/ops/actions/refund-payment.mjs';
+import { draftAction } from '@/scripts/ops/actions/draft-reply.mjs';
+import { sendAction } from '@/scripts/ops/actions/send-reply.mjs';
+import { outsideUntrusted } from '@/scripts/ops/briefing-lib.mjs';
+
+// lib.mjs is plain JS: TypeScript infers over-narrow types from its defaults (e.g. `{}` option bags,
+// union return types), which do not match how the tests call it, so the module is used untyped here.
+const {
   ActionInputError,
   aiLogLine,
   assertNoSecrets,
@@ -29,12 +38,7 @@ import {
   runCli,
   sshRun,
   stripeRefundedTotal,
-} from '@/scripts/ops/actions/lib.mjs';
-import { commentAction } from '@/scripts/ops/actions/comment-action.mjs';
-import { refundAction } from '@/scripts/ops/actions/refund-payment.mjs';
-import { draftAction } from '@/scripts/ops/actions/draft-reply.mjs';
-import { sendAction } from '@/scripts/ops/actions/send-reply.mjs';
-import { outsideUntrusted } from '@/scripts/ops/briefing-lib.mjs';
+} = actionsLib as Record<string, any>;
 
 const PAY_ID = '8d271b2e-eb43-4a30-8ca9-ade46d8b7577';
 const COMMENT_ID = 'd500363e-7c28-42dc-ad4f-6e1fba0b9675';
@@ -376,7 +380,7 @@ describe('support actions', () => {
 
   it('draft dry-run shows the note and never posts', async () => {
     const { runApp: runSupport, calls } = fakeSupport();
-    const r = await draftAction(parseDraftArgs(['--conversation=12', '--text=Dzień dobry']), { runSupport, record: vi.fn(), secretValues: [] });
+    const r: Record<string, any> = await draftAction(parseDraftArgs(['--conversation=12', '--text=Dzień dobry']), { runSupport, record: vi.fn(), secretValues: [] });
     expect(calls.map((c) => c.op)).toEqual(['conversation.inspect']);
     expect(r.preview.rozmowa.senderEmail).toBe('j***@example.com');
     expect(r.next).toContain('--yes');
@@ -392,7 +396,7 @@ describe('support actions', () => {
   it('send dry-run shows the full recipient and text and the exact --to/--sha to approve', async () => {
     const { runApp: runSupport } = fakeSupport();
     const text = 'Dzień dobry,\nodpowiedź.';
-    const r = await sendAction(parseSendArgs(['--conversation=12', `--text=${text}`]), { runSupport, record: vi.fn(), secretValues: [] });
+    const r: Record<string, any> = await sendAction(parseSendArgs(['--conversation=12', `--text=${text}`]), { runSupport, record: vi.fn(), secretValues: [] });
     expect(r.preview.ODBIORCA).toBe('jan@example.com');
     expect(r.preview.TREŚĆ_DO_WYSŁANIA).toBe(text);
     expect(r.next).toContain('--to=jan@example.com');

@@ -883,6 +883,10 @@ function renderSection(s) {
   return out.join('\n');
 }
 
+/**
+ * @param {object} report result of buildReport()
+ * @param {{ section?: string | null }} [options]
+ */
 export function renderMarkdown(report, { section = null } = {}) {
   const out = [];
   out.push(`# Odprawa ${formatWarsaw(report.generatedAt)}`);

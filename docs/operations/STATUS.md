@@ -169,8 +169,9 @@ Sekrety właściciel skopiował do `/root/.ai-secrets/` (Cloudflare, Hetzner, Re
 
 - Baza: kopia raz na dobę (do 24 h utraty danych); częstsze zrzuty albo archiwizacja WAL do R2.
 - Oryginały wideo i HLS w R2 bez kopii i bez blokady usuwania.
-- Obrazy: workflow `images.yml` + `IMAGE_SOURCE=ghcr ./deploy.sh` gotowe (SERWEREK.md §24); brakuje tokenu `read:packages` na serwerze i pierwszego wdrożenia z GHCR;
-  minuty Actions są wyczerpane (workflow też je zużywa).
+- Obrazy: workflow `images.yml` + `IMAGE_SOURCE=ghcr ./deploy.sh` gotowe (SERWEREK.md §24); brakuje tokenu
+  `read:packages` na serwerze (właściciel) i pierwszego wdrożenia z GHCR; workflow wymaga GitHub Actions,
+  które dla prywatnego repo nie działa (patrz „CI: lokalne”).
 - Rotacja logów kontenerów, twardsze ustawienia kontenerów, osobna rola bazy bez uprawnień superusera (odprawa działa w sesji READ ONLY).
 - Deploy restartuje koder w trakcie kodowania (kodowanie zaczyna od zera).
 - Na serwerze do usunięcia: martwe zmienne `MUX_*` w `app.env`, usługa `serwerek-placeholder` i wpisy tunelu `test.` oraz `apptest.`.
@@ -178,6 +179,10 @@ Sekrety właściciel skopiował do `/root/.ai-secrets/` (Cloudflare, Hetzner, Re
 - Jedna miniatura (`dla-patronow`) nadal idzie przez proxy ze starego Vercel Blob: przenieść do R2, potem usunąć `BLOB_READ_WRITE_TOKEN` i `@vercel/blob`.
 - Około 230 zdalnych gałęzi bez scalonego PR-a: do przejrzenia i skasowania.
 - Pamięć aplikacji rośnie z ruchem (do ~830 MiB przy przeciążeniu): ustawić `NODE_OPTIONS=--max-old-space-size` zgodnie z limitem kontenera (LOAD-TEST.md, rekomendacje).
+
+## CI: lokalne (tryb stały od 2026-10-04)
+
+GitHub Actions dla prywatnego repo nie startuje (limit minut; decyzja właściciela: bez płacenia). Przed scaleniem: `node scripts/ops/local-ci.mjs` (te same bramki co `ci.yml`), scalanie: `LOCAL_CI=1 scripts/ops/mergedeploy.sh <PR> <gałąź> <tag>`. Instrukcja, czasy i ograniczenia: [`LOCAL-CI.md`](LOCAL-CI.md). Na maszynie właściciela nie ma Dockera ani ffmpeg, więc bramki `postgres` i `encode-smoke` są tam pomijane (SKIP): instalacja Docker Desktop i ffmpeg je włącza. Gdyby właściciel kiedyś podniósł limit wydatków w GitHub (Settings, Billing and plans), `ci.yml` działa bez zmian.
 
 ## Pozostałe
 

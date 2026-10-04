@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
     currentTime: 0,
     duration: 60,
     state: { canPlay: true },
-    buffered: { length: 0, end: (_index: number) => 0 },
+    buffered: { length: 0, end: (_index: number): number => 0 },
     play: vi.fn(async () => undefined),
   },
 }));
@@ -69,6 +69,7 @@ function withPlan(children: React.ReactNode) {
         isLoading: false,
         effectiveTier: "PUBLIC",
         refreshPlaybackPlan: async () => {},
+        renewPlaybackPlan: async () => null,
       }}
     >
       {children}

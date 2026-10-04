@@ -24,3 +24,9 @@ thumbnail-r2-migration-*.json
 
 # bundled services (npm run collector:build)
 /dist
+
+# local CI (scripts/ops/local-ci.mjs)
+/.claude/local-ci-last.json
+/.claude/local-ci-last.md
+/.claude/local-ci-logs/
+/.claude/local-ci-cache/

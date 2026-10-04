@@ -130,7 +130,7 @@ describe("admin channel diagnostics API", () => {
       subscribersCount: 3,
       displaySubscribersCount: null,
       user: null,
-    });
+    } as never);
 
     const response = await PATCH(
       new NextRequest("http://localhost/api/admin/channel", {

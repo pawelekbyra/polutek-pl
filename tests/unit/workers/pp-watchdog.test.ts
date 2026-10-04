@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-// @ts-expect-error plain ES module of a Cloudflare Worker, no type declarations
 import { nextState } from '@/workers/pp-watchdog/worker.mjs';
 
 const MIN = 60_000;

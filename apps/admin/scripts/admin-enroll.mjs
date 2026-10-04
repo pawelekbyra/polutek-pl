@@ -71,6 +71,9 @@ async function appendEvent(tx, row) {
  * Creates the admin account if needed and a fresh one-time link. With `reset`, every way into the
  * account (sessions, passkeys, TOTP, password rows) is removed first, so a lost or stolen device is cut off.
  * Returns the plain token (shown once, only its hash is stored).
+ *
+ * @param {object} prisma PrismaClient (or a transaction-capable stand-in in tests)
+ * @param {{ email: string, name?: string | null, reset?: boolean, now?: Date }} options
  */
 export async function issueEnrollment(prisma, { email, name, reset, now = new Date() }) {
   const token = newEnrollmentToken();

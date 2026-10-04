@@ -30,6 +30,7 @@ albo znika w tym samym PR. Historia jest w git.
 | Temat | Plik |
 |---|---|
 | Serwer: układ, deploy, rollback, kopie, crony | [`operations/SERWEREK.md`](operations/SERWEREK.md) |
+| Lokalne CI przed scaleniem (zamiast GitHub Actions) | [`operations/LOCAL-CI.md`](operations/LOCAL-CI.md) |
 | Dzienna odprawa „co słychać?” (raport tylko do odczytu, skill `odprawa`) | [`operations/DAILY-BRIEFING.md`](operations/DAILY-BRIEFING.md) |
 | Wydajność: test obciążenia, ilu widzów wytrzymuje serwer | [`operations/LOAD-TEST.md`](operations/LOAD-TEST.md) |
 | Wideo: upload, kodowanie, diagnostyka | [`operations/VIDEO-PIPELINE.md`](operations/VIDEO-PIPELINE.md) |

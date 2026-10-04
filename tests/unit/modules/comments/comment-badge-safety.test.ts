@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { mapCommentToDto } from '@/lib/modules/comments/domain/comment.dto';
+import { mapCommentToDto, type CommentRow } from '@/lib/modules/comments/domain/comment.dto';
+
+// The fixtures carry legacy author fields (patronGrants, isPatron) on purpose: the mapper must ignore them.
+const asRow = (comment: unknown) => comment as CommentRow;
 import { CommentStatus } from '@prisma/client';
 
 describe('Comment Badge and Permission Safety', () => {
@@ -26,7 +29,7 @@ describe('Comment Badge and Permission Safety', () => {
   };
 
   it('never shows a PATRON badge publicly, even with an active PatronGrant (a tip buys nothing)', () => {
-    const dto = mapCommentToDto(mockComment, {
+    const dto = mapCommentToDto(asRow(mockComment), {
       userId: 'other-user',
       canModerate: false,
       videoCreatorId: 'creator-1',
@@ -37,7 +40,7 @@ describe('Comment Badge and Permission Safety', () => {
   });
 
   it('does NOT grant edit permission based on author badge data if access is false', () => {
-    const dto = mapCommentToDto(mockComment, {
+    const dto = mapCommentToDto(asRow(mockComment), {
       userId: 'u1',
       canModerate: false,
       videoCreatorId: 'creator-1',
@@ -48,7 +51,7 @@ describe('Comment Badge and Permission Safety', () => {
   });
 
   it('does NOT grant delete permission based on author badge data if access is false', () => {
-    const dto = mapCommentToDto(mockComment, {
+    const dto = mapCommentToDto(asRow(mockComment), {
       userId: 'u1',
       canModerate: false,
       videoCreatorId: 'creator-1',
@@ -59,7 +62,7 @@ describe('Comment Badge and Permission Safety', () => {
   });
 
   it('does NOT grant report permission based on author badge data if access is false', () => {
-    const dto = mapCommentToDto(mockComment, {
+    const dto = mapCommentToDto(asRow(mockComment), {
       userId: 'u2',
       canModerate: false,
       videoCreatorId: 'creator-1',
@@ -70,7 +73,7 @@ describe('Comment Badge and Permission Safety', () => {
   });
 
   it('grants permissions when access truth is true regardless of author badges', () => {
-     const dto = mapCommentToDto(mockComment, {
+     const dto = mapCommentToDto(asRow(mockComment), {
       userId: 'u1',
       canModerate: false,
       videoCreatorId: 'creator-1',
@@ -91,7 +94,7 @@ describe('Comment Badge and Permission Safety', () => {
       },
     };
 
-    const dto = mapCommentToDto(commentWithLegacyMismatch, {
+    const dto = mapCommentToDto(asRow(commentWithLegacyMismatch), {
       userId: 'u2',
       canModerate: false,
       videoCreatorId: 'v-creator',
@@ -111,7 +114,7 @@ describe('Comment Badge and Permission Safety', () => {
       },
     };
 
-    const dto = mapCommentToDto(commentWithLegacyMismatch, {
+    const dto = mapCommentToDto(asRow(commentWithLegacyMismatch), {
       userId: 'u2',
       canModerate: false,
       videoCreatorId: 'v-creator',

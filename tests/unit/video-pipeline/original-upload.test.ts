@@ -34,7 +34,7 @@ function setup(row: VideoOriginal | null = original(), opts: { activeJob?: boole
       findFirst: vi.fn(async (a: { orderBy?: unknown }) => (a?.orderBy ? { version: 3 } : row)),
       findMany: vi.fn(async () => opts.stale ?? []),
       create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => original({ ...(data as Partial<VideoOriginal>), id: "new" })),
-      update: vi.fn(async () => ({})),
+      update: vi.fn(async (_args: { where: unknown; data: Record<string, unknown> }) => ({})),
       updateMany: vi.fn(async () => ({ count: 0 })),
     },
   };

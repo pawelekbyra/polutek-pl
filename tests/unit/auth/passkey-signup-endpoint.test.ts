@@ -1,8 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Importing Better Auth and its plugins is slow on a cold, busy machine.
-vi.setConfig({ testTimeout: 60_000 });
-
 const h = vi.hoisted(() => ({
   prisma: {
     user: { findUnique: vi.fn() },
