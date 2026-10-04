@@ -40,7 +40,6 @@ const channelPatchSchema = z.object({
     .optional()
     .nullable()
     .transform((value) => value || null),
-  bannerUrl: optionalUrl,
   defaultThumbnailUrl: optionalUrl,
   displaySubscribersCount: z.number().int().min(0).nullable().optional(),
 });

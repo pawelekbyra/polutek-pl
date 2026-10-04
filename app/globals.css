@@ -60,20 +60,16 @@
       var(--chan-nav);
   }
 
-  .channel-hero-banner {
-    border-width: 1px;
-    border-color: var(--cm-line-74);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, .5),
-      0 1px 2px rgba(23, 23, 23, .04),
-      0 30px 64px -34px rgba(15, 23, 42, .28);
-  }
-
+  /* Channel header: the profile card is the whole header (no cover photo). The two soft
+     accent glows reuse the page-shell tokens so the card reads as part of the same surface. */
   .channel-profile {
-    padding: clamp(1rem, 2.4vw, 1.6rem);
+    padding: clamp(1.25rem, 3vw, 2.25rem);
     border: 1px solid var(--cm-line-80);
     border-radius: 22px;
-    background: var(--cm-card-94);
+    background:
+      radial-gradient(circle at 0% 0%, var(--cm-blue-8), transparent 22rem),
+      radial-gradient(circle at 100% 100%, var(--cm-amber-6), transparent 20rem),
+      var(--cm-card-94);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, .6),
       0 1px 2px rgba(23, 23, 23, .03),
@@ -86,6 +82,16 @@
     box-shadow:
       0 0 0 1px var(--cm-line-70),
       0 10px 24px -8px var(--cm-blue-34);
+  }
+
+  .channel-profile-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 .75rem;
+    border: 1px solid var(--chan-line);
+    border-radius: 999px;
+    background: var(--chan-surface-raised);
   }
 
   .channel-tabs {
@@ -279,15 +285,8 @@
   }
 
   @media (max-width: 767px) {
-    .channel-hero-banner {
-      border-inline: 0;
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, .5),
-        0 18px 38px -20px rgba(23, 23, 23, .24);
-    }
-
     .channel-profile {
-      padding: 1rem;
+      padding: 1.5rem 1rem;
       border-radius: 18px;
     }
 

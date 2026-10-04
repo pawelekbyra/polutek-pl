@@ -463,7 +463,7 @@ Located in `app/admin/`. Key areas:
 | `/admin/comments` | Comment moderation + reports link |
 | `/admin/comments/reports` | Reported comments queue |
 | `/admin/emails` | Email broadcast |
-| `/admin/channel` | Channel settings (name, bio, banner, default thumbnail URL) |
+| `/admin/channel` | Channel settings (name, bio, default thumbnail URL). The channel has no cover photo/banner (removed 2026-10-04; the `/channel/[slug]` header is the profile card) |
 | `/admin/settings` | Media settings (default thumbnail file upload via Vercel Blob) |
 
 **Update 2026-09-30 (admin hardening, "Etap 0", PRs #1528/#1529/#1530):** the admin (identity layer since 2026-10-02: Better Auth, see 4.12; the break-glass health route and `?token=` rules below are historical) was hardened without changing its architecture. Rules future agents must keep:

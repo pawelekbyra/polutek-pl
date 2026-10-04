@@ -7,7 +7,6 @@ export const DEFAULT_CREATOR = {
   name: MAIN_CREATOR_NAME,
   slug: MAIN_CREATOR_SLUG,
   bio: `Oficjalny kanał ${MAIN_CREATOR_NAME}. Ekskluzywne materiały VOD i niezależne śledztwa.`,
-  bannerUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop",
   subscribersCount: 1250000,
 };
 

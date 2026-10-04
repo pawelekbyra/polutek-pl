@@ -80,6 +80,7 @@ Legenda: **Ż** żywe; **M** martwe (0 trafień); **M-PR** martwe po PR #1614; *
 | `User.username` | Ż, legacy/D | czytane w `lib/comments-public-author.ts:40` jako fallback; zapisywane tylko przy usuwaniu konta (`account-deletion-cleanup.use-case.ts:79`); dubluje `name` (pseudonim Better Auth) |
 | `User.id` komentarz "clerkUserId" | nieaktualny komentarz | `schema.prisma:12` |
 | `Creator.stripeConnectId` | M | 0 trafień |
+| `Creator.bannerUrl` | M (od 2026-10-04) | okładka kanału usunięta z kodu (strona kanału, admin, API); kolumna zostaje w `schema.prisma` do migracji czyszczącej |
 | `Creator.isApproved`, `isPrimary` | Ż | `video-content.service.ts:26`, `check-video-access.use-case.ts:40`; przy jednym kanale to strażnicy redundantni, ale działają |
 | `Comment.score` | Z / D | tylko `comment.repository.ts:108,118,119` (inkrementacja razem z `likesCount`); nikt nie sortuje po `score` |
 | `Comment.pinnedById` | M | 0 trafień; przypinanie zapisuje tylko `pinnedAt` (`comment.repository.ts:172`) |
@@ -460,7 +461,7 @@ DROP TYPE IF EXISTS "VideoDistributionMode", "VideoPlaybackSelectionPolicy", "Vi
 
 -- 3. Martwe kolumny
 ALTER TABLE "User" DROP COLUMN IF EXISTS "totalPaidMinor", DROP COLUMN IF EXISTS "canCreateChannel";
-ALTER TABLE "Creator" DROP COLUMN IF EXISTS "stripeConnectId";             -- usuwa też unikalny indeks
+ALTER TABLE "Creator" DROP COLUMN IF EXISTS "stripeConnectId", DROP COLUMN IF EXISTS "bannerUrl"; -- usuwa też unikalny indeks stripeConnectId
 ALTER TABLE "Comment" DROP COLUMN IF EXISTS "score", DROP COLUMN IF EXISTS "pinnedById";
 ALTER TABLE "Video" DROP COLUMN IF EXISTS "videoUrl", DROP COLUMN IF EXISTS "publishAfterAssetReadyProvider";
 ALTER TABLE "VideoOriginal" DROP COLUMN IF EXISTS "storageProvider", DROP COLUMN IF EXISTS "checksumSha256";
