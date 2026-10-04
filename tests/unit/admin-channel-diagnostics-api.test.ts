@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest, NextResponse } from "next/server";
-import { GET } from "@/app/api/admin/channel/route";
+import { GET, PATCH } from "@/app/api/admin/channel/route";
 import { requireAdminForApi } from "@/lib/auth-utils";
-import { getAdminChannelSettings } from "@/lib/modules/channel";
+import { getAdminChannelSettings, updateAdminChannelSettings } from "@/lib/modules/channel";
 
 vi.mock("@/lib/auth-utils", () => ({
   requireAdminForApi: vi.fn(),
@@ -15,6 +15,7 @@ vi.mock("@/lib/modules/channel", async () => {
   return {
     ...actual,
     getAdminChannelSettings: vi.fn(),
+    updateAdminChannelSettings: vi.fn(),
   };
 });
 
@@ -55,7 +56,6 @@ describe("admin channel diagnostics API", () => {
         slug: "polutek",
         name: "Polutek",
         bio: null,
-        bannerUrl: null,
         defaultThumbnailUrl: null,
         subscribersCount: 3,
         displaySubscribersCount: null,
@@ -118,5 +118,33 @@ describe("admin channel diagnostics API", () => {
     });
     expect(JSON.stringify(data)).not.toContain("postgres://");
     expect(JSON.stringify(data)).not.toContain("schema drift");
+  });
+
+  it("PATCH ignores the removed channel cover (bannerUrl) instead of saving it", async () => {
+    vi.mocked(updateAdminChannelSettings).mockResolvedValue({
+      id: "creator-1",
+      slug: "polutek",
+      name: "Polutek",
+      bio: null,
+      defaultThumbnailUrl: null,
+      subscribersCount: 3,
+      displaySubscribersCount: null,
+      user: null,
+    });
+
+    const response = await PATCH(
+      new NextRequest("http://localhost/api/admin/channel", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: "Polutek", bannerUrl: "https://example.com/cover.jpg" }),
+      }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    const input = vi.mocked(updateAdminChannelSettings).mock.calls[0][1];
+    expect(input).not.toHaveProperty("bannerUrl");
+    expect(input.name).toBe("Polutek");
+    expect(data.creator.name).toBe("Polutek");
   });
 });

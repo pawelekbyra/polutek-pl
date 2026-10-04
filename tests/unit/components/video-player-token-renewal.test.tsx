@@ -148,11 +148,61 @@ describe("VideoPlayer and delivery-token renewal", () => {
     expect(mocks.events.filter((e) => e.startsWith("PLAY_"))).toEqual(["PLAY_STARTED", "PLAY_PAUSED", "PLAY_RESUMED"]);
   });
 
-  it("renders the plan's subtitle tracks", async () => {
+  it("renders the plan's subtitle track for the page language", async () => {
     const view = render(<Harness value={ctx(plan("1800000000.a"))} />);
     await act(async () => {});
     const track = view.getByTestId("track");
     expect(track.getAttribute("data-src")).toBe("https://subs.example.com/pl.vtt");
     expect(track.getAttribute("data-lang")).toBe("pl");
+  });
+});
+
+describe("VideoPlayer captions", () => {
+  const withTracks = (tracks: Array<{ src: string; language: string; label: string }>) => {
+    const p = plan("1800000000.a") as unknown as { player: { textTracks: unknown[] } };
+    p.player.textTracks = tracks.map((t) => ({ ...t, kind: "subtitles" }));
+    return p as never;
+  };
+  const BOTH = [
+    { src: "/subtitles/v/pl.vtt", language: "pl", label: "Polski" },
+    { src: "/subtitles/v/en.vtt", language: "en", label: "English" },
+  ];
+
+  afterEach(() => {
+    cleanup();
+    document.documentElement.lang = "";
+    localStorage.clear();
+  });
+
+  it("mounts only the track in the page language (Polish site)", async () => {
+    document.documentElement.lang = "pl";
+    const view = render(<Harness value={ctx(withTracks(BOTH))} />);
+    await act(async () => {});
+    expect(view.getAllByTestId("track").map((t) => t.getAttribute("data-lang"))).toEqual(["pl"]);
+  });
+
+  it("mounts only the track in the page language (English site)", async () => {
+    document.documentElement.lang = "en";
+    const view = render(<Harness value={ctx(withTracks(BOTH))} />);
+    await act(async () => {});
+    expect(view.getAllByTestId("track").map((t) => t.getAttribute("data-src"))).toEqual(["/subtitles/v/en.vtt"]);
+  });
+
+  it("mounts no track when there is none in the page language", async () => {
+    document.documentElement.lang = "en";
+    const view = render(<Harness value={ctx(withTracks([BOTH[0]]))} />);
+    await act(async () => {});
+    expect(view.queryByTestId("track")).toBeNull();
+  });
+
+  it("remembers the viewer's own captions switch (CC button or c key)", async () => {
+    const { readCaptionsEnabled } = await import("@/app/components/player/captions");
+    render(<Harness value={ctx(withTracks(BOTH))} />);
+    await act(async () => {});
+    const request = mocks.lastProps?.onMediaTextTrackChangeRequest as (detail: { index: number; mode: string }) => void;
+    act(() => request({ index: 0, mode: "disabled" }));
+    expect(readCaptionsEnabled()).toBe(false);
+    act(() => request({ index: 0, mode: "showing" }));
+    expect(readCaptionsEnabled()).toBe(true);
   });
 });

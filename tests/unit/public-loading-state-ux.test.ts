@@ -36,7 +36,8 @@ describe("public loading/access state UX contracts", () => {
       "TimeSlider",
       "VolumeSlider",
       "Controls.Root",
-      "CaptionButton",
+      // The captions switch lives in player/CaptionsToggle.tsx (behaviour: captions-toggle.test.tsx).
+      "CaptionsToggleButton",
       "MuteButton",
       "FullscreenButton",
       "useMediaState",

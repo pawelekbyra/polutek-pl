@@ -81,10 +81,11 @@ const PASSKEY_CANCEL_CODES = new Set([
 ]);
 
 const PASSKEY_MESSAGES: Record<string, { pl: string; en: string }> = {
-  PASSKEY_NOT_FOUND: {
-    pl: "Ten klucz dostępu nie należy do żadnego konta. Zaloguj się inaczej i dodaj klucz w ustawieniach konta.",
-    en: "This passkey does not belong to any account. Sign in another way and add a passkey in your account settings.",
+  PASSKEY_SIGNUP_EXPIRED: {
+    pl: "Minęło za dużo czasu. Podaj e-mail jeszcze raz.",
+    en: "This took too long. Please enter your email again.",
   },
+  INVALID_EMAIL: { pl: "Podaj poprawny adres e-mail.", en: "Enter a valid email address." },
   PASSKEY_USER_VERIFICATION_REQUIRED: {
     pl: "Urządzenie nie potwierdziło, że to Ty (odcisk palca, twarz lub PIN). Spróbuj ponownie.",
     en: "Your device did not confirm it is you (fingerprint, face or PIN). Please try again.",
@@ -105,6 +106,15 @@ const PASSKEY_MESSAGES: Record<string, { pl: string; en: string }> = {
 /** True when the person dismissed the passkey prompt: not an error worth showing. */
 export function isPasskeyCancelled(error: AuthErrorLike): boolean {
   return Boolean(error?.code && PASSKEY_CANCEL_CODES.has(error.code));
+}
+
+/**
+ * "Use a passkey" found no passkey of ours: the browser had none to offer, the person closed
+ * the list (WebAuthn does not tell these apart, on purpose), or the chosen key belongs to no account
+ * (e.g. a deleted one). All of these lead to "create an account with a passkey", never to a dead end.
+ */
+export function passkeyNeedsAccount(error: AuthErrorLike): boolean {
+  return isPasskeyCancelled(error) || error?.code === "PASSKEY_NOT_FOUND";
 }
 
 /** Message for a failed passkey sign-in / add / remove (the plugin's own codes first, then the shared ones). */

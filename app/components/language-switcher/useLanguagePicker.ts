@@ -1,9 +1,9 @@
 "use client";
 
 import type React from "react";
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { Locale } from "@/lib/i18n/routing";
-import { filterLanguages, LANGUAGE_OPTIONS, normalizeLanguageQuery, type LanguageOption } from "./languages";
+import { LANGUAGE_OPTIONS, startsWithTyped, type LanguageOption } from "./languages";
 
 const NOTE_VISIBLE_MS = 4500;
 const TYPEAHEAD_RESET_MS = 600;
@@ -11,26 +11,24 @@ const TYPEAHEAD_RESET_MS = 600;
 type Options = {
   language: Locale;
   onSelect: (locale: Locale) => void;
-  /** Inline lists have no search field: the list itself takes focus and typing jumps (type-ahead). */
+  /** Inline lists stay open in the page flow when Tab leaves them; the floating panel closes. */
   inline: boolean;
 };
 
 /**
  * State and keyboard model shared by both switcher variants. The list follows the WAI-ARIA
- * combobox/listbox pattern with aria-activedescendant: DOM focus stays on the search field (or on
- * the listbox when there is no field), arrows/Home/End move the active option, Enter picks it,
- * Escape closes and returns focus to the button.
+ * listbox pattern with aria-activedescendant: on open, focus goes to the list with the current
+ * language active; arrows/Home/End move, typing a letter jumps to the next name starting with it,
+ * Enter picks, Escape closes and returns focus to the button.
  */
 export function useLanguagePicker({ language, onSelect, inline }: Options) {
   const [open, setOpen] = useState(false);
   // A listed-but-untranslated language the user picked: shown in the button until reload.
   const [preview, setPreview] = useState<LanguageOption | null>(null);
   const [noteVisible, setNoteVisible] = useState(false);
-  const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const typeahead = useRef({ text: "", at: 0 });
   const baseId = useId();
@@ -39,12 +37,11 @@ export function useLanguagePicker({ language, onSelect, inline }: Options) {
 
   const real = LANGUAGE_OPTIONS.find((o) => o.locale === language) ?? LANGUAGE_OPTIONS[0];
   const current = preview ?? real;
-  const results = useMemo(() => filterLanguages(query), [query]);
-  const active = activeIndex >= 0 ? results[activeIndex] : undefined;
+  const options = LANGUAGE_OPTIONS;
+  const active = activeIndex >= 0 ? options[activeIndex] : undefined;
 
   const close = useCallback((returnFocus: boolean) => {
     setOpen(false);
-    setQuery("");
     setActiveIndex(-1);
     if (returnFocus) triggerRef.current?.focus();
   }, []);
@@ -54,14 +51,8 @@ export function useLanguagePicker({ language, onSelect, inline }: Options) {
       close(false);
       return;
     }
-    setQuery("");
-    setActiveIndex(LANGUAGE_OPTIONS.findIndex((o) => o.code === current.code));
+    setActiveIndex(options.findIndex((o) => o.code === current.code));
     setOpen(true);
-  };
-
-  const updateQuery = (value: string) => {
-    setQuery(value);
-    setActiveIndex(filterLanguages(value).length > 0 ? 0 : -1);
   };
 
   const pick = (option: LanguageOption) => {
@@ -93,14 +84,9 @@ export function useLanguagePicker({ language, onSelect, inline }: Options) {
     };
   }, [open, close]);
 
-  // Initial focus: the search field, except on touch screens, where it would pop up the on-screen
-  // keyboard over the list before the user asked to type; there the list takes focus instead.
   useEffect(() => {
-    if (!open) return;
-    const coarse = typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
-    if (!inline && !coarse && inputRef.current) inputRef.current.focus();
-    else listRef.current?.focus();
-  }, [open, inline]);
+    if (open) listRef.current?.focus();
+  }, [open]);
 
   useEffect(() => {
     if (!open || !active) return;
@@ -113,39 +99,30 @@ export function useLanguagePicker({ language, onSelect, inline }: Options) {
     return () => window.clearTimeout(timer);
   }, [noteVisible]);
 
-  const move = (to: number) => {
-    if (results.length === 0) return;
-    setActiveIndex((to + results.length) % results.length);
-  };
+  const move = (to: number) => setActiveIndex((to + options.length) % options.length);
 
-  /** Type-ahead for lists without a search field: jump to the next name starting with the typed text. */
+  /** Type-ahead: jump to the next language whose name or code starts with the typed letters. */
   const jumpTo = (char: string) => {
     const now = Date.now();
     const state = typeahead.current;
     state.text = now - state.at > TYPEAHEAD_RESET_MS ? char : state.text + char;
     state.at = now;
-    const prefix = normalizeLanguageQuery(state.text);
-    const order = results.map((_, i) => (activeIndex + 1 + i) % results.length);
-    const hit = order.find(
-      (i) => normalizeLanguageQuery(results[i].label).startsWith(prefix) || normalizeLanguageQuery(results[i].code).startsWith(prefix),
-    );
+    const order = options.map((_, i) => (activeIndex + 1 + i) % options.length);
+    const hit = order.find((i) => startsWithTyped(options[i], state.text));
     if (hit !== undefined) setActiveIndex(hit);
   };
 
   const onListKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
-    const fromInput = event.currentTarget === inputRef.current;
     switch (event.key) {
       case "ArrowDown":
       case "ArrowRight":
-        if (fromInput && event.key === "ArrowRight") return;
         event.preventDefault();
         move(activeIndex + 1);
         return;
       case "ArrowUp":
       case "ArrowLeft":
-        if (fromInput && event.key === "ArrowLeft") return;
         event.preventDefault();
-        move(activeIndex < 0 ? results.length - 1 : activeIndex - 1);
+        move(activeIndex < 0 ? options.length - 1 : activeIndex - 1);
         return;
       case "Home":
         event.preventDefault();
@@ -153,15 +130,14 @@ export function useLanguagePicker({ language, onSelect, inline }: Options) {
         return;
       case "End":
         event.preventDefault();
-        move(results.length - 1);
+        move(options.length - 1);
         return;
-      case "Enter": {
-        const target = active ?? results[0];
-        if (!target) return;
+      case "Enter":
+      case " ":
+        if (!active) return;
         event.preventDefault();
-        pick(target);
+        pick(active);
         return;
-      }
       case "Escape":
         event.preventDefault();
         event.stopPropagation();
@@ -171,12 +147,7 @@ export function useLanguagePicker({ language, onSelect, inline }: Options) {
         if (!inline) close(false);
         return;
       default:
-        if (fromInput || event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return;
-        if (!inline && inputRef.current) {
-          // Typing on the list goes to the search field (the character lands there).
-          inputRef.current.focus();
-          return;
-        }
+        if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return;
         event.preventDefault();
         jumpTo(event.key);
     }
@@ -184,8 +155,7 @@ export function useLanguagePicker({ language, onSelect, inline }: Options) {
 
   return {
     open,
-    query,
-    results,
+    options,
     active,
     current,
     real,
@@ -194,11 +164,9 @@ export function useLanguagePicker({ language, onSelect, inline }: Options) {
     optionId,
     rootRef,
     triggerRef,
-    inputRef,
     listRef,
     toggle,
     pick,
-    updateQuery,
     setActiveIndex,
     onListKeyDown,
   };

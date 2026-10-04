@@ -19,6 +19,7 @@ albo znika w tym samym PR. Historia jest w git.
 | PP Support: architektura i projekt agenta AI | [`architecture/support-center.md`](architecture/support-center.md) |
 | Własna wysyłka poczty (plan na później) | [`architecture/self-hosted-mail-plan.md`](architecture/self-hosted-mail-plan.md) |
 | Nowy panel administratora `admin.pawelperfect.com`: wizja, decyzje, fazy, jak zbudowana faza 1 | [`architecture/admin-panel.md`](architecture/admin-panel.md) |
+| Tłumaczenia filmów i wiele języków, tłumacze w grupie (koncept na później) | [`architecture/translations-concept.md`](architecture/translations-concept.md) |
 | Nowy panel administratora: wdrożenie, rejestracja (`admin-enroll`), reset, rollback, status hosta | [`operations/ADMIN-PANEL.md`](operations/ADMIN-PANEL.md) |
 | Nowy panel administratora: parytet ze starym `/admin` (każda funkcja, przycisk i trasa → ekran → faza) | [`architecture/admin-parity.md`](architecture/admin-parity.md) |
 | Nowy panel administratora: klikalny prototyp (dane przykładowe) i system projektowy | [`design/admin-panel/DESIGN-SYSTEM.md`](design/admin-panel/DESIGN-SYSTEM.md), prototyp: `design/admin-panel/prototype-standalone.html` |

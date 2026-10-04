@@ -69,7 +69,7 @@ Ostatnia aktualizacja: 2026-10-04.
 | `feat/admin-phase0-telemetry` | panel admina, faza 0: schemat `telemetry`, `pp-collector`, beacon (odsłony, Web Vitals, jakość odtwarzania), polityka prywatności 2026-10-05; po wdrożeniu włączyć `scripts/serwerek/telemetry-enable.sh` (SERWEREK.md §22) |
 | `feat/admin-phase0-ops` | faza 0, operacje: kopie (age, bucket lock, test odtworzenia, alerty), `pg_stat_statements`, obrazy z GHCR, strażnik `pp-watchdog`; zmiany na serwerze już wykonane (SERWEREK.md §23–25) |
 | `feat/daily-briefing` | dzienna odprawa „co słychać?” (skrypt tylko do odczytu + skill `odprawa`); następny krok: skrypty działań z audytem (odpowiedź-szkic, ukrycie komentarza, zwrot) uruchamiane po zgodzie właściciela |
-| `feat/passkey-sign-in` | logowanie kluczem dostępu (passkey); po wdrożeniu właściciel dodaje klucz na telefonie i komputerze (też jako 2. czynnik dla admina, punkt 4) |
+| `feat/passkey-first-signup` | „Użyj klucza dostępu” zakłada konto jak Google (logowanie kluczem jest już na main); po wdrożeniu właściciel dodaje klucz na telefonie i komputerze (też jako 2. czynnik dla admina, punkt 4) |
 
 ## Do zrobienia (kolejność proponowana)
 
@@ -105,6 +105,17 @@ Ostatnia aktualizacja: 2026-10-04.
 - Jedna miniatura (`dla-patronow`) nadal idzie przez proxy ze starego Vercel Blob: przenieść do R2,
   potem usunąć `BLOB_READ_WRITE_TOKEN` i `@vercel/blob`.
 - Około 230 zdalnych gałęzi bez scalonego PR-a: do przejrzenia i skasowania.
+
+## Pomysły na później (koncepty, nie budujemy teraz)
+
+- **Tłumaczenia filmów i tłumacze w grupie** (decyzja 2026-10-04: koncept zatwierdzony, wracamy po fazie 2–3 panelu): [`architecture/translations-concept.md`](../architecture/translations-concept.md).
+- **Krótkie adresy filmów z nazwą w danym języku** bez maskowania adresu: wstrzymane decyzją właściciela (2026-10-04); opcja docelowa to `/pl/<nazwa>` i `/en/<name>` z historią nazw (patrz koncept tłumaczeń).
+- **Płatności krypto** (placeholder „Crypto” w bramce napiwkowej): Stripe stablecoin (jeśli dostępny w Polsce) albo BTCPay Server po powiększeniu serwera; wymaga uogólnienia modelu `Payment` i konsultacji podatkowej.
+- **Funkcje AI w stronie/panelu** (np. pierwszy filtr komentarzy): odłożone; start od Workers AI, odprawę robi Claude Code na żywo (`operations/DAILY-BRIEFING.md`).
+
+## GitHub Actions: limit wyczerpany (2026-10-04)
+
+Od ok. 17:33 CI na GitHubie nie startuje („recent account payments have failed or your spending limit needs to be increased”): limit minut prywatnego repo zjedzony w kilka dni przez PR-y agentów. Decyzja właściciela: **bez płacenia, tryb lokalny**: przed scaleniem testy, typecheck i lint uruchamiane lokalnie, `SKIP_CI=1 scripts/ops/mergedeploy.sh ...` pomija czekanie na CI GitHuba. Alternatywa: podnieść limit wydatków w GitHub (Settings, Billing and plans). Minuty zużywa też workflow obrazów GHCR.
 
 ## Pozostałe
 

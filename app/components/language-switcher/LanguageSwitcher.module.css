@@ -16,8 +16,9 @@
 }
 
 /*
- * Scroll shadows that appear only when there is more to scroll: card-coloured covers scroll with
- * the content ("local") and hide the shadows ("scroll") at either end.
+ * All eight languages fit without scrolling; only on a really short screen (phone in landscape)
+ * the list is capped to the viewport and these shadows show that there is more to scroll.
+ * Card-coloured covers scroll with the content ("local") and hide the shadows at either end.
  */
 .scroller {
   --scroll-shade: color-mix(in srgb, var(--chan-ink) 14%, transparent);

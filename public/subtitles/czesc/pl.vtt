@@ -1,0 +1,21 @@
+WEBVTT
+
+NOTE
+Przykładowe napisy testowe do filmu "czesc" (długość 10,0 s).
+Służą do sprawdzenia przycisku napisów w odtwarzaczu.
+
+1
+00:00:00.300 --> 00:00:02.300
+To są przykładowe napisy testowe.
+
+2
+00:00:02.500 --> 00:00:04.700
+Służą tylko do sprawdzenia odtwarzacza.
+
+3
+00:00:04.900 --> 00:00:07.200
+Przycisk CC włącza i wyłącza napisy.
+
+4
+00:00:07.400 --> 00:00:09.600
+Prawdziwe napisy pojawią się później.

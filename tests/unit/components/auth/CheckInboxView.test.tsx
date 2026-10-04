@@ -38,12 +38,13 @@ describe("CheckInboxView", () => {
 describe("LanguageSwitcher inline variant", () => {
   const active = (listbox: HTMLElement) => document.getElementById(listbox.getAttribute("aria-activedescendant") ?? "");
 
-  it("renders a Language: link with the current flag that expands the list in the page flow and switches", () => {
+  it("renders a globe Language: link (no flag) that expands the list with flags in the page flow and switches", () => {
     const onSelect = vi.fn();
     render(<LanguageSwitcher variant="inline" language="en" onSelect={onSelect} />);
     expect(screen.getByText("Language:")).toBeTruthy();
     const button = screen.getByRole("button");
-    expect(button.querySelector("img")?.getAttribute("src")).toBe("/flags/gb.svg");
+    expect(button.querySelector("svg.lucide-globe")).toBeTruthy();
+    expect(button.querySelector("img")).toBeNull();
     fireEvent.click(button);
     const listbox = screen.getByRole("listbox");
     expect(listbox.className).toContain("relative");

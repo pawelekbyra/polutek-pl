@@ -3,10 +3,10 @@
 // "Hasło" / "Security" tab of the account panel: password (change, or set one by e-mail link when
 // the account only has Google), TOTP two-step verification and the list of signed-in devices.
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Feedback, Field, Primary, ReauthNotice, useAccountUser, useHasPassword } from "./AccountSections";
-import { TurnstileWidget, useCaptchaRequired, type TurnstileHandle } from "./TurnstileWidget";
+import { useCaptchaGate } from "./useCaptchaGate";
 import { authClient, captchaFetchOptions } from "@/lib/auth/client";
 import { authErrorMessage, isSessionNotFresh } from "@/lib/auth/errors";
 import { PASSWORD_MIN_LENGTH } from "@/lib/auth/config";
@@ -43,9 +43,7 @@ function PasswordPart({ isPl, hasPassword }: { isPl: boolean; hasPassword: boole
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<Msg>(EMPTY);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const captchaRef = useRef<TurnstileHandle>(null);
-  const captchaRequired = useCaptchaRequired();
+  const captchaGate = useCaptchaGate(isPl);
 
   function change(e: React.FormEvent) {
     e.preventDefault();
@@ -60,18 +58,18 @@ function PasswordPart({ isPl, hasPassword }: { isPl: boolean; hasPassword: boole
 
   function sendSetLink() {
     const email = user.primaryEmailAddress?.emailAddress;
-    if (!email) return;
+    if (!email || !captchaGate.ready(sendSetLink)) return;
     return guarded(setLoading, setMsg, isPl, async () => {
       try {
         const { error } = await authClient.requestPasswordReset({
           email,
           redirectTo: "/reset-password",
-          fetchOptions: captchaFetchOptions(captchaToken),
+          fetchOptions: captchaFetchOptions(captchaGate.token()),
         });
         if (error) return setMsg({ error: authErrorMessage(error, isPl), info: null });
         setMsg({ error: null, info: isPl ? "Wysłaliśmy link do ustawienia hasła na Twój e-mail." : "We sent a link to set a password to your email." });
       } finally {
-        captchaRef.current?.reset();
+        captchaGate.reset();
       }
     });
   }
@@ -83,11 +81,11 @@ function PasswordPart({ isPl, hasPassword }: { isPl: boolean; hasPassword: boole
         <p className="text-[13px] text-[var(--chan-body)]">
           {isPl ? "Logujesz się przez Google i nie masz jeszcze hasła. Możesz je ustawić linkiem wysłanym na e-mail." : "You sign in with Google and have no password yet. You can set one with a link sent to your email."}
         </p>
-        <TurnstileWidget ref={captchaRef} onToken={setCaptchaToken} isPl={isPl} />
+        {captchaGate.widget}
         <button
           type="button"
           onClick={sendSetLink}
-          disabled={loading || (captchaRequired && !captchaToken)}
+          disabled={loading || captchaGate.waiting}
           className="flex h-[44px] w-full items-center justify-center rounded-[12px] bg-[var(--chan-blue)] font-brand text-[15px] font-bold text-white disabled:opacity-60"
         >
           {isPl ? "Wyślij link" : "Send link"}
