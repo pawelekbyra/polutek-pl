@@ -12,6 +12,7 @@ import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import AccessLockOverlay from "./AccessLockOverlay";
 import { NajsIcon } from "./najs/primitives";
 import { getLocalizedHref, appendQueryString } from "@/lib/i18n/routing";
+import { toVideoAccessTier } from "@/lib/access-tier";
 
 interface ChannelVideoCardProps {
   video: PublicVideoDTO;
@@ -45,38 +46,19 @@ export default function ChannelVideoCard({
 
   const displayTitle = getVideoDisplayTitle(video, language);
 
-  // 2026-09-22: PATRON tier no longer requires payment, only sign-in (see CLAUDE.md,
-  // checkVideoAccess) — same gate as LOGGED_IN.
-  const clientHasAccess =
-    video.tier === "PUBLIC" ||
-    (video.tier === "LOGGED_IN" && isLoggedIn) ||
-    (video.tier === "PATRON" && isLoggedIn);
-
-  const hasAccess = clientHasAccess;
+  // Two levels (lib/access-tier.ts): anything not PUBLIC needs sign-in.
+  const tier = toVideoAccessTier(video.tier);
+  const hasAccess = tier === "PUBLIC" || isLoggedIn;
 
   const getAccessBadge = () => {
     if (!mounted) return null;
     const isPl = language === "pl";
-
-    if (video.tier === "PUBLIC") {
-      return { text: isPl ? "Publiczne" : "Public", variant: "public" };
-    }
-
-    if (video.tier === "LOGGED_IN") {
-      if (!hasAccess) return { text: isPl ? "Login" : "Login", variant: "locked" };
-      return { text: isPl ? "Odblok." : "Unlocked", variant: "unlocked" };
-    }
-
-    if (video.tier === "PATRON") {
-      if (!hasAccess) return { text: isPl ? "Login" : "Login", variant: "locked" };
-      return { text: isPl ? "Odblok." : "Unlocked", variant: "unlocked" };
-    }
-
-    return null;
+    if (tier === "PUBLIC") return { text: isPl ? "Publiczne" : "Public", variant: "public" };
+    if (!hasAccess) return { text: "Login", variant: "locked" };
+    return { text: isPl ? "Odblok." : "Unlocked", variant: "unlocked" };
   };
 
   const badge = getAccessBadge();
-  // 2026-09-22: signing in is the only gate now, even for PATRON tier (see CLAUDE.md).
   const lockState = !hasAccess ? "LOGIN_REQUIRED" : null;
 
   return (

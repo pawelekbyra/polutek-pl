@@ -1,4 +1,5 @@
-import { AccessTier, VideoStatus } from "@prisma/client";
+import { VideoStatus } from "@prisma/client";
+import { parseVideoAccessTier, type VideoAccessTier } from "@/lib/access-tier";
 import type { CreateVideoInput, UpdateVideoInput } from "@/lib/modules/video";
 
 export type AdminVideoRequestBody = Record<string, unknown>;
@@ -67,12 +68,9 @@ export function fundraisingGoalUpdateFields(value: unknown): Pick<UpdateVideoInp
   };
 }
 
-function readAccessTier(body: AdminVideoRequestBody, key: string): AccessTier | undefined {
-  const value = body[key];
-  if (typeof value !== "string") return undefined;
-  return Object.values(AccessTier).includes(value as AccessTier)
-    ? (value as AccessTier)
-    : undefined;
+// Two levels (lib/access-tier.ts); an old client sending PATRON gets LOGGED_IN.
+function readAccessTier(body: AdminVideoRequestBody, key: string): VideoAccessTier | undefined {
+  return parseVideoAccessTier(body[key]) ?? undefined;
 }
 
 function readVideoStatus(body: AdminVideoRequestBody, key: string): VideoStatus | undefined {
@@ -147,7 +145,7 @@ export function buildAdminVideoCreatePayload(body: AdminVideoRequestBody): Creat
   const payload: CreateVideoInput = {
     title: readTextField(body, "title") ?? "",
     slug: readTextField(body, "slug") ?? "",
-    tier: readAccessTier(body, "tier") ?? AccessTier.PUBLIC,
+    tier: readAccessTier(body, "tier") ?? "PUBLIC",
     publishAfterAssetReady: readBooleanField(body, "publishAfterAssetReady") === true,
   };
 

@@ -12,8 +12,7 @@ export async function getPublicVideoList(
 
   const videos = await repository.findPublicList(mainChannel.id, new Date());
 
-  // Filtering for PATRON tier would normally happen here or in repository
-  // For now, returning all published ones on main channel
+  // Every published video of the main channel; access is decided per video (checkVideoAccess).
 
   return ok(videos.map(toPublicVideoDto));
 }

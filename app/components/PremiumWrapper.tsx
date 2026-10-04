@@ -1,5 +1,6 @@
 "use client";
 
+import { parseVideoAccessTier, toVideoAccessTier } from "@/lib/access-tier";
 import { logger } from "@/lib/logger";
 import { useAuth } from "@/lib/auth/react";
 import React, {
@@ -42,10 +43,6 @@ export {
   isPlayablePlaybackPlan,
 } from "./playback-plan-state";
 
-function isAccessTierDto(value: unknown): value is AccessTierDto {
-  return value === "PUBLIC" || value === "LOGGED_IN" || value === "PATRON";
-}
-
 type PlanView = {
   hasAccess: boolean;
   playbackPlan: PlaybackPlan | null;
@@ -77,14 +74,15 @@ function viewForPlan(rawData: unknown, videoId: string, isGuest: boolean): PlanV
     playbackPlan: hasAccess ? (data as PlaybackPlan) : null,
     playbackState,
     planPremiereAt: playbackState === "COMING_SOON" && typeof data.premiereAt === "string" ? data.premiereAt : null,
-    requiredTier: isAccessTierDto(requiredTier) ? requiredTier : null,
+    requiredTier: parseVideoAccessTier(requiredTier),
   };
 }
 
 interface PremiumWrapperProps {
   children: React.ReactNode;
   videoId: string;
-  requiredTier?: AccessTierDto;
+  /** The video's stored tier; anything but PUBLIC needs sign-in (lib/access-tier.ts). */
+  requiredTier?: string;
   variant?: "default" | "thumbnail" | "thumbnailCompact";
   onAccessLoad?: (hasAccess: boolean) => void;
   /**
@@ -147,11 +145,10 @@ export default function PremiumWrapper({
   const requestGenerationRef = useRef(0);
   const directRequestControllerRef = useRef<AbortController | null>(null);
 
-  const effectiveTier = (initialTier || dbTier || "PUBLIC") as AccessTierDto;
+  const effectiveTier = toVideoAccessTier(initialTier || dbTier || "PUBLIC");
   const isPublic = effectiveTier === "PUBLIC";
 
-  // 2026-09-22: PATRON tier no longer gates on payment, only sign-in — same denied state as
-  // LOGGED_IN (see checkVideoAccess and CLAUDE.md).
+  // Signing in is the only gate (CLAUDE.md §4.4).
   const deniedState = "LOGIN_REQUIRED";
 
   const getPreloadedPlaybackPlan = preloader?.getPlaybackPlan;

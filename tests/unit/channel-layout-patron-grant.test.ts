@@ -60,22 +60,24 @@ describe('ChannelLayoutService patron access truth', () => {
     expect(JSON.stringify(layout)).not.toContain('patronGrant');
   });
 
-  // CLAUDE.md §4.4: PATRON tier needs sign-in only, exactly like LOGGED_IN.
-  it('unlocks patron sidebar items for a signed-in user without an active PatronGrant', async () => {
+  // Two access levels (lib/access-tier.ts): a leftover PATRON row is a "Dla zalogowanych" video.
+  it('puts a leftover PATRON video into the signed-in section, unlocked for any signed-in user', async () => {
     findUnique.mockResolvedValue({ role: 'USER' });
 
     const { ChannelLayoutService } = await import('@/lib/modules/channel/application/channel-layout.service');
     const layout = await ChannelLayoutService.getSidebarLayout('user-1');
 
     expect(layout.viewerState).toBe('LOGGED_IN');
-    expect(layout.sections.find((section) => section.type === 'PATRON')?.items[0]?.isLocked).toBe(false);
+    expect(layout.sections.map((section) => section.type)).toEqual(['FREE', 'LOGGED_IN']);
+    const item = layout.sections.find((section) => section.type === 'LOGGED_IN')?.items[0];
+    expect(item).toMatchObject({ id: 'patron-video', tier: 'LOGGED_IN', isLocked: false });
   });
 
-  it('keeps patron sidebar items locked for guests', async () => {
+  it('keeps it locked for guests', async () => {
     const { ChannelLayoutService } = await import('@/lib/modules/channel/application/channel-layout.service');
     const layout = await ChannelLayoutService.getSidebarLayout(null);
 
     expect(layout.viewerState).toBe('ANONYMOUS');
-    expect(layout.sections.find((section) => section.type === 'PATRON')?.items[0]?.isLocked).toBe(true);
+    expect(layout.sections.find((section) => section.type === 'LOGGED_IN')?.items[0]).toMatchObject({ id: 'patron-video', isLocked: true });
   });
 });

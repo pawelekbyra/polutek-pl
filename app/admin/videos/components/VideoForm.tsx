@@ -272,7 +272,6 @@ export function VideoForm({
                 <SelectContent>
                   <SelectItem value="PUBLIC">Publiczny</SelectItem>
                   <SelectItem value="LOGGED_IN">Zalogowani</SelectItem>
-                  <SelectItem value="PATRON">Patroni</SelectItem>
                 </SelectContent>
               </Select>
               <div className="space-y-3 pt-3">
