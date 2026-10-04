@@ -1,7 +1,7 @@
 import React from 'react';
 
-export const LEGAL_EFFECTIVE_DATE = 'Obowiązuje od 2 października 2026 r.';
-export const LEGAL_EFFECTIVE_DATE_EN = 'Effective as of 2 October 2026.';
+export const LEGAL_EFFECTIVE_DATE = 'Obowiązuje od 4 października 2026 r.';
+export const LEGAL_EFFECTIVE_DATE_EN = 'Effective as of 4 October 2026.';
 
 /**
  * The service is run by a private individual (see § 1 of the Terms). Every legal document —
@@ -18,19 +18,6 @@ export function LegalSection({ nr, title, children }: { nr: string; title: strin
       </h2>
       <div className="space-y-3 text-[15px] leading-[1.7] text-[var(--chan-body)]">{children}</div>
     </section>
-  );
-}
-
-export function LegalSummary({ items }: { items: React.ReactNode[] }) {
-  return (
-    <div className="mb-12 rounded-xl border border-[var(--chan-ink)]/15 bg-white/60 p-5 text-[14px] leading-[1.7]">
-      <p className="mb-2 text-[11px] font-black uppercase tracking-[0.14em] text-[var(--chan-muted)]">W skrócie</p>
-      <ul className="list-disc space-y-1 pl-5">
-        {items.map((item, index) => (
-          <li key={index}>{item}</li>
-        ))}
-      </ul>
-    </div>
   );
 }
 
@@ -132,131 +119,109 @@ export function RegulaminContent() {
   );
 }
 
-const DATA_ROWS = [
-  { what: 'Konto i logowanie', data: 'e-mail, nazwa, avatar', why: 'prowadzenie konta i zapewnienie dostępu do funkcji serwisu' },
-  { what: 'Wsparcie (płatności)', data: 'kwota, data, identyfikator płatności, e-mail, status płatności', why: 'obsługa dobrowolnego wsparcia, potwierdzenia i obowiązki podatkowe' },
-  { what: 'Komentarze', data: 'treść, nazwa, data', why: 'publiczna dyskusja pod filmami i moderacja' },
-  { what: 'E-maile transakcyjne', data: 'adres e-mail', why: 'potwierdzenia wpłat, bezpieczeństwo konta (np. zmiana hasła) i istotne informacje o serwisie' },
-  { what: 'Powiadomienia marketingowe', data: 'adres e-mail', why: 'wysyłka newslettera lub informacji marketingowych, wyłącznie gdy udzielisz odrębnej zgody' },
-  { what: 'Bezpieczeństwo', data: 'adres IP, logi techniczne', why: 'ochrona serwisu przed nadużyciami i limity zapytań' },
-];
+function ContactLink() {
+  return (
+    <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">
+      {LEGAL_CONTACT_EMAIL}
+    </a>
+  );
+}
 
-/** Full Privacy Policy body (no page chrome), shared by the /polityka-prywatnosci page and the modal. */
+function CookieName({ children }: { children: React.ReactNode }) {
+  return <code className="rounded bg-[var(--chan-ink)]/5 px-1 text-[13px]">{children}</code>;
+}
+
+/** Full Privacy Policy body (no page chrome), shared by the /polityka-prywatnosci page and the tip-gate dialog. */
 export function PolitykaContent() {
   return (
-    <>
-      <LegalSummary
-        items={[
-          'Zbieramy tylko to, co potrzebne do działania serwisu: konto, wpłaty wsparcia, komentarze, e-maile transakcyjne i logi bezpieczeństwa.',
-          'Niczego nie sprzedajemy i nie profilujemy Cię reklamowo. Brak cookies reklamowych.',
-          <>Zawsze możesz poprosić o dostęp do swoich danych albo ich usunięcie: <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a>.</>,
-        ]}
-      />
+    <div className="space-y-10">
+      <LegalSection nr="1" title="Administrator">
+        <p>
+          Administratorem danych jest Paweł Perfect, osoba fizyczna prowadząca serwis WWW.PAWELPERFECT.COM,
+          ul. Złota 75, 00-819 Warszawa, e-mail: <ContactLink />.
+        </p>
+      </LegalSection>
 
-      <div className="space-y-10">
-        <LegalSection nr="1" title="Administrator danych">
-          <p>
-            Administratorem Twoich danych osobowych jest Paweł Perfect, osoba fizyczna prowadząca serwis
-            WWW.PAWELPERFECT.COM, adres do korespondencji: ul. Złota 75, 00-819 Warszawa.
-          </p>
-          <p>W sprawach danych osobowych pisz na adres <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a>.</p>
-        </LegalSection>
+      <LegalSection nr="2" title="Dane, cel i podstawa">
+        <p>Podstawy prawne to art. 6 ust. 1 RODO:</p>
+        <ol className="list-decimal space-y-2 pl-5">
+          <li>
+            Konto: e-mail (bez niego nie założysz konta), hasło, pseudonim, awatar, język, logowanie dwuetapowe; przy
+            logowaniu przez Google e-mail i identyfikator od Google. Podstawa: umowa, czyli Regulamin (lit. b).
+          </li>
+          <li>Komentarze, reakcje i subskrypcja kanału. Pseudonim, awatar i komentarze są publiczne. Podstawa: umowa (lit. b).</li>
+          <li>
+            Wpłaty: kwota, data, status i identyfikatory płatności, bez danych karty. Podstawa: umowa i obowiązki
+            podatkowe (lit. b i c).
+          </li>
+          <li>
+            E-maile o koncie i wpłatach: umowa (lit. b). O nowych filmach: Twoja zgoda (lit. a), którą wycofasz
+            linkiem w wiadomości.
+          </li>
+          <li>Wiadomości do nas, żeby odpowiedzieć: nasz uzasadniony interes (lit. f).</li>
+          <li>
+            Adres IP, dane przeglądarki i przebieg odtwarzania, dla bezpieczeństwa, liczenia wyświetleń i naprawy
+            błędów: nasz uzasadniony interes (lit. f).
+          </li>
+        </ol>
+        <p>
+          Dane możemy też wykorzystać do obrony roszczeń (lit. f). Nie sprzedajemy ich, nie profilujemy Cię i nie
+          podejmujemy decyzji wyłącznie automatycznie.
+        </p>
+      </LegalSection>
 
-        <LegalSection nr="2" title="Jakie dane zbieramy i po co">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[14px]">
-              <thead>
-                <tr className="border-b-2 border-[var(--chan-ink)]/15 text-left">
-                  <th className="py-2 pr-4 text-[11px] font-black uppercase tracking-[0.1em] text-[var(--chan-muted)]">Obszar</th>
-                  <th className="py-2 pr-4 text-[11px] font-black uppercase tracking-[0.1em] text-[var(--chan-muted)]">Dane</th>
-                  <th className="py-2 text-[11px] font-black uppercase tracking-[0.1em] text-[var(--chan-muted)]">Po co</th>
-                </tr>
-              </thead>
-              <tbody>
-                {DATA_ROWS.map((row) => (
-                  <tr key={row.what} className="border-b border-dashed border-[var(--chan-ink)]/10 align-top">
-                    <td className="py-3 pr-4 font-bold">{row.what}</td>
-                    <td className="py-3 pr-4">{row.data}</td>
-                    <td className="py-3">{row.why}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p>
-            Podstawy prawne przetwarzania danych zależą od celu: prowadzenie konta i korzystanie z serwisu na
-            zasadach regulaminu oraz obsługa dobrowolnego wsparcia (darowizny) — wykonanie umowy (art. 6 ust. 1
-            lit. b RODO); obowiązki wynikające z przepisów, np. podatkowych — obowiązek prawny (art. 6 ust. 1 lit. c
-            RODO); bezpieczeństwo serwisu, zapobieganie nadużyciom oraz ustalenie, obrona i dochodzenie roszczeń —
-            nasz prawnie uzasadniony interes (art. 6 ust. 1 lit. f RODO); newsletter lub informacje marketingowe —
-            Twoja odrębna zgoda (art. 6 ust. 1 lit. a RODO), jeżeli jej udzielisz.
-          </p>
-        </LegalSection>
+      <LegalSection nr="3" title="Odbiorcy">
+        <ul className="list-disc space-y-1 pl-5">
+          <li>Hetzner (Niemcy): serwer i baza danych;</li>
+          <li>Cloudflare: sieć, ochrona przed atakami i botami, pliki, kopie zapasowe, poczta przychodząca;</li>
+          <li>Resend: wysyłka e-maili;</li>
+          <li>Google: kopia wiadomości wysłanych na nasz adres (Gmail).</li>
+        </ul>
+        <p>
+          Stripe i operator wybranej metody płatności (np. BLIK, PayPal) oraz Google przy logowaniu przez Google są
+          odrębnymi administratorami. Cloudflare, Resend, Stripe i Google mogą przekazywać dane do USA na podstawie
+          Data Privacy Framework lub standardowych klauzul umownych (kopię wyślemy na prośbę).
+        </p>
+      </LegalSection>
 
-        <LegalSection nr="3" title="Komu powierzamy dane">
-          <p>
-            Korzystamy z zaufanych dostawców technologii: Clerk (logowanie), Stripe (płatności), Resend (e-maile),
-            Vercel (hosting), Neon (baza danych), Cloudflare (wideo i infrastruktura) i Upstash (ochrona przed nadużyciami).
-            W zależności od rodzaju usługi dostawcy mogą działać jako podmioty przetwarzające dane na nasze polecenie
-            albo jako odrębni administratorzy danych w zakresie niezbędnym do realizacji własnych obowiązków prawnych,
-            bezpieczeństwa i działania infrastruktury — w szczególności dotyczy to operatora płatności Stripe.
-          </p>
-          <p>
-            Część dostawców może przetwarzać dane poza Europejskim Obszarem Gospodarczym. Transfer odbywa się na podstawie
-            dostępnych mechanizmów przewidzianych przez prawo, takich jak Data Privacy Framework, standardowe klauzule
-            umowne lub inne właściwe zabezpieczenia. Nikomu nie sprzedajemy Twoich danych.
-          </p>
-        </LegalSection>
+      <LegalSection nr="4" title="Jak długo">
+        <p>
+          Dane konta trzymamy do jego usunięcia. Wtedy kasujemy dane logowania, awatar i zgody, e-mail i pseudonim
+          anonimizujemy, a komentarze znikają z serwisu. Konto z niepotwierdzonym e-mailem usuwamy po 7 dniach, treść
+          usuniętego komentarza po 30 dniach, sesja logowania wygasa po 30 dniach, kopie zapasowe po 14 dniach. Wpłaty
+          trzymamy tak długo, jak wymagają przepisy podatkowe, wiadomości do załatwienia sprawy, a dane techniczne,
+          dopóki są potrzebne do bezpieczeństwa i statystyk.
+        </p>
+      </LegalSection>
 
-        <LegalSection nr="4" title="Jak długo przechowujemy dane">
-          <p>
-            Dane konta przechowujemy do czasu jego usunięcia, a następnie przez okres niezbędny do obrony roszczeń
-            i realizacji obowiązków prawnych. Dane wpłat przechowujemy przez okres wymagany przez przepisy,
-            w szczególności podatkowe. Logi techniczne przechowujemy co do zasady do 90 dni, chyba że dłuższe
-            przechowywanie jest potrzebne do wyjaśnienia nadużyć, awarii lub roszczeń.
-            Komentarze przechowujemy do czasu ich usunięcia przez Ciebie lub moderację.
-          </p>
-        </LegalSection>
+      <LegalSection nr="5" title="Twoje prawa">
+        <p>
+          Możesz żądać dostępu do danych, ich sprostowania, usunięcia, ograniczenia przetwarzania i przeniesienia oraz
+          sprzeciwić się przetwarzaniu opartemu na lit. f. Zgodę wycofasz w każdej chwili, bez wpływu na wcześniejsze
+          przetwarzanie. Dane konta zmienisz, a konto usuniesz w ustawieniach konta; w innych sprawach napisz na{' '}
+          <ContactLink />. Możesz złożyć skargę do Prezesa UODO (uodo.gov.pl).
+        </p>
+      </LegalSection>
 
-        <LegalSection nr="5" title="Twoje prawa">
-          <p>
-            Masz prawo do: dostępu do danych, ich sprostowania, usunięcia, ograniczenia przetwarzania,
-            przenoszenia oraz sprzeciwu. Jeżeli dane przetwarzamy na podstawie zgody, możesz ją w każdej chwili wycofać,
-            co nie wpływa na zgodność z prawem przetwarzania sprzed jej wycofania. Wystarczy wysłać e-mail na{' '}
-            <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a> —
-            w ten sposób usuniesz też konto. Możesz również złożyć skargę do Prezesa Urzędu Ochrony Danych
-            Osobowych (uodo.gov.pl).
-          </p>
-        </LegalSection>
+      <LegalSection nr="6" title="Cookies">
+        <p>Używamy tylko cookies i pamięci przeglądarki niezbędnych dla funkcji, z których korzystasz, więc nie prosimy o zgodę:</p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li><CookieName>pp.*</CookieName>: logowanie, do 30 dni;</li>
+          <li><CookieName>app-language</CookieName>: język, rok;</li>
+          <li>
+            <CookieName>__stripe_mid</CookieName>, <CookieName>__stripe_sid</CookieName>: ochrona wpłat przed
+            oszustwami, po otwarciu bramki napiwkowej, do roku;
+          </li>
+          <li><CookieName>g_state</CookieName>: logowanie przez Google;</li>
+          <li>pamięć przeglądarki: Twoje ustawienia, np. wyciszenie dźwięku.</li>
+        </ul>
+        <p>Formularze logowania chroni Cloudflare Turnstile, bez cookies.</p>
+      </LegalSection>
 
-        <LegalSection nr="6" title="E-maile i powiadomienia">
-          <p>
-            E-maile transakcyjne, takie jak potwierdzenie wpłaty, powiadomienie o zmianie hasła lub o istotnych
-            zmianach w serwisie, wysyłamy w związku z korzystaniem z serwisu na zasadach regulaminu albo naszym
-            obowiązkiem informacyjnym. Newsletter, informacje
-            marketingowe lub promocyjne wysyłamy wyłącznie wtedy, gdy udzielisz odrębnej zgody. Z takich wiadomości
-            możesz wypisać się w każdej chwili.
-          </p>
-        </LegalSection>
-
-        <LegalSection nr="7" title="Cookies">
-          <p>
-            Używamy wyłącznie plików cookies i podobnych technologii niezbędnych do działania serwisu: utrzymania sesji
-            po zalogowaniu, bezpieczeństwa, ochrony przed nadużyciami i odtwarzania materiałów. Nie używamy cookies
-            reklamowych ani śledzących. Jeżeli w przyszłości dodamy narzędzia analityczne lub marketingowe wymagające zgody,
-            poprosimy o nią przed ich użyciem. Cookies możesz usunąć w ustawieniach przeglądarki — serwis bez zalogowania
-            będzie działał normalnie, ale część funkcji konta może wymagać cookies niezbędnych.
-          </p>
-        </LegalSection>
-
-        <LegalSection nr="8" title="Zmiany polityki">
-          <p>
-            Jeśli polityka się zmieni (np. dojdzie nowy dostawca), zaktualizujemy ten dokument i datę na górze strony.
-            Istotne zmiany zakomunikujemy w serwisie.
-          </p>
-        </LegalSection>
-      </div>
-    </>
+      <LegalSection nr="7" title="Zmiany">
+        <p>O zmianach poinformujemy w serwisie i zmienimy datę na górze strony.</p>
+      </LegalSection>
+    </div>
   );
 }
 
@@ -357,130 +322,98 @@ export function TermsContentEn() {
   );
 }
 
-const DATA_ROWS_EN = [
-  { what: 'Account and sign-in', data: 'email, name, avatar', why: 'managing the account and providing access to service features' },
-  { what: 'Support (payments)', data: 'amount, date, payment identifier, email, payment status', why: 'processing voluntary support, confirmations and tax obligations' },
-  { what: 'Comments', data: 'content, name, date', why: 'public discussion under videos and moderation' },
-  { what: 'Transactional emails', data: 'email address', why: 'payment confirmations, account security (e.g. password changes) and important service information' },
-  { what: 'Marketing notifications', data: 'email address', why: 'sending a newsletter or marketing information, only when you give separate consent' },
-  { what: 'Security', data: 'IP address, technical logs', why: 'protecting the service from abuse and rate limiting' },
-];
-
 /** Full Privacy Policy body (English translation, no page chrome), used by the /en/privacy-policy page. */
 export function PrivacyContentEn() {
   return (
-    <>
-      <LegalSummary
-        items={[
-          'We only collect what is needed to run the service: account, support payments, comments, transactional emails and security logs.',
-          'We never sell your data and we do not build advertising profiles from it. No advertising cookies.',
-          <>You can always ask for access to your data, or ask us to delete it: <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a>.</>,
-        ]}
-      />
+    <div className="space-y-10">
+      <LegalSection nr="1" title="Controller">
+        <p>
+          The controller of your data is Paweł Perfect, the private individual who runs the service WWW.PAWELPERFECT.COM,
+          ul. Złota 75, 00-819 Warsaw, Poland, email: <ContactLink />.
+        </p>
+      </LegalSection>
 
-      <div className="space-y-10">
-        <LegalSection nr="1" title="Data controller">
-          <p>
-            The controller of your personal data is Paweł Perfect, the private individual who runs the service
-            WWW.PAWELPERFECT.COM, correspondence address: ul. Złota 75, 00-819 Warsaw, Poland.
-          </p>
-          <p>For matters concerning personal data, write to <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a>.</p>
-        </LegalSection>
+      <LegalSection nr="2" title="Data, purpose and legal basis">
+        <p>The legal bases are in Article 6(1) GDPR:</p>
+        <ol className="list-decimal space-y-2 pl-5">
+          <li>
+            Account: email (you cannot create an account without it), password, nickname, avatar, language, two-step
+            sign-in; with Google sign-in, the email and identifier from Google. Basis: the contract, i.e. the Terms
+            (point (b)).
+          </li>
+          <li>Comments, reactions and channel subscription. Your nickname, avatar and comments are public. Basis: the contract (point (b)).</li>
+          <li>
+            Payments: amount, date, status and payment identifiers, without card details. Basis: the contract and tax
+            obligations (points (b) and (c)).
+          </li>
+          <li>
+            Emails about your account and payments: the contract (point (b)). About new videos: your consent (point
+            (a)), which you can withdraw with the link in the message.
+          </li>
+          <li>Messages to us, so that we can reply: our legitimate interest (point (f)).</li>
+          <li>
+            IP address, browser data and the course of playback, for security, counting views and fixing errors: our
+            legitimate interest (point (f)).
+          </li>
+        </ol>
+        <p>
+          We may also use data to defend claims (point (f)). We do not sell it, profile you or make decisions based
+          solely on automated processing.
+        </p>
+      </LegalSection>
 
-        <LegalSection nr="2" title="What data we collect and why">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[14px]">
-              <thead>
-                <tr className="border-b-2 border-[var(--chan-ink)]/15 text-left">
-                  <th className="py-2 pr-4 text-[11px] font-black uppercase tracking-[0.1em] text-[var(--chan-muted)]">Area</th>
-                  <th className="py-2 pr-4 text-[11px] font-black uppercase tracking-[0.1em] text-[var(--chan-muted)]">Data</th>
-                  <th className="py-2 text-[11px] font-black uppercase tracking-[0.1em] text-[var(--chan-muted)]">Purpose</th>
-                </tr>
-              </thead>
-              <tbody>
-                {DATA_ROWS_EN.map((row) => (
-                  <tr key={row.what} className="border-b border-dashed border-[var(--chan-ink)]/10 align-top">
-                    <td className="py-3 pr-4 font-bold">{row.what}</td>
-                    <td className="py-3 pr-4">{row.data}</td>
-                    <td className="py-3">{row.why}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p>
-            The legal basis for processing depends on the purpose: running the account and using the service under
-            the Terms, and processing voluntary support (a gift) — performance of a contract (Article 6(1)(b) GDPR);
-            obligations under the law, e.g. tax law — a legal obligation (Article 6(1)(c) GDPR); service security,
-            abuse prevention, and the establishment, defense and pursuit of claims — our legitimate interest
-            (Article 6(1)(f) GDPR); newsletter or marketing information — your separate consent (Article 6(1)(a)
-            GDPR), if you give it.
-          </p>
-        </LegalSection>
+      <LegalSection nr="3" title="Recipients">
+        <ul className="list-disc space-y-1 pl-5">
+          <li>Hetzner (Germany): server and database;</li>
+          <li>Cloudflare: network, protection against attacks and bots, files, backups, incoming mail;</li>
+          <li>Resend: sending emails;</li>
+          <li>Google: a copy of messages sent to our address (Gmail).</li>
+        </ul>
+        <p>
+          Stripe and the operator of the payment method you choose (e.g. BLIK, PayPal), and Google when you sign in
+          with Google, are separate controllers. Cloudflare, Resend, Stripe and Google may transfer data to the USA
+          under the Data Privacy Framework or standard contractual clauses (we will send a copy on request).
+        </p>
+      </LegalSection>
 
-        <LegalSection nr="3" title="Who we share data with">
-          <p>
-            We use trusted technology providers: Clerk (sign-in), Stripe (payments), Resend (emails), Vercel
-            (hosting), Neon (database), Cloudflare (video and infrastructure), and Upstash (abuse protection).
-            Depending on the type of service, these providers may act as processors on our instructions, or as
-            separate controllers to the extent necessary to fulfil their own legal, security and infrastructure
-            obligations — this applies in particular to the payment operator Stripe.
-          </p>
-          <p>
-            Some providers may process data outside the European Economic Area. Transfers rely on the mechanisms
-            available under law, such as the Data Privacy Framework, standard contractual clauses, or other
-            appropriate safeguards. We never sell your data to anyone.
-          </p>
-        </LegalSection>
+      <LegalSection nr="4" title="How long">
+        <p>
+          We keep account data until the account is deleted. We then erase sign-in data, avatar and consents,
+          anonymise your email and nickname, and your comments disappear from the service. We delete an account with
+          an unconfirmed email after 7 days and the text of a deleted comment after 30 days; a sign-in session expires
+          after 30 days and backups after 14 days. We keep payments as long as tax law requires, messages until the
+          matter is resolved, and technical data while it is needed for security and statistics.
+        </p>
+      </LegalSection>
 
-        <LegalSection nr="4" title="How long we keep data">
-          <p>
-            We keep account data until the account is deleted, and afterwards for the period necessary for the
-            defense of claims and compliance with legal obligations. We keep support payment data for the period
-            required by law, in particular tax law. We generally keep technical logs for up to 90 days, unless a
-            longer retention period is needed to investigate abuse, failures or claims.
-            We keep comments until you or moderation deletes them.
-          </p>
-        </LegalSection>
+      <LegalSection nr="5" title="Your rights">
+        <p>
+          You may request access to your data, its correction, deletion, restriction of processing and portability,
+          and object to processing based on point (f). You can withdraw consent at any time, without affecting earlier
+          processing. You can change account data and delete the account in the account settings; for anything else,
+          write to <ContactLink />. You may lodge a complaint with the President of the Polish Data Protection Office
+          (UODO, uodo.gov.pl).
+        </p>
+      </LegalSection>
 
-        <LegalSection nr="5" title="Your rights">
-          <p>
-            You have the right to: access your data, have it corrected, deleted, have its processing restricted,
-            transfer it, and object to its processing. Where we process data based on consent, you can withdraw it
-            at any time, which does not affect the lawfulness of processing carried out before its withdrawal. Just
-            email <a href={`mailto:${LEGAL_CONTACT_EMAIL}`} className="underline hover:text-primary">{LEGAL_CONTACT_EMAIL}</a>{' '}
-            — this also deletes your account. You may also file a complaint with the President of the Polish Data
-            Protection Authority (UODO, uodo.gov.pl).
-          </p>
-        </LegalSection>
+      <LegalSection nr="6" title="Cookies">
+        <p>We only use cookies and browser storage needed for the features you use, so we do not ask for consent:</p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li><CookieName>pp.*</CookieName>: sign-in, up to 30 days;</li>
+          <li><CookieName>app-language</CookieName>: language, one year;</li>
+          <li>
+            <CookieName>__stripe_mid</CookieName>, <CookieName>__stripe_sid</CookieName>: protecting payments from
+            fraud, after you open the tip gate, up to one year;
+          </li>
+          <li><CookieName>g_state</CookieName>: Google sign-in;</li>
+          <li>browser storage: your settings, e.g. muted sound.</li>
+        </ul>
+        <p>Sign-in forms are protected by Cloudflare Turnstile, without cookies.</p>
+      </LegalSection>
 
-        <LegalSection nr="6" title="Emails and notifications">
-          <p>
-            We send transactional emails — such as a payment confirmation, a password-change notice, or notice of
-            significant changes to the service — in connection with your use of the service under the Terms or our
-            information obligations. We send
-            newsletters or marketing/promotional information only when you give separate consent. You can
-            unsubscribe from such messages at any time.
-          </p>
-        </LegalSection>
-
-        <LegalSection nr="7" title="Cookies">
-          <p>
-            We use only cookies and similar technologies necessary for the service to work: keeping you signed in,
-            security, abuse protection, and playing content. We do not use advertising or tracking cookies. If we
-            add analytics or marketing tools that require consent in the future, we will ask for it before using
-            them. You can remove cookies in your browser settings — the service will work normally without signing
-            in, but some account features may require necessary cookies.
-          </p>
-        </LegalSection>
-
-        <LegalSection nr="8" title="Changes to this policy">
-          <p>
-            If this policy changes (e.g. a new provider is added), we will update this document and the date at the
-            top of the page. We will communicate significant changes within the service.
-          </p>
-        </LegalSection>
-      </div>
-    </>
+      <LegalSection nr="7" title="Changes">
+        <p>We will announce changes in the service and update the date at the top of the page.</p>
+      </LegalSection>
+    </div>
   );
 }
