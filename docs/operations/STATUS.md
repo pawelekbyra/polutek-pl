@@ -74,6 +74,8 @@ Ostatnia aktualizacja: 2026-10-04.
 7. Nowy, krótki `CLAUDE.md` opisujący wyłącznie stan obecny (po scaleniu gałęzi z punktu 1).
 8. Przepisać `SERWEREK.md` do stanu faktycznego (audyt operacji znalazł 21 rozbieżności) i dodać do
    repo pliki, które żyją tylko na serwerze: `backup.sh`, `health.sh`, `docker-compose.override.yml`.
+9. Usuwanie użytkownika i zmiana roli ADMIN: w nowym panelu to ekran „Społeczność → użytkownik”; stary panel
+   (`/admin/users/[userId]`, „Rola i uprawnienia” i „Strefa zagrożenia”) dostał je tymczasowo.
 
 ## Operacje (z `audit-ops.md`)
 

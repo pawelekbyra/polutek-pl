@@ -17,6 +17,7 @@ export interface AdminUserDetailsDto {
   role: string;
   isPatron: boolean;
   isDeleted: boolean;
+  emailVerified: boolean;
   patronSince: Date | null;
   patronSource: string | null;
   language: string | null;
@@ -83,6 +84,7 @@ export async function getAdminUserDetails(
       role: user.role,
       isPatron: patronDiagnostics.truth.isPatron,
       isDeleted: user.isDeleted,
+      emailVerified: user.emailVerified,
       patronSince: patronDiagnostics.truth.activeGrantSince,
       patronSource: patronDiagnostics.truth.activeGrantSource,
       language: user.language,

@@ -11,6 +11,7 @@ export * from "./domain/user.policy";
 export * from "./domain/payment-totals";
 export * from "./domain/user.errors";
 export * from "./application/account-deletion-cleanup.use-case";
+export * from "./application/admin-manage-user.use-case";
 export * from "./application/get-video-interaction.use-case";
 export * from "./application/check-nickname-availability.use-case";
 export * from "./application/update-user-profile.use-case";

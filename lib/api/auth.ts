@@ -9,8 +9,9 @@ import { recordAuthAudit } from "@/lib/auth/audit";
 /**
  * Admin = `User.role === ADMIN` in our database. Bootstrap: a verified account whose e-mail is listed
  * in ADMIN_EMAILS is promoted on its next request (and the promotion is audited). Note: this runs on
- * every request, so while an address stays in ADMIN_EMAILS a demotion in /admin/users is undone at
- * once; remove the address from ADMIN_EMAILS after the first sign-in (audit AUTH-27).
+ * every request, so while an address stays in ADMIN_EMAILS a demotion in /admin/users/[userId]
+ * ("Rola i uprawnienia", PATCH /api/admin/users/[userId]/role) is undone on that user's next request;
+ * remove the address from ADMIN_EMAILS after the first sign-in (audit AUTH-27). Empty in production.
  * A never-verified address cannot be promoted, so nobody can claim an admin e-mail by signing
  * up with it first.
  */
