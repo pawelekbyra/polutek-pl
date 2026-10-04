@@ -114,6 +114,7 @@ describe('Comments write access on PATRON-tier videos (sign-in only, no PatronGr
         delete: vi.fn(),
       },
       commentReport: {
+        count: vi.fn().mockResolvedValue(1),
         createMany: vi.fn().mockResolvedValue({ count: 1 }),
         deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
         updateMany: vi.fn().mockResolvedValue({ count: 0 }),
@@ -206,7 +207,7 @@ describe('Comments write access on PATRON-tier videos (sign-in only, no PatronGr
 
     expect(result.ok).toBe(true);
     expect(mockPrisma.patronGrant.findMany).not.toHaveBeenCalled();
-    expect(mockPrisma.commentReaction.create).toHaveBeenCalled();
+    expect(mockPrisma.commentReaction.createMany).toHaveBeenCalled();
   });
 
   it('denies comment reactions for a deleted local user, even on a PATRON-tier video', async () => {
@@ -222,7 +223,7 @@ describe('Comments write access on PATRON-tier videos (sign-in only, no PatronGr
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.type).toBe('FORBIDDEN');
     expect(mockPrisma.patronGrant.findMany).not.toHaveBeenCalled();
-    expect(mockPrisma.commentReaction.create).not.toHaveBeenCalled();
+    expect(mockPrisma.commentReaction.createMany).not.toHaveBeenCalled();
   });
 
   it('allows any signed-in user to react to a PATRON-tier video itself, with no PatronGrant lookup', async () => {
@@ -238,7 +239,7 @@ describe('Comments write access on PATRON-tier videos (sign-in only, no PatronGr
 
     expect(result.ok).toBe(true);
     expect(mockPrisma.patronGrant.findMany).not.toHaveBeenCalled();
-    expect(mockPrisma.videoLike.create).toHaveBeenCalled();
+    expect(mockPrisma.videoLike.createMany).toHaveBeenCalled();
   });
 
   it('keeps patron-only comments readable for guests while denying guest comment creation', async () => {
@@ -294,7 +295,7 @@ describe('Comments write access on PATRON-tier videos (sign-in only, no PatronGr
 
     expect(reactionResult.ok).toBe(false);
     if (!reactionResult.ok) expect(reactionResult.error.type).toBe('UNAUTHORIZED');
-    expect(mockPrisma.commentReaction.create).not.toHaveBeenCalled();
+    expect(mockPrisma.commentReaction.createMany).not.toHaveBeenCalled();
   });
 
   it('keeps patron-only comments readable for guests while denying guest reports', async () => {
@@ -321,7 +322,7 @@ describe('Comments write access on PATRON-tier videos (sign-in only, no PatronGr
 
     expect(reportResult.ok).toBe(false);
     if (!reportResult.ok) expect(reportResult.error.type).toBe('UNAUTHORIZED');
-    expect(mockPrisma.commentReport.create).not.toHaveBeenCalled();
+    expect(mockPrisma.commentReport.createMany).not.toHaveBeenCalled();
   });
 
   it('lets any signed-in user read, comment on, react to, and report patron-only comments', async () => {
@@ -361,8 +362,8 @@ describe('Comments write access on PATRON-tier videos (sign-in only, no PatronGr
     expect(reactionResult.ok).toBe(true);
     expect(reportResult.ok).toBe(true);
     expect(mockPrisma.patronGrant.findMany).not.toHaveBeenCalled();
-    expect(mockPrisma.commentReaction.create).toHaveBeenCalled();
-    expect(mockPrisma.commentReport.create).toHaveBeenCalled();
+    expect(mockPrisma.commentReaction.createMany).toHaveBeenCalled();
+    expect(mockPrisma.commentReport.createMany).toHaveBeenCalled();
   });
 
   it('only shows the decorative PATRON badge when the author has an active PatronGrant, independent of write access', async () => {
@@ -425,8 +426,8 @@ describe('Comments write access on PATRON-tier videos (sign-in only, no PatronGr
     expect(reportResult.ok).toBe(true);
     expect(mockPrisma.patronGrant.findMany).not.toHaveBeenCalled();
     expect(mockPrisma.comment.create).toHaveBeenCalled();
-    expect(mockPrisma.commentReaction.create).toHaveBeenCalled();
-    expect(mockPrisma.commentReport.create).toHaveBeenCalled();
+    expect(mockPrisma.commentReaction.createMany).toHaveBeenCalled();
+    expect(mockPrisma.commentReport.createMany).toHaveBeenCalled();
   });
 
   it('keeps admin comment creation behavior unchanged without any PatronGrant lookup', async () => {

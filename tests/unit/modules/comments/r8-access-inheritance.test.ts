@@ -145,7 +145,7 @@ describe('R8 Comments Access and Permissions', () => {
     });
 
     it('blocks non-patron from liking a comment on patron-only video', async () => {
-      mockPrisma.comment.findUnique.mockResolvedValue({ id: 'c1', videoId });
+      mockPrisma.comment.findUnique.mockResolvedValue({ id: 'c1', videoId, status: CommentStatus.VISIBLE, author: { isDeleted: false } });
       const result = await setCommentReaction({ commentId: 'c1', reaction: 'LIKE' }, createCtx({ type: 'user', userId }));
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.error.type).toBe('FORBIDDEN');

@@ -44,15 +44,14 @@ const noop = () => {};
 function CommentThreadComponent({ videoId, comment, isReactionPending, onReply, onPin, ...shared }: CommentThreadProps) {
   const [expanded, setExpanded] = useState(false);
   const repliesQuery = useCommentReplies(videoId, comment.id, expanded);
-  const preview = comment.repliesPreview ?? [];
-
   const replies = useMemo(() => {
+    const preview = comment.repliesPreview ?? [];
     const loaded = repliesQuery.data?.pages.flatMap((page) => page.replies) ?? [];
     if (!expanded || loaded.length === 0) return preview;
     // Replies posted after the thread was loaded live in the preview until the next refetch.
     const loadedIds = new Set(loaded.map((reply) => reply.id));
     return [...loaded, ...preview.filter((reply) => !loadedIds.has(reply.id))];
-  }, [expanded, repliesQuery.data, preview]);
+  }, [expanded, repliesQuery.data, comment.repliesPreview]);
 
   const remaining = Math.max(0, comment.repliesCount - replies.length);
   const canShowMore = expanded ? !!repliesQuery.hasNextPage || (repliesQuery.isError && remaining > 0) : remaining > 0;

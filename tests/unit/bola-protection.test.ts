@@ -9,7 +9,8 @@ vi.mock('@/lib/api/auth', () => ({
   getActorFromAuth: vi.fn(),
 }));
 
-vi.mock('@/lib/modules/comments', () => ({
+vi.mock('@/lib/modules/comments', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/modules/comments')>()),
   updateComment: vi.fn(),
   deleteComment: vi.fn(),
 }));

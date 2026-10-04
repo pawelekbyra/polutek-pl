@@ -180,7 +180,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   }, []);
 
   const scrollBehavior = (): ScrollBehavior =>
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
 
   const scrollToCommentsTop = useCallback(() => {
     commentsTopRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
