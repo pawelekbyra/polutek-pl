@@ -69,3 +69,36 @@ export function switchLocalePath(pathname: string, targetLocale: Locale): string
 export function getRouteLocaleFromPathname(pathname: string): Locale | null {
   return normalizeLocale(pathname.split("/").filter(Boolean)[0]);
 }
+
+/**
+ * Request header the proxy (middleware.ts) sets to the locale written in the URL ("/pl/...",
+ * "/en/..."), and strips otherwise, so the root layout knows which version the page renders.
+ * Bare paths ("/", "/regulamin", ...) carry no header: their language is negotiated.
+ */
+export const ROUTE_LOCALE_HEADER = "x-pp-route-locale";
+
+/**
+ * Path that names its language explicitly: "/pl/..." for Polish, "/en/..." for English. The bare
+ * Polish paths of `getLocalizedHref` are served in the viewer's negotiated language, so search
+ * engines (canonical, hreflang, sitemap) and server redirects that must never land on the bare
+ * path again use this form.
+ */
+export function getExplicitLocaleHref(locale: Locale, routeKey: RouteKey, params: RouteParams = {}): string {
+  const href = getLocalizedHref(locale, routeKey, params);
+  if (getRouteLocaleFromPathname(href) === locale) return href;
+  return href === "/" ? `/${locale}` : `/${locale}${href}`;
+}
+
+/**
+ * Canonical URL and hreflang map of one page (absolute when `baseUrl` is given): each language at
+ * its explicit URL, and `x-default` (any other language) on English, the language such visitors
+ * get anyway (lib/i18n/server-language.ts).
+ */
+export function getLocaleAlternates(
+  locale: Locale,
+  routeKey: RouteKey,
+  { params = {}, query = "", baseUrl = "" }: { params?: RouteParams; query?: string | URLSearchParams; baseUrl?: string } = {},
+) {
+  const url = (target: Locale) => `${baseUrl}${appendQueryString(getExplicitLocaleHref(target, routeKey, params), query)}`;
+  return { canonical: url(locale), languages: { pl: url("pl"), en: url("en"), "x-default": url("en") } };
+}

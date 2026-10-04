@@ -141,3 +141,20 @@ describe("proxy: admin and account mutations", () => {
     expect(response.headers.get("retry-after")).toBe("7");
   });
 });
+
+describe("proxy: locale written in the URL (for <html lang>)", () => {
+  const forwarded = (response: Response) => response.headers.get("x-middleware-request-x-pp-route-locale");
+
+  it.each([["/en", "en"], ["/en/watch/some-video", "en"], ["/pl", "pl"], ["/pl/regulamin", "pl"]])(
+    "passes %s on as %s",
+    async (path, locale) => {
+      expect(forwarded(await middleware(request(path)))).toBe(locale);
+    },
+  );
+
+  it("passes nothing on for a bare path, whose language is negotiated, and drops a client-sent value", async () => {
+    const response = await middleware(request("/", { headers: { "x-pp-route-locale": "en" } }));
+    expect(response.headers.get("x-middleware-rewrite")).toContain("/pl");
+    expect(forwarded(response)).toBeNull();
+  });
+});

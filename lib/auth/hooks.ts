@@ -5,6 +5,7 @@ import { logger } from "@/lib/logger";
 import { DEFAULT_AVATAR_URL } from "@/lib/auth/avatar";
 import { validateNickname } from "@/lib/auth/nickname";
 import { LEGAL_DOCUMENTS_VERSION } from "@/lib/legal/version";
+import { isLocale } from "@/lib/i18n/routing";
 import { recordAuthAudit } from "./audit";
 import { checkSensitiveReauth } from "./reauth";
 import {
@@ -63,8 +64,10 @@ export async function beforeUserCreate(user: NewUser, ctx: HookCtx) {
   };
 
   if (ctx?.path === "/sign-up/email" || ctx?.path === PASSKEY_PATHS.register) {
-    // E-mail sign-up and passkey-first sign-up (whose language comes from the sign-up token).
+    // E-mail sign-up and passkey-first sign-up (whose language comes from the sign-up token). The
+    // language field is client input, so only a real locale is kept; otherwise the site's cookie.
     data.name = placeholderNameFromEmail(user.email);
+    data.language = isLocale(user.language) ? user.language : readLanguageCookie(ctx);
   } else {
     // Google (redirect or One Tap): the provider name is only a placeholder as well.
     data.language = readLanguageCookie(ctx);

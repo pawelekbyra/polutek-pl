@@ -5,6 +5,7 @@ import { SESSION_COOKIE_PREFIX } from "@/lib/auth/config";
 import { generateCSP } from "@/lib/utils/security";
 import { checkAdminCsrf } from "@/lib/api/csrf";
 import { checkAdminRateLimit, getAdminClientIp } from "@/lib/api/admin-rate-limit";
+import { getRouteLocaleFromPathname, ROUTE_LOCALE_HEADER } from "@/lib/i18n/routing";
 
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -200,6 +201,11 @@ export default async function middleware(req: NextRequest) {
   const requestId = crypto.randomUUID();
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set('x-request-id', requestId);
+  // The locale written in the URL, for <html lang> (lib/i18n/server-language.ts). Set only by this
+  // proxy: a value sent by the client is dropped.
+  const routeLocale = getRouteLocaleFromPathname(req.nextUrl.pathname);
+  if (routeLocale) requestHeaders.set(ROUTE_LOCALE_HEADER, routeLocale);
+  else requestHeaders.delete(ROUTE_LOCALE_HEADER);
 
   // Bare paths ("/", "/regulamin", ...) are served from their /pl counterpart. The rewrite happens
   // here, after the gates above, so a rewritten page gets the same session gate, request id and

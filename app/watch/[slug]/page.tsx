@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { resolveInitialLanguage } from "@/lib/i18n/server-language";
-import { appendQueryString, getLocalizedHref } from "@/lib/i18n/routing";
+import { appendQueryString, getExplicitLocaleHref } from "@/lib/i18n/routing";
 
 export const dynamic = "force-dynamic";
 
@@ -11,5 +11,5 @@ export default async function LegacyWatchRedirect(props: { params: Promise<{ slu
     if (Array.isArray(value)) value.forEach((item) => query.append(key, item));
     else if (value) query.set(key, value);
   }
-  redirect(appendQueryString(getLocalizedHref(locale, "watch", { slug }), query));
+  redirect(appendQueryString(getExplicitLocaleHref(locale, "watch", { slug }), query));
 }

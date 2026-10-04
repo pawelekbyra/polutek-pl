@@ -2,12 +2,11 @@
 
 import { logger } from "@/lib/logger";
 import { useLanguage } from "../LanguageContext";
-import { updateUserLanguage } from "@/lib/actions/user";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useRef, useState } from "react";
 import UnsubscribedEmailConsentPrompt from "../subscriptions/UnsubscribedEmailConsentPrompt";
-import { useUser } from "@/lib/auth/react";
+import { refreshSession, useUser } from "@/lib/auth/react";
 
 /**
  * App-wide reactions to the session: refresh server-rendered state on a live sign-in/sign-out,
@@ -50,18 +49,29 @@ export default function AuthLifecycleProvider({ children }: { children: React.Re
   // Saved preference -> UI, once per login.
   useEffect(() => {
     if (isLoaded && user && isInitialized && !syncedOnce) {
-      if (user.language !== language) setLanguage(user.language, true);
+      if (user.language !== language) setLanguage(user.language);
       setPersistedLanguage(user.language);
       setSyncedOnce(true);
     }
   }, [user, isLoaded, isInitialized, language, setLanguage, syncedOnce]);
 
-  // UI -> saved preference, only when the language actually changes after the first sync.
+  // UI -> saved preference, only when the language actually changes after the first sync. This is
+  // the one place a signed-in viewer's choice is saved, whichever control changed it (navbar,
+  // sign-in or first-sign-in dialog, account window). The session is re-read afterwards: its
+  // cookie cache would otherwise hand the old language back to the sync above on the next load.
   useEffect(() => {
     if (!isLoaded || !user || !isInitialized || !syncedOnce) return;
     if (language === persistedLanguage) return;
-    updateUserLanguage(language)
-      .then(() => setPersistedLanguage(language))
+    fetch("/api/user/language", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ language }),
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        setPersistedLanguage(language);
+        await refreshSession();
+      })
       .catch((err) => logger.warn("[AuthLifecycleProvider] Failed to persist language choice:", err));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language, syncedOnce]);
