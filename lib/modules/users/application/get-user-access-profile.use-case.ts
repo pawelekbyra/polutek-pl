@@ -6,7 +6,6 @@ export interface UserAccessProfileDto {
   id: string;
   email: string | null;
   role: SystemRole;
-  isPatron: boolean;
   isAdmin: boolean;
   isDeleted: boolean;
   language: string | null;
@@ -14,7 +13,8 @@ export interface UserAccessProfileDto {
 
 /**
  * getUserAccessProfile provides a standardized read model for access decisions.
- * It strictly reads from the local database (source of truth).
+ * It strictly reads from the local database (source of truth). Whether the user ever tipped is
+ * deliberately not part of it: access never depends on payments.
  */
 export async function getUserAccessProfile(
   ctx: AppContext,
@@ -25,13 +25,10 @@ export async function getUserAccessProfile(
 
   if (!user) return null;
 
-  const hasActivePatronGrant = await repository.hasActivePatronGrant(user.id);
-
   return {
     id: user.id,
     email: user.email,
     role: user.role,
-    isPatron: hasActivePatronGrant,
     isAdmin: user.role === SystemRole.ADMIN,
     isDeleted: user.isDeleted,
     language: user.language,

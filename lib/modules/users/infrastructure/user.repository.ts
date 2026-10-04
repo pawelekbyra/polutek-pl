@@ -78,15 +78,6 @@ export class UserRepository {
     });
   }
 
-  async hasActivePatronGrant(userId: string): Promise<boolean> {
-    const grant = await (this.db as PrismaClient).patronGrant.findFirst({
-      where: { userId, revokedAt: null },
-      select: { id: true },
-    });
-
-    return grant !== null;
-  }
-
   async create(data: any) {
       return await this.user.create({ data });
   }

@@ -215,7 +215,7 @@ prisma/
 
 ### 4.1 Patron Status Source of Truth
 
-**`PatronGrant` table is the sole source of patron/supporter bookkeeping** and **never gates video access** (see §4.4). Owner decision 2026-10-03, "wpłacił = patron": **every** successful tip marks the payer (no amount threshold); one active STRIPE_TIP grant per user is enough. A refund or dispute of one tip removes the marker only when no other paid, not fully refunded tip remains (`lib/modules/payments/application/supporter-grant.ts`); ADMIN/LEGACY/MIGRATION grants are never revoked there. A revocation writes `revokedAt`/`revokeReason`/`revokedById`, never the grant's own `reason`. Any "is this user a supporter" read (admin diagnostics, email audience, decorative UI badges) queries:
+**`PatronGrant` table is the sole source of patron/supporter bookkeeping** and **never gates video access** (see §4.4). Owner decision 2026-10-03, "wpłacił = patron": **every** successful tip marks the payer (no amount threshold); one active STRIPE_TIP grant per user is enough. A refund or dispute of one tip removes the marker only when no other paid, not fully refunded tip remains (`lib/modules/payments/application/supporter-grant.ts`); ADMIN/LEGACY/MIGRATION grants are never revoked there. A revocation writes `revokedAt`/`revokeReason`/`revokedById`, never the grant's own `reason`. Owner decision 2026-10-04: a tip gives **no public benefit, not even a badge**; supporter status is visible only to the admin (the payer only sees the thank-you after their own tip). Never put it in public DTOs, `/api/user/profile`, the sidebar layout (`viewerState` has no PATRON) or UI copy. Admin reads (diagnostics, filters, email audience) query:
 
 ```prisma
 patronGrants: { some: { revokedAt: null } }

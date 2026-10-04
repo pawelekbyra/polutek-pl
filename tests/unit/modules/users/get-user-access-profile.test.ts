@@ -8,7 +8,6 @@ vi.mock('@/lib/modules/users/infrastructure/user.repository', () => {
     UserRepository.prototype.findById = vi.fn();
     UserRepository.prototype.create = vi.fn();
     UserRepository.prototype.update = vi.fn();
-    UserRepository.prototype.hasActivePatronGrant = vi.fn();
     return { UserRepository };
 });
 
@@ -30,7 +29,6 @@ describe('getUserAccessProfile Use Case', () => {
         language: 'pl'
     };
     vi.mocked(UserRepository.prototype.findById).mockResolvedValue(dbUser as any);
-    vi.mocked(UserRepository.prototype.hasActivePatronGrant).mockResolvedValue(true);
 
     const result = await getUserAccessProfile(ctx, 'u1');
 
@@ -38,7 +36,6 @@ describe('getUserAccessProfile Use Case', () => {
         id: 'u1',
         email: 'test@example.com',
         role: 'USER',
-        isPatron: true,
         isAdmin: false,
         isDeleted: false,
         language: 'pl'
@@ -46,7 +43,7 @@ describe('getUserAccessProfile Use Case', () => {
   });
 
 
-  it('returns non-patron when user cache is true but active PatronGrant is missing', async () => {
+  it('never carries whether the user tipped, even with a legacy cache field set', async () => {
     vi.mocked(UserRepository.prototype.findById).mockResolvedValue({
       id: 'u-cache',
       email: 'cache@example.com',
@@ -55,11 +52,10 @@ describe('getUserAccessProfile Use Case', () => {
       isDeleted: false,
       language: 'pl',
     } as any);
-    vi.mocked(UserRepository.prototype.hasActivePatronGrant).mockResolvedValue(false);
 
     const result = await getUserAccessProfile(ctx, 'u-cache');
 
-    expect(result?.isPatron).toBe(false);
+    expect(result).not.toHaveProperty('isPatron');
   });
 
   it('returns null for missing user', async () => {
@@ -70,7 +66,6 @@ describe('getUserAccessProfile Use Case', () => {
 
   it('correctly identifies deleted user', async () => {
     vi.mocked(UserRepository.prototype.findById).mockResolvedValue({ id: 'u3', isDeleted: true, role: 'USER' } as any);
-    vi.mocked(UserRepository.prototype.hasActivePatronGrant).mockResolvedValue(false);
     const result = await getUserAccessProfile(ctx, 'u3');
     expect(result?.isDeleted).toBe(true);
   });

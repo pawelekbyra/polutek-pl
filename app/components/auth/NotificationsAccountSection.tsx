@@ -81,7 +81,7 @@ export function NotificationsSection({ isPl }: { isPl: boolean }) {
           : "Choose which in-app notifications you want to receive."}
       </p>
       <ToggleRow
-        label={isPl ? "Status Patrona" : "Patron status"}
+        label={isPl ? "Podziękowania za wsparcie" : "Thanks for your support"}
         checked={prefs.patronEnabled}
         onChange={(v) => update({ patronEnabled: v })}
       />

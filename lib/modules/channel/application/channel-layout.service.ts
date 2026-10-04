@@ -7,7 +7,8 @@ import { resolvePublicThumbnailSrc } from '@/lib/modules/media';
 // Deep import allowlisted in scripts/check-architecture.ts (pure helper).
 import { effectivePublishedAt, isUpcomingPremiere, toPremiereDate } from '@/lib/modules/video/domain/premiere';
 
-export type SidebarViewerState = "ANONYMOUS" | "LOGGED_IN" | "PATRON" | "ADMIN";
+// Whether someone tipped never reaches public data (owner decision 2026-10-04): no PATRON state.
+export type SidebarViewerState = "ANONYMOUS" | "LOGGED_IN" | "ADMIN";
 
 export type SidebarItem = {
     id: string;
@@ -49,18 +50,9 @@ export class ChannelLayoutService {
         if (userId) {
             const user = await prisma.user.findUnique({
                 where: { id: userId },
-                select: {
-                    role: true,
-                    patronGrants: {
-                        where: { revokedAt: null },
-                        select: { id: true },
-                        take: 1,
-                    },
-                },
+                select: { role: true },
             });
-            if (user?.role === 'ADMIN') viewerState = "ADMIN";
-            else if ((user?.patronGrants?.length ?? 0) > 0) viewerState = "PATRON";
-            else viewerState = "LOGGED_IN";
+            viewerState = user?.role === 'ADMIN' ? "ADMIN" : "LOGGED_IN";
         }
 
         const mainChannel = await MainChannelService.getRequired(createAppContext()).catch(() => null);

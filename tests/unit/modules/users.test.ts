@@ -31,7 +31,6 @@ describe('Users Module', () => {
       id: 'user_123',
       email: undefined,
       role: 'USER',
-      isPatron: true,
       isAdmin: false,
       isDeleted: false,
       language: undefined,
@@ -178,7 +177,9 @@ describe('Users Module', () => {
 
       const ctx = createAppContext({ prisma: mockPrisma, actor: { type: 'user', userId: 'user_1' } });
       const profile = await GetUserProfileUseCase.execute(ctx, 'user_1');
-      expect(profile?.hasActivePatronGrant).toBe(true);
+      // Whether the user tipped is never part of their profile (owner decision 2026-10-04).
+      expect(profile).not.toHaveProperty('hasActivePatronGrant');
+      expect(profile).not.toHaveProperty('isPatron');
 
       expect(profile).toBeDefined();
       expect(profile?.id).toBe('user_1');

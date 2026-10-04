@@ -14,7 +14,7 @@ export type SidebarLayoutSection = {
 };
 
 export type SidebarLayout = {
-  viewerState: "ANONYMOUS" | "LOGGED_IN" | "PATRON" | "ADMIN";
+  viewerState: "ANONYMOUS" | "LOGGED_IN" | "ADMIN";
   sections: SidebarLayoutSection[];
   currentVideoId?: string;
 };

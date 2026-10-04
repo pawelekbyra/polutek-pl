@@ -10,8 +10,6 @@ export interface UserProfileDTO {
   language: string;
   isDeleted: boolean;
   createdAt: Date;
-  /** Decorative badge only (CLAUDE.md 4.1); access never depends on it. */
-  hasActivePatronGrant: boolean;
 }
 
 export class GetUserProfileUseCase {
@@ -27,11 +25,6 @@ export class GetUserProfileUseCase {
        return null;
     }
 
-    const activeGrant = await ctx.prisma.patronGrant.findFirst({
-      where: { userId: user.id, revokedAt: null },
-      select: { id: true },
-    });
-
     return {
       id: user.id,
       name: user.name,
@@ -40,7 +33,6 @@ export class GetUserProfileUseCase {
       language: user.language || 'pl',
       isDeleted: user.isDeleted,
       createdAt: user.createdAt,
-      hasActivePatronGrant: Boolean(activeGrant),
     };
   }
 }

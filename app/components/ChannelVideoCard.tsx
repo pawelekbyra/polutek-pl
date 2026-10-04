@@ -16,7 +16,6 @@ import { getLocalizedHref, appendQueryString } from "@/lib/i18n/routing";
 interface ChannelVideoCardProps {
   video: PublicVideoDTO;
   isLoggedIn: boolean;
-  isPatron?: boolean;
   role?: string;
   /** Position in the grid, used for a staggered mount-in animation. Optional so callers that don't care about ordering can omit it. */
   index?: number;
@@ -34,7 +33,6 @@ function getViewsLabel(count: number, language: string) {
 export default function ChannelVideoCard({
   video,
   isLoggedIn,
-  isPatron: propIsPatron,
   role,
   index = 0,
 }: ChannelVideoCardProps) {
