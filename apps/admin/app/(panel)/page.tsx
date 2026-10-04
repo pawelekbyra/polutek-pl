@@ -7,6 +7,7 @@ import {
   fmtRelative,
   fmtTime,
   getTodayOverview,
+  getServerHeadroom,
   parseCompare,
   parseRange,
   type EncodeJobDto,
@@ -18,8 +19,11 @@ import { Icon } from "@admin/components/icons";
 import { RefreshButton } from "@admin/components/refresh-button";
 import { Age, Badge, Card, Check, Delta, Empty, ExternalLink, Meter, PageHead, Tile } from "@admin/components/ui";
 import { overviewDeps } from "@admin/lib/overview";
+import { ServerHeadroomCard } from "@admin/components/server-headroom";
 
 export const metadata: Metadata = { title: "Dzisiaj" };
+
+const LOAD_TEST_DOC = "https://github.com/pawelekbyra/polutek-pl/blob/main/docs/operations/LOAD-TEST.md";
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -70,7 +74,8 @@ export default async function TodayPage({ searchParams }: Props) {
   const sp = await searchParams;
   const range = parseRange(one(sp.range));
   const compare = parseCompare(one(sp.cmp));
-  const o = await getTodayOverview(overviewDeps(), { range, compare });
+  const deps = overviewDeps();
+  const [o, headroom] = await Promise.all([getTodayOverview(deps, { range, compare }), getServerHeadroom(deps)]);
   const now = new Date(o.generatedAt);
   const ctx = compare === "none" ? "" : o.compareLabel;
   const rank: Record<StateKind, number> = { crit: 0, warn: 1, info: 2, ok: 3 };
@@ -171,6 +176,7 @@ export default async function TodayPage({ searchParams }: Props) {
         </div>
 
         <div className="span-4 stack">
+          <ServerHeadroomCard h={headroom} compact loadTestHref={LOAD_TEST_DOC} />
           <Card id="h-limits" title="Limity serwera" meta={o.limits[0] ? <Age at={o.limits[0].measuredAt} everyMin={1} source={o.limits[0].source} now={now} /> : null}>
             {o.limits.map((l) => (
               <div className="limit" key={l.id}>

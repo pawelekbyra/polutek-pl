@@ -8,13 +8,18 @@ import {
   fmtOne,
   fmtPercent,
   fmtRelative,
+  getServerHeadroom,
   getSystemOverview,
+  type ServerHeadroom,
   type SystemOverview,
 } from "@/lib/modules/admin-overview";
 import { Icon } from "@admin/components/icons";
 import { RefreshButton } from "@admin/components/refresh-button";
 import { Age, Badge, Card, Empty, ExternalLink, Meter, PageHead, State, Tile } from "@admin/components/ui";
 import { overviewDeps } from "@admin/lib/overview";
+import { ServerHeadroomCard } from "@admin/components/server-headroom";
+
+const LOAD_TEST_DOC = "https://github.com/pawelekbyra/polutek-pl/blob/main/docs/operations/LOAD-TEST.md";
 
 export const metadata: Metadata = { title: "System" };
 
@@ -117,7 +122,7 @@ function HealthTab({ s, now }: { s: SystemOverview; now: Date }) {
   );
 }
 
-function ServerTab({ s, now }: { s: SystemOverview; now: Date }) {
+function ServerTab({ s, now, headroom }: { s: SystemOverview; now: Date; headroom: ServerHeadroom }) {
   const h = s.host;
   const p = s.process;
   return (
@@ -141,6 +146,9 @@ function ServerTab({ s, now }: { s: SystemOverview; now: Date }) {
             <Unavailable reason={h.reason} source={h.source} />
           </Card>
         )}
+      </div>
+      <div className="span-12">
+        <ServerHeadroomCard h={headroom} loadTestHref={LOAD_TEST_DOC} />
       </div>
       <div className="span-8">
         <Card
@@ -363,7 +371,8 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 export default async function SystemPage({ searchParams }: Props) {
   const raw = (await searchParams).tab;
   const tab: Tab = (TABS.find(([id]) => id === (Array.isArray(raw) ? raw[0] : raw))?.[0] ?? "zdrowie") as Tab;
-  const s = await getSystemOverview(overviewDeps());
+  const deps = overviewDeps();
+  const [s, headroom] = await Promise.all([getSystemOverview(deps), getServerHeadroom(deps)]);
   const now = new Date(s.generatedAt);
   const problems = s.health.counts.warn + s.health.counts.crit;
   return (
@@ -382,7 +391,7 @@ export default async function SystemPage({ searchParams }: Props) {
           </Link>
         ))}
       </nav>
-      {tab === "zdrowie" ? <HealthTab s={s} now={now} /> : tab === "serwer" ? <ServerTab s={s} now={now} /> : tab === "zadania" ? <JobsTab s={s} now={now} /> : <DomainsTab s={s} />}
+      {tab === "zdrowie" ? <HealthTab s={s} now={now} /> : tab === "serwer" ? <ServerTab s={s} now={now} headroom={headroom} /> : tab === "zadania" ? <JobsTab s={s} now={now} /> : <DomainsTab s={s} />}
     </>
   );
 }

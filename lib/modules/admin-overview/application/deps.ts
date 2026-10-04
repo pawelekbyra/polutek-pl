@@ -3,6 +3,7 @@ import type { HostMetricsDto, ProcessMetricsDto } from "../domain/types";
 import { readHostMetrics, readProcessMetrics } from "../infrastructure/host-metrics";
 import { readHostStatus, type HostStatusRead } from "../infrastructure/host-status-file";
 import { cachedProbe, probeHlsWorker, probePublicApp, probeRedis, type ProbeResult } from "../infrastructure/probes";
+import { readTelemetryPeaks, type TelemetryPeaksRead } from "../infrastructure/telemetry-peaks";
 import { PrismaOverviewRepository, type OverviewRepository } from "../infrastructure/overview.repository";
 
 /** Everything the overview use cases read, injectable so tests run without a database or network. */
@@ -18,6 +19,8 @@ export type OverviewDeps = {
     redis: () => Promise<ProbeResult | null>;
     hlsWorker: () => Promise<ProbeResult | null>;
   };
+  /** Traffic peaks from telemetry (read-only role). Absent or null = not configured here. */
+  telemetry?: () => Promise<TelemetryPeaksRead | null>;
   /** Absolute link into the old /admin on www (phase 1 shows; actions move in phase 4). */
   oldPanel: (path: string) => string;
 };
@@ -30,6 +33,7 @@ export function createOverviewDeps(ctx: AppContext, env: Env = process.env): Ove
   const kvUrl = env.KV_REST_API_URL?.trim() || env.UPSTASH_REDIS_REST_URL?.trim();
   const kvToken = env.KV_REST_API_TOKEN?.trim() || env.UPSTASH_REDIS_REST_TOKEN?.trim();
   const hlsBase = env.HLS_DELIVERY_BASE_URL?.trim();
+  const telemetryUrl = env.ADMIN_TELEMETRY_DATABASE_URL?.trim();
   return {
     repo: new PrismaOverviewRepository(ctx.prisma),
     now: ctx.now,
@@ -41,6 +45,7 @@ export function createOverviewDeps(ctx: AppContext, env: Env = process.env): Ove
       redis: async () => (kvUrl && kvToken ? cachedProbe("redis", () => probeRedis(kvUrl, kvToken)) : null),
       hlsWorker: async () => (hlsBase ? cachedProbe("hls", () => probeHlsWorker(hlsBase)) : null),
     },
+    telemetry: async () => (telemetryUrl ? readTelemetryPeaks(telemetryUrl, ctx.now()) : null),
     oldPanel: (path: string) => `${publicBase}${path.startsWith("/") ? path : `/${path}`}`,
   };
 }

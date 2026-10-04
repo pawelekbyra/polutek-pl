@@ -103,6 +103,7 @@
           </div>
         </div>
         <div class="span-4 stack">
+          ${PP.headroomCard(true)}
           ${card({ hid: "h-limits", title: "Limity dziś", body: limits })}
           ${card({ hid: "h-now", title: "Teraz na stronie", meta: `<span class="age">${icon("clock")}ostatnie 5 min</span>`, body: `<div class="row" style="gap:24px;margin-bottom:12px"><div><div class="hero-num">${PP.live.online}</div><div class="muted">osób na stronie</div></div><div><div class="hero-num">${PP.live.watching}</div><div class="muted">ogląda film</div></div></div>${C.barList(PP.live.perVideo, { noPct: true })}<p class="limit-note" style="margin-top:8px">czas startu p95 1,4 s · 0 błędów odtwarzania</p>` })}
           ${card({ hid: "h-system", title: "Stan systemu", meta: `<a href="${href("system")}">Wszystkie ${icon("right")}</a>`, body: checksHtml })}

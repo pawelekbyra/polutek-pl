@@ -189,6 +189,23 @@
     return { title: "Komunikacja", html };
   };
 
+  // „Zapas serwera” (2026-10-05): szczyt odsłon/s z telemetrii wobec granicy z testu obciążenia (LOAD-TEST.md).
+  PP.headroomCard = function (compact) {
+    const { card, badge, state, icon, fmt } = PP.ui;
+    const limit = 16.5, comfy = 8, peak = 61 / 60, usage = peak / limit, pct = Math.round(usage * 100);
+    const kind = usage > 0.8 ? "crit" : usage >= 0.5 ? "warn" : "ok";
+    const word = { ok: "duży zapas", warn: "połowa granicy", crit: "blisko granicy" }[kind];
+    const meter = C.meter({ value: pct, max: 100, label: "Zapas serwera", valueText: "Szczyt 24 h: " + fmt.one(peak) + " wizyt/s z " + fmt.one(limit) + " granicy", warnAt: 50, critAt: 80 });
+    const windows = compact ? "" : `<table class="table table-compact"><caption class="sr-only">Szczyty ruchu</caption><thead><tr><th scope="col">Okno</th><th scope="col" class="num">Najmocniejsza minuta</th><th scope="col" class="num">Najmocniejsza sekunda</th></tr></thead><tbody><tr><th scope="row">1 h</th><td class="num">0,4/s</td><td class="num">2 odsłony</td></tr><tr><th scope="row">24 h</th><td class="num">1,0/s</td><td class="num">4 odsłony</td></tr><tr><th scope="row">7 dni</th><td class="num">1,0/s</td><td class="num">4 odsłony</td></tr></tbody></table><p class="muted">Ostatnie 24 h: 1840 odsłon. Granica odpowiada ok. 594 tys. odsłon dziennie, komfortowo ok. 288 tys. (najgorsza godzina ≈ 10% doby).</p>`;
+    return card({
+      hid: compact ? "h-headroom-c" : "h-headroom",
+      title: "Zapas serwera",
+      meta: badge(kind, "zapas " + (100 - pct) + "%"),
+      body: `<div class="limit-head"><span class="limit-name">Szczyt 24 h: ${fmt.one(peak)} wizyt/s z ${fmt.one(limit)} granicy</span><span class="limit-val">${pct}%</span></div>${meter}<span class="limit-note">${state(kind, word)} · komfortowo do ${comfy}/s (95% wizyt w 250 ms)</span><p class="limit-note">${icon("warn")} Za mało danych: telemetria zbiera od 14 h, pełny obraz po 24 h i 7 dniach.</p><p class="limit-note">Na razie zapas jest duży; przy szczycie powyżej połowy granicy: „Powiększ serwer przed premierą”.</p>${windows}`,
+      foot: `<span class="muted">Hetzner CPX22, pomiar 2026-10-04</span><a href="#">Test obciążenia</a>`,
+    });
+  };
+
   // ======================= SYSTEM =======================
   SC.system = function (r) {
     const tab = r.q.tab || "zdrowie";
@@ -229,6 +246,7 @@
           ${tile({ label: "Dysk", value: "64", unit: "%", delta: `<span class="delta-ctx">46 / 75 GB · pełny za ok. 210 d</span>` })}
           ${tile({ label: "iowait", value: fmt.one(h.iowait), unit: "%", delta: `<span class="delta-ctx">sieć 1,2 MB/s</span>` })}
         </div></div>
+        <div class="span-12">${PP.headroomCard(false)}</div>
         <div class="span-4">${card({ hid: "h-cpu", title: "CPU % (24 h)", meta: age(h.fetchedAt, 1, "pp-collector"), body: mini(h.cpu, "CPU", (v) => fmt.int(v) + "%", 100, "Skok do ok. 85% podczas wdrożenia o 9:41 (budowa obrazu na serwerze), poza tym 5–25%.") })}</div>
         <div class="span-4">${card({ hid: "h-ram", title: "RAM zajęty, MB (24 h)", body: mini(h.ram, "RAM", (v) => fmt.int(v), 4000, "RAM stabilnie 2,0–2,4 GB z 3,8 GB.") })}</div>
         <div class="span-4">${card({ hid: "h-swp", title: "Swap zajęty, MB (24 h)", body: mini(h.swap, "Swap", (v) => fmt.int(v), 4000, "Swap stale ok. 1,4 GB: pamięć po budowach obrazów; sugestia: budować obrazy poza serwerem.") })}</div>

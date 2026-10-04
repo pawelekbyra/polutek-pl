@@ -103,6 +103,11 @@ export function devFixtureDeps(): OverviewDeps {
     host,
     process: async () => ({ rssBytes: 148 * 1024 * 1024, heapUsedBytes: 61 * 1024 * 1024, uptimeSeconds: 5 * 3600, nodeVersion: "v22.20.0", memoryLimitBytes: 384 * 1024 * 1024 }),
     hostStatus: async () => ({ ok: false, reason: "Brak pliku statusu hosta (zadanie host-status nie jest włączone na serwerze)." }),
+    // Telemetry started ~14 h ago: the meter shows its numbers with the honest "less than 24 h" note.
+    telemetry: async () => ({
+      ok: true,
+      peaks: { firstAt: new Date(t.getTime() - 14 * 3600_000).toISOString(), views24h: 1840, peakMinute: { h1: 22, h24: 61, d7: 61 }, peakSecond: { h1: 2, h24: 4, d7: 4 } },
+    }),
     probes: {
       publicApp: async () => ({ ok: true, latencyMs: 41, detail: "HTTP 200", measuredAt: new Date().toISOString() }),
       redis: async () => ({ ok: true, latencyMs: 2, detail: "PONG", measuredAt: new Date().toISOString() }),
