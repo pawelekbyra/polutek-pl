@@ -23,7 +23,7 @@ vi.mock("@/lib/rate-limit", () => ({ rateLimit: h.rateLimit }));
 vi.mock("@/lib/modules/shared/app-context", () => ({ createAppContext: () => ({}) }));
 vi.mock("@/lib/modules/users", () => ({ AccountDeletionCleanupUseCase: { execute: h.execute } }));
 
-import { checkDeletionReauth, isLastAdmin } from "@/lib/auth/reauth";
+import { checkSensitiveReauth, isLastAdmin } from "@/lib/auth/reauth";
 import { DELETE } from "@/app/api/user/account/route";
 
 const NOW = new Date("2026-10-02T12:00:00.000Z");
@@ -34,22 +34,22 @@ beforeEach(() => {
   h.verify.mockResolvedValue(true);
 });
 
-describe("checkDeletionReauth", () => {
+describe("checkSensitiveReauth", () => {
   it("asks a password account for the password and verifies it", async () => {
-    expect(await checkDeletionReauth({ userId: "u1", sessionId: "s1", password: null })).toBe("PASSWORD_REQUIRED");
+    expect(await checkSensitiveReauth({ userId: "u1", sessionId: "s1", password: null })).toBe("PASSWORD_REQUIRED");
     h.verify.mockResolvedValueOnce(false);
-    expect(await checkDeletionReauth({ userId: "u1", sessionId: "s1", password: "nope" })).toBe("INVALID_PASSWORD");
-    expect(await checkDeletionReauth({ userId: "u1", sessionId: "s1", password: "right" })).toBe("ok");
+    expect(await checkSensitiveReauth({ userId: "u1", sessionId: "s1", password: "nope" })).toBe("INVALID_PASSWORD");
+    expect(await checkSensitiveReauth({ userId: "u1", sessionId: "s1", password: "right" })).toBe("ok");
     expect(h.verify).toHaveBeenLastCalledWith({ hash: "hash", password: "right" });
   });
 
   it("lets a Google-only account delete only right after a fresh sign-in", async () => {
     h.prisma.account.findFirst.mockResolvedValue(null);
     h.prisma.session.findUnique.mockResolvedValueOnce({ createdAt: new Date(NOW.getTime() - 5 * 60_000) });
-    expect(await checkDeletionReauth({ userId: "u1", sessionId: "s1", now: NOW })).toBe("ok");
+    expect(await checkSensitiveReauth({ userId: "u1", sessionId: "s1", now: NOW })).toBe("ok");
     h.prisma.session.findUnique.mockResolvedValueOnce({ createdAt: new Date(NOW.getTime() - 3 * 3600_000) });
-    expect(await checkDeletionReauth({ userId: "u1", sessionId: "s1", now: NOW })).toBe("REAUTH_REQUIRED");
-    expect(await checkDeletionReauth({ userId: "u1", sessionId: null, now: NOW })).toBe("REAUTH_REQUIRED");
+    expect(await checkSensitiveReauth({ userId: "u1", sessionId: "s1", now: NOW })).toBe("REAUTH_REQUIRED");
+    expect(await checkSensitiveReauth({ userId: "u1", sessionId: null, now: NOW })).toBe("REAUTH_REQUIRED");
   });
 });
 

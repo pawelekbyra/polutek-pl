@@ -6,7 +6,7 @@ import { logger } from "@/lib/logger";
  * their route (they call the global prisma client directly).
  *
  * - When the caller already knows the admin id, that is used as-is.
- * - Otherwise the admin is re-resolved from the current Clerk session, exactly
+ * - Otherwise the admin is re-resolved from the current session, exactly
  *   like the route's own `requireAdminForApi` did.
  * - If neither works the event is still written, attributed to a system actor
  *   with an explicit reason, so the gap is visible rather than silently lost.

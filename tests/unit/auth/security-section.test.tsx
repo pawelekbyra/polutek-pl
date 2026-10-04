@@ -42,8 +42,7 @@ describe("2FA backup codes (F-08)", () => {
     h.client.twoFactor.generateBackupCodes.mockResolvedValue({ data: { backupCodes: ["aaaa-1111", "bbbb-2222"] }, error: null });
     render(<SecuritySection isPl={false} />);
     const regenerate = await screen.findByRole("button", { name: /generate new backup codes/i });
-    expect((regenerate as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.change(screen.getAllByLabelText("Password")[0], { target: { value: "my password 12345" } });
+    fireEvent.change(screen.getByLabelText("Password for new backup codes"), { target: { value: "my password 12345" } });
     fireEvent.click(regenerate);
     await waitFor(() => expect(h.client.twoFactor.generateBackupCodes).toHaveBeenCalledWith({ password: "my password 12345" }));
     expect(await screen.findByText(/aaaa-1111/)).toBeTruthy();
@@ -56,9 +55,38 @@ describe("2FA backup codes (F-08)", () => {
     h.client.twoFactor.generateBackupCodes.mockResolvedValue({ data: null, error: { code: "INVALID_PASSWORD", status: 400 } });
     render(<SecuritySection isPl={false} />);
     const regenerate = await screen.findByRole("button", { name: /generate new backup codes/i });
-    fireEvent.change(screen.getAllByLabelText("Password")[0], { target: { value: "wrong" } });
+    fireEvent.change(screen.getByLabelText("Password for new backup codes"), { target: { value: "wrong" } });
     fireEvent.click(regenerate);
     expect((await screen.findByRole("alert")).textContent).toBe("Incorrect password.");
+  });
+
+  it("never turns 2FA off when the backup-code password is submitted with Enter (AUTH-13)", async () => {
+    h.client.listAccounts.mockResolvedValue({ data: [{ providerId: "credential" }] });
+    h.client.twoFactor.generateBackupCodes.mockResolvedValue({ data: { backupCodes: ["cccc-3333"] }, error: null });
+    render(<SecuritySection isPl={false} />);
+    const field = await screen.findByLabelText("Password for new backup codes");
+    fireEvent.change(field, { target: { value: "my password 12345" } });
+    fireEvent.submit(field.closest("form")!);
+    await waitFor(() => expect(h.client.twoFactor.generateBackupCodes).toHaveBeenCalled());
+    expect(h.client.twoFactor.disable).not.toHaveBeenCalled();
+    // Turning off has its own password field and button, disabled until that field is filled.
+    const off = screen.getByRole("button", { name: /turn off two-step verification/i }) as HTMLButtonElement;
+    expect(off.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("Password to turn verification off"), { target: { value: "pw for off 12345" } });
+    h.client.twoFactor.disable.mockResolvedValue({ error: null });
+    fireEvent.click(off);
+    await waitFor(() => expect(h.client.twoFactor.disable).toHaveBeenCalledWith({ password: "pw for off 12345" }));
+  });
+
+  it("stops the spinner and says so when the connection drops (AUTH-08)", async () => {
+    h.client.listAccounts.mockResolvedValue({ data: [{ providerId: "credential" }] });
+    h.client.twoFactor.generateBackupCodes.mockRejectedValue(new TypeError("Failed to fetch"));
+    render(<SecuritySection isPl={false} />);
+    const field = await screen.findByLabelText("Password for new backup codes");
+    fireEvent.change(field, { target: { value: "my password 12345" } });
+    fireEvent.click(screen.getByRole("button", { name: /generate new backup codes/i }));
+    expect((await screen.findByRole("alert")).textContent).toContain("Can't reach the server");
+    expect((screen.getByRole("button", { name: /generate new backup codes/i }) as HTMLButtonElement).disabled).toBe(false);
   });
 
   it("explains to Google-only users how to get 2FA", async () => {

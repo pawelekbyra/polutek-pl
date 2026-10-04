@@ -36,15 +36,6 @@ export type CommentView = {
   repliesPreview: CommentView[];
 };
 
-export function getAvatarSeed(comment: CommentView) {
-  return (
-    comment.author?.displayName ||
-    comment.author?.username ||
-    comment.author?.id ||
-    comment.id
-  );
-}
-
 export function isPatronAuthor(author?: CommentAuthorDto | null) {
   return (
     !!author &&

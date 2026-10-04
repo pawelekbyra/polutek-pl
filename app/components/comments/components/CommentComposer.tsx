@@ -128,7 +128,6 @@ export function CommentComposer({
           src={userAvatarUrl}
           alt={userProfile.name || "Avatar"}
           size={40}
-          fallbackSeed={userProfile.id}
           className={cn(
             "mt-1 border border-[var(--chan-line)]",
             isPatronDecorative && "chan-patron-ring",

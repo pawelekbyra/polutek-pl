@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getUserAccessProfile, getActorAccessProfile, updateUserLanguage, GetUserProfileUseCase, SyncCurrentUserUseCase } from '@/lib/modules/users';
+import { getUserAccessProfile, getActorAccessProfile, updateUserLanguage, GetUserProfileUseCase } from '@/lib/modules/users';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { SystemRole } from '@prisma/client';
 
@@ -29,7 +29,6 @@ describe('Users Module', () => {
 
     expect(profile).toEqual({
       id: 'user_123',
-      clerkId: 'user_123',
       email: undefined,
       role: 'USER',
       isPatron: true,
@@ -193,34 +192,6 @@ describe('Users Module', () => {
 
         const profile = await GetUserProfileUseCase.execute(ctx, 'user_1');
         expect(profile).toBeNull();
-    });
-  });
-
-  describe('SyncCurrentUserUseCase', () => {
-    it('returns isPatron from active PatronGrant and ignores user cache or actor claims', async () => {
-      const mockUser = {
-        id: 'user_1',
-        isPatron: false,
-        language: 'en',
-        paymentTotals: [{ amountMinor: 5000, currency: 'PLN' }],
-        patronGrants: [{ id: 'grant_1' }]
-      };
-
-      const mockPrisma = {
-        user: {
-          findUnique: vi.fn().mockResolvedValue(mockUser),
-        },
-      } as any;
-
-      const ctx = createAppContext({
-        prisma: mockPrisma,
-        actor: { type: 'user', userId: 'user_1' }
-      });
-
-      const result = await SyncCurrentUserUseCase.execute(ctx);
-
-      expect(result.isPatron).toBe(true);
-      expect(result.totalPaid).toBe(50); // 5000 / 100
     });
   });
 });

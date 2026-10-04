@@ -3,12 +3,12 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { DEFAULT_AVATAR_URL } from "@/lib/auth/avatar";
 
 interface SafeAvatarProps {
   src?: string | null;
   alt: string;
   size: number;
-  fallbackSeed?: string | null;
   fallbackSrc?: string;
   className?: string;
 }
@@ -17,7 +17,6 @@ export function SafeAvatar({
   src,
   alt,
   size,
-  fallbackSeed,
   fallbackSrc,
   className
 }: SafeAvatarProps) {
@@ -28,8 +27,8 @@ export function SafeAvatar({
     setError(false);
   }, [src]);
 
-  const defaultFallback = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fallbackSeed || alt || "default")}`;
-  const finalFallback = fallbackSrc || defaultFallback;
+  // Our own default avatar (no third-party avatar service: it would receive the seed and is not in the CSP).
+  const finalFallback = fallbackSrc || DEFAULT_AVATAR_URL;
 
   const showFallback = error || !src;
 
@@ -49,7 +48,7 @@ export function SafeAvatar({
         className="object-cover"
         onError={() => setError(true)}
         // Our own avatar route has a version query string and is already a tiny image.
-        unoptimized={(showFallback && finalFallback.includes("dicebear.com")) || (!showFallback && String(src).startsWith("/api/avatars/"))}
+        unoptimized={!showFallback && String(src).startsWith("/api/avatars/")}
       />
     </div>
   );
