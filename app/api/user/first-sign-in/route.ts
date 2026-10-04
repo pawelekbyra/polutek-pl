@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { completeOnboarding } from "@/lib/modules/users";
-import { sendWelcomeEmail } from "@/lib/modules/email";
+import { resolveEmailLanguage, sendWelcomeEmail } from "@/lib/modules/email";
 import { handleApiError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     });
     // Older accounts that are only asked for a (new) nickname were welcomed long ago.
     const isNewAccount = Date.now() - user.createdAt.getTime() < 24 * 60 * 60 * 1000;
-    if (isNewAccount) void sendWelcomeEmail(user.email, user.name, user.language === "pl" ? "pl" : "en").catch((error) => {
+    if (isNewAccount) void sendWelcomeEmail(user.email, resolveEmailLanguage(user.language)).catch((error) => {
       logger.error("[onboarding] welcome email failed", error instanceof Error ? error.message : String(error));
     });
     return NextResponse.json({ success: true, name: user.name });

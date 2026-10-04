@@ -13,21 +13,21 @@ export class InvalidBroadcastPayloadError extends EmailError {
   }
 }
 
-export class InvalidBroadcastAudienceError extends EmailError {
-  constructor(message: string = 'Invalid broadcast audience') {
-    super(message, 400, 'EMAIL_INVALID_AUDIENCE');
-  }
-}
-
-export class TestRecipientRequiredError extends EmailError {
-  constructor(message: string = 'Test recipient email is required for TEST audience') {
-    super(message, 400, 'EMAIL_TEST_RECIPIENT_REQUIRED');
-  }
-}
-
 export class NoRecipientsError extends EmailError {
-  constructor(message: string = 'No recipients found for this audience') {
+  constructor(message: string = 'Nikt nie ma włączonych powiadomień o nowych treściach, więc nie ma do kogo wysłać.') {
     super(message, 400, 'EMAIL_NO_RECIPIENTS');
+  }
+}
+
+export class BroadcastInProgressError extends EmailError {
+  constructor() {
+    super('Poprzednia rozsyłka jeszcze trwa. Poczekaj na jej koniec albo ją anuluj w historii.', 409, 'EMAIL_BROADCAST_IN_PROGRESS');
+  }
+}
+
+export class BroadcastNotFoundError extends EmailError {
+  constructor() {
+    super('Nie ma takiej rozsyłki.', 404, 'EMAIL_BROADCAST_NOT_FOUND');
   }
 }
 
@@ -43,20 +43,23 @@ export class WebhookInvalidPayloadError extends EmailError {
   }
 }
 
-export class WebhookUnsupportedEventError extends EmailError {
-  constructor(message: string = 'Unsupported webhook event type') {
-    super(message, 202, 'EMAIL_WEBHOOK_UNSUPPORTED_EVENT');
-  }
-}
-
 export class EmailTemplateNotFoundError extends EmailError {
   constructor(slug: string) {
     super(`Email template with slug '${slug}' not found`, 404, 'EMAIL_TEMPLATE_NOT_FOUND');
   }
 }
 
-export class SystemTemplateDeleteError extends EmailError {
-  constructor() {
-    super('System templates cannot be deleted', 403, 'EMAIL_SYSTEM_TEMPLATE_DELETE_FORBIDDEN');
+export class InvalidTemplateVariablesError extends EmailError {
+  readonly unknown: string[];
+  readonly missingRequired: string[];
+
+  constructor(problems: { unknown: string[]; missingRequired: string[] }) {
+    const parts = [
+      problems.unknown.length ? `nieznane zmienne: ${problems.unknown.map((k) => `{{${k}}}`).join(', ')}` : '',
+      problems.missingRequired.length ? `brak wymaganych zmiennych: ${problems.missingRequired.map((k) => `{{${k}}}`).join(', ')}` : '',
+    ].filter(Boolean);
+    super(`Szablon ma błędne zmienne (${parts.join('; ')}).`, 400, 'EMAIL_TEMPLATE_INVALID_VARIABLES');
+    this.unknown = problems.unknown;
+    this.missingRequired = problems.missingRequired;
   }
 }

@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/lib/feature-flags', () => ({ flags: { mainCreatorSlug: 'polutek' } }));
 vi.mock('@/lib/prisma', () => ({ prisma: {} }));
 
-import { getEmailFrom } from '@/lib/modules/email/infrastructure/legacy-email-service-provider';
+import { getEmailFrom } from '@/lib/modules/email/infrastructure/resend-email.transport';
 
 describe('email sender display name', () => {
   afterEach(() => {

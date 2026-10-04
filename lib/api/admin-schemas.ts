@@ -23,9 +23,34 @@ export const adminCommentDeleteSchema = z.object({
   reason: z.nativeEnum(CommentDeletedReason).nullish(),
 });
 
-export const adminInboundEmailPatchSchema = z.object({
-  id: z.string().min(1),
-  status: z.enum(["NEW", "READ", "ARCHIVED", "RESOLVED"]),
+const broadcastContentShape = {
+  subjectPl: z.string().trim().min(1).max(200),
+  htmlPl: z.string().min(1).max(100_000),
+  subjectEn: z.string().trim().max(200).nullish(),
+  htmlEn: z.string().max(100_000).nullish(),
+};
+
+/** POST /api/admin/emails/broadcast: create (queue) a broadcast. One audience, no recipient list. */
+export const adminBroadcastCreateSchema = z.object({
+  ...broadcastContentShape,
+  requestKey: z.string().uuid(),
+});
+
+/** POST /api/admin/emails/broadcast/test: a test copy to the signed-in admin's own address. */
+export const adminBroadcastTestSchema = z.object({
+  ...broadcastContentShape,
+  language: z.enum(["pl", "en"]).default("pl"),
+});
+
+/** POST /api/admin/templates. Slug of a system mail (override) or an admin template. */
+export const adminEmailTemplateSchema = z.object({
+  slug: z.string().trim().min(1).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  name: z.string().trim().max(100).nullish(),
+  description: z.string().trim().max(255).nullish(),
+  subject: z.string().trim().min(1).max(150),
+  html: z.string().min(1).max(50_000),
+  subjectEn: z.string().trim().max(150).nullish(),
+  htmlEn: z.string().max(50_000).nullish(),
 });
 
 export const adminNotificationBroadcastSchema = z.object({

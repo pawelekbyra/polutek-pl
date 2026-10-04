@@ -281,6 +281,7 @@ Kroki: build `runner`+`migrator` (pomijany, gdy obrazy tego tagu już są), star
 | `polutek-cron-purge-deleted-comments` | `purge-deleted-comments` | 05:15 (dodany 2026-10-04; skopiować timer na serwerek i `systemctl enable --now`) |
 | `polutek-cron-sync-public-thumbnails` | `sync-public-thumbnails` | 06:00 |
 | `polutek-cron-prune-unverified-accounts` | `prune-unverified-accounts` | 03:30 (dodany w kodzie 2026-10-02; timer trzeba skopiować na serwerek i włączyć: `systemctl enable --now`) |
+| `polutek-cron-send-broadcasts` | `send-broadcasts` | co minutę (kolejka rozsyłek e-mail; pusta kolejka = nic nie robi; dodany w kodzie 2026-10-03, trzeba skopiować i włączyć jak wyżej) |
 
 Instalacja: `install -m755 scripts/serwerek/cron-runner.sh /opt/serwerek/scripts/`; `/etc/serwerek/cron.env` z jedną linią `CRON_SECRET=...` (root, 600; to piąty dozwolony plik z sekretem obok §4); `cp deploy/serwerek/systemd/* /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now polutek-cron-*.timer`. Podgląd: `systemctl list-timers 'polutek-cron-*'`, `journalctl -u 'polutek-cron@*' -n 50`. Po przełączeniu usuń sekcję `crons` z `vercel.json` albo wyłącz projekt Vercel, żeby crony nie szły podwójnie.
 

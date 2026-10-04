@@ -1,0 +1,11 @@
+[Unit]
+Description=polutek cron send-broadcasts, every minute (sends queued admin e-mail broadcasts; idle when the queue is empty)
+
+[Timer]
+OnCalendar=*-*-* *:*:00 UTC
+Persistent=false
+AccuracySec=5s
+Unit=polutek-cron@send-broadcasts.service
+
+[Install]
+WantedBy=timers.target

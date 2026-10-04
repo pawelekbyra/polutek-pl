@@ -1,9 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createHmac } from 'node:crypto';
 import { NextRequest } from 'next/server';
-import { buildContentUnsubscribeUrl, CONTENT_UNSUBSCRIBE_PURPOSE, createContentUnsubscribeToken, verifyContentUnsubscribeToken } from '@/lib/modules/subscriptions/domain/signed-unsubscribe-token';
+import {
+  buildContentUnsubscribeUrl,
+  buildOneClickUnsubscribeUrl,
+  CONTENT_UNSUBSCRIBE_PURPOSE,
+  createContentUnsubscribeToken,
+  verifyContentUnsubscribeToken,
+} from '@/lib/modules/subscriptions/domain/signed-unsubscribe-token';
 import { SignedContentUnsubscribeUseCase } from '@/lib/modules/subscriptions/application/signed-unsubscribe.use-case';
-import { POST } from '@/app/api/subscriptions/unsubscribe/route';
-import { EmailPolicy } from '@/lib/modules/email/domain/email.policy';
+import { GET, POST } from '@/app/api/subscriptions/unsubscribe/route';
 
 vi.mock('@/lib/feature-flags', () => ({ flags: { mainCreatorSlug: 'polutek' } }));
 
@@ -19,7 +25,7 @@ type PreferenceRow = {
   unsubscribedAt: Date | null;
 };
 
-function makeDb(options: { preferences?: PreferenceRow[]; userEmail?: string; failPreferenceUpdate?: boolean; p2002OnFirstUpdate?: boolean } = {}) {
+function makeDb(options: { preferences?: PreferenceRow[]; userEmail?: string; language?: string; failPreferenceUpdate?: boolean; p2002OnFirstUpdate?: boolean } = {}) {
   const preferences: PreferenceRow[] = options.preferences ? options.preferences.map((p) => ({ ...p })) : [];
   let p2002Thrown = false;
 
@@ -52,11 +58,13 @@ function makeDb(options: { preferences?: PreferenceRow[]; userEmail?: string; fa
   });
 
   const tx = {
-    user: { findUnique: vi.fn().mockResolvedValue({ id: 'user_opaque_1', email: options.userEmail ?? 'person@example.com' }) },
-    creator: { findUnique: vi.fn().mockResolvedValue({ id: 'creator_1' }) },
+    user: {
+      findUnique: vi.fn().mockResolvedValue({ id: 'user_opaque_1', email: options.userEmail ?? 'person@example.com', language: options.language ?? 'pl' }),
+    },
+    creator: { findUnique: vi.fn().mockResolvedValue({ id: 'creator_1' }), update: vi.fn().mockResolvedValue({ id: 'creator_1', subscribersCount: 4 }) },
     subscription: {
       deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
-      findUnique: vi.fn().mockResolvedValue({ id: 'sub_1' }),
+      count: vi.fn().mockResolvedValue(4),
     },
     emailPreference: {
       upsert: vi.fn(),
@@ -73,222 +81,195 @@ function makeDb(options: { preferences?: PreferenceRow[]; userEmail?: string; fa
   return { db, tx, preferences };
 }
 
-function makeCtx(db: any, now = new Date('2026-06-14T00:00:00Z')) {
+function makeCtx(db: any) {
   return {
     prisma: db,
     actor: { type: 'guest' as const },
-    now: () => now,
+    now: () => new Date('2026-10-03T00:00:00Z'),
     db: { read: db, writeTransaction: async (fn: any) => db.$transaction(fn) },
   };
 }
 
-describe('signed content unsubscribe flow', () => {
+describe('unsubscribe token', () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
-    process.env = { ...ORIGINAL_ENV, EMAIL_UNSUBSCRIBE_SIGNING_SECRET: SECRET, NEXT_PUBLIC_APP_URL: 'https://polutek.example' };
+    process.env = { ...ORIGINAL_ENV, EMAIL_UNSUBSCRIBE_SIGNING_SECRET: SECRET, NEXT_PUBLIC_APP_URL: 'https://www.pawelperfect.com' };
   });
-
   afterEach(() => {
     process.env = { ...ORIGINAL_ENV };
-    vi.restoreAllMocks();
   });
 
-  it('valid token can render the GET confirmation flow without database or mutation calls', async () => {
-    const token = createContentUnsubscribeToken('user_opaque_1', { now: new Date('2026-06-14T00:00:00Z') })!;
-    const pageSource = await import('node:fs/promises').then(fs => fs.readFile('app/unsubscribe/page.tsx', 'utf8'));
-    expect(pageSource).toContain('method="post"');
-    expect(pageSource).toContain('name="token"');
-    expect(verifyContentUnsubscribeToken(token, { now: new Date('2026-06-14T00:00:01Z') }).ok).toBe(true);
-  });
-
-  it('multiple GET requests remain state-neutral for Subscription and EmailPreference', async () => {
+  it('never expires: a token from a mail sent long ago still works', () => {
     const token = createContentUnsubscribeToken('user_opaque_1')!;
-    const { tx } = makeDb();
-    const pageSource = await import('node:fs/promises').then(fs => fs.readFile('app/unsubscribe/page.tsx', 'utf8'));
-    expect(pageSource).not.toContain('SignedContentUnsubscribeUseCase');
-    expect(token).toBeTruthy();
-    expect(tx.subscription.deleteMany).not.toHaveBeenCalled();
-    expect(tx.emailPreference.upsert).not.toHaveBeenCalled();
+    const payload = JSON.parse(Buffer.from(token.split('.')[0], 'base64url').toString('utf8'));
+    expect(payload).not.toHaveProperty('exp');
+    expect(verifyContentUnsubscribeToken(token)).toEqual({ ok: true, subject: 'user_opaque_1' });
   });
 
-  it('valid POST deletes main-creator Subscription and creates a missing preference as opted out in the same transaction', async () => {
-    const { db, tx, preferences } = makeDb();
-    const ctx = makeCtx(db);
-    const token = createContentUnsubscribeToken('user_opaque_1', { now: ctx.now() })!;
+  it('still accepts the old 7-day tokens after their expiry date (they carry exp)', () => {
+    const encoded = Buffer.from(JSON.stringify({ v: 1, p: CONTENT_UNSUBSCRIBE_PURPOSE, sub: 'user_opaque_1', exp: 1_700_000_000 })).toString('base64url');
+    const legacy = `${encoded}.${createHmac('sha256', SECRET).update(encoded).digest('base64url')}`;
+    expect(verifyContentUnsubscribeToken(legacy)).toEqual({ ok: true, subject: 'user_opaque_1' });
+  });
 
-    await SignedContentUnsubscribeUseCase.execute(ctx as any, token);
+  it('keeps links signed with the previous secret working after a rotation', () => {
+    const old = createContentUnsubscribeToken('user_opaque_1')!;
+    process.env.EMAIL_UNSUBSCRIBE_SIGNING_SECRET = 'b'.repeat(32);
+    expect(verifyContentUnsubscribeToken(old).ok).toBe(false);
+    process.env.EMAIL_UNSUBSCRIBE_SIGNING_SECRET_PREVIOUS = SECRET;
+    expect(verifyContentUnsubscribeToken(old).ok).toBe(true);
+  });
 
+  it('rejects tampered, malformed and wrong-purpose tokens', () => {
+    const valid = createContentUnsubscribeToken('user_opaque_1')!;
+    const wrongPurpose = Buffer.from(JSON.stringify({ v: 1, p: 'other', sub: 'user_opaque_1' })).toString('base64url');
+    for (const token of ['invalid', 'a.b.c', `${valid.split('.')[0]}.bad${valid.split('.')[1]}`, `${wrongPurpose}.${valid.split('.')[1]}`]) {
+      expect(verifyContentUnsubscribeToken(token).ok).toBe(false);
+    }
+  });
+
+  it('page and one-click URLs carry no email address', () => {
+    const page = buildContentUnsubscribeUrl('user_opaque_1')!;
+    const oneClick = buildOneClickUnsubscribeUrl('user_opaque_1')!;
+    expect(page).toMatch(/^https:\/\/www\.pawelperfect\.com\/unsubscribe\?token=/);
+    expect(oneClick).toMatch(/^https:\/\/www\.pawelperfect\.com\/api\/subscriptions\/unsubscribe\?token=/);
+    for (const url of [page, oneClick]) {
+      const token = new URL(url).searchParams.get('token')!;
+      expect(Buffer.from(token.split('.')[0], 'base64url').toString('utf8')).not.toContain('@');
+    }
+  });
+});
+
+describe('SignedContentUnsubscribeUseCase', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    process.env = { ...ORIGINAL_ENV, EMAIL_UNSUBSCRIBE_SIGNING_SECRET: SECRET, NEXT_PUBLIC_APP_URL: 'https://www.pawelperfect.com' };
+  });
+  afterEach(() => {
+    process.env = { ...ORIGINAL_ENV };
+  });
+
+  it('removes the subscription, records the opt-out and fixes the subscriber count in one transaction', async () => {
+    const { db, tx, preferences } = makeDb({ language: 'en' });
+    const result = await SignedContentUnsubscribeUseCase.execute(makeCtx(db) as any, createContentUnsubscribeToken('user_opaque_1'));
+
+    expect(result).toEqual({ status: 'unsubscribed', language: 'en' });
     expect(db.$transaction).toHaveBeenCalledTimes(1);
     expect(tx.subscription.deleteMany).toHaveBeenCalledWith({ where: { userId: 'user_opaque_1', creatorId: 'creator_1' } });
-    expect(tx.emailPreference.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ userId: 'user_opaque_1', email: 'person@example.com', marketingEmails: false, systemEmails: true, unsubscribedAt: expect.any(Date) }),
-    }));
-    expect(tx.emailPreference.upsert).not.toHaveBeenCalled();
-    expect(preferences[0]).toEqual(expect.objectContaining({ marketingEmails: false, systemEmails: true, unsubscribedAt: expect.any(Date) }));
+    expect(tx.creator.update).toHaveBeenCalledWith({ where: { id: 'creator_1' }, data: { subscribersCount: 4 } });
+    expect(preferences[0]).toEqual(expect.objectContaining({ userId: 'user_opaque_1', marketingEmails: false, systemEmails: true, unsubscribedAt: expect.any(Date) }));
     expect(tx.patronGrant.update).not.toHaveBeenCalled();
-    expect(tx.patronGrant.deleteMany).not.toHaveBeenCalled();
   });
 
-  it('updates existing EmailPreference by userId instead of direct email upsert and preserves systemEmails=false', async () => {
+  it('does not touch the count when there was no subscription, and is idempotent', async () => {
     const { db, tx, preferences } = makeDb({
-      preferences: [{ id: 'pref_user', userId: 'user_opaque_1', email: 'person@example.com', marketingEmails: true, systemEmails: false, unsubscribedAt: null }],
+      preferences: [{ id: 'pref_email', userId: null, email: 'person@example.com', marketingEmails: false, systemEmails: true, unsubscribedAt: null }],
     });
-    const token = createContentUnsubscribeToken('user_opaque_1')!;
-
+    tx.subscription.deleteMany.mockResolvedValue({ count: 0 });
+    const token = createContentUnsubscribeToken('user_opaque_1');
     await SignedContentUnsubscribeUseCase.execute(makeCtx(db) as any, token);
-
-    expect(tx.emailPreference.findUnique).toHaveBeenCalledWith({ where: { userId: 'user_opaque_1' } });
-    expect(tx.emailPreference.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'pref_user' },
-      data: expect.objectContaining({ marketingEmails: false, unsubscribedAt: expect.any(Date), email: 'person@example.com' }),
-    }));
-    expect(tx.emailPreference.create).not.toHaveBeenCalled();
-    expect(tx.emailPreference.upsert).not.toHaveBeenCalled();
+    await SignedContentUnsubscribeUseCase.execute(makeCtx(db) as any, token);
+    expect(tx.creator.update).not.toHaveBeenCalled();
     expect(preferences).toHaveLength(1);
-    expect(preferences[0]).toEqual(expect.objectContaining({ marketingEmails: false, systemEmails: false, unsubscribedAt: expect.any(Date) }));
+    expect(preferences[0]).toEqual(expect.objectContaining({ userId: 'user_opaque_1', marketingEmails: false }));
   });
 
-  it('safely reconciles a userId preference with an old email and preserves systemEmails=true', async () => {
-    const { db, tx, preferences } = makeDb({
-      preferences: [{ id: 'pref_old', userId: 'user_opaque_1', email: 'old@example.com', marketingEmails: true, systemEmails: true, unsubscribedAt: null }],
+  it('updates the preference found by user id and keeps systemEmails as it was', async () => {
+    const { db, preferences } = makeDb({
+      preferences: [{ id: 'pref_user', userId: 'user_opaque_1', email: 'old@example.com', marketingEmails: true, systemEmails: false, unsubscribedAt: null }],
     });
-    const token = createContentUnsubscribeToken('user_opaque_1')!;
-
-    await SignedContentUnsubscribeUseCase.execute(makeCtx(db) as any, token);
-
-    expect(tx.emailPreference.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'pref_old' },
-      data: expect.objectContaining({ email: 'person@example.com', marketingEmails: false, unsubscribedAt: expect.any(Date) }),
-    }));
-    expect(tx.emailPreference.upsert).not.toHaveBeenCalled();
-    expect(preferences[0]).toEqual(expect.objectContaining({ email: 'person@example.com', marketingEmails: false, systemEmails: true, unsubscribedAt: expect.any(Date) }));
+    await SignedContentUnsubscribeUseCase.execute(makeCtx(db) as any, createContentUnsubscribeToken('user_opaque_1'));
+    expect(preferences[0]).toEqual(expect.objectContaining({ email: 'person@example.com', marketingEmails: false, systemEmails: false }));
   });
 
-  it('uses compatible unowned current-email preference and repeated unsubscribe remains idempotent', async () => {
-    const { db, tx, preferences } = makeDb({
-      preferences: [{ id: 'pref_email', userId: null, email: 'person@example.com', marketingEmails: false, systemEmails: true, unsubscribedAt: new Date('2026-01-01T00:00:00Z') }],
-    });
-    const token = createContentUnsubscribeToken('user_opaque_1')!;
-
-    await SignedContentUnsubscribeUseCase.execute(makeCtx(db) as any, token);
-    await SignedContentUnsubscribeUseCase.execute(makeCtx(db) as any, token);
-
-    expect(tx.subscription.deleteMany).toHaveBeenCalledTimes(2);
-    expect(tx.emailPreference.update).toHaveBeenCalled();
-    expect(tx.emailPreference.create).not.toHaveBeenCalled();
-    expect(tx.emailPreference.upsert).not.toHaveBeenCalled();
-    expect(preferences).toHaveLength(1);
-    expect(preferences[0]).toEqual(expect.objectContaining({ userId: 'user_opaque_1', email: 'person@example.com', marketingEmails: false, systemEmails: true, unsubscribedAt: expect.any(Date) }));
-  });
-
-  it('repository P2002 retry path prevents a false successful no-op', async () => {
+  it('survives the P2002 retry path of the preference repository', async () => {
     const { db, tx, preferences } = makeDb({
       p2002OnFirstUpdate: true,
       preferences: [{ id: 'pref_retry', userId: 'user_opaque_1', email: 'person@example.com', marketingEmails: true, systemEmails: true, unsubscribedAt: null }],
     });
-    const token = createContentUnsubscribeToken('user_opaque_1')!;
-
-    await SignedContentUnsubscribeUseCase.execute(makeCtx(db) as any, token);
-
+    await SignedContentUnsubscribeUseCase.execute(makeCtx(db) as any, createContentUnsubscribeToken('user_opaque_1'));
     expect(tx.emailPreference.update).toHaveBeenCalledTimes(2);
-    expect(tx.emailPreference.upsert).not.toHaveBeenCalled();
-    expect(preferences[0]).toEqual(expect.objectContaining({ marketingEmails: false, unsubscribedAt: expect.any(Date) }));
+    expect(preferences[0].marketingEmails).toBe(false);
   });
 
-  it('unexpected preference persistence failure rejects the transaction and still returns generic response', async () => {
-    const { db, tx } = makeDb({
-      failPreferenceUpdate: true,
-      preferences: [{ id: 'pref_fail', userId: 'user_opaque_1', email: 'person@example.com', marketingEmails: true, systemEmails: true, unsubscribedAt: null }],
-    });
-    const token = createContentUnsubscribeToken('user_opaque_1')!;
-
-    const result = await SignedContentUnsubscribeUseCase.execute(makeCtx(db) as any, token);
-
-    expect(result).toEqual(expect.objectContaining({ ok: true }));
-    expect(db.$transaction).toHaveBeenCalledTimes(1);
-    expect(tx.subscription.deleteMany).toHaveBeenCalledTimes(1);
-    expect(tx.emailPreference.update).toHaveBeenCalledTimes(1);
-    expect(tx.emailPreference.upsert).not.toHaveBeenCalled();
-    expect(tx.emailPreference.create).not.toHaveBeenCalled();
-  });
-
-  it('invalid, expired, malformed, tampered, wrong-purpose, unknown recipient, and missing-secret POSTs are generic and safe', async () => {
-    const logSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const cases = ['invalid', 'malformed.token.value', createContentUnsubscribeToken('user_opaque_1', { now: new Date('2020-01-01T00:00:00Z'), ttlSeconds: 1 })!];
-    const valid = createContentUnsubscribeToken('user_opaque_1')!;
-    cases.push(`${valid.split('.')[0]}.bad${valid.split('.')[1]}`);
-    const wrongPayload = Buffer.from(JSON.stringify({ v: 1, p: 'other-purpose', sub: 'user_opaque_1', exp: 4102444800 })).toString('base64url');
-    cases.push(`${wrongPayload}.${valid.split('.')[1]}`);
-
-    for (const token of cases) {
-      const { db, tx } = makeDb();
-      const result = await SignedContentUnsubscribeUseCase.execute(makeCtx(db) as any, token);
-      expect(result).toEqual(expect.objectContaining({ ok: true }));
-      expect(tx.subscription.deleteMany).not.toHaveBeenCalled();
-      expect(tx.emailPreference.create).not.toHaveBeenCalled();
-      expect(tx.emailPreference.update).not.toHaveBeenCalled();
-      expect(tx.emailPreference.upsert).not.toHaveBeenCalled();
-    }
-
+  it('reports a link it did not sign as invalid and changes nothing', async () => {
     const { db, tx } = makeDb();
-    tx.user.findUnique.mockResolvedValue(null);
-    await SignedContentUnsubscribeUseCase.execute(makeCtx(db) as any, valid);
-    expect(tx.emailPreference.create).not.toHaveBeenCalled();
-    expect(tx.emailPreference.update).not.toHaveBeenCalled();
-    expect(tx.emailPreference.upsert).not.toHaveBeenCalled();
-
-    delete process.env.EMAIL_UNSUBSCRIBE_SIGNING_SECRET;
-    const missingSecret = await SignedContentUnsubscribeUseCase.execute(makeCtx(makeDb().db) as any, valid);
-    expect(missingSecret).toEqual(expect.objectContaining({ ok: true }));
-    expect(logSpy).not.toHaveBeenCalled();
+    const result = await SignedContentUnsubscribeUseCase.execute(makeCtx(db) as any, 'garbage.token');
+    expect(result).toEqual({ status: 'invalid', language: null });
+    expect(db.$transaction).not.toHaveBeenCalled();
+    expect(tx.subscription.deleteMany).not.toHaveBeenCalled();
   });
 
-  it('API POST returns generic behavior and invokes the handler once', async () => {
-    const spy = vi.spyOn(SignedContentUnsubscribeUseCase, 'execute').mockResolvedValue({ ok: true, message: 'generic' });
+  it('lets a database failure surface (the route shows an error and the mailbox provider retries)', async () => {
+    const { db } = makeDb({
+      failPreferenceUpdate: true,
+      preferences: [{ id: 'p', userId: 'user_opaque_1', email: 'person@example.com', marketingEmails: true, systemEmails: true, unsubscribedAt: null }],
+    });
+    await expect(SignedContentUnsubscribeUseCase.execute(makeCtx(db) as any, createContentUnsubscribeToken('user_opaque_1'))).rejects.toThrow();
+  });
+
+  it('inspect() reads the owner language without changing anything', async () => {
+    const { db, tx } = makeDb();
+    (db as any).user.findUnique = vi.fn().mockResolvedValue({ language: 'en' });
+    const inspected = await SignedContentUnsubscribeUseCase.inspect(makeCtx(db) as any, createContentUnsubscribeToken('user_opaque_1'));
+    expect(inspected).toEqual({ valid: true, language: 'en' });
+    expect(tx.subscription.deleteMany).not.toHaveBeenCalled();
+    expect(await SignedContentUnsubscribeUseCase.inspect(makeCtx(db) as any, 'nope')).toEqual({ valid: false, language: null });
+  });
+});
+
+describe('/api/subscriptions/unsubscribe', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    process.env = { ...ORIGINAL_ENV, EMAIL_UNSUBSCRIBE_SIGNING_SECRET: SECRET, NEXT_PUBLIC_APP_URL: 'https://www.pawelperfect.com' };
+  });
+  afterEach(() => {
+    process.env = { ...ORIGINAL_ENV };
+  });
+
+  it('handles an RFC 8058 one-click POST (token in the URL, List-Unsubscribe=One-Click body) with 200 and no redirect', async () => {
+    const spy = vi.spyOn(SignedContentUnsubscribeUseCase, 'execute').mockResolvedValue({ status: 'unsubscribed', language: 'pl' });
+    const url = buildOneClickUnsubscribeUrl('user_opaque_1')!;
+    const res = await POST(new NextRequest(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: 'List-Unsubscribe=One-Click',
+    }));
+    expect(res.status).toBe(200);
+    expect(res.headers.get('location')).toBeNull();
+    expect(spy).toHaveBeenCalledWith(expect.anything(), new URL(url).searchParams.get('token'));
+  });
+
+  it('sends the form POST from the page back to the page with the result in the person language', async () => {
+    vi.spyOn(SignedContentUnsubscribeUseCase, 'execute').mockResolvedValue({ status: 'unsubscribed', language: 'en' });
     const body = new FormData();
     body.set('token', createContentUnsubscribeToken('user_opaque_1')!);
-    const res = await POST(new NextRequest('https://polutek.example/api/subscriptions/unsubscribe', { method: 'POST', body }));
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true, message: 'generic' });
-    expect(spy).toHaveBeenCalledTimes(1);
+    const res = await POST(new NextRequest('https://www.pawelperfect.com/api/subscriptions/unsubscribe', { method: 'POST', body }));
+    expect(res.status).toBe(303);
+    expect(res.headers.get('location')).toBe('https://www.pawelperfect.com/unsubscribe?status=done&lang=en');
   });
 
-  it('public URL and decoded token contain no raw or encoded email', () => {
-    const url = buildContentUnsubscribeUrl('user_opaque_1', 'https://polutek.example')!;
-    const encodedEmail = encodeURIComponent('person@example.com');
-    expect(url).toContain('/unsubscribe?token=');
-    expect(url).not.toContain('person@example.com');
-    expect(url).not.toContain(encodedEmail);
-    const token = new URL(url).searchParams.get('token')!;
-    const decodedPayload = Buffer.from(token.split('.')[0], 'base64url').toString('utf8');
-    expect(decodedPayload).toContain(CONTENT_UNSUBSCRIBE_PURPOSE);
-    expect(decodedPayload).toContain('user_opaque_1');
-    expect(decodedPayload).not.toContain('person@example.com');
-    expect(decodedPayload).not.toContain(encodedEmail);
+  it('sends a bad link to the page that explains it', async () => {
+    const body = new FormData();
+    body.set('token', 'garbage');
+    const res = await POST(new NextRequest('https://www.pawelperfect.com/api/subscriptions/unsubscribe', { method: 'POST', body }));
+    expect(res.headers.get('location')).toBe('https://www.pawelperfect.com/unsubscribe?status=invalid');
   });
 
-  it('current recipient selector excludes unsubscribed and missing EmailPreference recipients', async () => {
-    const prisma = {
-      creator: { findUnique: vi.fn().mockResolvedValue({ id: 'creator_1' }) },
-      subscription: { findUnique: vi.fn().mockResolvedValue({ id: 'sub_1' }) },
-      emailPreference: { findUnique: vi.fn() },
-      emailSuppression: { findUnique: vi.fn().mockResolvedValue(null) },
-    };
-    prisma.emailPreference.findUnique.mockResolvedValueOnce({ marketingEmails: false });
-    await expect(EmailPolicy.canReceiveBroadcastEmail(prisma as any, 'person@example.com', 'user_opaque_1')).resolves.toBe(false);
-    prisma.emailPreference.findUnique.mockResolvedValueOnce(null);
-    await expect(EmailPolicy.canReceiveBroadcastEmail(prisma as any, 'person@example.com', 'user_opaque_1')).resolves.toBe(false);
-    prisma.emailPreference.findUnique.mockResolvedValueOnce({ marketingEmails: true });
-    await expect(EmailPolicy.canReceiveBroadcastEmail(prisma as any, 'person@example.com', 'user_opaque_1')).resolves.toBe(true);
+  it('never unsubscribes on GET (link scanners): it redirects to the confirmation page', async () => {
+    const spy = vi.spyOn(SignedContentUnsubscribeUseCase, 'execute');
+    const res = await GET(new NextRequest('https://www.pawelperfect.com/api/subscriptions/unsubscribe?token=abc'));
+    expect(res.status).toBe(303);
+    expect(res.headers.get('location')).toBe('https://www.pawelperfect.com/unsubscribe?token=abc');
+    expect(spy).not.toHaveBeenCalled();
   });
 
-  it('registration, tipping and PatronGrant do not create content consent in the signed unsubscribe flow', async () => {
-    const { db, tx } = makeDb();
-    const token = createContentUnsubscribeToken('user_opaque_1')!;
-    await SignedContentUnsubscribeUseCase.execute(makeCtx(db) as any, token);
-    expect(tx.emailPreference.create).toHaveBeenCalledTimes(1);
-    expect(tx.emailPreference.create).not.toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ marketingEmails: true }) }));
-    expect(tx.emailPreference.upsert).not.toHaveBeenCalled();
-    expect(tx.patronGrant.findMany).not.toHaveBeenCalled();
+  it('answers 500 to a one-click POST when the database fails, so the provider retries', async () => {
+    vi.spyOn(SignedContentUnsubscribeUseCase, 'execute').mockRejectedValue(new Error('db down'));
+    const res = await POST(new NextRequest(buildOneClickUnsubscribeUrl('user_opaque_1')!, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: 'List-Unsubscribe=One-Click',
+    }));
+    expect(res.status).toBe(500);
   });
 });

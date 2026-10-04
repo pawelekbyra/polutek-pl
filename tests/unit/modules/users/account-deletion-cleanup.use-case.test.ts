@@ -5,6 +5,7 @@ import { sendAccountDeletedEmail } from '@/lib/modules/email';
 
 vi.mock('@/lib/modules/email/application/send-transactional-email.use-case', () => ({
   sendAccountDeletedEmail: vi.fn().mockResolvedValue(undefined),
+  resolveEmailLanguage: (language: string | null | undefined) => (language === 'pl' ? 'pl' : 'en'),
 }));
 
 describe('AccountDeletionCleanupUseCase', () => {
@@ -14,7 +15,7 @@ describe('AccountDeletionCleanupUseCase', () => {
     vi.clearAllMocks();
     prisma = {
       user: {
-        findUnique: vi.fn().mockResolvedValue({ id: 'u1', email: 'user@example.com', isDeleted: false }),
+        findUnique: vi.fn().mockResolvedValue({ id: 'u1', email: 'user@example.com', isDeleted: false, language: 'en' }),
         update: vi.fn().mockResolvedValue({}),
       },
       patronGrant: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
@@ -61,7 +62,7 @@ describe('AccountDeletionCleanupUseCase', () => {
     }));
     expect(prisma.user.update.mock.calls[0][0].data.email).toMatch(/^deleted_.*@deleted\.com$/);
     expect(prisma.auditLog.create).toHaveBeenCalled();
-    expect(sendAccountDeletedEmail).toHaveBeenCalledWith('user@example.com');
+    expect(sendAccountDeletedEmail).toHaveBeenCalledWith('user@example.com', 'en');
   });
 
   it('treats missing local user as successful idempotent cleanup', async () => {

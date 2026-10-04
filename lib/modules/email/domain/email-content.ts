@@ -31,7 +31,8 @@ export function escapeHtml(value: string): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 /**
@@ -82,6 +83,11 @@ export type EmailDocumentInput = {
   preheader?: string;
   /** One line saying who sends this mail, shown under the card (physical identity). */
   identityLine: string;
+  /**
+   * Trusted HTML shown above the identity line, outside the template's own card, so no template
+   * (admin-edited or not) can drop it. Used for the mandatory unsubscribe line of broadcasts.
+   */
+  footerHtml?: string;
 };
 
 const PREHEADER_STYLE =
@@ -96,7 +102,13 @@ export function isFullHtmlDocument(html: string): boolean {
  * so admin-edited templates get it too.
  */
 export function wrapEmailDocument(input: EmailDocumentInput): string {
-  if (isFullHtmlDocument(input.html)) return input.html;
+  if (isFullHtmlDocument(input.html)) {
+    // A complete document is sent as written; only the mandatory footer is put into it.
+    if (!input.footerHtml) return input.html;
+    return /<\/body>/i.test(input.html)
+      ? input.html.replace(/<\/body>/i, `${input.footerHtml}\n</body>`)
+      : `${input.html}\n${input.footerHtml}`;
+  }
 
   const preheader = (input.preheader ?? derivePreheader(input.html)).trim();
   const preheaderBlock = preheader
@@ -115,6 +127,7 @@ export function wrapEmailDocument(input: EmailDocumentInput): string {
 <body style="margin:0;padding:24px 12px;background-color:#ffffff;">
 ${preheaderBlock}
 ${input.html}
+${input.footerHtml ?? ''}
 <p style="max-width:600px;margin:12px auto 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:#777777;text-align:center;">${escapeHtml(input.identityLine)}</p>
 </body>
 </html>`;

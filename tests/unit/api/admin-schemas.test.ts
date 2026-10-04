@@ -37,10 +37,24 @@ describe("admin schemas", () => {
     expect(ok(s.adminVideoWriteSchema, { premiereAt: "nope" })).toBe(false);
   });
 
-  it("inbound email patch", () => {
-    expect(ok(s.adminInboundEmailPatchSchema, { id: "1", status: "READ" })).toBe(true);
-    expect(ok(s.adminInboundEmailPatchSchema, { id: "", status: "READ" })).toBe(false);
-    expect(ok(s.adminInboundEmailPatchSchema, { id: "1", status: "WHATEVER" })).toBe(false);
+  it("broadcast create needs Polish content and a request key, and accepts no recipient list", () => {
+    const base = { subjectPl: "Nowy film", htmlPl: "<p>Hej</p>", requestKey: "6f1c1f9e-6c8c-4d8e-9a59-2f8f1b2b9c11" };
+    expect(ok(s.adminBroadcastCreateSchema, base)).toBe(true);
+    expect(ok(s.adminBroadcastCreateSchema, { ...base, requestKey: "not-a-uuid" })).toBe(false);
+    expect(ok(s.adminBroadcastCreateSchema, { ...base, subjectPl: " " })).toBe(false);
+    const parsed = s.adminBroadcastCreateSchema.safeParse({ ...base, manualEmails: "x@example.com", audience: "PATRONS" });
+    expect(parsed.success && Object.keys(parsed.data).sort()).toEqual(["htmlPl", "requestKey", "subjectPl"]);
+  });
+
+  it("broadcast test takes a language and no recipient address", () => {
+    const parsed = s.adminBroadcastTestSchema.safeParse({ subjectPl: "a", htmlPl: "b", testEmail: "anyone@example.com" });
+    expect(parsed.success && parsed.data).toEqual({ subjectPl: "a", htmlPl: "b", language: "pl" });
+    expect(ok(s.adminBroadcastTestSchema, { subjectPl: "a", htmlPl: "b", language: "de" })).toBe(false);
+  });
+
+  it("email template", () => {
+    expect(ok(s.adminEmailTemplateSchema, { slug: "welcome-email", subject: "S", html: "<p>x</p>" })).toBe(true);
+    expect(ok(s.adminEmailTemplateSchema, { slug: "Bad Slug", subject: "S", html: "x" })).toBe(false);
   });
 
   it("notification broadcast", () => {
