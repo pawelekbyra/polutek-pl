@@ -31,11 +31,22 @@ async function assertNicknameFree(ctx: AppContext, raw: string, userId: string):
   const validation = validateNickname(raw);
   if (!validation.ok) throw new NicknameRejectedError(validation.reason);
   const taken = await ctx.prisma.user.findFirst({
-    where: { isDeleted: false, id: { not: userId }, name: { equals: validation.value, mode: "insensitive" } },
+    // Placeholders of accounts still in onboarding do not reserve a nickname (audit AUTH-10).
+    where: { isDeleted: false, onboardingPending: false, id: { not: userId }, name: { equals: validation.value, mode: "insensitive" } },
     select: { id: true },
   });
   if (taken) throw new NicknameRejectedError("taken");
   return validation.value;
+}
+
+/** The partial unique index on lower(name) settles a race between two requests for the same nickname. */
+async function withNicknameRace<T>(write: () => Promise<T>): Promise<T> {
+  try {
+    return await write();
+  } catch (error) {
+    if ((error as { code?: unknown } | null)?.code === "P2002") throw new NicknameRejectedError("taken");
+    throw error;
+  }
 }
 
 type StoredAvatar = { data: Uint8Array<ArrayBuffer>; mime: string };
@@ -59,7 +70,7 @@ async function saveAvatar(ctx: AppContext, userId: string, stored: StoredAvatar)
 export async function updateNickname(ctx: AppContext, input: { userId: string; nickname: string }) {
   await loadActiveUser(ctx, input.userId);
   const name = await assertNicknameFree(ctx, input.nickname, input.userId);
-  await ctx.prisma.user.update({ where: { id: input.userId }, data: { name } });
+  await withNicknameRace(() => ctx.prisma.user.update({ where: { id: input.userId }, data: { name } }));
   await recordAuditEventSafe(ctx, { action: "USER_NICKNAME_CHANGED", targetType: "User", targetId: input.userId });
   return { name };
 }
@@ -76,9 +87,9 @@ export async function updateAvatar(ctx: AppContext, input: { userId: string; dat
 }
 
 /**
- * First-sign-in step for accounts created through Google: the nickname (and optional avatar) the
- * viewer picks replace the provider placeholder. Returns the user so the caller can send the
- * welcome e-mail exactly once.
+ * First-sign-in step for every new account (e-mail or Google) and for older accounts whose name broke
+ * the nickname rules: the nickname (and optional avatar) the viewer picks replace the placeholder.
+ * Returns the user so the caller can send the welcome e-mail exactly once.
  */
 export async function completeOnboarding(
   ctx: AppContext,
@@ -89,10 +100,12 @@ export async function completeOnboarding(
   const name = await assertNicknameFree(ctx, input.nickname, input.userId);
   const avatar = resolveAvatar(input.avatarDataUrl);
   if (avatar) await saveAvatar(ctx, input.userId, avatar);
-  const updated = await ctx.prisma.user.update({
-    where: { id: input.userId },
-    data: { name, onboardingPending: false, ...(avatar ? { imageUrl: avatarRouteUrl(input.userId) } : {}) },
-    select: { email: true, name: true, language: true, createdAt: true },
-  });
+  const updated = await withNicknameRace(() =>
+    ctx.prisma.user.update({
+      where: { id: input.userId },
+      data: { name, onboardingPending: false, ...(avatar ? { imageUrl: avatarRouteUrl(input.userId) } : {}) },
+      select: { email: true, name: true, language: true, createdAt: true },
+    }),
+  );
   return updated;
 }

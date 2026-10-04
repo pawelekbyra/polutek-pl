@@ -108,7 +108,7 @@ export function PageRevealGate({ children, waitFor = [], posterUrl }: PageReveal
   const language = useOptionalLanguage();
 
   // Phase machine: covering → gate (user sees rabbit) → leaving → done
-  // Also check sessionStorage so auth redirects (Clerk sign-in) don't re-show the preloader.
+  // Also check sessionStorage so auth redirects (Google sign-in) don't re-show the preloader.
   const [phase, setPhase] = useState<"covering" | "gate" | "leaving" | "done">(() =>
     revealedInThisDocument || hasRevealedThisSession() ? "done" : "covering"
   );

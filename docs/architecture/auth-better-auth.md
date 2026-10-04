@@ -29,14 +29,15 @@ and the operations.
 | `lib/auth/auth.ts` | The Better Auth instance (plugins, hooks, rate limits, cookies). |
 | `lib/auth/config.ts` | Constants and pure helpers (base URL, trusted origins, admin e-mails). |
 | `lib/auth/hooks.ts` | Hook bodies: placeholder name, default avatar, onboarding flag, EMAIL_TAKEN answer, sign-in lockout, session guard, pre-hijack guard, audit. |
-| `lib/auth/emails.ts` | Fire-and-forget e-mails (verification, reset, password changed; the welcome mail goes out from the onboarding route). |
-| `lib/auth/rate-limit-storage.ts` | Better Auth `customStorage.consume` on our Redis REST store (atomic Lua INCR). |
+| `lib/auth/emails.ts` | Fire-and-forget e-mails (verification, reset, password changed, the three e-mail-change mails; the welcome mail goes out from the onboarding route). |
+| `lib/auth/rate-limit-storage.ts` | Better Auth `customStorage.consume` on our Redis REST store (atomic Lua INCR); fails open with an error log (see Security controls). |
+| `lib/auth/reauth.ts` | `checkSensitiveReauth`: password, or a Google sign-in from the last 10 minutes (account deletion, e-mail change). |
 | `lib/auth/server.ts` | `auth()`, `getAuth(req)`, `currentUser()`: the only server-side session readers. |
 | `lib/api/auth.ts` | DB-backed actor (`getActorFromAuth`, `requireAdminActor`); admin bootstrap by `ADMIN_EMAILS`. |
-| `lib/auth/client.ts`, `lib/auth/react.ts` | Browser client and `useAuth` / `useUser` hooks (same shape the components already used). |
+| `lib/auth/client.ts`, `lib/auth/react.ts` | Browser client and `useAuth` / `useUser` hooks (the user object still uses the old Clerk-like field names `fullName`, `primaryEmailAddress`; see "Not done yet"). |
 | `middleware.ts` | Optimistic session-cookie gate, public route list, CSRF, admin rate limit, CSP. |
 | `app/api/auth/[...all]/route.ts` | Better Auth HTTP handler. |
-| `app/api/user/{nickname,avatar,onboarding,account}` | Our own profile routes (Better Auth `/update-user` is disabled). |
+| `app/api/user/{nickname,avatar,first-sign-in,account}` | Our own profile routes (Better Auth `/update-user` is disabled). |
 | `app/components/auth/*` | `AuthModal`, `OnboardingDialog`, `AccountModal` sections, Turnstile widget, One Tap. |
 | `app/sso-callback`, `app/reset-password` | Return pages for the Google redirect and the reset e-mail link. |
 
@@ -109,7 +110,19 @@ cannot keep access. Unverified password sign-ups older than 7 days are deleted b
 `/api/cron/prune-unverified-accounts` (systemd timer `polutek-cron-prune-unverified-accounts`, 03:30 UTC; only rows
 with no payments, grants, channels or comments), so nobody can squat an address or nickname for long.
 
-**Change e-mail.** `changeEmail` sends a verification link to the new address; the address changes after the click.
+**Change e-mail (audit AUTH-02/03, 2026-10-03).** A valid session alone is not enough (a stolen cookie must not be able
+to take the account over):
+1. `POST /api/auth/change-email` carries the password in the body; the before hook `guardChangeEmail` (`lib/auth/hooks.ts`)
+   checks it with `checkSensitiveReauth`. A Google-only account instead needs a sign-in from the last 10 minutes
+   (`REAUTH_REQUIRED`; the UI offers "sign in again"). Limits: 5 requests per user per hour (wrong passwords count too)
+   and 10 per IP per hour (`customRules`).
+2. `changeEmail.sendChangeEmailConfirmation`: the CURRENT address gets "approve the change to <new>" (`change-email-confirm`).
+3. Only after that click Better Auth sends the verification link to the NEW address (`change-email-verify`); the
+   address changes when it is clicked.
+4. `emailVerification.afterEmailVerification` (`onEmailVerified`) mails the OLD address "your address was changed"
+   (`email-changed`) and writes `AUTH_EMAIL_CHANGED`.
+All three mails use the account language (looked up by user id, the new address is not in the database yet). Other
+sessions are not revoked by the change (the old address approved it); revoking them is a possible follow-up.
 
 **Account deletion.** `DELETE /api/user/account` needs re-authentication (F-12): a password account sends its
 password in the body (verified with Better Auth's hasher, rate limited 5 per 15 min per user), a Google-only account
@@ -124,20 +137,36 @@ account panel lists devices and can revoke one or all others (`listSessions`, `r
 `SESSION_NOT_FRESH`, and the UI then shows "sign in again" (`ReauthNotice`: signs out and reopens sign-in with the
 current page as `next`) instead of an empty list. Password change revokes other sessions.
 
-**2FA management (F-08).** Backup codes are shown with copy/download after setup and can be regenerated (password
-required, old codes stop working). Google-only accounts must first set a password ("Forgot password" link) before
+**2FA management (F-08, AUTH-13).** Backup codes are shown with copy/download after setup and can be regenerated (password
+required, old codes stop working). Regenerating codes and turning 2FA off are two separate forms with their own password
+fields, so Enter in one can never trigger the other. Turning it off needs the password (not a TOTP code). Google-only accounts must first set a password ("Forgot password" link) before
 they can enable TOTP; the Security tab explains this.
 
 **Old accounts (F-09).** At every sign-in, accounts whose name is missing, breaks the nickname rules or duplicates an
 older account's name get `onboardingPending = true`, so the first-sign-in dialog asks for a nickname (the welcome
 e-mail is only sent for accounts younger than a day).
 
+**Onboarding on the server (F-11, AUTH-10/11).** While `onboardingPending` is true the name is only a placeholder: the
+actor carries `onboardingPending` (`resolveDbBackedActor`), `CommentPolicy` refuses comments, reactions and edits, and a
+comment attempt answers `ONBOARDING_REQUIRED` ("choose a nickname in the welcome window first"). Placeholders never
+count as taken nicknames (`CheckNicknameAvailabilityUseCase`, `assertNicknameFree`). Nicknames of active, onboarded
+accounts are unique case-insensitively in the database: partial index `User_name_lower_active_key` on `lower(name)`
+(migration `20261003200000_user_nickname_unique_active`, which first sends duplicate holders except the oldest back to
+onboarding); a lost race answers `NICKNAME_TAKEN`. The index is not expressible in `schema.prisma`.
+
 ## Admin
 
-Admin is `User.role = ADMIN`. Bootstrap: set `ADMIN_EMAILS` (comma separated). The first time a **verified**
-account with such an e-mail resolves an actor (`lib/api/auth.ts`), it is promoted and an `AUTH_ADMIN_BOOTSTRAP`
-audit event is written. A never-verified address can never be promoted, so nobody can claim an admin e-mail by
-registering it first. Afterwards the variable can stay or be emptied; roles are managed in `/admin/users`.
+Admin is `User.role = ADMIN`. Bootstrap: set `ADMIN_EMAILS` (comma separated). A **verified** account with such an
+e-mail is promoted when it resolves an actor (`lib/api/auth.ts`) and an `AUTH_ADMIN_BOOTSTRAP` audit event is written.
+A never-verified address can never be promoted, so nobody can claim an admin e-mail by registering it first. The check
+runs on every request (AUTH-27): while an address stays in `ADMIN_EMAILS`, a demotion in `/admin/users` is undone at
+once, so empty the variable after the first sign-in and never list a shared (helpdesk) inbox there.
+
+**MFA for the admin (proposal, not enabled).** Safe order: (1) the owner turns on TOTP in the account panel and stores
+the backup codes; (2) only then `requireAdminActor` starts refusing `role=ADMIN` without `twoFactorEnabled`, and also an
+admin session created by Google (decision F-07 lets Google skip TOTP), or adds a TOTP step-up for admin routes; (3) keep
+the break-glass path below. Better long-term: passkeys (`@better-auth/passkey`, phishing-resistant; a `Passkey` table, a
+section in the account panel, `rpID = pawelperfect.com`), first mandatory for the admin, then optional for everybody.
 Admin routes keep the CSRF guard and rate limits in `middleware.ts`; admin API rate limiting is keyed by a hash of the
 session cookie plus the IP (the proxy cannot read the user id without a database call).
 
@@ -145,7 +174,13 @@ session cookie plus the IP (the proxy cannot read the user id without a database
 
 - Cookies: prefix `pp`, `HttpOnly`, `SameSite=Lax`, `Secure` in production (`__Secure-` name).
 - Rate limits: Better Auth's limiter uses `customStorage.consume` on `KV_REST_API_*` / `UPSTASH_*` (memory only
-  outside production). Per-path rules in `lib/auth/auth.ts`; per-account sign-in lockout in `lib/auth/hooks.ts`.
+  outside production). Per-path rules in `lib/auth/auth.ts`; per-account sign-in lockout and per-user e-mail-change
+  limit in `lib/auth/hooks.ts`; reset/verification mails are also limited to 5 per hour per target address (hashed
+  key, counted only after Turnstile passed, AUTH-30).
+- Redis outage (AUTH-12, deliberate): every gateway call has a 1.5 s timeout (`REDIS_COMMAND_TIMEOUT_MS`) and the auth
+  counters FAIL OPEN with an error log, so sign-in keeps working. Turnstile, the database TOTP attempt counter and the
+  password re-checks stay in force; only the failed-sign-in lockout is blind meanwhile (failing closed would lock
+  everybody out of password sign-in).
 - Captcha: Turnstile on `/sign-up/email`, `/sign-in/email`, `/request-password-reset`, `/send-verification-email`.
   Enabled when `TURNSTILE_SECRET_KEY` is set (required in production by `env:validate:prod`).
   The client widget (`app/components/auth/TurnstileWidget.tsx`) runs in `appearance: "interaction-only"`: invisible
@@ -157,11 +192,15 @@ session cookie plus the IP (the proxy cannot read the user id without a database
 - IP: `cf-connecting-ip` when `TRUST_CF_CONNECTING_IP=true`, else `x-real-ip`.
 - Origins: `NEXT_PUBLIC_APP_URL` host in www and apex form plus `BETTER_AUTH_TRUSTED_ORIGINS`.
 - CSRF for `/api/user/*` mutations is checked in `middleware.ts` (same guard as admin).
-- Audit events: `AUTH_SIGN_UP`, `AUTH_SIGN_IN`, `AUTH_SIGN_OUT`, `AUTH_PASSWORD_CHANGED`, `AUTH_ADMIN_BOOTSTRAP`,
+- Audit events: `AUTH_SIGN_UP`, `AUTH_SIGN_IN`, `AUTH_SIGN_OUT`, `AUTH_PASSWORD_CHANGED`, `AUTH_EMAIL_CHANGED`, `AUTH_ADMIN_BOOTSTRAP`,
   `USER_NICKNAME_CHANGED`. Metadata holds ids and flags only.
 - Avatars: resized to 256 px JPEG in the browser, validated server side (type, signature, size <= 120k chars) and
   stored as bytes in the `UserAvatar` table (kept out of every `User` read); `User.imageUrl` points at the public
-  `/api/avatars/[userId]?v=<timestamp>` route (immutable cache, 404 for deleted accounts). Older rows may still point at `img.clerk.com` (kept in the CSP `img-src`).
+  `/api/avatars/[userId]?v=<timestamp>` route (immutable cache, 404 for deleted accounts). Older rows may still point at `img.clerk.com` (kept in the CSP `img-src` and the image optimizer until
+  `SELECT count(*) FROM "User" WHERE "imageUrl" LIKE '%img.clerk.com%';` returns 0).
+- CSP (SEC-06, decision 2026-10-03): `script-src` keeps `'unsafe-inline'`. A nonce + `'strict-dynamic'` policy needs every
+  page rendered per request (Next.js injects nonces only during dynamic rendering: no static pages, no PPR) and a
+  re-test of Stripe.js, Google Identity and Turnstile; plan it as its own change, starting in Report-Only.
 
 ## Operations
 
@@ -172,9 +211,15 @@ Environment (names only; never commit values): `BETTER_AUTH_SECRET`, `GOOGLE_CLI
 Deploy: run the migration (`prisma migrate deploy` runs in `deploy.sh`), set the variables in `app.env`, restart.
 Existing Clerk sessions stop working; everybody signs in again.
 
-Rotating `BETTER_AUTH_SECRET` signs everybody out and invalidates pending verification/reset links; it does not
-affect passwords (hashed with scrypt, independent of the secret) or TOTP secrets of users who enabled 2FA
-(encrypted with the secret: **they would need backup codes**). Rotate only with a plan.
+Rotating `BETTER_AUTH_SECRET` (AUTH-07):
+- signs everybody out (session cookies are signed with it) and breaks pending e-mail verification and e-mail-change
+  links (signed JWTs);
+- does NOT break pending password-reset links (`Verification` rows in the database) or passwords (scrypt, independent
+  of the secret);
+- **locks every 2FA account out of password sign-in**: TOTP secrets AND backup codes are both encrypted with the secret
+  (`storeBackupCodes: "encrypted"`), so neither works afterwards.
+Procedure: ask 2FA users (and the admin) to turn 2FA off first, or re-encrypt the `TwoFactor` rows with the new secret in
+a one-off script before switching; otherwise affected users need a password reset and their `TwoFactor` row removed.
 
 Locked out of admin: set `ADMIN_EMAILS` to the owner's verified address and sign in, or
 `UPDATE "User" SET role = 'ADMIN' WHERE email = '...'` on the database.
@@ -185,7 +230,10 @@ trustworthy) to `account.accountLinking.trustedProviders`.
 
 ## Not done yet
 
-- Passkeys (`@better-auth/passkey`): not added; fits a separate change (needs a `Passkey` table and a UI section).
+- Passkeys (`@better-auth/passkey`) and mandatory admin MFA: not added; proposal under "Admin" above.
+- `lib/auth/react.ts` still returns a Clerk-shaped user (`fullName`, `primaryEmailAddress`); a plain
+  `{ id, nickname, email, ... }` shape touches the checkout/tip components and their tests, so it is left for a change
+  coordinated with the payments work.
 - Apple sign-in was dropped with Clerk (needs Apple credentials).
 - Google-only accounts cannot enable TOTP until they set a password (explained in the UI).
 - haveIBeenPwned is fail-closed: if its API is unreachable, sign-up and password changes return an error.

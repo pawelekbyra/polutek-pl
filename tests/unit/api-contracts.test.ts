@@ -1,14 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { PATCH as languagePATCH } from '@/app/api/user/language/route';
 import { GET as subscriptionsGET, POST as subscriptionsPOST, DELETE as subscriptionsDELETE } from '@/app/api/subscriptions/route';
-import { GET as userSyncGET } from '@/app/api/user/sync/route';
 import { GET as mediaSourceGET } from '@/app/api/media-source/[videoId]/route';
 import { POST as checkoutIntentPOST } from '@/app/api/checkout/create-intent/route';
 import { MainChannelService } from '@/lib/modules/channel';
 import { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth/server';
 import { prisma } from '@/lib/prisma';
-import { getOrCreateCurrentUser, updateUserLanguage, SyncCurrentUserUseCase } from '@/lib/modules/users';
+import { getOrCreateCurrentUser, updateUserLanguage } from '@/lib/modules/users';
 import { PlaybackService } from '@/lib/modules/playback';
 import { createCheckoutIntent } from '@/lib/modules/payments';
 import { getActorFromAuth } from '@/lib/api/auth';
@@ -59,9 +58,6 @@ vi.mock('@/lib/modules/channel', () => ({
 vi.mock('@/lib/modules/users', () => ({
   updateUserLanguage: vi.fn(),
   getOrCreateCurrentUser: vi.fn(),
-  SyncCurrentUserUseCase: {
-    execute: vi.fn(),
-  },
 }));
 
 vi.mock('@/lib/modules/playback', () => ({
@@ -206,41 +202,6 @@ describe('API Contracts', () => {
 
         expect(res.status).toBe(200);
         expect(data).toEqual(mockResult);
-    });
-  });
-
-  describe('GET /api/user/sync', () => {
-    it('ensures the local user row through the conflict-resolving sync path', async () => {
-      // Regression: this route used to call a naive repo upsert that had no
-      // email-conflict handling, so a Clerk id whose email already belonged to
-      // another row hit the unique constraint instead of being merged.
-      vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as any);
-      vi.mocked(getOrCreateCurrentUser).mockResolvedValue({ id: 'user_1' } as any);
-      vi.mocked(SyncCurrentUserUseCase.execute).mockResolvedValue({
-        totalPaid: 50,
-        isPatron: true,
-        language: 'pl',
-      });
-
-      const req = new NextRequest('http://localhost/api/user/sync');
-      const res = await userSyncGET(req);
-      const data = await res.json();
-
-      expect(res.status).toBe(200);
-      expect(data).toEqual({ totalPaid: 50, isPatron: true, language: 'pl' });
-      expect(getOrCreateCurrentUser).toHaveBeenCalledWith(expect.anything(), 'user_1');
-    });
-
-    it('matches the documented response shape for unauthorized', async () => {
-      vi.mocked(auth).mockResolvedValue({ userId: null } as any);
-
-      const req = new NextRequest('http://localhost/api/user/sync');
-      const res = await userSyncGET(req);
-      const data = await res.json();
-
-      expect(res.status).toBe(401);
-      expect(data).toEqual({ error: 'Unauthorized' });
-      expect(getOrCreateCurrentUser).not.toHaveBeenCalled();
     });
   });
 

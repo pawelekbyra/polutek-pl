@@ -1,5 +1,3 @@
-export const DEFAULT_AVATAR_URL = 'https://www.dicebear.com/api/avataaars/anonymous.svg';
-
 export const SUPPORTED_CURRENCIES = ["PLN", "EUR", "USD", "CHF", "GBP"] as const;
 export type SupportedCurrency = (typeof SUPPORTED_CURRENCIES)[number];
 

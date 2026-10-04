@@ -33,7 +33,6 @@ describe('Security Headers', () => {
     expect(csp).toContain('https://challenges.cloudflare.com');
     
     expect(csp).toContain('https://js.stripe.com');
-    expect(csp).toContain('https://fonts.googleapis.com');
     expect(csp).toContain("default-src 'self'");
   });
 
@@ -95,7 +94,23 @@ describe('Security Headers', () => {
     const csp = generateCSP();
 
     expect(csp).toContain('https://user-images.example.com');
-    expect(csp).toContain("img-src 'self' data: blob: https://img.clerk.com https://images.unsplash.com https://www.dicebear.com https://user-images.example.com");
+    expect(csp).toContain("img-src 'self' data: blob: https://img.clerk.com https://user-images.example.com");
+  });
+
+  it("allows no host the app does not use (SEC-06): no Google Fonts, demo images, dicebear or WebSockets", () => {
+    const csp = generateCSP();
+    for (const host of ["fonts.googleapis.com", "fonts.gstatic.com", "images.unsplash.com", "dicebear.com", "wss://"]) {
+      expect(csp).not.toContain(host);
+    }
+    const directive = (name: string) => csp.split("; ").find((part) => part.startsWith(`${name} `)) ?? "";
+    expect(directive("font-src")).toBe("font-src 'self' data:");
+  });
+
+  it("upgrades insecure requests in production only", () => {
+    vi.stubEnv("NODE_ENV", "production");
+    expect(generateCSP()).toContain("upgrade-insecure-requests");
+    vi.stubEnv("NODE_ENV", "development");
+    expect(generateCSP()).not.toContain("upgrade-insecure-requests");
   });
 
   it('allows thumbnails from the public R2 host in img-src', () => {

@@ -26,10 +26,16 @@ function ResetPasswordForm() {
     if (!token) return;
     setLoading(true);
     setError(null);
-    const { error: resetError } = await authClient.resetPassword({ newPassword: password, token });
-    setLoading(false);
-    if (resetError) return setError(authErrorMessage(resetError, isPl));
-    setDone(true);
+    try {
+      const { error: resetError } = await authClient.resetPassword({ newPassword: password, token });
+      if (resetError) return setError(authErrorMessage(resetError, isPl));
+      setDone(true);
+    } catch {
+      // The auth client throws on a dropped connection (audit AUTH-08).
+      setError(authErrorMessage({ code: "NETWORK_ERROR" }, isPl));
+    } finally {
+      setLoading(false);
+    }
   }
 
   const invalidLink = !token || Boolean(tokenError);

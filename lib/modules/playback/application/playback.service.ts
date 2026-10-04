@@ -140,17 +140,19 @@ export class PlaybackService {
   static async createPlaybackPlanWithContext(videoId: string, ctx: AppContext, ipHash?: string, userAgentHash?: string): Promise<PlaybackPlan> {
     const { actor } = ctx;
 
-    // Provider-gating order: load safe video metadata first, then make the
-    // backend access decision before inspecting or resolving any playable source.
+    // Provider-gating order: make the backend access decision first, then load the
+    // row that decision was about (the caller may have passed a slug) before
+    // inspecting or resolving any playable source.
+    const accessResult = await checkVideoAccess({ videoIdOrSlug: videoId }, ctx);
+    const resolvedVideoId = (accessResult.ok && accessResult.data.videoId) || videoId;
+
     const video = await ctx.prisma.video.findUnique({
-      where: { id: videoId },
+      where: { id: resolvedVideoId },
       include: {
         assets: true,
         activePlaybackRoute: { include: { asset: true } },
       }
     }) as VideoWithAssets;
-
-    const accessResult = await checkVideoAccess({ videoIdOrSlug: videoId }, ctx);
 
     if (!accessResult.ok) {
         return unavailablePlan({
@@ -166,17 +168,22 @@ export class PlaybackService {
     // token, provider id or playback session is touched, so an upcoming video
     // can never be played or counted early — whatever its tier. Admins may
     // still preview it (like a draft); their sessions are marked as previews.
-    if (video && actor.type !== 'admin' && isUpcomingPremiere(video)) {
+    // The decision's own premiereAt (computed for the row it resolved, id or slug) and the loaded row
+    // are both checked, so neither a slug nor a stale decision can open a premiere early (SEC-10).
+    const upcomingPremiereAt = actor.type === 'admin'
+      ? null
+      : toPremiereDate(accessResult.data.premiereAt) ?? (isUpcomingPremiere(video) ? toPremiereDate(video?.premiereAt) : null);
+    if (upcomingPremiereAt) {
       const isGuest = actor.type === 'guest';
       return {
         ...unavailablePlan({
           videoId,
           status: isGuest ? 'LOGIN_REQUIRED' : 'COMING_SOON',
-          video: { thumbnailUrl: posterFor(video), title: video.title },
+          video: { thumbnailUrl: posterFor(video), title: video?.title },
           accessReason: isGuest ? 'LOGIN_REQUIRED' : 'COMING_SOON',
           warnings: ['Premiere not reached yet'],
         }),
-        ...(isGuest ? {} : { premiereAt: toPremiereDate(video.premiereAt)!.toISOString() }),
+        ...(isGuest ? {} : { premiereAt: upcomingPremiereAt.toISOString() }),
       };
     }
 

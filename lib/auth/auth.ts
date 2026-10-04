@@ -32,7 +32,7 @@ import {
   beforeUserCreate,
   onPasswordReset,
 } from "./hooks";
-import { queuePasswordResetEmail, queueVerificationEmail } from "./emails";
+import { onEmailVerified, queueChangeEmailConfirmation, queuePasswordResetEmail, queueVerificationEmail } from "./emails";
 import { authRateLimitStorage } from "./rate-limit-storage";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -61,7 +61,13 @@ export const auth = betterAuth({
       language: { type: "string", required: false, defaultValue: "en", input: true },
       onboardingPending: { type: "boolean", required: false, defaultValue: false, input: false },
     },
-    changeEmail: { enabled: true },
+    // Changing the address (audit AUTH-02/SEC-04): the before hook wants the password or a fresh Google
+    // sign-in and limits requests per user; the CURRENT address must approve the change first, then the
+    // new address is verified, then the old address gets a notice (onEmailVerified).
+    changeEmail: {
+      enabled: true,
+      sendChangeEmailConfirmation: async ({ user, newEmail, url }) => queueChangeEmailConfirmation(user, newEmail, url),
+    },
   },
 
   emailAndPassword: {
@@ -82,6 +88,7 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
     expiresIn: EMAIL_TOKEN_TTL_SECONDS,
     sendVerificationEmail: async ({ user, url }) => queueVerificationEmail(user, url),
+    afterEmailVerification: async (user, request) => onEmailVerified(user, request),
   },
 
   socialProviders: googleEnabled
@@ -123,6 +130,8 @@ export const auth = betterAuth({
       "/request-password-reset": { window: 3600, max: 5 },
       "/send-verification-email": { window: 3600, max: 5 },
       "/change-password": { window: 3600, max: 10 },
+      // Each request mails an address the caller typed (also limited per user, see guardChangeEmail).
+      "/change-email": { window: 3600, max: 10 },
     },
   },
 

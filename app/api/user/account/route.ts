@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { auth } from "@/lib/auth/server";
-import { checkDeletionReauth, isLastAdmin } from "@/lib/auth/reauth";
+import { checkSensitiveReauth, isLastAdmin } from "@/lib/auth/reauth";
 import { rateLimit } from "@/lib/rate-limit";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { AccountDeletionCleanupUseCase } from "@/lib/modules/users";
@@ -36,7 +36,7 @@ export async function DELETE(req: NextRequest) {
 
     const body = (await req.json().catch(() => null)) as { password?: unknown } | null;
     const session = await auth({ fresh: true });
-    const reauth = await checkDeletionReauth({
+    const reauth = await checkSensitiveReauth({
       userId: actor.userId,
       sessionId: session.sessionId,
       password: typeof body?.password === "string" ? body.password : null,

@@ -99,6 +99,40 @@ describe('PlaybackService premiere gate', () => {
     }
   });
 
+  it('cannot be skipped by asking for the slug (SEC-10)', async () => {
+    // The slug resolves (in checkVideoAccess) to the premiere's row; the service loads that row.
+    vi.mocked(checkVideoAccess).mockResolvedValue({
+      ok: true,
+      data: { hasAccess: true, videoId: 'video-0001', premiereAt: premiereAt.toISOString() },
+    } as never);
+    prisma.video.findUnique.mockImplementation((async (args: { where: { id: string } }) =>
+      args.where.id === 'video-0001' ? video() : null) as never);
+
+    const result = await PlaybackService.createPlaybackPlanWithContext(
+      'premiere-slug',
+      createAppContext({ actor: { type: 'user', userId: 'user-1' }, prisma: prisma as never }),
+    );
+
+    expect(prisma.video.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'video-0001' } }));
+    expect(result.status).toBe('COMING_SOON');
+    expect(result.premiereAt).toBe(premiereAt.toISOString());
+    expect(result.source).toBeUndefined();
+    expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses playback from the decision alone, even when the loaded row has no premiere', async () => {
+    vi.mocked(checkVideoAccess).mockResolvedValue({
+      ok: true,
+      data: { hasAccess: true, videoId: 'video-0001', premiereAt: premiereAt.toISOString() },
+    } as never);
+    prisma.video.findUnique.mockResolvedValue(video({ premiereAt: null }));
+
+    const result = await plan({ type: 'guest' });
+
+    expect(result.status).toBe('LOGIN_REQUIRED');
+    expect(result.source).toBeUndefined();
+  });
+
   it('plays normally once the premiere has passed', async () => {
     prisma.video.findUnique.mockResolvedValue(video({ premiereAt: new Date(Date.now() - 60_000) }));
 

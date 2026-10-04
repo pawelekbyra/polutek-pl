@@ -250,7 +250,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     src={video.creator?.imageUrl}
                     alt={video.creator?.name || 'Creator'}
                     size={46}
-                    fallbackSeed={video.creator?.name || MAIN_CREATOR_NAME}
                     className="bg-[var(--chan-avatar-gradient)] transition-[transform,opacity] duration-200 hover:opacity-90 hover:scale-[1.04]"
                   />
                </Link>

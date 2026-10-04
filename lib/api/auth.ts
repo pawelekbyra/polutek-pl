@@ -6,20 +6,11 @@ import { isAdminEmail } from "@/lib/auth/config";
 import { recordAuthAudit } from "@/lib/auth/audit";
 
 
-export async function getAuthSession() {
-  const { userId } = await auth();
-  return {
-    userId,
-    /** Non-authoritative UI hint only. Never use for server authorization. */
-    role: undefined as string | undefined,
-    /** Non-authoritative UI hint only. Never use for access-control decisions. */
-    isPatron: undefined as boolean | undefined,
-  };
-}
-
 /**
- * Admin = `User.role === ADMIN` in our database. One-time bootstrap: a verified account whose
- * e-mail is listed in ADMIN_EMAILS is promoted on first use (and the promotion is audited).
+ * Admin = `User.role === ADMIN` in our database. Bootstrap: a verified account whose e-mail is listed
+ * in ADMIN_EMAILS is promoted on its next request (and the promotion is audited). Note: this runs on
+ * every request, so while an address stays in ADMIN_EMAILS a demotion in /admin/users is undone at
+ * once; remove the address from ADMIN_EMAILS after the first sign-in (audit AUTH-27).
  * A never-verified address cannot be promoted, so nobody can claim an admin e-mail by signing
  * up with it first.
  */
@@ -40,7 +31,7 @@ type ActorResolverOptions = {
 export async function resolveDbBackedActor(userId: string): Promise<Actor> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, role: true, isDeleted: true, email: true, emailVerified: true },
+    select: { id: true, role: true, isDeleted: true, email: true, emailVerified: true, onboardingPending: true },
   });
 
   if (!user || user.isDeleted) {
@@ -51,10 +42,8 @@ export async function resolveDbBackedActor(userId: string): Promise<Actor> {
     return { type: "admin", userId };
   }
 
-  return {
-    type: "user",
-    userId,
-  };
+  // Server-side half of the first-sign-in dialog (audit AUTH-11): see Actor.onboardingPending.
+  return user.onboardingPending ? { type: "user", userId, onboardingPending: true } : { type: "user", userId };
 }
 
 async function resolveDbBackedAdminActor(
@@ -74,11 +63,6 @@ async function resolveDbBackedAdminActor(
   }
 
   throw new AppError("Forbidden: Admin access required", 403, "FORBIDDEN");
-}
-
-export async function requireAdminSession() {
-  const actor = await requireAdminActor();
-  return { userId: actor.userId, role: "admin" as const };
 }
 
 /**
