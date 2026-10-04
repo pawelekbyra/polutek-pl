@@ -26,7 +26,7 @@ Ostatnia aktualizacja: 2026-10-04.
 - **Pasek zbiórki:** zostaje ręcznie ustawiany (decyzja 2026-10-04).
 - **Resend:** zostaje jedynym nadawcą do czasu własnej poczty; plan Pro dopiero przy starcie publicznym. Nowa domena ma słabą reputację u Hotmaila (maile w spamie).
 - **Polityka prywatności** (2026-10-04): przepisać na krótką, zrozumiałą, zawierającą tylko to, co wymaga prawo (jak Regulamin); przed startem przegląd prawnika.
-- **Panel administratora** (2026-10-04): niezależna aplikacja na `admin.pawelperfect.com` z bogatą analityką i obserwowalnością; trwa faza badań i projektu (odwraca decyzję z 2026-09-30 o odłożeniu).
+- **Panel administratora** (2026-10-04): niezależna aplikacja na `admin.pawelperfect.com` z bogatą analityką i obserwowalnością (odwraca decyzję z 2026-09-30 o odłożeniu). Wizja, decyzje, fazy budowy i 12 pytań do właściciela: [`architecture/admin-panel.md`](../architecture/admin-panel.md).
 ## Czeka na właściciela
 
 1. **Baza Neon `NEON-krau`** (stara kopia danych testowych): usunąć w panelu Vercel → Storage →
@@ -39,8 +39,9 @@ Ostatnia aktualizacja: 2026-10-04.
    nie działa do północy UTC) i powiększa serwer. Opcje (ceny Hetznera od 15.06.2026, netto):
    CX43 8 vCPU/16 GB 15,99 €, CPX32 4 vCPU/8 GB 35,49 €, dedykowany EX44 14 rdzeni/64 GB 57,30 €.
    Zmiana rozmiaru w trybie „CPU i RAM” (bez dysku), żeby dało się wrócić.
-4. **2FA dla kont administratora**: żadne z 4 kont admina nie ma 2FA; adres `hello@` jest na liście
-   `ADMIN_EMAILS`, a jego poczta trafia do PP Support.
+4. **2FA dla kont administratora**: żadne z 4 kont admina nie ma 2FA. `ADMIN_EMAILS` jest na produkcji
+   pusty (pomiar 2026-10-04), ale `hello@` jest w polityce Access dla `support.`, a jego poczta (linki
+   resetu, kody OTP) trafia do PP Support, którą czyta token agenta AI. Kroki: `architecture/admin-panel.md`, faza 0.
 5. **Logowanie Google**: klient OAuth leży w projekcie organizacji Google Workspace. Przed anulowaniem
    Workspace trzeba go przenieść na konto osobiste (`GOOGLE_ACCESS.md`, sekcja „Move the OAuth client”),
    potem agent podmienia `GOOGLE_CLIENT_ID/SECRET` na serwerze.
