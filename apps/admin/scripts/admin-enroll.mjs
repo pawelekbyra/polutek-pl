@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // Enrollment of the panel administrator. The ONLY way an admin account comes to exist: run on the server
 // over SSH (root of trust = SSH), never from the web. Prints a one-time link (15 min, works once) in the
 // terminal; nothing is e-mailed. The owner opens it through Cloudflare Access and adds a passkey + TOTP.
