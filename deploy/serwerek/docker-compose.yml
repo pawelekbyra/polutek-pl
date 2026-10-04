@@ -57,6 +57,35 @@ services:
       driver: json-file
       options: { max-size: "20m", max-file: "3" }
 
+  admin:
+    # Admin panel (apps/admin), admin.pawelperfect.com. Profile "admin": NOT started by deploy.sh or a plain
+    # `docker compose up`; only by deploy/serwerek/deploy-admin.sh (docker compose --profile admin ...).
+    # Tunnel ingress admin.pawelperfect.com -> http://127.0.0.1:3100, behind a Cloudflare Access application.
+    # Runbook: docs/operations/ADMIN-PANEL.md.
+    profiles: ["admin"]
+    image: ${ADMIN_IMAGE:-polutek-admin:current}
+    restart: unless-stopped
+    env_file: ./admin.env         # DATABASE_URL (host "db"), ADMIN_AUTH_SECRET, ADMIN_APP_URL, CF_ACCESS_TEAM_DOMAIN, CF_ACCESS_AUD ...
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3100:3100"
+    volumes:
+      # Read-only status written by the host job deploy/serwerek/admin/host-status.py (no docker.sock in the panel).
+      - /var/lib/serwerek/host-status:/host-status:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m
+      - /app/apps/admin/.next/cache:size=32m,uid=1000,gid=1000
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    mem_limit: 384m
+    cpu_shares: 512
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
   collector:
     # pp-collector: anonymous analytics beacons forwarded by the app (POST /api/t), batch insert into the
     # Postgres schema "telemetry" as role pp_collector, rollups every 5 min, retention every 6 h.

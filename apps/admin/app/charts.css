@@ -1,0 +1,63 @@
+/* Panel PP: wykresy, liczniki, sparkline (sekcja 12 prototypu przeniesiona do kodu).
+ * Bez atrybutów style= (ścisłe CSP): wysokości, szerokości i pozycje idą przez klasy skali z scale.css.
+ * Zasady: docs/design/admin-panel/DESIGN-SYSTEM.md, sekcje 3 i 4. */
+
+.chart { margin: 0; display: grid; gap: var(--s-2); min-width: 0; }
+.cchart { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: var(--s-2); }
+.cchart-y { position: relative; min-width: 24px; font-size: var(--fs-12); color: var(--text-3); font-variant-numeric: tabular-nums; }
+.cchart-y span { position: absolute; right: 0; transform: translateY(-50%); white-space: nowrap; line-height: 1; }
+/* Niewidoczna kopia najdłuższej etykiety rezerwuje szerokość kolumny osi. */
+.cchart-y .gy-sizer { position: static; visibility: hidden; display: block; transform: none; height: 0; overflow: hidden; }
+.cchart-y .gy-0 { top: 100%; } .cchart-y .gy-1 { top: 75%; } .cchart-y .gy-2 { top: 50%; } .cchart-y .gy-3 { top: 25%; } .cchart-y .gy-4 { top: 0%; }
+.cchart-plot { position: relative; border-bottom: 1px solid var(--axis); border-radius: 2px; }
+.cchart-plot:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+.cchart-h-160 .cchart-plot, .cchart-h-160 .cchart-y { height: 160px; }
+.cchart-h-200 .cchart-plot, .cchart-h-200 .cchart-y { height: 200px; }
+.cchart-h-240 .cchart-plot, .cchart-h-240 .cchart-y { height: 240px; }
+.cchart-grid { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid var(--grid); }
+.cchart-grid.gy-1 { top: 75%; } .cchart-grid.gy-2 { top: 50%; } .cchart-grid.gy-3 { top: 25%; } .cchart-grid.gy-4 { top: 0%; }
+.cchart-bars { position: absolute; inset: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+.cchart-col { height: 100%; display: flex; align-items: flex-end; justify-content: center; padding: 0 1px; }
+.cchart-bar { width: 72%; max-width: 24px; border-radius: 4px 4px 0 0; background: var(--series-1); transition: opacity var(--dur-1) var(--ease); }
+.cchart-bar.is-zero { height: 1px; background: var(--axis); border-radius: 0; }
+.cchart-col.is-hover .cchart-bar { opacity: 0.78; }
+.cchart-x { grid-column: 2; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); font-size: var(--fs-12); color: var(--text-3); padding-top: 6px; font-variant-numeric: tabular-nums; }
+.cchart-x span { justify-self: center; white-space: nowrap; }
+.cchart-x span.is-hidden { visibility: hidden; }
+
+.chart-tip {
+  position: absolute; z-index: 5; pointer-events: none; min-width: 140px; max-width: 240px; top: 6px; left: 0;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--r-md);
+  box-shadow: var(--shadow-1); padding: var(--s-2) var(--s-3); font-size: var(--fs-12);
+}
+.tip-title { color: var(--text-2); margin-bottom: 4px; }
+.tip-row { display: flex; align-items: center; gap: 6px; }
+.tip-row strong { font-size: var(--fs-13); font-variant-numeric: tabular-nums; }
+.tip-row span:last-child { color: var(--text-2); }
+.tip-key { width: 12px; height: 2px; border-radius: 1px; flex: none; background: var(--series-1); }
+.chart-cap { font-size: var(--fs-12); color: var(--text-3); }
+.chart-table summary, details.more summary { cursor: pointer; font-size: var(--fs-12); color: var(--accent-text); width: max-content; padding: 2px 0; }
+.chart-table[open] summary { margin-bottom: var(--s-2); }
+.chart-table .table-scroll { max-height: 280px; overflow: auto; border: 1px solid var(--border); border-radius: var(--r-md); }
+
+/* Sparkline: SVG rozciągnięty na szerokość kafla; kreska i kropka mają stałą grubość niezależnie od skali. */
+.spark { display: block; width: 100%; height: 28px; overflow: visible; }
+.spark-line { fill: none; stroke: var(--compare); stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.spark-dot { fill: none; stroke: var(--series-1); stroke-width: 6; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+
+/* Licznik limitu: wypełnienie niesie stan, tor to jaśniejszy krok tego samego koloru. */
+.meter { position: relative; height: 8px; border-radius: var(--r-full); background: color-mix(in srgb, var(--series-1) 16%, var(--surface)); }
+.meter-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: inherit; background: var(--series-1); }
+.meter-warn { background: color-mix(in srgb, var(--warn-icon) 20%, var(--surface)); } .meter-warn .meter-fill { background: var(--warn-icon); }
+.meter-crit { background: color-mix(in srgb, var(--crit-icon) 18%, var(--surface)); } .meter-crit .meter-fill { background: var(--crit-icon); }
+.meter-threshold { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--text-3); opacity: 0.6; }
+.limit { display: grid; gap: 6px; padding: var(--s-3) 0; border-top: 1px solid var(--border); }
+.limit:first-child { border-top: 0; padding-top: 0; }
+.limit-head { display: flex; justify-content: space-between; gap: var(--s-2); align-items: baseline; flex-wrap: wrap; }
+.limit-name { font-weight: 500; }
+.limit-val { font-variant-numeric: tabular-nums; color: var(--text-2); font-size: var(--fs-13); }
+.limit-note { font-size: var(--fs-12); color: var(--text-3); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+@media (forced-colors: active) {
+  .badge, .nav-count, .health-dot, .meter-fill, .cchart-bar { forced-color-adjust: none; }
+}

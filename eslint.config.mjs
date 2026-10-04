@@ -1,6 +1,8 @@
 import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
 
 const eslintConfig = [
+  // Build output of the admin panel (apps/admin, a second Next.js app in this repo).
+  { ignores: ["apps/admin/.next/**", "apps/admin/next-env.d.ts"] },
   ...nextCoreWebVitals,
   {
     // These two rules are new "error"-level defaults as of eslint-config-next 16

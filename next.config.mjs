@@ -75,6 +75,11 @@ const nextConfig = {
           }
         ],
       },
+      {
+        // Language-switcher flags (public/flags): static, rarely changed, so no revalidation on every open.
+        source: '/flags/:file*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' }],
+      },
     ];
   },
 };
