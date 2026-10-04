@@ -62,5 +62,37 @@ describe('Channel Admin Use Cases', () => {
       expect(result.name).toBe('New Name');
       expect(mockPrisma.creator.update).toHaveBeenCalled();
     });
+
+    it('never writes or returns the removed channel cover (bannerUrl)', async () => {
+      const ctx = createAppContext({
+        prisma: mockPrisma as any,
+        actor: { type: 'admin', userId: 'admin-1' }
+      });
+      mockPrisma.creator.findUnique.mockResolvedValue({ id: 'chan-1', slug: 'test-slug', isApproved: true, isPrimary: true });
+      mockPrisma.creator.update.mockResolvedValue({ id: 'chan-1', slug: 'test-slug', name: 'New Name' });
+
+      await updateAdminChannelSettings(ctx, { name: 'New Name', bannerUrl: 'https://example.com/cover.jpg' } as never);
+
+      const args = mockPrisma.creator.update.mock.calls[0][0];
+      expect(args.data).not.toHaveProperty('bannerUrl');
+      expect(args.data.name).toBe('New Name');
+      expect(args.select).not.toHaveProperty('bannerUrl');
+      expect(args.select.name).toBe(true);
+    });
+  });
+
+  it('does not read the removed channel cover (bannerUrl) for the settings page', async () => {
+    const ctx = createAppContext({
+      prisma: mockPrisma as any,
+      actor: { type: 'admin', userId: 'admin-1' }
+    });
+    mockPrisma.creator.findUnique.mockResolvedValueOnce({ id: 'chan-1', slug: 'test-slug', isApproved: true, isPrimary: true });
+    mockPrisma.creator.findUnique.mockResolvedValueOnce({ id: 'chan-1', name: 'Test' });
+
+    await getAdminChannelSettings(ctx);
+
+    const settingsQuery = mockPrisma.creator.findUnique.mock.calls[1][0];
+    expect(settingsQuery.select).not.toHaveProperty('bannerUrl');
+    expect(settingsQuery.select.bio).toBe(true);
   });
 });

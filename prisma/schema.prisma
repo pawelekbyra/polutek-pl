@@ -284,6 +284,7 @@ model Creator {
   slug                    String         @unique
   name                    String
   bio                     String?
+  /// LEGACY, unused since 2026-10-04: former channel cover photo (removed from the channel page, admin and API). Dropped by the cleanup migration.
   bannerUrl               String?
   defaultThumbnailUrl     String?
   subscribersCount        Int            @default(0)
