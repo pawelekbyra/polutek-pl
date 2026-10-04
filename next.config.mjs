@@ -35,7 +35,7 @@ const nextConfig = {
     // a host /_next/image will fetch and transcode on our server, so no wildcards and no demo hosts.
     // Most remote images are `unoptimized` anyway; these remain: public video thumbnails (R2) and
     // avatars of accounts that predate Better Auth (img.clerk.com, until no User.imageUrl points there).
-    remotePatterns: Array.from(new Set(['thumbs.pawelperfect.pl', 'img.clerk.com', ...configuredImageHosts])).map((hostname) => ({
+    remotePatterns: Array.from(new Set(['thumbs.pawelperfect.com', 'img.clerk.com', ...configuredImageHosts])).map((hostname) => ({
       protocol: 'https',
       hostname,
       pathname: '/**',

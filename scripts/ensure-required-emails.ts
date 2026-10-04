@@ -31,7 +31,22 @@ const TEMPLATE_METADATA: Record<SystemTemplateSlug, { name: string; description:
   },
   'verify-email': {
     name: 'System: Verify email',
-    description: 'Link potwierdzający adres e-mail po rejestracji lub zmianie adresu.',
+    description: 'Link potwierdzający adres e-mail po rejestracji.',
+    category: 'SYSTEM',
+  },
+  'change-email-confirm': {
+    name: 'System: Approve email change',
+    description: 'Zmiana adresu, krok 1: obecny adres zatwierdza zmianę na nowy.',
+    category: 'SYSTEM',
+  },
+  'change-email-verify': {
+    name: 'System: Confirm new email',
+    description: 'Zmiana adresu, krok 2: link potwierdzający nowy adres.',
+    category: 'SYSTEM',
+  },
+  'email-changed': {
+    name: 'System: Email changed',
+    description: 'Powiadomienie na stary adres po zmianie adresu e-mail.',
     category: 'SYSTEM',
   },
   'reset-password': {
