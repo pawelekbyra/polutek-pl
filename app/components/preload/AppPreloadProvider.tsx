@@ -5,6 +5,12 @@ import { useAuth } from "@/lib/auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { PublicVideoDTO } from "@/app/types/video";
 import type { PlaybackPlan } from "@/lib/modules/playback";
+import { resolvePlaybackViewerKey } from "./playback-viewer-key";
+import type { InitialPlaybackPlan } from "./initial-playback-plan";
+import { isUpcomingPremiere } from "@/lib/premiere";
+import { isPlayablePlaybackPlan } from "../playback-plan-state";
+
+export { resolvePlaybackViewerKey };
 
 type PreloadStatus = "idle" | "loading" | "ready" | "error";
 
@@ -37,25 +43,6 @@ type AppPreloadContextValue = {
 
 const AppPreloadContext = createContext<AppPreloadContextValue | null>(null);
 
-export function resolvePlaybackViewerKey({
-  isLoaded,
-  userId,
-  sessionId,
-}: {
-  isLoaded: boolean;
-  userId: string | null | undefined;
-  sessionId: string | null | undefined;
-}): string | null {
-  if (!isLoaded) return null;
-  if (!userId) {
-    return sessionId
-      ? `anonymous-session:${encodeURIComponent(sessionId)}`
-      : "anonymous";
-  }
-  if (!sessionId) return null;
-  return `user:${encodeURIComponent(userId)}:session:${encodeURIComponent(sessionId)}`;
-}
-
 export function useAppPreload() {
   return useContext(AppPreloadContext);
 }
@@ -84,24 +71,55 @@ function scheduleIdle(callback: () => void) {
   requestIdle(() => callback(), { timeout: 1800 });
 }
 
+/**
+ * Low-priority fetch of a playable plan's manifest, so a click on that video finds it in the HTTP
+ * cache (the manifest is `public, max-age=300`). Anonymous CORS without credentials, like hls.js.
+ */
+function prefetchManifest(url: string) {
+  try {
+    void fetch(url, { mode: "cors", credentials: "omit", priority: "low" } as RequestInit).catch(() => undefined);
+  } catch {
+    // A warm-up only.
+  }
+}
+
 export function AppPreloadProvider({
   children,
   selectedVideo,
   allVideos,
+  initialPlayback,
 }: {
   children: React.ReactNode;
   selectedVideo: PublicVideoDTO | null;
   allVideos: PublicVideoDTO[];
+  /** The selected video's plan, made by the server for this viewer while rendering the page. */
+  initialPlayback?: InitialPlaybackPlan | null;
 }) {
   const { isLoaded, userId, sessionId } = useAuth();
   const queryClient = useQueryClient();
   const [initialProgress, setInitialProgress] = useState(0);
   const [initialReady, setInitialReady] = useState(false);
-  const playbackRecords = useRef<Map<string, PlaybackRecord>>(new Map());
+  const viewerKey = resolvePlaybackViewerKey({ isLoaded, userId, sessionId });
+  // The server's plan is the first entry of the cache, for exactly the viewer it was made for:
+  // the player then mounts from the first render, without asking /api/media-source. A plan for
+  // any other viewer key is never used (and is dropped with the other viewers' entries below).
+  const [initialRecords] = useState(() => {
+    const records = new Map<string, PlaybackRecord>();
+    if (initialPlayback && viewerKey && initialPlayback.viewerKey === viewerKey) {
+      records.set(`${viewerKey}\u0000${initialPlayback.videoId}`, {
+        status: "ready",
+        plan: initialPlayback.plan,
+        viewerKey,
+        requestId: 0,
+      });
+    }
+    return records;
+  });
+  const playbackRecords = useRef<Map<string, PlaybackRecord>>(initialRecords);
   const requestIdRef = useRef(0);
   const activeVideoIdRef = useRef<string | null>(selectedVideo?.id ?? null);
   const videosById = useMemo(() => new Map(allVideos.map((video) => [video.id, video])), [allVideos]);
-  const viewerKey = resolvePlaybackViewerKey({ isLoaded, userId, sessionId });
+  const prefetchedManifestsRef = useRef<Set<string>>(new Set());
 
   const updateProgress = useCallback((progress: number, ready = false) => {
     const next = Math.max(0, Math.min(100, Math.round(progress)));
@@ -186,10 +204,37 @@ export function AppPreloadProvider({
     return promise;
   }, [viewerKey]);
 
+  /**
+   * A plan is only warmed when the player will really need it: always when the player asks
+   * ("critical"), on intent (hover, focus, touch) only for a video this viewer can play, and never
+   * in the background ("nearby"/"idle"): a plan opens a playback session, which should mean
+   * someone is about to watch. A guest is never sent for a sign-in-only video or a premiere
+   * (the answer would be a 403/lock the page already shows).
+   */
+  const shouldWarmPlan = useCallback((videoId: string, priority: WarmVideoOptions["priority"]) => {
+    if (priority === "critical") return true;
+    if (priority === "nearby" || priority === "idle") return false;
+    const video = videosById.get(videoId);
+    if (!video) return false;
+    if (isUpcomingPremiere(video)) return false;
+    return Boolean(userId) || video.tier === "PUBLIC";
+  }, [userId, videosById]);
+
   const warmVideo = useCallback(async (videoId: string, options: WarmVideoOptions = {}) => {
     if (!videoId || !viewerKey) return null;
     const video = videosById.get(videoId);
-    const tasks: Promise<unknown>[] = [warmPlaybackPlan(videoId)];
+    const planTask = shouldWarmPlan(videoId, options.priority)
+      ? warmPlaybackPlan(videoId).then((plan) => {
+          // On intent, also pull the manifest into the HTTP cache: the switch then starts with it.
+          const url = plan?.source?.playbackUrl;
+          if (options.priority === "intent" && url && plan && isPlayablePlaybackPlan(plan, videoId) && !prefetchedManifestsRef.current.has(url)) {
+            prefetchedManifestsRef.current.add(url);
+            prefetchManifest(url);
+          }
+          return plan;
+        })
+      : Promise.resolve(null);
+    const tasks: Promise<unknown>[] = [planTask];
 
     if (options.includePoster !== false) {
       tasks.push(loadImage(video?.thumbnailUrl));
@@ -201,7 +246,7 @@ export function AppPreloadProvider({
 
     const [plan] = await Promise.all(tasks);
     return (plan as PlaybackPlan | null) ?? null;
-  }, [videosById, viewerKey, warmComments, warmPlaybackPlan]);
+  }, [shouldWarmPlan, videosById, viewerKey, warmComments, warmPlaybackPlan]);
 
   const getPlaybackPlan = useCallback((videoId: string) => {
     if (!viewerKey) return null;
