@@ -84,6 +84,11 @@ describe('legal documents consistency', () => {
     expect(en).toContain('pp.*: sign-in, up to 30 days');
   });
 
+  it('the privacy policy describes passkey data (public key only, private key stays on the device)', () => {
+    expect(text(PolitykaContent)).toContain('klucze dostępu (klucz publiczny, identyfikator i nazwa urządzenia; klucz prywatny zostaje na Twoim urządzeniu)');
+    expect(text(PrivacyContentEn)).toContain('passkeys (public key, identifier and device name; the private key stays on your device)');
+  });
+
   it('the Polish and English versions have the same structure', () => {
     for (const [pl, en] of [
       [RegulaminContent, TermsContentEn],

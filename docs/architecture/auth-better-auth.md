@@ -15,7 +15,8 @@ and the operations.
   `20261002100000_add_better_auth`, additive and idempotent). Extra fields used through
   `user.additionalFields`: `language` (input) and `onboardingPending` (server only).
 - New tables: `Session`, `Account` (credential password hash, Google link), `Verification` (one-time
-  tokens), `TwoFactor` (TOTP secret and backup codes). `ClerkEvent` stays in the schema as a dead table
+  tokens), `TwoFactor` (TOTP secret and backup codes), `Passkey` (WebAuthn public key, credential id, device
+  name; migration `20261004120000_add_passkey`, `credentialID` unique across users). `ClerkEvent` stays in the schema as a dead table
   (migrations are additive only).
 - Roles are ours: `User.role` (`USER` | `ADMIN`). The Better Auth `admin` plugin is **not** used (its string
   role and ban fields clash with `SystemRole` and with our soft delete). Disabled accounts are blocked in
@@ -31,6 +32,8 @@ and the operations.
 | `lib/auth/hooks.ts` | Hook bodies: placeholder name, default avatar, onboarding flag, EMAIL_TAKEN answer, sign-in lockout, session guard, pre-hijack guard, audit. |
 | `lib/auth/emails.ts` | Fire-and-forget e-mails (verification, reset, password changed, the three e-mail-change mails; the welcome mail goes out from the onboarding route). |
 | `lib/auth/rate-limit-storage.ts` | Better Auth `customStorage.consume` on our Redis REST store (atomic Lua INCR); fails open with an error log (see Security controls). |
+| `lib/auth/passkey.ts` | Passkey rules on the server: name cleanup, fresh session for removal, user-verification check, audit events. |
+| `lib/auth/passkey-support.ts` | Browser feature detection (`PublicKeyCredential`, autofill) and the default device name. |
 | `lib/auth/reauth.ts` | `checkSensitiveReauth`: password, or a Google sign-in from the last 10 minutes (account deletion, e-mail change). |
 | `lib/auth/server.ts` | `auth()`, `getAuth(req)`, `currentUser()`: the only server-side session readers. |
 | `lib/api/auth.ts` | DB-backed actor (`getActorFromAuth`, `requireAdminActor`); admin bootstrap by `ADMIN_EMAILS`. |
@@ -72,6 +75,41 @@ Unverified accounts get a new verification link and a 403 `EMAIL_NOT_VERIFIED`. 
 **Decision (F-07): 2FA applies to e-mail + password sign-in only.** Google and One Tap sign-in are trusted as
 strong on their own (Google's own 2-step verification), as in Better Auth's defaults; the app never adds a TOTP
 step on top. A wrong password shows a hint at Google / "Forgot password" for Clerk-era accounts without a password.
+
+**Passkeys (2026-10-04).** `@better-auth/passkey` (same version as `better-auth`; see "Dependency note" below).
+- Relying party: `getPasskeyRelyingParty()` in `lib/auth/config.ts`. RP ID = host of `BETTER_AUTH_URL` /
+  `NEXT_PUBLIC_APP_URL` without `www.` (`pawelperfect.com`, `localhost` in development), so one passkey works on www and
+  the apex. Accepted WebAuthn origins = the trusted origins on that domain (www and apex); the plugin never falls back to
+  the request's own `Origin` header. RP name "Pawel Perfect". Attestation `none` (plugin default).
+- Credentials are discoverable (`residentKey: "required"`, needed for the e-mail-less "Sign in with a passkey" button and
+  autofill); `userVerification: "preferred"` in the browser call (web.dev advice: `"required"` confuses some platforms)
+  but the server **requires the UV flag** in `afterVerification` (`PASSKEY_USER_VERIFICATION_REQUIRED`): the plugin
+  itself verifies with `requireUserVerification: false`, and a passkey sign-in replaces the password and TOTP.
+- **Decision: a passkey never creates an account.** It is added in the account panel ("Klucze dostępu" tab) after
+  signing in with a password or Google (`registration.requireSession: true`). Adding needs a fresh session (the plugin's
+  `freshSessionMiddleware`, `freshAge` 1 day); removing too (our before hook, the plugin only wants a session); an
+  older session gets `SESSION_NOT_FRESH` and the usual "sign in again" notice. Renaming (`/passkey/update-passkey`) is
+  disabled. The device name is normalized (one line, max 64 characters) and the WebAuthn user name stays the e-mail
+  (`?name=` is blanked in the before hook). `createSession` on registration is forced off.
+- **Decision: a passkey sign-in counts as strong authentication**, like Google: no TOTP step after it (Better Auth's
+  2FA hook only runs on `/sign-in/email`), because it already combines possession of the device key with biometrics or
+  the device PIN (user verification enforced above) and is phishing-resistant.
+- Sign-in UI: "Zaloguj się kluczem dostępu" button under Google in the sign-in modal, and passkeys in the e-mail field's
+  autofill (`autocomplete="username webauthn"`, conditional mediation) while the modal is open. Both are hidden where
+  `PublicKeyCredential` is missing. Autofill shows only errors that follow picking a passkey.
+- No Turnstile on passkey endpoints: the options request runs when the form opens (autofill), the challenge is
+  single-use (5 min, `Verification` row + signed cookie `pp.better-auth-passkey`) and a signature needs the device key.
+  Instead Better Auth's per-IP limits on our Redis store: options 20/min, verify 10/min, add/remove 20/h.
+- A deleted account cannot sign in with a passkey: `beforeSessionCreate` refuses `isDeleted`, and account deletion
+  removes the `Passkey` rows (also `ON DELETE CASCADE`).
+- Audit: `AUTH_PASSKEY_ADDED`, `AUTH_PASSKEY_REMOVED`, `AUTH_PASSKEY_SIGN_IN` (user id + passkey id only); the sign-in
+  also writes the usual `AUTH_SIGN_IN`.
+- CSP: nothing new (WebAuthn is a browser API; requests go to our own `/api/auth`); `Permissions-Policy` does not
+  restrict `publickey-credentials-*`. `/api/auth/passkey/*` is public in the proxy through `/api/auth(.*)`.
+- Dependency note: `@better-auth/passkey` needs `@better-auth/core` and `better-call` at the top of `node_modules`;
+  `better-call` lists `zod@^4` as an optional peer while the app uses zod 3, so `package.json` overrides that edge
+  (`"better-call": { "zod": "$zod" }`). Only `better-call/openapi` imports zod, and nothing here uses it. Upgrade
+  `@better-auth/passkey` together with `better-auth`.
 
 **Shared computers.** Google redirect sign-in always shows the account chooser (`prompt: "select_account"`), One
 Tap never auto-selects (`autoSelect: false`), and every sign-out goes through `signOutCompletely()`
@@ -128,7 +166,7 @@ sessions are not revoked by the change (the old address approved it); revoking t
 password in the body (verified with Better Auth's hasher, rate limited 5 per 15 min per user), a Google-only account
 must have a session created in the last 10 minutes (`REAUTH_REQUIRED`; the UI offers "Confirm with Google", which
 signs in again), and the last remaining ADMIN cannot delete itself (`LAST_ADMIN`, 409). Then our anonymising cleanup
-(`AccountDeletionCleanupUseCase`) deletes sessions, accounts and two-factor rows. The `User` row stays as an
+(`AccountDeletionCleanupUseCase`) deletes sessions, accounts, two-factor and passkey rows. The `User` row stays as an
 anonymised tombstone.
 
 **Sessions.** DB sessions, 30 days, refreshed daily, cookie cache 60 s, `freshAge` 1 day (kept on purpose, F-05). The
@@ -165,8 +203,8 @@ once, so empty the variable after the first sign-in and never list a shared (hel
 **MFA for the admin (proposal, not enabled).** Safe order: (1) the owner turns on TOTP in the account panel and stores
 the backup codes; (2) only then `requireAdminActor` starts refusing `role=ADMIN` without `twoFactorEnabled`, and also an
 admin session created by Google (decision F-07 lets Google skip TOTP), or adds a TOTP step-up for admin routes; (3) keep
-the break-glass path below. Better long-term: passkeys (`@better-auth/passkey`, phishing-resistant; a `Passkey` table, a
-section in the account panel, `rpID = pawelperfect.com`), first mandatory for the admin, then optional for everybody.
+the break-glass path below. Passkeys are now available to everybody (see "Passkeys"); making one mandatory for the
+admin is the remaining step.
 Admin routes keep the CSRF guard and rate limits in `middleware.ts`; admin API rate limiting is keyed by a hash of the
 session cookie plus the IP (the proxy cannot read the user id without a database call).
 
@@ -193,7 +231,7 @@ session cookie plus the IP (the proxy cannot read the user id without a database
 - Origins: `NEXT_PUBLIC_APP_URL` host in www and apex form plus `BETTER_AUTH_TRUSTED_ORIGINS`.
 - CSRF for `/api/user/*` mutations is checked in `middleware.ts` (same guard as admin).
 - Audit events: `AUTH_SIGN_UP`, `AUTH_SIGN_IN`, `AUTH_SIGN_OUT`, `AUTH_PASSWORD_CHANGED`, `AUTH_EMAIL_CHANGED`, `AUTH_ADMIN_BOOTSTRAP`,
-  `USER_NICKNAME_CHANGED`. Metadata holds ids and flags only.
+  `AUTH_PASSKEY_ADDED`, `AUTH_PASSKEY_REMOVED`, `AUTH_PASSKEY_SIGN_IN`, `USER_NICKNAME_CHANGED`. Metadata holds ids and flags only.
 - Avatars: resized to 256 px JPEG in the browser, validated server side (type, signature, size <= 120k chars) and
   stored as bytes in the `UserAvatar` table (kept out of every `User` read); `User.imageUrl` points at the public
   `/api/avatars/[userId]?v=<timestamp>` route (immutable cache, 404 for deleted accounts). Older rows may still point at `img.clerk.com` (kept in the CSP `img-src` and the image optimizer until
@@ -230,7 +268,8 @@ trustworthy) to `account.accountLinking.trustedProviders`.
 
 ## Not done yet
 
-- Passkeys (`@better-auth/passkey`) and mandatory admin MFA: not added; proposal under "Admin" above.
+- Mandatory admin MFA (TOTP or passkey): not added; proposal under "Admin" above.
+- Passkeys: no "signal unknown credential" to the password manager after a deleted key, and no rename in the UI.
 - `lib/auth/react.ts` still returns a Clerk-shaped user (`fullName`, `primaryEmailAddress`); a plain
   `{ id, nickname, email, ... }` shape touches the checkout/tip components and their tests, so it is left for a change
   coordinated with the payments work.
