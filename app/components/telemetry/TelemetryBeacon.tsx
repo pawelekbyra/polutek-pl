@@ -18,13 +18,16 @@ const FIRST_FLUSH_MS = 10_000;
 /** During long playback, report watch time and quality this often. */
 const PLAYBACK_FLUSH_MS = 5 * 60_000;
 
+/** The document's referrer belongs to its first page view only; later in-app navigations are internal. */
+let referrerReported = false;
+
 function currentPageView(pathname: string): BeaconPageView {
   const params = new URLSearchParams(window.location.search);
   const utm = (key: string) => params.get(key)?.slice(0, 64) || undefined;
   const lang = document.documentElement.lang?.slice(0, 2).toLowerCase();
   return {
     path: pathname,
-    referrer: document.referrer || undefined,
+    referrer: referrerReported ? undefined : document.referrer || undefined,
     utmSource: utm("utm_source"),
     utmMedium: utm("utm_medium"),
     utmCampaign: utm("utm_campaign"),
@@ -49,7 +52,10 @@ export function TelemetryBeacon({ enabled }: { enabled: boolean }) {
   useEffect(() => {
     if (!enabled) return;
     // The effect above (declared first, so it runs first) has already configured the queue.
-    if (isBeaconEnabled() && pathname) queuePageView(currentPageView(pathname));
+    if (isBeaconEnabled() && pathname) {
+      queuePageView(currentPageView(pathname));
+      referrerReported = true;
+    }
   }, [enabled, pathname]);
 
   useEffect(() => {
