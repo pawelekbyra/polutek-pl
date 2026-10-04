@@ -39,7 +39,10 @@ beforeEach(() => {
     patronGrant: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
     subscription: { findMany: vi.fn().mockResolvedValue([]), deleteMany: vi.fn().mockResolvedValue({ count: 0 }), count: vi.fn() },
     creator: { updateMany: vi.fn() },
-    emailPreference: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+    emailPreference: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }), findMany: vi.fn().mockResolvedValue([]) },
+    comment: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
+    broadcastEmailRecipient: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
+    emailEvent: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
     session: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
     account: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
     twoFactor: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
@@ -61,7 +64,7 @@ describe('deleteUserAsAdmin', () => {
     const update = prisma.user.update.mock.calls[0][0];
     expect(update.where).toEqual({ id: TARGET });
     expect(update.data).toMatchObject({ isDeleted: true, name: 'Usunięty Użytkownik', imageUrl: null });
-    expect(update.data.email).toMatch(/^deleted_.*@deleted\.com$/);
+    expect(update.data.email).toMatch(/^deleted_.*@deleted\.invalid$/);
 
     const audits = auditActions();
     expect(audits).toHaveLength(1);
