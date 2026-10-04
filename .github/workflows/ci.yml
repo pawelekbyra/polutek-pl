@@ -149,6 +149,20 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+  admin-build:
+    name: admin build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run admin:build
+        env:
+          NEXT_OUTPUT: standalone
+
   integration-postgres:
     name: integration-postgres
     runs-on: ubuntu-latest

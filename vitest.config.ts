@@ -8,6 +8,7 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/unit/**/*.test.ts', 'tests/unit/**/*.test.tsx', 'tests/integration/**/*.test.ts'],
     alias: {
+      '@admin': path.resolve(__dirname, './apps/admin'),
       '@': path.resolve(__dirname, './'),
     },
     coverage: {
@@ -20,6 +21,8 @@ export default defineConfig({
         'lib/api/**',
         'lib/auth-utils.ts',
         'lib/webhooks/**',
+        'apps/admin/lib/**',
+        'apps/admin/proxy.ts',
       ],
     },
   },

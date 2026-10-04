@@ -9,6 +9,7 @@ export default defineConfig({
     fileParallelism: false,
     testTimeout: 30_000,
     alias: {
+      '@admin': path.resolve(__dirname, './apps/admin'),
       '@': path.resolve(__dirname, './'),
     },
   },

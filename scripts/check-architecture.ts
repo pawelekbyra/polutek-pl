@@ -321,7 +321,48 @@ function checkDecommissionedAccessPolicySurface() {
   return violations;
 }
 
-const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkUserProfileServiceUsage() + checkDecommissionedAccessPolicySurface();
+/**
+ * apps/admin (admin.pawelperfect.com, docs/architecture/admin-panel.md) is a separate app with its own auth.
+ * It may use domain modules only through their index (plus the shared context), must never import the
+ * public site's identity (lib/auth, lib/api/auth) or its UI (app/), and touches Prisma directly only in
+ * its own auth layer (apps/admin/lib/auth) and the server-side enrollment script.
+ */
+const ADMIN_APP_DIR = path.join(ROOT, 'apps/admin');
+const ADMIN_FORBIDDEN_IMPORTS: [RegExp, string][] = [
+  [/from ['"]@\/lib\/auth(\/|['"])/, 'the public site auth (lib/auth); the panel has its own Better Auth instance'],
+  [/from ['"]@\/lib\/api\/auth['"]/, 'the public site actor (lib/api/auth)'],
+  [/from ['"]@\/app\//, 'public site UI (app/)'],
+  [/from ['"]@\/components\//, 'public site UI (components/)'],
+];
+
+function checkAdminApp() {
+  let violations = 0;
+  if (!fs.existsSync(ADMIN_APP_DIR)) return 0;
+  const files = getAllFiles(ADMIN_APP_DIR).filter((f) => !f.includes(`${path.sep}.next${path.sep}`) && !f.includes(`${path.sep}node_modules${path.sep}`));
+  for (const file of files) {
+    const content = fs.readFileSync(file, 'utf-8');
+    const relativePath = path.relative(ROOT, file).split(path.sep).join('/');
+    for (const [pattern, what] of ADMIN_FORBIDDEN_IMPORTS) {
+      if (pattern.test(content)) {
+        console.error(`❌ Violation: ${relativePath} imports ${what}.`);
+        violations++;
+      }
+    }
+    for (const match of content.matchAll(/from ['"]@\/lib\/modules\/([^/'"]+)\/([^'"]+)['"]/g)) {
+      if (match[1] === 'shared') continue;
+      console.error(`❌ Violation: ${relativePath} deep-imports @/lib/modules/${match[1]}/${match[2]}; use @/lib/modules/${match[1]}.`);
+      violations++;
+    }
+    if (content.includes('@/lib/prisma') && !relativePath.startsWith('apps/admin/lib/auth/')) {
+      console.error(`❌ Violation: ${relativePath} imports @/lib/prisma; read data through @/lib/modules/* (only apps/admin/lib/auth may use Prisma).`);
+      violations++;
+    }
+  }
+  console.log(`- apps/admin files checked: ${files.length}`);
+  return violations;
+}
+
+const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkUserProfileServiceUsage() + checkDecommissionedAccessPolicySurface() + checkAdminApp();
 
 if (totalViolations > 0) {
   console.error(`\nFound ${totalViolations} architectural violations.`);
