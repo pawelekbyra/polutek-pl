@@ -3,7 +3,8 @@
 Właściciel pisze do Claude Code „co słychać?”, a Claude uruchamia jeden skrypt i dostaje pełny obraz sytuacji:
 poczta PP Support, komentarze, wpłaty, użytkownicy, serwer, koszty, premiera. Decyzja właściciela (2026-10-04):
 **żadnego autonomicznego agenta AI na serwerze**; Claude Code na żywo jest operatorem raz dziennie, a każde
-działanie wykonuje dopiero po zgodzie właściciela w czacie. Skill dla Claude Code: `.claude/skills/odprawa/SKILL.md`.
+działanie wykonuje dopiero po zgodzie właściciela w czacie, wąskimi skryptami z sekcji „Działania po zgodzie”.
+Skill dla Claude Code: `.claude/skills/odprawa/SKILL.md`.
 
 ## Użycie
 
@@ -73,6 +74,57 @@ logika: okno czasu, czyszczenie treści, maskowanie, priorytety, Markdown), `scr
 - Prośby o zwrot i groźby rozpoznawane są po słowach kluczowych (PL/EN): fałszywe alarmy i przeoczenia są możliwe.
 - PP Support: do 4 stron otwartych rozmów (100) i pierwsza strona wszystkich; treść pobierana dla maks. 15 rozmów.
 - `.pl` wygasła: certyfikat `thumbs.pawelperfect.pl` nie da się sprawdzić (ENOTFOUND), co odprawa zgłasza.
+
+## Działania po zgodzie
+
+Odprawa niczego nie zmienia. Gdy właściciel zatwierdzi w czacie konkretne działanie, Claude wykonuje je jednym z
+wąskich skryptów w `scripts/ops/actions/`. Każdy działa w dwóch trybach: **domyślnie podgląd** (tylko odczyt: pokazuje
+stan, sprawdzenia, skutek i dokładne polecenie do wykonania) i **`--yes`** (wykonanie). Wspólne opcje: `--json`,
+`--help`, `--host=<alias ssh>` (domyślnie `serwerek`).
+
+| Skrypt | Co robi | Zabezpieczenia |
+|---|---|---|
+| `draft-reply.mjs --conversation=<nr> --file=<plik>` | szkic odpowiedzi w PP Support jako **notatka prywatna** (klient jej nie dostaje) | podgląd rozmowy (nadawca zamaskowany, temat i ostatnia wiadomość jako treść niezaufana) i pełna treść szkicu; odmowa, gdy treść zawiera sekret |
+| `send-reply.mjs --conversation=<nr> --file=<plik>` | **wysyłka** odpowiedzi do klienta (wiadomość publiczna = e-mail) | podgląd pokazuje PEŁNY adres odbiorcy i PEŁNĄ treść z odciskiem (12 znaków sha256); `--yes` wymaga `--to=<adres>` i `--sha=<odcisk>` z podglądu, inna treść albo inny odbiorca = nic nie wychodzi (sprawdzane też na serwerze tuż przed wysłaniem); odmowa dla nadawców automatycznych (no-reply, raporty DMARC, mailer-daemon) i treści z sekretem |
+| `hide-comment.mjs --comment=<uuid> --reason="..."` | ukrycie komentarza use case'em `hideAdminComment` | podgląd komentarza (ucięty, w znacznikach niezaufanych), przejście statusu wg `CommentPolicy`, powód wymagany |
+| `restore-comment.mjs --comment=<uuid> --reason="..."` | przywrócenie ukrytego/wstrzymanego use case'em `restoreAdminComment` | jak wyżej; usuniętego komentarza nie da się przywrócić |
+| `refund-payment.mjs --payment=<uuid> --amount=<grosze> --currency=PLN --reason="..."` | zwrot use case'em `adminRefund` (Stripe, baza, audyt `PAYMENT_REFUNDED`) | podgląd: płatność, zwroty w bazie i w Stripe, pozostała kwota, czy id/kwota/waluta się zgadzają, skutek (pełny/częściowy, nowy status); nigdy więcej niż pozostało; różnica między sumą zwrotów w Stripe i w bazie blokuje; `--yes` wymaga `--expect-refunded=<kwota z podglądu>` (gdy coś zmieniło się po podglądzie, zwrot się nie wykona); serwer sprawdza to jeszcze raz tuż przed zleceniem, a Stripe dostaje klucz idempotencji |
+
+Kwoty zawsze w groszach/centach (`500` = 5,00). Polecenie do wykonania podgląd wypisuje w całości; Claude pokazuje je
+właścicielowi razem z podglądem i uruchamia dopiero po jego „tak”/„wykonaj” (skill `odprawa`, sekcja 5).
+
+**Jak to działa na serwerze.** Działania na aplikacji idą przez istniejące use case'y, nie surowy SQL: `lib.mjs`
+łączy się `ssh serwerek` i uruchamia jednorazowy kontener `docker compose run --rm --no-deps -T` usługi `app` z
+obrazem workera (`.current-worker-image`, ten sam commit co aplikacja; obraz aplikacji to zbudowany Next bez źródeł
+use case'ów, więc nie `docker exec polutek-app-1`). Kontener ma `app.env` i sieć compose, nie publikuje portów, a skrypt
+`app-runner.ts` dostaje na stdin, parametry jako base64url (bez znaków powłoki). Podgląd czyta w transakcji
+`SET TRANSACTION READ ONLY` (Postgres odrzuci zapis) plus `GET` listy zwrotów w Stripe. Trwa ok. 7 s. Działania PP
+Support: `support-remote.mjs` przez `ssh serwerek node` na lokalnym API `127.0.0.1:3010` tokenem „Agent AI” z pliku
+na serwerze (jak odprawa).
+
+**Aktor i audyt.** Działania na aplikacji wykonuje konto administratora właściciela: `--admin=<id>`, a domyślnie
+`OPS_ADMIN_USER_ID` z `%USERPROFILE%\.ai-secrets\secrets.env`; bez obu serwer bierze jedyne aktywne konto ADMIN, a
+gdy jest ich kilka, podgląd wypisuje kandydatów i nic nie wykona. Każde wykonanie zapisuje:
+- w `AuditLog` wpis use case'u (`COMMENT_HIDE`, `COMMENT_RESTORE`, `PAYMENT_REFUNDED`) i dodatkowo `OPERATOR_ACTION`
+  (`metadata`: operacja, powód, wynik, „operator (Claude Code) na polecenie właściciela”; `userAgent`
+  `ops-actions (Claude Code)`); oba mają to samo `requestId` = id operacji `ops-<uuid>`. Przy zwrocie powód z id
+  operacji trafia też do `Payment.refundReason` i do metadanych zwrotu w Stripe;
+- linię `ai-log` na serwerze (`/var/log/serwerek/changes.log`, agent `claude-code-ops`): tylko id, kwoty, odciski;
+- lokalny dziennik `%USERPROFILE%\.ai-secrets\ops-actions.log` (JSONL, bez treści; zmienna `OPS_ACTIONS_JOURNAL`).
+Działania PP Support nie dotykają bazy aplikacji, więc mają tylko `ai-log` i dziennik lokalny (treść notatki/odpowiedzi
+widać w samej rozmowie).
+
+**Wynik nieznany.** Gdy połączenie zerwie się w trakcie wykonania, wynik to „WYNIK NIEZNANY”: wpis idzie do dziennika,
+a przed ponowną próbą trzeba zrobić podgląd i sprawdzić stan (zwrot ponowiony przy tym samym stanie dostaje ten sam
+klucz idempotencji w Stripe).
+
+**Kody wyjścia:** 0 podgląd bez problemów albo wykonano; 2 błędne argumenty, odmowa albo wykonanie niemożliwe (nic
+nie zmieniono); 1 błąd albo wynik nieznany.
+
+Pliki: `scripts/ops/actions/lib.mjs` (wspólna warstwa: argumenty, sprawdzenia, podgląd treści niezaufanej, ssh,
+dziennik, format wyniku), `app-runner.ts` (wykonawca w kontenerze), `support-remote.mjs` (wykonawca PP Support),
+`comment-action.mjs` (wspólny przebieg ukrycia/przywrócenia), testy `tests/unit/ops/actions-lib.test.ts` (bez
+połączeń, serwer zastąpiony atrapą).
 
 ## Jak dodać sekcję albo pomiar
 
