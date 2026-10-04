@@ -108,6 +108,7 @@
 
 /* ---------------- 2. Baza ---------------- */
 *, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body {
   margin: 0; background: var(--bg); color: var(--text);
@@ -125,7 +126,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
 .num, td.num, th.num { font-variant-numeric: tabular-nums; text-align: right; }
 .tabular { font-variant-numeric: tabular-nums; }
-.mono { font-family: var(--mono); font-size: 0.92em; }
+.mono { font-family: var(--mono); font-size: max(12px, 0.92em); }
 .muted { color: var(--text-3); }
 .text-2 { color: var(--text-2); }
 .sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
@@ -134,7 +135,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .skip-link { position: absolute; left: var(--s-2); top: -100px; z-index: 100; background: var(--accent); color: var(--on-accent); padding: var(--s-2) var(--s-3); border-radius: var(--r-sm); }
 .skip-link:focus { top: var(--s-2); }
 kbd, .kbd {
-  font: 500 11px/1 var(--font); color: var(--text-2); background: var(--surface); border: 1px solid var(--border-strong);
+  font: 500 12px/1 var(--font); color: var(--text-2); background: var(--surface); border: 1px solid var(--border-strong);
   border-bottom-width: 2px; border-radius: 4px; padding: 2px 5px; min-width: 18px; display: inline-block; text-align: center;
 }
 
@@ -175,7 +176,7 @@ kbd, .kbd {
   border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: var(--s-2); padding: var(--s-2) var(--s-5);
 }
 .search-btn {
-  display: flex; align-items: center; gap: var(--s-2); height: var(--control-h); min-width: 0; width: min(420px, 40vw);
+  display: flex; align-items: center; gap: var(--s-2); height: var(--control-h); min-width: 0; flex: 1 1 260px; max-width: 440px;
   padding: 0 var(--s-2) 0 var(--s-3); border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--surface); color: var(--text-3); cursor: pointer; text-align: left;
 }
 .search-btn:hover { border-color: var(--border-input); color: var(--text-2); }
@@ -213,8 +214,12 @@ kbd, .kbd {
 .stack { display: grid; gap: var(--s-4); align-content: start; }
 .row { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
 .row-between { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; }
-.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
-@media (min-width: 1600px) { .tiles-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+/* Kafle stykają się; linie podziału rysuje cień 1 px w prawo i w dół, a krawędź pojemnika go przycina,
+   więc niepełny ostatni rząd zostaje czystą powierzchnią (bez szarych dziur). */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(176px, 1fr)); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden; }
+.tiles > .tile { box-shadow: 1px 0 0 var(--border), 0 1px 0 var(--border); }
+.tiles-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (min-width: 1400px) { .tiles-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 
 /* ---------------- 5. Karta ---------------- */
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: var(--s-4); min-width: 0; }
@@ -379,7 +384,7 @@ textarea.input { padding: var(--s-2) var(--s-3); min-height: 88px; resize: verti
 .chart-svg .crosshair { stroke: var(--text-3); stroke-width: 1; }
 .chart-svg .annot { stroke: var(--annot); stroke-width: 1; opacity: 0.6; }
 .chart-svg .annot-dot { fill: var(--surface); stroke: var(--annot); stroke-width: 1; }
-.chart-svg .annot-num { fill: var(--text); font-size: 11px; font-weight: 600; }
+.chart-svg .annot-num { fill: var(--text); font-size: 12px; font-weight: 600; }
 .chart-svg .ref { stroke: var(--crit-icon); stroke-width: 1; }
 .chart-svg .ref-label { fill: var(--crit); }
 .chart-tip {
@@ -401,7 +406,7 @@ textarea.input { padding: var(--s-2) var(--s-3); min-height: 88px; resize: verti
 .chart-cap { font-size: var(--fs-12); color: var(--text-3); }
 .chart-notes { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s-1) var(--s-4); font-size: var(--fs-12); color: var(--text-2); }
 .chart-notes li { display: inline-flex; align-items: center; gap: 6px; }
-.note-num { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--annot); display: inline-grid; place-items: center; font-size: 11px; font-weight: 600; color: var(--text); }
+.note-num { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--annot); display: inline-grid; place-items: center; font-size: 12px; font-weight: 600; color: var(--text); }
 .chart-table summary, details.more summary { cursor: pointer; font-size: var(--fs-12); color: var(--accent-text); width: max-content; padding: 2px 0; }
 .chart-table[open] summary { margin-bottom: var(--s-2); }
 .chart-table .table-scroll { max-height: 280px; overflow: auto; border: 1px solid var(--border); border-radius: var(--r-md); }
@@ -520,18 +525,23 @@ dialog::backdrop { background: var(--overlay); }
 .live-pill .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--crit-icon); animation: pulse 1.6s var(--ease) infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 .quick-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-2); }
+.quick-actions .btn { white-space: normal; text-align: center; padding: var(--s-2) var(--s-3); line-height: 1.3; }
 .countdown { font-variant-numeric: tabular-nums; }
 .inline-sep { color: var(--text-3); }
 .dl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--s-3) var(--s-5); }
 .dl-grid div { display: grid; gap: 2px; }
 .dl-grid dt { font-size: var(--fs-12); color: var(--text-3); }
 .dl-grid dd { margin: 0; font-weight: 500; }
-.foot-note { margin-top: var(--s-6); font-size: var(--fs-12); color: var(--text-3); display: flex; gap: var(--s-2); align-items: center; flex-wrap: wrap; }
+.foot-note { margin-top: var(--s-6); font-size: var(--fs-12); color: var(--text-3); display: flex; gap: var(--s-2); align-items: flex-start; }
+.foot-note .icon { margin-top: 1px; }
+.grid .foot-note, .foot-note + .foot-note { margin-top: 0; }
 
 /* ---------------- 15. Responsywność ---------------- */
-@media (max-width: 1280px) {
-  .span-8, .span-7 { grid-column: span 12; } .span-5, .span-4 { grid-column: span 6; }
-  .live-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* Kolumny drugorzędne znikają na średnich ekranach (są w szczególe), wracają na szerokim i jako wiersze karty na telefonie. */
+@media (min-width: 761px) and (max-width: 1439px) { .table .hide-md { display: none; } }
+@media (max-width: 1280px) { .live-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1023px) {
+  .span-8, .span-7 { grid-column: span 12; } .span-5, .span-4, .span-3 { grid-column: span 6; }
 }
 @media (max-width: 1100px) {
   :root { --sidebar-w: 64px; }
@@ -541,7 +551,6 @@ dialog::backdrop { background: var(--overlay); }
   .nav a { width: 44px; justify-content: center; padding: 0; }
   .nav a[aria-current="page"]::before { left: -10px; }
   .nav a .badge-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--warn-icon); }
-  .span-6, .span-5, .span-4, .span-3 { grid-column: span 12; }
   .content { padding: var(--s-5) var(--s-5) var(--s-8); }
   .preview-row { grid-template-columns: 1fr 1fr; }
 }
@@ -581,7 +590,7 @@ dialog::backdrop { background: var(--overlay); }
   }
   .bottom-nav a, .bottom-nav button {
     all: unset; box-sizing: border-box; cursor: pointer; display: grid; justify-items: center; align-content: center; gap: 2px; min-height: 56px;
-    font-size: 11px; font-weight: 500; color: var(--text-2); position: relative; text-align: center;
+    font-size: 12px; font-weight: 500; color: var(--text-2); position: relative; text-align: center;
   }
   .bottom-nav [aria-current="page"] { color: var(--accent-text); }
   .bottom-nav .icon { width: 22px; height: 22px; }
@@ -598,6 +607,8 @@ dialog::backdrop { background: var(--overlay); }
   .table.responsive td.cell-first::before, .table.responsive td.actions::before { content: none; }
   .table.responsive td.actions { justify-content: flex-end; padding-top: var(--s-2) !important; }
   .table.responsive td.wrap { min-width: 0; text-align: left; display: block; }
+  .table .hide-sm { display: none !important; }
+  .table.responsive td .cell-in { min-width: 0; }
   .table.responsive td.wrap::before { display: block; }
   .filters .input, .filters .search-wrap { width: 100%; }
   .filters .select { flex: 1; }
@@ -605,6 +616,9 @@ dialog::backdrop { background: var(--overlay); }
   .preview-row { grid-template-columns: 1fr; }
   .live-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); }
   .hero-num { font-size: var(--fs-28); }
+  .banner { flex-wrap: wrap; }
+  .banner-body { flex-basis: calc(100% - 40px); }
+  .banner > .btn { margin-left: 32px; }
   .mod-item { grid-template-columns: 1fr; }
   .mod-actions { justify-content: flex-start; }
   .palette { margin-top: 4vh; }
@@ -614,6 +628,8 @@ dialog::backdrop { background: var(--overlay); }
   .kv { grid-template-columns: 1fr; gap: 2px; }
   .kv dd { margin-bottom: var(--s-2); }
 }
+/* Podpowiedzi klawiszowe tylko tam, gdzie jest klawiatura. */
+@media (pointer: coarse), (max-width: 760px) { .btn kbd, .kbd-tip, .palette-foot { display: none; } }
 @media (forced-colors: active) {
   .badge, .nav-count, .health-dot, .meter-fill { forced-color-adjust: none; }
   .chart-svg .line, .chart-svg .bar { forced-color-adjust: auto; }
@@ -958,7 +974,7 @@ dialog::backdrop { background: var(--overlay); }
     });
     if (st === "SUCCEEDED" || st === "PARTIALLY_REFUNDED") { u.tipsTotal += amt; u.tipsCount++; }
   }
-  PP.payments[0].amount = 2000; PP.payments[0].method = "BLIK"; PP.payments[0].user = "u1"; PP.payments[0].currency = "PLN"; PP.payments[0].status = "SUCCEEDED";
+  PP.payments[0].amount = 2000; PP.payments[0].method = "BLIK"; PP.payments[0].user = "u1"; PP.payments[0].currency = "PLN"; PP.payments[0].status = "SUCCEEDED"; PP.payments[0].video = "kulisy";
   PP.payments.sort(function (a, b) { return b.createdAt - a.createdAt; });
   PP.dispute = { payment: PP.payments.filter(function (x) { return x.status === "DISPUTED"; })[0], reason: "Nieuznana transakcja (fraudulent)", dueBy: new Date("2026-10-08T21:59:00Z"), amount: 5000 };
   PP.stripeHealth = {
@@ -988,6 +1004,9 @@ dialog::backdrop { background: var(--overlay); }
     });
   }
   PP.comments[0].createdAt = daysAgo(0, 13, 50);
+  PP.comments[0].video = "czesc";
+  // Liczniki komentarzy osób zgodne z listą komentarzy.
+  PP.users.forEach(function (u) { u.comments = PP.comments.filter(function (x) { return x.user === u.id; }).length; });
 
   // ---------- Dziennik audytu ----------
   var actions = [
@@ -1145,6 +1164,7 @@ dialog::backdrop { background: var(--overlay); }
     renditions: [["1080p", 58], ["720p", 31], ["480p", 9], ["360p", 2]], errors: [["Sieć (fragLoadError)", 9], ["Token wygasł (403)", 4], ["Dekodowanie (media)", 1]],
     startupDaily: [] };
   for (var sd = 0; sd < 30; sd++) PP.qoe.startupDaily.push(Math.round((2.9 - sd * 0.022 + (rnd() - 0.5) * 0.5 + (sd === 26 ? 0.9 : 0)) * 100) / 100);
+  PP.qoe.startupDaily[29] = 2.1; PP.qoe.startupDaily[0] = 2.6;
 
   // ---------- Kolejka zadań / teraz ----------
   PP.jobs = [
@@ -1260,10 +1280,19 @@ dialog::backdrop { background: var(--overlay); }
     spec.series.forEach(function (s) { s.values.forEach(function (v) { if (v !== null) all.push(v); }); });
     if (spec.band) all = all.concat(spec.band.hi);
     var max = spec.yMax || niceMax(Math.max.apply(null, all) * 1.05);
-    var top = spec.annotations && spec.annotations.length ? 26 : 10, bottom = 26;
     var left = leftPad(max, fmt), right = spec.endLabel ? 52 : 12;
-    var w = W - left - right, h = H - top - bottom;
+    var w = W - left - right;
     function X(i) { return left + (n === 1 ? w / 2 : (w * i) / (n - 1)); }
+    // Znaczniki adnotacji leżące bliżej niż 20 px schodzą do drugiego rzędu, żeby się nie nakładały.
+    var rows = [], lastX = -99, stagger = false;
+    (spec.annotations || []).forEach(function (a, k) {
+      var ax = X(a.index), row = 0;
+      if (ax - lastX < 20) row = rows[k - 1] === 0 ? 1 : 0;
+      if (row) stagger = true;
+      rows.push(row); lastX = ax;
+    });
+    var top = spec.annotations && spec.annotations.length ? (stagger ? 46 : 26) : 10, bottom = 26;
+    var h = H - top - bottom;
     function Y(v) { return top + h - (h * v) / max; }
     var out = '<svg class="chart-svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' + esc(spec.title + (spec.summary ? ". " + spec.summary : "")) + '">';
     out += axisY(max, fmt, top, h, left, W - right + 8);
@@ -1282,9 +1311,9 @@ dialog::backdrop { background: var(--overlay); }
       out += '<line class="ref" x1="' + left + '" x2="' + (W - right) + '" y1="' + ry + '" y2="' + ry + '"/><text class="tick ref-label" x="' + (W - right) + '" y="' + (ry - 6) + '" text-anchor="end">' + esc(spec.refLine.label) + "</text>";
     }
     (spec.annotations || []).forEach(function (a, k) {
-      var ax = X(a.index);
-      out += '<line class="annot" x1="' + ax.toFixed(1) + '" x2="' + ax.toFixed(1) + '" y1="' + (top - 4) + '" y2="' + (top + h) + '"/>' +
-        '<circle class="annot-dot" cx="' + ax.toFixed(1) + '" cy="11" r="9"/><text class="annot-num" x="' + ax.toFixed(1) + '" y="15" text-anchor="middle">' + (k + 1) + "</text>";
+      var ax = X(a.index), cy = rows[k] ? 31 : 11;
+      out += '<line class="annot" x1="' + ax.toFixed(1) + '" x2="' + ax.toFixed(1) + '" y1="' + (cy + 9) + '" y2="' + (top + h) + '"/>' +
+        '<circle class="annot-dot" cx="' + ax.toFixed(1) + '" cy="' + cy + '" r="9"/><text class="annot-num" x="' + ax.toFixed(1) + '" y="' + (cy + 4) + '" text-anchor="middle">' + (k + 1) + "</text>";
     });
     var cur = null;
     spec.series.forEach(function (s) {
@@ -1593,7 +1622,7 @@ dialog::backdrop { background: var(--overlay); }
       ? rows.map((r, i) => `<tr${o.rowAttr ? " " + o.rowAttr(i) : ""}>` + r.map((cell, j) => {
           const c = cols[j];
           const cls = (c.num ? "num " : "") + (j === 0 ? "cell-first " : "") + (c.cls || "");
-          return `<td class="${cls}" data-label="${esc(c.label || "")}">${cell}</td>`;
+          return `<td class="${cls}" data-label="${esc(c.label || "")}"><span class="cell-in">${cell}</span></td>`;
         }).join("") + "</tr>").join("")
       : o.empty ? `<tr><td colspan="${cols.length}"><div class="empty">${icon("info")}<span>${esc(o.empty)}</span></div></td></tr>`
       : `<tr><td colspan="${cols.length}"><div class="empty">${icon("filter")}<strong>Brak wyników</strong><span>Żaden wiersz nie pasuje do filtrów. <a href="${withParam({ q: "", status: "", page: "" , kind: "", method: "", seg: "", actor: "", vid: ""})}">Wyczyść filtry</a></span></div></td></tr>`;
@@ -1680,7 +1709,8 @@ dialog::backdrop { background: var(--overlay); }
       idx = Math.max(0, Math.min(w.dates.length - 1, idx));
       out.push({ index: idx, label: c.label, when: fmt.dt(c.at), kind: c.kind });
     });
-    return out.slice(-6);
+    // Numeracja od lewej do prawej (chronologicznie), najwyżej 6 najnowszych.
+    return out.sort((a, b) => a.index - b.index).slice(-6);
   }
 
   // ---------- Toasty ----------
@@ -1717,7 +1747,11 @@ dialog::backdrop { background: var(--overlay); }
     if (f) f.focus();
   }
   function closeModal() { if (modal.open) modal.close(); }
-  modal.addEventListener("close", () => { modal.innerHTML = ""; if (returnFocus && document.contains(returnFocus)) returnFocus.focus(); });
+  modal.addEventListener("close", () => {
+    modal.innerHTML = "";
+    // Po akcji ekran mógł się przerysować; wtedy fokus wraca na nagłówek strony, nie ginie.
+    setTimeout(() => { if (returnFocus && document.contains(returnFocus)) returnFocus.focus(); else { const h = document.querySelector("#main h1"); if (h) h.focus(); } }, 0);
+  });
   modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
   function confirmModal(o) {
     openModal({
@@ -1900,7 +1934,8 @@ dialog::backdrop { background: var(--overlay); }
       const days = q.startupDaily.map((_, i) => fmt.date(new Date(PP.now - (29 - i) * PP.DAY)));
       const st = C.figure({ title: "Czas startu p95", summary: `Czas od kliknięcia do pierwszej klatki, 95. percentyl. Spadł z 2,6 s do 2,1 s w 30 dni; cel 2 s.`, labels: days, series: [{ name: "p95", values: q.startupDaily, role: "current", slot: 1 }], refLine: { value: 2, label: "cel 2 s" }, annotations: [{ index: 26, label: "Migracja na serwerek", when: days[26] }], height: 200, fmt: (v) => fmt.one(v) + " s", endLabel: true });
       const hours = PP.worker.hourly.map((_, i) => String(i).padStart(2, "0") + ":00");
-      const wk = C.figure({ type: "columns", title: "Żądania do Workera HLS na godzinę (UTC)", summary: `Dziś ${fmt.int(PP.worker.used)} żądań; linia pokazuje tempo, przy którym limit 100 tys. skończyłby się o północy UTC (4 167/h). Żadna godzina go nie przekroczyła.`, labels: hours, series: [{ name: "Żądania", values: PP.worker.hourly, role: "current", slot: 1 }], refLine: { value: 4167, label: "tempo limitu" }, height: 200, xName: "Godzina UTC" });
+      const over = PP.worker.hourly.filter((x) => x > 4167).length;
+      const wk = C.figure({ type: "columns", title: "Żądania do Workera HLS na godzinę (UTC)", summary: `Dziś ${fmt.int(PP.worker.used)} żądań; czerwona linia to tempo, przy którym limit 100 tys. kończy się dokładnie o północy UTC (4167/h). Powyżej tempa: ${over} z ${PP.worker.hourly.length} godzin (wieczorny szczyt), średnio poniżej.`, labels: hours, series: [{ name: "Żądania", values: PP.worker.hourly, role: "current", slot: 1 }], refLine: { value: 4167, label: "tempo limitu" }, height: 200, xName: "Godzina UTC" });
       body = `<div class="grid">
         <div class="span-12"><div class="tiles" role="group" aria-label="Jakość odtwarzania">
           ${tile({ label: "Wynik doświadczenia widza", value: q.score, unit: "/100", hint: "Średnia wyników Mux Data: start, płynność, sukces odtwarzania.", delta: deltaHtml(q.score, 88, true, cmpLabel()) })}
@@ -1946,7 +1981,7 @@ dialog::backdrop { background: var(--overlay); }
     const val = (v) => (sk === "title" ? norm(v.title) : sk === "pub" ? +(v.publishedAt || 0) : v.views7);
     list.sort((a, b) => (val(a) > val(b) ? 1 : val(a) < val(b) ? -1 : 0) * (sd === "asc" ? 1 : -1));
     const pg = paginate(list, q.page, 10);
-    const cols = [{ label: "Film", sortKey: "title" }, { label: "Status" }, { label: "Wideo (HLS)" }, { label: "Miniatura" }, { label: "Napisy" }, { label: "Dostęp" }, { label: "Publikacja", sortKey: "pub" }, { label: "Obejrzenia 7 d", num: true, sortKey: "views7" }, { label: "" }];
+    const cols = [{ label: "Film", sortKey: "title" }, { label: "Status" }, { label: "Wideo (HLS)" }, { label: "Miniatura", cls: "hide-sm" }, { label: "Napisy", cls: "hide-sm" }, { label: "Dostęp", cls: "hide-md hide-sm" }, { label: "Publikacja", sortKey: "pub", cls: "hide-md hide-sm" }, { label: "Obejrzenia 7 d", num: true, sortKey: "views7" }, { label: "", cls: "hide-sm" }];
     const rows = pg.items.map((v) => [
       `<div class="cell-title"><span class="thumb" aria-hidden="true"></span><div><a href="${href("tresci/" + v.slug)}">${esc(v.title)}</a><div class="muted mono">${esc(v.slug)}</div></div></div>`,
       statusBadge(v), hlsState(v),
@@ -2071,7 +2106,7 @@ dialog::backdrop { background: var(--overlay); }
     let body = "";
     if (tab === "moderacja") {
       const sel = Math.min(S.modIdx || 0, Math.max(0, q.length - 1));
-      body = q.length ? `<p class="text-2" style="margin-bottom:12px">Klawisze: <kbd>j</kbd>/<kbd>k</kbd> następny/poprzedni, <kbd>h</kbd> ukryj, <kbd>z</kbd> zostaw (zamknij zgłoszenie), <kbd>w</kbd> wycisz autora.</p>
+      body = q.length ? `<p class="text-2 kbd-tip" style="margin-bottom:12px">Klawisze: <kbd>j</kbd>/<kbd>k</kbd> następny/poprzedni, <kbd>h</kbd> ukryj, <kbd>z</kbd> zostaw (zamknij zgłoszenie), <kbd>w</kbd> wycisz autora.</p>
         <section class="card card-flush" aria-label="Kolejka moderacji">${q.map((c, i) => {
           const u = U(c.user);
           return `<article class="mod-item${i === sel ? " is-active" : ""}" data-mod="${c.id}" tabindex="-1" aria-label="Komentarz ${i + 1} z ${q.length}">
@@ -2089,7 +2124,7 @@ dialog::backdrop { background: var(--overlay); }
       if (r.q.vid) list = list.filter((c) => c.video === r.q.vid);
       const pg = paginate(list, r.q.page, 12);
       body = `<div class="filters" role="search" aria-label="Filtry komentarzy">${searchParam("q", "Szukaj w treści lub autorze", r.q.q)}${selectParam("status", "Status", [["", "Każdy status"], ["VISIBLE", "Widoczne"], ["HIDDEN", "Ukryte"], ["HELD", "Wstrzymane"], ["Q", "Pytania bez odpowiedzi"]], r.q.status)}${selectParam("vid", "Film", [["", "Wszystkie filmy"], ["czesc", "Cześć"], ["jj", "JJ"], ["dla-patronow", "Dla patronów"], ["wywiad-z-montazysta", "Wywiad z montażystą"]], r.q.vid)}</div>
-        <section class="card card-flush" aria-label="Komentarze">${table([{ label: "Komentarz", cls: "wrap" }, { label: "Autor" }, { label: "Film" }, { label: "Status" }, { label: "Polubienia", num: true }, { label: "Data" }, { label: "" }], pg.items.map((c) => [
+        <section class="card card-flush" aria-label="Komentarze">${table([{ label: "Komentarz", cls: "wrap" }, { label: "Autor" }, { label: "Film" }, { label: "Status" }, { label: "Polubienia", num: true, cls: "hide-sm" }, { label: "Data" }, { label: "" }], pg.items.map((c) => [
           `${esc(c.text)}${c.heart ? ` <span class="muted" title="Serduszko twórcy">${icon("heart")}<span class="sr-only">serduszko twórcy</span></span>` : ""}`, userLink(U(c.user)), esc(vTitle(c.video)), badge(CSTATUS[c.status][0], CSTATUS[c.status][1], false), String(c.likes), esc(fmt.dt(c.createdAt)),
           `<div class="row" style="justify-content:flex-end">${c.status === "HIDDEN" ? `<button type="button" class="btn btn-sm btn-ghost" data-action="toast" data-msg="Komentarz przywrócony">Przywróć</button>` : `<button type="button" class="btn btn-sm btn-ghost" data-action="toast" data-msg="Komentarz ukryty (można cofnąć)">Ukryj</button>`}<button type="button" class="btn btn-sm btn-ghost" data-action="reply" data-id="${c.id}" aria-label="Odpowiedz jako twórca">${icon("reply")}</button><button type="button" class="btn btn-sm btn-ghost" data-action="delete-comment" data-id="${c.id}" aria-label="Usuń komentarz">${icon("trash")}</button></div>`]), { caption: "Komentarze" })}${pager(pg, "komentarzy")}</section>`;
     } else {
@@ -2108,7 +2143,7 @@ dialog::backdrop { background: var(--overlay); }
       list.sort((a, b) => (val(a) > val(b) ? 1 : val(a) < val(b) ? -1 : 0) * (sd === "asc" ? 1 : -1));
       const pg = paginate(list, r.q.page, 12);
       body = `<div class="filters" role="search" aria-label="Filtry użytkowników">${searchParam("q", "Pseudonim lub e-mail", r.q.q)}${selectParam("seg", "Segment", [["", "Wszyscy (" + PP.users.length + ")"], ["nowi", "Nowi (7 dni)"], ["aktywni", "Aktywni (30 dni)"], ["wspierajacy", "Wspierający"], ["niezweryfikowani", "Niezweryfikowani"], ["2fa", "Z 2FA"]], seg)}</div>
-        <section class="card card-flush" aria-label="Użytkownicy">${table([{ label: "Osoba", sortKey: "nick" }, { label: "Dołączył(a)", sortKey: "created" }, { label: "Ostatnio" }, { label: "Źródło" }, { label: "Komentarze", num: true }, { label: "Napiwki", num: true, sortKey: "tips" }, { label: "Konto" }], pg.items.map((u) => [
+        <section class="card card-flush" aria-label="Użytkownicy">${table([{ label: "Osoba", sortKey: "nick" }, { label: "Dołączył(a)", sortKey: "created" }, { label: "Ostatnio" }, { label: "Źródło", cls: "hide-sm" }, { label: "Komentarze", num: true, cls: "hide-sm" }, { label: "Napiwki", num: true, sortKey: "tips" }, { label: "Konto" }], pg.items.map((u) => [
           `<div class="cell-title"><span class="avatar" aria-hidden="true">${esc(initials(u.nick))}</span><div><a href="${href("spolecznosc/u/" + u.id)}">${esc(u.nick)}</a><div class="muted">${esc(u.email)}</div></div></div>`,
           esc(fmt.dateY(u.createdAt)), esc(fmt.rel(u.lastSeen)), esc(u.source), String(u.comments), u.tipsTotal ? fmt.money(u.tipsTotal) : '<span class="muted">—</span>',
           `${u.status === "deleted" ? badge("", "Usunięte", false) : u.status === "muted" ? badge("warn", "Wyciszony", "eye-off") : u.verified ? badge("ok", "Zweryfikowany") : badge("warn", "Niezweryfikowany")}${u.twoFA ? " " + badge("outline", "2FA", "lock") : ""}`
@@ -2180,7 +2215,7 @@ dialog::backdrop { background: var(--overlay); }
       list.sort((a, b) => ((sk === "amount" ? a.amount - b.amount : a.createdAt - b.createdAt) * (sd === "asc" ? 1 : -1)));
       const pg = paginate(list, r.q.page, 12);
       body = `<div class="filters" role="search" aria-label="Filtry wpłat">${searchParam("q", "Osoba, kwota lub pi_…", r.q.q)}${selectParam("status", "Status", [["", "Wszystkie statusy"], ["SUCCEEDED", "Opłacone"], ["PENDING", "Oczekujące"], ["FAILED", "Nieudane"], ["REFUNDED", "Zwrócone"], ["PARTIALLY_REFUNDED", "Częściowo zwrócone"], ["DISPUTED", "Spór"]], r.q.status)}${selectParam("method", "Metoda", [["", "Każda metoda"], ["BLIK", "BLIK"], ["Karta", "Karta"], ["Przelewy24", "Przelewy24"], ["Apple Pay", "Apple Pay"], ["Google Pay", "Google Pay"]], r.q.method)}<span class="topbar-spacer"></span><button type="button" class="btn" data-action="export-csv">${icon("download")}Eksport CSV</button></div>
-        <section class="card card-flush" aria-label="Wpłaty">${table([{ label: "Data", sortKey: "date" }, { label: "Osoba" }, { label: "Kwota", num: true, sortKey: "amount" }, { label: "Metoda" }, { label: "Status" }, { label: "Film (atrybucja)" }, { label: "ID Stripe" }, { label: "" }], pg.items.map((p) => [
+        <section class="card card-flush" aria-label="Wpłaty">${table([{ label: "Data", sortKey: "date" }, { label: "Osoba" }, { label: "Kwota", num: true, sortKey: "amount" }, { label: "Metoda" }, { label: "Status" }, { label: "Film (atrybucja)", cls: "hide-md hide-sm" }, { label: "ID Stripe", cls: "hide-sm" }, { label: "" }], pg.items.map((p) => [
           esc(fmt.dt(p.createdAt)), userLink(U(p.user)), `<strong>${fmt.money(p.amount, p.currency)}</strong>${p.refunded ? `<div class="muted">zwrot ${fmt.money(p.refunded, p.currency)}</div>` : ""}`, esc(p.method), payBadge(p), esc(vTitle(p.video)), `<span class="mono" title="${esc(p.id)}">${esc(p.id.slice(0, 12))}…</span>`,
           p.status === "SUCCEEDED" || p.status === "PARTIALLY_REFUNDED" ? `<button type="button" class="btn btn-sm" data-action="refund" data-id="${p.id}">Zwrot…</button>` : ""
         ]), { caption: "Wpłaty", sort })}${pager(pg, "wpłat")}</section>
@@ -2277,8 +2312,8 @@ dialog::backdrop { background: var(--overlay); }
           ${tile({ label: "iowait", value: fmt.one(h.iowait), unit: "%", delta: `<span class="delta-ctx">sieć 1,2 MB/s</span>` })}
         </div></div>
         <div class="span-4">${card({ hid: "h-cpu", title: "CPU % (24 h)", meta: age(h.fetchedAt, 1, "pp-collector"), body: mini(h.cpu, "CPU", (v) => fmt.int(v) + "%", 100, "Skok do ok. 85% podczas wdrożenia o 9:41 (budowa obrazu na serwerze), poza tym 5–25%.") })}</div>
-        <div class="span-4">${card({ hid: "h-ram", title: "RAM zajęty, MB (24 h)", body: mini(h.ram, "RAM", (v) => fmt.int(v), 3809, "RAM stabilnie 2,0–2,4 GB z 3,8 GB.") })}</div>
-        <div class="span-4">${card({ hid: "h-swp", title: "Swap zajęty, MB (24 h)", body: mini(h.swap, "Swap", (v) => fmt.int(v), 4096, "Swap stale ok. 1,4 GB: pamięć po budowach obrazów; sugestia: budować obrazy poza serwerem.") })}</div>
+        <div class="span-4">${card({ hid: "h-ram", title: "RAM zajęty, MB (24 h)", body: mini(h.ram, "RAM", (v) => fmt.int(v), 4000, "RAM stabilnie 2,0–2,4 GB z 3,8 GB.") })}</div>
+        <div class="span-4">${card({ hid: "h-swp", title: "Swap zajęty, MB (24 h)", body: mini(h.swap, "Swap", (v) => fmt.int(v), 4000, "Swap stale ok. 1,4 GB: pamięć po budowach obrazów; sugestia: budować obrazy poza serwerem.") })}</div>
         <div class="span-12">${card({ hid: "h-cont", title: "Kontenery (9)", meta: age(h.fetchedAt, 1, "cgroup v2 + docker-socket-proxy"), flush: true, body: cont })}</div>
         <div class="span-12"><div class="banner">${icon("info")}<div class="banner-body"><span class="banner-title">Rekomendacja pojemności</span><span class="text-2">Przy obecnym ruchu serwer wystarcza. Dodatkowy panel (+250 MB) i kolektor (+80 MB) mieszczą się po przeniesieniu budowy obrazów poza serwer. Przy starcie: CX43 (8 vCPU, 16 GB).</span></div></div></div>
       </div>`;
@@ -2325,7 +2360,7 @@ dialog::backdrop { background: var(--overlay); }
       if (r.q.q) list = list.filter((a) => norm(a.label + " " + a.code + " " + a.targetId + " " + a.requestId + " " + a.actor).includes(norm(r.q.q)));
       const pg = paginate(list, r.q.page, 15);
       body = `<div class="filters" role="search" aria-label="Filtry dziennika">${searchParam("q", "Akcja, obiekt lub requestId", r.q.q)}${selectParam("actor", "Aktor", [["", "Każdy aktor"], ["admin", "Admin"], ["system", "System (crony)"], ["webhook", "Webhook"], ["użytkownik", "Użytkownik"]], r.q.actor)}${selectParam("kind", "Obiekt", [["", "Każdy obiekt"], ["Film", "Film"], ["Komentarz", "Komentarz"], ["Płatność", "Płatność"], ["Konto", "Konto"], ["Sesja", "Sesja"], ["Ustawienia", "Ustawienia"], ["Rozsyłka", "Rozsyłka"]], r.q.kind)}<span class="topbar-spacer"></span><button type="button" class="btn" data-action="toast" data-msg="Eksport dziennika (CSV) dla filtrów: zapis w audycie">${icon("download")}Eksport</button></div>
-        <section class="card card-flush" aria-label="Dziennik audytu">${table([{ label: "Czas" }, { label: "Akcja" }, { label: "Aktor" }, { label: "Obiekt" }, { label: "IP" }, { label: "Żądanie" }], pg.items.map((a) => [esc(fmt.dt(a.at)), `<strong>${esc(a.label)}</strong><div class="muted mono">${esc(a.code)}</div>`, esc(a.actor), `${esc(a.target)} <span class="mono muted">${esc(a.targetId)}</span>`, esc(a.ip), `<span class="mono">${esc(a.requestId)}</span>`]), { caption: "Dziennik audytu" })}${pager(pg, "wpisów")}</section>
+        <section class="card card-flush" aria-label="Dziennik audytu">${table([{ label: "Czas" }, { label: "Akcja" }, { label: "Aktor" }, { label: "Obiekt" }, { label: "IP", cls: "hide-sm" }, { label: "Żądanie", cls: "hide-md hide-sm" }], pg.items.map((a) => [esc(fmt.dt(a.at)), `<strong>${esc(a.label)}</strong><div class="muted mono">${esc(a.code)}</div>`, esc(a.actor), `${esc(a.target)} <span class="mono muted">${esc(a.targetId)}</span>`, esc(a.ip), `<span class="mono">${esc(a.requestId)}</span>`]), { caption: "Dziennik audytu" })}${pager(pg, "wpisów")}</section>
         <p class="foot-note">${icon("lock")}Dziennik jest niezmienny: brak UPDATE/DELETE dla ról aplikacji, łańcuch skrótów sprawdzony ${esc(fmt.dt(PP.daysAgo(0, 3, 0)))} (zgodny), kopia dzienna w R2 z blokadą retencji.</p>`;
     }
     return { title: "Bezpieczeństwo", html: head("Bezpieczeństwo", "Kto, co i kiedy") + tabs + body };
@@ -2386,6 +2421,8 @@ dialog::backdrop { background: var(--overlay); }
   }
   function toggleDrawer(open) {
     const app = $("#app");
+    const wasOpen = app.classList.contains("nav-open");
+    if (!open && !wasOpen) return;
     app.classList.toggle("nav-open", open);
     const mb = $("#more-btn");
     if (mb) mb.setAttribute("aria-expanded", String(open));
@@ -2639,7 +2676,7 @@ dialog::backdrop { background: var(--overlay); }
         steps: steps(1),
         body: `<p>Zwrot <strong>${fmt.money(amount, pay.currency)}</strong> dla ${esc(u.nick)} wymaga ponownego uwierzytelnienia. Potwierdzenie jest ważne 5 minut.</p>
           <div class="passkey-box">${icon("passkey")}<div style="flex:1"><strong>Klucz dostępu (passkey)</strong><div class="muted">Windows Hello, Face ID lub klucz sprzętowy</div></div><button type="button" class="btn btn-primary" id="pk-btn">Użyj klucza</button></div>
-          <div class="field"><span class="field-label" id="otp-label">albo kod z aplikacji (TOTP)</span><div class="otp" role="group" aria-labelledby="otp-label">${[1, 2, 3, 4, 5, 6].map((i) => `<input class="input" inputmode="numeric" maxlength="1" aria-label="Cyfra ${i}" autocomplete="${i === 1 ? "one-time-code" : "off"}">`).join("")}</div><span class="hint">Prototyp: dowolne 6 cyfr poza 000000.</span></div>
+          <div class="field"><span class="field-label" id="otp-label">albo kod z aplikacji (TOTP)</span><div class="otp" role="group" aria-labelledby="otp-label">${[1, 2, 3, 4, 5, 6].map((i) => `<input class="input" inputmode="numeric" aria-label="Cyfra ${i} z 6" autocomplete="${i === 1 ? "one-time-code" : "off"}">`).join("")}</div><span class="hint">Prototyp: dowolne 6 cyfr poza 000000.</span></div>
           <p class="muted" id="su-status" role="status"></p>`,
         foot: `<button type="button" class="btn" data-close>Anuluj</button><button type="submit" class="btn btn-danger" id="do-refund" aria-disabled="true">Zwróć ${fmt.money(amount, pay.currency)}</button>`,
         onOpen(m) {
@@ -2650,8 +2687,10 @@ dialog::backdrop { background: var(--overlay); }
           const boxes = Array.from(m.querySelectorAll(".otp input"));
           boxes.forEach((b, i) => {
             b.addEventListener("input", () => {
-              b.value = b.value.replace(/\D/g, "").slice(-1);
-              if (b.value && boxes[i + 1]) boxes[i + 1].focus();
+              const digits = b.value.replace(/\D/g, "");
+              // Kilka cyfr naraz (szybkie pisanie, autouzupełnienie kodu SMS/TOTP): rozkładamy na kolejne pola.
+              if (digits.length > 1) { digits.split("").slice(0, 6 - i).forEach((d, j) => { boxes[i + j].value = d; }); const nx = boxes[Math.min(5, i + digits.length)]; if (nx) nx.focus(); }
+              else { b.value = digits; if (b.value && boxes[i + 1]) boxes[i + 1].focus(); }
               const code = boxes.map((x) => x.value).join("");
               if (code.length === 6) { if (code === "000000") { st.innerHTML = `<span class="state crit">${icon("crit")}Nieprawidłowy kod. Spróbuj ponownie.</span>`; boxes.forEach((x) => { x.value = ""; x.setAttribute("aria-invalid", "true"); }); boxes[0].focus(); } else verified("TOTP"); }
             });

@@ -24,7 +24,7 @@
     let body = "";
     if (tab === "moderacja") {
       const sel = Math.min(S.modIdx || 0, Math.max(0, q.length - 1));
-      body = q.length ? `<p class="text-2" style="margin-bottom:12px">Klawisze: <kbd>j</kbd>/<kbd>k</kbd> następny/poprzedni, <kbd>h</kbd> ukryj, <kbd>z</kbd> zostaw (zamknij zgłoszenie), <kbd>w</kbd> wycisz autora.</p>
+      body = q.length ? `<p class="text-2 kbd-tip" style="margin-bottom:12px">Klawisze: <kbd>j</kbd>/<kbd>k</kbd> następny/poprzedni, <kbd>h</kbd> ukryj, <kbd>z</kbd> zostaw (zamknij zgłoszenie), <kbd>w</kbd> wycisz autora.</p>
         <section class="card card-flush" aria-label="Kolejka moderacji">${q.map((c, i) => {
           const u = U(c.user);
           return `<article class="mod-item${i === sel ? " is-active" : ""}" data-mod="${c.id}" tabindex="-1" aria-label="Komentarz ${i + 1} z ${q.length}">
