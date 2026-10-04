@@ -66,7 +66,15 @@ Wszystkie PR-y były weryfikowane lokalnie (Actions nie działa). Przed scalenie
 | #1677 | `feat/admin-server-headroom` | Wskaźnik „Zapas serwera” w „System” i „Dzisiaj” (próg z `docs/operations/LOAD-TEST.md`) | Scalić po #1675 |
 | #1681 | `feat/admin-phase2-community` (WIP, draft) | Faza 2 – Społeczność (użytkownicy: lista, szczegóły, wpłaty, rola, usunięcie; komentarze, zgłoszenia). Praca w toku, jeden commit WIP z niezacommitowanymi zmianami | Po scaleniu #1673/#1675/#1677 rebase na `main`, dokończyć, przetestować, wyjąć z draftu |
 
-Brak PR-ów otwartych dla: faz 3, A, 5 panelu (nie zaczęte).
+**Mapa dokumentacji panelu admina (czytaj w tej kolejności):**
+1. [`architecture/admin-panel.md`](../architecture/admin-panel.md): wizja, 12 decyzji, **plan wszystkich faz** (0, 1, 2, 3, A, 5 z zakresem, kryteriami ukończenia, testami, zależnościami, ryzykami), jak zbudowana faza 1 (§9).
+2. [`architecture/admin-parity.md`](../architecture/admin-parity.md): tabela „funkcja starego panelu → ekran w nowym → faza → status” (66 tras API, wszystkie przyciski). Stan faz = statusy w tej tabeli: po każdej fazie zaktualizuj.
+3. `docs/design/admin-panel/` (`prototype-standalone.html`, `DESIGN-SYSTEM.md`): zatwierdzony przez właściciela wygląd; ekrany mają wyglądać jak prototyp.
+4. [`operations/ADMIN-PANEL.md`](ADMIN-PANEL.md): wdrożenie, rejestracja, reset, rollback, diagnostyka. [`architecture/admin-telemetry.md`](../architecture/admin-telemetry.md): dane do analityki (faza A).
+5. **Szczegółowy plan fazy 2 (Treści):** `docs/architecture/admin-phase2-content.md` jest w gałęzi `feat/admin-phase2-content` (PR #1673), na `main` będzie po jego scaleniu (do tego czasu: `git show origin/feat/admin-phase2-content:docs/architecture/admin-phase2-content.md`).
+6. Koncepty powiązane: [`architecture/translations-concept.md`](../architecture/translations-concept.md) (model w #1675), wskaźnik zapasu serwera (#1677).
+
+**Stan faz panelu:** 0 zrobiona i wdrożona; 1 zrobiona i **wdrożona** (czeka tylko na rejestrację administratora); 2 w PR-ach #1673/#1675/#1677 oraz draft #1681 (Społeczność); 3, A i 5 nie zaczęte.
 
 ## Najbliższe kroki (kolejność proponowana, jeden agent naraz)
 
