@@ -20,7 +20,7 @@ import { hitAuthCounter, peekAuthCounter } from "./rate-limit-storage";
 import { queuePasswordChangedEmail } from "./emails";
 import {
   PASSKEY_PATHS,
-  assertFreshSessionForPasskeyRemoval,
+  assertFreshSessionIfSignedIn,
   auditPasskeyEvent,
   sanitizePasskeyRegistrationBody,
   stripPasskeyOptionsName,
@@ -62,7 +62,8 @@ export async function beforeUserCreate(user: NewUser, ctx: HookCtx) {
     termsVersion: LEGAL_DOCUMENTS_VERSION,
   };
 
-  if (ctx?.path === "/sign-up/email") {
+  if (ctx?.path === "/sign-up/email" || ctx?.path === PASSKEY_PATHS.register) {
+    // E-mail sign-up and passkey-first sign-up (whose language comes from the sign-up token).
     data.name = placeholderNameFromEmail(user.email);
   } else {
     // Google (redirect or One Tap): the provider name is only a placeholder as well.
@@ -133,9 +134,10 @@ export async function beforeAccountCreate(account: { userId: string; providerId:
   if (user && !user.emailVerified) {
     await prisma.$transaction([
       prisma.account.deleteMany({ where: { userId: account.userId, providerId: "credential" } }),
+      prisma.passkey.deleteMany({ where: { userId: account.userId } }),
       prisma.session.deleteMany({ where: { userId: account.userId } }),
     ]);
-    logger.warn("[auth] dropped unverified credential while linking a verified provider");
+    logger.warn("[auth] dropped unverified credential/passkeys while linking a verified provider");
   }
 }
 
@@ -247,15 +249,19 @@ export const authBeforeHook = createAuthMiddleware(async (ctx) => {
     await guardChangeEmail(ctx as unknown as ChangeEmailCtx);
     return;
   }
+  // Adding a key to a signed-in account needs a fresh session (registration without a session is the
+  // passkey-first sign-up, gated by its signed token in lib/auth/passkey-signup.ts).
   if (ctx.path === PASSKEY_PATHS.registerOptions) {
+    await assertFreshSessionIfSignedIn(ctx);
     // The plugin would use `?name=` as the WebAuthn user name; the password manager must show the e-mail.
     return { context: { ...ctx, query: stripPasskeyOptionsName(ctx.query) } };
   }
   if (ctx.path === PASSKEY_PATHS.register) {
+    await assertFreshSessionIfSignedIn(ctx);
     return { context: { ...ctx, body: sanitizePasskeyRegistrationBody(ctx.body) } };
   }
   if (ctx.path === PASSKEY_PATHS.remove) {
-    await assertFreshSessionForPasskeyRemoval(ctx);
+    await assertFreshSessionIfSignedIn(ctx);
     return;
   }
   if (MAIL_TO_ADDRESS_PATHS.has(ctx.path)) {
@@ -283,13 +289,20 @@ export async function rejectExistingEmailSignUp(ctx: { context: { returned?: unk
   const body = ctx.body as { email?: unknown } | undefined;
   const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
   if (!email || !returned?.user?.id || returned instanceof Error) return;
-  const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
-  if (!existing || existing.id === returned.user.id) return;
+  const code = await existingAccountCode(email, returned.user.id);
+  if (code) throw new APIError("UNPROCESSABLE_ENTITY", { message: code, code });
+}
+
+/**
+ * EMAIL_TAKEN_GOOGLE when the address has an account signed in only through Google, EMAIL_TAKEN for any
+ * other existing account, null when it is free (`exceptUserId`: the synthetic sign-up user).
+ */
+export async function existingAccountCode(email: string, exceptUserId?: string): Promise<"EMAIL_TAKEN" | "EMAIL_TAKEN_GOOGLE" | null> {
+  const existing = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() }, select: { id: true } });
+  if (!existing || existing.id === exceptUserId) return null;
   const providers = await prisma.account.findMany({ where: { userId: existing.id }, select: { providerId: true } });
   const ids = providers.map((p) => p.providerId);
-  const googleOnly = ids.includes("google") && !ids.includes("credential");
-  const code = googleOnly ? "EMAIL_TAKEN_GOOGLE" : "EMAIL_TAKEN";
-  throw new APIError("UNPROCESSABLE_ENTITY", { message: code, code });
+  return ids.includes("google") && !ids.includes("credential") ? "EMAIL_TAKEN_GOOGLE" : "EMAIL_TAKEN";
 }
 
 export const authAfterHook = createAuthMiddleware(async (ctx) => {
@@ -321,6 +334,10 @@ export const authAfterHook = createAuthMiddleware(async (ctx) => {
 });
 
 export async function onPasswordReset(user: { id: string; email: string; name?: string | null }) {
+  // The reset link proves the mailbox. Passkeys on an account whose address was never verified were
+  // added by whoever started a passkey sign-up with it, not necessarily the owner: drop them.
+  const row = await prisma.user.findUnique({ where: { id: user.id }, select: { emailVerified: true } });
+  if (row && !row.emailVerified) await prisma.passkey.deleteMany({ where: { userId: user.id } });
   queuePasswordChangedEmail({ email: user.email, name: user.name });
   await recordAuthAudit({ action: "AUTH_PASSWORD_CHANGED", userId: user.id, metadata: { via: "reset" } });
 }

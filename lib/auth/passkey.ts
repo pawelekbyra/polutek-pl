@@ -54,12 +54,13 @@ export function isSessionFresh(createdAt: Date | string, now: number = Date.now(
 type SessionCtx = Parameters<typeof getSessionFromCtx>[0];
 
 /**
- * Removing a passkey takes away a way to sign in, so it needs a fresh session like adding one does
- * (the plugin protects add with freshSessionMiddleware, delete only with a plain session).
+ * Adding or removing a passkey on a signed-in account needs a fresh session (Better Auth `freshAge`).
+ * The plugin cannot do it itself: registration runs with `requireSession: false` (passkey-first
+ * sign-up) and delete only wants a plain session. No session: nothing to check here.
  */
-export async function assertFreshSessionForPasskeyRemoval(ctx: SessionCtx) {
+export async function assertFreshSessionIfSignedIn(ctx: SessionCtx) {
   const session = await getSessionFromCtx(ctx);
-  if (!session) return; // the endpoint answers 401 itself
+  if (!session) return;
   if (!isSessionFresh(session.session.createdAt)) {
     throw new APIError("FORBIDDEN", { message: "SESSION_NOT_FRESH", code: "SESSION_NOT_FRESH" });
   }
