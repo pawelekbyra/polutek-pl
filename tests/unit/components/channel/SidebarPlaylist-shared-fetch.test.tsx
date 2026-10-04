@@ -87,7 +87,6 @@ const baseProps = {
   viewerIsPatron: false,
   t: { views: "views" },
   language: "pl",
-  mounted: true,
   onVideoMouseEnter: () => {},
 };
 
@@ -200,6 +199,9 @@ describe("SidebarPlaylist shared /api/channel/sidebar request", () => {
     );
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    // While the viewer's own layout loads, the server's list stays on screen (no skeleton).
+    expect(screen.getByText("Server title")).toBeTruthy();
+    expect(document.querySelectorAll('[aria-busy="true"]').length).toBe(0);
     await act(async () => {});
     expect(screen.getByText("Layout title")).toBeTruthy();
     expect(screen.queryByText("Server title")).toBeNull();

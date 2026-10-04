@@ -27,6 +27,8 @@ const nextConfig = {
   // Unset on Vercel, so the normal build is unchanged.
   ...(process.env.NEXT_OUTPUT === 'standalone' ? { output: 'standalone' } : {}),
   productionBrowserSourceMaps: false,
+  // No `X-Powered-By: Next.js` on every response.
+  poweredByHeader: false,
   typescript: {
     ignoreBuildErrors: true,
   },

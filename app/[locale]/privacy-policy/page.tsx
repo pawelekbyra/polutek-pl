@@ -7,6 +7,12 @@ import { PrivacyContentEn, LEGAL_EFFECTIVE_DATE_EN } from '@/app/components/lega
 import { notFound } from 'next/navigation';
 import { getLocalizedHref } from '@/lib/i18n/routing';
 
+// The document is the same for every visitor, so the page is rendered once and served from the
+// cache (no per-request render, no `no-store`). Rendered at the first request, not at build time,
+// so the runtime settings the root layout reads (sign-in keys) are the real ones; refreshed hourly.
+export const dynamic = 'force-static';
+export const revalidate = 3600;
+
 export const metadata = {
   title: 'Privacy Policy — WWW.PAWELPERFECT.COM',
   description: 'Privacy Policy for WWW.PAWELPERFECT.COM: what data we collect, why, and what rights you have.',
