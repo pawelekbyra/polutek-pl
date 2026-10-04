@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET, PATCH } from '@/app/api/admin/payment-settings/route';
-import { getPaymentSettings, updatePaymentSettings } from '@/lib/modules/payments';
+import { updatePaymentSettings } from '@/lib/modules/payments';
+import { getPaymentCurrencyLimits } from '@/lib/payments/currency-settings';
 import { requireAdminForApi } from '@/lib/auth-utils';
 
 vi.mock('@/lib/auth-utils', () => ({
@@ -12,14 +13,12 @@ vi.mock('@/lib/modules/payments', async () => {
   const actual = await vi.importActual<typeof import('@/lib/modules/payments')>('@/lib/modules/payments');
   return {
     ...actual,
-    getPaymentSettings: vi.fn(),
     updatePaymentSettings: vi.fn(),
   };
 });
 
-function makeGetRequest() {
-  return new NextRequest('http://localhost/api/admin/payment-settings');
-}
+vi.mock('@/lib/payments/currency-settings', () => ({ getPaymentCurrencyLimits: vi.fn() }));
+
 
 function makePatchRequest(body: unknown) {
   return new NextRequest('http://localhost/api/admin/payment-settings', {
@@ -38,25 +37,20 @@ describe('/api/admin/payment-settings', () => {
   });
 
   describe('GET', () => {
-    it('returns { limits } from the use-case on success', async () => {
-      vi.mocked(getPaymentSettings).mockResolvedValue({ ok: true, data: { PLN: {} } } as any);
+    it('returns { limits } on success', async () => {
+      vi.mocked(getPaymentCurrencyLimits).mockResolvedValue({ PLN: {} } as any);
 
-      const res = await GET(makeGetRequest());
+      const res = await GET();
       const body = await res.json();
 
       expect(res.status).toBe(200);
       expect(body).toEqual({ limits: { PLN: {} } });
     });
 
-    it('maps a use-case failure to its statusCode', async () => {
-      vi.mocked(getPaymentSettings).mockResolvedValue({
-        ok: false,
-        error: { message: 'nope', statusCode: 403 },
-      } as any);
-
-      const res = await GET(makeGetRequest());
-
-      expect(res.status).toBe(403);
+    it('a database error is a 500, not silent defaults', async () => {
+      vi.mocked(getPaymentCurrencyLimits).mockRejectedValue(new Error('db down'));
+      const res = await GET();
+      expect(res.status).toBe(500);
     });
 
     it('short-circuits with the requireAdminForApi response when not an admin', async () => {
@@ -65,16 +59,16 @@ describe('/api/admin/payment-settings', () => {
         response: new Response('Unauthorized', { status: 401 }),
       } as any);
 
-      const res = await GET(makeGetRequest());
+      const res = await GET();
 
       expect(res.status).toBe(401);
-      expect(getPaymentSettings).not.toHaveBeenCalled();
+      expect(getPaymentCurrencyLimits).not.toHaveBeenCalled();
     });
   });
 
   describe('PATCH', () => {
     const validBody = {
-      limits: [{ currency: 'PLN', minAmount: 10, patronThreshold: 50, patronBoxMin: 20 }],
+      limits: [{ currency: 'PLN', minAmount: 10 }],
     };
 
     it('validates, forwards limits to updatePaymentSettings, and returns { limits } on success', async () => {

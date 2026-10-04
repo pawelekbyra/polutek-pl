@@ -29,8 +29,6 @@ const requiredProductionVars = [
   'RESEND_API_KEY',
   'EMAIL_FROM',
   'MAIN_CREATOR_SLUG',
-  'PATRON_MIN_TIP_AMOUNT',
-  'PATRON_MIN_TIP_CURRENCY',
   'REFERRAL_PATRON_THRESHOLD',
   'HEALTHCHECK_TOKEN',
   'EMAIL_UNSUBSCRIBE_SIGNING_SECRET',
@@ -109,9 +107,7 @@ export function validateAppEnv(env: EnvRecord = process.env, mode: EnvValidation
   validateUrl(errors, env, 'NEXT_PUBLIC_APP_URL');
   validateUrl(errors, env, 'UPSTASH_REDIS_REST_URL');
   validateUrl(errors, env, 'KV_REST_API_URL');
-  validatePositiveInteger(errors, env, 'PATRON_MIN_TIP_AMOUNT');
   validatePositiveInteger(errors, env, 'REFERRAL_PATRON_THRESHOLD');
-  validateCurrency(errors, env, 'PATRON_MIN_TIP_CURRENCY');
 
   if (hasValue(env, 'EMAIL_UNSUBSCRIBE_SIGNING_SECRET') && env.EMAIL_UNSUBSCRIBE_SIGNING_SECRET!.trim().length < 32) {
     errors.push('EMAIL_UNSUBSCRIBE_SIGNING_SECRET must be at least 32 characters.');

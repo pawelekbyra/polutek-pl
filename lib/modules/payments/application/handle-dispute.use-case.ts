@@ -4,150 +4,109 @@ import { PaymentStatus } from "@prisma/client";
 import { PaymentRepository } from "../infrastructure/payment.repository";
 import { PaymentError } from "../domain/payment.errors";
 import { logger } from "@/lib/logger";
-import { recordMetric, recordAlert } from "@/lib/observability";
-import { recalculatePatronStatus } from "@/lib/modules/patron";
+import { recordAlert } from "@/lib/observability";
+import { restoreSupporterGrantRevokedFor, revokeSupporterGrantIfNoPaidTips } from "./supporter-grant";
 
 export interface HandleDisputeInput {
   stripeIntentId: string;
-  disputeId?: string;
-  status: string; // 'warning', 'needs_response', 'under_review', 'chargeback_lost', 'chargeback_won' (mapped from Stripe)
-  isLost: boolean;
-  isWon: boolean;
+  disputeId: string;
+  /**
+   * Stripe's own `dispute.status`, read from Stripe when the event is handled (not from the event
+   * payload), so events that arrive out of order still land on the dispute's current state.
+   */
+  status: string;
 }
 
-function disputeSuspensionReason(disputeId: string): string {
-  return `Payment dispute temporarily suspended access: stripeDisputeId=${disputeId}`;
+export type DisputeOutcome = "open" | "lost" | "closed_in_favour";
+
+/** Maps every Stripe dispute status (including inquiries/early warnings) onto what it means for us. */
+export function classifyDisputeStatus(status: string): DisputeOutcome {
+  switch (status) {
+    case "lost":
+      return "lost";
+    case "won":
+    case "warning_closed":
+    case "prevented":
+      return "closed_in_favour";
+    default:
+      // warning_needs_response, warning_under_review, needs_response, under_review
+      return "open";
+  }
 }
 
-function disputeLostReason(disputeId?: string): string {
-  return disputeId
-    ? `Payment disputed: lost; stripeDisputeId=${disputeId}`
-    : 'Payment disputed: lost';
+export function disputeSuspensionReason(disputeId: string): string {
+  return `Payment disputed: stripeDisputeId=${disputeId}`;
 }
+
+/** Statuses an open dispute may move to DISPUTED from; anything else is never moved backwards. */
+const DISPUTABLE_STATUSES: PaymentStatus[] = [PaymentStatus.SUCCEEDED, PaymentStatus.PARTIALLY_REFUNDED];
 
 export async function handleDispute(
   input: HandleDisputeInput,
   ctx: AppContext
-): Promise<UseCaseResult<void, PaymentError>> {
+): Promise<UseCaseResult<{ outcome: DisputeOutcome; changed: boolean }, PaymentError>> {
   const repo = new PaymentRepository();
+  const outcome = classifyDisputeStatus(input.status);
 
   try {
-    await ctx.db.writeTransaction(async (tx) => {
+    const changed = await ctx.db.writeTransaction(async (tx) => {
       const payment = await repo.findByIntentId(input.stripeIntentId, tx);
       if (!payment) {
         recordAlert('payment.dispute_unmatched', { stripeIntentId: input.stripeIntentId });
-        return null;
+        return false;
       }
 
-      if (input.isLost) {
-        if (payment.status === PaymentStatus.CHARGEBACK_LOST) {
-          return null;
-        }
+      if (outcome === "lost") {
+        if (payment.status === PaymentStatus.CHARGEBACK_LOST) return false;
 
         const count = await repo.updatePaymentStatusWithCAS(payment.id, payment.status, PaymentStatus.CHARGEBACK_LOST, tx);
-        if (count === 0) {
-          return null;
-        }
+        if (count === 0) return false;
 
         const netAdjustment = Math.max(0, payment.amountMinor - (payment.refundedAmountMinor ?? 0));
         await repo.decrementUserPaymentTotal(payment.userId, payment.currency, netAdjustment, tx);
-
-        await tx.patronGrant.updateMany({
-          where: { paymentId: payment.id },
-          data: { revokedAt: new Date(), reason: disputeLostReason(input.disputeId) }
-        });
-
-        const recalcResult = await recalculatePatronStatus(payment.userId, ctx, tx);
-        if (!recalcResult.ok) {
-            throw new Error(`PATRON_RECALC_FAILED: ${recalcResult.error.message}`);
-        }
-        const { isPatron, normalizedTotal } = recalcResult.data;
+        await revokeSupporterGrantIfNoPaidTips({
+          userId: payment.userId,
+          paymentId: payment.id,
+          revokeReason: `Payment dispute lost: stripeDisputeId=${input.disputeId}`,
+        }, ctx, tx);
         recordAlert('payment.dispute_lost', { paymentId: payment.id, currency: payment.currency });
-        return { userId: payment.userId, isPatron, normalizedTotal };
+        return true;
       }
 
-      if (input.isWon) {
-        if (payment.status === PaymentStatus.REFUNDED || payment.status === PaymentStatus.CHARGEBACK_LOST) {
-          return null;
-        }
+      if (outcome === "closed_in_favour") {
+        // Only a payment this dispute actually suspended goes back; a refunded, lost or never
+        // disputed payment stays as it is.
+        if (payment.status !== PaymentStatus.DISPUTED) return false;
 
-        await repo.updatePayment(payment.id, { status: PaymentStatus.SUCCEEDED }, tx);
+        const restoredStatus = (payment.refundedAmountMinor ?? 0) > 0
+          ? PaymentStatus.PARTIALLY_REFUNDED
+          : PaymentStatus.SUCCEEDED;
+        const count = await repo.updatePaymentStatusWithCAS(payment.id, PaymentStatus.DISPUTED, restoredStatus, tx);
+        if (count === 0) return false;
 
-        if (input.disputeId) {
-          await tx.patronGrant.updateMany({
-            where: {
-              paymentId: payment.id,
-              revokedAt: { not: null },
-              reason: disputeSuspensionReason(input.disputeId),
-            },
-            data: {
-              revokedAt: null,
-              reason: `Payment dispute won; access reactivated: stripeDisputeId=${input.disputeId}`,
-            },
-          });
-        }
-
-        const recalcResult = await recalculatePatronStatus(payment.userId, ctx, tx);
-        if (!recalcResult.ok) {
-            throw new Error(`PATRON_RECALC_FAILED: ${recalcResult.error.message}`);
-        }
-        const { isPatron, normalizedTotal } = recalcResult.data;
-        logger.info(`[HandleDispute] Dispute WON for payment ${payment.id}. Patron status restored if it was suspended by the same dispute lifecycle.`);
-        return { userId: payment.userId, isPatron, normalizedTotal };
+        await restoreSupporterGrantRevokedFor({
+          userId: payment.userId,
+          revokeReason: disputeSuspensionReason(input.disputeId),
+        }, ctx, tx);
+        logger.info(`[HandleDispute] Dispute ${input.disputeId} closed in the payer's favour (${input.status}); payment ${payment.id} back to ${restoredStatus}.`);
+        return true;
       }
 
-      if (input.status === 'warning_closed') {
-        // An inquiry / early-warning that closes without a chargeback. The matching
-        // dispute.created (default branch below) set the payment to DISPUTED and revoked
-        // the payment-linked grant with disputeSuspensionReason(). Restore both here —
-        // recalculatePatronStatus() is a pure read and will NOT un-revoke the grant, so the
-        // reactivation must be done explicitly (mirroring the isWon branch above).
-        if (payment.status === PaymentStatus.REFUNDED || payment.status === PaymentStatus.CHARGEBACK_LOST) {
-          return null;
-        }
+      if (!DISPUTABLE_STATUSES.includes(payment.status)) return false;
 
-        await repo.updatePayment(payment.id, { status: PaymentStatus.SUCCEEDED }, tx);
+      const count = await repo.updatePaymentStatusWithCAS(payment.id, payment.status, PaymentStatus.DISPUTED, tx);
+      if (count === 0) return false;
 
-        if (input.disputeId) {
-          await tx.patronGrant.updateMany({
-            where: {
-              paymentId: payment.id,
-              revokedAt: { not: null },
-              reason: disputeSuspensionReason(input.disputeId),
-            },
-            data: {
-              revokedAt: null,
-              reason: `Dispute inquiry closed without chargeback; access reactivated: stripeDisputeId=${input.disputeId}`,
-            },
-          });
-        }
-
-        const recalcResult = await recalculatePatronStatus(payment.userId, ctx, tx);
-        if (!recalcResult.ok) {
-          throw new Error(`PATRON_RECALC_FAILED: ${recalcResult.error.message}`);
-        }
-        const { isPatron, normalizedTotal } = recalcResult.data;
-        logger.info(`[HandleDispute] Dispute inquiry closed without chargeback for payment ${payment.id}; patron access restored.`);
-        return { userId: payment.userId, isPatron, normalizedTotal };
-      }
-
-      // Default: DISPUTED
-      const disputeId = input.disputeId || `unknown:${input.stripeIntentId}`;
-      await repo.updatePayment(payment.id, { status: PaymentStatus.DISPUTED }, tx);
-      await tx.patronGrant.updateMany({
-        where: { paymentId: payment.id, revokedAt: null },
-        data: { revokedAt: new Date(), reason: disputeSuspensionReason(disputeId) },
-      });
-      const recalcResult = await recalculatePatronStatus(payment.userId, ctx, tx);
-      if (!recalcResult.ok) {
-        throw new Error(`PATRON_RECALC_FAILED: ${recalcResult.error.message}`);
-      }
-      const { isPatron, normalizedTotal } = recalcResult.data;
+      await revokeSupporterGrantIfNoPaidTips({
+        userId: payment.userId,
+        paymentId: payment.id,
+        revokeReason: disputeSuspensionReason(input.disputeId),
+      }, ctx, tx);
       recordAlert('payment.dispute_opened', { paymentId: payment.id, status: input.status });
-      return { userId: payment.userId, isPatron, normalizedTotal };
+      return true;
     });
 
-    return ok(undefined);
+    return ok({ outcome, changed });
   } catch (error: any) {
     logger.error(`[HandleDispute] Error handling dispute for ${input.stripeIntentId}:`, error);
     return fail(new PaymentError(error.message || 'Dispute processing failed'));

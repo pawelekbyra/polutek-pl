@@ -49,32 +49,20 @@ describe('ChannelLayoutService patron access truth', () => {
     ]);
   });
 
-  it('uses active PatronGrant, not legacy User.isPatron cache, to unlock patron sidebar items', async () => {
-    findUnique.mockResolvedValue({
-      role: 'USER',
-      patronGrants: [{ id: 'grant-1' }],
-    });
+  it('never reveals whether the viewer tipped: no PatronGrant read, no PATRON viewer state', async () => {
+    findUnique.mockResolvedValue({ role: 'USER' });
 
     const { ChannelLayoutService } = await import('@/lib/modules/channel/application/channel-layout.service');
     const layout = await ChannelLayoutService.getSidebarLayout('user-1');
 
-    expect(findUnique).toHaveBeenCalledWith(expect.objectContaining({
-      select: expect.objectContaining({
-        patronGrants: expect.objectContaining({
-          where: { revokedAt: null },
-        }),
-      }),
-    }));
-    expect(layout.viewerState).toBe('PATRON');
-    expect(layout.sections.find((section) => section.type === 'PATRON')?.items[0]?.isLocked).toBe(false);
+    expect(findUnique).toHaveBeenCalledWith(expect.objectContaining({ select: { role: true } }));
+    expect(layout.viewerState).toBe('LOGGED_IN');
+    expect(JSON.stringify(layout)).not.toContain('patronGrant');
   });
 
   // CLAUDE.md §4.4: PATRON tier needs sign-in only, exactly like LOGGED_IN.
   it('unlocks patron sidebar items for a signed-in user without an active PatronGrant', async () => {
-    findUnique.mockResolvedValue({
-      role: 'USER',
-      patronGrants: [],
-    });
+    findUnique.mockResolvedValue({ role: 'USER' });
 
     const { ChannelLayoutService } = await import('@/lib/modules/channel/application/channel-layout.service');
     const layout = await ChannelLayoutService.getSidebarLayout('user-1');

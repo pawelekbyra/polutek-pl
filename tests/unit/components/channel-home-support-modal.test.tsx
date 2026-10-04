@@ -34,7 +34,6 @@ vi.mock('@/app/components/preload/PreloadProgressBar', () => ({ PreloadProgressB
 vi.mock('@/components/skeletons', () => ({ CommentLoadingSkeleton: () => null }));
 vi.mock('@/app/components/channel/SidebarPlaylist', () => ({
   SidebarPlaylist: () => null,
-  SidebarSupportBox: () => null,
 }));
 vi.mock('@/app/components/Hero', () => ({ default: () => <div>hero-stub</div> }));
 vi.mock('@/app/components/LanguageContext', () => ({
@@ -45,7 +44,7 @@ vi.mock('@/app/hooks/useClientEnvironment', () => ({ useClientReady: () => true 
 const video = { id: 'video_1', slug: 'first', title: 'Video', tier: 'PUBLIC', status: 'PUBLISHED', views: 0 } as unknown as PublicVideoDTO;
 const signedIn = { id: 'u', email: '', totalPaid: 0 };
 
-describe('ChannelHome support modal (TEMP_SUPPORT_AS_MODAL)', () => {
+describe('ChannelHome tip gate (SupportModal)', () => {
   beforeEach(() => {
     mocks.search = '';
     window.scrollTo = vi.fn() as never;
@@ -61,7 +60,7 @@ describe('ChannelHome support modal (TEMP_SUPPORT_AS_MODAL)', () => {
       window.dispatchEvent(new CustomEvent('polutek:open-support'));
     });
     expect(screen.getByTestId('support-modal')).toBeInTheDocument();
-    // The comments tab stays active: no tab switch/scroll to the hidden sidebar gate.
+    // The comments tab stays active: the gate is a modal, not a sidebar box to scroll to.
     expect(screen.getByTestId('mobile-videos-panel')).toHaveClass('hidden');
 
     fireEvent.click(screen.getByText('close-support'));
@@ -80,7 +79,10 @@ describe('ChannelHome support modal (TEMP_SUPPORT_AS_MODAL)', () => {
     expect(screen.queryByTestId('support-modal')).toBeNull();
     guest.unmount();
 
+    window.history.replaceState(null, '', '/?v=first&support=1');
     render(<ChannelHome mainVideo={video} allVideos={[video]} userProfile={signedIn} />);
     expect(screen.getByTestId('support-modal')).toBeInTheDocument();
+    // Stripped at once, so a refresh doesn't open the gate again; the open video stays.
+    expect(window.location.search).toBe('?v=first');
   });
 });

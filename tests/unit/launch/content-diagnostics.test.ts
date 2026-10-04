@@ -17,8 +17,6 @@ function productionEnv(overrides: Record<string, string | undefined> = {}): Node
     EMAIL_FROM: 'Polutek <noreply@polutek.pl>',
     ADMIN_CLERK_USER_IDS: 'admin_1',
     MAIN_CREATOR_SLUG: 'polutek',
-    PATRON_MIN_TIP_AMOUNT: '10',
-    PATRON_MIN_TIP_CURRENCY: 'PLN',
     REFERRAL_PATRON_THRESHOLD: '10',
     HEALTHCHECK_TOKEN: 'token',
     EMAIL_UNSUBSCRIBE_SIGNING_SECRET: 'x'.repeat(32),

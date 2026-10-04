@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { CardElement, Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import type { PaymentIntentResult } from "@stripe/stripe-js";
 import type { SupportedCurrency } from "@/lib/constants";
@@ -34,12 +34,22 @@ export function TipPayStep(props: TipPayStepProps) {
 function useTipConfirm(isPl: boolean, onConfirmed: (outcome: TipConfirmOutcome) => void) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A ref, not the `busy` state: two quick clicks land before React re-renders, and a second
+  // confirm on the same intent fails and flashes an error.
+  const inFlight = useRef(false);
   /** Resolves true when the tip went through. */
   const run = async (confirm: () => Promise<PaymentIntentResult>) => {
+    if (inFlight.current) return false;
+    inFlight.current = true;
     setBusy(true);
     setError(null);
-    const read = readConfirmResult(await confirm(), isPl);
-    setBusy(false);
+    let read: ReturnType<typeof readConfirmResult>;
+    try {
+      read = readConfirmResult(await confirm(), isPl);
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
+    }
     if ("outcome" in read) {
       onConfirmed(read.outcome);
       return true;

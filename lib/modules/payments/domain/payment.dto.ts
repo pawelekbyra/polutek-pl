@@ -10,6 +10,7 @@ export interface PaymentDto {
   stripeIntentId: string | null;
   requestId: string | null;
   refundedAmountMinor: number | null;
+  refundedById?: string | null;
   metadata: any;
   createdAt: Date;
   updatedAt: Date;
@@ -19,7 +20,6 @@ export interface CreateCheckoutIntentInput {
   userId: string;
   amountMinor: number;
   currency: string;
-  title: string;
   requestId?: string;
 }
 

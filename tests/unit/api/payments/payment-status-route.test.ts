@@ -14,6 +14,9 @@ vi.mock('@/lib/modules/payments', () => ({
   getOwnedPaymentStatus: vi.fn(),
 }));
 
+const rateLimit = vi.fn();
+vi.mock('@/lib/rate-limit', () => ({ rateLimit: (...args: unknown[]) => rateLimit(...args) }));
+
 function makeRequest() {
   return new NextRequest('http://localhost/api/payments/pay_1');
 }
@@ -25,6 +28,18 @@ function callRoute(req: NextRequest, paymentId = 'pay_1') {
 describe('GET /api/payments/[paymentId]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    rateLimit.mockResolvedValue({ success: true, remaining: 59 });
+  });
+
+  it('answers 429 without asking Stripe when the caller polls too often (PAY-27)', async () => {
+    vi.mocked(auth).mockResolvedValue({ userId: 'user_1' } as any);
+    rateLimit.mockResolvedValue({ success: false, remaining: 0 });
+
+    const res = await callRoute(makeRequest());
+
+    expect(res.status).toBe(429);
+    expect(rateLimit).toHaveBeenCalledWith(expect.objectContaining({ key: 'payment-status:user_1' }));
+    expect(getOwnedPaymentStatus).not.toHaveBeenCalled();
   });
 
   it('returns 401 without hitting the use-case when the caller is not signed in', async () => {

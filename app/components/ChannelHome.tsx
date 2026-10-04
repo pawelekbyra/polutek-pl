@@ -8,7 +8,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { useLanguage } from "./LanguageContext";
-import { SidebarPlaylist, SidebarSupportBox } from "./channel/SidebarPlaylist";
+import { SidebarPlaylist } from "./channel/SidebarPlaylist";
 import type { SidebarLayout } from "./channel/sidebar-layout-request";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
@@ -16,7 +16,6 @@ import { AppPreloadProvider, useAppPreload } from "./preload/AppPreloadProvider"
 import { PreloadProgressBar } from "./preload/PreloadProgressBar";
 import { CommentLoadingSkeleton } from "@/components/skeletons";
 import { useSearchParams } from "next/navigation";
-import { TEMP_SUPPORT_AS_MODAL } from "@/lib/temp-support-modal";
 
 const SupportModal = dynamic(() => import("./channel/SupportModal"), { ssr: false });
 import {
@@ -92,20 +91,6 @@ function scrollToMediaOnMobile() {
 
   const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
   window.scrollTo({ top: 0, behavior: prefersReducedMotion ? "auto" : "smooth" });
-}
-
-// Two elements can share id="donations" at once: the always-mounted mobile "videos" tab
-// panel's own DonationBox (hidden via CSS at lg: and up, but still in the DOM) and the
-// desktop aside's separate SidebarSupportBox/DonationBox. document.getElementById always
-// returns the FIRST one in DOM order — the (CSS-hidden) mobile copy — so on desktop a
-// scroll targeting it silently did nothing. Query all matches and pick the one that's
-// actually laid out (offsetParent is null for display:none elements and their descendants).
-function getVisibleDonationsElement(): HTMLElement | null {
-  const candidates = document.querySelectorAll<HTMLElement>('[id="donations"]');
-  for (const el of candidates) {
-    if (el.offsetParent !== null) return el;
-  }
-  return candidates[0] ?? null;
 }
 
 // Key under which a shallow video switch stores the selected video in the history
@@ -193,50 +178,36 @@ function ChannelHomeContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Shared by the "polutek:open-support" event, dispatched by both AccessLockOverlay's
-  // CTA and Hero's "Wspieraj" button. The mobile "videos" tab panel (see its render
-  // below) is now ALWAYS mounted — only hidden via a CSS class when not active, the
-  // same technique the "comments" panel already used — so #donations always exists in
-  // the DOM once signed in, regardless of which tab is showing. That removes the need
-  // to wait for anything to mount: switching tabs is just a class toggle, so a single
-  // scroll shortly after is enough.
+  // The tip gate (SupportModal) opens on the "polutek:open-support" event, dispatched by Hero's
+  // "Wspieraj" button and AccessLockOverlay. It is mounted only while open, so Stripe.js is loaded
+  // only by viewers who actually open it.
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
-  const revealDonations = useCallback(() => {
-    // TEMPORARY experiment (lib/temp-support-modal.ts): open the full-page support modal
-    // instead of revealing the (hidden) sidebar tip gate.
-    if (TEMP_SUPPORT_AS_MODAL) {
-      setIsSupportModalOpen(true);
-      return;
-    }
-    if (!window.matchMedia("(min-width: 1024px)").matches) {
-      setActiveTab("videos");
-    }
-    const prefersReducedMotion = window.matchMedia?.(
-      "(prefers-reduced-motion: reduce)",
-    ).matches ?? false;
-    window.setTimeout(() => {
-      getVisibleDonationsElement()?.scrollIntoView({
-        behavior: prefersReducedMotion ? "auto" : "smooth",
-        block: "center",
-      });
-    }, 0);
-  }, []);
+  const openSupport = useCallback(() => setIsSupportModalOpen(true), []);
 
   useEffect(() => {
-    window.addEventListener("polutek:open-support", revealDonations);
-    return () => window.removeEventListener("polutek:open-support", revealDonations);
-  }, [revealDonations]);
+    window.addEventListener("polutek:open-support", openSupport);
+    return () => window.removeEventListener("polutek:open-support", openSupport);
+  }, [openSupport]);
 
-  // With the sidebar tip gate hidden, the modal must also mount for URLs that DonationBox
-  // reacts to on load: an external ?support=1 deep link, and a Stripe redirect return
-  // (?success=true&payment_id=…) whose success screen DonationBox's checkout flow renders.
+  // It also opens for signed-in viewers from a URL: an external `?support=1` deep link (stripped
+  // at once, so a refresh doesn't reopen it) and a Stripe redirect return
+  // (`?success=true&payment_id=…`), which lands on the thank-you step.
   const searchParams = useSearchParams();
-  const hasSupportUrlIntent =
-    searchParams.get("support") === "1" ||
-    (searchParams.get("success") === "true" && Boolean(searchParams.get("payment_id")));
+  const wantsSupport = searchParams.get("support") === "1";
+  const isStripeReturn = searchParams.get("success") === "true" && Boolean(searchParams.get("payment_id"));
   useEffect(() => {
-    if (TEMP_SUPPORT_AS_MODAL && userProfile && hasSupportUrlIntent) setIsSupportModalOpen(true);
-  }, [hasSupportUrlIntent, userProfile]);
+    if (!userProfile || !(wantsSupport || isStripeReturn)) return;
+    setIsSupportModalOpen(true);
+    if (wantsSupport) {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("support");
+        window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+      } catch {
+        // Cosmetic only.
+      }
+    }
+  }, [wantsSupport, isStripeReturn, userProfile]);
 
   if (!selectedVideo)
     return (
@@ -384,11 +355,8 @@ function ChannelHomeContent({
           </div>
           <div className="hidden lg:col-span-4 lg:flex lg:flex-col lg:gap-4">
             <aside className="lg:flex lg:flex-col lg:gap-0 lg:overflow-y-auto rounded-[24px] border border-[var(--cm-line-80)] bg-[var(--cm-card-88-white)] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(23,23,23,0.03),0_24px_50px_-26px_rgba(23,23,23,0.2)]">
-              <SidebarPlaylist {...commonSidebarProps} showSupportBox={false} />
+              <SidebarPlaylist {...commonSidebarProps} />
             </aside>
-            <div className="lg:shrink-0">
-              <SidebarSupportBox sortedVideos={sortedVideos} />
-            </div>
           </div>
         </div>
       </div>

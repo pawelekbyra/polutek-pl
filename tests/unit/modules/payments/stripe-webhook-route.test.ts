@@ -3,17 +3,15 @@ import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/webhooks/stripe/route';
 import { handleStripeWebhook } from '@/lib/modules/payments';
 import { ok, fail } from '@/lib/modules/shared/result';
-import { PaymentError } from '@/lib/modules/payments/domain/payment.errors';
+import { PaymentWebhookProcessingError, PaymentWebhookSignatureError } from '@/lib/modules/payments/domain/payment.errors';
 
-vi.mock('@/lib/modules/payments', () => ({
-  handleStripeWebhook: vi.fn(),
-}));
+vi.mock('@/lib/modules/payments', async () => {
+  const errors = await import('@/lib/modules/payments/domain/payment.errors');
+  return { handleStripeWebhook: vi.fn(), PaymentError: errors.PaymentError };
+});
 
 vi.mock('@/lib/logger', () => ({
-  createScopedLogger: vi.fn().mockReturnValue({
-    error: vi.fn(),
-    info: vi.fn(),
-  }),
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }));
 
 function stripeRequest(headers: Record<string, string> = { 'stripe-signature': 'test-sig' }) {
@@ -61,7 +59,7 @@ describe('Stripe Webhook Route Actor Verification', () => {
 
   it('maps handler processing failure to a retryable server error', async () => {
     vi.mocked(handleStripeWebhook).mockResolvedValue(
-      fail(new PaymentError('Database write failed')) as any
+      fail(new PaymentWebhookProcessingError('Database write failed')) as any
     );
 
     const response = await POST(stripeRequest());
@@ -75,15 +73,15 @@ describe('Stripe Webhook Route Actor Verification', () => {
 
   it('keeps signature failure as a client error', async () => {
     vi.mocked(handleStripeWebhook).mockResolvedValue(
-      fail(new PaymentError('Webhook Signature Error: invalid signature')) as any
+      fail(new PaymentWebhookSignatureError('Webhook signature verification failed')) as any
     );
 
     const response = await POST(stripeRequest());
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({
-      error: 'PAYMENT_ERROR',
-      message: 'Webhook Signature Error: invalid signature',
+      error: 'PAYMENT_WEBHOOK_SIGNATURE_ERROR',
+      message: 'Webhook signature verification failed',
     });
   });
 });

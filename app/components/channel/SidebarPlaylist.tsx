@@ -13,13 +13,11 @@ import { useEffect, useRef, useState } from "react";
 import AccessLockOverlay from "../AccessLockOverlay";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { NajsIcon } from "../najs/primitives";
-import DonationBox from "./DonationBox";
 import { useAppPreload } from "../preload/AppPreloadProvider";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isUpcomingPremiere } from "@/lib/premiere";
 import { usePremiereClock } from "@/lib/hooks/usePremiereClock";
-import { TEMP_SUPPORT_AS_MODAL } from "@/lib/temp-support-modal";
 import {
   acquireSidebarLayout,
   releaseSidebarLayout,
@@ -38,27 +36,9 @@ interface SidebarPlaylistProps {
   mounted: boolean;
   onVideoMouseEnter: (id: string) => void;
   onVideoSelect?: (videoId?: string) => void;
-  showSupportBox?: boolean;
   /** Server-built layout (HomeExperience) + the viewer it was built for; skips the first fetch. */
   initialLayout?: SidebarLayout | null;
   initialLayoutViewerKey?: string;
-}
-
-function useSupportItem(sortedVideos: PublicVideoDTO[], layoutItems?: SidebarLayoutItem[]) {
-  return (layoutItems ?? sortedVideos).find((item) => item.creatorId);
-}
-
-/**
- * Renders the patron/donation support widget on its own, outside the
- * height-clamped desktop playlist box — it must live in normal document
- * flow below the video list, not compete with it for the fixed height.
- */
-export function SidebarSupportBox({ sortedVideos }: { sortedVideos: PublicVideoDTO[] }) {
-  const { isLoaded: authLoaded, isSignedIn } = useAuth();
-  const supportItem = useSupportItem(sortedVideos);
-  if (TEMP_SUPPORT_AS_MODAL || !authLoaded || !isSignedIn) return null;
-  if (!supportItem?.creatorId) return null;
-  return <DonationBox videoTitle={supportItem?.title} />;
 }
 
 export function SidebarPlaylist({
@@ -69,7 +49,6 @@ export function SidebarPlaylist({
   mounted,
   onVideoMouseEnter,
   onVideoSelect,
-  showSupportBox = true,
   initialLayout,
   initialLayoutViewerKey,
 }: SidebarPlaylistProps) {
@@ -287,8 +266,6 @@ export function SidebarPlaylist({
     );
   };
 
-  const supportItem = (layout?.sections.flatMap((section) => section.items) ?? sortedVideos).find((item) => item.creatorId);
-
   const renderSectionHeader = (title: string, icon?: React.ReactNode) => (
     <div className="mb-1.5 flex shrink-0 items-center gap-2 border-b border-[var(--cm-line-76-2)] pb-1.5">
       {icon ?? (
@@ -302,10 +279,6 @@ export function SidebarPlaylist({
       </h3>
     </div>
   );
-
-  const patronBox = !TEMP_SUPPORT_AS_MODAL && authLoaded && isSignedIn && supportItem?.creatorId
-    ? <DonationBox videoTitle={supportItem.title} />
-    : null;
 
   // Section titles follow the viewer's language (the server layout only carries Polish ones).
   const publicSectionTitle = language === "pl" ? "Publiczne" : "Public";
@@ -339,11 +312,6 @@ export function SidebarPlaylist({
         {renderSkeletonSection(publicSectionTitle)}
         {renderSkeletonSection(loggedInSectionTitle)}
         {renderSkeletonSection(upcomingSectionTitle)}
-        {showSupportBox && !TEMP_SUPPORT_AS_MODAL && (
-          <div className="mt-2 shrink-0 rounded-lg bg-[var(--chan-surface)] p-4">
-            <Skeleton className="h-8 w-full rounded-[10px]" />
-          </div>
-        )}
       </div>
     );
   }
@@ -382,7 +350,6 @@ export function SidebarPlaylist({
             i,
           ),
         )}
-        {showSupportBox && patronBox}
       </div>
     );
   }
@@ -421,11 +388,6 @@ export function SidebarPlaylist({
         </div>
       )}
 
-      {showSupportBox && (
-        <div className="shrink-0">
-          {patronBox}
-        </div>
-      )}
     </div>
   );
 }

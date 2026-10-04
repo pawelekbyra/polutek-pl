@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import type { StripeElementsOptions } from "@stripe/stripe-js";
 import { X } from "../icons";
@@ -9,8 +9,9 @@ import { useLanguage } from "../LanguageContext";
 import { useAuthModal } from "../auth/AuthModalProvider";
 import { cn } from "@/lib/utils";
 import { APP_NAME, type SupportedCurrency } from "@/lib/constants";
+import { getStripeBrowser } from "@/lib/payments/stripe-browser";
 import { detectDefaultCurrency } from "@/lib/payments/detect-currency";
-import { checkoutStripePromise, useCheckoutFlow } from "@/lib/hooks/useCheckoutFlow";
+import { useCheckoutFlow } from "@/lib/hooks/useCheckoutFlow";
 import {
   TIP_WALLETS,
   getTipMethodTiles,
@@ -34,36 +35,26 @@ interface SupportModalProps {
 const STEPS: TipStep[] = ["recipient", "disclaimer", "amount", "method", "pay"];
 
 /**
- * The tip gate (TEMP_SUPPORT_AS_MODAL experiment, see lib/temp-support-modal.ts):
- * "Kwota napiwku" → "Metoda napiwku" → the chosen method's form → thank-you. A fixed-size window
- * on desktop, full screen on phones; the frame (badge, dots, back, ✕, footer button) never
- * changes size between steps.
+ * The tip gate, opened from "Wspieraj" (ChannelHome). Five steps: recipient + Terms/Privacy
+ * consent → disclaimer ("a tip unlocks nothing") → amount → method → that method's form, then the
+ * thank-you screen. A fixed-size window on desktop, full screen on phones; the frame (badge, dots,
+ * back, ✕, footer button) never changes size between steps.
  *
  * Stripe decides which methods a tip can use: the intent is created with automatic payment
- * methods after step 1 and its `payment_method_types` become the tiles (plus Apple Pay /
- * Google Pay when the device has one); the chosen one is then confirmed with its own Stripe.js
- * call on the same intent. Success still reconciles through
- * /api/payments/[id] → fulfillPayment(). Mounted only while open, so each opening starts fresh.
+ * methods when the amount step is confirmed (and updated, not duplicated, if the amount changes)
+ * and its `payment_method_types` become the tiles (plus Apple Pay / Google Pay when the device has
+ * one); the chosen one is confirmed with its own Stripe.js call on the same intent. Success
+ * reconciles through /api/payments/[id] → fulfillPayment(). Mounted only while open, which is
+ * also when Stripe.js is first downloaded.
  */
 export default function SupportModal({ onClose }: SupportModalProps) {
   const { language } = useLanguage();
   const isPl = language === "pl";
   const { open: openAuthModal } = useAuthModal();
 
-  const flow = useCheckoutFlow({
-    isPl,
-    logPrefix: "TipFlow",
-    // The PaymentIntent description: shown in the BLIK banking app and on statements.
-    title: isPl ? `Napiwek dla ${APP_NAME}` : `Tip for ${APP_NAME}`,
-    getMinAmountTooLowMessage: useCallback(
-      (min: number, currency: string) =>
-        isPl ? `Minimalna kwota napiwku to ${min} ${currency}` : `Minimum tip amount is ${min} ${currency}`,
-      [isPl],
-    ),
-    attemptFinishedMessage: isPl
-      ? "Ta próba płatności jest zakończona. Rozpocznij nową wpłatę."
-      : "This payment attempt is finished. Start a new support attempt.",
-  });
+  const flow = useCheckoutFlow({ isPl });
+  // Stripe.js is requested here, i.e. only once somebody opens the gate.
+  const stripePromise = useMemo(() => getStripeBrowser(), []);
 
   // Controls the Base UI dialog open state. Starts true (component only mounts when open).
   // On close we set false first so Base UI can apply data-closed and play the slide-up
@@ -81,8 +72,8 @@ export default function SupportModal({ onClose }: SupportModalProps) {
   // Apple Pay / Google Pay get a tile only when this browser has one set up.
   useEffect(() => {
     let active = true;
-    checkoutStripePromise
-      ?.then((stripe) =>
+    stripePromise
+      .then((stripe) =>
         stripe
           ?.paymentRequest({
             country: "PL",
@@ -99,9 +90,9 @@ export default function SupportModal({ onClose }: SupportModalProps) {
     return () => {
       active = false;
     };
-  }, [currency]);
+  }, [currency, stripePromise]);
 
-  const minAmount = flow.patronBoxMinimums[currency] ?? flow.minimums[currency];
+  const minAmount = flow.minimums[currency];
   const methods = getTipMethodTiles(flow.paymentMethodTypes, wallets);
   // The viewer's pick (or last-used method) when Stripe allows it for this tip, else the first tile.
   const method = pickedMethod && methods.includes(pickedMethod) ? pickedMethod : methods[0] ?? null;
@@ -113,11 +104,12 @@ export default function SupportModal({ onClose }: SupportModalProps) {
     }
     if (amount === "") return;
     setCreatingIntent(true);
-    const ready = await flow.submit(amount, currency, minAmount, { requireTerms: false });
+    const ready = await flow.submit(amount, currency, minAmount);
     setCreatingIntent(false);
     if (ready) setStep("method");
   };
 
+  // The intent stays: going on with a new amount updates it on the server.
   const backToAmount = () => {
     flow.resetCheckout();
     setStep("amount");
@@ -181,7 +173,9 @@ export default function SupportModal({ onClose }: SupportModalProps) {
   } else if (step !== "amount" && elementsOptions && amount !== "") {
     body = (
       // One Elements group per intent; the per-method forms confirm against its client secret.
-      <Elements key={flow.clientSecret} stripe={checkoutStripePromise} options={elementsOptions}>
+      // Keyed by amount/currency too: the intent is updated in place, and the wallet and Payment
+      // Element forms must re-read it after a change.
+      <Elements key={`${flow.clientSecret}:${amount}:${currency}`} stripe={stripePromise} options={elementsOptions}>
         {step === "method" || !method ? (
           <TipMethodStep
             language={language}
@@ -206,7 +200,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
             clientSecret={flow.clientSecret!}
             paymentId={flow.paymentId}
             userEmail={flow.userEmail}
-            stripePromise={checkoutStripePromise}
+            stripePromise={stripePromise}
             onChangeMethod={() => setStep("method")}
             onConfirmed={handleConfirmed}
           />

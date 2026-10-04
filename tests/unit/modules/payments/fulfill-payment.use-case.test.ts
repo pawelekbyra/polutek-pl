@@ -1,280 +1,133 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fulfillPayment } from '@/lib/modules/payments/application/fulfill-payment.use-case';
-import { PaymentStatus, PatronGrantSource } from '@prisma/client';
-import { grantPatron } from '@/lib/modules/patron';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createFakePaymentsDb, createTestContext } from './fake-payments-db';
 
-// Mocking dependencies
-vi.mock('@/lib/logger');
-vi.mock('@/lib/observability');
-vi.mock('@/lib/modules/email/application/send-transactional-email.use-case');
-vi.mock('@/lib/modules/audit');
+const db = createFakePaymentsDb();
+const sendBecomePatronEmail = vi.fn();
+const sendDonationThankYouEmail = vi.fn();
+const sendNotification = vi.fn();
+const recordAuditEvent = vi.fn();
 
-// Mock getPaymentCurrencyLimits
-vi.mock('@/lib/payments/currency-settings', () => ({
-  getPaymentCurrencyLimits: vi.fn().mockResolvedValue({
-    PLN: { minAmountMinor: 1000, patronThresholdMinor: 1000, patronBoxMinMinor: 1000 },
-    EUR: { minAmountMinor: 1000, patronThresholdMinor: 1000, patronBoxMinMinor: 1000 },
-  }),
-  resolvePatronThresholdMinor: (_currency: string, fallbackMinor: number) => fallbackMinor,
+vi.mock('@/lib/prisma', () => ({ prisma: db }));
+vi.mock('@/lib/modules/audit', () => ({ recordAuditEvent: (...args: unknown[]) => recordAuditEvent(...args) }));
+vi.mock('@/lib/modules/email', () => ({
+  sendBecomePatronEmail: (...args: unknown[]) => sendBecomePatronEmail(...args),
+  sendDonationThankYouEmail: (...args: unknown[]) => sendDonationThankYouEmail(...args),
+}));
+vi.mock('@/lib/modules/notifications', () => ({
+  sendNotification: (...args: unknown[]) => sendNotification(...args),
+  notificationTemplates: { supportThanks: { kind: 'PATRON', titlePl: 't', titleEn: 't', bodyPl: 'b', bodyEn: 'b' } },
 }));
 
-vi.mock('@/lib/modules/patron', () => ({
-  grantPatron: vi.fn().mockResolvedValue({
-    ok: true,
-    data: {
-      isPatron: true,
-      normalizedTotal: 25,
-    }
-  }),
-}));
+const { fulfillPayment } = await import('@/lib/modules/payments/application/fulfill-payment.use-case');
 
-vi.mock('@/lib/modules/users', () => ({
-  normalizePaymentTotals: vi.fn().mockReturnValue(25),
-}));
+const ctx = () => createTestContext(db);
 
-describe('fulfillPayment use case', () => {
-  let mockPrisma: any;
-  let ctx: any;
+function seed(overrides: Record<string, unknown> = {}) {
+  const row = {
+    id: `pay_${db.payment.rows.length + 1}`,
+    userId: 'user_1',
+    creatorId: 'creator_1',
+    amountMinor: 1000,
+    currency: 'PLN',
+    status: 'PENDING',
+    stripeIntentId: `pi_${db.payment.rows.length + 1}`,
+    refundedAmountMinor: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+  db.payment.rows.push(row);
+  return row;
+}
 
-  beforeEach(() => {
+const input = (payment: any, overrides: Record<string, unknown> = {}) => ({
+  paymentId: payment.id,
+  stripeIntentId: payment.stripeIntentId,
+  metadataUserId: 'user_1',
+  amountMinor: payment.amountMinor,
+  currency: payment.currency.toLowerCase(),
+  ...overrides,
+});
+
+beforeEach(() => {
+  for (const name of ['payment', 'patronGrant', 'user', 'userPaymentTotal']) db[name].rows.length = 0;
+  db.user.rows.push({ id: 'user_1', email: 'payer@example.com', language: 'en' });
+  vi.clearAllMocks();
+});
+
+describe('fulfillPayment', () => {
+  it('first tip: SUCCEEDED, supporter marker, totals, one "become patron" e-mail and notification', async () => {
+    const payment = seed();
+
+    const result = await fulfillPayment(input(payment), ctx());
+
+    expect(result.ok && result.data.isFirstFulfillment).toBe(true);
+    expect(payment.status).toBe('SUCCEEDED');
+    expect(db.patronGrant.rows).toHaveLength(1);
+    expect(db.userPaymentTotal.rows[0]).toMatchObject({ userId: 'user_1', currency: 'PLN', amountMinor: 1000 });
+    expect(sendBecomePatronEmail).toHaveBeenCalledWith('payer@example.com', 10, 'PLN', 'en');
+    expect(sendNotification).toHaveBeenCalledTimes(1);
+  });
+
+  it('a later tip adds no second marker and sends the plain thank-you', async () => {
+    await fulfillPayment(input(seed()), ctx());
     vi.clearAllMocks();
 
-    mockPrisma = {
-      payment: {
-        updateMany: vi.fn(),
-        findUnique: vi.fn(),
-      },
-      user: {
-        findUnique: vi.fn(),
-        update: vi.fn(),
-      },
-      userPaymentTotal: {
-        upsert: vi.fn(),
-      },
-      patronGrant: {
-        create: vi.fn(),
-        findUnique: vi.fn(),
-        findFirst: vi.fn(),
-        findMany: vi.fn(),
-      },
-      $transaction: vi.fn(async (fn) => await fn(mockPrisma)),
-      $executeRaw: vi.fn(),
-    };
+    await fulfillPayment(input(seed({ amountMinor: 300 }), { amountMinor: 300 }), ctx());
 
-    ctx = {
-      db: {
-        writeTransaction: async (fn: any) => await mockPrisma.$transaction(fn),
-        read: mockPrisma,
-      },
-      actor: { type: 'system' },
-    };
+    expect(db.patronGrant.rows).toHaveLength(1);
+    expect(sendDonationThankYouEmail).toHaveBeenCalledTimes(1);
+    expect(sendNotification).not.toHaveBeenCalled();
   });
 
-  it('grants patron status when payment is above threshold', async () => {
-    const input = {
-      paymentId: 'pay_123',
-      userId: 'user_123',
-      amountMinor: 1000,
-      currency: 'PLN',
-    };
+  it('a replay changes nothing and thanks nobody again', async () => {
+    const payment = seed();
+    await fulfillPayment(input(payment), ctx());
+    vi.clearAllMocks();
 
-    mockPrisma.payment.updateMany.mockResolvedValue({ count: 1 });
-    mockPrisma.payment.findUnique.mockResolvedValue({
-      id: 'pay_123',
-      userId: 'user_123',
-      amountMinor: 1000,
-      currency: 'PLN',
-      status: PaymentStatus.SUCCEEDED,
-    });
-    mockPrisma.user.findUnique.mockResolvedValue({
-      id: 'user_123',
-      email: 'test@example.com',
-      isPatron: false,
-      paymentTotals: [],
-      patronGrants: [],
-    });
-    mockPrisma.user.update.mockResolvedValue({
-      id: 'user_123',
-      isPatron: true,
-      paymentTotals: [{ currency: 'PLN', amountMinor: 1000 }],
-    });
+    const replay = await fulfillPayment(input(payment), ctx());
 
-    const result = await fulfillPayment(input, ctx);
-
-    expect(result.ok).toBe(true);
-    expect(grantPatron).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userId: 'user_123',
-        source: 'stripe_tip',
-        paymentId: 'pay_123',
-      }),
-      expect.objectContaining({
-        actor: { type: 'system' }
-      }),
-      expect.anything()
-    );
+    expect(replay.ok && replay.data.isFirstFulfillment).toBe(false);
+    expect(db.userPaymentTotal.rows[0].amountMinor).toBe(1000);
+    expect(sendBecomePatronEmail).not.toHaveBeenCalled();
+    expect(sendDonationThankYouEmail).not.toHaveBeenCalled();
   });
 
-  it('does NOT grant patron status when payment is below threshold', async () => {
-    const input = {
-      paymentId: 'pay_123',
-      userId: 'user_123',
-      amountMinor: 999, // 9.99 PLN < 10 PLN threshold
-      currency: 'PLN',
-    };
-
-    mockPrisma.payment.updateMany.mockResolvedValue({ count: 1 });
-    mockPrisma.payment.findUnique.mockResolvedValue({
-      id: 'pay_123',
-      userId: 'user_123',
-      amountMinor: 999,
-      currency: 'PLN',
-      status: PaymentStatus.SUCCEEDED,
-    });
-    mockPrisma.user.findUnique.mockResolvedValue({
-      id: 'user_123',
-      email: 'test@example.com',
-      isPatron: false,
-      paymentTotals: [],
-      patronGrants: [],
-    });
-
-    const result = await fulfillPayment(input, ctx);
-
-    expect(result.ok).toBe(true);
-    expect(grantPatron).not.toHaveBeenCalled();
+  it('records the intent id when the checkout write of it was lost', async () => {
+    const payment = seed({ stripeIntentId: null });
+    await fulfillPayment(input(payment, { stripeIntentId: 'pi_recovered' }), ctx());
+    expect(payment).toMatchObject({ status: 'SUCCEEDED', stripeIntentId: 'pi_recovered' });
   });
 
-  it('does NOT create a second PatronGrant when an existing patron tips above threshold again', async () => {
-    const input = {
-      paymentId: 'pay_extra',
-      userId: 'user_123',
-      amountMinor: 5000, // well above the 10 PLN threshold
-      currency: 'PLN',
-    };
-
-    mockPrisma.payment.updateMany.mockResolvedValue({ count: 1 });
-    mockPrisma.payment.findUnique.mockResolvedValue({
-      id: 'pay_extra',
-      userId: 'user_123',
-      amountMinor: 5000,
-      currency: 'PLN',
-      status: PaymentStatus.SUCCEEDED,
-    });
-    mockPrisma.user.findUnique.mockResolvedValue({
-      id: 'user_123',
-      email: 'test@example.com',
-      isPatron: true,
-      paymentTotals: [{ currency: 'PLN', amountMinor: 5000 }],
-      patronGrants: [{ id: 'grant_existing' }], // already an active patron
-    });
-
-    const result = await fulfillPayment(input, ctx);
-
-    expect(result.ok).toBe(true);
-    expect(grantPatron).not.toHaveBeenCalled();
-    // Clerk should still be synced as a patron, just without minting a new grant.
+  it.each([
+    ['amount', { amountMinor: 999 }, 'PAYMENT_AMOUNT_MISMATCH'],
+    ['currency', { currency: 'eur' }, 'PAYMENT_CURRENCY_MISMATCH'],
+    ['intent', { stripeIntentId: 'pi_other' }, 'PAYMENT_STRIPE_INTENT_MISMATCH'],
+    ['user', { metadataUserId: 'user_2' }, 'PAYMENT_METADATA_USER_MISMATCH'],
+  ])('refuses a %s that does not match the local payment', async (_label, overrides, code) => {
+    const payment = seed();
+    const result = await fulfillPayment(input(payment, overrides), ctx());
+    expect(!result.ok && result.error.message).toContain(code);
+    expect(payment.status).toBe('PENDING');
+    expect(db.patronGrant.rows).toHaveLength(0);
   });
 
-  it('does NOT grant patron status when currency is not supported by limits', async () => {
-    const input = {
-      paymentId: 'pay_123',
-      userId: 'user_123',
-      amountMinor: 1000,
-      currency: 'JPY',
-    };
+  it('a failing e-mail never undoes the recorded payment (it is audited instead)', async () => {
+    const payment = seed();
+    sendBecomePatronEmail.mockRejectedValueOnce(new Error('resend down'));
 
-    mockPrisma.payment.updateMany.mockResolvedValue({ count: 1 });
-    mockPrisma.payment.findUnique.mockResolvedValue({
-      id: 'pay_123',
-      userId: 'user_123',
-      amountMinor: 1000,
-      currency: 'JPY',
-      status: PaymentStatus.SUCCEEDED,
-    });
-    mockPrisma.user.findUnique.mockResolvedValue({
-      id: 'user_123',
-      email: 'test@example.com',
-      isPatron: false,
-      paymentTotals: [],
-      patronGrants: [],
-    });
+    const result = await fulfillPayment(input(payment), ctx());
 
-    const result = await fulfillPayment(input, ctx);
-
-    if (!result.ok) {
-        console.error('Replay failed:', result.error);
-    }
     expect(result.ok).toBe(true);
-    expect(grantPatron).not.toHaveBeenCalled();
+    expect(payment.status).toBe('SUCCEEDED');
+    expect(recordAuditEvent).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: 'EMAIL_SEND_FAILED' }));
   });
 
-  it('handles replay correctly (already SUCCEEDED)', async () => {
-    const input = {
-      paymentId: 'pay_123',
-      userId: 'user_123',
-      amountMinor: 2500,
-      currency: 'PLN',
-    };
-
-    // CAS returns 0 because status is already SUCCEEDED
-    mockPrisma.payment.updateMany.mockResolvedValue({ count: 0 });
-    mockPrisma.payment.findUnique.mockResolvedValue({
-      id: 'pay_123',
-      userId: 'user_123',
-      amountMinor: 2500,
-      currency: 'PLN',
-      status: PaymentStatus.SUCCEEDED,
-    });
-    mockPrisma.user.findUnique.mockResolvedValue({
-      id: 'user_123',
-      email: 'test@example.com',
-      isPatron: true,
-      paymentTotals: [{ currency: 'PLN', amountMinor: 2500 }],
-      patronGrants: [{ id: 'grant_1' }],
-    });
-
-    const result = await fulfillPayment(input, ctx);
-
-    if (!result.ok) {
-        console.error('Replay failed:', result.error);
-    }
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-        expect(result.data.isFirstFulfillment).toBe(false);
-    }
-    expect(grantPatron).not.toHaveBeenCalled(); // No new grant on replay
-  });
-
-  it('syncs Clerk with truth even on replay if legacy isPatron is false but active grant exists', async () => {
-    const input = {
-      paymentId: 'pay_replay',
-      userId: 'user_mismatch',
-      amountMinor: 2500,
-      currency: 'PLN',
-    };
-
-    // CAS returns 0 because status is already SUCCEEDED
-    mockPrisma.payment.updateMany.mockResolvedValue({ count: 0 });
-    mockPrisma.payment.findUnique.mockResolvedValue({
-      id: 'pay_replay',
-      userId: 'user_mismatch',
-      amountMinor: 2500,
-      currency: 'PLN',
-      status: PaymentStatus.SUCCEEDED,
-    });
-    // Legacy cache says NOT patron
-    mockPrisma.user.findUnique.mockResolvedValue({
-      id: 'user_mismatch',
-      email: 'test@example.com',
-      isPatron: false,
-      paymentTotals: [{ currency: 'PLN', amountMinor: 2500 }],
-      patronGrants: [{ id: 'grant_existing' }], // Source of truth says IS patron
-    });
-
-    const result = await fulfillPayment(input, ctx);
-
-    expect(result.ok).toBe(true);
-    // Should sync Clerk with isPatron: true based on patronGrants.length > 0
+  it('notifyPayer=false records the payment silently', async () => {
+    const payment = seed();
+    await fulfillPayment({ ...input(payment), notifyPayer: false }, ctx());
+    expect(payment.status).toBe('SUCCEEDED');
+    expect(sendBecomePatronEmail).not.toHaveBeenCalled();
+    expect(sendNotification).not.toHaveBeenCalled();
   });
 });

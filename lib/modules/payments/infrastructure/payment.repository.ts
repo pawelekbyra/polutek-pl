@@ -2,24 +2,22 @@ import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
 import { PaymentStatus, Prisma } from "@prisma/client";
 import { PaymentDto } from "../domain/payment.dto";
 
+/** Local statuses a Stripe `succeeded` may still move to SUCCEEDED (see fulfillPaymentWithCAS). */
+const FULFILLABLE_STATUSES: PaymentStatus[] = [PaymentStatus.PENDING, PaymentStatus.FAILED, PaymentStatus.CANCELED];
+
+/** Statuses of payments whose money was received (possibly refunded or disputed afterwards). */
+const RECEIVED_STATUSES: PaymentStatus[] = [
+  PaymentStatus.SUCCEEDED,
+  PaymentStatus.PARTIALLY_REFUNDED,
+  PaymentStatus.REFUNDED,
+  PaymentStatus.DISPUTED,
+  PaymentStatus.CHARGEBACK_LOST,
+];
+
 export class PaymentRepository {
   async findUser(userId: string, db: ReadDb) {
     return await db.user.findUnique({
       where: { id: userId },
-    });
-  }
-
-  async findUserWithPaymentTotalsAndActivePatronGrants(userId: string, db: ReadDb) {
-    return await db.user.findUnique({
-      where: { id: userId },
-      include: {
-        paymentTotals: true,
-        patronGrants: {
-          where: { revokedAt: null },
-          select: { id: true },
-          take: 1,
-        },
-      },
     });
   }
 
@@ -82,7 +80,16 @@ export class PaymentRepository {
     return count;
   }
 
-  async fulfillPendingPaymentWithCAS(payment: {
+  /**
+   * Atomic transition to SUCCEEDED once Stripe reports the intent `succeeded`.
+   *
+   * FAILED and CANCELED are not terminal for this transition: a PaymentIntent goes back to
+   * `requires_payment_method` after a failed attempt (wrong BLIK code, declined card, failed 3DS)
+   * and a later attempt on the same intent can still succeed. Stripe's `succeeded` (with the
+   * amount, currency and intent checked by the caller) is the source of truth, so a row that an
+   * earlier failure or our own cleanup marked FAILED/CANCELED must still be recorded as paid.
+   */
+  async fulfillPaymentWithCAS(payment: {
     id: string;
     currentStripeIntentId: string | null;
     stripeIntentId: string | null;
@@ -103,11 +110,38 @@ export class PaymentRepository {
         stripeIntentId: payment.currentStripeIntentId,
         amountMinor: payment.amountMinor,
         currency: payment.currency,
-        status: PaymentStatus.PENDING,
+        status: { in: FULFILLABLE_STATUSES },
       },
       data
     });
     return count;
+  }
+
+  /** Marks a not-yet-paid payment CANCELED (abandoned or canceled intent). Never touches a paid one. */
+  async markUnpaidPaymentCanceled(paymentId: string, tx: WriteTx): Promise<number> {
+    const { count } = await tx.payment.updateMany({
+      where: { id: paymentId, status: { in: [PaymentStatus.PENDING, PaymentStatus.FAILED] } },
+      data: { status: PaymentStatus.CANCELED },
+    });
+    return count;
+  }
+
+  async updatePendingPaymentAmount(paymentId: string, amountMinor: number, currency: string, tx: WriteTx): Promise<number> {
+    const { count } = await tx.payment.updateMany({
+      where: { id: paymentId, status: PaymentStatus.PENDING },
+      data: { amountMinor, currency },
+    });
+    return count;
+  }
+
+  /** Paid payments that still count as support: not (fully) refunded, not disputed or lost. */
+  async findCountablePayments(userId: string, db: ReadDb) {
+    const payments = await db.payment.findMany({
+      where: { userId, status: { in: [PaymentStatus.SUCCEEDED, PaymentStatus.PARTIALLY_REFUNDED] } },
+      select: { id: true, amountMinor: true, refundedAmountMinor: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    return payments.filter((payment) => payment.amountMinor > (payment.refundedAmountMinor ?? 0));
   }
 
   async updateRefundStatusWithCAS(paymentId: string, oldRefundedMinor: number, data: { status: PaymentStatus; refundedAmountMinor: number; refundedById?: string; refundedAt?: Date; refundReason?: string | null }, tx: WriteTx): Promise<number> {
@@ -150,20 +184,16 @@ export class PaymentRepository {
     `;
   }
 
-  async getCurrencySettings(db: ReadDb) {
-    return await db.paymentCurrencySetting.findMany();
-  }
-
-  async upsertCurrencySetting(
-    currency: string,
-    values: { minAmountMinor: number; patronThresholdMinor: number | null; patronBoxMinMinor: number | null },
-    tx: WriteTx,
-  ) {
-    const { minAmountMinor, patronThresholdMinor, patronBoxMinMinor } = values;
+  /**
+   * Saves the one tip minimum and clears the legacy columns (patron threshold, tip-box minimum),
+   * which no longer mean anything once a single minimum is set.
+   */
+  async upsertCurrencyMinimum(currency: string, minAmountMinor: number, tx: WriteTx) {
+    const data = { minAmountMinor, patronThresholdMinor: null, patronBoxMinMinor: null };
     return await tx.paymentCurrencySetting.upsert({
       where: { currency },
-      create: { currency, minAmountMinor, patronThresholdMinor, patronBoxMinMinor },
-      update: { minAmountMinor, patronThresholdMinor, patronBoxMinMinor }
+      create: { currency, ...data },
+      update: data,
     });
   }
 
@@ -204,7 +234,19 @@ export class PaymentRepository {
   }
 
   async getFinancialStats(where: Prisma.PaymentWhereInput, db: ReadDb) {
-    const succeededWhere = { ...where, status: PaymentStatus.SUCCEEDED };
+    // Gross: every payment where money was actually received, including ones refunded or disputed
+    // later. Refunds are summed separately over the same set, so gross - refunded is the net.
+    // (Counting only SUCCEEDED dropped partially refunded tips from the gross while their refunds
+    // were still subtracted.) An explicit status filter from the caller still narrows the set.
+    const callerStatus = where.status;
+    const succeededWhere: Prisma.PaymentWhereInput = {
+      ...where,
+      AND: [
+        { status: { in: RECEIVED_STATUSES } },
+        ...(callerStatus ? [{ status: callerStatus }] : []),
+      ],
+    };
+    delete succeededWhere.status;
 
     const succeeded = await db.payment.groupBy({
       by: ['currency'],

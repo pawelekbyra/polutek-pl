@@ -147,21 +147,6 @@ describe("public loading/access state UX contracts", () => {
     expect(embedded).toContain("Ładowanie...");
   });
 
-  it("keeps DonationBox errors associated and pending state readable", () => {
-    const support = read("app/components/channel/DonationBox.tsx");
-    const amountField = read("app/components/channel/DonationAmountField.tsx");
-
-    expect(amountField).toContain("aria-invalid={amountTooLow}");
-    expect(amountField).toContain(
-      "aria-describedby={amountTooLow ? errorId : undefined}",
-    );
-    expect(amountField).toContain('role="alert"');
-    expect(support).toContain("aria-busy={isLoading}");
-    expect(support).toContain("Processing...");
-    expect(support).toContain("motion-reduce:animate-none");
-    expect(support).not.toContain("animate-bounce");
-  });
-
   it("ensures LanguageContext does not use lazy initializer in useState to avoid hydration mismatch", () => {
     const content = read("app/components/LanguageContext.tsx");
     // Initial state must come from a static/server-provided value, never a lazy initializer that

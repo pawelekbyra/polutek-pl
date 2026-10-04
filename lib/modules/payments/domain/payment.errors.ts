@@ -28,6 +28,13 @@ export class PaymentWebhookProcessingError extends PaymentError {
   }
 }
 
+export class PaymentWebhookEventInProgressError extends PaymentError {
+  constructor(eventId: string) {
+    super(`Stripe event ${eventId} is already being processed`, 'PAYMENT_WEBHOOK_EVENT_IN_PROGRESS', 409);
+    this.name = 'PaymentWebhookEventInProgressError';
+  }
+}
+
 export class UserNotFoundError extends PaymentError {
   constructor(userId: string) {
     super(`User ${userId} was not found.`, 'USER_NOT_FOUND', 404);

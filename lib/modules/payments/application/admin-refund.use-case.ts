@@ -7,6 +7,7 @@ import { logger } from "@/lib/logger";
 import { PaymentStatus } from "@prisma/client";
 import Stripe from "stripe";
 import { getStripeClient } from "../infrastructure/stripe-client";
+import { recordAuditEvent } from "@/lib/modules/audit";
 
 export interface AdminRefundInput {
   paymentId: string;
@@ -80,13 +81,34 @@ export async function adminRefund(
     stripeRefund = await stripe.refunds.create({
       payment_intent: payment.stripeIntentId,
       amount: requestedAmount,
-      ...(input.reason ? { reason: "requested_by_customer" } : {}),
+      ...(input.reason ? { reason: "requested_by_customer", metadata: { adminReason: input.reason.slice(0, 500) } } : {}),
+    }, {
+      // A retried request (network error, double click) for the same refund state reuses the key,
+      // so Stripe returns the first refund instead of refunding twice. Once that refund is recorded,
+      // alreadyRefunded changes and a deliberate next refund gets a new key.
+      idempotencyKey: `refund-${payment.id}-${alreadyRefunded}-${requestedAmount}`,
     });
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
     logger.error(`[AdminRefund] Stripe API error for payment ${payment.id}:`, err);
-    return fail(new PaymentProviderError(`Stripe refund failed: ${msg}`));
+    return fail(new PaymentProviderError("Stripe refund failed. Details are in the server log."));
   }
+
+  // The refund is in the audit log whatever happens next: the Stripe webhook may record the
+  // amount first, which leaves nothing for handleRefund below to change.
+  await recordAuditEvent(ctx, {
+    action: "PAYMENT_REFUNDED",
+    targetType: "Payment",
+    targetId: payment.id,
+    metadata: {
+      userId: payment.userId,
+      amountMinor: requestedAmount,
+      currency: payment.currency,
+      totalRefundedMinor: alreadyRefunded + requestedAmount,
+      paymentAmountMinor: payment.amountMinor,
+      stripeRefundId: stripeRefund.id,
+      stripeRefundStatus: stripeRefund.status ?? null,
+    },
+  });
 
   // Apply refund in DB immediately — webhook is idempotent via CAS and will be a no-op
   const newTotalRefunded = alreadyRefunded + requestedAmount;
@@ -97,7 +119,6 @@ export async function adminRefund(
       admin: {
         refundedById: ctx.actor.type === "admin" ? ctx.actor.userId : "unknown",
         reason: input.reason ?? null,
-        stripeRefundId: stripeRefund.id,
       },
     },
     ctx

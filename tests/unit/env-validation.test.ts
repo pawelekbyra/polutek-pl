@@ -18,8 +18,6 @@ const productionEnv = {
   EMAIL_FROM: 'notifications@example.com',
   ADMIN_EMAILS: 'owner@example.com',
   MAIN_CREATOR_SLUG: 'creator-slug',
-  PATRON_MIN_TIP_AMOUNT: '500',
-  PATRON_MIN_TIP_CURRENCY: 'EUR',
   REFERRAL_PATRON_THRESHOLD: '5',
   HEALTHCHECK_TOKEN: 'health-token',
   EMAIL_UNSUBSCRIBE_SIGNING_SECRET: '0123456789abcdef0123456789abcdef',

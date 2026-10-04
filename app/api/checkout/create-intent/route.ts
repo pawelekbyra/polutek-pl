@@ -39,9 +39,8 @@ export async function POST(req: NextRequest) {
         }, { status: 429 });
     }
 
-    // Lazy Sync Fallback via Bridge
-    const tempCtx = createAppContext();
-    const userResult = await getOrCreateCurrentUser(tempCtx, userId);
+    // Throws (-> 404/403 via handleApiError) for a missing or soft-deleted account.
+    await getOrCreateCurrentUser(createAppContext(), userId);
 
     const actor: Actor = {
       type: 'user',
@@ -60,7 +59,7 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const { amountMinor, currency, title, requestId: inputRequestId } = result.data;
+    const { amountMinor, currency, requestId: inputRequestId } = result.data;
 
     const amountError = await validatePaymentAmountMinorAsync(amountMinor, currency);
 
@@ -72,7 +71,6 @@ export async function POST(req: NextRequest) {
       userId,
       amountMinor,
       currency,
-      title,
       requestId: inputRequestId,
     }, ctx);
 

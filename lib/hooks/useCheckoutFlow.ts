@@ -5,8 +5,6 @@ import { useAuth, useUser } from "@/lib/auth/react";
 import { useAuthModal } from "@/app/components/auth/AuthModalProvider";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { loadStripe } from "@stripe/stripe-js";
-import type { Stripe } from "@stripe/stripe-js";
 import { logger } from "@/lib/logger";
 import { MIN_PAYMENT_BY_CURRENCY, SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
 import { useToast } from "@/app/hooks/useToast";
@@ -18,71 +16,66 @@ const STRIPE_RETURN_PARAMS = [
   "redirect_status",
   "payment_id",
   "success",
-  "canceled",
-  "session_id",
 ];
 
 /**
- * Shared Stripe.js loader for every checkout surface (currently just DonationBox).
- * `loadStripe()` is idempotent for a given publishable key, so a single module-level promise
- * reused across all callers is equivalent to each having its own.
+ * One tip attempt = one requestId = one PaymentIntent on the server (which updates the intent when
+ * the amount changes). Kept for the tab's session, so closing and re-opening the gate continues
+ * the same attempt instead of opening a new intent; dropped once the attempt is finished.
  */
-export const checkoutStripePromise: Promise<Stripe | null> | null = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-  ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
-  : null;
+const ATTEMPT_STORAGE_KEY = "pp:tip-attempt-id";
+
+function readAttemptId(): string | null {
+  try {
+    return window.sessionStorage.getItem(ATTEMPT_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function storeAttemptId(id: string | null) {
+  try {
+    if (id) window.sessionStorage.setItem(ATTEMPT_STORAGE_KEY, id);
+    else window.sessionStorage.removeItem(ATTEMPT_STORAGE_KEY);
+  } catch {
+    // Storage blocked (private mode): the attempt simply lives as long as this hook.
+  }
+}
+
+/** Payment status as reported by GET /api/payments/[id] (PaymentUiStatus) plus local states. */
+export type TipUiStatus = "PROCESSING" | "SUCCEEDED" | "FAILED" | "REFUNDED" | "TIMED_OUT";
 
 export interface UseCheckoutFlowOptions {
-  /** True for Polish copy, false for English — drives the handful of fixed, shared toast strings. */
+  /** True for Polish copy, false for English — drives the handful of fixed toast strings. */
   isPl: boolean;
-  /** Tag used in console warnings/errors so logs stay attributable, e.g. "DonationBox". */
-  logPrefix: string;
-  /** `title` field sent in the /api/checkout/create-intent request body. */
-  title: string;
-  /** Copy for the "amount is below the minimum" toast — wording differs per surface (tip vs pledge). */
-  getMinAmountTooLowMessage: (minAmount: number, currency: string) => string;
-  /** Copy for the "this payment attempt is finished, start a new one" toast. */
-  attemptFinishedMessage: string;
 }
 
 export interface UseCheckoutFlowResult {
-  /** Clerk viewer id, or null/undefined when signed out. */
+  /** Signed-in viewer id, or null/undefined when signed out. */
   userId: string | null | undefined;
-  /** Clerk viewer's primary email, threaded to CheckoutModal for receipt display. */
+  /** Viewer's e-mail, prefilled where a payment form asks for one. */
   userEmail: string | undefined;
 
   isInitialLoading: boolean;
+  /** Minimum tip per currency (major units), the same one the server enforces. */
   minimums: Record<SupportedCurrency, number>;
-  patronBoxMinimums: Record<SupportedCurrency, number>;
 
-  isTermsAccepted: boolean;
-  setIsTermsAccepted: (value: boolean) => void;
-  showTermsError: boolean;
-  setShowTermsError: (value: boolean) => void;
-  /** Radix Checkbox onCheckedChange handler: sets acceptance and clears any shown error. */
-  onTermsCheckedChange: (checked: boolean | "indeterminate") => void;
-
-  isLoading: boolean;
   clientSecret: string | null;
   /** Methods Stripe allows for the current intent (from create-intent); drives the tip gate tiles. */
   paymentMethodTypes: string[];
   paymentId: string | null;
-  paymentUiStatus: string | null;
-  isCheckoutModalOpen: boolean;
-  isMounted: boolean;
+  paymentUiStatus: TipUiStatus | null;
+  /** True once a confirmed payment (or a Stripe return) moved the gate to its result screen. */
   isSuccess: boolean;
   isSyncing: boolean;
 
-  /** Re-checks payment status on demand (CheckoutModal's manual retry action). */
+  /** Re-checks payment status on demand (the "check again" action). */
   handleRetryStatusCheck: () => Promise<void>;
-  /** Closes the modal; full reload on a confirmed success, soft URL cleanup otherwise. */
+  /** Leaves the result screen: full reload after a confirmed payment, URL cleanup otherwise. */
   closeSuccessAndSync: () => void;
-  /**
-   * Runs the shared auth/terms/amount checks and, if they pass, calls
-   * /api/checkout/create-intent and hands the result to CheckoutModal.
-   */
-  /** Resolves true once an intent (clientSecret) is ready for the checkout step. */
-  submit: (amount: number | "", currency: string, minAmount: number, options?: CheckoutSubmitOptions) => Promise<boolean>;
-  /** Drops the current intent (e.g. the viewer went back to change the amount or method). */
+  /** Creates or updates the intent for this amount; resolves true once a client secret is ready. */
+  submit: (amount: number | "", currency: string, minAmount: number) => Promise<boolean>;
+  /** Leaves the result screen state (e.g. "try again" after a failure). */
   resetCheckout: () => void;
   /**
    * Shows the result of a payment confirmed without leaving the page (card, BLIK, wallets) and
@@ -91,21 +84,12 @@ export interface UseCheckoutFlowResult {
   trackConfirmedPayment: (paymentId: string, outcome: "succeeded" | "processing") => void;
 }
 
-export interface CheckoutSubmitOptions {
-  /** False when the caller keeps its own Terms consent (the tip gate asks for it on step 1). */
-  requireTerms?: boolean;
-}
-
 /**
- * Checkout plumbing for the tip surface (DonationBox): fetching per-currency minimums, the
- * terms/modal state machine, the scroll lock while the modal is open, the Stripe return-URL
- * reconciliation loop, and the /api/checkout/create-intent → CheckoutModal handoff.
- * Presentation (copy, layout, amount picker UI) and surface-specific behavior (DonationBox's
- * own `?support=1` deep link) stay in the calling component. This hook used to be shared with
- * the now-removed /secretproject and /secretproject2 pledge boxes.
+ * Checkout plumbing for the tip gate (SupportModal): per-currency minimums, the
+ * create-intent call, the Stripe return-URL handling and the background reconciliation loop.
  */
 export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlowResult {
-  const { isPl, logPrefix, title, getMinAmountTooLowMessage, attemptFinishedMessage } = options;
+  const { isPl } = options;
 
   const toast = useToast();
   const { userId } = useAuth();
@@ -115,139 +99,114 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
 
-  const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [isTermsAccepted, setIsTermsAccepted] = useState(false);
-  const [showTermsError, setShowTermsError] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentMethodTypes, setPaymentMethodTypes] = useState<string[]>([]);
   const [paymentId, setPaymentId] = useState<string | null>(null);
-  // One idempotency key per distinct request: a changed amount or currency must create a
-  // new intent (reusing the key returned the old intent with the old amount).
-  const checkoutRequestRef = useRef<{ signature: string; id: string } | null>(null);
-  const [paymentUiStatus, setPaymentUiStatus] = useState<string | null>(null);
-  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  const [paymentUiStatus, setPaymentUiStatus] = useState<TipUiStatus | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  // True once a confirmed-success screen has been shown for this return (either Stripe's own
-  // redirect_status said "succeeded", or the backend later confirmed it). Drives the full reload
-  // on close so server-rendered supporter state (e.g. the comment Patron badge) is fresh.
+  // True once a confirmed-success screen has been shown. Drives the full reload on close so
+  // server-rendered supporter state (e.g. the comment Patron badge) is fresh.
   const [paymentSucceeded, setPaymentSucceeded] = useState(false);
   const [minimums, setMinimums] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
-  const [patronBoxMinimums, setPatronBoxMinimums] = useState<Record<SupportedCurrency, number>>(MIN_PAYMENT_BY_CURRENCY);
 
   useEffect(() => {
     fetch("/api/payment-settings", { cache: "no-store" })
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => {
         if (!data?.limits) return;
-        const nextMinimums = { ...MIN_PAYMENT_BY_CURRENCY } as Record<SupportedCurrency, number>;
+        const next = { ...MIN_PAYMENT_BY_CURRENCY } as Record<SupportedCurrency, number>;
         for (const currency of SUPPORTED_CURRENCIES) {
           const min = Number(data.limits[currency]?.minAmount);
-          if (Number.isFinite(min) && min > 0) nextMinimums[currency] = min;
+          if (Number.isFinite(min) && min > 0) next[currency] = min;
         }
-        setMinimums(nextMinimums);
-
-        const nextBoxMins = { ...nextMinimums } as Record<SupportedCurrency, number>;
-        for (const currency of SUPPORTED_CURRENCIES) {
-          const boxMin = Number(data.patronBoxMinimums?.[currency]?.min);
-          if (Number.isFinite(boxMin) && boxMin > 0) nextBoxMins[currency] = boxMin;
-        }
-        setPatronBoxMinimums(nextBoxMins);
+        setMinimums(next);
       })
-      .catch((error) => logger.warn(`[${logPrefix}] Failed to fetch payment minimums:`, error))
+      .catch((error) => logger.warn("[TipFlow] Failed to fetch payment minimums:", error))
       .finally(() => setIsInitialLoading(false));
-    // logPrefix is a fixed literal per caller (e.g. "DonationBox") and never changes across
-    // this component's lifetime, so this intentionally still runs only once on mount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Background reconciliation shared by the redirect return and in-page confirmations: the status
-  // endpoint retrieves the PaymentIntent from Stripe and runs fulfillPayment() when still PENDING.
+  // endpoint retrieves the PaymentIntent from Stripe and runs fulfillPayment() when needed.
   // It never downgrades an already-shown success; it only upgrades a "processing" screen to
   // success (or surfaces a real failure).
   const stopTrackingRef = useRef<(() => void) | null>(null);
-  const startTracking = useCallback(
-    (trackedPaymentId: string, redirectSucceeded: boolean) => {
-      stopTrackingRef.current?.();
-      let interval: ReturnType<typeof setInterval> | undefined;
-      let cancelled = false;
-      let attempts = 0;
-      const maxAttempts = 10;
+  const startTracking = useCallback((trackedPaymentId: string, redirectSucceeded: boolean) => {
+    stopTrackingRef.current?.();
+    let interval: ReturnType<typeof setInterval> | undefined;
+    let cancelled = false;
+    let attempts = 0;
+    const maxAttempts = 10;
 
-      const reconcile = async (): Promise<boolean> => {
-        attempts++;
-        try {
-          const res = await fetch(`/api/payments/${encodeURIComponent(trackedPaymentId)}`, { cache: "no-store" });
-          if (!res.ok) throw new Error(`Status check failed (${res.status})`);
-          const data = await res.json();
-          const nextStatus: string | null = data.uiStatus || null;
-          const isTerminal =
-            nextStatus === "SUCCEEDED" ||
-            nextStatus === "FAILED_CANCELED" ||
-            nextStatus === "REFUNDED_DISPUTED";
+    const reconcile = async (): Promise<boolean> => {
+      attempts++;
+      try {
+        const res = await fetch(`/api/payments/${encodeURIComponent(trackedPaymentId)}`, { cache: "no-store" });
+        if (!res.ok) throw new Error(`Status check failed (${res.status})`);
+        const data = await res.json();
+        const nextStatus = (data.uiStatus as TipUiStatus | undefined) ?? null;
+        const isTerminal = nextStatus === "SUCCEEDED" || nextStatus === "FAILED" || nextStatus === "REFUNDED";
 
-          if (cancelled) return true;
+        if (cancelled) return true;
 
-          if (nextStatus === "SUCCEEDED") {
-            setPaymentSucceeded(true);
+        if (nextStatus === "SUCCEEDED") {
+          setPaymentSucceeded(true);
+          setIsSyncing(false);
+          setPaymentUiStatus("SUCCEEDED");
+          return true;
+        }
+
+        if (!redirectSucceeded) {
+          // Only a not-yet-confirmed (async) flow may still change the visible message.
+          if (isTerminal || attempts >= maxAttempts) {
             setIsSyncing(false);
-            setPaymentUiStatus("SUCCEEDED");
+            setPaymentUiStatus(nextStatus ?? "TIMED_OUT");
             return true;
           }
-
-          if (!redirectSucceeded) {
-            // Only a not-yet-confirmed (async) flow may still change the visible message.
-            if (isTerminal || attempts >= maxAttempts) {
-              setIsSyncing(false);
-              setPaymentUiStatus(nextStatus ?? "TIMED_OUT");
-              return true;
-            }
-            setPaymentUiStatus(nextStatus ?? "PROCESSING");
-            return false;
-          }
-
-          // Already showing success: keep quietly reconciling until the grant lands so the
-          // on-close reload reflects the fresh supporter state, but never change copy.
-          return isTerminal || attempts >= maxAttempts;
-        } catch (e) {
-          logger.error(`[${logPrefix}] Reconcile error`, e);
-          if (cancelled) return true;
-          if (attempts >= maxAttempts) {
-            if (!redirectSucceeded) {
-              setIsSyncing(false);
-              setPaymentUiStatus((current) => current ?? "TIMED_OUT");
-            }
-            return true;
-          }
+          setPaymentUiStatus(nextStatus ?? "PROCESSING");
           return false;
         }
-      };
 
-      reconcile().then((done) => {
-        if (done || cancelled) return;
-        interval = setInterval(async () => {
-          const finished = await reconcile();
-          if (finished && interval) clearInterval(interval);
-        }, 2000);
-      });
+        // Already showing success: keep quietly reconciling until it is recorded so the
+        // on-close reload reflects it, but never change the copy.
+        return isTerminal || attempts >= maxAttempts;
+      } catch (e) {
+        logger.error("[TipFlow] Reconcile error", e);
+        if (cancelled) return true;
+        if (attempts >= maxAttempts) {
+          if (!redirectSucceeded) {
+            setIsSyncing(false);
+            setPaymentUiStatus((current) => current ?? "TIMED_OUT");
+          }
+          return true;
+        }
+        return false;
+      }
+    };
 
-      const stop = () => {
-        cancelled = true;
-        if (interval) clearInterval(interval);
-      };
-      stopTrackingRef.current = stop;
-      return stop;
-    },
-    [logPrefix],
-  );
+    reconcile().then((done) => {
+      if (done || cancelled) return;
+      interval = setInterval(async () => {
+        const finished = await reconcile();
+        if (finished && interval) clearInterval(interval);
+      }, 2000);
+    });
+
+    const stop = () => {
+      cancelled = true;
+      if (interval) clearInterval(interval);
+    };
+    stopTrackingRef.current = stop;
+    return stop;
+  }, []);
 
   useEffect(() => () => stopTrackingRef.current?.(), []);
 
   const showOutcome = useCallback(
     (trackedPaymentId: string, outcome: "succeeded" | "processing") => {
-      setIsCheckoutModalOpen(true);
+      // This attempt is finished: the next tip starts a new one.
+      storeAttemptId(null);
       setIsSuccess(true);
       setPaymentId(trackedPaymentId);
       queryClient.invalidateQueries();
@@ -266,7 +225,6 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
 
   const trackConfirmedPayment = useCallback(
     (trackedPaymentId: string, outcome: "succeeded" | "processing") => {
-      checkoutRequestRef.current = null;
       showOutcome(trackedPaymentId, outcome);
     },
     [showOutcome],
@@ -274,21 +232,19 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
 
   // Stripe return-URL handling: trust Stripe's own redirect_status for the visible message and
   // reconcile in the background. "succeeded" (or no param, as on a plain card confirmation)
-  // shows the thank-you at once; genuinely async methods that come back "pending"/"processing"
-  // get a neutral processing screen until the backend confirms.
+  // shows the thank-you at once; async methods that come back "pending"/"processing" get a
+  // neutral processing screen until the backend confirms.
   useEffect(() => {
-    setIsMounted(true);
     const returnedPaymentId = searchParams.get("payment_id");
     if (searchParams.get("success") !== "true" || !returnedPaymentId) return;
 
     const redirectStatus = searchParams.get("redirect_status");
     if (redirectStatus === "failed") {
-      // Stripe says the payment failed — show the failure message, nothing to reconcile.
-      setIsCheckoutModalOpen(true);
+      // Stripe says this attempt failed; the intent can still be paid, so the attempt is kept.
       setIsSuccess(true);
       setPaymentId(returnedPaymentId);
       setIsSyncing(false);
-      setPaymentUiStatus("FAILED_CANCELED");
+      setPaymentUiStatus("FAILED");
       return;
     }
 
@@ -304,25 +260,21 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
       const res = await fetch(`/api/payments/${encodeURIComponent(paymentId)}`, { cache: "no-store" });
       if (!res.ok) throw new Error(`Status check failed (${res.status})`);
       const data = await res.json();
-      const nextStatus: string | null = data.uiStatus || null;
+      const nextStatus = (data.uiStatus as TipUiStatus | undefined) ?? null;
       setPaymentUiStatus(nextStatus ?? "TIMED_OUT");
       if (nextStatus === "SUCCEEDED") setPaymentSucceeded(true);
     } catch (e) {
-      logger.error(`[${logPrefix}] Manual status check error`, e);
+      logger.error("[TipFlow] Manual status check error", e);
       setPaymentUiStatus("TIMED_OUT");
     } finally {
       setIsSyncing(false);
     }
-  }, [paymentId, logPrefix]);
+  }, [paymentId]);
 
-  // Closing the success screen (either the X or "back to site"): if the payment went through,
-  // do a full reload to the clean URL so every server-rendered surface comes back reflecting the
-  // freshly granted access at once, and all client caches are rebuilt. For a non-success close
-  // (e.g. "Back" before paying) only Stripe's return params need stripping, and that must stay
-  // shallow: a router.replace here re-rendered the whole page on the server (flashing the
-  // route's loading screen) and, with UrlMask's "/" address, even dropped the open video.
+  // Leaving the result screen: after a confirmed payment, a full reload to the clean URL so every
+  // server-rendered surface reflects it. Otherwise only Stripe's return params are stripped, and
+  // shallowly: a router.replace re-renders the whole page on the server and drops the open video.
   const closeSuccessAndSync = useCallback(() => {
-    setIsCheckoutModalOpen(false);
     if (paymentSucceeded) {
       window.location.replace(window.location.pathname);
       return;
@@ -333,145 +285,105 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
     STRIPE_RETURN_PARAMS.forEach((key) => params.delete(key));
     const query = params.toString();
     try {
-      window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
+      window.history.replaceState(window.history.state, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
     } catch {
-      // Cosmetic; the checkout is already closed.
+      // Cosmetic; the gate is already closed.
     }
   }, [paymentSucceeded]);
 
-  useEffect(() => {
-    document.body.style.overflow = isCheckoutModalOpen ? "hidden" : "unset";
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isCheckoutModalOpen]);
-
-  const onTermsCheckedChange = useCallback((checked: boolean | "indeterminate") => {
-    setIsTermsAccepted(!!checked);
-    if (checked) setShowTermsError(false);
-  }, []);
-
   const resetCheckout = useCallback(() => {
     stopTrackingRef.current?.();
-    setClientSecret(null);
-    setPaymentMethodTypes([]);
-    setPaymentId(null);
-    setIsCheckoutModalOpen(false);
     setIsSuccess(false);
     setIsSyncing(false);
     setPaymentUiStatus(null);
   }, []);
 
+  const requestIntent = useCallback(async (amountMinor: number, currency: string, requestId: string) => {
+    const response = await fetch("/api/checkout/create-intent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amountMinor, currency, requestId }),
+      cache: "no-store",
+    });
+    return { response, data: await response.json().catch(() => null) };
+  }, []);
+
   const submit = useCallback(
-    async (amount: number | "", currency: string, minAmount: number, submitOptions: CheckoutSubmitOptions = {}) => {
-      const { requireTerms = true } = submitOptions;
+    async (amount: number | "", currency: string, minAmount: number) => {
       if (!userId) {
         openAuthModal("sign-in");
         return false;
       }
-      if (requireTerms && !isTermsAccepted) {
-        setShowTermsError(true);
-        return false;
-      }
-      setShowTermsError(false);
-
       if (!amount || amount < minAmount) {
-        toast(getMinAmountTooLowMessage(minAmount, currency), "error");
+        toast(
+          isPl ? `Minimalna kwota napiwku to ${minAmount} ${currency}` : `Minimum tip amount is ${minAmount} ${currency}`,
+          "error",
+        );
         return false;
       }
 
       try {
-        setIsLoading(true);
         const normalizedCurrency = currency.toUpperCase();
-        const signature = [Number(amount), normalizedCurrency].join("|");
-        if (checkoutRequestRef.current?.signature !== signature) {
-          checkoutRequestRef.current = { signature, id: crypto.randomUUID() };
+        const amountMinor = Math.round(Number(amount) * 100);
+        let requestId = readAttemptId() ?? crypto.randomUUID();
+        storeAttemptId(requestId);
+
+        let { response, data } = await requestIntent(amountMinor, normalizedCurrency, requestId);
+        if (data?.terminal) {
+          // The stored attempt is finished (paid, failed to start, canceled): start a new one.
+          requestId = crypto.randomUUID();
+          storeAttemptId(requestId);
+          ({ response, data } = await requestIntent(amountMinor, normalizedCurrency, requestId));
         }
-        const requestId = checkoutRequestRef.current.id;
-
-        const response = await fetch("/api/checkout/create-intent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            amountMinor: Math.round(Number(amount) * 100),
-            currency: normalizedCurrency,
-            title,
-            requestId,
-          }),
-          cache: "no-store",
-        });
-
-        const data = await response.json();
 
         if (data?.clientSecret) {
           setClientSecret(data.clientSecret);
           setPaymentMethodTypes(Array.isArray(data.paymentMethodTypes) ? data.paymentMethodTypes : []);
           setPaymentId(data.paymentId || null);
-          setIsCheckoutModalOpen(true);
           return true;
-        } else if (data?.terminal) {
-          setPaymentId(data.paymentId || null);
-          setPaymentUiStatus(data.status || "FAILED_CANCELED");
-          toast(attemptFinishedMessage, "error");
-          checkoutRequestRef.current = null;
-        } else if (data?.error) {
-          if (response.status === 401 || String(data.error).includes("AUTH_REQUIRED")) {
-            toast(isPl ? "Twoja sesja wygasła. Zaloguj się ponownie." : "Your session has expired. Please sign in again.", "error");
-            openAuthModal("sign-in");
-          } else {
-            toast(isPl ? `Błąd: ${data.message || data.error}` : `Error: ${data.message || data.error}`, "error");
-          }
+        }
+
+        if (response.status === 401 || String(data?.error).includes("AUTH_REQUIRED")) {
+          toast(isPl ? "Twoja sesja wygasła. Zaloguj się ponownie." : "Your session has expired. Please sign in again.", "error");
+          openAuthModal("sign-in");
+        } else if (data?.error === "PAYMENT_IN_PROGRESS") {
+          toast(
+            isPl
+              ? "Ten napiwek jest właśnie opłacany (np. czeka na potwierdzenie w banku). Dokończ go albo spróbuj za kilka minut."
+              : "This tip is being paid right now (e.g. waiting for your bank). Finish it or try again in a few minutes.",
+            "error",
+          );
+        } else {
+          toast(
+            isPl ? "Nie udało się rozpocząć płatności. Spróbuj ponownie za chwilę." : "The payment could not be started. Please try again in a moment.",
+            "error",
+          );
         }
       } catch (error: unknown) {
-        logger.error(`[${logPrefix}] Payment error`, error);
+        logger.error("[TipFlow] Payment error", error);
         toast(
           isPl
             ? "Błąd połączenia z systemem płatności. Spróbuj odświeżyć stronę."
             : "Payment system connection error. Please refresh the page.",
           "error",
         );
-      } finally {
-        setIsLoading(false);
       }
       return false;
     },
-    [
-      userId,
-      openAuthModal,
-      isTermsAccepted,
-      toast,
-      isPl,
-      title,
-      getMinAmountTooLowMessage,
-      attemptFinishedMessage,
-      logPrefix,
-    ],
+    [userId, openAuthModal, toast, isPl, requestIntent],
   );
 
   return {
     userId,
     userEmail,
-
     isInitialLoading,
     minimums,
-    patronBoxMinimums,
-
-    isTermsAccepted,
-    setIsTermsAccepted,
-    showTermsError,
-    setShowTermsError,
-    onTermsCheckedChange,
-
-    isLoading,
     clientSecret,
     paymentMethodTypes,
     paymentId,
     paymentUiStatus,
-    isCheckoutModalOpen,
-    isMounted,
     isSuccess,
     isSyncing,
-
     handleRetryStatusCheck,
     closeSuccessAndSync,
     submit,

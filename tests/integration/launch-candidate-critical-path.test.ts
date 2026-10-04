@@ -91,6 +91,8 @@ type GrantRecord = {
   reason: string | null;
   createdAt: Date;
   revokedAt: Date | null;
+  revokedById?: string | null;
+  revokeReason?: string | null;
 };
 
 type VideoRecord = {
@@ -159,6 +161,7 @@ function createHarness() {
     if (where.paymentId !== undefined && grant.paymentId !== where.paymentId) return false;
     if (where.source !== undefined && grant.source !== where.source) return false;
     if (where.reason !== undefined && grant.reason !== where.reason) return false;
+    if (where.revokeReason !== undefined && grant.revokeReason !== where.revokeReason) return false;
     if (where.revokedAt === null && grant.revokedAt !== null) return false;
     if (where.revokedAt?.not === null && grant.revokedAt === null) return false;
     return true;
@@ -207,13 +210,19 @@ function createHarness() {
         let count = 0;
         for (const payment of state.payments.values()) {
           if (where.id !== undefined && payment.id !== where.id) continue;
-          if (where.status !== undefined && payment.status !== where.status) continue;
+          if (where.status?.in !== undefined ? !where.status.in.includes(payment.status) : where.status !== undefined && payment.status !== where.status) continue;
+          if (where.stripeIntentId !== undefined && payment.stripeIntentId !== where.stripeIntentId) continue;
+          if (where.amountMinor !== undefined && payment.amountMinor !== where.amountMinor) continue;
+          if (where.currency !== undefined && payment.currency !== where.currency) continue;
           if (where.refundedAmountMinor !== undefined && payment.refundedAmountMinor !== where.refundedAmountMinor) continue;
           Object.assign(payment, data);
           count += 1;
         }
         return { count };
       }),
+      findMany: vi.fn(async ({ where }) => Array.from(state.payments.values()).filter((payment) =>
+        (where.userId === undefined || payment.userId === where.userId)
+        && (where.status?.in === undefined || where.status.in.includes(payment.status)))),
     },
     userPaymentTotal: {
       upsert: vi.fn(async ({ where, create, update }) => {
@@ -509,7 +518,8 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     const below = await fulfillPayment({ paymentId: 'pay_below', userId: 'below', amountMinor: 999, currency: 'PLN' }, harness.ctx(null, 'system'));
     expect(below.ok).toBe(true);
     expect(harness.state.payments.get('pay_below')?.status).toBe(PaymentStatus.SUCCEEDED);
-    expect(harness.activeGrants('below')).toHaveLength(0);
+    // Every successful tip marks a supporter, whatever the amount (owner decision 2026-10-03).
+    expect(harness.activeGrants('below')).toHaveLength(1);
 
     harness.seedUser('signals', { isPatron: true, publicMetadata: { isPatron: true } });
     harness.seedPayment('pay_signals', 'signals', 2500, PaymentStatus.SUCCEEDED);
@@ -566,22 +576,22 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     const grantB = harness.seedGrant('grant_b', 'user_b', 'pay_b');
     const manualA = harness.seedGrant('grant_manual_a', 'user_a', null);
 
-    await handleDispute({ stripeIntentId: 'pi_pay_a', disputeId: 'dp_same', status: 'needs_response', isLost: false, isWon: false }, harness.ctx('user_a'));
+    // handleDispute receives the dispute's current Stripe status (read at handling time).
+    await handleDispute({ stripeIntentId: 'pi_pay_a', disputeId: 'dp_same', status: 'needs_response' }, harness.ctx(null, 'system'));
     expect(harness.state.payments.get('pay_a')?.status).toBe(PaymentStatus.DISPUTED);
     expect(grantA.revokedAt).toBeInstanceOf(Date);
-    expect(grantA.reason).toContain('dp_same');
+    expect(grantA.revokeReason).toContain('dp_same');
+    expect(grantA.reason).toBe('seed payment grant');
     expect(grantB.revokedAt).toBeNull();
     expect(manualA.revokedAt).toBeNull();
     expect(harness.activeGrants('user_a')).toEqual([manualA]); // manual unrelated grant stays active
 
     const firstSuspension = grantA.revokedAt;
-    await handleDispute({ stripeIntentId: 'pi_pay_a', disputeId: 'dp_same', status: 'needs_response', isLost: false, isWon: false }, harness.ctx('user_a'));
+    await handleDispute({ stripeIntentId: 'pi_pay_a', disputeId: 'dp_same', status: 'needs_response' }, harness.ctx(null, 'system'));
     expect(grantA.revokedAt).toBe(firstSuspension);
 
-    await handleDispute({ stripeIntentId: 'pi_pay_a', disputeId: 'dp_other', status: 'won', isLost: false, isWon: true }, harness.ctx('user_a'));
-    expect(grantA.revokedAt).toBe(firstSuspension);
-
-    await handleDispute({ stripeIntentId: 'pi_pay_a', disputeId: 'dp_same', status: 'won', isLost: false, isWon: true }, harness.ctx('user_a'));
+    await handleDispute({ stripeIntentId: 'pi_pay_a', disputeId: 'dp_same', status: 'won' }, harness.ctx(null, 'system'));
+    expect(harness.state.payments.get('pay_a')?.status).toBe(PaymentStatus.SUCCEEDED);
     expect(grantA.revokedAt).toBeNull();
     expect(grantB.revokedAt).toBeNull();
     expect(manualA.revokedAt).toBeNull();
@@ -596,17 +606,19 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     await revokePatron({ userId: 'user_a', paymentId: null as any, note: 'Manual owner revoke' }, { ...harness.ctx('admin_1', 'admin') });
     harness.state.sessions.length = 0;
     expect(harness.activeGrants('user_a')).toHaveLength(0);
-    await handleDispute({ stripeIntentId: 'pi_pay_a', disputeId: 'dp_same', status: 'won', isLost: false, isWon: true }, harness.ctx('user_a'));
+    await handleDispute({ stripeIntentId: 'pi_pay_a', disputeId: 'dp_same', status: 'won' }, harness.ctx(null, 'system'));
     expect(harness.activeGrants('user_a')).toHaveLength(0);
     // Losing every grant only removes the badge; a signed-in user still plays.
     expect((await harness.attemptPlayback('user_a')).status).toBe('READY');
 
-    await handleDispute({ stripeIntentId: 'pi_pay_b', disputeId: 'dp_lost', status: 'lost', isLost: true, isWon: false }, harness.ctx('user_b'));
+    await handleDispute({ stripeIntentId: 'pi_pay_b', disputeId: 'dp_lost', status: 'lost' }, harness.ctx(null, 'system'));
     expect(harness.state.payments.get('pay_b')?.status).toBe(PaymentStatus.CHARGEBACK_LOST);
     const lostRevokedAt = grantB.revokedAt;
-    await handleDispute({ stripeIntentId: 'pi_pay_b', disputeId: 'dp_lost', status: 'lost', isLost: true, isWon: false }, harness.ctx('user_b'));
-    await handleDispute({ stripeIntentId: 'pi_pay_b', disputeId: 'dp_lost', status: 'won', isLost: false, isWon: true }, harness.ctx('user_b'));
-    await handleDispute({ stripeIntentId: 'pi_pay_b', disputeId: 'dp_old', status: 'needs_response', isLost: false, isWon: false }, harness.ctx('user_b'));
+    expect(lostRevokedAt).toBeInstanceOf(Date);
+    await handleDispute({ stripeIntentId: 'pi_pay_b', disputeId: 'dp_lost', status: 'lost' }, harness.ctx(null, 'system'));
+    await handleDispute({ stripeIntentId: 'pi_pay_b', disputeId: 'dp_lost', status: 'won' }, harness.ctx(null, 'system'));
+    await handleDispute({ stripeIntentId: 'pi_pay_b', disputeId: 'dp_old', status: 'needs_response' }, harness.ctx(null, 'system'));
+    expect(harness.state.payments.get('pay_b')?.status).toBe(PaymentStatus.CHARGEBACK_LOST);
     expect(grantB.revokedAt).toBe(lostRevokedAt);
     expect(harness.activeGrants('user_b')).toHaveLength(0);
   });

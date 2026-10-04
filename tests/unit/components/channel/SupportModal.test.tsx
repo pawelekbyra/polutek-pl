@@ -87,6 +87,7 @@ describe('SupportModal (tip gate)', () => {
     mocks.confirmBlikPayment.mockReset();
     mocks.openAuthModal.mockReset();
     window.localStorage.clear();
+    window.sessionStorage.clear();
     mockFetch();
   });
   afterEach(() => cleanup());
@@ -149,7 +150,10 @@ describe('SupportModal (tip gate)', () => {
     // Back sits in the footer, next to the main button.
     expect(screen.getByRole('button', { name: 'Wstecz' }).nextElementSibling).toContainElement(screen.getByRole('button', { name: 'Dalej' }));
     const body = createIntentBody();
-    expect(body).toMatchObject({ amountMinor: 2000, currency: 'PLN', title: 'Napiwek dla www.pawelperfect.com' });
+    expect(body).toMatchObject({ amountMinor: 2000, currency: 'PLN' });
+    expect(typeof body.requestId).toBe('string');
+    // The intent description is built on the server; the client sends no free text.
+    expect(body).not.toHaveProperty('title');
     expect(body).not.toHaveProperty('paymentMethod');
     const select = screen.getByRole('combobox', { name: 'Wybierz metodę napiwku' });
     expect(select).toHaveTextContent('BLIK');

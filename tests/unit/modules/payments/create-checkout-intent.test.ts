@@ -1,107 +1,134 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createCheckoutIntent } from '@/lib/modules/payments/application/create-checkout-intent.use-case';
-import { createAppContext } from '@/lib/modules/shared/app-context';
-import { Actor } from '@/lib/modules/shared/actor';
-import { PaymentStatus } from '@prisma/client';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createFakePaymentsDb, createTestContext } from './fake-payments-db';
 
-const mockRepo = {
-  findUser: vi.fn().mockResolvedValue({
-      id: 'user-1',
-      email: 'user@example.com',
-      stripeCustomerId: 'cus_123'
-  }),
-  findPendingPaymentByRequestId: vi.fn().mockResolvedValue(null),
-  createPayment: vi.fn().mockResolvedValue({ id: 'pay-1' }),
-  updatePayment: vi.fn().mockResolvedValue({}),
-  updateStripeCustomerId: vi.fn().mockResolvedValue({}),
-};
-
-vi.mock('@/lib/modules/payments/infrastructure/payment.repository', () => {
-  return {
-    PaymentRepository: function() { return mockRepo; },
-  };
-});
-
-vi.mock('@/lib/modules/channel', () => ({
-  MainChannelService: {
-    getRequired: vi.fn().mockResolvedValue({ id: 'creator-1' }),
-  }
-}));
-
-const mockStripe = {
-  customers: {
-    create: vi.fn().mockResolvedValue({ id: 'cus_123' }),
-  },
+const db = createFakePaymentsDb();
+let intentSeq = 0;
+const intents = new Map<string, any>();
+const byIdempotencyKey = new Map<string, any>();
+const stripe = {
+  customers: { create: vi.fn(async () => ({ id: 'cus_new' })) },
   paymentIntents: {
-    create: vi.fn().mockResolvedValue({ id: 'pi_123', client_secret: 'secret_123' }),
-    retrieve: vi.fn().mockResolvedValue({ id: 'pi_123', client_secret: 'secret_123' }),
+    create: vi.fn(async (params: any, options: any = {}) => {
+      // Like Stripe: the same idempotency key returns the first result.
+      if (options.idempotencyKey && byIdempotencyKey.has(options.idempotencyKey)) return byIdempotencyKey.get(options.idempotencyKey);
+      const intent = {
+        id: `pi_${++intentSeq}`,
+        client_secret: `pi_${intentSeq}_secret`,
+        status: 'requires_payment_method',
+        amount: params.amount,
+        currency: params.currency,
+        description: params.description,
+        payment_method_types: params.currency === 'pln' ? ['blik', 'card', 'p24'] : ['card'],
+      };
+      intents.set(intent.id, intent);
+      if (options.idempotencyKey) byIdempotencyKey.set(options.idempotencyKey, intent);
+      return intent;
+    }),
+    retrieve: vi.fn(async (id: string) => ({ ...intents.get(id) })),
+    update: vi.fn(async (id: string, params: any) => {
+      const intent = intents.get(id);
+      Object.assign(intent, params, { payment_method_types: params.currency === 'pln' ? ['blik', 'card', 'p24'] : ['card'] });
+      return { ...intent };
+    }),
   },
 };
 
-vi.mock('stripe', () => {
-  return {
-    default: function() { return mockStripe; },
-  };
+vi.mock('@/lib/modules/payments/infrastructure/stripe-client', () => ({ getStripeClient: () => stripe }));
+vi.mock('@/lib/modules/channel', () => ({ MainChannelService: { getRequired: vi.fn(async () => ({ id: 'creator_1' })) } }));
+
+const { createCheckoutIntent } = await import('@/lib/modules/payments/application/create-checkout-intent.use-case');
+
+const userCtx = () => createTestContext(db, { type: 'user', userId: 'user_1' });
+const REQUEST = '7d9b2f1e-2f4c-4f8a-9d61-3c6c1d2b8a10';
+
+beforeEach(() => {
+  db.payment.rows.length = 0;
+  db.user.rows.length = 0;
+  db.user.rows.push({ id: 'user_1', email: 'payer@example.com', language: 'pl', stripeCustomerId: 'cus_1' });
+  intents.clear();
+  byIdempotencyKey.clear();
+  intentSeq = 0;
+  vi.clearAllMocks();
 });
 
-describe('createCheckoutIntent use case', () => {
-  beforeEach(() => {
-    vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_mock');
-  });
-
-  it('requires user or admin actor', async () => {
-    const actor: Actor = { type: 'guest' };
-    const ctx = createAppContext({
-        actor,
-        prisma: {} as any,
-    });
-    const result = await createCheckoutIntent({
-        userId: 'user-1',
-        amountMinor: 1000,
-        currency: 'PLN',
-        title: 'Test'
-    }, ctx);
-
+describe('createCheckoutIntent', () => {
+  it('refuses guests', async () => {
+    const result = await createCheckoutIntent(
+      { userId: 'user_1', amountMinor: 1000, currency: 'PLN', requestId: REQUEST },
+      createTestContext(db, { type: 'guest' }),
+    );
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.code).toBe('INVALID_PAYMENT_REQUEST');
-    }
+    expect(stripe.paymentIntents.create).not.toHaveBeenCalled();
   });
 
-  it('successfully creates checkout intent for user actor', async () => {
-    const actor: Actor = { type: 'user', userId: 'user-1' };
-    const ctx = createAppContext({
-        actor,
-        prisma: {} as any,
-    });
-    const result = await createCheckoutIntent({
-        userId: 'user-1',
-        amountMinor: 1000,
-        currency: 'PLN',
-        title: 'Test'
-    }, ctx);
+  it('creates one PENDING payment and one intent with a server-side description (PAY-18)', async () => {
+    const result = await createCheckoutIntent({ userId: 'user_1', amountMinor: 1000, currency: 'PLN', requestId: REQUEST }, userCtx());
 
     expect(result.ok).toBe(true);
-    if (result.ok === true) {
-      expect(result.data.paymentId).toBe('pay-1');
-      expect(result.data.clientSecret).toBe('secret_123');
-    }
+    expect(db.payment.rows).toHaveLength(1);
+    expect(db.payment.rows[0]).toMatchObject({ status: 'PENDING', amountMinor: 1000, currency: 'PLN', stripeIntentId: 'pi_1' });
+    expect(stripe.paymentIntents.create.mock.calls[0][0].description).toMatch(/^Napiwek dla /);
   });
 
-  it('creates the intent with Stripe automatic methods and returns the list Stripe allows', async () => {
-    mockStripe.paymentIntents.create.mockClear();
-    mockStripe.paymentIntents.create.mockResolvedValueOnce({
-      id: 'pi_123',
-      client_secret: 'secret_123',
-      payment_method_types: ['card', 'blik', 'p24'],
-    });
-    const ctx = createAppContext({ actor: { type: 'user', userId: 'user-1' }, prisma: {} as any });
+  it('changing the amount on the same attempt updates the intent instead of creating another (PAY-08)', async () => {
+    await createCheckoutIntent({ userId: 'user_1', amountMinor: 1000, currency: 'PLN', requestId: REQUEST }, userCtx());
+    const second = await createCheckoutIntent({ userId: 'user_1', amountMinor: 2500, currency: 'EUR', requestId: REQUEST }, userCtx());
 
-    const result = await createCheckoutIntent({ userId: 'user-1', amountMinor: 1000, currency: 'PLN', title: 'Test' }, ctx);
+    expect(second.ok && second.data.clientSecret).toBe('pi_1_secret');
+    expect(second.ok && second.data.paymentMethodTypes).toEqual(['card']);
+    expect(stripe.paymentIntents.create).toHaveBeenCalledTimes(1);
+    expect(intents.get('pi_1')).toMatchObject({ amount: 2500, currency: 'eur' });
+    expect(db.payment.rows).toHaveLength(1);
+    expect(db.payment.rows[0]).toMatchObject({ amountMinor: 2500, currency: 'EUR', status: 'PENDING' });
+  });
 
-    const params = mockStripe.paymentIntents.create.mock.calls[0][0];
-    expect(params.automatic_payment_methods).toEqual({ enabled: true });
-    expect(params).not.toHaveProperty('payment_method_types');
-    expect(result.ok && result.data.paymentMethodTypes).toEqual(['card', 'blik', 'p24']);
+  it('the same amount again just returns the existing intent', async () => {
+    await createCheckoutIntent({ userId: 'user_1', amountMinor: 1000, currency: 'PLN', requestId: REQUEST }, userCtx());
+    await createCheckoutIntent({ userId: 'user_1', amountMinor: 1000, currency: 'PLN', requestId: REQUEST }, userCtx());
+
+    expect(stripe.paymentIntents.create).toHaveBeenCalledTimes(1);
+    expect(stripe.paymentIntents.update).not.toHaveBeenCalled();
+  });
+
+  it('refuses to change the amount while the payer is confirming in the bank app', async () => {
+    await createCheckoutIntent({ userId: 'user_1', amountMinor: 1000, currency: 'PLN', requestId: REQUEST }, userCtx());
+    intents.get('pi_1').status = 'requires_action';
+
+    const result = await createCheckoutIntent({ userId: 'user_1', amountMinor: 2000, currency: 'PLN', requestId: REQUEST }, userCtx());
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.code).toBe('PAYMENT_IN_PROGRESS');
+    expect(db.payment.rows[0].amountMinor).toBe(1000);
+  });
+
+  it('reports a finished attempt as terminal so the client starts a new one', async () => {
+    await createCheckoutIntent({ userId: 'user_1', amountMinor: 1000, currency: 'PLN', requestId: REQUEST }, userCtx());
+    intents.get('pi_1').status = 'canceled';
+
+    const result = await createCheckoutIntent({ userId: 'user_1', amountMinor: 1000, currency: 'PLN', requestId: REQUEST }, userCtx());
+
+    expect(result.ok && result.data.terminal).toBe(true);
+    expect(db.payment.rows[0].status).toBe('CANCELED');
+  });
+
+  it('two concurrent requests for one attempt end with one row, not a 500 (PAY-20)', async () => {
+    const [a, b] = await Promise.all([
+      createCheckoutIntent({ userId: 'user_1', amountMinor: 1000, currency: 'PLN', requestId: REQUEST }, userCtx()),
+      createCheckoutIntent({ userId: 'user_1', amountMinor: 1000, currency: 'PLN', requestId: REQUEST }, userCtx()),
+    ]);
+
+    expect(a.ok && b.ok).toBe(true);
+    expect(db.payment.rows).toHaveLength(1);
+    expect(intents.size).toBe(1);
+  });
+
+  it('never sends a Stripe error message to the client (PAY-19)', async () => {
+    stripe.paymentIntents.create.mockRejectedValueOnce(new Error('Invalid API Key provided: sk_live_****abcd'));
+
+    const result = await createCheckoutIntent({ userId: 'user_1', amountMinor: 1000, currency: 'PLN', requestId: REQUEST }, userCtx());
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error.message).not.toContain('sk_live');
+    expect(db.payment.rows[0].status).toBe('FAILED');
   });
 });
