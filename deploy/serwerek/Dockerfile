@@ -4,7 +4,8 @@
 #     --build-arg NEXT_PUBLIC_APP_URL=https://www.pawelperfect.com \
 #     --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_... \
 #     --build-arg NEXT_PUBLIC_R2_PUBLIC_HOST=thumbs.pawelperfect.com .
-# Targets: runner (default = last stage, the app), migrator (prisma CLI + migrations only, ~300 MB), worker (video encoder; both used by deploy.sh).
+# Targets: runner (default = last stage, the app), migrator (prisma CLI + migrations only, ~300 MB), worker (video encoder),
+# collector (pp-collector, one 108 KB bundle on node:22-alpine, ~240 MB on disk, almost all of it the node base image); all used by deploy.sh.
 # NEXT_PUBLIC_* values are PUBLIC by design (inlined into the client bundle), so passing them as build args is fine.
 # Real secrets (BETTER_AUTH_SECRET, GOOGLE_CLIENT_SECRET, STRIPE_SECRET_KEY, DATABASE_URL ...) are NEVER baked in: they come from env_file at runtime.
 FROM node:22-bookworm-slim AS deps
@@ -67,6 +68,22 @@ COPY --chown=node:node scripts ./scripts
 RUN mkdir -p /work && chown node:node /work
 USER node
 CMD ["node_modules/.bin/tsx", "scripts/video-worker.ts"]
+
+# pp-collector (services/pp-collector): analytics beacons -> Postgres schema "telemetry", rollups, retention.
+# One esbuild bundle (zod + postgres.js inlined), no node_modules: ~25 MB RAM under load. Docs: docs/architecture/admin-telemetry.md.
+FROM deps AS collector-build
+COPY lib/telemetry ./lib/telemetry
+COPY services/pp-collector ./services/pp-collector
+RUN npm run collector:build
+
+FROM node:22-alpine AS collector
+WORKDIR /app
+ENV NODE_ENV=production PORT=3200
+COPY --from=collector-build --chown=node:node /app/dist/pp-collector/collector.cjs ./collector.cjs
+USER node
+EXPOSE 3200
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3   CMD node -e "fetch('http://127.0.0.1:3200/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "--max-old-space-size=48", "collector.cjs"]
 
 FROM node:22-bookworm-slim AS runner
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*

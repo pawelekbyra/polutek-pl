@@ -11,6 +11,8 @@ import { ServiceWorkerCleanup } from "@/app/components/ServiceWorkerCleanup";
 import { UrlMask } from "@/app/components/UrlMask";
 import { resolveInitialLanguage } from "@/lib/i18n/server-language";
 import { AuthModalProvider } from "@/app/components/auth/AuthModalProvider";
+import { TelemetryBeacon } from "@/app/components/telemetry/TelemetryBeacon";
+import { isTelemetryBeaconEnabled } from "@/lib/telemetry/config";
 
 export const metadata = {
   title: APP_NAME,
@@ -68,6 +70,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <AuthModalProvider>
                   {children}
                 </AuthModalProvider>
+                <TelemetryBeacon enabled={isTelemetryBeaconEnabled()} />
               </AuthLifecycleProvider>
             </AuthPublicConfigProvider>
           </Providers>
