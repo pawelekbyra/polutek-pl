@@ -46,6 +46,8 @@ export const CAPTCHA_ENDPOINTS = [
   "/sign-in/email",
   "/request-password-reset",
   "/send-verification-email",
+  // Passkey-first sign-up: the step where the visitor types an e-mail (lib/auth/passkey-signup.ts).
+  "/passkey-signup/start",
 ] as const;
 
 function stripTrailingSlash(value: string) {

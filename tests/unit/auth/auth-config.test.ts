@@ -93,8 +93,9 @@ describe("passkey relying party (WebAuthn)", () => {
     expect(origin).not.toContain("https://pawelperfect.com.evil.example");
   });
 
-  it("keeps Turnstile off the passkey endpoints", () => {
-    expect(CAPTCHA_ENDPOINTS.some((path) => path.includes("passkey"))).toBe(false);
+  it("keeps Turnstile off passkey sign-in, but on the passkey sign-up step where an e-mail is typed", () => {
+    expect(CAPTCHA_ENDPOINTS.some((path) => path.startsWith("/passkey/"))).toBe(false);
+    expect(CAPTCHA_ENDPOINTS).toContain("/passkey-signup/start");
   });
 });
 

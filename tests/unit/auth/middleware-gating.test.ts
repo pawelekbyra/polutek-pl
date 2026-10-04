@@ -25,7 +25,7 @@ beforeEach(() => {
 });
 
 describe("proxy: public routes", () => {
-  it.each(["/en", "/en/watch/some-video", "/api/auth/sign-in/email", "/api/auth/callback/google", "/api/auth/passkey/generate-authenticate-options", "/api/auth/passkey/verify-authentication", "/reset-password", "/sso-callback", "/api/webhooks/stripe", "/api/cron/x", "/api/users/nickname-available"])(
+  it.each(["/en", "/en/watch/some-video", "/api/auth/sign-in/email", "/api/auth/callback/google", "/api/auth/passkey/generate-authenticate-options", "/api/auth/passkey/verify-authentication", "/api/auth/passkey-signup/start", "/reset-password", "/sso-callback", "/api/webhooks/stripe", "/api/cron/x", "/api/users/nickname-available"])(
     "lets %s through without a session",
     async (path) => {
       const response = await middleware(request(path));

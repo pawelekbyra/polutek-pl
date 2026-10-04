@@ -4,12 +4,12 @@ import { prisma } from "@/lib/prisma";
 export const UNVERIFIED_ACCOUNT_RETENTION_DAYS = 7;
 
 /**
- * Deletes password sign-ups whose e-mail was never verified for N days (F-04). Such a row can never
+ * Deletes password or passkey sign-ups whose e-mail was never verified for N days (F-04). Such a row can never
  * sign in (`requireEmailVerification`), so nothing of value hangs on it; leaving it would let
  * anyone squat an e-mail address or a nickname by registering and never clicking the link.
  *
  * Only rows with no payments, supporter grants, channels or comments are touched, and only plain
- * users (never an admin). Session/Account/2FA/avatar/notification rows go with the user (ON DELETE CASCADE).
+ * users (never an admin). Session/Account/2FA/Passkey/avatar/notification rows go with the user (ON DELETE CASCADE).
  */
 export async function pruneUnverifiedAccounts(options: { now?: Date; olderThanDays?: number } = {}) {
   const now = options.now ?? new Date();

@@ -142,7 +142,11 @@ type PasskeyPluginOptions = {
   rpName: string;
   origin: string[];
   authenticatorSelection: Record<string, unknown>;
-  registration: { requireSession: boolean; afterVerification: (input: unknown) => Promise<void> };
+  registration: {
+    requireSession: boolean;
+    resolveUser?: (input: { ctx: unknown; context: string | null }) => Promise<unknown>;
+    afterVerification: (input: unknown) => Promise<unknown>;
+  };
   authentication: { afterVerification: (input: unknown) => Promise<void> };
 };
 
@@ -166,10 +170,27 @@ describe("Better Auth passkeys", () => {
     expect(options.origin).toEqual(["http://localhost:3000"]);
   });
 
-  it("creates discoverable credentials, needs a signed-in user to add one and never creates accounts", async () => {
+  it("creates discoverable credentials; registration without a session needs a valid sign-up token", async () => {
     const options = passkeyOptions(await loadAuth(FULL_ENV));
     expect(options.authenticatorSelection).toEqual({ residentKey: "required", requireResidentKey: true, userVerification: "preferred" });
-    expect(options.registration.requireSession).toBe(true);
+    // Passkey-first sign-up: no session, but resolveUser accepts only our signed token.
+    expect(options.registration.requireSession).toBe(false);
+    await expect(options.registration.resolveUser!({ ctx: { context: { secret: "s".repeat(40) } }, context: null })).rejects.toMatchObject({
+      body: { code: "PASSKEY_SIGNUP_EXPIRED" },
+    });
+    await expect(options.registration.resolveUser!({ ctx: { context: { secret: "s".repeat(40) } }, context: "forged.token" })).rejects.toMatchObject({
+      body: { code: "PASSKEY_SIGNUP_EXPIRED" },
+    });
+  });
+
+  it("puts Turnstile and a sign-up-sized rate limit on the passkey sign-up step, not on passkey sign-in", async () => {
+    const options = await loadAuth(FULL_ENV);
+    const captchaPlugin = options.plugins.find((p) => p.id === "captcha") as { options?: { endpoints?: string[] } } | undefined;
+    expect(captchaPlugin?.options?.endpoints).toContain("/passkey-signup/start");
+    expect(captchaPlugin?.options?.endpoints).not.toContain("/passkey/verify-authentication");
+    expect(captchaPlugin?.options?.endpoints).not.toContain("/passkey/generate-authenticate-options");
+    expect(options.rateLimit.customRules["/passkey-signup/start"]).toEqual({ window: 3600, max: 10 });
+    expect(options.plugins.map((p) => p.id)).toContain("passkey-signup");
   });
 
   it("refuses a passkey ceremony in which the device did not verify the user", async () => {

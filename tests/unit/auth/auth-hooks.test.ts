@@ -4,6 +4,7 @@ const prisma = vi.hoisted(() => ({
   user: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
   account: { deleteMany: vi.fn().mockReturnValue("delete-accounts"), findMany: vi.fn() },
   session: { deleteMany: vi.fn().mockReturnValue("delete-sessions") },
+  passkey: { deleteMany: vi.fn().mockReturnValue("delete-passkeys") },
   $transaction: vi.fn().mockResolvedValue([]),
 }));
 
@@ -19,6 +20,8 @@ import {
   beforeUserCreate,
   flagNicknameOnboardingIfNeeded,
   recordSignInOutcome,
+  existingAccountCode,
+  onPasswordReset,
   rejectExistingEmailSignUp,
 } from "@/lib/auth/hooks";
 import { hitAuthCounter, peekAuthCounter } from "@/lib/auth/rate-limit-storage";
@@ -32,6 +35,13 @@ function ctx(path: string, cookie = "") {
 beforeEach(() => {
   vi.clearAllMocks();
   prisma.user.findFirst.mockResolvedValue(null);
+});
+
+describe("beforeUserCreate for a passkey-first sign-up", () => {
+  it("uses the placeholder name and keeps the language from the sign-up token", async () => {
+    const result = await beforeUserCreate({ name: "x", email: "jan@b.pl", language: "pl" }, ctx("/passkey/verify-registration", "app-language=en"));
+    expect(result.data).toMatchObject({ name: "jan", language: "pl", onboardingPending: true });
+  });
 });
 
 describe("beforeUserCreate (placeholder name, avatar, onboarding)", () => {
@@ -117,12 +127,14 @@ describe("beforeSessionCreate", () => {
 });
 
 describe("beforeAccountCreate (pre-hijack guard)", () => {
-  it("drops the unverified credential and sessions when a verified provider is linked", async () => {
+  it("drops the unverified credential, passkeys and sessions when a verified provider is linked", async () => {
     prisma.user.findUnique.mockResolvedValueOnce({ emailVerified: false });
     await beforeAccountCreate({ userId: "u1", providerId: "google" });
     expect(prisma.account.deleteMany).toHaveBeenCalledWith({ where: { userId: "u1", providerId: "credential" } });
+    // A passkey-first sign-up by somebody else must not survive the real owner's Google sign-in.
+    expect(prisma.passkey.deleteMany).toHaveBeenCalledWith({ where: { userId: "u1" } });
     expect(prisma.session.deleteMany).toHaveBeenCalledWith({ where: { userId: "u1" } });
-    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(prisma.$transaction).toHaveBeenCalledWith(["delete-accounts", "delete-passkeys", "delete-sessions"]);
   });
 
   it("leaves a verified account (e.g. a legacy row) untouched", async () => {
@@ -134,6 +146,34 @@ describe("beforeAccountCreate (pre-hijack guard)", () => {
   it("ignores the credential account itself", async () => {
     await beforeAccountCreate({ userId: "u1", providerId: "credential" });
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
+  });
+});
+
+describe("onPasswordReset (passkey-first sign-up pre-hijack guard)", () => {
+  it("drops passkeys of an account whose address was never verified: the reset link proves the mailbox", async () => {
+    prisma.user.findUnique.mockResolvedValueOnce({ emailVerified: false });
+    await onPasswordReset({ id: "u1", email: "a@b.pl" });
+    expect(prisma.passkey.deleteMany).toHaveBeenCalledWith({ where: { userId: "u1" } });
+  });
+
+  it("keeps the passkeys of a verified account", async () => {
+    prisma.user.findUnique.mockResolvedValueOnce({ emailVerified: true });
+    await onPasswordReset({ id: "u1", email: "a@b.pl" });
+    expect(prisma.passkey.deleteMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("existingAccountCode", () => {
+  it("tells a Google-only account apart from any other and ignores the given user id", async () => {
+    prisma.user.findUnique.mockResolvedValue({ id: "u1" });
+    prisma.account.findMany.mockResolvedValueOnce([{ providerId: "google" }]);
+    expect(await existingAccountCode("A@B.pl")).toBe("EMAIL_TAKEN_GOOGLE");
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { email: "a@b.pl" }, select: { id: true } });
+    prisma.account.findMany.mockResolvedValueOnce([]);
+    expect(await existingAccountCode("a@b.pl")).toBe("EMAIL_TAKEN"); // e.g. a passkey-only account
+    expect(await existingAccountCode("a@b.pl", "u1")).toBeNull();
+    prisma.user.findUnique.mockResolvedValue(null);
+    expect(await existingAccountCode("free@b.pl")).toBeNull();
   });
 });
 
