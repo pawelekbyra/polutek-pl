@@ -3,7 +3,7 @@ import AuthLifecycleProvider from "@/app/components/auth/AuthLifecycleProvider";
 import { AuthPublicConfigProvider } from "@/lib/auth/public-config";
 import { readPublicAuthConfig } from "@/lib/auth/public-config.server";
 import { Suspense } from 'react';
-import { geistMono, geistSans, brandLogoFont } from "./fonts";
+import { geistMono, geistSans } from "./fonts";
 import "./globals.css";
 
 import { APP_NAME } from '@/lib/constants';
@@ -22,13 +22,15 @@ export const metadata = {
     statusBarStyle: "black-translucent",
     title: APP_NAME,
   },
+  // Small copies of the rabbit (the 500 px, 105 KB original is only the gate image): a 32 px tab
+  // icon and the 180 px home-screen icon iOS asks for.
   icons: {
     icon: [
-      { url: '/rabbit.png', type: 'image/png' },
+      { url: '/rabbit-32.png', type: 'image/png', sizes: '32x32' },
     ],
-    shortcut: ['/rabbit.png'],
+    shortcut: ['/rabbit-32.png'],
     apple: [
-      { url: '/rabbit.png', type: 'image/png' },
+      { url: '/rabbit-180.png', type: 'image/png', sizes: '180x180' },
     ],
   },
 };
@@ -42,7 +44,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       lang={initialLanguage}
       suppressHydrationWarning
       data-build-id={buildId}
-      className={`${geistSans.variable} ${geistMono.variable} ${brandLogoFont.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable}`}
       style={{ background: "#f7f9fc" }}
     >
       <head>
