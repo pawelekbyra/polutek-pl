@@ -60,37 +60,25 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaState, setCaptchaState] = useState<CaptchaState>("checking");
 
-  // Shared computers (audit AUTH-04): the modal stays mounted for the whole visit, so whatever was typed
-  // (e-mail, password, codes) is wiped whenever it closes: after a successful sign-in, on "×" and on
-  // Escape. The next person who opens it, also after a sign-out without a reload, starts empty; the
-  // "Show password" toggle lives in the dialog content, which unmounts on close.
   useEffect(() => {
-    if (!open) {
-      setEmail("");
-      setPassword("");
-      setConfirmPassword("");
-      setCode("");
-      setUseBackupCode(false);
-      setTrustDevice(false);
-      setWrongCredentials(false);
-      setCaptchaToken(null);
-    }
-  }, [open]);
-
-  useEffect(() => {
+    setCode("");
+    setConfirmPassword("");
     if (open) {
       setView(notice === "link-expired" ? "link-expired" : initialView);
       setError(null);
-      setInfo(
-        notice === "verified"
-          ? (isPl ? "Adres e-mail potwierdzony. Zaloguj się." : "Email confirmed. Please sign in.")
-          : null,
-      );
-      setCode("");
-      setConfirmPassword("");
+      setInfo(notice === "verified" ? (isPl ? "Adres e-mail potwierdzony. Zaloguj się." : "Email confirmed. Please sign in.") : null);
       setEmailTaken(null);
       setLoading(false);
+      return;
     }
+    // Shared computers (AUTH-04): the modal stays mounted for the whole visit, so whatever was typed is wiped
+    // whenever it closes (sign-in, "×", Escape); the "Show password" toggle unmounts with the dialog content.
+    setEmail("");
+    setPassword("");
+    setUseBackupCode(false);
+    setTrustDevice(false);
+    setWrongCredentials(false);
+    setCaptchaToken(null);
     // isPl is read only to localise the one-off notice text, not a reason to reset the form.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialView, notice]);
@@ -117,11 +105,8 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
     captchaRef.current?.reset();
   }
 
-  /**
-   * Every auth call runs through here (audit AUTH-08): the spinner always stops, and a dropped
-   * connection (the auth client throws on network errors) shows a readable message instead of a
-   * button that spins for ever.
-   */
+  // Every auth call runs through here (AUTH-08): the spinner always stops, and a dropped connection
+  // (the auth client throws on network errors) shows a readable message.
   async function run(task: () => Promise<void>) {
     setLoading(true);
     setError(null);
