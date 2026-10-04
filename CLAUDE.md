@@ -434,7 +434,7 @@ Located in `app/admin/`. Key areas:
 | `/admin/videos/[id]/edit` | Metadata edit form |
 | `/admin/videos/new` | Create video (Cloudflare upload or existing UID) |
 | `/admin/users` | User list |
-| `/admin/users/[id]` | User detail + patron diagnostics |
+| `/admin/users/[id]` | User detail + patron diagnostics; change ADMIN role (`PATCH /api/admin/users/[id]/role`) and delete the account (`DELETE /api/admin/users/[id]`, same cleanup as self-deletion, e-mail typed back). Both: never yourself, never the last admin, never an ADMIN for deletion, sign-in within the last 10 min (`REAUTH_REQUIRED`), 5/min, audit `ADMIN_USER_ROLE_CHANGED` / `ADMIN_USER_DELETED` (ids only). Use cases in `lib/modules/users/application/admin-manage-user.use-case.ts` |
 | `/admin/comments` | Comment moderation + reports link |
 | `/admin/comments/reports` | Reported comments queue |
 | `/admin/emails` | Email broadcast |

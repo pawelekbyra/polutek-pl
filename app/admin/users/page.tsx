@@ -40,6 +40,16 @@ export default function AdminUsersPage() {
   const [hasPaymentsFilter, setHasPaymentsFilter] = useState<boolean>(false);
   const [hasSubscriptionsFilter, setHasSubscriptionsFilter] = useState<boolean>(false);
   const [orderBy, setOrderBy] = useState<string>("createdAt");
+  // Set by the user page after "Usuń użytkownika" succeeded (`?deleted=1`); the param is dropped at once.
+  const [deletedNotice, setDeletedNotice] = useState(false);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("deleted") !== "1") return;
+    setDeletedNotice(true);
+    url.searchParams.delete("deleted");
+    window.history.replaceState(window.history.state, "", url.pathname + url.search);
+  }, []);
 
   const fetchStats = async () => {
     try {
@@ -116,6 +126,13 @@ export default function AdminUsersPage() {
             Zarządzaj społecznością, weryfikuj statusy patronów i monitoruj aktywność finansową.
           </p>
         </div>
+
+        {deletedNotice && (
+          <div role="status" className="mb-6 flex items-start justify-between gap-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm font-medium text-green-800">
+            <span>Użytkownik został usunięty. Konto jest zanonimizowane, a jego wpłaty i komentarze zostały jako anonimowe.</span>
+            <button type="button" className="text-xs underline" onClick={() => setDeletedNotice(false)}>Zamknij</button>
+          </div>
+        )}
 
         {stats && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
