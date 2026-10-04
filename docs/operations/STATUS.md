@@ -95,8 +95,8 @@ Ostatnia aktualizacja: 2026-10-04.
 - Baza: kopia raz na dobę (do 24 h utraty danych); częstsze zrzuty albo archiwizacja WAL do R2.
 - Oryginały wideo i HLS w R2 bez kopii i bez blokady usuwania.
 - Obrazy: workflow `images.yml` + `IMAGE_SOURCE=ghcr ./deploy.sh` gotowe (SERWEREK.md §24); brakuje tokenu
-  `read:packages` na serwerze (właściciel) i pierwszego wdrożenia z GHCR. Limit minut Actions prywatnego repo
-  do sprawdzenia przez właściciela (agent nie ma uprawnień do rozliczeń).
+  `read:packages` na serwerze (właściciel) i pierwszego wdrożenia z GHCR; workflow wymaga GitHub Actions,
+  które dla prywatnego repo nie działa (patrz „CI: lokalne”).
 - Rotacja logów kontenerów, twardsze ustawienia kontenerów, osobna rola bazy bez uprawnień superusera.
 - Deploy restartuje koder w trakcie kodowania (kodowanie zaczyna od zera).
 - Na serwerze do usunięcia: martwe zmienne `MUX_*` w `app.env`, usługa `serwerek-placeholder` i wpisy
@@ -113,9 +113,9 @@ Ostatnia aktualizacja: 2026-10-04.
 - **Płatności krypto** (placeholder „Crypto” w bramce napiwkowej): Stripe stablecoin (jeśli dostępny w Polsce) albo BTCPay Server po powiększeniu serwera; wymaga uogólnienia modelu `Payment` i konsultacji podatkowej.
 - **Funkcje AI w stronie/panelu** (np. pierwszy filtr komentarzy): odłożone; start od Workers AI, odprawę robi Claude Code na żywo (`operations/DAILY-BRIEFING.md`).
 
-## GitHub Actions: limit wyczerpany (2026-10-04)
+## CI: lokalne (tryb stały od 2026-10-04)
 
-Od ok. 17:33 CI na GitHubie nie startuje („recent account payments have failed or your spending limit needs to be increased”): limit minut prywatnego repo zjedzony w kilka dni przez PR-y agentów. Decyzja właściciela: **bez płacenia, tryb lokalny**: przed scaleniem testy, typecheck i lint uruchamiane lokalnie, `SKIP_CI=1 scripts/ops/mergedeploy.sh ...` pomija czekanie na CI GitHuba. Alternatywa: podnieść limit wydatków w GitHub (Settings, Billing and plans). Minuty zużywa też workflow obrazów GHCR.
+GitHub Actions dla prywatnego repo nie startuje (limit minut; decyzja właściciela: bez płacenia). Przed scaleniem: `node scripts/ops/local-ci.mjs` (te same bramki co `ci.yml`), scalanie: `LOCAL_CI=1 scripts/ops/mergedeploy.sh <PR> <gałąź> <tag>`. Instrukcja, czasy i ograniczenia: [`LOCAL-CI.md`](LOCAL-CI.md). Na maszynie właściciela nie ma Dockera ani ffmpeg, więc bramki `postgres` i `encode-smoke` są tam pomijane (SKIP): instalacja Docker Desktop i ffmpeg je włącza. Gdyby właściciel kiedyś podniósł limit wydatków w GitHub (Settings, Billing and plans), `ci.yml` działa bez zmian.
 
 ## Pozostałe
 

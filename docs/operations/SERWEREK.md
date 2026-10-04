@@ -243,7 +243,7 @@ Stos jest zatrzymany, nie usunięty. Odzyskanie miejsca (nieobowiązkowe, wolne 
 
 ## 15. Produkcja na serwerku: obraz, deploy, crony, IP klienta (kod gotowy 2026-10-01)
 
-**Skrypt pomocniczy (2026-10-03): `scripts/ops/mergedeploy.sh <PR> <galaz> <prefiks-tagu> [--no-deploy]`**: czeka na CI galezi, scala tylko przy konkluzji `success`, wdraza `origin/main` na serwerek (`deploy.sh`) i sprawdza strone. Dla zmian samej dokumentacji: `--no-deploy`.
+**Skrypt pomocniczy (2026-10-03): `scripts/ops/mergedeploy.sh <PR> <galaz> <prefiks-tagu> [--no-deploy]`**: czeka na CI galezi, scala tylko przy konkluzji `success` (bez GitHub Actions: `LOCAL_CI=1` uruchamia lokalne CI, `docs/operations/LOCAL-CI.md`), wdraza `origin/main` na serwerek (`deploy.sh`) i sprawdza strone. Dla zmian samej dokumentacji: `--no-deploy`.
 
 Cel: `www.pawelperfect.com` z serwerka w Dockerze za Cloudflare Tunnel, bez Vercela. To jest **kod i procedura**; samo przełączenie (env, DNS, Tunnel, Clerk/Stripe webhooki) robi osobna sesja. Test z §14 używa teraz `deploy/serwerek/docker-compose.test.yml` (dawny `docker-compose.yml`); `docker-compose.yml` to już stos produkcyjny.
 
