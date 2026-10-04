@@ -12,7 +12,8 @@ describe("shared visual system contracts", () => {
     expect(rootLoading).not.toContain("HomePageSkeleton");
     expect(rootLoading).not.toContain("SitePreloaderScreen");
     expect(localizedLoading).toContain("HomeRouteLoading");
-    expect(channelHome).toContain("CommentsMountPlaceholder");
+    // Comments are server-rendered with their first page: no mount placeholder skeleton.
+    expect(channelHome).not.toContain("CommentsMountPlaceholder");
     expect(channelHome).not.toContain("CommentsShellSkeleton");
   });
 

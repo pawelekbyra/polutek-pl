@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useRef } from "react";
-import { useInfiniteQuery, useMutation, useQueryClient, InfiniteData, QueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient, InfiniteData, QueryClient } from "@tanstack/react-query";
 import { parseJsonResponse } from "@/lib/client/api";
 import { CommentView } from "../types";
+import type { InitialCommentsPage } from "../initial-comments";
 
 type CommentsPage = {
   comments: CommentView[];
@@ -253,10 +254,32 @@ export function useCommentReplies(videoId: string, parentId: string, enabled: bo
   });
 }
 
-export function useComments(videoId: string, sortBy: "newest" | "top", language: string = "pl", userProfile?: any) {
+/**
+ * The server-rendered first page as this query's starting data, when it is for exactly this video
+ * and sort order (it is never used for another video).
+ */
+export function initialCommentsData(
+  initial: InitialCommentsPage | null | undefined,
+  videoId: string,
+  sortBy: "newest" | "top",
+): InfiniteData<CommentsPage & { viewer: any; totalCount: number }, string> | undefined {
+  if (!initial || initial.videoId !== videoId || initial.sortBy !== sortBy) return undefined;
+  return {
+    pages: [initial.page as unknown as CommentsPage & { viewer: any; totalCount: number }],
+    pageParams: [""],
+  };
+}
+
+export function useComments(
+  videoId: string,
+  sortBy: "newest" | "top",
+  language: string = "pl",
+  userProfile?: any,
+  initialComments?: InitialCommentsPage | null,
+) {
   const queryClient = useQueryClient();
 
-  const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage, isError, error, refetch } =
+  const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage, isError, error, refetch, isPlaceholderData } =
     useInfiniteQuery({
       queryKey: [...commentKeys.list(videoId), sortBy],
       queryFn: async ({ pageParam, signal }) => {
@@ -270,6 +293,11 @@ export function useComments(videoId: string, sortBy: "newest" | "top", language:
       initialPageParam: "",
       getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
       enabled: !!videoId,
+      // First page from the server render: no request and no skeleton on the first view.
+      initialData: initialCommentsData(initialComments, videoId, sortBy),
+      // Switching video or sort order keeps the previous list on screen (marked as stale by the
+      // caller) until the new one arrives, instead of dropping back to a skeleton.
+      placeholderData: keepPreviousData,
     });
 
   const invalidateAll = useCallback(() => {
@@ -502,6 +530,8 @@ export function useComments(videoId: string, sortBy: "newest" | "top", language:
     isFetchingNextPage,
     isError,
     error,
+    /** True while the list shown is the previous video's/sort's, kept until the new one arrives. */
+    isPlaceholderData,
     postMutation,
     likeMutation: { ...likeMutation, mutate: likeMutate, mutateAsync: likeMutateAsync },
     dislikeMutation: { ...likeMutation, mutate: dislikeMutate, mutateAsync: dislikeMutateAsync },

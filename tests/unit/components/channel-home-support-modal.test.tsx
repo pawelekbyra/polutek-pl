@@ -32,6 +32,7 @@ vi.mock('@/app/components/preload/AppPreloadProvider', () => ({
 }));
 vi.mock('@/app/components/preload/PreloadProgressBar', () => ({ PreloadProgressBar: () => null }));
 vi.mock('@/components/skeletons', () => ({ CommentLoadingSkeleton: () => null }));
+vi.mock('@/app/components/comments/EmbeddedComments', () => ({ default: () => null }));
 vi.mock('@/app/components/channel/SidebarPlaylist', () => ({
   SidebarPlaylist: () => null,
 }));
