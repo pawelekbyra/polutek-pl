@@ -76,7 +76,7 @@ describe("Better Auth instance configuration", () => {
       requireLocalEmailVerified: false,
     });
     const ids = options.plugins.map((p) => p.id);
-    expect(ids).toEqual(expect.arrayContaining(["captcha", "one-tap", "two-factor", "have-i-been-pwned"]));
+    expect(ids).toEqual(expect.arrayContaining(["captcha", "one-tap", "two-factor", "have-i-been-pwned", "passkey"]));
     expect(ids[ids.length - 1]).toBe("next-cookies");
   });
 
@@ -134,6 +134,63 @@ describe("Better Auth instance configuration", () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("BETTER_AUTH_SECRET", "");
     await expect(import("@/lib/auth/auth")).rejects.toThrow(/BETTER_AUTH_SECRET/);
+  });
+});
+
+type PasskeyPluginOptions = {
+  rpID: string;
+  rpName: string;
+  origin: string[];
+  authenticatorSelection: Record<string, unknown>;
+  registration: { requireSession: boolean; afterVerification: (input: unknown) => Promise<void> };
+  authentication: { afterVerification: (input: unknown) => Promise<void> };
+};
+
+function passkeyOptions(options: AuthOptions) {
+  const plugin = options.plugins.find((p) => p.id === "passkey") as { options?: PasskeyPluginOptions } | undefined;
+  expect(plugin).toBeDefined();
+  return plugin!.options!;
+}
+
+describe("Better Auth passkeys", () => {
+  it("binds passkeys to pawelperfect.com and accepts only the www and apex origins", async () => {
+    const options = passkeyOptions(await loadAuth(FULL_ENV));
+    expect(options.rpID).toBe("pawelperfect.com");
+    expect(options.rpName).toBe("Pawel Perfect");
+    expect(options.origin).toEqual(["https://www.pawelperfect.com", "https://pawelperfect.com"]);
+  });
+
+  it("uses localhost as RP in development", async () => {
+    const options = passkeyOptions(await loadAuth({ NODE_ENV: "development" }));
+    expect(options.rpID).toBe("localhost");
+    expect(options.origin).toEqual(["http://localhost:3000"]);
+  });
+
+  it("creates discoverable credentials, needs a signed-in user to add one and never creates accounts", async () => {
+    const options = passkeyOptions(await loadAuth(FULL_ENV));
+    expect(options.authenticatorSelection).toEqual({ residentKey: "required", requireResidentKey: true, userVerification: "preferred" });
+    expect(options.registration.requireSession).toBe(true);
+  });
+
+  it("refuses a passkey ceremony in which the device did not verify the user", async () => {
+    const options = passkeyOptions(await loadAuth(FULL_ENV));
+    await expect(options.authentication.afterVerification({ verification: { authenticationInfo: { userVerified: false } } })).rejects.toMatchObject({
+      body: { code: "PASSKEY_USER_VERIFICATION_REQUIRED" },
+    });
+    await expect(options.authentication.afterVerification({ verification: { authenticationInfo: { userVerified: true } } })).resolves.toBeUndefined();
+    await expect(options.registration.afterVerification({ verification: { registrationInfo: { userVerified: false } } })).rejects.toMatchObject({
+      body: { code: "PASSKEY_USER_VERIFICATION_REQUIRED" },
+    });
+  });
+
+  it("rate limits the passkey endpoints and disables renaming", async () => {
+    const options = await loadAuth(FULL_ENV);
+    expect(options.rateLimit.customRules["/passkey/generate-authenticate-options"]).toEqual({ window: 60, max: 20 });
+    expect(options.rateLimit.customRules["/passkey/verify-authentication"]).toEqual({ window: 60, max: 10 });
+    for (const path of ["/passkey/generate-register-options", "/passkey/verify-registration", "/passkey/delete-passkey"]) {
+      expect(options.rateLimit.customRules[path]).toEqual({ window: 3600, max: 20 });
+    }
+    expect(options.disabledPaths).toContain("/passkey/update-passkey");
   });
 });
 

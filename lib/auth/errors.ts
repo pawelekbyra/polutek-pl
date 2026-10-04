@@ -72,6 +72,50 @@ export function authErrorCode(error: AuthErrorLike): string | null {
   return error?.code ?? null;
 }
 
+/** Codes the passkey client returns when the person closed the browser prompt (or it timed out). */
+const PASSKEY_CANCEL_CODES = new Set([
+  "AUTH_CANCELLED",
+  "REGISTRATION_CANCELLED",
+  "ERROR_CEREMONY_ABORTED",
+  "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY",
+]);
+
+const PASSKEY_MESSAGES: Record<string, { pl: string; en: string }> = {
+  PASSKEY_NOT_FOUND: {
+    pl: "Ten klucz dostępu nie należy do żadnego konta. Zaloguj się inaczej i dodaj klucz w ustawieniach konta.",
+    en: "This passkey does not belong to any account. Sign in another way and add a passkey in your account settings.",
+  },
+  PASSKEY_USER_VERIFICATION_REQUIRED: {
+    pl: "Urządzenie nie potwierdziło, że to Ty (odcisk palca, twarz lub PIN). Spróbuj ponownie.",
+    en: "Your device did not confirm it is you (fingerprint, face or PIN). Please try again.",
+  },
+  ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED: {
+    pl: "Ten klucz dostępu jest już dodany do Twojego konta.",
+    en: "This passkey is already added to your account.",
+  },
+  ERROR_INVALID_DOMAIN: {
+    pl: "Klucze dostępu działają tylko na stronie www.pawelperfect.com.",
+    en: "Passkeys only work on www.pawelperfect.com.",
+  },
+  AUTHENTICATION_FAILED: { pl: "Nie udało się zalogować kluczem dostępu. Spróbuj ponownie.", en: "Passkey sign-in failed. Please try again." },
+  CHALLENGE_NOT_FOUND: { pl: "Prośba wygasła. Spróbuj ponownie.", en: "The request expired. Please try again." },
+  FAILED_TO_VERIFY_REGISTRATION: { pl: "Nie udało się dodać klucza dostępu. Spróbuj ponownie.", en: "Could not add the passkey. Please try again." },
+};
+
+/** True when the person dismissed the passkey prompt: not an error worth showing. */
+export function isPasskeyCancelled(error: AuthErrorLike): boolean {
+  return Boolean(error?.code && PASSKEY_CANCEL_CODES.has(error.code));
+}
+
+/** Message for a failed passkey sign-in / add / remove (the plugin's own codes first, then the shared ones). */
+export function passkeyErrorMessage(error: AuthErrorLike, isPl: boolean): string {
+  const known = error?.code ? PASSKEY_MESSAGES[error.code] : undefined;
+  if (known && error?.status !== 429) return isPl ? known.pl : known.en;
+  // The plugin reuses UNKNOWN_ERROR, which in MESSAGES means a failed bot check.
+  if (error?.code === "UNKNOWN_ERROR") return authErrorMessage(null, isPl);
+  return authErrorMessage(error, isPl);
+}
+
 /** Better Auth refuses sensitive actions on a session older than `freshAge` (1 day): the user must sign in again. */
 export function isSessionNotFresh(error: AuthErrorLike): boolean {
   return error?.code === "SESSION_NOT_FRESH";

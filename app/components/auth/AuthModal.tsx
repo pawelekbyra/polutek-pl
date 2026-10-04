@@ -7,7 +7,7 @@ import { useLanguage } from "../LanguageContext";
 import type { AuthNotice, AuthView } from "./AuthModalProvider";
 import { TwoFactorView } from "./TwoFactorView";
 import { LinkExpiredView } from "./LinkExpiredView";
-import { Divider, Field, OAuthButtons, PrimaryButton } from "./AuthFormParts";
+import { Divider, Field, OAuthButtons, PasskeySignIn, PrimaryButton } from "./AuthFormParts";
 import CheckInboxView from "./CheckInboxView";
 import SignUpFooter from "./SignUpFooter";
 import LanguageSwitcher from "../LanguageSwitcher";
@@ -313,15 +313,14 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
                 )}
               </div>
             )}
-            {info && !error && (
-              <p className="mt-3 rounded-lg bg-[var(--chan-blue-soft)] px-3 py-2 text-[13px] font-semibold text-[var(--chan-blue)]">{info}</p>
-            )}
+            {info && !error && <p className="mt-3 rounded-lg bg-[var(--chan-blue-soft)] px-3 py-2 text-[13px] font-semibold text-[var(--chan-blue)]">{info}</p>}
 
             {view === "sign-in" && (
               <form onSubmit={handlePasswordSignIn} className="mt-5 space-y-3.5">
                 <OAuthButtons onSelect={handleOAuth} isPl={isPl} />
+                <PasskeySignIn active={open && view === "sign-in"} isPl={isPl} onSignedIn={finishSignedIn} onError={setError} />
                 <Divider isPl={isPl} />
-                <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
+                <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="username webauthn" required />
                 <Field label={isPl ? "Hasło" : "Password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" revealLabels={revealLabels} required />
                 {captcha}
                 <PrimaryButton loading={loading} busy={captchaChecking} disabled={waitingForCaptcha} label={isPl ? "Zaloguj się" : "Sign in"} />

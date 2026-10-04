@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { captcha, haveIBeenPwned, oneTap, twoFactor } from "better-auth/plugins";
+import { passkey } from "@better-auth/passkey";
 import { prisma } from "@/lib/prisma";
 import { APP_NAME } from "@/lib/constants";
 import { isCfConnectingIpTrusted } from "@/lib/api/client-ip";
@@ -18,6 +19,7 @@ import {
   TWO_FACTOR_TRUST_DEVICE_SECONDS,
   SIGN_IN_IP_RATE_PER_MINUTE,
   getAuthBaseUrl,
+  getPasskeyRelyingParty,
   getTrustedOrigins,
   isCaptchaConfigured,
   isGoogleConfigured,
@@ -34,6 +36,7 @@ import {
 } from "./hooks";
 import { onEmailVerified, queueChangeEmailConfirmation, queuePasswordResetEmail, queueVerificationEmail } from "./emails";
 import { authRateLimitStorage } from "./rate-limit-storage";
+import { PASSKEY_PATHS, assertPasskeyUserVerified } from "./passkey";
 
 const isProduction = process.env.NODE_ENV === "production";
 const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
@@ -135,6 +138,13 @@ export const auth = betterAuth({
       "/change-password": { window: 3600, max: 10 },
       // Each request mails an address the caller typed (also limited per user, see guardChangeEmail).
       "/change-email": { window: 3600, max: 10 },
+      // Passkeys: the options request runs whenever the sign-in form opens (autofill), and every
+      // call stores a one-time challenge, so it gets its own per-IP budget.
+      [PASSKEY_PATHS.signInOptions]: { window: 60, max: 20 },
+      [PASSKEY_PATHS.signIn]: { window: 60, max: SIGN_IN_IP_RATE_PER_MINUTE },
+      [PASSKEY_PATHS.registerOptions]: { window: 3600, max: 20 },
+      [PASSKEY_PATHS.register]: { window: 3600, max: 20 },
+      [PASSKEY_PATHS.remove]: { window: 3600, max: 20 },
     },
   },
 
@@ -146,7 +156,8 @@ export const auth = betterAuth({
   },
 
   // Profile edits go through our own routes (nickname rules, avatar validation, language).
-  disabledPaths: ["/update-user"],
+  // Passkeys are named once, when added; renaming is not offered.
+  disabledPaths: ["/update-user", PASSKEY_PATHS.rename],
 
   hooks: { before: authBeforeHook, after: authAfterHook },
 
@@ -190,6 +201,25 @@ export const auth = betterAuth({
     // One Tap sign-in count as strong on their own (Google's own 2-step verification and device
     // checks), which is also Better Auth's behaviour; the app never forces a second factor on top.
     twoFactor({ issuer: APP_NAME, trustDeviceMaxAge: TWO_FACTOR_TRUST_DEVICE_SECONDS }),
+    // Passkeys (WebAuthn). Added from the account panel by a signed-in user (fresh session); a new
+    // account is never created by a passkey. A passkey sign-in is strong on its own (possession of
+    // the device key + biometrics/PIN), so like Google it never gets the TOTP step (the twoFactor
+    // hook only runs on /sign-in/email). User verification is enforced, not just "preferred".
+    passkey({
+      ...getPasskeyRelyingParty(),
+      authenticatorSelection: { residentKey: "required", requireResidentKey: true, userVerification: "preferred" },
+      registration: {
+        requireSession: true,
+        afterVerification: async ({ verification }) => {
+          assertPasskeyUserVerified(verification.registrationInfo?.userVerified);
+        },
+      },
+      authentication: {
+        afterVerification: async ({ verification }) => {
+          assertPasskeyUserVerified(verification.authenticationInfo.userVerified);
+        },
+      },
+    }),
     nextCookies(), // must stay last
   ],
 });

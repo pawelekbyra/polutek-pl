@@ -4,6 +4,9 @@ import React from "react";
 import { Loader2 } from "../icons";
 import { OAUTH_PROVIDERS, type OAuthProviderId } from "./oauth-providers";
 
+// The passkey button sits next to the Google button in the sign-in form.
+export { PasskeySignIn } from "./PasskeySignIn";
+
 export function Field({
   label,
   type,
