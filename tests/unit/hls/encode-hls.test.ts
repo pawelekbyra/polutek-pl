@@ -142,7 +142,7 @@ describe('encode-hls', () => {
   it('tone-maps HLG / PQ sources to BT.709 SDR once, at the top rung size, and tags the output', () => {
     const hlg = encodeArgs({ color: { transfer: 'arib-std-b67', primaries: 'bt2020', matrix: 'bt2020nc' } });
     const graph = hlg[hlg.indexOf('-filter_complex') + 1];
-    expect(graph.match(/tonemap=/g)).toHaveLength(1);
+    expect(graph.match(/tonemap=tonemap=/g)).toHaveLength(1);
     expect(graph).toContain('zscale=w=1920:h=1080:f=lanczos:tin=arib-std-b67:pin=2020:min=2020_ncl:t=linear:npl=100');
     expect(graph).toContain('tonemap=tonemap=hable:desat=0,zscale=t=709:m=709:r=limited,format=yuv420p');
     expect(hlg.join(' ')).toContain('-color_primaries bt709 -color_trc bt709 -colorspace bt709');
