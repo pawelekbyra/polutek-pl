@@ -20,6 +20,7 @@ import { readUserMuted, writeUserMuted } from './player/sound-preference';
 import { resolvePlaybackSource } from './playback-source';
 import { shouldSendViewForPlaybackPosition } from './video-view-threshold';
 import { usePlaybackTelemetry } from '@/lib/hooks/usePlaybackTelemetry';
+import { usePlaybackQoe } from '@/lib/telemetry/client/use-playback-qoe';
 import { usePageRevealReady } from './preload/PageRevealGate';
 import { buildSelfHlsConfig, loadHlsLibrary, streamIdentity } from './player/self-hls';
 
@@ -113,7 +114,6 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
     const bufferedEnoughRef = useRef(false);
     const hasReached10s = useRef(false);
     const viewCountRequestInFlight = useRef(false);
-    const reachedThresholds = useRef<Record<number, boolean>>({});
 
     const sendEvent = usePlaybackTelemetry({
         videoId: video.id,
@@ -121,6 +121,8 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
         renewPlaybackPlan,
         playerRef: player,
     });
+    // Startup, stalls, quality and errors go out with the page's analytics beacon (no request per event).
+    const qoe = usePlaybackQoe(video.id, streamKey, player);
 
     // Token handling for hls.js requests: renew first when the token is about to expire (a tab
     // that slept for hours), and renew at once when the edge refused a request (401/403).
@@ -170,8 +172,8 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
         }
         resumeRef.current = null;
         setLoadError('Nie udało się załadować materiału wideo. Spróbuj ponownie za chwilę.');
-        sendEvent('PLAYER_ERROR', { errorCode: 'LOAD_FAILED' });
-    }, [sendEvent, streamKey]);
+        qoe.error('LOAD_FAILED', true);
+    }, [qoe, streamKey]);
 
     const maybeSendView = useCallback(async (currentTimeSeconds: number, durationSeconds?: number) => {
         if (hasReached10s.current || viewCountRequestInFlight.current || !shouldSendViewForPlaybackPosition(currentTimeSeconds, durationSeconds)) return;
@@ -213,7 +215,6 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
         setPlayerKey((key) => key + 1);
         hasReached10s.current = false;
         viewCountRequestInFlight.current = false;
-        reachedThresholds.current = {};
         recoveryAttemptedRef.current = false;
         resumeRef.current = null;
         playStartedSentRef.current = false;
@@ -368,7 +369,6 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                                 if (resume.time > 0) player.current.currentTime = resume.time;
                                 if (resume.play) void player.current.play().catch(() => undefined);
                             }
-                            sendEvent('PLAYER_READY');
                             // Check buffered amount immediately at canPlay too.
                             if (!bufferedEnoughRef.current) {
                                 try {
@@ -392,6 +392,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                         }}
                         onPlay={() => {
                             setHasStartedPlayback(true);
+                            qoe.playRequested();
                             // First play starts the watch clock, every later play resumes it
                             // (the server counts watch time between these and HEARTBEAT/PAUSE).
                             sendEvent(playStartedSentRef.current ? 'PLAY_RESUMED' : 'PLAY_STARTED');
@@ -399,6 +400,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                         }}
                         onPause={() => {
                             setIsPlaying(false);
+                            qoe.paused();
                             sendEvent('PLAY_PAUSED');
                         }}
                         onVolumeChange={(detail: { muted: boolean }) => {
@@ -421,22 +423,21 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                         }}
                         onEnded={() => {
                             setIsPlaying(false);
+                            qoe.ended();
                             void sendEvent('ENDED');
                             if (player.current) void maybeSendView(player.current.currentTime, player.current.duration);
                         }}
-                        onSeeked={(event: any) => {
-                            const detailTime = typeof event.detail === 'number' ? event.detail : event.detail?.currentTime;
-                            const currentTime = Number.isFinite(detailTime) ? detailTime : player.current?.currentTime || 0;
-                            sendEvent('SEEKED', { positionMs: Math.floor(currentTime * 1000) });
-                        }}
-                        onWaiting={() => sendEvent('BUFFERING_STARTED')}
+                        onSeeking={() => qoe.seekStarted()}
+                        onWaiting={() => qoe.waiting()}
+                        onQualityChange={(quality) => qoe.qualityChanged(quality?.height, quality?.bitrate)}
+                        onHlsError={(detail) => qoe.error(`hls:${detail.type}:${detail.details}`, detail.fatal)}
                         onAutoPlayFail={handleAutoPlayFail}
                         onPlaying={() => {
                             setIsPlaying(true);
                             setHasStartedPlayback(true);
                             setHasRenderedFrame(true);
                             recoveryAttemptedRef.current = false;
-                            sendEvent('BUFFERING_ENDED');
+                            qoe.playing();
                         }}
                         onTimeUpdate={(event: any) => {
                             const detail = typeof event.detail === 'number'
@@ -448,24 +449,12 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                             if (currentTime > 0 && !hasRenderedFrame) setHasRenderedFrame(true);
 
                             void maybeSendView(currentTime, duration);
-
-                            const pct = duration ? (currentTime / duration) * 100 : 0;
-                            const thresholds = [
-                                { pct: 25, type: 'WATCHED_25_PERCENT' },
-                                { pct: 50, type: 'WATCHED_50_PERCENT' },
-                                { pct: 75, type: 'WATCHED_75_PERCENT' },
-                                { pct: 90, type: 'WATCHED_90_PERCENT' },
-                            ];
-
-                            for (const threshold of thresholds) {
-                                if (pct >= threshold.pct && !reachedThresholds.current[threshold.pct]) {
-                                    reachedThresholds.current[threshold.pct] = true;
-                                    sendEvent(threshold.type);
-                                }
-                            }
                         }}
                         onProviderChange={handleProviderChange}
-                        onError={() => void handleMediaError()}
+                        onError={(detail) => {
+                            qoe.error(`media:${detail?.code ?? 0}`, false);
+                            void handleMediaError();
+                        }}
                     >
                         <MediaProvider>
                             {textTracks.map((track) => (

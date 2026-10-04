@@ -425,6 +425,11 @@ Owner request: a crowdfunding-style bar under the title of the premiere video, *
 - **Broadcasts** are a Postgres queue: the admin route only creates `BroadcastEmail` + PENDING recipients (idempotent `requestKey`, one active broadcast); `/api/cron/send-broadcasts` (timer every minute) sends ≤ 4/s with a per-recipient Resend idempotency key, pauses on 429. Recipients: subscribers with content consent, not in `EmailSuppression`. Mandatory unsubscribe footer. Never send broadcasts inside an HTTP request.
 - **Webhook** `/api/webhooks/resend`: verified with `resend.webhooks.verify` (rejections logged with reason); acts only on events of mail tagged `app=pawelperfect` (the Resend account is shared with PP Support). No inbound mail handling (MX is Cloudflare -> PP Support).
 
+
+### 4.19 Own telemetry (2026-10-04, admin panel phase 0)
+
+Anonymous, cookie-free statistics for the future admin panel: `TelemetryBeacon` (root layout) sends page views, Web Vitals (`web-vitals` npm, lazy) and playback QoE (`PlaybackQoeTracker`, wired in `VideoPlayer`) with `navigator.sendBeacon` to `POST /api/t` (always 204, no cookies), which hands the body to the `collector` container (`services/pp-collector`, bundled by esbuild) after the response. The collector hashes IP+UA with a daily salt (deleted after the day), drops bots/DNT/GPC, batch-inserts into the Postgres schema `telemetry` (role `pp_collector`, raw SQL migration, not in `schema.prisma`) and runs rollups/retention (90 days raw, 25 months aggregates, `lib/telemetry/retention.ts`, stated in the privacy policy). Pure-telemetry player events (`PLAYER_READY`, `SEEKED`, `BUFFERING_*`, `WATCHED_25..90_PERCENT`, `PLAYER_ERROR`) no longer go to `/api/videos/[id]/playback-event`. Switches: `TELEMETRY_COLLECTOR_URL` (unset = off), `TELEMETRY_BEACON=off`. Never add a user id, raw IP/UA, cookie or device storage to telemetry. Details and the legal caveat (EDPB 2/2023, art. 399 PKE): `docs/architecture/admin-telemetry.md`.
+
 ---
 
 ## 5. Admin Panel
@@ -571,6 +576,7 @@ See `.env.example` for all variables. Critical ones:
 | `CRON_SECRET` | Authenticates cron API routes (≥32 random chars) |
 | `TRUST_CF_CONNECTING_IP` | `true` only when self-hosted behind Cloudflare Tunnel: client IP (rate limits, audit) comes from `CF-Connecting-IP` via `lib/api/client-ip.ts`; default false (Vercel behaviour) |
 | `ADMIN_EMAILS` | Comma-separated e-mails promoted to ADMIN once verified (bootstrap) |
+| `TELEMETRY_COLLECTOR_URL` / `TELEMETRY_BEACON` | pp-collector address inside compose (`http://collector:3200`; unset = no beacon); `off` stops the beacon without a rebuild |
 | `IP_HASH_SECRET` | Optional (recommended, >= 32 chars): key for HMAC hashes of client IP/UA; derived from `BETTER_AUTH_SECRET` when unset |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` or `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Production rate limiting |
 

@@ -354,3 +354,14 @@ Kod nie zależy już od żadnego z nich (PR "remove third-party video providers"
 7. **YouTube/Vimeo:** nic do sprzątania po stronie dostawców (były tylko osadzeniami); jeśli któryś film miał takie źródło, jego wiersze zostają w bazie (ignorowane) do osobnego PR czyszczącego.
 8. **R2:** bucket `polutek` (oryginały) i `polutek-hls` zostają; stare surowe pliki wideo (jeśli leżały w innym buckecie/Blobie jako `videoUrl`) można usunąć ręcznie (Vercel Blob legacy: tylko miniatury są jeszcze używane).
 9. **CSP/DNS:** bez zmian po stronie DNS; `videodelivery.net`, `*.cloudflarestream.com`, `stream.mux.com`, YouTube i Vimeo zniknęły z CSP w kodzie.
+
+## 22. Telemetria: pp-collector (kod gotowy 2026-10-04)
+
+Własne, anonimowe statystyki (odsłony, Web Vitals, jakość odtwarzania) dla przyszłego panelu `admin.pawelperfect.com`. Projekt, prawo i model danych: [`../architecture/admin-telemetry.md`](../architecture/admin-telemetry.md).
+
+- Kontener `collector` w `docker-compose.yml` (obraz `polutek-collector:<tag>`, `node:22-alpine` + jeden plik, `mem_limit 96m`, `read_only`, `cap_drop: ALL`, bez portu na hoście: aplikacja woła `http://collector:3200`). `deploy.sh` buduje go razem z resztą i uruchamia tylko, gdy obok leży `collector.env` (jak encoder: błąd kolektora nie cofa wdrożenia; `--rollback` przywraca poprzedni obraz).
+- Baza: schemat `telemetry`, role `pp_collector` (zapis tylko w `telemetry`) i `pp_analytics_ro` (odczyt), migracja `20261004210000_telemetry_schema` tworzy je jako `NOLOGIN`.
+- **Włączenie (raz, po pierwszym wdrożeniu z tą migracją):** skopiować `scripts/serwerek/telemetry-enable.sh` do `/opt/serwerek/apps/polutek/` i uruchomić. Skrypt nadaje `pp_collector` losowe hasło i `LOGIN`, zapisuje `collector.env` (600), dopisuje `TELEMETRY_COLLECTOR_URL=http://collector:3200` do `app.env` (z kopią), startuje kolektor i odtwarza kontener `app` (kilka sekund przerwy). Wpis w `ai-log`.
+- **Wyłączenie bez przebudowy:** `TELEMETRY_BEACON=off` w `app.env` i `docker compose up -d --no-deps app` (strona przestaje wysyłać beacon; kolektor może dalej działać). Całkowicie: usunąć `TELEMETRY_COLLECTOR_URL` z `app.env` i `docker compose stop collector`.
+- Sprawdzenie: `docker compose logs --tail 20 collector` (co minutę linia `pp-collector stats` przy ruchu), `docker compose exec -T db psql -U polutek -d polutek -c "select job, status, started_at from telemetry.job_run order by id desc limit 5"` (rollup co 5 min, retencja co 6 h).
+- Retencja: surowe 90 dni, agregaty 25 miesięcy, `job_run` 400 dni, sól dnia kasowana po dniu (funkcja `telemetry.apply_retention`).

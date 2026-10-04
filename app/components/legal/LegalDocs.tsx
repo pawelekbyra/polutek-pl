@@ -1,6 +1,7 @@
 import React from 'react';
 import { formatLegalDateEn, formatLegalDatePl } from '@/lib/legal/version';
 import { TECHNICAL_DATA_RETENTION_DAYS } from '@/lib/modules/privacy/domain/retention';
+import { TELEMETRY_AGGREGATE_RETENTION_MONTHS, TELEMETRY_RAW_RETENTION_DAYS } from '@/lib/telemetry/retention';
 
 /** Derived from LEGAL_DOCUMENTS_VERSION (lib/legal/version.ts): change the date there. */
 export const LEGAL_EFFECTIVE_DATE = `Obowiązuje od ${formatLegalDatePl()} r.`;
@@ -166,6 +167,15 @@ export function PolitykaContent() {
             Adres IP, dane przeglądarki i przebieg odtwarzania, dla bezpieczeństwa, liczenia wyświetleń i naprawy
             błędów: nasz uzasadniony interes (lit. f).
           </li>
+          <li>
+            Statystyki serwisu: odwiedzona strona (bez parametrów adresu), domena strony, z której przyszedłeś, kraj,
+            rodzaj urządzenia, przeglądarka i system, szybkość ładowania strony oraz jakość odtwarzania filmów (czas
+            startu, buforowanie, błędy, obejrzane fragmenty). Bez cookies i bez zapisu czegokolwiek na Twoim
+            urządzeniu. Adresu IP nie zapisujemy: z adresu IP i danych przeglądarki tworzymy skrót z losową wartością,
+            którą codziennie zmieniamy i kasujemy, więc następnego dnia nie da się Cię rozpoznać. Statystyk nie łączymy
+            z kontem. Gdy przeglądarka wysyła sygnał Global Privacy Control lub Do Not Track, statystyk nie zbieramy;
+            to także sposób na sprzeciw. Podstawa: nasz uzasadniony interes (lit. f), czyli wiedza, jak działa serwis.
+          </li>
         </ol>
         <p>
           Dane możemy też wykorzystać do obrony roszczeń (lit. f). Nie sprzedajemy ich, nie profilujemy Cię i nie
@@ -193,7 +203,9 @@ export function PolitykaContent() {
           komentarzy, usuwamy Twój adres z listy mailingowej, a e-mail i pseudonim anonimizujemy. Konto z
           niepotwierdzonym e-mailem usuwamy po 7 dniach, treść usuniętego komentarza po 30 dniach, sesja logowania
           wygasa po 30 dniach (wygasłe sesje i linki z e-maili kasujemy codziennie), kopie zapasowe po 14 dniach. Adres
-          IP i dane przeglądarki zapisane w naszej bazie usuwamy po {TECHNICAL_DATA_RETENTION_DAYS} dniach. Wpłaty
+          IP i dane przeglądarki zapisane w naszej bazie usuwamy po {TECHNICAL_DATA_RETENTION_DAYS} dniach, zdarzenia
+          statystyczne po {TELEMETRY_RAW_RETENTION_DAYS} dniach, a dzienne zestawienia statystyk po{' '}
+          {TELEMETRY_AGGREGATE_RETENTION_MONTHS} miesiącach. Wpłaty
           trzymamy tak długo, jak wymagają przepisy podatkowe, a wiadomości do załatwienia sprawy.
         </p>
       </LegalSection>
@@ -220,6 +232,7 @@ export function PolitykaContent() {
           <li>pamięć przeglądarki: Twoje ustawienia, np. wyciszenie dźwięku.</li>
         </ul>
         <p>Formularze logowania chroni Cloudflare Turnstile, bez cookies.</p>
+        <p>Statystyki z § 2 działają bez cookies i bez pamięci przeglądarki.</p>
       </LegalSection>
 
       <LegalSection nr="7" title="Zmiany">
@@ -359,6 +372,15 @@ export function PrivacyContentEn() {
             IP address, browser data and the course of playback, for security, counting views and fixing errors: our
             legitimate interest (point (f)).
           </li>
+          <li>
+            Service statistics: the page visited (without address parameters), the domain of the page you came from,
+            country, device type, browser and operating system, page loading speed and video playback quality (start-up
+            time, buffering, errors, parts watched). No cookies and nothing stored on your device. We do not store your
+            IP address: we turn the IP address and browser data into a hash with a random value that we change and
+            delete every day, so you cannot be recognised the next day. Statistics are not linked to your account. When
+            your browser sends a Global Privacy Control or Do Not Track signal, we collect no statistics; this is also
+            a way to object. Basis: our legitimate interest (point (f)), i.e. knowing how the service works.
+          </li>
         </ol>
         <p>
           We may also use data to defend claims (point (f)). We do not sell it, profile you or make decisions based
@@ -387,7 +409,8 @@ export function PrivacyContentEn() {
           delete an account with an unconfirmed email after 7 days and the text of a deleted comment after 30 days; a
           sign-in session expires after 30 days (expired sessions and email links are erased daily) and backups after
           14 days. We erase IP addresses and browser data stored in our database after {TECHNICAL_DATA_RETENTION_DAYS}{' '}
-          days. We keep payments as long as tax law requires, and messages until the matter is resolved.
+          days, statistics events after {TELEMETRY_RAW_RETENTION_DAYS} days and daily statistics summaries after{' '}
+          {TELEMETRY_AGGREGATE_RETENTION_MONTHS} months. We keep payments as long as tax law requires, and messages until the matter is resolved.
         </p>
       </LegalSection>
 
@@ -414,6 +437,7 @@ export function PrivacyContentEn() {
           <li>browser storage: your settings, e.g. muted sound.</li>
         </ul>
         <p>Sign-in forms are protected by Cloudflare Turnstile, without cookies.</p>
+        <p>The statistics described in section 2 work without cookies and without browser storage.</p>
       </LegalSection>
 
       <LegalSection nr="7" title="Changes">

@@ -46,7 +46,11 @@ Ostatnia aktualizacja: 2026-10-04.
    Workspace trzeba go przenieść na konto osobiste (`GOOGLE_ACCESS.md`, sekcja „Move the OAuth client”),
    potem agent podmienia `GOOGLE_CLIENT_ID/SECRET` na serwerze.
 6. **Anulowanie Google Workspace** (po punkcie 5, ok. 2026-10-09).
-7. **Decyzje produktowe z audytów, które jeszcze czekają:** retencja danych (jak długo trzymać oryginały wideo, telemetrię, logi), wymogi prawne z `audit-legal-privacy.md` (polityka prywatności w toku, reklamacje i DSA w regulaminie).
+7. **Analityka bez zgody (pytanie do prawnika, 2026-10-04):** wytyczne EDPB 2/2023 traktują beacon bez cookies jako
+   „dostęp do urządzenia” (art. 5(3) ePrivacy), a art. 399 PKE nie ma wyjątku dla analityki. Statystyki są minimalne,
+   anonimowe i opisane w polityce, z wyłącznikiem `TELEMETRY_BEACON=off` (`architecture/admin-telemetry.md` §1).
+   Przed startem publicznym prawnik ocenia, czy zostają bez zgody.
+8. **Decyzje produktowe z audytów, które jeszcze czekają:** retencja danych (jak długo trzymać oryginały wideo, telemetrię, logi), wymogi prawne z `audit-legal-privacy.md` (polityka prywatności w toku, reklamacje i DSA w regulaminie).
 
 ## W toku (gałęzie agentów, każda kończy się PR-em)
 
@@ -57,6 +61,7 @@ Ostatnia aktualizacja: 2026-10-04.
 | `fix/hls-audit` | hls.js lokalnie, szybki start, napisy, HDR, drabinka jakości, odświeżanie tokenu |
 | `fix/security-auth-audit` | zmiana e-maila, formularze logowania, onboarding, reszta CSP, resztki Clerka |
 | `fix/email-audit` | szablony (jedno źródło prawdy), wypis jednym kliknięciem, webhook Resend, kolejka rozsyłek |
+| `feat/admin-phase0-telemetry` | panel admina, faza 0: schemat `telemetry`, `pp-collector`, beacon (odsłony, Web Vitals, jakość odtwarzania), polityka prywatności 2026-10-05; po wdrożeniu włączyć `scripts/serwerek/telemetry-enable.sh` (SERWEREK.md §22) |
 
 ## Do zrobienia (kolejność proponowana)
 

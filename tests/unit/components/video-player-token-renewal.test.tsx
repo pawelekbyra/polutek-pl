@@ -21,6 +21,14 @@ vi.mock("@/lib/hooks/usePlaybackTelemetry", () => ({
     return { ok: true };
   },
 }));
+// Playback quality goes to the analytics beacon (lib/telemetry/client), not to the per-event route.
+vi.mock("@/lib/telemetry/client/use-playback-qoe", () => {
+  const record = (name: string) => (...args: unknown[]) => mocks.events.push(["qoe", name, ...args].join(":"));
+  const handlers = Object.fromEntries(
+    ["playRequested", "playing", "waiting", "seekStarted", "paused", "ended", "qualityChanged", "error"].map((n) => [n, record(n)]),
+  );
+  return { usePlaybackQoe: () => handlers };
+});
 vi.mock("@vidstack/react", async () => {
   const ReactModule = await import("react");
   const MediaPlayer = ReactModule.forwardRef<unknown, Record<string, unknown>>((props, ref) => {
@@ -114,7 +122,7 @@ describe("VideoPlayer and delivery-token renewal", () => {
     expect(renew).toHaveBeenCalledTimes(1);
     expect(mocks.mounts).toBeGreaterThan(mountsBefore);
     expect(mocks.lastProps?.src).toBe(url("1800021600.b"));
-    expect(mocks.events).not.toContain("PLAYER_ERROR");
+    expect(mocks.events).not.toContain("qoe:error:LOAD_FAILED:true");
 
     mocks.instance.currentTime = 0;
     await act(async () => (mocks.lastProps?.onCanPlay as () => void)());
@@ -125,7 +133,7 @@ describe("VideoPlayer and delivery-token renewal", () => {
     const view = render(<Harness value={ctx(plan("1800000000.a"), vi.fn(async () => null))} />);
     await act(async () => {});
     await act(async () => (mocks.lastProps?.onError as () => void)());
-    expect(mocks.events).toContain("PLAYER_ERROR");
+    expect(mocks.events).toContain("qoe:error:LOAD_FAILED:true");
     expect(view.queryByTestId("media-player")).toBeNull();
     expect(view.getByTestId("player-error").textContent).toBe("MEDIA_LOAD_FAILED");
   });
