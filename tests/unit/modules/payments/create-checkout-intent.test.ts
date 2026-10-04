@@ -47,6 +47,7 @@ beforeEach(() => {
   db.user.rows.push({ id: 'user_1', email: 'payer@example.com', language: 'pl', stripeCustomerId: 'cus_1' });
   intents.clear();
   byIdempotencyKey.clear();
+  intentSeq = 0;
   vi.clearAllMocks();
 });
 
