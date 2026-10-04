@@ -62,6 +62,7 @@ Ostatnia aktualizacja: 2026-10-04.
 | `fix/security-auth-audit` | zmiana e-maila, formularze logowania, onboarding, reszta CSP, resztki Clerka |
 | `fix/email-audit` | szablony (jedno źródło prawdy), wypis jednym kliknięciem, webhook Resend, kolejka rozsyłek |
 | `feat/admin-phase0-telemetry` | panel admina, faza 0: schemat `telemetry`, `pp-collector`, beacon (odsłony, Web Vitals, jakość odtwarzania), polityka prywatności 2026-10-05; po wdrożeniu włączyć `scripts/serwerek/telemetry-enable.sh` (SERWEREK.md §22) |
+| `feat/passkey-sign-in` | logowanie kluczem dostępu (passkey); po wdrożeniu właściciel dodaje klucz na telefonie i komputerze (też jako 2. czynnik dla admina, punkt 4) |
 
 ## Do zrobienia (kolejność proponowana)
 

@@ -1,0 +1,153 @@
+// @vitest-environment jsdom
+/** Passkeys in the UI: hidden without WebAuthn, sign-in button + autofill, the account panel list/add/remove. */
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+
+const h = vi.hoisted(() => ({
+  client: {
+    signIn: { passkey: vi.fn() },
+    passkey: { listUserPasskeys: vi.fn(), addPasskey: vi.fn(), deletePasskey: vi.fn() },
+  },
+}));
+
+vi.mock("@/lib/auth/client", () => ({ authClient: h.client }));
+vi.mock("@/lib/auth/react", () => ({ useUser: () => ({ user: { id: "u1" } }) }));
+vi.mock("@/lib/auth/sign-out", () => ({ signOutCompletely: vi.fn() }));
+
+import { PasskeySignIn } from "@/app/components/auth/PasskeySignIn";
+import { PasskeysSection } from "@/app/components/auth/PasskeysSection";
+import { defaultPasskeyName } from "@/lib/auth/passkey-support";
+
+function enableWebAuthn({ autofill = false } = {}) {
+  const PublicKeyCredential = function PublicKeyCredential() {} as unknown as { isConditionalMediationAvailable: () => Promise<boolean> };
+  PublicKeyCredential.isConditionalMediationAvailable = () => Promise.resolve(autofill);
+  vi.stubGlobal("PublicKeyCredential", PublicKeyCredential);
+  Object.defineProperty(navigator, "credentials", { value: {}, configurable: true });
+}
+
+function disableWebAuthn() {
+  vi.stubGlobal("PublicKeyCredential", undefined);
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  h.client.passkey.listUserPasskeys.mockResolvedValue({ data: [], error: null });
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+describe("PasskeySignIn (sign-in modal)", () => {
+  it("renders nothing and never calls WebAuthn when the browser has no passkey support", async () => {
+    disableWebAuthn();
+    const { container } = render(<PasskeySignIn active isPl onSignedIn={vi.fn()} onError={vi.fn()} />);
+    await Promise.resolve();
+    expect(container.innerHTML).toBe("");
+    expect(h.client.signIn.passkey).not.toHaveBeenCalled();
+  });
+
+  it("signs in with the button and closes the modal", async () => {
+    enableWebAuthn();
+    h.client.signIn.passkey.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
+    const onSignedIn = vi.fn();
+    render(<PasskeySignIn active isPl onSignedIn={onSignedIn} onError={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Zaloguj się kluczem dostępu" }));
+    await waitFor(() => expect(onSignedIn).toHaveBeenCalled());
+    expect(h.client.signIn.passkey).toHaveBeenCalledWith();
+  });
+
+  it("stays quiet when the person closes the browser prompt", async () => {
+    enableWebAuthn();
+    h.client.signIn.passkey.mockResolvedValue({ data: null, error: { code: "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY", status: 400 } });
+    const onError = vi.fn();
+    render(<PasskeySignIn active isPl={false} onSignedIn={vi.fn()} onError={onError} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Sign in with a passkey" }));
+    await waitFor(() => expect(h.client.signIn.passkey).toHaveBeenCalled());
+    await waitFor(() => expect(onError).toHaveBeenCalledTimes(1)); // the reset before the attempt
+    expect(onError).toHaveBeenLastCalledWith(null);
+  });
+
+  it("explains an unknown passkey (no account is ever created by a passkey)", async () => {
+    enableWebAuthn();
+    h.client.signIn.passkey.mockResolvedValue({ data: null, error: { code: "PASSKEY_NOT_FOUND", status: 401 } });
+    const onError = vi.fn();
+    render(<PasskeySignIn active isPl={false} onSignedIn={vi.fn()} onError={onError} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Sign in with a passkey" }));
+    await waitFor(() => expect(onError).toHaveBeenLastCalledWith(expect.stringMatching(/does not belong to any account/)));
+  });
+
+  it("offers passkeys in the e-mail autofill when the browser supports it, only while the modal is open", async () => {
+    enableWebAuthn({ autofill: true });
+    h.client.signIn.passkey.mockReturnValue(new Promise(() => undefined));
+    const { rerender } = render(<PasskeySignIn active={false} isPl onSignedIn={vi.fn()} onError={vi.fn()} />);
+    await screen.findByRole("button");
+    expect(h.client.signIn.passkey).not.toHaveBeenCalled();
+    rerender(<PasskeySignIn active isPl onSignedIn={vi.fn()} onError={vi.fn()} />);
+    await waitFor(() => expect(h.client.signIn.passkey).toHaveBeenCalledWith({ autoFill: true }));
+  });
+
+  it("does not show an error when the autofill options request fails on its own", async () => {
+    enableWebAuthn({ autofill: true });
+    h.client.signIn.passkey.mockResolvedValue({ data: null, error: { status: 429 } });
+    const onError = vi.fn();
+    render(<PasskeySignIn active isPl onSignedIn={vi.fn()} onError={onError} />);
+    await waitFor(() => expect(h.client.signIn.passkey).toHaveBeenCalledWith({ autoFill: true }));
+    await Promise.resolve();
+    expect(onError).not.toHaveBeenCalled();
+  });
+});
+
+describe("PasskeysSection (account panel)", () => {
+  it("lists the passkeys with their name and date, and hides adding where WebAuthn is missing", async () => {
+    disableWebAuthn();
+    h.client.passkey.listUserPasskeys.mockResolvedValue({ data: [{ id: "pk1", name: "iPhone · Safari", createdAt: "2026-10-01T10:00:00Z" }], error: null });
+    render(<PasskeysSection isPl={false} />);
+    expect(await screen.findByText("iPhone · Safari")).toBeTruthy();
+    expect(screen.getByText(/^Added /)).toBeTruthy();
+    expect(screen.getByText("This browser does not support passkeys.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Add a passkey" })).toBeNull();
+  });
+
+  it("adds a passkey with the device name and reloads the list", async () => {
+    enableWebAuthn();
+    h.client.passkey.addPasskey.mockResolvedValue({ data: { id: "pk2" }, error: null });
+    render(<PasskeysSection isPl={false} />);
+    expect(await screen.findByText("You have no passkeys yet.")).toBeTruthy();
+    const field = screen.getByLabelText("Device name (optional)");
+    fireEvent.change(field, { target: { value: "Work laptop" } });
+    fireEvent.click(screen.getByRole("button", { name: "Add a passkey" }));
+    await waitFor(() => expect(h.client.passkey.addPasskey).toHaveBeenCalledWith({ name: "Work laptop" }));
+    expect(await screen.findByText(/Passkey added/)).toBeTruthy();
+    expect(h.client.passkey.listUserPasskeys).toHaveBeenCalledTimes(2);
+  });
+
+  it("asks to sign in again when the session is not fresh", async () => {
+    enableWebAuthn();
+    h.client.passkey.addPasskey.mockResolvedValue({ data: null, error: { code: "SESSION_NOT_FRESH", status: 403 } });
+    render(<PasskeysSection isPl />);
+    fireEvent.click(await screen.findByRole("button", { name: "Dodaj klucz dostępu" }));
+    expect(await screen.findByRole("button", { name: "Zaloguj się ponownie" })).toBeTruthy();
+  });
+
+  it("removes a passkey only after confirmation", async () => {
+    disableWebAuthn();
+    h.client.passkey.listUserPasskeys.mockResolvedValue({ data: [{ id: "pk1", name: "Mac", createdAt: "2026-10-01T10:00:00Z" }], error: null });
+    h.client.passkey.deletePasskey.mockResolvedValue({ data: { status: true }, error: null });
+    render(<PasskeysSection isPl={false} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Remove passkey Mac" }));
+    expect(h.client.passkey.deletePasskey).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Yes, remove" }));
+    await waitFor(() => expect(h.client.passkey.deletePasskey).toHaveBeenCalledWith({ id: "pk1" }));
+    expect(await screen.findByText("Passkey removed.")).toBeTruthy();
+  });
+});
+
+describe("defaultPasskeyName", () => {
+  it("names the device and browser from the user agent", () => {
+    expect(defaultPasskeyName("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1")).toBe("iPhone · Safari");
+    expect(defaultPasskeyName("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/129.0 Safari/537.36 Edg/129.0")).toBe("Windows · Edge");
+    expect(defaultPasskeyName("Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 Chrome/129.0 Mobile Safari/537.36")).toBe("Android · Chrome");
+    expect(defaultPasskeyName("curl/8")).toBe("Passkey");
+  });
+});

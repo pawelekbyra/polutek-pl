@@ -46,6 +46,7 @@ beforeEach(() => {
     session: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
     account: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
     twoFactor: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+    passkey: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
     userAvatar: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
     auditLog: { create: vi.fn().mockResolvedValue({}) },
     $executeRaw: vi.fn().mockResolvedValue(1),

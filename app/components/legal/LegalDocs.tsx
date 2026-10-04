@@ -150,7 +150,8 @@ export function PolitykaContent() {
         <p>Podstawy prawne to art. 6 ust. 1 RODO:</p>
         <ol className="list-decimal space-y-2 pl-5">
           <li>
-            Konto: e-mail (bez niego nie założysz konta), hasło, pseudonim, awatar, język, logowanie dwuetapowe; przy
+            Konto: e-mail (bez niego nie założysz konta), hasło, pseudonim, awatar, język, logowanie dwuetapowe, klucze
+            dostępu (klucz publiczny, identyfikator i nazwa urządzenia; klucz prywatny zostaje na Twoim urządzeniu); przy
             logowaniu przez Google e-mail i identyfikator od Google. Podstawa: umowa, czyli Regulamin (lit. b).
           </li>
           <li>Komentarze, reakcje i subskrypcja kanału. Pseudonim, awatar i komentarze są publiczne. Podstawa: umowa (lit. b).</li>
@@ -355,7 +356,8 @@ export function PrivacyContentEn() {
         <ol className="list-decimal space-y-2 pl-5">
           <li>
             Account: email (you cannot create an account without it), password, nickname, avatar, language, two-step
-            sign-in; with Google sign-in, the email and identifier from Google. Basis: the contract, i.e. the Terms
+            sign-in, passkeys (public key, identifier and device name; the private key stays on your device); with Google
+            sign-in, the email and identifier from Google. Basis: the contract, i.e. the Terms
             (point (b)).
           </li>
           <li>Comments, reactions and channel subscription. Your nickname, avatar and comments are public. Basis: the contract (point (b)).</li>

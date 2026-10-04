@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   CAPTCHA_ENDPOINTS,
+  PASSKEY_RP_NAME,
   PASSWORD_MIN_LENGTH,
   getAdminEmails,
   getAuthBaseUrl,
+  getPasskeyRelyingParty,
   getTrustedOrigins,
   isAdminEmail,
   isCaptchaConfigured,
@@ -58,6 +60,41 @@ describe("auth config helpers", () => {
     expect(CAPTCHA_ENDPOINTS).toEqual(
       expect.arrayContaining(["/sign-up/email", "/sign-in/email", "/request-password-reset", "/send-verification-email"]),
     );
+  });
+});
+
+describe("passkey relying party (WebAuthn)", () => {
+  it("uses the domain without www as RP ID and accepts both the www and the apex origin", () => {
+    expect(getPasskeyRelyingParty({ NEXT_PUBLIC_APP_URL: "https://www.pawelperfect.com" })).toEqual({
+      rpID: "pawelperfect.com",
+      rpName: PASSKEY_RP_NAME,
+      origin: ["https://www.pawelperfect.com", "https://pawelperfect.com"],
+    });
+    expect(PASSKEY_RP_NAME).toBe("Pawel Perfect");
+  });
+
+  it("gives the same RP ID when the app URL is the apex or comes from BETTER_AUTH_URL", () => {
+    expect(getPasskeyRelyingParty({ NEXT_PUBLIC_APP_URL: "https://pawelperfect.com" }).rpID).toBe("pawelperfect.com");
+    expect(getPasskeyRelyingParty({ BETTER_AUTH_URL: "https://www.pawelperfect.com/", NEXT_PUBLIC_APP_URL: "http://localhost:3000" }).rpID).toBe("pawelperfect.com");
+  });
+
+  it("uses localhost in development", () => {
+    expect(getPasskeyRelyingParty({})).toEqual({ rpID: "localhost", rpName: PASSKEY_RP_NAME, origin: ["http://localhost:3000"] });
+    expect(getPasskeyRelyingParty({ NEXT_PUBLIC_APP_URL: "http://localhost:3005" }).origin).toEqual(["http://localhost:3005"]);
+  });
+
+  it("accepts extra trusted origins only on the RP domain, never a foreign one", () => {
+    const { origin } = getPasskeyRelyingParty({
+      NEXT_PUBLIC_APP_URL: "https://www.pawelperfect.com",
+      BETTER_AUTH_TRUSTED_ORIGINS: "https://apptest.pawelperfect.com,https://evil.example,https://pawelperfect.com.evil.example",
+    });
+    expect(origin).toContain("https://apptest.pawelperfect.com");
+    expect(origin).not.toContain("https://evil.example");
+    expect(origin).not.toContain("https://pawelperfect.com.evil.example");
+  });
+
+  it("keeps Turnstile off the passkey endpoints", () => {
+    expect(CAPTCHA_ENDPOINTS.some((path) => path.includes("passkey"))).toBe(false);
   });
 });
 

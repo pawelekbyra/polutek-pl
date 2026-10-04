@@ -86,6 +86,11 @@ describe('legal documents consistency', () => {
     expect(en).toContain('pp.*: sign-in, up to 30 days');
   });
 
+  it('the privacy policy describes passkey data (public key only, private key stays on the device)', () => {
+    expect(text(PolitykaContent)).toContain('klucze dostępu (klucz publiczny, identyfikator i nazwa urządzenia; klucz prywatny zostaje na Twoim urządzeniu)');
+    expect(text(PrivacyContentEn)).toContain('passkeys (public key, identifier and device name; the private key stays on your device)');
+  });
+
   it('the IP / browser-data period in the policy is the one the retention cron enforces', () => {
     expect(TECHNICAL_DATA_RETENTION_DAYS).toBe(90);
     expect(text(PolitykaContent)).toContain(
