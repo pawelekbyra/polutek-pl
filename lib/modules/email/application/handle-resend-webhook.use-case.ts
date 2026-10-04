@@ -1,3 +1,4 @@
+import type { BroadcastRecipientStatus, Prisma } from "@prisma/client";
 import { AppContext } from "../../shared/app-context";
 import { ResendWebhookInput, ResendWebhookResult } from "../domain/email.dto";
 import { UseCaseResult, ok, fail } from "../../shared/result";
@@ -124,14 +125,15 @@ export async function handleResendWebhook(
     }
 
     return ok({ received: true, accepted: true, duplicate: false, idempotency: "available" });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
     logger.error("[handleResendWebhook] Error processing webhook", error);
 
     try {
-      await lockService.releaseWithFailure(eventId, error.message || String(error));
+      await lockService.releaseWithFailure(eventId, message);
     } catch (releaseError) {
       logger.error(`[handleResendWebhook] Could not release lock with failure for ${eventId}`, {
-        originalError: error.message,
+        originalError: message,
         releaseError,
       });
     }
@@ -140,7 +142,7 @@ export async function handleResendWebhook(
       return fail(error);
     }
 
-    return fail(new EmailError(error.message || "Internal error during webhook handling", 500));
+    return fail(new EmailError(message || "Internal error during webhook handling", 500));
   }
 }
 
@@ -162,7 +164,12 @@ const STATUS_PRIORITY: Record<string, number> = {
  * not a broadcast (system mails) has no recipient row: nothing to update. Counts shown to the admin
  * are computed from these statuses, so no counters are touched here.
  */
-async function updateRecipientStatus(ctx: AppContext, resendEmailId: string, status: string, extraData: Record<string, unknown> = {}) {
+async function updateRecipientStatus(
+  ctx: AppContext,
+  resendEmailId: string,
+  status: BroadcastRecipientStatus,
+  extraData: Omit<Prisma.BroadcastEmailRecipientUpdateManyMutationInput, "status"> = {},
+) {
   const newPriority = STATUS_PRIORITY[status] || 0;
   const maxAttempts = 3;
 
@@ -179,7 +186,7 @@ async function updateRecipientStatus(ctx: AppContext, resendEmailId: string, sta
     // Compare-and-set on the status read above.
     const { count } = await ctx.prisma.broadcastEmailRecipient.updateMany({
       where: { id: recipient.id, status: recipient.status },
-      data: { status: status as any, ...extraData },
+      data: { status, ...extraData },
     });
     if (count > 0) return;
     logger.warn(`[handleResendWebhook] Retrying status update for ${resendEmailId} (attempt ${attempt})`);
