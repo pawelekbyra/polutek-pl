@@ -37,10 +37,6 @@ vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
-vi.mock('@/lib/actions/interactions', () => ({
-  setVideoReaction: vi.fn(),
-}));
-
 vi.mock('@/app/components/PremiumWrapper', () => ({
   default: () => <div>player-stub</div>,
 }));
