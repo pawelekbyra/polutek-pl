@@ -35,7 +35,8 @@ vi.mock("@/lib/modules/access", () => ({
   checkVideoAccess: vi.fn(),
 }));
 
-vi.mock("@/lib/modules/comments", () => ({
+vi.mock("@/lib/modules/comments", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/modules/comments")>()),
   updateComment: vi.fn(),
   deleteComment: vi.fn(),
   pinComment: vi.fn(),

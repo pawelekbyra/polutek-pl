@@ -5,6 +5,7 @@ const composer = () => readFileSync('app/components/comments/components/CommentC
 const embedded = () => readFileSync('app/components/comments/EmbeddedComments.tsx', 'utf8');
 const hook = () => readFileSync('app/components/comments/hooks/useComments.ts', 'utf8');
 const item = () => readFileSync('app/components/comments/components/CommentItem.tsx', 'utf8');
+const reactions = () => readFileSync('app/components/comments/components/CommentReactions.tsx', 'utf8');
 const motion = () => readFileSync('app/components/comments/components/comment-motion.tsx', 'utf8');
 
 describe('comments UI production contract', () => {
@@ -59,15 +60,15 @@ describe('comments UI production contract', () => {
 
     expect(source).toContain('const reactionsDisabled = !userProfile || !canComment || isReactionPending;');
     expect(source).toContain('disabled={reactionsDisabled}');
-    expect(source).toContain('aria-pressed={isLiked}');
-    expect(source).toContain('aria-pressed={isDisliked}');
+    expect(reactions()).toContain('aria-pressed={isLiked}');
+    expect(reactions()).toContain('aria-pressed={isDisliked}');
     // Reaction buttons are compact, repeated icon controls (h-8/32px, matching this file's
     // other dense-list controls like the "..." menu trigger and reply button) rather than
     // the 44px min-h-11 target used for one-off primary CTAs — still comfortably above
     // WCAG 2.2 AA's 24px Target Size (Minimum) criterion (docs/strategy/PRODUCT-STANDARD.md
     // X6.4 targets WCAG 2.2 AA generally; the 24px figure is the spec's own number, not
     // stated verbatim in that doc). Assert the visible focus indicator instead.
-    expect(source).toContain('focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]');
+    expect(reactions()).toContain('focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]');
     expect(source).toContain('locale: language === "pl" ? pl : enUS');
   });
 

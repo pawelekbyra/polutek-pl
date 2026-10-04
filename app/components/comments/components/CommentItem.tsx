@@ -5,13 +5,13 @@ import { formatDistanceToNow } from "date-fns";
 import { enUS, pl } from "date-fns/locale";
 import { Star, Trash2, Heart, MoreVertical, Edit, Flag, Link as LinkIcon, EyeOff, RotateCcw } from "../../icons";
 import { cn } from "@/lib/utils";
-import { CommentView, CommentBadgeKind, getAuthorBadge } from "../types";
+import { CommentView, getAuthorBadge } from "../types";
 import { SafeAvatar } from "../../SafeAvatar";
 import { ReportDialog } from "./ReportDialog";
 import { CommentReportReasonDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { useToast } from "@/app/hooks/useToast";
-import { NajsIcon } from "../../najs/primitives";
-import { AnimatedCount, LikePop } from "./comment-motion";
+import { CommentReactions } from "./CommentReactions";
+import { AuthorBadge } from "./AuthorBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,27 +42,6 @@ interface CommentItemProps {
 /** Avatar sizes: replies are visibly subordinate to their parent. */
 const AVATAR_SIZE = 40;
 const REPLY_AVATAR_SIZE = 24;
-
-const BADGE_LABELS: Record<CommentBadgeKind, { pl: string; en: string }> = {
-  AUTHOR: { pl: "Twórca", en: "Creator" },
-  PATRON: { pl: "Patron", en: "Patron" },
-};
-
-/** Inline badge after the author's name, readable at 11 px. */
-function AuthorBadge({ kind, language }: { kind: CommentBadgeKind; language: string }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex h-[18px] shrink-0 items-center rounded-md px-1.5 text-[11px] font-semibold leading-none",
-        kind === "AUTHOR"
-          ? "bg-[var(--chan-ink)] text-white"
-          : "border border-[var(--cm-blue-35)] bg-[var(--chan-blue-soft)] text-[var(--chan-blue)]",
-      )}
-    >
-      {BADGE_LABELS[kind][language === "pl" ? "pl" : "en"]}
-    </span>
-  );
-}
 
 function formatCommentAge(date: Date, language: string) {
   const formatted = formatDistanceToNow(date, {
@@ -101,8 +80,6 @@ function CommentItemComponent({
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const toast = useToast();
 
-  const isLiked = comment.viewerReaction === "LIKE";
-  const isDisliked = comment.viewerReaction === "DISLIKE";
   const reactionsDisabled = !userProfile || !canComment || isReactionPending;
   const [isHearted, setIsHearted] = React.useState<boolean>(comment.isHearted || false);
   const [isHighlighted, setIsHighlighted] = useState(false);
@@ -461,67 +438,15 @@ function CommentItemComponent({
 
         {/* -ml-2 cancels the buttons' own padding so the like icon lines up with the text. */}
         <div className="-ml-2 mt-1 flex min-w-0 flex-wrap items-center gap-1.5">
-          {/* Like + Dislike zgrupowane razem */}
-          <div className="flex items-center gap-0">
-            <button
-              type="button"
-              onClick={() => onLike(comment.id)}
-              disabled={reactionsDisabled}
-              aria-label={
-                isLiked
-                  ? language === "pl"
-                    ? "Cofnij polubienie komentarza"
-                    : "Remove like from comment"
-                  : language === "pl"
-                    ? "Polub komentarz"
-                    : "Like comment"
-              }
-              aria-pressed={isLiked}
-              className={cn(
-                "group inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-full px-2 transition-[color,background-color,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 motion-reduce:transition-none",
-                isLiked
-                  ? "text-[var(--chan-blue)]"
-                  : "text-[var(--chan-muted)] enabled:hover:bg-[var(--chan-surface)] enabled:hover:text-[var(--chan-ink)]",
-              )}
-            >
-              <LikePop active={isLiked}>
-                <NajsIcon
-                  name="like"
-                  className="h-4 w-4"
-                  stroke={isLiked ? "var(--chan-blue)" : "currentColor"}
-                />
-              </LikePop>
-              <AnimatedCount value={comment.likesCount || 0} className="font-semibold text-[12px] leading-none" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onDislike(comment.id)}
-              disabled={reactionsDisabled}
-              className={cn(
-                "inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-full px-2 transition-[color,background-color,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 motion-reduce:transition-none",
-                isDisliked
-                  ? "text-[var(--chan-blue)]"
-                  : "text-[var(--chan-muted)] enabled:hover:bg-[var(--chan-surface)] enabled:hover:text-[var(--chan-ink)]",
-              )}
-              aria-label={
-                isDisliked
-                  ? language === "pl"
-                    ? "Cofnij reakcję nie lubię"
-                    : "Remove dislike from comment"
-                  : language === "pl"
-                    ? "Nie lubię komentarza"
-                    : "Dislike comment"
-              }
-              aria-pressed={isDisliked}
-            >
-              <NajsIcon
-                name="dislike"
-                className="h-4 w-4"
-                stroke={isDisliked ? "var(--chan-blue)" : "currentColor"}
-              />
-            </button>
-          </div>
+          <CommentReactions
+            commentId={comment.id}
+            likesCount={comment.likesCount}
+            viewerReaction={comment.viewerReaction}
+            disabled={reactionsDisabled}
+            language={language}
+            onLike={onLike}
+            onDislike={onDislike}
+          />
 
           {isHearted && (
             <span

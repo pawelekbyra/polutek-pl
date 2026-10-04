@@ -106,7 +106,8 @@ describe('replying to a comment', () => {
     expect(await screen.findByText('Moja odpowiedź')).toBeInTheDocument();
     expect(posts[0]).toEqual({ url: '/api/videos/video-1/comments', body: { text: 'Moja odpowiedź', parentId: 'root' } });
     // "1 komentarz" counts top-level comments; a reply does not bump it.
-    expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent(/^1\s*komentarz$/);
+    // (waitFor: the count animates from 0 to 1 when the list loads.)
+    await waitFor(() => expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent(/^1\s*komentarz$/));
   });
 
   it('drops the reply target when the viewer switches to another video', async () => {
