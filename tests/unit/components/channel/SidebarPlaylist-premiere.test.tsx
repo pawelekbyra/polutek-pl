@@ -80,7 +80,6 @@ const baseProps = {
   sortedVideos: [item("public-1") as unknown as PublicVideoDTO],
   t: { views: "views" },
   language: "pl",
-  mounted: true,
   onVideoMouseEnter: () => {},
   showSupportBox: false,
 };
