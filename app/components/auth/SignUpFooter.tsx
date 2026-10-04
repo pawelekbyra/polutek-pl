@@ -13,7 +13,10 @@ export const ONE_TAP_CONTAINER_ID = "auth-modal-one-tap";
  */
 export default function SignUpFooter({ open, language, onSignedIn }: { open: boolean; language: string; onSignedIn: () => void }) {
   return (
-    <div className="mt-4 space-y-3">
+    // A flex gap, not `space-y`: the One Tap slot is `display: none` while Google draws nothing into it,
+    // and a hidden flex item gets no gap, so the window ends right under the notice (space-y would
+    // still give the notice a bottom margin because the slot follows it).
+    <div className="mt-4 flex flex-col gap-3">
       <SignUpLegalNotice language={language} />
       {open && (
         <>
