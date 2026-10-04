@@ -9,7 +9,14 @@ export interface VideoAccessContextValue {
   playbackPlan: PlaybackPlan | null;
   isLoading: boolean;
   effectiveTier: AccessTierDto;
+  /** Full re-check: shows the loading state and remounts the player. */
   refreshPlaybackPlan: () => Promise<void>;
+  /**
+   * Silent renewal for an open player (fresh delivery token, same playback session): the plan is
+   * replaced in place, nothing unmounts. Resolves with the new playable plan, or null when the
+   * viewer can no longer play (then the full re-check has already been started).
+   */
+  renewPlaybackPlan: () => Promise<PlaybackPlan | null>;
 }
 
 export const VideoAccessContext = createContext<VideoAccessContextValue>({
@@ -18,6 +25,7 @@ export const VideoAccessContext = createContext<VideoAccessContextValue>({
   isLoading: true,
   effectiveTier: "PUBLIC",
   refreshPlaybackPlan: async () => {},
+  renewPlaybackPlan: async () => null,
 });
 
 export function useVideoAccess() {

@@ -343,3 +343,94 @@ describe('recordPlaybackEventUseCase', () => {
     expect(JSON.stringify(createPlaybackEvent.mock.calls)).not.toContain('cookie');
   });
 });
+
+describe('recordPlaybackEventUseCase watch time (totalWatchMs)', () => {
+  const T0 = new Date('2026-01-01T00:00:00.000Z').getTime();
+
+  /** In-memory session row; updateSession applies the same fields Prisma would. */
+  function setup() {
+    const session: Record<string, any> = {
+      id: 's1',
+      videoId: 'v1',
+      userId: null,
+      ipHash: 'ip1',
+      userAgentHash: 'ua1',
+      countedAsView: false,
+      isAdminPreview: false,
+      createdAt: new Date(T0),
+      lastHeartbeatAt: null,
+      firstPlayAt: null,
+      maxProgressMs: 0,
+      totalWatchMs: 0,
+    };
+    let nowMs = T0;
+    const prisma = {
+      videoPlaybackSession: {
+        findUnique: vi.fn(async () => ({ ...session })),
+        update: vi.fn(async ({ data }: { data: Record<string, any> }) => {
+          if (data.lastHeartbeatAt) session.lastHeartbeatAt = data.lastHeartbeatAt;
+          if (data.firstPlayAt) session.firstPlayAt = data.firstPlayAt;
+          if (data.totalWatchMs?.increment) session.totalWatchMs += data.totalWatchMs.increment;
+          return session;
+        }),
+      },
+      videoPlaybackEvent: { create: vi.fn().mockResolvedValue({}) },
+    };
+    const ctx = createAppContext({ actor: { type: 'guest' }, prisma: prisma as never, now: () => new Date(nowMs) });
+    ctx.db.writeTransaction = vi.fn(async (fn: (tx: WriteTx) => Promise<unknown>) => fn({
+      videoPlaybackSession: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+      videoView: { create: vi.fn() },
+      video: { update: vi.fn() },
+    } as never)) as never;
+
+    const send = async (type: string, atSeconds: number) => {
+      nowMs = T0 + atSeconds * 1000;
+      const result = await recordPlaybackEventUseCase({
+        videoId: 'v1', sessionId: 's1', type, positionMs: 1000, durationMs: 600000,
+        ipHash: 'ip1', uaHash: 'ua1', fingerprint: 'f1',
+      }, ctx);
+      expect(result.ok).toBe(true);
+    };
+    return { session, send };
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true } });
+    vi.mocked(setNxEx).mockResolvedValue(true);
+  });
+
+  it('adds the real time between 60-second heartbeats', async () => {
+    const { session, send } = setup();
+    await send('PLAY_STARTED', 5);
+    await send('WATCHED_10_SECONDS', 15);
+    await send('HEARTBEAT', 65);
+    await send('HEARTBEAT', 125);
+    expect(session.totalWatchMs).toBe(120_000);
+  });
+
+  it('does not count paused time, and counts the part played before the pause', async () => {
+    const { session, send } = setup();
+    await send('PLAY_STARTED', 0);
+    await send('PLAY_PAUSED', 40);
+    await send('PLAY_RESUMED', 640);
+    await send('HEARTBEAT', 700);
+    expect(session.totalWatchMs).toBe(100_000);
+  });
+
+  it('caps one gap (sleeping tab, missing pause event) at one interval plus slack', async () => {
+    const { session, send } = setup();
+    await send('PLAY_STARTED', 0);
+    await send('HEARTBEAT', 3600);
+    expect(session.totalWatchMs).toBe(90_000);
+  });
+
+  it('ignores a heartbeat that comes less than 10 s after the previous mark', async () => {
+    const { session, send } = setup();
+    await send('PLAY_STARTED', 0);
+    await send('HEARTBEAT', 5);
+    expect(session.totalWatchMs).toBe(0);
+    await send('ENDED', 30);
+    expect(session.totalWatchMs).toBe(30_000);
+  });
+});

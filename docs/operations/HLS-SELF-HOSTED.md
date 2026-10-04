@@ -1,115 +1,72 @@
-# Własny HLS: kodowanie, dostarczanie, wdrożenie (jedyne źródło wideo od 2026-10-02)
+# Własny HLS: kodowanie, dostarczanie, odtwarzacz (jedyne źródło wideo)
 
-Decyzja i uzasadnienie: `docs/architecture/self-hosted-hls.md`. Badania: `docs/research/serwerek/01-hls-encoding.md`, `02-hls-delivery-cloudflare.md`.
+Decyzja i uzasadnienie: `docs/architecture/self-hosted-hls.md`. Upload, kolejka i worker kodowania: `docs/operations/VIDEO-PIPELINE.md`.
 
-**Własny HLS jest jedynym źródłem wideo.** Decyzja właściciela 2026-10-02: Mux, Cloudflare Stream, YouTube, Vimeo i każdy zewnętrzny URL/embed/surowy plik zostały wycięte z kodu (PR "remove third-party video providers"). Nie ma już poprzedniego dostawcy jako zapasu ani fallbacku w odtwarzaczu: jeśli własny HLS nie działa, film nie gra (plan `ERROR`/`NO_PRIMARY_ASSET`). Początek: pilot na filmie `c52f0407-b0e8-4b5c-b6d3-a9f152653002` (slug `czesc`, tier PUBLIC).
+Własny HLS jest jedynym źródłem wideo (decyzja właściciela 2026-10-02: żadnych zewnętrznych dostawców). Nie ma zapasowego źródła: gdy własny HLS nie działa, film nie gra (plan `ERROR`/`NO_PRIMARY_ASSET`, w odtwarzaczu komunikat z ponowieniem).
 
-## Co działa (stan 2026-10-02)
+## Elementy
 
-| Element | Stan |
+| Element | Gdzie |
 |---|---|
-| Bucket R2 `polutek-hls` (prywatny, `r2.dev` wyłączony) | utworzony, pilot wgrany: `videos/c52f0407-…/v/v1/` (3 rendycje 720/540/360, master, poster) |
-| Worker `polutek-hls-edge` + domena `video.pawelperfect.com` (strefa `pawelperfect.com`) | wdrożony (plan Free), sprawdzony: 200 z tokenem, 403 bez/zły/wygasły, 206 dla Range, CORS dla `https://www.pawelperfect.com` |
-| Sekret `HLS_TOKEN_SECRET` | w `%USERPROFILE%\.ai-secrets\secrets.env`, w Workerze i w `/opt/serwerek/apps/polutek/app.env` (kopia `app.env.bak-hls-20261002`); aplikacja NIE restartowana |
-| Kod aplikacji (provider `SELF_HLS`, plan odtwarzania, CSP) | wdrożony; od usunięcia dostawców jedyna ścieżka odtwarzania |
-| Wiersze w bazie | asset + trasa `SELF_HLS` dla 3 filmów (od teraz tworzy je worker kodowania, `activate-self-hls.sql` tylko ręcznie); stare wiersze dostawców zostają w bazie jako nieaktywne (kod je ignoruje; usunięcie: osobny PR) |
+| Bucket R2 `polutek-hls` (prywatny, bez `r2.dev`) | `videos/<videoId>/v/v<N>/` (master, rendycje, plakat, `meta.json`) |
+| Worker `polutek-hls-edge` na `video.pawelperfect.com` (plan Free) | `workers/hls-edge/worker.mjs`, wdrożenie `node workers/hls-edge/deploy.mjs` |
+| Sekret `HLS_TOKEN_SECRET` (>= 32 znaki) | Worker + `app.env` (ten sam); `HLS_DELIVERY_BASE_URL` (domyślnie `https://video.pawelperfect.com`) |
+| Koder | kontener `encoder` (VIDEO-PIPELINE.md), biblioteka `scripts/hls/encode-hls.mjs` |
+| Wiersze w bazie | `VideoAsset(provider=SELF_HLS, objectKey=videos/<id>/v/v<N>, bucket=polutek-hls)` + aktywna `VideoPlaybackRoute`; tworzy je worker |
+
+Filmy na produkcji (3) kodowano ręcznie z `downloads/default.mp4` dawnego Cloudflare Stream (720p, skompresowane); oryginałów w R2 nie mają, więc do przekodowania trzeba wgrać plik źródłowy w panelu (VIDEO-PIPELINE.md §8).
 
 ## Kodowanie (`scripts/hls/encode-hls.mjs`)
 
-Bez zależności npm: Node >= 18 + ffmpeg/ffprobe (na serwerku: Node 22, ffmpeg 8.0.1).
+Bez zależności npm: Node >= 18 + ffmpeg/ffprobe (obraz workera: statyczny ffmpeg 8.0.1 z `mwader/static-ffmpeg`, zawiera `libzimg`).
 
 ```bash
-nice -n 10 node encode-hls.mjs --input src.mp4 --out out-v1        # opcje: --preset slow --segment 6 --keyframe 2 --lufs -16 --max-height 1080 --dry-run
+nice -n 10 node encode-hls.mjs --input src.mp4 --out out-v1   # --preset slow --segment 6 --keyframe 2 --lufs -16 --max-height 1080 (krótszy bok) --dry-run
 ```
 
-- H.264 High, capped CRF na rendycję (1080p CRF21/max 7,5 Mb/s, 720p 22/4,5, 540p 23/3, 360p 23/1,1), 8-bit 4:2:0, tylko SDR (HDR = błąd z komunikatem), bez upscalingu (rendycje <= wysokość źródła), stała liczba klatek (24 zostaje 24, NTSC dokładne).
-- IDR co 2 s, GOP zamknięty, segmenty 6 s fMP4/CMAF, **wszystkie rendycje cięte w tych samych punktach** (sprawdzane).
-- Audio zmiksowane do każdej rendycji (jedna ścieżka: mniej żądań niż osobne audio): AAC-LC 128k, loudnorm 2-przebiegowy do -16 LUFS / -1 dBTP.
-- Master piszemy sami z zmierzonych rozmiarów segmentów: `BANDWIDTH` = szczyt, `AVERAGE-BANDWIDTH`, `RESOLUTION`, `FRAME-RATE`, `CODECS` z prawdziwego SPS; pierwszy wariant = najbliższy 2 Mb/s (start Apple).
-- Na końcu samokontrola: playlisty VOD zamknięte, init, suma EXTINF = długość źródła, każdy segment zaczyna się od klatki kluczowej, te same granice segmentów. Wynik w `meta.json` (czasy, rozmiary, problemy). Kod wyjścia 1 przy problemach.
-- Nie ma: playlist I-frame (trick play), napisów, wielu ścieżek audio, HDR (patrz pytania w dokumencie architektury).
-
-**Pomiar (CPX22, 2 vCPU, `nice -n 10`, preset slow):** źródło 1280x720 24 fps 10 s -> 3 rendycje w **13,5 s** (720p 6,1 s, 540p 3,9 s, 360p 2,5 s, pomiar głośności ok. 1 s), szczyt RAM 460 MB, wynik 4,7 MB. To ok. 1,3x czasu rzeczywistego dla drabinki do 720p. Dla 1080p i długich filmów: niezmierzone (rząd 2-3x czasu rzeczywistego, przy kodowaniu strona zwalnia o ok. 25%, SERWEREK.md §14).
-
-Źródło pilota: Cloudflare Stream trzyma oryginał tylko u siebie; pobrano jego `downloads/default.mp4` (720p, ok. 1,3 Mb/s, 24 fps, AAC). Oryginału w R2 nie było. **Dla nowych filmów zawsze zachowuj oryginał w R2 (`polutek`)**, bo kodowanie z już skompresowanego pliku traci jakość.
-
-## Wgranie (`scripts/hls/upload-hls.sh`)
-
-```bash
-R2_ACCOUNT_ID=… R2_ACCESS_KEY_ID=… R2_SECRET_ACCESS_KEY=… bash upload-hls.sh out-v1 <videoId> v1
-```
-
-Wszystko oprócz `master.m3u8`, potem master (publikacja "na końcu"). Klucz: `videos/<videoId>/v/<wersja>/…`. Nowa wersja = nowy katalog (`v2`), nigdy nadpisywanie. rclone loguje przy pierwszej próbie `501 NotImplemented` z R2 i druga próba przechodzi (hałas, plik trafia).
+- **Jeden proces ffmpeg**: źródło dekodowane raz (przeplot `bwdif`, HDR -> SDR, stała liczba klatek), `split` na wszystkie rendycje; audio: loudnorm 2-przebiegowy do -16 LUFS / -1 dBTP raz, `asplit`, AAC-LC 128k stereo 48 kHz w każdej rendycji.
+- **Drabinka**: prostokąty 16:9 obrócone do orientacji źródła, źródło wpisane bez powiększania, `setsar=1`, wymiary parzyste. Capped CRF: 1080 (CRF 21, max 7,8 Mb/s), 720 (22 / 4,5), 540 (23 / 3), 360 (23 / 1,1, <= 30 kl./s), 234 (24 / 0,35, <= 30 kl./s; słabe łącza, Apple zaczyna drabinkę od 416×234). Pion 1080×1920 -> 1080×1920, 720×1280, …; kino 1920×804 -> 1920×804, 1280×536, …; rendycja z > 80% pikseli wyższej jest pomijana. Ustawienia z najmniejszego prostokąta, który mieści rendycję.
+- **HDR** (HLG `arib-std-b67`, PQ `smpte2084`, np. iPhone HDR / Dolby Vision 8.4): `zscale` do liniowego światła w rozmiarze górnej rendycji, BT.2020 -> BT.709 w float, `tonemap=hable`, BT.709 limited 4:2:0; wynik oznaczony jako BT.709.
+- H.264 High, poziom liczony z rozmiaru i kl./s (1080p60 = 4.2), IDR co 2 s w każdej rendycji (GOP w klatkach tej rendycji), GOP zamknięty, bez scenecut, segmenty 6 s fMP4/CMAF: **wszystkie rendycje cięte w tych samych punktach** (sprawdzane).
+- Master piszemy sami z rozmiarów segmentów: `BANDWIDTH` = szczyt, `AVERAGE-BANDWIDTH`, `RESOLUTION`, `FRAME-RATE`, `CODECS` z prawdziwego SPS, `CLOSED-CAPTIONS=NONE`; pierwszy wariant = najbliższy 2 Mb/s (start według Apple).
+- Plakat z górnej rendycji (już SDR, obrócony) w 10% filmu.
+- Samokontrola: playlisty VOD zamknięte, init, suma EXTINF = długość strumienia wideo albo kontenera (±0,6 s), każdy segment od klatki kluczowej, te same granice segmentów. Wynik w `meta.json`.
+- Testy: `tests/unit/hls/encode-hls.test.ts` (argumenty, drabinka), `tests/unit/hls/encode-hls.ffmpeg.test.ts` (prawdziwy ffmpeg: poziom z audio, pion 60 kl./s bez audio, HLG; job CI `encode-smoke`).
+- Nie ma: playlist I-frame, storyboardu miniatur, napisów i wielu ścieżek audio wewnątrz HLS.
+- Czas: pilot 720p 10 s = 13,5 s na CPX22 (1,3× czasu rzeczywistego, przed jednym dekodowaniem); 1080p i długie filmy niezmierzone.
 
 ## Dostarczanie (`workers/hls-edge`)
 
-URL: `https://video.pawelperfect.com/h/<exp>.<sig>/<videoId>/<wersja>/<plik>`; `sig` = base64url(HMAC-SHA256(`HLS_TOKEN_SECRET`, `<videoId>/<wersja>/<exp>`)). Token obejmuje cały film w danej wersji (playlisty mają względne URI, więc hls.js i natywny Safari dziedziczą prefiks bez nagłówków i cookies). Token wydaje tylko `PlaybackService` po `checkVideoAccess()` i bramce premiery; TTL 6 h.
+URL: `https://video.pawelperfect.com/h/<exp>.<sig>/<videoId>/<wersja>/<plik>`; `sig` = base64url(HMAC-SHA256(`HLS_TOKEN_SECRET`, `<videoId>/<wersja>/<exp>`)). Jeden token obejmuje wszystkie pliki jednej wersji (playlisty mają względne URI). Token wydaje tylko `PlaybackService` po `checkVideoAccess()` i bramce premiery; TTL 6 h. Odpowiedź `/api/media-source` jest per widz: `private, no-store`.
 
-- Worker sprawdza token przy KAŻDYM żądaniu, zanim zajrzy do cache; cache edge ma klucz bez tokenu (jedna kopia dla wszystkich widzów). Segmenty i init: `public, max-age=31536000, immutable`; playlisty `max-age=300`.
-- Dozwolone tylko rozszerzenia m3u8/m4s/mp4/ts/vtt/jpg/webp i ścieżki `[A-Za-z0-9_-]`; `meta.json` nie jest serwowany. CORS tylko dla `ALLOWED_ORIGINS` (`https://www.pawelperfect.com`, `https://pawelperfect.com`); metody GET/HEAD/OPTIONS; Range przez cache.
-- To kontrola dostępu, nie DRM: zalogowany widz może skopiować URL na czas TTL i pobrać pliki.
-- Wdrożenie / aktualizacja Workera (idempotentne): `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `HLS_TOKEN_SECRET` w środowisku, potem `node workers/hls-edge/deploy.mjs`.
-- **Plan Free: 100 000 żądań Workera na dobę** (każdy plik to żądanie, także z cache). Film 3 min = ok. 35 żądań na odtworzenie, czyli ok. 2,8 tys. odtworzeń na dobę. Po przekroczeniu Worker zwraca błąd, a film przestaje grać (nie ma już fallbacku na dostawcę zewnętrznego). Powyżej limitu: Workers Paid 5 USD/mies. (decyzja właściciela, nic nie kupiono).
+- Token sprawdzany przy KAŻDYM żądaniu przed cache (klucz HMAC importowany raz na izolat); klucz cache bez tokenu (jedna kopia dla wszystkich). Segmenty i init: `public, max-age=31536000, immutable`; playlisty `public, max-age=300`; błędy `no-store`.
+- Kody: 403 zły/wygasły token, 404 nieznana ścieżka lub obiekt (np. `meta.json`), 405 inna metoda, 416 zły `Range`.
+- `Range` przy chybieniu: odpowiedź 206 prosto z R2 (`get` z zakresem), pełny obiekt trafia do cache w tle. `HEAD`: tylko metadane R2 (bez czytania i cache'owania treści).
+- CORS tylko dla `ALLOWED_ORIGINS` (`https://www.pawelperfect.com`, `https://pawelperfect.com`); GET/HEAD/OPTIONS.
+- To kontrola dostępu, nie DRM: zalogowany widz może skopiować URL na czas TTL.
+- **Plan Free: twarde 100 000 żądań Workera na dobę** (każdy plik, także z cache). Odtworzenie 3 min ≈ 35 żądań, a każde wejście na stronę główną z autoodtwarzaniem hero ≈ 6-10. Po przekroczeniu wideo nie gra do 00:00 UTC (nie ma zapasu). Workers Paid (5 USD/mies.) to decyzja właściciela.
+
+## Odtwarzacz (`app/components/VideoPlayer.tsx`, `app/components/player/self-hls.ts`)
+
+- hls.js (wersja przypięta w `package-lock.json`, build `hls.js/light`) z własnego bundla jako osobny chunk, ładowany od razu przy starcie strony (`loadHlsLibrary`); Vidstack dostaje go przez `provider.library`. Żadnego CDN: `cdn.jsdelivr.net` nie ma w CSP.
+- Szybki start: `testBandwidth: false` (bez pobierania pierwszego segmentu najniższej rendycji, a potem tego samego w wyższej), rendycja startowa z szacunku przepustowości przeglądarki (`navigator.connection`, Chromium; `saveData`/2G = najniższa), a bez niego pierwszy wariant mastera (~2 Mb/s); `startFragPrefetch`, `capLevelToPlayerSize`, bufor 30 s.
+- Odnowienie tokenu bez przemontowania: `PremiumWrapper` 2 min przed wygaśnięciem (i od razu po powrocie do uśpionej karty) pobiera `/api/media-source/<id>?session=<id>` (pełna kontrola dostępu; serwer zostawia tę samą sesję odtwarzania, gdy należy do widza, filmu i ma < 24 h) i podmienia plan. Każde żądanie hls.js dostaje najnowszy token (`xhrSetup`), więc pozycja, bufor i jakość zostają. 401/403 z Workera: odnowienie i do 3 ponowień tego samego żądania. Gdy mimo to błąd jest krytyczny (albo natywny HLS Safari), odtwarzacz raz przeładowuje strumień ze świeżym tokenem i wraca do tej samej pozycji.
+- Napisy: `subtitleUrlPl/En` (WebVTT, `https://` albo `/...`) tylko w grywalnym planie, jako `<Track>` Vidstacka; host pliku musi być w CSP `connect-src`.
+- Telemetria: `PLAY_STARTED`, `PLAY_RESUMED`, `PLAY_PAUSED`, `HEARTBEAT` co 60 s, `ENDED`; `totalWatchMs` = czas między startem/wznowieniem a kolejnym zdarzeniem, najwyżej 90 s na odcinek (pauza i uśpiona karta się nie liczą).
 
 ## Aplikacja
 
-- Prisma: wartość `SELF_HLS` w enum `StorageProvider` (migracja `20261002140000_add_self_hls_storage_provider`, addytywna, bez BOM). `VideoAsset`: `provider=SELF_HLS`, `objectKey=videos/<videoId>/v/<wersja>`, `bucket=polutek-hls`.
-- `PlaybackService`: po decyzji dostępu i bramce premiery asset `SELF_HLS` daje podpisany `master.m3u8` (`source.kind=self_hls`); odmowa nie ma żadnego URL (test). Gdy brak `HLS_TOKEN_SECRET` albo zły klucz obiektu, plan to `ERROR` bez URL, tokenu i sesji (fail closed). Wiersze innych dostawców (stare trasy `PREVIOUS`, assety Mux/Stream/YouTube/Vimeo) są ignorowane, nigdy nie powodują błędu i nigdy nie są odtwarzane. Sesje i liczenie wyświetleń bez zmian (`sourceKind=self_hls`). `VideoPlayer` gra wyłącznie `source.kind=self_hls` z adresem `.m3u8`; błąd ładowania pokazuje komunikat z ponowieniem, bez przełączania na inne źródło.
-- CSP: `video.pawelperfect.com` (i host z `HLS_DELIVERY_BASE_URL`) w `connect-src`/`media-src`.
-- Env: `HLS_TOKEN_SECRET` (>= 32 znaki, ten sam co w Workerze; rotacja = nowy sekret w Workerze i aplikacji naraz, aktywne tokeny wygasną), `HLS_DELIVERY_BASE_URL` (domyślnie `https://video.pawelperfect.com`).
-- Admin: nowy film = upload pliku (panel "Media"), brak wyboru dostawcy, URL-a ani UID (VIDEO-PIPELINE.md §5).
-
-## Wdrożenie pilota (robi główna sesja, po scaleniu PR)
-
-```bash
-# 1. deploy aplikacji (migracja enum wykona się w deploy.sh; pg_dump przed migracją jest automatyczny)
-cd /opt/serwerek/apps/polutek && rm -rf src && mkdir src && (git archive <commit> | tar -x -C src) && ./deploy.sh <tag>
-
-# 2. skrypty SQL na serwer
-scp scripts/hls/activate-self-hls.sql serwerek:/opt/serwerek/data/hls-work/
-
-# 3. próba na sucho (transakcja wycofana), potem prawdziwa aktywacja
-ssh serwerek 'cd /opt/serwerek/data/hls-work && docker exec -i polutek-db-1 sh -c "psql -U \$POSTGRES_USER -d \$POSTGRES_DB -v ON_ERROR_STOP=1 -v video_id=c52f0407-b0e8-4b5c-b6d3-a9f152653002 -v version=v1" < activate-self-hls.sql'
-ssh serwerek 'ai-log "HLS pilot: activated SELF_HLS route for video c52f0407 (activate-self-hls.sql)"'
-```
-
-(Próba na sucho: dodaj `-v finish=ROLLBACK`; skrypt wykonuje wszystko, pokazuje stan po zmianie i wycofuje transakcję. Bez tego parametru kończy `COMMIT`. Skrypt służy do ręcznej aktywacji; zwykle robi to worker.) Sprawdzenie: otwórz film `czesc` na `www.pawelperfect.com`, w DevTools/Network żądania idą do `video.pawelperfect.com/h/…`; panel admina `/admin/videos/<id>` pokazuje aktywną trasę "Własny HLS".
-
-## Wszystkie trzy filmy na własnym HLS (2026-10-02)
-
-Decyzja właściciela: na stronie zostają dokładnie 3 filmy i grają wyłącznie z własnego HLS. Stan bazy produkcyjnej po aktywacji (`activate-self-hls.sql`, wersja `v1`; poprzednie trasy dostawców zostały jako `PREVIOUS`, kod je ignoruje):
-
-| Film | id | Tier / bramka | Źródło | Wynik kodowania |
-|---|---|---|---|---|
-| `czesc` | `c52f0407-b0e8-4b5c-b6d3-a9f152653002` | PUBLIC | CF `downloads/default.mp4` 720p ok. 1,3 Mb/s | pilot, 4,7 MB |
-| `jj` | `5ab531a4-54ad-4d4e-8c92-870fd42f445e` | LOGGED_IN | CF `downloads/default.mp4` 720p ok. 3,2 Mb/s, **ścieżka audio to cyfrowa cisza** (-91 dB) | 3 rendycje, 8,4 MB, 20 s, szczyt RAM 348 MB |
-| `dla-patronow` | `aa229b35-e37d-46a2-959b-d016ad7b6a68` | PUBLIC + premiera 2026-12-31 (bramka bez zmian) | CF `downloads/default.mp4` 720p ok. 1,4 Mb/s | 3 rendycje, 4,4 MB, 15 s, szczyt RAM 346 MB |
-
-**Jakość źródeł:** dla `jj` i `dla-patronow` nie ma oryginałów w R2 (`polutek`), nie ma assetów Mux, `Video.videoUrl` jest pusty. Jedyne dostępne źródło to wygenerowany przez Cloudflare Stream `downloads/default.mp4` (`POST /stream/<uid>/downloads`, potem pobranie z `-L`, bo adres przekierowuje). Cloudflare przechowuje większy oryginał (`jj`: 19,6 MB / 10 s, 1280x720), ale nie wydaje go przez API, więc kodowano ze skompresowanego pliku (jakość nie wzrośnie ponad to, co było). Dla przyszłych filmów trzymaj oryginał w R2.
-
-**Błąd naprawiony przy okazji:** `encode-hls.mjs` przerywał pracę na źródle z cyfrową ciszą w audio (`loudnorm` zwraca `-inf`). Teraz pomiar głośności jest pomijany, audio kodowane jak jest (test `encode-hls.test.ts`).
-
-Weryfikacja po aktywacji (bez sesji zalogowanego użytkownika, bo nie tworzymy kont na produkcji):
-- `GET /api/media-source/<id>` jako gość: `jj` -> `LOGIN_REQUIRED` (`requiredTier: LOGGED_IN`) bez żadnego URL; `dla-patronow` -> `LOGIN_REQUIRED`, diagnostyka "Premiere not reached yet", bez URL; `czesc` -> `SELF_HLS` z `playbackUrl` na `video.pawelperfect.com`. Podpisany plan dla zalogowanego (i brak URL dla odmowy / przed premierą) pokrywa `tests/unit/playback-self-hls.test.ts`.
-- Dostarczanie z tokenem wystawionym ręcznie tym samym sekretem (jak `SelfHlsTokenService`): master/wariant/init/segment 200, `Range` 206, CORS dla `https://www.pawelperfect.com`, brak/zły podpis/token innego filmu/wygasły 403, `meta.json` 404; pełne zdekodowanie strumienia przez `ffmpeg` z adresu HLS (audio+wideo, bez błędów) w ok. 4 s dla 10-sekundowego filmu. Pierwszy bajt mastera ok. 0,2 s, segment 720p 0,3 s z serwerka.
-
-Kopia bazy sprzed aktywacji: `/opt/serwerek/backups/pre-hls-jj-patronow-20261002T111908.sql.gz`. `run-sql-on-server.sh` (z `scripts/hls/`) = `docker exec -i polutek-db-1 psql ... -v video_id=<id> -v version=v1 < plik.sql`.
-
-## Po usunięciu dostawców (2026-10-02): wdrożenie i sprzątanie
-
-Kod ignoruje wiersze dostawców, więc kolejność jest bezpieczna: najpierw deploy, potem sprzątanie u dostawców.
-
-1. Deploy aplikacji (`deploy.sh <tag>`). Migracji nie ma: kolejne wartości enum `StorageProvider` (`R2`, `S3`, `VERCEL_BLOB`, `CLOUDFLARE_STREAM`, `MUX`, `YOUTUBE`, `VIMEO`) i tabele dystrybucji/jobów dostawców zostają w schemacie jako LEGACY (komentarze w `schema.prisma`); migracje są tylko addytywne. Stare wiersze (nieaktywne trasy `PREVIOUS`, assety, joby, zdarzenia webhooków) zostają w bazie; ich usunięcie i migracja czyszcząca to osobny PR.
-2. Sprzątanie u dostawców (webhooki, assety, tokeny, timer systemd): lista w `docs/operations/SERWEREK.md`, sekcja "Sprzątanie po dostawcach wideo".
+- `PlaybackService`: po decyzji dostępu i bramce premiery asset `SELF_HLS` daje podpisany `master.m3u8` (`source.kind=self_hls`); odmowa nie ma żadnego URL (test). Brak `HLS_TOKEN_SECRET` albo zły klucz obiektu = plan `ERROR` bez URL, tokenu i sesji (fail closed). Wiersze innych dostawców są ignorowane.
+- CSP: host z `HLS_DELIVERY_BASE_URL` / `video.pawelperfect.com` w `connect-src` i `media-src`; `worker-src blob:` dla wątku hls.js.
 
 ## Rollback
 
-- **Jednego filmu:** nie ma już poprzedniego dostawcy, do którego można wrócić. Własną wersję przełącza się ręcznie na wcześniejszą wersję HLS (`activate-self-hls.sql` z `-v version=v<N>`; stare wersje zostają w R2) albo w panelu "Zakoduj ponownie" (nowa wersja HLS, stara gra do przełączenia trasy).
-- **Awaria Workera/limit:** wideo nie gra do czasu naprawy (Workers Paid 5 USD/mies. znosi limit dobowy; decyzja właściciela). Brak `HLS_TOKEN_SECRET` w `app.env` = plan `ERROR` dla wszystkich filmów (fail closed), nie pomaga jako "wyłącznik".
-- **Aplikacja:** `./deploy.sh <tag> --rollback` wraca do poprzedniego obrazu (z kodem dostawców; aktywne trasy wskazują własny HLS, więc stary kod też gra własny HLS).
+- **Jednego filmu:** wcześniejsza wersja HLS (stare wersje zostają w R2) przez `scripts/hls/activate-self-hls.sql -v version=v<N>` (`-v finish=ROLLBACK` = próba na sucho) albo nowa wersja przez „Zakoduj ponownie”.
+- **Awaria Workera / limit:** wideo nie gra do naprawy. Brak `HLS_TOKEN_SECRET` w `app.env` = `ERROR` dla wszystkich filmów.
+- **Aplikacja:** `./deploy.sh <tag> --rollback` (aktywne trasy wskazują własny HLS, poprzedni obraz też go gra).
 
 ## Utrzymanie
 
-- Nowy film: upload w panelu admina, kodowanie robi worker (kolejka w Postgresie): **docs/operations/VIDEO-PIPELINE.md**. Ręczna ścieżka (encode-hls.mjs + upload-hls.sh + SQL) zostaje jako awaryjna.
-- Sprzątanie starych wersji z R2 ręcznie po okresie karencji.
-- Logi Workera: Cloudflare Dashboard (observability włączone).
+- Nowy film / przekodowanie: panel admina (VIDEO-PIPELINE.md). Ręczna ścieżka awaryjna: `encode-hls.mjs` + `scripts/hls/upload-hls.sh` (rclone; master na końcu) + `activate-self-hls.sql`.
+- Stare wersje HLS: usuwanie w panelu po okresie karencji.
+- Logi Workera: Cloudflare Dashboard (observability włączone). Monitoringu dostępności i zużycia limitu na razie nie ma (decyzja właściciela).

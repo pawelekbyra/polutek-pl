@@ -33,7 +33,7 @@ const asset = (over: Record<string, unknown>) => ({
 describe('SELF_HLS playback plan', () => {
   const prisma = {
     video: { findUnique: vi.fn() },
-    videoPlaybackSession: { create: vi.fn() },
+    videoPlaybackSession: { create: vi.fn(), findUnique: vi.fn() },
   };
 
   const selfAsset = asset({ id: 'self', isPrimary: true });
@@ -166,6 +166,74 @@ describe('SELF_HLS playback plan', () => {
     const result = await plan({ type: 'user', userId: 'u1' });
     expect(result.status).toBe('UNAVAILABLE');
     expect(result.source).toBeUndefined();
+  });
+
+  it('hands the subtitle tracks to an allowed viewer (https or same-site only)', async () => {
+    prisma.video.findUnique.mockResolvedValue(video({
+      subtitleUrlPl: 'https://subs.example.com/pl.vtt',
+      subtitleUrlEn: 'javascript:alert(1)',
+    }));
+    const result = await plan({ type: 'user', userId: 'u1' });
+    expect(result.status).toBe('READY');
+    expect(result.player.textTracks).toEqual([
+      { src: 'https://subs.example.com/pl.vtt', label: 'Polski', language: 'pl', kind: 'subtitles' },
+    ]);
+
+    prisma.video.findUnique.mockResolvedValue(video({ subtitleUrlPl: '/subs/pl.vtt', subtitleUrlEn: 'http://plain.example.com/en.vtt' }));
+    const second = await plan({ type: 'user', userId: 'u1' });
+    expect(second.player.textTracks?.map((t) => t.src)).toEqual(['/subs/pl.vtt']);
+  });
+
+  describe('token renewal of an open player (reuseSessionId)', () => {
+    const renew = (actor: Actor, reuseSessionId: string, fingerprint = { ip: 'ip1', ua: 'ua1' }) =>
+      PlaybackService.createPlaybackPlanWithContext(
+        VIDEO_ID,
+        createAppContext({ actor, prisma: prisma as never }),
+        fingerprint.ip,
+        fingerprint.ua,
+        { reuseSessionId },
+      );
+    const session = (over: Record<string, unknown> = {}) => ({
+      id: 'sess-old', videoId: VIDEO_ID, userId: 'u1', ipHash: 'ip1', userAgentHash: 'ua1',
+      isAdminPreview: false, createdAt: new Date(Date.now() - 6 * 3600_000), ...over,
+    });
+
+    it('keeps the viewer\'s own session and issues a fresh token', async () => {
+      prisma.videoPlaybackSession.findUnique.mockResolvedValue(session());
+      const result = await renew({ type: 'user', userId: 'u1' }, 'sess-old');
+      expect(result.status).toBe('READY');
+      expect(result.tracking.playbackSessionId).toBe('sess-old');
+      expect(result.source?.playbackUrl).toContain('/h/');
+      expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
+    });
+
+    it('keeps a guest session only for the same fingerprint', async () => {
+      prisma.videoPlaybackSession.findUnique.mockResolvedValue(session({ userId: null }));
+      expect((await renew({ type: 'guest' }, 'sess-old')).tracking.playbackSessionId).toBe('sess-old');
+      expect((await renew({ type: 'guest' }, 'sess-old', { ip: 'other', ua: 'ua1' })).tracking.playbackSessionId).toBe('sess-1');
+    });
+
+    it.each([
+      ['another user', session({ userId: 'u2' })],
+      ['another video', session({ videoId: 'other-video-id-123' })],
+      ['a session older than a day', session({ createdAt: new Date(Date.now() - 25 * 3600_000) })],
+      ['an admin preview session', session({ isAdminPreview: true })],
+      ['a missing session', null],
+    ])('creates a new session instead of reusing %s', async (_label, existing) => {
+      prisma.videoPlaybackSession.findUnique.mockResolvedValue(existing);
+      const result = await renew({ type: 'user', userId: 'u1' }, 'sess-old');
+      expect(result.tracking.playbackSessionId).toBe('sess-1');
+      expect(prisma.videoPlaybackSession.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('still runs the access check: a renewal for a viewer who lost access gets no URL', async () => {
+      vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'LOGIN_REQUIRED' } } as never);
+      prisma.videoPlaybackSession.findUnique.mockResolvedValue(session());
+      const result = await renew({ type: 'guest' }, 'sess-old');
+      expect(result.canPlay).toBe(false);
+      expect(JSON.stringify(result)).not.toContain('/h/');
+      expect(prisma.videoPlaybackSession.findUnique).not.toHaveBeenCalled();
+    });
   });
 
   it('only accepts object keys that belong to the video', () => {

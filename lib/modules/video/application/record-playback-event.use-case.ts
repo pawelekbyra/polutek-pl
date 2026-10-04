@@ -2,7 +2,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult } from "@/lib/modules/shared/result";
 import { checkVideoAccess } from "@/lib/modules/access";
 import { setNxEx } from "@/lib/rate-limit";
-import { RecordPlaybackEventInput, PLAYBACK_EVENT_TYPES } from "../domain/video.dto";
+import { RecordPlaybackEventInput, PLAYBACK_EVENT_TYPES, PLAYBACK_MAX_WATCH_INCREMENT_MS, PLAYBACK_SESSION_MAX_AGE_MS } from "../domain/video.dto";
 import {
     InvalidPlaybackSessionError,
     PlaybackSessionOwnershipMismatchError,
@@ -41,6 +41,11 @@ function isMetadataRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+
+/** Events after which the video is playing again: they only move the session's "playing since" mark. */
+const WATCH_START_EVENTS = new Set(['PLAY_STARTED', 'PLAY_RESUMED']);
+/** Events sent while (or right when stopping) playing: they add the time since the mark to totalWatchMs. */
+const WATCH_ACCRUAL_EVENTS = new Set(['HEARTBEAT', 'PROGRESS', 'WATCHED_10_SECONDS', 'PLAY_PAUSED', 'ENDED']);
 
 function getWatchedViewThresholdMs(durationMs: number | null | undefined): number {
   if (Number.isFinite(durationMs) && durationMs && durationMs > 0) {
@@ -154,7 +159,7 @@ export async function recordPlaybackEventUseCase(
 
         const currentTime = ctx.now ? ctx.now() : new Date();
         const sessionAgeMs = currentTime.getTime() - session.createdAt.getTime();
-        if (sessionAgeMs > 24 * 60 * 60 * 1000) {
+        if (sessionAgeMs > PLAYBACK_SESSION_MAX_AGE_MS) {
             return { ok: false, error: new PlaybackSessionExpiredError() };
         }
     } else if (['WATCHED_10_SECONDS', 'PROGRESS', 'HEARTBEAT'].includes(type)) {
@@ -162,22 +167,23 @@ export async function recordPlaybackEventUseCase(
     }
 
     const isProgressOrHeartbeat = ['PROGRESS', 'HEARTBEAT'].includes(type);
+    const marksPlaybackStart = WATCH_START_EVENTS.has(type);
+    const accruesWatchTime = WATCH_ACCRUAL_EVENTS.has(type);
     let shouldSaveEvent = true;
 
-    if (sessionId && (isProgressOrHeartbeat || ['PLAY_STARTED', 'WATCHED_10_SECONDS'].includes(type))) {
+    if (sessionId && (marksPlaybackStart || accruesWatchTime)) {
         const now = ctx.now ? ctx.now() : new Date();
-        const lastHeartbeat = session?.lastHeartbeatAt || session?.createdAt || now;
-        const timeSinceLastHeartbeat = now.getTime() - lastHeartbeat.getTime();
+        const lastMark = session?.lastHeartbeatAt || session?.createdAt || now;
+        const sinceLastMarkMs = Math.max(0, now.getTime() - lastMark.getTime());
 
-        const isCritical = ['PLAY_STARTED', 'WATCHED_10_SECONDS'].includes(type);
-        const shouldUpdateStats = isCritical || timeSinceLastHeartbeat >= 10000;
-
-        if (isProgressOrHeartbeat && !shouldUpdateStats) {
-            shouldSaveEvent = false;
-        }
+        // Heartbeats closer than 10 s to the previous mark are dropped (duplicates, chatty clients).
+        const shouldUpdateStats = !isProgressOrHeartbeat || sinceLastMarkMs >= 10000;
+        if (!shouldUpdateStats) shouldSaveEvent = false;
 
         if (shouldUpdateStats) {
-            const incrementMs = !isCritical && timeSinceLastHeartbeat < 30000 ? timeSinceLastHeartbeat : 0;
+            // `lastHeartbeatAt` is the "playing since" mark: a (re)start only moves it; every other
+            // event adds the time since the mark, capped so a pause or a sleeping tab never counts.
+            const incrementMs = accruesWatchTime ? Math.min(sinceLastMarkMs, PLAYBACK_MAX_WATCH_INCREMENT_MS) : 0;
 
             await repo.updateSession(sessionId, {
                 lastHeartbeatAt: now,

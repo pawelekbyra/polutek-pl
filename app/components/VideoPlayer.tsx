@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import Image from 'next/image';
 import {
     MediaPlayer,
     MediaProvider,
+    Track,
     isHLSProvider,
     type MediaPlayerInstance,
     type MediaProviderAdapter,
@@ -12,7 +12,6 @@ import {
 import PolutekControls from './player/PolutekControls';
 import { useVideoAccess } from './PremiumWrapper';
 import { PublicVideoDTO as VideoType, type VideoTextTrackDTO } from '@/app/types/video';
-import { cn } from '@/lib/utils';
 import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
 import { PlayerPosterLoading } from './PlayerLoadingState';
@@ -20,10 +19,20 @@ import { resolvePlaybackSource } from './playback-source';
 import { shouldSendViewForPlaybackPosition } from './video-view-threshold';
 import { usePlaybackTelemetry } from '@/lib/hooks/usePlaybackTelemetry';
 import { usePageRevealReady } from './preload/PageRevealGate';
+import { buildSelfHlsConfig, loadHlsLibrary, streamIdentity } from './player/self-hls';
+
+// The player is on the home page above the fold: start fetching hls.js (our own chunk) right
+// away, so it is ready before the playback plan arrives and the stream is never fetched twice
+// (natively by the <video> element and again by hls.js).
+if (typeof window !== 'undefined') void loadHlsLibrary().catch(() => undefined);
+
+/** Renew the delivery token before a request when it expires within this window. */
+const TOKEN_RENEW_BEFORE_MS = 30_000;
+/** Longest a request waits for a token renewal before going out anyway. */
+const TOKEN_RENEW_WAIT_MS = 10_000;
 
 interface VideoPlayerProps {
     video: VideoType;
-    variant?: 'hero' | 'thumbnail';
     onViewCounted?: () => void;
     /** PageRevealGate key to report once the stream can play (first frames buffered). */
     revealKey?: string;
@@ -41,8 +50,8 @@ function normalizeTextTracks(tracks: VideoTextTrackDTO[] | undefined): VideoText
     });
 }
 
-export default function VideoPlayer({ video, variant = 'hero', onViewCounted, revealKey }: VideoPlayerProps) {
-    const { playbackPlan, refreshPlaybackPlan, isLoading } = useVideoAccess();
+export default function VideoPlayer({ video, onViewCounted, revealKey }: VideoPlayerProps) {
+    const { playbackPlan, refreshPlaybackPlan, renewPlaybackPlan, isLoading } = useVideoAccess();
     // The player never receives admin status from the session (the server decides); admin-only
     // diagnostics in the overlays stay off for viewers.
     const isAdmin = false;
@@ -50,7 +59,25 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
     const { source, tracking, player: playerConfig } = playbackPlan || {};
     const videoUrl = source?.playbackUrl;
     const videoSourceKind = source?.kind;
-    const textTracks = normalizeTextTracks(playerConfig?.textTracks || video.textTracks);
+    const textTracks = normalizeTextTracks(playerConfig?.textTracks);
+
+    // One stream = one video version; a renewed token is the same stream. The player is mounted
+    // with the URL it started with; later requests get the newest token (see player/self-hls.ts).
+    const streamKey = streamIdentity(videoUrl);
+    const [mountedStream, setMountedStream] = useState<{ key: string | null; url: string | undefined }>({ key: streamKey, url: videoUrl });
+    if (mountedStream.key !== streamKey) setMountedStream({ key: streamKey, url: videoUrl });
+    const latestUrlRef = useRef(videoUrl);
+    const tokenExpiresAtRef = useRef<number | null>(null);
+    const renewRef = useRef(renewPlaybackPlan);
+    useEffect(() => {
+        latestUrlRef.current = videoUrl;
+        tokenExpiresAtRef.current = source?.expiresAt ? new Date(source.expiresAt).getTime() : null;
+        renewRef.current = renewPlaybackPlan;
+    }, [videoUrl, source?.expiresAt, renewPlaybackPlan]);
+    // After a fatal error the stream is reloaded once with a fresh token, from the same position.
+    const recoveryAttemptedRef = useRef(false);
+    const resumeRef = useRef<{ time: number; play: boolean } | null>(null);
+    const playStartedSentRef = useRef(false);
 
     const player = useRef<MediaPlayerInstance>(null);
     const posterUrl = playerConfig?.poster || source?.posterUrl || video.thumbnailUrl || '/logo.png';
@@ -77,9 +104,60 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
     const sendEvent = usePlaybackTelemetry({
         videoId: video.id,
         playbackSessionId: tracking?.playbackSessionId,
-        refreshPlaybackPlan,
+        renewPlaybackPlan,
         playerRef: player,
     });
+
+    // Token handling for hls.js requests: renew first when the token is about to expire (a tab
+    // that slept for hours), and renew at once when the edge refused a request (401/403).
+    const ensureFreshToken = useCallback(async () => {
+        const expiresAt = tokenExpiresAtRef.current;
+        if (!expiresAt || expiresAt - Date.now() > TOKEN_RENEW_BEFORE_MS) return;
+        await Promise.race([
+            renewRef.current().catch(() => null),
+            new Promise((resolve) => setTimeout(resolve, TOKEN_RENEW_WAIT_MS)),
+        ]);
+    }, []);
+    const onDeliveryAuthError = useCallback(() => {
+        void renewRef.current().catch(() => null);
+    }, []);
+
+    const handleProviderChange = useCallback((provider: MediaProviderAdapter | null) => {
+        if (!isHLSProvider(provider) || videoSourceKind !== 'self_hls') return;
+        // Our own pinned hls.js chunk, never the CDN default. Must be an arrow function: Vidstack
+        // treats anything with a prototype as the hls.js class itself.
+        provider.library = async () => {
+            const mod = await loadHlsLibrary();
+            provider.config = buildSelfHlsConfig({
+                defaults: mod.default.DefaultConfig,
+                currentMasterUrl: () => latestUrlRef.current,
+                ensureFreshToken,
+                onAuthError: onDeliveryAuthError,
+                connection: (navigator as Navigator & { connection?: Parameters<typeof buildSelfHlsConfig>[0]['connection'] }).connection,
+            });
+            return mod;
+        };
+    }, [ensureFreshToken, onDeliveryAuthError, videoSourceKind]);
+
+    const handleMediaError = useCallback(async () => {
+        if (!recoveryAttemptedRef.current) {
+            // Typical cause: the token expired while the tab slept and the edge answered 403.
+            // Renew silently and reload the stream from the same position, once.
+            recoveryAttemptedRef.current = true;
+            const current = player.current;
+            resumeRef.current = current ? { time: current.currentTime || 0, play: current.paused === false } : null;
+            const fresh = await renewRef.current().catch(() => null);
+            const freshUrl = fresh?.source?.playbackUrl;
+            if (freshUrl && streamIdentity(freshUrl) === streamKey) {
+                setMountedStream({ key: streamKey, url: freshUrl });
+                setPlayerKey((key) => key + 1);
+                return;
+            }
+        }
+        resumeRef.current = null;
+        setLoadError('Nie udało się załadować materiału wideo. Spróbuj ponownie za chwilę.');
+        sendEvent('PLAYER_ERROR', { errorCode: 'LOAD_FAILED' });
+    }, [sendEvent, streamKey]);
 
     const maybeSendView = useCallback(async (currentTimeSeconds: number, durationSeconds?: number) => {
         if (hasReached10s.current || viewCountRequestInFlight.current || !shouldSendViewForPlaybackPosition(currentTimeSeconds, durationSeconds)) return;
@@ -117,13 +195,17 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
         hasReached10s.current = false;
         viewCountRequestInFlight.current = false;
         reachedThresholds.current = {};
-    }, [video.id, source?.playbackUrl, source?.kind, tracking?.playbackSessionId]);
+        recoveryAttemptedRef.current = false;
+        resumeRef.current = null;
+        playStartedSentRef.current = false;
+        // Only a different video/version restarts the player; a renewed token or session does not.
+    }, [video.id, streamKey]);
 
     useEffect(() => {
         setBufferingOverlayTimedOut(false);
         const timer = setTimeout(() => setBufferingOverlayTimedOut(true), 15000);
         return () => clearTimeout(timer);
-    }, [video.id, videoUrl, videoSourceKind]);
+    }, [video.id, streamKey]);
 
     useEffect(() => {
         if (!isMounted || !tracking?.playbackSessionId) return;
@@ -133,7 +215,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
         return () => clearInterval(interval);
     }, [isMounted, tracking, sendEvent]);
 
-    const autoPlayWanted = playerConfig ? (playerConfig.autoplayAllowed && playerConfig.mutedAutoplay) : variant === 'hero';
+    const autoPlayWanted = playerConfig ? (playerConfig.autoplayAllowed && playerConfig.mutedAutoplay) : true;
     const resolvedSource = resolvePlaybackSource({
         kind: videoSourceKind,
         playbackUrl: videoUrl,
@@ -176,28 +258,9 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
     // pre-mount frame here, keep showing the same poster rather than an empty (black)
     // box, so the handoff from PremiumWrapper to the player never flashes.
     if (!isMounted || isLoading) {
-        if (variant === 'thumbnail') return null;
         return (
             <div className="relative h-full w-full">
                 <PlayerPosterLoading posterUrl={video.thumbnailUrl || posterUrl} />
-            </div>
-        );
-    }
-
-    if (variant === 'thumbnail') {
-        return (
-            <div className={cn("relative w-full h-full group/player overflow-hidden bg-neutral-900", "cursor-default")}>
-                <Image
-                    src={posterUrl}
-                    alt={video.title || 'Video poster'}
-                    fill
-                    className="w-full h-full object-cover opacity-90 transition duration-700 group-hover/player:scale-105"
-                />
-                {!videoUrl && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/player:opacity-100 transition-opacity">
-                        <span className="text-white font-mono text-[10px] uppercase tracking-widest bg-black/60 px-4 py-2 border border-white/20">Access Restricted</span>
-                    </div>
-                )}
             </div>
         );
     }
@@ -219,7 +282,8 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
         );
     }
 
-    const src = resolvedSource.src;
+    // The URL the stream was mounted with (a renewed token alone never reloads it).
+    const src = mountedStream.key === streamKey && mountedStream.url ? mountedStream.url : resolvedSource.src;
 
     return (
         <div className="relative h-full w-full min-h-0 overflow-hidden rounded-[18px] border border-black/10 bg-black shadow-[0_18px_48px_rgba(15,23,42,0.16)] sm:min-h-[220px]">
@@ -242,7 +306,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
                         className="polutek-vidstack-player h-full w-full"
                         title={playerConfig?.title || video.title || 'Video'}
                         src={src}
-                        muted={playerConfig ? playerConfig.mutedAutoplay : variant === 'hero'}
+                        muted={playerConfig ? playerConfig.mutedAutoplay : true}
                         autoPlay={autoPlayWanted}
                         preload={autoPlayWanted ? 'auto' : undefined}
                         playsInline
@@ -250,6 +314,12 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
                         controlsDelay={4000}
                         onCanPlay={() => {
                             setCanPlay(true);
+                            const resume = resumeRef.current;
+                            if (resume && player.current) {
+                                resumeRef.current = null;
+                                if (resume.time > 0) player.current.currentTime = resume.time;
+                                if (resume.play) void player.current.play().catch(() => undefined);
+                            }
                             if (player.current?.muted && typeof navigator !== 'undefined' && navigator.userActivation?.hasBeenActive) {
                                 player.current.muted = false;
                             }
@@ -276,10 +346,11 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
                             } catch {}
                         }}
                         onPlay={() => {
-                            if (!hasStartedPlayback) {
-                                setHasStartedPlayback(true);
-                                sendEvent('PLAY_STARTED');
-                            }
+                            setHasStartedPlayback(true);
+                            // First play starts the watch clock, every later play resumes it
+                            // (the server counts watch time between these and HEARTBEAT/PAUSE).
+                            sendEvent(playStartedSentRef.current ? 'PLAY_RESUMED' : 'PLAY_STARTED');
+                            playStartedSentRef.current = true;
                         }}
                         onPause={() => sendEvent('PLAY_PAUSED')}
                         onEnded={() => {
@@ -296,6 +367,7 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
                         onPlaying={() => {
                             setHasStartedPlayback(true);
                             setHasRenderedFrame(true);
+                            recoveryAttemptedRef.current = false;
                             sendEvent('BUFFERING_ENDED');
                         }}
                         onTimeUpdate={(event: any) => {
@@ -324,25 +396,18 @@ export default function VideoPlayer({ video, variant = 'hero', onViewCounted, re
                                 }
                             }
                         }}
-                        onProviderChange={(provider: MediaProviderAdapter | null) => {
-                            // Quick start for short VOD: assume a decent connection, size quality to the player.
-                            if (isHLSProvider(provider) && videoSourceKind === 'self_hls') {
-                                provider.config = { startLevel: -1, abrEwmaDefaultEstimate: 4_000_000, capLevelToPlayerSize: true, lowLatencyMode: false, maxBufferLength: 30, backBufferLength: 30 };
-                            }
-                        }}
-                        onError={() => {
-                            setLoadError('Nie udało się załadować materiału wideo. Spróbuj ponownie za chwilę.');
-                            sendEvent('PLAYER_ERROR', { errorCode: 'LOAD_FAILED' });
-                        }}
+                        onProviderChange={handleProviderChange}
+                        onError={() => void handleMediaError()}
                     >
                         <MediaProvider>
                             {textTracks.map((track) => (
-                                <track
+                                <Track
                                     key={`${track.kind}:${track.language}:${track.label}:${track.src}`}
                                     src={track.src}
                                     kind={track.kind}
                                     label={track.label}
-                                    srcLang={track.language}
+                                    language={track.language}
+                                    type="vtt"
                                     default={track.default}
                                 />
                             ))}

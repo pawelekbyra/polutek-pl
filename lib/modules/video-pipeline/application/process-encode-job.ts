@@ -21,6 +21,7 @@ export interface SourceProbe {
   width: number;
   height: number;
   duration: number;
+  /** HLG/PQ source: encoded with tone mapping to SDR (scripts/hls/encode-hls.mjs). */
   hdr: boolean;
   hasAudio: boolean;
   videoCodec?: string;
@@ -233,7 +234,6 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
       if (controller.signal.aborted) throw new EncodeCancelledError();
       throw err;
     }
-    if (probe.hdr) throw new EncodeJobError(PERMANENT.HDR_UNSUPPORTED, "Material HDR nie jest jeszcze obslugiwany (potrzebny tone-mapping).", true);
     if (!(probe.duration > 0) || probe.duration > ENCODE_LIMITS.maxDurationSeconds) {
       throw new EncodeJobError(PERMANENT.TOO_LONG, `Dlugosc ${Math.round(probe.duration)} s poza limitem ${ENCODE_LIMITS.maxDurationSeconds} s.`, true);
     }
@@ -241,7 +241,7 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
       throw new EncodeJobError(PERMANENT.TOO_LARGE_FRAME, `Rozdzielczosc ${probe.width}x${probe.height} poza limitem.`, true);
     }
     await ports.store.reportProgress(job.id, ports.workerId, {
-      sourceInfo: { width: probe.width, height: probe.height, durationSeconds: probe.duration, hasAudio: probe.hasAudio, codec: probe.videoCodec ?? null, sizeBytes: probe.sizeBytes ?? null } as Prisma.InputJsonValue,
+      sourceInfo: { width: probe.width, height: probe.height, durationSeconds: probe.duration, hasAudio: probe.hasAudio, hdr: probe.hdr, codec: probe.videoCodec ?? null, sizeBytes: probe.sizeBytes ?? null } as Prisma.InputJsonValue,
     });
 
     // 3. encode
