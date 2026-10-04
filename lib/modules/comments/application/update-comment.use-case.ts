@@ -1,7 +1,7 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { CommentDto, mapCommentToDto } from "../domain/comment.dto";
-import { CommentError } from "../domain/comment.errors";
+import { CommentError, commentDatabaseError } from "../domain/comment.errors";
 import { CommentPolicy } from "../domain/comment.policy";
 import { CommentRepository } from "../infrastructure/comment.repository";
 import { checkVideoAccess } from "@/lib/modules/access";
@@ -27,51 +27,37 @@ export async function updateComment(
   const userId = actor.userId;
   const repo = new CommentRepository(prisma);
 
-  const comment = await repo.findCommentById(commentId);
-  if (!comment) return fail({ type: "NOT_FOUND", message: "Komentarz nie istnieje." });
-
-  // 0. Access Check (inheritance)
-  const accessResult = await checkVideoAccess({ videoIdOrSlug: comment.videoId }, ctx);
-  if (!accessResult.ok) {
-     return fail({ type: "DATABASE_ERROR", message: "Błąd podczas sprawdzania dostępu." });
-  }
-  if (!accessResult.data.hasAccess) {
-    return fail({
-        type: "FORBIDDEN",
-        message: "Brak dostępu."
-    });
-  }
-
-  // 1. Authorization check
-  if (!CommentPolicy.canUpdateComment(actor, comment.authorId)) {
-    return fail({ type: "FORBIDDEN", message: "Nie masz uprawnień do edycji tego komentarza." });
-  }
-
-  // 2. Invariant check: Cannot edit moderated or deleted comments
-  if (comment.status !== CommentStatus.VISIBLE) {
-      return fail({ type: "VALIDATION_ERROR", message: "Nie można edytować moderowanych lub usuniętych komentarzy." });
-  }
-
-  // 3. Validation
-  if (countGraphemes(text) > 2000) {
-    return fail({ type: "VALIDATION_ERROR", message: "Komentarz jest za długi (max 2000 znaków)." });
-  }
-
   try {
-    await repo.update(commentId, {
-        text,
-        editedAt: new Date()
-    });
+    const comment = await repo.findCommentById(commentId);
+    if (!comment) return fail({ type: "NOT_FOUND", message: "Komentarz nie istnieje." });
+
+    // Comments inherit the video's access rules.
+    const accessResult = await checkVideoAccess({ videoIdOrSlug: comment.videoId }, ctx);
+    if (!accessResult.ok) return fail(commentDatabaseError("COMMENT_UPDATE_ACCESS_ERROR", accessResult.error));
+    if (!accessResult.data.hasAccess) return fail({ type: "FORBIDDEN", message: "Brak dostępu." });
+
+    if (!CommentPolicy.canUpdateComment(actor, comment.authorId)) {
+      return fail({ type: "FORBIDDEN", message: "Nie masz uprawnień do edycji tego komentarza." });
+    }
+
+    // Moderated or deleted comments cannot be edited.
+    if (comment.status !== CommentStatus.VISIBLE) {
+      return fail({ type: "CONFLICT", message: "Nie można edytować moderowanych lub usuniętych komentarzy." });
+    }
+
+    if (countGraphemes(text) > 2000) {
+      return fail({ type: "VALIDATION_ERROR", message: "Komentarz jest za długi (max 2000 znaków)." });
+    }
+
+    await repo.update(commentId, { text, editedAt: ctx.now() });
 
     const videoCreatorId = await repo.findVideoCreatorId(comment.videoId);
     const canModerate = actor.type === 'admin' || videoCreatorId === userId;
-    const context = { userId, canModerate, videoCreatorId, hasVideoAccess: accessResult.data.hasAccess };
+    const fullComment = await repo.findCommentForDto(commentId, userId, canModerate);
+    if (!fullComment) return fail({ type: "NOT_FOUND", message: "Komentarz nie istnieje." });
 
-    // Need full author details for DTO
-    const fullComment = await repo.findCommentById(commentId);
-
-    return ok(mapCommentToDto(fullComment, context));
-  } catch (error: any) {
-    return fail({ type: "DATABASE_ERROR", message: error.message || "Błąd bazy danych." });
+    return ok(mapCommentToDto(fullComment, { userId, canModerate, videoCreatorId, hasVideoAccess: true }));
+  } catch (error) {
+    return fail(commentDatabaseError("COMMENT_UPDATE_ERROR", error));
   }
 }

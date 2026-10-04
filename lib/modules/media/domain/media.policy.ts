@@ -87,25 +87,6 @@ export class MediaPolicy {
     return hostname.endsWith('.clerk.com') || allowedAvatarHosts.has(hostname);
   }
 
-  static isAllowedCommentImageUrl(rawUrl: string, env: MediaHostEnv) {
-    let url: URL;
-    try {
-      url = new URL(rawUrl);
-    } catch {
-      return false;
-    }
-
-    if (url.protocol !== 'https:') return false;
-    if (isBlockedPrivateHostname(url.hostname)) return false;
-
-    const allowedCommentImageHosts = new Set([
-      ...parseMediaHosts(env.ALLOWED_COMMENT_IMAGE_HOSTS),
-      ...parseMediaHosts(env.NEXT_PUBLIC_BLOB_PUBLIC_HOST),
-    ]);
-
-    return allowedCommentImageHosts.has(url.hostname.toLowerCase());
-  }
-
   static visiblePublishedAtFilter(now: Date) {
     return {
       OR: [{ publishedAt: null }, { publishedAt: { lte: now } }],

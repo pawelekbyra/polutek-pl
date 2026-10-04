@@ -13,6 +13,7 @@ vi.mock('@/lib/modules/access', () => ({
 
 vi.mock('@/lib/modules/audit', () => ({
   recordAuditEvent: vi.fn(),
+  recordAuditEventSafe: vi.fn(),
 }));
 
 describe('Comments Core Use Cases', () => {
@@ -29,12 +30,15 @@ describe('Comments Core Use Cases', () => {
         count: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
-        updateMany: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       video: {
         findUnique: vi.fn(),
       },
       commentReport: {
+          createMany: vi.fn().mockResolvedValue({ count: 1 }),
+          deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
           findUnique: vi.fn(),
           create: vi.fn(),
       },

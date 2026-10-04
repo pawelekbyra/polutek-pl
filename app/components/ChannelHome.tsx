@@ -42,7 +42,6 @@ interface ChannelHomeProps {
     totalPaid: number;
     initialInteraction?: { liked: boolean; disliked: boolean };
     initialIsSubscribed?: boolean;
-    isPatronDecorative?: boolean;
     role?: string;
   } | null;
   /** Server-rendered sidebar layout, so the playlist is in the first HTML (see HomeExperience). */
@@ -316,7 +315,6 @@ function ChannelHomeContent({
     <EmbeddedComments
       videoId={selectedVideo.id}
       userProfile={userProfile}
-      videoTier={selectedVideo.tier}
     />
   );
 

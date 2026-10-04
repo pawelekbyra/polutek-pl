@@ -1,6 +1,5 @@
-export * from "./application/toggle-video-like.use-case";
-export * from "./application/toggle-video-dislike.use-case";
-export * from "./application/toggle-comment-like.use-case";
+export * from "./application/set-video-reaction.use-case";
+export * from "./application/set-comment-reaction.use-case";
 export * from "./application/get-comment-context.use-case";
 export * from "./application/list-admin-comments.use-case";
 export * from "./application/pin-comment.use-case";
@@ -22,3 +21,4 @@ export * from "./application/resolve-comment-report.use-case";
 export * from "./domain/comment.dto";
 export * from "./domain/comment.errors";
 export * from "./domain/comment.policy";
+export * from "./application/purge-deleted-comments.use-case";

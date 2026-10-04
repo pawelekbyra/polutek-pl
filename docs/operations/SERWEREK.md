@@ -278,6 +278,7 @@ Kroki: build `runner`+`migrator` (pomijany, gdy obrazy tego tagu już są), star
 |---|---|---|
 | `polutek-cron-stripe-reconciliation` | `stripe-reconciliation` | co 15 min |
 | `polutek-cron-prune-playback-sessions` | `prune-playback-sessions` | 05:00 |
+| `polutek-cron-purge-deleted-comments` | `purge-deleted-comments` | 05:15 (dodany 2026-10-04; skopiować timer na serwerek i `systemctl enable --now`) |
 | `polutek-cron-sync-public-thumbnails` | `sync-public-thumbnails` | 06:00 |
 | `polutek-cron-prune-unverified-accounts` | `prune-unverified-accounts` | 03:30 (dodany w kodzie 2026-10-02; timer trzeba skopiować na serwerek i włączyć: `systemctl enable --now`) |
 

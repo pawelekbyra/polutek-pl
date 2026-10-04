@@ -5,65 +5,51 @@ import { getCorrelationId } from "@/lib/utils/correlation";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { updateComment, deleteComment } from "@/lib/modules/comments";
+import { commentErrorResponse } from "@/lib/api/comment-response";
+import {
+  MalformedJsonBodyError,
+  RequestBodyTooLargeError,
+  readRequestJsonWithLimit,
+} from "@/lib/utils/request-body";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
+const MAX_EDIT_REQUEST_BODY_BYTES = 10_000;
+const editSchema = z.object({ text: z.string().trim().min(1).max(5000) });
+
+const unauthorized = () =>
+  NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+const invalidBody = () =>
+  NextResponse.json({ success: false, message: "Nieprawidłowe dane." }, { status: 400 });
+
 export async function PATCH(
   request: NextRequest,
-  props: { params: Promise<{ id?: string; commentId?: string }> }
+  props: { params: Promise<{ commentId: string }> }
 ) {
-  const params = await props.params;
-  const requestId = getCorrelationId();
-  const scopedLogger = createScopedLogger(requestId);
-  const commentId =
-    params.commentId || new URL(request.url).searchParams.get("id");
-  if (!commentId)
-    return NextResponse.json(
-      { success: false, message: "commentId is required" },
-      { status: 400 },
-    );
+  const { commentId } = await props.params;
+  const scopedLogger = createScopedLogger(getCorrelationId());
 
   try {
     const actor = await getActorFromAuth();
-    if (actor.type === "guest") {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
+    if (actor.type === "guest") return unauthorized();
+
+    let body: unknown;
+    try {
+      body = await readRequestJsonWithLimit(request, MAX_EDIT_REQUEST_BODY_BYTES);
+    } catch (error) {
+      if (error instanceof RequestBodyTooLargeError) {
+        return NextResponse.json({ success: false, message: "Komentarz jest za duży." }, { status: 413 });
+      }
+      if (error instanceof MalformedJsonBodyError) return invalidBody();
+      throw error;
     }
 
-    const body = await request.json();
-    const resultJson = z
-      .object({ text: z.string().trim().min(1) })
-      .safeParse(body);
+    const parsed = editSchema.safeParse(body);
+    if (!parsed.success) return invalidBody();
 
-    if (!resultJson.success) {
-      return NextResponse.json(
-        { success: false, message: "Nieprawidłowe dane." },
-        { status: 400 },
-      );
-    }
-
-    const { text } = resultJson.data;
-
-    const ctx = createAppContext({ actor });
-    const result = await updateComment({ commentId, text }, ctx);
-
-    if (!result.ok) {
-      const status =
-        result.error.type === "UNAUTHORIZED"
-          ? 401
-          : result.error.type === "FORBIDDEN"
-            ? 403
-            : result.error.type === "NOT_FOUND"
-              ? 404
-              : 400;
-      return NextResponse.json(
-        { success: false, message: result.error.message },
-        { status },
-      );
-    }
+    const result = await updateComment({ commentId, text: parsed.data.text }, createAppContext({ actor }));
+    if (!result.ok) return commentErrorResponse(result.error);
 
     return NextResponse.json({ success: true, comment: result.data });
   } catch (error: unknown) {
@@ -73,58 +59,22 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  props: { params: Promise<{ id?: string; commentId?: string }> }
+  _request: NextRequest,
+  props: { params: Promise<{ commentId: string }> }
 ) {
-  const params = await props.params;
-  const requestId = getCorrelationId();
-  const scopedLogger = createScopedLogger(requestId);
-  const commentId =
-    params.commentId || new URL(request.url).searchParams.get("id");
-  if (!commentId)
-    return NextResponse.json(
-      { success: false, message: "commentId is required" },
-      { status: 400 },
-    );
+  const { commentId } = await props.params;
+  const scopedLogger = createScopedLogger(getCorrelationId());
 
   try {
     const actor = await getActorFromAuth();
-    if (actor.type === "guest") {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
+    if (actor.type === "guest") return unauthorized();
 
-    const ctx = createAppContext({ actor });
-    const result = await deleteComment({ commentId }, ctx);
-
-    if (!result.ok) {
-      const status =
-        result.error.type === "UNAUTHORIZED"
-          ? 401
-          : result.error.type === "FORBIDDEN"
-            ? 403
-            : result.error.type === "NOT_FOUND"
-              ? 404
-              : 400;
-      return NextResponse.json(
-        { success: false, message: result.error.message },
-        { status },
-      );
-    }
+    const result = await deleteComment({ commentId }, createAppContext({ actor }));
+    if (!result.ok) return commentErrorResponse(result.error);
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     scopedLogger.error("[COMMENT_DELETE_ERROR]", error);
-    if (error instanceof TypeError && error.message.includes("findUnique")) {
-      // This usually happens in tests when prisma is mocked globally but the use case tries to use it from context
-      // We catch it here to return 403 as expected by BOLA test if it fails during repo lookup
-      return NextResponse.json(
-        { success: false, message: "Forbidden" },
-        { status: 403 },
-      );
-    }
     return handleApiError(error);
   }
 }

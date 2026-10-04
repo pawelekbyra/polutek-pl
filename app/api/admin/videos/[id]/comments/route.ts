@@ -3,6 +3,7 @@ import { handleApiError } from "@/lib/errors";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { listVideoComments, commentErrorStatus } from "@/lib/modules/comments";
 import { requireAdminForApi } from "@/lib/auth-utils";
+import { commentSortSchema } from "@/lib/api/comment-response";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export async function GET(
   if (response) return response;
   try {
     const { searchParams } = new URL(request.url);
-    const sortBy = (searchParams.get("sortBy") as any) || "newest";
+    const sortBy = commentSortSchema.parse(searchParams.get("sortBy") ?? undefined);
     const cursor = searchParams.get("cursor") || undefined;
     const limit = 50;
 

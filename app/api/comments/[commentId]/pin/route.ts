@@ -5,18 +5,9 @@ import { getCorrelationId } from "@/lib/utils/correlation";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { pinComment, unpinComment } from "@/lib/modules/comments";
+import { commentErrorResponse } from "@/lib/api/comment-response";
 
 export const dynamic = "force-dynamic";
-
-function statusForCommentError(type: string) {
-  return type === "UNAUTHORIZED"
-    ? 401
-    : type === "FORBIDDEN"
-      ? 403
-      : type === "NOT_FOUND"
-        ? 404
-        : 400;
-}
 
 export async function POST(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
   const params = await props.params;
@@ -28,12 +19,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ comm
     const ctx = createAppContext({ actor });
     const result = await pinComment({ commentId: params.commentId }, ctx);
 
-    if (!result.ok) {
-      return NextResponse.json(
-        { success: false, message: result.error.message },
-        { status: statusForCommentError(result.error.type) },
-      );
-    }
+    if (!result.ok) return commentErrorResponse(result.error);
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
@@ -52,12 +38,7 @@ export async function DELETE(request: NextRequest, props: { params: Promise<{ co
     const ctx = createAppContext({ actor });
     const result = await unpinComment({ commentId: params.commentId }, ctx);
 
-    if (!result.ok) {
-      return NextResponse.json(
-        { success: false, message: result.error.message },
-        { status: statusForCommentError(result.error.type) },
-      );
-    }
+    if (!result.ok) return commentErrorResponse(result.error);
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {

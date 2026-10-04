@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { z } from "zod";
+import { commentResultResponse } from "@/lib/api/comment-response";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { listCommentReports } from "@/lib/modules/comments";
 import { CommentReportStatus } from "@prisma/client";
@@ -12,8 +14,7 @@ export async function GET(req: NextRequest) {
   );
   if (response) return response;
   const { searchParams } = new URL(req.url);
-  const status =
-    (searchParams.get("status") as CommentReportStatus) || undefined;
+  const status = z.nativeEnum(CommentReportStatus).optional().catch(undefined).parse(searchParams.get("status") || undefined);
   // Reuses the shared admin pagination-parsing pattern (page/pageSize) for
   // consistency with the other admin list endpoints (videos/users/payments).
   const { page, pageSize } = parsePaginationParams(req, "createdAt");
@@ -23,11 +24,7 @@ export async function GET(req: NextRequest) {
       { status, page, pageSize },
       createAppContext({ actor }),
     );
-    if (result.ok) return NextResponse.json(result.data);
-    return NextResponse.json(
-      { error: result.error.message },
-      { status: result.error.type === "UNAUTHORIZED" ? 401 : 500 },
-    );
+    return commentResultResponse(result);
   } catch (error: unknown) {
     return handleApiError(error);
   }

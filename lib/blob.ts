@@ -44,12 +44,4 @@ export function isAllowedAvatarUrl(
   return MediaPolicy.isAllowedAvatarUrl(rawUrl, env);
 }
 
-/** @deprecated Use MediaPolicy.isAllowedCommentImageUrl */
-export function isAllowedCommentImageUrl(
-  rawUrl: string,
-  env: MediaHostEnv = process.env,
-) {
-  return MediaPolicy.isAllowedCommentImageUrl(rawUrl, env);
-}
-
 export { isSafeLocalPath, isBlockedPrivateHostname } from "@/lib/modules/media";

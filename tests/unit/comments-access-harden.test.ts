@@ -5,43 +5,23 @@ const embedded = () => readFileSync('app/components/comments/EmbeddedComments.ts
 const hook = () => readFileSync('app/components/comments/hooks/useComments.ts', 'utf8');
 const channelHome = () => readFileSync('app/components/ChannelHome.tsx', 'utf8');
 const page = () => readFileSync('app/components/home/HomeExperience.tsx', 'utf8');
+const composer = () => readFileSync('app/components/comments/components/CommentComposer.tsx', 'utf8');
 
 describe('comments access hardening', () => {
-  it('EmbeddedComments: derives canComment strictly from viewer state and isPatron is renamed to isPatronDecorative', () => {
+  it('EmbeddedComments: canComment comes only from the server viewer state', () => {
     const source = embedded();
-
-    // Renamed prop
-    expect(source).toContain('isPatronDecorative?: boolean;');
-    expect(source).not.toContain('isPatron?: boolean;');
-
-    // The own-comment preview carries no session-derived patron/role data (the server decides badges)
-    expect(source).toContain('isPatronDecorative: false');
-
-    // Defensive default for commenting
     expect(source).toContain('canComment={viewer?.canComment ?? false}');
-
-    // logic check: isPatronDecorative must not influence canComment
     const canCommentLine = source.split('\n').find(l => l.includes('canComment={'));
     expect(canCommentLine).not.toContain('isPatron');
     expect(canCommentLine).not.toContain('userProfile');
   });
 
-  it('useComments: optimistic UI uses isPatronDecorative badge truth', () => {
-    const source = hook();
-    expect(source).toContain('if (userProfile?.isPatronDecorative) badges.push({ type: "PATRON", label: "Patron" });');
-    expect(source).not.toContain('if (userProfile?.isPatron) badges.push');
-  });
-
-  it('ChannelHome: uses renamed isPatronDecorative', () => {
-    const source = channelHome();
-    expect(source).toContain('isPatronDecorative?: boolean;');
-    expect(source).not.toContain('userProfile?.isPatron === true');
-  });
-
-  it('Root Page: maps DB truth to isPatronDecorative', () => {
-    const source = page();
-    expect(source).toContain('isPatronDecorative: userDb?.role === \'ADMIN\' || hasActivePatronGrant');
-    expect(source).not.toContain('isPatron: userDb?.role === \'ADMIN\' || hasActivePatronGrant');
+  it('no public supporter distinction: no patron decoration flag or avatar ring anywhere in the comments shell', () => {
+    for (const source of [embedded(), hook(), channelHome(), page(), composer()]) {
+      expect(source).not.toContain('isPatronDecorative');
+      expect(source).not.toContain('chan-patron-ring');
+    }
+    expect(hook()).toContain('badges: [],');
   });
 
   it('EmbeddedComments: does NOT use publicMetadata.isPatron for canComment', () => {

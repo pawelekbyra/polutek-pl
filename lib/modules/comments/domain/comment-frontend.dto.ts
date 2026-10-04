@@ -1,3 +1,8 @@
+/**
+ * The one definition of the comment wire format (public and admin APIs, client cache).
+ * Client-safe on purpose: no Prisma imports, so client components can use it directly.
+ * The server maps database rows to these types in `comment.dto.ts`.
+ */
 export type CommentStatusDto = 'VISIBLE' | 'HELD_FOR_REVIEW' | 'HIDDEN' | 'DELETED';
 
 export type CommentDeletedReasonDto = 'AUTHOR_DELETED' | 'MODERATOR_DELETED' | 'SPAM' | 'ABUSE' | 'OTHER';
@@ -6,7 +11,8 @@ export type CommentReportReasonDto = 'SPAM' | 'HARASSMENT' | 'HATE' | 'NSFW' | '
 
 export type CommentReactionDto = 'LIKE' | 'DISLIKE';
 
-export type CommentAuthorBadgeDto = 'ADMIN' | 'PATRON' | 'AUTHOR';
+/** No supporter badge on purpose: tips never buy a public distinction (patron status is admin-only). */
+export type CommentAuthorBadgeDto = 'ADMIN' | 'AUTHOR';
 
 export type AccessTierDto = 'PUBLIC' | 'LOGGED_IN' | 'PATRON';
 
@@ -22,8 +28,8 @@ export type CommentDto = {
   id: string;
   videoId: string;
   parentId: string | null;
+  /** Null whenever the viewer may not see the content (anything but VISIBLE for non-moderators). */
   text: string | null;
-  imageUrl: string | null;
   status: CommentStatusDto;
   author: CommentAuthorDto | null;
   createdAt: string;
@@ -33,9 +39,9 @@ export type CommentDto = {
   deletedReason: CommentDeletedReasonDto | null;
   pinnedAt: string | null;
   likesCount: number;
+  /** Replies the viewer can see (computed, not a stored counter). */
   repliesCount: number;
   reportsCount?: number;
-  score?: number;
   viewerReaction: CommentReactionDto | null;
   viewerCanEdit: boolean;
   viewerCanDelete: boolean;
@@ -44,18 +50,6 @@ export type CommentDto = {
   viewerCanPin: boolean;
   isPinned: boolean;
   isHearted: boolean;
+  /** The first replies of the thread; the rest is paged through `/api/comments/[id]/replies`. */
   repliesPreview: CommentDto[];
-};
-
-export type CommentListResponse = {
-  comments: CommentDto[];
-  totalCount: number;
-  nextCursor: string | null;
-  hasMore: boolean;
-  viewer: {
-    canComment: boolean;
-    canReact: boolean;
-    canReport: boolean;
-    canModerate: boolean;
-  };
 };

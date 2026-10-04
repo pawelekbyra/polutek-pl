@@ -1,27 +1,28 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { CommentDto, mapCommentToDto } from "../domain/comment.dto";
-import { CommentError } from "../domain/comment.errors";
+import { CommentError, commentDatabaseError } from "../domain/comment.errors";
 import { CommentPolicy } from "../domain/comment.policy";
 import { CommentRepository } from "../infrastructure/comment.repository";
 import { checkVideoAccess } from "@/lib/modules/access";
-import { recordAuditEvent } from "@/lib/modules/audit";
+import { recordAuditEventSafe } from "@/lib/modules/audit";
 import { isUuid } from "@/lib/utils/uuid";
 import { countGraphemes } from "@/lib/utils/graphemes";
-import { PrismaClient } from "@prisma/client";
+import { CommentStatus } from "@prisma/client";
 
 export interface CreateVideoCommentInput {
   videoId: string;
   text: string;
   parentId?: string | null;
-  imageUrl?: string | null;
 }
+
+const INVALID_PARENT: CommentError = { type: "VALIDATION_ERROR", message: "Nie można odpowiedzieć na ten komentarz." };
 
 export async function createVideoComment(
   input: CreateVideoCommentInput,
   ctx: AppContext
 ): Promise<UseCaseResult<CommentDto, CommentError>> {
-  const { videoId, text, parentId, imageUrl } = input;
+  const { videoId, text, parentId } = input;
   const { actor, prisma } = ctx;
 
   if (actor.type === 'guest' || actor.type === 'system') {
@@ -38,39 +39,33 @@ export async function createVideoComment(
 
   const userId = actor.userId;
 
-  // 1. Resolve videoId if it's a slug
-  let resolvedVideoId = videoId;
-  if (!isUuid(videoId)) {
-    const video = await prisma.video.findUnique({ where: { slug: videoId }, select: { id: true } });
-    if (!video) return fail({ type: "NOT_FOUND", message: "Film nie istnieje." });
-    resolvedVideoId = video.id;
-  }
-
-  // 2. Access Check
-  const accessResult = await checkVideoAccess({ videoIdOrSlug: resolvedVideoId }, ctx);
-  if (!accessResult.ok) {
-     return fail({ type: "DATABASE_ERROR", message: "Błąd podczas sprawdzania dostępu." });
-  }
-
-  if (!CommentPolicy.canCreateComment(actor, accessResult.data)) {
-    // If not found, return NOT_FOUND to avoid leaking existence
-    if (accessResult.data.reason === 'NOT_FOUND' || accessResult.data.reason === 'DELETED') {
-        return fail({ type: "NOT_FOUND", message: "Film nie istnieje." });
-    }
-    return fail({
-        type: "FORBIDDEN",
-        message: "Brak uprawnień do komentowania."
-    });
-  }
-
-  // 3. Validation
-  if (countGraphemes(text) > 2000) {
-    return fail({ type: "VALIDATION_ERROR", message: "Komentarz jest za długi (max 2000 znaków)." });
-  }
-
-  const repo = new CommentRepository(prisma);
-
   try {
+    // 1. Resolve videoId if it's a slug
+    let resolvedVideoId = videoId;
+    if (!isUuid(videoId)) {
+      const video = await prisma.video.findUnique({ where: { slug: videoId }, select: { id: true } });
+      if (!video) return fail({ type: "NOT_FOUND", message: "Film nie istnieje." });
+      resolvedVideoId = video.id;
+    }
+
+    // 2. Access Check
+    const accessResult = await checkVideoAccess({ videoIdOrSlug: resolvedVideoId }, ctx);
+    if (!accessResult.ok) return fail(commentDatabaseError("COMMENT_CREATE_ACCESS_ERROR", accessResult.error));
+
+    if (!CommentPolicy.canCreateComment(actor, accessResult.data)) {
+      // If not found, return NOT_FOUND to avoid leaking existence
+      if (accessResult.data.reason === 'NOT_FOUND' || accessResult.data.reason === 'DELETED') {
+        return fail({ type: "NOT_FOUND", message: "Film nie istnieje." });
+      }
+      return fail({ type: "FORBIDDEN", message: "Brak uprawnień do komentowania." });
+    }
+
+    // 3. Validation
+    if (countGraphemes(text) > 2000) {
+      return fail({ type: "VALIDATION_ERROR", message: "Komentarz jest za długi (max 2000 znaków)." });
+    }
+
+    const repo = new CommentRepository(prisma);
     const video = await prisma.video.findUnique({
       where: { id: resolvedVideoId },
       select: { creatorId: true, creator: { select: { userId: true } } }
@@ -78,55 +73,43 @@ export async function createVideoComment(
     if (!video) return fail({ type: "NOT_FOUND", message: "Film nie istnieje." });
 
     const videoCreatorId = video.creator?.userId || null;
+    const canModerate = actor.type === 'admin' || videoCreatorId === userId;
 
-    let finalParentId = parentId || null;
+    let finalParentId: string | null = null;
     if (parentId) {
       const parent = await repo.findCommentById(parentId);
-      if (!parent || parent.videoId !== resolvedVideoId) {
-        return fail({ type: "VALIDATION_ERROR", message: "Nieprawidłowy komentarz nadrzędny." });
+      if (!parent || parent.videoId !== resolvedVideoId) return fail(INVALID_PARENT);
+      // A reply to a reply joins the same thread (one level of nesting).
+      const threadRoot = parent.parentId ? await repo.findCommentById(parent.parentId) : parent;
+      // Only a thread people can see accepts replies; a reply under a deleted, hidden or held
+      // comment (or one of a deleted account) would be invisible to everyone.
+      const rootIsVisible = !!threadRoot && threadRoot.status === CommentStatus.VISIBLE && threadRoot.author?.isDeleted !== true;
+      if (!threadRoot || (!rootIsVisible && !canModerate) || threadRoot.status === CommentStatus.DELETED) {
+        return fail(INVALID_PARENT);
       }
-      // Enforce one-level nesting: if parent is a reply, attach to its parent instead
-      if (parent.parentId) {
-        finalParentId = parent.parentId;
-      }
+      finalParentId = threadRoot.id;
     }
 
-    const newComment = await (prisma as PrismaClient).$transaction(async (tx) => {
-      const txRepo = new CommentRepository(tx);
-      // Note: imageUrl is currently accepted for future compatibility,
-      // but not exposed in the public CommentComposer UI.
-      const comment = await txRepo.create({
-        authorId: userId,
-        videoId: resolvedVideoId,
-        creatorId: video.creatorId,
-        text,
-        parentId: finalParentId,
-        imageUrl
-      });
-
-      if (finalParentId) {
-        await txRepo.incrementRepliesCount(finalParentId);
-      }
-
-      return comment;
+    const newComment = await repo.create({
+      authorId: userId,
+      videoId: resolvedVideoId,
+      creatorId: video.creatorId,
+      text,
+      parentId: finalParentId,
     });
 
-    await recordAuditEvent(ctx, {
+    await recordAuditEventSafe(ctx, {
       action: "COMMENT_CREATE",
       targetType: "COMMENT",
       targetId: newComment.id,
       metadata: { videoId: resolvedVideoId, parentId: finalParentId }
     });
 
-    // We need to fetch author details for DTO
-    const commentWithAuthor = await repo.findCommentById(newComment.id);
+    const commentWithRelations = await repo.findCommentForDto(newComment.id, userId, canModerate);
+    if (!commentWithRelations) return fail(commentDatabaseError("COMMENT_CREATE_READBACK_ERROR", new Error("Created comment not found")));
 
-    // Global admin or creator of the video can moderate.
-    const canModerate = actor.type === 'admin' || videoCreatorId === userId;
-    const context = { userId, canModerate, videoCreatorId, hasVideoAccess: accessResult.data.hasAccess };
-
-    return ok(mapCommentToDto(commentWithAuthor, context));
-  } catch (error: any) {
-    return fail({ type: "DATABASE_ERROR", message: error.message || "Błąd bazy danych." });
+    return ok(mapCommentToDto(commentWithRelations, { userId, canModerate, videoCreatorId, hasVideoAccess: accessResult.data.hasAccess }));
+  } catch (error) {
+    return fail(commentDatabaseError("COMMENT_CREATE_ERROR", error));
   }
 }

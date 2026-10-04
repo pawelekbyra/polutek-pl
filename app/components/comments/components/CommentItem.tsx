@@ -5,13 +5,13 @@ import { formatDistanceToNow } from "date-fns";
 import { enUS, pl } from "date-fns/locale";
 import { Star, Trash2, Heart, MoreVertical, Edit, Flag, Link as LinkIcon, EyeOff, RotateCcw } from "../../icons";
 import { cn } from "@/lib/utils";
-import { CommentView, isPatronAuthor } from "../types";
+import { CommentView, getAuthorBadge } from "../types";
 import { SafeAvatar } from "../../SafeAvatar";
 import { ReportDialog } from "./ReportDialog";
 import { CommentReportReasonDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { useToast } from "@/app/hooks/useToast";
-import { NajsIcon } from "../../najs/primitives";
-import { AnimatedCount, LikePop } from "./comment-motion";
+import { CommentReactions } from "./CommentReactions";
+import { AuthorBadge } from "./AuthorBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,11 +31,17 @@ interface CommentItemProps {
   onReply: (id: string) => void;
   onDelete: (id: string) => void;
   onPin: (id: string, pinned: boolean) => void;
-  onEdit: (id: string, text: string) => void;
-  onReport: (id: string, reason: CommentReportReasonDto, note?: string) => void;
+  /** Resolves when the edit is saved; the editor stays open with an error when it rejects. */
+  onEdit: (id: string, text: string) => Promise<void> | void;
+  /** Resolves when the report is stored; the dialog shows the error when it rejects. */
+  onReport: (id: string, reason: CommentReportReasonDto, note?: string) => Promise<void> | void;
   isReactionPending: boolean;
   isReply?: boolean;
 }
+
+/** Avatar sizes: replies are visibly subordinate to their parent. */
+const AVATAR_SIZE = 40;
+const REPLY_AVATAR_SIZE = 24;
 
 function formatCommentAge(date: Date, language: string) {
   const formatted = formatDistanceToNow(date, {
@@ -65,15 +71,15 @@ function CommentItemComponent({
 }: CommentItemProps) {
   const isDeletedForPublic = comment.status === 'DELETED';
 
-  const authorIsPatron = isPatronAuthor(comment.author);
+  const authorBadge = getAuthorBadge(comment.author);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(comment.text || "");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const toast = useToast();
 
-  const isLiked = comment.viewerReaction === "LIKE";
-  const isDisliked = comment.viewerReaction === "DISLIKE";
   const reactionsDisabled = !userProfile || !canComment || isReactionPending;
   const [isHearted, setIsHearted] = React.useState<boolean>(comment.isHearted || false);
   const [isHighlighted, setIsHighlighted] = useState(false);
@@ -130,6 +136,59 @@ function CommentItemComponent({
     setShowMenu(false);
   };
 
+  const handleToggleHeart = async () => {
+    try {
+      const response = await fetch(`/api/admin/comments/${comment.id}/heart`, { method: "POST" });
+      if (!response.ok) throw new Error(String(response.status));
+      const body = (await response.json().catch(() => null)) as { isHearted?: boolean } | null;
+      setIsHearted((current) => (typeof body?.isHearted === "boolean" ? body.isHearted : !current));
+      toast(language === "pl" ? "Serce twórcy zaktualizowane." : "Creator heart updated.", "success");
+    } catch {
+      toast(
+        language === "pl" ? "Nie udało się zmienić serca twórcy." : "Could not update the creator heart.",
+        "error",
+      );
+    }
+  };
+
+  const startEditing = () => {
+    setEditText(comment.text || "");
+    setEditError(null);
+    setIsEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+    setEditError(null);
+  };
+
+  const saveEdit = async () => {
+    if (!editText.trim() || editText === comment.text || isSavingEdit) return;
+    setIsSavingEdit(true);
+    setEditError(null);
+    try {
+      await onEdit(comment.id, editText);
+      setIsEditing(false);
+    } catch (error) {
+      // Keep the editor and the typed text so nothing is lost.
+      setEditError(
+        error instanceof Error && error.message
+          ? error.message
+          : language === "pl" ? "Nie udało się zapisać zmian." : "Could not save your changes.",
+      );
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const submitReport = async (reason: CommentReportReasonDto, note?: string) => {
+    await onReport(comment.id, reason, note);
+    toast(
+      language === "pl" ? "Dziękujemy, zgłoszenie zostało wysłane." : "Thanks, your report was sent.",
+      "success",
+    );
+  };
+
   if (isDeletedForPublic) return null;
 
   const createdAtDate = comment.createdAt
@@ -150,66 +209,59 @@ function CommentItemComponent({
     : "";
   const menuItemClassName =
     "min-h-10 gap-2 rounded-xl px-3 py-2 text-sm text-[var(--chan-ink)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]";
+  const avatarSize = isReply ? REPLY_AVATAR_SIZE : AVATAR_SIZE;
 
+  // Layout (one source of spacing, no vertical padding on the item itself; the list's gap owns
+  // the space between comments): avatar 40 px (replies 24 px) + 12 px gap, name line 18 px,
+  // 2 px to the text (14/20), 4 px to the actions, whose like icon lines up with the text edge.
   return (
     <div
       id={`comment-${comment.id}`}
       ref={commentRef}
       className={cn(
-        "relative flex items-start gap-[13px] border-t border-[var(--chan-line)] px-1 py-[18px] transition-colors duration-1000 first:border-t-0 first:pt-0",
+        "relative flex items-start gap-3 rounded-lg transition-colors duration-300 motion-reduce:transition-none",
         isReply ? "group/reply" : "group/comment",
-        isHighlighted && "-mx-1 rounded-lg bg-[var(--chan-blue-soft)]/60 px-2",
+        isHighlighted && "-mx-2 bg-[var(--chan-blue-soft)]/60 px-2",
       )}
     >
-      {!isReply && comment.isPinned && (
-        <span
-          aria-label={language === "pl" ? "Przypięty" : "Pinned"}
-          className="absolute right-1 top-[18px] z-[6] inline-flex items-center justify-center rounded-full bg-[var(--chan-blue-soft)] p-1.5 text-[var(--chan-blue)]"
-        >
-          <Star size={12} className="fill-[var(--chan-blue)]" />
-        </span>
-      )}
-      <div className={cn("relative z-[5] flex shrink-0 flex-col items-center gap-1", isReply ? "w-[38px]" : "w-[38px]")}>
-        <div className="w-[38px] h-[38px] rounded-full overflow-hidden border border-[var(--chan-line)] relative">
-            <SafeAvatar
-            src={comment.author?.imageUrl}
-            alt={comment.author?.displayName || "Avatar"}
-            size={38}
-            className="w-full h-full object-cover"
-            />
-        </div>
-        {authorIsPatron && (
-          <span className="whitespace-nowrap rounded-full border border-[var(--cm-blue-35)] bg-[var(--chan-blue-soft)] px-[5px] py-[1px] text-[8px] font-extrabold uppercase tracking-wider text-[var(--chan-blue)]">
-            PATRON
-          </span>
-        )}
-      </div>
-      <div className={cn("relative z-[5] flex-1 space-y-[2px] min-w-0 pt-0", !isReply && comment.isPinned && "pr-8")}>
+      <SafeAvatar
+        src={comment.author?.imageUrl}
+        alt={comment.author?.displayName || "Avatar"}
+        size={avatarSize}
+        className="relative z-[5] border border-[var(--chan-line)]"
+      />
+      <div className="relative z-[5] min-w-0 flex-1">
         <div className={cn("relative flex items-start justify-between", userProfile && "pr-9")}>
-          <div className="flex min-w-0 items-center gap-1.5 leading-none">
-            <span
-              className={cn(
-                "truncate font-bold text-[var(--chan-ink)] leading-tight text-[13px]",
-              )}
-            >
-              {comment.author?.displayName || "Użytkownik"}
+          <div className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate text-[13px] font-bold leading-[18px] text-[var(--chan-ink)]">
+              {comment.author?.displayName || (language === "pl" ? "Użytkownik" : "User")}
             </span>
-
+            {authorBadge && <AuthorBadge kind={authorBadge} language={language} />}
             <time
-              className="shrink-0 whitespace-nowrap text-[12px] leading-none text-[var(--chan-muted)]"
+              className="shrink-0 whitespace-nowrap text-[12px] leading-[18px] text-[var(--chan-muted)]"
               dateTime={validCreatedAt ? comment.createdAt : undefined}
             >
               {relativeCreatedAt}
             </time>
+            {!isReply && comment.isPinned && (
+              <span
+                role="img"
+                aria-label={language === "pl" ? "Przypięty" : "Pinned"}
+                className="inline-flex shrink-0 text-[var(--chan-blue)]"
+              >
+                <Star size={12} aria-hidden="true" className="fill-[var(--chan-blue)]" />
+              </span>
+            )}
           </div>
           {userProfile && (
             <DropdownMenu open={showMenu} onOpenChange={setShowMenu}>
               <DropdownMenuTrigger
                 className={cn(
-                  "absolute right-0 top-0 grid h-9 w-9 place-items-center rounded-full transition-[opacity,background-color] hover:bg-[var(--chan-surface)] focus-visible:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transition-none",
+                  "absolute -top-[9px] right-0 grid h-9 w-9 place-items-center rounded-full transition-[opacity,background-color] hover:bg-[var(--chan-surface)] focus-visible:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transition-none",
+                  // Revealed on hover only where hover exists; on touch screens it is always visible.
                   showMenu
                     ? "opacity-100"
-                    : "opacity-0 group-hover/comment:opacity-100 group-hover/reply:opacity-100 group-focus-within/comment:opacity-100 group-focus-within/reply:opacity-100 focus:opacity-100",
+                    : "opacity-100 [@media(hover:hover)]:opacity-0 group-hover/comment:opacity-100 group-hover/reply:opacity-100 group-focus-within/comment:opacity-100 group-focus-within/reply:opacity-100 focus:opacity-100",
                 )}
                 aria-label={
                   language === "pl" ? "Akcje komentarza" : "Comment actions"
@@ -237,7 +289,7 @@ function CommentItemComponent({
 
                 {comment.viewerCanEdit && (
                   <DropdownMenuItem
-                    onClick={() => setIsEditing(true)}
+                    onClick={startEditing}
                     className={menuItemClassName}
                   >
                     <Edit aria-hidden="true" size={14} />
@@ -303,36 +355,13 @@ function CommentItemComponent({
                   )}
                 {comment.viewerCanModerate && !isReply && (
                   <DropdownMenuItem
-                    onClick={async () => {
-                      try {
-                        const response = await fetch(
-                          `/api/admin/comments/${comment.id}/heart`,
-                          { method: "POST" },
-                        );
-                        if (response.ok) {
-                          setIsHearted((current) => !current);
-                          toast(
-                            language === "pl"
-                              ? "Serce twórcy zaktualizowane."
-                              : "Creator heart updated.",
-                            "success",
-                          );
-                        }
-                      } catch {
-                        toast(
-                          language === "pl"
-                            ? "Nie udało się zmienić serca twórcy."
-                            : "Could not update the creator heart.",
-                          "error",
-                        );
-                      }
-                    }}
+                    onClick={() => void handleToggleHeart()}
                     className={cn(
                       menuItemClassName,
                       "text-[var(--chan-amber-strong)] focus:text-[var(--chan-amber-strong)]",
                     )}
                   >
-                    <Star
+                    <Heart
                       aria-hidden="true"
                       size={16}
                       className={isHearted ? "fill-[var(--chan-amber)]" : ""}
@@ -356,19 +385,38 @@ function CommentItemComponent({
             <textarea
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
-              className="w-full bg-white border border-[var(--chan-line)] rounded-md p-2 text-sm shadow-[0_1px_0_rgba(15,15,15,0.10),0_6px_14px_rgba(15,15,15,0.06)] focus:outline-none focus:ring-2 focus:ring-[var(--chan-ink)]/20"
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  cancelEditing();
+                } else if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                  e.preventDefault();
+                  void saveEdit();
+                }
+              }}
+              aria-label={language === "pl" ? "Edytuj komentarz" : "Edit comment"}
+              aria-invalid={Boolean(editError)}
+              readOnly={isSavingEdit}
+              className="w-full rounded-md border border-[var(--chan-line)] bg-[var(--chan-card)] p-2 text-sm text-[var(--chan-ink)] shadow-[0_1px_0_rgba(15,15,15,0.10),0_6px_14px_rgba(15,15,15,0.06)] focus:outline-none focus:ring-2 focus:ring-[var(--chan-ink)]/20"
               autoFocus
             />
+            {editError && (
+              <p role="alert" className="text-xs font-bold text-red-700">
+                {editError}
+              </p>
+            )}
             <div className="flex gap-2">
                <button
-                onClick={() => setIsEditing(false)}
+                type="button"
+                onClick={cancelEditing}
                 className="text-xs font-bold px-3 py-1 rounded-md hover:bg-[var(--chan-surface)]"
                >
                  {t.cancel}
                </button>
                <button
-                onClick={() => { onEdit(comment.id, editText); setIsEditing(false); }}
-                disabled={!editText.trim() || editText === comment.text}
+                type="button"
+                onClick={() => void saveEdit()}
+                disabled={!editText.trim() || editText === comment.text || isSavingEdit}
                 className="text-xs font-bold px-3 py-1 bg-[var(--chan-blue)] text-white rounded-md hover:brightness-110 disabled:opacity-50"
                >
                  {language === "pl" ? "Zapisz" : "Save"}
@@ -376,8 +424,8 @@ function CommentItemComponent({
             </div>
           </div>
         ) : (
-          <p className="text-[var(--chan-ink)] text-[14px] leading-[1.5]">
-            {comment.text || (comment.status === 'DELETED' ? (language === 'pl' ? 'Komentarz usunięty' : 'Comment deleted') : '')}
+          <p className="mt-0.5 whitespace-pre-wrap break-words text-[14px] leading-5 text-[var(--chan-ink)]">
+            {comment.text}
           </p>
         )}
 
@@ -385,71 +433,20 @@ function CommentItemComponent({
           isOpen={isReportDialogOpen}
           onClose={() => setIsReportDialogOpen(false)}
           language={language}
-          onSubmit={(reason, note) => onReport(comment.id, reason, note)}
+          onSubmit={submitReport}
         />
 
-        <div className="flex flex-wrap items-center gap-[6px] pt-1 min-w-0">
-          {/* Like + Dislike zgrupowane razem */}
-          <div className="flex items-center gap-0">
-            <button
-              type="button"
-              onClick={() => onLike(comment.id)}
-              disabled={reactionsDisabled}
-              aria-label={
-                isLiked
-                  ? language === "pl"
-                    ? "Cofnij polubienie komentarza"
-                    : "Remove like from comment"
-                  : language === "pl"
-                    ? "Polub komentarz"
-                    : "Like comment"
-              }
-              aria-pressed={isLiked}
-              className={cn(
-                "group inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-full px-2 transition-[color,background-color,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 motion-reduce:transition-none",
-                isLiked
-                  ? "text-[var(--chan-blue)]"
-                  : "text-[var(--chan-muted)] enabled:hover:bg-[var(--chan-surface)] enabled:hover:text-[var(--chan-ink)]",
-              )}
-            >
-              <LikePop active={isLiked}>
-                <NajsIcon
-                  name="like"
-                  className="h-4 w-4"
-                  stroke={isLiked ? "var(--chan-blue)" : "currentColor"}
-                />
-              </LikePop>
-              <AnimatedCount value={comment.likesCount || 0} className="font-semibold text-[12px] leading-none" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onDislike(comment.id)}
-              disabled={reactionsDisabled}
-              className={cn(
-                "inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-full px-2 transition-[color,background-color,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100 motion-reduce:transition-none",
-                isDisliked
-                  ? "text-[var(--chan-blue)]"
-                  : "text-[var(--chan-muted)] enabled:hover:bg-[var(--chan-surface)] enabled:hover:text-[var(--chan-ink)]",
-              )}
-              aria-label={
-                isDisliked
-                  ? language === "pl"
-                    ? "Cofnij reakcję nie lubię"
-                    : "Remove dislike from comment"
-                  : language === "pl"
-                    ? "Nie lubię komentarza"
-                    : "Dislike comment"
-              }
-              aria-pressed={isDisliked}
-            >
-              <NajsIcon
-                name="dislike"
-                className="h-4 w-4"
-                stroke={isDisliked ? "var(--chan-blue)" : "currentColor"}
-              />
-            </button>
-          </div>
+        {/* -ml-2 cancels the buttons' own padding so the like icon lines up with the text. */}
+        <div className="-ml-2 mt-1 flex min-w-0 flex-wrap items-center gap-1.5">
+          <CommentReactions
+            commentId={comment.id}
+            likesCount={comment.likesCount}
+            viewerReaction={comment.viewerReaction}
+            disabled={reactionsDisabled}
+            language={language}
+            onLike={onLike}
+            onDislike={onDislike}
+          />
 
           {isHearted && (
             <span

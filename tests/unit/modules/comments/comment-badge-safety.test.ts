@@ -25,7 +25,7 @@ describe('Comment Badge and Permission Safety', () => {
     replies: [],
   };
 
-  it('shows PATRON badge based on active author PatronGrant', () => {
+  it('never shows a PATRON badge publicly, even with an active PatronGrant (a tip buys nothing)', () => {
     const dto = mapCommentToDto(mockComment, {
       userId: 'other-user',
       canModerate: false,
@@ -33,7 +33,7 @@ describe('Comment Badge and Permission Safety', () => {
       hasVideoAccess: true
     });
 
-    expect(dto.author?.badges).toContain('PATRON');
+    expect(dto.author?.badges).not.toContain('PATRON');
   });
 
   it('does NOT grant edit permission based on author badge data if access is false', () => {
@@ -101,7 +101,7 @@ describe('Comment Badge and Permission Safety', () => {
     expect(dto.author?.badges).not.toContain('PATRON');
   });
 
-  it('shows PATRON badge when active grants exist, even if User.isPatron legacy field is false', () => {
+  it('no PATRON badge even when active grants exist', () => {
     const commentWithLegacyMismatch = {
       ...mockComment,
       author: {
@@ -118,6 +118,6 @@ describe('Comment Badge and Permission Safety', () => {
       hasVideoAccess: true,
     });
 
-    expect(dto.author?.badges).toContain('PATRON');
+    expect(dto.author?.badges).not.toContain('PATRON');
   });
 });

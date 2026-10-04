@@ -4,70 +4,58 @@ import { createScopedLogger } from "@/lib/logger";
 import { getCorrelationId } from "@/lib/utils/correlation";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { toggleCommentLike } from "@/lib/modules/comments";
+import { setCommentReaction, type ReactionTarget } from "@/lib/modules/comments";
+import { commentErrorResponse } from "@/lib/api/comment-response";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
-export async function PUT(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
-  const params = await props.params;
-  const requestId = getCorrelationId();
-  const scopedLogger = createScopedLogger(requestId);
-  const { commentId } = params;
+/** Generous for real clicking, tight enough to stop scripted like/unlike loops. */
+const REACTIONS_PER_MINUTE = 60;
 
+/**
+ * PUT sets the viewer's reaction to the `type` in the body (LIKE by default, DISLIKE),
+ * DELETE clears it. Both are idempotent: repeating a request changes nothing.
+ */
+async function handle(request: NextRequest, commentId: string, reaction: ReactionTarget, tag: string) {
+  const scopedLogger = createScopedLogger(getCorrelationId());
   try {
     const actor = await getActorFromAuth();
-    if (actor.type === "guest") {
+    if (actor.type === "guest" || !("userId" in actor)) {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    }
+
+    const limited = await rateLimit({ key: `comment-reactions:${actor.userId}`, limit: REACTIONS_PER_MINUTE, windowMs: 60_000 });
+    if (!limited.success) {
       return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
+        { success: false, error: "RATE_LIMITED", message: "Zbyt wiele reakcji. Spróbuj za chwilę." },
+        { status: 429 },
       );
     }
 
-    // Body is optional for backward compatibility — bare PUT means LIKE
-    const body = await request.json().catch(() => null) as { type?: unknown } | null;
-    const action = body?.type === "DISLIKE" ? "DISLIKE" : "LIKE";
+    const result = await setCommentReaction({ commentId, reaction }, createAppContext({ actor }));
+    if (!result.ok) return commentErrorResponse(result.error);
 
-    const ctx = createAppContext({ actor });
-    const result = await toggleCommentLike({ commentId, action }, ctx);
-
-    if (!result.ok) {
-      return NextResponse.json(
-        { success: false, message: result.error.message },
-        { status: result.error.type === "UNAUTHORIZED" ? 401 : 403 },
-      );
-    }
-
-    return NextResponse.json({ success: true, liked: result.data.liked, viewerReaction: result.data.viewerReaction, likesCount: result.data.likesCount });
+    return NextResponse.json({
+      success: true,
+      liked: result.data.viewerReaction === "LIKE",
+      viewerReaction: result.data.viewerReaction,
+      likesCount: result.data.likesCount,
+    });
   } catch (error: unknown) {
-    scopedLogger.error("[COMMENT_REACTION_PUT_ERROR]", error);
+    scopedLogger.error(tag, error);
     return handleApiError(error);
   }
 }
 
+export async function PUT(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
+  const { commentId } = await props.params;
+  const body = (await request.json().catch(() => null)) as { type?: unknown } | null;
+  const reaction: ReactionTarget = body?.type === "DISLIKE" ? "DISLIKE" : "LIKE";
+  return handle(request, commentId, reaction, "[COMMENT_REACTION_PUT_ERROR]");
+}
+
 export async function DELETE(request: NextRequest, props: { params: Promise<{ commentId: string }> }) {
-  const params = await props.params;
-  const requestId = getCorrelationId();
-  const scopedLogger = createScopedLogger(requestId);
-  const { commentId } = params;
-
-  try {
-    const actor = await getActorFromAuth();
-    const ctx = createAppContext({ actor });
-    const result = await toggleCommentLike(
-      { commentId, action: "UNLIKE" },
-      ctx,
-    );
-
-    if (!result.ok) {
-      return NextResponse.json(
-        { success: false, message: result.error.message },
-        { status: result.error.type === "UNAUTHORIZED" ? 401 : 403 },
-      );
-    }
-
-    return NextResponse.json({ success: true, liked: result.data.liked, likesCount: result.data.likesCount });
-  } catch (error: unknown) {
-    scopedLogger.error("[COMMENT_REACTION_DELETE_ERROR]", error);
-    return handleApiError(error);
-  }
+  const { commentId } = await props.params;
+  return handle(request, commentId, null, "[COMMENT_REACTION_DELETE_ERROR]");
 }

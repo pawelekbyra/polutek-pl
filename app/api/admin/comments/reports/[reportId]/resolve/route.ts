@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { resolveCommentReport } from "@/lib/modules/comments";
 import { CommentReportStatus } from "@prisma/client";
-import { handleApiError, fromUseCaseResult } from "@/lib/api/api-response";
+import { handleApiError } from "@/lib/api/api-response";
+import { commentResultResponse } from "@/lib/api/comment-response";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { parseAdminBody } from "@/lib/api/admin-body";
 import { adminCommentReportResolveSchema } from "@/lib/api/admin-schemas";
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ reportId
       status as CommentReportStatus,
       createAppContext({ actor }),
     );
-    return fromUseCaseResult(result);
+    return commentResultResponse(result);
   } catch (error: unknown) {
     return handleApiError(error);
   }

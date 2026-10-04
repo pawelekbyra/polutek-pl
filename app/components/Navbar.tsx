@@ -25,7 +25,6 @@ const TEMP_HIDE_NOTIFICATIONS_BELL = true;
 type ServerAdminState = {
   userId: string;
   isAdmin: boolean;
-  isPatron: boolean;
 };
 
 const Navbar = () => {
@@ -63,7 +62,7 @@ const Navbar = () => {
       .then((response) => (response.ok ? response.json() : null))
       .then((profile) => {
         if (!controller.signal.aborted) {
-          setServerAdminState({ userId, isAdmin: profile?.isAdmin === true, isPatron: profile?.isPatron === true });
+          setServerAdminState({ userId, isAdmin: profile?.isAdmin === true });
         }
       })
       .catch((error: unknown) => {
@@ -71,7 +70,7 @@ const Navbar = () => {
           !controller.signal.aborted &&
           !(error instanceof DOMException && error.name === "AbortError")
         ) {
-          setServerAdminState({ userId, isAdmin: false, isPatron: false });
+          setServerAdminState({ userId, isAdmin: false });
         }
       });
 
@@ -82,7 +81,6 @@ const Navbar = () => {
     serverAdminState?.userId === userId && serverAdminState?.isAdmin === true;
 
   const isAdmin = resolveNavbarAdminUiState(serverIsAdmin, undefined);
-  const isPatron = isAdmin || (serverAdminState?.userId === userId && serverAdminState?.isPatron === true);
   const searchLabel = language === "pl" ? "Szukaj" : "Search";
   const messagesLabel = language === "pl" ? "Wiadomości" : "Messages";
   const [notifications, setNotifications] = React.useState<NotificationDTO[]>([]);
@@ -221,7 +219,7 @@ const Navbar = () => {
               )}
 
               {isLoaded && isSignedIn && (
-                <UserMenu isAdmin={isAdmin} isPatron={isPatron} />
+                <UserMenu isAdmin={isAdmin} />
               )}
             </div>
           </>
