@@ -28,6 +28,18 @@ interface HeroProps {
   initialIsSubscribed?: boolean;
 }
 
+// Fixed locale and time zone: the server and the browser format these the same way, so the first
+// HTML already has the final text (no "1234" -> "1,2K" swap after hydration).
+const NUMBER_LOCALE = { pl: 'pl-PL', en: 'en-US' } as const;
+function formatPublishedDate(value: string | Date, language: 'pl' | 'en'): string {
+  return new Date(value).toLocaleDateString(NUMBER_LOCALE[language], {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'Europe/Warsaw',
+  });
+}
+
 function truncateAtWord(text: string, max: number): string {
   if (text.length <= max) return text;
   let i = max;
@@ -67,7 +79,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
       });
   }, [video.id, initialIsSubscribed, video.creator?.subscribersCount]);
 
-  const subscribersCount = mounted ? localSubState.subscribersCount : (video.creator?.subscribersCount || 0);
+  const subscribersCount = localSubState.subscribersCount;
   const subscribersLabel = subscribersCount === 1 ? t.subscribersOne : t.subscribers;
 
   const [interactionState, setInteractionState] = useState({
@@ -206,6 +218,9 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                <Link
                  href={video.creator?.slug ? getLocalizedHref(language, "channel", { slug: video.creator.slug }) : "#"}
                  className="shrink-0"
+                 // The channel page is rendered per request; prefetching it on sight would cost a
+                 // server render on every visit for a link few people follow.
+                 prefetch={false}
                >
                   <SafeAvatar
                     src={video.creator?.imageUrl}
@@ -217,12 +232,13 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                <div className="min-w-0 flex flex-col">
                   <Link
                     href={video.creator?.slug ? getLocalizedHref(language, "channel", { slug: video.creator.slug }) : "#"}
+                    prefetch={false}
                     className="font-brand font-bold text-[var(--chan-ink)] text-[15px] leading-[1.2] tracking-[-0.01em] truncate block transition-colors hover:text-[var(--chan-blue)]"
                   >
                     {video.creator?.name || MAIN_CREATOR_NAME}
                   </Link>
                   <span className="text-[12.5px] font-medium text-[var(--chan-muted)] mt-[1px] tabular-nums">
-                     {mounted ? formatCount(subscribersCount) : subscribersCount} {subscribersLabel}
+                     {formatCount(subscribersCount)} {subscribersLabel}
                   </span>
                </div>
                <div className="ml-auto shrink-0 lg:ml-[6px]">
@@ -266,7 +282,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                        strokeWidth={1.8}
                        color={interactionState.isLiked ? "var(--chan-blue)" : "var(--chan-ink)"}
                      />
-                     <span className="text-[12px] font-bold">{interactionState.likesCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US')}</span>
+                     <span className="text-[12px] font-bold">{interactionState.likesCount.toLocaleString(NUMBER_LOCALE[language])}</span>
                   </button>
                   <span className="h-4 w-px bg-[var(--chan-line-soft)]" />
                   <button
@@ -335,11 +351,11 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
            <div>
              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mb-1.5">
                 <span className="font-sans text-[12px] font-bold not-italic tabular-nums text-[var(--chan-ink)]">
-                   {mounted ? localViewsCount.toLocaleString(language === 'pl' ? 'pl-PL' : 'en-US') : localViewsCount} {t.views}
+                   {localViewsCount.toLocaleString(NUMBER_LOCALE[language])} {t.views}
                 </span>
                 <span aria-hidden="true" className="h-[3px] w-[3px] rounded-full bg-[var(--chan-line-soft)]" />
                 <span className="font-sans text-[12px] font-semibold not-italic text-[var(--chan-muted)]">
-                   {video.publishedAt ? new Date(video.publishedAt).toLocaleDateString(language === 'pl' ? 'pl-PL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : t.noDate}
+                   {video.publishedAt ? formatPublishedDate(video.publishedAt, language) : t.noDate}
                 </span>
              </div>
 

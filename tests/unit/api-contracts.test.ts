@@ -60,10 +60,11 @@ vi.mock('@/lib/modules/users', () => ({
   getOrCreateCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/lib/modules/playback', () => ({
+vi.mock('@/lib/modules/playback', async () => ({
   PlaybackService: {
     createPlaybackPlanWithContext: vi.fn(),
   },
+  toPublicPlaybackPlan: (await import('@/lib/modules/playback/application/public-playback-plan')).toPublicPlaybackPlan,
 }));
 
 vi.mock('@/lib/modules/payments', () => ({

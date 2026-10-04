@@ -216,7 +216,10 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
     expect(stripeRoute).toContain("message: 'Webhook processing failed'");
     expect(stripeRoute).not.toContain('err.stack');
     expect(stripeRoute).not.toContain('.stack');
-    expect(mediaRoute).toContain('MediaPolicy.isProbablyRawMediaUrl');
+    // The raw-URL safety net is the shared sanitizer (also used by the server-rendered home page);
+    // its behaviour is tested in tests/unit/api/media-source-route.test.ts.
+    expect(mediaRoute).toContain('toPublicPlaybackPlan');
+    expect(source('lib/modules/playback/application/public-playback-plan.ts')).toContain('MediaPolicy.isProbablyRawMediaUrl');
     expect(mediaRoute).not.toContain('playbackToken');
     expect(handleApiError).toBeDefined();
   });

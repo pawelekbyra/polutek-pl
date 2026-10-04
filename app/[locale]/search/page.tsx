@@ -6,6 +6,9 @@ import { VideoSearchService } from "@/lib/modules/video/application/video-search
 import { getLocalizedHref, isLocale, type Locale } from "@/lib/i18n/routing";
 import { notFound } from "next/navigation";
 import { APP_NAME } from "@/lib/constants";
+import { auth } from "@/lib/auth/server";
+import { toAuthSessionSnapshot } from "@/lib/auth/session-snapshot";
+import { AuthSessionSeedProvider } from "@/lib/auth/react";
 
 export const dynamic = "force-dynamic";
 
@@ -20,13 +23,16 @@ export default async function SearchPage(props: SearchPageProps) {
   const locale: Locale = rawLocale;
   const rawQuery = searchParams.q ?? "";
   const normalizedQuery = VideoSearchService.normalizeQuery(rawQuery);
-  const results = normalizedQuery
-    ? await VideoSearchService.searchPublicVideos(rawQuery)
-    : [];
+  // The viewer's session goes into the first HTML, so the navbar renders final (no loading state).
+  const [results, session] = await Promise.all([
+    normalizedQuery ? VideoSearchService.searchPublicVideos(rawQuery) : Promise.resolve([]),
+    auth(),
+  ]);
 
   return (
+    <AuthSessionSeedProvider snapshot={toAuthSessionSnapshot(session)}>
     <div className="public-visual-shell min-h-screen bg-[var(--chan-nav)] font-sans text-[var(--chan-ink)]">
-      <Navbar />
+      <Navbar initialQuery={rawQuery} />
       <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-8 border-b border-[var(--chan-line)] pb-6">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.15em] text-[var(--chan-muted)]">
@@ -91,6 +97,7 @@ export default async function SearchPage(props: SearchPageProps) {
       </main>
       <Footer />
     </div>
+    </AuthSessionSeedProvider>
   );
 }
 

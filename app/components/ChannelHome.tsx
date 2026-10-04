@@ -13,22 +13,15 @@ import type { SidebarLayout } from "./channel/sidebar-layout-request";
 import { AlertCircle } from "./icons";
 import { compareSidebarItems } from "@/lib/modules/video/domain/sidebar-order";
 import { AppPreloadProvider, useAppPreload } from "./preload/AppPreloadProvider";
+import type { InitialPlaybackPlan } from "./preload/initial-playback-plan";
 import { PreloadProgressBar } from "./preload/PreloadProgressBar";
-import { CommentLoadingSkeleton } from "@/components/skeletons";
+import { RenderClockProvider } from "./RenderClock";
 import { useSearchParams } from "next/navigation";
+// Rendered on the server with its first page (HomeExperience), so the list is in the first HTML.
+import EmbeddedComments from "./comments/EmbeddedComments";
+import type { InitialCommentsPage } from "./comments/initial-comments";
 
 const SupportModal = dynamic(() => import("./channel/SupportModal"), { ssr: false });
-import {
-  useClientReady,
-} from "@/app/hooks/useClientEnvironment";
-
-const EmbeddedComments = dynamic(() => import("./comments/EmbeddedComments"), {
-  ssr: false,
-});
-
-function CommentsMountPlaceholder() {
-  return <CommentLoadingSkeleton />;
-}
 
 interface ChannelHomeProps {
   mainVideo: PublicVideoDTO | null;
@@ -47,6 +40,12 @@ interface ChannelHomeProps {
   initialSidebarLayout?: SidebarLayout | null;
   /** Viewer the server-rendered layout was built for (`sidebarLayoutViewerKey`). */
   initialSidebarViewerKey?: string;
+  /** First page of the selected video's comments, rendered on the server. */
+  initialComments?: InitialCommentsPage | null;
+  /** The selected video's playback plan, made on the server for this viewer. */
+  initialPlayback?: InitialPlaybackPlan | null;
+  /** Server render time (ISO): the clock for relative dates in the first render. */
+  renderedAt?: string;
 }
 
 type ChannelViewState = {
@@ -63,6 +62,9 @@ export default function ChannelHome({
   userProfile,
   initialSidebarLayout,
   initialSidebarViewerKey,
+  initialComments,
+  initialPlayback,
+  renderedAt,
 }: ChannelHomeProps) {
   const selectedVideo =
     (allVideos || []).find(
@@ -70,7 +72,8 @@ export default function ChannelHome({
     ) || mainVideo;
 
   return (
-    <AppPreloadProvider selectedVideo={selectedVideo} allVideos={allVideos}>
+    <RenderClockProvider renderedAt={renderedAt}>
+    <AppPreloadProvider selectedVideo={selectedVideo} allVideos={allVideos} initialPlayback={initialPlayback}>
       <ChannelHomeContent
         mainVideo={mainVideo}
         allVideos={allVideos}
@@ -78,8 +81,10 @@ export default function ChannelHome({
         userProfile={userProfile}
         initialSidebarLayout={initialSidebarLayout}
         initialSidebarViewerKey={initialSidebarViewerKey}
+        initialComments={initialComments}
       />
     </AppPreloadProvider>
+    </RenderClockProvider>
   );
 }
 
@@ -110,6 +115,7 @@ function ChannelHomeContent({
   userProfile,
   initialSidebarLayout,
   initialSidebarViewerKey,
+  initialComments,
 }: ChannelHomeProps) {
   const { t, language } = useLanguage();
   const [selectionState, setSelectionState] = useState<ChannelViewState>(() => ({
@@ -141,7 +147,6 @@ function ChannelHomeContent({
   // after a shallow switch Hero fetches it for the newly selected video itself.
   const serverInteractionVideoId = resolveVideoId(currentVideoId);
   const activeTab = selectionState.activeTab;
-  const mounted = useClientReady();
   const preloader = useAppPreload();
 
   const setActiveTab = (activeTab: "comments" | "videos") => {
@@ -275,7 +280,6 @@ function ChannelHomeContent({
     selectedVideoId: selectedVideo.id,
     t,
     language,
-    mounted,
     onVideoMouseEnter: prefetchVideoIntent,
     onVideoSelect: handleVideoSelect,
     initialLayout: initialSidebarLayout,
@@ -286,6 +290,7 @@ function ChannelHomeContent({
     <EmbeddedComments
       videoId={selectedVideo.id}
       userProfile={userProfile}
+      initialComments={initialComments}
     />
   );
 
@@ -344,7 +349,7 @@ function ChannelHomeContent({
                 activeTab === "videos" && "hidden",
               )}
             >
-              {mounted ? comments : <CommentsMountPlaceholder />}
+              {comments}
             </div>
             <div
               data-testid="mobile-videos-panel"

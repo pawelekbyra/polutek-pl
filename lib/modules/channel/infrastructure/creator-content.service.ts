@@ -3,8 +3,12 @@ import { VideoStatus } from '@prisma/client';
 import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { PublicCreatorPageDTO } from '@/app/types/video';
 import { canUseDemoFallbacks } from '@/lib/feature-flags';
-import { VideoContentService, publicVideoOrderBy } from '@/lib/modules/video/infrastructure/video-content.service';
+import { VideoContentService, findMainCreatorAdminAvatar, publicVideoOrderBy } from '@/lib/modules/video/infrastructure/video-content.service';
 import { MainChannelService } from '@/lib/modules/channel/application/main-channel.service';
+import { createAppContext } from '@/lib/modules/shared/app-context';
+
+/** What the home page needs to know about the channel itself (metadata only, no video list). */
+export type HomeCreatorSummary = Pick<PublicCreatorPageDTO, 'id' | 'name' | 'slug' | 'bio'>;
 
 export class CreatorContentService {
   static async getCreatorBySlug(slug: string | null): Promise<PublicCreatorPageDTO | null> {
@@ -34,11 +38,7 @@ export class CreatorContentService {
         }
       });
 
-      const adminData = isMainCreator ? await prisma.user.findFirst({
-        where: { role: 'ADMIN', isDeleted: false },
-        orderBy: { createdAt: 'asc' },
-        select: { imageUrl: true }
-      }) : null;
+      const adminData = isMainCreator ? await findMainCreatorAdminAvatar() : null;
 
       if (creator && creator.isApproved && creator.isPrimary) {
         const effectiveImageUrl = adminData?.imageUrl || creator.user?.imageUrl || null;
@@ -88,6 +88,21 @@ export class CreatorContentService {
       }
       return null;
     }
+  }
+
+  /**
+   * The approved main channel's name and bio, from the same (request-cached) row the video queries
+   * use, so the home page does not load the channel's whole video list a second time.
+   */
+  static async getConfiguredCreatorSummary(): Promise<HomeCreatorSummary | null> {
+    const channel = await MainChannelService.getOptional(createAppContext());
+    if (channel?.isApproved && channel.isPrimary) {
+      return { id: channel.id, name: channel.name, slug: channel.slug, bio: channel.bio };
+    }
+    if (!channel && canUseDemoFallbacks()) {
+      return { id: DEFAULT_CREATOR.id, name: DEFAULT_CREATOR.name, slug: DEFAULT_CREATOR.slug, bio: DEFAULT_CREATOR.bio };
+    }
+    return null;
   }
 
   static async getConfiguredOrDefaultCreator(): Promise<PublicCreatorPageDTO | null> {

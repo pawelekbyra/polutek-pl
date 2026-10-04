@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistance } from "date-fns";
 import { pl } from "date-fns/locale";
 import Image from "next/image";
 import { AlertCircle } from "../icons";
@@ -18,6 +18,7 @@ import { getLocalizedHref } from "@/lib/i18n/routing";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isUpcomingPremiere } from "@/lib/premiere";
 import { usePremiereClock } from "@/lib/hooks/usePremiereClock";
+import { useRenderClock } from "../RenderClock";
 import {
   acquireSidebarLayout,
   releaseSidebarLayout,
@@ -33,7 +34,6 @@ interface SidebarPlaylistProps {
   selectedVideoId?: string;
   t: Translations;
   language: string;
-  mounted: boolean;
   onVideoMouseEnter: (id: string) => void;
   onVideoSelect?: (videoId?: string) => void;
   /** Server-built layout (HomeExperience) + the viewer it was built for; skips the first fetch. */
@@ -46,7 +46,6 @@ export function SidebarPlaylist({
   selectedVideoId,
   t,
   language,
-  mounted,
   onVideoMouseEnter,
   onVideoSelect,
   initialLayout,
@@ -58,6 +57,9 @@ export function SidebarPlaylist({
     userId: authUserId,
   } = useAuth();
   const preloader = useAppPreload();
+  // Relative dates render from the server's clock during hydration (RenderClock), so the first
+  // HTML already has them; views use a fixed locale, which formats the same on server and client.
+  const now = useRenderClock();
 
   const getViewsLabel = (count: number) => {
     if (language !== "pl") return count === 1 ? "view" : "views";
@@ -69,8 +71,10 @@ export function SidebarPlaylist({
   };
 
   const [layout, setLayout] = useState<SidebarLayout | null>(initialLayout ?? null);
-  const [loading, setLoading] = useState(!initialLayout);
   const [error, setError] = useState<boolean>(false);
+  // Nothing to show yet (no server layout and the first fetch is still running). A refetch (sign-in,
+  // premiere reached) keeps the current layout on screen until the new one replaces it.
+  const loading = !layout && !error;
   // Viewer the layout in state was built for; seeded from the server so the first pass doesn't refetch.
   const layoutViewerKeyRef = useRef<string | null>(initialLayout ? initialLayoutViewerKey ?? null : null);
 
@@ -100,9 +104,6 @@ export function SidebarPlaylist({
 
     async function applyLayout() {
       layoutViewerKeyRef.current = null;
-      setLayout(null);
-      setLoading(true);
-      setError(false);
 
       const result = await request.promise;
       if (cancelled || result.status === "aborted") return;
@@ -111,9 +112,11 @@ export function SidebarPlaylist({
         setLayout(result.layout);
         setError(false);
       } else {
+        // The layout on screen was built for another viewer: fall back to the plain list,
+        // locked by this viewer's own sign-in state.
+        setLayout(null);
         setError(true);
       }
-      setLoading(false);
     }
     void applyLayout();
 
@@ -169,6 +172,9 @@ export function SidebarPlaylist({
         <Link
           href={feedVideoHref}
           scroll={false}
+          // A plain click switches in place (no navigation), so a router prefetch of the
+          // dynamic home page would only cost a server render per visible link.
+          prefetch={false}
           onClick={(event) => {
             // Plain clicks switch in place (ChannelHome does a shallow URL update);
             // modified/middle clicks keep the real link for new tabs. Upcoming
@@ -239,24 +245,16 @@ export function SidebarPlaylist({
               </div>
               <div className="flex flex-col leading-[1.4]">
                 <span>
-                  {mounted
-                    ? video.views?.toLocaleString(
-                        language === "pl" ? "pl-PL" : "en-US",
-                      )
-                    : video.views}{" "}
-                  {mounted ? getViewsLabel(video.views ?? 0) : t.views}
+                  {(video.views ?? 0).toLocaleString(language === "pl" ? "pl-PL" : "en-US")}{" "}
+                  {getViewsLabel(video.views ?? 0)}
                 </span>
-                {video.publishedAt && (
-                  <>
-                    <span>
-                      {mounted
-                        ? formatDistanceToNow(new Date(video.publishedAt), {
-                            addSuffix: true,
-                            locale: language === "pl" ? pl : undefined,
-                          }).replace("około", "ok.")
-                        : ""}
-                    </span>
-                  </>
+                {video.publishedAt && now && (
+                  <span>
+                    {formatDistance(new Date(video.publishedAt), now, {
+                      addSuffix: true,
+                      locale: language === "pl" ? pl : undefined,
+                    }).replace("około", "ok.")}
+                  </span>
                 )}
               </div>
             </div>

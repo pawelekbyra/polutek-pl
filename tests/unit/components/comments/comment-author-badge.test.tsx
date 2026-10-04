@@ -43,7 +43,6 @@ const renderItem = (comment: CommentView) =>
     <CommentItem
       comment={comment}
       userProfile={null}
-      isClient
       language="pl"
       t={{}}
       canComment={false}

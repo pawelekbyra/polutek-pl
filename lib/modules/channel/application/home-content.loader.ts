@@ -1,11 +1,15 @@
-import { PublicCreatorPageDTO, PublicVideoDTO } from "@/app/types/video";
-import { CreatorContentService } from "@/lib/modules/channel/infrastructure/creator-content.service";
+import { cache } from "react";
+import { PublicVideoDTO } from "@/app/types/video";
+import {
+  CreatorContentService,
+  type HomeCreatorSummary,
+} from "@/lib/modules/channel/infrastructure/creator-content.service";
 import { VideoContentService } from "@/lib/modules/video/infrastructure/video-content.service";
 import { logger } from "@/lib/logger";
 
 export interface HomeContent {
   status: 'loading' | 'ready' | 'error' | 'empty';
-  creator: PublicCreatorPageDTO | null;
+  creator: HomeCreatorSummary | null;
   mainVideo: PublicVideoDTO | null;
   allVideos: PublicVideoDTO[];
   error?: string;
@@ -22,23 +26,28 @@ export interface HomeContent {
 /**
  * Core business logic for loading the initial homepage state.
  * This is decoupled from React components for easier testing.
+ *
+ * The channel summary, the video list and the featured video are independent reads, so they run
+ * in parallel; the main-channel row and the admin avatar they all need are read once per render
+ * (React `cache` in MainChannelService / VideoContentService).
  */
 export async function loadHomeContent(): Promise<HomeContent> {
-  let creator: PublicCreatorPageDTO | null = null;
-  let allVideos: PublicVideoDTO[] = [];
-  let mainFeaturedVideo: PublicVideoDTO | null = null;
-
   try {
-    try {
-      creator = await CreatorContentService.getConfiguredOrDefaultCreator();
-    } catch (err) {
-      logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load creator", err);
+    const [creatorResult, videosResult, featuredResult] = await Promise.allSettled([
+      CreatorContentService.getConfiguredCreatorSummary(),
+      VideoContentService.getAllVideos(),
+      VideoContentService.getMainFeaturedVideo(),
+    ]);
+
+    let creator: HomeCreatorSummary | null = null;
+    if (creatorResult.status === 'fulfilled') {
+      creator = creatorResult.value;
+    } else {
+      logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load creator", creatorResult.reason);
     }
 
-    try {
-      allVideos = await VideoContentService.getAllVideos();
-    } catch (err) {
-      logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load videos", err);
+    if (videosResult.status === 'rejected') {
+      logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to load videos", videosResult.reason);
       return {
         status: 'empty',
         creator,
@@ -47,13 +56,15 @@ export async function loadHomeContent(): Promise<HomeContent> {
         publicMessage: "Brak dostępnych materiałów."
       };
     }
+    const allVideos = videosResult.value;
 
-    try {
-      mainFeaturedVideo = (await VideoContentService.getMainFeaturedVideo())
-        || (allVideos.length > 0 ? allVideos[0] : null);
-    } catch (err) {
-      logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to resolve main video", err);
+    let featured: PublicVideoDTO | null = null;
+    if (featuredResult.status === 'fulfilled') {
+      featured = featuredResult.value;
+    } else {
+      logger.error("[HOME_CONTENT_LOAD_ERROR] Failed to resolve main video", featuredResult.reason);
     }
+    const mainFeaturedVideo = featured || (allVideos.length > 0 ? allVideos[0] : null);
 
     if (!mainFeaturedVideo && allVideos.length === 0) {
         return {
@@ -83,12 +94,10 @@ export async function loadHomeContent(): Promise<HomeContent> {
   }
 }
 
-// NOTE: despite the name, this does not actually cache anything — it's a direct
-// passthrough to loadHomeContent(). The page(s) calling it are intentionally
-// force-dynamic, so there's no
-// caching layer here today. Kept as its own function (not just an alias) since it's
-// the natural place to add real caching later; don't assume memoization exists
-// because of the name.
-export async function getHomeContentCached(): Promise<HomeContent> {
-  return loadHomeContent();
-}
+/**
+ * The home content of the current request. `generateMetadata`, the page and HomeExperience all
+ * call this; React `cache` makes it one load per request (it is request-scoped, so nothing is
+ * shared between viewers or requests: the page stays per-request, as the premiere and tier
+ * logic need).
+ */
+export const getHomeContentCached = cache(loadHomeContent);

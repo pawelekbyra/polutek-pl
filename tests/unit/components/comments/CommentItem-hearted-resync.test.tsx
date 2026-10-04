@@ -53,7 +53,6 @@ function renderCommentItem(comment: CommentView) {
     <CommentItem
       comment={comment}
       userProfile={{ id: 'viewer-1' }}
-      isClient={true}
       language="pl"
       t={{}}
       canComment={true}
@@ -85,8 +84,7 @@ describe('CommentItem resyncs isHearted from the comment prop', () => {
       <CommentItem
         comment={{ ...comment, isHearted: true }}
         userProfile={{ id: 'viewer-1' }}
-        isClient={true}
-        language="pl"
+          language="pl"
         t={{}}
         canComment={true}
         onLike={noop}

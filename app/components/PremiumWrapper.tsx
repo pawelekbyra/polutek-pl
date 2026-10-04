@@ -46,6 +46,41 @@ function isAccessTierDto(value: unknown): value is AccessTierDto {
   return value === "PUBLIC" || value === "LOGGED_IN" || value === "PATRON";
 }
 
+type PlanView = {
+  hasAccess: boolean;
+  playbackPlan: PlaybackPlan | null;
+  playbackState: PlaybackPlanStatus | null;
+  planPremiereAt: string | null;
+  requiredTier: AccessTierDto | null;
+};
+
+/**
+ * What the wrapper shows for a plan response. One place for both paths: a plan answered by
+ * `/api/media-source` and a plan the server already rendered into the page. A plan that is not
+ * playable for exactly this video is never handed to the player.
+ */
+function viewForPlan(rawData: unknown, videoId: string, isGuest: boolean): PlanView {
+  const data = rawData as Partial<PlaybackPlan> & {
+    access?: {
+      allowed?: unknown;
+      reason?: unknown;
+      requiredTier?: string;
+    };
+    hasAccess?: unknown;
+    requiredTier?: string;
+  };
+  const playbackState = getSafePlaybackState(data, isGuest ? "LOGIN_REQUIRED" : false);
+  const hasAccess = isPlayablePlaybackPlan(data as PlaybackPlan, videoId);
+  const requiredTier = data.requiredTier ?? data.access?.requiredTier;
+  return {
+    hasAccess,
+    playbackPlan: hasAccess ? (data as PlaybackPlan) : null,
+    playbackState,
+    planPremiereAt: playbackState === "COMING_SOON" && typeof data.premiereAt === "string" ? data.premiereAt : null,
+    requiredTier: isAccessTierDto(requiredTier) ? requiredTier : null,
+  };
+}
+
 interface PremiumWrapperProps {
   children: React.ReactNode;
   videoId: string;
@@ -80,18 +115,6 @@ export default function PremiumWrapper({
   onAccessLoad,
 }: PremiumWrapperProps) {
   const { userId, isLoaded, sessionId } = useAuth();
-  const [hasAccess, setHasAccess] = useState<boolean>(false);
-  const [playbackPlan, setPlaybackPlan] = useState<PlaybackPlan | null>(null);
-  const [resolvedViewerKey, setResolvedViewerKey] = useState<string | null>(null);
-  const [dbTier, setDbTier] = useState<AccessTierDto | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [fetchError, setFetchError] = useState<string | null>(null);
-  const [playbackState, setPlaybackState] = useState<PlaybackPlanStatus | null>(
-    null,
-  );
-  // Premiere time the server reported on a COMING_SOON plan (defensive: the DTO
-  // is the primary signal, but the server clock has the last word).
-  const [planPremiereAt, setPlanPremiereAt] = useState<string | null>(null);
   const premiereNow = usePremiereClock([premiereAt]);
   const isUpcoming = isUpcomingPremiere({ premiereAt }, premiereNow);
   const preloader = useAppPreload();
@@ -101,6 +124,29 @@ export default function PremiumWrapper({
       ? authViewerKey
       : null
     : authViewerKey;
+
+  // A plan already in the preload cache for this viewer (the server renders the hero's plan into
+  // the page) is the starting state: the player is in the first HTML instead of a loading frame
+  // that waits for /api/media-source. The effect below still runs and confirms the same plan.
+  const [initialView] = useState<{ viewerKey: string; view: PlanView } | null>(() => {
+    if (!viewerKey || isUpcoming || !preloader) return null;
+    const cached = preloader.getPlaybackPlan(videoId);
+    if (!cached || cached.status === "COMING_SOON") return null;
+    return { viewerKey, view: viewForPlan(cached, videoId, !userId) };
+  });
+
+  const [hasAccess, setHasAccess] = useState<boolean>(initialView?.view.hasAccess ?? false);
+  const [playbackPlan, setPlaybackPlan] = useState<PlaybackPlan | null>(initialView?.view.playbackPlan ?? null);
+  const [resolvedViewerKey, setResolvedViewerKey] = useState<string | null>(initialView?.viewerKey ?? null);
+  const [dbTier, setDbTier] = useState<AccessTierDto | null>(initialView?.view.requiredTier ?? null);
+  const [isLoading, setIsLoading] = useState(!initialView);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [playbackState, setPlaybackState] = useState<PlaybackPlanStatus | null>(
+    initialView?.view.playbackState ?? null,
+  );
+  // Premiere time the server reported on a COMING_SOON plan (defensive: the DTO
+  // is the primary signal, but the server clock has the last word).
+  const [planPremiereAt, setPlanPremiereAt] = useState<string | null>(initialView?.view.planPremiereAt ?? null);
   const requestGenerationRef = useRef(0);
   const directRequestControllerRef = useRef<AbortController | null>(null);
 
@@ -183,29 +229,14 @@ export default function PremiumWrapper({
         throw new Error("Invalid playback plan response");
       }
 
-      const data = rawData as Partial<PlaybackPlan> & {
-        access?: {
-          allowed?: unknown;
-          reason?: unknown;
-          requiredTier?: string;
-        };
-        hasAccess?: unknown;
-        requiredTier?: string;
-      };
+      const view = viewForPlan(rawData, videoId, !userId);
 
-      const nextState = getSafePlaybackState(
-        data,
-        !userId ? deniedState : false,
-      );
-      const nextHasAccess = isPlayablePlaybackPlan(data as PlaybackPlan, videoId);
-      const requiredTier = data.requiredTier ?? data.access?.requiredTier;
-
-      setHasAccess(nextHasAccess);
-      onAccessLoad?.(nextHasAccess);
-      setPlaybackState(nextState);
-      setPlanPremiereAt(nextState === "COMING_SOON" && typeof data.premiereAt === "string" ? data.premiereAt : null);
-      setPlaybackPlan(nextHasAccess ? data as PlaybackPlan : null);
-      if (isAccessTierDto(requiredTier)) setDbTier(requiredTier);
+      setHasAccess(view.hasAccess);
+      onAccessLoad?.(view.hasAccess);
+      setPlaybackState(view.playbackState);
+      setPlanPremiereAt(view.planPremiereAt);
+      setPlaybackPlan(view.playbackPlan);
+      if (view.requiredTier) setDbTier(view.requiredTier);
       setFetchError(null);
     } catch (error) {
       if (!isCurrentRequest()) return;

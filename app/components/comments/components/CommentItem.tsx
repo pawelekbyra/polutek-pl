@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistance } from "date-fns";
 import { enUS, pl } from "date-fns/locale";
 import { Star, Trash2, Heart, MoreVertical, Edit, Flag, Link as LinkIcon, EyeOff, RotateCcw } from "../../icons";
 import { cn } from "@/lib/utils";
@@ -18,11 +18,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useRenderClock } from "../../RenderClock";
 
 interface CommentItemProps {
   comment: CommentView;
   userProfile: { id?: string } | null;
-  isClient: boolean;
   language: string;
   t: Record<string, string>;
   canComment: boolean;
@@ -43,8 +43,8 @@ interface CommentItemProps {
 const AVATAR_SIZE = 40;
 const REPLY_AVATAR_SIZE = 24;
 
-function formatCommentAge(date: Date, language: string) {
-  const formatted = formatDistanceToNow(date, {
+function formatCommentAge(date: Date, language: string, now: Date) {
+  const formatted = formatDistance(date, now, {
     addSuffix: true,
     locale: language === "pl" ? pl : enUS,
   });
@@ -55,7 +55,6 @@ function formatCommentAge(date: Date, language: string) {
 function CommentItemComponent({
   comment,
   userProfile,
-  isClient,
   language,
   t,
   canComment,
@@ -84,6 +83,8 @@ function CommentItemComponent({
   const [isHearted, setIsHearted] = React.useState<boolean>(comment.isHearted || false);
   const [isHighlighted, setIsHighlighted] = useState(false);
   const commentRef = useRef<HTMLDivElement>(null);
+  // Server render time during hydration, live time after (RenderClock): no text swap on load.
+  const now = useRenderClock();
 
   // CommentItem is keyed by comment.id, so React reuses this instance across
   // refetches — resync from the prop whenever the server's own value changes
@@ -198,9 +199,9 @@ function CommentItemComponent({
     createdAtDate && !Number.isNaN(createdAtDate.getTime())
       ? createdAtDate
       : null;
-  const relativeCreatedAt = isClient
+  const relativeCreatedAt = now
     ? validCreatedAt
-      ? formatCommentAge(validCreatedAt, language)
+      ? formatCommentAge(validCreatedAt, language, now)
       : isReply
         ? t.justNow
         : language === "pl"
