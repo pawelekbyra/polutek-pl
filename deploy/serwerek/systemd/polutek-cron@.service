@@ -9,3 +9,5 @@ Type=oneshot
 EnvironmentFile=/etc/serwerek/cron.env
 ExecStart=/opt/serwerek/scripts/cron-runner.sh %i
 TimeoutStartSec=300
+# No OnFailure= here on purpose: a minute-cron that misses one run during a deploy would e-mail. A failed unit stays
+# "failed" until its next successful run, and health.sh (every 5 min) alerts on that; every run is in telemetry.job_run.

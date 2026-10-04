@@ -6,6 +6,7 @@
     "app/**/*.tsx",
     "lib/**/*.ts",
     "scripts/**/*.ts",
+    "services/**/*.ts",
     ".next/types/**/*.ts",
     "apps/admin/**/*.ts",
     "apps/admin/**/*.tsx"
