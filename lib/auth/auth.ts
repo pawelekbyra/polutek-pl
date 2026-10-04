@@ -36,7 +36,14 @@ import {
 } from "./hooks";
 import { onEmailVerified, queueChangeEmailConfirmation, queuePasswordResetEmail, queueVerificationEmail } from "./emails";
 import { authRateLimitStorage } from "./rate-limit-storage";
-import { PASSKEY_PATHS, assertPasskeyUserVerified } from "./passkey";
+import { PASSKEY_PATHS } from "./passkey";
+import {
+  PASSKEY_SIGNUP_PATH,
+  afterPasskeyAuthentication,
+  afterPasskeyRegistration,
+  passkeySignup,
+  resolvePasskeySignupUser,
+} from "./passkey-signup";
 
 const isProduction = process.env.NODE_ENV === "production";
 const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
@@ -145,6 +152,8 @@ export const auth = betterAuth({
       [PASSKEY_PATHS.registerOptions]: { window: 3600, max: 20 },
       [PASSKEY_PATHS.register]: { window: 3600, max: 20 },
       [PASSKEY_PATHS.remove]: { window: 3600, max: 20 },
+      // Passkey-first sign-up: same budget as the e-mail sign-up (each answer can say "address taken").
+      [PASSKEY_SIGNUP_PATH]: { window: 3600, max: 10 },
     },
   },
 
@@ -201,25 +210,26 @@ export const auth = betterAuth({
     // One Tap sign-in count as strong on their own (Google's own 2-step verification and device
     // checks), which is also Better Auth's behaviour; the app never forces a second factor on top.
     twoFactor({ issuer: APP_NAME, trustDeviceMaxAge: TWO_FACTOR_TRUST_DEVICE_SECONDS }),
-    // Passkeys (WebAuthn). Added from the account panel by a signed-in user (fresh session); a new
-    // account is never created by a passkey. A passkey sign-in is strong on its own (possession of
-    // the device key + biometrics/PIN), so like Google it never gets the TOTP step (the twoFactor
-    // hook only runs on /sign-in/email). User verification is enforced, not just "preferred".
+    // Passkeys (WebAuthn). Added from the account panel (fresh session, checked in the before hook) or
+    // used to create an account ("Use a passkey", lib/auth/passkey-signup.ts: signed token,
+    // account created only after a successful ceremony, signs in after the e-mail is verified).
+    // A passkey sign-in is strong on its own (device key + biometrics/PIN, user verification enforced),
+    // so like Google it never gets the TOTP step (the twoFactor hook only runs on /sign-in/email).
     passkey({
       ...getPasskeyRelyingParty(),
       authenticatorSelection: { residentKey: "required", requireResidentKey: true, userVerification: "preferred" },
       registration: {
-        requireSession: true,
-        afterVerification: async ({ verification }) => {
-          assertPasskeyUserVerified(verification.registrationInfo?.userVerified);
-        },
+        requireSession: false,
+        resolveUser: async ({ ctx, context }) => resolvePasskeySignupUser({ ctx: ctx as never, context }),
+        afterVerification: async ({ ctx, verification, user, context }) =>
+          afterPasskeyRegistration({ ctx: ctx as never, verification, user, context }),
       },
       authentication: {
-        afterVerification: async ({ verification }) => {
-          assertPasskeyUserVerified(verification.authenticationInfo.userVerified);
-        },
+        afterVerification: async ({ ctx, verification, clientData }) =>
+          afterPasskeyAuthentication({ ctx: ctx as never, verification, clientData: clientData as never }),
       },
     }),
+    passkeySignup(),
     nextCookies(), // must stay last
   ],
 });

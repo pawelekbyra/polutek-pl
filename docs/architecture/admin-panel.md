@@ -1,8 +1,17 @@
 # Panel administratora `admin.pawelperfect.com`: wizja i plan
 
-Stan: 2026-10-04. Status: **projekt; faza 0 w budowie** (telemetria: [`admin-telemetry.md`](admin-telemetry.md), stan faktyczny ma tam pierwszeństwo). Dokument scala trzy raporty
-badawcze (mapa na końcu). Każdy fakt pochodzi z raportów albo z kodu; czego nie wiemy, oznaczam „do ustalenia”.
+Stan: 2026-10-04. Status: **faza 0 w budowie** (telemetria: [`admin-telemetry.md`](admin-telemetry.md), stan
+faktyczny ma tam pierwszeństwo); **faza 1 zbudowana w kodzie (`apps/admin`), jeszcze niewdrożona**. Jak faza 1 jest
+zbudowana i czym różni się od planu: sekcja 9. Wdrożenie, rejestracja, reset, rollback:
+[`operations/ADMIN-PANEL.md`](../operations/ADMIN-PANEL.md). Parytet ze starym panelem:
+[`admin-parity.md`](admin-parity.md). Dokument scala trzy raporty badawcze (mapa w sekcji 8). Każdy fakt pochodzi z
+raportów albo z kodu; czego nie wiemy, oznaczam „do ustalenia”.
 Gdy któraś decyzja się zmieni albo faza się skończy, ten plik zmienia się w tym samym PR.
+
+**Decyzje właściciela z 2026-10-04 (12 pytań z sekcji 7):** wszystkie według rekomendacji, z wyjątkami: nic za
+pieniądze (bez Workers Paid, Resend Pro, kluczy sprzętowych i nowych płatnych usług; „Workers Paid 5 USD” i „Resend
+Pro” z sekcji 6.1 są nieaktualne), inne projekty Cloudflare zostają na koncie, przed startem publicznym fazy 0–1 +
+poprawki z sekcji 5. Wygląd prototypu zatwierdzony.
 
 ## 1. Cel i zasady
 
@@ -242,8 +251,57 @@ Nie warto teraz (zrobi to przebudowa): ADM-08, 09, 11, 14, 19–22, 30, 31, 33.
 | [`audit/2026-10-03/admin-3-architecture.md`](../audit/2026-10-03/admin-3-architecture.md) | układ aplikacji, logowanie, źródła danych, model `telemetry`, szacunki, etapy |
 | [`audit/2026-10-03/audit-feat-admin.md`](../audit/2026-10-03/audit-feat-admin.md) | poprzedni audyt panelu (stara numeracja ADM, zastąpiony raportem 1) |
 | [`audit/2026-10-03/audit-ops.md`](../audit/2026-10-03/audit-ops.md), [`audit-legal-privacy.md`](../audit/2026-10-03/audit-legal-privacy.md), [`audit-security.md`](../audit/2026-10-03/audit-security.md) | kopie i monitoring, analityka a prawo, bezpieczeństwo |
-| `docs/design/admin-panel/` | prototyp wizualny: **na `origin/main` jeszcze nie istnieje** (stan 2026-10-04) |
+| [`design/admin-panel/`](../design/admin-panel/DESIGN-SYSTEM.md) | zatwierdzony prototyp i system projektowy (źródło wyglądu `apps/admin`) |
 | [`operations/STATUS.md`](../operations/STATUS.md) | otwarte prace i decyzje właściciela |
 | [`operations/SERWEREK.md`](../operations/SERWEREK.md), [`VIDEO-PIPELINE.md`](../operations/VIDEO-PIPELINE.md), [`SUPPORT-CENTER.md`](../operations/SUPPORT-CENTER.md), [`AGENT_ACCESS.md`](../operations/AGENT_ACCESS.md) | serwer i wdrożenia, kodowanie wideo, PP Support, dostępy agentów |
 | [`architecture/auth-better-auth.md`](auth-better-auth.md), [`self-hosted-hls.md`](self-hosted-hls.md) | logowanie serwisu, własny HLS |
 | `git show 88c787d0:docs/audit/2026-09-30-admin-backoffice-architecture.md` | stara analiza osobnego panelu (odłożonego 2026-09-30), materiał historyczny |
+| [`operations/ADMIN-PANEL.md`](../operations/ADMIN-PANEL.md) | runbook panelu: wdrożenie, rejestracja administratora, reset, rollback, status hosta |
+
+## 9. Faza 1: jak to jest zbudowane (2026-10-04)
+
+Kod: `apps/admin` (aplikacja), `lib/modules/admin-overview` (odczyty dla ekranów), `prisma/migrations/20261004200000_add_admin_panel_auth`,
+`deploy/serwerek/{Dockerfile.admin,deploy-admin.sh,admin/}`. Testy: `tests/unit/admin-app`, `tests/unit/admin-overview`,
+`tests/postgres/admin-panel-auth.pg.test.ts`.
+
+### 9.1 Decyzje techniczne (badanie 2026-10-04)
+
+| Temat | Wybór | Dlaczego | Zmiana względem sekcji 2 |
+|---|---|---|---|
+| Układ repo | `apps/admin` jako **drugi katalog Next.js bez npm workspaces**: bez własnego `package.json`, używa wspólnego `node_modules` i jednego `package-lock.json`; budowa `next build apps/admin`, `turbopack.root` i `outputFileTracingRoot` = katalog repo ([Turbopack root](https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack), [standalone w monorepo](https://nextjs.org/docs/app/api-reference/config/next-config-js/output)). Kod wspólny przez alias `@/…` (ten sam co w serwisie), własny przez `@admin/…`. | Workspaces zmieniają lockfile, `npm ci` w obu Dockerfile'ach i w CI (osobne `package.json` musi być skopiowane przed instalacją), a niczego nie dają przy tych samych wersjach Next/React. Jedna instalacja = zero rozjazdu wersji. | sekcja 2 mówiła „npm workspaces”: zastąpione prostszym wariantem; `packages/core` dalej „później”. |
+| Granice | Bramka `architecture boundaries` sprawdza `apps/admin`: tylko indeksy modułów (`@/lib/modules/<m>`, plus `shared`), **zakaz** `@/lib/auth`, `@/lib/api/auth`, `@/app/*`, `@/components/*`; Prisma tylko w `apps/admin/lib/auth`. `hotspots` obejmuje `apps/`. | Panel nie może przypadkiem użyć tożsamości strony ani jej UI. | nowe |
+| Warstwa 1 (Access) | `proxy.ts` (Next 16, runtime Node) weryfikuje `Cf-Access-Jwt-Assertion` biblioteką `jose`: RS256, `iss` = zespół, `aud` = tag aplikacji, `exp`; klucze z `/cdn-cgi/access/certs` z pamięcią 10 min i odświeżeniem przy nieznanym `kid` ([Cloudflare](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/)). Opcjonalna lista e-maili `ADMIN_ACCESS_EMAILS`. W produkcji bez `CF_ACCESS_TEAM_DOMAIN`/`CF_ACCESS_AUD` każde żądanie dostaje 503 (fail closed). Jedyny wyjątek: `/api/health` (tylko `{ok:true}`, dla healthchecka kontenera). | Nawet źle ustawiony ingress tunelu albo wystawiony port nie wpuści bez Access. | zgodnie z planem |
+| Warstwa 2 (sesja) | Osobna instancja Better Auth (`apps/admin/lib/auth/auth.ts`), własny sekret `ADMIN_AUTH_SECRET`, tabele `Admin*`, ciasteczko `__Host-ppadm.session_token` (host-only, `SameSite=Strict`, bez cache sesji). **Logowanie wyłącznie passkeyem** z weryfikacją użytkownika (`userVerification: required`, `rpID` = host panelu) ([passkey](https://better-auth.com/docs/plugins/passkey)). **Bez hasła, bez e-maila, bez Google, bez rejestracji.** TOTP + 10 kodów zapasowych ustawiane przy rejestracji (`allowPasswordless`, [2FA](https://better-auth.com/docs/plugins/2fa)); TOTP służy do step-up. Sesja: bezczynność 60 min (przesuwne okno), twardo 12 h od logowania (sprawdzane w `requireAdmin()`, sesja jest wtedy unieważniana). Wyłączone ścieżki Better Auth: zmiana e-maila/hasła, usuwanie konta, wyłączanie 2FA, usuwanie passkeyów (wszystko to robi `admin-enroll --reset`). | Najmniej sposobów wejścia = najmniej ataków; passkey jest odporny na phishing; utrata urządzeń = SSH. | sekcja 2 dopuszczała hasło z obowiązkowym 2FA: wybrano wariant bez hasła. |
+| Rejestracja | `apps/admin/scripts/admin-enroll.mjs` (zwykły ESM, działa w obrazie standalone): tworzy `AdminUser`, link jednorazowy 15 min w **fragmencie URL** (`/rejestracja#t=…`, nie trafia do logów ani Referer), w bazie tylko SHA-256 tokenu; `--reset` usuwa sesje, passkeye, TOTP i niewykorzystane linki. Strona rejestracji: wykorzystanie linku → TOTP (QR + klucz ręczny + kody zapasowe, kod weryfikujący) → passkey → „Zakończ” (`enrolledAt`). Niedokończona rejestracja nigdy nie jest zaufana: nowy link kasuje to, co poprzedni zdążył dodać. | Korzeń zaufania = SSH, nic nie idzie e-mailem. | `scripts/admin-enroll.js` → `apps/admin/scripts/admin-enroll.mjs` |
+| Step-up | `requireStepUp()` + ekran `/potwierdz`: ponowne logowanie passkeyem (nowa sesja) albo kod TOTP potwierdzony na bieżącej sesji (`AdminSession.stepUpAt`, 5 błędów = blokada 15 min). Ważne 5 min. W fazie 1 tylko mechanizm i ekran; pierwsze akcje, które go wymagają, przychodzą w fazie 4. | jak w planie | – |
+| Audyt logowań | Nowa tabela **`AdminAuthEvent`**: tylko dopisywanie (trigger odrzuca `UPDATE`, `DELETE` młodszych niż 400 dni i `TRUNCATE`), łańcuch `hash = sha256(prevHash ‖ wiersz)` pod blokadą doradczą; IP z `CF-Connecting-IP`, kraj, UA, `cf-ray`. Zdarzenia: wydanie/reset/wykorzystanie linku, rejestracja, logowanie (też nieudane), step-up, wylogowanie, wygaśnięcie 12 h, dodanie passkeya i TOTP. | `AuditLog` nie może być niezmienny już teraz: cron `retention` anonimizuje w nim IP po 90 dniach. | „`AuditLog` niezmienny” zostaje na później (faza 3, razem z rolą `pp_admin`). |
+| CSRF i nagłówki | Każda mutacja: `Origin` = dokładnie origin panelu, `Sec-Fetch-Site` (jeśli jest) = `same-origin`. CSP z nonce na żądanie: `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'` (zero atrybutów `style=` w znacznikach; szerokości i wysokości przez klasy skali `scale.css`), `connect-src 'self'`, `frame-ancestors 'none'`, `base-uri 'none'` ([Next CSP](https://nextjs.org/docs/app/guides/content-security-policy)); do tego HSTS, COOP/CORP same-origin, `Referrer-Policy: no-referrer`, `X-Robots-Tag: noindex`, `Cache-Control: private, no-store`. Wszystkie strony dynamiczne (nonce wymaga renderu na żądanie). | Zero skryptów i czcionek z zewnątrz; panel działa bez `unsafe-inline`. | zgodnie z planem |
+| Wykresy | Własne komponenty: kolumny w HTML/CSS (zaokrąglone końce, ≤ 24 px, siatka, oś), sparkline w SVG z `vector-effect: non-scaling-stroke`, licznik z `role="meter"`; podpowiedź tylko uzupełnia, obszar wykresu czytany strzałkami, pod każdym wykresem prawdziwa tabela danych. **Bez uPlot/Recharts.** | Rysowane na serwerze w pełnej szerokości (bez mierzenia i bez szkieletu), zgodne z CSP bez stylów inline, ~0 kB zależności; uPlot rysuje na canvasie dopiero po pomiarze w przeglądarce. | wybór z DESIGN-SYSTEM.md §8 |
+| Dane ekranów | Komponenty serwerowe czytają `lib/modules/admin-overview` (zapytania ograniczone oknem czasu albo `take`). Sondy własnych usług (strona `/api/health` po sieci Dockera, Redis REST `PING`, `HEAD` do Workera HLS) z twardym limitem 1,5 s i pamięcią 60 s (stale-while-revalidate). Żadnych wywołań API Stripe/Cloudflare/Resend przy renderze. Brak danych = jawny stan „bez pomiaru”, nigdy zero. | Panel nie jest ślepy i nie czeka na zewnętrzne API. | zgodnie z planem |
+| Host bez `docker.sock` | Zadanie na hoście `deploy/serwerek/admin/host-status.py` (systemd, co minutę, root) zapisuje **jeden plik JSON** (kontenery z `docker inspect/stats`, wynik i termin timerów `polutek-cron-*`, ostatnia kopia, `backup.sh`/`health.sh`); kontener panelu montuje tylko ten katalog tylko do odczytu. RAM, swap, dysk i obciążenie panel czyta sam (`/proc/meminfo`, `statfs`, `loadavg` w kontenerze opisują hosta). | Gniazdo Dockera (nawet „ro”) daje pełną kontrolę nad hostem; plik nie daje żadnej. Kolektor z fazy 0 może pisać ten sam format (wersja 1) albo go zastąpić. | nowe |
+| Na żywo (SSE) | Faza 2. Plan: Route Handler z `ReadableStream`, zdarzenia co 2–5 s, komentarz keep-alive co 25 s (Cloudflare zamyka bezczynne połączenie po ok. 100 s, [524](https://developers.cloudflare.com/support/troubleshooting/http-status-codes/cloudflare-5xx-errors/error-524/)), przycisk „Wstrzymaj” (WCAG 2.2.2). | – | – |
+| Wdrożenie | Osobny obraz `polutek-admin:<tag>` (`Dockerfile.admin`, standalone ok. 106 MB plików), usługa `admin` w `docker-compose.yml` z **profilem `admin`** (nie startuje przy `deploy.sh` ani zwykłym `docker compose up`), `127.0.0.1:3100`, `mem_limit: 384m`, `read_only`, `cap_drop: ALL`, `no-new-privileges`. Osobny `deploy-admin.sh <tag> [--rollback|--stop]` z własnym health i rollbackiem; migracje robi zwykły `deploy.sh`. | Panel i strona wdrażane i wycofywane niezależnie. | `deploy.sh <tag> [app|admin|all]` → osobny skrypt (żeby nie kolidować z przebudową `deploy.sh` pod GHCR w fazie 0). |
+
+### 9.2 Co jest w fazie 1
+
+- Powłoka 1:1 z zatwierdzonego prototypu: pasek boczny (8 modułów + Premiera + Ustawienia, liczniki), górny pasek
+  (paleta Ctrl/⌘+K z wyszukiwaniem filmów, osób i płatności, okres i porównanie w URL, kropka zdrowia z
+  podglądem, motyw jasny/ciemny/systemowy bez mignięcia, konto z wylogowaniem), dolny pasek i szuflada na telefonie,
+  skróty `g`+litera, `?`, `/`, `[` `]`, Esc, toasty, link „Przejdź do treści”, fokus na `h1` po zmianie ekranu.
+- **Dzisiaj**: baner zdrowia, 6 kafli z porównaniem (napiwki netto jedną definicją, wpłaty, nowe konta, komentarze,
+  obejrzenia, zgłoszenia) i sparkline, „Wymaga uwagi” (spory, nieudane kodowania bez późniejszego sukcesu, webhooki
+  Stripe, moderacja, zawieszone wpłaty, błędy rozsyłek), wykres napiwków w okresie, aktywność, limity serwera,
+  stan systemu, kolejka kodowania, nadchodzące premiery i rozsyłki. Akcje z „Wymaga uwagi” otwierają stary panel.
+- **System**: centrum zdrowia (11 kontroli z wiekiem pomiaru), kolejki, serwer (CPU/RAM/swap/dysk/czas pracy),
+  kontenery i zadania z pliku statusu hosta, kopie, proces panelu, Postgres, domeny i koszty (z dokumentacji, z datą stanu).
+- Pozostałe moduły: uczciwe strony „w budowie, faza N” z zakresem i linkami do starego panelu; Ustawienia mają
+  działający wybór motywu.
+- Bez danych telemetrii (ruch, QoE): to faza 2.
+
+### 9.3 Czego faza 1 nie robi (świadomie)
+
+- Nie zastępuje jeszcze `ADMIN_EMAILS` ani roli `ADMIN` na `www` (stary panel działa do fazy 5).
+- Rola bazy `pp_admin`: panel łączy się tym samym użytkownikiem co strona; osobna rola razem z niezmiennym `AuditLog`.
+- Playwright z wirtualnym WebAuthn: Playwright jest w repo, ale w CI nie ma przeglądarek ani bazy dla tego testu;
+  logika rejestracji i step-up jest pokryta testami jednostkowymi i testem na prawdziwym Postgresie.
+- Niezależne MFA w Cloudflare Access (plan Free) i polityka tylko dla Gmaila ustawia właściciel przy wdrożeniu.

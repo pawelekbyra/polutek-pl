@@ -13,7 +13,7 @@ vi.mock("better-auth/api", async (importOriginal) => ({
 }));
 
 import {
-  assertFreshSessionForPasskeyRemoval,
+  assertFreshSessionIfSignedIn,
   assertPasskeyUserVerified,
   auditPasskeyEvent,
   isSessionFresh,
@@ -56,7 +56,7 @@ describe("passkey names and request bodies", () => {
   });
 });
 
-describe("fresh session for removing a passkey", () => {
+describe("fresh session for adding or removing a passkey on a signed-in account", () => {
   it("follows Better Auth's freshAge rule on the session creation time", () => {
     expect(isSessionFresh(new Date(NOW - 60_000), NOW)).toBe(true);
     expect(isSessionFresh(new Date(NOW - SESSION_FRESH_AGE_SECONDS * 1000), NOW)).toBe(false);
@@ -66,14 +66,14 @@ describe("fresh session for removing a passkey", () => {
     vi.useFakeTimers();
     vi.setSystemTime(NOW);
     h.getSessionFromCtx.mockResolvedValue({ session: { id: "s1", createdAt: new Date(NOW - 2 * SESSION_FRESH_AGE_SECONDS * 1000) }, user: { id: "u1" } });
-    await expect(assertFreshSessionForPasskeyRemoval({} as never)).rejects.toMatchObject({ body: { code: "SESSION_NOT_FRESH" } });
+    await expect(assertFreshSessionIfSignedIn({} as never)).rejects.toMatchObject({ body: { code: "SESSION_NOT_FRESH" } });
 
     h.getSessionFromCtx.mockResolvedValue({ session: { id: "s1", createdAt: new Date(NOW - 60_000) }, user: { id: "u1" } });
-    await expect(assertFreshSessionForPasskeyRemoval({} as never)).resolves.toBeUndefined();
+    await expect(assertFreshSessionIfSignedIn({} as never)).resolves.toBeUndefined();
 
-    // No session: the endpoint itself answers 401.
+    // No session: nothing to check (delete answers 401 itself; registration then needs a sign-up token).
     h.getSessionFromCtx.mockResolvedValue(null);
-    await expect(assertFreshSessionForPasskeyRemoval({} as never)).resolves.toBeUndefined();
+    await expect(assertFreshSessionIfSignedIn({} as never)).resolves.toBeUndefined();
   });
 });
 

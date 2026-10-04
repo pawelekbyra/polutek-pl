@@ -9,8 +9,10 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 
 const h = vi.hoisted(() => ({
   client: {
-    signIn: { email: vi.fn(), social: vi.fn() },
+    signIn: { email: vi.fn(), social: vi.fn(), passkey: vi.fn() },
     signUp: { email: vi.fn() },
+    passkey: { addPasskey: vi.fn() },
+    $fetch: vi.fn(),
     twoFactor: { verifyTotp: vi.fn(), verifyBackupCode: vi.fn() },
     sendVerificationEmail: vi.fn(),
     requestPasswordReset: vi.fn(),
@@ -178,5 +180,43 @@ describe("AuthModal with Turnstile in the background", () => {
     fireEvent.change(screen.getByLabelText(/^Password/), { target: { value: "long password 1" } });
     fireEvent.change(screen.getByLabelText("Repeat password"), { target: { value: "long password 1" } });
     expect(button().disabled).toBe(false);
+  });
+});
+
+describe("passkey sign-up step with Turnstile in the background", () => {
+  beforeEach(() => {
+    const PublicKeyCredential = function PublicKeyCredential() {} as unknown as { isConditionalMediationAvailable: () => Promise<boolean> };
+    PublicKeyCredential.isConditionalMediationAvailable = () => Promise.resolve(false);
+    vi.stubGlobal("PublicKeyCredential", PublicKeyCredential);
+    Object.defineProperty(navigator, "credentials", { value: {}, configurable: true });
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("keeps 'Create account with a passkey' active, queues an early click and sends it with the token", async () => {
+    h.client.signIn.passkey.mockResolvedValue({ data: null, error: { code: "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY", status: 400 } });
+    h.client.$fetch.mockResolvedValue({ data: { token: "signed-token" }, error: null });
+    h.client.passkey.addPasskey.mockResolvedValue({ data: { id: "pk1" }, error: null });
+    render(<Modal />);
+    fireEvent.click(await screen.findByRole("button", { name: "Use a passkey" }));
+    await screen.findByRole("heading", { name: "Account with a passkey" });
+    await waitFor(() => expect(api.render).toHaveBeenCalled());
+    fireEvent.change(screen.getByLabelText("E-mail"), { target: { value: "new@example.com" } });
+
+    const button = () => screen.getByRole("button", { name: /^create account with a passkey$/i }) as HTMLButtonElement;
+    expect(button().disabled).toBe(false);
+    fireEvent.click(button());
+    expect(h.client.$fetch).not.toHaveBeenCalled();
+    expect(button().getAttribute("aria-busy")).toBe("true");
+
+    const resetsBefore = api.reset.mock.calls.length;
+    act(() => widget.callback("tok-pk"));
+    await screen.findByRole("heading", { name: "Check your inbox" });
+    expect(h.client.$fetch).toHaveBeenCalledWith(
+      "/passkey-signup/start",
+      expect.objectContaining({ headers: { "x-captcha-response": "tok-pk" } }),
+    );
+    // The token was used: a fresh one is requested right away.
+    expect(api.reset.mock.calls.length).toBeGreaterThan(resetsBefore);
+    expect(h.client.passkey.addPasskey).toHaveBeenCalledWith({ name: expect.any(String), context: "signed-token" });
   });
 });

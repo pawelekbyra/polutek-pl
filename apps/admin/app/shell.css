@@ -1,0 +1,33 @@
+/* Panel PP: drobne uzupełnienia powłoki względem prototypu (tam pozycje liczył JS; tu CSS). */
+.topbar { position: sticky; }
+.popover-health, .popover-account { top: calc(100% + 6px); right: var(--s-5); }
+.popover-lede { margin: 4px 0 8px; font-size: var(--fs-13); }
+.popover .btn { margin-top: var(--s-2); }
+.account-who { display: grid; gap: 2px; }
+.account-who .muted { font-size: var(--fs-13); overflow-wrap: anywhere; }
+.nowrap { white-space: nowrap; }
+.search-short { display: none; }
+@media (max-width: 760px) { .search-long { display: none; } .search-short { display: inline; } }
+.fieldset-plain { border: 0; padding: 0; margin: 0; min-width: 0; }
+.foot-note { margin-top: var(--s-6); }
+.card-foot a { display: inline-flex; align-items: center; gap: 4px; }
+.age-row { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.li-actions { display: flex; gap: var(--s-2); flex-wrap: wrap; align-items: center; }
+.job-progress { min-width: 120px; display: grid; gap: 4px; }
+.pill-row { display: flex; gap: var(--s-2); flex-wrap: wrap; align-items: center; }
+.kv dd .state { font-weight: 500; }
+.meter-inline { min-width: 140px; display: grid; gap: 4px; }
+.list .li-title, .list .li-sub, .check > div { overflow-wrap: anywhere; }
+.list .li-title a { color: var(--text); }
+.list .li-title a:hover { color: var(--accent-text); }
+.tiles-6 .tile { min-height: 132px; }
+.list-pad > li { padding-left: var(--s-4); padding-right: var(--s-4); }
+.card-pad { padding: 0 var(--s-4) var(--s-4); }
+.unavailable { display: flex; gap: var(--s-3); align-items: flex-start; padding: var(--s-3); border: 1px dashed var(--border-input); border-radius: var(--r-md); color: var(--text-2); font-size: var(--fs-13); }
+.unavailable .icon { margin-top: 2px; color: var(--text-3); }
+.unavailable strong { color: var(--text); font-weight: 600; }
+@media (max-width: 760px) {
+  .topbar { position: relative; }
+  .card-head h2 { flex-basis: 100%; }
+  .popover-health, .popover-account { right: var(--s-4); left: var(--s-4); width: auto; }
+}

@@ -32,7 +32,8 @@ and the operations.
 | `lib/auth/hooks.ts` | Hook bodies: placeholder name, default avatar, onboarding flag, EMAIL_TAKEN answer, sign-in lockout, session guard, pre-hijack guard, audit. |
 | `lib/auth/emails.ts` | Fire-and-forget e-mails (verification, reset, password changed, the three e-mail-change mails; the welcome mail goes out from the onboarding route). |
 | `lib/auth/rate-limit-storage.ts` | Better Auth `customStorage.consume` on our Redis REST store (atomic Lua INCR); fails open with an error log (see Security controls). |
-| `lib/auth/passkey.ts` | Passkey rules on the server: name cleanup, fresh session for removal, user-verification check, audit events. |
+| `lib/auth/passkey.ts` | Passkey rules on the server: name cleanup, fresh session for add/remove, user-verification check, audit events. |
+| `lib/auth/passkey-signup.ts` | Passkey-first sign-up: `/passkey-signup/start`, the signed sign-up token, account creation after the ceremony, unverified-account check on passkey sign-in. |
 | `lib/auth/passkey-support.ts` | Browser feature detection (`PublicKeyCredential`, autofill) and the default device name. |
 | `lib/auth/reauth.ts` | `checkSensitiveReauth`: password, or a Google sign-in from the last 10 minutes (account deletion, e-mail change). |
 | `lib/auth/server.ts` | `auth()`, `getAuth(req)`, `currentUser()`: the only server-side session readers. |
@@ -81,25 +82,30 @@ step on top. A wrong password shows a hint at Google / "Forgot password" for Cle
   `NEXT_PUBLIC_APP_URL` without `www.` (`pawelperfect.com`, `localhost` in development), so one passkey works on www and
   the apex. Accepted WebAuthn origins = the trusted origins on that domain (www and apex); the plugin never falls back to
   the request's own `Origin` header. RP name "Pawel Perfect". Attestation `none` (plugin default).
-- Credentials are discoverable (`residentKey: "required"`, needed for the e-mail-less "Sign in with a passkey" button and
+- Credentials are discoverable (`residentKey: "required"`, needed for the e-mail-less "Use a passkey" button and
   autofill); `userVerification: "preferred"` in the browser call (web.dev advice: `"required"` confuses some platforms)
   but the server **requires the UV flag** in `afterVerification` (`PASSKEY_USER_VERIFICATION_REQUIRED`): the plugin
   itself verifies with `requireUserVerification: false`, and a passkey sign-in replaces the password and TOTP.
-- **Decision: a passkey never creates an account.** It is added in the account panel ("Klucze dostępu" tab) after
-  signing in with a password or Google (`registration.requireSession: true`). Adding needs a fresh session (the plugin's
-  `freshSessionMiddleware`, `freshAge` 1 day); removing too (our before hook, the plugin only wants a session); an
-  older session gets `SESSION_NOT_FRESH` and the usual "sign in again" notice. Renaming (`/passkey/update-passkey`) is
-  disabled. The device name is normalized (one line, max 64 characters) and the WebAuthn user name stays the e-mail
-  (`?name=` is blanked in the before hook). `createSession` on registration is forced off.
+- A signed-in user adds and removes passkeys in the account panel ("Klucze dostępu" tab). Both need a fresh session
+  (`freshAge` 1 day), checked in our before hook (`assertFreshSessionIfSignedIn`, since registration runs with
+  `requireSession: false` for the passkey-first sign-up below and delete only wants a session); an older session gets
+  `SESSION_NOT_FRESH` and the usual "sign in again" notice. Renaming (`/passkey/update-passkey`) is disabled. The device
+  name is normalized (one line, max 64 characters) and the WebAuthn user name stays the e-mail (`?name=` is blanked in
+  the before hook). `createSession` on registration is forced off.
+- **Decision (owner, 2026-10-04, reverses "a passkey never creates an account"): "Use a passkey" works like
+  "Continue with Google".** See "Passkey-first sign-up" below.
 - **Decision: a passkey sign-in counts as strong authentication**, like Google: no TOTP step after it (Better Auth's
   2FA hook only runs on `/sign-in/email`), because it already combines possession of the device key with biometrics or
   the device PIN (user verification enforced above) and is phishing-resistant.
-- Sign-in UI: "Zaloguj się kluczem dostępu" button under Google in the sign-in modal, and passkeys in the e-mail field's
-  autofill (`autocomplete="username webauthn"`, conditional mediation) while the modal is open. Both are hidden where
-  `PublicKeyCredential` is missing. Autofill shows only errors that follow picking a passkey.
-- No Turnstile on passkey endpoints: the options request runs when the form opens (autofill), the challenge is
+- Sign-in UI (window titled "Zaloguj się lub załóż konto"): "Kontynuuj z Google" and "Użyj klucza dostępu",
+  then "Nowy tutaj? Konto założymy automatycznie.", the e-mail/password form, and "Nie masz konta? Załóż konto" at the
+  bottom. Passkeys are also offered in the e-mail field's autofill (`autocomplete="username webauthn"`, conditional
+  mediation) while the window is open. Passkey parts are hidden where `PublicKeyCredential` is missing. Autofill shows
+  only errors that follow picking a passkey.
+- No Turnstile on passkey sign-in: the options request runs when the form opens (autofill), the challenge is
   single-use (5 min, `Verification` row + signed cookie `pp.better-auth-passkey`) and a signature needs the device key.
-  Instead Better Auth's per-IP limits on our Redis store: options 20/min, verify 10/min, add/remove 20/h.
+  Instead Better Auth's per-IP limits on our Redis store: options 20/min, verify 10/min, add/remove 20/h. The passkey
+  sign-up step, where an e-mail is typed, does have Turnstile (below).
 - A deleted account cannot sign in with a passkey: `beforeSessionCreate` refuses `isDeleted`, and account deletion
   removes the `Passkey` rows (also `ON DELETE CASCADE`).
 - Audit: `AUTH_PASSKEY_ADDED`, `AUTH_PASSKEY_REMOVED`, `AUTH_PASSKEY_SIGN_IN` (user id + passkey id only); the sign-in
@@ -110,6 +116,34 @@ step on top. A wrong password shows a hint at Google / "Forgot password" for Cle
   `better-call` lists `zod@^4` as an optional peer while the app uses zod 3, so `package.json` overrides that edge
   (`"better-call": { "zod": "$zod" }`). Only `better-call/openapi` imports zod, and nothing here uses it. Upgrade
   `@better-auth/passkey` together with `better-auth`.
+
+**Passkey-first sign-up (2026-10-04).** `lib/auth/passkey-signup.ts`, UI `PasskeySignIn.tsx` + `PasskeySignupView.tsx`.
+- Flow: the button tries a discoverable-passkey sign-in. If the browser offers no passkey of ours or the person picks
+  nothing (WebAuthn reports both as the same `NotAllowedError`, on purpose), or the chosen key belongs to no account
+  (`PASSKEY_NOT_FOUND`), the window shows "Konto z kluczem dostępu": e-mail + Turnstile -> `POST
+  /api/auth/passkey-signup/start` -> the browser creates the passkey -> the account is created -> "check your inbox".
+  The verification link signs the person in (`autoSignInAfterVerification`) and the first-sign-in dialog asks for the
+  nickname, avatar and language, exactly as after an e-mail sign-up.
+- Mechanism (chosen after the Better Auth passkey docs, "passkey-first registration"): `registration.requireSession:
+  false` with `resolveUser` that accepts only our own signed token, and the account is created in
+  `registration.afterVerification` (the docs' advice: "create or load the user in afterVerification"), so nothing is
+  stored unless the WebAuthn ceremony succeeded and the device verified the user. The token comes from
+  `/passkey-signup/start` (Turnstile, 10/h per IP like the e-mail sign-up): HMAC-SHA256 with a key derived from
+  `BETTER_AUTH_SECRET`, carries the e-mail, language, return path and a 10-minute expiry; it is stateless, and reusing it
+  fails because the address is taken by then. A taken address answers `EMAIL_TAKEN` / `EMAIL_TAKEN_GOOGLE`, the same
+  owner decision (and the same enumeration trade-off, behind Turnstile and the rate limit) as the e-mail sign-up.
+  Rejected alternatives: creating the user at "start" (rows for every abandoned attempt), a session-less account with
+  an immediate session (an unverified address would be signed in), magic-link first (two round trips to the inbox).
+- The account is unverified until the link is clicked: a passkey sign-in on it is refused with `EMAIL_NOT_VERIFIED` and
+  a new link is mailed (limited per address, like the other mail forms); no session, so it cannot comment, react or tip;
+  `/api/cron/prune-unverified-accounts` deletes it after 7 days (passkeys go with it, `ON DELETE CASCADE`).
+- Threat: somebody starts a passkey sign-up with another person's address (pre-hijacking). Until the owner verifies, the
+  account is useless (no sign-in) and is pruned. If the owner later signs in with Google, the pre-hijack guard
+  (`beforeAccountCreate`) now drops the unverified account's passkeys too; if the owner resets the password ("forgot
+  password" on `EMAIL_TAKEN`), `onPasswordReset` drops passkeys of a never-verified account. Accepted residual risk,
+  the same as for the e-mail sign-up today: the owner clicks the verification mail that the other person's sign-up
+  triggered, which verifies the account with that person's passkey on it. The mail is the standard verification mail.
+- Passkey sign-in stays without TOTP (decision above).
 
 **Shared computers.** Google redirect sign-in always shows the account chooser (`prompt: "select_account"`), One
 Tap never auto-selects (`autoSelect: false`), and every sign-out goes through `signOutCompletely()`
@@ -147,7 +181,7 @@ A brand-new Google user (like every new e-mail sign-up) gets `onboardingPending 
 gets a password; `resetPassword` creates the credential account. Resetting revokes all sessions.
 **Pre-hijack guard:** if someone registered an address by e-mail and never verified it, and the real owner later
 signs in with Google, `beforeAccountCreate` deletes the unverified password and sessions so the first registrant
-cannot keep access. Unverified password sign-ups older than 7 days are deleted by
+cannot keep access. Unverified password or passkey sign-ups older than 7 days are deleted by
 `/api/cron/prune-unverified-accounts` (systemd timer `polutek-cron-prune-unverified-accounts`, 03:30 UTC; only rows
 with no payments, grants, channels or comments), so nobody can squat an address or nickname for long.
 
@@ -222,7 +256,7 @@ session cookie plus the IP (the proxy cannot read the user id without a database
   counters FAIL OPEN with an error log, so sign-in keeps working. Turnstile, the database TOTP attempt counter and the
   password re-checks stay in force; only the failed-sign-in lockout is blind meanwhile (failing closed would lock
   everybody out of password sign-in).
-- Captcha: Turnstile on `/sign-up/email`, `/sign-in/email`, `/request-password-reset`, `/send-verification-email`.
+- Captcha: Turnstile on `/sign-up/email`, `/sign-in/email`, `/request-password-reset`, `/send-verification-email`, `/passkey-signup/start`.
   Enabled when `TURNSTILE_SECRET_KEY` is set (required in production by `env:validate:prod`).
   The client widget (`app/components/auth/TurnstileWidget.tsx`) runs in `appearance: "interaction-only"` with the
   default `execution: "render"`: the check starts the moment a form opens, invisibly, in a collapsed grid row with no

@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 /** Passkeys in the UI: hidden without WebAuthn, sign-in button + autofill, the account panel list/add/remove. */
+import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
@@ -38,63 +39,77 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("PasskeySignIn (sign-in modal)", () => {
+describe("PasskeySignIn (\"Use a passkey\")", () => {
+  function renderButton(props: Partial<React.ComponentProps<typeof PasskeySignIn>> = {}) {
+    const handlers = { onSignedIn: vi.fn(), onError: vi.fn(), onNeedAccount: vi.fn() };
+    render(<PasskeySignIn active isPl={false} {...handlers} {...props} />);
+    return handlers;
+  }
+
   it("renders nothing and never calls WebAuthn when the browser has no passkey support", async () => {
     disableWebAuthn();
-    const { container } = render(<PasskeySignIn active isPl onSignedIn={vi.fn()} onError={vi.fn()} />);
+    const { container } = render(<PasskeySignIn active isPl onSignedIn={vi.fn()} onError={vi.fn()} onNeedAccount={vi.fn()} />);
     await Promise.resolve();
     expect(container.innerHTML).toBe("");
     expect(h.client.signIn.passkey).not.toHaveBeenCalled();
   });
 
-  it("signs in with the button and closes the modal", async () => {
+  it("signs in somebody with an existing passkey", async () => {
     enableWebAuthn();
     h.client.signIn.passkey.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
     const onSignedIn = vi.fn();
-    render(<PasskeySignIn active isPl onSignedIn={onSignedIn} onError={vi.fn()} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Zaloguj się kluczem dostępu" }));
+    render(<PasskeySignIn active isPl onSignedIn={onSignedIn} onError={vi.fn()} onNeedAccount={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Użyj klucza dostępu" }));
     await waitFor(() => expect(onSignedIn).toHaveBeenCalled());
     expect(h.client.signIn.passkey).toHaveBeenCalledWith();
   });
 
-  it("stays quiet when the person closes the browser prompt", async () => {
+  it("offers to create an account when the browser had no passkey or nothing was picked", async () => {
     enableWebAuthn();
     h.client.signIn.passkey.mockResolvedValue({ data: null, error: { code: "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY", status: 400 } });
-    const onError = vi.fn();
-    render(<PasskeySignIn active isPl={false} onSignedIn={vi.fn()} onError={onError} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Sign in with a passkey" }));
-    await waitFor(() => expect(h.client.signIn.passkey).toHaveBeenCalled());
-    await waitFor(() => expect(onError).toHaveBeenCalledTimes(1)); // the reset before the attempt
-    expect(onError).toHaveBeenLastCalledWith(null);
+    const handlers = renderButton();
+    fireEvent.click(await screen.findByRole("button", { name: "Use a passkey" }));
+    await waitFor(() => expect(handlers.onNeedAccount).toHaveBeenCalled());
+    expect(handlers.onError).toHaveBeenCalledTimes(1); // only the reset before the attempt
+    expect(handlers.onError).toHaveBeenLastCalledWith(null);
   });
 
-  it("explains an unknown passkey (no account is ever created by a passkey)", async () => {
+  it("never dead-ends on a passkey that belongs to no account: it leads to creating one", async () => {
     enableWebAuthn();
     h.client.signIn.passkey.mockResolvedValue({ data: null, error: { code: "PASSKEY_NOT_FOUND", status: 401 } });
-    const onError = vi.fn();
-    render(<PasskeySignIn active isPl={false} onSignedIn={vi.fn()} onError={onError} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Sign in with a passkey" }));
-    await waitFor(() => expect(onError).toHaveBeenLastCalledWith(expect.stringMatching(/does not belong to any account/)));
+    const handlers = renderButton();
+    fireEvent.click(await screen.findByRole("button", { name: "Use a passkey" }));
+    await waitFor(() => expect(handlers.onNeedAccount).toHaveBeenCalled());
+    expect(handlers.onError).not.toHaveBeenCalledWith(expect.stringMatching(/does not belong/));
+  });
+
+  it("tells an account created by passkey to confirm its e-mail first", async () => {
+    enableWebAuthn();
+    h.client.signIn.passkey.mockResolvedValue({ data: null, error: { code: "EMAIL_NOT_VERIFIED", status: 403 } });
+    const handlers = renderButton();
+    fireEvent.click(await screen.findByRole("button", { name: "Use a passkey" }));
+    await waitFor(() => expect(handlers.onError).toHaveBeenLastCalledWith("Please verify your email. We sent a new link."));
+    expect(handlers.onNeedAccount).not.toHaveBeenCalled();
   });
 
   it("offers passkeys in the e-mail autofill when the browser supports it, only while the modal is open", async () => {
     enableWebAuthn({ autofill: true });
     h.client.signIn.passkey.mockReturnValue(new Promise(() => undefined));
-    const { rerender } = render(<PasskeySignIn active={false} isPl onSignedIn={vi.fn()} onError={vi.fn()} />);
+    const { rerender } = render(<PasskeySignIn active={false} isPl onSignedIn={vi.fn()} onError={vi.fn()} onNeedAccount={vi.fn()} />);
     await screen.findByRole("button");
     expect(h.client.signIn.passkey).not.toHaveBeenCalled();
-    rerender(<PasskeySignIn active isPl onSignedIn={vi.fn()} onError={vi.fn()} />);
+    rerender(<PasskeySignIn active isPl onSignedIn={vi.fn()} onError={vi.fn()} onNeedAccount={vi.fn()} />);
     await waitFor(() => expect(h.client.signIn.passkey).toHaveBeenCalledWith({ autoFill: true }));
   });
 
-  it("does not show an error when the autofill options request fails on its own", async () => {
+  it("stays silent when the autofill request fails on its own or is dismissed", async () => {
     enableWebAuthn({ autofill: true });
     h.client.signIn.passkey.mockResolvedValue({ data: null, error: { status: 429 } });
-    const onError = vi.fn();
-    render(<PasskeySignIn active isPl onSignedIn={vi.fn()} onError={onError} />);
+    const handlers = renderButton();
     await waitFor(() => expect(h.client.signIn.passkey).toHaveBeenCalledWith({ autoFill: true }));
     await Promise.resolve();
-    expect(onError).not.toHaveBeenCalled();
+    expect(handlers.onError).not.toHaveBeenCalled();
+    expect(handlers.onNeedAccount).not.toHaveBeenCalled();
   });
 });
 

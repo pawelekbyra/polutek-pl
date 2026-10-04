@@ -7,7 +7,8 @@ import { useLanguage } from "../LanguageContext";
 import type { AuthNotice, AuthView } from "./AuthModalProvider";
 import { TwoFactorView } from "./TwoFactorView";
 import { LinkExpiredView } from "./LinkExpiredView";
-import { Divider, Field, OAuthButtons, PasskeySignIn, PrimaryButton } from "./AuthFormParts";
+import { Divider, EmailTakenActions, Field, NewHereNote, OAuthButtons, PasskeySignIn, PrimaryButton, SignInLinks } from "./AuthFormParts";
+import { PasskeySignupView } from "./PasskeySignupView";
 import CheckInboxView from "./CheckInboxView";
 import SignUpFooter from "./SignUpFooter";
 import { useCaptchaGate } from "./useCaptchaGate";
@@ -17,7 +18,7 @@ import { authErrorMessage } from "@/lib/auth/errors";
 import { PASSWORD_MIN_LENGTH } from "@/lib/auth/config";
 import { clearReturnPath, peekReturnPath, rememberReturnPathIfNone, withQueryFlag } from "@/lib/auth/sso-return";
 
-type InternalView = "sign-in" | "sign-up" | "verify-sent" | "link-expired" | "forgot" | "forgot-sent" | "two-factor";
+type InternalView = "sign-in" | "sign-up" | "passkey-signup" | "verify-sent" | "link-expired" | "forgot" | "forgot-sent" | "two-factor";
 
 interface AuthModalProps {
   open: boolean;
@@ -233,8 +234,9 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
   }
 
   const title = {
-    "sign-in": isPl ? "Zaloguj się" : "Sign in",
+    "sign-in": isPl ? "Zaloguj się lub załóż konto" : "Sign in or create account",
     "sign-up": isPl ? "Załóż konto" : "Create account",
+    "passkey-signup": isPl ? "Konto z kluczem dostępu" : "Account with a passkey",
     "verify-sent": isPl ? "Sprawdź skrzynkę" : "Check your inbox",
     "link-expired": isPl ? "Link wygasł" : "Link expired",
     forgot: isPl ? "Reset hasła" : "Reset password",
@@ -287,41 +289,37 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
                   : "Have an older account, or signed in with Google before? Use the Google button, or “Forgot password” to set a password."}
               </p>
             )}
-            {error && emailTaken && view === "sign-up" && (
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px]">
-                <button type="button" className="font-bold underline hover:text-[var(--chan-ink)]" onClick={() => switchView("sign-in")}>
-                  {isPl ? "Zaloguj się" : "Sign in"}
-                </button>
-                <button type="button" className="font-bold underline hover:text-[var(--chan-ink)]" onClick={() => switchView("forgot")}>
-                  {isPl ? "Nie pamiętam hasła" : "Forgot password"}
-                </button>
-                {emailTaken === "google" && (
-                  <span className="text-[var(--chan-muted)]">
-                    {isPl ? "Możesz też użyć przycisku Google." : "You can also use the Google button."}
-                  </span>
-                )}
-              </div>
+            {error && emailTaken && (view === "sign-up" || view === "passkey-signup") && (
+              <EmailTakenActions isPl={isPl} kind={emailTaken} onSignIn={() => switchView("sign-in")} onForgot={() => switchView("forgot")} />
             )}
             {info && !error && <p className="mt-3 rounded-lg bg-[var(--chan-blue-soft)] px-3 py-2 text-[13px] font-semibold text-[var(--chan-blue)]">{info}</p>}
 
             {view === "sign-in" && (
               <form onSubmit={handlePasswordSignIn} className="mt-5 space-y-3.5">
                 <OAuthButtons onSelect={handleOAuth} isPl={isPl} />
-                <PasskeySignIn active={open && view === "sign-in"} isPl={isPl} onSignedIn={finishSignedIn} onError={setError} />
+                <PasskeySignIn active={open && view === "sign-in"} isPl={isPl} onSignedIn={finishSignedIn} onError={setError} onNeedAccount={() => switchView("passkey-signup")} />
+                <NewHereNote isPl={isPl} />
                 <Divider isPl={isPl} />
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="username webauthn" required />
                 <Field label={isPl ? "Hasło" : "Password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" revealLabels={revealLabels} required />
                 {captcha}
                 <PrimaryButton loading={busy} label={isPl ? "Zaloguj się" : "Sign in"} />
-                <div className="flex items-center justify-between pt-1 text-[12px] text-[var(--chan-muted)]">
-                  <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("forgot")}>
-                    {isPl ? "Nie pamiętam hasła" : "Forgot password"}
-                  </button>
-                  <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("sign-up")}>
-                    {isPl ? "Załóż konto" : "Create account"}
-                  </button>
-                </div>
+                <SignInLinks isPl={isPl} onForgot={() => switchView("forgot")} onSignUp={() => switchView("sign-up")} />
               </form>
+            )}
+
+            {view === "passkey-signup" && (
+              <PasskeySignupView
+                isPl={isPl}
+                email={email}
+                onEmailChange={setEmail}
+                callbackURL={returnTo()}
+                captchaGate={captchaGate}
+                onError={setError}
+                onEmailTaken={setEmailTaken}
+                onCreated={() => { setInfo(isPl ? "Klucz dostępu zapisany. Potwierdź e-mail linkiem z wiadomości, a zalogujemy Cię." : "Passkey saved. Confirm your email with the link we sent and you'll be signed in."); setView("verify-sent"); }}
+                onBack={() => switchView("sign-in")}
+              />
             )}
 
             {view === "sign-up" && (
@@ -365,7 +363,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
                 </div>
               </form>
             )}
-            {(view === "sign-in" || view === "sign-up") && <SignUpFooter open={open} language={language} onSignedIn={finishSignedIn} />}
+            {(view === "sign-in" || view === "sign-up" || view === "passkey-signup") && <SignUpFooter open={open} language={language} onSignedIn={finishSignedIn} />}
 
             {view === "verify-sent" && (
               <CheckInboxView
