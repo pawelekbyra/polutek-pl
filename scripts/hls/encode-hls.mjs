@@ -5,7 +5,7 @@
  *
  * Zero npm dependencies: only Node >= 18 and ffmpeg/ffprobe (>= 6) on PATH.
  * Designed to run on the serwerek VPS (2 vCPU) under `nice`; see
- * docs/operations/HLS-SELF-HOSTED.md and docs/research/serwerek/01-hls-encoding.md.
+ * docs/operations/HLS-SELF-HOSTED.md.
  *
  * Output layout (all playlist URIs are relative, so the player/CDN can serve
  * the folder from any prefix):

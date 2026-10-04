@@ -1,6 +1,6 @@
 # Własny HLS: kodowanie, dostarczanie, odtwarzacz (jedyne źródło wideo)
 
-Decyzja i uzasadnienie: `docs/architecture/self-hosted-hls.md`. Upload, kolejka i worker kodowania: `docs/operations/VIDEO-PIPELINE.md`. Badania: `docs/research/serwerek/01-hls-encoding.md`, `02-hls-delivery-cloudflare.md`.
+Decyzja i uzasadnienie: `docs/architecture/self-hosted-hls.md`. Upload, kolejka i worker kodowania: `docs/operations/VIDEO-PIPELINE.md`.
 
 Własny HLS jest jedynym źródłem wideo (decyzja właściciela 2026-10-02: żadnych zewnętrznych dostawców). Nie ma zapasowego źródła: gdy własny HLS nie działa, film nie gra (plan `ERROR`/`NO_PRIMARY_ASSET`, w odtwarzaczu komunikat z ponowieniem).
 
