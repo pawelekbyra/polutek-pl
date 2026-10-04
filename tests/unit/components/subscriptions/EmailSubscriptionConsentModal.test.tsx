@@ -4,9 +4,12 @@ import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import EmailSubscriptionConsentModal from '@/app/components/subscriptions/EmailSubscriptionConsentModal';
 import React from 'react';
 
+const lang = vi.hoisted(() => ({ language: 'pl' }));
+
 // Mock LanguageContext
 vi.mock('@/app/components/LanguageContext', () => ({
   useLanguage: () => ({
+    language: lang.language,
     t: {
       confirmSubscribeTitle: 'CZY CHCESZ SUBSKRYBOWAĆ?',
       confirmSubscribeText: 'Subskrypcja oznacza zgodę na otrzymywanie powiadomień mailowych o nowościach.',
@@ -19,6 +22,7 @@ vi.mock('@/app/components/LanguageContext', () => ({
 describe('EmailSubscriptionConsentModal', () => {
   afterEach(() => {
     cleanup();
+    lang.language = 'pl';
   });
 
   it('renders correctly when open', () => {
@@ -101,5 +105,23 @@ describe('EmailSubscriptionConsentModal', () => {
 
     expect(screen.getByRole('button', { name: 'TAK' })).toHaveProperty('disabled', true);
     expect(screen.getByRole('button', { name: 'NIE' })).toHaveProperty('disabled', true);
+  });
+
+  it("links the Privacy Policy and the Terms in the reader's language, in a new tab, and says how to withdraw", () => {
+    for (const [language, privacy, terms, privacyHref, termsHref, withdraw] of [
+      ['pl', 'Polityka prywatności', 'Regulamin', '/polityka-prywatnosci', '/regulamin', 'Zgodę wycofasz w każdej chwili'],
+      ['en', 'Privacy Policy', 'Terms', '/en/privacy-policy', '/en/terms', 'withdraw consent at any time'],
+    ] as const) {
+      lang.language = language;
+      render(<EmailSubscriptionConsentModal open onConfirm={() => {}} onDismiss={() => {}} />);
+      expect(screen.getByTestId('email-consent-legal').textContent).toContain(withdraw);
+      for (const [name, href] of [[privacy, privacyHref], [terms, termsHref]]) {
+        const link = screen.getByRole('link', { name });
+        expect(link.getAttribute('href')).toBe(href);
+        expect(link.getAttribute('target')).toBe('_blank');
+        expect(link.getAttribute('rel')).toContain('noopener');
+      }
+      cleanup();
+    }
   });
 });

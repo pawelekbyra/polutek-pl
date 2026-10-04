@@ -14,6 +14,7 @@ import {
 import { SESSION_COOKIE_PREFIX, SESSION_EXPIRES_IN_SECONDS } from '@/lib/auth/config';
 import { UNVERIFIED_ACCOUNT_RETENTION_DAYS } from '@/lib/auth/prune-unverified';
 import { AUTHOR_DELETED_COMMENT_RETENTION_DAYS } from '@/lib/modules/comments/application/purge-deleted-comments.use-case';
+import { TECHNICAL_DATA_RETENTION_DAYS } from '@/lib/modules/privacy/domain/retention';
 
 const DOCS = { RegulaminContent, PolitykaContent, TermsContentEn, PrivacyContentEn };
 const POLICIES = { PolitykaContent, PrivacyContentEn };
@@ -82,6 +83,26 @@ describe('legal documents consistency', () => {
     expect(en).toContain(`deleted comment after ${AUTHOR_DELETED_COMMENT_RETENTION_DAYS} days`);
     expect(en).toContain('sign-in session expires after 30 days');
     expect(en).toContain('pp.*: sign-in, up to 30 days');
+  });
+
+  it('the IP / browser-data period in the policy is the one the retention cron enforces', () => {
+    expect(TECHNICAL_DATA_RETENTION_DAYS).toBe(90);
+    expect(text(PolitykaContent)).toContain(
+      `Adres IP i dane przeglądarki zapisane w naszej bazie usuwamy po ${TECHNICAL_DATA_RETENTION_DAYS} dniach`,
+    );
+    expect(text(PrivacyContentEn)).toContain(
+      `We erase IP addresses and browser data stored in our database after ${TECHNICAL_DATA_RETENTION_DAYS} days`,
+    );
+    // Expired sessions and e-mail links are deleted daily (prune-expired-auth), account deletion erases comment text.
+    expect(text(PolitykaContent)).toContain('wygasłe sesje i linki z e-maili kasujemy codziennie');
+    expect(text(PrivacyContentEn)).toContain('expired sessions and email links are erased daily');
+    expect(text(PolitykaContent)).toContain('treść Twoich komentarzy');
+    expect(text(PrivacyContentEn)).toContain('the text of your comments');
+  });
+
+  it('the policy says Google sign-in (g_state) starts only after the sign-in window is opened', () => {
+    expect(text(PolitykaContent)).toContain('g_state: logowanie przez Google, po otwarciu okna logowania');
+    expect(text(PrivacyContentEn)).toContain('g_state: Google sign-in, after you open the sign-in window');
   });
 
   it('the Polish and English versions have the same structure', () => {

@@ -23,6 +23,7 @@ import {
 } from "@/lib/auth/hooks";
 import { hitAuthCounter, peekAuthCounter } from "@/lib/auth/rate-limit-storage";
 import { recordAuthAudit } from "@/lib/auth/audit";
+import { LEGAL_DOCUMENTS_VERSION } from "@/lib/legal/version";
 
 function ctx(path: string, cookie = "") {
   return { path, headers: new Headers(cookie ? { cookie } : {}) };
@@ -57,6 +58,21 @@ describe("beforeUserCreate (placeholder name, avatar, onboarding)", () => {
     expect(result.data.name).toBe("Jan Kowalski");
     const english = await beforeUserCreate({ name: "Jan", email: "g@gmail.com" }, ctx("/one-tap/callback"));
     expect(english.data.language).toBe("en");
+  });
+
+  it("records acceptance of the current Terms for every way of signing up (e-mail, Google, One Tap)", async () => {
+    for (const path of ["/sign-up/email", "/callback/google", "/one-tap/callback"]) {
+      const before = Date.now();
+      const result = await beforeUserCreate({ email: "t@b.pl" }, ctx(path));
+      expect(result.data.termsVersion, path).toBe(LEGAL_DOCUMENTS_VERSION);
+      expect((result.data.termsAcceptedAt as Date).getTime(), path).toBeGreaterThanOrEqual(before);
+    }
+  });
+
+  it("a client cannot pick the recorded Terms version or date", async () => {
+    const result = await beforeUserCreate({ email: "t@b.pl", termsVersion: "1999-01-01", termsAcceptedAt: new Date(0) } as never, ctx("/sign-up/email"));
+    expect(result.data.termsVersion).toBe(LEGAL_DOCUMENTS_VERSION);
+    expect((result.data.termsAcceptedAt as Date).getTime()).toBeGreaterThan(0);
   });
 });
 

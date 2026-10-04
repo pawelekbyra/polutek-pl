@@ -121,6 +121,11 @@ export function validateAppEnv(env: EnvRecord = process.env, mode: EnvValidation
     errors.push('HLS_TOKEN_SECRET must be at least 32 characters.');
   }
 
+  // Optional: without it the key for client IP/user-agent hashes is derived from BETTER_AUTH_SECRET.
+  if (hasValue(env, 'IP_HASH_SECRET') && env.IP_HASH_SECRET!.trim().length < 32) {
+    errors.push('IP_HASH_SECRET must be at least 32 characters.');
+  }
+
   return {
     success: errors.length === 0,
     mode,
