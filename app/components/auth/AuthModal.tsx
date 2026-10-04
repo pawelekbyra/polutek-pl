@@ -9,6 +9,7 @@ import { TwoFactorView } from "./TwoFactorView";
 import { LinkExpiredView } from "./LinkExpiredView";
 import { Divider, Field, OAuthButtons, PrimaryButton } from "./AuthFormParts";
 import CheckInboxView from "./CheckInboxView";
+import SignUpFooter from "./SignUpFooter";
 import LanguageSwitcher from "../LanguageSwitcher";
 import { useSwitchLanguage } from "../useSwitchLanguage";
 import { TurnstileWidget, useCaptchaRequired, type CaptchaState, type TurnstileHandle } from "./TurnstileWidget";
@@ -377,6 +378,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
                 </div>
               </form>
             )}
+            {(view === "sign-in" || view === "sign-up") && <SignUpFooter open={open} language={language} onSignedIn={finishSignedIn} />}
 
             {view === "verify-sent" && (
               <CheckInboxView

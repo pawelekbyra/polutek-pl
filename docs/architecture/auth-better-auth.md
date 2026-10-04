@@ -95,9 +95,12 @@ and One Tap (`oneTap` plugin; the client id is handed to the browser at runtime 
 `AuthPublicConfigProvider`, so it is not baked into the bundle). Account linking is on with `google` as a trusted
 provider: a Google sign-in whose e-mail matches an existing row signs into that row (comments and payments stay).
 `requireLocalEmailVerified: false` (F-04), so this also works when the row only has a never-verified password
-sign-up (see the pre-hijack guard below). One Tap (F-10) is offered at most once per day per browser
-(`localStorage` `pp:one-tap-last`), after the home entry gate, never on `/sso-callback` or `/reset-password`; the CSP
-allows `https://accounts.google.com/gsi/style`.
+sign-up (see the pre-hijack guard below). One Tap is offered only while the sign-in window is open (sign-in and
+sign-up views, `SignUpFooter` → `GoogleOneTapPrompt`, cancelled when the window closes): Google's script and its
+`g_state` cookie never reach a visitor who did not ask to sign in (privacy policy § 6, 2026-10-04). Without FedCM
+the prompt is drawn inside the dialog (`prompt_parent_id`). The CSP allows `https://accounts.google.com/gsi/style`.
+Every way to create an account is in that window, next to the Terms / Privacy Policy notice; `beforeUserCreate`
+records `User.termsAcceptedAt`/`termsVersion`.
 A brand-new Google user (like every new e-mail sign-up) gets `onboardingPending = true` and must pick a nickname (and optionally an avatar) in
 `OnboardingDialog`; the welcome e-mail is sent after that (`POST /api/user/first-sign-in`).
 

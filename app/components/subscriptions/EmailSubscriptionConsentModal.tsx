@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useLanguage } from "../LanguageContext";
+import { LegalDocLink } from "../legal/LegalDocLink";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +27,7 @@ export default function EmailSubscriptionConsentModal({
   onConfirm,
   onDismiss,
 }: EmailSubscriptionConsentModalProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   return (
     <Dialog
@@ -46,6 +47,21 @@ export default function EmailSubscriptionConsentModal({
           <DialogDescription className="text-sm leading-relaxed text-[var(--chan-muted)]">
             {t.confirmSubscribeText}
           </DialogDescription>
+          <p data-testid="email-consent-legal" className="text-xs leading-relaxed text-[var(--chan-muted)]">
+            {language === "pl" ? (
+              <>
+                Zgodę wycofasz w każdej chwili linkiem w każdej wiadomości. Szczegóły:{" "}
+                <LegalDocLink doc="privacy" language={language}>Polityka prywatności</LegalDocLink> i{" "}
+                <LegalDocLink doc="terms" language={language}>Regulamin</LegalDocLink>.
+              </>
+            ) : (
+              <>
+                You can withdraw consent at any time with the link in every message. Details:{" "}
+                <LegalDocLink doc="privacy" language={language}>Privacy Policy</LegalDocLink> and{" "}
+                <LegalDocLink doc="terms" language={language}>Terms</LegalDocLink>.
+              </>
+            )}
+          </p>
         </DialogHeader>
 
         {errorMessage && (

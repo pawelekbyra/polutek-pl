@@ -2,7 +2,6 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import AuthModal from "./AuthModal";
-import GoogleOneTapPrompt from "./GoogleOneTapPrompt";
 import OnboardingDialog from "./OnboardingDialog";
 import { useLanguage } from "../LanguageContext";
 import { useAuth } from "@/lib/auth/react";
@@ -116,8 +115,6 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
         </div>
       )}
       <OnboardingDialog />
-      {/* Google's native One Tap prompt for logged-out visitors (hidden when signed in). */}
-      <GoogleOneTapPrompt />
     </AuthModalContext.Provider>
   );
 }

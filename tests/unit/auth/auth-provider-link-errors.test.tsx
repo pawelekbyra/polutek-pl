@@ -14,7 +14,6 @@ vi.mock("@/app/components/auth/AuthModal", () => ({
     <div data-testid="auth-modal">{open ? `open:${notice ?? ""}` : "closed"}</div>
   ),
 }));
-vi.mock("@/app/components/auth/GoogleOneTapPrompt", () => ({ default: () => null }));
 vi.mock("@/app/components/auth/OnboardingDialog", () => ({ default: () => null }));
 vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en" }) }));
 vi.mock("@/lib/auth/react", () => ({ useAuth: () => authState }));
