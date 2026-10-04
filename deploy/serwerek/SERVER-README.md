@@ -27,6 +27,12 @@ Postgres 17, Redis, kodowanie wideo (kontener `encoder`), kolektor telemetrii (`
 3. **Obsługa serwera (deploy, rollback, crony, telemetria, kopie):** `/opt/serwerek/docs/operations/SERWEREK.md`.
 4. **Codzienny przegląd stanu:** `/opt/serwerek/docs/operations/DAILY-BRIEFING.md`.
 
+## Agent pracujący na serwerku
+
+Wdrożenia, diagnostyka, kopie, odczyt bazy i zadania operacyjne możesz robić tu na miejscu (lista i zasady: sekcja „Agent pracujący bezpośrednio na serwerku”
+w `/opt/serwerek/docs/operations/STATUS.md`). **Kodu tu nie ma** (brak klonu repo i poświadczeń GitHub): zmiany w kodzie robi sesja na komputerze właściciela,
+chyba że właściciel da token GitHub (instrukcja w STATUS.md). Nie uruchamiaj tu pełnych testów ani budowy w godzinach ruchu (2 vCPU, 4 GB RAM).
+
 ## Podstawowe polecenia
 
 ```bash

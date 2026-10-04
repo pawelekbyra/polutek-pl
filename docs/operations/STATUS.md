@@ -41,9 +41,11 @@ bo jego komputer zamulał).
 - Na serwerze są nowe `deploy.sh` i `docker-compose.yml` (z kontenerem `collector`; linia bazy BEZ `pg_stat_statements`, bo restart bazy pod tę
   bibliotekę wykonuje jednorazowo `pp-pgss-once` **2026-10-05 03:05**: sprawdź wynik w `/var/log/serwerek/pg-stat-statements.log` i
   `ai-log`; jeśli nie poszło, uruchom `scripts/serwerek/pg-stat-statements-enable.sh`). Kopie poprzednich plików: `*.bak-20261004`.
-- Panel admina `apps/admin` jest w `main`, ale **nie jest uruchomiony** (nie startuje z `deploy.sh`): wdrożenie z właścicielem wg [`ADMIN-PANEL.md`](ADMIN-PANEL.md)
-  (aplikacja Cloudflare Access „serwerek admin” tylko dla pawel.perfect@gmail.com + tag AUD w `admin.env`, wpis tunelu `admin.pawelperfect.com`
-  → `127.0.0.1:3100`, `admin-enroll` z kodem TOTP i 10 kodami zapasowymi).
+- **Panel admina (faza 1) działa** od 2026-10-05: kontener `polutek-admin-1` (obraz `polutek-admin:adm10050110`, `127.0.0.1:3100`, limit 384 MB) z `deploy-admin.sh`,
+  `admin.env` (sekrety, root 600; `ADMIN_AUTH_SECRET` nowy), timer `admin-host-status`, aplikacja Cloudflare Access „serwerek admin” (tylko `pawel.perfect@gmail.com`,
+  sesja 12 h), reguła tunelu `admin.pawelperfect.com → http://127.0.0.1:3100` i CNAME `admin` (kopia poprzedniej konfiguracji tunelu w
+  `%USERPROFILE%\.ai-secrets\cloudflare-backup\`). Bez Access panel odpowiada 403, `https://admin.pawelperfect.com` przekierowuje na logowanie Cloudflare.
+  **Brakuje tylko rejestracji administratora** (robi właściciel, link jednorazowy, [`ADMIN-PANEL.md`](ADMIN-PANEL.md) rozdz. 2).
 - **Snapshot serwera** zrobiony przez właściciela 2026-10-05 ~00:13 (id 439648964, `serwereksnapszot1`, 27,04 GB, ~0,48 €/mies.).
   Plan przenoszenia na inny serwer albo powiększenia: sekcja „Hetzner: powiększenie i przenoszenie” niżej.
 - Konta ADMIN w bazie: **4** (powinno zostać 1). Właściciel: `pawel.perfect@gmail.com` = `user_3FeY8okjicDKlWDGSSc4Q7bvaPZ`. Do zdjęcia roli
@@ -68,6 +70,10 @@ Brak PR-ów otwartych dla: faz 3, A, 5 panelu (nie zaczęte).
 
 ## Najbliższe kroki (kolejność proponowana, jeden agent naraz)
 
+0. **Rejestracja administratora w panelu (właściciel, na serwerze):** `ssh serwerek`, potem
+   `cd /opt/serwerek/apps/polutek && docker compose --profile admin run --rm admin node apps/admin/scripts/admin-enroll.mjs --email pawel.perfect@gmail.com`;
+   link `https://admin.pawelperfect.com/rejestracja#t=…` (15 min, jednorazowy, nie wklejać do czatu) otworzyć w przeglądarce: kod QR do aplikacji TOTP,
+   **zapisać 10 kodów zapasowych poza komputerem**, dodać klucz dostępu (najlepiej dwa: komputer i telefon). Potem sprawdzić „Dzisiaj” i „System”.
 1. Preloader (#1678), potem `set-role` (#1680) i lokalne CI (#1679).
 2. Panel admina: scalić #1673 → #1675 → #1677, dokończyć #1681 (Społeczność), wdrożyć panel z właścicielem ([`ADMIN-PANEL.md`](ADMIN-PANEL.md)).
    Dalsze fazy ([`architecture/admin-panel.md`](../architecture/admin-panel.md) §4, parytet ze starym panelem w
@@ -81,6 +87,26 @@ Brak PR-ów otwartych dla: faz 3, A, 5 panelu (nie zaczęte).
 6. Nowy, krótki `CLAUDE.md` opisujący wyłącznie stan obecny i przepisanie `SERWEREK.md` do stanu faktycznego (audyt operacji znalazł 21 rozbieżności).
 7. Naprawy z raportów audytów, których nikt nie ruszył: `audit-frontend.md`, `audit-style.md` (poza komentarzami), `audit-ops.md`, `audit-legal-privacy.md`
    (w `docs/audit/2026-10-03/`).
+
+## Agent pracujący bezpośrednio na serwerku (instrukcja)
+
+Na serwerze leży kopia dokumentacji (`/opt/serwerek/docs/`, odświeżana przy każdym `deploy.sh`) i `/opt/serwerek/README.md`; **ten plik jest tam jako
+`/opt/serwerek/docs/operations/STATUS.md`**. Źródłem prawdy jest repo `pawelekbyra/polutek-pl` (gałąź `main`).
+
+**Co agent na serwerku może robić od razu:** wdrożenia z `./deploy.sh`/`./deploy-admin.sh` (z `src/` zbudowanego `git archive`; kod pochodzi z PC właściciela),
+diagnostyka (`docker compose ps/logs`, `systemctl`, `journalctl`, `health.sh`), odczyt bazy (`docker compose exec db psql`, tylko SELECT bez
+zgody właściciela), kopie i test odtworzenia (`/opt/serwerek/scripts/`), zadania z listy „Operacje”, akcje operatora (`scripts/ops/actions/`) i odprawa
+(`scripts/ops/briefing.mjs`) po zgodzie właściciela. Każda zmiana: kopia pliku, wpis `AI_AGENT=<nazwa> ai-log "..."`.
+
+**Czego brakuje do zmian w kodzie bezpośrednio z serwerka:** na serwerze nie ma klonu repozytorium ani poświadczeń GitHub (repo prywatne). Aby tam kodować:
+właściciel tworzy **fine-grained token GitHub** (repo `polutek-pl`: Contents read/write, Pull requests read/write) albo deploy key z zapisem i wkłada go do
+`/root/.ai-secrets/` (chmod 600; nigdy do repo ani czatu); potem `git clone` do `/opt/serwerek/repo` i praca na gałęziach z PR (`gh`). Do tego czasu zmiany
+w kodzie robi sesja na komputerze właściciela, a serwerek tylko wdraża. Nie uruchamiaj na serwerze pełnych testów ani budowy obok produkcji w godzinach ruchu
+(2 vCPU, 4 GB RAM, swap ~1,7 GB): testy lokalnie, na serwerze tylko `deploy.sh` (budowa z `nice`).
+
+**Kolejność prac dla takiego agenta:** (1) odczytać „Stan produkcji”, „Otwarte PR-y” i „Najbliższe kroki” poniżej i w wyniku `briefing.mjs`; (2) zrobić zadania
+operacyjne bez zmian w kodzie (np. weryfikacja wyniku nocnego restartu bazy `pg_stat_statements`, porządki z listy „Operacje”); (3) kod i PR-y tylko po
+przekazaniu tokenu GitHub; (4) po każdej zmianie zaktualizować ten plik w repo (PR) i wpis w `ai-log`.
 
 ## Czeka na właściciela
 

@@ -1,6 +1,7 @@
 # Panel administratora `admin.pawelperfect.com`: runbook
 
-Stan: 2026-10-04 (faza 1: powłoka, logowanie, ekrany „Dzisiaj” i „System”, tylko odczyt). Architektura i decyzje:
+Stan: 2026-10-04 (faza 1: powłoka, logowanie, ekrany „Dzisiaj” i „System”, tylko odczyt).
+**Wdrożenie na serwerku wykonane 2026-10-05** (obraz `polutek-admin:adm10050110`, `admin.env`, Access, tunel, DNS): zostaje rejestracja administratora (rozdział 2). Architektura i decyzje:
 [`architecture/admin-panel.md`](../architecture/admin-panel.md) (sekcja 9). Stary `/admin` na `www` działa bez zmian.
 
 Panel to osobna aplikacja (`apps/admin`) i osobny kontener `admin` (`127.0.0.1:3100`, limit 384 MB) w stosie
