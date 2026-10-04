@@ -26,6 +26,9 @@ Ostatnia aktualizacja: 2026-10-04.
 - **Pasek zbiórki:** zostaje ręcznie ustawiany (decyzja 2026-10-04).
 - **Resend:** zostaje jedynym nadawcą do czasu własnej poczty; plan Pro dopiero przy starcie publicznym. Nowa domena ma słabą reputację u Hotmaila (maile w spamie).
 - **Polityka prywatności** (2026-10-04): przepisać na krótką, zrozumiałą, zawierającą tylko to, co wymaga prawo (jak Regulamin); przed startem przegląd prawnika.
+- **Odprawa dzienna** (2026-10-04): bez autonomicznego agenta AI na serwerze. Właściciel pyta Claude Code
+  „co słychać?”, Claude uruchamia `scripts/ops/briefing.mjs` (tylko odczyt, [`DAILY-BRIEFING.md`](DAILY-BRIEFING.md)),
+  a działania wykonuje dopiero po zgodzie właściciela w czacie.
 - **Panel administratora** (2026-10-04): niezależna aplikacja na `admin.pawelperfect.com` z bogatą analityką i obserwowalnością (odwraca decyzję z 2026-09-30 o odłożeniu). Wizja, decyzje, fazy budowy i 12 pytań do właściciela: [`architecture/admin-panel.md`](../architecture/admin-panel.md).
 ## Czeka na właściciela
 
@@ -57,6 +60,7 @@ Ostatnia aktualizacja: 2026-10-04.
 | `fix/hls-audit` | hls.js lokalnie, szybki start, napisy, HDR, drabinka jakości, odświeżanie tokenu |
 | `fix/security-auth-audit` | zmiana e-maila, formularze logowania, onboarding, reszta CSP, resztki Clerka |
 | `fix/email-audit` | szablony (jedno źródło prawdy), wypis jednym kliknięciem, webhook Resend, kolejka rozsyłek |
+| `feat/daily-briefing` | dzienna odprawa „co słychać?” (skrypt tylko do odczytu + skill `odprawa`); następny krok: skrypty działań z audytem (odpowiedź-szkic, ukrycie komentarza, zwrot) uruchamiane po zgodzie właściciela |
 | `feat/passkey-sign-in` | logowanie kluczem dostępu (passkey); po wdrożeniu właściciel dodaje klucz na telefonie i komputerze (też jako 2. czynnik dla admina, punkt 4) |
 
 ## Do zrobienia (kolejność proponowana)
