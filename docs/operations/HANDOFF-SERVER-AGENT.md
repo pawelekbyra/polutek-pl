@@ -57,14 +57,25 @@ Własny zdalny serwer (opcjonalnie, decyzja właściciela): na innym serwerze `g
 - Kopie bazy i test odtworzenia chodzą z timerów (nie ruszaj ich konfiguracji bez potrzeby). Przed ryzykowną zmianą: `/opt/serwerek/scripts/backup.sh`.
 - Po każdej zakończonej pracy zaktualizuj `docs/operations/STATUS.md` w repo (commit) i odśwież kopię `/opt/serwerek/docs/` (robi to `deploy.sh`).
 
-## 4. Czego tu nie ma (i skąd to wziąć od właściciela)
+## 4. Sekrety i czego nadal brakuje
 
-- **Sekretów** (`/opt/serwerek/handoff/secrets-names.txt` to tylko nazwy, bez wartości). Na serwerze są sekrety aplikacji (`app.env`, `admin.env`, `collector.env`, `worker.env`,
-  `/opt/serwerek/secrets/`). **Nie ma** tokenów Cloudflare, GitHub, Stripe (poza kluczami aplikacji), Resend (poza `app.env`) ani Google. Operacji w Cloudflare (Access, tunel, DNS, Workers)
-  agent na serwerku nie wykona, dopóki właściciel nie umieści odpowiedniego tokenu w `/root/.ai-secrets/` (chmod 600, nigdy do repo ani czatu).
-- **Claude Code / klienta AI** (uruchamia go właściciel; na serwerze są git, Node 22, npm, Docker, Python 3, rsync, age, rclone; brak `gh`).
-- **Przeglądarki** (weryfikacja wizualna wymaga komputera właściciela albo kontenera z przeglądarką).
-- **Rejestracji administratora panelu**: robi właściciel ([`ADMIN-PANEL.md`](ADMIN-PANEL.md) rozdz. 2); link jednorazowy nie idzie na czat.
+**Właściciel (2026-10-05) pracuje już tylko na serwerze** i skopiował tu cały folder sekretów ze swojego komputera: **`/root/.ai-secrets/`** (katalog 700, pliki 600, tylko root; nigdy do repo, czatu, logów ani kopii poza serwerem):
+
+| Plik | Co |
+|---|---|
+| `secrets.env` | podzbiór do codziennej pracy: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_R2_*`, `HETZNER_API_TOKEN`, `RESEND_API_KEY`, `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `SUPPORT_ACCESS_CLIENT_ID/SECRET`, `OPS_ADMIN_USER_ID`, puste `GITHUB_TOKEN` |
+| `load-secrets.sh` | `source /root/.ai-secrets/load-secrets.sh` ładuje je do powłoki, nic nie wypisuje |
+| `secrets.full-from-pc.env` | pełna kopia z komputera właściciela, także wycofane (Vercel, Clerk, Mux, Cloudflare Stream) i sekrety aplikacji; używaj tylko w razie potrzeby |
+| `age/` | `serwerek-backups.agekey` (klucz PRYWATNY kopii zapasowych) i `.pub` |
+| `cloudflare-backup/`, `dns-backup/` | kopie konfiguracji (polityka Access, tunel przed dodaniem panelu, DNS obu stref, usunięte rekordy DKIM Google) |
+| `pp-support.env`, `google-ai-agent.json`, `ops-actions.log` | dostęp do PP Support, klucz konta usługi Google (Workspace anulowany: nieaktualny), dziennik akcji operatora |
+
+Zasady: sekretów **nigdy nie wypisuj** (maskuj, pokazuj najwyżej długość), nie kopiuj do repo ani dokumentacji, nie wysyłaj poza serwer. Sekrety **aplikacji** (Better Auth, Google, Turnstile, HLS, baza)
+są w `/opt/serwerek/apps/polutek/app.env` i `admin.env`. **Uwaga o kluczu `age`:** jego obecność tu oznacza, że szyfrowanie kopii w R2 nie chroni przed przejęciem serwera; **zadbaj, żeby właściciel miał
+drugą kopię offline** (menedżer haseł), bo przy utracie serwera bez tego klucza kopie z R2 są nieczytelne.
+
+**Nadal brakuje:** `GITHUB_TOKEN` (właściciel nie dostarczył; repo jest lokalne w `/opt/serwerek/repo`), prywatnego klucza SSH do serwera (jest tylko u właściciela, na serwerze niepotrzebny), Claude Code
+(uruchamia go właściciel), przeglądarki do kontroli wyglądu. Rejestrację administratora panelu robi właściciel ([`ADMIN-PANEL.md`](ADMIN-PANEL.md) rozdz. 2); link jednorazowy nie idzie na czat.
 
 ## 5. Kolejność prac (skrót, pełna lista w STATUS.md)
 

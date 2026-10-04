@@ -598,6 +598,8 @@ See `.env.example` for all variables. Critical ones:
 
 ### 8.1 Local secrets for AI agents (2026-09-29)
 
+**Update 2026-10-05:** the owner no longer works on his local machine; the whole secrets folder (Cloudflare, Hetzner, Resend, Stripe, PP Support, the `age` backup key, config backups) was copied to **`/root/.ai-secrets/` on serwerek** (dir 700, files 600; load with `source /root/.ai-secrets/load-secrets.sh`; details in `docs/operations/HANDOFF-SERVER-AGENT.md` §4). The Windows paths below are historical. There is no `GITHUB_TOKEN` and no private SSH key on the server.
+
 Owner-run local machine only (Windows). API tokens for the tools the AI manages live **outside the repo**, in `%USERPROFILE%\.ai-secrets\` (`C:\Users\Administrator\.ai-secrets\`), readable only by the owner's Windows account:
 
 - `secrets.env` — `NAME=value` lines (Cloudflare, Vercel, GitHub, Resend, Stripe, Clerk, DB). Empty value = not provided yet; ask the owner rather than guessing.
