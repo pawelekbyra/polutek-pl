@@ -7,6 +7,7 @@
 
 import React, { useState } from "react";
 import { Field, PrimaryButton } from "./AuthFormParts";
+import type { CaptchaGate } from "./useCaptchaGate";
 import { authClient, captchaFetchOptions } from "@/lib/auth/client";
 import { isPasskeyCancelled, passkeyErrorMessage } from "@/lib/auth/errors";
 import { defaultPasskeyName } from "@/lib/auth/passkey-support";
@@ -18,11 +19,7 @@ export function PasskeySignupView({
   email,
   onEmailChange,
   callbackURL,
-  captcha,
-  captchaToken,
-  captchaBusy,
-  captchaReady,
-  resetCaptcha,
+  captchaGate,
   onError,
   onEmailTaken,
   onCreated,
@@ -33,11 +30,8 @@ export function PasskeySignupView({
   onEmailChange: (value: string) => void;
   /** Where the verification link brings the person back (same-site path). */
   callbackURL: string;
-  captcha: React.ReactNode;
-  captchaToken: string | null;
-  captchaBusy: boolean;
-  captchaReady: boolean;
-  resetCaptcha: () => void;
+  /** The window's bot check: the button stays active, an early click waits for the token. */
+  captchaGate: CaptchaGate;
   onError: (message: string | null) => void;
   /** The address already has an account: the window offers sign-in / password reset. */
   onEmailTaken: (kind: "google" | "password") => void;
@@ -53,17 +47,18 @@ export function PasskeySignupView({
     onError(passkeyErrorMessage(error, isPl));
   }
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  async function submit(e?: React.FormEvent) {
+    e?.preventDefault();
+    if (!captchaGate.ready(() => void submit())) return;
     setLoading(true);
     onError(null);
     try {
       const start = await authClient.$fetch<{ token: string }>("/passkey-signup/start", {
         method: "POST",
         body: { email, language: isPl ? "pl" : "en", callbackURL },
-        ...captchaFetchOptions(captchaToken),
+        ...captchaFetchOptions(captchaGate.token()),
       });
-      resetCaptcha();
+      captchaGate.reset();
       if (start.error || !start.data?.token) return fail(start.error as ErrorLike);
       const name = typeof navigator === "undefined" ? undefined : defaultPasskeyName(navigator.userAgent);
       const { error } = await authClient.passkey.addPasskey({ name, context: start.data.token });
@@ -89,11 +84,9 @@ export function PasskeySignupView({
           : "We did not find a passkey of yours. Enter your email and we'll create an account with a new passkey: you'll sign in with your fingerprint, face or device PIN, no password."}
       </p>
       <Field label="E-mail" type="email" value={email} onChange={onEmailChange} autoComplete="email" required />
-      {captcha}
+      {captchaGate.widget}
       <PrimaryButton
-        loading={loading}
-        busy={captchaBusy}
-        disabled={!captchaReady}
+        loading={loading || captchaGate.waiting}
         label={isPl ? "Utwórz konto z kluczem" : "Create account with a passkey"}
       />
       <div className="pt-1 text-center text-[12px] text-[var(--chan-muted)]">

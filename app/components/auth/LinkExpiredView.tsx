@@ -11,8 +11,6 @@ export function LinkExpiredView(props: {
   onSubmit: (event: React.FormEvent) => void;
   captcha: React.ReactNode;
   loading: boolean;
-  busy: boolean;
-  disabled: boolean;
   onBack: () => void;
 }) {
   const { isPl } = props;
@@ -25,7 +23,7 @@ export function LinkExpiredView(props: {
       </p>
       <Field label="E-mail" type="email" value={props.email} onChange={props.onEmailChange} autoComplete="email" required />
       {props.captcha}
-      <PrimaryButton loading={props.loading} busy={props.busy} disabled={props.disabled} label={isPl ? "Wyślij nowy link" : "Send a new link"} />
+      <PrimaryButton loading={props.loading} label={isPl ? "Wyślij nowy link" : "Send a new link"} />
       <div className="pt-1 text-center text-[12px] text-[var(--chan-muted)]">
         <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={props.onBack}>
           {isPl ? "Wróć do logowania" : "Back to sign in"}

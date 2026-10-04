@@ -60,14 +60,17 @@ describe("TurnstileWidget (interaction-only)", () => {
     mount({ onStateChange: (s) => states.push(s) });
     await waitFor(() => expect(api.render).toHaveBeenCalled());
     const box = screen.getByTestId("turnstile-widget");
+    // Hidden: a collapsed grid row with no margin (no gap in the form), still full width for Cloudflare.
     expect(box.dataset.visible).toBe("false");
-    expect(box.className).toContain("absolute");
-    expect(box.className).toContain("h-0");
+    expect(box.className).toContain("grid-rows-[0fr]");
+    expect(box.className).toContain("!my-0");
+    expect(screen.queryByRole("status")).toBeNull();
 
     act(() => options["before-interactive-callback"]());
     expect(box.dataset.visible).toBe("true");
-    expect(box.className).not.toContain("absolute");
-    expect(screen.getByRole("status").textContent).toContain("nie jesteś robotem");
+    expect(box.className).toContain("grid-rows-[1fr]");
+    expect(box.className).not.toContain("!my-0");
+    expect(screen.getByRole("status").textContent).toContain("nie jesteś botem");
 
     act(() => options["after-interactive-callback"]());
     expect(box.dataset.visible).toBe("false");

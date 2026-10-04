@@ -55,20 +55,29 @@ function loadTurnstile(): Promise<TurnstileApi> {
 }
 
 /**
- * checking: the check runs invisibly (the form shows a spinner on its button);
- * interactive: Cloudflare needs the visitor to act, so the widget is shown;
- * verified: a token exists; failed: the check could not finish (the visitor can retry).
+ * checking: the check runs invisibly in the background; interactive: Cloudflare needs the visitor
+ * to act, so the widget is shown; verified: a token exists; failed: the check could not finish
+ * (or took too long, see `stall()`), the visitor can retry.
  */
 export type CaptchaState = "checking" | "interactive" | "verified" | "failed";
 
-export type TurnstileHandle = { reset: () => void };
+export type TurnstileHandle = {
+  /** Drop the (used) token and fetch a fresh one in the background. */
+  reset: () => void;
+  /** Start over with a new widget (after an error or a stall). */
+  retry: () => void;
+  /** The form gave up waiting for a token: show the "taking too long, try again" message. */
+  stall: () => void;
+};
 
 /**
- * Cloudflare Turnstile bot check in `interaction-only` mode: the widget is invisible and takes no
- * space unless Cloudflare needs an interactive challenge. Renders nothing when no site key is
- * configured (then the server does not enforce the captcha either). A token is single use: call
- * `reset()` after every request that consumed it. Forms should disable submit until `onToken`
- * delivers a token and may show a spinner while `onStateChange` reports "checking".
+ * Cloudflare Turnstile bot check in `interaction-only` mode with the default `execution: "render"`:
+ * the check starts as soon as the widget mounts (when the form opens), invisibly and without taking
+ * space. Only if Cloudflare needs an interactive challenge does the widget expand smoothly in place,
+ * with a one-line explanation. Renders nothing when no site key is configured (then the server does
+ * not enforce the captcha either). A token is single use: call `reset()` after every request that
+ * consumed it. Forms do not wait for the token themselves: `useCaptchaGate` queues a submit until
+ * the token arrives.
  */
 export const TurnstileWidget = forwardRef<
   TurnstileHandle,
@@ -80,6 +89,7 @@ export const TurnstileWidget = forwardRef<
   const onTokenRef = useRef(onToken);
   const onStateChangeRef = useRef(onStateChange);
   const [state, setStateRaw] = useState<CaptchaState>("checking");
+  const [stalled, setStalled] = useState(false);
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
@@ -92,12 +102,21 @@ export const TurnstileWidget = forwardRef<
     onStateChangeRef.current?.(next);
   }, []);
 
+  const retry = useCallback(() => {
+    onTokenRef.current(null);
+    setStalled(false);
+    setAttempt((n) => n + 1);
+  }, []);
+
   useImperativeHandle(ref, () => ({
     reset: () => {
       onTokenRef.current(null);
+      setStalled(false);
       setState("checking");
       if (widgetIdRef.current && window.turnstile) window.turnstile.reset(widgetIdRef.current);
     },
+    retry,
+    stall: () => setStalled(true),
   }));
 
   useEffect(() => {
@@ -123,6 +142,7 @@ export const TurnstileWidget = forwardRef<
           "refresh-timeout": "auto",
           callback: (token) => {
             onTokenRef.current(token);
+            setStalled(false);
             setState("verified");
           },
           "expired-callback": () => {
@@ -152,32 +172,38 @@ export const TurnstileWidget = forwardRef<
   if (!turnstileSiteKey) return null;
 
   const visible = state === "interactive";
+  const problem = state === "failed" || stalled;
   return (
     <>
-      {/* Hidden: out of flow (absolute, zero height) so it leaves no gap in the form's spacing,
-          but still laid out at full width for Cloudflare to measure. Visible: a normal block. */}
+      {/* Collapsed (0 rows, no margin) while the check runs invisibly, so it leaves no gap in the form's
+          spacing but is still laid out at full width for Cloudflare to measure. When Cloudflare needs the
+          visitor, the row grows to the widget's height (no jump). */}
       <div
-        ref={containerRef}
         data-testid="turnstile-widget"
         data-visible={visible}
-        className={visible ? "flex min-h-[65px] justify-center" : "pointer-events-none absolute inset-x-0 h-0 overflow-hidden opacity-0"}
-      />
-      {visible && (
-        <p role="status" className="text-center text-[12px] text-[var(--chan-muted)]">
-          {isPl ? "Potwierdź powyżej, że nie jesteś robotem." : "Please confirm above that you are not a robot."}
-        </p>
-      )}
-      {state === "failed" && (
+        className={`grid transition-[grid-template-rows,opacity,margin] duration-300 ease-out motion-reduce:transition-none ${
+          visible ? "grid-rows-[1fr] opacity-100" : "pointer-events-none !my-0 grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="min-h-0 overflow-hidden">
+          {visible && (
+            <p role="status" className="pb-2 text-center text-[12px] font-semibold text-[var(--chan-body)]">
+              {isPl ? "Potwierdź, że nie jesteś botem." : "Confirm that you're not a bot."}
+            </p>
+          )}
+          <div ref={containerRef} className="flex justify-center" />
+        </div>
+      </div>
+      {problem && (
         <div role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-[13px] font-semibold text-red-600">
-          {isPl ? "Nie udało się sprawdzić zabezpieczenia. " : "We couldn't complete the security check. "}
-          <button
-            type="button"
-            className="underline"
-            onClick={() => {
-              onTokenRef.current(null);
-              setAttempt((n) => n + 1);
-            }}
-          >
+          {stalled && state !== "failed"
+            ? isPl
+              ? "Sprawdzanie zabezpieczenia trwa zbyt długo. "
+              : "The security check is taking too long. "
+            : isPl
+              ? "Nie udało się sprawdzić zabezpieczenia. "
+              : "We couldn't complete the security check. "}
+          <button type="button" className="underline" onClick={retry}>
             {isPl ? "Spróbuj ponownie" : "Try again"}
           </button>
         </div>
@@ -186,7 +212,7 @@ export const TurnstileWidget = forwardRef<
   );
 });
 
-/** True when a captcha is configured, so forms should wait for a token before submitting. */
+/** True when a captcha is configured, so forms must send a token with the request. */
 export function useCaptchaRequired(): boolean {
   return Boolean(useAuthPublicConfig().turnstileSiteKey);
 }

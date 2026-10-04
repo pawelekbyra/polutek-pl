@@ -258,12 +258,18 @@ session cookie plus the IP (the proxy cannot read the user id without a database
   everybody out of password sign-in).
 - Captcha: Turnstile on `/sign-up/email`, `/sign-in/email`, `/request-password-reset`, `/send-verification-email`, `/passkey-signup/start`.
   Enabled when `TURNSTILE_SECRET_KEY` is set (required in production by `env:validate:prod`).
-  The client widget (`app/components/auth/TurnstileWidget.tsx`) runs in `appearance: "interaction-only"`: invisible
-  and out of the layout (absolute, zero height) unless Cloudflare needs a challenge, then shown in flow
-  (`size: "flexible"`). Forms keep submit disabled until a token exists and show a spinner on the button while the
-  check runs (`PrimaryButton busy`); expiry/timeout refresh automatically, an error or a script that fails to load
-  shows a PL/EN message with "try again". The server verification and token header are unchanged. CSP already
-  allows `challenges.cloudflare.com` for script, frame and connect (`lib/utils/security.ts`).
+  The client widget (`app/components/auth/TurnstileWidget.tsx`) runs in `appearance: "interaction-only"` with the
+  default `execution: "render"`: the check starts the moment a form opens, invisibly, in a collapsed grid row with no
+  margin (no gap in the form). If Cloudflare needs a challenge the row expands smoothly to the widget
+  (`size: "flexible"`) under "Confirm that you're not a bot". Submit buttons are visible and active from the start:
+  `useCaptchaGate` (`app/components/auth/useCaptchaGate.tsx`) queues a click made before the token exists (spinner next
+  to the unchanged label) and sends it as soon as the token arrives; it gives up after 15 s of non-interactive
+  waiting (never while the visitor solves a challenge) with a PL/EN "taking too long, try again" message, drops a
+  queued submit when the form unmounts, and a click after a failed check restarts it. After every request the used
+  token is reset and a fresh one fetched in the background. Expiry/timeout refresh automatically; an error or a
+  script that fails to load shows a message with "try again". The Cloudflare script still loads only when the
+  sign-in window opens (privacy policy), with no preload on the page. The server verification and token header are
+  unchanged. CSP already allows `challenges.cloudflare.com` for script, frame and connect (`lib/utils/security.ts`).
 - IP: `cf-connecting-ip` when `TRUST_CF_CONNECTING_IP=true`, else `x-real-ip`.
 - Origins: `NEXT_PUBLIC_APP_URL` host in www and apex form plus `BETTER_AUTH_TRUSTED_ORIGINS`.
 - CSRF for `/api/user/*` mutations is checked in `middleware.ts` (same guard as admin).

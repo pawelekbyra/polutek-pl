@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { AuthDialogTop } from "./AuthDialogTop";
 import { useLanguage } from "../LanguageContext";
 import type { AuthNotice, AuthView } from "./AuthModalProvider";
 import { TwoFactorView } from "./TwoFactorView";
@@ -11,7 +12,7 @@ import { Divider, EmailTakenActions, Field, NewHereNote, OAuthButtons, PasskeySi
 import { PasskeySignupView } from "./PasskeySignupView";
 import CheckInboxView from "./CheckInboxView";
 import SignUpFooter from "./SignUpFooter";
-import { TurnstileWidget, useCaptchaRequired, type CaptchaState, type TurnstileHandle } from "./TurnstileWidget";
+import { useCaptchaGate } from "./useCaptchaGate";
 import { authClient, captchaFetchOptions } from "@/lib/auth/client";
 import { useAuth } from "@/lib/auth/react";
 import { authErrorMessage } from "@/lib/auth/errors";
@@ -39,8 +40,8 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
   const { language } = useLanguage();
   const isPl = language === "pl";
   const { isSignedIn } = useAuth();
-  const captchaRequired = useCaptchaRequired();
-  const captchaRef = useRef<TurnstileHandle>(null);
+  // Bot check: runs in the background from the moment a form opens; the submit button never waits for it.
+  const captchaGate = useCaptchaGate(isPl);
 
   const [view, setView] = useState<InternalView>(initialView);
   const [email, setEmail] = useState("");
@@ -56,8 +57,6 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
   const [info, setInfo] = useState<string | null>(null);
   // After a wrong e-mail/password we hint at the other ways in (older accounts have no password yet).
   const [wrongCredentials, setWrongCredentials] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const [captchaState, setCaptchaState] = useState<CaptchaState>("checking");
 
   useEffect(() => {
     setCode("");
@@ -77,7 +76,6 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
     setUseBackupCode(false);
     setTrustDevice(false);
     setWrongCredentials(false);
-    setCaptchaToken(null);
     // isPl is read only to localise the one-off notice text, not a reason to reset the form.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialView, notice]);
@@ -91,7 +89,6 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
     }
   }, [open, isSignedIn, view, onOpenChange, router]);
 
-  const captchaReady = !captchaRequired || Boolean(captchaToken);
   const currentPath = () => (typeof window !== "undefined" ? window.location.pathname + window.location.search : "/");
   // Where the visitor ends up after signing in: the path the proxy asked for (`?next=`), else this page.
   // E-mail links (verification) bring the visitor back here with `?verified=1`, which shows a confirmation.
@@ -101,7 +98,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
     setWrongCredentials(err?.code === "INVALID_EMAIL_OR_PASSWORD");
     setError(authErrorMessage(err, isPl));
     setLoading(false);
-    captchaRef.current?.reset();
+    captchaGate.reset();
   }
 
   // Every auth call runs through here (AUTH-08): the spinner always stops, and a dropped connection
@@ -126,20 +123,21 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
     router.refresh();
   }
 
-  function handlePasswordSignIn(e: React.FormEvent) {
-    e.preventDefault();
+  function handlePasswordSignIn(e?: React.FormEvent) {
+    e?.preventDefault();
+    if (!captchaGate.ready(handlePasswordSignIn)) return;
     return run(async () => {
       const { data, error: signInError } = await authClient.signIn.email({
         email,
         password,
         callbackURL: returnTo(),
-        fetchOptions: captchaFetchOptions(captchaToken),
+        fetchOptions: captchaFetchOptions(captchaGate.token()),
       });
       if (signInError) {
         if (signInError.code === "EMAIL_NOT_VERIFIED") {
           setInfo(isPl ? "Potwierdź adres e-mail. Wysłaliśmy nowy link." : "Please verify your email. We sent a new link.");
           setView("verify-sent");
-          captchaRef.current?.reset();
+          captchaGate.reset();
           return;
         }
         return fail(signInError);
@@ -152,9 +150,10 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
     });
   }
 
-  function handleSignUp(e: React.FormEvent) {
-    e.preventDefault();
+  function handleSignUp(e?: React.FormEvent) {
+    e?.preventDefault();
     if (password !== confirmPassword) return setError(passwordMismatchMessage(isPl));
+    if (!captchaGate.ready(handleSignUp)) return;
     setEmailTaken(null);
     return run(async () => {
       // No nickname here: the server stores a placeholder name and the first-sign-in dialog asks for it.
@@ -164,7 +163,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
         name: email.split("@")[0] || "user",
         language: isPl ? "pl" : "en",
         callbackURL: returnTo(),
-        fetchOptions: captchaFetchOptions(captchaToken),
+        fetchOptions: captchaFetchOptions(captchaGate.token()),
       });
       if (signUpError) {
         // Owner decision 2026-10-02: say plainly when the address already has an account (see docs).
@@ -175,36 +174,38 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
       }
       setInfo(null);
       setView("verify-sent");
-      captchaRef.current?.reset();
+      captchaGate.reset();
     });
   }
 
   function handleResend(e?: React.FormEvent) {
     e?.preventDefault();
+    if (!captchaGate.ready(handleResend)) return;
     return run(async () => {
       const { error: resendError } = await authClient.sendVerificationEmail({
         email,
         callbackURL: returnTo(),
-        fetchOptions: captchaFetchOptions(captchaToken),
+        fetchOptions: captchaFetchOptions(captchaGate.token()),
       });
       if (resendError) return fail(resendError);
       setInfo(isPl ? "Wysłaliśmy link ponownie." : "We sent the link again.");
-      captchaRef.current?.reset();
+      captchaGate.reset();
     });
   }
 
-  function handleForgot(e: React.FormEvent) {
-    e.preventDefault();
+  function handleForgot(e?: React.FormEvent) {
+    e?.preventDefault();
+    if (!captchaGate.ready(handleForgot)) return;
     return run(async () => {
       const { error: resetError } = await authClient.requestPasswordReset({
         email,
         redirectTo: "/reset-password",
-        fetchOptions: captchaFetchOptions(captchaToken),
+        fetchOptions: captchaFetchOptions(captchaGate.token()),
       });
       if (resetError) return fail(resetError);
       // Always the same answer, so the form cannot be used to find out which addresses have accounts.
       setView("forgot-sent");
-      captchaRef.current?.reset();
+      captchaGate.reset();
     });
   }
 
@@ -253,11 +254,9 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
   }
 
   const revealLabels = isPl ? { show: "Pokaż", hide: "Ukryj" } : { show: "Show", hide: "Hide" };
-  const captcha = <TurnstileWidget ref={captchaRef} onToken={setCaptchaToken} onStateChange={setCaptchaState} isPl={isPl} />;
-  const waitingForCaptcha = !captchaReady;
-  // Spinner on the button only while the invisible check is running; when the visitor has to act
-  // (or it failed) the widget/message is shown instead and the button just stays disabled.
-  const captchaChecking = waitingForCaptcha && captchaState === "checking";
+  const captcha = captchaGate.widget;
+  // A click before the token is there queues the request: same spinner as a running request.
+  const busy = loading || captchaGate.waiting;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -266,18 +265,8 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
         className="!w-[calc(100vw-1rem)] !max-w-[390px] overflow-visible !rounded-none !border-0 !bg-transparent !p-0 !shadow-none !ring-0 sm:!w-[390px] sm:!max-w-[390px]"
       >
         <div className="relative isolate max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-5 py-6 shadow-[0_20px_50px_rgba(23,23,23,0.14)] sm:px-6 sm:py-7">
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            className="absolute right-4 top-4 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--chan-surface)] text-[18px] font-black leading-none text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-line)]"
-            aria-label={isPl ? "Zamknij okno logowania" : "Close sign-in dialog"}
-          >
-            ×
-          </button>
           <div>
-            <DialogHeader className="text-center">
-              <DialogTitle className="font-brand text-2xl font-bold tracking-tight text-[var(--chan-ink)]">{title}</DialogTitle>
-            </DialogHeader>
+            <AuthDialogTop title={title} isPl={isPl} onClose={() => onOpenChange(false)} />
 
             {error && (
               <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-[13px] font-semibold text-red-600">
@@ -305,7 +294,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="username webauthn" required />
                 <Field label={isPl ? "Hasło" : "Password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" revealLabels={revealLabels} required />
                 {captcha}
-                <PrimaryButton loading={loading} busy={captchaChecking} disabled={waitingForCaptcha} label={isPl ? "Zaloguj się" : "Sign in"} />
+                <PrimaryButton loading={busy} label={isPl ? "Zaloguj się" : "Sign in"} />
                 <SignInLinks isPl={isPl} onForgot={() => switchView("forgot")} onSignUp={() => switchView("sign-up")} />
               </form>
             )}
@@ -316,11 +305,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
                 email={email}
                 onEmailChange={setEmail}
                 callbackURL={returnTo()}
-                captcha={captcha}
-                captchaToken={captchaToken}
-                captchaBusy={captchaChecking}
-                captchaReady={captchaReady}
-                resetCaptcha={() => captchaRef.current?.reset()}
+                captchaGate={captchaGate}
                 onError={setError}
                 onEmailTaken={setEmailTaken}
                 onCreated={() => { setInfo(isPl ? "Klucz dostępu zapisany. Potwierdź e-mail linkiem z wiadomości, a zalogujemy Cię." : "Passkey saved. Confirm your email with the link we sent and you'll be signed in."); setView("verify-sent"); }}
@@ -358,9 +343,8 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
                 )}
                 {captcha}
                 <PrimaryButton
-                  loading={loading}
-                  busy={captchaChecking}
-                  disabled={waitingForCaptcha || password.length < PASSWORD_MIN_LENGTH || password !== confirmPassword}
+                  loading={busy}
+                  disabled={password.length < PASSWORD_MIN_LENGTH || password !== confirmPassword}
                   label={isPl ? "Załóż konto" : "Create account"}
                 />
                 <div className="pt-1 text-center text-[12px] text-[var(--chan-muted)]">
@@ -381,8 +365,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
                 onChangeEmail={() => switchView("sign-up")}
                 onBack={() => switchView("sign-in")}
                 captcha={captcha}
-                loading={loading}
-                disabled={waitingForCaptcha}
+                loading={busy}
               />
             )}
 
@@ -393,9 +376,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
                 onEmailChange={setEmail}
                 onSubmit={handleResend}
                 captcha={captcha}
-                loading={loading}
-                busy={captchaChecking}
-                disabled={waitingForCaptcha}
+                loading={busy}
                 onBack={() => switchView("sign-in")}
               />
             )}
@@ -407,7 +388,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
                 </p>
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
                 {captcha}
-                <PrimaryButton loading={loading} busy={captchaChecking} disabled={waitingForCaptcha} label={isPl ? "Wyślij link" : "Send link"} />
+                <PrimaryButton loading={busy} label={isPl ? "Wyślij link" : "Send link"} />
                 <div className="pt-1 text-center text-[12px] text-[var(--chan-muted)]">
                   <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("sign-in")}>
                     {isPl ? "Wróć do logowania" : "Back to sign in"}
