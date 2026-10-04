@@ -20,6 +20,13 @@ Ostatnia aktualizacja: 2026-10-04.
 - Agenci weryfikują rozwiązania w internecie; audyty i naprawy robią agenci na Opusie, sesja główna
   koordynuje.
 
+- **Język (2026-10-04):** wykrywany automatycznie (zapisany wybór konta, cookie `app-language`, nagłówki przeglądarki/kraj, domyślnie angielski). Zmiana wyboru zapisuje się w cookie (niezalogowany) albo w koncie przy każdej zmianie (zalogowany). Flaga `TEMP_FORCE_ENGLISH` do usunięcia.
+- **Dzwonek powiadomień** (2026-10-04): usunąć (UI i flaga `TEMP_HIDE_NOTIFICATIONS_BELL`); podsystem powiadomień w bazie na później.
+- **Poziom dostępu `PATRON`** (2026-10-04): uprościć do dwóch poziomów (publiczny, po zalogowaniu); film z `PATRON` przechodzi na `LOGGED_IN`, wartość enuma usuwana w migracji czyszczącej.
+- **Pasek zbiórki:** zostaje ręcznie ustawiany (decyzja 2026-10-04).
+- **Resend:** zostaje jedynym nadawcą do czasu własnej poczty; plan Pro dopiero przy starcie publicznym. Nowa domena ma słabą reputację u Hotmaila (maile w spamie).
+- **Polityka prywatności** (2026-10-04): przepisać na krótką, zrozumiałą, zawierającą tylko to, co wymaga prawo (jak Regulamin); przed startem przegląd prawnika.
+- **Panel administratora** (2026-10-04): niezależna aplikacja na `admin.pawelperfect.com` z bogatą analityką i obserwowalnością; trwa faza badań i projektu (odwraca decyzję z 2026-09-30 o odłożeniu).
 ## Czeka na właściciela
 
 1. **Baza Neon `NEON-krau`** (stara kopia danych testowych): usunąć w panelu Vercel → Storage →
@@ -38,11 +45,7 @@ Ostatnia aktualizacja: 2026-10-04.
    Workspace trzeba go przenieść na konto osobiste (`GOOGLE_ACCESS.md`, sekcja „Move the OAuth client”),
    potem agent podmienia `GOOGLE_CLIENT_ID/SECRET` na serwerze.
 6. **Anulowanie Google Workspace** (po punkcie 5, ok. 2026-10-09).
-7. **Decyzje produktowe z audytów** (pytania zebrane na końcu każdego raportu w `docs/audit/2026-10-03/`):
-   publiczna odznaka PATRON przy komentarzach, ręcznie ustawiany pasek zbiórki, poziom dostępu `PATRON`
-   (usunąć czy zostawić jako sekcję), powiadomienia w aplikacji (dzwonek ukryty: przywrócić czy usunąć
-   podsystem), język domyślny (flaga wymuszająca angielski), treść polityki prywatności i wymogi prawne
-   z `audit-legal-privacy.md` (do przejrzenia z prawnikiem).
+7. **Decyzje produktowe z audytów, które jeszcze czekają:** retencja danych (jak długo trzymać oryginały wideo, telemetrię, logi), wymogi prawne z `audit-legal-privacy.md` (polityka prywatności w toku, reklamacje i DSA w regulaminie).
 
 ## W toku (gałęzie agentów, każda kończy się PR-em)
 
