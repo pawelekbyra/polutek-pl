@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { AuthDialogTop } from "./AuthDialogTop";
 import { useLanguage } from "../LanguageContext";
 import type { AuthNotice, AuthView } from "./AuthModalProvider";
 import { TwoFactorView } from "./TwoFactorView";
@@ -264,18 +265,8 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
         className="!w-[calc(100vw-1rem)] !max-w-[390px] overflow-visible !rounded-none !border-0 !bg-transparent !p-0 !shadow-none !ring-0 sm:!w-[390px] sm:!max-w-[390px]"
       >
         <div className="relative isolate max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-5 py-6 shadow-[0_20px_50px_rgba(23,23,23,0.14)] sm:px-6 sm:py-7">
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            className="absolute right-4 top-4 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--chan-surface)] text-[18px] font-black leading-none text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-line)]"
-            aria-label={isPl ? "Zamknij okno logowania" : "Close sign-in dialog"}
-          >
-            ×
-          </button>
           <div>
-            <DialogHeader className="text-center">
-              <DialogTitle className="font-brand text-2xl font-bold tracking-tight text-[var(--chan-ink)]">{title}</DialogTitle>
-            </DialogHeader>
+            <AuthDialogTop title={title} isPl={isPl} onClose={() => onOpenChange(false)} />
 
             {error && (
               <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-[13px] font-semibold text-red-600">
