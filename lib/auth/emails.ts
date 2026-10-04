@@ -1,3 +1,4 @@
+import { getSessionCookie } from "better-auth/cookies";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import {
@@ -9,6 +10,7 @@ import {
   sendVerificationEmail,
 } from "@/lib/modules/email";
 import { recordAuthAudit } from "./audit";
+import { SESSION_COOKIE_PREFIX } from "./config";
 
 type MailUser = { id?: string | null; email: string; name?: string | null; language?: string | null };
 type Language = "pl" | "en";
@@ -79,15 +81,39 @@ export function queueChangeEmailConfirmation(user: MailUser, newEmail: string, u
 }
 
 /**
+ * After an e-mail change every other device is signed out, as after a password change. The session
+ * kept is the one this browser gets: Better Auth sets it right after this hook, either the session
+ * the browser already had (its cookie) or, without one, the session it has just created (the newest).
+ */
+async function revokeOtherSessionsAfterEmailChange(userId: string, request?: Request | null) {
+  const cookieToken = request ? getSessionCookie(request, { cookiePrefix: SESSION_COOKIE_PREFIX })?.split(".")[0] : undefined;
+  const sessions = await prisma.session.findMany({
+    where: { userId },
+    select: { id: true, token: true },
+    orderBy: { createdAt: "desc" },
+  });
+  const keep = sessions.find((session) => session.token === cookieToken) ?? sessions[0];
+  if (!keep) return;
+  await prisma.session.deleteMany({ where: { userId, id: { not: keep.id } } });
+}
+
+/**
  * `emailVerification.afterEmailVerification`: after the new address was confirmed, the old address
- * gets a notice (the approval link may have been clicked by someone else who reads that inbox) and
- * the change is audited. Plain sign-up verifications are left alone.
+ * gets a notice (the approval link may have been clicked by someone else who reads that inbox), other
+ * devices are signed out and the change is audited. Plain sign-up verifications are left alone.
  */
 export async function onEmailVerified(user: MailUser, request?: Request | null) {
   const claims = readEmailTokenClaims(request?.url);
   if (claims?.requestType !== "change-email-verification" || !claims.email || !claims.updateTo) return;
   const oldEmail = claims.email;
   fire("e-mail changed notice", async () => sendEmailChangedEmail(oldEmail, claims.updateTo!, await languageFor(user)));
+  if (user.id) {
+    try {
+      await revokeOtherSessionsAfterEmailChange(user.id, request);
+    } catch (error) {
+      logger.error("[auth] could not sign other devices out after an e-mail change", error instanceof Error ? error.message : String(error));
+    }
+  }
   await recordAuthAudit({ action: "AUTH_EMAIL_CHANGED", userId: user.id ?? null });
 }
 
