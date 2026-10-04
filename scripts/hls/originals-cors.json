@@ -2,7 +2,7 @@
   "rules": [
     {
       "allowed": {
-        "origins": ["https://www.pawelperfect.com", "https://pawelperfect.com"],
+        "origins": ["https://www.pawelperfect.com", "https://pawelperfect.com", "https://admin.pawelperfect.com"],
         "methods": ["PUT", "GET", "HEAD"],
         "headers": ["*"]
       },

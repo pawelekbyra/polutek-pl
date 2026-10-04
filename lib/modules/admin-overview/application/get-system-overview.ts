@@ -34,7 +34,7 @@ export function buildQueues(i: HealthInputs, moderation: { pendingReports: numbe
       kind: i.jobs.some((j) => j.status === "FAILED") ? "warn" : "ok",
       pending: queued + running,
       detail: running ? `${running} w toku, ${queued} czeka` : queued ? `${queued} czeka` : "pusta",
-      link: { label: "Filmy", href: i.oldPanel("/admin/videos"), external: true },
+      link: { label: "Filmy", href: "/tresci?hls=FAILED", external: false },
     },
     {
       id: "broadcast",

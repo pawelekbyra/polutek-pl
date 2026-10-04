@@ -29,38 +29,38 @@ A Analityka i tryb premiery (równolegle od fazy 2, gdy jest 7+ dni danych) · 5
 
 | Stary panel: funkcja / przycisk | Nowy panel | Faza | Status |
 |---|---|---|---|
-| Lista filmów z filtrami (status, tier, szukaj) i stronami | **Treści** `#/tresci` (filtry i strona w URL, stan HLS, miniatura, napisy) | 2 | plan |
-| Statystyki nad listą (`AdminVideoStats`) | kafle na liście Treści; obejrzenia z faz A | 2 | plan |
-| „Utwórz” (inline na liście) | **Nowy film** `#/tresci/nowy` (osobny ekran: metadane → wgranie oryginału → kodowanie) | 2 | plan |
-| Upload oryginału (multipart, wznawianie, weryfikacja) | `#/tresci/nowy` krok 2 i karta „Kodowanie i wideo” filmu (te same use case'y i `multipart-uploader.ts`) | 2 | plan |
-| Postęp kodowania (polling) | karta „Kodowanie i wideo” (etapy, rendycje, log błędu) | 2 | plan |
-| „Anuluj kodowanie” | przycisk „Anuluj” w karcie kodowania (odwracalne, bez okna) | 2 | plan |
-| „Zakoduj ponownie” / „Ponów” | „Przekoduj” / „Ponów kodowanie” | 2 | plan |
-| „Usuń wersję HLS” (2 kliknięcia) | lista wersji w karcie kodowania, okno ze skutkiem | 2 | plan |
+| Lista filmów z filtrami (status, tier, szukaj) i stronami | **Treści** `/tresci` (filtry: status, dostęp, stan wideo, sortowanie i strona w URL; stan HLS, miniatury i napisów) | 2 | zrobione |
+| Statystyki nad listą (`AdminVideoStats`) | licznik filmów i błędów kodowania w nagłówku Treści; kafle obejrzeń w fazie A (telemetria) | 2/A | zrobione (licznik), plan (kafle A) |
+| „Utwórz” (inline na liście) | **Nowy film** `/tresci/nowy` (metadane → szkic → edycja otwarta na wgraniu oryginału) | 2 | zrobione |
+| Upload oryginału (multipart, wznawianie, weryfikacja) | karta „Oryginał wideo” w edycji (te same use case'y i `multipart-uploader.ts` z `apiBase=/api/videos`; trasy panelu `/api/videos/[id]/original-upload/*`) | 2 | zrobione |
+| Postęp kodowania (polling) | karta „Kodowanie i wideo” (etapy, rendycje, log błędu) | 2 | zrobione |
+| „Anuluj kodowanie” | przycisk „Anuluj” w karcie kodowania (odwracalne, bez okna) | 2 | zrobione |
+| „Zakoduj ponownie” / „Ponów” | „Przekoduj” / „Ponów kodowanie” | 2 | zrobione |
+| „Usuń wersję HLS” (2 kliknięcia) | lista wersji w karcie kodowania, okno ze skutkiem | 2 | zrobione |
 | „Edytuj” (inline na liście) | **DROP**: jeden formularz edycji na film | – | DROP |
-| `/edit`: tytuł, slug, opis, tier, status, kategorie pól | **Edycja** `#/tresci/<slug>/edycja` (wszystkie pola, walidacja przy polu) | 2 | plan |
-| `/edit`: „Publikacja: Natychmiast / Premiera + data” | karta „Publikacja i premiera” | 2 | plan |
-| `/edit`: „Cel zbiórki” (procent ręczny, kwota, waluta, data) | karta „Pasek zbiórki” w edycji | 2 | plan |
-| Miniatura (`CoverImageUpload`, podgląd) | karta „Miniatura” (kadrowanie, 3 podglądy, magic bytes) | 2 | plan |
-| Napisy PL/EN (URL VTT w formularzu) | karta „Napisy” (wgranie VTT z walidacją; zarządzany hosting: #1219) | 2 | plan |
-| Szczegóły: zakładka Podsumowanie (odtwarzacz) | Przegląd filmu + „Podgląd jako widz” | 2 | plan |
-| Szczegóły: zakładka Treść | edycja | 2 | plan |
-| Szczegóły: zakładka Media (pipeline) | karta „Kodowanie i wideo” | 2 | plan |
-| Szczegóły: zakładka Dostęp | pole „Dostęp” + lista kontrolna | 2 | plan |
-| Szczegóły: zakładka Diagnostyka | lista kontrolna publikacji (pre-flight) i test po publikacji | 2 | plan |
+| `/edit`: tytuł, slug, opis, tier, status, kategorie pól | **Edycja** `/tresci/<slug>/edycja` (wszystkie pola, walidacja przy polu, blokada nadpisania nowszej wersji; tylko dwa poziomy dostępu, decyzja 2026-10-04) | 2 | zrobione |
+| `/edit`: „Publikacja: Natychmiast / Premiera + data” | karta „Publikacja i premiera” | 2 | zrobione |
+| `/edit`: „Cel zbiórki” (procent ręczny, kwota, waluta, data) | karta „Pasek zbiórki” w edycji | 2 | zrobione |
+| Miniatura (`CoverImageUpload`, podgląd) | karta „Miniatura” (wgranie do R2, magic bytes, podgląd przez trasę panelu, stan kopii publicznej); kadrowanie w przeglądarce: później | 2 | zrobione |
+| Napisy PL/EN (URL VTT w formularzu) | karta „Napisy” (wgranie VTT z walidacją, hosting w publicznym R2 `videos/<id>/subtitles/`, podmiana, usunięcie; decyzja 2026-10-04, #1219) | 2 | zrobione |
+| Szczegóły: zakładka Podsumowanie (odtwarzacz) | Przegląd filmu `/tresci/<slug>` + „Zobacz na stronie”; „Podgląd jako widz” (tryb tylko do odczytu na www) w fazie 3 | 2/3 | zrobione (przegląd), plan (podgląd jako widz) |
+| Szczegóły: zakładka Treść | edycja | 2 | zrobione |
+| Szczegóły: zakładka Media (pipeline) | karta „Kodowanie i wideo” | 2 | zrobione |
+| Szczegóły: zakładka Dostęp | pole „Dostęp” + lista kontrolna | 2 | zrobione |
+| Szczegóły: zakładka Diagnostyka | lista kontrolna publikacji (pre-flight przed zapisem); test po publikacji (token → master → segment) w fazie A | 2/A | zrobione (pre-flight), plan (post-flight) |
 | Szczegóły: zakładka Komentarze (martwa, ADM-06) | Społeczność → Komentarze z filtrem filmu | 2 | plan |
 | Szczegóły: zakładka Statystyki | Analityka filmu | A | plan |
-| Szczegóły: zakładka Historia | karta „Historia zmian” (audyt) | 2 | plan |
-| „Publikuj” | przycisk „Opublikuj” (blokady publikacji, pre-flight) | 2 | plan |
-| „Cofnij publikację” (bez potwierdzenia, ADM-05) | okno „Skutek” (zdejmuje z sidebaru i Hero, kasuje publiczną miniaturę) | 2 | plan |
-| „Archiwizuj” (bez potwierdzenia) | okno „Skutek” | 2 | plan |
-| „Przywróć” (z archiwum) | przycisk „Przywróć do szkiców” | 2 | plan |
-| „Usuń film” (dialog) | strefa zagrożenia: okno ze skutkiem + wpisanie sluga | 2 | plan |
-| „Duplikuj” (kopia bez okładki, ADM-10) | „Duplikuj jako szkic” (z okładką) | 2 | plan |
-| „Podgląd”, „Kopiuj link” | „Podgląd jako widz”, „Kopiuj link” | 2 | plan |
-| Hero on/off (szczegóły) | przełącznik „Hero strony głównej” (karta Ekspozycja) | 2 | plan |
-| Sidebar on/off i pozycja (szczegóły) | przełącznik „Na liście filmów” + pozycja | 2 | plan |
-| `/admin/videos/layout`: kolejność, Hero, oko (zapis nie działa dla Hero, ADM-02) | **Układ kanału** `#/tresci?widok=uklad` (przeciąganie i klawiatura, jeden zapis) | 2 | plan |
+| Szczegóły: zakładka Historia | karta „Historia zmian” (audyt) | 2 | zrobione |
+| „Publikuj” | przycisk „Opublikuj” (blokady publikacji, pre-flight) | 2 | zrobione |
+| „Cofnij publikację” (bez potwierdzenia, ADM-05) | okno „Skutek” (zdejmuje z sidebaru i Hero, kasuje publiczną miniaturę) | 2 | zrobione |
+| „Archiwizuj” (bez potwierdzenia) | okno „Skutek” | 2 | zrobione |
+| „Przywróć” (z archiwum) | przycisk „Przywróć do szkiców” | 2 | zrobione |
+| „Usuń film” (dialog) | strefa zagrożenia: okno ze skutkiem + wpisanie sluga + step-up (passkey/TOTP z 5 min, decyzja 2026-10-04); sprząta R2 i napisy | 2 | zrobione |
+| „Duplikuj” (kopia bez okładki, ADM-10) | „Duplikuj” (szkic z tytułem, opisami i dostępem; bez okładki celowo: wspólny obiekt w R2 skasowałby się przy zmianie okładki jednej z kopii) | 2 | zrobione |
+| „Podgląd”, „Kopiuj link” | „Zobacz na stronie”, „Kopiuj link”; „Podgląd jako widz” w fazie 3 | 2 | zrobione |
+| Hero on/off (szczegóły) | przełącznik „Hero strony głównej” (karta Ekspozycja) | 2 | zrobione |
+| Sidebar on/off i pozycja (szczegóły) | przełącznik „Na liście filmów”; pozycja w Układzie kanału | 2 | zrobione |
+| `/admin/videos/layout`: kolejność, Hero, oko (zapis nie działa dla Hero, ADM-02) | **Układ kanału** `/tresci/uklad` (strzałki i Alt+↑/↓, jeden zapis, Hero przez use case z regułami Hero) | 2 | zrobione |
 
 ### 1.3 Użytkownicy i wpłaty (`/admin/users*`)
 
@@ -158,23 +158,23 @@ z `lib/modules/**` (wrapper `requireAdmin → zod (.strict) → limit → step-u
 | `users/[userId]/role` (PATCH) | rola | „Rola…” ze step-up | 2 | plan |
 | `users/export` (GET) | eksport CSV (audyt) | „Eksport CSV” ze step-up | 2 | plan |
 | `users/stats` (GET) | kafle | kafle Użytkowników | 2 | plan |
-| `videos` (GET) | lista | Treści | 2 | plan |
-| `videos` (POST) | utworzenie i (z `id`) edycja | „Nowy film” i jeden `PATCH` edycji | 2 | plan |
-| `videos` (DELETE) | usunięcie + sprzątanie R2 | strefa zagrożenia filmu | 2 | plan |
-| `videos/[id]` (GET, PATCH) | szczegóły, edycja, miniatura | edycja filmu | 2 | plan |
-| `videos/[id]/actions` (POST) | publish/unpublish/archive/restore/set-hero | przyciski statusu i Hero | 2 | plan |
-| `videos/[id]/actions` (PATCH, luźny schemat, ADM-08) | sidebar i pozycja | przełączniki Ekspozycji (ścisły schemat) | 2 | plan |
+| `videos` (GET) | lista | Treści | 2 | zrobione |
+| `videos` (POST) | utworzenie i (z `id`) edycja | „Nowy film” i jeden `PATCH` edycji | 2 | zrobione |
+| `videos` (DELETE) | usunięcie + sprzątanie R2 | strefa zagrożenia filmu | 2 | zrobione |
+| `videos/[id]` (GET, PATCH) | szczegóły, edycja, miniatura | edycja filmu | 2 | zrobione |
+| `videos/[id]/actions` (POST) | publish/unpublish/archive/restore/set-hero | przyciski statusu i Hero | 2 | zrobione |
+| `videos/[id]/actions` (PATCH, luźny schemat, ADM-08) | sidebar i pozycja | przełączniki Ekspozycji (ścisły schemat) | 2 | zrobione |
 | `videos/[id]/comments` (GET) | brak wołającego (ADM-06) | Komentarze z filtrem filmu | 2 | plan |
-| `videos/[id]/original-upload/multipart` (POST, GET, DELETE) | start, wznowienie, przerwanie | „Nowy film” krok 2, karta kodowania | 2 | plan |
-| `…/multipart/parts` (POST) | adresy części | uploader | 2 | plan |
-| `…/multipart/complete` (POST) | weryfikacja + kolejka | uploader | 2 | plan |
-| `videos/[id]/pipeline` (GET) | stan | karta kodowania (SSE zamiast pollingu, faza A) | 2 | plan |
-| `videos/[id]/pipeline/encode` (POST) | przekodowanie | „Przekoduj” | 2 | plan |
-| `videos/[id]/pipeline/jobs/[jobId]` (DELETE) | anulowanie | „Anuluj” | 2 | plan |
-| `videos/[id]/pipeline/assets/[assetId]` (DELETE) | usunięcie wersji | „Usuń wersję…” | 2 | plan |
-| `videos/cover-upload` (POST) | miniatura do R2 | karta Miniatura | 2 | plan |
+| `videos/[id]/original-upload/multipart` (POST, GET, DELETE) | start, wznowienie, przerwanie | „Nowy film” krok 2, karta kodowania | 2 | zrobione |
+| `…/multipart/parts` (POST) | adresy części | uploader | 2 | zrobione |
+| `…/multipart/complete` (POST) | weryfikacja + kolejka | uploader | 2 | zrobione |
+| `videos/[id]/pipeline` (GET) | stan | karta kodowania (polling co 3 s tylko gdy coś trwa; SSE w fazie A) | 2 | zrobione |
+| `videos/[id]/pipeline/encode` (POST) | przekodowanie | „Przekoduj” | 2 | zrobione |
+| `videos/[id]/pipeline/jobs/[jobId]` (DELETE) | anulowanie | „Anuluj” | 2 | zrobione |
+| `videos/[id]/pipeline/assets/[assetId]` (DELETE) | usunięcie wersji | „Usuń wersję…” | 2 | zrobione |
+| `videos/cover-upload` (POST) | miniatura do R2 | karta Miniatura | 2 | zrobione |
 | `videos/r2-diagnostics` (GET) | brak wołającego | System → diagnostyka R2 | 3 | plan |
-| `videos/reorder` (POST) | kolejność sidebaru | Układ kanału | 2 | plan |
+| `videos/reorder` (POST) | kolejność sidebaru | Układ kanału | 2 | zrobione |
 | `videos/resync` (POST) | brak wołającego | DROP (zastąpione przez post-flight) | – | DROP |
 
 ## 3. Uprawnienia admina używane z publicznej strony

@@ -445,6 +445,7 @@ A second Next.js app in this repo (no npm workspace: shared root `node_modules`,
 - **`AdminAuthEvent`** is append-only (DB trigger refuses UPDATE, TRUNCATE and DELETE younger than 400 days; hash chain). Write it only through `recordAdminAuthEvent()` (or the enroll script, same chain).
 - **No docker.sock.** Host data (containers, timers, backups) comes from the read-only file written by `deploy/serwerek/admin/host-status.py`.
 - **Deploy is separate and opt-in**: `Dockerfile.admin`, compose service `admin` under profile `admin` (not started by `deploy.sh`), `deploy/serwerek/deploy-admin.sh`.
+- **Phase 2 "Treści" (writes, 2026-10-04):** screens `/tresci`, `/tresci/nowy`, `/tresci/[slug]`, `/tresci/[slug]/edycja`, `/tresci/uklad`; Server Actions in `apps/admin/app/(panel)/tresci/actions.ts` go through the same `lib/modules/video`, `video-pipeline` and the new `lib/modules/admin-content` use cases as the old panel (never their own Prisma writes). Use-case actor = `{ type: "admin", userId: AdminUser.id }`. File routes live under `apps/admin/app/api/videos/[id]/*` (`lib/api/panel-route.ts`). Deleting a film needs the typed slug AND `hasFreshStepUp()`. Subtitles are hosted in the public thumbnail bucket under `videos/<id>/subtitles/` (the public-thumbnail reconcile skips that prefix: keep it that way). The panel needs the R2 variables in `admin.env` and the admin origin in the originals bucket CORS. Details: `docs/architecture/admin-phase2-content.md` section 0.
 
 ---
 

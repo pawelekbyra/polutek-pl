@@ -68,6 +68,17 @@ export async function requireStepUp(nextPath: string): Promise<AdminViewer> {
   return viewer;
 }
 
+/**
+ * For Server Actions of sensitive operations (delete a film, change a role, delete an account): true only
+ * when the owner signed in or confirmed TOTP in the last 5 minutes. The action then answers
+ * `STEP_UP_REQUIRED` and the client sends the owner to /potwierdz first.
+ */
+export async function hasFreshStepUp(): Promise<boolean> {
+  if (isDevAuthBypassEnabled()) return true;
+  const current = await readSession().catch(() => null);
+  return !!current && !!current.user.enrolledAt && !isAbsoluteExpired(current.session) && isStepUpFresh(current.session);
+}
+
 /** For the sign-in and enrollment screens: who is signed in (if anyone), without redirecting. */
 export async function peekAdminSession(): Promise<{ enrolled: boolean; email: string } | null> {
   if (isDevAuthBypassEnabled()) return null;

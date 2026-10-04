@@ -35,7 +35,7 @@ export async function searchAdminObjects(db: ReadDb, rawQuery: string, oldPanel:
       : Promise.resolve([]),
   ]);
   return [
-    ...videos.map((v) => ({ group: "Filmy" as const, label: v.title, hint: v.slug, href: oldPanel(`/admin/videos/${v.id}`) })),
+    ...videos.map((v) => ({ group: "Filmy" as const, label: v.title, hint: v.slug, href: `/tresci/${encodeURIComponent(v.slug)}` })),
     ...users.map((u) => ({ group: "Osoby" as const, label: u.name || "(bez pseudonimu)", hint: u.email, href: oldPanel(`/admin/users/${u.id}`) })),
     ...payments.map((p) => ({
       group: "Płatności" as const,
