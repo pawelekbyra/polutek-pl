@@ -9,7 +9,7 @@ type HotspotException = {
 };
 
 const repoRoot = process.cwd();
-const sourceRoots = ["app", "lib", "middleware.ts"];
+const sourceRoots = ["app", "lib", "middleware.ts", "apps"];
 const sourceExtensions = new Set([".ts", ".tsx"]);
 const ignoredDirectories = new Set([
   "node_modules",

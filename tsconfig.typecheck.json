@@ -7,7 +7,13 @@
     "lib/**/*.ts",
     "scripts/**/*.ts",
     "services/**/*.ts",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "apps/admin/**/*.ts",
+    "apps/admin/**/*.tsx"
   ],
-  "exclude": ["node_modules", "tests"]
+  "exclude": [
+    "node_modules",
+    "tests",
+    "apps/admin/.next"
+  ]
 }

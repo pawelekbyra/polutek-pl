@@ -29,7 +29,7 @@ Ostatnia aktualizacja: 2026-10-04.
 - **Odprawa dzienna** (2026-10-04): bez autonomicznego agenta AI na serwerze. Właściciel pyta Claude Code
   „co słychać?”, Claude uruchamia `scripts/ops/briefing.mjs` (tylko odczyt, [`DAILY-BRIEFING.md`](DAILY-BRIEFING.md)),
   a działania wykonuje dopiero po zgodzie właściciela w czacie.
-- **Panel administratora** (2026-10-04): niezależna aplikacja na `admin.pawelperfect.com` z bogatą analityką i obserwowalnością (odwraca decyzję z 2026-09-30 o odłożeniu). Wizja, decyzje, fazy budowy i 12 pytań do właściciela: [`architecture/admin-panel.md`](../architecture/admin-panel.md).
+- **Panel administratora** (2026-10-04): niezależna aplikacja na `admin.pawelperfect.com` z bogatą analityką i obserwowalnością (odwraca decyzję z 2026-09-30 o odłożeniu). Wizja, decyzje, fazy budowy i 12 pytań do właściciela: [`architecture/admin-panel.md`](../architecture/admin-panel.md). Wszystkie 12 decyzji według rekomendacji, z wyjątkiem: nic za pieniądze (bez Workers Paid, Resend Pro, kluczy sprzętowych), inne projekty Cloudflare zostają, przed startem fazy 0–1 + poprawki starego panelu. Faza 1 (`apps/admin`: powłoka, logowanie passkey + Access, „Dzisiaj”, „System”) jest w kodzie, czeka na wdrożenie: kroki w [`ADMIN-PANEL.md`](ADMIN-PANEL.md) rozdz. 1 (Access, tunel, `admin.env`, `admin-enroll` z właścicielem).
 ## Czeka na właściciela
 
 1. **Baza Neon `NEON-krau`** (stara kopia danych testowych): usunąć w panelu Vercel → Storage →
