@@ -15,6 +15,9 @@ import Image from "next/image";
 import { UserPatronActions } from "../UserPatronActions";
 import { AdminAccessDiagnostics } from "../AdminAccessDiagnostics";
 import { AdminUserDetailsSkeleton } from "@/components/skeletons/admin";
+import { UserRoleActions } from "../UserRoleActions";
+import { UserDangerZone } from "../UserDangerZone";
+import { useAuth } from "@/lib/auth/react";
 
 function formatDate(value: string | Date | null) {
   if (!value) return "—";
@@ -23,6 +26,7 @@ function formatDate(value: string | Date | null) {
 
 export default function UserDetailsPage(props: { params: Promise<{ userId: string }> }) {
     const params = use(props.params);
+    const { userId: viewerId } = useAuth();
     const [user, setUser] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -151,6 +155,37 @@ export default function UserDetailsPage(props: { params: Promise<{ userId: strin
                   <CardContent>
                       <UserPatronActions userId={user.id} isPatron={isPatronByGrantTruth} onActionComplete={fetchUser} />
                       <AdminAccessDiagnostics user={user} formatDate={formatDate} />
+                  </CardContent>
+              </Card>
+
+              <Card>
+                  <CardHeader>
+                      <CardTitle className="text-sm font-bold flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> Rola i uprawnienia</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                      <UserRoleActions
+                        userId={user.id}
+                        role={user.role}
+                        emailVerified={user.emailVerified === true}
+                        isDeleted={user.isDeleted === true}
+                        isSelf={viewerId === user.id}
+                        onActionComplete={fetchUser}
+                      />
+                  </CardContent>
+              </Card>
+
+              <Card className="border-destructive/40">
+                  <CardHeader>
+                      <CardTitle className="text-sm font-bold flex items-center gap-2 text-destructive"><Trash2 className="h-4 w-4" /> Strefa zagrożenia</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                      <UserDangerZone
+                        userId={user.id}
+                        email={user.email ?? ""}
+                        role={user.role}
+                        isDeleted={user.isDeleted === true}
+                        isSelf={viewerId === user.id}
+                      />
                   </CardContent>
               </Card>
             </div>

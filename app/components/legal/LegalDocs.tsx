@@ -1,7 +1,10 @@
 import React from 'react';
+import { formatLegalDateEn, formatLegalDatePl } from '@/lib/legal/version';
+import { TECHNICAL_DATA_RETENTION_DAYS } from '@/lib/modules/privacy/domain/retention';
 
-export const LEGAL_EFFECTIVE_DATE = 'Obowiązuje od 4 października 2026 r.';
-export const LEGAL_EFFECTIVE_DATE_EN = 'Effective as of 4 October 2026.';
+/** Derived from LEGAL_DOCUMENTS_VERSION (lib/legal/version.ts): change the date there. */
+export const LEGAL_EFFECTIVE_DATE = `Obowiązuje od ${formatLegalDatePl()} r.`;
+export const LEGAL_EFFECTIVE_DATE_EN = `Effective as of ${formatLegalDateEn()}.`;
 
 /**
  * The service is run by a private individual (see § 1 of the Terms). Every legal document —
@@ -187,11 +190,12 @@ export function PolitykaContent() {
 
       <LegalSection nr="4" title="Jak długo">
         <p>
-          Dane konta trzymamy do jego usunięcia. Wtedy kasujemy dane logowania, awatar i zgody, e-mail i pseudonim
-          anonimizujemy, a komentarze znikają z serwisu. Konto z niepotwierdzonym e-mailem usuwamy po 7 dniach, treść
-          usuniętego komentarza po 30 dniach, sesja logowania wygasa po 30 dniach, kopie zapasowe po 14 dniach. Wpłaty
-          trzymamy tak długo, jak wymagają przepisy podatkowe, wiadomości do załatwienia sprawy, a dane techniczne,
-          dopóki są potrzebne do bezpieczeństwa i statystyk.
+          Dane konta trzymamy do jego usunięcia. Wtedy kasujemy dane logowania, awatar, zgody i treść Twoich
+          komentarzy, usuwamy Twój adres z listy mailingowej, a e-mail i pseudonim anonimizujemy. Konto z
+          niepotwierdzonym e-mailem usuwamy po 7 dniach, treść usuniętego komentarza po 30 dniach, sesja logowania
+          wygasa po 30 dniach (wygasłe sesje i linki z e-maili kasujemy codziennie), kopie zapasowe po 14 dniach. Adres
+          IP i dane przeglądarki zapisane w naszej bazie usuwamy po {TECHNICAL_DATA_RETENTION_DAYS} dniach. Wpłaty
+          trzymamy tak długo, jak wymagają przepisy podatkowe, a wiadomości do załatwienia sprawy.
         </p>
       </LegalSection>
 
@@ -213,7 +217,7 @@ export function PolitykaContent() {
             <CookieName>__stripe_mid</CookieName>, <CookieName>__stripe_sid</CookieName>: ochrona wpłat przed
             oszustwami, po otwarciu bramki napiwkowej, do roku;
           </li>
-          <li><CookieName>g_state</CookieName>: logowanie przez Google;</li>
+          <li><CookieName>g_state</CookieName>: logowanie przez Google, po otwarciu okna logowania;</li>
           <li>pamięć przeglądarki: Twoje ustawienia, np. wyciszenie dźwięku.</li>
         </ul>
         <p>Formularze logowania chroni Cloudflare Turnstile, bez cookies.</p>
@@ -380,11 +384,12 @@ export function PrivacyContentEn() {
 
       <LegalSection nr="4" title="How long">
         <p>
-          We keep account data until the account is deleted. We then erase sign-in data, avatar and consents,
-          anonymise your email and nickname, and your comments disappear from the service. We delete an account with
-          an unconfirmed email after 7 days and the text of a deleted comment after 30 days; a sign-in session expires
-          after 30 days and backups after 14 days. We keep payments as long as tax law requires, messages until the
-          matter is resolved, and technical data while it is needed for security and statistics.
+          We keep account data until the account is deleted. We then erase sign-in data, avatar, consents and the
+          text of your comments, remove your address from our mailing list, and anonymise your email and nickname. We
+          delete an account with an unconfirmed email after 7 days and the text of a deleted comment after 30 days; a
+          sign-in session expires after 30 days (expired sessions and email links are erased daily) and backups after
+          14 days. We erase IP addresses and browser data stored in our database after {TECHNICAL_DATA_RETENTION_DAYS}{' '}
+          days. We keep payments as long as tax law requires, and messages until the matter is resolved.
         </p>
       </LegalSection>
 
@@ -407,7 +412,7 @@ export function PrivacyContentEn() {
             <CookieName>__stripe_mid</CookieName>, <CookieName>__stripe_sid</CookieName>: protecting payments from
             fraud, after you open the tip gate, up to one year;
           </li>
-          <li><CookieName>g_state</CookieName>: Google sign-in;</li>
+          <li><CookieName>g_state</CookieName>: Google sign-in, after you open the sign-in window;</li>
           <li>browser storage: your settings, e.g. muted sound.</li>
         </ul>
         <p>Sign-in forms are protected by Cloudflare Turnstile, without cookies.</p>

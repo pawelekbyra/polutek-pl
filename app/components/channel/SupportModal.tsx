@@ -104,7 +104,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
     }
     if (amount === "") return;
     setCreatingIntent(true);
-    const ready = await flow.submit(amount, currency, minAmount);
+    const ready = await flow.submit(amount, currency, minAmount, termsAccepted);
     setCreatingIntent(false);
     if (ready) setStep("method");
   };

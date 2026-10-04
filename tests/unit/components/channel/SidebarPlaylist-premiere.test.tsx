@@ -37,7 +37,7 @@ vi.mock("@/app/components/AccessLockOverlay", () => ({
 }));
 
 vi.mock("@/app/components/preload/AppPreloadProvider", () => ({
-  useAppPreload: () => ({ warmVideo: vi.fn() }),
+  useAppPreload: () => ({ warmVideo: vi.fn(), releaseVideoIntent: vi.fn() }),
 }));
 
 import { SidebarPlaylist } from "@/app/components/channel/SidebarPlaylist";
@@ -80,7 +80,6 @@ const baseProps = {
   sortedVideos: [item("public-1") as unknown as PublicVideoDTO],
   t: { views: "views" },
   language: "pl",
-  onVideoMouseEnter: () => {},
   showSupportBox: false,
 };
 

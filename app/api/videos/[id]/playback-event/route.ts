@@ -6,7 +6,7 @@ import { getMediaClientIp } from "@/lib/media/rate-limit";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { recordPlaybackEventUseCase } from "@/lib/modules/video";
-import crypto from "crypto";
+import { clientFingerprint } from "@/lib/modules/privacy";
 
 export const dynamic = "force-dynamic";
 
@@ -27,13 +27,8 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
     const ip = getMediaClientIp(req);
     const userAgent = req.headers.get("user-agent") || "unknown";
 
-    // Secure fingerprinting
-    const ipHash = crypto.createHash("sha256").update(ip).digest("hex");
-    const uaHash = crypto.createHash("sha256").update(userAgent).digest("hex");
-    const fingerprint = crypto
-      .createHash("sha256")
-      .update(`${ip}:${userAgent}`)
-      .digest("hex");
+    // Keyed hashes (HMAC): must match what /api/media-source stored on the playback session.
+    const { ipHash, uaHash, fingerprint } = clientFingerprint(ip, userAgent);
 
     const rl = await rateLimit({
       key: `playback-event:${userId || ipHash}`,

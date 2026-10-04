@@ -10,6 +10,7 @@ import type { PlaybackPlan } from "@/lib/modules/playback";
 
 const mocks = vi.hoisted(() => ({
   auth: { isLoaded: true, userId: null as string | null, sessionId: null as string | null },
+  warmup: { intend: vi.fn(), provide: vi.fn(), release: vi.fn(), select: vi.fn(), dispose: vi.fn() },
 }));
 
 vi.mock("@/lib/auth/react", () => ({ useAuth: () => mocks.auth }));
@@ -22,6 +23,12 @@ vi.mock("@/app/components/PlayerStateFrame", () => ({
 }));
 vi.mock("@/app/components/AccessLockOverlay", () => ({
   default: ({ state }: { state: string }) => <div data-testid="player-locked">{state}</div>,
+}));
+vi.mock("@/app/components/preload/media-warmup", () => ({
+  MediaWarmup: function MediaWarmup() {
+    return mocks.warmup;
+  },
+  isConstrainedConnection: () => false,
 }));
 
 import PremiumWrapper from "@/app/components/PremiumWrapper";
@@ -92,6 +99,7 @@ function Tree({ children, viewerKey = "anonymous" }: { children?: React.ReactNod
 
 beforeEach(() => {
   mocks.auth = { isLoaded: true, userId: null, sessionId: null };
+  for (const fn of Object.values(mocks.warmup)) fn.mockClear();
   fetchMock = vi.fn(async () => new Response(JSON.stringify(readyPlan("other")), { status: 200 }));
   vi.stubGlobal("fetch", fetchMock);
   vi.stubGlobal("requestIdleCallback", () => 0);
@@ -161,22 +169,42 @@ describe("warming other videos", () => {
     const api = await getApi();
     await act(async () => { await api.warmVideo("other", { priority: "nearby" }); });
     expect(planRequests()).toHaveLength(0);
+    expect(mocks.warmup.intend).not.toHaveBeenCalled();
   });
 
-  it("does not ask for a guest's sign-in-only video or an upcoming premiere", async () => {
+  it("does not ask for a guest's sign-in-only video or an upcoming premiere, nor warm their media", async () => {
     const api = await getApi();
     await act(async () => {
       await api.warmVideo("members", { priority: "intent" });
       await api.warmVideo("soon", { priority: "intent" });
     });
     expect(planRequests()).toHaveLength(0);
+    expect(mocks.warmup.intend).not.toHaveBeenCalled();
+    expect(mocks.warmup.provide).not.toHaveBeenCalled();
   });
 
-  it("on intent warms the plan of a playable video and its manifest", async () => {
+  it("on intent warms the plan of a playable video and hands its stream to the media warm-up", async () => {
+    const api = await getApi();
+    await act(async () => { await api.warmVideo("other", { priority: "intent", input: "touch" }); });
+    expect(planRequests()).toHaveLength(1);
+    expect(mocks.warmup.intend).toHaveBeenCalledWith("other", "touch");
+    expect(mocks.warmup.provide).toHaveBeenCalledWith("other", MANIFEST);
+  });
+
+  it("never hands a denied plan's answer to the media warm-up", async () => {
+    fetchMock.mockImplementation(async () => new Response(JSON.stringify({ videoId: "other", status: "LOGIN_REQUIRED", canPlay: false, access: { allowed: false } }), { status: 200 }));
     const api = await getApi();
     await act(async () => { await api.warmVideo("other", { priority: "intent" }); });
-    expect(planRequests()).toHaveLength(1);
-    expect(fetchMock.mock.calls.some(([url]) => url === MANIFEST)).toBe(true);
+    expect(mocks.warmup.provide).not.toHaveBeenCalled();
+  });
+
+  it("passes picks and ended intents on to the media warm-up", async () => {
+    const api = await getApi();
+    await act(async () => { await api.warmVideo("other", { priority: "intent" }); });
+    api.releaseVideoIntent("other");
+    api.selectVideo("other");
+    expect(mocks.warmup.release).toHaveBeenCalledWith("other");
+    expect(mocks.warmup.select).toHaveBeenCalledWith("other");
   });
 
   it("always fetches when the player itself asks", async () => {

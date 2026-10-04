@@ -7,9 +7,9 @@ import { useLanguage } from "../LanguageContext";
 import type { AuthNotice, AuthView } from "./AuthModalProvider";
 import { TwoFactorView } from "./TwoFactorView";
 import { LinkExpiredView } from "./LinkExpiredView";
-import { Divider, Field, OAuthButtons, PrimaryButton } from "./AuthFormParts";
-import { PasskeySignIn } from "./PasskeySignIn";
+import { Divider, Field, OAuthButtons, PasskeySignIn, PrimaryButton } from "./AuthFormParts";
 import CheckInboxView from "./CheckInboxView";
+import SignUpFooter from "./SignUpFooter";
 import LanguageSwitcher from "../LanguageSwitcher";
 import { useSwitchLanguage } from "../useSwitchLanguage";
 import { TurnstileWidget, useCaptchaRequired, type CaptchaState, type TurnstileHandle } from "./TurnstileWidget";
@@ -313,9 +313,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
                 )}
               </div>
             )}
-            {info && !error && (
-              <p className="mt-3 rounded-lg bg-[var(--chan-blue-soft)] px-3 py-2 text-[13px] font-semibold text-[var(--chan-blue)]">{info}</p>
-            )}
+            {info && !error && <p className="mt-3 rounded-lg bg-[var(--chan-blue-soft)] px-3 py-2 text-[13px] font-semibold text-[var(--chan-blue)]">{info}</p>}
 
             {view === "sign-in" && (
               <form onSubmit={handlePasswordSignIn} className="mt-5 space-y-3.5">
@@ -379,6 +377,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
                 </div>
               </form>
             )}
+            {(view === "sign-in" || view === "sign-up") && <SignUpFooter open={open} language={language} onSignedIn={finishSignedIn} />}
 
             {view === "verify-sent" && (
               <CheckInboxView

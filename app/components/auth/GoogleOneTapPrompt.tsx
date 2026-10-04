@@ -1,99 +1,71 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { createAuthClient } from "better-auth/react";
 import { oneTapClient } from "better-auth/client/plugins";
 import { useAuthPublicConfig } from "@/lib/auth/public-config";
 import { refreshSession, useAuth } from "@/lib/auth/react";
 
-const SKIP_PATHS = ["/sso-callback", "/reset-password"];
-/** One Tap is offered to a signed-out visitor at most once per day (per browser), not on every page load. */
-export const ONE_TAP_COOLDOWN_MS = 24 * 60 * 60 * 1000;
-export const ONE_TAP_STORAGE_KEY = "pp:one-tap-last";
-/** Quiet time after the page is usable (or the entry gate was passed) before the prompt appears. */
-const PROMPT_DELAY_MS = 2500;
-
-function readLastPrompt(): number {
-  for (const storage of ["localStorage", "sessionStorage"] as const) {
-    try {
-      const value = Number(window[storage].getItem(ONE_TAP_STORAGE_KEY));
-      if (value) return value;
-    } catch {
-      // storage unavailable: try the next one
-    }
-  }
-  return 0;
-}
-
-function rememberPrompt() {
-  const now = String(Date.now());
-  for (const storage of ["localStorage", "sessionStorage"] as const) {
-    try {
-      window[storage].setItem(ONE_TAP_STORAGE_KEY, now);
-      return;
-    } catch {
-      // storage unavailable: try the next one
-    }
-  }
-}
-
 type OneTapCapableClient = { oneTap: (options: unknown) => Promise<unknown> };
+type GoogleIdentityWindow = { google?: { accounts?: { id?: { cancel?: () => void } } } };
 
-/** The home page's entry gate (matrix preloader) is still covering the page. */
-function entryGateIsUp(): boolean {
-  return document.querySelector('[data-testid="site-preloader"]') !== null;
+interface GoogleOneTapPromptProps {
+  /** Element (inside the sign-in window) that holds the prompt where the browser has no FedCM. */
+  containerId: string;
+  /** Called after a successful tap, once the Better Auth session exists. */
+  onSignedIn: () => void;
 }
 
 /**
- * Google's One Tap prompt for signed-out visitors (Google's own UI, no site branding). The One
- * Tap client is built here, at runtime, because it needs the Google client id the server hands
- * over; a successful tap ends in the same Better Auth session as the redirect flow.
- * Shown once per day per browser, never underneath the home entry gate.
+ * Google's One Tap prompt, offered only inside the open sign-in window. A visitor who just browses
+ * never loads Google's script and never gets its `g_state` cookie: both happen only after they asked
+ * to sign in (privacy policy § 6). Mounted by AuthModal while the sign-in or sign-up view is shown;
+ * unmounting (window closed, view changed) cancels the prompt. The One Tap client is built at runtime
+ * because it needs the Google client id the server hands over; a successful tap ends in the same
+ * Better Auth session as the redirect flow (the "Continue with Google" button, unchanged).
  */
-export default function GoogleOneTapPrompt() {
+export default function GoogleOneTapPrompt({ containerId, onSignedIn }: GoogleOneTapPromptProps) {
   const { googleClientId } = useAuthPublicConfig();
   const { isLoaded, isSignedIn } = useAuth();
-  const router = useRouter();
-  const clientRef = useRef<OneTapCapableClient | null>(null);
+  const onSignedInRef = useRef(onSignedIn);
+  useEffect(() => {
+    onSignedInRef.current = onSignedIn;
+  }, [onSignedIn]);
 
   useEffect(() => {
     if (!googleClientId || !isLoaded || isSignedIn) return;
-    if (SKIP_PATHS.some((path) => window.location.pathname.startsWith(path))) return;
-    if (Date.now() - readLastPrompt() < ONE_TAP_COOLDOWN_MS) return;
+    let active = true;
+    const client = createAuthClient({
+      plugins: [
+        oneTapClient({
+          clientId: googleClientId,
+          autoSelect: false,
+          cancelOnTapOutside: true,
+          context: "signin",
+          // Without FedCM (Firefox, Safari) Google draws the prompt into this element, inside the
+          // dialog, so it stays clickable above the dialog's backdrop.
+          additionalOptions: { prompt_parent_id: containerId },
+        }),
+      ],
+    }) as unknown as OneTapCapableClient;
 
-    let timer: number | undefined;
-    const prompt = () => {
-      if (Date.now() - readLastPrompt() < ONE_TAP_COOLDOWN_MS) return;
-      rememberPrompt();
-      clientRef.current ??= createAuthClient({
-        plugins: [oneTapClient({ clientId: googleClientId, autoSelect: false, cancelOnTapOutside: true, context: "signin" })],
-      }) as unknown as OneTapCapableClient;
-      void clientRef.current
-        .oneTap({
-          fetchOptions: {
-            onSuccess: () => {
-              void refreshSession();
-              router.refresh();
-            },
+    void client
+      .oneTap({
+        fetchOptions: {
+          onSuccess: () => {
+            if (!active) return;
+            void refreshSession();
+            onSignedInRef.current();
           },
-        })
-        .catch(() => undefined);
-    };
-    const schedule = () => {
-      timer = window.setTimeout(prompt, PROMPT_DELAY_MS);
-    };
+        },
+      })
+      .catch(() => undefined);
 
-    if (entryGateIsUp()) {
-      window.addEventListener("polutek:gate-enter", schedule, { once: true });
-      return () => {
-        window.removeEventListener("polutek:gate-enter", schedule);
-        window.clearTimeout(timer);
-      };
-    }
-    schedule();
-    return () => window.clearTimeout(timer);
-  }, [googleClientId, isLoaded, isSignedIn, router]);
+    return () => {
+      active = false;
+      (window as unknown as GoogleIdentityWindow).google?.accounts?.id?.cancel?.();
+    };
+  }, [googleClientId, isLoaded, isSignedIn, containerId]);
 
   return null;
 }

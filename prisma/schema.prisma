@@ -35,6 +35,11 @@ model User {
   // Nicknames of active, onboarded accounts are unique case-insensitively through the partial index
   // "User_name_lower_active_key" (migration 20261003200000, not expressible in this schema).
   onboardingPending             Boolean    @default(false)
+  // Latest version of the Terms (the documents' effective date, LEGAL_DOCUMENTS_VERSION) this user
+  // accepted, and when: stamped at sign-up and again when a tip is sent with the Terms ticked.
+  // Null for accounts created before acceptance was recorded (2026-10-04).
+  termsAcceptedAt               DateTime?
+  termsVersion                  String?
   createdAt                     DateTime   @default(now())
   updatedAt                     DateTime   @updatedAt
 
@@ -293,6 +298,20 @@ model Creator {
   payments                Payment[]
   comments                Comment[]
   subscriptions           Subscription[]
+}
+
+/// An address whose Resend Audience contact must still be removed (account deletion while Resend
+/// was unreachable). Retried by /api/cron/retention; the row is deleted once Resend confirms.
+model ResendContactRemoval {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  attempts      Int      @default(0)
+  lastError     String?
+  nextAttemptAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([nextAttemptAt])
 }
 
 model Subscription {

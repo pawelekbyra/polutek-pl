@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { DEFAULT_AVATAR_URL } from "@/lib/auth/avatar";
 import { validateNickname } from "@/lib/auth/nickname";
+import { LEGAL_DOCUMENTS_VERSION } from "@/lib/legal/version";
 import { recordAuthAudit } from "./audit";
 import { checkSensitiveReauth } from "./reauth";
 import {
@@ -45,12 +46,21 @@ export function placeholderNameFromEmail(email: string): string {
 }
 
 /**
- * databaseHooks.user.create.before: default avatar, onboarding flag, language. Nobody (e-mail or Google)
- * picks a nickname at sign-up: every new account gets a placeholder name and `onboardingPending`, and
- * chooses the nickname (checked for uniqueness in completeOnboarding) in the first-sign-in dialog.
+ * databaseHooks.user.create.before: default avatar, onboarding flag, language, Terms acceptance.
+ * Nobody (e-mail or Google) picks a nickname at sign-up: every new account gets a placeholder name and
+ * `onboardingPending`, and chooses the nickname (checked for uniqueness in completeOnboarding) in the
+ * first-sign-in dialog. Every way to create an account (e-mail form, Google button, One Tap) lives in
+ * the sign-in window, which states that creating an account accepts the Terms (with links to the Terms
+ * and the Privacy Policy), so the acceptance is recorded with the current documents' version.
  */
 export async function beforeUserCreate(user: NewUser, ctx: HookCtx) {
-  const data: Record<string, unknown> = { ...user, image: DEFAULT_AVATAR_URL, onboardingPending: true };
+  const data: Record<string, unknown> = {
+    ...user,
+    image: DEFAULT_AVATAR_URL,
+    onboardingPending: true,
+    termsAcceptedAt: new Date(),
+    termsVersion: LEGAL_DOCUMENTS_VERSION,
+  };
 
   if (ctx?.path === "/sign-up/email") {
     data.name = placeholderNameFromEmail(user.email);

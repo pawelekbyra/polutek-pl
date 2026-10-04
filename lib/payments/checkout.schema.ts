@@ -20,6 +20,8 @@ export const checkoutSchema = z.object({
   // One UUID per tip attempt (kept while the payer changes the amount): the same attempt reuses
   // and updates one PaymentIntent instead of creating a new one per amount.
   requestId: z.string().uuid().optional(),
+  // Version (LEGAL_DOCUMENTS_VERSION) of the Terms the payer ticked in the tip gate; recorded on the user.
+  acceptedTermsVersion: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
