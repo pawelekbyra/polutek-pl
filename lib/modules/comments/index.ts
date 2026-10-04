@@ -21,3 +21,4 @@ export * from "./application/resolve-comment-report.use-case";
 export * from "./domain/comment.dto";
 export * from "./domain/comment.errors";
 export * from "./domain/comment.policy";
+export * from "./application/purge-deleted-comments.use-case";

@@ -122,8 +122,8 @@ function createOptimisticComment({
       displayName: userProfile?.name || "Ty",
       username: userProfile?.username || null,
       imageUrl: userProfile?.imageUrl || null,
-      // Decorative until the server answers; the server decides the real badges.
-      badges: userProfile?.isPatronDecorative ? ["PATRON"] : [],
+      // The server decides the real badges.
+      badges: [],
     },
     createdAt: now,
     updatedAt: now,

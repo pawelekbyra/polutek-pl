@@ -11,7 +11,8 @@ export type CommentReportReasonDto = 'SPAM' | 'HARASSMENT' | 'HATE' | 'NSFW' | '
 
 export type CommentReactionDto = 'LIKE' | 'DISLIKE';
 
-export type CommentAuthorBadgeDto = 'ADMIN' | 'PATRON' | 'AUTHOR';
+/** No supporter badge on purpose: tips never buy a public distinction (patron status is admin-only). */
+export type CommentAuthorBadgeDto = 'ADMIN' | 'AUTHOR';
 
 export type AccessTierDto = 'PUBLIC' | 'LOGGED_IN' | 'PATRON';
 

@@ -71,9 +71,10 @@ describe('comment author badge and avatar', () => {
     expect(screen.getByText('Twórca')).toBeInTheDocument();
   });
 
-  it('a supporter keeps the patron badge', () => {
-    renderItem(commentBy(['PATRON']));
-    expect(screen.getByText('Patron')).toBeInTheDocument();
+  it('a supporter gets no public badge, even if an old payload still says PATRON', () => {
+    renderItem(commentBy(['PATRON' as unknown as CommentAuthorBadgeDto]));
+    expect(screen.queryByText('Patron')).not.toBeInTheDocument();
+    expect(screen.queryByText('PATRON')).not.toBeInTheDocument();
   });
 
   it('falls back to our own local default avatar, never a third-party service', () => {

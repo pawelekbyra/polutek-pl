@@ -793,13 +793,6 @@
     filter: none;
   }
 
-  .chan-patron-ring {
-    border-color: var(--chan-amber);
-    box-shadow:
-      0 0 0 3px var(--cm-amber-18),
-      0 0 18px var(--cm-amber-28),
-      0 8px 20px var(--cm-amber-14);
-  }
 
   .polutek-vidstack-player {
     border-radius: 14px;

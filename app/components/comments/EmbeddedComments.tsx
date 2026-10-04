@@ -35,7 +35,6 @@ interface EmbeddedCommentsProps {
     imageUrl?: string | null;
     name?: string | null;
     username?: string | null;
-    isPatronDecorative?: boolean;
     role?: string;
   } | null;
   videoId: string;
@@ -85,8 +84,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             user?.fullName ||
             null,
           username: user?.username || null,
-          // Decorative fields only; the server decides roles and badges for rendered comments.
-          isPatronDecorative: false,
           role: "USER",
         }
       : null;
@@ -109,8 +106,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     user,
   ]);
 
-  /** Decorative only. Authoritative permission comes from `viewer.canComment`. */
-  const isPatronDecorative = userProfile?.isPatronDecorative === true;
   // SafeAvatar falls back to our own local default avatar.
   const userAvatarUrl = userProfile?.imageUrl || null;
 
@@ -435,7 +430,6 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           setIsInputFocused={setIsInputFocused}
           /** ground truth for the UI permission: */
           canComment={viewer?.canComment ?? false}
-          isPatronDecorative={isPatronDecorative}
           isPending={postMutation.isPending}
           isViewerLoading={isLoading}
           errorMessage={composerError}

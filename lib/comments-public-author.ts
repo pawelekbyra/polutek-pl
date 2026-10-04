@@ -6,11 +6,6 @@ export const publicCommentAuthorSelect = Prisma.validator<Prisma.UserSelect>()({
   name: true,
   username: true,
   imageUrl: true,
-  patronGrants: {
-    where: { revokedAt: null },
-    select: { id: true },
-    take: 1,
-  },
   isDeleted: true,
   role: true,
 });
@@ -30,9 +25,9 @@ export function toPublicCommentAuthor(author?: PublicCommentAuthor | null, video
     };
   }
 
-  const badges: Array<"ADMIN" | "PATRON" | "AUTHOR"> = [];
+  // No supporter ("patron") badge: a voluntary tip never buys any public distinction.
+  const badges: Array<"ADMIN" | "AUTHOR"> = [];
   if (author.role === 'ADMIN') badges.push("ADMIN");
-  if (author.patronGrants?.length > 0) badges.push("PATRON");
   if (videoCreatorId && author.id === videoCreatorId) badges.push("AUTHOR");
 
   const rawName = author.name?.trim();

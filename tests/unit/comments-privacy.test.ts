@@ -21,7 +21,8 @@ describe('comments privacy helpers', () => {
       displayName: 'Komentator',
       username: 'komentator',
       imageUrl: 'https://img.example/avatar.png',
-      badges: ['PATRON'],
+      // No supporter badge in public payloads (owner decision 2026-10-04).
+      badges: [],
     });
     expect(publicAuthor).not.toHaveProperty('email');
     expect(publicAuthor).not.toHaveProperty('referralPoints');

@@ -240,6 +240,24 @@ export class CommentRepository {
   }
 
   /**
+   * Erases the text of comments their authors deleted before `deletedBefore` (retention). The row,
+   * author and thread links stay, so replies and counters keep working. Comments deleted or hidden
+   * by moderation keep their text (needed for moderation and a possible restore). Returns the count.
+   */
+  async purgeAuthorDeletedContent(deletedBefore: Date): Promise<number> {
+    const { count } = await this.write.comment.updateMany({
+      where: {
+        status: CommentStatus.DELETED,
+        deletedReason: CommentDeletedReason.AUTHOR_DELETED,
+        deletedAt: { lt: deletedBefore },
+        OR: [{ text: { not: "" } }, { imageUrl: { not: null } }],
+      },
+      data: { text: "", imageUrl: null },
+    });
+    return count;
+  }
+
+  /**
    * Moves a comment to `status` only if its current status is one of `from` (the moderation
    * state machine lives in `CommentPolicy`). Returns whether the transition happened.
    */

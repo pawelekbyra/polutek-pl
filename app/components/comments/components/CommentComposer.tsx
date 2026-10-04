@@ -19,7 +19,6 @@ interface CommentComposerProps {
   isInputFocused: boolean;
   setIsInputFocused: (val: boolean) => void;
   canComment: boolean;
-  isPatronDecorative: boolean;
   isPending: boolean;
   isViewerLoading?: boolean;
   errorMessage?: string | null;
@@ -53,7 +52,6 @@ export function CommentComposer({
   isInputFocused,
   setIsInputFocused,
   canComment,
-  isPatronDecorative,
   isPending,
   isViewerLoading = false,
   errorMessage,
@@ -130,10 +128,7 @@ export function CommentComposer({
           src={userAvatarUrl}
           alt={userProfile.name || "Avatar"}
           size={40}
-          className={cn(
-            "mt-0.5 border border-[var(--chan-line)]",
-            isPatronDecorative && "chan-patron-ring",
-          )}
+          className="mt-0.5 border border-[var(--chan-line)]"
         />
       )}
       <div className="flex-1 min-w-0">

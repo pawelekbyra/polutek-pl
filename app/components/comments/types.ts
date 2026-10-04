@@ -3,15 +3,13 @@ import type { CommentAuthorDto, CommentDto } from "@/lib/modules/comments/domain
 /** A comment as the API returns it (the single DTO definition lives in comment-frontend.dto.ts). */
 export type CommentView = CommentDto;
 
-export type CommentBadgeKind = "AUTHOR" | "PATRON";
+export type CommentBadgeKind = "AUTHOR";
 
 /**
- * The badge shown next to an author's name: "AUTHOR" for the video's creator, otherwise "PATRON"
- * for supporters. Being an admin is a role, not a badge, so it never shows as "PATRON".
+ * The badge shown next to an author's name: only the video's creator ("AUTHOR"). Supporters get
+ * no public badge (a tip buys nothing), and being an admin is a role, not a badge.
  */
 export function getAuthorBadge(author?: CommentAuthorDto | null): CommentBadgeKind | null {
   if (!author) return null;
-  if (author.badges.includes("AUTHOR")) return "AUTHOR";
-  if (author.badges.includes("PATRON")) return "PATRON";
-  return null;
+  return author.badges.includes("AUTHOR") ? "AUTHOR" : null;
 }
