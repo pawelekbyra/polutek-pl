@@ -7,7 +7,6 @@ export interface Creator {
   email?: string | null;
   bio?: string | null;
   imageUrl?: string | null;
-  bannerUrl?: string | null;
   subscribersCount: number;
 }
 
@@ -58,7 +57,6 @@ export interface PublicCreatorDTO {
 
 export type PublicCreatorPageDTO = PublicCreatorDTO & {
   bio?: string | null;
-  bannerUrl?: string | null;
   userId?: string;
   videos: PublicVideoDTO[];
 };

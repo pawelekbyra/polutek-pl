@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  CaptionButton,
   Captions as CaptionsLayer,
   FullscreenButton,
   Gesture,
@@ -11,20 +10,16 @@ import {
   Time,
   TimeSlider,
   VolumeSlider,
-  isTrackCaptionKind,
-  useCaptionOptions,
   useMediaState,
   usePlaybackRateOptions,
-  type CaptionOption,
   type PlaybackRateOption,
 } from "@vidstack/react";
 import {
   CheckIcon,
-  ClosedCaptionsIcon,
-  ClosedCaptionsOnIcon,
   FullscreenExitIcon,
   FullscreenIcon,
   MuteIcon,
+  OdometerIcon,
   PauseIcon,
   PlayIcon,
   ReplayIcon,
@@ -32,6 +27,7 @@ import {
   VolumeLowIcon,
 } from "@vidstack/react/icons";
 import { cn } from "@/lib/utils";
+import { CaptionsSync, CaptionsToggleButton } from "./CaptionsToggle";
 import { usePlayerCopy } from "./polutek-controls-copy";
 
 function CenterStage() {
@@ -129,58 +125,10 @@ function ScrubBar() {
   );
 }
 
-function SpeedMenuSection({ onSelect }: { onSelect: () => void }) {
+/** Playback speed: its own button (odometer icon) and menu. Captions have their own switch. */
+function SpeedMenu() {
   const copy = usePlayerCopy();
   const options = usePlaybackRateOptions({ normalLabel: copy.normal });
-  if (options.disabled) return null;
-
-  return (
-    <div className="mc-menu-section">
-      <div className="mc-menu-heading">{copy.speed}</div>
-      {options.map((option: PlaybackRateOption) => (
-        <button
-          key={option.value}
-          type="button"
-          role="menuitemradio"
-          aria-checked={option.selected}
-          className="mc-menu-item"
-          onClick={() => { option.select(); onSelect(); }}
-        >
-          <span>{option.label}</span>
-          {option.selected && <CheckIcon className="mc-menu-check" />}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function CaptionsMenuSection({ onSelect }: { onSelect: () => void }) {
-  const copy = usePlayerCopy();
-  const options = useCaptionOptions({ off: copy.captionsOff });
-  if (!options.length) return null;
-
-  return (
-    <div className="mc-menu-section">
-      <div className="mc-menu-heading">{copy.captions}</div>
-      {options.map((option: CaptionOption) => (
-        <button
-          key={option.value}
-          type="button"
-          role="menuitemradio"
-          aria-checked={option.selected}
-          className="mc-menu-item"
-          onClick={() => { option.select(); onSelect(); }}
-        >
-          <span>{option.label}</span>
-          {option.selected && <CheckIcon className="mc-menu-check" />}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function SettingsMenu() {
-  const copy = usePlayerCopy();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -198,43 +146,40 @@ function SettingsMenu() {
     };
   }, [open]);
 
+  if (options.disabled) return null;
+
   return (
     <div className="mc-menu-root" ref={rootRef}>
       <button
         type="button"
         className="mc-btn"
-        aria-label={copy.settings}
-        title={copy.settings}
+        aria-label={copy.playbackSpeed}
+        title={copy.playbackSpeed}
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen(v => !v)}
       >
-        <ClosedCaptionsIcon className="mc-icon" />
+        <OdometerIcon className="mc-icon" />
       </button>
       {open && (
-        <div className="mc-menu" role="menu" aria-label={copy.playerSettings}>
-          <SpeedMenuSection onSelect={() => setOpen(false)} />
-          <CaptionsMenuSection onSelect={() => setOpen(false)} />
+        <div className="mc-menu" role="menu" aria-label={copy.playbackSpeed}>
+          <div className="mc-menu-heading">{copy.speed}</div>
+          {options.map((option: PlaybackRateOption) => (
+            <button
+              key={option.value}
+              type="button"
+              role="menuitemradio"
+              aria-checked={option.selected}
+              className="mc-menu-item"
+              onClick={() => { option.select(); setOpen(false); }}
+            >
+              <span>{option.label}</span>
+              {option.selected && <CheckIcon className="mc-menu-check" />}
+            </button>
+          ))}
         </div>
       )}
     </div>
-  );
-}
-
-function CaptionToggle() {
-  const copy = usePlayerCopy();
-  const hasCaptions = useMediaState("hasCaptions");
-  const track = useMediaState("textTrack");
-  const isOn = Boolean(track && isTrackCaptionKind(track));
-  if (!hasCaptions) return null;
-
-  const label = isOn ? copy.disableCaptions : copy.enableCaptions;
-  return (
-    <CaptionButton className="mc-btn mc-caption" aria-label={label} title={label}>
-      {isOn
-        ? <ClosedCaptionsOnIcon className="mc-icon" />
-        : <ClosedCaptionsIcon className="mc-icon" style={{ opacity: 0.5 }} />}
-    </CaptionButton>
   );
 }
 
@@ -259,6 +204,7 @@ export default function PolutekControls({ className }: { className?: string }) {
     <>
       <Gesture className="mc-gesture" event="pointerup" action="toggle:paused" />
       <Gesture className="mc-gesture" event="dblpointerup" action="toggle:fullscreen" />
+      <CaptionsSync />
       <CaptionsLayer className="vds-captions" />
       <CenterStage />
       {/* zwykły div zamiast Controls.Root — eliminuje Vidstack CSS interference */}
@@ -284,8 +230,8 @@ export default function PolutekControls({ className }: { className?: string }) {
                 </div>
               </div>
               <div className="mc-group mc-group--right">
-                <CaptionToggle />
-                <SettingsMenu />
+                <CaptionsToggleButton />
+                <SpeedMenu />
                 <FullscreenToggleButton />
               </div>
             </div>

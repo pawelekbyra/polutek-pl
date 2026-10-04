@@ -8,7 +8,6 @@ export type AdminChannelCreatorDto = {
   slug: string;
   name: string;
   bio: string | null;
-  bannerUrl: string | null;
   defaultThumbnailUrl: string | null;
   subscribersCount: number;
   displaySubscribersCount: number | null;
@@ -19,6 +18,18 @@ export type AdminChannelCreatorDto = {
     imageUrl: string | null;
   } | null;
 };
+
+/** The only Creator columns the admin channel settings read or return. */
+export const ADMIN_CHANNEL_CREATOR_SELECT = {
+  id: true,
+  slug: true,
+  name: true,
+  bio: true,
+  defaultThumbnailUrl: true,
+  subscribersCount: true,
+  displaySubscribersCount: true,
+  user: { select: { id: true, email: true, name: true, imageUrl: true } },
+} as const;
 
 export type AdminChannelDiagnosticsDto = {
   mainChannelConfigured: boolean;
@@ -48,17 +59,7 @@ export async function getAdminChannelSettings(
 
   const creator = await db.creator.findUnique({
     where: { id: mainChannel.id },
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-      bio: true,
-      bannerUrl: true,
-      defaultThumbnailUrl: true,
-      subscribersCount: true,
-      displaySubscribersCount: true,
-      user: { select: { id: true, email: true, name: true, imageUrl: true } },
-    },
+    select: ADMIN_CHANNEL_CREATOR_SELECT,
   });
 
   return {

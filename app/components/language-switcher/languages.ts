@@ -33,18 +33,10 @@ export function flagSrc(option: LanguageOption): string {
   return `/flags/${option.flag}.svg`;
 }
 
-/** Case- and accent-insensitive form ("francais" finds "Français"). */
-export function normalizeLanguageQuery(value: string): string {
-  return value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
-}
-
-/** Options whose name or code contains the query (all of them for an empty query). */
-export function filterLanguages(query: string): LanguageOption[] {
-  const q = normalizeLanguageQuery(query);
-  if (!q) return [...LANGUAGE_OPTIONS];
-  return LANGUAGE_OPTIONS.filter(
-    (o) => normalizeLanguageQuery(o.label).includes(q) || normalizeLanguageQuery(o.code).includes(q),
-  );
+/** Type-ahead match: the name or the code starts with the typed letters (case-insensitive). */
+export function startsWithTyped(option: LanguageOption, typed: string): boolean {
+  const prefix = typed.toLowerCase();
+  return option.label.toLowerCase().startsWith(prefix) || option.code.toLowerCase().startsWith(prefix);
 }
 
 let flagsWarmed = false;

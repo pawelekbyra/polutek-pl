@@ -5,7 +5,6 @@ import { auth } from "@/lib/auth/server";
 import { Metadata } from 'next';
 import { PublicVideoDTO } from '@/app/types/video';
 import Link from 'next/link';
-import Image from 'next/image';
 import { SafeAvatar } from '@/app/components/SafeAvatar';
 import { CreatorContentService as ContentService } from '@/lib/modules/channel/infrastructure/creator-content.service';
 import { getOrCreateCurrentUser } from '@/lib/modules/users';
@@ -59,13 +58,11 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
     openGraph: {
       title: creator.name,
       description: creator.bio ?? (locale === "pl" ? `Kanał ${creator.name}` : `${creator.name} channel`),
-      images: creator.bannerUrl ? [{ url: creator.bannerUrl }] : [],
       type: 'website',
     },
     twitter: {
-      card: 'summary_large_image',
+      card: 'summary',
       title: creator.name,
-      images: creator.bannerUrl ? [creator.bannerUrl] : [],
     },
   };
 }
@@ -160,59 +157,44 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
     <div className="channel-page-shell min-h-screen bg-[var(--chan-nav)] text-[var(--chan-ink)] font-sans">
       <Navbar />
 
-      <div className="max-w-[1284px] mx-auto px-0 md:px-4 lg:px-6">
-        <div className="channel-hero-banner w-full aspect-[6/1] bg-[var(--chan-surface)] relative overflow-hidden rounded-none md:rounded-xl border border-[var(--chan-line)]">
-           {creator.bannerUrl ? (
-             <Image src={creator.bannerUrl} alt={displayName} fill sizes="(max-width: 768px) 100vw, 1284px" className="object-cover" unoptimized />
-           ) : (
-             <>
-               <div className="absolute inset-0 bg-[var(--chan-avatar-gradient)] opacity-25" />
-               <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
-                  <span className="font-brand text-[10vw] font-bold uppercase tracking-tighter rotate-2">{displayName}</span>
-               </div>
-             </>
-           )}
-        </div>
-      </div>
-
-      <div className="max-w-[1284px] mx-auto px-4 md:px-6 lg:px-8 py-6">
-        <div className="channel-profile flex flex-col md:flex-row items-center md:items-start gap-5 md:gap-7">
-          <div className="channel-profile-avatar w-24 h-24 md:w-36 md:h-36 rounded-full border border-[var(--chan-line)] shrink-0">
+      <div className="max-w-[1284px] mx-auto px-4 md:px-6 lg:px-8 pt-4 pb-6 md:pt-8">
+        {/* The channel header is the profile card itself: one creator, no cover photo. */}
+        <header className="channel-profile flex flex-col items-center gap-5 text-center md:flex-row md:items-center md:gap-8 md:text-left">
+          <div className="channel-profile-avatar w-28 h-28 md:w-40 md:h-40 rounded-full border border-[var(--chan-line)] shrink-0">
              <SafeAvatar
                src={channelAvatar}
                alt={displayName}
-               size={96}
+               size={112}
                className="md:hidden bg-[var(--chan-avatar-gradient)]"
              />
              <SafeAvatar
                src={channelAvatar}
                alt={displayName}
-               size={144}
+               size={160}
                className="hidden md:block bg-[var(--chan-avatar-gradient)]"
              />
           </div>
-          <div className="flex-1 text-center md:text-left space-y-1">
-            <h1 className="font-brand text-[34px] md:text-[42px] font-bold leading-[1.05] tracking-[-0.04em] mb-2">
+          <div className="min-w-0 flex-1">
+            <h1 className="font-brand text-[32px] md:text-[46px] font-bold leading-[1.05] tracking-[-0.04em] break-words">
               {displayName}
             </h1>
-            <div className="text-[14px] text-[var(--chan-muted)] flex flex-wrap justify-center md:justify-start gap-x-1.5 font-sans">
-               <span className="font-bold text-[var(--chan-ink)]">@{creator.slug}</span>
-               <span>•</span>
-               <span>{formatCount(allVideos.length)} {getVideoCountLabel(allVideos.length)}</span>
-            </div>
-            <p className="text-[14px] text-[var(--chan-muted)] line-clamp-1 max-w-2xl font-sans mt-1">
+            <ul className="mt-3 flex flex-wrap justify-center md:justify-start gap-2 text-[13px] font-sans" aria-label={locale === "pl" ? "Informacje o kanale" : "Channel details"}>
+               <li className="channel-profile-chip font-bold text-[var(--chan-ink)]">@{creator.slug}</li>
+               <li className="channel-profile-chip text-[var(--chan-muted)]">{formatCount(allVideos.length)} {locale === "pl" ? getVideoCountLabel(allVideos.length) : allVideos.length === 1 ? "video" : "videos"}</li>
+            </ul>
+            <p className="mt-4 text-[15px] leading-relaxed text-[var(--chan-body)] max-w-2xl mx-auto md:mx-0 font-sans whitespace-pre-line">
                {displayBio}
             </p>
-            <div className="mt-4 flex justify-center md:justify-start">
-              <SubscribeButton
-                creatorId={creator.id}
-                creatorSlug={creator.slug}
-                creatorName={creator.name}
-                initialIsSubscribed={initialSubscribed}
-              />
-            </div>
           </div>
-        </div>
+          <div className="shrink-0 md:self-center">
+            <SubscribeButton
+              creatorId={creator.id}
+              creatorSlug={creator.slug}
+              creatorName={creator.name}
+              initialIsSubscribed={initialSubscribed}
+            />
+          </div>
+        </header>
 
         <div className="channel-tabs flex border-b border-[var(--chan-line)] mt-7 overflow-x-auto no-scrollbar gap-8">
            <div className="channel-tab-active pb-3 border-b-2 border-[var(--chan-ink)] text-[13px] font-bold uppercase tracking-[0.14em] font-sans" aria-current="page">{locale === "pl" ? "Wideo" : "Videos"}</div>

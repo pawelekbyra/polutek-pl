@@ -17,7 +17,6 @@ type ChannelCreator = {
   slug: string;
   name: string;
   bio: string | null;
-  bannerUrl: string | null;
   defaultThumbnailUrl: string | null;
   subscribersCount: number;
   displaySubscribersCount: number | null;
@@ -33,7 +32,6 @@ export function ChannelSettingsForm({ initialCreator, fallbackImageUrl }: Channe
   const [creator, setCreator] = useState(initialCreator);
   const [name, setName] = useState(initialCreator?.name || "");
   const [bio, setBio] = useState(initialCreator?.bio || "");
-  const [bannerUrl, setBannerUrl] = useState(initialCreator?.bannerUrl || "");
   const [defaultThumbnailUrl, setDefaultThumbnailUrl] = useState(initialCreator?.defaultThumbnailUrl || "");
   const [displaySubscribersCount, setDisplaySubscribersCount] = useState(initialCreator?.displaySubscribersCount?.toString() || "");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -48,7 +46,7 @@ export function ChannelSettingsForm({ initialCreator, fallbackImageUrl }: Channe
       const response = await fetch("/api/admin/channel", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, bio, bannerUrl, defaultThumbnailUrl: defaultThumbnailUrl.trim() || null, displaySubscribersCount: displaySubscribersCount.trim() === "" ? null : Number(displaySubscribersCount) }),
+        body: JSON.stringify({ name, bio, defaultThumbnailUrl: defaultThumbnailUrl.trim() || null, displaySubscribersCount: displaySubscribersCount.trim() === "" ? null : Number(displaySubscribersCount) }),
       });
       const payload = await response.json().catch(() => null);
 
@@ -59,7 +57,6 @@ export function ChannelSettingsForm({ initialCreator, fallbackImageUrl }: Channe
       setCreator(payload.creator);
       setName(payload.creator.name || "");
       setBio(payload.creator.bio || "");
-      setBannerUrl(payload.creator.bannerUrl || "");
       setDefaultThumbnailUrl(payload.creator.defaultThumbnailUrl || "");
       setDisplaySubscribersCount(payload.creator.displaySubscribersCount?.toString() || "");
       setStatus("saved");
@@ -93,7 +90,7 @@ export function ChannelSettingsForm({ initialCreator, fallbackImageUrl }: Channe
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">Ustawienia profilu</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">Kanał</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-          Nazwa kanału, opis, cover photo i podstawowe ustawienia profilu publicznego.
+          Nazwa kanału, opis i podstawowe ustawienia profilu publicznego.
         </p>
       </div>
 
@@ -181,11 +178,6 @@ export function ChannelSettingsForm({ initialCreator, fallbackImageUrl }: Channe
               <div className="space-y-2">
                 <Label htmlFor="channel-bio">Opis / bio</Label>
                 <Textarea id="channel-bio" value={bio} onChange={(event) => setBio(event.target.value)} className="min-h-32" maxLength={1000} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="channel-banner">Cover photo / banner URL</Label>
-                <Input id="channel-banner" value={bannerUrl} onChange={(event) => setBannerUrl(event.target.value)} placeholder="https://..." />
-                <p className="text-xs text-muted-foreground">Cover photo należy do kanału i nie jest pobierane z konta.</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="default-thumbnail-url">Domyślna miniatura (URL)</Label>

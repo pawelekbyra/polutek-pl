@@ -109,7 +109,7 @@ export function SkeletonNavbar() {
 }
 
 /**
- * Placeholder for the creator channel page (Navbar + banner + profile header +
+ * Placeholder for the creator channel page (Navbar + profile header card +
  * single tab + video grid). Colours, container widths, avatar size and the tab
  * count all track the real page so there's no warm/cool flash on hand-off.
  */
@@ -117,23 +117,18 @@ export function ChannelPageSkeleton() {
   return (
     <div className="channel-page-shell min-h-screen bg-[var(--chan-nav)]">
       <SkeletonNavbar />
-      <div className="max-w-[1284px] mx-auto px-0 md:px-4 lg:px-6">
-        <Skeleton className="w-full aspect-[6/1] rounded-none md:rounded-xl" />
-      </div>
-      <div className="max-w-[1284px] mx-auto px-4 md:px-6 lg:px-8 py-6">
-        <div className="flex flex-col md:flex-row items-center md:items-start gap-5 md:gap-7">
-          <Skeleton className="w-24 h-24 md:w-36 md:h-36 rounded-full shrink-0" />
+      <div className="max-w-[1284px] mx-auto px-4 md:px-6 lg:px-8 pt-4 pb-6 md:pt-8">
+        <div className="channel-profile flex flex-col md:flex-row items-center gap-5 md:gap-8">
+          <Skeleton className="w-28 h-28 md:w-40 md:h-40 rounded-full shrink-0" />
           <div className="flex-1 w-full text-center md:text-left space-y-3">
-            <Skeleton className="h-9 w-64 mx-auto md:mx-0 md:h-11" />
+            <Skeleton className="h-9 w-64 mx-auto md:mx-0 md:h-12" />
             <div className="flex justify-center md:justify-start gap-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-7 w-24 rounded-full" />
+              <Skeleton className="h-7 w-20 rounded-full" />
             </div>
             <Skeleton className="h-4 w-full max-w-2xl mx-auto md:mx-0" />
-            <div className="pt-2 flex justify-center md:justify-start">
-              <Skeleton className="h-10 w-32 rounded-full" />
-            </div>
           </div>
+          <Skeleton className="h-10 w-32 rounded-full shrink-0" />
         </div>
         <div className="flex border-b border-[var(--cm-line-76-2)] mt-7 gap-8 overflow-hidden">
           <Skeleton className="h-7 w-20 mb-3" />

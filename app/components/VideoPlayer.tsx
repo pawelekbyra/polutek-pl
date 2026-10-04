@@ -24,6 +24,8 @@ import { usePlaybackTelemetry } from '@/lib/hooks/usePlaybackTelemetry';
 import { usePlaybackQoe } from '@/lib/telemetry/client/use-playback-qoe';
 import { usePageRevealReady } from './preload/PageRevealGate';
 import { buildSelfHlsConfig, loadHlsLibrary, streamIdentity } from './player/self-hls';
+import { pickCaptionTrack, writeCaptionsEnabled } from './player/captions';
+import { useOptionalLanguage } from './LanguageContext';
 
 // The player is on the home page above the fold: start fetching hls.js (our own chunk) right
 // away, so it is ready before the playback plan arrives and the stream is never fetched twice
@@ -69,7 +71,10 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
     const { source, tracking, player: playerConfig } = playbackPlan || {};
     const videoUrl = source?.playbackUrl;
     const videoSourceKind = source?.kind;
-    const textTracks = normalizeTextTracks(playerConfig?.textTracks);
+    // Only the caption track in the page language is mounted (captions.ts): it is what the CC
+    // switch turns on and off; without one the player has no captions and no CC button.
+    const language = useOptionalLanguage();
+    const captionTrack = pickCaptionTrack(normalizeTextTracks(playerConfig?.textTracks), language);
 
     // One stream = one video version; a renewed token is the same stream. The player is mounted
     // with the URL it started with; later requests get the newest token (see player/self-hls.ts).
@@ -435,6 +440,10 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                             writeUserMuted(false);
                             setUserMuted(false);
                         }}
+                        // The viewer's own captions switch (CC button, "c" key) is remembered.
+                        onMediaTextTrackChangeRequest={(detail: { mode: string }) => {
+                            writeCaptionsEnabled(detail.mode === 'showing');
+                        }}
                         onEnded={() => {
                             setIsPlaying(false);
                             qoe.ended();
@@ -471,17 +480,17 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                         }}
                     >
                         <MediaProvider>
-                            {textTracks.map((track) => (
+                            {captionTrack && (
+                                // No `default`: CaptionsSync applies the viewer's on/off choice.
                                 <Track
-                                    key={`${track.kind}:${track.language}:${track.label}:${track.src}`}
-                                    src={track.src}
-                                    kind={track.kind}
-                                    label={track.label}
-                                    language={track.language}
+                                    key={`${captionTrack.kind}:${captionTrack.language}:${captionTrack.src}`}
+                                    src={captionTrack.src}
+                                    kind={captionTrack.kind}
+                                    label={captionTrack.label}
+                                    language={captionTrack.language}
                                     type="vtt"
-                                    default={track.default}
                                 />
-                            ))}
+                            )}
                         </MediaProvider>
                         {(playerConfig ? playerConfig.controls : true) && <PolutekControls />}
                     </MediaPlayer>
