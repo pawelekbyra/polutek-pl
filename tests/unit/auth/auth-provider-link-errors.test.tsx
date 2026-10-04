@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * F-03 (docs/audit/2026-10-02-auth-flows-audit.md): the e-mail verification endpoint redirects an
+ * F-03: the e-mail verification endpoint redirects an
  * expired or invalid link to `<callbackURL>?error=TOKEN_EXPIRED` (or INVALID_TOKEN) and a verified one
  * to `<callbackURL>?verified=1` (our own flag). The provider must turn both into visible feedback.
  */
