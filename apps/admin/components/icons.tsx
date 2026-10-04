@@ -53,6 +53,10 @@ const ICONS = {
   inbox: `<path d="M4 13.5 6.5 5h11l2.5 8.5V19H4z"/><path d="M4 13.5h4.5l1.5 2h4l1.5-2H20"/>`,
   filter: `<path d="M4 5.5h16l-6 7.5v5l-4 1.5V13z"/>`,
   note: `<path d="M6 3.5h9l3 3v14H6z"/><path d="M9 10h6M9 14h6M9 18h3"/>`,
+  trash: `<path d="M4.5 7h15M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/><path d="M10.5 11v5.5M13.5 11v5.5"/>`,
+  subtitles: `<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M7 14.5h4M13 14.5h4M7 11h2M11 11h6"/>`,
+  copy: `<rect x="8.5" y="8.5" width="11" height="11" rx="1.5"/><path d="M15.5 8.5V6A1.5 1.5 0 0 0 14 4.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/>`,
+  archive: `<rect x="3.5" y="4.5" width="17" height="4" rx="1"/><path d="M5 8.5v10A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5v-10M10 12.5h4"/>`,
 } as const;
 
 export type IconName = keyof typeof ICONS;

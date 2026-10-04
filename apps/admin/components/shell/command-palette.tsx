@@ -2,7 +2,7 @@
 /**
  * Command palette (Ctrl/⌘+K, DESIGN-SYSTEM.md 3): modules, actions and objects (films, people, payments
  * found by /api/search, read only). Search ignores Polish diacritics; arrows + Enter; Esc closes.
- * Objects open in the old panel until their sections move here (phases 3-4).
+ * Films open here (phase 2); people and payments open in the old panel until their sections move (phase 3).
  */
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -37,6 +37,8 @@ export function CommandPalette({ open, onClose, onShortcuts, onRange }: { open: 
       { id: "range-today", group: "Akcje", label: "Okres: dziś", icon: "calendar", run: () => onRange("today"), keywords: "zakres czas" },
       { id: "range-7d", group: "Akcje", label: "Okres: ostatnie 7 dni", icon: "calendar", run: () => onRange("7d"), keywords: "zakres czas tydzien" },
       { id: "range-28d", group: "Akcje", label: "Okres: ostatnie 28 dni", icon: "calendar", run: () => onRange("28d"), keywords: "zakres czas miesiac" },
+      { id: "new-film", group: "Akcje", label: "Nowy film (wgraj oryginał)", icon: "upload", run: go("/tresci/nowy"), keywords: "dodaj upload film" },
+      { id: "layout", group: "Akcje", label: "Układ kanału (kolejność, hero)", icon: "film", run: go("/tresci/uklad"), keywords: "sidebar kolejnosc hero" },
       { id: "refresh", group: "Akcje", label: "Odśwież dane na ekranie", icon: "refresh", run: () => router.refresh(), keywords: "przeladuj" },
       { id: "theme", group: "Akcje", label: "Przełącz motyw", icon: "sun", run: () => applyTheme(THEME_NEXT[readTheme()]), keywords: "ciemny jasny dark light" },
       { id: "shortcuts", group: "Akcje", label: "Pokaż wszystkie skróty", icon: "command", keys: ["?"], run: onShortcuts, keywords: "klawisze pomoc" },
@@ -55,10 +57,11 @@ export function CommandPalette({ open, onClose, onShortcuts, onRange }: { open: 
       label: h.label,
       hint: h.hint,
       icon: h.group === "Filmy" ? "film" : h.group === "Osoby" ? "users" : "coins",
-      run: () => window.open(h.href, "_blank", "noopener,noreferrer"),
+      // Relative hrefs are screens of this panel; absolute ones still open the old panel in a new tab.
+      run: () => (h.href.startsWith("/") ? router.push(h.href) : window.open(h.href, "_blank", "noopener,noreferrer")),
     }));
     return [...local, ...objects].slice(0, 40);
-  }, [commands, hits, query]);
+  }, [commands, hits, query, router]);
 
   useEffect(() => {
     const d = dialog.current;

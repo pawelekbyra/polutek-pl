@@ -101,4 +101,19 @@ describe("uploadOriginal", () => {
     expect(store.map.size).toBe(1);
     expect(s.calls.some((c) => c.includes("/complete"))).toBe(false);
   });
+
+  it("talks to the admin panel's API when given its base (apps/admin uses /api/videos)", async () => {
+    const s = server(1, 16 * MIB);
+    const put: PartPutter = vi.fn(async () => '"e1"');
+    await uploadOriginal({ videoId: "v 1", file: file(MIB), signal: new AbortController().signal, fetchFn: s.fetchFn, putPart: put, storage: memoryStorage(), apiBase: "/api/videos" });
+    const urls = s.spy.mock.calls.map((c) => String(c[0]));
+    expect(urls.length).toBeGreaterThan(0);
+    expect(urls.every((u) => u.startsWith("/api/videos/v%201/original-upload/multipart"))).toBe(true);
+  });
+
+  it("keeps the old www admin path by default", async () => {
+    const s = server(1, 16 * MIB);
+    await uploadOriginal({ videoId: "v1", file: file(MIB), signal: new AbortController().signal, fetchFn: s.fetchFn, putPart: vi.fn(async () => '"e1"'), storage: memoryStorage() });
+    expect(String(s.spy.mock.calls[0][0])).toBe("/api/admin/videos/v1/original-upload/multipart");
+  });
 });

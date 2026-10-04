@@ -217,6 +217,9 @@ export async function reconcilePublicThumbnails(
   const client = new R2ThumbnailStorageClient();
   for (const { key, lastModified } of await client.listPublicObjects()) {
     if (advertisedKeys.has(key)) continue;
+    // Subtitle files (videos/<id>/subtitles/*.vtt, admin panel) share the public bucket; their lifecycle is
+    // managed by the subtitle upload/remove and video delete use cases, never by this thumbnail sweep.
+    if (key.includes("/subtitles/")) continue;
     if (!lastModified || lastModified.getTime() > cutoff) continue;
     if (referencedKeys.has(key)) {
       result.orphansKeptReferenced++;

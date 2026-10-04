@@ -228,12 +228,12 @@ export function Empty({ icon = "ok", title, children }: { icon?: IconName; title
   );
 }
 
-export function ExternalLink({ href, children, className }: { href: string; children: ReactNode; className?: string }) {
+export function ExternalLink({ href, children, className, hint = "otwiera stary panel w nowej karcie" }: { href: string; children: ReactNode; className?: string; hint?: string }) {
   return (
     <a className={className} href={href} target="_blank" rel="noopener noreferrer">
       {children}
       <Icon name="external" />
-      <span className="sr-only"> (otwiera stary panel w nowej karcie)</span>
+      <span className="sr-only"> ({hint})</span>
     </a>
   );
 }

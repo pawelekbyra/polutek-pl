@@ -20,17 +20,6 @@ export const UPCOMING_MODULES: Record<string, UpcomingModule> = {
     summary: "Ruch, źródła, lejek i oglądalność z własnej telemetrii bez ciasteczek. Zbieranie danych rusza w fazie 0, ekrany w fazie 2, gdy będzie co najmniej 7 dni danych.",
     scope: ["odwiedzający, wizyty, odsłony, źródła i kraje", "lejek: wejście → konto → komentarz → napiwek oraz atrybucja", "obejrzenia, czas oglądania, czas startu p50/p95, buforowanie, błędy odtwarzania", "ruch Workera HLS względem dziennego limitu"],
   },
-  tresci: {
-    id: "tresci",
-    title: "Treści",
-    phase: 4,
-    summary: "Filmy ze stanem kodowania, premiery, układ kanału i wgrywanie oryginałów. Najpierw odczyt, zapisy w fazie 4 przez te same moduły domenowe co dziś.",
-    scope: ["lista filmów ze stanem HLS, miniatury i napisów", "wgrywanie i kodowanie na żywo, kolejka z logiem", "lista kontrolna przed publikacją i test po publikacji", "premiery, zbiórka, układ kanału, podgląd jako widz"],
-    today: [
-      { label: "Filmy w starym panelu", path: "/admin/videos" },
-      { label: "Kanał", path: "/admin/channel" },
-    ],
-  },
   spolecznosc: {
     id: "spolecznosc",
     title: "Społeczność",

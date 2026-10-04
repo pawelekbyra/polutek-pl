@@ -109,6 +109,8 @@ przechodzi na 308 do nowego panelu, gdy tylko jest gotowa. Każdy wiersz starego
 Każda akcja przechodzi przez jeden wrapper `requireAdmin → zod (.strict) → limit → step-up → use case → audyt`.
 
 ### Faza 2: Treści i Społeczność, pełny CRUD (ok. 2 tygodnie)
+
+> Stan 2026-10-04: część „Treści” zbudowana (PR „faza 2: Treści”); co i gdzie: [`admin-phase2-content.md`](admin-phase2-content.md) sekcja 0. „Społeczność” w osobnym PR-ze.
 - **Cel:** codzienna praca z filmami, komentarzami i ludźmi w całości w nowym panelu.
 - **Zakres, Treści:** lista z filtrami i stroną w URL (D1); **nowy film** jako osobny ekran: metadane → wgranie oryginału (multipart, wznawianie) → kodowanie na żywo (D2, D3); **edycja wszystkich pól** w jednym formularzu (tytuł, slug, opisy PL/EN, dostęp, napisy PL/EN, miniatura z podglądem, premiera, pasek zbiórki: procent ręczny albo cel) z historią (D5, D6, D8, D9, D10); publikacja z pre-flight i post-flight (D4), cofnięcie publikacji, archiwizacja, przywrócenie, **usunięcie** (okno „Skutek”, wpisanie sluga), duplikat, Hero i sidebar, układ kanału (D7), podgląd jako widz (D12), wersje HLS (przekoduj, anuluj, usuń wersję). Jeden `PATCH` filmu, status tylko przez akcje, `updatedAt` → 409.
 - **Zakres, Społeczność:** moderacja z klawiatury (E1; akcje zbiorcze jednym żądaniem, atomowe „rozwiąż z akcją”, „Cofnij”), komentarze z filtrami (E2), odpowiedź twórcy i serduszko (E3); użytkownicy: lista, szukanie, segmenty (E8), profil 360° z wpłatami, znacznikiem wspierającego, sesjami, e-mailami i audytem (E6), **zmiana roli** i **usunięcie konta z wpisaniem e-maila**, oba ze step-up; wycisz, wyloguj wszędzie (E7); eksport CSV ze step-up.

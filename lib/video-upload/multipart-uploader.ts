@@ -1,6 +1,7 @@
 /**
  * Browser-side resumable multipart uploader for the own video pipeline.
- * Talks to /api/admin/videos/[id]/original-upload/multipart{,/parts,/complete} and PUTs parts
+ * Talks to <apiBase>/[id]/original-upload/multipart{,/parts,/complete} (www admin: /api/admin/videos,
+ * admin panel apps/admin: /api/videos) and PUTs parts
  * straight to presigned R2 URLs. Framework-free so it can be unit tested with fakes.
  *
  * Resume: the originalId is remembered in localStorage per (video, file name, size, mtime); on the
@@ -30,7 +31,11 @@ export interface UploaderOptions {
   putPart?: PartPutter;
   storage?: Pick<Storage, "getItem" | "setItem" | "removeItem"> | null;
   sleep?: (ms: number) => Promise<void>;
+  /** Prefix of the video API: "/api/admin/videos" (www admin, default) or "/api/videos" (apps/admin panel). */
+  apiBase?: string;
 }
+
+export const DEFAULT_UPLOAD_API_BASE = "/api/admin/videos";
 
 export class UploadError extends Error {
   constructor(
@@ -97,7 +102,7 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
   const putPart = opts.putPart ?? xhrPutPart;
   const store = safeStorage(opts.storage);
   const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
-  const base = `/api/admin/videos/${encodeURIComponent(opts.videoId)}/original-upload/multipart`;
+  const base = `${opts.apiBase ?? DEFAULT_UPLOAD_API_BASE}/${encodeURIComponent(opts.videoId)}/original-upload/multipart`;
   const key = resumeKey(opts.videoId, opts.file);
   const { file, signal } = opts;
 
@@ -221,11 +226,11 @@ export async function uploadOriginal(opts: UploaderOptions): Promise<{ originalI
 }
 
 /** Cancels the upload for good (server aborts the multipart upload) and forgets the resume point. */
-export async function cancelUpload(videoId: string, file: File, fetchFn: typeof fetch = fetch.bind(globalThis), storage?: UploaderOptions["storage"]): Promise<void> {
+export async function cancelUpload(videoId: string, file: File, fetchFn: typeof fetch = fetch.bind(globalThis), storage?: UploaderOptions["storage"], apiBase: string = DEFAULT_UPLOAD_API_BASE): Promise<void> {
   const store = safeStorage(storage);
   const key = resumeKey(videoId, file);
   const originalId = store?.getItem(key);
   store?.removeItem(key);
   if (!originalId) return;
-  await fetchFn(`/api/admin/videos/${encodeURIComponent(videoId)}/original-upload/multipart?originalId=${encodeURIComponent(originalId)}`, { method: "DELETE" }).catch(() => undefined);
+  await fetchFn(`${apiBase}/${encodeURIComponent(videoId)}/original-upload/multipart?originalId=${encodeURIComponent(originalId)}`, { method: "DELETE" }).catch(() => undefined);
 }

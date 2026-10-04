@@ -30,7 +30,25 @@ Kolejność ma znaczenie; nic z tego nie dzieje się samo.
    HLS_DELIVERY_BASE_URL=https://video.pawelperfect.com
    NEXT_PUBLIC_APP_URL=https://www.pawelperfect.com   # linki do starego panelu
    ```
-   Panel celowo **nie** dostaje `BETTER_AUTH_SECRET`, kluczy Stripe, Resend ani R2.
+   Panel celowo **nie** dostaje `BETTER_AUTH_SECRET`, kluczy Stripe ani Resend.
+
+   **Od fazy 2 (Treści)** panel zapisuje filmy, więc dostaje też R2 (te same wartości co `app.env`):
+   ```
+   CLOUDFLARE_R2_ACCOUNT_ID=...
+   CLOUDFLARE_R2_ACCESS_KEY_ID=...
+   CLOUDFLARE_R2_SECRET_ACCESS_KEY=...
+   CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS=polutek       # oryginały (upload z przeglądarki)
+   CLOUDFLARE_R2_BUCKET_HLS=polutek-hls               # sprzątanie wersji HLS przy usuwaniu
+   CLOUDFLARE_R2_BUCKET_THUMBNAILS_PRIVATE=polutek-thumbnails-private
+   CLOUDFLARE_R2_BUCKET_THUMBNAILS_PUBLIC=polutek-thumbnails
+   NEXT_PUBLIC_R2_PUBLIC_HOST=thumbs.pawelperfect.pl  # publiczne miniatury i napisy VTT
+   ALLOWED_THUMBNAIL_HOSTS=...                        # jak w app.env (podgląd starych miniatur)
+   BLOB_READ_WRITE_TOKEN=...                          # opcjonalnie: 6 starych miniatur z Vercel Blob
+   ```
+   Oraz jednorazowo CORS bucketa oryginałów z originem panelu (przeglądarka PUT-uje części prosto do R2):
+   `npx wrangler r2 bucket cors set polutek --file scripts/hls/originals-cors.json` (plik ma już
+   `https://admin.pawelperfect.com`). Bez tego wgrywanie oryginału w panelu kończy się błędem sieci przy pierwszej części;
+   reszta Treści działa.
 3. **Status hosta** (zamiast gniazda Dockera):
    ```
    install -m755 src/deploy/serwerek/admin/host-status.py /opt/serwerek/scripts/host-status.py

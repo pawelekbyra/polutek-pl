@@ -1,5 +1,34 @@
 # Faza 2 panelu: Treści (plan ekranów i kodu)
 
+## 0. Stan po implementacji (2026-10-04, PR „faza 2: Treści”)
+
+Zbudowane i odhaczone w [`admin-parity.md`](admin-parity.md) (sekcja 1.2 i trasy `videos*`). Odpowiedzi właściciela
+na 3 pytania z sekcji 4: wszystkie „tak” (step-up przy usunięciu filmu + wpisanie sluga; hosting VTT w R2 już teraz;
+w edycji tylko dwa poziomy dostępu). Gdzie kod różni się od planu niżej, obowiązuje ta sekcja:
+
+| Element | Gdzie | Uwagi |
+|---|---|---|
+| Lista | `apps/admin/app/(panel)/tresci/page.tsx` | filtry w URL (`q`, `status`, `tier`, `hls`, `sort`, `page`) jako zwykły formularz GET; stan miniatury z `thumbnailState()` (jedno zapytanie na stronę). „Wymaga uwagi” i „Premiery” jako filtry: później (repozytorium filtruje tylko po polach). |
+| Nowy film | `tresci/nowy` + `components/content/new-film-form.tsx` | tworzy szkic i przekierowuje do edycji na kartę „Oryginał wideo”. |
+| Przegląd filmu | `tresci/[slug]/page.tsx` | kodowanie na żywo (`encode-panel.tsx`, polling `/api/videos/[id]/pipeline` co 3 s tylko gdy coś trwa), lista kontrolna z `getAdminVideoDiagnostics`, napisy, ekspozycja, zbiórka, historia z audytu, przyciski statusu w oknach „Skutek”, „Zobacz na stronie”, „Kopiuj link”, „Duplikuj”. |
+| Edycja | `tresci/[slug]/edycja/page.tsx` | jeden formularz tekstowy (`film-form.tsx`, Server Action `saveFilmAction`, wysyłany ręcznie, więc odrzucony zapis nie czyści pól); pliki zapisują się od razu po wgraniu (`original-upload.tsx`, `media-cards.tsx`); strefa zagrożenia (`danger-zone.tsx`). |
+| Układ kanału | `tresci/uklad` (nie `?widok=uklad`) + `layout-editor.tsx` | strzałki i Alt+↑/↓, jeden zapis `saveChannelLayout`. |
+| Zapisy | `apps/admin/app/(panel)/tresci/actions.ts` | wspólne klocki zamiast `adminAction()`: `lib/actions/panel.ts` (`panelContext`, `errorMessage`, czas warszawski, `zodFieldErrors`, `sampleDataRefusal`). Aktor use case'ów: `{ type: "admin", userId: AdminUser.id }`, `requestId` = `cf-ray`; `AuditLog.actorUserId` nie ma klucza obcego, więc id konta panelu jest bezpieczne. |
+| Trasy plików | `apps/admin/app/api/videos/[id]/{original-upload/multipart{,/parts,/complete},cover,subtitles/[lang],thumbnail,pipeline}` | `lib/api/panel-route.ts`: sesja panelu, JSON `{ error, code }`, limity rozmiaru przed czytaniem ciała. |
+| Moduł | `lib/modules/admin-content` | `detectImage`, `validateVtt`, `slugify`, `thumbnailState`, `uploadVideoCover`, `uploadVideoSubtitle`, `removeVideoSubtitle`, `listContent`, `getContentDetail`, `getThumbnailSource`, `deleteVideoWithStorage`, `getChannelLayout`, `saveChannelLayout`. |
+| Publikacja | `saveFilmAction` | pre-flight przed zapisem: blokada strukturalna odrzuca cały zapis; jeśli brakuje tylko gotowego HLS, zapis idzie jako szkic + `requestPublishAfterAssetReady` (encoder opublikuje). Premiera na szkicu publikuje film (zostaje „nadchodzący”). Ponowne wysłanie zapisanej premiery nie jest zmianą. |
+| Optymistyczna blokada | `saveFilmAction` | `expectedUpdatedAt` z formularza; inny `updatedAt` → komunikat „odśwież”, nic nie zapisane. |
+| Usunięcie | `deleteFilmAction` | wpisany slug (sprawdzany na serwerze) + `hasFreshStepUp()`; bez step-upu → `/potwierdz?next=…`. |
+| Napisy | `uploadVideoSubtitle` | publiczny bucket miniatur, klucz `videos/<id>/subtitles/<hash>.vtt`; nocny `reconcilePublicThumbnails` pomija ten prefiks; stary plik kasowany po podmianie, przy usunięciu napisów i filmu. Odtwarzacz CC na www (osobny PR) czyta `subtitleUrlPl/En` jak dotąd; host `thumbs.pawelperfect.pl` musi być w `connect-src` CSP www. |
+| CSP panelu | `lib/security/csp.ts` | jedyny zewnętrzny origin: `connect-src https://*.r2.cloudflarestorage.com` (PUT części oryginału). CORS bucketa oryginałów: `scripts/hls/originals-cors.json` z `https://admin.pawelperfect.com` (ustawić raz, ADMIN-PANEL.md rozdz. 1). |
+| Dane przykładowe | `lib/content-fixtures.ts` | `ADMIN_DEV_FIXTURES=1` pokazuje 7 filmów bez bazy; każdy zapis odpowiada „Dane przykładowe: zapis jest wyłączony”. |
+| Linki | wyszukiwarka, „Dzisiaj”, „System” | filmy otwierają się w nowym panelu (`/tresci/<slug>`), osoby i płatności nadal w starym. |
+
+Świadomie później: kadrowanie miniatury w przeglądarce, „Podgląd jako widz” (faza 3, wymaga trybu na www),
+test po publikacji (faza A), filtry „Wymaga uwagi”/„Premiery”, duplikat z okładką (wspólny obiekt w R2).
+
+---
+
 Stan: 2026-10-04, plan przed kodem. Zakres: wiersze sekcji 1.2 i trasy `videos*`, `videos/cover-upload`,
 `videos/reorder`, `videos/[id]/{actions,pipeline*,original-upload*}` z [`admin-parity.md`](admin-parity.md).
 Wygląd: prototyp `docs/design/admin-panel/` (`#/tresci`, `#/tresci/nowy`, `#/tresci/<slug>`, `#/tresci/<slug>/edycja`,

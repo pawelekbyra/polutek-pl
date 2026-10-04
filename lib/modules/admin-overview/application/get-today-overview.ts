@@ -73,7 +73,7 @@ export function buildTriage(i: {
       icon: "film",
       title: `Kodowanie „${j.video.title}” nieudane`,
       detail: `${j.failureReason || j.failureCode || "bez opisu błędu"} · ${j.attemptCount} z ${j.maxAttempts} prób · ${fmtRelative(j.finishedAt ?? j.createdAt, now)}`,
-      link: { label: "Szczegóły filmu", href: i.oldPanel(`/admin/videos/${j.videoId}`), external: true },
+      link: { label: "Szczegóły filmu", href: `/tresci/${encodeURIComponent(j.videoId)}`, external: false },
     });
   }
   if (i.stripe.failed || i.stripe.stuck) {
@@ -142,7 +142,7 @@ export function buildActivity(rows: ActivityRows, now: Date, take = 10): Activit
     const text = c.text.replace(/\s+/g, " ").trim();
     items.push({ id: `c-${c.id}`, at: c.createdAt.toISOString(), icon: "message", kind: "", title: `Komentarz${c.video ? ` pod „${c.video.title}”` : ""}`, detail: `${c.author?.name ?? "usunięte konto"}: „${text.length > 80 ? `${text.slice(0, 79)}…` : text}”` });
   }
-  for (const a of rows.audit) items.push({ id: `a-${a.id}`, at: a.createdAt.toISOString(), icon: "note", kind: "", title: "Akcja w starym panelu", detail: `${a.action}${a.targetType ? ` · obiekt: ${a.targetType}` : ""}` });
+  for (const a of rows.audit) items.push({ id: `a-${a.id}`, at: a.createdAt.toISOString(), icon: "note", kind: "", title: "Akcja administratora", detail: `${a.action}${a.targetType ? ` · obiekt: ${a.targetType}` : ""}` });
   for (const e of rows.panel) {
     items.push({
       id: `e-${e.id}`,

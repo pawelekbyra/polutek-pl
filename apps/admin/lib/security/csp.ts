@@ -13,6 +13,9 @@ export function createNonce(): string {
   return btoa(binary);
 }
 
+/** Presigned multipart uploads go to `<account>.r2.cloudflarestorage.com` (path-style bucket URLs). */
+export const R2_UPLOAD_ORIGIN = "https://*.r2.cloudflarestorage.com";
+
 export function buildCsp(nonce: string, opts: { dev?: boolean } = {}): string {
   const dev = !!opts.dev;
   const directives: Record<string, string> = {
@@ -24,7 +27,8 @@ export function buildCsp(nonce: string, opts: { dev?: boolean } = {}): string {
     "style-src": dev ? "'self' 'unsafe-inline'" : `'self' 'nonce-${nonce}'`,
     "img-src": "'self' data:",
     "font-src": "'self'",
-    "connect-src": dev ? "'self' ws:" : "'self'",
+    // R2 S3 endpoint: the browser PUTs parts of the original film straight to presigned URLs (phase 2).
+    "connect-src": `'self' ${R2_UPLOAD_ORIGIN}${dev ? " ws:" : ""}`,
     "media-src": "'none'",
     "object-src": "'none'",
     "frame-src": "'none'",

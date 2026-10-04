@@ -14,7 +14,11 @@ describe("panel CSP", () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("base-uri 'none'");
-    expect(csp).not.toMatch(/unsafe-inline|unsafe-eval|https?:\/\//);
+    expect(csp).not.toMatch(/unsafe-inline|unsafe-eval/);
+    // The one external origin: presigned R2 PUTs of the original film, in connect-src only.
+    expect(csp).toContain("connect-src 'self' https://*.r2.cloudflarestorage.com");
+    const external = csp.split("; ").filter((d) => /https?:\/\//.test(d));
+    expect(external).toEqual(["connect-src 'self' https://*.r2.cloudflarestorage.com"]);
   });
 
   it("relaxes only what next dev needs", () => {
