@@ -91,30 +91,38 @@ Stary `/admin` działa bez zmian do fazy 5. Każda faza kończy się PR-em i akt
 - **Stare zakładki:** pulpit `/admin` (zastąpiony przez Dzisiaj), diagnostyka R2 (do System). **ADM znika:** ADM-20, ADM-21 (w nowych ekranach), ADM-26, ADM-35, ADM-36 pkt 1, 7. **Testy:** Playwright z wirtualnym WebAuthn i seedowanym adminem; `Origin`/`Sec-Fetch-Site`; odrzucenie bez JWT; trigger `AuditLog`.
 - **Ryzyka:** drugi build Next.js na 4 GB (stąd GHCR w fazie 0); independent MFA w Access Free do sprawdzenia. **Zależności:** faza 0 (GHCR, `job_run`, kolektor), decyzje 1–3, 5.
 
-### Faza 2: Analityka i tryb premiery (ok. 1–2 tygodnie)
+**Zmiana kolejności (właściciel, 2026-10-04):** nowy panel ma pokryć **wszystko**, co robi stary panel i cała obsługa
+strony, nie tylko analitykę. Po fazie 1 zaraz idzie pełny CRUD treści i społeczności (faza 2), potem kanał,
+płatności i komunikacja (faza 3); analityka (faza A) toczy się równolegle, bo czeka na 7+ dni danych z fazy 0.
+Fazy 2 i 3 od razu przenoszą **odczyt i zapis** danej sekcji (bez osobnej „fazy tylko do odczytu”), więc sekcja
+przechodzi na 308 do nowego panelu, gdy tylko jest gotowa. Każdy wiersz starego panelu ma swoje miejsce w
+[`admin-parity.md`](admin-parity.md) (tabela funkcja → ekran → faza → status, 66 handlerów API, wszystkie przyciski).
+Każda akcja przechodzi przez jeden wrapper `requireAdmin → zod (.strict) → limit → step-up → use case → audyt`.
+
+### Faza 2: Treści i Społeczność, pełny CRUD (ok. 2 tygodnie)
+- **Cel:** codzienna praca z filmami, komentarzami i ludźmi w całości w nowym panelu.
+- **Zakres, Treści:** lista z filtrami i stroną w URL (D1); **nowy film** jako osobny ekran: metadane → wgranie oryginału (multipart, wznawianie) → kodowanie na żywo (D2, D3); **edycja wszystkich pól** w jednym formularzu (tytuł, slug, opisy PL/EN, dostęp, napisy PL/EN, miniatura z podglądem, premiera, pasek zbiórki: procent ręczny albo cel) z historią (D5, D6, D8, D9, D10); publikacja z pre-flight i post-flight (D4), cofnięcie publikacji, archiwizacja, przywrócenie, **usunięcie** (okno „Skutek”, wpisanie sluga), duplikat, Hero i sidebar, układ kanału (D7), podgląd jako widz (D12), wersje HLS (przekoduj, anuluj, usuń wersję). Jeden `PATCH` filmu, status tylko przez akcje, `updatedAt` → 409.
+- **Zakres, Społeczność:** moderacja z klawiatury (E1; akcje zbiorcze jednym żądaniem, atomowe „rozwiąż z akcją”, „Cofnij”), komentarze z filtrami (E2), odpowiedź twórcy i serduszko (E3); użytkownicy: lista, szukanie, segmenty (E8), profil 360° z wpłatami, znacznikiem wspierającego, sesjami, e-mailami i audytem (E6), **zmiana roli** i **usunięcie konta z wpisaniem e-maila**, oba ze step-up; wycisz, wyloguj wszędzie (E7); eksport CSV ze step-up.
+- **Kryterium ukończenia:** każdy wiersz sekcji 1.2–1.4 i odpowiadające trasy w `admin-parity.md` mają status „zrobione”; stare `/admin/videos*`, `/admin/comments*`, `/admin/users` (bez wpłat) przekierowują 308.
+- **ADM znika:** ADM-01, 02, 03, 05, 06, 08, 09, 10, 11, 12, 13, 17, 18, 27, 28, 33, 34. **Testy:** Playwright (wirtualny WebAuthn): nowy film z wgraniem, premiera, moderacja klawiszami, usunięcie konta ze step-up; testy domeny dla jednej ścieżki zapisu filmu; CSV injection.
+- **Ryzyka:** podwójne źródło zapisu, gdy stary panel nadal działa (przekierowanie sekcji zaraz po przeniesieniu). **Zależności:** faza 1.
+
+### Faza 3: Kanał, Przychody, Komunikacja, Powiadomienia, Bezpieczeństwo (ok. 1–2 tygodnie)
+- **Cel:** reszta obsługi strony: ustawienia, pieniądze, poczta, audyt.
+- **Zakres:** Ustawienia → Kanał (nazwa, opis, banner i domyślna miniatura przez wgranie, konto kanału, przeliczenie subskrybentów; J1), Ustawienia → Płatności (minimalne kwoty; J2), progi alertów (J4), stan integracji bez sekretów (J5), konto admina (J7); Przychody: jedna definicja przychodu (F1), wpłaty z filtrami (F2), lejek bramki (F3), **zwroty ze step-up, powodem i kluczem idempotencji** (F4), spory z terminem (F5), webhooki (F6), rekonsylacja (F7), eksport (F9); Komunikacja: szablony z podglądem i różnicą względem domyślnych (G6), rozsyłki (kreator, test, step-up przed wysłaniem, anulowanie; G4), dostarczalność i limity (G1–G3), wypisy (G5), PP Support (G8); Powiadomienia w aplikacji: ekran gotowy, wysyłka wyłączona do decyzji o dzwonku; Bezpieczeństwo: logowania i sesje panelu (I1–I3), dziennik audytu z filtrami i eksportem (I4), rola bazy `pp_admin` i niezmienny `AuditLog`.
+- **Kryterium ukończenia:** wszystkie wiersze `admin-parity.md` poza fazą A mają status „zrobione” albo „DROP”; zwrot w trybie testowym Stripe wymaga step-up.
+- **ADM znika:** ADM-07, 14, 15, 16, 19, 22, 23, 29, 30, 36, 37, 38. **Testy:** Playwright: zwrot ze step-up, rozsyłka testowa; uprawnienia roli `pp_admin`.
+- **Zależności:** faza 2 (wzorce formularzy i list), decyzja o dzwonku.
+
+### Faza A: Analityka i tryb premiery (równolegle od fazy 2, ok. 1–2 tygodnie pracy)
 - **Cel:** „wiem wszystko o ruchu i oglądaniu”.
 - **Zakres:** Analityka B1–B3, B6 (z bazy), B7, C1, C2, C7–C10, C14, C15; film → Analityka i Jakość; tryb „Premiera na żywo” (SSE); poranny raport e-mailem; adnotacje z osi zmian na wykresach.
-- **Kryterium ukończenia:** liczby z rollupów zgodne z surowymi danymi na danych testowych; ruch strony mieści się w ±X% względem Cloudflare GraphQL (próg X: do ustalenia); SSE przeżywa 10 min przez tunel.
-- **Stare zakładki:** martwe statystyki listy filmów i „Sesje wideo” (zastąpione). **ADM znika:** ADM-06 (część statystyk), ADM-07 (statystyki), ADM-36 pkt 3. **Testy:** rollupy, wzory QoE (startup 8/(8+s), płynność), ostrzeżenie przy małym n.
-- **Ryzyka:** mało danych przed startem (wykresy z małych prób). **Zależności:** faza 0 (7+ dni danych), faza 1.
-
-### Faza 3: sekcje operacyjne, tylko odczyt (ok. 1 tydzień)
-- **Cel:** przegląd ludzi, pieniędzy, poczty i audytu, zanim panel cokolwiek zmieni.
-- **Zakres:** Społeczność E2, E6, E8, E9 (z „podglądem jako użytkownik” bez wydawania sesji, wpis `ADMIN_VIEW_AS`); Przychody F1, F2, F3, F5–F7, F9; Komunikacja G1–G3, G5, G8, G9; Bezpieczeństwo I3, I4.
-- **Kryterium ukończenia:** jedna definicja przychodu w całym panelu; listy z filtrami i stroną w URL; eksport CSV z poprawnym escapowaniem.
-- **Stare zakładki:** Użytkownicy (lista, szczegóły), dashboard użytkowników (DROP), Wpłaty (lista; do Przychodów), statystyki poczty. **ADM znika:** ADM-01, ADM-12, ADM-14, ADM-15, ADM-18, ADM-22, ADM-23, ADM-27, ADM-28, ADM-36 pkt 2, 4, 5, 6. **Testy:** zachowanie list (strona, filtr, sortowanie), CSV injection, definicja przychodu na ustalonych danych.
-- **Ryzyka:** dane osobowe w panelu (eksport tylko ze step-up). **Zależności:** faza 1.
-
-### Faza 4: zapisy, od najmniej ryzykownych (ok. 2 tygodnie)
-- **Cel:** przenieść wszystkie akcje; każda przez jeden wrapper `requireAdmin → zod (.strict) → limit → step-up → use case → audyt`.
-- **Kolejność:** moderacja (E1, akcje zbiorcze jednym żądaniem, atomowe „rozwiąż z akcją”) → filmy (D1–D7, D10, D12, pre-flight i post-flight, jeden `PATCH /videos/[id]`, status tylko przez akcje, `updatedAt` → 409) → rozsyłki (G4, step-up) → ustawienia (J1, J2, J4, J5, J7; domyślna miniatura w module media, bez Vercel Blob) → konta (E7) → zwroty (F4: step-up, powód, blokada wiersza).
-- **Kryterium ukończenia:** każda akcja z mapy kontraktów ma test wygenerowany z mapy; zwrot w trybie testowym Stripe wymaga step-up; publikacja premiery przechodzi pre-flight i post-flight.
-- **Stare zakładki:** Komentarze, Zgłoszenia (jako filtr „Zgłoszone”), Filmy (lista, szczegóły, edycja, układ, nowy film jako osobna strona), Poczta, Kanał, Media, Płatności (ustawienia), Wpłaty (zwrot, spór). Powiadomienia: DROP z nawigacji. **ADM znika:** ADM-02, 03, 05, 06, 07, 08, 09, 10, 11, 13, 16, 17, 19, 29, 30, 33, 34, 37, 38. **Testy:** Playwright: moderacja, premiera, zwrot ze step-up; testy domeny dla jednej ścieżki zapisu filmu.
-- **Ryzyka:** podwójne źródło zapisu, gdy stary panel nadal działa (przekierowywać sekcję od razu po przeniesieniu). **Zależności:** fazy 1 i 3.
+- **Kryterium ukończenia:** liczby z rollupów zgodne z surowymi danymi na danych testowych; ruch strony w granicach ±X% względem Cloudflare GraphQL (próg X: do ustalenia); SSE przeżywa 10 min przez tunel.
+- **Testy:** rollupy, wzory QoE (startup 8/(8+s), płynność), ostrzeżenie przy małym n. **Zależności:** faza 0 (7+ dni danych), faza 1.
 
 ### Faza 5: wygaszenie starego panelu (2–3 dni, szacunek mój)
 - **Zakres:** każda sekcja na `www` dostaje 308 na `admin.`; potem usunięcie `app/admin/**`, `app/api/admin/**`, `components/skeletons/admin.tsx`, martwego kodu z `lib/auth-utils.ts`; proxy zwraca 404 dla `/admin*` i `/api/admin*`; moderacja z `CommentItem.tsx` według decyzji 8; rola `ADMIN` na koncie publicznym tylko jako odznaka; `ADMIN_EMAILS` znika z kodu; aktualizacja `CLAUDE.md` §5.
-- **Kryterium ukończenia:** obraz publiczny nie zawiera kodu ani tras admina (grep i test); żadna funkcja nie zginęła (lista z raportu 1 §3 odhaczona).
+- **Kryterium ukończenia:** obraz publiczny nie zawiera kodu ani tras admina (grep i test); żadna funkcja nie zginęła (każdy wiersz [`admin-parity.md`](admin-parity.md) „zrobione” albo „DROP”).
 - **ADM znika:** ADM-24, 25, 31, 32. **Testy:** test, że `/api/admin/*` na `www` zwraca 404; testy statyczne „tekstu źródła” zastąpione mapą kontraktów.
 
 ### Paczki po starcie (SHOULD, 1–2 miesiące; LATER potem)

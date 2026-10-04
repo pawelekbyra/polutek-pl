@@ -521,6 +521,13 @@ dialog::backdrop { background: var(--overlay); }
 .foot-note .icon { margin-top: 1px; }
 .grid .foot-note, .foot-note + .foot-note { margin-top: 0; }
 
+/* Ekrany parytetu (screens-c.js): wgrywanie, listy w kartach, zaznaczona pozycja listy. */
+.dropzone { display: flex; align-items: center; gap: var(--s-4); flex-wrap: wrap; padding: var(--s-5) var(--s-4); border: 1px dashed var(--border-input); border-radius: var(--r-lg); background: var(--surface-2); }
+.dropzone > div { flex: 1; min-width: 180px; display: grid; gap: 2px; }
+.dropzone .icon-lg { color: var(--accent-text); width: 28px; height: 28px; }
+.list-pad > li { padding-left: var(--s-4); padding-right: var(--s-4); }
+.list > li.is-active { background: var(--selected); box-shadow: inset 3px 0 0 var(--accent); }
+
 /* ---------------- 15. Responsywność ---------------- */
 /* Kolumny drugorzędne znikają na średnich ekranach (są w szczególe), wracają na szerokim i jako wiersze karty na telefonie. */
 @media (min-width: 761px) and (max-width: 1439px) { .table .hide-md { display: none; } }
