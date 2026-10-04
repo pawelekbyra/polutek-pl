@@ -183,7 +183,7 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
         >
           <div
             {...listboxProps}
-            className={`${styles.scroller} max-h-[min(16rem,calc(100dvh-80px))] overflow-y-auto overscroll-contain p-1.5 outline-none sm:max-h-[min(14.5rem,60vh)]`}
+            className={`${styles.scroller} max-h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain p-1.5 outline-none`}
           >
             {rows(false)}
           </div>

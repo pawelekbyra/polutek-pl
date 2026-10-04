@@ -150,11 +150,14 @@ describe("LanguageSwitcher (navbar pill)", () => {
     expect(screen.queryByRole("listbox")).toBeNull();
   });
 
-  it("is a capped, scrollable list that fits a phone screen", () => {
+  it("shows all eight languages without a fixed height cap, scrolling only on a too-short screen", () => {
     render(<LanguageSwitcher language="pl" onSelect={vi.fn()} />);
     fireEvent.click(trigger());
+    const heightCaps = listbox().className.split(/\s+/).filter((c) => c.includes("max-h-"));
+    // The only cap is the viewport itself (landscape phones); no rem/vh limit that hides rows.
+    expect(heightCaps).toEqual(["max-h-[calc(100dvh-72px)]"]);
     expect(listbox().className).toContain("overflow-y-auto");
-    expect(listbox().className).toContain("max-h-");
+    expect(screen.getAllByRole("option")).toHaveLength(8);
     const panel = listbox().parentElement as HTMLElement;
     // Full width under the navbar on phones, anchored to the pill from the sm breakpoint.
     expect(panel.className).toMatch(/\bfixed left-2 right-2\b/);
