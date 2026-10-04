@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
 import { toPublicCommentAuthor } from '@/lib/comments-public-author';
 
 describe('comments privacy helpers', () => {
@@ -21,7 +21,8 @@ describe('comments privacy helpers', () => {
       displayName: 'Komentator',
       username: 'komentator',
       imageUrl: 'https://img.example/avatar.png',
-      badges: ['PATRON'],
+      // No supporter badge in public payloads (owner decision 2026-10-04).
+      badges: [],
     });
     expect(publicAuthor).not.toHaveProperty('email');
     expect(publicAuthor).not.toHaveProperty('referralPoints');

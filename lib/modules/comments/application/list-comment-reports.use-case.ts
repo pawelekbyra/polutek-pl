@@ -1,8 +1,9 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
-import { CommentError } from "../domain/comment.errors";
+import { CommentError, commentDatabaseError } from "../domain/comment.errors";
 import { CommentRepository, CommentReportWithRelations } from "../infrastructure/comment.repository";
 import { CommentReportStatus } from "@prisma/client";
+import { canSeeCommentContent } from "../domain/comment.dto";
 
 export interface ListCommentReportsInput {
   status?: CommentReportStatus;
@@ -37,8 +38,14 @@ export async function listCommentReports(
       page,
       pageSize,
     });
-    return ok({ items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) });
-  } catch (error: any) {
-    return fail({ type: "DATABASE_ERROR", message: error.message || "Błąd bazy danych." });
+    // Same rule as the admin comment list: what an author deleted themselves is not shown again.
+    const masked = items.map((report) =>
+      !report.comment || canSeeCommentContent(report.comment, { canModerate: true, revealDeletedContent: true })
+        ? report
+        : { ...report, comment: { ...report.comment, text: "" } },
+    );
+    return ok({ items: masked, total, page, pageSize, totalPages: Math.ceil(total / pageSize) });
+  } catch (error) {
+    return fail(commentDatabaseError("COMMENT_REPORTS_LIST_ERROR", error));
   }
 }

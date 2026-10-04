@@ -19,7 +19,6 @@ interface CommentComposerProps {
   isInputFocused: boolean;
   setIsInputFocused: (val: boolean) => void;
   canComment: boolean;
-  isPatronDecorative: boolean;
   isPending: boolean;
   isViewerLoading?: boolean;
   errorMessage?: string | null;
@@ -53,7 +52,6 @@ export function CommentComposer({
   isInputFocused,
   setIsInputFocused,
   canComment,
-  isPatronDecorative,
   isPending,
   isViewerLoading = false,
   errorMessage,
@@ -121,17 +119,16 @@ export function CommentComposer({
 
   return (
     <div
-      className={cn("flex items-start mb-10", userProfile ? "gap-5" : "gap-0")}
+      // Avatar 40 px + 12 px gap: the field's text starts in the same column as comment text.
+      // No outer margin: the comments column's gap owns the spacing around the composer.
+      className={cn("flex items-start", userProfile ? "gap-3" : "gap-0")}
     >
       {userProfile && (
         <SafeAvatar
           src={userAvatarUrl}
           alt={userProfile.name || "Avatar"}
           size={40}
-          className={cn(
-            "mt-1 border border-[var(--chan-line)]",
-            isPatronDecorative && "chan-patron-ring",
-          )}
+          className="mt-0.5 border border-[var(--chan-line)]"
         />
       )}
       <div className="flex-1 min-w-0">
@@ -270,7 +267,7 @@ export function CommentComposer({
                       aria-label={
                         language === "pl" ? "Wybierz emoji" : "Choose an emoji"
                       }
-                      className="absolute bottom-full left-0 z-50 mb-2 max-h-[200px] w-[300px] overflow-y-auto rounded-xl border border-[var(--chan-line)] bg-white p-2 shadow-[0_8px_26px_rgba(23,23,23,0.12)]"
+                      className="absolute bottom-full left-0 z-50 mb-2 max-h-[200px] w-[300px] overflow-y-auto rounded-xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-2 shadow-[0_8px_26px_rgba(23,23,23,0.12)]"
                     >
                       <div className="flex flex-wrap gap-0.5">
                         {EXTENDED_EMOJIS.map((emoji) => (

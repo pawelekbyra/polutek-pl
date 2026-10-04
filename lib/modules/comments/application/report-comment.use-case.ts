@@ -1,11 +1,15 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
-import { CommentError } from "../domain/comment.errors";
+import { WriteTx } from "@/lib/modules/shared/db";
+import { CommentError, commentDatabaseError } from "../domain/comment.errors";
 import { CommentPolicy } from "../domain/comment.policy";
 import { CommentRepository } from "../infrastructure/comment.repository";
 import { checkVideoAccess } from "@/lib/modules/access";
-import { recordAuditEvent } from "@/lib/modules/audit";
-import { CommentStatus, CommentReportReason, PrismaClient } from "@prisma/client";
+import { recordAuditEventSafe } from "@/lib/modules/audit";
+import { CommentStatus, CommentReportReason } from "@prisma/client";
+
+/** Pending reports from distinct users after which a regular viewer's comment waits for review. */
+export const REPORT_HOLD_THRESHOLD = 3;
 
 export interface ReportCommentInput {
   commentId: string;
@@ -27,68 +31,56 @@ export async function reportComment(
   const userId = actor.userId;
   const repo = new CommentRepository(prisma);
 
-  const comment = await repo.findCommentById(commentId);
-  if (!comment) return fail({ type: "NOT_FOUND", message: "Komentarz nie istnieje." });
-
-  if (comment.status === CommentStatus.DELETED) {
-      return fail({ type: "VALIDATION_ERROR", message: "Nie można zgłosić usuniętego komentarza." });
-  }
-  if (comment.authorId === userId) {
-      return fail({ type: "VALIDATION_ERROR", message: "Nie możesz zgłosić własnego komentarza." });
-  }
-
-  // 1. Access Check for the video the comment belongs to
-  const accessResult = await checkVideoAccess({ videoIdOrSlug: comment.videoId }, ctx);
-  if (!accessResult.ok) {
-     return fail({ type: "DATABASE_ERROR", message: "Błąd podczas sprawdzania dostępu." });
-  }
-
-  // To report, you must have access to view the video (inheritance)
-  if (!CommentPolicy.canReportComment(actor, accessResult.data)) {
-      return fail({
-          type: "FORBIDDEN",
-          message: "Brak dostępu do zgłaszania komentarzy pod tym filmem."
-      });
-  }
-
   try {
-    const existing = await (prisma as PrismaClient).commentReport.findUnique({
-      where: { commentId_reporterId: { commentId, reporterId: userId } }
-    });
+    const comment = await repo.findCommentById(commentId);
+    if (!comment || comment.author?.isDeleted) return fail({ type: "NOT_FOUND", message: "Komentarz nie istnieje." });
 
-    if (existing) return ok(undefined);
+    if (comment.status === CommentStatus.DELETED) {
+      return fail({ type: "CONFLICT", message: "Nie można zgłosić usuniętego komentarza." });
+    }
+    if (comment.authorId === userId) {
+      return fail({ type: "VALIDATION_ERROR", message: "Nie możesz zgłosić własnego komentarza." });
+    }
 
-    const HOLD_THRESHOLD = 3;
+    const accessResult = await checkVideoAccess({ videoIdOrSlug: comment.videoId }, ctx);
+    if (!accessResult.ok) return fail(commentDatabaseError("COMMENT_REPORT_ACCESS_ERROR", accessResult.error));
+    if (!CommentPolicy.canReportComment(actor, accessResult.data)) {
+      return fail({ type: "FORBIDDEN", message: "Brak dostępu do zgłaszania komentarzy pod tym filmem." });
+    }
 
-    await (prisma as PrismaClient).$transaction(async (tx) => {
-      await tx.commentReport.create({
-        data: { commentId, reporterId: userId, reason, note }
-      });
-      const updated = await tx.comment.update({
-        where: { id: commentId },
-        data: { reportsCount: { increment: 1 } },
-        select: { reportsCount: true, status: true },
-      });
-      if (
-        updated.reportsCount >= HOLD_THRESHOLD &&
-        updated.status === CommentStatus.VISIBLE
-      ) {
-        await tx.comment.update({
-          where: { id: commentId },
-          data: { status: CommentStatus.HELD_FOR_REVIEW, moderatedAt: new Date() },
+    // The channel's own voices (admins, the video's creator) are never hidden automatically;
+    // their reports still land in the moderation queue.
+    const videoCreatorId = await repo.findVideoCreatorId(comment.videoId);
+    const authorIsProtected = comment.author?.role === "ADMIN" || comment.authorId === videoCreatorId;
+
+    const created = await ctx.db.writeTransaction(async (tx: WriteTx) => {
+      const txRepo = new CommentRepository(tx);
+      // One report per user and comment (unique constraint); a repeated report is a no-op.
+      if (!(await txRepo.createReport({ commentId, reporterId: userId, reason, note }))) return false;
+
+      const pending = await txRepo.refreshPendingReportsCount(commentId);
+      if (pending >= REPORT_HOLD_THRESHOLD && !authorIsProtected) {
+        await txRepo.transitionStatus(commentId, [CommentStatus.VISIBLE], {
+          status: CommentStatus.HELD_FOR_REVIEW,
+          moderatedAt: ctx.now(),
+          moderatedById: null,
         });
       }
+      return true;
     });
 
-    await recordAuditEvent(ctx, {
-      action: "COMMENT_REPORT",
-      targetType: "COMMENT",
-      targetId: commentId,
-      metadata: { reason, note }
-    });
+    if (created) {
+      // Ids and the reason only; the free-text note stays in the report itself.
+      await recordAuditEventSafe(ctx, {
+        action: "COMMENT_REPORT",
+        targetType: "COMMENT",
+        targetId: commentId,
+        metadata: { reason },
+      });
+    }
 
     return ok(undefined);
-  } catch (error: any) {
-    return fail({ type: "DATABASE_ERROR", message: error.message || "Błąd bazy danych." });
+  } catch (error) {
+    return fail(commentDatabaseError("COMMENT_REPORT_ERROR", error));
   }
 }

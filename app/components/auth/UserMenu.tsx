@@ -47,7 +47,9 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
           aria-label={isPl ? "Menu konta" : "Account menu"}
           className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95 motion-reduce:transform-none motion-reduce:transition-none"
         >
-          <span className="flex h-[34px] w-[34px] items-center justify-center overflow-hidden rounded-full border border-[var(--chan-line)]">
+          <span
+            className="flex h-[34px] w-[34px] items-center justify-center overflow-hidden rounded-full border border-[var(--chan-line)]"
+          >
             {avatar ? (
               <Image
                 src={avatar}

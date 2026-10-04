@@ -1,35 +1,37 @@
-import { AppError } from "@/lib/modules/shared/app-error";
+import { logger } from "@/lib/logger";
 
 export type CommentError =
   | { type: "NOT_FOUND"; message: string }
   /** `code: ONBOARDING_REQUIRED`: the account has not picked a nickname yet (see Actor.onboardingPending). */
   | { type: "FORBIDDEN"; message: string; code?: "ONBOARDING_REQUIRED" }
   | { type: "UNAUTHORIZED"; message: string }
-  | { type: "VALIDATION_ERROR"; message: string; errors?: any }
+  | { type: "VALIDATION_ERROR"; message: string }
+  /** The comment is in a state that does not allow the action (e.g. restoring a deleted comment). */
+  | { type: "CONFLICT"; message: string }
   | { type: "DATABASE_ERROR"; message: string };
-
-export class CommentDomainError extends AppError {
-    constructor(public error: CommentError) {
-        super(error.message);
-    }
-}
 
 const COMMENT_ERROR_STATUS: Record<CommentError["type"], number> = {
   UNAUTHORIZED: 401,
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   VALIDATION_ERROR: 400,
+  CONFLICT: 409,
   DATABASE_ERROR: 500,
 };
 
 /**
- * Maps a CommentError's discriminated `type` to the HTTP status code admin
- * API routes should respond with. CommentError is a plain `{ type, message }`
- * union (not an AppError instance), so it can't flow through
- * `fromUseCaseResult`/`handleApiError`'s `instanceof AppError` check -
- * every admin comments route derives its status from this instead so the
- * NOT_FOUND/FORBIDDEN/UNAUTHORIZED distinction is never lost.
+ * HTTP status for a CommentError. Every comments route (public and admin) maps errors through
+ * this one function so NOT_FOUND/CONFLICT/VALIDATION never collapse into 403 or 500.
  */
 export function commentErrorStatus(error: CommentError): number {
-  return COMMENT_ERROR_STATUS[error.type] ?? 400;
+  return COMMENT_ERROR_STATUS[error.type] ?? 500;
+}
+
+/**
+ * Logs an unexpected (database) failure and returns a generic error. The database message
+ * (table and constraint names, query details) never reaches the client.
+ */
+export function commentDatabaseError(tag: string, error: unknown): CommentError {
+  logger.error(`[${tag}]`, error);
+  return { type: "DATABASE_ERROR", message: "Coś poszło nie tak. Spróbuj ponownie." };
 }

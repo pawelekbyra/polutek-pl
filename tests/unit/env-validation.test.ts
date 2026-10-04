@@ -35,11 +35,11 @@ describe('validateAppEnv', () => {
     expect(result.errors).toEqual([]);
   });
 
-  it('requires the admin bootstrap e-mails in production', () => {
+  it('does not require the admin bootstrap e-mails in production (one-time bootstrap, emptied afterwards)', () => {
     const result = validateAppEnv({ ...productionEnv, ADMIN_EMAILS: '' }, 'production');
 
-    expect(result.success).toBe(false);
-    expect(result.errors).toContain('ADMIN_EMAILS is required in production.');
+    expect(result.errors).not.toContain('ADMIN_EMAILS is required in production.');
+    expect(result.success).toBe(true);
   });
 
   it('requires the main creator slug in production', () => {

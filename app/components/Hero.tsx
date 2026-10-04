@@ -9,7 +9,7 @@ import PremiumWrapper from './PremiumWrapper';
 import Link from 'next/link';
 import VideoPlayer from './VideoPlayer';
 import { SafeAvatar } from './SafeAvatar';
-import { toggleVideoLike, toggleVideoDislike } from '@/lib/actions/interactions';
+import { setVideoReaction } from '@/lib/actions/interactions';
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { useLanguage } from './LanguageContext';
 import { useToast } from '@/app/hooks/useToast';
@@ -113,106 +113,67 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
     return () => controller.abort();
   }, [video.id, userId, hasInitialInteraction]);
 
-  const handleLike = async () => {
-    if (!userId) return openAuthModal("sign-in");
-    userActedRef.current = true;
-    if (isPending) return;
-
+  // Sends the target state (not a toggle), so a repeated or retried request can never flip the
+  // reaction back; the server action does not re-render the page, the state below is the source.
+  const applyReaction = (target: "LIKE" | "DISLIKE" | null) => {
     const previousState = interactionState;
-    const nextIsLiked = !previousState.isLiked;
+    const nextIsLiked = target === "LIKE";
+    const nextIsDisliked = target === "DISLIKE";
     if (nextIsLiked) {
         setLikePulse(true);
         window.setTimeout(() => setLikePulse(false), 320);
     }
-    // Optimistic update: reflect the click immediately, reconcile with the server after.
-    setInteractionState({
-        isLiked: nextIsLiked,
-        isDisliked: nextIsLiked ? false : previousState.isDisliked,
-        likesCount: Math.max(0, previousState.likesCount + (nextIsLiked ? 1 : -1)),
-        dislikesCount: nextIsLiked && previousState.isDisliked ? Math.max(0, previousState.dislikesCount - 1) : previousState.dislikesCount,
-    });
-
-    startTransition(async () => {
-        try {
-            logger.debug("[Hero] Toggling LIKE for video:", video.id);
-            const result = await toggleVideoLike(video.id) as { liked: boolean; disliked: boolean; likesCount: number; dislikesCount: number; error?: string; message?: string };
-
-            if (result.error) {
-                logger.error("[Hero] LIKE Action failed:", result.error, result.message);
-                setInteractionState(previousState);
-                if (result.error === 'AUTH_REQUIRED') {
-                    openAuthModal("sign-in");
-                } else if (result.error === 'DATABASE_ERROR') {
-                    toast(`BŁĄD BAZY DANYCH: ${result.message}`, 'error');
-                } else {
-                    toast(`BŁĄD: ${result.message || result.error}`, 'error');
-                }
-            } else {
-                setInteractionState({
-                    isLiked: result.liked,
-                    isDisliked: result.disliked,
-                    likesCount: result.likesCount,
-                    dislikesCount: result.dislikesCount,
-                });
-                logger.debug("[Hero] LIKE Action success:", result);
-            }
-        } catch (error: unknown) {
-            logger.error("[Hero] Transition error during LIKE:", error);
-            setInteractionState(previousState);
-            toast("Błąd serwera podczas polubienia. Sprawdź połączenie.", 'error');
-        }
-    });
-  };
-
-  const handleDislike = async () => {
-    if (!userId) return openAuthModal("sign-in");
-    userActedRef.current = true;
-    if (isPending) return;
-
-    const previousState = interactionState;
-    const nextIsDisliked = !previousState.isDisliked;
     if (nextIsDisliked) {
         setDislikePulse(true);
         window.setTimeout(() => setDislikePulse(false), 320);
     }
     // Optimistic update: reflect the click immediately, reconcile with the server after.
     setInteractionState({
+        isLiked: nextIsLiked,
         isDisliked: nextIsDisliked,
-        isLiked: nextIsDisliked ? false : previousState.isLiked,
-        dislikesCount: Math.max(0, previousState.dislikesCount + (nextIsDisliked ? 1 : -1)),
-        likesCount: nextIsDisliked && previousState.isLiked ? Math.max(0, previousState.likesCount - 1) : previousState.likesCount,
+        likesCount: Math.max(0, previousState.likesCount + Number(nextIsLiked) - Number(previousState.isLiked)),
+        dislikesCount: Math.max(0, previousState.dislikesCount + Number(nextIsDisliked) - Number(previousState.isDisliked)),
     });
 
     startTransition(async () => {
+        const failMessage = language === 'pl'
+            ? 'Nie udało się zapisać oceny. Spróbuj ponownie.'
+            : 'Could not save your rating. Try again.';
         try {
-            logger.debug("[Hero] Toggling DISLIKE for video:", video.id);
-            const result = await toggleVideoDislike(video.id) as { liked: boolean; disliked: boolean; likesCount: number; dislikesCount: number; error?: string; message?: string };
-
-            if (result.error) {
-                logger.error("[Hero] DISLIKE Action failed:", result.error, result.message);
+            const result = await setVideoReaction(video.id, target);
+            if (result.error !== undefined) {
+                logger.error("[Hero] Reaction failed:", result.error);
                 setInteractionState(previousState);
-                if (result.error === 'AUTH_REQUIRED') {
-                    openAuthModal("sign-in");
-                } else if (result.error === 'DATABASE_ERROR') {
-                    toast(`BŁĄD BAZY DANYCH: ${result.message}`, 'error');
-                } else {
-                    toast(`BŁĄD: ${result.message || result.error}`, 'error');
-                }
-            } else {
-                setInteractionState({
-                    isLiked: result.liked,
-                    isDisliked: result.disliked,
-                    likesCount: result.likesCount,
-                    dislikesCount: result.dislikesCount,
-                });
-                logger.debug("[Hero] DISLIKE Action success:", result);
+                if (result.error === 'UNAUTHORIZED') openAuthModal("sign-in");
+                else toast(failMessage, 'error');
+                return;
             }
+            setInteractionState({
+                isLiked: result.liked,
+                isDisliked: result.disliked,
+                likesCount: result.likesCount,
+                dislikesCount: result.dislikesCount,
+            });
         } catch (error: unknown) {
-            logger.error("[Hero] Transition error during DISLIKE:", error);
+            logger.error("[Hero] Reaction request failed:", error);
             setInteractionState(previousState);
-            toast("Błąd serwera podczas oceny. Sprawdź połączenie.", 'error');
+            toast(failMessage, 'error');
         }
     });
+  };
+
+  const handleLike = () => {
+    if (!userId) return openAuthModal("sign-in");
+    userActedRef.current = true;
+    if (isPending) return;
+    applyReaction(interactionState.isLiked ? null : "LIKE");
+  };
+
+  const handleDislike = () => {
+    if (!userId) return openAuthModal("sign-in");
+    userActedRef.current = true;
+    if (isPending) return;
+    applyReaction(interactionState.isDisliked ? null : "DISLIKE");
   };
 
   return (

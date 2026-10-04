@@ -39,7 +39,8 @@ export async function listAdminComments(
 
   const { items, total } = await repo.findAdminComments({ q, status, videoId, page, pageSize });
 
-  const context = { userId, canModerate: true, videoCreatorId: null, hasVideoAccess: true };
+  // The admin panel also shows what moderation deleted (kept as evidence), never what an author deleted.
+  const context = { userId, canModerate: true, videoCreatorId: null, hasVideoAccess: true, revealDeletedContent: true };
   const mappedComments = items.map(c => mapCommentToDto(c, context));
 
   return ok({ items: mappedComments, total, page, pageSize, totalPages: Math.ceil(total / pageSize) });

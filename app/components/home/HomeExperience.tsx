@@ -85,7 +85,6 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
   };
 
   let userDb = null;
-  let hasActivePatronGrant = false;
   let initialSidebarLayout: SidebarLayout | null = null;
   let initialInteraction = { liked: false, disliked: false };
   let initialIsSubscribed = false;
@@ -100,14 +99,10 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
       logger.error("[HOME_USER_FETCH_ERROR]", e);
     });
 
-    const [dbResult, activeGrant, like, dislike, sub, sidebarLayout] = await Promise.all([
+    const [dbResult, like, dislike, sub, sidebarLayout] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         include: { paymentTotals: true }
-      }).catch(() => null),
-      prisma.patronGrant.findFirst({
-        where: { userId, revokedAt: null },
-        select: { id: true },
       }).catch(() => null),
       targetVideoId ? prisma.videoLike.findUnique({
         where: { userId_videoId: { userId, videoId: targetVideoId } }
@@ -123,7 +118,6 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
     ]);
 
     userDb = dbResult;
-    hasActivePatronGrant = Boolean(activeGrant);
     initialInteraction = { liked: !!like, disliked: !!dislike };
     initialIsSubscribed = !!sub;
     initialSidebarLayout = sidebarLayout;
@@ -141,8 +135,6 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
     imageUrl: userDb?.imageUrl || user?.image || null,
     // Use normalized totals from UserPaymentTotal if userDb is present
     totalPaid: (userDb && 'paymentTotals' in userDb) ? normalizePaymentTotals(userDb.paymentTotals) : 0,
-    /** Decorative/display only. Authority for access-control is PatronGrant. */
-    isPatronDecorative: userDb?.role === 'ADMIN' || hasActivePatronGrant,
     role: userDb?.role || 'USER',
     initialInteraction,
     initialIsSubscribed

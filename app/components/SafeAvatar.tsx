@@ -9,6 +9,7 @@ interface SafeAvatarProps {
   src?: string | null;
   alt: string;
   size: number;
+  /** Shown when `src` is missing or fails to load; defaults to our own local default avatar. */
   fallbackSrc?: string;
   className?: string;
 }
@@ -17,7 +18,7 @@ export function SafeAvatar({
   src,
   alt,
   size,
-  fallbackSrc,
+  fallbackSrc = DEFAULT_AVATAR_URL,
   className
 }: SafeAvatarProps) {
   const [error, setError] = useState(false);
@@ -27,10 +28,8 @@ export function SafeAvatar({
     setError(false);
   }, [src]);
 
-  // Our own default avatar (no third-party avatar service: it would receive the seed and is not in the CSP).
-  const finalFallback = fallbackSrc || DEFAULT_AVATAR_URL;
-
   const showFallback = error || !src;
+  const imageSrc = showFallback ? fallbackSrc : src!;
 
   return (
     <div
@@ -41,14 +40,14 @@ export function SafeAvatar({
       style={{ width: size, height: size }}
     >
       <Image
-        src={showFallback ? finalFallback : src!}
+        src={imageSrc}
         alt={alt}
         fill
         sizes={`${size}px`}
         className="object-cover"
         onError={() => setError(true)}
         // Our own avatar route has a version query string and is already a tiny image.
-        unoptimized={!showFallback && String(src).startsWith("/api/avatars/")}
+        unoptimized={imageSrc.startsWith("/api/avatars/")}
       />
     </div>
   );

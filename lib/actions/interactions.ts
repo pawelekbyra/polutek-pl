@@ -1,76 +1,34 @@
 'use server';
 
 import { logger } from "@/lib/logger";
-import { auth } from "@/lib/auth/server";
-import { getOrCreateCurrentUser } from "@/lib/modules/users";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { revalidatePath } from "next/cache";
 import { getActorFromAuth } from "@/lib/api/auth";
-import { toggleVideoLike as toggleLikeUseCase, toggleVideoDislike as toggleDislikeUseCase } from "@/lib/modules/comments";
+import { setVideoReaction as setVideoReactionUseCase, type CommentInteractionDto } from "@/lib/modules/comments";
 
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
-}
+export type VideoReactionActionResult =
+  | (CommentInteractionDto & { error?: undefined })
+  | { error: string; message: string };
 
 /**
- * Toggles a 'Like' on a video.
+ * Sets the viewer's like/dislike of a video to `reaction` (null clears it) and returns the new
+ * counters. Idempotent, and deliberately does not revalidate any path: the caller updates its
+ * own state from the result, so a like never re-renders the page on the server.
  */
-export async function toggleVideoLike(videoId: string) {
-  try {
-      const actor = await getActorFromAuth();
-      const ctx = createAppContext({ actor });
-
-      // 1. Sync/Fetch user record (Legacy requirement for Server Actions to ensure user exists in DB)
-      if (actor.type === 'user') {
-          try {
-              await getOrCreateCurrentUser(ctx, actor.userId);
-          } catch (err: unknown) {
-              logger.error("[Interaction] UserService sync issue:", getErrorMessage(err));
-              return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika." };
-          }
-      }
-
-      const result = await toggleLikeUseCase({ videoId }, ctx);
-
-      if (!result.ok) {
-          return { error: result.error.type, message: result.error.message };
-      }
-
-      revalidatePath('/', 'layout');
-      return result.data;
-  } catch (error: unknown) {
-    logger.error("[TOGGLE_LIKE_ERROR]", error);
-    return { error: "INTERNAL_ERROR", message: getErrorMessage(error) };
+export async function setVideoReaction(
+  videoId: string,
+  reaction: "LIKE" | "DISLIKE" | null,
+): Promise<VideoReactionActionResult> {
+  // Server action arguments come straight from the client: check them at runtime.
+  if (typeof videoId !== "string" || !videoId || !(reaction === "LIKE" || reaction === "DISLIKE" || reaction === null)) {
+    return { error: "VALIDATION_ERROR", message: "Nieprawidłowe dane." };
   }
-}
-
-/**
- * Toggles a 'Dislike' on a video.
- */
-export async function toggleVideoDislike(videoId: string) {
   try {
-      const actor = await getActorFromAuth();
-      const ctx = createAppContext({ actor });
-
-      if (actor.type === 'user') {
-          try {
-              await getOrCreateCurrentUser(ctx, actor.userId);
-          } catch (err: unknown) {
-              logger.error("[Interaction] UserService sync issue:", getErrorMessage(err));
-              return { error: "USER_SYNC_FAILED", message: "Błąd synchronizacji profilu użytkownika." };
-          }
-      }
-
-      const result = await toggleDislikeUseCase({ videoId }, ctx);
-
-      if (!result.ok) {
-          return { error: result.error.type, message: result.error.message };
-      }
-
-      revalidatePath('/', 'layout');
-      return result.data;
+    const actor = await getActorFromAuth();
+    const result = await setVideoReactionUseCase({ videoId, reaction }, createAppContext({ actor }));
+    if (!result.ok) return { error: result.error.type, message: result.error.message };
+    return result.data;
   } catch (error: unknown) {
-    logger.error("[TOGGLE_DISLIKE_ERROR]", error);
-    return { error: "INTERNAL_ERROR", message: getErrorMessage(error) };
+    logger.error("[SET_VIDEO_REACTION_ERROR]", error);
+    return { error: "INTERNAL_ERROR", message: "Coś poszło nie tak. Spróbuj ponownie." };
   }
 }

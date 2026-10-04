@@ -1,18 +1,24 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
-import { CommentError } from "../domain/comment.errors";
+import { WriteTx } from "@/lib/modules/shared/db";
+import { CommentError, commentDatabaseError } from "../domain/comment.errors";
 import { CommentRepository } from "../infrastructure/comment.repository";
 import { recordAuditEvent } from "@/lib/modules/audit";
+import { CommentStatus } from "@prisma/client";
+
 export async function toggleAdminCommentHeart(commentId: string, ctx: AppContext): Promise<UseCaseResult<{ isHearted: boolean }, CommentError>> {
   if (ctx.actor.type !== 'admin') return fail({ type: "UNAUTHORIZED", message: "Brak uprawnień administratora." });
-  const repo = new CommentRepository(ctx.prisma);
   try {
-    const comment = await repo.findCommentById(commentId);
+    const comment = await new CommentRepository(ctx.prisma).findCommentById(commentId);
     if (!comment) return fail({ type: "NOT_FOUND", message: "Komentarz nie istnieje." });
-    const result = await repo.toggleHeart(commentId);
-    await recordAuditEvent(ctx, { action: result.isHearted ? "COMMENT_HEART" : "COMMENT_UNHEART", targetType: "COMMENT", targetId: commentId, metadata: { actorId: ctx.actor.userId } });
-    return ok(result);
-  } catch (error: any) {
-    return fail({ type: "DATABASE_ERROR", message: error.message || "Błąd bazy danych." });
+    if (comment.status === CommentStatus.DELETED) return fail({ type: "CONFLICT", message: "Usuniętemu komentarzowi nie można dać serca." });
+    const isHearted = !comment.isHearted;
+    await ctx.db.writeTransaction(async (tx: WriteTx) => {
+      await new CommentRepository(tx).setHeart(commentId, isHearted);
+      await recordAuditEvent(ctx, { action: isHearted ? "COMMENT_HEART" : "COMMENT_UNHEART", targetType: "COMMENT", targetId: commentId }, tx);
+    });
+    return ok({ isHearted });
+  } catch (error) {
+    return fail(commentDatabaseError("COMMENT_HEART_ERROR", error));
   }
 }

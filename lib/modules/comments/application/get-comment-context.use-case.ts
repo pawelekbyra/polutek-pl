@@ -1,7 +1,7 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
-import { CommentDto, mapCommentToDto } from "../domain/comment.dto";
-import { CommentError } from "../domain/comment.errors";
+import { CommentDto, CommentDtoContext, canSeeCommentContent, mapCommentToDto } from "../domain/comment.dto";
+import { CommentError, commentDatabaseError } from "../domain/comment.errors";
 import { CommentRepository } from "../infrastructure/comment.repository";
 import { checkVideoAccess } from "@/lib/modules/access";
 
@@ -16,56 +16,60 @@ export interface GetCommentContextResult {
   canView: boolean;
 }
 
+const NOT_FOUND: CommentError = { type: "NOT_FOUND", message: "Komentarz nie istnieje." };
+
+/**
+ * One comment (and its parent) for deep links. A comment the viewer may not see (deleted,
+ * hidden, held for review, or written by a deleted account) is reported as NOT_FOUND, so the
+ * endpoint never reveals its content or even its existence. Moderators see hidden/held ones.
+ */
 export async function getCommentContext(
   input: GetCommentContextInput,
   ctx: AppContext
 ): Promise<UseCaseResult<GetCommentContextResult, CommentError>> {
   const { commentId } = input;
   const { actor, prisma } = ctx;
-
   const repo = new CommentRepository(prisma);
-  const comment = await repo.findCommentById(commentId);
 
-  if (!comment) {
-    return fail({ type: "NOT_FOUND", message: "Komentarz nie istnieje." });
-  }
+  try {
+    const comment = await repo.findCommentById(commentId);
+    if (!comment) return fail(NOT_FOUND);
 
-  // Access Check for the video the comment belongs to
-  const accessResult = await checkVideoAccess({ videoIdOrSlug: comment.videoId }, ctx);
-  if (!accessResult.ok) {
-     return fail({ type: "DATABASE_ERROR", message: "Błąd podczas sprawdzania dostępu." });
-  }
-
-  // Comments inherit video access
-  if (!accessResult.data.hasAccess) {
-    if (accessResult.data.reason === 'NOT_FOUND' || accessResult.data.reason === 'DELETED') {
+    const accessResult = await checkVideoAccess({ videoIdOrSlug: comment.videoId }, ctx);
+    if (!accessResult.ok) return fail(commentDatabaseError("COMMENT_CONTEXT_ACCESS_ERROR", accessResult.error));
+    if (!accessResult.data.hasAccess) {
+      if (accessResult.data.reason === 'NOT_FOUND' || accessResult.data.reason === 'DELETED') {
         return fail({ type: "NOT_FOUND", message: "Film nie istnieje lub został usunięty." });
-    }
-    return fail({
-        type: "FORBIDDEN",
-        message: "Brak dostępu do komentarzy."
-    });
-  }
-
-  const userId = actor.type === 'user' || actor.type === 'admin' ? actor.userId : null;
-  const isGlobalAdmin = actor.type === 'admin';
-  const videoCreatorId = await repo.findVideoCreatorId(comment.videoId);
-  const canModerate = isGlobalAdmin || (userId !== null && videoCreatorId === userId);
-
-  const context = { userId, canModerate, videoCreatorId, hasVideoAccess: accessResult.data.hasAccess };
-
-  let parentCommentDto: CommentDto | null = null;
-  if (comment.parentId) {
-      const parent = await repo.findCommentById(comment.parentId);
-      if (parent) {
-          parentCommentDto = mapCommentToDto(parent, context);
       }
-  }
+      return fail({ type: "FORBIDDEN", message: "Brak dostępu do komentarzy." });
+    }
 
-  return ok({
-    comment: mapCommentToDto(comment, context),
-    parentComment: parentCommentDto,
-    videoId: comment.videoId,
-    canView: true
-  });
+    const userId = actor.type === 'user' || actor.type === 'admin' ? actor.userId : null;
+    const videoCreatorId = await repo.findVideoCreatorId(comment.videoId);
+    const canModerate = actor.type === 'admin' || (userId !== null && videoCreatorId === userId);
+    const context: CommentDtoContext = { userId, canModerate, videoCreatorId, hasVideoAccess: true };
+
+    const isViewable = (row: { status: typeof comment.status; deletedReason: typeof comment.deletedReason; author: { isDeleted: boolean } | null }) =>
+      canSeeCommentContent(row, context) && row.author?.isDeleted !== true;
+
+    if (!isViewable(comment)) return fail(NOT_FOUND);
+
+    const full = await repo.findCommentForDto(commentId, userId, canModerate);
+    if (!full) return fail(NOT_FOUND);
+
+    let parentComment: CommentDto | null = null;
+    if (comment.parentId) {
+      const parent = await repo.findCommentForDto(comment.parentId, userId, canModerate);
+      if (parent && isViewable(parent)) parentComment = mapCommentToDto(parent, context);
+    }
+
+    return ok({
+      comment: mapCommentToDto(full, context),
+      parentComment,
+      videoId: comment.videoId,
+      canView: true,
+    });
+  } catch (error) {
+    return fail(commentDatabaseError("COMMENT_CONTEXT_ERROR", error));
+  }
 }

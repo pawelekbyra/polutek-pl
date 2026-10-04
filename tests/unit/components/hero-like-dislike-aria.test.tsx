@@ -38,8 +38,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 vi.mock('@/lib/actions/interactions', () => ({
-  toggleVideoLike: vi.fn(),
-  toggleVideoDislike: vi.fn(),
+  setVideoReaction: vi.fn(),
 }));
 
 vi.mock('@/app/components/PremiumWrapper', () => ({

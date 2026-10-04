@@ -7,7 +7,6 @@ describe('Media Module', () => {
     ALLOWED_MEDIA_HOSTS: 'cdn.example.com',
     NEXT_PUBLIC_BLOB_PUBLIC_HOST: 'blob.example.com',
     ALLOWED_AVATAR_HOSTS: 'avatars.com',
-    ALLOWED_COMMENT_IMAGE_HOSTS: 'comments.com',
   };
 
   describe('isBlockedPrivateHostname', () => {
@@ -78,17 +77,6 @@ describe('Media Module', () => {
 
     it('should block unauthorized avatar hosts', () => {
       expect(MediaPolicy.isAllowedAvatarUrl('https://evil.com/me.jpg', env)).toBe(false);
-    });
-  });
-
-  describe('MediaPolicy.isAllowedCommentImageUrl', () => {
-    it('should allow allowed comment image hosts', () => {
-      expect(MediaPolicy.isAllowedCommentImageUrl('https://comments.com/img.jpg', env)).toBe(true);
-      expect(MediaPolicy.isAllowedCommentImageUrl('https://blob.example.com/img.jpg', env)).toBe(true);
-    });
-
-    it('should block unauthorized hosts', () => {
-      expect(MediaPolicy.isAllowedCommentImageUrl('https://evil.com/img.jpg', env)).toBe(false);
     });
   });
 });

@@ -5,6 +5,7 @@ import { listAdminComments, commentErrorStatus } from "@/lib/modules/comments";
 import { CommentStatus } from "@prisma/client";
 import { requireAdminForApi } from "@/lib/auth-utils";
 import { parsePaginationParams } from "@/lib/admin/query-parser";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get("q") || undefined;
-    const status = searchParams.get("status") as CommentStatus | undefined;
+    const status = z.nativeEnum(CommentStatus).optional().catch(undefined).parse(searchParams.get("status") || undefined);
     const videoId = searchParams.get("videoId") || undefined;
     // Reuses the shared admin pagination-parsing pattern (page/pageSize) for
     // consistency with the other admin list endpoints (videos/users/payments/reports).

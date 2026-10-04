@@ -1,44 +1,15 @@
-"use client";
+import type { CommentAuthorDto, CommentDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 
-export type CommentAuthorDto = {
-  id: string;
-  displayName: string;
-  username: string | null;
-  imageUrl: string | null;
-  badges: Array<"ADMIN" | "PATRON" | "AUTHOR">;
-};
+/** A comment as the API returns it (the single DTO definition lives in comment-frontend.dto.ts). */
+export type CommentView = CommentDto;
 
-export type CommentView = {
-  id: string;
-  videoId: string;
-  parentId: string | null;
-  text: string | null;
-  imageUrl: string | null;
-  status: "VISIBLE" | "HELD_FOR_REVIEW" | "HIDDEN" | "DELETED";
-  author: CommentAuthorDto | null;
-  createdAt: string;
-  updatedAt: string;
-  editedAt: string | null;
-  deletedAt: string | null;
-  deletedReason: string | null;
-  pinnedAt: string | null;
-  likesCount: number;
-  repliesCount: number;
-  reportsCount?: number;
-  viewerReaction: "LIKE" | "DISLIKE" | null;
-  viewerCanEdit: boolean;
-  viewerCanDelete: boolean;
-  viewerCanReport: boolean;
-  viewerCanModerate: boolean;
-  viewerCanPin: boolean;
-  isPinned: boolean;
-  isHearted?: boolean;
-  repliesPreview: CommentView[];
-};
+export type CommentBadgeKind = "AUTHOR";
 
-export function isPatronAuthor(author?: CommentAuthorDto | null) {
-  return (
-    !!author &&
-    author.badges.some(b => b === "ADMIN" || b === "PATRON")
-  );
+/**
+ * The badge shown next to an author's name: only the video's creator ("AUTHOR"). Supporters get
+ * no public badge (a tip buys nothing), and being an admin is a role, not a badge.
+ */
+export function getAuthorBadge(author?: CommentAuthorDto | null): CommentBadgeKind | null {
+  if (!author) return null;
+  return author.badges.includes("AUTHOR") ? "AUTHOR" : null;
 }
