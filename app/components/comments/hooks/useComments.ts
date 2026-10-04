@@ -62,6 +62,7 @@ async function parseCommentPostResponse(res: Response, language: string = "pl"):
       if (language === "pl") {
         message =
           code === "AUTH_REQUIRED" ? "Musisz być zalogowany, żeby komentować." :
+          code === "ONBOARDING_REQUIRED" ? "Najpierw wybierz pseudonim w oknie powitalnym, potem możesz komentować." :
           code === "COMMENT_FORBIDDEN" ? "Nie masz uprawnień do komentowania tego filmu." :
           code === "COMMENT_RATE_LIMITED" ? "Zbyt dużo komentarzy. Spróbuj ponownie za chwilę." :
           code === "COMMENT_VALIDATION_ERROR" ? "Nieprawidłowe dane komentarza." :
@@ -76,6 +77,7 @@ async function parseCommentPostResponse(res: Response, language: string = "pl"):
       } else {
         message =
           code === "AUTH_REQUIRED" ? "You must be signed in to comment." :
+          code === "ONBOARDING_REQUIRED" ? "Choose a nickname in the welcome window first, then you can comment." :
           code === "COMMENT_FORBIDDEN" ? "You don't have permission to comment on this video." :
           code === "COMMENT_RATE_LIMITED" ? "Too many comments. Try again in a moment." :
           code === "COMMENT_VALIDATION_ERROR" ? "Invalid comment data." :

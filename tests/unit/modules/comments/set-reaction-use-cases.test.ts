@@ -39,6 +39,16 @@ describe('reaction use cases (target state)', () => {
     if (!result.ok) expect(result.error.type).toBe('UNAUTHORIZED');
   });
 
+  it('an account still choosing its nickname gets ONBOARDING_REQUIRED and changes nothing', async () => {
+    const pending = createAppContext({ actor: { type: 'user', userId: 'u1', onboardingPending: true }, prisma: prisma as any });
+    const comment = await setCommentReaction({ commentId: 'c1', reaction: 'LIKE' }, pending);
+    const video = await setVideoReaction({ videoId: 'v1', reaction: 'LIKE' }, pending);
+    expect(comment).toMatchObject({ ok: false, error: { type: 'FORBIDDEN', code: 'ONBOARDING_REQUIRED' } });
+    expect(video).toMatchObject({ ok: false, error: { type: 'FORBIDDEN', code: 'ONBOARDING_REQUIRED' } });
+    expect(repo.setCommentReaction).not.toHaveBeenCalled();
+    expect(repo.setVideoReaction).not.toHaveBeenCalled();
+  });
+
   it('returns the stored state and notifies the author only for a like that was actually added', async () => {
     const result = await setCommentReaction({ commentId: 'c1', reaction: 'LIKE' }, user());
     expect(result).toEqual({ ok: true, data: { viewerReaction: 'LIKE', likesCount: 4 } });

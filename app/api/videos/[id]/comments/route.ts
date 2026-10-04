@@ -137,7 +137,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
         result.error.type === "UNAUTHORIZED"
           ? "AUTH_REQUIRED"
           : result.error.type === "FORBIDDEN"
-            ? "COMMENT_FORBIDDEN"
+            ? (result.error.code ?? "COMMENT_FORBIDDEN")
             : "COMMENT_ERROR";
       return NextResponse.json(
         { success: false, message: result.error.message, code },

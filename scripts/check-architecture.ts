@@ -10,7 +10,8 @@ const FORBIDDEN_IMPORTS = [
   'next/cache',
   'NextResponse',
   'app/',
-  '@clerk/nextjs',
+  // The identity library is wired only in lib/auth (CLAUDE.md 4.12), never inside a module.
+  'better-auth',
   'lib/api/',
 ];
 
@@ -39,6 +40,7 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
     'video/domain/premiere': PREMIERE_HELPER_REASON,
   },
   'lib/modules/access/application/check-video-access.use-case.ts': {
+    'video/domain/premiere': PREMIERE_HELPER_REASON,
     'channel/domain/channel.policy': 'Pure, no-side-effect policy class; many tests narrowly mock the whole @/lib/modules/channel barrel for MainChannelService only, and routing this through it would force every such test to also mock MainChannelPolicy.',
   },
 };
@@ -54,12 +56,12 @@ function checkModules() {
     const content = fs.readFileSync(file, 'utf-8');
     const relativePath = path.relative(ROOT, file);
 
-    // 1. Forbidden Next.js/App/Clerk imports in modules
+    // 1. Forbidden Next.js/App/identity-library imports in modules
     // thumbnail-response.service.ts is a Next.js-specific HTTP response builder in infra layer
     const isNextJsInfraException = relativePath === 'lib/modules/media/infrastructure/thumbnail-response.service.ts';
     for (const forbidden of FORBIDDEN_IMPORTS) {
       if (isNextJsInfraException && (forbidden === 'next/server' || forbidden === 'NextResponse')) continue;
-      if (content.includes(`from '${forbidden}'`) || content.includes(`from "${forbidden}"`) || content.includes(`from "@clerk/nextjs"`)) {
+      if (content.includes(`from '${forbidden}'`) || content.includes(`from "${forbidden}"`)) {
         console.error(`❌ Violation: Forbidden import '${forbidden}' in ${relativePath}`);
         violations++;
       }

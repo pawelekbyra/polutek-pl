@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { toPublicCommentAuthor } from '@/lib/comments-public-author';
 
@@ -24,5 +25,10 @@ describe('comments privacy helpers', () => {
     });
     expect(publicAuthor).not.toHaveProperty('email');
     expect(publicAuthor).not.toHaveProperty('referralPoints');
+  });
+
+  it('keeps email out of the client author type', () => {
+    const source = readFileSync('app/components/comments/types.ts', 'utf8');
+    expect(source).not.toContain('email?: string | null');
   });
 });

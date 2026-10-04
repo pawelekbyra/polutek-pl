@@ -29,6 +29,14 @@ export async function createVideoComment(
     return fail({ type: "UNAUTHORIZED", message: "Musisz być zalogowany, aby dodać komentarz." });
   }
 
+  if (CommentPolicy.isOnboardingPending(actor)) {
+    return fail({
+      type: "FORBIDDEN",
+      code: "ONBOARDING_REQUIRED",
+      message: "Najpierw wybierz pseudonim w oknie powitalnym, potem możesz komentować.",
+    });
+  }
+
   const userId = actor.userId;
 
   try {

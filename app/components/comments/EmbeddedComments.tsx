@@ -77,7 +77,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const { user } = useUser();
 
   const userProfile = React.useMemo(() => {
-    const clerkUserProfile = isSignedIn
+    const sessionUserProfile = isSignedIn
       ? {
           id: userId!,
           imageUrl: user?.imageUrl || null,
@@ -91,15 +91,15 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
         }
       : null;
 
-    return propUserProfile || clerkUserProfile
+    return propUserProfile || sessionUserProfile
       ? {
-          ...(clerkUserProfile || {}),
+          ...(sessionUserProfile || {}),
           ...(propUserProfile || {}),
           imageUrl:
-            clerkUserProfile?.imageUrl || propUserProfile?.imageUrl || null,
-          name: clerkUserProfile?.name || propUserProfile?.name || null,
+            sessionUserProfile?.imageUrl || propUserProfile?.imageUrl || null,
+          name: sessionUserProfile?.name || propUserProfile?.name || null,
           username:
-            clerkUserProfile?.username || propUserProfile?.username || null,
+            sessionUserProfile?.username || propUserProfile?.username || null,
         }
       : null;
   }, [

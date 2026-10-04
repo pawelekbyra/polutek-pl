@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { isGeneratedClerkUsername } from '@/lib/utils/auth';
+import { isGeneratedLegacyUsername } from '@/lib/utils/auth';
 
 function getCommentAuthorName(author?: { email?: string | null; name?: string | null; username?: string | null } | null) {
   const rawName = author?.name?.trim();
-  const name = (rawName && !isGeneratedClerkUsername(rawName)) ? rawName : null;
+  const name = (rawName && !isGeneratedLegacyUsername(rawName)) ? rawName : null;
   const rawUsername = author?.username?.trim();
-  const username = (rawUsername && !isGeneratedClerkUsername(rawUsername)) ? rawUsername : null;
+  const username = (rawUsername && !isGeneratedLegacyUsername(rawUsername)) ? rawUsername : null;
   const fallbackFromEmail = author?.email?.split('@')[0]?.trim();
 
   return name || username || fallbackFromEmail || "Użytkownik";
@@ -13,11 +13,11 @@ function getCommentAuthorName(author?: { email?: string | null; name?: string | 
 
 describe('Comment Name Resolution', () => {
   it('identifies generated Clerk usernames correctly', () => {
-    expect(isGeneratedClerkUsername('user_2n9VpX9z9z9z9z9z9z9z9z9z9z9')).toBe(true);
-    expect(isGeneratedClerkUsername('user_123456789012')).toBe(true);
-    expect(isGeneratedClerkUsername('user_123')).toBe(false); // too short
-    expect(isGeneratedClerkUsername('john_doe')).toBe(false);
-    expect(isGeneratedClerkUsername('user_name')).toBe(false); // underscores not in [a-z0-9] after user_
+    expect(isGeneratedLegacyUsername('user_2n9VpX9z9z9z9z9z9z9z9z9z9z9')).toBe(true);
+    expect(isGeneratedLegacyUsername('user_123456789012')).toBe(true);
+    expect(isGeneratedLegacyUsername('user_123')).toBe(false); // too short
+    expect(isGeneratedLegacyUsername('john_doe')).toBe(false);
+    expect(isGeneratedLegacyUsername('user_name')).toBe(false); // underscores not in [a-z0-9] after user_
   });
 
   it('prefers name over generated username', () => {

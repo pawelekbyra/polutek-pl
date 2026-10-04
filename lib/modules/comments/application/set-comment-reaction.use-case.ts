@@ -31,6 +31,14 @@ export async function setCommentReaction(
     return fail({ type: "UNAUTHORIZED", message: "Musisz być zalogowany, aby ocenić komentarz." });
   }
 
+  if (CommentPolicy.isOnboardingPending(actor)) {
+    return fail({
+      type: "FORBIDDEN",
+      code: "ONBOARDING_REQUIRED",
+      message: "Najpierw wybierz pseudonim w oknie powitalnym.",
+    });
+  }
+
   const userId = actor.userId;
 
   try {

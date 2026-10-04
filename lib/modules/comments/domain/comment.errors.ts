@@ -2,7 +2,8 @@ import { logger } from "@/lib/logger";
 
 export type CommentError =
   | { type: "NOT_FOUND"; message: string }
-  | { type: "FORBIDDEN"; message: string }
+  /** `code: ONBOARDING_REQUIRED`: the account has not picked a nickname yet (see Actor.onboardingPending). */
+  | { type: "FORBIDDEN"; message: string; code?: "ONBOARDING_REQUIRED" }
   | { type: "UNAUTHORIZED"; message: string }
   | { type: "VALIDATION_ERROR"; message: string }
   /** The comment is in a state that does not allow the action (e.g. restoring a deleted comment). */

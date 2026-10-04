@@ -36,7 +36,6 @@ describe('getUserAccessProfile Use Case', () => {
 
     expect(result).toEqual({
         id: 'u1',
-        clerkId: 'u1',
         email: 'test@example.com',
         role: 'USER',
         isPatron: true,

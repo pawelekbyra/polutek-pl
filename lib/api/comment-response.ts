@@ -6,7 +6,7 @@ import { CommentError, commentErrorStatus } from "@/lib/modules/comments";
 /** JSON error for a comments route: `error` is the CommentError type, `message` is safe to show. */
 export function commentErrorResponse(error: CommentError) {
   return NextResponse.json(
-    { success: false, error: error.type, message: error.message },
+    { success: false, error: error.type, message: error.message, ...("code" in error && error.code ? { code: error.code } : {}) },
     { status: commentErrorStatus(error) },
   );
 }

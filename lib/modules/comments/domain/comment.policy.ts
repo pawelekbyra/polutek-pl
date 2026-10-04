@@ -25,6 +25,8 @@ export class CommentPolicy {
   static canInteractWithVideo(actor: Actor, videoAccess: AccessDecisionDto): boolean {
     if (actor.type === 'system') return true;
     if (actor.type === 'guest') return false;
+    // No comments or reactions under a placeholder name (audit AUTH-11): finish onboarding first.
+    if (CommentPolicy.isOnboardingPending(actor)) return false;
     return videoAccess.hasAccess;
   }
 
@@ -46,8 +48,13 @@ export class CommentPolicy {
     return videoAccess.hasAccess;
   }
 
+  static isOnboardingPending(actor: Actor): boolean {
+    return actor.type === 'user' && actor.onboardingPending === true;
+  }
+
   /** Only the author edits a comment. Moderators hide or delete; they never rewrite someone's words. */
   static canUpdateComment(actor: Actor, commentAuthorId: string): boolean {
+    if (CommentPolicy.isOnboardingPending(actor)) return false;
     if (actor.type === 'user' || actor.type === 'admin') {
       return actor.userId === commentAuthorId;
     }

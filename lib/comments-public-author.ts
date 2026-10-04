@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { isGeneratedClerkUsername } from '@/lib/utils/auth';
+import { isGeneratedLegacyUsername } from '@/lib/utils/auth';
 
 export const publicCommentAuthorSelect = Prisma.validator<Prisma.UserSelect>()({
   id: true,
@@ -36,9 +36,9 @@ export function toPublicCommentAuthor(author?: PublicCommentAuthor | null, video
   if (videoCreatorId && author.id === videoCreatorId) badges.push("AUTHOR");
 
   const rawName = author.name?.trim();
-  const name = rawName && !isGeneratedClerkUsername(rawName) ? rawName : null;
+  const name = rawName && !isGeneratedLegacyUsername(rawName) ? rawName : null;
   const rawUsername = author.username?.trim();
-  const username = rawUsername && !isGeneratedClerkUsername(rawUsername) ? rawUsername : null;
+  const username = rawUsername && !isGeneratedLegacyUsername(rawUsername) ? rawUsername : null;
   const displayName = name || username || "Użytkownik";
 
   return {

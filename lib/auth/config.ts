@@ -26,6 +26,16 @@ export const SIGN_IN_FAILURE_WINDOW_SECONDS = 15 * 60;
 /** Per-IP request budget for /sign-in/email (requests per minute, any outcome); roomy enough for shared networks. */
 export const SIGN_IN_IP_RATE_PER_MINUTE = 10;
 
+/**
+ * E-mail change (each request sends a mail): per user, on top of the per-IP rule in auth.ts. Wrong
+ * passwords count too, so the password check cannot be used as a guessing oracle.
+ */
+export const CHANGE_EMAIL_LIMIT_PER_USER = 5;
+export const CHANGE_EMAIL_WINDOW_SECONDS = 60 * 60;
+/** Password-reset / verification mails to one address (any IP), counted only after Turnstile passed. */
+export const MAIL_TO_ADDRESS_LIMIT = 5;
+export const MAIL_TO_ADDRESS_WINDOW_SECONDS = 60 * 60;
+
 /** Paths protected by Cloudflare Turnstile (Better Auth path, without /api/auth). */
 export const CAPTCHA_ENDPOINTS = [
   "/sign-up/email",
