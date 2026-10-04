@@ -14,6 +14,7 @@ import AccessLockOverlay from "../AccessLockOverlay";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { NajsIcon } from "../najs/primitives";
 import { useAppPreload } from "../preload/AppPreloadProvider";
+import type { WarmupInput } from "../preload/media-warmup";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isUpcomingPremiere } from "@/lib/premiere";
@@ -34,7 +35,6 @@ interface SidebarPlaylistProps {
   selectedVideoId?: string;
   t: Translations;
   language: string;
-  onVideoMouseEnter: (id: string) => void;
   onVideoSelect?: (videoId?: string) => void;
   /** Server-built layout (HomeExperience) + the viewer it was built for; skips the first fetch. */
   initialLayout?: SidebarLayout | null;
@@ -46,7 +46,6 @@ export function SidebarPlaylist({
   selectedVideoId,
   t,
   language,
-  onVideoMouseEnter,
   onVideoSelect,
   initialLayout,
   initialLayoutViewerKey,
@@ -144,28 +143,27 @@ export function SidebarPlaylist({
     const lockState = isUpcoming
       ? isSignedIn ? "COMING_SOON" : "LOGIN_REQUIRED"
       : !hasAccess ? "LOGIN_REQUIRED" : null;
-    const warmVideoOnIntent = () => {
+    // Intent (pointer over the tile, touch on it, keyboard focus) warms what a click will need:
+    // the playback plan, the first seconds of the stream and the first page of comments.
+    const warmVideoOnIntent = (input: WarmupInput) => {
       void preloader?.warmVideo(video.id, {
         includeComments: true,
-        includePoster: true,
         priority: "intent",
+        input,
       });
     };
+    const releaseIntent = () => preloader?.releaseVideoIntent(video.id);
     const locale = language === "pl" ? "pl" : "en";
     const feedVideoHref = `${getLocalizedHref(locale, "home")}?v=${encodeURIComponent(video.slug || video.id)}`;
 
     return (
       <div
         key={video.id || video.slug}
-        onMouseEnter={() => {
-          onVideoMouseEnter(video.id);
-          warmVideoOnIntent();
-        }}
-        onPointerEnter={warmVideoOnIntent}
-        onFocus={() => {
-          onVideoMouseEnter(video.id);
-          warmVideoOnIntent();
-        }}
+        onPointerEnter={(event) => warmVideoOnIntent(event.pointerType === "touch" ? "touch" : "mouse")}
+        onPointerLeave={releaseIntent}
+        onPointerCancel={releaseIntent}
+        onFocus={() => warmVideoOnIntent("keyboard")}
+        onBlur={releaseIntent}
         className="relative group/item lg:flex-1 lg:h-full motion-safe:animate-[polutek-surface-enter_360ms_cubic-bezier(0.16,1,0.3,1)_both]"
         style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
       >

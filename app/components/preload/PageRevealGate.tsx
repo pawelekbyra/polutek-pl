@@ -15,7 +15,7 @@ import { useOptionalLanguage } from "../LanguageContext";
 /**
  * Coordinated first reveal of the public home page.
  *
- * Once the page has settled (auth loaded, featured poster decoded, player buffered),
+ * Once the page has settled (auth loaded, player buffered),
  * the preloader transitions to a "Follow the white rabbit" gate — the rain keeps
  * falling and the viewer must click the rabbit button to enter. Clicking triggers a
  * blur-fade exit and reveals the page underneath.
@@ -72,38 +72,12 @@ export function usePageRevealReady(key: string | undefined, ready: boolean) {
   }, [context, key, ready]);
 }
 
-function useDecodedImage(src: string | null | undefined, onDone: () => void) {
-  useEffect(() => {
-    if (!src) {
-      onDone();
-      return;
-    }
-    let cancelled = false;
-    const finish = () => {
-      if (!cancelled) onDone();
-    };
-    const img = new Image();
-    img.decoding = "async";
-    img.src = src;
-    if (typeof img.decode === "function") {
-      img.decode().then(finish, finish);
-    } else {
-      img.onload = finish;
-      img.onerror = finish;
-    }
-    return () => {
-      cancelled = true;
-    };
-  }, [src, onDone]);
-}
-
 interface PageRevealGateProps {
   children: React.ReactNode;
   waitFor?: string[];
-  posterUrl?: string | null;
 }
 
-export function PageRevealGate({ children, waitFor = [], posterUrl }: PageRevealGateProps) {
+export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) {
   const { isLoaded: authLoaded } = useAuth();
   const language = useOptionalLanguage();
 
@@ -123,17 +97,12 @@ export function PageRevealGate({ children, waitFor = [], posterUrl }: PageReveal
       return next;
     });
   }, []);
-  const markPosterReady = useCallback(() => reportReady("poster"), [reportReady]);
-
   const waitForKey = waitFor.join("|");
   const allReady =
     authLoaded &&
-    readyKeys.has("poster") &&
     waitForKey.split("|").every((key) => !key || readyKeys.has(key));
 
   const covering = phase === "covering";
-
-  useDecodedImage(covering ? posterUrl : null, markPosterReady);
 
   // Max wait — once expired the gate appears even if things are still loading.
   useEffect(() => {

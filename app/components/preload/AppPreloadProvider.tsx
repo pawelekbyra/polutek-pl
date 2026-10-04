@@ -9,6 +9,7 @@ import { resolvePlaybackViewerKey } from "./playback-viewer-key";
 import type { InitialPlaybackPlan } from "./initial-playback-plan";
 import { isUpcomingPremiere } from "@/lib/premiere";
 import { isPlayablePlaybackPlan } from "../playback-plan-state";
+import { MediaWarmup, isConstrainedConnection, type ConnectionLike, type WarmupInput } from "./media-warmup";
 
 export { resolvePlaybackViewerKey };
 
@@ -16,8 +17,9 @@ type PreloadStatus = "idle" | "loading" | "ready" | "error";
 
 type WarmVideoOptions = {
   includeComments?: boolean;
-  includePoster?: boolean;
   priority?: "critical" | "nearby" | "intent" | "idle";
+  /** What showed the intent (only for "intent"): touch warms media only on a fast connection. */
+  input?: WarmupInput;
 };
 
 type PlaybackRecord = {
@@ -36,7 +38,10 @@ type AppPreloadContextValue = {
   invalidatePlaybackPlan: (videoId: string) => void;
   warmVideo: (videoId: string, options?: WarmVideoOptions) => Promise<PlaybackPlan | null>;
   warmComments: (videoId: string, sortBy?: "newest" | "top") => Promise<void>;
-  markVideoActive: (videoId: string) => void;
+  /** The intent shown with warmVideo ended before anything was picked (pointer left). */
+  releaseVideoIntent: (videoId: string) => void;
+  /** The viewer picked this video: stop warming the others. */
+  selectVideo: (videoId: string) => void;
   initialProgress: number;
   initialReady: boolean;
 };
@@ -52,35 +57,15 @@ function emitSplashProgress(progress: number, ready: boolean) {
   window.dispatchEvent(new CustomEvent("polutek:app-preload-progress", { detail: { progress, ready } }));
 }
 
-function loadImage(src: string | null | undefined) {
-  if (!src || typeof window === "undefined") return Promise.resolve();
-
-  return new Promise<void>((resolve) => {
-    const img = new Image();
-    img.decoding = "async";
-    img.onload = () => resolve();
-    img.onerror = () => resolve();
-    img.src = src;
-    if (img.complete) resolve();
-  });
-}
-
 function scheduleIdle(callback: () => void) {
   if (typeof window === "undefined") return;
   const requestIdle = window.requestIdleCallback || ((cb: IdleRequestCallback) => window.setTimeout(() => cb({ didTimeout: false, timeRemaining: () => 0 }), 250));
   requestIdle(() => callback(), { timeout: 1800 });
 }
 
-/**
- * Low-priority fetch of a playable plan's manifest, so a click on that video finds it in the HTTP
- * cache (the manifest is `public, max-age=300`). Anonymous CORS without credentials, like hls.js.
- */
-function prefetchManifest(url: string) {
-  try {
-    void fetch(url, { mode: "cors", credentials: "omit", priority: "low" } as RequestInit).catch(() => undefined);
-  } catch {
-    // A warm-up only.
-  }
+function currentConnection(): ConnectionLike | undefined {
+  if (typeof navigator === "undefined") return undefined;
+  return (navigator as Navigator & { connection?: ConnectionLike }).connection;
 }
 
 export function AppPreloadProvider({
@@ -117,9 +102,11 @@ export function AppPreloadProvider({
   });
   const playbackRecords = useRef<Map<string, PlaybackRecord>>(initialRecords);
   const requestIdRef = useRef(0);
-  const activeVideoIdRef = useRef<string | null>(selectedVideo?.id ?? null);
   const videosById = useMemo(() => new Map(allVideos.map((video) => [video.id, video])), [allVideos]);
-  const prefetchedManifestsRef = useRef<Set<string>>(new Set());
+  // First seconds of hovered/focused videos (see media-warmup.ts). Created on first use, so the
+  // server render never builds one.
+  const mediaWarmupRef = useRef<MediaWarmup | null>(null);
+  const getMediaWarmup = useCallback(() => (mediaWarmupRef.current ??= new MediaWarmup()), []);
 
   const updateProgress = useCallback((progress: number, ready = false) => {
     const next = Math.max(0, Math.min(100, Math.round(progress)));
@@ -222,23 +209,21 @@ export function AppPreloadProvider({
 
   const warmVideo = useCallback(async (videoId: string, options: WarmVideoOptions = {}) => {
     if (!videoId || !viewerKey) return null;
-    const video = videosById.get(videoId);
-    const planTask = shouldWarmPlan(videoId, options.priority)
+    const warmsPlan = shouldWarmPlan(videoId, options.priority);
+    // On intent, also warm the first seconds of the stream: the click then starts at once. Only
+    // with a READY plan of exactly this video (a denied or premiere plan carries no URL).
+    const warmsMedia = warmsPlan && options.priority === "intent";
+    if (warmsMedia) getMediaWarmup().intend(videoId, options.input ?? "mouse");
+    const planTask = warmsPlan
       ? warmPlaybackPlan(videoId).then((plan) => {
-          // On intent, also pull the manifest into the HTTP cache: the switch then starts with it.
           const url = plan?.source?.playbackUrl;
-          if (options.priority === "intent" && url && plan && isPlayablePlaybackPlan(plan, videoId) && !prefetchedManifestsRef.current.has(url)) {
-            prefetchedManifestsRef.current.add(url);
-            prefetchManifest(url);
+          if (warmsMedia && url && plan && isPlayablePlaybackPlan(plan, videoId)) {
+            getMediaWarmup().provide(videoId, url);
           }
           return plan;
         })
       : Promise.resolve(null);
     const tasks: Promise<unknown>[] = [planTask];
-
-    if (options.includePoster !== false) {
-      tasks.push(loadImage(video?.thumbnailUrl));
-    }
 
     if (options.includeComments) {
       tasks.push(warmComments(videoId).catch(() => undefined));
@@ -246,7 +231,15 @@ export function AppPreloadProvider({
 
     const [plan] = await Promise.all(tasks);
     return (plan as PlaybackPlan | null) ?? null;
-  }, [shouldWarmPlan, videosById, viewerKey, warmComments, warmPlaybackPlan]);
+  }, [getMediaWarmup, shouldWarmPlan, viewerKey, warmComments, warmPlaybackPlan]);
+
+  const releaseVideoIntent = useCallback((videoId: string) => {
+    mediaWarmupRef.current?.release(videoId);
+  }, []);
+
+  const selectVideo = useCallback((videoId: string) => {
+    mediaWarmupRef.current?.select(videoId);
+  }, []);
 
   const getPlaybackPlan = useCallback((videoId: string) => {
     if (!viewerKey) return null;
@@ -262,11 +255,6 @@ export function AppPreloadProvider({
     playbackRecords.current.delete(cacheKey);
   }, [viewerKey]);
 
-  const markVideoActive = useCallback((videoId: string) => {
-    activeVideoIdRef.current = videoId;
-    void warmVideo(videoId, { includeComments: false, includePoster: true, priority: "critical" });
-  }, [warmVideo]);
-
   useEffect(() => {
     for (const [cacheKey, record] of playbackRecords.current) {
       if (record.viewerKey === viewerKey) continue;
@@ -280,10 +268,11 @@ export function AppPreloadProvider({
       record.controller?.abort();
     }
     playbackRecords.current.clear();
+    mediaWarmupRef.current?.dispose();
+    mediaWarmupRef.current = null;
   }, []);
 
   useEffect(() => {
-    activeVideoIdRef.current = selectedVideo?.id ?? null;
     setInitialReady(false);
     setInitialProgress(0);
     emitSplashProgress(0, false);
@@ -301,33 +290,26 @@ export function AppPreloadProvider({
       updateProgress(18);
       await Promise.resolve(document.fonts?.ready).catch(() => undefined);
       if (cancelled) return;
-      updateProgress(34);
+      updateProgress(45);
 
-      await loadImage(selectedVideo.thumbnailUrl);
-      if (cancelled) return;
-      updateProgress(58);
-
-      await warmVideo(selectedVideo.id, { includeComments: false, includePoster: false, priority: "critical" });
-      if (cancelled) return;
-      updateProgress(82);
-
-      const nearby = allVideos.filter((video) => video.id !== selectedVideo.id).slice(0, 3);
-      await Promise.all(nearby.map((video) => loadImage(video.thumbnailUrl)));
+      await warmVideo(selectedVideo.id, { includeComments: false, priority: "critical" });
       if (cancelled) return;
       updateProgress(100, true);
 
+      // Comments of nearby videos: on touch devices there is no hover intent, so the idle
+      // warm-up is what makes a tap on a nearby video land on ready comments. Skipped on Data
+      // Saver and slow networks. It never warms plans or media ("nearby" opens no session).
+      if (isConstrainedConnection(currentConnection())) return;
       scheduleIdle(() => {
         if (cancelled) return;
         const next = allVideos.filter((video) => video.id !== selectedVideo.id).slice(0, 3);
-        // Comments too: on touch devices there is no hover intent, so the idle warm-up
-        // is what makes a tap on a nearby video land on ready comments.
-        next.forEach((video) => void warmVideo(video.id, { includePoster: true, includeComments: true, priority: "nearby" }));
+        next.forEach((video) => void warmVideo(video.id, { includeComments: true, priority: "nearby" }));
       });
     }
 
     void boot();
     return () => { cancelled = true; };
-  }, [allVideos, selectedVideo?.id, selectedVideo?.thumbnailUrl, updateProgress, viewerKey, warmVideo]);
+  }, [allVideos, selectedVideo?.id, updateProgress, viewerKey, warmVideo]);
 
   const value = useMemo<AppPreloadContextValue>(() => ({
     viewerKey,
@@ -335,10 +317,11 @@ export function AppPreloadProvider({
     invalidatePlaybackPlan,
     warmVideo,
     warmComments,
-    markVideoActive,
+    releaseVideoIntent,
+    selectVideo,
     initialProgress,
     initialReady,
-  }), [getPlaybackPlan, initialProgress, initialReady, invalidatePlaybackPlan, markVideoActive, viewerKey, warmComments, warmVideo]);
+  }), [getPlaybackPlan, initialProgress, initialReady, invalidatePlaybackPlan, releaseVideoIntent, selectVideo, viewerKey, warmComments, warmVideo]);
 
   return <AppPreloadContext.Provider value={value}>{children}</AppPreloadContext.Provider>;
 }

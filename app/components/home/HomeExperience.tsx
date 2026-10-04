@@ -216,7 +216,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
 
   return (
     <AuthSessionSeedProvider snapshot={sessionSnapshot}>
-    <PageRevealGate waitFor={['player', 'comments']} posterUrl={selectedVideo?.thumbnailUrl}>
+    <PageRevealGate waitFor={['player', 'comments']}>
       <div className="public-visual-shell min-h-screen bg-background text-foreground">
         <Navbar />
         <main className="relative">

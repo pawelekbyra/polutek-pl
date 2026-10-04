@@ -8,14 +8,13 @@ describe("public loading/access state UX contracts", () => {
     const wrapper = read("app/components/PremiumWrapper.tsx");
     const player = read("app/components/VideoPlayer.tsx");
 
-    expect(wrapper).toContain(
-      "return <PlayerLoadingState variant={variant} posterUrl={posterUrl} />;",
-    );
+    expect(wrapper).toContain("return <PlayerLoadingState variant={variant} />;");
     expect(wrapper).not.toContain("setMounted(true)");
     expect(player).toContain("PremiumWrapper owns the loading placeholder before this mounts");
-    // The pre-mount frame shows the same poster, never an empty box or a second loader card.
+    // The pre-mount frame shows the same dark start-up frame, never an empty box or a second
+    // loader card (rendered behaviour: tests/unit/components/video-player-page-reveal.test.tsx).
     expect(player).toContain("if (!isMounted || isLoading) {");
-    expect(player).toContain("<PlayerPosterLoading posterUrl={video.thumbnailUrl || posterUrl} />");
+    expect(player).toContain("<PlayerStartLoading />");
     expect(player).not.toContain("<PlayerLoadingState");
   });
 
@@ -46,7 +45,6 @@ describe("public loading/access state UX contracts", () => {
     }
 
     expect(player).toContain("<MediaProvider>");
-    expect(player).toContain("posterUrl");
     expect(player).toContain("<PolutekControls />");
 
     // The old "polutek-player-*" class names/pixel values below were replaced wholesale
@@ -89,10 +87,9 @@ describe("public loading/access state UX contracts", () => {
     expect(videoTypes).toContain("export type VideoTextTrackDTO");
   });
 
-  it("uses the branded application loading state instead of a black system-like bar", () => {
+  it("uses the branded loading indicator for thumbnail-sized states", () => {
     const loading = read("app/components/PlayerLoadingState.tsx");
 
-    expect(loading).toContain("Już podaję film…");
     expect(loading).toContain("polutek-player-loader-mark");
     expect(loading).toContain("polutek-player-loader-progress");
     expect(loading).toContain("var(--chan-nav,#f7f9fc)");
