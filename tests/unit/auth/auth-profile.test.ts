@@ -91,6 +91,12 @@ describe("completeOnboarding (first Google sign-in)", () => {
     expect(result.name).toBe("Gracz");
   });
 
+  it("saves the language chosen in the dialog with the nickname, so the welcome e-mail uses it", async () => {
+    user.findUnique.mockResolvedValue({ id: "u1", email: "g@gmail.com", isDeleted: false, onboardingPending: true });
+    await completeOnboarding(ctx, { userId: "u1", nickname: "Gracz", language: "en" });
+    expect(user.update.mock.calls[0][0].data).toEqual({ name: "Gracz", onboardingPending: false, language: "en" });
+  });
+
   it("refuses a second run and keeps the default avatar when none is sent", async () => {
     await expect(completeOnboarding(ctx, { userId: "u1", nickname: "Gracz" })).rejects.toMatchObject({ code: "ONBOARDING_DONE" });
     user.findUnique.mockResolvedValue({ id: "u1", email: "g@gmail.com", isDeleted: false, onboardingPending: true });

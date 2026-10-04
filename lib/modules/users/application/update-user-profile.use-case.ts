@@ -93,7 +93,7 @@ export async function updateAvatar(ctx: AppContext, input: { userId: string; dat
  */
 export async function completeOnboarding(
   ctx: AppContext,
-  input: { userId: string; nickname: string; avatarDataUrl?: string | null },
+  input: { userId: string; nickname: string; avatarDataUrl?: string | null; language?: "pl" | "en" },
 ) {
   const user = await loadActiveUser(ctx, input.userId);
   if (!user.onboardingPending) throw new AppError("Onboarding already completed", 409, "ONBOARDING_DONE");
@@ -103,7 +103,13 @@ export async function completeOnboarding(
   const updated = await withNicknameRace(() =>
     ctx.prisma.user.update({
       where: { id: input.userId },
-      data: { name, onboardingPending: false, ...(avatar ? { imageUrl: avatarRouteUrl(input.userId) } : {}) },
+      data: {
+        name,
+        onboardingPending: false,
+        // The language chosen in the dialog is what every later e-mail (the welcome one first) uses.
+        ...(input.language ? { language: input.language } : {}),
+        ...(avatar ? { imageUrl: avatarRouteUrl(input.userId) } : {}),
+      },
       select: { email: true, name: true, language: true, createdAt: true },
     }),
   );

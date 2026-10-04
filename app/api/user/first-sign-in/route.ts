@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     if (actor.type !== "user" && actor.type !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const body = (await req.json().catch(() => null)) as { nickname?: unknown; avatarDataUrl?: unknown } | null;
+    const body = (await req.json().catch(() => null)) as { nickname?: unknown; avatarDataUrl?: unknown; language?: unknown } | null;
     if (typeof body?.nickname !== "string") {
       return NextResponse.json({ error: "INVALID_NICKNAME" }, { status: 400 });
     }
@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
       userId: actor.userId,
       nickname: body.nickname,
       avatarDataUrl: typeof body.avatarDataUrl === "string" ? body.avatarDataUrl : null,
+      language: body.language === "pl" || body.language === "en" ? body.language : undefined,
     });
     // Older accounts that are only asked for a (new) nickname were welcomed long ago.
     const isNewAccount = Date.now() - user.createdAt.getTime() < 24 * 60 * 60 * 1000;
