@@ -425,6 +425,16 @@ Owner request: a crowdfunding-style bar under the title of the premiere video, *
 - **Broadcasts** are a Postgres queue: the admin route only creates `BroadcastEmail` + PENDING recipients (idempotent `requestKey`, one active broadcast); `/api/cron/send-broadcasts` (timer every minute) sends ≤ 4/s with a per-recipient Resend idempotency key, pauses on 429. Recipients: subscribers with content consent, not in `EmailSuppression`. Mandatory unsubscribe footer. Never send broadcasts inside an HTTP request.
 - **Webhook** `/api/webhooks/resend`: verified with `resend.webhooks.verify` (rejections logged with reason); acts only on events of mail tagged `app=pawelperfect` (the Resend account is shared with PP Support). No inbound mail handling (MX is Cloudflare -> PP Support).
 
+### 4.19 New admin panel `apps/admin` (admin.pawelperfect.com, phase 1, 2026-10-04)
+
+A second Next.js app in this repo (no npm workspace: shared root `node_modules`, `next build apps/admin`, aliases `@/` = repo root, `@admin/` = `apps/admin`). Plan, decisions and what phase 1 contains: `docs/architecture/admin-panel.md` (section 9); runbook (deploy, enrollment, reset, rollback): `docs/operations/ADMIN-PANEL.md`. The old `app/admin` keeps working until phase 5. Rules to keep:
+- **Separate identity.** Own Better Auth instance (`apps/admin/lib/auth/auth.ts`), own secret `ADMIN_AUTH_SECRET`, own tables `Admin*`, host-only cookie `__Host-ppadm.session_token`. Sign-in is passkey only (user verification required); no password, e-mail, Google or sign-up. Accounts come only from `apps/admin/scripts/admin-enroll.mjs` run over SSH (`--reset` wipes every way in). Never import `@/lib/auth`, `@/lib/api/auth`, `@/app/*` or `@/components/*` in `apps/admin`, never deep-import modules (only `@/lib/modules/<m>` and `shared`), Prisma only in `apps/admin/lib/auth`: the `architecture boundaries` gate enforces it.
+- **Three layers.** `apps/admin/proxy.ts` verifies the Cloudflare Access JWT on every request (fail closed: production without `CF_ACCESS_TEAM_DOMAIN`/`CF_ACCESS_AUD` answers 503; only `/api/health` is exempt), CSRF (exact panel `Origin`), strict nonce CSP. Pages call `requireAdmin()` (12 h absolute, 60 min idle); sensitive actions must call `requireStepUp()` (passkey or TOTP within 5 min).
+- **No inline styles** in panel markup (the CSP has no `unsafe-inline`): sizes go through `apps/admin/app/scale.css` classes or SVG attributes. No external scripts, fonts or CDNs. No skeletons and no `loading.tsx`: pages are server components reading `lib/modules/admin-overview`.
+- **`AdminAuthEvent`** is append-only (DB trigger refuses UPDATE, TRUNCATE and DELETE younger than 400 days; hash chain). Write it only through `recordAdminAuthEvent()` (or the enroll script, same chain).
+- **No docker.sock.** Host data (containers, timers, backups) comes from the read-only file written by `deploy/serwerek/admin/host-status.py`.
+- **Deploy is separate and opt-in**: `Dockerfile.admin`, compose service `admin` under profile `admin` (not started by `deploy.sh`), `deploy/serwerek/deploy-admin.sh`.
+
 ---
 
 ## 5. Admin Panel
