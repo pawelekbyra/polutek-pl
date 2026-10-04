@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth/server";
 import { NextRequest, NextResponse } from 'next/server';
 import { createScopedLogger } from '@/lib/logger';
 import { createCheckoutIntent } from '@/lib/modules/payments';
-import { getOrCreateCurrentUser } from '@/lib/modules/users';
+import { getOrCreateCurrentUser, recordTermsAcceptance } from '@/lib/modules/users';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { rateLimit } from '@/lib/rate-limit';
 import { checkoutSchema } from '@/lib/payments/checkout.schema';
@@ -59,12 +59,19 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const { amountMinor, currency, requestId: inputRequestId } = result.data;
+    const { amountMinor, currency, requestId: inputRequestId, acceptedTermsVersion } = result.data;
 
     const amountError = await validatePaymentAmountMinorAsync(amountMinor, currency);
 
     if (amountError) {
       return NextResponse.json({ error: amountError }, { status: 400 });
+    }
+
+    // The tip gate's Terms checkbox: record which version was accepted (best effort, never blocks a tip).
+    if (acceptedTermsVersion) {
+      await recordTermsAcceptance(ctx, userId, acceptedTermsVersion).catch((error) => {
+        scopedLogger.warn('[create-intent] could not record Terms acceptance', error instanceof Error ? error.message : String(error));
+      });
     }
 
     const checkoutResult = await createCheckoutIntent({

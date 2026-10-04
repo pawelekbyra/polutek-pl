@@ -60,6 +60,9 @@ export const auth = betterAuth({
     additionalFields: {
       language: { type: "string", required: false, defaultValue: "en", input: true },
       onboardingPending: { type: "boolean", required: false, defaultValue: false, input: false },
+      // Set only by beforeUserCreate (the sign-up window shows the Terms next to every way in).
+      termsAcceptedAt: { type: "date", required: false, input: false, returned: false },
+      termsVersion: { type: "string", required: false, input: false, returned: false },
     },
     // Changing the address (audit AUTH-02/SEC-04): the before hook wants the password or a fresh Google
     // sign-in and limits requests per user; the CURRENT address must approve the change first, then the

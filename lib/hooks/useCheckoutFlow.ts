@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { logger } from "@/lib/logger";
 import { MIN_PAYMENT_BY_CURRENCY, SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
 import { useToast } from "@/app/hooks/useToast";
+import { LEGAL_DOCUMENTS_VERSION } from "@/lib/legal/version";
 
 // Query params Stripe/our return URL add after a redirect-based payment method.
 const STRIPE_RETURN_PARAMS = [
@@ -73,8 +74,11 @@ export interface UseCheckoutFlowResult {
   handleRetryStatusCheck: () => Promise<void>;
   /** Leaves the result screen: full reload after a confirmed payment, URL cleanup otherwise. */
   closeSuccessAndSync: () => void;
-  /** Creates or updates the intent for this amount; resolves true once a client secret is ready. */
-  submit: (amount: number | "", currency: string, minAmount: number) => Promise<boolean>;
+  /**
+   * Creates or updates the intent for this amount; resolves true once a client secret is ready.
+   * `termsAccepted`: the payer ticked the Terms checkbox (the server records the accepted version).
+   */
+  submit: (amount: number | "", currency: string, minAmount: number, termsAccepted?: boolean) => Promise<boolean>;
   /** Leaves the result screen state (e.g. "try again" after a failure). */
   resetCheckout: () => void;
   /**
@@ -298,18 +302,23 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
     setPaymentUiStatus(null);
   }, []);
 
-  const requestIntent = useCallback(async (amountMinor: number, currency: string, requestId: string) => {
+  const requestIntent = useCallback(async (amountMinor: number, currency: string, requestId: string, termsAccepted: boolean) => {
     const response = await fetch("/api/checkout/create-intent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amountMinor, currency, requestId }),
+      body: JSON.stringify({
+        amountMinor,
+        currency,
+        requestId,
+        ...(termsAccepted ? { acceptedTermsVersion: LEGAL_DOCUMENTS_VERSION } : {}),
+      }),
       cache: "no-store",
     });
     return { response, data: await response.json().catch(() => null) };
   }, []);
 
   const submit = useCallback(
-    async (amount: number | "", currency: string, minAmount: number) => {
+    async (amount: number | "", currency: string, minAmount: number, termsAccepted = false) => {
       if (!userId) {
         openAuthModal("sign-in");
         return false;
@@ -328,12 +337,12 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
         let requestId = readAttemptId() ?? crypto.randomUUID();
         storeAttemptId(requestId);
 
-        let { response, data } = await requestIntent(amountMinor, normalizedCurrency, requestId);
+        let { response, data } = await requestIntent(amountMinor, normalizedCurrency, requestId, termsAccepted);
         if (data?.terminal) {
           // The stored attempt is finished (paid, failed to start, canceled): start a new one.
           requestId = crypto.randomUUID();
           storeAttemptId(requestId);
-          ({ response, data } = await requestIntent(amountMinor, normalizedCurrency, requestId));
+          ({ response, data } = await requestIntent(amountMinor, normalizedCurrency, requestId, termsAccepted));
         }
 
         if (data?.clientSecret) {

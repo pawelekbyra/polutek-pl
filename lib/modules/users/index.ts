@@ -15,3 +15,4 @@ export * from "./application/get-video-interaction.use-case";
 export * from "./application/check-nickname-availability.use-case";
 export * from "./application/update-user-profile.use-case";
 export * from "./application/get-user-avatar.use-case";
+export * from "./application/record-terms-acceptance.use-case";
