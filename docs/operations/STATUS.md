@@ -57,7 +57,7 @@ Ostatnia aktualizacja: 2026-10-04.
 | `fix/hls-audit` | hls.js lokalnie, szybki start, napisy, HDR, drabinka jakości, odświeżanie tokenu |
 | `fix/security-auth-audit` | zmiana e-maila, formularze logowania, onboarding, reszta CSP, resztki Clerka |
 | `fix/email-audit` | szablony (jedno źródło prawdy), wypis jednym kliknięciem, webhook Resend, kolejka rozsyłek |
-| `feat/passkey-sign-in` | logowanie kluczem dostępu (passkey); po wdrożeniu właściciel dodaje klucz na telefonie i komputerze (też jako 2. czynnik dla admina, punkt 4) |
+| `feat/passkey-first-signup` | „Kontynuuj z kluczem dostępu” zakłada konto jak Google (logowanie kluczem jest już na main); po wdrożeniu właściciel dodaje klucz na telefonie i komputerze (też jako 2. czynnik dla admina, punkt 4) |
 
 ## Do zrobienia (kolejność proponowana)
 
