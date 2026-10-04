@@ -198,8 +198,8 @@ export function CommentLoadingSkeleton({ count = 3 }: { count?: number }) {
 /**
  * Placeholder for the legal document pages (regulamin/terms, polityka-
  * prywatnosci/privacy-policy) — a plain text document, not the channel/video
- * shell. Mirrors LegalDocs.tsx: page header (title + effective date), the
- * "W skrócie" summary box, then a stack of numbered sections. Using
+ * shell. Mirrors LegalDocs.tsx: page header (title + effective date), then
+ * a stack of numbered sections. Using
  * HomePageSkeleton here (as the shared app/[locale]/loading.tsx boundary
  * would by default) drew a video player and playlist over a text-only page,
  * which read as broken.
@@ -212,12 +212,6 @@ export function LegalDocSkeleton() {
         <div className="mb-10 space-y-3 border-b-2 border-[var(--chan-ink)]/10 pb-8">
           <Skeleton className="h-8 w-3/4" />
           <Skeleton className="h-4 w-40" />
-        </div>
-        <div className="mb-12 space-y-2 rounded-xl border border-[var(--chan-ink)]/15 bg-white/60 p-5">
-          <Skeleton className="mb-2 h-3 w-24" />
-          <Skeleton className="h-3 w-full" />
-          <Skeleton className="h-3 w-5/6" />
-          <Skeleton className="h-3 w-2/3" />
         </div>
         <div className="space-y-10">
           {[1, 2, 3, 4, 5].map((i) => (
