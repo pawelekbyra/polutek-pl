@@ -29,6 +29,7 @@ describe('AccountDeletionCleanupUseCase', () => {
       session: { deleteMany: vi.fn().mockResolvedValue({ count: 2 }) },
       account: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
       twoFactor: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
+      passkey: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
       userAvatar: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
       auditLog: { create: vi.fn().mockResolvedValue({}) },
       $transaction: vi.fn((fn) => fn(prisma)),
@@ -50,6 +51,7 @@ describe('AccountDeletionCleanupUseCase', () => {
     expect(prisma.session.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1' } });
     expect(prisma.account.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1' } });
     expect(prisma.twoFactor.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1' } });
+    expect(prisma.passkey.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1' } });
     expect(prisma.userAvatar.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1' } });
     expect(prisma.subscription.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u1' } });
     expect(prisma.emailPreference.deleteMany).toHaveBeenCalledWith({

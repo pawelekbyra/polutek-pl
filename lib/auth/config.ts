@@ -36,7 +36,11 @@ export const CHANGE_EMAIL_WINDOW_SECONDS = 60 * 60;
 export const MAIL_TO_ADDRESS_LIMIT = 5;
 export const MAIL_TO_ADDRESS_WINDOW_SECONDS = 60 * 60;
 
-/** Paths protected by Cloudflare Turnstile (Better Auth path, without /api/auth). */
+/**
+ * Paths protected by Cloudflare Turnstile (Better Auth path, without /api/auth). Passkey sign-in is
+ * deliberately not here: it needs a private key on the user's device plus a gesture, the challenge is
+ * single-use, and the options request runs when the sign-in form opens (autofill), before any widget.
+ */
 export const CAPTCHA_ENDPOINTS = [
   "/sign-up/email",
   "/sign-in/email",
@@ -74,6 +78,38 @@ export function getTrustedOrigins(env: Record<string, string | undefined> = proc
     if (value) origins.add(value);
   }
   return Array.from(origins);
+}
+
+/** Name the browser shows in the passkey prompt ("Save a passkey for Pawel Perfect"). */
+export const PASSKEY_RP_NAME = "Pawel Perfect";
+/** Longest device name stored for a passkey (the user may type one; the server trims longer input). */
+export const PASSKEY_NAME_MAX_LENGTH = 64;
+
+function hostnameOf(value: string): string | null {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * WebAuthn relying party (passkeys). The RP ID is the registrable domain without `www.`
+ * (`pawelperfect.com`), so one passkey works on both www and the apex; in development it is
+ * `localhost`. Only trusted origins on that domain (or its subdomains) are accepted as the
+ * WebAuthn origin; it is never taken from the request's own Origin header.
+ */
+export function getPasskeyRelyingParty(env: Record<string, string | undefined> = process.env): {
+  rpID: string;
+  rpName: string;
+  origin: string[];
+} {
+  const rpID = (hostnameOf(getAuthBaseUrl(env)) ?? "localhost").replace(/^www\./, "");
+  const origin = getTrustedOrigins(env).filter((value) => {
+    const host = hostnameOf(value);
+    return host !== null && (host === rpID || host.endsWith(`.${rpID}`));
+  });
+  return { rpID, rpName: PASSKEY_RP_NAME, origin };
 }
 
 /** One-time bootstrap list: verified accounts with these e-mails become ADMIN (see resolveDbBackedActor). */

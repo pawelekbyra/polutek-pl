@@ -41,7 +41,8 @@ model User {
   sessions         Session[]
   accounts         Account[]
   twoFactors       TwoFactor[]
-  avatar           UserAvatar?
+  passkeys         Passkey[]
+  avatar          UserAvatar?
   creators         Creator[]
   comments         Comment[]
   commentLikes     CommentLike[]
@@ -126,6 +127,25 @@ model TwoFactor {
   failedVerificationCount Int @default(0)
   lockedUntil DateTime?
   user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Better Auth passkey plugin (WebAuthn). Only the public key and metadata are stored; the private
+// key never leaves the user's device. `credentialID` is unique across all users (WebAuthn L3 §7.1).
+model Passkey {
+  id           String    @id
+  name         String?
+  publicKey    String
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialID String    @unique
+  counter      Int
+  deviceType   String
+  backedUp     Boolean
+  transports   String?
+  createdAt    DateTime? @default(now())
+  aaguid       String?
 
   @@index([userId])
 }

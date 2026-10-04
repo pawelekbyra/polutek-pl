@@ -57,6 +57,7 @@ export class AccountDeletionCleanupUseCase {
       await tx.session.deleteMany({ where: { userId: input.userId } });
       await tx.account.deleteMany({ where: { userId: input.userId } });
       await tx.twoFactor.deleteMany({ where: { userId: input.userId } });
+      await tx.passkey.deleteMany({ where: { userId: input.userId } });
       await tx.userAvatar.deleteMany({ where: { userId: input.userId } });
       await tx.subscription.deleteMany({ where: { userId: input.userId } });
       await tx.emailPreference.deleteMany({

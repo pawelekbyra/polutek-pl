@@ -17,6 +17,13 @@ import {
 } from "./config";
 import { hitAuthCounter, peekAuthCounter } from "./rate-limit-storage";
 import { queuePasswordChangedEmail } from "./emails";
+import {
+  PASSKEY_PATHS,
+  assertFreshSessionForPasskeyRemoval,
+  auditPasskeyEvent,
+  sanitizePasskeyRegistrationBody,
+  stripPasskeyOptionsName,
+} from "./passkey";
 
 type HookCtx = {
   path?: string;
@@ -230,6 +237,17 @@ export const authBeforeHook = createAuthMiddleware(async (ctx) => {
     await guardChangeEmail(ctx as unknown as ChangeEmailCtx);
     return;
   }
+  if (ctx.path === PASSKEY_PATHS.registerOptions) {
+    // The plugin would use `?name=` as the WebAuthn user name; the password manager must show the e-mail.
+    return { context: { ...ctx, query: stripPasskeyOptionsName(ctx.query) } };
+  }
+  if (ctx.path === PASSKEY_PATHS.register) {
+    return { context: { ...ctx, body: sanitizePasskeyRegistrationBody(ctx.body) } };
+  }
+  if (ctx.path === PASSKEY_PATHS.remove) {
+    await assertFreshSessionForPasskeyRemoval(ctx);
+    return;
+  }
   if (MAIL_TO_ADDRESS_PATHS.has(ctx.path)) {
     const email = bodyEmail(ctx);
     if (email) await assertMailToAddressAllowed(email);
@@ -286,6 +304,9 @@ export const authAfterHook = createAuthMiddleware(async (ctx) => {
   }
   if (ctx.path === "/sign-out") {
     await recordAuthAudit({ action: "AUTH_SIGN_OUT", userId: ctx.context.session?.user?.id ?? null });
+  }
+  if (ctx.path.startsWith("/passkey/")) {
+    await auditPasskeyEvent(ctx);
   }
 });
 
