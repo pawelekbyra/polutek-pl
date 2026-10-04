@@ -175,7 +175,8 @@
     else if (act === "refund") refundFlow(id);
     else if (act === "mod-hide" || act === "mod-keep" || act === "mod-mute") moderate(act, id);
     else if (act === "delete-comment") confirmModal({ title: "Usunąć komentarz?", body: "Usunięcie jest ostateczne. Jeśli chcesz tylko schować komentarz przed widzami, użyj „Ukryj” (można cofnąć).", effect: ["komentarz i odpowiedzi znikną ze strony", "polubienia zostaną usunięte", "wpis COMMENT_DELETED w audycie"], confirm: "Usuń komentarz", danger: true, onConfirm: () => toast("ok", "Komentarz usunięty", "Zapisano w dzienniku audytu.") });
-    else if (act === "delete-user") confirmModal({ title: "Usunąć i zanonimizować konto?", body: "Konto zostanie zanonimizowane: pseudonim, e-mail i awatar znikną, komentarze zostaną podpisane „Usunięte konto”. Wpłaty zostają w księgowości bez danych osobowych.", effect: ["wylogowanie ze wszystkich urządzeń", "nieodwracalne", "wymaga ponownego uwierzytelnienia (w pełnej wersji)"], confirm: "Usuń konto", danger: true, onConfirm: () => toast("ok", "Konto zanonimizowane", "Zapis USER_DELETED w audycie.") });
+    else if (act === "delete-user") PP.deleteUserFlow(id);
+    else if (PP.extraActions && PP.extraActions[act]) PP.extraActions[act](a, id);
     else if (act === "unpublish") confirmModal({ title: `Cofnąć publikację „${a.dataset.title}”?`, body: "Film zniknie ze strony dla widzów i wróci do szkiców.", effect: ["film znika z listy filmów (sidebar)", "jeśli był hero, strona główna zostaje bez hero", "publiczna kopia miniatury zostaje usunięta", "komentarze zostają, ale nie są widoczne"], confirm: "Cofnij publikację", danger: true, onConfirm: () => toast("ok", "Publikacja cofnięta", "Prototyp: dane nie zostały zmienione.") });
     else if (act === "rollback") confirmModal({ title: "Wycofać wdrożenie do m10032104?", body: "Aplikacja wróci do poprzedniego obrazu (ok. 30 s przerwy). Migracje bazy nie są cofane.", confirm: "Wycofaj", danger: true, onConfirm: () => toast("ok", "Wycofywanie zlecone", "deploy.sh --rollback · wynik pojawi się na osi zmian.") });
     else if (act === "reply") replyModal(id);
@@ -385,6 +386,11 @@
     ALL.forEach((n) => list.push({ g: "Przejdź", label: n.label, icon: n.icon, kbd: ["g", n.key], run: () => { location.hash = href(n.id).slice(1); } }));
     [
       ["Moderuj zgłoszenia", "flag", () => { location.hash = href("spolecznosc", { tab: "moderacja" }).slice(1); }, "kolejka komentarze spam"],
+      ["Nowy film (wgraj oryginał)", "upload", () => { location.hash = href("tresci/nowy").slice(1); }, "dodaj upload film"],
+      ["Układ kanału (kolejność, hero)", "film", () => { location.hash = href("tresci", { widok: "uklad" }).slice(1); }, "sidebar kolejnosc hero"],
+      ["Nowa rozsyłka e-mail", "mail", () => { location.hash = href("komunikacja", { tab: "rozsylki", nowa: "1" }).slice(1); }, "newsletter broadcast"],
+      ["Ustawienia kanału", "settings", () => { location.hash = href("ustawienia", { tab: "kanal" }).slice(1); }, "nazwa opis baner miniatura"],
+      ["Ustawienia płatności (minimalne kwoty)", "coins", () => { location.hash = href("ustawienia", { tab: "platnosci" }).slice(1); }, "napiwek minimum waluty"],
       ["Zwróć płatność…", "coins", () => { location.hash = href("przychody", { tab: "wplaty" }).slice(1); toast("ok", "Wybierz wpłatę", "Przycisk „Zwrot…” przy wierszu."); }, "refund zwrot pieniadze"],
       ["Ponów nieudane kodowanie „Test kodowania 4K”", "refresh", () => retryEncode("test-kodowania-4k"), "encode ffmpeg"],
       ["Dodaj notatkę na osi zmian", "note", noteModal, "adnotacja wykres"],
