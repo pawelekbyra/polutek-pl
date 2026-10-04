@@ -50,10 +50,24 @@ function posterFor(video?: { id: string; status?: string | null; thumbnailUrl?: 
   return video?.id ? resolvePublicThumbnailSrc(video, process.env) : '';
 }
 
+/** A WebVTT URL the browser may load: absolute https or a same-site path. Anything else is dropped. */
+function safeSubtitleUrl(value: string | null | undefined): string | null {
+  const url = value?.trim();
+  if (!url) return null;
+  if (url.startsWith('/') && !url.startsWith('//')) return url;
+  try {
+    return new URL(url).protocol === 'https:' ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 function playerFor(video?: { thumbnailUrl?: string | null; title?: string | null; subtitleUrlPl?: string | null; subtitleUrlEn?: string | null } | null, controls = false): PlayerDefaults['player'] {
   const textTracks: PlayerDefaults['player']['textTracks'] = [];
-  if (video?.subtitleUrlPl) textTracks.push({ src: video.subtitleUrlPl, label: 'Polski', language: 'pl', kind: 'subtitles' });
-  if (video?.subtitleUrlEn) textTracks.push({ src: video.subtitleUrlEn, label: 'English', language: 'en', kind: 'subtitles' });
+  const pl = safeSubtitleUrl(video?.subtitleUrlPl);
+  const en = safeSubtitleUrl(video?.subtitleUrlEn);
+  if (pl) textTracks.push({ src: pl, label: 'Polski', language: 'pl', kind: 'subtitles' });
+  if (en) textTracks.push({ src: en, label: 'English', language: 'en', kind: 'subtitles' });
   return {
     autoplayAllowed: controls,
     mutedAutoplay: controls,
@@ -137,7 +151,17 @@ function pickSelfHlsAsset(video: VideoWithAssets | null): VideoAsset | null {
 }
 
 export class PlaybackService {
-  static async createPlaybackPlanWithContext(videoId: string, ctx: AppContext, ipHash?: string, userAgentHash?: string): Promise<PlaybackPlan> {
+  /**
+   * `options.reuseSessionId`: the open player renews its delivery token. Access and the premiere
+   * gate are checked again in full; only the playback session may be kept (see self-hls-plan).
+   */
+  static async createPlaybackPlanWithContext(
+    videoId: string,
+    ctx: AppContext,
+    ipHash?: string,
+    userAgentHash?: string,
+    options: { reuseSessionId?: string } = {},
+  ): Promise<PlaybackPlan> {
     const { actor } = ctx;
 
     // Provider-gating order: make the backend access decision first, then load the
@@ -280,8 +304,10 @@ export class PlaybackService {
       ipHash,
       userAgentHash,
       safeAsset,
-      player: playerFor({ thumbnailUrl, title }, true),
+      // Subtitles only on the playable plan: denied plans are built without them (no URL leaks).
+      player: playerFor({ thumbnailUrl, title, subtitleUrlPl: video.subtitleUrlPl, subtitleUrlEn: video.subtitleUrlEn }, true),
       warnings,
+      reuseSessionId: options.reuseSessionId,
     }).catch((e) => {
       console.error('[PLAYBACK_SERVICE] SELF_HLS resolution failed', e);
       return null;

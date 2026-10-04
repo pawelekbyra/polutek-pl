@@ -143,15 +143,13 @@ describe("processEncodeJob", () => {
     expect(h.hls.deletePrefix.mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 
-  it("fails permanently on HDR input before encoding anything", async () => {
+  it("encodes HDR input (the encoder tone-maps it) and records it in the source info", async () => {
     const h = harness();
     h.encoder.probe.mockResolvedValue({ ...GOOD_PROBE, hdr: true });
     const outcome = await processEncodeJob(h.job, h.ports);
-    expect(outcome).toBe("failed");
-    expect(h.encoder.encode).not.toHaveBeenCalled();
-    expect(h.hls.putFile).not.toHaveBeenCalled();
-    expect(h.store.markFailedOrRetry).toHaveBeenCalledWith("job-1", "w1", expect.objectContaining({ next: "FAILED", code: "HDR_UNSUPPORTED" }), expect.any(Date));
-    expect(h.audit).toHaveBeenCalledWith("VIDEO_ENCODE_FAILED", expect.anything(), expect.objectContaining({ code: "HDR_UNSUPPORTED" }));
+    expect(outcome).toBe("succeeded");
+    expect(h.encoder.encode).toHaveBeenCalledTimes(1);
+    expect(h.store.reportProgress).toHaveBeenCalledWith("job-1", "w1", expect.objectContaining({ sourceInfo: expect.objectContaining({ hdr: true }) }));
   });
 
   it("rejects over-long and over-large sources", async () => {

@@ -356,6 +356,18 @@ export const PLAYBACK_EVENT_TYPES: PlaybackEventType[] = [
   "ACCESS_ERROR"
 ];
 
+/** How often the player sends HEARTBEAT while playing (the plan tells the player this value). */
+export const PLAYBACK_HEARTBEAT_INTERVAL_SECONDS = 60;
+
+/**
+ * Most watch time one HEARTBEAT/PAUSE/END may add: one interval plus slack for late timers.
+ * A longer gap means the player was paused or the tab slept, which is not watch time.
+ */
+export const PLAYBACK_MAX_WATCH_INCREMENT_MS = (PLAYBACK_HEARTBEAT_INTERVAL_SECONDS + 30) * 1000;
+
+/** A playback session accepts events (and can be kept on a token renewal) for this long. */
+export const PLAYBACK_SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
 export interface RecordPlaybackEventInput {
   videoId: string;
   sessionId?: string;
