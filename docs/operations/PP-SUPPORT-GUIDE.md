@@ -179,7 +179,7 @@ Lista funkcji, ktore moglibysmy dopisac sami w nakladce `/admin/support` (nasz k
 - **Pobieranie wlasnych stron do bazy wiedzy** (nasz crawler dla naszej strony i dokumentacji).
 
 ### Pozniej albo wcale
-- **Kampanie wychodzace**: razem z wlasna wysylka poczty i drugim serwerem (docs/research/serwerek/07-self-hosted-mail.md).
+- **Kampanie wychodzace**: razem z wlasna wysylka poczty i drugim serwerem (docs/architecture/self-hosted-mail-plan.md).
 - **Publiczne centrum pomocy** (artykuly), np. strona `/pomoc` generowana z FAQ.
 - **Logowanie SAML i weryfikacja urzadzen**: niepotrzebne, mamy Cloudflare Access i Google.
 - **Rozmowy glosowe i WhatsApp**: wymagaja operatora telefonii, poza zakresem.
