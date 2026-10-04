@@ -33,15 +33,19 @@ export function SignUpLegalNotice({ language }: { language: string }) {
     <p data-testid="signup-legal-notice" className="text-center text-[11.5px] leading-relaxed text-[var(--chan-muted)]">
       {isPl ? (
         <>
-          Zakładając konto (także przez Google), akceptujesz{" "}
-          <LegalDocLink doc="terms" language={language}>Regulamin</LegalDocLink> i{" "}
-          <LegalDocLink doc="privacy" language={language}>Politykę prywatności</LegalDocLink>.
+          Zakładając konto (także przez Google), akceptujesz:
+          <span className="block">
+            <LegalDocLink doc="terms" language={language}>Regulamin</LegalDocLink> i{" "}
+            <LegalDocLink doc="privacy" language={language}>Politykę prywatności</LegalDocLink>.
+          </span>
         </>
       ) : (
         <>
-          By creating an account (also with Google), you accept the{" "}
-          <LegalDocLink doc="terms" language={language}>Terms</LegalDocLink> and the{" "}
-          <LegalDocLink doc="privacy" language={language}>Privacy Policy</LegalDocLink>.
+          By creating an account (also with Google), you accept:
+          <span className="block">
+            the <LegalDocLink doc="terms" language={language}>Terms</LegalDocLink> and the{" "}
+            <LegalDocLink doc="privacy" language={language}>Privacy Policy</LegalDocLink>.
+          </span>
         </>
       )}
     </p>

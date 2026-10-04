@@ -15,6 +15,7 @@ import { SESSION_COOKIE_PREFIX, SESSION_EXPIRES_IN_SECONDS } from '@/lib/auth/co
 import { UNVERIFIED_ACCOUNT_RETENTION_DAYS } from '@/lib/auth/prune-unverified';
 import { AUTHOR_DELETED_COMMENT_RETENTION_DAYS } from '@/lib/modules/comments/application/purge-deleted-comments.use-case';
 import { TECHNICAL_DATA_RETENTION_DAYS } from '@/lib/modules/privacy/domain/retention';
+import { TELEMETRY_AGGREGATE_RETENTION_MONTHS, TELEMETRY_RAW_RETENTION_DAYS } from '@/lib/telemetry/retention';
 
 const DOCS = { RegulaminContent, PolitykaContent, TermsContentEn, PrivacyContentEn };
 const POLICIES = { PolitykaContent, PrivacyContentEn };
@@ -103,6 +104,21 @@ describe('legal documents consistency', () => {
     expect(text(PrivacyContentEn)).toContain('expired sessions and email links are erased daily');
     expect(text(PolitykaContent)).toContain('treść Twoich komentarzy');
     expect(text(PrivacyContentEn)).toContain('the text of your comments');
+  });
+
+  it('the statistics described in the policy match the telemetry code: periods, no cookies, opt-out signals', () => {
+    expect(TELEMETRY_RAW_RETENTION_DAYS).toBe(90);
+    expect(TELEMETRY_AGGREGATE_RETENTION_MONTHS).toBe(25);
+    const pl = text(PolitykaContent);
+    expect(pl).toContain(`zdarzenia statystyczne po ${TELEMETRY_RAW_RETENTION_DAYS} dniach`);
+    expect(pl).toContain(`dzienne zestawienia statystyk po ${TELEMETRY_AGGREGATE_RETENTION_MONTHS} miesiącach`);
+    expect(pl).toContain('Global Privacy Control lub Do Not Track');
+    expect(pl).toContain('Statystyki z § 2 działają bez cookies i bez pamięci przeglądarki');
+    const en = text(PrivacyContentEn);
+    expect(en).toContain(`statistics events after ${TELEMETRY_RAW_RETENTION_DAYS} days`);
+    expect(en).toContain(`daily statistics summaries after ${TELEMETRY_AGGREGATE_RETENTION_MONTHS} months`);
+    expect(en).toContain('Global Privacy Control or Do Not Track');
+    expect(en).toContain('without cookies and without browser storage');
   });
 
   it('the policy says Google sign-in (g_state) starts only after the sign-in window is opened', () => {

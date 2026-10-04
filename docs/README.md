@@ -19,6 +19,7 @@ albo znika w tym samym PR. Historia jest w git.
 | PP Support: architektura i projekt agenta AI | [`architecture/support-center.md`](architecture/support-center.md) |
 | Własna wysyłka poczty (plan na później) | [`architecture/self-hosted-mail-plan.md`](architecture/self-hosted-mail-plan.md) |
 | Nowy panel administratora `admin.pawelperfect.com`: wizja, decyzje, fazy (projekt) | [`architecture/admin-panel.md`](architecture/admin-panel.md) |
+| Nowy panel administratora: parytet ze starym `/admin` (każda funkcja, przycisk i trasa → ekran → faza) | [`architecture/admin-parity.md`](architecture/admin-parity.md) |
 | Nowy panel administratora: klikalny prototyp (dane przykładowe) i system projektowy | [`design/admin-panel/DESIGN-SYSTEM.md`](design/admin-panel/DESIGN-SYSTEM.md), prototyp: `design/admin-panel/prototype-standalone.html` |
 
 ## Jak to obsługiwać (`operations/`)
@@ -26,6 +27,7 @@ albo znika w tym samym PR. Historia jest w git.
 | Temat | Plik |
 |---|---|
 | Serwer: układ, deploy, rollback, kopie, crony | [`operations/SERWEREK.md`](operations/SERWEREK.md) |
+| Dzienna odprawa „co słychać?” (raport tylko do odczytu, skill `odprawa`) | [`operations/DAILY-BRIEFING.md`](operations/DAILY-BRIEFING.md) |
 | Wydajność: test obciążenia, ilu widzów wytrzymuje serwer | [`operations/LOAD-TEST.md`](operations/LOAD-TEST.md) |
 | Wideo: upload, kodowanie, diagnostyka | [`operations/VIDEO-PIPELINE.md`](operations/VIDEO-PIPELINE.md) |
 | Wideo: dostarczanie HLS, Worker, R2 | [`operations/HLS-SELF-HOSTED.md`](operations/HLS-SELF-HOSTED.md) |

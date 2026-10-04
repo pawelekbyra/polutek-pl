@@ -10,7 +10,9 @@ services:
     image: postgres:17-alpine
     restart: unless-stopped
     env_file: ./db.env            # POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
-    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "max_connections=60"]
+    # pg_stat_statements (query statistics for the admin panel): preloading needs a restart, done once by
+    # scripts/serwerek/pg-stat-statements-enable.sh (SERWEREK.md section 23); keep this line identical to the one it writes.
+    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "max_connections=60", "-c", "shared_preload_libraries=pg_stat_statements", "-c", "pg_stat_statements.track=top"]
     volumes:
       - /opt/serwerek/data/polutek/pg:/var/lib/postgresql/data
     ports:
@@ -54,6 +56,26 @@ services:
     logging:
       driver: json-file
       options: { max-size: "20m", max-file: "3" }
+
+  collector:
+    # pp-collector: anonymous analytics beacons forwarded by the app (POST /api/t), batch insert into the
+    # Postgres schema "telemetry" as role pp_collector, rollups every 5 min, retention every 6 h.
+    # No published port: only the app reaches it, at http://collector:3200 (TELEMETRY_COLLECTOR_URL in app.env).
+    # Optional like the encoder: deploy.sh starts it only when collector.env exists. Docs: docs/architecture/admin-telemetry.md.
+    image: ${COLLECTOR_IMAGE:-polutek-collector:current}
+    restart: unless-stopped
+    env_file: ./collector.env     # TELEMETRY_DATABASE_URL=postgresql://pp_collector:...@db:5432/<db>, TELEMETRY_ALLOWED_HOSTS=www.pawelperfect.com
+    depends_on:
+      db:
+        condition: service_healthy
+    mem_limit: 96m
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+    pids_limit: 64
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
 
   migrate:
     # One-off, run by deploy.sh:  docker compose --profile tools run --rm migrate

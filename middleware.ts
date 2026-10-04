@@ -60,6 +60,8 @@ const isPublicRoute = createRouteMatcher([
   // exists (no session). Rate-limited per IP, returns only a boolean.
   '/api/users/nickname-available',
   '/api/health',
+  // Anonymous analytics beacon (app/api/t/route.ts): always 204, no cookies, handed to pp-collector.
+  '/api/t',
   '/api/access(.*)',
   '/api/media-source/(.*)',
   '/api/videos/(.*)/playback-event',

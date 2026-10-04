@@ -1,0 +1,12 @@
+[Unit]
+Description=serwerek nightly backup (dumps, configs, encrypted offsite copy to R2)
+After=docker.service
+Wants=docker.service
+OnFailure=serwerek-alert@%n.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/serwerek/scripts/backup.sh
+TimeoutStartSec=3600
+Nice=10
+IOSchedulingClass=idle

@@ -1,0 +1,20 @@
+# Lives next to docker-compose.yml on serwerek (/opt/serwerek/apps/polutek/); compose merges it automatically.
+# Redis for rate limits and auth counters, reached by the app through the REST gateway srh
+# (KV_REST_API_URL=http://srh:80, SRH_TOKEN in .env next to this file). Kept as a separate file so a
+# local `docker compose` of the main file still works without Redis.
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server","--appendonly","yes","--maxmemory","128mb","--maxmemory-policy","allkeys-lru"]
+    volumes: ["/opt/serwerek/data/polutek/redis:/data"]
+    mem_limit: 192m
+  srh:
+    image: hiett/serverless-redis-http:latest
+    restart: unless-stopped
+    environment:
+      SRH_MODE: env
+      SRH_TOKEN: ${SRH_TOKEN}
+      SRH_CONNECTION_STRING: redis://redis:6379
+    depends_on: [redis]
+    mem_limit: 128m

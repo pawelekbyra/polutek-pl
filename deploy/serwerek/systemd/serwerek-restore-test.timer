@@ -1,0 +1,9 @@
+[Unit]
+Description=serwerek restore test, Sundays 03:30 local time (after the 02:30 backup)
+
+[Timer]
+OnCalendar=Sun *-*-* 03:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

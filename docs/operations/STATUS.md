@@ -26,6 +26,9 @@ Ostatnia aktualizacja: 2026-10-04.
 - **Pasek zbiórki:** zostaje ręcznie ustawiany (decyzja 2026-10-04).
 - **Resend:** zostaje jedynym nadawcą do czasu własnej poczty; plan Pro dopiero przy starcie publicznym. Nowa domena ma słabą reputację u Hotmaila (maile w spamie).
 - **Polityka prywatności** (2026-10-04): przepisać na krótką, zrozumiałą, zawierającą tylko to, co wymaga prawo (jak Regulamin); przed startem przegląd prawnika.
+- **Odprawa dzienna** (2026-10-04): bez autonomicznego agenta AI na serwerze. Właściciel pyta Claude Code
+  „co słychać?”, Claude uruchamia `scripts/ops/briefing.mjs` (tylko odczyt, [`DAILY-BRIEFING.md`](DAILY-BRIEFING.md)),
+  a działania wykonuje dopiero po zgodzie właściciela w czacie.
 - **Panel administratora** (2026-10-04): niezależna aplikacja na `admin.pawelperfect.com` z bogatą analityką i obserwowalnością (odwraca decyzję z 2026-09-30 o odłożeniu). Wizja, decyzje, fazy budowy i 12 pytań do właściciela: [`architecture/admin-panel.md`](../architecture/admin-panel.md).
 ## Czeka na właściciela
 
@@ -40,13 +43,19 @@ Ostatnia aktualizacja: 2026-10-04.
    CX43 8 vCPU/16 GB 15,99 €, CPX32 4 vCPU/8 GB 35,49 €, dedykowany EX44 14 rdzeni/64 GB 57,30 €.
    Zmiana rozmiaru w trybie „CPU i RAM” (bez dysku), żeby dało się wrócić.
 4. **2FA dla kont administratora**: żadne z 4 kont admina nie ma 2FA. `ADMIN_EMAILS` jest na produkcji
-   pusty (pomiar 2026-10-04), ale `hello@` jest w polityce Access dla `support.`, a jego poczta (linki
-   resetu, kody OTP) trafia do PP Support, którą czyta token agenta AI. Kroki: `architecture/admin-panel.md`, faza 0.
+   pusty (pomiar 2026-10-04). `hello@` usunięty z polityki Access 2026-10-04 (SERWEREK.md §4). Zostaje dla
+   właściciela: włączyć TOTP albo passkey na swoich kontach (strona, Cloudflare, GitHub, Google, Resend, Stripe,
+   PP Support) i zdecydować, z których kont admina zdjąć rolę (agent nie robi ad-hoc UPDATE na produkcji).
+   Kroki: `architecture/admin-panel.md`, faza 0.
 5. **Logowanie Google**: klient OAuth leży w projekcie organizacji Google Workspace. Przed anulowaniem
    Workspace trzeba go przenieść na konto osobiste (`GOOGLE_ACCESS.md`, sekcja „Move the OAuth client”),
    potem agent podmienia `GOOGLE_CLIENT_ID/SECRET` na serwerze.
 6. **Anulowanie Google Workspace** (po punkcie 5, ok. 2026-10-09).
-7. **Decyzje produktowe z audytów, które jeszcze czekają:** retencja danych (jak długo trzymać oryginały wideo, telemetrię, logi), wymogi prawne z `audit-legal-privacy.md` (polityka prywatności w toku, reklamacje i DSA w regulaminie).
+7. **Analityka bez zgody (pytanie do prawnika, 2026-10-04):** wytyczne EDPB 2/2023 traktują beacon bez cookies jako
+   „dostęp do urządzenia” (art. 5(3) ePrivacy), a art. 399 PKE nie ma wyjątku dla analityki. Statystyki są minimalne,
+   anonimowe i opisane w polityce, z wyłącznikiem `TELEMETRY_BEACON=off` (`architecture/admin-telemetry.md` §1).
+   Przed startem publicznym prawnik ocenia, czy zostają bez zgody.
+8. **Decyzje produktowe z audytów, które jeszcze czekają:** retencja danych (jak długo trzymać oryginały wideo, telemetrię, logi), wymogi prawne z `audit-legal-privacy.md` (polityka prywatności w toku, reklamacje i DSA w regulaminie).
 
 ## W toku (gałęzie agentów, każda kończy się PR-em)
 
@@ -57,6 +66,9 @@ Ostatnia aktualizacja: 2026-10-04.
 | `fix/hls-audit` | hls.js lokalnie, szybki start, napisy, HDR, drabinka jakości, odświeżanie tokenu |
 | `fix/security-auth-audit` | zmiana e-maila, formularze logowania, onboarding, reszta CSP, resztki Clerka |
 | `fix/email-audit` | szablony (jedno źródło prawdy), wypis jednym kliknięciem, webhook Resend, kolejka rozsyłek |
+| `feat/admin-phase0-telemetry` | panel admina, faza 0: schemat `telemetry`, `pp-collector`, beacon (odsłony, Web Vitals, jakość odtwarzania), polityka prywatności 2026-10-05; po wdrożeniu włączyć `scripts/serwerek/telemetry-enable.sh` (SERWEREK.md §22) |
+| `feat/admin-phase0-ops` | faza 0, operacje: kopie (age, bucket lock, test odtworzenia, alerty), `pg_stat_statements`, obrazy z GHCR, strażnik `pp-watchdog`; zmiany na serwerze już wykonane (SERWEREK.md §23–25) |
+| `feat/daily-briefing` | dzienna odprawa „co słychać?” (skrypt tylko do odczytu + skill `odprawa`); następny krok: skrypty działań z audytem (odpowiedź-szkic, ukrycie komentarza, zwrot) uruchamiane po zgodzie właściciela |
 | `feat/passkey-first-signup` | „Kontynuuj z kluczem dostępu” zakłada konto jak Google (logowanie kluczem jest już na main); po wdrożeniu właściciel dodaje klucz na telefonie i komputerze (też jako 2. czynnik dla admina, punkt 4) |
 
 ## Do zrobienia (kolejność proponowana)
@@ -73,23 +85,20 @@ Ostatnia aktualizacja: 2026-10-04.
 6. Usunięcie dwóch pozostałych flag: `TEMP_HIDE_NOTIFICATIONS_BELL`, `TEMP_FORCE_ENGLISH` (po decyzjach
    z punktu 7 wyżej).
 7. Nowy, krótki `CLAUDE.md` opisujący wyłącznie stan obecny (po scaleniu gałęzi z punktu 1).
-8. Przepisać `SERWEREK.md` do stanu faktycznego (audyt operacji znalazł 21 rozbieżności) i dodać do
-   repo pliki, które żyją tylko na serwerze: `backup.sh`, `health.sh`, `docker-compose.override.yml`.
+8. Przepisać `SERWEREK.md` do stanu faktycznego (audyt operacji znalazł 21 rozbieżności). `backup.sh`, `health.sh`,
+   `docker-compose.override.yml` są już w repo (`scripts/serwerek/`, `deploy/serwerek/`, gałąź `feat/admin-phase0-ops`).
 9. Usuwanie użytkownika i zmiana roli ADMIN: w nowym panelu to ekran „Społeczność → użytkownik”; stary panel
    (`/admin/users/[userId]`, „Rola i uprawnienia” i „Strefa zagrożenia”) dostał je tymczasowo.
 
 ## Operacje (z `audit-ops.md`)
 
-- Kopie: sekrety (`app.env`, klucz tunelu) nie są w kopii; szyfrowana kopia sekretów (age) do R2.
 - Baza: kopia raz na dobę (do 24 h utraty danych); częstsze zrzuty albo archiwizacja WAL do R2.
 - Oryginały wideo i HLS w R2 bez kopii i bez blokady usuwania.
-- Monitoring tylko z samego serwera; potrzebny zewnętrzny, plus alert po nieudanym backupie i cronie.
-- Obrazy budowane na serwerze produkcyjnym (przy każdym wdrożeniu swap ok. 1,5 GB i większość CPU):
-  docelowo budowa poza nim i pobranie gotowego obrazu. Robimy przed startem, niezależnie od rozmiaru serwera.
-  CI na GitHubie ma limit minut dla prywatnego repo: testy można uruchamiać na serwerze.
+- Obrazy: workflow `images.yml` + `IMAGE_SOURCE=ghcr ./deploy.sh` gotowe (SERWEREK.md §24); brakuje tokenu
+  `read:packages` na serwerze (właściciel) i pierwszego wdrożenia z GHCR. Limit minut Actions prywatnego repo
+  do sprawdzenia przez właściciela (agent nie ma uprawnień do rozliczeń).
 - Rotacja logów kontenerów, twardsze ustawienia kontenerów, osobna rola bazy bez uprawnień superusera.
 - Deploy restartuje koder w trakcie kodowania (kodowanie zaczyna od zera).
-- Stary rclone na serwerze (pierwsza próba wysyłki do R2 kończy się błędem 501).
 - Na serwerze do usunięcia: martwe zmienne `MUX_*` w `app.env`, usługa `serwerek-placeholder` i wpisy
   tunelu `test.` oraz `apptest.`.
 - DNS do usunięcia: rekordy Clerka w obu strefach.

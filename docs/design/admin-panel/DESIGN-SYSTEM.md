@@ -2,6 +2,8 @@
 
 Krótki kontrakt wyglądu i zachowania nowego panelu `admin.pawelperfect.com`. Źródłem prawdy jest prototyp w tym katalogu: `styles.css` (tokeny i komponenty), `charts.js` (wykresy), `core.js` (klocki UI). Kierunek zatwierdzony przez właściciela 2026-10-04 („podoba mi się bardzo”): jasna, spokojna paleta, zaokrąglone elementy, wyszukiwarka i filtr czasu u góry. Nie zmieniać charakteru bez jego decyzji.
 
+**Ekrany parytetu (2026-10-04, `screens-c.js`):** nowy film z wgraniem oryginału (`#/tresci/nowy`), edycja wszystkich pól filmu ze strefą zagrożenia (`#/tresci/<slug>/edycja`), układ kanału (`#/tresci?widok=uklad`), rola i usunięcie konta z wpisaniem e-maila (profil 360°), Ustawienia → Kanał / Płatności / Panel i alerty, Komunikacja → Rozsyłki (kreator) / Szablony (edytor PL/EN) / Powiadomienia. Działania nieodwracalne (usunięcie filmu, konta) wymagają wpisania sluga lub e-maila; odwracalne (archiwizacja, anulowanie rozsyłki) mają zwykłe okno ze skutkiem. Mapa funkcji starego panelu: [`../../architecture/admin-parity.md`](../../architecture/admin-parity.md).
+
 **Jak otworzyć prototyp:** `prototype-standalone.html` (jeden plik, działa z dysku i w podglądzie) albo `index.html` przez dowolny serwer HTTP, np. `python -m http.server 8765 --directory docs/design/admin-panel`. Po zmianie plików źródłowych: `node docs/design/admin-panel/build-standalone.mjs`. Wszystkie dane są przykładowe (`data.js`, stałe ziarno, „teraz” = 2026-10-04 14:36 czasu warszawskiego).
 
 ## 1. Zasady
