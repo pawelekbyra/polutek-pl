@@ -8,7 +8,7 @@ import { assertPasskeyUserVerified } from "./passkey";
 import { sanitizeReturnPath } from "./sso-return";
 
 /**
- * Passkey-first sign-up (owner decision 2026-10-04): "Continue with a passkey" also creates an account.
+ * Passkey-first sign-up (owner decision 2026-10-04): "Use a passkey" also creates an account.
  *
  * 1. `POST /api/auth/passkey-signup/start` (Turnstile + per-IP limit): the visitor types an e-mail; an
  *    address that already has an account answers EMAIL_TAKEN / EMAIL_TAKEN_GOOGLE (same decision as the

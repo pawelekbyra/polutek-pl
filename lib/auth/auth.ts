@@ -211,7 +211,7 @@ export const auth = betterAuth({
     // checks), which is also Better Auth's behaviour; the app never forces a second factor on top.
     twoFactor({ issuer: APP_NAME, trustDeviceMaxAge: TWO_FACTOR_TRUST_DEVICE_SECONDS }),
     // Passkeys (WebAuthn). Added from the account panel (fresh session, checked in the before hook) or
-    // used to create an account ("Continue with a passkey", lib/auth/passkey-signup.ts: signed token,
+    // used to create an account ("Use a passkey", lib/auth/passkey-signup.ts: signed token,
     // account created only after a successful ceremony, signs in after the e-mail is verified).
     // A passkey sign-in is strong on its own (device key + biometrics/PIN, user verification enforced),
     // so like Google it never gets the TOTP step (the twoFactor hook only runs on /sign-in/email).

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/** "Sign in or create account": Continue with a passkey signs in, or creates an account with a new passkey. */
+/** "Sign in or create account": Use a passkey signs in, or creates an account with a new passkey. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
@@ -38,7 +38,7 @@ function renderModal(onOpenChange = vi.fn()) {
 
 async function openPasskeySignup() {
   h.client.signIn.passkey.mockResolvedValue({ data: null, error: { code: "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY", status: 400 } });
-  fireEvent.click(await screen.findByRole("button", { name: "Continue with a passkey" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Use a passkey" }));
   await screen.findByRole("heading", { name: "Account with a passkey" });
   fireEvent.change(screen.getByLabelText("E-mail"), { target: { value: "new@example.com" } });
 }
@@ -57,7 +57,7 @@ describe("sign-in window copy (owner decision 2026-10-04)", () => {
   it("is titled 'Sign in or create account' and says new visitors get an account automatically", async () => {
     renderModal();
     expect(screen.getByRole("heading", { name: "Sign in or create account" })).toBeTruthy();
-    expect(await screen.findByRole("button", { name: "Continue with a passkey" })).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "Use a passkey" })).toBeTruthy();
     expect(screen.getByText("New here? We'll create your account automatically.")).toBeTruthy();
     expect(screen.getByText("Don't have an account?")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
@@ -65,11 +65,11 @@ describe("sign-in window copy (owner decision 2026-10-04)", () => {
   });
 });
 
-describe("Continue with a passkey", () => {
+describe("Use a passkey", () => {
   it("signs in an existing passkey user and closes the window (no TOTP step)", async () => {
     h.client.signIn.passkey.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
     const onOpenChange = renderModal();
-    fireEvent.click(await screen.findByRole("button", { name: "Continue with a passkey" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Use a passkey" }));
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
     expect(screen.queryByRole("heading", { name: "Two-step verification" })).toBeNull();
   });

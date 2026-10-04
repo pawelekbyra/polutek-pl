@@ -69,7 +69,7 @@ Ostatnia aktualizacja: 2026-10-04.
 | `feat/admin-phase0-telemetry` | panel admina, faza 0: schemat `telemetry`, `pp-collector`, beacon (odsłony, Web Vitals, jakość odtwarzania), polityka prywatności 2026-10-05; po wdrożeniu włączyć `scripts/serwerek/telemetry-enable.sh` (SERWEREK.md §22) |
 | `feat/admin-phase0-ops` | faza 0, operacje: kopie (age, bucket lock, test odtworzenia, alerty), `pg_stat_statements`, obrazy z GHCR, strażnik `pp-watchdog`; zmiany na serwerze już wykonane (SERWEREK.md §23–25) |
 | `feat/daily-briefing` | dzienna odprawa „co słychać?” (skrypt tylko do odczytu + skill `odprawa`); następny krok: skrypty działań z audytem (odpowiedź-szkic, ukrycie komentarza, zwrot) uruchamiane po zgodzie właściciela |
-| `feat/passkey-first-signup` | „Kontynuuj z kluczem dostępu” zakłada konto jak Google (logowanie kluczem jest już na main); po wdrożeniu właściciel dodaje klucz na telefonie i komputerze (też jako 2. czynnik dla admina, punkt 4) |
+| `feat/passkey-first-signup` | „Użyj klucza dostępu” zakłada konto jak Google (logowanie kluczem jest już na main); po wdrożeniu właściciel dodaje klucz na telefonie i komputerze (też jako 2. czynnik dla admina, punkt 4) |
 
 ## Do zrobienia (kolejność proponowana)
 

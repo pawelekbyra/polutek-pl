@@ -1,6 +1,6 @@
 "use client";
 
-// "Continue with a passkey" in the sign-in window, working like "Continue with Google": somebody with a
+// "Use a passkey" in the sign-in window, working like "Continue with Google": somebody with a
 // passkey of ours signs in; somebody without one (no key in the browser, nothing picked from the list,
 // or a key that belongs to no account) is taken to "create an account with a passkey" (onNeedAccount),
 // never to an error. Where the browser supports it, passkeys are also offered in the e-mail field's
@@ -94,7 +94,7 @@ export function PasskeySignIn({
       className="flex h-[44px] w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--chan-surface)] font-sans text-[14px] font-bold text-[var(--chan-ink)] transition-[background-color,box-shadow,transform] duration-160 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-[0.98] disabled:opacity-60"
     >
       {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <PasskeyIcon className="h-[20px] w-[20px] text-[var(--chan-blue)]" />}
-      <span>{isPl ? "Kontynuuj z kluczem dostępu" : "Continue with a passkey"}</span>
+      <span>{isPl ? "Użyj klucza dostępu" : "Use a passkey"}</span>
     </button>
   );
 }

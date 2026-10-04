@@ -39,7 +39,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("PasskeySignIn (\"Continue with a passkey\")", () => {
+describe("PasskeySignIn (\"Use a passkey\")", () => {
   function renderButton(props: Partial<React.ComponentProps<typeof PasskeySignIn>> = {}) {
     const handlers = { onSignedIn: vi.fn(), onError: vi.fn(), onNeedAccount: vi.fn() };
     render(<PasskeySignIn active isPl={false} {...handlers} {...props} />);
@@ -59,7 +59,7 @@ describe("PasskeySignIn (\"Continue with a passkey\")", () => {
     h.client.signIn.passkey.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
     const onSignedIn = vi.fn();
     render(<PasskeySignIn active isPl onSignedIn={onSignedIn} onError={vi.fn()} onNeedAccount={vi.fn()} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Kontynuuj z kluczem dostępu" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Użyj klucza dostępu" }));
     await waitFor(() => expect(onSignedIn).toHaveBeenCalled());
     expect(h.client.signIn.passkey).toHaveBeenCalledWith();
   });
@@ -68,7 +68,7 @@ describe("PasskeySignIn (\"Continue with a passkey\")", () => {
     enableWebAuthn();
     h.client.signIn.passkey.mockResolvedValue({ data: null, error: { code: "ERROR_PASSTHROUGH_SEE_CAUSE_PROPERTY", status: 400 } });
     const handlers = renderButton();
-    fireEvent.click(await screen.findByRole("button", { name: "Continue with a passkey" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Use a passkey" }));
     await waitFor(() => expect(handlers.onNeedAccount).toHaveBeenCalled());
     expect(handlers.onError).toHaveBeenCalledTimes(1); // only the reset before the attempt
     expect(handlers.onError).toHaveBeenLastCalledWith(null);
@@ -78,7 +78,7 @@ describe("PasskeySignIn (\"Continue with a passkey\")", () => {
     enableWebAuthn();
     h.client.signIn.passkey.mockResolvedValue({ data: null, error: { code: "PASSKEY_NOT_FOUND", status: 401 } });
     const handlers = renderButton();
-    fireEvent.click(await screen.findByRole("button", { name: "Continue with a passkey" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Use a passkey" }));
     await waitFor(() => expect(handlers.onNeedAccount).toHaveBeenCalled());
     expect(handlers.onError).not.toHaveBeenCalledWith(expect.stringMatching(/does not belong/));
   });
@@ -87,7 +87,7 @@ describe("PasskeySignIn (\"Continue with a passkey\")", () => {
     enableWebAuthn();
     h.client.signIn.passkey.mockResolvedValue({ data: null, error: { code: "EMAIL_NOT_VERIFIED", status: 403 } });
     const handlers = renderButton();
-    fireEvent.click(await screen.findByRole("button", { name: "Continue with a passkey" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Use a passkey" }));
     await waitFor(() => expect(handlers.onError).toHaveBeenLastCalledWith("Please verify your email. We sent a new link."));
     expect(handlers.onNeedAccount).not.toHaveBeenCalled();
   });

@@ -82,7 +82,7 @@ step on top. A wrong password shows a hint at Google / "Forgot password" for Cle
   `NEXT_PUBLIC_APP_URL` without `www.` (`pawelperfect.com`, `localhost` in development), so one passkey works on www and
   the apex. Accepted WebAuthn origins = the trusted origins on that domain (www and apex); the plugin never falls back to
   the request's own `Origin` header. RP name "Pawel Perfect". Attestation `none` (plugin default).
-- Credentials are discoverable (`residentKey: "required"`, needed for the e-mail-less "Continue with a passkey" button and
+- Credentials are discoverable (`residentKey: "required"`, needed for the e-mail-less "Use a passkey" button and
   autofill); `userVerification: "preferred"` in the browser call (web.dev advice: `"required"` confuses some platforms)
   but the server **requires the UV flag** in `afterVerification` (`PASSKEY_USER_VERIFICATION_REQUIRED`): the plugin
   itself verifies with `requireUserVerification: false`, and a passkey sign-in replaces the password and TOTP.
@@ -92,12 +92,12 @@ step on top. A wrong password shows a hint at Google / "Forgot password" for Cle
   `SESSION_NOT_FRESH` and the usual "sign in again" notice. Renaming (`/passkey/update-passkey`) is disabled. The device
   name is normalized (one line, max 64 characters) and the WebAuthn user name stays the e-mail (`?name=` is blanked in
   the before hook). `createSession` on registration is forced off.
-- **Decision (owner, 2026-10-04, reverses "a passkey never creates an account"): "Continue with a passkey" works like
+- **Decision (owner, 2026-10-04, reverses "a passkey never creates an account"): "Use a passkey" works like
   "Continue with Google".** See "Passkey-first sign-up" below.
 - **Decision: a passkey sign-in counts as strong authentication**, like Google: no TOTP step after it (Better Auth's
   2FA hook only runs on `/sign-in/email`), because it already combines possession of the device key with biometrics or
   the device PIN (user verification enforced above) and is phishing-resistant.
-- Sign-in UI (window titled "Zaloguj się lub załóż konto"): "Kontynuuj z Google" and "Kontynuuj z kluczem dostępu",
+- Sign-in UI (window titled "Zaloguj się lub załóż konto"): "Kontynuuj z Google" and "Użyj klucza dostępu",
   then "Nowy tutaj? Konto założymy automatycznie.", the e-mail/password form, and "Nie masz konta? Załóż konto" at the
   bottom. Passkeys are also offered in the e-mail field's autofill (`autocomplete="username webauthn"`, conditional
   mediation) while the window is open. Passkey parts are hidden where `PublicKeyCredential` is missing. Autofill shows

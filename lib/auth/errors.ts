@@ -109,7 +109,7 @@ export function isPasskeyCancelled(error: AuthErrorLike): boolean {
 }
 
 /**
- * "Continue with a passkey" found no passkey of ours: the browser had none to offer, the person closed
+ * "Use a passkey" found no passkey of ours: the browser had none to offer, the person closed
  * the list (WebAuthn does not tell these apart, on purpose), or the chosen key belongs to no account
  * (e.g. a deleted one). All of these lead to "create an account with a passkey", never to a dead end.
  */
