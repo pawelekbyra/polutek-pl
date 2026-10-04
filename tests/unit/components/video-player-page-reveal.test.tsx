@@ -251,3 +251,72 @@ describe("VideoPlayer sound", () => {
     expect(mocks.lastPlayerProps?.muted).toBe(true);
   });
 });
+
+describe("VideoPlayer unmutes on the first gesture after a muted start (reload, Back/Forward)", () => {
+  async function mountMutedAndPlaying() {
+    render(withPlan(<VideoPlayer video={VIDEO} />));
+    await act(async () => {});
+    await act(async () => fire("onPlaying"));
+    expect(mocks.lastPlayerProps?.muted).toBe(true);
+  }
+
+  it("turns the sound on at the first gesture anywhere, once, without saving it as the viewer's choice", async () => {
+    await mountMutedAndPlaying();
+    await act(async () => {
+      fireEvent.pointerDown(document.body);
+    });
+    expect(mocks.instance.muted).toBe(false);
+    expect(mocks.lastPlayerProps?.muted).toBe(false);
+    expect(sessionStorage.getItem("polutek:player-muted")).toBeNull();
+
+    // One-shot: once the viewer mutes it, later gestures leave it muted.
+    mocks.instance.muted = true;
+    await act(async () => fire("onMediaMuteRequest"));
+    await act(async () => fire("onVolumeChange", { muted: true, volume: 1 }));
+    await act(async () => {
+      fireEvent.keyDown(document.body, { key: "a" });
+      fireEvent.pointerDown(document.body);
+    });
+    expect(mocks.instance.muted).toBe(true);
+    expect(mocks.lastPlayerProps?.muted).toBe(true);
+  });
+
+  it("does not unmute when the viewer muted the player themselves", async () => {
+    sessionStorage.setItem("polutek:player-muted", "1");
+    await mountMutedAndPlaying();
+    await act(async () => {
+      fireEvent.pointerDown(document.body);
+      fireEvent.keyDown(document.body, { key: "Enter" });
+    });
+    expect(mocks.instance.muted).toBe(true);
+    expect(mocks.lastPlayerProps?.muted).toBe(true);
+  });
+
+  it("leaves a gesture on the unmute button, the player's volume control or the \"m\" key to them", async () => {
+    await mountMutedAndPlaying();
+    const hint = unmuteHint()!;
+    const volumeControl = document.createElement("div");
+    volumeControl.className = "mc-volume";
+    const muteButton = document.createElement("button");
+    volumeControl.appendChild(muteButton);
+    document.body.appendChild(volumeControl);
+
+    await act(async () => {
+      fireEvent.pointerDown(muteButton);
+      fireEvent.keyDown(document.body, { key: "m" });
+      fireEvent.pointerDown(hint);
+    });
+    // The page-wide listener stayed out of it (no unmute-then-mute toggle)...
+    expect(mocks.instance.muted).toBe(true);
+
+    // ...and the button's own click turns the sound on, as the viewer's explicit choice.
+    sessionStorage.setItem("polutek:player-muted", "1");
+    await act(async () => {
+      fireEvent.click(hint);
+    });
+    expect(mocks.instance.muted).toBe(false);
+    expect(sessionStorage.getItem("polutek:player-muted")).toBeNull();
+    expect(unmuteHint()).toBeNull();
+    volumeControl.remove();
+  });
+});

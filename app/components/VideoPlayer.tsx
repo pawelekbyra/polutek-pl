@@ -17,6 +17,7 @@ import { PlayerStateFrame } from './PlayerStateFrame';
 import { PlayerStartLoading } from './PlayerLoadingState';
 import { UnmuteHint } from './player/UnmuteHint';
 import { readUserMuted, writeUserMuted } from './player/sound-preference';
+import { useUnmuteOnFirstGesture } from './player/useUnmuteOnFirstGesture';
 import { resolvePlaybackSource } from './playback-source';
 import { shouldSendViewForPlaybackPosition } from './video-view-threshold';
 import { usePlaybackTelemetry } from '@/lib/hooks/usePlaybackTelemetry';
@@ -296,6 +297,19 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
         current.muted = false;
         if (current.volume === 0) current.volume = 1;
     };
+
+    // Muted only because the browser required it (reload or Back/Forward without a gesture, or
+    // sound refused), never because the viewer chose mute: the first gesture anywhere on the page
+    // turns the sound on, without recording it as the viewer's choice.
+    const unmuteAfterGesture = useCallback(() => {
+        if (readUserMuted()) return;
+        setMuted(false);
+        const current = player.current;
+        if (!current) return;
+        current.muted = false;
+        if (current.volume === 0) current.volume = 1;
+    }, []);
+    useUnmuteOnFirstGesture(isMounted && muted && !userMuted, unmuteAfterGesture, playerKey);
 
     // The start-up frame hides as soon as the first frame renders (independent of buffering).
     const startOverlayHidden =
