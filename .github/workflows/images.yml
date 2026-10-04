@@ -1,0 +1,113 @@
+name: images
+
+# Builds the serwerek images (app, migrator, worker, collector) OUTSIDE the production server and pushes them to
+# GHCR (private packages of this repo). deploy.sh then only pulls them: IMAGE_SOURCE=ghcr ./deploy.sh <tag>.
+# Building on the server stays available as the fallback (plain ./deploy.sh <tag>).
+#
+# Runs ONLY by hand (Actions -> images -> Run workflow, on the branch/commit to deploy) or for a tag "deploy-*":
+# this repo is private, so every run uses the account's monthly Actions minutes (about 10-20 min per run with a
+# warm cache). The existing CI (ci.yml) is unchanged. Docs: docs/operations/SERWEREK.md, section 24.
+#
+# NEXT_PUBLIC_* build args are public by design (inlined into the browser bundle) and come from the repository
+# variables of the same names (Settings -> Secrets and variables -> Actions -> Variables).
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['deploy-*']
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: images-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build and push
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      REGISTRY: ghcr.io/${{ github.repository_owner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Image tag (short commit sha)
+        id: tag
+        run: echo "tag=$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: app (runner)
+        id: app
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/serwerek/Dockerfile
+          target: runner
+          push: true
+          tags: ${{ env.REGISTRY }}/polutek-app:${{ steps.tag.outputs.tag }}
+          cache-from: type=gha,scope=serwerek
+          cache-to: type=gha,scope=serwerek,mode=max
+          build-args: |
+            NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ vars.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+            NEXT_PUBLIC_R2_PUBLIC_HOST=${{ vars.NEXT_PUBLIC_R2_PUBLIC_HOST }}
+            NEXT_PUBLIC_BLOB_PUBLIC_HOST=${{ vars.NEXT_PUBLIC_BLOB_PUBLIC_HOST }}
+            NEXT_PUBLIC_APP_NAME=${{ vars.NEXT_PUBLIC_APP_NAME }}
+            NEXT_PUBLIC_SUPPORT_EMAIL=${{ vars.NEXT_PUBLIC_SUPPORT_EMAIL }}
+
+      - name: migrator
+        id: migrator
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/serwerek/Dockerfile
+          target: migrator
+          push: true
+          tags: ${{ env.REGISTRY }}/polutek-migrator:${{ steps.tag.outputs.tag }}
+          cache-from: type=gha,scope=serwerek
+
+      - name: worker (video encoder)
+        id: worker
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/serwerek/Dockerfile
+          target: worker
+          push: true
+          tags: ${{ env.REGISTRY }}/polutek-worker:${{ steps.tag.outputs.tag }}
+          cache-from: type=gha,scope=serwerek
+
+      - name: collector (pp-collector)
+        id: collector
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/serwerek/Dockerfile
+          target: collector
+          push: true
+          tags: ${{ env.REGISTRY }}/polutek-collector:${{ steps.tag.outputs.tag }}
+          cache-from: type=gha,scope=serwerek
+
+      - name: Summary
+        run: |
+          {
+            echo "### Images for \`${{ steps.tag.outputs.tag }}\`"
+            echo "| image | digest |"
+            echo "|---|---|"
+            echo "| polutek-app | \`${{ steps.app.outputs.digest }}\` |"
+            echo "| polutek-migrator | \`${{ steps.migrator.outputs.digest }}\` |"
+            echo "| polutek-worker | \`${{ steps.worker.outputs.digest }}\` |"
+            echo "| polutek-collector | \`${{ steps.collector.outputs.digest }}\` |"
+            echo
+            echo "Deploy on serwerek: \`IMAGE_SOURCE=ghcr ./deploy.sh ${{ steps.tag.outputs.tag }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

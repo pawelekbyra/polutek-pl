@@ -1,0 +1,6 @@
+[Unit]
+Description=serwerek alert e-mail: unit %i failed
+
+[Service]
+Type=oneshot
+ExecStart=/opt/serwerek/scripts/unit-failed.sh %i

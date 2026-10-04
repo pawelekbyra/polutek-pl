@@ -1,0 +1,10 @@
+[Unit]
+Description=serwerek nightly backup, 02:30 local time
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target

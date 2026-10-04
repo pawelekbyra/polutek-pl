@@ -5,6 +5,11 @@
 # Usage:  ./deploy.sh <tag> [--rollback]
 #   <tag>        image tag, normally the short git sha; sources must be in ./src (git archive of that commit)
 #   --rollback   skip build/migrate, just start the previously deployed image
+# Images come from one of two places:
+#   default            built here from ./src (fallback; heavy on the 2 vCPU / 4 GB server)
+#   IMAGE_SOURCE=ghcr  pulled from GHCR, built by .github/workflows/images.yml (tag = 12-char commit sha shown in
+#                      the workflow summary); needs a one-time `docker login ghcr.io` with a read:packages token.
+#                      No ./src and no build.env needed. Docs: docs/operations/SERWEREK.md, section 24.
 # Files next to this script (all root, 600, NOT in git):
 #   app.env    runtime env of the app (DATABASE_URL, BETTER_AUTH_SECRET, GOOGLE_*, TURNSTILE_*, STRIPE_*, CRON_SECRET, TRUST_CF_CONNECTING_IP=true ...)
 #   db.env     POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB
@@ -14,11 +19,25 @@ set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")"
 
 HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-150}"
+IMAGE_SOURCE="${IMAGE_SOURCE:-build}"
+GHCR_PREFIX="${GHCR_PREFIX:-ghcr.io/pawelekbyra}"
+BUILD_CACHE_KEEP="${BUILD_CACHE_KEEP:-12GB}"
+DEPLOY_STARTED="$(date +%s)"
 KEEP_IMAGES="${KEEP_IMAGES:-3}"
 BACKUP_KEEP="${BACKUP_KEEP:-10}"
 [[ "$BACKUP_KEEP" =~ ^[1-9][0-9]*$ ]] || { echo "BACKUP_KEEP must be a positive integer" >&2; exit 1; }
 log() { printf '[deploy %s] %s\n' "$(date -u +%H:%M:%S)" "$*"; }
-die() { log "ERROR: $*" >&2; exit 1; }
+# Every deploy outcome lands in telemetry.job_run as "deploy" (the change axis of the admin panel); best effort.
+record_deploy() { # $1 = ok|fail, $2 = detail
+  local common=/opt/serwerek/scripts/common.sh
+  if [[ -r "$common" ]]; then
+    # shellcheck disable=SC1090
+    . "$common"
+    job_run deploy "$1" "$DEPLOY_STARTED" "${tag:-?} ($IMAGE_SOURCE): $2"
+  fi
+  return 0
+}
+die() { log "ERROR: $*" >&2; record_deploy fail "$*"; exit 1; }
 
 tag="${1:-}"; [[ -n "$tag" ]] || die "usage: $0 <tag> [--rollback]"
 mode="${2:-deploy}"
@@ -73,11 +92,20 @@ if [[ "$mode" == "--rollback" ]]; then
   if [[ -n "$prev_worker" ]]; then start_encoder "$prev_worker"; printf '%s' "$prev_worker" > .current-worker-image; fi
   prev_collector="$(cat .previous-collector-image 2>/dev/null || true)"
   if [[ -n "$prev_collector" ]]; then start_collector "$prev_collector"; printf '%s' "$prev_collector" > .current-collector-image; fi
+  record_deploy ok "rollback to $prev"
   exit 0
 fi
 
-# 1. Build (skipped when the image for this tag already exists).
-if docker image inspect "$new_image" >/dev/null 2>&1 && docker image inspect "$migrator_image" >/dev/null 2>&1   && docker image inspect "$worker_image" >/dev/null 2>&1 && docker image inspect "$collector_image" >/dev/null 2>&1; then
+# 1. Images: pull from GHCR, or build here (skipped when the images for this tag already exist).
+if [[ "$IMAGE_SOURCE" == "ghcr" ]]; then
+  for pair in "polutek-app:$new_image" "polutek-migrator:$migrator_image" "polutek-worker:$worker_image" "polutek-collector:$collector_image"; do
+    remote="$GHCR_PREFIX/${pair%%:*}:$tag"
+    log "pulling $remote"
+    docker pull -q "$remote" >/dev/null || die "cannot pull $remote (images workflow run for this commit? docker login ghcr.io?)"
+    docker tag "$remote" "${pair#*:}"
+    docker rmi "$remote" >/dev/null 2>&1 || true   # keep only the local name; the layers stay
+  done
+elif docker image inspect "$new_image" >/dev/null 2>&1 && docker image inspect "$migrator_image" >/dev/null 2>&1   && docker image inspect "$worker_image" >/dev/null 2>&1 && docker image inspect "$collector_image" >/dev/null 2>&1; then
   log "images for $tag already built, skipping build"
 else
   [[ -d src ]] || die "missing ./src (git archive of the commit to deploy)"
@@ -142,6 +170,9 @@ if wait_healthy "$new_image"; then
     done
   done
   docker image prune -f >/dev/null 2>&1 || true
+  # Build cache grows by GBs per build on this 75 GB disk (44 GB on 2026-10-04): keep a bounded warm cache.
+  docker builder prune -f --keep-storage "$BUILD_CACHE_KEEP" >/dev/null 2>&1 || true
+  record_deploy ok "live on $new_image"
   log "OK: $new_image is live"
   exit 0
 fi
