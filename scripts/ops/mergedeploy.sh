@@ -12,14 +12,19 @@ set -uo pipefail
 PR="${1:?brak numeru PR}"; BR="${2:?brak galezi}"; TAG="${3:?brak prefiksu tagu}"; MODE="${4:-}"
 cd "$(git rev-parse --show-toplevel)" || exit 1
 
-sleep 40
-id=$(gh run list --branch "$BR" --limit 1 --json databaseId --jq '.[0].databaseId')
-[ -n "$id" ] || { echo "brak przebiegu CI dla $BR"; exit 2; }
-until [ "$(gh run view "$id" --json status --jq .status)" = "completed" ]; do sleep 20; done
-c=$(gh run view "$id" --json conclusion --jq .conclusion); echo "CI: $c"
-if [ "$c" != "success" ]; then
-  gh run view "$id" --json jobs --jq '.jobs[] | select(.conclusion!="success") | .name'
-  exit 2
+# SKIP_CI=1: GitHub Actions unavailable (billing/limit): the caller ran tests, typecheck and lint locally first.
+if [ -n "${SKIP_CI:-}" ]; then
+  echo "CI: pominiete (SKIP_CI), sprawdzenia lokalne"
+else
+  sleep 40
+  id=$(gh run list --branch "$BR" --limit 1 --json databaseId --jq '.[0].databaseId')
+  [ -n "$id" ] || { echo "brak przebiegu CI dla $BR"; exit 2; }
+  until [ "$(gh run view "$id" --json status --jq .status)" = "completed" ]; do sleep 20; done
+  c=$(gh run view "$id" --json conclusion --jq .conclusion); echo "CI: $c"
+  if [ "$c" != "success" ]; then
+    gh run view "$id" --json jobs --jq '.jobs[] | select(.conclusion!="success") | .name'
+    exit 2
+  fi
 fi
 
 gh pr merge "$PR" --squash --admin 2>&1 | tail -1
