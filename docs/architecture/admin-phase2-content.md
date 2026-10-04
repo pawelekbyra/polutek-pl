@@ -91,3 +91,43 @@ Po wdrożeniu: `/admin/videos*` na `www` → 308 na `admin.pawelperfect.com/tres
 1. Usunięcie filmu: wymagać step-up (passkey) oprócz wpisania sluga? *Rekomendacja:* tak.
 2. Napisy: przenosić hosting VTT do R2 już w fazie 2 (zakres #1219), czy na razie tylko URL? *Rekomendacja:* R2 w fazie 2.
 3. Poziom dostępu `PATRON`: w edycji tylko dwa poziomy (decyzja 2026-10-04); migracja czyszcząca enuma osobno.
+
+## 6. Tłumaczenia filmów (zatwierdzone przez właściciela 2026-10-04, PR „Tłumaczenia: model i ekran”)
+
+Koncepcja i model docelowy grupowego przeglądu: [`translations-concept.md`](translations-concept.md). W fazie 2 powstaje model
+danych, odczyt z kompatybilnością i ekran; **bez generowania AI** (następny krok) i **bez zmiany publicznych adresów**
+(krótkie adresy wstrzymane przez właściciela).
+
+**Dane** (migracja `20261005100000_add_video_translations`, addytywna, idempotentna, bez BOM):
+
+| Tabela | Pola | Zasady |
+|---|---|---|
+| `VideoTranslation` | `videoId`, `language` (`en`, `de`, `es`, `fr`, `it`, `pt`, `zh`), `title`, `slug`, `description`, `subtitleUrl`, `status` (`AI_DRAFT` / `APPROVED` / `EDITED`), `reviewedAt`, `reviewedById` (id konta panelu, bez klucza obcego) | unikalne `(videoId, language)` i `(language, slug)`; kasowane razem z filmem |
+| `VideoSlugHistory` | `language`, `slug`, `videoId` | każdy poprzedni adres tłumaczenia; unikalne `(language, slug)`, więc stary adres nie przejdzie na inny film (pod przyszłe 301) |
+
+**Kompatybilność (nic na stronie się nie zmienia):** polski to wiersz `Video` (oryginał). Strona i odtwarzacz dalej czytają
+`Video.titleEn/descriptionEn` i `subtitleUrlPl/En`. Migracja kopiuje istniejące tytuły i opisy EN do `VideoTranslation(en)` jako
+`EDITED` (adres = adres filmu, więc bez kolizji). Zapis EN w panelu aktualizuje oba miejsca; napisy EN trafiają do
+`Video.subtitleUrlEn` i są lustrzane w wierszu `en`; napisy innych języków tylko w ich wierszu (wymaga zapisanego tytułu).
+Odczyt dla strony: `resolveFilmText()` (wiersz tłumaczenia, potem stare kolumny EN, potem oryginał z flagą `fallback`).
+Mapowanie po przejściu: gdy wszystkie odczyty pójdą przez `resolveFilmText()`, kolumny EN na `Video` można wygasić osobną migracją.
+
+**Adres z tytułu** (`uniqueSlug()`, czysta funkcja z testami): transliteracja (akcenty, `ł`, `ß`, niemieckie `ä → ae`,
+`&` w danym języku), myślniki, do 80 znaków, przy zajętym adresie `-2`, `-3` (sufiks mieści się w limicie), tytuł bez liter
+łacińskich (chiński) bierze adres oryginału. Zajęte = inny film ma ten adres w tym języku, także w historii.
+
+**Ekran** `/tresci/[slug]/tlumaczenia` (zakładka obok „Przegląd” i „Edycja”): wiersz oryginału (źródło) i wiersz na język z flagą
+(`apps/admin/public/flags`, te same co przełącznik na www), stanem, tytułem, adresem i napisami; „Dodaj/Edytuj” (okno: tytuł,
+adres, opis; zapis = `EDITED`, zmiana adresu idzie do historii), „Wgraj VTT”/„Podmień”/„Usuń”, „Zatwierdź” (szkic → `APPROVED`),
+„Zatwierdź wszystkie szkice”, „Generuj szkice AI” widoczne, wyłączone z opisem „wkrótce”. Audyt: `VIDEO_TRANSLATION_SAVED`,
+`VIDEO_TRANSLATION_APPROVED`, napisy jak dotąd.
+
+**Publicznie (projekt, wdrożenie razem z adresami per język):** `translationPublicMeta()`: `AI_DRAFT` ma etykietę
+„tłumaczenie automatyczne”, `noindex` i jest poza mapą strony; `APPROVED` i `EDITED` to zwykłe strony.
+
+**Rola „tłumacz” (projekt, budowa w fazie 3):** osobne uprawnienie w modelu kont panelu, nie rola strony. Propozycja:
+`AdminUser.role` = `OWNER` | `TRANSLATOR`, plus tabela `AdminLanguageGrant(adminUserId, language, level: TRANSLATOR | REVIEWER | LEAD)`.
+Tłumacz widzi tylko ekran „Do przetłumaczenia” i zakładkę Tłumaczenia filmów, tylko swoje języki; zapis sprawdza grant w use case
+(`saveFilmTranslation` dostaje `allowedLanguages` z kontekstu), nie zatwierdza własnych zmian (próg zgód z koncepcji, etap B/C).
+Nawigacja panelu filtruje moduły po roli; `requireAdmin()` przyjmie wymaganą rolę. Konta tłumaczy też przez `admin-enroll`
+(passkey), z dostępem Cloudflare Access na ich e-mail.

@@ -197,3 +197,7 @@ z `lib/modules/**` (wrapper `requireAdmin → zod (.strict) → limit → step-u
 | Dziennik audytu z filtrami i eksportem | Bezpieczeństwo → Dziennik | 3 | plan |
 | Logowania do panelu, sesje panelu | Bezpieczeństwo → Logowania (dane już w `AdminAuthEvent`) | 3 | plan |
 | Premiera na żywo | Premiera na żywo | A | plan |
+| Tłumaczenia filmów (dziś tylko pola EN w edycji) | **Treści → film → Tłumaczenia** `/tresci/<slug>/tlumaczenia`: języki z flagami, stan (szkic automatyczny / zatwierdzone / napisane przez człowieka), tytuł, adres, opis, napisy, „Zatwierdź”, „Zatwierdź wszystkie”; model `VideoTranslation` + `VideoSlugHistory` (admin-phase2-content.md §6) | 2 | zrobione |
+| Generowanie szkiców tłumaczeń (AI) | przycisk „Generuj szkice AI” (dziś wyłączony, „wkrótce”) | 3 | decyzja (model: Claude API czy Workers AI) |
+| Rola „tłumacz” (tylko wybrane języki, bez reszty panelu) | konta panelu z rolą `TRANSLATOR` i grantami języków (projekt w admin-phase2-content.md §6) | 3 | plan |
+| Adresy filmów per język, etykieta i `noindex` szkiców automatycznych na stronie | strona www (`translationPublicMeta`, `resolveFilmText`, 301 z `VideoSlugHistory`) | po decyzji | decyzja (wstrzymane przez właściciela) |

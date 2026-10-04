@@ -16,8 +16,9 @@ import { isUpcomingPremiere, type AdminVideoDto } from "@/lib/modules/video";
 import type { PipelineStateDto } from "@/lib/modules/video-pipeline";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import type { StateKind } from "@/lib/modules/admin-overview";
+import { listFilmTranslations, type FilmTranslationsDto } from "@/lib/modules/translations";
 import { isDevFixturesEnabled } from "./config";
-import { fixtureDetail, fixtureLayout, fixtureList } from "./content-fixtures";
+import { fixtureDetail, fixtureLayout, fixtureList, fixtureTranslations } from "./content-fixtures";
 
 const readCtx = () => createAppContext({ type: "system", reason: "admin_panel_read" });
 
@@ -31,6 +32,12 @@ export async function loadContentList(filters: ContentFilters): Promise<ContentL
 export async function loadContentDetail(slug: string): Promise<ContentDetail | null> {
   if (isDevFixturesEnabled()) return fixtureDetail(slug);
   const res = await getContentDetail(slug, readCtx());
+  return res.ok ? res.data : null;
+}
+
+export async function loadFilmTranslations(slug: string): Promise<FilmTranslationsDto | null> {
+  if (isDevFixturesEnabled()) return fixtureTranslations(slug);
+  const res = await listFilmTranslations(slug, readCtx());
   return res.ok ? res.data : null;
 }
 

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { isUpcomingPremiere } from "@/lib/modules/video";
 import { DangerZone } from "@admin/components/content/danger-zone";
+import { FilmTabs } from "@admin/components/content/film-tabs";
 import { FilmForm, type FilmFormValues } from "@admin/components/content/film-form";
 import { CoverUpload, SubtitlesCard } from "@admin/components/content/media-cards";
 import { OriginalUpload } from "@admin/components/content/original-upload";
@@ -67,6 +68,7 @@ export default async function EditFilmPage({ params, searchParams }: Props) {
           </Link>
         }
       />
+      <FilmTabs slug={v.slug} current="edycja" />
       {isNew ? (
         <div className="banner ok mb-3" role="status">
           <Icon name="ok" />

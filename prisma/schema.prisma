@@ -583,6 +583,8 @@ model Video {
   playbackSessions    VideoPlaybackSession[]
   playbackEvents      VideoPlaybackEvent[]
   encodeJobs          VideoEncodeJob[]
+  translations        VideoTranslation[]
+  slugHistory         VideoSlugHistory[]
 
   @@index([status, publishedAt])
   @@index([status, createdAt])
@@ -593,6 +595,54 @@ model Video {
   @@index([activePlaybackRouteId])
   @@index([creatorId])
   @@index([slug])
+}
+
+/// Who wrote a translation: a machine draft, approved as is, or written/corrected by a person.
+enum VideoTranslationStatus {
+  AI_DRAFT
+  APPROVED
+  EDITED
+}
+
+/// A film in one more language (docs/architecture/translations-concept.md, admin-phase2-content.md section 6).
+/// The original language is the Video row itself (PL). During the transition Video.titleEn/descriptionEn and
+/// Video.subtitleUrlPl/En stay the source the site and the player read; the panel keeps them in sync for "en".
+/// Public addresses per language are NOT live yet (owner hold): `slug` is reserved and unique per language.
+model VideoTranslation {
+  id           String                 @id @default(uuid())
+  videoId      String
+  /// Lower-case BCP 47 primary tag: "en", "de", "es", "fr", "it", "pt", "zh" (never "pl", the original).
+  language     String
+  title        String
+  slug         String
+  description  String?
+  subtitleUrl  String?
+  status       VideoTranslationStatus @default(AI_DRAFT)
+  reviewedAt   DateTime?
+  /// AdminUser.id (panel) of who approved or edited it; no foreign key, like AuditLog.actorUserId.
+  reviewedById String?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([videoId, language])
+  @@unique([language, slug])
+  @@index([language, status])
+}
+
+/// Earlier addresses of a film per language, for 301 redirects once per-language addresses go live.
+model VideoSlugHistory {
+  id        String   @id @default(uuid())
+  videoId   String
+  language  String
+  slug      String
+  createdAt DateTime @default(now())
+
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([language, slug])
+  @@index([videoId])
 }
 
 /// Since 2026-10-02 the only live video source is SELF_HLS (our own HLS: encoded by the worker, stored in the

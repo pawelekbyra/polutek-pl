@@ -20,6 +20,7 @@ import { getPipelineState, purgeVideoStorage, snapshotVideoStorage, type Pipelin
 import { MainChannelService } from "@/lib/modules/channel";
 import { R2ThumbnailStorageClient, parsePublicThumbnailUrl } from "@/lib/modules/media";
 import { recordAuditEventSafe } from "@/lib/modules/audit";
+import { translationSubtitleUrls } from "@/lib/modules/translations";
 import { thumbnailState, type ThumbnailState } from "../domain/thumbnail-state";
 
 export const CONTENT_PAGE_SIZE = 20;
@@ -82,7 +83,7 @@ export async function getThumbnailSource(videoId: string, ctx: AppContext): Prom
  */
 export async function deleteVideoWithStorage(videoId: string, ctx: AppContext): Promise<UseCaseResult<AdminVideoDto, AppError>> {
   const details = await getAdminVideoDetails({ idOrSlug: videoId }, ctx);
-  const subtitles = details.ok ? [details.data.subtitleUrlPl, details.data.subtitleUrlEn] : [];
+  const subtitles = new Set([...(details.ok ? [details.data.subtitleUrlPl, details.data.subtitleUrlEn] : []), ...(await translationSubtitleUrls(videoId, ctx).catch(() => [] as string[]))]);
   const storage = await snapshotVideoStorage(videoId, ctx).catch(() => null);
   const result = await deleteAdminVideo(videoId, ctx);
   if (!result.ok) return fail(result.error as AppError);
