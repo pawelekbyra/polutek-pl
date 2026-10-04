@@ -9,7 +9,10 @@ const { handleResendWebhook, loggerWarn, loggerError } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/lib/modules/email/application/handle-resend-webhook.use-case', () => ({ handleResendWebhook }));
-vi.mock('@/lib/logger', () => ({ logger: { warn: loggerWarn, error: loggerError, info: vi.fn() } }));
+vi.mock('@/lib/logger', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/logger')>()),
+  logger: { warn: loggerWarn, error: loggerError, info: vi.fn(), debug: vi.fn() },
+}));
 
 import { POST } from '@/app/api/webhooks/resend/route';
 
