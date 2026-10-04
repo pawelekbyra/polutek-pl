@@ -17,6 +17,14 @@ export const AUDIT_LABEL: Record<string, string> = {
   VIDEO_ORIGINAL_UPLOAD_STARTED: "Rozpoczęte wgrywanie oryginału",
   VIDEO_HLS_ASSET_DELETED: "Usunięta wersja HLS",
   VIDEO_PUBLISH_AFTER_ASSET_READY_REQUESTED: "Publikacja po zakodowaniu: zlecona",
+  ADMIN_USER_ROLE_CHANGED: "Zmiana roli na stronie",
+  ADMIN_USER_DELETED: "Konto usunięte przez administratora",
+  USER_NICKNAME_CHANGED: "Zmiana pseudonimu",
+  AUTH_SIGN_UP: "Rejestracja",
+  AUTH_SIGN_IN: "Logowanie",
+  AUTH_SIGN_OUT: "Wylogowanie",
+  AUTH_PASSWORD_CHANGED: "Zmiana hasła",
+  AUTH_EMAIL_CHANGED: "Zmiana e-maila",
   VIDEO_PUBLISH_AFTER_ASSET_READY_COMPLETED: "Publikacja po zakodowaniu: wykonana",
 };
 

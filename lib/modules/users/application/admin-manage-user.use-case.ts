@@ -72,14 +72,47 @@ export async function changeUserRoleAsAdmin(
   input: { adminUserId: string; userId: string; role: ManagedRole },
 ): Promise<UseCaseResult<{ changed: boolean; role: ManagedRole }, AppError>> {
   if (input.userId === input.adminUserId) return fail(new AdminSelfActionError('role'));
+  return changeRoleLocked(ctx, { userId: input.userId, role: input.role, siteAdminId: input.adminUserId });
+}
 
+/**
+ * The same role change from the separate admin panel (apps/admin): the actor is a panel account
+ * (AdminUser, passkey + Cloudflare Access + fresh step-up checked by the action), not a site User row, so
+ * there is no site-admin check; "never yourself" is the panel account's e-mail matching the target.
+ * Same lock, last-admin rule, verified-e-mail rule and ADMIN_USER_ROLE_CHANGED audit.
+ */
+export async function changeUserRoleFromPanel(
+  ctx: AppContext,
+  input: { userId: string; role: ManagedRole; panelEmail: string },
+): Promise<UseCaseResult<{ changed: boolean; role: ManagedRole }, AppError>> {
+  const target = await ctx.prisma.user.findUnique({ where: { id: input.userId }, select: { email: true } });
+  if (target && sameEmail(target.email, input.panelEmail)) return fail(new AdminSelfActionError('role'));
+  return changeRoleLocked(ctx, { userId: input.userId, role: input.role, siteAdminId: null });
+}
+
+/** Account deletion from the admin panel: same rules and cleanup as deleteUserAsAdmin, self = same e-mail. */
+export async function deleteUserFromPanel(
+  ctx: AppContext,
+  input: { userId: string; confirmEmail: string | null | undefined; panelEmail: string },
+): Promise<UseCaseResult<{ deleted: true }, AppError>> {
+  const target = await ctx.prisma.user.findUnique({ where: { id: input.userId }, select: { email: true } });
+  if (target && sameEmail(target.email, input.panelEmail)) return fail(new AdminSelfActionError('delete'));
+  return deleteUserAsAdmin(ctx, { adminUserId: '', userId: input.userId, confirmEmail: input.confirmEmail });
+}
+
+async function changeRoleLocked(
+  ctx: AppContext,
+  input: { userId: string; role: ManagedRole; siteAdminId: string | null },
+): Promise<UseCaseResult<{ changed: boolean; role: ManagedRole }, AppError>> {
   type Outcome = { error: AppError } | { changed: boolean };
   const outcome = await ctx.db.writeTransaction(async (tx): Promise<Outcome> => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${ADMIN_ROSTER_LOCK}))`;
 
     // Re-read under the lock: another admin may have demoted the caller a moment ago.
-    const actor = await tx.user.findUnique({ where: { id: input.adminUserId }, select: { role: true, isDeleted: true } });
-    if (!actor || actor.isDeleted || actor.role !== 'ADMIN') return { error: new AdminActorNotAdminError() };
+    if (input.siteAdminId !== null) {
+      const actor = await tx.user.findUnique({ where: { id: input.siteAdminId }, select: { role: true, isDeleted: true } });
+      if (!actor || actor.isDeleted || actor.role !== 'ADMIN') return { error: new AdminActorNotAdminError() };
+    }
 
     const user = await tx.user.findUnique({
       where: { id: input.userId },

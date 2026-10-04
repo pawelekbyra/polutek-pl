@@ -50,7 +50,7 @@ export function buildQueues(i: HealthInputs, moderation: { pendingReports: numbe
       kind: moderation.pendingReports + moderation.heldComments ? "warn" : "ok",
       pending: moderation.pendingReports + moderation.heldComments,
       detail: `${moderation.pendingReports} zgłoszeń, ${moderation.heldComments} wstrzymanych`,
-      link: { label: "Zgłoszenia", href: i.oldPanel("/admin/comments/reports"), external: true },
+      link: { label: "Zgłoszenia", href: "/spolecznosc?tab=zgloszenia", external: false },
     },
     {
       id: "payments",
