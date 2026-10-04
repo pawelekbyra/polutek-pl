@@ -1,0 +1,11 @@
+[Unit]
+Description=serwerek weekly restore test of the newest database dump (throwaway container)
+After=docker.service serwerek-backup.service
+Wants=docker.service
+OnFailure=serwerek-alert@%n.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/serwerek/scripts/restore-test.sh
+TimeoutStartSec=1800
+Nice=10
