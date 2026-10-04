@@ -10,8 +10,6 @@ import { LinkExpiredView } from "./LinkExpiredView";
 import { Divider, Field, OAuthButtons, PasskeySignIn, PrimaryButton } from "./AuthFormParts";
 import CheckInboxView from "./CheckInboxView";
 import SignUpFooter from "./SignUpFooter";
-import LanguageSwitcher from "../LanguageSwitcher";
-import { useSwitchLanguage } from "../useSwitchLanguage";
 import { TurnstileWidget, useCaptchaRequired, type CaptchaState, type TurnstileHandle } from "./TurnstileWidget";
 import { authClient, captchaFetchOptions } from "@/lib/auth/client";
 import { useAuth } from "@/lib/auth/react";
@@ -39,7 +37,6 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
   const router = useRouter();
   const { language } = useLanguage();
   const isPl = language === "pl";
-  const switchLanguage = useSwitchLanguage();
   const { isSignedIn } = useAuth();
   const captchaRequired = useCaptchaRequired();
   const captchaRef = useRef<TurnstileHandle>(null);
@@ -279,12 +276,6 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
             <DialogHeader className="text-center">
               <DialogTitle className="font-brand text-2xl font-bold tracking-tight text-[var(--chan-ink)]">{title}</DialogTitle>
             </DialogHeader>
-
-            {view === "sign-up" && (
-              <div className="mt-1 flex justify-center">
-                <LanguageSwitcher variant="inline" language={language} onSelect={switchLanguage} />
-              </div>
-            )}
 
             {error && (
               <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-[13px] font-semibold text-red-600">

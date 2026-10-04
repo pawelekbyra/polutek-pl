@@ -26,7 +26,7 @@ export function LegalDocLink({
   );
 }
 
-/** "Creating an account (also with Google) accepts the Terms" line shown under every way to sign up. */
+/** "Creating an account (also with Google) accepts the Terms and the Privacy Policy" line shown under every way to sign up. */
 export function SignUpLegalNotice({ language }: { language: string }) {
   const isPl = language === "pl";
   return (
@@ -34,13 +34,13 @@ export function SignUpLegalNotice({ language }: { language: string }) {
       {isPl ? (
         <>
           Zakładając konto (także przez Google), akceptujesz{" "}
-          <LegalDocLink doc="terms" language={language}>Regulamin</LegalDocLink>. Jak przetwarzamy dane:{" "}
-          <LegalDocLink doc="privacy" language={language}>Polityka prywatności</LegalDocLink>.
+          <LegalDocLink doc="terms" language={language}>Regulamin</LegalDocLink> i{" "}
+          <LegalDocLink doc="privacy" language={language}>Politykę prywatności</LegalDocLink>.
         </>
       ) : (
         <>
           By creating an account (also with Google), you accept the{" "}
-          <LegalDocLink doc="terms" language={language}>Terms</LegalDocLink>. How we process your data:{" "}
+          <LegalDocLink doc="terms" language={language}>Terms</LegalDocLink> and the{" "}
           <LegalDocLink doc="privacy" language={language}>Privacy Policy</LegalDocLink>.
         </>
       )}

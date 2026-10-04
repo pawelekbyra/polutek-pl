@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "../LanguageContext";
+import LanguageSwitcher from "../LanguageSwitcher";
+import { useSwitchLanguage } from "../useSwitchLanguage";
 import { Field, PrimaryButton } from "./AuthFormParts";
 import { signOutCompletely } from "@/lib/auth/sign-out";
 import { refreshSession, useUser } from "@/lib/auth/react";
@@ -21,6 +23,7 @@ export default function OnboardingDialog() {
   const { user } = useUser();
   const { language } = useLanguage();
   const router = useRouter();
+  const switchLanguage = useSwitchLanguage();
   const isPl = language === "pl";
   const [nickname, setNickname] = useState("");
   const [avatarDataUrl, setAvatarDataUrl] = useState<string | null>(null);
@@ -64,7 +67,7 @@ export default function OnboardingDialog() {
     const response = await fetch("/api/user/first-sign-in", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nickname: validation.value, avatarDataUrl }),
+      body: JSON.stringify({ nickname: validation.value, avatarDataUrl, language }),
     }).catch(() => null);
     if (!response) {
       setSaving(false);
@@ -100,6 +103,12 @@ export default function OnboardingDialog() {
               ? "Wybierz pseudonim. To nazwa widoczna na stronie, np. przy Twoich komentarzach."
               : "Choose a nickname. It is the name shown on the site, e.g. with your comments."}
           </p>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[12px] font-semibold text-[var(--chan-ink)]">
+              {isPl ? "Język strony i wiadomości e-mail" : "Site and e-mail language"}
+            </span>
+            <LanguageSwitcher variant="inline" language={language} onSelect={switchLanguage} />
+          </div>
           <Field label={isPl ? "Pseudonim" : "Nickname"} type="text" value={nickname} onChange={setNickname} autoComplete="nickname" required />
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
