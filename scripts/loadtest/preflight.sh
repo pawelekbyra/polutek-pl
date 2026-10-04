@@ -6,7 +6,8 @@ set -u
 fail() { echo "PREFLIGHT FAIL: $1" >&2; exit 1; }
 busy() { echo "PREFLIGHT BUSY: $1" >&2; exit 2; }  # transient: the caller may wait and retry
 
-pgrep -f deploy.sh >/dev/null && fail "deploy.sh is running"
+# Matches "bash ./deploy.sh <tag>", not a shell whose command line merely mentions the name.
+pgrep -f "^(/usr/bin/|/bin/)?(ba)?sh [^ ]*deploy\.sh" >/dev/null && fail "deploy.sh is running"
 [ "$(docker inspect -f '{{.State.Health.Status}}' polutek-app-1 2>/dev/null)" = "healthy" ] || fail "polutek-app-1 is not healthy"
 jobs="$(docker exec polutek-db-1 sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "select count(*) from \"VideoEncodeJob\" where status::text in ('"'"'RUNNING'"'"','"'"'QUEUED'"'"')"' 2>/dev/null)"
 [ -n "$jobs" ] || fail "could not read VideoEncodeJob"

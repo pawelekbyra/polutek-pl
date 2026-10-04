@@ -2,7 +2,7 @@
 # Database work per request: runs N sequential requests of one target (1 VU) and reads the delta of
 # pg_stat_database (committed transactions = statements outside explicit transactions, rows fetched/returned)
 # for the app database, minus the background rate measured over the same time while idle.
-# usage: count-queries.sh <target> [iterations=50]      env: VIDEO_ID, OUT_DIR, K6_IMAGE
+# usage: count-queries.sh <target> [iterations=50]  (env FLUSH_WAIT_SECONDS=12)      env: VIDEO_ID, OUT_DIR, K6_IMAGE
 set -u
 TARGET="$1"; N="${2:-50}"
 DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -21,7 +21,9 @@ s0="$(snap)"; t0=$(date +%s.%N)
 docker run --rm --name pp-loadtest-k6 --network host --cpus 0.5 --memory 256m \
   -v "$DIR:/scripts:ro" -v "$OUT:/out" -e TARGET="$TARGET" -e ITERATIONS="$N" -e VIDEO_ID="$VIDEO_ID" \
   -e OUT="/out/count-$TARGET.json" "$K6_IMAGE" run -q --no-usage-report /scripts/k6-guest.js >/dev/null 2>&1
-sleep 2  # pg_stat_database is updated when backends report (at most ~1 s later)
+# Postgres 15+ backends flush their statistics at most once a second while busy and up to ~10 s after going
+# idle, so wait before reading or part of this run is attributed to the next one.
+sleep "${FLUSH_WAIT_SECONDS:-12}"
 s1="$(snap)"; t1=$(date +%s.%N)
 elapsed=$(awk -v a="$t0" -v b="$t1" 'BEGIN{print b-a}')
 # Idle background over the same length of time (encoder queue polling, cron, health checks).
