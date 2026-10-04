@@ -314,7 +314,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   };
 
   // Spacing has one owner: the `gap` of each column below (no margins on the children, no
-  // overrides in CSS modules). Header, composer and list 16 px apart; threads 16 px apart.
+  // overrides in CSS modules). Header and composer 16 px apart, composer and the first comment
+  // 24 px (the list's own `pt-2` on top of the gap: a new section needs more air than a row in
+  // it); threads 16 px apart.
   return (
     <div
       ref={commentsTopRef}
@@ -444,7 +446,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
       <div
         className={cn(
-          "flex flex-col gap-4 transition-opacity duration-200 motion-reduce:transition-none",
+          "flex flex-col gap-4 pt-2 transition-opacity duration-200 motion-reduce:transition-none",
           // The previous video's (or sort order's) list, kept while the new one loads: dimmed
           // and inert, never a skeleton.
           isPlaceholderData && "pointer-events-none opacity-50",
