@@ -1,10 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
-
-vi.mock("@/lib/api/admin-rate-limit", () => ({
-  checkAdminRateLimit: vi.fn().mockResolvedValue({ limited: false }),
-  getAdminClientIp: () => "203.0.113.5",
-}));
 
 import middleware from "@/middleware";
 

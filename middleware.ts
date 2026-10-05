@@ -4,7 +4,7 @@ import { createRouteMatcher } from "@/lib/auth/route-matcher";
 import { SESSION_COOKIE_PREFIX } from "@/lib/auth/config";
 import { generateCSP } from "@/lib/utils/security";
 import { checkAdminCsrf } from "@/lib/api/csrf";
-import { checkAdminRateLimit, getAdminClientIp } from "@/lib/api/admin-rate-limit";
+import { isLegacyAdminApiPath, resolveLegacyAdminRedirect } from "@/lib/admin-legacy-redirects";
 import { getRouteLocaleFromPathname, ROUTE_LOCALE_HEADER } from "@/lib/i18n/routing";
 
 const isPublicRoute = createRouteMatcher([
@@ -80,8 +80,6 @@ const isPublicRoute = createRouteMatcher([
   '/api/comments/(.*)/replies',
 ]);
 
-const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);
-
 // Exact top-level paths that must never get a /pl or /en prefix.
 // - /manifest.json, /robots.txt, /sitemap.xml: static root files served from
 //   /public. The matcher's static-extension exclusion skips most file types
@@ -97,7 +95,7 @@ function shouldRewriteForPolish(pathname: string): boolean {
   if (LOCALE_EXEMPT_PATHS.has(pathname)) return false;
 
   // Check if pathname is already localized or is a route that should not be locale-prefixed.
-  const startsWithLocaleOrSystemRoute = /^\/(?:pl|en|admin|api|\.)(?:\/|$)/.test(pathname);
+  const startsWithLocaleOrSystemRoute = /^\/(?:pl|en|api|\.)(?:\/|$)/.test(pathname);
   if (startsWithLocaleOrSystemRoute) return false;
 
   // All other paths should be rewritten (including "/")
@@ -134,17 +132,18 @@ function requireSessionCookie(req: NextRequest): NextResponse | null {
   return NextResponse.redirect(target);
 }
 
-async function sessionRateKey(req: NextRequest): Promise<string | null> {
-  const cookie = getSessionCookie(req, { cookiePrefix: SESSION_COOKIE_PREFIX });
-  if (!cookie) return null;
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(cookie));
-  const hex = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
-  return `session:${hex.slice(0, 24)}`;
-}
-
 export default async function middleware(req: NextRequest) {
-  // Account mutations (nickname, avatar, language, deletion, ...) get the same cross-origin guard
-  // as the admin API. Better Auth's own endpoints check the origin themselves.
+  // The old admin is retired (docs/architecture/admin-phase5.md): its pages move permanently to the
+  // panel and its API no longer exists. Answered before any session gate, so a signed-out visitor
+  // holding an old bookmark lands on the panel's own login instead of the public sign-in.
+  const legacyTarget = resolveLegacyAdminRedirect(req.nextUrl.pathname);
+  if (legacyTarget) return NextResponse.redirect(legacyTarget, 308);
+  if (isLegacyAdminApiPath(req.nextUrl.pathname)) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
+  }
+
+  // Account mutations (nickname, avatar, language, deletion, ...) get a cross-origin guard (lib/api/csrf.ts).
+  // Better Auth's own endpoints check the origin themselves.
   if (req.nextUrl.pathname.startsWith('/api/user/')) {
     const csrf = checkAdminCsrf(req);
     if (csrf) return NextResponse.json(csrf.body, { status: csrf.status });
@@ -156,46 +155,9 @@ export default async function middleware(req: NextRequest) {
   if (req.nextUrl.pathname === '/api/comments' && req.method !== 'GET') {
     const blocked = requireSessionCookie(req);
     if (blocked) return blocked;
-  } else if (isAdminRoute(req.nextUrl.pathname)) {
-    const isApiAdmin = req.nextUrl.pathname.startsWith('/api/admin');
-
-    // CSRF is enforced here, once, for every mutating /api/admin request, so no
-    // individual route can forget it (see lib/api/csrf.ts).
-    if (isApiAdmin) {
-      const csrf = checkAdminCsrf(req);
-      if (csrf) return NextResponse.json(csrf.body, { status: csrf.status });
-    }
-
-    const blocked = requireSessionCookie(req);
-    if (blocked) return blocked;
-
-    // Rate limiting (per admin session + IP) runs after the cookie check; per-route limits
-    // live in lib/api/admin-rate-limit.ts.
-    if (isApiAdmin) {
-      const limited = await checkAdminRateLimit({
-        pathname: req.nextUrl.pathname,
-        method: req.method,
-        userId: await sessionRateKey(req),
-        ip: getAdminClientIp(req.headers),
-      });
-      if (limited.limited) {
-        return NextResponse.json(
-          { error: 'Too many requests', message: 'Rate limit exceeded. Try again shortly.' },
-          { status: 429, headers: { 'Retry-After': String(limited.retryAfterSeconds) } },
-        );
-      }
-    }
   } else if (!isPublicRoute(req.nextUrl.pathname)) {
     const blocked = requireSessionCookie(req);
     if (blocked) return blocked;
-  }
-
-  if (req.method === 'GET' && req.nextUrl.pathname === '/admin/videos') {
-    const editId = req.nextUrl.searchParams.get('edit');
-    if (editId) {
-      const targetUrl = new URL(`/admin/videos/${encodeURIComponent(editId)}/edit`, req.url);
-      return NextResponse.redirect(targetUrl);
-    }
   }
 
   const requestId = crypto.randomUUID();
