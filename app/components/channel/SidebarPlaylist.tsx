@@ -4,7 +4,6 @@ import React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { formatDistance } from "date-fns";
-import { pl } from "date-fns/locale";
 import Image from "next/image";
 import { AlertCircle } from "../icons";
 import { PublicVideoDTO } from "@/app/types/video";
@@ -15,7 +14,11 @@ import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { NajsIcon } from "../najs/primitives";
 import { useAppPreload } from "../preload/AppPreloadProvider";
 import type { WarmupInput } from "../preload/media-warmup";
-import { getLocalizedHref } from "@/lib/i18n/routing";
+import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
+import { dateFnsLocale } from "@/lib/i18n/date-locale";
+import { countedNoun } from "@/lib/i18n/plurals";
+import { intlLocale } from "@/lib/i18n/ui";
+import { useOptionalTx } from "@/lib/i18n/language-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isUpcomingPremiere } from "@/lib/premiere";
 import { usePremiereClock } from "@/lib/hooks/usePremiereClock";
@@ -34,7 +37,7 @@ interface SidebarPlaylistProps {
   sortedVideos: PublicVideoDTO[];
   selectedVideoId?: string;
   t: Translations;
-  language: string;
+  language: Locale;
   onVideoSelect?: (videoId?: string) => void;
   /** Server-built layout (HomeExperience) + the viewer it was built for; skips the first fetch. */
   initialLayout?: SidebarLayout | null;
@@ -55,19 +58,13 @@ export function SidebarPlaylist({
     isSignedIn,
     userId: authUserId,
   } = useAuth();
+  const tx = useOptionalTx(language);
   const preloader = useAppPreload();
   // Relative dates render from the server's clock during hydration (RenderClock), so the first
   // HTML already has them; views use a fixed locale, which formats the same on server and client.
   const now = useRenderClock();
 
-  const getViewsLabel = (count: number) => {
-    if (language !== "pl") return count === 1 ? "view" : "views";
-    if (count === 1) return "wyświetlenie";
-    const last = count % 10;
-    const lastTwo = count % 100;
-    if (last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14)) return "wyświetlenia";
-    return "wyświetleń";
-  };
+  const getViewsLabel = (count: number) => countedNoun(language, "views", count);
 
   const [layout, setLayout] = useState<SidebarLayout | null>(initialLayout ?? null);
   const [error, setError] = useState<boolean>(false);
@@ -152,8 +149,7 @@ export function SidebarPlaylist({
       });
     };
     const releaseIntent = () => preloader?.releaseVideoIntent(video.id);
-    const locale = language === "pl" ? "pl" : "en";
-    const feedVideoHref = `${getLocalizedHref(locale, "home")}?v=${encodeURIComponent(video.slug || video.id)}`;
+    const feedVideoHref = `${getLocalizedHref(language, "home")}?v=${encodeURIComponent(video.slug || video.id)}`;
 
     return (
       <div
@@ -238,14 +234,14 @@ export function SidebarPlaylist({
               </div>
               <div className="flex flex-col leading-[1.4]">
                 <span>
-                  {(video.views ?? 0).toLocaleString(language === "pl" ? "pl-PL" : "en-US")}{" "}
+                  {(video.views ?? 0).toLocaleString(intlLocale(language))}{" "}
                   {getViewsLabel(video.views ?? 0)}
                 </span>
                 {video.publishedAt && now && (
                   <span>
                     {formatDistance(new Date(video.publishedAt), now, {
                       addSuffix: true,
-                      locale: language === "pl" ? pl : undefined,
+                      locale: dateFnsLocale(language),
                     }).replace("około", "ok.")}
                   </span>
                 )}
@@ -272,9 +268,9 @@ export function SidebarPlaylist({
   );
 
   // Section titles follow the viewer's language (the server layout only carries Polish ones).
-  const publicSectionTitle = language === "pl" ? "Publiczne" : "Public";
-  const loggedInSectionTitle = language === "pl" ? "Dla zalogowanych" : "For signed-in users";
-  const upcomingSectionTitle = language === "pl" ? "Już wkrótce" : "Coming soon";
+  const publicSectionTitle = tx("Publiczne", "Public");
+  const loggedInSectionTitle = tx("Dla zalogowanych", "For signed-in users");
+  const upcomingSectionTitle = tx("Już wkrótce", "Coming soon");
   const amberDot = (
     <span
       aria-hidden="true"
@@ -313,9 +309,7 @@ export function SidebarPlaylist({
       return (
         <div className="rounded-2xl border-2 border-dashed border-[var(--chan-line)] p-8 text-center">
           <p className="text-sm text-[var(--chan-muted)]">
-            {language === "pl"
-              ? "Brak filmów do wyświetlenia."
-              : "No videos to show."}
+            {tx("Brak filmów do wyświetlenia.", "No videos to show.")}
           </p>
         </div>
       );
@@ -324,7 +318,7 @@ export function SidebarPlaylist({
     return (
       <div className="space-y-1.5 lg:h-full lg:min-h-0">
         {renderSectionHeader(
-          language === "pl" ? "Dostępne filmy" : "Available videos",
+          tx("Dostępne filmy", "Available videos"),
           <AlertCircle size={14} className="text-[var(--chan-amber-strong)]" />,
         )}
         {fallbackItems.map((v, i) =>

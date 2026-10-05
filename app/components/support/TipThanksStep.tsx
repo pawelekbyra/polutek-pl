@@ -5,8 +5,10 @@ import { Loader2 } from "../icons";
 import { TipPrimaryButton, TipStepLayout } from "./TipStepLayout";
 import type { TipUiStatus } from "@/lib/hooks/useCheckoutFlow";
 
+import { useOptionalTx } from "@/lib/i18n/language-context";
+import type { Locale } from "@/lib/i18n/routing";
 interface TipThanksStepProps {
-  language: string;
+  language: Locale;
   paymentUiStatus: TipUiStatus | null;
   isSyncing: boolean;
   onRetryStatusCheck: () => void;
@@ -32,42 +34,34 @@ export function TipThanksStep({
   onTryAgain,
   onDone,
 }: TipThanksStepProps) {
-  const isPl = language === "pl";
+  const tx = useOptionalTx(language);
   const outcome = outcomeOf(paymentUiStatus);
 
   const copy: Record<Outcome, { icon: React.ReactNode; title: string; body: string }> = {
     thanks: {
       icon: "🎉",
-      title: isPl ? "Dziękuję!" : "Thank you!",
-      body: isPl
-        ? "Napiwek dotarł. Bez wsparcia widzów tego projektu by nie było."
-        : "Your tip arrived. This project wouldn't exist without viewers' support.",
+      title: tx("Dziękuję!", "Thank you!"),
+      body: tx("Napiwek dotarł. Bez wsparcia widzów tego projektu by nie było.", "Your tip arrived. This project wouldn't exist without viewers' support."),
     },
     pending: {
       icon: <Loader2 className="h-10 w-10 animate-spin text-[var(--chan-muted)] motion-reduce:animate-none" aria-hidden="true" />,
-      title: isPl ? "Chwileczkę…" : "One moment…",
-      body: isPl ? "Potwierdzam Twój napiwek. To zajmie tylko chwilę." : "Confirming your tip. This only takes a moment.",
+      title: tx("Chwileczkę…", "One moment…"),
+      body: tx("Potwierdzam Twój napiwek. To zajmie tylko chwilę.", "Confirming your tip. This only takes a moment."),
     },
     timeout: {
       icon: "⏳",
-      title: isPl ? "Trwa to dłużej niż zwykle" : "This is taking longer than usual",
-      body: isPl
-        ? "Sprawdź status za chwilę — nie musisz płacić ponownie."
-        : "Check the status again in a moment — no need to pay twice.",
+      title: tx("Trwa to dłużej niż zwykle", "This is taking longer than usual"),
+      body: tx("Sprawdź status za chwilę — nie musisz płacić ponownie.", "Check the status again in a moment — no need to pay twice."),
     },
     refunded: {
       icon: "↩️",
-      title: isPl ? "Napiwek został zwrócony" : "This tip was refunded",
-      body: isPl
-        ? "Ta wpłata została zwrócona albo jest sporna. Szczegóły znajdziesz w potwierdzeniu z banku."
-        : "This payment was refunded or is disputed. Your bank statement has the details.",
+      title: tx("Napiwek został zwrócony", "This tip was refunded"),
+      body: tx("Ta wpłata została zwrócona albo jest sporna. Szczegóły znajdziesz w potwierdzeniu z banku.", "This payment was refunded or is disputed. Your bank statement has the details."),
     },
     failed: {
       icon: "😕",
-      title: isPl ? "Coś poszło nie tak" : "Something went wrong",
-      body: isPl
-        ? "Płatność nie została ukończona. Nic nie zostało pobrane."
-        : "The payment was not completed. Nothing was charged.",
+      title: tx("Coś poszło nie tak", "Something went wrong"),
+      body: tx("Płatność nie została ukończona. Nic nie zostało pobrane.", "The payment was not completed. Nothing was charged."),
     },
   };
   const { icon, title, body } = copy[outcome];
@@ -84,7 +78,7 @@ export function TipThanksStep({
               disabled={isSyncing}
               className="h-12 rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-[var(--chan-amber-soft)] text-[14px] font-bold text-[var(--chan-ink)] hover:bg-[var(--cm-amber-28)] disabled:opacity-60"
             >
-              {isPl ? "Sprawdź ponownie" : "Check again"}
+              {tx("Sprawdź ponownie", "Check again")}
             </button>
           )}
           {outcome === "failed" && (
@@ -93,10 +87,10 @@ export function TipThanksStep({
               onClick={onTryAgain}
               className="h-12 rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-[var(--chan-amber-soft)] text-[14px] font-bold text-[var(--chan-ink)] hover:bg-[var(--cm-amber-28)]"
             >
-              {isPl ? "Spróbuj jeszcze raz" : "Try again"}
+              {tx("Spróbuj jeszcze raz", "Try again")}
             </button>
           )}
-          <TipPrimaryButton onClick={onDone}>{isPl ? "Wróć do filmu" : "Back to the video"}</TipPrimaryButton>
+          <TipPrimaryButton onClick={onDone}>{tx("Wróć do filmu", "Back to the video")}</TipPrimaryButton>
         </div>
       }
     >

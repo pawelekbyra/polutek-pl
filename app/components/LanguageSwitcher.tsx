@@ -7,6 +7,7 @@ import LanguageFlag from "./language-switcher/LanguageFlag";
 import { warmFlags, type LanguageOption } from "./language-switcher/languages";
 import { useLanguagePicker } from "./language-switcher/useLanguagePicker";
 import styles from "./language-switcher/LanguageSwitcher.module.css";
+import { useOptionalTx } from "@/lib/i18n/language-context";
 
 type Props = {
   language: Locale;
@@ -75,17 +76,14 @@ function LanguageOptionRow({ option, id, selected, active, compact, onPick, onHo
  */
 export default function LanguageSwitcher({ language, onSelect, variant = "pill" }: Props) {
   const inline = variant === "inline";
-  const isPl = language === "pl";
+  const tx = useOptionalTx(language);
   const {
-    open, options, current, real, active, noteVisible, listId, optionId,
+    open, options, current, active, listId, optionId,
     rootRef, triggerRef, listRef, toggle, pick, setActiveIndex, onListKeyDown,
   } = useLanguagePicker({ language, onSelect, inline });
 
-  const buttonLabel = isPl ? `Język: ${current.label}. Zmień język` : `Language: ${current.label}. Change language`;
-  const listLabel = isPl ? "Języki" : "Languages";
-  const note = isPl
-    ? `Tłumaczenie na ${current.label} jest w przygotowaniu. Na razie ${real.label}.`
-    : `The ${current.label} translation is in progress. For now: ${real.label}.`;
+  const buttonLabel = tx("Język: {0}. Zmień język", "Language: {0}. Change language", current.label);
+  const listLabel = tx("Języki", "Languages");
 
   const rows = (compact: boolean) =>
     options.map((option, index) => (
@@ -139,7 +137,7 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
           className="ml-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold text-[var(--chan-muted)] transition-colors hover:bg-[var(--chan-surface)] hover:text-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] pointer-coarse:min-h-11"
         >
           <Globe className="h-3.5 w-3.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
-          <span>{isPl ? "Język" : "Language"}:</span>
+          <span>{tx("Język", "Language")}:</span>
           <span className="text-[var(--chan-ink)]">{current.label}</span>
           {chevron("h-3 w-3")}
         </button>
@@ -153,20 +151,6 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
           {chevron("h-3.5 w-3.5 text-[var(--chan-muted)]")}
         </button>
       )}
-
-      <div role="status" aria-live="polite" className="contents">
-        {noteVisible && !open ? (
-          <div
-            className={
-              inline
-                ? "relative mx-auto mt-1 basis-full text-center text-[11.5px] leading-snug text-[var(--chan-muted)]"
-                : "absolute right-0 top-[calc(100%+8px)] z-[1100] w-[232px] rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-3 py-2 text-left text-[12.5px] leading-snug text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.14)]"
-            }
-          >
-            {note}
-          </div>
-        ) : null}
-      </div>
 
       {open && inline ? (
         <div

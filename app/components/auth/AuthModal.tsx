@@ -18,6 +18,7 @@ import { useAuth } from "@/lib/auth/react";
 import { authErrorMessage } from "@/lib/auth/errors";
 import { PASSWORD_MIN_LENGTH } from "@/lib/auth/config";
 import { clearReturnPath, peekReturnPath, rememberReturnPathIfNone, withQueryFlag } from "@/lib/auth/sso-return";
+import type { Tx } from "@/lib/i18n/ui";
 
 type InternalView = "sign-in" | "sign-up" | "passkey-signup" | "verify-sent" | "link-expired" | "forgot" | "forgot-sent" | "two-factor";
 
@@ -29,8 +30,8 @@ interface AuthModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-function passwordMismatchMessage(isPl: boolean) {
-  return isPl ? "Hasła nie są takie same." : "The passwords do not match.";
+function passwordMismatchMessage(tx: Tx) {
+  return tx("Hasła nie są takie same.", "The passwords do not match.");
 }
 
 type OpError = { code?: string; message?: string; status?: number } | null | undefined;
@@ -38,10 +39,10 @@ type OpError = { code?: string; message?: string; status?: number } | null | und
 export default function AuthModal({ open, initialView, notice = null, onOpenChange }: AuthModalProps) {
   const router = useRouter();
   const { language } = useLanguage();
-  const isPl = language === "pl";
+  const { tx } = useLanguage();
   const { isSignedIn } = useAuth();
   // Bot check: runs in the background from the moment a form opens; the submit button never waits for it.
-  const captchaGate = useCaptchaGate(isPl);
+  const captchaGate = useCaptchaGate(tx);
 
   const [view, setView] = useState<InternalView>(initialView);
   const [email, setEmail] = useState("");
@@ -64,7 +65,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
     if (open) {
       setView(notice === "link-expired" ? "link-expired" : initialView);
       setError(null);
-      setInfo(notice === "verified" ? (isPl ? "Adres e-mail potwierdzony. Zaloguj się." : "Email confirmed. Please sign in.") : null);
+      setInfo(notice === "verified" ? (tx("Adres e-mail potwierdzony. Zaloguj się.", "Email confirmed. Please sign in.")) : null);
       setEmailTaken(null);
       setLoading(false);
       return;
@@ -96,7 +97,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
 
   function fail(err: OpError) {
     setWrongCredentials(err?.code === "INVALID_EMAIL_OR_PASSWORD");
-    setError(authErrorMessage(err, isPl));
+    setError(authErrorMessage(err, tx));
     setLoading(false);
     captchaGate.reset();
   }
@@ -135,7 +136,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
       });
       if (signInError) {
         if (signInError.code === "EMAIL_NOT_VERIFIED") {
-          setInfo(isPl ? "Potwierdź adres e-mail. Wysłaliśmy nowy link." : "Please verify your email. We sent a new link.");
+          setInfo(tx("Potwierdź adres e-mail. Wysłaliśmy nowy link.", "Please verify your email. We sent a new link."));
           setView("verify-sent");
           captchaGate.reset();
           return;
@@ -152,7 +153,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
 
   function handleSignUp(e?: React.FormEvent) {
     e?.preventDefault();
-    if (password !== confirmPassword) return setError(passwordMismatchMessage(isPl));
+    if (password !== confirmPassword) return setError(passwordMismatchMessage(tx));
     if (!captchaGate.ready(handleSignUp)) return;
     setEmailTaken(null);
     return run(async () => {
@@ -161,7 +162,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
         email,
         password,
         name: email.split("@")[0] || "user",
-        language: isPl ? "pl" : "en",
+        language: tx.language,
         callbackURL: returnTo(),
         fetchOptions: captchaFetchOptions(captchaGate.token()),
       });
@@ -188,7 +189,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
         fetchOptions: captchaFetchOptions(captchaGate.token()),
       });
       if (resendError) return fail(resendError);
-      setInfo(isPl ? "Wysłaliśmy link ponownie." : "We sent the link again.");
+      setInfo(tx("Wysłaliśmy link ponownie.", "We sent the link again."));
       captchaGate.reset();
     });
   }
@@ -235,14 +236,14 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
   }
 
   const title = {
-    "sign-in": isPl ? "Zaloguj się lub załóż konto" : "Sign in or create account",
-    "sign-up": isPl ? "Załóż konto" : "Create account",
-    "passkey-signup": isPl ? "Konto z kluczem dostępu" : "Account with a passkey",
-    "verify-sent": isPl ? "Sprawdź skrzynkę" : "Check your inbox",
-    "link-expired": isPl ? "Link wygasł" : "Link expired",
-    forgot: isPl ? "Reset hasła" : "Reset password",
-    "forgot-sent": isPl ? "Sprawdź skrzynkę" : "Check your inbox",
-    "two-factor": isPl ? "Weryfikacja dwuetapowa" : "Two-step verification",
+    "sign-in": tx("Zaloguj się lub załóż konto", "Sign in or create account"),
+    "sign-up": tx("Załóż konto", "Create account"),
+    "passkey-signup": tx("Konto z kluczem dostępu", "Account with a passkey"),
+    "verify-sent": tx("Sprawdź skrzynkę", "Check your inbox"),
+    "link-expired": tx("Link wygasł", "Link expired"),
+    forgot: tx("Reset hasła", "Reset password"),
+    "forgot-sent": tx("Sprawdź skrzynkę", "Check your inbox"),
+    "two-factor": tx("Weryfikacja dwuetapowa", "Two-step verification"),
   }[view];
 
   function switchView(next: InternalView) {
@@ -253,7 +254,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
     setView(next);
   }
 
-  const revealLabels = isPl ? { show: "Pokaż", hide: "Ukryj" } : { show: "Show", hide: "Hide" };
+  const revealLabels = { show: tx("Pokaż", "Show"), hide: tx("Ukryj", "Hide") };
   const captcha = captchaGate.widget;
   // A click before the token is there queues the request: same spinner as a running request.
   const busy = loading || captchaGate.waiting;
@@ -266,7 +267,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
       >
         <div className="relative isolate max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-5 py-6 shadow-[0_20px_50px_rgba(23,23,23,0.14)] sm:px-6 sm:py-7">
           <div>
-            <AuthDialogTop title={title} isPl={isPl} onClose={() => onOpenChange(false)} />
+            <AuthDialogTop title={title} tx={tx} onClose={() => onOpenChange(false)} />
 
             {error && (
               <p role="alert" className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-[13px] font-semibold text-red-600">
@@ -275,51 +276,49 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
             )}
             {error && wrongCredentials && view === "sign-in" && (
               <p className="mt-2 text-[12px] text-[var(--chan-muted)]">
-                {isPl
-                  ? "Masz starsze konto albo logowałeś się przez Google? Użyj przycisku Google albo „Nie pamiętam hasła”, żeby ustawić hasło."
-                  : "Have an older account, or signed in with Google before? Use the Google button, or “Forgot password” to set a password."}
+                {tx("Masz starsze konto albo logowałeś się przez Google? Użyj przycisku Google albo „Nie pamiętam hasła”, żeby ustawić hasło.", "Have an older account, or signed in with Google before? Use the Google button, or “Forgot password” to set a password.")}
               </p>
             )}
             {error && emailTaken && (view === "sign-up" || view === "passkey-signup") && (
-              <EmailTakenActions isPl={isPl} kind={emailTaken} onSignIn={() => switchView("sign-in")} onForgot={() => switchView("forgot")} />
+              <EmailTakenActions tx={tx} kind={emailTaken} onSignIn={() => switchView("sign-in")} onForgot={() => switchView("forgot")} />
             )}
             {info && !error && <p className="mt-3 rounded-lg bg-[var(--chan-blue-soft)] px-3 py-2 text-[13px] font-semibold text-[var(--chan-blue)]">{info}</p>}
 
             {view === "sign-in" && (
               <form onSubmit={handlePasswordSignIn} className="mt-5 space-y-3.5">
-                <OAuthButtons onSelect={handleOAuth} isPl={isPl} />
-                <PasskeySignIn active={open && view === "sign-in"} isPl={isPl} onSignedIn={finishSignedIn} onError={setError} onNeedAccount={() => switchView("passkey-signup")} />
-                <NewHereNote isPl={isPl} />
-                <Divider isPl={isPl} />
+                <OAuthButtons onSelect={handleOAuth} tx={tx} />
+                <PasskeySignIn active={open && view === "sign-in"} tx={tx} onSignedIn={finishSignedIn} onError={setError} onNeedAccount={() => switchView("passkey-signup")} />
+                <NewHereNote tx={tx} />
+                <Divider tx={tx} />
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="username webauthn" required />
-                <Field label={isPl ? "Hasło" : "Password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" revealLabels={revealLabels} required />
+                <Field label={tx("Hasło", "Password")} type="password" value={password} onChange={setPassword} autoComplete="current-password" revealLabels={revealLabels} required />
                 {captcha}
-                <PrimaryButton loading={busy} label={isPl ? "Zaloguj się" : "Sign in"} />
-                <SignInLinks isPl={isPl} onForgot={() => switchView("forgot")} onSignUp={() => switchView("sign-up")} />
+                <PrimaryButton loading={busy} label={tx("Zaloguj się", "Sign in")} />
+                <SignInLinks tx={tx} onForgot={() => switchView("forgot")} onSignUp={() => switchView("sign-up")} />
               </form>
             )}
 
             {view === "passkey-signup" && (
               <PasskeySignupView
-                isPl={isPl}
+                tx={tx}
                 email={email}
                 onEmailChange={setEmail}
                 callbackURL={returnTo()}
                 captchaGate={captchaGate}
                 onError={setError}
                 onEmailTaken={setEmailTaken}
-                onCreated={() => { setInfo(isPl ? "Klucz dostępu zapisany. Potwierdź e-mail linkiem z wiadomości, a zalogujemy Cię." : "Passkey saved. Confirm your email with the link we sent and you'll be signed in."); setView("verify-sent"); }}
+                onCreated={() => { setInfo(tx("Klucz dostępu zapisany. Potwierdź e-mail linkiem z wiadomości, a zalogujemy Cię.", "Passkey saved. Confirm your email with the link we sent and you'll be signed in.")); setView("verify-sent"); }}
                 onBack={() => switchView("sign-in")}
               />
             )}
 
             {view === "sign-up" && (
               <form onSubmit={handleSignUp} className="mt-5 space-y-3.5">
-                <OAuthButtons onSelect={handleOAuth} isPl={isPl} />
-                <Divider isPl={isPl} />
+                <OAuthButtons onSelect={handleOAuth} tx={tx} />
+                <Divider tx={tx} />
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
                 <Field
-                  label={isPl ? "Hasło (min. 10 znaków)" : "Password (min. 10 characters)"}
+                  label={tx("Hasło (min. 10 znaków)", "Password (min. 10 characters)")}
                   type="password"
                   value={password}
                   onChange={setPassword}
@@ -329,7 +328,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
                   required
                 />
                 <Field
-                  label={isPl ? "Powtórz hasło" : "Repeat password"}
+                  label={tx("Powtórz hasło", "Repeat password")}
                   type="password"
                   value={confirmPassword}
                   onChange={setConfirmPassword}
@@ -339,17 +338,17 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
                   required
                 />
                 {confirmPassword && password !== confirmPassword && (
-                  <p role="alert" className="text-[12px] font-semibold text-red-600">{passwordMismatchMessage(isPl)}</p>
+                  <p role="alert" className="text-[12px] font-semibold text-red-600">{passwordMismatchMessage(tx)}</p>
                 )}
                 {captcha}
                 <PrimaryButton
                   loading={busy}
                   disabled={password.length < PASSWORD_MIN_LENGTH || password !== confirmPassword}
-                  label={isPl ? "Załóż konto" : "Create account"}
+                  label={tx("Załóż konto", "Create account")}
                 />
                 <div className="pt-1 text-center text-[12px] text-[var(--chan-muted)]">
                   <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("sign-in")}>
-                    {isPl ? "Masz już konto? Zaloguj się" : "Already have an account? Sign in"}
+                    {tx("Masz już konto? Zaloguj się", "Already have an account? Sign in")}
                   </button>
                 </div>
               </form>
@@ -358,7 +357,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
 
             {view === "verify-sent" && (
               <CheckInboxView
-                isPl={isPl}
+                tx={tx}
                 kind="verify"
                 email={email}
                 onResend={() => void handleResend()}
@@ -371,7 +370,7 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
 
             {view === "link-expired" && (
               <LinkExpiredView
-                isPl={isPl}
+                tx={tx}
                 email={email}
                 onEmailChange={setEmail}
                 onSubmit={handleResend}
@@ -384,26 +383,26 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
             {view === "forgot" && (
               <form onSubmit={handleForgot} className="mt-5 space-y-3.5">
                 <p className="text-[13px] text-[var(--chan-body)]">
-                  {isPl ? "Podaj e-mail — wyślemy link do ustawienia nowego hasła." : "Enter your email — we'll send a link to set a new password."}
+                  {tx("Podaj e-mail — wyślemy link do ustawienia nowego hasła.", "Enter your email — we'll send a link to set a new password.")}
                 </p>
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="email" required />
                 {captcha}
-                <PrimaryButton loading={busy} label={isPl ? "Wyślij link" : "Send link"} />
+                <PrimaryButton loading={busy} label={tx("Wyślij link", "Send link")} />
                 <div className="pt-1 text-center text-[12px] text-[var(--chan-muted)]">
                   <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={() => switchView("sign-in")}>
-                    {isPl ? "Wróć do logowania" : "Back to sign in"}
+                    {tx("Wróć do logowania", "Back to sign in")}
                   </button>
                 </div>
               </form>
             )}
 
             {view === "forgot-sent" && (
-              <CheckInboxView isPl={isPl} kind="reset" email={email} onBack={() => switchView("sign-in")} />
+              <CheckInboxView tx={tx} kind="reset" email={email} onBack={() => switchView("sign-in")} />
             )}
 
             {view === "two-factor" && (
               <TwoFactorView
-                isPl={isPl}
+                tx={tx}
                 code={code}
                 onCodeChange={setCode}
                 useBackupCode={useBackupCode}

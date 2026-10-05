@@ -5,7 +5,6 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { Locale } from "@/lib/i18n/routing";
 import { LANGUAGE_OPTIONS, startsWithTyped, type LanguageOption } from "./languages";
 
-const NOTE_VISIBLE_MS = 4500;
 const TYPEAHEAD_RESET_MS = 600;
 
 type Options = {
@@ -23,9 +22,6 @@ type Options = {
  */
 export function useLanguagePicker({ language, onSelect, inline }: Options) {
   const [open, setOpen] = useState(false);
-  // A listed-but-untranslated language the user picked: shown in the button until reload.
-  const [preview, setPreview] = useState<LanguageOption | null>(null);
-  const [noteVisible, setNoteVisible] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -35,8 +31,7 @@ export function useLanguagePicker({ language, onSelect, inline }: Options) {
   const listId = `${baseId}-list`;
   const optionId = (option: LanguageOption) => `${baseId}-${option.code}`;
 
-  const real = LANGUAGE_OPTIONS.find((o) => o.locale === language) ?? LANGUAGE_OPTIONS[0];
-  const current = preview ?? real;
+  const current = LANGUAGE_OPTIONS.find((o) => o.locale === language) ?? LANGUAGE_OPTIONS[0];
   const options = LANGUAGE_OPTIONS;
   const active = activeIndex >= 0 ? options[activeIndex] : undefined;
 
@@ -57,14 +52,7 @@ export function useLanguagePicker({ language, onSelect, inline }: Options) {
 
   const pick = (option: LanguageOption) => {
     close(true);
-    if (option.locale) {
-      setPreview(null);
-      setNoteVisible(false);
-      onSelect(option.locale);
-      return;
-    }
-    setPreview(option);
-    setNoteVisible(true);
+    onSelect(option.locale);
   };
 
   // Outside press closes without moving focus; Escape anywhere closes too.
@@ -92,12 +80,6 @@ export function useLanguagePicker({ language, onSelect, inline }: Options) {
     if (!open || !active) return;
     document.getElementById(`${baseId}-${active.code}`)?.scrollIntoView?.({ block: "nearest" });
   }, [open, active, baseId]);
-
-  useEffect(() => {
-    if (!noteVisible) return;
-    const timer = window.setTimeout(() => setNoteVisible(false), NOTE_VISIBLE_MS);
-    return () => window.clearTimeout(timer);
-  }, [noteVisible]);
 
   const move = (to: number) => setActiveIndex((to + options.length) % options.length);
 
@@ -158,8 +140,6 @@ export function useLanguagePicker({ language, onSelect, inline }: Options) {
     options,
     active,
     current,
-    real,
-    noteVisible,
     listId,
     optionId,
     rootRef,

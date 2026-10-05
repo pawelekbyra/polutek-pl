@@ -1,46 +1,31 @@
 "use client";
 
-import { useOptionalLanguage } from "../LanguageContext";
+import { useMemo } from "react";
+import type { Tx } from "@/lib/i18n/ui";
+import { useOptionalTx } from "@/lib/i18n/language-context";
 
-const PLAYER_COPY = {
-  pl: {
-    buffering: "Buforowanie",
-    replay: "Odtwórz ponownie",
-    play: "Odtwórz",
-    pause: "Pauza",
-    unmute: "Włącz dźwięk",
-    mute: "Wycisz",
-    volume: "Głośność",
-    progress: "Postęp odtwarzania",
-    normal: "Normalna",
-    speed: "Prędkość",
-    playbackSpeed: "Prędkość odtwarzania",
-    captions: "Napisy",
-    disableCaptions: "Wyłącz napisy",
-    enableCaptions: "Włącz napisy",
-    exitFullscreen: "Zamknij pełny ekran",
-    fullscreen: "Pełny ekran",
-  },
-  en: {
-    buffering: "Buffering",
-    replay: "Play again",
-    play: "Play",
-    pause: "Pause",
-    unmute: "Unmute",
-    mute: "Mute",
-    volume: "Volume",
-    progress: "Playback progress",
-    normal: "Normal",
-    speed: "Speed",
-    playbackSpeed: "Playback speed",
-    captions: "Captions",
-    disableCaptions: "Turn captions off",
-    enableCaptions: "Turn captions on",
-    exitFullscreen: "Exit fullscreen",
-    fullscreen: "Fullscreen",
-  },
-} as const;
+function buildPlayerCopy(tx: Tx) {
+  return {
+    buffering: tx("Buforowanie", "Buffering"),
+    replay: tx("Odtwórz ponownie", "Play again"),
+    play: tx("Odtwórz", "Play"),
+    pause: tx("Pauza", "Pause"),
+    unmute: tx("Włącz dźwięk", "Unmute"),
+    mute: tx("Wycisz", "Mute"),
+    volume: tx("Głośność", "Volume"),
+    progress: tx("Postęp odtwarzania", "Playback progress"),
+    normal: tx("Normalna", "Normal"),
+    speed: tx("Prędkość", "Speed"),
+    playbackSpeed: tx("Prędkość odtwarzania", "Playback speed"),
+    captions: tx("Napisy", "Captions"),
+    disableCaptions: tx("Wyłącz napisy", "Turn captions off"),
+    enableCaptions: tx("Włącz napisy", "Turn captions on"),
+    exitFullscreen: tx("Zamknij pełny ekran", "Exit fullscreen"),
+    fullscreen: tx("Pełny ekran", "Fullscreen"),
+  };
+}
 
 export function usePlayerCopy() {
-  return PLAYER_COPY[useOptionalLanguage()];
+  const tx = useOptionalTx();
+  return useMemo(() => buildPlayerCopy(tx), [tx]);
 }

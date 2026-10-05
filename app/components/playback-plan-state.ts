@@ -1,3 +1,4 @@
+import type { Tx } from "@/lib/i18n/ui";
 import type {
   PlaybackPlan,
   PlaybackPlanStatus,
@@ -33,113 +34,80 @@ export type PlaybackPlanStateMessage = {
   actionLabel: string;
 };
 
-export const PLAYBACK_PLAN_STATE_MESSAGES: Record<
-  Exclude<PlaybackPlanStatus, "READY">,
-  PlaybackPlanStateMessage
-> = {
-  LOGIN_REQUIRED: {
-    title: "Zaloguj się, aby obejrzeć materiał.",
-    description:
-      "Ten film jest dostępny po zalogowaniu. Konto jest bezpłatne.",
-    action: "login",
-    actionLabel: "Zaloguj się",
-  },
-  // Rendered as the premiere countdown (AccessLockOverlay); this copy is only the fallback text.
-  COMING_SOON: {
-    title: "Premiera już wkrótce.",
-    description:
-      "Ten film ma zaplanowaną premierę. Odtwarzanie ruszy automatycznie w chwili premiery.",
-    action: "retry",
-    actionLabel: "Sprawdź ponownie",
-  },
-  VIDEO_NOT_READY: {
-    title: "Materiał jest przygotowywany.",
-    description:
-      "Film został zapisany, ale nie jest jeszcze gotowy do bezpiecznego odtworzenia. Spróbuj odświeżyć za chwilę.",
-    action: "retry",
-    actionLabel: "Sprawdź ponownie",
-  },
-  PROCESSING: {
-    title: "Trwa przetwarzanie wideo.",
-    description:
-      "Plik wideo jest przetwarzany przez system. Odtwarzacz pojawi się automatycznie, gdy materiał będzie gotowy.",
-    action: "retry",
-    actionLabel: "Odśwież stan",
-  },
-  NO_PRIMARY_ASSET: {
-    title: "Materiał nie ma jeszcze aktywnego pliku wideo.",
-    description:
-      "Nie możemy teraz uruchomić odtwarzania. Spróbuj ponownie później albo skontaktuj się w sprawie dostępu.",
-    action: "support",
-    actionLabel: "Napisz w sprawie dostępu",
-  },
-  UNAVAILABLE: {
-    title: "Materiał jest chwilowo niedostępny.",
-    description:
-      "Nie możemy teraz bezpiecznie przygotować odtwarzania. Spróbuj ponownie albo skontaktuj się w sprawie dostępu.",
-    action: "support",
-    actionLabel: "Napisz w sprawie dostępu",
-  },
-  ERROR: {
-    title: "Nie udało się przygotować odtwarzania.",
-    description:
-      "Spróbuj ponownie. Jeśli problem wraca, napisz w sprawie dostępu i podaj tytuł filmu.",
-    action: "retry",
-    actionLabel: "Spróbuj ponownie",
-  },
-};
-
-export const PLAYBACK_PLAN_STATE_MESSAGES_EN: typeof PLAYBACK_PLAN_STATE_MESSAGES = {
-  LOGIN_REQUIRED: {
-    title: "Sign in to watch this video.",
-    description:
-      "This video is available after signing in. An account is free.",
-    action: "login",
-    actionLabel: "Sign in",
-  },
-  COMING_SOON: {
-    title: "Premiere coming soon.",
-    description:
-      "This video has a scheduled premiere. Playback starts automatically at the premiere.",
-    action: "retry",
-    actionLabel: "Check again",
-  },
-  VIDEO_NOT_READY: {
-    title: "This video is being prepared.",
-    description:
-      "The video is saved but is not ready for secure playback yet. Please check again shortly.",
-    action: "retry",
-    actionLabel: "Check again",
-  },
-  PROCESSING: {
-    title: "The video is processing.",
-    description:
-      "The player will appear automatically when processing is complete.",
-    action: "retry",
-    actionLabel: "Refresh status",
-  },
-  NO_PRIMARY_ASSET: {
-    title: "This video does not have an active media file yet.",
-    description:
-      "Playback cannot start right now. Please try again later or contact us about access.",
-    action: "support",
-    actionLabel: "Contact support",
-  },
-  UNAVAILABLE: {
-    title: "This video is temporarily unavailable.",
-    description:
-      "We cannot prepare secure playback right now. Please try again or contact us about access.",
-    action: "support",
-    actionLabel: "Contact support",
-  },
-  ERROR: {
-    title: "Playback could not be prepared.",
-    description:
-      "Try again. If the problem continues, contact us and include the video title.",
-    action: "retry",
-    actionLabel: "Try again",
-  },
-};
+/**
+ * Fallback texts for a video that cannot play yet. Built per language by `tx`
+ * (lib/i18n/ui.ts), so every language has the same states.
+ */
+export function playbackPlanStateMessages(
+  tx: Tx,
+): Record<Exclude<PlaybackPlanStatus, "READY">, PlaybackPlanStateMessage> {
+  return {
+    LOGIN_REQUIRED: {
+      title: tx("Zaloguj się, aby obejrzeć materiał.", "Sign in to watch this video."),
+      description: tx(
+        "Ten film jest dostępny po zalogowaniu. Konto jest bezpłatne.",
+        "This video is available after signing in. An account is free.",
+      ),
+      action: "login",
+      actionLabel: tx("Zaloguj się", "Sign in"),
+    },
+    // Rendered as the premiere countdown (AccessLockOverlay); this copy is only the fallback text.
+    COMING_SOON: {
+      title: tx("Premiera już wkrótce.", "Premiere coming soon."),
+      description: tx(
+        "Ten film ma zaplanowaną premierę. Odtwarzanie ruszy automatycznie w chwili premiery.",
+        "This video has a scheduled premiere. Playback starts automatically at the premiere.",
+      ),
+      action: "retry",
+      actionLabel: tx("Sprawdź ponownie", "Check again"),
+    },
+    VIDEO_NOT_READY: {
+      title: tx("Materiał jest przygotowywany.", "This video is being prepared."),
+      description: tx(
+        "Film został zapisany, ale nie jest jeszcze gotowy do bezpiecznego odtworzenia. Spróbuj odświeżyć za chwilę.",
+        "The video is saved but is not ready for secure playback yet. Please check again shortly.",
+      ),
+      action: "retry",
+      actionLabel: tx("Sprawdź ponownie", "Check again"),
+    },
+    PROCESSING: {
+      title: tx("Trwa przetwarzanie wideo.", "The video is processing."),
+      description: tx(
+        "Plik wideo jest przetwarzany przez system. Odtwarzacz pojawi się automatycznie, gdy materiał będzie gotowy.",
+        "The player will appear automatically when processing is complete.",
+      ),
+      action: "retry",
+      actionLabel: tx("Odśwież stan", "Refresh status"),
+    },
+    NO_PRIMARY_ASSET: {
+      title: tx("Materiał nie ma jeszcze aktywnego pliku wideo.", "This video does not have an active media file yet."),
+      description: tx(
+        "Nie możemy teraz uruchomić odtwarzania. Spróbuj ponownie później albo skontaktuj się w sprawie dostępu.",
+        "Playback cannot start right now. Please try again later or contact us about access.",
+      ),
+      action: "support",
+      actionLabel: tx("Napisz w sprawie dostępu", "Contact support"),
+    },
+    UNAVAILABLE: {
+      title: tx("Materiał jest chwilowo niedostępny.", "This video is temporarily unavailable."),
+      description: tx(
+        "Nie możemy teraz bezpiecznie przygotować odtwarzania. Spróbuj ponownie albo skontaktuj się w sprawie dostępu.",
+        "We cannot prepare secure playback right now. Please try again or contact us about access.",
+      ),
+      action: "support",
+      actionLabel: tx("Napisz w sprawie dostępu", "Contact support"),
+    },
+    ERROR: {
+      title: tx("Nie udało się przygotować odtwarzania.", "Playback could not be prepared."),
+      description: tx(
+        "Spróbuj ponownie. Jeśli problem wraca, napisz w sprawie dostępu i podaj tytuł filmu.",
+        "Try again. If the problem continues, contact us and include the video title.",
+      ),
+      action: "retry",
+      actionLabel: tx("Spróbuj ponownie", "Try again"),
+    },
+  };
+}
 
 export function getSafePlaybackState(
   data:

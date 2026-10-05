@@ -154,7 +154,7 @@
   .admin-visual-shell [data-slot="card-title"],
   .admin-visual-shell h1,
   .admin-visual-shell h2 {
-    font-family: var(--font-geist-sans), sans-serif;
+    font-family: var(--font-geist-sans), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans SC", "WenQuanYi Micro Hei", sans-serif;
     letter-spacing: -.025em;
   }
 
@@ -807,7 +807,7 @@
   .mc-controls {
     position:absolute; inset:0; z-index:20;
     pointer-events:none;
-    font-family: var(--font-geist-sans, ui-sans-serif), sans-serif;
+    font-family: var(--font-geist-sans, ui-sans-serif), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans SC", "WenQuanYi Micro Hei", sans-serif;
   }
 
   /* Scrim fades (it's just a background darkening layer), but the control
@@ -1190,7 +1190,7 @@
   --media-cue-bg: rgba(0,0,0,.78);
   --media-cue-backdrop: none;
   --media-cue-border-radius: 4px;
-  --media-user-font-family: var(--font-geist-sans, ui-sans-serif), sans-serif;
+  --media-user-font-family: var(--font-geist-sans, ui-sans-serif), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans SC", "WenQuanYi Micro Hei", sans-serif;
   --cue-text-shadow: 0 1px 2px rgba(0,0,0,.85);
   bottom: 1%;
   font-weight: 500;

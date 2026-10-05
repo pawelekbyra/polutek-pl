@@ -11,11 +11,12 @@ import type { CaptchaGate } from "./useCaptchaGate";
 import { authClient, captchaFetchOptions } from "@/lib/auth/client";
 import { isPasskeyCancelled, passkeyErrorMessage } from "@/lib/auth/errors";
 import { defaultPasskeyName } from "@/lib/auth/passkey-support";
+import type { Tx } from "@/lib/i18n/ui";
 
 type ErrorLike = { code?: string; message?: string; status?: number } | null | undefined;
 
 export function PasskeySignupView({
-  isPl,
+  tx,
   email,
   onEmailChange,
   callbackURL,
@@ -25,7 +26,7 @@ export function PasskeySignupView({
   onCreated,
   onBack,
 }: {
-  isPl: boolean;
+  tx: Tx;
   email: string;
   onEmailChange: (value: string) => void;
   /** Where the verification link brings the person back (same-site path). */
@@ -44,7 +45,7 @@ export function PasskeySignupView({
     if (error?.code === "EMAIL_TAKEN" || error?.code === "EMAIL_TAKEN_GOOGLE") {
       onEmailTaken(error.code === "EMAIL_TAKEN_GOOGLE" ? "google" : "password");
     }
-    onError(passkeyErrorMessage(error, isPl));
+    onError(passkeyErrorMessage(error, tx));
   }
 
   async function submit(e?: React.FormEvent) {
@@ -55,7 +56,7 @@ export function PasskeySignupView({
     try {
       const start = await authClient.$fetch<{ token: string }>("/passkey-signup/start", {
         method: "POST",
-        body: { email, language: isPl ? "pl" : "en", callbackURL },
+        body: { email, language: tx.language, callbackURL },
         ...captchaFetchOptions(captchaGate.token()),
       });
       captchaGate.reset();
@@ -64,7 +65,7 @@ export function PasskeySignupView({
       const { error } = await authClient.passkey.addPasskey({ name, context: start.data.token });
       if (error) {
         if (isPasskeyCancelled(error)) {
-          return onError(isPl ? "Klucza nie utworzono. Spróbuj ponownie, gdy będziesz gotowy." : "No passkey was created. Try again when you are ready.");
+          return onError(tx("Klucza nie utworzono. Spróbuj ponownie, gdy będziesz gotowy.", "No passkey was created. Try again when you are ready."));
         }
         return fail(error);
       }
@@ -79,19 +80,17 @@ export function PasskeySignupView({
   return (
     <form onSubmit={submit} className="mt-5 space-y-3.5">
       <p className="text-[13px] leading-[1.5] text-[var(--chan-body)]">
-        {isPl
-          ? "Nie znaleźliśmy Twojego klucza dostępu. Podaj e-mail, a założymy konto z nowym kluczem: zalogujesz się odciskiem palca, twarzą albo PIN-em urządzenia, bez hasła."
-          : "We did not find a passkey of yours. Enter your email and we'll create an account with a new passkey: you'll sign in with your fingerprint, face or device PIN, no password."}
+        {tx("Nie znaleźliśmy Twojego klucza dostępu. Podaj e-mail, a założymy konto z nowym kluczem: zalogujesz się odciskiem palca, twarzą albo PIN-em urządzenia, bez hasła.", "We did not find a passkey of yours. Enter your email and we'll create an account with a new passkey: you'll sign in with your fingerprint, face or device PIN, no password.")}
       </p>
       <Field label="E-mail" type="email" value={email} onChange={onEmailChange} autoComplete="email" required />
       {captchaGate.widget}
       <PrimaryButton
         loading={loading || captchaGate.waiting}
-        label={isPl ? "Utwórz konto z kluczem" : "Create account with a passkey"}
+        label={tx("Utwórz konto z kluczem", "Create account with a passkey")}
       />
       <div className="pt-1 text-center text-[12px] text-[var(--chan-muted)]">
         <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={onBack}>
-          {isPl ? "Wróć do logowania" : "Back to sign in"}
+          {tx("Wróć do logowania", "Back to sign in")}
         </button>
       </div>
     </form>

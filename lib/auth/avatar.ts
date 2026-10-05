@@ -1,3 +1,4 @@
+import type { Tx } from "@/lib/i18n/ui";
 /** Default avatar every new account starts with (public/default-avatar.jpg). */
 export const DEFAULT_AVATAR_URL = "/default-avatar.jpg";
 
@@ -24,9 +25,9 @@ export function validateAvatarFile(file: { type: string; size: number }): Avatar
   return null;
 }
 
-export function avatarProblemMessage(problem: AvatarProblem, isPl: boolean): string {
-  if (problem === "type") return isPl ? "Avatar: dozwolone pliki JPG, PNG lub WebP." : "Avatar: JPG, PNG or WebP files only.";
-  return isPl ? "Avatar może mieć najwyżej 2 MB." : "The avatar can be at most 2 MB.";
+export function avatarProblemMessage(problem: AvatarProblem, tx: Tx): string {
+  if (problem === "type") return tx("Avatar: dozwolone pliki JPG, PNG lub WebP.", "Avatar: JPG, PNG or WebP files only.");
+  return tx("Avatar może mieć najwyżej 2 MB.", "The avatar can be at most 2 MB.");
 }
 
 const DATA_URL_PATTERN = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/]+={0,2})$/;

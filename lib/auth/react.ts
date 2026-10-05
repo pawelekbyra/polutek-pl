@@ -10,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { isLocale, type Locale } from "@/lib/i18n/routing";
 import { authClient } from "./client";
 import { signOutCompletely } from "./sign-out";
 import type { AuthSessionSnapshot } from "./session-snapshot";
@@ -30,7 +31,7 @@ export type AuthUser = {
   imageUrl: string;
   primaryEmailAddress: { emailAddress: string } | null;
   emailVerified: boolean;
-  language: "pl" | "en";
+  language: Locale;
   onboardingPending: boolean;
   twoFactorEnabled: boolean;
   createdAt: Date | string | null;
@@ -60,7 +61,7 @@ export function toAuthUser(user: SessionUser): AuthUser {
     imageUrl: user.image || DEFAULT_AVATAR_PATH,
     primaryEmailAddress: user.email ? { emailAddress: user.email } : null,
     emailVerified: user.emailVerified === true,
-    language: user.language === "pl" ? "pl" : "en",
+    language: isLocale(user.language) ? user.language : "en",
     onboardingPending: user.onboardingPending === true,
     twoFactorEnabled: user.twoFactorEnabled === true,
     createdAt: user.createdAt ?? null,

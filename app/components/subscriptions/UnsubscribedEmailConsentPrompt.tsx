@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useTransition } from 'react';
 import { useAuth, useUser } from "@/lib/auth/react";
 import { logger } from '@/lib/logger';
 import EmailSubscriptionConsentModal from './EmailSubscriptionConsentModal';
+import { useLanguage } from '../LanguageContext';
 
 // How long after account creation we still consider this the user's "first
 // login after registration" — the only automatic (non-button-click) trigger
@@ -13,6 +14,7 @@ const FRESH_REGISTRATION_WINDOW_MS = 10 * 60 * 1000;
 export default function UnsubscribedEmailConsentPrompt() {
   const { userId, isLoaded } = useAuth();
   const { user } = useUser();
+  const { tx } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -103,11 +105,11 @@ export default function UnsubscribedEmailConsentPrompt() {
         if (!response.ok) {
           const code = result.error;
           const message =
-            response.status === 401 ? "Zaloguj się, aby zarządzać powiadomieniami." :
-            response.status === 400 && code === "TRUSTED_EMAIL_REQUIRED" ? "Konto musi mieć zweryfikowany adres e-mail." :
-            response.status === 409 && code === "EMAIL_PREFERENCE_IDENTITY_CONFLICT" ? "Ten adres e-mail jest już przypisany do innego konta." :
-            response.status === 429 ? "Zbyt wiele prób. Spróbuj ponownie później." :
-            result.message || "Nie udało się zapisać subskrypcji. Spróbuj ponownie.";
+            response.status === 401 ? tx("Zaloguj się, aby zarządzać powiadomieniami.", "Sign in to manage notifications.") :
+            response.status === 400 && code === "TRUSTED_EMAIL_REQUIRED" ? tx("Konto musi mieć zweryfikowany adres e-mail.", "The account needs a verified email address.") :
+            response.status === 409 && code === "EMAIL_PREFERENCE_IDENTITY_CONFLICT" ? tx("Ten adres e-mail jest już przypisany do innego konta.", "This email address is already linked to another account.") :
+            response.status === 429 ? tx("Zbyt wiele prób. Spróbuj ponownie później.", "Too many attempts. Please try again later.") :
+            result.message || tx("Nie udało się zapisać subskrypcji. Spróbuj ponownie.", "Could not save the subscription. Please try again.");
           setErrorMessage(message);
           return;
         }
@@ -118,7 +120,7 @@ export default function UnsubscribedEmailConsentPrompt() {
         }
       } catch (err) {
         logger.warn("[EMAIL_CONSENT_PROMPT_POST_ERROR]", err);
-        setErrorMessage("Nie udało się połączyć z serwerem. Spróbuj ponownie.");
+        setErrorMessage(tx("Nie udało się połączyć z serwerem. Spróbuj ponownie.", "Could not reach the server. Please try again."));
       }
     });
   };

@@ -1,3 +1,4 @@
+import type { Tx } from "@/lib/i18n/ui";
 /**
  * Client-safe premiere helpers (see CLAUDE.md "Premieres"). The upcoming
  * check lives in the video domain; it is re-exported here so client
@@ -18,14 +19,12 @@ export function formatPremiereDate(target: Date): string {
 }
 
 /** "PREMIERA ZA 3D 4H 5M 6S" / "PREMIERES IN …", clamped at zero. */
-export function formatPremiereCountdown(isPl: boolean, target: Date, now: Date = new Date()): string {
+export function formatPremiereCountdown(tx: Tx, target: Date, now: Date = new Date()): string {
   const diffMs = Math.max(0, target.getTime() - now.getTime());
   const totalSeconds = Math.floor(diffMs / 1000);
   const days = Math.floor(totalSeconds / 86400);
   const hours = Math.floor((totalSeconds % 86400) / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  return isPl
-    ? `PREMIERA ZA ${days}D ${hours}H ${minutes}M ${seconds}S`
-    : `PREMIERES IN ${days}D ${hours}H ${minutes}M ${seconds}S`;
+  return tx("PREMIERA ZA {0}D {1}H {2}M {3}S", "PREMIERES IN {0}D {1}H {2}M {3}S", days, hours, minutes, seconds);
 }

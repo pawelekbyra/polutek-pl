@@ -2,6 +2,7 @@
 
 import React from "react";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import type { Tx } from "@/lib/i18n/ui";
 
 /**
  * Top of the sign-in window, the same in every view (sign-in, sign-up, passkey, check inbox, reset,
@@ -9,7 +10,7 @@ import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
  * (the visible circle is 32 px), and the title keeps a matching gap on both sides so a long or
  * two-line title never runs under the button.
  */
-export function AuthDialogTop({ title, isPl, onClose }: { title: string; isPl: boolean; onClose: () => void }) {
+export function AuthDialogTop({ title, tx, onClose }: { title: string; tx: Tx; onClose: () => void }) {
   return (
     <>
       <button
@@ -17,7 +18,7 @@ export function AuthDialogTop({ title, isPl, onClose }: { title: string; isPl: b
         onClick={onClose}
         data-testid="auth-dialog-close"
         className="group absolute right-1.5 top-1.5 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
-        aria-label={isPl ? "Zamknij okno logowania" : "Close sign-in dialog"}
+        aria-label={tx("Zamknij okno logowania", "Close sign-in dialog")}
       >
         <span
           aria-hidden="true"

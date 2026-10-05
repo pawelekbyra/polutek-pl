@@ -25,20 +25,19 @@ import {
   useAppPreload,
 } from "./preload/AppPreloadProvider";
 import { VideoAccessContext, useVideoAccess } from "./VideoAccessContext";
-import { useOptionalLanguage } from "./LanguageContext";
+import { useOptionalTx } from "@/lib/i18n/language-context";
 import { usePageRevealReady } from "./preload/PageRevealGate";
 import { usePlaybackTokenRenewal } from "./player/usePlaybackTokenRenewal";
 import {
   BLOCKED_PLAYBACK_STATES,
-  PLAYBACK_PLAN_STATE_MESSAGES,
-  PLAYBACK_PLAN_STATE_MESSAGES_EN,
   getSafePlaybackState,
+  playbackPlanStateMessages,
   isPlayablePlaybackPlan,
 } from "./playback-plan-state";
 
 export { useVideoAccess };
 export {
-  PLAYBACK_PLAN_STATE_MESSAGES,
+  playbackPlanStateMessages,
   getSafePlaybackState,
   isPlayablePlaybackPlan,
 } from "./playback-plan-state";
@@ -405,10 +404,10 @@ function PlaybackPlanStateOverlay({
   variant,
   premiereAt,
 }: PlaybackPlanStateOverlayProps) {
-  const language = useOptionalLanguage();
+  const tx = useOptionalTx();
   const safeState = BLOCKED_PLAYBACK_STATES.has(state) ? state : "ERROR";
   const content =
-    (language === "pl" ? PLAYBACK_PLAN_STATE_MESSAGES : PLAYBACK_PLAN_STATE_MESSAGES_EN)[
+    playbackPlanStateMessages(tx)[
       safeState as Exclude<PlaybackPlanStatus, "READY">
     ];
   const isThumbnail = variant === "thumbnail" || variant === "thumbnailCompact";

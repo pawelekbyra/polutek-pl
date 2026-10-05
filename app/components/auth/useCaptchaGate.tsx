@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { TurnstileWidget, useCaptchaRequired, type CaptchaState, type TurnstileHandle } from "./TurnstileWidget";
+import type { Tx } from "@/lib/i18n/ui";
 
 /** How long a clicked submit waits for the invisible check before it gives up (paused while the visitor solves a challenge). */
 export const CAPTCHA_WAIT_TIMEOUT_MS = 15_000;
@@ -29,7 +30,7 @@ export type CaptchaGate = {
  * or takes longer than `CAPTCHA_WAIT_TIMEOUT_MS`, the queued submit is dropped and the widget shows a
  * "try again" message; clicking the button again also starts a failed check over.
  */
-export function useCaptchaGate(isPl: boolean): CaptchaGate {
+export function useCaptchaGate(tx: Tx): CaptchaGate {
   const required = useCaptchaRequired();
   const widgetRef = useRef<TurnstileHandle>(null);
   const tokenRef = useRef<string | null>(null);
@@ -86,7 +87,7 @@ export function useCaptchaGate(isPl: boolean): CaptchaGate {
 
   const widget = (
     <DropQueuedSubmitOnUnmount onUnmount={cancel}>
-      <TurnstileWidget ref={widgetRef} onToken={onToken} onStateChange={onStateChange} isPl={isPl} />
+      <TurnstileWidget ref={widgetRef} onToken={onToken} onStateChange={onStateChange} tx={tx} />
     </DropQueuedSubmitOnUnmount>
   );
 

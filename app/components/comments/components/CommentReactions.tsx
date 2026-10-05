@@ -4,13 +4,15 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { NajsIcon } from "../../najs/primitives";
 import { AnimatedCount, LikePop } from "./comment-motion";
+import type { Locale } from "@/lib/i18n/routing";
+import { useOptionalTx } from "@/lib/i18n/language-context";
 
 interface CommentReactionsProps {
   commentId: string;
   likesCount: number;
   viewerReaction: "LIKE" | "DISLIKE" | null;
   disabled: boolean;
-  language: string;
+  language: Locale;
   onLike: (id: string) => void;
   onDislike: (id: string) => void;
 }
@@ -26,7 +28,7 @@ const stateClassName = (active: boolean) =>
 export function CommentReactions({ commentId, likesCount, viewerReaction, disabled, language, onLike, onDislike }: CommentReactionsProps) {
   const isLiked = viewerReaction === "LIKE";
   const isDisliked = viewerReaction === "DISLIKE";
-  const pl = language === "pl";
+  const tx = useOptionalTx(language);
 
   return (
     <div className="flex items-center gap-0">
@@ -34,7 +36,7 @@ export function CommentReactions({ commentId, likesCount, viewerReaction, disabl
         type="button"
         onClick={() => onLike(commentId)}
         disabled={disabled}
-        aria-label={isLiked ? (pl ? "Cofnij polubienie komentarza" : "Remove like from comment") : pl ? "Polub komentarz" : "Like comment"}
+        aria-label={isLiked ? (tx("Cofnij polubienie komentarza", "Remove like from comment")) : tx("Polub komentarz", "Like comment")}
         aria-pressed={isLiked}
         className={cn("group", buttonClassName, stateClassName(isLiked))}
       >
@@ -48,7 +50,7 @@ export function CommentReactions({ commentId, likesCount, viewerReaction, disabl
         type="button"
         onClick={() => onDislike(commentId)}
         disabled={disabled}
-        aria-label={isDisliked ? (pl ? "Cofnij reakcję nie lubię" : "Remove dislike from comment") : pl ? "Nie lubię komentarza" : "Dislike comment"}
+        aria-label={isDisliked ? (tx("Cofnij reakcję nie lubię", "Remove dislike from comment")) : tx("Nie lubię komentarza", "Dislike comment")}
         aria-pressed={isDisliked}
         className={cn(buttonClassName, stateClassName(isDisliked))}
       >

@@ -25,8 +25,8 @@ const KEEP_URL_PATTERNS: RegExp[] = [
   // Legal pages keep their own address.
   /^\/regulamin\/?$/,
   /^\/polityka-prywatnosci\/?$/,
-  /^\/en\/terms\/?$/,
-  /^\/en\/privacy-policy\/?$/,
+  /^\/(?:en|de|es|fr|it|pt|zh)\/terms\/?$/,
+  /^\/(?:en|de|es|fr|it|pt|zh)\/privacy-policy\/?$/,
   // TEMPORARY logo font bake-off pages keep their /logoN address so they can be
   // compared. Remove alongside the experiment.
   /^\/logo\d+\/?$/,

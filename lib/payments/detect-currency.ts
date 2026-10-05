@@ -1,4 +1,5 @@
 import { SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
+import type { Locale } from "@/lib/i18n/routing";
 
 // Regions whose local currency we support directly.
 const REGION_CURRENCY: Record<string, SupportedCurrency> = {
@@ -26,11 +27,11 @@ function currencyForRegion(region: string | undefined): SupportedCurrency | null
 
 /**
  * Best-effort default currency for the support box, used only to pre-select the switcher.
- * Polish UI always defaults to PLN. For the English UI we infer from the browser locale's
+ * Polish UI always defaults to PLN. For every other UI language we infer from the browser locale's
  * region (and, failing that, the timezone), falling back to USD. The user can always override
  * via the currency switcher.
  */
-export function detectDefaultCurrency(language: "pl" | "en"): SupportedCurrency {
+export function detectDefaultCurrency(language: Locale): SupportedCurrency {
   if (language === "pl") return "PLN";
   if (typeof navigator === "undefined") return "USD";
 

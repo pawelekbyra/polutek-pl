@@ -5,7 +5,7 @@ import { logger } from "@/lib/logger";
 import { DEFAULT_AVATAR_URL } from "@/lib/auth/avatar";
 import { validateNickname } from "@/lib/auth/nickname";
 import { LEGAL_DOCUMENTS_VERSION } from "@/lib/legal/version";
-import { isLocale } from "@/lib/i18n/routing";
+import { isLocale, type Locale } from "@/lib/i18n/routing";
 import { recordAuthAudit } from "./audit";
 import { checkSensitiveReauth } from "./reauth";
 import {
@@ -33,9 +33,10 @@ type HookCtx = {
   request?: Request | null;
 } | null | undefined;
 
-function readLanguageCookie(ctx: HookCtx): "pl" | "en" {
+function readLanguageCookie(ctx: HookCtx): Locale {
   const cookie = ctx?.headers?.get("cookie") ?? ctx?.request?.headers.get("cookie") ?? "";
-  return /(?:^|;\s*)app-language=pl(?:;|$)/.test(cookie) ? "pl" : "en";
+  const value = /(?:^|;\s*)app-language=([a-z]+)(?:;|$)/.exec(cookie)?.[1];
+  return isLocale(value) ? value : "en";
 }
 
 type NewUser = Record<string, unknown> & { name?: string | null; email: string };

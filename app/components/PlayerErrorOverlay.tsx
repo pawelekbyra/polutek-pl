@@ -17,57 +17,55 @@ export function PlayerErrorOverlay({
   isAdmin = false,
   showTechnicalDetails = false
 }: PlayerErrorOverlayProps) {
-  const { language } = useLanguage();
+  const { tx } = useLanguage();
 
-  const getErrorContent = (code?: string, lang: string = 'pl') => {
-    const isPl = lang === 'pl';
-
+  const getErrorContent = (code?: string) => {
     switch (code) {
       case 'NO_PLAYBACK_PLAN':
         return {
-          title: isPl ? "Nie udało się przygotować odtwarzania." : "Could not prepare playback.",
-          description: isPl ? "Spróbuj ponownie za chwilę." : "Please try again in a moment."
+          title: tx("Nie udało się przygotować odtwarzania.", "Could not prepare playback."),
+          description: tx("Spróbuj ponownie za chwilę.", "Please try again in a moment.")
         };
       case 'NO_PLAYBACK_URL':
         return {
-          title: isPl ? "Film nie ma poprawnego źródła odtwarzania." : "This video has no valid playback source.",
-          description: isPl ? "Materiał nie może zostać teraz uruchomiony." : "The video cannot be started right now."
+          title: tx("Film nie ma poprawnego źródła odtwarzania.", "This video has no valid playback source."),
+          description: tx("Materiał nie może zostać teraz uruchomiony.", "The video cannot be started right now.")
         };
       case 'MEDIA_LOAD_FAILED':
         return {
-          title: isPl ? "Nie udało się załadować materiału wideo." : "Could not load the video.",
-          description: isPl ? "Źródło może być chwilowo niedostępne." : "The video source may be temporarily unavailable."
+          title: tx("Nie udało się załadować materiału wideo.", "Could not load the video."),
+          description: tx("Źródło może być chwilowo niedostępne.", "The video source may be temporarily unavailable.")
         };
       case 'SOURCE_ERROR':
         return {
-          title: isPl ? "Źródło wideo nie odpowiada." : "The video source is not responding.",
-          description: isPl ? "Spróbuj ponownie albo wybierz inny film." : "Try again or choose another video."
+          title: tx("Źródło wideo nie odpowiada.", "The video source is not responding."),
+          description: tx("Spróbuj ponownie albo wybierz inny film.", "Try again or choose another video.")
         };
       case 'UNSUPPORTED_SOURCE':
         return {
-          title: isPl ? "Ten format wideo nie jest obsługiwany." : "This video format is not supported.",
-          description: isPl ? "Spróbuj odtworzyć inny materiał." : "Try playing another video."
+          title: tx("Ten format wideo nie jest obsługiwany.", "This video format is not supported."),
+          description: tx("Spróbuj odtworzyć inny materiał.", "Try playing another video.")
         };
       case 'ACCESS_ERROR':
         return {
-          title: isPl ? "Błąd dostępu do materiału." : "Access error.",
-          description: isPl ? "Sprawdź swoje uprawnienia i spróbuj ponownie." : "Please check your permissions and try again."
+          title: tx("Błąd dostępu do materiału.", "Access error."),
+          description: tx("Sprawdź swoje uprawnienia i spróbuj ponownie.", "Please check your permissions and try again.")
         };
       case 'NETWORK_ERROR':
         return {
-          title: isPl ? "Błąd połączenia sieciowego." : "Network error.",
-          description: isPl ? "Sprawdź swoje połączenie z internetem." : "Please check your internet connection."
+          title: tx("Błąd połączenia sieciowego.", "Network error."),
+          description: tx("Sprawdź swoje połączenie z internetem.", "Please check your internet connection.")
         };
       default:
         return {
-          title: isPl ? "Nie udało się odtworzyć filmu." : "Could not play this video.",
-          description: isPl ? "Materiał jest chwilowo niedostępny albo źródło wideo nie odpowiada." : "This video is temporarily unavailable or the video source is not responding."
+          title: tx("Nie udało się odtworzyć filmu.", "Could not play this video."),
+          description: tx("Materiał jest chwilowo niedostępny albo źródło wideo nie odpowiada.", "This video is temporarily unavailable or the video source is not responding.")
         };
     }
   };
 
-  const content = getErrorContent(errorCode, language);
-  const retryLabel = language === 'pl' ? "Spróbuj ponownie" : "Try again";
+  const content = getErrorContent(errorCode);
+  const retryLabel = tx("Spróbuj ponownie", "Try again");
 
   return (
     <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[var(--chan-nav,#f7f9fc)] p-6 text-center text-[var(--chan-ink,#111827)] motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300 [container-type:inline-size]">

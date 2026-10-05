@@ -5,7 +5,19 @@ import { SESSION_COOKIE_PREFIX } from "@/lib/auth/config";
 import { generateCSP } from "@/lib/utils/security";
 import { checkAdminCsrf } from "@/lib/api/csrf";
 import { checkAdminRateLimit, getAdminClientIp } from "@/lib/api/admin-rate-limit";
-import { getRouteLocaleFromPathname, ROUTE_LOCALE_HEADER } from "@/lib/i18n/routing";
+import { getRouteLocaleFromPathname, ROUTE_LOCALE_HEADER, SUPPORTED_LOCALES, UI_ONLY_LOCALES } from "@/lib/i18n/routing";
+
+// The interface-only languages (de, es, ...) mirror the English public routes under their own prefix.
+const UI_ONLY_PUBLIC_ROUTES = UI_ONLY_LOCALES.flatMap((locale) => [
+  `/${locale}`,
+  `/${locale}/search`,
+  `/${locale}/watch/(.*)`,
+  `/${locale}/channel/(.*)`,
+  `/${locale}/terms`,
+  `/${locale}/privacy-policy`,
+  `/${locale}/regulamin`,
+  `/${locale}/polityka-prywatnosci`,
+]);
 
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -78,6 +90,7 @@ const isPublicRoute = createRouteMatcher([
   // Only GET comments is public if product requires it
   '/api/comments',
   '/api/comments/(.*)/replies',
+  ...UI_ONLY_PUBLIC_ROUTES,
 ]);
 
 const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);
@@ -97,7 +110,7 @@ function shouldRewriteForPolish(pathname: string): boolean {
   if (LOCALE_EXEMPT_PATHS.has(pathname)) return false;
 
   // Check if pathname is already localized or is a route that should not be locale-prefixed.
-  const startsWithLocaleOrSystemRoute = /^\/(?:pl|en|admin|api|\.)(?:\/|$)/.test(pathname);
+  const startsWithLocaleOrSystemRoute = new RegExp(`^/(?:${SUPPORTED_LOCALES.join('|')}|admin|api|\\.)(?:/|$)`).test(pathname);
   if (startsWithLocaleOrSystemRoute) return false;
 
   // All other paths should be rewritten (including "/")

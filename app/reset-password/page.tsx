@@ -12,7 +12,7 @@ import { useLanguage } from "@/app/components/LanguageContext";
 // with `?token=...` (or `?error=INVALID_TOKEN` for an expired/used link).
 function ResetPasswordForm() {
   const { language } = useLanguage();
-  const isPl = language === "pl";
+  const { tx } = useLanguage();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const tokenError = searchParams.get("error");
@@ -28,11 +28,11 @@ function ResetPasswordForm() {
     setError(null);
     try {
       const { error: resetError } = await authClient.resetPassword({ newPassword: password, token });
-      if (resetError) return setError(authErrorMessage(resetError, isPl));
+      if (resetError) return setError(authErrorMessage(resetError, tx));
       setDone(true);
     } catch {
       // The auth client throws on a dropped connection (audit AUTH-08).
-      setError(authErrorMessage({ code: "NETWORK_ERROR" }, isPl));
+      setError(authErrorMessage({ code: "NETWORK_ERROR" }, tx));
     } finally {
       setLoading(false);
     }
@@ -43,30 +43,30 @@ function ResetPasswordForm() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm space-y-4 rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-6 py-7 shadow-[0_20px_50px_rgba(23,23,23,0.10)]">
-        <h1 className="font-brand text-xl font-bold text-[var(--chan-ink)]">{isPl ? "Ustaw nowe hasło" : "Set a new password"}</h1>
+        <h1 className="font-brand text-xl font-bold text-[var(--chan-ink)]">{tx("Ustaw nowe hasło", "Set a new password")}</h1>
         {done ? (
           <>
             <p className="text-[13px] text-[var(--chan-body)]">
-              {isPl ? "Hasło zostało zmienione. Możesz się zalogować." : "Your password was changed. You can sign in now."}
+              {tx("Hasło zostało zmienione. Możesz się zalogować.", "Your password was changed. You can sign in now.")}
             </p>
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a href="/?signin=1" className="inline-block rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background">
-              {isPl ? "Zaloguj się" : "Sign in"}
+              {tx("Zaloguj się", "Sign in")}
             </a>
           </>
         ) : invalidLink ? (
           <>
-            <p role="alert" className="text-[13px] text-red-600">{authErrorMessage({ code: "INVALID_TOKEN" }, isPl)}</p>
+            <p role="alert" className="text-[13px] text-red-600">{authErrorMessage({ code: "INVALID_TOKEN" }, tx)}</p>
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a href="/" className="inline-block rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background">
-              {isPl ? "Wróć na stronę główną" : "Back to home"}
+              {tx("Wróć na stronę główną", "Back to home")}
             </a>
           </>
         ) : (
           <form onSubmit={submit} className="space-y-3.5">
             {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-[13px] font-semibold text-red-600">{error}</p>}
             <Field
-              label={isPl ? "Nowe hasło (min. 10 znaków)" : "New password (min. 10 characters)"}
+              label={tx("Nowe hasło (min. 10 znaków)", "New password (min. 10 characters)")}
               type="password"
               value={password}
               onChange={setPassword}
@@ -74,7 +74,7 @@ function ResetPasswordForm() {
               minLength={PASSWORD_MIN_LENGTH}
               required
             />
-            <PrimaryButton loading={loading} label={isPl ? "Ustaw hasło" : "Set password"} />
+            <PrimaryButton loading={loading} label={tx("Ustaw hasło", "Set password")} />
           </form>
         )}
       </div>

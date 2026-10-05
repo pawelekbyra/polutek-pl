@@ -12,6 +12,7 @@ import { signOutCompletely } from "@/lib/auth/sign-out";
 import { authErrorMessage, isSessionNotFresh } from "@/lib/auth/errors";
 import { rememberReturnPath } from "@/lib/auth/sso-return";
 import { useUser } from "@/lib/auth/react";
+import type { Tx } from "@/lib/i18n/ui";
 
 const NETWORK_ERROR = { code: "NETWORK_ERROR" } as const;
 
@@ -65,7 +66,7 @@ export function Feedback({ error, info }: { error: string | null; info: string |
  * (`SESSION_NOT_FRESH`, or `REAUTH_REQUIRED` for a Google-only account). Signing in again creates a
  * fresh session and brings the visitor back to this page.
  */
-export function ReauthNotice({ isPl }: { isPl: boolean }) {
+export function ReauthNotice({ tx }: { tx: Tx }) {
   async function signInAgain() {
     await signOutCompletely().catch(() => undefined);
     const here = window.location.pathname + window.location.search;
@@ -73,20 +74,20 @@ export function ReauthNotice({ isPl }: { isPl: boolean }) {
   }
   return (
     <div role="alert" className="space-y-2 rounded-lg bg-red-50 px-3 py-2">
-      <p className="text-[13px] font-semibold text-red-600">{authErrorMessage({ code: "SESSION_NOT_FRESH" }, isPl)}</p>
+      <p className="text-[13px] font-semibold text-red-600">{authErrorMessage({ code: "SESSION_NOT_FRESH" }, tx)}</p>
       <button type="button" onClick={signInAgain} className="text-[12px] font-bold text-red-700 underline">
-        {isPl ? "Zaloguj się ponownie" : "Sign in again"}
+        {tx("Zaloguj się ponownie", "Sign in again")}
       </button>
     </div>
   );
 }
 
-function RetryNotice({ isPl, onRetry }: { isPl: boolean; onRetry: () => void }) {
+function RetryNotice({ tx, onRetry }: { tx: Tx; onRetry: () => void }) {
   return (
     <div role="alert" className="space-y-2 rounded-lg bg-red-50 px-3 py-2">
-      <p className="text-[13px] font-semibold text-red-600">{authErrorMessage(NETWORK_ERROR, isPl)}</p>
+      <p className="text-[13px] font-semibold text-red-600">{authErrorMessage(NETWORK_ERROR, tx)}</p>
       <button type="button" onClick={onRetry} className="text-[12px] font-bold text-red-700 underline">
-        {isPl ? "Spróbuj ponownie" : "Try again"}
+        {tx("Spróbuj ponownie", "Try again")}
       </button>
     </div>
   );
@@ -97,7 +98,7 @@ function RetryNotice({ isPl, onRetry }: { isPl: boolean; onRetry: () => void }) 
  * account, a sign-in from the last few minutes), then the CURRENT address must approve the change
  * before the new one is confirmed. The password goes in the same request body as the new address.
  */
-export function EmailSection({ isPl }: { isPl: boolean }) {
+export function EmailSection({ tx }: { tx: Tx }) {
   const user = useAccountUser();
   const { hasPassword, failed, retry } = useHasPassword();
   const [newEmail, setNewEmail] = useState("");
@@ -125,17 +126,15 @@ export function EmailSection({ isPl }: { isPl: boolean }) {
       if (changeError) {
         const code = (changeError as { code?: string }).code;
         if (code === "REAUTH_REQUIRED" || isSessionNotFresh(changeError)) return setNeedsReauth(true);
-        return setError(authErrorMessage(changeError, isPl));
+        return setError(authErrorMessage(changeError, tx));
       }
       setNewEmail("");
       setPassword("");
       setInfo(
-        isPl
-          ? "Wysłaliśmy wiadomość na Twój obecny adres. Zatwierdź w niej zmianę, a potem kliknij link, który przyjdzie na nowy adres."
-          : "We sent a message to your current address. Approve the change there, then click the link we send to the new address.",
+        tx("Wysłaliśmy wiadomość na Twój obecny adres. Zatwierdź w niej zmianę, a potem kliknij link, który przyjdzie na nowy adres.", "We sent a message to your current address. Approve the change there, then click the link we send to the new address."),
       );
     } catch {
-      setError(authErrorMessage(NETWORK_ERROR, isPl));
+      setError(authErrorMessage(NETWORK_ERROR, tx));
     } finally {
       setLoading(false);
     }
@@ -144,21 +143,21 @@ export function EmailSection({ isPl }: { isPl: boolean }) {
   return (
     <div className="space-y-3">
       <Feedback error={error} info={info} />
-      {needsReauth && <ReauthNotice isPl={isPl} />}
+      {needsReauth && <ReauthNotice tx={tx} />}
       <div className="rounded-lg border border-[var(--chan-line)] px-3 py-2">
         <p className="truncate text-[14px] font-semibold">{user.primaryEmailAddress?.emailAddress}</p>
         <p className="text-[11px] text-[var(--chan-muted)]">
-          {user.emailVerified ? (isPl ? "Potwierdzony" : "Verified") : (isPl ? "Niepotwierdzony" : "Unverified")}
+          {user.emailVerified ? (tx("Potwierdzony", "Verified")) : (tx("Niepotwierdzony", "Unverified"))}
         </p>
       </div>
-      {failed && <RetryNotice isPl={isPl} onRetry={retry} />}
+      {failed && <RetryNotice tx={tx} onRetry={retry} />}
       {hasPassword !== null && (
         <form onSubmit={changeEmail} className="space-y-3 border-t border-[var(--chan-line)] pt-3">
-          <Field label={isPl ? "Nowy adres e-mail" : "New email address"} type="email" value={newEmail} onChange={setNewEmail} autoComplete="email" />
+          <Field label={tx("Nowy adres e-mail", "New email address")} type="email" value={newEmail} onChange={setNewEmail} autoComplete="email" />
           {hasPassword && (
-            <Field label={isPl ? "Twoje hasło" : "Your password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" />
+            <Field label={tx("Twoje hasło", "Your password")} type="password" value={password} onChange={setPassword} autoComplete="current-password" />
           )}
-          <Primary loading={loading} label={isPl ? "Zmień adres" : "Change address"} />
+          <Primary loading={loading} label={tx("Zmień adres", "Change address")} />
         </form>
       )}
     </div>
@@ -167,7 +166,7 @@ export function EmailSection({ isPl }: { isPl: boolean }) {
 
 type LinkedAccount = { id: string; providerId: string; accountId: string };
 
-export function ConnectionsSection({ isPl }: { isPl: boolean }) {
+export function ConnectionsSection({ tx }: { tx: Tx }) {
   const [accounts, setAccounts] = useState<LinkedAccount[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -195,9 +194,9 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
       // Errors (another e-mail in Google, account already linked elsewhere) come back to /sso-callback?error=<code>,
       // which explains them before sending the user back here (audit AUTH-09).
       const { error: linkError } = await authClient.linkSocial({ provider, callbackURL: "/sso-callback", errorCallbackURL: "/sso-callback" });
-      if (linkError) setError(authErrorMessage(linkError, isPl));
+      if (linkError) setError(authErrorMessage(linkError, tx));
     } catch {
-      setError(authErrorMessage(NETWORK_ERROR, isPl));
+      setError(authErrorMessage(NETWORK_ERROR, tx));
     }
   }
 
@@ -208,11 +207,11 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
       const { error: unlinkError } = await authClient.unlinkAccount({ accountId: account.id });
       if (unlinkError) {
         if (isSessionNotFresh(unlinkError)) return setNeedsReauth(true);
-        return setError(authErrorMessage(unlinkError, isPl));
+        return setError(authErrorMessage(unlinkError, tx));
       }
       await load();
     } catch {
-      setError(authErrorMessage(NETWORK_ERROR, isPl));
+      setError(authErrorMessage(NETWORK_ERROR, tx));
     }
   }
 
@@ -222,8 +221,8 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
   return (
     <div className="space-y-3">
       <Feedback error={error} info={null} />
-      {needsReauth && <ReauthNotice isPl={isPl} />}
-      {loadFailed && <RetryNotice isPl={isPl} onRetry={() => void load()} />}
+      {needsReauth && <ReauthNotice tx={tx} />}
+      {loadFailed && <RetryNotice tx={tx} onRetry={() => void load()} />}
       <ul className="space-y-2">
         {external.map((acc) => {
           const known = OAUTH_PROVIDERS.find((p) => p.provider === acc.providerId);
@@ -234,13 +233,13 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
                 <p className="text-[14px] font-semibold capitalize">{known?.label ?? acc.providerId}</p>
               </div>
               <button type="button" onClick={() => disconnect(acc)} className="text-[12px] font-bold text-red-600 hover:underline">
-                {isPl ? "Odłącz" : "Disconnect"}
+                {tx("Odłącz", "Disconnect")}
               </button>
             </li>
           );
         })}
         {accounts && external.length === 0 && (
-          <li className="text-[13px] text-[var(--chan-muted)]">{isPl ? "Brak połączonych kont." : "No connected accounts."}</li>
+          <li className="text-[13px] text-[var(--chan-muted)]">{tx("Brak połączonych kont.", "No connected accounts.")}</li>
         )}
       </ul>
       {accounts && connectable.map(({ provider, label, Icon }) => (
@@ -251,21 +250,21 @@ export function ConnectionsSection({ isPl }: { isPl: boolean }) {
           className="flex h-[42px] w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--chan-surface)] font-sans text-[14px] font-bold text-[var(--chan-ink)] transition-all hover:-translate-y-px active:scale-[0.98]"
         >
           <Icon className="h-[18px] w-[18px]" />
-          <span>{isPl ? `Połącz z ${label}` : `Connect ${label}`}</span>
+          <span>{tx("Połącz z {0}", "Connect {0}", label)}</span>
         </button>
       ))}
     </div>
   );
 }
 
-export function DangerSection({ isPl, onDeleted }: { isPl: boolean; onDeleted: () => void }) {
+export function DangerSection({ tx, onDeleted }: { tx: Tx; onDeleted: () => void }) {
   const [confirm, setConfirm] = useState("");
   const [password, setPassword] = useState("");
   const { hasPassword, failed, retry } = useHasPassword();
   const [needsGoogle, setNeedsGoogle] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const CONFIRM_WORD = isPl ? "USUŃ" : "DELETE";
+  const CONFIRM_WORD = tx("USUŃ", "DELETE");
 
   // Deleting is irreversible, so the server wants proof it is really the owner: the password, or (Google-only
   // accounts) a sign-in from the last few minutes.
@@ -277,9 +276,9 @@ export function DangerSection({ isPl, onDeleted }: { isPl: boolean; onDeleted: (
         callbackURL: "/sso-callback",
         errorCallbackURL: "/sso-callback",
       });
-      if (socialError) setError(authErrorMessage(socialError, isPl));
+      if (socialError) setError(authErrorMessage(socialError, tx));
     } catch {
-      setError(authErrorMessage(NETWORK_ERROR, isPl));
+      setError(authErrorMessage(NETWORK_ERROR, tx));
     }
   }
 
@@ -295,14 +294,14 @@ export function DangerSection({ isPl, onDeleted }: { isPl: boolean; onDeleted: (
       body: JSON.stringify(hasPassword ? { password } : {}),
     }).catch(() => null);
     if (!response) {
-      setError(authErrorMessage(NETWORK_ERROR, isPl));
+      setError(authErrorMessage(NETWORK_ERROR, tx));
       setLoading(false);
       return;
     }
     if (!response.ok) {
       const body = (await response.json().catch(() => null)) as { error?: string } | null;
       if (body?.error === "REAUTH_REQUIRED") setNeedsGoogle(true);
-      setError(authErrorMessage({ code: body?.error, status: response.status }, isPl));
+      setError(authErrorMessage({ code: body?.error, status: response.status }, tx));
       setLoading(false);
       return;
     }
@@ -315,19 +314,17 @@ export function DangerSection({ isPl, onDeleted }: { isPl: boolean; onDeleted: (
   return (
     <form onSubmit={del} className="space-y-3">
       <Feedback error={error} info={null} />
-      {failed && <RetryNotice isPl={isPl} onRetry={retry} />}
+      {failed && <RetryNotice tx={tx} onRetry={retry} />}
       <p className="text-[13px] leading-[1.5] text-[var(--chan-body)]">
-        {isPl
-          ? "Usunięcie konta jest nieodwracalne. Wpisz USUŃ, aby potwierdzić."
-          : "Deleting your account is permanent. Type DELETE to confirm."}
+        {tx("Usunięcie konta jest nieodwracalne. Wpisz USUŃ, aby potwierdzić.", "Deleting your account is permanent. Type DELETE to confirm.")}
       </p>
       {hasPassword && (
-        <Field label={isPl ? "Twoje hasło" : "Your password"} type="password" value={password} onChange={setPassword} autoComplete="current-password" />
+        <Field label={tx("Twoje hasło", "Your password")} type="password" value={password} onChange={setPassword} autoComplete="current-password" />
       )}
-      <Field label={`${isPl ? "Wpisz" : "Type"} ${CONFIRM_WORD}`} value={confirm} onChange={setConfirm} />
+      <Field label={`${tx("Wpisz", "Type")} ${CONFIRM_WORD}`} value={confirm} onChange={setConfirm} />
       {needsGoogle && (
         <button type="button" onClick={confirmWithGoogle} className="text-[12px] font-bold underline hover:text-[var(--chan-ink)]">
-          {isPl ? "Potwierdź przez Google" : "Confirm with Google"}
+          {tx("Potwierdź przez Google", "Confirm with Google")}
         </button>
       )}
       <button
@@ -335,7 +332,7 @@ export function DangerSection({ isPl, onDeleted }: { isPl: boolean; onDeleted: (
         disabled={loading || confirm !== CONFIRM_WORD || hasPassword === null || (hasPassword && !password)}
         className="flex h-[44px] w-full items-center justify-center rounded-[12px] bg-red-600 font-brand text-[15px] font-bold text-white transition-all hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
       >
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span>{isPl ? "Usuń konto na zawsze" : "Delete account permanently"}</span>}
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <span>{tx("Usuń konto na zawsze", "Delete account permanently")}</span>}
       </button>
     </form>
   );

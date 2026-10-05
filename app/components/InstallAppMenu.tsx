@@ -19,7 +19,7 @@ interface InstallAppMenuProps {
 
 export default function InstallAppMenu({ className }: InstallAppMenuProps) {
   const { language } = useLanguage();
-  const isPl = language === "pl";
+  const { tx } = useLanguage();
   const { installed, isIOS, canInstallDirectly, install } = usePwaInstall();
   const [isOpen, setIsOpen] = useState(false);
   const [showIosInstructions, setShowIosInstructions] = useState(false);
@@ -56,7 +56,7 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
             "flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[var(--chan-surface)] font-sans text-sm font-bold text-[var(--chan-ink)] transition-transform hover:-translate-y-px hover:brightness-110 active:scale-95 motion-reduce:transform-none motion-reduce:transition-none",
             !installed && !canOfferInstall && "opacity-50",
           )}
-          aria-label={isPl ? "Zainstaluj aplikację" : "Install app"}
+          aria-label={tx("Zainstaluj aplikację", "Install app")}
         >
           <Download aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={1.8} />
         </DropdownMenuTrigger>
@@ -73,7 +73,7 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
             disabled
             className="min-h-10 rounded-xl px-3 py-2.5 text-[13px] font-bold text-[var(--chan-ink)] opacity-100"
           >
-            {isPl ? "Przecież już masz ściągniętą apkę 😎" : "You've already got the app 😎"}
+            {tx("Przecież już masz ściągniętą apkę 😎", "You've already got the app 😎")}
           </DropdownMenuItem>
         ) : showIosInstructions ? (
           <DropdownMenuItem
@@ -81,12 +81,10 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
             className="flex-col items-start px-3 py-2.5 text-[12.5px] font-normal leading-relaxed text-[var(--chan-ink)] opacity-100"
           >
             <span className="mb-1 block font-bold">
-              {isPl ? "Zainstaluj na iPhonie/iPadzie" : "Install on iPhone/iPad"}
+              {tx("Zainstaluj na iPhonie/iPadzie", "Install on iPhone/iPad")}
             </span>
             <span className="block text-[var(--chan-muted)]">
-              {isPl
-                ? 'Stuknij ikonę Udostępnij w Safari, a potem "Dodaj do ekranu początkowego".'
-                : 'Tap the Share icon in Safari, then "Add to Home Screen".'}
+              {tx("Stuknij ikonę Udostępnij w Safari, a potem \"Dodaj do ekranu początkowego\".", "Tap the Share icon in Safari, then \"Add to Home Screen\".")}
             </span>
           </DropdownMenuItem>
         ) : canOfferInstall ? (
@@ -96,16 +94,14 @@ export default function InstallAppMenu({ className }: InstallAppMenuProps) {
             className="flex min-h-10 items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] font-bold text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)] motion-reduce:transition-none"
           >
             <Download aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={1.8} />
-            {isPl ? "Zainstaluj aplikację" : "Install app"}
+            {tx("Zainstaluj aplikację", "Install app")}
           </DropdownMenuItem>
         ) : (
           <DropdownMenuItem
             disabled
             className="min-h-10 rounded-xl px-3 py-2.5 text-[12px] font-bold text-[var(--chan-muted)] opacity-100"
           >
-            {isPl
-              ? "Instalacja niedostępna w tej przeglądarce"
-              : "Installation isn't available in this browser"}
+            {tx("Instalacja niedostępna w tej przeglądarce", "Installation isn't available in this browser")}
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

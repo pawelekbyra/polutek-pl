@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { Tx } from "@/lib/i18n/ui";
 
 interface FundraisingProgressBarProps {
   /** Share of the goal reached, 0..1 (PublicVideoDTO.fundraisingProgress). */
   progress: number;
-  isPl: boolean;
+  tx: Tx;
 }
 
 /** Clamps to 0..100 whole percents; anything non-finite reads as 0. */
@@ -19,7 +20,7 @@ export function toProgressPercent(progress: number): number {
  * progress bar"): only a filled track, no amounts, currency or visible percent.
  * The fill grows in once on mount (not under reduced motion).
  */
-export function FundraisingProgressBar({ progress, isPl }: FundraisingProgressBarProps) {
+export function FundraisingProgressBar({ progress, tx }: FundraisingProgressBarProps) {
   const percent = toProgressPercent(progress);
   const [shown, setShown] = useState(false);
 
@@ -31,7 +32,7 @@ export function FundraisingProgressBar({ progress, isPl }: FundraisingProgressBa
   return (
     <div
       role="progressbar"
-      aria-label={isPl ? "Postęp zbiórki" : "Fundraising progress"}
+      aria-label={tx("Postęp zbiórki", "Fundraising progress")}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={percent}
