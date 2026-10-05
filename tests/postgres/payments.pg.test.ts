@@ -11,6 +11,13 @@ import { PaymentStatus, PrismaClient } from '@prisma/client';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 const refundsCreate = vi.fn();
+const refundsList = vi.fn();
+/** Stripe's side of the refunds: PaymentIntent id -> refunds (list reads it; tests and refundsCreate write it). */
+const stripeRefunds = new Map<string, Array<{ id: string; amount: number; status: string }>>();
+const stripeSide = (intent: string) => {
+  if (!stripeRefunds.has(intent)) stripeRefunds.set(intent, []);
+  return stripeRefunds.get(intent)!;
+};
 vi.mock('@/lib/modules/email', () => ({
   sendBecomePatronEmail: vi.fn().mockResolvedValue(undefined),
   sendDonationThankYouEmail: vi.fn().mockResolvedValue(undefined),
@@ -20,13 +27,15 @@ vi.mock('@/lib/modules/notifications', async (importOriginal) => ({
   sendNotification: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('@/lib/modules/payments/infrastructure/stripe-client', () => ({
-  getStripeClient: () => ({ refunds: { create: refundsCreate } }),
+  getStripeClient: () => ({ refunds: { create: refundsCreate, list: refundsList } }),
 }));
 
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { fulfillPayment } from '@/lib/modules/payments/application/fulfill-payment.use-case';
 import { handleRefund } from '@/lib/modules/payments/application/handle-refund.use-case';
 import { handleDispute } from '@/lib/modules/payments/application/handle-dispute.use-case';
+import { syncRefundsFromStripe } from '@/lib/modules/payments/application/sync-refunds.use-case';
+import { enqueueStripeCustomerAnonymization, processStripeCustomerAnonymizations } from '@/lib/modules/payments/application/stripe-customer-anonymization.use-case';
 import { adminRefund } from '@/lib/modules/payments/application/admin-refund.use-case';
 import { StripeEventLockService } from '@/lib/modules/payments/infrastructure/stripe-event-lock.service';
 
@@ -53,6 +62,18 @@ async function resetUser() {
   await prisma.patronGrant.deleteMany({ where: { userId } });
   await prisma.userPaymentTotal.deleteMany({ where: { userId } });
   await prisma.payment.deleteMany({ where: { userId } });
+}
+
+/** Default Stripe fakes: list reads stripeRefunds; create appends a succeeded refund. */
+function resetStripeFakes() {
+  stripeRefunds.clear();
+  refundsList.mockReset().mockImplementation(async ({ payment_intent }: { payment_intent: string }) => ({ data: [...stripeSide(payment_intent)], has_more: false }));
+  let n = 0;
+  refundsCreate.mockReset().mockImplementation(async ({ payment_intent, amount }: { payment_intent: string; amount: number }) => {
+    const refund = { id: `re_${RUN}_${++n}`, amount, status: 'succeeded' };
+    stripeSide(payment_intent).push(refund);
+    return refund;
+  });
 }
 
 beforeAll(async () => {
@@ -157,7 +178,7 @@ describe('admin refund against the real ledger (Stripe replaced)', () => {
     await resetUser();
     const payment = await newPayment();
     await fulfillPayment(fulfillInput(payment), ctx());
-    refundsCreate.mockReset().mockResolvedValue({ id: 're_1', status: 'succeeded' });
+    resetStripeFakes();
 
     const input = { paymentId: payment.id, amountMinor: 400, reason: 'test refund', idempotencyKey: `${RUN}-key-0000000000` };
     const first = await adminRefund(input, adminCtx());
@@ -172,26 +193,147 @@ describe('admin refund against the real ledger (Stripe replaced)', () => {
     expect(audit).toHaveLength(1);
   });
 
-  it('two simultaneous submits with different keys: Stripe is the limit, the local ledger can lag until charge.refunded arrives', async () => {
+  it('two simultaneous submits with different keys: Stripe is the limit and the local ledger converges to Stripe\'s total at once (PA-04)', async () => {
     await resetUser();
     const payment = await newPayment();
     await fulfillPayment(fulfillInput(payment), ctx());
-    let n = 0;
-    refundsCreate.mockReset().mockImplementation(async () => ({ id: `re_${++n}`, status: 'succeeded' }));
+    resetStripeFakes();
 
-    await Promise.all([
+    const results = await Promise.all([
       adminRefund({ paymentId: payment.id, amountMinor: 500, reason: 'a', idempotencyKey: `${RUN}-key-aaaaaaaaaaaa` }, adminCtx()),
       adminRefund({ paymentId: payment.id, amountMinor: 500, reason: 'b', idempotencyKey: `${RUN}-key-bbbbbbbbbbbb` }, adminCtx()),
     ]);
-    // Both reached Stripe (each saw 0 refunded locally); the local row only knows one 500 until the webhook
-    // reports Stripe's amount_refunded (1000).
+    expect(results.every((r) => r.ok)).toBe(true);
     expect(refundsCreate).toHaveBeenCalledTimes(2);
-    expect((await prisma.payment.findUniqueOrThrow({ where: { id: payment.id } })).refundedAmountMinor).toBe(500);
 
-    await handleRefund({ paymentId: payment.id, reportedRefundedMinor: 1000 }, ctx());
     const row = await prisma.payment.findUniqueOrThrow({ where: { id: payment.id } });
     expect(row).toMatchObject({ status: 'REFUNDED', refundedAmountMinor: 1000 });
+    expect(row.refundsCheckedAt).not.toBeNull();
     expect(await total()).toBe(0);
+    expect(await activeGrants()).toBe(0);
+  });
+
+  it('writes the intent audit row before Stripe and the result row after; both carry the idempotency key (PA-09)', async () => {
+    await resetUser();
+    const payment = await newPayment();
+    await fulfillPayment(fulfillInput(payment), ctx());
+    resetStripeFakes();
+
+    await adminRefund({ paymentId: payment.id, amountMinor: 100, idempotencyKey: `${RUN}-key-cccccccccccc` }, adminCtx());
+
+    const rows = await prisma.auditLog.findMany({ where: { targetId: payment.id, action: { in: ['PAYMENT_REFUND_REQUESTED', 'PAYMENT_REFUNDED'] } }, orderBy: { createdAt: 'asc' } });
+    expect(rows.map((r) => r.action)).toEqual(['PAYMENT_REFUND_REQUESTED', 'PAYMENT_REFUNDED']);
+    expect((rows[0].metadata as any).idempotencyKey).toBe(`refund-${payment.id}-${RUN}-key-cccccccccccc`);
+    expect((rows[1].metadata as any)).toMatchObject({ totalRefundedMinor: 100, ledgerSynced: true });
+  });
+});
+
+describe('refund ledger follows Stripe (PA-04)', () => {
+  it('a refund made in the Dashboard is caught up with the person\'s total and marker', async () => {
+    await resetUser();
+    const payment = await newPayment();
+    await fulfillPayment(fulfillInput(payment), ctx());
+    resetStripeFakes();
+    stripeSide(payment.stripeIntentId!).push({ id: 're_dash', amount: 1000, status: 'succeeded' });
+
+    const result = await syncRefundsFromStripe({ paymentId: payment.id }, ctx());
+
+    expect(result.ok && result.data).toMatchObject({ matched: true, refundedMinor: 1000, deltaMinor: 1000 });
+    expect((await prisma.payment.findUniqueOrThrow({ where: { id: payment.id } })).status).toBe('REFUNDED');
+    expect(await total()).toBe(0);
+    expect(await activeGrants()).toBe(0);
+  });
+
+  it('a refund that failed afterwards gives the amount, the total and the marker back, and a repeat sync changes nothing more', async () => {
+    await resetUser();
+    const other = await newPayment();
+    await fulfillPayment(fulfillInput(other), ctx());
+    await prisma.patronGrant.deleteMany({ where: { userId } }); // so the marker below is the one under test
+    const payment = await newPayment();
+    await fulfillPayment(fulfillInput(payment), ctx());
+    resetStripeFakes();
+    stripeSide(payment.stripeIntentId!).push({ id: 're_blik', amount: 1000, status: 'pending' });
+    await syncRefundsFromStripe({ paymentId: payment.id }, ctx());
+    await handleRefund({ paymentId: other.id, reportedRefundedMinor: 1000 }, ctx());
+    expect(await total()).toBe(0);
+
+    stripeSide(payment.stripeIntentId!)[0].status = 'failed';
+    const first = await syncRefundsFromStripe({ paymentId: payment.id }, ctx());
+    const second = await syncRefundsFromStripe({ paymentId: payment.id }, ctx());
+
+    expect(first.ok && first.data.deltaMinor).toBe(-1000);
+    expect(second.ok && second.data.deltaMinor).toBe(0);
+    expect(await prisma.payment.findUniqueOrThrow({ where: { id: payment.id } })).toMatchObject({ status: 'SUCCEEDED', refundedAmountMinor: 0, refundedById: null });
+    expect(await total()).toBe(1000);
+  });
+
+  it('a lost dispute keeps the total at zero when a refund on it fails afterwards', async () => {
+    await resetUser();
+    const payment = await newPayment();
+    await fulfillPayment(fulfillInput(payment), ctx());
+    resetStripeFakes();
+    stripeSide(payment.stripeIntentId!).push({ id: 're_1', amount: 250, status: 'succeeded' });
+    await syncRefundsFromStripe({ paymentId: payment.id }, ctx());
+    await handleDispute({ stripeIntentId: payment.stripeIntentId!, disputeId: 'dp_pa04', status: 'lost' }, ctx());
+    expect(await total()).toBe(0);
+
+    stripeSide(payment.stripeIntentId!)[0].status = 'failed';
+    await syncRefundsFromStripe({ paymentId: payment.id }, ctx());
+
+    expect((await prisma.payment.findUniqueOrThrow({ where: { id: payment.id } })).status).toBe('CHARGEBACK_LOST');
+    expect(await total()).toBe(0);
+  });
+
+  it('concurrent syncs are serialized by the row lock: each reads Stripe after the previous one committed, the last Stripe answer wins', async () => {
+    await resetUser();
+    const payment = await newPayment();
+    await fulfillPayment(fulfillInput(payment), ctx());
+    resetStripeFakes();
+    stripeSide(payment.stripeIntentId!).push({ id: 're_1', amount: 600, status: 'succeeded' });
+
+    // The first list call is slow and answers with the OLD state (600); meanwhile Stripe moves on to 1000.
+    let calls = 0;
+    refundsList.mockImplementation(async ({ payment_intent }: { payment_intent: string }) => {
+      const snapshot = [...stripeSide(payment_intent)];
+      if (++calls === 1) {
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        stripeSide(payment_intent).push({ id: 're_2', amount: 400, status: 'succeeded' });
+      }
+      return { data: snapshot, has_more: false };
+    });
+    const [a, b] = await Promise.all([
+      syncRefundsFromStripe({ paymentId: payment.id }, ctx()),
+      (async () => { await new Promise((resolve) => setTimeout(resolve, 30)); return syncRefundsFromStripe({ paymentId: payment.id }, ctx()); })(),
+    ]);
+
+    expect(a.ok && b.ok).toBe(true);
+    // Without the lock the 2nd sync (fresh answer 1000) could be overwritten by the 1st (stale 600).
+    expect(await prisma.payment.findUniqueOrThrow({ where: { id: payment.id } })).toMatchObject({ status: 'REFUNDED', refundedAmountMinor: 1000 });
+    expect(await total()).toBe(0);
+  });
+});
+
+describe('Stripe Customer anonymization queue (PA-03)', () => {
+  it('queues idempotently, backs off on a Stripe failure, succeeds on retry, removes the row and leaves an audit row', async () => {
+    const customerId = `cus_${RUN}`;
+    await prisma.$transaction((tx) => enqueueStripeCustomerAnonymization(tx, [{ stripeCustomerId: customerId, userId }, { stripeCustomerId: customerId, userId }, { stripeCustomerId: null, userId }], new Date()));
+    expect(await prisma.stripeCustomerAnonymization.count({ where: { stripeCustomerId: customerId } })).toBe(1);
+
+    const update = vi.fn().mockRejectedValueOnce(new Error('stripe down')).mockResolvedValue({});
+    const failed = await processStripeCustomerAnonymizations(ctx(), { stripeCustomerIds: [customerId], stripe: { customers: { update } } as never });
+    expect(failed).toMatchObject({ failed: 1, anonymized: 0 });
+    const row = await prisma.stripeCustomerAnonymization.findUniqueOrThrow({ where: { stripeCustomerId: customerId } });
+    expect(row.attempts).toBe(1);
+    expect(row.nextAttemptAt.getTime()).toBeGreaterThan(Date.now());
+
+    // Not due yet: nothing happens. Make it due, retry.
+    expect(await processStripeCustomerAnonymizations(ctx(), { stripeCustomerIds: [customerId], stripe: { customers: { update } } as never })).toMatchObject({ failed: 0, anonymized: 0 });
+    await prisma.stripeCustomerAnonymization.update({ where: { stripeCustomerId: customerId }, data: { nextAttemptAt: new Date(Date.now() - 1000) } });
+    const done = await processStripeCustomerAnonymizations(ctx(), { stripeCustomerIds: [customerId], stripe: { customers: { update } } as never });
+
+    expect(done).toMatchObject({ anonymized: 1, failed: 0 });
+    expect(await prisma.stripeCustomerAnonymization.count({ where: { stripeCustomerId: customerId } })).toBe(0);
+    expect(await prisma.auditLog.count({ where: { action: 'STRIPE_CUSTOMER_ANONYMIZED', targetId: userId } })).toBe(1);
   });
 });
 

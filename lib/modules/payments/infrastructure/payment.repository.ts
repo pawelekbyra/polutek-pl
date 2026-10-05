@@ -144,12 +144,25 @@ export class PaymentRepository {
     return payments.filter((payment) => payment.amountMinor > (payment.refundedAmountMinor ?? 0));
   }
 
-  async updateRefundStatusWithCAS(paymentId: string, oldRefundedMinor: number, data: { status: PaymentStatus; refundedAmountMinor: number; refundedById?: string; refundedAt?: Date; refundReason?: string | null }, tx: WriteTx): Promise<number> {
+  async updateRefundStatusWithCAS(paymentId: string, oldRefundedMinor: number, data: { status: PaymentStatus; refundedAmountMinor: number; refundedById?: string | null; refundedAt?: Date | null; refundReason?: string | null }, tx: WriteTx): Promise<number> {
     const { count } = await tx.payment.updateMany({
       where: { id: paymentId, refundedAmountMinor: oldRefundedMinor },
       data
     });
     return count;
+  }
+
+  /**
+   * Row lock for the rest of the transaction (`SELECT ... FOR UPDATE`). Refund reconciliation reads
+   * Stripe while holding it, so two concurrent syncs apply Stripe's answers one after the other and
+   * an older snapshot can never overwrite a newer one.
+   */
+  async lockPaymentRow(paymentId: string, tx: WriteTx): Promise<void> {
+    await tx.$queryRaw`SELECT "id" FROM "Payment" WHERE "id" = ${paymentId} FOR UPDATE`;
+  }
+
+  async markRefundsChecked(paymentId: string, at: Date, tx: WriteTx): Promise<void> {
+    await tx.payment.updateMany({ where: { id: paymentId }, data: { refundsCheckedAt: at } });
   }
 
   async updateStripeCustomerId(userId: string, stripeCustomerId: string, tx: WriteTx) {

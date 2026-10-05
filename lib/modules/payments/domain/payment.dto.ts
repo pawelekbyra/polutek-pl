@@ -11,6 +11,7 @@ export interface PaymentDto {
   requestId: string | null;
   refundedAmountMinor: number | null;
   refundedById?: string | null;
+  refundsCheckedAt?: Date | null;
   metadata: any;
   createdAt: Date;
   updatedAt: Date;

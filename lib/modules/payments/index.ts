@@ -1,6 +1,7 @@
 export * from "./application/create-checkout-intent.use-case";
 export * from "./application/fulfill-payment.use-case";
 export * from "./application/handle-refund.use-case";
+export * from "./application/sync-refunds.use-case";
 export * from "./application/handle-dispute.use-case";
 export * from "./application/handle-stripe-webhook.use-case";
 export * from "./application/update-payment-settings.use-case";
@@ -10,6 +11,8 @@ export * from "./application/admin-dispute-sync.use-case";
 export * from "./application/get-user-payments.use-case";
 export * from "./application/get-payment-status.use-case";
 export * from "./application/reconcile-payment.use-case";
+export * from "./application/reconcile-refunds.use-case";
+export * from "./application/stripe-customer-anonymization.use-case";
 export * from "./domain/payment.dto";
 export * from "./domain/admin-payment.dto";
 export * from "./domain/payment.errors";

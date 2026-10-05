@@ -183,6 +183,8 @@ model Payment {
   refundedById        String?
   refundedAt          DateTime?
   refundReason        String?
+  /// Last time the refund total was reconciled against Stripe's refund list (PA-04); NULL = never.
+  refundsCheckedAt    DateTime?
   currency            String
   status              PaymentStatus @default(PENDING)
   metadata            Json?
@@ -474,6 +476,23 @@ model ResendContactRemoval {
   nextAttemptAt DateTime @default(now())
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([nextAttemptAt])
+}
+
+/// A Stripe Customer whose personal data (e-mail, name, phone) must still be erased at Stripe after an
+/// account deletion (PA-03). Written in the deletion transaction, so the deletion never depends on Stripe being
+/// reachable; retried by the account-deletion path and daily by /api/cron/retention; the row is deleted once
+/// Stripe confirms (the audit log keeps STRIPE_CUSTOMER_ANONYMIZED). No FK to User: the User row is a tombstone.
+model StripeCustomerAnonymization {
+  id               String   @id @default(uuid())
+  stripeCustomerId String   @unique
+  userId           String?
+  attempts         Int      @default(0)
+  lastError        String?
+  nextAttemptAt    DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@index([nextAttemptAt])
 }

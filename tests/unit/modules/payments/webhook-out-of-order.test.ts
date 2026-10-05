@@ -11,6 +11,9 @@ import { createFakePaymentsDb } from './fake-payments-db';
 const SECRET = 'whsec_test_signing_secret_for_unit_tests';
 const db = createFakePaymentsDb();
 const disputesRetrieve = vi.fn();
+/** Stripe's refund list per PaymentIntent (what the webhook reads as the truth). */
+const stripeRefunds = new Map<string, Array<{ id: string; amount: number; status: string }>>();
+const refundsList = vi.fn(async ({ payment_intent }: { payment_intent: string }) => ({ data: stripeRefunds.get(payment_intent) ?? [], has_more: false }));
 const sendBecomePatronEmail = vi.fn();
 const sendDonationThankYouEmail = vi.fn();
 const sendNotification = vi.fn();
@@ -28,7 +31,7 @@ vi.mock('@/lib/modules/notifications', () => ({
   },
 }));
 vi.mock('@/lib/modules/payments/infrastructure/stripe-client', () => ({
-  getStripeClient: () => ({ disputes: { retrieve: disputesRetrieve } }),
+  getStripeClient: () => ({ disputes: { retrieve: disputesRetrieve }, refunds: { list: refundsList } }),
 }));
 
 const { POST } = await import('@/app/api/webhooks/stripe/route');
@@ -91,12 +94,14 @@ beforeEach(() => {
   for (const name of ['payment', 'stripeEvent', 'patronGrant', 'user', 'userPaymentTotal']) db[name].rows.length = 0;
   db.user.rows.push({ id: 'user_1', email: 'payer@example.com', language: 'pl' });
   vi.clearAllMocks();
+  stripeRefunds.clear();
   process.env.STRIPE_WEBHOOK_SECRET = SECRET;
   process.env.STRIPE_SECRET_KEY = 'sk_test_dummy';
 });
 
 
 function charge(paymentIntent: string, amountRefunded: number) {
+  stripeRefunds.set(paymentIntent, amountRefunded > 0 ? [{ id: `re_${paymentIntent}`, amount: amountRefunded, status: 'succeeded' }] : []);
   return { id: `ch_${paymentIntent}`, object: 'charge', payment_intent: paymentIntent, amount_refunded: amountRefunded, metadata: {} };
 }
 
