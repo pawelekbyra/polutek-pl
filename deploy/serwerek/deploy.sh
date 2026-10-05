@@ -14,7 +14,9 @@
 #   app.env    runtime env of the app (DATABASE_URL, BETTER_AUTH_SECRET, GOOGLE_*, TURNSTILE_*, STRIPE_*, CRON_SECRET, TRUST_CF_CONNECTING_IP=true ...)
 #   db.env     POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB
 #   build.env  PUBLIC build args only: NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY, NEXT_PUBLIC_R2_PUBLIC_HOST ...
-# State: .current-image / .previous-image (image refs). Migrations are additive in this repo, so rollback restores code only, never the schema.
+# State: .current-image / .previous-image (image refs). --rollback restores CODE only, never the schema. Migrations were additive until
+# 20261005210000_cleanup_dead_schema (destructive): after such a migration the previous image may select dropped columns and fail,
+# so roll back by restoring the pre-deploy dump (docs/architecture/db-cleanup-2026-10-05.md).
 set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")"
 

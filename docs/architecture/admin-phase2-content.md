@@ -90,7 +90,7 @@ Po wdrożeniu: `/admin/videos*` na `www` → 308 na `admin.pawelperfect.com/tres
 ## 5. Pytania do właściciela
 1. Usunięcie filmu: wymagać step-up (passkey) oprócz wpisania sluga? *Rekomendacja:* tak.
 2. Napisy: przenosić hosting VTT do R2 już w fazie 2 (zakres #1219), czy na razie tylko URL? *Rekomendacja:* R2 w fazie 2.
-3. Poziom dostępu `PATRON`: w edycji tylko dwa poziomy (decyzja 2026-10-04); migracja czyszcząca enuma osobno.
+3. Poziom dostępu `PATRON`: w edycji tylko dwa poziomy (decyzja 2026-10-04); enum zmieniony migracją `20261005210000_cleanup_dead_schema`.
 
 ## 6. Tłumaczenia filmów (zatwierdzone przez właściciela 2026-10-04, PR „Tłumaczenia: model i ekran”)
 

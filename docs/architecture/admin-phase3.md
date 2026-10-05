@@ -24,7 +24,7 @@ maili, bo śledzenie jest wyłączone), nigdy zero. Pod `ADMIN_DEV_FIXTURES=1` e
   (`lib/modules/admin-content/application/default-thumbnail.ts`, trasa `/api/settings/default-thumbnail`: magic bytes, 5 MB, nowy plik zapisany
   zanim stary zostanie usunięty, bez zapasowego Vercel Blob), konto kanału (`changeChannelOwner`: wyszukiwanie konta, wpisanie jego e-maila,
   powód, **step-up**, porównanie-i-zamiana na poprzednim właścicielu, audyt `CHANNEL_OWNER_CHANGED`), „Przelicz subskrybentów”.
-* **Decyzje:** (a) **banner kanału: DROP.** Okładkę usunięto ze strony 2026-10-04 (#1668), `Creator.bannerUrl` jest martwe i test pilnuje, że
+* **Decyzje:** (a) **banner kanału: DROP (kolumna usunięta migracją `20261005210000_cleanup_dead_schema`).** Okładkę usunięto ze strony 2026-10-04 (#1668), `Creator.bannerUrl` jest martwe i test pilnuje, że
   nic go nie zapisuje; wgrywanie obrazu, którego nigdzie nie widać, byłoby martwą funkcją. (b) Opis tylko jeden (PL): w bazie nie ma pola opisu EN.
   (c) Licznik „wyświetlany” subskrybentów: DROP (wiersz parytetu już tak mówił). (d) Dawny adres URL miniatury na wierszu `Creator` **przesłaniał**
   wgrany plik (`resolveVideoThumbnailUrl`); zapis i usunięcie w panelu czyszczą go, a ekran ostrzega, dopóki istnieje.
