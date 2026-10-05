@@ -138,18 +138,22 @@ export async function sendBroadcastTest(
   const problem = contentProblem(input);
   if (problem) return fail(new InvalidBroadcastPayloadError(problem));
 
-  // Only the signed-in admin's own account address, never one from the request.
+  // Only the signed-in admin's own address, never one from the request. The panel passes the address of its
+  // own admin account (`recipient`); the old /admin looks up the site account behind the session.
   const adminUserId = ctx.actor.type === "admin" || ctx.actor.type === "user" ? ctx.actor.userId : null;
-  const admin = adminUserId
-    ? await ctx.prisma.user.findUnique({ where: { id: adminUserId }, select: { name: true, email: true } })
-    : null;
+  const admin = input.recipient
+    ? { name: input.recipient.name, email: input.recipient.email }
+    : adminUserId
+      ? await ctx.prisma.user.findUnique({ where: { id: adminUserId }, select: { name: true, email: true } })
+      : null;
   if (!adminUserId || !admin?.email) {
     return fail(new InvalidBroadcastPayloadError("Konto admina nie ma adresu e-mail."));
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const pageUrl = buildContentUnsubscribeUrl(adminUserId, appUrl) ?? new URL("/unsubscribe", appUrl).toString();
-  const oneClickUrl = buildOneClickUnsubscribeUrl(adminUserId, appUrl) ?? pageUrl;
+  // A panel account is not a site account: its test mail carries the generic page, never a token for a user id.
+  const pageUrl = (!input.recipient && buildContentUnsubscribeUrl(adminUserId, appUrl)) || new URL("/unsubscribe", appUrl).toString();
+  const oneClickUrl = (!input.recipient && buildOneClickUnsubscribeUrl(adminUserId, appUrl)) || pageUrl;
 
   const message = renderBroadcastMessage(
     { subjectPl: input.subjectPl, htmlPl: input.htmlPl, subjectEn: input.subjectEn ?? "", htmlEn: input.htmlEn ?? "" },

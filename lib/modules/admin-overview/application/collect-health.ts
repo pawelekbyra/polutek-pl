@@ -13,6 +13,7 @@ import type { HealthCheckDto, HealthSummary, HostMetricsDto, StateKind } from ".
 import type { HostStatusRead } from "../infrastructure/host-status-file";
 import type { EncodeJobRow } from "../infrastructure/overview.repository";
 import type { ProbeResult } from "../infrastructure/probes";
+import type { LimitThresholds } from "../domain/alert-thresholds";
 import type { OverviewDeps } from "./deps";
 
 const DAY_MS = 86_400_000;
@@ -28,6 +29,8 @@ export type HealthInputs = {
   broadcasts: { failed: number; sending: number; pendingRecipients: number };
   probes: { publicApp: ProbeResult | null; redis: ProbeResult | null; hlsWorker: ProbeResult | null };
   oldPanel: OverviewDeps["oldPanel"];
+  /** Owner-set alert thresholds (Ustawienia); absent = the built-in LIMITS. */
+  limits?: LimitThresholds;
 };
 
 function probeCheck(id: string, label: string, probe: ProbeResult | null, source: string, notConfigured: string): HealthCheckDto {
@@ -63,13 +66,13 @@ export function encoderCheck(jobs: EncodeJobRow[], now: Date): HealthCheckDto {
   return { ...base, kind: "ok", detail: queued.length ? `${queued.length} w kolejce` : "bezczynny, kolejka pusta" };
 }
 
-function hostCheck(host: HostMetricsDto): HealthCheckDto {
+function hostCheck(host: HostMetricsDto, limits: LimitThresholds = LIMITS): HealthCheckDto {
   const base = { id: "host", label: "Serwer: dysk, RAM, swap", everyMin: 1 };
   if (!host.available) return { ...base, kind: "info", detail: host.reason, measuredAt: null, source: host.source };
   const disk = (host.diskUsedBytes / host.diskTotalBytes) * 100;
   const mem = ((host.memTotalBytes - host.memAvailableBytes) / host.memTotalBytes) * 100;
   const swap = host.swapTotalBytes ? (host.swapUsedBytes / host.swapTotalBytes) * 100 : 0;
-  const kind = worstKind([levelFor(disk, LIMITS.disk), levelFor(mem, LIMITS.memoryUsed), levelFor(swap, LIMITS.swap)]);
+  const kind = worstKind([levelFor(disk, limits.disk), levelFor(mem, limits.memoryUsed), levelFor(swap, limits.swap)]);
   return {
     ...base,
     kind,
@@ -174,7 +177,7 @@ export function buildHealthChecks(i: HealthInputs): HealthCheckDto[] {
       source: "tabele BroadcastEmail",
       everyMin: 1,
     },
-    hostCheck(i.host),
+    hostCheck(i.host, i.limits),
     ...hostStatusChecks(i.hostStatus, now),
   ];
   return checks;
@@ -183,7 +186,7 @@ export function buildHealthChecks(i: HealthInputs): HealthCheckDto[] {
 /** Gathers everything the health centre needs in parallel. */
 export async function gatherHealthInputs(deps: OverviewDeps): Promise<HealthInputs> {
   const now = deps.now();
-  const [database, host, hostStatus, jobs, payments, stripe, broadcasts, publicApp, redis, hlsWorker] = await Promise.all([
+  const [database, host, hostStatus, jobs, payments, stripe, broadcasts, publicApp, redis, hlsWorker, limits] = await Promise.all([
     deps.repo.database(),
     deps.host(),
     deps.hostStatus(),
@@ -194,8 +197,9 @@ export async function gatherHealthInputs(deps: OverviewDeps): Promise<HealthInpu
     deps.probes.publicApp(),
     deps.probes.redis(),
     deps.probes.hlsWorker(),
+    deps.limits ? deps.limits().catch(() => undefined) : undefined,
   ]);
-  return { now, database, host, hostStatus, jobs, payments, stripe, broadcasts, probes: { publicApp, redis, hlsWorker }, oldPanel: deps.oldPanel };
+  return { now, database, host, hostStatus, jobs, payments, stripe, broadcasts, probes: { publicApp, redis, hlsWorker }, oldPanel: deps.oldPanel, limits };
 }
 
 export function healthFrom(inputs: HealthInputs): HealthSummary {

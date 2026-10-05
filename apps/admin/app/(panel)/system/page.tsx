@@ -377,7 +377,7 @@ export default async function SystemPage({ searchParams }: Props) {
   const problems = s.health.counts.warn + s.health.counts.crit;
   return (
     <>
-      <PageHead title="System" lede="Serwer serwerek (Hetzner CPX22) · Docker Compose za Cloudflare Tunnel" actions={<RefreshButton />} />
+      <PageHead title="System" lede="Serwer serwerek (Hetzner CPX22) · Docker Compose za Cloudflare Tunnel" actions={<><Link className="btn" href="/system/r2">Diagnostyka R2</Link><RefreshButton /></>} />
       <nav className="tabs" aria-label="Sekcje systemu">
         {TABS.map(([id, label]) => (
           <Link key={id} href={id === "zdrowie" ? "/system" : `/system?tab=${id}`} aria-current={tab === id ? "page" : undefined} scroll={false}>

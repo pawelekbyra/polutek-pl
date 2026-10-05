@@ -17,6 +17,9 @@ export interface AdminDisputeSyncResult {
   disputeStatus: string | null;
   synced: boolean;
   message: string;
+  /** When the evidence must be submitted in Stripe (ISO), if Stripe says so. */
+  evidenceDueBy?: string | null;
+  reason?: string | null;
 }
 
 export async function adminDisputeSync(
@@ -76,6 +79,19 @@ export async function adminDisputeSync(
     return fail(syncResult.error);
   }
 
+  // Keep the facts the panel's dispute list needs (deadline, reason) on the payment: webhooks only
+  // carry the status, so this is the one place they are stored.
+  const dueBy = dispute.evidence_details?.due_by ? new Date(dispute.evidence_details.due_by * 1000).toISOString() : null;
+  try {
+    const current = (payment.metadata && typeof payment.metadata === "object" && !Array.isArray(payment.metadata) ? payment.metadata : {}) as Record<string, unknown>;
+    await ctx.prisma.payment.update({
+      where: { id: payment.id },
+      data: { metadata: { ...current, dispute: { id: dispute.id, status: dispute.status, reason: dispute.reason ?? null, dueBy, amount: dispute.amount, currency: dispute.currency, syncedAt: ctx.now().toISOString() } } as never },
+    });
+  } catch (err) {
+    logger.error(`[AdminDisputeSync] Could not store dispute details for payment ${payment.id}:`, err);
+  }
+
   try {
     await recordAuditEvent(ctx, {
       action: "PAYMENT_DISPUTE_SYNCED",
@@ -92,6 +108,8 @@ export async function adminDisputeSync(
     disputeId: dispute.id,
     disputeStatus: dispute.status,
     synced: true,
+    evidenceDueBy: dueBy,
+    reason: dispute.reason ?? null,
     message: `Dispute ${dispute.id} synced (status: ${dispute.status})`,
   });
 }

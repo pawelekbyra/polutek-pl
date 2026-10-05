@@ -291,6 +291,10 @@ model AdminUser {
   /// Set when the enrollment finished (TOTP verified and at least one passkey). Null = the account may
   /// only reach the enrollment screen.
   enrolledAt       DateTime?
+  /// OWNER = the whole panel (default, every account until phase 3). TRANSLATOR = only the translation
+  /// screens, only the languages in AdminLanguageGrant. Checked by requireAdmin(); a plain string so a
+  /// new role is an additive change (validated in code, apps/admin/lib/auth/roles.ts).
+  role             String    @default("OWNER")
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
@@ -299,6 +303,20 @@ model AdminUser {
   passkeys    AdminPasskey[]
   twoFactors  AdminTwoFactor[]
   enrollments AdminEnrollment[]
+  languageGrants AdminLanguageGrant[]
+}
+
+/// Which translation languages a TRANSLATOR account may write (one row per language).
+/// `level` is reserved for the later approval thresholds (TRANSLATOR < REVIEWER < LEAD); today only TRANSLATOR is used.
+model AdminLanguageGrant {
+  id          String    @id @default(uuid())
+  adminUserId String
+  language    String
+  level       String    @default("TRANSLATOR")
+  grantedAt   DateTime  @default(now())
+  user        AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@unique([adminUserId, language])
 }
 
 model AdminSession {

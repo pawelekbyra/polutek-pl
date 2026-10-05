@@ -46,6 +46,8 @@ const nextConfig = {
           },
         ],
       },
+      // The only framable URL: the e-mail preview (sandboxed iframe on the same origin, own CSP in the response).
+      { source: "/api/email/preview", headers: [{ key: "X-Frame-Options", value: "SAMEORIGIN" }] },
     ];
   },
 };

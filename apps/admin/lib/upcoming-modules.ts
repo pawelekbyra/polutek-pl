@@ -12,42 +12,6 @@ export type UpcomingModule = {
   today?: { label: string; path: string }[];
 };
 
+/** Every module of the panel is built; kept as the fallback shape for a future module that is announced before it ships. */
 export const UPCOMING_MODULES: Record<string, UpcomingModule> = {
-  przychody: {
-    id: "przychody",
-    title: "Przychody",
-    phase: 3,
-    summary: "Napiwki jedną definicją (opłacone i częściowo zwrócone, netto), lejek bramki, spory z terminem i zdrowie webhooków. Zwroty dopiero w fazie 4, zawsze z ponownym potwierdzeniem tożsamości.",
-    scope: ["przychód brutto i netto, lista wpłat z filtrami", "lejek bramki napiwkowej", "spory z terminem na dowody, zwroty ze step-up", "rekonsylacja, eksport CSV odporny na wstrzyknięcie formuł"],
-    today: [
-      { label: "Wpłaty w starym panelu", path: "/admin/users/payments" },
-      { label: "Ustawienia płatności", path: "/admin/payments" },
-    ],
-  },
-  komunikacja: {
-    id: "komunikacja",
-    title: "Komunikacja",
-    phase: 3,
-    summary: "E-maile transakcyjne, dostarczalność względem progów Resend, rozsyłki, wypisy i PP Support w jednym miejscu.",
-    scope: ["maile transakcyjne i dostarczalność", "limity Resend", "rozsyłki (wysyłka ze step-up w fazie 4)", "wypisy, blokady, liczby z PP Support"],
-    today: [{ label: "Poczta w starym panelu", path: "/admin/emails" }],
-  },
-  bezpieczenstwo: {
-    id: "bezpieczenstwo",
-    title: "Bezpieczeństwo",
-    phase: 3,
-    summary: "Logowania do panelu, sesje, nieudane próby i dziennik audytu z filtrami. Dziennik logowań panelu już się zapisuje (AdminAuthEvent, tylko dopisywanie, łańcuch skrótów); ekran przyjdzie w fazie 3.",
-    scope: ["logowania admina i aktywne sesje", "passkey, TOTP, step-up i Cloudflare Access w jednym widoku", "nieudane logowania i blokady", "dziennik audytu z filtrami i eksportem"],
-  },
-  ustawienia: {
-    id: "ustawienia",
-    title: "Ustawienia",
-    phase: 4,
-    summary: "Kanał, progi płatności, alerty i stan integracji (bez wartości sekretów). Wygląd panelu działa już teraz.",
-    scope: ["kanał i baner", "progi płatności", "progi alertów i godziny ciszy", "stan integracji, konto administratora"],
-    today: [
-      { label: "Kanał w starym panelu", path: "/admin/channel" },
-      { label: "Media", path: "/admin/settings" },
-    ],
-  },
 };

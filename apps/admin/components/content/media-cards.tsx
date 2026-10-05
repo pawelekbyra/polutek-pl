@@ -7,7 +7,7 @@ import { ConfirmDialog } from "@admin/components/confirm-dialog";
 import { Icon } from "@admin/components/icons";
 import { useToast } from "@admin/components/shell/toasts";
 
-async function postFile(url: string, file: File): Promise<{ ok: true; data: Record<string, unknown> } | { ok: false; message: string }> {
+export async function postFile(url: string, file: File): Promise<{ ok: true; data: Record<string, unknown> } | { ok: false; message: string }> {
   const fd = new FormData();
   fd.set("file", file);
   const res = await fetch(url, { method: "POST", body: fd }).catch(() => null);
@@ -17,7 +17,7 @@ async function postFile(url: string, file: File): Promise<{ ok: true; data: Reco
   return { ok: true, data: (body ?? {}) as Record<string, unknown> };
 }
 
-function FilePick({ accept, label, busy, onFile }: { accept: string; label: string; busy: boolean; onFile: (f: File) => void }) {
+export function FilePick({ accept, label, busy, onFile }: { accept: string; label: string; busy: boolean; onFile: (f: File) => void }) {
   const input = useRef<HTMLInputElement>(null);
   return (
     <>

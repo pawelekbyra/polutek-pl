@@ -1,0 +1,24 @@
+/* Panel PP, faza 3 (Ustawienia, Przychody, Komunikacja, Bezpieczeństwo): tylko to, czego nie ma w panel.css.
+ * Tokeny z panel.css, bez atrybutów style= (CSP), szerokości postępu przez klasy .pw-N (scale.css). */
+.preview-narrow { max-width: 280px; }
+.fieldset-plain { border: 0; padding: 0; margin: 0; min-width: 0; }
+.input-money { width: 120px; text-align: right; }
+.input-pct { width: 84px; text-align: right; }
+.table td .input, .table td .select { min-width: 0; }
+.diff { margin: 0; padding: var(--s-2) var(--s-3); border-radius: var(--r-md); background: var(--surface-2); font: 12px/1.55 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow: auto; }
+.diff .add { background: color-mix(in srgb, var(--ok-icon) 18%, transparent); display: block; }
+.diff .del { background: color-mix(in srgb, var(--crit-icon) 16%, transparent); display: block; }
+.diff .same { display: block; color: var(--text-3); }
+.mail-frame { width: 100%; min-height: 360px; border: 1px solid var(--border); border-radius: var(--r-md); background: #fff; }
+.split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-4); }
+.wizard-steps { display: flex; gap: var(--s-3); flex-wrap: wrap; list-style: none; margin: 0 0 var(--s-4); padding: 0; color: var(--text-3); font-size: var(--fs-13); }
+.wizard-steps [aria-current="step"] { color: var(--text); font-weight: 600; }
+.progress-cell { display: grid; gap: 4px; min-width: 120px; }
+.kv-wide { grid-template-columns: minmax(120px, max-content) 1fr; }
+.status-chip { display: inline-flex; gap: 6px; align-items: center; }
+.tabs-wrap { margin-bottom: var(--s-4); }
+.search-row { display: flex; gap: var(--s-2); align-items: flex-end; flex-wrap: wrap; }
+.search-row .field { flex: 1; min-width: 200px; }
+.list-pad > li.is-active { background: var(--selected); }
+.chip-row { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+@media (max-width: 760px) { .split { grid-template-columns: 1fr; } }

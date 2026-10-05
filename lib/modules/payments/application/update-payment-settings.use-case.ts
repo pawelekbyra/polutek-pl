@@ -21,6 +21,8 @@ export async function updatePaymentSettings(
   }
 
   const repo = new PaymentRepository();
+  // Audit "before": the effective minimums the owner saw when he edited (legacy columns included).
+  const before = await getPaymentCurrencyLimits();
 
   await ctx.db.writeTransaction(async (tx) => {
     for (const limit of input.limits) {
@@ -31,7 +33,10 @@ export async function updatePaymentSettings(
       action: 'PAYMENT_SETTINGS_UPDATED',
       targetType: 'PaymentCurrencySetting',
       targetId: 'global',
-      metadata: { minimums: input.limits.map((l) => ({ currency: l.currency, minAmount: l.minAmount })) },
+      metadata: {
+        minimums: input.limits.map((l) => ({ currency: l.currency, minAmount: l.minAmount })),
+        before: input.limits.map((l) => ({ currency: l.currency, minAmount: before[l.currency]?.minAmount ?? null })),
+      },
     }, tx);
   });
 

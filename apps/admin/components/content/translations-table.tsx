@@ -5,7 +5,7 @@
  */
 import { useRouter } from "next/navigation";
 import { startTransition, useActionState, useEffect, useId, useRef, useState, useTransition } from "react";
-import { approveTranslationsAction, saveTranslationAction } from "@admin/app/(panel)/tresci/translation-actions";
+import { approveTranslationsAction, generateDraftsAction, saveTranslationAction } from "@admin/app/(panel)/tresci/translation-actions";
 import { removeSubtitleAction } from "@admin/app/(panel)/tresci/actions";
 import type { ActionResult } from "@admin/lib/actions/panel";
 import { Icon } from "@admin/components/icons";
@@ -31,7 +31,11 @@ function Flag({ flag }: { flag: string }) {
   return <img className="flag" src={`/flags/${flag}.svg`} alt="" width={20} height={20} />;
 }
 
-export function TranslationsTable({ videoId, filmSlug, original, rows }: { videoId: string; filmSlug: string; original: { title: string; slug: string; hasSubtitles: boolean }; rows: TranslationRow[] }) {
+export type TranslationsAi = { enabled: boolean; reason: string | null };
+
+/** `translator`: a translator account sees and writes only its languages; no approving, subtitles or AI. */
+export function TranslationsTable({ videoId, filmSlug, original, rows, mode = "owner", ai = { enabled: false, reason: "wkrótce" } }: { videoId: string; filmSlug: string; original: { title: string; slug: string; hasSubtitles: boolean }; rows: TranslationRow[]; mode?: "owner" | "translator"; ai?: TranslationsAi }) {
+  const owner = mode === "owner";
   const router = useRouter();
   const { toast } = useToast();
   const [editing, setEditing] = useState<TranslationRow | null>(null);
@@ -43,6 +47,13 @@ export function TranslationsTable({ videoId, filmSlug, original, rows }: { video
     start(async () => {
       const res = await approveTranslationsAction({ videoId, filmSlug, language });
       toast(res.ok ? "ok" : "crit", res.ok ? res.message ?? "Zatwierdzono" : res.message);
+      if (res.ok) router.refresh();
+    });
+
+  const generate = () =>
+    start(async () => {
+      const res = await generateDraftsAction({ videoId, filmSlug });
+      toast(res.ok ? "ok" : "crit", res.ok ? (res.message ?? "Gotowe") : res.message);
       if (res.ok) router.refresh();
     });
 
@@ -61,17 +72,19 @@ export function TranslationsTable({ videoId, filmSlug, original, rows }: { video
 
   return (
     <>
-      <div className="row mb-3">
-        <button type="button" className="btn btn-primary" aria-disabled={!drafts || pending} onClick={() => drafts && !pending && approve()}>
-          <Icon name="ok" />
-          Zatwierdź wszystkie szkice{drafts ? ` (${drafts})` : ""}
-        </button>
-        <button type="button" className="btn" aria-disabled="true" aria-describedby="ai-soon" title="Wkrótce">
-          <Icon name="zap" />
-          Generuj szkice AI
-        </button>
-        <span id="ai-soon" className="muted">wkrótce: tłumaczenie tytułu, opisu i napisów z wersji oryginalnej</span>
-      </div>
+      {owner ? (
+        <div className="row mb-3">
+          <button type="button" className="btn btn-primary" aria-disabled={!drafts || pending} onClick={() => drafts && !pending && approve()}>
+            <Icon name="ok" />
+            Zatwierdź wszystkie szkice{drafts ? ` (${drafts})` : ""}
+          </button>
+          <button type="button" className="btn" aria-disabled={!ai.enabled || pending} aria-describedby="ai-note" onClick={() => ai.enabled && !pending && generate()}>
+            <Icon name="zap" />
+            Generuj szkice AI
+          </button>
+          <span id="ai-note" className="muted">{ai.enabled ? "Cloudflare Workers AI (darmowy limit dobowy): tytuł i opis; nie nadpisuje tekstów napisanych przez człowieka." : (ai.reason ?? "wkrótce")}</span>
+        </div>
+      ) : null}
       <section className="card card-flush" aria-label="Języki filmu">
         <div className="table-scroll">
           <table className="table responsive">
@@ -100,7 +113,7 @@ export function TranslationsTable({ videoId, filmSlug, original, rows }: { video
                 <td data-label="Adres" className="hide-md mono">{original.slug}</td>
                 <td data-label="Napisy">{original.hasSubtitles ? <span className="state ok"><Icon name="ok" /><span>Są</span></span> : <span className="muted">brak</span>}</td>
                 <td className="actions">
-                  <a className="btn btn-sm btn-ghost" href={`/tresci/${filmSlug}/edycja`}>Edytuj oryginał</a>
+                  {owner ? <a className="btn btn-sm btn-ghost" href={`/tresci/${filmSlug}/edycja`}>Edytuj oryginał</a> : null}
                 </td>
               </tr>
               {rows.map((r) => {
@@ -119,8 +132,8 @@ export function TranslationsTable({ videoId, filmSlug, original, rows }: { video
                     <td data-label="Napisy">
                       <span className="li-actions">
                         {t?.subtitleUrl ? <span className="state ok"><Icon name="ok" /><span>Są</span></span> : <span className="muted">brak</span>}
-                        {t ? <SubtitlePick code={r.code} busy={busySub === r.code} onFile={(f) => uploadSub(r.code, f)} has={!!t.subtitleUrl} /> : null}
-                        {t?.subtitleUrl && r.code !== "en" ? (
+                        {owner && t ? <SubtitlePick code={r.code} busy={busySub === r.code} onFile={(f) => uploadSub(r.code, f)} has={!!t.subtitleUrl} /> : null}
+                        {owner && t?.subtitleUrl && r.code !== "en" ? (
                           <button
                             type="button"
                             className="btn btn-sm btn-ghost"
@@ -139,7 +152,7 @@ export function TranslationsTable({ videoId, filmSlug, original, rows }: { video
                     </td>
                     <td className="actions">
                       <span className="li-actions">
-                        {t?.status === "AI_DRAFT" ? (
+                        {owner && t?.status === "AI_DRAFT" ? (
                           <button type="button" className="btn btn-sm" onClick={() => approve(r.code)} aria-disabled={pending}>
                             Zatwierdź<span className="sr-only"> {r.namePl}</span>
                           </button>

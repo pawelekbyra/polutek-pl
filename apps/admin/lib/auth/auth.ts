@@ -43,6 +43,7 @@ export const adminAuth = betterAuth({
     modelName: "adminUser",
     additionalFields: {
       enrolledAt: { type: "date", required: false, input: false },
+      role: { type: "string", required: false, input: false },
     },
   },
   session: {

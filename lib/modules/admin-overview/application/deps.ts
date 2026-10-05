@@ -1,9 +1,11 @@
 import type { AppContext } from "@/lib/modules/shared/app-context";
+import type { LimitThresholds } from "../domain/alert-thresholds";
 import type { HostMetricsDto, ProcessMetricsDto } from "../domain/types";
 import { readHostMetrics, readProcessMetrics } from "../infrastructure/host-metrics";
 import { readHostStatus, type HostStatusRead } from "../infrastructure/host-status-file";
 import { cachedProbe, probeHlsWorker, probePublicApp, probeRedis, type ProbeResult } from "../infrastructure/probes";
 import { readTelemetryPeaks, type TelemetryPeaksRead } from "../infrastructure/telemetry-peaks";
+import { getAlertThresholds } from "./alert-thresholds";
 import { PrismaOverviewRepository, type OverviewRepository } from "../infrastructure/overview.repository";
 
 /** Everything the overview use cases read, injectable so tests run without a database or network. */
@@ -21,6 +23,8 @@ export type OverviewDeps = {
   };
   /** Traffic peaks from telemetry (read-only role). Absent or null = not configured here. */
   telemetry?: () => Promise<TelemetryPeaksRead | null>;
+  /** Owner-set alert thresholds (Ustawienia). Absent = the built-in defaults. */
+  limits?: () => Promise<LimitThresholds>;
   /** Absolute link into the old /admin on www (phase 1 shows; actions move in phase 4). */
   oldPanel: (path: string) => string;
 };
@@ -45,6 +49,7 @@ export function createOverviewDeps(ctx: AppContext, env: Env = process.env): Ove
       redis: async () => (kvUrl && kvToken ? cachedProbe("redis", () => probeRedis(kvUrl, kvToken)) : null),
       hlsWorker: async () => (hlsBase ? cachedProbe("hls", () => probeHlsWorker(hlsBase)) : null),
     },
+    limits: async () => (await getAlertThresholds(ctx)).limits,
     telemetry: async () => (telemetryUrl ? readTelemetryPeaks(telemetryUrl, ctx.now()) : null),
     oldPanel: (path: string) => `${publicBase}${path.startsWith("/") ? path : `/${path}`}`,
   };

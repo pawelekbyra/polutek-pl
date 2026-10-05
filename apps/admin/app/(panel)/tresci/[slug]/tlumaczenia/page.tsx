@@ -6,6 +6,7 @@ import { TranslationsTable } from "@admin/components/content/translations-table"
 import { Icon } from "@admin/components/icons";
 import { PageHead } from "@admin/components/ui";
 import { loadFilmTranslations } from "@admin/lib/content";
+import { draftAiStatus } from "@/lib/modules/translations";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -35,6 +36,7 @@ export default async function FilmTranslationsPage({ params }: Props) {
       />
       <FilmTabs slug={v.slug} current="tlumaczenia" />
       <TranslationsTable
+        ai={draftAiStatus()}
         videoId={v.id}
         filmSlug={v.slug}
         original={{ title: v.title, slug: v.slug, hasSubtitles: !!v.subtitleUrlPl }}

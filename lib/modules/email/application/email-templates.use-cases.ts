@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import sanitizeHtml from "sanitize-html";
 import type { EmailTemplate } from "@prisma/client";
 import { AppContext } from "../../shared/app-context";
@@ -23,7 +24,7 @@ import { validateTemplateVariables } from "../domain/render-email";
  * Nothing writes default texts to the database.
  */
 
-const sanitizeOptions: sanitizeHtml.IOptions = {
+export const sanitizeOptions: sanitizeHtml.IOptions = {
   allowedTags: sanitizeHtml.defaults.allowedTags.concat([
     'div', 'h1', 'h2', 'h3', 'br', 'span', 'section', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'ul', 'ol', 'li', 'img',
   ]),
@@ -90,6 +91,11 @@ export async function findSystemTemplateOverride(ctx: Pick<AppContext, "prisma">
   return row && isOverride(row) ? row : null;
 }
 
+function summarizeTemplate(row: Pick<EmailTemplate, "subject" | "html" | "subjectEn" | "htmlEn">) {
+  const h = (v: string | null) => (v ? createHash("sha256").update(v).digest("hex").slice(0, 12) : null);
+  return { subject: row.subject.slice(0, 120), subjectEn: row.subjectEn?.slice(0, 120) ?? null, htmlSha: h(row.html), htmlLength: row.html.length, htmlEnSha: h(row.htmlEn), htmlEnLength: row.htmlEn?.length ?? 0 };
+}
+
 export async function listEmailTemplates(ctx: AppContext): Promise<UseCaseResult<EmailTemplateDto[], never>> {
   const rows = await new EmailRepository(ctx.prisma).listTemplates();
   const bySlug = new Map(rows.map((row) => [row.slug, row]));
@@ -120,6 +126,7 @@ export async function upsertEmailTemplate(
 ): Promise<UseCaseResult<EmailTemplateDto, EmailError>> {
   const html = sanitizeHtml(input.html, sanitizeOptions);
   const htmlEn = input.htmlEn ? sanitizeHtml(input.htmlEn, sanitizeOptions) : null;
+  const previous = await new EmailRepository(ctx.prisma).findTemplateBySlug(input.slug);
   const subjectEn = input.subjectEn?.trim() ? input.subjectEn.trim() : null;
 
   const problems = validateTemplateVariables(getTemplateDefinition(input.slug), {
@@ -148,7 +155,12 @@ export async function upsertEmailTemplate(
     action: "TEMPLATE_SAVED",
     targetType: "EmailTemplate",
     targetId: updated.id,
-    metadata: { slug: updated.slug },
+    metadata: {
+      slug: updated.slug,
+      // Before/after: texts are not copied into the audit log (they can be long), their hashes and lengths are.
+      before: previous && isOverride(previous) ? summarizeTemplate(previous) : "default",
+      after: summarizeTemplate(updated),
+    },
   });
 
   return ok(rowDto(updated));

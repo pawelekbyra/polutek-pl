@@ -12,7 +12,15 @@ import { recordAuditEvent } from "@/lib/modules/audit";
 export interface AdminRefundInput {
   paymentId: string;
   amountMinor?: number; // undefined = full refund
+  /** Free-text note of the admin (stored on the payment, in the audit log and in Stripe metadata). */
   reason?: string;
+  /** Stripe's own reason enum; defaults to requested_by_customer. */
+  stripeReason?: "duplicate" | "fraudulent" | "requested_by_customer";
+  /**
+   * Generated when the refund dialog opens. A repeated submit (double click, retry after a timeout) carries
+   * the same key, so Stripe returns the first refund instead of creating a second one.
+   */
+  idempotencyKey?: string;
 }
 
 export interface AdminRefundResult {
@@ -81,12 +89,13 @@ export async function adminRefund(
     stripeRefund = await stripe.refunds.create({
       payment_intent: payment.stripeIntentId,
       amount: requestedAmount,
-      ...(input.reason ? { reason: "requested_by_customer", metadata: { adminReason: input.reason.slice(0, 500) } } : {}),
+      ...(input.reason || input.stripeReason ? { reason: input.stripeReason ?? "requested_by_customer" } : {}),
+      ...(input.reason ? { metadata: { adminReason: input.reason.slice(0, 500) } } : {}),
     }, {
       // A retried request (network error, double click) for the same refund state reuses the key,
       // so Stripe returns the first refund instead of refunding twice. Once that refund is recorded,
       // alreadyRefunded changes and a deliberate next refund gets a new key.
-      idempotencyKey: `refund-${payment.id}-${alreadyRefunded}-${requestedAmount}`,
+      idempotencyKey: input.idempotencyKey ? `refund-${payment.id}-${input.idempotencyKey}` : `refund-${payment.id}-${alreadyRefunded}-${requestedAmount}`,
     });
   } catch (err: unknown) {
     logger.error(`[AdminRefund] Stripe API error for payment ${payment.id}:`, err);
@@ -107,6 +116,10 @@ export async function adminRefund(
       paymentAmountMinor: payment.amountMinor,
       stripeRefundId: stripeRefund.id,
       stripeRefundStatus: stripeRefund.status ?? null,
+      reason: input.reason?.slice(0, 500) ?? null,
+      stripeReason: input.stripeReason ?? null,
+      before: { status: payment.status, refundedAmountMinor: alreadyRefunded },
+      after: { refundedAmountMinor: alreadyRefunded + requestedAmount },
     },
   });
 

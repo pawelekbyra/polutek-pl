@@ -48,7 +48,8 @@ afterAll(async () => {
   await prisma.videoPlaybackSession.deleteMany({ where: { videoId: ids.video } });
   await prisma.emailEvent.deleteMany({ where: { providerEventId: { startsWith: RUN } } });
   await prisma.broadcastEmail.deleteMany({ where: { id: ids.broadcast } });
-  await prisma.auditLog.deleteMany({ where: { OR: [{ action: { startsWith: RUN } }, { targetId: ids.deleter }] } });
+  // AuditLog rows are tamper-resistant (migration 20261005200000: no DELETE of rows younger than 400 days), so the
+  // test's audit rows stay in the throwaway CI database; they are unique per run (action starts with RUN).
   await prisma.verification.deleteMany({ where: { identifier: { startsWith: RUN } } });
   await prisma.resendContactRemoval.deleteMany({ where: { email: { startsWith: RUN } } });
   await prisma.video.deleteMany({ where: { id: ids.video } });
