@@ -20,6 +20,6 @@ describe("Comments loading state verification", () => {
   it("displays loading text in load more button", () => {
     const source = component("app/components/comments/EmbeddedComments.tsx");
     expect(source).toContain("{isFetchingNextPage ? (");
-    expect(source).toContain('language === "pl" ? "Ładowanie..." : "Loading..."');
+    expect(source).toContain('tx("Ładowanie...", "Loading...")');
   });
 });

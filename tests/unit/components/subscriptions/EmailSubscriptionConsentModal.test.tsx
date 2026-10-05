@@ -3,13 +3,14 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import EmailSubscriptionConsentModal from '@/app/components/subscriptions/EmailSubscriptionConsentModal';
 import React from 'react';
+import { txFor } from "../../i18n/mock-language";
 
 const lang = vi.hoisted(() => ({ language: 'pl' }));
 
 // Mock LanguageContext
 vi.mock('@/app/components/LanguageContext', () => ({
   useLanguage: () => ({
-    language: lang.language,
+    language: lang.language, tx: txFor(lang.language),
     t: {
       confirmSubscribeTitle: 'CZY CHCESZ SUBSKRYBOWAĆ?',
       confirmSubscribeText: 'Subskrypcja oznacza zgodę na otrzymywanie powiadomień mailowych o nowościach.',

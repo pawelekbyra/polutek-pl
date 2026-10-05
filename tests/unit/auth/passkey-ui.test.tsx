@@ -18,6 +18,7 @@ vi.mock("@/lib/auth/sign-out", () => ({ signOutCompletely: vi.fn() }));
 import { PasskeySignIn } from "@/app/components/auth/PasskeySignIn";
 import { PasskeysSection } from "@/app/components/auth/PasskeysSection";
 import { defaultPasskeyName } from "@/lib/auth/passkey-support";
+import { createTx } from "@/lib/i18n/ui";
 
 function enableWebAuthn({ autofill = false } = {}) {
   const PublicKeyCredential = function PublicKeyCredential() {} as unknown as { isConditionalMediationAvailable: () => Promise<boolean> };
@@ -42,13 +43,13 @@ afterEach(() => {
 describe("PasskeySignIn (\"Use a passkey\")", () => {
   function renderButton(props: Partial<React.ComponentProps<typeof PasskeySignIn>> = {}) {
     const handlers = { onSignedIn: vi.fn(), onError: vi.fn(), onNeedAccount: vi.fn() };
-    render(<PasskeySignIn active isPl={false} {...handlers} {...props} />);
+    render(<PasskeySignIn active tx={createTx("en")} {...handlers} {...props} />);
     return handlers;
   }
 
   it("renders nothing and never calls WebAuthn when the browser has no passkey support", async () => {
     disableWebAuthn();
-    const { container } = render(<PasskeySignIn active isPl onSignedIn={vi.fn()} onError={vi.fn()} onNeedAccount={vi.fn()} />);
+    const { container } = render(<PasskeySignIn active tx={createTx("pl")} onSignedIn={vi.fn()} onError={vi.fn()} onNeedAccount={vi.fn()} />);
     await Promise.resolve();
     expect(container.innerHTML).toBe("");
     expect(h.client.signIn.passkey).not.toHaveBeenCalled();
@@ -58,7 +59,7 @@ describe("PasskeySignIn (\"Use a passkey\")", () => {
     enableWebAuthn();
     h.client.signIn.passkey.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
     const onSignedIn = vi.fn();
-    render(<PasskeySignIn active isPl onSignedIn={onSignedIn} onError={vi.fn()} onNeedAccount={vi.fn()} />);
+    render(<PasskeySignIn active tx={createTx("pl")} onSignedIn={onSignedIn} onError={vi.fn()} onNeedAccount={vi.fn()} />);
     fireEvent.click(await screen.findByRole("button", { name: "Użyj klucza dostępu" }));
     await waitFor(() => expect(onSignedIn).toHaveBeenCalled());
     expect(h.client.signIn.passkey).toHaveBeenCalledWith();
@@ -95,10 +96,10 @@ describe("PasskeySignIn (\"Use a passkey\")", () => {
   it("offers passkeys in the e-mail autofill when the browser supports it, only while the modal is open", async () => {
     enableWebAuthn({ autofill: true });
     h.client.signIn.passkey.mockReturnValue(new Promise(() => undefined));
-    const { rerender } = render(<PasskeySignIn active={false} isPl onSignedIn={vi.fn()} onError={vi.fn()} onNeedAccount={vi.fn()} />);
+    const { rerender } = render(<PasskeySignIn active={false} tx={createTx("pl")} onSignedIn={vi.fn()} onError={vi.fn()} onNeedAccount={vi.fn()} />);
     await screen.findByRole("button");
     expect(h.client.signIn.passkey).not.toHaveBeenCalled();
-    rerender(<PasskeySignIn active isPl onSignedIn={vi.fn()} onError={vi.fn()} onNeedAccount={vi.fn()} />);
+    rerender(<PasskeySignIn active tx={createTx("pl")} onSignedIn={vi.fn()} onError={vi.fn()} onNeedAccount={vi.fn()} />);
     await waitFor(() => expect(h.client.signIn.passkey).toHaveBeenCalledWith({ autoFill: true }));
   });
 
@@ -117,7 +118,7 @@ describe("PasskeysSection (account panel)", () => {
   it("lists the passkeys with their name and date, and hides adding where WebAuthn is missing", async () => {
     disableWebAuthn();
     h.client.passkey.listUserPasskeys.mockResolvedValue({ data: [{ id: "pk1", name: "iPhone · Safari", createdAt: "2026-10-01T10:00:00Z" }], error: null });
-    render(<PasskeysSection isPl={false} />);
+    render(<PasskeysSection tx={createTx("en")} />);
     expect(await screen.findByText("iPhone · Safari")).toBeTruthy();
     expect(screen.getByText(/^Added /)).toBeTruthy();
     expect(screen.getByText("This browser does not support passkeys.")).toBeTruthy();
@@ -127,7 +128,7 @@ describe("PasskeysSection (account panel)", () => {
   it("adds a passkey with the device name and reloads the list", async () => {
     enableWebAuthn();
     h.client.passkey.addPasskey.mockResolvedValue({ data: { id: "pk2" }, error: null });
-    render(<PasskeysSection isPl={false} />);
+    render(<PasskeysSection tx={createTx("en")} />);
     expect(await screen.findByText("You have no passkeys yet.")).toBeTruthy();
     const field = screen.getByLabelText("Device name (optional)");
     fireEvent.change(field, { target: { value: "Work laptop" } });
@@ -140,7 +141,7 @@ describe("PasskeysSection (account panel)", () => {
   it("asks to sign in again when the session is not fresh", async () => {
     enableWebAuthn();
     h.client.passkey.addPasskey.mockResolvedValue({ data: null, error: { code: "SESSION_NOT_FRESH", status: 403 } });
-    render(<PasskeysSection isPl />);
+    render(<PasskeysSection tx={createTx("pl")} />);
     fireEvent.click(await screen.findByRole("button", { name: "Dodaj klucz dostępu" }));
     expect(await screen.findByRole("button", { name: "Zaloguj się ponownie" })).toBeTruthy();
   });
@@ -149,7 +150,7 @@ describe("PasskeysSection (account panel)", () => {
     disableWebAuthn();
     h.client.passkey.listUserPasskeys.mockResolvedValue({ data: [{ id: "pk1", name: "Mac", createdAt: "2026-10-01T10:00:00Z" }], error: null });
     h.client.passkey.deletePasskey.mockResolvedValue({ data: { status: true }, error: null });
-    render(<PasskeysSection isPl={false} />);
+    render(<PasskeysSection tx={createTx("en")} />);
     fireEvent.click(await screen.findByRole("button", { name: "Remove passkey Mac" }));
     expect(h.client.passkey.deletePasskey).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Yes, remove" }));

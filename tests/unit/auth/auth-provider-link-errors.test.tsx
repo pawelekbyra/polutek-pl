@@ -15,10 +15,11 @@ vi.mock("@/app/components/auth/AuthModal", () => ({
   ),
 }));
 vi.mock("@/app/components/auth/OnboardingDialog", () => ({ default: () => null }));
-vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en" }) }));
+vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en", tx: txFor("en") }) }));
 vi.mock("@/lib/auth/react", () => ({ useAuth: () => authState }));
 
 import { AuthModalProvider } from "@/app/components/auth/AuthModalProvider";
+import { txFor } from "../i18n/mock-language";
 
 function renderAt(url: string) {
   window.history.replaceState(null, "", url);

@@ -30,10 +30,11 @@ vi.mock("better-auth/client/plugins", () => ({ oneTapClient: (options: unknown) 
 vi.mock("@/lib/auth/public-config", () => ({ useAuthPublicConfig: () => ({ googleClientId: "gid", turnstileSiteKey: null }) }));
 vi.mock("@/lib/auth/react", () => ({ useAuth: () => ({ ...h.auth, signOut: vi.fn() }), refreshSession: h.refreshSession }));
 vi.mock("@/lib/auth/client", () => ({ authClient: h.client, captchaFetchOptions: () => undefined }));
-vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en", setLanguage: () => {} }) }));
+vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en", tx: txFor("en"), setLanguage: () => {} }) }));
 
 import GoogleOneTapPrompt from "@/app/components/auth/GoogleOneTapPrompt";
 import AuthModal from "@/app/components/auth/AuthModal";
+import { txFor } from "../i18n/mock-language";
 
 beforeEach(() => {
   vi.clearAllMocks();

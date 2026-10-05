@@ -19,7 +19,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/app/components/LanguageContext", () => ({
   useLanguage: () => ({
-    language: mocks.language,
+    language: mocks.language, tx: txFor(mocks.language),
     t: { share: mocks.language === "pl" ? "Szeruj" : "Share" },
   }),
 }));
@@ -45,6 +45,7 @@ vi.mock("@/app/hooks/usePwaInstall", () => ({
 
 import InstallAppMenu from "@/app/components/InstallAppMenu";
 import ShareButton from "@/app/components/ShareButton";
+import { txFor } from "../i18n/mock-language";
 
 describe("ShareButton menu", () => {
   beforeEach(() => {

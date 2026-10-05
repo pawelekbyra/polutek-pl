@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createTx } from '@/lib/i18n/ui';
 import { TIP_CRYPTO_PLACEHOLDER, TIP_FALLBACK_METHOD, describeTipMethod, getTipMethodTiles } from '@/app/components/support/tip-flow-config';
 
 describe('tip gate method tiles (list comes from Stripe)', () => {
@@ -9,7 +10,7 @@ describe('tip gate method tiles (list comes from Stripe)', () => {
 
   it('keeps a method Stripe adds later, with a generic tile at the end', () => {
     expect(getTipMethodTiles(['card', 'some_new_method'])).toEqual(['card', 'some_new_method', TIP_CRYPTO_PLACEHOLDER]);
-    expect(describeTipMethod('some_new_method', true).title).toBe('Some New Method');
+    expect(describeTipMethod('some_new_method', createTx('pl')).title).toBe('Some New Method');
   });
 
   it('adds Apple Pay / Google Pay as ordinary tiles only when the device has them and cards are allowed', () => {

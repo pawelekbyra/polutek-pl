@@ -69,7 +69,7 @@ describe('comments UI production contract', () => {
     // X6.4 targets WCAG 2.2 AA generally; the 24px figure is the spec's own number, not
     // stated verbatim in that doc). Assert the visible focus indicator instead.
     expect(reactions()).toContain('focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]');
-    expect(source).toContain('locale: language === "pl" ? pl : enUS');
+    expect(source).toContain('locale: dateFnsLocale(language)');
   });
 
   it('renders static comment motion equivalents for reduced-motion users', () => {

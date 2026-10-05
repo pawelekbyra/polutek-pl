@@ -65,7 +65,7 @@ describe('PremiumWrapper playback plan state messaging', () => {
   });
 
   it('keeps sensitive provider details and internal diagnostics out of user-facing copy', () => {
-    const messagesStart = stateSource.indexOf('PLAYBACK_PLAN_STATE_MESSAGES');
+    const messagesStart = stateSource.indexOf('playbackPlanStateMessages');
     const helperStart = stateSource.indexOf('export function getSafePlaybackState');
     const messages = stateSource.slice(messagesStart, helperStart);
 

@@ -6,6 +6,7 @@ import React from 'react';
 import type { AccessTier, VideoStatus } from '@prisma/client';
 import Hero from '@/app/components/Hero';
 import type { PublicVideoDTO } from '@/app/types/video';
+import { txFor } from "../i18n/mock-language";
 
 vi.mock('@/lib/auth/react', () => ({
   useAuth: () => ({ userId: 'user_123' as string | null }),
@@ -24,7 +25,7 @@ vi.mock('next/navigation', () => ({
 const mockLanguage = { language: 'pl' as 'pl' | 'en' };
 vi.mock('@/app/components/LanguageContext', () => ({
   useLanguage: () => ({
-    language: mockLanguage.language,
+    language: mockLanguage.language, tx: txFor(mockLanguage.language),
     t: { noDescription: 'Brak opisu', comments: 'Komentarze', videosTab: 'Filmy' },
   }),
 }));

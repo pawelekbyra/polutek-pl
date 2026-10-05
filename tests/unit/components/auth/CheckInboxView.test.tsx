@@ -4,12 +4,13 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import React from "react";
 import CheckInboxView from "@/app/components/auth/CheckInboxView";
 import LanguageSwitcher from "@/app/components/LanguageSwitcher";
+import { createTx } from "@/lib/i18n/ui";
 
 afterEach(() => cleanup());
 
 describe("CheckInboxView", () => {
   it("shows the address, the steps and the spam hint for sign-up", () => {
-    render(<CheckInboxView isPl={false} kind="verify" email="jan@hotmail.com" onBack={vi.fn()} />);
+    render(<CheckInboxView tx={createTx("en")} kind="verify" email="jan@hotmail.com" onBack={vi.fn()} />);
     expect(screen.getByText("jan@hotmail.com")).toBeTruthy();
     expect(screen.getByText(/Click the confirmation link/)).toBeTruthy();
     expect(screen.getByText(/Spam or Junk folder/)).toBeTruthy();
@@ -19,7 +20,7 @@ describe("CheckInboxView", () => {
     const onResend = vi.fn();
     const onChangeEmail = vi.fn();
     const onBack = vi.fn();
-    render(<CheckInboxView isPl kind="verify" email="a@b.pl" onResend={onResend} onChangeEmail={onChangeEmail} onBack={onBack} />);
+    render(<CheckInboxView tx={createTx("pl")} kind="verify" email="a@b.pl" onResend={onResend} onChangeEmail={onChangeEmail} onBack={onBack} />);
     fireEvent.click(screen.getByText("Wyślij link ponownie"));
     fireEvent.click(screen.getByText("Zły adres? Wpisz inny"));
     fireEvent.click(screen.getByText("Wróć do logowania"));
@@ -29,7 +30,7 @@ describe("CheckInboxView", () => {
   });
 
   it("uses reset wording and hides resend when no handler is given", () => {
-    render(<CheckInboxView isPl={false} kind="reset" email="x@y.com" onBack={vi.fn()} />);
+    render(<CheckInboxView tx={createTx("en")} kind="reset" email="x@y.com" onBack={vi.fn()} />);
     expect(screen.getByText(/password link to/)).toBeTruthy();
     expect(screen.queryByText("Send the link again")).toBeNull();
   });
@@ -57,7 +58,7 @@ describe("LanguageSwitcher inline variant", () => {
     expect(onSelect).toHaveBeenCalledWith("pl");
   });
 
-  it("is compact, supports arrow keys, type-ahead and Esc, and keeps placeholder languages non-switching", () => {
+  it("is compact, supports arrow keys, type-ahead and Esc, and switches to any of the eight languages", () => {
     const onSelect = vi.fn();
     render(<LanguageSwitcher variant="inline" language="en" onSelect={onSelect} />);
     const button = screen.getByRole("button");
@@ -77,8 +78,8 @@ describe("LanguageSwitcher inline variant", () => {
     fireEvent.keyDown(listbox, { key: "End" });
     fireEvent.keyDown(listbox, { key: "ArrowLeft" });
     fireEvent.keyDown(listbox, { key: "Enter" });
-    expect(onSelect).not.toHaveBeenCalled();
-    expect(screen.getByText(/Português translation is in progress/)).toBeTruthy();
+    expect(onSelect).toHaveBeenCalledWith("pt");
+    expect(screen.queryByText(/translation is in progress/)).toBeNull();
     expect(document.activeElement).toBe(button);
     fireEvent.click(button);
     fireEvent.keyDown(screen.getByRole("listbox"), { key: "Escape" });

@@ -5,6 +5,7 @@ import { render, cleanup, act, screen, fireEvent } from '@testing-library/react'
 import React from 'react';
 import ChannelHome from '@/app/components/ChannelHome';
 import type { PublicVideoDTO } from '@/app/types/video';
+import { txFor } from "../i18n/mock-language";
 
 const mocks = vi.hoisted(() => ({ search: '' }));
 
@@ -38,7 +39,7 @@ vi.mock('@/app/components/channel/SidebarPlaylist', () => ({
 }));
 vi.mock('@/app/components/Hero', () => ({ default: () => <div>hero-stub</div> }));
 vi.mock('@/app/components/LanguageContext', () => ({
-  useLanguage: () => ({ language: 'pl', t: { comments: 'Komentarze', videosTab: 'Filmy' } }),
+  useLanguage: () => ({ language: 'pl', tx: txFor('pl'), t: { comments: 'Komentarze', videosTab: 'Filmy' } }),
 }));
 vi.mock('@/app/hooks/useClientEnvironment', () => ({ useClientReady: () => true }));
 
