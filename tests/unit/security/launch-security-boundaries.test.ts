@@ -117,7 +117,7 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
     const constructIndex = stripeUseCase.indexOf('Stripe.webhooks.constructEvent');
     const lockIndex = stripeUseCase.indexOf('lockService.acquireLock');
     const fulfillIndex = stripeUseCase.indexOf('fulfillPayment({');
-    const refundIndex = stripeUseCase.indexOf('handleRefund({');
+    const refundIndex = stripeUseCase.indexOf('syncRefundsFromStripe({');
     const disputeIndex = stripeUseCase.indexOf('handleDispute({');
 
     expect(stripeUseCase).toContain('if (!endpointSecret)');

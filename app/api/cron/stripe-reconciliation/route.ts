@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { logger } from "@/lib/logger";
 import { PaymentStatus } from "@prisma/client";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { reconcilePaymentWithStripe } from "@/lib/modules/payments";
+import { reconcilePaymentWithStripe, reconcileRefundsWithStripe } from "@/lib/modules/payments";
 import { timingSafeEqual } from "crypto";
 
 export const dynamic = 'force-dynamic';
@@ -16,6 +16,9 @@ const RECOVERY_BATCH_SIZE = 500;
  * Routine run: every PENDING payment older than 15 minutes, oldest first, in batches. Stripe's
  * answer decides: succeeded → fulfillPayment(); canceled → CANCELED; still unpaid after 24 h →
  * the intent is canceled in Stripe and the row CANCELED, so abandoned tips don't stay open.
+ *
+ * Each run also checks the refunds of up to 25 paid payments not checked for 6 h against Stripe's refund list
+ * (see reconcileRefundsWithStripe), so the refund ledger converges without a working webhook.
  *
  * `?scope=recover` (run once by hand after deploying the PAY-01 fix): also re-checks FAILED and
  * CANCELED rows, which older code wrote after a single failed attempt even when a later attempt
@@ -60,6 +63,16 @@ export async function GET(req: NextRequest) {
     counts[result]++;
   }
 
-  logger.info(`[Cron:StripeReconciliation] ${recover ? 'recover' : 'routine'} run: ${JSON.stringify(counts)}`);
-  return NextResponse.json({ scope: recover ? 'recover' : 'routine', ...counts });
+  // Refund ledger (PA-04): Stripe's refund list is the truth; catches missed webhooks, Dashboard refunds
+  // and refunds that failed later. A failure here must not hide the payment pass above.
+  let refunds = { checked: 0, corrected: 0, errors: 0 };
+  try {
+    refunds = await reconcileRefundsWithStripe(ctx);
+  } catch (error) {
+    logger.error('[Cron:StripeReconciliation] refund pass failed', error);
+    refunds.errors = 1;
+  }
+
+  logger.info(`[Cron:StripeReconciliation] ${recover ? 'recover' : 'routine'} run: ${JSON.stringify({ ...counts, refunds })}`);
+  return NextResponse.json({ scope: recover ? 'recover' : 'routine', ...counts, refunds });
 }

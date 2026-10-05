@@ -3,7 +3,7 @@ import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { PaymentRepository } from "../infrastructure/payment.repository";
 import { StripeEventLockService } from "../infrastructure/stripe-event-lock.service";
 import { fulfillPayment } from "./fulfill-payment.use-case";
-import { handleRefund } from "./handle-refund.use-case";
+import { syncRefundsFromStripe } from "./sync-refunds.use-case";
 import { handleDispute } from "./handle-dispute.use-case";
 import {
   PaymentError,
@@ -157,13 +157,23 @@ async function dispatchEvent(event: Stripe.Event, repo: PaymentRepository, ctx: 
       await repo.markUnpaidPaymentCanceled(payment.id, ctx.prisma);
       return 'processed';
     }
-    case 'charge.refunded': {
-      const charge = event.data.object;
-      const result = await handleRefund({
-        paymentId: charge.metadata?.paymentId,
-        stripeIntentId: intentIdOf(charge.payment_intent) ?? undefined,
-        reportedRefundedMinor: charge.amount_refunded || 0
-      }, ctx);
+    case 'charge.refunded':
+    case 'charge.refund.updated':
+    case 'refund.created':
+    case 'refund.updated':
+    case 'refund.failed': {
+      // Event order is not guaranteed and a refund can fail or be canceled after `charge.refunded`
+      // (BLIK/P24/bank refunds), so the event only says WHICH payment changed; the amount comes from
+      // Stripe's current refund list (PA-04), like disputes below.
+      const object = event.data.object as Stripe.Charge | Stripe.Refund;
+      const stripeIntentId = intentIdOf(object.payment_intent);
+      const paymentId = object.object === 'charge' ? object.metadata?.paymentId : undefined;
+      if (!stripeIntentId && !paymentId) {
+        // A refund of a charge without a PaymentIntent cannot belong to a payment of this app.
+        logger.info(`[StripeWebhook] ${event.id}: ${event.type} has no payment_intent; not a payment of this app.`);
+        return 'ignored';
+      }
+      const result = await syncRefundsFromStripe({ paymentId, stripeIntentId: stripeIntentId ?? undefined }, ctx);
       if (!result.ok) throw result.error;
       return 'processed';
     }

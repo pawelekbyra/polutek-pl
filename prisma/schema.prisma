@@ -183,6 +183,8 @@ model Payment {
   refundedById        String?
   refundedAt          DateTime?
   refundReason        String?
+  /// Last time the refund total was reconciled against Stripe's refund list (PA-04); NULL = never.
+  refundsCheckedAt    DateTime?
   currency            String
   status              PaymentStatus @default(PENDING)
   metadata            Json?

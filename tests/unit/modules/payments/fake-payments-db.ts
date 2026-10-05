@@ -112,6 +112,10 @@ export function createFakePaymentsDb() {
     async $executeRaw() {
       return 1;
     },
+    // SELECT ... FOR UPDATE row lock: nothing to do in a single-threaded in-memory fake.
+    async $queryRaw() {
+      return [];
+    },
     async $transaction(fn: (tx: any) => Promise<any>) {
       return fn(db);
     },

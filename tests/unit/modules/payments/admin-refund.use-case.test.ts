@@ -3,12 +3,19 @@ import { createFakePaymentsDb, createTestContext } from './fake-payments-db';
 
 const db = createFakePaymentsDb();
 const refundsCreate = vi.fn();
+const refundsList = vi.fn();
 const recordAuditEvent = vi.fn();
+/** Stripe's side: refunds per PaymentIntent. The list endpoint reads it, create appends to it. */
+const stripeRefunds = new Map<string, Array<{ id: string; amount: number; status: string }>>();
+const stripeSide = (intent: string) => {
+  if (!stripeRefunds.has(intent)) stripeRefunds.set(intent, []);
+  return stripeRefunds.get(intent)!;
+};
 
 vi.mock('@/lib/prisma', () => ({ prisma: db }));
 vi.mock('@/lib/modules/audit', () => ({ recordAuditEvent: (...args: unknown[]) => recordAuditEvent(...args) }));
 vi.mock('@/lib/modules/payments/infrastructure/stripe-client', () => ({
-  getStripeClient: () => ({ refunds: { create: refundsCreate } }),
+  getStripeClient: () => ({ refunds: { create: refundsCreate, list: refundsList } }),
 }));
 
 const { adminRefund } = await import('@/lib/modules/payments/application/admin-refund.use-case');
@@ -32,6 +39,8 @@ function seed(overrides: Record<string, unknown> = {}) {
     ...overrides,
   };
   db.payment.rows.push(row);
+  // Stripe knows the refunds the local row shows (override with stripeSide() to model a lag).
+  if (row.refundedAmountMinor > 0) stripeSide(row.stripeIntentId as string).push({ id: 're_seed', amount: row.refundedAmountMinor as number, status: 'succeeded' });
   return row;
 }
 
@@ -39,7 +48,13 @@ beforeEach(() => {
   for (const name of ['payment', 'patronGrant', 'user', 'userPaymentTotal']) db[name].rows.length = 0;
   db.user.rows.push({ id: 'user_1', email: 'payer@example.com', language: 'pl' });
   vi.clearAllMocks();
-  refundsCreate.mockResolvedValue({ id: 're_1', status: 'succeeded' });
+  stripeRefunds.clear();
+  refundsList.mockImplementation(async ({ payment_intent }: { payment_intent: string }) => ({ data: stripeSide(payment_intent), has_more: false }));
+  refundsCreate.mockImplementation(async ({ payment_intent, amount }: { payment_intent: string; amount: number }) => {
+    const refund = { id: `re_${stripeSide(payment_intent).length + 1}`, amount, status: 'succeeded' };
+    stripeSide(payment_intent).push(refund);
+    return refund;
+  });
 });
 
 describe('adminRefund', () => {
@@ -80,6 +95,7 @@ describe('adminRefund', () => {
     const payment = seed();
     refundsCreate.mockImplementation(async () => {
       // Stripe's charge.refunded webhook lands before our own DB write.
+      stripeSide('pi_1').push({ id: 're_2', amount: 1000, status: 'succeeded' });
       await handleRefund({ stripeIntentId: 'pi_1', reportedRefundedMinor: 1000 }, createTestContext(db));
       return { id: 're_2', status: 'succeeded' };
     });
@@ -113,6 +129,99 @@ describe('adminRefund', () => {
     expect(!result.ok && result.error.statusCode).toBe(502);
     expect(!result.ok && result.error.message).not.toContain('sk_live');
     expect(payment.status).toBe('SUCCEEDED');
-    expect(recordAuditEvent).not.toHaveBeenCalled();
+    expect(recordAuditEvent).not.toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: 'PAYMENT_REFUNDED' }));
+    expect(recordAuditEvent).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: 'PAYMENT_REFUND_FAILED' }));
+  });
+});
+
+describe('adminRefund against a ledger that lags behind Stripe (PA-04)', () => {
+  it('a refund made in the Stripe Dashboard is taken into account before the limit is checked', async () => {
+    const payment = seed();
+    stripeSide('pi_1').push({ id: 're_dashboard', amount: 600, status: 'succeeded' }); // local row still shows 0
+
+    const tooMuch = await adminRefund({ paymentId: 'pay_1', amountMinor: 500 }, adminCtx());
+
+    expect(!tooMuch.ok && tooMuch.error.code).toBe('INVALID_REFUND_AMOUNT');
+    expect(refundsCreate).not.toHaveBeenCalled();
+    expect(payment).toMatchObject({ status: 'PARTIALLY_REFUNDED', refundedAmountMinor: 600 });
+
+    const rest = await adminRefund({ paymentId: 'pay_1' }, adminCtx());
+    expect(rest.ok && rest.data.amountMinor).toBe(400);
+    expect(payment).toMatchObject({ status: 'REFUNDED', refundedAmountMinor: 1000 });
+  });
+
+  it('a refund that failed at Stripe no longer counts, so the money can be refunded again', async () => {
+    const payment = seed({ refundedAmountMinor: 500, status: 'PARTIALLY_REFUNDED' });
+    stripeSide('pi_1')[0].status = 'failed'; // BLIK/P24 refund came back
+
+    const result = await adminRefund({ paymentId: 'pay_1' }, adminCtx());
+
+    expect(result.ok && result.data.amountMinor).toBe(1000);
+    expect(refundsCreate.mock.calls[0][0].amount).toBe(1000);
+    expect(payment).toMatchObject({ status: 'REFUNDED', refundedAmountMinor: 1000 });
+  });
+
+  it('the local total after the refund is Stripe\'s total, including a parallel refund made meanwhile', async () => {
+    const payment = seed();
+    refundsCreate.mockImplementation(async ({ payment_intent, amount }: { payment_intent: string; amount: number }) => {
+      stripeSide(payment_intent).push({ id: 're_parallel', amount: 300, status: 'succeeded' }); // other admin, other key
+      const mine = { id: 're_mine', amount, status: 'succeeded' };
+      stripeSide(payment_intent).push(mine);
+      return mine;
+    });
+
+    await adminRefund({ paymentId: 'pay_1', amountMinor: 200, idempotencyKey: 'key-aaaaaaaaaaaaaaaa' }, adminCtx());
+
+    expect(payment).toMatchObject({ status: 'PARTIALLY_REFUNDED', refundedAmountMinor: 500 });
+    expect(recordAuditEvent).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
+      action: 'PAYMENT_REFUNDED',
+      metadata: expect.objectContaining({ amountMinor: 200, totalRefundedMinor: 500, ledgerSynced: true }),
+    }));
+  });
+
+  it('does not refund when Stripe cannot be read first', async () => {
+    seed();
+    refundsList.mockRejectedValue(new Error('stripe down'));
+    const result = await adminRefund({ paymentId: 'pay_1' }, adminCtx());
+    expect(!result.ok && result.error.code).toBe('PAYMENT_PROVIDER_ERROR');
+    expect(refundsCreate).not.toHaveBeenCalled();
+  });
+});
+
+describe('adminRefund and the audit log (PA-09)', () => {
+  it('writes the intent row BEFORE calling Stripe and the result row after the ledger is updated', async () => {
+    const payment = seed();
+    const order: string[] = [];
+    recordAuditEvent.mockImplementation(async (_ctx: unknown, event: { action: string }) => { order.push(`audit:${event.action}`); });
+    refundsCreate.mockImplementation(async () => { order.push('stripe'); return { id: 're_1', amount: 1000, status: 'succeeded' }; });
+    refundsList.mockImplementation(async () => ({ data: order.includes('stripe') ? [{ id: 're_1', amount: 1000, status: 'succeeded' }] : [], has_more: false }));
+
+    await adminRefund({ paymentId: 'pay_1' }, adminCtx());
+
+    expect(order).toEqual(['audit:PAYMENT_REFUND_REQUESTED', 'stripe', 'audit:PAYMENT_REFUNDED']);
+    expect(payment.refundedAmountMinor).toBe(1000);
+  });
+
+  it('when the intent cannot be recorded nothing is sent to Stripe', async () => {
+    const payment = seed();
+    recordAuditEvent.mockRejectedValue(new Error('audit db down'));
+
+    const result = await adminRefund({ paymentId: 'pay_1' }, adminCtx());
+
+    expect(!result.ok && result.error.code).toBe('AUDIT_UNAVAILABLE');
+    expect(refundsCreate).not.toHaveBeenCalled();
+    expect(payment.refundedAmountMinor).toBe(0);
+  });
+
+  it('an audit failure AFTER the Stripe refund leaves the ledger correct and still reports the refund', async () => {
+    const payment = seed();
+    recordAuditEvent.mockImplementation(async (_ctx: unknown, event: { action: string }) => {
+      if (event.action === 'PAYMENT_REFUNDED') throw new Error('audit db down');
+    });
+
+    const result = await adminRefund({ paymentId: 'pay_1' }, adminCtx());
+
+    expect(result.ok && result.data.stripeRefundId).toBe('re_1');
+    expect(payment).toMatchObject({ status: 'REFUNDED', refundedAmountMinor: 1000, refundedById: 'admin_1' });
   });
 });

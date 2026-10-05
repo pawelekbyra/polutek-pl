@@ -13,6 +13,8 @@ const stripe = {
     }),
   },
 };
+const refundsByIntent = new Map<string, Array<{ id: string; amount: number; status: string }>>();
+(stripe as any).refunds = { list: vi.fn(async ({ payment_intent }: { payment_intent: string }) => ({ data: refundsByIntent.get(payment_intent) ?? [], has_more: false })) };
 const sendBecomePatronEmail = vi.fn();
 const sendDonationThankYouEmail = vi.fn();
 
@@ -60,6 +62,7 @@ beforeEach(() => {
   for (const name of ['payment', 'patronGrant', 'user', 'userPaymentTotal']) db[name].rows.length = 0;
   db.user.rows.push({ id: 'user_1', email: 'payer@example.com', language: 'pl' });
   intents.clear();
+  refundsByIntent.clear();
   vi.clearAllMocks();
   process.env.CRON_SECRET = 'a'.repeat(40);
   process.env.STRIPE_SECRET_KEY = 'sk_test_dummy';
@@ -150,5 +153,51 @@ describe('stripe-reconciliation cron', () => {
 
     expect(body).toMatchObject({ errors: 1 });
     expect(payment.status).toBe('PENDING');
+  });
+
+  describe('refund ledger (PA-04)', () => {
+    it('catches up a refund the webhook never delivered, and undoes one that failed', async () => {
+      const dashboard = seed('dashboard', 'SUCCEEDED', 3 * HOUR, null);
+      dashboard.stripeIntentId = 'pi_dashboard';
+      refundsByIntent.set('pi_dashboard', [{ id: 're_1', amount: 1000, status: 'succeeded' }]);
+      const failed = seed('failed', 'PARTIALLY_REFUNDED', 3 * HOUR, null);
+      failed.stripeIntentId = 'pi_failed';
+      failed.refundedAmountMinor = 400;
+      refundsByIntent.set('pi_failed', [{ id: 're_2', amount: 400, status: 'failed' }]);
+
+      const body = await (await GET(cronRequest())).json();
+
+      expect(body.refunds).toEqual({ checked: 2, corrected: 2, errors: 0 });
+      expect(dashboard).toMatchObject({ status: 'REFUNDED', refundedAmountMinor: 1000 });
+      expect(failed).toMatchObject({ status: 'SUCCEEDED', refundedAmountMinor: 0 });
+    });
+
+    it('does not poll a payment again within 6 hours, and polls it after that', async () => {
+      const payment = seed('seen', 'SUCCEEDED', 3 * HOUR, null);
+      payment.stripeIntentId = 'pi_seen';
+
+      await GET(cronRequest());
+      expect(stripe.refunds.list).toHaveBeenCalledTimes(1);
+      await GET(cronRequest());
+      expect(stripe.refunds.list).toHaveBeenCalledTimes(1);
+
+      (payment as any).refundsCheckedAt = new Date(Date.now() - 7 * HOUR);
+      await GET(cronRequest());
+      expect(stripe.refunds.list).toHaveBeenCalledTimes(2);
+    });
+
+    it('a Stripe error on one payment is counted and does not stop the others or the response', async () => {
+      const bad = seed('bad', 'SUCCEEDED', 3 * HOUR, null);
+      bad.stripeIntentId = 'pi_bad';
+      const good = seed('good', 'SUCCEEDED', 2 * HOUR, null);
+      good.stripeIntentId = 'pi_good';
+      refundsByIntent.set('pi_good', [{ id: 're_3', amount: 100, status: 'succeeded' }]);
+      (stripe.refunds.list as any).mockImplementationOnce(async () => { throw new Error('stripe down'); });
+
+      const body = await (await GET(cronRequest())).json();
+
+      expect(body.refunds).toMatchObject({ checked: 2, errors: 1, corrected: 1 });
+      expect(good.refundedAmountMinor).toBe(100);
+    });
   });
 });
