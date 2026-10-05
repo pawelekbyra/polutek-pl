@@ -37,34 +37,25 @@ wcześniej wszystkie prace agentów były wstrzymane na prośbę właściciela).
 ## Stan produkcji na koniec sesji
 
 - `www.pawelperfect.com` z serwerka Hetzner CPX22 (2 vCPU, 4 GB RAM, 75 GB dysku) za Cloudflare Tunnel, Postgres lokalny, Redis lokalny.
-  Ostatni obraz na dzień 2026-10-05: tag `lang10050012` (wdrożony z `main`). Wideo: własny HLS, Worker `video.pawelperfect.com`.
+  Ostatni obraz na dzień 2026-10-05 ok. 09:27: tag `d47e3861` (strona, encoder, kolektor, panel; wdrożone z `main` repo TAKT). Poprzednie obrazy do rollbacku: `lang10050012` (strona) i `adm10050110` (panel). Wideo: własny HLS, Worker `video.pawelperfect.com`.
 - **Telemetria włączona** (kolektor `pp-collector` działa, tabele w schemacie `telemetry`): `architecture/admin-telemetry.md`, SERWEREK.md §22.
 - Kopie: szyfrowane `age` do R2 (bucket z blokadą 14 dni), cotygodniowy test odtworzenia, `health.sh`, strażnik `pp-watchdog` (SERWEREK.md §23–25).
   Timery `polutek-cron-prune-expired-auth` i `polutek-cron-retention` zainstalowane.
 - Na serwerze są nowe `deploy.sh` i `docker-compose.yml` (z kontenerem `collector`; linia bazy BEZ `pg_stat_statements`, bo restart bazy pod tę
   bibliotekę wykonuje jednorazowo `pp-pgss-once` **2026-10-05 03:05**: sprawdź wynik w `/var/log/serwerek/pg-stat-statements.log` i
   `ai-log`; jeśli nie poszło, uruchom `scripts/serwerek/pg-stat-statements-enable.sh`). Kopie poprzednich plików: `*.bak-20261004`.
-- **Panel admina (faza 1) działa** od 2026-10-05: kontener `polutek-admin-1` (obraz `polutek-admin:adm10050110`, `127.0.0.1:3100`, limit 384 MB) z `deploy-admin.sh`,
-  `admin.env` (sekrety, root 600; `ADMIN_AUTH_SECRET` nowy), timer `admin-host-status`, aplikacja Cloudflare Access „serwerek admin” (tylko `pawel.perfect@gmail.com`,
-  sesja 12 h), reguła tunelu `admin.pawelperfect.com → http://127.0.0.1:3100` i CNAME `admin` (kopia poprzedniej konfiguracji tunelu w
-  `%USERPROFILE%\.ai-secrets\cloudflare-backup\`). Bez Access panel odpowiada 403, `https://admin.pawelperfect.com` przekierowuje na logowanie Cloudflare.
-  **Brakuje tylko rejestracji administratora** (robi właściciel, link jednorazowy, [`ADMIN-PANEL.md`](ADMIN-PANEL.md) rozdz. 2).
+- **Panel admina (fazy 1, 2, 3, A) działa** od 2026-10-05 (obraz `polutek-admin:d47e3861`, `127.0.0.1:3100`, limit 384 MB, `deploy-admin.sh`, `admin.env`, aplikacja Cloudflare Access „serwerek admin” tylko dla `pawel.perfect@gmail.com`). Logowanie: tryb `access` (kod z maila od Cloudflare, bez kluczy), [`ADMIN-PANEL.md`](ADMIN-PANEL.md) rozdz. 1b. Wdrożone razem: 4 migracje (`add_video_translations`, `add_user_comment_mute`, `analytics_rollups`, `admin_phase3_roles_and_audit_immutable`), faza 5 (stary `/admin` na `www`: 308 do panelu, `/api/admin` 404) i interfejs w 8 językach. Przed wdrożeniem: `backup.sh` i zrzut `pre-deploy-d47e3861-*.sql.gz`. W `admin.env` brakuje celowo: `STRIPE_SECRET_KEY` (ograniczony klucz `rk_live_` od właściciela: zwroty i spory), `RESEND_API_KEY`/`EMAIL_FROM`, zmiennych szkiców AI i porannego raportu; ekrany tych funkcji piszą „nie skonfigurowano”.
 - **Snapshot serwera** zrobiony przez właściciela 2026-10-05 ~00:13 (id 439648964, `serwereksnapszot1`, 27,04 GB, ~0,48 €/mies.).
   Plan przenoszenia na inny serwer albo powiększenia: sekcja „Hetzner: powiększenie i przenoszenie” niżej.
 - Konta ADMIN: akcja `set-role` wykonana 2026-10-04 (patrz #1680): zostaje konto właściciela `pawel.perfect@gmail.com` = `user_3FeY8okjicDKlWDGSSc4Q7bvaPZ`, trzy pozostałe mają rolę USER (konta nie usunięte). Stan w bazie do potwierdzenia odprawą.
 
 ## Gałęzie i prace w toku (stan 2026-10-05, repo na serwerze TAKT; GitHub nie jest używany)
 
-W `main` (repo TAKT `~/git/pawelperfect.git`) są scalone: panel faz 2 (Treści, Społeczność), tłumaczenia (model danych), zapas serwera, faza 3, faza A,
-`local-ci`, `ops-set-role`. Po scaleniu: `npm run quality` OK (383 pliki / 2808 testów), `npm run admin:build` OK, testy z Postgresem 7 plików OK
-(lokalna baza PostgreSQL 16 na TAKT, wszystkie migracje stosują się czysto). **Nic z tego nie jest jeszcze wdrożone na serwerek** (wdrożona jest tylko faza 1 panelu).
+W `main` (repo TAKT `~/git/pawelperfect.git`) i **na produkcji** (obraz `d47e3861`, 2026-10-05) jest wszystko poza gałęziami z tabeli poniżej: panel faz 1, 2, 3, A, logowanie przez Access, faza 5 (stary `/admin` usunięty), interfejs w 8 językach, poprawki odtwarzacza i logo, poprawki z audytu płatności. Testy przed wdrożeniem: `npm run quality` (356 plików / 2678 testów), `npm run admin:build`, `npm run build` strony, testy z Postgresem 9 plików / 49 testów (PostgreSQL 16 lokalnie na TAKT).
 
 | Gałąź | Zakres i stan | Co dalej |
 |---|---|---|
 | `feat/preloader-polish` | Preloader: ciemne tło od pierwszej klatki, czcionka Major Mono Display, tylko „WCZYTUJĘ…”, kursor-marchewka. Nie scalona (czeka na obejrzenie w przeglądarce) | Obejrzeć z właścicielem, scalić |
-| `fix/player-topbar` (w toku) | Dźwięk po przeładowaniu, usunięcie przycisku prędkości, logo okularów wraca na stronę główną z hero | Przejrzeć raport agenta, scalić |
-| `feat/p5-retire-old-admin` (w toku) | Faza 5: stary `/admin` na `www` znika (308 do nowego panelu, 404 dla `/api/admin*`), moderacja i `ADMIN_EMAILS` | **Wdrożyć dopiero po udanym logowaniu do nowego panelu przez Access** |
-| `feat/i18n-ui-languages` (w toku) | Interfejs w DE/ES/FR/IT/PT/ZH (bez maili i regulaminu), działające przełączniki | Przejrzeć raport, scalić |
 | `docs/state-rewrite`, `fix/audits-www` (wstrzymane) | Nowy krótki `CLAUDE.md` + przepisany `SERWEREK.md`; naprawy z audytów frontendu/stylu/prywatności. Agenci przerwani limitem, część pracy w katalogach `~/work/docs` i `~/work/audits` | Wznowić po zakończeniu bieżących |
 
 **Mapa dokumentacji panelu admina (czytaj w tej kolejności):**
@@ -75,13 +66,12 @@ W `main` (repo TAKT `~/git/pawelperfect.git`) są scalone: panel faz 2 (Treści,
 5. **Szczegółowy plan fazy 2 (Treści):** `docs/architecture/admin-phase2-content.md` jest w gałęzi `feat/admin-phase2-content` (PR #1673), na `main` będzie po jego scaleniu (do tego czasu: `git show origin/feat/admin-phase2-content:docs/architecture/admin-phase2-content.md`).
 6. Koncepty powiązane: [`architecture/translations-concept.md`](../architecture/translations-concept.md) (model w #1675), wskaźnik zapasu serwera (#1677).
 
-**Stan faz panelu:** 0 i 1 zrobione i wdrożone (faza 1 czeka tylko na rejestrację administratora); 2 (Treści + Społeczność), tłumaczenia, zapas serwera, 3 i A **zrobione w kodzie i scalone do `main`, niewdrożone** (jedna kolejność wdrożenia: [`ADMIN-PANEL.md`](ADMIN-PANEL.md) rozdz. 1a); 5 w toku (kod i dokumentacja, bez wdrożenia).
+**Stan faz panelu:** 0, 1, 2 (Treści + Społeczność), tłumaczenia (model danych), zapas serwera, 3, A i 5 **zrobione i wdrożone** (2026-10-05). Zostają: pierwsze logowanie i obejrzenie panelu przez właściciela, dane do funkcji opcjonalnych (Stripe, Resend, AI) i drobne punkty z audytów.
 
 ## Najbliższe kroki (kolejność proponowana, jeden agent naraz)
 
-0. **Pierwsze logowanie do nowego panelu przez Access (właściciel):** otworzyć `https://admin.pawelperfect.com`, wpisać `pawel.perfect@gmail.com`, przepisać kod z maila (bez rejestracji, kluczy i TOTP; [`ADMIN-PANEL.md`](ADMIN-PANEL.md) rozdz. 1b). Potem sprawdzić „Dzisiaj” i „System”.
-1. Udane logowanie (punkt 0), potem wdrożenie faz 2, 3 i A według [`ADMIN-PANEL.md`](ADMIN-PANEL.md) rozdz. 1a (backup, migracje, `admin.env`, obraz strony, obraz panelu, kontrola).
-2. Po wdrożeniu i sprawdzeniu nowego panelu: wdrożyć fazę 5 (wygaszenie starego `/admin`); wcześniej nie, bo bez zarejestrowanego administratora właściciel straciłby dostęp do funkcji administracyjnych.
+0. **Pierwsze logowanie do nowego panelu przez Access (właściciel):** otworzyć `https://admin.pawelperfect.com`, wpisać `pawel.perfect@gmail.com`, przepisać kod z maila (bez rejestracji, kluczy i TOTP). Obejrzeć Dzisiaj, System, Treści, Społeczność, Analitykę, Przychody, Komunikację, Bezpieczeństwo, Ustawienia na komputerze i telefonie; wszystko zgłosić uwagami. Włączyć weryfikację dwuetapową Google na tym Gmailu.
+1. **Przed pierwszą prawdziwą wpłatą** (audyt płatności `audit/2026-10-05/audit-payments.md`, kroki P0): endpoint webhooka Stripe (live) ze zdarzeniami z raportu, wersja API `2026-02-25.clover`, `whsec_` do `app.env`; jedna wpłata testowa i wiersz `StripeEvent` `PROCESSED`; klucze z jednego trybu; ograniczony klucz `rk_live_` do `admin.env`.
 2a. Preloader (`feat/preloader-polish`): obejrzeć wizualnie z właścicielem, potem scalić.
 3. Jedna prawdziwa wpłata testowa (webhook Stripe nigdy nie dostał udanej wpłaty; `StripeEvent` jest pusty): robi właściciel.
 4. Przegląd ostatnich wdrożeń na telefonach: passkey (logowanie i zakładanie konta kluczem), napisy CC, lista języków, okno logowania.
