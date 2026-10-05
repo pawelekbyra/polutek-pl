@@ -1109,47 +1109,6 @@
     animation:mc-spin .8s linear infinite;
   }
 
-  .mc-menu-root { position:relative; }
-  .mc-menu {
-    position:absolute; right:0; bottom:38px;
-    width:200px;
-    max-height:min(320px,60vh);
-    overflow:auto;
-    padding:6px;
-    border-radius:12px;
-    background:rgba(10,10,10,.92);
-    border:1px solid rgba(255,255,255,.1);
-    box-shadow:0 16px 40px rgba(0,0,0,.5);
-    backdrop-filter:blur(16px);
-    color:#fff;
-  }
-  .mc-menu-section + .mc-menu-section {
-    margin-top:6px; padding-top:6px;
-    border-top:1px solid rgba(255,255,255,.08);
-  }
-  .mc-menu-heading {
-    padding:4px 8px 3px;
-    font-size:10px; font-weight:700;
-    letter-spacing:.12em; text-transform:uppercase;
-    color:rgba(255,255,255,.4);
-  }
-  .mc-menu-item {
-    display:flex; align-items:center; justify-content:space-between;
-    width:100%; min-height:38px;
-    padding:6px 8px;
-    border-radius:8px;
-    font-size:13px; font-weight:600;
-    color:rgba(255,255,255,.85);
-    text-align:left;
-    transition: background .12s ease, color .12s ease;
-    cursor:pointer;
-  }
-  .mc-menu-item:hover,
-  .mc-menu-item:focus-visible {
-    background:rgba(255,255,255,.1); color:#fff; outline:none;
-  }
-  .mc-menu-check { width:16px; height:16px; color:rgba(255,255,255,.7); }
-
   @keyframes mc-spin { to { transform:rotate(360deg); } }
 
   @media (max-width:640px) {

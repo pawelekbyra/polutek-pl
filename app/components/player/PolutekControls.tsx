@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import {
   Captions as CaptionsLayer,
   FullscreenButton,
@@ -11,15 +10,11 @@ import {
   TimeSlider,
   VolumeSlider,
   useMediaState,
-  usePlaybackRateOptions,
-  type PlaybackRateOption,
 } from "@vidstack/react";
 import {
-  CheckIcon,
   FullscreenExitIcon,
   FullscreenIcon,
   MuteIcon,
-  OdometerIcon,
   PauseIcon,
   PlayIcon,
   ReplayIcon,
@@ -125,64 +120,6 @@ function ScrubBar() {
   );
 }
 
-/** Playback speed: its own button (odometer icon) and menu. Captions have their own switch. */
-function SpeedMenu() {
-  const copy = usePlayerCopy();
-  const options = usePlaybackRateOptions({ normalLabel: copy.normal });
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (e: PointerEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKeyDown = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
-
-  if (options.disabled) return null;
-
-  return (
-    <div className="mc-menu-root" ref={rootRef}>
-      <button
-        type="button"
-        className="mc-btn"
-        aria-label={copy.playbackSpeed}
-        title={copy.playbackSpeed}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        onClick={() => setOpen(v => !v)}
-      >
-        <OdometerIcon className="mc-icon" />
-      </button>
-      {open && (
-        <div className="mc-menu" role="menu" aria-label={copy.playbackSpeed}>
-          <div className="mc-menu-heading">{copy.speed}</div>
-          {options.map((option: PlaybackRateOption) => (
-            <button
-              key={option.value}
-              type="button"
-              role="menuitemradio"
-              aria-checked={option.selected}
-              className="mc-menu-item"
-              onClick={() => { option.select(); setOpen(false); }}
-            >
-              <span>{option.label}</span>
-              {option.selected && <CheckIcon className="mc-menu-check" />}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function FullscreenToggleButton() {
   const copy = usePlayerCopy();
   const canFullscreen = useMediaState("canFullscreen");
@@ -231,7 +168,6 @@ export default function PolutekControls({ className }: { className?: string }) {
               </div>
               <div className="mc-group mc-group--right">
                 <CaptionsToggleButton />
-                <SpeedMenu />
                 <FullscreenToggleButton />
               </div>
             </div>
