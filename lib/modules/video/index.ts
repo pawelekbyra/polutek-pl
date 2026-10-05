@@ -17,6 +17,7 @@ export * from './application/record-playback-event.use-case';
 export * from './application/publish-after-asset-ready.use-case';
 export * from './application/admin-video-payload';
 export * from './domain/video.dto';
+export * from './domain/asset-size';
 export * from './domain/video.policy';
 export * from './domain/video.errors';
 export * from './domain/sidebar-order';

@@ -72,7 +72,7 @@ export interface PublicVideoDTO {
   descriptionEn?: string | null;
   thumbnailUrl: string;
   duration?: string | null;
-  /** Effective access level (lib/access-tier.ts): a stored legacy PATRON arrives as LOGGED_IN. */
+  /** Effective access level (lib/access-tier.ts): anything that is not PUBLIC arrives as LOGGED_IN. */
   tier: VideoAccessTier;
   status: VideoStatus;
   views: number;

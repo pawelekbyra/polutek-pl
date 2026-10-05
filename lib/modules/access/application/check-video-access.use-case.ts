@@ -101,7 +101,7 @@ export async function checkVideoAccess(
   // Admin access granted for existing main-channel non-archived content
   if (isAdmin) return decide({ hasAccess: true });
 
-  // 5. Tier-based access: two levels (lib/access-tier.ts); a leftover PATRON row counts as LOGGED_IN.
+  // 5. Tier-based access: two levels (lib/access-tier.ts).
   const tier = toVideoAccessTier(video.tier);
   if (tier === "PUBLIC") return decide({ hasAccess: true });
 

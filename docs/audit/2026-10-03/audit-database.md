@@ -9,8 +9,7 @@ Ograniczenie metody: masowe liczenie użyć kolumn (skrypt po 293 nazwach pól) 
 ## 1. Podsumowanie
 
 - **Schemat:** 45 modeli, 30 enumów, 50 katalogów migracji (w `_prisma_migrations` jest 62 wiersze; nadmiar to wycofane próby i usunięta migracja `20260627000000_video_sources_youtube`). Klient Prisma `6.19.3` (najnowsza stabilna to 7.10, a 8 ma status RC). Postgres 17 w Docker Compose.
-- **Martwe od dziś (0 trafień w kodzie):** tabele `ClerkEvent`, `CommentLike`, `CommentDislike`; kolumny `User.totalPaidMinor` (`legacyTotalPaidMinor_DoNotUse`), `User.canCreateChannel`, `Creator.stripeConnectId`, `VideoOriginal.checksumSha256`, `VideoOriginal.storageProvider`, `VideoPlaybackSession.endedAt`, `Comment.pinnedById`, `EmailPreference.resendContactId`, `BroadcastEmail.scheduledAt`, `BroadcastEmail.templateId`; `Comment.score` jest tylko zapisywany.
-- **Martwe po scaleniu PR #1614:** tabele `VideoDistributionPlan`, `VideoDistributionTarget`, `VideoProviderJob`, `VideoProviderWebhookEvent`, osiem enumów dystrybucji, siedem wartości `StorageProvider` (wszystkie poza `SELF_HLS`), około 12 kolumn `VideoAsset`, `VideoPlaybackRoute.planId`, `Video.videoUrl`, `Video.publishAfterAssetReadyProvider`.
+- **Martwe, jeszcze do usunięcia (wymagają danych produkcyjnych lub decyzji):** siedem wartości `StorageProvider` poza `SELF_HLS` (stare wiersze dostawców w `VideoAsset`/`VideoPlaybackRoute`), `PatronGrantSource.PAYMENT/REFERRAL/LEGACY`, `Comment.imageUrl`, `VideoStatus.UNLISTED`. Martwe tabele i kolumny usunęła migracja `20261005210000_cleanup_dead_schema` (opis: `docs/architecture/db-cleanup-2026-10-05.md`).
 - **Najpoważniejsze sygnały:**
   1. `StripeEvent = 0` i `UserPaymentTotal = 0` przy 147 płatnościach i 8 patronach. Albo webhooki Stripe nie dochodzą do serwerka, albo przywrócenie bazy z Neona było niepełne. Do pilnego sprawdzenia (DB-01).
   2. Unikalność pseudonimu jest sprawdzana tylko w aplikacji, a nie w bazie (wyścig TOCTOU).
@@ -35,7 +34,6 @@ Legenda: **Ż** żywe; **M** martwe (0 trafień); **M-PR** martwe po PR #1614; *
 | UserAvatar | 0 | Ż | `PUT /api/user/avatar`, 4 wywołania |
 | Payment | 147 | Ż | 30 wywołań |
 | StripeEvent | **0** | Ż (!) | `lib/modules/payments/infrastructure/stripe-event-lock.service.ts:14` tworzy wiersz przy **każdym** zweryfikowanym webhooku; 0 wierszy oznacza anomalię, patrz DB-01 |
-| **ClerkEvent** | 73 | **M** | 0 trafień `clerkEvent` w app/lib/scripts; zawiera payloady webhooków Clerka (dane osobowe) |
 | PatronGrant | 8 | Ż | 21 wywołań; księgowe oznaczenie wspierającego |
 | AuditLog | 758 | Ż | `lib/modules/audit/infrastructure/audit.repository.ts:25,42,50` |
 | AppSetting | 1 | Ż | `default-thumbnail.service.ts:25`, `encode-queue.use-cases.ts:140` (heartbeat workera) |
@@ -47,18 +45,12 @@ Legenda: **Ż** żywe; **M** martwe (0 trafień); **M-PR** martwe po PR #1614; *
 | Video | 4 | Ż | 103 wywołania |
 | VideoAsset | 7 | Ż | rdzeń `SELF_HLS` |
 | VideoOriginal | 2 | Ż | pipeline `original-upload.use-cases.ts` |
-| **VideoDistributionPlan** | 0 | **M-PR** | na PR: trafienia tylko w `scripts/hls/delete-legacy-provider-rows.sql:47` |
-| **VideoDistributionTarget** | 0 | **M-PR** | jw. `:46` |
-| **VideoProviderJob** | 14 | **M-PR** | jw. `:44` |
 | VideoEncodeJob | 1 | Ż | `encode-job.repository.ts` |
 | VideoPlaybackRoute | 7 | Ż | `video-playback-route.service.ts` |
-| **VideoProviderWebhookEvent** | 8 | **M-PR** | na PR 0 trafień poza skryptem SQL |
 | VideoLike, VideoDislike | 2/3 | Ż + D | `comment.repository.ts:51-72`; dwie tabele zamiast jednej `VideoReaction(type)` (wzorzec `CommentReaction`) |
 | Comment | 19 | Ż | |
 | CommentReaction | 5 | Ż | `comment.repository.ts:104-116` |
 | CommentReport | 0 | Ż | `report-comment.use-case.ts` |
-| **CommentLike** | 0 | **M / D** | 0 trafień `commentLike.`/`commentDislike.` jako delegatów; zastąpione przez `CommentReaction` |
-| **CommentDislike** | 0 | **M / D** | jw. |
 | VideoView | 94 | Ż + D | zapis `video-playback.repository.ts:44`, odczyt tylko `resync-admin-video-stats.use-case.ts:36`; dubluje `VideoPlaybackSession.countedAsView` |
 | UserPaymentTotal | **0** | Ż + D (!) | zapis `fulfill-payment.use-case.ts:90`, odczyt w statystykach admina `get-admin-users-stats.use-case.ts:40`; zdenormalizowana suma z `Payment`, przy 0 wierszach statystyki pokazują 0 |
 | PaymentCurrencySetting | 5 | Ż | `lib/payments/currency-settings.ts:44` |
@@ -75,45 +67,25 @@ Legenda: **Ż** żywe; **M** martwe (0 trafień); **M-PR** martwe po PR #1614; *
 
 | Kolumna | Status | Dowód |
 |---|---|---|
-| `User.totalPaidMinor` (`legacyTotalPaidMinor_DoNotUse`) | M | 0 trafień obu nazw (jedyne `totalPaidMinor` to pole DTO w `list-admin-users.use-case.ts:90`, nie kolumna) |
-| `User.canCreateChannel` | M | 0 trafień |
 | `User.username` | Ż, legacy/D | czytane w `lib/comments-public-author.ts:40` jako fallback; zapisywane tylko przy usuwaniu konta (`account-deletion-cleanup.use-case.ts:79`); dubluje `name` (pseudonim Better Auth) |
 | `User.id` komentarz "clerkUserId" | nieaktualny komentarz | `schema.prisma:12` |
-| `Creator.stripeConnectId` | M | 0 trafień |
-| `Creator.bannerUrl` | M (od 2026-10-04) | okładka kanału usunięta z kodu (strona kanału, admin, API); kolumna zostaje w `schema.prisma` do migracji czyszczącej |
 | `Creator.isApproved`, `isPrimary` | Ż | `video-content.service.ts:26`, `check-video-access.use-case.ts:40`; przy jednym kanale to strażnicy redundantni, ale działają |
-| `Comment.score` | Z / D | tylko `comment.repository.ts:108,118,119` (inkrementacja razem z `likesCount`); nikt nie sortuje po `score` |
-| `Comment.pinnedById` | M | 0 trafień; przypinanie zapisuje tylko `pinnedAt` (`comment.repository.ts:172`) |
 | `Comment.imageUrl` | Ż (ukryte) | API przyjmuje (`app/api/videos/[id]/comments/route.ts:25`), UI tego nie udostępnia (`create-video-comment.use-case.ts:88`) |
 | `Comment.creatorId` | Ż / D | przy jednym kanale równe `Video.creatorId` |
-| `Video.videoUrl` | M-PR | na PR nie jest czytane (zostają typy DTO i strażnicy "forbidden field"); skrypt PR zeruje kolumnę |
-| `Video.publishAfterAssetReadyProvider` | M-PR | na PR tylko przepisywanie w `admin-video-payload.ts:154`, DTO i repo, bez logiki |
 | `Video.duration` (String "12:45") | Ż | JSON-LD `app/[locale]/(home)/page.tsx:27`; typ słaby (lepiej `durationSeconds Int`) |
-| `VideoAsset.distributionTargetId`, `muxUploadId`, `pendingPrimaryIntent` | M-PR | 0 trafień na PR |
-| `VideoAsset.providerAssetId`, `providerPlaybackId`, `externalVideoId`, `externalUrl`, `providerSyncedAt`, `processingStartedAt`, `mirrorSourceOriginalId`, `mirrorRequestedAt`, `mirrorCompletedAt`, `mirrorFailureReason`, `fallbackPriority` | M-PR | na PR wyłącznie mapowanie w `lib/modules/video/domain/video.dto.ts`, `playback.dto.ts` (`providerAssetId: null`), `video.policy.ts:15,24`; `fallbackPriority` tylko zapisywane (`finalize-self-hls.ts:60`) |
 | `VideoAsset.isPrimary` | Ż / D | trzecia kopia "aktywnego źródła" (DB-15) |
-| `VideoAsset.sizeBytes Int` | Ż, zły typ | `finalize-self-hls.ts:46` zapisuje `null`, gdy HLS ma ponad 2^31 B (DB-14) |
-| `VideoOriginal.storageProvider` | M | 0 trafień (zawsze default `R2`) |
-| `VideoOriginal.checksumSha256` | M | 0 trafień |
-| `VideoPlaybackRoute.planId` | M-PR | tylko przekazywane `video-playback-route.service.ts:15,38` (zawsze null) |
 | `VideoPlaybackRoute.provider` | D | kopia `VideoAsset.provider` |
-| `VideoPlaybackSession.endedAt` | M | 0 trafień |
-| `EmailPreference.resendContactId` | M | 0 trafień |
 | `EmailPreference.systemEmails` | Z | 1 trafienie (default przy create) |
 | `EmailSuppression.firstSeenAt`, `lastSeenAt` | Z | 0 trafień; ustawiane przez defaulty/`@updatedAt` |
 | `BroadcastEmail.scheduledAt` | M | 0 trafień |
-| `BroadcastEmail.templateId` (+ relacja `EmailTemplate.broadcasts`) | M | 0 trafień `-w templateId` |
 | `BroadcastEmailRecipient.deliveredAt/openedAt/clickedAt/bouncedAt/complainedAt` | Z | 1 trafienie każde (zapis w webhooku) |
-| `PaymentCurrencySetting.patronThresholdMinor`, `patronBoxMinMinor` | Ż, model nieaktualny | 3 progi na walutę (DB-27) |
 
 ### 2.3 Enumy i wartości
 
 | Enum / wartość | Status | Dowód |
 |---|---|---|
-| `StorageProvider`: `R2, S3, VERCEL_BLOB, CLOUDFLARE_STREAM, MUX, YOUTUBE, VIMEO` | M-PR | na PR jedyne trafienia to komentarz `video-asset.constants.ts:13`; `R2` jest jeszcze defaultem `VideoOriginal.storageProvider` (kolumna martwa) |
-| `VideoDistributionMode`, `VideoPlaybackSelectionPolicy`, `VideoAutopublishPolicy`, `VideoDistributionTargetStatus`, `VideoDistributionTargetRole`, `VideoProviderJobType`, `VideoProviderJobStatus`, `VideoProviderWebhookStatus` | M-PR | znikają razem z tabelami |
+| `StorageProvider`: `R2, S3, VERCEL_BLOB, CLOUDFLARE_STREAM, MUX, YOUTUBE, VIMEO` | M-PR | na PR jedyne trafienia to komentarz `video-asset.constants.ts:13` |
 | `PatronGrantSource.PAYMENT, REFERRAL, LEGACY` | nieużywane w zapisie | mapa `grant-patron.use-case.ts:16-18` zna tylko `STRIPE_TIP, ADMIN, MIGRATION`; przed usunięciem sprawdzić dane SQL-em |
-| `AccessTier.PATRON` | Ż, funkcjonalnie = `LOGGED_IN` | `check-video-access.use-case.ts:122`; nadal tworzy osobną sekcję w sidebarze (`channel-layout.service.ts:103,150`) |
 | `VideoStatus.UNLISTED` | tylko etykieta w UI | `VideoTable.tsx`, `VideoFilters.tsx`; brak logiki |
 | `VideoPlaybackRouteActivatedBy.FALLBACK, RECONCILER, MIGRATION` | typ dopuszcza, nikt nie przekazuje na PR (poza `POLICY`/`ADMIN` i skryptami SQL) | do weryfikacji danych |
 | `VideoAssetProcessingState.PENDING/UPLOADING/PROCESSING` | na PR tylko filtr admina `video.repository.ts:201`; pipeline tworzy od razu `READY` | prawdopodobnie martwe |
@@ -143,15 +115,6 @@ Naprawa:
 4. Jeśli to (b): odbuduj `UserPaymentTotal` z `Payment` albo usuń tabelę (DB-21).
 
 Nakład S. Pewność anomalii wysoka, przyczyny nieznana.
-
-**DB-02 | P1 | `deploy/serwerek/deploy.sh:12` ("Migrations are additive ... rollback restores code only"), `deploy.sh:58-70` | Po zgodzie na DROP-y rollback obrazu po migracji destrukcyjnej uruchomi stary kod na schemacie bez kolumn.**
-Prisma wybiera wszystkie kolumny modelu, więc stary kod dostanie błąd P2022 "column does not exist" na każdym zapytaniu do tej tabeli.
-
-Naprawa, wzorzec expand/contract w dwóch wdrożeniach:
-1. Wdrożenie N: kod przestaje używać kolumny lub tabeli, a w `schema.prisma` jeszcze ją zostawia.
-2. Wdrożenie N+1 (po co najmniej jednym dniu stabilnej pracy): sama migracja DROP.
-
-Dopisz to do `deploy.sh` i CLAUDE.md. Rollback po N+1 wraca tylko do N, który już nie dotyka usuniętych obiektów. Nakład S. Pewność wysoka.
 
 ### P2
 
@@ -192,10 +155,6 @@ Naprawa: jeden cron `prune-telemetry` (systemd timer, jak pozostałe):
 Nakład M. Pewność wysoka.
 
 **DB-08 | P2 (RODO) | `account-deletion-cleanup.use-case.ts:40-82` | Usunięcie konta anonimizuje `User` i kasuje sesje i zgody, ale zostawia oryginalny adres e-mail** w `BroadcastEmailRecipient.email`, `EmailEvent.email` i `payload`, `InboundEmail.fromEmail`, a także `AuditLog.ip`/`userAgent` oraz `Notification`. Naprawa: w tej samej transakcji `UPDATE "BroadcastEmailRecipient" SET email = <tombstone> WHERE "userId" = $1 OR email = $orig`, analogicznie `EmailEvent`, plus `DELETE` z `Notification`. Retencja z DB-07 domyka resztę. Nakład S. Pewność wysoka.
-
-**DB-09 | P2 | `ClerkEvent` (73 wiersze) | Martwa tabela z payloadami webhooków Clerka (e-maile, imiona).** Naprawa: `DROP TABLE` w migracji czyszczącej. Nakład S. Pewność wysoka.
-
-**DB-10 | P2 | `finalize-self-hls.ts:46`, `schema.prisma:552` | `VideoAsset.sizeBytes Int`: dla HLS większego niż 2 147 483 647 B kod świadomie zapisuje `null`** (informacja ginie), podczas gdy `VideoOriginal.sizeBytes` jest już `BigInt`. Naprawa: `ALTER COLUMN "sizeBytes" TYPE BIGINT` i `BigInt` w Prisma. Nakład S. Pewność wysoka.
 
 **DB-11 | P2 | `video-playback-route.service.ts:26-44` | Trzy źródła prawdy dla aktywnego źródła wideo: `Video.activePlaybackRouteId`, `VideoPlaybackRoute.status='ACTIVE'` i `VideoAsset.isPrimary`.** Synchronizuje je tylko kod, w jednej transakcji, a w bazie nie ma ograniczenia "jedna ACTIVE trasa na film". Naprawa: zostaw `Video.activePlaybackRouteId` jako jedyne źródło, usuń `VideoAsset.isPrimary` (i `pendingPrimaryIntent`) po przepisaniu `primary-playable-asset.ts`/`video.repository.ts:487-541`, a do czasu usunięcia dodaj `CREATE UNIQUE INDEX ON "VideoPlaybackRoute"("videoId") WHERE status='ACTIVE'`. Nakład M. Pewność wysoka.
 
@@ -245,15 +204,6 @@ Nakład S. Pewność wysoka.
 
 Naprawa: `DROP INDEX` w migracji czyszczącej. Nakład S. Pewność wysoka.
 
-**DB-17 | P3 | Brakujące indeksy:**
-- `BroadcastEmailRecipient(resendEmailId)`: wyszukiwanie przy każdym webhooku `handle-resend-webhook.use-case.ts:203,312`; najlepiej `@unique`.
-- `Comment(authorId)`: klucz obcy bez indeksu, używany przez `comments: { none: {} }` w `prune-unverified.ts:28` i `_count`.
-- `VideoPlaybackSession(countedAsView, startedAt)` (DB-06).
-- `Payment(status, createdAt)` dla crona rekoncyliacji.
-- `BroadcastEmail(templateId)` znika razem z kolumną.
-
-Postgres nie indeksuje kluczy obcych automatycznie. Nakład S. Pewność wysoka.
-
 **DB-18 | P3 | Brak CHECK-ów:**
 - `Payment.amountMinor > 0`
 - `0 <= refundedAmountMinor <= amountMinor`
@@ -287,8 +237,6 @@ Nakład S. Pewność wysoka.
 
 **DB-26 | P3 | `app/api/cron/stripe-reconciliation/route.ts:33-90` | Porzucone intenty są oznaczane jako `FAILED` zamiast `CANCELED`** i nie są anulowane w Stripe (`paymentIntents.cancel`). Starsze niż 7 dni wiszą jako `PENDING` na zawsze. `findMany` nie ma `select` ani `take`. Każda zmiana kwoty w bramce to nowy `Payment`; prawdopodobnie większość ze 147 wierszy to porzucone intenty. Naprawa: `select`, `take: 200`, status `CANCELED` i anulowanie intentu. Nakład S. Pewność wysoka.
 
-**DB-27 | P3 | `PaymentCurrencySetting` | Trzy progi na walutę** (`minAmountMinor`, `patronThresholdMinor`, `patronBoxMinMinor`). W modelu "napiwek = patron" realnie potrzebny jest jeden (`minTipMinor`) albo dwa, jeśli właściciel zachowa próg "patrona". Decyzja w §4. Nakład M. Pewność wysoka.
-
 **DB-28 | P3 | `channel-layout.service.ts:72-82`, `video-content.service.ts:48-66` | Brak `select`:** pobierane są pełne wiersze `Video` z `include: { creator: true }`, a sitemap dociąga e-mail właściciela kanału (`user: { select: { imageUrl, email } }`), choć DTO go nie potrzebuje. Naprawa: wąskie `select`. Nakład S. Pewność wysoka.
 
 **DB-29 | P3 | `finalize-self-hls.ts:40-74` | Zapis `VideoAsset` i aktywacja trasy nie są w jednej transakcji** (jest akcja kompensująca `delete`). Nie ma też `@@unique([videoId, provider, objectKey])`, więc idempotencja opiera się na `findFirst`. Naprawa: unikalność plus `upsert`, a utworzenie assetu i aktywacja trasy w jednej transakcji. Nakład S. Pewność wysoka.
@@ -313,23 +261,9 @@ Naprawa: squash do baseline (§5.2). Nakład S/M. Pewność wysoka.
 
 ## 4. Docelowy, minimalny schemat i pytania do właściciela
 
-### 4.1 Do usunięcia (bez potrzeby decyzji, po PR #1614 i expand/contract)
+### 4.1 Do usunięcia
 
-- **Tabele:** `ClerkEvent`, `CommentLike`, `CommentDislike`, `VideoDistributionPlan`, `VideoDistributionTarget`, `VideoProviderJob`, `VideoProviderWebhookEvent`.
-- **Enumy:** `VideoDistributionMode`, `VideoPlaybackSelectionPolicy`, `VideoAutopublishPolicy`, `VideoDistributionTargetStatus`, `VideoDistributionTargetRole`, `VideoProviderJobType`, `VideoProviderJobStatus`, `VideoProviderWebhookStatus`; wartości `StorageProvider` poza `SELF_HLS`.
-- **Kolumny:**
-  - `User.totalPaidMinor`, `User.canCreateChannel`
-  - `Creator.stripeConnectId`
-  - `Comment.score`, `Comment.pinnedById`
-  - `Video.videoUrl`, `Video.publishAfterAssetReadyProvider`
-  - `VideoOriginal.storageProvider`, `VideoOriginal.checksumSha256`
-  - `VideoAsset.distributionTargetId`, `providerAssetId`, `providerPlaybackId`, `externalVideoId`, `externalUrl`, `muxUploadId`, `pendingPrimaryIntent`, `providerSyncedAt`, `processingStartedAt`, `mirrorSourceOriginalId`, `mirrorRequestedAt`, `mirrorCompletedAt`, `mirrorFailureReason`, `fallbackPriority`
-  - `VideoPlaybackRoute.planId`
-  - `VideoPlaybackSession.endedAt`
-  - `EmailPreference.resendContactId`
-  - `BroadcastEmail.scheduledAt`, `BroadcastEmail.templateId`
-- **Zmiana typu:** `VideoAsset.sizeBytes` → `BIGINT`.
-- **Indeksy:** lista z DB-16 do usunięcia; z DB-03, DB-11, DB-17, DB-19 i DB-20 do dodania.
+Zrobione (migracja `20261005210000_cleanup_dead_schema`, `docs/architecture/db-cleanup-2026-10-05.md`): martwe tabele, enumy dystrybucji, kolumny, `AccessTier.PATRON`, `VideoAsset.sizeBytes` na `BIGINT`, brakujące indeksy. Zostają: wartości `StorageProvider` poza `SELF_HLS` (po sprawdzeniu `SELECT provider, count(*) FROM "VideoAsset" GROUP BY 1` i `"VideoPlaybackRoute"` na produkcji; wzorzec `_new` jak w migracji), `PatronGrantSource` (sprawdzić `SELECT source, count(*) FROM "PatronGrant" GROUP BY 1`), nadmiarowe indeksy z DB-16 i inwarianty z DB-03/04/11/18/19/20.
 
 ### 4.2 Do scalenia lub przemianowania (rekomendowane, wymaga kodu)
 
@@ -341,19 +275,6 @@ Naprawa: squash do baseline (§5.2). Nakład S/M. Pewność wysoka.
 | `VideoView` jako trwały log; sesje tymczasowe (kasowane po 30 dniach); retencja `VideoPlaybackEvent` | koniec nieograniczonego wzrostu | utrata surowej telemetrii po 30-90 dniach (dziś nikt jej nie czyta) |
 | `User.username` → wchłonięte przez `name` | jeden pseudonim | trzeba uzupełnić `name` tam, gdzie jest `null`, i poprawić `comments-public-author.ts` |
 | `Video.duration` (String) → `durationSeconds Int` | typ liczbowy, łatwy JSON-LD | zmiana formularza admina |
-
-### 4.3 `AccessTier.PATRON`
-
-- **Opcja A: usunąć wartość i zmapować filmy na `LOGGED_IN`.**
-  - Za: koniec nazwy sugerującej płatny dostęp; prostszy kod (access, playback, sidebar, comments-public-author, PremiumWrapper; około 30 plików ma `'PATRON'`); zgodność z regulaminem "nic za pieniądze".
-  - Przeciw: znika osobna sekcja sidebara "dla patronów" (film `dla-patronow` trafi do sekcji zalogowanych); trzeba odtworzyć typ enum (DROP VALUE nie istnieje w Postgresie).
-- **Opcja B: przemianować na neutralną "sekcję" (np. pole `Video.section` albo enum `SUPPORTERS_CORNER`) niezależną od dostępu.**
-  - Za: zachowuje układ UI, oddziela prezentację od dostępu.
-  - Przeciw: więcej pracy niż A.
-- **Opcja C: zostawić.**
-  - Za: zero pracy.
-  - Przeciw: myląca nazwa i ryzyko, że ktoś kiedyś przywróci paywall.
-- **Rekomendacja:** A, jeśli właściciel nie chce osobnej sekcji; B, jeśli chce.
 
 ### 4.4 `PatronGrant` (funkcja księgowa)
 
@@ -370,7 +291,7 @@ Naprawa: squash do baseline (§5.2). Nakład S/M. Pewność wysoka.
 
 1. **DB-01:** czy od 2026-10-01 była jakaś udana wpłata? Czy możesz sprawdzić w panelu Stripe, czy webhook na `www.pawelperfect.com/api/webhooks/stripe` dostaje odpowiedzi 2xx?
 2. Czy "patron" ma oznaczać **każdą** udaną wpłatę (bez progu), czy wpłatę powyżej progu? Od tego zależy, czy `patronThresholdMinor` zostaje.
-3. `AccessTier.PATRON`: opcja A (usunąć, film do sekcji zalogowanych), B (osobna sekcja bez znaczenia dostępowego) czy C (zostawić)?
+3. (rozstrzygnięte 2026-10-04: dwa poziomy dostępu, `PATRON` usunięty migracją 2026-10-05)
 4. Czy zostawiamy przycisk "Subskrybuj" jako zapis na powiadomienia e-mail? Jeśli tak, scalić `Subscription` z `EmailPreference` (DB-22)?
 5. Powiadomienia w serwisie (dzwonek ukryty): przywracamy czy usuwamy moduł (`Notification*`)?
 6. `InboundEmail` i skrzynka w panelu admina: usunąć, skoro poczta jest w PP Support?
@@ -383,150 +304,9 @@ Naprawa: squash do baseline (§5.2). Nakład S/M. Pewność wysoka.
 
 ## 5. Szkic migracji czyszczącej i procedura squasha
 
-### 5.1 Migracja czyszcząca (jedna, `2026101xxxxxxx_cleanup_dead_schema`)
+### 5.1 Migracja czyszcząca
 
-**Warunki wstępne (kolejność ma znaczenie):**
-
-1. PR #1614 scalony i wdrożony. `scripts/hls/delete-legacy-provider-rows.sql` uruchomiony na produkcji (sam pilnuje, żeby każdy film miał aktywną trasę `SELF_HLS`).
-2. **Wdrożenie N ("expand/contract", tylko kod):** usunąć odwołania w kodzie, ale kolumny jeszcze zostają w `schema.prisma`, żeby rollback był bezpieczny:
-   - `lib/modules/video/domain/video.dto.ts`, `lib/modules/playback/domain/playback.dto.ts`, `lib/modules/playback/application/playback.service.ts:83-84`, `lib/modules/video/domain/video.policy.ts:15,24`: pola providerowe i mirror `VideoAsset`;
-   - `admin-video-payload.ts:154`, `video.repository.ts` i DTO: `publishAfterAssetReadyProvider`;
-   - `app/types/video.ts`, `lib/data/initial-content.ts`, `primary-playable-asset.ts`: `videoUrl` (strażnicy "forbidden field" w `media.policy.ts` mogą zostać jako stringi);
-   - `video-playback-route.service.ts:15,38,56`: `planId`;
-   - `finalize-self-hls.ts:46,60`: `fallbackPriority`, `sizeBytes` jako `BigInt`;
-   - `comment.repository.ts:108,118,119`: `score`;
-   - `lib/modules/comments/domain/comment-frontend.dto.ts:38`: `score`;
-   - usunąć `lib/services/payment.service.ts` i jego test;
-   - skrypty `scripts/backfill-video-assets-1n.ts` i `scripts/fix-main-creator-content.ts` (odwołują się do `videoUrl` i `isPrimary`) usunąć lub poprawić; `scripts/verify_db.ts`, `scripts/db-smoke.ts`, `scripts/verify-restored-database.ts` i `scripts/strict-escapes-baseline.jsonc` zaktualizować;
-   - opcjonalnie (decyzje z §4): `UserPaymentTotal`, `Subscription`, `InboundEmail`, `Notification*`, `AccessTier.PATRON`.
-3. Stabilna praca przez co najmniej 1 dzień, potem **wdrożenie N+1** = `schema.prisma` bez martwych obiektów + poniższy SQL. Przed nim `deploy.sh` i tak robi `pg_dump`; dodatkowo warto zrobić `pg_dump -Fc` ręcznie.
-
-**Kontrole danych przed migracją (SELECT-y, ręcznie):**
-
-```sql
-SELECT provider, count(*) FROM "VideoAsset" GROUP BY 1;              -- oczekiwane: tylko SELF_HLS
-SELECT provider, count(*) FROM "VideoPlaybackRoute" GROUP BY 1;      -- tylko SELF_HLS
-SELECT source, count(*) FROM "PatronGrant" GROUP BY 1;               -- czy są PAYMENT/REFERRAL/LEGACY
-SELECT tier, count(*) FROM "Video" GROUP BY 1;                       -- jeśli opcja A dla PATRON
-SELECT lower(name), count(*) FROM "User" WHERE NOT "isDeleted" AND NOT "onboardingPending" AND name IS NOT NULL GROUP BY 1 HAVING count(*) > 1;
-SELECT lower(email), count(*) FROM "User" GROUP BY 1 HAVING count(*) > 1;
-SELECT "videoId", count(*) FROM "VideoPlaybackRoute" WHERE status = 'ACTIVE' GROUP BY 1 HAVING count(*) > 1;
-SELECT count(*) FROM "Payment" WHERE "amountMinor" <= 0 OR "refundedAmountMinor" > "amountMinor";
-```
-
-**SQL (szkic, plik bez BOM, w jednej transakcji):**
-
-```sql
-BEGIN;
-
--- 0. Strażnik: przerwij, jeśli zostały dane dostawców zewnętrznych
-DO $$ BEGIN
-  IF EXISTS (SELECT 1 FROM "VideoAsset" WHERE provider <> 'SELF_HLS')
-     OR EXISTS (SELECT 1 FROM "VideoPlaybackRoute" WHERE provider <> 'SELF_HLS') THEN
-    RAISE EXCEPTION 'legacy provider rows still present: run scripts/hls/delete-legacy-provider-rows.sql first';
-  END IF;
-END $$;
-
--- 1. Najpierw zerwij FK prowadzące do tabel dystrybucji
-ALTER TABLE "VideoPlaybackRoute" DROP COLUMN IF EXISTS "planId";
-ALTER TABLE "VideoAsset"
-  DROP COLUMN IF EXISTS "distributionTargetId",
-  DROP COLUMN IF EXISTS "providerAssetId",
-  DROP COLUMN IF EXISTS "providerPlaybackId",
-  DROP COLUMN IF EXISTS "externalVideoId",
-  DROP COLUMN IF EXISTS "externalUrl",
-  DROP COLUMN IF EXISTS "muxUploadId",
-  DROP COLUMN IF EXISTS "pendingPrimaryIntent",
-  DROP COLUMN IF EXISTS "providerSyncedAt",
-  DROP COLUMN IF EXISTS "processingStartedAt",
-  DROP COLUMN IF EXISTS "mirrorSourceOriginalId",
-  DROP COLUMN IF EXISTS "mirrorRequestedAt",
-  DROP COLUMN IF EXISTS "mirrorCompletedAt",
-  DROP COLUMN IF EXISTS "mirrorFailureReason",
-  DROP COLUMN IF EXISTS "fallbackPriority";
-ALTER TABLE "VideoAsset" ALTER COLUMN "sizeBytes" TYPE BIGINT;
-
--- 2. Martwe tabele (nieodwracalne bez zrzutu)
-DROP TABLE IF EXISTS "VideoProviderJob";
-DROP TABLE IF EXISTS "VideoDistributionTarget";
-DROP TABLE IF EXISTS "VideoDistributionPlan";
-DROP TABLE IF EXISTS "VideoProviderWebhookEvent";
-DROP TABLE IF EXISTS "ClerkEvent";
-DROP TABLE IF EXISTS "CommentLike";
-DROP TABLE IF EXISTS "CommentDislike";
-
-DROP TYPE IF EXISTS "VideoDistributionMode", "VideoPlaybackSelectionPolicy", "VideoAutopublishPolicy",
-  "VideoDistributionTargetStatus", "VideoDistributionTargetRole", "VideoProviderJobType",
-  "VideoProviderJobStatus", "VideoProviderWebhookStatus";
-
--- 3. Martwe kolumny
-ALTER TABLE "User" DROP COLUMN IF EXISTS "totalPaidMinor", DROP COLUMN IF EXISTS "canCreateChannel";
-ALTER TABLE "Creator" DROP COLUMN IF EXISTS "stripeConnectId", DROP COLUMN IF EXISTS "bannerUrl"; -- usuwa też unikalny indeks stripeConnectId
-ALTER TABLE "Comment" DROP COLUMN IF EXISTS "score", DROP COLUMN IF EXISTS "pinnedById";
-ALTER TABLE "Video" DROP COLUMN IF EXISTS "videoUrl", DROP COLUMN IF EXISTS "publishAfterAssetReadyProvider";
-ALTER TABLE "VideoOriginal" DROP COLUMN IF EXISTS "storageProvider", DROP COLUMN IF EXISTS "checksumSha256";
-ALTER TABLE "VideoPlaybackSession" DROP COLUMN IF EXISTS "endedAt";
-ALTER TABLE "EmailPreference" DROP COLUMN IF EXISTS "resendContactId";
-ALTER TABLE "BroadcastEmail" DROP COLUMN IF EXISTS "scheduledAt", DROP COLUMN IF EXISTS "templateId";
-
--- 4. StorageProvider -> tylko SELF_HLS (Postgres nie ma DROP VALUE: nowy typ + rzutowanie przez text)
-CREATE TYPE "StorageProvider_new" AS ENUM ('SELF_HLS');
-ALTER TABLE "VideoAsset" ALTER COLUMN "provider" TYPE "StorageProvider_new" USING ("provider"::text::"StorageProvider_new");
-ALTER TABLE "VideoPlaybackRoute" ALTER COLUMN "provider" TYPE "StorageProvider_new" USING ("provider"::text::"StorageProvider_new");
-DROP TYPE "StorageProvider";
-ALTER TYPE "StorageProvider_new" RENAME TO "StorageProvider";
-
--- 5. (opcjonalnie, po decyzji) PatronGrantSource bez PAYMENT/REFERRAL/LEGACY: ten sam wzorzec _new;
---    (opcjonalnie, opcja A) AccessTier bez PATRON:
---    UPDATE "Video" SET tier = 'LOGGED_IN' WHERE tier = 'PATRON';
---    UPDATE "VideoPlaybackSession" SET "accessTier" = 'LOGGED_IN' WHERE "accessTier" = 'PATRON';
---    potem CREATE TYPE "AccessTier_new" ('PUBLIC','LOGGED_IN') + ALTER ... DROP DEFAULT / TYPE / SET DEFAULT (Video.tier ma default 'PUBLIC')
-
--- 6. Nadmiarowe indeksy (nazwy wg konwencji Prisma; sprawdzić \di przed uruchomieniem)
-DROP INDEX IF EXISTS "User_email_idx", "Video_slug_idx", "Video_creatorId_idx", "Video_activeOriginalId_idx",
-  "Video_activePlaybackRouteId_idx", "Payment_userId_idx", "PatronGrant_userId_idx", "Comment_videoId_idx",
-  "Comment_parentId_idx", "VideoOriginal_videoId_idx", "VideoOriginal_videoId_version_idx", "VideoAsset_videoId_idx",
-  "VideoLike_userId_idx", "VideoDislike_userId_idx", "CommentReaction_userId_idx", "Subscription_userId_idx",
-  "CommentReport_commentId_idx", "EmailPreference_email_idx", "PaymentCurrencySetting_updatedAt_idx",
-  "VideoPlaybackSession_countedAsView_idx", "VideoPlaybackSession_isAdminPreview_idx",
-  "VideoAsset_provider_idx", "VideoAsset_provider_providerAssetId_idx", "VideoPlaybackRoute_provider_idx";
-
--- 7. Nowe indeksy i inwarianty (obiekty "unsupported" w Prisma 6: tylko SQL)
-CREATE INDEX "Comment_authorId_idx" ON "Comment"("authorId");
-CREATE INDEX "BroadcastEmailRecipient_resendEmailId_idx" ON "BroadcastEmailRecipient"("resendEmailId");
-CREATE INDEX "VideoPlaybackSession_countedAsView_startedAt_idx" ON "VideoPlaybackSession"("countedAsView","startedAt");
-CREATE INDEX "Payment_status_createdAt_idx" ON "Payment"("status","createdAt");
-CREATE UNIQUE INDEX "VideoPlaybackRoute_one_active_per_video" ON "VideoPlaybackRoute"("videoId") WHERE status = 'ACTIVE';
-CREATE UNIQUE INDEX "VideoEncodeJob_one_active_per_video" ON "VideoEncodeJob"("videoId") WHERE status IN ('QUEUED','RUNNING');
-CREATE UNIQUE INDEX "PatronGrant_one_active_per_user" ON "PatronGrant"("userId") WHERE "revokedAt" IS NULL;
-CREATE UNIQUE INDEX "User_name_lower_active_key" ON "User"(lower("name"))
-  WHERE "isDeleted" = false AND "onboardingPending" = false AND "name" IS NOT NULL;
-CREATE UNIQUE INDEX "User_email_lower_key" ON "User"(lower("email"));
-
--- 8. CHECK-i (NOT VALID + VALIDATE: bez długiej blokady, czytelny błąd przy złych danych)
-ALTER TABLE "Payment" ADD CONSTRAINT "Payment_amount_positive" CHECK ("amountMinor" > 0) NOT VALID;
-ALTER TABLE "Payment" ADD CONSTRAINT "Payment_refund_range" CHECK ("refundedAmountMinor" BETWEEN 0 AND "amountMinor") NOT VALID;
-ALTER TABLE "Payment" ADD CONSTRAINT "Payment_currency_iso" CHECK ("currency" ~ '^[A-Z]{3}$') NOT VALID;
-ALTER TABLE "Video" ADD CONSTRAINT "Video_fundraising_percent" CHECK ("fundraisingManualPercent" IS NULL OR "fundraisingManualPercent" BETWEEN 0 AND 100) NOT VALID;
-ALTER TABLE "Video" ADD CONSTRAINT "Video_counters_nonneg" CHECK ("views" >= 0 AND "likesCount" >= 0 AND "dislikesCount" >= 0) NOT VALID;
-ALTER TABLE "VideoEncodeJob" ADD CONSTRAINT "VideoEncodeJob_progress" CHECK ("progressPercent" BETWEEN 0 AND 100) NOT VALID;
-ALTER TABLE "Payment" VALIDATE CONSTRAINT "Payment_amount_positive";
-ALTER TABLE "Payment" VALIDATE CONSTRAINT "Payment_refund_range";
-ALTER TABLE "Payment" VALIDATE CONSTRAINT "Payment_currency_iso";
-ALTER TABLE "Video" VALIDATE CONSTRAINT "Video_fundraising_percent";
-ALTER TABLE "Video" VALIDATE CONSTRAINT "Video_counters_nonneg";
-ALTER TABLE "VideoEncodeJob" VALIDATE CONSTRAINT "VideoEncodeJob_progress";
-
-COMMIT;
-```
-
-**Co jest nieodwracalne:** kroki 1-5 (dane w usuniętych kolumnach i tabelach, w tym `ClerkEvent`, `VideoProviderJob`, `VideoProviderWebhookEvent` i stare wartości enumów). Jedyną drogą powrotu jest przywrócenie zrzutu. Kroki 6-8 są odwracalne.
-
-**Co wymaga przepisania danych:** opcjonalne mapowanie `PATRON → LOGGED_IN`; deduplikacja pseudonimów i e-maili przed krokiem 7, jeśli SELECT-y coś zwrócą.
-
-**Uwagi:**
-- `CREATE INDEX CONCURRENTLY` nie działa w transakcji. Przy tych rozmiarach (największa tabela ma około 10 tys. wierszy) zwykły `CREATE INDEX` trwa milisekundy.
-- Po migracji `npx prisma migrate diff --from-url $DATABASE_URL --to-schema prisma/schema.prisma --script` musi być pusty, poza obiektami z kroków 7-8, których Prisma 6 nie modeluje; upewnij się, że diff nie proponuje ich `DROP`.
+Wykonana jako `20261005210000_cleanup_dead_schema` (opis, dowody, test na danych i lista kontrolna przed wdrożeniem: `docs/architecture/db-cleanup-2026-10-05.md`). Z niedokończonego szkicu zostają do zrobienia (osobno, po sprawdzeniu danych produkcyjnych): zawężenie `StorageProvider` do `SELF_HLS`, usunięcie nadmiarowych indeksów (DB-16) i unikalne indeksy częściowe z DB-03/04/11/19/20 oraz CHECK-i z DB-18. Przed pierwszym z nich uruchomić SELECT-y kontrolne z tego dokumentu (duplikaty `lower(name)`, `lower(email)`, wiele `ACTIVE` tras na film, płatności z `amountMinor <= 0`).
 
 ### 5.2 Squash do jednej migracji bazowej
 

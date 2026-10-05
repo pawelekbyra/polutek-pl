@@ -130,8 +130,6 @@ describe('VideoRepository asset foundation queries', () => {
       videoId: 'v1',
       provider: 'SELF_HLS',
       objectKey: 'videos/v1/v/v1',
-      providerAssetId: null,
-      providerPlaybackId: null,
       processingState: 'READY',
       isPrimary: true,
       failureReason: null,

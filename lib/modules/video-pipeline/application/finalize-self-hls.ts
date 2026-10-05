@@ -43,7 +43,6 @@ export function createSelfHlsFinalizer(prisma: PrismaClient): ProcessorPorts["fi
         where: { videoId: job.videoId, provider: "SELF_HLS", objectKey: assetKey },
         select: { id: true },
       });
-      const sizeBytes = input.totalBytes <= 2_147_483_647 ? input.totalBytes : null;
       const assetId =
         created?.id ??
         (
@@ -57,8 +56,7 @@ export function createSelfHlsFinalizer(prisma: PrismaClient): ProcessorPorts["fi
               processingState: "READY",
               processingEndedAt: new Date(),
               isPrimary: false,
-              fallbackPriority: 10,
-              sizeBytes,
+              sizeBytes: Number.isFinite(input.totalBytes) && input.totalBytes >= 0 ? BigInt(Math.trunc(input.totalBytes)) : null,
             },
             select: { id: true },
           })

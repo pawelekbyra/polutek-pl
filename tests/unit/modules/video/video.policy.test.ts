@@ -173,7 +173,7 @@ describe('VideoPolicy: only own HLS can be published', () => {
   it.each(['CLOUDFLARE_STREAM', 'MUX', 'YOUTUBE', 'VIMEO', 'VERCEL_BLOB', 'R2', 'S3'])('blocks a %s active route (legacy provider)', (provider) => {
     const blockers = VideoPolicy.getPublicationBlockers({
       ...base,
-      activePlaybackRoute: { asset: { provider, processingState: 'READY', providerAssetId: 'x', externalVideoId: 'y', objectKey: 'k' } },
+      activePlaybackRoute: { asset: { provider, processingState: 'READY', objectKey: 'k' } },
     });
 
     expect(blockers.map((b) => b.code)).toContain('VIDEO_PUBLICATION_NON_PLAYABLE_PROVIDER');

@@ -207,6 +207,8 @@ ssh serwerek 'cd /opt/serwerek/apps/polutek && ./deploy.sh <tag>'
 
 Z klonu na serwerku krok 1 to: `cd /opt/serwerek/apps/polutek && rm -rf src && mkdir src && (cd /opt/serwerek/repo && git archive main) | tar -x -C src`.
 
+**Uwaga o wycofywaniu po migracji destrukcyjnej:** migracje były addytywne do `20261005210000_cleanup_dead_schema` (usuwa martwe tabele i kolumny). `./deploy.sh <cokolwiek> --rollback` przywraca tylko kod i poprzedni obraz, nie schemat: po takiej migracji stary obraz może się wywrócić na usuniętych kolumnach (a automatyczny powrót przy niezdrowym nowym obrazie też zostawi stary niezdrowy). Wtedy przywróć zrzut `pre-deploy-*` z `/opt/serwerek/backups/` (`docs/architecture/db-cleanup-2026-10-05.md`, sekcja „Rollback”).
+
 Co robi `deploy.sh <tag>` (kolejność z kodu):
 1. buduje cztery obrazy z `deploy/serwerek/Dockerfile`: `polutek-app` (cel `runner`), `polutek-migrator`, `polutek-worker`, `polutek-collector`; pomija budowę, gdy wszystkie cztery obrazy tego tagu już istnieją;
    argumenty `NEXT_PUBLIC_*` bierze z `build.env` (zmiana któregokolwiek wymaga przebudowy obrazu; sekrety nie trafiają do obrazu);

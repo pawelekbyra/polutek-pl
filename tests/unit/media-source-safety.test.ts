@@ -45,8 +45,6 @@ const selfHlsAsset = {
   provider: 'SELF_HLS',
   objectKey: `videos/${VIDEO_ID}/v/v1`,
   bucket: 'polutek-hls',
-  providerAssetId: null,
-  providerPlaybackId: null,
   processingState: 'READY',
   isPrimary: true,
   failureReason: null,
@@ -61,10 +59,6 @@ const legacyAsset = (provider: string, over: Record<string, unknown> = {}) => ({
   id: `legacy-${provider}`,
   provider,
   objectKey: 'legacy-object-key',
-  providerAssetId: 'legacy-provider-asset-id',
-  providerPlaybackId: 'legacy-playback-id',
-  externalVideoId: 'legacyYtId',
-  externalUrl: 'https://www.youtube.com/watch?v=legacyYtId',
   isPrimary: false,
   ...over,
 });
@@ -165,7 +159,7 @@ describe('PlaybackService safety (own HLS is the only source)', () => {
     expect(plan.status).toBe('PROCESSING');
     expect(plan.access.allowed).toBe(true);
     expect(plan.diagnostics.asset?.provider).toBe('SELF_HLS');
-    expect(plan.diagnostics.asset?.providerAssetId).toBeNull();
+    expect(plan.diagnostics.asset).not.toHaveProperty('providerAssetId');
     assertNothingPlayable(plan);
   });
 
@@ -226,8 +220,8 @@ describe('PlaybackService safety (own HLS is the only source)', () => {
     expect(plan.source?.kind).toBe('self_hls');
     expect(plan.source?.playbackUrl).toMatch(/^https:\/\/video\.pawelperfect\.com\/h\/\d+\.[A-Za-z0-9_-]+\/v1-0000-aaaa\/v1\/master\.m3u8$/);
     expect(plan.source?.isSignedUrl).toBe(true);
-    expect(plan.source?.asset?.providerAssetId).toBeNull();
-    expect(plan.source?.asset?.providerPlaybackId).toBeNull();
+    expect(plan.source?.asset).not.toHaveProperty('providerAssetId');
+    expect(plan.source?.asset).not.toHaveProperty('providerPlaybackId');
     expect(plan.tracking.playbackSessionId).toBe('s-own-1');
     expect(prisma.videoPlaybackSession.create).toHaveBeenCalledTimes(1);
     expect(serialized).not.toContain('secret.mp4');

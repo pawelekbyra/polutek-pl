@@ -72,7 +72,6 @@ function toDetail(s: Seed, i: number, now: Date): ContentDetail {
     original: null,
     migrationStatus: s.hls,
     publishAfterAssetReady: s.slug === "qa-1",
-    publishAfterAssetReadyProvider: null,
     publishAfterAssetReadyRequestedAt: null,
     publishAfterAssetReadyCompletedAt: null,
     publishAfterAssetReadyError: null,

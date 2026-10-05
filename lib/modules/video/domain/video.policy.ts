@@ -13,8 +13,6 @@ type ContractVideo = {
     asset?: {
       provider?: string | null;
       processingState?: string | null;
-      providerAssetId?: string | null;
-      externalVideoId?: string | null;
       objectKey?: string | null;
     } | null;
   } | null;
@@ -22,8 +20,6 @@ type ContractVideo = {
     isPrimary?: boolean | null;
     provider?: string | null;
     processingState?: string | null;
-    providerAssetId?: string | null;
-    externalVideoId?: string | null;
   } | null;
 };
 

@@ -116,8 +116,6 @@ type AssetRecord = {
   provider: StorageProvider;
   objectKey: string;
   bucket: string | null;
-  providerAssetId: string | null;
-  providerPlaybackId: string | null;
   processingState: VideoAssetProcessingState;
   isPrimary: boolean;
   mimeType: string | null;
@@ -430,8 +428,6 @@ function createHarness() {
         provider: StorageProvider.SELF_HLS,
         objectKey: `videos/${id}/v/v1`,
         bucket: 'polutek-hls',
-        providerAssetId: null,
-        providerPlaybackId: null,
         processingState: VideoAssetProcessingState.READY,
         isPrimary: true,
         mimeType: 'video/mp4',

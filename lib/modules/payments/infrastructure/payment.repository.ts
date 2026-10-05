@@ -197,12 +197,9 @@ export class PaymentRepository {
     `;
   }
 
-  /**
-   * Saves the one tip minimum and clears the legacy columns (patron threshold, tip-box minimum),
-   * which no longer mean anything once a single minimum is set.
-   */
+  /** Saves the one tip minimum of a currency. */
   async upsertCurrencyMinimum(currency: string, minAmountMinor: number, tx: WriteTx) {
-    const data = { minAmountMinor, patronThresholdMinor: null, patronBoxMinMinor: null };
+    const data = { minAmountMinor };
     return await tx.paymentCurrencySetting.upsert({
       where: { currency },
       create: { currency, ...data },

@@ -16,8 +16,8 @@ and the operations.
   `user.additionalFields`: `language` (input) and `onboardingPending` (server only).
 - New tables: `Session`, `Account` (credential password hash, Google link), `Verification` (one-time
   tokens), `TwoFactor` (TOTP secret and backup codes), `Passkey` (WebAuthn public key, credential id, device
-  name; migration `20261004180000_add_passkey`, `credentialID` unique across users). `ClerkEvent` stays in the schema as a dead table
-  (migrations are additive only).
+  name; migration `20261004180000_add_passkey`, `credentialID` unique across users).
+  The dead `ClerkEvent` table was dropped by `20261005210000_cleanup_dead_schema`.
 - Roles are ours: `User.role` (`USER` | `ADMIN`). The Better Auth `admin` plugin is **not** used (its string
   role and ban fields clash with `SystemRole` and with our soft delete). Disabled accounts are blocked in
   `databaseHooks.session.create.before` (`isDeleted`).

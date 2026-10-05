@@ -1,9 +1,9 @@
 /**
  * Video access levels (owner decision 2026-10-04): two, PUBLIC (everyone) and LOGGED_IN (any
- * signed-in account). The database enum `AccessTier` still has the old `PATRON` value until a
- * cleanup migration drops it; migration 20261004230000 moved every video off it. Code reads a tier
- * only through these helpers, so a stray PATRON row behaves exactly like LOGGED_IN. Pure and
- * client-safe.
+ * signed-in account). The database enum `AccessTier` had a third value, `PATRON`; migration
+ * 20261004230000 moved every video off it and 20261005210000 removed it from the enum. Code reads a
+ * tier only through these helpers, which stay fail-closed: any value that is not PUBLIC needs
+ * sign-in, and a client still sending the old name PATRON gets LOGGED_IN. Pure and client-safe.
  */
 export const VIDEO_ACCESS_TIERS = ["PUBLIC", "LOGGED_IN"] as const;
 export type VideoAccessTier = (typeof VIDEO_ACCESS_TIERS)[number];
@@ -20,10 +20,7 @@ export function parseVideoAccessTier(value: unknown): VideoAccessTier | null {
   return null;
 }
 
-/**
- * Prisma `tier` condition for an admin list filter ("PUBLIC", "LOGGED_IN"; anything else = no
- * filter). LOGGED_IN matches every non-public row, so a leftover PATRON row is listed with it.
- */
+/** Prisma `tier` condition for an admin list filter ("PUBLIC", "LOGGED_IN"; anything else = no filter). */
 export function accessTierWhere(value: unknown): "PUBLIC" | { not: "PUBLIC" } | undefined {
   const tier = parseVideoAccessTier(value);
   if (tier === "PUBLIC") return "PUBLIC";

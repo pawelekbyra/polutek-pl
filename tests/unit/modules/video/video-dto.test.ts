@@ -54,13 +54,9 @@ describe('Video DTOs', () => {
       provider: StorageProvider.SELF_HLS,
       objectKey: 'videos/v1/v/v1',
       bucket: 'polutek-hls',
-      providerAssetId: null,
-      providerPlaybackId: null,
       processingState: VideoAssetProcessingState.PROCESSING,
       isPrimary: true,
       failureReason: null,
-      providerSyncedAt: syncedAt,
-      processingStartedAt: syncedAt,
       processingEndedAt: null,
       mimeType: 'video/mp4',
       sizeBytes: 1234,
@@ -80,8 +76,9 @@ describe('Video DTOs', () => {
     expect(dto.requiresSignedUrl).toBe(true);
     expect(dto.sourceMode).toBe('SELF_HLS');
     expect(dto.isPlayable).toBe(false);
-    expect(dto.lastSyncAt).toBe(syncedAt);
-    expect(dto.providerSyncedAt).toBe(syncedAt);
+    expect(dto).not.toHaveProperty('lastSyncAt');
+    expect(dto).not.toHaveProperty('providerSyncedAt');
+    expect(dto.sizeBytes).toBe(1234);
     expect((dto as any).playbackUrl).toBeUndefined();
     expect((dto as any).playbackToken).toBeUndefined();
     expect((dto as any).signedUrl).toBeUndefined();
@@ -97,13 +94,9 @@ describe('Video DTOs', () => {
         provider,
         objectKey: `legacy/${provider}/video.mp4`,
         bucket: 'legacy-bucket',
-        providerAssetId: null,
-        providerPlaybackId: null,
         processingState: VideoAssetProcessingState.READY,
         isPrimary: true,
         failureReason: null,
-        providerSyncedAt: null,
-        processingStartedAt: null,
         processingEndedAt: null,
         mimeType: 'video/mp4',
         sizeBytes: 100,
@@ -114,8 +107,7 @@ describe('Video DTOs', () => {
       expect(dto.provider).toBe(provider);
       expect(dto.objectKey).toContain('legacy');
       expect(dto.processingState).toBe('READY');
-      expect(dto.providerAssetId).toBeNull();
-      expect(dto.providerPlaybackId).toBeNull();
+      expect(dto).not.toHaveProperty('providerAssetId');
       expect(dto.requiresSignedUrl).toBe(false);
       expect(dto.sourceMode).toBe('LEGACY_PROVIDER_ASSET');
     }
@@ -149,13 +141,9 @@ describe('Video DTOs', () => {
         provider: StorageProvider.MUX,
         objectKey: 'mux/mux-asset-id',
         bucket: null,
-        providerAssetId: 'mux-asset-id',
-        providerPlaybackId: 'mux-playback-id',
         processingState: VideoAssetProcessingState.FAILED,
         isPrimary: true,
         failureReason: 'provider fixture failure',
-        providerSyncedAt,
-        processingStartedAt: providerSyncedAt,
         processingEndedAt: providerSyncedAt,
         mimeType: null,
         sizeBytes: null,
@@ -166,8 +154,8 @@ describe('Video DTOs', () => {
     });
 
     expect(dto.asset?.provider).toBe('MUX');
-    expect(dto.asset?.providerAssetId).toBe('mux-asset-id');
-    expect(dto.asset?.providerPlaybackId).toBe('mux-playback-id');
+    expect(dto.asset).not.toHaveProperty('providerAssetId');
+    expect(dto.asset).not.toHaveProperty('providerPlaybackId');
     expect(dto.asset?.failureReason).toBe('provider fixture failure');
     expect((dto.asset as any).uploadUrl).toBeUndefined();
     expect((dto.asset as any).playbackUrl).toBeUndefined();
@@ -184,13 +172,9 @@ describe('Video DTOs', () => {
         provider: StorageProvider.SELF_HLS,
         objectKey: 'videos/v1/v/v2',
         bucket: 'polutek-hls',
-        providerAssetId: null,
-        providerPlaybackId: null,
         processingState: VideoAssetProcessingState.FAILED,
         isPrimary: true,
         failureReason: 'transcode failed',
-        providerSyncedAt: updatedAt,
-        processingStartedAt: updatedAt,
         processingEndedAt: updatedAt,
         mimeType: 'video/mp4',
         sizeBytes: 100,

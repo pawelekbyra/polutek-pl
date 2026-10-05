@@ -37,14 +37,13 @@ export function getDefaultPaymentLimits(currency: SupportedCurrency): CurrencyLi
 }
 
 /**
- * Effective minimum of a stored row. `patronBoxMinMinor` is the legacy "tip box minimum" column
- * (the value the gate used to show); until the next admin save clears it, the higher of the two
- * stays the minimum, so nobody sees a lower minimum than before. `patronThresholdMinor` is dead
- * (every successful tip marks a supporter) and is ignored.
+ * Effective minimum of a stored row: the minimum set in the panel, never below what Stripe can charge.
+ * (The legacy `patronBoxMinMinor` / `patronThresholdMinor` columns were folded into `minAmountMinor` and
+ * dropped by migration 20261005210000; the minimum users see did not change.)
  */
-function effectiveMinMinor(setting: { currency: string; minAmountMinor: number; patronBoxMinMinor: number | null }): number {
+function effectiveMinMinor(setting: { currency: string; minAmountMinor: number }): number {
   const stripeFloor = STRIPE_MIN_CHARGE_MINOR[setting.currency as SupportedCurrency] ?? 1;
-  return Math.max(stripeFloor, setting.minAmountMinor, setting.patronBoxMinMinor ?? 0);
+  return Math.max(stripeFloor, setting.minAmountMinor);
 }
 
 export async function getPaymentCurrencyLimits(): Promise<Record<SupportedCurrency, CurrencyLimit>> {

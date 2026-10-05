@@ -68,7 +68,9 @@ Granice architektury pilnuje bramka `npm run quality:architecture-boundaries` (m
 
 ### 4.0 Migracje i baza
 
-Migracje są wyłącznie addytywne i nigdy nie edytuje się istniejących; pliki bez BOM; migracja czyszcząca tylko po backupie i za zgodą właściciela. Zasady, historia i lista martwych elementów: `docs/architecture/database-and-migrations.md`.
+Migracje były addytywne do `20261005210000_cleanup_dead_schema` (usunęła martwe tabele i kolumny), a nowe mają być addytywne, chyba że to świadoma migracja czyszcząca; istniejących nigdy się nie edytuje; pliki bez BOM; migracja czyszcząca tylko po backupie i za zgodą właściciela. Zasady, historia i lista martwych elementów: `docs/architecture/database-and-migrations.md`.
+
+**Migracje destrukcyjne (2026-10-05):** zasada na przyszłość to dwa wdrożenia (najpierw kod przestaje używać obiektu, później osobna migracja go usuwa), zweryfikowany zrzut bazy przed wdrożeniem i pamięć, że `deploy.sh --rollback` przywraca tylko KOD: po migracji destrukcyjnej poprzedni obraz nadal odczytuje usunięte kolumny i się wywróci, więc wycofanie to przywrócenie zrzutu `pre-deploy-*` (lista kontrolna i procedura: `docs/architecture/db-cleanup-2026-10-05.md`).
 
 ### 4.1 Wspierający nie decydują o dostępie
 
