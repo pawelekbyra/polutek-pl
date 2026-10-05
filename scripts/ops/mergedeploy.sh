@@ -12,7 +12,7 @@
 #                LOCAL_CI_ARGS="--full" przekazuje opcje do local-ci (domyslnie: --build).
 #   SKIP_CI=1    bez zadnego sprawdzania (wywolujacy sam uruchomil testy, typecheck i lint).
 #
-# Wymaga: gh (zalogowany), ssh z aliasem `serwerek` (SERWEREK.md §15). Nie wypisuje sekretow.
+# Wymaga: gh (zalogowany), ssh z aliasem `serwerek` (SERWEREK.md, rozdz. 7; skrypt zakłada GitHub i `gh`, projekt go nie używa). Nie wypisuje sekretow.
 # Deploy: ./deploy.sh <tag> na serwerku z archiwum origin/main; rollback robi sam deploy.sh przy nieudanym health.
 set -uo pipefail
 

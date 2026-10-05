@@ -621,7 +621,7 @@ export function aiLogLine(entry) {
   return parts.join(' ').replace(/[^\p{L}\p{N} =.,:()_/#@+-]/gu, '').slice(0, 400);
 }
 
-/** Dopisuje wpis do /var/log/serwerek/changes.log przez `ai-log` (SERWEREK.md §6). Treść jako base64 (bez powłoki). */
+/** Dopisuje wpis do /var/log/serwerek/changes.log przez `ai-log` (SERWEREK.md chapter 12). Treść jako base64 (bez powłoki). */
 export async function writeAiLog(entry, { host = DEFAULT_SSH_HOST, spawnImpl = spawn } = {}) {
   const b64 = Buffer.from(aiLogLine(entry), 'utf8').toString('base64');
   const res = await sshRun({ host, command: `AI_AGENT=${AI_LOG_AGENT} ai-log "$(printf %s ${b64} | base64 -d)"`, spawnImpl, timeoutMs: 30000 });

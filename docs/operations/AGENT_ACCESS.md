@@ -1,3 +1,6 @@
+> **Uwaga (2026-10-05):** część tego dokumentu jest nieaktualna: Vercel, GitHub, Clerk i Neon nie są używane, a sekrety leżą na serwerku w `/root/.ai-secrets/`.
+> Obowiązują zasady z `CLAUDE.md` §0 i §8.1: odczyty wolno, zmiany na produkcji tylko na wyraźną zgodę właściciela w czacie.
+
 # Agent access to external services (local machine)
 
 No secrets in this file. Last verified: 2026-09-30 (evening).
