@@ -1,5 +1,7 @@
 # Audyt zgodności „dokumenty vs rzeczywistość”: pawelperfect.com
 
+> Stan po naprawach: patrz `RESULT-www-fixes.md` (znaleziska naprawione lub nieaktualne zostały usunięte z tego pliku).
+
 - Data: 2026-10-03. Repo: `main` @ `88c787d0` (worktree `dns-migration-cloudflare-bcfaf0`).
 - Tryb: tylko odczyt. Niczego nie zmieniono. Na produkcji wykonano wyłącznie zwykłe GET jako gość (`curl` oraz jedno wejście przeglądarką na `https://www.pawelperfect.com/pl` z kliknięciem bramki „Follow the white rabbit”), bez logowania.
 - Zastrzeżenie: to nie jest porada prawna. Raport wskazuje niezgodności faktyczne między tym, co serwis deklaruje, a tym, co robi kod, oraz ryzyka do przejrzenia. Punkty oznaczone **[PRAWNIK]** wymagają oceny prawnika (RODO, prawo telekomunikacyjne/PKE, UŚUDE, DSA, prawo konsumenckie, podatki).
@@ -140,13 +142,6 @@ Format: **ID | waga | miejsce (dokument / kod) | niezgodność | kierunek | nak�
 
 ### P1
 
-**LEG-01 | P1 | Lista odbiorców danych w Polityce jest nieaktualna i niepełna**
-- Dokument: `app/components/legal/LegalDocs.tsx:196-209` (PL § 3) i `:421-434` (EN § 3).
-- Kod: sekcja 2 tego raportu.
-- Niezgodność: Polityka wymienia Clerk, Vercel, Neon i Upstash jako bieżących dostawców, choć zostały wycofane. Pomija Hetzner (hosting i baza, DE), Google (Sign-In i One Tap, odrębny administrator, USA), prywatny Gmail (kopia supportu), jsDelivr, operatorów metod płatności Stripe (PayPal, Klarna, BLIK/P24, Revolut, Apple/Google Pay) i PP Support. Cloudflare opisuje wąsko jako „wideo i infrastruktura”, choć w rzeczywistości obsługuje proxy z terminacją TLS, R2 (w tym kopie baz), Workers, Email Routing, Access i Turnstile.
-- Kierunek: **zmienić dokument** (po decyzjach z LEG-07 i LEG-08). Podać kategorie odbiorców i rolę każdego (podmiot przetwarzający vs odrębny administrator). Sprawdzić zawarcie umów powierzenia: Hetzner (AVV w panelu), Cloudflare/Resend (DPA przyjmowane z regulaminem), Stripe (DPA z SPEL). **[PRAWNIK]**: kwalifikacja ról Google, Stripe i operatorów metod.
-- Nakład: S (tekst) + decyzje właściciela.
-
 **LEG-02 | P1 | Skrypty i cookies stron trzecich u każdego gościa bez zgody, sprzecznie z § 7 Polityki**
 - Dokument: `LegalDocs.tsx:242-250` / `:467-475` („wyłącznie… niezbędnych… Nie używamy… śledzących”) oraz podsumowanie `:151`.
 - Kod:
@@ -179,27 +174,6 @@ Format: **ID | waga | miejsce (dokument / kod) | niezgodność | kierunek | nak�
   - **[PRAWNIK/doradca podatkowy]**: wpływ na kwalifikację darowizny.
 - Nakład: S.
 
-**LEG-04 | P1 | Usunięcie konta: mail i deklaracje vs rzeczywistość**
-- Dokument:
-  - mail `account-deleted` w `lib/email-defaults.ts:238-275`: „trwale usunięte”, „✓ Historia komentarzy i reakcji”, „odpowiedz na tego maila w ciągu 30 dni”;
-  - Polityka § 4: „Dane konta… do czasu jego usunięcia”;
-  - Regulamin § 3 ust. 1: „można je usunąć w każdej chwili”.
-- Kod: `lib/modules/users/application/account-deletion-cleanup.use-case.ts:40-93`.
-  - Kasowane: sesje, loginy, 2FA, awatar, subskrypcje, preferencje e-mail.
-  - **Zostają**: wiersz `User` jako nagrobek, tekst komentarzy (ukryty publicznie, ale w bazie), reakcje i polubienia, `CommentReport`, powiadomienia, płatności i `StripeEvent`, `AuditLog` z IP i UA, telemetria z `userId`, `BroadcastEmailRecipient.email`, `EmailEvent.email`, `InboundEmail`, kontakt w **Resend Audience** (brak wywołania usunięcia), obiekt **Customer w Stripe** z e-mailem (lokalnie tylko `stripeCustomerId: null`), rozmowy w PP Support i Gmailu, kopie zapasowe do 14 dni, kopia na Neon (LEG-08).
-  - Przywrócenie konta w ciągu 30 dni jest niemożliwe, bo metody logowania są kasowane.
-- Kierunek:
-  - **zmienić kod**: przy usunięciu konta nadpisać tekst i obraz komentarzy jak przy usunięciu przez autora, skasować reakcje, polubienia i powiadomienia, usunąć kontakt z Resend Audience, zanonimizować e-mail w `BroadcastEmailRecipient` i `EmailEvent`, rozważyć usunięcie lub redakcję Customer w Stripe przez API;
-  - **zmienić dokumenty**: mail ma mówić prawdę (co usunięto, co zostaje i dlaczego, np. płatności z powodów podatkowych; bez obietnicy 30 dni), a § 4 Polityki ma opisać, co zostaje.
-  - **[PRAWNIK]**: okres przechowywania płatności i logów.
-- Nakład: M.
-
-**LEG-05 | P1 | Rejestracja bez Regulaminu i Polityki; akceptacja nigdzie nie jest zapisywana**
-- Dokument: Regulamin § 3 (konto); art. 8 ust. 1 UŚUDE (udostępnienie regulaminu przed zawarciem umowy); art. 13 RODO (informacja przy zbieraniu danych).
-- Kod: `app/components/auth/AuthModal.tsx` i `OnboardingDialog.tsx` nie mają linków ani akceptacji Regulaminu i Polityki. To samo dotyczy rejestracji przez Google i One Tap (konto powstaje jednym kliknięciem). Akceptacja jest tylko przy napiwku (`app/components/support/TipRecipientStep.tsx:58-66`), a `create-intent` (`app/api/checkout/create-intent/route.ts:63`) jej nie przyjmuje ani nie zapisuje. Brak pól typu `termsAcceptedAt`/`termsVersion`.
-- Kierunek: **zmienić kod**. Formularz rejestracji i dialog pierwszego logowania (także Google/One Tap) powinny pokazywać informację z linkami do Regulaminu i Polityki. Rozważyć zapis daty i wersji akceptacji (Regulamin) oraz zapis przekazania informacji (Polityka). **[PRAWNIK]**: czy wystarczy klauzula informacyjna, czy potrzebna aktywna akceptacja.
-- Nakład: S–M.
-
 **LEG-06 | P1 | Regulamin nie ma trybu postępowania reklamacyjnego**
 - Dokument: `LegalDocs.tsx:37-133` (5 paragrafów, „Reklamacje” usunięto 2026-09-22). Metadane stron nadal obiecują „reklamacje/complaints”: `app/[locale]/regulamin/page.tsx:12`, `app/[locale]/terms/page.tsx:12`.
 - Wymóg: art. 8 ust. 3 pkt 4 UŚUDE (regulamin określa tryb reklamacji) ([arslege, art. 8](https://arslege.pl/regulamin-swiadczenia-uslug-droga-elektroniczna/k879/a62684/), [lookreatywni](https://lookreatywni.pl/baza-wiedzy/reklamacja-regulamin-swiadczenia-uslug-droga-elektroniczna/)). Usługa elektroniczna to konto, komentarze i odtwarzanie; reklamacja dotyczy działania serwisu, nie sprzedaży.
@@ -225,17 +199,6 @@ Format: **ID | waga | miejsce (dokument / kod) | niezgodność | kierunek | nak�
 - Nakład: S–M.
 
 ### P2
-
-**LEG-09 | P2 | Okresy przechowywania: deklaracja „logi do 90 dni” vs bezterminowo**
-- Dokument: `LegalDocs.tsx:211-219` / `:436-444`.
-- Kod:
-  - bezterminowo: `AuditLog` z `ip`/`userAgent` (`prisma/schema.prisma:225-243`), `VideoPlaybackEvent` i zaliczone `VideoPlaybackSession`, `VideoView`, `StripeEvent.payload`, `ClerkEvent.payload`, `EmailEvent.payload`, `InboundEmail`, `Notification`;
-  - jedyne crony retencji: `prune-playback-sessions` (tylko sesje niezaliczone, 30 dni) i `prune-unverified-accounts` (konta niezweryfikowane, 7 dni);
-  - wygasłe `Session` i `Verification` nie są aktywnie czyszczone;
-  - logi kontenera `app` bez rotacji w compose;
-  - kopie zapasowe 7/14 dni nie są wspomniane.
-- Kierunek: **zmienić kod** (cron retencji: `AuditLog` i telemetria np. 90 dni lub 12 miesięcy wg decyzji, payloady webhooków skracane po przetworzeniu, czyszczenie wygasłych sesji i tokenów, rotacja logów) i **dokument** (tabela okresów, w tym kopie zapasowe). **[PRAWNIK]**: okres dla płatności i audytu.
-- Nakład: M.
 
 **LEG-10 | P2 | Telemetria oglądania nieopisana; skróty IP/UA bez soli**
 - Kod: `app/api/videos/[id]/playback-event/route.ts:31-36`, `app/api/media-source/[videoId]/route.ts:54-55`, modele `VideoPlaybackSession`/`VideoPlaybackEvent`/`VideoView`.
@@ -335,18 +298,6 @@ Format: **ID | waga | miejsce (dokument / kod) | niezgodność | kierunek | nak�
 
 ### P3
 
-**LEG-20 | P3 | Prawa w praktyce: brak samoobsługowego eksportu; mylące zdanie o usunięciu konta**
-- Dokument: Polityka § 5: „Wystarczy wysłać e-mail… — w ten sposób usuniesz też konto” (`LegalDocs.tsx:225-227`); EN „this also deletes your account” (`:450-452`) brzmi, jakby każdy mail o prawach kasował konto.
-- Kod: samoobsługowe usunięcie istnieje (`AccountSections.tsx:165-238`); eksportu danych nie ma (prawo do przenoszenia jest obiecane).
-- Kierunek: dokument (wskazać usunięcie w ustawieniach konta, przenoszenie realizowane na żądanie mailowe w ciągu miesiąca); opcjonalnie kod (eksport JSON).
-- Nakład: S.
-
-**LEG-21 | P3 | Martwy `@vercel/analytics`**
-- Kod: `app/layout.tsx:15,76`, `package.json`.
-- Niezgodność: na serwerku zapytanie kończy się 404 i nic nie jest wysyłane, ale ponowne uruchomienie na Vercelu włączyłoby analitykę sprzecznie z Polityką.
-- Kierunek: usunąć z kodu.
-- Nakład: XS.
-
 **LEG-22 | P3 | Terminologia i drobne rozjazdy wokół wpłat**
 - Regulamin mówi „wsparcie (darowizna)”, a UI i maile „napiwek” (`TipDisclaimerStep.tsx:32`, `email-defaults.ts:118-196`). „Napiwek” potocznie oznacza zapłatę za obsługę **[doradca podatkowy]**.
 - Maile mówią „Otrzymano i **zaksięgowano**” (`email-defaults.ts:127`).
@@ -366,12 +317,6 @@ Format: **ID | waga | miejsce (dokument / kod) | niezgodność | kierunek | nak�
 - Kierunek: osobne daty i wersje per dokument, archiwum poprzednich wersji.
 - Nakład: S.
 
-**LEG-25 | P3 | Wymuszony angielski (`TEMP_FORCE_ENGLISH`)**
-- Kod: `lib/i18n/server-language.ts:31-34`; `User.language` ma domyślnie `"en"`.
-- Niezgodność: polscy użytkownicy domyślnie lądują na `/en`, czyli na angielskim Regulaminie, który sam deklaruje, że wiążąca jest wersja polska. Maile mogą iść po angielsku.
-- Kierunek: decyzja właściciela; przy produkcyjnym ruchu wyłączyć flagę.
-- Nakład: XS.
-
 **LEG-26 | P3 | Minimalizacja i bezpieczeństwo**
 - Tokeny Google (access, refresh, idToken z imieniem, nazwiskiem i zdjęciem) leżą jawnie w `Account`; Better Auth ma opcję szyfrowania tokenów OAuth.
 - Adresy e-mail są logowane jawnie (`send-transactional-email.use-case.ts:90,94`).
@@ -384,22 +329,6 @@ Format: **ID | waga | miejsce (dokument / kod) | niezgodność | kierunek | nak�
 - Ryzyko: dziś wiersze powstają tylko przez jawne opt-in lub opt-out, ale domyślna zgoda w schemacie to pułapka na przyszłość.
 - Kierunek: migracja domyślnej wartości na `false`.
 - Nakład: XS.
-
-**LEG-28 | P3 | Nagrobek e-mail w prawdziwej domenie**
-- Kod: `account-deletion-cleanup.use-case.ts:14-16` (`deleted_…@deleted.com`).
-- Ryzyko: `deleted.com` to istniejąca domena. Wysyłki filtrują `isDeleted`, ale bezpieczniej użyć domeny zarezerwowanej (np. `.invalid`).
-- Nakład: XS.
-
-**LEG-29 | P3 | Endpoint `/api/comments/image-upload` do Vercel Blob**
-- Kod: `app/api/comments/image-upload/route.ts:2,38`.
-- Niezgodność: UI z niego nie korzysta, ale API jest aktywne dla każdego zalogowanego i wysyła pliki do wycofanego dostawcy.
-- Kierunek: usunąć lub przenieść na R2.
-- Nakład: XS.
-
-**LEG-30 | P3 | § 7 Polityki bez listy cookies i elementów pamięci przeglądarki**
-- Dokument: `LegalDocs.tsx:242-250`.
-- Kierunek: dodać tabelę (nazwa, cel, czas życia, dostawca) wg sekcji 4, po wdrożeniu LEG-02.
-- Nakład: S.
 
 ---
 

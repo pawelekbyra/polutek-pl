@@ -1,5 +1,7 @@
 # Audyt wydajności postrzeganej: preloader, ładowanie, płynność (pawelperfect.com)
 
+> Stan po naprawach: patrz `RESULT-www-fixes.md` (znaleziska naprawione lub nieaktualne zostały usunięte z tego pliku).
+
 Data: 2026-10-03. Stan kodu: `main` @ `88c787d0`. Audyt tylko do odczytu, jako gość, tylko GET.
 Narzędzia: analiza kodu, `curl` (HTTP/1.1, Schannel), sonda HTTP/2 w Node (`http2`), Playwright 1.61 + systemowy Chrome 154 (headless), z PerformanceObserver (`layout-shift`, `largest-contentful-paint`, `longtask`) i znacznikami stanu preloadera/wideo co klatkę.
 Ograniczenia: (a) Lighthouse (`npx lighthouse@13`) uruchomiony, ale zabity przez limit czasu (maszyna mocno obciążona); nie powtarzałem go, żeby nie dokładać ruchu na produkcję. Zastępczo: przebieg Playwright z emulacją „Slow 4G” (150 ms RTT, 1,6 Mb/s, CPU ×4). (b) Wyszukiwarka/WebFetch zwróciły limit sesji, więc źródła w §6 to oficjalna dokumentacja podana z wiedzy, **niezweryfikowana w tej sesji**. (c) DNS na tej maszynie jest wolny (0,3–1,5 s), więc czasy „zimnego” pierwszego wejścia są zawyżone o ten koszt. Czasy serwera podaję osobno (ciepłe połączenie HTTP/2).
@@ -168,66 +170,11 @@ Tworzenie sesji odtwarzania przy hoverze/bezczynności: zysk istnieje (plan goto
 
 Skala: P1 = widocznie psuje cel „gotowe naraz” albo marnuje sekundy; P2 = istotne; P3 = drobne. Nakład S/M/L. Zysk szacowany z pomiarów w §2.
 
-**LOAD-01 · P1 · CSP blokuje wszystkie miniatury i postery z R2**
-- Plik: `lib/utils/security.ts:58-66` (`imageHosts` nie zawiera `NEXT_PUBLIC_R2_PUBLIC_HOST`), `:112`.
-- Problem: `img-src 'self' data: blob: https://img.clerk.com https://images.unsplash.com https://www.dicebear.com`. Blokowane: poster w `PlayerPosterLoading` (`PlayerLoadingState.tsx:52`), `useDecodedImage` w bramce (`PageRevealGate.tsx:218-241`), `loadImage` w `AppPreloadProvider.tsx:68-79`, `<link rel=preload as=image>` w `<head>`. Zmierzone: 11 naruszeń CSP na wejście, `naturalWidth = 0`, czarny odtwarzacz do pierwszej klatki (desktop ~9 s, mobile ~5 s po kliknięciu bramki), czarny ekran 3 s przy każdym przełączeniu. Rozgrzewanie posterów jest martwe, a „poster” bramki jest „gotowy” tylko dlatego, że błąd też kończy oczekiwanie.
-- Naprawa: dodać `...parseMediaHosts(process.env.NEXT_PUBLIC_R2_PUBLIC_HOST)` (i `api.dicebear.com`, używany w `EmbeddedComments.tsx:123`) do `imageHosts`; test jednostkowy, że host R2 jest w `img-src`.
-- Zysk: brak czarnego odtwarzacza; plakat od pierwszej klatki HTML. Nakład S. Pewność: wysoka (zmierzone).
-
-**LOAD-02 · P1 · hls.js pobierany z cdn.jsdelivr.net dopiero przy montażu odtwarzacza**
-- Plik: `package.json` (brak `hls.js`), `app/components/VideoPlayer.tsx:333-338`.
-- Problem: Vidstack bez skonfigurowanej biblioteki importuje `https://cdn.jsdelivr.net/npm/hls.js@^1.5.0/dist/hls.min.js` (zmierzone: 189 KB, +1,5 s, start dopiero ~2,7 s po `media-source`). Nowe połączenie do obcej domeny, zakres wersji `^1.5.0` (niedeterministyczny), zależność od dostępności jsDelivr i dodatkowy wyjątek w CSP `script-src`.
-- Naprawa: dodać `hls.js` do zależności i ustawić w `onProviderChange`: `provider.library = () => import('hls.js')` (Vidstack obsługuje funkcję zwracającą moduł); dodatkowo `import('hls.js')` jako preload przy starcie (`requestIdleCallback`) albo `<link rel="modulepreload">`. Usunąć `cdn.jsdelivr.net` z CSP.
-- Zysk: ~1,0–1,5 s do pierwszej klatki (desktop i mobile), mniej punktów awarii. Nakład S. Pewność: wysoka.
-
-**LOAD-03 · P1 · Testowy segment 360p (557 KB) przed właściwym startem**
-- Plik: `app/components/VideoPlayer.tsx:336` (`startLevel: -1, abrEwmaDefaultEstimate: 4_000_000`).
-- Problem: przy `startLevel:-1` hls.js domyślnie robi `testBandwidth` na najniższym poziomie: pobrany 360p `seg_00000` (557 KB), potem ten sam fragment w 540p (865 KB). Na Slow 4G to +3,1 s. Segmenty po 6 s są duże jak na pierwszą klatkę.
-- Naprawa: `testBandwidth: false` i jawny `startLevel` (np. 540p na desktopie, 360p na mobile/`saveData`), `startFragPrefetch: true`, `maxBufferLength` na starcie 10 s (zwiększyć po starcie). W enkoderze (`scripts/hls/encode-hls.mjs`) rozważyć 2-sekundowy pierwszy segment (albo `-hls_time 2` dla pierwszych sekund / krótszy GOP), co skraca pierwszą klatkę niezależnie od pasma.
-- Zysk: mobile ~3 s, desktop ~0,5 s. Nakład S (konfiguracja), M (enkoder). Pewność: wysoka dla testBandwidth (zmierzone podwójne pobranie).
-
-**LOAD-04 · P1 · Stripe.js ładowany u każdego odwiedzającego**
-- Plik: `lib/hooks/useCheckoutFlow.ts:8, 30-32` (moduł-level `loadStripe`), import przez `app/components/channel/SidebarPlaylist.tsx:16` (`DonationBox`) i `CheckoutModal`.
-- Problem: na starcie gościa: `stripe.js` 256 KB + `controller` 349 KB + `shared` 203 KB + iframe `m.stripe.network`, choć bramka napiwku jest ukryta (`TEMP_SUPPORT_AS_MODAL`) i gość nie może płacić. Na mobile `stripe.js` pobierał się 2,4 s równolegle z hls.js i segmentami.
-- Naprawa: `import { loadStripe } from '@stripe/stripe-js/pure'` i wywołanie dopiero w `SupportModal`/`CheckoutModal` (leniwie, np. przy hoverze/focusie na „Wspieraj” jako rozgrzanie); `DonationBox` i `SupportModal` przez `next/dynamic` (jest już dla `SupportModal`, brak dla `DonationBox`).
-- Zysk: −~800 KB zewnętrznego JS i ~0,5–1 s CPU na mobile; pasmo dla wideo. Nakład S. Pewność: wysoka.
-
 **LOAD-05 · P1 · Bramka czeka do 6 s, a potem jeszcze ~3 s animacji, zanim da się kliknąć**
 - Pliki: `app/components/preload/PageRevealGate.tsx:177, 271-297`, `MatrixGatePrompt.tsx:47-78`, `VideoPlayer.tsx:74, 158-161`.
 - Problem: faza „covering” czeka na `auth` + poster + `player` (pierwsza klatka i 3 s bufora) + `comments`. Zmierzone: zawsze kończy limit (7,4 s desktop / 7,8 s mobile, bo długie zadania opóźniają timer), a „gotowość” wideo przychodzi 9–13 s później. Potem 2,2 s pisania + 0,7 s → przycisk po ~10–11 s. Koszt dostępności: `role="status"` na zasłonie, `aria-label` „Ładowanie strony…” zamiast nazwy akcji; `body overflow:hidden`; przycisk `aria-label="Enter"` także w PL. SEO: treść jest w HTML, więc indeksacja OK; LCP liczony przez Chrome pod zasłoną (5,3–5,6 s), czyli metryki nie oddają tego, co widzi użytkownik.
 - Naprawa: bramka jako czysta nakładka od pierwszego malowania (napis i przycisk w HTML/CSS; animacja pisania przez CSS `steps()`), przycisk aktywny po hydratacji, bez fazy „covering” i bez `waitFor`. Czas patrzenia na bramkę wykorzystać na: preload manifestu HLS + pierwszego segmentu (`<link rel=preload as=fetch crossorigin>` po planie z RSC), dekodowanie postera, `import('hls.js')`, czcionki. Klik odsłania stronę, która była gotowa pod spodem; jeżeli wideo nie gra, widać poster (po LOAD-01).
 - Zysk: przycisk dostępny ~1 s po FCP zamiast ~10 s (−6 do −9 s czekania). Nakład M. Pewność: wysoka.
-
-**LOAD-06 · P1 · Stan auth tylko po stronie klienta (wszystko czeka na `get-session`)**
-- Pliki: `lib/auth/react.ts:60-79` (`authClient.useSession()`), konsumenci: `Navbar.tsx:34, 198-225`, `PremiumWrapper.tsx:81, 97-102`, `AppPreloadProvider.tsx:96, 104`, `SidebarPlaylist.tsx:76-80, 112`, `Hero.tsx:41, 73-93`, `EmbeddedComments.tsx:78-79`, `PageRevealGate.tsx:250, 273`.
-- Problem: serwer już zna sesję (`HomeExperience.tsx:46-55`), ale klient zaczyna od `isLoaded=false`, robi `GET /api/auth/get-session` (zmierzone: 0,5–1,4 s po DCL) i dopiero wtedy: znika szkielet nawigacji, rusza plan odtwarzania (cały łańcuch wideo przesunięty o ten RTT), zapala się „polubione”, kafelki premiery zmieniają się z ściany logowania na PREMIERA.
-- Naprawa: `AuthSessionProvider initialSession={…}` w root layout (sesja z `auth()`, tylko pola publiczne: id, name, image, emailVerified, language, onboardingPending, twoFactorEnabled; `sessionId` potrzebny do `viewerKey`) i wpisanie jej do store Better Auth przed pierwszym renderem (`authClient.$store.atoms.session.set({ data, isPending:false, … })` albo własny kontekst nadrzędny nad `useAuth`). Uwaga: root layout odczyta wtedy nagłówki, więc wszystkie strony staną się dynamiczne; lepiej zrobić to tylko w layoutach, które i tak są dynamiczne (home, search, watch), a statyczne strony prawne zostawić z `isLoaded` po kliencie.
-- Zysk: −1 RTT (100–300 ms realnie, 0,5–1,4 s zmierzone na tej maszynie) na całym łańcuchu wideo; znika S1 i trzy „mignięcia” u zalogowanych. Nakład M. Pewność: wysoka.
-
-**LOAD-07 · P2 · Plan odtwarzania Hero dopiero po hydratacji**
-- Pliki: `PremiumWrapper.tsx:117-223`, `AppPreloadProvider.tsx:240-285`, `app/api/media-source/*`.
-- Problem: łańcuch hydratacja → auth → `media-source` (~170–320 ms) → montaż. Plan jest per-widz (sesja odtwarzania, token HLS), więc nie wolno go cache’ować, ale można go policzyć w tym samym żądaniu HTML.
-- Naprawa: w `HomeExperience` wywołać `PlaybackService.createPlaybackPlanWithContext()` dla Hero i przekazać do `AppPreloadProvider` jako rekord `ready` dla `viewerKey` z serwera; HTML i tak jest `private, no-store`, więc token nie trafi do cache. Dodać `<link rel="preload" as="fetch" crossorigin href=master.m3u8>` (React 19 `preload(url, { as: 'fetch', crossOrigin })`) i `preconnect` do `video.pawelperfect.com` w `<head>`. Zachować inwarianty §4.3: plan odmowy bez URL/tokenu, sesja tylko dla planu `READY`.
-- Ryzyko: strona dla gościa przestaje być kandydatem do cache HTML (i tak nie jest); każdy GET HTML tworzy sesję odtwarzania (już dziś robi to klient), więc boty też je utworzą: tworzyć sesję leniwie przy pierwszym evencie odtwarzania albo filtrować UA.
-- Zysk: −0,3 do −0,8 s do startu manifestu. Nakład M. Pewność: średnia.
-
-**LOAD-08 · P2 · Natywne pobranie manifestu przez `<video>` przed hls.js**
-- Plik: `VideoPlayer.tsx:245-255`.
-- Problem: w pomiarze `media 206 master.m3u8` (+933 ms) przed `xhr master.m3u8` hls.js: Chrome z natywnym HLS próbuje `src` zanim Vidstack przełączy się na hls.js. Podwójny manifest i wyścig.
-- Naprawa: podać źródło jako `{ src, type: 'application/x-mpegurl' }` i preferować hls.js w Chrome (Vidstack `preferNativeHLS: false`) albo świadomie wybrać natywny HLS tam, gdzie działa (wtedy pominąć hls.js całkiem). Zweryfikować w Chrome 154.
-- Zysk: ~0,3–0,9 s i jedno żądanie. Nakład S. Pewność: średnia.
-
-**LOAD-09 · P2 · Brak cache publicznej treści; 3× ten sam loader na żądanie**
-- Pliki: `app/[locale]/(home)/page.tsx:10, 42, 81`, `HomeExperience.tsx:48`, `home-content.loader.ts:92-94`, `video-content.service.ts:137-257`, `channel-layout.service.ts:66-82`.
-- Problem: ~26 zapytań do bazy na żądanie gościa, 3 identyczne szeregowe łańcuchy po ~8 zapytań; admin `user.findFirst` 3× na łańcuch; `findMainChannel` wielokrotnie.
-- Naprawa: (1) natychmiast: `export const getHomeContentCached = cache(loadHomeContent)` (React `cache`, deduplikacja w obrębie żądania) i jedno zapytanie admin/kanał; (2) docelowo Next 16 Cache Components: `cacheComponents: true`, `'use cache'` + `cacheTag('videos')`/`cacheLife('minutes')` dla `loadHomeContent` i części sidebaru niezależnej od widza; `revalidateTag('videos')` w use case’ach admina (publish/update/archive/delete, premiera) i po zmianie zbiórki. Część per-widz (lajki, `isLocked`, plan) liczona osobno. Premiera: klucz cache z `cacheLife` krótszym niż odstęp do najbliższej premiery albo przeliczanie `isUpcomingPremiere` po odczycie z cache (już jest per-request w `channel-layout.service.ts`).
-- Zysk: TTFB z ~90–120 ms do ~40–60 ms; mniej CPU na 2 vCPU. Nakład S (React cache) / M (use cache). Pewność: wysoka.
-
-**LOAD-10 · P2 · ~10 prefetchy RSC do dynamicznego serwera na wizytę**
-- Pliki: `SidebarPlaylist.tsx:186` (`<Link href=feedVideoHref scroll={false}>`), `Footer.tsx:31-34`, `Hero.tsx:245, 258`.
-- Problem: Next prefetchuje widoczne linki; dla `force-dynamic` każdy prefetch to wywołanie serwera (do granicy `loading`). Kliknięcia w playlistę są przechwytywane (`preventDefault`), więc prefetch nigdy nie jest użyty. Druga runda po `history.replaceState` (UrlMask/ChannelHome).
-- Naprawa: `prefetch={false}` na linkach playlisty; stopka i kanał: prefetch przy hoverze (`router.prefetch` w `onMouseEnter`) albo statyczne strony prawne (LOAD-12) z domyślnym prefetchem, który wtedy idzie z cache.
-- Zysk: −8 do −10 żądań na wizytę do serwera. Nakład S. Pewność: wysoka.
 
 **LOAD-11 · P2 · Ponowne wejście w tej samej karcie pokazuje surowe ładowanie**
 - Pliki: `PageRevealGate.tsx:184-203, 255-257`, `HomeRouteLoading.tsx:14-17`.
@@ -252,22 +199,6 @@ Skala: P1 = widocznie psuje cel „gotowe naraz” albo marnuje sekundy; P2 = is
 - Problem: pełne przerysowanie płótna co klatkę, ~7 tys. `fillText` na klatkę przy 1440×900 (102 kolumny × 71 wierszy), w czasie hydratacji, fetchy i startu hls.js. Desktop: 127 długich zadań, 11,1 s w ~24 s.
 - Naprawa: rysować tylko głowy i zmienione komórki (zanikanie przez półprzezroczysty `fillRect`), limit 30 fps, atlas glifów (`drawImage`) albo `OffscreenCanvas` w workerze; pauza na czas hydratacji (start po `requestIdleCallback`).
 - Zysk: kilka sekund CPU na słabszych urządzeniach, szybsza hydratacja i INP kliknięcia bramki. Nakład S–M. Pewność: wysoka.
-
-**LOAD-15 · P2 · Ciężki JS pierwszego widoku (666 KB br)**
-- Pliki: `app/layout.tsx:14, 69` (`AuthModalProvider` → statycznie `AuthModal`, `OnboardingDialog`, `GoogleOneTapPrompt`; chunk 50 KB br), `AccessLockOverlay.tsx:4, 8` (framer-motion + cały kokpit premier dla wszystkich), `EmbeddedComments` + framer `AnimatePresence`, `SidebarPlaylist.tsx:16` (`DonationBox`).
-- Naprawa: `AuthModal` i `OnboardingDialog` przez `next/dynamic` z `preload` przy hoverze/focusie przycisku „ENTER”/„Zaloguj” i przy `?signin=1` (otwarcie i tak natychmiastowe); `CockpitComingSoon` dynamicznie tylko dla `COMING_SOON`; `DonationBox` dynamicznie; zamienić animacje framer-motion w nakładkach na CSS. Cel: < 350 KB br.
-- Zysk: ~1–1,5 s mniej pobierania na Slow 4G, krótsza hydratacja. Nakład M. Pewność: średnia (wielkości zmierzone, przypisanie do modułów po sygnaturach w chunkach).
-
-**LOAD-16 · P2 · Fonty: preload nieużywanych, brak preloadu kokpitu**
-- Pliki: `app/fonts.ts:4, 12-19`, `app/layout.tsx:47`.
-- Problem: preloadowane GeistMono (72 KB; w części publicznej `font-mono` prawie nieużywany) i Space Grotesk Bold (13,5 KB, nieużywany wg CLAUDE.md). Na Slow 4G fonty kończyły się po 4,4 s, konkurując z JS.
-- Naprawa: `GeistMono` z `preload: false` (albo tylko w layoucie admina), usunąć `brandLogoFont` z `className` root/`preload:false`. Dla zalogowanych z premierą: `preload` czcionek DSEG7/Oxanium (React 19 `preload(..., { as: 'font' })`) w momencie, gdy wiadomo, że Hero to premiera.
-- Zysk: −85 KB na ścieżce krytycznej. Nakład S. Pewność: wysoka.
-
-**LOAD-17 · P3 · Vercel Analytics na self-hoście (404) i duża ikona**
-- Pliki: `app/layout.tsx:15, 76`; `metadata.icons` (`:27-35`) → `/rabbit.png` 105 KB.
-- Naprawa: usunąć `<Analytics />` (404 + błąd MIME w konsoli przy każdej wizycie); favicon 32×32/48×48 PNG lub SVG (< 5 KB), osobny `apple-touch-icon` 180×180; obraz królika w bramce jako WebP/AVIF z wymiarami.
-- Nakład S. Pewność: wysoka.
 
 **LOAD-18 · P3 · Zmiany tekstu po hydratacji (`mounted`)**
 - Pliki: `Hero.tsx:265, 336, 382`, `SidebarPlaylist.tsx:263-281`.

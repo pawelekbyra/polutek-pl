@@ -1,5 +1,7 @@
 # Audyt frontendu pawelperfect.com (wydajność, dostępność, jakość kodu UI)
 
+> Stan po naprawach: patrz `RESULT-www-fixes.md` (znaleziska naprawione lub nieaktualne zostały usunięte z tego pliku).
+
 Data: 2026-10-03. Stan: `main` @ `88c787d0` (worktree `dns-migration-cloudflare-bcfaf0`). Audyt tylko do odczytu.
 Metody: czytanie kodu, lokalny `next build` (Next 16.3.8, Turbopack, bez `.env` z DB; build przeszedł, 7,2 min kompilacji), żądania GET do produkcji (`curl`, bez logowania), pomiar rozmiarów chunków z produkcji, skrypty Node w scratchpadzie (sieroty, nieużywane eksporty, tokeny CSS, kontrast).
 Pominięte zgodnie z poleceniem: kod dostawców Mux/Stream/YouTube/Vimeo (PR #1614), szczegółowa spójność stylów i szczegóły preloadera/szybkości ładowania (osobni agenci). `CLAUDE.md` traktowany jako historia; tam, gdzie kłamie, zaznaczam to.
@@ -33,39 +35,7 @@ Legenda: waga P1 (pilne / realna szkoda) · P2 (ważne) · P3 (porządki). Nakł
 
 ### A. Błędy działające na produkcji
 
-**FE-01 · P1 · SEO/dane** · `middleware.ts:81` (`LOCALE_EXEMPT_PATHS`), `app/unsubscribe/page.tsx`
-Problem: proxy przepisuje każdą ścieżkę bez prefiksu na `/pl/...`. Wyjątki obejmują `/sso-callback` i `/reset-password`, ale nie `/unsubscribe`, więc `/unsubscribe` → `/pl/unsubscribe`, a tam nie ma strony. Produkcja: `GET /unsubscribe` → 404. Link generowany w `signed-unsubscribe-token.ts:84` (`new URL('/unsubscribe', appUrl)`) prowadzi donikąd. To dotyczy obowiązku prawnego (wypis z wiadomości) i dostarczalności (List-Unsubscribe).
-Rozwiązanie: dodać `/unsubscribe` do wyjątków (oraz `/icon`, `/icon-512`, patrz FE-30) i dodać test, który dla każdej strony najwyższego poziomu bez wersji `[locale]` sprawdza, że nie jest przepisywana. Docelowo przenieść listę do jednego źródła razem z `UrlMask`. Nakład S. Pewność wysoka (sprawdzone GET).
-
-**FE-02 · P1 · bezpieczeństwo/SEO** · `middleware.ts:137-141`
-Problem: gałąź przepisywania polskich ścieżek robi `return rewriteResponse` przed ustawieniem CSP i reszty nagłówków ustawianych dalej w proxy. Produkcja: `/` nie ma `content-security-policy`, `/en` ma. Wszystkie polskie strony (domyślny język) działają bez CSP.
-Rozwiązanie: nagłówki doklejać w jednej funkcji `withSecurityHeaders(response)` także do odpowiedzi `NextResponse.rewrite`. Przy okazji przemianować plik na `proxy.ts` (Next 16 oznacza `middleware` jako przestarzały, build to zgłasza). Nakład S. Pewność wysoka.
-
-**FE-03 · P1 · dostępność/SEO/i18n** · `app/layout.tsx:44`, `lib/i18n/server-language.ts:31-34`, `app/components/Providers.tsx:96-98`
-Problem: `<html lang>` pochodzi z `resolveInitialLanguage()` (flaga `TEMP_FORCE_ENGLISH` = zawsze `en`), a nie z segmentu `[locale]`. Klientowy `Providers` wyciąga język z `usePathname()`, a ten dla przepisanego `/` zwraca `/`, nie `/pl`, więc `routeLocale` = null. Efekt na produkcji: `https://www.pawelperfect.com/` (hreflang=pl, canonical `/`) ma `lang="en"` i angielski `<h1>`, a `og:title` jest po polsku. Narusza to WCAG 3.1.1 (język strony) i spójność hreflang/treść. Także bez flagi język zależałby od ciasteczka, a nie od URL, więc ten sam URL dawałby różne treści.
-Rozwiązanie: język wyłącznie z parametru `[locale]`: `app/[locale]/layout.tsx` jako layout główny z `<html lang={locale}>` (wiele layoutów głównych lub przekazanie `params.locale` w dół) i `LanguageProvider` z `locale` z `params`. Ciasteczko i `Accept-Language` służą tylko do przekierowania z `/` przy pierwszej wizycie. Patrz rozdział 4.1. Nakład M. Pewność wysoka.
-
-**FE-04 · P1 · wydajność** · `app/components/AppVersionCheck.tsx:131-159`, `app/api/__version/route.ts`, `app/layout.tsx:40`
-Problem: (a) folder `app/api/__version` zaczyna się od `_`, czyli jest [folderem prywatnym](https://nextjs.org/docs/app/getting-started/project-structure) i nie tworzy trasy (nie ma go w wyniku `next build`). Produkcja zwraca HTML 404 (16 KB), renderowany przez Next co 60 s w każdej otwartej karcie, także w tle. (b) `buildId` = `VERCEL_GIT_COMMIT_SHA || 'development'`; na serwerku zmiennej nie ma, więc w HTML jest `data-build-id="development"`. (c) Gdyby to działało, robiłoby twardy reload w trakcie oglądania filmu.
-Rozwiązanie: usunąć komponent i trasę albo zrobić to porządnie: trasa `app/api/version/route.ts`, `BUILD_ID` jako `ARG` w Dockerfile, sprawdzanie tylko przy `visibilitychange`, a zamiast wymuszonego reloadu toast „Nowa wersja, odśwież”. Alternatywa: `deploymentId` w `next.config` (ochrona przed rozjazdem wersji przy nawigacji). Nakład S. Pewność wysoka.
-
-**FE-05 · P1 · wydajność/prywatność** · `app/layout.tsx:15,93`, `package.json` (`@vercel/analytics`)
-Problem: komponent analityki Vercela na self-hoście: `/_vercel/insights/script.js` → 404 na każdej stronie, a pakiet trafia do bundla.
-Rozwiązanie: usunąć zależność. Jeśli analityka jest potrzebna, użyć self-hostowanej (np. Umami/Plausible na serwerku) albo Cloudflare Web Analytics. Nakład S. Pewność wysoka.
-
 ### B. Wydajność i bundle
-
-**FE-06 · P1 · wydajność/prywatność** · `lib/hooks/useCheckoutFlow.ts:8,30-32`; łańcuch `ChannelHome.tsx:11` → `channel/SidebarPlaylist.tsx:16` → `channel/DonationBox.tsx:22`
-Problem: `loadStripe()` jest wywoływane na poziomie modułu, a samo `import … from "@stripe/stripe-js"` ma efekt uboczny: wstrzykuje `js.stripe.com`. Moduł jest importowany statycznie z playlisty, więc **każdy odwiedzający, także gość, ładuje Stripe.js** (z jego skryptami antyfraudowymi), mimo że bramka boczna jest ukryta flagą. W chunku produkcyjnym `0nka6ngk6e868.js` jest `js.stripe.com` i kod BLIK.
-Rozwiązanie: `import { loadStripe } from "@stripe/stripe-js/pure"` i leniwe `getStripe()` wołane dopiero przy otwarciu bramki ([stripe-js: import bez efektów ubocznych](https://github.com/stripe/stripe-js)). `SupportModal` jest już `dynamic`; trzeba jeszcze odciąć statyczny import `DonationBox` (patrz FE-50). Nakład S. Pewność wysoka.
-
-**FE-07 · P1 · wydajność** · `app/components/auth/AuthModalProvider.tsx:4-6`, `auth/UserMenu.tsx:17`, `auth/SecuritySection.tsx:7`
-Problem: `AuthModal`, `OnboardingDialog`, `GoogleOneTapPrompt` i `AccountModal` (z `SecuritySection` → `qrcode.react`, 2FA, sesje) są importowane statycznie w providerze montowanym w `app/layout.tsx`, więc lądują w JS każdej strony (chunki `10va_-pu0bnua.js` z 2FA/QR i `2hqk6qm95-7ks.js` z Turnstile). Większość gości nigdy nie otwiera logowania.
-Rozwiązanie: `next/dynamic` (lub `React.lazy`) dla zawartości modali, montowanej dopiero przy `open`. W providerze zostaje tylko stan i API `open()`. Prefetch przy `pointerenter` na przycisku „Wejście”. Nakład M. Pewność wysoka.
-
-**FE-08 · P1 · wydajność** · `app/components/AccessLockOverlay.tsx:4,8-9`
-Problem: statyczny import `CockpitComingSoon` (+ `HudBackdrop.tsx` 625 linii, `cockpit-timeline.ts`, logika audio) i `framer-motion` (dla jednej sprężyny w `LoginScene`). Kokpit trafia do pierwszego widoku każdej strony z playerem (chunk `2282erirdusm-.js`, 53 KB raw), także gdy żadna premiera nie trwa.
-Rozwiązanie: `dynamic(() => import("./coming-soon/CockpitComingSoon"))` tylko dla `state === "COMING_SOON"` i wariantu pełnego; animację `LoginScene` zrobić w CSS (`@starting-style`/keyframes). Nakład S. Pewność wysoka.
 
 **FE-09 · P1 · wydajność (budżet)** · cały pierwszy widok (`app/[locale]/(home)`)
 Problem: ≈630 KB gz JS na pierwszy widok to kilkukrotnie więcej niż rozsądny budżet dla strony z jednym playerem. Główne składniki (pomiar chunków z produkcji): Vidstack+hls 117 KB gz, framer-motion 46 KB gz, Better Auth + modale ≈ 70 KB gz, Stripe/tip ≈ 21 KB gz, kokpit ≈ 17 KB gz, TanStack Query, date-fns z locale `pl`.
@@ -75,17 +45,9 @@ Rozwiązanie: po FE-06/07/08/10/50 ustalić budżet (np. ≤ 250 KB gz) i pilnow
 Problem: pełny framer-motion (141 KB raw) służy do kilku efektów wejścia i liczników.
 Rozwiązanie: przejście na CSS (keyframes, `@starting-style`, `transition-behavior: allow-discrete`). Jeśli coś musi zostać, to `LazyMotion` + `m` + `domAnimation` tylko w komentarzach. Nakład M. Pewność wysoka.
 
-**FE-11 · P1 · wydajność/CSS** · `app/globals.css:1-2`
-Problem: globalny import `@vidstack/react/player/styles/default/theme.css` i `layouts/video.css`. W głównym CSS jest ≈59 KB raw reguł Vidstack, w tym ≈30 KB domyślnego layoutu (menu, tooltipy, przyciski), choć projekt używa własnych kontrolek (`PolutekControls`) i nigdzie nie ma `DefaultVideoLayout`. Ten CSS ładuje się też w panelu admina i na stronach prawnych.
-Rozwiązanie: usunąć `layouts/video.css`, a potrzebne zmienne/bazę zaimportować w module playera (`VideoPlayer`), żeby trafiały tylko do chunku playera. Nakład S. Pewność wysoka.
-
 **FE-12 · P2 · CSS/wydajność** · `tailwind.config.ts:106-108`
 Problem: wtyczka `@tailwindcss/typography` dokłada ≈26 KB raw `.prose` do globalnego CSS, a klasa `prose` występuje tylko w `app/admin/emails/components/BroadcastWizard.tsx` i `app/admin/emails/broadcast/BroadcastHistory.tsx`.
 Rozwiązanie: usunąć wtyczkę i ostylować podgląd maila lokalnie; ewentualnie `@plugin` w osobnym CSS admina. Nakład S. Pewność wysoka.
-
-**FE-13 · P1 · wydajność** · `app/fonts.ts:9-17`, `app/layout.tsx:6,47`, `tailwind.config.ts:28-31`
-Problem: czcionka Space Grotesk (`brandLogoFont`) nie jest używana (`font-brandLogo` nie występuje w kodzie), ale jest **preloadowana nagłówkiem `Link` przy każdej odpowiedzi** (produkcja: `space_grotesk_bold_latin…woff2; rel=preload`). Do tego `app/fonts/bowlby-one-latin.woff2` (+ OFL) nie jest nigdzie używana.
-Rozwiązanie: usunąć `brandLogoFont`, wpis `brandLogo` w Tailwind, pliki `space-grotesk-bold-latin.woff2` i `bowlby-one-*`. Nakład S. Pewność wysoka.
 
 **FE-14 · P2 · wydajność/dane** · `app/components/preload/AppPreloadProvider.tsx:14,33-35,98-111,220-223,240-285`, `preload/PreloadProgressBar.tsx:134-142`
 Problem: (a) przy każdym wejściu boot rozgrzewa bieżący film i w `requestIdleCallback` 3 sąsiednie, każdy przez `/api/media-source/…`, co tworzy prawdziwe `VideoPlaybackSession`, podpisane tokeny i dociąga komentarze, nawet gdy widz nic nie kliknie. (b) `priority` w `WarmVideoOptions` nie jest nigdzie czytane. (c) `markVideoActive`, `warmComments`, `initialProgress` i `initialReady` są w kontekście, ale nikt ich nie używa z zewnątrz, a zmiany `initialProgress` (≈5 na każdy film) odświeżają wartość kontekstu, czyli renderują ponownie całe `ChannelHomeContent` (konsument `useAppPreload`). (d) Postęp jest równolegle rozgłaszany zdarzeniem `window` do `PreloadProgressBar`.
@@ -95,10 +57,6 @@ Rozwiązanie: rozgrzewać tylko przy intencji (hover/focus/touchstart) i tylko l
 Problem: plan `ready` jest trzymany w pamięci bez względu na `source.expiresAt`. Po powrocie do filmu po wygaśnięciu tokenu `PremiumWrapper` (`:246-257`) od razu robi drugi fetch.
 Rozwiązanie: traktować plan z `expiresAt - 120 s < now` jako brak w cache. Nakład S. Pewność wysoka.
 
-**FE-16 · P1 · dane/wydajność serwera** · `app/[locale]/(home)/page.tsx:46,72`, `app/components/home/HomeExperience.tsx:44-51,90-112`, `lib/modules/channel/application/home-content.loader.ts:86-94`, `lib/auth/server.ts:47-62`
-Problem: na jedno żądanie strony głównej `loadHomeContent()` wykonuje się **3 razy** (`generateMetadata`, `Home`, `HomeExperience`; „Cached” w nazwie niczego nie cache'uje, co przyznaje komentarz). `auth()` i `currentUser()` to dwa osobne `betterAuth.api.getSession` (brak `React.cache`); po usunięciu `TEMP_FORCE_ENGLISH` dojdzie trzecie w `resolveInitialLanguage`. Dalej `getOrCreateCurrentUser` i osobno `prisma.user.findUnique` dla tego samego użytkownika, plus zapytanie o `patronGrant` tylko dla dekoracyjnej odznaki.
-Rozwiązanie: owinąć `loadHomeContent` i odczyt sesji w `cache()` z React (deduplikacja w obrębie żądania), wywołać sesję raz, połączyć dwa odczyty użytkownika w jeden `select` z `role`. Docelowo Cache Components (rozdz. 4.2). Nakład S. Pewność wysoka.
-
 **FE-17 · P2 · wydajność** · `app/components/ChannelHome.tsx:380-393`, `channel/sidebar-layout-request.ts`, `ChannelHome.tsx:98-110`
 Problem: `SidebarPlaylist` jest montowana dwa razy (panel mobilny „zawsze zamontowany” i `aside` desktopu). Podwaja to DOM, obrazki, nakładki, zegary premiery i id `donations`. Istnieją wyłącznie po to, żeby to obejść: moduł deduplikacji żądań i `getVisibleDonationsElement`.
 Rozwiązanie: jedna instancja ustawiana CSS-em (grid z obszarami albo `order`), a nieaktywną kartę mobilną ukryć przez [`<Activity mode="hidden">`](https://react.dev/blog/2025/10/01/react-19-2) (React 19.2: stan zostaje, efekty są odmontowane). Moduł `sidebar-layout-request.ts` i helper od `#donations` znikają. Nakład M. Pewność wysoka.
@@ -106,10 +64,6 @@ Rozwiązanie: jedna instancja ustawiana CSS-em (grid z obszarami albo `order`), 
 **FE-18 · P2 · wydajność/architektura** · `force-dynamic` w `app/[locale]/(home)/page.tsx:10`, `search/page.tsx:10`, `watch/[slug]/page.tsx:7`, `channel/[slug]`, `app/admin/layout.tsx:6`; `app/layout.tsx` czyta ciasteczka/nagłówki
 Problem: każda strona jest w pełni dynamiczna, więc nie ma statycznej powłoki i TTFB zależy od bazy. Publiczna część strony głównej (lista filmów, opisy) jest identyczna dla wszystkich.
 Rozwiązanie: Next 16 [Cache Components](https://nextjs.org/blog/next-16) (`cacheComponents: true`, `"use cache"` + `cacheTag('videos')` dla treści publicznych, `updateTag`/`revalidateTag` przy publikacji w adminie), a rzeczy zależne od widza (polubienia, subskrypcja, sesja) w `<Suspense>`. Daje to PPR: statyczną powłokę z CDN Cloudflare plus dynamiczne dziury. Nakład L. Pewność średnia (wymaga przebudowy granic danych).
-
-**FE-19 · P2 · wydajność** · `app/components/legal/LegalDocs.tsx` (486 linii, 4 dokumenty × 2 języki) importowany przez `support/TipLegalDialog.tsx:12` i `channel/DonationLegalDialog.tsx`
-Problem: pełne teksty regulaminu i polityki trafiają do JS klienta strony głównej (znacznik „Regulamin” w chunkach `0nka6…` i `20hxw…`).
-Rozwiązanie: dialog prawny ładowany `dynamic()` przy otwarciu albo treść pobierana jako RSC lub z trasy. Nakład S. Pewność wysoka.
 
 **FE-20 · P3 · jakość** · `app/components/Providers.tsx:62-85,102-104`
 Problem: globalne nadpisanie `window.fetch` wywoływane w trakcie renderu, żeby dodać timeouty trzem ścieżkom. Ukryte, globalne i łatwe do zapomnienia.
@@ -145,49 +99,17 @@ Rozwiązanie: zawsze startować od `covering`, a pominięcie liczyć w `useLayou
 Problem: (a) `new Date(publishedAt).toLocaleDateString(...)` w renderze bez strefy czasowej (serwer UTC, klient lokalnie): ryzyko rozjazdu hydracji w okolicy północy. (b) Wzorzec „najpierw surowa liczba, po `mounted` sformatowana” daje dodatkowy render i mignięcie. (c) Trzy `useEffect` kopiujące propsy do stanu po `video.id`, mimo że `Hero` i tak jest przemontowywany przez `key={selectedVideo.id}` na wrapperze (`ChannelHome.tsx:330-333`), więc te efekty są zbędne.
 Rozwiązanie: formatowanie po stronie serwera (`Intl` z `timeZone: 'Europe/Warsaw'`), przekazanie gotowych stringów, usunięcie efektów synchronizujących. Nakład S. Pewność wysoka.
 
-**FE-28 · P3 · stan** · `app/components/LanguageContext.tsx:44-74,77-97,223-233`
-Problem: złożony efekt z refami pod `forcedLanguage`/`UrlMask`; `setLanguage` zmienia tożsamość przy każdej zmianie języka; `t` memoizowane dwa razy; **21 z 46 kluczy słownika nieużywanych** (`subscribeMobile, replying, showAll, support, materials, donate, loginToWatch, loginReq, supportArtist, supportBrand, loginToWatchShort, independencyTitle, welcomeOn, independencyTitleLoggedIn, patronZone, patronZoneLine1, patronZoneLine2, loginGatedText, acceptTerms, tipTheGuy`, `public`). `tipTheGuy` występuje tylko w testach.
-Rozwiązanie: zniknie razem z przebudową i18n (rozdz. 4.1); doraźnie usunąć martwe klucze. Nakład S. Pewność wysoka.
-
 ### D. SEO, metadane, PWA
-
-**FE-29 · P1 · SEO** · `app/sitemap.ts` (brak `dynamic`/`revalidate`)
-Problem: build oznacza `/sitemap.xml` jako statyczny (○). W `docker build` nie ma `DATABASE_URL`, więc zapytania lecą w `catch` i mapa nie zawiera kanału ani filmów (produkcja: 3,7 KB, same strony statyczne). Do tego mapa zawiera `/search` i `/en/search` (pusta strona wyników), `lastModified` = czas buildu, a wpisy `watch` (gdy są) to przekierowania.
-Rozwiązanie: `export const revalidate = 3600` (lub `dynamic = 'force-dynamic'`), usunąć `search`, dla filmów podawać kanoniczny URL docelowy (nie przekierowanie), `lastModified` z danych. Nakład S. Pewność wysoka.
-
-**FE-30 · P2 · PWA/SEO** · `app/layout.tsx:59`, `app/icon.tsx`, `app/icon-512/route.tsx`, `public/manifest.json:16-23`, `middleware.ts:81`
-Problem: `<link rel="apple-touch-icon" href="/icon">` → 404 (proxy przepisuje na `/pl/icon`). Manifest ma jedną ikonę `rabbit.png` z `"sizes":"any"` i `"purpose":"any maskable"` (PNG powinien deklarować realny rozmiar, a łączenie `any maskable` jest odradzane). Do tego trzy konkurencyjne źródła ikon: `favicon.ico`, `rabbit.png`, generowane `/icon` z okularami. `app/icon.tsx:10` używa runtime `edge` (Next 16 ostrzega, że edge jest przestarzały, i wyłącza statyczne generowanie).
-Rozwiązanie: wybrać jeden znak; statyczne PNG 192/512 + osobny maskable + `apple-icon.png` w konwencji plików App Routera; usunąć `icon.tsx` i `icon-512` albo dodać je do wyjątków proxy. Nakład S. Pewność wysoka.
-
-**FE-31 · P2 · SEO** · `app/layout.tsx:17-36,53-61`; `public/manifest.json:4`
-Problem: `themeColor` w `metadata` (Next 16 ostrzega przy buildzie, ma być w [`export const viewport`](https://nextjs.org/docs/app/api-reference/functions/generate-viewport)). Na produkcji są dwa `<meta name="viewport">` (domyślny Next + ręczny), dwa `<link rel="manifest">` i zdublowane tagi `apple-mobile-web-app-*`. Opis strony i manifestu mówi o „materiałach patronackich” (nieaktualny model). OG: `og:description` = tytuł, brak `og:url`, `og:locale`, `twitter:card`; tytuł karty zawsze sam `APP_NAME`.
-Rozwiązanie: `export const viewport = { themeColor, viewportFit: 'cover' }`, usunąć ręczne `<head>`, uzupełnić OG/Twitter per film i język, poprawić opisy. Nakład S. Pewność wysoka.
 
 **FE-32 · P2 · jakość/SEO** · `next.config.mjs:27-29,33-62,79-85`; `app/robots.ts:4`
 Problem: `typescript.ignoreBuildErrors: true` (build przepuszcza błędy typów; build pokazał „Skipping validation of types”); `poweredByHeader` domyślny (na produkcji jest `x-powered-by: Next.js`); `remotePatterns` dla martwych hostów (pinata, unsplash, dicebear, `img.clerk.com`, `*.blob.vercel-storage.com` jeśli migracja skończona, `i.ytimg.com`); przestarzały `X-XSS-Protection`; `robots.ts` z fallbackiem na `localhost`.
 Rozwiązanie: wyłączyć `ignoreBuildErrors` (typecheck jest w CI, więc build powinien też pilnować), `poweredByHeader: false`, wyczyścić hosty, fallback robots na `https://www.pawelperfect.com`. Nakład S. Pewność wysoka.
-
-**FE-33 · P2 · i18n** · `lib/i18n/server-language.ts:55-57`
-Problem: wykrywanie kraju czyta `x-vercel-ip-country`; za Cloudflare tego nagłówka nie ma. Odpowiednik to `CF-IPCountry`.
-Rozwiązanie: po zdjęciu flagi czytać `cf-ipcountry` (zaufany tylko przy `TRUST_CF_CONNECTING_IP`). Nakład S. Pewność wysoka.
 
 ### E. Dostępność (WCAG 2.2 AA)
 
 **FE-34 · P1 · dostępność** · `app/components/preload/SitePreloaderScreen.tsx:32-36`, `preload/MatrixGatePrompt.tsx:61-102`, `preload/PageRevealGate.tsx:183-196`
 Problem: (a) kontener `role="status" aria-live="polite"` obejmuje pisany znak po znaku tekst (zmiana co 95 ms), więc czytnik ekranu go zasypuje; (b) przycisk wejścia jest wewnątrz regionu live; (c) `aria-label="Enter"` jest zawsze po angielsku; (d) przycisk jest fokusowalny, gdy jest niewidoczny (`opacity:0`), a Enter nic wtedy nie robi; (e) fokus nie jest przenoszony na przycisk; (f) strona pod nakładką nie jest `inert`, więc Tab wędruje po ukrytej treści (WCAG 2.4.3, 2.4.11, 4.1.3); (g) animacja pisania ignoruje `prefers-reduced-motion`.
 Rozwiązanie: tekst pisany jako `aria-hidden` + pełny tekst `sr-only`, bez `aria-live` na kontenerze; `inert` na wrapperze strony, dopóki `phase !== 'done'`; przycisk renderować dopiero po pojawieniu się, z `autoFocus` i zlokalizowaną etykietą; przy reduced motion tekst od razu w całości. Nakład S. Pewność wysoka.
-
-**FE-35 · P1 · dostępność** · `app/components/Navbar.tsx:103-106,109-114,117-124,155-161,184-189`
-Problem: przyciski z samą ikoną bez nazwy dostępnej (zamknięcie i otwarcie wyszukiwania na mobile; WCAG 4.1.2); pola wyszukiwania bez etykiety (tylko placeholder; WCAG 1.3.1/3.3.2), `type="text"`, formularz bez `role="search"`; pasek to `<div>` bez `<header>`/`<nav>`; w całej aplikacji nie ma linku „Przejdź do treści” (WCAG 2.4.1).
-Rozwiązanie: `aria-label` na przyciskach, `<label class="sr-only">` + `type="search"`, `<search>`/`role="search"`, `<header>` + `<nav>`, skip link do `#main`. Nakład S. Pewność wysoka.
-
-**FE-36 · P1 · dostępność** · `app/components/home/HomeExperience.tsx:211`, `ChannelHome.tsx:244,326`
-Problem: zagnieżdżone landmarki `<main>` (`HomeExperience` → `<main>` → `ChannelHome` → `<main>`).
-Rozwiązanie: jeden `<main id="main">` na stronę. Nakład S. Pewność wysoka.
-
-**FE-37 · P2 · dostępność** · `app/components/Hero.tsx:375-423`
-Problem: panel opisu to `div onClick`, a „...więcej/Pokaż mniej” to `span onClick`, czyli nieobsługiwalne klawiaturą (WCAG 2.1.1), bez `aria-expanded`.
-Rozwiązanie: `<button aria-expanded aria-controls>`. Nakład S. Pewność wysoka.
 
 **FE-38 · P2 · dostępność** · `app/components/AccessLockOverlay.tsx:132-142,165-197,100-124`; `channel/SidebarPlaylist.tsx:239-245`
 Problem: blokada logowania to `section role="button"` z nazwą z obrazka („Nie masz psychy sie zalogowac”: bez polskich znaków i bez informacji, co robi akcja); Spacja nie ma `preventDefault`, więc przewija stronę; tekst jest obrazkiem (`wall-text-*.png`, WCAG 1.4.5). Kafelki z `role="img"` wewnątrz linku playlisty doklejają „Zaloguj się”/„Premiera …” do nazwy linku.
@@ -201,29 +123,9 @@ Rozwiązanie: wzorzec tabs (np. Base UI `Tabs`), ciemniejszy bursztyn (#b45309 �
 Problem: kropki postępu są `aria-hidden` i nie ma tekstowego „Krok 2 z 5”; przy zmianie kroku cała treść jest przemontowywana (`key`), a fokus z usuniętego przycisku nie trafia na nagłówek nowego kroku. `handleClose` od razu woła `onClose()`, więc rodzic odmontowuje dialog i animacja zamknięcia opisana w komentarzu (`:68-70`) nigdy się nie odtwarza. `paymentRequest({ country: "PL" })` (`:88`) jest zaszyte na sztywno.
 Rozwiązanie: `aria-live`/tekst kroku, fokus na nagłówek kroku po zmianie, `onOpenChangeComplete` z Base UI do odmontowania po animacji. Nakład S. Pewność średnia (zachowanie fokusu Base UI przy usunięciu aktywnego elementu warto sprawdzić w przeglądarce).
 
-**FE-41 · P2 · dostępność** · `channel/SidebarPlaylist.tsx:226-232,254,300`; `PremiumWrapper.tsx:425`
-Problem: `alt` miniatury = tytuł, czyli to samo, co tekst linku, więc czytnik czyta tytuł dwa razy. Hierarchia nagłówków h1 → h3 (sekcje) → h4 (filmy), bez h2.
-Rozwiązanie: `alt=""`; sekcje jako h2, filmy jako h3 albo bez nagłówków (lista `<ul>`). Nakład S. Pewność wysoka.
-
-**FE-42 · P2 · dostępność/i18n** · `components/ui/dialog.tsx:75,123`; `comments/components/CommentItem.tsx:251`; `app/admin/videos/components/VideoTable.tsx:25`
-Problem: współdzielony dialog ma zaszyte angielskie „Close” (sr-only i przycisk stopki), także w polskim UI. Usuwanie komentarza używa `window.confirm`, admin używa `alert()`.
-Rozwiązanie: etykiety z i18n, a potwierdzenia przez `AlertDialog`/toast. Nakład S. Pewność wysoka.
-
 **FE-43 · P2 · dostępność/jakość** · `app/components/Hero.tsx:143-162,194-213`; `VideoPlayer.tsx:347`
 Problem: toasty z surowym komunikatem serwera („BŁĄD BAZY DANYCH: ${result.message}”) tylko po polsku, ujawniające wewnętrzne błędy. Komunikat playera „…CORS…” jest tylko po polsku i techniczny. Obsługa like/dislike to dwie kopie tej samej funkcji.
 Rozwiązanie: mapowanie kodów błędów na zlokalizowane komunikaty i jedna funkcja `toggleReaction(kind)` z `useOptimistic` (React 19). Nakład S. Pewność wysoka.
-
-**FE-44 · P3 · dostępność** · `app/components/auth/AuthFormParts.tsx:31-36`
-Problem: pola mają `outline-none`, a fokus sygnalizuje tylko zmiana koloru ramki 1 px (słaby wskaźnik, WCAG 2.4.7; zalecenie 2.4.13); błędy nie są wiązane z polami (`aria-invalid`, `aria-describedby`).
-Rozwiązanie: `focus-visible:ring-2` jak w reszcie UI i powiązanie błędów z polami. Nakład S. Pewność wysoka.
-
-**FE-45 · P3 · dostępność/i18n** · `app/loading.tsx:5`, `PreloadProgressBar.tsx:157`, `app/error.tsx`, `app/not-found.tsx`
-Problem: etykiety i treści tylko po polsku (także na `/en`); `error.tsx` twierdzi „Nasz zespół został powiadomiony”, ale nic nie raportuje.
-Rozwiązanie: tłumaczenia; `not-found` per `[locale]`; raport błędu (np. `instrumentation` `onRequestError` + log) albo zmiana tekstu. Nakład S. Pewność wysoka.
-
-**FE-46 · P3 · dostępność/jakość** · `app/components/icons/index.tsx` (54 ikony przez `dangerouslySetInnerHTML`, 41 zaszytych `id`, np. `search_clip0`)
-Problem: ta sama ikona wyrenderowana dwukrotnie tworzy zduplikowane `id` w dokumencie (niepoprawny HTML, `clip-path` może wskazać zły element). Do tego dwa systemy ikon: lucide w 15 plikach i własny w 54; 15 eksportów nieużywanych (`Dollar, Pound, PiggyBank, MoreHorizontal, Smile, VolumeUp, VolumeDown, Maximize, Minimize, FastForward, FastRewind, BellSimple, Coin2, Youtube, GripVertical`).
-Rozwiązanie: jeden system (lucide + kilka własnych w JSX bez `clipPath` albo `<symbol>`-sprite z `useId`); usunąć nieużywane. Nakład M. Pewność wysoka.
 
 ### F. CSS
 
@@ -231,45 +133,14 @@ Rozwiązanie: jeden system (lucide + kilka własnych w JSX bez `clipPath` albo `
 Problem: około 45 `!important` i selektory globalne zależne od struktury DOM: `:global(main):has(.metaRow) :global(section:has(.polutek-vidstack-player) > div > div:nth-child(2) > div > div:nth-child(2))`, `div[class~="space-y-[24px]"]`, `aside:has(a[href*="?v="])`. Każda zmiana zagnieżdżenia albo klasy Tailwind w `Hero`/`EmbeddedComments`/playliście po cichu psuje style.
 Rozwiązanie: przenieść te style do komponentów (klasy lub warianty Tailwind na właściwych elementach) i usunąć moduł. Nakład M. Pewność wysoka. (Szczegóły spójności wizualnej robi osobny agent.)
 
-**FE-48 · P2 · CSS (martwe)** · `app/globals.css`
-Problem (sprawdzone skryptem):
-- nieużywane tokeny: `--chan-gold` (`:359`; bramka nie jest już żółta, `.tip-gate-surface` ma białe tło `:728`; CLAUDE.md opisuje kanarkową żółć, co jest nieaktualne), `--chan-surface-raised`, `--chan-support-shadow`, `--motion-instant/fast/standard/slow`, `--ease-standard/enter/exit` (`:365-371`), `--cm-amber-17/48/65`, `--cm-amber-strong-58/62/68/80/82-black`, `--cm-blue-22-white/55-white/60-black/60-white/65-black/80-black`, `--cm-line-90`;
-- nieużywane klasy: `.polutek-player-btn`, `.polutek-player-hero`, `.tip-gate-slide` + `@keyframes tip-gate-open/close` (`:739-764`), `.chan-brand-suffix`, `.comments-flat-shell`;
-- blok fallbacków `@supports not (color-mix…)` (`:498-614`, ≈115 linii) jest bezcelowy: [Tailwind 4 wymaga Safari 16.4+/Chrome 111+/Firefox 128+](https://tailwindcss.com/docs/compatibility), czyli przeglądarek z `color-mix`. `browserslist` w `package.json` (`safari >= 14`) jest z tym sprzeczny;
-- ≈90 tokenów `--cm-*` to ręcznie nazwane mieszanki, które w Tailwind 4 da się zapisać inline (`bg-(--chan-blue)/10`) albo przez `@theme`.
-Rozwiązanie: usunąć martwe elementy, podnieść `browserslist` do targetów Tailwind 4, tokeny przenieść do `@theme` (rozdz. 4.5). Nakład S (martwe) / M (tokeny). Pewność wysoka.
-
-**FE-49 · P2 · CSS (martwe)** · `app/components/AccessLockOverlay.module.css`; `tailwind.config.ts`
-Problem: 11 nieużywanych klas modułu (`graffitiCta, graffitiCtaLine, graffitiCtaText, graffitiText, compactMark, compactLabel, mark, word, divider, cta, ctaText`), pozostałości dawnego „premium dark panel”. `tailwind.config.ts` (JS config w Tailwind 4 przez `@config`) zawiera `cream`, `charcoal`, `primary.dark`, `secondary.dark` (fiolet!), `serif`→Geist, `brandLogo`, `shimmer`; `darkMode: "class"` przy braku trybu ciemnego.
-Rozwiązanie: usunąć martwe klasy i przenieść konfigurację do `@theme` w CSS (Tailwind 4 natywnie), kasując `tailwind.config.ts`. Nakład S-M. Pewność wysoka.
-
 ### G. Martwy kod i zasoby
 
 **FE-50 · P1 · martwe/wydajność** · bramka boczna za `TEMP_SUPPORT_AS_MODAL=true`: `channel/DonationBox.tsx` (294 l.), `channel/DonationAmountField.tsx`, `channel/DonationLegalDialog.tsx`, `playlist/CheckoutModal.tsx` (241 l.), `playlist/CheckoutSummaryPanel.tsx`, `CheckoutForm.tsx`, `SidebarPlaylist.tsx:56-62,306-308,342-346`, `ChannelHome.tsx:98-110,212-223`
 Problem: martwy w działaniu, ale **statycznie importowany**, więc ciągnie Stripe do pierwszego widoku (FE-06). Szczegóły i warianty w rozdz. „Flagi TEMP_*”. Nakład M. Pewność wysoka.
 
-**FE-51 · P2 · martwe** · komponenty i eksporty
-- `app/components/RotateDeviceGuard.tsx` + `.module.css`, `app/components/OrientationLock.tsx`: nigdzie niezamontowane (CLAUDE.md twierdzi, że `app/layout.tsx` montuje `RotateDeviceGuard`, a to nieprawda).
-- `app/components/InstallAppMenu.tsx`: tylko testy. `app/components/cloudflarePlaybackSource.ts`: tylko testy.
-- `components/skeletons/index.tsx`: nieużywane `HomePageSkeleton`, `SkeletonNavbar`, `VideoCardSkeleton`, `VideoGridSkeleton` (CLAUDE.md twierdzi, że `HomeRouteLoading` używa `HomePageSkeleton`; dziś zwraca `null`); `components/skeletons/admin.tsx`: `StatCardsSkeleton`.
-- `icons/brand-icons.tsx`: `ThreadsIcon`, `MessengerIcon`, `MastercardIcon`; `app/hooks/useClientEnvironment.ts`: `useMediaQuery`; `lib/constants.ts`: `MIN_PATRON_AMOUNT`, `MIN_PATRON_AMOUNT_PLN`, `getConfiguredAdminEmail`, `requireConfiguredAdminEmail`, `APP_DOMAIN`; `playback-plan-state.ts`: 2 typy; `PageRevealGate.tsx`: `hasRevealedPageInThisDocument`.
-- `VideoPlayer.tsx:185,193-209`: gałąź `variant === 'thumbnail'` (nikt jej nie używa, angielskie „Access Restricted”); `:48` stała `isAdmin = false` + gałęzie admina w `PlayerErrorOverlay`.
-- `ChannelHome.tsx:26-32,378`: `EmbeddedComments` jest już `ssr:false`, a do tego bramkowany `mounted`, więc są dwa placeholdery.
-- Komentarz `HomeExperience.tsx:31-33` o stronach `/logoN` (usunięte).
-Rozwiązanie: usunąć (razem z testami, które testują tylko martwy kod). Nakład S. Pewność wysoka.
-
 **FE-52 · P2 · martwe** · trasy nieosiągalne: `app/page.tsx`, `app/regulamin/page.tsx`, `app/polityka-prywatnosci/page.tsx`, `app/search/page.tsx`, `app/watch/[slug]/page.tsx`, `app/channel/[slug]/page.tsx` (+ `loading.tsx`)
 Problem: proxy przepisuje każdą ścieżkę bez prefiksu na `/pl/...` (`middleware.ts:84-96`), zanim te trasy zostaną dopasowane, więc nigdy się nie wykonują. Build i tak je buduje (`/regulamin` i `/polityka-prywatnosci` nawet prerenderuje statycznie z przekierowaniem na `/en`, przez flagę).
 Rozwiązanie: usunąć. Przy przebudowie i18n zdecydować jawnie w `proxy.ts`. Nakład S. Pewność wysoka (logika proxy jednoznaczna; warto potwierdzić jednym testem e2e).
-
-**FE-53 · P2 · martwe zasoby** · `public/` i katalog główny repo
-Bez odwołań w kodzie (sprawdzone skryptem): `public/gallery/janov/*` (23 JPG, **12 MB**), `Nieruchomosc3.jpeg` (1,5 MB), `Nydek1.jpg`, `Nydek2.jpg`, `nowe.png` (690 KB), `obok-loga.png` (264 KB), `stripe.png`, `logo-wektorowe.svg`, `qr-code-placeholder.png`, `public/fonts/*.ttf` (amatic, floyd ×2, 240 KB), `avatars/.gitkeep`; `wuthering.jpg` tylko w seedzie `lib/data/initial-content.ts`. W katalogu głównym: `Projektowanie stylu Polutek (1).zip`, `logo1.png`, `logo1.svg`, `logoperfect.png`. Czcionki `app/fonts/bowlby-one-*`, `space-grotesk-bold-latin.woff2`. Razem ≈15 MB w obrazie Dockera i w repo.
-Zostawić: `favicon.ico` (przeglądarki pytają same), `sw.js` (kill-switch).
-Rozwiązanie: usunąć. Nakład S. Pewność wysoka (odwołania dynamiczne z bazy, np. stare `thumbnailUrl`, warto sprawdzić jednym zapytaniem przed usunięciem `gallery/`).
-
-**FE-54 · P3 · martwe zależności** · `package.json`
-Problem: `media-icons` (0 importów), `@vercel/analytics` (FE-05), `@radix-ui/react-progress` i `@radix-ui/react-slot` (po 1 użyciu w `components/ui/progress.tsx` i `button.tsx`, obok Base UI, czyli dwie biblioteki prymitywów), `svix` (tylko webhook Resend; zostaje, ale sprawdzić, czy nie wystarczy `resend.webhooks.verify`). Skrypt `clerk:resync` w `package.json` wskazuje na Clerka, którego już nie ma.
-Rozwiązanie: usunąć zbędne pakiety, `Slot` zastąpić `render` z Base UI. Nakład S. Pewność wysoka.
 
 **FE-55 · P3 · jakość** · `"use client"` bez potrzeby
 Pliki bez hooków i handlerów: `app/components/BrandName.tsx`, `PlayerStateFrame.tsx`, `playlist/CheckoutSummaryPanel.tsx`, `najs/primitives.tsx`, `icons/brand-icons.tsx`, **`comments/types.ts`** (plik z samymi typami!), `app/admin/users/AdminAccessDiagnostics.tsx`, `components/ui/{label,table}.tsx`. `Footer.tsx` jest kliencki tylko dla `useLanguage`, co da się zastąpić propem `locale`. Strony prawne renderują po stronie serwera, ale wciągają kliencki `Navbar` z całym drzewem auth.
