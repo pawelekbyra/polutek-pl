@@ -49,7 +49,7 @@ A Analityka i tryb premiery (równolegle od fazy 2, gdy jest 7+ dni danych) · 5
 | Szczegóły: zakładka Dostęp | pole „Dostęp” + lista kontrolna | 2 | zrobione |
 | Szczegóły: zakładka Diagnostyka | lista kontrolna publikacji (pre-flight przed zapisem); test po publikacji (token → master → segment) w fazie A | 2/A | zrobione (pre-flight), plan (post-flight) |
 | Szczegóły: zakładka Komentarze (martwa, ADM-06) | Społeczność → Komentarze z filtrem filmu | 2 | plan |
-| Szczegóły: zakładka Statystyki | Analityka filmu | A | plan |
+| Szczegóły: zakładka Statystyki | Film → **Analityka** `/tresci/<slug>/analityka` i **Jakość** `/tresci/<slug>/jakosc` (obejrzenia, widzowie, retencja z pasmem typowego filmu, QoE, ostrzeżenie o małej próbie; admin-phaseA.md) | A | zrobione |
 | Szczegóły: zakładka Historia | karta „Historia zmian” (audyt) | 2 | zrobione |
 | „Publikuj” | przycisk „Opublikuj” (blokady publikacji, pre-flight) | 2 | zrobione |
 | „Cofnij publikację” (bez potwierdzenia, ADM-05) | okno „Skutek” (zdejmuje z sidebaru i Hero, kasuje publiczną miniaturę) | 2 | zrobione |
@@ -196,7 +196,7 @@ z `lib/modules/**` (wrapper `requireAdmin → zod (.strict) → limit → step-u
 | Wyciszenie komentowania osoby | profil i moderacja: „Wycisz” | 2 | plan |
 | Dziennik audytu z filtrami i eksportem | Bezpieczeństwo → Dziennik | 3 | plan |
 | Logowania do panelu, sesje panelu | Bezpieczeństwo → Logowania (dane już w `AdminAuthEvent`) | 3 | plan |
-| Premiera na żywo | Premiera na żywo | A | plan |
+| Premiera na żywo | **Premiera na żywo** `/premiera` (SSE `/api/live`, keep-alive 25 s, „Wstrzymaj”, widzowie, QoE, serwer, napiwki; admin-phaseA.md §4). Przeżycie 10 min przez prawdziwy tunel do sprawdzenia przy wdrożeniu | A | zrobione (w kodzie; test przez tunel przy wdrożeniu) |
 | Tłumaczenia filmów (dziś tylko pola EN w edycji) | **Treści → film → Tłumaczenia** `/tresci/<slug>/tlumaczenia`: języki z flagami, stan (szkic automatyczny / zatwierdzone / napisane przez człowieka), tytuł, adres, opis, napisy, „Zatwierdź”, „Zatwierdź wszystkie”; model `VideoTranslation` + `VideoSlugHistory` (admin-phase2-content.md §6) | 2 | zrobione |
 | Generowanie szkiców tłumaczeń (AI) | przycisk „Generuj szkice AI” (dziś wyłączony, „wkrótce”) | 3 | decyzja (model: Claude API czy Workers AI) |
 | Rola „tłumacz” (tylko wybrane języki, bez reszty panelu) | konta panelu z rolą `TRANSLATOR` i grantami języków (projekt w admin-phase2-content.md §6) | 3 | plan |
