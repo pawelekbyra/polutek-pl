@@ -41,6 +41,14 @@ export const DISPLAY_USD_TO_PLN_RATE = (() => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 4.0;
 })();
 
+/** Display-only CHF/GBP rates, same env names and defaults as fundraising.ts and admin-overview (minorToPln). */
+function positiveRateFromEnv(raw: string | undefined, fallback: number): number {
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+export const DISPLAY_CHF_TO_PLN_RATE = positiveRateFromEnv(process.env.DISPLAY_CHF_TO_PLN_RATE, 4.5);
+export const DISPLAY_GBP_TO_PLN_RATE = positiveRateFromEnv(process.env.DISPLAY_GBP_TO_PLN_RATE, 4.9);
+
 export const MAIN_CREATOR_NAME = process.env.MAIN_CREATOR_NAME || 'Configured Creator';
 // PAWELPERFECT.PL is a strict single-channel app. Keep the env override, but use the
 // seeded canonical slug as a safe production fallback so missing Vercel env does
