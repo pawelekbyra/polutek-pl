@@ -76,14 +76,14 @@ A Analityka i tryb premiery (równolegle od fazy 2, gdy jest 7+ dni danych) · 5
 | Szczegóły: Granty | karta „Znacznik wspierającego” (historia nadań/cofnięć) | 2 | plan |
 | Szczegóły: Aktywność | karty Komentarze, Oglądanie, E-maile | 2 | plan |
 | Szczegóły: Historia zmian | karta „Audyt dotyczący osoby” | 2 | plan |
-| „Zobacz w Stripe” | link przy wpłacie | 3 | plan |
+| „Zobacz w Stripe” | link przy wpłacie | 3 | zrobione |
 | Zmiana roli (`UserRoleActions`, ADMIN/USER, wymaga świeżego logowania) | profil: „Rola…” (okno, step-up; rola ADMIN na `www` po fazie 5 to tylko odznaka) | 2 | plan |
 | Usunięcie konta (`UserDangerZone`, wpisanie e-maila, świeże logowanie) | profil: strefa zagrożenia „Usuń i zanonimizuj…” z wpisaniem e-maila + step-up | 2 | plan |
 | Diagnostyka dostępu (`AdminAccessDiagnostics`) | profil: „Podgląd jako ta osoba” (tylko odczyt, wpis `ADMIN_VIEW_AS`) | 2 | plan |
 | `/admin/users/dashboard` (4 kafelki + sumy walut) | DROP (kafle na liście + Przychody) | – | DROP |
-| `/admin/users/payments`: lista wpłat, podsumowanie, filtry | **Przychody → Wpłaty** `#/przychody?tab=wplaty` | 3 | plan |
-| „Zwrot” (dialog z kwotą, bez powodu) | „Zwrot…”: skutek + powód + step-up + klucz idempotencji | 3 | plan |
-| „Synchronizuj spór” | Przychody → Zwroty i spory: „Odśwież ze Stripe” | 3 | plan |
+| `/admin/users/payments`: lista wpłat, podsumowanie, filtry | **Przychody → Wpłaty** `#/przychody?tab=wplaty` | 3 | zrobione |
+| „Zwrot” (dialog z kwotą, bez powodu) | „Zwrot…”: skutek + powód + step-up + klucz idempotencji | 3 | zrobione |
+| „Synchronizuj spór” | Przychody → Zwroty i spory: „Odśwież ze Stripe” | 3 | zrobione |
 
 ### 1.4 Komentarze (`/admin/comments`, `/admin/comments/reports`)
 
@@ -100,21 +100,21 @@ A Analityka i tryb premiery (równolegle od fazy 2, gdy jest 7+ dni danych) · 5
 
 | Stary panel | Nowy panel | Faza | Status |
 |---|---|---|---|
-| Szablony: lista, edycja PL/EN, zapis, „Przywróć domyślny”, usuń własny | **Komunikacja → Szablony** `#/komunikacja?tab=szablony` (edytor z podglądem i różnicą względem domyślnego) | 3 | plan |
-| Kreator rozsyłki: odbiorcy (audience), treść PL/EN, test do siebie, wyślij | **Komunikacja → Rozsyłki** „Nowa rozsyłka” (kreator 4 kroków, step-up przed wysłaniem) | 3 | plan |
-| Historia rozsyłek, postęp, „Anuluj” | Rozsyłki: tabela z postępem i „Anuluj” | 3 | plan |
-| Powiadomienia: kafle, rozsyłka (dialog), szablony, lista | **Komunikacja → Powiadomienia**: ekran istnieje, wysyłka wyłączona, bo dzwonek usunięty decyzją 2026-10-04 | 3 | decyzja |
+| Szablony: lista, edycja PL/EN, zapis, „Przywróć domyślny”, usuń własny | **Komunikacja → Szablony** `#/komunikacja?tab=szablony` (edytor z podglądem i różnicą względem domyślnego) | 3 | zrobione |
+| Kreator rozsyłki: odbiorcy (audience), treść PL/EN, test do siebie, wyślij | **Komunikacja → Rozsyłki** „Nowa rozsyłka” (kreator 4 kroków, step-up przed wysłaniem) | 3 | zrobione |
+| Historia rozsyłek, postęp, „Anuluj” | Rozsyłki: tabela z postępem i „Anuluj” | 3 | zrobione |
+| Powiadomienia: kafle, rozsyłka (dialog), szablony, lista | **Komunikacja → Powiadomienia**: ekran istnieje, wysyłka wyłączona, bo dzwonek usunięty decyzją 2026-10-04 | 3 | zrobione (tylko odczyt; wysyłka wyłączona, decyzja 2026-10-05) |
 
 ### 1.6 Kanał i ustawienia (`/admin/channel`, `/admin/settings`, `/admin/payments`)
 
 | Stary panel | Nowy panel | Faza | Status |
 |---|---|---|---|
-| Nazwa, opis, banner (URL), domyślna miniatura (URL) | **Ustawienia → Kanał** `#/ustawienia?tab=kanal` (banner i miniatura przez wgranie, podgląd) | 3 | plan |
+| Nazwa, opis, banner (URL), domyślna miniatura (URL) | **Ustawienia → Kanał** `#/ustawienia?tab=kanal` (banner i miniatura przez wgranie, podgląd) | 3 | zrobione (nazwa i opis; domyślna miniatura przez wgranie; banner DROP: okładkę usunięto ze strony 2026-10-04, pole `bannerUrl` jest martwe) |
 | Licznik subskrybentów (`displaySubscribersCount`, nigdzie nie wyświetlany) | DROP pola; zostaje „Przelicz subskrybentów” | 3 | DROP |
-| „Resync licznika subskrybentów” | „Przelicz subskrybentów” | 3 | plan |
-| Konto kanału (właściciel `Creator.userId`) | Ustawienia → Kanał: „Konto kanału” (wybór konta, step-up) | 3 | plan |
-| `/admin/settings`: domyślna miniatura (wgraj, usuń) | Ustawienia → Kanał: „Domyślna miniatura” | 3 | plan |
-| `/admin/payments`: minimalna kwota napiwku × 5 walut | **Ustawienia → Płatności** `#/ustawienia?tab=platnosci` | 3 | plan |
+| „Resync licznika subskrybentów” | „Przelicz subskrybentów” | 3 | zrobione |
+| Konto kanału (właściciel `Creator.userId`) | Ustawienia → Kanał: „Konto kanału” (wybór konta, step-up) | 3 | zrobione |
+| `/admin/settings`: domyślna miniatura (wgraj, usuń) | Ustawienia → Kanał: „Domyślna miniatura” | 3 | zrobione |
+| `/admin/payments`: minimalna kwota napiwku × 5 walut | **Ustawienia → Płatności** `#/ustawienia?tab=platnosci` | 3 | zrobione |
 
 ## 2. Trasy `app/api/admin/**` (każdy handler)
 
@@ -123,7 +123,7 @@ z `lib/modules/**` (wrapper `requireAdmin → zod (.strict) → limit → step-u
 
 | Trasa (metody) | Use case / rola | Nowy panel | Faza | Status |
 |---|---|---|---|---|
-| `channel` (GET, PATCH) | ustawienia kanału | Ustawienia → Kanał (odczyt serwerowy, zapis akcją) | 3 | plan |
+| `channel` (GET, PATCH) | ustawienia kanału | Ustawienia → Kanał (odczyt serwerowy, zapis akcją) | 3 | zrobione |
 | `comments` (GET) | lista komentarzy | Społeczność → Komentarze | 2 | plan |
 | `comments/[id]/approve` (POST) | moderacja | akcja „Zatwierdź” | 2 | plan |
 | `comments/[id]/hold` (POST) | moderacja | „Wstrzymaj” | 2 | plan |
@@ -133,24 +133,24 @@ z `lib/modules/**` (wrapper `requireAdmin → zod (.strict) → limit → step-u
 | `comments/[id]/heart` (POST) | serduszko (tylko `www`) | „Serduszko” | 2 | plan |
 | `comments/reports` (GET) | zgłoszenia | Moderacja | 2 | plan |
 | `comments/reports/[id]/resolve` (POST) | rozwiązanie | atomowe „rozwiąż z akcją” | 2 | plan |
-| `emails/broadcast` (GET, POST) | historia, utworzenie (kolejka) | Rozsyłki | 3 | plan |
-| `emails/broadcast/[id]/cancel` (POST) | anulowanie | „Anuluj” | 3 | plan |
-| `emails/broadcast/audience` (GET) | liczba odbiorców | kreator, krok 1 | 3 | plan |
-| `emails/broadcast/test` (POST) | test do siebie | kreator, krok 3 | 3 | plan |
+| `emails/broadcast` (GET, POST) | historia, utworzenie (kolejka) | Rozsyłki | 3 | zrobione |
+| `emails/broadcast/[id]/cancel` (POST) | anulowanie | „Anuluj” | 3 | zrobione |
+| `emails/broadcast/audience` (GET) | liczba odbiorców | kreator, krok 1 | 3 | zrobione |
+| `emails/broadcast/test` (POST) | test do siebie | kreator, krok 3 | 3 | zrobione |
 | `maintenance/main-channel/preview` (GET) | brak wołającego | DROP (jednorazowa naprawa) | – | DROP |
 | `maintenance/main-channel/apply` (POST) | brak wołającego | DROP | – | DROP |
-| `notifications` (GET) | lista | Komunikacja → Powiadomienia | 3 | decyzja |
-| `notifications/broadcast` (POST) | rozsyłka powiadomienia | wyłączone do decyzji o dzwonku | 3 | decyzja |
-| `notifications/templates` (GET, PUT, DELETE) | szablony powiadomień | Komunikacja → Powiadomienia | 3 | decyzja |
-| `payment-settings` (GET, PATCH) | minimalne kwoty | Ustawienia → Płatności | 3 | plan |
-| `payments` (GET) | lista wpłat | Przychody → Wpłaty | 3 | plan |
-| `payments/[id]/refund` (POST) | `adminRefund` | „Zwrot…” ze step-up | 3 | plan |
-| `payments/[id]/dispute-sync` (POST) | `adminDisputeSync` | „Odśwież ze Stripe” | 3 | plan |
-| `settings/media/default-video-thumbnail` (GET, POST, DELETE) | domyślna miniatura | Ustawienia → Kanał | 3 | plan |
-| `settings/media/default-video-thumbnail/proxy` (GET) | podgląd obrazu | podgląd w Ustawieniach (route panelu) | 3 | plan |
+| `notifications` (GET) | lista | Komunikacja → Powiadomienia | 3 | zrobione (tylko odczyt) |
+| `notifications/broadcast` (POST) | rozsyłka powiadomienia | wyłączone do decyzji o dzwonku | 3 | DROP (dzwonek usunięty; wysyłka wyłączona) |
+| `notifications/templates` (GET, PUT, DELETE) | szablony powiadomień | Komunikacja → Powiadomienia | 3 | zrobione (tylko odczyt); edycja i reset DROP |
+| `payment-settings` (GET, PATCH) | minimalne kwoty | Ustawienia → Płatności | 3 | zrobione |
+| `payments` (GET) | lista wpłat | Przychody → Wpłaty | 3 | zrobione |
+| `payments/[id]/refund` (POST) | `adminRefund` | „Zwrot…” ze step-up | 3 | zrobione |
+| `payments/[id]/dispute-sync` (POST) | `adminDisputeSync` | „Odśwież ze Stripe” | 3 | zrobione |
+| `settings/media/default-video-thumbnail` (GET, POST, DELETE) | domyślna miniatura | Ustawienia → Kanał | 3 | zrobione |
+| `settings/media/default-video-thumbnail/proxy` (GET) | podgląd obrazu | podgląd w Ustawieniach (route panelu) | 3 | zrobione |
 | `stats` (GET) | brak wołającego | DROP (Dzisiaj ma własne odczyty) | 1 | DROP |
-| `subscribers/resync` (POST) | przeliczenie | „Przelicz subskrybentów” | 3 | plan |
-| `templates` (GET, POST, DELETE) | szablony e-mail | Komunikacja → Szablony | 3 | plan |
+| `subscribers/resync` (POST) | przeliczenie | „Przelicz subskrybentów” | 3 | zrobione |
+| `templates` (GET, POST, DELETE) | szablony e-mail | Komunikacja → Szablony | 3 | zrobione |
 | `users` (GET) | lista | Społeczność → Użytkownicy | 2 | plan |
 | `users/[userId]` (GET) | szczegóły | profil 360° | 2 | plan |
 | `users/[userId]` (DELETE) | usunięcie i anonimizacja | strefa zagrożenia profilu (e-mail + step-up) | 2 | plan |
@@ -173,7 +173,7 @@ z `lib/modules/**` (wrapper `requireAdmin → zod (.strict) → limit → step-u
 | `videos/[id]/pipeline/jobs/[jobId]` (DELETE) | anulowanie | „Anuluj” | 2 | zrobione |
 | `videos/[id]/pipeline/assets/[assetId]` (DELETE) | usunięcie wersji | „Usuń wersję…” | 2 | zrobione |
 | `videos/cover-upload` (POST) | miniatura do R2 | karta Miniatura | 2 | zrobione |
-| `videos/r2-diagnostics` (GET) | brak wołającego | System → diagnostyka R2 | 3 | plan |
+| `videos/r2-diagnostics` (GET) | brak wołającego | System → diagnostyka R2 | 3 | zrobione |
 | `videos/reorder` (POST) | kolejność sidebaru | Układ kanału | 2 | zrobione |
 | `videos/resync` (POST) | brak wołającego | DROP (zastąpione przez post-flight) | – | DROP |
 
@@ -191,14 +191,14 @@ z `lib/modules/**` (wrapper `requireAdmin → zod (.strict) → limit → step-u
 | Czynność | Nowy panel | Faza | Status |
 |---|---|---|---|
 | Stan serwera, kontenerów, cronów, kopii | System | 1 | zrobione |
-| Kto ma rolę ADMIN, 2FA, sesje | Społeczność (filtr „Z 2FA”, rola) + Bezpieczeństwo | 2–3 | plan |
+| Kto ma rolę ADMIN, 2FA, sesje | Społeczność (filtr „Z 2FA”, rola) + Bezpieczeństwo | 2–3 | zrobione (Bezpieczeństwo: konta ADMIN na stronie z 2FA, sesje); filtr „Z 2FA” w Społeczności: inny strumień |
 | Wylogowanie osoby ze wszystkich urządzeń | profil: „Wyloguj wszędzie” | 2 | plan |
 | Wyciszenie komentowania osoby | profil i moderacja: „Wycisz” | 2 | plan |
-| Dziennik audytu z filtrami i eksportem | Bezpieczeństwo → Dziennik | 3 | plan |
-| Logowania do panelu, sesje panelu | Bezpieczeństwo → Logowania (dane już w `AdminAuthEvent`) | 3 | plan |
+| Dziennik audytu z filtrami i eksportem | Bezpieczeństwo → Dziennik | 3 | zrobione |
+| Logowania do panelu, sesje panelu | Bezpieczeństwo → Logowania (dane już w `AdminAuthEvent`) | 3 | zrobione |
 | Premiera na żywo | Premiera na żywo | A | plan |
 | Tłumaczenia filmów (dziś tylko pola EN w edycji) | **Treści → film → Tłumaczenia** `/tresci/<slug>/tlumaczenia`: języki z flagami, stan (szkic automatyczny / zatwierdzone / napisane przez człowieka), tytuł, adres, opis, napisy, „Zatwierdź”, „Zatwierdź wszystkie”; model `VideoTranslation` + `VideoSlugHistory` (admin-phase2-content.md §6) | 2 | zrobione |
-| Generowanie szkiców tłumaczeń (AI) | przycisk „Generuj szkice AI” (dziś wyłączony, „wkrótce”) | 3 | decyzja (model: Claude API czy Workers AI) |
-| Rola „tłumacz” (tylko wybrane języki, bez reszty panelu) | konta panelu z rolą `TRANSLATOR` i grantami języków (projekt w admin-phase2-content.md §6) | 3 | plan |
+| Generowanie szkiców tłumaczeń (AI) | przycisk „Generuj szkice AI” (dziś wyłączony, „wkrótce”) | 3 | zrobione (Cloudflare Workers AI, darmowy limit; domyślnie WYŁĄCZONE: TRANSLATION_AI_ENABLED) |
+| Rola „tłumacz” (tylko wybrane języki, bez reszty panelu) | konta panelu z rolą `TRANSLATOR` i grantami języków (projekt w admin-phase2-content.md §6) | 3 | zrobione |
 | Adresy filmów per język, etykieta i `noindex` szkiców automatycznych na stronie | strona www (`translationPublicMeta`, `resolveFilmText`, 301 z `VideoSlugHistory`) | po decyzji | decyzja (wstrzymane przez właściciela) |
 | Czy serwer wytrzyma szczyt (dziś: arkusz z testu obciążenia) | **Zapas serwera**: System → Serwer i kontenery (pełny), Dzisiaj (skrót); szczyt odsłon/s z telemetrii (1 h, 24 h, 7 dni) wobec granicy z `server-capacity.config.ts` (LOAD-TEST.md), progi 50/80%, rekomendacja, przelicznik na odsłony dziennie | 1 | zrobione (dane po włączeniu `ADMIN_TELEMETRY_DATABASE_URL`) |

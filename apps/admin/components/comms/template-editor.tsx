@@ -24,6 +24,20 @@ export type TemplateEditorProps = {
   variables: { key: string; label: string }[];
 };
 
+function Diff({ lines, label }: { lines: ReturnType<typeof lineDiff>; label: string }) {
+  if (!hasChanges(lines)) return null;
+  return (
+    <div>
+      <strong>{label}</strong>
+      <pre className="diff" aria-label={`Różnica: ${label}`}>
+        {lines.map((l, i) => (
+          <span key={i} className={l.kind}>{l.kind === "add" ? "+ " : l.kind === "del" ? "- " : "  "}{l.text}{"\n"}</span>
+        ))}
+      </pre>
+    </div>
+  );
+}
+
 /** Editor with a live preview (sandboxed frame fed by the preview route) and a diff against the default text. */
 export function TemplateEditor(p: TemplateEditorProps) {
   const router = useRouter();
@@ -64,18 +78,6 @@ export function TemplateEditor(p: TemplateEditorProps) {
       router.push(p.isSystem ? `/komunikacja?tab=szablony&t=${p.slug}` : "/komunikacja?tab=szablony");
       router.refresh();
     });
-
-  const Diff = ({ lines, label }: { lines: ReturnType<typeof lineDiff>; label: string }) =>
-    hasChanges(lines) ? (
-      <div>
-        <strong>{label}</strong>
-        <pre className="diff" aria-label={`Różnica: ${label}`}>
-          {lines.map((l, i) => (
-            <span key={i} className={l.kind}>{l.kind === "add" ? "+ " : l.kind === "del" ? "- " : "  "}{l.text}{"\n"}</span>
-          ))}
-        </pre>
-      </div>
-    ) : null;
 
   return (
     <div className="stack">
