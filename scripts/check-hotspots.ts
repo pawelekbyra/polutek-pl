@@ -34,26 +34,6 @@ const hotspotExceptions: Record<string, HotspotException> = {
     reason:
       "Central icon barrel/component registry; tolerated as pre-existing generated-style UI asset debt after Next 15 recovery, but block further unbounded growth.",
   },
-  "app/admin/users/[userId]/page.tsx": {
-    maxLines: 500,
-    reason: knownUiHotspotReason,
-  },
-  "app/admin/videos/page.tsx": {
-    maxLines: 500,
-    reason: knownUiHotspotReason,
-  },
-  "app/admin/videos/[id]/page.tsx": {
-    maxLines: 500,
-    reason: knownUiHotspotReason,
-  },
-  "app/admin/emails/EmailTemplateEditor.tsx": {
-    maxLines: 500,
-    reason: knownUiHotspotReason,
-  },
-  "app/admin/emails/components/BroadcastWizard.tsx": {
-    maxLines: 500,
-    reason: knownUiHotspotReason,
-  },
   "app/components/Hero.tsx": {
     maxLines: 500,
     reason: knownUiHotspotReason,

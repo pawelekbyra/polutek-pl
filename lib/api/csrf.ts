@@ -1,9 +1,9 @@
 /**
- * CSRF protection for cookie-authenticated admin mutations.
+ * CSRF protection for cookie-authenticated mutations on the public site.
  *
  * Enforced centrally in middleware.ts for every POST/PUT/PATCH/DELETE under
- * /api/admin (one place, so a new admin route can't forget it, and no custom
- * header is needed - the existing admin UI keeps working unchanged).
+ * /api/user (one place, so a new account route can't forget it, and no custom
+ * header is needed). The admin panel has its own check (apps/admin/lib/security/csrf.ts).
  *
  * Edge-safe: no Node-only imports (middleware runs on the Edge runtime).
  *

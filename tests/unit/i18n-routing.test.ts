@@ -25,12 +25,13 @@ describe('locale-first public routing', () => {
     expect(switchLocalePath('/regulamin', 'en')).toBe('/en/terms');
   });
 
-  it('keeps localized public routes public without exposing admin routes', () => {
+  it('keeps localized public routes public and routes the retired admin paths through the redirect map', () => {
     const source = middleware();
     for (const route of ['/watch/(.*)', '/en/watch/(.*)', '/regulamin', '/en/terms']) {
       expect(source).toContain(route);
     }
-    expect(source).toContain("const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)']);");
+    expect(source).toContain('resolveLegacyAdminRedirect(req.nextUrl.pathname)');
+    expect(source).toContain('isLegacyAdminApiPath(req.nextUrl.pathname)');
   });
 });
 

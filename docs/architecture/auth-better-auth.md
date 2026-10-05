@@ -37,9 +37,9 @@ and the operations.
 | `lib/auth/passkey-support.ts` | Browser feature detection (`PublicKeyCredential`, autofill) and the default device name. |
 | `lib/auth/reauth.ts` | `checkSensitiveReauth`: password, or a Google sign-in from the last 10 minutes (account deletion, e-mail change). |
 | `lib/auth/server.ts` | `auth()`, `getAuth(req)`, `currentUser()`: the only server-side session readers. |
-| `lib/api/auth.ts` | DB-backed actor (`getActorFromAuth`, `requireAdminActor`); admin bootstrap by `ADMIN_EMAILS`. |
+| `lib/api/auth.ts` | DB-backed actor (`getActorFromAuth`, `requireAdminActor`); the admin role is only `User.role` (no e-mail bootstrap since phase 5). |
 | `lib/auth/client.ts`, `lib/auth/react.ts` | Browser client and `useAuth` / `useUser` hooks (the user object still uses the old Clerk-like field names `fullName`, `primaryEmailAddress`; see "Not done yet"). |
-| `middleware.ts` | Optimistic session-cookie gate, public route list, CSRF, admin rate limit, CSP. |
+| `middleware.ts` | Optimistic session-cookie gate, public route list, CSRF for `/api/user/*`, 308/404 for the retired `/admin*` and `/api/admin*`, CSP. |
 | `app/api/auth/[...all]/route.ts` | Better Auth HTTP handler. |
 | `app/api/user/{nickname,avatar,first-sign-in,account}` | Our own profile routes (Better Auth `/update-user` is disabled). |
 | `app/components/auth/*` | `AuthModal`, `OnboardingDialog`, `AccountModal` sections, Turnstile widget, One Tap. |
@@ -231,11 +231,11 @@ onboarding); a lost race answers `NICKNAME_TAKEN`. The index is not expressible 
 
 ## Admin
 
-Admin is `User.role = ADMIN`. Bootstrap: set `ADMIN_EMAILS` (comma separated). A **verified** account with such an
-e-mail is promoted when it resolves an actor (`lib/api/auth.ts`) and an `AUTH_ADMIN_BOOTSTRAP` audit event is written.
-A never-verified address can never be promoted, so nobody can claim an admin e-mail by registering it first. The check
-runs on every request (AUTH-27): while an address stays in `ADMIN_EMAILS`, a demotion in `/admin/users` is undone at
-once, so empty the variable after the first sign-in and never list a shared (helpdesk) inbox there.
+Admin on the public site is `User.role = ADMIN` and nothing else: a flag for draft previews and the owner's link to the
+panel. The `ADMIN_EMAILS` e-mail bootstrap (and its `AUTH_ADMIN_BOOTSTRAP` audit event) was removed in phase 5
+(`docs/architecture/admin-phase5.md`); old audit rows with that action stay. The role is granted or removed in the panel
+(profile 360°) or with `scripts/ops` (`changeUserRoleAsAdmin`). The panel's own accounts (passkey, Cloudflare Access) are
+separate (`docs/architecture/admin-panel.md`).
 
 **MFA for the admin (proposal, not enabled).** Safe order: (1) the owner turns on TOTP in the account panel and stores
 the backup codes; (2) only then `requireAdminActor` starts refusing `role=ADMIN` without `twoFactorEnabled`, and also an
@@ -286,7 +286,7 @@ session cookie plus the IP (the proxy cannot read the user id without a database
 ## Operations
 
 Environment (names only; never commit values): `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
-`TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `ADMIN_EMAILS`, optional `BETTER_AUTH_URL`,
+`TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, optional `BETTER_AUTH_URL`,
 `BETTER_AUTH_TRUSTED_ORIGINS`. Google redirect URI: `https://<host>/api/auth/callback/google` for each host in use.
 
 Deploy: run the migration (`prisma migrate deploy` runs in `deploy.sh`), set the variables in `app.env`, restart.
@@ -302,8 +302,8 @@ Rotating `BETTER_AUTH_SECRET` (AUTH-07):
 Procedure: ask 2FA users (and the admin) to turn 2FA off first, or re-encrypt the `TwoFactor` rows with the new secret in
 a one-off script before switching; otherwise affected users need a password reset and their `TwoFactor` row removed.
 
-Locked out of admin: set `ADMIN_EMAILS` to the owner's verified address and sign in, or
-`UPDATE "User" SET role = 'ADMIN' WHERE email = '...'` on the database.
+Locked out of the public-site admin flag: `UPDATE "User" SET role = 'ADMIN' WHERE email = '...'` on the database
+(there is no e-mail bootstrap any more). Locked out of the panel: see `docs/operations/ADMIN-PANEL.md`.
 
 Adding a provider: configure it under `socialProviders` in `lib/auth/auth.ts`, add its id to `OAUTH_PROVIDERS`
 (`app/components/auth/oauth-providers.tsx`), add its callback URL at the provider, and (if its e-mails are

@@ -1,8 +1,8 @@
 /**
  * Default video thumbnail (Ustawienia → Kanał): the image films without their own cover fall back to.
  * Stored as the AppSetting `default_video_thumbnail` (the value the site already reads through
- * resolveVideoThumbnailUrl), the file in the private R2 thumbnail bucket. Moved out of the old
- * /api/admin route: same setting, but R2 only (no Vercel Blob fallback), bytes checked by magic number,
+ * resolveVideoThumbnailUrl), the file in the private R2 thumbnail bucket. Moved out of the retired
+ * www admin route: same setting, but R2 only (no Vercel Blob fallback), bytes checked by magic number,
  * the new file is saved before the old one is deleted (no gap), every change is audited with before/after.
  */
 import type { AppContext } from "@/lib/modules/shared/app-context";

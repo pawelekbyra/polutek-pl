@@ -25,7 +25,6 @@ export default defineConfig({
         'lib/modules/**',
         'lib/services/**',
         'lib/api/**',
-        'lib/auth-utils.ts',
         'lib/webhooks/**',
         'apps/admin/lib/**',
         'apps/admin/proxy.ts',

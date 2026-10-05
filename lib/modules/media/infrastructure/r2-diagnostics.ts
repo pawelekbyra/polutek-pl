@@ -1,5 +1,5 @@
 /**
- * R2 diagnostics (System → Diagnostyka R2; replaces the old /api/admin/videos/r2-diagnostics): which R2
+ * R2 diagnostics (System → Diagnostyka R2; replaces the retired www diagnostics route): which R2
  * variables the process has, whether bucket names look right, and (on request) a HeadBucket per bucket.
  * Never returns a secret: secret variables show only "ustawiona", others a shortened value.
  */

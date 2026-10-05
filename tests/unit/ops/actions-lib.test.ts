@@ -436,8 +436,8 @@ describe('support actions', () => {
 
 // ------------------------------------------------------------------ zmiana roli
 
-const OWNER = { id: 'user_3FeY8okjicDKlWDGSSc4Q7bvaPZ', name: 'Właściciel', email: 'owner@example.com', role: 'ADMIN', isDeleted: false, emailVerified: true, inAdminEmails: false };
-const OTHER = { id: 'H0aCus81jxyEpuEFsCdYMPW0NftWCRiA', name: 'hello', email: 'hello@example.com', role: 'ADMIN', isDeleted: false, emailVerified: true, inAdminEmails: false };
+const OWNER = { id: 'user_3FeY8okjicDKlWDGSSc4Q7bvaPZ', name: 'Właściciel', email: 'owner@example.com', role: 'ADMIN', isDeleted: false, emailVerified: true };
+const OTHER = { id: 'H0aCus81jxyEpuEFsCdYMPW0NftWCRiA', name: 'hello', email: 'hello@example.com', role: 'ADMIN', isDeleted: false, emailVerified: true };
 
 describe('role change', () => {
   it('parses --user/--role and requires a reason to execute', () => {
@@ -460,10 +460,9 @@ describe('role change', () => {
     expect(plan.adminsAfter).toEqual([OWNER.id]);
   });
 
-  it('refuses ADMIN for an unverified e-mail, deleted accounts and addresses in ADMIN_EMAILS', () => {
+  it('refuses ADMIN for an unverified e-mail, and deleted accounts', () => {
     expect(planRoleChange({ user: { ...OTHER, role: 'USER', emailVerified: false }, admins: [OWNER], actorId: OWNER.id, role: 'ADMIN' }).problems.join(' ')).toMatch(/potwierdzonym/);
     expect(planRoleChange({ user: { ...OTHER, isDeleted: true }, admins: [OWNER, OTHER], actorId: OWNER.id, role: 'USER' }).allowed).toBe(false);
-    expect(planRoleChange({ user: { ...OTHER, inAdminEmails: true }, admins: [OWNER, OTHER], actorId: OWNER.id, role: 'USER' }).problems.join(' ')).toMatch(/ADMIN_EMAILS/);
     expect(planRoleChange({ user: OTHER, admins: [OWNER, OTHER], actorId: OWNER.id, role: 'ADMIN' })).toMatchObject({ noop: true, adminsAfter: [OWNER.id, OTHER.id] });
   });
 

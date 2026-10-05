@@ -111,9 +111,9 @@ describe("uploadOriginal", () => {
     expect(urls.every((u) => u.startsWith("/api/videos/v%201/original-upload/multipart"))).toBe(true);
   });
 
-  it("keeps the old www admin path by default", async () => {
+  it("defaults to the panel API base and never targets the removed www /api/admin", async () => {
     const s = server(1, 16 * MIB);
     await uploadOriginal({ videoId: "v1", file: file(MIB), signal: new AbortController().signal, fetchFn: s.fetchFn, putPart: vi.fn(async () => '"e1"'), storage: memoryStorage() });
-    expect(String(s.spy.mock.calls[0][0])).toBe("/api/admin/videos/v1/original-upload/multipart");
+    expect(String(s.spy.mock.calls[0][0])).toBe("/api/videos/v1/original-upload/multipart");
   });
 });

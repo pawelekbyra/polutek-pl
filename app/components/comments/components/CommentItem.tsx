@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { formatDistance } from "date-fns";
 import { enUS, pl } from "date-fns/locale";
-import { Star, Trash2, Heart, MoreVertical, Edit, Flag, Link as LinkIcon, EyeOff, RotateCcw } from "../../icons";
+import { Star, Trash2, Heart, MoreVertical, Edit, Flag, Link as LinkIcon } from "../../icons";
 import { cn } from "@/lib/utils";
 import { CommentView, getAuthorBadge } from "../types";
 import { SafeAvatar } from "../../SafeAvatar";
@@ -80,19 +80,12 @@ function CommentItemComponent({
   const toast = useToast();
 
   const reactionsDisabled = !userProfile || !canComment || isReactionPending;
-  const [isHearted, setIsHearted] = React.useState<boolean>(comment.isHearted || false);
+  // Creator heart: shown to everyone, set only from the admin panel (decision 8, docs/architecture/admin-phase5.md).
+  const isHearted = comment.isHearted === true;
   const [isHighlighted, setIsHighlighted] = useState(false);
   const commentRef = useRef<HTMLDivElement>(null);
   // Server render time during hydration, live time after (RenderClock): no text swap on load.
   const now = useRenderClock();
-
-  // CommentItem is keyed by comment.id, so React reuses this instance across
-  // refetches — resync from the prop whenever the server's own value changes
-  // (e.g. another tab toggling the heart, or an unrelated cache invalidation)
-  // instead of only ever reading it once on mount.
-  useEffect(() => {
-    setIsHearted(comment.isHearted || false);
-  }, [comment.isHearted]);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.hash === `#comment-${comment.id}`) {
@@ -108,49 +101,6 @@ function CommentItemComponent({
       return () => clearTimeout(timer);
     }
   }, [comment.id]);
-
-  const handleHide = async () => {
-    try {
-      const res = await fetch(`/api/admin/comments/${comment.id}/hide`, { method: "POST" });
-      if (res.ok) {
-        toast(language === "pl" ? "Komentarz ukryty." : "Comment hidden.", "success");
-      } else {
-        toast(language === "pl" ? "Błąd ukrywania." : "Error hiding.", "error");
-      }
-    } catch (err) {
-      toast("Error", "error");
-    }
-    setShowMenu(false);
-  };
-
-  const handleRestore = async () => {
-    try {
-      const res = await fetch(`/api/admin/comments/${comment.id}/restore`, { method: "POST" });
-      if (res.ok) {
-        toast(language === "pl" ? "Komentarz przywrócony." : "Comment restored.", "success");
-      } else {
-        toast(language === "pl" ? "Błąd przywracania." : "Error restoring.", "error");
-      }
-    } catch (err) {
-      toast("Error", "error");
-    }
-    setShowMenu(false);
-  };
-
-  const handleToggleHeart = async () => {
-    try {
-      const response = await fetch(`/api/admin/comments/${comment.id}/heart`, { method: "POST" });
-      if (!response.ok) throw new Error(String(response.status));
-      const body = (await response.json().catch(() => null)) as { isHearted?: boolean } | null;
-      setIsHearted((current) => (typeof body?.isHearted === "boolean" ? body.isHearted : !current));
-      toast(language === "pl" ? "Serce twórcy zaktualizowane." : "Creator heart updated.", "success");
-    } catch {
-      toast(
-        language === "pl" ? "Nie udało się zmienić serca twórcy." : "Could not update the creator heart.",
-        "error",
-      );
-    }
-  };
 
   const startEditing = () => {
     setEditText(comment.text || "");
@@ -338,50 +288,6 @@ function CommentItemComponent({
                       : language === "pl"
                         ? "Przypnij"
                         : "Pin"}
-                  </DropdownMenuItem>
-                )}
-                {comment.viewerCanModerate &&
-                  comment.status === "VISIBLE" &&
-                  !isReply && (
-                    <DropdownMenuItem
-                      onClick={() => void handleHide()}
-                      className={menuItemClassName}
-                    >
-                      <EyeOff aria-hidden="true" size={14} />
-                      {language === "pl" ? "Ukryj" : "Hide"}
-                    </DropdownMenuItem>
-                  )}
-                {comment.viewerCanModerate &&
-                  comment.status === "HIDDEN" &&
-                  !isReply && (
-                    <DropdownMenuItem
-                      onClick={() => void handleRestore()}
-                      className={menuItemClassName}
-                    >
-                      <RotateCcw aria-hidden="true" size={14} />
-                      {language === "pl" ? "Przywróć" : "Restore"}
-                    </DropdownMenuItem>
-                  )}
-                {comment.viewerCanModerate && !isReply && (
-                  <DropdownMenuItem
-                    onClick={() => void handleToggleHeart()}
-                    className={cn(
-                      menuItemClassName,
-                      "text-[var(--chan-amber-strong)] focus:text-[var(--chan-amber-strong)]",
-                    )}
-                  >
-                    <Heart
-                      aria-hidden="true"
-                      size={16}
-                      className={isHearted ? "fill-[var(--chan-amber)]" : ""}
-                    />
-                    {isHearted
-                      ? language === "pl"
-                        ? "Usuń serce"
-                        : "Remove heart"
-                      : language === "pl"
-                        ? "Daj serce"
-                        : "Give heart"}
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>

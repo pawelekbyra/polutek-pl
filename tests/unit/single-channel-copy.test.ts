@@ -21,8 +21,6 @@ const FILES_TO_CHECK = [
   'app/[locale]/regulamin/page.tsx',
   'app/[locale]/polityka-prywatnosci/page.tsx',
   'app/components/channel/SupportModal.tsx',
-  'app/admin/users/payments/page.tsx',
-  'app/admin/users/[userId]/page.tsx',
   'app/components/support/TipThanksStep.tsx',
 ];
 

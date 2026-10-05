@@ -16,7 +16,6 @@ const productionEnv = {
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_stripe',
   RESEND_API_KEY: 're_example',
   EMAIL_FROM: 'notifications@example.com',
-  ADMIN_EMAILS: 'owner@example.com',
   MAIN_CREATOR_SLUG: 'creator-slug',
   REFERRAL_PATRON_THRESHOLD: '5',
   HEALTHCHECK_TOKEN: 'health-token',
@@ -33,13 +32,6 @@ describe('validateAppEnv', () => {
 
     expect(result.success).toBe(true);
     expect(result.errors).toEqual([]);
-  });
-
-  it('does not require the admin bootstrap e-mails in production (one-time bootstrap, emptied afterwards)', () => {
-    const result = validateAppEnv({ ...productionEnv, ADMIN_EMAILS: '' }, 'production');
-
-    expect(result.errors).not.toContain('ADMIN_EMAILS is required in production.');
-    expect(result.success).toBe(true);
   });
 
   it('requires the main creator slug in production', () => {

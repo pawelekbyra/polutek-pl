@@ -33,7 +33,7 @@ function sameEmail(a: string, b: string) {
  * ADMIN_USER_DELETED audit row (ids only) is written in the same transaction.
  * Fail closed: never yourself, never an ADMIN (demote first, so the last admin can never be deleted),
  * never an already deleted account, and only with the user's e-mail typed back (case-insensitive).
- * Fresh sign-in of the admin is checked by the route (lib/api/admin-recent-sign-in.ts).
+ * The panel (apps/admin) checks the admin's step-up before calling this.
  */
 export async function deleteUserAsAdmin(
   ctx: AppContext,
@@ -64,8 +64,7 @@ export async function deleteUserAsAdmin(
  * An admin grants or removes the ADMIN role of another account. Never your own role, never on a deleted
  * account, ADMIN only for a verified e-mail, never removing the last admin. Admin status is read from the
  * database on every request (lib/api/auth.ts), so a demotion takes effect on the next request without
- * signing the user out. Caveat: an address listed in ADMIN_EMAILS is promoted again on its next request
- * (bootstrap in lib/api/auth.ts); that list is empty in production.
+ * signing the user out. (The ADMIN_EMAILS bootstrap that used to undo a demotion no longer exists.)
  */
 export async function changeUserRoleAsAdmin(
   ctx: AppContext,
