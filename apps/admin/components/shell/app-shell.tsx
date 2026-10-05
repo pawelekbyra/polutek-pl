@@ -15,7 +15,7 @@ import { ShortcutsDialog } from "./shortcuts-dialog";
 import { Topbar, type ShellHealth } from "./topbar";
 import { ToastProvider } from "./toasts";
 
-export type ShellViewer = { name: string; email: string; dev?: boolean };
+export type ShellViewer = { name: string; email: string; dev?: boolean; /** Access mode: the account menu links here to sign out (Cloudflare Access logout). */ signOutHref?: string };
 
 const RANGE_ORDER = ["today", "7d", "28d", "90d"] as const;
 

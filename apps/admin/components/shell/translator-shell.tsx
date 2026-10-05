@@ -7,7 +7,7 @@ import { Icon } from "../icons";
 import { ToastProvider } from "./toasts";
 
 /** The whole panel a TRANSLATOR sees: a header with the account and sign-out, and the translation screens. */
-export function TranslatorShell({ children, name, email, languages }: { children: ReactNode; name: string; email: string; languages: string[] }) {
+export function TranslatorShell({ children, name, email, languages, signOutHref }: { children: ReactNode; name: string; email: string; languages: string[]; signOutHref?: string }) {
   const router = useRouter();
   async function signOut() {
     await adminAuthClient.signOut().catch(() => undefined);
@@ -24,7 +24,11 @@ export function TranslatorShell({ children, name, email, languages }: { children
         <span className="topbar-spacer" />
         <nav aria-label="Menu tłumacza"><Link className="btn btn-sm btn-ghost" href="/tlumaczenia">Do przetłumaczenia</Link></nav>
         <span className="muted" title={email}>{name}</span>
-        <button type="button" className="btn btn-sm" onClick={signOut}><Icon name="logout" />Wyloguj</button>
+        {signOutHref ? (
+          <a className="btn btn-sm" href={signOutHref}><Icon name="logout" />Wyloguj</a>
+        ) : (
+          <button type="button" className="btn btn-sm" onClick={signOut}><Icon name="logout" />Wyloguj</button>
+        )}
       </header>
       <main id="main" className="content" tabIndex={-1}>{children}</main>
     </ToastProvider>

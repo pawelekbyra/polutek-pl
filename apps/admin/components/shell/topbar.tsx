@@ -205,10 +205,17 @@ export function Topbar({
             <strong>{viewer.name}</strong>
             <span className="muted">{viewer.email}</span>
           </div>
-          <button type="button" className="btn btn-sm" onClick={signOut} disabled={!!viewer.dev}>
-            <Icon name="logout" />
-            Wyloguj
-          </button>
+          {viewer.signOutHref ? (
+            <a className="btn btn-sm" href={viewer.signOutHref}>
+              <Icon name="logout" />
+              Wyloguj
+            </a>
+          ) : (
+            <button type="button" className="btn btn-sm" onClick={signOut} disabled={!!viewer.dev}>
+              <Icon name="logout" />
+              Wyloguj
+            </button>
+          )}
         </div>
       ) : null}
     </header>

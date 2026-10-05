@@ -8,7 +8,7 @@
 import type { AppContext } from "@/lib/modules/shared/app-context";
 import { hasFreshStepUp, requireAdmin, type AdminViewer } from "@admin/lib/auth/guard";
 import type { AdminRole } from "@admin/lib/auth/roles";
-import { isDevFixturesEnabled } from "@admin/lib/config";
+import { isDevFixturesEnabled, stepUpMessage } from "@admin/lib/config";
 import { panelContext, sampleDataRefusal, type ActionResult } from "./panel";
 import { allowAction, retryAfterSeconds, type RateRule } from "./rate-limit";
 
@@ -32,7 +32,7 @@ export async function openGate(opts: GateOptions): Promise<Gate> {
     return { ok: false, result: { ok: false, code: "RATE_LIMITED", message: `Za dużo prób. Spróbuj ponownie za ${wait} s.` } };
   }
   if (opts.stepUp && !(await hasFreshStepUp())) {
-    return { ok: false, result: { ok: false, code: "STEP_UP_REQUIRED", message: "Najpierw potwierdź tożsamość (klucz dostępu albo kod TOTP z ostatnich 5 minut)." } };
+    return { ok: false, result: { ok: false, code: "STEP_UP_REQUIRED", message: stepUpMessage("Najpierw potwierdź tożsamość (klucz dostępu albo kod TOTP z ostatnich 5 minut).") } };
   }
   return { ok: true, viewer, ctx: await panelContext(viewer) };
 }

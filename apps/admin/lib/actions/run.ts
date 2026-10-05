@@ -8,7 +8,7 @@ import type { z } from "zod";
 import { logger } from "@/lib/logger";
 import type { AppContext } from "@/lib/modules/shared/app-context";
 import { hasFreshStepUp, requireAdmin, type AdminViewer } from "@admin/lib/auth/guard";
-import { isDevFixturesEnabled } from "@admin/lib/config";
+import { isDevFixturesEnabled, stepUpMessage } from "@admin/lib/config";
 import { errorMessage, panelContext, sampleDataRefusal, zodFieldErrors, type ActionResult } from "./panel";
 import { checkRateLimit, type LimitRule } from "./rate-limit";
 
@@ -51,7 +51,7 @@ export async function runAdminAction<S extends z.ZodTypeAny, T = undefined>(spec
   if (!parsed.success) return { ok: false, code: "BAD_REQUEST", message: "Niepoprawne żądanie.", fieldErrors: zodFieldErrors(parsed.error.issues) };
   const limited = checkRateLimit(viewer.userId, spec.limit);
   if (!limited.ok) return { ok: false, code: "RATE_LIMITED", message: `Za dużo prób w krótkim czasie. Spróbuj za ${limited.retryAfterSeconds} s.` };
-  if (spec.stepUp && !(await hasFreshStepUp())) return STEP_UP_REQUIRED;
+  if (spec.stepUp && !(await hasFreshStepUp())) return { ...STEP_UP_REQUIRED, message: stepUpMessage(STEP_UP_REQUIRED.message) };
   try {
     return await spec.run({ data: parsed.data, ctx: await panelContext(viewer), viewer });
   } catch (error) {

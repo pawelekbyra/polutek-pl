@@ -50,11 +50,11 @@ async function Overview() {
   return (
     <div className="grid">
       <div className="span-12">
-        <div className="banner ok"><Icon name="shield" /><div className="banner-body"><span className="banner-title">Panel chroniony trzema warstwami</span><span className="text-2">Cloudflare Access → klucz dostępu + TOTP w panelu → dziennik audytu odporny na przepisanie (wyzwalacz w bazie; rola bazy pp_admin bez prawa kasowania, gdy operator ją nadał).</span></div></div>
+        <div className="banner ok"><Icon name="shield" /><div className="banner-body">{viewer.authMode === "access" ? <><span className="banner-title">Logowanie: Cloudflare Access (kod na Gmail)</span><span className="text-2">Prostszy tryb na czas testów: bez kluczy dostępu i TOTP, więc bezpieczeństwo panelu zależy od skrzynki Gmail właściciela (włącz w Google weryfikację dwuetapową). Dziennik audytu nadal odporny na przepisanie (wyzwalacz w bazie).</span></> : <><span className="banner-title">Panel chroniony trzema warstwami</span><span className="text-2">Cloudflare Access → klucz dostępu + TOTP w panelu → dziennik audytu odporny na przepisanie (wyzwalacz w bazie; rola bazy pp_admin bez prawa kasowania, gdy operator ją nadał).</span></>}</div></div>
       </div>
       <div className="span-7 stack">
-        <Card id="h-ses" title="Aktywne sesje panelu" foot={<><span className="muted">Bezczynność 60 min, najwyżej 12 h. Ponowne potwierdzenie przed zwrotem, rozsyłką, eksportem i zmianą konta.</span><RevokeOthersButton /></>}>
-          {sessions.length === 0 ? <p className="muted">Brak aktywnych sesji (podgląd lokalny?).</p> : (
+        <Card id="h-ses" title={viewer.authMode === "access" ? "Sesja panelu" : "Aktywne sesje panelu"} foot={viewer.authMode === "access" ? <span className="muted">Sesją zarządza Cloudflare Access (12 godzin). Zakończysz ją przyciskiem „Wyloguj” w menu konta albo na admin.pawelperfect.com/cdn-cgi/access/logout.</span> : <><span className="muted">Bezczynność 60 min, najwyżej 12 h. Ponowne potwierdzenie przed zwrotem, rozsyłką, eksportem i zmianą konta.</span><RevokeOthersButton /></>}>
+          {viewer.authMode === "access" ? <p className="muted">W tym trybie panel nie przechowuje własnych sesji: każde żądanie niesie podpisany token Cloudflare. Logowania są w zakładce „Logowania do panelu”.</p> : sessions.length === 0 ? <p className="muted">Brak aktywnych sesji (podgląd lokalny?).</p> : (
             <ul className="list">
               {sessions.map((s) => {
                 const current = s.id === viewer.sessionId;
@@ -81,9 +81,9 @@ async function Overview() {
                 <span className="avatar" aria-hidden="true">{a.name.slice(0, 1).toUpperCase()}</span>
                 <div className="li-main">
                   <span className="li-title">{a.name} <span className="muted">· {a.role === "OWNER" ? "właściciel" : "tłumacz"}</span></span>
-                  <span className="li-sub">{a.email} · {a.passkeys.length} kluczy · TOTP {a.totp ? "włączony" : "wyłączony"} · {a.lastSignInAt ? `ostatnio ${fmtRelative(a.lastSignInAt, now)}` : "bez logowania"}</span>
+                  <span className="li-sub">{a.email} · {viewer.authMode === "access" ? "logowanie przez Cloudflare Access" : `${a.passkeys.length} kluczy · TOTP ${a.totp ? "włączony" : "wyłączony"}`} · {a.lastSignInAt ? `ostatnio ${fmtRelative(a.lastSignInAt, now)}` : "bez logowania"}</span>
                 </div>
-                {a.enrolledAt && a.totp && a.passkeys.length ? <Badge kind="ok">MFA</Badge> : <Badge kind="warn">niedokończone</Badge>}
+                {viewer.authMode === "access" ? <Badge kind="info" icon={false}>Access</Badge> : a.enrolledAt && a.totp && a.passkeys.length ? <Badge kind="ok">MFA</Badge> : <Badge kind="warn">niedokończone</Badge>}
               </li>
             ))}
           </ul>

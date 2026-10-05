@@ -2,6 +2,7 @@ import { z } from "zod";
 import { exportUsersCsv, USER_SEGMENTS } from "@/lib/modules/admin-community";
 import { checkRateLimit } from "@admin/lib/actions/rate-limit";
 import { adminFromRequest } from "@admin/lib/auth/api-guard";
+import { stepUpMessage } from "@admin/lib/config";
 import { hasFreshStepUp } from "@admin/lib/auth/guard";
 import { jsonError, panelRouteContext, readJson, sampleDataResponse, unauthorizedJson } from "@admin/lib/api/panel-route";
 import { errorMessage } from "@admin/lib/actions/panel";
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
   if (!body.ok) return body.response;
   const limited = checkRateLimit(admin.userId, { bucket: "users-export", max: 5, windowMs: 60 * 60_000 });
   if (!limited.ok) return jsonError(429, `Za dużo eksportów. Spróbuj za ${Math.ceil(limited.retryAfterSeconds / 60)} min.`, "RATE_LIMITED");
-  if (!(await hasFreshStepUp())) return jsonError(403, "Najpierw potwierdź tożsamość (klucz dostępu albo kod TOTP).", "STEP_UP_REQUIRED");
+  if (!(await hasFreshStepUp())) return jsonError(403, stepUpMessage("Najpierw potwierdź tożsamość (klucz dostępu albo kod TOTP)."), "STEP_UP_REQUIRED");
   const ctx = await panelRouteContext(request);
   if (!ctx) return unauthorizedJson();
   const result = await exportUsersCsv(ctx, { q: body.data.q?.trim() || undefined, seg: body.data.seg });
