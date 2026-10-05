@@ -122,4 +122,33 @@ describe('stripe-reconciliation cron', () => {
 
     expect(payment.status).toBe('CANCELED');
   });
+
+  it('does not let abandoned rows whose intent Stripe no longer knows (e.g. test-mode intents under a live key) starve newer payments', async () => {
+    for (let i = 0; i < 100; i++) {
+      seed(`ghost${i}`, 'PENDING', 5 * 24 * HOUR + i, `ghost${i}`);
+      intents.delete(`pi_ghost${i}`); // retrieve() will throw resource_missing for these
+    }
+    const real = seed('real', 'PENDING', 2 * HOUR, 'succeeded');
+    stripe.paymentIntents.retrieve.mockImplementation(async (id: string) => {
+      if (!intents.has(id)) throw Object.assign(new Error('No such payment_intent'), { type: 'StripeInvalidRequestError', code: 'resource_missing' });
+      return { ...intents.get(id) };
+    });
+
+    const first = await (await GET(cronRequest())).json();
+    expect(first).toMatchObject({ checked: 100, canceled: 100, errors: 0 });
+    const second = await (await GET(cronRequest())).json();
+
+    expect(second).toMatchObject({ checked: 1, fulfilled: 1 });
+    expect(real.status).toBe('SUCCEEDED');
+  });
+
+  it('keeps a FRESH row whose intent is not found (could be a transient or wrong-key problem) for the next run', async () => {
+    const payment = seed('fresh', 'PENDING', 2 * HOUR, 'succeeded');
+    stripe.paymentIntents.retrieve.mockRejectedValueOnce(Object.assign(new Error('No such payment_intent'), { type: 'StripeInvalidRequestError', code: 'resource_missing' }));
+
+    const body = await (await GET(cronRequest())).json();
+
+    expect(body).toMatchObject({ errors: 1 });
+    expect(payment.status).toBe('PENDING');
+  });
 });

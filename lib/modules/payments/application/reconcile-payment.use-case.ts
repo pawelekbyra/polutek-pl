@@ -83,6 +83,15 @@ export async function reconcilePaymentWithStripe(
     // processing / requires_capture / still fresh: leave it for the next run.
     return "unchanged";
   } catch (error) {
+    // An abandoned row whose intent Stripe does not know at all (typically a test-mode intent read with a
+    // live key after going live) can never be resolved by retrying; left PENDING it would occupy a slot in
+    // every batch (oldest first) and eventually starve real payments. A later ?scope=recover run still
+    // re-checks CANCELED rows, so a wrong-key mistake is recoverable.
+    if (abandoned && payment.status === PaymentStatus.PENDING && (error as { code?: string } | null)?.code === "resource_missing") {
+      logger.warn(`[ReconcilePayment] Intent of payment ${payment.id} is unknown to Stripe (other mode or deleted); canceling the abandoned row.`);
+      const count = await repo.markUnpaidPaymentCanceled(payment.id, ctx.prisma);
+      return count > 0 ? "canceled" : "unchanged";
+    }
     logger.error(`[ReconcilePayment] Error reconciling payment ${payment.id}:`, error);
     return "errors";
   }
