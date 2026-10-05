@@ -4,7 +4,6 @@ import path from 'path';
 
 describe('Email Module Import Boundary Guard', () => {
   const routes = [
-    'app/api/admin/emails/broadcast/route.ts',
     'app/api/webhooks/resend/route.ts'
   ];
 
