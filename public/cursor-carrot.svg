@@ -1,21 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-  <!-- Carrot rotated -45deg: tip upper-left, fat end lower-right. Hotspot ~(8,8) -->
-  <g transform="translate(16 16) rotate(-45) translate(-16 -16)">
-    <!-- Leaves (green, at top/fat end) -->
-    <path d="M15 13 C13 9 10 5 12 2 C13 5 15 9 15 13Z" fill="#16A34A"/>
-    <path d="M16 12 C16 7 15 3 16 1 C17 3 16 7 16 12Z" fill="#22C55E"/>
-    <path d="M17 13 C19 9 22 5 20 2 C19 5 17 9 17 13Z" fill="#16A34A"/>
-    <!-- Carrot body shadow -->
-    <path d="M15.5 28 C12.5 28 10.5 22 10.5 16 L10.5 14 C10.5 12 13 11 16 11 C19 11 21.5 12 21.5 14 L21.5 16 C21.5 22 19.5 28 16.5 28Z" fill="rgba(0,0,0,0.18)"/>
-    <!-- Carrot body orange -->
-    <path d="M15 27 C12 27 10 21 10 15 L10 13 C10 11 12.5 10 16 10 C19.5 10 22 11 22 13 L22 15 C22 21 20 27 17 27Z" fill="#EA580C"/>
-    <!-- Carrot highlight -->
-    <path d="M13 13 C13 11.5 14.3 10.8 16 10.5 C14.5 11 13.5 12 13.5 14 C13.5 18 14.5 23 16 26 C14 23 13 19 13 13Z" fill="rgba(255,255,255,0.22)"/>
-    <!-- Carrot texture lines -->
-    <line x1="10.5" y1="15" x2="21.5" y2="15" stroke="rgba(0,0,0,0.1)" stroke-width="0.8"/>
-    <line x1="11" y1="18" x2="21" y2="18" stroke="rgba(0,0,0,0.1)" stroke-width="0.8"/>
-    <line x1="12" y1="21" x2="20" y2="21" stroke="rgba(0,0,0,0.1)" stroke-width="0.8"/>
-    <!-- Tip -->
-    <path d="M16 27 C15 27 14.5 26 15 24 L17 24 C17.5 26 17 27 16 27Z" fill="#C2410C"/>
+  <!-- Carrot cursor, drawn for this site. Like an arrow cursor: the sharp tip is the hotspot at
+       (2, 2) in the top-left corner, the body runs down-right and the leaves end bottom-right.
+       Dark outline + white halo keep it readable on light and dark backgrounds.
+       CSS: cursor: url(/cursor-carrot.svg) 2 2, <fallback>; -->
+  <g transform="translate(2 2) rotate(-45)" stroke-linejoin="round" stroke-linecap="round">
+    <!-- leaves (behind the body), fanned out at the thick end -->
+    <g fill="#22c55e" stroke="#14532d" stroke-width="1.1" paint-order="stroke">
+      <path d="M-1.2 23.5 C-4.8 26 -7.2 29.4 -6 32.6 C-3.6 30.6 -1.8 27.2 -0.2 24.2 Z"/>
+      <path d="M1.2 23.5 C4.8 26 7.2 29.4 6 32.6 C3.6 30.6 1.8 27.2 0.2 24.2 Z"/>
+      <path d="M0 23.6 C-1.4 27.4 -1.2 31.4 0 34.4 C1.2 31.4 1.4 27.4 0 23.6 Z" fill="#16a34a"/>
+    </g>
+    <!-- white halo -->
+    <path d="M0 0 C1.4 6 4.2 15.5 5.6 20.6 C6.2 23.4 3.2 25 0 25 C-3.2 25 -6.2 23.4 -5.6 20.6 C-4.2 15.5 -1.4 6 0 0 Z"
+          fill="none" stroke="#ffffff" stroke-width="3.2"/>
+    <!-- body -->
+    <path d="M0 0 C1.4 6 4.2 15.5 5.6 20.6 C6.2 23.4 3.2 25 0 25 C-3.2 25 -6.2 23.4 -5.6 20.6 C-4.2 15.5 -1.4 6 0 0 Z"
+          fill="#f97316" stroke="#7c2d12" stroke-width="1.2"/>
+    <!-- highlight and ridges -->
+    <path d="M-1.6 9 C-2.6 13 -3.4 17 -3.4 20.4" fill="none" stroke="#fed7aa" stroke-width="1.1" opacity="0.9"/>
+    <path d="M0.6 8.5 L2.4 8.1 M-0.6 13.5 L3.6 12.9 M0.8 18 L4.6 17.4 M-2 21.4 L1.6 21" fill="none" stroke="#9a3412" stroke-width="0.9"/>
   </g>
 </svg>

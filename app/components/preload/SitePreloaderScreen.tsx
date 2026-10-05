@@ -1,45 +1,56 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useOptionalTx } from "@/lib/i18n/language-context";
 import { MatrixRain } from "./MatrixRain";
-import { MatrixGatePrompt } from "./MatrixGatePrompt";
+import { MatrixGatePrompt, type GatePromptLabels } from "./MatrixGatePrompt";
 import styles from "./SitePreloaderScreen.module.css";
 
 interface SitePreloaderScreenProps {
-  /** Fades + blurs the screen out (the page underneath is ready). */
+  /** Fades + blurs the screen out (the viewer entered). */
   leaving?: boolean;
-  /** Auto-hides after a few seconds even without JS — only for the reveal gate. */
+  /** Auto-hides after 30 s even without JS — only while the page is still loading. */
   failsafe?: boolean;
-  label?: string;
-  /** When true shows the "Follow the white rabbit" prompt over the rain. */
-  showGate?: boolean;
-  /** Called when the user clicks the rabbit button. */
-  onGateClick?: () => void;
+  /** The page underneath is ready: the button enters instead of saying "loading". */
+  ready?: boolean;
+  /** Click on the entry button (queued by the gate while the page is not ready). */
+  onEnter?: () => void;
 }
 
 /**
- * The one full-screen loading view of the public home page. Rendered both by the
- * route-level `loading.tsx` (while the server streams the page) and by
- * `PageRevealGate` (while the page's client-side pieces settle).
+ * The entry gate of the public home page: Matrix rain, "Follow the white rabbit" and the rabbit
+ * button, all present from the first paint. Rendered by the route-level `loading.tsx` (while the
+ * server streams the page) and by `PageRevealGate`; both render identical markup, so the hand-over
+ * is invisible.
  */
 export function SitePreloaderScreen({
   leaving = false,
   failsafe = false,
-  label = "Loading…",
-  showGate = false,
-  onGateClick,
+  ready = false,
+  onEnter,
 }: SitePreloaderScreenProps) {
+  const tx = useOptionalTx();
+  // The gate font (Major Mono Display subset) has Latin and Polish letters only, so the captions
+  // are plain upper-case ASCII where the language allows it.
+  const labels = {
+    loading: tx("WCZYTUJĘ…", "LOADING…"),
+    enter: tx("WEJDŹ", "ENTER"),
+    screen: tx("Wejście na stronę", "Site entrance"),
+  };
   return (
     <div
-      role="status"
-      aria-live="polite"
-      aria-label={label}
+      role="dialog"
+      aria-modal="true"
+      aria-label={labels.screen}
       aria-hidden={leaving || undefined}
       data-testid="site-preloader"
-      data-state={leaving ? "leaving" : showGate ? "gate" : "covering"}
+      data-site-preloader=""
+      data-state={leaving ? "leaving" : ready ? "gate" : "covering"}
+      // The carrot cursor belongs to the gate only; it goes away with the screen.
+      data-cursor={leaving ? undefined : "carrot"}
       className={cn(styles.screen, failsafe && styles.failsafe, leaving && styles.leaving)}
     >
       <MatrixRain />
-      {showGate && onGateClick && <MatrixGatePrompt onEnter={onGateClick} />}
+      <MatrixGatePrompt ready={ready} labels={labels} onEnter={onEnter} />
     </div>
   );
 }

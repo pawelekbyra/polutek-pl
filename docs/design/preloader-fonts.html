@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preloader: porównanie czcionek</title>
+<!--
+  Porównanie kandydatów na czcionkę napisu "Follow the white rabbit" i podpisu przycisku bramki.
+  Samodzielny plik: czcionki leżą obok w ./preloader-fonts/ (podzbiory woff2: ASCII + polskie litery),
+  bez zewnętrznych hostów. Otwórz bezpośrednio w przeglądarce.
+
+  Licencje (wszystkie SIL Open Font License 1.1, użycie komercyjne i self-hosting dozwolone):
+  - VT323 (Peter Hull)                 latin + latin-ext (polskie znaki)
+  - Share Tech Mono (Carrois)          tylko latin (BRAK ą ę ł ń ś ź ż: podpis PL spada na zapasową)
+  - IBM Plex Mono Bold (IBM)           latin + latin-ext
+  - Major Mono Display (Emre Parlak)   latin + latin-ext
+  Odrzucone: Matrix Code NFI (Norfok) — licencja tylko do użytku osobistego.
+-->
+<style>
+  @font-face { font-family: "C VT323"; src: url("preloader-fonts/vt323-latin.woff2") format("woff2"); unicode-range: U+0020-007E, U+00A0, U+00D3, U+00F3, U+2013-2014, U+2019, U+201C-201D, U+2026; }
+  @font-face { font-family: "C VT323"; src: url("preloader-fonts/vt323-pl.woff2") format("woff2"); unicode-range: U+0104-0107, U+0118-0119, U+0141-0144, U+015A-015B, U+0179-017C; }
+  @font-face { font-family: "C ShareTech"; src: url("preloader-fonts/share-tech-mono-latin.woff2") format("woff2"); }
+  @font-face { font-family: "C Plex"; font-weight: 700; src: url("preloader-fonts/ibm-plex-mono-700-latin.woff2") format("woff2"); unicode-range: U+0020-007E, U+00A0, U+00D3, U+00F3, U+2013-2014, U+2019, U+201C-201D, U+2026; }
+  @font-face { font-family: "C Plex"; font-weight: 700; src: url("preloader-fonts/ibm-plex-mono-700-pl.woff2") format("woff2"); unicode-range: U+0104-0107, U+0118-0119, U+0141-0144, U+015A-015B, U+0179-017C; }
+  @font-face { font-family: "C Major"; src: url("preloader-fonts/major-mono-display-latin.woff2") format("woff2"); unicode-range: U+0020-007E, U+00A0, U+00D3, U+00F3, U+2013-2014, U+2019, U+201C-201D, U+2026; }
+  @font-face { font-family: "C Major"; src: url("preloader-fonts/major-mono-display-pl.woff2") format("woff2"); unicode-range: U+0104-0107, U+0118-0119, U+0141-0144, U+015A-015B, U+0179-017C; }
+
+  :root { --bg: #f7f9fc; --ink: #111827; color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: system-ui, sans-serif; }
+  header { padding: 24px 16px 8px; max-width: 1100px; margin: 0 auto; }
+  header h1 { font-size: 20px; margin: 0 0 6px; }
+  header p { margin: 0; font-size: 14px; color: #4b5563; max-width: 70ch; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 16px; padding: 16px; max-width: 1100px; margin: 0 auto; }
+  .panel { position: relative; height: 300px; overflow: hidden; border-radius: 12px; border: 1px solid #d8dee8; background: var(--bg); }
+  .panel canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .content { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 0 12px; }
+  .prompt { margin: 0; color: var(--ink); line-height: 1.2; white-space: nowrap; }
+  .prompt::after { content: ""; display: inline-block; width: 0.5em; height: 0.95em; margin-left: 0.12em; vertical-align: -0.1em; background: currentColor; animation: blink 1.06s steps(1) infinite; }
+  .caption { margin: 0; font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; color: #374151; }
+  .tag { position: absolute; left: 10px; top: 8px; font: 600 12px/1.4 system-ui, sans-serif; background: rgba(255,255,255,.85); padding: 2px 8px; border-radius: 999px; border: 1px solid #d8dee8; }
+  .verdict { position: absolute; right: 10px; top: 8px; font: 600 12px/1.4 system-ui, sans-serif; padding: 2px 8px; border-radius: 999px; background: #111827; color: #fff; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .vt     { font-family: "C VT323", monospace; font-size: clamp(30px, 6vw, 50px); letter-spacing: 0.04em; font-synthesis: none; }
+  .vt.c   { font-size: 22px; letter-spacing: 0.14em; }
+  .stm    { font-family: "C ShareTech", monospace; font-size: clamp(22px, 4.2vw, 36px); letter-spacing: 0.06em; }
+  .stm.c  { font-size: 16px; }
+  .plex   { font-family: "C Plex", monospace; font-weight: 700; font-size: clamp(20px, 3.8vw, 32px); letter-spacing: 0.04em; }
+  .plex.c { font-size: 14px; }
+  .major  { font-family: "C Major", monospace; font-size: clamp(18px, 3.4vw, 30px); letter-spacing: 0.02em; }
+  .major.c{ font-size: 14px; }
+  .geist  { font-family: "Courier New", monospace; font-weight: 700; font-size: clamp(20px, 4vw, 36px); letter-spacing: 0.08em; }
+  .geist.c{ font-size: 14px; }
+  @media (prefers-reduced-motion: reduce) { .prompt::after { animation: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Bramka „Follow the white rabbit”: porównanie czcionek</h1>
+  <p>Każdy panel: deszcz w kolorach strony, napis z blokiem kursora i podpis przycisku w stanie wczytywania. Wybrana przez właściciela: <strong>Major Mono Display</strong> (w aplikacji jeden podzbiór 5 KB: ASCII + polskie litery, <code>app/fonts/major-mono-display-gate.woff2</code>). Podpis pod napisem w aplikacji pokazuje tylko jeden stan naraz: „wczytuję…”, a po gotowości strony „wejdź”.</p>
+</header>
+<main class="grid">
+  <section class="panel"><canvas aria-hidden="true"></canvas><span class="tag">VT323 · OFL · PL ✓ · 3,6 + 1,3 KB</span>
+    <div class="content"><p class="prompt vt">Follow the white rabbit</p><p class="caption vt c">wczytuję…</p></div></section>
+  <section class="panel"><canvas aria-hidden="true"></canvas><span class="tag">Share Tech Mono · OFL · PL ✗ · 3,8 KB</span>
+    <div class="content"><p class="prompt stm">Follow the white rabbit</p><p class="caption stm c">wczytuję…</p></div></section>
+  <section class="panel"><canvas aria-hidden="true"></canvas><span class="tag">IBM Plex Mono Bold · OFL · PL ✓ · 4,8 + 1,5 KB</span>
+    <div class="content"><p class="prompt plex">Follow the white rabbit</p><p class="caption plex c">wczytuję…</p></div></section>
+  <section class="panel"><canvas aria-hidden="true"></canvas><span class="tag">Major Mono Display · OFL · PL ✓ · 4,5 + 1,5 KB</span><span class="verdict">wybrana</span>
+    <div class="content"><p class="prompt major">Follow the white rabbit</p><p class="caption major c">wczytuję…</p></div></section>
+  <section class="panel"><canvas aria-hidden="true"></canvas><span class="tag">Obecnie: CSS prosi o „Geist Mono”, którego pod tą nazwą nie ma, więc rysuje Courier New</span>
+    <div class="content"><p class="prompt geist">Follow the white rabbit</p><p class="caption geist c">wczytuję…</p></div></section>
+</main>
+<script>
+  // Uproszczony deszcz z aplikacji (te same kolory i parametry), po jednym na panel.
+  var CHARS = "ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  Array.prototype.forEach.call(document.querySelectorAll(".panel canvas"), function (canvas) {
+    var ctx = canvas.getContext("2d");
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var w = canvas.clientWidth, h = canvas.clientHeight;
+    canvas.width = w * dpr; canvas.height = h * dpr; ctx.scale(dpr, dpr);
+    var cols = Math.floor(w / 14), rows = Math.ceil(h / 13) + 2, TRAIL = 26;
+    var heads = [], speeds = [], grid = [];
+    for (var c = 0; c < cols; c++) {
+      heads.push(Math.random() * (rows + TRAIL));
+      speeds.push(27 * (0.75 + Math.random() * 0.5));
+      var col = []; for (var r = 0; r < rows; r++) col.push(Math.floor(Math.random() * CHARS.length)); grid.push(col);
+    }
+    var last = 0;
+    function frame(now) {
+      var dt = last ? Math.min((now - last) / 1000, 0.25) : 0; last = now;
+      ctx.fillStyle = "#f7f9fc"; ctx.fillRect(0, 0, w, h);
+      ctx.font = "13px monospace"; ctx.fillStyle = "#111827";
+      for (var c = 0; c < cols; c++) {
+        heads[c] = (heads[c] + speeds[c] * dt) % (rows + TRAIL);
+        for (var r = 0; r < rows; r++) {
+          var d = heads[c] - r;
+          ctx.globalAlpha = d >= 0 && d <= TRAIL ? 0.08 + 0.65 * (1 - d / TRAIL) : 0.08;
+          ctx.fillText(CHARS[grid[c][r]], c * 14, r * 13);
+        }
+      }
+      ctx.globalAlpha = 1;
+      if (!reduce) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  });
+</script>
+</body>
+</html>

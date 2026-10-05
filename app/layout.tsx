@@ -16,6 +16,7 @@ import { htmlLang } from "@/lib/i18n/ui";
 import { AuthModalProvider } from "@/app/components/auth/AuthModalProvider";
 import { TelemetryBeacon } from "@/app/components/telemetry/TelemetryBeacon";
 import { isTelemetryBeaconEnabled } from "@/lib/telemetry/config";
+import { GATE_BOOT_SCRIPT } from "@/app/components/preload/matrix-rain-engine";
 
 export const metadata = {
   title: APP_NAME,
@@ -62,6 +63,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       className={`${geistSans.variable} ${geistMono.variable}`}
       style={{ background: "#f7f9fc" }}
     >
+      <head>
+        {/* Entry gate: hides it before the first paint for a viewer who already entered in this
+            tab, otherwise draws the Matrix rain the moment its canvas is parsed (pre-hydration).
+            Inline on purpose (the CSP allows inline scripts); Next merges its own metadata tags
+            (viewport, manifest, icons) into this <head>. */}
+        <script dangerouslySetInnerHTML={{ __html: GATE_BOOT_SCRIPT }} />
+      </head>
       <body className="font-sans bg-background text-foreground min-h-[100dvh] relative" suppressHydrationWarning>
         <ServiceWorkerCleanup />
         <UrlMask />

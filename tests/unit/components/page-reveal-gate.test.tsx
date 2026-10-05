@@ -27,14 +27,12 @@ function preloaderState() {
   return screen.queryByTestId("site-preloader")?.getAttribute("data-state") ?? "gone";
 }
 
-// The gate waits for the viewer: once the page has settled (or the max wait expired) the
-// preloader shows "Follow the white rabbit" and only a click on the rabbit reveals the page.
-// The button is inert until the prompt has finished typing itself out.
-async function enterThroughRabbitGate() {
+const enterButton = () => screen.getByRole("button", { name: /WEJDŹ|WCZYTUJĘ…/ });
+
+async function finishLeaving() {
   await act(async () => {
-    vi.advanceTimersByTime(3000);
+    vi.advanceTimersByTime(800);
   });
-  fireEvent.click(screen.getByRole("button", { name: "Enter" }));
 }
 
 describe("PageRevealGate", () => {
@@ -51,7 +49,24 @@ describe("PageRevealGate", () => {
     vi.restoreAllMocks();
   });
 
-  it("covers the page until every awaited piece has settled, then fades out and unmounts", async () => {
+  it("shows the prompt, the rabbit and a 'loading' button from the very first render", () => {
+    render(
+      <PageRevealGate waitFor={["player"]}>
+        <Piece name="player" ready={false} />
+      </PageRevealGate>,
+    );
+
+    expect(preloaderState()).toBe("covering");
+    expect(screen.getByText("Follow the white rabbit")).toBeTruthy();
+    const button = enterButton();
+    expect(button.textContent).toBe("WCZYTUJĘ…");
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+    expect(button.querySelector("img")?.getAttribute("src")).toBe("/rabbit-gate.webp");
+    // Only one caption at a time, never "WCZYTUJĘ… / WEJDŹ".
+    expect(screen.queryByText(/WEJDŹ/)).toBeNull();
+  });
+
+  it("covers the page until every awaited piece has settled, then waits for the click", async () => {
     const { rerender } = render(
       <PageRevealGate waitFor={["player", "comments"]}>
         <Piece name="player" ready />
@@ -69,16 +84,51 @@ describe("PageRevealGate", () => {
         <Piece name="comments" ready />
       </PageRevealGate>,
     );
-    // Everything settled: the rabbit prompt takes over, the page stays covered until the click.
     expect(preloaderState()).toBe("gate");
+    expect(enterButton().textContent).toBe("WEJDŹ");
+    expect(enterButton().getAttribute("aria-disabled")).toBeNull();
+    expect(screen.queryByText("WCZYTUJĘ…")).toBeNull();
 
-    await enterThroughRabbitGate();
+    fireEvent.click(enterButton());
     expect(preloaderState()).toBe("leaving");
 
-    await act(async () => {
-      vi.advanceTimersByTime(800);
-    });
+    await finishLeaving();
     expect(preloaderState()).toBe("gone");
+  });
+
+  it("queues a click made while the page is loading and enters only once it is ready", async () => {
+    const onEnter = vi.fn();
+    window.addEventListener("polutek:gate-enter", onEnter);
+    const { rerender } = render(
+      <PageRevealGate waitFor={["player"]}>
+        <Piece name="player" ready={false} />
+      </PageRevealGate>,
+    );
+
+    fireEvent.click(enterButton());
+    // Not ready yet: the page is not let through.
+    expect(preloaderState()).toBe("covering");
+    expect(onEnter).not.toHaveBeenCalled();
+
+    rerender(
+      <PageRevealGate waitFor={["player"]}>
+        <Piece name="player" ready />
+      </PageRevealGate>,
+    );
+    expect(preloaderState()).toBe("leaving");
+    expect(onEnter).toHaveBeenCalledTimes(1);
+    window.removeEventListener("polutek:gate-enter", onEnter);
+  });
+
+  it("honours a click caught by the boot script before hydration", () => {
+    (window as unknown as Record<string, unknown>).__ppGateQueued = true;
+    render(
+      <PageRevealGate>
+        <p>page</p>
+      </PageRevealGate>,
+    );
+    // Auth is loaded and nothing else is awaited, so the queued click enters at once.
+    expect(preloaderState()).toBe("leaving");
   });
 
   it("waits for auth to load before revealing", () => {
@@ -110,18 +160,42 @@ describe("PageRevealGate", () => {
     expect(preloaderState()).toBe("gate");
   });
 
-  it("skips the preloader on later mounts in the same document (client navigation back home)", async () => {
+  it("shows the carrot cursor over the whole gate and drops it once the viewer enters", async () => {
+    render(
+      <PageRevealGate>
+        <p>page</p>
+      </PageRevealGate>,
+    );
+    expect(screen.getByTestId("site-preloader").getAttribute("data-cursor")).toBe("carrot");
+
+    fireEvent.click(enterButton());
+    expect(screen.getByTestId("site-preloader").getAttribute("data-cursor")).toBeNull();
+    await finishLeaving();
+    expect(screen.queryByTestId("site-preloader")).toBeNull();
+  });
+
+  it("skips the gate on later mounts in the same document and marks <html> for reloads", async () => {
     const first = render(
       <PageRevealGate>
         <p>page</p>
       </PageRevealGate>,
     );
-    await enterThroughRabbitGate();
-    await act(async () => {
-      vi.advanceTimersByTime(800);
-    });
+    fireEvent.click(enterButton());
+    await finishLeaving();
+    expect(sessionStorage.getItem("polutek:revealed")).toBe("1");
+    expect(document.documentElement.hasAttribute("data-gate-passed")).toBe(true);
     first.unmount();
 
+    render(
+      <PageRevealGate waitFor={["player"]}>
+        <Piece name="player" ready={false} />
+      </PageRevealGate>,
+    );
+    expect(preloaderState()).toBe("gone");
+  });
+
+  it("skips the gate on a reload in a tab session that already entered", () => {
+    sessionStorage.setItem("polutek:revealed", "1");
     render(
       <PageRevealGate waitFor={["player"]}>
         <Piece name="player" ready={false} />
