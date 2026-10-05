@@ -35,6 +35,7 @@ import { fulfillPayment } from '@/lib/modules/payments/application/fulfill-payme
 import { handleRefund } from '@/lib/modules/payments/application/handle-refund.use-case';
 import { handleDispute } from '@/lib/modules/payments/application/handle-dispute.use-case';
 import { syncRefundsFromStripe } from '@/lib/modules/payments/application/sync-refunds.use-case';
+import { enqueueStripeCustomerAnonymization, processStripeCustomerAnonymizations } from '@/lib/modules/payments/application/stripe-customer-anonymization.use-case';
 import { adminRefund } from '@/lib/modules/payments/application/admin-refund.use-case';
 import { StripeEventLockService } from '@/lib/modules/payments/infrastructure/stripe-event-lock.service';
 
@@ -309,6 +310,30 @@ describe('refund ledger follows Stripe (PA-04)', () => {
     // Without the lock the 2nd sync (fresh answer 1000) could be overwritten by the 1st (stale 600).
     expect(await prisma.payment.findUniqueOrThrow({ where: { id: payment.id } })).toMatchObject({ status: 'REFUNDED', refundedAmountMinor: 1000 });
     expect(await total()).toBe(0);
+  });
+});
+
+describe('Stripe Customer anonymization queue (PA-03)', () => {
+  it('queues idempotently, backs off on a Stripe failure, succeeds on retry, removes the row and leaves an audit row', async () => {
+    const customerId = `cus_${RUN}`;
+    await prisma.$transaction((tx) => enqueueStripeCustomerAnonymization(tx, [{ stripeCustomerId: customerId, userId }, { stripeCustomerId: customerId, userId }, { stripeCustomerId: null, userId }], new Date()));
+    expect(await prisma.stripeCustomerAnonymization.count({ where: { stripeCustomerId: customerId } })).toBe(1);
+
+    const update = vi.fn().mockRejectedValueOnce(new Error('stripe down')).mockResolvedValue({});
+    const failed = await processStripeCustomerAnonymizations(ctx(), { stripeCustomerIds: [customerId], stripe: { customers: { update } } as never });
+    expect(failed).toMatchObject({ failed: 1, anonymized: 0 });
+    const row = await prisma.stripeCustomerAnonymization.findUniqueOrThrow({ where: { stripeCustomerId: customerId } });
+    expect(row.attempts).toBe(1);
+    expect(row.nextAttemptAt.getTime()).toBeGreaterThan(Date.now());
+
+    // Not due yet: nothing happens. Make it due, retry.
+    expect(await processStripeCustomerAnonymizations(ctx(), { stripeCustomerIds: [customerId], stripe: { customers: { update } } as never })).toMatchObject({ failed: 0, anonymized: 0 });
+    await prisma.stripeCustomerAnonymization.update({ where: { stripeCustomerId: customerId }, data: { nextAttemptAt: new Date(Date.now() - 1000) } });
+    const done = await processStripeCustomerAnonymizations(ctx(), { stripeCustomerIds: [customerId], stripe: { customers: { update } } as never });
+
+    expect(done).toMatchObject({ anonymized: 1, failed: 0 });
+    expect(await prisma.stripeCustomerAnonymization.count({ where: { stripeCustomerId: customerId } })).toBe(0);
+    expect(await prisma.auditLog.count({ where: { action: 'STRIPE_CUSTOMER_ANONYMIZED', targetId: userId } })).toBe(1);
   });
 });
 

@@ -12,6 +12,7 @@ export * from "./application/get-user-payments.use-case";
 export * from "./application/get-payment-status.use-case";
 export * from "./application/reconcile-payment.use-case";
 export * from "./application/reconcile-refunds.use-case";
+export * from "./application/stripe-customer-anonymization.use-case";
 export * from "./domain/payment.dto";
 export * from "./domain/admin-payment.dto";
 export * from "./domain/payment.errors";

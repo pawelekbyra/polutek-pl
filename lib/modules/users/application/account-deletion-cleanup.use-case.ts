@@ -4,6 +4,7 @@ import { AppContext } from '@/lib/modules/shared/app-context';
 import { recordAuditEvent } from '@/lib/modules/audit';
 import { resolveEmailLanguage, sendAccountDeletedEmail } from '@/lib/modules/email';
 import { enqueueContactRemovals, processContactRemovals } from '@/lib/modules/subscriptions';
+import { enqueueStripeCustomerAnonymization, processStripeCustomerAnonymizations } from '@/lib/modules/payments';
 import { logger } from '@/lib/logger';
 
 /** APP_ACCOUNT_DELETION: the user deleted their own account. ADMIN_USER_DELETION: an admin deleted it (/admin/users). */
@@ -77,6 +78,22 @@ async function settleContactRemovals(ctx: AppContext, emails: string[]) {
   }
 }
 
+/** Same bounded, best-effort wait for the Stripe Customer erasure; what is left is retried by /api/cron/retention. */
+async function settleStripeCustomerAnonymization(ctx: AppContext, stripeCustomerIds: string[]) {
+  if (stripeCustomerIds.length === 0) return;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      processStripeCustomerAnonymizations(ctx, { stripeCustomerIds }),
+      new Promise((resolve) => { timer = setTimeout(resolve, CONTACT_REMOVAL_WAIT_MS); }),
+    ]);
+  } catch (error) {
+    logger.warn('[AccountDeletionCleanup] Stripe customer anonymization deferred to the retention cron', error instanceof Error ? error.message : String(error));
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 async function resyncCreatorSubscriberCounts(tx: any, creatorIds: string[]) {
   for (const creatorId of [...new Set(creatorIds)]) {
     const activeCount = await tx.subscription.count({ where: { creatorId } });
@@ -93,7 +110,7 @@ export class AccountDeletionCleanupUseCase {
     const anonymousId = crypto.randomUUID();
     const user = await ctx.prisma.user.findUnique({
       where: { id: input.userId },
-      select: { id: true, email: true, isDeleted: true, language: true },
+      select: { id: true, email: true, isDeleted: true, language: true, stripeCustomerId: true },
     });
 
     if (!user) return { cleaned: false, alreadyDeleted: true, originalEmail: null };
@@ -101,6 +118,7 @@ export class AccountDeletionCleanupUseCase {
     const originalEmail = user.email && !user.email.startsWith('deleted_') ? user.email : null;
     const tombstoneEmail = user.isDeleted && user.email.startsWith('deleted_') ? user.email : deletedEmail(anonymousId);
     let contactEmails: string[] = [];
+    const stripeCustomerIds: string[] = user.stripeCustomerId ? [user.stripeCustomerId] : [];
     const result = await ctx.db.writeTransaction(async (tx) => {
       const subscriptions = await tx.subscription.findMany({
         where: { userId: input.userId },
@@ -143,6 +161,9 @@ export class AccountDeletionCleanupUseCase {
       await eraseCommentContent(tx, input.userId, now);
       await anonymizeEmailHistory(tx, input.userId, [...new Set([...(originalEmail ? [originalEmail] : []), ...contactEmails])], tombstoneEmail);
 
+      // PA-03: the Stripe Customer holds the e-mail; queue its erasure in this transaction (the Payment ledger stays).
+      await enqueueStripeCustomerAnonymization(tx, stripeCustomerIds.map((stripeCustomerId) => ({ stripeCustomerId, userId: input.userId })), now);
+
       await tx.user.update({
         where: { id: input.userId },
         data: {
@@ -165,6 +186,7 @@ export class AccountDeletionCleanupUseCase {
           reason: input.reason ?? null,
           originalEmailRemoved: Boolean(originalEmail),
           contactRemovalsQueued: contactEmails.length,
+          stripeCustomersQueued: stripeCustomerIds.length,
         },
       }, tx);
 
@@ -173,6 +195,7 @@ export class AccountDeletionCleanupUseCase {
 
     // Best effort and bounded: a slow or unreachable Resend never blocks the deletion.
     await settleContactRemovals(ctx, contactEmails);
+    await settleStripeCustomerAnonymization(ctx, stripeCustomerIds);
 
     if (originalEmail) {
       await sendAccountDeletedEmail(originalEmail, resolveEmailLanguage(user.language)).catch((error) => {

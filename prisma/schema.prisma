@@ -480,6 +480,23 @@ model ResendContactRemoval {
   @@index([nextAttemptAt])
 }
 
+/// A Stripe Customer whose personal data (e-mail, name, phone) must still be erased at Stripe after an
+/// account deletion (PA-03). Written in the deletion transaction, so the deletion never depends on Stripe being
+/// reachable; retried by the account-deletion path and daily by /api/cron/retention; the row is deleted once
+/// Stripe confirms (the audit log keeps STRIPE_CUSTOMER_ANONYMIZED). No FK to User: the User row is a tombstone.
+model StripeCustomerAnonymization {
+  id               String   @id @default(uuid())
+  stripeCustomerId String   @unique
+  userId           String?
+  attempts         Int      @default(0)
+  lastError        String?
+  nextAttemptAt    DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([nextAttemptAt])
+}
+
 model Subscription {
   /// LEGACY: historical channel-follow/subscription records only.
   /// Do not use this model for premium/patron content access; active PatronGrant rows are the only access source of truth.

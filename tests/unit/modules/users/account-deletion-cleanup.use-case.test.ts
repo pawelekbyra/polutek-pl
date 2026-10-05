@@ -4,6 +4,8 @@ import { AccountDeletionCleanupUseCase } from '@/lib/modules/users/application/a
 import { sendAccountDeletedEmail } from '@/lib/modules/email';
 
 const gateway = vi.hoisted(() => ({ removeContact: vi.fn() }));
+const stripeCustomers = vi.hoisted(() => ({ update: vi.fn() }));
+vi.mock('@/lib/modules/payments/infrastructure/stripe-client', () => ({ getStripeClient: () => ({ customers: stripeCustomers }) }));
 
 vi.mock('@/lib/modules/email/application/send-transactional-email.use-case', () => ({
   sendAccountDeletedEmail: vi.fn().mockResolvedValue(undefined),
@@ -19,11 +21,14 @@ const NOW = new Date('2026-06-26T00:00:00.000Z');
 
 describe('AccountDeletionCleanupUseCase', () => {
   let prisma: any;
+  let queuedCustomers: Map<string, { id: string; stripeCustomerId: string; userId: string | null; attempts: number; nextAttemptAt: Date }>;
   let queued: Map<string, { id: string; email: string; attempts: number; nextAttemptAt: Date; lastError?: string | null }>;
 
   beforeEach(() => {
     vi.clearAllMocks();
     gateway.removeContact.mockResolvedValue('SYNCED');
+    stripeCustomers.update.mockResolvedValue({});
+    queuedCustomers = new Map();
     queued = new Map();
     prisma = {
       user: {
@@ -66,6 +71,22 @@ describe('AccountDeletionCleanupUseCase', () => {
           return { count: 1 };
         }),
       },
+      stripeCustomerAnonymization: {
+        upsert: vi.fn(async ({ create }: any) => {
+          const row = { id: `s-${create.stripeCustomerId}`, attempts: 0, ...create };
+          queuedCustomers.set(create.stripeCustomerId, row);
+          return row;
+        }),
+        findMany: vi.fn(async ({ where }: any) => [...queuedCustomers.values()].filter((row) => where.stripeCustomerId.in.includes(row.stripeCustomerId))),
+        deleteMany: vi.fn(async ({ where }: any) => {
+          for (const [id, row] of queuedCustomers) if (row.id === where.id) queuedCustomers.delete(id);
+          return { count: 1 };
+        }),
+        updateMany: vi.fn(async ({ where, data }: any) => {
+          for (const row of queuedCustomers.values()) if (row.id === where.id) Object.assign(row, data);
+          return { count: 1 };
+        }),
+      },
       auditLog: { create: vi.fn().mockResolvedValue({}) },
       $transaction: vi.fn((fn) => fn(prisma)),
     };
@@ -105,6 +126,45 @@ describe('AccountDeletionCleanupUseCase', () => {
     expect(prisma.user.update.mock.calls[0][0].data.email).toMatch(/^deleted_.*@deleted\.invalid$/);
     expect(prisma.auditLog.create).toHaveBeenCalled();
     expect(sendAccountDeletedEmail).toHaveBeenCalledWith('user@example.com', 'en');
+  });
+
+  describe('Stripe Customer (PA-03)', () => {
+    const withCustomer = () => prisma.user.findUnique.mockResolvedValue({ id: 'u1', email: 'user@example.com', isDeleted: false, language: 'en', stripeCustomerId: 'cus_123' });
+
+    it('erases e-mail, name, phone, description and the userId metadata at Stripe and keeps nothing queued', async () => {
+      withCustomer();
+      await AccountDeletionCleanupUseCase.execute(ctx(), { userId: 'u1', source: 'APP_ACCOUNT_DELETION' });
+
+      expect(stripeCustomers.update).toHaveBeenCalledWith('cus_123', { email: '', name: '', phone: '', description: '', metadata: { userId: '' } });
+      expect(queuedCustomers.size).toBe(0);
+      expect(prisma.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ action: 'STRIPE_CUSTOMER_ANONYMIZED' }) }));
+    });
+
+    it('a Stripe outage never fails the deletion: the erasure stays queued with a backoff for the cron', async () => {
+      withCustomer();
+      stripeCustomers.update.mockRejectedValue(new Error('stripe down'));
+
+      const result = await AccountDeletionCleanupUseCase.execute(ctx(), { userId: 'u1', source: 'APP_ACCOUNT_DELETION' });
+
+      expect(result.cleaned).toBe(true);
+      expect(prisma.user.update).toHaveBeenCalled();
+      const row = queuedCustomers.get('cus_123')!;
+      expect(row.attempts).toBe(1);
+      expect(row.nextAttemptAt.getTime()).toBeGreaterThan(NOW.getTime());
+    });
+
+    it('a person who never paid has no customer, so nothing is queued or sent', async () => {
+      await AccountDeletionCleanupUseCase.execute(ctx(), { userId: 'u1', source: 'APP_ACCOUNT_DELETION' });
+      expect(stripeCustomers.update).not.toHaveBeenCalled();
+      expect(prisma.stripeCustomerAnonymization.upsert).not.toHaveBeenCalled();
+    });
+
+    it('a customer Stripe no longer knows counts as done', async () => {
+      withCustomer();
+      stripeCustomers.update.mockRejectedValue(Object.assign(new Error('No such customer'), { code: 'resource_missing' }));
+      await AccountDeletionCleanupUseCase.execute(ctx(), { userId: 'u1', source: 'APP_ACCOUNT_DELETION' });
+      expect(queuedCustomers.size).toBe(0);
+    });
   });
 
   it('erases the content of every comment but keeps the rows for the threads', async () => {

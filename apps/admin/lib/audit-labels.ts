@@ -56,6 +56,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   PAYMENT_REFUND_REQUESTED: "Zlecenie zwrotu wpłaty (przed wysłaniem do Stripe)",
   PAYMENT_REFUNDED: "Zwrot wpłaty",
   PAYMENT_REFUND_FAILED: "Zwrot wpłaty odrzucony",
+  STRIPE_CUSTOMER_ANONYMIZED: "Dane osobowe klienta w Stripe usunięte",
   PAYMENT_DISPUTE_SYNCED: "Synchronizacja sporu",
   PAYMENTS_EXPORTED: "Eksport wpłat (CSV)",
   AUDIT_EXPORTED: "Eksport dziennika audytu (CSV)",
