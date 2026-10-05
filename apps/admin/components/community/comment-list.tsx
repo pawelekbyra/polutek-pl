@@ -12,7 +12,7 @@ import { ConfirmDialog } from "@admin/components/confirm-dialog";
 import { FieldsDialog } from "@admin/components/community/fields-dialog";
 import { Icon } from "@admin/components/icons";
 import { useToast } from "@admin/components/shell/toasts";
-import { Badge } from "@admin/components/ui";
+import { Badge } from "@admin/components/badge";
 import { COMMENT_STATUS } from "@admin/lib/community-format";
 import type { BulkModerationResult, PanelComment } from "@/lib/modules/comments";
 

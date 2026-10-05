@@ -13,7 +13,7 @@ import { muteUserAction } from "@admin/app/(panel)/spolecznosc/user-actions";
 import { FieldsDialog } from "@admin/components/community/fields-dialog";
 import { Icon } from "@admin/components/icons";
 import { useToast } from "@admin/components/shell/toasts";
-import { Badge } from "@admin/components/ui";
+import { Badge } from "@admin/components/badge";
 import { REPORT_REASON } from "@admin/lib/community-format";
 import type { PanelComment } from "@/lib/modules/comments";
 
