@@ -28,7 +28,8 @@ function refresh(videoSlug?: string) {
   if (videoSlug) revalidatePath(`/tresci/${videoSlug}/komentarze`);
 }
 
-const OP_MESSAGE = { hide: "ukryte", hold: "wstrzymane", approve: "zatwierdzone", restore: "przywrócone", delete: "usunięte" } as const;
+const ONE = { hide: "ukryty", hold: "wstrzymany", approve: "zatwierdzony", restore: "przywrócony", delete: "usunięty" } as const;
+const MANY = { hide: "ukryte", hold: "wstrzymane", approve: "zatwierdzone", restore: "przywrócone", delete: "usunięte" } as const;
 
 const moderateSchema = z
   .object({ ids: z.array(id).min(1).max(BULK_MODERATION_LIMIT), op: z.enum(["hide", "hold", "approve", "restore", "delete"]), videoSlug: z.string().max(120).optional() })
@@ -50,7 +51,7 @@ export async function moderateCommentsAction(input: z.input<typeof moderateSchem
       if (!res.ok) return domainError(res.error);
       refresh(data.videoSlug);
       const n = res.data.changed.length;
-      return { ok: true, data: res.data, message: n === 0 ? "Bez zmian: komentarze już były w tym stanie." : n === 1 ? `Komentarz ${OP_MESSAGE[data.op]}.` : `${n} komentarzy ${OP_MESSAGE[data.op]}.` };
+      return { ok: true, data: res.data, message: n === 0 ? "Bez zmian: komentarze już były w tym stanie." : n === 1 ? `Komentarz ${ONE[data.op]}.` : `${n} komentarzy: ${MANY[data.op]}.` };
     },
   });
 }
