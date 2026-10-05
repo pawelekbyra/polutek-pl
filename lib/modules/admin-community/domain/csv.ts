@@ -6,7 +6,7 @@
  * the cell is always quoted, with inner quotes doubled (RFC 4180). Numbers we compute ourselves (negative
  * amounts) go through `csvNumber`, which is never prefixed, so they stay numbers.
  */
-const FORMULA_START = /^[\s\u0000-\u001f\u007f ﻿]*[=+\-@]/;
+const FORMULA_START = /^[\s\u0000-\u001f\u007f ﻿]*[=+\-@\uff1d\uff0b\uff0d\uff20]/;
 const LEADING_CONTROL = /^[\t\r\n]/;
 
 export function csvText(value: unknown): string {

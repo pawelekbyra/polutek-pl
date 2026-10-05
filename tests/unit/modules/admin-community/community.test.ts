@@ -6,7 +6,7 @@ import { csvNumber, csvText, deviceLabel, exportUsersCsv, explainAccess, panelUs
 const NOW = new Date('2026-10-05T10:00:00.000Z');
 
 describe('csvText (spreadsheet formula injection, OWASP)', () => {
-  it.each(['=1+1', '+SUM(A1)', '-2+3', '@cmd', '\t=1', '\r=1', ' =HYPERLINK("x")', ' =1', '\n=1'])('neutralises %j', (v) => {
+  it.each(['=1+1', '+SUM(A1)', '-2+3', '@cmd', '\t=1', '\r=1', ' =HYPERLINK("x")', ' =1', '\n=1', '＝1', '＋1', '－1', '＠x'])('neutralises %j', (v) => {
     const cell = csvText(v);
     expect(cell.startsWith(`"'`)).toBe(true);
   });
