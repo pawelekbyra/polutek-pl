@@ -5,8 +5,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Solid background matches the canvas fill — prevents a flash if the canvas
-     is momentarily blank during mount or the loading.tsx → PageRevealGate swap. */
+  /* Same colour as the rain's own background (and <html>): the canvas is drawn by the <head>
+     boot script as soon as it is parsed, so there is no empty frame to see. */
   background: #f7f9fc;
   transition: opacity 700ms ease-in-out, filter 700ms ease-in-out, transform 600ms ease-in-out;
   /* Prevent any touch-scroll from reaching the page underneath. */
@@ -14,6 +14,17 @@
   overscroll-behavior: none;
 }
 
+/* Carrot cursor over the whole gate (tip = hotspot, top-left), only for real mouse pointers. */
+@media (hover: hover) and (pointer: fine) {
+  .screen[data-cursor="carrot"],
+  .screen[data-cursor="carrot"] * {
+    cursor: url("/cursor-carrot.svg") 2 2, default;
+  }
+  .screen[data-cursor="carrot"] button,
+  .screen[data-cursor="carrot"] button * {
+    cursor: url("/cursor-carrot.svg") 2 2, pointer;
+  }
+}
 
 /* Last-resort safety net: if JS never hydrates (or the reveal gate somehow never
    fires), the page underneath must not stay hidden forever. */
@@ -27,6 +38,12 @@
   pointer-events: none;
   filter: blur(18px);
   transform: scale(1.05);
+}
+
+/* Already through the gate in this tab session: the <head> boot script sets this attribute
+   before the first paint, so a reload never flashes the gate. */
+:global(html[data-gate-passed]) .screen {
+  display: none;
 }
 
 @keyframes preloader-failsafe {

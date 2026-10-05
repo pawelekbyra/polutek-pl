@@ -1,58 +1,59 @@
-"use client";
-
-import { useEffect, useRef, useState } from "react";
 import styles from "./MatrixGatePrompt.module.css";
 
-const TEXT = "Follow the white rabbit";
-const CHAR_DELAY_MS = 95;
+const PROMPT = "Follow the white rabbit";
 
-export function MatrixGatePrompt({ onEnter }: { onEnter: () => void }) {
-  const [charCount, setCharCount] = useState(0);
-  const [cursorOn, setCursorOn] = useState(true);
-  const doneTyping = charCount >= TEXT.length;
-  const [showButton, setShowButton] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+export interface GatePromptLabels {
+  /** Caption while the page underneath is still loading. */
+  loading: string;
+  /** Caption once a click enters the page. */
+  enter: string;
+}
 
-  useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setCharCount((c) => {
-        if (c >= TEXT.length) {
-          clearInterval(timerRef.current!);
-          return c;
-        }
-        return c + 1;
-      });
-    }, CHAR_DELAY_MS);
-    return () => clearInterval(timerRef.current!);
-  }, []);
-
-  useEffect(() => {
-    const id = setInterval(() => setCursorOn((v) => !v), 530);
-    return () => clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    if (!doneTyping) return;
-    const timer = setTimeout(() => setShowButton(true), 700);
-    return () => clearTimeout(timer);
-  }, [doneTyping]);
-
+/**
+ * The gate's prompt and entry button. Plain markup without timers: the text and the rabbit are
+ * in the server HTML and visible from the first paint. While the page is not ready the button
+ * says so ("WCZYTUJĘ…") and a click is queued by the gate; once ready the caption is replaced by
+ * "WEJDŹ" (only one of the two is ever shown).
+ */
+export function MatrixGatePrompt({
+  ready,
+  labels,
+  onEnter,
+}: {
+  ready: boolean;
+  labels: GatePromptLabels;
+  onEnter?: () => void;
+}) {
+  const caption = ready ? labels.enter : labels.loading;
   return (
     <div className={styles.overlay}>
       <p className={styles.text}>
-        {TEXT.slice(0, charCount)}
-        {!doneTyping && (
-          <span className={styles.cursor} style={{ opacity: cursorOn ? 1 : 0 }} />
-        )}
+        {PROMPT}
+        <span className={styles.cursor} aria-hidden="true" />
       </p>
-      {/* Always in DOM so the text position never shifts when the button appears */}
       <button
+        type="button"
         className={styles.btn}
-        onClick={doneTyping ? onEnter : undefined}
-        aria-label="Enter"
-        style={{ opacity: showButton ? 1 : 0, pointerEvents: showButton ? "auto" : "none" }}
+        data-gate-enter=""
+        data-state={ready ? "ready" : "loading"}
+        aria-disabled={ready ? undefined : true}
+        onClick={onEnter}
+        // The <head> boot script marks a click made before hydration (data-queued).
+        suppressHydrationWarning
       >
-        <img src="/rabbit.png" alt="" className={styles.rabbitImg} />
+        {/* Re-keyed so the new caption fades in instead of both ever being on screen. */}
+        <span key={caption} className={styles.caption}>
+          {caption}
+        </span>
+        <img
+          src="/rabbit-gate.webp"
+          alt=""
+          width={220}
+          height={220}
+          fetchPriority="high"
+          decoding="async"
+          className={styles.rabbitImg}
+        />
       </button>
     </div>
   );
