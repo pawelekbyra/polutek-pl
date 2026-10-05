@@ -30,6 +30,14 @@ describe('payment currency settings: one minimum per currency', () => {
     expect((await getPaymentCurrencyLimits()).EUR.minAmountMinor).toBe(400);
   });
 
+  it('a minimum below the Stripe floor (PLN 2.00) is raised to it, so the intent is never refused by Stripe', async () => {
+    db.paymentCurrencySetting.rows.push({ currency: 'PLN', minAmountMinor: 100, patronThresholdMinor: null, patronBoxMinMinor: null });
+
+    expect((await getPaymentCurrencyLimits()).PLN.minAmountMinor).toBe(200);
+    expect(await validatePaymentAmountMinorAsync(150, 'PLN')).toMatch(/zbyt niska/);
+    expect(await validatePaymentAmountMinorAsync(200, 'PLN')).toBeNull();
+  });
+
   it('saving writes the one minimum and clears the legacy columns', async () => {
     db.paymentCurrencySetting.rows.push({ currency: 'EUR', minAmountMinor: 300, patronThresholdMinor: 500, patronBoxMinMinor: 400 });
 

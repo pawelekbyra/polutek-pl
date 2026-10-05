@@ -111,6 +111,16 @@ describe("read models", () => {
     expect(r.totals).toEqual([{ currency: "PLN", fromPayments: 8000, fromTotals: 7500, diff: -500 }]);
     expect(r.stalePending[0].hasIntent).toBe(false);
   });
+
+  it("counts a DISPUTED payment on the payments side: UserPaymentTotal only drops when a dispute is lost, so leaving it out showed a false difference", async () => {
+    const paymentGroupBy = vi.fn(async () => [{ currency: "PLN", _sum: { amountMinor: 1000, refundedAmountMinor: 0 } }]);
+    const prisma = { payment: { findMany: vi.fn(async () => []), groupBy: paymentGroupBy }, userPaymentTotal: { groupBy: vi.fn(async () => [{ currency: "PLN", _sum: { amountMinor: 1000 } }]) } };
+    await getReconciliation(mk(prisma));
+    const where = (paymentGroupBy.mock.calls[0] as unknown as [{ where: { status: { in: string[] } } }])[0].where;
+    expect(where.status.in).toEqual(expect.arrayContaining(["SUCCEEDED", "PARTIALLY_REFUNDED", "DISPUTED"]));
+    expect(where.status.in).not.toContain("CHARGEBACK_LOST");
+    expect(where.status.in).not.toContain("REFUNDED");
+  });
 });
 
 describe("exportPaymentsCsv", () => {

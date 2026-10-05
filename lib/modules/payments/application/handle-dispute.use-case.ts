@@ -38,6 +38,8 @@ export function disputeSuspensionReason(disputeId: string): string {
   return `Payment disputed: stripeDisputeId=${disputeId}`;
 }
 
+const UNRECORDED_STATUSES: PaymentStatus[] = [PaymentStatus.PENDING, PaymentStatus.FAILED, PaymentStatus.CANCELED];
+
 /** Statuses an open dispute may move to DISPUTED from; anything else is never moved backwards. */
 const DISPUTABLE_STATUSES: PaymentStatus[] = [PaymentStatus.SUCCEEDED, PaymentStatus.PARTIALLY_REFUNDED];
 
@@ -54,6 +56,14 @@ export async function handleDispute(
       if (!payment) {
         recordAlert('payment.dispute_unmatched', { stripeIntentId: input.stripeIntentId });
         return false;
+      }
+
+      // A dispute implies Stripe took the money: a payment still unpaid locally has not been recorded
+      // yet (event order, webhook outage). Fail so Stripe redelivers once it is recorded, instead of
+      // dropping the dispute or decrementing totals that were never raised.
+      if (outcome !== "closed_in_favour" && UNRECORDED_STATUSES.includes(payment.status)) {
+        recordAlert('payment.dispute_before_fulfilment', { paymentId: payment.id, status: payment.status });
+        throw new Error(`PAYMENT_NOT_RECORDED_YET: dispute ${input.disputeId} for payment ${payment.id} in status ${payment.status}; retry later`);
       }
 
       if (outcome === "lost") {

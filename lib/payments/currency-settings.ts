@@ -19,6 +19,13 @@ export type CurrencyLimit = {
   maxAmount: number;
 };
 
+/**
+ * Stripe's hard minimum charge per currency (https://docs.stripe.com/currencies#minimum-and-maximum-charge-amounts).
+ * A smaller amount makes paymentIntents.create fail, so a lower minimum saved in the panel (it accepts 1)
+ * must never reach the gate: the effective minimum is never below this floor.
+ */
+export const STRIPE_MIN_CHARGE_MINOR: Record<SupportedCurrency, number> = { PLN: 200, EUR: 50, USD: 50, CHF: 50, GBP: 30 };
+
 export function getDefaultPaymentLimits(currency: SupportedCurrency): CurrencyLimit {
   return {
     currency,
@@ -35,8 +42,9 @@ export function getDefaultPaymentLimits(currency: SupportedCurrency): CurrencyLi
  * stays the minimum, so nobody sees a lower minimum than before. `patronThresholdMinor` is dead
  * (every successful tip marks a supporter) and is ignored.
  */
-function effectiveMinMinor(setting: { minAmountMinor: number; patronBoxMinMinor: number | null }): number {
-  return Math.max(1, setting.minAmountMinor, setting.patronBoxMinMinor ?? 0);
+function effectiveMinMinor(setting: { currency: string; minAmountMinor: number; patronBoxMinMinor: number | null }): number {
+  const stripeFloor = STRIPE_MIN_CHARGE_MINOR[setting.currency as SupportedCurrency] ?? 1;
+  return Math.max(stripeFloor, setting.minAmountMinor, setting.patronBoxMinMinor ?? 0);
 }
 
 export async function getPaymentCurrencyLimits(): Promise<Record<SupportedCurrency, CurrencyLimit>> {
