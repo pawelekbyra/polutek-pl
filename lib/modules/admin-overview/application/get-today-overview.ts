@@ -1,5 +1,6 @@
 import { fmtBytes, fmtDateTime, fmtInt, fmtMoney, fmtPercent, fmtRelative } from "../domain/format";
 import { LIMITS, minorToPln, netMinor } from "../domain/rules";
+import type { LimitThresholds } from "../domain/alert-thresholds";
 import { bucketIndex, rangeWindows, type CompareKey, type RangeKey, type RangeWindows } from "../domain/time";
 import type { ActivityItemDto, EncodeJobDto, HostMetricsDto, KpiDto, LimitDto, TodayOverview, TriageItemDto, UpcomingDto } from "../domain/types";
 import type { ActivityRows, EncodeJobRow, RevenueRow } from "../infrastructure/overview.repository";
@@ -175,7 +176,7 @@ export function toEncodeJobDto(j: EncodeJobRow): EncodeJobDto {
   };
 }
 
-export function hostLimits(host: HostMetricsDto): LimitDto[] {
+export function hostLimits(host: HostMetricsDto, limits: LimitThresholds = LIMITS): LimitDto[] {
   if (!host.available) {
     return [{ id: "host", label: "Serwer", percent: null, valueText: "brak danych", warnAt: 80, critAt: 90, note: host.reason, measuredAt: null, source: host.source }];
   }
@@ -184,9 +185,9 @@ export function hostLimits(host: HostMetricsDto): LimitDto[] {
   const swap = host.swapTotalBytes ? (host.swapUsedBytes / host.swapTotalBytes) * 100 : 0;
   const common = { measuredAt: host.measuredAt, source: host.source };
   return [
-    { id: "disk", label: "Dysk", percent: disk, valueText: `${fmtBytes(host.diskUsedBytes)} / ${fmtBytes(host.diskTotalBytes)} · ${fmtPercent(disk)}`, ...LIMITS.disk, note: `wolne ${fmtBytes(host.diskTotalBytes - host.diskUsedBytes)}`, ...common },
-    { id: "memory", label: "RAM", percent: mem, valueText: `${fmtBytes(host.memTotalBytes - host.memAvailableBytes)} / ${fmtBytes(host.memTotalBytes)}`, ...LIMITS.memoryUsed, note: `dostępne ${fmtBytes(host.memAvailableBytes)}`, ...common },
-    { id: "swap", label: "Swap", percent: swap, valueText: `${fmtBytes(host.swapUsedBytes)} / ${fmtBytes(host.swapTotalBytes)} · ${fmtPercent(swap)}`, ...LIMITS.swap, note: swap >= LIMITS.swap.warnAt ? `powyżej progu ${LIMITS.swap.warnAt}%` : `próg ostrzeżenia ${LIMITS.swap.warnAt}%`, ...common },
+    { id: "disk", label: "Dysk", percent: disk, valueText: `${fmtBytes(host.diskUsedBytes)} / ${fmtBytes(host.diskTotalBytes)} · ${fmtPercent(disk)}`, ...limits.disk, note: `wolne ${fmtBytes(host.diskTotalBytes - host.diskUsedBytes)}`, ...common },
+    { id: "memory", label: "RAM", percent: mem, valueText: `${fmtBytes(host.memTotalBytes - host.memAvailableBytes)} / ${fmtBytes(host.memTotalBytes)}`, ...limits.memoryUsed, note: `dostępne ${fmtBytes(host.memAvailableBytes)}`, ...common },
+    { id: "swap", label: "Swap", percent: swap, valueText: `${fmtBytes(host.swapUsedBytes)} / ${fmtBytes(host.swapTotalBytes)} · ${fmtPercent(swap)}`, ...limits.swap, note: swap >= limits.swap.warnAt ? `powyżej progu ${limits.swap.warnAt}%` : `próg ostrzeżenia ${limits.swap.warnAt}%`, ...common },
   ];
 }
 
@@ -250,7 +251,7 @@ export async function getTodayOverview(deps: OverviewDeps, opts: { range: RangeK
     activity: buildActivity(activityRows, now),
     encodeQueue,
     upcoming,
-    limits: hostLimits(healthInputs.host),
+    limits: hostLimits(healthInputs.host, healthInputs.limits),
     health,
   };
 }

@@ -9,6 +9,7 @@ import "./scale.css";
 import "./shell.css";
 import "./auth.css";
 import "./content.css";
+import "./phase3.css";
 
 export const metadata: Metadata = {
   title: { default: "Panel PP", template: "%s · Panel PP" },

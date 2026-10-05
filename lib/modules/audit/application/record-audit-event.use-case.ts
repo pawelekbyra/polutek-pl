@@ -21,6 +21,8 @@ export async function recordAuditEvent(
   return await repository.create({
     ...input,
     requestId: input.requestId ?? ctx.requestId ?? null,
+    ip: input.ip ?? ctx.client?.ip ?? null,
+    userAgent: input.userAgent ?? ctx.client?.userAgent ?? null,
     actorUserId,
     actorType: ctx.actor.type,
     systemReason,

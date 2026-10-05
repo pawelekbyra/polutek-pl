@@ -8,3 +8,4 @@ export * from './application/default-thumbnail.service';
 export * from './infrastructure/storage.service';
 export * from './infrastructure/thumbnail-response.service';
 export * from './infrastructure/r2-thumbnail-storage.client';
+export * from './infrastructure/r2-diagnostics';
