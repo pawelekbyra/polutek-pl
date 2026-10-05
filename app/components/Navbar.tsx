@@ -4,7 +4,7 @@ import React, { Suspense, useEffect, useState } from "react";
 import { useUser } from "@/lib/auth/react";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import UserMenu from "./auth/UserMenu";
-import Link from "next/link";
+import BrandHomeLink from "./BrandHomeLink";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
 import BrandName from "./BrandName";
@@ -30,7 +30,8 @@ function NavbarLanguageSwitcher({ language }: { language: Locale }) {
   return <LanguageSwitcher language={language} onSelect={switchLanguage} />;
 }
 
-const Navbar = ({ initialQuery = "" }: { initialQuery?: string }) => {
+// `isHome`: the page is the home page with the hero video (the logo then scrolls to its top).
+const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; isHome?: boolean }) => {
   const { language, setLanguage, t } = useLanguage();
   const { open: openAuthModal } = useAuthModal();
   const { user, isLoaded, isSignedIn } = useUser();
@@ -123,16 +124,16 @@ const Navbar = ({ initialQuery = "" }: { initialQuery?: string }) => {
           <>
             {/* Logo */}
             <div className="flex items-center shrink-0">
-              <Link
-                href={getLocalizedHref(language, "home")}
-                className="flex h-[38px] shrink-0 items-center gap-0 transition-all hover:opacity-85 active:scale-95"
-                aria-label="www.pawelperfect.com"
+              <BrandHomeLink
+                language={language}
+                isHome={isHome}
+                className="flex h-[38px] shrink-0 items-center gap-0 rounded-md transition-all hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:scale-95"
               >
                 <BrandName
                   className="h-[28px] md:h-[34px]"
                   decorative
                 />
-              </Link>
+              </BrandHomeLink>
             </div>
 
             {/* Desktop search */}
