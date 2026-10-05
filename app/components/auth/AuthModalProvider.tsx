@@ -1,11 +1,19 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import AuthModal from "./AuthModal";
-import OnboardingDialog from "./OnboardingDialog";
+import dynamic from "next/dynamic";
 import { useLanguage } from "../LanguageContext";
 import { useAuth } from "@/lib/auth/react";
 import { clearReturnPath, rememberReturnPath } from "@/lib/auth/sso-return";
+
+// The sign-in window and the onboarding dialog (2FA, Turnstile, passkeys, ...) are heavy and most
+// visitors never open them, so they are separate chunks: not part of the first page's JavaScript.
+// The sign-in window is mounted on first open (and kept, so it can animate out); both chunks are
+// fetched in an idle moment after hydration, so the first click does not wait for the network.
+const loadAuthModal = () => import("./AuthModal");
+const loadOnboardingDialog = () => import("./OnboardingDialog");
+const AuthModal = dynamic(loadAuthModal, { ssr: false });
+const OnboardingDialog = dynamic(loadOnboardingDialog, { ssr: false });
 
 export type AuthView = "sign-in" | "sign-up";
 
@@ -102,10 +110,29 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(() => ({ open, close, isOpen }), [open, close, isOpen]);
 
+  const [authModalMounted, setAuthModalMounted] = useState(false);
+  useEffect(() => {
+    if (isOpen) setAuthModalMounted(true);
+  }, [isOpen]);
+  useEffect(() => {
+    const warm = () => {
+      void loadAuthModal();
+      void loadOnboardingDialog();
+    };
+    if (typeof window.requestIdleCallback === "function") {
+      const handle = window.requestIdleCallback(warm, { timeout: 4000 });
+      return () => window.cancelIdleCallback(handle);
+    }
+    const timer = window.setTimeout(warm, 2000);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
     <AuthModalContext.Provider value={value}>
       {children}
-      <AuthModal open={isOpen} initialView={view} notice={notice} onOpenChange={handleOpenChange} />
+      {(isOpen || authModalMounted) && (
+        <AuthModal open={isOpen} initialView={view} notice={notice} onOpenChange={handleOpenChange} />
+      )}
       {verifiedBanner && (
         <div
           role="status"

@@ -26,7 +26,7 @@ export default function Error({
         </div>
         <h1 className="mb-3 text-2xl font-black uppercase tracking-tight text-foreground">{tx("Coś poszło nie tak", "Something went wrong")}</h1>
         <p className="mb-8 text-muted-foreground">
-          {tx("Wystąpił nieoczekiwany błąd aplikacji. Nasz zespół został powiadomiony. Spróbuj odświeżyć stronę lub wrócić później.", "An unexpected application error occurred. Our team has been notified. Try refreshing the page or come back later.")}
+          {tx("Wystąpił nieoczekiwany błąd aplikacji. Spróbuj odświeżyć stronę lub wrócić później.", "An unexpected application error occurred. Try refreshing the page or come back later.")}
         </p>
 
         {error.digest && (

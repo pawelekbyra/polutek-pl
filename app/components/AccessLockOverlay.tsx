@@ -5,13 +5,19 @@ import { motion, useReducedMotion } from "framer-motion";
 import type { PlaybackPlanStatus } from "@/lib/modules/playback";
 import { cn } from "@/lib/utils";
 import { formatPremiereCountdown, formatPremiereDate, toPremiereDate } from "@/lib/premiere";
-import { CockpitComingSoon } from "./coming-soon/CockpitComingSoon";
+import dynamic from "next/dynamic";
 import { PremieraLettering } from "./coming-soon/PremieraLettering";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import { useLanguage } from "./LanguageContext";
 import { PlayerStateFrame } from "./PlayerStateFrame";
 import { useRenderClock } from "./RenderClock";
 import styles from "./AccessLockOverlay.module.css";
+
+// The premiere cockpit (HUD, countdown, audio) is only needed while a premiere is upcoming, so it
+// is its own chunk instead of part of every page with a player.
+const CockpitComingSoon = dynamic(
+  () => import("./coming-soon/CockpitComingSoon").then((m) => m.CockpitComingSoon),
+);
 import type { Tx } from "@/lib/i18n/ui";
 
 // COMING_SOON = a scheduled premiere not reached yet (CLAUDE.md "Premieres"), shown to
