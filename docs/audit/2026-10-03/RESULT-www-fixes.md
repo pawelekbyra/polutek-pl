@@ -42,3 +42,9 @@ hls.js z bundla, Stripe `/pure`, statyczne dokumenty prawne, bez szkieletów).
 ## Nie zweryfikowano
 Wygląd w przeglądarce (nawigacja, skip link, fokus, kontrast), działanie lazy chunków przy pierwszym kliknięciu logowania, `public/gallery` (usunięte po braku odwołań w kodzie;
 stare `thumbnailUrl` w bazie niesprawdzone).
+
+## Uzupełnienie 2026-10-05: preloader (gałąź `feat/preloader-on-main`)
+Po akceptacji właściciela gałąź `feat/preloader-polish` scalona do aktualnego main. Przez nią załatwione: LOAD-05 (brama od pierwszego malowania, bez czekania na pisanie),
+LOAD-11 i FE-26 (zawsze `covering` w pierwszym renderze, pominięcie w layout effect i `data-gate-passed` ustawiane przed malowaniem: zgodna hydratacja),
+LOAD-14 (silnik deszczu bez rozbiegu, 60 fps, pauza w ukrytej karcie). Dodatkowo FE-34: strona pod bramką jest `inert`, przycisk dostaje fokus, podpisy przez `tx()`
+(brak `aria-live` na animowanym tekście, reduced motion obsłużone w silniku i CSS).
