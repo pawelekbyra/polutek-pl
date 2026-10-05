@@ -81,6 +81,26 @@ Kolejność ma znaczenie; nic z tego nie dzieje się samo.
    ```
 7. **Rejestracja administratora** (rozdział 2), potem wpis w `ai-log` i w SERWEREK.md §4 (tabela ingress).
 
+## 1a. Wdrożenie faz 2, 3 i A (jedna kolejność, stan 2026-10-05)
+
+Kod faz 2 (Treści, Społeczność, tłumaczenia, zapas serwera), 3 i A jest w `main`, ale **niewdrożony**. Szczegóły i ryzyka każdej fazy:
+`architecture/admin-phase2-community.md` §6, `admin-phaseA.md` §11, `admin-phase3.md` §7. Wszystkie migracje przeszły czysto na PostgreSQL 16
+(testy integracyjne: 7 plików OK); Postgres 17 z produkcji nie był używany do testów, różnice składni dla tych migracji nie są oczekiwane, ale pierwsze `migrate deploy` na produkcji nadal jest sprawdzianem.
+
+1. **Przed wszystkim:** administrator zarejestrowany w panelu (rozdz. 2) i potwierdzone działanie faz 1 (Dzisiaj, System). Zrób `./scripts/backup.sh` i sprawdź, że kopia trafiła do R2.
+2. **Migracje (jednym `deploy.sh` strony):** `20261005100000_add_video_translations`, `20261005120000_add_user_comment_mute`, `20261005120000_analytics_rollups` (opakowuje `telemetry.rollup_day`, uzupełnia dane wstecz), `20261005200000_admin_phase3_roles_and_audit_immutable`
+   (niezmienny `AuditLog`: od niej wiersze młodsze niż 400 dni nie dadzą się skasować; po migracji sprawdź, że zapis audytu działa).
+   Kolejność: migracja → obraz `www` → obraz panelu. `www` bez migracji `..._add_user_comment_mute` zwróci błąd przy dodawaniu komentarza.
+3. **`admin.env` (root, 600), nowe zmienne:**
+   - faza 2: komplet `CLOUDFLARE_R2_*` (jak w `app.env`) + CORS bucketa oryginałów (rozdz. 1, krok R2);
+   - zapas serwera i analityka: `ADMIN_TELEMETRY_DATABASE_URL` (rola `pp_analytics_ro` z logowaniem, hasło nadaje operator jednorazowo);
+   - faza 3: `STRIPE_SECRET_KEY` (klucz OGRANICZONY: Refunds zapis, Disputes/Charges/PaymentIntents odczyt), `RESEND_API_KEY` i `EMAIL_FROM` (tylko test do siebie), `NEXT_PUBLIC_APP_URL`;
+   - opcjonalnie (zostaw puste, dopóki nie zdecydujesz): `ADMIN_EDGE_TOLERANCE_PCT`, `ADMIN_MORNING_REPORT` (off), `ADMIN_MORNING_REPORT_TO`, `ADMIN_JOBS_TOKEN`, `RESEND_DAILY_LIMIT`, `RESEND_MONTHLY_LIMIT`, `TRANSLATION_AI_ENABLED`, `CLOUDFLARE_AI_ACCOUNT_ID`, `CLOUDFLARE_AI_API_TOKEN`.
+4. **Opcjonalnie:** rola bazy `pp_admin` (`deploy/serwerek/admin/pp-admin-role.sql`, panel działa bez niej), konta tłumaczy (`admin-enroll --role translator --languages de,es`).
+5. **Obraz panelu:** `./deploy-admin.sh <tag>`; rollback `./deploy-admin.sh x --rollback`. Obraz strony: `./deploy.sh <tag>`; rollback `./deploy.sh x --rollback`. Baza: nowe tabele są niegroźne przy powrocie do starego obrazu.
+6. **Kontrola po wdrożeniu:** `docker compose ps`, `/api/health` strony i panelu, ekrany Treści, Społeczność, Analityka (czy rollupy się wypełniają: `job_run` `telemetry-rollup`), Przychody, Komunikacja, Bezpieczeństwo (zapis audytu), `/premiera` otwarta ≥ 12 minut (SSE przez tunel; przy przerwaniu po ok. 100 s sprawdź keep-alive i kompresję).
+7. **Nie włączaj** bez decyzji: porannego raportu (wymaga polityki Service Auth w Access), wysyłki rozsyłek z panelu (panel tylko kolejkuje), szkiców AI (domyślnie wyłączone).
+
 ## 2. Rejestracja administratora (`admin-enroll`)
 
 Konto panelu powstaje **tylko** z terminala serwera (korzeń zaufania = SSH). Link nie idzie e-mailem.
