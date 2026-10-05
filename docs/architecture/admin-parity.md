@@ -23,7 +23,7 @@ A Analityka i tryb premiery (równolegle od fazy 2, gdy jest 7+ dni danych) · 5
 | Stary panel | Nowy panel | Faza | Status |
 |---|---|---|---|
 | `/admin`: 7 kafelków-linków (bez danych) | **Dzisiaj** `#/dzisiaj` (zdrowie, KPI, „Wymaga uwagi”, aktywność, kolejki) | 1 | zrobione |
-| link „Zarządzaj kanałem” w `UserMenu.tsx` i `AccountModal.tsx` na `www` | link do `admin.pawelperfect.com` (zmiana w fazie 5) | 5 | plan |
+| link „Zarządzaj kanałem” w `UserMenu.tsx` i `AccountModal.tsx` na `www` | link do `admin.pawelperfect.com` (zrobione w fazie 5: nowa karta, rel=noopener) | 5 | zrobione |
 
 ### 1.2 Filmy (`/admin/videos`, `/admin/videos/[id]`, `/admin/videos/[id]/edit`, `/admin/videos/layout`)
 
@@ -181,9 +181,9 @@ z `lib/modules/**` (wrapper `requireAdmin → zod (.strict) → limit → step-u
 
 | Miejsce na `www` | Co robi | Docelowo | Faza | Status |
 |---|---|---|---|---|
-| `CommentItem.tsx`: ukryj, przywróć | `/api/admin/comments/[id]/{hide,restore}` | całość do panelu (decyzja 8 z `admin-panel.md`) | 5 | plan |
-| `CommentItem.tsx`: serduszko | `/api/admin/comments/[id]/heart` | „Serduszko” w panelu | 5 | plan |
-| `UserMenu.tsx`, `AccountModal.tsx`: link „Zarządzaj kanałem” | `/admin` | link do `admin.pawelperfect.com` | 5 | plan |
+| `CommentItem.tsx`: ukryj, przywróć | `/api/admin/comments/[id]/{hide,restore}` | całość do panelu (decyzja 8 z `admin-panel.md`); z `CommentItem` zniknęły przyciski i wywołania `/api/admin` | 5 | zrobione |
+| `CommentItem.tsx`: serduszko | `/api/admin/comments/[id]/heart` | „Serduszko” w panelu; na `www` serce twórcy zostaje tylko do odczytu | 5 | zrobione |
+| `UserMenu.tsx`, `AccountModal.tsx`: link „Zarządzaj kanałem” | `/admin` | link do `admin.pawelperfect.com` (nowa karta, `rel=noopener noreferrer`) | 5 | zrobione |
 | `lib/video-upload/multipart-uploader.ts` | woła trasy admina | używany przez panel (ten sam moduł) | 2 | zrobione |
 
 ## 4. Obsługa strony poza starym panelem (dziś terminal, baza albo nic)

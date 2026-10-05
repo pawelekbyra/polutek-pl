@@ -90,9 +90,9 @@ stan, sprawdzenia, skutek i dokładne polecenie do wykonania) i **`--yes`** (wyk
 | `restore-comment.mjs --comment=<uuid> --reason="..."` | przywrócenie ukrytego/wstrzymanego use case'em `restoreAdminComment` | jak wyżej; usuniętego komentarza nie da się przywrócić |
 | `refund-payment.mjs --payment=<uuid> --amount=<grosze> --currency=PLN --reason="..."` | zwrot use case'em `adminRefund` (Stripe, baza, audyt `PAYMENT_REFUNDED`) | podgląd: płatność, zwroty w bazie i w Stripe, pozostała kwota, czy id/kwota/waluta się zgadzają, skutek (pełny/częściowy, nowy status); nigdy więcej niż pozostało; różnica między sumą zwrotów w Stripe i w bazie blokuje; `--yes` wymaga `--expect-refunded=<kwota z podglądu>` (gdy coś zmieniło się po podglądzie, zwrot się nie wykona); serwer sprawdza to jeszcze raz tuż przed zleceniem, a Stripe dostaje klucz idempotencji |
 
-| `set-role.mjs --user=<id> --role=USER\|ADMIN --reason="..."` | nadanie/zdjęcie roli ADMIN use case'em `changeUserRoleAsAdmin` (audyt `ADMIN_USER_ROLE_CHANGED`); konta NIE usuwa i nie wylogowuje | podgląd: konto, lista adminów teraz i po zmianie (e-maile zamaskowane); nigdy własna rola operatora, nigdy ostatni admin, ADMIN tylko ze zweryfikowanym e-mailem, odmowa dla adresu z `ADMIN_EMAILS` (bootstrap przywróciłby rolę); blokada `admin-roster` w use case'ie |
+| `set-role.mjs --user=<id> --role=USER\|ADMIN --reason="..."` | nadanie/zdjęcie roli ADMIN use case'em `changeUserRoleAsAdmin` (audyt `ADMIN_USER_ROLE_CHANGED`); konta NIE usuwa i nie wylogowuje | podgląd: konto, lista adminów teraz i po zmianie (e-maile zamaskowane); nigdy własna rola operatora, nigdy ostatni admin, ADMIN tylko ze zweryfikowanym e-mailem; blokada `admin-roster` w use case'ie |
 
-Wymóg świeżego logowania (< 10 min) przy zmianie roli sprawdza trasa HTTP panelu (`lib/api/admin-recent-sign-in.ts`),
+Wymóg świeżego logowania (< 10 min) przy zmianie roli sprawdza panel (step-up w `apps/admin`),
 nie use case: skrypt operatora nie ma sesji przeglądarki i działa jako audytowane narzędzie na polecenie właściciela,
 więc tego kryterium nie stosuje (use case bez zmian).
 

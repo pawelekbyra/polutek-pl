@@ -319,12 +319,12 @@ Clerk jest usunięty z kodu. Logowanie działa w samej aplikacji na lokalnym Pos
 
 **Co zrobić przy wdrożeniu (deployer; nic z tego nie jest w repo):**
 
-1. W `app.env` dodać (wartości z `%USERPROFILE%\.ai-secrets\secrets.env`, nie wklejać do czatu ani repo): `BETTER_AUTH_SECRET` (min. 32 znaki), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `ADMIN_EMAILS` (e-maile właściciela, np. `pawel.perfect@gmail.com,hello@pawelperfect.com`). Opcjonalnie `BETTER_AUTH_TRUSTED_ORIGINS` (np. `https://apptest.pawelperfect.com`) i `BETTER_AUTH_URL`. Usunąć `CLERK_*`, `ADMIN_CLERK_USER_IDS`.
+1. W `app.env` dodać (wartości z `%USERPROFILE%\.ai-secrets\secrets.env`, nie wklejać do czatu ani repo): `BETTER_AUTH_SECRET` (min. 32 znaki), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` (zmienna `ADMIN_EMAILS` z tej instrukcji już nie istnieje: usunięta w fazie 5 panelu, nic nie awansuje po e-mailu). Opcjonalnie `BETTER_AUTH_TRUSTED_ORIGINS` (np. `https://apptest.pawelperfect.com`) i `BETTER_AUTH_URL`. Usunąć `CLERK_*`, `ADMIN_CLERK_USER_IDS`.
 2. Z `build.env` usunąć `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (nic go już nie czyta). Klucze Google i Turnstile (site key) są czytane w runtime, **nie** wymagają przebudowania obrazu.
 3. Migracja `20261002100000_add_better_auth` (nowe tabele `Session`, `Account`, `Verification`, `TwoFactor` i kolumny w `User`; istniejący użytkownicy dostają `emailVerified = true`) uruchomi się w `deploy.sh` (`migrator`).
 4. Google Cloud Console: w kliencie OAuth dodać Authorized redirect URI `https://www.pawelperfect.com/api/auth/callback/google` (oraz `https://apptest.pawelperfect.com/api/auth/callback/google` dla testu) i Authorized JavaScript origins (te same hosty, dla One Tap).
 5. Turnstile: w widżecie dodać hostnames `www.pawelperfect.com` (i apex/`apptest`, jeśli używane).
-6. Po wdrożeniu wszyscy są wylogowani (stare sesje Clerk nie działają). Wejść na stronę, zalogować się Google kontem z listy `ADMIN_EMAILS`: konto zostanie awansowane na ADMIN przy pierwszym użyciu (wpis `AUTH_ADMIN_BOOTSTRAP` w audycie).
+6. Po wdrożeniu wszyscy są wylogowani (stare sesje Clerk nie działają). Wejść na stronę, zalogować się Google kontem właściciela. (Historycznie konto z `ADMIN_EMAILS` awansowało się samo; od fazy 5 rolę ADMIN nadaje się w panelu albo `scripts/ops`.)
 7. Webhook Clerk (`/api/webhooks/clerk`) już nie istnieje: wyłączyć endpoint w panelu Clerk, gdy konto Clerk przestanie być potrzebne.
 
 **Ryzyka:** nie testowano na żywo logowania Google/One Tap ani wysyłki e-maili Resend z serwerka (kod i testy jednostkowe są zielone); haveIBeenPwned jest fail-closed (gdy API HIBP niedostępne, rejestracja i zmiana hasła zwracają błąd); rotacja `BETTER_AUTH_SECRET` wylogowuje wszystkich i unieważnia zapisane sekrety TOTP (użytkownicy z 2FA potrzebują kodów zapasowych).
