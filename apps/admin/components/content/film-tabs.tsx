@@ -4,6 +4,8 @@ const TABS = [
   ["przeglad", "Przegląd", ""],
   ["edycja", "Edycja", "/edycja"],
   ["tlumaczenia", "Tłumaczenia", "/tlumaczenia"],
+  ["analityka", "Analityka", "/analityka"],
+  ["jakosc", "Jakość", "/jakosc"],
 ] as const;
 
 /** Sections of one film; plain links, the current one marked for assistive tech. */

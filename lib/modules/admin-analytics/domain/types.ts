@@ -30,7 +30,7 @@ export type KpiDto = {
   value: number | null;
   previous: number | null;
   unit?: string;
-  format: "int" | "pct" | "one" | "hours";
+  format: "int" | "pct" | "one";
   upIsGood: boolean;
 };
 
