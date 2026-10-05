@@ -211,7 +211,7 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
              </Link>
           </div>
         )}
-      </div>
+      </main>
       <Footer />
     </div>
   );
