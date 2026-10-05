@@ -31,7 +31,8 @@ export function buildCsp(nonce: string, opts: { dev?: boolean } = {}): string {
     "connect-src": `'self' ${R2_UPLOAD_ORIGIN}${dev ? " ws:" : ""}`,
     "media-src": "'none'",
     "object-src": "'none'",
-    "frame-src": "'none'",
+    // Only the e-mail preview (/api/email/preview, a sandboxed frame with its own strict CSP) is ever framed.
+    "frame-src": "'self'",
     "worker-src": "'self'",
     "manifest-src": "'self'",
     "base-uri": "'none'",
