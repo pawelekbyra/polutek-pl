@@ -261,6 +261,13 @@
     cursor: pointer;
   }
 
+  /* Windows rendered into <body> (sign-in, account, dialogs) sit outside the shells above; this
+     zero-specificity default gives them the same visible focus, and any component ring wins over it. */
+  :where(a, button, [role="button"], [role="menuitem"], summary, input, select, textarea):focus-visible {
+    outline: 3px solid rgba(37, 99, 235, .45);
+    outline-offset: 2px;
+  }
+
   .channel-page-shell :is(a, button):focus-visible,
   .public-visual-shell :is(a, button):focus-visible,
   .admin-visual-shell :is(a, button):focus-visible {
@@ -346,7 +353,7 @@
     --chan-line: #e1e6ef;
     --chan-line-soft: #d5dce8;
     --chan-ink: #111827;
-    --chan-muted: #667085;
+    --chan-muted: #5d6679;
     --chan-muted-2: #475467;
     --chan-body: #344054;
     --chan-blue: #2563eb;

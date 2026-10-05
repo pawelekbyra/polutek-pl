@@ -36,7 +36,7 @@ export function Field({
           type={isPassword && revealed ? "text" : type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`w-full rounded-[12px] border border-[var(--chan-line)] bg-[var(--chan-surface)] py-2 pl-3 font-sans text-[15px] text-[var(--chan-ink)] outline-none transition-colors focus:border-[var(--chan-blue)] ${isPassword ? "pr-16" : "pr-3"}`}
+          className={`w-full rounded-[12px] border border-[var(--chan-line)] bg-[var(--chan-surface)] py-2 pl-3 font-sans text-[15px] text-[var(--chan-ink)] outline-none transition-colors focus:border-[var(--chan-blue)] focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]/40 ${isPassword ? "pr-16" : "pr-3"}`}
           {...rest}
         />
         {isPassword && (
@@ -44,7 +44,7 @@ export function Field({
             type="button"
             onClick={() => setRevealed((v) => !v)}
             aria-pressed={revealed}
-            className="absolute inset-y-0 right-2 my-auto h-7 rounded-md px-2 text-[11px] font-bold uppercase tracking-wide text-[var(--chan-muted)] hover:text-[var(--chan-ink)]"
+            className="absolute inset-y-0 right-2 my-auto h-7 rounded-md px-2 text-[11px] font-bold uppercase tracking-wide text-[var(--chan-muted)] hover:text-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
           >
             {revealed ? revealLabels?.hide : revealLabels?.show}
           </button>
