@@ -5,7 +5,7 @@
  * to `<callbackURL>?verified=1` (our own flag). The provider must turn both into visible feedback.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 
 const authState = vi.hoisted(() => ({ isLoaded: true, isSignedIn: false }));
 
@@ -41,41 +41,41 @@ afterEach(() => {
 });
 
 describe("e-mail verification link feedback (F-03)", () => {
-  it("opens the modal on the 'link expired' notice for ?error=TOKEN_EXPIRED and tidies the URL", () => {
+  it("opens the modal on the 'link expired' notice for ?error=TOKEN_EXPIRED and tidies the URL", async () => {
     renderAt("/pl?error=TOKEN_EXPIRED&v=abc");
-    expect(screen.getByTestId("auth-modal").textContent).toBe("open:link-expired");
+    expect((await screen.findByTestId("auth-modal")).textContent).toBe("open:link-expired");
     expect(window.location.search).toBe("?v=abc");
   });
 
-  it("treats INVALID_TOKEN the same way", () => {
+  it("treats INVALID_TOKEN the same way", async () => {
     renderAt("/?error=INVALID_TOKEN");
-    expect(screen.getByTestId("auth-modal").textContent).toBe("open:link-expired");
+    expect((await screen.findByTestId("auth-modal")).textContent).toBe("open:link-expired");
   });
 
-  it("ignores ?error on the reset-password and sso-callback pages, which handle it themselves", () => {
+  it("ignores ?error on the reset-password and sso-callback pages, which handle it themselves", async () => {
     renderAt("/reset-password?error=INVALID_TOKEN");
-    expect(screen.getByTestId("auth-modal").textContent).toBe("closed");
+    expect(screen.queryByTestId("auth-modal")).toBeNull();
     cleanup();
     renderAt("/sso-callback?error=1");
-    expect(screen.getByTestId("auth-modal").textContent).toBe("closed");
+    expect(screen.queryByTestId("auth-modal")).toBeNull();
   });
 
-  it("ignores unrelated ?error values", () => {
+  it("ignores unrelated ?error values", async () => {
     renderAt("/?error=something-else");
-    expect(screen.getByTestId("auth-modal").textContent).toBe("closed");
+    expect(screen.queryByTestId("auth-modal")).toBeNull();
     expect(window.location.search).toBe("?error=something-else");
   });
 
-  it("shows a confirmation after a verified click when the visitor is signed in", () => {
+  it("shows a confirmation after a verified click when the visitor is signed in", async () => {
     authState.isSignedIn = true;
     renderAt("/watch/x?verified=1");
     expect(screen.getByRole("status").textContent).toContain("Email confirmed");
     expect(window.location.search).toBe("");
-    expect(screen.getByTestId("auth-modal").textContent).toBe("closed");
+    expect(screen.queryByTestId("auth-modal")).toBeNull();
   });
 
-  it("asks to sign in after a verified click when there is no session in this browser", () => {
+  it("asks to sign in after a verified click when there is no session in this browser", async () => {
     renderAt("/?verified=1");
-    expect(screen.getByTestId("auth-modal").textContent).toBe("open:verified");
+    expect((await screen.findByTestId("auth-modal")).textContent).toBe("open:verified");
   });
 });

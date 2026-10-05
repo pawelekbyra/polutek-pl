@@ -22,11 +22,6 @@ const config = {
   theme: {
     extend: {
       fontFamily: {
-        serif: [
-          'var(--font-geist-sans)',
-          ...CJK_SYSTEM_FONTS,
-          'sans-serif'
-        ],
         sans: [
           'var(--font-geist-sans)',
           ...CJK_SYSTEM_FONTS,
@@ -48,16 +43,12 @@ const config = {
         ]
       },
       colors: {
-        cream: '#FDFBF7',
-        charcoal: '#1a1a1a',
         primary: {
           DEFAULT: 'hsl(var(--primary))',
-          dark: '#1d4ed8',
           foreground: 'hsl(var(--primary-foreground))'
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
-          dark: '#6d28d9',
           foreground: 'hsl(var(--secondary-foreground))'
         },
         background: 'hsl(var(--background))',
@@ -93,16 +84,6 @@ const config = {
           '3': 'hsl(var(--chart-3))',
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))'
-        }
-      },
-      animation: {
-        shimmer: 'shimmer 2s infinite'
-      },
-      keyframes: {
-        shimmer: {
-          '100%': {
-            transform: 'translateX(100%)'
-          }
         }
       },
       borderRadius: {

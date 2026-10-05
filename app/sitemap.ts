@@ -3,6 +3,10 @@ import { CreatorContentService as ContentService } from '@/lib/modules/channel/i
 import { VideoContentService } from '@/lib/modules/video/infrastructure/video-content.service';
 import { CONTENT_LOCALES, getLocaleAlternates, type RouteKey } from '@/lib/i18n/routing';
 
+// Rendered per request: the Docker build has no database, so a build-time sitemap would never list
+// the channel or any video. Crawlers fetch it rarely, so the two small queries cost nothing.
+export const dynamic = 'force-dynamic';
+
 const DEFAULT_BASE_URL = 'https://www.pawelperfect.com';
 function getBaseUrl() { try { return new URL(process.env.NEXT_PUBLIC_APP_URL || DEFAULT_BASE_URL).origin; } catch { return DEFAULT_BASE_URL; } }
 
@@ -35,7 +39,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseUrl();
   const routes: MetadataRoute.Sitemap = [
     ...localizedEntry(baseUrl, 'home', 1),
-    ...localizedEntry(baseUrl, 'search', 0.5),
     ...localizedEntry(baseUrl, 'terms', 0.4),
     ...localizedEntry(baseUrl, 'privacy', 0.4),
   ];

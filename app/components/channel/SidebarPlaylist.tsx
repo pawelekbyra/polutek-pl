@@ -199,7 +199,7 @@ export function SidebarPlaylist({
               {video.thumbnailUrl ? (
                 <Image
                   src={video.thumbnailUrl}
-                  alt={displayTitle}
+                  alt=""
                   fill
                   sizes="(min-width: 1280px) 158px, (min-width: 1024px) 150px, 130px"
                   className="object-cover transition-transform duration-200 group-hover/thumb:scale-[1.025] motion-reduce:transform-none motion-reduce:transition-none"

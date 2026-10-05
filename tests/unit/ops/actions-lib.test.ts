@@ -471,8 +471,8 @@ describe('role change', () => {
     const r = await setRoleAction(parseRoleArgs([`--user=${OTHER.id}`, '--role=USER', '--reason=decyzja właściciela']), { runApp, record: vi.fn() });
     expect(calls.map((c) => c.op)).toEqual(['user.inspect']);
     expect(r.ok).toBe(true);
-    expect(r.preview.admini_po_zmianie).toHaveLength(1);
-    expect(r.preview.admini_po_zmianie[0]).toContain(OWNER.id);
+    expect(r.preview?.admini_po_zmianie).toHaveLength(1);
+    expect(r.preview?.admini_po_zmianie[0]).toContain(OWNER.id);
     expect(JSON.stringify(r.preview)).not.toContain('owner@example.com');
     expect(r.next).toContain('--role=USER');
   });

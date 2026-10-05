@@ -363,12 +363,12 @@ function CommentItemComponent({
           {isHearted && (
             <span
               aria-label={tx("Serce twórcy", "Creator heart")}
-              className="inline-flex h-8 items-center px-1 text-[var(--chan-amber)]"
+              className="inline-flex h-8 items-center px-1 text-[var(--chan-amber-strong)]"
               role="img"
             >
               <Heart
                 size={15}
-                className="fill-[var(--chan-amber)] text-[var(--chan-amber)]"
+                className="fill-[var(--chan-amber-strong)] text-[var(--chan-amber-strong)]"
                 aria-hidden="true"
               />
             </span>

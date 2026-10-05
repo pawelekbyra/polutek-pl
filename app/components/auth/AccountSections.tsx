@@ -318,6 +318,12 @@ export function DangerSection({ tx, onDeleted }: { tx: Tx; onDeleted: () => void
       <p className="text-[13px] leading-[1.5] text-[var(--chan-body)]">
         {tx("Usunięcie konta jest nieodwracalne. Wpisz USUŃ, aby potwierdzić.", "Deleting your account is permanent. Type DELETE to confirm.")}
       </p>
+      <p className="text-[13px] leading-[1.5] text-[var(--chan-body)]">
+        {tx("Najpierw możesz pobrać swoje dane:", "You can download your data first:")}{" "}
+        <a href="/api/user/export" download className="font-bold underline hover:text-[var(--chan-ink)]">
+          {tx("Pobierz moje dane (JSON)", "Download my data (JSON)")}
+        </a>
+      </p>
       {hasPassword && (
         <Field label={tx("Twoje hasło", "Your password")} type="password" value={password} onChange={setPassword} autoComplete="current-password" />
       )}

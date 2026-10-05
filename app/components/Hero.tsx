@@ -414,29 +414,33 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                   <>
                     {displayDescription.trimEnd()}
                     {" "}
-                    <span
-                      className="text-[12px] font-bold text-[var(--chan-blue)] hover:underline cursor-pointer"
+                    <button
+                      type="button"
+                      aria-expanded="true"
+                      className="text-[12px] font-bold text-[var(--chan-blue)] hover:underline cursor-pointer rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsExpanded(false);
                       }}
                     >
                       {t.showLess}
-                    </span>
+                    </button>
                   </>
                 ) : (
                   <>
                     {truncateAtWord(displayDescription, 160)}
                     {displayDescription.length > 160 && (
-                      <span
-                        className="text-[12px] font-bold text-[var(--chan-blue)] ml-1 hover:underline cursor-pointer inline"
+                      <button
+                        type="button"
+                        aria-expanded="false"
+                        className="text-[12px] font-bold text-[var(--chan-blue)] ml-1 hover:underline cursor-pointer inline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
                         onClick={(e) => {
                           e.stopPropagation();
                           setIsExpanded(true);
                         }}
                       >
                         {t.showMore}
-                      </span>
+                      </button>
                     )}
                   </>
                 )}

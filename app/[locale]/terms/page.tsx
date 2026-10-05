@@ -30,7 +30,7 @@ export default async function TermsPage(props: { params: Promise<{ locale: strin
   return (
     <div className="min-h-screen bg-background text-[var(--chan-ink)]">
       <Navbar />
-      <main lang="en" className="mx-auto max-w-3xl px-4 py-16">
+      <main id="main" tabIndex={-1} lang="en" className="mx-auto max-w-3xl px-4 py-16">
         <header className="mb-10 border-b-2 border-[var(--chan-ink)]/10 pb-8">
           <h1 className="text-3xl font-black uppercase tracking-tighter">Terms of Service — WWW.PAWELPERFECT.COM</h1>
           <p className="mt-2 text-sm text-[var(--chan-muted)]">{LEGAL_EFFECTIVE_DATE_EN}</p>

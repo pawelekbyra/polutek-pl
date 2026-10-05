@@ -52,7 +52,7 @@ const TEST_VIDEO: PublicVideoDTO = {
   title: "Video",
   slug: "video",
   thumbnailUrl: "",
-  tier: "PATRON",
+  tier: "LOGGED_IN",
   status: "PUBLISHED",
   views: 0,
   likesCount: 0,

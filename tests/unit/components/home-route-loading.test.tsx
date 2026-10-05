@@ -7,9 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/app/components/preload/MatrixRain", () => ({ MatrixRain: () => null }));
 
 vi.mock("@/lib/auth/react", () => ({ useAuth: () => ({ isLoaded: true }) }));
-vi.mock("@/components/skeletons", () => ({
-  HomePageSkeleton: () => <div data-testid="home-skeleton" />,
-}));
 
 import { HomeRouteLoading } from "@/app/components/preload/HomeRouteLoading";
 import { PageRevealGate, resetPageRevealForTests } from "@/app/components/preload/PageRevealGate";

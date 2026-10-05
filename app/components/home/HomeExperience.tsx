@@ -165,7 +165,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
       <AuthSessionSeedProvider snapshot={sessionSnapshot}>
       <div className="public-visual-shell min-h-screen bg-background text-foreground">
         <Navbar />
-        <main className="max-w-3xl mx-auto px-6 py-20 text-center">
+        <main id="main" tabIndex={-1} className="max-w-3xl mx-auto px-6 py-20 text-center focus:outline-none">
           <h1 className="text-2xl font-bold mb-4">
             {isError ? tx('Błąd wczytywania', 'Loading error') : tx('Brak materiałów', 'No videos yet')}
           </h1>
@@ -221,7 +221,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
     <PageRevealGate waitFor={['player', 'comments']}>
       <div className="public-visual-shell min-h-screen bg-background text-foreground">
         <Navbar isHome />
-        <main className="relative">
+        <main id="main" tabIndex={-1} className="relative focus:outline-none">
           <ChannelHome
             mainVideo={mainVideo}
             allVideos={allVideos}
