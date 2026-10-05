@@ -17,6 +17,8 @@ const nextConfig = {
   outputFileTracingRoot: repoRoot,
   ...(process.env.NEXT_OUTPUT === "standalone" ? { output: "standalone" } : {}),
   poweredByHeader: false,
+  // Cloudflare compresses at the edge; origin gzip would buffer the live premiere stream (Server-Sent Events).
+  compress: false,
   // Agent guidance for this repo lives in the root CLAUDE.md; do not let `next dev` generate copies here.
   agentRules: false,
   productionBrowserSourceMaps: false,

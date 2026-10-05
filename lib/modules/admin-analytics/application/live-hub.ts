@@ -9,6 +9,8 @@ export type LiveHub<T> = {
   /** Last successful value, if any. */
   latest(): T | null;
   subscribers(): number;
+  /** True when no further listener is accepted. */
+  full(): boolean;
 };
 
 export function createLiveHub<T>(opts: {
@@ -59,5 +61,6 @@ export function createLiveHub<T>(opts: {
     },
     latest: () => last,
     subscribers: () => listeners.size,
+    full: () => listeners.size >= opts.maxSubscribers,
   };
 }

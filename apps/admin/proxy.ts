@@ -30,7 +30,8 @@ export async function proxy(request: NextRequest) {
 
   if (pathname.startsWith("/api/")) {
     const res = NextResponse.next();
-    res.headers.set("cache-control", "private, no-store");
+    // no-transform: the live stream (SSE) must never be buffered or re-encoded by a compression layer.
+    res.headers.set("cache-control", "private, no-store, no-transform");
     return res;
   }
 

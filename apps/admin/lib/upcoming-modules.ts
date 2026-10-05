@@ -13,13 +13,6 @@ export type UpcomingModule = {
 };
 
 export const UPCOMING_MODULES: Record<string, UpcomingModule> = {
-  analityka: {
-    id: "analityka",
-    title: "Analityka",
-    phase: 2,
-    summary: "Ruch, źródła, lejek i oglądalność z własnej telemetrii bez ciasteczek. Zbieranie danych rusza w fazie 0, ekrany w fazie 2, gdy będzie co najmniej 7 dni danych.",
-    scope: ["odwiedzający, wizyty, odsłony, źródła i kraje", "lejek: wejście → konto → komentarz → napiwek oraz atrybucja", "obejrzenia, czas oglądania, czas startu p50/p95, buforowanie, błędy odtwarzania", "ruch Workera HLS względem dziennego limitu"],
-  },
   spolecznosc: {
     id: "spolecznosc",
     title: "Społeczność",
@@ -57,13 +50,6 @@ export const UPCOMING_MODULES: Record<string, UpcomingModule> = {
     phase: 3,
     summary: "Logowania do panelu, sesje, nieudane próby i dziennik audytu z filtrami. Dziennik logowań panelu już się zapisuje (AdminAuthEvent, tylko dopisywanie, łańcuch skrótów); ekran przyjdzie w fazie 3.",
     scope: ["logowania admina i aktywne sesje", "passkey, TOTP, step-up i Cloudflare Access w jednym widoku", "nieudane logowania i blokady", "dziennik audytu z filtrami i eksportem"],
-  },
-  premiera: {
-    id: "premiera",
-    title: "Premiera na żywo",
-    phase: 2,
-    summary: "Tryb na czas premiery: widzowie teraz, czas startu, błędy, limit Workera HLS i napiwki na żywo (SSE co 2–5 s, z przyciskiem „Wstrzymaj”).",
-    scope: ["widzowie i jakość odtwarzania co kilka sekund", "prognoza limitu Workera HLS", "komentarze i napiwki na żywo", "szybkie akcje (faza 4)"],
   },
   ustawienia: {
     id: "ustawienia",
