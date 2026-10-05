@@ -2,6 +2,7 @@ import Providers from "@/app/components/Providers";
 import AuthLifecycleProvider from "@/app/components/auth/AuthLifecycleProvider";
 import { AuthPublicConfigProvider } from "@/lib/auth/public-config";
 import { readPublicAuthConfig } from "@/lib/auth/public-config.server";
+import type { Viewport } from "next";
 import { Suspense } from 'react';
 import { geistMono, geistSans } from "./fonts";
 import "./globals.css";
@@ -16,9 +17,9 @@ import { isTelemetryBeaconEnabled } from "@/lib/telemetry/config";
 
 export const metadata = {
   title: APP_NAME,
-  description: `${APP_NAME} — niezależny kanał wideo z materiałami publicznymi, dla zalogowanych i patronackimi.`,
+  applicationName: APP_NAME,
+  description: `${APP_NAME}: niezależny kanał wideo twórcy, filmy publiczne i dla zalogowanych.`,
   manifest: "/manifest.json",
-  themeColor: "#f7f9fc",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -37,29 +38,27 @@ export const metadata = {
   },
 };
 
+// Next emits the one viewport and theme-color tag from here (a `themeColor` inside `metadata` is
+// deprecated, and a hand-written <head> duplicated both tags).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#f7f9fc",
+  // The site is light only; saying so keeps form controls and scrollbars consistent.
+  colorScheme: "light",
+};
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const initialLanguage = await resolveDocumentLanguage();
   const publicAuthConfig = readPublicAuthConfig();
-  const buildId = process.env.VERCEL_GIT_COMMIT_SHA || 'development';
   return (
     <html
       lang={initialLanguage}
       suppressHydrationWarning
-      data-build-id={buildId}
       className={`${geistSans.variable} ${geistMono.variable}`}
       style={{ background: "#f7f9fc" }}
     >
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <meta name="application-name" content={APP_NAME} />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content={APP_NAME} />
-        <meta name="theme-color" content="#f7f9fc" />
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/icon" />
-      </head>
       <body className="font-sans bg-background text-foreground min-h-[100dvh] relative" suppressHydrationWarning>
         <ServiceWorkerCleanup />
         <UrlMask />

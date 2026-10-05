@@ -52,7 +52,6 @@ beforeEach(() => {
 describe("hero playback plan in the server render", () => {
   it("is skipped where the browser would not ask either (guest lock, premiere)", () => {
     expect(shouldRenderHeroPlan(video("LOGGED_IN"), guest)).toBe(false);
-    expect(shouldRenderHeroPlan(video("PATRON"), guest)).toBe(false);
     expect(shouldRenderHeroPlan(video("PUBLIC", new Date(Date.now() + 60_000).toISOString()), user)).toBe(false);
     expect(shouldRenderHeroPlan(video("PUBLIC"), guest)).toBe(true);
     expect(shouldRenderHeroPlan(video("LOGGED_IN"), user)).toBe(true);

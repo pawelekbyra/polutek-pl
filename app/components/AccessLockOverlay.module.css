@@ -72,50 +72,6 @@
   }
 }
 
-
-.graffitiCta {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  border: 0;
-  background: none;
-  padding: 0;
-  color: rgba(26, 16, 8, 0.55);
-  font: inherit;
-  cursor: pointer;
-  transition: color 0.3s ease;
-}
-
-.graffitiCta:hover,
-.graffitiCta:focus-visible { color: #1a1008; }
-
-.graffitiCta:focus-visible {
-  outline: 2px solid rgba(26, 16, 8, 0.5);
-  outline-offset: 4px;
-  border-radius: 4px;
-}
-
-.graffitiCtaLine {
-  width: 68px;
-  height: 2px;
-  background: rgba(26, 16, 8, 0.28);
-  border-radius: 2px;
-  transition: width 0.5s ease;
-}
-
-.graffitiCta:hover .graffitiCtaLine,
-.graffitiCta:focus-visible .graffitiCtaLine { width: 124px; }
-
-.graffitiCtaText {
-  max-width: 100%;
-  font-size: clamp(10px, 1.9cqi, 13px);
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
 /* Clickable login overlay */
 
 .loginClickable {
@@ -130,10 +86,6 @@
   outline: 3px solid rgba(26, 16, 8, 0.5);
   outline-offset: -3px;
 }
-@container (max-width: 420px) {
-  .graffitiText { font-size: clamp(1.3rem, 11cqi, 2rem); }
-}
-
 /* Compact overlay */
 
 .compact {
@@ -232,16 +184,6 @@
   background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(2, 3, 10, 0.6) 0%, transparent 70%);
 }
 
-.compactMark {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  width: clamp(16px, 12cqi, 24px);
-  aspect-ratio: 1;
-  place-items: center;
-  color: #fff;
-}
-
 /* Premiere compact thumbnail: a static patch of deep space */
 
 /* "DSEG7 HUD" and "Oxanium HUD" are declared in coming-soon/CockpitComingSoon.module.css. */
@@ -275,46 +217,10 @@
   margin-left: -0.46em;
 }
 
-.compactMark svg {
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, .4));
-}
-
-.compactLabel {
-  position: relative;
-  z-index: 1;
-  display: -webkit-box;
-  overflow: hidden;
-  max-width: 100%;
-  color: #fff;
-  font-size: clamp(11px, 13cqi, 17px);
-  font-weight: 700;
-  letter-spacing: .03em;
-  line-height: 1.05;
-  text-align: center;
-  text-transform: uppercase;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, .3);
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
 .compactTiny {
   /* was 4px: the lettering and the date blended together */
   gap: 7px;
 }
-
-.compactTiny .compactMark { width: clamp(12px, 10cqi, 20px); }
-.compactTiny .compactLabel { font-size: clamp(10px, 12cqi, 15px); }
-
-@container (max-width: 420px) {
-  .mark { margin-bottom: 10px; }
-  .word { font-size: clamp(1.6rem, 12cqi, 2.3rem); }
-  .divider { margin: 5px 0 7px; }
-  .cta { margin-top: 12px; }
-  .ctaText { letter-spacing: .18em; }
-}
-
 
 @media (prefers-reduced-motion: reduce) {
   .graffitiImage {

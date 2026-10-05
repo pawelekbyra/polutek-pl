@@ -28,7 +28,7 @@ function fakeDb(initial: Tr[] = [], history: { videoId: string; language: string
       upsert: vi.fn(async ({ where, create, update }: { where: { videoId_language: { videoId: string; language: string } }; create: Tr; update: Partial<Tr> }) => {
         const i = rows.findIndex((r) => r.videoId === where.videoId_language.videoId && r.language === where.videoId_language.language);
         if (i >= 0) Object.assign(rows[i], update);
-        else rows.push({ id: `t${rows.length}`, updatedAt: new Date(), reviewedAt: null, reviewedById: null, subtitleUrl: null, description: null, ...create });
+        else rows.push({ ...{ id: `t${rows.length}`, updatedAt: new Date(), reviewedAt: null, reviewedById: null, subtitleUrl: null, description: null }, ...create } as Tr);
       }),
       updateMany: vi.fn(async ({ where, data }: { where: Record<string, unknown>; data: Partial<Tr> }) => {
         const hit = rows.filter((r) => match(r, where));

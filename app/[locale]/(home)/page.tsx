@@ -48,18 +48,27 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   const selectedVideo = resolveSelectedVideo(allVideos, mainVideo, selectedVideoId);
   const baseUrl = getBaseUrl();
   const canonicalSlug = selectedVideoId ? selectedVideo?.slug ?? selectedVideoId : undefined;
+  const alternates = getLocaleAlternates(locale, 'home', { query: videoQuery(canonicalSlug), baseUrl });
 
   return {
     // Browser tab always reads www.pawelperfect.com regardless of the selected video; the
     // per-video title is kept only for social/OG previews below.
     title: APP_NAME,
     description: selectedVideo?.title ?? creator?.bio ?? `${APP_NAME} — kanał wideo`,
-    alternates: getLocaleAlternates(locale, 'home', { query: videoQuery(canonicalSlug), baseUrl }),
+    alternates,
     openGraph: {
       title: selectedVideo?.title ?? APP_NAME,
       description: selectedVideo?.title ?? creator?.bio ?? undefined,
+      url: alternates.canonical,
+      siteName: APP_NAME,
+      locale: locale === 'pl' ? 'pl_PL' : 'en_US',
       images: selectedVideo?.thumbnailUrl ? [{ url: selectedVideo.thumbnailUrl }] : [],
       type: 'video.other',
+    },
+    twitter: {
+      card: selectedVideo?.thumbnailUrl ? 'summary_large_image' : 'summary',
+      title: selectedVideo?.title ?? APP_NAME,
+      images: selectedVideo?.thumbnailUrl ? [selectedVideo.thumbnailUrl] : [],
     },
   };
 }

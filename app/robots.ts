@@ -1,8 +1,7 @@
 import { MetadataRoute } from 'next';
+import { getBaseUrl } from '@/lib/utils';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
   return {
     rules: {
       userAgent: '*',
@@ -10,8 +9,12 @@ export default function robots(): MetadataRoute.Robots {
       disallow: [
         '/admin/',
         '/api/',
+        // Search result pages are thin and infinite; the sitemap does not list them either.
+        '/pl/search',
+        '/en/search',
+        '/search',
       ],
     },
-    sitemap: `${baseUrl}/sitemap.xml`,
+    sitemap: `${getBaseUrl()}/sitemap.xml`,
   };
 }

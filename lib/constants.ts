@@ -17,18 +17,8 @@ export const MAX_PAYMENT_BY_CURRENCY: Record<SupportedCurrency, number> = {
   GBP: 1000,
 };
 
-export function getConfiguredAdminEmail() {
+function getConfiguredAdminEmail() {
   return process.env.ADMIN_EMAIL?.trim() || null;
-}
-
-export function requireConfiguredAdminEmail() {
-  const value = getConfiguredAdminEmail();
-
-  if (!value) {
-    throw new Error("CRITICAL: ADMIN_EMAIL environment variable is not set.");
-  }
-
-  return value;
 }
 
 export const ADMIN_EMAIL = getConfiguredAdminEmail() || "admin@example.local";
@@ -55,6 +45,3 @@ const configuredAppName = process.env.NEXT_PUBLIC_APP_NAME?.trim();
 export const APP_NAME = !configuredAppName || /^(www\.)?pawelperfect\.(pl|com)$/i.test(configuredAppName)
   ? 'www.pawelperfect.com'
   : configuredAppName;
-export const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_URL
-  ? new URL(process.env.NEXT_PUBLIC_APP_URL).hostname.toUpperCase().replace(/^(WWW\.)+/, '')
-  : 'PAWELPERFECT.COM';

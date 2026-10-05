@@ -11,10 +11,6 @@ const mocks = vi.hoisted(() => ({
   isMobile: false,
   canNativeShare: false,
   copied: false,
-  installed: false,
-  isIOS: false,
-  canInstallDirectly: false,
-  install: vi.fn(),
 }));
 
 vi.mock("@/app/components/LanguageContext", () => ({
@@ -34,16 +30,6 @@ vi.mock("@/app/hooks/useShare", () => ({
   }),
 }));
 
-vi.mock("@/app/hooks/usePwaInstall", () => ({
-  usePwaInstall: () => ({
-    installed: mocks.installed,
-    isIOS: mocks.isIOS,
-    canInstallDirectly: mocks.canInstallDirectly,
-    install: mocks.install,
-  }),
-}));
-
-import InstallAppMenu from "@/app/components/InstallAppMenu";
 import ShareButton from "@/app/components/ShareButton";
 
 describe("ShareButton menu", () => {
@@ -155,65 +141,5 @@ describe("ShareButton menu", () => {
 
     expect(await screen.findByRole("menuitem", { name: "Copy link" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Send by email" })).toBeTruthy();
-  });
-});
-
-describe("InstallAppMenu", () => {
-  beforeEach(() => {
-    mocks.language = "pl";
-    mocks.installed = false;
-    mocks.isIOS = false;
-    mocks.canInstallDirectly = false;
-    mocks.install.mockReset().mockResolvedValue("accepted");
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  it("exposes an unavailable browser message as a disabled menu item", async () => {
-    render(<InstallAppMenu />);
-
-    fireEvent.click(screen.getByRole("button", { name: "Zainstaluj aplikację" }));
-
-    const item = await screen.findByRole("menuitem", {
-      name: "Instalacja niedostępna w tej przeglądarce",
-    });
-    expect(item.getAttribute("aria-disabled")).toBe("true");
-  });
-
-  it("runs the captured browser install prompt and closes the menu", async () => {
-    mocks.canInstallDirectly = true;
-    render(<InstallAppMenu />);
-    fireEvent.click(screen.getByRole("button", { name: "Zainstaluj aplikację" }));
-
-    fireEvent.click(await screen.findByRole("menuitem", { name: "Zainstaluj aplikację" }));
-
-    await waitFor(() => expect(mocks.install).toHaveBeenCalledOnce());
-    await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
-  });
-
-  it("keeps the menu open to show iOS add-to-home-screen instructions", async () => {
-    mocks.isIOS = true;
-    render(<InstallAppMenu />);
-    fireEvent.click(screen.getByRole("button", { name: "Zainstaluj aplikację" }));
-
-    fireEvent.click(await screen.findByRole("menuitem", { name: "Zainstaluj aplikację" }));
-
-    expect(await screen.findByText("Zainstaluj na iPhonie/iPadzie")).toBeTruthy();
-    expect(screen.getByRole("menu")).toBeTruthy();
-  });
-
-  it("localizes the unavailable state in English", async () => {
-    mocks.language = "en";
-    render(<InstallAppMenu />);
-
-    fireEvent.click(screen.getByRole("button", { name: "Install app" }));
-
-    expect(
-      await screen.findByRole("menuitem", {
-        name: "Installation isn't available in this browser",
-      }),
-    ).toBeTruthy();
   });
 });
