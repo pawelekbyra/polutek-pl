@@ -220,7 +220,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
     <AuthSessionSeedProvider snapshot={sessionSnapshot}>
     <PageRevealGate waitFor={['player', 'comments']}>
       <div className="public-visual-shell min-h-screen bg-background text-foreground">
-        <Navbar />
+        <Navbar isHome />
         <main className="relative">
           <ChannelHome
             mainVideo={mainVideo}

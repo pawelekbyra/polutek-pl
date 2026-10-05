@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useAuth, useUser } from "@/lib/auth/react";
+import { ADMIN_PANEL_ORIGIN } from "@/lib/admin-legacy-redirects";
 import { ShieldCheck } from "../icons";
 import {
   DropdownMenu,
@@ -93,7 +93,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
 
           {isAdmin && (
             <DropdownMenuItem
-              render={<Link href="/admin" />}
+              render={<a href={ADMIN_PANEL_ORIGIN} target="_blank" rel="noopener noreferrer" />}
               className={itemClassName}
             >
               <ShieldCheck aria-hidden="true" size={16} />

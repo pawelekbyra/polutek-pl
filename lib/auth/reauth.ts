@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 
 /**
  * A Google-only account may do a sensitive action only if the session was created this recently (the user
- * just signed in again). The same window gates destructive admin actions on other accounts (lib/api/admin-recent-sign-in.ts).
+ * just signed in again).
  */
 export const RECENT_SIGN_IN_SECONDS = 10 * 60;
 

@@ -39,3 +39,9 @@ export async function loadRole(adminUserId: string): Promise<AdminRole> {
   const row = await prisma.adminUser.findUnique({ where: { id: adminUserId }, select: { role: true } });
   return normalizeRole(row?.role);
 }
+
+/** Read-only role lookup by e-mail (access mode, used by the proxy); null = no such account (yet). */
+export async function lookupRoleByEmail(email: string): Promise<AdminRole | null> {
+  const row = await prisma.adminUser.findUnique({ where: { email: email.toLowerCase() }, select: { role: true } });
+  return row ? normalizeRole(row.role) : null;
+}

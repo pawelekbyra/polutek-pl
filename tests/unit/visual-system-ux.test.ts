@@ -34,18 +34,6 @@ describe("shared visual system contracts", () => {
     expect(player).not.toContain(">P</span>");
   });
 
-  it("keeps the scoped admin shell while preserving the payment settings skin", () => {
-    const layout = read("app/admin/layout.tsx");
-    const shell = read("app/admin/components/AdminVisualShell.tsx");
-    const globals = read("app/globals.css");
-
-    expect(layout).toContain("<AdminVisualShell>{children}</AdminVisualShell>");
-    expect(shell).toContain('pathname === "/admin/payments"');
-    expect(shell).toContain("admin-visual-shell--payments");
-    expect(globals).toContain(".admin-visual-shell [data-slot=\"card\"]");
-    expect(globals).toContain(".admin-visual-shell [data-slot=\"button\"]:active");
-  });
-
   it("keeps the channel grid proportional and removes placeholder tabs that did nothing", () => {
     const channel = read("app/[locale]/channel/[slug]/page.tsx");
     const card = read("app/components/ChannelVideoCard.tsx");

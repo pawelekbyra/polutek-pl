@@ -114,19 +114,6 @@ export function getPasskeyRelyingParty(env: Record<string, string | undefined> =
   return { rpID, rpName: PASSKEY_RP_NAME, origin };
 }
 
-/** One-time bootstrap list: verified accounts with these e-mails become ADMIN (see resolveDbBackedActor). */
-export function getAdminEmails(env: Record<string, string | undefined> = process.env): string[] {
-  return (env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-export function isAdminEmail(email: string | null | undefined, env: Record<string, string | undefined> = process.env): boolean {
-  if (!email) return false;
-  return getAdminEmails(env).includes(email.trim().toLowerCase());
-}
-
 export function isCaptchaConfigured(env: Record<string, string | undefined> = process.env): boolean {
   return Boolean(env.TURNSTILE_SECRET_KEY?.trim());
 }

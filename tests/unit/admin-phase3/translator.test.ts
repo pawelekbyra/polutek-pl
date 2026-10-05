@@ -77,6 +77,7 @@ describe("roles and the proxy", () => {
   it("sends a translator away from owner pages (redirect) and APIs (403), but lets the translation screens through", async () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("ADMIN_DEV_BYPASS_ACCESS", "1");
+    vi.stubEnv("ADMIN_AUTH_MODE", "passkey"); // cookie-based role lookup is the legacy mode (access mode: access-proxy.test.ts)
     prismaMock.adminSession.findUnique.mockResolvedValue({ user: { role: "TRANSLATOR" } });
     const page = await proxy(devReq("/przychody"));
     expect(page.status).toBe(307);
@@ -88,6 +89,7 @@ describe("roles and the proxy", () => {
   it("does not touch an owner", async () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("ADMIN_DEV_BYPASS_ACCESS", "1");
+    vi.stubEnv("ADMIN_AUTH_MODE", "passkey"); // cookie-based role lookup is the legacy mode (access mode: access-proxy.test.ts)
     prismaMock.adminSession.findUnique.mockResolvedValue({ user: { role: "OWNER" } });
     expect((await proxy(devReq("/przychody"))).status).toBe(200);
     vi.unstubAllEnvs();

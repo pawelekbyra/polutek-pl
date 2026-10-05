@@ -10,7 +10,7 @@ import { safeNextPath } from "@admin/lib/auth/session-rules";
 import { overviewDeps, usesSampleData } from "@admin/lib/overview";
 
 /**
- * Every screen of the panel: signed-in, enrolled admin only (layer 2), then the shell with the badges and
+ * Every screen of the panel: signed-in admin only (layer 2: Access token in access mode, passkey session in legacy mode), then the shell with the badges and
  * the health dot read on the server. No loading.tsx anywhere: the page arrives complete.
  * A TRANSLATOR gets the small translator shell (and the proxy keeps them on /tlumaczenia); owners get the full one.
  */
@@ -20,7 +20,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
   if (viewer.role === "TRANSLATOR") {
     if (!path.startsWith("/tlumaczenia")) redirect("/tlumaczenia");
     return (
-      <TranslatorShell name={viewer.name} email={viewer.email} languages={viewer.languages}>
+      <TranslatorShell name={viewer.name} email={viewer.email} languages={viewer.languages} signOutHref={viewer.signOutHref}>
         {children}
       </TranslatorShell>
     );
@@ -37,7 +37,7 @@ export default async function PanelLayout({ children }: { children: ReactNode })
     <AppShell
       counts={nav}
       health={shellHealth}
-      viewer={{ name: viewer.name, email: viewer.email, dev: viewer.dev }}
+      viewer={{ name: viewer.name, email: viewer.email, dev: viewer.dev, signOutHref: viewer.signOutHref }}
       sample={usesSampleData()}
       now={health.measuredAt}
     >

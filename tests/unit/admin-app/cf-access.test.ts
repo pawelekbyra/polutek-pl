@@ -61,7 +61,7 @@ describe("Cloudflare Access JWT (layer 1)", () => {
     const strict = { ...config, allowedEmails: ["pawel.perfect@gmail.com"] };
     expect(await verifyAccessRequest(headersWith(await token()), strict, jwks)).toMatchObject({ ok: true });
     const r = await verifyAccessRequest(headersWith(await token({ email: "hello@pawelperfect.com" })), strict, jwks);
-    expect(r).toEqual({ ok: false, reason: "email_not_allowed" });
+    expect(r).toMatchObject({ ok: false, reason: "email_not_allowed", email: "hello@pawelperfect.com" });
   });
 
   it("fails closed when Access is not configured", async () => {
@@ -84,7 +84,15 @@ describe("getAccessConfig", () => {
       mode: "enforce",
       teamDomain: TEAM,
       audience: AUD,
+      allowedEmails: ["pawel.perfect@gmail.com"], // access mode (default): the owner is the explicit default
+      requireEmail: true,
+    });
+    expect(getAccessConfig({ NODE_ENV: "production", ADMIN_AUTH_MODE: "passkey", CF_ACCESS_TEAM_DOMAIN: TEAM, CF_ACCESS_AUD: AUD })).toEqual({
+      mode: "enforce",
+      teamDomain: TEAM,
+      audience: AUD,
       allowedEmails: [],
+      requireEmail: false,
     });
     expect(getAccessConfig({ NODE_ENV: "production", CF_ACCESS_TEAM_DOMAIN: "https://evil.example.com", CF_ACCESS_AUD: AUD })).toMatchObject({ mode: "misconfigured" });
     expect(getAccessConfig({ NODE_ENV: "production", CF_ACCESS_TEAM_DOMAIN: TEAM })).toMatchObject({ mode: "misconfigured" });

@@ -2,27 +2,16 @@ import { auth } from "@/lib/auth/server";
 import { AppError } from "@/lib/errors";
 import { Actor } from "@/lib/modules/shared/actor";
 import { prisma } from "@/lib/prisma";
-import { isAdminEmail } from "@/lib/auth/config";
-import { recordAuthAudit } from "@/lib/auth/audit";
 
 
 /**
- * Admin = `User.role === ADMIN` in our database. Bootstrap: a verified account whose e-mail is listed
- * in ADMIN_EMAILS is promoted on its next request (and the promotion is audited). Note: this runs on
- * every request, so while an address stays in ADMIN_EMAILS a demotion in /admin/users/[userId]
- * ("Rola i uprawnienia", PATCH /api/admin/users/[userId]/role) is undone on that user's next request;
- * remove the address from ADMIN_EMAILS after the first sign-in (audit AUTH-27). Empty in production.
- * A never-verified address cannot be promoted, so nobody can claim an admin e-mail by signing
- * up with it first.
+ * Admin = `User.role === ADMIN` in our database, nothing else. On the public site the role is only a
+ * flag (draft previews, the owner's menu link to the panel); the panel at admin.pawelperfect.com has its
+ * own accounts and sign-in. There is no e-mail bootstrap any more (ADMIN_EMAILS was removed in phase 5,
+ * docs/architecture/admin-phase5.md): the role is changed with changeUserRoleAsAdmin or the ops script.
  */
-async function isAdminUser(user: { id: string; role: string; email: string; emailVerified: boolean }): Promise<boolean> {
-  if (user.role === "ADMIN") return true;
-  if (user.emailVerified && isAdminEmail(user.email)) {
-    await prisma.user.update({ where: { id: user.id }, data: { role: "ADMIN" } });
-    await recordAuthAudit({ action: "AUTH_ADMIN_BOOTSTRAP", userId: user.id, metadata: { source: "ADMIN_EMAILS" } });
-    return true;
-  }
-  return false;
+function isAdminUser(user: { role: string }): boolean {
+  return user.role === "ADMIN";
 }
 
 type ActorResolverOptions = {
@@ -32,14 +21,14 @@ type ActorResolverOptions = {
 export async function resolveDbBackedActor(userId: string): Promise<Actor> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, role: true, isDeleted: true, email: true, emailVerified: true, onboardingPending: true },
+    select: { id: true, role: true, isDeleted: true, onboardingPending: true },
   });
 
   if (!user || user.isDeleted) {
     throw new AppError("Forbidden", 403, "FORBIDDEN");
   }
 
-  if (await isAdminUser(user)) {
+  if (isAdminUser(user)) {
     return { type: "admin", userId };
   }
 
@@ -52,14 +41,14 @@ async function resolveDbBackedAdminActor(
 ): Promise<{ type: "admin"; userId: string }> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, role: true, isDeleted: true, email: true, emailVerified: true },
+    select: { id: true, role: true, isDeleted: true },
   });
 
   if (!user || user.isDeleted) {
     throw new AppError("Forbidden", 403, "FORBIDDEN");
   }
 
-  if (await isAdminUser(user)) {
+  if (isAdminUser(user)) {
     return { type: "admin", userId };
   }
 

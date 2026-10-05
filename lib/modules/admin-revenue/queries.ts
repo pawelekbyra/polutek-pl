@@ -116,14 +116,14 @@ export type ReconciliationView = {
 
 /**
  * Local consistency (no call to Stripe): payments PENDING for over 15 minutes, and per currency the sum of
- * received money (net of refunds, without disputed/lost) against the per-user running totals the supporter
+ * received money (net of refunds; an open dispute still counts, it is only subtracted when lost) against the per-user running totals the supporter
  * logic uses. A non-zero difference means a webhook or refund path missed an update.
  */
 export async function getReconciliation(ctx: AppContext, now: Date = ctx.now()): Promise<ReconciliationView> {
   adminOnly(ctx);
   const [pending, paid, totals] = await Promise.all([
     ctx.prisma.payment.findMany({ where: { status: "PENDING", createdAt: { lt: new Date(now.getTime() - 15 * 60_000) } }, orderBy: { createdAt: "asc" }, take: 50, select: { id: true, createdAt: true, amountMinor: true, currency: true, stripeIntentId: true } }),
-    ctx.prisma.payment.groupBy({ by: ["currency"], where: { status: { in: ["SUCCEEDED", "PARTIALLY_REFUNDED"] } }, _sum: { amountMinor: true, refundedAmountMinor: true } }),
+    ctx.prisma.payment.groupBy({ by: ["currency"], where: { status: { in: ["SUCCEEDED", "PARTIALLY_REFUNDED", "DISPUTED"] } }, _sum: { amountMinor: true, refundedAmountMinor: true } }),
     ctx.prisma.userPaymentTotal.groupBy({ by: ["currency"], _sum: { amountMinor: true } }),
   ]);
   const currencies = new Set([...paid.map((p) => p.currency), ...totals.map((t) => t.currency)]);

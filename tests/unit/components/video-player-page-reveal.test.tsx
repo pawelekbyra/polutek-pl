@@ -41,6 +41,11 @@ vi.mock("@vidstack/react", async () => {
 import VideoPlayer from "@/app/components/VideoPlayer";
 import { VideoAccessContext } from "@/app/components/VideoAccessContext";
 import {
+  readSoundPreference,
+  resetSoundPreferenceForTests,
+  writeUserMuted,
+} from "@/app/components/player/sound-preference";
+import {
   PageRevealGate,
   resetPageRevealForTests,
 } from "@/app/components/preload/PageRevealGate";
@@ -94,6 +99,9 @@ beforeEach(() => {
   vi.spyOn(performance, "now").mockReturnValue(0);
   resetPageRevealForTests();
   sessionStorage.clear();
+  localStorage.clear();
+  resetSoundPreferenceForTests();
+  vi.stubGlobal("navigator", Object.assign(Object.create(navigator), { getAutoplayPolicy: undefined }));
   mocks.lastPlayerProps = null;
   mocks.instance.buffered = { length: 0, end: () => 0 };
   mocks.instance.muted = true;
@@ -106,6 +114,7 @@ afterEach(() => {
   cleanup();
   vi.useRealTimers();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("VideoPlayer under the first-load preloader", () => {
@@ -243,7 +252,7 @@ describe("VideoPlayer sound", () => {
   });
 
   it("does not unmute on the gate click when the viewer chose mute", async () => {
-    sessionStorage.setItem("polutek:player-muted", "1");
+    writeUserMuted(true);
     await mountPlayer(false);
     await act(async () => {
       window.dispatchEvent(new Event("polutek:gate-enter"));
@@ -268,7 +277,7 @@ describe("VideoPlayer unmutes on the first gesture after a muted start (reload, 
     });
     expect(mocks.instance.muted).toBe(false);
     expect(mocks.lastPlayerProps?.muted).toBe(false);
-    expect(sessionStorage.getItem("polutek:player-muted")).toBeNull();
+    expect(readSoundPreference().muted).toBeNull();
 
     // One-shot: once the viewer mutes it, later gestures leave it muted.
     mocks.instance.muted = true;
@@ -283,7 +292,7 @@ describe("VideoPlayer unmutes on the first gesture after a muted start (reload, 
   });
 
   it("does not unmute when the viewer muted the player themselves", async () => {
-    sessionStorage.setItem("polutek:player-muted", "1");
+    writeUserMuted(true);
     await mountMutedAndPlaying();
     await act(async () => {
       fireEvent.pointerDown(document.body);
@@ -311,13 +320,124 @@ describe("VideoPlayer unmutes on the first gesture after a muted start (reload, 
     expect(mocks.instance.muted).toBe(true);
 
     // ...and the button's own click turns the sound on, as the viewer's explicit choice.
-    sessionStorage.setItem("polutek:player-muted", "1");
+    writeUserMuted(true);
     await act(async () => {
       fireEvent.click(hint);
     });
     expect(mocks.instance.muted).toBe(false);
-    expect(sessionStorage.getItem("polutek:player-muted")).toBeNull();
+    expect(readSoundPreference().muted).toBe(false);
     expect(unmuteHint()).toBeNull();
     volumeControl.remove();
+  });
+});
+
+describe("VideoPlayer restores the viewer's sound after a reload", () => {
+  async function mountAfterReload() {
+    // A reload inside the session: the entry gate was already passed, so it does not wait for a click.
+    sessionStorage.setItem("polutek:revealed", "1");
+    render(withPlan(<VideoPlayer video={VIDEO} />));
+    await act(async () => {});
+  }
+  const stubAutoplayPolicy = (policy: string) =>
+    vi.stubGlobal("navigator", Object.assign(Object.create(navigator), { getAutoplayPolicy: () => policy }));
+
+  it("tries sound first after a reload when the viewer had sound on (regression: it always started muted)", async () => {
+    writeUserMuted(false);
+    await mountAfterReload();
+    expect(mocks.lastPlayerProps?.muted).toBe(false);
+    expect(mocks.lastPlayerProps?.autoPlay).toBe(true);
+  });
+
+  it("falls back to muted autoplay plus the unmute button when the browser refuses (NotAllowedError)", async () => {
+    writeUserMuted(false);
+    await mountAfterReload();
+    mocks.instance.play.mockRejectedValueOnce(Object.assign(new Error("blocked"), { name: "NotAllowedError" }));
+    await act(async () => fire("onCanPlay"));
+    await act(async () => fire("onAutoPlayFail", { muted: false, error: new Error("NotAllowedError") }));
+    expect(mocks.instance.muted).toBe(true);
+    await act(async () => fire("onPlaying"));
+    expect(unmuteHint()).not.toBeNull();
+    // ...and the first gesture anywhere turns the sound on again, with the restored volume.
+    await act(async () => {
+      fireEvent.pointerDown(document.body);
+    });
+    expect(mocks.instance.muted).toBe(false);
+    expect(unmuteHint()).toBeNull();
+  });
+
+  it("stays muted after a reload when the viewer never chose sound (no choice yet)", async () => {
+    await mountAfterReload();
+    expect(mocks.lastPlayerProps?.muted).toBe(true);
+  });
+
+  it("stays muted after a reload when the viewer muted the player", async () => {
+    writeUserMuted(true);
+    await mountAfterReload();
+    expect(mocks.lastPlayerProps?.muted).toBe(true);
+    await act(async () => fire("onPlaying"));
+    expect(unmuteHint()).toBeNull();
+  });
+
+  it("stays muted under a waiting entry gate even with sound remembered (the gate click brings it)", async () => {
+    writeUserMuted(false);
+    renderUnderGate();
+    await act(async () => {});
+    expect(mocks.lastPlayerProps?.muted).toBe(true);
+    await act(async () => {
+      window.dispatchEvent(new Event("polutek:gate-enter"));
+    });
+    expect(mocks.instance.muted).toBe(false);
+  });
+
+  it("does not even try sound when the browser says only muted autoplay is allowed", async () => {
+    writeUserMuted(false);
+    stubAutoplayPolicy("allowed-muted");
+    await mountAfterReload();
+    expect(mocks.lastPlayerProps?.muted).toBe(true);
+    await act(async () => fire("onPlaying"));
+    expect(unmuteHint()).not.toBeNull();
+  });
+
+  it("tries sound when the browser reports that autoplay is allowed", async () => {
+    writeUserMuted(false);
+    stubAutoplayPolicy("allowed");
+    await mountAfterReload();
+    expect(mocks.lastPlayerProps?.muted).toBe(false);
+  });
+
+  it("remembers the gate click as the viewer's own sound choice", async () => {
+    renderUnderGate();
+    await act(async () => {});
+    await act(async () => {
+      window.dispatchEvent(new Event("polutek:gate-enter"));
+    });
+    expect(readSoundPreference().muted).toBe(false);
+  });
+
+  it("restores the saved volume and saves the one the viewer sets", async () => {
+    await mountAfterReload();
+    expect(mocks.lastPlayerProps?.volume).toBe(1);
+    await act(async () => fire("onMediaVolumeChangeRequest", 0.35));
+    await act(async () => fire("onMediaVolumeChangeRequest", 0));
+    expect(readSoundPreference().volume).toBe(0.35);
+    cleanup();
+    await mountAfterReload();
+    expect(mocks.lastPlayerProps?.volume).toBe(0.35);
+  });
+
+  it("survives blocked storage (falls back to the current document)", async () => {
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    writeUserMuted(true);
+    expect(readSoundPreference().muted).toBe(true);
+  });
+
+  it("turns off the playback-speed keys (the player has no speed control)", async () => {
+    await mountAfterReload();
+    expect(mocks.lastPlayerProps?.keyShortcuts).toEqual({ speedUp: "", slowDown: "" });
   });
 });

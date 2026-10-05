@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
+import { ADMIN_PANEL_ORIGIN } from "@/lib/admin-legacy-redirects";
 import { useAuth, useUser } from "@/lib/auth/react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "../LanguageContext";
@@ -78,9 +78,9 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
 
             <div className="mt-5 flex items-center justify-between border-t border-[var(--chan-line)] pt-4">
               {isAdmin ? (
-                <Link href="/admin" className="font-sans text-[13px] font-bold text-[var(--chan-ink)] underline hover:text-[var(--chan-blue)]">
+                <a href={ADMIN_PANEL_ORIGIN} target="_blank" rel="noopener noreferrer" className="font-sans text-[13px] font-bold text-[var(--chan-ink)] underline hover:text-[var(--chan-blue)]">
                   {tx("Zarządzaj kanałem", "Manage channel")}
-                </Link>
+                </a>
               ) : (
                 <span />
               )}

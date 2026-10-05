@@ -53,19 +53,19 @@ wcześniej wszystkie prace agentów były wstrzymane na prośbę właściciela).
   Plan przenoszenia na inny serwer albo powiększenia: sekcja „Hetzner: powiększenie i przenoszenie” niżej.
 - Konta ADMIN: akcja `set-role` wykonana 2026-10-04 (patrz #1680): zostaje konto właściciela `pawel.perfect@gmail.com` = `user_3FeY8okjicDKlWDGSSc4Q7bvaPZ`, trzy pozostałe mają rolę USER (konta nie usunięte). Stan w bazie do potwierdzenia odprawą.
 
-## Otwarte PR-y i gałęzie (kolejność scalania)
+## Gałęzie i prace w toku (stan 2026-10-05, repo na serwerze TAKT; GitHub nie jest używany)
 
-Wszystkie PR-y były weryfikowane lokalnie (Actions nie działa). Przed scaleniem powtórz testy dotknięte zmianami po `git merge origin/main`.
+W `main` (repo TAKT `~/git/pawelperfect.git`) są scalone: panel faz 2 (Treści, Społeczność), tłumaczenia (model danych), zapas serwera, faza 3, faza A,
+`local-ci`, `ops-set-role`. Po scaleniu: `npm run quality` OK (383 pliki / 2808 testów), `npm run admin:build` OK, testy z Postgresem 7 plików OK
+(lokalna baza PostgreSQL 16 na TAKT, wszystkie migracje stosują się czysto). **Nic z tego nie jest jeszcze wdrożone na serwerek** (wdrożona jest tylko faza 1 panelu).
 
-| PR | Gałąź | Zakres i stan | Co dalej |
-|---|---|---|---|
-| #1678 | `feat/preloader-polish` | Preloader: ciemne tło od pierwszej klatki, napis i królik od razu (w HTML serwera), deszcz bez rozbiegu, czcionka **Major Mono Display** (wybór właściciela), stan pod napisem **tylko „WCZYTUJĘ…”** (bez „/ WEJDŹ”), marchewka jako kursor na całym ekranie bramki (czubek = lewy górny róg). Plik porównania czcionek `docs/design/preloader-fonts.html`. Agent przerwany tuż przed końcową weryfikacją wizualną | Obejrzeć w przeglądarce (1280/390 px, wolne łącze), poprawić ewentualne usterki, scalić i wdrożyć |
-| #1680 | `feat/ops-set-role` | Akcja `scripts/ops/actions/set-role.mjs` (use case `changeUserRoleAsAdmin`, podgląd/`--yes`, audyt). **Scalona do `main` na TAKT (2026-10-05).** Wykonana na produkcji 2026-10-04 (3 wpisy `ops user.set-role ... wynik=ok` w `/var/log/serwerek/changes.log`, 23:47–23:49): trzy konta zdjęte do roli USER (konta nie usunięte); zostaje konto właściciela | Zrobione. Do potwierdzenia stan ról w bazie przy najbliższej odprawie |
-| #1679 | `feat/local-ci` | `scripts/ops/local-ci.mjs` + `LOCAL_CI=1` w `mergedeploy.sh`, naprawy błędów typów w testach, usunięte martwe testy. **Scalona do `main` na TAKT (2026-10-05).** Brakuje dokumentacji końcowej (`docs/operations/LOCAL-CI.md`) | Dopisać `LOCAL-CI.md`; wyjaśnić 14 błędów typów w pełnym `tsc --noEmit` (z testami), których `npm run quality` nie sprawdza |
-| #1673 | `feat/admin-phase2-content` | Panel admina, faza 2 – Treści (lista, nowy film z uploadem, edycja, kodowanie, napisy, układ kanału). **Scalona do `main` na TAKT (2026-10-05), niewdrożona** | Wdrożyć z właścicielem (R2 w `admin.env`, CORS bucketa: `ADMIN-PANEL.md`) |
-| #1675 | `feat/admin-translations` | Model danych tłumaczeń filmów (`VideoTranslation`, `VideoSlugHistory`) z kompatybilnością odczytu, ekran „Tłumaczenia” (generowanie AI jeszcze nie). **Scalona do `main` na TAKT (2026-10-05), niewdrożona** | Przy wdrożeniu migracja bazy (addytywna): najpierw `backup.sh` |
-| #1677 | `feat/admin-server-headroom` | Wskaźnik „Zapas serwera” w „System” i „Dzisiaj” (próg z `docs/operations/LOAD-TEST.md`). **Scalona do `main` na TAKT (2026-10-05), niewdrożona** | Przy wdrożeniu: nadać roli `pp_analytics_ro` hasło (`ADMIN-PANEL.md`) |
-| #1681 | `feat/admin-phase2-community` (WIP, draft) | Faza 2 – Społeczność (użytkownicy: lista, szczegóły, wpłaty, rola, usunięcie; komentarze, zgłoszenia). Praca w toku, jeden commit WIP z niezacommitowanymi zmianami | Podstawa (#1673/#1675/#1677) jest już w `main`: dokończyć (na TAKT czyste scalenie z `main`, testy zielone), wstrzymane decyzją właściciela, przetestować, wyjąć z draftu |
+| Gałąź | Zakres i stan | Co dalej |
+|---|---|---|
+| `feat/preloader-polish` | Preloader: ciemne tło od pierwszej klatki, czcionka Major Mono Display, tylko „WCZYTUJĘ…”, kursor-marchewka. Nie scalona (czeka na obejrzenie w przeglądarce) | Obejrzeć z właścicielem, scalić |
+| `fix/player-topbar` (w toku) | Dźwięk po przeładowaniu, usunięcie przycisku prędkości, logo okularów wraca na stronę główną z hero | Przejrzeć raport agenta, scalić |
+| `feat/p5-retire-old-admin` (w toku) | Faza 5: stary `/admin` na `www` znika (308 do nowego panelu, 404 dla `/api/admin*`), moderacja i `ADMIN_EMAILS` | **Wdrożyć dopiero po udanym logowaniu do nowego panelu przez Access** |
+| `feat/i18n-ui-languages` (w toku) | Interfejs w DE/ES/FR/IT/PT/ZH (bez maili i regulaminu), działające przełączniki | Przejrzeć raport, scalić |
+| `docs/state-rewrite`, `fix/audits-www` (wstrzymane) | Nowy krótki `CLAUDE.md` + przepisany `SERWEREK.md`; naprawy z audytów frontendu/stylu/prywatności. Agenci przerwani limitem, część pracy w katalogach `~/work/docs` i `~/work/audits` | Wznowić po zakończeniu bieżących |
 
 **Mapa dokumentacji panelu admina (czytaj w tej kolejności):**
 1. [`architecture/admin-panel.md`](../architecture/admin-panel.md): wizja, 12 decyzji, **plan wszystkich faz** (0, 1, 2, 3, A, 5 z zakresem, kryteriami ukończenia, testami, zależnościami, ryzykami), jak zbudowana faza 1 (§9).
@@ -75,25 +75,19 @@ Wszystkie PR-y były weryfikowane lokalnie (Actions nie działa). Przed scalenie
 5. **Szczegółowy plan fazy 2 (Treści):** `docs/architecture/admin-phase2-content.md` jest w gałęzi `feat/admin-phase2-content` (PR #1673), na `main` będzie po jego scaleniu (do tego czasu: `git show origin/feat/admin-phase2-content:docs/architecture/admin-phase2-content.md`).
 6. Koncepty powiązane: [`architecture/translations-concept.md`](../architecture/translations-concept.md) (model w #1675), wskaźnik zapasu serwera (#1677).
 
-**Stan faz panelu:** 0 zrobiona i wdrożona; 1 zrobiona i **wdrożona** (czeka tylko na rejestrację administratora); 2 Treści (+ tłumaczenia, zapas serwera) **scalona do `main`, niewdrożona**; 2 Społeczność (#1681) WIP, wstrzymana; 3, A i 5 nie zaczęte.
+**Stan faz panelu:** 0 i 1 zrobione i wdrożone (faza 1 czeka tylko na rejestrację administratora); 2 (Treści + Społeczność), tłumaczenia, zapas serwera, 3 i A **zrobione w kodzie i scalone do `main`, niewdrożone** (jedna kolejność wdrożenia: [`ADMIN-PANEL.md`](ADMIN-PANEL.md) rozdz. 1a); 5 w toku (kod i dokumentacja, bez wdrożenia).
 
 ## Najbliższe kroki (kolejność proponowana, jeden agent naraz)
 
-0. **Rejestracja administratora w panelu (właściciel, na serwerze):** `ssh serwerek`, potem
-   `cd /opt/serwerek/apps/polutek && docker compose --profile admin run --rm admin node apps/admin/scripts/admin-enroll.mjs --email pawel.perfect@gmail.com`;
-   link `https://admin.pawelperfect.com/rejestracja#t=…` (15 min, jednorazowy, nie wklejać do czatu) otworzyć w przeglądarce: kod QR do aplikacji TOTP,
-   **zapisać 10 kodów zapasowych poza komputerem**, dodać klucz dostępu (najlepiej dwa: komputer i telefon). Potem sprawdzić „Dzisiaj” i „System”.
-1. Preloader (#1678): obejrzeć wizualnie z właścicielem, potem scalić. (`set-role` #1680 i lokalne CI #1679 są już scalone w `main`.)
-2. Panel admina: #1673/#1675/#1677 są scalone w `main`; dokończyć #1681 (Społeczność), wdrożyć fazę 2 z właścicielem ([`ADMIN-PANEL.md`](ADMIN-PANEL.md)).
-   Dalsze fazy ([`architecture/admin-panel.md`](../architecture/admin-panel.md) §4, parytet ze starym panelem w
-   [`architecture/admin-parity.md`](../architecture/admin-parity.md)): **faza 3** (Kanał, Przychody, Komunikacja, Powiadomienia, Bezpieczeństwo),
-   **faza A** (analityka i premiera na żywo, gdy będzie 7+ dni danych telemetrii), **faza 5** (wygaszenie starego `/admin`).
-   Stary panel zostaje, dopóki nowy nie pokryje wszystkiego.
+0. **Pierwsze logowanie do nowego panelu przez Access (właściciel):** otworzyć `https://admin.pawelperfect.com`, wpisać `pawel.perfect@gmail.com`, przepisać kod z maila (bez rejestracji, kluczy i TOTP; [`ADMIN-PANEL.md`](ADMIN-PANEL.md) rozdz. 1b). Potem sprawdzić „Dzisiaj” i „System”.
+1. Udane logowanie (punkt 0), potem wdrożenie faz 2, 3 i A według [`ADMIN-PANEL.md`](ADMIN-PANEL.md) rozdz. 1a (backup, migracje, `admin.env`, obraz strony, obraz panelu, kontrola).
+2. Po wdrożeniu i sprawdzeniu nowego panelu: wdrożyć fazę 5 (wygaszenie starego `/admin`); wcześniej nie, bo bez zarejestrowanego administratora właściciel straciłby dostęp do funkcji administracyjnych.
+2a. Preloader (`feat/preloader-polish`): obejrzeć wizualnie z właścicielem, potem scalić.
 3. Jedna prawdziwa wpłata testowa (webhook Stripe nigdy nie dostał udanej wpłaty; `StripeEvent` jest pusty): robi właściciel.
 4. Przegląd ostatnich wdrożeń na telefonach: passkey (logowanie i zakładanie konta kluczem), napisy CC, lista języków, okno logowania.
 5. Migracja czyszcząca bazę wg `docs/audit/2026-10-03/audit-database.md` (martwe tabele dostawców wideo, `ClerkEvent`, `CommentLike`/`CommentDislike`,
    `AccessTier.PATRON`, `Creator.bannerUrl`, `NotificationPreference` jeśli nie wróci, `patronThresholdMinor`/`patronBoxMinMinor`), potem squash migracji.
-6. Nowy, krótki `CLAUDE.md` opisujący wyłącznie stan obecny i przepisanie `SERWEREK.md` do stanu faktycznego (audyt operacji znalazł 21 rozbieżności).
+6. Nowy, krótki `CLAUDE.md` i przepisanie `SERWEREK.md` do stanu faktycznego (agent wstrzymany, gałąź `docs/state-rewrite`).
 7. Naprawy z raportów audytów, których nikt nie ruszył: `audit-frontend.md`, `audit-style.md` (poza komentarzami), `audit-ops.md`, `audit-legal-privacy.md`
    (w `docs/audit/2026-10-03/`).
 

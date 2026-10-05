@@ -42,8 +42,49 @@ export function resolveAdminAuthSecret(env: Env = process.env): string {
   throw new Error("ADMIN_AUTH_SECRET (min. 32 znaki, inny niż BETTER_AUTH_SECRET) jest wymagany w produkcji.");
 }
 
+/** The owner of the panel: the only address that is provisioned automatically (role OWNER) in access mode. */
+export const DEFAULT_OWNER_EMAIL = "pawel.perfect@gmail.com";
+/**
+ * Access mode: how old (iat) the Cloudflare Access token may be for a sensitive action (money, delete, export,
+ * role change). Equals the 12 h session of the Access application, so it is true for every valid token of a
+ * correctly configured application and only bites when someone stretches the Access session to days.
+ */
+export const ADMIN_ACCESS_MAX_AGE_SECONDS = 12 * 60 * 60;
+/** Cloudflare Access sign-out for the application's own host (revokes the Access session, not just the cookie). */
+export const ACCESS_LOGOUT_PATH = "/cdn-cgi/access/logout";
+
+/**
+ * How a person signs in to the panel.
+ *  - "access"  (default): the verified Cloudflare Access JWT is the sign-in (e-mail from the signed payload).
+ *  - "passkey" (legacy): Access + the panel's own passkey/TOTP login, enrollment and step-up.
+ * An unknown value is NOT silently mapped to the weaker mode: it fails closed (see getAccessConfig) and the
+ * guards treat it as the stricter "passkey".
+ */
+export type AdminAuthMode = "access" | "passkey";
+
+export function parseAdminAuthMode(env: Env = process.env): { ok: true; mode: AdminAuthMode } | { ok: false; value: string } {
+  const raw = env.ADMIN_AUTH_MODE?.trim().toLowerCase();
+  if (!raw) return { ok: true, mode: "access" };
+  if (raw === "access" || raw === "passkey") return { ok: true, mode: raw };
+  return { ok: false, value: raw.slice(0, 40) };
+}
+
+export function getAdminAuthMode(env: Env = process.env): AdminAuthMode {
+  const parsed = parseAdminAuthMode(env);
+  return parsed.ok ? parsed.mode : "passkey";
+}
+
+/** Text of the "confirm identity first" refusal: legacy (passkey/TOTP) wording, or the access-mode one. */
+export function stepUpMessage(legacy: string, env: Env = process.env): string {
+  return getAdminAuthMode(env) === "access" ? "Zaloguj się ponownie przez Cloudflare Access: ostatnie logowanie jest starsze niż 12 godzin." : legacy;
+}
+
+export function getOwnerEmail(env: Env = process.env): string {
+  return env.ADMIN_OWNER_EMAIL?.trim().toLowerCase() || DEFAULT_OWNER_EMAIL;
+}
+
 export type AccessConfig =
-  | { mode: "enforce"; teamDomain: string; audience: string; allowedEmails: string[] }
+  | { mode: "enforce"; teamDomain: string; audience: string; allowedEmails: string[]; requireEmail?: boolean }
   | { mode: "dev-bypass" }
   | { mode: "misconfigured"; reason: string };
 
@@ -53,6 +94,8 @@ export type AccessConfig =
  */
 export function getAccessConfig(env: Env = process.env): AccessConfig {
   if (!isProd(env) && env.ADMIN_DEV_BYPASS_ACCESS === "1") return { mode: "dev-bypass" };
+  const authMode = parseAdminAuthMode(env);
+  if (!authMode.ok) return { mode: "misconfigured", reason: `ADMIN_AUTH_MODE ma nieznaną wartość „${authMode.value}” (dozwolone: access, passkey)` };
   const teamRaw = env.CF_ACCESS_TEAM_DOMAIN?.trim();
   const audience = env.CF_ACCESS_AUD?.trim();
   if (!teamRaw || !audience) return { mode: "misconfigured", reason: "CF_ACCESS_TEAM_DOMAIN i CF_ACCESS_AUD są wymagane" };
@@ -66,11 +109,21 @@ export function getAccessConfig(env: Env = process.env): AccessConfig {
   } catch {
     return { mode: "misconfigured", reason: "CF_ACCESS_TEAM_DOMAIN nie jest poprawnym adresem" };
   }
-  const allowedEmails = (env.ADMIN_ACCESS_EMAILS ?? "")
+  let allowedEmails = (env.ADMIN_ACCESS_EMAILS ?? "")
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
-  return { mode: "enforce", teamDomain, audience, allowedEmails };
+  // Access mode: the e-mail IS the login, so the list is never empty (default = the owner, explicit here and in the docs).
+  if (authMode.mode === "access" && allowedEmails.length === 0) allowedEmails = [getOwnerEmail(env)];
+  return { mode: "enforce", teamDomain, audience, allowedEmails, requireEmail: authMode.mode === "access" };
+}
+
+/**
+ * Local development only: in access mode the Access bypass (ADMIN_DEV_BYPASS_ACCESS=1) acts as this address
+ * (ADMIN_DEV_EMAIL, default the owner). Never read in production (the bypass itself is refused there).
+ */
+export function getDevAccessEmail(env: Env = process.env): string {
+  return env.ADMIN_DEV_EMAIL?.trim().toLowerCase() || getOwnerEmail(env);
 }
 
 /** Sample data for `next dev` without a database (screenshots, layout work). Never in production. */

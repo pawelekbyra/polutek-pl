@@ -75,6 +75,6 @@ export async function verifyAdminAuthChain(limit = 200): Promise<ChainCheck> {
 }
 
 export const EVENT_LABEL: Record<string, string> = {
-  ADMIN_SIGN_IN: "Logowanie", ADMIN_SIGN_OUT: "Wylogowanie", ADMIN_STEP_UP: "Potwierdzenie tożsamości", ADMIN_SESSION_EXPIRED: "Sesja wygasła (12 h)", ADMIN_SESSION_REVOKED: "Sesja zakończona z panelu",
+  ADMIN_SIGN_IN: "Logowanie", ADMIN_ACCESS_SIGN_IN: "Logowanie przez Cloudflare Access", ADMIN_SIGN_OUT: "Wylogowanie", ADMIN_STEP_UP: "Potwierdzenie tożsamości", ADMIN_SESSION_EXPIRED: "Sesja wygasła (12 h)", ADMIN_SESSION_REVOKED: "Sesja zakończona z panelu",
   ADMIN_PASSKEY_ADDED: "Dodano klucz dostępu", ADMIN_TOTP_ENABLED: "Włączono TOTP", ADMIN_ENROLLED: "Rejestracja ukończona", ADMIN_ENROLL_ISSUED: "Wydano link rejestracji (serwer)", ADMIN_ENROLL_RESET: "Reset dostępu (serwer)", ADMIN_ENROLL_REDEEMED: "Otwarto link rejestracji", ADMIN_ACCESS_DENIED: "Odmowa dostępu",
 };

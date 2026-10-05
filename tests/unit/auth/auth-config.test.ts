@@ -3,11 +3,9 @@ import {
   CAPTCHA_ENDPOINTS,
   PASSKEY_RP_NAME,
   PASSWORD_MIN_LENGTH,
-  getAdminEmails,
   getAuthBaseUrl,
   getPasskeyRelyingParty,
   getTrustedOrigins,
-  isAdminEmail,
   isCaptchaConfigured,
   isGoogleConfigured,
 } from "@/lib/auth/config";
@@ -37,15 +35,6 @@ describe("auth config helpers", () => {
 
   it("does not invent www/apex variants for localhost", () => {
     expect(getTrustedOrigins({ NEXT_PUBLIC_APP_URL: "http://localhost:3000" })).toEqual(["http://localhost:3000"]);
-  });
-
-  it("parses the admin bootstrap list case-insensitively", () => {
-    const env = { ADMIN_EMAILS: " Owner@Example.com ,hello@pawelperfect.com" };
-    expect(getAdminEmails(env)).toEqual(["owner@example.com", "hello@pawelperfect.com"]);
-    expect(isAdminEmail("OWNER@example.com", env)).toBe(true);
-    expect(isAdminEmail("someone@example.com", env)).toBe(false);
-    expect(isAdminEmail(null, env)).toBe(false);
-    expect(getAdminEmails({})).toEqual([]);
   });
 
   it("detects configured providers", () => {

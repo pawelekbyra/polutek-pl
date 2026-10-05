@@ -2,11 +2,9 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 const authMock = vi.hoisted(() => vi.fn());
 const prisma = vi.hoisted(() => ({ user: { findUnique: vi.fn(), update: vi.fn() } }));
-const audit = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/auth/server", () => ({ auth: authMock }));
 vi.mock("@/lib/prisma", () => ({ prisma }));
-vi.mock("@/lib/auth/audit", () => ({ recordAuthAudit: audit }));
 
 import { getActorFromAuth, requireAdminActor } from "@/lib/api/auth";
 
@@ -16,7 +14,6 @@ function signedInAs(userId: string | null) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.stubEnv("ADMIN_EMAILS", "owner@example.com");
 });
 afterEach(() => vi.unstubAllEnvs());
 
@@ -49,23 +46,33 @@ describe("getActorFromAuth", () => {
   });
 });
 
-describe("admin bootstrap by ADMIN_EMAILS", () => {
-  it("promotes a verified account with a listed e-mail once and audits it", async () => {
-    signedInAs("o1");
-    prisma.user.findUnique.mockResolvedValue({ id: "o1", role: "USER", isDeleted: false, email: "Owner@Example.com", emailVerified: true });
-    expect(await requireAdminActor()).toEqual({ type: "admin", userId: "o1" });
-    expect(prisma.user.update).toHaveBeenCalledWith({ where: { id: "o1" }, data: { role: "ADMIN" } });
-    expect(audit).toHaveBeenCalledWith(expect.objectContaining({ action: "AUTH_ADMIN_BOOTSTRAP", userId: "o1" }));
+describe("requireAdminActor (role flag only, no e-mail bootstrap)", () => {
+  it("accepts a user whose role is ADMIN", async () => {
+    signedInAs("a1");
+    prisma.user.findUnique.mockResolvedValue({ id: "a1", role: "ADMIN", isDeleted: false });
+    expect(await requireAdminActor()).toEqual({ type: "admin", userId: "a1" });
   });
 
-  it("never promotes a listed e-mail that was not verified (nobody can claim it by registering first)", async () => {
-    signedInAs("evil");
-    prisma.user.findUnique.mockResolvedValue({ id: "evil", role: "USER", isDeleted: false, email: "owner@example.com", emailVerified: false });
+  it("never promotes anybody by e-mail, even when the removed ADMIN_EMAILS variable is still set", async () => {
+    vi.stubEnv("ADMIN_EMAILS", "owner@example.com");
+    signedInAs("o1");
+    prisma.user.findUnique.mockResolvedValue({ id: "o1", role: "USER", isDeleted: false, email: "owner@example.com", emailVerified: true });
     await expect(requireAdminActor()).rejects.toMatchObject({ statusCode: 403 });
+    expect(await getActorFromAuth()).toEqual({ type: "user", userId: "o1" });
     expect(prisma.user.update).not.toHaveBeenCalled();
   });
 
-  it("does not make unlisted users admins", async () => {
+  it("ignores an admin claim in the session: only the database role counts", async () => {
+    authMock.mockResolvedValue({ userId: "u1", sessionId: "s1", user: null, sessionClaims: { metadata: { role: "ADMIN" } } });
+    prisma.user.findUnique.mockResolvedValue({ id: "u1", role: "USER", isDeleted: false });
+    await expect(requireAdminActor()).rejects.toMatchObject({ statusCode: 403 });
+    prisma.user.findUnique.mockResolvedValue({ id: "u1", role: "ADMIN", isDeleted: true });
+    await expect(requireAdminActor()).rejects.toMatchObject({ statusCode: 403 });
+    prisma.user.findUnique.mockResolvedValue(null);
+    await expect(requireAdminActor()).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  it("does not make plain users admins", async () => {
     signedInAs("u1");
     prisma.user.findUnique.mockResolvedValue({ id: "u1", role: "USER", isDeleted: false, email: "x@y.pl", emailVerified: true });
     await expect(requireAdminActor()).rejects.toMatchObject({ statusCode: 403 });

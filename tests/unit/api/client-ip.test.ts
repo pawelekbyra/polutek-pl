@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getClientIp, isCfConnectingIpTrusted } from "@/lib/api/client-ip";
-import { getAdminClientIp } from "@/lib/api/admin-rate-limit";
 import { getMediaClientIp } from "@/lib/media/rate-limit";
 import { NextRequest } from "next/server";
 
@@ -35,10 +34,10 @@ describe("getClientIp", () => {
     expect(getClientIp(new Headers({ "cf-connecting-ip": "x".repeat(200) }))).toBe("unknown");
   });
 
-  it("is what the admin and media helpers use", () => {
+  it("is what the media helper uses", () => {
     vi.stubEnv("TRUST_CF_CONNECTING_IP", "true");
     const headers = { "cf-connecting-ip": "7.7.7.7", "x-forwarded-for": "9.9.9.9, 4.4.4.4" };
-    expect(getAdminClientIp(new Headers(headers))).toBe("7.7.7.7");
+    expect(getClientIp(new Headers(headers))).toBe("7.7.7.7");
     expect(getMediaClientIp(new NextRequest("http://localhost/api/x", { headers }))).toBe("7.7.7.7");
   });
 });

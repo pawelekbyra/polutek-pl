@@ -125,10 +125,7 @@ const CLOSED_MODULES = ['video', 'video-pipeline', 'users', 'channel', 'audit', 
 
 const KNOWN_ROUTE_VIOLATIONS_ALLOWLIST: Record<string, string> = {};
 
-const ROUTE_SERVICE_IMPORT_ALLOWLIST: Record<string, string> = {
-  'app/api/admin/users/[userId]/patron/route.ts':
-    'Temporary user access bridge; tracked for PatronGrant/UserAccess cleanup.',
-};
+const ROUTE_SERVICE_IMPORT_ALLOWLIST: Record<string, string> = {};
 
 const USER_PROFILE_SERVICE_ALLOWLIST: Record<string, string> = {};
 

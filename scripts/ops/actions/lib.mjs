@@ -353,8 +353,8 @@ export function parseRoleArgs(argv) {
 
 /**
  * Skutek zmiany roli przy danej liście aktywnych adminów. Odbicie reguł use case'u changeUserRoleAsAdmin (nigdy
- * własna rola, nigdy usunięte konto, ADMIN tylko ze zweryfikowanym e-mailem, nigdy ostatni admin) plus ADMIN_EMAILS
- * (bootstrap przywróciłby rolę). O wykonaniu decyduje use case pod blokadą; tu jest podgląd i lista adminów po zmianie.
+ * własna rola, nigdy usunięte konto, ADMIN tylko ze zweryfikowanym e-mailem, nigdy ostatni admin).
+ * O wykonaniu decyduje use case pod blokadą; tu jest podgląd i lista adminów po zmianie.
  */
 export function planRoleChange({ user, admins = [], actorId, role }) {
   const problems = [];
@@ -365,7 +365,6 @@ export function planRoleChange({ user, admins = [], actorId, role }) {
   if (!noop && role === 'ADMIN' && !user.emailVerified) problems.push('Rolę ADMIN może dostać tylko konto z potwierdzonym e-mailem.');
   if (!noop && role === 'USER') {
     if (!admins.some((a) => a.id !== user.id)) problems.push('To ostatni administrator: najpierw nadaj rolę ADMIN innemu kontu.');
-    if (user.inAdminEmails) problems.push('Adres konta jest w ADMIN_EMAILS: rola ADMIN wróciłaby przy następnym żądaniu.');
   }
   const ids = admins.map((a) => a.id);
   const adminsAfter = noop || problems.length
@@ -378,7 +377,6 @@ export function planRoleChange({ user, admins = [], actorId, role }) {
 export function accountLine(account) {
   if (!account) return '—';
   const flags = [account.emailVerified ? 'e-mail potwierdzony' : 'e-mail NIEpotwierdzony'];
-  if (account.inAdminEmails) flags.push('w ADMIN_EMAILS');
   return `${account.id} ${maskEmail(account.email ?? '')} ${untrusted(account.name, 40)} (${flags.join(', ')})`;
 }
 
