@@ -86,25 +86,41 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
 
   const isAdmin = resolveNavbarAdminUiState(serverIsAdmin, undefined);
   const searchLabel = tx("Szukaj", "Search");
+  const openSearchLabel = tx("Otwórz wyszukiwanie", "Open search");
+  const closeSearchLabel = tx("Zamknij wyszukiwanie", "Close search");
+  const skipLabel = tx("Przejdź do treści", "Skip to content");
+  const navLabel = tx("Główna nawigacja", "Main navigation");
 
   return (
-    <div
+    <header
       className="polutek-watch-nav sticky top-0 z-[1000] flex w-full flex-col"
     >
-      <div className="flex min-h-[54px] w-full items-center justify-between gap-3 overflow-visible px-2 py-2 md:gap-5 md:px-6 lg:px-8">
+      {/* First stop of the Tab order: lets keyboard and screen-reader users jump past the bar (WCAG 2.4.1). */}
+      <a
+        href="#main"
+        className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:left-3 focus-visible:top-3 focus-visible:z-10 focus-visible:rounded-full focus-visible:bg-[var(--chan-ink)] focus-visible:px-4 focus-visible:py-2 focus-visible:text-[13px] focus-visible:font-semibold focus-visible:text-white"
+      >
+        {skipLabel}
+      </a>
+      <nav aria-label={navLabel} className="flex min-h-[54px] w-full items-center justify-between gap-3 overflow-visible px-2 py-2 md:gap-5 md:px-6 lg:px-8">
         {isMobileSearchOpen ? (
           <div className="flex-1 flex items-center gap-2 px-1 animate-in slide-in-from-top-4 duration-200">
             <button
+              type="button"
               onClick={() => setIsMobileSearchOpen(false)}
+              aria-label={closeSearchLabel}
               className="relative flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] transition-[background-color,box-shadow] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)]"
             >
-              <X className="h-5 w-5 shrink-0" strokeWidth={1.8} />
+              <X className="h-5 w-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
             </button>
-            <form onSubmit={handleSearch} className="flex-1 flex min-w-0">
+            <form onSubmit={handleSearch} role="search" className="flex-1 flex min-w-0">
               <div className="relative flex h-[38px] min-w-0 flex-1 items-center rounded-full border border-[var(--cm-line-82)] bg-[var(--cm-card-74-white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[var(--cm-blue-55)] focus-within:bg-[var(--cm-card-45-white)] focus-within:shadow-[0_0_0_3px_var(--cm-blue-14)]">
                 <input
-                  type="text"
+                  type="search"
                   autoFocus
+                  aria-label={searchLabel}
+                  enterKeyHint="search"
+                  autoComplete="off"
                   placeholder={searchLabel}
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
@@ -138,10 +154,13 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
 
             {/* Desktop search */}
             <div className="flex-1 max-w-[548px] hidden md:flex mx-2 min-w-0">
-              <form onSubmit={handleSearch} className="flex w-full">
+              <form onSubmit={handleSearch} role="search" className="flex w-full">
                 <div className="relative flex h-[38px] min-w-0 flex-1 items-center rounded-full border border-[var(--cm-line-82)] bg-[var(--cm-card-74-white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[var(--cm-blue-55)] focus-within:bg-[var(--cm-card-45-white)] focus-within:shadow-[0_0_0_3px_var(--cm-blue-14)]">
                   <input
-                    type="text"
+                    type="search"
+                    aria-label={searchLabel}
+                    enterKeyHint="search"
+                    autoComplete="off"
                     placeholder={searchLabel}
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
@@ -170,10 +189,13 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                   tight. */}
               <div className="flex items-center sm:hidden -mr-[5px]">
                 <button
+                  type="button"
                   onClick={() => setIsMobileSearchOpen(true)}
+                  aria-label={openSearchLabel}
+                  aria-expanded={isMobileSearchOpen}
                   className="flex h-[38px] w-[38px] items-center justify-center rounded-full text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95"
                 >
-                  <Search className="h-5 w-5 shrink-0" strokeWidth={1.8} />
+                  <Search className="h-5 w-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
                 </button>
               </div>
 
@@ -184,8 +206,9 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
 
               {isSignedIn ? null : isLoaded ? (
                 <button
+                  type="button"
                   onClick={() => openAuthModal("sign-in")}
-                  className="flex h-[32px] w-[32px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-[var(--cm-ink-55)] bg-[var(--chan-ink)] px-0 font-sans text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_6px_16px_-6px_rgba(23,23,23,0.42)] transition-[transform,background-color,border-color,box-shadow] duration-200 hover:-translate-y-px hover:bg-[var(--cm-ink-88-black)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_11px_24px_-8px_rgba(23,23,23,0.48)] active:translate-y-0 active:scale-[0.97] sm:h-[38px] sm:w-auto sm:px-4"
+                  className="flex h-[38px] w-[38px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-[var(--cm-ink-55)] bg-[var(--chan-ink)] px-0 font-sans text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_6px_16px_-6px_rgba(23,23,23,0.42)] transition-[transform,background-color,border-color,box-shadow] duration-200 hover:-translate-y-px hover:bg-[var(--cm-ink-88-black)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_11px_24px_-8px_rgba(23,23,23,0.48)] active:translate-y-0 active:scale-[0.97] sm:w-auto sm:px-4"
                   aria-label={t.signIn}
                   title={t.signIn}
                 >
@@ -196,7 +219,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                 // Session not known yet: only on statically rendered pages (legal documents) on a
                 // fresh load; dynamic pages get the session from the server. The slot keeps its
                 // size, without a placeholder animation, until the button or the avatar is known.
-                <div aria-hidden="true" className="h-[32px] w-[32px] shrink-0 sm:h-[38px] sm:w-[38px]" />
+                <div aria-hidden="true" className="h-[38px] w-[38px] shrink-0" />
               )}
 
               {isLoaded && isSignedIn && (
@@ -205,8 +228,8 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
             </div>
           </>
         )}
-      </div>
-    </div>
+      </nav>
+    </header>
   );
 };
 

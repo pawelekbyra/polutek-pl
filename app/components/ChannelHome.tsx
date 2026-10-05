@@ -224,7 +224,7 @@ function ChannelHomeContent({
 
   if (!selectedVideo)
     return (
-      <main className="min-h-screen flex items-center justify-center p-6 bg-[var(--chan-nav)]">
+      <div className="min-h-screen flex items-center justify-center p-6 bg-[var(--chan-nav)]">
         <div className="max-w-md w-full rounded-[24px] border border-[var(--cm-line-80)] bg-[var(--cm-card-92-white)] p-10 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_28px_60px_-28px_rgba(23,23,23,0.24)] animate-in fade-in zoom-in duration-500">
           <div className="w-20 h-20 flex items-center justify-center mx-auto mb-6 rounded-full bg-[var(--chan-surface)]">
             <AlertCircle size={36} className="text-[var(--chan-muted)]" />
@@ -242,7 +242,7 @@ function ChannelHomeContent({
             {tx("Wróć do bazy", "Back to database")}
           </Link>
         </div>
-      </main>
+      </div>
     );
 
   const sortedVideos = [...(allVideos || [])].sort(compareSidebarItems);
@@ -301,7 +301,7 @@ function ChannelHomeContent({
   return (
     <>
       <PreloadProgressBar />
-      <main className="min-h-screen bg-[var(--chan-nav)] bg-[radial-gradient(circle_at_top_left,var(--cm-blue-9),transparent_34%),radial-gradient(circle_at_top_right,var(--cm-amber-8),transparent_30%),linear-gradient(180deg,var(--cm-card-72),transparent_42%)]">
+      <div className="min-h-screen bg-[var(--chan-nav)] bg-[radial-gradient(circle_at_top_left,var(--cm-blue-9),transparent_34%),radial-gradient(circle_at_top_right,var(--cm-amber-8),transparent_30%),linear-gradient(180deg,var(--cm-card-72),transparent_42%)]">
       <div className="mx-auto max-w-[1180px] px-4 pb-8 md:px-6 lg:px-8 lg:pb-10 lg:pt-5">
         <div className="grid grid-cols-12 gap-5 lg:items-start xl:gap-6">
           <div className="col-span-12 flex flex-col lg:col-span-8">
@@ -368,7 +368,7 @@ function ChannelHomeContent({
       {isSupportModalOpen && (
         <SupportModal onClose={() => setIsSupportModalOpen(false)} />
       )}
-    </main>
+    </div>
     </>
   );
 }

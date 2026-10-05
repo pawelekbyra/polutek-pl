@@ -73,11 +73,11 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--chan-nav)] text-[var(--chan-ink)] font-sans">
         <Navbar />
-        <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
+        <main id="main" tabIndex={-1} className="flex-1 flex flex-col items-center justify-center p-4 text-center focus:outline-none">
             <h1 className="font-brand text-4xl font-bold">{tx("Kanał nie znaleziony", "Channel not found")}</h1>
             <p className="text-[var(--chan-muted)] mt-2 mb-6">{tx("Ten kanał nie istnieje.", "This channel does not exist.")}</p>
             <Link href={getLocalizedHref(locale, "home")} className="bg-[var(--chan-ink)] text-white px-8 py-3 rounded-xl font-brand font-bold tracking-wide hover:opacity-90 transition-all">{tx("Wróć na stronę główną", "Back home")}</Link>
-        </div>
+        </main>
         <Footer />
       </div>
     );
@@ -97,11 +97,11 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--chan-nav)] text-[var(--chan-ink)] font-sans">
         <Navbar />
-        <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
+        <main id="main" tabIndex={-1} className="flex-1 flex flex-col items-center justify-center p-4 text-center focus:outline-none">
             <h1 className="font-brand text-4xl font-bold">{tx("Kanał nie znaleziony", "Channel not found")}</h1>
             <p className="text-[var(--chan-muted)] mt-2 mb-6">{tx("Ten kanał nie istnieje.", "This channel does not exist.")}</p>
             <Link href={getLocalizedHref(locale, "home")} className="bg-[var(--chan-ink)] text-white px-8 py-3 rounded-xl font-brand font-bold tracking-wide hover:opacity-90 transition-all">{tx("Wróć na stronę główną", "Back home")}</Link>
-        </div>
+        </main>
         <Footer />
       </div>
     );
@@ -146,7 +146,7 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
     <div className="channel-page-shell min-h-screen bg-[var(--chan-nav)] text-[var(--chan-ink)] font-sans">
       <Navbar />
 
-      <div className="max-w-[1284px] mx-auto px-4 md:px-6 lg:px-8 pt-4 pb-6 md:pt-8">
+      <main id="main" tabIndex={-1} className="max-w-[1284px] mx-auto px-4 md:px-6 lg:px-8 pt-4 pb-6 md:pt-8 focus:outline-none">
         {/* The channel header is the profile card itself: one creator, no cover photo. */}
         <header className="channel-profile flex flex-col items-center gap-5 text-center md:flex-row md:items-center md:gap-8 md:text-left">
           <div className="channel-profile-avatar w-28 h-28 md:w-40 md:h-40 rounded-full border border-[var(--chan-line)] shrink-0">
