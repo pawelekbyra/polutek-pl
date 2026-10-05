@@ -19,6 +19,7 @@ export type AdminAuthAction =
   | "ADMIN_SESSION_EXPIRED"
   | "ADMIN_PASSKEY_ADDED"
   | "ADMIN_TOTP_ENABLED"
+  | "ADMIN_SESSION_REVOKED"
   | "ADMIN_ACCESS_DENIED";
 
 export type AdminAuthEventInput = {

@@ -18,6 +18,28 @@ export const AUDIT_LABEL: Record<string, string> = {
   VIDEO_HLS_ASSET_DELETED: "Usunięta wersja HLS",
   VIDEO_PUBLISH_AFTER_ASSET_READY_REQUESTED: "Publikacja po zakodowaniu: zlecona",
   VIDEO_PUBLISH_AFTER_ASSET_READY_COMPLETED: "Publikacja po zakodowaniu: wykonana",
+  // phase 3: settings, money, mail, security
+  CHANNEL_UPDATED: "Zmiana ustawień kanału",
+  CHANNEL_OWNER_CHANGED: "Zmiana konta kanału",
+  SUBSCRIBERS_RESYNCED: "Przeliczeni subskrybenci",
+  DEFAULT_THUMBNAIL_UPDATED: "Nowa domyślna miniatura",
+  DEFAULT_THUMBNAIL_DELETED: "Usunięta domyślna miniatura",
+  PAYMENT_SETTINGS_UPDATED: "Zmiana minimalnych kwot napiwku",
+  ALERT_THRESHOLDS_UPDATED: "Zmiana progów alertów",
+  ALERT_THRESHOLDS_RESET: "Przywrócone progi alertów",
+  PAYMENT_REFUNDED: "Zwrot wpłaty",
+  PAYMENT_DISPUTE_SYNCED: "Synchronizacja sporu",
+  PAYMENTS_EXPORTED: "Eksport wpłat (CSV)",
+  AUDIT_EXPORTED: "Eksport dziennika audytu (CSV)",
+  TEMPLATE_SAVED: "Zapisany szablon e-mail",
+  TEMPLATE_RESET_TO_DEFAULT: "Przywrócony tekst domyślny e-maila",
+  TEMPLATE_DELETED: "Usunięty szablon e-mail",
+  BROADCAST_CREATED: "Utworzona rozsyłka",
+  BROADCAST_CANCELLED: "Anulowana rozsyłka",
+  BROADCAST_TEST_SENT: "Test rozsyłki do siebie",
+  VIDEO_TRANSLATION_SAVED: "Zapisane tłumaczenie filmu",
+  VIDEO_TRANSLATION_APPROVED: "Zatwierdzone tłumaczenie",
+  TRANSLATION_AI_DRAFTS_GENERATED: "Wygenerowane szkice tłumaczeń (AI)",
 };
 
 export const auditLabel = (action: string) => AUDIT_LABEL[action] ?? action;

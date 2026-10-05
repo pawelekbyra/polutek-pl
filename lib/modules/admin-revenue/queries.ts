@@ -3,7 +3,7 @@ import { AppError } from "@/lib/modules/shared/app-error";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { minorToPln, netMinor, REVENUE_STATUSES } from "@/lib/modules/admin-overview";
 import type { Prisma } from "@prisma/client";
-import { toCsv } from "./csv";
+import { toCsv } from "@/lib/modules/shared/csv";
 import { summarizeRevenue, type PaymentFact, type RevenueSummary } from "./revenue";
 
 const adminOnly = (ctx: AppContext) => {

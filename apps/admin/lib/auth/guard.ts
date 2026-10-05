@@ -12,11 +12,13 @@ export type AdminViewer = {
   name: string;
   sessionCreatedAt: string;
   stepUpSecondsLeft: number;
+  /** Id of the session behind this request (so the sessions list can mark "ta sesja"). */
+  sessionId?: string;
   dev?: true;
 };
 
 type RawSession = {
-  session: { token: string; createdAt: Date; stepUpAt?: Date | null };
+  session: { id?: string; token: string; createdAt: Date; stepUpAt?: Date | null };
   user: { id: string; email: string; name: string; enrolledAt?: Date | null };
 };
 
@@ -56,6 +58,7 @@ export async function requireAdmin(nextPath: string = "/"): Promise<AdminViewer>
     name: current.user.name,
     sessionCreatedAt: new Date(current.session.createdAt).toISOString(),
     stepUpSecondsLeft: stepUpSecondsLeft(current.session),
+    sessionId: current.session.id,
   };
 }
 
