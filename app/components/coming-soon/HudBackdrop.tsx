@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { LOOP_SECONDS, engineAt } from "./cockpit-timeline";
 import { activeProgress, cuesOf, lastIndex, sinceLast, useClockValue, type CockpitClock } from "./useCockpitClock";
 import styles from "./HudBackdrop.module.css";
+import type { Tx } from "@/lib/i18n/ui";
 
 /*
  * The pilot's computer behind the premiere readout. The composition is a flight
@@ -32,52 +33,37 @@ const MISSION_START = Date.UTC(2026, 8, 1);
 const MIN_MISSION_MS = 86_400_000;
 const MISSION_KM = 54.6e6;
 
-const COPY = {
-  pl: {
-    trajectory: "TRAJEKTORIA",
-    dist: "DYST.",
-    mkm: "mln km",
-    origin: "ZIEMIA",
-    target: "PREMIERA",
-    systems: "SYSTEMY",
-    sys: ["NAPĘD", "ZASILANIE", "ŁĄCZNOŚĆ", "OSŁONY", "NAWIGACJA"],
-    test: "TEST",
-    radar: "RADAR",
-    range: "ZASIĘG 40 000 km",
-    telemetry: "TELEMETRIA",
-    speed: "PRĘDKOŚĆ",
-    thrust: "CIĄG",
-    fuel: "PALIWO",
-    core: "TEMP. RDZENIA",
-    engine: "SILNIK",
-    sync: "SYNCHRONIZACJA KURSU",
-    lock: "CEL NAMIERZONY",
-    heading: "KURS",
-  },
-  en: {
-    trajectory: "TRAJECTORY",
-    dist: "DIST.",
-    mkm: "M km",
-    origin: "EARTH",
-    target: "PREMIERE",
-    systems: "SYSTEMS",
-    sys: ["DRIVE", "POWER", "COMMS", "SHIELDS", "NAVIGATION"],
-    test: "TEST",
-    radar: "RADAR",
-    range: "RANGE 40 000 km",
-    telemetry: "TELEMETRY",
-    speed: "VELOCITY",
-    thrust: "THRUST",
-    fuel: "FUEL",
-    core: "CORE TEMP",
-    engine: "ENGINE",
-    sync: "COURSE SYNC",
-    lock: "TARGET LOCKED",
-    heading: "HDG",
-  },
-};
+function buildCopy(tx: Tx) {
+  return {
+    trajectory: tx("TRAJEKTORIA", "TRAJECTORY"),
+    dist: tx("DYST.", "DIST."),
+    mkm: tx("mln km", "M km"),
+    origin: tx("ZIEMIA", "EARTH"),
+    target: tx("PREMIERA", "PREMIERE"),
+    systems: tx("SYSTEMY", "SYSTEMS"),
+    sys: [
+      tx("NAPĘD", "DRIVE"),
+      tx("ZASILANIE", "POWER"),
+      tx("ŁĄCZNOŚĆ", "COMMS"),
+      tx("OSŁONY", "SHIELDS"),
+      tx("NAWIGACJA", "NAVIGATION"),
+    ],
+    test: tx("TEST", "TEST"),
+    radar: tx("RADAR", "RADAR"),
+    range: tx("ZASIĘG 40 000 km", "RANGE 40 000 km"),
+    telemetry: tx("TELEMETRIA", "TELEMETRY"),
+    speed: tx("PRĘDKOŚĆ", "VELOCITY"),
+    thrust: tx("CIĄG", "THRUST"),
+    fuel: tx("PALIWO", "FUEL"),
+    core: tx("TEMP. RDZENIA", "CORE TEMP"),
+    engine: tx("SILNIK", "ENGINE"),
+    sync: tx("SYNCHRONIZACJA KURSU", "COURSE SYNC"),
+    lock: tx("CEL NAMIERZONY", "TARGET LOCKED"),
+    heading: tx("KURS", "HDG"),
+  };
+}
 
-type Copy = (typeof COPY)["pl"];
+type Copy = ReturnType<typeof buildCopy>;
 
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 const easeOut = (v: number) => 1 - Math.pow(1 - clamp01(v), 3);
@@ -592,18 +578,18 @@ function FarPlane({ dotsId }: { dotsId: string }) {
 
 export function HudBackdrop({
   clock,
-  isPl,
+  tx,
   running,
   premiereAt,
 }: {
   clock: CockpitClock;
-  isPl: boolean;
+  tx: Tx;
   running: boolean;
   /** End of the trajectory: this video's premiere. */
   premiereAt: Date;
 }) {
   const uid = useId().replace(/:/g, "");
-  const copy = COPY[isPl ? "pl" : "en"];
+  const copy = useMemo(() => buildCopy(tx), [tx]);
   const mission = useMission(premiereAt);
   return (
     <div className={`${styles.backdrop} ${running ? "" : styles.paused}`} aria-hidden="true">

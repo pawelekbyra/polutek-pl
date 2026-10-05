@@ -27,6 +27,7 @@ import { TipMethodStep } from "../support/TipMethodStep";
 import { TipPayStep } from "../support/TipPayStep";
 import { TipThanksStep } from "../support/TipThanksStep";
 import { TipBackContext } from "../support/TipStepLayout";
+import { stripeLocale } from "@/lib/i18n/ui";
 
 interface SupportModalProps {
   onClose: () => void;
@@ -48,11 +49,10 @@ const STEPS: TipStep[] = ["recipient", "disclaimer", "amount", "method", "pay"];
  * also when Stripe.js is first downloaded.
  */
 export default function SupportModal({ onClose }: SupportModalProps) {
-  const { language } = useLanguage();
-  const isPl = language === "pl";
+  const { language, tx } = useLanguage();
   const { open: openAuthModal } = useAuthModal();
 
-  const flow = useCheckoutFlow({ isPl });
+  const flow = useCheckoutFlow({ tx });
   // Stripe.js is requested here, i.e. only once somebody opens the gate.
   const stripePromise = useMemo(() => getStripeBrowser(), []);
 
@@ -61,7 +61,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
   // animation before the parent unmounts the component.
   const [localOpen, setLocalOpen] = useState(true);
 
-  const [currency, setCurrency] = useState<SupportedCurrency>(() => detectDefaultCurrency(isPl ? "pl" : "en"));
+  const [currency, setCurrency] = useState<SupportedCurrency>(() => detectDefaultCurrency(language));
   const [amount, setAmount] = useState<number | "">("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [step, setStep] = useState<TipStep>("recipient");
@@ -140,7 +140,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
   const elementsOptions: StripeElementsOptions | null = flow.clientSecret
     ? {
         clientSecret: flow.clientSecret,
-        locale: isPl ? "pl" : "en",
+        locale: stripeLocale(language),
         appearance: {
           theme: "flat",
           variables: {
@@ -250,11 +250,11 @@ export default function SupportModal({ onClose }: SupportModalProps) {
           data-testid="support-modal"
           className="fixed inset-0 z-[9991] flex h-[100dvh] w-screen tip-gate-surface flex-col overflow-hidden outline-none md:inset-auto md:left-1/2 md:top-1/2 md:h-[min(640px,90dvh)] md:w-[440px] md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-[24px] md:border md:border-[var(--chan-line)] md:shadow-[0_30px_80px_-30px_rgba(17,24,39,0.14)]"
         >
-          <DialogTitle className="sr-only">{isPl ? "Bramka napiwkowa" : "Tip gate"}</DialogTitle>
+          <DialogTitle className="sr-only">{tx("Bramka napiwkowa", "Tip gate")}</DialogTitle>
 
           <header className="flex shrink-0 items-center gap-2 px-5 pb-2 pt-[max(12px,env(safe-area-inset-top))] md:px-7 md:pt-4">
             <span className="inline-flex shrink-0 items-center rounded-full bg-[var(--chan-ink)] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-white">
-              {isPl ? "Bramka napiwkowa" : "Tip gate"}
+              {tx("Bramka napiwkowa", "Tip gate")}
             </span>
             <div className="ml-auto flex items-center gap-1.5" aria-hidden="true">
               {STEPS.map((key, index) => (
@@ -271,7 +271,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
             <button
               type="button"
               onClick={handleClose}
-              aria-label={isPl ? "Zamknij" : "Close"}
+              aria-label={tx("Zamknij", "Close")}
               className="-mr-2 ml-1 flex h-10 w-10 items-center justify-center rounded-full text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)]"
             >
               <X className="h-5 w-5" />
@@ -282,7 +282,7 @@ export default function SupportModal({ onClose }: SupportModalProps) {
             key={showThanks ? "thanks" : step}
             className="flex min-h-0 flex-1 flex-col"
           >
-            <TipBackContext.Provider value={canGoBack ? { onBack: goBack, label: isPl ? "Wstecz" : "Back" } : null}>
+            <TipBackContext.Provider value={canGoBack ? { onBack: goBack, label: tx("Wstecz", "Back") } : null}>
               {body}
             </TipBackContext.Provider>
           </div>

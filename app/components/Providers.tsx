@@ -6,7 +6,8 @@ import { LanguageProvider } from "./LanguageContext";
 import { ToastProvider } from "@/app/hooks/useToast";
 import { MotionConfig } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { getRouteLocaleFromPathname } from "@/lib/i18n/routing";
+import { getRouteLocaleFromPathname, type Locale } from "@/lib/i18n/routing";
+import type { Catalog } from "@/lib/i18n/ui";
 
 const CLIENT_API_GET_TIMEOUT_MS = 15_000;
 const TIMEOUT_PATHS = [
@@ -84,9 +85,12 @@ function installClientApiFetchTimeout() {
 export default function Providers({
   children,
   initialLanguage,
+  initialCatalog,
 }: {
   children: React.ReactNode;
-  initialLanguage?: "pl" | "en";
+  initialLanguage?: Locale;
+  /** Interface catalog of `initialLanguage` (null for Polish/English), loaded by the root layout. */
+  initialCatalog?: Catalog | null;
 }) {
   if (typeof window !== "undefined") {
     installClientApiFetchTimeout();
@@ -111,7 +115,12 @@ export default function Providers({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <LanguageProvider initialLanguage={effectiveInitialLanguage} forcedLanguage={routeLocale ?? undefined}>
+      <LanguageProvider
+        initialLanguage={effectiveInitialLanguage}
+        forcedLanguage={routeLocale ?? undefined}
+        initialCatalog={initialCatalog}
+        initialCatalogLanguage={initialLanguage}
+      >
         <MotionConfig reducedMotion="user">
           <ToastProvider>{children}</ToastProvider>
         </MotionConfig>

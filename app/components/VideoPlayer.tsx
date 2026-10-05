@@ -32,6 +32,7 @@ import { shouldSkipGate, usePageRevealReady } from './preload/PageRevealGate';
 import { buildSelfHlsConfig, loadHlsLibrary, streamIdentity } from './player/self-hls';
 import { pickCaptionTrack, writeCaptionsEnabled } from './player/captions';
 import { useOptionalLanguage } from './LanguageContext';
+import { useOptionalTx } from "@/lib/i18n/language-context";
 
 // The player is on the home page above the fold: start fetching hls.js (our own chunk) right
 // away, so it is ready before the playback plan arrives and the stream is never fetched twice
@@ -83,6 +84,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
     // Only the caption track in the page language is mounted (captions.ts): it is what the CC
     // switch turns on and off; without one the player has no captions and no CC button.
     const language = useOptionalLanguage();
+    const tx = useOptionalTx();
     const captionTrack = pickCaptionTrack(normalizeTextTracks(playerConfig?.textTracks), language);
 
     // One stream = one video version; a renewed token is the same stream. The player is mounted
@@ -188,9 +190,9 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
             }
         }
         resumeRef.current = null;
-        setLoadError('Nie udało się załadować materiału wideo. Spróbuj ponownie za chwilę.');
+        setLoadError(tx('Nie udało się załadować materiału wideo. Spróbuj ponownie za chwilę.', 'Could not load the video. Please try again in a moment.'));
         qoe.error('LOAD_FAILED', true);
-    }, [qoe, streamKey]);
+    }, [qoe, streamKey, tx]);
 
     const maybeSendView = useCallback(async (currentTimeSeconds: number, durationSeconds?: number) => {
         if (hasReached10s.current || viewCountRequestInFlight.current || !shouldSendViewForPlaybackPosition(currentTimeSeconds, durationSeconds)) return;

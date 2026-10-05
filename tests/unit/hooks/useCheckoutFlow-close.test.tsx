@@ -22,13 +22,14 @@ vi.mock('@/app/hooks/useToast', () => ({ useToast: () => vi.fn() }));
 vi.mock('@/lib/logger', () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() } }));
 
 import { useCheckoutFlow } from '@/lib/hooks/useCheckoutFlow';
+import { createTx } from "@/lib/i18n/ui";
 
 function renderFlow() {
   const queryClient = new QueryClient();
   const wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
-  return renderHook(() => useCheckoutFlow({ isPl: true }), { wrapper });
+  return renderHook(() => useCheckoutFlow({ tx: createTx("pl") }), { wrapper });
 }
 
 describe('useCheckoutFlow — closing the checkout without paying', () => {

@@ -94,7 +94,8 @@ export async function fulfillPayment(
       return {
         userId: user.id,
         email: user.email,
-        language: user.language === 'en' ? 'en' as const : 'pl' as const,
+        // Polish only for a Polish account; every other interface language gets English e-mails.
+        language: user.language === 'pl' ? 'pl' as const : 'en' as const,
         becameSupporterNow: created,
       };
     });

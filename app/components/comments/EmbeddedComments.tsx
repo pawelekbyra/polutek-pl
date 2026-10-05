@@ -10,6 +10,9 @@ import {
 import { useAuth, useUser } from "@/lib/auth/react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "../LanguageContext";
+import { useOptionalTx } from "@/lib/i18n/language-context";
+import { countedNoun } from "@/lib/i18n/plurals";
+import type { Locale } from "@/lib/i18n/routing";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -49,7 +52,9 @@ interface EmbeddedCommentsProps {
  * reader users (and anyone glancing at the panel) get the same "comments are
  * loading" signal the skeleton bars only convey visually.
  */
-const CommentsLoadingState = ({ language }: { language: "pl" | "en" }) => (
+const CommentsLoadingState = ({ language }: { language: Locale }) => {
+  const tx = useOptionalTx(language);
+  return (
   <div className="space-y-4">
     <div
       role="status"
@@ -61,20 +66,19 @@ const CommentsLoadingState = ({ language }: { language: "pl" | "en" }) => (
         className="animate-spin motion-reduce:animate-none"
         aria-hidden="true"
       />
-      {language === "pl"
-        ? "Rozgrzewamy dyskusję…"
-        : "Warming up the discussion…"}
+      {tx("Rozgrzewamy dyskusję…", "Warming up the discussion…")}
     </div>
     <CommentLoadingSkeleton />
   </div>
-);
+  );
+};
 
 const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   userProfile: propUserProfile,
   videoId,
   initialComments,
 }) => {
-  const { t, language } = useLanguage();
+  const { t, language, tx } = useLanguage();
   const { isSignedIn, userId } = useAuth();
   const { user } = useUser();
 
@@ -274,9 +278,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             const message =
               error instanceof Error
                 ? error.message
-                : language === "pl"
-                  ? "Nie udało się dodać komentarza. Spróbuj ponownie."
-                  : "Could not add your comment. Try again.";
+                : tx("Nie udało się dodać komentarza. Spróbuj ponownie.", "Could not add your comment. Try again.");
             setComposerError(message);
           },
         },
@@ -289,25 +291,11 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       postComment,
       postMutation.isPending,
       language,
+      tx,
     ],
   );
 
-  const getCommentsLabel = (count: number) => {
-    if (language === "pl") {
-      if (count === 1) return "komentarz";
-      const lastDigit = count % 10;
-      const lastTwoDigits = count % 100;
-      if (
-        lastDigit >= 2 &&
-        lastDigit <= 4 &&
-        (lastTwoDigits < 12 || lastTwoDigits > 14)
-      ) {
-        return "komentarze";
-      }
-      return "komentarzy";
-    }
-    return count === 1 ? "comment" : "comments";
-  };
+  const getCommentsLabel = (count: number) => countedNoun(language, "comments", count);
 
   const handleSortChange = (nextSort: "newest" | "top") => {
     setSortBy(nextSort);
@@ -328,7 +316,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           <button
             type="button"
             onClick={scrollToCommentsTop}
-            aria-label={language === "pl" ? "Wróć do początku komentarzy" : "Back to the top of comments"}
+            aria-label={tx("Wróć do początku komentarzy", "Back to the top of comments")}
             className="group flex h-12 w-12 items-center justify-center rounded-full bg-[var(--chan-blue)] text-white shadow-[0_10px_30px_var(--cm-blue-35)] ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:bg-[var(--cm-blue-86-black)] hover:shadow-[0_14px_36px_var(--cm-blue-42)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:translate-y-0 active:scale-95 motion-reduce:transition-none"
           >
             <svg
@@ -361,7 +349,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             <DropdownMenuTrigger
               className="flex min-h-11 items-center gap-2 rounded-lg px-2 text-[var(--chan-muted)] transition-colors hover:bg-[var(--chan-surface)] hover:text-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transition-none"
               aria-label={
-                language === "pl" ? "Sortuj komentarze" : "Sort comments"
+                tx("Sortuj komentarze", "Sort comments")
               }
             >
               <svg
@@ -386,7 +374,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                 <line x1="18" y1="16" x2="22" y2="16"></line>
               </svg>
               <span className="text-[13px] font-semibold">
-                {language === "pl" ? "Sortuj według" : "Sort by"}
+                {tx("Sortuj według", "Sort by")}
               </span>
             </DropdownMenuTrigger>
 
@@ -405,13 +393,13 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                   value="newest"
                   className="min-h-10 rounded-xl px-3 py-2 text-[12px] font-bold text-[var(--chan-muted)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]"
                 >
-                  {language === "pl" ? "Najnowsze" : "Newest"}
+                  {tx("Najnowsze", "Newest")}
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem
                   value="top"
                   className="min-h-10 rounded-xl px-3 py-2 text-[12px] font-bold text-[var(--chan-muted)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]"
                 >
-                  {language === "pl" ? "Najlepsze" : "Top"}
+                  {tx("Najlepsze", "Top")}
                 </DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
@@ -463,14 +451,10 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             </div>
             <div className="space-y-1">
               <p className="font-bold text-red-900">
-                {language === "pl"
-                  ? "Nie udało się załadować komentarzy."
-                  : "Could not load comments."}
+                {tx("Nie udało się załadować komentarzy.", "Could not load comments.")}
               </p>
               <p className="text-xs text-red-700/70">
-                {language === "pl"
-                  ? "Spróbuj odświeżyć stronę lub wróć później."
-                  : "Try refreshing the page or come back later."}
+                {tx("Spróbuj odświeżyć stronę lub wróć później.", "Try refreshing the page or come back later.")}
               </p>
             </div>
             <Button
@@ -480,7 +464,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               onClick={() => refetch()}
             >
               <RefreshCcw size={14} className="mr-2" />
-              {language === "pl" ? "Spróbuj ponownie" : "Try again"}
+              {tx("Spróbuj ponownie", "Try again")}
             </Button>
           </div>
         ) : comments.length === 0 ? (
@@ -488,16 +472,12 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             <MessageSquare size={48} className="text-[var(--chan-line-soft)]" />
             <div className="space-y-1">
               <p className="font-black uppercase tracking-widest text-[11px]">
-                {language === "pl" ? "Brak komentarzy" : "No comments yet"}
+                {tx("Brak komentarzy", "No comments yet")}
               </p>
               <p className="text-xs">
                 {viewer?.canComment
-                  ? language === "pl"
-                    ? "Bądź pierwszy i napisz coś sensownego."
-                    : "Be the first to say something meaningful."
-                  : language === "pl"
-                    ? "Ten film nie ma jeszcze komentarzy."
-                    : "This video has no comments yet."}
+                  ? tx("Bądź pierwszy i napisz coś sensownego.", "Be the first to say something meaningful.")
+                  : tx("Ten film nie ma jeszcze komentarzy.", "This video has no comments yet.")}
               </p>
             </div>
           </div>
@@ -541,13 +521,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
                     className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none"
                     aria-hidden="true"
                   />
-                  {language === "pl" ? "Ładowanie..." : "Loading..."}
+                  {tx("Ładowanie...", "Loading...")}
                 </>
-              ) : language === "pl" ? (
-                "Pokaż więcej"
-              ) : (
-                "Show more"
-              )}
+              ) : tx("Pokaż więcej", "Show more")}
             </Button>
           </div>
         )}

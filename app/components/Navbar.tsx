@@ -32,7 +32,7 @@ function NavbarLanguageSwitcher({ language }: { language: Locale }) {
 
 // `isHome`: the page is the home page with the hero video (the logo then scrolls to its top).
 const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; isHome?: boolean }) => {
-  const { language, setLanguage, t } = useLanguage();
+  const { language, setLanguage, t, tx } = useLanguage();
   const { open: openAuthModal } = useAuthModal();
   const { user, isLoaded, isSignedIn } = useUser();
   const router = useRouter();
@@ -85,7 +85,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
     serverAdminState?.userId === userId && serverAdminState?.isAdmin === true;
 
   const isAdmin = resolveNavbarAdminUiState(serverIsAdmin, undefined);
-  const searchLabel = language === "pl" ? "Szukaj" : "Search";
+  const searchLabel = tx("Szukaj", "Search");
 
   return (
     <div

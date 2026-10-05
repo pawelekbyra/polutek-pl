@@ -3,6 +3,7 @@
 import React from "react";
 import { Loader2 } from "../icons";
 import { OAUTH_PROVIDERS, type OAuthProviderId } from "./oauth-providers";
+import type { Tx } from "@/lib/i18n/ui";
 
 // The passkey button sits next to the Google button in the sign-in form.
 export { PasskeySignIn } from "./PasskeySignIn";
@@ -80,11 +81,11 @@ export function PrimaryButton({
 
 export function OAuthButtons({
   onSelect,
-  isPl,
+  tx,
   disabled,
 }: {
   onSelect: (provider: OAuthProviderId) => void;
-  isPl: boolean;
+  tx: Tx;
   disabled?: boolean;
 }) {
   return (
@@ -98,7 +99,7 @@ export function OAuthButtons({
           className="flex h-[44px] w-full items-center justify-center gap-2 rounded-[12px] bg-[var(--chan-surface)] font-sans text-[14px] font-bold text-[var(--chan-ink)] transition-[background-color,box-shadow,transform] duration-160 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-[0.98] disabled:opacity-60"
         >
           <Icon className="h-[18px] w-[18px]" />
-          <span>{isPl ? `Kontynuuj z ${label}` : `Continue with ${label}`}</span>
+          <span>{tx("Kontynuuj z {0}", "Continue with {0}", label)}</span>
         </button>
       ))}
     </div>
@@ -107,12 +108,12 @@ export function OAuthButtons({
 
 /** Owner decision 2026-10-02: a sign-up with an address that already has an account says so, with the ways in. */
 export function EmailTakenActions({
-  isPl,
+  tx,
   kind,
   onSignIn,
   onForgot,
 }: {
-  isPl: boolean;
+  tx: Tx;
   kind: "google" | "password";
   onSignIn: () => void;
   onForgot: () => void;
@@ -120,49 +121,49 @@ export function EmailTakenActions({
   return (
     <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px]">
       <button type="button" className="font-bold underline hover:text-[var(--chan-ink)]" onClick={onSignIn}>
-        {isPl ? "Zaloguj się" : "Sign in"}
+        {tx("Zaloguj się", "Sign in")}
       </button>
       <button type="button" className="font-bold underline hover:text-[var(--chan-ink)]" onClick={onForgot}>
-        {isPl ? "Nie pamiętam hasła" : "Forgot password"}
+        {tx("Nie pamiętam hasła", "Forgot password")}
       </button>
       {kind === "google" && (
-        <span className="text-[var(--chan-muted)]">{isPl ? "Możesz też użyć przycisku Google." : "You can also use the Google button."}</span>
+        <span className="text-[var(--chan-muted)]">{tx("Możesz też użyć przycisku Google.", "You can also use the Google button.")}</span>
       )}
     </div>
   );
 }
 
 /** Under "Continue with Google / a passkey": both create the account when there is none. */
-export function NewHereNote({ isPl }: { isPl: boolean }) {
+export function NewHereNote({ tx }: { tx: Tx }) {
   return (
     <p className="text-center text-[12px] text-[var(--chan-muted)]">
-      {isPl ? "Nowy tutaj? Konto założymy automatycznie." : "New here? We'll create your account automatically."}
+      {tx("Nowy tutaj? Konto założymy automatycznie.", "New here? We'll create your account automatically.")}
     </p>
   );
 }
 
 /** Bottom of the sign-in view: password reset, and the way to the e-mail sign-up (question grey, action blue). */
-export function SignInLinks({ isPl, onForgot, onSignUp }: { isPl: boolean; onForgot: () => void; onSignUp: () => void }) {
+export function SignInLinks({ tx, onForgot, onSignUp }: { tx: Tx; onForgot: () => void; onSignUp: () => void }) {
   return (
     <div className="space-y-2 pt-1 text-center text-[12px] text-[var(--chan-muted)]">
       <button type="button" className="underline hover:text-[var(--chan-ink)]" onClick={onForgot}>
-        {isPl ? "Nie pamiętam hasła" : "Forgot password"}
+        {tx("Nie pamiętam hasła", "Forgot password")}
       </button>
       <p>
-        {isPl ? "Nie masz konta?" : "Don't have an account?"}{" "}
+        {tx("Nie masz konta?", "Don't have an account?")}{" "}
         <button type="button" className="font-bold text-[var(--chan-blue)] hover:underline" onClick={onSignUp}>
-          {isPl ? "Załóż konto" : "Create account"}
+          {tx("Załóż konto", "Create account")}
         </button>
       </p>
     </div>
   );
 }
 
-export function Divider({ isPl }: { isPl: boolean }) {
+export function Divider({ tx }: { tx: Tx }) {
   return (
     <div className="flex items-center gap-3 py-1">
       <span className="h-px flex-1 bg-[var(--chan-line)]" />
-      <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--chan-muted)]">{isPl ? "lub" : "or"}</span>
+      <span className="text-[11px] font-bold uppercase tracking-wide text-[var(--chan-muted)]">{tx("lub", "or")}</span>
       <span className="h-px flex-1 bg-[var(--chan-line)]" />
     </div>
   );

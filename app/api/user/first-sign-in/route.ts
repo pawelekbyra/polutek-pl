@@ -4,6 +4,7 @@ import { createAppContext } from "@/lib/modules/shared/app-context";
 import { completeOnboarding } from "@/lib/modules/users";
 import { resolveEmailLanguage, sendWelcomeEmail } from "@/lib/modules/email";
 import { handleApiError } from "@/lib/errors";
+import { isLocale } from "@/lib/i18n/routing";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
       userId: actor.userId,
       nickname: body.nickname,
       avatarDataUrl: typeof body.avatarDataUrl === "string" ? body.avatarDataUrl : null,
-      language: body.language === "pl" || body.language === "en" ? body.language : undefined,
+      language: isLocale(body.language) ? body.language : undefined,
     });
     // Older accounts that are only asked for a (new) nickname were welcomed long ago.
     const isNewAccount = Date.now() - user.createdAt.getTime() < 24 * 60 * 60 * 1000;

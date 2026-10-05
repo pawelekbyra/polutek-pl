@@ -30,6 +30,7 @@ albo znika w tym samym PR. Historia jest w git.
 | Temat | Plik |
 |---|---|
 | Serwer: układ, deploy, rollback, kopie, crony | [`operations/SERWEREK.md`](operations/SERWEREK.md) |
+| Języki interfejsu (osiem języków): jak działa `tx()`, jak dodać tekst lub język, decyzje, słownik | [`operations/I18N.md`](operations/I18N.md) |
 | Lokalne CI przed scaleniem (zamiast GitHub Actions) | [`operations/LOCAL-CI.md`](operations/LOCAL-CI.md) |
 | Dzienna odprawa „co słychać?” (raport tylko do odczytu, skill `odprawa`) | [`operations/DAILY-BRIEFING.md`](operations/DAILY-BRIEFING.md) |
 | Wydajność: test obciążenia, ilu widzów wytrzymuje serwer | [`operations/LOAD-TEST.md`](operations/LOAD-TEST.md) |

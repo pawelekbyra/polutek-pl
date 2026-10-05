@@ -9,7 +9,8 @@ import PremiumWrapper from './PremiumWrapper';
 import Link from 'next/link';
 import VideoPlayer from './VideoPlayer';
 import { SafeAvatar } from './SafeAvatar';
-import { getLocalizedHref } from "@/lib/i18n/routing";
+import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
+import { intlLocale } from "@/lib/i18n/ui";
 import { useLanguage } from './LanguageContext';
 import { useToast } from '@/app/hooks/useToast';
 import { logger } from '@/lib/logger';
@@ -31,9 +32,8 @@ interface HeroProps {
 
 // Fixed locale and time zone: the server and the browser format these the same way, so the first
 // HTML already has the final text (no "1234" -> "1,2K" swap after hydration).
-const NUMBER_LOCALE = { pl: 'pl-PL', en: 'en-US' } as const;
-function formatPublishedDate(value: string | Date, language: 'pl' | 'en'): string {
-  return new Date(value).toLocaleDateString(NUMBER_LOCALE[language], {
+function formatPublishedDate(value: string | Date, language: Locale): string {
+  return new Date(value).toLocaleDateString(intlLocale(language), {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -79,7 +79,7 @@ async function sendVideoReaction(videoId: string, target: ReactionTarget): Promi
 }
 
 const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscribed, startWithSound = false }) => {
-  const { t, language } = useLanguage();
+  const { t, language, tx } = useLanguage();
   const toast = useToast();
   const { userId } = useAuth();
   const { open: openAuthModal } = useAuthModal();
@@ -87,7 +87,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   const [isExpanded, setIsExpanded] = useState(false);
   const displayTitle = getVideoDisplayTitle(video, language);
   const [localViewsCount, setLocalViewsCount] = useState(video.views || 0);
-  const displayDescription = (language === 'en' && video.descriptionEn) ? video.descriptionEn : (video.description || t.noDescription);
+  const displayDescription = (language !== 'pl' && video.descriptionEn) ? video.descriptionEn : (video.description || t.noDescription);
 
   useEffect(() => {
     setMounted(true);
@@ -189,7 +189,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
           logger.error("[Hero] Reaction failed:", outcome.status);
           if (showable && sync.confirmed) setInteractionState(sync.confirmed);
           toast(
-            language === 'pl' ? 'Nie udało się zapisać oceny. Spróbuj ponownie.' : 'Could not save your rating. Try again.',
+            tx("Nie udało się zapisać oceny. Spróbuj ponownie.", "Could not save your rating. Try again."),
             'error',
           );
         }
@@ -264,7 +264,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
              {displayTitle}
           </h1>
           {typeof video.fundraisingProgress === 'number' && (
-            <FundraisingProgressBar key={video.id} progress={video.fundraisingProgress} isPl={language === 'pl'} />
+            <FundraisingProgressBar key={video.id} progress={video.fundraisingProgress} tx={tx} />
           )}
 
           <div className={cn("flex flex-col justify-between gap-2 lg:flex-row lg:items-center", styles.metaRow)}>
@@ -322,8 +322,8 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                         styles.actionButton,
                         interactionState.isLiked ? "text-[var(--chan-blue)]" : "text-[var(--chan-ink)]"
                     )}
-                    title={interactionState.isLiked ? (language === 'pl' ? 'Cofnij polubienie' : 'Remove like') : (language === 'pl' ? 'Lubię to' : 'Like')}
-                    aria-label={interactionState.isLiked ? (language === 'pl' ? 'Cofnij polubienie filmu' : 'Remove like from video') : (language === 'pl' ? 'Polub film' : 'Like video')}
+                    title={interactionState.isLiked ? (tx("Cofnij polubienie", "Remove like")) : (tx("Lubię to", "Like"))}
+                    aria-label={interactionState.isLiked ? (tx("Cofnij polubienie filmu", "Remove like from video")) : (tx("Polub film", "Like video"))}
                     aria-pressed={interactionState.isLiked}
                   >
                      <ThumbsUp
@@ -334,7 +334,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                        strokeWidth={1.8}
                        color={interactionState.isLiked ? "var(--chan-blue)" : "var(--chan-ink)"}
                      />
-                     <span className="text-[12px] font-bold">{interactionState.likesCount.toLocaleString(NUMBER_LOCALE[language])}</span>
+                     <span className="text-[12px] font-bold">{interactionState.likesCount.toLocaleString(intlLocale(language))}</span>
                   </button>
                   <span className="h-4 w-px bg-[var(--chan-line-soft)]" />
                   <button
@@ -344,8 +344,8 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                         styles.actionButton,
                         interactionState.isDisliked ? "text-[var(--chan-blue)]" : "text-[var(--chan-ink)]"
                     )}
-                    title={interactionState.isDisliked ? (language === 'pl' ? 'Cofnij reakcję nie lubię' : 'Remove dislike') : (language === 'pl' ? 'Nie lubię' : 'Dislike')}
-                    aria-label={interactionState.isDisliked ? (language === 'pl' ? 'Cofnij reakcję nie lubię filmu' : 'Remove dislike from video') : (language === 'pl' ? 'Nie lubię filmu' : 'Dislike video')}
+                    title={interactionState.isDisliked ? (tx("Cofnij reakcję nie lubię", "Remove dislike")) : (tx("Nie lubię", "Dislike"))}
+                    aria-label={interactionState.isDisliked ? (tx("Cofnij reakcję nie lubię filmu", "Remove dislike from video")) : (tx("Nie lubię filmu", "Dislike video"))}
                     aria-pressed={interactionState.isDisliked}
                   >
                      <ThumbsDown
@@ -383,11 +383,11 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                    "relative flex h-9 flex-1 items-center justify-center gap-1.5 rounded-[12px] bg-[var(--chan-surface)] px-3 font-sans text-sm font-bold text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95 lg:flex-none",
                    styles.supportAction,
                  )}
-                 aria-label={language === "pl" ? "Wspieraj" : "Support"}
-                 title={language === "pl" ? "Wspieraj" : "Support"}
+                 aria-label={tx("Wspieraj", "Support")}
+                 title={tx("Wspieraj", "Support")}
                >
                  <Coins aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={1.8} />
-                 <span className="leading-none">{language === "pl" ? "Wspieraj" : "Support"}</span>
+                 <span className="leading-none">{tx("Wspieraj", "Support")}</span>
                </button>
             </div>
           </div>
@@ -401,7 +401,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
            <div>
              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mb-1.5">
                 <span className="font-sans text-[12px] font-bold not-italic tabular-nums text-[var(--chan-ink)]">
-                   {localViewsCount.toLocaleString(NUMBER_LOCALE[language])} {t.views}
+                   {localViewsCount.toLocaleString(intlLocale(language))} {t.views}
                 </span>
                 <span aria-hidden="true" className="h-[3px] w-[3px] rounded-full bg-[var(--chan-line-soft)]" />
                 <span className="font-sans text-[12px] font-semibold not-italic text-[var(--chan-muted)]">

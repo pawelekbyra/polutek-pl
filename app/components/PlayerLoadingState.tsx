@@ -4,7 +4,7 @@ import React from "react";
 import { LoaderCircle } from "lucide-react";
 import { PlayerStateFrame } from "./PlayerStateFrame";
 import { cn } from "@/lib/utils";
-import { useOptionalLanguage } from "./LanguageContext";
+import { useOptionalTx } from "@/lib/i18n/language-context";
 
 interface PlayerLoadingStateProps {
   className?: string;
@@ -28,7 +28,7 @@ export function PlayerStartLoading({
   /** The media can already play: keep the plain dark frame, never show the spinner. */
   ready?: boolean;
 }) {
-  const language = useOptionalLanguage();
+  const tx = useOptionalTx();
   return (
     <div
       className={cn(
@@ -38,7 +38,7 @@ export function PlayerStartLoading({
       )}
       role={hidden ? undefined : "status"}
       aria-live="polite"
-      aria-label={hidden ? undefined : language === "pl" ? "Ładowanie filmu…" : "Loading video…"}
+      aria-label={hidden ? undefined : tx("Ładowanie filmu…", "Loading video…")}
       aria-hidden={hidden || undefined}
       data-testid="player-start-loading"
     >

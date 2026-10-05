@@ -3,6 +3,7 @@ import { getHomeContentCached } from '@/lib/modules/channel/application/home-con
 import { APP_NAME } from '@/lib/constants';
 import { getExplicitLocaleHref, getLocaleAlternates, isLocale, type Locale } from '@/lib/i18n/routing';
 import { getBaseUrl } from '@/lib/utils';
+import { getVideoDisplayDescription, getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import { notFound } from 'next/navigation';
 import HomeExperience from '@/app/components/home/HomeExperience';
 import type { PublicVideoDTO } from '@/app/types/video';
@@ -78,9 +79,9 @@ export default async function Home(props: { params: Promise<{ locale: string }>;
     ? {
         '@context': 'https://schema.org',
         '@type': 'VideoObject',
-        name: locale === 'en' ? selectedVideo.titleEn || selectedVideo.title : selectedVideo.title,
+        name: getVideoDisplayTitle(selectedVideo, locale),
         description:
-          (locale === 'en' ? selectedVideo.descriptionEn || selectedVideo.description : selectedVideo.description) ||
+          getVideoDisplayDescription(selectedVideo, locale) ||
           selectedVideo.title,
         thumbnailUrl: [
           selectedVideo.thumbnailUrl.startsWith('http')

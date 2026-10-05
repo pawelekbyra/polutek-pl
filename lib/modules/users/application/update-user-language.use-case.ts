@@ -1,10 +1,11 @@
+import type { Locale } from "@/lib/i18n/routing";
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UserRepository } from "../infrastructure/user.repository";
 import { UserDeletedError, UserNotFoundError } from "../domain/user.errors";
 
 export interface UpdateUserLanguageInput {
   userId: string;
-  language: "en" | "pl";
+  language: Locale;
 }
 
 /** Stores the signed-in user's UI/e-mail language (the database is the only copy). */

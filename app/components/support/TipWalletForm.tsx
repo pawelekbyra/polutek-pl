@@ -6,6 +6,7 @@ import { buildTipReturnUrl, readConfirmResult } from "./tip-confirm";
 import { ErrorLine, PayStepFrame, type TipPayStepProps } from "./TipPayFrame";
 import { TipPrimaryButton } from "./TipStepLayout";
 
+import { useOptionalTx } from "@/lib/i18n/language-context";
 /**
  * Apple Pay / Google Pay: Stripe's own wallet button (Express Checkout Element) limited to the
  * chosen wallet, in place of our send button. The button is the wallet's official one (brand
@@ -13,7 +14,7 @@ import { TipPrimaryButton } from "./TipStepLayout";
  */
 export function TipWalletForm(props: TipPayStepProps) {
   const { language, method, paymentId, onConfirmed, onChangeMethod } = props;
-  const isPl = language === "pl";
+  const tx = useOptionalTx(language);
   const stripe = useStripe();
   const elements = useElements();
   const [state, setState] = useState<"loading" | "ready" | "unavailable">("loading");
@@ -28,14 +29,14 @@ export function TipWalletForm(props: TipPayStepProps) {
       confirmParams: { return_url: buildTipReturnUrl(paymentId) },
       redirect: "if_required",
     });
-    const read = readConfirmResult(result, isPl);
+    const read = readConfirmResult(result, tx);
     if ("outcome" in read) onConfirmed(read.outcome);
     else setError(read.error);
   };
 
   const footer =
     state === "unavailable" ? (
-      <TipPrimaryButton onClick={onChangeMethod}>{isPl ? "Wybierz inną metodę" : "Choose another method"}</TipPrimaryButton>
+      <TipPrimaryButton onClick={onChangeMethod}>{tx("Wybierz inną metodę", "Choose another method")}</TipPrimaryButton>
     ) : (
       <div className="relative min-h-[52px]">
         {state === "loading" && (
@@ -70,12 +71,8 @@ export function TipWalletForm(props: TipPayStepProps) {
     <PayStepFrame props={props} footer={footer}>
       <p className="text-[14px] leading-[1.6] text-[var(--chan-body)]">
         {state === "unavailable"
-          ? isPl
-            ? "Ta metoda nie jest dostępna na tym urządzeniu albo w tej przeglądarce. Wybierz inną."
-            : "This method isn't available on this device or browser. Please choose another one."
-          : isPl
-            ? "Kliknij przycisk na dole — otworzy się okno portfela, w którym potwierdzisz napiwek."
-            : "Tap the button below — your wallet opens so you can confirm the tip."}
+          ? tx("Ta metoda nie jest dostępna na tym urządzeniu albo w tej przeglądarce. Wybierz inną.", "This method isn't available on this device or browser. Please choose another one.")
+          : tx("Kliknij przycisk na dole — otworzy się okno portfela, w którym potwierdzisz napiwek.", "Tap the button below — your wallet opens so you can confirm the tip.")}
       </p>
       <ErrorLine error={error} />
     </PayStepFrame>

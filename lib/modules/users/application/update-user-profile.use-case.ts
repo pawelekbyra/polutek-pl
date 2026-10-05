@@ -4,6 +4,7 @@ import { recordAuditEventSafe } from "@/lib/modules/audit";
 import { DEFAULT_AVATAR_URL, avatarRouteUrl, validateAvatarDataUrl } from "@/lib/auth/avatar";
 import { validateNickname } from "@/lib/auth/nickname";
 import { UserDeletedError, UserNotFoundError } from "../domain/user.errors";
+import type { Locale } from "@/lib/i18n/routing";
 
 export class NicknameRejectedError extends AppError {
   constructor(public readonly reason: "too_short" | "too_long" | "invalid_chars" | "taken") {
@@ -93,7 +94,7 @@ export async function updateAvatar(ctx: AppContext, input: { userId: string; dat
  */
 export async function completeOnboarding(
   ctx: AppContext,
-  input: { userId: string; nickname: string; avatarDataUrl?: string | null; language?: "pl" | "en" },
+  input: { userId: string; nickname: string; avatarDataUrl?: string | null; language?: Locale },
 ) {
   const user = await loadActiveUser(ctx, input.userId);
   if (!user.onboardingPending) throw new AppError("Onboarding already completed", 409, "ONBOARDING_DONE");

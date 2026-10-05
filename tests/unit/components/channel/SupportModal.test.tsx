@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   paymentMethodTypes: ['card', 'blik', 'p24', 'link'] as string[],
 }));
 
-vi.mock('@/app/components/LanguageContext', () => ({ useLanguage: () => ({ language: mocks.language }) }));
+vi.mock('@/app/components/LanguageContext', () => ({ useLanguage: () => ({ language: mocks.language, tx: txFor(mocks.language) }) }));
 vi.mock('@/app/components/auth/AuthModalProvider', () => ({ useAuthModal: () => ({ open: mocks.openAuthModal }) }));
 vi.mock('@/lib/auth/react', () => ({
   useAuth: () => ({ userId: mocks.userId }),
@@ -34,6 +34,7 @@ vi.mock('@stripe/react-stripe-js', () => ({
 }));
 
 import SupportModal from '@/app/components/channel/SupportModal';
+import { txFor } from "../../i18n/mock-language";
 
 function mockFetch() {
   global.fetch = vi.fn().mockImplementation((url: string) => {

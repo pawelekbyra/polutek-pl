@@ -19,7 +19,8 @@ const UPDATABLE_INTENT_STATES: ReadonlySet<Stripe.PaymentIntent.Status> = new Se
 
 /** Shown in the BLIK banking app, on statements and in the Dashboard; never taken from the client. */
 export function tipIntentDescription(language: string | null | undefined): string {
-  return language === "en" ? `Tip for ${APP_NAME}` : `Napiwek dla ${APP_NAME}`;
+  // Polish for a Polish (or unknown) account; every other interface language gets English.
+  return !language || language === "pl" ? `Napiwek dla ${APP_NAME}` : `Tip for ${APP_NAME}`;
 }
 
 class PaymentInProgressError extends PaymentError {

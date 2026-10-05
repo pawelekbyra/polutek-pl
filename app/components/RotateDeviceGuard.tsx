@@ -12,14 +12,12 @@ import styles from "./RotateDeviceGuard.module.css";
  * it can't lag or miss the rotation event.
  */
 export function RotateDeviceGuard() {
-  const { language } = useLanguage();
+  const { language, tx } = useLanguage();
   return (
     <div className={styles.guard} role="alert" aria-live="polite">
       <RotateCw className={styles.icon} strokeWidth={1.8} aria-hidden="true" />
       <p className={styles.text}>
-        {language === "pl"
-          ? "Obróć telefon do pionu, aby kontynuować"
-          : "Rotate your phone to portrait to continue"}
+        {tx("Obróć telefon do pionu, aby kontynuować", "Rotate your phone to portrait to continue")}
       </p>
     </div>
   );

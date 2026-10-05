@@ -3,11 +3,7 @@
 import type { MouseEvent, ReactNode } from "react";
 import Link from "next/link";
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
-
-const LABEL: Record<Locale, string> = {
-  pl: "pawelperfect.com, strona główna",
-  en: "pawelperfect.com, home page",
-};
+import { useOptionalTx } from "@/lib/i18n/language-context";
 
 /** A click the browser should handle itself: new tab/window, download, or not the main button. */
 function isModifiedClick(event: MouseEvent<HTMLAnchorElement>): boolean {
@@ -34,6 +30,7 @@ export default function BrandHomeLink({
   className?: string;
   children: ReactNode;
 }) {
+  const tx = useOptionalTx(language);
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (!isHome || isModifiedClick(event)) return;
     event.preventDefault();
@@ -46,7 +43,7 @@ export default function BrandHomeLink({
       href={getLocalizedHref(language, "home")}
       onClick={handleClick}
       className={className}
-      aria-label={LABEL[language]}
+      aria-label={tx("pawelperfect.com, strona główna", "pawelperfect.com, home page")}
       aria-current={isHome ? "page" : undefined}
     >
       {children}

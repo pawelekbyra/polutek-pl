@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appendQueryString, getExplicitLocaleHref, getLocaleAlternates, getLocalizedHref, localizedPathFromLegacyPath, switchLocalePath } from '@/lib/i18n/routing';
+import { appendQueryString, getExplicitLocaleHref, getLocaleAlternates, getLocalizedHref, getRouteLocaleFromPathname, isLocale, localizedPathFromLegacyPath, switchLocalePath, toContentLocale, UI_ONLY_LOCALES } from '@/lib/i18n/routing';
 import { readFileSync } from 'node:fs';
 
 const middleware = () => readFileSync('middleware.ts', 'utf8');
@@ -50,5 +50,43 @@ describe('language-explicit URLs for search engines and redirects', () => {
       languages: { pl: 'https://x.test/pl?v=film', en: 'https://x.test/en?v=film', 'x-default': 'https://x.test/en?v=film' },
     });
     expect(getLocaleAlternates('en', 'terms').languages).toEqual({ pl: '/pl/regulamin', en: '/en/terms', 'x-default': '/en/terms' });
+  });
+});
+
+describe('interface-only languages (de, es, fr, it, pt, zh)', () => {
+  it('mirror the English routes under their own prefix', () => {
+    expect(getLocalizedHref('de', 'home')).toBe('/de');
+    expect(getLocalizedHref('zh', 'search')).toBe('/zh/search');
+    expect(getLocalizedHref('fr', 'watch', { slug: 'film' })).toBe('/fr/watch/film');
+    expect(getLocalizedHref('pt', 'terms')).toBe('/pt/terms');
+    expect(getLocalizedHref('it', 'privacy')).toBe('/it/privacy-policy');
+    expect(getExplicitLocaleHref('es', 'home')).toBe('/es');
+  });
+
+  it('switch between all eight languages on the same page', () => {
+    expect(switchLocalePath('/en/search', 'de')).toBe('/de/search');
+    expect(switchLocalePath('/de/search', 'pl')).toBe('/search');
+    expect(switchLocalePath('/de/privacy-policy', 'pl')).toBe('/polityka-prywatnosci');
+    expect(switchLocalePath('/zh/watch/abc', 'fr')).toBe('/fr/watch/abc');
+    expect(switchLocalePath('/regulamin', 'es')).toBe('/es/terms');
+    expect(switchLocalePath('/', 'pt')).toBe('/pt');
+  });
+
+  it('point search engines at the English page (their content is English) and are not in the sitemap languages', () => {
+    const alternates = getLocaleAlternates('de', 'search', { baseUrl: 'https://x.test' });
+    expect(alternates.canonical).toBe('https://x.test/en/search');
+    expect(Object.keys(alternates.languages)).toEqual(['pl', 'en', 'x-default']);
+    expect(toContentLocale('zh')).toBe('en');
+    expect(toContentLocale('pl')).toBe('pl');
+  });
+
+  it('are public in the proxy and keep their prefix instead of being rewritten to /pl', () => {
+    const source = middleware();
+    expect(source).toContain('UI_ONLY_PUBLIC_ROUTES');
+    expect(source).toContain('SUPPORTED_LOCALES.join');
+    for (const locale of UI_ONLY_LOCALES) expect(getRouteLocaleFromPathname(`/${locale}/search`)).toBe(locale);
+    expect(getRouteLocaleFromPathname('/ja/search')).toBeNull();
+    expect(isLocale('de')).toBe(true);
+    expect(isLocale('DE')).toBe(false);
   });
 });

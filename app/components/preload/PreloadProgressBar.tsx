@@ -2,9 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useAppPreload } from "./AppPreloadProvider";
+import { useOptionalTx } from "@/lib/i18n/language-context";
 
 export function PreloadProgressBar() {
   const preloader = useAppPreload();
+  const tx = useOptionalTx();
   const [progress, setProgress] = useState(0);
   const [isReady, setIsReady] = useState(false);
 
@@ -31,7 +33,7 @@ export function PreloadProgressBar() {
       aria-valuenow={progress}
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-label="Ładowanie aplikacji"
+      aria-label={tx("Ładowanie aplikacji", "Loading the app")}
     />
   );
 }

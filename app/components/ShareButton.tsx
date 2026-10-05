@@ -21,7 +21,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import type { Tx } from "@/lib/i18n/ui";
 import { useLanguage } from "./LanguageContext";
 
 interface ShareButtonProps {
@@ -33,38 +34,23 @@ interface ShareButtonProps {
   fill?: boolean;
 }
 
-const COPY = {
-  pl: {
-    triggerLabel: "Udostępnij",
-    copied: "Skopiowano!",
-    copyLink: "Kopiuj link",
-    shareOnX: "Udostępnij na X",
-    shareOnFacebook: "Udostępnij na Facebook",
-    shareOnWhatsApp: "Wyślij przez WhatsApp",
-    shareOnTelegram: "Wyślij na Telegram",
-    shareOnLinkedIn: "Udostępnij na LinkedIn",
-    shareOnReddit: "Udostępnij na Reddit",
-    shareOnBluesky: "Udostępnij na Bluesky",
-    shareOnWykop: "Udostępnij na Wykop",
-    shareOnPinterest: "Zapisz na Pinterest",
-    shareByEmail: "Wyślij emailem",
-  },
-  en: {
-    triggerLabel: "Share",
-    copied: "Copied!",
-    copyLink: "Copy link",
-    shareOnX: "Share on X",
-    shareOnFacebook: "Share on Facebook",
-    shareOnWhatsApp: "Send via WhatsApp",
-    shareOnTelegram: "Send via Telegram",
-    shareOnLinkedIn: "Share on LinkedIn",
-    shareOnReddit: "Share on Reddit",
-    shareOnBluesky: "Share on Bluesky",
-    shareOnWykop: "Share on Wykop",
-    shareOnPinterest: "Save on Pinterest",
-    shareByEmail: "Send by email",
-  },
-} as const;
+function buildShareCopy(tx: Tx) {
+  return {
+    triggerLabel: tx("Udostępnij", "Share"),
+    copied: tx("Skopiowano!", "Copied!"),
+    copyLink: tx("Kopiuj link", "Copy link"),
+    shareOnX: tx("Udostępnij na X", "Share on X"),
+    shareOnFacebook: tx("Udostępnij na Facebook", "Share on Facebook"),
+    shareOnWhatsApp: tx("Wyślij przez WhatsApp", "Send via WhatsApp"),
+    shareOnTelegram: tx("Wyślij na Telegram", "Send via Telegram"),
+    shareOnLinkedIn: tx("Udostępnij na LinkedIn", "Share on LinkedIn"),
+    shareOnReddit: tx("Udostępnij na Reddit", "Share on Reddit"),
+    shareOnBluesky: tx("Udostępnij na Bluesky", "Share on Bluesky"),
+    shareOnWykop: tx("Udostępnij na Wykop", "Share on Wykop"),
+    shareOnPinterest: tx("Zapisz na Pinterest", "Save on Pinterest"),
+    shareByEmail: tx("Wyślij emailem", "Send by email"),
+  };
+}
 
 function XIcon({ className }: { className?: string }) {
   return (
@@ -86,9 +72,9 @@ export default function ShareButton({
   fill = false,
 }: ShareButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { language, t } = useLanguage();
+  const { t, tx } = useLanguage();
   const { isMobile, canNativeShare, share, copied, copyToClipboard } = useShare();
-  const copy = COPY[language];
+  const copy = useMemo(() => buildShareCopy(tx), [tx]);
   const url = propUrl ?? (typeof window !== "undefined" ? window.location.href : "");
   const useNativeShare = isMobile && canNativeShare;
 

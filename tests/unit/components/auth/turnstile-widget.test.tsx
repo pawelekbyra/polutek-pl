@@ -8,13 +8,14 @@ vi.mock("@/lib/auth/public-config", () => ({
 }));
 
 import { TurnstileWidget, type CaptchaState } from "@/app/components/auth/TurnstileWidget";
+import { createTx } from "@/lib/i18n/ui";
 
 type RenderOptions = Record<string, unknown> & Record<string, (...args: unknown[]) => void>;
 let options: RenderOptions;
 const api = { render: vi.fn(), reset: vi.fn(), remove: vi.fn() };
 
 function mount(props: { onToken?: (t: string | null) => void; onStateChange?: (s: CaptchaState) => void; isPl?: boolean } = {}) {
-  return render(<TurnstileWidget onToken={props.onToken ?? vi.fn()} onStateChange={props.onStateChange} isPl={props.isPl ?? true} />);
+  return render(<TurnstileWidget onToken={props.onToken ?? vi.fn()} onStateChange={props.onStateChange} tx={createTx((props.isPl ?? true) ? "pl" : "en")} />);
 }
 
 describe("TurnstileWidget (interaction-only)", () => {

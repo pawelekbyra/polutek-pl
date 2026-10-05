@@ -16,7 +16,7 @@ vi.mock("@tanstack/react-query", () => ({ useQueryClient: () => ({ clear: vi.fn(
 vi.mock("@/lib/logger", () => ({ logger: { warn: vi.fn() } }));
 vi.mock("@/app/components/subscriptions/UnsubscribedEmailConsentPrompt", () => ({ default: () => null }));
 vi.mock("@/app/components/LanguageContext", () => ({
-  useLanguage: () => ({ language: h.language.current, setLanguage: h.setLanguage, isInitialized: true }),
+  useLanguage: () => ({ language: h.language.current, tx: txFor(h.language.current), setLanguage: h.setLanguage, isInitialized: true }),
 }));
 vi.mock("@/lib/auth/react", () => ({
   useUser: () => ({ user: h.user.current, isLoaded: true }),
@@ -24,6 +24,7 @@ vi.mock("@/lib/auth/react", () => ({
 }));
 
 import AuthLifecycleProvider from "@/app/components/auth/AuthLifecycleProvider";
+import { txFor } from "../i18n/mock-language";
 
 beforeEach(() => {
   vi.clearAllMocks();

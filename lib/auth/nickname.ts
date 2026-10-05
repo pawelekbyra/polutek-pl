@@ -1,3 +1,4 @@
+import type { Tx } from "@/lib/i18n/ui";
 /**
  * Nickname ("Pseudonim") rules for new accounts. The nickname is the only name a new user gives:
  * it is stored as `User.name` (the Better Auth user name), so every public surface * shows it: the (user menu, comments) show it. Shared by the client forms and the
@@ -35,22 +36,16 @@ export function validateNickname(raw: string): NicknameValidation {
   return { ok: true, value };
 }
 
-export function nicknameProblemMessage(reason: NicknameProblem, isPl: boolean): string {
+export function nicknameProblemMessage(reason: NicknameProblem, tx: Tx): string {
   switch (reason) {
     case "too_short":
-      return isPl
-        ? `Pseudonim musi mieć co najmniej ${NICKNAME_MIN_LENGTH} znaki.`
-        : `Nickname must be at least ${NICKNAME_MIN_LENGTH} characters.`;
+      return tx("Pseudonim musi mieć co najmniej {0} znaki.", "Nickname must be at least {0} characters.", NICKNAME_MIN_LENGTH);
     case "too_long":
-      return isPl
-        ? `Pseudonim może mieć najwyżej ${NICKNAME_MAX_LENGTH} znaków.`
-        : `Nickname can be at most ${NICKNAME_MAX_LENGTH} characters.`;
+      return tx("Pseudonim może mieć najwyżej {0} znaków.", "Nickname can be at most {0} characters.", NICKNAME_MAX_LENGTH);
     case "invalid_chars":
-      return isPl
-        ? "Pseudonim może zawierać tylko litery, cyfry, spacje oraz znaki - _ ."
-        : "Nickname can only contain letters, digits, spaces and - _ .";
+      return tx("Pseudonim może zawierać tylko litery, cyfry, spacje oraz znaki - _ .", "Nickname can only contain letters, digits, spaces and - _ .");
     case "taken":
-      return isPl ? "Ten pseudonim jest już zajęty. Wybierz inny." : "This nickname is already taken. Choose another one.";
+      return tx("Ten pseudonim jest już zajęty. Wybierz inny.", "This nickname is already taken. Choose another one.");
   }
 }
 
@@ -73,9 +68,9 @@ export async function checkNicknameAvailability(nickname: string): Promise<Nickn
   }
 }
 
-export function nicknameCheckMessage(reason: NicknameProblem | "rate_limited", isPl: boolean): string {
+export function nicknameCheckMessage(reason: NicknameProblem | "rate_limited", tx: Tx): string {
   if (reason === "rate_limited") {
-    return isPl ? "Za dużo prób. Odczekaj chwilę i spróbuj ponownie." : "Too many attempts. Wait a moment and try again.";
+    return tx("Za dużo prób. Odczekaj chwilę i spróbuj ponownie.", "Too many attempts. Wait a moment and try again.");
   }
-  return nicknameProblemMessage(reason, isPl);
+  return nicknameProblemMessage(reason, tx);
 }

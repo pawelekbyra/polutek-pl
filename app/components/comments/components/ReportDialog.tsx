@@ -19,6 +19,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CommentReportReasonDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
+import type { Locale } from "@/lib/i18n/routing";
+import type { Tx } from "@/lib/i18n/ui";
+import { useOptionalTx } from "@/lib/i18n/language-context";
 
 /** Same limit as the report API (`note` max 500). */
 export const REPORT_NOTE_MAX_LENGTH = 500;
@@ -28,16 +31,16 @@ interface ReportDialogProps {
   onClose: () => void;
   /** Resolves when the report is stored; rejects with a message to show otherwise. */
   onSubmit: (reason: CommentReportReasonDto, note?: string) => Promise<void>;
-  language: string;
+  language: Locale;
 }
 
-const REASON_LABELS: Record<CommentReportReasonDto, { pl: string; en: string }> = {
-  SPAM: { pl: "Spam", en: "Spam" },
-  HARASSMENT: { pl: "Nękanie", en: "Harassment" },
-  HATE: { pl: "Mowa nienawiści", en: "Hate speech" },
-  NSFW: { pl: "Treści nieodpowiednie", en: "Inappropriate content" },
-  SPOILER: { pl: "Spoiler", en: "Spoiler" },
-  OTHER: { pl: "Inne", en: "Other" },
+const REASON_LABELS: Record<CommentReportReasonDto, (tx: Tx) => string> = {
+  SPAM: (tx) => tx("Spam", "Spam"),
+  HARASSMENT: (tx) => tx("Nękanie", "Harassment"),
+  HATE: (tx) => tx("Mowa nienawiści", "Hate speech"),
+  NSFW: (tx) => tx("Treści nieodpowiednie", "Inappropriate content"),
+  SPOILER: (tx) => tx("Spoiler", "Spoiler"),
+  OTHER: (tx) => tx("Inne", "Other"),
 };
 
 export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDialogProps) {
@@ -46,7 +49,7 @@ export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDial
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const idPrefix = useId();
-  const pl = language === "pl";
+  const tx = useOptionalTx(language);
 
   const close = () => {
     setError(null);
@@ -65,7 +68,7 @@ export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDial
       setError(
         submitError instanceof Error && submitError.message
           ? submitError.message
-          : pl ? "Nie udało się wysłać zgłoszenia." : "Could not send the report.",
+          : tx("Nie udało się wysłać zgłoszenia.", "Could not send the report."),
       );
     } finally {
       setIsSubmitting(false);
@@ -77,13 +80,13 @@ export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDial
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {pl ? "Zgłoś komentarz" : "Report comment"}
+            {tx("Zgłoś komentarz", "Report comment")}
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor={`${idPrefix}-reason`}>
-              {pl ? "Powód" : "Reason"}
+              {tx("Powód", "Reason")}
             </Label>
             <Select value={reason} onValueChange={(v) => setReason(v as CommentReportReasonDto)}>
               <SelectTrigger id={`${idPrefix}-reason`}>
@@ -91,14 +94,14 @@ export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDial
               </SelectTrigger>
               <SelectContent>
                 {(Object.keys(REASON_LABELS) as CommentReportReasonDto[]).map((value) => (
-                  <SelectItem key={value} value={value}>{REASON_LABELS[value][pl ? "pl" : "en"]}</SelectItem>
+                  <SelectItem key={value} value={value}>{REASON_LABELS[value](tx)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="grid gap-2">
             <Label htmlFor={`${idPrefix}-note`}>
-              {pl ? "Opcjonalna notatka" : "Optional note"}
+              {tx("Opcjonalna notatka", "Optional note")}
             </Label>
             <Textarea
               id={`${idPrefix}-note`}
@@ -106,7 +109,7 @@ export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDial
               maxLength={REPORT_NOTE_MAX_LENGTH}
               aria-describedby={`${idPrefix}-note-count`}
               onChange={(e) => setNote(e.target.value)}
-              placeholder={pl ? "Opisz problem..." : "Describe the issue..."}
+              placeholder={tx("Opisz problem...", "Describe the issue...")}
             />
             <p id={`${idPrefix}-note-count`} className="text-right text-[11px] text-[var(--chan-muted)]">
               {note.length} / {REPORT_NOTE_MAX_LENGTH}
@@ -120,10 +123,10 @@ export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDial
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={close} disabled={isSubmitting}>
-            {pl ? "Anuluj" : "Cancel"}
+            {tx("Anuluj", "Cancel")}
           </Button>
           <Button onClick={() => void handleSubmit()} variant="destructive" disabled={isSubmitting}>
-            {pl ? "Zgłoś" : "Report"}
+            {tx("Zgłoś", "Report")}
           </Button>
         </DialogFooter>
       </DialogContent>

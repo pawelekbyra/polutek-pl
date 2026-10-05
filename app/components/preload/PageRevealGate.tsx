@@ -10,7 +10,7 @@ import React, {
 } from "react";
 import { useAuth } from "@/lib/auth/react";
 import { SitePreloaderScreen } from "./SitePreloaderScreen";
-import { useOptionalLanguage } from "../LanguageContext";
+import { useOptionalTx } from "@/lib/i18n/language-context";
 
 /**
  * Coordinated first reveal of the public home page.
@@ -79,7 +79,7 @@ interface PageRevealGateProps {
 
 export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) {
   const { isLoaded: authLoaded } = useAuth();
-  const language = useOptionalLanguage();
+  const tx = useOptionalTx();
 
   // Phase machine: covering → gate (user sees rabbit) → leaving → done
   // Also check sessionStorage so auth redirects (Google sign-in) don't re-show the preloader.
@@ -156,7 +156,7 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
         <SitePreloaderScreen
           leaving={phase === "leaving"}
           failsafe={phase === "covering"}
-          label={language === "pl" ? "Ładowanie strony…" : "Loading…"}
+          label={tx("Ładowanie strony…", "Loading…")}
           showGate={phase === "gate"}
           onGateClick={handleGateClick}
         />

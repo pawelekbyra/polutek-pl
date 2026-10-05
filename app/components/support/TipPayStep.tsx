@@ -11,7 +11,11 @@ import { TIP_CRYPTO_PLACEHOLDER, TIP_FALLBACK_METHOD, formatTipAmount } from "./
 import { TipPrimaryButton } from "./TipStepLayout";
 import { ErrorLine, PayStepFrame, type TipPayStepProps } from "./TipPayFrame";
 import { TipWalletForm } from "./TipWalletForm";
+import type { Tx } from "@/lib/i18n/ui";
 
+import { useOptionalTx } from "@/lib/i18n/language-context";
+import { stripeLocale } from "@/lib/i18n/ui";
+import type { Locale } from "@/lib/i18n/routing";
 /**
  * The last step: a form for the method picked on "Metoda napiwku" only, confirmed against the
  * same automatic intent with that method's Stripe.js confirm call. Methods without a dedicated
@@ -31,7 +35,7 @@ export function TipPayStep(props: TipPayStepProps) {
 }
 
 /** Shared submit state + result handling for the per-method forms. */
-function useTipConfirm(isPl: boolean, onConfirmed: (outcome: TipConfirmOutcome) => void) {
+function useTipConfirm(tx: Tx, onConfirmed: (outcome: TipConfirmOutcome) => void) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // A ref, not the `busy` state: two quick clicks land before React re-renders, and a second
@@ -45,7 +49,7 @@ function useTipConfirm(isPl: boolean, onConfirmed: (outcome: TipConfirmOutcome) 
     setError(null);
     let read: ReturnType<typeof readConfirmResult>;
     try {
-      read = readConfirmResult(await confirm(), isPl);
+      read = readConfirmResult(await confirm(), tx);
     } finally {
       inFlight.current = false;
       setBusy(false);
@@ -65,14 +69,14 @@ function SendButton({
   disabled,
   label,
   busyLabel,
-  isPl,
+  tx,
   onClick,
 }: {
   busy: boolean;
   disabled?: boolean;
   label: string;
   busyLabel?: string;
-  isPl: boolean;
+  tx: Tx;
   onClick: () => void;
 }) {
   return (
@@ -80,7 +84,7 @@ function SendButton({
       {busy ? (
         <>
           <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-          {busyLabel ?? (isPl ? "Wysyłam…" : "Sending…")}
+          {busyLabel ?? (tx("Wysyłam…", "Sending…"))}
         </>
       ) : (
         label
@@ -94,17 +98,17 @@ function toMinor(amount: number) {
   return Math.round(amount * 100);
 }
 
-function sendLabel(isPl: boolean, amount: number, currency: SupportedCurrency, language: string) {
+function sendLabel(tx: Tx, amount: number, currency: SupportedCurrency, language: Locale) {
   const formatted = formatTipAmount(amount, currency, language);
-  return isPl ? `Wyślij ${formatted}` : `Send ${formatted}`;
+  return tx("Wyślij {0}", "Send {0}", formatted);
 }
 
 function BlikForm(props: TipPayStepProps) {
   const { language, amount, currency, clientSecret, userEmail, onConfirmed } = props;
-  const isPl = language === "pl";
+  const tx = useOptionalTx(language);
   const stripe = useStripe();
   const [code, setCode] = useState("");
-  const { busy, error, run } = useTipConfirm(isPl, onConfirmed);
+  const { busy, error, run } = useTipConfirm(tx, onConfirmed);
   const valid = /^\d{6}$/.test(code);
 
   return (
@@ -114,10 +118,10 @@ function BlikForm(props: TipPayStepProps) {
         <SendButton
           busy={busy}
           disabled={!valid || !stripe}
-          isPl={isPl}
-          label={sendLabel(isPl, amount, currency, language)}
+          tx={tx}
+          label={sendLabel(tx, amount, currency, language)}
           // Stripe.js waits here (up to 60 s) until the payment is approved in the banking app.
-          busyLabel={isPl ? "Potwierdź w aplikacji banku…" : "Approve in your banking app…"}
+          busyLabel={tx("Potwierdź w aplikacji banku…", "Approve in your banking app…")}
           onClick={async () => {
             if (!stripe) return;
             const sent = await run(() =>
@@ -134,7 +138,7 @@ function BlikForm(props: TipPayStepProps) {
     >
       <label className="block">
         <span className="mb-2 block text-[13px] leading-[1.55] text-[var(--chan-body)]">
-          {isPl ? "Kod BLIK z aplikacji banku" : "BLIK code from your banking app"}
+          {tx("Kod BLIK z aplikacji banku", "BLIK code from your banking app")}
         </span>
         <input
           value={code}
@@ -142,14 +146,12 @@ function BlikForm(props: TipPayStepProps) {
           inputMode="numeric"
           autoComplete="one-time-code"
           placeholder="000000"
-          aria-label={isPl ? "Kod BLIK" : "BLIK code"}
+          aria-label={tx("Kod BLIK", "BLIK code")}
           className="h-16 w-full rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-white text-center text-[28px] font-extrabold tracking-[0.35em] tabular-nums text-[var(--chan-ink)] outline-none transition-[border-color,box-shadow] placeholder:text-[var(--cm-amber-46)] focus:border-[var(--chan-ink)] focus:shadow-[0_0_0_4px_var(--cm-amber-18)]"
         />
       </label>
       <p className="mt-2 text-[12px] text-[var(--chan-muted)]">
-        {isPl
-          ? "Po wysłaniu masz 60 sekund na potwierdzenie napiwku w aplikacji banku."
-          : "After sending, you have 60 seconds to confirm the tip in your banking app."}
+        {tx("Po wysłaniu masz 60 sekund na potwierdzenie napiwku w aplikacji banku.", "After sending, you have 60 seconds to confirm the tip in your banking app.")}
       </p>
       <ErrorLine error={error} />
     </PayStepFrame>
@@ -158,9 +160,9 @@ function BlikForm(props: TipPayStepProps) {
 
 function RedirectForm(props: TipPayStepProps) {
   const { language, clientSecret, paymentId, userEmail, onConfirmed } = props;
-  const isPl = language === "pl";
+  const tx = useOptionalTx(language);
   const stripe = useStripe();
-  const { busy, error, run } = useTipConfirm(isPl, onConfirmed);
+  const { busy, error, run } = useTipConfirm(tx, onConfirmed);
 
   return (
     <PayStepFrame
@@ -169,8 +171,8 @@ function RedirectForm(props: TipPayStepProps) {
         <SendButton
           busy={busy}
           disabled={!stripe || !userEmail}
-          isPl={isPl}
-          label={isPl ? "Przejdź do Przelewy24" : "Continue to Przelewy24"}
+          tx={tx}
+          label={tx("Przejdź do Przelewy24", "Continue to Przelewy24")}
           onClick={() =>
             stripe &&
             userEmail &&
@@ -185,16 +187,12 @@ function RedirectForm(props: TipPayStepProps) {
       }
     >
       <p className="text-[14px] leading-[1.6] text-[var(--chan-body)]">
-        {isPl
-          ? "Przeniesiemy Cię do Przelewy24, gdzie wybierzesz swój bank. Po zapłacie wrócisz tutaj."
-          : "You'll go to Przelewy24 to pick your bank, then come right back here."}
+        {tx("Przeniesiemy Cię do Przelewy24, gdzie wybierzesz swój bank. Po zapłacie wrócisz tutaj.", "You'll go to Przelewy24 to pick your bank, then come right back here.")}
       </p>
       {!userEmail && (
         <ErrorLine
           error={
-            isPl
-              ? "Przelewy24 wymaga adresu e-mail na koncie. Dodaj go w ustawieniach konta albo wybierz inną metodę."
-              : "Przelewy24 needs an email address on your account. Add one in your account settings or choose another method."
+            tx("Przelewy24 wymaga adresu e-mail na koncie. Dodaj go w ustawieniach konta albo wybierz inną metodę.", "Przelewy24 needs an email address on your account. Add one in your account settings or choose another method.")
           }
         />
       )}
@@ -207,7 +205,7 @@ function CardForm(props: TipPayStepProps) {
   // The card field needs its own Elements group: Elements bound to a PaymentIntent secret
   // are reserved for the Payment/Express Checkout Elements.
   return (
-    <Elements stripe={props.stripePromise} options={{ locale: props.language === "pl" ? "pl" : "en" }}>
+    <Elements stripe={props.stripePromise} options={{ locale: stripeLocale(props.language) }}>
       <CardFormInner {...props} />
     </Elements>
   );
@@ -215,11 +213,11 @@ function CardForm(props: TipPayStepProps) {
 
 function CardFormInner(props: TipPayStepProps) {
   const { language, amount, currency, clientSecret, userEmail, onConfirmed } = props;
-  const isPl = language === "pl";
+  const tx = useOptionalTx(language);
   const stripe = useStripe();
   const elements = useElements();
   const [complete, setComplete] = useState(false);
-  const { busy, error, run } = useTipConfirm(isPl, onConfirmed);
+  const { busy, error, run } = useTipConfirm(tx, onConfirmed);
 
   const send = () => {
     const card = elements?.getElement(CardElement);
@@ -235,7 +233,7 @@ function CardFormInner(props: TipPayStepProps) {
     <PayStepFrame
       props={props}
       footer={
-        <SendButton busy={busy} disabled={!complete || !stripe} isPl={isPl} label={sendLabel(isPl, amount, currency, language)} onClick={send} />
+        <SendButton busy={busy} disabled={!complete || !stripe} tx={tx} label={sendLabel(tx, amount, currency, language)} onClick={send} />
       }
     >
       <div className="rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-white px-4 py-4 transition-[border-color,box-shadow] focus-within:border-[var(--chan-ink)] focus-within:shadow-[0_0_0_4px_var(--cm-amber-18)]">
@@ -255,10 +253,10 @@ function CardFormInner(props: TipPayStepProps) {
 /** Stripe's Payment Element; `deferred` when it sits in its own Elements group limited to one method. */
 function FallbackForm({ deferred, ...props }: TipPayStepProps & { deferred?: boolean }) {
   const { language, amount, currency, clientSecret, paymentId, userEmail, onConfirmed } = props;
-  const isPl = language === "pl";
+  const tx = useOptionalTx(language);
   const stripe = useStripe();
   const elements = useElements();
-  const { busy, error, run } = useTipConfirm(isPl, onConfirmed);
+  const { busy, error, run } = useTipConfirm(tx, onConfirmed);
 
   const send = () =>
     stripe &&
@@ -283,7 +281,7 @@ function FallbackForm({ deferred, ...props }: TipPayStepProps & { deferred?: boo
     <PayStepFrame
       props={props}
       footer={
-        <SendButton busy={busy} disabled={!stripe || !elements} isPl={isPl} label={sendLabel(isPl, amount, currency, language)} onClick={send} />
+        <SendButton busy={busy} disabled={!stripe || !elements} tx={tx} label={sendLabel(tx, amount, currency, language)} onClick={send} />
       }
     >
       <PaymentElement
@@ -312,7 +310,7 @@ function SingleMethodForm(props: TipPayStepProps) {
         // The intent uses automatic payment methods, so narrow with allowedPaymentMethodTypes;
         // paymentMethodTypes would declare manual methods and not match the intent.
         allowedPaymentMethodTypes: [method],
-        locale: language === "pl" ? "pl" : "en",
+        locale: stripeLocale(language),
       }}
     >
       <FallbackForm {...props} deferred />
@@ -322,16 +320,14 @@ function SingleMethodForm(props: TipPayStepProps) {
 
 /** Placeholder until crypto tips exist: explains and sends the viewer back to pick another method. */
 function CryptoPlaceholder(props: TipPayStepProps) {
-  const isPl = props.language === "pl";
+  const tx = useOptionalTx(props.language);
   return (
     <PayStepFrame
       props={props}
-      footer={<TipPrimaryButton onClick={props.onChangeMethod}>{isPl ? "Wybierz inną metodę" : "Choose another method"}</TipPrimaryButton>}
+      footer={<TipPrimaryButton onClick={props.onChangeMethod}>{tx("Wybierz inną metodę", "Choose another method")}</TipPrimaryButton>}
     >
       <p className="text-[14px] leading-[1.6] text-[var(--chan-body)]">
-        {isPl
-          ? "Napiwki w kryptowalutach będą dostępne już wkrótce. Na razie wybierz inną metodę."
-          : "Crypto tips are coming soon. For now, please choose another method."}
+        {tx("Napiwki w kryptowalutach będą dostępne już wkrótce. Na razie wybierz inną metodę.", "Crypto tips are coming soon. For now, please choose another method.")}
       </p>
     </PayStepFrame>
   );

@@ -3,6 +3,7 @@ import { APIError, createAuthEndpoint, getSessionFromCtx, sendVerificationEmailF
 import type { BetterAuthPlugin } from "better-auth";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
+import { isLocale, type Locale } from "@/lib/i18n/routing";
 import { assertMailToAddressAllowed, countMailToAddress, existingAccountCode } from "./hooks";
 import { assertPasskeyUserVerified } from "./passkey";
 import { sanitizeReturnPath } from "./sso-return";
@@ -31,7 +32,7 @@ const EMAIL_MAX_LENGTH = 254;
 
 export type PasskeySignupClaims = {
   email: string;
-  language: "pl" | "en";
+  language: Locale;
   callbackURL: string;
   nonce: string;
   /** Expiry, unix seconds. */
@@ -180,7 +181,7 @@ export function passkeySignup(): BetterAuthPlugin {
         if (taken) throw new APIError("UNPROCESSABLE_ENTITY", { message: taken, code: taken });
         const claims: PasskeySignupClaims = {
           email,
-          language: body.language === "pl" ? "pl" : "en",
+          language: isLocale(body.language) ? body.language : "en",
           callbackURL: sanitizeReturnPath(typeof body.callbackURL === "string" ? body.callbackURL : "/"),
           nonce: crypto.randomUUID(),
           exp: Math.floor(Date.now() / 1000) + PASSKEY_SIGNUP_TOKEN_TTL_SECONDS,

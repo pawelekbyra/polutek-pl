@@ -17,7 +17,7 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("next/navigation", () => ({ useRouter: () => h.router, usePathname: () => "/en", useSearchParams: () => h.search }));
-vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en", setLanguage: () => {} }) }));
+vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en", tx: txFor("en"), setLanguage: () => {} }) }));
 vi.mock("@/lib/auth/client", () => ({ authClient: h.client, captchaFetchOptions: () => undefined }));
 vi.mock("@/lib/auth/public-config", () => ({ useAuthPublicConfig: () => ({ googleClientId: null, turnstileSiteKey: null }) }));
 vi.mock("@/lib/auth/react", () => ({ useAuth: () => ({ ...h.auth, signOut: vi.fn() }) }));
@@ -25,6 +25,7 @@ vi.mock("@/lib/auth/react", () => ({ useAuth: () => ({ ...h.auth, signOut: vi.fn
 import AuthModal from "@/app/components/auth/AuthModal";
 import SSOCallbackPage from "@/app/sso-callback/page";
 import { rememberReturnPath } from "@/lib/auth/sso-return";
+import { txFor } from "../i18n/mock-language";
 
 beforeEach(() => {
   vi.clearAllMocks();

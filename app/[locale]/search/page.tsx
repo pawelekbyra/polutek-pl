@@ -3,7 +3,11 @@ import Image from "next/image";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import { VideoSearchService } from "@/lib/modules/video/application/video-search.service";
-import { getLocalizedHref, isLocale, type Locale } from "@/lib/i18n/routing";
+import { getLocalizedHref, isLocale, toContentLocale, type Locale } from "@/lib/i18n/routing";
+import { getServerTx } from "@/lib/i18n/server-tx";
+import { countedNoun } from "@/lib/i18n/plurals";
+import { intlLocale, type Tx } from "@/lib/i18n/ui";
+import { getVideoDisplayDescription, getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { notFound } from "next/navigation";
 import { APP_NAME } from "@/lib/constants";
 import { auth } from "@/lib/auth/server";
@@ -21,6 +25,8 @@ export default async function SearchPage(props: SearchPageProps) {
   const [{ locale: rawLocale }, searchParams] = await Promise.all([props.params, props.searchParams]);
   if (!isLocale(rawLocale)) notFound();
   const locale: Locale = rawLocale;
+  const tx = await getServerTx(locale);
+  const contentLocale = toContentLocale(locale);
   const rawQuery = searchParams.q ?? "";
   const normalizedQuery = VideoSearchService.normalizeQuery(rawQuery);
   // The viewer's session goes into the first HTML, so the navbar renders final (no loading state).
@@ -39,24 +45,23 @@ export default async function SearchPage(props: SearchPageProps) {
             {APP_NAME}
           </p>
           <h1 className="font-brand text-3xl font-bold tracking-tight text-[var(--chan-ink)] sm:text-4xl">
-            {locale === "pl" ? "Wyniki wyszukiwania" : "Search results"}
+            {tx("Wyniki wyszukiwania", "Search results")}
           </h1>
           {normalizedQuery ? (
             <p className="mt-3 text-sm text-[var(--chan-muted)]">
-              {locale === "pl" ? `Znaleziono ${results.length} ${results.length === 1 ? "materiał" : "materiałów"} dla „` : `Found ${results.length} ${results.length === 1 ? "result" : "results"} for “`}
-              {rawQuery.trim()}{locale === "pl" ? "”." : ".”"}
+              {tx("Wyniki dla „{0}”: {1}", "Results for “{0}”: {1}", rawQuery.trim(), results.length)}
             </p>
           ) : (
             <p className="mt-3 text-sm text-[var(--chan-muted)]">
-              {locale === "pl" ? "Wpisz frazę w wyszukiwarce, aby znaleźć publiczne materiały." : "Enter a phrase to find public videos."}
+              {tx("Wpisz frazę w wyszukiwarce, aby znaleźć publiczne materiały.", "Enter a phrase to find public videos.")}
             </p>
           )}
         </div>
 
         {!normalizedQuery ? (
-          <EmptySearchState locale={locale} message={locale === "pl" ? "Brak zapytania do wyszukania." : "No search query."} />
+          <EmptySearchState locale={locale} tx={tx} message={tx("Brak zapytania do wyszukania.", "No search query.")} />
         ) : results.length === 0 ? (
-          <EmptySearchState locale={locale} message={locale === "pl" ? "Nie znaleziono publicznych materiałów dla tej frazy." : "No public videos found for this phrase."} />
+          <EmptySearchState locale={locale} tx={tx} message={tx("Nie znaleziono publicznych materiałów dla tej frazy.", "No public videos found for this phrase.")} />
         ) : (
           <div className="grid gap-4">
             {results.map((video) => (
@@ -69,7 +74,7 @@ export default async function SearchPage(props: SearchPageProps) {
                   {video.thumbnailUrl ? (
                     <Image
                       src={video.thumbnailUrl}
-                      alt={`Miniatura filmu: ${locale === "en" ? (video.titleEn || video.title) : video.title}`}
+                      alt={tx("Miniatura filmu: {0}", "Video thumbnail: {0}", getVideoDisplayTitle(video, contentLocale))}
                       fill
                       sizes="(min-width: 640px) 224px, 160px"
                       className="object-cover opacity-90 transition duration-500 group-hover:scale-105"
@@ -78,16 +83,16 @@ export default async function SearchPage(props: SearchPageProps) {
                 </div>
                 <div className="min-w-0 py-1">
                   <h2 className="line-clamp-2 font-brand text-lg font-bold text-[var(--chan-ink)] group-hover:underline">
-                    {locale === "en" ? (video.titleEn || video.title) : video.title}
+                    {getVideoDisplayTitle(video, contentLocale)}
                   </h2>
                   {video.description ? (
                     <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--chan-body)]">
-                      {locale === "en" ? (video.descriptionEn || video.description) : video.description}
+                      {getVideoDisplayDescription(video, contentLocale) || video.description}
                     </p>
                   ) : null}
                   <p className="mt-3 text-xs font-bold uppercase tracking-widest text-[var(--chan-muted)]">
                     {video.creator?.name ?? "PawelPerfect"} ·{" "}
-                    {video.views.toLocaleString(locale === "pl" ? "pl-PL" : "en-US")} {locale === "pl" ? "wyświetleń" : "views"}
+                    {video.views.toLocaleString(intlLocale(locale))} {countedNoun(locale, "views", video.views)}
                   </p>
                 </div>
               </Link>
@@ -101,7 +106,7 @@ export default async function SearchPage(props: SearchPageProps) {
   );
 }
 
-function EmptySearchState({ message, locale }: { message: string; locale: Locale }) {
+function EmptySearchState({ message, locale, tx }: { message: string; locale: Locale; tx: Tx }) {
   return (
     <div className="rounded-3xl border border-dashed border-[var(--chan-line)] bg-[var(--chan-card)] p-10 text-center">
       <p className="mb-6 text-sm text-[var(--chan-muted)]">{message}</p>
@@ -109,7 +114,7 @@ function EmptySearchState({ message, locale }: { message: string; locale: Locale
         href={getLocalizedHref(locale, "home")}
         className="inline-flex rounded-full bg-[var(--chan-ink)] px-6 py-3 font-brand text-xs font-bold uppercase tracking-widest text-white transition hover:opacity-90"
       >
-        {locale === "pl" ? "Wróć na kanał" : "Back to channel"}
+        {tx("Wróć na kanał", "Back to channel")}
       </Link>
     </div>
   );

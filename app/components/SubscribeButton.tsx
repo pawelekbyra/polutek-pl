@@ -32,7 +32,7 @@ export default function SubscribeButton({
   variant = "default",
   onStatusChange,
 }: SubscribeButtonProps) {
-  const { t, language } = useLanguage();
+  const { t, language, tx } = useLanguage();
   const { userId } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const [isSubscribed, setIsSubscribed] = useState(
@@ -99,16 +99,16 @@ export default function SubscribeButton({
           const code = result.error;
           const message =
             response.status === 401
-              ? "Zaloguj się, aby zarządzać powiadomieniami."
+              ? tx("Zaloguj się, aby zarządzać powiadomieniami.", "Sign in to manage notifications.")
               : response.status === 400 && code === "TRUSTED_EMAIL_REQUIRED"
-                ? "Konto musi mieć zweryfikowany adres e-mail."
+                ? tx("Konto musi mieć zweryfikowany adres e-mail.", "The account needs a verified email address.")
                 : response.status === 409 &&
                     code === "EMAIL_PREFERENCE_IDENTITY_CONFLICT"
-                  ? "Ten adres e-mail jest już przypisany do innego konta."
+                  ? tx("Ten adres e-mail jest już przypisany do innego konta.", "This email address is already linked to another account.")
                   : response.status === 429
-                    ? "Zbyt wiele prób. Spróbuj ponownie później."
+                    ? tx("Zbyt wiele prób. Spróbuj ponownie później.", "Too many attempts. Please try again later.")
                     : result.message ||
-                      "Nie udało się zapisać subskrypcji. Spróbuj ponownie.";
+                      tx("Nie udało się zapisać subskrypcji. Spróbuj ponownie.", "Could not save the subscription. Please try again.");
           setErrorMessage(message);
           setIsSubscribed(previousState);
           return;
@@ -119,7 +119,7 @@ export default function SubscribeButton({
       } catch (err) {
         logger.warn("[SUBSCRIPTION_TOGGLE_ERROR]", err);
         setIsSubscribed(previousState);
-        setErrorMessage("Nie udało się połączyć z serwerem. Spróbuj ponownie.");
+        setErrorMessage(tx("Nie udało się połączyć z serwerem. Spróbuj ponownie.", "Could not reach the server. Please try again."));
       }
     });
   };
@@ -157,7 +157,7 @@ export default function SubscribeButton({
             onClick={() => { setErrorMessage(null); executeSubscribe(); }}
             className="text-xs font-bold text-primary underline hover:opacity-70 text-left"
           >
-            {language === "pl" ? "Spróbuj ponownie" : "Try again"}
+            {tx("Spróbuj ponownie", "Try again")}
           </button>
         </div>
       )}

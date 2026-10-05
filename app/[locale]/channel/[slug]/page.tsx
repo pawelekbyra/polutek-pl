@@ -16,6 +16,8 @@ import SubscribeButton from '@/app/components/SubscribeButton';
 import { prisma } from '@/lib/prisma';
 import { getLocaleAlternates, getLocalizedHref, isLocale, type Locale } from '@/lib/i18n/routing';
 import { APP_NAME } from '@/lib/constants';
+import { getServerTx } from '@/lib/i18n/server-tx';
+import { countedNoun } from '@/lib/i18n/plurals';
 import { notFound } from 'next/navigation';
 
 export const revalidate = 60;
@@ -35,6 +37,7 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   const params = await props.params;
   if (!isLocale(params.locale)) notFound();
   const locale: Locale = params.locale;
+  const tx = await getServerTx(locale);
   const mainSlug = getConfiguredSlugSafe();
   if (mainSlug && params.slug !== mainSlug) return { title: APP_NAME };
 
@@ -47,10 +50,10 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
     // Browser tab always reads www.pawelperfect.com; creator name stays in OG/twitter below.
     title: APP_NAME,
     alternates: getLocaleAlternates(locale, "channel", { params: { slug: params.slug }, baseUrl }),
-    description: creator.bio ?? (locale === "pl" ? `Kanał ${creator.name} — materiały wideo` : `${creator.name} video channel`),
+    description: creator.bio ?? (tx("Kanał {0} — materiały wideo", "{0} video channel", creator.name)),
     openGraph: {
       title: creator.name,
-      description: creator.bio ?? (locale === "pl" ? `Kanał ${creator.name}` : `${creator.name} channel`),
+      description: creator.bio ?? (tx("Kanał {0}", "{0} channel", creator.name)),
       type: 'website',
     },
     twitter: {
@@ -60,27 +63,20 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   };
 }
 
-function getVideoCountLabel(count: number) {
-  if (count === 1) return "film";
-  const last = count % 10;
-  const lastTwo = count % 100;
-  if (last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14)) return "filmy";
-  return "filmów";
-}
-
 export default async function ChannelPage(props: { params: Promise<{ locale: string; slug: string }> }) {
   const params = await props.params;
   if (!isLocale(params.locale)) notFound();
   const locale: Locale = params.locale;
+  const tx = await getServerTx(locale);
   const mainSlug = getConfiguredSlugSafe();
   if (mainSlug && params.slug !== mainSlug) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--chan-nav)] text-[var(--chan-ink)] font-sans">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
-            <h1 className="font-brand text-4xl font-bold">{locale === "pl" ? "Kanał nie znaleziony" : "Channel not found"}</h1>
-            <p className="text-[var(--chan-muted)] mt-2 mb-6">{locale === "pl" ? "Ten kanał nie istnieje." : "This channel does not exist."}</p>
-            <Link href={getLocalizedHref(locale, "home")} className="bg-[var(--chan-ink)] text-white px-8 py-3 rounded-xl font-brand font-bold tracking-wide hover:opacity-90 transition-all">{locale === "pl" ? "Wróć na stronę główną" : "Back home"}</Link>
+            <h1 className="font-brand text-4xl font-bold">{tx("Kanał nie znaleziony", "Channel not found")}</h1>
+            <p className="text-[var(--chan-muted)] mt-2 mb-6">{tx("Ten kanał nie istnieje.", "This channel does not exist.")}</p>
+            <Link href={getLocalizedHref(locale, "home")} className="bg-[var(--chan-ink)] text-white px-8 py-3 rounded-xl font-brand font-bold tracking-wide hover:opacity-90 transition-all">{tx("Wróć na stronę główną", "Back home")}</Link>
         </div>
         <Footer />
       </div>
@@ -102,9 +98,9 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
       <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--chan-nav)] text-[var(--chan-ink)] font-sans">
         <Navbar />
         <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
-            <h1 className="font-brand text-4xl font-bold">{locale === "pl" ? "Kanał nie znaleziony" : "Channel not found"}</h1>
-            <p className="text-[var(--chan-muted)] mt-2 mb-6">{locale === "pl" ? "Ten kanał nie istnieje." : "This channel does not exist."}</p>
-            <Link href={getLocalizedHref(locale, "home")} className="bg-[var(--chan-ink)] text-white px-8 py-3 rounded-xl font-brand font-bold tracking-wide hover:opacity-90 transition-all">{locale === "pl" ? "Wróć na stronę główną" : "Back home"}</Link>
+            <h1 className="font-brand text-4xl font-bold">{tx("Kanał nie znaleziony", "Channel not found")}</h1>
+            <p className="text-[var(--chan-muted)] mt-2 mb-6">{tx("Ten kanał nie istnieje.", "This channel does not exist.")}</p>
+            <Link href={getLocalizedHref(locale, "home")} className="bg-[var(--chan-ink)] text-white px-8 py-3 rounded-xl font-brand font-bold tracking-wide hover:opacity-90 transition-all">{tx("Wróć na stronę główną", "Back home")}</Link>
         </div>
         <Footer />
       </div>
@@ -144,7 +140,7 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
   }));
 
   const displayName = creator.name;
-  const displayBio = creator.bio || (locale === "pl" ? "Witamy na oficjalnym kanale." : "Welcome to the official channel.");
+  const displayBio = creator.bio || (tx("Witamy na oficjalnym kanale.", "Welcome to the official channel."));
 
   return (
     <div className="channel-page-shell min-h-screen bg-[var(--chan-nav)] text-[var(--chan-ink)] font-sans">
@@ -171,9 +167,9 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
             <h1 className="font-brand text-[32px] md:text-[46px] font-bold leading-[1.05] tracking-[-0.04em] break-words">
               {displayName}
             </h1>
-            <ul className="mt-3 flex flex-wrap justify-center md:justify-start gap-2 text-[13px] font-sans" aria-label={locale === "pl" ? "Informacje o kanale" : "Channel details"}>
+            <ul className="mt-3 flex flex-wrap justify-center md:justify-start gap-2 text-[13px] font-sans" aria-label={tx("Informacje o kanale", "Channel details")}>
                <li className="channel-profile-chip font-bold text-[var(--chan-ink)]">@{creator.slug}</li>
-               <li className="channel-profile-chip text-[var(--chan-muted)]">{formatCount(allVideos.length)} {locale === "pl" ? getVideoCountLabel(allVideos.length) : allVideos.length === 1 ? "video" : "videos"}</li>
+               <li className="channel-profile-chip text-[var(--chan-muted)]">{formatCount(allVideos.length)} {countedNoun(locale, "videos", allVideos.length)}</li>
             </ul>
             <p className="mt-4 text-[15px] leading-relaxed text-[var(--chan-body)] max-w-2xl mx-auto md:mx-0 font-sans whitespace-pre-line">
                {displayBio}
@@ -190,7 +186,7 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
         </header>
 
         <div className="channel-tabs flex border-b border-[var(--chan-line)] mt-7 overflow-x-auto no-scrollbar gap-8">
-           <div className="channel-tab-active pb-3 border-b-2 border-[var(--chan-ink)] text-[13px] font-bold uppercase tracking-[0.14em] font-sans" aria-current="page">{locale === "pl" ? "Wideo" : "Videos"}</div>
+           <div className="channel-tab-active pb-3 border-b-2 border-[var(--chan-ink)] text-[13px] font-bold uppercase tracking-[0.14em] font-sans" aria-current="page">{tx("Wideo", "Videos")}</div>
         </div>
 
         {allVideos.length > 0 ? (
@@ -208,10 +204,10 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
         ) : (
           <div className="py-20 text-center space-y-4">
              <div className="text-4xl opacity-20">🎬</div>
-             <h3 className="font-brand text-xl font-bold uppercase tracking-tight text-[var(--chan-ink)]">{locale === "pl" ? "Brak publicznych materiałów" : "No public videos"}</h3>
-             <p className="text-[var(--chan-muted)] max-w-md mx-auto">{locale === "pl" ? "Na kanale nie ma jeszcze opublikowanych materiałów. Wróć tu później." : "This channel has no published videos yet. Check back later."}</p>
+             <h3 className="font-brand text-xl font-bold uppercase tracking-tight text-[var(--chan-ink)]">{tx("Brak publicznych materiałów", "No public videos")}</h3>
+             <p className="text-[var(--chan-muted)] max-w-md mx-auto">{tx("Na kanale nie ma jeszcze opublikowanych materiałów. Wróć tu później.", "This channel has no published videos yet. Check back later.")}</p>
              <Link href={getLocalizedHref(locale, "home")} className="inline-block mt-4 text-[14px] font-bold uppercase tracking-widest border-b-2 border-[var(--chan-ink)] pb-1 hover:opacity-70 transition-opacity">
-                {locale === "pl" ? "Przejdź do strony głównej" : "Go to home"}
+                {tx("Przejdź do strony głównej", "Go to home")}
              </Link>
           </div>
         )}

@@ -2,7 +2,9 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { formatDistance } from "date-fns";
-import { enUS, pl } from "date-fns/locale";
+import { dateFnsLocale } from "@/lib/i18n/date-locale";
+import type { Locale } from "@/lib/i18n/routing";
+import { useOptionalTx } from "@/lib/i18n/language-context";
 import { Star, Trash2, Heart, MoreVertical, Edit, Flag, Link as LinkIcon } from "../../icons";
 import { cn } from "@/lib/utils";
 import { CommentView, getAuthorBadge } from "../types";
@@ -23,7 +25,7 @@ import { useRenderClock } from "../../RenderClock";
 interface CommentItemProps {
   comment: CommentView;
   userProfile: { id?: string } | null;
-  language: string;
+  language: Locale;
   t: Record<string, string>;
   canComment: boolean;
   onLike: (id: string) => void;
@@ -43,10 +45,10 @@ interface CommentItemProps {
 const AVATAR_SIZE = 40;
 const REPLY_AVATAR_SIZE = 24;
 
-function formatCommentAge(date: Date, language: string, now: Date) {
+function formatCommentAge(date: Date, language: Locale, now: Date) {
   const formatted = formatDistance(date, now, {
     addSuffix: true,
-    locale: language === "pl" ? pl : enUS,
+    locale: dateFnsLocale(language),
   });
 
   return language === "pl" ? formatted.replace("około", "ok.") : formatted;
@@ -68,6 +70,7 @@ function CommentItemComponent({
   isReactionPending,
   isReply = false
 }: CommentItemProps) {
+  const tx = useOptionalTx(language);
   const isDeletedForPublic = comment.status === 'DELETED';
 
   const authorBadge = getAuthorBadge(comment.author);
@@ -125,7 +128,7 @@ function CommentItemComponent({
       setEditError(
         error instanceof Error && error.message
           ? error.message
-          : language === "pl" ? "Nie udało się zapisać zmian." : "Could not save your changes.",
+          : tx("Nie udało się zapisać zmian.", "Could not save your changes."),
       );
     } finally {
       setIsSavingEdit(false);
@@ -135,7 +138,7 @@ function CommentItemComponent({
   const submitReport = async (reason: CommentReportReasonDto, note?: string) => {
     await onReport(comment.id, reason, note);
     toast(
-      language === "pl" ? "Dziękujemy, zgłoszenie zostało wysłane." : "Thanks, your report was sent.",
+      tx("Dziękujemy, zgłoszenie zostało wysłane.", "Thanks, your report was sent."),
       "success",
     );
   };
@@ -154,9 +157,7 @@ function CommentItemComponent({
       ? formatCommentAge(validCreatedAt, language, now)
       : isReply
         ? t.justNow
-        : language === "pl"
-          ? "niedawno"
-          : "recently"
+        : tx("niedawno", "recently")
     : "";
   const menuItemClassName =
     "min-h-10 gap-2 rounded-xl px-3 py-2 text-sm text-[var(--chan-ink)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]";
@@ -194,7 +195,7 @@ function CommentItemComponent({
         <div className={cn("relative flex items-start justify-between", userProfile && "pr-9")}>
           <div className="flex min-w-0 items-center gap-1.5">
             <span className="truncate text-[13px] font-bold leading-[18px] text-[var(--chan-ink)]">
-              {comment.author?.displayName || (language === "pl" ? "Użytkownik" : "User")}
+              {comment.author?.displayName || (tx("Użytkownik", "User"))}
             </span>
             <time
               className="shrink-0 whitespace-nowrap text-[12px] leading-[18px] text-[var(--chan-muted)]"
@@ -205,7 +206,7 @@ function CommentItemComponent({
             {!isReply && comment.isPinned && (
               <span
                 role="img"
-                aria-label={language === "pl" ? "Przypięty" : "Pinned"}
+                aria-label={tx("Przypięty", "Pinned")}
                 className="inline-flex shrink-0 text-[var(--chan-blue)]"
               >
                 <Star size={12} aria-hidden="true" className="fill-[var(--chan-blue)]" />
@@ -223,7 +224,7 @@ function CommentItemComponent({
                     : "opacity-100 [@media(hover:hover)]:opacity-0 group-hover/comment:opacity-100 group-hover/reply:opacity-100 group-focus-within/comment:opacity-100 group-focus-within/reply:opacity-100 focus:opacity-100",
                 )}
                 aria-label={
-                  language === "pl" ? "Akcje komentarza" : "Comment actions"
+                  tx("Akcje komentarza", "Comment actions")
                 }
               >
                 <MoreVertical aria-hidden="true" size={16} />
@@ -243,7 +244,7 @@ function CommentItemComponent({
                   className={menuItemClassName}
                 >
                   <LinkIcon aria-hidden="true" size={14} />
-                  {language === "pl" ? "Kopiuj link" : "Copy link"}
+                  {tx("Kopiuj link", "Copy link")}
                 </DropdownMenuItem>
 
                 {comment.viewerCanEdit && (
@@ -252,7 +253,7 @@ function CommentItemComponent({
                     className={menuItemClassName}
                   >
                     <Edit aria-hidden="true" size={14} />
-                    {language === "pl" ? "Edytuj" : "Edit"}
+                    {tx("Edytuj", "Edit")}
                   </DropdownMenuItem>
                 )}
                 {comment.viewerCanDelete && (
@@ -263,7 +264,7 @@ function CommentItemComponent({
                     className={cn(menuItemClassName, "text-[var(--chan-muted-2)]")}
                   >
                     <Trash2 aria-hidden="true" size={14} />
-                    {language === "pl" ? "Usuń" : "Delete"}
+                    {tx("Usuń", "Delete")}
                   </DropdownMenuItem>
                 )}
                 {comment.viewerCanReport && (
@@ -272,7 +273,7 @@ function CommentItemComponent({
                     className={menuItemClassName}
                   >
                     <Flag aria-hidden="true" size={14} />
-                    {language === "pl" ? "Zgłoś" : "Report"}
+                    {tx("Zgłoś", "Report")}
                   </DropdownMenuItem>
                 )}
                 {!isReply && comment.viewerCanPin && (
@@ -282,12 +283,8 @@ function CommentItemComponent({
                   >
                     <Star aria-hidden="true" size={16} />
                     {comment.isPinned
-                      ? language === "pl"
-                        ? "Odepnij"
-                        : "Unpin"
-                      : language === "pl"
-                        ? "Przypnij"
-                        : "Pin"}
+                      ? tx("Odepnij", "Unpin")
+                      : tx("Przypnij", "Pin")}
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -309,7 +306,7 @@ function CommentItemComponent({
                   void saveEdit();
                 }
               }}
-              aria-label={language === "pl" ? "Edytuj komentarz" : "Edit comment"}
+              aria-label={tx("Edytuj komentarz", "Edit comment")}
               aria-invalid={Boolean(editError)}
               readOnly={isSavingEdit}
               className="w-full rounded-md border border-[var(--chan-line)] bg-[var(--chan-card)] p-2 text-sm text-[var(--chan-ink)] shadow-[0_1px_0_rgba(15,15,15,0.10),0_6px_14px_rgba(15,15,15,0.06)] focus:outline-none focus:ring-2 focus:ring-[var(--chan-ink)]/20"
@@ -334,7 +331,7 @@ function CommentItemComponent({
                 disabled={!editText.trim() || editText === comment.text || isSavingEdit}
                 className="text-xs font-bold px-3 py-1 bg-[var(--chan-blue)] text-white rounded-md hover:brightness-110 disabled:opacity-50"
                >
-                 {language === "pl" ? "Zapisz" : "Save"}
+                 {tx("Zapisz", "Save")}
                </button>
             </div>
           </div>
@@ -365,7 +362,7 @@ function CommentItemComponent({
 
           {isHearted && (
             <span
-              aria-label={language === "pl" ? "Serce twórcy" : "Creator heart"}
+              aria-label={tx("Serce twórcy", "Creator heart")}
               className="inline-flex h-8 items-center px-1 text-[var(--chan-amber)]"
               role="img"
             >

@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { txRich } from "@/lib/i18n/rich";
 
 type EmailSubscriptionConsentModalProps = {
   open: boolean;
@@ -27,7 +28,7 @@ export default function EmailSubscriptionConsentModal({
   onConfirm,
   onDismiss,
 }: EmailSubscriptionConsentModalProps) {
-  const { t, language } = useLanguage();
+  const { t, language, tx } = useLanguage();
 
   return (
     <Dialog
@@ -48,18 +49,12 @@ export default function EmailSubscriptionConsentModal({
             {t.confirmSubscribeText}
           </DialogDescription>
           <p data-testid="email-consent-legal" className="text-xs leading-relaxed text-[var(--chan-muted)]">
-            {language === "pl" ? (
-              <>
-                Zgodę wycofasz w każdej chwili linkiem w każdej wiadomości. Szczegóły:{" "}
-                <LegalDocLink doc="privacy" language={language}>Polityka prywatności</LegalDocLink> i{" "}
-                <LegalDocLink doc="terms" language={language}>Regulamin</LegalDocLink>.
-              </>
-            ) : (
-              <>
-                You can withdraw consent at any time with the link in every message. Details:{" "}
-                <LegalDocLink doc="privacy" language={language}>Privacy Policy</LegalDocLink> and{" "}
-                <LegalDocLink doc="terms" language={language}>Terms</LegalDocLink>.
-              </>
+            {txRich(
+              tx,
+              "Zgodę wycofasz w każdej chwili linkiem w każdej wiadomości. Szczegóły: {0} i {1}.",
+              "You can withdraw consent at any time with the link in every message. Details: {0} and {1}.",
+              <LegalDocLink doc="privacy" language={language}>{tx("Polityka prywatności", "Privacy Policy")}</LegalDocLink>,
+              <LegalDocLink doc="terms" language={language}>{tx("Regulamin", "Terms")}</LegalDocLink>,
             )}
           </p>
         </DialogHeader>

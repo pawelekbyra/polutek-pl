@@ -1,5 +1,18 @@
 import type { Config } from "tailwindcss"
 
+// Geist has no Chinese glyphs: Chinese text falls back to the visitor's own system font (nothing is
+// downloaded, the CSP only allows self-hosted fonts). `<html lang="zh-CN">` makes the browser pick
+// the Simplified glyph forms; the names below cover macOS/iOS, Windows, Android and Linux.
+const CJK_SYSTEM_FONTS = [
+  '"PingFang SC"',
+  '"Hiragino Sans GB"',
+  '"Microsoft YaHei"',
+  '"Noto Sans CJK SC"',
+  '"Noto Sans SC"',
+  '"Source Han Sans SC"',
+  '"WenQuanYi Micro Hei"',
+]
+
 const config = {
   darkMode: "class",
   content: [
@@ -11,18 +24,22 @@ const config = {
       fontFamily: {
         serif: [
           'var(--font-geist-sans)',
+          ...CJK_SYSTEM_FONTS,
           'sans-serif'
         ],
         sans: [
           'var(--font-geist-sans)',
+          ...CJK_SYSTEM_FONTS,
           'sans-serif'
         ],
         heading: [
           'var(--font-geist-sans)',
+          ...CJK_SYSTEM_FONTS,
           'sans-serif'
         ],
         brand: [
           'var(--font-geist-sans)',
+          ...CJK_SYSTEM_FONTS,
           'sans-serif'
         ],
         mono: [
