@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getAccessConfig, getAdminOrigin } from "@admin/lib/config";
+import { ADMIN_COOKIE_PREFIX, getAccessConfig, getAdminOrigin } from "@admin/lib/config";
+import { isTranslatorPath, lookupSessionRole } from "@admin/lib/auth/roles";
 import { verifyAccessRequest } from "@admin/lib/security/cf-access";
 import { buildCsp, createNonce } from "@admin/lib/security/csp";
 import { checkPanelCsrf } from "@admin/lib/security/csrf";
@@ -26,6 +27,19 @@ export async function proxy(request: NextRequest) {
   if (!csrf.ok) {
     console.warn(`[admin-proxy] csrf refused: ${csrf.reason} ${request.method} ${pathname}`);
     return NextResponse.json({ error: "Forbidden" }, { status: 403, headers: { "cache-control": "no-store" } });
+  }
+
+  // A TRANSLATOR account reaches only the translation screens. Checked here, on every request (soft navigations
+  // fetch their page from the server too), so a new page added by someone else is closed to translators by default.
+  if (!isTranslatorPath(pathname)) {
+    const cookieName = process.env.NODE_ENV === "production" ? `__Host-${ADMIN_COOKIE_PREFIX}.session_token` : `${ADMIN_COOKIE_PREFIX}.session_token`;
+    const cookie = request.cookies.get(cookieName)?.value;
+    const role = cookie ? await lookupSessionRole(cookie).catch(() => null) : null;
+    if (role === "TRANSLATOR") {
+      console.warn(`[admin-proxy] translator outside its screens: ${request.method} ${pathname}`);
+      if (pathname.startsWith("/api/")) return NextResponse.json({ error: "Forbidden" }, { status: 403, headers: { "cache-control": "no-store" } });
+      return NextResponse.redirect(new URL("/tlumaczenia", request.url));
+    }
   }
 
   if (pathname.startsWith("/api/")) {

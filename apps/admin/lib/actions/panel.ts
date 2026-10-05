@@ -22,6 +22,7 @@ export async function panelContext(viewer: AdminViewer): Promise<AppContext> {
     actor: { type: "admin", userId: viewer.userId },
     requestId: h.get("cf-ray") ?? h.get("x-request-id") ?? undefined,
     // Audit rows say from where the admin acted (ADM-14: production had 0 of 25 admin rows with an IP).
+    allowedLanguages: viewer.role === "TRANSLATOR" ? viewer.languages : undefined,
     client: { ip: h.get("cf-connecting-ip")?.trim() || null, userAgent: h.get("user-agent")?.slice(0, 300) || null },
   });
 }

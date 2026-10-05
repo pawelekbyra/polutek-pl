@@ -24,6 +24,9 @@ export type FilmTranslationsDto = {
   rows: TranslationRowDto[];
 };
 
+/** A TRANSLATOR account (ctx.allowedLanguages set) may write only its granted languages and never approves. */
+const languageDenied = (ctx: AppContext, language: string) => (ctx.allowedLanguages && !ctx.allowedLanguages.includes(language) ? new AppError("Nie masz uprawnień do tego języka.", 403, "LANGUAGE_NOT_GRANTED") : null);
+
 const actorId = (ctx: AppContext) => (ctx.actor.type === "admin" ? ctx.actor.userId : null);
 
 async function requireFilm(idOrSlug: string, ctx: AppContext) {
@@ -73,6 +76,8 @@ export type SaveTranslationInput = { videoId: string; language: string; title: s
 export async function saveFilmTranslation(input: SaveTranslationInput, ctx: AppContext): Promise<UseCaseResult<{ slug: string }, AppError>> {
   try {
     if (!isTranslationLanguage(input.language)) return fail(new AppError("Nieobsługiwany język.", 400, "LANGUAGE_UNSUPPORTED"));
+    const denied = languageDenied(ctx, input.language);
+    if (denied) return fail(denied);
     const title = input.title.trim();
     if (!title || title.length > 200) return fail(new AppError("Tytuł: od 1 do 200 znaków.", 400, "TRANSLATION_INVALID_TITLE"));
     const description = input.description?.trim() ? input.description.trim().slice(0, 5000) : null;
@@ -124,6 +129,7 @@ export async function saveFilmTranslation(input: SaveTranslationInput, ctx: AppC
 export async function approveFilmTranslations(input: { videoId: string; language?: string }, ctx: AppContext): Promise<UseCaseResult<{ approved: number }, AppError>> {
   try {
     if (input.language && !isTranslationLanguage(input.language)) return fail(new AppError("Nieobsługiwany język.", 400, "LANGUAGE_UNSUPPORTED"));
+    if (ctx.allowedLanguages) return fail(new AppError("Zatwierdza właściciel kanału, nie tłumacz.", 403, "APPROVAL_NOT_GRANTED"));
     const video = await requireFilm(input.videoId, ctx);
     const res = await ctx.prisma.videoTranslation.updateMany({
       where: { videoId: video.id, status: "AI_DRAFT", ...(input.language ? { language: input.language } : {}) },
@@ -151,4 +157,35 @@ export async function setTranslationSubtitle(input: { videoId: string; language:
   }
   await ctx.prisma.videoTranslation.update({ where: { id: row.id }, data: { subtitleUrl: input.url } });
   return ok({ previous: row.subtitleUrl });
+}
+
+
+export type QueueItem = { slug: string; title: string; languages: { code: string; status: TranslationStatus | null }[] };
+
+/**
+ * "Do przetłumaczenia" for a translator: films of the channel (not archived) with the state of each language
+ * the account may write; films with a missing or machine-drafted language first.
+ */
+export async function listTranslationQueue(languages: readonly string[], ctx: AppContext): Promise<QueueItem[]> {
+  const channel = await MainChannelService.getRequired(ctx);
+  const codes = TRANSLATION_LANGUAGES.map((l) => l.code).filter((c) => languages.includes(c));
+  if (!codes.length) return [];
+  const videos = await ctx.prisma.video.findMany({
+    where: { creatorId: channel.id, status: { in: ["PUBLISHED", "DRAFT"] } },
+    orderBy: { createdAt: "desc" },
+    take: 200,
+    select: { id: true, slug: true, title: true, titleEn: true },
+  });
+  const rows = await ctx.prisma.videoTranslation.findMany({ where: { videoId: { in: videos.map((v) => v.id) }, language: { in: codes } }, select: { videoId: true, language: true, status: true } });
+  const items = videos.map((v) => ({
+    slug: v.slug,
+    title: v.title,
+    languages: codes.map((code) => {
+      const row = rows.find((r) => r.videoId === v.id && r.language === code);
+      // English typed into the old fields before translations existed counts as human-written.
+      return { code, status: (row?.status ?? (code === "en" && v.titleEn ? "EDITED" : null)) as TranslationStatus | null };
+    }),
+  }));
+  const todo = (i: QueueItem) => i.languages.filter((l) => l.status === null || l.status === "AI_DRAFT").length;
+  return items.sort((a, b) => todo(b) - todo(a));
 }

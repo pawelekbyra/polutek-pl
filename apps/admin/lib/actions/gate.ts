@@ -7,6 +7,7 @@
  */
 import type { AppContext } from "@/lib/modules/shared/app-context";
 import { hasFreshStepUp, requireAdmin, type AdminViewer } from "@admin/lib/auth/guard";
+import type { AdminRole } from "@admin/lib/auth/roles";
 import { isDevFixturesEnabled } from "@admin/lib/config";
 import { panelContext, sampleDataRefusal, type ActionResult } from "./panel";
 import { allowAction, retryAfterSeconds, type RateRule } from "./rate-limit";
@@ -17,12 +18,14 @@ export type GateOptions = {
   rate: RateRule;
   /** Money, mail, personal data, ownership: the owner proved who he is in the last 5 minutes. */
   stepUp?: boolean;
+  /** Roles admitted; omitted = OWNER only (safe default). */
+  roles?: readonly AdminRole[];
 };
 
 export type Gate = { ok: true; viewer: AdminViewer; ctx: AppContext } | { ok: false; result: Extract<ActionResult, { ok: false }> };
 
 export async function openGate(opts: GateOptions): Promise<Gate> {
-  const viewer = await requireAdmin(opts.path);
+  const viewer = await requireAdmin(opts.path, { roles: opts.roles });
   if (isDevFixturesEnabled()) return { ok: false, result: sampleDataRefusal() };
   if (!allowAction(viewer.userId, opts.rate)) {
     const wait = retryAfterSeconds(viewer.userId, opts.rate);
