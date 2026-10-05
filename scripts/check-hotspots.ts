@@ -68,7 +68,7 @@ const hotspotExceptions: Record<string, HotspotException> = {
   "app/components/legal/LegalDocs.tsx": {
     maxLines: 660,
     reason:
-      "Pre-existing large PL/EN regulamin/polityka-prywatnosci legal-copy component, already over the source budget before this file was touched for --chan-* token cleanup; tracked for a split by document/locale before launch certification. Nudged up slightly for the TEMP_HIDE_TERMS_EN_SUMMARY temporary flag (see CLAUDE.md TEMPORARY CHANGES REGISTRY) — revert that flag's removal will bring this back down.",
+      "Pre-existing large PL/EN regulamin/polityka-prywatnosci legal-copy component, already over the source budget before this file was touched for --chan-* token cleanup; tracked for a split by document/locale before launch certification.",
   },
 };
 

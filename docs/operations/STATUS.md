@@ -77,7 +77,7 @@ W `main` (repo TAKT `~/git/pawelperfect.git`) i **na produkcji** (obraz `d47e386
 4. Przegląd ostatnich wdrożeń na telefonach: passkey (logowanie i zakładanie konta kluczem), napisy CC, lista języków, okno logowania.
 5. Migracja czyszcząca bazę wg `docs/audit/2026-10-03/audit-database.md` (martwe tabele dostawców wideo, `ClerkEvent`, `CommentLike`/`CommentDislike`,
    `AccessTier.PATRON`, `Creator.bannerUrl`, `NotificationPreference` jeśli nie wróci, `patronThresholdMinor`/`patronBoxMinMinor`), potem squash migracji.
-6. Nowy, krótki `CLAUDE.md` i przepisanie `SERWEREK.md` do stanu faktycznego (agent wstrzymany, gałąź `docs/state-rewrite`).
+6. ~~Nowy, krótki `CLAUDE.md` i przepisanie `SERWEREK.md`~~ zrobione (gałąź `docs/state-rewrite`, do scalenia); odwołania „SERWEREK.md §N” w tym pliku tłumaczy mapa na końcu `SERWEREK.md`.
 7. Naprawy z raportów audytów, których nikt nie ruszył: `audit-frontend.md`, `audit-style.md` (poza komentarzami), `audit-ops.md`, `audit-legal-privacy.md`
    (w `docs/audit/2026-10-03/`).
 

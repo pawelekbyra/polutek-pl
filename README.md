@@ -31,7 +31,6 @@ npx prisma generate
 npm run dev
 ```
 
-Sprawdzenia przed PR: `npm run lint`, `npm run typecheck`, `npm test`, `npm run quality`.
-
-Wdrożenie: `scripts/ops/mergedeploy.sh <PR> <gałąź> <prefiks-tagu>` (scala po zielonym CI i wdraża na
-serwer; opis w `docs/operations/SERWEREK.md`).
+Sprawdzenia przed scaleniem: `npm run quality` (architektura, typecheck, testy), `npm run quality:hotspots`,
+`node scripts/ops/local-ci.mjs` (`docs/operations/LOCAL-CI.md`). Repozytorium jest lokalne (serwer TAKT), bez GitHuba.
+Wdrożenie na serwer tylko na zgodę właściciela: `docs/operations/SERWEREK.md`, rozdział „Wdrożenie”.

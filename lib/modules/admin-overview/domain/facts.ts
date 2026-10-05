@@ -3,7 +3,7 @@
  * domains and monthly costs as documented. Each list says where it comes from and as of when.
  * When the phase-0 collector starts writing `job_run`, RDAP and cost snapshots, these become defaults
  * for rows without data instead of the only source. Update together with deploy/serwerek/systemd/*.timer,
- * SERWEREK.md (sections 4 and 15) and STATUS.md.
+ * SERWEREK.md (chapters 5-8) and STATUS.md.
  */
 import type { CostFactDto, DomainFactDto } from "./types";
 
@@ -11,7 +11,7 @@ export const FACTS_AS_OF = "2026-10-04";
 
 export type ScheduledJob = { name: string; kind: "timer" | "cron"; schedule: string; purpose: string };
 
-/** 9 timers from deploy/serwerek/systemd + backup.sh and health.sh from the server crontab (SERWEREK.md §4). */
+/** 9 timers from deploy/serwerek/systemd + backup.sh and health.sh from the server crontab (SERWEREK.md chapter 8). */
 export const SCHEDULED_JOBS: ScheduledJob[] = [
   { name: "send-broadcasts", kind: "timer", schedule: "co minutę", purpose: "wysyła kolejkę rozsyłek e-mail" },
   { name: "stripe-reconciliation", kind: "timer", schedule: "co 15 min", purpose: "dopina wpłaty potwierdzone w Stripe, zamyka porzucone" },

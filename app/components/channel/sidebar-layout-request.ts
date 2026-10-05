@@ -34,7 +34,7 @@ export type SidebarLayoutRequest = {
 /**
  * ChannelHome renders TWO SidebarPlaylist instances at once — the always-mounted
  * mobile "videos" tab panel and the desktop aside (both stay mounted by design,
- * only CSS-hidden per viewport; see the "always-mounted" note in CLAUDE.md). Each
+ * only CSS-hidden per viewport; see docs/architecture/public-shell-and-player.md). Each
  * instance used to fire its own `/api/channel/sidebar` request on mount, so every
  * page view did that route's DB work twice on the highest-traffic page in the app.
  *

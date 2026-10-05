@@ -25,6 +25,19 @@ albo znika w tym samym PR. Historia jest w git.
 | Nowy panel administratora: parytet ze starym `/admin` (każda funkcja, przycisk i trasa → ekran → faza) | [`architecture/admin-parity.md`](architecture/admin-parity.md) |
 | Nowy panel administratora: klikalny prototyp (dane przykładowe) i system projektowy | [`design/admin-panel/DESIGN-SYSTEM.md`](design/admin-panel/DESIGN-SYSTEM.md), prototyp: `design/admin-panel/prototype-standalone.html` |
 
+## Przeniesione reguły i opisy modułów (`architecture/`)
+
+| Temat | Plik |
+|---|---|
+| Napiwki, płatności, ewidencja wspierających | [`architecture/payments-and-tips.md`](architecture/payments-and-tips.md) |
+| Miniatury w R2 | [`architecture/thumbnails-r2.md`](architecture/thumbnails-r2.md) |
+| Premiery i pasek zbiórki | [`architecture/premieres-and-fundraising.md`](architecture/premieres-and-fundraising.md) |
+| Komentarze i reakcje | [`architecture/comments-and-reactions.md`](architecture/comments-and-reactions.md) |
+| Powłoka publiczna, ładowanie, odtwarzacz, napisy | [`architecture/public-shell-and-player.md`](architecture/public-shell-and-player.md) |
+| Wybór języka i dokumenty prawne | [`architecture/i18n-and-legal.md`](architecture/i18n-and-legal.md) |
+| Prywatność, retencja, e-mail | [`architecture/privacy-email-retention.md`](architecture/privacy-email-retention.md) |
+| Baza i migracje | [`architecture/database-and-migrations.md`](architecture/database-and-migrations.md) |
+
 ## Jak to obsługiwać (`operations/`)
 
 | Temat | Plik |
@@ -33,6 +46,8 @@ albo znika w tym samym PR. Historia jest w git.
 | Języki interfejsu (osiem języków): jak działa `tx()`, jak dodać tekst lub język, decyzje, słownik | [`operations/I18N.md`](operations/I18N.md) |
 | Lokalne CI przed scaleniem (zamiast GitHub Actions) | [`operations/LOCAL-CI.md`](operations/LOCAL-CI.md) |
 | Dzienna odprawa „co słychać?” (raport tylko do odczytu, skill `odprawa`) | [`operations/DAILY-BRIEFING.md`](operations/DAILY-BRIEFING.md) |
+| Dźwięk w odtwarzaczu i przycisk logo | [`operations/PLAYER-SOUND.md`](operations/PLAYER-SOUND.md) |
+| Wydajność: pomiary CPX22 z 2026-10-01 (aplikacja, ffmpeg) | [`operations/BENCHMARK-2026-10-01.md`](operations/BENCHMARK-2026-10-01.md) |
 | Wydajność: test obciążenia, ilu widzów wytrzymuje serwer | [`operations/LOAD-TEST.md`](operations/LOAD-TEST.md) |
 | Wideo: upload, kodowanie, diagnostyka | [`operations/VIDEO-PIPELINE.md`](operations/VIDEO-PIPELINE.md) |
 | Wideo: dostarczanie HLS, Worker, R2 | [`operations/HLS-SELF-HOSTED.md`](operations/HLS-SELF-HOSTED.md) |

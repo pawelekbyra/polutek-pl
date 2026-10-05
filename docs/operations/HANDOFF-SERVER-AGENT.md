@@ -83,7 +83,7 @@ drugą kopię offline** (menedżer haseł), bo przy utracie serwera bez tego klu
 2. Przejrzyj i scal gałęzie panelu w kolejności: `feat/admin-phase2-content` → `feat/admin-translations` → `feat/admin-server-headroom`; dokończ `feat/admin-phase2-community` (rebase na `main`).
 3. `feat/preloader-polish` (obejrzyj wizualnie z właścicielem), `feat/local-ci`, `feat/ops-set-role` (potem wykonaj `set-role` po zgodzie właściciela: zostaje konto `user_3FeY8okjicDKlWDGSSc4Q7bvaPZ`).
 4. Panel: fazy 3, A, 5 według [`architecture/admin-panel.md`](../architecture/admin-panel.md) §4 i [`architecture/admin-parity.md`](../architecture/admin-parity.md); wygląd jak w `docs/design/admin-panel/`.
-5. Migracja czyszcząca bazy (`audit-database.md`), nowy krótki `CLAUDE.md`, przepisanie `SERWEREK.md`.
+5. Migracja czyszcząca bazy (`audit-database.md`). (Nowy krótki `CLAUDE.md` i przepisany `SERWEREK.md`: zrobione na gałęzi `docs/state-rewrite`.)
 
 Wartości, które trzeba znać: serwer `serwerek` Hetzner CPX22 (2 vCPU, 4 GB, 75 GB), snapshot 439648964 z 2026-10-05; produkcja `www.pawelperfect.com` (Cloudflare Tunnel), panel `admin.pawelperfect.com`
 (Access, tylko `pawel.perfect@gmail.com`); jedyne konto ADMIN docelowo: `pawel.perfect@gmail.com` = `user_3FeY8okjicDKlWDGSSc4Q7bvaPZ`.
