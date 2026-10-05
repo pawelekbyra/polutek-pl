@@ -63,7 +63,7 @@ W `main` (repo TAKT `~/git/pawelperfect.git`) są scalone: panel faz 2 (Treści,
 |---|---|---|
 | `feat/preloader-polish` | Preloader: ciemne tło od pierwszej klatki, czcionka Major Mono Display, tylko „WCZYTUJĘ…”, kursor-marchewka. Nie scalona (czeka na obejrzenie w przeglądarce) | Obejrzeć z właścicielem, scalić |
 | `fix/player-topbar` (w toku) | Dźwięk po przeładowaniu, usunięcie przycisku prędkości, logo okularów wraca na stronę główną z hero | Przejrzeć raport agenta, scalić |
-| `feat/p5-retire-old-admin` (w toku) | Faza 5: stary `/admin` na `www` znika (308 do nowego panelu, 404 dla `/api/admin*`), moderacja i `ADMIN_EMAILS` | **Wdrożyć dopiero po rejestracji administratora w nowym panelu** |
+| `feat/p5-retire-old-admin` (w toku) | Faza 5: stary `/admin` na `www` znika (308 do nowego panelu, 404 dla `/api/admin*`), moderacja i `ADMIN_EMAILS` | **Wdrożyć dopiero po udanym logowaniu do nowego panelu przez Access** |
 | `feat/i18n-ui-languages` (w toku) | Interfejs w DE/ES/FR/IT/PT/ZH (bez maili i regulaminu), działające przełączniki | Przejrzeć raport, scalić |
 | `docs/state-rewrite`, `fix/audits-www` (wstrzymane) | Nowy krótki `CLAUDE.md` + przepisany `SERWEREK.md`; naprawy z audytów frontendu/stylu/prywatności. Agenci przerwani limitem, część pracy w katalogach `~/work/docs` i `~/work/audits` | Wznowić po zakończeniu bieżących |
 
@@ -79,11 +79,8 @@ W `main` (repo TAKT `~/git/pawelperfect.git`) są scalone: panel faz 2 (Treści,
 
 ## Najbliższe kroki (kolejność proponowana, jeden agent naraz)
 
-0. **Rejestracja administratora w panelu (właściciel, na serwerze):** `ssh serwerek`, potem
-   `cd /opt/serwerek/apps/polutek && docker compose --profile admin run --rm admin node apps/admin/scripts/admin-enroll.mjs --email pawel.perfect@gmail.com`;
-   link `https://admin.pawelperfect.com/rejestracja#t=…` (15 min, jednorazowy, nie wklejać do czatu) otworzyć w przeglądarce: kod QR do aplikacji TOTP,
-   **zapisać 10 kodów zapasowych poza komputerem**, dodać klucz dostępu (najlepiej dwa: komputer i telefon). Potem sprawdzić „Dzisiaj” i „System”.
-1. Rejestracja administratora (punkt 0), potem wdrożenie faz 2, 3 i A według [`ADMIN-PANEL.md`](ADMIN-PANEL.md) rozdz. 1a (backup, migracje, `admin.env`, obraz strony, obraz panelu, kontrola).
+0. **Pierwsze logowanie do nowego panelu przez Access (właściciel):** otworzyć `https://admin.pawelperfect.com`, wpisać `pawel.perfect@gmail.com`, przepisać kod z maila (bez rejestracji, kluczy i TOTP; [`ADMIN-PANEL.md`](ADMIN-PANEL.md) rozdz. 1b). Potem sprawdzić „Dzisiaj” i „System”.
+1. Udane logowanie (punkt 0), potem wdrożenie faz 2, 3 i A według [`ADMIN-PANEL.md`](ADMIN-PANEL.md) rozdz. 1a (backup, migracje, `admin.env`, obraz strony, obraz panelu, kontrola).
 2. Po wdrożeniu i sprawdzeniu nowego panelu: wdrożyć fazę 5 (wygaszenie starego `/admin`); wcześniej nie, bo bez zarejestrowanego administratora właściciel straciłby dostęp do funkcji administracyjnych.
 2a. Preloader (`feat/preloader-polish`): obejrzeć wizualnie z właścicielem, potem scalić.
 3. Jedna prawdziwa wpłata testowa (webhook Stripe nigdy nie dostał udanej wpłaty; `StripeEvent` jest pusty): robi właściciel.

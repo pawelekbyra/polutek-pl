@@ -24,7 +24,7 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3100 HOSTNAME=0.0.0.0 NOD
 COPY --from=build --chown=node:node /app/apps/admin/.next/standalone ./
 COPY --from=build --chown=node:node /app/apps/admin/.next/static ./apps/admin/.next/static
 COPY --from=build --chown=node:node /app/apps/admin/public ./apps/admin/public
-# The enrollment CLI (run over SSH: docker compose --profile admin run --rm admin node apps/admin/scripts/admin-enroll.mjs ...).
+# The enrollment CLI (legacy ADMIN_AUTH_MODE=passkey, and translator accounts; not needed for the owner in the default access mode; run over SSH: docker compose --profile admin run --rm admin node apps/admin/scripts/admin-enroll.mjs ...).
 COPY --from=build --chown=node:node /app/apps/admin/scripts/admin-enroll.mjs ./apps/admin/scripts/admin-enroll.mjs
 RUN mkdir -p /app/apps/admin/.next/cache && chown -R node:node /app/apps/admin/.next
 USER node
