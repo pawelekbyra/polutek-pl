@@ -139,6 +139,34 @@ zachowania Stripe przy `refund.failed` dla BLIK/P24.
 **P1:** PA-04 (rekonsyliacja zwrotów ze Stripe w cronie, `refund.failed`), decyzja PA-03 (A) i PA-10 (retencja), PA-09 (kolejność audytu).
 **P2:** PA-08 (CHF/GBP), a po przejściu na live decyzja, co zrobić ze starymi wpłatami testowymi.
 
+## 7a. Realizacja (follow-up na gałęzi `fix/payments-audit-followups`)
+
+| ID | Status | Commit | Co zmieniono |
+|---|---|---|---|
+| PA-01, 02, 05, 06, 07 | naprawione wcześniej | patrz tabela w sekcji 2 | bez zmian |
+| PA-04 | NAPRAWIONE | `a3b2023b` | Lista zwrotów ze Stripe jest prawdą (`syncRefundsFromStripe`, pod blokadą wiersza). Liczą się zwroty `succeeded`, `pending`, `requires_action`; `failed` i `canceled` przestają się liczyć (kwota, status, suma osoby i znacznik wracają). Zdarzenia `charge.refunded`, `charge.refund.updated`, `refund.created/updated/failed` tylko wskazują płatność. Cron sprawdza 25 płatności na przebieg (kolumna `Payment.refundsCheckedAt`, ponowne sprawdzenie po 6 h). `adminRefund` czyta Stripe przed limitem i po zwrocie. |
+| PA-09 | NAPRAWIONE | `a3b2023b` | Wpis `PAYMENT_REFUND_REQUESTED` przed Stripe (błąd = zwrot nie jest wysłany), księga aktualizowana zaraz po Stripe, wpis `PAYMENT_REFUNDED` best effort. Zbieżność: webhook i cron czytają Stripe. |
+| PA-03 | NAPRAWIONE (opcja A) | `b7a184e6` | Usunięcie konta kolejkuje (tabela `StripeCustomerAnonymization`) `customers.update` z pustymi: e-mail, nazwa, telefon, opis, `metadata.userId`. Ograniczone czasowo po commicie, ponowienia z backoffem codziennie w `/api/cron/retention`, alert po 5 próbach, audyt `STRIPE_CUSTOMER_ANONYMIZED`. Błąd Stripe nie psuje usunięcia. |
+| PA-08 | NAPRAWIONE | `3b7b88c8` | `normalizedTotal` liczy CHF i GBP (`DISPLAY_CHF/GBP_TO_PLN_RATE`, domyślnie 4,5 i 4,9). |
+| PA-10 | DO DECYZJI | commit z tym dokumentem | Propozycja: `payments-retention-proposal.md` (opcje A/B/C, rekomendacja A). Brak kodu bez decyzji. |
+| PA-11 do PA-16 | bez działania | | jak w sekcji 2 |
+
+### Księgowość a PA-03 (dlaczego Klient zostaje)
+Płatności (`Payment`, kwoty, daty, zwroty) są naszym zapisem księgowym i zostają razem z nagrobkiem konta. Z Klienta w Stripe znikają tylko identyfikatory osobowe (e-mail, nazwa, telefon, opis, `userId`),
+a sam obiekt Klienta zostaje, więc PaymentIntenty i opłaty dalej na niego wskazują (Stripe trzyma dane transakcyjne jako niezależny administrator; `billing_details` na metodzie płatności i opłacie nie da się usunąć przez `customers.update`).
+Opcja B (`customers.del`) odpada: usuwa Klienta, a dane transakcyjne i tak zostają. `metadata.userId` na PaymentIntentach to nieosobowy identyfikator wiersza-nagrobka.
+
+### Zmiany konfiguracyjne u właściciela (wymagane dla PA-04)
+Endpoint webhooka Stripe musi dodatkowo subskrybować: `refund.created`, `refund.updated`, `refund.failed` (oraz `charge.refunded`, jak dotąd). `charge.refund.updated` jest przestarzałe, ale kod je obsłuży, jeśli przyjdzie. Bez nich cron i tak dociąga stan w ciągu godzin.
+
+### Migracje (addytywne, bez ryzyka dla danych)
+`20261006090000_payment_refunds_checked_at` (kolumna nullowalna), `20261006091000_stripe_customer_anonymization` (nowa tabela). Wdrożenie: `prisma migrate deploy` przed wdrożeniem kodu.
+
+### Źródła do tej sekcji
+* Zwroty, statusy `pending/requires_action/succeeded/failed/canceled`, zdarzenia `refund.failed`, `refund.updated`: https://docs.stripe.com/refunds
+* Aktualizacja Klienta, kasowanie pól pustą wartością: https://docs.stripe.com/api/customers/update
+* Klucze idempotencji: https://docs.stripe.com/api/idempotent_requests
+
 ## 8. Źródła
 
 * Minimalne kwoty i waluty bezdziesiętne: https://docs.stripe.com/currencies (PLN 2,00, EUR/USD/CHF 0,50, GBP 0,30; Stripe oczekuje kwot w najmniejszej jednostce).
