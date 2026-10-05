@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ACCESS_LOGOUT_PATH } from "@admin/lib/config";
 import { AuthBrand } from "./sign-in-card";
 
@@ -22,7 +23,7 @@ export function AccessNotice({ email, kind }: { email: string | null; kind: "no_
         <p className="auth-lede">{lede}</p>
       </div>
       <div className="auth-actions">
-        <a className="btn btn-primary" href="/">Wróć do panelu</a>
+        <Link className="btn btn-primary" href="/">Wróć do panelu</Link>
         <a className="btn" href={ACCESS_LOGOUT_PATH}>Wyloguj z Cloudflare i zaloguj innym adresem</a>
       </div>
     </section>
