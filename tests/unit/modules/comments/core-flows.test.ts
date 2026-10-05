@@ -35,6 +35,7 @@ describe('Comments Core Use Cases', () => {
       video: {
         findUnique: vi.fn(),
       },
+      user: { findUnique: vi.fn().mockResolvedValue({ commentMutedUntil: null }) },
       commentReport: {
           createMany: vi.fn().mockResolvedValue({ count: 1 }),
           deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
@@ -91,6 +92,25 @@ describe('Comments Core Use Cases', () => {
       mockPrisma.comment.create.mockResolvedValue({ id: 'new-c', createdAt: new Date(), updatedAt: new Date() });
       mockPrisma.comment.findUnique.mockResolvedValue({ id: 'new-c', videoId, createdAt: new Date(), updatedAt: new Date(), author: { id: userId, role: 'USER' }, reactions: [] });
 
+      const result = await createVideoComment({ videoId, text: 'hello' }, createCtx({ type: 'user', userId }));
+      expect(result.ok).toBe(true);
+    });
+
+    it('refuses a comment from an account muted by moderation, before any access check or write', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ commentMutedUntil: new Date(Date.now() + 3_600_000) });
+      const result = await createVideoComment({ videoId, text: 'hello' }, createCtx({ type: 'user', userId }));
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result).toMatchObject({ error: { type: 'FORBIDDEN', message: expect.stringContaining('wyłączone') } });
+      expect(checkVideoAccess).not.toHaveBeenCalled();
+      expect(mockPrisma.comment.create).not.toHaveBeenCalled();
+    });
+
+    it('lets an account whose mute has expired comment again', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({ commentMutedUntil: new Date(Date.now() - 1000) });
+      (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: true } });
+      mockPrisma.video.findUnique.mockResolvedValue({ id: videoId, creatorId: 'c1' });
+      mockPrisma.comment.create.mockResolvedValue({ id: 'new-c', createdAt: new Date(), updatedAt: new Date() });
+      mockPrisma.comment.findUnique.mockResolvedValue({ id: 'new-c', videoId, createdAt: new Date(), updatedAt: new Date(), author: { id: userId, role: 'USER' }, reactions: [] });
       const result = await createVideoComment({ videoId, text: 'hello' }, createCtx({ type: 'user', userId }));
       expect(result.ok).toBe(true);
     });
