@@ -35,6 +35,15 @@ describe('validateAppEnv', () => {
     expect(result.errors).toEqual([]);
   });
 
+  it('rejects mixed Stripe test and live keys and a webhook secret that is not a signing secret', () => {
+    const mixed = validateAppEnv({ ...productionEnv, STRIPE_SECRET_KEY: 'sk_live_x', NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_x' }, 'production');
+    expect(mixed.errors.join(' ')).toMatch(/same mode/);
+    const restricted = validateAppEnv({ ...productionEnv, STRIPE_SECRET_KEY: 'rk_live_x', NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_live_x' }, 'production');
+    expect(restricted.errors.join(' ')).not.toMatch(/Stripe|STRIPE/);
+    const badSecret = validateAppEnv({ ...productionEnv, STRIPE_WEBHOOK_SECRET: 'sk_live_oops' }, 'production');
+    expect(badSecret.errors.join(' ')).toMatch(/whsec_/);
+  });
+
   it('does not require the admin bootstrap e-mails in production (one-time bootstrap, emptied afterwards)', () => {
     const result = validateAppEnv({ ...productionEnv, ADMIN_EMAILS: '' }, 'production');
 
