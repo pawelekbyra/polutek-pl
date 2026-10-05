@@ -4,8 +4,8 @@ Jedyna lista otwartych prac. Aktualizuj ją w tym samym PR, który coś zamyka a
 zrobionych tu nie trzymamy (są w git). Przed uznaniem punktu za otwarty sprawdź stan faktyczny
 (`git log origin/main`, `gh pr list`, serwer, DNS).
 
-Ostatnia aktualizacja: 2026-10-05 (koniec długiej sesji; wszystkie prace agentów wstrzymane na prośbę właściciela,
-bo jego komputer zamulał).
+Ostatnia aktualizacja: 2026-10-05 (przejęcie pracy przez agenta na serwerze TAKT: repo `~/pawelperfect`, GitHub nie jest używany;
+wcześniej wszystkie prace agentów były wstrzymane na prośbę właściciela).
 
 ## Jak wznowić pracę (przeczytaj najpierw)
 
@@ -13,7 +13,10 @@ bo jego komputer zamulał).
    Google, Resend, Hetzner przez serwer). Pytaj tylko o: wydatki, hasła/2FA/odzyskiwanie, kasowanie całych kont/projektów/stref/
    bazy produkcyjnej, to co każe e-mail lub strona. Sekrety: od 2026-10-05 `/root/.ai-secrets/` na serwerze (wcześniej `%USERPROFILE%\.ai-secrets\` na komputerze właściciela, który już nie jest używany; nigdy do repo ani czatu).
    Zasady pracy i dostępy: `CLAUDE.md` §0, `AGENT_ACCESS.md`.
-2. **GitHub Actions nie działa** (od 2026-10-04 ~17:33: limit minut prywatnego repo wyczerpany, właściciel nie płaci).
+2. **Praca na serwerze TAKT (od 2026-10-05):** repo `~/pawelperfect` (origin: `~/git/pawelperfect.git`, bez GitHuba), Node 22 w `~/.local/node22`,
+   `npm run quality` (architektura + typecheck jak CI + testy) przechodzi w ok. 70 s na Linuksie (6 „fałszywych naruszeń” z Windows nie występują).
+   Opis i zasady: `PAWELPERFECT.md` w repo TAKT. Wdrożenie na serwerek (`git archive main` → `deploy.sh`) tylko na zgodę właściciela.
+2a. **GitHub Actions nie działa** (od 2026-10-04 ~17:33: limit minut prywatnego repo wyczerpany, właściciel nie płaci).
    Weryfikacja jest LOKALNA: testy dotknięte zmianami (`npx vitest run <pliki> --testTimeout=120000 --hookTimeout=120000`:
    komputer właściciela jest wolny i bez tego część testów pada na czasie), `npx tsc --noEmit -p tsconfig.typecheck.json`
    (błędy z `.next/` ignoruj), `npx eslint` na zmienionych plikach, `npm run quality:hotspots`. Lokalnie
@@ -48,9 +51,7 @@ bo jego komputer zamulał).
   **Brakuje tylko rejestracji administratora** (robi właściciel, link jednorazowy, [`ADMIN-PANEL.md`](ADMIN-PANEL.md) rozdz. 2).
 - **Snapshot serwera** zrobiony przez właściciela 2026-10-05 ~00:13 (id 439648964, `serwereksnapszot1`, 27,04 GB, ~0,48 €/mies.).
   Plan przenoszenia na inny serwer albo powiększenia: sekcja „Hetzner: powiększenie i przenoszenie” niżej.
-- Konta ADMIN w bazie: **4** (powinno zostać 1). Właściciel: `pawel.perfect@gmail.com` = `user_3FeY8okjicDKlWDGSSc4Q7bvaPZ`. Do zdjęcia roli
-  (decyzja właściciela, rola, NIE kasowanie kont): `user_3BMZnb64ITqtCf5NxXPFnZLeeDZ` (z końcówką `_stale`), `user_3ByQKNOiftiVr0VJZbX2QE46W8g`,
-  `H0aCus81jxyEpuEFsCdYMPW0NftWCRiA` (= `hello@pawelperfect.com`). Wykonać przez akcję `set-role` (gałąź `feat/ops-set-role`, #1680), nie ad-hoc UPDATE.
+- Konta ADMIN: akcja `set-role` wykonana 2026-10-04 (patrz #1680): zostaje konto właściciela `pawel.perfect@gmail.com` = `user_3FeY8okjicDKlWDGSSc4Q7bvaPZ`, trzy pozostałe mają rolę USER (konta nie usunięte). Stan w bazie do potwierdzenia odprawą.
 
 ## Otwarte PR-y i gałęzie (kolejność scalania)
 
@@ -59,12 +60,12 @@ Wszystkie PR-y były weryfikowane lokalnie (Actions nie działa). Przed scalenie
 | PR | Gałąź | Zakres i stan | Co dalej |
 |---|---|---|---|
 | #1678 | `feat/preloader-polish` | Preloader: ciemne tło od pierwszej klatki, napis i królik od razu (w HTML serwera), deszcz bez rozbiegu, czcionka **Major Mono Display** (wybór właściciela), stan pod napisem **tylko „WCZYTUJĘ…”** (bez „/ WEJDŹ”), marchewka jako kursor na całym ekranie bramki (czubek = lewy górny róg). Plik porównania czcionek `docs/design/preloader-fonts.html`. Agent przerwany tuż przed końcową weryfikacją wizualną | Obejrzeć w przeglądarce (1280/390 px, wolne łącze), poprawić ewentualne usterki, scalić i wdrożyć |
-| #1680 | `feat/ops-set-role` | Akcja `scripts/ops/actions/set-role.mjs` (use case `changeUserRoleAsAdmin`, podgląd/`--yes`, audyt). **Nic jeszcze nie wykonano na produkcji.** Właściciel zgodził się: zostaje tylko jego konto ADMIN | Scalić (`--no-deploy` jeśli nie zmienia aplikacji), ustawić `OPS_ADMIN_USER_ID=user_3FeY8okjicDKlWDGSSc4Q7bvaPZ` w `secrets.env`, wykonać `--yes` dla trzech kont po kolei z podglądem, zweryfikować, że został jeden admin (właściciel) |
-| #1679 | `feat/local-ci` | `scripts/ops/local-ci.mjs` + `LOCAL_CI=1` w `mergedeploy.sh`, naprawy błędów typów w testach. Brakuje dokumentacji końcowej (`docs/operations/LOCAL-CI.md`) i pełnego uruchomienia na własnej gałęzi | Dokończyć, uruchomić, scalić |
-| #1673 | `feat/admin-phase2-content` | Panel admina, faza 2 – Treści (lista, nowy film z uploadem, edycja, kodowanie, napisy, układ kanału) | Scalić pierwszy, potem poniższe |
-| #1675 | `feat/admin-translations` | Model danych tłumaczeń filmów (`VideoTranslation`, `VideoSlugHistory`) z kompatybilnością odczytu, ekran „Tłumaczenia” (generowanie AI jeszcze nie) | Scalić po #1673 (migracja addytywna) |
-| #1677 | `feat/admin-server-headroom` | Wskaźnik „Zapas serwera” w „System” i „Dzisiaj” (próg z `docs/operations/LOAD-TEST.md`) | Scalić po #1675 |
-| #1681 | `feat/admin-phase2-community` (WIP, draft) | Faza 2 – Społeczność (użytkownicy: lista, szczegóły, wpłaty, rola, usunięcie; komentarze, zgłoszenia). Praca w toku, jeden commit WIP z niezacommitowanymi zmianami | Po scaleniu #1673/#1675/#1677 rebase na `main`, dokończyć, przetestować, wyjąć z draftu |
+| #1680 | `feat/ops-set-role` | Akcja `scripts/ops/actions/set-role.mjs` (use case `changeUserRoleAsAdmin`, podgląd/`--yes`, audyt). **Scalona do `main` na TAKT (2026-10-05).** Wykonana na produkcji 2026-10-04 (3 wpisy `ops user.set-role ... wynik=ok` w `/var/log/serwerek/changes.log`, 23:47–23:49): trzy konta zdjęte do roli USER (konta nie usunięte); zostaje konto właściciela | Zrobione. Do potwierdzenia stan ról w bazie przy najbliższej odprawie |
+| #1679 | `feat/local-ci` | `scripts/ops/local-ci.mjs` + `LOCAL_CI=1` w `mergedeploy.sh`, naprawy błędów typów w testach, usunięte martwe testy. **Scalona do `main` na TAKT (2026-10-05).** Brakuje dokumentacji końcowej (`docs/operations/LOCAL-CI.md`) | Dopisać `LOCAL-CI.md`; wyjaśnić 14 błędów typów w pełnym `tsc --noEmit` (z testami), których `npm run quality` nie sprawdza |
+| #1673 | `feat/admin-phase2-content` | Panel admina, faza 2 – Treści (lista, nowy film z uploadem, edycja, kodowanie, napisy, układ kanału). **Scalona do `main` na TAKT (2026-10-05), niewdrożona** | Wdrożyć z właścicielem (R2 w `admin.env`, CORS bucketa: `ADMIN-PANEL.md`) |
+| #1675 | `feat/admin-translations` | Model danych tłumaczeń filmów (`VideoTranslation`, `VideoSlugHistory`) z kompatybilnością odczytu, ekran „Tłumaczenia” (generowanie AI jeszcze nie). **Scalona do `main` na TAKT (2026-10-05), niewdrożona** | Przy wdrożeniu migracja bazy (addytywna): najpierw `backup.sh` |
+| #1677 | `feat/admin-server-headroom` | Wskaźnik „Zapas serwera” w „System” i „Dzisiaj” (próg z `docs/operations/LOAD-TEST.md`). **Scalona do `main` na TAKT (2026-10-05), niewdrożona** | Przy wdrożeniu: nadać roli `pp_analytics_ro` hasło (`ADMIN-PANEL.md`) |
+| #1681 | `feat/admin-phase2-community` (WIP, draft) | Faza 2 – Społeczność (użytkownicy: lista, szczegóły, wpłaty, rola, usunięcie; komentarze, zgłoszenia). Praca w toku, jeden commit WIP z niezacommitowanymi zmianami | Podstawa (#1673/#1675/#1677) jest już w `main`: dokończyć (na TAKT czyste scalenie z `main`, testy zielone), wstrzymane decyzją właściciela, przetestować, wyjąć z draftu |
 
 **Mapa dokumentacji panelu admina (czytaj w tej kolejności):**
 1. [`architecture/admin-panel.md`](../architecture/admin-panel.md): wizja, 12 decyzji, **plan wszystkich faz** (0, 1, 2, 3, A, 5 z zakresem, kryteriami ukończenia, testami, zależnościami, ryzykami), jak zbudowana faza 1 (§9).
@@ -74,7 +75,7 @@ Wszystkie PR-y były weryfikowane lokalnie (Actions nie działa). Przed scalenie
 5. **Szczegółowy plan fazy 2 (Treści):** `docs/architecture/admin-phase2-content.md` jest w gałęzi `feat/admin-phase2-content` (PR #1673), na `main` będzie po jego scaleniu (do tego czasu: `git show origin/feat/admin-phase2-content:docs/architecture/admin-phase2-content.md`).
 6. Koncepty powiązane: [`architecture/translations-concept.md`](../architecture/translations-concept.md) (model w #1675), wskaźnik zapasu serwera (#1677).
 
-**Stan faz panelu:** 0 zrobiona i wdrożona; 1 zrobiona i **wdrożona** (czeka tylko na rejestrację administratora); 2 w PR-ach #1673/#1675/#1677 oraz draft #1681 (Społeczność); 3, A i 5 nie zaczęte.
+**Stan faz panelu:** 0 zrobiona i wdrożona; 1 zrobiona i **wdrożona** (czeka tylko na rejestrację administratora); 2 Treści (+ tłumaczenia, zapas serwera) **scalona do `main`, niewdrożona**; 2 Społeczność (#1681) WIP, wstrzymana; 3, A i 5 nie zaczęte.
 
 ## Najbliższe kroki (kolejność proponowana, jeden agent naraz)
 
@@ -82,8 +83,8 @@ Wszystkie PR-y były weryfikowane lokalnie (Actions nie działa). Przed scalenie
    `cd /opt/serwerek/apps/polutek && docker compose --profile admin run --rm admin node apps/admin/scripts/admin-enroll.mjs --email pawel.perfect@gmail.com`;
    link `https://admin.pawelperfect.com/rejestracja#t=…` (15 min, jednorazowy, nie wklejać do czatu) otworzyć w przeglądarce: kod QR do aplikacji TOTP,
    **zapisać 10 kodów zapasowych poza komputerem**, dodać klucz dostępu (najlepiej dwa: komputer i telefon). Potem sprawdzić „Dzisiaj” i „System”.
-1. Preloader (#1678), potem `set-role` (#1680) i lokalne CI (#1679).
-2. Panel admina: scalić #1673 → #1675 → #1677, dokończyć #1681 (Społeczność), wdrożyć panel z właścicielem ([`ADMIN-PANEL.md`](ADMIN-PANEL.md)).
+1. Preloader (#1678): obejrzeć wizualnie z właścicielem, potem scalić. (`set-role` #1680 i lokalne CI #1679 są już scalone w `main`.)
+2. Panel admina: #1673/#1675/#1677 są scalone w `main`; dokończyć #1681 (Społeczność), wdrożyć fazę 2 z właścicielem ([`ADMIN-PANEL.md`](ADMIN-PANEL.md)).
    Dalsze fazy ([`architecture/admin-panel.md`](../architecture/admin-panel.md) §4, parytet ze starym panelem w
    [`architecture/admin-parity.md`](../architecture/admin-parity.md)): **faza 3** (Kanał, Przychody, Komunikacja, Powiadomienia, Bezpieczeństwo),
    **faza A** (analityka i premiera na żywo, gdy będzie 7+ dni danych telemetrii), **faza 5** (wygaszenie starego `/admin`).
@@ -140,7 +141,7 @@ Sekrety właściciel skopiował do `/root/.ai-secrets/` (Cloudflare, Hetzner, Re
   przed startem minimum fazy 0–1 + poprawki starego panelu. Właściciel zatwierdził prototyp (`docs/design/admin-panel/`). Panel ma obejmować WSZYSTKO, co robi stary
   (filmy, użytkownicy, kanał, płatności, rozsyłki), nie tylko analitykę.
 - **Odprawa dzienna:** bez autonomicznego agenta AI na serwerze; Claude Code na żywo jako operator, działania po zgodzie w czacie.
-- **Konta ADMIN:** zostaje tylko `pawel.perfect@gmail.com` (zdjąć rolę trzem pozostałym, nie kasować kont; kasowanie kont zostawia właściciel w panelu).
+- **Konta ADMIN:** zostaje tylko `pawel.perfect@gmail.com` (rola trzem pozostałym zdjęta 2026-10-04 akcją `set-role`, konta nie skasowane; kasowanie kont zostawia właściciel w panelu).
 - Pasek zbiórki zostaje ustawiany ręcznie. Krótkie adresy filmów **wstrzymane** (maskowanie `UrlMask` zostaje); docelowo `/pl/<nazwa>` i `/en/<name>` per język.
 - Lista języków: globus w przycisku (bez flagi), wiersze z flagami (`public/flags/`, circle-flags MIT), wszystkie 8 widoczne bez przewijania, bez wyszukiwarki.
 - Zakładki komentarze/filmy na telefonie: oba podkreślenia niebieskie. Okładka kanału twórcy usunięta z kodu i panelu (`Creator.bannerUrl` do usunięcia migracją).
