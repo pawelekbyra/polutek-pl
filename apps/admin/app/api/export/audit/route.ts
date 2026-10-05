@@ -1,5 +1,6 @@
 import { exportAuditCsv, type AuditFilters } from "@/lib/modules/admin-security";
 import { allowAction, RATE } from "@admin/lib/actions/rate-limit";
+import { stepUpMessage } from "@admin/lib/config";
 import { hasFreshStepUp } from "@admin/lib/auth/guard";
 import { jsonError, panelRouteContext, sampleDataResponse, unauthorizedJson } from "@admin/lib/api/panel-route";
 
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
   if (!ctx || ctx.actor.type !== "admin") return unauthorizedJson();
   const sample = sampleDataResponse();
   if (sample) return sample;
-  if (!(await hasFreshStepUp())) return jsonError(403, "Dziennik zawiera adresy IP: najpierw potwierdź tożsamość (klucz dostępu albo TOTP).", "STEP_UP_REQUIRED");
+  if (!(await hasFreshStepUp())) return jsonError(403, stepUpMessage("Dziennik zawiera adresy IP: najpierw potwierdź tożsamość (klucz dostępu albo TOTP)."), "STEP_UP_REQUIRED");
   if (!allowAction(ctx.actor.userId, RATE.export)) return jsonError(429, "Za dużo eksportów. Spróbuj za kilka minut.", "RATE_LIMITED");
   const p = new URL(request.url).searchParams;
   const actor = p.get("actor");

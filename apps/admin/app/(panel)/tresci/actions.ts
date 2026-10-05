@@ -20,7 +20,7 @@ import {
 import { cancelEncode, deleteSelfHlsAsset, enqueueEncode } from "@/lib/modules/video-pipeline";
 import { deleteVideoWithStorage, removeVideoSubtitle, saveChannelLayout, slugify } from "@/lib/modules/admin-content";
 import { hasFreshStepUp, requireAdmin } from "@admin/lib/auth/guard";
-import { isDevFixturesEnabled } from "@admin/lib/config";
+import { isDevFixturesEnabled, stepUpMessage } from "@admin/lib/config";
 import { dateToWarsawLocal, errorMessage, sampleDataRefusal, panelContext, warsawLocalToDate, zodFieldErrors, type ActionResult } from "@admin/lib/actions/panel";
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -221,7 +221,7 @@ export async function deleteFilmAction(input: { id: string; typedSlug: string; r
   const current = await getAdminVideoById({ idOrSlug: input.id }, ctx);
   if (!current.ok) return { ok: false, ...errorMessage(current.error) };
   if (input.typedSlug.trim() !== current.data.slug) return { ok: false, code: "TYPED_MISMATCH", message: "Wpisany adres nie zgadza się z adresem filmu." };
-  if (!(await hasFreshStepUp())) return { ok: false, code: "STEP_UP_REQUIRED", message: "Najpierw potwierdź tożsamość (klucz dostępu albo TOTP)." };
+  if (!(await hasFreshStepUp())) return { ok: false, code: "STEP_UP_REQUIRED", message: stepUpMessage("Najpierw potwierdź tożsamość (klucz dostępu albo TOTP).") };
   const result = await deleteVideoWithStorage(current.data.id, ctx);
   if (!result.ok) return { ok: false, ...errorMessage(result.error) };
   revalidateFilm();

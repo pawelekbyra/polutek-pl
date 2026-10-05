@@ -43,7 +43,7 @@ export function CommandPalette({ open, onClose, onShortcuts, onRange }: { open: 
       { id: "theme", group: "Akcje", label: "Przełącz motyw", icon: "sun", run: () => applyTheme(THEME_NEXT[readTheme()]), keywords: "ciemny jasny dark light" },
       { id: "shortcuts", group: "Akcje", label: "Pokaż wszystkie skróty", icon: "command", keys: ["?"], run: onShortcuts, keywords: "klawisze pomoc" },
       { id: "health", group: "Akcje", label: "Centrum zdrowia", icon: "server", run: go("/system"), keywords: "status awaria kontrole" },
-      { id: "stepup", group: "Akcje", label: "Potwierdź tożsamość (step-up)", icon: "passkey", run: go("/potwierdz?next=/"), keywords: "passkey totp klucz" },
+      { id: "stepup", group: "Akcje", label: "Potwierdź tożsamość (ponowne logowanie)", icon: "passkey", run: go("/potwierdz?next=/"), keywords: "passkey totp klucz cloudflare logowanie" },
     ];
   }, [onRange, onShortcuts, router]);
 

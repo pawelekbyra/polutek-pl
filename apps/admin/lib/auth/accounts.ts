@@ -27,7 +27,7 @@ export async function listAdminAccounts(): Promise<AdminAccountView[]> {
       passkeys: { select: { id: true, name: true, deviceType: true, backedUp: true, createdAt: true }, orderBy: { createdAt: "asc" } },
     },
   });
-  const lastIn = await prisma.adminAuthEvent.groupBy({ by: ["adminUserId"], where: { action: "ADMIN_SIGN_IN", outcome: "success", adminUserId: { in: users.map((u) => u.id) } }, _max: { createdAt: true } });
+  const lastIn = await prisma.adminAuthEvent.groupBy({ by: ["adminUserId"], where: { action: { in: ["ADMIN_SIGN_IN", "ADMIN_ACCESS_SIGN_IN"] }, outcome: "success", adminUserId: { in: users.map((u) => u.id) } }, _max: { createdAt: true } });
   const lastBy = new Map(lastIn.map((r) => [r.adminUserId, r._max.createdAt]));
   return users.map((u) => ({
     id: u.id,

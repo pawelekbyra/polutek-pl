@@ -17,6 +17,7 @@ import { Icon } from "@admin/components/icons";
 import { Badge, Card, Check, Empty, PageHead } from "@admin/components/ui";
 import { listAdminAccounts } from "@admin/lib/auth/accounts";
 import { requireAdmin } from "@admin/lib/auth/guard";
+import { ACCESS_LOGOUT_PATH } from "@admin/lib/config";
 import { isDevFixturesEnabled } from "@admin/lib/config";
 import { panelContext } from "@admin/lib/actions/panel";
 
@@ -165,6 +166,36 @@ async function AccountTab() {
   const viewer = await requireAdmin("/ustawienia?tab=konto");
   const accounts = await listAdminAccounts().catch(() => []);
   const me = accounts.find((a) => a.id === viewer.userId);
+  if (viewer.authMode === "access") {
+    return (
+      <div className="grid">
+        <div className="span-7">
+          <Card id="h-me" title="Twoje konto w panelu" sub="Logowanie przez Cloudflare Access: kod wysłany na Twój adres e-mail. Bez kluczy dostępu i TOTP.">
+            {me ? (
+              <dl className="kv kv-wide">
+                <dt>E-mail</dt>
+                <dd>{me.email}</dd>
+                <dt>Nazwa</dt>
+                <dd>{me.name}</dd>
+                <dt>Rola</dt>
+                <dd>{me.role === "OWNER" ? "właściciel (cały panel)" : "tłumacz (tylko tłumaczenia)"}</dd>
+                <dt>Ostatnie logowanie</dt>
+                <dd>{me.lastSignInAt ? fmtDateTime(me.lastSignInAt, new Date()) : "brak w dzienniku"}</dd>
+              </dl>
+            ) : (
+              <p className="muted">Podgląd lokalny albo konto nieznalezione.</p>
+            )}
+          </Card>
+        </div>
+        <div className="span-5 stack">
+          <Card id="h-recovery" title="Bezpieczeństwo logowania">
+            <p>Panel jest chroniony tak dobrze, jak skrzynka Gmail właściciela. Włącz w Google weryfikację dwuetapową dla tego adresu. Sesja Cloudflare trwa 12 godzin; <a href={ACCESS_LOGOUT_PATH}>wyloguj</a> kończy ją od razu.</p>
+            <p className="muted">Logowania: <Link href="/bezpieczenstwo?tab=logowania">Bezpieczeństwo</Link>.</p>
+          </Card>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="grid">
       <div className="span-7">

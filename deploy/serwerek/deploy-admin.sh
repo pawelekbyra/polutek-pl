@@ -10,6 +10,7 @@
 # Order: the panel's tables come from the normal Prisma migrations, so run ./deploy.sh <tag> for the same
 # commit first (it applies migrations); this script never migrates.
 # Needs admin.env (root, 600): DATABASE_URL, ADMIN_AUTH_SECRET, ADMIN_APP_URL, CF_ACCESS_TEAM_DOMAIN, CF_ACCESS_AUD ...
+# Sign-in: ADMIN_AUTH_MODE=access (default; Cloudflare Access e-mail code, no enrollment) or passkey (legacy, needs admin-enroll).
 # State: .current-admin-image / .previous-admin-image.
 set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")"
@@ -82,6 +83,7 @@ if wait_healthy "$new_image"; then
     docker rmi "polutek-admin:$t" >/dev/null 2>&1 || true
   done
   log "OK: $new_image is live on 127.0.0.1:3100"
+  log "next: open https://admin.pawelperfect.com, enter the owner e-mail, type the code Cloudflare mails you (no enrollment; ADMIN_AUTH_MODE=passkey needs admin-enroll, see docs/operations/ADMIN-PANEL.md 1b)"
   exit 0
 fi
 
