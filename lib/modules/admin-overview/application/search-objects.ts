@@ -36,12 +36,12 @@ export async function searchAdminObjects(db: ReadDb, rawQuery: string, oldPanel:
   ]);
   return [
     ...videos.map((v) => ({ group: "Filmy" as const, label: v.title, hint: v.slug, href: `/tresci/${encodeURIComponent(v.slug)}` })),
-    ...users.map((u) => ({ group: "Osoby" as const, label: u.name || "(bez pseudonimu)", hint: u.email, href: `/spolecznosc/osoby/${encodeURIComponent(u.id)}` })),
+    ...users.map((u) => ({ group: "Osoby" as const, label: u.name || "(bez pseudonimu)", hint: u.email, href: `/spolecznosc/u/${encodeURIComponent(u.id)}` })),
     ...payments.map((p) => ({
       group: "Płatności" as const,
       label: `${fmtMoney(p.amountMinor, p.currency)} · ${p.status}`,
       hint: `${(p.stripeIntentId ?? p.id).slice(0, 14)}…`,
-      href: `/spolecznosc/osoby/${encodeURIComponent(p.userId)}`,
+      href: `/spolecznosc/u/${encodeURIComponent(p.userId)}`,
     })),
   ];
 }

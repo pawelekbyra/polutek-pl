@@ -36,3 +36,17 @@
   .form-actions { bottom: calc(56px + env(safe-area-inset-bottom)); }
   .dropzone { padding: var(--s-4) var(--s-3); }
 }
+
+/* Społeczność (faza 2): zaznaczanie komentarzy, pasek akcji zbiorczych, wiersz z polem wyboru. */
+.bulk-bar { position: sticky; top: var(--s-2); z-index: 6; display: flex; gap: var(--s-2); align-items: center; flex-wrap: wrap; padding: var(--s-2) var(--s-3); margin-bottom: var(--s-3); border: 1px solid var(--accent); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-2); }
+.bulk-bar strong { margin-right: auto; }
+.select-all { padding: var(--s-2) var(--s-4); border-bottom: 1px solid var(--border); font-size: var(--fs-13); color: var(--text-2); }
+.mod-row { grid-template-columns: auto minmax(0, 1fr) auto; }
+.mod-row.is-selected { background: var(--selected); }
+.mod-check { padding-top: 2px; }
+.tile-link-row { display: flex; gap: var(--s-2); flex-wrap: wrap; align-items: center; margin-bottom: var(--s-3); }
+@media (max-width: 760px) { .mod-row { grid-template-columns: auto 1fr; } .mod-row .mod-actions { grid-column: 1 / -1; } .bulk-bar { top: 0; } }
+.action-row { flex-wrap: wrap; gap: var(--s-2); }
+fieldset.field { border: 0; padding: 0; margin: 0; }
+.profile-name { flex: 1; min-width: 200px; }
+.tiles-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -96,7 +96,7 @@ export function buildTriage(i: {
       icon: "flag",
       title: `Komentarze do moderacji: ${parts.join(", ")}`,
       detail: i.moderation.oldestPendingReportAt ? `najstarsze zgłoszenie ${fmtRelative(i.moderation.oldestPendingReportAt, now)}` : "wstrzymane czekają na decyzję",
-      link: { label: "Moderuj", href: "/spolecznosc?tab=zgloszenia", external: false },
+      link: { label: "Moderuj", href: "/spolecznosc", external: false },
     });
   }
   if (i.payments.stalePending) {

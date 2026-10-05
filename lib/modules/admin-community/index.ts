@@ -9,3 +9,4 @@ export * from "./application/panel-users";
 export * from "./application/user-profile";
 export * from "./application/export-users-csv";
 export * from "./application/person-access";
+export * from "./application/film-options";
