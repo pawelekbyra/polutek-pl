@@ -159,8 +159,8 @@ Sekrety właściciel skopiował do `/root/.ai-secrets/` (Cloudflare, Hetzner, Re
   które dla prywatnego repo nie działa (patrz „CI: lokalne”).
 - Rotacja logów kontenerów, twardsze ustawienia kontenerów, osobna rola bazy bez uprawnień superusera (odprawa działa w sesji READ ONLY).
 - Deploy restartuje koder w trakcie kodowania (kodowanie zaczyna od zera).
-- Na serwerze do usunięcia: martwe zmienne `MUX_*` w `app.env`, usługa `serwerek-placeholder` i wpisy tunelu `test.` oraz `apptest.`.
-- DNS do usunięcia: rekordy Clerka w obu strefach (rekordy Google DKIM usunięte 2026-10-05; `google-site-verification` zostają do sprawdzenia).
+- Zrobione 2026-10-05: martwe `MUX_*` usunięte z `app.env`, usługa `serwerek-placeholder` wyłączona, reguły tunelu `test.` i `apptest.` usunięte (kopia konfiguracji: `/root/.ai-secrets/cloudflare-backup/`). Zostały nieszkodliwe resztki: rekordy DNS `test.` i `apptest.` oraz ich aplikacje Cloudflare Access (do usunięcia przy okazji).
+- Zrobione 2026-10-05: usunięte rekordy DNS Clerka (5 w `pawelperfect.com`, 5 w `pawelperfect.pl`; kopie: `/root/.ai-secrets/dns-backup/`). Rekordy Google DKIM usunięte wcześniej; `google-site-verification` zostają do sprawdzenia.
 - Jedna miniatura (`dla-patronow`) nadal idzie przez proxy ze starego Vercel Blob: przenieść do R2, potem usunąć `BLOB_READ_WRITE_TOKEN` i `@vercel/blob`.
 - Około 230 zdalnych gałęzi bez scalonego PR-a: do przejrzenia i skasowania.
 - Pamięć aplikacji rośnie z ruchem (do ~830 MiB przy przeciążeniu): ustawić `NODE_OPTIONS=--max-old-space-size` zgodnie z limitem kontenera (LOAD-TEST.md, rekomendacje).
