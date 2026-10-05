@@ -4,7 +4,7 @@ import { AppError } from "@/lib/modules/shared/app-error";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { MainChannelService } from "@/lib/modules/channel";
 import { recordAuditEvent } from "@/lib/modules/audit";
-import { assetSizeToNumber } from "@/lib/modules/video/domain/asset-size";
+import { assetSizeToNumber } from "@/lib/modules/video";
 import { EncodeJobError, STALE_HEARTBEAT_MS, isActiveStatus, parseVersionNumber, type EncodeJobStatus, type EncodeStage } from "../domain/encode-job.state";
 import { EncodeJobRepository } from "../infrastructure/encode-job.repository";
 import { actorId, requireVideo } from "./video-guard";

@@ -8,7 +8,7 @@ import { isUpcomingPremiere, toPremiereDate } from '@/lib/modules/video/domain/p
 import { resolvePublicThumbnailSrc } from '@/lib/modules/media';
 import { VideoStatus, type VideoAsset } from '@prisma/client';
 import { buildSelfHlsPlan } from './self-hls-plan';
-import { assetSizeToNumber } from '@/lib/modules/video/domain/asset-size';
+import { assetSizeToNumber } from '@/lib/modules/video';
 import { SelfHlsTokenService } from '../infrastructure/self-hls-token.service';
 
 export type PlaybackErrorCode =
