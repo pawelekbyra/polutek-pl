@@ -4,11 +4,10 @@
  * closes the stream and freezes the numbers until "Wznów". The numbers are not announced on every update
  * (aria-live off); only connection changes are announced. A silent stream (no event for 15 s) is shown as a warning.
  */
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { LiveSnapshot } from "@/lib/modules/admin-analytics";
 import { ColumnChart } from "../column-chart";
 import { Icon } from "../icons";
-import { Card, Meter, State } from "../ui";
 
 type Status = "connecting" | "live" | "retrying" | "paused";
 const STALE_AFTER_MS = 15_000;
@@ -17,6 +16,44 @@ const nf1 = new Intl.NumberFormat("pl-PL", { maximumFractionDigits: 1 });
 const warsawTime = new Intl.DateTimeFormat("pl-PL", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit", second: "2-digit" });
 const warsawMinute = new Intl.DateTimeFormat("pl-PL", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit" });
 const none = "bez pomiaru";
+
+/** Local copies of the Card/Meter/State markup: ui.tsx imports server-only modules and must not enter the browser bundle. */
+function Card({ id, title, meta, sub, children }: { id: string; title: string; meta?: ReactNode; sub?: string; children: ReactNode }) {
+  return (
+    <section className="card" aria-labelledby={id}>
+      <div className="card-head">
+        <h2 id={id}>{title}</h2>
+        {meta}
+        {sub ? <p className="sub">{sub}</p> : null}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Meter({ percent, label, valueText, warnAt, critAt }: { percent: number; label: string; valueText: string; warnAt: number; critAt: number }) {
+  const state = percent >= critAt ? "crit" : percent >= warnAt ? "warn" : "ok";
+  return (
+    <div className={`meter meter-${state}`} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(percent)} aria-label={label} aria-valuetext={valueText}>
+      <div className={`meter-fill pw-${Math.max(0, Math.min(100, Math.round(percent)))}`} />
+      <div className={`meter-threshold pl-${warnAt}`} aria-hidden="true" />
+    </div>
+  );
+}
+
+const STATE_ICON = { ok: "ok", warn: "warn", crit: "crit", info: "info" } as const;
+const STATE_WORD = { ok: "OK", warn: "Uwaga", crit: "Błąd", info: "Info" } as const;
+function State({ kind, children }: { kind: keyof typeof STATE_ICON; children: ReactNode }) {
+  return (
+    <span className={`state ${kind}`}>
+      <Icon name={STATE_ICON[kind]} />
+      <span>
+        <span className="sr-only">{STATE_WORD[kind]}: </span>
+        {children}
+      </span>
+    </span>
+  );
+}
 
 export function isSnapshot(v: unknown): v is LiveSnapshot {
   return !!v && typeof v === "object" && typeof (v as LiveSnapshot).at === "string" && Array.isArray((v as LiveSnapshot).perMinute);

@@ -1,4 +1,9 @@
-import { fmtInt, fmtOne, fmtPercent } from "@/lib/modules/admin-overview";
+// Client-safe: no imports from lib/modules (the admin-overview barrel pulls the Postgres driver into the browser bundle).
+const nf0 = new Intl.NumberFormat("pl-PL", { maximumFractionDigits: 0 });
+const nf1 = new Intl.NumberFormat("pl-PL", { maximumFractionDigits: 1 });
+const fmtInt = (v: number) => nf0.format(Math.round(v));
+const fmtOne = (v: number) => nf1.format(v);
+const fmtPercent = (v: number, digits = 0) => `${new Intl.NumberFormat("pl-PL", { maximumFractionDigits: digits }).format(v)}%`;
 
 /** Value kinds that can cross the server/client boundary (functions cannot), formatted the same everywhere. */
 export type ValueFormat = "int" | "pct" | "one" | "sec" | "ms" | "h";
