@@ -331,7 +331,9 @@ Steps (`STEPS`): recipient (with the Terms/Privacy consent checkbox, `TipRecipie
 
 **One minimum per currency.** `PaymentCurrencySetting.minAmountMinor`, set in `/admin/payments`, is the minimum the gate shows and the server enforces (`getPaymentCurrencyLimits()`, `GET /api/payment-settings` -> `{ limits }`). The legacy columns `patronThresholdMinor` (dead) and `patronBoxMinMinor` (counts as max(min, boxMin) until the next admin save clears it) are to be dropped in a cleanup migration. Stripe Elements render in the viewer's language.
 
-### 4.11 Language Resolution (pl/en)
+### 4.11 Language Resolution (eight languages)
+
+- **Eight real interface languages** (2026-10-05): `pl`, `en` have their own content; `de`, `es`, `fr`, `it`, `pt` (Brazilian), `zh` (Simplified) translate the interface only and show English content (legal pages included). Texts are written as `tx("polski", "english")` and translated through `lib/i18n/catalog/*.json` keyed by the English text; every language, helper and decision is in `docs/operations/I18N.md`. New text needs its entry in all six catalogs (the parity test fails otherwise). Wherever this section says `pl|en` for validation, read "any of the eight" (`isLocale`); e-mails stay pl/en (non-Polish accounts get English).
 
 - Initial UI language is resolved server-side in `lib/i18n/server-language.ts`. `resolveInitialLanguage()`: signed-in user's `User.language` → `app-language` cookie → country from Cloudflare `CF-IPCountry` (`COUNTRY_LANGUAGE`: only `PL` → pl; a country is listed only when its language is a real locale, English-speaking ones are deliberately absent) → `Accept-Language` honouring q-values → `en`. No forced language.
 - `<html lang>` (`app/layout.tsx`) uses `resolveDocumentLanguage()`: the locale written in the URL (`/pl/...`, `/en/...`, passed by `middleware.ts` in the `x-pp-route-locale` request header, a client-sent value is dropped), else `resolveInitialLanguage()`. Known limit: the `force-static` legal pages render without a request, so their HTML carries the default and the client corrects it on hydration.
