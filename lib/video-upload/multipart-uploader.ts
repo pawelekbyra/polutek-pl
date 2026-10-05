@@ -1,7 +1,6 @@
 /**
  * Browser-side resumable multipart uploader for the own video pipeline.
- * Talks to <apiBase>/[id]/original-upload/multipart{,/parts,/complete} (www admin: /api/admin/videos,
- * admin panel apps/admin: /api/videos) and PUTs parts
+ * Talks to <apiBase>/[id]/original-upload/multipart{,/parts,/complete} (admin panel apps/admin: /api/videos) and PUTs parts
  * straight to presigned R2 URLs. Framework-free so it can be unit tested with fakes.
  *
  * Resume: the originalId is remembered in localStorage per (video, file name, size, mtime); on the
@@ -31,11 +30,11 @@ export interface UploaderOptions {
   putPart?: PartPutter;
   storage?: Pick<Storage, "getItem" | "setItem" | "removeItem"> | null;
   sleep?: (ms: number) => Promise<void>;
-  /** Prefix of the video API: "/api/admin/videos" (www admin, default) or "/api/videos" (apps/admin panel). */
+  /** Prefix of the video API; defaults to "/api/videos" (the apps/admin panel). */
   apiBase?: string;
 }
 
-export const DEFAULT_UPLOAD_API_BASE = "/api/admin/videos";
+export const DEFAULT_UPLOAD_API_BASE = "/api/videos";
 
 export class UploadError extends Error {
   constructor(

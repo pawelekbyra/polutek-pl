@@ -7,6 +7,7 @@ import {
   normalizeNickname,
   validateNickname,
 } from "@/lib/auth/nickname";
+import { createTx } from "@/lib/i18n/ui";
 
 describe("validateNickname", () => {
   it("trims and collapses inner whitespace", () => {
@@ -34,10 +35,10 @@ describe("validateNickname", () => {
 
   it("has a message for every problem in both languages", () => {
     for (const reason of ["too_short", "too_long", "invalid_chars", "taken"] as const) {
-      expect(nicknameProblemMessage(reason, true)).toBeTruthy();
-      expect(nicknameProblemMessage(reason, false)).toBeTruthy();
+      expect(nicknameProblemMessage(reason, createTx("pl"))).toBeTruthy();
+      expect(nicknameProblemMessage(reason, createTx("en"))).toBeTruthy();
     }
-    expect(nicknameCheckMessage("rate_limited", false)).toMatch(/Too many/);
+    expect(nicknameCheckMessage("rate_limited", createTx("en"))).toMatch(/Too many/);
   });
 });
 

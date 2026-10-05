@@ -5,8 +5,10 @@ import { Check } from "../icons";
 import { cn } from "@/lib/utils";
 import { TipPrimaryButton, TipStepHeading, TipStepLayout } from "./TipStepLayout";
 
+import { useOptionalTx } from "@/lib/i18n/language-context";
+import type { Locale } from "@/lib/i18n/routing";
 interface TipDisclaimerStepProps {
-  language: string;
+  language: Locale;
   /** Proceeds to the amount step. */
   onNext: () => void;
   /** "E, to nie..." selected — close the gate immediately. */
@@ -14,23 +16,21 @@ interface TipDisclaimerStepProps {
 }
 
 export function TipDisclaimerStep({ language, onNext, onClose }: TipDisclaimerStepProps) {
-  const isPl = language === "pl";
+  const tx = useOptionalTx(language);
 
   return (
     <TipStepLayout
       bodyClassName="flex flex-col pb-0"
       footer={
         <TipPrimaryButton onClick={onNext}>
-          {isPl ? "Dalej" : "Next"}
+          {tx("Dalej", "Next")}
         </TipPrimaryButton>
       }
     >
       <TipStepHeading
-        title={isPl ? "Napiwek" : "Tip"}
+        title={tx("Napiwek", "Tip")}
         subtitle={
-          isPl
-            ? "Napiwek jest dobrowolny i niczego nie odblokowuje."
-            : "A tip is voluntary and unlocks nothing."
+          tx("Napiwek jest dobrowolny i niczego nie odblokowuje.", "A tip is voluntary and unlocks nothing.")
         }
       />
 
@@ -42,7 +42,7 @@ export function TipDisclaimerStep({ language, onNext, onClose }: TipDisclaimerSt
               <Check className="h-3 w-3 text-white" strokeWidth={3} />
             </span>
             <span className="text-[15px] font-extrabold text-[var(--chan-ink)]">
-              {isPl ? "Rozumiem, spoko." : "Got it, sure."}
+              {tx("Rozumiem, spoko.", "Got it, sure.")}
             </span>
           </div>
         </div>
@@ -61,7 +61,7 @@ export function TipDisclaimerStep({ language, onNext, onClose }: TipDisclaimerSt
           <div className="flex items-center gap-3">
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-[var(--cm-amber-38)]" />
             <span className="text-[15px] font-semibold text-[var(--chan-body)]">
-              {isPl ? "E, to nie..." : "Eh, never mind..."}
+              {tx("E, to nie...", "Eh, never mind...")}
             </span>
           </div>
         </button>

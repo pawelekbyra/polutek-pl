@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
-import { appendQueryString, switchLocalePath, type Locale } from "@/lib/i18n/routing";
+import { appendQueryString, SUPPORTED_LOCALES, switchLocalePath, type Locale } from "@/lib/i18n/routing";
 
 /**
  * The one way to change the site language from the UI (navbar switcher, sign-in dialog, ...):
@@ -21,7 +21,7 @@ export function useSwitchLanguage() {
     // On the home page, avoid a server re-render (which triggers loading.tsx and flashes
     // a blank screen). LanguageContext already updates all copy; history.replaceState updates
     // the URL client-side without a navigation. Same pattern as video switching (CLAUDE.md §4.13).
-    const isHomePage = pathname === "/pl" || pathname === "/en" || pathname === "/";
+    const isHomePage = pathname === "/" || (SUPPORTED_LOCALES as readonly string[]).some((locale) => pathname === `/${locale}`);
     if (isHomePage) {
       window.history.replaceState(null, "", newPath);
     } else {

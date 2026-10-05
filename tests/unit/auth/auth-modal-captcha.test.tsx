@@ -21,7 +21,7 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("next/navigation", () => ({ useRouter: () => h.router, usePathname: () => "/en", useSearchParams: () => new URLSearchParams() }));
-vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en", setLanguage: () => {} }) }));
+vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en", tx: txFor("en"), setLanguage: () => {} }) }));
 vi.mock("@/lib/auth/client", () => ({
   authClient: h.client,
   captchaFetchOptions: (token: string | null) => (token ? { headers: { "x-captcha-response": token } } : undefined),
@@ -31,6 +31,7 @@ vi.mock("@/lib/auth/react", () => ({ useAuth: () => ({ isLoaded: true, isSignedI
 
 import AuthModal from "@/app/components/auth/AuthModal";
 import { CAPTCHA_WAIT_TIMEOUT_MS } from "@/app/components/auth/useCaptchaGate";
+import { txFor } from "../i18n/mock-language";
 
 type Callbacks = Record<string, (...args: unknown[]) => void>;
 let widget: Callbacks;

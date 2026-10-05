@@ -122,7 +122,7 @@ function ChannelHomeContent({
   initialSidebarViewerKey,
   initialComments,
 }: ChannelHomeProps) {
-  const { t, language } = useLanguage();
+  const { t, language, tx } = useLanguage();
   const [selectionState, setSelectionState] = useState<ChannelViewState>(() => ({
     routeVideoId: currentVideoId,
     selectedVideoId: currentVideoId,
@@ -230,18 +230,16 @@ function ChannelHomeContent({
             <AlertCircle size={36} className="text-[var(--chan-muted)]" />
           </div>
           <h1 className="font-brand text-2xl font-bold mb-4 text-[var(--chan-ink)]">
-            {language === "pl" ? "Brak zeznań" : "No evidence found"}
+            {tx("Brak zeznań", "No evidence found")}
           </h1>
           <p className="font-sans text-[var(--chan-muted)] leading-relaxed mb-8">
-            {language === "pl"
-              ? "Nie znaleziono wybranego filmu. Materiał mógł zostać zarchiwizowany lub przeniesiony."
-              : "The selected video could not be found. It might have been archived or moved."}
+            {tx("Nie znaleziono wybranego filmu. Materiał mógł zostać zarchiwizowany lub przeniesiony.", "The selected video could not be found. It might have been archived or moved.")}
           </p>
           <Link
             href={getLocalizedHref(language, "home")}
             className="inline-flex items-center justify-center h-[44px] px-10 rounded-[14px] bg-[var(--chan-blue)] text-white font-brand font-bold text-[14px] transition-all active:scale-95 hover:-translate-y-px"
           >
-            {language === "pl" ? "Wróć do bazy" : "Back to database"}
+            {tx("Wróć do bazy", "Back to database")}
           </Link>
         </div>
       </main>

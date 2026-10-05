@@ -12,6 +12,7 @@ export {
   sendBecomePatronEmail,
 } from "./application/send-transactional-email.use-case";
 export type { EmailLanguage } from "./application/send-transactional-email.use-case";
+export { sendOperatorEmail } from "./application/send-operator-email";
 export { handleResendWebhook } from "./application/handle-resend-webhook.use-case";
 export { verifyResendWebhook } from "./infrastructure/resend-webhook-verifier";
 export type { ResendWebhookVerification } from "./infrastructure/resend-webhook-verifier";
@@ -41,4 +42,7 @@ export type {
   EmailTemplateDto,
   UpsertEmailTemplateInput,
 } from "./domain/email.dto";
+export { getEmailTemplateDefault, previewEmailTemplate, getDeliverability, getSuppressions, resendLimits } from "./application/admin-communication";
+export type { TemplatePreview, Deliverability, SuppressionView } from "./application/admin-communication";
+export { findPlaceholders } from "./domain/render-email";
 export * from "./domain/email.errors";

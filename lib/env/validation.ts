@@ -104,6 +104,18 @@ export function validateAppEnv(env: EnvRecord = process.env, mode: EnvValidation
     warnings.push('MAIN_CREATOR_SLUG is not set; non-production single-creator pages will fall back to an approved creator from the database when available.');
   }
 
+  // Stripe test and live objects never mix: a secret key of one mode with a publishable key of the other
+  // makes every payment fail at the browser; a webhook secret that is not a signing secret rejects every event.
+  const stripeMode = (key: string | undefined) => (/^(sk|rk|pk)_live_/.test(key ?? '') ? 'live' : /^(sk|rk|pk)_test_/.test(key ?? '') ? 'test' : null);
+  const secretMode = stripeMode(env.STRIPE_SECRET_KEY);
+  const publishableMode = stripeMode(env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+  if (secretMode && publishableMode && secretMode !== publishableMode) {
+    errors.push(`STRIPE_SECRET_KEY is a ${secretMode} key but NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is a ${publishableMode} key; both must be the same mode.`);
+  }
+  if (hasValue(env, 'STRIPE_WEBHOOK_SECRET') && !env.STRIPE_WEBHOOK_SECRET!.trim().startsWith('whsec_')) {
+    errors.push('STRIPE_WEBHOOK_SECRET must be an endpoint signing secret (starts with whsec_).');
+  }
+
   validateUrl(errors, env, 'NEXT_PUBLIC_APP_URL');
   validateUrl(errors, env, 'UPSTASH_REDIS_REST_URL');
   validateUrl(errors, env, 'KV_REST_API_URL');

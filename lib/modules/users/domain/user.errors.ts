@@ -71,3 +71,17 @@ export class ConfirmEmailMismatchError extends AppError {
     super('Wpisany adres e-mail nie zgadza się z adresem tego użytkownika.', 400, 'CONFIRM_EMAIL_MISMATCH');
   }
 }
+
+/* Moderation of one account (admin panel, Społeczność): mute commenting, sign out everywhere. */
+
+export class InvalidModerationInputError extends AppError {
+  constructor(message: string) {
+    super(message, 400, 'INVALID_MODERATION_INPUT');
+  }
+}
+
+export class CannotMuteAdminError extends AppError {
+  constructor() {
+    super('Administratora strony nie da się wyciszyć.', 409, 'TARGET_IS_ADMIN');
+  }
+}

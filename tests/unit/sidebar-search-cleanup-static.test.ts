@@ -51,7 +51,7 @@ describe("#1104 search/sidebar cleanup contracts", () => {
   it("playlist items use one direct feed link with aria-current and non-blocking lock overlay", () => {
     const sidebar = source("app/components/channel/SidebarPlaylist.tsx");
     expect((sidebar.match(/<Link/g) ?? []).length).toBe(1);
-    expect(sidebar).toContain('getLocalizedHref(locale, "home")');
+    expect(sidebar).toContain('getLocalizedHref(language, "home")');
     expect(sidebar).toContain("?v=");
     expect(sidebar).toContain("encodeURIComponent(video.slug || video.id)");
     expect(sidebar).toContain('aria-current={isCurrent ? "page" : undefined}');

@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import EmbeddedComments from '@/app/components/comments/EmbeddedComments';
 import type { CommentView } from '@/app/components/comments/types';
+import { txFor } from "../../i18n/mock-language";
 
 class IntersectionObserverStub {
   observe() {}
@@ -21,7 +22,7 @@ vi.mock('@/lib/auth/react', () => ({
 
 vi.mock('@/app/components/LanguageContext', () => ({
   useLanguage: () => ({
-    language: 'pl',
+    language: 'pl', tx: txFor('pl'),
     t: { cancel: 'Anuluj', deleteComment: 'Usunąć?', justNow: 'Przed chwilą', reply: 'Odpowiedz' },
   }),
 }));

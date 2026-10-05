@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 import { buildPatronDiagnosticsReadModel } from '@/lib/modules/users/application/patron-read-model';
 import { CommentPolicy } from '@/lib/modules/comments/domain/comment.policy';
@@ -8,19 +8,6 @@ import { handleApiError } from '@/lib/errors';
 
 const repoRoot = process.cwd();
 const source = (path: string) => readFileSync(join(repoRoot, path), 'utf8');
-
-const mockRequireAdminForApi = vi.fn();
-const mockGrantPatron = vi.fn();
-const mockRevokePatron = vi.fn();
-
-vi.mock('@/lib/auth-utils', () => ({
-  requireAdminForApi: mockRequireAdminForApi,
-}));
-
-vi.mock('@/lib/modules/patron', () => ({
-  grantPatron: mockGrantPatron,
-  revokePatron: mockRevokePatron,
-}));
 
 
 vi.mock('@/lib/logger', () => ({
@@ -55,76 +42,9 @@ vi.mock('@/lib/observability', () => ({
 }));
 
 describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
-  // Warm the route modules once: their cold import graph is large and would otherwise
-  // eat the first tests' 5s budget under a fully parallel suite run.
-  beforeAll(async () => {
-    await import('@/app/api/admin/users/[userId]/patron/route');
-  }, 60_000);
-
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
-  });
-
-  it('denies an unauthenticated admin patron mutation before grant/revoke side effects', async () => {
-    mockRequireAdminForApi.mockResolvedValue({
-      adminUserId: null,
-      response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
-    });
-
-    const { PATCH } = await import('@/app/api/admin/users/[userId]/patron/route');
-    const request = new NextRequest('http://localhost/api/admin/users/user-1/patron', {
-      method: 'PATCH',
-      body: JSON.stringify({ action: 'grant', reason: 'manual verification' }),
-    });
-
-    const response = await PATCH(request, { params: Promise.resolve({ userId: 'user-1' }) });
-
-    expect(response.status).toBe(401);
-    expect(mockRequireAdminForApi).toHaveBeenCalledWith('PATCH_ADMIN_USER_PATRON');
-    expect(mockGrantPatron).not.toHaveBeenCalled();
-    expect(mockRevokePatron).not.toHaveBeenCalled();
-  });
-
-  it('denies a non-admin admin patron mutation before grant/revoke side effects', async () => {
-    mockRequireAdminForApi.mockResolvedValue({
-      adminUserId: null,
-      response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }),
-    });
-
-    const { PATCH } = await import('@/app/api/admin/users/[userId]/patron/route');
-    const request = new NextRequest('http://localhost/api/admin/users/user-1/patron', {
-      method: 'PATCH',
-      body: JSON.stringify({ action: 'revoke', reason: 'manual verification' }),
-    });
-
-    const response = await PATCH(request, { params: Promise.resolve({ userId: 'user-1' }) });
-
-    expect(response.status).toBe(403);
-    expect(mockRevokePatron).not.toHaveBeenCalled();
-    expect(mockGrantPatron).not.toHaveBeenCalled();
-  });
-
-  it('requires a valid manual patron action and non-empty reason before mutation', async () => {
-    mockRequireAdminForApi.mockResolvedValue({ adminUserId: 'admin-1', response: null });
-    const { PATCH } = await import('@/app/api/admin/users/[userId]/patron/route');
-
-    const missingReason = await PATCH(new NextRequest('http://localhost/api/admin/users/user-1/patron', {
-      method: 'PATCH',
-      body: JSON.stringify({ action: 'grant', reason: '   ' }),
-    }), { params: Promise.resolve({ userId: 'user-1' }) });
-
-    expect(missingReason.status).toBe(400);
-    expect(mockGrantPatron).not.toHaveBeenCalled();
-
-    const invalidAction = await PATCH(new NextRequest('http://localhost/api/admin/users/user-1/patron', {
-      method: 'PATCH',
-      body: JSON.stringify({ action: 'promote', reason: 'manual verification' }),
-    }), { params: Promise.resolve({ userId: 'user-1' }) });
-
-    expect(invalidAction.status).toBe(400);
-    expect(mockGrantPatron).not.toHaveBeenCalled();
-    expect(mockRevokePatron).not.toHaveBeenCalled();
   });
 
   it('has no Cloudflare Stream or Mux webhook route any more (own HLS is the only video source)', () => {

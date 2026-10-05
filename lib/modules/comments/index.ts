@@ -22,3 +22,8 @@ export * from "./domain/comment.dto";
 export * from "./domain/comment.errors";
 export * from "./domain/comment.policy";
 export * from "./application/purge-deleted-comments.use-case";
+export * from "./application/moderate-comments-bulk.use-case";
+export * from "./application/undo-comment-moderation.use-case";
+export * from "./application/create-creator-reply.use-case";
+export * from "./application/set-admin-comment-heart.use-case";
+export * from "./application/list-panel-comments.use-case";

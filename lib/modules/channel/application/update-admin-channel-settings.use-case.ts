@@ -43,7 +43,13 @@ export async function updateAdminChannelSettings(
     action: 'CHANNEL_UPDATED',
     targetType: 'CREATOR',
     targetId: updated.id,
-    metadata: { slug: updated.slug, fields }
+    // Before/after of the text fields (the audit log answers "what was it before?"); URLs are not texts.
+    metadata: {
+      slug: updated.slug,
+      fields,
+      before: { name: mainChannel.name ?? null, bio: mainChannel.bio ?? null },
+      after: { name: updated.name ?? null, bio: updated.bio ?? null },
+    }
   });
 
   if (input.defaultThumbnailUrl !== undefined) invalidateDefaultThumbnailCache();

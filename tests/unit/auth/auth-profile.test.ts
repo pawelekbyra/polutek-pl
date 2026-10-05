@@ -6,6 +6,7 @@ import { completeOnboarding, updateAvatar, updateNickname, NicknameRejectedError
 import { authErrorMessage } from "@/lib/auth/errors";
 import { validateAvatarDataUrl, validateAvatarFile, AVATAR_MAX_BYTES } from "@/lib/auth/avatar";
 import { authRateLimitStorage } from "@/lib/auth/rate-limit-storage";
+import { createTx } from "@/lib/i18n/ui";
 
 const user = { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn() };
 const userAvatar = { upsert: vi.fn(), deleteMany: vi.fn() };
@@ -108,11 +109,11 @@ describe("completeOnboarding (first Google sign-in)", () => {
 
 describe("authErrorMessage", () => {
   it("localizes known codes and never echoes unknown server messages", () => {
-    expect(authErrorMessage({ code: "INVALID_EMAIL_OR_PASSWORD" }, true)).toBe("Nieprawidłowy e-mail lub hasło.");
-    expect(authErrorMessage({ code: "PASSWORD_COMPROMISED" }, false)).toContain("breaches");
-    expect(authErrorMessage({ code: "SOMETHING_NEW", message: "stack trace with secrets" }, false)).toBe("Something went wrong. Please try again.");
-    expect(authErrorMessage({ status: 429 }, true)).toContain("Za dużo");
-    expect(authErrorMessage(null, true)).toBe("Coś poszło nie tak. Spróbuj ponownie.");
+    expect(authErrorMessage({ code: "INVALID_EMAIL_OR_PASSWORD" }, createTx("pl"))).toBe("Nieprawidłowy e-mail lub hasło.");
+    expect(authErrorMessage({ code: "PASSWORD_COMPROMISED" }, createTx("en"))).toContain("breaches");
+    expect(authErrorMessage({ code: "SOMETHING_NEW", message: "stack trace with secrets" }, createTx("en"))).toBe("Something went wrong. Please try again.");
+    expect(authErrorMessage({ status: 429 }, createTx("pl"))).toContain("Za dużo");
+    expect(authErrorMessage(null, createTx("pl"))).toBe("Coś poszło nie tak. Spróbuj ponownie.");
   });
 });
 

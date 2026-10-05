@@ -43,7 +43,7 @@ describe('PATCH /api/user/language (the one place a signed-in language is saved)
     expect(update.imageUrl).toBeUndefined();
   });
 
-  it.each([['{"language":"de"}'], ['{"language":"PL"}'], ['{}'], ['not json']])('refuses %s with 400 and writes nothing', async (body) => {
+  it.each([['{"language":"ja"}'], ['{"language":"PL"}'], ['{}'], ['not json']])('refuses %s with 400 and writes nothing', async (body) => {
     const response = await patch(body);
     expect(response.status).toBe(400);
     expect(prisma.user.upsert).not.toHaveBeenCalled();

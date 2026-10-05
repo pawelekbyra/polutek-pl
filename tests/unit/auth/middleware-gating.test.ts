@@ -1,13 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-vi.mock("@/lib/api/admin-rate-limit", () => ({
-  checkAdminRateLimit: vi.fn().mockResolvedValue({ limited: false }),
-  getAdminClientIp: () => "203.0.113.5",
-}));
-
 import middleware from "@/middleware";
-import { checkAdminRateLimit } from "@/lib/api/admin-rate-limit";
 
 const ORIGIN = "https://www.pawelperfect.com";
 
@@ -20,7 +14,6 @@ function request(path: string, init: { method?: string; headers?: Record<string,
 const SESSION_COOKIE = "pp.session_token=abc.def";
 
 beforeEach(() => {
-  vi.mocked(checkAdminRateLimit).mockClear();
   vi.stubEnv("NEXT_PUBLIC_APP_URL", ORIGIN);
 });
 
@@ -100,45 +93,47 @@ describe("proxy: protected routes", () => {
   });
 });
 
-describe("proxy: admin and account mutations", () => {
-  it("rejects an admin page without a session", async () => {
-    const response = await middleware(request("/admin/videos"));
-    expect(response.status).toBe(307);
+describe("proxy: retired old admin (phase 5)", () => {
+  it.each([
+    ["/admin", "https://admin.pawelperfect.com/"],
+    ["/admin/videos", "https://admin.pawelperfect.com/tresci"],
+    ["/admin/users/payments", "https://admin.pawelperfect.com/przychody?tab=wplaty"],
+    ["/admin/something/unknown", "https://admin.pawelperfect.com/"],
+  ])("answers a permanent 308 for %s, with or without a session", async (path, target) => {
+    for (const cookie of [undefined, SESSION_COOKIE]) {
+      const response = await middleware(request(path, { cookie }));
+      expect(response.status).toBe(308);
+      expect(response.headers.get("location")).toBe(target);
+    }
   });
 
-  it("rejects an admin API call without a session with JSON 401", async () => {
-    const response = await middleware(request("/api/admin/users"));
-    expect(response.status).toBe(401);
-  });
+  it.each(["/api/admin", "/api/admin/users", "/api/admin/videos/abc/actions", "/api/admin/comments/x/hide"])(
+    "answers 404 for the removed API %s on every method, with or without a session",
+    async (path) => {
+      for (const method of ["GET", "POST", "PATCH", "DELETE"]) {
+        for (const cookie of [undefined, SESSION_COOKIE]) {
+          const response = await middleware(request(path, { method, cookie, headers: { origin: ORIGIN } }));
+          expect(response.status).toBe(404);
+        }
+      }
+    },
+  );
 
-  it("blocks cross-origin admin mutations before anything else", async () => {
-    const response = await middleware(
-      request("/api/admin/videos", { method: "POST", headers: { origin: "https://evil.example" }, cookie: SESSION_COOKIE }),
-    );
-    expect(response.status).toBe(403);
+  it("does not catch look-alike public paths", async () => {
+    for (const path of ["/administracja", "/api/administrator", "/pl/admin-note"]) {
+      const response = await middleware(request(path));
+      expect(response.status).not.toBe(308);
+      expect(response.status).not.toBe(404);
+    }
   });
+});
 
+describe("proxy: account mutations", () => {
   it("blocks cross-origin account mutations (/api/user/*)", async () => {
     const response = await middleware(
       request("/api/user/nickname", { method: "PATCH", headers: { origin: "https://evil.example" }, cookie: SESSION_COOKIE }),
     );
     expect(response.status).toBe(403);
-  });
-
-  it("rate limits admin API calls keyed by a hash of the session cookie, never the cookie itself", async () => {
-    await middleware(request("/api/admin/users", { cookie: SESSION_COOKIE }));
-    expect(checkAdminRateLimit).toHaveBeenCalledTimes(1);
-    const input = vi.mocked(checkAdminRateLimit).mock.calls[0][0];
-    expect(input.userId).toMatch(/^session:[0-9a-f]{24}$/);
-    expect(input.userId).not.toContain("abc");
-    expect(input.ip).toBe("203.0.113.5");
-  });
-
-  it("returns 429 with Retry-After when the admin limiter trips", async () => {
-    vi.mocked(checkAdminRateLimit).mockResolvedValueOnce({ limited: true, retryAfterSeconds: 7, bucket: "mutate" });
-    const response = await middleware(request("/api/admin/users", { cookie: SESSION_COOKIE }));
-    expect(response.status).toBe(429);
-    expect(response.headers.get("retry-after")).toBe("7");
   });
 });
 

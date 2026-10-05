@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useAuth, useUser } from "@/lib/auth/react";
+import { ADMIN_PANEL_ORIGIN } from "@/lib/admin-legacy-redirects";
 import { ShieldCheck } from "../icons";
 import {
   DropdownMenu,
@@ -25,7 +25,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
   const { user } = useUser();
   const { signOut } = useAuth();
   const { language } = useLanguage();
-  const isPl = language === "pl";
+  const { tx } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
 
@@ -44,7 +44,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
     <>
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger
-          aria-label={isPl ? "Menu konta" : "Account menu"}
+          aria-label={tx("Menu konta", "Account menu")}
           className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95 motion-reduce:transform-none motion-reduce:transition-none"
         >
           <span
@@ -88,16 +88,16 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
             onClick={() => setAccountOpen(true)}
             className={itemClassName}
           >
-            {isPl ? "Moje konto" : "My account"}
+            {tx("Moje konto", "My account")}
           </DropdownMenuItem>
 
           {isAdmin && (
             <DropdownMenuItem
-              render={<Link href="/admin" />}
+              render={<a href={ADMIN_PANEL_ORIGIN} target="_blank" rel="noopener noreferrer" />}
               className={itemClassName}
             >
               <ShieldCheck aria-hidden="true" size={16} />
-              {isPl ? "Zarządzaj kanałem" : "Manage channel"}
+              {tx("Zarządzaj kanałem", "Manage channel")}
             </DropdownMenuItem>
           )}
 
@@ -107,7 +107,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
             onClick={() => void signOut()}
             className="min-h-10 rounded-xl px-3 py-2 text-[14px] font-semibold"
           >
-            {isPl ? "Wyloguj się" : "Sign out"}
+            {tx("Wyloguj się", "Sign out")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

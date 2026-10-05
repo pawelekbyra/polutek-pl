@@ -6,7 +6,9 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { PublicVideoDTO } from "@/app/types/video";
 import { formatDistanceToNow } from "date-fns";
-import { pl } from "date-fns/locale";
+import { dateFnsLocale } from "@/lib/i18n/date-locale";
+import { countedNoun } from "@/lib/i18n/plurals";
+import { intlLocale } from "@/lib/i18n/ui";
 import { useLanguage } from "./LanguageContext";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import AccessLockOverlay from "./AccessLockOverlay";
@@ -22,22 +24,13 @@ interface ChannelVideoCardProps {
   index?: number;
 }
 
-function getViewsLabel(count: number, language: string) {
-  if (language !== "pl") return count === 1 ? "view" : "views";
-  if (count === 1) return "wyświetlenie";
-  const last = count % 10;
-  const lastTwo = count % 100;
-  if (last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14)) return "wyświetlenia";
-  return "wyświetleń";
-}
-
 export default function ChannelVideoCard({
   video,
   isLoggedIn,
   role,
   index = 0,
 }: ChannelVideoCardProps) {
-  const { t, language } = useLanguage();
+  const { t, language, tx } = useLanguage();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -52,10 +45,9 @@ export default function ChannelVideoCard({
 
   const getAccessBadge = () => {
     if (!mounted) return null;
-    const isPl = language === "pl";
-    if (tier === "PUBLIC") return { text: isPl ? "Publiczne" : "Public", variant: "public" };
-    if (!hasAccess) return { text: "Login", variant: "locked" };
-    return { text: isPl ? "Odblok." : "Unlocked", variant: "unlocked" };
+    if (tier === "PUBLIC") return { text: tx("Publiczne", "Public"), variant: "public" };
+    if (!hasAccess) return { text: tx("Logowanie", "Login"), variant: "locked" };
+    return { text: tx("Odblok.", "Unlocked"), variant: "unlocked" };
   };
 
   const badge = getAccessBadge();
@@ -119,11 +111,9 @@ export default function ChannelVideoCard({
               <div className="flex items-center gap-1">
                 <span>
                   {mounted
-                    ? video.views.toLocaleString(
-                        t.currency === "PLN" ? "pl-PL" : "en-US",
-                      )
+                    ? video.views.toLocaleString(intlLocale(language))
                     : video.views}{" "}
-                  {mounted ? getViewsLabel(video.views, language) : t.views}
+                  {mounted ? countedNoun(language, "views", video.views) : t.views}
                 </span>
                 {video.publishedAt && (
                   <>
@@ -132,7 +122,7 @@ export default function ChannelVideoCard({
                       {mounted
                         ? formatDistanceToNow(new Date(video.publishedAt), {
                             addSuffix: true,
-                            locale: t.currency === "PLN" ? pl : undefined,
+                            locale: dateFnsLocale(language),
                           }).replace("około", "ok.")
                         : ""}
                     </span>

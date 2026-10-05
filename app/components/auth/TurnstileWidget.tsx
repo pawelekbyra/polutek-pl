@@ -2,6 +2,8 @@
 
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useAuthPublicConfig } from "@/lib/auth/public-config";
+import type { Tx } from "@/lib/i18n/ui";
+import { turnstileLanguage } from "@/lib/i18n/ui";
 
 type TurnstileApi = {
   render: (
@@ -81,8 +83,8 @@ export type TurnstileHandle = {
  */
 export const TurnstileWidget = forwardRef<
   TurnstileHandle,
-  { onToken: (token: string | null) => void; isPl: boolean; onStateChange?: (state: CaptchaState) => void }
->(function TurnstileWidget({ onToken, isPl, onStateChange }, ref) {
+  { onToken: (token: string | null) => void; tx: Tx; onStateChange?: (state: CaptchaState) => void }
+>(function TurnstileWidget({ onToken, tx, onStateChange }, ref) {
   const { turnstileSiteKey } = useAuthPublicConfig();
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
@@ -136,7 +138,7 @@ export const TurnstileWidget = forwardRef<
           appearance: "interaction-only",
           size: "flexible",
           theme: "light",
-          language: isPl ? "pl" : "en",
+          language: turnstileLanguage(tx.language),
           retry: "auto",
           "refresh-expired": "auto",
           "refresh-timeout": "auto",
@@ -167,7 +169,7 @@ export const TurnstileWidget = forwardRef<
       widgetIdRef.current = null;
       onTokenRef.current(null);
     };
-  }, [turnstileSiteKey, isPl, attempt, setState]);
+  }, [turnstileSiteKey, tx, attempt, setState]);
 
   if (!turnstileSiteKey) return null;
 
@@ -188,7 +190,7 @@ export const TurnstileWidget = forwardRef<
         <div className="min-h-0 overflow-hidden">
           {visible && (
             <p role="status" className="pb-2 text-center text-[12px] font-semibold text-[var(--chan-body)]">
-              {isPl ? "Potwierdź, że nie jesteś botem." : "Confirm that you're not a bot."}
+              {tx("Potwierdź, że nie jesteś botem.", "Confirm that you're not a bot.")}
             </p>
           )}
           <div ref={containerRef} className="flex justify-center" />
@@ -197,14 +199,10 @@ export const TurnstileWidget = forwardRef<
       {problem && (
         <div role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-[13px] font-semibold text-red-600">
           {stalled && state !== "failed"
-            ? isPl
-              ? "Sprawdzanie zabezpieczenia trwa zbyt długo. "
-              : "The security check is taking too long. "
-            : isPl
-              ? "Nie udało się sprawdzić zabezpieczenia. "
-              : "We couldn't complete the security check. "}
+            ? tx("Sprawdzanie zabezpieczenia trwa zbyt długo. ", "The security check is taking too long. ")
+            : tx("Nie udało się sprawdzić zabezpieczenia. ", "We couldn't complete the security check. ")}
           <button type="button" className="underline" onClick={retry}>
-            {isPl ? "Spróbuj ponownie" : "Try again"}
+            {tx("Spróbuj ponownie", "Try again")}
           </button>
         </div>
       )}

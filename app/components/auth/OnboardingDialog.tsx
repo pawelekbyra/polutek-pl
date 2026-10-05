@@ -24,7 +24,7 @@ export default function OnboardingDialog() {
   const { language } = useLanguage();
   const router = useRouter();
   const switchLanguage = useSwitchLanguage();
-  const isPl = language === "pl";
+  const { tx } = useLanguage();
   const [nickname, setNickname] = useState("");
   const [avatarDataUrl, setAvatarDataUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -42,27 +42,27 @@ export default function OnboardingDialog() {
     if (avatarProblem) {
       e.target.value = "";
       setAvatarDataUrl(null);
-      setProblem(avatarProblemMessage(avatarProblem, isPl));
+      setProblem(avatarProblemMessage(avatarProblem, tx));
       return;
     }
     try {
       setProblem(null);
       setAvatarDataUrl(await fileToAvatarDataUrl(file));
     } catch {
-      setProblem(avatarProblemMessage("type", isPl));
+      setProblem(avatarProblemMessage("type", tx));
     }
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const validation = validateNickname(nickname);
-    if (!validation.ok) return setProblem(nicknameProblemMessage(validation.reason, isPl));
+    if (!validation.ok) return setProblem(nicknameProblemMessage(validation.reason, tx));
     setSaving(true);
     setProblem(null);
     const check = await checkNicknameAvailability(validation.value);
     if (!check.available) {
       setSaving(false);
-      return setProblem(nicknameCheckMessage(check.reason, isPl));
+      return setProblem(nicknameCheckMessage(check.reason, tx));
     }
     const response = await fetch("/api/user/first-sign-in", {
       method: "POST",
@@ -71,13 +71,13 @@ export default function OnboardingDialog() {
     }).catch(() => null);
     if (!response) {
       setSaving(false);
-      return setProblem(authErrorMessage({ code: "NETWORK_ERROR" }, isPl));
+      return setProblem(authErrorMessage({ code: "NETWORK_ERROR" }, tx));
     }
     if (!response.ok) {
       const body = (await response.json().catch(() => null)) as { error?: string } | null;
       setSaving(false);
       if (body?.error !== "ONBOARDING_DONE") {
-        return setProblem(authErrorMessage({ code: body?.error, status: response.status }, isPl));
+        return setProblem(authErrorMessage({ code: body?.error, status: response.status }, tx));
       }
       // Finished in another tab: just pick up the session state instead of showing an error.
     }
@@ -87,7 +87,7 @@ export default function OnboardingDialog() {
     } catch {
       // Saved on the server; only re-reading the session failed (audit AUTH-08). A reload picks it up.
       setSaving(false);
-      setProblem(authErrorMessage({ code: "NETWORK_ERROR" }, isPl));
+      setProblem(authErrorMessage({ code: "NETWORK_ERROR" }, tx));
     }
   }
 
@@ -96,25 +96,23 @@ export default function OnboardingDialog() {
       <DialogContent showCloseButton={false} className="max-w-sm border-none bg-transparent p-0 shadow-none">
         <form onSubmit={submit} className="space-y-4 rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-6 py-7 shadow-[0_20px_50px_rgba(23,23,23,0.14)]">
           <DialogHeader>
-            <DialogTitle className="font-brand text-xl font-bold text-[var(--chan-ink)]">{isPl ? "Witaj!" : "Welcome!"}</DialogTitle>
+            <DialogTitle className="font-brand text-xl font-bold text-[var(--chan-ink)]">{tx("Witaj!", "Welcome!")}</DialogTitle>
           </DialogHeader>
           <p className="text-[13px] text-[var(--chan-muted)]">
-            {isPl
-              ? "Wybierz pseudonim. To nazwa widoczna na stronie, np. przy Twoich komentarzach."
-              : "Choose a nickname. It is the name shown on the site, e.g. with your comments."}
+            {tx("Wybierz pseudonim. To nazwa widoczna na stronie, np. przy Twoich komentarzach.", "Choose a nickname. It is the name shown on the site, e.g. with your comments.")}
           </p>
           <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
             <span className="text-[12px] font-semibold text-[var(--chan-ink)]">
-              {isPl ? "Język strony i wiadomości e-mail" : "Site and e-mail language"}
+              {tx("Język strony i wiadomości e-mail", "Site and e-mail language")}
             </span>
             <LanguageSwitcher variant="inline" language={language} onSelect={switchLanguage} />
           </div>
-          <Field label={isPl ? "Pseudonim" : "Nickname"} type="text" value={nickname} onChange={setNickname} autoComplete="nickname" required />
+          <Field label={tx("Pseudonim", "Nickname")} type="text" value={nickname} onChange={setNickname} autoComplete="nickname" required />
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={avatarDataUrl ?? DEFAULT_AVATAR_URL} alt="" className="h-14 w-14 shrink-0 rounded-full border border-[var(--chan-line)] bg-black object-cover" />
             <label className="block flex-1 text-[12px] font-semibold text-[var(--chan-ink)]">
-              {isPl ? "Avatar (opcjonalnie)" : "Avatar (optional)"}
+              {tx("Avatar (opcjonalnie)", "Avatar (optional)")}
               <input
                 type="file"
                 accept={AVATAR_ACCEPT}
@@ -124,13 +122,13 @@ export default function OnboardingDialog() {
             </label>
           </div>
           {problem && <p role="alert" className="text-xs text-red-600">{problem}</p>}
-          <PrimaryButton loading={saving} label={isPl ? "Zapisz i wejdź" : "Save and continue"} />
+          <PrimaryButton loading={saving} label={tx("Zapisz i wejdź", "Save and continue")} />
           <button
             type="button"
             onClick={() => void signOutCompletely().then(() => router.refresh())}
             className="w-full text-center text-[12px] text-[var(--chan-muted)] underline"
           >
-            {isPl ? "Wyloguj się" : "Sign out"}
+            {tx("Wyloguj się", "Sign out")}
           </button>
         </form>
       </DialogContent>

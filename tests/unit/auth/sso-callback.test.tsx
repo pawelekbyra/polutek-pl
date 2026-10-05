@@ -5,11 +5,12 @@ import { sanitizeReturnPath, rememberReturnPath, readReturnPath } from "@/lib/au
 
 const auth = { isLoaded: false, isSignedIn: false };
 let searchParams = new URLSearchParams();
-vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en" }) }));
+vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en", tx: txFor("en") }) }));
 vi.mock("@/lib/auth/react", () => ({ useAuth: () => auth }));
 vi.mock("next/navigation", () => ({ useSearchParams: () => searchParams }));
 
 import SSOCallbackPage from "@/app/sso-callback/page";
+import { txFor } from "../i18n/mock-language";
 
 describe("sanitizeReturnPath", () => {
   it("keeps same-site paths and rejects open redirects and loops", () => {

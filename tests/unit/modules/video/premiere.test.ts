@@ -5,6 +5,7 @@ import {
   isUpcomingPremiere,
 } from "@/lib/modules/video";
 import { formatPremiereCountdown, formatPremiereDate } from "@/lib/premiere";
+import { createTx } from "@/lib/i18n/ui";
 
 const NOW = new Date("2026-10-01T12:00:00.000Z");
 const FUTURE = new Date("2026-10-05T18:00:00.000Z");
@@ -78,8 +79,8 @@ describe("premiere formatting", () => {
 
   it("counts down to the given premiere and clamps at zero", () => {
     const target = new Date(NOW.getTime() + (2 * 86_400 + 3 * 3_600 + 4 * 60 + 5) * 1_000);
-    expect(formatPremiereCountdown(true, target, NOW)).toBe("PREMIERA ZA 2D 3H 4M 5S");
-    expect(formatPremiereCountdown(false, target, NOW)).toBe("PREMIERES IN 2D 3H 4M 5S");
-    expect(formatPremiereCountdown(true, PAST, NOW)).toBe("PREMIERA ZA 0D 0H 0M 0S");
+    expect(formatPremiereCountdown(createTx("pl"), target, NOW)).toBe("PREMIERA ZA 2D 3H 4M 5S");
+    expect(formatPremiereCountdown(createTx("en"), target, NOW)).toBe("PREMIERES IN 2D 3H 4M 5S");
+    expect(formatPremiereCountdown(createTx("pl"), PAST, NOW)).toBe("PREMIERA ZA 0D 0H 0M 0S");
   });
 });

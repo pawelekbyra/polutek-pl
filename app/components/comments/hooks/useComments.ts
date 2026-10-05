@@ -5,6 +5,9 @@ import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient, Infini
 import { parseJsonResponse } from "@/lib/client/api";
 import { CommentView } from "../types";
 import type { InitialCommentsPage } from "../initial-comments";
+import type { Locale } from "@/lib/i18n/routing";
+import type { Tx } from "@/lib/i18n/ui";
+import { useOptionalTx } from "@/lib/i18n/language-context";
 
 type CommentsPage = {
   comments: CommentView[];
@@ -52,7 +55,7 @@ export class CommentPostError extends Error {
   }
 }
 
-async function parseCommentPostResponse(res: Response, language: string = "pl"): Promise<PostCommentResponse> {
+async function parseCommentPostResponse(res: Response, tx: Tx): Promise<PostCommentResponse> {
   const data = await res.json().catch(() => null) as any;
 
   if (!res.ok || data?.success === false) {
@@ -60,37 +63,20 @@ async function parseCommentPostResponse(res: Response, language: string = "pl"):
     let message = data?.message || data?.errors?.fieldErrors?.text?.[0];
 
     if (!message || code) {
-      if (language === "pl") {
-        message =
-          code === "AUTH_REQUIRED" ? "Musisz być zalogowany, żeby komentować." :
-          code === "ONBOARDING_REQUIRED" ? "Najpierw wybierz pseudonim w oknie powitalnym, potem możesz komentować." :
-          code === "COMMENT_FORBIDDEN" ? "Nie masz uprawnień do komentowania tego filmu." :
-          code === "COMMENT_RATE_LIMITED" ? "Zbyt dużo komentarzy. Spróbuj ponownie za chwilę." :
-          code === "COMMENT_VALIDATION_ERROR" ? "Nieprawidłowe dane komentarza." :
-          code === "COMMENT_TOO_LONG" ? "Komentarz jest za długi." :
-          message || (res.status === 401
-            ? "Musisz być zalogowany, żeby komentować."
-            : res.status === 403
-              ? "Nie masz uprawnień do komentowania tego filmu."
-              : res.status === 429
-                ? "Zbyt dużo komentarzy. Spróbuj ponownie za chwilę."
-                : "Nie udało się dodać komentarza.");
-      } else {
-        message =
-          code === "AUTH_REQUIRED" ? "You must be signed in to comment." :
-          code === "ONBOARDING_REQUIRED" ? "Choose a nickname in the welcome window first, then you can comment." :
-          code === "COMMENT_FORBIDDEN" ? "You don't have permission to comment on this video." :
-          code === "COMMENT_RATE_LIMITED" ? "Too many comments. Try again in a moment." :
-          code === "COMMENT_VALIDATION_ERROR" ? "Invalid comment data." :
-          code === "COMMENT_TOO_LONG" ? "Comment is too long." :
-          message || (res.status === 401
-            ? "You must be signed in to comment."
-            : res.status === 403
-              ? "You don't have permission to comment."
-              : res.status === 429
-                ? "Too many comments. Try again later."
-                : "Failed to add comment.");
-      }
+      message =
+        code === "AUTH_REQUIRED" ? tx("Musisz być zalogowany, żeby komentować.", "You must be signed in to comment.") :
+        code === "ONBOARDING_REQUIRED" ? tx("Najpierw wybierz pseudonim w oknie powitalnym, potem możesz komentować.", "Choose a nickname in the welcome window first, then you can comment.") :
+        code === "COMMENT_FORBIDDEN" ? tx("Nie masz uprawnień do komentowania tego filmu.", "You don't have permission to comment on this video.") :
+        code === "COMMENT_RATE_LIMITED" ? tx("Zbyt dużo komentarzy. Spróbuj ponownie za chwilę.", "Too many comments. Try again in a moment.") :
+        code === "COMMENT_VALIDATION_ERROR" ? tx("Nieprawidłowe dane komentarza.", "Invalid comment data.") :
+        code === "COMMENT_TOO_LONG" ? tx("Komentarz jest za długi.", "Comment is too long.") :
+        message || (res.status === 401
+          ? tx("Musisz być zalogowany, żeby komentować.", "You must be signed in to comment.")
+          : res.status === 403
+            ? tx("Nie masz uprawnień do komentowania tego filmu.", "You don't have permission to comment on this video.")
+            : res.status === 429
+              ? tx("Zbyt dużo komentarzy. Spróbuj ponownie za chwilę.", "Too many comments. Try again in a moment.")
+              : tx("Nie udało się dodać komentarza.", "Failed to add comment."));
     }
 
     throw new CommentPostError(message, res.status, code);
@@ -273,11 +259,12 @@ export function initialCommentsData(
 export function useComments(
   videoId: string,
   sortBy: "newest" | "top",
-  language: string = "pl",
+  language: Locale = "pl",
   userProfile?: { id?: string; name?: string | null; username?: string | null; imageUrl?: string | null } | null,
   initialComments?: InitialCommentsPage | null,
 ) {
   const queryClient = useQueryClient();
+  const tx = useOptionalTx(language);
 
   const { data, fetchNextPage, hasNextPage, isLoading, isFetchingNextPage, isError, error, refetch, isPlaceholderData } =
     useInfiniteQuery({
@@ -321,7 +308,7 @@ export function useComments(
         }),
         headers: { "Content-Type": "application/json" },
       });
-      return parseCommentPostResponse(res, language);
+      return parseCommentPostResponse(res, tx);
     },
     onMutate: async ({ text, parentId }) => {
       await cancelCommentQueries(queryClient, videoId);

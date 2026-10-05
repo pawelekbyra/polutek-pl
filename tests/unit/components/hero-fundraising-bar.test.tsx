@@ -7,6 +7,7 @@ import type { AccessTier, VideoStatus } from '@prisma/client';
 import Hero from '@/app/components/Hero';
 import { toProgressPercent } from '@/app/components/FundraisingProgressBar';
 import type { PublicVideoDTO } from '@/app/types/video';
+import { txFor } from "../i18n/mock-language";
 
 vi.mock('@/lib/auth/react', () => ({ useAuth: () => ({ userId: null }) }));
 vi.mock('@/app/components/auth/AuthModalProvider', () => ({
@@ -18,7 +19,7 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 vi.mock('@/app/components/LanguageContext', () => ({
-  useLanguage: () => ({ language: 'pl', t: { noDescription: 'Brak opisu' } }),
+  useLanguage: () => ({ language: 'pl', tx: txFor('pl'), t: { noDescription: 'Brak opisu' } }),
 }));
 vi.mock('@/app/hooks/useToast', () => ({ useToast: () => vi.fn() }));
 vi.mock('@/lib/logger', () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() } }));

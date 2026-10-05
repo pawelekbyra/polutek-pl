@@ -2,8 +2,10 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { formatDistance } from "date-fns";
-import { enUS, pl } from "date-fns/locale";
-import { Star, Trash2, Heart, MoreVertical, Edit, Flag, Link as LinkIcon, EyeOff, RotateCcw } from "../../icons";
+import { dateFnsLocale } from "@/lib/i18n/date-locale";
+import type { Locale } from "@/lib/i18n/routing";
+import { useOptionalTx } from "@/lib/i18n/language-context";
+import { Star, Trash2, Heart, MoreVertical, Edit, Flag, Link as LinkIcon } from "../../icons";
 import { cn } from "@/lib/utils";
 import { CommentView, getAuthorBadge } from "../types";
 import { SafeAvatar } from "../../SafeAvatar";
@@ -23,7 +25,7 @@ import { useRenderClock } from "../../RenderClock";
 interface CommentItemProps {
   comment: CommentView;
   userProfile: { id?: string } | null;
-  language: string;
+  language: Locale;
   t: Record<string, string>;
   canComment: boolean;
   onLike: (id: string) => void;
@@ -43,10 +45,10 @@ interface CommentItemProps {
 const AVATAR_SIZE = 40;
 const REPLY_AVATAR_SIZE = 24;
 
-function formatCommentAge(date: Date, language: string, now: Date) {
+function formatCommentAge(date: Date, language: Locale, now: Date) {
   const formatted = formatDistance(date, now, {
     addSuffix: true,
-    locale: language === "pl" ? pl : enUS,
+    locale: dateFnsLocale(language),
   });
 
   return language === "pl" ? formatted.replace("około", "ok.") : formatted;
@@ -68,6 +70,7 @@ function CommentItemComponent({
   isReactionPending,
   isReply = false
 }: CommentItemProps) {
+  const tx = useOptionalTx(language);
   const isDeletedForPublic = comment.status === 'DELETED';
 
   const authorBadge = getAuthorBadge(comment.author);
@@ -80,19 +83,12 @@ function CommentItemComponent({
   const toast = useToast();
 
   const reactionsDisabled = !userProfile || !canComment || isReactionPending;
-  const [isHearted, setIsHearted] = React.useState<boolean>(comment.isHearted || false);
+  // Creator heart: shown to everyone, set only from the admin panel (decision 8, docs/architecture/admin-phase5.md).
+  const isHearted = comment.isHearted === true;
   const [isHighlighted, setIsHighlighted] = useState(false);
   const commentRef = useRef<HTMLDivElement>(null);
   // Server render time during hydration, live time after (RenderClock): no text swap on load.
   const now = useRenderClock();
-
-  // CommentItem is keyed by comment.id, so React reuses this instance across
-  // refetches — resync from the prop whenever the server's own value changes
-  // (e.g. another tab toggling the heart, or an unrelated cache invalidation)
-  // instead of only ever reading it once on mount.
-  useEffect(() => {
-    setIsHearted(comment.isHearted || false);
-  }, [comment.isHearted]);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.hash === `#comment-${comment.id}`) {
@@ -108,49 +104,6 @@ function CommentItemComponent({
       return () => clearTimeout(timer);
     }
   }, [comment.id]);
-
-  const handleHide = async () => {
-    try {
-      const res = await fetch(`/api/admin/comments/${comment.id}/hide`, { method: "POST" });
-      if (res.ok) {
-        toast(language === "pl" ? "Komentarz ukryty." : "Comment hidden.", "success");
-      } else {
-        toast(language === "pl" ? "Błąd ukrywania." : "Error hiding.", "error");
-      }
-    } catch (err) {
-      toast("Error", "error");
-    }
-    setShowMenu(false);
-  };
-
-  const handleRestore = async () => {
-    try {
-      const res = await fetch(`/api/admin/comments/${comment.id}/restore`, { method: "POST" });
-      if (res.ok) {
-        toast(language === "pl" ? "Komentarz przywrócony." : "Comment restored.", "success");
-      } else {
-        toast(language === "pl" ? "Błąd przywracania." : "Error restoring.", "error");
-      }
-    } catch (err) {
-      toast("Error", "error");
-    }
-    setShowMenu(false);
-  };
-
-  const handleToggleHeart = async () => {
-    try {
-      const response = await fetch(`/api/admin/comments/${comment.id}/heart`, { method: "POST" });
-      if (!response.ok) throw new Error(String(response.status));
-      const body = (await response.json().catch(() => null)) as { isHearted?: boolean } | null;
-      setIsHearted((current) => (typeof body?.isHearted === "boolean" ? body.isHearted : !current));
-      toast(language === "pl" ? "Serce twórcy zaktualizowane." : "Creator heart updated.", "success");
-    } catch {
-      toast(
-        language === "pl" ? "Nie udało się zmienić serca twórcy." : "Could not update the creator heart.",
-        "error",
-      );
-    }
-  };
 
   const startEditing = () => {
     setEditText(comment.text || "");
@@ -175,7 +128,7 @@ function CommentItemComponent({
       setEditError(
         error instanceof Error && error.message
           ? error.message
-          : language === "pl" ? "Nie udało się zapisać zmian." : "Could not save your changes.",
+          : tx("Nie udało się zapisać zmian.", "Could not save your changes."),
       );
     } finally {
       setIsSavingEdit(false);
@@ -185,7 +138,7 @@ function CommentItemComponent({
   const submitReport = async (reason: CommentReportReasonDto, note?: string) => {
     await onReport(comment.id, reason, note);
     toast(
-      language === "pl" ? "Dziękujemy, zgłoszenie zostało wysłane." : "Thanks, your report was sent.",
+      tx("Dziękujemy, zgłoszenie zostało wysłane.", "Thanks, your report was sent."),
       "success",
     );
   };
@@ -204,9 +157,7 @@ function CommentItemComponent({
       ? formatCommentAge(validCreatedAt, language, now)
       : isReply
         ? t.justNow
-        : language === "pl"
-          ? "niedawno"
-          : "recently"
+        : tx("niedawno", "recently")
     : "";
   const menuItemClassName =
     "min-h-10 gap-2 rounded-xl px-3 py-2 text-sm text-[var(--chan-ink)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]";
@@ -244,7 +195,7 @@ function CommentItemComponent({
         <div className={cn("relative flex items-start justify-between", userProfile && "pr-9")}>
           <div className="flex min-w-0 items-center gap-1.5">
             <span className="truncate text-[13px] font-bold leading-[18px] text-[var(--chan-ink)]">
-              {comment.author?.displayName || (language === "pl" ? "Użytkownik" : "User")}
+              {comment.author?.displayName || (tx("Użytkownik", "User"))}
             </span>
             <time
               className="shrink-0 whitespace-nowrap text-[12px] leading-[18px] text-[var(--chan-muted)]"
@@ -255,7 +206,7 @@ function CommentItemComponent({
             {!isReply && comment.isPinned && (
               <span
                 role="img"
-                aria-label={language === "pl" ? "Przypięty" : "Pinned"}
+                aria-label={tx("Przypięty", "Pinned")}
                 className="inline-flex shrink-0 text-[var(--chan-blue)]"
               >
                 <Star size={12} aria-hidden="true" className="fill-[var(--chan-blue)]" />
@@ -273,7 +224,7 @@ function CommentItemComponent({
                     : "opacity-100 [@media(hover:hover)]:opacity-0 group-hover/comment:opacity-100 group-hover/reply:opacity-100 group-focus-within/comment:opacity-100 group-focus-within/reply:opacity-100 focus:opacity-100",
                 )}
                 aria-label={
-                  language === "pl" ? "Akcje komentarza" : "Comment actions"
+                  tx("Akcje komentarza", "Comment actions")
                 }
               >
                 <MoreVertical aria-hidden="true" size={16} />
@@ -293,7 +244,7 @@ function CommentItemComponent({
                   className={menuItemClassName}
                 >
                   <LinkIcon aria-hidden="true" size={14} />
-                  {language === "pl" ? "Kopiuj link" : "Copy link"}
+                  {tx("Kopiuj link", "Copy link")}
                 </DropdownMenuItem>
 
                 {comment.viewerCanEdit && (
@@ -302,7 +253,7 @@ function CommentItemComponent({
                     className={menuItemClassName}
                   >
                     <Edit aria-hidden="true" size={14} />
-                    {language === "pl" ? "Edytuj" : "Edit"}
+                    {tx("Edytuj", "Edit")}
                   </DropdownMenuItem>
                 )}
                 {comment.viewerCanDelete && (
@@ -313,7 +264,7 @@ function CommentItemComponent({
                     className={cn(menuItemClassName, "text-[var(--chan-muted-2)]")}
                   >
                     <Trash2 aria-hidden="true" size={14} />
-                    {language === "pl" ? "Usuń" : "Delete"}
+                    {tx("Usuń", "Delete")}
                   </DropdownMenuItem>
                 )}
                 {comment.viewerCanReport && (
@@ -322,7 +273,7 @@ function CommentItemComponent({
                     className={menuItemClassName}
                   >
                     <Flag aria-hidden="true" size={14} />
-                    {language === "pl" ? "Zgłoś" : "Report"}
+                    {tx("Zgłoś", "Report")}
                   </DropdownMenuItem>
                 )}
                 {!isReply && comment.viewerCanPin && (
@@ -332,56 +283,8 @@ function CommentItemComponent({
                   >
                     <Star aria-hidden="true" size={16} />
                     {comment.isPinned
-                      ? language === "pl"
-                        ? "Odepnij"
-                        : "Unpin"
-                      : language === "pl"
-                        ? "Przypnij"
-                        : "Pin"}
-                  </DropdownMenuItem>
-                )}
-                {comment.viewerCanModerate &&
-                  comment.status === "VISIBLE" &&
-                  !isReply && (
-                    <DropdownMenuItem
-                      onClick={() => void handleHide()}
-                      className={menuItemClassName}
-                    >
-                      <EyeOff aria-hidden="true" size={14} />
-                      {language === "pl" ? "Ukryj" : "Hide"}
-                    </DropdownMenuItem>
-                  )}
-                {comment.viewerCanModerate &&
-                  comment.status === "HIDDEN" &&
-                  !isReply && (
-                    <DropdownMenuItem
-                      onClick={() => void handleRestore()}
-                      className={menuItemClassName}
-                    >
-                      <RotateCcw aria-hidden="true" size={14} />
-                      {language === "pl" ? "Przywróć" : "Restore"}
-                    </DropdownMenuItem>
-                  )}
-                {comment.viewerCanModerate && !isReply && (
-                  <DropdownMenuItem
-                    onClick={() => void handleToggleHeart()}
-                    className={cn(
-                      menuItemClassName,
-                      "text-[var(--chan-amber-strong)] focus:text-[var(--chan-amber-strong)]",
-                    )}
-                  >
-                    <Heart
-                      aria-hidden="true"
-                      size={16}
-                      className={isHearted ? "fill-[var(--chan-amber)]" : ""}
-                    />
-                    {isHearted
-                      ? language === "pl"
-                        ? "Usuń serce"
-                        : "Remove heart"
-                      : language === "pl"
-                        ? "Daj serce"
-                        : "Give heart"}
+                      ? tx("Odepnij", "Unpin")
+                      : tx("Przypnij", "Pin")}
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -403,7 +306,7 @@ function CommentItemComponent({
                   void saveEdit();
                 }
               }}
-              aria-label={language === "pl" ? "Edytuj komentarz" : "Edit comment"}
+              aria-label={tx("Edytuj komentarz", "Edit comment")}
               aria-invalid={Boolean(editError)}
               readOnly={isSavingEdit}
               className="w-full rounded-md border border-[var(--chan-line)] bg-[var(--chan-card)] p-2 text-sm text-[var(--chan-ink)] shadow-[0_1px_0_rgba(15,15,15,0.10),0_6px_14px_rgba(15,15,15,0.06)] focus:outline-none focus:ring-2 focus:ring-[var(--chan-ink)]/20"
@@ -428,7 +331,7 @@ function CommentItemComponent({
                 disabled={!editText.trim() || editText === comment.text || isSavingEdit}
                 className="text-xs font-bold px-3 py-1 bg-[var(--chan-blue)] text-white rounded-md hover:brightness-110 disabled:opacity-50"
                >
-                 {language === "pl" ? "Zapisz" : "Save"}
+                 {tx("Zapisz", "Save")}
                </button>
             </div>
           </div>
@@ -459,7 +362,7 @@ function CommentItemComponent({
 
           {isHearted && (
             <span
-              aria-label={language === "pl" ? "Serce twórcy" : "Creator heart"}
+              aria-label={tx("Serce twórcy", "Creator heart")}
               className="inline-flex h-8 items-center px-1 text-[var(--chan-amber)]"
               role="img"
             >

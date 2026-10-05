@@ -12,6 +12,7 @@ import { useLanguage } from "./LanguageContext";
 import { PlayerStateFrame } from "./PlayerStateFrame";
 import { useRenderClock } from "./RenderClock";
 import styles from "./AccessLockOverlay.module.css";
+import type { Tx } from "@/lib/i18n/ui";
 
 // COMING_SOON = a scheduled premiere not reached yet (CLAUDE.md "Premieres"), shown to
 // signed-in viewers; guests get LOGIN_REQUIRED for the same video.
@@ -54,7 +55,7 @@ export function AccessLockOverlay({ state, variant, premiereAt }: AccessLockOver
   const { open: openAuthModal } = useAuthModal();
   const reduceMotion = useReducedMotion();
   const titleId = useId();
-  const isPl = language === "pl";
+  const { tx } = useLanguage();
   const isCompact = variant !== "default";
   const isComingSoon = state === "COMING_SOON";
 
@@ -79,7 +80,7 @@ export function AccessLockOverlay({ state, variant, premiereAt }: AccessLockOver
     };
   }, [ticks]);
 
-  const countdownLabel = formatPremiereCountdown(isPl, premiereDate, countdownNow);
+  const countdownLabel = formatPremiereCountdown(tx, premiereDate, countdownNow);
   const units = useCountdownUnits(countdownNow, premiereDate);
 
   if (isCompact) {
@@ -96,9 +97,9 @@ export function AccessLockOverlay({ state, variant, premiereAt }: AccessLockOver
               variant === "thumbnailCompact" && styles.compactTiny,
             )}
             role="img"
-            aria-label={`${isPl ? "Premiera" : "Premiere"} ${formatPremiereDate(premiereDate)}`}
+            aria-label={`${tx("Premiera", "Premiere")} ${formatPremiereDate(premiereDate)}`}
           >
-            <PremieraLettering isPl={isPl} className={styles.compactPremiereLabel} />
+            <PremieraLettering tx={tx} className={styles.compactPremiereLabel} />
             <span className={styles.compactPremiereDate} aria-hidden="true">
               {tightenSegmentOnes(formatPremiereDate(premiereDate), styles.compactPremiereDateOne)}
             </span>
@@ -119,15 +120,15 @@ export function AccessLockOverlay({ state, variant, premiereAt }: AccessLockOver
             variant === "thumbnailCompact" && styles.compactTiny,
           )}
           role="img"
-          aria-label={isPl ? "Zaloguj się" : "Sign in"}
+          aria-label={tx("Zaloguj się", "Sign in")}
         >
           <img
-            src={isPl ? "/wall-login-pl.png" : "/wall-login-en.png"}
+            src={tx("/wall-login-pl.png", "/wall-login-en.png")}
             alt=""
             className={styles.compactLoginImage}
             // The lettering sits off-centre inside the PNG (measured: PL centre at 52.1% / 49%,
             // EN at 56.7% / 49%), so nudge the image to put the words in the middle of the tile.
-            style={{ transform: isPl ? "translate(-2.1%, 1%)" : "translate(-6.7%, 1%)" }}
+            style={{ transform: tx("translate(-2.1%, 1%)", "translate(-6.7%, 1%)") }}
             draggable={false}
           />
         </div>
@@ -153,7 +154,7 @@ export function AccessLockOverlay({ state, variant, premiereAt }: AccessLockOver
       >
         {isComingSoon ? (
           <CockpitComingSoon
-            isPl={isPl}
+            tx={tx}
             reduceMotion={Boolean(reduceMotion)}
             titleId={titleId}
             units={units}
@@ -162,7 +163,7 @@ export function AccessLockOverlay({ state, variant, premiereAt }: AccessLockOver
           />
         ) : (
           <LoginScene
-            isPl={isPl}
+            tx={tx}
             reduceMotion={Boolean(reduceMotion)}
             titleId={titleId}
           />
@@ -173,11 +174,11 @@ export function AccessLockOverlay({ state, variant, premiereAt }: AccessLockOver
 }
 
 function LoginScene({
-  isPl,
+  tx,
   reduceMotion,
   titleId,
 }: {
-  isPl: boolean;
+  tx: Tx;
   reduceMotion: boolean;
   titleId: string;
 }) {
@@ -186,7 +187,7 @@ function LoginScene({
       <motion.div
         id={titleId}
         role="img"
-        aria-label={isPl ? "Nie masz psychy sie zalogowac" : "You don't have guts to log in"}
+        aria-label={tx("Nie masz psychy sie zalogowac", "You don't have guts to log in")}
         className={styles.graffitiImageWrap}
         initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -197,7 +198,7 @@ function LoginScene({
         }
       >
         <img
-          src={isPl ? "/wall-text-pl.png" : "/wall-text-en.png"}
+          src={tx("/wall-text-pl.png", "/wall-text-en.png")}
           alt=""
           className={styles.graffitiImage}
           draggable={false}

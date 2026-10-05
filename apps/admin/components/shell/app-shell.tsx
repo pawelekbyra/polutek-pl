@@ -15,7 +15,7 @@ import { ShortcutsDialog } from "./shortcuts-dialog";
 import { Topbar, type ShellHealth } from "./topbar";
 import { ToastProvider } from "./toasts";
 
-export type ShellViewer = { name: string; email: string; dev?: boolean };
+export type ShellViewer = { name: string; email: string; dev?: boolean; /** Access mode: the account menu links here to sign out (Cloudflare Access logout). */ signOutHref?: string };
 
 const RANGE_ORDER = ["today", "7d", "28d", "90d"] as const;
 
@@ -46,6 +46,9 @@ function NavLink({ item, current, counts }: { item: NavItem; current: string | n
     </li>
   );
 }
+
+/** Screens that read the global period filter (`?range=`, `?cmp=`). */
+const hasPeriod = (path: string) => path === "/" || path === "/analityka" || path.startsWith("/analityka/") || /^\/tresci\/[^/]+\/(analityka|jakosc)$/.test(path);
 
 function isTyping(target: EventTarget | null) {
   const el = target as HTMLElement | null;
@@ -88,9 +91,9 @@ export function AppShell({ children, counts, health, viewer, sample, now }: { ch
       if (range === "today") q.delete("range");
       else q.set("range", range);
       const qs = q.toString();
-      router.push(`/${qs ? `?${qs}` : ""}`, { scroll: false });
+      router.push(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
     },
-    [params, router],
+    [params, pathname, router],
   );
 
   useEffect(() => {
@@ -132,7 +135,7 @@ export function AppShell({ children, counts, health, viewer, sample, now }: { ch
         }
         return;
       }
-      if ((k === "[" || k === "]") && pathname === "/") {
+      if ((k === "[" || k === "]") && hasPeriod(pathname)) {
         const cur = RANGE_ORDER.indexOf((params.get("range") as (typeof RANGE_ORDER)[number]) ?? "today");
         const next = RANGE_ORDER[Math.max(0, Math.min(RANGE_ORDER.length - 1, (cur < 0 ? 0 : cur) + (k === "]" ? 1 : -1)))];
         setRange(next);
@@ -182,7 +185,7 @@ export function AppShell({ children, counts, health, viewer, sample, now }: { ch
             viewer={viewer}
             sample={sample}
             now={now}
-            showPeriod={pathname === "/"}
+            showPeriod={hasPeriod(pathname)}
             range={params.get("range") ?? "today"}
             compare={params.get("cmp") ?? "prev"}
             onOpenPalette={() => setPalette(true)}

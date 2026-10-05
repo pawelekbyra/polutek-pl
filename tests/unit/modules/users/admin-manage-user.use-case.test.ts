@@ -1,7 +1,7 @@
 /** Admin account management: deleting another user and changing the ADMIN role (fail closed). */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { changeUserRoleAsAdmin, deleteUserAsAdmin } from '@/lib/modules/users/application/admin-manage-user.use-case';
+import { changeUserRoleAsAdmin, changeUserRoleFromPanel, deleteUserAsAdmin, deleteUserFromPanel } from '@/lib/modules/users/application/admin-manage-user.use-case';
 import { sendAccountDeletedEmail } from '@/lib/modules/email';
 
 vi.mock('@/lib/modules/email/application/send-transactional-email.use-case', () => ({
@@ -189,5 +189,36 @@ describe('changeUserRoleAsAdmin', () => {
     const result = await changeUserRoleAsAdmin(ctx(), { adminUserId: ADMIN, userId: 'nope', role: 'ADMIN' });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error).toMatchObject({ code: 'USER_NOT_FOUND', statusCode: 404 });
+  });
+});
+
+describe('from the admin panel (apps/admin): the actor is a panel account, not a site user', () => {
+  function panelCtx() {
+    return createAppContext({ actor: { type: 'admin', userId: 'panel-account-1' }, prisma, now: () => new Date('2026-10-04T10:00:00.000Z') });
+  }
+
+  it('changes a role without a site-admin row for the actor, with the same lock and audit', async () => {
+    const result = await changeUserRoleFromPanel(panelCtx(), { userId: TARGET, role: 'ADMIN', panelEmail: 'owner@panel.example' });
+    expect(result).toEqual({ ok: true, data: { changed: true, role: 'ADMIN' } });
+    expect(prisma.$executeRaw).toHaveBeenCalled();
+    expect(auditActions()).toEqual([expect.objectContaining({ action: 'ADMIN_USER_ROLE_CHANGED', targetId: TARGET })]);
+  });
+
+  it('never acts on the account with the panel owner e-mail (yourself)', async () => {
+    const role = await changeUserRoleFromPanel(panelCtx(), { userId: TARGET, role: 'ADMIN', panelEmail: 'jan.kowalski@example.com' });
+    const del = await deleteUserFromPanel(panelCtx(), { userId: TARGET, confirmEmail: 'jan.kowalski@example.com', panelEmail: 'JAN.KOWALSKI@example.com' });
+    expect(role.ok).toBe(false);
+    expect(del.ok).toBe(false);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it('keeps the last-admin rule', async () => {
+    const result = await changeUserRoleFromPanel(panelCtx(), { userId: ADMIN, role: 'USER', panelEmail: 'owner@panel.example' });
+    expect(result.ok).toBe(false);
+  });
+
+  it('deletes with the typed e-mail and refuses a mismatch', async () => {
+    expect((await deleteUserFromPanel(panelCtx(), { userId: TARGET, confirmEmail: 'x@example.com', panelEmail: 'owner@panel.example' })).ok).toBe(false);
+    expect(await deleteUserFromPanel(panelCtx(), { userId: TARGET, confirmEmail: 'jan.kowalski@example.com', panelEmail: 'owner@panel.example' })).toEqual({ ok: true, data: { deleted: true } });
   });
 });

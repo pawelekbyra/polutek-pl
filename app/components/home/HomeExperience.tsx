@@ -22,6 +22,7 @@ import {
 } from '@/app/components/channel/sidebar-layout-request';
 import { resolvePlaybackViewerKey } from '@/app/components/preload/playback-viewer-key';
 import { getHomeViewerActor, loadHeroPlaybackPlan, loadInitialComments } from './home-viewer-data';
+import { getServerTx } from '@/lib/i18n/server-tx';
 
 interface HomeExperienceProps {
   locale: Locale;
@@ -38,6 +39,7 @@ interface HomeExperienceProps {
  * from the wordmark font.
  */
 export default async function HomeExperience({ locale, videoId, q }: HomeExperienceProps) {
+  const tx = await getServerTx(locale);
   // auth() and the home content are read once per request (React cache), shared with the page
   // and its metadata.
   const [session, content] = await Promise.all([
@@ -165,12 +167,12 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
         <Navbar />
         <main className="max-w-3xl mx-auto px-6 py-20 text-center">
           <h1 className="text-2xl font-bold mb-4">
-            {isError ? 'Błąd wczytywania' : 'Brak materiałów'}
+            {isError ? tx('Błąd wczytywania', 'Loading error') : tx('Brak materiałów', 'No videos yet')}
           </h1>
           <p className="text-[var(--chan-muted)] mb-8">
             {isError
               ? content.publicMessage
-              : 'Nie znaleziono żadnych filmów. Dodaj film w panelu admina, aby go tutaj zobaczyć.'}
+              : tx('Nie znaleziono żadnych filmów. Dodaj film w panelu admina, aby go tutaj zobaczyć.', 'No videos found. Add a video in the admin panel to see it here.')}
           </p>
 
           {process.env.DEBUG_HOME_CONTENT === 'true' && content.debug && (
@@ -218,7 +220,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
     <AuthSessionSeedProvider snapshot={sessionSnapshot}>
     <PageRevealGate waitFor={['player', 'comments']}>
       <div className="public-visual-shell min-h-screen bg-background text-foreground">
-        <Navbar />
+        <Navbar isHome />
         <main className="relative">
           <ChannelHome
             mainVideo={mainVideo}

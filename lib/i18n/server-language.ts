@@ -9,10 +9,10 @@ export type AppLanguage = Locale;
 export const LANGUAGE_COOKIE = "app-language";
 
 /**
- * Countries whose dominant language is one the site really has (ISO 3166-1 alpha-2, as sent in
- * Cloudflare's `CF-IPCountry`). Add a country only when its language is a real locale in
- * lib/i18n/routing.ts. English-speaking countries are deliberately absent: English is the fallback
- * anyway, so an entry would only override a browser that explicitly asks for Polish.
+ * Countries whose language the site is detected by country (ISO 3166-1 alpha-2, as sent in
+ * Cloudflare's `CF-IPCountry`). Only Poland is listed (owner decision): every other visitor is
+ * served by the browser's `Accept-Language`, so a German browser set to English stays English
+ * even in Germany. English-speaking countries are absent for the same reason.
  */
 const COUNTRY_LANGUAGE: Readonly<Record<string, AppLanguage>> = { PL: "pl" };
 
@@ -24,8 +24,9 @@ export function languageFromCountry(country: string | null | undefined): AppLang
 
 /**
  * The first supported language in an `Accept-Language` header, in the browser's order of
- * preference (q-values, RFC 9110 §12.5.4): "en-US,en;q=0.9,pl;q=0.8" is English, "pl-PL,pl" is
- * Polish, "de-DE" is null. Entries with q=0 mean "not acceptable" and are skipped.
+ * preference (q-values, RFC 9110 §12.5.4); any of the eight site languages counts, by primary
+ * subtag ("zh-TW" and "pt-PT" too): "en-US,en;q=0.9,pl;q=0.8" is English, "pl-PL,pl" is
+ * Polish, "de-DE" is German, "ja" is null. Entries with q=0 mean "not acceptable" and are skipped.
  */
 export function languageFromAcceptLanguage(header: string | null | undefined): AppLanguage | null {
   if (!header) return null;

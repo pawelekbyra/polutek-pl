@@ -7,8 +7,10 @@ import type { TipConfirmOutcome } from "./tip-confirm";
 import { describeTipMethod, formatTipAmount } from "./tip-flow-config";
 import { TipStepHeading, TipStepLayout } from "./TipStepLayout";
 
+import { useOptionalTx } from "@/lib/i18n/language-context";
+import type { Locale } from "@/lib/i18n/routing";
 export interface TipPayStepProps {
-  language: string;
+  language: Locale;
   amount: number;
   currency: SupportedCurrency;
   method: string;
@@ -31,8 +33,8 @@ export function PayStepFrame({
   children: React.ReactNode;
 }) {
   const { language, amount, currency, method, onChangeMethod } = props;
-  const isPl = language === "pl";
-  const copy = describeTipMethod(method, isPl);
+  const tx = useOptionalTx(language);
+  const copy = describeTipMethod(method, tx);
   return (
     <TipStepLayout footer={footer}>
       <TipStepHeading title={copy.title} />
@@ -43,7 +45,7 @@ export function PayStepFrame({
           {copy.title}
         </p>
         <button type="button" onClick={onChangeMethod} className="text-[13px] font-bold text-[var(--chan-ink)] hover:underline">
-          {isPl ? "Zmień" : "Change"}
+          {tx("Zmień", "Change")}
         </button>
       </div>
       {children}

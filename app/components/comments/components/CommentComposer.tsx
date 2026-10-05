@@ -7,6 +7,8 @@ import { useAuthModal } from "@/app/components/auth/AuthModalProvider";
 import { cn } from "@/lib/utils";
 import { SafeAvatar } from "../../SafeAvatar";
 import { countGraphemes } from "@/lib/utils/graphemes";
+import type { Locale } from "@/lib/i18n/routing";
+import { useOptionalTx } from "@/lib/i18n/language-context";
 
 interface CommentComposerProps {
   userProfile: any;
@@ -24,7 +26,7 @@ interface CommentComposerProps {
   errorMessage?: string | null;
   handleSubmit: (e: React.FormEvent) => void;
   t: any;
-  language: string;
+  language: Locale;
 }
 
 const QUICK_EMOJIS = ["😀", "😂", "🔥", "👏", "❤️", "🙏", "💯", "😮"];
@@ -60,6 +62,7 @@ export function CommentComposer({
   language,
 }: CommentComposerProps) {
   const { open: openAuthModal } = useAuthModal();
+  const tx = useOptionalTx(language);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const emojiPanelRef = React.useRef<HTMLDivElement>(null);
   const emojiTriggerRef = React.useRef<HTMLButtonElement>(null);
@@ -136,23 +139,14 @@ export function CommentComposer({
           {replyTo && userProfile && (
             <div className="mb-2 flex w-fit items-center gap-2 text-[11px] font-bold text-[var(--chan-blue)]">
               <CornerDownRight size={12} />
-              {language === "pl" ? (
-                <>
-                  Odpowiadasz{" "}
-                  <span className="font-black ml-1">{replyingToAuthor}</span>
-                </>
-              ) : (
-                <>
-                  Replying to{" "}
-                  <span className="font-black ml-1">{replyingToAuthor}</span>
-                </>
-              )}
+              {tx("Odpowiadasz", "Replying to")}{" "}
+              <span className="font-black ml-1">{replyingToAuthor}</span>
               <button
                 type="button"
                 onClick={() => setReplyTo(null)}
                 className="ml-2 hover:opacity-60"
                 aria-label={
-                  language === "pl" ? "Anuluj odpowiedź" : "Cancel reply"
+                  tx("Anuluj odpowiedź", "Cancel reply")
                 }
               >
                 ✕
@@ -166,9 +160,7 @@ export function CommentComposer({
                 role="status"
                 aria-live="polite"
               >
-                {language === "pl"
-                  ? "Sprawdzamy możliwość komentowania..."
-                  : "Checking comment access..."}
+                {tx("Sprawdzamy możliwość komentowania...", "Checking comment access...")}
               </div>
             </div>
           ) : !canComment ? (
@@ -232,9 +224,7 @@ export function CommentComposer({
                       disabled={isPending}
                       className="grid h-9 w-9 place-items-center rounded-md text-[16px] transition-colors hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
                       aria-label={
-                        language === "pl"
-                          ? `Dodaj emoji ${emoji}`
-                          : `Add emoji ${emoji}`
+                        tx("Dodaj emoji {0}", "Add emoji {0}", emoji)
                       }
                     >
                       {emoji}
@@ -250,14 +240,12 @@ export function CommentComposer({
                     aria-controls={emojiPanelId}
                     aria-haspopup="dialog"
                     aria-label={
-                      language === "pl" ? "Więcej emoji" : "More emoji"
+                      tx("Więcej emoji", "More emoji")
                     }
                   >
                     {showEmojiPanel
                       ? "✕"
-                      : language === "pl"
-                        ? "więcej"
-                        : "more"}
+                      : tx("więcej", "more")}
                   </button>
                   {showEmojiPanel && (
                     <div
@@ -265,7 +253,7 @@ export function CommentComposer({
                       id={emojiPanelId}
                       role="dialog"
                       aria-label={
-                        language === "pl" ? "Wybierz emoji" : "Choose an emoji"
+                        tx("Wybierz emoji", "Choose an emoji")
                       }
                       className="absolute bottom-full left-0 z-50 mb-2 max-h-[200px] w-[300px] overflow-y-auto rounded-xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-2 shadow-[0_8px_26px_rgba(23,23,23,0.12)]"
                     >
@@ -277,9 +265,7 @@ export function CommentComposer({
                             onClick={() => { insertEmoji(emoji); setShowEmojiPanel(false); }}
                             className="grid h-9 w-9 place-items-center rounded text-[18px] leading-none transition-colors hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
                             aria-label={
-                              language === "pl"
-                                ? `Dodaj emoji ${emoji}`
-                                : `Add emoji ${emoji}`
+                              tx("Dodaj emoji {0}", "Add emoji {0}", emoji)
                             }
                           >
                             {emoji}
@@ -308,9 +294,7 @@ export function CommentComposer({
                   className="text-xs font-bold text-red-600"
                 >
                   {isTooLong
-                    ? language === "pl"
-                      ? "Komentarz jest za długi. Limit to 2000 znaków."
-                      : "Comment is too long. The limit is 2000 characters."
+                    ? tx("Komentarz jest za długi. Limit to 2000 znaków.", "Comment is too long. The limit is 2000 characters.")
                     : errorMessage}
                 </p>
               )}
@@ -343,7 +327,7 @@ export function CommentComposer({
                         size={14}
                         aria-hidden="true"
                       />
-                      {language === "pl" ? "Wysyłanie..." : "Sending..."}
+                      {tx("Wysyłanie...", "Sending...")}
                     </span>
                   ) : replyTo ? (
                     t.reply

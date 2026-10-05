@@ -9,6 +9,8 @@ const ROWS: [string[], string][] = [
   [["/"], "Szukaj na liście (gdy ekran ma filtr)"],
   [["[", "]"], "Krótszy / dłuższy okres (ekran Dzisiaj)"],
   [["←", "→"], "Na wykresie (po fokusie): wartości punkt po punkcie"],
+  [["j", "k"], "Moderacja: następny / poprzedni komentarz w kolejce"],
+  [["h", "z", "p", "w"], "Moderacja: ukryj, zostaw (zatwierdź), wstrzymaj, wycisz autora; „Cofnij” w powiadomieniu"],
   [["Esc"], "Zamknij okno, menu albo paletę"],
 ];
 

@@ -17,12 +17,13 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock("next/navigation", () => ({ useRouter: () => h.router, usePathname: () => "/en", useSearchParams: () => new URLSearchParams() }));
-vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en", setLanguage: () => {} }) }));
+vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en", tx: txFor("en"), setLanguage: () => {} }) }));
 vi.mock("@/lib/auth/client", () => ({ authClient: h.client, captchaFetchOptions: (token: string | null) => (token ? { headers: { "x-captcha-response": token } } : undefined) }));
 vi.mock("@/lib/auth/public-config", () => ({ useAuthPublicConfig: () => ({ googleClientId: null, turnstileSiteKey: null }) }));
 vi.mock("@/lib/auth/react", () => ({ useAuth: () => ({ isLoaded: true, isSignedIn: false, signOut: vi.fn() }) }));
 
 import AuthModal from "@/app/components/auth/AuthModal";
+import { txFor } from "../i18n/mock-language";
 
 function enableWebAuthn() {
   const PublicKeyCredential = function PublicKeyCredential() {} as unknown as { isConditionalMediationAvailable: () => Promise<boolean> };

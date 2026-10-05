@@ -16,16 +16,23 @@ import { PlayerErrorOverlay } from './PlayerErrorOverlay';
 import { PlayerStateFrame } from './PlayerStateFrame';
 import { PlayerStartLoading } from './PlayerLoadingState';
 import { UnmuteHint } from './player/UnmuteHint';
-import { readUserMuted, writeUserMuted } from './player/sound-preference';
+import {
+    mayTryAudibleAutoplay,
+    readSoundPreference,
+    readUserMuted,
+    writeUserMuted,
+    writeVolume,
+} from './player/sound-preference';
 import { useUnmuteOnFirstGesture } from './player/useUnmuteOnFirstGesture';
 import { resolvePlaybackSource } from './playback-source';
 import { shouldSendViewForPlaybackPosition } from './video-view-threshold';
 import { usePlaybackTelemetry } from '@/lib/hooks/usePlaybackTelemetry';
 import { usePlaybackQoe } from '@/lib/telemetry/client/use-playback-qoe';
-import { usePageRevealReady } from './preload/PageRevealGate';
+import { shouldSkipGate, usePageRevealReady } from './preload/PageRevealGate';
 import { buildSelfHlsConfig, loadHlsLibrary, streamIdentity } from './player/self-hls';
 import { pickCaptionTrack, writeCaptionsEnabled } from './player/captions';
 import { useOptionalLanguage } from './LanguageContext';
+import { useOptionalTx } from "@/lib/i18n/language-context";
 
 // The player is on the home page above the fold: start fetching hls.js (our own chunk) right
 // away, so it is ready before the playback plan arrives and the stream is never fetched twice
@@ -62,6 +69,9 @@ function normalizeTextTracks(tracks: VideoTextTrackDTO[] | undefined): VideoText
     });
 }
 
+// Vidstack's defaults, minus the playback-speed keys ("<" / ">"): the player has no speed control.
+const PLAYER_KEY_SHORTCUTS = { speedUp: '', slowDown: '' };
+
 export default function VideoPlayer({ video, onViewCounted, revealKey, startWithSound = false }: VideoPlayerProps) {
     const { playbackPlan, refreshPlaybackPlan, renewPlaybackPlan, isLoading } = useVideoAccess();
     // The player never receives admin status from the session (the server decides); admin-only
@@ -74,6 +84,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
     // Only the caption track in the page language is mounted (captions.ts): it is what the CC
     // switch turns on and off; without one the player has no captions and no CC button.
     const language = useOptionalLanguage();
+    const tx = useOptionalTx();
     const captionTrack = pickCaptionTrack(normalizeTextTracks(playerConfig?.textTracks), language);
 
     // One stream = one video version; a renewed token is the same stream. The player is mounted
@@ -101,6 +112,8 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
     const startWithSoundRef = useRef(startWithSound);
     const [muted, setMuted] = useState(true);
     const [userMuted, setUserMuted] = useState(false);
+    // The volume the viewer last set (sound-preference.ts); the player is mounted with it.
+    const [startVolume, setStartVolume] = useState(1);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -177,9 +190,9 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
             }
         }
         resumeRef.current = null;
-        setLoadError('Nie udało się załadować materiału wideo. Spróbuj ponownie za chwilę.');
+        setLoadError(tx('Nie udało się załadować materiału wideo. Spróbuj ponownie za chwilę.', 'Could not load the video. Please try again in a moment.'));
         qoe.error('LOAD_FAILED', true);
-    }, [qoe, streamKey]);
+    }, [qoe, streamKey, tx]);
 
     const maybeSendView = useCallback(async (currentTimeSeconds: number, durationSeconds?: number) => {
         if (hasReached10s.current || viewCountRequestInFlight.current || !shouldSendViewForPlaybackPosition(currentTimeSeconds, durationSeconds)) return;
@@ -215,9 +228,20 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
         setLoadError(null);
         setIsPlaying(false);
         // Read here, not during render: sessionStorage does not exist on the server.
-        const chosenMute = readUserMuted();
+        const preference = readSoundPreference();
+        const chosenMute = preference.muted === true;
         setUserMuted(chosenMute);
-        setMuted(!(startWithSoundRef.current && !chosenMute));
+        setStartVolume(preference.volume ?? 1);
+        // With sound when the viewer picked this video by click, or when they had sound on before
+        // and no entry gate is waiting for its click (a reload, Back/Forward, a later page of the
+        // same session) and the browser does not rule sound autoplay out: then the browser decides
+        // (onAutoPlayFail falls back to muted + the unmute button). Under the gate it stays muted.
+        const audibleStart =
+            !chosenMute &&
+            (startWithSoundRef.current ||
+                (preference.muted === false && shouldSkipGate() && mayTryAudibleAutoplay()));
+        if (startWithSoundRef.current && !chosenMute) writeUserMuted(false);
+        setMuted(!audibleStart);
         setPlayerKey((key) => key + 1);
         hasReached10s.current = false;
         viewCountRequestInFlight.current = false;
@@ -269,6 +293,8 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
     useEffect(() => {
         const handleGateEnter = () => {
             if (readUserMuted()) return;
+            // The gate click is the viewer's own: the sound they get now is remembered.
+            writeUserMuted(false);
             setMuted(false);
             const current = player.current;
             if (!current) return;
@@ -301,7 +327,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
         const current = player.current;
         if (!current) return;
         current.muted = false;
-        if (current.volume === 0) current.volume = 1;
+        if (current.volume === 0) current.volume = readSoundPreference().volume ?? 1;
     };
 
     // Muted only because the browser required it (reload or Back/Forward without a gesture, or
@@ -313,7 +339,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
         const current = player.current;
         if (!current) return;
         current.muted = false;
-        if (current.volume === 0) current.volume = 1;
+        if (current.volume === 0) current.volume = readSoundPreference().volume ?? 1;
     }, []);
     useUnmuteOnFirstGesture(isMounted && muted && !userMuted, unmuteAfterGesture, playerKey);
 
@@ -375,11 +401,13 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                         title={playerConfig?.title || video.title || 'Video'}
                         src={src}
                         muted={muted}
+                        volume={startVolume}
                         autoPlay={autoPlayWanted}
                         preload={autoPlayWanted ? 'auto' : undefined}
                         playsInline
                         aspectRatio="16/9"
                         controlsDelay={4000}
+                        keyShortcuts={PLAYER_KEY_SHORTCUTS}
                         onCanPlay={() => {
                             setCanPlay(true);
                             const resume = resumeRef.current;
@@ -436,6 +464,8 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                             writeUserMuted(true);
                             setUserMuted(true);
                         }}
+                        // The volume slider and the arrow keys: remembered for the next load.
+                        onMediaVolumeChangeRequest={(detail: number) => writeVolume(detail)}
                         onMediaUnmuteRequest={() => {
                             writeUserMuted(false);
                             setUserMuted(false);

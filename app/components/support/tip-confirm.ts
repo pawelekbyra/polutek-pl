@@ -1,4 +1,5 @@
 import type { PaymentIntentResult } from "@stripe/stripe-js";
+import type { Tx } from "@/lib/i18n/ui";
 
 export type TipConfirmOutcome = "succeeded" | "processing";
 
@@ -13,15 +14,15 @@ export function buildTipReturnUrl(paymentId: string | null): string {
 /** Maps a Stripe confirm result to the gate's outcome, or an error message to show. */
 export function readConfirmResult(
   result: PaymentIntentResult,
-  isPl: boolean,
+  tx: Tx,
 ): { outcome: TipConfirmOutcome } | { error: string } {
   if (result.error) {
-    return { error: result.error.message || (isPl ? "Nie udało się wysłać napiwku." : "The tip could not be sent.") };
+    return { error: result.error.message || (tx("Nie udało się wysłać napiwku.", "The tip could not be sent.")) };
   }
   const status = result.paymentIntent?.status;
   if (status === "succeeded") return { outcome: "succeeded" };
   if (status === "processing") return { outcome: "processing" };
   return {
-    error: isPl ? "Płatność nie została ukończona. Spróbuj ponownie." : "The payment was not completed. Please try again.",
+    error: tx("Płatność nie została ukończona. Spróbuj ponownie.", "The payment was not completed. Please try again."),
   };
 }

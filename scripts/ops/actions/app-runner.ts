@@ -308,16 +308,6 @@ async function paymentRefund(p: Params) {
 
 // ------------------------------------------------------------------ role kont
 
-/** ADMIN_EMAILS (bootstrap w lib/api/auth.ts) nadaje rolę ADMIN przy każdym żądaniu: zdjęcie roli z takiego adresu nie przetrwa. */
-function inAdminEmails(email: string | null | undefined): boolean {
-  if (!email) return false;
-  return String(process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean)
-    .includes(email.trim().toLowerCase());
-}
-
 async function adminRoster(db: Tx | typeof prisma) {
   const admins = await db.user.findMany({
     where: { role: "ADMIN", isDeleted: false },
@@ -325,7 +315,7 @@ async function adminRoster(db: Tx | typeof prisma) {
     orderBy: { createdAt: "asc" },
     take: 20,
   });
-  return admins.map((a) => ({ id: a.id, name: cut(a.name, 60), email: a.email, emailVerified: Boolean(a.emailVerified), inAdminEmails: inAdminEmails(a.email) }));
+  return admins.map((a) => ({ id: a.id, name: cut(a.name, 60), email: a.email, emailVerified: Boolean(a.emailVerified) }));
 }
 
 async function loadUser(db: Tx | typeof prisma, userId: string) {
@@ -334,7 +324,7 @@ async function loadUser(db: Tx | typeof prisma, userId: string) {
     select: { id: true, name: true, email: true, role: true, isDeleted: true, emailVerified: true, createdAt: true },
   });
   if (!u) return null;
-  return { id: u.id, name: cut(u.name, 60), email: u.email, role: u.role, isDeleted: u.isDeleted, emailVerified: Boolean(u.emailVerified), createdAt: u.createdAt.toISOString(), inAdminEmails: inAdminEmails(u.email) };
+  return { id: u.id, name: cut(u.name, 60), email: u.email, role: u.role, isDeleted: u.isDeleted, emailVerified: Boolean(u.emailVerified), createdAt: u.createdAt.toISOString() };
 }
 
 async function userInspect(p: Params) {
@@ -355,7 +345,7 @@ async function userInspect(p: Params) {
 /**
  * Zmiana roli istniejącym use case'em changeUserRoleAsAdmin (blokada „admin-roster”, nigdy własna rola, nigdy
  * ostatni admin, ADMIN tylko dla zweryfikowanego e-maila, audyt ADMIN_USER_ROLE_CHANGED w tej samej transakcji).
- * Wymóg świeżego logowania sprawdza trasa HTTP (lib/api/admin-recent-sign-in.ts), nie use case: operator nie ma sesji
+ * Wymóg świeżego logowania (step-up) sprawdza panel (apps/admin), nie use case: operator nie ma sesji
  * przeglądarki, działa jako audytowane narzędzie na polecenie właściciela, więc tego kryterium tu nie ma.
  */
 async function userSetRole(p: Params) {
@@ -369,9 +359,6 @@ async function userSetRole(p: Params) {
   if (!admin.ok) return { ok: false, executed: false, error: admin.error, adminCandidates: admin.candidates ?? null };
   const before = await loadUser(prisma, userId);
   if (!before) return { ok: false, executed: false, error: "Konto nie istnieje." };
-  if (role === "USER" && before.inAdminEmails) {
-    return { ok: false, executed: false, error: "Adres konta jest w ADMIN_EMAILS: rola ADMIN wróciłaby przy następnym żądaniu. Najpierw usuń go z ADMIN_EMAILS." };
-  }
 
   const ctx = operatorContext(admin.admin.id, opId);
   const result = await changeUserRoleAsAdmin(ctx, { adminUserId: admin.admin.id, userId, role });

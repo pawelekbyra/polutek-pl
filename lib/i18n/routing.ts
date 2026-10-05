@@ -1,6 +1,19 @@
-export const SUPPORTED_LOCALES = ["pl", "en"] as const;
+/**
+ * Languages with their own interface translation and their own URL prefix (/pl, /en, /de, ...).
+ * Only `CONTENT_LOCALES` also have real page content (film titles, legal documents, e-mails); the
+ * rest translate the interface only and show English content (docs/operations/I18N.md).
+ */
+export const CONTENT_LOCALES = ["pl", "en"] as const;
+export const UI_ONLY_LOCALES = ["de", "es", "fr", "it", "pt", "zh"] as const;
+export const SUPPORTED_LOCALES = [...CONTENT_LOCALES, ...UI_ONLY_LOCALES] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
+export type ContentLocale = (typeof CONTENT_LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "pl";
+
+/** Language whose page content (film texts, legal documents, e-mails) a viewer gets: Polish or English. */
+export function toContentLocale(locale: Locale): ContentLocale {
+  return locale === "pl" ? "pl" : "en";
+}
 
 export const ROUTES = {
   home: { pl: "", en: "/en" },
@@ -16,7 +29,7 @@ export type RouteKey = keyof typeof ROUTES;
 type RouteParams = { slug?: string };
 
 export function isLocale(value: unknown): value is Locale {
-  return value === "pl" || value === "en";
+  return typeof value === "string" && (SUPPORTED_LOCALES as readonly string[]).includes(value);
 }
 
 export function normalizeLocale(value: unknown): Locale | null {
@@ -26,7 +39,9 @@ export function normalizeLocale(value: unknown): Locale | null {
 }
 
 export function getLocalizedHref(locale: Locale, routeKey: RouteKey, params: RouteParams = {}) {
-  let href = ROUTES[routeKey][locale] as string;
+  // UI-only languages mirror the English routes under their own prefix: /en/search -> /de/search.
+  const href0 = ROUTES[routeKey][toContentLocale(locale)] as string;
+  let href = locale === "pl" || locale === "en" ? href0 : href0.replace(/^\/en(?=\/|$)/, `/${locale}`);
   if (href.includes(":slug")) {
     if (!params.slug) throw new Error(`Missing slug for localized route ${routeKey}`);
     href = href.replace(":slug", encodeURIComponent(params.slug));
@@ -100,5 +115,6 @@ export function getLocaleAlternates(
   { params = {}, query = "", baseUrl = "" }: { params?: RouteParams; query?: string | URLSearchParams; baseUrl?: string } = {},
 ) {
   const url = (target: Locale) => `${baseUrl}${appendQueryString(getExplicitLocaleHref(target, routeKey, params), query)}`;
-  return { canonical: url(locale), languages: { pl: url("pl"), en: url("en"), "x-default": url("en") } };
+  // A UI-only language shows English content, so its pages point search engines at the English URL.
+  return { canonical: url(toContentLocale(locale)), languages: { pl: url("pl"), en: url("en"), "x-default": url("en") } };
 }

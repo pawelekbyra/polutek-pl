@@ -16,3 +16,4 @@ export * from "./domain/payment.errors";
 export * from "./domain/payment.policy";
 export * from "./domain/stripe-event.dto";
 export * from "./infrastructure/stripe-client";
+export { getPaymentCurrencyLimits } from "@/lib/payments/currency-settings";

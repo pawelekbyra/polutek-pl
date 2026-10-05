@@ -9,6 +9,7 @@ import { logger } from "@/lib/logger";
 import { MIN_PAYMENT_BY_CURRENCY, SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
 import { useToast } from "@/app/hooks/useToast";
 import { LEGAL_DOCUMENTS_VERSION } from "@/lib/legal/version";
+import type { Tx } from "@/lib/i18n/ui";
 
 // Query params Stripe/our return URL add after a redirect-based payment method.
 const STRIPE_RETURN_PARAMS = [
@@ -48,7 +49,7 @@ export type TipUiStatus = "PROCESSING" | "SUCCEEDED" | "FAILED" | "REFUNDED" | "
 
 export interface UseCheckoutFlowOptions {
   /** True for Polish copy, false for English — drives the handful of fixed toast strings. */
-  isPl: boolean;
+  tx: Tx;
 }
 
 export interface UseCheckoutFlowResult {
@@ -93,7 +94,7 @@ export interface UseCheckoutFlowResult {
  * create-intent call, the Stripe return-URL handling and the background reconciliation loop.
  */
 export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlowResult {
-  const { isPl } = options;
+  const { tx } = options;
 
   const toast = useToast();
   const { userId } = useAuth();
@@ -325,7 +326,7 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
       }
       if (!amount || amount < minAmount) {
         toast(
-          isPl ? `Minimalna kwota napiwku to ${minAmount} ${currency}` : `Minimum tip amount is ${minAmount} ${currency}`,
+          tx("Minimalna kwota napiwku to {0} {1}", "Minimum tip amount is {0} {1}", minAmount, currency),
           "error",
         );
         return false;
@@ -353,33 +354,29 @@ export function useCheckoutFlow(options: UseCheckoutFlowOptions): UseCheckoutFlo
         }
 
         if (response.status === 401 || String(data?.error).includes("AUTH_REQUIRED")) {
-          toast(isPl ? "Twoja sesja wygasła. Zaloguj się ponownie." : "Your session has expired. Please sign in again.", "error");
+          toast(tx("Twoja sesja wygasła. Zaloguj się ponownie.", "Your session has expired. Please sign in again."), "error");
           openAuthModal("sign-in");
         } else if (data?.error === "PAYMENT_IN_PROGRESS") {
           toast(
-            isPl
-              ? "Ten napiwek jest właśnie opłacany (np. czeka na potwierdzenie w banku). Dokończ go albo spróbuj za kilka minut."
-              : "This tip is being paid right now (e.g. waiting for your bank). Finish it or try again in a few minutes.",
+            tx("Ten napiwek jest właśnie opłacany (np. czeka na potwierdzenie w banku). Dokończ go albo spróbuj za kilka minut.", "This tip is being paid right now (e.g. waiting for your bank). Finish it or try again in a few minutes."),
             "error",
           );
         } else {
           toast(
-            isPl ? "Nie udało się rozpocząć płatności. Spróbuj ponownie za chwilę." : "The payment could not be started. Please try again in a moment.",
+            tx("Nie udało się rozpocząć płatności. Spróbuj ponownie za chwilę.", "The payment could not be started. Please try again in a moment."),
             "error",
           );
         }
       } catch (error: unknown) {
         logger.error("[TipFlow] Payment error", error);
         toast(
-          isPl
-            ? "Błąd połączenia z systemem płatności. Spróbuj odświeżyć stronę."
-            : "Payment system connection error. Please refresh the page.",
+          tx("Błąd połączenia z systemem płatności. Spróbuj odświeżyć stronę.", "Payment system connection error. Please refresh the page."),
           "error",
         );
       }
       return false;
     },
-    [userId, openAuthModal, toast, isPl, requestIntent],
+    [userId, openAuthModal, toast, tx, requestIntent],
   );
 
   return {

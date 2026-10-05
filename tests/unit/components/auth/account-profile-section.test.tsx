@@ -19,9 +19,11 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/pl",
   useSearchParams: () => new URLSearchParams(),
 }));
-vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "pl", setLanguage: vi.fn() }) }));
+vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "pl", tx: txFor("pl"), setLanguage: vi.fn() }) }));
 
 import { ProfileSection } from "@/app/components/auth/ProfileSection";
+import { createTx } from "@/lib/i18n/ui";
+import { txFor } from "../../i18n/mock-language";
 
 const fetchMock = vi.fn();
 const availabilityCalls = () => fetchMock.mock.calls.filter(([url]) => String(url).startsWith("/api/users/nickname-available"));
@@ -47,14 +49,14 @@ describe("account ProfileSection (nickname)", () => {
   });
 
   it("shows one Pseudonim field in the current language", () => {
-    render(<ProfileSection isPl />);
+    render(<ProfileSection tx={createTx("pl")} />);
     expect((screen.getByLabelText("Pseudonim") as HTMLInputElement).value).toBe("Stary Nick");
     expect(screen.queryByLabelText(/nazwa użytkownika/i)).toBeNull();
     expect(screen.queryByText("Nickname")).toBeNull();
   });
 
   it("rejects an invalid nickname with the sign-up messages, without calling the server", async () => {
-    render(<ProfileSection isPl />);
+    render(<ProfileSection tx={createTx("pl")} />);
     setNickname("ab");
     expect((await screen.findByRole("alert")).textContent).toContain("Pseudonim musi mieć co najmniej 3 znaki.");
     setNickname("zły!nick");
@@ -67,7 +69,7 @@ describe("account ProfileSection (nickname)", () => {
 
   it("blocks a nickname someone else already has", async () => {
     fetchMock.mockImplementation(async () => new Response(JSON.stringify({ available: false, reason: "taken" }), { status: 200 }));
-    render(<ProfileSection isPl />);
+    render(<ProfileSection tx={createTx("pl")} />);
     setNickname("Zajęty");
     expect((await screen.findByRole("alert")).textContent).toContain("Ten pseudonim jest już zajęty.");
     expect(availabilityCalls()[0][0]).toBe("/api/users/nickname-available?name=Zaj%C4%99ty");
@@ -75,7 +77,7 @@ describe("account ProfileSection (nickname)", () => {
   });
 
   it("saves a free nickname through the profile route and refreshes the session", async () => {
-    render(<ProfileSection isPl />);
+    render(<ProfileSection tx={createTx("pl")} />);
     setNickname("  Nowy   Nick ");
     await waitFor(() => expect(saveCalls()).toHaveLength(1));
     const [, init] = saveCalls()[0];
@@ -89,7 +91,7 @@ describe("account ProfileSection (nickname)", () => {
     fetchMock.mockImplementation(async (url: string) =>
       new Response(JSON.stringify(url.startsWith("/api/users/nickname-available") ? { available: false, reason: "taken" } : {}), { status: 200 }),
     );
-    render(<ProfileSection isPl />);
+    render(<ProfileSection tx={createTx("pl")} />);
     setNickname("STARY NICK");
     await waitFor(() => expect(saveCalls()).toHaveLength(1));
     expect(availabilityCalls()).toHaveLength(0);
@@ -101,14 +103,14 @@ describe("account ProfileSection (nickname)", () => {
         ? new Response(JSON.stringify({ error: "NICKNAME_TAKEN" }), { status: 409 })
         : new Response(JSON.stringify({ available: true }), { status: 200 }),
     );
-    render(<ProfileSection isPl />);
+    render(<ProfileSection tx={createTx("pl")} />);
     setNickname("Wyścig");
     expect((await screen.findByRole("alert")).textContent).toContain("Ten pseudonim jest już zajęty.");
     expect(refreshSession).not.toHaveBeenCalled();
   });
 
   it("uses English labels and messages when the site is in English", async () => {
-    render(<ProfileSection isPl={false} />);
+    render(<ProfileSection tx={createTx("en")} />);
     expect(screen.getByLabelText("Nickname")).toBeTruthy();
     expect(screen.queryByText("Pseudonim")).toBeNull();
     fireEvent.change(screen.getByLabelText("Nickname"), { target: { value: "ab" } });

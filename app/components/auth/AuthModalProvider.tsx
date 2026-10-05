@@ -30,7 +30,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
   const [view, setView] = useState<AuthView>("sign-in");
   const [notice, setNotice] = useState<AuthNotice | null>(null);
   const [verifiedBanner, setVerifiedBanner] = useState(false);
-  const { language } = useLanguage();
+  const { language, tx } = useLanguage();
   const { isLoaded, isSignedIn } = useAuth();
 
   const open = useCallback((nextView: AuthView = "sign-in") => {
@@ -111,7 +111,7 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
           role="status"
           className="fixed left-1/2 top-4 z-[100] -translate-x-1/2 rounded-xl bg-[var(--chan-ink)] px-4 py-2.5 text-[13px] font-semibold text-white shadow-lg"
         >
-          {language === "pl" ? "Adres e-mail potwierdzony. Jesteś zalogowany." : "Email confirmed. You're signed in."}
+          {tx("Adres e-mail potwierdzony. Jesteś zalogowany.", "Email confirmed. You're signed in.")}
         </div>
       )}
       <OnboardingDialog />

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import React from "react";
+import { useOptionalTx } from "@/lib/i18n/language-context";
 
 export default function Error({
   error,
@@ -10,6 +11,7 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const tx = useOptionalTx();
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-6 font-sans text-foreground">
       <div className="w-full max-w-md text-center">
@@ -22,15 +24,14 @@ export default function Error({
             </svg>
           </div>
         </div>
-        <h1 className="mb-3 text-2xl font-black uppercase tracking-tight text-foreground">Coś poszło nie tak</h1>
+        <h1 className="mb-3 text-2xl font-black uppercase tracking-tight text-foreground">{tx("Coś poszło nie tak", "Something went wrong")}</h1>
         <p className="mb-8 text-muted-foreground">
-          Wystąpił nieoczekiwany błąd aplikacji. Nasz zespół został powiadomiony.
-          Spróbuj odświeżyć stronę lub wrócić później.
+          {tx("Wystąpił nieoczekiwany błąd aplikacji. Nasz zespół został powiadomiony. Spróbuj odświeżyć stronę lub wrócić później.", "An unexpected application error occurred. Our team has been notified. Try refreshing the page or come back later.")}
         </p>
 
         {error.digest && (
           <div className="mb-8 rounded-2xl border border-border bg-secondary p-3">
-            <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Kod błędu (Digest)</p>
+            <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{tx("Kod błędu (Digest)", "Error code (Digest)")}</p>
             <p className="break-all font-mono text-sm text-foreground">{error.digest}</p>
           </div>
         )}
@@ -40,13 +41,13 @@ export default function Error({
             onClick={() => reset()}
             className="w-full rounded-full bg-primary py-3 text-xs font-bold uppercase tracking-widest text-primary-foreground transition-all hover:opacity-90 active:scale-[0.98]"
           >
-            Spróbuj ponownie
+            {tx("Spróbuj ponownie", "Try again")}
           </button>
           <Link
             href="/"
             className="w-full rounded-full border border-border bg-background py-3 text-xs font-bold uppercase tracking-widest text-foreground transition-all hover:bg-secondary active:scale-[0.98]"
           >
-            Wróć do strony głównej
+            {tx("Wróć do strony głównej", "Back to the home page")}
           </Link>
         </div>
       </div>

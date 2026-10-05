@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getAccessConfig, getAdminOrigin } from "@admin/lib/config";
+import { ADMIN_COOKIE_PREFIX, getAccessConfig, getAdminAuthMode, getAdminOrigin, getDevAccessEmail } from "@admin/lib/config";
+import { recordAccessDenied } from "@admin/lib/auth/access-session";
+import { isTranslatorPath, lookupRoleByEmail, lookupSessionRole } from "@admin/lib/auth/roles";
 import { verifyAccessRequest } from "@admin/lib/security/cf-access";
 import { buildCsp, createNonce } from "@admin/lib/security/csp";
 import { checkPanelCsrf } from "@admin/lib/security/csrf";
@@ -7,10 +9,12 @@ import { checkPanelCsrf } from "@admin/lib/security/csrf";
 /**
  * Front door of the panel (Next.js 16 proxy, Node runtime), in this order:
  *  1. /api/health answers without anything else (container healthcheck on 127.0.0.1).
- *  2. Cloudflare Access JWT must verify (layer 1); otherwise 403 and nothing else runs.
+ *  2. Cloudflare Access JWT must verify (layer 1); otherwise 403 and nothing else runs. In access mode
+ *     (ADMIN_AUTH_MODE, default) the verified e-mail must also be allowed: that is the whole sign-in.
  *  3. Mutations must come from the exact panel origin (CSRF).
  *  4. Pages get a fresh nonce + strict CSP and `no-store`.
- * The session itself (layer 2) is checked by the pages and the auth handler, not here.
+ * Legacy passkey mode: the session itself (layer 2) is checked by the pages and the auth handler, not here.
+ * Access mode: the pages and handlers re-verify the token (lib/auth/access-session.ts); no panel cookie exists.
  */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -19,6 +23,9 @@ export async function proxy(request: NextRequest) {
   const access = await verifyAccessRequest(request.headers, getAccessConfig());
   if (!access.ok) {
     console.warn(`[admin-proxy] access denied: ${access.reason}${access.detail ? ` (${access.detail})` : ""} ${request.method} ${pathname}`);
+    if (access.reason === "email_not_allowed" || access.reason === "missing_email") {
+      await recordAccessDenied(request.headers, access.reason, access.email, access.tokenId).catch(() => undefined);
+    }
     return denied(access.reason === "not_configured" ? 503 : 403);
   }
 
@@ -28,9 +35,27 @@ export async function proxy(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403, headers: { "cache-control": "no-store" } });
   }
 
+  // A TRANSLATOR account reaches only the translation screens. Checked here, on every request (soft navigations
+  // fetch their page from the server too), so a new page added by someone else is closed to translators by default.
+  const accessMode = getAdminAuthMode() === "access";
+  if (!isTranslatorPath(pathname)) {
+    const cookieName = process.env.NODE_ENV === "production" ? `__Host-${ADMIN_COOKIE_PREFIX}.session_token` : `${ADMIN_COOKIE_PREFIX}.session_token`;
+    const cookie = request.cookies.get(cookieName)?.value;
+    const accessEmail = access.dev ? getDevAccessEmail() : access.email;
+    const role = accessMode
+      ? accessEmail ? await lookupRoleByEmail(accessEmail).catch(() => null) : null
+      : cookie ? await lookupSessionRole(cookie).catch(() => null) : null;
+    if (role === "TRANSLATOR") {
+      console.warn(`[admin-proxy] translator outside its screens: ${request.method} ${pathname}`);
+      if (pathname.startsWith("/api/")) return NextResponse.json({ error: "Forbidden" }, { status: 403, headers: { "cache-control": "no-store" } });
+      return NextResponse.redirect(new URL("/tlumaczenia", request.url));
+    }
+  }
+
   if (pathname.startsWith("/api/")) {
     const res = NextResponse.next();
-    res.headers.set("cache-control", "private, no-store");
+    // no-transform: the live stream (SSE) must never be buffered or re-encoded by a compression layer.
+    res.headers.set("cache-control", "private, no-store, no-transform");
     return res;
   }
 

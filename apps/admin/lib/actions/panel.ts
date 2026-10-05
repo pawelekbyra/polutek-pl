@@ -18,7 +18,13 @@ export type ActionResult<T = undefined> =
  */
 export async function panelContext(viewer: AdminViewer): Promise<AppContext> {
   const h = await headers();
-  return createAppContext({ actor: { type: "admin", userId: viewer.userId }, requestId: h.get("cf-ray") ?? h.get("x-request-id") ?? undefined });
+  return createAppContext({
+    actor: { type: "admin", userId: viewer.userId },
+    requestId: h.get("cf-ray") ?? h.get("x-request-id") ?? undefined,
+    // Audit rows say from where the admin acted (ADM-14: production had 0 of 25 admin rows with an IP).
+    allowedLanguages: viewer.role === "TRANSLATOR" ? viewer.languages : undefined,
+    client: { ip: h.get("cf-connecting-ip")?.trim() || null, userAgent: h.get("user-agent")?.slice(0, 300) || null },
+  });
 }
 
 const MESSAGES: Record<string, string> = {
@@ -31,6 +37,17 @@ const MESSAGES: Record<string, string> = {
   ENCODE_JOB_NOT_FOUND: "To zadanie kodowania już nie istnieje.",
   ENCODE_JOB_FINISHED: "To kodowanie już się zakończyło.",
   R2_NOT_CONFIGURED: "Magazyn R2 nie jest skonfigurowany w panelu.",
+  CHANNEL_OWNER_UNCHANGED: "To konto już jest kontem kanału.",
+  CHANNEL_OWNER_NOT_FOUND: "Nie ma takiego konta (albo zostało usunięte).",
+  CHANNEL_OWNER_CONFLICT: "Konto kanału zmieniło się w międzyczasie. Odśwież stronę.",
+  COVER_TOO_LARGE: "Miniatura może mieć najwyżej 5 MB.",
+  COVER_INVALID_TYPE: "To nie jest obraz JPG, PNG ani WebP.",
+  PAYMENT_NOT_FOUND: "Nie ma takiej wpłaty.",
+  PAYMENT_NOT_REFUNDABLE: "Ta wpłata nie może być zwrócona w obecnym stanie.",
+  PAYMENT_NO_STRIPE_INTENT: "Wpłata nie ma powiązania ze Stripe (brak identyfikatora intencji).",
+  PAYMENT_ALREADY_REFUNDED: "Ta wpłata jest już w całości zwrócona.",
+  INVALID_REFUND_AMOUNT: "Kwota zwrotu przekracza to, co zostało do zwrotu.",
+  PAYMENT_PROVIDER_ERROR: "Stripe odrzucił operację albo nie odpowiada. Szczegóły są w logu serwera; sprawdź stan w Stripe, zanim spróbujesz ponownie.",
   LAYOUT_STALE: "Lista filmów się zmieniła. Odśwież układ i spróbuj ponownie.",
 };
 

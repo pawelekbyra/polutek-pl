@@ -4,7 +4,7 @@
  * (shape + word, never colour alone), theme toggle and the account menu with sign-out.
  */
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { adminAuthClient } from "@admin/lib/auth/client";
 import { Icon } from "../icons";
@@ -45,6 +45,7 @@ export function Topbar({
 }) {
   const router = useRouter();
   const params = useSearchParams();
+  const pathname = usePathname();
   const { toast } = useToast();
   const theme = useSyncExternalStore<Theme>(subscribeTheme, readTheme, () => "system");
   const [healthOpen, setHealthOpen] = useState(false);
@@ -91,7 +92,7 @@ export function Topbar({
     if (value === fallback) q.delete(name);
     else q.set(name, value);
     const qs = q.toString();
-    router.push(`/${qs ? `?${qs}` : ""}`, { scroll: false });
+    router.push(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
   }
 
   async function signOut() {
@@ -128,7 +129,7 @@ export function Topbar({
             <option value="none">bez porównania</option>
           </select>
           <span id="range-hint" className="sr-only">
-            Okres dotyczy liczb i wykresu na ekranie Dzisiaj. Skróty: nawias kwadratowy otwierający i zamykający.
+            Okres dotyczy liczb i wykresów na ekranach Dzisiaj, Analityka i analityki filmu. Skróty: nawias kwadratowy otwierający i zamykający.
           </span>
         </div>
       ) : null}
@@ -204,10 +205,17 @@ export function Topbar({
             <strong>{viewer.name}</strong>
             <span className="muted">{viewer.email}</span>
           </div>
-          <button type="button" className="btn btn-sm" onClick={signOut} disabled={!!viewer.dev}>
-            <Icon name="logout" />
-            Wyloguj
-          </button>
+          {viewer.signOutHref ? (
+            <a className="btn btn-sm" href={viewer.signOutHref}>
+              <Icon name="logout" />
+              Wyloguj
+            </a>
+          ) : (
+            <button type="button" className="btn btn-sm" onClick={signOut} disabled={!!viewer.dev}>
+              <Icon name="logout" />
+              Wyloguj
+            </button>
+          )}
         </div>
       ) : null}
     </header>

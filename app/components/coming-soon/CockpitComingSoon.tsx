@@ -8,6 +8,7 @@ import { PremieraLettering } from "./PremieraLettering";
 import { HudBackdrop } from "./HudBackdrop";
 import { engineAt } from "./cockpit-timeline";
 import { activeProgress, cuesOf, lastIndex, sinceLast, useClockValue, useCockpitClock, type CockpitClock } from "./useCockpitClock";
+import type { Tx } from "@/lib/i18n/ui";
 
 type Star = { x: number; y: number; z: number; tint: string };
 
@@ -139,25 +140,44 @@ function Segments({ text, className, tightOnes }: { text: string; className?: st
 }
 
 /* Flight log: each line is written at its sound; the course line is typed on the keystrokes. */
-const LOG_SCRIPT: { t: number; pl: string; en: string; keys?: boolean }[] = [
-  { t: 0.36, pl: "test systemów…", en: "systems check…" },
-  { t: 2.3, pl: "test systemów: OK", en: "systems check: OK" },
-  { t: 6.11, pl: "łącze danych: aktywne", en: "data link: active" },
-  { t: 7.6, pl: "przeliczanie trajektorii…", en: "recomputing trajectory…" },
-  { t: 9.71, pl: "korekta ciągu +2,4%", en: "thrust trim +2.4%" },
-  { t: 10.72, pl: "skanowanie sektora…", en: "scanning sector…" },
-  { t: 14.15, pl: "CEL NAMIERZONY: PREMIERA", en: "TARGET LOCKED: PREMIERE" },
-  { t: 17.86, pl: "kurs ustalony: {date}", en: "course set: {date}", keys: true },
-  { t: 22.12, pl: "synchronizacja kursu…", en: "syncing course…" },
-  { t: 25.2, pl: "kurs zsynchronizowany", en: "course synced" },
-  { t: 27.04, pl: "kontakt radarowy: czysto", en: "radar contact: clear" },
-  { t: 35.05, pl: "transmisja z bazy: odebrano", en: "base transmission: received" },
-  { t: 37.91, pl: "przeliczanie trajektorii…", en: "recomputing trajectory…" },
+const LOG_SCRIPT: { t: number; keys?: boolean }[] = [
+  { t: 0.36 },
+  { t: 2.3 },
+  { t: 6.11 },
+  { t: 7.6 },
+  { t: 9.71 },
+  { t: 10.72 },
+  { t: 14.15 },
+  { t: 17.86, keys: true },
+  { t: 22.12 },
+  { t: 25.2 },
+  { t: 27.04 },
+  { t: 35.05 },
+  { t: 37.91 },
 ];
+
+/** The flight log lines, index-aligned with LOG_SCRIPT; the course line takes the premiere date. */
+function flightLogLines(tx: Tx, date: string): string[] {
+  return [
+    tx("test systemów…", "systems check…"),
+    tx("test systemów: OK", "systems check: OK"),
+    tx("łącze danych: aktywne", "data link: active"),
+    tx("przeliczanie trajektorii…", "recomputing trajectory…"),
+    tx("korekta ciągu +2,4%", "thrust trim +2.4%"),
+    tx("skanowanie sektora…", "scanning sector…"),
+    tx("CEL NAMIERZONY: PREMIERA", "TARGET LOCKED: PREMIERE"),
+    tx("kurs ustalony: {0}", "course set: {0}", date),
+    tx("synchronizacja kursu…", "syncing course…"),
+    tx("kurs zsynchronizowany", "course synced"),
+    tx("kontakt radarowy: czysto", "radar contact: clear"),
+    tx("transmisja z bazy: odebrano", "base transmission: received"),
+    tx("przeliczanie trajektorii…", "recomputing trajectory…"),
+  ];
+}
 
 const TYPE_KEYS = cuesOf("type").length;
 
-function FlightLog({ clock, isPl, date }: { clock: CockpitClock; isPl: boolean; date: string }) {
+function FlightLog({ clock, tx, date }: { clock: CockpitClock; tx: Tx; date: string }) {
   const key = useClockValue(clock, (p) => {
     if (p < LOG_SCRIPT[0].t) return `${LOG_SCRIPT.length - 1}|full`;
     let i = 0;
@@ -166,8 +186,7 @@ function FlightLog({ clock, isPl, date }: { clock: CockpitClock; isPl: boolean; 
     return `${i}|${Math.floor((p - LOG_SCRIPT[i].t) / 0.032)}`;
   });
   const [iS, nS] = key.split("|");
-  const entry = LOG_SCRIPT[Number(iS)];
-  const text = (isPl ? entry.pl : entry.en).replace("{date}", date);
+  const text = flightLogLines(tx, date)[Number(iS)];
   let shown = text;
   if (nS.startsWith("k")) shown = text.slice(0, Math.round((Number(nS.slice(1)) / TYPE_KEYS) * text.length));
   else if (nS !== "full") shown = text.slice(0, Number(nS));
@@ -180,8 +199,8 @@ function FlightLog({ clock, isPl, date }: { clock: CockpitClock; isPl: boolean; 
   );
 }
 
-function SoundToggle({ on, audible, onToggle, isPl }: { on: boolean; audible: boolean; onToggle: () => void; isPl: boolean }) {
-  const label = isPl ? (on ? "Wycisz dźwięk kokpitu" : "Włącz dźwięk kokpitu") : on ? "Mute cockpit sound" : "Unmute cockpit sound";
+function SoundToggle({ on, audible, onToggle, tx }: { on: boolean; audible: boolean; onToggle: () => void; tx: Tx }) {
+  const label = on ? tx("Wycisz dźwięk kokpitu", "Mute cockpit sound") : tx("Włącz dźwięk kokpitu", "Unmute cockpit sound");
   return (
     <button type="button" className={styles.sound} onClick={onToggle} aria-pressed={on} aria-label={label} title={label}>
       <span className={`${styles.soundBars} ${on && audible ? styles.soundLive : ""}`} aria-hidden="true">
@@ -190,20 +209,20 @@ function SoundToggle({ on, audible, onToggle, isPl }: { on: boolean; audible: bo
         <i />
         <i />
       </span>
-      <span aria-hidden="true">{isPl ? (on ? "DŹWIĘK WŁ." : "DŹWIĘK WYŁ.") : on ? "SOUND ON" : "SOUND OFF"}</span>
+      <span aria-hidden="true">{on ? tx("DŹWIĘK WŁ.", "SOUND ON") : tx("DŹWIĘK WYŁ.", "SOUND OFF")}</span>
     </button>
   );
 }
 
 export function CockpitComingSoon({
-  isPl,
+  tx,
   reduceMotion,
   titleId,
   units,
   countdownLabel,
   premiereAt,
 }: {
-  isPl: boolean;
+  tx: Tx;
   reduceMotion: boolean;
   titleId: string;
   units: string[];
@@ -234,7 +253,7 @@ export function CockpitComingSoon({
     };
   }, []);
 
-  const unitLabels = isPl ? ["DNI", "GODZ", "MIN", "SEK"] : ["DAYS", "HRS", "MIN", "SEC"];
+  const unitLabels = [tx("DNI", "DAYS"), tx("GODZ", "HRS"), tx("MIN", "MIN"), tx("SEK", "SEC")];
   const premiereDate = formatPremiereDate(premiereAt);
   const enter = (delay: number) =>
     reduceMotion
@@ -246,7 +265,7 @@ export function CockpitComingSoon({
       <div className={styles.nebula} aria-hidden="true" />
       <Warpfield clock={clock} running={running} />
       <div className={styles.focus} aria-hidden="true" />
-      <HudBackdrop clock={clock} isPl={isPl} running={running} premiereAt={premiereAt} />
+      <HudBackdrop clock={clock} tx={tx} running={running} premiereAt={premiereAt} />
       <div className={styles.glass} aria-hidden="true" />
       <div className={styles.scanlines} aria-hidden="true" />
 
@@ -271,7 +290,7 @@ export function CockpitComingSoon({
                 transition: { duration: 1.1, delay: 0.2, ease: EASE },
               })}
         >
-          <PremieraLettering isPl={isPl} className={styles.headingMark} />
+          <PremieraLettering tx={tx} className={styles.headingMark} />
         </motion.h2>
 
         <motion.div className={styles.units} role="timer" aria-label={countdownLabel} {...enter(0.75)}>
@@ -287,8 +306,8 @@ export function CockpitComingSoon({
         </motion.div>
       </div>
 
-      <FlightLog clock={clock} isPl={isPl} date={premiereDate} />
-      {!reduceMotion && <SoundToggle on={soundOn} audible={audible} onToggle={() => setSoundOn(!soundOn)} isPl={isPl} />}
+      <FlightLog clock={clock} tx={tx} date={premiereDate} />
+      {!reduceMotion && <SoundToggle on={soundOn} audible={audible} onToggle={() => setSoundOn(!soundOn)} tx={tx} />}
     </div>
   );
 }

@@ -11,6 +11,7 @@ vi.mock("@/lib/auth/client", () => ({ authClient: h.client, captchaFetchOptions:
 vi.mock("@/lib/auth/react", () => ({ useUser: () => ({ user: { id: "u1" } }) }));
 
 import { DangerSection } from "@/app/components/auth/AccountSections";
+import { createTx } from "@/lib/i18n/ui";
 
 const fetchMock = vi.fn();
 
@@ -30,7 +31,7 @@ describe("DangerSection (F-12)", () => {
   it("sends the password with the delete request and keeps the button disabled without it", async () => {
     h.client.listAccounts.mockResolvedValue({ data: [{ providerId: "credential" }] });
     fetchMock.mockResolvedValue({ ok: false, status: 403, json: async () => ({ error: "INVALID_PASSWORD" }) });
-    render(<DangerSection isPl={false} onDeleted={() => undefined} />);
+    render(<DangerSection tx={createTx("en")} onDeleted={() => undefined} />);
     const submit = await screen.findByRole("button", { name: /delete account permanently/i });
     fireEvent.change(screen.getByLabelText(/type delete/i), { target: { value: "DELETE" } });
     expect((submit as HTMLButtonElement).disabled).toBe(true);
@@ -47,7 +48,7 @@ describe("DangerSection (F-12)", () => {
   it("offers 'Confirm with Google' when the server wants a recent sign-in", async () => {
     h.client.listAccounts.mockResolvedValue({ data: [{ providerId: "google" }] });
     fetchMock.mockResolvedValue({ ok: false, status: 403, json: async () => ({ error: "REAUTH_REQUIRED" }) });
-    render(<DangerSection isPl={false} onDeleted={() => undefined} />);
+    render(<DangerSection tx={createTx("en")} onDeleted={() => undefined} />);
     const submit = await screen.findByRole("button", { name: /delete account permanently/i });
     expect(screen.queryByLabelText(/your password/i)).toBeNull();
     fireEvent.change(screen.getByLabelText(/type delete/i), { target: { value: "DELETE" } });
@@ -65,7 +66,7 @@ describe("DangerSection (F-12)", () => {
     const original = window.location;
     Object.defineProperty(window, "location", { value: { ...original, assign: vi.fn() }, writable: true });
     try {
-      render(<DangerSection isPl={false} onDeleted={onDeleted} />);
+      render(<DangerSection tx={createTx("en")} onDeleted={onDeleted} />);
       const submit = await screen.findByRole("button", { name: /delete account permanently/i });
       fireEvent.change(screen.getByLabelText(/type delete/i), { target: { value: "DELETE" } });
       fireEvent.change(screen.getByLabelText(/your password/i), { target: { value: "right password 1" } });

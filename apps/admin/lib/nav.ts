@@ -21,7 +21,7 @@ export const NAV: NavItem[] = [
   { id: "dzisiaj", href: "/", label: "Dzisiaj", icon: "today", key: "d", phase: 1 },
   { id: "analityka", href: "/analityka", label: "Analityka", icon: "chart", key: "a", phase: 2 },
   { id: "tresci", href: "/tresci", label: "Treści", icon: "film", key: "t", phase: 2, count: "contentErrors", what: "filmy z błędem kodowania" },
-  { id: "spolecznosc", href: "/spolecznosc", label: "Społeczność", icon: "users", key: "s", phase: 3, count: "moderation", what: "do moderacji" },
+  { id: "spolecznosc", href: "/spolecznosc", label: "Społeczność", icon: "users", key: "s", phase: 2, count: "moderation", what: "do moderacji" },
   { id: "przychody", href: "/przychody", label: "Przychody", icon: "coins", key: "p", phase: 3 },
   { id: "komunikacja", href: "/komunikacja", label: "Komunikacja", icon: "mail", key: "k", phase: 3 },
   { id: "system", href: "/system", label: "System", icon: "server", key: "y", phase: 1, count: "systemAlerts", what: "ostrzeżenia systemu" },

@@ -6,12 +6,15 @@ import { CommentItem } from "./CommentItem";
 import { useCommentReplies } from "../hooks/useComments";
 import type { CommentView } from "../types";
 import type { CommentReportReasonDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
+import type { Locale } from "@/lib/i18n/routing";
+import type { Tx } from "@/lib/i18n/ui";
+import { useOptionalTx } from "@/lib/i18n/language-context";
 
 interface CommentThreadProps {
   videoId: string;
   comment: CommentView;
   userProfile: { id?: string } | null;
-  language: string;
+  language: Locale;
   t: Record<string, string>;
   canComment: boolean;
   onLike: (id: string) => void;
@@ -24,13 +27,10 @@ interface CommentThreadProps {
   isReactionPending: (id: string) => boolean;
 }
 
-function moreRepliesLabel(count: number, language: string) {
-  if (language === "pl") {
-    if (count <= 0) return "Pokaż więcej odpowiedzi";
-    return `Pokaż ${count === 1 ? "jeszcze 1 odpowiedź" : `jeszcze ${count} odpowiedzi`}`;
-  }
-  if (count <= 0) return "Show more replies";
-  return count === 1 ? "Show 1 more reply" : `Show ${count} more replies`;
+function moreRepliesLabel(count: number, tx: Tx) {
+  if (count <= 0) return tx("Pokaż więcej odpowiedzi", "Show more replies");
+  if (count === 1) return tx("Pokaż jeszcze 1 odpowiedź", "Show 1 more reply");
+  return tx("Pokaż jeszcze {0} odpowiedzi", "Show {0} more replies", count);
 }
 
 const noop = () => {};
@@ -41,6 +41,7 @@ const noop = () => {};
  * cut off. Replies sit in the parent's text column (52 px = 40 px avatar + 12 px gap).
  */
 function CommentThreadComponent({ videoId, comment, isReactionPending, onReply, onPin, ...shared }: CommentThreadProps) {
+  const tx = useOptionalTx(shared.language);
   const [expanded, setExpanded] = useState(false);
   const repliesQuery = useCommentReplies(videoId, comment.id, expanded);
   const replies = useMemo(() => {
@@ -88,7 +89,7 @@ function CommentThreadComponent({ videoId, comment, isReactionPending, onReply, 
 
           {repliesQuery.isError && expanded && (
             <p role="alert" className="text-[13px] text-[var(--chan-muted)]">
-              {shared.language === "pl" ? "Nie udało się wczytać odpowiedzi." : "Could not load the replies."}
+              {tx("Nie udało się wczytać odpowiedzi.", "Could not load the replies.")}
             </p>
           )}
 
@@ -103,12 +104,12 @@ function CommentThreadComponent({ videoId, comment, isReactionPending, onReply, 
                 {isLoadingReplies ? (
                   <>
                     <Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
-                    {shared.language === "pl" ? "Wczytywanie odpowiedzi…" : "Loading replies…"}
+                    {tx("Wczytywanie odpowiedzi…", "Loading replies…")}
                   </>
                 ) : repliesQuery.isError ? (
-                  shared.language === "pl" ? "Spróbuj ponownie" : "Try again"
+                  tx("Spróbuj ponownie", "Try again")
                 ) : (
-                  moreRepliesLabel(remaining, shared.language)
+                  moreRepliesLabel(remaining, tx)
                 )}
               </button>
             </div>

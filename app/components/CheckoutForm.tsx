@@ -9,7 +9,7 @@ import { APP_NAME } from '@/lib/constants';
 export default function CheckoutForm({ returnUrl, paymentId, userEmail }: { returnUrl?: string; paymentId?: string | null; userEmail?: string | null }) {
   const stripe = useStripe();
   const elements = useElements();
-  const { language } = useLanguage();
+  const { language, tx } = useLanguage();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -88,8 +88,8 @@ export default function CheckoutForm({ returnUrl, paymentId, userEmail }: { retu
           )}
           <span>
             {isLoading
-              ? (language === 'pl' ? 'PRZETWARZANIE...' : 'PROCESSING...')
-              : (language === 'pl' ? 'POTWIERDŹ WPŁATĘ' : 'CONFIRM PAYMENT')
+              ? (tx("PRZETWARZANIE...", "PROCESSING..."))
+              : (tx("POTWIERDŹ WPŁATĘ", "CONFIRM PAYMENT"))
             }
           </span>
         </div>

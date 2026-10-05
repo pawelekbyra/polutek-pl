@@ -2,6 +2,7 @@
 
 import GoogleOneTapPrompt from "./GoogleOneTapPrompt";
 import { SignUpLegalNotice } from "../legal/LegalDocLink";
+import type { Locale } from "@/lib/i18n/routing";
 
 /** Where Google draws the One Tap prompt when the browser has no FedCM (inside the dialog). */
 export const ONE_TAP_CONTAINER_ID = "auth-modal-one-tap";
@@ -11,7 +12,7 @@ export const ONE_TAP_CONTAINER_ID = "auth-modal-one-tap";
  * account is in this window) and Google One Tap, which runs only while the window is open, i.e. after
  * the visitor asked to sign in. Stays mounted while switching between the two views.
  */
-export default function SignUpFooter({ open, language, onSignedIn }: { open: boolean; language: string; onSignedIn: () => void }) {
+export default function SignUpFooter({ open, language, onSignedIn }: { open: boolean; language: Locale; onSignedIn: () => void }) {
   return (
     // A flex gap, not `space-y`: the One Tap slot is `display: none` while Google draws nothing into it,
     // and a hidden flex item gets no gap, so the window ends right under the notice (space-y would

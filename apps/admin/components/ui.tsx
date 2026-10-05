@@ -6,18 +6,11 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { deltaOf, fmtDateTime, fmtTime, isStale, STATE_WORD, type StateKind } from "@/lib/modules/admin-overview";
 import { Icon, type IconName } from "./icons";
+import { Badge } from "./badge";
+
+export { Badge };
 
 const STATE_ICON: Record<StateKind, IconName> = { ok: "ok", warn: "warn", crit: "crit", info: "info" };
-
-export function Badge({ kind, children, icon }: { kind?: StateKind | "outline" | ""; children: ReactNode; icon?: IconName | false }) {
-  const iconName = icon === false ? null : icon ?? (kind && kind !== "outline" ? STATE_ICON[kind] : null);
-  return (
-    <span className={`badge ${kind ?? ""}`}>
-      {iconName ? <Icon name={iconName} /> : null}
-      {children}
-    </span>
-  );
-}
 
 export function State({ kind, children }: { kind: StateKind; children?: ReactNode }) {
   return (

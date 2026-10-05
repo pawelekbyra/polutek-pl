@@ -27,7 +27,7 @@ const h = vi.hoisted(() => {
 });
 
 vi.mock("next/navigation", () => ({ useRouter: () => h.router, usePathname: () => "/en", useSearchParams: () => new URLSearchParams() }));
-vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en", setLanguage: () => {} }) }));
+vi.mock("@/app/components/LanguageContext", () => ({ useLanguage: () => ({ language: "en", tx: txFor("en"), setLanguage: () => {} }) }));
 vi.mock("@/lib/auth/client", () => ({ authClient: h.client, captchaFetchOptions: () => undefined }));
 vi.mock("@/lib/auth/public-config", () => ({
   useAuthPublicConfig: () => ({ googleClientId: null, turnstileSiteKey: null }),
@@ -46,6 +46,8 @@ import { authErrorMessage } from "@/lib/auth/errors";
 import { SSO_RETURN_STORAGE_KEY } from "@/lib/auth/sso-return";
 import AuthModal from "@/app/components/auth/AuthModal";
 import { SecuritySection } from "@/app/components/auth/SecuritySection";
+import { createTx } from "@/lib/i18n/ui";
+import { txFor } from "../i18n/mock-language";
 
 const GENERIC_EN = "Something went wrong. Please try again.";
 
@@ -57,11 +59,11 @@ afterEach(() => cleanup());
 
 describe("error messages (F-05, F-03)", () => {
   it("F-05: SESSION_NOT_FRESH has its own message instead of the generic one", () => {
-    expect(authErrorMessage({ code: "SESSION_NOT_FRESH", status: 403 }, false)).not.toBe(GENERIC_EN);
+    expect(authErrorMessage({ code: "SESSION_NOT_FRESH", status: 403 }, createTx("en"))).not.toBe(GENERIC_EN);
   });
 
   it("F-03: TOKEN_EXPIRED (expired e-mail verification link) has its own message", () => {
-    expect(authErrorMessage({ code: "TOKEN_EXPIRED" }, false)).not.toBe(GENERIC_EN);
+    expect(authErrorMessage({ code: "TOKEN_EXPIRED" }, createTx("en"))).not.toBe(GENERIC_EN);
   });
 });
 
@@ -72,7 +74,7 @@ describe("Security tab (F-05)", () => {
     h.client.listAccounts.mockResolvedValue({ data: [{ providerId: "credential" }] });
     h.client.listSessions.mockResolvedValue({ data: null, error: { code: "SESSION_NOT_FRESH", status: 403 } });
     h.client.getSession.mockResolvedValue({ data: { session: { token: "t" } } });
-    render(<SecuritySection isPl={false} />);
+    render(<SecuritySection tx={createTx("en")} />);
     await screen.findByText("Signed-in devices");
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("sign in again");
@@ -83,7 +85,7 @@ describe("Security tab (F-05)", () => {
     h.client.listAccounts.mockResolvedValue({ data: [{ providerId: "credential" }] });
     h.client.listSessions.mockResolvedValue({ data: null, error: { code: "BOOM", status: 500 } });
     h.client.getSession.mockResolvedValue({ data: { session: { token: "t" } } });
-    render(<SecuritySection isPl={false} />);
+    render(<SecuritySection tx={createTx("en")} />);
     expect((await screen.findByRole("alert")).textContent).toBe(GENERIC_EN);
   });
 });

@@ -3,6 +3,7 @@
 // terminal; nothing is e-mailed. The owner opens it through Cloudflare Access and adds a passkey + TOTP.
 //
 //   docker compose --profile admin run --rm admin node apps/admin/scripts/admin-enroll.mjs --email pawel.perfect@gmail.com
+//   ... --role translator --languages de,es   a translator account: only the Tłumaczenia screens, only those languages
 //   ... --reset   revoke every session, passkey and TOTP of that account and print a fresh link
 //
 // Plain ESM (no TypeScript) so it runs inside the standalone image with only @prisma/client.
@@ -41,8 +42,11 @@ export function chainHash(prevHash, canonical) {
   return createHash("sha256").update(prevHash ?? "genesis").update("\n").update(canonical).digest("hex");
 }
 
+/** Languages a translator can be granted (same set as lib/modules/translations/domain/languages.ts). */
+export const GRANTABLE_LANGUAGES = ["en", "de", "es", "fr", "it", "pt", "zh"];
+
 export function parseArgs(argv) {
-  const out = { email: null, name: null, reset: false, help: false };
+  const out = { email: null, name: null, reset: false, help: false, role: null, languages: [] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--reset") out.reset = true;
@@ -51,11 +55,23 @@ export function parseArgs(argv) {
     else if (a.startsWith("--email=")) out.email = a.slice(8);
     else if (a === "--name") out.name = argv[++i] ?? null;
     else if (a.startsWith("--name=")) out.name = a.slice(7);
+    else if (a === "--role") out.role = (argv[++i] ?? "").toUpperCase();
+    else if (a.startsWith("--role=")) out.role = a.slice(7).toUpperCase();
+    else if (a === "--languages") out.languages = (argv[++i] ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+    else if (a.startsWith("--languages=")) out.languages = a.slice(12).split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
     else throw new Error(`Nieznany argument: ${a}`);
   }
   if (out.email) out.email = out.email.trim().toLowerCase();
   if (!out.help && (!out.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(out.email))) {
     throw new Error("Podaj poprawny adres: --email <adres>");
+  }
+  if (out.role !== null && out.role !== "OWNER" && out.role !== "TRANSLATOR") throw new Error("--role: owner albo translator");
+  if (out.role === "TRANSLATOR") {
+    if (!out.languages.length) throw new Error("Tłumacz potrzebuje języków: --languages de,es");
+    const bad = out.languages.filter((l) => !GRANTABLE_LANGUAGES.includes(l));
+    if (bad.length) throw new Error(`Nieznane języki: ${bad.join(", ")} (dozwolone: ${GRANTABLE_LANGUAGES.join(", ")})`);
+  } else if (out.languages.length) {
+    throw new Error("--languages ma sens tylko z --role translator");
   }
   return out;
 }
@@ -75,7 +91,7 @@ async function appendEvent(tx, row) {
  * @param {object} prisma PrismaClient (or a transaction-capable stand-in in tests)
  * @param {{ email: string, name?: string | null, reset?: boolean, now?: Date }} options
  */
-export async function issueEnrollment(prisma, { email, name, reset, now = new Date() }) {
+export async function issueEnrollment(prisma, { email, name, reset, role = null, languages = [], now = new Date() }) {
   const token = newEnrollmentToken();
   const tokenHash = hashEnrollmentToken(token);
   const expiresAt = new Date(now.getTime() + ENROLL_TTL_MS);
@@ -87,8 +103,15 @@ export async function issueEnrollment(prisma, { email, name, reset, now = new Da
     }
     if (!user) {
       user = await tx.adminUser.create({
-        data: { id: randomUUID(), email, name: name || "Właściciel", emailVerified: true, updatedAt: now },
+        data: { id: randomUUID(), email, name: name || (role === "TRANSLATOR" ? "Tłumacz" : "Właściciel"), emailVerified: true, updatedAt: now, ...(role ? { role } : {}) },
       });
+    } else if (role && user.role !== role) {
+      user = await tx.adminUser.update({ where: { id: user.id }, data: { role } });
+    }
+    // Language grants follow the role exactly: replaced when a translator is (re)issued, dropped for an owner.
+    if (role) {
+      await tx.adminLanguageGrant.deleteMany({ where: { adminUserId: user.id } });
+      if (role === "TRANSLATOR") await tx.adminLanguageGrant.createMany({ data: languages.map((language) => ({ adminUserId: user.id, language })) });
     }
     // An unfinished enrollment is never trusted: whatever a previous link managed to register is dropped.
     if (reset || !user.enrolledAt) {
@@ -134,7 +157,7 @@ async function main() {
     process.exit(2);
   }
   if (args.help) {
-    console.log("Użycie: admin-enroll.mjs --email <adres> [--name <imię>] [--reset]");
+    console.log("Użycie: admin-enroll.mjs --email <adres> [--name <imię>] [--reset] [--role translator --languages de,es]");
     return;
   }
   const { PrismaClient } = await import("@prisma/client");

@@ -73,28 +73,24 @@ describe("LanguageSwitcher (navbar pill)", () => {
     expect(document.activeElement).toBe(trigger());
   });
 
-  it("keeps the site language for an untranslated one, shows its code (still a globe) and a note", () => {
-    const onSelect = vi.fn();
-    render(<LanguageSwitcher language="en" onSelect={onSelect} />);
-    fireEvent.click(trigger());
-    fireEvent.click(screen.getByText("Italiano"));
-    expect(onSelect).not.toHaveBeenCalled();
-    expect(screen.getByText("IT")).toBeTruthy();
-    expect(trigger().querySelector("img")).toBeNull();
-    expect(screen.getByText(/Italiano translation is in progress/)).toBeTruthy();
+  it("switches to every one of the eight languages and shows no \"translation in progress\" note", () => {
+    for (const option of LANGUAGE_OPTIONS) {
+      const onSelect = vi.fn();
+      const { unmount } = render(<LanguageSwitcher language="en" onSelect={onSelect} />);
+      fireEvent.click(trigger());
+      fireEvent.click(screen.getByText(option.label));
+      expect(onSelect).toHaveBeenCalledWith(option.locale);
+      expect(screen.queryByText(/in progress|w przygotowaniu/)).toBeNull();
+      unmount();
+    }
   });
 
-  it("explains in Polish and goes back to a real language when chosen again", () => {
-    const onSelect = vi.fn();
-    render(<LanguageSwitcher language="pl" onSelect={onSelect} />);
-    fireEvent.click(trigger());
-    fireEvent.click(screen.getByText("Deutsch"));
-    expect(screen.getByText(/Tłumaczenie na Deutsch jest w przygotowaniu/)).toBeTruthy();
-    fireEvent.click(trigger());
-    fireEvent.click(screen.getByText("Polski"));
-    expect(onSelect).toHaveBeenCalledWith("pl");
-    expect(screen.queryByText(/w przygotowaniu/)).toBeNull();
-    expect(screen.getByText("PL")).toBeTruthy();
+  it("shows the code of the current language in the pill, whichever of the eight it is", () => {
+    for (const option of LANGUAGE_OPTIONS) {
+      const { unmount } = render(<LanguageSwitcher language={option.locale} onSelect={vi.fn()} />);
+      expect(screen.getByText(option.code)).toBeTruthy();
+      unmount();
+    }
   });
 
   it("moves with arrows (wrapping), Home and End, and Enter picks the active language", () => {

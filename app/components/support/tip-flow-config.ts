@@ -18,18 +18,36 @@ import {
   TWINTIcon,
   VisaIcon,
 } from "@/app/components/icons/brand-icons";
+import { intlLocale, type Tx } from "@/lib/i18n/ui";
+import type { Locale } from "@/lib/i18n/routing";
 
 export type TipStep = "recipient" | "disclaimer" | "amount" | "method" | "pay";
 
 export const TIP_CURRENCIES = SUPPORTED_CURRENCIES;
 
-export const TIP_CURRENCY_LABELS: Record<SupportedCurrency, { symbol: string; pl: string; en: string }> = {
-  PLN: { symbol: "zł", pl: "Złoty (PLN)", en: "Polish złoty (PLN)" },
-  EUR: { symbol: "€", pl: "Euro (EUR)", en: "Euro (EUR)" },
-  USD: { symbol: "$", pl: "Dolar amerykański (USD)", en: "US dollar (USD)" },
-  GBP: { symbol: "£", pl: "Funt brytyjski (GBP)", en: "British pound (GBP)" },
-  CHF: { symbol: "Fr", pl: "Frank szwajcarski (CHF)", en: "Swiss franc (CHF)" },
+export const TIP_CURRENCY_SYMBOLS: Record<SupportedCurrency, string> = {
+  PLN: "zł",
+  EUR: "€",
+  USD: "$",
+  GBP: "£",
+  CHF: "Fr",
 };
+
+/** Currency name in the viewer's language, e.g. "Złoty (PLN)". */
+export function tipCurrencyTitle(tx: Tx, code: SupportedCurrency): string {
+  switch (code) {
+    case "PLN":
+      return tx("Złoty (PLN)", "Polish złoty (PLN)");
+    case "EUR":
+      return tx("Euro (EUR)", "Euro (EUR)");
+    case "USD":
+      return tx("Dolar amerykański (USD)", "US dollar (USD)");
+    case "GBP":
+      return tx("Funt brytyjski (GBP)", "British pound (GBP)");
+    case "CHF":
+      return tx("Frank szwajcarski (CHF)", "Swiss franc (CHF)");
+  }
+}
 
 /** Tile used when Stripe didn't report a method list: opens Stripe's full form. */
 export const TIP_FALLBACK_METHOD = "stripe_all";
@@ -45,23 +63,23 @@ type IconComponent = ComponentType<{ className?: string }>;
  * them as `payment_method_types`; this only decides how a known method looks. A method Stripe
  * adds later without an entry here still gets a generic tile and Stripe's own form.
  */
-const METHOD_COPY: Record<string, { icon: IconComponent; title: string; hintPl: string; hintEn: string }> = {
-  blik: { icon: BLIKIcon, title: "BLIK", hintPl: "Kod z aplikacji banku", hintEn: "Code from your banking app" },
-  p24: { icon: Przelewy24Icon, title: "Przelewy24", hintPl: "Szybki przelew z Twojego banku", hintEn: "Instant transfer from your bank" },
-  apple_pay: { icon: ApplePayIcon, title: "Apple Pay", hintPl: "Szybko z Twojego urządzenia", hintEn: "Quick from your device" },
-  google_pay: { icon: GooglePayIcon, title: "Google Pay", hintPl: "Szybko z Twojego telefonu", hintEn: "Quick from your phone" },
-  card: { icon: VisaIcon, title: "Karta", hintPl: "Visa, Mastercard…", hintEn: "Visa, Mastercard…" },
-  paypal: { icon: PayPalIcon, title: "PayPal", hintPl: "Konto PayPal", hintEn: "Your PayPal account" },
-  revolut_pay: { icon: RevolutIcon, title: "Revolut Pay", hintPl: "Aplikacja Revolut", hintEn: "Revolut app" },
-  ideal: { icon: IDEALIcon, title: "iDEAL", hintPl: "Bank w Holandii", hintEn: "Dutch bank transfer" },
-  bancontact: { icon: BancontactIcon, title: "Bancontact", hintPl: "Bank w Belgii", hintEn: "Belgian bank transfer" },
-  eps: { icon: BankIcon, title: "EPS", hintPl: "Bank w Austrii", hintEn: "Austrian bank transfer" },
-  twint: { icon: TWINTIcon, title: "TWINT", hintPl: "Aplikacja TWINT", hintEn: "TWINT app" },
-  mobilepay: { icon: MobilePayIcon, title: "MobilePay", hintPl: "Aplikacja MobilePay", hintEn: "MobilePay app" },
-  swish: { icon: SwishIcon, title: "Swish", hintPl: "Aplikacja Swish", hintEn: "Swish app" },
-  klarna: { icon: KlarnaIcon, title: "Klarna", hintPl: "Konto Klarna", hintEn: "Your Klarna account" },
-  [TIP_CRYPTO_PLACEHOLDER]: { icon: CryptoIcon, title: "Crypto", hintPl: "Już wkrótce", hintEn: "Coming soon" },
-  [TIP_FALLBACK_METHOD]: { icon: GenericCardIcon, title: "Karta i inne", hintPl: "Wszystkie dostępne metody", hintEn: "All available methods" },
+const METHOD_COPY: Record<string, { icon: IconComponent; title: (tx: Tx) => string; hint: (tx: Tx) => string }> = {
+  blik: { icon: BLIKIcon, title: () => "BLIK", hint: (tx) => tx("Kod z aplikacji banku", "Code from your banking app") },
+  p24: { icon: Przelewy24Icon, title: () => "Przelewy24", hint: (tx) => tx("Szybki przelew z Twojego banku", "Instant transfer from your bank") },
+  apple_pay: { icon: ApplePayIcon, title: () => "Apple Pay", hint: (tx) => tx("Szybko z Twojego urządzenia", "Quick from your device") },
+  google_pay: { icon: GooglePayIcon, title: () => "Google Pay", hint: (tx) => tx("Szybko z Twojego telefonu", "Quick from your phone") },
+  card: { icon: VisaIcon, title: (tx) => tx("Karta", "Card"), hint: (tx) => tx("Visa, Mastercard…", "Visa, Mastercard…") },
+  paypal: { icon: PayPalIcon, title: () => "PayPal", hint: (tx) => tx("Konto PayPal", "Your PayPal account") },
+  revolut_pay: { icon: RevolutIcon, title: () => "Revolut Pay", hint: (tx) => tx("Aplikacja Revolut", "Revolut app") },
+  ideal: { icon: IDEALIcon, title: () => "iDEAL", hint: (tx) => tx("Bank w Holandii", "Dutch bank transfer") },
+  bancontact: { icon: BancontactIcon, title: () => "Bancontact", hint: (tx) => tx("Bank w Belgii", "Belgian bank transfer") },
+  eps: { icon: BankIcon, title: () => "EPS", hint: (tx) => tx("Bank w Austrii", "Austrian bank transfer") },
+  twint: { icon: TWINTIcon, title: () => "TWINT", hint: (tx) => tx("Aplikacja TWINT", "TWINT app") },
+  mobilepay: { icon: MobilePayIcon, title: () => "MobilePay", hint: (tx) => tx("Aplikacja MobilePay", "MobilePay app") },
+  swish: { icon: SwishIcon, title: () => "Swish", hint: (tx) => tx("Aplikacja Swish", "Swish app") },
+  klarna: { icon: KlarnaIcon, title: () => "Klarna", hint: (tx) => tx("Konto Klarna", "Your Klarna account") },
+  [TIP_CRYPTO_PLACEHOLDER]: { icon: CryptoIcon, title: () => "Crypto", hint: (tx) => tx("Już wkrótce", "Coming soon") },
+  [TIP_FALLBACK_METHOD]: { icon: GenericCardIcon, title: (tx) => tx("Karta i inne", "Card and more"), hint: (tx) => tx("Wszystkie dostępne metody", "All available methods") },
 };
 
 // Local instant methods first, then card, then accounts/wallets. Unknown methods go last.
@@ -90,7 +108,7 @@ export function getTipMethodTiles(paymentMethodTypes: string[], wallets: readonl
   return [...(tiles.length > 0 ? tiles : [TIP_FALLBACK_METHOD]), TIP_CRYPTO_PLACEHOLDER];
 }
 
-export function describeTipMethod(type: string, isPl: boolean): {
+export function describeTipMethod(type: string, tx: Tx): {
   icon: IconComponent | undefined;
   title: string;
   hint: string;
@@ -99,17 +117,17 @@ export function describeTipMethod(type: string, isPl: boolean): {
   if (copy) {
     return {
       icon: copy.icon,
-      title: !isPl && type === "card" ? "Card" : !isPl && type === TIP_FALLBACK_METHOD ? "Card and more" : copy.title,
-      hint: isPl ? copy.hintPl : copy.hintEn,
+      title: copy.title(tx),
+      hint: copy.hint(tx),
     };
   }
   const title = type.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
-  return { icon: undefined, title, hint: isPl ? "Inna metoda płatności" : "Another payment method" };
+  return { icon: undefined, title, hint: tx("Inna metoda płatności", "Another payment method") };
 }
 
-export function formatTipAmount(amount: number, currency: SupportedCurrency, language: string): string {
+export function formatTipAmount(amount: number, currency: SupportedCurrency, language: Locale): string {
   try {
-    return new Intl.NumberFormat(language === "pl" ? "pl-PL" : "en-GB", {
+    return new Intl.NumberFormat(intlLocale(language, "en-GB"), {
       style: "currency",
       currency,
       maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,

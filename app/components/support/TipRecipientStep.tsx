@@ -7,8 +7,11 @@ import { cn } from "@/lib/utils";
 import { TipLegalDialog, type TipLegalDoc } from "./TipLegalDialog";
 import { TipPrimaryButton, TipStepHeading, TipStepLayout } from "./TipStepLayout";
 
+import { useOptionalTx } from "@/lib/i18n/language-context";
+import type { Locale } from "@/lib/i18n/routing";
+import { txRich } from "@/lib/i18n/rich";
 interface TipRecipientStepProps {
-  language: string;
+  language: Locale;
   termsAccepted: boolean;
   onTermsChange: (accepted: boolean) => void;
   /** Proceeds to the amount step. */
@@ -24,7 +27,7 @@ export function TipRecipientStep({
   onNext,
   onClose,
 }: TipRecipientStepProps) {
-  const isPl = language === "pl";
+  const tx = useOptionalTx(language);
   const [attempted, setAttempted] = useState(false);
   const showTermsError = attempted && !termsAccepted;
   const [legalDoc, setLegalDoc] = useState<TipLegalDoc | null>(null);
@@ -61,22 +64,24 @@ export function TipRecipientStep({
               className="mt-[2px] shrink-0 border-[var(--cm-amber-46)] bg-white data-checked:border-[var(--chan-ink)] data-checked:bg-[var(--chan-ink)] data-checked:text-white"
             />
             <span className="text-[13px] leading-[1.5] text-[var(--chan-body)]">
-              {isPl ? (
-                <>Akceptuję {legalLink("terms", "Regulamin")} i {legalLink("privacy", "Politykę Prywatności")}</>
-              ) : (
-                <>I accept the {legalLink("terms", "Terms")} and {legalLink("privacy", "Privacy Policy")}</>
+              {txRich(
+                tx,
+                "Akceptuję {0} i {1}",
+                "I accept the {0} and the {1}",
+                legalLink("terms", tx("Regulamin", "Terms")),
+                legalLink("privacy", tx("Politykę Prywatności", "Privacy Policy")),
               )}
             </span>
           </label>
           <TipPrimaryButton onClick={handleNext}>
-            {isPl ? "Dalej" : "Next"}
+            {tx("Dalej", "Next")}
           </TipPrimaryButton>
         </>
       }
     >
       <TipStepHeading
-        title={isPl ? "Odbiorca napiwku" : "Tip recipient"}
-        subtitle={isPl ? "Komu chciałbyś przekazać napiwek?" : "Who would you like to tip?"}
+        title={tx("Odbiorca napiwku", "Tip recipient")}
+        subtitle={tx("Komu chciałbyś przekazać napiwek?", "Who would you like to tip?")}
       />
 
       <div className="flex flex-col gap-2">
@@ -86,7 +91,7 @@ export function TipRecipientStep({
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-[var(--chan-ink)] bg-[var(--chan-ink)]">
               <Check className="h-3 w-3 text-white" strokeWidth={3} />
             </span>
-            <span className="text-[15px] font-extrabold text-[var(--chan-ink)]">{isPl ? "Pawłowi Perfectowi" : "Paweł Perfect"}</span>
+            <span className="text-[15px] font-extrabold text-[var(--chan-ink)]">{tx("Pawłowi Perfectowi", "Paweł Perfect")}</span>
           </div>
         </div>
 
@@ -104,7 +109,7 @@ export function TipRecipientStep({
           <div className="flex items-center gap-3">
             <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-[var(--cm-amber-38)]" />
             <span className="text-[15px] font-semibold text-[var(--chan-body)]">
-              {isPl ? "Nikomu" : "Nobody"}
+              {tx("Nikomu", "Nobody")}
             </span>
           </div>
         </button>
@@ -114,9 +119,7 @@ export function TipRecipientStep({
         role="alert"
         className={`mt-auto pt-3 px-2 text-center text-[12px] font-semibold text-destructive transition-opacity duration-150 ${showTermsError ? "opacity-100" : "opacity-0 pointer-events-none"}`}
       >
-        {isPl
-          ? "Zaakceptuj Regulamin i Politykę Prywatności."
-          : "Please accept the Terms and Privacy Policy."}
+        {tx("Zaakceptuj Regulamin i Politykę Prywatności.", "Please accept the Terms and Privacy Policy.")}
       </p>
 
       <TipLegalDialog doc={legalDoc} language={language} onClose={() => setLegalDoc(null)} />

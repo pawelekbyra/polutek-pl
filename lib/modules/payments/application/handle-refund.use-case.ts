@@ -7,6 +7,8 @@ import { logger } from "@/lib/logger";
 import { recordMetric, recordAlert } from "@/lib/observability";
 import { revokeSupporterGrantIfNoPaidTips } from "./supporter-grant";
 
+const UNRECORDED_STATUSES: PaymentStatus[] = [PaymentStatus.PENDING, PaymentStatus.FAILED, PaymentStatus.CANCELED];
+
 export interface HandleRefundInput {
   stripeIntentId?: string;
   paymentId?: string;
@@ -35,6 +37,16 @@ export async function handleRefund(
       if (!payment) {
         recordAlert('payment.refund_unmatched', { hasPaymentId: Boolean(input.paymentId), hasStripeIntentId: Boolean(input.stripeIntentId) });
         return null;
+      }
+
+      // A refund implies Stripe took the money, so a payment still PENDING/FAILED/CANCELED here just
+      // has not been recorded as paid yet (event order is not guaranteed; the webhook may have been
+      // down). Applying the refund now would block the later fulfilment (its CAS needs an unpaid
+      // status) and lower totals that were never raised. Fail so Stripe redelivers after the
+      // payment_intent.succeeded / reconciliation has recorded it.
+      if (UNRECORDED_STATUSES.includes(payment.status as PaymentStatus)) {
+        recordAlert('payment.refund_before_fulfilment', { paymentId: payment.id, status: payment.status });
+        throw new Error(`PAYMENT_NOT_RECORDED_YET: refund for payment ${payment.id} in status ${payment.status}; retry later`);
       }
 
       const previousRefunded = payment.refundedAmountMinor ?? 0;

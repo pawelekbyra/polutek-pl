@@ -7,6 +7,10 @@ export interface AppContext {
   actor: Actor;
   now: () => Date;
   requestId?: string;
+  /** Network facts of the caller (admin panel requests only); recordAuditEvent copies them onto the audit row. */
+  client?: { ip?: string | null; userAgent?: string | null };
+  /** Admin panel TRANSLATOR accounts only: the translation languages this actor may write. Absent = no restriction (owner). */
+  allowedLanguages?: readonly string[];
   waitUntil?: (promise: Promise<unknown>) => void;
   db: {
     read: ReadDb;
@@ -19,6 +23,8 @@ export function createAppContext(actorOrOverrides: Actor | Partial<AppContext> =
   let prisma: DbClient;
   let now: () => Date;
   let requestId: string | undefined;
+  let client: AppContext['client'];
+  let allowedLanguages: AppContext['allowedLanguages'];
   let waitUntil: ((promise: Promise<unknown>) => void) | undefined;
 
   if ('type' in actorOrOverrides) {
@@ -31,6 +37,8 @@ export function createAppContext(actorOrOverrides: Actor | Partial<AppContext> =
     prisma = overrides.prisma || defaultPrisma;
     now = overrides.now || (() => new Date());
     requestId = overrides.requestId;
+    client = overrides.client;
+    allowedLanguages = overrides.allowedLanguages;
     waitUntil = overrides.waitUntil;
   }
 
@@ -39,6 +47,8 @@ export function createAppContext(actorOrOverrides: Actor | Partial<AppContext> =
     actor,
     now,
     requestId,
+    client,
+    allowedLanguages,
     waitUntil,
     db: {
       read: prisma,

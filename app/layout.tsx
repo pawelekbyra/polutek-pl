@@ -11,6 +11,8 @@ import { APP_NAME } from '@/lib/constants';
 import { ServiceWorkerCleanup } from "@/app/components/ServiceWorkerCleanup";
 import { UrlMask } from "@/app/components/UrlMask";
 import { resolveDocumentLanguage } from "@/lib/i18n/server-language";
+import { loadCatalog } from "@/lib/i18n/catalog";
+import { htmlLang } from "@/lib/i18n/ui";
 import { AuthModalProvider } from "@/app/components/auth/AuthModalProvider";
 import { TelemetryBeacon } from "@/app/components/telemetry/TelemetryBeacon";
 import { isTelemetryBeaconEnabled } from "@/lib/telemetry/config";
@@ -51,10 +53,11 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const initialLanguage = await resolveDocumentLanguage();
+  const initialCatalog = await loadCatalog(initialLanguage);
   const publicAuthConfig = readPublicAuthConfig();
   return (
     <html
-      lang={initialLanguage}
+      lang={htmlLang(initialLanguage)}
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable}`}
       style={{ background: "#f7f9fc" }}
@@ -63,7 +66,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ServiceWorkerCleanup />
         <UrlMask />
         <Suspense fallback={<div className="min-h-[100dvh] bg-background" />}>
-          <Providers initialLanguage={initialLanguage}>
+          <Providers initialLanguage={initialLanguage} initialCatalog={initialCatalog}>
             <AuthPublicConfigProvider value={publicAuthConfig}>
               <AuthLifecycleProvider>
                 <AuthModalProvider>

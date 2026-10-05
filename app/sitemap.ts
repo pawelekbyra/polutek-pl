@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 import { CreatorContentService as ContentService } from '@/lib/modules/channel/infrastructure/creator-content.service';
 import { VideoContentService } from '@/lib/modules/video/infrastructure/video-content.service';
-import { getLocaleAlternates, SUPPORTED_LOCALES, type RouteKey } from '@/lib/i18n/routing';
+import { CONTENT_LOCALES, getLocaleAlternates, type RouteKey } from '@/lib/i18n/routing';
 
 // Rendered per request: the Docker build has no database, so a build-time sitemap would never list
 // the channel or any video. Crawlers fetch it rarely, so the two small queries cost nothing.
@@ -11,7 +11,7 @@ const DEFAULT_BASE_URL = 'https://www.pawelperfect.com';
 function getBaseUrl() { try { return new URL(process.env.NEXT_PUBLIC_APP_URL || DEFAULT_BASE_URL).origin; } catch { return DEFAULT_BASE_URL; } }
 
 /**
- * One entry per language, at the URL that names its language (/pl/..., /en/...), the same
+ * One entry per content language, at the URL that names its language (/pl/..., /en/...), the same
  * canonical/hreflang URLs the pages declare (getLocaleAlternates). Bare paths are not listed: their
  * language is negotiated per visitor.
  */
@@ -21,7 +21,9 @@ function localizedEntry(
   priority: number,
   { params = {}, query = '', lastModified = new Date() }: { params?: { slug?: string }; query?: string; lastModified?: Date } = {},
 ): MetadataRoute.Sitemap[number][] {
-  return SUPPORTED_LOCALES.map((locale) => {
+  // Only the content languages (pl, en): the interface-only languages show English content and
+  // canonicalise to the English URL, so listing them would only add duplicates.
+  return CONTENT_LOCALES.map((locale) => {
     const { canonical, languages } = getLocaleAlternates(locale, routeKey, { params, query, baseUrl });
     return {
       url: canonical,

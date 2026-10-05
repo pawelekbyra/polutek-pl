@@ -27,6 +27,7 @@ vi.mock("@/lib/auth/react", () => ({
 }));
 
 import { SecuritySection } from "@/app/components/auth/SecuritySection";
+import { createTx } from "@/lib/i18n/ui";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -40,7 +41,7 @@ describe("2FA backup codes (F-08)", () => {
   it("regenerates backup codes after the password is entered and shows copy/download", async () => {
     h.client.listAccounts.mockResolvedValue({ data: [{ providerId: "credential" }] });
     h.client.twoFactor.generateBackupCodes.mockResolvedValue({ data: { backupCodes: ["aaaa-1111", "bbbb-2222"] }, error: null });
-    render(<SecuritySection isPl={false} />);
+    render(<SecuritySection tx={createTx("en")} />);
     const regenerate = await screen.findByRole("button", { name: /generate new backup codes/i });
     fireEvent.change(screen.getByLabelText("Password for new backup codes"), { target: { value: "my password 12345" } });
     fireEvent.click(regenerate);
@@ -53,7 +54,7 @@ describe("2FA backup codes (F-08)", () => {
   it("shows the server error when the password is wrong", async () => {
     h.client.listAccounts.mockResolvedValue({ data: [{ providerId: "credential" }] });
     h.client.twoFactor.generateBackupCodes.mockResolvedValue({ data: null, error: { code: "INVALID_PASSWORD", status: 400 } });
-    render(<SecuritySection isPl={false} />);
+    render(<SecuritySection tx={createTx("en")} />);
     const regenerate = await screen.findByRole("button", { name: /generate new backup codes/i });
     fireEvent.change(screen.getByLabelText("Password for new backup codes"), { target: { value: "wrong" } });
     fireEvent.click(regenerate);
@@ -63,7 +64,7 @@ describe("2FA backup codes (F-08)", () => {
   it("never turns 2FA off when the backup-code password is submitted with Enter (AUTH-13)", async () => {
     h.client.listAccounts.mockResolvedValue({ data: [{ providerId: "credential" }] });
     h.client.twoFactor.generateBackupCodes.mockResolvedValue({ data: { backupCodes: ["cccc-3333"] }, error: null });
-    render(<SecuritySection isPl={false} />);
+    render(<SecuritySection tx={createTx("en")} />);
     const field = await screen.findByLabelText("Password for new backup codes");
     fireEvent.change(field, { target: { value: "my password 12345" } });
     fireEvent.submit(field.closest("form")!);
@@ -81,7 +82,7 @@ describe("2FA backup codes (F-08)", () => {
   it("stops the spinner and says so when the connection drops (AUTH-08)", async () => {
     h.client.listAccounts.mockResolvedValue({ data: [{ providerId: "credential" }] });
     h.client.twoFactor.generateBackupCodes.mockRejectedValue(new TypeError("Failed to fetch"));
-    render(<SecuritySection isPl={false} />);
+    render(<SecuritySection tx={createTx("en")} />);
     const field = await screen.findByLabelText("Password for new backup codes");
     fireEvent.change(field, { target: { value: "my password 12345" } });
     fireEvent.click(screen.getByRole("button", { name: /generate new backup codes/i }));
@@ -92,7 +93,7 @@ describe("2FA backup codes (F-08)", () => {
   it("explains to Google-only users how to get 2FA", async () => {
     h.twoFactorEnabled = false;
     h.client.listAccounts.mockResolvedValue({ data: [{ providerId: "google" }] });
-    render(<SecuritySection isPl={false} />);
+    render(<SecuritySection tx={createTx("en")} />);
     expect(await screen.findByText(/Set a password above/i)).toBeTruthy();
     expect(screen.getByText(/Google account's own protection/i)).toBeTruthy();
   });

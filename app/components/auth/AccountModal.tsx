@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
+import { ADMIN_PANEL_ORIGIN } from "@/lib/admin-legacy-redirects";
 import { useAuth, useUser } from "@/lib/auth/react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "../LanguageContext";
@@ -22,7 +22,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
   const { user } = useUser();
   const { signOut } = useAuth();
   const { language } = useLanguage();
-  const isPl = language === "pl";
+  const { tx } = useLanguage();
   const [section, setSection] = useState<Section>("profile");
 
   useEffect(() => {
@@ -32,12 +32,12 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
   if (!user) return null;
 
   const sections: { id: Section; label: string }[] = [
-    { id: "profile", label: isPl ? "Profil" : "Profile" },
+    { id: "profile", label: tx("Profil", "Profile") },
     { id: "email", label: "E-mail" },
-    { id: "connections", label: isPl ? "Konta" : "Connections" },
-    { id: "security", label: isPl ? "Hasło" : "Security" },
-    { id: "passkeys", label: isPl ? "Klucze dostępu" : "Passkeys" },
-    { id: "danger", label: isPl ? "Usuń" : "Delete" },
+    { id: "connections", label: tx("Konta", "Connections") },
+    { id: "security", label: tx("Hasło", "Security") },
+    { id: "passkeys", label: tx("Klucze dostępu", "Passkeys") },
+    { id: "danger", label: tx("Usuń", "Delete") },
   ];
 
   return (
@@ -47,7 +47,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
           <div>
             <DialogHeader>
               <DialogTitle className="font-brand text-2xl font-bold tracking-tight text-[var(--chan-ink)]">
-                {isPl ? "Moje konto" : "My account"}
+                {tx("Moje konto", "My account")}
               </DialogTitle>
             </DialogHeader>
 
@@ -68,19 +68,19 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
             </div>
 
             <div className="mt-4 max-h-[60vh] overflow-y-auto pr-1">
-              {section === "profile" && <ProfileSection isPl={isPl} />}
-              {section === "email" && <EmailSection isPl={isPl} />}
-              {section === "connections" && <ConnectionsSection isPl={isPl} />}
-              {section === "security" && <SecuritySection isPl={isPl} />}
-              {section === "passkeys" && <PasskeysSection isPl={isPl} />}
-              {section === "danger" && <DangerSection isPl={isPl} onDeleted={() => onOpenChange(false)} />}
+              {section === "profile" && <ProfileSection tx={tx} />}
+              {section === "email" && <EmailSection tx={tx} />}
+              {section === "connections" && <ConnectionsSection tx={tx} />}
+              {section === "security" && <SecuritySection tx={tx} />}
+              {section === "passkeys" && <PasskeysSection tx={tx} />}
+              {section === "danger" && <DangerSection tx={tx} onDeleted={() => onOpenChange(false)} />}
             </div>
 
             <div className="mt-5 flex items-center justify-between border-t border-[var(--chan-line)] pt-4">
               {isAdmin ? (
-                <Link href="/admin" className="font-sans text-[13px] font-bold text-[var(--chan-ink)] underline hover:text-[var(--chan-blue)]">
-                  {isPl ? "Zarządzaj kanałem" : "Manage channel"}
-                </Link>
+                <a href={ADMIN_PANEL_ORIGIN} target="_blank" rel="noopener noreferrer" className="font-sans text-[13px] font-bold text-[var(--chan-ink)] underline hover:text-[var(--chan-blue)]">
+                  {tx("Zarządzaj kanałem", "Manage channel")}
+                </a>
               ) : (
                 <span />
               )}
@@ -92,7 +92,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
                 }}
                 className="font-sans text-[13px] font-bold text-red-600 hover:underline"
               >
-                {isPl ? "Wyloguj się" : "Sign out"}
+                {tx("Wyloguj się", "Sign out")}
               </button>
             </div>
           </div>

@@ -623,22 +623,9 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     expect(harness.activeGrants('user_b')).toHaveLength(0);
   });
 
-  it('UI and route contract regression evidence stays source-based because no existing non-production Playwright route exercises these private states', () => {
-    const actionsSource = readFileSync('app/admin/users/UserPatronActions.tsx', 'utf8');
-    const diagnosticsSource = readFileSync('app/admin/users/AdminAccessDiagnostics.tsx', 'utf8');
+  it('Playback-state UI contract evidence stays source-based because no existing non-production Playwright route exercises these private states', () => {
     const wrapperSource = readFileSync('app/components/PremiumWrapper.tsx', 'utf8');
     const playbackStateSource = readFileSync('app/components/playback-plan-state.ts', 'utf8');
-
-    expect(actionsSource).not.toContain('prompt(');
-    expect(actionsSource).toContain('Dialog');
-    expect(actionsSource).toContain('trimmedReason');
-    expect(actionsSource).toContain('pendingRequestRef.current');
-    expect(actionsSource).toContain('variant={dialogAction === "revoke" ? "destructive" : "default"}');
-    expect(actionsSource).toContain('użytkownik straci odznakę Patrona');
-    expect(actionsSource).toContain('Status Patrona wynika wyłącznie z aktywnego uprawnienia PatronGrant');
-    expect(diagnosticsSource).toContain('PatronGrant (źródło odznaki)');
-    expect(diagnosticsSource).toContain('dostęp do filmów zależy wyłącznie od zalogowania');
-    expect(diagnosticsSource).not.toContain('ZABLOKOWANY');
 
     for (const state of ['LOGIN_REQUIRED', 'VIDEO_NOT_READY', 'PROCESSING', 'NO_PRIMARY_ASSET', 'UNAVAILABLE', 'ERROR']) {
       expect(playbackStateSource).toContain(`${state}: {`);
