@@ -37,7 +37,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await prisma.session.deleteMany({ where: { userId: ids.author } });
   await prisma.comment.deleteMany({ where: { videoId: ids.video } });
-  await prisma.auditLog.deleteMany({ where: { actorUserId: `${RUN}-panel` } });
+  // AuditLog is immutable (rows younger than 400 days cannot be deleted); the rows are scoped by the unique RUN prefix, so leaving them is safe.
   await prisma.video.deleteMany({ where: { id: ids.video } });
   await prisma.creator.deleteMany({ where: { id: ids.creator } });
   await prisma.user.deleteMany({ where: { id: { in: [ids.owner, ids.author] } } });
