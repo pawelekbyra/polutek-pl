@@ -48,7 +48,7 @@ A Analityka i tryb premiery (równolegle od fazy 2, gdy jest 7+ dni danych) · 5
 | Szczegóły: zakładka Media (pipeline) | karta „Kodowanie i wideo” | 2 | zrobione |
 | Szczegóły: zakładka Dostęp | pole „Dostęp” + lista kontrolna | 2 | zrobione |
 | Szczegóły: zakładka Diagnostyka | lista kontrolna publikacji (pre-flight przed zapisem); test po publikacji (token → master → segment) w fazie A | 2/A | zrobione (pre-flight), plan (post-flight) |
-| Szczegóły: zakładka Komentarze (martwa, ADM-06) | Społeczność → Komentarze z filtrem filmu | 2 | plan |
+| Szczegóły: zakładka Komentarze (martwa, ADM-06) | Treści → film → **Komentarze** `/tresci/<slug>/komentarze` (te same akcje moderacji co w Społeczności) | 2 | zrobione |
 | Szczegóły: zakładka Statystyki | Analityka filmu | A | plan |
 | Szczegóły: zakładka Historia | karta „Historia zmian” (audyt) | 2 | zrobione |
 | „Publikuj” | przycisk „Opublikuj” (blokady publikacji, pre-flight) | 2 | zrobione |
@@ -66,20 +66,20 @@ A Analityka i tryb premiery (równolegle od fazy 2, gdy jest 7+ dni danych) · 5
 
 | Stary panel | Nowy panel | Faza | Status |
 |---|---|---|---|
-| Lista użytkowników, filtry, szukaj, sortowanie | **Społeczność → Użytkownicy** `#/spolecznosc?tab=uzytkownicy` | 2 | plan |
-| 4 kafelki statystyk (`/users/stats`) | kafle nad listą | 2 | plan |
-| Eksport CSV (`/users/export`) | „Eksport CSV” ze step-up (dane osobowe) | 2 | plan |
+| Lista użytkowników, filtry, szukaj, sortowanie | **Społeczność → Użytkownicy** `/spolecznosc?tab=uzytkownicy` (szukaj, 9 segmentów, 6 sortowań, strona w URL, tabela kart na telefonie) | 2 | zrobione |
+| 4 kafelki statystyk (`/users/stats`) | kafle nad listą (konta, nowe 7 dni, ze znacznikiem, niezweryfikowane), każdy to link do segmentu | 2 | zrobione |
+| Eksport CSV (`/users/export`) | „Eksport CSV” (POST, step-up, limit 5/h, audyt `USERS_EXPORT`, komórki odporne na wstrzyknięcie formuł, limit 20 000 wierszy) | 2 | zrobione |
 | „Wyślij wiadomość” (martwy) | DROP (wysyłka do jednej osoby: PP Support) | – | DROP |
-| Nadaj / cofnij znacznik wspierającego (dialog z powodem) | profil 360°: „Znacznik wspierającego…” (okno z powodem) | 2 | plan |
-| Szczegóły: Podsumowanie, suma wpłat | profil 360° `#/spolecznosc/u/<id>` | 2 | plan |
-| Szczegóły: Wpłaty | karta „Napiwki” w profilu | 2 | plan |
-| Szczegóły: Granty | karta „Znacznik wspierającego” (historia nadań/cofnięć) | 2 | plan |
-| Szczegóły: Aktywność | karty Komentarze, Oglądanie, E-maile | 2 | plan |
-| Szczegóły: Historia zmian | karta „Audyt dotyczący osoby” | 2 | plan |
+| Nadaj / cofnij znacznik wspierającego (dialog z powodem) | profil 360°: „Znacznik wspierającego…” (okno z obowiązkowym powodem, idempotentne, audyt) | 2 | zrobione |
+| Szczegóły: Podsumowanie, suma wpłat | profil 360° `/spolecznosc/u/<id>` | 2 | zrobione |
+| Szczegóły: Wpłaty | karta „Napiwki” w profilu | 2 | zrobione |
+| Szczegóły: Granty | karta „Znacznik wspierającego: historia” | 2 | zrobione |
+| Szczegóły: Aktywność | karty Komentarze, Oglądanie, E-maile, Sesje | 2 | zrobione |
+| Szczegóły: Historia zmian | karta „Audyt dotyczący osoby” | 2 | zrobione |
 | „Zobacz w Stripe” | link przy wpłacie | 3 | plan |
-| Zmiana roli (`UserRoleActions`, ADMIN/USER, wymaga świeżego logowania) | profil: „Rola…” (okno, step-up; rola ADMIN na `www` po fazie 5 to tylko odznaka) | 2 | plan |
-| Usunięcie konta (`UserDangerZone`, wpisanie e-maila, świeże logowanie) | profil: strefa zagrożenia „Usuń i zanonimizuj…” z wpisaniem e-maila + step-up | 2 | plan |
-| Diagnostyka dostępu (`AdminAccessDiagnostics`) | profil: „Podgląd jako ta osoba” (tylko odczyt, wpis `ADMIN_VIEW_AS`) | 2 | plan |
+| Zmiana roli (`UserRoleActions`, ADMIN/USER, wymaga świeżego logowania) | profil: „Rola…” (okno, step-up) | 2 | zrobione |
+| Usunięcie konta (`UserDangerZone`, wpisanie e-maila, świeże logowanie) | profil: „Usuń…” z oknem skutków (liczby), wpisaniem e-maila i step-up | 2 | zrobione |
+| Diagnostyka dostępu (`AdminAccessDiagnostics`) | profil: „Podgląd jako ta osoba” (tylko odczyt, wyliczenie według zasad strony, wpis `ADMIN_VIEW_AS`) | 2 | zrobione |
 | `/admin/users/dashboard` (4 kafelki + sumy walut) | DROP (kafle na liście + Przychody) | – | DROP |
 | `/admin/users/payments`: lista wpłat, podsumowanie, filtry | **Przychody → Wpłaty** `#/przychody?tab=wplaty` | 3 | plan |
 | „Zwrot” (dialog z kwotą, bez powodu) | „Zwrot…”: skutek + powód + step-up + klucz idempotencji | 3 | plan |
@@ -89,12 +89,12 @@ A Analityka i tryb premiery (równolegle od fazy 2, gdy jest 7+ dni danych) · 5
 
 | Stary panel | Nowy panel | Faza | Status |
 |---|---|---|---|
-| Lista komentarzy, szukaj, filtry, licznik zgłoszeń | **Społeczność → Komentarze** | 2 | plan |
-| Wstrzymaj / ukryj / zatwierdź / przywróć | akcje w wierszu i klawisze; „Ukryj” z toastem „Cofnij” | 2 | plan |
-| Usuń (bez potwierdzenia, ostateczne) | „Usuń…” z oknem „Skutek” | 2 | plan |
-| Akcje zbiorcze (ukryj/usuń do 50, 50 żądań) | zaznaczanie + jedno żądanie zbiorcze, okno dla usuwania | 2 | plan |
-| Zgłoszenia: odrzuć / ukryj+rozwiąż / wstrzymaj+rozwiąż | **Moderacja** `#/spolecznosc?tab=moderacja` (j/k, h, z, w; atomowe „rozwiąż z akcją”) | 2 | plan |
-| Serduszko twórcy (tylko z `www`) | „Serduszko” i „Odpowiedz jako twórca” w Komentarzach | 2 | plan |
+| Lista komentarzy, szukaj, filtry, licznik zgłoszeń | **Społeczność → Komentarze**: szukaj w treści/autorze, status, film, autor, „pytania bez odpowiedzi”, licznik zgłoszeń | 2 | zrobione |
+| Wstrzymaj / ukryj / zatwierdź / przywróć | akcje w wierszu (Ukryj, Przywróć, Zatwierdź) i klawisze w Moderacji; toast „Cofnij” (atomowo: status + zgłoszenia); Wstrzymaj w Moderacji (`p`) | 2 | zrobione |
+| Usuń (bez potwierdzenia, ostateczne) | „Usuń…” z oknem „Skutek” i step-up (usunięcie jest ostateczne) | 2 | zrobione |
+| Akcje zbiorcze (ukryj/usuń do 50, 50 żądań) | checkboxy (do 50) + pasek akcji: JEDNO żądanie atomowe (wszystko albo nic), „Cofnij” dla ukryj/przywróć, okno i step-up dla usuwania | 2 | zrobione |
+| Zgłoszenia: odrzuć / ukryj+rozwiąż / wstrzymaj+rozwiąż | **Moderacja** `/spolecznosc` (domyślna zakładka; j/k, h, z, p, w; decyzja = komentarz + zgłoszenia w jednej transakcji; „Cofnij”; historia rozstrzygniętych) | 2 | zrobione |
+| Serduszko twórcy (tylko z `www`) | „Serduszko” (ustawia stan, idempotentnie) i „Odpowiedz jako twórca” (z konta właściciela kanału, odporne na podwójne kliknięcie) | 2 | zrobione |
 
 ### 1.5 Poczta i powiadomienia (`/admin/emails`, `/admin/notifications`)
 
@@ -124,15 +124,15 @@ z `lib/modules/**` (wrapper `requireAdmin → zod (.strict) → limit → step-u
 | Trasa (metody) | Use case / rola | Nowy panel | Faza | Status |
 |---|---|---|---|---|
 | `channel` (GET, PATCH) | ustawienia kanału | Ustawienia → Kanał (odczyt serwerowy, zapis akcją) | 3 | plan |
-| `comments` (GET) | lista komentarzy | Społeczność → Komentarze | 2 | plan |
-| `comments/[id]/approve` (POST) | moderacja | akcja „Zatwierdź” | 2 | plan |
-| `comments/[id]/hold` (POST) | moderacja | „Wstrzymaj” | 2 | plan |
-| `comments/[id]/hide` (POST) | moderacja (też z `www`) | „Ukryj” (klawisz `h`) | 2 | plan |
-| `comments/[id]/restore` (POST) | moderacja (też z `www`) | „Przywróć” / „Cofnij” | 2 | plan |
-| `comments/[id]/delete` (POST) | usunięcie | „Usuń…” | 2 | plan |
-| `comments/[id]/heart` (POST) | serduszko (tylko `www`) | „Serduszko” | 2 | plan |
-| `comments/reports` (GET) | zgłoszenia | Moderacja | 2 | plan |
-| `comments/reports/[id]/resolve` (POST) | rozwiązanie | atomowe „rozwiąż z akcją” | 2 | plan |
+| `comments` (GET) | lista komentarzy | Społeczność → Komentarze | 2 | zrobione |
+| `comments/[id]/approve` (POST) | moderacja | akcja „Zatwierdź” | 2 | zrobione |
+| `comments/[id]/hold` (POST) | moderacja | „Wstrzymaj” | 2 | zrobione |
+| `comments/[id]/hide` (POST) | moderacja (też z `www`) | „Ukryj” (klawisz `h`) | 2 | zrobione |
+| `comments/[id]/restore` (POST) | moderacja (też z `www`) | „Przywróć” / „Cofnij” | 2 | zrobione |
+| `comments/[id]/delete` (POST) | usunięcie | „Usuń…” | 2 | zrobione |
+| `comments/[id]/heart` (POST) | serduszko (tylko `www`) | „Serduszko” | 2 | zrobione |
+| `comments/reports` (GET) | zgłoszenia | Moderacja | 2 | zrobione |
+| `comments/reports/[id]/resolve` (POST) | rozwiązanie | atomowe „rozwiąż z akcją” | 2 | zrobione |
 | `emails/broadcast` (GET, POST) | historia, utworzenie (kolejka) | Rozsyłki | 3 | plan |
 | `emails/broadcast/[id]/cancel` (POST) | anulowanie | „Anuluj” | 3 | plan |
 | `emails/broadcast/audience` (GET) | liczba odbiorców | kreator, krok 1 | 3 | plan |
@@ -151,20 +151,20 @@ z `lib/modules/**` (wrapper `requireAdmin → zod (.strict) → limit → step-u
 | `stats` (GET) | brak wołającego | DROP (Dzisiaj ma własne odczyty) | 1 | DROP |
 | `subscribers/resync` (POST) | przeliczenie | „Przelicz subskrybentów” | 3 | plan |
 | `templates` (GET, POST, DELETE) | szablony e-mail | Komunikacja → Szablony | 3 | plan |
-| `users` (GET) | lista | Społeczność → Użytkownicy | 2 | plan |
-| `users/[userId]` (GET) | szczegóły | profil 360° | 2 | plan |
-| `users/[userId]` (DELETE) | usunięcie i anonimizacja | strefa zagrożenia profilu (e-mail + step-up) | 2 | plan |
-| `users/[userId]/patron` (PATCH) | znacznik wspierającego | „Znacznik wspierającego…” | 2 | plan |
-| `users/[userId]/role` (PATCH) | rola | „Rola…” ze step-up | 2 | plan |
-| `users/export` (GET) | eksport CSV (audyt) | „Eksport CSV” ze step-up | 2 | plan |
-| `users/stats` (GET) | kafle | kafle Użytkowników | 2 | plan |
+| `users` (GET) | lista | Społeczność → Użytkownicy | 2 | zrobione |
+| `users/[userId]` (GET) | szczegóły | profil 360° | 2 | zrobione |
+| `users/[userId]` (DELETE) | usunięcie i anonimizacja | strefa zagrożenia profilu (e-mail + step-up) | 2 | zrobione |
+| `users/[userId]/patron` (PATCH) | znacznik wspierającego | „Znacznik wspierającego…” | 2 | zrobione |
+| `users/[userId]/role` (PATCH) | rola | „Rola…” ze step-up | 2 | zrobione |
+| `users/export` (GET) | eksport CSV (audyt) | „Eksport CSV” ze step-up | 2 | zrobione |
+| `users/stats` (GET) | kafle | kafle Użytkowników | 2 | zrobione |
 | `videos` (GET) | lista | Treści | 2 | zrobione |
 | `videos` (POST) | utworzenie i (z `id`) edycja | „Nowy film” i jeden `PATCH` edycji | 2 | zrobione |
 | `videos` (DELETE) | usunięcie + sprzątanie R2 | strefa zagrożenia filmu | 2 | zrobione |
 | `videos/[id]` (GET, PATCH) | szczegóły, edycja, miniatura | edycja filmu | 2 | zrobione |
 | `videos/[id]/actions` (POST) | publish/unpublish/archive/restore/set-hero | przyciski statusu i Hero | 2 | zrobione |
 | `videos/[id]/actions` (PATCH, luźny schemat, ADM-08) | sidebar i pozycja | przełączniki Ekspozycji (ścisły schemat) | 2 | zrobione |
-| `videos/[id]/comments` (GET) | brak wołającego (ADM-06) | Komentarze z filtrem filmu | 2 | plan |
+| `videos/[id]/comments` (GET) | brak wołającego (ADM-06) | Komentarze z filtrem filmu | 2 | zrobione |
 | `videos/[id]/original-upload/multipart` (POST, GET, DELETE) | start, wznowienie, przerwanie | „Nowy film” krok 2, karta kodowania | 2 | zrobione |
 | `…/multipart/parts` (POST) | adresy części | uploader | 2 | zrobione |
 | `…/multipart/complete` (POST) | weryfikacja + kolejka | uploader | 2 | zrobione |
@@ -184,16 +184,16 @@ z `lib/modules/**` (wrapper `requireAdmin → zod (.strict) → limit → step-u
 | `CommentItem.tsx`: ukryj, przywróć | `/api/admin/comments/[id]/{hide,restore}` | całość do panelu (decyzja 8 z `admin-panel.md`) | 5 | plan |
 | `CommentItem.tsx`: serduszko | `/api/admin/comments/[id]/heart` | „Serduszko” w panelu | 5 | plan |
 | `UserMenu.tsx`, `AccountModal.tsx`: link „Zarządzaj kanałem” | `/admin` | link do `admin.pawelperfect.com` | 5 | plan |
-| `lib/video-upload/multipart-uploader.ts` | woła trasy admina | używany przez panel (ten sam moduł) | 2 | plan |
+| `lib/video-upload/multipart-uploader.ts` | woła trasy admina | używany przez panel (ten sam moduł) | 2 | zrobione |
 
 ## 4. Obsługa strony poza starym panelem (dziś terminal, baza albo nic)
 
 | Czynność | Nowy panel | Faza | Status |
 |---|---|---|---|
 | Stan serwera, kontenerów, cronów, kopii | System | 1 | zrobione |
-| Kto ma rolę ADMIN, 2FA, sesje | Społeczność (filtr „Z 2FA”, rola) + Bezpieczeństwo | 2–3 | plan |
-| Wylogowanie osoby ze wszystkich urządzeń | profil: „Wyloguj wszędzie” | 2 | plan |
-| Wyciszenie komentowania osoby | profil i moderacja: „Wycisz” | 2 | plan |
+| Kto ma rolę ADMIN, 2FA, sesje | Społeczność (filtr „Z 2FA”, rola) + Bezpieczeństwo | 2–3 | zrobione (Społeczność), plan (Bezpieczeństwo) |
+| Wylogowanie osoby ze wszystkich urządzeń | profil: „Wyloguj wszędzie” | 2 | zrobione |
+| Wyciszenie komentowania osoby | profil i Moderacja: „Wycisz…” (1/7/30/365 dni, powód, audyt; `createVideoComment` odmawia do końca wyciszenia) i „Zdejmij wyciszenie” | 2 | zrobione |
 | Dziennik audytu z filtrami i eksportem | Bezpieczeństwo → Dziennik | 3 | plan |
 | Logowania do panelu, sesje panelu | Bezpieczeństwo → Logowania (dane już w `AdminAuthEvent`) | 3 | plan |
 | Premiera na żywo | Premiera na żywo | A | plan |

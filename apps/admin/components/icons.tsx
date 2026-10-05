@@ -57,6 +57,10 @@ const ICONS = {
   subtitles: `<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M7 14.5h4M13 14.5h4M7 11h2M11 11h6"/>`,
   copy: `<rect x="8.5" y="8.5" width="11" height="11" rx="1.5"/><path d="M15.5 8.5V6A1.5 1.5 0 0 0 14 4.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/>`,
   archive: `<rect x="3.5" y="4.5" width="17" height="4" rx="1"/><path d="M5 8.5v10A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5v-10M10 12.5h4"/>`,
+  "eye-off": `<path d="M3 3l18 18"/><path d="M10.6 6a9 9 0 0 1 1.4-.1c6 0 9.5 6.1 9.5 6.1a16 16 0 0 1-3.2 3.9M6.6 7.6A16 16 0 0 0 2.5 12S6 18.5 12 18.5a9 9 0 0 0 3.4-.7"/><path d="M9.9 9.9a2.8 2.8 0 0 0 4 4"/>`,
+  reply: `<path d="M10 7 4.5 12 10 17"/><path d="M4.5 12H14a5.5 5.5 0 0 1 5.5 5.5V19"/>`,
+  heart: `<path d="M12 20s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7.6 4.2 4.2 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/>`,
+  mute: `<circle cx="12" cy="12" r="8.5"/><path d="m6 6 12 12"/>`,
 } as const;
 
 export type IconName = keyof typeof ICONS;

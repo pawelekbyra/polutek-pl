@@ -6,3 +6,4 @@ export * from './domain/patron.dto';
 export * from './domain/patron.errors';
 export * from './domain/patron.policy';
 export * from './domain/patron-read-model';
+export * from './application/admin-set-supporter.use-case';

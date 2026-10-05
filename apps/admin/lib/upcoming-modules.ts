@@ -20,18 +20,7 @@ export const UPCOMING_MODULES: Record<string, UpcomingModule> = {
     summary: "Ruch, źródła, lejek i oglądalność z własnej telemetrii bez ciasteczek. Zbieranie danych rusza w fazie 0, ekrany w fazie 2, gdy będzie co najmniej 7 dni danych.",
     scope: ["odwiedzający, wizyty, odsłony, źródła i kraje", "lejek: wejście → konto → komentarz → napiwek oraz atrybucja", "obejrzenia, czas oglądania, czas startu p50/p95, buforowanie, błędy odtwarzania", "ruch Workera HLS względem dziennego limitu"],
   },
-  spolecznosc: {
-    id: "spolecznosc",
-    title: "Społeczność",
-    phase: 3,
-    summary: "Moderacja z klawiatury, komentarze i profil 360° każdej osoby. Odczyt w fazie 3, akcje (ukryj, wycisz, odpowiedz) w fazie 4.",
-    scope: ["kolejka moderacji: j/k, h ukryj, z zostaw, w wycisz, z cofnięciem", "komentarze z filtrami w adresie", "profil 360°: konto, 2FA, sesje, komentarze, wpłaty, e-maile, audyt", "segmenty i wzrost liczby kont"],
-    today: [
-      { label: "Zgłoszenia w starym panelu", path: "/admin/comments/reports" },
-      { label: "Komentarze", path: "/admin/comments" },
-      { label: "Użytkownicy", path: "/admin/users" },
-    ],
-  },
+
   przychody: {
     id: "przychody",
     title: "Przychody",
