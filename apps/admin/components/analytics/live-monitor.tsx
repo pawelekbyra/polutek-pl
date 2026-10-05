@@ -34,14 +34,10 @@ export function LiveMonitor({ initial, videoKey }: { initial: LiveSnapshot; vide
   const [paused, setPaused] = useState(false);
   const [status, setStatus] = useState<Status>("connecting");
   const [quiet, setQuiet] = useState(false);
-  const lastEvent = useRef(Date.now());
+  const lastEvent = useRef(0);
 
   useEffect(() => {
-    if (paused) {
-      setStatus("paused");
-      return;
-    }
-    setStatus("connecting");
+    if (paused) return;
     lastEvent.current = Date.now();
     const es = new EventSource(`/api/live${videoKey ? `?video=${encodeURIComponent(videoKey)}` : ""}`);
     es.addEventListener("snapshot", (e) => {
@@ -65,6 +61,7 @@ export function LiveMonitor({ initial, videoKey }: { initial: LiveSnapshot; vide
     };
   }, [paused, videoKey]);
 
+  const shown: Status = paused ? "paused" : status;
   const last = snap.perMinute;
   const viewers = last.map((m) => m.viewers);
   const labels = last.map((m) => warsawMinute.format(new Date(m.minute)));
@@ -81,7 +78,7 @@ export function LiveMonitor({ initial, videoKey }: { initial: LiveSnapshot; vide
             {paused ? "Wstrzymane" : "Na żywo"}
           </span>
           <span>
-            {STATUS_TEXT[status]} · dane z {warsawTime.format(new Date(snap.at))}
+            {STATUS_TEXT[shown]} · dane z {warsawTime.format(new Date(snap.at))}
           </span>
           {quiet && !paused ? (
             <span className="state warn">
@@ -90,13 +87,16 @@ export function LiveMonitor({ initial, videoKey }: { initial: LiveSnapshot; vide
             </span>
           ) : null}
         </span>
-        <button type="button" className="btn" aria-pressed={paused} onClick={() => setPaused((p) => !p)}>
+        <button type="button" className="btn" aria-pressed={paused} onClick={() => {
+            if (paused) setStatus("connecting");
+            setPaused((p) => !p);
+          }}>
           <Icon name={paused ? "refresh" : "clock"} />
           <span>{paused ? "Wznów odświeżanie" : "Wstrzymaj odświeżanie"}</span>
         </button>
       </div>
       <span className="sr-only" role="status">
-        {STATUS_TEXT[status]}
+        {STATUS_TEXT[shown]}
       </span>
 
       {forecast ? (
