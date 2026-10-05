@@ -40,6 +40,11 @@ model User {
   // Null for accounts created before acceptance was recorded (2026-10-04).
   termsAcceptedAt               DateTime?
   termsVersion                  String?
+  // Moderation mute (admin panel, Społeczność): until this instant the account may read and react but
+  // not write comments. Null = not muted; an expired value is the same as null. Set only by
+  // muteUserCommenting (audited), cleared by unmuteUserCommenting.
+  commentMutedUntil             DateTime?
+  commentMuteReason             String?
   createdAt                     DateTime   @default(now())
   updatedAt                     DateTime   @updatedAt
 

@@ -40,6 +40,14 @@ export async function createVideoComment(
   const userId = actor.userId;
 
   try {
+    // 0. Moderation mute (admin panel): the account may read and react but not write until the date passes.
+    if (actor.type === 'user') {
+      const mute = await prisma.user.findUnique({ where: { id: userId }, select: { commentMutedUntil: true } });
+      if (mute?.commentMutedUntil && mute.commentMutedUntil > ctx.now()) {
+        return fail({ type: "FORBIDDEN", message: "Komentowanie jest dla Twojego konta chwilowo wyłączone przez moderację." });
+      }
+    }
+
     // 1. Resolve videoId if it's a slug
     let resolvedVideoId = videoId;
     if (!isUuid(videoId)) {
