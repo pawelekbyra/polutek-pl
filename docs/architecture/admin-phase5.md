@@ -5,16 +5,16 @@ Parytet funkcji: [`admin-parity.md`](admin-parity.md) (123 wiersze „zrobione�
 
 > ## OSTRZEŻENIE: kiedy wdrożyć
 >
-> **Wdrożyć dopiero po rejestracji administratora w nowym panelu i sprawdzeniu, że panel działa.**
+> **Wdrożyć dopiero po udanym zalogowaniu do nowego panelu (logowanie przez Cloudflare Access z Gmailem właściciela) i sprawdzeniu, że panel działa.**
 >
 > Po wdrożeniu tej gałęzi stary panel na `www` przestaje istnieć: `/admin*` przekierowuje na `admin.pawelperfect.com`, a `/api/admin*` odpowiada 404.
-> Jeśli właściciel nie ma jeszcze zapisanego klucza (passkey) w nowym panelu, **straci dostęp do wszystkich funkcji administracyjnych** (filmy, komentarze, wpłaty, zwroty, rozsyłki), bo drogi wstecz przez stary panel już nie będzie.
-> Do tej pory (stan na 2026-10-05) żaden administrator nie jest zapisany w nowym panelu.
+> Jeśli właściciel nie potrafi jeszcze wejść do nowego panelu, **straci dostęp do wszystkich funkcji administracyjnych** (filmy, komentarze, wpłaty, zwroty, rozsyłki), bo drogi wstecz przez stary panel już nie będzie.
+> Do tej pory (stan na 2026-10-05) nowy panel nie był jeszcze sprawdzony przez właściciela w przeglądarce; logowanie (tryb `access`, `ADMIN_AUTH_MODE`) opisuje `docs/operations/ADMIN-PANEL.md` rozdz. 1b.
 >
 > Lista kontrolna przed wdrożeniem:
 > 1. Panel jest wdrożony i dostępny (`admin.pawelperfect.com`, Cloudflare Access przepuszcza właściciela).
-> 2. Właściciel zarejestrował administratora (passkey) i **zalogował się** do panelu, otworzył Treści, Społeczność, Przychody, Ustawienia.
-> 3. Wiadomo, jak wejść do panelu z drugiego urządzenia albo z kodem awaryjnym (`docs/operations/ADMIN-PANEL.md`).
+> 2. Właściciel **zalogował się** do panelu przez Access (kod z maila na pawel.perfect@gmail.com), otworzył Treści, Społeczność, Przychody, Ustawienia.
+> 3. Wiadomo, jak wrócić do trybu `passkey` albo cofnąć wdrożenie (`docs/operations/ADMIN-PANEL.md`, rozdz. 1b i 4).
 > 4. Właściciel zrobił ręczny snapshot serwera (zasada projektu przed ryzykownymi krokami).
 >
 > **Wycofanie (rollback):** poprzedni obraz aplikacji zostaje na serwerze: `./deploy.sh x --rollback` (uruchamia poprzedni obraz, bez budowania i migracji; ta faza nie zmienia schematu bazy, więc nic do cofania w danych). Stary panel wraca wtedy w całości, razem ze starymi trasami.
