@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { auth } from "@/lib/auth/server";
 import { prisma } from "@/lib/prisma";
 import { getActorFromAuth, requireAdminActor } from "@/lib/api/auth";
-import { requireAdminForApi } from "@/lib/auth-utils";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 
 vi.mock("@/lib/auth/server", () => ({
@@ -40,7 +39,6 @@ function mockAuth(userId: string | null, role?: string) {
 describe("Post-merge Admin Auth Canonicalization Verification", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.ADMIN_EMAILS = "";
   });
 
   it("VERIFY: DB admin without claim has access", async () => {
@@ -68,8 +66,7 @@ describe("Post-merge Admin Auth Canonicalization Verification", () => {
     const actor = await getActorFromAuth({ allowGuest: false });
     expect(actor.type).toBe("user"); // Downgraded to user despite claim
 
-    const { response } = await requireAdminForApi("TEST_REVOKED");
-    expect(response?.status).toBe(403);
+    await expect(requireAdminActor()).rejects.toMatchObject({ statusCode: 403 });
   });
 
   it("VERIFY: Missing local User gives 403", async () => {
@@ -77,8 +74,7 @@ describe("Post-merge Admin Auth Canonicalization Verification", () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
 
     await expect(getActorFromAuth({ allowGuest: false })).rejects.toThrow();
-    const { response } = await requireAdminForApi("TEST_MISSING");
-    expect(response?.status).toBe(403);
+    await expect(requireAdminActor()).rejects.toMatchObject({ statusCode: 403 });
   });
 
   it("VERIFY: isDeleted=true gives 403", async () => {
@@ -90,38 +86,24 @@ describe("Post-merge Admin Auth Canonicalization Verification", () => {
     } as any);
 
     await expect(getActorFromAuth({ allowGuest: false })).rejects.toThrow();
-    const { response } = await requireAdminForApi("TEST_DELETED");
-    expect(response?.status).toBe(403);
+    await expect(requireAdminActor()).rejects.toMatchObject({ statusCode: 403 });
   });
 
-  it("VERIFY: Listed admin e-mail works exclusively with an active, verified local User", async () => {
+  it("VERIFY: an e-mail never grants admin (ADMIN_EMAILS bootstrap is gone), only the DB role does", async () => {
     process.env.ADMIN_EMAILS = "owner@example.com";
-
-    // Active case
-    mockAuth("configured_admin");
+    mockAuth("owner_1");
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      id: "configured_admin",
+      id: "owner_1",
       isDeleted: false,
       role: "USER",
       email: "owner@example.com",
       emailVerified: true,
     } as any);
-    vi.mocked(prisma.user.update).mockResolvedValue({} as any);
 
     const actor = await getActorFromAuth({ allowGuest: false });
-    expect(actor.type).toBe("admin");
-
-    // Deleted case
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      id: "configured_admin",
-      isDeleted: true,
-      role: "USER",
-    } as any);
-    await expect(getActorFromAuth({ allowGuest: false })).rejects.toThrow();
-
-    // Missing case
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
-    await expect(getActorFromAuth({ allowGuest: false })).rejects.toThrow();
+    expect(actor.type).toBe("user");
+    expect(prisma.user.update).not.toHaveBeenCalled();
+    delete process.env.ADMIN_EMAILS;
   });
 
   it("VERIFY: Navbar shows admin for DB admin without metadata", () => {
