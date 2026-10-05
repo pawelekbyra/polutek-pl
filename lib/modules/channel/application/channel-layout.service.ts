@@ -91,7 +91,7 @@ export class ChannelLayoutService {
             .sort((a, b) => toPremiereDate(a.premiereAt)!.getTime() - toPremiereDate(b.premiereAt)!.getTime());
         const releasedVideos = sortedVideos.filter(v => !isUpcomingPremiere(v, now));
 
-        // Two levels (lib/access-tier.ts): a leftover PATRON row lands in "Dla zalogowanych".
+        // Two levels (lib/access-tier.ts).
         const freeVideos = releasedVideos.filter(v => toVideoAccessTier(v.tier) === "PUBLIC");
         const loggedInVideos = releasedVideos.filter(v => toVideoAccessTier(v.tier) === "LOGGED_IN");
 

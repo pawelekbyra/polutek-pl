@@ -40,7 +40,7 @@ export async function pinComment(
       return fail({ type: "CONFLICT", message: "Tylko widoczne komentarze mogą być przypięte." });
     }
 
-    await ctx.db.writeTransaction((tx: WriteTx) => new CommentRepository(tx).pin(commentId, comment.videoId, userId));
+    await ctx.db.writeTransaction((tx: WriteTx) => new CommentRepository(tx).pin(commentId, comment.videoId));
 
     await recordAuditEventSafe(ctx, {
       action: "COMMENT_PIN",

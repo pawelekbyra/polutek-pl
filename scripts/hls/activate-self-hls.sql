@@ -12,9 +12,9 @@
 \if :{?finish}\else\set finish COMMIT\endif
 BEGIN;
 
-INSERT INTO "VideoAsset" (id, "videoId", provider, "objectKey", bucket, "mimeType", "updatedAt", "processingState", "isPrimary", "fallbackPriority")
+INSERT INTO "VideoAsset" (id, "videoId", provider, "objectKey", bucket, "mimeType", "updatedAt", "processingState", "isPrimary")
 SELECT gen_random_uuid()::text, :'video_id', 'SELF_HLS', 'videos/' || :'video_id' || '/v/' || :'version', 'polutek-hls',
-       'application/x-mpegURL', now(), 'READY', false, 10
+       'application/x-mpegURL', now(), 'READY', false
 WHERE NOT EXISTS (
   SELECT 1 FROM "VideoAsset" WHERE "videoId" = :'video_id' AND provider = 'SELF_HLS'
     AND "objectKey" = 'videos/' || :'video_id' || '/v/' || :'version'

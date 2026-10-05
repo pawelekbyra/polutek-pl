@@ -8,6 +8,7 @@ import { isUpcomingPremiere, toPremiereDate } from '@/lib/modules/video/domain/p
 import { resolvePublicThumbnailSrc } from '@/lib/modules/media';
 import { VideoStatus, type VideoAsset } from '@prisma/client';
 import { buildSelfHlsPlan } from './self-hls-plan';
+import { assetSizeToNumber } from '@/lib/modules/video/domain/asset-size';
 import { SelfHlsTokenService } from '../infrastructure/self-hls-token.service';
 
 export type PlaybackErrorCode =
@@ -94,10 +95,8 @@ function toSafeAssetContract(asset: VideoAsset | null | undefined): PlaybackAsse
     // Public playback plans intentionally redact storage identifiers. Even
     // denied/non-ready states may include diagnostics.asset for safe state
     // messaging, so never expose object keys or provider ids here.
-    providerAssetId: null,
-    providerPlaybackId: null,
     mimeType: asset.mimeType ?? null,
-    sizeBytes: asset.sizeBytes ?? null,
+    sizeBytes: assetSizeToNumber(asset.sizeBytes),
   };
 }
 

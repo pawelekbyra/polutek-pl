@@ -214,16 +214,16 @@ export class CommentRepository {
   }
 
   /** Pins one comment and unpins any other on the same video (one pinned comment per video). Must run inside a transaction. */
-  async pin(commentId: string, videoId: string, pinnedById: string): Promise<void> {
+  async pin(commentId: string, videoId: string): Promise<void> {
     await this.write.comment.updateMany({
       where: { videoId, pinnedAt: { not: null }, NOT: { id: commentId } },
-      data: { pinnedAt: null, pinnedById: null },
+      data: { pinnedAt: null },
     });
-    await this.write.comment.update({ where: { id: commentId }, data: { pinnedAt: new Date(), pinnedById } });
+    await this.write.comment.update({ where: { id: commentId }, data: { pinnedAt: new Date() } });
   }
 
   async unpin(commentId: string): Promise<void> {
-    await this.write.comment.update({ where: { id: commentId }, data: { pinnedAt: null, pinnedById: null } });
+    await this.write.comment.update({ where: { id: commentId }, data: { pinnedAt: null } });
   }
 
   /**

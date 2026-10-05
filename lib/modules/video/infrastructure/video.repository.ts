@@ -34,7 +34,6 @@ export interface CreateVideoInput {
   showInSidebar?: boolean;
   sidebarOrder?: number;
   publishAfterAssetReady?: boolean;
-  publishAfterAssetReadyProvider?: string | null;
   publishAfterAssetReadyRequestedAt?: Date | null;
   publishAfterAssetReadyCompletedAt?: Date | null;
   publishAfterAssetReadyError?: string | null;
@@ -280,7 +279,6 @@ export class VideoRepository {
       publishedAt: null,
       premiereAt: input.premiereAt ?? null,
       publishAfterAssetReady: Boolean(input.publishAfterAssetReady),
-      publishAfterAssetReadyProvider: input.publishAfterAssetReady ? (input.publishAfterAssetReadyProvider ?? null) : null,
       publishAfterAssetReadyRequestedAt: input.publishAfterAssetReady ? (input.publishAfterAssetReadyRequestedAt || new Date()) : null,
       publishAfterAssetReadyCompletedAt: null,
       publishAfterAssetReadyError: null,
@@ -305,7 +303,6 @@ export class VideoRepository {
     if (data.showInSidebar !== undefined) updateData.showInSidebar = data.showInSidebar;
     if (data.sidebarOrder !== undefined) updateData.sidebarOrder = data.sidebarOrder;
     if (data.publishAfterAssetReady !== undefined) updateData.publishAfterAssetReady = data.publishAfterAssetReady;
-    if (data.publishAfterAssetReadyProvider !== undefined) updateData.publishAfterAssetReadyProvider = data.publishAfterAssetReadyProvider;
     if (data.publishAfterAssetReadyRequestedAt !== undefined) updateData.publishAfterAssetReadyRequestedAt = data.publishAfterAssetReadyRequestedAt;
     if (data.publishAfterAssetReadyCompletedAt !== undefined) updateData.publishAfterAssetReadyCompletedAt = data.publishAfterAssetReadyCompletedAt;
     if (data.publishAfterAssetReadyError !== undefined) updateData.publishAfterAssetReadyError = data.publishAfterAssetReadyError;

@@ -1,5 +1,6 @@
 import type { AccessTier, StorageProvider, VideoAssetProcessingState, VideoStatus } from "@prisma/client";
 import { selectPrimaryVideoAsset } from "./video-asset-selection";
+import { assetSizeToNumber } from "./asset-size";
 import { resolvePublicThumbnailSrc } from "@/lib/modules/media";
 import { effectivePublishedAt, toPremiereDate } from "./premiere";
 import { toVideoAccessTier } from "@/lib/access-tier";
@@ -50,17 +51,11 @@ export interface AdminVideoAssetDto {
   provider: StorageProvider;
   objectKey: string;
   bucket?: string | null;
-  providerAssetId?: string | null;
-  providerPlaybackId?: string | null;
-  externalVideoId?: string | null;
-  externalUrl?: string | null;
   status: VideoAssetProcessingState;
   processingState: VideoAssetProcessingState;
   isPrimary: boolean;
   isPlayable: boolean;
   failureReason?: string | null;
-  providerSyncedAt?: Date | null;
-  processingStartedAt?: Date | null;
   processingEndedAt?: Date | null;
   mimeType?: string | null;
   sizeBytes?: number | null;
@@ -71,14 +66,8 @@ export interface AdminVideoAssetDto {
   previewUrl?: string | null;
   hlsManifestUrl?: string | null;
   dashManifestUrl?: string | null;
-  lastSyncAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  fallbackPriority: number;
-  mirrorSourceOriginalId?: string | null;
-  mirrorRequestedAt?: Date | null;
-  mirrorCompletedAt?: Date | null;
-  mirrorFailureReason?: string | null;
   playbackUrl?: never;
   playbackToken?: never;
   signedUrl?: never;
@@ -102,7 +91,6 @@ export interface AdminVideoDto extends BaseVideoDto {
   original?: AdminVideoOriginalDto | null;
   migrationStatus: MigrationStatus;
   publishAfterAssetReady: boolean;
-  publishAfterAssetReadyProvider: string | null;
   publishAfterAssetReadyRequestedAt: Date | null;
   publishAfterAssetReadyCompletedAt: Date | null;
   publishAfterAssetReadyError: string | null;
@@ -122,18 +110,12 @@ export type AdminVideoAssetInput = {
   provider: StorageProvider;
   objectKey: string;
   bucket?: string | null;
-  providerAssetId?: string | null;
-  providerPlaybackId?: string | null;
-  externalVideoId?: string | null;
-  externalUrl?: string | null;
   processingState: VideoAssetProcessingState;
   isPrimary: boolean;
   failureReason?: string | null;
-  providerSyncedAt?: Date | null;
-  processingStartedAt?: Date | null;
   processingEndedAt?: Date | null;
   mimeType?: string | null;
-  sizeBytes?: number | null;
+  sizeBytes?: bigint | number | null;
   durationSeconds?: number | null;
   thumbnailUrl?: string | null;
   previewUrl?: string | null;
@@ -141,11 +123,6 @@ export type AdminVideoAssetInput = {
   dashManifestUrl?: string | null;
   createdAt: Date;
   updatedAt: Date;
-  fallbackPriority?: number | null;
-  mirrorSourceOriginalId?: string | null;
-  mirrorRequestedAt?: Date | null;
-  mirrorCompletedAt?: Date | null;
-  mirrorFailureReason?: string | null;
 };
 
 export type AdminVideoOriginalInput = {
@@ -169,7 +146,6 @@ export type AdminVideoInput = PublicVideoInput & {
   assets?: AdminVideoAssetInput[] | null;
   original?: AdminVideoOriginalInput | null;
   publishAfterAssetReady?: boolean | null;
-  publishAfterAssetReadyProvider?: string | null;
   publishAfterAssetReadyRequestedAt?: Date | null;
   publishAfterAssetReadyCompletedAt?: Date | null;
   publishAfterAssetReadyError?: string | null;
@@ -238,20 +214,14 @@ export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefi
     provider: asset.provider,
     objectKey: asset.objectKey,
     bucket: asset.bucket,
-    providerAssetId: asset.providerAssetId,
-    providerPlaybackId: asset.providerPlaybackId,
-    externalVideoId: asset.externalVideoId ?? null,
-    externalUrl: asset.externalUrl ?? null,
     status: asset.processingState,
     processingState: asset.processingState,
     isPrimary: asset.isPrimary,
     isPlayable: resolveIsPlayable(asset.provider, asset.processingState),
     failureReason: asset.failureReason,
-    providerSyncedAt: asset.providerSyncedAt,
-    processingStartedAt: asset.processingStartedAt,
     processingEndedAt: asset.processingEndedAt,
     mimeType: asset.mimeType,
-    sizeBytes: asset.sizeBytes,
+    sizeBytes: assetSizeToNumber(asset.sizeBytes),
     requiresSignedUrl: asset.provider === "SELF_HLS",
     sourceMode: resolveSourceMode(asset.provider),
     durationSeconds: asset.durationSeconds ?? null,
@@ -259,14 +229,8 @@ export function toAdminVideoAssetDto(asset: AdminVideoAssetInput | null | undefi
     previewUrl: asset.previewUrl ?? null,
     hlsManifestUrl: asset.hlsManifestUrl ?? null,
     dashManifestUrl: asset.dashManifestUrl ?? null,
-    lastSyncAt: asset.providerSyncedAt ?? null,
     createdAt: asset.createdAt,
     updatedAt: asset.updatedAt,
-    fallbackPriority: asset.fallbackPriority ?? 100,
-    mirrorSourceOriginalId: asset.mirrorSourceOriginalId ?? null,
-    mirrorRequestedAt: asset.mirrorRequestedAt ?? null,
-    mirrorCompletedAt: asset.mirrorCompletedAt ?? null,
-    mirrorFailureReason: asset.mirrorFailureReason ?? null,
   };
 }
 
@@ -303,7 +267,6 @@ export function toAdminVideoDto(input: AdminVideoInput | unknown): AdminVideoDto
     original: toAdminVideoOriginalDto(video.original),
     migrationStatus,
     publishAfterAssetReady: Boolean(video.publishAfterAssetReady),
-    publishAfterAssetReadyProvider: video.publishAfterAssetReadyProvider || null,
     publishAfterAssetReadyRequestedAt: video.publishAfterAssetReadyRequestedAt || null,
     publishAfterAssetReadyCompletedAt: video.publishAfterAssetReadyCompletedAt || null,
     publishAfterAssetReadyError: video.publishAfterAssetReadyError || null,

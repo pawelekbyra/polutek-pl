@@ -15,31 +15,25 @@ beforeEach(() => {
 
 describe('payment currency settings: one minimum per currency', () => {
   it('uses the stored minimum the gate shows and the server enforces', async () => {
-    db.paymentCurrencySetting.rows.push({ currency: 'PLN', minAmountMinor: 700, patronThresholdMinor: 5000, patronBoxMinMinor: null });
+    db.paymentCurrencySetting.rows.push({ currency: 'PLN', minAmountMinor: 700 });
 
     const limits = await getPaymentCurrencyLimits();
 
     expect(limits.PLN).toMatchObject({ minAmountMinor: 700, minAmount: 7 });
-    expect(limits.PLN).not.toHaveProperty('patronThresholdMinor');
     expect(await validatePaymentAmountMinorAsync(699, 'PLN')).toMatch(/zbyt niska/);
     expect(await validatePaymentAmountMinorAsync(700, 'PLN')).toBeNull();
   });
 
-  it('a legacy tip-box minimum higher than the floor stays the minimum until the next save', async () => {
-    db.paymentCurrencySetting.rows.push({ currency: 'EUR', minAmountMinor: 300, patronThresholdMinor: 500, patronBoxMinMinor: 400 });
-    expect((await getPaymentCurrencyLimits()).EUR.minAmountMinor).toBe(400);
-  });
-
   it('a minimum below the Stripe floor (PLN 2.00) is raised to it, so the intent is never refused by Stripe', async () => {
-    db.paymentCurrencySetting.rows.push({ currency: 'PLN', minAmountMinor: 100, patronThresholdMinor: null, patronBoxMinMinor: null });
+    db.paymentCurrencySetting.rows.push({ currency: 'PLN', minAmountMinor: 100 });
 
     expect((await getPaymentCurrencyLimits()).PLN.minAmountMinor).toBe(200);
     expect(await validatePaymentAmountMinorAsync(150, 'PLN')).toMatch(/zbyt niska/);
     expect(await validatePaymentAmountMinorAsync(200, 'PLN')).toBeNull();
   });
 
-  it('saving writes the one minimum and clears the legacy columns', async () => {
-    db.paymentCurrencySetting.rows.push({ currency: 'EUR', minAmountMinor: 300, patronThresholdMinor: 500, patronBoxMinMinor: 400 });
+  it('saving writes the one minimum', async () => {
+    db.paymentCurrencySetting.rows.push({ currency: 'EUR', minAmountMinor: 300 });
 
     const result = await updatePaymentSettings(
       { limits: [{ currency: 'EUR', minAmount: 2.5 }] },
@@ -47,7 +41,7 @@ describe('payment currency settings: one minimum per currency', () => {
     );
 
     expect(result.ok && result.data.EUR.minAmountMinor).toBe(250);
-    expect(db.paymentCurrencySetting.rows[0]).toMatchObject({ minAmountMinor: 250, patronThresholdMinor: null, patronBoxMinMinor: null });
+    expect(db.paymentCurrencySetting.rows[0]).toMatchObject({ minAmountMinor: 250 });
   });
 
   it('only admins may change it', async () => {

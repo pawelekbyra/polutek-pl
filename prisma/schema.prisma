@@ -17,13 +17,8 @@ model User {
   isDeleted                     Boolean    @default(false)
   role                          SystemRole @default(USER)
   language                      String     @default("en")
-  // Legacy historical mixed-currency aggregate kept only for old rows.
-  // Do not use for patron eligibility, financial reporting, access decisions, or payment sync.
-  // Use UserPaymentTotal per currency or normalized totals instead.
-  legacyTotalPaidMinor_DoNotUse Int        @default(0) @map("totalPaidMinor")
   stripeCustomerId              String?    @unique
   imageUrl                      String?
-  canCreateChannel              Boolean    @default(false)
   // Better Auth core field. Rows that predate Better Auth were verified by the old identity
   // provider, so the migration marks them verified.
   emailVerified                 Boolean    @default(false)
@@ -55,8 +50,6 @@ model User {
   avatar          UserAvatar?
   creators         Creator[]
   comments         Comment[]
-  commentLikes     CommentLike[]
-  commentDislikes  CommentDislike[]
   commentReactions CommentReaction[]
   commentReports   CommentReport[]
   videoLikes       VideoLike[]
@@ -197,6 +190,7 @@ model Payment {
   @@index([userId])
   @@index([creatorId])
   @@index([status])
+  @@index([status, createdAt])
   @@index([createdAt])
 }
 
@@ -207,17 +201,6 @@ enum WebhookEventStatus {
 }
 
 model StripeEvent {
-  id          String             @id
-  type        String
-  status      WebhookEventStatus @default(PROCESSING)
-  payload     Json?
-  error       String?
-  processedAt DateTime?
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-}
-
-model ClerkEvent {
   id          String             @id
   type        String
   status      WebhookEventStatus @default(PROCESSING)
@@ -447,14 +430,11 @@ model Creator {
   slug                    String         @unique
   name                    String
   bio                     String?
-  /// LEGACY, unused since 2026-10-04: former channel cover photo (removed from the channel page, admin and API). Dropped by the cleanup migration.
-  bannerUrl               String?
   defaultThumbnailUrl     String?
   subscribersCount        Int            @default(0)
   displaySubscribersCount Int?
   isApproved              Boolean        @default(false)
   isPrimary               Boolean        @default(false)
-  stripeConnectId         String?        @unique
   createdAt               DateTime       @default(now())
   updatedAt               DateTime       @updatedAt
   user                    User           @relation(fields: [userId], references: [id])
@@ -554,7 +534,6 @@ model Video {
   slug                              String      @unique
   description                       String?
   descriptionEn                     String?
-  videoUrl                          String? // Legacy field
   thumbnailUrl                      String
   // Public R2 copy of a PUBLISHED video's thumbnail (content-hashed key); null for drafts. See §4.8 of CLAUDE.md.
   thumbnailPublicUrl                String?
@@ -583,7 +562,6 @@ model Video {
   // wins over the goal computation above; null = off.
   fundraisingManualPercent          Int?
   publishAfterAssetReady           Boolean     @default(false)
-  publishAfterAssetReadyProvider    String?
   publishAfterAssetReadyRequestedAt DateTime?
   publishAfterAssetReadyCompletedAt DateTime?
   publishAfterAssetReadyError       String?
@@ -597,7 +575,6 @@ model Video {
   videoLikes          VideoLike[]
   videoDislikes       VideoDislike[]
   assets              VideoAsset[]
-  distributionPlans   VideoDistributionPlan[] @relation("VideoDistributionPlans")
   originals           VideoOriginal[]         @relation("VideoOriginals")
   playbackRoutes      VideoPlaybackRoute[]    @relation("VideoPlaybackRoutes")
   activeOriginal      VideoOriginal?          @relation("ActiveVideoOriginal", fields: [activeOriginalId], references: [id], onDelete: SetNull)
@@ -703,63 +680,6 @@ enum VideoOriginalStatus {
   ABANDONED
 }
 
-enum VideoDistributionMode {
-  SINGLE_PROVIDER
-  MULTI_PROVIDER
-  AUTO
-  MANUAL
-}
-
-enum VideoPlaybackSelectionPolicy {
-  MANUAL
-  FIRST_READY
-  PREFER_SELECTED
-  BEST_HEALTH
-  LOWEST_COST
-}
-
-enum VideoAutopublishPolicy {
-  NEVER
-  WHEN_ANY_TARGET_READY
-  WHEN_ALL_REQUIRED_TARGETS_READY
-  WHEN_ACTIVE_ROUTE_READY
-}
-
-enum VideoDistributionTargetStatus {
-  REQUESTED
-  QUEUED
-  STARTING
-  WAITING_PROVIDER
-  READY
-  FAILED
-  DISABLED
-  CANCELLED
-}
-
-enum VideoDistributionTargetRole {
-  PRIMARY
-  BACKUP
-  CANDIDATE
-}
-
-enum VideoProviderJobType {
-  IMPORT_FROM_ORIGINAL
-  DIRECT_UPLOAD
-  ATTACH_EXISTING
-  SYNC_STATUS
-  DELETE_PROVIDER_ASSET
-}
-
-enum VideoProviderJobStatus {
-  QUEUED
-  RUNNING
-  WAITING_PROVIDER
-  READY
-  FAILED
-  CANCELLED
-  ABANDONED
-}
-
 enum VideoPlaybackRouteStatus {
   ACTIVE
   PREVIOUS
@@ -775,13 +695,6 @@ enum VideoPlaybackRouteActivatedBy {
   RECONCILER
 }
 
-enum VideoProviderWebhookStatus {
-  RECEIVED
-  PROCESSED
-  IGNORED
-  FAILED
-}
-
 enum VideoAssetProcessingState {
   PENDING
   UPLOADING
@@ -791,58 +704,39 @@ enum VideoAssetProcessingState {
 }
 
 model VideoAsset {
-  id                     String                    @id @default(uuid())
-  videoId                String
-  distributionTargetId   String?
-  provider               StorageProvider
-  objectKey              String
-  bucket                 String?
-  providerAssetId        String?
-  providerPlaybackId     String?
-  externalVideoId        String?
-  externalUrl            String?
-  processingState        VideoAssetProcessingState @default(READY)
-  isPrimary              Boolean                   @default(true)
-  pendingPrimaryIntent   Boolean                   @default(false)
-  muxUploadId            String? // LEGACY: Mux direct upload id, unused
-  failureReason          String?
-  providerSyncedAt       DateTime?
-  processingStartedAt    DateTime?
-  processingEndedAt      DateTime?
-  mimeType               String?
-  sizeBytes              Int?
-  // Mirror metadata
-  fallbackPriority       Int                       @default(100)
-  mirrorSourceOriginalId String?
-  mirrorRequestedAt      DateTime?
-  mirrorCompletedAt      DateTime?
-  mirrorFailureReason    String?
-  createdAt              DateTime                  @default(now())
-  updatedAt              DateTime                  @updatedAt
+  id                String                    @id @default(uuid())
+  videoId           String
+  provider          StorageProvider
+  objectKey         String
+  bucket            String?
+  processingState   VideoAssetProcessingState @default(READY)
+  isPrimary         Boolean                   @default(true)
+  failureReason     String?
+  processingEndedAt DateTime?
+  mimeType          String?
+  /// Total size of the HLS output in bytes. BigInt: a tree can exceed 2 GiB (an Int column forced null);
+  /// JSON-facing code converts to number (lib/modules/video/domain/video.dto.ts).
+  sizeBytes         BigInt?
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
 
-  video              Video                    @relation(fields: [videoId], references: [id], onDelete: Cascade)
-  distributionTarget VideoDistributionTarget? @relation(fields: [distributionTargetId], references: [id], onDelete: SetNull)
-  providerJobs       VideoProviderJob[]
-  playbackRoutes     VideoPlaybackRoute[]
+  video          Video                @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  playbackRoutes VideoPlaybackRoute[]
 
   @@index([videoId])
-  @@index([distributionTargetId])
   @@index([videoId, isPrimary])
   @@index([provider])
   @@index([processingState])
-  @@index([provider, providerAssetId])
 }
 
 model VideoOriginal {
   id                String              @id @default(uuid())
   videoId           String
-  storageProvider   StorageProvider     @default(R2)
   bucket            String
   objectKey         String
   originalFileName  String?
   mimeType          String?
   sizeBytes         BigInt?
-  checksumSha256    String?
   status            VideoOriginalStatus @default(UPLOADING)
   failureReason     String?
   version           Int                 @default(1)
@@ -859,115 +753,12 @@ model VideoOriginal {
 
   video             Video                   @relation("VideoOriginals", fields: [videoId], references: [id], onDelete: Cascade)
   activeForVideo    Video?                  @relation("ActiveVideoOriginal")
-  distributionPlans VideoDistributionPlan[]
-  providerJobs      VideoProviderJob[]
   encodeJobs        VideoEncodeJob[]
 
   @@unique([videoId, version])
   @@index([videoId])
   @@index([videoId, version])
   @@index([status])
-}
-
-/// LEGACY (2026-10-02): provider distribution plan. Only the removed third-party video providers used it; no code reads or writes it.
-/// Kept (additive-only migration policy); rows can be deleted, the table can be dropped by a later owner-approved migration.
-model VideoDistributionPlan {
-  id                 String                       @id @default(uuid())
-  videoId            String
-  originalId         String?
-  mode               VideoDistributionMode        @default(SINGLE_PROVIDER)
-  selectionPolicy    VideoPlaybackSelectionPolicy @default(PREFER_SELECTED)
-  autopublishPolicy  VideoAutopublishPolicy       @default(NEVER)
-  preferredProvider  StorageProvider?
-  isActive           Boolean                      @default(true)
-  publishRequestedAt DateTime?
-  publishCompletedAt DateTime?
-  publishError       String?
-  createdByAdminId   String?
-  createdAt          DateTime                     @default(now())
-  updatedAt          DateTime                     @updatedAt
-
-  video          Video                     @relation("VideoDistributionPlans", fields: [videoId], references: [id], onDelete: Cascade)
-  original       VideoOriginal?            @relation(fields: [originalId], references: [id], onDelete: SetNull)
-  targets        VideoDistributionTarget[]
-  providerJobs   VideoProviderJob[]
-  playbackRoutes VideoPlaybackRoute[]
-
-  @@index([videoId, isActive])
-  @@index([originalId])
-  @@index([preferredProvider])
-}
-
-/// LEGACY (2026-10-02): provider distribution target. Only the removed third-party video providers used it; no code reads or writes it.
-/// Kept (additive-only migration policy); rows can be deleted, the table can be dropped by a later owner-approved migration.
-model VideoDistributionTarget {
-  id             String                        @id @default(uuid())
-  planId         String
-  videoId        String
-  provider       StorageProvider
-  role           VideoDistributionTargetRole   @default(CANDIDATE)
-  required       Boolean                       @default(true)
-  status         VideoDistributionTargetStatus @default(REQUESTED)
-  desiredPrimary Boolean                       @default(false)
-  lastError      String?
-  lastStatusAt   DateTime?
-  createdAt      DateTime                      @default(now())
-  updatedAt      DateTime                      @updatedAt
-
-  plan           VideoDistributionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  providerJobs   VideoProviderJob[]
-  providerAssets VideoAsset[]
-
-  @@unique([planId, provider])
-  @@index([planId])
-  @@index([videoId])
-  @@index([provider])
-  @@index([status])
-}
-
-/// LEGACY (2026-10-02): provider import job (Mux/Cloudflare Stream). Only the removed third-party video providers used it; no code reads or writes it.
-/// Kept (additive-only migration policy); rows can be deleted, the table can be dropped by a later owner-approved migration.
-model VideoProviderJob {
-  id                 String                 @id @default(uuid())
-  videoId            String
-  planId             String?
-  targetId           String?
-  originalId         String?
-  assetId            String?
-  provider           StorageProvider
-  type               VideoProviderJobType
-  status             VideoProviderJobStatus @default(QUEUED)
-  attemptCount       Int                    @default(0)
-  maxAttempts        Int                    @default(3)
-  idempotencyKey     String?
-  providerAssetId    String?
-  providerPlaybackId String?
-  providerUploadId   String?
-  lastError          String?
-  lastErrorCode      String?
-  nextAttemptAt      DateTime?
-  startedAt          DateTime?
-  completedAt        DateTime?
-  lastReconciledAt   DateTime?
-  lastWebhookAt      DateTime?
-  metadata           Json?
-  createdAt          DateTime               @default(now())
-  updatedAt          DateTime               @updatedAt
-
-  plan     VideoDistributionPlan?   @relation(fields: [planId], references: [id], onDelete: SetNull)
-  target   VideoDistributionTarget? @relation(fields: [targetId], references: [id], onDelete: SetNull)
-  original VideoOriginal?           @relation(fields: [originalId], references: [id], onDelete: SetNull)
-  asset    VideoAsset?              @relation(fields: [assetId], references: [id], onDelete: SetNull)
-
-  @@unique([idempotencyKey])
-  @@index([videoId])
-  @@index([planId])
-  @@index([targetId])
-  @@index([originalId])
-  @@index([assetId])
-  @@index([provider, providerAssetId])
-  @@index([providerUploadId])
-  @@index([status, nextAttemptAt])
 }
 
 enum VideoEncodeJobStatus {
@@ -1031,7 +822,6 @@ model VideoEncodeJob {
 model VideoPlaybackRoute {
   id               String                        @id @default(uuid())
   videoId          String
-  planId           String?
   assetId          String
   provider         StorageProvider
   status           VideoPlaybackRouteStatus      @default(ACTIVE)
@@ -1044,35 +834,11 @@ model VideoPlaybackRoute {
 
   video          Video                  @relation("VideoPlaybackRoutes", fields: [videoId], references: [id], onDelete: Cascade)
   activeForVideo Video?                 @relation("ActivePlaybackRoute")
-  plan           VideoDistributionPlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
   asset          VideoAsset             @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   @@index([videoId, status])
   @@index([assetId])
   @@index([provider])
-}
-
-/// LEGACY (2026-10-02): provider webhook event log. Only the removed third-party video providers used it; no code reads or writes it.
-/// Kept (additive-only migration policy); rows can be deleted, the table can be dropped by a later owner-approved migration.
-model VideoProviderWebhookEvent {
-  id               String                     @id @default(uuid())
-  provider         StorageProvider
-  externalEventId  String?
-  eventType        String
-  providerAssetId  String?
-  providerUploadId String?
-  status           VideoProviderWebhookStatus @default(RECEIVED)
-  receivedAt       DateTime                   @default(now())
-  processedAt      DateTime?
-  error            String?
-  payload          Json
-
-  @@unique([provider, externalEventId])
-  @@index([provider])
-  @@index([eventType])
-  @@index([providerAssetId])
-  @@index([providerUploadId])
-  @@index([status])
 }
 
 model VideoLike {
@@ -1123,11 +889,9 @@ model Comment {
   likesCount   Int           @default(0)
   repliesCount Int           @default(0)
   reportsCount Int           @default(0)
-  score        Int           @default(0)
   isHearted    Boolean       @default(false)
 
   pinnedAt   DateTime?
-  pinnedById String?
 
   editedAt      DateTime?
   deletedAt     DateTime?
@@ -1140,12 +904,11 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  likes     CommentLike[]
-  dislikes  CommentDislike[]
   reactions CommentReaction[]
   reports   CommentReport[]
 
   @@index([videoId, pinnedAt, createdAt])
+  @@index([authorId])
   @@index([videoId, createdAt])
   @@index([parentId, createdAt])
   @@index([videoId])
@@ -1189,36 +952,9 @@ model CommentReport {
   @@index([reporterId])
 }
 
-model CommentLike {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  commentId String
-  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@unique([userId, commentId])
-  @@index([commentId])
-  @@index([userId])
-}
-
-model CommentDislike {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  commentId String
-  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@unique([userId, commentId])
-  @@index([commentId])
-  @@index([userId])
-}
-
 enum AccessTier {
   PUBLIC // Everyone
   LOGGED_IN // Any signed-in account
-  PATRON // LEGACY: no video uses it since migration 20261004230000; read as LOGGED_IN (lib/access-tier.ts). Drop in a cleanup migration.
 }
 
 enum VideoStatus {
@@ -1297,12 +1033,6 @@ model PaymentCurrencySetting {
   currency             String   @id
   // The minimum tip in this currency (the one /admin/payments sets and the server enforces).
   minAmountMinor       Int
-  // DEAD since 2026-10-03 (every successful tip marks a supporter, no threshold). Ignored by the
-  // code and cleared on the next admin save; drop in a cleanup migration.
-  patronThresholdMinor Int?
-  // LEGACY tip-box minimum: until the next admin save clears it, the effective minimum is
-  // max(minAmountMinor, patronBoxMinMinor). Drop in a cleanup migration.
-  patronBoxMinMinor    Int?
   updatedAt            DateTime @updatedAt
 
   @@index([updatedAt])
@@ -1356,8 +1086,6 @@ model EmailTemplate {
   customizedAt DateTime?
   createdAt   DateTime              @default(now())
   updatedAt   DateTime              @updatedAt
-
-  broadcasts BroadcastEmail[]
 }
 
 enum BroadcastStatus {
@@ -1380,7 +1108,6 @@ enum BroadcastRecipientGroup {
 
 model BroadcastEmail {
   id             String                  @id @default(uuid())
-  templateId     String?
   createdById    String?
   subjectPl      String
   htmlPl         String                  @db.Text
@@ -1402,7 +1129,6 @@ model BroadcastEmail {
   createdAt      DateTime                @default(now())
   updatedAt      DateTime                @updatedAt
 
-  template   EmailTemplate?            @relation(fields: [templateId], references: [id])
   recipients BroadcastEmailRecipient[]
 
   @@index([status])
@@ -1460,7 +1186,6 @@ model EmailPreference {
   marketingEmails Boolean   @default(false)
   systemEmails    Boolean   @default(true)
   unsubscribedAt  DateTime?
-  resendContactId String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -1526,7 +1251,6 @@ model VideoPlaybackSession {
   startedAt       DateTime   @default(now())
   firstPlayAt     DateTime?
   lastHeartbeatAt DateTime?  @default(now())
-  endedAt         DateTime?
   totalWatchMs    Int        @default(0)
   maxProgressMs   Int        @default(0)
   durationMs      Int?
@@ -1543,6 +1267,7 @@ model VideoPlaybackSession {
   @@index([videoId])
   @@index([userId])
   @@index([countedAsView])
+  @@index([countedAsView, startedAt])
   @@index([startedAt])
   @@index([isAdminPreview])
 }

@@ -48,7 +48,7 @@ export async function loadChannelLayout(): Promise<LayoutItem[]> {
 
 // ---------------------------------------------------------------- words and states
 
-export const TIER_LABEL: Record<string, string> = { PUBLIC: "Publiczny", LOGGED_IN: "Po zalogowaniu", PATRON: "Po zalogowaniu (dawny Patron)" };
+export const TIER_LABEL: Record<string, string> = { PUBLIC: "Publiczny", LOGGED_IN: "Po zalogowaniu" };
 
 export function statusOf(v: Pick<AdminVideoDto, "status" | "premiereAt">, now: Date): { kind: StateKind | ""; label: string; icon?: "calendar" | "archive" | "note" } {
   if (isUpcomingPremiere(v, now)) return { kind: "info", label: "Premiera", icon: "calendar" };

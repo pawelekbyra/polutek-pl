@@ -12,7 +12,6 @@ export class VideoPlaybackRouteService {
   async activateRoute(input: {
     videoId: string;
     assetId: string;
-    planId?: string | null;
     activatedBy: "ADMIN" | "POLICY" | "FALLBACK" | "MIGRATION" | "RECONCILER";
     reason?: string;
   }, ctx: AppContext): Promise<VideoPlaybackRoute> {
@@ -35,7 +34,6 @@ export class VideoPlaybackRouteService {
       const created = await tx.videoPlaybackRoute.create({
         data: {
           videoId: input.videoId,
-          planId: input.planId ?? null,
           assetId: input.assetId,
           provider: asset.provider,
           status: VideoPlaybackRouteStatus.ACTIVE,
@@ -53,7 +51,7 @@ export class VideoPlaybackRouteService {
       action: "VIDEO_PLAYBACK_ROUTE_ACTIVATED",
       targetType: "Video",
       targetId: input.videoId,
-      metadata: { routeId: route.id, assetId: input.assetId, planId: input.planId ?? null, activatedBy: input.activatedBy, reason: input.reason ?? null },
+      metadata: { routeId: route.id, assetId: input.assetId, activatedBy: input.activatedBy, reason: input.reason ?? null },
     });
     return route;
   }

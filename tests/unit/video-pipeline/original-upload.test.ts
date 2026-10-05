@@ -20,8 +20,8 @@ const MP4 = Uint8Array.from([0, 0, 0, 0x20, 0x66, 0x74, 0x79, 0x70, 0x69, 0x73, 
 
 function original(over: Partial<VideoOriginal> = {}): VideoOriginal {
   return {
-    id: "o1", videoId: "v1", storageProvider: "R2", bucket: "polutek", objectKey: "originals/v1/1.mp4", originalFileName: "a.mp4", mimeType: "video/mp4",
-    sizeBytes: BigInt(20 * MIB), checksumSha256: null, status: "UPLOADING", failureReason: null, version: 1, uploadId: "up1", uploadPartSize: 16 * MIB, uploadPartCount: 2,
+    id: "o1", videoId: "v1", bucket: "polutek", objectKey: "originals/v1/1.mp4", originalFileName: "a.mp4", mimeType: "video/mp4",
+    sizeBytes: BigInt(20 * MIB), status: "UPLOADING", failureReason: null, version: 1, uploadId: "up1", uploadPartSize: 16 * MIB, uploadPartCount: 2,
     uploadStartedAt: new Date(), uploadCompletedAt: null, verifiedAt: null, supersededAt: null, createdAt: new Date(), updatedAt: new Date(), ...over,
   } as VideoOriginal;
 }

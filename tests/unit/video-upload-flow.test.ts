@@ -168,7 +168,7 @@ describe('Video admin flow (own HLS only)', () => {
     });
 
     it.each(['CLOUDFLARE_STREAM', 'MUX', 'YOUTUBE', 'VIMEO', 'S3'])('should fail when the active route still points at a legacy %s asset', async (provider) => {
-      const legacy = { isPrimary: true, provider, processingState: 'READY', providerAssetId: 'uid', externalVideoId: 'yt', objectKey: 'k' };
+      const legacy = { isPrimary: true, provider, processingState: 'READY', objectKey: 'k' };
       mockPrisma.video.findFirst.mockResolvedValue({
         id: 'video-id', title: 'Bad Provider', slug: 'bad-provider', tier: AccessTier.PUBLIC,
         asset: legacy,

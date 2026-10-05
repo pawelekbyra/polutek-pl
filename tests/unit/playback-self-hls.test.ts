@@ -19,8 +19,6 @@ const asset = (over: Record<string, unknown>) => ({
   provider: 'SELF_HLS',
   objectKey: `videos/${VIDEO_ID}/v/v1`,
   bucket: 'polutek-hls',
-  providerAssetId: null,
-  providerPlaybackId: null,
   processingState: 'READY',
   isPrimary: false,
   mimeType: null,
@@ -39,7 +37,7 @@ describe('SELF_HLS playback plan', () => {
   const selfAsset = asset({ id: 'self', isPrimary: true });
   // Legacy provider rows that still sit in the DB (inactive): they must be ignored.
   const legacyAssets = ['CLOUDFLARE_STREAM', 'MUX', 'YOUTUBE', 'VIMEO', 'VERCEL_BLOB', 'R2'].map((provider, i) =>
-    asset({ id: `legacy-${i}`, provider, objectKey: 'legacy-key', providerAssetId: 'legacy-id', externalVideoId: 'legacy-yt', updatedAt: new Date(Date.now() + 1000 + i) }),
+    asset({ id: `legacy-${i}`, provider, objectKey: 'legacy-key', updatedAt: new Date(Date.now() + 1000 + i) }),
   );
 
   function video(over: Record<string, unknown> = {}) {

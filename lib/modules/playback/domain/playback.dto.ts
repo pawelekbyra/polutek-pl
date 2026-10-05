@@ -15,8 +15,6 @@ export type PlaybackAssetContract = {
   provider: PlaybackAssetProvider;
   processingState?: "PENDING" | "UPLOADING" | "PROCESSING" | "READY" | "FAILED" | string;
   isPrimary: boolean;
-  providerAssetId?: string | null;
-  providerPlaybackId?: string | null;
   mimeType?: string | null;
   sizeBytes?: number | null;
 };

@@ -32,7 +32,6 @@
     "media:migrate-thumbnails-r2": "npx tsx scripts/migrate-thumbnails-to-r2.ts",
     "db:validate": "prisma validate",
     "vercel-build": "node scripts/vercel-build.mjs",
-    "content:fix:main-creator": "npx tsx scripts/fix-main-creator-content.ts",
     "env:validate": "tsx scripts/validate-env.ts",
     "env:validate:prod": "tsx scripts/validate-env.ts --mode=production",
     "quality:strict-escapes": "tsx scripts/check-strict-escapes.ts",
