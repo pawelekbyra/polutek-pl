@@ -48,6 +48,10 @@ wcześniej wszystkie prace agentów były wstrzymane na prośbę właściciela).
 - **Wdrożenie 2 (2026-10-05 ok. 10:45, `99862475`):** migracje `20261005210000_cleanup_dead_schema` (DESTRUKCYJNA: usunięte tabele ClerkEvent, CommentLike/Dislike, 4 tabele dostawców wideo i ok. 30 martwych kolumn, `AccessTier.PATRON`, `VideoAsset.sizeBytes` na bigint), `20261006090000_payment_refunds_checked_at` i `20261006091000_stripe_customer_anonymization`; poprawki płatności z audytu, naprawy z audytów strony, nowy `CLAUDE.md`/`SERWEREK.md`. Pierwsza próba padła na budowie obrazu (brak `media-icons`, usunięty przez audyt, wymagany przez `@vidstack/react/icons`); produkcja nie była dotknięta; naprawa `99862475`. Kontrola po: dane nietknięte (4 filmy, 20 komentarzy, 149 płatności, 36 kont), brak błędów schematu. **Webhook Stripe musi subskrybować także `refund.created`, `refund.updated`, `refund.failed`** (przy kroku P0 ze Stripe).
 - **Snapshot serwera** zrobiony przez właściciela 2026-10-05 ~00:13 (id 439648964, `serwereksnapszot1`, 27,04 GB, ~0,48 €/mies.).
   Plan przenoszenia na inny serwer albo powiększenia: sekcja „Hetzner: powiększenie i przenoszenie” niżej.
+- **Stan na 2026-10-06 (aktualizacja):**
+  - **Wdrożenie 3-4 (`1fc7fc4e`, strona/encoder/kolektor):** poprawka odcisku sesji odtwarzania (403 na `playback-event`, commit `390c141b`) oraz pasek „Strona w budowie (wersja testowa)", `noindex` (nagłówek i meta), neutralny tytuł/opis, pusty sitemap (`BETA.md`). Sprawdzone z zewnątrz i zrzutami (laptop, telefon). Panel admina nadal na `99862475` (zmiany od tego czasu go nie dotyczą). Start publiczny: `NEXT_PUBLIC_SITE_BETA=false` w `build.env` i przebudowa obrazu.
+  - **Filmy testowe:** 4 filmy („Film testowy 1-4") mają źródła podmienione na klipy CC0 z Wikimedia Commons (`THIRD_PARTY_NOTICES.md`), nowe HLS v2, nowe miniatury; tytuły i opisy w bazie neutralne. Skrypt: `scripts/ops/replace-video-source.ts` (uruchamiany w kontenerze `encoder`, te same funkcje co panel). Stare wersje HLS v1 (roboty) leżą w R2, bez trasy. Przed startem wgrać prawdziwe filmy.
+  - **E-mail: Resend → Amazon SES (eu-north-1):** DNS (5 rekordów DKIM/MAIL FROM) dodany, dane SMTP w `app.env` i `secrets.env` na serwerku. Kod na gałęzi `feat/email-ses` (nodemailer, endpoint SNS z weryfikacją podpisu, testy; `docs/operations/EMAIL_SES.md`): **NIE scalony i NIE wdrożony**, bo konto SES jest w piaskownicy. Wniosek o dostęp produkcyjny (sprawa AWS 179128326000153) odpowiedziany 2026-10-06, czeka na decyzję Amazona. Do tego czasu maile idą przez Resend.
 - Konta ADMIN: akcja `set-role` wykonana 2026-10-04 (patrz #1680): zostaje konto właściciela `pawel.perfect@gmail.com` = `user_3FeY8okjicDKlWDGSSc4Q7bvaPZ`, trzy pozostałe mają rolę USER (konta nie usunięte). Stan w bazie do potwierdzenia odprawą.
 
 ## Gałęzie i prace w toku (stan 2026-10-05, repo na serwerze TAKT; GitHub nie jest używany)
@@ -57,6 +61,7 @@ W `main` (repo TAKT `~/git/pawelperfect.git`) i **na produkcji** (obraz `d47e386
 | Gałąź | Zakres i stan | Co dalej |
 |---|---|---|
 | `feat/preloader-polish` | Preloader: ciemne tło od pierwszej klatki, czcionka Major Mono Display, tylko „WCZYTUJĘ…”, kursor-marchewka. Nie scalona (czeka na obejrzenie w przeglądarce) | Obejrzeć z właścicielem, scalić |
+| `feat/email-ses` | Resend → SES (SMTP, SNS, zawieszanie adresów po odbiciu/skardze). 7 commitów, oparta na `390c141b`, przetestowana na własnej gałęzi. **Nie scalona** do czasu zgody AWS | Po zgodzie AWS: próbne scalenie z `main`, `quality`, buildy, test z Postgresem, wdrożenie, test wysyłki, pytanie do właściciela o PP Support, na końcu usunięcie Resenda |
 | `docs/state-rewrite`, `fix/audits-www` (wstrzymane) | Nowy krótki `CLAUDE.md` + przepisany `SERWEREK.md`; naprawy z audytów frontendu/stylu/prywatności. Agenci przerwani limitem, część pracy w katalogach `~/work/docs` i `~/work/audits` | Wznowić po zakończeniu bieżących |
 
 **Mapa dokumentacji panelu admina (czytaj w tej kolejności):**
@@ -92,6 +97,7 @@ Sekrety właściciel skopiował do `/root/.ai-secrets/` (Cloudflare, Hetzner, Re
 
 ## Czeka na właściciela
 
+0. **Amazon SES:** (a) czekać na decyzję AWS (sprawa 179128326000153); (b) w konsoli SES włączyć listę wykluczeń konta (odbicia, skargi); (c) utworzyć temat SNS `ses-events`, zbiór konfiguracji `pawelperfect-default` i subskrypcję HTTPS na `https://www.pawelperfect.com/api/webhooks/ses` (po wdrożeniu kodu); (d) ponownie zapytam przed zmianą PP Support.
 1. **2FA i dostęp:** włączyć TOTP albo passkey na swoich kontach (strona, Cloudflare, GitHub, Google, Resend, Stripe, PP Support); zapisać offline
    klucz `serwerek-backups.agekey` (druga kopia, np. w menedżerze haseł); token GitHub `read:packages` do `docker login ghcr.io` na serwerze (SERWEREK.md §24).
 2. **Domena `pawelperfect.pl`:** wygasła 2026-10-03, do przywrócenia w home.pl do **2026-11-02**. Do tego czasu nie działają przekierowania z `.pl` i poczta
