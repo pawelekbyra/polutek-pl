@@ -30,3 +30,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## Test videos on the pre-launch site (2026-10-06)
+
+The four placeholder videos ("Film testowy 1-4") use CC0 / public-domain clips from Wikimedia Commons. CC0 needs no attribution; sources are kept for the record. Replaced with `scripts/ops/replace-video-source.ts` (run in the encoder container). Replace them with real content before launch.
+
+| Video | Clip (Wikimedia Commons) | Licence |
+|---|---|---|
+| Film testowy 1 | "Nature montage around Aberfeldy" (Rose Abrams), 720p transcode | CC0 |
+| Film testowy 2 | "Overlooking a forest creek in the Tsimpsean Peninsula" (Extemporalist) | CC0 |
+| Film testowy 3 | "Running Stream Of Water" (jLasWilson, via Pixabay) | CC0 |
+| Film testowy 4 | "Winter Timelapse of Clouds Roiling over Rimrock on Okanagan Mountain" | CC0 |
