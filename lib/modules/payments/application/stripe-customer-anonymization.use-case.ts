@@ -7,7 +7,7 @@ import { logger } from "@/lib/logger";
 import { getStripeClient } from "../infrastructure/stripe-client";
 
 const HOUR_MS = 60 * 60 * 1000;
-/** Retry backoff after a failed update: 1 h, 2 h, 4 h ... capped at one day (same as the Resend contact queue). */
+/** Retry backoff after a failed update: 1 h, 2 h, 4 h ... capped at one day (same backoff as other retry queues). */
 const MAX_BACKOFF_MS = 24 * HOUR_MS;
 const BATCH_LIMIT = 50;
 /** After this many failures the stuck row raises an alert (it keeps being retried daily). */
