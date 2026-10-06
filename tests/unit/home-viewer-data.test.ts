@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import crypto from "crypto";
 import type { PublicVideoDTO } from "@/app/types/video";
+import { clientFingerprint } from "@/lib/modules/privacy";
 
 const mocks = vi.hoisted(() => ({
   headers: new Headers({ "user-agent": "Mozilla/5.0 Chrome/150" }),
@@ -64,6 +66,17 @@ describe("hero playback plan in the server render", () => {
     expect(result?.plan.source?.playbackUrl).toBe(MANIFEST);
     expect(mocks.preload).toHaveBeenCalledWith(MANIFEST, { as: "fetch", crossOrigin: "anonymous" });
     expect(mocks.preconnect).toHaveBeenCalledWith("https://video.pawelperfect.com", { crossOrigin: "anonymous" });
+  });
+
+  it("binds the session to the keyed fingerprint that /api/media-source and /playback-event use (not a plain SHA-256)", async () => {
+    const ua = "Mozilla/5.0 Chrome/150";
+    mocks.headers = new Headers({ "user-agent": ua, "x-forwarded-for": "198.51.100.9, 203.0.113.7" });
+    mocks.createPlan.mockResolvedValue(readyPlan);
+    await loadHeroPlaybackPlan({ video: video("PUBLIC"), actor: guest, viewerKey: "anonymous" });
+    const { ipHash, uaHash } = clientFingerprint("203.0.113.7", ua);
+    expect(mocks.createPlan).toHaveBeenCalledWith(expect.any(String), expect.anything(), ipHash, uaHash);
+    expect(ipHash).not.toBe(crypto.createHash("sha256").update("203.0.113.7").digest("hex"));
+    expect(uaHash).not.toBe(crypto.createHash("sha256").update(ua).digest("hex"));
   });
 
   it("a plan that cannot play carries no URL, token or session, and no hint is emitted", async () => {

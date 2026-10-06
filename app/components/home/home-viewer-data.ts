@@ -1,13 +1,13 @@
 import { cache } from "react";
 import { headers } from "next/headers";
 import { preconnect, preload } from "react-dom";
-import crypto from "crypto";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { getClientIp } from "@/lib/api/client-ip";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import type { Actor } from "@/lib/modules/shared/actor";
 import { listVideoComments } from "@/lib/modules/comments";
 import { PlaybackService, isPlayableServerPlan, toPublicPlaybackPlan } from "@/lib/modules/playback";
+import { clientFingerprint } from "@/lib/modules/privacy";
 import { isUpcomingPremiere } from "@/lib/premiere";
 import { buildMediaRateLimitKey } from "@/lib/media/rate-limit";
 import { rateLimit } from "@/lib/rate-limit";
@@ -95,12 +95,11 @@ export async function loadHeroPlaybackPlan(args: {
     });
     if (!limit.success) return null;
 
-    const plan = await PlaybackService.createPlaybackPlanWithContext(
-      video.id,
-      createAppContext({ actor }),
-      crypto.createHash("sha256").update(ip).digest("hex"),
-      crypto.createHash("sha256").update(ua).digest("hex"),
-    );
+    // Keyed hashes (HMAC), the same as /api/media-source stores and /api/videos/[id]/playback-event checks:
+    // a plain SHA-256 here made the first browser event fail with SESSION_OWNERSHIP_MISMATCH (403) and
+    // stored a reversible IP hash.
+    const { ipHash, uaHash } = clientFingerprint(ip, ua);
+    const plan = await PlaybackService.createPlaybackPlanWithContext(video.id, createAppContext({ actor }), ipHash, uaHash);
     const publicPlan = toPublicPlaybackPlan(plan, {
       onRawUrlBlocked: () => logger.error("[HOME_HERO_PLAN_RAW_URL_BLOCKED]", { videoId: video.id }),
     });
