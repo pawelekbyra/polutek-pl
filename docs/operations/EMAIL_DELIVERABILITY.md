@@ -1,6 +1,6 @@
 # Dostarczalność maili z aplikacji (stan 2026-10-02)
 
-> **Aktualizacja (SES):** kod obsługuje też Amazon SES (`EMAIL_PROVIDER=ses`, [`EMAIL_SES.md`](EMAIL_SES.md)); produkcja jest nadal na Resend do czasu przełączenia przez właściciela. Rekomendacja „zostać na Resend” z sekcji o dedykowanym IP poniżej jest historyczna: właściciel zdecydował o przejściu na SES (wysyłka z współdzielonych IP Amazon jak dotąd, bo Resend też stoi na SES). Przy SES odbicia i skargi nie trafiają jeszcze do `EmailSuppression` (brak webhooka SNS; do czasu jego dodania działa lista wstrzymań konta SES), a konto zaczyna w sandboxie.
+> **Aktualizacja (SES):** wysyłka aplikacji przeszła z Resend na Amazon SES (SMTP, eu-north-1; [`EMAIL_SES.md`](EMAIL_SES.md)); Resend usunięty z kodu. Opis poniżej (nagłówki Authentication-Results, selektor `resend`, rekordy `send.`) jest **historyczny** z czasów Resend: obecnie DKIM to trzy rekordy SES, MAIL FROM to `bounce.pawelperfect.com`. Rekomendacja „zostać na Resend” w sekcji o dedykowanym IP jest nieaktualna (decyzja właściciela: SES). Konto SES startuje w **sandboxie** (tylko zweryfikowani odbiorcy), a odbicia i skargi trafiają do `EmailSuppression` przez SNS (`/api/webhooks/ses`).
 
 Bez sekretów. Dotyczy maili automatycznych (weryfikacja konta, reset hasła, powitanie, potwierdzenia napiwków) wysyłanych przez Resend z `Pawel Perfect <no-reply@pawelperfect.com>`. Skrzynka `hello@` (Google Workspace) i jej konfiguracja: [`EMAIL_SETUP.md`](EMAIL_SETUP.md). Ceny i alternatywy dostawców: [`../research/serwerek/06-email-providers-pricing.md`](../research/serwerek/06-email-providers-pricing.md).
 
@@ -87,8 +87,8 @@ Sprawdzone, bez zmian:
 ## 8. Monitoring i checklista
 
 Codziennie (kilka dni po zmianie, potem co tydzień):
-- Resend, `Emails`: status `delivered`/`bounced`/`complained`; w narzędziach agenta `get-email-metrics`. Cel: odbicia poniżej 4%, skargi poniżej 0,08% (limity Resend).
-- Webhook `/api/webhooks/resend` zapisuje odbicia i skargi do `EmailSuppression`.
+- Panel Komunikacja (zdarzenia z SNS) i konsola SES (Reputation metrics). Cel: odbicia poniżej 4%, skargi poniżej 0,08% (limity Resend).
+- Endpoint SNS `/api/webhooks/ses` zapisuje twarde odbicia i skargi do `EmailSuppression` (EMAIL_SES.md, sekcja 6).
 - Raporty DMARC na `hello@` (XML od Google/Microsoft): szukać `fail` w `dkim`/`spf` i nieznanych źródeł (ktoś podszywa się pod domenę).
 - Test ręczny: rejestracja na świeżych kontach Gmail, Outlook/Hotmail, Yahoo; sprawdzić folder i nagłówki (`Authentication-Results`).
 - Narzędzie agenta do odczytu nagłówków z `hello@`: patrz `AGENT_ACCESS.md` (Gmail przez konto usługi).

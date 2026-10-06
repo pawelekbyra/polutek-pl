@@ -327,7 +327,7 @@ Test alertu: `SIMULATE_WARN=test /opt/serwerek/scripts/health.sh`, potem `rm /va
 
 **`pp-watchdog`** (Cloudflare Worker, plan Free, cron co 5 min, stan w D1; kod `workers/pp-watchdog/`): sprawdza `www/api/health` (200), `video.` (404 z Workera), `support.` (302 do Access) i heartbeat z serwera
 (brak pingu przez 15 min = serwer nie żyje; WARN zgłaszany dłużej niż 30 min też alarmuje). Alert po 2 nieudanych sprawdzeniach z rzędu, przypomnienie co 6 h, jeden mail po powrocie, maks. 20 maili dziennie
-(poczta watchdoga: Cloudflare Email Workers `send_email`, bez klucza dostawcy; patrz EMAIL_SES.md, sekcja o watchdogu). Adres `https://pp-watchdog.pawel-perfect.workers.dev` (bez tokenu odpowiada 404; sprawdzone). Ręcznie z serwera (token z `alert.env`): `POST /run`, `POST /test-alert`, `GET /status`.
+(poczta watchdoga: Cloudflare Email Workers `send_email`, bez klucza dostawcy; patrz EMAIL_SES.md, sekcja 8). Adres `https://pp-watchdog.pawel-perfect.workers.dev` (bez tokenu odpowiada 404; sprawdzone). Ręcznie z serwera (token z `alert.env`): `POST /run`, `POST /test-alert`, `GET /status`.
 Strażnik nie sprawdza jeszcze `admin.pawelperfect.com`.
 
 **Panel administratora** pokazuje stan hosta z `status.json`, wiek kopii i wyniki zadań z `telemetry.job_run`.
