@@ -13,6 +13,7 @@
  "All available methods": "Tutti i metodi disponibili",
  "Already have an account? Sign in": "Hai già un account? Accedi",
  "Amount too low. Minimum: {0}.": "Importo troppo basso. Minimo: {0}.",
+ "An independent creator's video channel. The site is under construction and its content is for testing.": "Il canale video indipendente di un creator. Il sito è in costruzione e i contenuti sono di prova.",
  "An unexpected application error occurred. Try refreshing the page or come back later.": "Si è verificato un errore imprevisto dell'applicazione. Prova ad aggiornare la pagina o torna più tardi.",
  "Another payment method": "Altro metodo di pagamento",
  "Approve in your banking app…": "Approva nella tua app bancaria…",
@@ -449,6 +450,7 @@
  "Two-step verification protects password sign-in. Set a password above (a link is sent to your email), then you can turn it on. Signing in with Google uses your Google account's own protection.": "La verifica in due passaggi protegge l'accesso con password. Imposta prima una password qui sopra (ti invieremo un link via e-mail), poi potrai attivarla. L'accesso con Google usa la protezione del tuo account Google.",
  "Type": "Digita",
  "US dollar (USD)": "Dollaro USA (USD)",
+ "Under construction (test version)": "Sito in costruzione (versione di prova)",
  "Unknown device": "Dispositivo sconosciuto",
  "Unlocked": "Sbloccato",
  "Unmute": "Riattiva audio",
@@ -519,5 +521,6 @@
  "thrust trim +2.4%": "correzione spinta +2.4%",
  "translate(-6.7%, 1%)": "translate(-6.7%, 1%)",
  "{0} channel": "Canale di {0}",
- "{0} video channel": "Canale video di {0}"
+ "{0} video channel": "Canale video di {0}",
+ "{0}: video platform (test version)": "{0}: piattaforma video (versione di prova)"
 }

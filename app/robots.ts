@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { getBaseUrl } from '@/lib/utils';
+import { SITE_IS_BETA } from '@/lib/site-stage';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -15,6 +16,8 @@ export default function robots(): MetadataRoute.Robots {
         '/search',
       ],
     },
-    sitemap: `${getBaseUrl()}/sitemap.xml`,
+    // Beta: pages are noindex, so no sitemap is advertised (it would list URLs we ask not to index).
+    // The rules above stay as they are: crawling must remain allowed or the crawler never sees the noindex.
+    ...(SITE_IS_BETA ? {} : { sitemap: `${getBaseUrl()}/sitemap.xml` }),
   };
 }

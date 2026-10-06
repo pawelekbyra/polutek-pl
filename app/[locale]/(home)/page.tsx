@@ -3,6 +3,7 @@ import { getHomeContentCached } from '@/lib/modules/channel/application/home-con
 import { APP_NAME } from '@/lib/constants';
 import { getExplicitLocaleHref, getLocaleAlternates, isLocale, type Locale } from '@/lib/i18n/routing';
 import { getBaseUrl } from '@/lib/utils';
+import { getBetaSiteText } from '@/lib/site-stage-metadata';
 import { getVideoDisplayDescription, getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import { notFound } from 'next/navigation';
 import HomeExperience from '@/app/components/home/HomeExperience';
@@ -40,7 +41,7 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   const locale: Locale = rawLocale;
 
   const content = await getHomeContentCached();
-  if (content.status !== 'ready') return { title: APP_NAME };
+  if (content.status !== 'ready') return { title: (await getBetaSiteText(locale))?.title ?? APP_NAME };
 
   const { creator, mainVideo, allVideos } = content;
 
@@ -50,16 +51,18 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   const baseUrl = getBaseUrl();
   const canonicalSlug = selectedVideoId ? selectedVideo?.slug ?? selectedVideoId : undefined;
   const alternates = getLocaleAlternates(locale, 'home', { query: videoQuery(canonicalSlug), baseUrl });
+  // Beta: neutral title and description everywhere (tab, search, social); the hero video's title is not used.
+  const betaText = await getBetaSiteText(locale);
 
   return {
     // Browser tab always reads www.pawelperfect.com regardless of the selected video; the
     // per-video title is kept only for social/OG previews below.
-    title: APP_NAME,
-    description: selectedVideo?.title ?? creator?.bio ?? `${APP_NAME} — kanał wideo`,
+    title: betaText?.title ?? APP_NAME,
+    description: betaText?.description ?? selectedVideo?.title ?? creator?.bio ?? `${APP_NAME} — kanał wideo`,
     alternates,
     openGraph: {
-      title: selectedVideo?.title ?? APP_NAME,
-      description: selectedVideo?.title ?? creator?.bio ?? undefined,
+      title: betaText?.title ?? selectedVideo?.title ?? APP_NAME,
+      description: betaText?.description ?? selectedVideo?.title ?? creator?.bio ?? undefined,
       url: alternates.canonical,
       siteName: APP_NAME,
       locale: locale === 'pl' ? 'pl_PL' : 'en_US',
@@ -68,7 +71,8 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
     },
     twitter: {
       card: selectedVideo?.thumbnailUrl ? 'summary_large_image' : 'summary',
-      title: selectedVideo?.title ?? APP_NAME,
+      title: betaText?.title ?? selectedVideo?.title ?? APP_NAME,
+      ...(betaText ? { description: betaText.description } : {}),
       images: selectedVideo?.thumbnailUrl ? [selectedVideo.thumbnailUrl] : [],
     },
   };
