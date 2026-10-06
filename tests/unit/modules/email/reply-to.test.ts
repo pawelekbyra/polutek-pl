@@ -8,7 +8,7 @@ vi.mock('resend', () => ({
   }),
 }));
 
-import { sendEmail } from '@/lib/modules/email/infrastructure/resend-email.transport';
+import { sendEmail } from '@/lib/modules/email/infrastructure/email.transport';
 
 const base = { to: 'a@example.com', subject: 's', html: '<p>x</p>', language: 'pl' as const, kind: 'test' };
 

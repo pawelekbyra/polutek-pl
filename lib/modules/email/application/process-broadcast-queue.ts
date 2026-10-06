@@ -12,7 +12,7 @@ import { renderBroadcastMessage } from "../domain/broadcast-message";
 import type { EmailSendResult } from "../domain/email-provider";
 import { prisma } from "@/lib/prisma";
 import { BroadcastQueueRepository, type BroadcastQueueStore, type ClaimedBroadcast, type QueuedRecipient } from "../infrastructure/broadcast-queue.repository";
-import { EMAIL_SENDER_NAME, sendEmail } from "../infrastructure/resend-email.transport";
+import { EMAIL_SENDER_NAME, sendEmail } from "../infrastructure/email.transport";
 
 export type BroadcastRunResult = {
   broadcastId: string | null;

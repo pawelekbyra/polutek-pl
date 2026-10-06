@@ -6,7 +6,9 @@ import type { EmailSendError } from "./email-provider";
  * Resend allows 10 API requests per second per team by default and answers 429 above it, also for a
  * spent daily or monthly quota (https://resend.com/docs/api-reference/rate-limit). Broadcasts share
  * that budget with verification and reset mails, so they go one at a time with a pause, well under
- * the limit, and stop for a while as soon as Resend says 429.
+ * the limit, and stop for a while as soon as Resend says 429. The SES adapter maps its SMTP replies
+ * (454 throttling / daily quota, 535 auth) to the same names and status codes, so this one policy
+ * serves both providers (SES sandbox: 1 mail per second, which the 250 ms pause plus the 429 pause respect).
  */
 
 /** Pause between two broadcast mails: at most 4 per second. */
@@ -29,6 +31,10 @@ export type SendFailureVerdict =
   | { kind: "fail"; reason: string };
 
 const QUOTA_ERRORS = new Set(["daily_quota_exceeded", "monthly_quota_exceeded"]);
+/** Account-wide problems (bad credentials): every recipient would fail the same way, so wait instead of failing them. */
+/** SMTP 5xx replies that are final for this recipient (SES rejections); a 5xx status must not be mistaken for "try again". */
+const PERMANENT_ERRORS = new Set(["message_rejected", "message_rejected_not_verified", "message_too_large"]);
+const ACCOUNT_ERRORS = new Set(["smtp_auth_failed", "smtp_credentials_missing"]);
 
 export function classifySendFailure(error: EmailSendError, attemptCount: number): SendFailureVerdict {
   const name = error.name ?? "";
@@ -38,9 +44,14 @@ export function classifySendFailure(error: EmailSendError, attemptCount: number)
     // The daily quota resets within a day; check again in an hour.
     return { kind: "pause", delayMs: 60 * 60_000, reason };
   }
+  if (ACCOUNT_ERRORS.has(name)) {
+    return { kind: "pause", delayMs: 60 * 60_000, reason };
+  }
   if (error.statusCode === 429 || name === "rate_limit_exceeded") {
     return { kind: "pause", delayMs: 60_000, reason };
   }
+
+  if (PERMANENT_ERRORS.has(name)) return { kind: "fail", reason };
 
   const temporary =
     error.statusCode == null || // network error, timeout: no HTTP status at all

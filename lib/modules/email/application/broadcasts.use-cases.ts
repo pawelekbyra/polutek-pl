@@ -23,7 +23,7 @@ import { validateTemplateVariables } from "../domain/render-email";
 import { renderBroadcastMessage } from "../domain/broadcast-message";
 import { findEligibleRecipients } from "../infrastructure/broadcast-audience";
 import { summarizeRecipientStatuses } from "../infrastructure/broadcast-queue.repository";
-import { EMAIL_SENDER_NAME, sendEmail } from "../infrastructure/resend-email.transport";
+import { EMAIL_SENDER_NAME, sendEmail } from "../infrastructure/email.transport";
 
 /**
  * Admin broadcasts. Creating one only writes the broadcast and its recipients (PENDING) and returns;
@@ -176,7 +176,7 @@ export async function sendBroadcastTest(
     kind: "broadcast-test",
     unsubscribe: { oneClickUrl, footerHtml: message.footerHtml },
   });
-  if (!sent.ok) return fail(new EmailProviderError(`Resend odrzucił wiadomość testową (${sent.error.name ?? sent.error.message}).`));
+  if (!sent.ok) return fail(new EmailProviderError(`Dostawca poczty odrzucił wiadomość testową (${sent.error.name ?? sent.error.message}).${sent.error.hint ? ` ${sent.error.hint}` : ""}`));
 
   await recordAuditEvent(ctx, {
     action: "BROADCAST_TEST_SENT",

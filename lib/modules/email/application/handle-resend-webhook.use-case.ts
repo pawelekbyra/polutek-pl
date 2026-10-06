@@ -5,7 +5,7 @@ import { UseCaseResult, ok, fail } from "../../shared/result";
 import { EmailError, WebhookInvalidPayloadError } from "../domain/email.errors";
 import { logger } from "@/lib/logger";
 import { EmailEventLockService } from "../infrastructure/email-event-lock.service";
-import { APP_EMAIL_TAG } from "../infrastructure/resend-email.transport";
+import { APP_EMAIL_TAG } from "../infrastructure/email.transport";
 
 /**
  * Delivery events we act on. Opens and clicks are not tracked (tracking is off in Resend), and

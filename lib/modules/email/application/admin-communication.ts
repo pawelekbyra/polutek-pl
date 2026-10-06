@@ -3,6 +3,7 @@
  * preview rendered exactly like a real send, deliverability and limits, unsubscribes and blocks.
  * Nothing here sends mail.
  */
+import { bounceEventsConnected, emailSendLimits } from "@/lib/email-config";
 import sanitizeHtml from "sanitize-html";
 import { EMAIL_DEFAULTS } from "@/lib/email-defaults";
 import type { AppContext } from "../../shared/app-context";
@@ -12,7 +13,7 @@ import { wrapEmailDocument } from "../domain/email-content";
 import { describeVariables, getTemplateDefinition, isSystemTemplateSlug, SYSTEM_TEMPLATE_DEFINITIONS } from "../domain/email-template-registry";
 import { renderHtml, renderSubject, validateTemplateVariables, type TemplateVariableProblems } from "../domain/render-email";
 import { sanitizeOptions } from "./email-templates.use-cases";
-import { EMAIL_IDENTITY_LINE } from "../infrastructure/resend-email.transport";
+import { EMAIL_IDENTITY_LINE } from "../infrastructure/email.transport";
 
 /** The text of a system mail as it ships in code (what "Przywróć domyślny" returns to); null for admin-made templates. */
 export function getEmailTemplateDefault(slug: string): EmailTemplateDto | null {
@@ -45,11 +46,12 @@ const adminOnly = (ctx: AppContext) => {
   if (ctx.actor.type !== "admin") throw new AppError("Only admins can read mail statistics", 403, "FORBIDDEN");
 };
 
-/** Resend Free plan limits (resend.com/pricing); overridable when the plan changes. Bounce/complaint targets: Resend's own. */
-export function resendLimits(env: Record<string, string | undefined> = process.env) {
-  const num = (v: string | undefined, d: number) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : d);
-  return { perDay: num(env.RESEND_DAILY_LIMIT, 100), perMonth: num(env.RESEND_MONTHLY_LIMIT, 3000), bounceTarget: 4, complaintTarget: 0.08 };
+/** Send caps and bounce targets of the active provider (EMAIL_DAILY_LIMIT / EMAIL_MONTHLY_LIMIT, old RESEND_* names still work). */
+export function emailLimits(env: Record<string, string | undefined> = process.env) {
+  return emailSendLimits(env);
 }
+/** @deprecated Old name of emailLimits(). */
+export const resendLimits = emailLimits;
 
 export type Deliverability = {
   windowDays: 30;
@@ -62,7 +64,9 @@ export type Deliverability = {
   complaintRate: number | null;
   sentToday: number;
   sentMonth: number;
-  limits: ReturnType<typeof resendLimits>;
+  limits: ReturnType<typeof emailLimits>;
+  /** False when no bounce/complaint events reach the app (SES until the SNS webhook exists): the counters above are then not real. */
+  bounceEventsConnected: boolean;
   lastEventAt: string | null;
   /** Broadcast recipients, last 30 days: queue progress rather than provider events. */
   broadcastRecipients: { sent: number; pending: number; failed: number };
@@ -94,7 +98,8 @@ export async function getDeliverability(ctx: AppContext, now: Date = ctx.now()):
     complaintRate: sent ? (n("email.complained") / sent) * 100 : null,
     sentToday: today,
     sentMonth: month,
-    limits: resendLimits(),
+    limits: emailLimits(),
+    bounceEventsConnected: bounceEventsConnected(),
     lastEventAt: last?.createdAt.toISOString() ?? null,
     broadcastRecipients: { sent: r("SENT", "DELIVERED", "OPENED", "CLICKED"), pending: r("PENDING"), failed: r("FAILED", "BOUNCED", "COMPLAINED") },
   };

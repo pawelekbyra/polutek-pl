@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { APP_NAME } from '@/lib/constants';
 import { buildContentUnsubscribeUrl, buildOneClickUnsubscribeUrl } from '@/lib/modules/subscriptions';
 import { EMAIL_DEFAULTS, type SystemTemplateSlug } from '@/lib/email-defaults';
-import { EMAIL_SENDER_NAME, sendEmail } from "../infrastructure/resend-email.transport";
+import { EMAIL_SENDER_NAME, sendEmail } from "../infrastructure/email.transport";
 import { SYSTEM_TEMPLATE_DEFINITIONS } from "../domain/email-template-registry";
 import { renderHtml, renderSubject } from "../domain/render-email";
 import { findSystemTemplateOverride } from "./email-templates.use-cases";
@@ -84,8 +84,8 @@ async function sendTemplateEmail({ to, slug, language, variables = {} }: SendTem
   });
 
   if (!result.ok) {
-    logger.error(`[email] Resend failed to send "${slug}" email`, { name: result.error.name, statusCode: result.error.statusCode });
-    throw new Error(`Resend failed to send "${slug}" email: ${result.error.message}`);
+    logger.error(`[email] Provider failed to send "${slug}" email`, { name: result.error.name, statusCode: result.error.statusCode });
+    throw new Error(`Email provider failed to send "${slug}" email: ${result.error.message}`);
   }
 
   logger.info(`[email] Email "${slug}" sent${override ? ' (admin override)' : ''}. ID: ${result.id}`);

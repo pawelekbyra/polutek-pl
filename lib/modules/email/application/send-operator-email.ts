@@ -1,4 +1,4 @@
-import { sendEmail } from "../infrastructure/resend-email.transport";
+import { sendEmail } from "../infrastructure/email.transport";
 
 /**
  * A system mail to the operator (admin morning report and similar): no unsubscribe footer, never marketing.

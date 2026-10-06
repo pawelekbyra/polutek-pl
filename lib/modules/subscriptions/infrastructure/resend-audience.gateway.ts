@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { resolveEmailProvider } from '@/lib/email-config';
 import { logger } from '@/lib/logger';
 import { maskEmailForLog } from '../domain/email-address';
 import { ProviderSyncStatus } from '../domain/provider-sync-status';
@@ -38,8 +39,18 @@ export interface ResendContactsClient {
   };
 }
 
+/**
+ * Resend Audience sync. Only active when EMAIL_PROVIDER=resend (the default). With EMAIL_PROVIDER=ses the
+ * local database (EmailPreference, EmailSuppression) is the only source of truth: every method then
+ * returns NOT_CONFIGURED without creating a Resend client or making any call, so subscribe,
+ * unsubscribe and contact removal work without Resend.
+ */
 export class ResendAudienceGateway {
   constructor(private readonly injectedResend?: ResendContactsClient) {}
+
+  private isDisabledByProvider(): boolean {
+    return resolveEmailProvider() !== 'resend';
+  }
 
   private getClient(): ResendContactsClient | null {
     if (this.injectedResend) return this.injectedResend;
@@ -49,6 +60,7 @@ export class ResendAudienceGateway {
   }
 
   async syncExplicitSubscribe(email: string): Promise<ProviderSyncStatus> {
+    if (this.isDisabledByProvider()) return 'NOT_CONFIGURED';
     const audienceId = process.env.RESEND_AUDIENCE_ID;
     if (!audienceId) return 'NOT_CONFIGURED';
 
@@ -96,6 +108,7 @@ export class ResendAudienceGateway {
    * counts as removed. Never throws: FAILED means "try again later".
    */
   async removeContact(email: string): Promise<ProviderSyncStatus> {
+    if (this.isDisabledByProvider()) return 'NOT_CONFIGURED';
     const audienceId = process.env.RESEND_AUDIENCE_ID;
     if (!audienceId) return 'NOT_CONFIGURED';
 
@@ -121,6 +134,7 @@ export class ResendAudienceGateway {
   }
 
   async syncExplicitUnsubscribe(email: string): Promise<ProviderSyncStatus> {
+    if (this.isDisabledByProvider()) return 'NOT_CONFIGURED';
     const audienceId = process.env.RESEND_AUDIENCE_ID;
     if (!audienceId) return 'NOT_CONFIGURED';
 

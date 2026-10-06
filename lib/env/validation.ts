@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { resolveRateLimitRedisConfig } from '@/lib/rate-limit';
+import { isUnknownEmailProvider, resolveEmailProvider } from '@/lib/email-config';
 
 export type EnvValidationMode = 'development' | 'test' | 'production';
 
@@ -26,7 +27,6 @@ const requiredProductionVars = [
   'STRIPE_SECRET_KEY',
   'STRIPE_WEBHOOK_SECRET',
   'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
-  'RESEND_API_KEY',
   'EMAIL_FROM',
   'MAIN_CREATOR_SLUG',
   'REFERRAL_PATRON_THRESHOLD',
@@ -89,6 +89,12 @@ export function validateAppEnv(env: EnvRecord = process.env, mode: EnvValidation
       if (!hasValue(env, key)) errors.push(`${key} is required in production.`);
     }
 
+    // Provider-specific mail credentials: only the active provider's variables are required.
+    const providerVars = resolveEmailProvider(env) === 'ses' ? (['SES_SMTP_USER', 'SES_SMTP_PASS'] as const) : (['RESEND_API_KEY'] as const);
+    for (const key of providerVars) {
+      if (!hasValue(env, key)) errors.push(`${key} is required in production when EMAIL_PROVIDER=${resolveEmailProvider(env)}.`);
+    }
+
     for (const key of optionalButRecommendedProductionVars) {
       if (!hasValue(env, key)) warnings.push(`${key} is recommended in production.`);
     }
@@ -120,6 +126,12 @@ export function validateAppEnv(env: EnvRecord = process.env, mode: EnvValidation
   validateUrl(errors, env, 'UPSTASH_REDIS_REST_URL');
   validateUrl(errors, env, 'KV_REST_API_URL');
   validatePositiveInteger(errors, env, 'REFERRAL_PATRON_THRESHOLD');
+
+  if (isUnknownEmailProvider(env)) {
+    errors.push('EMAIL_PROVIDER must be "resend" or "ses".');
+  }
+  validatePositiveInteger(errors, env, 'EMAIL_DAILY_LIMIT');
+  validatePositiveInteger(errors, env, 'EMAIL_MONTHLY_LIMIT');
 
   if (hasValue(env, 'EMAIL_UNSUBSCRIBE_SIGNING_SECRET') && env.EMAIL_UNSUBSCRIBE_SIGNING_SECRET!.trim().length < 32) {
     errors.push('EMAIL_UNSUBSCRIBE_SIGNING_SECRET must be at least 32 characters.');

@@ -15,7 +15,7 @@ import { EMAIL_DEFAULTS, SYSTEM_TEMPLATE_SLUGS } from '@/lib/email-defaults';
 import {
   EMAIL_IDENTITY_LINE,
   sendEmail,
-} from '@/lib/modules/email/infrastructure/resend-email.transport';
+} from '@/lib/modules/email/infrastructure/email.transport';
 
 describe('htmlToPlainText', () => {
   it('keeps link targets visible and turns blocks into lines', () => {

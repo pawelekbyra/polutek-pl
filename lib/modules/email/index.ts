@@ -42,7 +42,7 @@ export type {
   EmailTemplateDto,
   UpsertEmailTemplateInput,
 } from "./domain/email.dto";
-export { getEmailTemplateDefault, previewEmailTemplate, getDeliverability, getSuppressions, resendLimits } from "./application/admin-communication";
+export { getEmailTemplateDefault, previewEmailTemplate, getDeliverability, getSuppressions, emailLimits, resendLimits } from "./application/admin-communication";
 export type { TemplatePreview, Deliverability, SuppressionView } from "./application/admin-communication";
 export { findPlaceholders } from "./domain/render-email";
 export * from "./domain/email.errors";
