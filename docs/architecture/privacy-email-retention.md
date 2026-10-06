@@ -20,7 +20,7 @@ Stan 2026-10-05. Kod: `lib/modules/privacy/`, `lib/modules/email/`, `lib/email-d
 
 - **Teksty maili systemowych są w kodzie** (`lib/email-defaults.ts`, zmienne w `lib/modules/email/domain/email-template-registry.ts`). Nic nie zasiewa `EmailTemplate`; wiersz systemowy jest używany tylko, gdy ma `customizedAt`
   (administrator zapisał go w panelu); „Przywróć domyślny” kasuje wiersz. Nigdy nie zapisuj tekstów domyślnych do bazy. Zapisany w bazie szablon ma pierwszeństwo przed domyślnym.
-- **Jeden transport:** `sendEmail()` w `lib/modules/email/infrastructure/resend-email.transport.ts` (wrapper, zwykły tekst, Reply-To, tagi `app=pawelperfect` + `kind`). Wartości szablonu są escapowane (`render-email.ts`),
+- **Jeden transport:** `sendEmail()` w `lib/modules/email/infrastructure/email.transport.ts` (Resend albo Amazon SES wg `EMAIL_PROVIDER`; przy SES synchronizacja kontaktów Resend jest wyłączona, źródłem prawdy jest baza) (wrapper, zwykły tekst, Reply-To, tagi `app=pawelperfect` + `kind`). Wartości szablonu są escapowane (`render-email.ts`),
   nieznane zmienne są odrzucane przy zapisie. Nadawca: `Pawel Perfect <no-reply@pawelperfect.com>`.
 - **Wypisanie:** podpisane tokeny nigdy nie wygasają (`EMAIL_UNSUBSCRIBE_SIGNING_SECRET`, `_PREVIOUS` przy rotacji). Strona `/unsubscribe` (bez prefiksu języka) i jednoklikowe `POST /api/subscriptions/unsubscribe?token=` (RFC 8058).
   Link/nagłówki mają tylko mail powitalny i rozsyłki; maile bezpieczeństwa i płatności nigdy.

@@ -1,5 +1,7 @@
 # Dostarczalność maili z aplikacji (stan 2026-10-02)
 
+> **Aktualizacja (SES):** kod obsługuje też Amazon SES (`EMAIL_PROVIDER=ses`, [`EMAIL_SES.md`](EMAIL_SES.md)); produkcja jest nadal na Resend do czasu przełączenia przez właściciela. Rekomendacja „zostać na Resend” z sekcji o dedykowanym IP poniżej jest historyczna: właściciel zdecydował o przejściu na SES (wysyłka z współdzielonych IP Amazon jak dotąd, bo Resend też stoi na SES). Przy SES odbicia i skargi nie trafiają jeszcze do `EmailSuppression` (brak webhooka SNS; do czasu jego dodania działa lista wstrzymań konta SES), a konto zaczyna w sandboxie.
+
 Bez sekretów. Dotyczy maili automatycznych (weryfikacja konta, reset hasła, powitanie, potwierdzenia napiwków) wysyłanych przez Resend z `Pawel Perfect <no-reply@pawelperfect.com>`. Skrzynka `hello@` (Google Workspace) i jej konfiguracja: [`EMAIL_SETUP.md`](EMAIL_SETUP.md). Ceny i alternatywy dostawców: [`../research/serwerek/06-email-providers-pricing.md`](../research/serwerek/06-email-providers-pricing.md).
 
 ## 1. Incydent
