@@ -6,7 +6,7 @@ import type { EmailSendError, EmailSendResult } from "../domain/email-provider";
 import type { PreparedEmail } from "./email.transport";
 
 /**
- * Amazon SES adapter (EMAIL_PROVIDER=ses): SMTP via nodemailer, STARTTLS on port 587, credentials from
+ * Amazon SES transport: SMTP via nodemailer, STARTTLS on port 587, credentials from
  * SES_SMTP_USER / SES_SMTP_PASS (SMTP credentials created in the SES console, not IAM access keys).
  * Sources: docs/operations/EMAIL_SES.md.
  */

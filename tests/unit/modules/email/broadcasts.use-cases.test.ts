@@ -2,11 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { emailsSend } = vi.hoisted(() => ({ emailsSend: vi.fn() }));
 
-vi.mock('resend', () => ({
-  Resend: vi.fn().mockImplementation(function () {
-    return { emails: { send: emailsSend } };
-  }),
-}));
+vi.mock('nodemailer', () => ({ default: { createTransport: vi.fn(() => ({ sendMail: emailsSend, close: vi.fn() })) } }));
 vi.mock('@/lib/feature-flags', () => ({ flags: { mainCreatorSlug: 'polutek' } }));
 
 import { createAppContext } from '@/lib/modules/shared/app-context';
@@ -131,10 +127,11 @@ describe('createBroadcast', () => {
 describe('sendBroadcastTest', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.RESEND_API_KEY = 'test_key';
+    process.env.SES_SMTP_USER = 'test_user';
+    process.env.SES_SMTP_PASS = 'test_pass_1234';
     process.env.EMAIL_UNSUBSCRIBE_SIGNING_SECRET = 'a'.repeat(32);
     process.env.NEXT_PUBLIC_APP_URL = 'https://www.pawelperfect.com';
-    emailsSend.mockResolvedValue({ data: { id: 'email_1' }, error: null });
+    emailsSend.mockResolvedValue({ response: '250 Ok email_1', messageId: '<local@x>' });
   });
 
   it('renders like the real broadcast (footer, one-click header, chosen language) and audits no address', async () => {
@@ -144,7 +141,7 @@ describe('sendBroadcastTest', () => {
     });
     expect(result.ok).toBe(true);
     const sent = emailsSend.mock.calls[0][0];
-    expect(sent.to).toEqual(['admin_1@example.com']);
+    expect(sent.to).toBe('admin_1@example.com');
     expect(sent.subject).toBe('[TEST] New video');
     expect(sent.html).toContain('Hi Paweł');
     expect(sent.html).toContain('Unsubscribe</a>');

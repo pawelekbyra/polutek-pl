@@ -3,7 +3,7 @@
  * preview rendered exactly like a real send, deliverability and limits, unsubscribes and blocks.
  * Nothing here sends mail.
  */
-import { bounceEventsConnected, emailSendLimits } from "@/lib/email-config";
+import { emailSendLimits, getSnsConfig } from "@/lib/email-config";
 import sanitizeHtml from "sanitize-html";
 import { EMAIL_DEFAULTS } from "@/lib/email-defaults";
 import type { AppContext } from "../../shared/app-context";
@@ -46,12 +46,10 @@ const adminOnly = (ctx: AppContext) => {
   if (ctx.actor.type !== "admin") throw new AppError("Only admins can read mail statistics", 403, "FORBIDDEN");
 };
 
-/** Send caps and bounce targets of the active provider (EMAIL_DAILY_LIMIT / EMAIL_MONTHLY_LIMIT, old RESEND_* names still work). */
+/** Send caps and bounce targets (EMAIL_DAILY_LIMIT / EMAIL_MONTHLY_LIMIT). */
 export function emailLimits(env: Record<string, string | undefined> = process.env) {
   return emailSendLimits(env);
 }
-/** @deprecated Old name of emailLimits(). */
-export const resendLimits = emailLimits;
 
 export type Deliverability = {
   windowDays: 30;
@@ -65,8 +63,12 @@ export type Deliverability = {
   sentToday: number;
   sentMonth: number;
   limits: ReturnType<typeof emailLimits>;
-  /** False when no bounce/complaint events reach the app (SES until the SNS webhook exists): the counters above are then not real. */
+  /** SES_SNS_TOPIC_ARN is set (the SNS endpoint accepts events). */
+  eventsConfigured: boolean;
+  /** Configured AND at least one event has arrived: only then are the counters above real. */
   bounceEventsConnected: boolean;
+  /** Transient bounces and delivery delays in the window (recorded, not blocking). */
+  transientBounces: number;
   lastEventAt: string | null;
   /** Broadcast recipients, last 30 days: queue progress rather than provider events. */
   broadcastRecipients: { sent: number; pending: number; failed: number };
@@ -99,7 +101,9 @@ export async function getDeliverability(ctx: AppContext, now: Date = ctx.now()):
     sentToday: today,
     sentMonth: month,
     limits: emailLimits(),
-    bounceEventsConnected: bounceEventsConnected(),
+    eventsConfigured: getSnsConfig().topicArns.length > 0,
+    bounceEventsConnected: getSnsConfig().topicArns.length > 0 && last !== null,
+    transientBounces: n("email.bounced_transient"),
     lastEventAt: last?.createdAt.toISOString() ?? null,
     broadcastRecipients: { sent: r("SENT", "DELIVERED", "OPENED", "CLICKED"), pending: r("PENDING"), failed: r("FAILED", "BOUNCED", "COMPLAINED") },
   };

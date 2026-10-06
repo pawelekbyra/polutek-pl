@@ -38,7 +38,7 @@ Numeracja §4.x jest stabilna: odwołują się do niej komentarze w kodzie i tes
 | Logowanie | Better Auth (własne UI logowania i konta); nie jest autorytetem wspierających; panel ma osobną instancję |
 | Płatności | Stripe (tylko napiwki; `fulfillPayment()` → `PatronGrant` jako prywatna ewidencja) |
 | Wideo | własny HLS: oryginały w R2 → kolejka kodowania w Postgresie → kontener `encoder` (ffmpeg) → prywatny bucket R2 `polutek-hls` → Worker Cloudflare na `video.pawelperfect.com` z tokenem |
-| E-mail | Resend (nadawca); poczta przychodząca: Cloudflare Email Routing → PP Support |
+| E-mail | Amazon SES przez SMTP (nadawca, eu-north-1; zdarzenia odbić i skarg przez SNS, `docs/operations/EMAIL_SES.md`); poczta przychodząca: Cloudflare Email Routing → PP Support |
 | Limity | Redis lokalny przez bramkę REST `srh` (zmienne `KV_REST_API_*`) |
 | Zadania cykliczne | timery systemd wołające `/api/cron/*` (§6) |
 | UI | Tailwind + shadcn/ui + Geist + tokeny `--chan-*`; panel ma własny system projektowy |
@@ -180,7 +180,7 @@ Wartości `StorageProvider` inne niż `SELF_HLS` i tabele dostawców są legacy 
 ### 4.18 E-mail
 
 Teksty maili systemowych są w kodzie (`lib/email-defaults.ts`), nic nie zasiewa `EmailTemplate`; jeden transport `sendEmail()`; wypisanie przez podpisane tokeny; rozsyłki to kolejka w Postgresie (nigdy w żądaniu HTTP);
-webhook Resend reaguje tylko na maile z tagiem `app=pawelperfect`. Szczegóły: `docs/architecture/privacy-email-retention.md`.
+endpoint SNS `/api/webhooks/ses` weryfikuje podpis każdej wiadomości i listę tematów. Szczegóły: `docs/architecture/privacy-email-retention.md`.
 
 ### 4.19 Własna telemetria
 
@@ -252,7 +252,7 @@ Pełna lista: `.env.example` i `lib/env/validation.ts`. Krytyczne (tylko nazwy; 
 | `DATABASE_URL`, `DATABASE_URL_UNPOOLED` | lokalny Postgres (host `db` w compose) |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe (klucz publiczny jest wypalany w obrazie) |
 | `HLS_TOKEN_SECRET` (≥ 32), `HLS_DELIVERY_BASE_URL`, `CLOUDFLARE_R2_*` | tokeny własnego HLS (ten sam sekret co Worker); R2 (oryginały, HLS, miniatury) |
-| `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_UNSUBSCRIBE_SIGNING_SECRET` | e-mail |
+| `SES_SMTP_USER`, `SES_SMTP_PASS`, `EMAIL_FROM`, `SES_SNS_TOPIC_ARN`, `SES_CONFIGURATION_SET`, `EMAIL_UNSUBSCRIBE_SIGNING_SECRET` | e-mail |
 | `CRON_SECRET` | autoryzacja tras cron (≥ 32 znaki) |
 | `TRUST_CF_CONNECTING_IP` | `true` tylko za Cloudflare Tunnel: adres klienta z `CF-Connecting-IP` przez `lib/api/client-ip.ts` (jedyny helper IP) |
 | `KV_REST_API_URL`, `KV_REST_API_TOKEN` | Redis przez `srh` (limity) |
@@ -265,7 +265,7 @@ Zmienne `NEXT_PUBLIC_*` są wypalane w obrazie: ich zmiana wymaga przebudowy. Zm
 
 Sekrety właściciela leżą na serwerku w `/root/.ai-secrets/` (katalog 700): `secrets.env`, `load-secrets.sh` i inne (opis: `docs/operations/HANDOFF-SERVER-AGENT.md` §4, `docs/operations/AGENT_ACCESS.md`). Wczytanie na serwerku:
 `source /root/.ai-secrets/load-secrets.sh`; z TAKT: `~/.local/bin/serwerek-env '<komenda>'` (komenda działa na serwerku z wczytanymi zmiennymi, nic nie wypisuje). Zasady: **nigdy** nie wypisuj wartości (maskuj), nie zapisuj ich do repo, `.env*`,
-dokumentacji, commitów, logów ani czatu, nie kopiuj poza serwerek. Zmiany w usługach zewnętrznych (Cloudflare, Stripe, Resend, Hetzner) tylko na zgodę właściciela (§0). Stripe: odczyt swobodnie; zwroty, wypłaty i wszystko, co rusza pieniądze, tylko za zgodą.
+dokumentacji, commitów, logów ani czatu, nie kopiuj poza serwerek. Zmiany w usługach zewnętrznych (Cloudflare, Stripe, AWS, Hetzner) tylko na zgodę właściciela (§0). Stripe: odczyt swobodnie; zwroty, wypłaty i wszystko, co rusza pieniądze, tylko za zgodą.
 Jedyny publiczny adres kontaktowy: `support@pawelperfect.com` (`LEGAL_CONTACT_EMAIL`).
 
 ## 9. Jak pracować

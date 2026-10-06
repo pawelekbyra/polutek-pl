@@ -63,14 +63,10 @@ describe('Subscriptions Use-Cases', () => {
   } as unknown as AppContext;
 
   const trustedEmail = 'USER@Example.COM';
-  const subscribeGateway = { syncExplicitSubscribe: vi.fn() };
-  const unsubscribeGateway = { syncExplicitUnsubscribe: vi.fn() };
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(MainChannelService.getRequired).mockResolvedValue(mockMainChannel as any);
-    subscribeGateway.syncExplicitSubscribe.mockResolvedValue('SYNCED');
-    unsubscribeGateway.syncExplicitUnsubscribe.mockResolvedValue('SYNCED');
     mockPreferenceRepoInstance.recordExplicitContentOptIn.mockResolvedValue({ id: 'pref_1', recorded: true });
     mockPreferenceRepoInstance.recordExplicitContentOptOut.mockResolvedValue({ id: 'pref_1', recorded: true });
   });
@@ -97,25 +93,20 @@ describe('Subscriptions Use-Cases', () => {
   });
 
   describe('SubscribeUseCase', () => {
-    it('creates exactly one subscription, records explicit opt-in, then syncs provider', async () => {
+    it('creates exactly one subscription, records explicit opt-in, and never talks to an external audience', async () => {
       const created = { id: 's1', createdAt: new Date() } as any;
       mockRepoInstance.findByUserIdAndCreatorId.mockResolvedValue(null);
       mockRepoInstance.create.mockResolvedValue(created);
       vi.mocked(MainChannelService.getRequired).mockResolvedValueOnce(mockMainChannel as any)
                                              .mockResolvedValueOnce({ ...mockMainChannel, subscribersCount: 11 } as any);
 
-      const result = await SubscribeUseCase.execute(mockCtx, { trustedEmail, audienceGateway: subscribeGateway });
+      const result = await SubscribeUseCase.execute(mockCtx, { trustedEmail });
 
       expect(result.isSubscribed).toBe(true);
-      expect(result.providerSyncStatus).toBe('SYNCED');
       expect(result.subscribersCount).toBe(11);
       expect(mockRepoInstance.create).toHaveBeenCalledTimes(1);
       expect(mockPreferenceRepoInstance.recordExplicitContentOptIn).toHaveBeenCalledWith('u1', 'user@example.com', {});
       expect(MainChannelService.incrementSubscribersCount).toHaveBeenCalled();
-      expect(subscribeGateway.syncExplicitSubscribe).toHaveBeenCalledWith('user@example.com');
-      expect(subscribeGateway.syncExplicitSubscribe.mock.invocationCallOrder[0]).toBeGreaterThan(
-        vi.mocked(mockCtx.db.writeTransaction).mock.invocationCallOrder[0]
-      );
     });
 
     it('throws AppError 409 when recorded: false (FOREIGN_EMAIL_CONFLICT)', async () => {
@@ -125,7 +116,7 @@ describe('Subscriptions Use-Cases', () => {
         reason: 'FOREIGN_EMAIL_CONFLICT'
       });
 
-      const promise = SubscribeUseCase.execute(mockCtx, { trustedEmail, audienceGateway: subscribeGateway });
+      const promise = SubscribeUseCase.execute(mockCtx, { trustedEmail });
 
       await expect(promise).rejects.toThrow(AppError);
       await expect(promise).rejects.toMatchObject({
@@ -136,7 +127,6 @@ describe('Subscriptions Use-Cases', () => {
 
       expect(mockRepoInstance.create).not.toHaveBeenCalled();
       expect(MainChannelService.incrementSubscribersCount).not.toHaveBeenCalled();
-      expect(subscribeGateway.syncExplicitSubscribe).not.toHaveBeenCalled();
     });
 
     it('handles the by-userId foreign email conflict by throwing 409 and avoiding side effects', async () => {
@@ -147,65 +137,37 @@ describe('Subscriptions Use-Cases', () => {
          reason: 'FOREIGN_EMAIL_CONFLICT'
        });
 
-       const promise = SubscribeUseCase.execute(mockCtx, { trustedEmail, audienceGateway: subscribeGateway });
+       const promise = SubscribeUseCase.execute(mockCtx, { trustedEmail });
 
        await expect(promise).rejects.toMatchObject({ statusCode: 409 });
        expect(mockRepoInstance.create).not.toHaveBeenCalled();
-       expect(subscribeGateway.syncExplicitSubscribe).not.toHaveBeenCalled();
     });
 
     it('is idempotent and can retry provider sync without duplicating Subscription', async () => {
       mockRepoInstance.findByUserIdAndCreatorId.mockResolvedValue({ id: 's1', createdAt: new Date() } as any);
 
-      const result = await SubscribeUseCase.execute(mockCtx, { trustedEmail, audienceGateway: subscribeGateway });
+      const result = await SubscribeUseCase.execute(mockCtx, { trustedEmail });
 
       expect(result.isSubscribed).toBe(true);
       expect(MainChannelService.incrementSubscribersCount).not.toHaveBeenCalled();
       expect(mockRepoInstance.create).not.toHaveBeenCalled();
-      expect(subscribeGateway.syncExplicitSubscribe).toHaveBeenCalledTimes(1);
     });
 
-    it('reports NOT_CONFIGURED without removing local Subscription', async () => {
-      subscribeGateway.syncExplicitSubscribe.mockResolvedValueOnce('NOT_CONFIGURED');
-      mockRepoInstance.findByUserIdAndCreatorId.mockResolvedValue({ id: 's1', createdAt: new Date() } as any);
-
-      const result = await SubscribeUseCase.execute(mockCtx, { trustedEmail, audienceGateway: subscribeGateway });
-
-      expect(result.providerSyncStatus).toBe('NOT_CONFIGURED');
-      expect(result.isSubscribed).toBe(true);
-    });
-
-    it('reports FAILED without removing local Subscription', async () => {
-      subscribeGateway.syncExplicitSubscribe.mockResolvedValueOnce('FAILED');
-      mockRepoInstance.findByUserIdAndCreatorId.mockResolvedValue({ id: 's1', createdAt: new Date() } as any);
-
-      const result = await SubscribeUseCase.execute(mockCtx, { trustedEmail, audienceGateway: subscribeGateway });
-
-      expect(result.providerSyncStatus).toBe('FAILED');
-      expect(result.isSubscribed).toBe(true);
-      expect(mockRepoInstance.deleteByUserIdAndCreatorId).not.toHaveBeenCalled();
-    });
-
-    it('does not sync provider when trusted email is missing', async () => {
-      await expect(SubscribeUseCase.execute(mockCtx, { trustedEmail: '', audienceGateway: subscribeGateway })).rejects.toThrow('Trusted user email is required');
-      expect(subscribeGateway.syncExplicitSubscribe).not.toHaveBeenCalled();
-    });
   });
 
   describe('UnsubscribeUseCase', () => {
-    it('deletes local Subscription, records opt-out, and syncs provider unsubscribe', async () => {
+    it('deletes local Subscription, records opt-out, ', async () => {
       mockRepoInstance.deleteByUserIdAndCreatorId.mockResolvedValue({ count: 1 } as any);
       vi.mocked(MainChannelService.getRequired).mockResolvedValueOnce(mockMainChannel as any)
                                              .mockResolvedValueOnce({ ...mockMainChannel, subscribersCount: 9 } as any);
 
-      const result = await UnsubscribeUseCase.execute(mockCtx, { trustedEmail, audienceGateway: unsubscribeGateway });
+      const result = await UnsubscribeUseCase.execute(mockCtx, { trustedEmail });
 
       expect(result.isSubscribed).toBe(false);
       expect(result.deleted).toBe(true);
       expect(result.subscribersCount).toBe(9);
       expect(mockPreferenceRepoInstance.recordExplicitContentOptOut).toHaveBeenCalledWith('u1', 'user@example.com', {});
       expect(MainChannelService.decrementSubscribersCount).toHaveBeenCalled();
-      expect(unsubscribeGateway.syncExplicitUnsubscribe).toHaveBeenCalledWith('user@example.com');
     });
 
     it('is fail-safe on FOREIGN_EMAIL_CONFLICT and uses structured logging', async () => {
@@ -216,11 +178,10 @@ describe('Subscriptions Use-Cases', () => {
       });
       mockRepoInstance.deleteByUserIdAndCreatorId.mockResolvedValue({ count: 1 } as any);
 
-      const result = await UnsubscribeUseCase.execute(mockCtx, { trustedEmail, audienceGateway: unsubscribeGateway });
+      const result = await UnsubscribeUseCase.execute(mockCtx, { trustedEmail });
 
       expect(result.isSubscribed).toBe(false);
       expect(result.deleted).toBe(true);
-      expect(unsubscribeGateway.syncExplicitUnsubscribe).toHaveBeenCalledWith('user@example.com');
 
       const { createScopedLogger } = await import('@/lib/logger');
       expect(createScopedLogger).toHaveBeenCalledWith('req_123');
@@ -231,37 +192,15 @@ describe('Subscriptions Use-Cases', () => {
       expect(logger.warn).not.toHaveBeenCalledWith(expect.stringContaining('user@example.com'));
     });
 
-    it('is idempotent and still retries provider unsubscribe', async () => {
+    it('is idempotent ', async () => {
       mockRepoInstance.deleteByUserIdAndCreatorId.mockResolvedValue({ count: 0 } as any);
 
-      const result = await UnsubscribeUseCase.execute(mockCtx, { trustedEmail, audienceGateway: unsubscribeGateway });
+      const result = await UnsubscribeUseCase.execute(mockCtx, { trustedEmail });
 
       expect(result.isSubscribed).toBe(false);
       expect(result.deleted).toBe(false);
       expect(MainChannelService.decrementSubscribersCount).not.toHaveBeenCalled();
-      expect(unsubscribeGateway.syncExplicitUnsubscribe).toHaveBeenCalledTimes(1);
     });
 
-    it('keeps local opt-out when provider sync fails', async () => {
-      unsubscribeGateway.syncExplicitUnsubscribe.mockResolvedValueOnce('FAILED');
-      mockRepoInstance.deleteByUserIdAndCreatorId.mockResolvedValue({ count: 1 } as any);
-
-      const result = await UnsubscribeUseCase.execute(mockCtx, { trustedEmail, audienceGateway: unsubscribeGateway });
-
-      expect(result.isSubscribed).toBe(false);
-      expect(result.providerSyncStatus).toBe('FAILED');
-      expect(mockRepoInstance.create).not.toHaveBeenCalled();
-      expect(mockPreferenceRepoInstance.recordExplicitContentOptOut).toHaveBeenCalled();
-    });
-
-    it('reports NOT_CONFIGURED for missing Audience', async () => {
-      unsubscribeGateway.syncExplicitUnsubscribe.mockResolvedValueOnce('NOT_CONFIGURED');
-      mockRepoInstance.deleteByUserIdAndCreatorId.mockResolvedValue({ count: 0 } as any);
-
-      const result = await UnsubscribeUseCase.execute(mockCtx, { trustedEmail, audienceGateway: unsubscribeGateway });
-
-      expect(result.providerSyncStatus).toBe('NOT_CONFIGURED');
-      expect(result.isSubscribed).toBe(false);
-    });
   });
 });

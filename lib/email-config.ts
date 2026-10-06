@@ -1,9 +1,8 @@
 /**
- * Mail configuration in ONE place: which provider sends, sender addresses, limits.
+ * Mail configuration in ONE place: sender addresses, SES SMTP settings, limits. Amazon SES is the only transport.
  * Pure functions of an env record (no I/O), shared by the transport, the admin screens and env validation.
  */
 
-export type EmailProvider = 'resend' | 'ses';
 type EnvRecord = Record<string, string | undefined>;
 
 /** Display name of every automatic mail (normal case on purpose, see the transport for the reasoning). */
@@ -13,17 +12,6 @@ export const DEFAULT_EMAIL_SUPPORT_FROM = 'support@pawelperfect.com';
 export const DEFAULT_EMAIL_REPLY_TO = 'support@pawelperfect.com';
 
 export const SES_DEFAULT_REGION = 'eu-north-1';
-
-/** Provider switch. Anything but an explicit "ses" means Resend (the safe default until the owner flips it). */
-export function resolveEmailProvider(env: EnvRecord = process.env): EmailProvider {
-  return env.EMAIL_PROVIDER?.trim().toLowerCase() === 'ses' ? 'ses' : 'resend';
-}
-
-/** True when EMAIL_PROVIDER holds something we do not recognise (validation reports it). */
-export function isUnknownEmailProvider(env: EnvRecord = process.env): boolean {
-  const raw = env.EMAIL_PROVIDER?.trim().toLowerCase();
-  return !!raw && raw !== 'ses' && raw !== 'resend';
-}
 
 /** A bare address gets the brand display name; "Name <addr>" is kept as configured. */
 function withDisplayName(raw: string | undefined, fallbackAddress: string): string {
@@ -72,26 +60,30 @@ export function getSesSmtpConfig(env: EnvRecord = process.env): SesSmtpConfig | 
 }
 
 /**
- * Daily / monthly send caps shown in the admin panel. EMAIL_*_LIMIT wins, the old RESEND_*_LIMIT names still work.
- * Defaults per provider: Resend Free 100/3000; SES sandbox 200 per day (production access raises it; set the real quota).
+ * Daily / monthly send caps shown in the admin panel (EMAIL_DAILY_LIMIT / EMAIL_MONTHLY_LIMIT).
+ * Defaults are the SES sandbox quota (200 per day); set the real quota after AWS grants production access.
  */
 export function emailSendLimits(env: EnvRecord = process.env) {
-  const provider = resolveEmailProvider(env);
-  const num = (...values: (string | undefined)[]) => {
-    for (const v of values) if (Number.isFinite(Number(v)) && Number(v) > 0) return Number(v);
-    return null;
-  };
-  const defaults = provider === 'ses' ? { perDay: 200, perMonth: 6000 } : { perDay: 100, perMonth: 3000 };
+  const num = (v: string | undefined) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : null);
   return {
-    provider,
-    perDay: num(env.EMAIL_DAILY_LIMIT, env.RESEND_DAILY_LIMIT) ?? defaults.perDay,
-    perMonth: num(env.EMAIL_MONTHLY_LIMIT, env.RESEND_MONTHLY_LIMIT) ?? defaults.perMonth,
+    perDay: num(env.EMAIL_DAILY_LIMIT) ?? 200,
+    perMonth: num(env.EMAIL_MONTHLY_LIMIT) ?? 6000,
     bounceTarget: 4,
     complaintTarget: 0.08,
   };
 }
 
-/** Whether bounce/complaint events reach the app. Only the Resend webhook exists; SES has none yet (SNS follow-up). */
-export function bounceEventsConnected(env: EnvRecord = process.env): boolean {
-  return resolveEmailProvider(env) === 'resend';
+
+/**
+ * Amazon SNS endpoint settings for bounce/complaint events. SES_SNS_TOPIC_ARN (comma-separated list allowed) is the
+ * allowlist of topics we accept: unset means the endpoint refuses everything (fail closed).
+ * SES_SNS_REGIONS adds regions whose sns.<region>.amazonaws.com may host the signing certificate (default: AWS_REGION).
+ */
+export function getSnsConfig(env: EnvRecord = process.env): { topicArns: string[]; regions: string[] } {
+  const list = (v: string | undefined) => (v ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+  const regions = list(env.SES_SNS_REGIONS);
+  return {
+    topicArns: list(env.SES_SNS_TOPIC_ARN),
+    regions: regions.length ? regions : [env.AWS_REGION?.trim() || SES_DEFAULT_REGION],
+  };
 }

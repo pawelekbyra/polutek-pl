@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { anonymizeOldTechnicalData } from "@/lib/modules/privacy";
-import { processContactRemovals } from "@/lib/modules/subscriptions";
 import { processStripeCustomerAnonymizations } from "@/lib/modules/payments";
 import { logger } from "@/lib/logger";
 
@@ -10,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * Daily retention: clears IP addresses and browser data older than TECHNICAL_DATA_RETENTION_DAYS
- * retries Resend Audience contact removals and Stripe Customer anonymizations left over from account deletions.
+ * retries Stripe Customer anonymizations left over from account deletions.
  */
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("Authorization") ?? "";
@@ -27,8 +26,6 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const contactRemovals = await processContactRemovals(ctx);
-    // Independent of the Resend queue: a Stripe outage must not fail the whole retention run.
     let stripeCustomers: unknown = null;
     try {
       stripeCustomers = await processStripeCustomerAnonymizations(ctx);
@@ -36,9 +33,9 @@ export async function GET(req: NextRequest) {
       logger.error("[cron] retention: stripe customer anonymization failed", error instanceof Error ? error.message : String(error));
       stripeCustomers = { error: true };
     }
-    return NextResponse.json({ technical: technical.data, contactRemovals, stripeCustomers });
+    return NextResponse.json({ technical: technical.data, stripeCustomers });
   } catch (error) {
-    logger.error("[cron] retention: contact removals failed", error instanceof Error ? error.message : String(error));
+    logger.error("[cron] retention: stripe customer anonymization failed", error instanceof Error ? error.message : String(error));
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

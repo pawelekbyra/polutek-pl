@@ -9,9 +9,9 @@
  *   - heartbeat: health.sh on the server POSTs /ping every 5 min; no ping for 15 min = the server is gone
  *                (dead man's switch); a WARN reported for 30 min is escalated here too (second channel).
  * A check alerts after 2 failed runs in a row (no e-mail for a blip), again every 6 h while failing, and once
- * when it recovers. E-mail through Resend, at most MAX_ALERTS_PER_DAY a day (the app shares the Resend quota).
- * Stays on Resend on purpose: a Worker cannot use SMTP, and SES over HTTPS needs IAM access keys + SigV4 (a separate decision,
- * docs/operations/EMAIL_SES.md, section "Co zostaje na Resend"). Remove Resend only after this is moved.
+ * when it recovers. E-mail through the Cloudflare Email Workers `send_email` binding (ALERT_EMAIL), free, no provider
+ * account: it can only deliver to the verified Email Routing destination address of the binding (the owner's mailbox),
+ * from an address on pawelperfect.com. At most MAX_ALERTS_PER_DAY a day. (A Worker cannot use SMTP, so not SES.)
  * State: D1 (binding DB). Free-plan budget: 288 cron runs + 288 pings a day.
  *
  * HTTP (all need "Authorization: Bearer <PING_TOKEN>"):
@@ -87,16 +87,46 @@ async function evaluate(env, now) {
   return results;
 }
 
+/** "Name <addr>" or "addr" -> bare address for the envelope. */
+function fromAddress(from) {
+  const match = /<([^>]+)>/.exec(from || '');
+  return (match ? match[1] : from || '').trim();
+}
+
+/** Minimal RFC 5322 message: ASCII subject, UTF-8 body as base64. Exported for tests. */
+export function buildMime(env, subject, text, now) {
+  const bytes = new TextEncoder().encode(text);
+  let binary = '';
+  for (const b of bytes) binary += String.fromCharCode(b);
+  const body = btoa(binary).replace(/(.{76})/g, '$1\r\n');
+  const safeSubject = String(subject).replace(/[^\x20-\x7e]/g, '?').slice(0, 200);
+  const domain = fromAddress(env.ALERT_FROM).split('@')[1] || 'pawelperfect.com';
+  return [
+    `From: ${env.ALERT_FROM}`,
+    `To: ${env.ALERT_TO}`,
+    `Subject: ${safeSubject}`,
+    `Date: ${new Date(now).toUTCString()}`,
+    `Message-ID: <${now}.${Math.random().toString(36).slice(2)}@${domain}>`,
+    'Auto-Submitted: auto-generated',
+    'MIME-Version: 1.0',
+    'Content-Type: text/plain; charset=utf-8',
+    'Content-Transfer-Encoding: base64',
+    '',
+    body,
+    '',
+  ].join('\r\n');
+}
+
 async function sendMail(env, subject, text, now) {
   const day = new Date(now).toISOString().slice(0, 10);
   const row = await env.DB.prepare('SELECT sent FROM alert_day WHERE day = ?').bind(day).first();
   if ((row ? row.sent : 0) >= MAX_ALERTS_PER_DAY) return false;
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: env.ALERT_FROM, to: [env.ALERT_TO], subject, text, tags: [{ name: 'kind', value: 'watchdog' }] }),
-  });
-  if (!response.ok) return false;
+  try {
+    const { EmailMessage } = await import('cloudflare:email');
+    await env.ALERT_EMAIL.send(new EmailMessage(fromAddress(env.ALERT_FROM), env.ALERT_TO, buildMime(env, subject, text, now)));
+  } catch {
+    return false;
+  }
   await env.DB.prepare('INSERT INTO alert_day (day, sent) VALUES (?, 1) ON CONFLICT(day) DO UPDATE SET sent = sent + 1').bind(day).run();
   await env.DB.prepare('DELETE FROM alert_day WHERE day < ?').bind(new Date(now - 7 * 86400000).toISOString().slice(0, 10)).run();
   return true;

@@ -31,3 +31,17 @@ describe('pp-watchdog alert state', () => {
     expect(r.state.ok).toBe(1);
   });
 });
+
+describe('pp-watchdog alert mail (Email Workers send_email, no provider key)', () => {
+  it('builds a plain RFC 5322 message with an ASCII subject and a base64 UTF-8 body', async () => {
+    const { buildMime } = await import('@/workers/pp-watchdog/worker.mjs');
+    const mime = buildMime({ ALERT_FROM: 'pp-watchdog <pp-watchdog@pawelperfect.com>', ALERT_TO: 'owner@example.com' }, '[pp-watchdog] DOWN: www ąę', 'Serwer nie odpowiada: zażółć', 1_700_000_000_000);
+    expect(mime).toContain('From: pp-watchdog <pp-watchdog@pawelperfect.com>\r\n');
+    expect(mime).toContain('To: owner@example.com\r\n');
+    expect(mime).toContain('Subject: [pp-watchdog] DOWN: www ??\r\n');
+    expect(mime).toMatch(/Message-ID: <1700000000000\.[a-z0-9]+@pawelperfect\.com>/);
+    expect(mime).toContain('Content-Transfer-Encoding: base64');
+    const body = mime.split('\r\n\r\n')[1].replace(/\r\n/g, '');
+    expect(Buffer.from(body, 'base64').toString('utf8')).toBe('Serwer nie odpowiada: zażółć');
+  });
+});

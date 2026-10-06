@@ -84,8 +84,8 @@ async function sendTemplateEmail({ to, slug, language, variables = {} }: SendTem
   });
 
   if (!result.ok) {
-    logger.error(`[email] Provider failed to send "${slug}" email`, { name: result.error.name, statusCode: result.error.statusCode });
-    throw new Error(`Email provider failed to send "${slug}" email: ${result.error.message}`);
+    logger.error(`[email] Provider failed to send "${slug}" email`, { name: result.error.name, statusCode: result.error.statusCode, hint: result.error.hint });
+    throw new Error(`Email provider failed to send "${slug}" email: ${result.error.message}${result.error.hint ? ` (${result.error.hint})` : ''}`);
   }
 
   logger.info(`[email] Email "${slug}" sent${override ? ' (admin override)' : ''}. ID: ${result.id}`);

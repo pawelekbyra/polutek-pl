@@ -4,7 +4,7 @@ import path from 'path';
 
 describe('Email Module Import Boundary Guard', () => {
   const routes = [
-    'app/api/webhooks/resend/route.ts'
+    'app/api/webhooks/ses/route.ts'
   ];
 
   it('routes must only import from the public module API, not internal paths', () => {

@@ -53,7 +53,7 @@ describe('legal documents consistency', () => {
   it('the privacy policy names every provider the code actually sends personal data to', () => {
     for (const [name, Doc] of Object.entries(POLICIES)) {
       const rendered = text(Doc);
-      for (const provider of ['Hetzner', 'Cloudflare', 'Stripe', 'Resend', 'Google', 'Gmail', 'Turnstile']) {
+      for (const provider of ['Hetzner', 'Cloudflare', 'Stripe', 'Amazon SES', 'Google', 'Gmail', 'Turnstile']) {
         expect(rendered, `${name}: ${provider}`).toContain(provider);
       }
     }

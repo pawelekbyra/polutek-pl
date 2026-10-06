@@ -188,7 +188,7 @@ export default async function TodayPage({ searchParams }: Props) {
                 <span className="limit-note">{l.note}</span>
               </div>
             ))}
-            <p className="limit-note">Worker HLS, Resend i R2: liczniki przyjdą z kolektora (faza 0).</p>
+            <p className="limit-note">Worker HLS i R2: liczniki przyjdą z kolektora (faza 0).</p>
           </Card>
 
           <Card id="h-system" title="Stan systemu" meta={<Link href="/system">Wszystkie <Icon name="right" /></Link>}>

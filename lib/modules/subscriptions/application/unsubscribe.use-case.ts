@@ -2,9 +2,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { MainChannelService } from "@/lib/modules/channel";
 import { SubscriptionRepository } from "../infrastructure/subscription.repository";
 import { EmailPreferenceRepository } from "../infrastructure/email-preference.repository";
-import { ResendAudienceGateway } from "../infrastructure/resend-audience.gateway";
 import { normalizeTrustedEmail } from "../domain/email-address";
-import { ProviderSyncStatus } from "../domain/provider-sync-status";
 import { createScopedLogger } from "@/lib/logger";
 
 export interface UnsubscribeResultDto {
@@ -14,13 +12,11 @@ export interface UnsubscribeResultDto {
   creatorId: string;
   creatorSlug: string;
   purpose: "EMAIL_NOTIFICATIONS";
-  providerSyncStatus: ProviderSyncStatus;
   message: string;
 }
 
 export type UnsubscribeInput = {
   trustedEmail: string;
-  audienceGateway?: Pick<ResendAudienceGateway, 'syncExplicitUnsubscribe'>;
 };
 
 export class UnsubscribeUseCase {
@@ -59,7 +55,6 @@ export class UnsubscribeUseCase {
       return { deletedCount: deleted.count, subscribersCount: syncedChannel.subscribersCount ?? 0 };
     });
 
-    const providerSyncStatus = await (input.audienceGateway ?? new ResendAudienceGateway()).syncExplicitUnsubscribe(trustedEmail);
     const finalChannel = await MainChannelService.getRequired(ctx);
 
     return {
@@ -69,7 +64,6 @@ export class UnsubscribeUseCase {
       creatorId: mainChannel.id,
       creatorSlug: mainChannel.slug,
       purpose: "EMAIL_NOTIFICATIONS",
-      providerSyncStatus,
       message: "Email notifications disabled for this channel.",
     };
   }

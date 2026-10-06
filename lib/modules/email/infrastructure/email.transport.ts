@@ -5,19 +5,16 @@ import {
   getEmailFrom,
   getEmailReplyTo,
   getEmailSupportFrom,
-  resolveEmailProvider,
 } from "@/lib/email-config";
 import { htmlToPlainText, wrapEmailDocument } from "../domain/email-content";
 import { toHeaderText } from "../domain/render-email";
 import type { EmailSendError, EmailSendResult } from "../domain/email-provider";
-import { sendViaResend } from "./resend-email.transport";
 import { sendViaSes } from "./ses-email.transport";
 
 /**
- * The one place that hands mail to a provider. Every automatic mail (system mails, broadcasts, broadcast
+ * The one place that hands mail to Amazon SES (SMTP). Every automatic mail (system mails, broadcasts, broadcast
  * tests) goes through sendEmail(), so all of them get the same document wrapper, plain-text part,
- * sender, Reply-To and headers, whichever provider carries them (EMAIL_PROVIDER=resend|ses, default resend).
- * Sender addresses, Reply-To and the switch live in lib/email-config.ts.
+ * sender, Reply-To and headers. Sender addresses and Reply-To live in lib/email-config.ts.
  */
 
 /**
@@ -25,7 +22,7 @@ import { sendViaSes } from "./ses-email.transport";
  * bodies ({{brandName}}). Normal case on purpose: an all-caps, domain-looking sender name and a
  * "www.…" in the subject are classic spam/phishing signals (Hotmail/Outlook sent our first
  * verification mail to Junk on a new domain). The address is @pawelperfect.com, a domain verified
- * for sending at the provider.
+ * for sending in Amazon SES.
  */
 export { EMAIL_SENDER_NAME, getEmailFrom };
 
@@ -33,9 +30,8 @@ export { EMAIL_SENDER_NAME, getEmailFrom };
 export const EMAIL_IDENTITY_LINE = 'Paweł Perfect · ul. Złota 75, 00-819 Warszawa · support@pawelperfect.com';
 
 /**
- * Tag on every mail this app sends. The Resend account is shared with PP Support, and webhooks are
- * per account, so the webhook acts only on events that carry this tag. On SES the same tag goes into
- * X-SES-MESSAGE-TAGS when a configuration set is configured.
+ * Tag on every mail this app sends. It goes into X-SES-MESSAGE-TAGS when a configuration set is
+ * configured, so future bounce/complaint events (SNS) can be told apart from other senders in the account.
  */
 export const APP_EMAIL_TAG = { name: 'app', value: 'pawelperfect' } as const;
 
@@ -56,7 +52,7 @@ export type OutgoingEmail = {
   kind: string;
   /** Present only for mail a recipient can unsubscribe from (never security or payment mail). */
   unsubscribe?: EmailUnsubscribe | null;
-  /** Resend deduplicates sends with the same key for 24 h (safe retries). SES has no such feature: ignored there. */
+  /** Kept for callers (broadcast queue); SES has no idempotency key, so it is not sent anywhere. */
   idempotencyKey?: string;
   headers?: Record<string, string>;
   /** "system" (default, EMAIL_FROM) or "support" (EMAIL_SUPPORT_FROM, mail that comes out of support work). */
@@ -125,5 +121,5 @@ export async function sendEmail(input: OutgoingEmail): Promise<EmailSendResult> 
     idempotencyKey: input.idempotencyKey,
   };
 
-  return resolveEmailProvider() === 'ses' ? sendViaSes(prepared) : sendViaResend(prepared);
+  return sendViaSes(prepared);
 }

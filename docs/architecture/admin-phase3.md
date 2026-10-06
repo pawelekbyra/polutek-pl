@@ -32,7 +32,7 @@ maili, bo śledzenie jest wyłączone), nigdy zero. Pod `ADMIN_DEV_FIXTURES=1` e
 * **Progi alertów:** dysk, RAM, swap (ostrzeżenie i błąd, `AppSetting admin_alert_thresholds`); sterują kolorem kropki zdrowia, Centrum zdrowia i limitami w „Dzisiaj”
   (`OverviewDeps.limits`, domyślnie dotychczasowe `LIMITS`). **Godziny ciszy i kanały alertów: DROP do czasu, aż panel cokolwiek wysyła z alertów**
   (dziś nie ma do czego tego podłączyć). Próg Workera HLS: brak pomiaru, więc brak progu.
-* **Integracje:** `getIntegrationStatus`: Stripe (tryb z publicznego prefiksu klucza, test na produkcji = ostrzeżenie), webhook, Resend, R2, Access, telemetria, Redis, PP Support;
+* **Integracje:** `getIntegrationStatus`: Stripe (tryb z publicznego prefiksu klucza, test na produkcji = ostrzeżenie), webhook, Amazon SES (dane SMTP, SNS), R2, Access, telemetria, Redis, PP Support;
   ostatnie ślady z naszych tabel. **Żadnej wartości sekretu i żadnego wywołania zewnętrznego przy wyświetlaniu** (test sprawdza, że sekrety nie trafiają do wyniku).
 * **Konto:** twoje konto panelu (klucze, TOTP, rola, ostatnie logowanie) i instrukcja odzyskiwania (`admin-enroll --reset` przez SSH).
 
@@ -59,9 +59,9 @@ Testy zwrotu: Stripe jest zawsze mockowany (`getStripeClient`), żaden test nie 
 
 ## 4. Komunikacja (`/komunikacja`: Przegląd · Rozsyłki · Szablony · Wypisy i blokady · Powiadomienia)
 
-* **Przegląd:** dostarczalność 30 dni z `EmailEvent` (wysłane, doręczone, odbicia ze celem < 4 %, skargi < 0,08 %, limity Resend Free 100/dzień i 3000/miesiąc,
-  nadpisywalne `RESEND_DAILY_LIMIT` / `RESEND_MONTHLY_LIMIT`), kolejka rozsyłek, PP Support jako link (liczby wątków wymagają tokenu agenta, którego panel nie trzyma; czekają na kolektor).
-  Otwarć i kliknięć **nie ma**: śledzenie jest wyłączone w Resend.
+* **Przegląd:** dostarczalność 30 dni z `EmailEvent` (wysłane, doręczone, odbicia ze celem < 4 %, skargi < 0,08 %, limity Amazon SES (sandbox 200/dzień), nadpisywalne
+  `EMAIL_DAILY_LIMIT` / `EMAIL_MONTHLY_LIMIT`), kolejka rozsyłek, PP Support jako link (liczby wątków wymagają tokenu agenta, którego panel nie trzyma; czekają na kolektor).
+  Otwarć i kliknięć **nie ma**: nie śledzimy ich (SES: zdarzenia Open/Click nie są konfigurowane).
 * **Szablony:** lista (systemowe z oznaczeniem „zmieniony/domyślny” i własne), edytor PL/EN, **podgląd na żywo** w `<iframe sandbox>` zasilanym przez
   `POST /api/email/preview` (HTML sanityzowany jak przy zapisie, wartości przykładowe z rejestru, odpowiedź z własnym CSP `default-src 'none'`; CSP panelu ma `frame-src 'self'`,
   `X-Frame-Options: SAMEORIGIN` tylko dla tej jednej trasy), **różnica względem domyślnego** (`lineDiff`, bez zależności), „Przywróć domyślny”, usuwanie własnego, nowy szablon rozsyłki.
@@ -70,7 +70,7 @@ Testy zwrotu: Stripe jest zawsze mockowany (`getStripeClient`), żaden test nie 
   **Panel tylko kolejkuje** (`createBroadcast`); prawdziwą wysyłkę robi zadanie `send-broadcasts` na stronie. Prawdziwy mail z panelu wychodzi wyłącznie przez (a) test do **własnego** adresu konta
   panelu (adres z sesji, nie z formularza; `.strict()` odrzuca podrobione pole; limit 6 / 10 min) i (b) utworzoną rozsyłkę za step-upem. Zgodność: stopka z wypisem i `List-Unsubscribe` +
   `List-Unsubscribe-Post` ([RFC 8058](https://www.rfc-editor.org/rfc/rfc8058), [wymagania Gmail/Yahoo](https://support.google.com/a/answer/81126)) dodaje nadawca, nie edytor; odbiorcy to tylko osoby ze zgodą, bez zablokowanych.
-  **Termin wysyłki w przyszłości: DROP** (kolejka nie ma harmonogramu; rozsyłka rusza od razu). Testy nie wysyłają maili (Resend zamockowany).
+  **Termin wysyłki w przyszłości: DROP** (kolejka nie ma harmonogramu; rozsyłka rusza od razu). Testy nie wysyłają maili (transport SES zamockowany).
 * **Wypisy i blokady:** liczby zgód, lista zablokowanych po odbiciu/skardze i wypisanych. Ręczne zdejmowanie blokad: celowo poza panelem.
 * **Powiadomienia:** ekran tylko do odczytu (szablony, ostatnie powiadomienia) z jasnym baner „wysyłka wyłączona”. **Decyzja:** dzwonek usunięto ze strony 2026-10-04, więc
   rozsyłka i edycja szablonów powiadomień są DROP; powrót dzwonka to osobna decyzja i zmiana.
@@ -119,21 +119,21 @@ Testy zwrotu: Stripe jest zawsze mockowany (`getStripeClient`), żaden test nie 
    usunąć; test postgres `privacy-retention` przestał kasować własne wiersze audytu (zostają w jednorazowej bazie CI).
 2. Obraz panelu (`deploy-admin.sh`). Nowe zmienne w `admin.env`:
    `STRIPE_SECRET_KEY` (klucz **ograniczony**: Refunds zapis, Disputes i Charges odczyt, PaymentIntents odczyt; potrzebny do zwrotów i „Odśwież ze Stripe”),
-   `RESEND_API_KEY` i `EMAIL_FROM` (tylko test rozsyłki do siebie), `NEXT_PUBLIC_APP_URL`, `CLOUDFLARE_R2_*` (komplet jak na stronie: wgrywanie domyślnej miniatury, diagnostyka),
-   opcjonalnie `RESEND_DAILY_LIMIT` / `RESEND_MONTHLY_LIMIT`, `TRANSLATION_AI_ENABLED`, `CLOUDFLARE_AI_ACCOUNT_ID`, `CLOUDFLARE_AI_API_TOKEN`.
+   `SES_SMTP_USER`, `SES_SMTP_PASS` i `EMAIL_FROM` (tylko test rozsyłki do siebie), `NEXT_PUBLIC_APP_URL`, `CLOUDFLARE_R2_*` (komplet jak na stronie: wgrywanie domyślnej miniatury, diagnostyka),
+   opcjonalnie `EMAIL_DAILY_LIMIT` / `EMAIL_MONTHLY_LIMIT`, `TRANSLATION_AI_ENABLED`, `CLOUDFLARE_AI_ACCOUNT_ID`, `CLOUDFLARE_AI_API_TOKEN`.
 3. Opcjonalnie rola `pp_admin` (sekcja 5). Opcjonalnie konta tłumaczy (`admin-enroll --role translator …`).
 4. CORS bucketu miniatur nie jest potrzebny (wgranie idzie przez serwer panelu, nie z przeglądarki).
 
 ## 8. Testy i czego nie zweryfikowano
 
-`tests/unit/admin-phase3/*` (użycia, akcje, rola, proxy, atrapy AI/Stripe/Resend, komponenty jsdom), rozszerzone `tests/unit/modules/payments/admin-refund.use-case.test.ts`,
+`tests/unit/admin-phase3/*` (użycia, akcje, rola, proxy, atrapy AI/Stripe/SES, komponenty jsdom), rozszerzone `tests/unit/modules/payments/admin-refund.use-case.test.ts`,
 `tests/postgres/admin-phase3.pg.test.ts` (**napisany, nieuruchomiony: na tej maszynie nie ma Postgresa**; uruchamia CI „integration-postgres”). Nie sprawdzono w przeglądarce:
-wygląd i układ (brak przeglądarki w środowisku), działanie `<dialog>`/iframe podglądu na żywo, passkey/step-up end to end, wywołanie prawdziwego Stripe/Resend/Workers AI.
+wygląd i układ (brak przeglądarki w środowisku), działanie `<dialog>`/iframe podglądu na żywo, passkey/step-up end to end, wywołanie prawdziwego Stripe/SES/Workers AI.
 
 ## 9. Ryzyka
 
 * Wyzwalacz `AuditLog` jest nieprzetestowany na prawdziwej bazie; błąd w nim blokowałby każdy zapis audytu (stąd prosta postać, wzorowana na działającym `AdminAuthEvent`). Pierwsze wdrożenie: sprawdź zapis audytu po migracji.
 * Webhooki Stripe nie zapisują terminu sporu; do czasu „Odśwież ze Stripe” termin jest „nieznany” (alarm o sporze w „Dzisiaj” działa jak dotąd).
-* Limit Resend liczony ze zdarzeń webhooka; jeśli webhook nie działa, liczniki są zaniżone (ekran pokazuje wiek ostatniego zdarzenia).
+* Liczniki wysyłki liczone ze zdarzeń SNS (`EmailEvent`); jeśli endpoint SNS nie jest skonfigurowany, liczniki są zaniżone (ekran pokazuje wiek ostatniego zdarzenia).
 * Proxy sprawdza rolę zapytaniem do bazy na każde żądanie z ciasteczkiem poza ścieżkami tłumacza (jeden indeksowany odczyt; panel ma jednego-dwóch użytkowników).
 * Szkice AI: przeciętna jakość tłumaczeń m2m100, limit dobowy; funkcja wyłączona, dopóki jej nie włączysz.

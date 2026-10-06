@@ -3,7 +3,6 @@ import { BroadcastRecipientStatus, CommentDeletedReason, CommentStatus } from '@
 import { AppContext } from '@/lib/modules/shared/app-context';
 import { recordAuditEvent } from '@/lib/modules/audit';
 import { resolveEmailLanguage, sendAccountDeletedEmail } from '@/lib/modules/email';
-import { enqueueContactRemovals, processContactRemovals } from '@/lib/modules/subscriptions';
 import { enqueueStripeCustomerAnonymization, processStripeCustomerAnonymizations } from '@/lib/modules/payments';
 import { logger } from '@/lib/logger';
 
@@ -20,9 +19,6 @@ export interface AccountDeletionCleanupResult {
   alreadyDeleted: boolean;
   originalEmail: string | null;
 }
-
-/** How long the deletion request waits for Resend before leaving the contact removal to the daily cron. */
-const CONTACT_REMOVAL_WAIT_MS = 5000;
 
 /** `.invalid` is reserved (RFC 2606): a tombstone address can never reach a real mailbox. */
 function deletedEmail(anonymousId: string) {
@@ -62,21 +58,8 @@ async function anonymizeEmailHistory(tx: any, userId: string, emails: string[], 
   await tx.emailEvent.updateMany({ where: { OR: byOwner }, data: { email: null, payload: REDACTED_EMAIL_EVENT_PAYLOAD } });
 }
 
-async function settleContactRemovals(ctx: AppContext, emails: string[]) {
-  if (emails.length === 0) return;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    await Promise.race([
-      processContactRemovals(ctx, { emails }),
-      new Promise((resolve) => { timer = setTimeout(resolve, CONTACT_REMOVAL_WAIT_MS); }),
-    ]);
-  } catch (error) {
-    // Still queued: /api/cron/retention retries it.
-    logger.warn('[AccountDeletionCleanup] Resend contact removal deferred to the retention cron', error instanceof Error ? error.message : String(error));
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-}
+/** How long the deletion request waits for Stripe before leaving the erasure to the daily cron. */
+const STRIPE_ERASURE_WAIT_MS = 5000;
 
 /** Same bounded, best-effort wait for the Stripe Customer erasure; what is left is retried by /api/cron/retention. */
 async function settleStripeCustomerAnonymization(ctx: AppContext, stripeCustomerIds: string[]) {
@@ -85,7 +68,7 @@ async function settleStripeCustomerAnonymization(ctx: AppContext, stripeCustomer
   try {
     await Promise.race([
       processStripeCustomerAnonymizations(ctx, { stripeCustomerIds }),
-      new Promise((resolve) => { timer = setTimeout(resolve, CONTACT_REMOVAL_WAIT_MS); }),
+      new Promise((resolve) => { timer = setTimeout(resolve, STRIPE_ERASURE_WAIT_MS); }),
     ]);
   } catch (error) {
     logger.warn('[AccountDeletionCleanup] Stripe customer anonymization deferred to the retention cron', error instanceof Error ? error.message : String(error));
@@ -149,11 +132,9 @@ export class AccountDeletionCleanupUseCase {
           ...(originalEmail ? [{ email: originalEmail }] : []),
         ],
       };
-      // A preference row exists only for someone who answered the e-mail consent question, i.e. the
-      // only people who can have a contact in the Resend Audience: that contact is removed too.
+      // The local database is the only record of e-mail consent (no external audience): the rows are deleted below.
       const preferences: { email: string }[] = await tx.emailPreference.findMany({ where: preferenceWhere, select: { email: true } });
       contactEmails = [...new Set(preferences.map((preference) => preference.email))];
-      await enqueueContactRemovals(tx, contactEmails, now);
       await tx.emailPreference.deleteMany({ where: preferenceWhere });
 
       if (creatorIds.length > 0) await resyncCreatorSubscriberCounts(tx, creatorIds);
@@ -185,7 +166,6 @@ export class AccountDeletionCleanupUseCase {
           source: input.source,
           reason: input.reason ?? null,
           originalEmailRemoved: Boolean(originalEmail),
-          contactRemovalsQueued: contactEmails.length,
           stripeCustomersQueued: stripeCustomerIds.length,
         },
       }, tx);
@@ -193,8 +173,7 @@ export class AccountDeletionCleanupUseCase {
       return { cleaned: true, alreadyDeleted: user.isDeleted, originalEmail };
     });
 
-    // Best effort and bounded: a slow or unreachable Resend never blocks the deletion.
-    await settleContactRemovals(ctx, contactEmails);
+    // Best effort and bounded: Stripe being slow or unreachable never blocks the deletion.
     await settleStripeCustomerAnonymization(ctx, stripeCustomerIds);
 
     if (originalEmail) {

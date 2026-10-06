@@ -8,7 +8,7 @@ Jednokanałowa platforma wideo jednego twórcy: <https://www.pawelperfect.com>.
 
 ## Stos
 
-Next.js 16 (App Router), React 19, TypeScript, Prisma, PostgreSQL 17, Better Auth, Stripe, Resend.
+Next.js 16 (App Router), React 19, TypeScript, Prisma, PostgreSQL 17, Better Auth, Stripe, Amazon SES.
 Wideo: własny HLS (oryginały i rendycje w prywatnych bucketach Cloudflare R2, kodowanie we własnym
 kontenerze, dostarczanie przez Cloudflare Worker). Hosting: jeden serwer Hetzner, Docker Compose,
 Cloudflare Tunnel.

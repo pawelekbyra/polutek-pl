@@ -26,13 +26,12 @@ write_status() {
 }
 
 # send_alert <key> <subject> <text> [min-seconds-between, default 21600]
-# One e-mail, at most once per key per interval. Returns 0 when sent or throttled.
-# Provider from /etc/serwerek/alert.env (default resend, so nothing changes until the owner flips it):
-#   ALERT_PROVIDER=resend  RESEND_API_KEY, ALERT_TO, ALERT_FROM          (Resend HTTP API)
-#   ALERT_PROVIDER=ses     SES_SMTP_USER, SES_SMTP_PASS, ALERT_TO, ALERT_FROM, optional AWS_REGION (default eu-north-1)
-#                          (Amazon SES SMTP, port 587 STARTTLS; docs/operations/EMAIL_SES.md)
+# One e-mail through Amazon SES SMTP (port 587, STARTTLS, python3 smtplib, no Node), at most once per key per interval.
+# Returns 0 when sent or throttled. /etc/serwerek/alert.env: SES_SMTP_USER, SES_SMTP_PASS (SES SMTP credentials, not IAM
+# keys), ALERT_TO, ALERT_FROM (an @pawelperfect.com address), optional AWS_REGION (default eu-north-1).
+# SES sandbox: ALERT_TO must be a verified identity in SES until production access is granted.
 send_alert() {
-  local key="$1" subject="$2" text="$3" every="${4:-21600}" state now last payload
+  local key="$1" subject="$2" text="$3" every="${4:-21600}" state now last
   [[ -r /etc/serwerek/alert.env ]] || { echo "send_alert: no /etc/serwerek/alert.env" >&2; return 1; }
   mkdir -p "$SERWEREK_STATE_DIR/alert-state"
   state="$SERWEREK_STATE_DIR/alert-state/$key"
@@ -40,10 +39,9 @@ send_alert() {
   (( now - last >= every )) || return 0
   # shellcheck disable=SC1091
   ( . /etc/serwerek/alert.env
-    if [[ "${ALERT_PROVIDER:-resend}" == "ses" ]]; then
-      # Credentials stay in the environment of this one process; never on a command line.
-      export ALERT_FROM ALERT_TO SES_SMTP_USER SES_SMTP_PASS
-      ALERT_SUBJECT="$subject" ALERT_TEXT="$text" AWS_REGION="${AWS_REGION:-}" python3 - <<'PY'
+    # Credentials stay in the environment of this one process; never on a command line.
+    export ALERT_FROM ALERT_TO SES_SMTP_USER SES_SMTP_PASS
+    ALERT_SUBJECT="$subject" ALERT_TEXT="$text" AWS_REGION="${AWS_REGION:-}" python3 - <<'PY'
 import os, smtplib
 from email.message import EmailMessage
 msg = EmailMessage()
@@ -56,11 +54,5 @@ with smtplib.SMTP(f"email-smtp.{region}.amazonaws.com", 587, timeout=20) as s:
     s.login(os.environ["SES_SMTP_USER"], os.environ["SES_SMTP_PASS"])
     s.send_message(msg)
 PY
-    else
-      payload=$(python3 -c 'import json,sys; print(json.dumps({"from": sys.argv[1], "to": [sys.argv[2]], "subject": sys.argv[3], "text": sys.argv[4]}))' \
-        "$ALERT_FROM" "$ALERT_TO" "$subject" "$text")
-      printf 'header = "Authorization: Bearer %s"\n' "$RESEND_API_KEY" \
-        | curl -fsS -m 20 -K - -X POST https://api.resend.com/emails -H 'Content-Type: application/json' -d "$payload" >/dev/null
-    fi
   ) && echo "$now" > "$state"
 }

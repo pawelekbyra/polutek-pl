@@ -3,12 +3,10 @@ import type { EmailSendError } from "./email-provider";
 /**
  * Pacing and retry rules of the broadcast queue (no I/O).
  *
- * Resend allows 10 API requests per second per team by default and answers 429 above it, also for a
- * spent daily or monthly quota (https://resend.com/docs/api-reference/rate-limit). Broadcasts share
- * that budget with verification and reset mails, so they go one at a time with a pause, well under
- * the limit, and stop for a while as soon as Resend says 429. The SES adapter maps its SMTP replies
- * (454 throttling / daily quota, 535 auth) to the same names and status codes, so this one policy
- * serves both providers (SES sandbox: 1 mail per second, which the 250 ms pause plus the 429 pause respect).
+ * Amazon SES answers throttling (SMTP 454 "Maximum sending rate exceeded", sandbox: 1 mail per second)
+ * and a spent daily quota (454 "Daily message quota exceeded"). ses-email.transport.ts maps those replies
+ * to the names and status codes below. Broadcasts share the sending budget with verification and reset
+ * mails, so they go one at a time with a pause, and stop for a while as soon as SES throttles.
  */
 
 /** Pause between two broadcast mails: at most 4 per second. */

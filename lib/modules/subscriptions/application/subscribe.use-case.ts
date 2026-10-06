@@ -3,18 +3,15 @@ import { AppError } from "@/lib/modules/shared/app-error";
 import { MainChannelService } from "@/lib/modules/channel";
 import { SubscriptionRepository } from "../infrastructure/subscription.repository";
 import { EmailPreferenceRepository } from "../infrastructure/email-preference.repository";
-import { ResendAudienceGateway } from "../infrastructure/resend-audience.gateway";
 import { normalizeTrustedEmail } from "../domain/email-address";
-import { ProviderSyncStatus } from "../domain/provider-sync-status";
 import { SubscriptionStatusDto } from "./get-subscription-status.use-case";
 
 export type SubscribeInput = {
   trustedEmail: string;
-  audienceGateway?: Pick<ResendAudienceGateway, 'syncExplicitSubscribe'>;
 };
 
 export class SubscribeUseCase {
-  static async execute(ctx: AppContext, input: SubscribeInput): Promise<SubscriptionStatusDto & { message: string; providerSyncStatus: ProviderSyncStatus }> {
+  static async execute(ctx: AppContext, input: SubscribeInput): Promise<SubscriptionStatusDto & { message: string }> {
     const mainChannel = await MainChannelService.getRequired(ctx);
     const userId = (ctx.actor.type === 'user' || ctx.actor.type === 'admin') ? ctx.actor.userId : null;
     if (!userId) {
@@ -56,7 +53,6 @@ export class SubscribeUseCase {
       return { ...result, subscribersCount: syncedChannel.subscribersCount ?? 0 };
     });
 
-    const providerSyncStatus = await (input.audienceGateway ?? new ResendAudienceGateway()).syncExplicitSubscribe(trustedEmail);
     const finalChannel = await MainChannelService.getRequired(ctx);
 
     return {
@@ -66,7 +62,6 @@ export class SubscribeUseCase {
       creatorId: mainChannel.id,
       creatorSlug: mainChannel.slug,
       purpose: "EMAIL_NOTIFICATIONS",
-      providerSyncStatus,
       message: "Email notifications enabled for this channel.",
     };
   }

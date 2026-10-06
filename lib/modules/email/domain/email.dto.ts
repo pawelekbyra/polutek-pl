@@ -48,30 +48,6 @@ export type AdminBroadcastEmailListItemDto = {
   createdById: string | null;
 };
 
-export type ResendWebhookInput = {
-  eventId?: string; // svix-id, used for idempotency
-  type: string;
-  created_at?: string;
-  data: {
-    email_id: string;
-    from?: string;
-    to?: string[];
-    subject?: string;
-    created_at?: string;
-    tags?: Record<string, string>;
-    bounce?: { type?: string; subType?: string; message?: string };
-    [key: string]: unknown;
-  };
-};
-
-export type ResendWebhookResult = {
-  received: boolean;
-  accepted: boolean;
-  ignored?: boolean;
-  duplicate?: boolean;
-  idempotency?: "available" | "not_available" | "best_effort";
-};
-
 export type EmailTemplateDto = {
   id: string;
   slug: string;

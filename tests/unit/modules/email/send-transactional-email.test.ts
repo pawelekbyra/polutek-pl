@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 
 const ORIGINAL_ENV = { ...process.env };
 
@@ -11,11 +11,7 @@ const { emailsSend, contactsCreate, emailTemplateFindUnique, emailPreferenceUpse
   userFindUnique: vi.fn(),
 }));
 
-vi.mock('resend', () => ({
-  Resend: vi.fn().mockImplementation(function () {
-    return { emails: { send: emailsSend }, contacts: { create: contactsCreate } };
-  }),
-}));
+vi.mock('nodemailer', () => ({ default: { createTransport: vi.fn(() => ({ sendMail: emailsSend, close: vi.fn() })) } }));
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -26,7 +22,7 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
-type SentMail = { subject: string; html: string; text: string; headers: Record<string, string>; tags: Array<{ name: string; value: string }> };
+type SentMail = { subject: string; html: string; text: string; headers: Record<string, string> };
 const sent = (index = 0) => emailsSend.mock.calls[index][0] as SentMail;
 
 describe('system emails', () => {
@@ -39,11 +35,12 @@ describe('system emails', () => {
     vi.clearAllMocks();
     process.env = {
       ...ORIGINAL_ENV,
-      RESEND_API_KEY: 'test_key',
+      SES_SMTP_USER: 'test_user',
+      SES_SMTP_PASS: 'test_pass_1234',
       NEXT_PUBLIC_APP_URL: 'https://www.pawelperfect.com',
       EMAIL_UNSUBSCRIBE_SIGNING_SECRET: 'a'.repeat(32),
     };
-    emailsSend.mockResolvedValue({ data: { id: 'email_1' }, error: null });
+    emailsSend.mockResolvedValue({ response: '250 Ok email_1', messageId: '<local@x>' });
     emailTemplateFindUnique.mockResolvedValue(null);
     userFindUnique.mockResolvedValue({ id: 'user_1', name: 'Mr Bean', username: null, isDeleted: false });
   });
@@ -137,6 +134,8 @@ describe('system emails', () => {
   });
 
   it('fills every placeholder, tags the mail and never links to a missing preferences page', async () => {
+    process.env.SES_CONFIGURATION_SET = 'pp-default';
+    onTestFinished(() => { delete process.env.SES_CONFIGURATION_SET; });
     const email = await import('@/lib/modules/email');
     await email.sendBecomePatronEmail('patron@example.com', 10, 'PLN', 'pl');
     await email.sendDonationThankYouEmail('tipper@example.com', 5, 'PLN', 'en');
@@ -146,7 +145,7 @@ describe('system emails', () => {
       expect(input.html).not.toMatch(/\{\{\s*\w+\s*\}\}/);
       expect(input.subject).not.toMatch(/\{\{\s*\w+\s*\}\}/);
       expect(input.html).not.toContain('/profile/settings');
-      expect(input.tags).toContainEqual({ name: 'app', value: 'pawelperfect' });
+      expect(input.headers['X-SES-MESSAGE-TAGS']).toContain('app=pawelperfect');
     }
   });
 
@@ -171,9 +170,9 @@ describe('system emails', () => {
     expect(subscriptionCreate).not.toHaveBeenCalled();
   });
 
-  it('throws when Resend refuses, so callers can log it', async () => {
+  it('throws when SES refuses, so callers can log it', async () => {
     const { sendPasswordChangedEmail } = await import('@/lib/modules/email');
-    emailsSend.mockResolvedValue({ data: null, error: { name: 'validation_error', message: 'bad', statusCode: 422 } });
+    emailsSend.mockRejectedValue(Object.assign(new Error('Message rejected'), { responseCode: 554, response: '554 Message rejected' }));
     await expect(sendPasswordChangedEmail('a@example.com', 'pl')).rejects.toThrow(/password-changed/);
   });
 });

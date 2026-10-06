@@ -695,7 +695,9 @@ function buildSystem(inputs, ctx) {
       s.summary.push(`Logi ${name}: linii z błędem/ostrzeżeniem ${v.problems.length} z ${v.totalLines}${since}`);
       for (const g of aggregateLogLines(v.problems, 4)) s.items.push({ text: `${name} ${g.count}x: ${untrusted(g.pattern, 160)}` });
       // Odrzucone podpisy webhooków: nazwę dostawcy wybieramy z naszej listy, nie kopiujemy tekstu logu.
-      for (const provider of ['Resend', 'Stripe']) {
+      const snsRejected = v.problems.filter((l) => /\[ses-events\]\s*Rejected/i.test(l)).length;
+      if (snsRejected >= 3) d.push(decision('WAŻNE', 'System', `Endpoint SNS (zdarzenia SES) odrzuca wiadomości ${snsRejected} razy w logach ${name}: sprawdź SES_SNS_TOPIC_ARN w app.env i subskrypcję tematu SNS.`));
+      for (const provider of ['Stripe']) {
         const rejected = v.problems.filter((l) => new RegExp(`${provider}\\s*Webhook`, 'i').test(l) && /(signature|verification failed|rejected)/i.test(l)).length;
         if (rejected >= 3) d.push(decision('WAŻNE', 'System', `Webhook ${provider} odrzuca żądania (zły podpis) ${rejected} razy w logach ${name}: sprawdź sekret webhooka ${provider} w app.env i w panelu ${provider}.`));
       }

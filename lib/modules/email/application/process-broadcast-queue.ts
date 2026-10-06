@@ -20,7 +20,7 @@ export type BroadcastRunResult = {
   skipped: number;
   failed: number;
   retried: number;
-  /** Set when Resend said 429: the broadcast waits until then. */
+  /** Set when SES throttled or the quota is spent: the broadcast waits until then. */
   pausedUntil: string | null;
   finished: boolean;
 };
@@ -38,8 +38,8 @@ export type BroadcastQueueDeps = {
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 /**
- * One broadcast mail. The idempotency key makes a resend of the same recipient (a run that died
- * after Resend accepted the mail but before the database said so) a no-op at Resend for 24 h.
+ * One broadcast mail. SES has no idempotency key: a run that dies after SES accepted the mail but before
+ * the database said so can send that one recipient twice (a window of milliseconds).
  */
 export const sendBroadcastMail: SendBroadcastMail = async (broadcast, recipient, nickname) => {
   const userId = recipient.userId;
@@ -117,7 +117,7 @@ export async function processBroadcastQueue(deps: BroadcastQueueDeps): Promise<B
           const verdict = classifySendFailure(outcome.error, attempt);
           if (verdict.kind === "pause") {
             pauseUntil = new Date(now() + verdict.delayMs);
-            logger.warn(`[broadcast] Resend refused (${verdict.reason}); pausing broadcast ${broadcast.id}`);
+            logger.warn(`[broadcast] SES refused (${verdict.reason}); pausing broadcast ${broadcast.id}`);
             break outer;
           }
           if (verdict.kind === "retry") {

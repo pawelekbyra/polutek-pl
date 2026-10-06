@@ -66,21 +66,17 @@ async function Overview() {
     <div className="grid">
       <div className="span-12">
         <div className="tiles" role="group" aria-label="Dostarczalność (30 dni)">
-          <Tile label="Wysłane (30 dni)" value={fmtInt(d.sent)} hint={d.bounceEventsConnected ? "Zdarzenia email.sent od Resend dla maili tej aplikacji (webhook). Otwarć i kliknięć nie śledzimy." : "Zdarzenia z SES nie są podłączone (brak webhooka SNS), więc liczniki zdarzeń pokazują 0. Rozsyłki i ich błędy widać w kolejce niżej."} />
+          <Tile label="Wysłane (30 dni)" value={fmtInt(d.sent)} hint={d.bounceEventsConnected ? "Zdarzenia Send/Delivery/Bounce/Complaint z Amazon SES przez SNS dla maili tej aplikacji. Otwarć i kliknięć nie śledzimy." : d.eventsConfigured ? "SNS skonfigurowany (SES_SNS_TOPIC_ARN), ale nie dotarło jeszcze żadne zdarzenie: liczniki pokazują 0. Rozsyłki i ich błędy widać w kolejce niżej." : "Zdarzenia odbić/skarg: nie podłączone (brak SES_SNS_TOPIC_ARN). Liczniki zdarzeń pokazują 0. Rozsyłki i ich błędy widać w kolejce niżej."} />
           <Tile label="Doręczone" value={d.sent ? fmtOne((d.delivered / d.sent) * 100) : "—"} unit={d.sent ? "%" : undefined} delta={<span className="delta-ctx">{fmtInt(d.delivered)} z {fmtInt(d.sent)}</span>} />
-          <Tile label="Odbicia" value={pct(d.bounceRate)} unit={d.bounceRate === null ? undefined : "%"} delta={<State kind={bounceKind}>{`cel poniżej ${d.limits.bounceTarget}%`}</State>} />
-          <Tile label="Skargi na spam" value={d.complaintRate === null ? "—" : d.complaintRate.toFixed(2).replace(".", ",")} unit={d.complaintRate === null ? undefined : "%"} delta={<State kind={complaintKind}>{`cel poniżej ${String(d.limits.complaintTarget).replace(".", ",")}%`}</State>} />
+          <Tile label="Odbicia" value={pct(d.bounceRate)} unit={d.bounceRate === null ? undefined : "%"} delta={<State kind={bounceKind}>{`${fmtInt(d.bounced)} twardych (cel poniżej ${d.limits.bounceTarget}%)${d.transientBounces ? `, ${fmtInt(d.transientBounces)} chwilowych` : ""}`}</State>} />
+          <Tile label="Skargi na spam" value={d.complaintRate === null ? "—" : d.complaintRate.toFixed(2).replace(".", ",")} unit={d.complaintRate === null ? undefined : "%"} delta={<State kind={complaintKind}>{`${fmtInt(d.complained)} skarg (cel poniżej ${String(d.limits.complaintTarget).replace(".", ",")}%)`}</State>} />
         </div>
       </div>
       <div className="span-5 stack">
-        <Card id="h-rl" title={`Limit wysyłki ${d.limits.provider === "ses" ? "Amazon SES" : "Resend"}`}>
+        <Card id="h-rl" title="Limit wysyłki Amazon SES">
           <div className="limit"><div className="limit-head"><span className="limit-name">Dziś (doba UTC)</span><span className="limit-val">{d.sentToday} / {d.limits.perDay}</span></div><Meter percent={dayPct} label="E-maile dziś" valueText={`${d.sentToday} z ${d.limits.perDay}`} warnAt={70} critAt={90} /></div>
           <div className="limit"><div className="limit-head"><span className="limit-name">Ten miesiąc</span><span className="limit-val">{fmtInt(d.sentMonth)} / {fmtInt(d.limits.perMonth)}</span></div><Meter percent={monthPct} label="E-maile w miesiącu" valueText={`${d.sentMonth} z ${d.limits.perMonth}`} warnAt={70} critAt={90} /></div>
-          {d.bounceEventsConnected ? (
-            <p className="limit-note">Plan Free; zmiana planu: EMAIL_DAILY_LIMIT / EMAIL_MONTHLY_LIMIT w admin.env (działają też stare RESEND_*). Liczone ze zdarzeń webhooka{d.lastEventAt ? `, ostatnie ${fmtRelative(d.lastEventAt, now)}` : ", brak zdarzeń"}.</p>
-          ) : (
-            <p className="limit-note">Amazon SES: limity z EMAIL_DAILY_LIMIT / EMAIL_MONTHLY_LIMIT (sandbox: ok. 200 dziennie, 1 na sekundę; po zgodzie produkcyjnej ustaw limit z konsoli SES). Zdarzenia odbić i skarg: nie podłączone; liczniki dnia i miesiąca nie są tu wiarygodne.</p>
-          )}
+          <p className="limit-note">Amazon SES: limity z EMAIL_DAILY_LIMIT / EMAIL_MONTHLY_LIMIT (sandbox: ok. 200 dziennie, 1 na sekundę; po zgodzie produkcyjnej ustaw limit z konsoli SES). Liczone ze zdarzeń SNS{d.lastEventAt ? `, ostatnie ${fmtRelative(d.lastEventAt, now)}` : ", brak zdarzeń"}.{d.bounceEventsConnected ? "" : " Zdarzenia odbić i skarg: nie podłączone, więc liczniki dnia i miesiąca nie są wiarygodne."}</p>
         </Card>
         <Card id="h-pps" title="PP Support" foot={<ExternalLink className="btn btn-sm" href="https://support.pawelperfect.com" hint="skrzynka za Cloudflare Access, nowa karta">Otwórz skrzynkę</ExternalLink>}>
           <p className="text-2">Poczta przychodząca (support@, hello@) trafia do PP Support. Liczby wątków pojawią się na tym ekranie z kolektorem (API wymaga tokenu agenta, którego panel nie przechowuje).</p>
@@ -95,7 +91,7 @@ async function Overview() {
           </dl>
         </Card>
         <Card id="h-dns" title="Dostarczalność i DNS poczty">
-          <p className="text-2">SPF, DKIM i DMARC nie są sprawdzane przez panel (nie odpytuje DNS przy wyświetlaniu). Stan rekordów i zasady rozgrzewania domeny: docs/operations/EMAIL_DELIVERABILITY.md; weryfikacja domeny w panelu dostawcy (Resend albo Amazon SES, patrz docs/operations/EMAIL_SES.md).</p>
+          <p className="text-2">SPF, DKIM i DMARC nie są sprawdzane przez panel (nie odpytuje DNS przy wyświetlaniu). Stan rekordów i zasady rozgrzewania domeny: docs/operations/EMAIL_DELIVERABILITY.md; weryfikacja domeny i zdarzenia SNS: docs/operations/EMAIL_SES.md.</p>
         </Card>
       </div>
     </div>

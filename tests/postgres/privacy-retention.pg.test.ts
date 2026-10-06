@@ -1,7 +1,7 @@
 /**
  * Account deletion and the retention jobs on a real Postgres (CI job "integration-postgres", after
  * `prisma migrate deploy`): real rows, real foreign keys, the new ResendContactRemoval table and the
- * User Terms columns. RESEND_AUDIENCE_ID is not set in CI, so contact removals settle as NOT_CONFIGURED.
+ * User Terms columns.
  *
  *   DATABASE_URL=postgresql://... npx vitest run --config vitest.postgres.config.ts
  */

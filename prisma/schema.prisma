@@ -446,8 +446,8 @@ model Creator {
   subscriptions           Subscription[]
 }
 
-/// An address whose Resend Audience contact must still be removed (account deletion while Resend
-/// was unreachable). Retried by /api/cron/retention; the row is deleted once Resend confirms.
+/// LEGACY (Resend was removed): no code reads or writes this table any more. Kept, empty or not, so no
+/// destructive migration is needed; drop it in a later cleanup migration.
 model ResendContactRemoval {
   id            String   @id @default(uuid())
   email         String   @unique
@@ -1080,7 +1080,7 @@ model EmailSuppression {
   firstSeenAt     DateTime               @default(now())
   lastSeenAt      DateTime               @updatedAt
   providerEmailId String?
-  source          String                 @default("RESEND_WEBHOOK")
+  source          String                 @default("RESEND_WEBHOOK") // legacy default; SES events write "SES_SNS"
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
 

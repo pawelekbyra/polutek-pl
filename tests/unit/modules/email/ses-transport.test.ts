@@ -1,23 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { sendMail, createTransport, close, resendCtor, resendSend } = vi.hoisted(() => ({
+const { sendMail, createTransport, close } = vi.hoisted(() => ({
   sendMail: vi.fn(),
   close: vi.fn(),
   createTransport: vi.fn(),
-  resendCtor: vi.fn(),
-  resendSend: vi.fn(),
 }));
 
 vi.mock('nodemailer', () => {
   createTransport.mockImplementation(() => ({ sendMail, close }));
   return { default: { createTransport } };
 });
-vi.mock('resend', () => ({
-  Resend: vi.fn().mockImplementation(function () {
-    resendCtor();
-    return { emails: { send: resendSend } };
-  }),
-}));
 
 import { sendEmail } from '@/lib/modules/email/infrastructure/email.transport';
 import { mapSesError, resetSesTransportForTests } from '@/lib/modules/email/infrastructure/ses-email.transport';
@@ -27,12 +19,11 @@ import { logger } from '@/lib/logger';
 const base = { to: 'a@example.com', subject: 's', html: '<p>x</p>', language: 'pl' as const, kind: 'verify-email' };
 const SECRET = 'SuperSecretSesPassword987';
 
-describe('SES transport (EMAIL_PROVIDER=ses, nodemailer mocked)', () => {
+describe('SES transport (the only transport, nodemailer mocked)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     createTransport.mockImplementation(() => ({ sendMail, close }));
     resetSesTransportForTests();
-    process.env.EMAIL_PROVIDER = 'ses';
     process.env.SES_SMTP_USER = 'AKIAEXAMPLEUSER';
     process.env.SES_SMTP_PASS = SECRET;
     delete process.env.AWS_REGION;
@@ -44,12 +35,11 @@ describe('SES transport (EMAIL_PROVIDER=ses, nodemailer mocked)', () => {
     sendMail.mockResolvedValue({ response: '250 Ok 0100019abc-1111-2222-000000', messageId: '<local@x>' });
   });
   afterEach(() => {
-    delete process.env.EMAIL_PROVIDER;
     delete process.env.SES_SMTP_USER;
     delete process.env.SES_SMTP_PASS;
   });
 
-  it('opens a pooled STARTTLS connection on 587 to the Stockholm endpoint and never calls Resend', async () => {
+  it('opens a pooled STARTTLS connection on 587 to the Stockholm endpoint', async () => {
     const result = await sendEmail(base);
     expect(result).toEqual({ ok: true, id: '0100019abc-1111-2222-000000' });
     expect(createTransport).toHaveBeenCalledTimes(1);
@@ -62,8 +52,6 @@ describe('SES transport (EMAIL_PROVIDER=ses, nodemailer mocked)', () => {
       auth: { user: 'AKIAEXAMPLEUSER', pass: SECRET },
     });
     expect(createTransport.mock.calls[0][0].connectionTimeout).toBeGreaterThan(0);
-    expect(resendCtor).not.toHaveBeenCalled();
-    expect(resendSend).not.toHaveBeenCalled();
     await sendEmail(base);
     expect(createTransport).toHaveBeenCalledTimes(1); // transporter is reused
   });
@@ -168,34 +156,12 @@ describe('SES transport (EMAIL_PROVIDER=ses, nodemailer mocked)', () => {
   });
 });
 
-describe('provider switch', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    resetSesTransportForTests();
-    process.env.RESEND_API_KEY = 're_test';
-    resendSend.mockResolvedValue({ data: { id: 'email_1' }, error: null });
-  });
-  afterEach(() => {
-    delete process.env.EMAIL_PROVIDER;
-  });
-
-  it.each([[undefined], [''], ['resend'], ['RESEND'], ['bogus']])('EMAIL_PROVIDER=%j sends through Resend and never touches SES', async (value) => {
-    if (value === undefined) delete process.env.EMAIL_PROVIDER;
-    else process.env.EMAIL_PROVIDER = value;
-    expect(await sendEmail(base)).toEqual({ ok: true, id: 'email_1' });
-    expect(resendSend).toHaveBeenCalledTimes(1);
-    expect(createTransport).not.toHaveBeenCalled();
-  });
-
-  it('EMAIL_PROVIDER=ses (any case) switches to SES', async () => {
-    process.env.EMAIL_PROVIDER = ' SES ';
-    process.env.SES_SMTP_USER = 'u-user';
-    process.env.SES_SMTP_PASS = 'p-pass-1234';
-    sendMail.mockResolvedValue({ response: '250 Ok abc', messageId: '<m>' });
-    await sendEmail(base);
-    expect(sendMail).toHaveBeenCalledTimes(1);
-    expect(resendSend).not.toHaveBeenCalled();
-    delete process.env.SES_SMTP_USER;
-    delete process.env.SES_SMTP_PASS;
+describe('Resend is gone', () => {
+  it('no Resend package, no provider switch in the code', async () => {
+    const fs = await import('node:fs');
+    const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+    expect({ ...pkg.dependencies, ...pkg.devDependencies }).not.toHaveProperty('resend');
+    const config = fs.readFileSync('lib/email-config.ts', 'utf8');
+    expect(config).not.toMatch(/EMAIL_PROVIDER|RESEND/);
   });
 });

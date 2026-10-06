@@ -51,8 +51,8 @@ albo znika w tym samym PR. Historia jest w git.
 | Wydajność: test obciążenia, ilu widzów wytrzymuje serwer | [`operations/LOAD-TEST.md`](operations/LOAD-TEST.md) |
 | Wideo: upload, kodowanie, diagnostyka | [`operations/VIDEO-PIPELINE.md`](operations/VIDEO-PIPELINE.md) |
 | Wideo: dostarczanie HLS, Worker, R2 | [`operations/HLS-SELF-HOSTED.md`](operations/HLS-SELF-HOSTED.md) |
-| Poczta: domeny, DNS, Resend, routing | [`operations/EMAIL_SETUP.md`](operations/EMAIL_SETUP.md) |
-| Poczta: Amazon SES (przełącznik, dane SMTP, sandbox, test, przełączenie PP Support) | [`operations/EMAIL_SES.md`](operations/EMAIL_SES.md) |
+| Poczta: domeny, DNS, routing | [`operations/EMAIL_SETUP.md`](operations/EMAIL_SETUP.md) |
+| Poczta wychodząca: Amazon SES (SMTP, SNS, sandbox, test, przełączenie PP Support) | [`operations/EMAIL_SES.md`](operations/EMAIL_SES.md) |
 | Poczta: dostarczalność | [`operations/EMAIL_DELIVERABILITY.md`](operations/EMAIL_DELIVERABILITY.md) |
 | PP Support: runbook | [`operations/SUPPORT-CENTER.md`](operations/SUPPORT-CENTER.md) |
 | PP Support: przewodnik dla właściciela i obsługi | [`operations/PP-SUPPORT-GUIDE.md`](operations/PP-SUPPORT-GUIDE.md) |

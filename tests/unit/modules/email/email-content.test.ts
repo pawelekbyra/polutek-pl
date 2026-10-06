@@ -2,11 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { emailsSend } = vi.hoisted(() => ({ emailsSend: vi.fn() }));
 
-vi.mock('resend', () => ({
-  Resend: vi.fn().mockImplementation(function () {
-    return { emails: { send: emailsSend } };
-  }),
-}));
+vi.mock('nodemailer', () => ({ default: { createTransport: vi.fn(() => ({ sendMail: emailsSend, close: vi.fn() })) } }));
 vi.mock('@/lib/feature-flags', () => ({ flags: { mainCreatorSlug: 'polutek' } }));
 vi.mock('@/lib/prisma', () => ({ prisma: {} }));
 
@@ -81,8 +77,9 @@ describe('default templates are not shouty', () => {
 describe('the transport sends a deliverability-friendly message', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.RESEND_API_KEY = 'test_key';
-    emailsSend.mockResolvedValue({ data: { id: 'email_1' }, error: null });
+    process.env.SES_SMTP_USER = 'test_user';
+    process.env.SES_SMTP_PASS = 'test_pass_1234';
+    emailsSend.mockResolvedValue({ response: '250 Ok email_1', messageId: '<local@x>' });
   });
 
   it('sends multipart text + full HTML with Auto-Submitted and a unique X-Entity-Ref-ID, no List-Unsubscribe on security mail', async () => {

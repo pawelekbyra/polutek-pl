@@ -6,9 +6,9 @@ const byId = (checks: ReturnType<typeof buildIntegrationChecks>, id: string) => 
 
 describe("integration status never leaks a secret", () => {
   it("reads only the public prefix of the Stripe key and never echoes any value", () => {
-    const env = { STRIPE_SECRET_KEY: "sk_live_SECRETSECRETSECRET", RESEND_API_KEY: "re_SECRETVALUE", CLOUDFLARE_R2_SECRET_ACCESS_KEY: "r2secretvalue", ADMIN_AUTH_SECRET: "x".repeat(40), NODE_ENV: "production" };
+    const env = { STRIPE_SECRET_KEY: "sk_live_SECRETSECRETSECRET", SES_SMTP_PASS: "SECRETSMTPVALUE", CLOUDFLARE_R2_SECRET_ACCESS_KEY: "r2secretvalue", ADMIN_AUTH_SECRET: "x".repeat(40), NODE_ENV: "production" };
     const text = JSON.stringify(buildIntegrationChecks(env, last));
-    for (const secret of ["SECRETSECRETSECRET", "re_SECRETVALUE", "r2secretvalue", "x".repeat(40)]) expect(text).not.toContain(secret);
+    for (const secret of ["SECRETSECRETSECRET", "SECRETSMTPVALUE", "r2secretvalue", "x".repeat(40)]) expect(text).not.toContain(secret);
     expect(stripeKeyFacts(env.STRIPE_SECRET_KEY)).toEqual({ present: true, mode: "live", restricted: false });
     expect(stripeKeyFacts("rk_test_abc")).toEqual({ present: true, mode: "test", restricted: true });
     expect(stripeKeyFacts("")).toEqual({ present: false, mode: "unknown", restricted: false });
@@ -28,12 +28,16 @@ describe("integration status never leaks a secret", () => {
     expect(byId(buildIntegrationChecks({ NODE_ENV: "production" }, last), "access").kind).toBe("crit");
   });
 
-  it("is provider-aware: Resend by default, SES says plainly that bounce events are not connected", () => {
-    expect(byId(buildIntegrationChecks({ RESEND_API_KEY: "re_x" }, last), "resend")).toMatchObject({ kind: "ok", label: "Resend (e-mail)" });
-    expect(byId(buildIntegrationChecks({ EMAIL_PROVIDER: "ses" }, last), "resend")).toMatchObject({ kind: "warn", label: "Amazon SES (e-mail)", detail: expect.stringContaining("nie podłączone") });
-    const ses = byId(buildIntegrationChecks({ EMAIL_PROVIDER: "ses", SES_SMTP_USER: "AKIAUSERSECRET", SES_SMTP_PASS: "passSECRET123" }, last), "resend");
-    expect(ses.kind).toBe("ok");
-    expect(JSON.stringify(ses)).not.toContain("passSECRET123");
-    expect(ses.detail).toContain("zdarzenia odbić/skarg: nie podłączone");
+  it("shows Amazon SES and says plainly whether bounce events are connected", () => {
+    expect(byId(buildIntegrationChecks({}, last), "ses")).toMatchObject({ kind: "warn", label: "Amazon SES (e-mail)", detail: expect.stringContaining("nie podłączone") });
+    const creds = { SES_SMTP_USER: "AKIAUSERSECRET", SES_SMTP_PASS: "passSECRET123" };
+    const noTopic = byId(buildIntegrationChecks(creds, last), "ses");
+    expect(noTopic.kind).toBe("warn");
+    expect(JSON.stringify(noTopic)).not.toContain("passSECRET123");
+    const topic = { ...creds, SES_SNS_TOPIC_ARN: "arn:aws:sns:eu-north-1:123456789012:ses-events" };
+    expect(byId(buildIntegrationChecks(topic, last), "ses").detail).toContain("skonfigurowane");
+    const live = byId(buildIntegrationChecks(topic, { ...last, emailEventAt: new Date("2026-10-05T08:00:00Z") }), "ses");
+    expect(live).toMatchObject({ kind: "ok", lastAt: "2026-10-05T08:00:00.000Z" });
+    expect(live.detail).toContain("podłączone (SNS)");
   });
 });

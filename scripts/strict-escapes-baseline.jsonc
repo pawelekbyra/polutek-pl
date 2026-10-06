@@ -162,27 +162,6 @@
       "reason": "Debt baselined/reconciled by CI-SIGNAL-RECONCILIATION-002; must be removed when the underlying debt is fixed."
     },
     {
-      "file": "lib/modules/email/application/handle-resend-webhook.use-case.ts",
-      "line": 52,
-      "label": "explicit any annotation",
-      "text": "created_at: (input as any).created_at,",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/email/application/handle-resend-webhook.use-case.ts",
-      "line": 219,
-      "label": "explicit any annotation",
-      "text": "status: recipient.status as any",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
-      "file": "lib/modules/email/application/handle-resend-webhook.use-case.ts",
-      "line": 222,
-      "label": "explicit any annotation",
-      "text": "status: status as any,",
-      "reason": "Historical pre-existing strict-escapes debt baselined by CI-SIGNAL-RESTORATION-001; must be removed when the underlying debt is fixed."
-    },
-    {
       "file": "lib/modules/email/domain/email.dto.ts",
       "line": 77,
       "label": "explicit any annotation",

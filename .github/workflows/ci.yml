@@ -20,7 +20,8 @@ env:
   STRIPE_SECRET_KEY: sk_test_stripe
   STRIPE_WEBHOOK_SECRET: whsec_stripe
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_stripe
-  RESEND_API_KEY: re_example
+  SES_SMTP_USER: ses_user_example
+  SES_SMTP_PASS: ses_pass_example
   EMAIL_FROM: notifications@example.com
   ADMIN_EMAIL: admin@example.com
   MAIN_CREATOR_SLUG: ci-creator

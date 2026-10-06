@@ -2,11 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { emailsSend } = vi.hoisted(() => ({ emailsSend: vi.fn() }));
 
-vi.mock('resend', () => ({
-  Resend: vi.fn().mockImplementation(function () {
-    return { emails: { send: emailsSend } };
-  }),
-}));
+vi.mock('nodemailer', () => ({ default: { createTransport: vi.fn(() => ({ sendMail: emailsSend, close: vi.fn() })) } }));
 
 import { sendEmail } from '@/lib/modules/email/infrastructure/email.transport';
 
@@ -15,9 +11,10 @@ const base = { to: 'a@example.com', subject: 's', html: '<p>x</p>', language: 'p
 describe('every automatic mail goes through one transport', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.RESEND_API_KEY = 'test_key';
+    process.env.SES_SMTP_USER = 'test_user';
+    process.env.SES_SMTP_PASS = 'test_pass_1234';
     delete process.env.EMAIL_REPLY_TO;
-    emailsSend.mockResolvedValue({ data: { id: 'email_1' }, error: null });
+    emailsSend.mockResolvedValue({ response: '250 Ok email_1', messageId: '<local@x>' });
   });
 
   it('replies go to support@ by default, and EMAIL_REPLY_TO overrides it', async () => {
@@ -28,10 +25,12 @@ describe('every automatic mail goes through one transport', () => {
     expect(emailsSend.mock.calls[1][0]).toMatchObject({ replyTo: 'team@pawelperfect.com' });
   });
 
-  it('tags the mail as ours (the webhook ignores everything else) and adds a plain-text part', async () => {
+  it('tags the mail through X-SES-MESSAGE-TAGS (only with a configuration set) and adds a plain-text part', async () => {
+    process.env.SES_CONFIGURATION_SET = 'pp-default';
     await sendEmail({ ...base, kind: 'verify-email' });
+    delete process.env.SES_CONFIGURATION_SET;
     const sent = emailsSend.mock.calls[0][0];
-    expect(sent.tags).toEqual([{ name: 'app', value: 'pawelperfect' }, { name: 'kind', value: 'verify-email' }]);
+    expect(sent.headers['X-SES-MESSAGE-TAGS']).toBe('app=pawelperfect, kind=verify-email');
     expect(sent.text).toContain('x');
     expect(sent.html).toMatch(/^<!DOCTYPE html>/);
   });
@@ -47,17 +46,16 @@ describe('every automatic mail goes through one transport', () => {
     });
   });
 
-  it('passes the idempotency key to Resend and strips line breaks from the subject', async () => {
-    await sendEmail({ ...base, subject: 'Hello\r\nBcc: x@example.com', idempotencyKey: 'broadcast/b/r' });
+  it('strips line breaks from the subject', async () => {
+    await sendEmail({ ...base, subject: 'Hello\r\nBcc: x@example.com' });
     expect(emailsSend.mock.calls[0][0].subject).toBe('Hello Bcc: x@example.com');
-    expect(emailsSend.mock.calls[0][1]).toEqual({ idempotencyKey: 'broadcast/b/r' });
   });
 
   it('reports a provider error instead of throwing', async () => {
-    emailsSend.mockResolvedValueOnce({ data: null, error: { name: 'rate_limit_exceeded', message: 'Too many', statusCode: 429 } });
-    await expect(sendEmail(base)).resolves.toEqual({ ok: false, error: { name: 'rate_limit_exceeded', message: 'Too many', statusCode: 429 } });
+    emailsSend.mockRejectedValueOnce(Object.assign(new Error('Throttling'), { responseCode: 454, response: '454 Throttling failure: Maximum sending rate exceeded' }));
+    const throttled = await sendEmail(base);
+    expect(throttled).toMatchObject({ ok: false, error: { name: 'rate_limit_exceeded', statusCode: 429 } });
     emailsSend.mockRejectedValueOnce(new Error('socket hang up'));
-    const network = await sendEmail(base);
-    expect(network.ok).toBe(false);
+    expect((await sendEmail(base)).ok).toBe(false);
   });
 });

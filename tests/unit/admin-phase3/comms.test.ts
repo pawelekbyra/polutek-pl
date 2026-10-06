@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { getDeliverability, getEmailTemplateDefault, getSuppressions, previewEmailTemplate, resendLimits } from "@/lib/modules/email";
+import { getDeliverability, getEmailTemplateDefault, getSuppressions, previewEmailTemplate, emailLimits } from "@/lib/modules/email";
 import { hasChanges, lineDiff } from "@admin/lib/text-diff";
 import type { AppContext } from "@/lib/modules/shared/app-context";
 
@@ -58,8 +58,8 @@ describe("deliverability and suppressions", () => {
     const d = await getDeliverability(mk(prisma));
     expect(d).toMatchObject({ sent: 200, bounced: 6, bounceRate: 3, complaintRate: 0.5, sentToday: 12, sentMonth: 140, broadcastRecipients: { sent: 8, pending: 2, failed: 1 } });
     await expect(getDeliverability(mk(prisma, { type: "user", userId: "u" }))).rejects.toThrow("Only admins");
-    expect(resendLimits({ RESEND_DAILY_LIMIT: "1000" })).toMatchObject({ perDay: 1000, perMonth: 3000 });
-    expect(resendLimits({ RESEND_DAILY_LIMIT: "abc" }).perDay).toBe(100);
+    expect(emailLimits({ EMAIL_DAILY_LIMIT: "1000" })).toMatchObject({ perDay: 1000, perMonth: 6000 });
+    expect(emailLimits({ EMAIL_DAILY_LIMIT: "abc" }).perDay).toBe(200);
   });
 
   it("lists blocks and unsubscribes with counts", async () => {
@@ -76,10 +76,11 @@ describe("deliverability and suppressions", () => {
 describe("sendBroadcastTest with a panel recipient", () => {
   it("never looks up a site user and carries the generic unsubscribe page (no token for a panel id)", async () => {
     vi.resetModules();
-    const send = vi.fn(async () => ({ data: { id: "e1" }, error: null }));
-    vi.doMock("resend", () => ({ Resend: class { emails = { send }; } }));
+    const send = vi.fn(async () => ({ response: "250 Ok e1", messageId: "<x>" }));
+    vi.doMock("nodemailer", () => ({ default: { createTransport: () => ({ sendMail: send, close: () => undefined }) } }));
     vi.doMock("@/lib/modules/audit", () => ({ recordAuditEvent: vi.fn(async () => undefined) }));
-    process.env.RESEND_API_KEY = "test_key";
+    process.env.SES_SMTP_USER = "test_user";
+    process.env.SES_SMTP_PASS = "test_pass_1234";
     process.env.NEXT_PUBLIC_APP_URL = "https://www.pawelperfect.com";
     const { sendBroadcastTest } = await import("@/lib/modules/email");
     const findUnique = vi.fn();
@@ -87,12 +88,12 @@ describe("sendBroadcastTest with a panel recipient", () => {
     const r = await sendBroadcastTest(ctx, { subjectPl: "T", htmlPl: "<p>x</p>", language: "pl", recipient: { email: "owner@example.com", name: "Właściciel" } });
     expect(r.ok).toBe(true);
     expect(findUnique).not.toHaveBeenCalled();
-    const sent = send.mock.calls[0] as unknown as [{ to: string[]; subject: string; headers: Record<string, string> }];
-    expect(sent[0].to).toEqual(["owner@example.com"]);
+    const sent = send.mock.calls[0] as unknown as [{ to: string; subject: string; headers: Record<string, string> }];
+    expect(sent[0].to).toBe("owner@example.com");
     expect(sent[0].subject).toBe("[TEST] T");
     expect(sent[0].headers["List-Unsubscribe"]).toContain("/unsubscribe");
     expect(sent[0].headers["List-Unsubscribe"]).not.toContain("token=");
-    vi.doUnmock("resend");
+    vi.doUnmock("nodemailer");
     vi.doUnmock("@/lib/modules/audit");
   });
 });

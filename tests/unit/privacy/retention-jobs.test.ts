@@ -4,14 +4,6 @@ import { createAppContext } from "@/lib/modules/shared/app-context";
 import { anonymizeOldTechnicalData, TECHNICAL_DATA_RETENTION_DAYS } from "@/lib/modules/privacy";
 import { pruneExpiredAuthRecords } from "@/lib/auth/prune-expired";
 
-const gateway = vi.hoisted(() => ({ removeContact: vi.fn() }));
-vi.mock("@/lib/modules/subscriptions/infrastructure/resend-audience.gateway", () => ({
-  ResendAudienceGateway: class {
-    removeContact = gateway.removeContact;
-  },
-}));
-
-import { processContactRemovals, contactRemovalBackoffMs } from "@/lib/modules/subscriptions";
 import { GET as retentionCron } from "@/app/api/cron/retention/route";
 import { GET as pruneExpiredAuthCron } from "@/app/api/cron/prune-expired-auth/route";
 
@@ -121,41 +113,6 @@ describe("expired sign-in sessions and e-mail tokens are deleted", () => {
     expect(result).toEqual({ sessionsDeleted: 1, verificationsDeleted: 1, expiredBefore: NOW.toISOString() });
     expect(prisma.session.rows.map((r) => r.id)).toEqual(["live"]);
     expect(prisma.verification.rows.map((r) => r.id)).toEqual(["live"]);
-  });
-});
-
-describe("queued Resend Audience contact removals", () => {
-  function db(rows: Row[], preferences: Row[] = []) {
-    return { resendContactRemoval: table(rows), emailPreference: table(preferences) };
-  }
-
-  beforeEach(() => gateway.removeContact.mockReset());
-
-  it("removes due contacts and forgets them once Resend confirms", async () => {
-    gateway.removeContact.mockResolvedValue("SYNCED");
-    const prisma = db([{ id: "r1", email: "a@b.pl", attempts: 0, nextAttemptAt: ago(1) }, { id: "r2", email: "later@b.pl", attempts: 2, nextAttemptAt: new Date(NOW.getTime() + DAY) }]);
-    const result = await processContactRemovals(systemCtx(prisma));
-    expect(result).toEqual({ removed: 1, failed: 0, skipped: 0 });
-    expect(gateway.removeContact).toHaveBeenCalledWith("a@b.pl");
-    expect(prisma.resendContactRemoval.rows.map((r) => r.id)).toEqual(["r2"]);
-  });
-
-  it("keeps a failed removal queued with a growing delay, capped at one day", async () => {
-    gateway.removeContact.mockResolvedValue("FAILED");
-    const prisma = db([{ id: "r1", email: "a@b.pl", attempts: 2, nextAttemptAt: ago(0) }]);
-    const result = await processContactRemovals(systemCtx(prisma));
-    expect(result).toEqual({ removed: 0, failed: 1, skipped: 0 });
-    expect(prisma.resendContactRemoval.rows[0]).toMatchObject({ attempts: 3, nextAttemptAt: new Date(NOW.getTime() + 4 * 60 * 60 * 1000) });
-    expect(contactRemovalBackoffMs(1)).toBe(60 * 60 * 1000);
-    expect(contactRemovalBackoffMs(30)).toBe(DAY);
-  });
-
-  it("does not remove the contact of someone who signed up again with the address and opted in", async () => {
-    const prisma = db([{ id: "r1", email: "a@b.pl", attempts: 0, nextAttemptAt: ago(1) }], [{ id: "p", email: "a@b.pl", userId: "new-user", marketingEmails: true }]);
-    const result = await processContactRemovals(systemCtx(prisma));
-    expect(result).toEqual({ removed: 0, failed: 0, skipped: 1 });
-    expect(gateway.removeContact).not.toHaveBeenCalled();
-    expect(prisma.resendContactRemoval.rows).toHaveLength(0);
   });
 });
 

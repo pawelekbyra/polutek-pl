@@ -1,7 +1,7 @@
 /**
  * Poranny raport e-mailem: BUILT, DISABLED by default. It is sent only when ADMIN_MORNING_REPORT=on AND
  * ADMIN_MORNING_REPORT_TO is a valid address; every other state (including tests) returns "disabled" without
- * touching the mail transport. The mail transport is injected (a mock in tests); nothing here calls Resend itself.
+ * touching the mail transport. The mail transport is injected (a mock in tests); nothing here calls the mail provider itself.
  * Content: yesterday (Europe/Warsaw) against the day before and the same weekday a week earlier; every missing
  * measurement is written as "bez pomiaru", small samples carry a warning.
  */

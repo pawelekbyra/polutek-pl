@@ -1,15 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { bounceEventsConnected, emailSendLimits, getEmailFrom, getEmailReplyTo, getEmailSupportFrom, getSesSmtpConfig, resolveEmailProvider } from '@/lib/email-config';
+import { emailSendLimits, getEmailFrom, getEmailReplyTo, getEmailSupportFrom, getSesSmtpConfig, getSnsConfig } from '@/lib/email-config';
 import { validateAppEnv } from '@/lib/env/validation';
 
 describe('email config', () => {
-  it('defaults to resend until the owner flips the switch', () => {
-    expect(resolveEmailProvider({})).toBe('resend');
-    expect(resolveEmailProvider({ EMAIL_PROVIDER: 'ses' })).toBe('ses');
-    expect(bounceEventsConnected({ EMAIL_PROVIDER: 'ses' })).toBe(false);
-    expect(bounceEventsConnected({})).toBe(true);
-  });
-
   it('sender addresses come from one place with sane defaults', () => {
     expect(getEmailFrom({})).toBe('Pawel Perfect <no-reply@pawelperfect.com>');
     expect(getEmailReplyTo({})).toBe('support@pawelperfect.com');
@@ -17,12 +10,17 @@ describe('email config', () => {
     expect(getEmailFrom({ EMAIL_FROM: 'X <x@pawelperfect.com>' })).toBe('X <x@pawelperfect.com>');
   });
 
-  it('limits: EMAIL_* wins, RESEND_* still works, defaults per provider', () => {
-    expect(emailSendLimits({})).toMatchObject({ perDay: 100, perMonth: 3000, provider: 'resend' });
-    expect(emailSendLimits({ RESEND_DAILY_LIMIT: '500' }).perDay).toBe(500);
-    expect(emailSendLimits({ RESEND_DAILY_LIMIT: '500', EMAIL_DAILY_LIMIT: '900' }).perDay).toBe(900);
-    expect(emailSendLimits({ EMAIL_PROVIDER: 'ses' })).toMatchObject({ perDay: 200, provider: 'ses' });
-    expect(emailSendLimits({ EMAIL_DAILY_LIMIT: 'abc' }).perDay).toBe(100);
+  it('limits: EMAIL_* variables with the SES sandbox as default', () => {
+    expect(emailSendLimits({})).toMatchObject({ perDay: 200, perMonth: 6000 });
+    expect(emailSendLimits({ EMAIL_DAILY_LIMIT: '900', EMAIL_MONTHLY_LIMIT: '20000' })).toMatchObject({ perDay: 900, perMonth: 20000 });
+    expect(emailSendLimits({ EMAIL_DAILY_LIMIT: 'abc' }).perDay).toBe(200);
+    expect(emailSendLimits({ RESEND_DAILY_LIMIT: '500' }).perDay).toBe(200); // old Resend names are gone
+  });
+
+  it('SNS config: topic allowlist (comma separated), regions default to AWS_REGION', () => {
+    expect(getSnsConfig({})).toEqual({ topicArns: [], regions: ['eu-north-1'] });
+    expect(getSnsConfig({ SES_SNS_TOPIC_ARN: ' a , b ', AWS_REGION: 'eu-west-1' })).toEqual({ topicArns: ['a', 'b'], regions: ['eu-west-1'] });
+    expect(getSnsConfig({ SES_SNS_REGIONS: 'eu-north-1, us-east-1' }).regions).toEqual(['eu-north-1', 'us-east-1']);
   });
 
   it('SES SMTP config needs both credentials', () => {
@@ -31,7 +29,7 @@ describe('email config', () => {
   });
 });
 
-describe('env validation per mail provider (production)', () => {
+describe('env validation (production)', () => {
   const base = {
     NODE_ENV: 'production', DATABASE_URL: 'postgresql://u:p@h:5432/a', DATABASE_URL_UNPOOLED: 'postgresql://u:p@h:5432/a',
     NEXT_PUBLIC_APP_URL: 'https://example.com', BETTER_AUTH_SECRET: '0123456789abcdef0123456789abcdef0123',
@@ -42,26 +40,15 @@ describe('env validation per mail provider (production)', () => {
     UPSTASH_REDIS_REST_URL: 'https://r.example.com', UPSTASH_REDIS_REST_TOKEN: 't', HLS_TOKEN_SECRET: 'hls-token-secret-0123456789abcdef0123456789',
   };
 
-  it('resend (default): RESEND_API_KEY required, SES variables not', () => {
+  it('requires the SES SMTP credentials and nothing about Resend', () => {
     const r = validateAppEnv(base, 'production');
-    expect(r.errors.join(' ')).toMatch(/RESEND_API_KEY is required/);
-    expect(r.errors.join(' ')).not.toMatch(/SES_SMTP/);
-    expect(validateAppEnv({ ...base, RESEND_API_KEY: 're_x' }, 'production').success).toBe(true);
+    expect(r.errors).toEqual(expect.arrayContaining(['SES_SMTP_USER is required in production.', 'SES_SMTP_PASS is required in production.']));
+    expect(r.errors.join(' ')).not.toMatch(/RESEND/);
+    expect(validateAppEnv({ ...base, SES_SMTP_USER: 'u', SES_SMTP_PASS: 'p' }, 'production').success).toBe(true);
   });
 
-  it('ses: SES_SMTP_USER and SES_SMTP_PASS required, RESEND_API_KEY not', () => {
-    const r = validateAppEnv({ ...base, EMAIL_PROVIDER: 'ses' }, 'production');
-    expect(r.errors).toEqual(expect.arrayContaining([
-      'SES_SMTP_USER is required in production when EMAIL_PROVIDER=ses.',
-      'SES_SMTP_PASS is required in production when EMAIL_PROVIDER=ses.',
-    ]));
-    expect(r.errors.join(' ')).not.toMatch(/RESEND_API_KEY/);
-    expect(validateAppEnv({ ...base, EMAIL_PROVIDER: 'ses', SES_SMTP_USER: 'u', SES_SMTP_PASS: 'p' }, 'production').success).toBe(true);
-  });
-
-  it('rejects an unknown provider and bad limits', () => {
-    const r = validateAppEnv({ ...base, RESEND_API_KEY: 'x', EMAIL_PROVIDER: 'mailgun', EMAIL_DAILY_LIMIT: '-1' }, 'production');
-    expect(r.errors.join(' ')).toMatch(/EMAIL_PROVIDER must be/);
+  it('rejects bad limits', () => {
+    const r = validateAppEnv({ ...base, SES_SMTP_USER: 'u', SES_SMTP_PASS: 'p', EMAIL_DAILY_LIMIT: '-1' }, 'production');
     expect(r.errors.join(' ')).toMatch(/EMAIL_DAILY_LIMIT/);
   });
 });

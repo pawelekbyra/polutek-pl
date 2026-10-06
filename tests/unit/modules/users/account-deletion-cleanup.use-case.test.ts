@@ -3,7 +3,6 @@ import { createAppContext } from '@/lib/modules/shared/app-context';
 import { AccountDeletionCleanupUseCase } from '@/lib/modules/users/application/account-deletion-cleanup.use-case';
 import { sendAccountDeletedEmail } from '@/lib/modules/email';
 
-const gateway = vi.hoisted(() => ({ removeContact: vi.fn() }));
 const stripeCustomers = vi.hoisted(() => ({ update: vi.fn() }));
 vi.mock('@/lib/modules/payments/infrastructure/stripe-client', () => ({ getStripeClient: () => ({ customers: stripeCustomers }) }));
 
@@ -11,25 +10,17 @@ vi.mock('@/lib/modules/email/application/send-transactional-email.use-case', () 
   sendAccountDeletedEmail: vi.fn().mockResolvedValue(undefined),
   resolveEmailLanguage: (language: string | null | undefined) => (language === 'pl' ? 'pl' : 'en'),
 }));
-vi.mock('@/lib/modules/subscriptions/infrastructure/resend-audience.gateway', () => ({
-  ResendAudienceGateway: class {
-    removeContact = gateway.removeContact;
-  },
-}));
 
 const NOW = new Date('2026-06-26T00:00:00.000Z');
 
 describe('AccountDeletionCleanupUseCase', () => {
   let prisma: any;
   let queuedCustomers: Map<string, { id: string; stripeCustomerId: string; userId: string | null; attempts: number; nextAttemptAt: Date }>;
-  let queued: Map<string, { id: string; email: string; attempts: number; nextAttemptAt: Date; lastError?: string | null }>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    gateway.removeContact.mockResolvedValue('SYNCED');
     stripeCustomers.update.mockResolvedValue({});
     queuedCustomers = new Map();
-    queued = new Map();
     prisma = {
       user: {
         findUnique: vi.fn().mockResolvedValue({ id: 'u1', email: 'user@example.com', isDeleted: false, language: 'en' }),
@@ -55,22 +46,7 @@ describe('AccountDeletionCleanupUseCase', () => {
       comment: { updateMany: vi.fn().mockResolvedValue({ count: 3 }) },
       broadcastEmailRecipient: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
       emailEvent: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
-      resendContactRemoval: {
-        upsert: vi.fn(async ({ create }: any) => {
-          const row = { id: `r-${create.email}`, email: create.email, attempts: 0, nextAttemptAt: create.nextAttemptAt };
-          queued.set(create.email, row);
-          return row;
-        }),
-        findMany: vi.fn(async ({ where }: any) => [...queued.values()].filter((row) => where.email.in.includes(row.email))),
-        deleteMany: vi.fn(async ({ where }: any) => {
-          for (const [email, row] of queued) if (row.id === where.id) queued.delete(email);
-          return { count: 1 };
-        }),
-        updateMany: vi.fn(async ({ where, data }: any) => {
-          for (const row of queued.values()) if (row.id === where.id) Object.assign(row, data);
-          return { count: 1 };
-        }),
-      },
+      resendContactRemoval: { upsert: vi.fn() },
       stripeCustomerAnonymization: {
         upsert: vi.fn(async ({ create }: any) => {
           const row = { id: `s-${create.stripeCustomerId}`, attempts: 0, ...create };
@@ -196,43 +172,12 @@ describe('AccountDeletionCleanupUseCase', () => {
     });
   });
 
-  it('removes the Resend Audience contact right away when Resend answers', async () => {
-    await AccountDeletionCleanupUseCase.execute(ctx(), { userId: 'u1', source: 'APP_ACCOUNT_DELETION' });
-
-    expect(gateway.removeContact).toHaveBeenCalledWith('user@example.com');
-    expect(queued.size).toBe(0);
-  });
-
-  it('a Resend failure never blocks the deletion: the removal stays queued for the cron', async () => {
-    gateway.removeContact.mockResolvedValue('FAILED');
-
+  it('deletes the e-mail consent rows and needs no external audience (the local database is the only record)', async () => {
     const result = await AccountDeletionCleanupUseCase.execute(ctx(), { userId: 'u1', source: 'APP_ACCOUNT_DELETION' });
 
     expect(result.cleaned).toBe(true);
-    expect(prisma.user.update).toHaveBeenCalled();
-    const row = queued.get('user@example.com');
-    expect(row?.attempts).toBe(1);
-    expect(row?.nextAttemptAt.getTime()).toBeGreaterThan(NOW.getTime());
-  });
-
-  it('does not wait for a Resend call that hangs', async () => {
-    vi.useFakeTimers();
-    gateway.removeContact.mockReturnValue(new Promise(() => undefined));
-
-    const pending = AccountDeletionCleanupUseCase.execute(ctx(), { userId: 'u1', source: 'APP_ACCOUNT_DELETION' });
-    await vi.advanceTimersByTimeAsync(5000);
-
-    await expect(pending).resolves.toMatchObject({ cleaned: true });
-    expect(queued.has('user@example.com')).toBe(true);
-  });
-
-  it('queues nothing for someone who never answered the e-mail consent question', async () => {
-    prisma.emailPreference.findMany.mockResolvedValue([]);
-
-    await AccountDeletionCleanupUseCase.execute(ctx(), { userId: 'u1', source: 'APP_ACCOUNT_DELETION' });
-
+    expect(prisma.emailPreference.deleteMany).toHaveBeenCalled();
     expect(prisma.resendContactRemoval.upsert).not.toHaveBeenCalled();
-    expect(gateway.removeContact).not.toHaveBeenCalled();
   });
 
   it('treats missing local user as successful idempotent cleanup', async () => {
