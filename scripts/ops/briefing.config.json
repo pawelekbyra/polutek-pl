@@ -32,6 +32,7 @@
     { "name": "Google Workspace", "status": "poczta już nie na Google", "date": "2026-10-09", "action": "przenieść klienta OAuth na konto osobiste, potem anulować Workspace", "remindDays": 7 },
     { "name": "Vercel: projekt polutek.pl i magazyny NEON-krau, upstashpolutek, BLOB-krau", "status": "projekt wstrzymany, magazyny do usunięcia", "action": "usunąć NEON-krau i upstashpolutek w panelu Vercel (BLOB-krau po przeniesieniu ostatniej miniatury)" },
     { "name": "Cloudflare Workers", "status": "plan Free (100 tys. żądań/dzień)", "action": "Workers Paid 5 USD/mies. przy starcie publicznym" },
-    { "name": "Resend", "status": "obecny plan", "action": "plan Pro dopiero przy starcie publicznym" }
+    { "name": "Resend", "status": "obecny plan (do wyłączenia po przejściu na Amazon SES)", "action": "plan Pro dopiero przy starcie publicznym, o ile SES nie zastąpi Resend" },
+    { "name": "Amazon SES (eu-north-1)", "status": "tożsamość domeny utworzona; wysyłka nieprzełączona (EMAIL_PROVIDER=resend)", "action": "poprosić o dostęp produkcyjny w konsoli SES, utworzyć dane SMTP, przełączyć wg docs/operations/EMAIL_SES.md" }
   ]
 }

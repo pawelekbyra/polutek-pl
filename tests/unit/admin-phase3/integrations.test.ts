@@ -27,4 +27,13 @@ describe("integration status never leaks a secret", () => {
     expect(byId(checks, "access").kind).toBe("info");
     expect(byId(buildIntegrationChecks({ NODE_ENV: "production" }, last), "access").kind).toBe("crit");
   });
+
+  it("is provider-aware: Resend by default, SES says plainly that bounce events are not connected", () => {
+    expect(byId(buildIntegrationChecks({ RESEND_API_KEY: "re_x" }, last), "resend")).toMatchObject({ kind: "ok", label: "Resend (e-mail)" });
+    expect(byId(buildIntegrationChecks({ EMAIL_PROVIDER: "ses" }, last), "resend")).toMatchObject({ kind: "warn", label: "Amazon SES (e-mail)", detail: expect.stringContaining("nie podłączone") });
+    const ses = byId(buildIntegrationChecks({ EMAIL_PROVIDER: "ses", SES_SMTP_USER: "AKIAUSERSECRET", SES_SMTP_PASS: "passSECRET123" }, last), "resend");
+    expect(ses.kind).toBe("ok");
+    expect(JSON.stringify(ses)).not.toContain("passSECRET123");
+    expect(ses.detail).toContain("zdarzenia odbić/skarg: nie podłączone");
+  });
 });

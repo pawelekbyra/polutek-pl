@@ -130,7 +130,7 @@ export function BroadcastWizard({ audience, email }: { audience: number; email: 
           confirm: "Wyślij rozsyłkę",
           danger: true,
           body: "Wymaga potwierdzenia tożsamości z ostatnich 5 minut. Wysłanych maili nie da się cofnąć; trwającą rozsyłkę można anulować w historii.",
-          effect: [`${audience} e-maili przez Resend, w partiach przez kolejkę na stronie (limit Resend Free: 100 dziennie, reszta czeka na następny dzień)`, "każdy mail ze stopką wypisu i nagłówkiem List-Unsubscribe", "ponowne kliknięcie nie utworzy drugiej rozsyłki (klucz żądania)", "wpis BROADCAST_CREATED w audycie"],
+          effect: [`${audience} e-maili przez dostawcę poczty, w partiach przez kolejkę na stronie (dzienny limit dostawcy: Komunikacja → Dostarczalność; po jego wyczerpaniu reszta czeka na następną dobę)`, "każdy mail ze stopką wypisu i nagłówkiem List-Unsubscribe", "ponowne kliknięcie nie utworzy drugiej rozsyłki (klucz żądania)", "wpis BROADCAST_CREATED w audycie"],
         }}
       />
     </section>

@@ -66,17 +66,21 @@ async function Overview() {
     <div className="grid">
       <div className="span-12">
         <div className="tiles" role="group" aria-label="Dostarczalność (30 dni)">
-          <Tile label="Wysłane (30 dni)" value={fmtInt(d.sent)} hint="Zdarzenia email.sent od Resend dla maili tej aplikacji (webhook). Otwarć i kliknięć nie śledzimy." />
+          <Tile label="Wysłane (30 dni)" value={fmtInt(d.sent)} hint={d.bounceEventsConnected ? "Zdarzenia email.sent od Resend dla maili tej aplikacji (webhook). Otwarć i kliknięć nie śledzimy." : "Zdarzenia z SES nie są podłączone (brak webhooka SNS), więc liczniki zdarzeń pokazują 0. Rozsyłki i ich błędy widać w kolejce niżej."} />
           <Tile label="Doręczone" value={d.sent ? fmtOne((d.delivered / d.sent) * 100) : "—"} unit={d.sent ? "%" : undefined} delta={<span className="delta-ctx">{fmtInt(d.delivered)} z {fmtInt(d.sent)}</span>} />
           <Tile label="Odbicia" value={pct(d.bounceRate)} unit={d.bounceRate === null ? undefined : "%"} delta={<State kind={bounceKind}>{`cel poniżej ${d.limits.bounceTarget}%`}</State>} />
           <Tile label="Skargi na spam" value={d.complaintRate === null ? "—" : d.complaintRate.toFixed(2).replace(".", ",")} unit={d.complaintRate === null ? undefined : "%"} delta={<State kind={complaintKind}>{`cel poniżej ${String(d.limits.complaintTarget).replace(".", ",")}%`}</State>} />
         </div>
       </div>
       <div className="span-5 stack">
-        <Card id="h-rl" title="Limit wysyłki Resend">
+        <Card id="h-rl" title={`Limit wysyłki ${d.limits.provider === "ses" ? "Amazon SES" : "Resend"}`}>
           <div className="limit"><div className="limit-head"><span className="limit-name">Dziś (doba UTC)</span><span className="limit-val">{d.sentToday} / {d.limits.perDay}</span></div><Meter percent={dayPct} label="E-maile dziś" valueText={`${d.sentToday} z ${d.limits.perDay}`} warnAt={70} critAt={90} /></div>
           <div className="limit"><div className="limit-head"><span className="limit-name">Ten miesiąc</span><span className="limit-val">{fmtInt(d.sentMonth)} / {fmtInt(d.limits.perMonth)}</span></div><Meter percent={monthPct} label="E-maile w miesiącu" valueText={`${d.sentMonth} z ${d.limits.perMonth}`} warnAt={70} critAt={90} /></div>
-          <p className="limit-note">Plan Free; zmiana planu: RESEND_DAILY_LIMIT / RESEND_MONTHLY_LIMIT w admin.env. Liczone ze zdarzeń webhooka{d.lastEventAt ? `, ostatnie ${fmtRelative(d.lastEventAt, now)}` : ", brak zdarzeń"}.</p>
+          {d.bounceEventsConnected ? (
+            <p className="limit-note">Plan Free; zmiana planu: EMAIL_DAILY_LIMIT / EMAIL_MONTHLY_LIMIT w admin.env (działają też stare RESEND_*). Liczone ze zdarzeń webhooka{d.lastEventAt ? `, ostatnie ${fmtRelative(d.lastEventAt, now)}` : ", brak zdarzeń"}.</p>
+          ) : (
+            <p className="limit-note">Amazon SES: limity z EMAIL_DAILY_LIMIT / EMAIL_MONTHLY_LIMIT (sandbox: ok. 200 dziennie, 1 na sekundę; po zgodzie produkcyjnej ustaw limit z konsoli SES). Zdarzenia odbić i skarg: nie podłączone; liczniki dnia i miesiąca nie są tu wiarygodne.</p>
+          )}
         </Card>
         <Card id="h-pps" title="PP Support" foot={<ExternalLink className="btn btn-sm" href="https://support.pawelperfect.com" hint="skrzynka za Cloudflare Access, nowa karta">Otwórz skrzynkę</ExternalLink>}>
           <p className="text-2">Poczta przychodząca (support@, hello@) trafia do PP Support. Liczby wątków pojawią się na tym ekranie z kolektorem (API wymaga tokenu agenta, którego panel nie przechowuje).</p>
@@ -91,7 +95,7 @@ async function Overview() {
           </dl>
         </Card>
         <Card id="h-dns" title="Dostarczalność i DNS poczty">
-          <p className="text-2">SPF, DKIM i DMARC nie są sprawdzane przez panel (nie odpytuje DNS przy wyświetlaniu). Stan rekordów i zasady rozgrzewania domeny: docs/operations/EMAIL_DELIVERABILITY.md; weryfikacja domeny w panelu Resend.</p>
+          <p className="text-2">SPF, DKIM i DMARC nie są sprawdzane przez panel (nie odpytuje DNS przy wyświetlaniu). Stan rekordów i zasady rozgrzewania domeny: docs/operations/EMAIL_DELIVERABILITY.md; weryfikacja domeny w panelu dostawcy (Resend albo Amazon SES, patrz docs/operations/EMAIL_SES.md).</p>
         </Card>
       </div>
     </div>
@@ -136,7 +140,7 @@ async function Broadcasts({ wizard }: { wizard: boolean }) {
           </div>
         )}
       </Card>
-      <p className="foot-note"><Icon name="info" />Rozsyłka trafia do kolejki, którą opróżnia zadanie na stronie (partie, ponowienia po błędzie, limit Resend). Termin wysyłki w przyszłości nie jest obsługiwany: rozsyłka rusza od razu po utworzeniu.</p>
+      <p className="foot-note"><Icon name="info" />Rozsyłka trafia do kolejki, którą opróżnia zadanie na stronie (partie, ponowienia po błędzie, limit dostawcy poczty). Termin wysyłki w przyszłości nie jest obsługiwany: rozsyłka rusza od razu po utworzeniu.</p>
     </div>
   );
 }

@@ -41,7 +41,8 @@ export const DOMAIN_FACTS: DomainFactDto[] = [
 export const COST_FACTS: CostFactDto[] = [
   { item: "Serwer Hetzner CPX22", monthly: "ok. 24,59 € z VAT", note: "stała; powiększenie przy starcie (decyzja właściciela)" },
   { item: "Cloudflare (Tunnel, Access, Workers, R2 do 10 GB)", monthly: "0 €", note: "plany darmowe; Workers Paid tylko za zgodą właściciela" },
-  { item: "Resend (Free)", monthly: "0 €", note: "100 e-maili dziennie, 3000 miesięcznie" },
+  { item: "Resend (Free)", monthly: "0 €", note: "100 e-maili dziennie, 3000 miesięcznie; do wyłączenia po przejściu na Amazon SES (EMAIL_PROVIDER=ses)" },
+  { item: "Amazon SES (eu-north-1)", monthly: "ok. 0,10 $ za 1000 e-maili", note: "płatność za wysłane wiadomości, bez opłaty stałej; sandbox ok. 200 dziennie do czasu zgody produkcyjnej" },
   { item: "Stripe", monthly: "prowizja od wpłat", note: "bez opłaty stałej" },
   { item: "Panel administratora", monthly: "0 €", note: "kontener na tym samym serwerze, limit 384 MB RAM" },
 ];

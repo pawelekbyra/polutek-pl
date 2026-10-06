@@ -10,6 +10,8 @@
  *                (dead man's switch); a WARN reported for 30 min is escalated here too (second channel).
  * A check alerts after 2 failed runs in a row (no e-mail for a blip), again every 6 h while failing, and once
  * when it recovers. E-mail through Resend, at most MAX_ALERTS_PER_DAY a day (the app shares the Resend quota).
+ * Stays on Resend on purpose: a Worker cannot use SMTP, and SES over HTTPS needs IAM access keys + SigV4 (a separate decision,
+ * docs/operations/EMAIL_SES.md, section "Co zostaje na Resend"). Remove Resend only after this is moved.
  * State: D1 (binding DB). Free-plan budget: 288 cron runs + 288 pings a day.
  *
  * HTTP (all need "Authorization: Bearer <PING_TOKEN>"):

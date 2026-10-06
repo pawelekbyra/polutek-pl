@@ -1,7 +1,7 @@
 #!/bin/bash
 # Health check of serwerek (cron every 5 min, /etc/cron.d/serwerek-health). Installed as /opt/serwerek/scripts/health.sh.
 # Logs to /var/log/serwerek/health.log; on WARN appends to alerts.log and sends ONE e-mail per issue (at most one per 6 h
-# per issue, a pending reboot at most weekly) through Resend (/etc/serwerek/alert.env). Records telemetry.job_run "health".
+# per issue, a pending reboot at most weekly) through the provider in /etc/serwerek/alert.env (ALERT_PROVIDER=resend|ses, default resend; see common.sh). Records telemetry.job_run "health".
 # Optional heartbeat to the external watchdog (workers/pp-watchdog): WATCHDOG_PING_URL + WATCHDOG_PING_TOKEN in alert.env.
 # Test: SIMULATE_WARN=test /opt/serwerek/scripts/health.sh  (then remove /var/lib/serwerek/alert-state/simulated-test).
 here="$(dirname "$(readlink -f "$0")")"

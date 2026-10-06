@@ -1,8 +1,9 @@
 /**
  * Integration status for Ustawienia: which outside services this panel process is configured for and the last
  * time each one did something. NEVER values of secrets: only "set / not set", the mode of a Stripe key (read
- * from its public prefix) and timestamps from our own tables. No call to Stripe, Resend or Cloudflare is made.
+ * from its public prefix) and timestamps from our own tables. No call to Stripe, the mail provider or Cloudflare is made.
  */
+import { bounceEventsConnected, resolveEmailProvider } from "@/lib/email-config";
 import type { AppContext } from "@/lib/modules/shared/app-context";
 import type { StateKind } from "../domain/types";
 
@@ -39,7 +40,9 @@ export function buildIntegrationChecks(env: Env, last: IntegrationLast): Integra
     : `klucz ${stripe.restricted ? "ograniczony (rk_)" : "pełny (sk_)"}, tryb ${stripe.mode === "live" ? "na żywo" : stripe.mode === "test" ? "TESTOWY" : "nieznany"}${stripe.mode === "test" && production ? " na produkcji" : ""}`;
 
   const webhookSecret = has(env, "STRIPE_WEBHOOK_SECRET");
-  const resendKey = has(env, "RESEND_API_KEY");
+  const provider = resolveEmailProvider(env);
+  const mailKey = provider === "ses" ? has(env, "SES_SMTP_USER") && has(env, "SES_SMTP_PASS") : has(env, "RESEND_API_KEY");
+  const mailSender = has(env, "EMAIL_FROM") ? "z EMAIL_FROM" : "domyślny (brak EMAIL_FROM)";
   const r2 = ["CLOUDFLARE_R2_ACCOUNT_ID", "CLOUDFLARE_R2_ACCESS_KEY_ID", "CLOUDFLARE_R2_SECRET_ACCESS_KEY", "CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS", "CLOUDFLARE_R2_BUCKET_THUMBNAILS_PRIVATE"];
   const r2Missing = r2.filter((n) => !has(env, n));
   const access = has(env, "CF_ACCESS_TEAM_DOMAIN") && has(env, "CF_ACCESS_AUD");
@@ -56,11 +59,18 @@ export function buildIntegrationChecks(env: Env, last: IntegrationLast): Integra
     },
     {
       id: "resend",
-      label: "Resend (e-mail)",
-      kind: resendKey ? "ok" : "warn",
-      detail: resendKey ? `klucz ustawiony; nadawca ${has(env, "EMAIL_FROM") ? "z EMAIL_FROM" : "domyślny (brak EMAIL_FROM)"}; rozsyłki wysyła kolejka na stronie` : "brak RESEND_API_KEY w panelu: „Wyślij test do siebie” nie zadziała (rozsyłki wysyła strona)",
+      label: provider === "ses" ? "Amazon SES (e-mail)" : "Resend (e-mail)",
+      kind: mailKey ? "ok" : "warn",
+      detail:
+        provider === "ses"
+          ? mailKey
+            ? `dane SMTP ustawione; nadawca ${mailSender}; rozsyłki wysyła kolejka na stronie; zdarzenia odbić/skarg: nie podłączone (lista wstrzymań SES na poziomie konta)`
+            : "brak SES_SMTP_USER / SES_SMTP_PASS w panelu: „Wyślij test do siebie” nie zadziała (rozsyłki wysyła strona); zdarzenia odbić/skarg: nie podłączone"
+          : mailKey
+            ? `klucz ustawiony; nadawca ${mailSender}; rozsyłki wysyła kolejka na stronie`
+            : "brak RESEND_API_KEY w panelu: „Wyślij test do siebie” nie zadziała (rozsyłki wysyła strona)",
       lastAt: iso(last.emailEventAt ?? last.broadcastAt),
-      lastLabel: "ostatnie zdarzenie poczty",
+      lastLabel: bounceEventsConnected(env) ? "ostatnie zdarzenie poczty" : "ostatnia rozsyłka (zdarzeń SES brak)",
     },
     { id: "r2", label: "Cloudflare R2 (pliki)", kind: r2Missing.length ? "warn" : "ok", detail: r2Missing.length ? `brakuje: ${r2Missing.join(", ")}` : "komplet zmiennych; test połączenia w System → Diagnostyka R2", lastAt: null },
     { id: "access", label: "Cloudflare Access (warstwa 1)", kind: access ? "ok" : production ? "crit" : "info", detail: access ? "zespół i znacznik aplikacji ustawione" : "brak CF_ACCESS_TEAM_DOMAIN / CF_ACCESS_AUD (produkcja odmawia każdego żądania)", lastAt: null },
