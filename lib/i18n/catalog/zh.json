@@ -13,6 +13,7 @@
  "All available methods": "所有可用方式",
  "Already have an account? Sign in": "已有账号？登录",
  "Amount too low. Minimum: {0}.": "金额过低，最低为 {0}。",
+ "An independent creator's video channel. The site is under construction and its content is for testing.": "创作者的独立视频频道。网站正在建设中，内容仅供测试。",
  "An unexpected application error occurred. Try refreshing the page or come back later.": "发生意外的应用错误，请刷新页面，或稍后再来。",
  "Another payment method": "其他支付方式",
  "Approve in your banking app…": "请在你的银行应用中批准…",
@@ -449,6 +450,7 @@
  "Two-step verification protects password sign-in. Set a password above (a link is sent to your email), then you can turn it on. Signing in with Google uses your Google account's own protection.": "两步验证用于保护密码登录。请先在上方设置密码（链接会发送到你的邮箱），之后即可开启。使用 Google 登录时，则由你的 Google 账号自身提供保护。",
  "Type": "输入",
  "US dollar (USD)": "美元（USD）",
+ "Under construction (test version)": "网站建设中（测试版）",
  "Unknown device": "未知设备",
  "Unlocked": "已解锁",
  "Unmute": "取消静音",
@@ -519,5 +521,6 @@
  "thrust trim +2.4%": "推力微调 +2.4%",
  "translate(-6.7%, 1%)": "translate(-6.7%, 1%)",
  "{0} channel": "{0} 频道",
- "{0} video channel": "{0} 视频频道"
+ "{0} video channel": "{0} 视频频道",
+ "{0}: video platform (test version)": "{0}：视频平台（测试版）"
 }

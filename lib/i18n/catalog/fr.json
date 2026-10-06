@@ -13,6 +13,7 @@
  "All available methods": "Tous les moyens disponibles",
  "Already have an account? Sign in": "Vous avez déjà un compte ? Se connecter",
  "Amount too low. Minimum: {0}.": "Montant trop bas. Minimum : {0}.",
+ "An independent creator's video channel. The site is under construction and its content is for testing.": "La chaîne vidéo indépendante d'un créateur. Le site est en construction et son contenu sert aux tests.",
  "An unexpected application error occurred. Try refreshing the page or come back later.": "Une erreur inattendue de l'application s'est produite. Essayez d'actualiser la page ou revenez plus tard.",
  "Another payment method": "Autre moyen de paiement",
  "Approve in your banking app…": "Approuvez dans votre appli bancaire…",
@@ -449,6 +450,7 @@
  "Two-step verification protects password sign-in. Set a password above (a link is sent to your email), then you can turn it on. Signing in with Google uses your Google account's own protection.": "La validation en deux étapes protège la connexion par mot de passe. Définissez d'abord un mot de passe ci-dessus (un lien est envoyé à votre e-mail), puis vous pourrez l'activer. La connexion avec Google utilise la protection propre à votre compte Google.",
  "Type": "Saisissez",
  "US dollar (USD)": "Dollar américain (USD)",
+ "Under construction (test version)": "Site en construction (version de test)",
  "Unknown device": "Appareil inconnu",
  "Unlocked": "Débloquée",
  "Unmute": "Activer le son",
@@ -519,5 +521,6 @@
  "thrust trim +2.4%": "correction de poussée +2,4 %",
  "translate(-6.7%, 1%)": "translate(-6.7%, 1%)",
  "{0} channel": "Chaîne {0}",
- "{0} video channel": "Chaîne vidéo {0}"
+ "{0} video channel": "Chaîne vidéo {0}",
+ "{0}: video platform (test version)": "{0} : plateforme vidéo (version de test)"
 }

@@ -4,6 +4,9 @@ import sitemap from '@/app/sitemap';
 import { CreatorContentService } from '@/lib/modules/channel/infrastructure/creator-content.service';
 import { VideoContentService } from '@/lib/modules/video/infrastructure/video-content.service';
 
+// The sitemap is empty while the site is a beta (see site-stage tests); these tests cover the launched site.
+vi.mock('@/lib/site-stage', async (importOriginal) => ({ ...(await importOriginal<typeof import('@/lib/site-stage')>()), SITE_IS_BETA: false }));
+
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     creator: { findUnique: vi.fn(), findFirst: vi.fn() },

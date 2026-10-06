@@ -22,6 +22,10 @@ const configuredImageHosts = Array.from(new Set([
   ...parseHosts(process.env.NEXT_PUBLIC_BLOB_PUBLIC_HOST),
 ]));
 
+// Beta (test version) stage: same rule as lib/site-stage.ts (default ON; NEXT_PUBLIC_SITE_BETA=false at
+// build time switches it off). Pages carry `X-Robots-Tag: noindex, nofollow` while it is on.
+const siteIsBeta = !['false', '0', 'no', 'off'].includes((process.env.NEXT_PUBLIC_SITE_BETA ?? '').trim().toLowerCase());
+
 const nextConfig = {
   // Self-hosted container build (deploy/serwerek/Dockerfile) sets NEXT_OUTPUT=standalone.
   // Unset on Vercel, so the normal build is unchanged.
@@ -75,6 +79,14 @@ const nextConfig = {
           }
         ],
       },
+      ...(siteIsBeta
+        ? [{
+            // HTML pages only (no file extension, not /api, not /_next), so robots.txt, sitemap.xml and
+            // static assets stay untouched. The crawler must still be allowed to fetch the page to see this.
+            source: '/((?!api/|_next/|.*\\..*).*)',
+            headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+          }]
+        : []),
       {
         // Language-switcher flags (public/flags): static, rarely changed, so no revalidation on every open.
         source: '/flags/:file*',

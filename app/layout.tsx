@@ -2,12 +2,13 @@ import Providers from "@/app/components/Providers";
 import AuthLifecycleProvider from "@/app/components/auth/AuthLifecycleProvider";
 import { AuthPublicConfigProvider } from "@/lib/auth/public-config";
 import { readPublicAuthConfig } from "@/lib/auth/public-config.server";
-import type { Viewport } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from 'react';
 import { geistMono, geistSans } from "./fonts";
 import "./globals.css";
 
 import { APP_NAME } from '@/lib/constants';
+import { getBetaSiteText, getStageRobots } from "@/lib/site-stage-metadata";
 import { ServiceWorkerCleanup } from "@/app/components/ServiceWorkerCleanup";
 import { UrlMask } from "@/app/components/UrlMask";
 import { resolveDocumentLanguage } from "@/lib/i18n/server-language";
@@ -18,28 +19,34 @@ import { TelemetryBeacon } from "@/app/components/telemetry/TelemetryBeacon";
 import { isTelemetryBeaconEnabled } from "@/lib/telemetry/config";
 import { GATE_BOOT_SCRIPT } from "@/app/components/preload/matrix-rain-engine";
 
-export const metadata = {
-  title: APP_NAME,
-  applicationName: APP_NAME,
-  description: `${APP_NAME}: niezależny kanał wideo twórcy, filmy publiczne i dla zalogowanych.`,
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: APP_NAME,
-  },
-  // Small copies of the rabbit (the 500 px, 105 KB original is only the gate image): a 32 px tab
-  // icon and the 180 px home-screen icon iOS asks for.
-  icons: {
-    icon: [
-      { url: '/rabbit-32.png', type: 'image/png', sizes: '32x32' },
-    ],
-    shortcut: ['/rabbit-32.png'],
-    apple: [
-      { url: '/rabbit-180.png', type: 'image/png', sizes: '180x180' },
-    ],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const betaText = await getBetaSiteText(await resolveDocumentLanguage());
+  return {
+    title: betaText?.title ?? APP_NAME,
+    applicationName: APP_NAME,
+    // Beta: neutral localized description. After launch: the original fixed text.
+    description: betaText?.description ?? `${APP_NAME}: niezależny kanał wideo twórcy, filmy publiczne i dla zalogowanych.`,
+    // Beta: noindex, nofollow (the X-Robots-Tag header in next.config.mjs says the same for every page).
+    robots: getStageRobots(),
+    manifest: "/manifest.json",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "black-translucent",
+      title: APP_NAME,
+    },
+    // Small copies of the rabbit (the 500 px, 105 KB original is only the gate image): a 32 px tab
+    // icon and the 180 px home-screen icon iOS asks for.
+    icons: {
+      icon: [
+        { url: '/rabbit-32.png', type: 'image/png', sizes: '32x32' },
+      ],
+      shortcut: ['/rabbit-32.png'],
+      apple: [
+        { url: '/rabbit-180.png', type: 'image/png', sizes: '180x180' },
+      ],
+    },
+  };
+}
 
 // Next emits the one viewport and theme-color tag from here (a `themeColor` inside `metadata` is
 // deprecated, and a hand-written <head> duplicated both tags).

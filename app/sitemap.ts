@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { CreatorContentService as ContentService } from '@/lib/modules/channel/infrastructure/creator-content.service';
 import { VideoContentService } from '@/lib/modules/video/infrastructure/video-content.service';
+import { SITE_IS_BETA } from '@/lib/site-stage';
 import { CONTENT_LOCALES, getLocaleAlternates, type RouteKey } from '@/lib/i18n/routing';
 
 // Rendered per request: the Docker build has no database, so a build-time sitemap would never list
@@ -36,6 +37,8 @@ function localizedEntry(
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Beta: every page is noindex, so the sitemap is empty (robots.txt does not advertise it either).
+  if (SITE_IS_BETA) return [];
   const baseUrl = getBaseUrl();
   const routes: MetadataRoute.Sitemap = [
     ...localizedEntry(baseUrl, 'home', 1),
