@@ -1,0 +1,42 @@
+# Send-only Postfix for the mail lab. Nothing listens on the network: mail is handed over locally
+# (docker compose exec mail-lab sendmail ...). Outbound goes out of the host IP over IPv4.
+compatibility_level = 3.9
+
+# Identity: HELO name equals the PTR of the server IP (mail.pawelperfect.com), forward and reverse match.
+myhostname = mail.pawelperfect.com
+myorigin = lab.pawelperfect.com
+mydomain = lab.pawelperfect.com
+mydestination =
+alias_maps =
+alias_database =
+local_transport = error:local delivery is disabled
+relayhost =
+mynetworks = 127.0.0.0/8
+
+# No SMTP listener at all: this is not a mail server, only a sender.
+inet_interfaces = loopback-only
+inet_protocols = ipv4
+smtpd_banner = $myhostname ESMTP
+
+# Outbound TLS whenever the other side offers it.
+smtp_tls_security_level = may
+smtp_tls_loglevel = 1
+smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
+
+# DKIM signing through OpenDKIM (milter on loopback).
+milter_default_action = accept
+smtpd_milters = inet:127.0.0.1:8891
+non_smtpd_milters = inet:127.0.0.1:8891
+
+# Slow and polite on purpose: one connection at a time, a pause between messages to the same provider.
+default_destination_concurrency_limit = 1
+default_destination_rate_delay = 5s
+smtp_connect_timeout = 20s
+maximal_queue_lifetime = 1d
+bounce_queue_lifetime = 1d
+
+# Logs go to stdout (docker logs).
+maillog_file = /dev/stdout
+
+# Bounces and errors for this experiment stay local (the lab domain has no MX).
+notify_classes =
