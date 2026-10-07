@@ -2,15 +2,9 @@
   "_opis": "Konfiguracja dziennej odprawy (scripts/ops/briefing.mjs). Bez sekretów. Właściciel może edytować: subskrypcje, domeny, oczekiwane kontenery, progi. Opis pól: docs/operations/DAILY-BRIEFING.md.",
   "sshHost": "serwerek",
   "publicHealthUrl": "https://www.pawelperfect.com/api/health",
-  "tlsHosts": ["www.pawelperfect.com", "video.pawelperfect.com", "support.pawelperfect.com", "thumbs.pawelperfect.pl"],
+  "tlsHosts": ["www.pawelperfect.com", "video.pawelperfect.com", "support.pawelperfect.com"],
   "domains": [
-    { "name": "pawelperfect.com", "rdap": "https://rdap.verisign.com/com/v1/domain/pawelperfect.com" },
-    {
-      "name": "pawelperfect.pl",
-      "rdap": "https://rdap.dns.pl/domain/pawelperfect.pl",
-      "note": "wygasła 2026-10-03, przywrócenie w home.pl do tego terminu",
-      "fallbackExpiresAt": "2026-11-02T17:03:01Z"
-    }
+    { "name": "pawelperfect.com", "rdap": "https://rdap.verisign.com/com/v1/domain/pawelperfect.com" }
   ],
   "expectedContainers": [
     "polutek-app-1",
@@ -28,7 +22,6 @@
   "thresholds": { "appErrorLines": 50 },
   "subscriptions": [
     { "name": "Hetzner CPX22 (serwerek)", "status": "aktywny", "cost": "ok. 24,59 EUR/mies. z VAT" },
-    { "name": "Domena pawelperfect.pl (home.pl)", "status": "wygasła 2026-10-03; termin odnowienia i odliczanie w sekcji System (Domeny)" },
     { "name": "Google Workspace", "status": "poczta już nie na Google", "date": "2026-10-09", "action": "przenieść klienta OAuth na konto osobiste, potem anulować Workspace", "remindDays": 7 },
     { "name": "Vercel: projekt polutek.pl i magazyny NEON-krau, upstashpolutek, BLOB-krau", "status": "projekt wstrzymany, magazyny do usunięcia", "action": "usunąć NEON-krau i upstashpolutek w panelu Vercel (BLOB-krau po przeniesieniu ostatniej miniatury)" },
     { "name": "Cloudflare Workers", "status": "plan Free (100 tys. żądań/dzień)", "action": "Workers Paid 5 USD/mies. przy starcie publicznym" },

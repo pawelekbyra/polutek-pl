@@ -30,10 +30,10 @@ export const DOMAIN_FACTS: DomainFactDto[] = [
   { name: "pawelperfect.com", kind: "domena (główna)", state: "ok", note: "strona, panel, wideo i poczta", source: "STATUS.md" },
   {
     name: "pawelperfect.pl",
-    kind: "domena",
-    state: "warn",
-    note: "wygasła 3 paź 2026; do przywrócenia w home.pl do 2 lis 2026; nic nie może od niej zależeć",
-    source: "STATUS.md, punkt 2",
+    kind: "domena (porzucona)",
+    state: "ok",
+    note: "wygasła 3 paź 2026; decyzja właściciela z 7 paź 2026: nie odnawiamy; nic od niej nie zależy",
+    source: "STATUS.md",
   },
   { name: "*.pawelperfect.com", kind: "certyfikat", state: "ok", note: "Cloudflare Universal SSL, odnawiany automatycznie", source: "Cloudflare" },
 ];

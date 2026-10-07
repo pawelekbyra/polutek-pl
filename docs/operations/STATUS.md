@@ -96,8 +96,7 @@ Pomysł pracy agenta bezpośrednio na serwerku bez GitHuba (bundle, własne repo
 0. **Amazon SES:** (a) czekać na decyzję AWS (sprawa 179128326000153); (b) w konsoli SES włączyć listę wykluczeń konta (odbicia, skargi); (c) utworzyć temat SNS `ses-events`, zbiór konfiguracji `pawelperfect-default` i subskrypcję HTTPS na `https://www.pawelperfect.com/api/webhooks/ses` (po wdrożeniu kodu); (d) ponownie zapytam przed zmianą PP Support.
 1. **2FA i dostęp:** włączyć TOTP albo passkey na swoich kontach (strona, Cloudflare, GitHub, Google, Resend, Stripe, PP Support); zapisać offline
    klucz `serwerek-backups.agekey` (druga kopia, np. w menedżerze haseł); token GitHub `read:packages` do `docker login ghcr.io` na serwerze (SERWEREK.md §24).
-2. **Domena `pawelperfect.pl`:** wygasła 2026-10-03, do przywrócenia w home.pl do **2026-11-02**. Do tego czasu nie działają przekierowania z `.pl` i poczta
-   `@pawelperfect.pl`; decyzja: odnowić czy porzucić (przy porzuceniu przenieść miniatury z `thumbs.pawelperfect.pl`, które już nie działają).
+2. ~~Domena `pawelperfect.pl`~~ **Porzucona (decyzja właściciela 2026-10-07):** nie odnawiamy. Nic od niej nie zależy (miniatury są na `thumbs.pawelperfect.com`, baza nie ma żadnego adresu `.pl`); strefa w Cloudflare skasuje się sama około 14.10, domena w Resend `pawelperfect.pl` usunięta.
 3. **Baza Neon `NEON-krau`** (stara kopia danych testowych): usunąć w panelu Vercel → Storage → `NEON-krau` → Delete (agent nie może: blokada nieodwracalnych
    usunięć). W tym samym miejscu `upstashpolutek` i `BLOB-krau`.
 4. **Start publiczny:** do startu zostaje CPX22; wtedy Workers Paid (5 USD/mies.; na planie darmowym po 100 tys. żądań dziennie wideo nie działa do północy UTC)
