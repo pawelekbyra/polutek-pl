@@ -8,8 +8,7 @@ Domyślnie (zmienna pusta lub brak) **beta jest WŁĄCZONA**.
 
 | Element | Zachowanie |
 |---|---|
-| Pasek | „Strona w budowie (wersja testowa)”, `role="note"`, na górze nagłówka (`app/components/BetaNotice.tsx`, w `Navbar`), stała wysokość 24 px (CLS 0), nic nie zasłania. Jest częścią strony, więc pojawia się po bramce wejściowej (bramka zasłania i blokuje stronę pod spodem). Nie da się go zamknąć (zamknięcie zmieniłoby wysokość nagłówka po załadowaniu). Kolory stałe (strona jest tylko jasna): #5c3d00 na #fff4d6, kontrast ok. 9:1. |
-| Teksty | `tx()`, wpisy w sześciu katalogach (`lib/i18n/catalog`), test parytetu pilnuje kompletności. |
+| Pasek | **Usunięty 2026-10-07** na prośbę właściciela (komponent `BetaNotice` i wpisy w katalogach skasowane). Beta nie pokazuje już żadnego paska; zostają noindex, pusta mapa strony i neutralny opis. |
 | noindex | `robots: { index: false, follow: false }` w metadanych (`app/layout.tsx`) oraz nagłówek `X-Robots-Tag: noindex, nofollow` dla stron HTML (`next.config.mjs`; bez plików z kropką, `/api`, `/_next`). |
 | robots.txt | bez zmian: crawling dozwolony (inaczej robot nie zobaczy noindex), reguły Disallow bez zmian, ale **bez linii `Sitemap:`**. |
 | sitemap.xml | w becie **pusta** (nie wystawiamy adresów, o których prosimy „nie indeksuj”). |

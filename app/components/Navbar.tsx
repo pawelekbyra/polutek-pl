@@ -1,6 +1,5 @@
 "use client";
 
-import { BetaNotice } from "@/app/components/BetaNotice";
 import React, { Suspense, useEffect, useState } from "react";
 import { useUser } from "@/lib/auth/react";
 import { useAuthModal } from "./auth/AuthModalProvider";
@@ -103,7 +102,6 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
       >
         {skipLabel}
       </a>
-      <BetaNotice />
       <nav aria-label={navLabel} className="flex min-h-[54px] w-full items-center justify-between gap-3 overflow-visible px-2 py-2 md:gap-5 md:px-6 lg:px-8">
         {isMobileSearchOpen ? (
           <div className="flex-1 flex items-center gap-2 px-1 animate-in slide-in-from-top-4 duration-200">
