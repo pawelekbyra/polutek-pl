@@ -65,6 +65,7 @@ export const sendBroadcastMail: SendBroadcastMail = async (broadcast, recipient,
     html: message.html,
     language: message.language,
     kind: "broadcast",
+    stream: "news",
     unsubscribe: { oneClickUrl, footerHtml: message.footerHtml },
     idempotencyKey: `broadcast/${broadcast.id}/${recipient.id}`,
   });

@@ -47,9 +47,9 @@ Do sprawdzenia w kodzie: czy zapis na subskrypcję wysyła mail potwierdzający 
 - Odpowiedź na pytanie o newsletter (sekcja 3).
 
 ### Mogą zrobić agenci (bez właściciela, po zgodzie na zmiany w DNS/koncie)
-- [ ] Nowa domena `news.pawelperfect.com` w Resend + rekordy DNS w Cloudflare (DKIM, Return-Path) i osobny `EMAIL_FROM_NEWS` w kodzie dla broadcastów i powitania subskrypcji (wymaga zgody na zmianę DNS i wdrożenie).
-- [ ] Nagłówek `Feedback-ID` w mailach (wymóg Google Postmaster FBL) i kontrola `List-Unsubscribe` na wszystkich mailach masowych.
-- [ ] Sprawdzić, czy subskrypcja ma double opt-in; dodać, jeśli nie.
+- [x] Domena `news.pawelperfect.com` w Resend (eu-west-1, śledzenie wyłączone, id w panelu Resend) + rekordy DNS w Cloudflare dodane 2026-10-07; weryfikacja w toku. Kod: `EMAIL_FROM_NEWS` (`getNewsEmailFrom()`), broadcasty i test broadcastu idą z nadawcy `news.` (`stream: "news"`), bez zmiennej fallback na `EMAIL_FROM`. **Po weryfikacji domeny ustawić na serwerku `EMAIL_FROM_NEWS="Pawel Perfect <newsletter@news.pawelperfect.com>"` w `app.env` i przebudować `app`/`worker`.** Powitanie po rejestracji zostaje na domenie transakcyjnej (to mail konta, nie newsletter).
+- [x] Nagłówek `Feedback-ID: <rodzaj>:<tx|news>:pp:ppmail` na każdym mailu (`buildFeedbackId()`), `List-Unsubscribe` + one-click już były na broadcastach.
+- [x] Subskrypcja wymaga zalogowanego konta, a e-mail konta jest zweryfikowany (link w mailu lub Google), więc to praktycznie double opt-in; dodatkowy mail potwierdzający niepotrzebny.
 - [ ] Rekord TXT dla Google Postmaster Tools v2 (gdy właściciel poda kod weryfikacyjny).
 - [ ] Rekordy `postmaster@`/`abuse@` w Cloudflare Email Routing → PP Support.
 - [ ] Zmiana PTR IPv4 serwerka na własną nazwę (np. `mail.pawelperfect.com`) przez API Hetznera + rekordy A/AAAA (zmiana serwera/DNS, tylko za zgodą).

@@ -41,6 +41,20 @@ export function getEmailFrom(): string {
 }
 
 /**
+ * Sender of mass mail (broadcasts: new-video notifications and newsletters). Lives on its own
+ * subdomain (EMAIL_FROM_NEWS, e.g. "newsletter@news.pawelperfect.com") with its own DKIM and
+ * Return-Path, so complaints about mass mail can never lower the reputation of the domain that sends
+ * sign-up, password-reset and payment mail. Unset (domain not verified in Resend yet): falls back to
+ * the transactional sender, so nothing breaks before the switch.
+ */
+export function getNewsEmailFrom(): string {
+  const raw = (process.env.EMAIL_FROM_NEWS || '').trim();
+  if (!raw) return getEmailFrom();
+  if (raw.includes('<')) return raw;
+  return `${EMAIL_SENDER_NAME} <${raw}>`;
+}
+
+/**
  * Automatic mail goes out from a no-reply address, but people do reply to it. Replies must land in
  * the real support mailbox (support@, routed to PP Support), so every send carries this Reply-To.
  */
@@ -65,6 +79,8 @@ export type OutgoingEmail = {
   kind: string;
   /** Present only for mail a recipient can unsubscribe from (never security or payment mail). */
   unsubscribe?: EmailUnsubscribe | null;
+  /** 'news' = mass mail, sent from the separate news sender (getNewsEmailFrom). Default: transactional. */
+  stream?: 'news';
   /** Resend deduplicates sends with the same key for 24 h (safe retries). */
   idempotencyKey?: string;
   headers?: Record<string, string>;
@@ -110,8 +126,17 @@ function toSendError(error: unknown): EmailSendError {
   return { message: String(error) };
 }
 
+/**
+ * Gmail Postmaster feedback loop: `Feedback-ID: campaign:stream:kind:SenderId` (values without colons,
+ * SenderId last), so Gmail can report complaint rates per mail kind and per stream.
+ */
+export function buildFeedbackId(kind: string, stream?: 'news'): string {
+  const clean = (v: string) => v.replace(/[^A-Za-z0-9_-]/g, '-').slice(0, 40);
+  return `${clean(kind)}:${stream ?? 'tx'}:pp:ppmail`;
+}
+
 export async function sendEmail(input: OutgoingEmail): Promise<EmailSendResult> {
-  const from = getEmailFrom();
+  const from = input.stream === 'news' ? getNewsEmailFrom() : getEmailFrom();
   if (!process.env.EMAIL_FROM && process.env.NODE_ENV === 'production') {
     logger.error('[email] EMAIL_FROM environment variable is NOT SET. Using fallback: ' + from);
   }
@@ -134,7 +159,10 @@ export async function sendEmail(input: OutgoingEmail): Promise<EmailSendResult> 
         html,
         text: htmlToPlainText(html),
         replyTo: getEmailReplyTo(),
-        headers: buildEmailHeaders(input.unsubscribe, input.headers),
+        headers: buildEmailHeaders(input.unsubscribe, {
+          'Feedback-ID': buildFeedbackId(input.kind, input.stream),
+          ...input.headers,
+        }),
         tags: [APP_EMAIL_TAG, { name: 'kind', value: input.kind }],
       },
       input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
