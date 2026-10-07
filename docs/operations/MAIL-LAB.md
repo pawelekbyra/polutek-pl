@@ -43,4 +43,5 @@ Wyniki zapisuj tabelką poniżej (dostawca, Odebrane/Spam, `Authentication-Resul
 | Data | Skrzynka (dostawca) | Tor | Folder | SPF/DKIM/DMARC | Uwagi |
 |---|---|---|---|---|---|
 | 2026-10-07 | Gmail (`pawel.perfect@gmail.com`, subdomena `lab.` nowa dla niego) | serwerek | **Odebrane** | SPF pass (IP 46.224.211.115), DKIM pass (`lab1`), DMARC pass | Serwer Gmaila przyjął mail od razu (250 OK, TLS 1.3). Pierwszy test, jedna wiadomość. |
+| 2026-10-07 | Outlook/Hotmail (`pawko.byra@hotmail.com`, świeża skrzynka) | serwerek | **Spam** (Junk) | SPF pass, DKIM pass, DMARC pass, `compauth=pass reason=100`, `X-SID-Result: PASS` | `SCL: 5` (próg spamu, nie blokada: 9 to pewny spam), `BCL: 0`, `dest:J` / `RF:JunkEmail`. Microsoft przyjął od razu (250), ale z powodu braku reputacji nowego IP i treści testowej ocenił mail na granicy. Uwierzytelnienie bez zarzutu. |
 | | | | | | |
