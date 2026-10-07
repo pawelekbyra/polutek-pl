@@ -1,5 +1,7 @@
 # Przekazanie projektu agentowi pracującemu na serwerku
 
+> **Wycofane 2026-10-07 (częściowo):** źródłem prawdy znów jest GitHub (`pawelekbyra/polutek-pl`, `main`), a praca idzie przez PR-y i `scripts/ops/mergedeploy.sh` (patrz `CLAUDE.md` §0 i `STATUS.md`). Opisy „pracy bez GitHuba”, bundle'a i klonu `/opt/serwerek/repo` poniżej są historyczne (bundle zostaje jako kopia zapasowa). Nadal aktualne: opis serwera i **§4 o sekretach** (`/root/.ai-secrets/`).
+
 Stan: 2026-10-05. Dokument dla agenta, który pracuje **bezpośrednio na serwerze `serwerek`** i **nie ma dostępu do GitHuba ani do komputera
 właściciela**. Zakłada własne repozytorium git na serwerze (a potem, jeśli właściciel zechce, na innym serwerze) od punktu, w którym skończyła
 poprzednia sesja. Reguły pracy, decyzje właściciela i stan prac są w [`STATUS.md`](STATUS.md): przeczytaj go po tym dokumencie.

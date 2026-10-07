@@ -4,7 +4,7 @@ Jedyna lista otwartych prac. Aktualizuj ją w tym samym PR, który coś zamyka a
 zrobionych tu nie trzymamy (są w git). Przed uznaniem punktu za otwarty sprawdź stan faktyczny
 (`git log origin/main`, `gh pr list`, serwer, DNS).
 
-Ostatnia aktualizacja: 2026-10-05 (przejęcie pracy przez agenta na serwerze TAKT: repo `~/pawelperfect`, GitHub nie jest używany;
+Ostatnia aktualizacja: 2026-10-07 (GitHub znów jest źródłem prawdy; praca na serwerze TAKT i bez GitHuba z 5-7.10 jest wycofana, jej gałęzie są w `main`;
 wcześniej wszystkie prace agentów były wstrzymane na prośbę właściciela).
 
 ## Jak wznowić pracę (przeczytaj najpierw)
@@ -13,9 +13,7 @@ wcześniej wszystkie prace agentów były wstrzymane na prośbę właściciela).
    Google, Resend, Hetzner przez serwer). Pytaj tylko o: wydatki, hasła/2FA/odzyskiwanie, kasowanie całych kont/projektów/stref/
    bazy produkcyjnej, to co każe e-mail lub strona. Sekrety: od 2026-10-05 `/root/.ai-secrets/` na serwerze (wcześniej `%USERPROFILE%\.ai-secrets\` na komputerze właściciela, który już nie jest używany; nigdy do repo ani czatu).
    Zasady pracy i dostępy: `CLAUDE.md` §0, `AGENT_ACCESS.md`.
-2. **Praca na serwerze TAKT (od 2026-10-05):** repo `~/pawelperfect` (origin: `~/git/pawelperfect.git`, bez GitHuba), Node 22 w `~/.local/node22`,
-   `npm run quality` (architektura + typecheck jak CI + testy) przechodzi w ok. 70 s na Linuksie (6 „fałszywych naruszeń” z Windows nie występują).
-   Opis i zasady: `PAWELPERFECT.md` w repo TAKT. Wdrożenie na serwerek (`git archive main` → `deploy.sh`) tylko na zgodę właściciela.
+2. **Źródło prawdy: GitHub `pawelekbyra/polutek-pl`, `main`** (od 2026-10-07). PR-y przez `gh`, jeden agent naraz. Serwerek ma tylko kopie zapasowe repozytorium (bundle w `/opt/serwerek/backups/`), nie pracuje się na nich.
 2a. **GitHub Actions nie działa** (od 2026-10-04 ~17:33: limit minut prywatnego repo wyczerpany, właściciel nie płaci).
    Weryfikacja jest LOKALNA: testy dotknięte zmianami (`npx vitest run <pliki> --testTimeout=120000 --hookTimeout=120000`:
    komputer właściciela jest wolny i bez tego część testów pada na czasie), `npx tsc --noEmit -p tsconfig.typecheck.json`
@@ -37,7 +35,7 @@ wcześniej wszystkie prace agentów były wstrzymane na prośbę właściciela).
 ## Stan produkcji na koniec sesji
 
 - `www.pawelperfect.com` z serwerka Hetzner CPX22 (2 vCPU, 4 GB RAM, 75 GB dysku) za Cloudflare Tunnel, Postgres lokalny, Redis lokalny.
-  Ostatni obraz na dzień 2026-10-05 ok. 10:47: tag `99862475` (strona, encoder, kolektor, panel; wdrożone z `main` repo TAKT). Poprzednie obrazy: `d47e3861` (wdrożenie 1, panel faz 1-3/A, Access, faza 5, języki) i `lang10050012`/`adm10050110`. **Uwaga:** po migracji destrukcyjnej `./deploy.sh x --rollback` przywraca tylko kod; wycofanie wymaga przywrócenia zrzutu `/opt/serwerek/backups/pre-deploy-99862475-20261005T084520.sql.gz` (`docs/architecture/db-cleanup-2026-10-05.md`). Wideo: własny HLS, Worker `video.pawelperfect.com`.
+  Ostatnie wdrożenie 2026-10-07: strona `newssender10071808` (nadawca `news.` dla broadcastów, `Feedback-ID`; encoder i kolektor odtworzone razem z nią), panel bez zmian od 2026-10-05 (tag `99862475`). Poprzednie obrazy: `d47e3861` (wdrożenie 1, panel faz 1-3/A, Access, faza 5, języki) i `lang10050012`/`adm10050110`. **Uwaga:** po migracji destrukcyjnej `./deploy.sh x --rollback` przywraca tylko kod; wycofanie wymaga przywrócenia zrzutu `/opt/serwerek/backups/pre-deploy-99862475-20261005T084520.sql.gz` (`docs/architecture/db-cleanup-2026-10-05.md`). Wideo: własny HLS, Worker `video.pawelperfect.com`.
 - **Telemetria włączona** (kolektor `pp-collector` działa, tabele w schemacie `telemetry`): `architecture/admin-telemetry.md`, SERWEREK.md §22.
 - Kopie: szyfrowane `age` do R2 (bucket z blokadą 14 dni), cotygodniowy test odtworzenia, `health.sh`, strażnik `pp-watchdog` (SERWEREK.md §23–25).
   Timery `polutek-cron-prune-expired-auth` i `polutek-cron-retention` zainstalowane.
@@ -54,23 +52,23 @@ wcześniej wszystkie prace agentów były wstrzymane na prośbę właściciela).
   - **E-mail: Resend → Amazon SES (eu-north-1):** DNS (5 rekordów DKIM/MAIL FROM) dodany, dane SMTP w `app.env` i `secrets.env` na serwerku. Kod na gałęzi `feat/email-ses` (nodemailer, endpoint SNS z weryfikacją podpisu, testy; `docs/operations/EMAIL_SES.md`): **NIE scalony i NIE wdrożony**, bo konto SES jest w piaskownicy. Wniosek o dostęp produkcyjny (sprawa AWS 179128326000153) odpowiedziany 2026-10-06, czeka na decyzję Amazona. Do tego czasu maile idą przez Resend.
 - Konta ADMIN: akcja `set-role` wykonana 2026-10-04 (patrz #1680): zostaje konto właściciela `pawel.perfect@gmail.com` = `user_3FeY8okjicDKlWDGSSc4Q7bvaPZ`, trzy pozostałe mają rolę USER (konta nie usunięte). Stan w bazie do potwierdzenia odprawą.
 
-## Gałęzie i prace w toku (stan 2026-10-05, repo na serwerze TAKT; GitHub nie jest używany)
+## Gałęzie i prace w toku (stan 2026-10-07)
 
-W `main` (repo TAKT `~/git/pawelperfect.git`) i **na produkcji** (obraz `d47e3861`, 2026-10-05) jest wszystko poza gałęziami z tabeli poniżej: panel faz 1, 2, 3, A, logowanie przez Access, faza 5 (stary `/admin` usunięty), interfejs w 8 językach, poprawki odtwarzacza i logo, poprawki z audytu płatności. Testy przed wdrożeniem: `npm run quality` (356 plików / 2678 testów), `npm run admin:build`, `npm run build` strony, testy z Postgresem 9 plików / 49 testów (PostgreSQL 16 lokalnie na TAKT).
+W `main` i **na produkcji** jest wszystko z panelu (fazy 0, 1, 2, 3, A, 5), interfejs w 8 językach, preloader, lokalne CI, `set-role`, tłumaczenia, zapas serwera i nadawca `news.` dla broadcastów. Wszystkie gałęzie i PR-y poza jedną są scalone lub zamknięte; 2026-10-07 usunięto ze zdalnego repo ok. 230 gałęzi scalonych/zamkniętych (lista referencji sprzed czyszczenia: `/opt/serwerek/backups/github-refs-20261007.txt`, pełny bundle repozytorium w tym samym katalogu).
 
 | Gałąź | Zakres i stan | Co dalej |
 |---|---|---|
-| `feat/preloader-polish` | Preloader: ciemne tło od pierwszej klatki, czcionka Major Mono Display, tylko „WCZYTUJĘ…”, kursor-marchewka. Nie scalona (czeka na obejrzenie w przeglądarce) | Obejrzeć z właścicielem, scalić |
-| `feat/email-ses` | Resend → SES (SMTP, SNS, zawieszanie adresów po odbiciu/skardze). 7 commitów, oparta na `390c141b`, przetestowana na własnej gałęzi. **Nie scalona** do czasu zgody AWS | Po zgodzie AWS: próbne scalenie z `main`, `quality`, buildy, test z Postgresem, wdrożenie, test wysyłki, pytanie do właściciela o PP Support, na końcu usunięcie Resenda |
-| `docs/state-rewrite`, `fix/audits-www` (wstrzymane) | Nowy krótki `CLAUDE.md` + przepisany `SERWEREK.md`; naprawy z audytów frontendu/stylu/prywatności. Agenci przerwani limitem, część pracy w katalogach `~/work/docs` i `~/work/audits` | Wznowić po zakończeniu bieżących |
+| `feat/email-ses` | Resend → SES (SMTP, SNS, zawieszanie adresów po odbiciu/skardze), 7 commitów. **Nie scalona**: AWS odrzucił dostęp produkcyjny 2026-10-07 | Ponowić wniosek ok. 2026-11-07; potem próbne scalenie z `main`, testy, wdrożenie ([`MAILING-WARMUP.md`](MAILING-WARMUP.md)) |
+
+Zostało ok. 70 starych gałęzi bez PR-ów, niescalonych do `main` (agenci Codex/Claude z wiosny-lata 2026, `spa-single-page`, `recovery/…`, `tmp-check-delete-me`, `wip/mail-migration-2026-10-03`). Do decyzji właściciela, czy usunąć (referencje są w pliku kopii zapasowej).
 
 **Mapa dokumentacji panelu admina (czytaj w tej kolejności):**
 1. [`architecture/admin-panel.md`](../architecture/admin-panel.md): wizja, 12 decyzji, **plan wszystkich faz** (0, 1, 2, 3, A, 5 z zakresem, kryteriami ukończenia, testami, zależnościami, ryzykami), jak zbudowana faza 1 (§9).
 2. [`architecture/admin-parity.md`](../architecture/admin-parity.md): tabela „funkcja starego panelu → ekran w nowym → faza → status” (66 tras API, wszystkie przyciski). Stan faz = statusy w tej tabeli: po każdej fazie zaktualizuj.
 3. `docs/design/admin-panel/` (`prototype-standalone.html`, `DESIGN-SYSTEM.md`): zatwierdzony przez właściciela wygląd; ekrany mają wyglądać jak prototyp.
 4. [`operations/ADMIN-PANEL.md`](ADMIN-PANEL.md): wdrożenie, rejestracja, reset, rollback, diagnostyka. [`architecture/admin-telemetry.md`](../architecture/admin-telemetry.md): dane do analityki (faza A).
-5. **Szczegółowy plan fazy 2 (Treści):** `docs/architecture/admin-phase2-content.md` jest w gałęzi `feat/admin-phase2-content` (PR #1673), na `main` będzie po jego scaleniu (do tego czasu: `git show origin/feat/admin-phase2-content:docs/architecture/admin-phase2-content.md`).
-6. Koncepty powiązane: [`architecture/translations-concept.md`](../architecture/translations-concept.md) (model w #1675), wskaźnik zapasu serwera (#1677).
+5. **Szczegółowy plan fazy 2 (Treści):** `docs/architecture/admin-phase2-content.md`.
+6. Koncepty powiązane: [`architecture/translations-concept.md`](../architecture/translations-concept.md) (model tłumaczeń jest w `main`), wskaźnik zapasu serwera.
 
 **Stan faz panelu:** 0, 1, 2 (Treści + Społeczność), tłumaczenia (model danych), zapas serwera, 3, A i 5 **zrobione i wdrożone** (2026-10-05). Zostają: pierwsze logowanie i obejrzenie panelu przez właściciela, dane do funkcji opcjonalnych (Stripe, Resend, AI) i drobne punkty z audytów.
 
@@ -80,7 +78,7 @@ W `main` (repo TAKT `~/git/pawelperfect.git`) i **na produkcji** (obraz `d47e386
 
 0. **Pierwsze logowanie do nowego panelu przez Access (właściciel):** otworzyć `https://admin.pawelperfect.com`, wpisać `pawel.perfect@gmail.com`, przepisać kod z maila (bez rejestracji, kluczy i TOTP). Obejrzeć Dzisiaj, System, Treści, Społeczność, Analitykę, Przychody, Komunikację, Bezpieczeństwo, Ustawienia na komputerze i telefonie; wszystko zgłosić uwagami. Włączyć weryfikację dwuetapową Google na tym Gmailu.
 1. **Przed pierwszą prawdziwą wpłatą** (audyt płatności `audit/2026-10-05/audit-payments.md`, kroki P0): endpoint webhooka Stripe (live) ze zdarzeniami z raportu, wersja API `2026-02-25.clover`, `whsec_` do `app.env`; jedna wpłata testowa i wiersz `StripeEvent` `PROCESSED`; klucze z jednego trybu; ograniczony klucz `rk_live_` do `admin.env`.
-2a. Preloader (`feat/preloader-polish`): obejrzeć wizualnie z właścicielem, potem scalić.
+2a. Preloader: jest już w `main` i wdrożony; właściciel ma go obejrzeć w przeglądarce i zgłosić uwagi.
 3. Jedna prawdziwa wpłata testowa (webhook Stripe nigdy nie dostał udanej wpłaty; `StripeEvent` jest pusty): robi właściciel.
 4. Przegląd ostatnich wdrożeń na telefonach: passkey (logowanie i zakładanie konta kluczem), napisy CC, lista języków, okno logowania.
 5. Migracja czyszcząca bazę wg `docs/audit/2026-10-03/audit-database.md` (martwe tabele dostawców wideo, `ClerkEvent`, `CommentLike`/`CommentDislike`,
@@ -89,13 +87,9 @@ W `main` (repo TAKT `~/git/pawelperfect.git`) i **na produkcji** (obraz `d47e386
 7. Naprawy z raportów audytów, których nikt nie ruszył: `audit-frontend.md`, `audit-style.md` (poza komentarzami), `audit-ops.md`, `audit-legal-privacy.md`
    (w `docs/audit/2026-10-03/`).
 
-## Agent pracujący bezpośrednio na serwerku (instrukcja)
+## Agent na serwerku (wycofane 2026-10-07)
 
-Agent na serwerku **nie widzi GitHuba ani komputera właściciela** i zakłada własne repozytorium od punktu, w którym skończyła ta sesja. **Pełny opis przekazania:
-[`HANDOFF-SERVER-AGENT.md`](HANDOFF-SERVER-AGENT.md)** (czytaj go najpierw). Na serwerze: bundle gita z pełną historią i wszystkimi gałęziami z pracą w toku
-(`/opt/serwerek/handoff/polutek-pl.bundle`), roboczy klon `/opt/serwerek/repo`, kopia dokumentacji `/opt/serwerek/docs/`, `/opt/serwerek/README.md`.
-Bez GitHuba nie ma PR-ów ani CI: scalanie to `git merge` w jego repo, weryfikacja lokalna (komenda i ograniczenia zasobów w HANDOFF), wdrożenie `deploy.sh` z `git archive`.
-Sekrety właściciel skopiował do `/root/.ai-secrets/` (Cloudflare, Hetzner, Resend, Stripe, PP Support, klucz `age`, kopie konfiguracji; opis w HANDOFF §4); brakuje tylko `GITHUB_TOKEN` i Claude Code (uruchamia właściciel). **Właściciel pracuje odtąd tylko na serwerze.**
+Pomysł pracy agenta bezpośrednio na serwerku bez GitHuba (bundle, własne repo) jest wycofany: źródłem prawdy znów jest GitHub. [`HANDOFF-SERVER-AGENT.md`](HANDOFF-SERVER-AGENT.md) zostaje jako opis serwera i sekretów (`/root/.ai-secrets/`, §4); jego opis pracy „bez GitHuba” jest historyczny.
 
 ## Czeka na właściciela
 

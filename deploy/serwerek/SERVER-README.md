@@ -1,7 +1,7 @@
 # serwerek: czytaj najpierw
 
 Ten plik leży w `/opt/serwerek/README.md` i jest odświeżany przy każdym `deploy.sh` z repo (`deploy/serwerek/SERVER-README.md`).
-**Źródłem prawdy jest repozytorium** na serwerze TAKT (`~/pawelperfect`, `origin` = `~/git/pawelperfect.git`); GitHub nie jest używany. Kopia dokumentacji na serwerze jest tylko do czytania na miejscu.
+**Źródłem prawdy jest repozytorium na GitHubie** (`pawelekbyra/polutek-pl`, `main`; od 2026-10-07, wcześniej krótko serwer TAKT). Kopia dokumentacji na serwerze jest tylko do czytania na miejscu.
 
 ## Co to jest
 
@@ -39,4 +39,4 @@ AI_AGENT=<nazwa> ai-log "opis"     # wpis o każdej zmianie na serwerze
 ```
 
 Zasady: każdą zmianę poprzedź kopią pliku i opisz w `ai-log`; zmiany na produkcji tylko na zgodę właściciela; nie otwieraj portów; nie wypisuj sekretów. Nie uruchamiaj tu pełnych testów ani budowy
-w godzinach ruchu (testy i budowanie robi się na TAKT). Sprawdź, czy dokumentacja w `/opt/serwerek/docs` nie jest starsza niż ostatni deploy; aktualną wersję ma zawsze repo.
+w godzinach ruchu (testy i budowanie robi się lokalnie przed wdrożeniem). Sprawdź, czy dokumentacja w `/opt/serwerek/docs` nie jest starsza niż ostatni deploy; aktualną wersję ma zawsze repo.
