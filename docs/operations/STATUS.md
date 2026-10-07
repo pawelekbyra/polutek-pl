@@ -76,6 +76,8 @@ W `main` (repo TAKT `~/git/pawelperfect.git`) i **na produkcji** (obraz `d47e386
 
 ## Najbliższe kroki (kolejność proponowana, jeden agent naraz)
 
+**Projekt „rozgrzewanie mailingu” (od 2026-10-07, hasło do przypomnienia właścicielowi):** dostarczalność maili (Hotmail/Outlook ląduje w spamie), rozdzielenie transakcji i newslettera na osobne subdomeny, pilot własnego serwera pocztowego, SES po ok. miesiącu, cel: największe wolumeny. Cały stan, pomiary i lista zadań (agenci / właściciel): [`MAILING-WARMUP.md`](MAILING-WARMUP.md). Gdy właściciel wraca do swoich zadań, przypomnij mu, co z tej listy czeka na niego.
+
 0. **Pierwsze logowanie do nowego panelu przez Access (właściciel):** otworzyć `https://admin.pawelperfect.com`, wpisać `pawel.perfect@gmail.com`, przepisać kod z maila (bez rejestracji, kluczy i TOTP). Obejrzeć Dzisiaj, System, Treści, Społeczność, Analitykę, Przychody, Komunikację, Bezpieczeństwo, Ustawienia na komputerze i telefonie; wszystko zgłosić uwagami. Włączyć weryfikację dwuetapową Google na tym Gmailu.
 1. **Przed pierwszą prawdziwą wpłatą** (audyt płatności `audit/2026-10-05/audit-payments.md`, kroki P0): endpoint webhooka Stripe (live) ze zdarzeniami z raportu, wersja API `2026-02-25.clover`, `whsec_` do `app.env`; jedna wpłata testowa i wiersz `StripeEvent` `PROCESSED`; klucze z jednego trybu; ograniczony klucz `rk_live_` do `admin.env`.
 2a. Preloader (`feat/preloader-polish`): obejrzeć wizualnie z właścicielem, potem scalić.
