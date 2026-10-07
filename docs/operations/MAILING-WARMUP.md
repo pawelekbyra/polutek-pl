@@ -20,7 +20,7 @@ Stan: 2026-10-07. Bez sekretów. Projekt właściciela (hasło do przypomnienia:
 | DNS | SPF `include:_spf.mx.cloudflare.net ~all` (**Resend ma osobny SPF na `send.`**), DKIM `resend._domainkey` 1024 bit (Resend nie wspiera 2048, to nie problem), DMARC `p=none` z `rua` na Gmail, brak MTA-STS i TLS-RPT |
 | Adresy w kodzie | **jeden nadawca na wszystko:** `Pawel Perfect <no-reply@pawelperfect.com>` (transakcje, powitanie i broadcasty), Reply-To `support@pawelperfect.com` |
 | IP serwerka `46.224.211.115` | listowane: **Barracuda** (poor), **SpamRATS** (zakres, wymaga ręcznego przeglądu), do tego generyczne wpisy z powodu PTR `*.clients.your-server.de` (Hostkarma, JustSpam, Polspam i in.). Spamhaus czysty (multirbl/mxtoolbox; check.spamhaus.org nie sprawdzony ręcznie). Talos i SenderScore nie sprawdzone. |
-| PTR | IPv4: `static.115.211.224.46.clients.your-server.de` (generyczny), IPv6: `serwerek.` |
+| PTR | **od 2026-10-07:** IPv4 i IPv6 = `mail.pawelperfect.com` (wcześniej generyczny `static.115.211.224.46.clients.your-server.de`); wpisy na listach oparte o generyczny PTR (Hostkarma, JustSpam i in.) powinny zniknąć w ciągu doby, do ponownego sprawdzenia |
 | Domena | czysta na wszystkich listach domen; jedyny wpis to SEM-FRESH („świeża domena”), znika sam z wiekiem |
 | Test do skrzynki `pawel.byra@hotmail.com` | maile z `no-reply@` i `support@` **doszły, ale test jest niemiarodajny**: skrzynka ma wcześniej oznaczonych nadawców jako „nie spam”. Miarodajne są tylko skrzynki, które nas nie znają. |
 
@@ -51,8 +51,8 @@ Do sprawdzenia w kodzie: czy zapis na subskrypcję wysyła mail potwierdzający 
 - [x] Nagłówek `Feedback-ID: <rodzaj>:<tx|news>:pp:ppmail` na każdym mailu (`buildFeedbackId()`), `List-Unsubscribe` + one-click już były na broadcastach.
 - [x] Subskrypcja wymaga zalogowanego konta, a e-mail konta jest zweryfikowany (link w mailu lub Google), więc to praktycznie double opt-in; dodatkowy mail potwierdzający niepotrzebny.
 - [ ] Rekord TXT dla Google Postmaster Tools v2 (gdy właściciel poda kod weryfikacyjny).
-- [ ] Rekordy `postmaster@`/`abuse@` w Cloudflare Email Routing → PP Support.
-- [ ] Zmiana PTR IPv4 serwerka na własną nazwę (np. `mail.pawelperfect.com`) przez API Hetznera + rekordy A/AAAA (zmiana serwera/DNS, tylko za zgodą).
+- [x] `postmaster@` i `abuse@`: osobne reguły niepotrzebne, catch-all w Cloudflare Email Routing kieruje każdy adres `@pawelperfect.com` do workera PP Support (sprawdzone 2026-10-07).
+- [x] PTR IPv4 i IPv6 serwerka ustawione 2026-10-07 na `mail.pawelperfect.com` (Hetzner API) + rekordy A i AAAA `mail.pawelperfect.com` w Cloudflare (DNS only). Poprzedni PTR v4: `static.115.211.224.46.clients.your-server.de`. Forward i reverse zgodne. Wpis w dzienniku zmian serwerka.
 - [ ] Wyjaśnić 2 twarde bounce z ostatnich 30 dni (które adresy, czy zostały zawieszone) i zadbać, by twardy bounce zawsze dodawał adres do listy zawieszeń.
 - [ ] Testy mail-tester.com (wymaga zezwolenia przeglądarki na stronę lub ręcznego adresu testowego; 3 testy na dobę, bez konta).
 - [ ] DMARC `p=none` → `quarantine` (`pct` 10→50→100) po 2–4 tygodniach czystych raportów; potem MTA-STS (tryb `testing`) i TLS-RPT.
