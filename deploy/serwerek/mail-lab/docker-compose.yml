@@ -1,0 +1,15 @@
+# Mail lab (docs/operations/MAIL-LAB.md): its own compose project, started and stopped by hand.
+#   docker compose -f /opt/serwerek/mail-lab/docker-compose.yml up -d
+#   docker compose -f /opt/serwerek/mail-lab/docker-compose.yml down
+services:
+  mail-lab:
+    build: .
+    image: pp-mail-lab:1
+    container_name: pp-mail-lab
+    restart: "no"
+    hostname: mail.pawelperfect.com
+    # No published ports: nothing can connect to it. 4 GB host with swap pressure, so a hard cap.
+    mem_limit: 128m
+    cpus: 0.25
+    volumes:
+      - /opt/serwerek/data/mail-lab/keys:/keys
