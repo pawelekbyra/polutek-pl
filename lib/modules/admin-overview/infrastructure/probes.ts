@@ -40,10 +40,19 @@ export function probePublicApp(baseUrl: string, fetcher: Fetcher = fetch): Promi
   });
 }
 
-/** Redis through the REST gateway (srh): GET /ping with the bearer token, expects PONG. */
+/**
+ * Redis through the REST gateway (srh): a PING command sent as POST ["PING"] with the bearer token, expects PONG.
+ * (srh has no GET /ping route and answers 404 there; the command form works on srh and on Upstash alike.)
+ */
 export function probeRedis(url: string, token: string, fetcher: Fetcher = fetch): Promise<ProbeResult> {
   return timed(async (signal) => {
-    const res = await fetcher(`${url.replace(/\/+$/, "")}/ping`, { signal, cache: "no-store", headers: { authorization: `Bearer ${token}` } });
+    const res = await fetcher(url.replace(/\/+$/, ""), {
+      method: "POST",
+      signal,
+      cache: "no-store",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify(["PING"]),
+    });
     const body = (await res.json().catch(() => null)) as { result?: unknown } | null;
     const pong = res.ok && body?.result === "PONG";
     return { ok: pong, detail: pong ? "PONG" : `HTTP ${res.status}` };

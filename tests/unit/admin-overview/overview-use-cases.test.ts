@@ -218,7 +218,10 @@ describe("probes", () => {
   it("reads Redis PONG and treats a Worker 404 as alive", async () => {
     const pong = vi.fn(async () => new Response(JSON.stringify({ result: "PONG" }), { status: 200 }));
     expect(await probeRedis("http://srh", "t", pong as unknown as typeof fetch)).toMatchObject({ ok: true, detail: "PONG" });
-    expect(pong).toHaveBeenCalledWith("http://srh/ping", expect.objectContaining({ headers: { authorization: "Bearer t" } }));
+    expect(pong).toHaveBeenCalledWith(
+      "http://srh",
+      expect.objectContaining({ method: "POST", body: JSON.stringify(["PING"]), headers: { authorization: "Bearer t", "content-type": "application/json" } }),
+    );
     const worker = async () => new Response(null, { status: 404 });
     expect(await probeHlsWorker("https://video.example.com", worker as unknown as typeof fetch)).toMatchObject({ ok: true });
     const down = async () => new Response(null, { status: 522 });
