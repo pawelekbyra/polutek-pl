@@ -66,7 +66,7 @@ Do sprawdzenia w kodzie: czy zapis na subskrypcję wysyła mail potwierdzający 
 - [ ] Prośba do **SpamRATS** o ręczny przegląd zakresu (strona „Contact SpamRATS Support”).
 - [ ] Ewentualnie napisać do Hetznera (autoryzacja SNDS/JMRP dla ich zakresu IP) i do Microsoftu (sender.office.com), gdy własny serwer będzie wysyłał do Hotmaila.
 - [ ] Ponowić wniosek o SES po ok. miesiącu (z historią wysyłki). Włączyć listę zawieszeń/SNS dopiero po zatwierdzeniu SES.
-- [ ] Decyzja kosztowa: dedykowane IP w Resend (plan Scale, 30 USD/mies.) vs SES vs własna flota IP przy docelowej skali.
+- [x] Decyzja kosztowa (2026-10-07): **odłożona do wzrostu wolumenu**. Dziś ~57 maili/mies., dedykowane IP bez sensu. Koszty: Resend Scale 90 USD + dodatek IP 30 USD = ok. 120 USD/mies. (źródła różnią się w progu wolumenu); SES 0,10 USD/1000 maili + 24,95 USD/mies. za IP (1 mln maili z 2 IP ok. 150 USD/mies., 5 mln ok. 550 USD/mies.), wariant zarządzany 15 USD/mies. + 0,08 USD/1000; nowe konta AWS 200 USD kredytów na 6 mies. Plan: zostać na wspólnym IP Resend, **2026-11-07 ponowić wniosek o SES z historią wysyłki**, dedykowane IP włączyć przy kilkudziesięciu tysiącach maili/mies. lub przed startem z dużym ruchem (czas na rozgrzewkę).
 - [ ] Przy okazji: sprawdzić nagłówki wiadomości testowych z Hotmaila (patrz wyżej).
 
 ## 5. Plan rozgrzewki własnego serwera (po spełnieniu warunków wstępnych)
