@@ -42,4 +42,5 @@ Wyniki zapisuj tabelką poniżej (dostawca, Odebrane/Spam, `Authentication-Resul
 
 | Data | Skrzynka (dostawca) | Tor | Folder | SPF/DKIM/DMARC | Uwagi |
 |---|---|---|---|---|---|
+| 2026-10-07 | Gmail (`pawel.perfect@gmail.com`, subdomena `lab.` nowa dla niego) | serwerek | **Odebrane** | SPF pass (IP 46.224.211.115), DKIM pass (`lab1`), DMARC pass | Serwer Gmaila przyjął mail od razu (250 OK, TLS 1.3). Pierwszy test, jedna wiadomość. |
 | | | | | | |
