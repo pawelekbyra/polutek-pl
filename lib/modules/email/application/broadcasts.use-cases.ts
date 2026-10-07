@@ -174,6 +174,7 @@ export async function sendBroadcastTest(
     html: message.html,
     language: message.language,
     kind: "broadcast-test",
+    stream: "news",
     unsubscribe: { oneClickUrl, footerHtml: message.footerHtml },
   });
   if (!sent.ok) return fail(new EmailProviderError(`Resend odrzucił wiadomość testową (${sent.error.name ?? sent.error.message}).`));
