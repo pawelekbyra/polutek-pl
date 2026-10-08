@@ -6,6 +6,7 @@ import {
   getQualityOverview,
   getTrafficOverview,
   getWatchOverview,
+  getWorldOverview,
   type EdgeSnapshot,
   type FunnelDto,
   type QualityOverview,
@@ -17,6 +18,7 @@ import { AnalyticsTabs, parseTab, type AnalyticsTab } from "@admin/components/an
 import { BarList, KpiTiles, LowSample, Notes, periodLede, RollupAge, SeriesChart, UnavailableCard } from "@admin/components/analytics/parts";
 import { EdgeCard, QualityTiles } from "@admin/components/analytics/quality-parts";
 import { TrendChart } from "@admin/components/analytics/trend-chart";
+import { WorldTab } from "@admin/components/analytics/world/world-tab";
 import { RefreshButton } from "@admin/components/refresh-button";
 import { Badge, Card, PageHead, State } from "@admin/components/ui";
 import { analyticsDeps } from "@admin/lib/analytics";
@@ -41,7 +43,12 @@ export default async function AnalyticsPage({ searchParams }: Props) {
   if (tab === "ruch") {
     const traffic = await getTrafficOverview(deps, { range, compare });
     if (traffic.available) lede = periodLede(traffic.data.rangeLabel, traffic.data.compareLabel, cmp);
-    body = traffic.available ? <TrafficTab d={traffic.data} cmp={cmp} now={now} /> : <UnavailableCard reason={traffic.reason} />;
+    const worldQs = new URLSearchParams({ tab: "swiat", ...(query.range ? { range: query.range } : {}), ...(query.cmp ? { cmp: query.cmp } : {}) });
+    body = traffic.available ? <TrafficTab d={traffic.data} cmp={cmp} now={now} worldHref={`/analityka?${worldQs}`} /> : <UnavailableCard reason={traffic.reason} />;
+  } else if (tab === "swiat") {
+    const world = await getWorldOverview(deps, { range, compare });
+    if (world.available) lede = periodLede(world.data.rangeLabel, world.data.compareLabel, cmp);
+    body = world.available ? <WorldTab d={world.data} cmp={cmp} now={now} /> : <UnavailableCard reason={world.reason} />;
   } else if (tab === "lejek") {
     const f = await getFunnel(deps, { range, compare });
     if (f.available) lede = f.data.rangeLabel;
@@ -65,7 +72,7 @@ export default async function AnalyticsPage({ searchParams }: Props) {
   );
 }
 
-function TrafficTab({ d, cmp, now }: { d: TrafficOverview; cmp: boolean; now: Date }) {
+function TrafficTab({ d, cmp, now, worldHref }: { d: TrafficOverview; cmp: boolean; now: Date; worldHref: string }) {
   const hourly = d.granularity === "hour";
   return (
     <div className="grid">
@@ -97,7 +104,7 @@ function TrafficTab({ d, cmp, now }: { d: TrafficOverview; cmp: boolean; now: Da
         </Card>
       </div>
       <div className="span-4">
-        <Card id="h-cty" title="Kraje">
+        <Card id="h-cty" title="Kraje" foot={<Link href={worldHref}>Mapa świata i podbój →</Link>}>
           <BarList items={d.countries} />
         </Card>
       </div>

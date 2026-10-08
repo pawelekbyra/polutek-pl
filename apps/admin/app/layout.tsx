@@ -10,6 +10,7 @@ import "./shell.css";
 import "./auth.css";
 import "./content.css";
 import "./analytics.css";
+import "./world.css";
 import "./phase3.css";
 
 export const metadata: Metadata = {

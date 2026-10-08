@@ -53,6 +53,41 @@ export type TrafficOverview = {
   edgeCheck: EdgeCheck;
 };
 
+/** One country of the "Świat" map (docs/architecture/admin-world-map.md). */
+export type WorldCountryDto = {
+  /** ISO 3166-1 alpha-2 (as sent by Cloudflare). */
+  code: string;
+  name: string;
+  /** Sum of daily unique visitors in the period (0 = seen before, not in this period). */
+  visitors: number;
+  pageviews: number;
+  /** Share of all visitors of the period with a known country, 0..100. */
+  share: number;
+  /** Colour class 0..WORLD_MAX_CLASSES (0 = no visitors in the period). */
+  cls: number;
+  /** First Warsaw day the country was ever seen ("YYYY-MM-DD"); null = not in the retained history. */
+  firstDay: string | null;
+  /** First seen inside the current period. */
+  isNew: boolean;
+};
+
+export type WorldOverview = {
+  rangeLabel: string;
+  compareLabel: string;
+  freshness: Freshness;
+  kpis: KpiDto[];
+  /** Countries of the period first (by visitors), then countries seen only before it. */
+  countries: WorldCountryDto[];
+  classes: { cls: number; label: string }[];
+  /** Visitors whose country is unknown (VPN, Tor, missing header); never placed on the map. */
+  unknownVisitors: number;
+  /** Days on which new countries appeared, oldest first, with the running total. */
+  conquest: { day: string; label: string; codes: string[]; names: string[]; total: number }[];
+  /** Running total of known countries per day since the first measurement. */
+  conquestSeries: TimeSeriesDto;
+  notes: string[];
+};
+
 export type EdgeCheck =
   | { available: false; reason: string }
   | { available: true; fetchedAt: string; ownPageviews: number; edgeRequests: number; deviationPct: number; withinTolerance: boolean; tolerancePct: number };

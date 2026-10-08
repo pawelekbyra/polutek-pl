@@ -2,6 +2,7 @@ import Link from "next/link";
 
 const TABS = [
   ["ruch", "Ruch i źródła"],
+  ["swiat", "Świat"],
   ["lejek", "Lejek i atrybucja"],
   ["ogladalnosc", "Oglądalność"],
   ["jakosc", "Jakość odtwarzania"],

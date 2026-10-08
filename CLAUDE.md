@@ -190,7 +190,7 @@ Anonimowe, bezciasteczkowe statystyki: `TelemetryBeacon` → `POST /api/t` (zaws
 ### 4.20 Panel administratora `apps/admin` (admin.pawelperfect.com)
 
 Druga aplikacja Next.js w tym repo (wspólny `node_modules`, `npm run admin:build`, aliasy `@/` = korzeń repo, `@admin/` = `apps/admin`). Fazy 1, 2, 3, A i 5 są wdrożone (2026-10-05). Plan, decyzje i parytet z dawnym panelem:
-`docs/architecture/admin-panel.md`, `admin-parity.md`, `admin-phase2-content.md`, `admin-phase2-community.md`, `admin-phase3.md`, `admin-phaseA.md`, `admin-phase5.md`; wdrożenie i logowanie: `docs/operations/ADMIN-PANEL.md`. Reguły:
+`docs/architecture/admin-panel.md`, `admin-parity.md`, `admin-phase2-content.md`, `admin-phase2-community.md`, `admin-phase3.md`, `admin-phaseA.md`, `admin-world-map.md` (mapa świata w Analityce), `admin-phase5.md`; wdrożenie i logowanie: `docs/operations/ADMIN-PANEL.md`. Reguły:
 - **Oddzielna tożsamość:** własna instancja Better Auth (`apps/admin/lib/auth/auth.ts`), własny sekret `ADMIN_AUTH_SECRET`, tabele `Admin*`, ciasteczko `__Host-ppadm.session_token`. Domyślne logowanie to **Cloudflare Access** (`ADMIN_AUTH_MODE=access`:
   zweryfikowany JWT Access jest logowaniem, e-mail zawsze z podpisanej treści tokenu; nieznana wartość trybu zawodzi zamknięcie); tryb `passkey` (klucze + TOTP, `admin-enroll`) zostaje jako wycofanie. Nigdy nie importuj `@/lib/auth`, `@/lib/api/auth`, `@/app/*`, `@/components/*`
   w `apps/admin`, nie importuj głęboko modułów (tylko `@/lib/modules/<m>` i `shared`), Prisma tylko w `apps/admin/lib/auth`: bramka architektury to egzekwuje.

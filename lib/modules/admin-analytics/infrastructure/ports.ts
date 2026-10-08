@@ -7,6 +7,8 @@ export type TrafficHourRow = { hour: Date; pageviews: number; visitors: number }
 export type TrafficDayRow = { day: string; pageviews: number; visitors: number };
 export type TrafficExtraRow = { day: string; visitors: number; singleViewVisitors: number };
 export type DimensionRow = { value: string; pageviews: number; visitors: number };
+/** First Warsaw day a country code appears in the traffic rollups (all retained history, 25 months). */
+export type CountryFirstSeenRow = { code: string; firstDay: string };
 
 /** Everything the playback screens need for one day (channel-wide or one video), summed over the selection. */
 export type PlaybackDayRow = {
@@ -84,6 +86,10 @@ export interface TelemetryRepository {
   trafficExtra(fromDay: string, toDay: string): Promise<TrafficExtraRow[]>;
   /** Top values of a traffic dimension summed over the days (visitors = sum of daily uniques). */
   trafficDimension(dimension: "referrer" | "country" | "utm_source", fromDay: string, toDay: string, limit: number): Promise<DimensionRow[]>;
+  /** Every country of the period (no top-N cut), visitors = sum of daily uniques; "??" = unknown. */
+  countryTotals(fromDay: string, toDay: string): Promise<DimensionRow[]>;
+  /** First day each country was seen, over all retained daily rollups. */
+  countryFirstSeen(): Promise<CountryFirstSeenRow[]>;
   playbackDaily(fromDay: string, toDay: string, videoId?: string): Promise<PlaybackDayRow[]>;
   playbackHourly(from: Date, to: Date, videoId?: string): Promise<PlaybackHourRow[]>;
   videoTotals(fromDay: string, toDay: string, limit: number): Promise<VideoTotalsRow[]>;

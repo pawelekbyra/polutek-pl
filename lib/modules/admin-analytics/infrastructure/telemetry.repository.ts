@@ -6,7 +6,7 @@
  */
 import postgres from "postgres";
 import type {
-  DeployRow, DimensionRow, ErrorClassRow, LadderClassRow, LiveNow, PlaybackDayRow, PlaybackHourRow, RetentionCurveRow, RetentionDayRow,
+  CountryFirstSeenRow, DeployRow, DimensionRow, ErrorClassRow, LadderClassRow, LiveNow, PlaybackDayRow, PlaybackHourRow, RetentionCurveRow, RetentionDayRow,
   SnapshotRow, TelemetryRepository, TrafficDayRow, TrafficExtraRow, TrafficHourRow, VideoTotalsRow,
 } from "./ports";
 
@@ -68,6 +68,24 @@ export class SqlTelemetryRepository implements TelemetryRepository {
       WHERE dimension = ${dimension} AND day BETWEEN ${fromDay}::date AND ${toDay}::date
       GROUP BY value ORDER BY sum(visitors) DESC, value LIMIT ${Math.min(50, limit)}`;
     return rows.map((r) => ({ value: String(r.value), pageviews: n(r.pageviews), visitors: n(r.visitors) }));
+  }
+
+  async countryTotals(fromDay: string, toDay: string): Promise<DimensionRow[]> {
+    const rows = await this.sql`
+      SELECT value, sum(pageviews)::bigint AS pageviews, sum(visitors)::bigint AS visitors
+      FROM telemetry.r_traffic_daily
+      WHERE dimension = 'country' AND day BETWEEN ${fromDay}::date AND ${toDay}::date
+      GROUP BY value ORDER BY sum(visitors) DESC, value LIMIT 400`;
+    return rows.map((r) => ({ value: String(r.value), pageviews: n(r.pageviews), visitors: n(r.visitors) }));
+  }
+
+  async countryFirstSeen(): Promise<CountryFirstSeenRow[]> {
+    const rows = await this.sql`
+      SELECT value, min(day)::text AS first_day
+      FROM telemetry.r_traffic_daily
+      WHERE dimension = 'country' AND value <> '??' AND visitors > 0
+      GROUP BY value ORDER BY min(day), value LIMIT 400`;
+    return rows.map((r) => ({ code: String(r.value), firstDay: dayStr(r.first_day) }));
   }
 
   async playbackDaily(fromDay: string, toDay: string, videoId?: string): Promise<PlaybackDayRow[]> {

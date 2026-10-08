@@ -1,0 +1,73 @@
+/* Panel PP: mapa świata (Analityka → Świat, docs/architecture/admin-world-map.md).
+ * Bez atrybutów style= (ścisłe CSP): kolory to klasy, rozmiary to atrybuty SVG.
+ * Skala sekwencyjna: jedna barwa --series-1 w krokach od tła do pełnego koloru (DESIGN-SYSTEM.md 2.1);
+ * c0 = brak odwiedzających (neutralna szarość, wyraźnie inna niż najjaśniejszy krok). */
+
+.wm {
+  --wm-none: var(--surface-3); --wm-line: var(--surface); --wm-sea: var(--surface);
+  /* Udział barwy serii w krokach 1-4 (jasny motyw); 5-6 idą w stronę tekstu, czyli ciemniej w jasnym i jaśniej w ciemnym. */
+  --wm-p1: 28%; --wm-p2: 44%; --wm-p3: 60%; --wm-p4: 76%;
+  display: grid; gap: var(--s-3); min-width: 0; }
+.wm-controls { display: flex; justify-content: space-between; align-items: center; gap: var(--s-2) var(--s-4); flex-wrap: wrap; }
+.wm-body { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: var(--s-4); align-items: start; }
+@media (max-width: 1100px) { .wm-body { grid-template-columns: minmax(0, 1fr); } }
+
+.wm-frame { position: relative; border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; background: var(--wm-sea); touch-action: manipulation; }
+.wm-frame:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+.wm-svg { display: block; width: 100%; height: auto; }
+.wm-sea { fill: var(--wm-sea); }
+
+.wm-country { stroke: var(--wm-line); stroke-width: 0.6; vector-effect: non-scaling-stroke; stroke-linejoin: round; cursor: pointer; transition: fill var(--dur-1) var(--ease); }
+.wm-point { stroke-width: 1; }
+.wm-c0 { fill: var(--wm-none); }
+.wm-c1 { fill: color-mix(in oklab, var(--series-1) var(--wm-p1), var(--surface)); }
+.wm-c2 { fill: color-mix(in oklab, var(--series-1) var(--wm-p2), var(--surface)); }
+.wm-c3 { fill: color-mix(in oklab, var(--series-1) var(--wm-p3), var(--surface)); }
+.wm-c4 { fill: color-mix(in oklab, var(--series-1) var(--wm-p4), var(--surface)); }
+.wm-c5 { fill: color-mix(in oklab, var(--series-1) 86%, var(--text)); }
+.wm-c6 { fill: color-mix(in oklab, var(--series-1) 66%, var(--text)); }
+.wm-country:hover, .wm-country.is-active { stroke: var(--text); stroke-width: 1.4; }
+.wm-country.is-selected { stroke: var(--text); stroke-width: 2.2; }
+.wm-points .wm-country { paint-order: stroke; }
+
+/* Ciemny motyw: najjaśniejszy krok musi odstawać od szarości „brak odwiedzających” na ciemnym tle. */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .wm { --wm-sea: var(--bg); --wm-line: var(--bg); --wm-p1: 56%; --wm-p2: 67%; --wm-p3: 78%; --wm-p4: 89%; } }
+:root[data-theme="dark"] .wm { --wm-sea: var(--bg); --wm-line: var(--bg); --wm-p1: 56%; --wm-p2: 67%; --wm-p3: 78%; --wm-p4: 89%; }
+
+/* Podbój: wszystko szare, odkryte wcześniej w jednym kroku skali, odkryte danego dnia w drugim kolorze serii. */
+.wm.is-conquest .wm-country { fill: var(--wm-none); }
+.wm.is-conquest .wm-country.is-on { fill: color-mix(in oklab, var(--series-1) var(--wm-p3), var(--surface)); }
+.wm.is-conquest .wm-country.is-fresh { fill: var(--series-2); }
+
+.wm-tip { top: 0; left: 0; }
+.wm-conquest-bar { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.wm-range { flex: 1 1 220px; min-width: 160px; accent-color: var(--accent); }
+.wm-step-label { font-size: var(--fs-13); color: var(--text-2); }
+.wm-step-label strong { color: var(--text); font-variant-numeric: tabular-nums; }
+
+.wm-side { display: grid; gap: var(--s-3); align-content: start; font-size: var(--fs-13); }
+.wm-side-title { margin: 0; font-size: var(--fs-16); font-weight: 600; }
+.wm-new { margin-left: 6px; }
+.wm-unknown { margin: 0; font-size: var(--fs-12); color: var(--text-3); }
+
+.wm-legend { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-4); font-size: var(--fs-12); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.wm-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.wm-key { display: inline-block; width: 14px; height: 10px; border-radius: 2px; border: 1px solid var(--border); background: var(--wm-none); }
+.wm-key.wm-c1 { background: color-mix(in oklab, var(--series-1) var(--wm-p1), var(--surface)); }
+.wm-key.wm-c2 { background: color-mix(in oklab, var(--series-1) var(--wm-p2), var(--surface)); }
+.wm-key.wm-c3 { background: color-mix(in oklab, var(--series-1) var(--wm-p3), var(--surface)); }
+.wm-key.wm-c4 { background: color-mix(in oklab, var(--series-1) var(--wm-p4), var(--surface)); }
+.wm-key.wm-c5 { background: color-mix(in oklab, var(--series-1) 86%, var(--text)); }
+.wm-key.wm-c6 { background: color-mix(in oklab, var(--series-1) 66%, var(--text)); }
+.wm-key-on { background: color-mix(in oklab, var(--series-1) var(--wm-p3), var(--surface)); }
+.wm-key-fresh { background: var(--series-2); }
+
+.wm-milestones { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--s-2); font-size: var(--fs-13); }
+.wm-milestones li { display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content; gap: var(--s-3); align-items: baseline; padding-bottom: var(--s-2); border-bottom: 1px solid var(--border); }
+.wm-milestones li:last-child { border-bottom: 0; padding-bottom: 0; }
+.wm-ms-day { color: var(--text-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.wm-ms-names { min-width: 0; overflow-wrap: anywhere; }
+.wm-ms-total { color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) { .wm-country { transition: none; } }
+@media (forced-colors: active) { .wm-country, .wm-key { forced-color-adjust: none; } }
