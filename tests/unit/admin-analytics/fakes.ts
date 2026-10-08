@@ -19,6 +19,8 @@ export type TelemetryData = Partial<{
   trafficDaily: TrafficDayRow[];
   trafficExtra: TrafficExtraRow[];
   dimensions: Record<string, DimensionRow[]>;
+  /** Country rows per Warsaw day (dimension "country"), for countryTotals / countryFirstSeen. */
+  countryDays: { day: string; value: string; visitors: number; pageviews: number }[];
   playbackDaily: (PlaybackDayRow & { videoId?: string })[];
   playbackHourly: (PlaybackHourRow & { videoId?: string })[];
   videoTotals: VideoTotalsRow[];
@@ -59,6 +61,23 @@ export function fakeTelemetry(d: TelemetryData = {}): TelemetryRepository & { ca
     },
     async trafficDimension(dim: string) {
       return d.dimensions?.[dim] ?? [];
+    },
+    async countryTotals(a: string, b: string) {
+      calls.push("countryTotals");
+      const sum = new Map<string, { value: string; visitors: number; pageviews: number }>();
+      for (const r of (d.countryDays ?? []).filter((x) => inDays(a, b)(x.day))) {
+        const cur = sum.get(r.value) ?? { value: r.value, visitors: 0, pageviews: 0 };
+        cur.visitors += r.visitors;
+        cur.pageviews += r.pageviews;
+        sum.set(r.value, cur);
+      }
+      return [...sum.values()].sort((x, y) => y.visitors - x.visitors || x.value.localeCompare(y.value));
+    },
+    async countryFirstSeen() {
+      calls.push("countryFirstSeen");
+      const first = new Map<string, string>();
+      for (const r of d.countryDays ?? []) if (r.value !== "??" && r.visitors > 0 && (!first.has(r.value) || r.day < first.get(r.value)!)) first.set(r.value, r.day);
+      return [...first.entries()].map(([code, firstDay]) => ({ code, firstDay })).sort((x, y) => x.firstDay.localeCompare(y.firstDay) || x.code.localeCompare(y.code));
     },
     async playbackDaily(a: string, b: string, videoId?: string) {
       calls.push(`playbackDaily:${videoId ?? "*"}`);
