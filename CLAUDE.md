@@ -180,7 +180,7 @@ Wartości `StorageProvider` inne niż `SELF_HLS` i tabele dostawców są legacy 
 ### 4.18 E-mail
 
 Teksty maili systemowych są w kodzie (`lib/email-defaults.ts`), nic nie zasiewa `EmailTemplate`; jeden transport `sendEmail()`; wypisanie przez podpisane tokeny; rozsyłki to kolejka w Postgresie (nigdy w żądaniu HTTP);
-webhook Resend reaguje tylko na maile z tagiem `app=pawelperfect`. Szczegóły: `docs/architecture/privacy-email-retention.md`.
+webhook Resend reaguje tylko na maile z tagiem `app=pawelperfect`. Dostawcę wybiera `EMAIL_PROVIDER` (domyślnie Resend; `postmark` = Postmark z awaryjnym Resend, osobny strumień dla masówki i webhook `/api/webhooks/postmark` z danymi Basic: `docs/operations/EMAIL_POSTMARK.md`). Szczegóły: `docs/architecture/privacy-email-retention.md`.
 
 ### 4.19 Własna telemetria
 

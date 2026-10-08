@@ -4,6 +4,7 @@ import { logger } from "@/lib/logger";
 import { htmlToPlainText, wrapEmailDocument } from "../domain/email-content";
 import { toHeaderText } from "../domain/render-email";
 import type { EmailSendError, EmailSendResult } from "../domain/email-provider";
+import { isProviderUnavailable, postmarkToken, sendViaPostmark, type PostmarkMessage } from "./postmark-email.transport";
 
 /**
  * The one place that hands mail to Resend. Every automatic mail (system mails, broadcasts, broadcast
@@ -135,6 +136,16 @@ export function buildFeedbackId(kind: string, stream?: 'news'): string {
   return `${clean(kind)}:${stream ?? 'tx'}:pp:ppmail`;
 }
 
+/** Which provider sends: Resend unless EMAIL_PROVIDER=postmark (and a token exists). */
+export function getEmailProvider(env: Record<string, string | undefined> = process.env): 'resend' | 'postmark' {
+  if (env.EMAIL_PROVIDER?.trim().toLowerCase() !== 'postmark') return 'resend';
+  if (!postmarkToken(env)) {
+    logger.error('[email] EMAIL_PROVIDER=postmark but POSTMARK_SERVER_TOKEN is not set: using Resend.');
+    return 'resend';
+  }
+  return 'postmark';
+}
+
 export async function sendEmail(input: OutgoingEmail): Promise<EmailSendResult> {
   const from = input.stream === 'news' ? getNewsEmailFrom() : getEmailFrom();
   if (!process.env.EMAIL_FROM && process.env.NODE_ENV === 'production') {
@@ -149,6 +160,29 @@ export async function sendEmail(input: OutgoingEmail): Promise<EmailSendResult> 
     identityLine: EMAIL_IDENTITY_LINE,
     footerHtml: input.unsubscribe?.footerHtml,
   });
+  const text = htmlToPlainText(html);
+  const replyTo = getEmailReplyTo();
+  const headers = buildEmailHeaders(input.unsubscribe, {
+    'Feedback-ID': buildFeedbackId(input.kind, input.stream),
+    ...input.headers,
+  });
+
+  if (getEmailProvider() === 'postmark') {
+    const message: PostmarkMessage = {
+      from, to: input.to, subject, html, text, replyTo, headers,
+      tag: input.kind,
+      metadata: { [APP_EMAIL_TAG.name]: APP_EMAIL_TAG.value, kind: input.kind },
+      stream: input.stream,
+    };
+    const result = await sendViaPostmark(message);
+    // Postmark itself cannot send right now (outage, rejected token, account still in test mode): fall back to
+    // Resend instead of losing the mail. Recipient problems (bad or suppressed address) are final, not retried.
+    if (result.ok || !isProviderUnavailable(result.error) || !process.env.RESEND_API_KEY) {
+      if (!result.ok) logger.error('[email] Postmark did not send', { name: result.error.name, statusCode: result.error.statusCode });
+      return result;
+    }
+    logger.error('[email] Postmark unavailable, falling back to Resend', { name: result.error.name, statusCode: result.error.statusCode });
+  }
 
   try {
     const { data, error } = await getResendClient().emails.send(
@@ -157,12 +191,9 @@ export async function sendEmail(input: OutgoingEmail): Promise<EmailSendResult> 
         to: [input.to],
         subject,
         html,
-        text: htmlToPlainText(html),
-        replyTo: getEmailReplyTo(),
-        headers: buildEmailHeaders(input.unsubscribe, {
-          'Feedback-ID': buildFeedbackId(input.kind, input.stream),
-          ...input.headers,
-        }),
+        text,
+        replyTo,
+        headers,
         tags: [APP_EMAIL_TAG, { name: 'kind', value: input.kind }],
       },
       input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,

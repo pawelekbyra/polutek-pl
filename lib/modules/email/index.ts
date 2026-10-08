@@ -15,6 +15,7 @@ export type { EmailLanguage } from "./application/send-transactional-email.use-c
 export { sendOperatorEmail } from "./application/send-operator-email";
 export { handleResendWebhook } from "./application/handle-resend-webhook.use-case";
 export { verifyResendWebhook } from "./infrastructure/resend-webhook-verifier";
+export { checkBasicAuth, normalizePostmarkEvent } from "./infrastructure/postmark-webhook";
 export type { ResendWebhookVerification } from "./infrastructure/resend-webhook-verifier";
 export {
   listEmailTemplates,

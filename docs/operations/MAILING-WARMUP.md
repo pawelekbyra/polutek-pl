@@ -70,6 +70,8 @@ Do sprawdzenia w kodzie: czy zapis na subskrypcję wysyła mail potwierdzający 
 - [x] Decyzja kosztowa (2026-10-07): **odłożona do wzrostu wolumenu**. Dziś ~57 maili/mies., dedykowane IP bez sensu. Koszty: Resend Scale 90 USD + dodatek IP 30 USD = ok. 120 USD/mies. (źródła różnią się w progu wolumenu); SES 0,10 USD/1000 maili + 24,95 USD/mies. za IP (1 mln maili z 2 IP ok. 150 USD/mies., 5 mln ok. 550 USD/mies.), wariant zarządzany 15 USD/mies. + 0,08 USD/1000; nowe konta AWS 200 USD kredytów na 6 mies. Plan: zostać na wspólnym IP Resend, **2026-11-07 ponowić wniosek o SES z historią wysyłki**, dedykowane IP włączyć przy kilkudziesięciu tysiącach maili/mies. lub przed startem z dużym ruchem (czas na rozgrzewkę).
 - [ ] Przy okazji: sprawdzić nagłówki wiadomości testowych z Hotmaila (patrz wyżej).
 
+**Postmark zamiast Resend (od 2026-10-08):** kod gotowy i domyślnie wyłączony, instrukcja uruchomienia w [`EMAIL_POSTMARK.md`](EMAIL_POSTMARK.md); czeka na domenę i zatwierdzenie konta w Postmarku.
+
 **Eksperyment na boku (od 2026-10-07):** [`MAIL-LAB.md`](MAIL-LAB.md): osobna subdomena `lab.pawelperfect.com`, Postfix+OpenDKIM w kontenerze, wysyłka tylko do skrzynek testowych właściciela; wyniki w tabeli tamże.
 
 ## 5. Plan rozgrzewki własnego serwera (po spełnieniu warunków wstępnych)
