@@ -265,6 +265,7 @@ dopóki następny przebieg się nie powiedzie. Szablon: `polutek-cron@.service`.
 | `polutek-cron-purge-deleted-comments` | `purge-deleted-comments` | 05:15 | kasuje treść komentarzy usuniętych przez autorów ponad 30 dni temu |
 | `polutek-cron-sync-public-thumbnails` | `sync-public-thumbnails` | 06:00 | uzgadnia publiczny bucket miniatur z opublikowanymi filmami |
 | `serwerek-backup` | skrypt `backup.sh` | 02:30 czasu lokalnego (`Persistent=true`) | nocna kopia (patrz „Kopie zapasowe”) |
+| `serwerek-own-mail-events` | skrypt `own-mail-events.sh` → `POST /api/cron/own-mail-events` | co 5 min | wysyła log Postfixa własnego toru poczty do aplikacji: twarde odbicia adresu zawieszają adres, blokady po stronie odbiorców dają niezerowy kod wyjścia i alarm w `health.sh` (nic nie robi, gdy kontener `pp-mail-lab` nie działa; patrz [`MAIL-OWN-TRANSPORT.md`](MAIL-OWN-TRANSPORT.md)) |
 | `serwerek-restore-test` | skrypt `restore-test.sh` | niedziela 03:30 czasu lokalnego | test odtworzenia bazy |
 | `admin-host-status` | `host-status.py` | co minutę | zapisuje `/var/lib/serwerek/host-status/status.json` dla panelu (patrz niżej) |
 | cron `serwerek-health` | `health.sh` | co 5 min | kontrola zdrowia (patrz „Zdrowie, alerty, strażnik”) |

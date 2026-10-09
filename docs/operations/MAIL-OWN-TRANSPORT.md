@@ -46,7 +46,16 @@ Identyfikator zwrócony z toru własnego to numer kolejki Postfixa (`queued as �
 
 **Cofnięcie:** usunięcie `EMAIL_OWN_SMTP_HOST` (albo `EMAIL_OWN_SHARE=0`) i odtworzenie `app`; wszystko wraca do toru głównego, bez zmian w kodzie.
 
+## Zwroty i blokady z toru własnego (kod gotowy, timer do włączenia)
+
+Domena `lab.pawelperfect.com` nie ma MX, więc zwroty nie przychodzą jako poczta; wynik każdej wysyłki to linia `status=sent|deferred|bounced` w logu Postfixa. Co 5 minut `serwerek-own-mail-events.timer` (`scripts/serwerek/own-mail-events.sh`) wysyła ostatnie okno logu (z 2-minutowym zakładem) do `POST /api/cron/own-mail-events` (sekret `CRON_SECRET`). Parser i klasyfikacja: `lib/modules/email/domain/postfix-log.ts`.
+
+- **Twarde odbicie adresu** (DSN 5.1.1/5.1.2/5.1.3/5.1.6/5.1.10, 5.2.1, 5.4.4, 5.4.1 z „recipient/user unknown”) → ten sam use case co webhook Resend/Postmarka: adres trafia do `EmailSuppression`. Każda linia ma stabilny identyfikator zdarzenia bez adresu (skrót), więc zachodzące okna nie dublują wpisów.
+- **Blokada przez odbiorcę** (5.7.x, 4.7.x albo tekst o blokadzie, liście RBL/Barracuda/Spamhaus, reputacji, limicie, spamie, polityce) **nigdy nie zawiesza adresu** (to sygnał o nas, nie o adresacie). Odpowiedź ma `alert: true`, skrypt kończy się kodem 3, jednostka zostaje `failed` i `health.sh` ją zgłasza; przyczyny (bez adresów) są w logu aplikacji i w odpowiedzi.
+- Inne odbicia (skrzynka pełna itp.) i `deferred` są tylko liczone. Gdy kontener `pp-mail-lab` nie działa, skrypt kończy się spokojnie (tor opcjonalny).
+- Włączenie (po zgodzie, razem z torem): `install -m 755 scripts/serwerek/own-mail-events.sh /opt/serwerek/scripts/ && install -m 644 deploy/serwerek/systemd/serwerek-own-mail-events.* /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now serwerek-own-mail-events.timer`.
+
 ## Otwarte (kolejny etap)
 
-- **Zwroty i skargi z toru własnego:** serwerek nie ma MX dla `lab.pawelperfect.com`, więc odrzucenia przy rozmowie SMTP widać tylko w logu Postfixa. Plan: timer systemd czyta log, wysyła zdarzenia do uwierzytelnionej trasy, zawieszamy wyłącznie adres po twardym odbiciu adresu (nie po blokadzie IP, np. 5.7.x) i alarmujemy w odprawie dziennej, gdy rośnie odsetek odrzuceń.
+- Pokazanie liczników toru własnego (wysłane / odbicia / blokady) w odprawie dziennej i w panelu.
 - Barracuda nadal listuje IP; pojedynczy IP i brak dedykowanej reputacji ograniczają ten tor do niskiego wolumenu.
