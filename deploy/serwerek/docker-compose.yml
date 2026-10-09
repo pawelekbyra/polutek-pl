@@ -35,6 +35,8 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     mem_limit: 1g
+    # default = db/redis/srh; mail-submit = private SMTP link to the own Postfix (docs/operations/MAIL-OWN-TRANSPORT.md)
+    networks: [default, mail-submit]
 
   encoder:
     # Own video pipeline worker: pulls encode jobs from Postgres, runs ffmpeg (nice 10), uploads HLS to R2.
@@ -115,3 +117,9 @@ services:
       db:
         condition: service_healthy
     command: ["npx", "prisma", "migrate", "deploy"]
+
+networks:
+  # Created once by hand (docker network create --subnet 172.30.250.0/29 pp-mail-submit); shared with the pp-mail-lab project.
+  mail-submit:
+    external: true
+    name: pp-mail-submit

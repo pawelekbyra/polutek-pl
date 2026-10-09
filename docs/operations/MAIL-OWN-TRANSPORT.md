@@ -34,7 +34,7 @@ Identyfikator zwrócony z toru własnego to numer kolejki Postfixa (`queued as �
    docker compose -f /opt/serwerek/mail-lab/docker-compose.yml up -d --build   # po skopiowaniu deploy/serwerek/mail-lab/
    ```
    Kontener wystawia SMTP tylko w tej sieci (`mynetworks` = pętla zwrotna + `172.30.250.0/29`), bez opublikowanych portów.
-2. Dołączenie kontenera `app` do tej sieci w `deploy/serwerek/docker-compose.yml` (osobna zmiana wraz z wdrożeniem aplikacji; sieć musi już istnieć, inaczej `up` się nie uda):
+2. Dołączenie kontenera `app` do tej sieci w `deploy/serwerek/docker-compose.yml` (zrobione w repo; sieć musi już istnieć, inaczej `up` się nie uda; zmiana działa po skopiowaniu pliku na serwerek i wdrożeniu):
    ```yaml
    app:
      networks: [default, mail-submit]
