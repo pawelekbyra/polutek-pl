@@ -55,11 +55,11 @@ afterEach(() => {
 });
 
 describe("sign-in window copy (owner decision 2026-10-04)", () => {
-  it("is titled 'Sign in or create account' and says new visitors get an account automatically", async () => {
+  it("is titled 'Sign in or create account' and has no 'New here?' line", async () => {
     renderModal();
     expect(screen.getByRole("heading", { name: "Sign in or create account" })).toBeTruthy();
     expect(await screen.findByRole("button", { name: "Use a passkey" })).toBeTruthy();
-    expect(screen.getByText("New here? We'll create your account automatically.")).toBeTruthy();
+    expect(screen.queryByText("New here? We'll create your account automatically.")).toBeNull();
     expect(screen.getByText("Don't have an account?")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Create account" }));
     expect(screen.getByRole("heading", { name: "Create account" })).toBeTruthy();

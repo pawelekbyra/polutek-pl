@@ -133,15 +133,6 @@ export function EmailTakenActions({
   );
 }
 
-/** Under "Continue with Google / a passkey": both create the account when there is none. */
-export function NewHereNote({ tx }: { tx: Tx }) {
-  return (
-    <p className="text-center text-[12px] text-[var(--chan-muted)]">
-      {tx("Nowy tutaj? Konto założymy automatycznie.", "New here? We'll create your account automatically.")}
-    </p>
-  );
-}
-
 /** Bottom of the sign-in view: password reset, and the way to the e-mail sign-up (question grey, action blue). */
 export function SignInLinks({ tx, onForgot, onSignUp }: { tx: Tx; onForgot: () => void; onSignUp: () => void }) {
   return (
