@@ -1,5 +1,6 @@
-# Send-only Postfix for the mail lab. Nothing listens on the network: mail is handed over locally
-# (docker compose exec mail-lab sendmail ...). Outbound goes out of the host IP over IPv4.
+# Send-only Postfix for the mail lab and the app's own mail path (docs/operations/MAIL-OWN-TRANSPORT.md).
+# Mail is handed over locally (docker exec ... sendmail) or by the app over SMTP on the private docker network
+# pp-mail-submit (no published port, only that network may submit). Outbound goes out of the host IP over IPv4.
 compatibility_level = 3.9
 
 # Identity: HELO name equals the PTR of the server IP (mail.pawelperfect.com), forward and reverse match.
@@ -11,11 +12,19 @@ alias_maps =
 alias_database =
 local_transport = error:local delivery is disabled
 relayhost =
+# Who may submit: loopback plus the private submission network (entrypoint.sh sets mynetworks from SUBMIT_NETWORK).
 mynetworks = 127.0.0.0/8
 
-# No SMTP listener at all: this is not a mail server, only a sender.
-inet_interfaces = loopback-only
+# Listens on the container's own interfaces only (loopback and pp-mail-submit; nothing is published to the host).
+# Not a mail server: it relays only for mynetworks and accepts nothing for local delivery.
+inet_interfaces = all
 inet_protocols = ipv4
+smtpd_client_restrictions = permit_mynetworks, reject
+smtpd_relay_restrictions = permit_mynetworks, reject_unauth_destination
+smtpd_recipient_restrictions = permit_mynetworks, reject
+smtpd_helo_required = no
+message_size_limit = 5242880
+smtpd_tls_security_level = none
 smtpd_banner = $myhostname ESMTP
 
 # Outbound TLS whenever the other side offers it.
