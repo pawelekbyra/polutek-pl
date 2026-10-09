@@ -8,7 +8,7 @@ import { useLanguage } from "../LanguageContext";
 import type { AuthNotice, AuthView } from "./AuthModalProvider";
 import { TwoFactorView } from "./TwoFactorView";
 import { LinkExpiredView } from "./LinkExpiredView";
-import { Divider, EmailTakenActions, Field, NewHereNote, OAuthButtons, PasskeySignIn, PrimaryButton, SignInLinks } from "./AuthFormParts";
+import { Divider, EmailTakenActions, Field, OAuthButtons, PasskeySignIn, PrimaryButton, SignInLinks } from "./AuthFormParts";
 import { PasskeySignupView } from "./PasskeySignupView";
 import CheckInboxView from "./CheckInboxView";
 import SignUpFooter from "./SignUpFooter";
@@ -288,7 +288,6 @@ export default function AuthModal({ open, initialView, notice = null, onOpenChan
               <form onSubmit={handlePasswordSignIn} className="mt-5 space-y-3.5">
                 <OAuthButtons onSelect={handleOAuth} tx={tx} />
                 <PasskeySignIn active={open && view === "sign-in"} tx={tx} onSignedIn={finishSignedIn} onError={setError} onNeedAccount={() => switchView("passkey-signup")} />
-                <NewHereNote tx={tx} />
                 <Divider tx={tx} />
                 <Field label="E-mail" type="email" value={email} onChange={setEmail} autoComplete="username webauthn" required />
                 <Field label={tx("Hasło", "Password")} type="password" value={password} onChange={setPassword} autoComplete="current-password" revealLabels={revealLabels} required />
