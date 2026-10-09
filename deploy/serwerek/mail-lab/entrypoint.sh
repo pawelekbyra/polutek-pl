@@ -13,6 +13,9 @@ chmod 600 /keys/lab1.private
 echo "[mail-lab] DKIM public record to publish at lab1._domainkey.lab.pawelperfect.com:"
 cat /keys/lab1.txt || true
 
+# Submission from the app: only the private docker network (docker-compose.yml: pp-mail-submit) may relay.
+postconf -e "mynetworks = 127.0.0.0/8 ${SUBMIT_NETWORK:-172.30.250.0/29}"
+
 opendkim -x /etc/opendkim/opendkim.conf
 postfix check
 exec postfix start-fg

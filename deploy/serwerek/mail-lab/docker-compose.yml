@@ -1,15 +1,26 @@
-# Mail lab (docs/operations/MAIL-LAB.md): its own compose project, started and stopped by hand.
+# Mail lab and own mail path (docs/operations/MAIL-LAB.md, MAIL-OWN-TRANSPORT.md): its own compose project, started and stopped by hand.
+#   docker network create --subnet 172.30.250.0/29 pp-mail-submit      # once
 #   docker compose -f /opt/serwerek/mail-lab/docker-compose.yml up -d
 #   docker compose -f /opt/serwerek/mail-lab/docker-compose.yml down
 services:
   mail-lab:
     build: .
-    image: pp-mail-lab:1
+    image: pp-mail-lab:2
     container_name: pp-mail-lab
     restart: "no"
     hostname: mail.pawelperfect.com
-    # No published ports: nothing can connect to it. 4 GB host with swap pressure, so a hard cap.
+    # No published ports: only containers on the private network below can reach SMTP (port 25 inside it).
+    # 4 GB host with swap pressure, so a hard cap.
     mem_limit: 128m
     cpus: 0.25
+    environment:
+      SUBMIT_NETWORK: 172.30.250.0/29
     volumes:
       - /opt/serwerek/data/mail-lab/keys:/keys
+    networks:
+      - submit
+
+networks:
+  submit:
+    external: true
+    name: pp-mail-submit

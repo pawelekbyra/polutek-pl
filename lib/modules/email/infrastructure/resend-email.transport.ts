@@ -4,6 +4,7 @@ import { logger } from "@/lib/logger";
 import { htmlToPlainText, wrapEmailDocument } from "../domain/email-content";
 import { toHeaderText } from "../domain/render-email";
 import type { EmailSendError, EmailSendResult } from "../domain/email-provider";
+import { getOwnMailConfig, sendViaOwnMail, shouldUseOwnTransport } from "./own-mail.transport";
 import { isProviderUnavailable, postmarkToken, sendViaPostmark, type PostmarkMessage } from "./postmark-email.transport";
 
 /**
@@ -166,6 +167,15 @@ export async function sendEmail(input: OutgoingEmail): Promise<EmailSendResult> 
     'Feedback-ID': buildFeedbackId(input.kind, input.stream),
     ...input.headers,
   });
+
+  // Own server first for the kinds and share of recipients configured (EMAIL_OWN_*); any failure falls through
+  // to the primary provider below, so the mail is not lost (a timeout after Postfix accepted can duplicate it).
+  const ownConfig = getOwnMailConfig();
+  if (ownConfig && shouldUseOwnTransport({ to: input.to, kind: input.kind, stream: input.stream }, ownConfig)) {
+    const own = await sendViaOwnMail({ from, to: input.to, subject, html, text, replyTo, headers, kind: input.kind, stream: input.stream }, ownConfig);
+    if (own.ok) return own;
+    logger.error('[email] Own mail transport failed, falling back to the primary provider', { name: own.error.name, statusCode: own.error.statusCode });
+  }
 
   if (getEmailProvider() === 'postmark') {
     const message: PostmarkMessage = {

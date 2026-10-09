@@ -9,6 +9,7 @@ RUN apk add --no-cache postfix opendkim opendkim-utils ca-certificates tzdata ba
 COPY main.cf /etc/postfix/main.cf
 COPY master.cf /etc/postfix/master.cf
 COPY opendkim.conf /etc/opendkim/opendkim.conf
+COPY key.table signing.table /etc/opendkim/
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh \
  && chmod 644 /etc/postfix/main.cf /etc/postfix/master.cf
