@@ -46,6 +46,11 @@ Identyfikator zwrócony z toru własnego to numer kolejki Postfixa (`queued as �
 
 **Cofnięcie:** usunięcie `EMAIL_OWN_SMTP_HOST` (albo `EMAIL_OWN_SHARE=0`) i odtworzenie `app`; wszystko wraca do toru głównego, bez zmian w kodzie.
 
+## Stan wdrożenia
+
+- **2026-10-09, krok 1 wykonany (za zgodą właściciela):** sieć `pp-mail-submit` (172.30.250.0/29) utworzona, kontener `pp-mail-lab` (obraz `pp-mail-lab:2`) działa z nasłuchem SMTP tylko w tej sieci (`mynetworks` = pętla zwrotna + podsieć). Kopia poprzednich plików: `/opt/serwerek/mail-lab.bak-20261009`. Test: mail z kontenera w sieci (jak z aplikacji) z nadawcą `no-reply@pawelperfect.com` doszedł do Gmaila do Odebranych; SPF pass (koperta `lab@lab.pawelperfect.com`), **DKIM pass** (`d=lab.pawelperfect.com`, `s=lab1`, podpis obejmuje `From: no-reply@pawelperfect.com`), **DMARC pass**. `restart: "no"`: po restarcie serwera kontener trzeba uruchomić ręcznie.
+- Kroki 2 i 3 (dołączenie `app` do sieci, zmienne `EMAIL_OWN_*`, timer zdarzeń) czekają na zgodę.
+
 ## Zwroty i blokady z toru własnego (kod gotowy, timer do włączenia)
 
 Domena `lab.pawelperfect.com` nie ma MX, więc zwroty nie przychodzą jako poczta; wynik każdej wysyłki to linia `status=sent|deferred|bounced` w logu Postfixa. Co 5 minut `serwerek-own-mail-events.timer` (`scripts/serwerek/own-mail-events.sh`) wysyła ostatnie okno logu (z 2-minutowym zakładem) do `POST /api/cron/own-mail-events` (sekret `CRON_SECRET`). Parser i klasyfikacja: `lib/modules/email/domain/postfix-log.ts`.
