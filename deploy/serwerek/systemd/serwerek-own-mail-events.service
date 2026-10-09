@@ -1,0 +1,12 @@
+[Unit]
+Description=serwerek own-mail-events (Postfix log of the own mail path -> app: suppress hard bounces, report blocks)
+After=docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+# CRON_SECRET=... (same file as the cron units). root:root, mode 600.
+EnvironmentFile=/etc/serwerek/cron.env
+ExecStart=/opt/serwerek/scripts/own-mail-events.sh
+TimeoutStartSec=120
+# Exit 3 = receivers block our mail: the unit stays failed until the next clean run and health.sh reports it.
