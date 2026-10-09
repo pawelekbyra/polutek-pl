@@ -49,7 +49,8 @@ Identyfikator zwrócony z toru własnego to numer kolejki Postfixa (`queued as �
 ## Stan wdrożenia
 
 - **2026-10-09, krok 1 wykonany (za zgodą właściciela):** sieć `pp-mail-submit` (172.30.250.0/29) utworzona, kontener `pp-mail-lab` (obraz `pp-mail-lab:2`) działa z nasłuchem SMTP tylko w tej sieci (`mynetworks` = pętla zwrotna + podsieć). Kopia poprzednich plików: `/opt/serwerek/mail-lab.bak-20261009`. Test: mail z kontenera w sieci (jak z aplikacji) z nadawcą `no-reply@pawelperfect.com` doszedł do Gmaila do Odebranych; SPF pass (koperta `lab@lab.pawelperfect.com`), **DKIM pass** (`d=lab.pawelperfect.com`, `s=lab1`, podpis obejmuje `From: no-reply@pawelperfect.com`), **DMARC pass**. `restart: "no"`: po restarcie serwera kontener trzeba uruchomić ręcznie.
-- Kroki 2 i 3 (dołączenie `app` do sieci, zmienne `EMAIL_OWN_*`, timer zdarzeń) czekają na zgodę.
+- **2026-10-09, kroki 2 i 3 wykonane (za zgodą właściciela):** `main` (`05027827`) wdrożony, `app` w sieci `pp-mail-submit` (kopia compose: `docker-compose.yml.bak-20261009-mailsubmit`). W `app.env` (kopia `app.env.bak-pre-ownmail-20261009`) ustawione `EMAIL_OWN_SMTP_HOST=pp-mail-lab`, `EMAIL_OWN_KINDS=welcome-email`, `EMAIL_OWN_SHARE=5`: **5% maili powitalnych idzie własnym torem**, reszta i cała reszta rodzajów przez Resend. Prawdziwy nodemailer 7 z kontenera w sieci dostarczył mail do Gmaila (`queued as …`, `status=sent`). Timer `serwerek-own-mail-events` (co 5 min) działa; pierwszy przebieg sparsował prawdziwą linię logu (`parsed 1, sent 1`). Cofnięcie: usunąć `EMAIL_OWN_SMTP_HOST` z `app.env` i odtworzyć `app`.
+- Do zrobienia: obserwować pierwsze prawdziwe powitania (log aplikacji szuka `Own mail transport failed`), zwiększać `EMAIL_OWN_SHARE` stopniowo (5 → 10 → 25) tylko gdy Gmail/Outlook/Proton nadal dają Odebrane i brak alarmów blokad.
 
 ## Zwroty i blokady z toru własnego (kod gotowy, timer do włączenia)
 
