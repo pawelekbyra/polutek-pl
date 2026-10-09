@@ -57,6 +57,10 @@ Zmienne `EMAIL_PROVIDER=postmark`, `POSTMARK_WEBHOOK_USER` i `POSTMARK_WEBHOOK_P
 
 Usunięcie `EMAIL_PROVIDER` (albo wartość `resend`) z `app.env` i odtworzenie kontenera `app`: całość wraca na Resend, bez zmian w kodzie. Webhook Postmarka można wyłączyć w jego panelu.
 
+## Wynik testu na Outlooku (2026-10-09)
+
+Konto zatwierdzone 2026-10-09. Jedna wiadomość powitalna (HTML + tekst, nadawca `team@pawelperfect.com`, nowy dla skrzynki) na świeży Hotmail: **SPF, DKIM i DMARC pass, `SCL: 5`, folder Spam**, czyli identycznie jak przez Resend i przez własny serwerek. Trzy różne tory (inne IP, inne dostawcy) dały tę samą ocenę przy pełnym uwierzytelnieniu, więc przyczyną jest wspólny element: **młoda domena** (zarejestrowana 2026-09-30) i/lub sama skrzynka testowa. Zmiana dostawcy sama tego nie naprawi; zostaje czas, prawdziwy ruch i zaangażowanie odbiorców (patrz [`MAILING-WARMUP.md`](MAILING-WARMUP.md)). Postmark zostaje przygotowany (kod, domena, webhooki, konto) jako rezerwa i opcja.
+
 ## Czego nie wiemy (sprawdzić w praktyce)
 
 - Postmark chwali się wysoką dostarczalnością, ale **nie ma niezależnego, kontrolowanego testu** dla nowej domeny na Outlooku (źródła to blogi i testy konkurentów). Nasze dane z 2026-10-07 pokazują, że Outlook oceniał Resend i własny serwer tak samo (SCL 5), więc głównym czynnikiem jest wiek domeny (zarejestrowana 2026-09-30) i treść, nie dostawca. Dlatego wynik trzeba **zmierzyć** tym samym testem (świeża skrzynka Outlook, nagłówki).
