@@ -8,6 +8,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { useLanguage } from "./LanguageContext";
+import { GO_HOME_EVENT } from "./BrandHomeLink";
 import { SidebarPlaylist } from "./channel/SidebarPlaylist";
 import type { SidebarLayout } from "./channel/sidebar-layout-request";
 import { AlertCircle } from "./icons";
@@ -190,6 +191,28 @@ function ChannelHomeContent({
     // Tagging the initial entry must happen once, for the video the page opened with.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // The logo ("polutek:go-home"): back to the hero video. A shallow switch like picking a video in the
+  // sidebar (no server round trip, no loading screen); the address goes back to the plain home URL.
+  const heroId = mainVideo?.id;
+  const selectedId = selectedVideo?.id;
+  const goToHero = useCallback(() => {
+    if (!heroId || selectedId === heroId) return;
+    preloader?.selectVideo(heroId);
+    void preloader?.warmVideo(heroId, { includeComments: true, priority: "critical" });
+    // A click is a user gesture, so the hero starts with sound.
+    setSelectionState({ routeVideoId: currentVideoId, selectedVideoId: heroId, activeTab: "comments", startWithSound: true });
+    try {
+      window.history.pushState({ [VIDEO_HISTORY_STATE_KEY]: heroId }, "", getLocalizedHref(language, "home"));
+    } catch {
+      // Selection already switched locally; a failed URL update is only cosmetic.
+    }
+  }, [heroId, selectedId, preloader, currentVideoId, language]);
+
+  useEffect(() => {
+    window.addEventListener(GO_HOME_EVENT, goToHero);
+    return () => window.removeEventListener(GO_HOME_EVENT, goToHero);
+  }, [goToHero]);
 
   // The tip gate (SupportModal) opens on the "polutek:open-support" event, dispatched by Hero's
   // "Wspieraj" button and AccessLockOverlay. It is mounted only while open, so Stripe.js is loaded

@@ -10,6 +10,7 @@ import "./globals.css";
 import { APP_NAME } from '@/lib/constants';
 import { getBetaSiteText, getStageRobots } from "@/lib/site-stage-metadata";
 import { ServiceWorkerCleanup } from "@/app/components/ServiceWorkerCleanup";
+import { ZoomLock } from "@/app/components/ZoomLock";
 import { UrlMask } from "@/app/components/UrlMask";
 import { resolveDocumentLanguage } from "@/lib/i18n/server-language";
 import { loadCatalog } from "@/lib/i18n/catalog";
@@ -53,6 +54,10 @@ export async function generateMetadata(): Promise<Metadata> {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // The site behaves like an app: no pinch or double-tap zoom (see also ZoomLock, for iOS Safari,
+  // which ignores these two values).
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
   themeColor: "#f7f9fc",
   // The site is light only; saying so keeps form controls and scrollbars consistent.
@@ -79,6 +84,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="font-sans bg-background text-foreground min-h-[100dvh] relative" suppressHydrationWarning>
         <ServiceWorkerCleanup />
+        <ZoomLock />
         <UrlMask />
         <Suspense fallback={<div className="min-h-[100dvh] bg-background" />}>
           <Providers initialLanguage={initialLanguage} initialCatalog={initialCatalog}>
