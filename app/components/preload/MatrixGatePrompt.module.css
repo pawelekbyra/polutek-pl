@@ -1,29 +1,130 @@
 /* Entry gate: the site's light palette with the Matrix rain (dark glyphs on the light page colour, no
    green). Colours come from the screen element (SitePreloaderScreen.module.css: --mx-*), with
-   fallbacks here. Layout rule: the prompt never moves. Under it is one fixed-size slot that holds
-   either the progress bar (loading) or the rabbit with "WEJDŹ" (ready), so the bar sits exactly
-   where the rabbit appears. */
+   fallbacks here.
+
+   Layout rule: one box (.stage) the size of the rabbit, centred on the visible viewport. Everything
+   else is positioned against that box, so nothing moves between the states:
+   - loading: the progress bar's track sits on the box's centre, its label just above it;
+   - ready: the rabbit fills the box, the prompt hangs above it and "WEJDŹ" below it. */
 
 .overlay {
-  /* The rabbit's edge; the slot below is sized from it. */
-  --rabbit: min(220px, 52vw);
+  /* The rabbit's edge. Also bounded by the height, so prompt + rabbit + caption fit a short
+     landscape phone (the 160px are prompt, caption, the two gaps and the 16px margins). */
+  --rabbit: max(96px, min(220px, 52vw, 100vh - 160px));
+  --gap-above: 20px;
+  --gap-below: 14px;
 
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   z-index: 1;
-  gap: 22px;
-  padding: 0 16px;
-  /* No entrance animation for the loading state: the prompt and the bar must be fully readable in
-     the very first painted frame (an opacity fade stalls while the main thread hydrates). */
+  /* No entrance animation for the loading state: the bar must be fully readable in the very first
+     painted frame (an opacity fade stalls while the main thread hydrates). */
 }
 
-.text {
+/* A custom property cannot fall back by redeclaration, hence @supports for the visible height. */
+@supports (height: 1dvh) {
+  .overlay {
+    --rabbit: max(96px, min(220px, 52vw, 100dvh - 160px));
+  }
+}
+
+.stage {
+  position: absolute;
+  left: 50%;
+  /* The visible viewport's centre (the screen itself is 100lvh tall, so 50% would sit under a
+     phone's bottom bar centre). */
+  top: 50%;
+  top: 50dvh;
+  width: var(--rabbit);
+  height: var(--rabbit);
+  transform: translate(-50%, -50%);
+}
+
+/* --- Loading: a thin bar on the centre point, its label above it ------------------------------ */
+
+.progress {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(240px, 64vw);
+  height: 4px;
+  transform: translate(-50%, -50%);
+  color: var(--mx-ink, #111827);
+}
+
+/* A soft light halo instead of a plate: it fades into the rain with no edge, so the label and the
+   bar stay readable over the glyphs without a box. */
+.progress::before {
+  content: "";
+  position: absolute;
+  inset: -56px -48px -36px;
+  background: radial-gradient(
+    closest-side,
+    var(--mx-bg, #f7f9fc) 0%,
+    rgba(247, 249, 252, 0.92) 55%,
+    rgba(247, 249, 252, 0) 100%
+  );
+  pointer-events: none;
+}
+
+.progressLabel {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  transform: translateX(-50%);
   font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: clamp(18px, 3.4vw, 30px);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  /* Balances the trailing letter-spacing, so the word is centred on the bar. */
+  padding-left: 0.32em;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-shadow: 0 0 4px var(--mx-bg, #f7f9fc), 0 0 8px var(--mx-bg, #f7f9fc);
+}
+
+.track {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.14);
+  overflow: hidden;
+}
+
+/* Two solid fills; the longer one shows. The time fill runs from the server HTML on (pure CSS),
+   the real fill follows the pieces the gate waits for. Both are clipped (not scaled), so the
+   rounded leading edge keeps its shape while the bar grows. */
+.fillTime,
+.fillReal {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border-radius: inherit;
+  background: var(--mx-ink, #111827);
+}
+
+.fillTime {
+  clip-path: inset(0 100% 0 0 round 999px);
+  animation: fill-time 5.5s cubic-bezier(0.12, 0.7, 0.25, 1) forwards;
+}
+
+.fillReal {
+  clip-path: inset(0 100% 0 0 round 999px);
+  transition: clip-path 300ms ease-out;
+}
+
+/* --- Ready: prompt above the rabbit, "WEJDŹ" under it; rabbit + caption are one button -------- */
+
+.text {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + var(--gap-above));
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: clamp(18px, min(3.4vw, 6vh), 30px);
   font-weight: 700;
   color: var(--mx-ink, #111827);
   letter-spacing: 0.01em;
@@ -32,6 +133,7 @@
   margin: 0;
   /* Background-coloured halo lifts the prompt off the rain without a box. */
   text-shadow: 0 0 4px var(--mx-bg, #f7f9fc), 0 0 8px var(--mx-bg, #f7f9fc), 0 0 12px var(--mx-bg, #f7f9fc);
+  animation: appear 260ms ease-out both;
 }
 
 /* Terminal block cursor after the prompt. */
@@ -45,84 +147,11 @@
   animation: blink 1.06s steps(1) infinite;
 }
 
-/* The fixed-size place under the prompt: rabbit + caption high, so the bar can take the rabbit's spot. */
-.slot {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  /* rabbit + gap + caption */
-  height: calc(var(--rabbit) + 14px + 46px);
-}
-
-/* --- Loading: label over a segmented progress bar, centred where the rabbit will appear ------ */
-
-.progressWrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: var(--rabbit);
-}
-
-.progress {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 18px 16px;
-  border: 1px solid var(--mx-line, rgba(17, 24, 39, 0.5));
-  background: rgba(247, 249, 252, 0.94);
-  color: var(--mx-ink, #111827);
-}
-
-.progressLabel {
-  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.32em;
-  /* The trailing letter-spacing would push the text off-centre. */
-  margin-right: -0.32em;
-  line-height: 1.2;
-}
-
-.track {
-  position: relative;
-  display: block;
-  width: min(260px, 68vw);
-  height: 10px;
-  border: 1px solid var(--mx-line, rgba(17, 24, 39, 0.5));
-  background: rgba(17, 24, 39, 0.06);
-  overflow: hidden;
-}
-
-/* Two fills drawn as terminal blocks (6 px on, 2 px off); the longer one shows. The time fill runs
-   from the server HTML on (pure CSS), the real fill follows the pieces the gate waits for. They
-   are clipped (not scaled), so the blocks keep their size while the bar grows. */
-.fillTime,
-.fillReal {
+/* The button is exactly the rabbit box; the caption hangs below it but is still part of it. */
+.enter {
   position: absolute;
   inset: 0;
   display: block;
-  background: repeating-linear-gradient(90deg, var(--mx-ink, #111827) 0 6px, transparent 6px 8px);
-}
-
-.fillTime {
-  clip-path: inset(0 100% 0 0);
-  animation: fill-time 5.5s cubic-bezier(0.12, 0.7, 0.25, 1) forwards;
-}
-
-.fillReal {
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 300ms ease-out;
-}
-
-/* --- Ready: the rabbit and "WEJDŹ" under it, one button ----------------------------------- */
-
-.enter {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
   background: none;
   border: none;
   padding: 0;
@@ -136,8 +165,8 @@
 
 .rabbitImg {
   display: block;
-  width: var(--rabbit);
-  height: var(--rabbit);
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   transition: filter 160ms ease;
   animation: pulse 2.8s ease-in-out 1.5s infinite;
@@ -157,6 +186,11 @@
 
 /* A dark terminal key under the rabbit; hover/focus anywhere on the button inverts it. */
 .caption {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + var(--gap-below));
+  transform: translateX(-50%);
+  white-space: nowrap;
   font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
   font-size: 16px;
   font-weight: 700;
@@ -182,8 +216,8 @@
 }
 
 @keyframes fill-time {
-  from { clip-path: inset(0 100% 0 0); }
-  to   { clip-path: inset(0 10% 0 0); }
+  from { clip-path: inset(0 100% 0 0 round 999px); }
+  to   { clip-path: inset(0 10% 0 0 round 999px); }
 }
 
 @keyframes blink {
@@ -201,6 +235,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .text,
   .cursor,
   .enter,
   .rabbitImg {
@@ -210,7 +245,7 @@
   /* No motion: the time fill rests at a fixed value, the real fill still shows the true share. */
   .fillTime {
     animation: none;
-    clip-path: inset(0 55% 0 0);
+    clip-path: inset(0 55% 0 0 round 999px);
   }
 
   .fillReal {

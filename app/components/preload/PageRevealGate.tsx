@@ -22,11 +22,12 @@ import {
 /**
  * Entry gate of the public home page ("Follow the white rabbit").
  *
- * The prompt and a progress bar are on screen from the first paint (server HTML). Phases:
- * - covering: the page underneath is still settling (auth loaded, player ready, comments); there
- *   is no rabbit and nothing to click yet;
+ * A progress bar is on screen from the first paint (server HTML). Phases:
+ * - covering: the page underneath is still settling (auth loaded, player ready, comments); only
+ *   the bar, no prompt, no rabbit and nothing to click yet;
  * - gate: settled, or {@link PAGE_REVEAL_MAX_WAIT_MS} from navigation start passed; the rabbit
- *   with "WEJDŹ" appears and a click on either enters;
+ *   appears in the screen centre with the prompt above and "WEJDŹ" below, and a click on rabbit or
+ *   caption enters;
  * - leaving: blur-fade exit; done: unmounted, no CPU left behind.
  * A CSS failsafe hides the screen after 30 s even if JS never runs. Once entered, the gate is
  * skipped for the rest of the tab session (sessionStorage + `data-gate-passed` on <html>, set
