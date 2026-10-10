@@ -22,11 +22,11 @@ import {
 /**
  * Entry gate of the public home page ("Follow the white rabbit").
  *
- * The prompt and the rabbit button are on screen from the first paint (server HTML). Phases:
- * - covering: the page underneath is still settling (auth loaded, player ready, comments); the
- *   button says "loading" and a click is queued;
- * - gate: settled, or {@link PAGE_REVEAL_MAX_WAIT_MS} from navigation start passed; a click
- *   (or a click queued earlier) enters;
+ * The prompt and a progress bar are on screen from the first paint (server HTML). Phases:
+ * - covering: the page underneath is still settling (auth loaded, player ready, comments); there
+ *   is no rabbit and nothing to click yet;
+ * - gate: settled, or {@link PAGE_REVEAL_MAX_WAIT_MS} from navigation start passed; the rabbit
+ *   with "WEJDŹ" appears and a click on either enters;
  * - leaving: blur-fade exit; done: unmounted, no CPU left behind.
  * A CSS failsafe hides the screen after 30 s even if JS never runs. Once entered, the gate is
  * skipped for the rest of the tab session (sessionStorage + `data-gate-passed` on <html>, set
@@ -80,21 +80,16 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
   // already entered is switched to "done" before paint (and CSS hides the screen meanwhile).
   const [phase, setPhase] = useState<Phase>("covering");
   const [timedOut, setTimedOut] = useState(false);
-  const [enterQueued, setEnterQueued] = useState(false);
   const [readyKeys, setReadyKeys] = useState<ReadonlySet<string>>(() => new Set());
 
   useLayoutEffect(() => {
-    if (shouldSkipGate()) {
-      setPhase("done");
-      return;
-    }
-    // A click on the rabbit before hydration (caught by the boot script) counts.
-    if (consumeQueuedGateEnter()) setEnterQueued(true);
+    if (shouldSkipGate()) setPhase("done");
   }, []);
 
-  // The entry button takes the keyboard focus, so Enter/Space enters without a mouse.
+  // The entry button (rabbit + "WEJDŹ") appears when the page is ready and takes the keyboard focus,
+  // so Enter/Space enters without a mouse.
   useEffect(() => {
-    if (phase !== "covering") return;
+    if (phase !== "gate") return;
     const button = document.querySelector<HTMLElement>("[data-gate-enter]");
     button?.focus({ preventScroll: true });
   }, [phase]);
@@ -142,11 +137,6 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
     if (covering && (allReady || timedOut)) setPhase("gate");
   }, [covering, allReady, timedOut]);
 
-  // A click queued while loading enters as soon as the gate opens, never before.
-  useEffect(() => {
-    if (phase === "gate" && enterQueued) enter();
-  }, [phase, enterQueued, enter]);
-
   // Block body scroll and touch-scroll while the gate is up.
   useEffect(() => {
     if (phase === "done") return;
@@ -172,7 +162,6 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
     // standalone; silently fails in regular browser tabs).
     try { (screen.orientation as unknown as { lock?: (orientation: string) => Promise<void> })?.lock?.("portrait").catch(() => {}); } catch { /* unsupported */ }
     if (phase === "gate") enter();
-    else if (phase === "covering") setEnterQueued(true);
   }, [phase, enter]);
 
   const contextValue = useMemo(() => ({ reportReady }), [reportReady]);

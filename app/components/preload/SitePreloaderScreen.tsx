@@ -14,13 +14,13 @@ interface SitePreloaderScreenProps {
   ready?: boolean;
   /** Share (0..1) of the awaited pieces that have settled (drives the progress bar). */
   progress?: number;
-  /** Click on the entry button (queued by the gate while the page is not ready). */
+  /** Click on the rabbit or the "WEJDŹ" caption (they exist only once the page is ready). */
   onEnter?: () => void;
 }
 
 /**
- * The entry gate of the public home page: Matrix rain, "Follow the white rabbit" and the rabbit
- * button, all present from the first paint. Rendered by the route-level `loading.tsx` (while the
+ * The entry gate of the public home page: Matrix rain, "Follow the white rabbit" and a progress bar
+ * from the first paint; once the page is ready the bar gives way to the rabbit with "WEJDŹ". Rendered by the route-level `loading.tsx` (while the
  * server streams the page) and by `PageRevealGate`; both render identical markup, so the hand-over
  * is invisible.
  */

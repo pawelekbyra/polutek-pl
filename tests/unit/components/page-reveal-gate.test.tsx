@@ -27,7 +27,7 @@ function preloaderState() {
   return screen.queryByTestId("site-preloader")?.getAttribute("data-state") ?? "gone";
 }
 
-const enterButton = () => screen.getByRole("button", { name: /WEJDŹ|ŁADOWANIE/ });
+const enterButton = () => screen.getByRole("button", { name: /WEJDŹ/ });
 
 async function finishLeaving() {
   await act(async () => {
@@ -49,7 +49,7 @@ describe("PageRevealGate", () => {
     vi.restoreAllMocks();
   });
 
-  it("shows the prompt, the rabbit and a 'loading' button from the very first render", () => {
+  it("shows the prompt and a progress bar from the very first render, with no rabbit and nothing to click", () => {
     render(
       <PageRevealGate waitFor={["player"]}>
         <Piece name="player" ready={false} />
@@ -58,13 +58,11 @@ describe("PageRevealGate", () => {
 
     expect(preloaderState()).toBe("covering");
     expect(screen.getByText("Follow the white rabbit")).toBeTruthy();
-    const button = enterButton();
-    expect(button.textContent).toBe("ŁADOWANIE");
-    expect(button.getAttribute("aria-disabled")).toBe("true");
-    expect(button.querySelector("img")?.getAttribute("src")).toBe("/rabbit-gate.webp");
-    // The loading state is a progress bar with the label, not a plain caption.
-    expect(button.querySelector("[data-gate-progress]")).toBeTruthy();
-    // Only one caption at a time, never "ŁADOWANIE / WEJDŹ".
+    const bar = screen.getByRole("progressbar", { name: "ŁADOWANIE" });
+    expect(bar.textContent).toBe("ŁADOWANIE");
+    // No rabbit and no entry button until the page is ready.
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(document.querySelector("img")).toBeNull();
     expect(screen.queryByText(/WEJDŹ/)).toBeNull();
   });
 
@@ -87,8 +85,10 @@ describe("PageRevealGate", () => {
       </PageRevealGate>,
     );
     expect(preloaderState()).toBe("gate");
+    // The bar gives way to the rabbit with "WEJDŹ" under it: one button, one click on either part.
     expect(enterButton().textContent).toBe("WEJDŹ");
-    expect(enterButton().getAttribute("aria-disabled")).toBeNull();
+    expect(enterButton().querySelector("img")?.getAttribute("src")).toBe("/rabbit-gate.webp");
+    expect(screen.queryByRole("progressbar")).toBeNull();
     expect(screen.queryByText("ŁADOWANIE")).toBeNull();
 
     fireEvent.click(enterButton());
@@ -98,7 +98,7 @@ describe("PageRevealGate", () => {
     expect(preloaderState()).toBe("gone");
   });
 
-  it("queues a click made while the page is loading and enters only once it is ready", async () => {
+  it("lets the viewer in with a click on the rabbit or on the caption, only once the page is ready", async () => {
     const onEnter = vi.fn();
     window.addEventListener("polutek:gate-enter", onEnter);
     const { rerender } = render(
@@ -106,10 +106,7 @@ describe("PageRevealGate", () => {
         <Piece name="player" ready={false} />
       </PageRevealGate>,
     );
-
-    fireEvent.click(enterButton());
-    // Not ready yet: the page is not let through.
-    expect(preloaderState()).toBe("covering");
+    expect(screen.queryByRole("button")).toBeNull();
     expect(onEnter).not.toHaveBeenCalled();
 
     rerender(
@@ -117,20 +114,13 @@ describe("PageRevealGate", () => {
         <Piece name="player" ready />
       </PageRevealGate>,
     );
+    expect(preloaderState()).toBe("gate");
+    // Ready: the button takes the keyboard focus and a click on the rabbit enters.
+    expect(document.activeElement).toBe(enterButton());
+    fireEvent.click(enterButton().querySelector("img")!);
     expect(preloaderState()).toBe("leaving");
     expect(onEnter).toHaveBeenCalledTimes(1);
     window.removeEventListener("polutek:gate-enter", onEnter);
-  });
-
-  it("honours a click caught by the boot script before hydration", () => {
-    (window as unknown as Record<string, unknown>).__ppGateQueued = true;
-    render(
-      <PageRevealGate>
-        <p>page</p>
-      </PageRevealGate>,
-    );
-    // Auth is loaded and nothing else is awaited, so the queued click enters at once.
-    expect(preloaderState()).toBe("leaving");
   });
 
   it("waits for auth to load before revealing", () => {
