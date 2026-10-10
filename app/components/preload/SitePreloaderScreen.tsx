@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useOptionalTx } from "@/lib/i18n/language-context";
 import { MatrixRain } from "./MatrixRain";
 import { MatrixGatePrompt, type GatePromptLabels } from "./MatrixGatePrompt";
+import { GateWarp, type WarpStart } from "./GateWarp";
 import styles from "./SitePreloaderScreen.module.css";
 
 interface SitePreloaderScreenProps {
@@ -16,6 +17,8 @@ interface SitePreloaderScreenProps {
   progress?: number;
   /** Click on the rabbit or the "ENTER" caption (they exist only once the page is ready). */
   onEnter?: () => void;
+  /** The entry warp is running (zoom into the eye, tunnel, flash); see GateWarp. */
+  warp?: { start: WarpStart; onFlash: () => void; onDone: () => void } | null;
 }
 
 /**
@@ -30,7 +33,11 @@ export function SitePreloaderScreen({
   ready = false,
   progress = 0,
   onEnter,
+  warp = null,
 }: SitePreloaderScreenProps) {
+  // Elements the warp animates directly (callback refs: they exist from the first commit).
+  const [screenEl, setScreenEl] = useState<HTMLDivElement | null>(null);
+  const [cameraEl, setCameraEl] = useState<HTMLDivElement | null>(null);
   const tx = useOptionalTx();
   const labels = {
     loading: tx("ŁADOWANIE", "LOADING"),
@@ -43,16 +50,22 @@ export function SitePreloaderScreen({
       role="dialog"
       aria-modal="true"
       aria-label={labels.screen}
-      aria-hidden={leaving || undefined}
+      aria-hidden={leaving || warp ? true : undefined}
       data-testid="site-preloader"
       data-site-preloader=""
-      data-state={leaving ? "leaving" : ready ? "gate" : "covering"}
+      data-state={leaving ? "leaving" : warp ? "warp" : ready ? "gate" : "covering"}
+      // The player leaves gestures on the gate alone (no unmuting the hidden hero behind it).
+      data-sound-control=""
       // The carrot cursor belongs to the gate only; it goes away with the screen.
-      data-cursor={leaving ? undefined : "carrot"}
+      data-cursor={leaving || warp ? undefined : "carrot"}
+      ref={setScreenEl}
       className={cn(styles.screen, failsafe && styles.failsafe, leaving && styles.leaving)}
     >
-      <MatrixRain />
-      <MatrixGatePrompt ready={ready} labels={labels} progress={progress} onEnter={onEnter} />
+      <div ref={setCameraEl} data-gate-camera="" className={styles.camera}>
+        <MatrixRain />
+        <MatrixGatePrompt ready={ready} labels={labels} progress={progress} onEnter={warp ? undefined : onEnter} />
+      </div>
+      {warp && <GateWarp start={warp.start} camera={cameraEl} screen={screenEl} onFlash={warp.onFlash} onDone={warp.onDone} />}
     </div>
   );
 }

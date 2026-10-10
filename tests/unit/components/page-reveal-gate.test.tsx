@@ -10,6 +10,12 @@ vi.mock("@/app/components/preload/MatrixRain", () => ({ MatrixRain: () => null }
 const mocks = vi.hoisted(() => ({ auth: { isLoaded: true } }));
 
 vi.mock("@/lib/auth/react", () => ({ useAuth: () => mocks.auth }));
+// The warp itself (canvas, rAF, audio) is out of scope here: a stand-in that plays it on demand.
+vi.mock("@/app/components/preload/GateWarp", () => ({
+  GateWarp: (props: { onFlash: () => void; onDone: () => void }) => (
+    <button type="button" data-testid="warp-finish" onClick={() => { props.onFlash(); props.onDone(); }} />
+  ),
+}));
 
 import {
   PAGE_REVEAL_MAX_WAIT_MS,
@@ -197,6 +203,55 @@ describe("PageRevealGate", () => {
       </PageRevealGate>,
     );
     expect(preloaderState()).toBe("gone");
+  });
+
+  it("runs the warp on the click when motion is allowed: unlocks the hero now, starts it at the flash", async () => {
+    window.matchMedia = ((query: string) => ({ matches: false, media: query })) as unknown as typeof window.matchMedia;
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({} as never);
+    const unlock = vi.fn();
+    const enterEvent = vi.fn();
+    window.addEventListener("polutek:gate-unlock", unlock);
+    window.addEventListener("polutek:gate-enter", enterEvent);
+    render(
+      <PageRevealGate>
+        <p>page</p>
+      </PageRevealGate>,
+    );
+    const rabbit = enterButton().querySelector("img")!;
+    vi.spyOn(rabbit, "getBoundingClientRect").mockReturnValue({ left: 100, top: 300, width: 200, height: 200, right: 300, bottom: 500, x: 100, y: 300, toJSON() {} } as DOMRect);
+    fireEvent.click(enterButton());
+
+    expect(preloaderState()).toBe("warp");
+    expect(unlock).toHaveBeenCalledTimes(1);
+    expect(enterEvent).not.toHaveBeenCalled();
+    // A reload during the warp must not show the gate again.
+    expect(sessionStorage.getItem("polutek:revealed")).toBe("1");
+
+    fireEvent.click(screen.getByTestId("warp-finish"));
+    expect(enterEvent).toHaveBeenCalledTimes(1);
+    expect(preloaderState()).toBe("gone");
+    window.removeEventListener("polutek:gate-unlock", unlock);
+    window.removeEventListener("polutek:gate-enter", enterEvent);
+    getContext.mockRestore();
+    // @ts-expect-error back to jsdom's default (no matchMedia)
+    delete window.matchMedia;
+  });
+
+  it("keeps the plain fade (no warp, no unlock) when the viewer prefers reduced motion", () => {
+    window.matchMedia = ((query: string) => ({ matches: true, media: query })) as unknown as typeof window.matchMedia;
+    const unlock = vi.fn();
+    window.addEventListener("polutek:gate-unlock", unlock);
+    render(
+      <PageRevealGate>
+        <p>page</p>
+      </PageRevealGate>,
+    );
+    fireEvent.click(enterButton());
+    expect(preloaderState()).toBe("leaving");
+    expect(unlock).not.toHaveBeenCalled();
+    window.removeEventListener("polutek:gate-unlock", unlock);
+    // @ts-expect-error back to jsdom's default (no matchMedia)
+    delete window.matchMedia;
   });
 
   it("is a no-op outside a gate", () => {

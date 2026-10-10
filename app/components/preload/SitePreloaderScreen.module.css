@@ -23,6 +23,12 @@
   overscroll-behavior: none;
 }
 
+/* What the entry warp's camera moves (rain, prompt, rabbit); a plain full-screen layer otherwise. */
+.camera {
+  position: absolute;
+  inset: 0;
+}
+
 /* Carrot cursor over the whole gate (tip = hotspot, top-left), only for real mouse pointers. */
 @media (hover: hover) and (pointer: fine) {
   .screen[data-cursor="carrot"],

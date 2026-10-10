@@ -300,10 +300,33 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
             if (!current) return;
             current.currentTime = 0;
             current.muted = false;
-            if (current.paused && current.state?.canPlay) void current.play().catch(() => undefined);
+            if (current.paused && current.state?.canPlay) {
+                // Refused with sound (the gesture's permission did not carry over): play muted with
+                // the unmute hint rather than stay paused.
+                void current.play().catch(() => {
+                    setMuted(true);
+                    current.muted = true;
+                    void current.play().catch(() => setAutoPlayFailed(true));
+                });
+            }
+        };
+        // The entry warp: the click itself only unlocks the media element (play + pause with sound,
+        // inside the gesture, so iOS/Safari allow sound later); the hero stays silent and paused
+        // during the warp and starts from 0 with sound at its flash ("polutek:gate-enter").
+        const handleGateUnlock = () => {
+            if (readUserMuted()) return;
+            const media = player.current?.el?.querySelector("video");
+            if (!media) return;
+            media.muted = false;
+            void media.play()?.catch(() => undefined);
+            media.pause();
         };
         window.addEventListener("polutek:gate-enter", handleGateEnter);
-        return () => window.removeEventListener("polutek:gate-enter", handleGateEnter);
+        window.addEventListener("polutek:gate-unlock", handleGateUnlock);
+        return () => {
+            window.removeEventListener("polutek:gate-enter", handleGateEnter);
+            window.removeEventListener("polutek:gate-unlock", handleGateUnlock);
+        };
     }, []);
 
     // The browser refused to start with sound (no gesture it accepts, e.g. Back/Forward, or a
