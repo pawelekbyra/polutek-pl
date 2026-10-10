@@ -5,7 +5,7 @@
    Layout rule: one box (.stage) the size of the rabbit, centred on the visible viewport. Everything
    else is positioned against that box, so nothing moves between the states:
    - loading: the progress bar's track sits on the box's centre, its label just above it;
-   - ready: the rabbit fills the box, the prompt hangs above it and "WEJDŹ" below it. */
+   - ready: the rabbit fills the box, the prompt hangs above it and "ENTER" below it. */
 
 .overlay {
   /* The rabbit's edge. Also bounded by the height, so prompt + rabbit + caption fit a short
@@ -114,7 +114,7 @@
   transition: clip-path 300ms ease-out;
 }
 
-/* --- Ready: prompt above the rabbit, "WEJDŹ" under it; rabbit + caption are one button -------- */
+/* --- Ready: prompt above the rabbit, "ENTER" under it; rabbit + caption are one button -------- */
 
 .text {
   position: absolute;
