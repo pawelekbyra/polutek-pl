@@ -149,7 +149,7 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
   // permission to play with sound now ("polutek:gate-unlock") and starts at the flash
   // ("polutek:gate-enter"), so the two sounds never overlap.
   const enter = useCallback(() => {
-    const rabbit = document.querySelector<HTMLElement>("[data-gate-enter] img");
+    const rabbit = document.querySelector<HTMLElement>("[data-gate-rabbit] img");
     const box = rabbit?.getBoundingClientRect();
     if (!canWarp() || !box || box.width === 0) {
       window.dispatchEvent(new Event("polutek:gate-enter"));

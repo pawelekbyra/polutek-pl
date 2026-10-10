@@ -55,7 +55,7 @@ describe("PageRevealGate", () => {
     vi.restoreAllMocks();
   });
 
-  it("shows only a progress bar from the very first render: no prompt, no rabbit, nothing to click", () => {
+  it("shows the rabbit, the prompt and a progress bar from the very first render, with nothing to click", () => {
     render(
       <PageRevealGate waitFor={["player"]}>
         <Piece name="player" ready={false} />
@@ -63,13 +63,14 @@ describe("PageRevealGate", () => {
     );
 
     expect(preloaderState()).toBe("covering");
-    // The prompt belongs to the rabbit: it is not on screen while the bar is.
-    expect(screen.queryByText("Follow the white rabbit")).toBeNull();
+    // The rabbit and the prompt are in their place from the start; the rabbit is not clickable yet.
+    expect(screen.getByText("Follow the white rabbit")).toBeTruthy();
+    expect(document.querySelector("[data-gate-rabbit] img")?.getAttribute("src")).toBe("/rabbit-gate.svg");
+    expect(document.querySelector("[data-gate-rabbit]")?.hasAttribute("data-ready")).toBe(false);
+    // Under the rabbit: the progress bar with its label, and no entry button until the page is ready.
     const bar = screen.getByRole("progressbar", { name: "ŁADOWANIE" });
     expect(bar.textContent).toBe("ŁADOWANIE");
-    // No rabbit and no entry button until the page is ready.
     expect(screen.queryByRole("button")).toBeNull();
-    expect(document.querySelector("img")).toBeNull();
     expect(screen.queryByText(/ENTER/)).toBeNull();
   });
 
@@ -92,11 +93,11 @@ describe("PageRevealGate", () => {
       </PageRevealGate>,
     );
     expect(preloaderState()).toBe("gate");
-    // The bar gives way to the rabbit with the prompt above it and "ENTER" under it; rabbit and
-    // caption are one button, one click on either part.
+    // The bar gives way to the ENTER button under the rabbit, which stays where it was.
     expect(screen.getByText("Follow the white rabbit")).toBeTruthy();
     expect(enterButton().textContent).toBe("ENTER");
-    expect(enterButton().querySelector("img")?.getAttribute("src")).toBe("/rabbit-gate.svg");
+    expect(document.querySelector("[data-gate-rabbit] img")?.getAttribute("src")).toBe("/rabbit-gate.svg");
+    expect(document.querySelector("[data-gate-rabbit]")?.hasAttribute("data-ready")).toBe(true);
     expect(screen.queryByRole("progressbar")).toBeNull();
     expect(screen.queryByText("ŁADOWANIE")).toBeNull();
 
@@ -116,6 +117,9 @@ describe("PageRevealGate", () => {
       </PageRevealGate>,
     );
     expect(screen.queryByRole("button")).toBeNull();
+    // A click on the rabbit while loading does nothing.
+    fireEvent.click(document.querySelector("[data-gate-rabbit] img")!);
+    expect(preloaderState()).toBe("covering");
     expect(onEnter).not.toHaveBeenCalled();
 
     rerender(
@@ -126,7 +130,7 @@ describe("PageRevealGate", () => {
     expect(preloaderState()).toBe("gate");
     // Ready: the button takes the keyboard focus and a click on the rabbit enters.
     expect(document.activeElement).toBe(enterButton());
-    fireEvent.click(enterButton().querySelector("img")!);
+    fireEvent.click(document.querySelector("[data-gate-rabbit] img")!);
     expect(preloaderState()).toBe("leaving");
     expect(onEnter).toHaveBeenCalledTimes(1);
     window.removeEventListener("polutek:gate-enter", onEnter);
@@ -217,7 +221,7 @@ describe("PageRevealGate", () => {
         <p>page</p>
       </PageRevealGate>,
     );
-    const rabbit = enterButton().querySelector("img")!;
+    const rabbit = document.querySelector("[data-gate-rabbit] img")!;
     vi.spyOn(rabbit, "getBoundingClientRect").mockReturnValue({ left: 100, top: 300, width: 200, height: 200, right: 300, bottom: 500, x: 100, y: 300, toJSON() {} } as DOMRect);
     fireEvent.click(enterButton());
 
