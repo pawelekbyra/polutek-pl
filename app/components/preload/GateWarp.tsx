@@ -83,7 +83,7 @@ export function GateWarp({
     }
 
     // The vector rabbit replaces the bitmap: the <img> is hidden in the frame that first draws it.
-    const rabbitImg = vector ? camera?.querySelector<HTMLElement>("[data-gate-enter] img") ?? null : null;
+    const rabbitImg = vector ? camera?.querySelector<HTMLElement>("[data-gate-rabbit] img") ?? null : null;
 
     let skipBy = 0;
     const skip = () => {

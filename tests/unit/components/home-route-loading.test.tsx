@@ -21,13 +21,13 @@ describe("HomeRouteLoading", () => {
     vi.useRealTimers();
   });
 
-  it("shows the gate with only a progress bar (no prompt, no rabbit, no button) on the first load of the document", () => {
+  it("shows the gate with the rabbit, the prompt and a progress bar (no button) on the first load of the document", () => {
     render(<HomeRouteLoading />);
     expect(screen.getByTestId("site-preloader")).toBeTruthy();
-    expect(screen.queryByText("Follow the white rabbit")).toBeNull();
+    expect(screen.getByText("Follow the white rabbit")).toBeTruthy();
+    expect(document.querySelector("[data-gate-rabbit] img")).toBeTruthy();
     expect(screen.getByRole("progressbar", { name: "ŁADOWANIE" })).toBeTruthy();
     expect(screen.queryByRole("button")).toBeNull();
-    expect(document.querySelector("img")).toBeNull();
   });
 
   it("never re-shows the gate once the page was entered in this session", async () => {

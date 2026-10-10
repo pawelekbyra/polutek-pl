@@ -5,18 +5,16 @@ const PROMPT = "Follow the white rabbit";
 export interface GatePromptLabels {
   /** Label of the progress bar while the page underneath is still loading. */
   loading: string;
-  /** Caption under the rabbit once the page is ready; a click on rabbit or caption enters. */
+  /** Caption of the entry button, shown under the rabbit once the page is ready. */
   enter: string;
 }
 
 /**
  * The gate's prompt and entry, laid out around one fixed box (`.stage`, the rabbit's size) whose
- * centre is the centre of the visible viewport. Two states, never both on screen:
- * - loading: only a thin progress bar labelled "ŁADOWANIE", centred in the box. No prompt, no
- *   rabbit and no button yet, so nothing can be clicked before the page is ready;
- * - ready: the rabbit fills the box, "Follow the white rabbit" stands above it and "ENTER" below it
- *   (both positioned against the box, so nothing shifts). Rabbit + caption are one button: a click
- *   on either is the pass.
+ * centre is the centre of the visible viewport. The rabbit and "Follow the white rabbit" are there
+ * from the first paint and never move; only the spot under the rabbit changes:
+ * - loading: a thin progress bar labelled "ŁADOWANIE". Nothing can be clicked yet;
+ * - ready: the "ENTER" button. A click on it, or on the rabbit, is the pass.
  *
  * The bar is two overlapping fills (the longer one shows): a CSS-only time ease that is alive from
  * the server HTML on, and the real share of settled pieces reported by the gate. Plain markup
@@ -38,33 +36,39 @@ export function MatrixGatePrompt({
   return (
     <div className={styles.overlay}>
       <div className={styles.stage}>
+        <p className={styles.text}>
+          {PROMPT}
+          <span className={styles.cursor} aria-hidden="true" />
+        </p>
+        {/* The rabbit is part of the first paint; it is clickable only once the page is ready. */}
+        <div
+          className={styles.rabbit}
+          data-gate-rabbit=""
+          data-ready={ready ? "" : undefined}
+          onClick={ready ? onEnter : undefined}
+        >
+          <img
+            src="/rabbit-gate.svg"
+            alt=""
+            width={220}
+            height={220}
+            fetchPriority="high"
+            decoding="async"
+            className={styles.rabbitImg}
+          />
+        </div>
         {ready ? (
-          <>
-            <p className={styles.text}>
-              {PROMPT}
-              <span className={styles.cursor} aria-hidden="true" />
-            </p>
-            <button
-              type="button"
-              className={styles.enter}
-              data-gate-enter=""
-              data-state="ready"
-              onClick={onEnter}
-              // The <head> boot script marks a click made before hydration (data-queued).
-              suppressHydrationWarning
-            >
-              <img
-                src="/rabbit-gate.svg"
-                alt=""
-                width={220}
-                height={220}
-                fetchPriority="high"
-                decoding="async"
-                className={styles.rabbitImg}
-              />
-              <span className={styles.caption}>{labels.enter}</span>
-            </button>
-          </>
+          <button
+            type="button"
+            className={styles.caption}
+            data-gate-enter=""
+            data-state="ready"
+            onClick={onEnter}
+            // The <head> boot script marks a click made before hydration (data-queued).
+            suppressHydrationWarning
+          >
+            {labels.enter}
+          </button>
         ) : (
           <div
             className={styles.progress}
