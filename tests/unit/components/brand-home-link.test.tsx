@@ -53,6 +53,24 @@ describe("BrandHomeLink (the logo in the top bar)", () => {
     expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
   });
 
+  it("on the home page asks the page to go back to the hero video before scrolling", () => {
+    const onGoHome = vi.fn();
+    window.addEventListener("polutek:go-home", onGoHome);
+    render(<BrandHomeLink language="pl" isHome><span /></BrandHomeLink>);
+    fireEvent.click(screen.getByRole("link"));
+    expect(onGoHome).toHaveBeenCalledTimes(1);
+    window.removeEventListener("polutek:go-home", onGoHome);
+  });
+
+  it("does not send the go-home event when leaving the browser to handle the click", () => {
+    const onGoHome = vi.fn();
+    window.addEventListener("polutek:go-home", onGoHome);
+    render(<BrandHomeLink language="pl" isHome><span /></BrandHomeLink>);
+    fireEvent.click(screen.getByRole("link"), { ctrlKey: true });
+    expect(onGoHome).not.toHaveBeenCalled();
+    window.removeEventListener("polutek:go-home", onGoHome);
+  });
+
   it("scrolls without animation for reduced motion", () => {
     window.matchMedia = ((query: string) => ({ matches: true, media: query })) as unknown as typeof window.matchMedia;
     render(<BrandHomeLink language="pl" isHome><span /></BrandHomeLink>);
