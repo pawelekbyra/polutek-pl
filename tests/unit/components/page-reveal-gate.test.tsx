@@ -27,7 +27,7 @@ function preloaderState() {
   return screen.queryByTestId("site-preloader")?.getAttribute("data-state") ?? "gone";
 }
 
-const enterButton = () => screen.getByRole("button", { name: /WEJDŹ/ });
+const enterButton = () => screen.getByRole("button", { name: /ENTER/ });
 
 async function finishLeaving() {
   await act(async () => {
@@ -64,7 +64,7 @@ describe("PageRevealGate", () => {
     // No rabbit and no entry button until the page is ready.
     expect(screen.queryByRole("button")).toBeNull();
     expect(document.querySelector("img")).toBeNull();
-    expect(screen.queryByText(/WEJDŹ/)).toBeNull();
+    expect(screen.queryByText(/ENTER/)).toBeNull();
   });
 
   it("covers the page until every awaited piece has settled, then waits for the click", async () => {
@@ -86,10 +86,10 @@ describe("PageRevealGate", () => {
       </PageRevealGate>,
     );
     expect(preloaderState()).toBe("gate");
-    // The bar gives way to the rabbit with the prompt above it and "WEJDŹ" under it; rabbit and
+    // The bar gives way to the rabbit with the prompt above it and "ENTER" under it; rabbit and
     // caption are one button, one click on either part.
     expect(screen.getByText("Follow the white rabbit")).toBeTruthy();
-    expect(enterButton().textContent).toBe("WEJDŹ");
+    expect(enterButton().textContent).toBe("ENTER");
     expect(enterButton().querySelector("img")?.getAttribute("src")).toBe("/rabbit-gate.webp");
     expect(screen.queryByRole("progressbar")).toBeNull();
     expect(screen.queryByText("ŁADOWANIE")).toBeNull();

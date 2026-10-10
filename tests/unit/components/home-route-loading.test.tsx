@@ -32,7 +32,7 @@ describe("HomeRouteLoading", () => {
 
   it("never re-shows the gate once the page was entered in this session", async () => {
     const gate = render(<PageRevealGate><p>page</p></PageRevealGate>);
-    fireEvent.click(screen.getByRole("button", { name: "WEJDŹ" }));
+    fireEvent.click(screen.getByRole("button", { name: "ENTER" }));
     await act(async () => {
       vi.advanceTimersByTime(1000);
     });

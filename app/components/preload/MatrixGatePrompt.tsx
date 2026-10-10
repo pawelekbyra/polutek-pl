@@ -14,7 +14,7 @@ export interface GatePromptLabels {
  * centre is the centre of the visible viewport. Two states, never both on screen:
  * - loading: only a thin progress bar labelled "ŁADOWANIE", centred in the box. No prompt, no
  *   rabbit and no button yet, so nothing can be clicked before the page is ready;
- * - ready: the rabbit fills the box, "Follow the white rabbit" stands above it and "WEJDŹ" below it
+ * - ready: the rabbit fills the box, "Follow the white rabbit" stands above it and "ENTER" below it
  *   (both positioned against the box, so nothing shifts). Rabbit + caption are one button: a click
  *   on either is the pass.
  *

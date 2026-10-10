@@ -26,7 +26,7 @@ import {
  * - covering: the page underneath is still settling (auth loaded, player ready, comments); only
  *   the bar, no prompt, no rabbit and nothing to click yet;
  * - gate: settled, or {@link PAGE_REVEAL_MAX_WAIT_MS} from navigation start passed; the rabbit
- *   appears in the screen centre with the prompt above and "WEJDŹ" below, and a click on rabbit or
+ *   appears in the screen centre with the prompt above and "ENTER" below, and a click on rabbit or
  *   caption enters;
  * - leaving: blur-fade exit; done: unmounted, no CPU left behind.
  * A CSS failsafe hides the screen after 30 s even if JS never runs. Once entered, the gate is
@@ -87,7 +87,7 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
     if (shouldSkipGate()) setPhase("done");
   }, []);
 
-  // The entry button (rabbit + "WEJDŹ") appears when the page is ready and takes the keyboard focus,
+  // The entry button (rabbit + "ENTER") appears when the page is ready and takes the keyboard focus,
   // so Enter/Space enters without a mouse.
   useEffect(() => {
     if (phase !== "gate") return;
