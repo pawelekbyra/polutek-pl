@@ -54,7 +54,7 @@ export function MatrixGatePrompt({
               suppressHydrationWarning
             >
               <img
-                src="/rabbit-gate.webp"
+                src="/rabbit-gate.svg"
                 alt=""
                 width={220}
                 height={220}

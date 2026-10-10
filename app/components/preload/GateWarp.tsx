@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import type { GateClock } from "./gate-sound";
 import { WARP, blackoutAt, cameraAt, flashAt, zoomLevels, type Point } from "./gate-warp-timeline";
+import { drawRabbit, type RabbitVector } from "./rabbit-vector";
 
 /**
  * The entry warp after the click (timeline: gate-warp-timeline.ts, sound: gate-sound.ts). The camera
@@ -17,6 +18,11 @@ export type WarpStart = {
   /** The pupil's black core on screen (CSS px) when the click happened. */
   pupil: Point & { r: number };
   clock: GateClock;
+  /**
+   * The vector rabbit and its square on screen: drawn on the canvas at the camera scale, so the eye
+   * stays sharp at any zoom. Without it the bitmap in the DOM is scaled (soft at the end).
+   */
+  vector?: { data: RabbitVector; box: { left: number; top: number; edge: number } } | null;
 };
 
 const LIGHT = "#f7f9fc";
@@ -67,7 +73,7 @@ export function GateWarp({
     size();
     window.addEventListener("resize", size);
 
-    const { pupil, clock } = start;
+    const { pupil, clock, vector } = start;
     const center = { x: w / 2, y: h / 2 };
     const zoom = zoomLevels(pupil.r, { width: w, height: h });
     if (screen) screen.style.transition = "none";
@@ -75,6 +81,9 @@ export function GateWarp({
       camera.style.transformOrigin = "0 0";
       camera.style.willChange = "transform";
     }
+
+    // The vector rabbit replaces the bitmap: the <img> is hidden in the frame that first draws it.
+    const rabbitImg = vector ? camera?.querySelector<HTMLElement>("[data-gate-enter] img") ?? null : null;
 
     let skipBy = 0;
     const skip = () => {
@@ -101,6 +110,10 @@ export function GateWarp({
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
+      if (vector && t < WARP.blackAt) {
+        drawRabbit(ctx, vector.data, vector.box, cam, dpr);
+        if (rabbitImg) rabbitImg.style.visibility = "hidden";
+      }
       const black = blackoutAt(t);
       if (black > 0) {
         ctx.globalAlpha = black;
@@ -134,6 +147,7 @@ export function GateWarp({
 
     return () => {
       cancelAnimationFrame(raf);
+      if (rabbitImg) rabbitImg.style.visibility = "";
       window.removeEventListener("resize", size);
       window.removeEventListener("pointerdown", skip);
       window.removeEventListener("keydown", skip);
