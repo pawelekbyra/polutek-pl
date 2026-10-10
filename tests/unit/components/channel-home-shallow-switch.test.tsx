@@ -107,4 +107,31 @@ describe('ChannelHome shallow video switching', () => {
     });
     expect(mocks.heroProps.at(-1)).toMatchObject({ videoId: 'video_1', startWithSound: false });
   });
+
+  it('goes back to the hero video (shallow, plain home URL, with sound) when the logo asks for it', () => {
+    const pushState = vi.spyOn(window.history, 'pushState');
+    render(<ChannelHome mainVideo={main} allVideos={[main, second]} />);
+    fireEvent.click(screen.getAllByText('pick-video-2')[0]);
+    expect(screen.getByTestId('hero')).toHaveTextContent('video_2');
+    pushState.mockClear();
+
+    act(() => {
+      window.dispatchEvent(new Event('polutek:go-home'));
+    });
+    expect(screen.getByTestId('hero')).toHaveTextContent('video_1');
+    expect(mocks.heroProps.at(-1)).toMatchObject({ videoId: 'video_1', startWithSound: true });
+    expect(pushState).toHaveBeenCalledTimes(1);
+    expect(pushState.mock.calls[0][0]).toEqual({ polutekVideoId: 'video_1' });
+    expect(pushState.mock.calls[0][2]).toBe('/');
+  });
+
+  it('does nothing on the logo when the hero video is already shown', () => {
+    const pushState = vi.spyOn(window.history, 'pushState');
+    render(<ChannelHome mainVideo={main} allVideos={[main, second]} />);
+    act(() => {
+      window.dispatchEvent(new Event('polutek:go-home'));
+    });
+    expect(screen.getByTestId('hero')).toHaveTextContent('video_1');
+    expect(pushState).not.toHaveBeenCalled();
+  });
 });
