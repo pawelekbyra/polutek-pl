@@ -114,6 +114,11 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
 
   const covering = phase === "covering";
 
+  // Real progress for the bar: auth plus every awaited piece, as the share that has settled.
+  const awaited = waitForKey.split("|").filter(Boolean);
+  const settled = (authLoaded ? 1 : 0) + awaited.filter((key) => readyKeys.has(key)).length;
+  const progress = settled / (awaited.length + 1);
+
   // Max wait: once expired the button enters even if something is still loading.
   useEffect(() => {
     if (!covering) return;
@@ -184,6 +189,7 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
           leaving={phase === "leaving"}
           failsafe={phase === "covering"}
           ready={phase !== "covering"}
+          progress={progress}
           onEnter={handleEnterClick}
         />
       )}

@@ -10,8 +10,10 @@ interface SitePreloaderScreenProps {
   leaving?: boolean;
   /** Auto-hides after 30 s even without JS — only while the page is still loading. */
   failsafe?: boolean;
-  /** The page underneath is ready: the button enters instead of saying "loading". */
+  /** The page underneath is ready: the button enters instead of the progress bar. */
   ready?: boolean;
+  /** Share (0..1) of the awaited pieces that have settled (drives the progress bar). */
+  progress?: number;
   /** Click on the entry button (queued by the gate while the page is not ready). */
   onEnter?: () => void;
 }
@@ -26,13 +28,12 @@ export function SitePreloaderScreen({
   leaving = false,
   failsafe = false,
   ready = false,
+  progress = 0,
   onEnter,
 }: SitePreloaderScreenProps) {
   const tx = useOptionalTx();
-  // The gate font (Major Mono Display subset) has Latin and Polish letters only, so the captions
-  // are plain upper-case ASCII where the language allows it.
   const labels = {
-    loading: tx("WCZYTUJĘ…", "LOADING…"),
+    loading: tx("ŁADOWANIE", "LOADING"),
     enter: tx("WEJDŹ", "ENTER"),
     screen: tx("Wejście na stronę", "Site entrance"),
   };
@@ -50,7 +51,7 @@ export function SitePreloaderScreen({
       className={cn(styles.screen, failsafe && styles.failsafe, leaving && styles.leaving)}
     >
       <MatrixRain />
-      <MatrixGatePrompt ready={ready} labels={labels} onEnter={onEnter} />
+      <MatrixGatePrompt ready={ready} labels={labels} progress={progress} onEnter={onEnter} />
     </div>
   );
 }

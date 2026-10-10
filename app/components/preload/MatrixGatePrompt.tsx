@@ -12,19 +12,24 @@ export interface GatePromptLabels {
 /**
  * The gate's prompt and entry button. Plain markup without timers: the text and the rabbit are
  * in the server HTML and visible from the first paint. While the page is not ready the button
- * says so ("WCZYTUJĘ…") and a click is queued by the gate; once ready the caption is replaced by
- * "WEJDŹ" (only one of the two is ever shown).
+ * shows a progress bar with "ŁADOWANIE" and a click is queued by the gate; once ready it is replaced
+ * by "WEJDŹ" (only one of the two is ever shown).
+ *
+ * The bar is two overlapping fills (the longer one shows): a CSS-only time ease that is alive from
+ * the server HTML on, and the real share of settled pieces reported by the gate.
  */
 export function MatrixGatePrompt({
   ready,
   labels,
+  progress = 0,
   onEnter,
 }: {
   ready: boolean;
   labels: GatePromptLabels;
+  /** Share (0..1) of the awaited pieces that have settled. */
+  progress?: number;
   onEnter?: () => void;
 }) {
-  const caption = ready ? labels.enter : labels.loading;
   return (
     <div className={styles.overlay}>
       <p className={styles.text}>
@@ -42,9 +47,19 @@ export function MatrixGatePrompt({
         suppressHydrationWarning
       >
         {/* Re-keyed so the new caption fades in instead of both ever being on screen. */}
-        <span key={caption} className={styles.caption}>
-          {caption}
-        </span>
+        {ready ? (
+          <span key="enter" className={styles.caption}>
+            {labels.enter}
+          </span>
+        ) : (
+          <span key="loading" className={styles.progress} data-gate-progress="">
+            <span className={styles.progressLabel}>{labels.loading}</span>
+            <span className={styles.track} aria-hidden="true">
+              <span className={styles.fillTime} />
+              <span className={styles.fillReal} style={{ transform: `scaleX(${Math.min(1, Math.max(0, progress))})` }} />
+            </span>
+          </span>
+        )}
         <img
           src="/rabbit-gate.webp"
           alt=""

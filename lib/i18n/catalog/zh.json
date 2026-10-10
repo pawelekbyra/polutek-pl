@@ -174,7 +174,7 @@
  "Invalid code.": "验证码无效。",
  "Invalid comment data.": "评论数据无效。",
  "Invalid nickname.": "昵称无效。",
- "LOADING…": "加载中…",
+ "LOADING": "加载中",
  "Language": "语言",
  "Language: {0}. Change language": "语言：{0}。切换语言",
  "Languages": "语言",

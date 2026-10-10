@@ -27,7 +27,7 @@ function preloaderState() {
   return screen.queryByTestId("site-preloader")?.getAttribute("data-state") ?? "gone";
 }
 
-const enterButton = () => screen.getByRole("button", { name: /WEJDŹ|WCZYTUJĘ…/ });
+const enterButton = () => screen.getByRole("button", { name: /WEJDŹ|ŁADOWANIE/ });
 
 async function finishLeaving() {
   await act(async () => {
@@ -59,10 +59,12 @@ describe("PageRevealGate", () => {
     expect(preloaderState()).toBe("covering");
     expect(screen.getByText("Follow the white rabbit")).toBeTruthy();
     const button = enterButton();
-    expect(button.textContent).toBe("WCZYTUJĘ…");
+    expect(button.textContent).toBe("ŁADOWANIE");
     expect(button.getAttribute("aria-disabled")).toBe("true");
     expect(button.querySelector("img")?.getAttribute("src")).toBe("/rabbit-gate.webp");
-    // Only one caption at a time, never "WCZYTUJĘ… / WEJDŹ".
+    // The loading state is a progress bar with the label, not a plain caption.
+    expect(button.querySelector("[data-gate-progress]")).toBeTruthy();
+    // Only one caption at a time, never "ŁADOWANIE / WEJDŹ".
     expect(screen.queryByText(/WEJDŹ/)).toBeNull();
   });
 
@@ -87,7 +89,7 @@ describe("PageRevealGate", () => {
     expect(preloaderState()).toBe("gate");
     expect(enterButton().textContent).toBe("WEJDŹ");
     expect(enterButton().getAttribute("aria-disabled")).toBeNull();
-    expect(screen.queryByText("WCZYTUJĘ…")).toBeNull();
+    expect(screen.queryByText("ŁADOWANIE")).toBeNull();
 
     fireEvent.click(enterButton());
     expect(preloaderState()).toBe("leaving");

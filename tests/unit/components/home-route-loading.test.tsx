@@ -26,7 +26,7 @@ describe("HomeRouteLoading", () => {
     render(<HomeRouteLoading />);
     expect(screen.getByTestId("site-preloader")).toBeTruthy();
     expect(screen.getByText("Follow the white rabbit")).toBeTruthy();
-    expect(screen.getByRole("button").textContent).toBe("WCZYTUJĘ…");
+    expect(screen.getByRole("button").textContent).toBe("ŁADOWANIE");
   });
 
   it("queues a click for the gate, since the page is not there yet", () => {
