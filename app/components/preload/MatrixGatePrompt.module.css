@@ -1,7 +1,13 @@
-/* Matrix look of the entry gate: black screen, green glyph rain, green terminal text. The colours are
-   defined once on the screen element (SitePreloaderScreen.module.css: --mx-*) with fallbacks here. */
+/* Entry gate: the site's light palette with the Matrix rain (dark glyphs on the light page colour, no
+   green). Colours come from the screen element (SitePreloaderScreen.module.css: --mx-*), with
+   fallbacks here. Layout rule: the prompt never moves. Under it is one fixed-size slot that holds
+   either the progress bar (loading) or the rabbit with "WEJDŹ" (ready), so the bar sits exactly
+   where the rabbit appears. */
 
 .overlay {
+  /* The rabbit's edge; the slot below is sized from it. */
+  --rabbit: min(220px, 52vw);
+
   position: absolute;
   inset: 0;
   display: flex;
@@ -9,7 +15,7 @@
   align-items: center;
   justify-content: center;
   z-index: 1;
-  gap: 28px;
+  gap: 22px;
   padding: 0 16px;
   /* No entrance animation for the loading state: the prompt and the bar must be fully readable in
      the very first painted frame (an opacity fade stalls while the main thread hydrates). */
@@ -19,16 +25,13 @@
   font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
   font-size: clamp(18px, 3.4vw, 30px);
   font-weight: 700;
-  color: var(--mx-green, #2bff6a);
-  letter-spacing: 0.02em;
+  color: var(--mx-ink, #111827);
+  letter-spacing: 0.01em;
   line-height: 1.25;
   text-align: center;
   margin: 0;
-  /* A dark halo keeps the text readable over the bright rain heads, and a soft green glow. */
-  text-shadow:
-    0 0 3px var(--mx-bg, #020604),
-    0 0 8px var(--mx-bg, #020604),
-    0 0 14px var(--mx-glow, rgba(43, 255, 106, 0.55));
+  /* Background-coloured halo lifts the prompt off the rain without a box. */
+  text-shadow: 0 0 4px var(--mx-bg, #f7f9fc), 0 0 8px var(--mx-bg, #f7f9fc), 0 0 12px var(--mx-bg, #f7f9fc);
 }
 
 /* Terminal block cursor after the prompt. */
@@ -39,11 +42,27 @@
   margin-left: 0.18em;
   vertical-align: -0.12em;
   background: currentColor;
-  box-shadow: 0 0 10px var(--mx-glow, rgba(43, 255, 106, 0.55));
   animation: blink 1.06s steps(1) infinite;
 }
 
-/* --- Loading: label over a segmented terminal progress bar -------------------------------- */
+/* The fixed-size place under the prompt: rabbit + caption high, so the bar can take the rabbit's spot. */
+.slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  /* rabbit + gap + caption */
+  height: calc(var(--rabbit) + 14px + 46px);
+}
+
+/* --- Loading: label over a segmented progress bar, centred where the rabbit will appear ------ */
+
+.progressWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--rabbit);
+}
 
 .progress {
   display: flex;
@@ -51,10 +70,9 @@
   align-items: center;
   gap: 12px;
   padding: 14px 18px 16px;
-  border: 1px solid var(--mx-line, rgba(43, 255, 106, 0.45));
-  background: rgba(2, 6, 4, 0.82);
-  box-shadow: 0 0 22px rgba(43, 255, 106, 0.14);
-  color: var(--mx-green, #2bff6a);
+  border: 1px solid var(--mx-line, rgba(17, 24, 39, 0.5));
+  background: rgba(247, 249, 252, 0.94);
+  color: var(--mx-ink, #111827);
 }
 
 .progressLabel {
@@ -65,7 +83,6 @@
   /* The trailing letter-spacing would push the text off-centre. */
   margin-right: -0.32em;
   line-height: 1.2;
-  text-shadow: 0 0 8px var(--mx-glow, rgba(43, 255, 106, 0.55));
 }
 
 .track {
@@ -73,8 +90,8 @@
   display: block;
   width: min(260px, 68vw);
   height: 10px;
-  border: 1px solid var(--mx-line, rgba(43, 255, 106, 0.45));
-  background: rgba(43, 255, 106, 0.07);
+  border: 1px solid var(--mx-line, rgba(17, 24, 39, 0.5));
+  background: rgba(17, 24, 39, 0.06);
   overflow: hidden;
 }
 
@@ -86,8 +103,7 @@
   position: absolute;
   inset: 0;
   display: block;
-  background: repeating-linear-gradient(90deg, var(--mx-green, #2bff6a) 0 6px, transparent 6px 8px);
-  filter: drop-shadow(0 0 4px var(--mx-glow, rgba(43, 255, 106, 0.55)));
+  background: repeating-linear-gradient(90deg, var(--mx-ink, #111827) 0 6px, transparent 6px 8px);
 }
 
 .fillTime {
@@ -111,25 +127,35 @@
   border: none;
   padding: 0;
   margin: 0;
+  color: var(--mx-ink, #111827);
   cursor: pointer;
   outline: none;
   -webkit-tap-highlight-color: transparent;
-  animation: materialize 520ms ease-out both;
+  animation: appear 260ms ease-out both;
 }
 
-/* The rabbit is a black line drawing on white: inverted and tinted green it becomes glowing
-   phosphor lines, and `screen` drops the (now black) background onto the rain. */
 .rabbitImg {
   display: block;
-  width: min(220px, 52vw);
-  height: auto;
-  aspect-ratio: 1;
+  width: var(--rabbit);
+  height: var(--rabbit);
   object-fit: contain;
-  filter: invert(1) sepia(1) saturate(7) hue-rotate(78deg) brightness(1.45) drop-shadow(0 0 8px rgba(43, 255, 106, 0.7));
-  mix-blend-mode: screen;
   transition: filter 160ms ease;
+  animation: pulse 2.8s ease-in-out 1.5s infinite;
 }
 
+.enter:hover .rabbitImg {
+  filter: drop-shadow(0 0 14px rgba(17, 24, 39, 0.25));
+}
+
+.enter:active .rabbitImg {
+  filter: drop-shadow(0 0 6px rgba(17, 24, 39, 0.2)) brightness(0.92);
+}
+
+.enter:focus-visible .rabbitImg {
+  filter: drop-shadow(0 0 0 #111827) drop-shadow(0 0 10px rgba(37, 99, 235, 0.55));
+}
+
+/* A dark terminal key under the rabbit; hover/focus anywhere on the button inverts it. */
 .caption {
   font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
   font-size: 16px;
@@ -138,30 +164,21 @@
   text-transform: uppercase;
   line-height: 1.3;
   padding: 0.55em 1.2em 0.55em calc(1.2em + 0.3em);
-  border: 1px solid var(--mx-green, #2bff6a);
-  background: rgba(2, 6, 4, 0.82);
-  color: var(--mx-green, #2bff6a);
-  text-shadow: 0 0 8px var(--mx-glow, rgba(43, 255, 106, 0.55));
-  box-shadow: 0 0 14px rgba(43, 255, 106, 0.28), inset 0 0 10px rgba(43, 255, 106, 0.1);
-  transition: background-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+  border: 1px solid var(--mx-ink, #111827);
+  background: var(--mx-ink, #111827);
+  color: var(--mx-bg, #f7f9fc);
+  transition: background-color 140ms ease, color 140ms ease;
 }
 
-/* Hover / focus / press anywhere on the button (rabbit or caption) inverts the key. */
 .enter:hover .caption,
 .enter:focus-visible .caption {
-  background: var(--mx-green, #2bff6a);
-  color: var(--mx-bg, #020604);
-  text-shadow: none;
-  box-shadow: 0 0 22px rgba(43, 255, 106, 0.6);
+  background: var(--mx-bg, #f7f9fc);
+  color: var(--mx-ink, #111827);
 }
 
-.enter:hover .rabbitImg,
-.enter:focus-visible .rabbitImg {
-  filter: invert(1) sepia(1) saturate(7) hue-rotate(78deg) brightness(1.3) drop-shadow(0 0 14px rgba(43, 255, 106, 0.85));
-}
-
-.enter:active .rabbitImg {
-  filter: invert(1) sepia(1) saturate(7) hue-rotate(78deg) brightness(0.95) drop-shadow(0 0 5px rgba(43, 255, 106, 0.5));
+.enter:focus-visible .caption {
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 @keyframes fill-time {
@@ -173,18 +190,20 @@
   50% { opacity: 0; }
 }
 
-/* The rabbit "decodes" onto the screen: a short flicker from nothing, no layout movement. */
-@keyframes materialize {
-  0%   { opacity: 0; }
-  30%  { opacity: 0.9; }
-  45%  { opacity: 0.2; }
-  70%  { opacity: 1; }
-  100% { opacity: 1; }
+@keyframes appear {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .cursor,
-  .enter {
+  .enter,
+  .rabbitImg {
     animation: none;
   }
 

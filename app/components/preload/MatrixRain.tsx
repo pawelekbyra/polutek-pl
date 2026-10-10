@@ -18,14 +18,7 @@ export function MatrixRain() {
     if (!canvas) return;
     const runtime = ensureRainRuntime();
     runtime.attach(canvas);
-    // The phone's browser bars take their colour from <meta name="theme-color">: dark while the gate is up.
-    const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-    const previous = meta?.getAttribute("content") ?? null;
-    meta?.setAttribute("content", "#020604");
-    return () => {
-      runtime.detach(canvas);
-      if (meta && previous !== null) meta.setAttribute("content", previous);
-    };
+    return () => runtime.detach(canvas);
   }, []);
 
   return (

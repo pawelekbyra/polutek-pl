@@ -1,9 +1,8 @@
 .screen {
-  /* Matrix palette, shared with MatrixGatePrompt.module.css (and RAIN_CONFIG in the engine). */
-  --mx-bg: #020604;
-  --mx-green: #2bff6a;
-  --mx-line: rgba(43, 255, 106, 0.45);
-  --mx-glow: rgba(43, 255, 106, 0.55);
+  /* The site's light palette, shared with MatrixGatePrompt.module.css (and RAIN_CONFIG in the engine). */
+  --mx-bg: #f7f9fc;
+  --mx-ink: #111827;
+  --mx-line: rgba(17, 24, 39, 0.5);
 
   position: fixed;
   inset: 0;
@@ -15,19 +14,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Same colour as the rain's own background: the canvas is drawn by the <head> boot script as
-     soon as it is parsed, so there is no empty frame to see. */
+  /* Same colour as the rain's own background (and <html>): the canvas is drawn by the <head> boot
+     script as soon as it is parsed, so there is no empty frame to see. */
   background: var(--mx-bg);
   transition: opacity 700ms ease-in-out, filter 700ms ease-in-out, transform 600ms ease-in-out;
   /* Prevent any touch-scroll from reaching the page underneath. */
   touch-action: none;
   overscroll-behavior: none;
-}
-
-/* While the gate is up the real <html> background (inline, light) must not show through at the
-   edges: the bar under the home indicator / the overscroll area on phones. */
-:global(html:has([data-site-preloader])) {
-  background: #020604 !important;
 }
 
 /* Carrot cursor over the whole gate (tip = hotspot, top-left), only for real mouse pointers. */
