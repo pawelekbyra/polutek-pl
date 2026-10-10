@@ -141,4 +141,27 @@ describe("gate boot script", () => {
     expect(document.querySelector("button")!.hasAttribute("data-queued")).toBe(true);
     vi.restoreAllMocks();
   });
+
+  it("keeps the inlined rain working when the viewport changes size (phone bars, rotation)", async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+    const errors: unknown[] = [];
+    const onError = (event: ErrorEvent) => errors.push(event.error ?? event.message);
+    window.addEventListener("error", onError);
+    const width = window.innerWidth;
+    run();
+    document.body.innerHTML = "<canvas data-matrix-rain></canvas>";
+    await Promise.resolve();
+    const canvas = document.querySelector("canvas")!;
+    expect(canvas.width).toBe(Math.round(width));
+
+    // The inlined functions only see each other through the boot script's own arguments.
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: width + 200 });
+    window.dispatchEvent(new Event("resize"));
+    expect(errors).toEqual([]);
+    expect(canvas.width).toBe(Math.round(width + 200));
+
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: width });
+    window.removeEventListener("error", onError);
+    vi.restoreAllMocks();
+  });
 });

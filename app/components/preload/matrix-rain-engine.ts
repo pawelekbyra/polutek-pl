@@ -114,6 +114,22 @@ export function stepRain(state: RainState, dtSec: number, cfg: RainConfig, rando
   }
 }
 
+/**
+ * Copies every column of `prev` that still fits into `next` (a fresh state of the new grid size),
+ * so a resize keeps the rain where it was. Self-contained on purpose: the boot script inlines it
+ * by `toString`, where it cannot see the other functions of this module.
+ */
+export function carryRainState(prev: RainState, next: RainState, cfg: RainConfig): RainState {
+  var keepCols = Math.min(next.cols, prev.cols);
+  var keepRows = Math.min(next.rows, prev.rows);
+  for (var c = 0; c < keepCols; c++) {
+    next.heads[c] = prev.heads[c] % (next.rows + cfg.trail);
+    next.speeds[c] = prev.speeds[c];
+    for (var r = 0; r < keepRows; r++) next.grid[c * next.rows + r] = prev.grid[c * prev.rows + r];
+  }
+  return next;
+}
+
 /** Fits the state to a new grid size, keeping every existing column where it was. */
 export function resizeRainState(
   state: RainState,
@@ -123,15 +139,7 @@ export function resizeRainState(
   random: () => number,
 ): RainState {
   if (cols === state.cols && rows === state.rows) return state;
-  var next = createRainState(cols, rows, cfg, random);
-  var keepCols = Math.min(cols, state.cols);
-  var keepRows = Math.min(rows, state.rows);
-  for (var c = 0; c < keepCols; c++) {
-    next.heads[c] = state.heads[c] % (rows + cfg.trail);
-    next.speeds[c] = state.speeds[c];
-    for (var r = 0; r < keepRows; r++) next.grid[c * rows + r] = state.grid[c * state.rows + r];
-  }
-  return next;
+  return carryRainState(state, createRainState(cols, rows, cfg, random), cfg);
 }
 
 /** Alpha of a cell `dist` rows behind its column's head (`dist < 0`: ahead of it). */
@@ -152,7 +160,7 @@ export function installRainRuntime(
   fns: {
     create: typeof createRainState;
     step: typeof stepRain;
-    resize: typeof resizeRainState;
+    carry: typeof carryRainState;
     alpha: typeof cellAlpha;
   },
 ) {
@@ -249,7 +257,10 @@ export function installRainRuntime(
     dpr = Math.min(win.devicePixelRatio || 1, cfg.maxDpr);
     var cols = Math.floor(width / cfg.colWidth);
     var rows = Math.ceil(height / cfg.fontSize) + 2;
-    state = state ? fns.resize(state, cols, rows, cfg, rand) : fns.create(cols, rows, cfg, rand);
+    if (!state) state = fns.create(cols, rows, cfg, rand);
+    else if (cols !== state.cols || rows !== state.rows) {
+      state = fns.carry(state, fns.create(cols, rows, cfg, rand), cfg);
+    }
     canvas.width = Math.round(width * dpr);
     canvas.height = Math.round(height * dpr);
     ctx = canvas.getContext("2d");
@@ -381,7 +392,7 @@ export function bootGate(
   });
 }
 
-const RAIN_FNS_SOURCE = `{create:${createRainState.toString()},step:${stepRain.toString()},resize:${resizeRainState.toString()},alpha:${cellAlpha.toString()}}`;
+const RAIN_FNS_SOURCE = `{create:${createRainState.toString()},step:${stepRain.toString()},carry:${carryRainState.toString()},alpha:${cellAlpha.toString()}}`;
 
 /** Inline `<head>` script (see {@link bootGate}). Built from the functions above. */
 export const GATE_BOOT_SCRIPT = `(${bootGate.toString()})(window,${JSON.stringify(RAIN_CONFIG)},${installRainRuntime.toString()},${RAIN_FNS_SOURCE});`;
@@ -391,7 +402,7 @@ export function ensureRainRuntime() {
   return installRainRuntime(window as unknown as Window & Record<string, unknown>, RAIN_CONFIG, {
     create: createRainState,
     step: stepRain,
-    resize: resizeRainState,
+    carry: carryRainState,
     alpha: cellAlpha,
   });
 }

@@ -19,10 +19,10 @@ interface SitePreloaderScreenProps {
 }
 
 /**
- * The entry gate of the public home page: Matrix rain, "Follow the white rabbit" and a progress bar
- * from the first paint; once the page is ready the bar gives way to the rabbit with "WEJDŹ". Rendered by the route-level `loading.tsx` (while the
- * server streams the page) and by `PageRevealGate`; both render identical markup, so the hand-over
- * is invisible.
+ * The entry gate of the public home page: Matrix rain and a progress bar from the first paint; once
+ * the page is ready the bar gives way to the rabbit, with "Follow the white rabbit" above it and
+ * "WEJDŹ" under it. Rendered by the route-level `loading.tsx` (while the server streams the page)
+ * and by `PageRevealGate`; both render identical markup, so the hand-over is invisible.
  */
 export function SitePreloaderScreen({
   leaving = false,

@@ -49,7 +49,7 @@ describe("PageRevealGate", () => {
     vi.restoreAllMocks();
   });
 
-  it("shows the prompt and a progress bar from the very first render, with no rabbit and nothing to click", () => {
+  it("shows only a progress bar from the very first render: no prompt, no rabbit, nothing to click", () => {
     render(
       <PageRevealGate waitFor={["player"]}>
         <Piece name="player" ready={false} />
@@ -57,7 +57,8 @@ describe("PageRevealGate", () => {
     );
 
     expect(preloaderState()).toBe("covering");
-    expect(screen.getByText("Follow the white rabbit")).toBeTruthy();
+    // The prompt belongs to the rabbit: it is not on screen while the bar is.
+    expect(screen.queryByText("Follow the white rabbit")).toBeNull();
     const bar = screen.getByRole("progressbar", { name: "ŁADOWANIE" });
     expect(bar.textContent).toBe("ŁADOWANIE");
     // No rabbit and no entry button until the page is ready.
@@ -85,7 +86,9 @@ describe("PageRevealGate", () => {
       </PageRevealGate>,
     );
     expect(preloaderState()).toBe("gate");
-    // The bar gives way to the rabbit with "WEJDŹ" under it: one button, one click on either part.
+    // The bar gives way to the rabbit with the prompt above it and "WEJDŹ" under it; rabbit and
+    // caption are one button, one click on either part.
+    expect(screen.getByText("Follow the white rabbit")).toBeTruthy();
     expect(enterButton().textContent).toBe("WEJDŹ");
     expect(enterButton().querySelector("img")?.getAttribute("src")).toBe("/rabbit-gate.webp");
     expect(screen.queryByRole("progressbar")).toBeNull();
