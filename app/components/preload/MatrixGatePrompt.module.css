@@ -252,3 +252,10 @@
     transition: none;
   }
 }
+
+/* The entry warp fades the prompt and the caption away first (GateWarp sets --warp-text). A filter,
+   not opacity: the prompt's own entrance animation holds opacity and would win. */
+.text,
+.caption {
+  filter: opacity(var(--warp-text, 1));
+}

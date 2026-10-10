@@ -11,6 +11,9 @@ import React, {
 } from "react";
 import { useAuth } from "@/lib/auth/react";
 import { SitePreloaderScreen } from "./SitePreloaderScreen";
+import type { WarpStart } from "./GateWarp";
+import { preloadGateSound, startGateSound } from "./gate-sound";
+import { pupilOnScreen } from "./gate-warp-timeline";
 import {
   consumeQueuedGateEnter,
   hasPassedGateThisSession,
@@ -67,7 +70,18 @@ export function usePageRevealReady(key: string | undefined, ready: boolean) {
   }, [context, key, ready]);
 }
 
-type Phase = "covering" | "gate" | "leaving" | "done";
+type Phase = "covering" | "gate" | "warp" | "leaving" | "done";
+
+/** The warp needs motion and a canvas; otherwise (reduced motion, no canvas) the plain fade. */
+function canWarp(): boolean {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
+  try {
+    return !!document.createElement("canvas").getContext("2d");
+  } catch {
+    return false;
+  }
+}
 
 interface PageRevealGateProps {
   children: React.ReactNode;
@@ -82,6 +96,7 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
   const [phase, setPhase] = useState<Phase>("covering");
   const [timedOut, setTimedOut] = useState(false);
   const [readyKeys, setReadyKeys] = useState<ReadonlySet<string>>(() => new Set());
+  const [warpStart, setWarpStart] = useState<WarpStart | null>(null);
 
   useLayoutEffect(() => {
     if (shouldSkipGate()) setPhase("done");
@@ -128,10 +143,42 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
     return () => window.clearTimeout(timer);
   }, [covering]);
 
+  // The click on the rabbit / "ENTER": the warp (zoom into the eye, the hole, the tunnel of code,
+  // the flash) with its sound, or the plain fade when motion is reduced. The hero gets the click's
+  // permission to play with sound now ("polutek:gate-unlock") and starts at the flash
+  // ("polutek:gate-enter"), so the two sounds never overlap.
   const enter = useCallback(() => {
-    window.dispatchEvent(new Event("polutek:gate-enter"));
-    setPhase("leaving");
+    const rabbit = document.querySelector<HTMLElement>("[data-gate-enter] img");
+    const box = rabbit?.getBoundingClientRect();
+    if (!canWarp() || !box || box.width === 0) {
+      window.dispatchEvent(new Event("polutek:gate-enter"));
+      setPhase("leaving");
+      return;
+    }
+    window.dispatchEvent(new Event("polutek:gate-unlock"));
+    setWarpStart({ pupil: pupilOnScreen(box), clock: startGateSound() });
+    setPhase("warp");
   }, []);
+
+  const warpFlash = useCallback(() => {
+    window.dispatchEvent(new Event("polutek:gate-enter"));
+  }, []);
+  const warpDone = useCallback(() => {
+    hideGateFromNowOn();
+    setPhase("done");
+  }, []);
+
+  // The sound loads while the viewer looks at the rabbit (never before the page is ready).
+  useEffect(() => {
+    if (phase === "gate" && canWarp()) void preloadGateSound();
+  }, [phase]);
+
+  // From the click on, a reload must not show the gate again.
+  useEffect(() => {
+    if (phase !== "warp") return;
+    revealedInThisDocument = true;
+    markGatePassed();
+  }, [phase]);
 
   // covering → gate when the page is ready (or the max wait expired).
   useEffect(() => {
@@ -181,6 +228,7 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
           ready={phase !== "covering"}
           progress={progress}
           onEnter={handleEnterClick}
+          warp={phase === "warp" && warpStart ? { start: warpStart, onFlash: warpFlash, onDone: warpDone } : null}
         />
       )}
     </PageRevealContext.Provider>
