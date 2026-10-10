@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { completeOnboarding } from "@/lib/modules/users";
-import { resolveEmailLanguage, sendWelcomeEmail } from "@/lib/modules/email";
+import { notifyOwnerOfNewUser, resolveEmailLanguage, sendWelcomeEmail } from "@/lib/modules/email";
 import { handleApiError } from "@/lib/errors";
 import { isLocale } from "@/lib/i18n/routing";
 import { logger } from "@/lib/logger";
@@ -28,9 +28,14 @@ export async function POST(req: NextRequest) {
     });
     // Older accounts that are only asked for a (new) nickname were welcomed long ago.
     const isNewAccount = Date.now() - user.createdAt.getTime() < 24 * 60 * 60 * 1000;
-    if (isNewAccount) void sendWelcomeEmail(user.email, resolveEmailLanguage(user.language)).catch((error) => {
-      logger.error("[onboarding] welcome email failed", error instanceof Error ? error.message : String(error));
-    });
+    if (isNewAccount) {
+      void sendWelcomeEmail(user.email, resolveEmailLanguage(user.language)).catch((error) => {
+        logger.error("[onboarding] welcome email failed", error instanceof Error ? error.message : String(error));
+      });
+      void notifyOwnerOfNewUser({ userId: actor.userId, email: user.email, nickname: user.name, language: user.language, createdAt: user.createdAt }).catch((error) => {
+        logger.error("[onboarding] new-user notification failed", error instanceof Error ? error.message : String(error));
+      });
+    }
     return NextResponse.json({ success: true, name: user.name });
   } catch (error) {
     return handleApiError(error);

@@ -13,6 +13,7 @@ export {
 } from "./application/send-transactional-email.use-case";
 export type { EmailLanguage } from "./application/send-transactional-email.use-case";
 export { sendOperatorEmail } from "./application/send-operator-email";
+export { notifyOwnerOfNewUser } from "./application/notify-new-user";
 export { handleResendWebhook } from "./application/handle-resend-webhook.use-case";
 export { processOwnMailEvents } from "./application/process-own-mail-events";
 export type { OwnMailEventsSummary } from "./application/process-own-mail-events";
