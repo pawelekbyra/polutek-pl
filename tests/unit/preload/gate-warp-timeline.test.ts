@@ -48,6 +48,14 @@ describe("entry warp timeline", () => {
     }
   });
 
+  it("keeps a long black void between the end of the zoom and the final flash", () => {
+    expect(WARP.flash - WARP.blackAt).toBeGreaterThan(6);
+    // Fully black all through it, and the flash is on the sound's last hit, before its end.
+    for (let t = WARP.blackAt; t < WARP.flash; t += 0.5) expect(blackoutAt(t)).toBe(1);
+    expect(WARP.flash).toBeLessThan(WARP.end);
+    expect(WARP.end).toBeCloseTo(12.3, 1);
+  });
+
   it("flashes on the bright hit and then fades the gate out", () => {
     expect(flashAt(WARP.flash - 0.01).radius).toBe(0);
     expect(flashAt(WARP.flashEnd).radius).toBe(1);

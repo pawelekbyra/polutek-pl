@@ -7,18 +7,23 @@
  *                prompt and the caption fall away, the eye ends up filling the frame;
  * - 2.00 – 4.40  from the low hit on, the zoom goes on into the black pixel of the pupil in the
  *                picture until the whole screen is black (the last moments are made fully black);
- * - 4.95         the bright hit: a light flash from the centre, the page is revealed under it
- *                and the hero starts with sound;
- * - 5.15 – 5.90  the gate fades out, the sound fades away (baked into the file).
+ * - 4.40 – 11.30 THE VOID: the screen is black while the rest of the sound plays (about 6.9 s). It is
+ *                kept empty on purpose, so an animation can be built there later (gate-void.ts is
+ *                its hook); until then it is simply black;
+ * - 11.30        the final, loudest hit of the sound: a light flash from the centre, the page is
+ *                revealed under it and the hero starts with sound;
+ * - 11.50 – 12.30 the gate fades out, the sound fades away (baked into the file, 12.3 s long).
  */
 
 export const WARP = {
   eyeAt: 2.0,
   blackFrom: 4.0,
   blackAt: 4.4,
-  flash: 4.95,
-  flashEnd: 5.15,
-  end: 5.9,
+  /** The sound's final hit (measured at 11.3 s); the flash is aligned to it. */
+  flash: 11.3,
+  flashEnd: 11.5,
+  /** Length of public/sounds/gate-enter.mp3. */
+  end: 12.3,
 } as const;
 
 /**

@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import type { GateClock } from "./gate-sound";
 import { WARP, blackoutAt, cameraAt, flashAt, zoomLevels, type Point } from "./gate-warp-timeline";
 import { drawRabbit, type RabbitVector } from "./rabbit-vector";
+import { drawVoid } from "./gate-void";
 
 /**
  * The entry warp after the click (timeline: gate-warp-timeline.ts, sound: gate-sound.ts). The camera
@@ -119,6 +120,10 @@ export function GateWarp({
         ctx.globalAlpha = black;
         ctx.fillStyle = BLACK;
         ctx.fillRect(0, 0, w, h);
+      }
+      if (t >= WARP.blackAt && t < WARP.flash) {
+        drawVoid(ctx, { width: w, height: h }, t, (t - WARP.blackAt) / (WARP.flash - WARP.blackAt));
+        ctx.globalAlpha = 1;
       }
       const flash = flashAt(t);
       if (flash.radius > 0) {
