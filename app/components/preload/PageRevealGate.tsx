@@ -13,7 +13,8 @@ import { useAuth } from "@/lib/auth/react";
 import { SitePreloaderScreen } from "./SitePreloaderScreen";
 import type { WarpStart } from "./GateWarp";
 import { preloadGateSound, startGateSound } from "./gate-sound";
-import { pupilOnScreen } from "./gate-warp-timeline";
+import { pupilOnScreen, rabbitBox } from "./gate-warp-timeline";
+import { getRabbitVector, preloadRabbitVector } from "./rabbit-vector";
 import {
   consumeQueuedGateEnter,
   hasPassedGateThisSession,
@@ -156,7 +157,12 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
       return;
     }
     window.dispatchEvent(new Event("polutek:gate-unlock"));
-    setWarpStart({ pupil: pupilOnScreen(box), clock: startGateSound() });
+    const data = getRabbitVector();
+    setWarpStart({
+      pupil: pupilOnScreen(box),
+      clock: startGateSound(),
+      vector: data ? { data, box: rabbitBox(box) } : null,
+    });
     setPhase("warp");
   }, []);
 
@@ -168,9 +174,11 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
     setPhase("done");
   }, []);
 
-  // The sound loads while the viewer looks at the rabbit (never before the page is ready).
+  // The sound and the vector rabbit load while the viewer looks at it (never before the page is ready).
   useEffect(() => {
-    if (phase === "gate" && canWarp()) void preloadGateSound();
+    if (phase !== "gate" || !canWarp()) return;
+    void preloadGateSound();
+    void preloadRabbitVector();
   }, [phase]);
 
   // From the click on, a reload must not show the gate again.

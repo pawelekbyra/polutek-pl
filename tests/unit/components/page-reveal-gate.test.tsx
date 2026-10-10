@@ -96,7 +96,7 @@ describe("PageRevealGate", () => {
     // caption are one button, one click on either part.
     expect(screen.getByText("Follow the white rabbit")).toBeTruthy();
     expect(enterButton().textContent).toBe("ENTER");
-    expect(enterButton().querySelector("img")?.getAttribute("src")).toBe("/rabbit-gate.webp");
+    expect(enterButton().querySelector("img")?.getAttribute("src")).toBe("/rabbit-gate.svg");
     expect(screen.queryByRole("progressbar")).toBeNull();
     expect(screen.queryByText("ŁADOWANIE")).toBeNull();
 

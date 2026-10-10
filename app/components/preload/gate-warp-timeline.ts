@@ -22,7 +22,7 @@ export const WARP = {
 } as const;
 
 /**
- * The black core of the pupil in public/rabbit-gate.webp (440 x 440), as a share of the image edge:
+ * The black core of the pupil in public/rabbit-gate.webp / .svg (440 x 440; the vector keeps the same proportions), as a share of the image edge:
  * its centre and the radius that is still solid black.
  */
 export const RABBIT_PUPIL = { x: 275.5 / 440, y: 183.5 / 440, core: 2.8 / 440 } as const;
@@ -41,13 +41,16 @@ export const smoothstep = (a: number, b: number, v: number) => {
 const easeInCubic = (t: number) => t * t * t;
 const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
 
+/** The square the drawing occupies inside the image's bounding box (object-fit: contain, centred). */
+export function rabbitBox(box: { left: number; top: number; width: number; height: number }) {
+  const edge = Math.min(box.width, box.height);
+  return { left: box.left + (box.width - edge) / 2, top: box.top + (box.height - edge) / 2, edge };
+}
+
 /** The pupil's black core on screen (CSS px) for the rabbit image's bounding box. */
 export function pupilOnScreen(box: { left: number; top: number; width: number; height: number }) {
-  const edge = Math.min(box.width, box.height);
-  // object-fit: contain inside a square box: the image is centred.
-  const left = box.left + (box.width - edge) / 2;
-  const top = box.top + (box.height - edge) / 2;
-  return { x: left + RABBIT_PUPIL.x * edge, y: top + RABBIT_PUPIL.y * edge, r: RABBIT_PUPIL.core * edge };
+  const sq = rabbitBox(box);
+  return { x: sq.left + RABBIT_PUPIL.x * sq.edge, y: sq.top + RABBIT_PUPIL.y * sq.edge, r: RABBIT_PUPIL.core * sq.edge };
 }
 
 /** Camera scales: the eye filling the frame, and the black core covering the whole screen. */
