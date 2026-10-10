@@ -130,7 +130,7 @@ describe("gate boot script", () => {
     expect(document.documentElement.hasAttribute("data-gate-passed")).toBe(false);
 
     document.body.innerHTML =
-      '<div><canvas data-matrix-rain></canvas><button type="button" data-gate-enter><span>WCZYTUJĘ…</span></button></div>';
+      '<div><canvas data-matrix-rain></canvas><button type="button" data-gate-enter><span>ŁADOWANIE</span></button></div>';
     await Promise.resolve();
     // The observer handed the parsed canvas to the runtime, which sized it for the viewport.
     const canvas = document.querySelector("canvas")!;

@@ -174,7 +174,7 @@
  "Invalid code.": "Código no válido.",
  "Invalid comment data.": "Datos del comentario no válidos.",
  "Invalid nickname.": "Apodo no válido.",
- "LOADING…": "CARGANDO…",
+ "LOADING": "CARGANDO",
  "Language": "Idioma",
  "Language: {0}. Change language": "Idioma: {0}. Cambiar idioma",
  "Languages": "Idiomas",

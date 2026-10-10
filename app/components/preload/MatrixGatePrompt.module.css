@@ -13,11 +13,11 @@
 }
 
 .text {
-  font-family: var(--font-gate, ui-monospace), "Courier New", monospace;
-  font-size: clamp(18px, 3.4vw, 30px);
-  font-weight: 400;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: clamp(20px, 3.6vw, 32px);
+  font-weight: 700;
   color: #111827;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   line-height: 1.2;
   white-space: nowrap;
   margin: 0;
@@ -55,9 +55,10 @@
 /* A small terminal "key": light while loading, inverted (dark) once a click enters. The plate
    keeps it readable over the rain. */
 .caption {
-  font-family: var(--font-gate, ui-monospace), "Courier New", monospace;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 15px;
-  letter-spacing: 0.12em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   line-height: 1.4;
   padding: 0.3em 0.75em 0.3em 0.87em;
@@ -67,7 +68,7 @@
   color: #111827;
 }
 
-/* The caption is re-keyed on change, so "WEJDŹ" fades in where "WCZYTUJĘ…" was. */
+/* The caption is re-keyed on change, so "WEJDŹ" fades in where the progress bar was. */
 .btn[data-state="ready"] .caption {
   background: #111827;
   border-color: #111827;
@@ -75,8 +76,56 @@
   animation: appear 220ms ease-out both;
 }
 
-.btn[data-state="loading"] .caption {
-  animation: breathe 1.6s ease-in-out infinite;
+/* Loading state: a label over a slim progress bar, on the same light plate as the key. */
+.progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 12px;
+  border: 1px solid rgba(17, 24, 39, 0.35);
+  border-radius: 6px;
+  background: rgba(247, 249, 252, 0.94);
+  color: #111827;
+}
+
+.progressLabel {
+  font-family: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  line-height: 1.2;
+}
+
+.track {
+  position: relative;
+  display: block;
+  width: min(240px, 66vw);
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.16);
+  overflow: hidden;
+}
+
+/* Two fills; the longer one shows. The time fill runs from the server HTML on (pure CSS), the real
+   fill follows the pieces the gate is waiting for. */
+.fillTime,
+.fillReal {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border-radius: 999px;
+  background: #111827;
+  transform-origin: left center;
+}
+
+.fillTime {
+  transform: scaleX(0);
+  animation: fill-time 5.5s cubic-bezier(0.12, 0.7, 0.25, 1) forwards;
+}
+
+.fillReal {
+  transition: transform 300ms ease-out;
 }
 
 .rabbitImg {
@@ -124,9 +173,9 @@
   50% { opacity: 0; }
 }
 
-@keyframes breathe {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.55; }
+@keyframes fill-time {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(0.9); }
 }
 
 @keyframes pulse {
@@ -137,9 +186,18 @@
 @media (prefers-reduced-motion: reduce) {
   .text,
   .rabbitImg,
-  .btn[data-state="loading"] .caption,
   .btn[data-state="ready"] .caption,
   .cursor {
     animation: none;
+  }
+
+  /* No motion: the time fill rests at a fixed value, the real fill still shows the true share. */
+  .fillTime {
+    animation: none;
+    transform: scaleX(0.45);
+  }
+
+  .fillReal {
+    transition: none;
   }
 }
