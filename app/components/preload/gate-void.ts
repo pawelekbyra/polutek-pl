@@ -5,9 +5,10 @@
  * - 5.15        a point of light opens in the depth of the pupil; a fine dust of rain glyphs starts
  *               to stream out of it towards the viewer;
  * - 5.15 – 8.40 "WWW.PAWELPERFECT.COM" (one line) flies out of that depth and brakes to a stop in
- *               front of the viewer (perspective: its distance falls fast, then eases out); while it
- *               comes, its letters decode one by one from cycling Matrix glyphs, each with a flare;
- * - 8.50        the sound swells: a glow pulse runs through the resolved title;
+ *               front of the viewer (perspective: its distance falls fast, then eases out); all the
+ *               way its letters are cycling Japanese rain glyphs (the rain's own glyphs and font);
+ * - 8.40 – 9.40 in place, the letters decode one by one into the address, each with a flare, and
+ *               the sound's swell (8.5 s) sends a glow through it;
  * - 8.40 – 10.2 it hangs there, drifting slowly closer (the sound's quiet stretch);
  * - 10.2 – 11.5 the sound rises to its last hit: the title accelerates towards the viewer and flies
  *               through the camera; inside the flash (11.3 – 11.5 s) it bolts, about 20x closer in
@@ -27,8 +28,9 @@ export const VOID_TITLE = "WWW.PAWELPERFECT.COM";
 /** Key moments (seconds since the click). */
 export const VOID_T = {
   open: 5.15,
-  decodeFrom: 6.25,
-  decodeStep: 0.085,
+  /** The letters stay cycling rain glyphs for the whole flight and decode once the title is in place. */
+  decodeFrom: 8.4,
+  decodeStep: 0.05,
   arrive: 8.4,
   swell: 8.5,
   push: 10.2,
@@ -39,8 +41,12 @@ const LIGHT = "247, 249, 252";
 const TRACKING = 0.12; // letter spacing, in em
 const FAR = 30; // starting distance of the title (1 = resting distance)
 const DUST = 54;
-/** Matrix glyphs used by the dust and by the title's undecoded letters (pre-rendered once). */
-const RAIN_GLYPHS = 24;
+/**
+ * The Japanese glyphs of the gate's rain (RAIN_CONFIG.chars without its digits), drawn in the rain's own
+ * font ("monospace"), so the dust and the title's undecoded letters are the same characters as the
+ * rain behind the rabbit. Pre-rendered once.
+ */
+const KANA = [...RAIN_CONFIG.chars].filter((ch) => !/[0-9]/.test(ch));
 const GLYPH_PX = 40;
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -77,7 +83,7 @@ export function titleScale(t: number): number {
 
 /** When letter `i` resolves from cycling glyphs into its real character. */
 export function revealAt(i: number): number {
-  return VOID_T.decodeFrom + i * VOID_T.decodeStep + (hash(i, 3) - 0.5) * 0.06;
+  return VOID_T.decodeFrom + i * VOID_T.decodeStep + (hash(i, 3) - 0.5) * 0.03;
 }
 
 let family: string | null = null;
@@ -138,15 +144,14 @@ function getLightSprite(): HTMLCanvasElement | null {
 }
 
 /**
- * A small atlas of rain glyphs, white, rendered once: drawing these (Japanese) glyphs as text every
- * frame goes through font fallback and was the costliest part of the void on phones.
+ * An atlas of the rain's Japanese glyphs, white, rendered once: drawing them as text every frame goes
+ * through font fallback and was the costliest part of the void on phones.
  */
 let rainAtlas: HTMLCanvasElement[] | null = null;
 function getRainAtlas(): HTMLCanvasElement[] | null {
   if (rainAtlas) return rainAtlas;
-  const chars = RAIN_CONFIG.chars;
   const atlas: HTMLCanvasElement[] = [];
-  for (let i = 0; i < RAIN_GLYPHS; i++) {
+  for (const kana of KANA) {
     const c = makeCanvas(GLYPH_PX * 1.2, GLYPH_PX * 1.2);
     const g = c?.getContext("2d");
     if (!c || !g) return null;
@@ -154,7 +159,8 @@ function getRainAtlas(): HTMLCanvasElement[] | null {
     g.textAlign = "center";
     g.textBaseline = "middle";
     g.fillStyle = `rgb(${LIGHT})`;
-    g.fillText(chars.charAt(Math.floor(hash(i, 97) * chars.length)), c.width / 2, c.height / 2);
+    // The rain's own font, so the glyphs look exactly like the rain behind the rabbit.
+    g.fillText(kana, c.width / 2, c.height / 2);
     atlas.push(c);
   }
   rainAtlas = atlas;
@@ -293,7 +299,7 @@ function drawTitle(ctx: CanvasRenderingContext2D, base: DOMMatrix, size: Size, t
         ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
       }
     }
-    ctx.globalAlpha = fadeIn * (resolved ? 1 : 0.4);
+    ctx.globalAlpha = fadeIn * (resolved ? 1 : 0.85);
     if (!resolved) {
       // Before it resolves: a dimmer rain glyph cycling ~18 times a second, in the letter's cell.
       if (atlas) {
