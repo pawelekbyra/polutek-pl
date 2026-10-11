@@ -205,6 +205,7 @@ export function GateWarp({
       window.removeEventListener("pointerdown", skip);
       window.removeEventListener("keydown", skip);
       clock.stop(0.3);
+      clock.dispose();
     };
   }, [start, camera, screen]);
 

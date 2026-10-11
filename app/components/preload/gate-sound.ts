@@ -12,6 +12,10 @@
  * - The picture never waits for the sound: it starts on the wall clock at the click and is steered
  *   gently (±15 % speed) onto the audio clock, so it is in sync within a second or two without a
  *   frozen or jumping frame. Any failure means a silent warp on the wall clock.
+ * - A tab hidden mid-warp pauses both: the audio context is suspended and the picture's clock stops
+ *   counting, and both go on together when the tab is back. (iOS suspends a hidden page's audio by
+ *   itself while the wall clock ran on: sound and picture came back apart; elsewhere the intro played
+ *   on unseen.)
  */
 
 /**
@@ -88,12 +92,44 @@ export function isGateSoundReady(): boolean {
 }
 
 export type GateClock = {
-  /** Seconds since the warp started, steered onto the audio clock when there is sound. */
+  /** Seconds since the warp started (not counting time the tab was hidden), steered onto the audio clock when there is sound. */
   now: () => number;
   /** Fades the sound out (skip, unmount) and releases the audio device. */
   stop: (fadeSeconds?: number) => void;
+  /** The warp is over: no more listening for the tab being hidden. */
+  dispose: () => void;
   withSound: boolean;
 };
+
+/**
+ * A wall clock in seconds from now that stops while the tab is hidden; `onHidden(hidden)` is told
+ * about each change (the sound follows it).
+ */
+function pausableWallClock(onHidden?: (hidden: boolean) => void) {
+  const t0 = performance.now();
+  let pausedMs = 0;
+  let hiddenSince: number | null = typeof document !== "undefined" && document.visibilityState === "hidden" ? t0 : null;
+  const listener = () => {
+    const hidden = document.visibilityState === "hidden";
+    const now = performance.now();
+    if (hidden && hiddenSince === null) hiddenSince = now;
+    else if (!hidden && hiddenSince !== null) {
+      pausedMs += now - hiddenSince;
+      hiddenSince = null;
+    } else return;
+    onHidden?.(hidden);
+  };
+  if (typeof document !== "undefined") document.addEventListener("visibilitychange", listener);
+  return {
+    seconds: () => {
+      const now = performance.now();
+      return (now - t0 - pausedMs - (hiddenSince === null ? 0 : now - hiddenSince)) / 1000;
+    },
+    dispose: () => {
+      if (typeof document !== "undefined") document.removeEventListener("visibilitychange", listener);
+    },
+  };
+}
 
 /** Largest correction of the picture's speed while it is steered onto the audio clock. */
 const MAX_SLEW = 0.15;
@@ -103,9 +139,14 @@ const MAX_SLEW = 0.15;
  * follows. Without a decoded sound (or Web Audio) the clock is the wall clock from the click.
  */
 export function startGateSound(): GateClock {
-  const t0 = performance.now();
-  const wallSeconds = () => (performance.now() - t0) / 1000;
-  const silent: GateClock = { now: wallSeconds, stop: () => undefined, withSound: false };
+  let audio: AudioContext | null = null;
+  let audioStopped = false;
+  const wall = pausableWallClock((hidden) => {
+    if (!audio || audioStopped) return;
+    void (hidden ? audio.suspend() : audio.resume()).catch(() => undefined);
+  });
+  const wallSeconds = wall.seconds;
+  const silent: GateClock = { now: wallSeconds, stop: () => undefined, dispose: wall.dispose, withSound: false };
   const { live } = ctors();
   if (!live || !buffer) return silent;
   // iOS: Web Audio follows the ring/silent switch unless the page asks for playback audio (Safari 17+);
@@ -120,6 +161,7 @@ export function startGateSound(): GateClock {
   const ctx = primed;
   primed = null;
   if (!ctx) return silent;
+  audio = ctx;
   try {
     void ctx.resume();
     const source = ctx.createBufferSource();
@@ -136,6 +178,7 @@ export function startGateSound(): GateClock {
     let stopped = false;
     return {
       withSound: true,
+      dispose: wall.dispose,
       now: () => {
         const wall = wallSeconds();
         const dt = Math.max(0, wall - lastWall);
@@ -154,6 +197,7 @@ export function startGateSound(): GateClock {
       stop: (fadeSeconds = 0.25) => {
         if (stopped) return;
         stopped = true;
+        audioStopped = true;
         try {
           const now = ctx.currentTime;
           gain.gain.setValueAtTime(gain.gain.value, now);
@@ -167,6 +211,7 @@ export function startGateSound(): GateClock {
       },
     };
   } catch {
+    audioStopped = true;
     void ctx.close().catch(() => undefined);
     return silent;
   }

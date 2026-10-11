@@ -19,7 +19,6 @@ import { getRabbitVector, preloadRabbitVector, releaseRabbitVector } from "./rab
 import { captureButton, capturePrompt, cursorBlinkPhase, showsHoverLook, type CapturedPrompt } from "./gate-scene";
 import { prepareGateVoid, releaseGateVoid } from "./gate-void";
 import {
-  consumeQueuedGateEnter,
   hasPassedGateThisSession,
   hideGateFromNowOn,
   markGatePassed,
@@ -64,7 +63,6 @@ export function resetPageRevealForTests() {
   revealedInThisDocument = false;
   try { sessionStorage.removeItem(RAIN_CONFIG.sessionKey); } catch {}
   document.documentElement.removeAttribute(RAIN_CONFIG.passedAttribute);
-  consumeQueuedGateEnter();
 }
 
 export function usePageRevealReady(key: string | undefined, ready: boolean) {

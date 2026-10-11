@@ -122,7 +122,7 @@ describe("gate boot script", () => {
     expect((window as unknown as Record<string, unknown>).__ppRain).toBeUndefined();
   });
 
-  it("installs the rain runtime, draws parsed canvases and remembers an early click", async () => {
+  it("installs the rain runtime and draws parsed canvases", async () => {
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
     run();
     const runtime = (window as unknown as Record<string, { attach: unknown }>).__ppRain;
@@ -136,9 +136,6 @@ describe("gate boot script", () => {
     const canvas = document.querySelector("canvas")!;
     expect(canvas.width).toBe(Math.round(window.innerWidth));
 
-    document.querySelector("span")!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    expect((window as unknown as Record<string, unknown>).__ppGateQueued).toBe(true);
-    expect(document.querySelector("button")!.hasAttribute("data-queued")).toBe(true);
     vi.restoreAllMocks();
   });
 
