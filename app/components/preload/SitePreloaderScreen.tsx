@@ -18,7 +18,7 @@ interface SitePreloaderScreenProps {
   /** Click on the rabbit or the "ENTER" caption (they exist only once the page is ready). */
   onEnter?: () => void;
   /** The entry warp is running (zoom into the eye, tunnel, flash); see GateWarp. */
-  warp?: { start: WarpStart; onFlash: () => void; onDone: () => void } | null;
+  warp?: { start: WarpStart; onReveal: () => void; onDone: () => void } | null;
 }
 
 /**
@@ -65,7 +65,7 @@ export function SitePreloaderScreen({
         <MatrixRain />
         <MatrixGatePrompt ready={ready} labels={labels} progress={progress} onEnter={warp ? undefined : onEnter} />
       </div>
-      {warp && <GateWarp start={warp.start} camera={cameraEl} screen={screenEl} onFlash={warp.onFlash} onDone={warp.onDone} />}
+      {warp && <GateWarp start={warp.start} camera={cameraEl} screen={screenEl} onReveal={warp.onReveal} onDone={warp.onDone} />}
     </div>
   );
 }

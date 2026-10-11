@@ -42,12 +42,37 @@ export function preloadRabbitVector(): Promise<RabbitVector | null> {
       const parsed = parseRabbitSvg(await response.text());
       if (!parsed) return null;
       loaded = { size: parsed.size, layers: parsed.layers.map((l) => ({ fill: l.fill, path: new Path2D(l.d) })) };
+      warmUp(loaded);
       return loaded;
     } catch {
       return null;
     }
   })();
   return loading;
+}
+
+/**
+ * The first fill of these paths costs tens of milliseconds (the browser prepares them), which would
+ * be a stutter in the warp's first frame: pay it now, on a tiny offscreen canvas, while the gate loads.
+ */
+function warmUp(vector: RabbitVector): void {
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    for (const scale of [64 / vector.size, (64 / vector.size) * 40]) {
+      ctx.setTransform(scale, 0, 0, scale, 0, 0);
+      for (const layer of vector.layers) {
+        ctx.fillStyle = layer.fill;
+        ctx.fill(layer.path, "evenodd");
+      }
+    }
+    ctx.getImageData(0, 0, 1, 1);
+  } catch {
+    /* only an optimisation */
+  }
 }
 
 /** The vector, if it has finished loading (the click handler cannot wait for it). */

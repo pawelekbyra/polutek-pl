@@ -106,6 +106,9 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
     const playStartedSentRef = useRef(false);
 
     const player = useRef<MediaPlayerInstance>(null);
+    // From the click on the entry gate until its flash the hero must stay paused at its start (the
+    // warp has its own sound): any play in between (a resumed autoplay, a buffering restart) is undone.
+    const gateHoldRef = useRef(false);
     // Sound. `muted` mirrors the player (and is what a remounted player starts with); until the
     // per-video reset below decides, the player is not mounted yet. `userMuted`: the viewer's own
     // mute choice this session. `isPlaying` drives the unmute hint.
@@ -286,20 +289,26 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
         (canPlay && (!autoPlayWanted || autoPlayFailed));
     usePageRevealReady(revealKey, playbackSettled || !!loadError || bufferingOverlayTimedOut || showsErrorState);
 
-    // The click on the entry gate ("Follow the white rabbit") is a user gesture: the hero, which
-    // autoplayed muted under the gate, restarts from 0 with sound (unless the viewer chose mute),
-    // and starts now if the browser had blocked even the muted autoplay. A player that is not
-    // mounted yet starts with sound when it mounts (and falls back to muted if refused).
+    // The entry gate. Its click is a user gesture: the hero, which autoplayed muted under the gate,
+    // is paused at its start right away and given the gesture's permission to play with sound
+    // ("polutek:gate-unlock": play + pause unmuted inside the click, what iOS/Safari require). It then
+    // waits, paused at 0, through the entry warp (which has its own sound) and starts FROM THE
+    // BEGINNING when the warp's flash covers the screen ("polutek:gate-enter"): with sound, unless the
+    // viewer chose mute (then muted, still from 0). Without the warp (reduced motion) both come at
+    // the click. A player that is not mounted yet starts with sound when it mounts.
     useEffect(() => {
         const handleGateEnter = () => {
-            if (readUserMuted()) return;
-            // The gate click is the viewer's own: the sound they get now is remembered.
-            writeUserMuted(false);
-            setMuted(false);
+            gateHoldRef.current = false;
+            const viewerMuted = readUserMuted();
+            if (!viewerMuted) {
+                // The gate click is the viewer's own: the sound they get now is remembered.
+                writeUserMuted(false);
+                setMuted(false);
+            }
             const current = player.current;
             if (!current) return;
             current.currentTime = 0;
-            current.muted = false;
+            current.muted = viewerMuted;
             if (current.paused && current.state?.canPlay) {
                 // Refused with sound (the gesture's permission did not carry over): play muted with
                 // the unmute hint rather than stay paused.
@@ -310,16 +319,17 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                 });
             }
         };
-        // The entry warp: the click itself only unlocks the media element (play + pause with sound,
-        // inside the gesture, so iOS/Safari allow sound later); the hero stays silent and paused
-        // during the warp and starts from 0 with sound at its flash ("polutek:gate-enter").
         const handleGateUnlock = () => {
-            if (readUserMuted()) return;
-            const media = player.current?.el?.querySelector("video");
-            if (!media) return;
-            media.muted = false;
-            void media.play()?.catch(() => undefined);
-            media.pause();
+            gateHoldRef.current = true;
+            const current = player.current;
+            const media = current?.el?.querySelector("video") ?? null;
+            if (media && !readUserMuted()) {
+                media.muted = false;
+                void media.play()?.catch(() => undefined);
+            }
+            media?.pause();
+            current?.pause();
+            if (current) current.currentTime = 0;
         };
         window.addEventListener("polutek:gate-enter", handleGateEnter);
         window.addEventListener("polutek:gate-unlock", handleGateUnlock);
@@ -461,6 +471,11 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                             } catch {}
                         }}
                         onPlay={() => {
+                            // Held for the entry warp: undo the start, nothing is counted.
+                            if (gateHoldRef.current) {
+                                player.current?.pause();
+                                return;
+                            }
                             setHasStartedPlayback(true);
                             qoe.playRequested();
                             // First play starts the watch clock, every later play resumes it

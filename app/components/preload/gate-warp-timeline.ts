@@ -3,28 +3,36 @@
  * tested and shared by the renderer. Times are seconds from the click, aligned to the sound
  * `public/sounds/gate-enter-12s.mp3` (docs/operations/PLAYER-SOUND.md):
  *
- * - 0.00 – 2.00  the sound swells: the camera zooms into the rabbit's eye (accelerating), the
- *                prompt and the caption fall away, the eye ends up filling the frame;
- * - 2.00 – 4.40  from the low hit on, the zoom goes on into the black pixel of the pupil in the
- *                picture until the whole screen is black (the last moments are made fully black);
- * - 4.40 – 11.30 THE VOID: the screen is black while the rest of the sound plays (about 6.9 s). It is
+ * - 0.00 – 4.95  one continuous zoom into the rabbit's eye and on into the black pixel of its pupil.
+ *                It moves from the very first frame (no dead start) but slowly, and speeds up all
+ *                the way, so it enters the pupil exactly on the sound's first bright hit (4.95 s);
+ *                the prompt and the caption fall away in the first 0.7 s;
+ * - 4.55 – 4.95  the last moments of the zoom are made fully black (the upscaled pixel edge is soft);
+ * - 4.95 – 11.30 THE VOID: the screen is black while the rest of the sound plays (about 6.4 s). It is
  *                kept empty on purpose, so an animation can be built there later (gate-void.ts is
  *                its hook); until then it is simply black;
- * - 11.30        the final, loudest hit of the sound: a light flash from the centre, the page is
- *                revealed under it and the hero starts with sound;
+ * - 11.30        the final, loudest hit of the sound: a light flash from the centre;
+ * - 11.50        the flash covers the screen: the page shows through as the gate fades out, and the
+ *                hero video starts FROM ITS BEGINNING (it waited paused at 0 since the click);
  * - 11.50 – 12.30 the gate fades out, the sound fades away (baked into the file, 12.3 s long).
  */
 
 export const WARP = {
-  eyeAt: 2.0,
-  blackFrom: 4.0,
-  blackAt: 4.4,
+  /** The sound's first bright hit: the zoom is inside the pupil, the screen black. */
+  blackAt: 4.95,
+  blackFrom: 4.55,
   /** The sound's final hit (measured at 11.3 s); the flash is aligned to it. */
   flash: 11.3,
+  /** Flash complete: the hero starts from its beginning here. */
   flashEnd: 11.5,
   /** Length of public/sounds/gate-enter-12s.mp3. */
   end: 12.3,
 } as const;
+
+/** How hard the zoom accelerates (log-space exponential): higher = slower start, faster end. */
+const ZOOM_ACCEL = 2.2;
+/** By then the pupil has travelled to the screen centre. */
+const CENTRE_BY = 3.6;
 
 /**
  * The black core of the pupil in public/rabbit-gate.webp / .svg (440 x 440; the vector keeps the same proportions), as a share of the image edge:
@@ -32,7 +40,7 @@ export const WARP = {
  */
 export const RABBIT_PUPIL = { x: 275.5 / 440, y: 183.5 / 440, core: 2.8 / 440 } as const;
 
-/** Share of the frame's shorter edge the eye (about 11 core radii either side) fills at `eyeAt`. */
+/** Share of the frame's shorter edge the eye fills (used for the eye-filling zoom level). */
 const EYE_FILL = 0.9;
 const EYE_HALF_WIDTH_IN_CORES = 9;
 
@@ -43,7 +51,6 @@ export const smoothstep = (a: number, b: number, v: number) => {
   const t = clamp01((v - a) / (b - a));
   return t * t * (3 - 2 * t);
 };
-const easeInCubic = (t: number) => t * t * t;
 const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
 
 /** The square the drawing occupies inside the image's bounding box (object-fit: contain, centred). */
@@ -77,16 +84,16 @@ export type Camera = {
 };
 
 /**
- * Camera at time `t`: an accelerating zoom whose fixed point travels from the pupil to the screen
- * centre (eye centred and filling the frame at `eyeAt`), then on into the pupil's black core until
- * it covers the screen at `blackAt`. Interpolated in log space, so the speed feels even.
+ * Camera at time `t`: one zoom from rest to inside the pupil's black core (`blackAt`), exponential
+ * in log space: it visibly moves from the first frame (about 3.5 % per 0.1 s), stays slow while the
+ * whole rabbit is in view and accelerates into the eye, so the speed always feels like a fall. The
+ * zoom's fixed point travels from the pupil to the screen centre during the first `CENTRE_BY` s.
  */
 export function cameraAt(t: number, pupil: Point, center: Point, zoom: { eye: number; black: number }): Camera {
-  const first = clamp01(t / WARP.eyeAt);
-  const second = smoothstep(WARP.eyeAt, WARP.blackAt, t);
-  const logScale = Math.log(zoom.eye) * easeInCubic(first) + (Math.log(zoom.black) - Math.log(zoom.eye)) * second;
-  const scale = Math.exp(logScale);
-  const move = easeOutCubic(first);
+  const u = clamp01(t / WARP.blackAt);
+  const progress = (Math.exp(ZOOM_ACCEL * u) - 1) / (Math.exp(ZOOM_ACCEL) - 1);
+  const scale = Math.exp(Math.log(zoom.black) * progress);
+  const move = easeOutCubic(clamp01(t / CENTRE_BY));
   const target = { x: pupil.x + (center.x - pupil.x) * move, y: pupil.y + (center.y - pupil.y) * move };
   return {
     scale,

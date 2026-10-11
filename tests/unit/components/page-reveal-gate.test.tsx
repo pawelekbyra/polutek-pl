@@ -12,8 +12,8 @@ const mocks = vi.hoisted(() => ({ auth: { isLoaded: true } }));
 vi.mock("@/lib/auth/react", () => ({ useAuth: () => mocks.auth }));
 // The warp itself (canvas, rAF, audio) is out of scope here: a stand-in that plays it on demand.
 vi.mock("@/app/components/preload/GateWarp", () => ({
-  GateWarp: (props: { onFlash: () => void; onDone: () => void }) => (
-    <button type="button" data-testid="warp-finish" onClick={() => { props.onFlash(); props.onDone(); }} />
+  GateWarp: (props: { onReveal: () => void; onDone: () => void }) => (
+    <button type="button" data-testid="warp-finish" onClick={() => { props.onReveal(); props.onDone(); }} />
   ),
 }));
 
@@ -221,6 +221,8 @@ describe("PageRevealGate", () => {
         <p>page</p>
       </PageRevealGate>,
     );
+    // The warp's sound and vector are loaded while the gate loads (here: unavailable, resolved at once).
+    await act(async () => {});
     const rabbit = document.querySelector("[data-gate-rabbit] img")!;
     vi.spyOn(rabbit, "getBoundingClientRect").mockReturnValue({ left: 100, top: 300, width: 200, height: 200, right: 300, bottom: 500, x: 100, y: 300, toJSON() {} } as DOMRect);
     fireEvent.click(enterButton());
