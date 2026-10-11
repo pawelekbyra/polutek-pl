@@ -35,15 +35,19 @@ export async function generateMetadata(): Promise<Metadata> {
       statusBarStyle: "black-translucent",
       title: APP_NAME,
     },
-    // Small copies of the rabbit (the 500 px, 105 KB original is only the gate image): a 32 px tab
-    // icon and the 180 px home-screen icon iOS asks for.
+    // The site's icon is the letter P (public/icon-p*.svg|png, traced from the owner's logo): a vector
+    // for browsers that take SVG (light on dark tabs), PNG and ICO fallbacks, and the 180 px
+    // home-screen icon iOS asks for (solid background: iOS paints transparency black). The rabbit
+    // is only the entry gate's picture, not an icon.
     icons: {
       icon: [
-        { url: '/rabbit-32.png', type: 'image/png', sizes: '32x32' },
+        { url: '/icon-p.svg', type: 'image/svg+xml', sizes: 'any' },
+        { url: '/icon-p-32.png', type: 'image/png', sizes: '32x32' },
+        { url: '/favicon.ico', sizes: 'any' },
       ],
-      shortcut: ['/rabbit-32.png'],
+      shortcut: ['/icon-p-32.png'],
       apple: [
-        { url: '/rabbit-180.png', type: 'image/png', sizes: '180x180' },
+        { url: '/icon-p-180.png', type: 'image/png', sizes: '180x180' },
       ],
     },
   };
