@@ -2,14 +2,13 @@
  * THE VOID: the black screen inside the pupil, between the end of the zoom (WARP.blackAt, 4.95 s)
  * and the final flash (WARP.flash, 11.3 s). Timed to the entry sound (gate-warp-timeline.ts):
  *
- * - 4.30 – 6.30 the tunnel emerges from a point in the depth and grows to its full size (tunnelEmerge);
- * - 3.90 – 4.95 the tunnel is already there INSIDE the pupil: as the zoom closes in, the black core
- *               becomes a window onto a tube of rain glyphs deep behind it (parallax: the pupil grows
- *               fast, the far tube slowly), so entering the pupil is entering the tunnel;
- * - from 3.90   the camera travels down the tube at one constant speed (the zoom's own tempo; it
- *               never slows with the title): its mouth comes out of the distance and reaches the
- *               screen edges at about 6.3 s; the tube is round and passes the screen's corners, so
- *               every edge of the screen is covered;
+ * - 3.30 – 4.95 while the zoom closes in on the pupil, a point appears in its black core and grows
+ *               into the tunnel (tunnelEmerge; drawn only inside the pupil, which is its window):
+ *               when the pupil fills the screen (4.95 s, the sound's accent) the tunnel fills it too,
+ *               so entering the pupil is entering the tunnel;
+ * - from 3.30   the camera travels down the tube at one constant speed (the zoom's own tempo; it
+ *               never slows with the title); the tube is round and passes the screen's corners, so
+ *               every edge of the screen is covered, and it runs deep, almost to a point;
  * - 5.15 – 8.40 "WWW.PAWELPERFECT.COM" (one line) flies out of that depth and brakes to a stop in
  *               front of the viewer (perspective: its distance falls fast, then eases out); all the
  *               way its letters are cycling Japanese rain glyphs (the rain's own glyphs and font);
@@ -42,10 +41,12 @@ export const AIM_CANDIDATES = [VOID_TITLE.length / 2 - 1, VOID_TITLE.length / 2]
 /** Key moments (seconds since the click). */
 export const VOID_T = {
   /**
-   * The camera starts travelling down the tunnel: it is seen through the pupil (a window in the
-   * zooming rabbit) until the zoom enters the pupil on the sound's accent (WARP.blackAt, 4.95 s).
+   * The tunnel appears as a point in the pupil and the camera starts travelling down it; it is seen
+   * through the pupil (a window in the zooming rabbit) until the zoom enters the pupil.
    */
-  tunnelFrom: 3.9,
+  tunnelFrom: 3.3,
+  /** The pupil fills the screen on the sound's accent (= WARP.blackAt): so does the tunnel. */
+  tunnelFull: 4.95,
   open: 5.15,
   /** The letters stay cycling rain glyphs for the whole flight and decode once the title is in place. */
   decodeFrom: 8.4,
@@ -66,9 +67,12 @@ const FAR = 30; // starting distance of the title (1 = resting distance)
 const TUBE_COLUMNS = 96;
 const CELL = 0.13;
 const RING_STEP = 0.16;
-/** Fog: rings come out of it far away, so the tube runs almost to a point; the mouth starts at MOUTH_AT and fades in. */
+/**
+ * Fog: rings come out of it far away, so the tube runs almost to a point. The tube has no mouth (its
+ * rings are laid from RING_ORIGIN, far behind the camera): it appears by growing (tunnelEmerge).
+ */
 const FOG_DEPTH = 18;
-const MOUTH_AT = 8;
+const RING_ORIGIN = -100;
 /**
  * Camera speed in world units per second, constant. Rings at depth 2 grow at about the zoom's mean
  * rate into the rabbit (~1.35 e-folds per second), so the tunnel keeps the zoom's tempo.
@@ -356,18 +360,16 @@ function drawDepthLight(ctx: CanvasRenderingContext2D, size: Size, centre: { x: 
 }
 
 /**
- * The tunnel emerging out of the distance: the whole tube is drawn scaled by this factor around the
- * vanishing point. It is born as a point in the depth of the pupil (EMERGE_FROM), grows at a log-even
- * rate that starts at about the zoom's own end tempo (so entering the pupil flows on into it), is about
- * an eighth of its size when the camera enters the pupil, and eases out into the constant travel.
+ * The tunnel emerging out of the pupil: the whole tube is drawn scaled by this factor around the
+ * vanishing point. It is born as a point in the pupil's core (VOID_T.tunnelFrom), grows in log space
+ * alongside the zoom and reaches its full size exactly when the pupil fills the screen
+ * (VOID_T.tunnelFull), easing out there so its growth hands over smoothly to the constant travel.
  */
-const EMERGE_FROM = 4.3;
-const EMERGE_TO = 6.3;
 const EMERGE_START = 0.01;
 export function tunnelEmerge(t: number): number {
-  const p = clamp01((t - EMERGE_FROM) / (EMERGE_TO - EMERGE_FROM));
+  const p = clamp01((t - VOID_T.tunnelFrom) / (VOID_T.tunnelFull - VOID_T.tunnelFrom));
   if (p <= 0) return 0;
-  const q = 1 - (1 - p) ** 2;
+  const q = 1 - (1 - p) ** 1.6;
   return EMERGE_START ** (1 - q);
 }
 
@@ -469,26 +471,29 @@ function drawTunnel(ctx: CanvasRenderingContext2D, size: Size, centre: { x: numb
   const f = Math.min(size.width, size.height) / 2; // focal length: world 1 at depth 1 = half the shorter side
   const { xs, ys } = tubeColumns(size.width, size.height);
   const travel = tunnelTravel(t);
-  // Ring k sits at world depth MOUTH_AT + k * RING_STEP; the camera has moved `travel` towards it.
-  const first = Math.max(0, Math.ceil((travel + 0.9 - MOUTH_AT) / RING_STEP));
-  const last = Math.floor((travel + FOG_DEPTH - MOUTH_AT) / RING_STEP);
+  // Ring k sits at world depth RING_ORIGIN + k * RING_STEP; the camera has moved `travel` towards it.
+  const first = Math.ceil((travel + 0.9 - RING_ORIGIN) / RING_STEP);
+  const last = Math.floor((travel + FOG_DEPTH - RING_ORIGIN) / RING_STEP);
   // Dimmer (never slower) while the title rests in front of it, so the address reads clearly.
   const dim = 1 - 0.35 * smooth(VOID_T.arrive - 0.6, VOID_T.arrive, t) * (1 - smooth(VOID_T.push, VOID_T.flash, t));
-  // The mouth starts nearer than the fog's end: it fades in over its first second, out of the dark.
-  const mouthIn = smooth(VOID_T.tunnelFrom, VOID_T.tunnelFrom + 1, t);
+  // Out of the dark: the point fades in as it appears.
+  const fadeIn = smooth(VOID_T.tunnelFrom, VOID_T.tunnelFrom + 0.3, t);
   const emerge = tunnelEmerge(t);
   if (emerge <= 0) return;
   for (let k = last; k >= first; k--) {
-    const z = MOUTH_AT + k * RING_STEP - travel;
+    const z = RING_ORIGIN + k * RING_STEP - travel;
     // Far away the rings crowd into a few pixels: every other one fades out beyond depth 3, and so on
     // (they fade back in as they come near, long before they are told apart).
-    const ringLod = k % 2 === 1 ? 1 - smooth(2.6, 3.4, z) : k % 4 === 2 ? 1 - smooth(4, 5, z) : k % 8 === 4 ? 1 - smooth(5.5, 6.5, z) : k % 16 === 8 ? 1 - smooth(8, 9.5, z) : 1;
-    const ring = ringAlpha(z) * dim * ringLod * mouthIn;
+    // Detail follows the size on screen: while the tunnel is still emerging (small), even its near
+    // rings are as small as far ones, so they are thinned out and drawn as ring sprites too.
+    const zs = z / emerge;
+    const ringLod = k % 2 === 1 ? 1 - smooth(2.6, 3.4, zs) : k % 4 === 2 ? 1 - smooth(4, 5, zs) : k % 8 === 4 ? 1 - smooth(5.5, 6.5, zs) : k % 16 === 8 ? 1 - smooth(8, 9.5, zs) : 1;
+    const ring = ringAlpha(z) * dim * ringLod * fadeIn;
     if (ring < 0.02) continue;
     const s = (f / z) * emerge;
     // Far: the whole ring as one pre-rendered sprite (changing now and then, like the rain); between
     // SPRITE_FROM and SPRITE_FULL it crossfades with the cells.
-    const far = smooth(SPRITE_FROM, SPRITE_FULL, z);
+    const far = smooth(SPRITE_FROM, SPRITE_FULL, zs);
     if (far > 0) {
       const m = (SPRITE_AT / z) * emerge;
       const sprite = rings.sprites[Math.floor(hash(k, Math.floor(t * 1.5 + hash(k, 3) * 4)) * RING_VARIANTS)];
