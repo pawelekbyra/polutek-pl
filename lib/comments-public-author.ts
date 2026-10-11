@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { isGeneratedLegacyUsername } from '@/lib/utils/auth';
+import { DELETED_COMMENT_AUTHOR_NAME } from '@/lib/modules/comments/domain/comment-frontend.dto';
 
 export const publicCommentAuthorSelect = Prisma.validator<Prisma.UserSelect>()({
   id: true,
@@ -18,7 +19,7 @@ export function toPublicCommentAuthor(author?: PublicCommentAuthor | null, video
   if (author.isDeleted) {
     return {
       id: author.id,
-      displayName: "Usunięty Użytkownik",
+      displayName: DELETED_COMMENT_AUTHOR_NAME,
       username: null,
       imageUrl: null,
       badges: [],
