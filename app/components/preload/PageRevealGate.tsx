@@ -175,6 +175,8 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
   // is prepared as soon as ENTER appears, not inside the click (where it was a stutter on the first
   // frame). The click reuses it if the prompt has not moved since.
   const promptSprite = useRef<CapturedPrompt | null>(null);
+  // Set when the gate goes away after an entry: the focus moves to the page content (see below).
+  const focusMainWhenDone = useRef(false);
   const capturePromptNow = () =>
     capturePrompt(document.querySelector<HTMLElement>("[data-gate-prompt]"), Math.min(window.devicePixelRatio || 1, 1.5));
   useEffect(() => {
@@ -229,10 +231,18 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
     // The warp's canvases and paths (tens of MB of sprites on a desktop) are not needed any more.
     releaseGateVoid();
     releaseRabbitVector();
+    focusMainWhenDone.current = true;
     setPhase("done");
-    // Keyboard and screen-reader users land on the page content, not on a vanished button.
-    document.getElementById("main")?.focus({ preventScroll: true });
   }, []);
+
+  // Keyboard and screen-reader users land on the page content, not on a vanished button. Only after
+  // the commit that lifts `inert` from the page: focusing inside an inert subtree does nothing (the
+  // focus used to end up on <body>).
+  useEffect(() => {
+    if (phase !== "done" || !focusMainWhenDone.current) return;
+    focusMainWhenDone.current = false;
+    document.getElementById("main")?.focus({ preventScroll: true });
+  }, [phase]);
 
   useEffect(() => {
     if (shouldSkipGate()) return;
@@ -289,6 +299,7 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
     markGatePassed();
     const timer = window.setTimeout(() => {
       hideGateFromNowOn();
+      focusMainWhenDone.current = true;
       setPhase("done");
     }, LEAVE_ANIMATION_MS);
     return () => window.clearTimeout(timer);

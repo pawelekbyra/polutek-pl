@@ -251,6 +251,51 @@ describe("PageRevealGate", () => {
     delete window.matchMedia;
   });
 
+  it("moves the focus to the page content once the gate is gone (after the warp and after the plain fade)", async () => {
+    // Warp.
+    window.matchMedia = ((query: string) => ({ matches: false, media: query })) as unknown as typeof window.matchMedia;
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({} as never);
+    const { unmount } = render(
+      <PageRevealGate>
+        <main id="main" tabIndex={-1}>page</main>
+      </PageRevealGate>,
+    );
+    await act(async () => {});
+    const rabbit = document.querySelector("[data-gate-rabbit] img")!;
+    vi.spyOn(rabbit, "getBoundingClientRect").mockReturnValue({ left: 100, top: 300, width: 200, height: 200, right: 300, bottom: 500, x: 100, y: 300, toJSON() {} } as DOMRect);
+    fireEvent.click(enterButton());
+    // Browsers ignore focus() inside an inert subtree (jsdom does not): record where it is called.
+    const original = HTMLElement.prototype.focus;
+    const inertAtFocus: boolean[] = [];
+    const focusSpy = vi.spyOn(HTMLElement.prototype, "focus").mockImplementation(function (this: HTMLElement, options?: FocusOptions) {
+      if (this.id === "main") inertAtFocus.push(this.closest("[inert]") !== null);
+      return original.call(this, options);
+    });
+    fireEvent.click(screen.getByTestId("warp-finish"));
+    expect(preloaderState()).toBe("gone");
+    expect(document.activeElement?.id).toBe("main");
+    expect(inertAtFocus).toEqual([false]);
+    focusSpy.mockRestore();
+    unmount();
+    getContext.mockRestore();
+    // @ts-expect-error back to jsdom's default (no matchMedia)
+    delete window.matchMedia;
+
+    // Plain fade (no matchMedia in jsdom: no warp).
+    resetPageRevealForTests();
+    render(
+      <PageRevealGate>
+        <main id="main" tabIndex={-1}>page</main>
+      </PageRevealGate>,
+    );
+    await act(async () => {});
+    fireEvent.click(enterButton());
+    expect(preloaderState()).toBe("leaving");
+    await finishLeaving();
+    expect(preloaderState()).toBe("gone");
+    expect(document.activeElement?.id).toBe("main");
+  });
+
   it("keeps the plain fade (no warp, no unlock) when the viewer prefers reduced motion", () => {
     window.matchMedia = ((query: string) => ({ matches: true, media: query })) as unknown as typeof window.matchMedia;
     const unlock = vi.fn();
