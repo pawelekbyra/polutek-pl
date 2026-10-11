@@ -5,8 +5,10 @@ const findMany = vi.fn();
 const getOptional = vi.fn();
 
 vi.mock("@/lib/prisma", () => ({ prisma: { video: { findMany } } }));
-vi.mock("@/lib/modules/channel", () => ({
+vi.mock("@/lib/modules/channel", async () => ({
   MainChannelService: { getOptional },
+  // The real, pure resolver (the search DTOs use it for the channel avatar).
+  ...(await vi.importActual<typeof import("@/lib/modules/channel/domain/channel-avatar")>("@/lib/modules/channel/domain/channel-avatar")),
 }));
 
 const pick = (overrides: any, key: string, fallback: any) => Object.prototype.hasOwnProperty.call(overrides, key) ? overrides[key] : fallback;
