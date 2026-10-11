@@ -5,7 +5,7 @@ import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { PublicVideoDTO } from '@/app/types/video';
 import { canUseDemoFallbacks, flags } from '@/lib/feature-flags';
 import { getCanonicalVideoTitle } from '@/lib/video-title-overrides';
-import { MainChannelService } from '@/lib/modules/channel';
+import { MainChannelService, resolveChannelAvatarUrl } from '@/lib/modules/channel';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { MediaPolicy, resolvePublicThumbnailSrc } from '@/lib/modules/media';
 import { effectivePublishedAt, toPremiereDate } from '../domain/premiere';
@@ -33,7 +33,8 @@ export async function buildPublicVideoWhere(now: Date = new Date()): Promise<Pri
 }
 
 /**
- * The first admin's avatar, shown as the main creator's picture. Read once per server render
+ * The first admin's avatar: the fallback for the main creator's picture when the channel owner account
+ * has none (`resolveChannelAvatarUrl`; it is never the logged-in viewer's image). Read once per server render
  * (the video list, the featured video and the creator page all ask for it); React `cache` does not
  * memoize outside a render.
  */
@@ -136,7 +137,12 @@ export class VideoContentService {
             id: video.creator.id,
             name: video.creator.name,
             slug: video.creator.slug,
-            imageUrl: video.creator.user?.imageUrl || video.creator.imageUrl || null,
+            // The one channel avatar rule (lib/modules/channel/domain/channel-avatar.ts). `creator.imageUrl`
+            // here is only the administrator fallback injected by the callers below, never a viewer image.
+            imageUrl: resolveChannelAvatarUrl({
+              ownerImageUrl: video.creator.user?.imageUrl,
+              adminImageUrl: video.creator.imageUrl,
+            }),
             subscribersCount: video.creator.subscribersCount ?? 0,
         } : undefined,
     };
@@ -178,16 +184,13 @@ export class VideoContentService {
 
       const mainCreatorSlug = flags.mainCreatorSlug;
 
-      const dtos = videos.map(v => {
-          let imageUrl = v.creator?.user?.imageUrl || null;
-          if (v.creator?.slug === mainCreatorSlug && adminData?.imageUrl) {
-              imageUrl = adminData.imageUrl;
-          }
-          return this.mapToPublicVideoDTO({
-            ...v,
-            creator: v.creator ? { ...v.creator, imageUrl } : null
-          });
-      });
+      const dtos = videos.map(v => this.mapToPublicVideoDTO({
+        ...v,
+        // Administrator fallback only for the main channel; the owner's own avatar still wins (see mapToPublicVideoDTO).
+        creator: v.creator
+          ? { ...v.creator, imageUrl: v.creator.slug === mainCreatorSlug ? adminData?.imageUrl ?? null : null }
+          : null,
+      }));
       // Amount-free goal progress (CLAUDE.md "Fundraising progress bar").
       return await withFundraisingProgress(dtos, videos);
     } catch (e: unknown) {
@@ -243,14 +246,12 @@ export class VideoContentService {
       const adminData = await findMainCreatorAdminAvatar();
 
       const mainCreatorSlug = flags.mainCreatorSlug;
-      let imageUrl = selectedVideo.creator?.user?.imageUrl || null;
-      if (selectedVideo.creator?.slug === mainCreatorSlug && adminData?.imageUrl) {
-          imageUrl = adminData.imageUrl;
-      }
+      const adminFallbackImageUrl =
+        selectedVideo.creator?.slug === mainCreatorSlug ? adminData?.imageUrl ?? null : null;
 
       const [dto] = await withFundraisingProgress([this.mapToPublicVideoDTO({
         ...selectedVideo,
-        creator: selectedVideo.creator ? { ...selectedVideo.creator, imageUrl } : null
+        creator: selectedVideo.creator ? { ...selectedVideo.creator, imageUrl: adminFallbackImageUrl } : null
       })], [selectedVideo]);
       return dto;
     } catch (e: unknown) {

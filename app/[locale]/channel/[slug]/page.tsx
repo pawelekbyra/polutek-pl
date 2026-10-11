@@ -126,6 +126,8 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
   if (freshCreator) {
       creator.subscribersCount = freshCreator.subscribersCount;
   }
+  // The channel's own avatar from the public creator DTO (resolveChannelAvatarUrl, same as the home
+  // page strip). Never the signed-in viewer's image: `userDb` below is only used for the role.
   const channelAvatar = creator.imageUrl || null;
 
   const allVideos: PublicVideoDTO[] = (creator.videos || []).map((v: PublicVideoDTO) => ({

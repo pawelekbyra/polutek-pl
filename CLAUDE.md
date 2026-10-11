@@ -228,6 +228,10 @@ CSP strony buduje `generateCSP()` w `lib/utils/security.ts` (middleware dokłada
 `script-src` i `style-src` zawierają `'unsafe-inline'` (znana słabość, decyzja 2026-10-03; zmiana na nonce wymaga osobnego planu i ponownego sprawdzenia Stripe/Google/Turnstile). Czcionki są lokalne. Nowy zewnętrzny host dopisuj tam, nie omijaj CSP.
 Panel ma osobne, ścisłe CSP z nonce (§4.20).
 
+### 4.22 Awatar kanału
+
+Awatar kanału (pasek pod odtwarzaczem na stronie głównej, nagłówek `/channel/[slug]`, DTO filmów) wyznacza wyłącznie `resolveChannelAvatarUrl()` (`lib/modules/channel/domain/channel-avatar.ts`): konto właściciela kanału (`Creator.user.imageUrl`), a dopiero potem pierwszy administrator. Obrazek zalogowanego widza (sesja, `userDb`) nigdy nie jest wejściem; widzi go tylko pasek nawigacji i komentarze (§4.9). Nie dopisuj drugiej ścieżki; test: `tests/unit/modules/channel/channel-avatar-source.test.tsx`.
+
 ## 5. Administracja
 
 Cała administracja jest w panelu (§4.20); dawne reguły stylu starego `/admin` wygasły razem z nim. Domyślna miniatura: łańcuch `Creator.defaultThumbnailUrl` → `AppSetting default_video_thumbnail` → `null`, ustawiany w panelu (Ustawienia → Kanał).

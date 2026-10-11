@@ -5,6 +5,7 @@ import { PublicCreatorPageDTO } from '@/app/types/video';
 import { canUseDemoFallbacks } from '@/lib/feature-flags';
 import { VideoContentService, findMainCreatorAdminAvatar, publicVideoOrderBy } from '@/lib/modules/video/infrastructure/video-content.service';
 import { MainChannelService } from '@/lib/modules/channel/application/main-channel.service';
+import { resolveChannelAvatarUrl } from '@/lib/modules/channel/domain/channel-avatar';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 
 /** What the home page needs to know about the channel itself (metadata only, no video list). */
@@ -41,11 +42,16 @@ export class CreatorContentService {
       const adminData = isMainCreator ? await findMainCreatorAdminAvatar() : null;
 
       if (creator && creator.isApproved && creator.isPrimary) {
-        const effectiveImageUrl = adminData?.imageUrl || creator.user?.imageUrl || null;
+        // Same rule as the home page's channel strip (resolveChannelAvatarUrl): the channel owner's
+        // avatar, the first administrator's only as a fallback. Never the viewer's own image.
+        const effectiveImageUrl = resolveChannelAvatarUrl({
+          ownerImageUrl: creator.user?.imageUrl,
+          adminImageUrl: adminData?.imageUrl,
+        });
         const videos = (creator.videos || []).map((v) =>
           VideoContentService.mapToPublicVideoDTO({
               ...v,
-              creator: { ...creator, imageUrl: effectiveImageUrl }
+              creator: { ...creator, imageUrl: adminData?.imageUrl ?? null }
           })
         );
 
