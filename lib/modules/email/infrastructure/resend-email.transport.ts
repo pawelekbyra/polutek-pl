@@ -6,6 +6,7 @@ import { toHeaderText } from "../domain/render-email";
 import type { EmailSendError, EmailSendResult } from "../domain/email-provider";
 import { getOwnMailConfig, sendViaOwnMail, shouldUseOwnTransport } from "./own-mail.transport";
 import { isProviderUnavailable, postmarkToken, sendViaPostmark, type PostmarkMessage } from "./postmark-email.transport";
+import { getSesConfig, isSesUnavailable, sendViaSes } from "./ses-email.transport";
 
 /**
  * The one place that hands mail to Resend. Every automatic mail (system mails, broadcasts, broadcast
@@ -137,9 +138,17 @@ export function buildFeedbackId(kind: string, stream?: 'news'): string {
   return `${clean(kind)}:${stream ?? 'tx'}:pp:ppmail`;
 }
 
-/** Which provider sends: Resend unless EMAIL_PROVIDER=postmark (and a token exists). */
-export function getEmailProvider(env: Record<string, string | undefined> = process.env): 'resend' | 'postmark' {
-  if (env.EMAIL_PROVIDER?.trim().toLowerCase() !== 'postmark') return 'resend';
+/** Which provider sends: Resend unless EMAIL_PROVIDER=ses or =postmark (and their credentials exist). */
+export function getEmailProvider(env: Record<string, string | undefined> = process.env): 'resend' | 'postmark' | 'ses' {
+  const wanted = env.EMAIL_PROVIDER?.trim().toLowerCase();
+  if (wanted === 'ses') {
+    if (!getSesConfig(env)) {
+      logger.error('[email] EMAIL_PROVIDER=ses but SES_SMTP_USER / SES_SMTP_PASS are not set: using Resend.');
+      return 'resend';
+    }
+    return 'ses';
+  }
+  if (wanted !== 'postmark') return 'resend';
   if (!postmarkToken(env)) {
     logger.error('[email] EMAIL_PROVIDER=postmark but POSTMARK_SERVER_TOKEN is not set: using Resend.');
     return 'resend';
@@ -177,7 +186,19 @@ export async function sendEmail(input: OutgoingEmail): Promise<EmailSendResult> 
     logger.error('[email] Own mail transport failed, falling back to the primary provider', { name: own.error.name, statusCode: own.error.statusCode });
   }
 
-  if (getEmailProvider() === 'postmark') {
+  const provider = getEmailProvider();
+  if (provider === 'ses') {
+    const result = await sendViaSes({ from, to: input.to, subject, html, text, replyTo, headers, kind: input.kind, stream: input.stream });
+    // SES itself cannot send right now (outage, throttling, sandbox, rejected credentials): fall back to Resend
+    // instead of losing the mail. Recipient problems (a bad address) are final, not retried elsewhere.
+    if (result.ok || !isSesUnavailable(result.error) || !process.env.RESEND_API_KEY) {
+      if (!result.ok) logger.error('[email] SES did not send', { name: result.error.name, statusCode: result.error.statusCode });
+      return result;
+    }
+    logger.error('[email] SES unavailable, falling back to Resend', { name: result.error.name, statusCode: result.error.statusCode });
+  }
+
+  if (provider === 'postmark') {
     const message: PostmarkMessage = {
       from, to: input.to, subject, html, text, replyTo, headers,
       tag: input.kind,

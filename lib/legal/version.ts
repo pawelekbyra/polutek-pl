@@ -3,7 +3,7 @@
  * ISO `YYYY-MM-DD`. The date printed at the top of every document is derived from it, and it is what
  * `User.termsVersion` records when someone accepts the Terms. Change it whenever a document changes.
  */
-export const LEGAL_DOCUMENTS_VERSION = "2026-10-05";
+export const LEGAL_DOCUMENTS_VERSION = "2026-10-11";
 
 const PL_MONTHS = [
   "stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca",
