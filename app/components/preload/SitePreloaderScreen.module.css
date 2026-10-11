@@ -35,7 +35,7 @@
   inset: 0;
 }
 
-/* No pointer at all while the page loads and during the entry animation. */
+/* No pointer at all during the entry animation (and while the gate fades out). */
 .screen[data-cursor="none"],
 .screen[data-cursor="none"] * {
   cursor: none !important;

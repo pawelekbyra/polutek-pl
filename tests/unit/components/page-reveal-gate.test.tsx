@@ -2,6 +2,7 @@
 
 import React from "react";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Canvas art is irrelevant here and jsdom has neither matchMedia nor a 2d context.
@@ -18,6 +19,7 @@ vi.mock("@/app/components/preload/GateWarp", () => ({
 }));
 
 import { GATE_RABBIT } from "@/app/components/preload/gate-rabbit";
+import { SitePreloaderScreen } from "@/app/components/preload/SitePreloaderScreen";
 import {
   PAGE_REVEAL_MAX_WAIT_MS,
   PageRevealGate,
@@ -166,26 +168,72 @@ describe("PageRevealGate", () => {
     expect(preloaderState()).toBe("gate");
   });
 
-  it("hides the pointer while loading, shows the carrot only once ENTER is there, hides it again after the click", async () => {
+  it("shows the carrot while loading and at ENTER, and no pointer once the plain fade starts", async () => {
     const { rerender } = render(
       <PageRevealGate waitFor={["player"]}>
         <Piece name="player" ready={false} />
       </PageRevealGate>,
     );
     const cursor = () => screen.getByTestId("site-preloader").getAttribute("data-cursor");
-    expect(cursor()).toBe("none");
+    // Loading bar on screen (covering): the carrot is already there.
+    expect(preloaderState()).toBe("covering");
+    expect(cursor()).toBe("carrot");
 
     rerender(
       <PageRevealGate waitFor={["player"]}>
         <Piece name="player" ready />
       </PageRevealGate>,
     );
+    // ENTER on screen (gate): still the carrot.
+    expect(preloaderState()).toBe("gate");
     expect(cursor()).toBe("carrot");
 
+    // No canvas in jsdom: the plain fade-out, which is pointer-free too.
     fireEvent.click(enterButton());
+    expect(preloaderState()).toBe("leaving");
     expect(cursor()).toBe("none");
     await finishLeaving();
     expect(screen.queryByTestId("site-preloader")).toBeNull();
+  });
+
+  it("has no pointer at all from the click through the whole entry warp", async () => {
+    window.matchMedia = ((query: string) => ({ matches: false, media: query })) as unknown as typeof window.matchMedia;
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({} as never);
+    render(
+      <PageRevealGate>
+        <p>page</p>
+      </PageRevealGate>,
+    );
+    await act(async () => {});
+    const cursor = () => screen.getByTestId("site-preloader").getAttribute("data-cursor");
+    expect(preloaderState()).toBe("gate");
+    expect(cursor()).toBe("carrot");
+
+    const rabbit = document.querySelector("[data-gate-rabbit] img")!;
+    vi.spyOn(rabbit, "getBoundingClientRect").mockReturnValue({ left: 100, top: 300, width: 200, height: 200, right: 300, bottom: 500, x: 100, y: 300, toJSON() {} } as DOMRect);
+    fireEvent.click(enterButton());
+    expect(preloaderState()).toBe("warp");
+    expect(cursor()).toBe("none");
+    await act(async () => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(preloaderState()).toBe("warp");
+    expect(cursor()).toBe("none");
+
+    fireEvent.click(screen.getByTestId("warp-finish"));
+    expect(preloaderState()).toBe("gone");
+    getContext.mockRestore();
+    // @ts-expect-error back to jsdom's default (no matchMedia)
+    delete window.matchMedia;
+  });
+
+  it("server-renders the first paint (loading.tsx) with the carrot already set, same markup as the client gate", () => {
+    const html = renderToStaticMarkup(<SitePreloaderScreen failsafe />);
+    expect(html).toContain('data-state="covering"');
+    expect(html).toContain('data-cursor="carrot"');
+    const client = render(<SitePreloaderScreen failsafe />);
+    expect(screen.getByTestId("site-preloader").getAttribute("data-cursor")).toBe("carrot");
+    client.unmount();
   });
 
   it("skips the gate on later mounts in the same document and marks <html> for reloads", async () => {
