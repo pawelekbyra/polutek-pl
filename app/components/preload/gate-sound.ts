@@ -9,9 +9,14 @@
  *   pointerdown/keydown on the gate: creating it costs tens of milliseconds, which would otherwise
  *   be a stutter in the warp's first frames) and started INSIDE the click (a user gesture: iOS and
  *   Chrome let it run at once). Without a press (a programmatic click) it is created in the click.
- * - The picture never waits for the sound: it starts on the wall clock at the click and is steered
- *   gently (±15 % speed) onto the audio clock, so it is in sync within a second or two without a
- *   frozen or jumping frame. Any failure means a silent warp on the wall clock.
+ * - The click is not possible before the sound is decoded (PageRevealGate keeps the loading bar up,
+ *   for the sound far longer than for the page; a sound that cannot load means the plain fade, never
+ *   a half-silent animation). Still, the audio output may start late (the device waking up, a
+ *   suspended context, a busy machine): the picture's time is therefore DERIVED FROM THE SOUND
+ *   (gate-clock.ts). It holds on its first frame until the output is really running and the sound
+ *   audible, then follows the wall clock steered gently (+-15 % speed) onto the sound's position; a
+ *   sound that does not get going within a few seconds is silenced and the picture goes on silent,
+ *   so sound and picture never begin seconds apart.
  * - A tab hidden mid-warp pauses both: the audio context is suspended and the picture's clock stops
  *   counting, and both go on together when the tab is back. (iOS suspends a hidden page's audio by
  *   itself while the wall clock ran on: sound and picture came back apart; elsewhere the intro played
@@ -25,6 +30,8 @@
  * visitors as the old, shorter sound while the picture ran the new timeline: the sound stopped halfway).
  */
 export const GATE_SOUND_URL = "/sounds/gate-enter-12s.mp3";
+
+import { createWarpClock, type AudioSample } from "./gate-clock";
 
 type AudioContextCtor = typeof AudioContext;
 type OfflineCtor = typeof OfflineAudioContext;
@@ -92,13 +99,14 @@ export function isGateSoundReady(): boolean {
 }
 
 export type GateClock = {
-  /** Seconds since the warp started (not counting time the tab was hidden), steered onto the audio clock when there is sound. */
+  /** Seconds since the warp started (not counting time the tab was hidden), derived from the audio clock when there is sound. */
   now: () => number;
   /** Fades the sound out (skip, unmount) and releases the audio device. */
   stop: (fadeSeconds?: number) => void;
   /** The warp is over: no more listening for the tab being hidden. */
   dispose: () => void;
-  withSound: boolean;
+  /** A sound is steering the picture (false: none was started, or it was given up and silenced). */
+  readonly withSound: boolean;
 };
 
 /**
@@ -131,12 +139,10 @@ function pausableWallClock(onHidden?: (hidden: boolean) => void) {
   };
 }
 
-/** Largest correction of the picture's speed while it is steered onto the audio clock. */
-const MAX_SLEW = 0.15;
-
 /**
  * Starts the sound (call synchronously from the click handler) and returns the clock the animation
- * follows. Without a decoded sound (or Web Audio) the clock is the wall clock from the click.
+ * follows. Without a decoded sound (or Web Audio) the clock is the silent wall clock from the click
+ * and `withSound` is false (the caller then takes the plain fade instead of the warp).
  */
 export function startGateSound(): GateClock {
   let audio: AudioContext | null = null;
@@ -146,7 +152,13 @@ export function startGateSound(): GateClock {
     void (hidden ? audio.suspend() : audio.resume()).catch(() => undefined);
   });
   const wallSeconds = wall.seconds;
-  const silent: GateClock = { now: wallSeconds, stop: () => undefined, dispose: wall.dispose, withSound: false };
+  const silentClock = createWarpClock(false);
+  const silent: GateClock = {
+    now: () => silentClock.tick(wallSeconds(), null),
+    stop: () => undefined,
+    dispose: wall.dispose,
+    withSound: false,
+  };
   const { live } = ctors();
   if (!live || !buffer) return silent;
   // iOS: Web Audio follows the ring/silent switch unless the page asks for playback audio (Safari 17+);
@@ -168,47 +180,48 @@ export function startGateSound(): GateClock {
     const gain = ctx.createGain();
     source.buffer = buffer;
     source.connect(gain).connect(ctx.destination);
+    // A context that is still suspended reports 0 and starts counting only when its output runs: the
+    // sound is then scheduled at 0 and begins the moment the output wakes up, however late that is.
     const startAt = ctx.currentTime;
     source.start(startAt);
     const latency = () => (ctx as AudioContext & { outputLatency?: number }).outputLatency || ctx.baseLatency || 0;
 
-    let offset = 0;
-    let lastWall = 0;
-    let last = 0;
+    const core = createWarpClock(true);
     let stopped = false;
+    const stop = (fadeSeconds = 0.25) => {
+      if (stopped) return;
+      stopped = true;
+      audioStopped = true;
+      try {
+        const now = ctx.currentTime;
+        gain.gain.setValueAtTime(gain.gain.value, now);
+        gain.gain.linearRampToValueAtTime(0, now + fadeSeconds);
+        source.stop(now + fadeSeconds + 0.05);
+      } catch {
+        /* already stopped */
+      }
+      // Give the audio device back once the fade is over.
+      window.setTimeout(() => void ctx.close().catch(() => undefined), (fadeSeconds + 0.2) * 1000);
+    };
+    const sample = (): AudioSample | null => {
+      if (stopped) return null;
+      const time = ctx.currentTime;
+      // `running` also needs the output's clock to have advanced: a context can report "running" a
+      // moment before it renders anything.
+      return { running: ctx.state === "running" && time > startAt, heard: time - startAt - latency() };
+    };
     return {
-      withSound: true,
+      get withSound() {
+        return core.withSound;
+      },
       dispose: wall.dispose,
       now: () => {
-        const wall = wallSeconds();
-        const dt = Math.max(0, wall - lastWall);
-        lastWall = wall;
-        if (ctx.state === "running") {
-          // Where the sound is, as heard (minus the output latency); the picture's offset drifts
-          // towards it by at most MAX_SLEW seconds per second, so it never stops or jumps.
-          const heard = ctx.currentTime - startAt - latency();
-          const want = heard - wall;
-          const step = MAX_SLEW * dt;
-          offset += Math.max(-step, Math.min(step, want - offset));
-        }
-        last = Math.max(last, wall + offset);
-        return last;
+        const t = core.tick(wallSeconds(), sample());
+        // The sound did not get going: silence it for good, so it cannot begin late and apart.
+        if (core.gaveUp) stop(0.05);
+        return t;
       },
-      stop: (fadeSeconds = 0.25) => {
-        if (stopped) return;
-        stopped = true;
-        audioStopped = true;
-        try {
-          const now = ctx.currentTime;
-          gain.gain.setValueAtTime(gain.gain.value, now);
-          gain.gain.linearRampToValueAtTime(0, now + fadeSeconds);
-          source.stop(now + fadeSeconds + 0.05);
-        } catch {
-          /* already stopped */
-        }
-        // Give the audio device back once the fade is over.
-        window.setTimeout(() => void ctx.close().catch(() => undefined), (fadeSeconds + 0.2) * 1000);
-      },
+      stop,
     };
   } catch {
     audioStopped = true;

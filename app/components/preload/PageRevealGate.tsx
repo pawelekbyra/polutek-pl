@@ -13,7 +13,16 @@ import React, {
 import { useAuth } from "@/lib/auth/react";
 import { SitePreloaderScreen } from "./SitePreloaderScreen";
 import type { WarpStart } from "./GateWarp";
-import { preloadGateSound, primeGateSound, releaseGateSound, startGateSound } from "./gate-sound";
+import { isGateSoundReady, preloadGateSound, primeGateSound, releaseGateSound, startGateSound } from "./gate-sound";
+import {
+  GATE_SOUND_MAX_WAIT_MS,
+  PAGE_REVEAL_MAX_WAIT_MS,
+  entryKind,
+  isAssetSettled,
+  isGateOpen,
+  waitUntilLimitMs,
+  type AssetState,
+} from "./gate-readiness";
 import { pupilOnScreen, rabbitBox } from "./gate-warp-timeline";
 import { getRabbitVector, preloadRabbitVector, releaseRabbitVector } from "./rabbit-vector";
 import { captureButton, capturePrompt, cursorBlinkPhase, showsHoverLook, type CapturedPrompt } from "./gate-scene";
@@ -31,9 +40,10 @@ import {
  * A progress bar is on screen from the first paint (server HTML). Phases:
  * - covering: the page underneath is still settling (auth loaded, player ready, comments); only
  *   the bar, no prompt, no rabbit and nothing to click yet;
- * - gate: settled, or {@link PAGE_REVEAL_MAX_WAIT_MS} from navigation start passed; the rabbit
- *   appears in the screen centre with the prompt above and "ENTER" below, and a click on rabbit or
- *   caption enters;
+ * - gate: the page has settled (or {@link PAGE_REVEAL_MAX_WAIT_MS} from navigation start passed) AND
+ *   the entry warp's sound is decoded (or it failed, or {@link GATE_SOUND_MAX_WAIT_MS} passed: then the
+ *   entry is the plain fade, see gate-readiness.ts); the rabbit appears in the screen centre with the
+ *   prompt above and "ENTER" below, and a click on rabbit or caption enters;
  * - leaving: blur-fade exit; done: unmounted, no CPU left behind.
  * A CSS failsafe hides the screen after 30 s even if JS never runs. Once entered, the gate is
  * skipped for the rest of the tab session (sessionStorage + `data-gate-passed` on <html>, set
@@ -46,8 +56,7 @@ type PageRevealContextValue = {
 
 const PageRevealContext = createContext<PageRevealContextValue | null>(null);
 
-export const PAGE_REVEAL_MAX_WAIT_MS = 6000;
-export const PAGE_REVEAL_MIN_WAIT_AFTER_MOUNT_MS = 700;
+export { PAGE_REVEAL_MAX_WAIT_MS, PAGE_REVEAL_MIN_WAIT_AFTER_MOUNT_MS, GATE_SOUND_MAX_WAIT_MS } from "./gate-readiness";
 // Duration of the blur-fade exit animation.
 const LEAVE_ANIMATION_MS = 700;
 
@@ -111,13 +120,18 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
   // Always "covering" on the first render so the client matches the server HTML; a viewer who
   // already entered is switched to "done" before paint (and CSS hides the screen meanwhile).
   const [phase, setPhase] = useState<Phase>("covering");
-  const [timedOut, setTimedOut] = useState(false);
+  // The page's patience (PAGE_REVEAL_MAX_WAIT_MS) and the longer one for the entry sound.
+  const [pageLimitReached, setPageLimitReached] = useState(false);
+  const [soundLimitReached, setSoundLimitReached] = useState(false);
   const [readyKeys, setReadyKeys] = useState<ReadonlySet<string>>(() => new Set());
   const [warpStart, setWarpStart] = useState<WarpStart | null>(null);
   // The entry warp's sound and vector rabbit: loaded (and the sound decoded) while the gate is still
-  // loading, so the click starts the warp at once, in sync and without a stutter. Counted as one
-  // more awaited piece; the max wait still opens the gate if they are slow (then: a silent warp).
-  const [warpAssetsReady, setWarpAssetsReady] = useState(false);
+  // loading, so the click starts the warp at once, in sync and without a stutter. ENTER does not
+  // appear before they are settled (the sound for up to GATE_SOUND_MAX_WAIT_MS, much longer than the
+  // page); a sound that cannot be had means the plain fade, never a warp whose sound begins late.
+  const [soundState, setSoundState] = useState<AssetState>("pending");
+  const [vectorState, setVectorState] = useState<AssetState>("pending");
+  const assetsSettled = isAssetSettled(soundState) && isAssetSettled(vectorState);
 
   useLayoutEffect(() => {
     if (shouldSkipGate()) setPhase("done");
@@ -140,29 +154,40 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
     });
   }, []);
   const waitForKey = waitFor.join("|");
-  const allReady =
-    authLoaded &&
-    warpAssetsReady &&
-    waitForKey.split("|").every((key) => !key || readyKeys.has(key));
+  const pagePiecesReady = waitForKey.split("|").every((key) => !key || readyKeys.has(key));
+  const gateOpen = isGateOpen({
+    authLoaded,
+    pagePiecesReady,
+    pageLimitReached,
+    sound: soundState,
+    vector: vectorState,
+    soundLimitReached,
+  });
 
   const covering = phase === "covering";
 
   // Real progress for the bar: auth plus every awaited piece, as the share that has settled.
   const awaited = waitForKey.split("|").filter(Boolean);
-  const settled = (authLoaded ? 1 : 0) + (warpAssetsReady ? 1 : 0) + awaited.filter((key) => readyKeys.has(key)).length;
+  const settled = (authLoaded ? 1 : 0) + (assetsSettled ? 1 : 0) + awaited.filter((key) => readyKeys.has(key)).length;
   const progress = settled / (awaited.length + 2);
 
-  // Max wait: once expired the button enters even if something is still loading.
+  // The two limits (from navigation start): a page piece that never settles stops mattering after
+  // PAGE_REVEAL_MAX_WAIT_MS, the entry sound after the much longer GATE_SOUND_MAX_WAIT_MS.
   useEffect(() => {
     if (!covering) return;
-    const sinceNavigationStart =
-      typeof performance !== "undefined" ? performance.now() : 0;
-    const wait = Math.max(
-      PAGE_REVEAL_MIN_WAIT_AFTER_MOUNT_MS,
-      PAGE_REVEAL_MAX_WAIT_MS - sinceNavigationStart,
+    const sinceNavigationStart = typeof performance !== "undefined" ? performance.now() : 0;
+    const pageTimer = window.setTimeout(
+      () => setPageLimitReached(true),
+      waitUntilLimitMs(PAGE_REVEAL_MAX_WAIT_MS, sinceNavigationStart),
     );
-    const timer = window.setTimeout(() => setTimedOut(true), wait);
-    return () => window.clearTimeout(timer);
+    const soundTimer = window.setTimeout(
+      () => setSoundLimitReached(true),
+      waitUntilLimitMs(GATE_SOUND_MAX_WAIT_MS, sinceNavigationStart),
+    );
+    return () => {
+      window.clearTimeout(pageTimer);
+      window.clearTimeout(soundTimer);
+    };
   }, [covering]);
 
   // The click on the rabbit / "ENTER": the warp (zoom into the pupil, the black void, the flash)
@@ -203,16 +228,28 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
   const enter = useCallback(() => {
     const rabbit = document.querySelector<HTMLElement>("[data-gate-rabbit] img");
     const box = rabbit?.getBoundingClientRect();
-    if (!canWarp() || !box || box.width === 0) {
+    const plainFade = () => {
       window.dispatchEvent(new Event("polutek:gate-enter"));
       setPhase("leaving");
+    };
+    // The warp only with its sound: a sound that is not decoded (it failed, or the long limit passed)
+    // means the plain fade, never an animation that runs without it or with it seconds late.
+    if (!box || entryKind({ canWarp: canWarp() && box.width > 0, soundReady: isGateSoundReady() }) === "fade") {
+      plainFade();
+      return;
+    }
+    const clock = startGateSound();
+    if (!clock.withSound) {
+      // The audio output could not be started at all.
+      clock.dispose();
+      plainFade();
       return;
     }
     window.dispatchEvent(new Event("polutek:gate-unlock"));
     const data = getRabbitVector();
     setWarpStart({
       pupil: pupilOnScreen(box),
-      clock: startGateSound(),
+      clock,
       vector: data ? { data, box: rabbitBox(box), glow: showsHoverLook(rabbit!.parentElement ?? rabbit!) } : null,
       button: captureButton(document.querySelector<HTMLElement>("[data-gate-enter]")),
       prompt: withBlinkPhase(freshPrompt(promptSprite.current) ?? capturePromptNow()),
@@ -245,12 +282,16 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
   useEffect(() => {
     if (shouldSkipGate()) return;
     if (!canWarp()) {
-      setWarpAssetsReady(true);
+      setSoundState("not-needed");
+      setVectorState("not-needed");
       return;
     }
     let alive = true;
-    void Promise.all([preloadGateSound(), preloadRabbitVector()]).then(() => {
-      if (alive) setWarpAssetsReady(true);
+    void preloadGateSound().then((ok) => {
+      if (alive) setSoundState(ok ? "ready" : "failed");
+    });
+    void preloadRabbitVector().then((vector) => {
+      if (alive) setVectorState(vector ? "ready" : "failed");
     });
     return () => {
       alive = false;
@@ -277,10 +318,10 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
     markGatePassed();
   }, [phase]);
 
-  // covering → gate when the page is ready (or the max wait expired).
+  // covering → gate when the page and the entry's sound are ready (or their limits expired).
   useEffect(() => {
-    if (covering && (allReady || timedOut)) setPhase("gate");
-  }, [covering, allReady, timedOut]);
+    if (covering && gateOpen) setPhase("gate");
+  }, [covering, gateOpen]);
 
   // Block body scroll and touch-scroll while the gate is up.
   useEffect(() => {
