@@ -519,5 +519,6 @@
  "translate(-6.7%, 1%)": "translate(-6.7%, 1%)",
  "{0} channel": "Kanal {0}",
  "{0} video channel": "{0}-Videokanal",
- "{0}: video platform (test version)": "{0}: Videoplattform (Testversion)"
+ "{0}: video platform (test version)": "{0}: Videoplattform (Testversion)",
+ "Using Outlook, Hotmail or Live? Microsoft often sends mail from new sites straight to the Junk folder. Check there and click “Not junk”.": "Sie nutzen Outlook, Hotmail oder Live? Microsoft sortiert Nachrichten neuer Websites oft direkt in den Junk-Ordner. Schauen Sie dort nach und klicken Sie auf „Kein Junk“."
 }

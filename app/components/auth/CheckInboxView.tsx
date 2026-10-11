@@ -22,7 +22,13 @@ type Props = {
  * "Check your inbox" screen after sign-up or a password-reset request: says where the e-mail went,
  * what to do next and what to do when it does not arrive (spam folder, resend, wrong address).
  */
+/** Microsoft's consumer mail (Outlook, Hotmail, Live, MSN): it routinely junks mail from new domains. */
+export function isMicrosoftConsumerAddress(email: string): boolean {
+  return /@(?:hotmail|outlook|live|msn)\.(?:[a-z]{2,3}|(?:co|com)\.[a-z]{2})$/i.test(email.trim());
+}
+
 export default function CheckInboxView({ tx, kind, email, onResend, onChangeEmail, onBack, captcha, loading, disabled }: Props) {
+  const microsoft = isMicrosoftConsumerAddress(email);
   const steps =
     kind === "verify"
       ? [
@@ -71,6 +77,18 @@ export default function CheckInboxView({ tx, kind, email, onResend, onChangeEmai
       <p className="rounded-xl border border-[var(--chan-line)] bg-[var(--chan-surface)] px-3 py-2.5 text-left text-[12px] leading-snug text-[var(--chan-muted)]">
         {tx("Nie ma wiadomości? Zajrzyj do folderu Spam lub Wiadomości-śmieci i oznacz nas jako bezpiecznych. Nowe strony czasem tam trafiają.", "Nothing yet? Check your Spam or Junk folder and mark us as safe. Messages from new sites sometimes land there.")}
       </p>
+
+      {microsoft ? (
+        <p
+          data-testid="check-inbox-microsoft-hint"
+          className="rounded-xl border border-[var(--chan-blue)] bg-[var(--chan-blue-soft)] px-3 py-2.5 text-left text-[12px] font-semibold leading-snug text-[var(--chan-ink)]"
+        >
+          {tx(
+            "Masz konto Outlook, Hotmail lub Live? Microsoft często wrzuca maile z nowych stron prosto do folderu Wiadomości-śmieci. Zajrzyj tam i kliknij „To nie jest wiadomość-śmieć”.",
+            "Using Outlook, Hotmail or Live? Microsoft often sends mail from new sites straight to the Junk folder. Check there and click “Not junk”.",
+          )}
+        </p>
+      ) : null}
 
       {captcha}
 
