@@ -65,8 +65,6 @@ export function MatrixGatePrompt({
             data-gate-enter=""
             data-state="ready"
             onClick={onEnter}
-            // The <head> boot script marks a click made before hydration (data-queued).
-            suppressHydrationWarning
           >
             {labels.enter}
           </button>

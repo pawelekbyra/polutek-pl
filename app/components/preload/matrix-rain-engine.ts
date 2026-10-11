@@ -37,11 +37,9 @@ export interface RainConfig {
   chars: string;
   /** Global names shared by the boot script and the React side. */
   runtimeGlobal: string;
-  queueGlobal: string;
   sessionKey: string;
   passedAttribute: string;
   canvasSelector: string;
-  enterSelector: string;
 }
 
 export const RAIN_CONFIG: RainConfig = {
@@ -60,11 +58,9 @@ export const RAIN_CONFIG: RainConfig = {
   chars:
     "ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789",
   runtimeGlobal: "__ppRain",
-  queueGlobal: "__ppGateQueued",
   sessionKey: "polutek:revealed",
   passedAttribute: "data-gate-passed",
   canvasSelector: "canvas[data-matrix-rain]",
-  enterSelector: "[data-gate-enter]",
 };
 
 export interface RainState {
@@ -337,8 +333,9 @@ export function installRainRuntime(
  * - a viewer who already went through the gate in this tab session gets `data-gate-passed` on
  *   `<html>`, which hides every preloader by CSS from the first paint (no flash on reload);
  * - otherwise the rain runtime is installed and every rain canvas the HTML stream inserts
- *   (route `loading.tsx` first, then the page's own gate) is drawn the moment it is parsed;
- * - a click on the entry button before React is ready is remembered and honoured once it is.
+ *   (route `loading.tsx` first, then the page's own gate) is drawn the moment it is parsed.
+ * (There is nothing to click before React is ready: the entry button exists only once the page
+ * underneath has loaded, which is after hydration.)
  */
 export function bootGate(
   win: Window & Record<string, unknown>,
@@ -358,18 +355,6 @@ export function bootGate(
     root.setAttribute(cfg.passedAttribute, "");
     return;
   }
-
-  doc.addEventListener(
-    "click",
-    function (event) {
-      var target = event.target as Element | null;
-      var button = target && target.closest ? target.closest(cfg.enterSelector) : null;
-      if (!button) return;
-      win[cfg.queueGlobal] = true;
-      button.setAttribute("data-queued", "");
-    },
-    true,
-  );
 
   var runtime = install(win, cfg, fns);
   var Observer = (win as unknown as { MutationObserver?: typeof MutationObserver }).MutationObserver;
@@ -426,17 +411,4 @@ export function hasPassedGateThisSession(): boolean {
   } catch {
     return false;
   }
-}
-
-/** Takes (and clears) a click on the entry button that happened before React was ready. */
-export function consumeQueuedGateEnter(): boolean {
-  const w = window as unknown as Record<string, unknown>;
-  const queued = w[RAIN_CONFIG.queueGlobal] === true;
-  w[RAIN_CONFIG.queueGlobal] = false;
-  return queued;
-}
-
-/** Remembers a click on the entry button made before the gate component could handle it. */
-export function queueGateEnter(): void {
-  (window as unknown as Record<string, unknown>)[RAIN_CONFIG.queueGlobal] = true;
 }
