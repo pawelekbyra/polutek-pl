@@ -1,7 +1,7 @@
 /**
  * Timeline of the entry warp (click on the rabbit / "ENTER"): pure numbers, no DOM, so it is unit
  * tested and shared by the renderer. Times are seconds from the click, aligned to the sound
- * `public/sounds/gate-enter.mp3` (docs/operations/PLAYER-SOUND.md):
+ * `public/sounds/gate-enter-12s.mp3` (docs/operations/PLAYER-SOUND.md):
  *
  * - 0.00 – 2.00  the sound swells: the camera zooms into the rabbit's eye (accelerating), the
  *                prompt and the caption fall away, the eye ends up filling the frame;
@@ -22,7 +22,7 @@ export const WARP = {
   /** The sound's final hit (measured at 11.3 s); the flash is aligned to it. */
   flash: 11.3,
   flashEnd: 11.5,
-  /** Length of public/sounds/gate-enter.mp3. */
+  /** Length of public/sounds/gate-enter-12s.mp3. */
   end: 12.3,
 } as const;
 

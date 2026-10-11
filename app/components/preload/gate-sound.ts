@@ -1,11 +1,17 @@
 /**
- * The entry sound (public/sounds/gate-enter.mp3) through Web Audio, so the warp animation can run on
+ * The entry sound (public/sounds/gate-enter-12s.mp3) through Web Audio, so the warp animation can run on
  * the audio clock and stay in sync with it. Loaded while the viewer looks at the rabbit (after the
  * page is ready, so it never competes with the video for the first bytes), started inside the click
  * that enters (browsers allow sound only from a gesture). Any failure means a silent warp.
  */
 
-export const GATE_SOUND_URL = "/sounds/gate-enter.mp3";
+/**
+ * The file name carries the sound's length on purpose: the file is cached for hours (and a browser
+ * keeps a copy far longer), and the animation timeline is cut to this exact sound. A new version of
+ * the sound gets a NEW name, never the old one overwritten (an overwritten file was served to returning
+ * visitors as the old, shorter sound while the picture ran the new timeline: the sound stopped halfway).
+ */
+export const GATE_SOUND_URL = "/sounds/gate-enter-12s.mp3";
 
 type AudioContextCtor = typeof AudioContext;
 
@@ -28,7 +34,7 @@ export function preloadGateSound(): Promise<void> {
     try {
       // Created suspended (no gesture yet); resumed by the click.
       context = context ?? new Ctor();
-      const response = await fetch(GATE_SOUND_URL, { cache: "force-cache" });
+      const response = await fetch(GATE_SOUND_URL);
       if (!response.ok) return;
       const data = await response.arrayBuffer();
       buffer = await new Promise<AudioBuffer>((resolve, reject) => context!.decodeAudioData(data, resolve, reject));

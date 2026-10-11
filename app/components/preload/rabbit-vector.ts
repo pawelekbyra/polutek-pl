@@ -37,7 +37,7 @@ export function preloadRabbitVector(): Promise<RabbitVector | null> {
   loading = (async () => {
     if (typeof fetch !== "function" || typeof Path2D === "undefined") return null;
     try {
-      const response = await fetch(RABBIT_SVG_URL, { cache: "force-cache" });
+      const response = await fetch(RABBIT_SVG_URL);
       if (!response.ok) return null;
       const parsed = parseRabbitSvg(await response.text());
       if (!parsed) return null;
