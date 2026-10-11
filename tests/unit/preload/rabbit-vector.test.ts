@@ -31,3 +31,11 @@ describe("rabbit vector (public/rabbit-gate.svg)", () => {
     expect(parseRabbitSvg('<svg viewBox="0 0 10 10"></svg>')).toBeNull();
   });
 });
+
+describe("after the entry", () => {
+  it("lets go of the parsed rabbit", async () => {
+    const { releaseRabbitVector, getRabbitVector } = await import("@/app/components/preload/rabbit-vector");
+    releaseRabbitVector();
+    expect(getRabbitVector()).toBeNull();
+  });
+});

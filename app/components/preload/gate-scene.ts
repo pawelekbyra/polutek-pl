@@ -29,6 +29,20 @@ function matches(el: Element, selector: string): boolean {
   }
 }
 
+/**
+ * True when the element shows its mouse-hover look: hovered AND on a device whose CSS hover rules
+ * apply (a real mouse). A tap on a touch screen leaves the element ":hover" although its look does
+ * not change there (the hover rules sit behind `(hover: hover) and (pointer: fine)`).
+ */
+export function showsHoverLook(el: Element): boolean {
+  if (!matches(el, ":hover")) return false;
+  try {
+    return typeof window.matchMedia === "function" && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  } catch {
+    return false;
+  }
+}
+
 const px = (v: string) => Number.parseFloat(v) || 0;
 
 /** Reads the button as the viewer sees it now; null when it is not on screen. */
@@ -49,7 +63,7 @@ export function captureButton(button: HTMLElement | null): CapturedButton | null
   // key, or its inverted look while a mouse is over it. Taken from the gate's palette variables (the
   // end state, not a colour caught halfway through the 140 ms hover transition), with the computed
   // colours as fallback.
-  const hovered = matches(button, ":hover");
+  const hovered = showsHoverLook(button);
   const ink = cs.getPropertyValue(hovered ? "--mx-bg" : "--mx-ink").trim();
   const page = cs.getPropertyValue(hovered ? "--mx-ink" : "--mx-bg").trim();
   const outline = px(cs.outlineWidth);
