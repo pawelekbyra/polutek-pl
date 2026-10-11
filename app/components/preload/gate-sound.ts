@@ -76,6 +76,10 @@ export function primeGateSound(): void {
       primed = null;
     }
   }
+  // A mouse press already counts as a user gesture: the audio output wakes up now, so at the click
+  // the sound starts at once instead of after the output's start-up. (A touch press does not count;
+  // then this is a no-op and the click wakes it.)
+  void primed?.resume().catch(() => undefined);
 }
 
 /** True once the sound is decoded (the click can start it at once). */
