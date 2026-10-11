@@ -2,10 +2,10 @@
  * THE VOID: the black screen inside the pupil, between the end of the zoom (WARP.blackAt, 4.95 s)
  * and the final flash (WARP.flash, 11.3 s). Timed to the entry sound (gate-warp-timeline.ts):
  *
- * - 4.87 – 5.20 the pupil has covered the screen and the camera enters it on the sound's accent (4.95):
- *               the tunnel appears around the viewer, walls and all (one entry; nothing shows inside
- *               the pupil before), already growing at the zoom's own tempo (tunnelEmerge), and its
- *               growth eases off over about a second into the constant travel, with no jump in tempo;
+ * - 4.87 – 5.80 the pupil has covered the screen and the camera enters it on the sound's accent (4.95):
+ *               the tunnel builds itself out of the distance (tunnelFront; nothing shows inside the
+ *               pupil before): its first glyph rings fly from the far end at the screen at the zoom's
+ *               own tempo and the tube forms behind them, reaching the screen edges at about 5.8 s;
  * - from 4.25   the camera travels down the tube at one constant speed (the zoom's own tempo; it
  *               never slows with the title); the tube is round and passes the screen's corners, so
  *               every edge of the screen is covered, and it runs deep, almost to a point;
@@ -44,8 +44,8 @@ export const VOID_T = {
   /** The camera starts travelling down the tunnel (it is shown only from the entry, tunnelFull). */
   tunnelFrom: 4.25,
   /**
-   * The pupil fills the screen and the camera enters it (= WARP.blackAt): the tunnel appears around
-   * the viewer (fading in from 0.08 s before) and its growth eases off into the constant travel.
+   * The pupil fills the screen and the camera enters it (= WARP.blackAt): the tunnel is building
+   * itself out of the distance (from 0.08 s before, when the pupil has covered the screen).
    */
   tunnelFull: 4.95,
   open: 5.15,
@@ -70,7 +70,7 @@ const CELL = 0.13;
 const RING_STEP = 0.16;
 /**
  * Fog: rings come out of it far away, so the tube runs almost to a point. The tube has no mouth (its
- * rings are laid from RING_ORIGIN, far behind the camera): it appears by growing (tunnelEmerge).
+ * rings are laid from RING_ORIGIN, far behind the camera): it builds itself from the distance (tunnelFront).
  */
 const FOG_DEPTH = 18;
 const RING_ORIGIN = -100;
@@ -361,33 +361,27 @@ function drawDepthLight(ctx: CanvasRenderingContext2D, size: Size, centre: { x: 
   ctx.globalAlpha = 1;
 }
 
-/**
- * The tunnel's size: the whole tube is drawn scaled by this factor around the vanishing point.
- *
- * One tempo throughout, the zoom's own. Until the camera enters the pupil (WARP.blackAt) the tunnel is
- * part of the zoomed scene, a small picture in the middle of the pupil that grows exactly as fast as
- * the pupil does (its log-size follows the zoom's log-progress). At the entry its growth does not
- * stop: it carries on at the same rate and eases off exponentially (ENTRY_TAU), so the fall into the
- * pupil flows on into the tunnel and settles into the constant travel; it is then at about a third of
- * its size and reaches it about a second later. (Catching up with the pupil, i.e. growing faster than
- * the zoom, looked like a sudden acceleration.)
- */
 const LN_ZOOM = 6; // ln of the zoom's whole scale range (zoomLevels: about 6.1 on a phone, 6.5 on a desktop)
-const ENTRY_TAU = 0.35;
-const EMERGE_MIN = 0.015;
 /** The zoom's tempo when it enters the pupil, in e-folds per second. */
 export function zoomEndRate(): number {
   const dt = 0.001;
   return (LN_ZOOM * (zoomProgress(VOID_T.tunnelFull) - zoomProgress(VOID_T.tunnelFull - dt))) / dt;
 }
-export function tunnelEmerge(t: number): number {
-  const carry = zoomEndRate() * ENTRY_TAU;
-  const lnM =
-    t < VOID_T.tunnelFull
-      ? LN_ZOOM * (zoomProgress(t) - 1) - carry
-      : -carry * Math.exp(-(t - VOID_T.tunnelFull) / ENTRY_TAU);
-  const m = Math.exp(lnM);
-  return m < EMERGE_MIN ? 0 : m;
+
+/** When the tunnel starts building: the pupil has just covered the whole screen. */
+const BUILD_FROM = VOID_T.tunnelFull - 0.08;
+/**
+ * The tunnel builds itself out of the distance: only the rings beyond this depth exist. The front
+ * starts at the far end of the tube (in the fog) the moment the pupil covers the screen and flies
+ * towards the viewer, so the first glyphs come at the screen and the tube forms behind them. Its
+ * depth falls exponentially at the zoom's own end tempo (its ring grows on screen exactly as fast as
+ * the zoom did), so the fall into the pupil flows straight on into it; it reaches the screen edges
+ * about 0.9 s later. Infinity: nothing yet; 0: the whole tube is built.
+ */
+export function tunnelFront(t: number): number {
+  if (t < BUILD_FROM) return Number.POSITIVE_INFINITY;
+  const z = FOG_DEPTH * Math.exp(-zoomEndRate() * (t - BUILD_FROM));
+  return z <= 0.9 ? 0 : z;
 }
 
 /**
@@ -538,31 +532,31 @@ function drawTunnel(ctx: CanvasRenderingContext2D, size: Size, centre: { x: numb
   // Dimmer (never slower) while the title rests in front of it, so the address reads clearly.
   const dim = 1 - 0.35 * smooth(VOID_T.arrive - 0.6, VOID_T.arrive, t) * (1 - smooth(VOID_T.push, VOID_T.flash, t));
   // One entry only, on the sound's accent: nothing shows inside the pupil while it does not fill the
-  // screen yet (a first, small tunnel in there read as a second ring entry); the whole tunnel, walls
-  // and all, appears around the viewer as the pupil covers the screen and the camera enters it.
-  const fadeIn = smooth(VOID_T.tunnelFull - 0.08, VOID_T.tunnelFull + 0.25, t);
-  const emerge = tunnelEmerge(t);
-  if (emerge <= 0) return;
+  // screen yet; then the tunnel builds itself from the distance towards the viewer (tunnelFront).
+  const front = tunnelFront(t);
+  if (!Number.isFinite(front)) return;
   // Nearest ring drawn: the one just past the screen edge (depth 0.9 at full size, nearer while smaller).
-  const first = Math.ceil((travel + 0.9 * emerge - RING_ORIGIN) / RING_STEP);
+  const first = Math.ceil((travel + Math.max(0.9, front) - RING_ORIGIN) / RING_STEP);
   for (let k = last; k >= first; k--) {
     const z = RING_ORIGIN + k * RING_STEP - travel;
     // Far away the rings crowd into a few pixels: every other one fades out beyond depth 3, and so on
     // (they fade back in as they come near, long before they are told apart).
-    // Detail follows the size on screen: while the tunnel is still emerging (small), even its near
-    // rings are as small as far ones, so they are thinned out and drawn as ring sprites too.
-    const zs = z / emerge;
+    const zs = z;
     const ringLod = k % 2 === 1 ? 1 - smooth(2.6, 3.4, zs) : k % 4 === 2 ? 1 - smooth(4, 5, zs) : k % 8 === 4 ? 1 - smooth(5.5, 6.5, zs) : k % 16 === 8 ? 1 - smooth(8, 9.5, zs) : 1;
-    const ring = ringAlpha(z) * dim * ringLod * fadeIn;
+    // The rings just behind the front fade in; the leading ones are lit up a little, so the first
+    // glyphs read as coming at the screen and building the tube.
+    const behind = front > 0 ? (z - front) / (0.35 * front) : 99;
+    const building = front > 0 ? smooth(0, 1, behind) * (1 + 0.6 * Math.exp(-behind)) : 1;
+    const ring = Math.min(1, ringAlpha(z) * dim * ringLod * building);
     if (ring < 0.02) continue;
-    const s = (f / z) * emerge;
+    const s = f / z;
     // Each ring keeps one layout (no swapping of its whole pattern: a small ring doing that flickered).
     const variant = Math.floor(hash(k, 3) * RING_VARIANTS);
     // Far: the whole ring as one pre-rendered sprite; between SPRITE_FROM and SPRITE_FULL it crossfades
     // with the cells, which show the same glyphs in the same places.
     const far = smooth(SPRITE_FROM, SPRITE_FULL, zs);
     if (far > 0) {
-      const m = (SPRITE_AT / z) * emerge;
+      const m = SPRITE_AT / z;
       drawRingSprite(ctx, rings.sprites[variant], centre.x - (rings.w * m) / 2, centre.y - (rings.h * m) / 2, rings.w * m, rings.h * m, ring * far * (0.6 + 0.4 * Math.min(1, 1.6 / z)), deviceScale);
     }
     if (far >= 1) continue;
