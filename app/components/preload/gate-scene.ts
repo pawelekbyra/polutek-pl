@@ -31,19 +31,24 @@ export function captureButton(button: HTMLElement | null): CapturedButton | null
   if (textNode) {
     const range = document.createRange();
     range.selectNodeContents(textNode);
-    const t = range.getBoundingClientRect();
-    if (t.width > 0) textBox = { left: t.left, top: t.top, width: t.width, height: t.height };
+    const t = typeof range.getBoundingClientRect === "function" ? range.getBoundingClientRect() : null;
+    if (t && t.width > 0) textBox = { left: t.left, top: t.top, width: t.width, height: t.height };
   }
   const cs = getComputedStyle(button);
+  // The key's resting look (dark key, light letters), not whatever :hover/:active state the click left:
+  // with a mouse the pointer is on the button when it is clicked, and the zoom must not keep the
+  // inverted hover colours. Taken from the gate's palette variables, with the computed colours as fallback.
+  const ink = cs.getPropertyValue("--mx-ink").trim();
+  const page = cs.getPropertyValue("--mx-bg").trim();
   return {
     box: { left: r.left, top: r.top, width: r.width, height: r.height },
     textBox,
     text: (textNode?.textContent ?? button.textContent ?? "").trim(),
     font: `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`,
     letterSpacing: px(cs.letterSpacing),
-    background: cs.backgroundColor,
-    color: cs.color,
-    borderColor: cs.borderTopColor,
+    background: ink || cs.backgroundColor,
+    color: page || cs.color,
+    borderColor: ink || cs.borderTopColor,
     borderWidth: px(cs.borderTopWidth),
   };
 }
