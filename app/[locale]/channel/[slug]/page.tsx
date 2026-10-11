@@ -15,7 +15,7 @@ import { formatCount, getBaseUrl } from '@/lib/utils';
 import SubscribeButton from '@/app/components/SubscribeButton';
 import { prisma } from '@/lib/prisma';
 import { getLocaleAlternates, getLocalizedHref, isLocale, type Locale } from '@/lib/i18n/routing';
-import { APP_NAME } from '@/lib/constants';
+import { SITE_TITLE } from '@/lib/constants';
 import { getServerTx } from '@/lib/i18n/server-tx';
 import { countedNoun } from '@/lib/i18n/plurals';
 import { notFound } from 'next/navigation';
@@ -39,16 +39,16 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   const locale: Locale = params.locale;
   const tx = await getServerTx(locale);
   const mainSlug = getConfiguredSlugSafe();
-  if (mainSlug && params.slug !== mainSlug) return { title: APP_NAME };
+  if (mainSlug && params.slug !== mainSlug) return { title: SITE_TITLE };
 
   const creator = await ContentService.getCreatorBySlug(params.slug).catch(() => null);
-  if (!creator) return { title: APP_NAME };
+  if (!creator) return { title: SITE_TITLE };
 
   const baseUrl = getBaseUrl();
 
   return {
     // Browser tab always reads www.pawelperfect.com; creator name stays in OG/twitter below.
-    title: APP_NAME,
+    title: SITE_TITLE,
     alternates: getLocaleAlternates(locale, "channel", { params: { slug: params.slug }, baseUrl }),
     description: creator.bio ?? (tx("Kanał {0} — materiały wideo", "{0} video channel", creator.name)),
     openGraph: {

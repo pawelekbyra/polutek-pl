@@ -12,7 +12,7 @@ Domyślnie (zmienna pusta lub brak) **beta jest WŁĄCZONA**.
 | noindex | `robots: { index: false, follow: false }` w metadanych (`app/layout.tsx`) oraz nagłówek `X-Robots-Tag: noindex, nofollow` dla stron HTML (`next.config.mjs`; bez plików z kropką, `/api`, `/_next`). |
 | robots.txt | bez zmian: crawling dozwolony (inaczej robot nie zobaczy noindex), reguły Disallow bez zmian, ale **bez linii `Sitemap:`**. |
 | sitemap.xml | w becie **pusta** (nie wystawiamy adresów, o których prosimy „nie indeksuj”). |
-| Tytuł i opis strony głównej | neutralne, lokalizowane (`lib/site-stage-metadata.ts`): „{APP_NAME}: platforma wideo (wersja testowa)”. Tytuł filmu nie jest już opisem strony; Open Graph i Twitter mają ten sam tytuł i opis. |
+| Tytuł i opis strony głównej | neutralne (`lib/site-stage-metadata.ts`): tytuł to sam adres drukowanymi literami, „WWW.PAWELPERFECT.COM” (`SITE_TITLE` w `lib/constants.ts`, decyzja 2026-10-11), opis lokalizowany. Tytuł filmu nie jest już opisem strony; Open Graph i Twitter mają ten sam tytuł i opis. |
 
 Strony prawne, przekierowania panelu admina (`middleware.ts`) i reszta tras są bez zmian.
 

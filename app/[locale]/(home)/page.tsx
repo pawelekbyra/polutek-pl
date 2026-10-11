@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { getHomeContentCached } from '@/lib/modules/channel/application/home-content.loader';
-import { APP_NAME } from '@/lib/constants';
+import { APP_NAME, SITE_TITLE } from '@/lib/constants';
 import { getExplicitLocaleHref, getLocaleAlternates, isLocale, type Locale } from '@/lib/i18n/routing';
 import { getBaseUrl } from '@/lib/utils';
 import { getBetaSiteText } from '@/lib/site-stage-metadata';
@@ -37,11 +37,11 @@ function durationToIso8601(duration?: string | null): string | undefined {
 
 export async function generateMetadata(props: { params: Promise<{ locale: string }>; searchParams: Promise<{ v?: string }> }): Promise<Metadata> {
   const [{ locale: rawLocale }, searchParams] = await Promise.all([props.params, props.searchParams]);
-  if (!isLocale(rawLocale)) return { title: APP_NAME };
+  if (!isLocale(rawLocale)) return { title: SITE_TITLE };
   const locale: Locale = rawLocale;
 
   const content = await getHomeContentCached();
-  if (content.status !== 'ready') return { title: (await getBetaSiteText(locale))?.title ?? APP_NAME };
+  if (content.status !== 'ready') return { title: (await getBetaSiteText(locale))?.title ?? SITE_TITLE };
 
   const { creator, mainVideo, allVideos } = content;
 
@@ -57,21 +57,21 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   return {
     // Browser tab always reads www.pawelperfect.com regardless of the selected video; the
     // per-video title is kept only for social/OG previews below.
-    title: betaText?.title ?? APP_NAME,
+    title: betaText?.title ?? SITE_TITLE,
     description: betaText?.description ?? selectedVideo?.title ?? creator?.bio ?? `${APP_NAME} — kanał wideo`,
     alternates,
     openGraph: {
-      title: betaText?.title ?? selectedVideo?.title ?? APP_NAME,
+      title: betaText?.title ?? selectedVideo?.title ?? SITE_TITLE,
       description: betaText?.description ?? selectedVideo?.title ?? creator?.bio ?? undefined,
       url: alternates.canonical,
-      siteName: APP_NAME,
+      siteName: SITE_TITLE,
       locale: locale === 'pl' ? 'pl_PL' : 'en_US',
       images: selectedVideo?.thumbnailUrl ? [{ url: selectedVideo.thumbnailUrl }] : [],
       type: 'video.other',
     },
     twitter: {
       card: selectedVideo?.thumbnailUrl ? 'summary_large_image' : 'summary',
-      title: betaText?.title ?? selectedVideo?.title ?? APP_NAME,
+      title: betaText?.title ?? selectedVideo?.title ?? SITE_TITLE,
       ...(betaText ? { description: betaText.description } : {}),
       images: selectedVideo?.thumbnailUrl ? [selectedVideo.thumbnailUrl] : [],
     },
