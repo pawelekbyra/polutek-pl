@@ -61,7 +61,7 @@ describe("X-Robots-Tag header (next.config.mjs)", () => {
     // Next matches `source` as path-to-regexp; the negative lookahead is a plain regex group.
     const re = new RegExp(`^${rule!.source}$`);
     for (const path of ["/", "/pl", "/en/regulamin", "/watch/abc", "/admin/x"]) expect(re.test(path)).toBe(true);
-    for (const path of ["/robots.txt", "/sitemap.xml", "/manifest.json", "/api/health", "/_next/static/a.js", "/rabbit-32.png"]) expect(re.test(path)).toBe(false);
+    for (const path of ["/robots.txt", "/sitemap.xml", "/manifest.json", "/api/health", "/_next/static/a.js", "/icon-p-32.png"]) expect(re.test(path)).toBe(false);
   });
 
   it("is absent after launch (NEXT_PUBLIC_SITE_BETA=false), the other headers stay", async () => {
