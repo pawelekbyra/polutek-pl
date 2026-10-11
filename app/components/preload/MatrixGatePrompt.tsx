@@ -36,9 +36,9 @@ export function MatrixGatePrompt({
   return (
     <div className={styles.overlay}>
       <div className={styles.stage}>
-        <p className={styles.text}>
+        <p className={styles.text} data-gate-prompt="">
           {PROMPT}
-          <span className={styles.cursor} aria-hidden="true" />
+          <span className={styles.cursor} aria-hidden="true" data-gate-cursor="" />
         </p>
         {/* The rabbit is part of the first paint; it is clickable only once the page is ready. */}
         <div

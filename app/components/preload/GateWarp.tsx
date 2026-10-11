@@ -5,7 +5,7 @@ import type { GateClock } from "./gate-sound";
 import { WARP, blackoutAt, cameraAt, flashAt, zoomLevels, type Point } from "./gate-warp-timeline";
 import { drawRabbit, type RabbitVector } from "./rabbit-vector";
 import { drawVoid } from "./gate-void";
-import { drawButton, type CapturedButton } from "./gate-scene";
+import { drawButton, drawPrompt, type CapturedButton, type CapturedPrompt } from "./gate-scene";
 import { ensureRainRuntime } from "./matrix-rain-engine";
 
 /**
@@ -29,6 +29,8 @@ export type WarpStart = {
   vector?: { data: RabbitVector; box: { left: number; top: number; edge: number } } | null;
   /** The ENTER button, drawn on the canvas under the same camera (it stays and zooms with the rabbit). */
   button?: CapturedButton | null;
+  /** "Follow the white rabbit", likewise part of the zooming scene. */
+  prompt?: CapturedPrompt | null;
 };
 
 const LIGHT = "#f7f9fc";
@@ -66,7 +68,7 @@ export function GateWarp({
       callbacks.current.onDone();
       return;
     }
-    const { pupil, clock, vector, button } = start;
+    const { pupil, clock, vector, button, prompt } = start;
     const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
     let w = 0;
     let h = 0;
@@ -98,6 +100,7 @@ export function GateWarp({
     const rabbitImg = vector ? camera?.querySelector<HTMLElement>("[data-gate-rabbit] img") ?? null : null;
     // Same for the ENTER button: from the first frame on it is the canvas copy that zooms.
     const buttonEl = button ? camera?.querySelector<HTMLElement>("[data-gate-enter]") ?? null : null;
+    const promptEl = prompt ? camera?.querySelector<HTMLElement>("[data-gate-prompt]") ?? null : null;
 
     let skipBy = 0;
     const skip = (event: Event) => {
@@ -124,7 +127,6 @@ export function GateWarp({
       const cam = cameraAt(t, pupil, center, zoom);
       if (camera) {
         camera.style.transform = `translate(${cam.tx}px, ${cam.ty}px) scale(${cam.scale})`;
-        camera.style.setProperty("--warp-text", String(cam.textOpacity));
         // Once the screen is black the huge layer is not needed any more.
         camera.style.visibility = t >= WARP.blackAt ? "hidden" : "";
       }
@@ -138,6 +140,10 @@ export function GateWarp({
       if (vector && t < WARP.blackAt) {
         drawRabbit(ctx, vector.data, vector.box, cam, dpr);
         if (rabbitImg) rabbitImg.style.visibility = "hidden";
+      }
+      if (prompt && t < WARP.blackAt) {
+        drawPrompt(ctx, prompt, cam, dpr, t);
+        if (promptEl) promptEl.style.visibility = "hidden";
       }
       if (button && t < WARP.blackAt) {
         drawButton(ctx, button, cam, dpr);
@@ -183,6 +189,7 @@ export function GateWarp({
       cancelAnimationFrame(raf);
       if (rabbitImg) rabbitImg.style.visibility = "";
       if (buttonEl) buttonEl.style.visibility = "";
+      if (promptEl) promptEl.style.visibility = "";
       window.removeEventListener("resize", size);
       window.removeEventListener("pointerdown", skip);
       window.removeEventListener("keydown", skip);

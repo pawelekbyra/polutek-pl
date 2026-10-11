@@ -87,3 +87,86 @@ export function drawButton(
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
+
+/** The "Follow the white rabbit" prompt as part of the warp's scene: rendered once (with its light
+ * halo) into a high-resolution sprite and drawn under the camera; its block cursor is drawn apart, so
+ * it keeps blinking. It leaves the screen at about 4x zoom, so a sprite at 4x the device resolution
+ * stays sharp all the way. */
+export type CapturedPrompt = {
+  box: { left: number; top: number; width: number; height: number };
+  sprite: HTMLCanvasElement;
+  /** Sprite pixels per CSS px. */
+  res: number;
+  cursor: { left: number; top: number; width: number; height: number; color: string } | null;
+};
+
+export function capturePrompt(p: HTMLElement | null, dpr: number): CapturedPrompt | null {
+  if (!p) return null;
+  const r = p.getBoundingClientRect();
+  if (r.width === 0 || r.height === 0) return null;
+  const textNode = [...p.childNodes].find((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim());
+  if (!textNode) return null;
+  const range = document.createRange();
+  range.selectNodeContents(textNode);
+  const tr = typeof range.getBoundingClientRect === "function" ? range.getBoundingClientRect() : r;
+  const cs = getComputedStyle(p);
+  const res = Math.min(12, Math.max(2, dpr * 4));
+  const pad = 16; // room for the halo
+  const sprite = document.createElement("canvas");
+  sprite.width = Math.ceil((r.width + pad * 2) * res);
+  sprite.height = Math.ceil((r.height + pad * 2) * res);
+  const g = sprite.getContext("2d");
+  if (!g) return null;
+  g.scale(res, res);
+  g.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  g.textBaseline = "middle";
+  g.textAlign = "left";
+  const spacing = Number.parseFloat(cs.letterSpacing) || 0;
+  const text = (textNode.textContent ?? "").trim();
+  const halo = cs.getPropertyValue("--mx-bg").trim() || "#f7f9fc";
+  const y = tr.top - r.top + pad + tr.height / 2;
+  const draw = () => {
+    let x = tr.left - r.left + pad;
+    for (const ch of text) {
+      g.fillText(ch, x, y);
+      x += g.measureText(ch).width + spacing;
+    }
+  };
+  // The page-coloured halo of the CSS text-shadow (4, 8 and 12 px), then the letters on top.
+  g.fillStyle = halo;
+  g.shadowColor = halo;
+  for (const blur of [12, 8, 4]) {
+    g.shadowBlur = blur * res;
+    draw();
+  }
+  g.shadowBlur = 0;
+  g.fillStyle = cs.color;
+  draw();
+  const cursorEl = p.querySelector<HTMLElement>("[data-gate-cursor]");
+  const cr = cursorEl?.getBoundingClientRect();
+  return {
+    box: { left: r.left - pad, top: r.top - pad, width: r.width + pad * 2, height: r.height + pad * 2 },
+    sprite,
+    res,
+    cursor: cr && cr.width > 0 ? { left: cr.left, top: cr.top, width: cr.width, height: cr.height, color: cs.color } : null,
+  };
+}
+
+export function drawPrompt(
+  ctx: CanvasRenderingContext2D,
+  prompt: CapturedPrompt,
+  camera: { tx: number; ty: number; scale: number },
+  dpr: number,
+  t: number,
+): void {
+  const s = camera.scale;
+  ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * camera.tx, dpr * camera.ty);
+  ctx.globalAlpha = 1;
+  ctx.drawImage(prompt.sprite, prompt.box.left, prompt.box.top, prompt.box.width, prompt.box.height);
+  // The terminal cursor keeps blinking (same rhythm as the CSS: 1.06 s, on for the first half).
+  if (prompt.cursor && t % 1.06 < 0.53) {
+    ctx.fillStyle = prompt.cursor.color;
+    ctx.fillRect(prompt.cursor.left, prompt.cursor.top, prompt.cursor.width, prompt.cursor.height);
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}

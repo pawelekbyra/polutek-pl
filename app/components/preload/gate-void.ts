@@ -2,9 +2,10 @@
  * THE VOID: the black screen inside the pupil, between the end of the zoom (WARP.blackAt, 4.95 s)
  * and the final flash (WARP.flash, 11.3 s). Timed to the entry sound (gate-warp-timeline.ts):
  *
- * - 5.15        a point of light opens in the depth of the pupil and the camera starts travelling
- *               down a tunnel whose walls are rain glyphs (they grow and slide outwards as they come
- *               near, in perspective; the camera races, crawls and bolts with the action);
+ * - 4.95        on the sound's accent, the moment the camera enters the pupil, a light opens in its
+ *               depth and the camera shoots into a tunnel whose walls are rain glyphs (they grow and
+ *               slide outwards as they come near, in perspective); then it races, crawls and bolts
+ *               with the action;
  * - 5.15 – 8.40 "WWW.PAWELPERFECT.COM" (one line) flies out of that depth and brakes to a stop in
  *               front of the viewer (perspective: its distance falls fast, then eases out); all the
  *               way its letters are cycling Japanese rain glyphs (the rain's own glyphs and font);
@@ -36,6 +37,8 @@ export const AIM_CANDIDATES = [VOID_TITLE.length / 2 - 1, VOID_TITLE.length / 2]
 
 /** Key moments (seconds since the click). */
 export const VOID_T = {
+  /** The camera enters the pupil on the sound's bright accent (= WARP.blackAt): the tunnel is there at once. */
+  tunnel: 4.95,
   open: 5.15,
   /** The letters stay cycling rain glyphs for the whole flight and decode once the title is in place. */
   decodeFrom: 8.4,
@@ -295,7 +298,7 @@ function aimPoint(widths: number[], tracking: number, total: number, restPx: num
 type Size = { width: number; height: number };
 
 function drawDepthLight(ctx: CanvasRenderingContext2D, size: Size, t: number) {
-  const open = smooth(VOID_T.open, VOID_T.open + 0.8, t) * (1 - 0.6 * smooth(VOID_T.arrive - 0.6, VOID_T.arrive + 0.4, t));
+  const open = smooth(VOID_T.tunnel, VOID_T.tunnel + 0.3, t) * (1 - 0.6 * smooth(VOID_T.arrive - 0.6, VOID_T.arrive + 0.4, t));
   const rush = smooth(VOID_T.push, VOID_T.flash, t);
   const strength = 0.16 * open + 0.22 * rush;
   const sprite = getLightSprite();
@@ -312,23 +315,25 @@ function drawDepthLight(ctx: CanvasRenderingContext2D, size: Size, t: number) {
  */
 function tunnelSpeed(t: number): number {
   const flight = 1 - smooth(VOID_T.open + 1.2, VOID_T.arrive, t);
-  return 0.5 + 2.4 * flight * smooth(VOID_T.open, VOID_T.open + 0.6, t) + 6 * smooth(VOID_T.push, VOID_T.flash, t) + 22 * smooth(VOID_T.flash, VOID_T.flash + 0.2, t);
+  // On the accent the camera shoots into the tunnel (a burst that eases off over about half a second).
+  const burst = 7 * Math.exp(-Math.max(0, t - VOID_T.tunnel) / 0.45);
+  return 0.5 + burst + 2.4 * flight + 6 * smooth(VOID_T.push, VOID_T.flash, t) + 22 * smooth(VOID_T.flash, VOID_T.flash + 0.2, t);
 }
 
 /** Distance travelled since the void opened: the integral of tunnelSpeed, tabulated once (10 ms steps). */
 const TRAVEL_STEP = 0.01;
 let travelTable: Float64Array | null = null;
 export function tunnelTravel(t: number): number {
-  if (t <= VOID_T.open) return 0;
+  if (t <= VOID_T.tunnel) return 0;
   if (!travelTable) {
-    const n = Math.ceil((VOID_T.flash + 1 - VOID_T.open) / TRAVEL_STEP) + 1;
+    const n = Math.ceil((VOID_T.flash + 1 - VOID_T.tunnel) / TRAVEL_STEP) + 1;
     travelTable = new Float64Array(n);
     for (let i = 1; i < n; i++) {
-      const tt = VOID_T.open + (i - 0.5) * TRAVEL_STEP;
+      const tt = VOID_T.tunnel + (i - 0.5) * TRAVEL_STEP;
       travelTable[i] = travelTable[i - 1] + tunnelSpeed(tt) * TRAVEL_STEP;
     }
   }
-  const x = (t - VOID_T.open) / TRAVEL_STEP;
+  const x = (t - VOID_T.tunnel) / TRAVEL_STEP;
   const i = Math.min(travelTable.length - 2, Math.floor(x));
   const f = Math.min(1, x - i);
   return travelTable[i] + (travelTable[i + 1] - travelTable[i]) * f;
@@ -346,7 +351,8 @@ function drawTunnel(ctx: CanvasRenderingContext2D, base: DOMMatrix, size: Size, 
   const cx = size.width / 2;
   const cy = size.height / 2;
   const focal = Math.min(size.width, size.height) * 0.42;
-  const fadeIn = smooth(VOID_T.open, VOID_T.open + 1.2, t);
+  // Full strength almost at once: it appears on the accent, not after it.
+  const fadeIn = smooth(VOID_T.tunnel, VOID_T.tunnel + 0.12, t);
   const travel = tunnelTravel(t);
   for (let i = 0; i < TUNNEL_GLYPHS; i++) {
     const angle = hash(i, 11) * Math.PI * 2;
