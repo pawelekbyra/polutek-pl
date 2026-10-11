@@ -23,7 +23,7 @@ const configuredImageHosts = Array.from(new Set([
 ]));
 
 // Beta (test version) stage: same rule as lib/site-stage.ts (default ON; NEXT_PUBLIC_SITE_BETA=false at
-// build time switches it off). Pages carry `X-Robots-Tag: noindex, nofollow` while it is on.
+// build time switches it off). Every response carries `X-Robots-Tag: noindex, nofollow` while it is on.
 const siteIsBeta = !['false', '0', 'no', 'off'].includes((process.env.NEXT_PUBLIC_SITE_BETA ?? '').trim().toLowerCase());
 
 const nextConfig = {
@@ -81,9 +81,11 @@ const nextConfig = {
       },
       ...(siteIsBeta
         ? [{
-            // HTML pages only (no file extension, not /api, not /_next), so robots.txt, sitemap.xml and
-            // static assets stay untouched. The crawler must still be allowed to fetch the page to see this.
-            source: '/((?!api/|_next/|.*\\..*).*)',
+            // EVERY response (pages, API, /_next, images, SVGs, audio, manifest), so nothing of the site is
+            // indexable, not even a file found by its direct URL (image search). Only robots.txt and
+            // sitemap.xml are left out: they are the crawlers' entry points. A crawler must still be
+            // allowed to fetch a page to see this, so robots.txt keeps crawling allowed.
+            source: '/((?!robots\\.txt|sitemap\\.xml).*)',
             headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
           }]
         : []),

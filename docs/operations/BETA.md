@@ -9,7 +9,7 @@ Domyślnie (zmienna pusta lub brak) **beta jest WŁĄCZONA**.
 | Element | Zachowanie |
 |---|---|
 | Pasek | **Usunięty 2026-10-07** na prośbę właściciela (komponent `BetaNotice` i wpisy w katalogach skasowane). Beta nie pokazuje już żadnego paska; zostają noindex, pusta mapa strony i neutralny opis. |
-| noindex | `robots: { index: false, follow: false }` w metadanych (`app/layout.tsx`) oraz nagłówek `X-Robots-Tag: noindex, nofollow` dla stron HTML (`next.config.mjs`; bez plików z kropką, `/api`, `/_next`). |
+| noindex | `robots: { index: false, follow: false }` w metadanych (`app/layout.tsx`) oraz nagłówek `X-Robots-Tag: noindex, nofollow` na **każdej** odpowiedzi (strony, `/api`, `/_next`, obrazy, SVG, dźwięk, manifest; `next.config.mjs`), z wyjątkiem `robots.txt` i `sitemap.xml`. Decyzja właściciela 2026-10-11: nic ze strony nie ma się indeksować. |
 | robots.txt | bez zmian: crawling dozwolony (inaczej robot nie zobaczy noindex), reguły Disallow bez zmian, ale **bez linii `Sitemap:`**. |
 | sitemap.xml | w becie **pusta** (nie wystawiamy adresów, o których prosimy „nie indeksuj”). |
 | Tytuł i opis strony głównej | neutralne (`lib/site-stage-metadata.ts`): tytuł to sam adres drukowanymi literami, „WWW.PAWELPERFECT.COM” (`SITE_TITLE` w `lib/constants.ts`, decyzja 2026-10-11), opis lokalizowany. Tytuł filmu nie jest już opisem strony; Open Graph i Twitter mają ten sam tytuł i opis. |
