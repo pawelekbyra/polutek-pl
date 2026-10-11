@@ -42,10 +42,10 @@ describe("the void: WWW.PAWELPERFECT.COM out of the pupil", () => {
     expect(titleScale(WARP.flashEnd)).toBeGreaterThan(titleScale(VOID_T.flash) * 15);
   });
 
-  it("decodes every letter in order, all of them before it comes to rest", () => {
+  it("keeps cycling rain glyphs for the whole flight and decodes the letters in order only once it is in place", () => {
     for (let i = 1; i < VOID_TITLE.length; i++) expect(revealAt(i)).toBeGreaterThan(revealAt(i - 1));
-    expect(revealAt(0)).toBeGreaterThan(VOID_T.open);
-    expect(revealAt(VOID_TITLE.length - 1)).toBeLessThan(VOID_T.arrive);
+    expect(revealAt(0)).toBeGreaterThanOrEqual(VOID_T.arrive - 0.05);
+    expect(revealAt(VOID_TITLE.length - 1)).toBeLessThan(VOID_T.push);
   });
 });
 
