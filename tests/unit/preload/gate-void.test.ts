@@ -73,31 +73,40 @@ describe("the tunnel of rain glyphs", () => {
     expect(rate(11.35, 11.5)).toBeGreaterThan(TUNNEL_SPEED * 2);
   });
 
-  it("spins up from a point in the pupil and is at full size exactly when the pupil fills the screen", async () => {
-    const { tunnelEmerge } = await import("@/app/components/preload/gate-void");
+  it("grows at the zoom's own tempo, with no jump when the camera enters the pupil", async () => {
+    const { tunnelEmerge, zoomEndRate } = await import("@/app/components/preload/gate-void");
     const { cameraAt, zoomLevels } = await import("@/app/components/preload/gate-warp-timeline");
     expect(VOID_T.tunnelFull).toBe(WARP.blackAt);
-    expect(tunnelEmerge(WARP.blackAt)).toBe(1);
-    expect(tunnelEmerge(WARP.blackAt - 0.001)).toBeGreaterThan(0.95);
-    // Before tunnelFrom nothing; then it is a point (a couple of percent of its size).
-    expect(tunnelEmerge(VOID_T.tunnelFrom - 0.05)).toBe(0);
-    expect(tunnelEmerge(VOID_T.tunnelFrom + 0.02)).toBeGreaterThan(0);
-    expect(tunnelEmerge(VOID_T.tunnelFrom + 0.02)).toBeLessThan(0.04);
-    let last = 0;
-    for (let t = VOID_T.tunnelFrom; t <= WARP.blackAt; t += 0.01) {
-      expect(tunnelEmerge(t)).toBeGreaterThanOrEqual(last);
-      last = tunnelEmerge(t);
-    }
-    // It grows faster than the pupil (it catches up with it) and stays inside the pupil's black core.
+    const rate = (t: number) => Math.log(tunnelEmerge(t + 0.005) / tunnelEmerge(t - 0.005)) / 0.01;
+    // Inside the pupil it grows exactly as fast as the zoom...
     const viewport = { width: 390, height: 844 };
     const pupil = { x: 195, y: 422, r: 1.4 };
     const zoom = zoomLevels(pupil.r, viewport);
-    const fullRadius = Math.hypot(195, 422) / 0.9; // the tube's nearest drawn ring at full size
+    const zoomRate = (t: number) =>
+      Math.log(cameraAt(t + 0.005, pupil, pupil, zoom).scale / cameraAt(t - 0.005, pupil, pupil, zoom).scale) / 0.01;
+    for (const t of [4.5, 4.7, 4.9]) expect(rate(t) / zoomRate(t)).toBeCloseTo(1, 1);
+    // ...its rate is continuous through the entry (no sudden acceleration or stop)...
+    expect(rate(WARP.blackAt + 0.006) / rate(WARP.blackAt - 0.006)).toBeGreaterThan(0.9);
+    expect(rate(WARP.blackAt + 0.006) / rate(WARP.blackAt - 0.006)).toBeLessThan(1.1);
+    expect(zoomEndRate()).toBeGreaterThan(2.5);
+    expect(zoomEndRate()).toBeLessThan(4);
+    // ...and then eases off into its full size within about a second.
+    expect(rate(5.5)).toBeLessThan(rate(5.0));
+    expect(tunnelEmerge(6.2)).toBeGreaterThan(0.95);
+    expect(tunnelEmerge(9)).toBeCloseTo(1, 4);
+    let last = 0;
+    for (let t = VOID_T.tunnelFrom; t <= 7; t += 0.01) {
+      expect(tunnelEmerge(t)).toBeGreaterThanOrEqual(last);
+      last = tunnelEmerge(t);
+    }
+    // Inside the pupil it is a small disc well within the pupil's black core.
+    const fullRadius = Math.hypot(195, 422) / 0.9;
     for (let t = VOID_T.tunnelFrom; t < WARP.blackAt; t += 0.02) {
       const core = cameraAt(t, pupil, pupil, zoom).scale * pupil.r;
-      expect(tunnelEmerge(t) * fullRadius).toBeLessThanOrEqual(core);
+      expect(tunnelEmerge(t) * fullRadius).toBeLessThanOrEqual(core * 0.5);
     }
   });
+
 
 
 
