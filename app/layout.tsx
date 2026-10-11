@@ -7,7 +7,7 @@ import { Suspense } from 'react';
 import { geistMono, geistSans } from "./fonts";
 import "./globals.css";
 
-import { APP_NAME } from '@/lib/constants';
+import { APP_NAME, SITE_TITLE } from '@/lib/constants';
 import { getBetaSiteText, getStageRobots } from "@/lib/site-stage-metadata";
 import { ServiceWorkerCleanup } from "@/app/components/ServiceWorkerCleanup";
 import { ZoomLock } from "@/app/components/ZoomLock";
@@ -23,7 +23,7 @@ import { GATE_BOOT_SCRIPT } from "@/app/components/preload/matrix-rain-engine";
 export async function generateMetadata(): Promise<Metadata> {
   const betaText = await getBetaSiteText(await resolveDocumentLanguage());
   return {
-    title: betaText?.title ?? APP_NAME,
+    title: betaText?.title ?? SITE_TITLE,
     applicationName: APP_NAME,
     // Beta: neutral localized description. After launch: the original fixed text.
     description: betaText?.description ?? `${APP_NAME}: niezależny kanał wideo twórcy, filmy publiczne i dla zalogowanych.`,
@@ -33,7 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
     appleWebApp: {
       capable: true,
       statusBarStyle: "black-translucent",
-      title: APP_NAME,
+      title: SITE_TITLE,
     },
     // The site's icon is the letter P (public/icon-p*.svg|png, traced from the owner's logo): a vector
     // for browsers that take SVG (light on dark tabs), PNG and ICO fallbacks, and the 180 px

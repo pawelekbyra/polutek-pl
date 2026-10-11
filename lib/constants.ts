@@ -53,3 +53,6 @@ const configuredAppName = process.env.NEXT_PUBLIC_APP_NAME?.trim();
 export const APP_NAME = !configuredAppName || /^(www\.)?pawelperfect\.(pl|com)$/i.test(configuredAppName)
   ? 'www.pawelperfect.com'
   : configuredAppName;
+
+/** The name shown as the page title (browser tab, search, social previews): the address in capitals (owner decision, 2026-10-11). */
+export const SITE_TITLE = APP_NAME.toUpperCase();

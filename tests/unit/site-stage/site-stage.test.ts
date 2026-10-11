@@ -25,14 +25,14 @@ describe("metadata while beta", () => {
   it("gives a neutral localized title and description, and null after launch", async () => {
     expect(await getBetaSiteText("pl", false)).toBeNull();
     const pl = await getBetaSiteText("pl", true);
-    expect(pl?.title).toMatch(/platforma wideo \(wersja testowa\)$/);
+    expect(pl?.title).toBe("WWW.PAWELPERFECT.COM");
     expect(pl?.description).toContain("w budowie");
     const en = await getBetaSiteText("en", true);
-    expect(en?.title).toMatch(/video platform \(test version\)$/);
+    expect(en?.title).toBe("WWW.PAWELPERFECT.COM");
     expect(en?.description).not.toMatch(/NIE MASZ PSYCHY/i);
     for (const locale of UI_ONLY_LOCALES) {
       const text = await getBetaSiteText(locale, true);
-      expect(text?.title).not.toBe(en?.title);
+      expect(text?.title).toBe("WWW.PAWELPERFECT.COM");
       expect(text?.description).not.toBe(en?.description);
       expect(text?.title).not.toContain("{0}");
     }
