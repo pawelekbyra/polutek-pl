@@ -26,112 +26,46 @@
  * into at any moment. Light on black, the site's own page colour. Canvas units are CSS px (the
  * context arrives scaled by the device pixel ratio).
  */
-import { zoomProgress } from "./gate-warp-timeline";
-import { RAIN_CONFIG } from "./matrix-rain-engine";
+import {
+  AIM_CANDIDATES,
+  VOID_T,
+  VOID_TITLE,
+  hash,
+  revealAt,
+  smooth,
+  titleScale,
+  type Size,
+} from "./gate-void-timing";
+import {
+  GLYPH_PX,
+  getGlowSprites,
+  getLetterSprites,
+  getLightSprite,
+  getRainAtlas,
+  getRainSheet,
+  glyphCore,
+  LIGHT,
+  monoFamily,
+  releaseVoidSprites,
+} from "./gate-void-sprites";
+import { drawDepthLight, drawTunnel, getRingSprites, releaseVoidTunnel } from "./gate-void-tunnel";
 
-export const VOID_TITLE = "WWW.PAWELPERFECT.COM";
+// The public surface of the void stays here (GateWarp, PageRevealGate and the tests import it).
+export {
+  AIM_CANDIDATES,
+  TUNNEL_SPEED,
+  VOID_T,
+  VOID_TITLE,
+  revealAt,
+  titleScale,
+  tunnelFront,
+  tunnelTravel,
+  zoomEndRate,
+} from "./gate-void-timing";
+export { drawTunnelWindow, tubeColumns } from "./gate-void-tunnel";
+export { glyphCore } from "./gate-void-sprites";
 
-/**
- * Candidates for the final dive: the two letters in the middle of the title ("P" and "E" of
- * "PERFECT"). Aiming at the gap between letters filled the screen with black right before the white
- * flash; the dive goes into the thickest point of whichever of these lies nearest the title's centre
- * (chosen from the rendered glyphs), so the camera hardly has to move sideways.
- */
-export const AIM_CANDIDATES = [VOID_TITLE.length / 2 - 1, VOID_TITLE.length / 2] as const;
-
-/** Key moments (seconds since the click). */
-export const VOID_T = {
-  /** The camera starts travelling down the tunnel (it is shown only from the entry, tunnelFull). */
-  tunnelFrom: 4.25,
-  /**
-   * The pupil fills the screen and the camera enters it (= WARP.blackAt): the tunnel is building
-   * itself out of the distance (from 0.08 s before, when the pupil has covered the screen).
-   */
-  tunnelFull: 4.95,
-  open: 5.15,
-  /** The letters stay cycling rain glyphs for the whole flight and decode once the title is in place. */
-  decodeFrom: 8.4,
-  decodeStep: 0.05,
-  arrive: 8.4,
-  swell: 8.5,
-  push: 10.2,
-  flash: 11.3,
-} as const;
-
-const LIGHT = "247, 249, 252";
 const TRACKING = 0.12; // letter spacing, in em
-const FAR = 30; // starting distance of the title (1 = resting distance)
-/**
- * The tunnel is a round tube (world units: half the screen's shorter side at depth 1 is 1). Its wall is one regular grid of glyph cells: TUBE_COLUMNS columns, a ring
- * every RING_STEP of depth, each cell CELL wide.
- */
-const TUBE_COLUMNS = 96;
-const CELL = 0.13;
-const RING_STEP = 0.16;
-/**
- * Fog: rings come out of it far away, so the tube runs almost to a point. The tube has no mouth (its
- * rings are laid from RING_ORIGIN, far behind the camera): it builds itself from the distance (tunnelFront).
- */
-const FOG_DEPTH = 18;
-const RING_ORIGIN = -100;
-/**
- * Camera speed in world units per second, constant. Rings at depth 2 grow at about the zoom's mean
- * rate into the rabbit (~1.35 e-folds per second), so the tunnel keeps the zoom's tempo.
- */
-export const TUNNEL_SPEED = 2.8;
-
-/**
- * The Japanese glyphs of the gate's rain (RAIN_CONFIG.chars without its digits), drawn in the rain's own
- * font ("monospace"), so the dust and the title's undecoded letters are the same characters as the
- * rain behind the rabbit. Pre-rendered once.
- */
-const KANA = [...RAIN_CONFIG.chars].filter((ch) => !/[0-9]/.test(ch));
-const GLYPH_PX = 40;
-
-const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
-const smooth = (a: number, b: number, v: number) => {
-  const t = clamp01((v - a) / (b - a));
-  return t * t * (3 - 2 * t);
-};
-
-/** Deterministic 0..1 noise for glyph choices and dust placement. */
-function hash(a: number, b: number): number {
-  let h = (a * 374761393 + b * 668265263) | 0;
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
-}
-
-/** The title's scale at time t (1 = resting size): flies in from FAR, rests, then rushes past. */
-export function titleScale(t: number): number {
-  if (t < VOID_T.open) return 0;
-  if (t < VOID_T.arrive) {
-    const a = clamp01((t - VOID_T.open) / (VOID_T.arrive - VOID_T.open));
-    // Distance falls quickly at first and brakes at the end (ease-out), apparent size = 1 / distance.
-    const z = 1 + (FAR - 1) * (1 - a) * (1 - a) * (1 - a);
-    return 1 / z;
-  }
-  if (t < VOID_T.push) return 1 + 0.06 * ((t - VOID_T.arrive) / (VOID_T.push - VOID_T.arrive));
-  // Not clamped at the flash: the title keeps flying at the camera until the flash has covered the
-  // screen (it goes through the camera, it never stops at a "full size"). Inside the flash it bolts:
-  // the zoom rate jumps and keeps accelerating, about 20x closer in those last 0.2 s.
-  const p = Math.min(1, (t - VOID_T.push) / (VOID_T.flash - VOID_T.push));
-  const rush = 1.06 * Math.exp(Math.log(9) * p * p * p);
-  const d = Math.max(0, t - VOID_T.flash);
-  return rush * Math.exp(6 * d + 45 * d * d);
-}
-
-/** When letter `i` resolves from cycling glyphs into its real character. */
-export function revealAt(i: number): number {
-  return VOID_T.decodeFrom + i * VOID_T.decodeStep + (hash(i, 3) - 0.5) * 0.03;
-}
-
-let family: string | null = null;
-function monoFamily(): string {
-  if (family) return family;
-  const v = typeof document === "undefined" ? "" : getComputedStyle(document.documentElement).getPropertyValue("--font-geist-mono").trim();
-  family = `${v ? `${v}, ` : ""}ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
-  return family;
-}
 
 /** Font size (px) at which the resting title (one line) spans most of the screen width. */
 function restingFontSize(ctx: CanvasRenderingContext2D, width: number): number {
@@ -155,89 +89,14 @@ function titleLayout(ctx: CanvasRenderingContext2D, width: number) {
   return layout;
 }
 
-// --- Sprites: rendered once, copied every frame -----------------------------------------------
-
-function makeCanvas(w: number, h: number): HTMLCanvasElement | null {
-  if (typeof document === "undefined") return null;
-  const c = document.createElement("canvas");
-  c.width = Math.max(1, Math.ceil(w));
-  c.height = Math.max(1, Math.ceil(h));
-  return c;
-}
-
-let lightSprite: HTMLCanvasElement | null = null;
-/** A soft white disc (light from the depth), 256 px, drawn scaled. */
-function getLightSprite(): HTMLCanvasElement | null {
-  if (lightSprite) return lightSprite;
-  const c = makeCanvas(256, 256);
-  const g = c?.getContext("2d");
-  if (!c || !g) return null;
-  const grad = g.createRadialGradient(128, 128, 0, 128, 128, 128);
-  grad.addColorStop(0, `rgba(${LIGHT}, 1)`);
-  grad.addColorStop(0.35, `rgba(${LIGHT}, 0.45)`);
-  grad.addColorStop(1, `rgba(${LIGHT}, 0)`);
-  g.fillStyle = grad;
-  g.fillRect(0, 0, 256, 256);
-  lightSprite = c;
-  return c;
-}
-
-/**
- * An atlas of the rain's Japanese glyphs, white, rendered once: drawing them as text every frame goes
- * through font fallback and was the costliest part of the void on phones.
- */
-let rainAtlas: HTMLCanvasElement[] | null = null;
-function getRainAtlas(): HTMLCanvasElement[] | null {
-  if (rainAtlas) return rainAtlas;
-  const atlas: HTMLCanvasElement[] = [];
-  for (const kana of KANA) {
-    const c = makeCanvas(GLYPH_PX * 1.2, GLYPH_PX * 1.2);
-    const g = c?.getContext("2d");
-    if (!c || !g) return null;
-    g.font = `${GLYPH_PX}px monospace`;
-    g.textAlign = "center";
-    g.textBaseline = "middle";
-    g.fillStyle = `rgb(${LIGHT})`;
-    // The rain's own font, so the glyphs look exactly like the rain behind the rabbit.
-    g.fillText(kana, c.width / 2, c.height / 2);
-    atlas.push(c);
-  }
-  rainAtlas = atlas;
-  return atlas;
-}
-
-/**
- * The same glyphs side by side on ONE canvas, for the tunnel's thousands of cells: drawing every cell
- * from its own small canvas switches the GPU texture per glyph (measured: ~2000 cells took over 100
- * ms a frame); from a single sheet the draws batch.
- */
-let rainSheet: { sheet: HTMLCanvasElement; cell: number; count: number } | null = null;
-function getRainSheet(): { sheet: HTMLCanvasElement; cell: number; count: number } | null {
-  if (rainSheet) return rainSheet;
-  const atlas = getRainAtlas();
-  if (!atlas) return null;
-  const cell = atlas[0].width;
-  const sheet = makeCanvas(cell * atlas.length, cell);
-  const g = sheet?.getContext("2d");
-  if (!sheet || !g) return null;
-  atlas.forEach((glyph, i) => g.drawImage(glyph, i * cell, 0));
-  rainSheet = { sheet, cell, count: atlas.length };
-  return rainSheet;
-}
-
 /**
  * Drops every sprite the void rendered (glyph atlas and sheet, ring sprites with their mipmaps,
  * letters, glows, light): tens of MB of canvas memory on a desktop, useless once the viewer is in
  * (the gate does not come back in this tab).
  */
 export function releaseGateVoid(): void {
-  rainAtlas = null;
-  rainSheet = null;
-  ringSprites = null;
-  letters = null;
-  glow = null;
-  lightSprite = null;
-  columnsFor = null;
+  releaseVoidSprites();
+  releaseVoidTunnel();
   layout = null;
 }
 
@@ -246,100 +105,6 @@ export function prepareGateVoid(): void {
   getRainSheet();
   getLightSprite();
   if (typeof window !== "undefined") getRingSprites(window.innerWidth, window.innerHeight);
-}
-
-/** The title's letters themselves (sharp, no glow) at about the device resolution of their resting size. */
-type LetterSprites = { refPx: number; byChar: Map<string, HTMLCanvasElement> };
-let letters: LetterSprites | null = null;
-function getLetterSprites(refPx: number): LetterSprites | null {
-  if (letters && letters.refPx === refPx) return letters;
-  const byChar = new Map<string, HTMLCanvasElement>();
-  for (const ch of new Set(VOID_TITLE)) {
-    const c = makeCanvas(refPx * 1.1, refPx * 1.4);
-    const g = c?.getContext("2d");
-    if (!c || !g) return null;
-    g.font = `700 ${refPx}px ${monoFamily()}`;
-    g.textAlign = "center";
-    g.textBaseline = "middle";
-    g.fillStyle = `rgb(${LIGHT})`;
-    g.fillText(ch, c.width / 2, c.height / 2);
-    byChar.set(ch, c);
-  }
-  letters = { refPx, byChar };
-  return letters;
-}
-
-/** Glow halos of the title's letters (one per distinct letter), rendered with a blur once. */
-type GlowSprites = { refPx: number; pad: number; byChar: Map<string, HTMLCanvasElement> };
-let glow: GlowSprites | null = null;
-function getGlowSprites(refPx: number): GlowSprites | null {
-  if (glow && Math.abs(glow.refPx - refPx) < 0.5) return glow;
-  const pad = Math.ceil(refPx * 0.9);
-  const byChar = new Map<string, HTMLCanvasElement>();
-  for (const ch of new Set(VOID_TITLE)) {
-    const c = makeCanvas(refPx + pad * 2, refPx * 1.4 + pad * 2);
-    const g = c?.getContext("2d");
-    if (!c || !g) return null;
-    g.font = `700 ${refPx}px ${monoFamily()}`;
-    g.textAlign = "center";
-    g.textBaseline = "middle";
-    g.shadowColor = `rgba(${LIGHT}, 1)`;
-    g.shadowBlur = refPx * 0.55;
-    g.fillStyle = `rgba(${LIGHT}, 0.9)`;
-    g.fillText(ch, c.width / 2, c.height / 2);
-    byChar.set(ch, c);
-  }
-  glow = { refPx, pad, byChar };
-  return glow;
-}
-
-/**
- * The thickest point of a glyph (the spot farthest from any edge, found with a distance transform on
- * a one-off render), as an offset from the glyph's centre in units of its font size. Zooming into
- * that point keeps the screen white for longest. (0, 0) when nothing can be rendered.
- */
-const glyphCores = new Map<string, { dx: number; dy: number }>();
-export function glyphCore(ch: string): { dx: number; dy: number } {
-  const known = glyphCores.get(ch);
-  if (known) return known;
-  const px = 120;
-  const c = makeCanvas(px * 1.4, px * 1.4);
-  const g = c?.getContext("2d");
-  let core = { dx: 0, dy: 0 };
-  if (c && g) {
-    g.font = `700 ${px}px ${monoFamily()}`;
-    g.textAlign = "center";
-    g.textBaseline = "middle";
-    g.fillStyle = "#fff";
-    g.fillText(ch, c.width / 2, c.height / 2);
-    const { width: w, height: h } = c;
-    const alpha = g.getImageData(0, 0, w, h).data;
-    // Two-pass chamfer distance (1 / 1.4) from every inside pixel to the nearest outside pixel.
-    const dist = new Float32Array(w * h);
-    for (let i = 0; i < w * h; i++) dist[i] = alpha[i * 4 + 3] > 128 ? 1e6 : 0;
-    const at = (x: number, y: number) => (x < 0 || y < 0 || x >= w || y >= h ? 0 : dist[y * w + x]);
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const i = y * w + x;
-        if (!dist[i]) continue;
-        dist[i] = Math.min(dist[i], at(x - 1, y) + 1, at(x, y - 1) + 1, at(x - 1, y - 1) + 1.4, at(x + 1, y - 1) + 1.4);
-      }
-    }
-    let best = 0;
-    for (let y = h - 1; y >= 0; y--) {
-      for (let x = w - 1; x >= 0; x--) {
-        const i = y * w + x;
-        if (!dist[i]) continue;
-        dist[i] = Math.min(dist[i], at(x + 1, y) + 1, at(x, y + 1) + 1, at(x + 1, y + 1) + 1.4, at(x - 1, y + 1) + 1.4);
-        if (dist[i] > best) {
-          best = dist[i];
-          core = { dx: (x + 0.5 - w / 2) / px, dy: (y + 0.5 - h / 2) / px };
-        }
-      }
-    }
-  }
-  glyphCores.set(ch, core);
-  return core;
 }
 
 /** Of the candidate letters, the thickest point nearest the title's centre (title coordinates, px). */
@@ -357,276 +122,6 @@ function aimPoint(widths: number[], tracking: number, total: number, restPx: num
     }
   }
   return best;
-}
-
-// --- Layers ---------------------------------------------------------------------------------------
-
-type Size = { width: number; height: number };
-
-function drawDepthLight(ctx: CanvasRenderingContext2D, size: Size, centre: { x: number; y: number }, t: number) {
-  // Lights up with the tunnel, on the entry (no glow inside the pupil before it covers the screen).
-  const open = smooth(VOID_T.tunnelFull - 0.08, VOID_T.tunnelFull + 0.6, t) * (1 - 0.6 * smooth(VOID_T.arrive - 0.6, VOID_T.arrive + 0.4, t));
-  const rush = smooth(VOID_T.push, VOID_T.flash, t);
-  const strength = 0.16 * open + 0.22 * rush;
-  const sprite = getLightSprite();
-  if (strength < 0.005 || !sprite) return;
-  // Small: a glow wider than the tube's far end reads as a hole in the middle.
-  const radius = Math.min(size.width, size.height) * (0.07 + 0.5 * rush);
-  ctx.globalAlpha = strength;
-  ctx.drawImage(sprite, centre.x - radius, centre.y - radius, radius * 2, radius * 2);
-  ctx.globalAlpha = 1;
-}
-
-const LN_ZOOM = 6; // ln of the zoom's whole scale range (zoomLevels: about 6.1 on a phone, 6.5 on a desktop)
-/** The zoom's tempo when it enters the pupil, in e-folds per second. */
-export function zoomEndRate(): number {
-  const dt = 0.001;
-  return (LN_ZOOM * (zoomProgress(VOID_T.tunnelFull) - zoomProgress(VOID_T.tunnelFull - dt))) / dt;
-}
-
-/** When the tunnel starts building: the pupil has just covered the whole screen. */
-const BUILD_FROM = VOID_T.tunnelFull - 0.08;
-/**
- * Where the front starts: deep, but nearer than the fog (from FOG_DEPTH * 0.7 on), so the tunnel is
- * visible from the very moment the pupil covers the screen; starting at the tube's far end, inside the
- * fog, it showed only about 0.2 s later.
- */
-const BUILD_DEPTH = 11;
-/**
- * The tunnel builds itself out of the distance: only the rings beyond this depth exist. The front
- * starts deep in the tube (BUILD_DEPTH) the moment the pupil covers the screen and flies
- * towards the viewer, so the first glyphs come at the screen and the tube forms behind them. Its
- * depth falls exponentially at the zoom's own end tempo (its ring grows on screen exactly as fast as
- * the zoom did), so the fall into the pupil flows straight on into it; it reaches the screen edges
- * about 0.8 s later. Infinity: nothing yet; 0: the whole tube is built.
- */
-export function tunnelFront(t: number): number {
-  if (t < BUILD_FROM) return Number.POSITIVE_INFINITY;
-  const z = BUILD_DEPTH * Math.exp(-zoomEndRate() * (t - BUILD_FROM));
-  return z <= 0.9 ? 0 : z;
-}
-
-/**
- * How far the camera has travelled down the tube: one constant speed from the start (no burst, no
- * slowing while the title rests); only inside the flash, when the screen is turning white, it bolts.
- */
-export function tunnelTravel(t: number): number {
-  if (t <= VOID_T.tunnelFrom) return 0;
-  const bolt = Math.max(0, t - VOID_T.flash);
-  return TUNNEL_SPEED * (t - VOID_T.tunnelFrom) + 120 * bolt * bolt;
-}
-
-/** Brightness of a ring at depth z: it comes out of the fog in the distance. */
-function ringAlpha(z: number): number {
-  // Deep: the rings close in on the vanishing point until the hole in the middle is a few pixels.
-  return 0.75 * (1 - smooth(FOG_DEPTH * 0.7, FOG_DEPTH, z));
-}
-
-/**
- * The columns of the tube's wall for a viewport: TUBE_COLUMNS points evenly round its round
- * cross-section. The circle passes through the screen's corners, so at depth 1 the wall just leaves
- * the screen at its corners and, nearer the middle of each edge, the rings a bit further away cover
- * it: no edge is ever left empty. World units at depth 1.
- */
-let columnsFor: { key: string; xs: Float64Array; ys: Float64Array } | null = null;
-export function tubeColumns(width: number, height: number): { xs: Float64Array; ys: Float64Array } {
-  const key = `${width}x${height}`;
-  if (columnsFor && columnsFor.key === key) return columnsFor;
-  const f = Math.min(width, height) / 2;
-  const radius = Math.hypot(width / 2, height / 2) / f;
-  const xs = new Float64Array(TUBE_COLUMNS);
-  const ys = new Float64Array(TUBE_COLUMNS);
-  for (let c = 0; c < TUBE_COLUMNS; c++) {
-    const a = ((c + 0.5) / TUBE_COLUMNS) * Math.PI * 2;
-    xs[c] = radius * Math.cos(a);
-    ys[c] = radius * Math.sin(a);
-  }
-  columnsFor = { key, xs, ys };
-  return columnsFor;
-}
-
-/**
- * Whole rings pre-rendered for the far part of the tube (depth beyond SPRITE_FROM): there each ring
- * is one drawImage instead of ~70 cells (the cells are a few pixels there, the stream's motion is not
- * distinguishable). Rendered at the size of a ring at depth SPRITE_AT, so they are only ever scaled down.
- * Rebuilt when the viewport changes (the tube's radius follows the screen's diagonal).
- */
-const SPRITE_AT = 1.7;
-const SPRITE_FROM = 1.8;
-const SPRITE_FULL = 2.4;
-const RING_VARIANTS = 6;
-/** Pixel budget of one ring sprite's full-size level (about 8 MB of memory at most). */
-const SPRITE_MAX_PIXELS = 2_000_000;
-/**
- * Each ring sprite comes with smaller copies (halved down to ~64 px; "mipmaps"): canvas scales an image
- * down without them by sampling a few of its pixels, and a far or still small ring then twinkled from
- * frame to frame as its scale changed. The copy nearest to (and not smaller than) the drawn size is used.
- */
-type RingSprite = HTMLCanvasElement[];
-let ringSprites: { key: string; sprites: RingSprite[]; w: number; h: number } | null = null;
-function getRingSprites(width: number, height: number): { sprites: RingSprite[]; w: number; h: number } | null {
-  const key = `${width}x${height}`;
-  if (ringSprites && ringSprites.key === key) return ringSprites;
-  const rain = getRainSheet();
-  if (!rain) return null;
-  const { xs, ys } = tubeColumns(width, height);
-  const s = Math.min(width, height) / 2 / SPRITE_AT;
-  const glyphPx = CELL * s * 1.2;
-  const w = 2 * (Math.max(...xs) * s + glyphPx);
-  const h = 2 * (Math.max(...ys) * s + glyphPx);
-  const dpr = (typeof window !== "undefined" && window.devicePixelRatio) || 1;
-  const res = Math.min(1.5, dpr, Math.sqrt(SPRITE_MAX_PIXELS / (w * h)));
-  const sprites: RingSprite[] = [];
-  for (let v = 0; v < RING_VARIANTS; v++) {
-    const c = makeCanvas(w * res, h * res);
-    const g = c?.getContext("2d");
-    if (!c || !g) return null;
-    g.scale(res, res);
-    for (let col = 0; col < TUBE_COLUMNS; col++) {
-      const glyph = ringGlyph(v, col, rain.count);
-      if (glyph < 0) continue;
-      const x = w / 2 + xs[col] * s - glyphPx / 2;
-      const y = h / 2 + ys[col] * s - glyphPx / 2;
-      g.drawImage(rain.sheet, glyph * rain.cell, 0, rain.cell, rain.cell, x, y, glyphPx, glyphPx);
-    }
-    const levels: RingSprite = [c];
-    for (let prev = c; prev.width > 128 && prev.height > 128; ) {
-      const next = makeCanvas(prev.width / 2, prev.height / 2);
-      const ng = next?.getContext("2d");
-      if (!next || !ng) break;
-      ng.imageSmoothingQuality = "high";
-      ng.drawImage(prev, 0, 0, next.width, next.height);
-      levels.push(next);
-      prev = next;
-    }
-    sprites.push(levels);
-  }
-  ringSprites = { key, sprites, w, h };
-  return ringSprites;
-}
-
-/**
- * The resting glyph of a ring layout's column (-1: a gap). Ring sprites and single cells share it, so
- * a ring coming near changes from its sprite to cells without its pattern changing.
- */
-function ringGlyph(variant: number, col: number, count: number): number {
-  if (hash(variant * 977 + col, 9) < 0.22) return -1;
-  return Math.floor(hash(variant * 977 + col, 23) * count);
-}
-
-/**
- * Draws a ring sprite at `w` x `h` CSS px: from the smallest level not smaller than the drawn size,
- * blended into the next smaller one as the size approaches it (as a GPU does between mipmaps), so the
- * ring does not pulse in brightness when the level changes.
- */
-function drawRingSprite(ctx: CanvasRenderingContext2D, levels: RingSprite, x: number, y: number, w: number, h: number, alpha: number, deviceScale: number) {
-  const devicePx = w * deviceScale;
-  let i = 0;
-  while (i + 1 < levels.length && levels[i + 1].width >= devicePx) i++;
-  const next = levels[i + 1];
-  const blend = next ? clamp01(Math.log2(levels[i].width / Math.max(1, devicePx))) : 0;
-  ctx.globalAlpha = alpha * (1 - blend);
-  ctx.drawImage(levels[i], x, y, w, h);
-  if (next && blend > 0.02) {
-    ctx.globalAlpha = alpha * blend;
-    ctx.drawImage(next, x, y, w, h);
-  }
-}
-
-/**
- * The tube, seen from inside: rings of glyph cells on its round wall at their depths, farthest first.
- * The rings are a regular grid (TUBE_COLUMNS columns running straight to the vanishing point
- * `centre`, rings every RING_STEP), all on the one surface; the glyphs have one even tone that
- * brightens as they come near and change now and then, like the rain. Near cells are drawn one by
- * one from the rain sheet (skipped when off screen or too faint), far rings as ring sprites.
- */
-function drawTunnel(ctx: CanvasRenderingContext2D, size: Size, centre: { x: number; y: number }, t: number) {
-  const rain = getRainSheet();
-  const rings = getRingSprites(size.width, size.height);
-  if (!rain || !rings) return;
-  const { sheet, cell, count } = rain;
-  const deviceScale = ctx.getTransform().a || 1;
-  const f = Math.min(size.width, size.height) / 2; // focal length: world 1 at depth 1 = half the shorter side
-  const { xs, ys } = tubeColumns(size.width, size.height);
-  const travel = tunnelTravel(t);
-  // Ring k sits at world depth RING_ORIGIN + k * RING_STEP; the camera has moved `travel` towards it.
-  const last = Math.floor((travel + FOG_DEPTH - RING_ORIGIN) / RING_STEP);
-  // Dimmer (never slower) while the title rests in front of it, so the address reads clearly.
-  const dim = 1 - 0.35 * smooth(VOID_T.arrive - 0.6, VOID_T.arrive, t) * (1 - smooth(VOID_T.push, VOID_T.flash, t));
-  // One entry only, on the sound's accent: nothing shows inside the pupil while it does not fill the
-  // screen yet; then the tunnel builds itself from the distance towards the viewer (tunnelFront).
-  const front = tunnelFront(t);
-  if (!Number.isFinite(front)) return;
-  // Nearest ring drawn: the one just past the screen edge (depth 0.9 at full size, nearer while smaller).
-  const first = Math.ceil((travel + Math.max(0.9, front) - RING_ORIGIN) / RING_STEP);
-  for (let k = last; k >= first; k--) {
-    const z = RING_ORIGIN + k * RING_STEP - travel;
-    // Far away the rings crowd into a few pixels: every other one fades out beyond depth 3, and so on
-    // (they fade back in as they come near, long before they are told apart).
-    const zs = z;
-    const ringLod = k % 2 === 1 ? 1 - smooth(2.6, 3.4, zs) : k % 4 === 2 ? 1 - smooth(4, 5, zs) : k % 8 === 4 ? 1 - smooth(5.5, 6.5, zs) : k % 16 === 8 ? 1 - smooth(8, 9.5, zs) : 1;
-    // The rings just behind the front fade in; the leading ones are lit up a little, so the first
-    // glyphs read as coming at the screen and building the tube.
-    const behind = front > 0 ? (z - front) / (0.35 * front) : 99;
-    const building = front > 0 ? smooth(0, 1, behind) * (1 + 0.6 * Math.exp(-behind)) : 1;
-    const ring = Math.min(1, ringAlpha(z) * dim * ringLod * building);
-    if (ring < 0.02) continue;
-    const s = f / z;
-    // Each ring keeps one layout (no swapping of its whole pattern: a small ring doing that flickered).
-    const variant = Math.floor(hash(k, 3) * RING_VARIANTS);
-    // Far: the whole ring as one pre-rendered sprite; between SPRITE_FROM and SPRITE_FULL it crossfades
-    // with the cells, which show the same glyphs in the same places.
-    const far = smooth(SPRITE_FROM, SPRITE_FULL, zs);
-    if (far > 0) {
-      const m = SPRITE_AT / z;
-      drawRingSprite(ctx, rings.sprites[variant], centre.x - (rings.w * m) / 2, centre.y - (rings.h * m) / 2, rings.w * m, rings.h * m, ring * far * (0.6 + 0.4 * Math.min(1, 1.6 / z)), deviceScale);
-    }
-    if (far >= 1) continue;
-    const glyphPx = CELL * s;
-    const half = glyphPx / 2;
-    // The glyphs' light: one even tone, brighter as they come near.
-    const near = 0.6 + 0.4 * Math.min(1, 1.6 / z);
-    for (let c = 0; c < TUBE_COLUMNS; c++) {
-      const resting = ringGlyph(variant, c, count);
-      if (resting < 0) continue; // a gap in the column
-      const px = centre.x + xs[c] * s;
-      const py = centre.y + ys[c] * s;
-      if (px < -half || py < -half || px > size.width + half || py > size.height + half) continue;
-      const alpha = ring * (1 - far) * near;
-      if (alpha < 0.03) continue;
-      // Once near (each cell from its own depth, so they do not all switch at once) a cell starts
-      // changing its glyph now and then, about three times a second, like the rain; before that it
-      // keeps the glyph its ring sprite shows.
-      const cycling = zs < 1.2 + 0.5 * hash(k * 31 + c, 41);
-      const glyph = cycling ? Math.floor(hash(k * 977 + c, Math.floor(t * 3 + hash(c, k) * 3)) * count) : resting;
-      ctx.globalAlpha = alpha;
-      ctx.drawImage(sheet, glyph * cell, 0, cell, cell, px - half * 1.2, py - half * 1.2, glyphPx * 1.2, glyphPx * 1.2);
-    }
-  }
-  ctx.globalAlpha = 1;
-}
-
-/**
- * The tunnel seen through the pupil before the camera is inside it (VOID_T.tunnelFrom → WARP.blackAt):
- * drawn only inside the pupil's black core (`window`, CSS px on screen), on top of the zooming rabbit.
- */
-export function drawTunnelWindow(
-  ctx: CanvasRenderingContext2D,
-  size: Size,
-  t: number,
-  window: { x: number; y: number; r: number },
-): void {
-  if (t < VOID_T.tunnelFrom || window.r < 4) return;
-  const base = ctx.getTransform();
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(window.x, window.y, window.r, 0, Math.PI * 2);
-  ctx.clip();
-  drawDepthLight(ctx, size, window, t);
-  drawTunnel(ctx, size, window, t);
-  ctx.restore();
-  ctx.setTransform(base);
-  ctx.globalAlpha = 1;
 }
 
 function drawTitle(ctx: CanvasRenderingContext2D, base: DOMMatrix, size: Size, t: number) {
