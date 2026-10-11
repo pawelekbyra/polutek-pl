@@ -188,12 +188,13 @@ export function PolitykaContent() {
         <ul className="list-disc space-y-1 pl-5">
           <li>Hetzner (Niemcy): serwer i baza danych;</li>
           <li>Cloudflare: sieć, ochrona przed atakami i botami, pliki, kopie zapasowe, poczta przychodząca;</li>
-          <li>Resend: wysyłka e-maili;</li>
+          <li>Amazon Web Services (Amazon SES, region Sztokholm w UE): wysyłka e-maili;</li>
+          <li>Resend: wysyłka e-maili awaryjnie, gdy główny dostawca nie może wysłać;</li>
           <li>Google: kopia wiadomości wysłanych na nasz adres (Gmail).</li>
         </ul>
         <p>
           Stripe i operator wybranej metody płatności (np. BLIK, PayPal) oraz Google przy logowaniu przez Google są
-          odrębnymi administratorami. Cloudflare, Resend, Stripe i Google mogą przekazywać dane do USA na podstawie
+          odrębnymi administratorami. Cloudflare, Amazon Web Services, Resend, Stripe i Google mogą przekazywać dane do USA na podstawie
           Data Privacy Framework lub standardowych klauzul umownych (kopię wyślemy na prośbę).
         </p>
       </LegalSection>
@@ -394,12 +395,13 @@ export function PrivacyContentEn() {
         <ul className="list-disc space-y-1 pl-5">
           <li>Hetzner (Germany): server and database;</li>
           <li>Cloudflare: network, protection against attacks and bots, files, backups, incoming mail;</li>
-          <li>Resend: sending emails;</li>
+          <li>Amazon Web Services (Amazon SES, Stockholm region in the EU): sending emails;</li>
+          <li>Resend: sending emails as a fallback when the main provider cannot send;</li>
           <li>Google: a copy of messages sent to our address (Gmail).</li>
         </ul>
         <p>
           Stripe and the operator of the payment method you choose (e.g. BLIK, PayPal), and Google when you sign in
-          with Google, are separate controllers. Cloudflare, Resend, Stripe and Google may transfer data to the USA
+          with Google, are separate controllers. Cloudflare, Amazon Web Services, Resend, Stripe and Google may transfer data to the USA
           under the Data Privacy Framework or standard contractual clauses (we will send a copy on request).
         </p>
       </LegalSection>
