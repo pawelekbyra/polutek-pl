@@ -90,24 +90,17 @@ describe('comment author profile card', () => {
     // The title carries the name; the large avatar is the one inside the card (160 px).
     expect(dialog).toHaveAccessibleName('Jurek');
     const img = dialog.querySelector('img') as HTMLImageElement;
-    expect(img.getAttribute('alt')).toBe('Jurek');
+    expect(img.getAttribute('alt')).toBe('');
     expect(decodeURIComponent(img.getAttribute('src') || '')).toContain('/api/avatars/a1?v=1');
     expect((img.parentElement as HTMLElement).style.width).toBe('160px');
     expect(dialog).toHaveTextContent('Twórca');
   });
 
-  it('opens on name click too, and shows the @username only when it differs from the name', async () => {
+  it('opens on name click too, and never shows the legacy @username', async () => {
     renderItem(commentBy([], null, 'Jurek Kowalski', 'jurek'));
     fireEvent.click(screen.getByRole('button', { name: 'Jurek Kowalski' }));
     const dialog = await waitFor(card);
     expect(dialog).toHaveTextContent('Jurek Kowalski');
-    expect(dialog).toHaveTextContent('@jurek');
-  });
-
-  it('does not repeat the handle when it equals the display name', async () => {
-    renderItem(commentBy([], null, 'jurek', 'jurek'));
-    fireEvent.click(screen.getByRole('button', { name: 'jurek' }));
-    const dialog = await waitFor(card);
     expect(dialog).not.toHaveTextContent('@jurek');
   });
 

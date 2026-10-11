@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import {
   Dialog,
   DialogClose,
@@ -26,28 +25,14 @@ interface UserProfileCardProps {
   language: Locale;
   /** The public name the user chose (never an e-mail address). */
   displayName: string;
-  /** The user's @handle, shown only when it differs from the display name. */
-  username?: string | null;
   /** Already resolved by the caller (the viewer's own comments use the live session avatar). */
   avatarSrc?: string | null;
   badge?: CommentBadgeKind | null;
-  /** More facts later (joined date, comment count): pass `UserProfileRow`s. */
-  children?: React.ReactNode;
-}
-
-/** One labelled fact under the name. Add rows as children of `UserProfileCard`. */
-export function UserProfileRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-4 py-2.5 text-[13px]">
-      <dt className="text-[var(--chan-muted)]">{label}</dt>
-      <dd className="m-0 min-w-0 truncate font-semibold text-[var(--chan-ink)]">{children}</dd>
-    </div>
-  );
 }
 
 /**
  * Small public profile card opened from a comment author's name or avatar. Built only from what
- * the comment DTO already carries (id, display name, username, avatar, badges): it never shows
+ * the comment DTO already carries (display name, avatar, badges): it never shows
  * an e-mail address or anything private, and it fetches nothing.
  */
 export function UserProfileCard({
@@ -55,13 +40,10 @@ export function UserProfileCard({
   onOpenChange,
   language,
   displayName,
-  username,
   avatarSrc,
   badge,
-  children,
 }: UserProfileCardProps) {
   const tx = useOptionalTx(language);
-  const handle = username && username !== displayName ? username : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -78,7 +60,7 @@ export function UserProfileCard({
           />
           <DialogClose
             aria-label={tx("Zamknij", "Close")}
-            className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-[var(--chan-card)]/70 text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transition-none"
+            className="absolute right-3 top-3 grid cursor-pointer h-9 w-9 place-items-center rounded-full bg-[var(--chan-card)]/70 text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transition-none"
           >
             <X aria-hidden="true" className="h-[18px] w-[18px]" />
           </DialogClose>
@@ -87,7 +69,7 @@ export function UserProfileCard({
             <div className="-mt-20">
               <SafeAvatar
                 src={avatarSrc}
-                alt={displayName}
+                alt=""
                 size={PROFILE_AVATAR_SIZE}
                 className="ring-4 ring-[var(--chan-card)] shadow-[0_14px_34px_-14px_rgba(15,23,42,0.5)]"
               />
@@ -96,9 +78,6 @@ export function UserProfileCard({
             <DialogTitle className="mt-4 max-w-full break-words text-[22px] font-extrabold leading-tight tracking-[-0.02em] text-[var(--chan-ink)]">
               {displayName}
             </DialogTitle>
-            {handle && (
-              <p className="mt-1 max-w-full truncate text-[13px] text-[var(--chan-muted)]">@{handle}</p>
-            )}
             {badge && (
               <div className="mt-3">
                 <AuthorBadge kind={badge} language={language} />
@@ -106,11 +85,6 @@ export function UserProfileCard({
             )}
             <DialogDescription className="sr-only">{tx("Profil użytkownika", "User profile")}</DialogDescription>
 
-            {children && (
-              <dl className="m-0 mt-5 w-full divide-y divide-[var(--chan-line)] border-t border-[var(--chan-line)] text-left">
-                {children}
-              </dl>
-            )}
           </div>
         </DialogPopup>
       </DialogPortal>

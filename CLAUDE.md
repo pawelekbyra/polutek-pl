@@ -116,7 +116,7 @@ Trasa `/api/videos/[id]/thumbnail` jest publiczna w `middleware.ts`; każda zmia
 
 Dislike nie ma publicznego licznika; reakcje to stan docelowy (idempotentne); `mapCommentToDto` to biała lista; brak publicznego wyróżnienia wspierających; moderacja to maszyna stanów (`CommentPolicy`), błędy bazy nie trafiają do klienta;
 moderacja (ukrycie, przywrócenie, serce, odpowiedź twórcy) jest tylko w panelu.
-Kliknięcie imienia lub awatara autora komentarza otwiera małą kartę profilu (`UserProfileCard`), zbudowaną wyłącznie z DTO komentarza (id, nazwa, nick, awatar, odznaki): bez nowych zapytań i bez żadnych danych prywatnych; usunięty użytkownik nie ma karty, a własne komentarze widza pokazują jego bieżący awatar. Szczegóły: `docs/architecture/comments-and-reactions.md`.
+Kliknięcie imienia lub awatara autora komentarza otwiera małą kartę profilu (`UserProfileCard`), zbudowaną wyłącznie z DTO komentarza (nazwa, awatar, odznaka „Twórca”; starego `username` nie pokazujemy): bez nowych zapytań i bez żadnych danych prywatnych; usunięty użytkownik nie ma karty, a własne komentarze widza pokazują jego bieżący awatar. Szczegóły: `docs/architecture/comments-and-reactions.md`.
 
 ### 4.10 Okno napiwku: jedna droga płatności
 

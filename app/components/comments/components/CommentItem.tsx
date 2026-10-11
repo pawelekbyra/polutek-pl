@@ -206,7 +206,8 @@ function CommentItemComponent({
             onClick={() => setIsProfileOpen(true)}
             aria-haspopup="dialog"
             aria-label={openProfileLabel}
-            className={cn("block rounded-full transition-opacity hover:opacity-90", profileTriggerRing)}
+            tabIndex={-1}
+            className={cn("block cursor-pointer rounded-full transition-opacity hover:opacity-90", profileTriggerRing)}
           >
             <SafeAvatar
               src={avatarSrc}
@@ -238,7 +239,7 @@ function CommentItemComponent({
                 onClick={() => setIsProfileOpen(true)}
                 aria-haspopup="dialog"
                 className={cn(
-                  "min-w-0 truncate rounded-sm text-left text-[13px] font-bold leading-[18px] text-[var(--chan-ink)] hover:underline",
+                  "-my-1 min-w-0 cursor-pointer truncate rounded-sm py-1 text-left text-[13px] font-bold leading-[18px] text-[var(--chan-ink)] hover:underline",
                   profileTriggerRing,
                 )}
               >
@@ -399,7 +400,6 @@ function CommentItemComponent({
             onOpenChange={setIsProfileOpen}
             language={language}
             displayName={profileName}
-            username={comment.author?.username}
             avatarSrc={avatarSrc}
             badge={authorBadge}
           />
