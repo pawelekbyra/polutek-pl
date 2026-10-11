@@ -10,7 +10,7 @@ export function getStageRobots(beta: boolean = SITE_IS_BETA): Metadata["robots"]
 }
 
 /**
- * Neutral site title (the address in capitals) and localized description for the beta stage (the home page used the hero
+ * Neutral site title (just the address) and localized description for the beta stage (the home page used the hero
  * video's title as its description). Returns null after launch: callers keep their normal metadata.
  */
 export async function getBetaSiteText(locale: Locale, beta: boolean = SITE_IS_BETA): Promise<{ title: string; description: string } | null> {

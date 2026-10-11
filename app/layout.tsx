@@ -35,19 +35,19 @@ export async function generateMetadata(): Promise<Metadata> {
       statusBarStyle: "black-translucent",
       title: SITE_TITLE,
     },
-    // The site's icon is the letter P (public/icon-p*.svg|png, traced from the owner's logo): a vector
+    // The site's icon is the owner's sunglasses logo (public/icon-glasses*.svg|png|ico, from logo-glasses.svg): a vector
     // for browsers that take SVG (light on dark tabs), PNG and ICO fallbacks, and the 180 px
     // home-screen icon iOS asks for (solid background: iOS paints transparency black). The rabbit
     // is only the entry gate's picture, not an icon.
     icons: {
       icon: [
-        { url: '/icon-p.svg', type: 'image/svg+xml', sizes: 'any' },
-        { url: '/icon-p-32.png', type: 'image/png', sizes: '32x32' },
-        { url: '/favicon.ico', sizes: 'any' },
+        { url: '/icon-glasses.svg', type: 'image/svg+xml', sizes: 'any' },
+        { url: '/icon-glasses-32.png', type: 'image/png', sizes: '32x32' },
+        { url: '/icon-glasses.ico', sizes: 'any' },
       ],
-      shortcut: ['/icon-p-32.png'],
+      shortcut: ['/icon-glasses-32.png'],
       apple: [
-        { url: '/icon-p-180.png', type: 'image/png', sizes: '180x180' },
+        { url: '/icon-glasses-180.png', type: 'image/png', sizes: '180x180' },
       ],
     },
   };

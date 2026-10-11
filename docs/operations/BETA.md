@@ -12,7 +12,7 @@ Domyślnie (zmienna pusta lub brak) **beta jest WŁĄCZONA**.
 | noindex | `robots: { index: false, follow: false }` w metadanych (`app/layout.tsx`) oraz nagłówek `X-Robots-Tag: noindex, nofollow` na **każdej** odpowiedzi (strony, `/api`, `/_next`, obrazy, SVG, dźwięk, manifest; `next.config.mjs`), z wyjątkiem `robots.txt` i `sitemap.xml`. Decyzja właściciela 2026-10-11: nic ze strony nie ma się indeksować. |
 | robots.txt | bez zmian: crawling dozwolony (inaczej robot nie zobaczy noindex), reguły Disallow bez zmian, ale **bez linii `Sitemap:`**. |
 | sitemap.xml | w becie **pusta** (nie wystawiamy adresów, o których prosimy „nie indeksuj”). |
-| Tytuł i opis strony głównej | neutralne (`lib/site-stage-metadata.ts`): tytuł to sam adres drukowanymi literami, „WWW.PAWELPERFECT.COM” (`SITE_TITLE` w `lib/constants.ts`, decyzja 2026-10-11), opis lokalizowany. Tytuł filmu nie jest już opisem strony; Open Graph i Twitter mają ten sam tytuł i opis. |
+| Tytuł i opis strony głównej | neutralne (`lib/site-stage-metadata.ts`): tytuł to sam adres małymi literami, „www.pawelperfect.com” (`SITE_TITLE` w `lib/constants.ts`, decyzja 2026-10-11), opis lokalizowany. Tytuł filmu nie jest już opisem strony; Open Graph i Twitter mają ten sam tytuł i opis. |
 
 Strony prawne, przekierowania panelu admina (`middleware.ts`) i reszta tras są bez zmian.
 
