@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { useAuth } from "@/lib/auth/react";
@@ -15,7 +16,7 @@ import type { WarpStart } from "./GateWarp";
 import { preloadGateSound, primeGateSound, releaseGateSound, startGateSound } from "./gate-sound";
 import { pupilOnScreen, rabbitBox } from "./gate-warp-timeline";
 import { getRabbitVector, preloadRabbitVector } from "./rabbit-vector";
-import { captureButton, capturePrompt } from "./gate-scene";
+import { captureButton, capturePrompt, type CapturedPrompt } from "./gate-scene";
 import {
   consumeQueuedGateEnter,
   hasPassedGateThisSession,
@@ -73,6 +74,16 @@ export function usePageRevealReady(key: string | undefined, ready: boolean) {
 }
 
 type Phase = "covering" | "gate" | "warp" | "leaving" | "done";
+
+/** The prepared prompt sprite, if the prompt is still exactly where it was when it was rendered. */
+function freshPrompt(p: CapturedPrompt | null): CapturedPrompt | null {
+  if (!p) return null;
+  const el = document.querySelector<HTMLElement>("[data-gate-prompt]");
+  const r = el?.getBoundingClientRect();
+  if (!r) return null;
+  const pad = (p.box.width - r.width) / 2;
+  return Math.abs(r.left - (p.box.left + pad)) < 0.5 && Math.abs(r.top - (p.box.top + pad)) < 0.5 && Math.abs(r.width + pad * 2 - p.box.width) < 0.5 ? p : null;
+}
 
 /** The warp needs motion and a canvas; otherwise (reduced motion, no canvas) the plain fade. */
 function canWarp(): boolean {
@@ -154,6 +165,27 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
   // with its sound, or the plain fade when motion is reduced. The click pauses the hero at its start
   // and gives it the permission to play with sound ("polutek:gate-unlock"); it starts from the
   // beginning when the flash covers the screen ("polutek:gate-enter"), so the sounds never overlap.
+  // The prompt's sharp sprite (rendered with its halo at 4x resolution) costs real time to draw: it
+  // is prepared as soon as ENTER appears, not inside the click (where it was a stutter on the first
+  // frame). The click reuses it if the prompt has not moved since.
+  const promptSprite = useRef<CapturedPrompt | null>(null);
+  const capturePromptNow = () =>
+    capturePrompt(document.querySelector<HTMLElement>("[data-gate-prompt]"), Math.min(window.devicePixelRatio || 1, 1.5));
+  useEffect(() => {
+    if (phase !== "gate" || !canWarp()) return;
+    const id = window.setTimeout(() => {
+      promptSprite.current = capturePromptNow();
+    }, 50);
+    const refresh = () => {
+      promptSprite.current = capturePromptNow();
+    };
+    window.addEventListener("resize", refresh);
+    return () => {
+      window.clearTimeout(id);
+      window.removeEventListener("resize", refresh);
+    };
+  }, [phase]);
+
   const enter = useCallback(() => {
     const rabbit = document.querySelector<HTMLElement>("[data-gate-rabbit] img");
     const box = rabbit?.getBoundingClientRect();
@@ -169,7 +201,7 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
       clock: startGateSound(),
       vector: data ? { data, box: rabbitBox(box) } : null,
       button: captureButton(document.querySelector<HTMLElement>("[data-gate-enter]")),
-      prompt: capturePrompt(document.querySelector<HTMLElement>("[data-gate-prompt]"), Math.min(window.devicePixelRatio || 1, 1.5)),
+      prompt: freshPrompt(promptSprite.current) ?? capturePromptNow(),
     });
     setPhase("warp");
   }, []);
