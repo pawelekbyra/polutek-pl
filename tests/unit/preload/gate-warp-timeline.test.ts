@@ -8,9 +8,11 @@ const pupil = pupilOnScreen({ left: 93.5, top: 320.5, width: 203, height: 203 })
 const zoom = zoomLevels(pupil.r, viewport);
 
 describe("entry warp timeline", () => {
-  it("finds the entry point, the black dot under the tail (left of centre, lower part of the rabbit)", () => {
-    expect(pupil.x).toBeLessThan(195);
-    expect(pupil.y).toBeGreaterThan(422);
+  it("finds the entry point inside the rabbit box, with a visible black core", () => {
+    expect(pupil.x).toBeGreaterThan(93.5);
+    expect(pupil.x).toBeLessThan(93.5 + 203);
+    expect(pupil.y).toBeGreaterThan(320.5);
+    expect(pupil.y).toBeLessThan(320.5 + 203);
     expect(pupil.r).toBeGreaterThan(0.5);
   });
 

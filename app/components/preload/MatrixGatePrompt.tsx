@@ -1,6 +1,12 @@
 import styles from "./MatrixGatePrompt.module.css";
+import { GATE_RABBIT } from "./gate-rabbit";
 
 const PROMPT = "Follow the white rabbit";
+
+const RABBIT_SHIFT =
+  GATE_RABBIT.shift.x || GATE_RABBIT.shift.y
+    ? { transform: `translate(${GATE_RABBIT.shift.x * 100}%, ${GATE_RABBIT.shift.y * 100}%)` }
+    : undefined;
 
 export interface GatePromptLabels {
   /** Label of the progress bar while the page underneath is still loading. */
@@ -45,10 +51,12 @@ export function MatrixGatePrompt({
           className={styles.rabbit}
           data-gate-rabbit=""
           data-ready={ready ? "" : undefined}
+          // The variant's placement (its body centred over ENTER); the warp reads this box from the layout.
+          style={RABBIT_SHIFT}
           onClick={ready ? onEnter : undefined}
         >
           <img
-            src="/rabbit-gate-2.svg"
+            src={GATE_RABBIT.svg}
             alt=""
             width={220}
             height={220}

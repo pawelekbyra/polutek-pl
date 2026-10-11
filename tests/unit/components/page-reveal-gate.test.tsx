@@ -17,6 +17,7 @@ vi.mock("@/app/components/preload/GateWarp", () => ({
   ),
 }));
 
+import { GATE_RABBIT } from "@/app/components/preload/gate-rabbit";
 import {
   PAGE_REVEAL_MAX_WAIT_MS,
   PageRevealGate,
@@ -65,7 +66,7 @@ describe("PageRevealGate", () => {
     expect(preloaderState()).toBe("covering");
     // The rabbit and the prompt are in their place from the start; the rabbit is not clickable yet.
     expect(screen.getByText("Follow the white rabbit")).toBeTruthy();
-    expect(document.querySelector("[data-gate-rabbit] img")?.getAttribute("src")).toBe("/rabbit-gate-2.svg");
+    expect(document.querySelector("[data-gate-rabbit] img")?.getAttribute("src")).toBe(GATE_RABBIT.svg);
     expect(document.querySelector("[data-gate-rabbit]")?.hasAttribute("data-ready")).toBe(false);
     // Under the rabbit: the progress bar with its label, and no entry button until the page is ready.
     const bar = screen.getByRole("progressbar", { name: "ŁADOWANIE" });
@@ -96,7 +97,7 @@ describe("PageRevealGate", () => {
     // The bar gives way to the ENTER button under the rabbit, which stays where it was.
     expect(screen.getByText("Follow the white rabbit")).toBeTruthy();
     expect(enterButton().textContent).toBe("ENTER");
-    expect(document.querySelector("[data-gate-rabbit] img")?.getAttribute("src")).toBe("/rabbit-gate-2.svg");
+    expect(document.querySelector("[data-gate-rabbit] img")?.getAttribute("src")).toBe(GATE_RABBIT.svg);
     expect(document.querySelector("[data-gate-rabbit]")?.hasAttribute("data-ready")).toBe(true);
     expect(screen.queryByRole("progressbar")).toBeNull();
     expect(screen.queryByText("ŁADOWANIE")).toBeNull();
