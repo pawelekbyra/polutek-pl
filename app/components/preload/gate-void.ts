@@ -2,6 +2,7 @@
  * THE VOID: the black screen inside the pupil, between the end of the zoom (WARP.blackAt, 4.95 s)
  * and the final flash (WARP.flash, 11.3 s). Timed to the entry sound (gate-warp-timeline.ts):
  *
+ * - 4.30 – 6.30 the tunnel emerges from a point in the depth and grows to its full size (tunnelEmerge);
  * - 3.90 – 4.95 the tunnel is already there INSIDE the pupil: as the zoom closes in, the black core
  *               becomes a window onto a tube of rain glyphs deep behind it (parallax: the pupil grows
  *               fast, the far tube slowly), so entering the pupil is entering the tunnel;
@@ -65,8 +66,8 @@ const FAR = 30; // starting distance of the title (1 = resting distance)
 const TUBE_COLUMNS = 96;
 const CELL = 0.13;
 const RING_STEP = 0.16;
-/** Fog: rings come out of it in the distance; the tube's mouth starts at its far end. */
-const FOG_DEPTH = 8;
+/** Fog: rings come out of it far away, so the tube runs almost to a point; the mouth starts at MOUTH_AT and fades in. */
+const FOG_DEPTH = 18;
 const MOUTH_AT = 8;
 /**
  * Camera speed in world units per second, constant. Rings at depth 2 grow at about the zoom's mean
@@ -347,10 +348,27 @@ function drawDepthLight(ctx: CanvasRenderingContext2D, size: Size, centre: { x: 
   const strength = 0.16 * open + 0.22 * rush;
   const sprite = getLightSprite();
   if (strength < 0.005 || !sprite) return;
-  const radius = Math.min(size.width, size.height) * (0.18 + 0.5 * rush);
+  // Small: a glow wider than the tube's far end reads as a hole in the middle.
+  const radius = Math.min(size.width, size.height) * (0.07 + 0.5 * rush);
   ctx.globalAlpha = strength;
   ctx.drawImage(sprite, centre.x - radius, centre.y - radius, radius * 2, radius * 2);
   ctx.globalAlpha = 1;
+}
+
+/**
+ * The tunnel emerging out of the distance: the whole tube is drawn scaled by this factor around the
+ * vanishing point. It is born as a point in the depth of the pupil (EMERGE_FROM), grows at a log-even
+ * rate that starts at about the zoom's own end tempo (so entering the pupil flows on into it), is about
+ * an eighth of its size when the camera enters the pupil, and eases out into the constant travel.
+ */
+const EMERGE_FROM = 4.3;
+const EMERGE_TO = 6.3;
+const EMERGE_START = 0.01;
+export function tunnelEmerge(t: number): number {
+  const p = clamp01((t - EMERGE_FROM) / (EMERGE_TO - EMERGE_FROM));
+  if (p <= 0) return 0;
+  const q = 1 - (1 - p) ** 2;
+  return EMERGE_START ** (1 - q);
 }
 
 /**
@@ -365,7 +383,8 @@ export function tunnelTravel(t: number): number {
 
 /** Brightness of a ring at depth z: it comes out of the fog in the distance. */
 function ringAlpha(z: number): number {
-  return 0.75 * (1 - smooth(FOG_DEPTH * 0.55, FOG_DEPTH, z));
+  // Deep: the rings close in on the vanishing point until the hole in the middle is a few pixels.
+  return 0.75 * (1 - smooth(FOG_DEPTH * 0.7, FOG_DEPTH, z));
 }
 
 /**
@@ -455,28 +474,32 @@ function drawTunnel(ctx: CanvasRenderingContext2D, size: Size, centre: { x: numb
   const last = Math.floor((travel + FOG_DEPTH - MOUTH_AT) / RING_STEP);
   // Dimmer (never slower) while the title rests in front of it, so the address reads clearly.
   const dim = 1 - 0.35 * smooth(VOID_T.arrive - 0.6, VOID_T.arrive, t) * (1 - smooth(VOID_T.push, VOID_T.flash, t));
+  // The mouth starts nearer than the fog's end: it fades in over its first second, out of the dark.
+  const mouthIn = smooth(VOID_T.tunnelFrom, VOID_T.tunnelFrom + 1, t);
+  const emerge = tunnelEmerge(t);
+  if (emerge <= 0) return;
   for (let k = last; k >= first; k--) {
     const z = MOUTH_AT + k * RING_STEP - travel;
     // Far away the rings crowd into a few pixels: every other one fades out beyond depth 3, and so on
     // (they fade back in as they come near, long before they are told apart).
-    const ringLod = k % 2 === 1 ? 1 - smooth(2.6, 3.4, z) : k % 4 === 2 ? 1 - smooth(4, 5, z) : k % 8 === 4 ? 1 - smooth(5.5, 6.5, z) : 1;
-    const ring = ringAlpha(z) * dim * ringLod;
+    const ringLod = k % 2 === 1 ? 1 - smooth(2.6, 3.4, z) : k % 4 === 2 ? 1 - smooth(4, 5, z) : k % 8 === 4 ? 1 - smooth(5.5, 6.5, z) : k % 16 === 8 ? 1 - smooth(8, 9.5, z) : 1;
+    const ring = ringAlpha(z) * dim * ringLod * mouthIn;
     if (ring < 0.02) continue;
-    const s = f / z;
+    const s = (f / z) * emerge;
     // Far: the whole ring as one pre-rendered sprite (changing now and then, like the rain); between
     // SPRITE_FROM and SPRITE_FULL it crossfades with the cells.
     const far = smooth(SPRITE_FROM, SPRITE_FULL, z);
     if (far > 0) {
-      const m = SPRITE_AT / z;
+      const m = (SPRITE_AT / z) * emerge;
       const sprite = rings.sprites[Math.floor(hash(k, Math.floor(t * 1.5 + hash(k, 3) * 4)) * RING_VARIANTS)];
-      ctx.globalAlpha = ring * far * (0.45 + 0.55 * Math.min(1, 1.6 / z));
+      ctx.globalAlpha = ring * far * (0.6 + 0.4 * Math.min(1, 1.6 / z));
       ctx.drawImage(sprite, centre.x - (rings.w * m) / 2, centre.y - (rings.h * m) / 2, rings.w * m, rings.h * m);
     }
     if (far >= 1) continue;
     const glyphPx = CELL * s;
     const half = glyphPx / 2;
     // The glyphs' light: one even tone, brighter as they come near.
-    const near = 0.45 + 0.55 * Math.min(1, 1.6 / z);
+    const near = 0.6 + 0.4 * Math.min(1, 1.6 / z);
     for (let c = 0; c < TUBE_COLUMNS; c++) {
       if (hash(k * 131 + c, 9) < 0.22) continue; // a gap in the column
       const px = centre.x + xs[c] * s;
