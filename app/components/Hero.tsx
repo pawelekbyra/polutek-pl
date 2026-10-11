@@ -260,7 +260,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* INFO SECTION */}
         <div className="space-y-3 pb-1 lg:px-2">
-          <h1 className="font-brand font-bold not-italic text-[22px] md:text-[30px] tracking-[-0.021em] text-[var(--chan-ink)] leading-[1.16] mb-2">
+          <h1 className="font-brand font-bold not-italic uppercase text-[22px] md:text-[30px] tracking-[0.005em] text-[var(--chan-ink)] leading-[1.16] mb-2">
              {displayTitle}
           </h1>
           {typeof video.fundraisingProgress === 'number' && (
