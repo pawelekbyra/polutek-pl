@@ -78,9 +78,10 @@ describe("the tunnel of rain glyphs", () => {
     expect(VOID_T.tunnelFull).toBe(WARP.blackAt);
     // Nothing inside the pupil before it covers the screen.
     expect(tunnelFront(WARP.blackAt - 0.2)).toBe(Number.POSITIVE_INFINITY);
-    // It starts at the far end of the tube (in the fog) and comes at the viewer...
+    // It starts deep in the tube but in front of the fog, so it shows at once, and comes at the viewer...
     const start = tunnelFront(WARP.blackAt - 0.08);
-    expect(start).toBeGreaterThan(10);
+    expect(start).toBeGreaterThan(8);
+    expect(start).toBeLessThanOrEqual(18 * 0.7);
     let last = start;
     for (let t = WARP.blackAt - 0.07; t < 5.8; t += 0.01) {
       const z = tunnelFront(t);
