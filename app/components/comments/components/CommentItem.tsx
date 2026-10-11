@@ -24,7 +24,7 @@ import { useRenderClock } from "../../RenderClock";
 
 interface CommentItemProps {
   comment: CommentView;
-  userProfile: { id?: string } | null;
+  userProfile: { id?: string; imageUrl?: string | null } | null;
   language: Locale;
   t: Record<string, string>;
   canComment: boolean;
@@ -83,6 +83,13 @@ function CommentItemComponent({
   const toast = useToast();
 
   const reactionsDisabled = !userProfile || !canComment || isReactionPending;
+  // The viewer's own comments always show the viewer's CURRENT avatar: the list lives in the browser's
+  // cache with the avatar address it had when the page loaded, so a freshly changed avatar would
+  // otherwise stay old under the earlier comments until the next reload.
+  const avatarSrc =
+    userProfile?.id && comment.author?.id === userProfile.id && userProfile.imageUrl
+      ? userProfile.imageUrl
+      : comment.author?.imageUrl;
   // Creator heart: shown to everyone, set only from the admin panel (decision 8, docs/architecture/admin-phase5.md).
   const isHearted = comment.isHearted === true;
   const [isHighlighted, setIsHighlighted] = useState(false);
@@ -180,7 +187,7 @@ function CommentItemComponent({
           centred on the avatar, so it never changes the column width or the text alignment. */}
       <div className="relative z-[5] shrink-0" style={{ width: avatarSize, height: avatarSize }}>
         <SafeAvatar
-          src={comment.author?.imageUrl}
+          src={avatarSrc}
           alt={comment.author?.displayName || "Avatar"}
           size={avatarSize}
           className="border border-[var(--chan-line)]"
