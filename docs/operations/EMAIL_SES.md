@@ -36,6 +36,18 @@ Stan: 2026-10-11. Bez sekretów. Część projektu „rozgrzewanie mailingu” (
 2. Maile do świeżych skrzynek u odbiorców problematycznych (Outlook/Hotmail, Gmail, Yahoo, WP, O2): sprawdzić, czy trafiają do skrzynki odbiorczej, czy do spamu. Skrzynki testowe, które już widziały nasze wcześniejsze maile, nie nadają się (są oznaczone).
 3. Wyniki zapisać w [`MAIL-LAB.md`](MAIL-LAB.md).
 
+## Wyniki testów 2026-10-11 (po przełączeniu)
+
+Mail przez prawdziwą ścieżkę produkcyjną (`sendEmail()` z środowiskiem produkcji):
+
+- **Gmail** (`pawel.perfect@gmail.com`): skrzynka odbiorcza (kategoria Aktualizacje), nie spam. Nagłówki: `spf=pass` (ścieżka zwrotna `bounce.pawelperfect.com`), `dkim=pass` (podpis domeny `pawelperfect.com`, zgodny z nadawcą, i drugi z `amazonses.com`), `dmarc=pass` (rekord DMARC ma dziś `p=none`).
+- **Newsletter** (nadawca `newsletter@news.pawelperfect.com`, z `List-Unsubscribe`): SES przyjmuje poddomenę, Gmail: skrzynka odbiorcza.
+- **mail-tester.com: 9,1/10.** W pełni uwierzytelniony, adres IP wysyłki na białej liście Mailspike, bez czarnych list i błędnych linków. **Jedyna kara: `FROM_FMBLA_NEWDOM14`, „domena nadawcy zarejestrowana w ostatnich 7–14 dniach”.**
+
+**Wniosek:** dostarczalność u Hotmaila (Microsoft) najpewniej psuł nie dostawca, tylko **wiek domeny** (u wszystkich trzech dostawców wynik był ten sam) oraz wcześniej nazwa nadawcy wielkimi literami („PAWELPERFECT.COM”). Wiek domeny mija z czasem i z historią dobrej wysyłki; żaden dostawca tego nie obejdzie. Czego nie wiemy: faktycznego umieszczenia w skrzynce Outlooka/Hotmaila (do sprawdzenia na świeżych skrzynkach, patrz wyżej).
+
+Uwaga: SES nadpisuje nagłówek `Feedback-ID` własnym (`...:AmazonSES`), więc nasz podział na rodzaje maili w Gmail Postmaster Tools nie obowiązuje; do podziału służą znaczniki SES (`X-SES-MESSAGE-TAGS`).
+
 ## Cofnięcie
 
 Usunięcie `EMAIL_PROVIDER` (albo wartość `resend`) z `app.env` i odtworzenie kontenera `app`: całość wraca na Resend, bez zmian w kodzie. Poprzednia wartość `EMAIL_FROM` jest w kopii `app.env.bak-pre-ses-*` na serwerku.
