@@ -77,15 +77,13 @@ describe("the tunnel of rain glyphs", () => {
     expect(VOID_T.tunnelFrom).toBeLessThan(WARP.blackAt);
   });
 
-  it("is an oval tube whose columns are spread evenly along its outline and pass the screen corners", async () => {
+  it("is a round tube through the screen corners, its columns evenly round it", async () => {
     const { tubeColumns } = await import("@/app/components/preload/gate-void");
     const { xs, ys } = tubeColumns(390, 844);
-    const ex = Math.max(...xs);
-    const ey = Math.max(...ys);
-    // Oval with the screen's proportions through the corners (half sizes 1 and 844/390 at depth 1).
-    expect(ex).toBeCloseTo(Math.SQRT2, 1);
-    expect(ey).toBeCloseTo((844 / 390) * Math.SQRT2, 1);
+    const radius = Math.hypot(195, 422) / 195;
+    for (let i = 0; i < xs.length; i++) expect(Math.hypot(xs[i], ys[i])).toBeCloseTo(radius, 6);
     const gaps = [...xs].map((x, i) => Math.hypot(xs[(i + 1) % xs.length] - x, ys[(i + 1) % ys.length] - ys[i]));
-    expect(Math.max(...gaps) / Math.min(...gaps)).toBeLessThan(1.1);
+    expect(Math.max(...gaps) - Math.min(...gaps)).toBeLessThan(1e-9);
   });
+
 });

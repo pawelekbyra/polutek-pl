@@ -7,8 +7,8 @@
  *               fast, the far tube slowly), so entering the pupil is entering the tunnel;
  * - from 3.90   the camera travels down the tube at one constant speed (the zoom's own tempo; it
  *               never slows with the title): its mouth comes out of the distance and reaches the
- *               screen edges at about 6.3 s; the tube is oval, with the screen's proportions, so it
- *               covers every edge of the screen alike, and the rain flows along its columns;
+ *               screen edges at about 6.3 s; the tube is round and passes the screen's corners, so
+ *               every edge of the screen is covered;
  * - 5.15 – 8.40 "WWW.PAWELPERFECT.COM" (one line) flies out of that depth and brakes to a stop in
  *               front of the viewer (perspective: its distance falls fast, then eases out); all the
  *               way its letters are cycling Japanese rain glyphs (the rain's own glyphs and font);
@@ -59,8 +59,7 @@ const LIGHT = "247, 249, 252";
 const TRACKING = 0.12; // letter spacing, in em
 const FAR = 30; // starting distance of the title (1 = resting distance)
 /**
- * The tunnel is an oval tube (world units: half the screen's shorter side at depth 1 is 1) with the
- * screen's proportions. Its wall is one regular grid of glyph cells: TUBE_COLUMNS columns, a ring
+ * The tunnel is a round tube (world units: half the screen's shorter side at depth 1 is 1). Its wall is one regular grid of glyph cells: TUBE_COLUMNS columns, a ring
  * every RING_STEP of depth, each cell CELL wide.
  */
 const TUBE_COLUMNS = 96;
@@ -74,9 +73,7 @@ const MOUTH_AT = 8;
  * rate into the rabbit (~1.35 e-folds per second), so the tunnel keeps the zoom's tempo.
  */
 export const TUNNEL_SPEED = 2.8;
-/** The rain along the tube's columns: one stream every RAIN_TRAIL of depth, RAIN_FLOW periods a second. */
-const RAIN_TRAIL = 2.2;
-const RAIN_FLOW = 1.1;
+
 /**
  * The Japanese glyphs of the gate's rain (RAIN_CONFIG.chars without its digits), drawn in the rain's own
  * font ("monospace"), so the dust and the title's undecoded letters are the same characters as the
@@ -368,55 +365,37 @@ export function tunnelTravel(t: number): number {
 
 /** Brightness of a ring at depth z: it comes out of the fog in the distance. */
 function ringAlpha(z: number): number {
-  return 0.8 * (1 - smooth(FOG_DEPTH * 0.55, FOG_DEPTH, z));
+  return 0.75 * (1 - smooth(FOG_DEPTH * 0.55, FOG_DEPTH, z));
 }
 
 /**
- * The columns of the tube's wall for a viewport: TUBE_COLUMNS points on the oval cross-section at
- * equal distances along its outline (equal angles would crowd the narrow ends and leave the long
- * sides of a phone sparse). World units at depth 1.
+ * The columns of the tube's wall for a viewport: TUBE_COLUMNS points evenly round its round
+ * cross-section. The circle passes through the screen's corners, so at depth 1 the wall just leaves
+ * the screen at its corners and, nearer the middle of each edge, the rings a bit further away cover
+ * it: no edge is ever left empty. World units at depth 1.
  */
 let columnsFor: { key: string; xs: Float64Array; ys: Float64Array } | null = null;
 export function tubeColumns(width: number, height: number): { xs: Float64Array; ys: Float64Array } {
   const key = `${width}x${height}`;
   if (columnsFor && columnsFor.key === key) return columnsFor;
   const f = Math.min(width, height) / 2;
-  // The oval has the screen's proportions and passes through its corners, so at every edge the
-  // wall leaves the screen at about the same depth.
-  const ex = (width / 2 / f) * Math.SQRT2;
-  const ey = (height / 2 / f) * Math.SQRT2;
-  const steps = 1440;
-  const acc = new Float64Array(steps + 1);
-  for (let i = 1; i <= steps; i++) {
-    const a = ((i - 0.5) / steps) * Math.PI * 2;
-    acc[i] = acc[i - 1] + Math.hypot(ex * Math.sin(a), ey * Math.cos(a)) * ((Math.PI * 2) / steps);
-  }
+  const radius = Math.hypot(width / 2, height / 2) / f;
   const xs = new Float64Array(TUBE_COLUMNS);
   const ys = new Float64Array(TUBE_COLUMNS);
-  let j = 0;
   for (let c = 0; c < TUBE_COLUMNS; c++) {
-    const target = ((c + 0.5) / TUBE_COLUMNS) * acc[steps];
-    while (j < steps && acc[j + 1] < target) j++;
-    const a = ((j + (target - acc[j]) / (acc[j + 1] - acc[j] || 1)) / steps) * Math.PI * 2;
-    xs[c] = ex * Math.cos(a);
-    ys[c] = ey * Math.sin(a);
+    const a = ((c + 0.5) / TUBE_COLUMNS) * Math.PI * 2;
+    xs[c] = radius * Math.cos(a);
+    ys[c] = radius * Math.sin(a);
   }
   columnsFor = { key, xs, ys };
   return columnsFor;
 }
 
 /**
- * The tube, seen from inside: rings of glyph cells on an oval wall at their depths, farthest first.
- * The rings are a regular grid (TUBE_COLUMNS columns running straight to the vanishing point
- * `centre`, rings every RING_STEP), all on the one surface. Along each column the rain flows towards
- * the camera: a bright head with a fading trail, like the rain behind the rabbit. Cells are sprites
- * from the rain atlas, drawn with one drawImage each and skipped when off screen or too faint.
- */
-/**
  * Whole rings pre-rendered for the far part of the tube (depth beyond SPRITE_FROM): there each ring
  * is one drawImage instead of ~70 cells (the cells are a few pixels there, the stream's motion is not
- * readable). Rendered at the size of a ring at depth SPRITE_AT, so they are only ever scaled down.
- * Rebuilt when the viewport changes (the oval follows its proportions).
+ * distinguishable). Rendered at the size of a ring at depth SPRITE_AT, so they are only ever scaled down.
+ * Rebuilt when the viewport changes (the tube's radius follows the screen's diagonal).
  */
 const SPRITE_AT = 1.7;
 const SPRITE_FROM = 1.8;
@@ -445,7 +424,6 @@ function getRingSprites(width: number, height: number): { sprites: HTMLCanvasEle
     g.scale(res, res);
     for (let col = 0; col < TUBE_COLUMNS; col++) {
       if (hash(v * 977 + col, 9) < 0.22) continue;
-      g.globalAlpha = 0.3 + 0.7 * hash(v * 977 + col, 19) ** 3;
       const glyph = Math.floor(hash(v * 977 + col, 23) * rain.count);
       const x = w / 2 + xs[col] * s - glyphPx / 2;
       const y = h / 2 + ys[col] * s - glyphPx / 2;
@@ -457,6 +435,13 @@ function getRingSprites(width: number, height: number): { sprites: HTMLCanvasEle
   return ringSprites;
 }
 
+/**
+ * The tube, seen from inside: rings of glyph cells on its round wall at their depths, farthest first.
+ * The rings are a regular grid (TUBE_COLUMNS columns running straight to the vanishing point
+ * `centre`, rings every RING_STEP), all on the one surface; the glyphs have one even tone that
+ * brightens as they come near and change now and then, like the rain. Near cells are drawn one by
+ * one from the rain sheet (skipped when off screen or too faint), far rings as ring sprites.
+ */
 function drawTunnel(ctx: CanvasRenderingContext2D, size: Size, centre: { x: number; y: number }, t: number) {
   const rain = getRainSheet();
   const rings = getRingSprites(size.width, size.height);
@@ -468,7 +453,6 @@ function drawTunnel(ctx: CanvasRenderingContext2D, size: Size, centre: { x: numb
   // Ring k sits at world depth MOUTH_AT + k * RING_STEP; the camera has moved `travel` towards it.
   const first = Math.max(0, Math.ceil((travel + 0.9 - MOUTH_AT) / RING_STEP));
   const last = Math.floor((travel + FOG_DEPTH - MOUTH_AT) / RING_STEP);
-  const flow = t * RAIN_FLOW;
   // Dimmer (never slower) while the title rests in front of it, so the address reads clearly.
   const dim = 1 - 0.35 * smooth(VOID_T.arrive - 0.6, VOID_T.arrive, t) * (1 - smooth(VOID_T.push, VOID_T.flash, t));
   for (let k = last; k >= first; k--) {
@@ -485,25 +469,23 @@ function drawTunnel(ctx: CanvasRenderingContext2D, size: Size, centre: { x: numb
     if (far > 0) {
       const m = SPRITE_AT / z;
       const sprite = rings.sprites[Math.floor(hash(k, Math.floor(t * 1.5 + hash(k, 3) * 4)) * RING_VARIANTS)];
-      ctx.globalAlpha = ring * far * 0.75;
+      ctx.globalAlpha = ring * far * (0.45 + 0.55 * Math.min(1, 1.6 / z));
       ctx.drawImage(sprite, centre.x - (rings.w * m) / 2, centre.y - (rings.h * m) / 2, rings.w * m, rings.h * m);
     }
     if (far >= 1) continue;
     const glyphPx = CELL * s;
     const half = glyphPx / 2;
-    const depth = MOUTH_AT + k * RING_STEP; // fixed on the wall: the rain flows over it
+    // The glyphs' light: one even tone, brighter as they come near.
+    const near = 0.45 + 0.55 * Math.min(1, 1.6 / z);
     for (let c = 0; c < TUBE_COLUMNS; c++) {
       if (hash(k * 131 + c, 9) < 0.22) continue; // a gap in the column
       const px = centre.x + xs[c] * s;
       const py = centre.y + ys[c] * s;
       if (px < -half || py < -half || px > size.width + half || py > size.height + half) continue;
-      // The rain's stream in this column: the head moves towards the camera, the trail fades behind it.
-      const phase = (depth / RAIN_TRAIL + hash(c, 31) * 7 + flow) % 1;
-      const stream = (1 - phase) ** 3;
-      const alpha = ring * (1 - far) * (0.3 + 0.7 * stream);
+      const alpha = ring * (1 - far) * near;
       if (alpha < 0.03) continue;
-      // Each cell changes its glyph now and then, faster in the stream's head.
-      const glyph = Math.floor(hash(k * 977 + c, Math.floor(t * (2 + 10 * stream) + hash(c, k))) * count);
+      // Each cell changes its glyph now and then (about three times a second, cells out of step), like the rain.
+      const glyph = Math.floor(hash(k * 977 + c, Math.floor(t * 3 + hash(c, k) * 3)) * count);
       ctx.globalAlpha = alpha;
       ctx.drawImage(sheet, glyph * cell, 0, cell, cell, px - half * 1.2, py - half * 1.2, glyphPx * 1.2, glyphPx * 1.2);
     }
