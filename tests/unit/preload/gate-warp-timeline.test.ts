@@ -22,15 +22,18 @@ describe("entry warp timeline", () => {
     expect(cam.textOpacity).toBe(1);
   });
 
-  it("moves from the very first frame, slowly, and drops the text in the first 0.7 s", () => {
-    // No dead start: visibly bigger after a tenth of a second, still small after a whole second.
-    expect(cameraAt(0.1, pupil, center, zoom).scale).toBeGreaterThan(1.02);
-    expect(cameraAt(1.0, pupil, center, zoom).scale).toBeLessThan(2);
+  it("holds still through the opening whisper, then moves from the motif's first frame, slowly", () => {
+    // The whisper (0-0.65 s): no zoom yet, but the prompt already fades (the click registered).
+    expect(cameraAt(WARP.zoomFrom - 0.01, pupil, center, zoom).scale).toBeCloseTo(1);
+    expect(cameraAt(0.4, pupil, center, zoom).textOpacity).toBeLessThan(0.7);
+    // The motif: visibly bigger a tenth of a second later, still small a second later.
+    expect(cameraAt(WARP.zoomFrom + 0.1, pupil, center, zoom).scale).toBeGreaterThan(1.02);
+    expect(cameraAt(WARP.zoomFrom + 1.0, pupil, center, zoom).scale).toBeLessThan(2.2);
     expect(cameraAt(0.7, pupil, center, zoom).textOpacity).toBe(0);
   });
 
   it("has the pupil centred long before it enters it", () => {
-    const cam = cameraAt(3.6, pupil, center, zoom);
+    const cam = cameraAt(WARP.zoomFrom + 3.0, pupil, center, zoom);
     expect(cam.tx + cam.scale * pupil.x).toBeCloseTo(center.x);
     expect(cam.ty + cam.scale * pupil.y).toBeCloseTo(center.y);
   });
