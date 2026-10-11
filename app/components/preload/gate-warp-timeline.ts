@@ -18,6 +18,8 @@
  * - 11.50 – 12.30 the gate fades out, the sound fades away (baked into the file, 12.3 s long).
  */
 
+import { GATE_RABBIT } from "./gate-rabbit";
+
 export const WARP = {
   /**
    * The zoom starts on the second word of the opening whisper ("here COME…", 0.4 s, measured): it
@@ -41,12 +43,11 @@ const ZOOM_ACCEL = 2.2;
 const CENTRE_BY = 3.0;
 
 /**
- * Where the warp goes in, as a share of the picture's edge: its centre and the radius that is still
- * solid black. Experiment (2026-10-11): the rabbit seen from behind (public/rabbit-gate-2.svg, viewBox
- * 1926) and the black dot under its tail. (The eye's pupil of the first rabbit, public/rabbit-gate.svg,
- * was { x: 275.5 / 440, y: 183.5 / 440, core: 2.8 / 440 }.) The name stays "pupil" throughout the code.
+ * Where the warp goes in, as a share of the picture's edge (the black core of the eye's pupil, or the
+ * black dot under the tail): set by the gate's rabbit variant, see gate-rabbit.ts. The name stays
+ * "pupil" throughout the warp code.
  */
-export const RABBIT_PUPIL = { x: 570.3 / 1926, y: 1707.8 / 1926, core: 9 / 1926 } as const;
+export const RABBIT_PUPIL = GATE_RABBIT.target;
 
 /** Share of the frame's shorter edge the eye fills (used for the eye-filling zoom level). */
 const EYE_FILL = 0.9;

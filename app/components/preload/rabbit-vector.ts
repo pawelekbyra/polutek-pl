@@ -1,12 +1,14 @@
 /**
- * The gate rabbit as vector paths (public/rabbit-gate.svg: a trace of the original drawing, three
- * flat layers: white silhouette, light shading, black lines). The entry warp zooms into the eye by
+ * The gate rabbit as vector paths (the active variant's traced SVG, gate-rabbit.ts: three flat layers:
+ * white silhouette, light shading, black lines). The entry warp zooms into its black spot by
  * more than 50x, which a 440 px bitmap cannot survive; here the paths are drawn on a canvas every
  * frame at the current scale, so the eye stays razor sharp. Loaded while the viewer looks at the
  * rabbit; without it (fetch failed, no Path2D) the warp falls back to scaling the bitmap.
  */
 
-export const RABBIT_SVG_URL = "/rabbit-gate-2.svg";
+import { GATE_RABBIT } from "./gate-rabbit";
+
+export const RABBIT_SVG_URL = GATE_RABBIT.svg;
 
 export type RabbitVector = {
   /** Edge of the (square) viewBox the paths are drawn in. */
