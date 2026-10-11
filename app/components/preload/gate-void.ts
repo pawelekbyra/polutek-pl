@@ -5,7 +5,7 @@
  * - 4.87 – 5.80 the pupil has covered the screen and the camera enters it on the sound's accent (4.95):
  *               the tunnel builds itself out of the distance (tunnelFront; nothing shows inside the
  *               pupil before): its first glyph rings fly from the far end at the screen at the zoom's
- *               own tempo and the tube forms behind them, reaching the screen edges at about 5.8 s;
+ *               own tempo and the tube forms behind them, reaching the screen edges at about 5.65 s;
  * - from 4.25   the camera travels down the tube at one constant speed (the zoom's own tempo; it
  *               never slows with the title); the tube is round and passes the screen's corners, so
  *               every edge of the screen is covered, and it runs deep, almost to a point;
@@ -371,16 +371,22 @@ export function zoomEndRate(): number {
 /** When the tunnel starts building: the pupil has just covered the whole screen. */
 const BUILD_FROM = VOID_T.tunnelFull - 0.08;
 /**
+ * Where the front starts: deep, but nearer than the fog (from FOG_DEPTH * 0.7 on), so the tunnel is
+ * visible from the very moment the pupil covers the screen; starting at the tube's far end, inside the
+ * fog, it showed only about 0.2 s later.
+ */
+const BUILD_DEPTH = 11;
+/**
  * The tunnel builds itself out of the distance: only the rings beyond this depth exist. The front
- * starts at the far end of the tube (in the fog) the moment the pupil covers the screen and flies
+ * starts deep in the tube (BUILD_DEPTH) the moment the pupil covers the screen and flies
  * towards the viewer, so the first glyphs come at the screen and the tube forms behind them. Its
  * depth falls exponentially at the zoom's own end tempo (its ring grows on screen exactly as fast as
  * the zoom did), so the fall into the pupil flows straight on into it; it reaches the screen edges
- * about 0.9 s later. Infinity: nothing yet; 0: the whole tube is built.
+ * about 0.8 s later. Infinity: nothing yet; 0: the whole tube is built.
  */
 export function tunnelFront(t: number): number {
   if (t < BUILD_FROM) return Number.POSITIVE_INFINITY;
-  const z = FOG_DEPTH * Math.exp(-zoomEndRate() * (t - BUILD_FROM));
+  const z = BUILD_DEPTH * Math.exp(-zoomEndRate() * (t - BUILD_FROM));
   return z <= 0.9 ? 0 : z;
 }
 
