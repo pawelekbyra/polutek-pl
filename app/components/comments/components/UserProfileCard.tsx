@@ -53,11 +53,8 @@ export function UserProfileCard({
           data-testid="user-profile-card"
           className="fixed left-1/2 top-1/2 z-[1101] w-[calc(100%-32px)] max-w-[360px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[28px] border border-[var(--chan-line)] bg-[var(--chan-card)] text-[var(--chan-ink)] shadow-[0_32px_80px_-24px_rgba(15,23,42,0.45)] outline-none duration-200 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-open:slide-in-from-bottom-3 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 motion-reduce:animate-none"
         >
-          {/* Soft tinted band the avatar overlaps (tokens only, so it follows light/dark). */}
-          <div
-            aria-hidden="true"
-            className="h-24 bg-[linear-gradient(135deg,var(--cm-amber-20),var(--cm-blue-20))]"
-          />
+          {/* Band the avatar overlaps: the site's ink colour, like its primary buttons (tokens only, so it follows light/dark). */}
+          <div aria-hidden="true" className="h-24 bg-[var(--chan-ink)]" />
           <DialogClose
             aria-label={tx("Zamknij", "Close")}
             className="absolute right-3 top-3 grid cursor-pointer h-9 w-9 place-items-center rounded-full bg-[var(--chan-card)]/70 text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transition-none"
