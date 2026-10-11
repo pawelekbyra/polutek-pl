@@ -2,11 +2,10 @@
  * THE VOID: the black screen inside the pupil, between the end of the zoom (WARP.blackAt, 4.95 s)
  * and the final flash (WARP.flash, 11.3 s). Timed to the entry sound (gate-warp-timeline.ts):
  *
- * - 4.25 – 4.95 a small picture of the tunnel fades in in the middle of the pupil and grows exactly as
- *               fast as the pupil (tunnelEmerge: one tempo, the zoom's own);
- * - 4.95        the pupil fills the screen and the camera enters it (the sound's accent): the tunnel's
- *               walls open around the viewer and its growth eases off over about a second into the
- *               constant travel, with no jump in tempo;
+ * - 4.87 – 5.20 the pupil has covered the screen and the camera enters it on the sound's accent (4.95):
+ *               the tunnel appears around the viewer, walls and all (one entry; nothing shows inside
+ *               the pupil before), already growing at the zoom's own tempo (tunnelEmerge), and its
+ *               growth eases off over about a second into the constant travel, with no jump in tempo;
  * - from 4.25   the camera travels down the tube at one constant speed (the zoom's own tempo; it
  *               never slows with the title); the tube is round and passes the screen's corners, so
  *               every edge of the screen is covered, and it runs deep, almost to a point;
@@ -42,11 +41,11 @@ export const AIM_CANDIDATES = [VOID_TITLE.length / 2 - 1, VOID_TITLE.length / 2]
 
 /** Key moments (seconds since the click). */
 export const VOID_T = {
-  /** The tunnel fades in as a small picture in the middle of the pupil; the camera starts travelling. */
+  /** The camera starts travelling down the tunnel (it is shown only from the entry, tunnelFull). */
   tunnelFrom: 4.25,
   /**
-   * The pupil fills the screen and the camera enters it (= WARP.blackAt): the tunnel's walls open
-   * around the viewer and its growth eases off into the constant travel (tunnelEmerge).
+   * The pupil fills the screen and the camera enters it (= WARP.blackAt): the tunnel appears around
+   * the viewer (fading in from 0.08 s before) and its growth eases off into the constant travel.
    */
   tunnelFull: 4.95,
   open: 5.15,
@@ -349,7 +348,8 @@ function aimPoint(widths: number[], tracking: number, total: number, restPx: num
 type Size = { width: number; height: number };
 
 function drawDepthLight(ctx: CanvasRenderingContext2D, size: Size, centre: { x: number; y: number }, t: number) {
-  const open = smooth(VOID_T.tunnelFrom, VOID_T.tunnelFrom + 1, t) * (1 - 0.6 * smooth(VOID_T.arrive - 0.6, VOID_T.arrive + 0.4, t));
+  // Lights up with the tunnel, on the entry (no glow inside the pupil before it covers the screen).
+  const open = smooth(VOID_T.tunnelFull - 0.08, VOID_T.tunnelFull + 0.6, t) * (1 - 0.6 * smooth(VOID_T.arrive - 0.6, VOID_T.arrive + 0.4, t));
   const rush = smooth(VOID_T.push, VOID_T.flash, t);
   const strength = 0.16 * open + 0.22 * rush;
   const sprite = getLightSprite();
@@ -438,11 +438,17 @@ export function tubeColumns(width: number, height: number): { xs: Float64Array; 
 const SPRITE_AT = 1.7;
 const SPRITE_FROM = 1.8;
 const SPRITE_FULL = 2.4;
-const RING_VARIANTS = 4;
-/** Pixel budget of one ring sprite (about 12 MB of memory at most each). */
-const SPRITE_MAX_PIXELS = 3_000_000;
-let ringSprites: { key: string; sprites: HTMLCanvasElement[]; w: number; h: number } | null = null;
-function getRingSprites(width: number, height: number): { sprites: HTMLCanvasElement[]; w: number; h: number } | null {
+const RING_VARIANTS = 6;
+/** Pixel budget of one ring sprite's full-size level (about 8 MB of memory at most). */
+const SPRITE_MAX_PIXELS = 2_000_000;
+/**
+ * Each ring sprite comes with smaller copies (halved down to ~64 px; "mipmaps"): canvas scales an image
+ * down without them by sampling a few of its pixels, and a far or still small ring then twinkled from
+ * frame to frame as its scale changed. The copy nearest to (and not smaller than) the drawn size is used.
+ */
+type RingSprite = HTMLCanvasElement[];
+let ringSprites: { key: string; sprites: RingSprite[]; w: number; h: number } | null = null;
+function getRingSprites(width: number, height: number): { sprites: RingSprite[]; w: number; h: number } | null {
   const key = `${width}x${height}`;
   if (ringSprites && ringSprites.key === key) return ringSprites;
   const rain = getRainSheet();
@@ -453,24 +459,62 @@ function getRingSprites(width: number, height: number): { sprites: HTMLCanvasEle
   const w = 2 * (Math.max(...xs) * s + glyphPx);
   const h = 2 * (Math.max(...ys) * s + glyphPx);
   const dpr = (typeof window !== "undefined" && window.devicePixelRatio) || 1;
-  const res = Math.min(2, dpr, Math.sqrt(SPRITE_MAX_PIXELS / (w * h)));
-  const sprites: HTMLCanvasElement[] = [];
+  const res = Math.min(1.5, dpr, Math.sqrt(SPRITE_MAX_PIXELS / (w * h)));
+  const sprites: RingSprite[] = [];
   for (let v = 0; v < RING_VARIANTS; v++) {
     const c = makeCanvas(w * res, h * res);
     const g = c?.getContext("2d");
     if (!c || !g) return null;
     g.scale(res, res);
     for (let col = 0; col < TUBE_COLUMNS; col++) {
-      if (hash(v * 977 + col, 9) < 0.22) continue;
-      const glyph = Math.floor(hash(v * 977 + col, 23) * rain.count);
+      const glyph = ringGlyph(v, col, rain.count);
+      if (glyph < 0) continue;
       const x = w / 2 + xs[col] * s - glyphPx / 2;
       const y = h / 2 + ys[col] * s - glyphPx / 2;
       g.drawImage(rain.sheet, glyph * rain.cell, 0, rain.cell, rain.cell, x, y, glyphPx, glyphPx);
     }
-    sprites.push(c);
+    const levels: RingSprite = [c];
+    for (let prev = c; prev.width > 128 && prev.height > 128; ) {
+      const next = makeCanvas(prev.width / 2, prev.height / 2);
+      const ng = next?.getContext("2d");
+      if (!next || !ng) break;
+      ng.imageSmoothingQuality = "high";
+      ng.drawImage(prev, 0, 0, next.width, next.height);
+      levels.push(next);
+      prev = next;
+    }
+    sprites.push(levels);
   }
   ringSprites = { key, sprites, w, h };
   return ringSprites;
+}
+
+/**
+ * The resting glyph of a ring layout's column (-1: a gap). Ring sprites and single cells share it, so
+ * a ring coming near changes from its sprite to cells without its pattern changing.
+ */
+function ringGlyph(variant: number, col: number, count: number): number {
+  if (hash(variant * 977 + col, 9) < 0.22) return -1;
+  return Math.floor(hash(variant * 977 + col, 23) * count);
+}
+
+/**
+ * Draws a ring sprite at `w` x `h` CSS px: from the smallest level not smaller than the drawn size,
+ * blended into the next smaller one as the size approaches it (as a GPU does between mipmaps), so the
+ * ring does not pulse in brightness when the level changes.
+ */
+function drawRingSprite(ctx: CanvasRenderingContext2D, levels: RingSprite, x: number, y: number, w: number, h: number, alpha: number, deviceScale: number) {
+  const devicePx = w * deviceScale;
+  let i = 0;
+  while (i + 1 < levels.length && levels[i + 1].width >= devicePx) i++;
+  const next = levels[i + 1];
+  const blend = next ? clamp01(Math.log2(levels[i].width / Math.max(1, devicePx))) : 0;
+  ctx.globalAlpha = alpha * (1 - blend);
+  ctx.drawImage(levels[i], x, y, w, h);
+  if (next && blend > 0.02) {
+    ctx.globalAlpha = alpha * blend;
+    ctx.drawImage(next, x, y, w, h);
+  }
 }
 
 /**
@@ -485,6 +529,7 @@ function drawTunnel(ctx: CanvasRenderingContext2D, size: Size, centre: { x: numb
   const rings = getRingSprites(size.width, size.height);
   if (!rain || !rings) return;
   const { sheet, cell, count } = rain;
+  const deviceScale = ctx.getTransform().a || 1;
   const f = Math.min(size.width, size.height) / 2; // focal length: world 1 at depth 1 = half the shorter side
   const { xs, ys } = tubeColumns(size.width, size.height);
   const travel = tunnelTravel(t);
@@ -492,14 +537,13 @@ function drawTunnel(ctx: CanvasRenderingContext2D, size: Size, centre: { x: numb
   const last = Math.floor((travel + FOG_DEPTH - RING_ORIGIN) / RING_STEP);
   // Dimmer (never slower) while the title rests in front of it, so the address reads clearly.
   const dim = 1 - 0.35 * smooth(VOID_T.arrive - 0.6, VOID_T.arrive, t) * (1 - smooth(VOID_T.push, VOID_T.flash, t));
-  // Out of the dark: the point fades in as it appears.
-  const fadeIn = smooth(VOID_T.tunnelFrom, VOID_T.tunnelFrom + 0.3, t);
-  // Inside the pupil the tunnel is a small disc (its nearest rings faded out); its walls open around
-  // the viewer as the pupil covers the screen and the camera enters it.
-  const walls = smooth(VOID_T.tunnelFull - 0.08, VOID_T.tunnelFull + 0.25, t);
+  // One entry only, on the sound's accent: nothing shows inside the pupil while it does not fill the
+  // screen yet (a first, small tunnel in there read as a second ring entry); the whole tunnel, walls
+  // and all, appears around the viewer as the pupil covers the screen and the camera enters it.
+  const fadeIn = smooth(VOID_T.tunnelFull - 0.08, VOID_T.tunnelFull + 0.25, t);
   const emerge = tunnelEmerge(t);
   if (emerge <= 0) return;
-  // Nearest ring drawn: the one just past the screen edge (depth 0.9 at full size, nearer while small).
+  // Nearest ring drawn: the one just past the screen edge (depth 0.9 at full size, nearer while smaller).
   const first = Math.ceil((travel + 0.9 * emerge - RING_ORIGIN) / RING_STEP);
   for (let k = last; k >= first; k--) {
     const z = RING_ORIGIN + k * RING_STEP - travel;
@@ -509,18 +553,17 @@ function drawTunnel(ctx: CanvasRenderingContext2D, size: Size, centre: { x: numb
     // rings are as small as far ones, so they are thinned out and drawn as ring sprites too.
     const zs = z / emerge;
     const ringLod = k % 2 === 1 ? 1 - smooth(2.6, 3.4, zs) : k % 4 === 2 ? 1 - smooth(4, 5, zs) : k % 8 === 4 ? 1 - smooth(5.5, 6.5, zs) : k % 16 === 8 ? 1 - smooth(8, 9.5, zs) : 1;
-    const passing = walls + (1 - walls) * smooth(0.9, 1.6, z);
-    const ring = ringAlpha(z) * dim * ringLod * fadeIn * passing;
+    const ring = ringAlpha(z) * dim * ringLod * fadeIn;
     if (ring < 0.02) continue;
     const s = (f / z) * emerge;
-    // Far: the whole ring as one pre-rendered sprite (changing now and then, like the rain); between
-    // SPRITE_FROM and SPRITE_FULL it crossfades with the cells.
+    // Each ring keeps one layout (no swapping of its whole pattern: a small ring doing that flickered).
+    const variant = Math.floor(hash(k, 3) * RING_VARIANTS);
+    // Far: the whole ring as one pre-rendered sprite; between SPRITE_FROM and SPRITE_FULL it crossfades
+    // with the cells, which show the same glyphs in the same places.
     const far = smooth(SPRITE_FROM, SPRITE_FULL, zs);
     if (far > 0) {
       const m = (SPRITE_AT / z) * emerge;
-      const sprite = rings.sprites[Math.floor(hash(k, Math.floor(t * 1.5 + hash(k, 3) * 4)) * RING_VARIANTS)];
-      ctx.globalAlpha = ring * far * (0.6 + 0.4 * Math.min(1, 1.6 / z));
-      ctx.drawImage(sprite, centre.x - (rings.w * m) / 2, centre.y - (rings.h * m) / 2, rings.w * m, rings.h * m);
+      drawRingSprite(ctx, rings.sprites[variant], centre.x - (rings.w * m) / 2, centre.y - (rings.h * m) / 2, rings.w * m, rings.h * m, ring * far * (0.6 + 0.4 * Math.min(1, 1.6 / z)), deviceScale);
     }
     if (far >= 1) continue;
     const glyphPx = CELL * s;
@@ -528,14 +571,18 @@ function drawTunnel(ctx: CanvasRenderingContext2D, size: Size, centre: { x: numb
     // The glyphs' light: one even tone, brighter as they come near.
     const near = 0.6 + 0.4 * Math.min(1, 1.6 / z);
     for (let c = 0; c < TUBE_COLUMNS; c++) {
-      if (hash(k * 131 + c, 9) < 0.22) continue; // a gap in the column
+      const resting = ringGlyph(variant, c, count);
+      if (resting < 0) continue; // a gap in the column
       const px = centre.x + xs[c] * s;
       const py = centre.y + ys[c] * s;
       if (px < -half || py < -half || px > size.width + half || py > size.height + half) continue;
       const alpha = ring * (1 - far) * near;
       if (alpha < 0.03) continue;
-      // Each cell changes its glyph now and then (about three times a second, cells out of step), like the rain.
-      const glyph = Math.floor(hash(k * 977 + c, Math.floor(t * 3 + hash(c, k) * 3)) * count);
+      // Once near (each cell from its own depth, so they do not all switch at once) a cell starts
+      // changing its glyph now and then, about three times a second, like the rain; before that it
+      // keeps the glyph its ring sprite shows.
+      const cycling = zs < 1.2 + 0.5 * hash(k * 31 + c, 41);
+      const glyph = cycling ? Math.floor(hash(k * 977 + c, Math.floor(t * 3 + hash(c, k) * 3)) * count) : resting;
       ctx.globalAlpha = alpha;
       ctx.drawImage(sheet, glyph * cell, 0, cell, cell, px - half * 1.2, py - half * 1.2, glyphPx * 1.2, glyphPx * 1.2);
     }

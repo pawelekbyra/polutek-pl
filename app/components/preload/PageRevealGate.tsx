@@ -16,7 +16,7 @@ import type { WarpStart } from "./GateWarp";
 import { preloadGateSound, primeGateSound, releaseGateSound, startGateSound } from "./gate-sound";
 import { pupilOnScreen, rabbitBox } from "./gate-warp-timeline";
 import { getRabbitVector, preloadRabbitVector } from "./rabbit-vector";
-import { captureButton, capturePrompt, type CapturedPrompt } from "./gate-scene";
+import { captureButton, capturePrompt, cursorBlinkPhase, type CapturedPrompt } from "./gate-scene";
 import { prepareGateVoid } from "./gate-void";
 import {
   consumeQueuedGateEnter,
@@ -75,6 +75,11 @@ export function usePageRevealReady(key: string | undefined, ready: boolean) {
 }
 
 type Phase = "covering" | "gate" | "warp" | "leaving" | "done";
+
+/** The prompt for the warp, its cursor blinking in step with the one on screen at the click. */
+function withBlinkPhase(p: CapturedPrompt | null): CapturedPrompt | null {
+  return p ? { ...p, blinkPhase: cursorBlinkPhase(document.querySelector<HTMLElement>("[data-gate-prompt]")) } : null;
+}
 
 /** The prepared prompt sprite, if the prompt is still exactly where it was when it was rendered. */
 function freshPrompt(p: CapturedPrompt | null): CapturedPrompt | null {
@@ -174,16 +179,22 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
     capturePrompt(document.querySelector<HTMLElement>("[data-gate-prompt]"), Math.min(window.devicePixelRatio || 1, 1.5));
   useEffect(() => {
     if (phase !== "gate" || !canWarp()) return;
+    let alive = true;
     const id = window.setTimeout(() => {
-      promptSprite.current = capturePromptNow();
       // The tunnel's glyph sprites too: rendering them on the warp's first tunnel frame was a stall.
       prepareGateVoid();
+      // Only once the prompt's font is in: a sprite drawn in the fallback font changed shape on the click.
+      const fonts = typeof document.fonts?.ready?.then === "function" ? document.fonts.ready : Promise.resolve();
+      void fonts.then(() => {
+        if (alive) promptSprite.current = capturePromptNow();
+      });
     }, 50);
     const refresh = () => {
       promptSprite.current = capturePromptNow();
     };
     window.addEventListener("resize", refresh);
     return () => {
+      alive = false;
       window.clearTimeout(id);
       window.removeEventListener("resize", refresh);
     };
@@ -204,7 +215,7 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
       clock: startGateSound(),
       vector: data ? { data, box: rabbitBox(box) } : null,
       button: captureButton(document.querySelector<HTMLElement>("[data-gate-enter]")),
-      prompt: freshPrompt(promptSprite.current) ?? capturePromptNow(),
+      prompt: withBlinkPhase(freshPrompt(promptSprite.current) ?? capturePromptNow()),
     });
     setPhase("warp");
   }, []);
