@@ -11,6 +11,26 @@ vi.mock("@/app/components/preload/MatrixRain", () => ({ MatrixRain: () => null }
 const mocks = vi.hoisted(() => ({ auth: { isLoaded: true } }));
 
 vi.mock("@/lib/auth/react", () => ({ useAuth: () => mocks.auth }));
+// The entry sound (Web Audio does not exist in jsdom): decoded or not, loadable or not, on demand.
+const sound = vi.hoisted(() => ({
+  ready: true,
+  withSound: true,
+  preload: (() => Promise.resolve(true)) as () => Promise<boolean>,
+}));
+vi.mock("@/app/components/preload/gate-sound", () => ({
+  preloadGateSound: () => sound.preload(),
+  primeGateSound: () => undefined,
+  isGateSoundReady: () => sound.ready,
+  releaseGateSound: () => undefined,
+  startGateSound: () => ({
+    now: () => 0,
+    stop: () => undefined,
+    dispose: () => undefined,
+    get withSound() {
+      return sound.withSound;
+    },
+  }),
+}));
 // The warp itself (canvas, rAF, audio) is out of scope here: a stand-in that plays it on demand.
 vi.mock("@/app/components/preload/GateWarp", () => ({
   GateWarp: (props: { onReveal: () => void; onDone: () => void }) => (
@@ -21,6 +41,7 @@ vi.mock("@/app/components/preload/GateWarp", () => ({
 import { GATE_RABBIT } from "@/app/components/preload/gate-rabbit";
 import { SitePreloaderScreen } from "@/app/components/preload/SitePreloaderScreen";
 import {
+  GATE_SOUND_MAX_WAIT_MS,
   PAGE_REVEAL_MAX_WAIT_MS,
   PageRevealGate,
   resetPageRevealForTests,
@@ -49,6 +70,9 @@ describe("PageRevealGate", () => {
     vi.useFakeTimers();
     vi.spyOn(performance, "now").mockReturnValue(0);
     mocks.auth.isLoaded = true;
+    sound.ready = true;
+    sound.withSound = true;
+    sound.preload = () => Promise.resolve(true);
     resetPageRevealForTests();
   });
 
@@ -360,6 +384,115 @@ describe("PageRevealGate", () => {
     window.removeEventListener("polutek:gate-unlock", unlock);
     // @ts-expect-error back to jsdom's default (no matchMedia)
     delete window.matchMedia;
+  });
+
+  describe("the entry's sound", () => {
+    function allowMotion() {
+      window.matchMedia = ((query: string) => ({ matches: false, media: query })) as unknown as typeof window.matchMedia;
+      vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({} as never);
+    }
+    function rabbitBox() {
+      const rabbit = document.querySelector("[data-gate-rabbit] img")!;
+      vi.spyOn(rabbit, "getBoundingClientRect").mockReturnValue({ left: 100, top: 300, width: 200, height: 200, right: 300, bottom: 500, x: 100, y: 300, toJSON() {} } as DOMRect);
+    }
+    afterEach(() => {
+      // @ts-expect-error back to jsdom's default (no matchMedia)
+      delete window.matchMedia;
+    });
+
+    it("keeps the loading bar up past the page limit while the sound is not decoded, and offers ENTER the moment it is", async () => {
+      allowMotion();
+      let resolve!: (ok: boolean) => void;
+      sound.ready = false;
+      sound.preload = () => new Promise<boolean>((r) => { resolve = r; });
+      render(
+        <PageRevealGate>
+          <p>page</p>
+        </PageRevealGate>,
+      );
+      await act(async () => {});
+      // The page has long been ready (nothing awaited, auth loaded), the page limit has passed.
+      await act(async () => {
+        vi.advanceTimersByTime(PAGE_REVEAL_MAX_WAIT_MS + 4000);
+      });
+      expect(preloaderState()).toBe("covering");
+      expect(screen.queryByRole("button")).toBeNull();
+      expect(screen.getByRole("progressbar", { name: "ŁADOWANIE" })).toBeTruthy();
+      // The rabbit does not enter either.
+      fireEvent.click(document.querySelector("[data-gate-rabbit] img")!);
+      expect(preloaderState()).toBe("covering");
+
+      sound.ready = true;
+      await act(async () => {
+        resolve(true);
+      });
+      expect(preloaderState()).toBe("gate");
+      expect(enterButton().textContent).toBe("ENTER");
+
+      // With the sound decoded, the click runs the warp.
+      rabbitBox();
+      fireEvent.click(enterButton());
+      expect(preloaderState()).toBe("warp");
+    });
+
+    it("falls back to the plain fade, silent and without animation, when the sound cannot be loaded", async () => {
+      allowMotion();
+      const unlock = vi.fn();
+      window.addEventListener("polutek:gate-unlock", unlock);
+      sound.ready = false;
+      sound.preload = () => Promise.resolve(false);
+      render(
+        <PageRevealGate>
+          <p>page</p>
+        </PageRevealGate>,
+      );
+      await act(async () => {});
+      expect(preloaderState()).toBe("gate");
+      rabbitBox();
+      fireEvent.click(enterButton());
+      expect(preloaderState()).toBe("leaving");
+      expect(unlock).not.toHaveBeenCalled();
+      await finishLeaving();
+      expect(preloaderState()).toBe("gone");
+      window.removeEventListener("polutek:gate-unlock", unlock);
+    });
+
+    it("gives the sound up at its long limit (never stuck on the bar) and then takes the plain fade", async () => {
+      allowMotion();
+      sound.ready = false;
+      sound.preload = () => new Promise<boolean>(() => undefined);
+      render(
+        <PageRevealGate>
+          <p>page</p>
+        </PageRevealGate>,
+      );
+      await act(async () => {});
+      await act(async () => {
+        vi.advanceTimersByTime(GATE_SOUND_MAX_WAIT_MS - 1);
+      });
+      expect(preloaderState()).toBe("covering");
+      await act(async () => {
+        vi.advanceTimersByTime(1);
+      });
+      expect(preloaderState()).toBe("gate");
+      rabbitBox();
+      fireEvent.click(enterButton());
+      expect(preloaderState()).toBe("leaving");
+    });
+
+    it("takes the plain fade when the audio output cannot be started at the click", async () => {
+      allowMotion();
+      sound.withSound = false;
+      render(
+        <PageRevealGate>
+          <p>page</p>
+        </PageRevealGate>,
+      );
+      await act(async () => {});
+      rabbitBox();
+      fireEvent.click(enterButton());
+      expect(preloaderState()).toBe("leaving");
+    });
   });
 
   it("is a no-op outside a gate", () => {
