@@ -10,7 +10,11 @@ import { cn } from "@/lib/utils";
 import { CommentView, getAuthorBadge } from "../types";
 import { SafeAvatar } from "../../SafeAvatar";
 import { ReportDialog } from "./ReportDialog";
-import { CommentReportReasonDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
+import { UserProfileCard } from "./UserProfileCard";
+import {
+  CommentReportReasonDto,
+  DELETED_COMMENT_AUTHOR_NAME,
+} from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { useToast } from "@/app/hooks/useToast";
 import { CommentReactions } from "./CommentReactions";
 import { AuthorBadge } from "./AuthorBadge";
@@ -80,6 +84,7 @@ function CommentItemComponent({
   const [editError, setEditError] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const toast = useToast();
 
   const reactionsDisabled = !userProfile || !canComment || isReactionPending;
@@ -90,6 +95,15 @@ function CommentItemComponent({
     userProfile?.id && comment.author?.id === userProfile.id && userProfile.imageUrl
       ? userProfile.imageUrl
       : comment.author?.imageUrl;
+  // The profile card opens for real accounts only: a deleted user (neutral name, no avatar) and
+  // a comment without an author have nobody to show.
+  const profileName = comment.author?.displayName || tx("Użytkownik", "User");
+  const canOpenProfile = Boolean(
+    comment.author?.id && comment.author.displayName !== DELETED_COMMENT_AUTHOR_NAME,
+  );
+  const openProfileLabel = tx("Otwórz profil użytkownika {0}", "Open {0}'s profile", profileName);
+  const profileTriggerRing =
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transition-none";
   // Creator heart: shown to everyone, set only from the admin panel (decision 8, docs/architecture/admin-phase5.md).
   const isHearted = comment.isHearted === true;
   const [isHighlighted, setIsHighlighted] = useState(false);
@@ -186,12 +200,30 @@ function CommentItemComponent({
       {/* Badges live under the avatar (never next to the name). The badge is positioned absolutely,
           centred on the avatar, so it never changes the column width or the text alignment. */}
       <div className="relative z-[5] shrink-0" style={{ width: avatarSize, height: avatarSize }}>
-        <SafeAvatar
-          src={avatarSrc}
-          alt={comment.author?.displayName || "Avatar"}
-          size={avatarSize}
-          className="border border-[var(--chan-line)]"
-        />
+        {canOpenProfile ? (
+          <button
+            type="button"
+            onClick={() => setIsProfileOpen(true)}
+            aria-haspopup="dialog"
+            aria-label={openProfileLabel}
+            tabIndex={-1}
+            className={cn("block cursor-pointer rounded-full transition-opacity hover:opacity-90", profileTriggerRing)}
+          >
+            <SafeAvatar
+              src={avatarSrc}
+              alt={comment.author?.displayName || "Avatar"}
+              size={avatarSize}
+              className="border border-[var(--chan-line)]"
+            />
+          </button>
+        ) : (
+          <SafeAvatar
+            src={avatarSrc}
+            alt={comment.author?.displayName || "Avatar"}
+            size={avatarSize}
+            className="border border-[var(--chan-line)]"
+          />
+        )}
         {authorBadge && (
           <span className="absolute left-1/2 top-full mt-1 -translate-x-1/2">
             <AuthorBadge kind={authorBadge} language={language} />
@@ -201,9 +233,23 @@ function CommentItemComponent({
       <div className="relative z-[5] min-w-0 flex-1">
         <div className={cn("relative flex items-start justify-between", userProfile && "pr-9")}>
           <div className="flex min-w-0 items-center gap-1.5">
-            <span className="truncate text-[13px] font-bold leading-[18px] text-[var(--chan-ink)]">
-              {comment.author?.displayName || (tx("Użytkownik", "User"))}
-            </span>
+            {canOpenProfile ? (
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen(true)}
+                aria-haspopup="dialog"
+                className={cn(
+                  "-my-1 min-w-0 cursor-pointer truncate rounded-sm py-1 text-left text-[13px] font-bold leading-[18px] text-[var(--chan-ink)] hover:underline",
+                  profileTriggerRing,
+                )}
+              >
+                {profileName}
+              </button>
+            ) : (
+              <span className="truncate text-[13px] font-bold leading-[18px] text-[var(--chan-ink)]">
+                {profileName}
+              </span>
+            )}
             <time
               className="shrink-0 whitespace-nowrap text-[12px] leading-[18px] text-[var(--chan-muted)]"
               dateTime={validCreatedAt ? comment.createdAt : undefined}
@@ -346,6 +392,17 @@ function CommentItemComponent({
           <p className="mt-0.5 whitespace-pre-wrap break-words text-[14px] leading-5 text-[var(--chan-ink)]">
             {comment.text}
           </p>
+        )}
+
+        {canOpenProfile && (
+          <UserProfileCard
+            open={isProfileOpen}
+            onOpenChange={setIsProfileOpen}
+            language={language}
+            displayName={profileName}
+            avatarSrc={avatarSrc}
+            badge={authorBadge}
+          />
         )}
 
         <ReportDialog

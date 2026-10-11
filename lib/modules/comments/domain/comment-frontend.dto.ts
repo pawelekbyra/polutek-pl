@@ -16,6 +16,12 @@ export type CommentAuthorBadgeDto = 'ADMIN' | 'AUTHOR';
 
 export type AccessTierDto = 'PUBLIC' | 'LOGGED_IN';
 
+/**
+ * The neutral name shown for an author whose account was deleted (the DTO has no other marker).
+ * Such an author has no profile card: the client treats this name as "nobody to open".
+ */
+export const DELETED_COMMENT_AUTHOR_NAME = 'Usunięty Użytkownik';
+
 export type CommentAuthorDto = {
   id: string;
   displayName: string;
