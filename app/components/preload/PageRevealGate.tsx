@@ -17,6 +17,7 @@ import { preloadGateSound, primeGateSound, releaseGateSound, startGateSound } fr
 import { pupilOnScreen, rabbitBox } from "./gate-warp-timeline";
 import { getRabbitVector, preloadRabbitVector } from "./rabbit-vector";
 import { captureButton, capturePrompt, type CapturedPrompt } from "./gate-scene";
+import { prepareGateVoid } from "./gate-void";
 import {
   consumeQueuedGateEnter,
   hasPassedGateThisSession,
@@ -175,6 +176,8 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
     if (phase !== "gate" || !canWarp()) return;
     const id = window.setTimeout(() => {
       promptSprite.current = capturePromptNow();
+      // The tunnel's glyph sprites too: rendering them on the warp's first tunnel frame was a stall.
+      prepareGateVoid();
     }, 50);
     const refresh = () => {
       promptSprite.current = capturePromptNow();

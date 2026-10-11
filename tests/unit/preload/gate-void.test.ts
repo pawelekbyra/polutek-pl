@@ -58,27 +58,34 @@ describe("the final dive", () => {
 });
 
 describe("the tunnel of rain glyphs", () => {
-  it("the camera only ever moves forward, fast while the title flies in, slow while it rests, fastest in the flash", async () => {
-    const { tunnelTravel } = await import("@/app/components/preload/gate-void");
+  it("the camera travels at one constant speed (no burst, no slowing with the title), bolting only in the flash", async () => {
+    const { tunnelTravel, TUNNEL_SPEED } = await import("@/app/components/preload/gate-void");
     let last = -1;
-    for (let t = VOID_T.open; t <= WARP.flashEnd; t += 0.05) {
+    for (let t = VOID_T.tunnelFrom; t <= WARP.flashEnd; t += 0.05) {
       const d = tunnelTravel(t);
       expect(d).toBeGreaterThanOrEqual(last);
       last = d;
     }
     const rate = (a: number, b: number) => (tunnelTravel(b) - tunnelTravel(a)) / (b - a);
-    expect(rate(6.0, 6.5)).toBeGreaterThan(rate(9.0, 9.5));
-    expect(rate(11.3, 11.5)).toBeGreaterThan(rate(10.4, 10.9));
+    for (const [a, b] of [[4.0, 4.5], [5.0, 5.4], [7.0, 7.5], [8.4, 9.4], [10.4, 11.2]]) {
+      expect(rate(a, b)).toBeCloseTo(TUNNEL_SPEED, 6);
+    }
+    expect(rate(11.35, 11.5)).toBeGreaterThan(TUNNEL_SPEED * 2);
   });
-});
 
-describe("the tunnel starts on the accent", () => {
-  it("is there the moment the camera enters the pupil, with a burst of speed", async () => {
-    const { tunnelTravel } = await import("@/app/components/preload/gate-void");
-    expect(VOID_T.tunnel).toBe(WARP.blackAt);
-    expect(tunnelTravel(VOID_T.tunnel)).toBe(0);
-    const burst = (tunnelTravel(VOID_T.tunnel + 0.3) - tunnelTravel(VOID_T.tunnel)) / 0.3;
-    const cruise = (tunnelTravel(9.5) - tunnelTravel(9.2)) / 0.3;
-    expect(burst).toBeGreaterThan(cruise * 4);
+  it("is already seen through the pupil before the camera enters it", () => {
+    expect(VOID_T.tunnelFrom).toBeLessThan(WARP.blackAt);
+  });
+
+  it("is an oval tube whose columns are spread evenly along its outline and pass the screen corners", async () => {
+    const { tubeColumns } = await import("@/app/components/preload/gate-void");
+    const { xs, ys } = tubeColumns(390, 844);
+    const ex = Math.max(...xs);
+    const ey = Math.max(...ys);
+    // Oval with the screen's proportions through the corners (half sizes 1 and 844/390 at depth 1).
+    expect(ex).toBeCloseTo(Math.SQRT2, 1);
+    expect(ey).toBeCloseTo((844 / 390) * Math.SQRT2, 1);
+    const gaps = [...xs].map((x, i) => Math.hypot(xs[(i + 1) % xs.length] - x, ys[(i + 1) % ys.length] - ys[i]));
+    expect(Math.max(...gaps) / Math.min(...gaps)).toBeLessThan(1.1);
   });
 });
