@@ -55,13 +55,14 @@ describe("X-Robots-Tag header (next.config.mjs)", () => {
   const robotsRule = (rules: Awaited<ReturnType<typeof loadHeaders>>) =>
     rules.find((r) => r.headers.some((h) => h.key === "X-Robots-Tag"));
 
-  it("is sent for HTML pages by default and not for assets, api or _next", async () => {
+  it("is sent for every response by default (pages, assets, api, _next) except robots.txt and sitemap.xml", async () => {
     const rule = robotsRule(await loadHeaders(undefined));
     expect(rule?.headers).toEqual([{ key: "X-Robots-Tag", value: "noindex, nofollow" }]);
     // Next matches `source` as path-to-regexp; the negative lookahead is a plain regex group.
     const re = new RegExp(`^${rule!.source}$`);
-    for (const path of ["/", "/pl", "/en/regulamin", "/watch/abc", "/admin/x"]) expect(re.test(path)).toBe(true);
-    for (const path of ["/robots.txt", "/sitemap.xml", "/manifest.json", "/api/health", "/_next/static/a.js", "/icon-p-32.png"]) expect(re.test(path)).toBe(false);
+    const covered = ["/", "/pl", "/en/regulamin", "/watch/abc", "/admin/x", "/manifest.json", "/api/health", "/_next/static/a.js", "/icon-p-32.png", "/icon-p.svg", "/sounds/gate-enter-12s.mp3", "/rabbit-gate.svg"];
+    for (const path of covered) expect(re.test(path), path).toBe(true);
+    for (const path of ["/robots.txt", "/sitemap.xml"]) expect(re.test(path), path).toBe(false);
   });
 
   it("is absent after launch (NEXT_PUBLIC_SITE_BETA=false), the other headers stay", async () => {
