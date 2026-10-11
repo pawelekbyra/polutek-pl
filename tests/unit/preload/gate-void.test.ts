@@ -73,20 +73,21 @@ describe("the tunnel of rain glyphs", () => {
     expect(rate(11.35, 11.5)).toBeGreaterThan(TUNNEL_SPEED * 2);
   });
 
-  it("emerges from a point in the depth and grows to full size, small when the camera enters the pupil", async () => {
+  it("emerges from a point in the pupil during the zoom and fills the screen when the pupil does", async () => {
     const { tunnelEmerge } = await import("@/app/components/preload/gate-void");
-    expect(tunnelEmerge(4.0)).toBe(0);
-    expect(tunnelEmerge(4.31)).toBeLessThan(0.02);
-    expect(tunnelEmerge(WARP.blackAt)).toBeGreaterThan(0.05);
-    expect(tunnelEmerge(WARP.blackAt)).toBeLessThan(0.2);
+    expect(VOID_T.tunnelFull).toBe(WARP.blackAt);
+    expect(VOID_T.tunnelFrom).toBeLessThan(WARP.blackAt - 1);
+    expect(tunnelEmerge(VOID_T.tunnelFrom - 0.1)).toBe(0);
+    expect(tunnelEmerge(VOID_T.tunnelFrom + 0.01)).toBeLessThan(0.02);
     let last = 0;
-    for (let t = 4.3; t <= 6.3; t += 0.05) {
+    for (let t = VOID_T.tunnelFrom; t <= WARP.blackAt; t += 0.05) {
       expect(tunnelEmerge(t)).toBeGreaterThanOrEqual(last);
       last = tunnelEmerge(t);
     }
-    expect(tunnelEmerge(6.3)).toBe(1);
+    expect(tunnelEmerge(WARP.blackAt)).toBe(1);
     expect(tunnelEmerge(9)).toBe(1);
   });
+
 
   it("is already seen through the pupil before the camera enters it", () => {
     expect(VOID_T.tunnelFrom).toBeLessThan(WARP.blackAt);
