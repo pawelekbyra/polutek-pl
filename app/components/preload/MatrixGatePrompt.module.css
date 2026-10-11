@@ -254,9 +254,5 @@
   }
 }
 
-/* The entry warp fades the prompt away first (GateWarp sets --warp-text); the ENTER button stays in
-   the scene and zooms with the rabbit (drawn on the warp canvas). A filter, not opacity: the
-   prompt's own entrance animation holds opacity and would win. */
-.text {
-  filter: opacity(var(--warp-text, 1));
-}
+/* During the entry warp the prompt, the rabbit and the ENTER button are all drawn on the warp canvas
+   and zoom together as one scene (GateWarp, gate-scene.ts). */

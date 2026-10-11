@@ -71,3 +71,14 @@ describe("the tunnel of rain glyphs", () => {
     expect(rate(11.3, 11.5)).toBeGreaterThan(rate(10.4, 10.9));
   });
 });
+
+describe("the tunnel starts on the accent", () => {
+  it("is there the moment the camera enters the pupil, with a burst of speed", async () => {
+    const { tunnelTravel } = await import("@/app/components/preload/gate-void");
+    expect(VOID_T.tunnel).toBe(WARP.blackAt);
+    expect(tunnelTravel(VOID_T.tunnel)).toBe(0);
+    const burst = (tunnelTravel(VOID_T.tunnel + 0.3) - tunnelTravel(VOID_T.tunnel)) / 0.3;
+    const cruise = (tunnelTravel(9.5) - tunnelTravel(9.2)) / 0.3;
+    expect(burst).toBeGreaterThan(cruise * 4);
+  });
+});

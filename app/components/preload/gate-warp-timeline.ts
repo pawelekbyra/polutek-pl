@@ -3,8 +3,7 @@
  * tested and shared by the renderer. Times are seconds from the click, aligned to the sound
  * `public/sounds/gate-enter-12s.mp3` (docs/operations/PLAYER-SOUND.md):
  *
- * - 0.00 – 0.40  the sound opens with a whisper ("here come…"); the camera holds still, only the
- *                prompt fades (the click visibly registered);
+ * - 0.00 – 0.40  the sound opens with a whisper ("here come…"); the camera holds still;
  * - 0.40 – 4.95  from the whisper's second word on (the main motif follows at 0.65 s), one continuous zoom into the
  *                rabbit's eye and on into the black pixel of its pupil: it moves from its very first
  *                frame but slowly, and speeds up all the way, so it enters the pupil exactly on the
@@ -86,8 +85,6 @@ export type Camera = {
   scale: number;
   tx: number;
   ty: number;
-  /** Opacity of the prompt and the caption (they fall away first). */
-  textOpacity: number;
 };
 
 /**
@@ -106,7 +103,6 @@ export function cameraAt(t: number, pupil: Point, center: Point, zoom: { eye: nu
     scale,
     tx: target.x - scale * pupil.x,
     ty: target.y - scale * pupil.y,
-    textOpacity: 1 - smoothstep(0, 0.7, t),
   };
 }
 
