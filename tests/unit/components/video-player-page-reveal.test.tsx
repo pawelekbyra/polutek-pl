@@ -405,6 +405,62 @@ describe("VideoPlayer restores the viewer's sound after a reload", () => {
     expect(mocks.lastPlayerProps?.muted).toBe(false);
   });
 
+  it("pauses the hero at its start on the gate click and undoes any play until the warp's flash", async () => {
+    writeUserMuted(false);
+    renderUnderGate();
+    await act(async () => {});
+    const video = document.createElement("video");
+    const videoPlay = vi.fn(() => Promise.resolve());
+    const videoPause = vi.fn();
+    Object.assign(video, { play: videoPlay, pause: videoPause });
+    const instance = mocks.instance as unknown as Record<string, unknown>;
+    instance.pause = vi.fn();
+    instance.el = { querySelector: () => video };
+    instance.currentTime = 7;
+    try {
+      await act(async () => {
+        window.dispatchEvent(new Event("polutek:gate-unlock"));
+      });
+      // Unlocked for sound inside the click (play + pause unmuted), then held at the start.
+      expect(video.muted).toBe(false);
+      expect(videoPlay).toHaveBeenCalled();
+      expect(videoPause).toHaveBeenCalled();
+      expect(instance.pause).toHaveBeenCalled();
+      expect(mocks.instance.currentTime).toBe(0);
+      // Something starts it during the warp (resumed autoplay, buffering): it is paused again.
+      (instance.pause as ReturnType<typeof vi.fn>).mockClear();
+      await act(async () => fire("onPlay"));
+      expect(instance.pause).toHaveBeenCalledTimes(1);
+      // The flash: from the beginning, with sound.
+      mocks.instance.currentTime = 3;
+      await act(async () => {
+        window.dispatchEvent(new Event("polutek:gate-enter"));
+      });
+      expect(mocks.instance.currentTime).toBe(0);
+      expect(mocks.instance.muted).toBe(false);
+      expect(mocks.instance.play).toHaveBeenCalled();
+    } finally {
+      delete instance.pause;
+      delete instance.el;
+      mocks.instance.currentTime = 0;
+    }
+  });
+
+  it("restarts the hero from its beginning at the gate also for a viewer who muted it (muted)", async () => {
+    writeUserMuted(true);
+    renderUnderGate();
+    await act(async () => {});
+    mocks.instance.currentTime = 12;
+    await act(async () => {
+      window.dispatchEvent(new Event("polutek:gate-enter"));
+    });
+    expect(mocks.instance.currentTime).toBe(0);
+    expect(mocks.instance.muted).toBe(true);
+    expect(mocks.instance.play).toHaveBeenCalled();
+    expect(readSoundPreference().muted).toBe(true);
+    mocks.instance.currentTime = 0;
+  });
+
   it("remembers the gate click as the viewer's own sound choice", async () => {
     renderUnderGate();
     await act(async () => {});

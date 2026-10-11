@@ -12,7 +12,7 @@ import React, {
 import { useAuth } from "@/lib/auth/react";
 import { SitePreloaderScreen } from "./SitePreloaderScreen";
 import type { WarpStart } from "./GateWarp";
-import { preloadGateSound, startGateSound } from "./gate-sound";
+import { preloadGateSound, primeGateSound, releaseGateSound, startGateSound } from "./gate-sound";
 import { pupilOnScreen, rabbitBox } from "./gate-warp-timeline";
 import { getRabbitVector, preloadRabbitVector } from "./rabbit-vector";
 import {
@@ -98,6 +98,10 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
   const [timedOut, setTimedOut] = useState(false);
   const [readyKeys, setReadyKeys] = useState<ReadonlySet<string>>(() => new Set());
   const [warpStart, setWarpStart] = useState<WarpStart | null>(null);
+  // The entry warp's sound and vector rabbit: loaded (and the sound decoded) while the gate is still
+  // loading, so the click starts the warp at once, in sync and without a stutter. Counted as one
+  // more awaited piece; the max wait still opens the gate if they are slow (then: a silent warp).
+  const [warpAssetsReady, setWarpAssetsReady] = useState(false);
 
   useLayoutEffect(() => {
     if (shouldSkipGate()) setPhase("done");
@@ -122,14 +126,15 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
   const waitForKey = waitFor.join("|");
   const allReady =
     authLoaded &&
+    warpAssetsReady &&
     waitForKey.split("|").every((key) => !key || readyKeys.has(key));
 
   const covering = phase === "covering";
 
   // Real progress for the bar: auth plus every awaited piece, as the share that has settled.
   const awaited = waitForKey.split("|").filter(Boolean);
-  const settled = (authLoaded ? 1 : 0) + awaited.filter((key) => readyKeys.has(key)).length;
-  const progress = settled / (awaited.length + 1);
+  const settled = (authLoaded ? 1 : 0) + (warpAssetsReady ? 1 : 0) + awaited.filter((key) => readyKeys.has(key)).length;
+  const progress = settled / (awaited.length + 2);
 
   // Max wait: once expired the button enters even if something is still loading.
   useEffect(() => {
@@ -144,10 +149,10 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
     return () => window.clearTimeout(timer);
   }, [covering]);
 
-  // The click on the rabbit / "ENTER": the warp (zoom into the eye, the hole, the tunnel of code,
-  // the flash) with its sound, or the plain fade when motion is reduced. The hero gets the click's
-  // permission to play with sound now ("polutek:gate-unlock") and starts at the flash
-  // ("polutek:gate-enter"), so the two sounds never overlap.
+  // The click on the rabbit / "ENTER": the warp (zoom into the pupil, the black void, the flash)
+  // with its sound, or the plain fade when motion is reduced. The click pauses the hero at its start
+  // and gives it the permission to play with sound ("polutek:gate-unlock"); it starts from the
+  // beginning when the flash covers the screen ("polutek:gate-enter"), so the sounds never overlap.
   const enter = useCallback(() => {
     const rabbit = document.querySelector<HTMLElement>("[data-gate-rabbit] img");
     const box = rabbit?.getBoundingClientRect();
@@ -166,19 +171,43 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
     setPhase("warp");
   }, []);
 
-  const warpFlash = useCallback(() => {
+  const warpReveal = useCallback(() => {
     window.dispatchEvent(new Event("polutek:gate-enter"));
   }, []);
   const warpDone = useCallback(() => {
     hideGateFromNowOn();
+    releaseGateSound();
     setPhase("done");
+    // Keyboard and screen-reader users land on the page content, not on a vanished button.
+    document.getElementById("main")?.focus({ preventScroll: true });
   }, []);
 
-  // The sound and the vector rabbit load while the viewer looks at it (never before the page is ready).
   useEffect(() => {
-    if (phase !== "gate" || !canWarp()) return;
-    void preloadGateSound();
-    void preloadRabbitVector();
+    if (shouldSkipGate()) return;
+    if (!canWarp()) {
+      setWarpAssetsReady(true);
+      return;
+    }
+    let alive = true;
+    void Promise.all([preloadGateSound(), preloadRabbitVector()]).then(() => {
+      if (alive) setWarpAssetsReady(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // The press before the click (finger down, mouse down, key down) prepares the audio output, so the
+  // click itself only has to start the sound and the first frame of the warp.
+  useEffect(() => {
+    if (phase !== "gate") return;
+    const prime = () => primeGateSound();
+    document.addEventListener("pointerdown", prime, { capture: true, passive: true });
+    document.addEventListener("keydown", prime, { capture: true });
+    return () => {
+      document.removeEventListener("pointerdown", prime, { capture: true });
+      document.removeEventListener("keydown", prime, { capture: true });
+    };
   }, [phase]);
 
   // From the click on, a reload must not show the gate again.
@@ -236,7 +265,7 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
           ready={phase !== "covering"}
           progress={progress}
           onEnter={handleEnterClick}
-          warp={phase === "warp" && warpStart ? { start: warpStart, onFlash: warpFlash, onDone: warpDone } : null}
+          warp={phase === "warp" && warpStart ? { start: warpStart, onReveal: warpReveal, onDone: warpDone } : null}
         />
       )}
     </PageRevealContext.Provider>

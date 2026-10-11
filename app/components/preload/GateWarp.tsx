@@ -1,18 +1,20 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import type { GateClock } from "./gate-sound";
 import { WARP, blackoutAt, cameraAt, flashAt, zoomLevels, type Point } from "./gate-warp-timeline";
 import { drawRabbit, type RabbitVector } from "./rabbit-vector";
 import { drawVoid } from "./gate-void";
+import { ensureRainRuntime } from "./matrix-rain-engine";
 
 /**
  * The entry warp after the click (timeline: gate-warp-timeline.ts, sound: gate-sound.ts). The camera
  * is a CSS transform on the gate's own content (rain, prompt, rabbit): it zooms into the rabbit's
  * eye and on into the black pixel of the pupil until the screen is black. This canvas only adds the
  * solid black at the end of the zoom and the light flash that reveals the page. Driven by the
- * sound's clock, written straight to the DOM per frame (no React state). A click or key press skips
- * to the flash.
+ * sound's clock, written straight to the DOM per frame (no React state). The first frame is drawn in
+ * the same commit as the click (layout effect), so the zoom starts with no visible delay. A click or
+ * key press after the first 0.6 s skips to the flash (not the tap that entered, not a held key).
  */
 
 export type WarpStart = {
@@ -34,7 +36,7 @@ export function GateWarp({
   start,
   camera,
   screen,
-  onFlash,
+  onReveal,
   onDone,
 }: {
   start: WarpStart;
@@ -42,26 +44,31 @@ export function GateWarp({
   camera: HTMLElement | null;
   /** The gate screen itself (faded out at the end). */
   screen: HTMLElement | null;
-  onFlash: () => void;
+  /** The flash covers the screen: the page shows through from now on (the hero starts here). */
+  onReveal: () => void;
   onDone: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const callbacks = useRef({ onFlash, onDone });
+  const callbacks = useRef({ onReveal, onDone });
   useEffect(() => {
-    callbacks.current = { onFlash, onDone };
-  }, [onFlash, onDone]);
+    callbacks.current = { onReveal, onDone };
+  }, [onReveal, onDone]);
 
-  useEffect(() => {
+  // Layout effect: the first frame is on screen in the very paint that follows the click.
+  useLayoutEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) {
-      callbacks.current.onFlash();
+      callbacks.current.onReveal();
       callbacks.current.onDone();
       return;
     }
+    const { pupil, clock, vector } = start;
     const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
     let w = 0;
     let h = 0;
+    let center = { x: 0, y: 0 };
+    let zoom = { eye: 1, black: 1 };
     const size = () => {
       w = window.innerWidth;
       h = window.innerHeight;
@@ -70,13 +77,14 @@ export function GateWarp({
       // The visible viewport (the gate screen itself may be taller under a phone's bottom bar).
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
+      // A rotation or a browser bar that moves mid-warp re-aims the camera at the new centre.
+      center = { x: w / 2, y: h / 2 };
+      zoom = zoomLevels(pupil.r, { width: w, height: h });
     };
     size();
     window.addEventListener("resize", size);
-
-    const { pupil, clock, vector } = start;
-    const center = { x: w / 2, y: h / 2 };
-    const zoom = zoomLevels(pupil.r, { width: w, height: h });
+    // The focused ENTER button is about to be hidden from assistive tech (aria-hidden screen).
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     if (screen) screen.style.transition = "none";
     if (camera) {
       camera.style.transformOrigin = "0 0";
@@ -87,8 +95,11 @@ export function GateWarp({
     const rabbitImg = vector ? camera?.querySelector<HTMLElement>("[data-gate-rabbit] img") ?? null : null;
 
     let skipBy = 0;
-    const skip = () => {
+    const skip = (event: Event) => {
+      // Not the tap that entered (its pointer events may still arrive), not a held key (repeats).
+      if (event instanceof KeyboardEvent && event.repeat) return;
       const t = clock.now() + skipBy;
+      if (t < 0.6) return;
       if (t < WARP.flash - 0.3) {
         skipBy += WARP.flash - 0.3 - t;
         clock.stop(0.3);
@@ -97,7 +108,11 @@ export function GateWarp({
     window.addEventListener("pointerdown", skip);
     window.addEventListener("keydown", skip);
 
-    let flashed = false;
+    // The rain is invisible once the screen is black: stop its loop instead of drawing it unseen.
+    const rainCanvas = camera?.querySelector<HTMLCanvasElement>("canvas[data-matrix-rain]") ?? null;
+    let rainStopped = false;
+
+    let revealed = false;
     let raf = 0;
     const frame = () => {
       const t = clock.now() + skipBy;
@@ -107,6 +122,10 @@ export function GateWarp({
         camera.style.setProperty("--warp-text", String(cam.textOpacity));
         // Once the screen is black the huge layer is not needed any more.
         camera.style.visibility = t >= WARP.blackAt ? "hidden" : "";
+      }
+      if (t >= WARP.blackAt && rainCanvas && !rainStopped) {
+        rainStopped = true;
+        ensureRainRuntime().detach(rainCanvas);
       }
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -137,9 +156,9 @@ export function GateWarp({
         ctx.fillRect(0, 0, w, h);
       }
       ctx.globalAlpha = 1;
-      if (t >= WARP.flash && !flashed) {
-        flashed = true;
-        callbacks.current.onFlash();
+      if (t >= WARP.flashEnd && !revealed) {
+        revealed = true;
+        callbacks.current.onReveal();
       }
       if (screen) screen.style.opacity = String(flash.screenOpacity);
       if (t >= WARP.end) {
@@ -148,7 +167,7 @@ export function GateWarp({
       }
       raf = requestAnimationFrame(frame);
     };
-    raf = requestAnimationFrame(frame);
+    frame();
 
     return () => {
       cancelAnimationFrame(raf);

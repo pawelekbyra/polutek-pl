@@ -22,12 +22,24 @@ describe("entry warp timeline", () => {
     expect(cam.textOpacity).toBe(1);
   });
 
-  it("has the eye centred and filling the frame on the low hit, the text gone", () => {
-    const cam = cameraAt(WARP.eyeAt, pupil, center, zoom);
-    expect(cam.scale).toBeCloseTo(zoom.eye);
+  it("moves from the very first frame, slowly, and drops the text in the first 0.7 s", () => {
+    // No dead start: visibly bigger after a tenth of a second, still small after a whole second.
+    expect(cameraAt(0.1, pupil, center, zoom).scale).toBeGreaterThan(1.02);
+    expect(cameraAt(1.0, pupil, center, zoom).scale).toBeLessThan(2);
+    expect(cameraAt(0.7, pupil, center, zoom).textOpacity).toBe(0);
+  });
+
+  it("has the pupil centred long before it enters it", () => {
+    const cam = cameraAt(3.6, pupil, center, zoom);
     expect(cam.tx + cam.scale * pupil.x).toBeCloseTo(center.x);
     expect(cam.ty + cam.scale * pupil.y).toBeCloseTo(center.y);
-    expect(cam.textOpacity).toBe(0);
+  });
+
+  it("enters the pupil on the sound's first bright hit (4.95 s), not earlier", () => {
+    expect(WARP.blackAt).toBeCloseTo(4.95);
+    // Half a second before it the eye is still being approached, not yet black.
+    expect(cameraAt(WARP.blackAt - 0.5, pupil, center, zoom).scale).toBeLessThan(zoom.black / 2);
+    expect(blackoutAt(WARP.blackAt - 0.5)).toBe(0);
   });
 
   it("ends inside the black core: it covers the whole screen, which is fully black", () => {
@@ -50,6 +62,7 @@ describe("entry warp timeline", () => {
 
   it("keeps a long black void between the end of the zoom and the final flash", () => {
     expect(WARP.flash - WARP.blackAt).toBeGreaterThan(6);
+    expect(WARP.flashEnd).toBeGreaterThan(WARP.flash);
     // Fully black all through it, and the flash is on the sound's last hit, before its end.
     for (let t = WARP.blackAt; t < WARP.flash; t += 0.5) expect(blackoutAt(t)).toBe(1);
     expect(WARP.flash).toBeLessThan(WARP.end);
