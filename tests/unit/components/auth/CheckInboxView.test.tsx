@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import React from "react";
-import CheckInboxView from "@/app/components/auth/CheckInboxView";
+import CheckInboxView, { isMicrosoftConsumerAddress } from "@/app/components/auth/CheckInboxView";
 import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 import { createTx } from "@/lib/i18n/ui";
 
@@ -14,6 +14,20 @@ describe("CheckInboxView", () => {
     expect(screen.getByText("jan@hotmail.com")).toBeTruthy();
     expect(screen.getByText(/Click the confirmation link/)).toBeTruthy();
     expect(screen.getByText(/Spam or Junk folder/)).toBeTruthy();
+  });
+
+  it("adds a Microsoft-specific junk-folder hint only for Outlook, Hotmail, Live and MSN addresses", () => {
+    for (const address of ["jan@hotmail.com", "ola@outlook.com", "x@live.com", "y@msn.com", "z@hotmail.pl", "w@outlook.co.uk", "  V@Outlook.COM  "]) {
+      expect(isMicrosoftConsumerAddress(address), address).toBe(true);
+    }
+    for (const address of ["a@gmail.com", "b@wp.pl", "c@o2.pl", "d@hotmail.example.org", "e@notlive.com", "outlook.com", ""]) {
+      expect(isMicrosoftConsumerAddress(address), address).toBe(false);
+    }
+    const { unmount } = render(<CheckInboxView tx={createTx("pl")} kind="verify" email="jan@hotmail.com" onBack={vi.fn()} />);
+    expect(screen.getByTestId("check-inbox-microsoft-hint").textContent).toMatch(/Wiadomości-śmieci/);
+    unmount();
+    render(<CheckInboxView tx={createTx("en")} kind="reset" email="jan@gmail.com" onBack={vi.fn()} />);
+    expect(screen.queryByTestId("check-inbox-microsoft-hint")).toBeNull();
   });
 
   it("offers resend, a different address and going back", () => {
