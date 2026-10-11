@@ -25,14 +25,14 @@ describe("metadata while beta", () => {
   it("gives a neutral localized title and description, and null after launch", async () => {
     expect(await getBetaSiteText("pl", false)).toBeNull();
     const pl = await getBetaSiteText("pl", true);
-    expect(pl?.title).toBe("WWW.PAWELPERFECT.COM");
+    expect(pl?.title).toBe("www.pawelperfect.com");
     expect(pl?.description).toContain("w budowie");
     const en = await getBetaSiteText("en", true);
-    expect(en?.title).toBe("WWW.PAWELPERFECT.COM");
+    expect(en?.title).toBe("www.pawelperfect.com");
     expect(en?.description).not.toMatch(/NIE MASZ PSYCHY/i);
     for (const locale of UI_ONLY_LOCALES) {
       const text = await getBetaSiteText(locale, true);
-      expect(text?.title).toBe("WWW.PAWELPERFECT.COM");
+      expect(text?.title).toBe("www.pawelperfect.com");
       expect(text?.description).not.toBe(en?.description);
       expect(text?.title).not.toContain("{0}");
     }
@@ -60,7 +60,7 @@ describe("X-Robots-Tag header (next.config.mjs)", () => {
     expect(rule?.headers).toEqual([{ key: "X-Robots-Tag", value: "noindex, nofollow" }]);
     // Next matches `source` as path-to-regexp; the negative lookahead is a plain regex group.
     const re = new RegExp(`^${rule!.source}$`);
-    const covered = ["/", "/pl", "/en/regulamin", "/watch/abc", "/admin/x", "/manifest.json", "/api/health", "/_next/static/a.js", "/icon-p-32.png", "/icon-p.svg", "/sounds/gate-enter-12s.mp3", "/rabbit-gate.svg"];
+    const covered = ["/", "/pl", "/en/regulamin", "/watch/abc", "/admin/x", "/manifest.json", "/api/health", "/_next/static/a.js", "/icon-glasses-32.png", "/icon-glasses.svg", "/sounds/gate-enter-12s.mp3", "/rabbit-gate.svg"];
     for (const path of covered) expect(re.test(path), path).toBe(true);
     for (const path of ["/robots.txt", "/sitemap.xml"]) expect(re.test(path), path).toBe(false);
   });
