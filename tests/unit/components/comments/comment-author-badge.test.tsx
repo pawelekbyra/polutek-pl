@@ -38,6 +38,24 @@ function commentBy(badges: CommentAuthorBadgeDto[], imageUrl: string | null = nu
 }
 
 const noop = () => {};
+const renderWithProfile = (comment: CommentView, userProfile: { id?: string; imageUrl?: string | null } | null) =>
+  render(
+    <CommentItem
+      comment={comment}
+      userProfile={userProfile}
+      language="pl"
+      t={{}}
+      canComment={false}
+      onLike={noop}
+      onDislike={noop}
+      onReply={noop}
+      onDelete={noop}
+      onPin={noop}
+      onEdit={noop}
+      onReport={noop}
+      isReactionPending={false}
+    />,
+  );
 const renderItem = (comment: CommentView) =>
   render(
     <CommentItem
@@ -81,6 +99,18 @@ describe('comment author badge and avatar', () => {
     const img = screen.getByAltText('Jurek') as HTMLImageElement;
     expect(decodeURIComponent(img.getAttribute('src') || '')).toContain('/default-avatar.jpg');
     expect(img.getAttribute('src')).not.toContain('dicebear');
+  });
+
+  it("shows the viewer's CURRENT avatar under their own earlier comments, others keep theirs", () => {
+    const old = '/api/avatars/a1?v=1';
+    const fresh = '/api/avatars/a1?v=2';
+    const render = (viewerId: string) =>
+      renderWithProfile(commentBy([], old), { id: viewerId, imageUrl: fresh });
+    render('a1');
+    expect((screen.getByAltText('Jurek') as HTMLImageElement).getAttribute('src')).toContain('v=2');
+    cleanup();
+    render('someone-else');
+    expect((screen.getByAltText('Jurek') as HTMLImageElement).getAttribute('src')).toContain('v=1');
   });
 
   it('keeps line breaks of the comment text', () => {
