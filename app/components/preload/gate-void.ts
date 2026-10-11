@@ -9,8 +9,9 @@
  *               comes, its letters decode one by one from cycling Matrix glyphs, each with a flare;
  * - 8.50        the sound swells: a glow pulse runs through the resolved title;
  * - 8.40 – 10.2 it hangs there, drifting slowly closer (the sound's quiet stretch);
- * - 10.2 – 11.3 the sound rises to its last hit: the title accelerates towards the viewer and flies
- *               through the camera; the dust speeds up; the flash takes over at 11.3 s.
+ * - 10.2 – 11.5 the sound rises to its last hit: the title accelerates towards the viewer and flies
+ *               through the camera; inside the flash (11.3 – 11.5 s) it bolts, about 20x closer in
+ *               0.2 s, until the screen is white; the dust bolts with it.
  *
  * Built for phones: nothing is blurred per frame. The glow of each letter and the light in the depth
  * are pre-rendered once into small sprites and only copied (scaled) every frame; the crisp letters
@@ -65,8 +66,13 @@ export function titleScale(t: number): number {
     return 1 / z;
   }
   if (t < VOID_T.push) return 1 + 0.06 * ((t - VOID_T.arrive) / (VOID_T.push - VOID_T.arrive));
-  const p = clamp01((t - VOID_T.push) / (VOID_T.flash - VOID_T.push));
-  return 1.06 * Math.exp(Math.log(9) * p * p * p);
+  // Not clamped at the flash: the title keeps flying at the camera until the flash has covered the
+  // screen (it goes through the camera, it never stops at a "full size"). Inside the flash it bolts:
+  // the zoom rate jumps and keeps accelerating, about 20x closer in those last 0.2 s.
+  const p = Math.min(1, (t - VOID_T.push) / (VOID_T.flash - VOID_T.push));
+  const rush = 1.06 * Math.exp(Math.log(9) * p * p * p);
+  const d = Math.max(0, t - VOID_T.flash);
+  return rush * Math.exp(6 * d + 45 * d * d);
 }
 
 /** When letter `i` resolves from cycling glyphs into its real character. */
@@ -224,7 +230,8 @@ function drawDust(ctx: CanvasRenderingContext2D, base: DOMMatrix, size: Size, t:
   const reach = Math.hypot(size.width, size.height) * 0.62;
   const fadeIn = smooth(VOID_T.open, VOID_T.open + 1.2, t);
   // Quiet while the title rests, fast when it rushes out.
-  const speed = 0.45 + 0.25 * smooth(VOID_T.open, VOID_T.arrive, t) + 1.6 * smooth(VOID_T.push, VOID_T.flash, t);
+  const speed =
+    0.45 + 0.25 * smooth(VOID_T.open, VOID_T.arrive, t) + 1.6 * smooth(VOID_T.push, VOID_T.flash, t) + 4 * smooth(VOID_T.flash, VOID_T.flash + 0.2, t);
   for (let i = 0; i < DUST; i++) {
     const angle = hash(i, 11) * Math.PI * 2;
     // Each speck cycles from the depth (cycle 0) to the viewer (cycle 1), offset per speck.
