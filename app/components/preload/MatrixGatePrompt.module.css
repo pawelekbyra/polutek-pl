@@ -47,6 +47,10 @@
   position: absolute;
   inset: 0;
   display: block;
+  /* The rabbit seen from behind (rabbit-gate-2.svg) has its body left of the picture's centre (the head
+     and whiskers reach out to the right): the picture is moved so the body sits centred over ENTER,
+     a little higher. The warp reads the rabbit's box from the layout, so it follows. */
+  transform: translate(8%, -3%);
 }
 
 .rabbit[data-ready] {
