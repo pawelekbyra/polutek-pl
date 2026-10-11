@@ -2,11 +2,12 @@
  * THE VOID: the black screen inside the pupil, between the end of the zoom (WARP.blackAt, 4.95 s)
  * and the final flash (WARP.flash, 11.3 s). Timed to the entry sound (gate-warp-timeline.ts):
  *
- * - 3.30 – 4.95 while the zoom closes in on the pupil, a point appears in its black core and grows
- *               into the tunnel (tunnelEmerge; drawn only inside the pupil, which is its window):
- *               when the pupil fills the screen (4.95 s, the sound's accent) the tunnel fills it too,
- *               so entering the pupil is entering the tunnel;
- * - from 3.30   the camera travels down the tube at one constant speed (the zoom's own tempo; it
+ * - 4.87        the pupil's black core has just covered the whole screen (the pupil itself stays pure
+ *               black until then: glyphs flickering inside a big pupil that does not fill the screen
+ *               yet looked wrong): at the screen centre a point appears and grows into the tunnel
+ *               (tunnelEmerge), at first at the zoom's own end tempo, so the fall into the pupil flows
+ *               straight on into the tunnel; it reaches its full size at 6.5 s;
+ * - from 4.87   the camera travels down the tube at one constant speed (the zoom's own tempo; it
  *               never slows with the title); the tube is round and passes the screen's corners, so
  *               every edge of the screen is covered, and it runs deep, almost to a point;
  * - 5.15 – 8.40 "WWW.PAWELPERFECT.COM" (one line) flies out of that depth and brakes to a stop in
@@ -41,12 +42,13 @@ export const AIM_CANDIDATES = [VOID_TITLE.length / 2 - 1, VOID_TITLE.length / 2]
 /** Key moments (seconds since the click). */
 export const VOID_T = {
   /**
-   * The tunnel appears as a point in the pupil and the camera starts travelling down it; it is seen
-   * through the pupil (a window in the zooming rabbit) until the zoom enters the pupil.
+   * The tunnel appears as a point and the camera starts travelling down it: at the last moment before
+   * the camera enters the pupil, once the pupil's black core covers the whole screen (about 0.1 s
+   * before WARP.blackAt; tested for phone and desktop sizes up to 2560 x 1440).
    */
-  tunnelFrom: 3.3,
-  /** The pupil fills the screen on the sound's accent (= WARP.blackAt): so does the tunnel. */
-  tunnelFull: 4.95,
+  tunnelFrom: 4.87,
+  /** The tunnel has grown to its full size. */
+  tunnelFull: 6.5,
   open: 5.15,
   /** The letters stay cycling rain glyphs for the whole flight and decode once the title is in place. */
   decodeFrom: 8.4,
@@ -360,12 +362,12 @@ function drawDepthLight(ctx: CanvasRenderingContext2D, size: Size, centre: { x: 
 }
 
 /**
- * The tunnel emerging out of the pupil: the whole tube is drawn scaled by this factor around the
- * vanishing point. It is born as a point in the pupil's core (VOID_T.tunnelFrom), grows in log space
- * alongside the zoom and reaches its full size exactly when the pupil fills the screen
- * (VOID_T.tunnelFull), easing out there so its growth hands over smoothly to the constant travel.
+ * The tunnel emerging out of the black: the whole tube is drawn scaled by this factor around the
+ * vanishing point. It is born as a point (3% of its size) at VOID_T.tunnelFrom and grows in log space,
+ * at first at about the zoom's end tempo (~3.4 e-folds a second), easing out into its full size at
+ * VOID_T.tunnelFull, so its growth hands over smoothly to the constant travel.
  */
-const EMERGE_START = 0.01;
+const EMERGE_START = 0.03;
 export function tunnelEmerge(t: number): number {
   const p = clamp01((t - VOID_T.tunnelFrom) / (VOID_T.tunnelFull - VOID_T.tunnelFrom));
   if (p <= 0) return 0;
