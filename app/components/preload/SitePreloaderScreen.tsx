@@ -56,8 +56,9 @@ export function SitePreloaderScreen({
       data-state={leaving ? "leaving" : warp ? "warp" : ready ? "gate" : "covering"}
       // The player leaves gestures on the gate alone (no unmuting the hidden hero behind it).
       data-sound-control=""
-      // The carrot cursor belongs to the gate only; it goes away with the screen.
-      data-cursor={leaving || warp ? undefined : "carrot"}
+      // The pointer: hidden while loading, the carrot once ENTER can be clicked, hidden again from the
+      // click to the end of the entry animation.
+      data-cursor={ready && !leaving && !warp ? "carrot" : "none"}
       ref={setScreenEl}
       className={cn(styles.screen, failsafe && styles.failsafe, leaving && styles.leaving)}
     >

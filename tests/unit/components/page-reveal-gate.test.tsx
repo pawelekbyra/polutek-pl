@@ -165,16 +165,24 @@ describe("PageRevealGate", () => {
     expect(preloaderState()).toBe("gate");
   });
 
-  it("shows the carrot cursor over the whole gate and drops it once the viewer enters", async () => {
-    render(
-      <PageRevealGate>
-        <p>page</p>
+  it("hides the pointer while loading, shows the carrot only once ENTER is there, hides it again after the click", async () => {
+    const { rerender } = render(
+      <PageRevealGate waitFor={["player"]}>
+        <Piece name="player" ready={false} />
       </PageRevealGate>,
     );
-    expect(screen.getByTestId("site-preloader").getAttribute("data-cursor")).toBe("carrot");
+    const cursor = () => screen.getByTestId("site-preloader").getAttribute("data-cursor");
+    expect(cursor()).toBe("none");
+
+    rerender(
+      <PageRevealGate waitFor={["player"]}>
+        <Piece name="player" ready />
+      </PageRevealGate>,
+    );
+    expect(cursor()).toBe("carrot");
 
     fireEvent.click(enterButton());
-    expect(screen.getByTestId("site-preloader").getAttribute("data-cursor")).toBeNull();
+    expect(cursor()).toBe("none");
     await finishLeaving();
     expect(screen.queryByTestId("site-preloader")).toBeNull();
   });
