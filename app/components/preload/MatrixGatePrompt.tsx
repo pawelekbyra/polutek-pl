@@ -48,7 +48,7 @@ export function MatrixGatePrompt({
           onClick={ready ? onEnter : undefined}
         >
           <img
-            src="/rabbit-gate.svg"
+            src="/rabbit-gate-2.svg"
             alt=""
             width={220}
             height={220}

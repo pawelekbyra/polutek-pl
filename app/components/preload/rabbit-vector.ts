@@ -6,7 +6,7 @@
  * rabbit; without it (fetch failed, no Path2D) the warp falls back to scaling the bitmap.
  */
 
-export const RABBIT_SVG_URL = "/rabbit-gate.svg";
+export const RABBIT_SVG_URL = "/rabbit-gate-2.svg";
 
 export type RabbitVector = {
   /** Edge of the (square) viewBox the paths are drawn in. */
