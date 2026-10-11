@@ -64,3 +64,20 @@ describe("entry warp timeline", () => {
     expect(flashAt(WARP.end).screenOpacity).toBe(0);
   });
 });
+
+describe("entry sound asset", () => {
+  it("is the sound the timeline was cut to: the file's length matches WARP.end", async () => {
+    const { statSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { GATE_SOUND_URL } = await import("@/app/components/preload/gate-sound");
+    const size = statSync(join(process.cwd(), "public", GATE_SOUND_URL)).size;
+    // 128 kb/s constant bitrate: 16 000 bytes per second.
+    expect(Math.abs(size / 16000 - WARP.end)).toBeLessThan(0.6);
+  });
+
+  it("never reuses the name of an older, shorter version of the sound", async () => {
+    const { GATE_SOUND_URL } = await import("@/app/components/preload/gate-sound");
+    expect(GATE_SOUND_URL).not.toBe("/sounds/gate-enter.mp3");
+    expect(GATE_SOUND_URL).toMatch(/gate-enter-\d+s\.mp3$/);
+  });
+});
