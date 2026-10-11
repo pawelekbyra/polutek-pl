@@ -103,7 +103,7 @@ export default function ChannelVideoCard({
         <div className="flex gap-2 relative z-10">
           <div className="flex-1 min-w-0">
             <Link href={appendQueryString(getLocalizedHref(language, "home"), `v=${video.id}`)}>
-              <h3 className="font-sans text-[14px] font-bold text-[var(--chan-ink)] leading-tight line-clamp-2 mb-1 hover:opacity-80 transition-opacity">
+              <h3 className="font-sans text-[14px] font-bold uppercase tracking-[0.01em] text-[var(--chan-ink)] leading-tight line-clamp-2 mb-1 hover:opacity-80 transition-opacity">
                 {displayTitle}
               </h3>
             </Link>
