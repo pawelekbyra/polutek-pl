@@ -88,15 +88,22 @@ export type Camera = {
 };
 
 /**
+ * How far the zoom has got in log space (0 = at rest, 1 = inside the pupil at WARP.blackAt): the scale
+ * is `black ** zoomProgress(t)`. Exponential in u, so it starts slowly and keeps accelerating.
+ */
+export function zoomProgress(t: number): number {
+  const u = clamp01((t - WARP.zoomFrom) / (WARP.blackAt - WARP.zoomFrom));
+  return (Math.exp(ZOOM_ACCEL * u) - 1) / (Math.exp(ZOOM_ACCEL) - 1);
+}
+
+/**
  * Camera at time `t`: still until the whisper is over (`zoomFrom`), then one zoom from rest to inside
  * the pupil's black core (`blackAt`), exponential in log space: it visibly moves from its first frame,
  * stays slow while the whole rabbit is in view and accelerates into the eye, so the speed always feels
  * like a fall. The zoom's fixed point travels to the screen centre in its first `CENTRE_BY` s.
  */
 export function cameraAt(t: number, pupil: Point, center: Point, zoom: { eye: number; black: number }): Camera {
-  const u = clamp01((t - WARP.zoomFrom) / (WARP.blackAt - WARP.zoomFrom));
-  const progress = (Math.exp(ZOOM_ACCEL * u) - 1) / (Math.exp(ZOOM_ACCEL) - 1);
-  const scale = Math.exp(Math.log(zoom.black) * progress);
+  const scale = Math.exp(Math.log(zoom.black) * zoomProgress(t));
   const move = easeOutCubic(clamp01((t - WARP.zoomFrom) / CENTRE_BY));
   const target = { x: pupil.x + (center.x - pupil.x) * move, y: pupil.y + (center.y - pupil.y) * move };
   return {

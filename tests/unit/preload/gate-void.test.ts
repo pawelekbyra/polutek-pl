@@ -67,38 +67,38 @@ describe("the tunnel of rain glyphs", () => {
       last = d;
     }
     const rate = (a: number, b: number) => (tunnelTravel(b) - tunnelTravel(a)) / (b - a);
-    for (const [a, b] of [[4.9, 5.0], [5.0, 5.4], [7.0, 7.5], [8.4, 9.4], [10.4, 11.2]]) {
+    for (const [a, b] of [[4.5, 4.9], [5.0, 5.4], [7.0, 7.5], [8.4, 9.4], [10.4, 11.2]]) {
       expect(rate(a, b)).toBeCloseTo(TUNNEL_SPEED, 6);
     }
     expect(rate(11.35, 11.5)).toBeGreaterThan(TUNNEL_SPEED * 2);
   });
 
-  it("appears only once the pupil covers the whole screen, as a point, and grows at the zoom's end tempo", async () => {
+  it("spins up from a point in the pupil and is at full size exactly when the pupil fills the screen", async () => {
     const { tunnelEmerge } = await import("@/app/components/preload/gate-void");
     const { cameraAt, zoomLevels } = await import("@/app/components/preload/gate-warp-timeline");
-    // The pupil stays pure black while it does not fill the screen: by tunnelFrom its core covers it.
-    for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 800 }, { width: 1920, height: 1080 }, { width: 2560, height: 1440 }]) {
-      const pupil = { x: viewport.width / 2, y: viewport.height / 2, r: 1.4 };
-      const centre = { x: viewport.width / 2, y: viewport.height / 2 };
-      const cam = cameraAt(VOID_T.tunnelFrom, pupil, centre, zoomLevels(pupil.r, viewport));
-      expect(cam.scale * pupil.r).toBeGreaterThanOrEqual(Math.hypot(viewport.width, viewport.height) / 2);
-    }
-    expect(VOID_T.tunnelFrom).toBeLessThan(WARP.blackAt);
-    expect(VOID_T.tunnelFrom).toBeGreaterThan(WARP.blackAt - 0.2);
-    expect(tunnelEmerge(VOID_T.tunnelFrom - 0.01)).toBe(0);
-    expect(tunnelEmerge(VOID_T.tunnelFrom + 0.001)).toBeLessThan(0.04);
-    // At first it grows about as fast as the zoom ends (e-folds per second).
-    const rate = Math.log(tunnelEmerge(VOID_T.tunnelFrom + 0.06) / tunnelEmerge(VOID_T.tunnelFrom + 0.01)) / 0.05;
-    expect(rate).toBeGreaterThan(2.5);
-    expect(rate).toBeLessThan(4.5);
+    expect(VOID_T.tunnelFull).toBe(WARP.blackAt);
+    expect(tunnelEmerge(WARP.blackAt)).toBe(1);
+    expect(tunnelEmerge(WARP.blackAt - 0.001)).toBeGreaterThan(0.95);
+    // Before tunnelFrom nothing; then it is a point (a couple of percent of its size).
+    expect(tunnelEmerge(VOID_T.tunnelFrom - 0.05)).toBe(0);
+    expect(tunnelEmerge(VOID_T.tunnelFrom + 0.02)).toBeGreaterThan(0);
+    expect(tunnelEmerge(VOID_T.tunnelFrom + 0.02)).toBeLessThan(0.04);
     let last = 0;
-    for (let t = VOID_T.tunnelFrom; t <= VOID_T.tunnelFull; t += 0.05) {
+    for (let t = VOID_T.tunnelFrom; t <= WARP.blackAt; t += 0.01) {
       expect(tunnelEmerge(t)).toBeGreaterThanOrEqual(last);
       last = tunnelEmerge(t);
     }
-    expect(tunnelEmerge(VOID_T.tunnelFull)).toBe(1);
-    expect(tunnelEmerge(9)).toBe(1);
+    // It grows faster than the pupil (it catches up with it) and stays inside the pupil's black core.
+    const viewport = { width: 390, height: 844 };
+    const pupil = { x: 195, y: 422, r: 1.4 };
+    const zoom = zoomLevels(pupil.r, viewport);
+    const fullRadius = Math.hypot(195, 422) / 0.9; // the tube's nearest drawn ring at full size
+    for (let t = VOID_T.tunnelFrom; t < WARP.blackAt; t += 0.02) {
+      const core = cameraAt(t, pupil, pupil, zoom).scale * pupil.r;
+      expect(tunnelEmerge(t) * fullRadius).toBeLessThanOrEqual(core);
+    }
   });
+
 
 
 
