@@ -3,9 +3,9 @@
  * tested and shared by the renderer. Times are seconds from the click, aligned to the sound
  * `public/sounds/gate-enter-12s.mp3` (docs/operations/PLAYER-SOUND.md):
  *
- * - 0.00 – 0.65  the sound opens with a whisper ("here come…"); the camera holds still, only the
+ * - 0.00 – 0.40  the sound opens with a whisper ("here come…"); the camera holds still, only the
  *                prompt fades (the click visibly registered);
- * - 0.65 – 4.95  from the main motif on (bass enters at 0.65 s, measured), one continuous zoom into the
+ * - 0.40 – 4.95  from the whisper's second word on (the main motif follows at 0.65 s), one continuous zoom into the
  *                rabbit's eye and on into the black pixel of its pupil: it moves from its very first
  *                frame but slowly, and speeds up all the way, so it enters the pupil exactly on the
  *                sound's first bright hit (4.95 s);
@@ -20,8 +20,11 @@
  */
 
 export const WARP = {
-  /** End of the whisper at the start of the sound: the main motif (and the zoom) start here. */
-  zoomFrom: 0.65,
+  /**
+   * The zoom starts on the second word of the opening whisper ("here COME…", 0.4 s, measured): it
+   * eases in, so its motion shows towards the end of the whisper, as the main motif (0.65 s) arrives.
+   */
+  zoomFrom: 0.4,
   /** The sound's first bright hit: the zoom is inside the pupil, the screen black. */
   blackAt: 4.95,
   blackFrom: 4.55,

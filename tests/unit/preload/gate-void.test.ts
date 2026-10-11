@@ -49,3 +49,25 @@ describe("the void: WWW.PAWELPERFECT.COM out of the pupil", () => {
   });
 });
 
+
+describe("the final dive", () => {
+  it("chooses between the two middle letters, the P and the E of PERFECT", async () => {
+    const { AIM_CANDIDATES } = await import("@/app/components/preload/gate-void");
+    expect(AIM_CANDIDATES.map((i) => VOID_TITLE[i]).join("")).toBe("PE");
+  });
+});
+
+describe("the tunnel of rain glyphs", () => {
+  it("the camera only ever moves forward, fast while the title flies in, slow while it rests, fastest in the flash", async () => {
+    const { tunnelTravel } = await import("@/app/components/preload/gate-void");
+    let last = -1;
+    for (let t = VOID_T.open; t <= WARP.flashEnd; t += 0.05) {
+      const d = tunnelTravel(t);
+      expect(d).toBeGreaterThanOrEqual(last);
+      last = d;
+    }
+    const rate = (a: number, b: number) => (tunnelTravel(b) - tunnelTravel(a)) / (b - a);
+    expect(rate(6.0, 6.5)).toBeGreaterThan(rate(9.0, 9.5));
+    expect(rate(11.3, 11.5)).toBeGreaterThan(rate(10.4, 10.9));
+  });
+});
