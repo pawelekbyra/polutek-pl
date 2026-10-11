@@ -296,7 +296,13 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
     // BEGINNING when the warp's flash covers the screen ("polutek:gate-enter"): with sound, unless the
     // viewer chose mute (then muted, still from 0). Without the warp (reduced motion) both come at
     // the click. A player that is not mounted yet starts with sound when it mounts.
+    //
+    // Both act on the <video> element itself: it is the source of truth, and the player library
+    // follows its events. (Pausing it through the library right after the raw play+pause left the
+    // library's state at "playing" while the element stood still, so a later play() was a no-op and
+    // the hero never started after the warp.)
     useEffect(() => {
+        const mediaOf = () => player.current?.el?.querySelector("video") ?? null;
         const handleGateEnter = () => {
             gateHoldRef.current = false;
             const viewerMuted = readUserMuted();
@@ -307,29 +313,27 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
             }
             const current = player.current;
             if (!current) return;
-            current.currentTime = 0;
-            current.muted = viewerMuted;
-            if (current.paused && current.state?.canPlay) {
-                // Refused with sound (the gesture's permission did not carry over): play muted with
-                // the unmute hint rather than stay paused.
-                void current.play().catch(() => {
-                    setMuted(true);
-                    current.muted = true;
-                    void current.play().catch(() => setAutoPlayFailed(true));
-                });
-            }
+            const target: { currentTime: number; muted: boolean; play: () => Promise<void> } = mediaOf() ?? current;
+            target.currentTime = 0;
+            target.muted = viewerMuted;
+            // Refused with sound (the gesture's permission did not carry over): play muted with the
+            // unmute hint rather than stay paused.
+            void target.play().catch(() => {
+                setMuted(true);
+                target.muted = true;
+                void target.play().catch(() => setAutoPlayFailed(true));
+            });
         };
         const handleGateUnlock = () => {
             gateHoldRef.current = true;
-            const current = player.current;
-            const media = current?.el?.querySelector("video") ?? null;
-            if (media && !readUserMuted()) {
+            const media = mediaOf();
+            if (!media) return;
+            if (!readUserMuted()) {
                 media.muted = false;
                 void media.play()?.catch(() => undefined);
             }
-            media?.pause();
-            current?.pause();
-            if (current) current.currentTime = 0;
+            media.pause();
+            media.currentTime = 0;
         };
         window.addEventListener("polutek:gate-enter", handleGateEnter);
         window.addEventListener("polutek:gate-unlock", handleGateUnlock);
@@ -473,7 +477,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                         onPlay={() => {
                             // Held for the entry warp: undo the start, nothing is counted.
                             if (gateHoldRef.current) {
-                                player.current?.pause();
+                                player.current?.el?.querySelector("video")?.pause();
                                 return;
                             }
                             setHasStartedPlayback(true);

@@ -405,44 +405,42 @@ describe("VideoPlayer restores the viewer's sound after a reload", () => {
     expect(mocks.lastPlayerProps?.muted).toBe(false);
   });
 
-  it("pauses the hero at its start on the gate click and undoes any play until the warp's flash", async () => {
+  it("pauses the hero at its start on the gate click, undoes any play, and starts it from 0 at the flash", async () => {
     writeUserMuted(false);
     renderUnderGate();
     await act(async () => {});
+    // The real <video> element (the player library only follows its events).
     const video = document.createElement("video");
     const videoPlay = vi.fn(() => Promise.resolve());
     const videoPause = vi.fn();
     Object.assign(video, { play: videoPlay, pause: videoPause });
+    video.currentTime = 7;
     const instance = mocks.instance as unknown as Record<string, unknown>;
-    instance.pause = vi.fn();
     instance.el = { querySelector: () => video };
-    instance.currentTime = 7;
     try {
       await act(async () => {
         window.dispatchEvent(new Event("polutek:gate-unlock"));
       });
       // Unlocked for sound inside the click (play + pause unmuted), then held at the start.
       expect(video.muted).toBe(false);
-      expect(videoPlay).toHaveBeenCalled();
+      expect(videoPlay).toHaveBeenCalledTimes(1);
       expect(videoPause).toHaveBeenCalled();
-      expect(instance.pause).toHaveBeenCalled();
-      expect(mocks.instance.currentTime).toBe(0);
+      expect(video.currentTime).toBe(0);
       // Something starts it during the warp (resumed autoplay, buffering): it is paused again.
-      (instance.pause as ReturnType<typeof vi.fn>).mockClear();
+      videoPause.mockClear();
       await act(async () => fire("onPlay"));
-      expect(instance.pause).toHaveBeenCalledTimes(1);
-      // The flash: from the beginning, with sound.
-      mocks.instance.currentTime = 3;
+      expect(videoPause).toHaveBeenCalledTimes(1);
+      // The flash: the element itself is rewound and played (not a library call that could be a
+      // no-op on a stale "playing" state), with sound.
+      video.currentTime = 3;
       await act(async () => {
         window.dispatchEvent(new Event("polutek:gate-enter"));
       });
-      expect(mocks.instance.currentTime).toBe(0);
-      expect(mocks.instance.muted).toBe(false);
-      expect(mocks.instance.play).toHaveBeenCalled();
+      expect(video.currentTime).toBe(0);
+      expect(video.muted).toBe(false);
+      expect(videoPlay).toHaveBeenCalledTimes(2);
     } finally {
-      delete instance.pause;
       delete instance.el;
-      mocks.instance.currentTime = 0;
     }
   });
 
