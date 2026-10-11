@@ -182,7 +182,10 @@
   filter: drop-shadow(0 0 6px rgba(17, 24, 39, 0.2)) brightness(0.92);
 }
 
-/* A dark terminal key under the rabbit (the same spot the progress bar had); hover/focus inverts it. */
+/* A dark terminal key under the rabbit (the same spot the progress bar had). A mouse over it inverts
+   it; keyboard focus draws a ring around it instead of inverting it: the key is focused by script when
+   it appears, and Chrome then shows the keyboard-focus look, which vanished on the press (a dark flash
+   right as the warp began). */
 .caption {
   position: absolute;
   left: 50%;
@@ -206,15 +209,16 @@
   animation: appear 260ms ease-out both;
 }
 
-.caption:hover,
-.caption:focus-visible {
-  background: var(--mx-bg, #f7f9fc);
-  color: var(--mx-ink, #111827);
+@media (hover: hover) and (pointer: fine) {
+  .caption:hover {
+    background: var(--mx-bg, #f7f9fc);
+    color: var(--mx-ink, #111827);
+  }
 }
 
 .caption:focus-visible {
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  outline: 2px solid var(--mx-ink, #111827);
+  outline-offset: 3px;
 }
 
 @keyframes fill-time {

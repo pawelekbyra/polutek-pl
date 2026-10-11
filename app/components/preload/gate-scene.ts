@@ -17,7 +17,17 @@ export type CapturedButton = {
   color: string;
   borderColor: string;
   borderWidth: number;
+  /** Keyboard focus ring (outline) shown at the click, if any. */
+  ring: { color: string; width: number; offset: number } | null;
 };
+
+function matches(el: Element, selector: string): boolean {
+  try {
+    return el.matches(selector);
+  } catch {
+    return false;
+  }
+}
 
 const px = (v: string) => Number.parseFloat(v) || 0;
 
@@ -35,11 +45,14 @@ export function captureButton(button: HTMLElement | null): CapturedButton | null
     if (t && t.width > 0) textBox = { left: t.left, top: t.top, width: t.width, height: t.height };
   }
   const cs = getComputedStyle(button);
-  // The key's resting look (dark key, light letters), not whatever :hover/:active state the click left:
-  // with a mouse the pointer is on the button when it is clicked, and the zoom must not keep the
-  // inverted hover colours. Taken from the gate's palette variables, with the computed colours as fallback.
-  const ink = cs.getPropertyValue("--mx-ink").trim();
-  const page = cs.getPropertyValue("--mx-bg").trim();
+  // Exactly the look on screen at the click, so the canvas copy replaces it without a flash: the dark
+  // key, or its inverted look while a mouse is over it. Taken from the gate's palette variables (the
+  // end state, not a colour caught halfway through the 140 ms hover transition), with the computed
+  // colours as fallback.
+  const hovered = matches(button, ":hover");
+  const ink = cs.getPropertyValue(hovered ? "--mx-bg" : "--mx-ink").trim();
+  const page = cs.getPropertyValue(hovered ? "--mx-ink" : "--mx-bg").trim();
+  const outline = px(cs.outlineWidth);
   return {
     box: { left: r.left, top: r.top, width: r.width, height: r.height },
     textBox,
@@ -48,8 +61,12 @@ export function captureButton(button: HTMLElement | null): CapturedButton | null
     letterSpacing: px(cs.letterSpacing),
     background: ink || cs.backgroundColor,
     color: page || cs.color,
-    borderColor: ink || cs.borderTopColor,
+    borderColor: cs.getPropertyValue("--mx-ink").trim() || cs.borderTopColor,
     borderWidth: px(cs.borderTopWidth),
+    ring:
+      matches(button, ":focus-visible") && outline > 0 && cs.outlineStyle !== "none"
+        ? { color: cs.outlineColor, width: outline, offset: px(cs.outlineOffset) }
+        : null,
   };
 }
 
@@ -69,6 +86,12 @@ export function drawButton(
   ctx.globalAlpha = 1;
   ctx.fillStyle = b.background;
   ctx.fillRect(b.box.left, b.box.top, b.box.width, b.box.height);
+  if (b.ring) {
+    const o = b.ring.offset + b.ring.width / 2;
+    ctx.strokeStyle = b.ring.color;
+    ctx.lineWidth = b.ring.width;
+    ctx.strokeRect(b.box.left - o, b.box.top - o, b.box.width + 2 * o, b.box.height + 2 * o);
+  }
   if (b.borderWidth > 0) {
     ctx.strokeStyle = b.borderColor;
     ctx.lineWidth = b.borderWidth;
@@ -98,7 +121,22 @@ export type CapturedPrompt = {
   /** Sprite pixels per CSS px. */
   res: number;
   cursor: { left: number; top: number; width: number; height: number; color: string } | null;
+  /** Where the on-screen cursor's blink was at the click (s into its 1.06 s cycle); see cursorBlinkPhase. */
+  blinkPhase: number;
 };
+
+const BLINK = 1.06;
+
+/**
+ * Where the prompt's CSS cursor is in its blink cycle right now (seconds), so the canvas copy goes on
+ * blinking in step instead of restarting "on" at the click (a cursor that was off flashed on).
+ */
+export function cursorBlinkPhase(p: HTMLElement | null): number {
+  const cursor = p?.querySelector<HTMLElement>("[data-gate-cursor]");
+  const anim = typeof cursor?.getAnimations === "function" ? cursor.getAnimations()[0] : undefined;
+  const ms = typeof anim?.currentTime === "number" ? anim.currentTime : Number(anim?.currentTime ?? 0);
+  return Number.isFinite(ms) ? (((ms / 1000) % BLINK) + BLINK) % BLINK : 0;
+}
 
 export function capturePrompt(p: HTMLElement | null, dpr: number): CapturedPrompt | null {
   if (!p) return null;
@@ -149,6 +187,7 @@ export function capturePrompt(p: HTMLElement | null, dpr: number): CapturedPromp
     sprite,
     res,
     cursor: cr && cr.width > 0 ? { left: cr.left, top: cr.top, width: cr.width, height: cr.height, color: cs.color } : null,
+    blinkPhase: 0,
   };
 }
 
@@ -164,7 +203,7 @@ export function drawPrompt(
   ctx.globalAlpha = 1;
   ctx.drawImage(prompt.sprite, prompt.box.left, prompt.box.top, prompt.box.width, prompt.box.height);
   // The terminal cursor keeps blinking (same rhythm as the CSS: 1.06 s, on for the first half).
-  if (prompt.cursor && t % 1.06 < 0.53) {
+  if (prompt.cursor && (t + prompt.blinkPhase) % BLINK < BLINK / 2) {
     ctx.fillStyle = prompt.cursor.color;
     ctx.fillRect(prompt.cursor.left, prompt.cursor.top, prompt.cursor.width, prompt.cursor.height);
   }

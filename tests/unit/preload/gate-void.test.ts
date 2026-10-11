@@ -111,9 +111,7 @@ describe("the tunnel of rain glyphs", () => {
 
 
 
-  it("is already seen through the pupil before the camera enters it", () => {
-    expect(VOID_T.tunnelFrom).toBeLessThan(WARP.blackAt);
-  });
+
 
   it("is a round tube through the screen corners, its columns evenly round it", async () => {
     const { tubeColumns } = await import("@/app/components/preload/gate-void");

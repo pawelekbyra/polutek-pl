@@ -7,7 +7,7 @@ afterEach(() => {
 });
 
 describe("ENTER button captured for the warp scene", () => {
-  it("keeps the key's resting colours even when the click left it in its hover look", () => {
+  it("takes the key's settled colours from the palette, not a colour caught mid-transition", () => {
     // In the browser the palette variables are inherited from the gate screen; jsdom does not inherit
     // custom properties, so they sit on the button here.
     document.body.innerHTML = '<button style="--mx-ink:#111827;--mx-bg:#f7f9fc;background:#f7f9fc;color:#111827;border:1px solid #111827">ENTER</button>';
