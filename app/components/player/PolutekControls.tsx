@@ -31,6 +31,11 @@ function CenterStage() {
   const waiting = useMediaState("waiting");
   const ended = useMediaState("ended");
 
+  // One button, one class set: the ended state only swaps the glyph (replay arrow instead of the
+  // play triangle) and the accessible name. Size, circle, shadow, hover and focus ring are shared
+  // by construction, so the two cannot drift apart again. No visible label: the icon is the cue.
+  const label = ended ? copy.replay : copy.play;
+
   return (
     <div
       className={cn("mc-center", ended && "mc-center--ended")}
@@ -41,20 +46,10 @@ function CenterStage() {
           <span className="mc-spinner-ring" aria-hidden="true" />
         </div>
       ) : paused ? (
-        <PlayButton
-          className={cn("mc-hero", ended && "mc-hero--replay")}
-          aria-label={ended ? copy.replay : copy.play}
-        >
-          {ended ? (
-            <>
-              <span className="mc-hero-icon-wrap">
-                <ReplayIcon className="mc-hero-icon" aria-hidden="true" />
-              </span>
-              <span className="mc-replay-label">{copy.replay}</span>
-            </>
-          ) : (
-            <PlayIcon className="mc-hero-icon" aria-hidden="true" />
-          )}
+        <PlayButton className="mc-hero" aria-label={label} title={label}>
+          {ended
+            ? <ReplayIcon className="mc-hero-icon" aria-hidden="true" />
+            : <PlayIcon className="mc-hero-icon" aria-hidden="true" />}
         </PlayButton>
       ) : null}
     </div>
