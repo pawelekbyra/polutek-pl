@@ -6,4 +6,5 @@ export * from "./application/resync-subscribers.use-case";
 export * from "./application/change-channel-owner.use-case";
 export * from "./domain/channel.policy";
 export * from "./domain/channel.errors";
+export * from "./domain/channel-avatar";
 // Repository is internal to the module
