@@ -21,6 +21,12 @@
   /* Prevent any touch-scroll from reaching the page underneath. */
   touch-action: none;
   overscroll-behavior: none;
+  /* A gate, not a document: no text selection, no "Save image" menu on a long press (iOS), no
+     tap flash. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* What the entry warp's camera moves (rain, prompt, rabbit); a plain full-screen layer otherwise. */

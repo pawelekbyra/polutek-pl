@@ -26,7 +26,7 @@ export type WarpStart = {
    * The vector rabbit and its square on screen: drawn on the canvas at the camera scale, so the eye
    * stays sharp at any zoom. Without it the bitmap in the DOM is scaled (soft at the end).
    */
-  vector?: { data: RabbitVector; box: { left: number; top: number; edge: number } } | null;
+  vector?: { data: RabbitVector; box: { left: number; top: number; edge: number }; glow?: boolean } | null;
   /** The ENTER button, drawn on the canvas under the same camera (it stays and zooms with the rabbit). */
   button?: CapturedButton | null;
   /** "Follow the white rabbit", likewise part of the zooming scene. */
@@ -138,7 +138,10 @@ export function GateWarp({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
       if (vector && t < WARP.blackAt) {
-        drawRabbit(ctx, vector.data, vector.box, cam, dpr);
+        // A rabbit clicked under the mouse had its hover glow: it fades out during the whisper instead
+        // of vanishing in the first frame.
+        const glow = vector.glow ? 1 - Math.min(1, t / 0.45) : 0;
+        drawRabbit(ctx, vector.data, vector.box, cam, dpr, glow);
         if (rabbitImg) rabbitImg.style.visibility = "hidden";
       }
       if (prompt && t < WARP.blackAt) {

@@ -225,6 +225,22 @@ function getRainSheet(): { sheet: HTMLCanvasElement; cell: number; count: number
   return rainSheet;
 }
 
+/**
+ * Drops every sprite the void rendered (glyph atlas and sheet, ring sprites with their mipmaps,
+ * letters, glows, light): tens of MB of canvas memory on a desktop, useless once the viewer is in
+ * (the gate does not come back in this tab).
+ */
+export function releaseGateVoid(): void {
+  rainAtlas = null;
+  rainSheet = null;
+  ringSprites = null;
+  letters = null;
+  glow = null;
+  lightSprite = null;
+  columnsFor = null;
+  layout = null;
+}
+
 /** Renders the void's sprites ahead of time (call while nothing animates), so its first frame does not stall. */
 export function prepareGateVoid(): void {
   getRainSheet();

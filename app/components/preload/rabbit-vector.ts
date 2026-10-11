@@ -91,6 +91,8 @@ export function drawRabbit(
   box: { left: number; top: number; edge: number },
   camera: { tx: number; ty: number; scale: number },
   dpr: number,
+  /** 0..1: the soft dark glow the rabbit has under a mouse (CSS drop-shadow 14 px), faded by the caller. */
+  glow = 0,
 ): void {
   const k = (box.edge / vector.size) * camera.scale;
   ctx.setTransform(
@@ -101,11 +103,26 @@ export function drawRabbit(
     dpr * (camera.tx + camera.scale * box.left),
     dpr * (camera.ty + camera.scale * box.top),
   );
-  for (const layer of vector.layers) {
+  vector.layers.forEach((layer, i) => {
+    // Only the outer silhouette casts the glow (the inner layers would darken the white body).
+    const glowing = i === 0 && glow > 0.01;
+    if (glowing) {
+      ctx.shadowColor = `rgba(17, 24, 39, ${0.25 * glow})`;
+      ctx.shadowBlur = 14 * dpr * camera.scale;
+    }
     ctx.fillStyle = layer.fill;
     ctx.fill(layer.path, "evenodd");
-  }
+    if (glowing) {
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+    }
+  });
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+/** Drops the parsed rabbit once the entry is over (the gate does not come back in this tab). */
+export function releaseRabbitVector(): void {
+  loaded = null;
 }
 
 /** @internal tests */

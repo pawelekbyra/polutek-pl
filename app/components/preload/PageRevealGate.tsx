@@ -15,9 +15,9 @@ import { SitePreloaderScreen } from "./SitePreloaderScreen";
 import type { WarpStart } from "./GateWarp";
 import { preloadGateSound, primeGateSound, releaseGateSound, startGateSound } from "./gate-sound";
 import { pupilOnScreen, rabbitBox } from "./gate-warp-timeline";
-import { getRabbitVector, preloadRabbitVector } from "./rabbit-vector";
-import { captureButton, capturePrompt, cursorBlinkPhase, type CapturedPrompt } from "./gate-scene";
-import { prepareGateVoid } from "./gate-void";
+import { getRabbitVector, preloadRabbitVector, releaseRabbitVector } from "./rabbit-vector";
+import { captureButton, capturePrompt, cursorBlinkPhase, showsHoverLook, type CapturedPrompt } from "./gate-scene";
+import { prepareGateVoid, releaseGateVoid } from "./gate-void";
 import {
   consumeQueuedGateEnter,
   hasPassedGateThisSession,
@@ -213,7 +213,7 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
     setWarpStart({
       pupil: pupilOnScreen(box),
       clock: startGateSound(),
-      vector: data ? { data, box: rabbitBox(box) } : null,
+      vector: data ? { data, box: rabbitBox(box), glow: showsHoverLook(rabbit!.parentElement ?? rabbit!) } : null,
       button: captureButton(document.querySelector<HTMLElement>("[data-gate-enter]")),
       prompt: withBlinkPhase(freshPrompt(promptSprite.current) ?? capturePromptNow()),
     });
@@ -226,6 +226,9 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
   const warpDone = useCallback(() => {
     hideGateFromNowOn();
     releaseGateSound();
+    // The warp's canvases and paths (tens of MB of sprites on a desktop) are not needed any more.
+    releaseGateVoid();
+    releaseRabbitVector();
     setPhase("done");
     // Keyboard and screen-reader users land on the page content, not on a vanished button.
     document.getElementById("main")?.focus({ preventScroll: true });

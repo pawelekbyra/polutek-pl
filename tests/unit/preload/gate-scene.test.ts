@@ -21,6 +21,21 @@ describe("ENTER button captured for the warp scene", () => {
     expect(captured.box).toEqual({ left: 10, top: 20, width: 120, height: 46 });
   });
 
+  it("ignores the hover state a tap leaves on a touch screen (its look does not change there)", async () => {
+    const { showsHoverLook } = await import("@/app/components/preload/gate-scene");
+    const el = document.createElement("button");
+    el.matches = (sel: string) => sel === ":hover";
+    const original = window.matchMedia;
+    try {
+      window.matchMedia = ((q: string) => ({ matches: false, media: q })) as unknown as typeof window.matchMedia;
+      expect(showsHoverLook(el)).toBe(false);
+      window.matchMedia = ((q: string) => ({ matches: true, media: q })) as unknown as typeof window.matchMedia;
+      expect(showsHoverLook(el)).toBe(true);
+    } finally {
+      window.matchMedia = original;
+    }
+  });
+
   it("returns nothing for a button that is not on screen", () => {
     document.body.innerHTML = "<button>ENTER</button>";
     expect(captureButton(document.querySelector("button"))).toBeNull();

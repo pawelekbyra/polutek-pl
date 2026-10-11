@@ -54,6 +54,7 @@ export function MatrixGatePrompt({
             height={220}
             fetchPriority="high"
             decoding="async"
+            draggable={false}
             className={styles.rabbitImg}
           />
         </div>
