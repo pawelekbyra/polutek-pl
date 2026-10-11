@@ -15,6 +15,7 @@ import type { WarpStart } from "./GateWarp";
 import { preloadGateSound, primeGateSound, releaseGateSound, startGateSound } from "./gate-sound";
 import { pupilOnScreen, rabbitBox } from "./gate-warp-timeline";
 import { getRabbitVector, preloadRabbitVector } from "./rabbit-vector";
+import { captureButton } from "./gate-scene";
 import {
   consumeQueuedGateEnter,
   hasPassedGateThisSession,
@@ -167,6 +168,7 @@ export function PageRevealGate({ children, waitFor = [] }: PageRevealGateProps) 
       pupil: pupilOnScreen(box),
       clock: startGateSound(),
       vector: data ? { data, box: rabbitBox(box) } : null,
+      button: captureButton(document.querySelector<HTMLElement>("[data-gate-enter]")),
     });
     setPhase("warp");
   }, []);

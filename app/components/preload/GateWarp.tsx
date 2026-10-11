@@ -5,6 +5,7 @@ import type { GateClock } from "./gate-sound";
 import { WARP, blackoutAt, cameraAt, flashAt, zoomLevels, type Point } from "./gate-warp-timeline";
 import { drawRabbit, type RabbitVector } from "./rabbit-vector";
 import { drawVoid } from "./gate-void";
+import { drawButton, type CapturedButton } from "./gate-scene";
 import { ensureRainRuntime } from "./matrix-rain-engine";
 
 /**
@@ -26,6 +27,8 @@ export type WarpStart = {
    * stays sharp at any zoom. Without it the bitmap in the DOM is scaled (soft at the end).
    */
   vector?: { data: RabbitVector; box: { left: number; top: number; edge: number } } | null;
+  /** The ENTER button, drawn on the canvas under the same camera (it stays and zooms with the rabbit). */
+  button?: CapturedButton | null;
 };
 
 const LIGHT = "#f7f9fc";
@@ -63,7 +66,7 @@ export function GateWarp({
       callbacks.current.onDone();
       return;
     }
-    const { pupil, clock, vector } = start;
+    const { pupil, clock, vector, button } = start;
     const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
     let w = 0;
     let h = 0;
@@ -93,6 +96,8 @@ export function GateWarp({
 
     // The vector rabbit replaces the bitmap: the <img> is hidden in the frame that first draws it.
     const rabbitImg = vector ? camera?.querySelector<HTMLElement>("[data-gate-rabbit] img") ?? null : null;
+    // Same for the ENTER button: from the first frame on it is the canvas copy that zooms.
+    const buttonEl = button ? camera?.querySelector<HTMLElement>("[data-gate-enter]") ?? null : null;
 
     let skipBy = 0;
     const skip = (event: Event) => {
@@ -134,13 +139,18 @@ export function GateWarp({
         drawRabbit(ctx, vector.data, vector.box, cam, dpr);
         if (rabbitImg) rabbitImg.style.visibility = "hidden";
       }
+      if (button && t < WARP.blackAt) {
+        drawButton(ctx, button, cam, dpr);
+        if (buttonEl) buttonEl.style.visibility = "hidden";
+      }
       const black = blackoutAt(t);
       if (black > 0) {
         ctx.globalAlpha = black;
         ctx.fillStyle = BLACK;
         ctx.fillRect(0, 0, w, h);
       }
-      if (t >= WARP.blackAt && t < WARP.flash) {
+      // The void runs on under the flash (its title flies through the camera into it).
+      if (t >= WARP.blackAt && t < WARP.flashEnd) {
         drawVoid(ctx, { width: w, height: h }, t, (t - WARP.blackAt) / (WARP.flash - WARP.blackAt));
         ctx.globalAlpha = 1;
       }
@@ -172,6 +182,7 @@ export function GateWarp({
     return () => {
       cancelAnimationFrame(raf);
       if (rabbitImg) rabbitImg.style.visibility = "";
+      if (buttonEl) buttonEl.style.visibility = "";
       window.removeEventListener("resize", size);
       window.removeEventListener("pointerdown", skip);
       window.removeEventListener("keydown", skip);

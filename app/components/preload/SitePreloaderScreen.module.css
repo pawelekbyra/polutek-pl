@@ -29,6 +29,12 @@
   inset: 0;
 }
 
+/* No pointer at all while the page loads and during the entry animation. */
+.screen[data-cursor="none"],
+.screen[data-cursor="none"] * {
+  cursor: none !important;
+}
+
 /* Carrot cursor over the whole gate (tip = hotspot, top-left), only for real mouse pointers. */
 @media (hover: hover) and (pointer: fine) {
   .screen[data-cursor="carrot"],
