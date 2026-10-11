@@ -48,6 +48,36 @@ Mail przez prawdziwą ścieżkę produkcyjną (`sendEmail()` z środowiskiem pro
 
 Uwaga: SES nadpisuje nagłówek `Feedback-ID` własnym (`...:AmazonSES`), więc nasz podział na rodzaje maili w Gmail Postmaster Tools nie obowiązuje; do podziału służą znaczniki SES (`X-SES-MESSAGE-TAGS`).
 
+## Hotmail/Outlook: testy na świeżych skrzynkach (2026-10-11)
+
+Dwie nowe skrzynki outlook.com, nietykane (bez „nie spam”, bez przenoszenia). Nadawca `no-reply@pawelperfect.com` przez SES, uwierzytelnianie w pełni `pass` (SPF, DKIM zgodny z nadawcą, DMARC, `compauth=pass`).
+
+| Mail (pierwszy kontakt) | Skrzynka 1 | Skrzynka 2 |
+|---|---|---|
+| powitanie | Odebrane (SCL 1) | Odebrane |
+| potwierdzenie adresu, z tokenem | Junk (SCL 5, doręczenie SCL 6) | Junk |
+| reset hasła | Junk | Junk |
+| newsletter (nadawca `news.`, z wypisem) | Junk | Junk |
+
+Na skrzynce 2 cztery warianty potwierdzenia (bez ukrytego tekstu, dłuższa treść, sam tekst, inny temat): wszystkie Junk.
+
+**Czytanie nagłówków Microsoftu:** `X-MS-Exchange-Organization-SCL` to ocena filtra (od 5 w górę = Junk), `X-Message-Delivery: ...;D=1|2;...;SCL=n` (base64) to wynik doręczenia (D=1 Odebrane, D=2 Junk), `X-Microsoft-Antispam: BCL:0` = nie poczta masowa. Konsumencki Outlook nie pokazuje `X-Forefront-Antispam-Report`, więc kategorii (spam/phishing) nie widać. Oznaczenie „nie spam” nie zmienia oceny filtra (SCL w nagłówku zostaje), tylko wynik doręczenia dla tej skrzynki: **skrzynka po takim oznaczeniu jest do testów „skażona”**.
+
+Wnioski i czego NIE wiemy:
+
+- Link z tokenem **nie** jest przyczyną: potwierdzenie z linkiem na stronę główną też dostało SCL 5.
+- Same zmiany: ukryty tekst, długość treści, tylko tekst, temat: bez efektu w teście.
+- Powitanie przechodzi dwa razy z rzędu na świeżych skrzynkach. Potwierdzenie, reset i newsletter nie. Filtr wygląda na reagujący na **rodzaj wiadomości** (potwierdzenie konta, reset hasła, poczta masowa) u nadawcy z krótką historią, a domena ma ok. 2 tygodnie (mail-tester: `FROM_FMBLA_NEWDOM14`).
+- Runda 2 na tej samej skrzynce (powitanie plus po jednej zmianie, 6 maili co 70 s): przeszło **tylko** powitanie wysłane jako ostatnie z nadawcy newslettera; powitanie z głównego nadawcy wysłane 5 minut wcześniej już nie. Czyli wynik zależy też od **stanu skrzynki/nadawcy po kilku wcześniejszych wiadomościach w Junku**; kolejne próby na tej samej skrzynce nie są porównywalne ze świeżą. Jedna skrzynka na jedną próbę to jedyny czysty test.
+- Skutek uboczny testów: kilkadziesiąt maili z nowej domeny do skrzynek Microsoftu, w większości w Junku. Nie ma powodu do niepokoju przy takiej skali, ale **nie ma sensu dalej testować na ślepo**.
+
+Co robić:
+
+1. Zrobić przerwę w testach do Microsoftu na kilka dni; domena dojrzewa (próg „30 dni” kończy się ok. połowy listopada).
+2. Prawdziwe zaangażowanie poprawia reputację bardziej niż zmiany w nagłówkach: kilku znajomych z kontami Outlook zakłada konto na stronie, czyta maile i oznacza „to nie jest wiadomość-śmieć”.
+3. Strona i tak podpowiada po rejestracji, żeby zajrzeć do Spamu (`CheckInboxView`). Rozważyć: rejestracja bez przymusu potwierdzenia adresu przed pierwszym wejściem (decyzja produktowa, osobno), logowanie przez Google jako główna ścieżka.
+4. Nie zmieniać DMARC z `p=none` bez potrzeby (ryzyko dla poczty z forwardów).
+
 ## Cofnięcie
 
 Usunięcie `EMAIL_PROVIDER` (albo wartość `resend`) z `app.env` i odtworzenie kontenera `app`: całość wraca na Resend, bez zmian w kodzie. Poprzednia wartość `EMAIL_FROM` jest w kopii `app.env.bak-pre-ses-*` na serwerku.
