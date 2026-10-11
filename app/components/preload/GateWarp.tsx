@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import type { GateClock } from "./gate-sound";
 import { WARP, blackoutAt, cameraAt, flashAt, zoomLevels, type Point } from "./gate-warp-timeline";
 import { drawRabbit, type RabbitVector } from "./rabbit-vector";
-import { drawVoid } from "./gate-void";
+import { drawTunnelWindow, drawVoid } from "./gate-void";
 import { drawButton, drawPrompt, type CapturedButton, type CapturedPrompt } from "./gate-scene";
 import { ensureRainRuntime } from "./matrix-rain-engine";
 
@@ -154,6 +154,14 @@ export function GateWarp({
         ctx.globalAlpha = black;
         ctx.fillStyle = BLACK;
         ctx.fillRect(0, 0, w, h);
+      }
+      // Before the camera is inside the pupil, the tunnel is seen through it (its black core is a window).
+      if (t < WARP.blackAt) {
+        drawTunnelWindow(ctx, { width: w, height: h }, t, {
+          x: cam.tx + cam.scale * pupil.x,
+          y: cam.ty + cam.scale * pupil.y,
+          r: cam.scale * pupil.r,
+        });
       }
       // The void runs on under the flash (its title flies through the camera into it).
       if (t >= WARP.blackAt && t < WARP.flashEnd) {
