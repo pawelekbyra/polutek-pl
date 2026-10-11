@@ -42,6 +42,6 @@ export const GATE_RABBIT_VARIANTS = {
 } as const satisfies Record<string, GateRabbitVariant>;
 
 /** THE SWITCH: "eye" (through the eye) or "rear" (through the dot under the tail). */
-export const GATE_RABBIT_VARIANT: keyof typeof GATE_RABBIT_VARIANTS = "rear";
+export const GATE_RABBIT_VARIANT: keyof typeof GATE_RABBIT_VARIANTS = "eye";
 
 export const GATE_RABBIT: GateRabbitVariant = GATE_RABBIT_VARIANTS[GATE_RABBIT_VARIANT];
