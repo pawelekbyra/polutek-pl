@@ -65,3 +65,6 @@ albo znika w tym samym PR. Historia jest w git.
 baza, testy, frontend, ładowanie, style, operacje, zgodność prawna oraz podsystemy: wideo, logowanie,
 komentarze, płatności, e-maile, panel admina). To materiał roboczy: znalezisko naprawione albo
 przeniesione do `operations/STATUS.md` znika z raportu, a pusty raport jest usuwany.
+
+[`audit/2026-10-12/`](audit/2026-10-12/README.md) to **badania, nie decyzje** (płatny dostęp dożywotni, VAT i narzędzia, napiwki,
+LLC/JDG/sp. z o.o., koszty skalowania, pozycjonowanie, licencje na covery): indeks, wnioski i lista otwartych decyzji właściciela.

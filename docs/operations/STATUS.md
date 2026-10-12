@@ -4,7 +4,7 @@ Jedyna lista otwartych prac. Aktualizuj ją w tym samym PR, który coś zamyka a
 zrobionych tu nie trzymamy (są w git). Przed uznaniem punktu za otwarty sprawdź stan faktyczny
 (`git log origin/main`, `gh pr list`, serwer, DNS).
 
-Ostatnia aktualizacja: 2026-10-07 (GitHub znów jest źródłem prawdy; praca na serwerze TAKT i bez GitHuba z 5-7.10 jest wycofana, jej gałęzie są w `main`;
+Ostatnia aktualizacja: 2026-10-12 (dopisana sekcja „Stan 2026-10-12: decyzje i otwarte pytania”, badania w `docs/audit/2026-10-12/`; reszta pliku bez zmian od 2026-10-07: GitHub znów jest źródłem prawdy; praca na serwerze TAKT i bez GitHuba z 5-7.10 jest wycofana, jej gałęzie są w `main`;
 wcześniej wszystkie prace agentów były wstrzymane na prośbę właściciela).
 
 ## Jak wznowić pracę (przeczytaj najpierw)
@@ -132,6 +132,20 @@ Pomysł pracy agenta bezpośrednio na serwerku bez GitHuba (bundle, własne repo
 - Lista języków: globus w przycisku (bez flagi), wiersze z flagami (`public/flags/`, circle-flags MIT), wszystkie 8 widoczne bez przewijania, bez wyszukiwarki.
 - Zakładki komentarze/filmy na telefonie: oba podkreślenia niebieskie. Okładka kanału twórcy usunięta z kodu i panelu (`Creator.bannerUrl` do usunięcia migracją).
 - Odstęp pola komentarza od pierwszego komentarza: 24 px. Plakietki komentarzy są pod avatarem.
+
+## Stan 2026-10-12: decyzje i otwarte pytania
+
+Źródło: badania z sesji 2026-10-12 w [`../audit/2026-10-12/`](../audit/2026-10-12/README.md) (indeks, wnioski, lista decyzji i pytań do doradców). To są badania, nie decyzje: nic poniżej nie zmienia kodu ani zasad z `CLAUDE.md`.
+
+- **Płatny dostęp (tylko badanie).** Serwis jest w becie (`noindex`), niekomercyjny, tylko napiwki. Płatny dostęp dożywotni jest zbadany (VAT, narzędzia, prawo, architektura, fazy), ale odwrócenie `CLAUDE.md` §1/§4.1/§4.14 wymaga wyraźnej decyzji właściciela w czacie; do tego czasu nic się nie buduje.
+- **Kierunek z badań (do decyzji).** Przy małym wolumenie najprościej przez MoR (Stripe Managed Payments, zapas Paddle); własny sprzedawca ze Stripe Checkout + Stripe Tax jest najtańszy i najbardziej kontrolowany, ale opłaca się dopiero od ok. 850-1 900 sprzedaży rocznie i zostawia VAT po stronie sprzedawcy. Zablokowane pytaniem, które **wymaga doradcy**: LLC zarządzana z Polski jest prawdopodobnie „ustanowiona" w Polsce dla VAT, ryczałt 8,5% prawdopodobnie nie przysługuje dla LLC, trzeba porównać JDG / LLC / sp. z o.o. (do potwierdzenia u doradcy podatkowego; `llc-jdg-spzoo.md`, `vat-ue.md`).
+- **Napiwki.** Model jest zgodny z polityką Stripe dla napiwków za treści twórcy-osoby fizycznej. Jedyny ryzykowny element to pasek zbiórki z napisem „Zbieram hajs na mój Tajny Projekt" (wygląda na crowdfunding bez konkretnego celu): **decyzja właściciela czeka** (zostawić / usunąć pasek / usunąć pasek i tytuł). Badanie przerwane: UE/RODO/AML niezbadane (`napiwki-legalnosc.md`).
+- **Domeny.** `polutek.com` jest na sprzedaż (799 USD, stała cena, GoDaddy); `polutek.pl` zarejestrował 2026-09-25 ktoś inny (nie jest w koncie Cloudflare właściciela); `polutek.com.mx` jest wolna. Podstawowa domena nadal `pawelperfect.com`; zmiana kosztuje (RP ID kluczy dostępu, reputacja poczty, 301, indeksacja).
+- **Covery.** Na własnym serwisie potrzebna jest licencja synchronizacji per piosenka od wydawcy/autora (plus prawa mechaniczne i publiczne udostępnianie); licencje YouTube i Content ID tu nie działają, licencje wyłącznie mechaniczne nie wystarczają (`covery-licencje.md`).
+- **Trwałość projektu (propozycja, otwarta praca).** Żeby przyszły agent lub właściciel mógł wznowić prace bez tej rozmowy: `WAKE-UP.md` (jak wznowić od zera), `ACCOUNTS.md` (jakie konta i gdzie, bez sekretów) i zimna kopia poza serwerem. Uwaga: kopie w R2 wygasają po 15 dniach, a klucz prywatny `age` musi mieć kopię offline (już na liście „Czeka na właściciela", pkt 1). Nic z tego jeszcze nie istnieje.
+- **Koszty skalowania.** Obecny serwer wystarcza; pierwszy twardy limit to Workers Free (100 tys. żądań/dobę), potem pojedynczy encoder i niepodcinane tabele odtwarzania; od S2 dominuje składowanie R2; od S3 ludzie i prawo (`koszty-skalowania.md`, model `cost_model.py`).
+- **Pozycjonowanie.** Alternatywy dla YouTube przeżywają tylko z przyniesioną publicznością albo kapitałem; badanie rekomenduje wąski, zamknięty pilotaż z ok. 10 twórcami i sondowanie ZAiKS, bez otwartej rejestracji (`pozycjonowanie-platformy.md`).
+- **Dryf dokumentacji.** `CLAUDE.md` §1 mówi, że `PATRON` jest jeszcze w enumie `AccessTier`; `prisma/schema.prisma` ma tylko `PUBLIC` i `LOGGED_IN`. Poprawić przy najbliższej zmianie `CLAUDE.md`.
 
 ## Koncepty na później (nie budujemy teraz)
 
