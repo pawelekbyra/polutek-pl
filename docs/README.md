@@ -43,6 +43,8 @@ albo znika w tym samym PR. Historia jest w git.
 | Temat | Plik |
 |---|---|
 | Serwer: układ, deploy, rollback, kopie, crony | [`operations/SERWEREK.md`](operations/SERWEREK.md) |
+| Obudź projekt od zera: kolejność odtworzenia na nowym serwerze z kopii R2, testy dymne, czego nie da się odtworzyć | [`operations/WAKE-UP.md`](operations/WAKE-UP.md) |
+| Konta i usługi zewnętrzne (bez sekretów), kalendarz odnowień i wygasania, co monitorować | [`operations/ACCOUNTS.md`](operations/ACCOUNTS.md) |
 | Języki interfejsu (osiem języków): jak działa `tx()`, jak dodać tekst lub język, decyzje, słownik | [`operations/I18N.md`](operations/I18N.md) |
 | Lokalne CI przed scaleniem (zamiast GitHub Actions) | [`operations/LOCAL-CI.md`](operations/LOCAL-CI.md) |
 | Dzienna odprawa „co słychać?” (raport tylko do odczytu, skill `odprawa`) | [`operations/DAILY-BRIEFING.md`](operations/DAILY-BRIEFING.md) |
