@@ -30,3 +30,4 @@ thumbnail-r2-migration-*.json
 /.claude/local-ci-last.md
 /.claude/local-ci-logs/
 /.claude/local-ci-cache/
+.vercel
