@@ -200,3 +200,8 @@ GitHub Actions dla prywatnego repo nie startuje (limit minut; decyzja właścici
 
 - PP Support: właściciel włącza 2FA na swoim koncie; testowe rozmowy do zamknięcia (w odprawie widać 17 czekających > 24 h, głównie alerty i raporty DMARC).
 - Tłumaczenia DE/ES/FR/IT/PT/ZH to makiety (przełącznik języków pokazuje je jak działające, bez tłumaczeń).
+
+## Stan 2026-10-13 (wieczór): etapy 0-8 platformy wielu twórców
+
+Gałąź `feat/multi-creator-platform`, **niewdrożona, niewypchnięta**. Etapy 0-4 zrobione; 5 (panel „Kanały”, zgłoszenia), 6 (sprzedaż: rdzeń bez Stripe), 7 (strony kanałów, `/@uchwyt`, zgłoszenia) w części; 8 tylko jako plan (`docs/architecture/stage-8-cleanup-plan.md`).
+Niesprawdzone: brak bazy i przeglądarki w tej sesji, więc migracje SQL (`20261013120000`, `20261013140000`), Studio i panel „Kanały” nie były uruchomione end to end. Testy jednostkowe, typecheck i bramka architektury przechodzą; 1 test (`legacy-admin-retired`) pada z powodu separatorów ścieżek Windows, jak wcześniej.
