@@ -6,6 +6,7 @@ import {
 } from "@/lib/modules/channel/infrastructure/creator-content.service";
 import { VideoContentService } from "@/lib/modules/video/infrastructure/video-content.service";
 import { logger } from "@/lib/logger";
+import { needsExtraVideoLookup, pickHomeVideo } from "@/lib/home-video-selection";
 
 export interface HomeContent {
   status: 'loading' | 'ready' | 'error' | 'empty';
@@ -101,3 +102,28 @@ export async function loadHomeContent(): Promise<HomeContent> {
  * logic need).
  */
 export const getHomeContentCached = cache(loadHomeContent);
+
+export interface HomeSelection {
+  /** The video the page plays for `?v=` (list video, extra video or hero), or null when there is nothing to play. */
+  selectedVideo: PublicVideoDTO | null;
+  /** Set only when `?v=` points outside the home list and the video passed the public visibility rules. */
+  extraVideo: PublicVideoDTO | null;
+}
+
+/**
+ * The selection of the current request, shared by the page, its metadata and HomeExperience (React `cache`, keyed by
+ * the `?v=` value). A link to a video that is not in the home list (another channel, or not in the sidebar) is
+ * loaded here by id or slug with the public visibility rules; a hidden or unknown one falls back to the hero.
+ */
+export const getHomeSelectionCached = cache(async (videoId: string | undefined): Promise<HomeSelection> => {
+  const content = await getHomeContentCached();
+  if (content.status === 'error' || content.status === 'empty') return { selectedVideo: null, extraVideo: null };
+  let extraVideo: PublicVideoDTO | null = null;
+  if (videoId && needsExtraVideoLookup(videoId, content.allVideos)) {
+    extraVideo = await VideoContentService.getPublicVideoByIdOrSlug(videoId);
+  }
+  return {
+    selectedVideo: pickHomeVideo(videoId, { allVideos: content.allVideos, mainVideo: content.mainVideo, extraVideo }),
+    extraVideo,
+  };
+});

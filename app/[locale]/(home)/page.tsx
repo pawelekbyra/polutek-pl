@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { getHomeContentCached } from '@/lib/modules/channel/application/home-content.loader';
+import { getHomeContentCached, getHomeSelectionCached } from '@/lib/modules/channel/application/home-content.loader';
 import { APP_NAME, SITE_TITLE } from '@/lib/constants';
 import { getExplicitLocaleHref, getLocaleAlternates, isLocale, type Locale } from '@/lib/i18n/routing';
 import { getBaseUrl } from '@/lib/utils';
@@ -7,18 +7,8 @@ import { getBetaSiteText } from '@/lib/site-stage-metadata';
 import { getVideoDisplayDescription, getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import { notFound } from 'next/navigation';
 import HomeExperience from '@/app/components/home/HomeExperience';
-import type { PublicVideoDTO } from '@/app/types/video';
 
 export const dynamic = 'force-dynamic';
-
-function resolveSelectedVideo(
-  allVideos: PublicVideoDTO[],
-  mainVideo: PublicVideoDTO | null,
-  selectedVideoId?: string
-): PublicVideoDTO | null {
-  if (!selectedVideoId) return mainVideo;
-  return allVideos.find((v) => v.id === selectedVideoId || v.slug === selectedVideoId) || mainVideo;
-}
 
 function videoQuery(videoSlug?: string): string {
   return videoSlug ? `v=${encodeURIComponent(videoSlug)}` : '';
@@ -43,11 +33,11 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   const content = await getHomeContentCached();
   if (content.status !== 'ready') return { title: (await getBetaSiteText(locale))?.title ?? SITE_TITLE };
 
-  const { creator, mainVideo, allVideos } = content;
+  const { creator } = content;
 
   // If a specific video is selected via ?v=, use it for OG tags
   const selectedVideoId = searchParams.v;
-  const selectedVideo = resolveSelectedVideo(allVideos, mainVideo, selectedVideoId);
+  const { selectedVideo } = await getHomeSelectionCached(selectedVideoId);
   const baseUrl = getBaseUrl();
   const canonicalSlug = selectedVideoId ? selectedVideo?.slug ?? selectedVideoId : undefined;
   const alternates = getLocaleAlternates(locale, 'home', { query: videoQuery(canonicalSlug), baseUrl });
@@ -84,9 +74,7 @@ export default async function Home(props: { params: Promise<{ locale: string }>;
   const locale: Locale = rawLocale;
   const searchParams = await props.searchParams;
 
-  const content = await getHomeContentCached();
-  const selectedVideo =
-    content.status === 'ready' ? resolveSelectedVideo(content.allVideos, content.mainVideo, searchParams.v) : null;
+  const { selectedVideo } = await getHomeSelectionCached(searchParams.v);
 
   const videoJsonLd = selectedVideo
     ? {

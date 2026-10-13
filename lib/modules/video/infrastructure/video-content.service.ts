@@ -11,6 +11,7 @@ import { MediaPolicy, resolvePublicThumbnailSrc } from '@/lib/modules/media';
 import { effectivePublishedAt, toPremiereDate } from '../domain/premiere';
 import { withFundraisingProgress } from './fundraising-progress.service';
 import { toVideoAccessTier } from '@/lib/access-tier';
+import { isVideoPubliclyVisible } from '../domain/public-visibility';
 
 export const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
   OR: [
@@ -197,6 +198,40 @@ export class VideoContentService {
       console.error("[GET_ALL_VIDEOS_ERROR]", e);
       if (canUseDemoFallbacks()) return INITIAL_VIDEOS.filter(v => (v.tier as string) !== 'ADMIN').map(v => this.mapToPublicVideoDTO(v));
       throw e;
+    }
+  }
+
+  /**
+   * One video by id or slug for the public page, from any channel (slugs are globally unique), or null when the
+   * viewer must not see it: not found, not PUBLISHED or not yet due, removed by moderation, or on a channel that
+   * is not publicly visible (CLAUDE.md 4.24). Every refusal looks the same, so nothing about a hidden video leaks.
+   * Staff and channel previews are not applied here: an unpublished video is never shown on the public page.
+   */
+  static async getPublicVideoByIdOrSlug(idOrSlug: string): Promise<PublicVideoDTO | null> {
+    const key = idOrSlug.trim();
+    if (!key || key.length > 200) return null;
+    try {
+      const video = await prisma.video.findFirst({
+        where: { OR: [{ id: key }, { slug: key }] },
+        include: {
+          creator: {
+            include: {
+              user: { select: { imageUrl: true, email: true } },
+            },
+          },
+        },
+      });
+      if (!video || !isVideoPubliclyVisible(video as any)) return null;
+
+      const adminData = await findMainCreatorAdminAvatar();
+      const creator = video.creator
+        ? { ...video.creator, imageUrl: video.creator.slug === flags.mainCreatorSlug ? adminData?.imageUrl ?? null : null }
+        : null;
+      const [dto] = await withFundraisingProgress([this.mapToPublicVideoDTO({ ...video, creator })], [video]);
+      return dto;
+    } catch (e: unknown) {
+      console.error("[GET_PUBLIC_VIDEO_BY_ID_OR_SLUG_ERROR]", e);
+      return null;
     }
   }
 
