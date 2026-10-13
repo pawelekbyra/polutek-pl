@@ -5,25 +5,25 @@ import type { ReactNode } from "react";
 /** Small presentational pieces shared by the Studio sections (tokens `--chan-*`, same look as the site). */
 
 export const inputClass =
-  "w-full rounded-xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-3 py-2 text-[14px] text-[var(--chan-ink)] outline-none focus:border-[var(--chan-ink)] disabled:opacity-60";
+  "w-full rounded-xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-3 py-2 text-[14px] text-[var(--chan-ink)] focus:border-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] focus-visible:ring-offset-1 disabled:opacity-60";
 
 export const buttonClass =
-  "inline-flex min-h-10 items-center justify-center rounded-xl bg-[var(--chan-ink)] px-4 py-2 text-[14px] font-semibold text-[var(--chan-card)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-10 items-center justify-center rounded-xl bg-[var(--chan-ink)] px-4 py-2 text-[14px] font-semibold text-[var(--chan-card)] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50";
 
 export const ghostButtonClass =
-  "inline-flex min-h-10 items-center justify-center rounded-xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-4 py-2 text-[14px] font-semibold text-[var(--chan-ink)] transition hover:bg-[var(--chan-surface)] disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-10 items-center justify-center rounded-xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-4 py-2 text-[14px] font-semibold text-[var(--chan-ink)] transition hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50";
 
 export const smallGhostButtonClass =
-  "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--chan-line)] bg-[var(--chan-card)] px-3 py-1 text-[13px] font-semibold text-[var(--chan-ink)] transition hover:bg-[var(--chan-surface)] disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--chan-line)] bg-[var(--chan-card)] px-3 py-1 text-[13px] font-semibold text-[var(--chan-ink)] transition hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50";
 
 export const smallDangerGhostButtonClass =
-  "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--chan-line)] bg-[var(--chan-card)] px-3 py-1 text-[13px] font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--chan-line)] bg-[var(--chan-card)] px-3 py-1 text-[13px] font-semibold text-red-700 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50";
 
 export const smallButtonClass =
-  "inline-flex min-h-8 items-center justify-center rounded-lg bg-[var(--chan-ink)] px-3 py-1 text-[13px] font-semibold text-[var(--chan-card)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-8 items-center justify-center rounded-lg bg-[var(--chan-ink)] px-3 py-1 text-[13px] font-semibold text-[var(--chan-card)] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50";
 
 export const dangerButtonClass =
-  "inline-flex min-h-10 items-center justify-center rounded-xl border border-red-300 bg-[var(--chan-card)] px-4 py-2 text-[14px] font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-10 items-center justify-center rounded-xl border border-red-300 bg-[var(--chan-card)] px-4 py-2 text-[14px] font-semibold text-red-700 transition hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50";
 
 export function Card({ title, children, actions }: { title?: string; children: ReactNode; actions?: ReactNode }) {
   return (
@@ -39,14 +39,46 @@ export function Card({ title, children, actions }: { title?: string; children: R
   );
 }
 
-export function Field({ label, hint, htmlFor, children }: { label: string; hint?: string; htmlFor: string; children: ReactNode }) {
+/** Shared focus ring for custom controls (tabs, nav buttons) so keyboard focus is always visible. */
+export const focusRingClass = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] focus-visible:ring-offset-1";
+
+/** `current/max` counter of a text field; turns amber near the limit. Pair it with `aria-describedby`. */
+export function CharCounter({ id, value, max }: { id: string; value: string; max: number }) {
+  const length = value.length;
+  const near = length >= Math.floor(max * 0.9);
+  return (
+    <span id={id} className={`text-[12px] tabular-nums ${near ? "font-semibold text-amber-700" : "text-[var(--chan-muted)]"}`}>
+      {length}/{max}
+    </span>
+  );
+}
+
+/** A labelled field. The hint gets the id `<htmlFor>-hint`; point `aria-describedby` of the control at it. */
+export function Field({
+  label,
+  hint,
+  counter,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  hint?: ReactNode;
+  /** Shown on the right of the label, e.g. a `CharCounter`. */
+  counter?: ReactNode;
+  htmlFor: string;
+  children: ReactNode;
+}) {
   return (
     <div className="grid gap-1.5">
       <label htmlFor={htmlFor} className="text-[13px] font-semibold text-[var(--chan-ink)]">
         {label}
       </label>
       {children}
-      {hint && <p className="text-[12px] text-[var(--chan-muted)]">{hint}</p>}
+      {hint && (
+        <p id={`${htmlFor}-hint`} className="text-[12px] text-[var(--chan-muted)]">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }

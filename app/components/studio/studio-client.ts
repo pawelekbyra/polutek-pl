@@ -72,6 +72,9 @@ export interface StudioVideo {
   views: number;
   createdAt: string;
   publishedAt: string | null;
+  commentsCount?: number;
+  /** Set when the video publishes itself once processing is done. */
+  publishAfterAssetReady?: boolean;
 }
 
 export interface StudioVideoList {
