@@ -11,7 +11,7 @@ export async function requireVideo(videoId: string, ctx: AppContext, action: Aut
   const channel = await MainChannelService.getRequired(ctx);
   const video = await ctx.prisma.video.findFirst({
     where: { id: videoId, creatorId: channel.id },
-    select: { id: true, title: true, status: true, activeOriginalId: true },
+    select: { id: true, title: true, status: true, activeOriginalId: true, creatorId: true },
   });
   if (!video) throw new AppError("Film nie istnieje.", 404, "VIDEO_NOT_FOUND");
   await assertAuthorized(ctx, action, { channel: { id: channel.id, ownerUserId: channel.userId, status: channel.status } });

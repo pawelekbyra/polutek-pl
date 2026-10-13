@@ -155,9 +155,9 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.json({ error: 'Not found' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
   }
 
-  // Account mutations (nickname, avatar, language, deletion, ...) get a cross-origin guard (lib/api/csrf.ts).
-  // Better Auth's own endpoints check the origin themselves.
-  if (req.nextUrl.pathname.startsWith('/api/user/')) {
+  // Account mutations (nickname, avatar, language, deletion, ...) and the Studio API (channel, videos, uploads,
+  // comments) get a cross-origin guard (lib/api/csrf.ts). Better Auth's own endpoints check the origin themselves.
+  if (req.nextUrl.pathname.startsWith('/api/user/') || req.nextUrl.pathname.startsWith('/api/studio/')) {
     const csrf = checkAdminCsrf(req);
     if (csrf) return NextResponse.json(csrf.body, { status: csrf.status });
   }

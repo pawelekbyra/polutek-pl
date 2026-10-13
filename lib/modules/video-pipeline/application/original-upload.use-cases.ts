@@ -20,6 +20,8 @@ import {
 import { OriginalsMultipart, type UploadedPart } from "../infrastructure/r2-multipart";
 import { enqueueEncode, type EncodeJobDto } from "./encode-queue.use-cases";
 import { requireVideo } from "./video-guard";
+import { channelUploadLimitError } from "./channel-limits";
+import { MainChannelService } from "@/lib/modules/channel";
 
 /** The storage operations the use cases need (R2 in production, a fake in tests). */
 export type OriginalsStoragePort = Pick<OriginalsMultipart, "bucket" | "create" | "presignPart" | "listParts" | "complete" | "abort" | "head" | "readHead" | "deleteObject">;
@@ -76,6 +78,9 @@ export async function startOriginalUpload(input: { videoId: string } & UploadReq
     if (!checked.ok) return fail(new AppError(checked.message, 400, checked.code));
     const storage = storageOrFail(deps);
     const video = await requireVideo(input.videoId, ctx, "video.upload");
+    const channel = await MainChannelService.getRequired(ctx);
+    const limited = await channelUploadLimitError(ctx, channel, checked.value.fileSize);
+    if (limited) return fail(limited);
 
     const active = await ctx.prisma.videoEncodeJob.findFirst({ where: { videoId: video.id, status: { in: ["QUEUED", "RUNNING"] } }, select: { id: true } });
     if (active) return fail(new AppError("Dla tego filmu trwa kodowanie. Poczekaj na koniec albo je anuluj.", 409, "ENCODE_ALREADY_ACTIVE"));

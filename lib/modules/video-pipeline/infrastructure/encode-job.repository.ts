@@ -201,7 +201,7 @@ export class EncodeJobRepository implements EncodeJobStore {
    * original of the same video is a conflict (one encode per video at a time).
    * The advisory lock serialises concurrent enqueues of the same video.
    */
-  async enqueue(input: { videoId: string; originalId: string; requestedById: string | null; maxAttempts?: number }) {
+  async enqueue(input: { videoId: string; originalId: string; requestedById: string | null; channelId?: string | null; maxAttempts?: number }) {
     return this.db.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`encode:${input.videoId}`}))`;
 
@@ -224,6 +224,7 @@ export class EncodeJobRepository implements EncodeJobStore {
       const job = await tx.videoEncodeJob.create({
         data: {
           videoId: input.videoId,
+          channelId: input.channelId ?? null,
           originalId: input.originalId,
           versionNumber,
           idempotencyKey: `${input.originalId}:${generation}`,

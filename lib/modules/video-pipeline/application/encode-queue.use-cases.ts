@@ -93,7 +93,7 @@ export async function enqueueEncode(
     if (!original) return fail(new AppError("Film nie ma wgranego pliku zrodlowego.", 409, "ORIGINAL_MISSING"));
     if (original.status !== "READY") return fail(new AppError("Plik zrodlowy nie jest gotowy (upload nie zostal ukonczony).", 409, "ORIGINAL_NOT_READY"));
 
-    const { job, created } = await repo(ctx).enqueue({ videoId: video.id, originalId: original.id, requestedById: actorId(ctx) });
+    const { job, created } = await repo(ctx).enqueue({ videoId: video.id, originalId: original.id, requestedById: actorId(ctx), channelId: video.creatorId ?? null });
     if (created) {
       await recordAuditEvent(ctx, {
         action: input.auditAction ?? "VIDEO_ENCODE_ENQUEUED",
