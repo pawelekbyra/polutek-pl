@@ -36,7 +36,7 @@ export class EncodeJobRepository implements EncodeJobStore {
   // ---------- worker side ----------
 
   /**
-   * Atomically picks the oldest due QUEUED job and marks it RUNNING.
+   * Atomically picks the next due QUEUED job (channels take turns, then oldest first) and marks it RUNNING.
    * `FOR UPDATE SKIP LOCKED` makes concurrent claimers skip each other's row instead of waiting;
    * the NOT EXISTS clause + advisory lock keep it to ONE running encode (CPX22 has 2 vCPU).
    * Times are computed in the database (UTC) so a skewed worker clock cannot confuse the queue.
@@ -68,7 +68,14 @@ export class EncodeJobRepository implements EncodeJobStore {
             WHERE r."status" = 'RUNNING'
               AND r."heartbeatAt" > ((now() AT TIME ZONE 'UTC') - make_interval(secs => ${staleSeconds}::double precision))
           )
-        ORDER BY c."createdAt" ASC
+        -- Fair between channels: the channel that least recently got the encoder goes first (never started =
+        -- first); inside a channel the oldest job goes first. One creator queueing ten videos cannot starve
+        -- another creator's single upload.
+        ORDER BY (
+          SELECT max(s."startedAt") FROM "VideoEncodeJob" AS s
+          WHERE s."channelId" IS NOT DISTINCT FROM c."channelId" AND s."startedAt" IS NOT NULL
+        ) ASC NULLS FIRST,
+        c."createdAt" ASC
         LIMIT 1
         FOR UPDATE SKIP LOCKED
       )

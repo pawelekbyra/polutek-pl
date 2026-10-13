@@ -205,3 +205,5 @@ GitHub Actions dla prywatnego repo nie startuje (limit minut; decyzja właścici
 
 Gałąź `feat/multi-creator-platform`, **niewdrożona, niewypchnięta**. Etapy 0-4 zrobione; 5 (panel „Kanały”, zgłoszenia), 6 (sprzedaż: rdzeń bez Stripe), 7 (strony kanałów, `/@uchwyt`, zgłoszenia) w części; 8 tylko jako plan (`docs/architecture/stage-8-cleanup-plan.md`).
 Niesprawdzone: brak bazy i przeglądarki w tej sesji, więc migracje SQL (`20261013120000`, `20261013140000`), Studio i panel „Kanały” nie były uruchomione end to end. Testy jednostkowe, typecheck i bramka architektury przechodzą; 1 test (`legacy-admin-retired`) pada z powodu separatorów ścieżek Windows, jak wcześniej.
+
+Uzupełnienie: migracje (66) zastosowane i sprawdzone na prawdziwym silniku Postgres (PGlite, poza repo): backfill, wyzwalacze tylko-do-dopisywania, ograniczenia kwot, unikalność uchwytu bez względu na wielkość liter. Kolejka kodowania jest sprawiedliwa między kanałami (kanał, który najdłużej nie dostał kodera, idzie pierwszy), SQL sprawdzony na tym samym silniku. Nadal niesprawdzone w przeglądarce: Studio, panel Kanały, przycisk Zgłoś.
