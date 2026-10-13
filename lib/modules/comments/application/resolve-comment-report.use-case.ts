@@ -5,12 +5,14 @@ import { CommentError, commentDatabaseError } from "../domain/comment.errors";
 import { CommentRepository } from "../infrastructure/comment.repository";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { CommentReportStatus } from "@prisma/client";
+import { authorizeReport, moderatorId } from "./authorize-comments";
 
 /** Closes a report. The comment's `reportsCount` is recomputed from the reports still pending. */
 export async function resolveCommentReport(reportId: string, status: CommentReportStatus, ctx: AppContext): Promise<UseCaseResult<{ id: string; status: CommentReportStatus }, CommentError>> {
-  if (ctx.actor.type !== 'admin') return fail({ type: "UNAUTHORIZED", message: "Brak uprawnień administratora." });
+  const denied = await authorizeReport(ctx, "comment.moderate", reportId);
+  if (denied) return fail(denied);
   if (status === CommentReportStatus.PENDING) return fail({ type: "VALIDATION_ERROR", message: "Zgłoszenie można tylko oddalić albo uznać." });
-  const actorId = ctx.actor.userId;
+  const actorId = moderatorId(ctx);
   try {
     const report = await new CommentRepository(ctx.prisma).findReportById(reportId);
     if (!report) return fail({ type: "NOT_FOUND", message: "Zgłoszenie nie istnieje." });

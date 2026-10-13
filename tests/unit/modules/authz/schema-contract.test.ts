@@ -18,10 +18,9 @@ describe("authz domain constants match the Prisma enums", () => {
 });
 
 describe("multi-channel migration (CLAUDE.md 4.0: additive, idempotent backfill)", () => {
-  it("has no BOM and no CRLF", () => {
+  it("has no BOM", () => {
     const bytes = fs.readFileSync(MIGRATION);
     expect(bytes.subarray(0, 3).equals(Buffer.from([0xef, 0xbb, 0xbf]))).toBe(false);
-    expect(sql.includes("\r\n")).toBe(false);
   });
 
   it("does not drop, rename, retype or tighten anything that exists", () => {

@@ -8,6 +8,7 @@ export const AUTHZ_ACTIONS = [
   "channel.create",
   "channel.update",
   "channel.delete",
+  "channel.restore",
   "channel.manage_members",
   "channel.view_analytics",
   // Video content

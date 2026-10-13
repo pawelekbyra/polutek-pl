@@ -5,9 +5,11 @@ import { CommentError, commentDatabaseError } from "../domain/comment.errors";
 import { CommentRepository } from "../infrastructure/comment.repository";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { CommentStatus } from "@prisma/client";
+import { authorizeComments } from "./authorize-comments";
 
 export async function toggleAdminCommentHeart(commentId: string, ctx: AppContext): Promise<UseCaseResult<{ isHearted: boolean }, CommentError>> {
-  if (ctx.actor.type !== 'admin') return fail({ type: "UNAUTHORIZED", message: "Brak uprawnień administratora." });
+  const denied = await authorizeComments(ctx, "comment.heart", [commentId]);
+  if (denied) return fail(denied);
   try {
     const comment = await new CommentRepository(ctx.prisma).findCommentById(commentId);
     if (!comment) return fail({ type: "NOT_FOUND", message: "Komentarz nie istnieje." });

@@ -208,19 +208,63 @@ describe('checkVideoAccess Use Case Matrix', () => {
       }
     });
 
-    it('off-channel video returns NOT_FOUND for non-admin', async () => {
-        mockPrisma.video.findFirst.mockResolvedValue({
-            ...baseVideo,
-            creatorId: 'other',
-            creator: { id: 'other', isApproved: true, isPrimary: true }
-        });
-        // Note: findFirst in checkVideoAccess already scopes to mainChannelId, but if it didn't:
-        const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
-        expect(result.ok).toBe(true);
-        if (result.ok) {
-            expect(result.data.hasAccess).toBe(false);
-            expect(result.data.reason).toBe('NOT_FOUND');
+    it('a video of a channel that is not public returns NOT_FOUND for a non-member', async () => {
+        for (const creator of [
+          { id: 'other', userId: 'owner-x', isApproved: false, isPrimary: false, status: 'PENDING_REVIEW' },
+          { id: 'other', userId: 'owner-x', isApproved: true, isPrimary: false, status: 'SUSPENDED' },
+          { id: 'other', userId: 'owner-x', isApproved: true, isPrimary: false, status: 'ACTIVE', deletedAt: new Date(now.getTime() - 1000) },
+        ]) {
+          mockPrisma.video.findFirst.mockResolvedValue({ ...baseVideo, creatorId: 'other', creator });
+          const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
+          expect(result.ok && result.data.hasAccess, creator.status).toBe(false);
+          expect(result.ok && result.data.reason, creator.status).toBe('NOT_FOUND');
         }
+    });
+
+    it('serves a video of ANY public channel (the channel comes from the video, not from the site)', async () => {
+        mockPrisma.video.findFirst.mockResolvedValue({
+          ...baseVideo,
+          creatorId: 'other',
+          creator: { id: 'other', userId: 'owner-x', isApproved: true, isPrimary: false, status: 'ACTIVE' },
+        });
+        const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'guest' }));
+        expect(result.ok && result.data.hasAccess).toBe(true);
+    });
+
+    it('lets the channel owner (and staff) open a draft, nobody else', async () => {
+        const draft = {
+          ...baseVideo,
+          status: VideoStatus.DRAFT,
+          publishedAt: null,
+          creatorId: 'other',
+          creator: { id: 'other', userId: 'owner-x', isApproved: true, isPrimary: false, status: 'ACTIVE' },
+        };
+        mockPrisma.video.findFirst.mockResolvedValue(draft);
+        const owner = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'owner-x' }));
+        expect(owner.ok && owner.data.hasAccess).toBe(true);
+        const stranger = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
+        expect(stranger.ok && stranger.data.reason).toBe('NOT_FOUND');
+        const staff = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'admin', userId: 'a1' }));
+        expect(staff.ok && staff.data.hasAccess).toBe(true);
+    });
+
+    it('hides a REMOVED video from everyone but staff', async () => {
+        const removed = { ...baseVideo, moderationStatus: 'REMOVED' };
+        mockPrisma.video.findFirst.mockResolvedValue(removed);
+        const guest = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'guest' }));
+        expect(guest.ok && guest.data.reason).toBe('NOT_FOUND');
+        mockPrisma.video.findFirst.mockResolvedValue({ ...removed, creator: { ...baseVideo.creator, userId: 'owner-x' } });
+        const owner = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'owner-x' }));
+        expect(owner.ok && owner.data.reason).toBe('NOT_FOUND');
+        const staff = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'admin', userId: 'a1' }));
+        expect(staff.ok && staff.data.hasAccess).toBe(true);
+    });
+
+    it('asks a guest to sign in for an age-restricted video', async () => {
+        mockPrisma.video.findFirst.mockResolvedValue({ ...baseVideo, moderationStatus: 'AGE_RESTRICTED' });
+        const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'guest' }));
+        expect(result.ok && result.data.hasAccess).toBe(false);
+        expect(result.ok && result.data.reason).toBe('LOGIN_REQUIRED');
     });
   });
 
@@ -231,7 +275,7 @@ describe('checkVideoAccess Use Case Matrix', () => {
     it("resolves a slug to the row id and reports the upcoming premiere", async () => {
       mockPrisma.video.findFirst.mockResolvedValue(upcoming);
       const result = await checkVideoAccess({ videoIdOrSlug: "premiera" }, createCtx({ type: "guest" }));
-      expect(mockPrisma.video.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { slug: "premiera", creatorId: mainChannel.id } }));
+      expect(mockPrisma.video.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { slug: "premiera" } }));
       expect(result.ok && result.data).toEqual({ hasAccess: true, videoId: upcoming.id, premiereAt: premiereAt.toISOString() });
     });
 

@@ -23,5 +23,5 @@ export const flags = {
 };
 
 if (process.env.ENABLE_MULTI_CREATOR === "true") {
-  console.warn("WARNING: ENABLE_MULTI_CREATOR is deprecated and unsupported. PawelPerfect.pl is strict single-channel.");
+  console.warn("WARNING: ENABLE_MULTI_CREATOR is ignored. Channel creation is controlled by PLATFORM_GATE_CHANNEL_CREATION (lib/platform-gates.ts, CLAUDE.md 4.24).");
 }

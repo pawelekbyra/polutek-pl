@@ -20,6 +20,7 @@ export const ROLE_ACTIONS: Readonly<Record<ChannelRole, ReadonlySet<AuthzAction>
   OWNER: new Set<AuthzAction>([
     "channel.update",
     "channel.delete",
+    "channel.restore",
     "channel.manage_members",
     "channel.view_analytics",
     ...CONTENT_EDIT,

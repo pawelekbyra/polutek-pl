@@ -20,7 +20,8 @@ const guest: Principal = { kind: "guest" };
 
 const channel: ChannelResource = { id: "ch-1", ownerUserId: "u-owner", status: "ACTIVE" };
 
-const CHANNEL_ACTIONS = AUTHZ_ACTIONS.filter((a) => !isPlatformAction(a) && a !== "channel.create");
+/** `channel.restore` only works on a DELETED channel, so it is tested on its own below. */
+const CHANNEL_ACTIONS = AUTHZ_ACTIONS.filter((a) => !isPlatformAction(a) && a !== "channel.create" && a !== "channel.restore");
 
 describe("authz policy: principals", () => {
   it("maps actors to principals (admin becomes staff)", () => {
@@ -44,7 +45,20 @@ describe("authz policy: principals", () => {
 
 describe("authz policy: channel membership", () => {
   it("the channel owner can do the owner actions inside their own channel", () => {
-    for (const action of ROLE_ACTIONS.OWNER) expect(can(owner, action, channel).allow, action).toBe(true);
+    for (const action of ROLE_ACTIONS.OWNER) {
+      if (action === "channel.restore") continue;
+      expect(can(owner, action, channel).allow, action).toBe(true);
+    }
+  });
+
+  it("restoring is the owner's alone and only while the channel is DELETED", () => {
+    expect(can(owner, "channel.restore", { ...channel, status: "DELETED" }).allow).toBe(true);
+    for (const status of ["ACTIVE", "LIMITED", "SUSPENDED", "BANNED", "PENDING_REVIEW"] as const) {
+      expect(can(owner, "channel.restore", { ...channel, status }), status).toEqual({ allow: false, reason: "ROLE_FORBIDS" });
+    }
+    expect(can(stranger, "channel.restore", { ...channel, status: "DELETED" })).toEqual({ allow: false, reason: "NOT_A_MEMBER" });
+    const editor: ChannelResource = { id: "ch-2", ownerUserId: "x", members: [{ userId: "u-e", role: "EDITOR" }], status: "DELETED" };
+    expect(can({ kind: "user", userId: "u-e", onboardingPending: false }, "channel.restore", editor)).toEqual({ allow: false, reason: "ROLE_FORBIDS" });
   });
 
   it("a user who is not a member is denied every channel action (BOLA)", () => {

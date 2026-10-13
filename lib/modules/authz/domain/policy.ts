@@ -55,6 +55,10 @@ export function can(principal: Principal, action: AuthzAction, resource?: Channe
   if (!role) return deny("NOT_A_MEMBER");
   if (!ROLE_ACTIONS[role].has(action)) return deny("ROLE_FORBIDS");
 
+  // A channel its owner deleted can be restored by that owner during the grace period; nothing else is open.
+  if (action === "channel.restore") {
+    return resource.status === "DELETED" ? ALLOW : deny("ROLE_FORBIDS");
+  }
   if (resource.status && FROZEN_STATUSES.has(resource.status)) return deny("CHANNEL_FROZEN");
   if (resource.status === "LIMITED" && LIMITED_DENIED.has(action)) return deny("CHANNEL_LIMITED");
 

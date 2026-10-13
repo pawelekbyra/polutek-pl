@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { ChannelRepository } from "../infrastructure/channel.repository";
-import { MainChannelNotFoundError, MainChannelNotApprovedError, MainChannelNotPrimaryError } from "../domain/channel.errors";
+import { ChannelNotFoundError, MainChannelNotFoundError, MainChannelNotApprovedError, MainChannelNotPrimaryError } from "../domain/channel.errors";
 import { flags } from "@/lib/feature-flags";
 import { ReadDb, WriteTx } from "../../shared/db";
 
@@ -12,13 +12,33 @@ import { ReadDb, WriteTx } from "../../shared/db";
  * client is a different key, so a write path never reads a stale row.
  */
 const findMainChannel = cache((db: ReadDb) => new ChannelRepository(db).findMainChannel());
+const findChannelById = cache((db: ReadDb, id: string) => new ChannelRepository(db).findById(id));
+
+/** A channel that was soft deleted (or marked DELETED) is not found for any context. */
+function isGone(channel: { status?: string | null; deletedAt?: Date | null }): boolean {
+  return channel.status === 'DELETED' || channel.deletedAt != null;
+}
 
 export class MainChannelService {
+  /**
+   * The channel of this context: `ctx.channelId` when a Studio or panel entry point set it, otherwise the
+   * configured main channel (the public site). The name is historical; see CLAUDE.md 4.24.
+   */
   static async getOptional(ctx: AppContext) {
+    if (ctx.channelId) {
+      const channel = await findChannelById(ctx.prisma, ctx.channelId);
+      return channel && !isGone(channel) ? channel : null;
+    }
     return await findMainChannel(ctx.prisma);
   }
 
   static async getRequired(ctx: AppContext) {
+    if (ctx.channelId) {
+      const channel = await findChannelById(ctx.prisma, ctx.channelId);
+      if (!channel || isGone(channel)) throw new ChannelNotFoundError(ctx.channelId);
+      return channel;
+    }
+
     const channel = await this.getOptional(ctx);
     const slug = flags.mainCreatorSlug;
 

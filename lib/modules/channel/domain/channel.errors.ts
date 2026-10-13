@@ -27,3 +27,10 @@ export class MainChannelNotPrimaryError extends MainChannelError {
     this.name = 'MainChannelNotPrimaryError';
   }
 }
+
+export class ChannelNotFoundError extends MainChannelError {
+  constructor(id: string) {
+    super(`Channel "${id}" not found.`, 404, 'CHANNEL_NOT_FOUND');
+    this.name = 'ChannelNotFoundError';
+  }
+}
