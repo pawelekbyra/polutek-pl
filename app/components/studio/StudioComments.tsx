@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
 import { StudioApiError, jsonBody, studioApi, type StudioComment, type StudioCommentList } from "./studio-client";
-import { Badge, Card, Notice, buttonClass, ghostButtonClass, inputClass } from "./ui";
+import { Badge, Card, Notice, inputClass, smallButtonClass, smallDangerGhostButtonClass, smallGhostButtonClass } from "./ui";
 
 type Filter = "all" | "held" | "reported";
 
@@ -95,29 +95,29 @@ export default function StudioComments() {
               <p className="whitespace-pre-wrap text-[14px] text-[var(--chan-ink)]">{c.text ?? tx("(treść usunięta przez autora)", "(removed by the author)")}</p>
               <div className="flex flex-wrap gap-2">
                 {c.status === "VISIBLE" && (
-                  <button type="button" className={ghostButtonClass} disabled={busyId === c.id} onClick={() => act(c.id, { action: "hide" })}>
+                  <button type="button" className={smallGhostButtonClass} disabled={busyId === c.id} onClick={() => act(c.id, { action: "hide" })}>
                     {tx("Ukryj", "Hide")}
                   </button>
                 )}
                 {c.status === "HELD_FOR_REVIEW" && (
-                  <button type="button" className={ghostButtonClass} disabled={busyId === c.id} onClick={() => act(c.id, { action: "approve" })}>
+                  <button type="button" className={smallGhostButtonClass} disabled={busyId === c.id} onClick={() => act(c.id, { action: "approve" })}>
                     {tx("Zatwierdź", "Approve")}
                   </button>
                 )}
                 {c.status === "HIDDEN" && (
-                  <button type="button" className={ghostButtonClass} disabled={busyId === c.id} onClick={() => act(c.id, { action: "restore" })}>
+                  <button type="button" className={smallGhostButtonClass} disabled={busyId === c.id} onClick={() => act(c.id, { action: "restore" })}>
                     {tx("Przywróć", "Restore")}
                   </button>
                 )}
                 {c.status !== "DELETED" && (
                   <>
-                    <button type="button" className={ghostButtonClass} disabled={busyId === c.id} onClick={() => act(c.id, { action: c.isHearted ? "unheart" : "heart" })}>
+                    <button type="button" className={smallGhostButtonClass} disabled={busyId === c.id} onClick={() => act(c.id, { action: c.isHearted ? "unheart" : "heart" })}>
                       {c.isHearted ? tx("Zabierz serce", "Remove heart") : tx("Daj serce", "Heart")}
                     </button>
-                    <button type="button" className={ghostButtonClass} onClick={() => setReplying(replying === c.id ? null : c.id)}>
+                    <button type="button" className={smallGhostButtonClass} onClick={() => setReplying(replying === c.id ? null : c.id)}>
                       {tx("Odpowiedz", "Reply")}
                     </button>
-                    <button type="button" className={ghostButtonClass} disabled={busyId === c.id} onClick={() => act(c.id, { action: "delete" })}>
+                    <button type="button" className={smallDangerGhostButtonClass} disabled={busyId === c.id} onClick={() => act(c.id, { action: "delete" })}>
                       {tx("Usuń", "Delete")}
                     </button>
                   </>
@@ -134,7 +134,7 @@ export default function StudioComments() {
                     onChange={(e) => setReplyText(e.target.value)}
                   />
                   <div>
-                    <button type="button" className={buttonClass} disabled={busyId === c.id || !replyText.trim()} onClick={() => act(c.id, { action: "reply", text: replyText })}>
+                    <button type="button" className={smallButtonClass} disabled={busyId === c.id || !replyText.trim()} onClick={() => act(c.id, { action: "reply", text: replyText })}>
                       {tx("Wyślij odpowiedź", "Send reply")}
                     </button>
                   </div>

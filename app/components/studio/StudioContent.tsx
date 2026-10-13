@@ -63,8 +63,18 @@ function VideoList({ onUpload, onEdit }: { onUpload: () => void; onEdit: (id: st
       {list && list.items.length > 0 && (
         <ul className="divide-y divide-[var(--chan-line)]">
           {list.items.map((video) => (
-            <li key={video.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-              <div className="min-w-0">
+            <li key={video.id} className="flex flex-wrap items-center gap-3 py-3">
+              {/* The list DTO's thumbnailUrl is already a public src (proxy path or public bucket URL). */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={video.thumbnailUrl || `/api/videos/${encodeURIComponent(video.id)}/thumbnail`}
+                alt=""
+                loading="lazy"
+                width={160}
+                height={90}
+                className="h-[54px] w-24 shrink-0 rounded-lg bg-[var(--chan-surface)] object-cover sm:h-[72px] sm:w-32"
+              />
+              <div className="min-w-0 flex-1">
                 <p className="truncate text-[14px] font-semibold text-[var(--chan-ink)]">{video.title}</p>
                 <p className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-[var(--chan-muted)]">
                   <Badge tone={video.status === "PUBLISHED" ? "good" : "neutral"}>{statusLabel[video.status]}</Badge>
