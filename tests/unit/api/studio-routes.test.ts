@@ -190,6 +190,41 @@ describe("Studio API: videos", () => {
     await videosGet(req("/api/studio/videos?limit=9999&page=-3"));
     expect(m.getAdminVideoList).toHaveBeenCalledWith({ page: 1, limit: 50, query: undefined, status: undefined }, ctx);
   });
+
+  it("passes only whitelisted search, status and sort to the list use case", async () => {
+    m.getAdminVideoList.mockResolvedValue({ ok: true, data: { items: [] } });
+    await videosGet(req("/api/studio/videos?q=kot&status=DRAFT&sort=views&limit=10&page=2"));
+    expect(m.getAdminVideoList).toHaveBeenLastCalledWith({ page: 2, limit: 10, query: "kot", status: "DRAFT", orderBy: "views" }, ctx);
+    await videosGet(req("/api/studio/videos?sort=newest"));
+    expect(m.getAdminVideoList.mock.calls[1][0].orderBy).toBe("createdAt");
+  });
+
+  it("answers 400 for an unknown status or sort and does not reach the use case", async () => {
+    expect((await videosGet(req("/api/studio/videos?status=REMOVED"))).status).toBe(400);
+    expect((await videosGet(req("/api/studio/videos?sort=password"))).status).toBe(400);
+    expect(m.getAdminVideoList).not.toHaveBeenCalled();
+  });
+
+  it("creates a private draft by default and maps the visibility fields of the wizard", async () => {
+    m.createAdminVideo.mockResolvedValue({ ok: true, data: { id: "v1" } });
+    await videosPost(req("/api/studio/videos", json({ title: "Film" })));
+    expect(m.createAdminVideo.mock.calls[0][0]).toMatchObject({ publishAfterAssetReady: false, premiereAt: null });
+    await videosPost(
+      req("/api/studio/videos", json({ title: "Film", publishAfterAssetReady: true, premiereAt: "2026-12-01T18:00:00Z", tier: "LOGGED_IN", description: "Opis" })),
+    );
+    expect(m.createAdminVideo.mock.calls[1][0]).toMatchObject({
+      publishAfterAssetReady: true,
+      premiereAt: new Date("2026-12-01T18:00:00Z"),
+      tier: "LOGGED_IN",
+      description: "Opis",
+    });
+    expect(m.createAdminVideo.mock.calls[1][1]).toBe(ctx);
+  });
+
+  it("rejects a title over 100 and a description over 5000 characters", async () => {
+    expect((await videosPost(req("/api/studio/videos", json({ title: "a".repeat(101) })))).status).toBe(400);
+    expect((await videosPost(req("/api/studio/videos", json({ title: "t", description: "d".repeat(5001) })))).status).toBe(400);
+  });
 });
 
 describe("Studio API: comments", () => {

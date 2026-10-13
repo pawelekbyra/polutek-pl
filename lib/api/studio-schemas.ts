@@ -33,6 +33,14 @@ export const createVideoSchema = z.object({
   description: z.string().max(5000).nullable().optional(),
   descriptionEn: z.string().max(5000).nullable().optional(),
   tier: studioTierSchema.optional(),
+  /**
+   * "Publish on its own once processing finishes": the same flag the panel sets at creation. The use case that
+   * stores it authorizes `video.create`, and the worker later publishes through `publishAdminVideo`, which
+   * authorizes `video.publish` and re-checks every publication blocker; both actions sit in the same role sets.
+   */
+  publishAfterAssetReady: z.boolean().optional(),
+  /** ISO instant of a scheduled premiere (must be in the future; the use case validates it). */
+  premiereAt: z.string().datetime({ offset: true }).nullable().optional(),
 });
 
 export const updateVideoSchema = z.object({
@@ -45,6 +53,22 @@ export const updateVideoSchema = z.object({
   premiereAt: z.string().datetime({ offset: true }).nullable().optional(),
   showInSidebar: z.boolean().optional(),
 });
+
+/** Filters of the Studio video list. Whitelists: nothing else reaches the repository's `where` or `orderBy`. */
+export const STUDIO_VIDEO_STATUS_FILTERS = ["DRAFT", "PUBLISHED", "UNLISTED", "ARCHIVED"] as const;
+export const STUDIO_VIDEO_SORTS = ["newest", "views"] as const;
+
+export const studioVideosQuerySchema = z.object({
+  q: z.string().trim().max(100).optional(),
+  status: z.enum(STUDIO_VIDEO_STATUS_FILTERS).optional(),
+  sort: z.enum(STUDIO_VIDEO_SORTS).optional(),
+});
+
+/** Sort key to the repository's `orderBy` column (descending). */
+export const STUDIO_VIDEO_ORDER_BY: Record<(typeof STUDIO_VIDEO_SORTS)[number], string> = {
+  newest: "createdAt",
+  views: "views",
+};
 
 export const publishVideoSchema = z.object({ action: z.enum(["publish", "archive"]) });
 
