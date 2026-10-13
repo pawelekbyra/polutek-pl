@@ -62,6 +62,9 @@ export async function updateAdminVideo(
   }
 
   const safeInput = { ...input };
+  // A paid video stays paid: the edit form only knows the two free levels and would silently make it free for
+  // every signed-in account. Price and tier of a paid video change through the sales use cases only.
+  if ((existing.tier as string) === 'PAID') delete safeInput.tier;
   // The edit form is loaded from the admin DTO, whose thumbnailUrl is the public src: the
   // proxy path (/api/videos/<id>/thumbnail) or, for a published video with a synced copy,
   // the public R2 URL (https://<NEXT_PUBLIC_R2_PUBLIC_HOST>/<key>). Saving either back

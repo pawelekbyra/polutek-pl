@@ -22,6 +22,7 @@ export const AUTHZ_ACTIONS = [
   "video.preview",
   "video.subtitles",
   "video.translate",
+  "video.set_price",
   // Comments on the channel's videos
   "comment.moderate",
   "comment.pin",

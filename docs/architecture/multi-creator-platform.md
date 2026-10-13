@@ -57,7 +57,7 @@ Jedno miejsce decyzji: `lib/modules/authz` (`can()` czyste, `authorize()` w use 
 | 3 | Kanał z kontekstu żądania, koniec „kanału głównego” | **zrobiony w rdzeniu**: `AppContext.channelId`, dostęp publiczny z kanału filmu, cykl życia kanału, moderacja komentarzy per kanał, odpowiedź twórcy jako właściciel; **zostaje** przepisanie nazwy `MainChannelService` i stron publicznych na kanał z adresu (etap 7) |
 | 4 | Studio twórcy na `www` | **zrobiony**: `/studio` (Przegląd, Treści, Komentarze, Kanał i ustawienia), API `/api/studio/*` działa zawsze jako zwykły użytkownik, limity wgrywania; **nieprzetestowany w przeglądarce ani na bazie** (brak Dockera); luka: profil nie wczytuje istniejącego opisu |
 | 5 | Panel: wszystkie kanały, zgłoszenia, sprzedaż | **kanały i zgłoszenia zrobione**: `/kanaly` (lista, szczegóły, status z powodem, ostrzeżenia, poziom zaufania, decyzje); `ChannelModerationUseCases` z `ModerationDecision` i audytem; **zostaje**: filtr kanału w pozostałych ekranach, „zobacz jako twórca”, sprzedaż i rozliczenia (etap 6) |
-| 6 | Sprzedaż i wypłaty (za wyłącznikiem) | nie zaczęty |
+| 6 | Sprzedaż i wypłaty (za wyłącznikiem) | **rdzeń zrobiony**: `PAID`, `VideoPrice`, `Order`, `Entitlement`, księga `LedgerEntry` (migracja `20261013140000_sales_schema`), moduł `sales`, dostęp przez uprawnienie; **zostaje** adapter Stripe (sesja, webhook, zwrot), ekran zakupu, wypłaty przelewem, profile podatkowe twórców: czekają na decyzję o podmiocie |
 | 7 | Odkrywanie, `/@uchwyt`, wyszukiwarka, SEO | nie zaczęty |
 | 8 | Migracja czyszcząca (usunięcie `isPrimary`, `isApproved`, `MAIN_CREATOR_SLUG`) | **wymaga zgody właściciela i zasady dwóch wdrożeń** (`CLAUDE.md` §4.0) |
 

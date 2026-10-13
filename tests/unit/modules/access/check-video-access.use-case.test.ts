@@ -24,6 +24,9 @@ describe('checkVideoAccess Use Case Matrix', () => {
       user: {
         findUnique: vi.fn(),
       },
+      entitlement: {
+        findFirst: vi.fn(),
+      },
     };
     (MainChannelService.getRequired as any).mockResolvedValue(mainChannel);
   });
@@ -59,6 +62,39 @@ describe('checkVideoAccess Use Case Matrix', () => {
       const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'admin', userId: 'a1' }));
       expect(result.ok).toBe(true);
       if (result.ok) expect(result.data.hasAccess).toBe(true);
+    });
+  });
+
+  describe('Paid Tier', () => {
+    const paidVideo = { ...baseVideo, tier: 'PAID' };
+    const ask = (actor: any) => checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx(actor));
+
+    it('asks a guest to sign in', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue(paidVideo);
+      const result = await ask({ type: 'guest' });
+      expect(result.ok && result.data).toMatchObject({ hasAccess: false, reason: 'LOGIN_REQUIRED' });
+    });
+
+    it('denies a signed-in viewer without an entitlement (never falls back to LOGGED_IN)', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue(paidVideo);
+      mockPrisma.entitlement.findFirst.mockResolvedValue(null);
+      const result = await ask({ type: 'user', userId: 'u1' });
+      expect(result.ok && result.data).toMatchObject({ hasAccess: false, reason: 'PAYMENT_REQUIRED' });
+      expect(mockPrisma.entitlement.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ userId: 'u1', videoId: 'v1', revokedAt: null }) }));
+    });
+
+    it('lets a buyer in', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue(paidVideo);
+      mockPrisma.entitlement.findFirst.mockResolvedValue({ id: 'e1' });
+      const result = await ask({ type: 'user', userId: 'u1' });
+      expect(result.ok && result.data.hasAccess).toBe(true);
+    });
+
+    it('lets platform staff preview without an entitlement', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue(paidVideo);
+      const result = await ask({ type: 'admin', userId: 'a1' });
+      expect(result.ok && result.data.hasAccess).toBe(true);
+      expect(mockPrisma.entitlement.findFirst).not.toHaveBeenCalled();
     });
   });
 

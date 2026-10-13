@@ -110,6 +110,22 @@ export async function checkVideoAccess(
     return decide({ hasAccess: false, reason: "LOGIN_REQUIRED", requiredTier: "LOGGED_IN" });
   }
 
+  // 5a. Paid videos (stage 6): the viewer needs a live entitlement. Read from the raw column on purpose:
+  // `toVideoAccessTier` maps every unknown value to LOGGED_IN, which would let any account in.
+  if ((video.tier as string) === "PAID") {
+    if (actor.type === 'guest') {
+      return decide({ hasAccess: false, reason: "LOGIN_REQUIRED", requiredTier: "LOGGED_IN" });
+    }
+    if (actor.type !== 'user') return decide({ hasAccess: false, reason: "FORBIDDEN" });
+    const entitlement = await prisma.entitlement.findFirst({
+      where: { userId: actor.userId, videoId: resolvedVideoId, revokedAt: null },
+      select: { id: true },
+    });
+    return entitlement
+      ? decide({ hasAccess: true })
+      : decide({ hasAccess: false, reason: "PAYMENT_REQUIRED", requiredTier: "LOGGED_IN" });
+  }
+
   // 5. Tier-based access: two levels (lib/access-tier.ts).
   const tier = toVideoAccessTier(video.tier);
   if (tier === "PUBLIC") return decide({ hasAccess: true });

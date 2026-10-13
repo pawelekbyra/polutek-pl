@@ -92,7 +92,7 @@ Webhook weryfikuje podpis na surowym ciele; zwroty administratora mają klucz id
 
 ### 4.4 Kontrola dostępu
 
-Dostęp sprawdza `checkVideoAccess()` (`lib/modules/access/`), aktor z `getActorFromAuth()`. Dwa poziomy: `PUBLIC` (wszyscy) i `LOGGED_IN` (każde zalogowane, niezablokowane konto; gość dostaje `LOGIN_REQUIRED`).
+Dostęp sprawdza `checkVideoAccess()` (`lib/modules/access/`), aktor z `getActorFromAuth()`. Dwa poziomy: `PUBLIC` (wszyscy) i `LOGGED_IN` (każde zalogowane, niezablokowane konto; gość dostaje `LOGIN_REQUIRED`). Trzeci, `PAID` (etap 6, za wyłącznikiem `sales`), wymaga aktywnego `Entitlement`; brak zakupu = `PAYMENT_REQUIRED`. `PAID` czyta się z surowej kolumny, nigdy przez `toVideoAccessTier` (ten mapuje nieznane wartości na `LOGGED_IN`, więc wpuściłby każdego). Film `PAID` nie traci poziomu przez formularz edycji (`update-admin-video` pomija `tier`); cena i poziom zmieniają się tylko przez `setVideoPrice`.
 Poziom czytaj wyłącznie przez `toVideoAccessTier()` / `parseVideoAccessTier()` / `accessTierWhere()` z `lib/access-tier.ts` (czyste, bezpieczne dla klienta); publiczne DTO, układ sidebara i `requiredTier` niosą tylko dwie wartości.
 Stanów odmowy jest dwa: `LOGIN_REQUIRED` i wyświetlany `COMING_SOON` (§4.15); `PATRON_REQUIRED` nie istnieje.
 
@@ -348,3 +348,9 @@ Wdrożenie (`git archive` → `deploy.sh`, panel `deploy-admin.sh`, rollback `--
 Indeks: `docs/README.md`. Najczęściej potrzebne: `docs/operations/STATUS.md` (otwarte prace i decyzje), `SERWEREK.md` (serwer), `ADMIN-PANEL.md`, `LOCAL-CI.md`, `VIDEO-PIPELINE.md`, `I18N.md`, `PLAYER-SOUND.md`;
 `docs/architecture/` (m.in. `auth-better-auth.md`, `payments-and-tips.md`, `premieres-and-fundraising.md`, `thumbnails-r2.md`, `comments-and-reactions.md`, `public-shell-and-player.md`, `i18n-and-legal.md`, `privacy-email-retention.md`, `database-and-migrations.md`).
 Gdy zmiana modyfikuje zachowanie, które agenci mają zachować, zaktualizuj ten plik i właściwy dokument w tej samej zmianie. Bieżące prace śledź w `STATUS.md`, nie w nowych plikach „roadmap”.
+
+### 4.25 Sprzedaż (etap 6, wyłączona domyślnie)
+- Moduł `lib/modules/sales`: `splitSale` (czysta arytmetyka groszy: brutto = VAT + netto, netto = prowizja + udział twórcy; ten sam warunek jako `CHECK` w bazie), `setVideoPrice`, `quoteVideoPurchase`, `recordOrderPaid` (idempotentne po `providerRef`, wołane przez webhook jako aktor `system`), `refundOrder` (najpierw operator płatności, potem księgi; pełny zwrot cofa uprawnienie), `getChannelBalance`.
+- Wszystko odmawia, dopóki `PLATFORM_GATE_SALES` nie jest `on`. Prowizja (`PLATFORM_FEE_BP`, domyślnie 1000 = 10%, **wartość tymczasowa do decyzji właściciela**) i okres wstrzymania (`PLATFORM_PAYOUT_HOLD_DAYS`, 14) to konfiguracja, nie kod.
+- `LedgerEntry` jest tylko do dopisywania (wyzwalacz w migracji `20261013140000_sales_schema`); korekty to nowe wiersze.
+- **Nie ma** adaptera Stripe (sesja płatności, webhook, zwrot u operatora), ekranu zakupu ani wypłat: czekają na decyzję o podmiocie prawnym, rejestrację VAT i zgody Stripe. Bez nich nie wolno włączać `sales`.

@@ -62,6 +62,8 @@ model User {
   notificationPreference NotificationPreference?
   channelMemberships    ChannelMember[]
   channelBans           ChannelBan[]
+  orders                Order[]
+  entitlements          Entitlement[]
 
   @@index([email])
 }
@@ -472,6 +474,8 @@ model Creator {
   quota                   ChannelQuota?
   strikes                 ChannelStrike[]
   bans                    ChannelBan[]
+  orders                  Order[]
+  ledger                  LedgerEntry[]
 }
 
 enum ChannelStatus {
@@ -793,6 +797,10 @@ model Video {
 
   @@index([status, publishedAt])
   @@index([status, createdAt])
+  price        VideoPrice?
+  orders       Order[]
+  entitlements Entitlement[]
+
   @@index([creatorId, status])
   @@index([publishAfterAssetReady])
   @@index([premiereAt])
@@ -1170,6 +1178,9 @@ model CommentReport {
 enum AccessTier {
   PUBLIC // Everyone
   LOGGED_IN // Any signed-in account
+  /// Paid access (multi-creator platform, stage 6). Only readable through lib/access-tier.ts; needs an Entitlement.
+  /// Videos cannot be set to PAID unless the `sales` platform gate is on.
+  PAID
 }
 
 enum VideoStatus {
@@ -1514,4 +1525,105 @@ model VideoPlaybackEvent {
   @@index([userId])
   @@index([type])
   @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Sales (stage 6, docs/architecture/multi-creator-platform.md). Everything below stays empty until the `sales`
+// platform gate is turned on by the owner. Money is integer minor units (grosze/cents) with an ISO currency.
+// ---------------------------------------------------------------------------------------------------------------
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PARTIALLY_REFUNDED
+  REFUNDED
+  FAILED
+}
+
+enum LedgerEntryKind {
+  SALE
+  REFUND
+  PAYOUT
+  ADJUSTMENT
+}
+
+/// The price of one paid video: fixed, or pay-what-you-want with a minimum.
+model VideoPrice {
+  videoId        String   @id
+  currency       String
+  amountMinor    Int
+  payWhatYouWant Boolean  @default(false)
+  minAmountMinor Int?
+  updatedAt      DateTime @updatedAt
+
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+}
+
+/// One purchase. The split is computed once, at payment time, and frozen on the row (never recomputed later).
+model Order {
+  id                String      @id @default(uuid())
+  userId            String
+  videoId           String
+  channelId         String
+  currency          String
+  grossMinor        Int
+  vatMinor          Int
+  netMinor          Int
+  platformFeeMinor  Int
+  creatorShareMinor Int
+  vatRateBp         Int
+  feeRateBp         Int
+  refundedMinor     Int         @default(0)
+  status            OrderStatus @default(PENDING)
+  /// Payment provider reference (checkout session / intent); unique so a replayed webhook is a no-op.
+  providerRef       String?     @unique
+  createdAt         DateTime    @default(now())
+  paidAt            DateTime?
+
+  user        User         @relation(fields: [userId], references: [id])
+  video       Video        @relation(fields: [videoId], references: [id])
+  channel     Creator      @relation(fields: [channelId], references: [id])
+  entitlement Entitlement?
+  ledger      LedgerEntry[]
+
+  @@index([userId, createdAt])
+  @@index([channelId, status])
+}
+
+/// The right of one account to watch one paid video. Revoked (not deleted) on a full refund.
+model Entitlement {
+  id        String    @id @default(uuid())
+  userId    String
+  videoId   String
+  orderId   String    @unique
+  grantedAt DateTime  @default(now())
+  revokedAt DateTime?
+
+  user  User  @relation(fields: [userId], references: [id])
+  video Video @relation(fields: [videoId], references: [id])
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@unique([userId, videoId])
+  @@index([videoId])
+}
+
+/// The creators' balance book. Append-only (trigger in migration 20261013140000): corrections are new rows.
+/// `amountMinor` is signed and is what the platform owes the channel (SALE +, REFUND -, PAYOUT -).
+model LedgerEntry {
+  id          String          @id @default(uuid())
+  channelId   String
+  orderId     String?
+  kind        LedgerEntryKind
+  currency    String
+  amountMinor Int
+  /// From when the amount may be paid out (sale date + the hold period).
+  availableAt DateTime
+  note        String?
+  createdAt   DateTime        @default(now())
+
+  channel Creator @relation(fields: [channelId], references: [id])
+  order   Order?  @relation(fields: [orderId], references: [id])
+
+  @@index([channelId, availableAt])
+  @@index([orderId])
 }

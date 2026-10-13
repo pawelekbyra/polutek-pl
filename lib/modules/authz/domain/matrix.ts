@@ -25,6 +25,7 @@ export const ROLE_ACTIONS: Readonly<Record<ChannelRole, ReadonlySet<AuthzAction>
     "channel.view_analytics",
     ...CONTENT_EDIT,
     "video.delete",
+    "video.set_price",
     ...COMMENT_MODERATION,
     "comment.reply_as_creator",
     "payout.view",
@@ -35,6 +36,7 @@ export const ROLE_ACTIONS: Readonly<Record<ChannelRole, ReadonlySet<AuthzAction>
     "channel.view_analytics",
     ...CONTENT_EDIT,
     "video.delete",
+    "video.set_price",
     ...COMMENT_MODERATION,
     "comment.reply_as_creator",
     "payout.view",
@@ -49,6 +51,7 @@ export const LIMITED_DENIED: ReadonlySet<AuthzAction> = new Set<AuthzAction>([
   "video.create",
   "video.upload",
   "video.publish",
+  "video.set_price",
   "payout.manage",
 ]);
 
@@ -60,5 +63,5 @@ export const FROZEN_STATUSES: ReadonlySet<ChannelStatus> = new Set<ChannelStatus
  * account is the owner's alone. Replying as the creator is a legacy staff capability kept until the channel owner is
  * the author (stage 3); remove it from `LEGACY_STAFF_ALLOWED` then.
  */
-export const STAFF_DENIED: ReadonlySet<AuthzAction> = new Set<AuthzAction>(["payout.manage", "channel.manage_members"]);
+export const STAFF_DENIED: ReadonlySet<AuthzAction> = new Set<AuthzAction>(["payout.manage", "channel.manage_members", "video.set_price"]);
 export const LEGACY_STAFF_ALLOWED: ReadonlySet<AuthzAction> = new Set<AuthzAction>(["comment.reply_as_creator"]);

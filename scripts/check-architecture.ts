@@ -377,7 +377,7 @@ function checkAdminApp() {
 // A file in these modules' application layer must call authorize()/assertAuthorized()/requireVideo() or be listed
 // here with the reason it is exempt (public read, pure helper, worker/cron acting as `system`, or it only delegates
 // to a function that authorizes).
-const AUTHZ_MODULES = ['video', 'video-pipeline', 'admin-content', 'channel'];
+const AUTHZ_MODULES = ['video', 'video-pipeline', 'admin-content', 'channel', 'sales'];
 const AUTHZ_EXEMPT: Record<string, string> = {
   'lib/modules/video/application/admin-video-payload.ts': 'pure DTO helper, no I/O',
   'lib/modules/video/application/get-admin-video-details.use-case.ts': 'delegates to getAdminVideoById and getAdminVideoDiagnostics, which authorize',
