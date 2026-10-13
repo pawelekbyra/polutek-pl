@@ -9,7 +9,6 @@ import { SafeAvatar } from '@/app/components/SafeAvatar';
 import { CreatorContentService as ContentService } from '@/lib/modules/channel/infrastructure/creator-content.service';
 import { getOrCreateCurrentUser } from '@/lib/modules/users';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { MainChannelService } from '@/lib/channel/main-channel.service';
 import ChannelVideoCard from '@/app/components/ChannelVideoCard';
 import { formatCount, getBaseUrl } from '@/lib/utils';
 import SubscribeButton from '@/app/components/SubscribeButton';
@@ -18,29 +17,15 @@ import { getLocaleAlternates, getLocalizedHref, isLocale, type Locale } from '@/
 import { SITE_TITLE } from '@/lib/constants';
 import { getServerTx } from '@/lib/i18n/server-tx';
 import { countedNoun } from '@/lib/i18n/plurals';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 export const revalidate = 60;
-
-function getConfiguredSlugSafe() {
-  try {
-    return MainChannelService.getConfiguredSlug();
-  } catch (error) {
-    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
-      throw error;
-    }
-    return null;
-  }
-}
 
 export async function generateMetadata(props: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
   const params = await props.params;
   if (!isLocale(params.locale)) notFound();
   const locale: Locale = params.locale;
   const tx = await getServerTx(locale);
-  const mainSlug = getConfiguredSlugSafe();
-  if (mainSlug && params.slug !== mainSlug) return { title: SITE_TITLE };
-
   const creator = await ContentService.getCreatorBySlug(params.slug).catch(() => null);
   if (!creator) return { title: SITE_TITLE };
 
@@ -49,7 +34,7 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   return {
     // Browser tab always reads www.pawelperfect.com; creator name stays in OG/twitter below.
     title: SITE_TITLE,
-    alternates: getLocaleAlternates(locale, "channel", { params: { slug: params.slug }, baseUrl }),
+    alternates: getLocaleAlternates(locale, "channel", { params: { slug: creator.slug }, baseUrl }),
     description: creator.bio ?? (tx("Kanał {0} — materiały wideo", "{0} video channel", creator.name)),
     openGraph: {
       title: creator.name,
@@ -68,21 +53,6 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
   if (!isLocale(params.locale)) notFound();
   const locale: Locale = params.locale;
   const tx = await getServerTx(locale);
-  const mainSlug = getConfiguredSlugSafe();
-  if (mainSlug && params.slug !== mainSlug) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--chan-nav)] text-[var(--chan-ink)] font-sans">
-        <Navbar />
-        <main id="main" tabIndex={-1} className="flex-1 flex flex-col items-center justify-center p-4 text-center focus:outline-none">
-            <h1 className="font-brand text-4xl font-bold">{tx("Kanał nie znaleziony", "Channel not found")}</h1>
-            <p className="text-[var(--chan-muted)] mt-2 mb-6">{tx("Ten kanał nie istnieje.", "This channel does not exist.")}</p>
-            <Link href={getLocalizedHref(locale, "home")} className="bg-[var(--chan-ink)] text-white px-8 py-3 rounded-xl font-brand font-bold tracking-wide hover:opacity-90 transition-all">{tx("Wróć na stronę główną", "Back home")}</Link>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
   let authState: { userId: string | null } = { userId: null };
   try {
     authState = await auth();
@@ -105,6 +75,13 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
         <Footer />
       </div>
     );
+  }
+
+  // /channel/<old handle> and /@<old handle> lead to the channel's stable address (the handle history keeps
+  // a released handle reserved for 180 days). The slug and the current handle are served as they are.
+  const asked = params.slug.toLowerCase();
+  if (creator.slug.toLowerCase() !== asked && (creator.handle ?? '').toLowerCase() !== asked) {
+    redirect(getLocalizedHref(locale, 'channel', { slug: creator.slug }));
   }
 
   const userCtx = createAppContext();
@@ -170,7 +147,7 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
               {displayName}
             </h1>
             <ul className="mt-3 flex flex-wrap justify-center md:justify-start gap-2 text-[13px] font-sans" aria-label={tx("Informacje o kanale", "Channel details")}>
-               <li className="channel-profile-chip font-bold text-[var(--chan-ink)]">@{creator.slug}</li>
+               <li className="channel-profile-chip font-bold text-[var(--chan-ink)]">@{creator.handle ?? creator.slug}</li>
                <li className="channel-profile-chip text-[var(--chan-muted)]">{formatCount(allVideos.length)} {countedNoun(locale, "videos", allVideos.length)}</li>
             </ul>
             <p className="mt-4 text-[15px] leading-relaxed text-[var(--chan-body)] max-w-2xl mx-auto md:mx-0 font-sans whitespace-pre-line">

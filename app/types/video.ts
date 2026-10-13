@@ -58,6 +58,8 @@ export interface PublicCreatorDTO {
 
 export type PublicCreatorPageDTO = PublicCreatorDTO & {
   bio?: string | null;
+  /** The channel's public @handle (null until chosen); the URL /@handle resolves to the channel. */
+  handle?: string | null;
   userId?: string;
   videos: PublicVideoDTO[];
 };
