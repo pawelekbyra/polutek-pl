@@ -4,7 +4,7 @@ Jedyna lista otwartych prac. Aktualizuj ją w tym samym PR, który coś zamyka a
 zrobionych tu nie trzymamy (są w git). Przed uznaniem punktu za otwarty sprawdź stan faktyczny
 (`git log origin/main`, `gh pr list`, serwer, DNS).
 
-Ostatnia aktualizacja: 2026-10-12 (dopisana sekcja „Stan 2026-10-12: decyzje i otwarte pytania”, badania w `docs/audit/2026-10-12/`; reszta pliku bez zmian od 2026-10-07: GitHub znów jest źródłem prawdy; praca na serwerze TAKT i bez GitHuba z 5-7.10 jest wycofana, jej gałęzie są w `main`;
+Ostatnia aktualizacja: 2026-10-13 (dopisana sekcja „Stan 2026-10-13: platforma wielu twórców”; wcześniej 2026-10-12: dopisana sekcja „Stan 2026-10-12: decyzje i otwarte pytania”, badania w `docs/audit/2026-10-12/`; reszta pliku bez zmian od 2026-10-07: GitHub znów jest źródłem prawdy; praca na serwerze TAKT i bez GitHuba z 5-7.10 jest wycofana, jej gałęzie są w `main`;
 wcześniej wszystkie prace agentów były wstrzymane na prośbę właściciela).
 
 ## Jak wznowić pracę (przeczytaj najpierw)
@@ -132,6 +132,17 @@ Pomysł pracy agenta bezpośrednio na serwerku bez GitHuba (bundle, własne repo
 - Lista języków: globus w przycisku (bez flagi), wiersze z flagami (`public/flags/`, circle-flags MIT), wszystkie 8 widoczne bez przewijania, bez wyszukiwarki.
 - Zakładki komentarze/filmy na telefonie: oba podkreślenia niebieskie. Okładka kanału twórcy usunięta z kodu i panelu (`Creator.bannerUrl` do usunięcia migracją).
 - Odstęp pola komentarza od pierwszego komentarza: 24 px. Plakietki komentarzy są pod avatarem.
+
+## Stan 2026-10-13: platforma wielu twórców (w budowie)
+
+Decyzja właściciela (czat 2026-10-13): przejście z jednego kanału na platformę wielu twórców, ze sprzedażą dostępu i platformą jako sprzedawcą (MoR).
+Opis, bramki, stan etapów: [`../architecture/multi-creator-platform.md`](../architecture/multi-creator-platform.md); badania: [`../audit/2026-10-13/`](../audit/2026-10-13/README.md).
+
+- **Otwarte decyzje właściciela:** forma prawna i rezydencja (sp. z o.o. w PL, Cypr, Hongkong, USA z zarządem w USA; bez rozstrzygnięcia nie ma płatnej sprzedaży ani wypłat),
+  prowizja platformy (rekomendacja 10% od netto), pilotaż na zaproszenie, wiek twórców (16+ konto, 18+ sprzedaż), usunięcie paska zbiórki „Tajny Projekt”.
+- **Bramki przed otwarciem dla obcych:** wpis KRRiT (14 dni przed), punkty kontaktowe DSA, formularz zgłoszeń, regulaminy, zgoda Stripe, narzędzia CSAM.
+  W kodzie są wyłącznikami (`lib/platform-gates.ts`), domyślnie wyłączone.
+- **Wdrożenie na produkcję tych zmian tylko na wyraźną zgodę właściciela** (jedna zgoda na jedno wdrożenie, `CLAUDE.md` §0). Praca idzie na gałęzi `feat/multi-creator-platform`.
 
 ## Stan 2026-10-12: decyzje i otwarte pytania
 

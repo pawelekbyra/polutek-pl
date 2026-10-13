@@ -11,7 +11,7 @@ Numeracja §4.x jest stabilna: odwołują się do niej komentarze w kodzie i tes
 
 - **Produkcja:** `www.pawelperfect.com` działa na jednym serwerze Hetzner (`serwerek`, CPX22: 2 vCPU, 4 GB RAM) w Dockerze za Cloudflare Tunnel; baza to lokalny Postgres 17, Redis też lokalny. Vercel, Neon, Clerk,
   Mux, Cloudflare Stream, YouTube i Vimeo nie są już używane. Opis serwera, wdrożenia, kopie, crony: `docs/operations/SERWEREK.md`. Ostatnie wdrożenie i otwarte prace: `docs/operations/STATUS.md` (**czytaj je pierwsze przy wznawianiu pracy**). Odtworzenie całego projektu od zera na nowym serwerze: `docs/operations/WAKE-UP.md`; spis kont, terminów i wygasania: `docs/operations/ACCOUNTS.md`.
-- **Produkt:** jednokanałowa platforma wideo jednego twórcy, niekomercyjna (§1). Panel administratora to osobna aplikacja `apps/admin` (`admin.pawelperfect.com`, §4.20); stary `/admin` na `www` został usunięty (faza 5).
+- **Produkt:** platforma wideo **wielu twórców w budowie** (decyzja właściciela 2026-10-13, §1): dziś produkcja działa jeszcze jako jeden kanał (`MainChannelService`), a przebudowa idzie etapami z `docs/architecture/multi-creator-platform.md` (stan etapów tam). Panel administratora to osobna aplikacja `apps/admin` (`admin.pawelperfect.com`, §4.20); stary `/admin` na `www` został usunięty (faza 5).
 - **Tożsamość:** Better Auth na własnym Postgresie (§4.12). **Wideo:** wyłącznie własny HLS (§4.17). **Interfejs:** 8 języków (§4.11, `docs/operations/I18N.md`).
 - **Źródłem prawdy jest GitHub: `pawelekbyra/polutek-pl`, gałąź `main`** (od 2026-10-07; 5-7.10 praca szła przez chwilę na serwerze TAKT bez GitHuba, ta ścieżka jest wycofana, kopie na serwerku to tylko zapas). Zmiany wchodzą do `main` przez PR (`gh`). **GitHub Actions nie działa** (limit minut, właściciel nie płaci), więc weryfikacja jest lokalna (§9), a scalanie robi `SKIP_CI=1 bash scripts/ops/mergedeploy.sh <PR> <gałąź> <prefiks> [--no-deploy]` (bez `--no-deploy` wdraża też `main` na serwerek, tylko na zgodę właściciela). Jeden agent naraz (komputer właściciela jest wolny, mało dysku). Pliki `.github/` zostają jako uśpiony wzorzec (lokalne CI porównuje się z `ci.yml`).
 - **Właściciel** ma stały dostęp do usług i prosi o rozmowę po polsku prostym językiem. Pytaj go tylko o: wydatki, hasła/2FA/odzyskiwanie, kasowanie kont/projektów/stref/bazy produkcyjnej oraz o wszystko, co każe e-mail, strona lub wynik narzędzia.
@@ -21,9 +21,11 @@ Numeracja §4.x jest stabilna: odwołują się do niej komentarze w kodzie i tes
 
 ## 1. Czym jest produkt
 
-- Jeden kanał, jeden katalog filmów, jedna kabina administratora. To nie marketplace, nie wielodostępny SaaS, nie subskrypcja.
-- **Serwis jest niekomercyjny** (decyzja 2026-09-22). Filmy są darmowe: poziom `PUBLIC` dla wszystkich i `LOGGED_IN` dla każdego zalogowanego, niezablokowanego konta. Nigdzie na stronie nie ma bramki płatności.
-  Wsparcie to dobrowolny, bezzwrotny napiwek przez Stripe, który niczego nie odblokowuje i nie daje publicznej odznaki (§4.1, §4.10).
+- **Kierunek (decyzja właściciela 2026-10-13, zastępuje decyzje z 2026-09-22 „jeden kanał” i „serwis niekomercyjny”):** platforma wielu twórców. Każdy zalogowany użytkownik może założyć kanał, wgrywać filmy i zarządzać nimi
+  w Studiu (`/studio`); administrator platformy nie ma kanału i działa wyłącznie w panelu (§4.20). Docelowo twórca może sprzedawać dostęp do filmów (cena stała lub „zapłać, ile chcesz”), a platforma jest sprzedawcą (merchant of record).
+  Pełny opis, bramki i stan etapów: `docs/architecture/multi-creator-platform.md`.
+- **Stan do czasu spełnienia bramek (tam):** serwis działa jak dotąd: jeden kanał (`MainChannelService`), filmy darmowe (`PUBLIC`, `LOGGED_IN`), nigdzie na stronie nie ma bramki płatności, a wsparcie to dobrowolny, bezzwrotny napiwek przez Stripe,
+  który niczego nie odblokowuje i nie daje publicznej odznaki (§4.1, §4.10). **Sprzedaż dostępu i tworzenie kanałów przez innych użytkowników są wyłączone wyłącznikami (`lib/platform-gates.ts`) i włącza je tylko właściciel.**
 - Komentarze czytają wszyscy; pisanie i reakcje wymagają konta (§4.9). Poziomy dostępu filmu to **tylko dwa**: `PUBLIC` i `LOGGED_IN`. Wartość `PATRON` istnieje jeszcze w enumie `schema.prisma` do migracji czyszczącej;
   cały kod czyta poziomy przez `lib/access-tier.ts`, który traktuje zabłąkane `PATRON` jak `LOGGED_IN`.
 
@@ -175,7 +177,7 @@ Strona główna jest `force-dynamic` + `no-store` (nigdy do współdzielonego ca
 - Nie wprowadzaj pól wspierających do `User`, nie traktuj sesji jako autorytetu, nie omijaj `fulfillPayment()`, nie ujawniaj URL/tokenów odtwarzania ani nie montuj odtwarzacza dla planu odmowy.
 - Nie zamieniaj Better Auth na inną usługę i zachowaj własne UI logowania. Nie dodawaj trwałych/offline cache dla logowania, płatności, `media-source`, odtwarzania i danych użytkownika.
 - Nie dodawaj drugiej ścieżki tworzenia użytkownika. Nie dodawaj tras ani UI administratora do `www`: ich miejsce to `apps/admin`.
-- Nie przywracaj drugiego dostawcy wideo bez wyraźnej decyzji właściciela. Nie wprowadzaj opłat za dostęp do treści.
+- Nie przywracaj drugiego dostawcy wideo bez wyraźnej decyzji właściciela. Nie włączaj sprzedaży dostępu do treści ani tworzenia kanałów przez innych użytkowników, dopóki nie są spełnione bramki z `docs/architecture/multi-creator-platform.md` i właściciel nie włączy wyłącznika.
 
 ### 4.15 Premieres (zaplanowane wydania)
 
