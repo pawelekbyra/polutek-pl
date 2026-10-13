@@ -3,7 +3,7 @@
  * exceptions so the segment error page shows them, never an empty list that looks like "no data".
  */
 import type { ChannelStatus, ContentReportStatus } from "@prisma/client";
-import { getChannelForStaff, listChannelsForStaff, listContentReports, type StaffChannelDetail, type StaffChannelList } from "@/lib/modules/channel";
+import { getChannelForStaff, listChannelVideosForStaff, listChannelsForStaff, listContentReports, type StaffChannelDetail, type StaffChannelList, type StaffVideoRow } from "@/lib/modules/channel";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { isDevFixturesEnabled } from "./config";
 
@@ -47,4 +47,9 @@ export async function loadChannel(id: string): Promise<StaffChannelDetail | null
 export async function loadReports(f: { status: ContentReportStatus | undefined; channelId?: string; page: number }) {
   if (isDevFixturesEnabled()) return { items: [], total: 0, page: 1, pageSize: CHANNELS_PAGE_SIZE, totalPages: 0 };
   return unwrap(await listContentReports(readCtx(), { status: f.status, channelId: f.channelId, page: f.page, pageSize: CHANNELS_PAGE_SIZE }));
+}
+
+export async function loadChannelVideos(channelId: string): Promise<StaffVideoRow[]> {
+  if (isDevFixturesEnabled()) return [];
+  return unwrap(await listChannelVideosForStaff(readCtx(), channelId));
 }

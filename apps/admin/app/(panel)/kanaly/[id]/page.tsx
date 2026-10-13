@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { RevokeStrikeForm, StatusForm, StrikeForm, TrustForm } from "@admin/components/channels/channel-forms";
+import { RevokeStrikeForm, StatusForm, StrikeForm, TrustForm, VideoModerationForm } from "@admin/components/channels/channel-forms";
 import { Badge, Card, Empty, PageHead } from "@admin/components/ui";
 import { fmtDateTime } from "@/lib/modules/admin-overview";
-import { CHANNEL_STATUS, loadChannel } from "@admin/lib/channels";
+import { CHANNEL_STATUS, loadChannel, loadChannelVideos } from "@admin/lib/channels";
 
 export const metadata: Metadata = { title: "Kanał" };
 export const dynamic = "force-dynamic";
@@ -19,6 +19,7 @@ export default async function ChannelPage({ params }: Props) {
   const { id } = await params;
   const c = await loadChannel(id);
   if (!c) notFound();
+  const videos = await loadChannelVideos(c.id);
   const now = new Date();
   const st = CHANNEL_STATUS[c.status] ?? { kind: "" as const, label: c.status };
   const deleted = c.status === "DELETED";
@@ -97,6 +98,24 @@ export default async function ChannelPage({ params }: Props) {
               })
             )}
             {deleted ? null : <StrikeForm channelId={c.id} />}
+          </Card>
+        </div>
+        <div className="span-12">
+          <Card id="ch-videos" title="Filmy kanału" sub="Decyzja o widoczności filmu, z powodem i wpisem do historii decyzji.">
+            {videos.length === 0 ? (
+              <p className="muted">Kanał nie ma jeszcze filmów.</p>
+            ) : (
+              videos.map((v) => (
+                <article className="mod-item" key={v.id}>
+                  <div>
+                    <strong>{v.title}</strong>{" "}
+                    <Badge kind={v.moderationStatus === "REMOVED" ? "crit" : v.moderationStatus === "VISIBLE" ? "" : "warn"} icon={false}>{v.moderationStatus}</Badge>
+                    <div className="mod-meta"><span>{v.status}</span><span>{v.views} wyświetleń</span><span>{fmtDateTime(v.createdAt, now)}</span></div>
+                    <VideoModerationForm channelId={c.id} videoId={v.id} current={v.moderationStatus} />
+                  </div>
+                </article>
+              ))
+            )}
           </Card>
         </div>
         <div className="span-12">

@@ -5,6 +5,7 @@ import {
   revokeStrikeAction,
   setChannelStatusAction,
   setTrustLevelAction,
+  setVideoModerationAction,
 } from "@admin/app/(panel)/kanaly/actions";
 import { Field, describe } from "@admin/components/form/field";
 import { FormError, useActionForm } from "@admin/components/form/use-action-form";
@@ -141,6 +142,31 @@ export function ReportForm({ reportId, canRemoveVideo }: { reportId: string; can
           <button type="button" className="btn btn-primary" aria-busy={pending} onClick={() => decide("ACTION_TAKEN")}>Uznaj zgłoszenie</button>
         </span>
       </div>
+    </form>
+  );
+}
+
+const MODERATION_CHOICES: [string, string][] = [
+  ["VISIBLE", "Widoczny"],
+  ["LIMITED", "Ograniczony"],
+  ["AGE_RESTRICTED", "Tylko dla zalogowanych (wiek)"],
+  ["REMOVED", "Usunięty przez moderację"],
+];
+
+export function VideoModerationForm({ channelId, videoId, current }: { channelId: string; videoId: string; current: string }) {
+  const { state, pending, errors, onSubmit, formRef } = useActionForm(setVideoModerationAction);
+  return (
+    <form ref={formRef} noValidate onSubmit={onSubmit} className="tile-link-row">
+      <input type="hidden" name="channelId" value={channelId} />
+      <input type="hidden" name="videoId" value={videoId} />
+      <select className="input" name="status" defaultValue={current} aria-label="Status moderacji filmu">
+        {MODERATION_CHOICES.map(([v, l]) => (
+          <option key={v} value={v}>{l}</option>
+        ))}
+      </select>
+      <input className="input" name="reason" placeholder="Powód (audyt)" maxLength={500} aria-label="Powód zmiany statusu filmu" {...describe(`vm-${videoId}`, errors.reason)} />
+      <button type="submit" className="btn btn-sm" aria-busy={pending}>{pending ? "…" : "Zapisz"}</button>
+      <FormError state={state} />
     </form>
   );
 }

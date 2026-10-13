@@ -5,7 +5,7 @@
  */
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { issueChannelStrike, resolveContentReport, revokeChannelStrike, setChannelStatus, setChannelTrustLevel } from "@/lib/modules/channel";
+import { issueChannelStrike, resolveContentReport, revokeChannelStrike, setChannelStatus, setChannelTrustLevel, setVideoModerationStatus } from "@/lib/modules/channel";
 import { openGate } from "@admin/lib/actions/gate";
 import { RATE } from "@admin/lib/actions/rate-limit";
 import { errorMessage, zodFieldErrors, type ActionResult } from "@admin/lib/actions/panel";
@@ -106,4 +106,25 @@ export async function resolveReportAction(_prev: ActionResult | null, fd: FormDa
   if (!res.ok) return { ok: false, ...errorMessage(res.error) };
   revalidatePath("/kanaly");
   return { ok: true, message: "Zgłoszenie rozstrzygnięte." };
+}
+
+const videoModerationSchema = z
+  .object({
+    channelId: z.string().min(1).max(100),
+    videoId: z.string().min(1).max(100),
+    status: z.enum(["VISIBLE", "LIMITED", "AGE_RESTRICTED", "REMOVED"]),
+    reason: z.string().trim().min(5, "Podaj powód (co najmniej 5 znaków).").max(500),
+  })
+  .strict();
+
+export async function setVideoModerationAction(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
+  const gate = await openGate({ path: "/kanaly", rate: RATE.security });
+  if (!gate.ok) return gate.result;
+  const parsed = videoModerationSchema.safeParse({ channelId: text(fd, "channelId"), videoId: text(fd, "videoId"), status: text(fd, "status"), reason: text(fd, "reason") });
+  if (!parsed.success) return bad(parsed.error.issues);
+  const { channelId, ...rest } = parsed.data;
+  const res = await setVideoModerationStatus(gate.ctx, rest);
+  if (!res.ok) return { ok: false, ...errorMessage(res.error) };
+  revalidatePath(`/kanaly/${channelId}`);
+  return { ok: true, message: "Status filmu zmieniony." };
 }

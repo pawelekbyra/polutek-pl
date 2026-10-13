@@ -6,6 +6,7 @@ import {
   resolveContentReport,
   setChannelStatus,
   setChannelTrustLevel,
+  setVideoModerationStatus,
 } from "@/lib/modules/channel";
 
 function makePrisma(over: Record<string, unknown> = {}) {
@@ -95,5 +96,17 @@ describe("channel moderation use cases", () => {
     const { prisma } = makePrisma();
     const res = await setChannelTrustLevel(ctxFor(staff, prisma), { channelId: "c1", trustLevel: 7 });
     expect(res.ok).toBe(false);
+  });
+
+  it("moderates a single video with a decision and an audit row, and only for staff", async () => {
+    const { prisma, tx } = makePrisma({ video: { findUnique: vi.fn(async () => ({ id: "v1", creatorId: "c1", moderationStatus: "VISIBLE" })) } });
+    (tx as Record<string, unknown>).video = { update: vi.fn(async () => ({})) };
+    const denied = await setVideoModerationStatus(ctxFor(user, prisma), { videoId: "v1", status: "REMOVED", reason: "naruszenie zasad" });
+    expect(denied.ok).toBe(false);
+    const res = await setVideoModerationStatus(ctxFor(staff, prisma), { videoId: "v1", status: "REMOVED", reason: "naruszenie zasad" });
+    expect(res.ok).toBe(true);
+    expect((tx as unknown as { video: { update: ReturnType<typeof vi.fn> } }).video.update).toHaveBeenCalledWith({ where: { id: "v1" }, data: { moderationStatus: "REMOVED" } });
+    expect(tx.moderationDecision.create).toHaveBeenCalledTimes(1);
+    expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
   });
 });

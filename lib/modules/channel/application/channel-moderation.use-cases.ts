@@ -343,3 +343,64 @@ export async function resolveContentReport(
   }
   return ok(undefined);
 }
+
+export type StaffVideoRow = {
+  id: string;
+  slug: string;
+  title: string;
+  status: string;
+  moderationStatus: string;
+  tier: string;
+  views: number;
+  createdAt: Date;
+};
+
+/** The channel's latest videos for the staff moderation screen (every status, newest first). */
+export async function listChannelVideosForStaff(ctx: AppContext, channelId: string, limit = 50): Promise<UseCaseResult<StaffVideoRow[], AppError>> {
+  const denied = await authorize(ctx, "platform.view_all_channels");
+  if (denied) return fail(denied);
+  const rows = await ctx.prisma.video.findMany({
+    where: { creatorId: channelId },
+    orderBy: { createdAt: "desc" },
+    take: Math.min(Math.max(limit, 1), 100),
+    select: { id: true, slug: true, title: true, status: true, moderationStatus: true, tier: true, views: true, createdAt: true },
+  });
+  return ok(rows.map((r) => ({ ...r, status: String(r.status), moderationStatus: String(r.moderationStatus), tier: String(r.tier) })));
+}
+
+const VIDEO_MODERATION = ["VISIBLE", "LIMITED", "AGE_RESTRICTED", "REMOVED"] as const;
+export type VideoModerationValue = (typeof VIDEO_MODERATION)[number];
+
+/**
+ * Staff decision on one video outside a report (policy takedown, age restriction, restoring). One transaction with
+ * the statement of reasons (ModerationDecision) and the audit row; staff never edit a creator's film otherwise.
+ */
+export async function setVideoModerationStatus(
+  ctx: AppContext,
+  input: { videoId: string; status: VideoModerationValue; reason: string; reasonPublic?: string },
+): Promise<UseCaseResult<undefined, AppError>> {
+  const denied = await authorize(ctx, "platform.moderate_channel");
+  if (denied) return fail(denied);
+  if (!VIDEO_MODERATION.includes(input.status)) return fail(new AppError("Nieprawidłowy status moderacji.", 400, "INVALID_STATUS"));
+  const reason = input.reason.trim();
+  if (reason.length < 5 || reason.length > 500) return fail(new AppError("Podaj powód (5-500 znaków).", 400, "REASON_REQUIRED"));
+  const video = await ctx.prisma.video.findUnique({ where: { id: input.videoId }, select: { id: true, creatorId: true, moderationStatus: true } });
+  if (!video) return fail(new AppError("Nie znaleziono filmu.", 404, "VIDEO_NOT_FOUND"));
+  if (video.moderationStatus === input.status) return fail(new AppError("Film ma już ten status.", 409, "STATUS_UNCHANGED"));
+  const adminId = ctx.actor.type === "admin" ? ctx.actor.userId : null;
+  await ctx.db.writeTransaction(async (tx) => {
+    await tx.video.update({ where: { id: video.id }, data: { moderationStatus: input.status } });
+    await tx.moderationDecision.create({
+      data: {
+        targetType: "VIDEO", targetId: video.id, channelId: video.creatorId,
+        action: `VIDEO_${input.status}`, reasonCode: "STAFF_DECISION",
+        reasonPublic: input.reasonPublic?.trim().slice(0, 500) || reason, reasonInternal: reason, actorAdminId: adminId,
+      },
+    });
+    await recordAuditEvent(ctx, {
+      action: "VIDEO_MODERATION_CHANGED", targetType: "Video", targetId: video.id, channelId: video.creatorId,
+      metadata: { before: { moderationStatus: video.moderationStatus }, after: { moderationStatus: input.status }, reason },
+    }, tx);
+  });
+  return ok(undefined);
+}
