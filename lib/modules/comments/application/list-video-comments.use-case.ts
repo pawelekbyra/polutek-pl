@@ -23,6 +23,8 @@ export interface ListVideoCommentsResult {
     canReact: boolean;
     canReport: boolean;
     canModerate: boolean;
+    /** The creator turned comments off for this video: existing comments stay readable, the composer says why. */
+    commentsDisabled: boolean;
   };
 }
 
@@ -91,6 +93,9 @@ export async function listVideoComments(
     })
   ]);
 
+  const videoRow = await prisma.video.findUnique({ where: { id: resolvedVideoId }, select: { commentsMode: true } });
+  const commentsDisabled = CommentPolicy.statusForNewComment(videoRow?.commentsMode, canModerate) === null;
+
   const context = { userId, canModerate, videoCreatorId, hasVideoAccess: accessResult.data.hasAccess };
   const comments = rows.slice(0, limit);
   const mappedComments = comments.map(c => mapCommentToDto(c, context));
@@ -103,7 +108,8 @@ export async function listVideoComments(
         canComment: CommentPolicy.canCreateComment(actor, accessResult.data),
         canReact: CommentPolicy.canReactToComment(actor, accessResult.data),
         canReport: CommentPolicy.canReportComment(actor, accessResult.data),
-        canModerate: CommentPolicy.canModerateComment(actor, canModerate)
+        canModerate: CommentPolicy.canModerateComment(actor, canModerate),
+        commentsDisabled,
     }
   });
 }

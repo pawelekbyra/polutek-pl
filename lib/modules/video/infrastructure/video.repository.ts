@@ -1,4 +1,4 @@
-import { Video, VideoAsset, Prisma, AccessTier, VideoStatus } from "@prisma/client";
+import { Video, VideoAsset, Prisma, AccessTier, VideoStatus, VideoCommentsMode } from "@prisma/client";
 import { accessTierWhere, parseVideoAccessTier } from "@/lib/access-tier";
 import { VIDEO_ASSET_PROCESSING_STATE, VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
@@ -39,6 +39,10 @@ export interface CreateVideoInput {
   publishAfterAssetReadyError?: string | null;
   /** Scheduled premiere (CLAUDE.md "Premieres"); null = publish now / no premiere. */
   premiereAt?: Date | null;
+  /** Creator metadata (lib/video-metadata.ts); validated by the use cases, the repository only stores. */
+  tags?: string[];
+  category?: string | null;
+  commentsMode?: VideoCommentsMode;
 }
 
 export interface AdminUpdateVideoInput extends Partial<CreateVideoInput>, FundraisingGoalFields {
@@ -282,6 +286,9 @@ export class VideoRepository {
       publishAfterAssetReadyRequestedAt: input.publishAfterAssetReady ? (input.publishAfterAssetReadyRequestedAt || new Date()) : null,
       publishAfterAssetReadyCompletedAt: null,
       publishAfterAssetReadyError: null,
+      ...(input.tags !== undefined ? { tags: input.tags } : {}),
+      ...(input.category !== undefined ? { category: input.category } : {}),
+      ...(input.commentsMode !== undefined ? { commentsMode: input.commentsMode } : {}),
     };
 
     return await tx.video.create({ data });
@@ -310,6 +317,9 @@ export class VideoRepository {
     if (data.subtitleUrlEn !== undefined) updateData.subtitleUrlEn = data.subtitleUrlEn;
     if (data.premiereAt !== undefined) updateData.premiereAt = data.premiereAt;
     if (data.publishedAt !== undefined) updateData.publishedAt = data.publishedAt;
+    if (data.tags !== undefined) updateData.tags = data.tags;
+    if (data.category !== undefined) updateData.category = data.category;
+    if (data.commentsMode !== undefined) updateData.commentsMode = data.commentsMode;
     Object.assign(updateData, pickFundraisingUpdate(data));
 
     if (status && status !== VideoStatus.PUBLISHED) {

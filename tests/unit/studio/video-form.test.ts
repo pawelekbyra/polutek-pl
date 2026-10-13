@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   COVER_MAX_BYTES,
+  TAGS_MAX,
+  TAG_MAX_LENGTH,
   TITLE_MAX,
+  addTagsFromInput,
+  removeTag,
+  tagCounterText,
   buildVideoListQuery,
   isFormDirty,
   titleFromFileName,
@@ -67,7 +72,7 @@ describe("limits and helpers", () => {
   });
 
   it("detects unsaved changes against the baseline", () => {
-    const baseline: EditorForm = { title: "A", titleEn: "", description: "", descriptionEn: "", tier: "PUBLIC", premiere: "" };
+    const baseline: EditorForm = { title: "A", titleEn: "", description: "", descriptionEn: "", tier: "PUBLIC", premiere: "", tags: [], category: "", commentsMode: "ON" };
     expect(isFormDirty(baseline, baseline)).toBe(false);
     expect(isFormDirty({ ...baseline }, baseline)).toBe(false);
     expect(isFormDirty({ ...baseline, description: "x" }, baseline)).toBe(true);
@@ -101,5 +106,55 @@ describe("Studio schemas", () => {
     expect(studioVideosQuerySchema.safeParse({ status: "REMOVED" }).success).toBe(false);
     expect(studioVideosQuerySchema.safeParse({ sort: "title; DROP" }).success).toBe(false);
     expect(studioVideosQuerySchema.safeParse({ q: "x".repeat(101) }).success).toBe(false);
+  });
+});
+
+describe("tags input", () => {
+  it("adds tags separated by a comma or a new line, without # and duplicates", () => {
+    const result = addTagsFromInput(["kot"], "#pies, Kot,\n mysz ,,");
+    expect(result).toEqual({ tags: ["kot", "pies", "mysz"], leftover: "", problem: null });
+  });
+
+  it("keeps a too long tag in the input and reports why", () => {
+    const long = "a".repeat(TAG_MAX_LENGTH + 1);
+    const result = addTagsFromInput([], `ok, ${long}`);
+    expect(result.tags).toEqual(["ok"]);
+    expect(result.leftover).toBe(long);
+    expect(result.problem).toBe("TOO_LONG");
+  });
+
+  it("stops at the maximum count and keeps the rest", () => {
+    const full = Array.from({ length: TAGS_MAX - 1 }, (_, i) => `t${i}`);
+    const result = addTagsFromInput(full, "one, two");
+    expect(result.tags).toHaveLength(TAGS_MAX);
+    expect(result.leftover).toBe("two");
+    expect(result.problem).toBe("TOO_MANY");
+    expect(tagCounterText(result.tags)).toBe(`${TAGS_MAX}/${TAGS_MAX}`);
+  });
+
+  it("removes a tag by index and treats tag changes as unsaved work", () => {
+    expect(removeTag(["a", "b", "c"], 1)).toEqual(["a", "c"]);
+    const baseline: EditorForm = { title: "A", titleEn: "", description: "", descriptionEn: "", tier: "PUBLIC", premiere: "", tags: ["a"], category: "", commentsMode: "ON" };
+    expect(isFormDirty({ ...baseline, tags: ["a"] }, baseline)).toBe(false);
+    expect(isFormDirty({ ...baseline, tags: ["a", "b"] }, baseline)).toBe(true);
+    expect(isFormDirty({ ...baseline, commentsMode: "OFF" }, baseline)).toBe(true);
+  });
+});
+
+describe("Studio schemas: metadata whitelists", () => {
+  it("accepts known categories and modes, rejects anything else", () => {
+    expect(updateVideoSchema.safeParse({ category: "music", commentsMode: "HELD", tags: ["a"] }).success).toBe(true);
+    expect(updateVideoSchema.safeParse({ category: null }).success).toBe(true);
+    expect(updateVideoSchema.safeParse({ category: "cats" }).success).toBe(false);
+    expect(updateVideoSchema.safeParse({ commentsMode: "ALL" }).success).toBe(false);
+    expect(createVideoSchema.safeParse({ title: "t", commentsMode: "off" }).success).toBe(false);
+  });
+
+  it("limits tags to 15 of 30 characters and normalizes them", () => {
+    const parsed = updateVideoSchema.safeParse({ tags: ["#Kot", "kot", " pies "] });
+    expect(parsed.success && parsed.data.tags).toEqual(["Kot", "pies"]);
+    expect(updateVideoSchema.safeParse({ tags: ["a".repeat(31)] }).success).toBe(false);
+    expect(updateVideoSchema.safeParse({ tags: Array.from({ length: 16 }, (_, i) => `t${i}`) }).success).toBe(false);
+    expect(updateVideoSchema.safeParse({ tags: Array.from({ length: 15 }, (_, i) => `t${i}`) }).success).toBe(true);
   });
 });

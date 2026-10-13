@@ -11,6 +11,7 @@ const m = vi.hoisted(() => ({
   getAdminVideoList: vi.fn(),
   getAdminVideoDetails: vi.fn(),
   updateAdminVideo: vi.fn(),
+  cancelAutoPublish: vi.fn(),
   listPanelComments: vi.fn(),
   getModerationCounts: vi.fn(),
   hideAdminComment: vi.fn(),
@@ -35,6 +36,7 @@ vi.mock("@/lib/modules/video", () => ({
   updateAdminVideo: m.updateAdminVideo,
   publishAdminVideo: vi.fn(),
   archiveAdminVideo: vi.fn(),
+  cancelAutoPublish: m.cancelAutoPublish,
 }));
 vi.mock("@/lib/modules/admin-content", async () => ({
   slugify: (await vi.importActual<typeof import("@/lib/modules/admin-content/domain/files")>("@/lib/modules/admin-content/domain/files")).slugify,
@@ -70,6 +72,7 @@ import { POST as channelPost, PATCH as channelPatch } from "@/app/api/studio/cha
 import { GET as handleGet } from "@/app/api/studio/channel/handle/route";
 import { POST as videosPost, GET as videosGet } from "@/app/api/studio/videos/route";
 import { PATCH as videoPatch, GET as videoGet } from "@/app/api/studio/videos/[id]/route";
+import { POST as publishPost } from "@/app/api/studio/videos/[id]/publish/route";
 import { POST as uploadPost } from "@/app/api/studio/videos/[id]/upload/route";
 import { GET as commentsGet } from "@/app/api/studio/comments/route";
 import { POST as commentPost } from "@/app/api/studio/comments/[id]/route";
@@ -219,6 +222,23 @@ describe("Studio API: videos", () => {
       description: "Opis",
     });
     expect(m.createAdminVideo.mock.calls[1][1]).toBe(ctx);
+  });
+
+  it("passes tags, category and comments mode on create and refuses values outside the whitelist", async () => {
+    m.createAdminVideo.mockResolvedValue({ ok: true, data: { id: "v1" } });
+    await videosPost(req("/api/studio/videos", json({ title: "Film", tags: ["#a", "A", "b"], category: "music", commentsMode: "HELD" })));
+    expect(m.createAdminVideo.mock.calls[0][0]).toMatchObject({ tags: ["a", "b"], category: "music", commentsMode: "HELD" });
+    expect((await videosPost(req("/api/studio/videos", json({ title: "Film", category: "cats" })))).status).toBe(400);
+    expect((await videosPost(req("/api/studio/videos", json({ title: "Film", commentsMode: "ALL" })))).status).toBe(400);
+    expect((await videosPost(req("/api/studio/videos", json({ title: "Film", tags: ["a".repeat(31)] })))).status).toBe(400);
+  });
+
+  it("cancels the automatic publication through the publish route's whitelist", async () => {
+    m.cancelAutoPublish.mockResolvedValue({ ok: true, data: { id: "v1", publishAfterAssetReady: false } });
+    const res = await publishPost(req("/api/studio/videos/v1/publish", json({ action: "cancel_auto_publish" })), { params: Promise.resolve({ id: "v1" }) });
+    expect(res.status).toBe(200);
+    expect(m.cancelAutoPublish).toHaveBeenCalledWith("v1", ctx);
+    expect((await publishPost(req("/api/studio/videos/v1/publish", json({ action: "delete" })), { params: Promise.resolve({ id: "v1" }) })).status).toBe(400);
   });
 
   it("rejects a title over 100 and a description over 5000 characters", async () => {

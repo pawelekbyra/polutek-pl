@@ -4,6 +4,9 @@
  * The limits mirror `lib/api/studio-schemas.ts`; the server stays the authority.
  */
 
+import { VIDEO_TAG_MAX_LENGTH, VIDEO_TAGS_MAX, normalizeTag, type VideoCommentsModeValue } from "@/lib/video-metadata";
+
+export { VIDEO_TAG_MAX_LENGTH as TAG_MAX_LENGTH, VIDEO_TAGS_MAX as TAGS_MAX };
 export const TITLE_MAX = 100;
 export const DESCRIPTION_MAX = 5000;
 export const COVER_MAX_BYTES = 5 * 1024 * 1024;
@@ -80,12 +83,71 @@ export interface EditorForm {
   descriptionEn: string;
   tier: "PUBLIC" | "LOGGED_IN";
   premiere: string;
+  tags: string[];
+  /** A key of `VIDEO_CATEGORIES` or "" for none. */
+  category: string;
+  commentsMode: VideoCommentsModeValue;
 }
 
 /** True when anything the creator can type differs from the saved baseline. */
 export function isFormDirty(form: EditorForm, baseline: EditorForm | null): boolean {
   if (!baseline) return false;
-  return (Object.keys(baseline) as (keyof EditorForm)[]).some((key) => form[key] !== baseline[key]);
+  return (Object.keys(baseline) as (keyof EditorForm)[]).some((key) => {
+    const a = form[key];
+    const b = baseline[key];
+    if (Array.isArray(a) && Array.isArray(b)) return a.length !== b.length || a.some((item, index) => item !== b[index]);
+    return a !== b;
+  });
+}
+
+export type TagInputProblem = "TOO_MANY" | "TOO_LONG";
+
+export interface TagInputResult {
+  tags: string[];
+  /** What could not be added (kept in the input so nothing the creator typed is lost). */
+  leftover: string;
+  problem: TagInputProblem | null;
+}
+
+/**
+ * Adds what was typed or pasted to the tag list. Tags are separated by a comma or a new line (Enter commits the
+ * whole input); each one is trimmed, loses a leading `#` and is skipped when it is a duplicate (case-insensitive).
+ * A tag over the length limit or beyond the count limit is not added: it stays in `leftover` with the reason.
+ * Counts characters, not UTF-16 units, so an emoji is one character like on the server.
+ */
+export function addTagsFromInput(current: readonly string[], text: string): TagInputResult {
+  const tags = [...current];
+  const known = new Set(tags.map((tag) => tag.toLocaleLowerCase()));
+  const leftover: string[] = [];
+  let problem: TagInputProblem | null = null;
+  for (const part of text.split(/[,\n]/)) {
+    const tag = normalizeTag(part);
+    if (!tag) continue;
+    const key = tag.toLocaleLowerCase();
+    if (known.has(key)) continue;
+    if ([...tag].length > VIDEO_TAG_MAX_LENGTH) {
+      problem = problem ?? "TOO_LONG";
+      leftover.push(tag);
+      continue;
+    }
+    if (tags.length >= VIDEO_TAGS_MAX) {
+      problem = "TOO_MANY";
+      leftover.push(tag);
+      continue;
+    }
+    tags.push(tag);
+    known.add(key);
+  }
+  return { tags, leftover: leftover.join(", "), problem };
+}
+
+export function removeTag(tags: readonly string[], index: number): string[] {
+  return tags.filter((_, i) => i !== index);
+}
+
+/** `used/max` text of the tag counter. */
+export function tagCounterText(tags: readonly string[]): string {
+  return `${tags.length}/${VIDEO_TAGS_MAX}`;
 }
 
 /** `YYYY-MM-DDTHH:mm` in local time for a `datetime-local` input. */

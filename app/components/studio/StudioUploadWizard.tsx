@@ -6,6 +6,8 @@ import { StudioApiError, jsonBody, studioApi } from "./studio-client";
 import { uploadOriginal, type UploadProgress } from "./upload-original";
 import { confirmLeave, setUnsavedWork } from "./unsaved-guard";
 import { DESCRIPTION_MAX, TITLE_MAX, titleFromFileName, validateCoverFile, visibilityToFields, type VisibilityMode } from "./video-form";
+import VideoMoreOptions from "./VideoMoreOptions";
+import type { VideoCommentsModeValue } from "@/lib/video-metadata";
 import { Card, CharCounter, Field, Notice, ProgressBar, buttonClass, ghostButtonClass, inputClass } from "./ui";
 
 type Step = 1 | 2 | 3;
@@ -33,6 +35,9 @@ export default function StudioUploadWizard({ onCancel, onFinished }: { onCancel:
   const [mode, setMode] = useState<VisibilityMode>("private");
   const [premiere, setPremiere] = useState("");
   const [tier, setTier] = useState<Tier>("PUBLIC");
+  const [tags, setTags] = useState<string[]>([]);
+  const [category, setCategory] = useState("");
+  const [commentsMode, setCommentsMode] = useState<VideoCommentsModeValue>("ON");
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [progress, setProgress] = useState<UploadProgress | null>(null);
@@ -134,6 +139,9 @@ export default function StudioUploadWizard({ onCancel, onFinished }: { onCancel:
             title: title.trim() || titleFromFileName(file.name) || "Film",
             description: description.trim() || null,
             tier,
+            tags,
+            category: category || null,
+            commentsMode,
             publishAfterAssetReady: visibility.fields.publishAfterAssetReady,
             premiereAt: visibility.fields.premiereAt,
           }),
@@ -357,6 +365,15 @@ export default function StudioUploadWizard({ onCancel, onFinished }: { onCancel:
               <option value="LOGGED_IN">{tx("Tylko zalogowani", "Signed-in viewers only")}</option>
             </select>
           </Field>
+          <VideoMoreOptions
+            idPrefix="wz"
+            value={{ tags, category, commentsMode }}
+            onChange={(next) => {
+              setTags(next.tags);
+              setCategory(next.category);
+              setCommentsMode(next.commentsMode);
+            }}
+          />
           {fieldError && <Notice kind="error">{fieldError}</Notice>}
           <div className="flex flex-wrap gap-2">
             <button type="button" className={buttonClass} onClick={start}>

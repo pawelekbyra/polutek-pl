@@ -9,6 +9,7 @@ export * from './application/update-admin-video.use-case';
 export * from './application/publish-admin-video.use-case';
 export * from './application/create-admin-video.use-case';
 export * from './application/archive-admin-video.use-case';
+export * from './application/cancel-auto-publish.use-case';
 export * from './application/delete-admin-video.use-case';
 export * from './application/reorder-admin-videos.use-case';
 export * from './application/get-hero-video.use-case';

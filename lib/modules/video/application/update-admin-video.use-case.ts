@@ -11,6 +11,7 @@ import { VideoPolicy } from "../domain/video.policy";
 import { syncPublicThumbnail } from "./sync-public-thumbnail.service";
 import { publishAdminVideo } from "./publish-admin-video.use-case";
 import { isAllowedPremiereChange, isUpcomingPremiere } from "../domain/premiere";
+import { resolveVideoMetadata } from "../domain/video-metadata";
 import {
     VideoNotFoundError,
     VideoNotOnMainChannelError,
@@ -61,7 +62,10 @@ export async function updateAdminVideo(
       if (blockers.length > 0) return fail(new VideoInvalidSidebarError(`${blockers[0].code}: ${blockers[0].message}`));
   }
 
-  const safeInput = { ...input };
+  const metadata = resolveVideoMetadata(input);
+  if (metadata instanceof AppError) return fail(metadata);
+
+  const safeInput = { ...input, ...metadata };
   // A paid video stays paid: the edit form only knows the two free levels and would silently make it free for
   // every signed-in account. Price and tier of a paid video change through the sales use cases only.
   if ((existing.tier as string) === 'PAID') delete safeInput.tier;
@@ -98,6 +102,7 @@ export async function updateAdminVideo(
       targetId: video.id,
       metadata: {
         changed: Object.keys(safeInput).filter(k => k !== 'id'),
+        ...(safeInput.commentsMode !== undefined ? { commentsMode: safeInput.commentsMode } : {}),
         ...(safeInput.premiereAt !== undefined ? { premiereAt: safeInput.premiereAt?.toISOString() ?? null } : {}),
         ...(safeInput.fundraisingGoalMinor !== undefined ? {
           fundraisingGoal: safeInput.fundraisingGoalMinor === null ? null : {

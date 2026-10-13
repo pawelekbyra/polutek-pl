@@ -100,6 +100,10 @@ export interface AdminVideoDto extends BaseVideoDto {
   fundraisingStartAt: Date | null;
   /** Hand-set bar fill 0..100 (wins over the goal), null = off. */
   fundraisingManualPercent: number | null;
+  /** Creator metadata (Studio "Więcej opcji"). */
+  tags: string[];
+  category: string | null;
+  commentsMode: "ON" | "HELD" | "OFF";
 }
 
 export type PublicVideoInput = BaseVideoDto & Record<string, unknown>;
@@ -274,6 +278,9 @@ export function toAdminVideoDto(input: AdminVideoInput | unknown): AdminVideoDto
     fundraisingGoalCurrency: typeof video.fundraisingGoalCurrency === "string" ? video.fundraisingGoalCurrency : null,
     fundraisingStartAt: video.fundraisingStartAt instanceof Date ? video.fundraisingStartAt : null,
     fundraisingManualPercent: typeof video.fundraisingManualPercent === "number" ? video.fundraisingManualPercent : null,
+    tags: Array.isArray(video.tags) ? (video.tags as unknown[]).filter((tag): tag is string => typeof tag === "string") : [],
+    category: typeof video.category === "string" ? video.category : null,
+    commentsMode: video.commentsMode === "HELD" || video.commentsMode === "OFF" ? video.commentsMode : "ON",
   };
 }
 

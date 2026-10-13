@@ -6,6 +6,7 @@ import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
 import { StudioApiError, jsonBody, studioApi, type StudioVideo } from "./studio-client";
 import { confirmLeave, setUnsavedWork } from "./unsaved-guard";
 import { DESCRIPTION_MAX, TITLE_MAX, isFormDirty, toLocalInput, validateCoverFile, type EditorForm } from "./video-form";
+import VideoMoreOptions from "./VideoMoreOptions";
 import { Badge, Card, CharCounter, Field, Notice, ProgressBar, buttonClass, dangerButtonClass, ghostButtonClass, inputClass, smallGhostButtonClass } from "./ui";
 
 export interface PipelineView {
@@ -26,6 +27,9 @@ function toForm(video: StudioVideo): EditorForm {
     descriptionEn: video.descriptionEn ?? "",
     tier: video.tier,
     premiere: toLocalInput(video.premiereAt),
+    tags: video.tags ?? [],
+    category: video.category ?? "",
+    commentsMode: video.commentsMode ?? "ON",
   };
 }
 
@@ -122,6 +126,9 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
             descriptionEn: form.descriptionEn || null,
             tier: form.tier,
             premiereAt: form.premiere ? new Date(form.premiere).toISOString() : null,
+            tags: form.tags,
+            category: form.category || null,
+            commentsMode: form.commentsMode,
           }),
         }),
       tx("Zapisano.", "Saved."),
@@ -254,6 +261,12 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
               >
                 <input id="ed-premiere" type="datetime-local" className={inputClass} value={form.premiere} aria-describedby="ed-premiere-hint" onChange={(e) => set("premiere", e.target.value)} />
               </Field>
+              <VideoMoreOptions
+                idPrefix="ed"
+                value={{ tags: form.tags, category: form.category, commentsMode: form.commentsMode }}
+                onChange={(next) => setForm({ ...form, ...next })}
+                disabled={busy}
+              />
               <Field label={tx("Miniatura", "Thumbnail")} htmlFor="ed-cover" hint={tx("JPG, PNG lub WebP do 5 MB. Zapisuje się od razu.", "JPG, PNG or WebP up to 5 MB. Saved at once.")}>
                 <input
                   id="ed-cover"
@@ -354,9 +367,27 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
               </div>
             )}
             {video.publishAfterAssetReady && video.status === "DRAFT" && (
-              <p className="mt-3 text-[13px] text-[var(--chan-muted)]">
-                {tx("Ten film opublikuje się sam, gdy skończy się przetwarzanie.", "This video publishes itself when processing finishes.")}
-              </p>
+              <div className="mt-3 grid gap-2">
+                <p className="text-[13px] text-[var(--chan-muted)]">
+                  {tx("Ten film opublikuje się sam, gdy skończy się przetwarzanie.", "This video publishes itself when processing finishes.")}
+                </p>
+                <div>
+                  <button
+                    type="button"
+                    className={smallGhostButtonClass}
+                    disabled={busy}
+                    onClick={() =>
+                      run(
+                        () => studioApi(`${base}/publish`, { method: "POST", ...jsonBody({ action: "cancel_auto_publish" }) }),
+                        tx("Automatyczna publikacja anulowana. Film zostaje szkicem.", "Automatic publication cancelled. The video stays a draft."),
+                        false,
+                      )
+                    }
+                  >
+                    {tx("Anuluj automatyczną publikację", "Cancel automatic publication")}
+                  </button>
+                </div>
+              </div>
             )}
             {premiereDate && premiereUpcoming && (
               <p className="mt-3 text-[13px] text-[var(--chan-muted)]">

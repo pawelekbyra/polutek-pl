@@ -75,6 +75,10 @@ export interface StudioVideo {
   commentsCount?: number;
   /** Set when the video publishes itself once processing is done. */
   publishAfterAssetReady?: boolean;
+  /** Creator metadata (lib/video-metadata.ts). */
+  tags?: string[];
+  category?: string | null;
+  commentsMode?: "ON" | "HELD" | "OFF";
 }
 
 export interface StudioVideoList {

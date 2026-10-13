@@ -9,6 +9,7 @@ import { authorize } from "@/lib/modules/authz";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { VideoInvalidPremiereError, VideoSlugConflictError } from "../domain/video.errors";
 import { isAllowedPremiereChange } from "../domain/premiere";
+import { resolveVideoMetadata } from "../domain/video-metadata";
 import { Prisma } from "@prisma/client";
 import { isDerivedThumbnailUrl } from "@/lib/modules/media";
 
@@ -29,7 +30,11 @@ function normalizeCreateVideoInput(input: CreateVideoInput): CreateVideoInput | 
     return new VideoInvalidPremiereError();
   }
 
+  const metadata = resolveVideoMetadata(input);
+  if (metadata instanceof AppError) return metadata;
+
   return {
+    ...metadata,
     premiereAt: input.premiereAt ?? null,
     title,
     slug,
@@ -134,6 +139,7 @@ export async function createAdminVideo(
           title: video.title,
           publishAfterAssetReady: Boolean(normalizedInput.publishAfterAssetReady),
           premiereAt: normalizedInput.premiereAt?.toISOString() ?? null,
+          ...(normalizedInput.commentsMode ? { commentsMode: normalizedInput.commentsMode } : {}),
         }
       });
     } catch (auditError) {

@@ -3,6 +3,7 @@
  * so each schema is also the whitelist of what a creator may set.
  */
 import { z } from "zod";
+import { VIDEO_CATEGORIES, VIDEO_COMMENTS_MODES, VIDEO_TAG_MAX_LENGTH, VIDEO_TAGS_MAX, normalizeTags } from "@/lib/video-metadata";
 
 const trimmed = (max: number, min = 0) => z.string().trim().min(min).max(max);
 
@@ -27,6 +28,20 @@ export const restoreChannelSchema = z.object({ channelId: z.string().min(1).max(
 /** What a creator may choose today: free for everyone or for signed-in viewers. Paid access arrives with sales. */
 export const studioTierSchema = z.enum(["PUBLIC", "LOGGED_IN"]);
 
+/** Free-form tags: at most 15 of 30 characters each; normalized (trimmed, no `#`, no duplicates) before they reach a use case. */
+export const studioTagsSchema = z
+  .array(z.string().max(200))
+  .max(VIDEO_TAGS_MAX * 2)
+  .transform(normalizeTags)
+  .pipe(z.array(z.string().min(1).max(VIDEO_TAG_MAX_LENGTH)).max(VIDEO_TAGS_MAX));
+
+/** Whitelists of the "Więcej opcji" section; `category: null` clears the category. */
+const videoMetadataFields = {
+  tags: studioTagsSchema.optional(),
+  category: z.enum(VIDEO_CATEGORIES).nullable().optional(),
+  commentsMode: z.enum(VIDEO_COMMENTS_MODES).optional(),
+};
+
 export const createVideoSchema = z.object({
   title: trimmed(100, 1),
   titleEn: z.string().trim().max(100).nullable().optional(),
@@ -41,6 +56,7 @@ export const createVideoSchema = z.object({
   publishAfterAssetReady: z.boolean().optional(),
   /** ISO instant of a scheduled premiere (must be in the future; the use case validates it). */
   premiereAt: z.string().datetime({ offset: true }).nullable().optional(),
+  ...videoMetadataFields,
 });
 
 export const updateVideoSchema = z.object({
@@ -52,6 +68,7 @@ export const updateVideoSchema = z.object({
   /** ISO instant or null ("publish immediately"). */
   premiereAt: z.string().datetime({ offset: true }).nullable().optional(),
   showInSidebar: z.boolean().optional(),
+  ...videoMetadataFields,
 });
 
 /** Filters of the Studio video list. Whitelists: nothing else reaches the repository's `where` or `orderBy`. */
@@ -70,7 +87,7 @@ export const STUDIO_VIDEO_ORDER_BY: Record<(typeof STUDIO_VIDEO_SORTS)[number], 
   views: "views",
 };
 
-export const publishVideoSchema = z.object({ action: z.enum(["publish", "archive"]) });
+export const publishVideoSchema = z.object({ action: z.enum(["publish", "archive", "cancel_auto_publish"]) });
 
 export const commentActionSchema = z.object({
   action: z.enum(["hide", "approve", "restore", "hold", "delete", "heart", "unheart", "reply"]),
