@@ -3,6 +3,7 @@ import { AppError } from "@/lib/modules/shared/app-error";
 import { fail, ok, type UseCaseResult } from "@/lib/modules/shared/result";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { MainChannelService } from "./main-channel.service";
+import { assertAuthorized, authorize } from "@/lib/modules/authz";
 
 /**
  * "Konto kanału": the site account that is the channel's creator (Creator.userId: the creator badge on
@@ -12,7 +13,7 @@ import { MainChannelService } from "./main-channel.service";
 export type ChannelOwnerCandidate = { id: string; email: string; name: string | null };
 
 export async function findChannelOwnerCandidates(ctx: AppContext, query: string): Promise<ChannelOwnerCandidate[]> {
-  if (ctx.actor.type !== "admin") throw new AppError("Only admins can look up accounts", 403, "FORBIDDEN");
+  await assertAuthorized(ctx, "platform.settings");
   const q = query.trim().slice(0, 120);
   if (q.length < 3) return [];
   return ctx.prisma.user.findMany({
@@ -27,7 +28,8 @@ export async function changeChannelOwner(
   ctx: AppContext,
   input: { userId: string; reason?: string },
 ): Promise<UseCaseResult<{ previousUserId: string; owner: ChannelOwnerCandidate }, AppError>> {
-  if (ctx.actor.type !== "admin") return fail(new AppError("Only admins can change the channel owner", 403, "FORBIDDEN"));
+  const denied = await authorize(ctx, "platform.settings");
+  if (denied) return fail(denied);
   const channel = await MainChannelService.getRequired(ctx);
   if (channel.userId === input.userId) return fail(new AppError("To konto już jest kontem kanału.", 409, "CHANNEL_OWNER_UNCHANGED"));
   const owner = await ctx.prisma.user.findUnique({ where: { id: input.userId }, select: { id: true, email: true, name: true, isDeleted: true } });

@@ -50,7 +50,7 @@ Numeracja §4.x jest stabilna: odwołują się do niej komentarze w kodzie i tes
 app/                  strona publiczna (App Router): strony, komponenty (app/components), trasy API (app/api)
 apps/admin/           panel administratora (osobna aplikacja Next.js, port 3100): auth, proxy.ts, ekrany (app/(panel)), skrypty (admin-enroll)
 lib/modules/          logika domenowa, moduł = domain / application / infrastructure
-  access/ audit/ channel/ comments/ email/ media/ patron/ payments/ playback/ privacy/ subscriptions/
+  access/ audit/ authz/ channel/ comments/ email/ media/ patron/ payments/ playback/ privacy/ subscriptions/
   translations/ users/ video/ video-pipeline/ admin-* (odczyty panelu)   shared/ (AppContext, Actor, wyniki)
 lib/auth/ lib/i18n/ lib/telemetry/ lib/api/ ...   wspólne pomocnicze (jedyne wejście do Better Auth: lib/auth)
 prisma/               schema.prisma (jedno źródło prawdy) i migracje (§4.0)
@@ -233,6 +233,26 @@ Panel ma osobne, ścisłe CSP z nonce (§4.20).
 ### 4.22 Awatar kanału
 
 Awatar kanału (pasek pod odtwarzaczem na stronie głównej, nagłówek `/channel/[slug]`, DTO filmów) wyznacza wyłącznie `resolveChannelAvatarUrl()` (`lib/modules/channel/domain/channel-avatar.ts`): konto właściciela kanału (`Creator.user.imageUrl`), a dopiero potem pierwszy administrator. Obrazek zalogowanego widza (sesja, `userDb`) nigdy nie jest wejściem; widzi go tylko pasek nawigacji i komentarze (§4.9). Nie dopisuj drugiej ścieżki; test: `tests/unit/modules/channel/channel-avatar-source.test.tsx`.
+
+### 4.23 Uprawnienia: jedno miejsce decyzji (`lib/modules/authz`)
+
+Kto co może w kanale i na platformie rozstrzyga **wyłącznie** `can(principal, action, resource)` (`lib/modules/authz/domain/policy.ts`, czyste, bez I/O); macierz ról i akcji jest w `matrix.ts`, lista akcji w `actions.ts` (lista zamknięta: nowa możliwość = nowa akcja + wiersz macierzy, test kontraktowy pilnuje).
+`authorize(ctx, action, target)` dociąga fakty (kanał, właściciel) i zwraca `AppError` albo `null`; `assertAuthorized()` rzuca. Reguły:
+- **Sprawdzenie jest w use case'ie, nie w trasie.** Każdy use case modułów `video`, `video-pipeline`, `admin-content`, `channel`, który zmienia lub ujawnia treść kanału, woła `authorize`/`assertAuthorized`/`requireVideo` albo jest na liście `AUTHZ_EXEMPT` w `scripts/check-architecture.ts` z uzasadnieniem (odczyt publiczny, pracownik/cron jako `system`, deleguje do funkcji z autoryzacją). Bramka to egzekwuje.
+- **Rodzaje podmiotów:** `guest` (401), `user` (tylko we własnym kanale wg roli; konto z `onboardingPending` nie działa), `staff` (aktor typu `admin`: konto panelu albo dawna rola ADMIN na www; akcje `platform.*` i treści kanału, ale **nie** zmiana konta wypłat ani członków kanału), `system` (workery i crony; nie jest osiągalny z żądania).
+- **Personel nie jest twórcą:** akcja `comment.reply_as_creator` dla personelu jest wyjątkiem przejściowym (`LEGACY_STAFF_ALLOWED`), który znika, gdy autorem odpowiedzi staje się właściciel kanału (etap 3).
+- **Status kanału** (`SUSPENDED`, `BANNED`, `DELETED`) zamraża zmiany dla członków; `LIMITED` odbiera tworzenie, upload i publikację oraz zmianę wypłat. Personel nadal może działać (tak kanał odmraża się).
+- Decyzje odmowne nie ujawniają faktów: nieistniejący zasób to 404, brak dostępu 403, brak logowania 401.
+- Pole `userId` aktora `admin` oznacza `User.id` (www) albo `AdminUser.id` (panel); `principal.staffId` zachowuje tę dwuznaczność do etapu 2, nie używaj go do porównań z `Creator.userId`.
+
+### 4.24 Kanał, członkostwo i wyłączniki platformy
+
+- **`Creator` jest kanałem** (w domenie „Channel”). Ma `status` (`ChannelStatus`: `PENDING_REVIEW`, `ACTIVE`, `LIMITED`, `SUSPENDED`, `BANNED`, `DELETED`), `handle` (unikalny bez względu na wielkość liter przez indeks częściowy `Creator_handle_lower_key`, którego Prisma nie wyraża) oraz członków w `ChannelMember`.
+  Właściciel (`Creator.userId`) ma wiersz `OWNER`; autoryzacja używa wiersza, a gdy go brak, `Creator.userId` (§4.23). Zmiany statusu kanału i `Video.moderationStatus` przechodzą wyłącznie przez use case'y modułów `channel` i `video`, a każda decyzja moderacyjna zapisuje niemodyfikowalny `ModerationDecision` (trigger bazy, uzasadnienie z art. 17 DSA).
+- **Wyłączniki** (`lib/platform-gates.ts`, zmienne `PLATFORM_GATE_*`): `channelCreation` (`off`/`invite`/`on`), `sales`, `payouts`. Domyślnie wszystkie wyłączone, nieznana wartość znaczy `off`; kod nowych możliwości sprawdza wyłącznik na wejściu i nie zakłada, że jest włączony.
+  Włącza je wyłącznie właściciel, po liście kontrolnej z `docs/architecture/multi-creator-platform.md`.
+- **Limity kanału** (`lib/platform-limits.ts`, nadpisywane wierszem `ChannelQuota`): rozmiar pliku, długość, liczba uploadów na dobę i zadań w kolejce, miejsce; egzekwowane przy rezerwacji uploadu, nie w trakcie.
+- Schemat wielokanałowy jest addytywny (migracja `20261013120000_multi_channel_schema`); kolumny `isPrimary`, `isApproved` i `MAIN_CREATOR_SLUG` zostają do migracji czyszczącej etapu 8 (dwa wdrożenia, zgoda właściciela, §4.0).
 
 ## 5. Administracja
 

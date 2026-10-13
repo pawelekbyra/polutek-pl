@@ -18,6 +18,7 @@ import {
 } from "@/lib/modules/video";
 import { getPipelineState, purgeVideoStorage, snapshotVideoStorage, type PipelineStateDto } from "@/lib/modules/video-pipeline";
 import { MainChannelService } from "@/lib/modules/channel";
+import { authorize } from "@/lib/modules/authz";
 import { R2ThumbnailStorageClient, parsePublicThumbnailUrl } from "@/lib/modules/media";
 import { recordAuditEventSafe } from "@/lib/modules/audit";
 import { translationSubtitleUrls } from "@/lib/modules/translations";
@@ -74,6 +75,8 @@ export async function getContentDetail(idOrSlug: string, ctx: AppContext): Promi
 /** Raw storage value of the cover (the admin DTO carries a derived public src), for the panel's own proxy. */
 export async function getThumbnailSource(videoId: string, ctx: AppContext): Promise<{ thumbnailUrl: string | null; status: VideoStatus } | null> {
   const channel = await MainChannelService.getRequired(ctx);
+  const denied = await authorize(ctx, "video.preview", { channel: { id: channel.id, ownerUserId: channel.userId, status: channel.status } });
+  if (denied) return null;
   return ctx.prisma.video.findFirst({ where: { id: videoId, creatorId: channel.id }, select: { thumbnailUrl: true, status: true } });
 }
 
@@ -82,6 +85,8 @@ export async function getThumbnailSource(videoId: string, ctx: AppContext): Prom
  * the panel's subtitle files. Same order as the old route, now in one use case.
  */
 export async function deleteVideoWithStorage(videoId: string, ctx: AppContext): Promise<UseCaseResult<AdminVideoDto, AppError>> {
+  const denied = await authorize(ctx, "video.delete", { videoId });
+  if (denied) return fail(denied);
   const details = await getAdminVideoDetails({ idOrSlug: videoId }, ctx);
   const subtitles = new Set([...(details.ok ? [details.data.subtitleUrlPl, details.data.subtitleUrlEn] : []), ...(await translationSubtitleUrls(videoId, ctx).catch(() => [] as string[]))]);
   const storage = await snapshotVideoStorage(videoId, ctx).catch(() => null);

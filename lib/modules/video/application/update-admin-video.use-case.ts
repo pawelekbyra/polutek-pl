@@ -3,6 +3,8 @@ import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository, UpdateVideoInput } from "../infrastructure/video.repository";
 import { MainChannelService } from "@/lib/modules/channel";
+import { authorize } from "@/lib/modules/authz";
+import { AppError } from "@/lib/modules/shared/app-error";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { MediaStorageService, isDerivedThumbnailUrl, isThumbnailProxyPath } from "@/lib/modules/media";
 import { VideoPolicy } from "../domain/video.policy";
@@ -23,8 +25,10 @@ export { isThumbnailProxyPath };
 export async function updateAdminVideo(
   input: UpdateVideoInput,
   ctx: AppContext
-): Promise<UseCaseResult<AdminVideoDto, VideoNotFoundError | VideoNotOnMainChannelError | VideoInvalidHeroError | VideoInvalidSidebarError | VideoInvalidPremiereError | VideoNotReadyForPublicationError>> {
+): Promise<UseCaseResult<AdminVideoDto, VideoNotFoundError | VideoNotOnMainChannelError | VideoInvalidHeroError | VideoInvalidSidebarError | VideoInvalidPremiereError | VideoNotReadyForPublicationError | AppError>> {
   const mainChannel = await MainChannelService.getRequired(ctx);
+  const denied = await authorize(ctx, "video.update", { channel: { id: mainChannel.id, ownerUserId: mainChannel.userId, status: mainChannel.status } });
+  if (denied) return fail(denied);
   const repository = new VideoRepository(ctx.prisma);
 
   const existing = await repository.findByIdWithAsset(input.id);

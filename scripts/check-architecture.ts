@@ -373,7 +373,54 @@ function checkAdminApp() {
   return violations;
 }
 
-const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkUserProfileServiceUsage() + checkDecommissionedAccessPolicySurface() + checkAdminApp();
+// CLAUDE.md 4.23: every use case that changes or exposes channel content authorizes through lib/modules/authz.
+// A file in these modules' application layer must call authorize()/assertAuthorized()/requireVideo() or be listed
+// here with the reason it is exempt (public read, pure helper, worker/cron acting as `system`, or it only delegates
+// to a function that authorizes).
+const AUTHZ_MODULES = ['video', 'video-pipeline', 'admin-content', 'channel'];
+const AUTHZ_EXEMPT: Record<string, string> = {
+  'lib/modules/video/application/admin-video-payload.ts': 'pure DTO helper, no I/O',
+  'lib/modules/video/application/get-admin-video-details.use-case.ts': 'delegates to getAdminVideoById and getAdminVideoDiagnostics, which authorize',
+  'lib/modules/video/application/get-hero-video.use-case.ts': 'public read (whitelisted DTO)',
+  'lib/modules/video/application/get-public-video-by-id.use-case.ts': 'public read (whitelisted DTO, access via checkVideoAccess)',
+  'lib/modules/video/application/get-public-video-list.use-case.ts': 'public read (whitelisted DTO)',
+  'lib/modules/video/application/prune-stale-playback-sessions.use-case.ts': 'cron acting as system',
+  'lib/modules/video/application/publish-after-asset-ready.use-case.ts': 'pipeline worker acting as system',
+  'lib/modules/video/application/record-playback-event.use-case.ts': 'viewer playback telemetry bound to the playback session fingerprint',
+  'lib/modules/video/application/sync-public-thumbnail.service.ts': 'cron/pipeline acting as system',
+  'lib/modules/video/application/video-playback-route.service.ts': 'pipeline worker acting as system',
+  'lib/modules/video/application/video-search.service.ts': 'public read (whitelisted DTO)',
+  'lib/modules/video-pipeline/application/finalize-self-hls.ts': 'encode worker acting as system',
+  'lib/modules/video-pipeline/application/process-encode-job.ts': 'encode worker acting as system',
+  'lib/modules/video-pipeline/application/worker-loop.ts': 'encode worker acting as system',
+  'lib/modules/video-pipeline/application/output-cleanup.use-cases.ts': 'system cleanup invoked after an authorized delete',
+  'lib/modules/channel/application/channel-layout.service.ts': 'public sidebar read',
+  'lib/modules/channel/application/home-content.loader.ts': 'public home read',
+  'lib/modules/channel/application/main-channel.service.ts': 'channel resolver, no permissions',
+};
+
+function checkAuthorizationCoverage() {
+  let violations = 0;
+  let checked = 0;
+  for (const mod of AUTHZ_MODULES) {
+    const dir = path.join(MODULES_DIR, mod, 'application');
+    if (!fs.existsSync(dir)) continue;
+    for (const file of getAllFiles(dir).filter((f) => f.endsWith('.ts'))) {
+      const relativePath = rel(file);
+      if (AUTHZ_EXEMPT[relativePath]) continue;
+      checked++;
+      const content = fs.readFileSync(file, 'utf-8');
+      if (!/\b(authorize|assertAuthorized|requireVideo)\(/.test(content)) {
+        console.error(`❌ Violation: ${relativePath} has no authorize()/assertAuthorized()/requireVideo() call (CLAUDE.md 4.23). Authorize in the use case, or exempt it in AUTHZ_EXEMPT with a reason.`);
+        violations++;
+      }
+    }
+  }
+  console.log(`- Authorization coverage: ${checked} use case files checked, ${Object.keys(AUTHZ_EXEMPT).length} exempt`);
+  return violations;
+}
+
+const totalViolations = checkModules() + checkRoutes() + checkLegacyChannelAdapter() + checkUserProfileServiceUsage() + checkDecommissionedAccessPolicySurface() + checkAdminApp() + checkAuthorizationCoverage();
 
 if (totalViolations > 0) {
   console.error(`\nFound ${totalViolations} architectural violations.`);

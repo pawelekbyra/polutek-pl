@@ -2,6 +2,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { MainChannelService } from "@/lib/modules/channel";
+import { authorize } from "@/lib/modules/authz";
 import { VideoStatus } from "@prisma/client";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { toAdminVideoDto } from "../domain/video.dto";
@@ -14,6 +15,8 @@ export async function publishAdminVideo(
   ctx: AppContext
 ): Promise<UseCaseResult<any, any>> {
   const mainChannel = await MainChannelService.getRequired(ctx);
+  const denied = await authorize(ctx, "video.publish", { channel: { id: mainChannel.id, ownerUserId: mainChannel.userId, status: mainChannel.status } });
+  if (denied) return fail(denied);
   const repository = new VideoRepository(ctx.prisma);
 
   const video = await repository.findByIdForMainChannel(videoId, mainChannel.id);

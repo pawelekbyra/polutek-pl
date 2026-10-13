@@ -3,6 +3,7 @@ import { MainChannelService } from "./main-channel.service";
 import { PrismaClient } from "@prisma/client";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { AppError } from "@/lib/modules/shared/app-error";
+import { assertAuthorized } from "@/lib/modules/authz";
 import { invalidateDefaultThumbnailCache } from "@/lib/modules/media";
 import { ADMIN_CHANNEL_CREATOR_SELECT } from "./get-admin-channel-settings.use-case";
 
@@ -17,9 +18,7 @@ export async function updateAdminChannelSettings(
   ctx: AppContext,
   input: UpdateAdminChannelSettingsInput
 ) {
-  if (ctx.actor.type !== 'admin') {
-    throw new AppError("Only admins can update channel settings", 403, "FORBIDDEN");
-  }
+  await assertAuthorized(ctx, "platform.manage_channel");
 
   const db = ctx.prisma as PrismaClient;
   const mainChannel = await MainChannelService.getRequired(ctx);

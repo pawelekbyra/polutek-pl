@@ -47,7 +47,7 @@ describe("findChannelOwnerCandidates / getChannelOwner", () => {
     expect(prisma.user.findMany).not.toHaveBeenCalled();
     await findChannelOwnerCandidates(ctx, "  new@  ");
     expect(prisma.user.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 8, where: expect.objectContaining({ isDeleted: false }) }));
-    await expect(findChannelOwnerCandidates(makeCtx({ actor: { type: "guest" } }).ctx, "abc")).rejects.toThrow("Only admins");
+    await expect(findChannelOwnerCandidates(makeCtx({ actor: { type: "guest" } }).ctx, "abc")).rejects.toMatchObject({ statusCode: 401 });
     expect(await getChannelOwner(ctx)).toBeTruthy();
   });
 });

@@ -1,7 +1,7 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { MainChannelService } from "./main-channel.service";
 import { PrismaClient } from "@prisma/client";
-import { AppError } from "@/lib/modules/shared/app-error";
+import { assertAuthorized } from "@/lib/modules/authz";
 
 export type AdminChannelCreatorDto = {
   id: string;
@@ -46,13 +46,7 @@ export type AdminChannelSettingsDto = {
 export async function getAdminChannelSettings(
   ctx: AppContext,
 ): Promise<AdminChannelSettingsDto> {
-  if (ctx.actor.type !== "admin") {
-    throw new AppError(
-      "Only admins can access channel settings",
-      403,
-      "FORBIDDEN",
-    );
-  }
+  await assertAuthorized(ctx, "platform.manage_channel");
 
   const db = ctx.prisma as PrismaClient;
   const mainChannel = await MainChannelService.getRequired(ctx);

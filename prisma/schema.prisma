@@ -60,6 +60,8 @@ model User {
   subscriptions         Subscription[]
   notifications         Notification[]
   notificationPreference NotificationPreference?
+  channelMemberships    ChannelMember[]
+  channelBans           ChannelBan[]
 
   @@index([email])
 }
@@ -253,9 +255,12 @@ model AuditLog {
   requestId   String?
   ip          String?
   userAgent   String?
+  /// Channel the event concerns (null = platform-wide); lets the panel filter per channel.
+  channelId   String?
   createdAt   DateTime @default(now())
 
   @@index([actorUserId])
+  @@index([channelId, createdAt])
   @@index([action])
   @@index([createdAt])
   @@index([targetType, targetId])
@@ -437,6 +442,24 @@ model Creator {
   displaySubscribersCount Int?
   isApproved              Boolean        @default(false)
   isPrimary               Boolean        @default(false)
+  /// Public handle shown as @handle (3-30 chars a-z 0-9 . _ -). Unique case-insensitively through the partial index
+  /// "Creator_handle_lower_key" (migration 20261013120000, not expressible in this schema). Null until chosen.
+  handle                  String?
+  /// Channel lifecycle (multi-creator platform, docs/architecture/multi-creator-platform.md). Transitions live in
+  /// lib/modules/channel (one place), never as ad-hoc updates.
+  status                  ChannelStatus  @default(ACTIVE)
+  statusReason            String?
+  statusChangedAt         DateTime?
+  /// AdminUser.id of the staff member who changed the status (null = the system or the owner).
+  statusChangedById       String?
+  /// Storage value of the channel avatar (same rule as Video.thumbnailUrl: never a derived address).
+  avatarUrl               String?
+  country                 String?
+  language                String?
+  isVerified              Boolean        @default(false)
+  /// Soft delete: the channel is hidden at once and purged for good after `deleteAfter`.
+  deletedAt               DateTime?
+  deleteAfter             DateTime?
   createdAt               DateTime       @default(now())
   updatedAt               DateTime       @updatedAt
   user                    User           @relation(fields: [userId], references: [id])
@@ -444,6 +467,165 @@ model Creator {
   payments                Payment[]
   comments                Comment[]
   subscriptions           Subscription[]
+  members                 ChannelMember[]
+  handleHistory           ChannelHandleHistory[]
+  quota                   ChannelQuota?
+  strikes                 ChannelStrike[]
+  bans                    ChannelBan[]
+}
+
+enum ChannelStatus {
+  PENDING_REVIEW
+  ACTIVE
+  LIMITED
+  SUSPENDED
+  BANNED
+  DELETED
+}
+
+enum ChannelRole {
+  OWNER
+  MANAGER
+  EDITOR
+  MODERATOR
+  TRANSLATOR
+}
+
+/// A user's role in a channel. The channel owner always has an OWNER row (backfilled from Creator.userId);
+/// authorization falls back to Creator.userId when a row is missing (lib/modules/authz).
+model ChannelMember {
+  id          String      @id @default(uuid())
+  channelId   String
+  userId      String
+  role        ChannelRole
+  invitedById String?
+  acceptedAt  DateTime?
+  createdAt   DateTime    @default(now())
+
+  channel Creator @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])
+  @@index([userId])
+}
+
+/// Handles a channel used to have. While `reservedUntil` is in the future nobody else can take the handle and
+/// requests to it redirect (301) to the channel's current handle.
+model ChannelHandleHistory {
+  id            String   @id @default(uuid())
+  channelId     String
+  handle        String
+  releasedAt    DateTime @default(now())
+  reservedUntil DateTime
+
+  channel Creator @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@index([handle, reservedUntil])
+  @@index([channelId])
+}
+
+/// Per-channel limits (uploads, storage, queue). Absent row = the platform defaults in lib/platform-limits.ts.
+model ChannelQuota {
+  channelId        String   @id
+  trustLevel       Int      @default(0)
+  maxStorageBytes  BigInt
+  maxUploadBytes   BigInt
+  maxVideoSeconds  Int
+  maxUploadsPerDay Int
+  maxQueuedJobs    Int
+  usedStorageBytes BigInt   @default(0)
+  updatedAt        DateTime @updatedAt
+
+  channel Creator @relation(fields: [channelId], references: [id], onDelete: Cascade)
+}
+
+enum ReportTargetType {
+  VIDEO
+  CHANNEL
+  COMMENT
+}
+
+enum ContentReportStatus {
+  PENDING
+  DISMISSED
+  ACTION_TAKEN
+}
+
+/// A notice about a video, channel or comment (DSA art. 16, UoRiT art. 47s: decision within 48 h). Comment
+/// reports keep using CommentReport; this table is for videos and channels.
+model ContentReport {
+  id                String              @id @default(uuid())
+  targetType        ReportTargetType
+  targetId          String
+  channelId         String?
+  reporterId        String?
+  reporterEmail     String?
+  reason            String
+  note              String?
+  status            ContentReportStatus @default(PENDING)
+  createdAt         DateTime            @default(now())
+  resolvedAt        DateTime?
+  /// AdminUser.id of the staff member who resolved it.
+  resolvedByAdminId String?
+  decisionId        String?
+
+  @@index([status, createdAt])
+  @@index([channelId])
+  @@index([targetType, targetId])
+}
+
+/// Statement of reasons (DSA art. 17): one immutable row per moderation decision. Append-only (trigger in the
+/// migration): to change a decision write a new one.
+model ModerationDecision {
+  id             String           @id @default(uuid())
+  targetType     ReportTargetType
+  targetId       String
+  channelId      String?
+  action         String
+  reasonCode     String
+  reasonPublic   String
+  reasonInternal String?
+  legalBasis     String?
+  automated      Boolean          @default(false)
+  actorAdminId   String?
+  reportId       String?
+  createdAt      DateTime         @default(now())
+
+  @@index([channelId, createdAt])
+  @@index([targetType, targetId])
+}
+
+model ChannelStrike {
+  id              String    @id @default(uuid())
+  channelId       String
+  videoId         String?
+  reason          String
+  policy          String
+  issuedByAdminId String
+  issuedAt        DateTime  @default(now())
+  expiresAt       DateTime?
+  appealedAt      DateTime?
+  appealNote      String?
+  revokedAt       DateTime?
+
+  channel Creator @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@index([channelId, expiresAt])
+}
+
+/// A viewer a channel's owner has blocked from commenting on that channel.
+model ChannelBan {
+  channelId String
+  userId    String
+  until     DateTime?
+  reason    String?
+  createdAt DateTime @default(now())
+
+  channel Creator @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([channelId, userId])
+  @@index([userId])
 }
 
 /// An address whose Resend Audience contact must still be removed (account deletion while Resend
@@ -584,6 +766,10 @@ model Video {
   publishAfterAssetReadyRequestedAt DateTime?
   publishAfterAssetReadyCompletedAt DateTime?
   publishAfterAssetReadyError       String?
+  /// Platform moderation state, separate from publication status: a REMOVED video is never public whatever `status` says.
+  moderationStatus                  VideoModerationStatus @default(VISIBLE)
+  moderationReason                  String?
+  moderationChangedAt               DateTime?
   activeOriginalId                  String?     @unique
   activePlaybackRouteId             String?     @unique
   createdAt                         DateTime    @default(now())
@@ -614,6 +800,13 @@ model Video {
   @@index([activePlaybackRouteId])
   @@index([creatorId])
   @@index([slug])
+}
+
+enum VideoModerationStatus {
+  VISIBLE
+  AGE_RESTRICTED
+  LIMITED
+  REMOVED
 }
 
 /// Who wrote a translation: a machine draft, approved as is, or written/corrected by a person.
@@ -824,6 +1017,8 @@ model VideoEncodeJob {
   startedAt       DateTime?
   finishedAt      DateTime?
   requestedById   String?
+  /// Denormalized channel of the video, for the fair per-channel queue (round robin).
+  channelId       String?
   assetId         String?
   sourceInfo      Json?
   result          Json?
@@ -836,6 +1031,7 @@ model VideoEncodeJob {
   @@index([status, nextAttemptAt, createdAt])
   @@index([videoId, createdAt])
   @@index([originalId])
+  @@index([channelId, status])
 }
 
 model VideoPlaybackRoute {

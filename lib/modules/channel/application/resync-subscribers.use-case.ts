@@ -3,6 +3,7 @@ import { UseCaseResult, ok as success, fail as failure } from "@/lib/modules/sha
 import { AppError } from "@/lib/modules/shared/app-error";
 import { ChannelRepository } from "../infrastructure/channel.repository";
 import { recordAuditEventSafe } from "@/lib/modules/audit";
+import { authorize } from "@/lib/modules/authz";
 
 export interface ResyncSubscribersResult {
   updated: { creatorId: string; subscribersCount: number }[];
@@ -11,9 +12,8 @@ export interface ResyncSubscribersResult {
 export async function resyncSubscribers(
   ctx: AppContext
 ): Promise<UseCaseResult<ResyncSubscribersResult, AppError>> {
-  if (ctx.actor.type !== 'admin') {
-    return failure(new AppError("Only admins can resync subscribers", 403, "FORBIDDEN"));
-  }
+  const denied = await authorize(ctx, "platform.settings");
+  if (denied) return failure(denied);
 
   const repository = new ChannelRepository(ctx.prisma);
   const creators = await repository.findAllCreators();

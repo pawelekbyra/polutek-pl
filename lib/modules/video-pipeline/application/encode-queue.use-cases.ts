@@ -3,6 +3,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { MainChannelService } from "@/lib/modules/channel";
+import { authorize } from "@/lib/modules/authz";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { assetSizeToNumber } from "@/lib/modules/video";
 import { EncodeJobError, STALE_HEARTBEAT_MS, isActiveStatus, parseVersionNumber, type EncodeJobStatus, type EncodeStage } from "../domain/encode-job.state";
@@ -83,7 +84,7 @@ export async function enqueueEncode(
   ctx: AppContext,
 ): Promise<UseCaseResult<EncodeJobDto, AppError>> {
   try {
-    const video = await requireVideo(input.videoId, ctx);
+    const video = await requireVideo(input.videoId, ctx, "video.encode");
     const original = input.originalId
       ? await ctx.prisma.videoOriginal.findFirst({ where: { id: input.originalId, videoId: video.id } })
       : video.activeOriginalId
@@ -111,7 +112,7 @@ export async function enqueueEncode(
 
 export async function cancelEncode(input: { videoId: string; jobId: string }, ctx: AppContext): Promise<UseCaseResult<{ result: string }, AppError>> {
   try {
-    const video = await requireVideo(input.videoId, ctx);
+    const video = await requireVideo(input.videoId, ctx, "video.encode");
     const result = await repo(ctx).requestCancel(input.jobId, video.id);
     if (result === "not_found") return fail(new AppError("Zadanie nie istnieje.", 404, "ENCODE_JOB_NOT_FOUND"));
     if (result === "terminal") return fail(new AppError("Zadanie jest juz zakonczone.", 409, "ENCODE_JOB_FINISHED"));
@@ -131,6 +132,8 @@ export async function getPipelineState(input: { videoId: string }, ctx: AppConte
     });
     const channel = await MainChannelService.getRequired(ctx);
     if (!video || video.creatorId !== channel.id) return fail(new AppError("Film nie istnieje.", 404, "VIDEO_NOT_FOUND"));
+    const denied = await authorize(ctx, "video.update", { channel: { id: channel.id, ownerUserId: channel.userId, status: channel.status } });
+    if (denied) return fail(denied);
     const now = ctx.now();
 
     const [original, latestJob, selfAssets, otherAssets, heartbeat] = await Promise.all([

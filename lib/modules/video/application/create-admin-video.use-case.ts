@@ -5,6 +5,7 @@ import { logger } from "@/lib/logger";
 import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository, CreateVideoInput } from "../infrastructure/video.repository";
 import { MainChannelService } from "@/lib/modules/channel";
+import { authorize } from "@/lib/modules/authz";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { VideoInvalidPremiereError, VideoSlugConflictError } from "../domain/video.errors";
 import { isAllowedPremiereChange } from "../domain/premiere";
@@ -114,6 +115,8 @@ export async function createAdminVideo(
   if (normalizedInput instanceof AppError) return fail(normalizedInput);
 
   const mainChannel = await MainChannelService.getRequired(ctx);
+  const denied = await authorize(ctx, "video.create", { channel: { id: mainChannel.id, ownerUserId: mainChannel.userId, status: mainChannel.status } });
+  if (denied) return fail(denied);
 
   const repository = new VideoRepository(ctx.prisma);
 

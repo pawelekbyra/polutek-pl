@@ -27,7 +27,7 @@ describe('Channel Admin Use Cases', () => {
   describe('getAdminChannelSettings', () => {
     it('throws if actor is not admin', async () => {
       const ctx = createAppContext({ actor: { type: 'user', userId: '1' } });
-      await expect(getAdminChannelSettings(ctx)).rejects.toThrow('Only admins');
+      await expect(getAdminChannelSettings(ctx)).rejects.toMatchObject({ statusCode: 403 });
     });
 
     it('returns channel settings for admin', async () => {

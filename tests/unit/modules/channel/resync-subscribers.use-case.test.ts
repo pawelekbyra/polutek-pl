@@ -40,7 +40,7 @@ describe('ResyncSubscribersUseCase', () => {
     }
   });
 
-  it('should fail if actor is not an admin', async () => {
+  it('should fail if actor is not signed in (401) or not an admin', async () => {
     const guestCtx = createAppContext({
       actor: { type: 'guest' }
     });
@@ -50,7 +50,7 @@ describe('ResyncSubscribersUseCase', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error).toBeInstanceOf(AppError);
-      expect(result.error.statusCode).toBe(403);
+      expect(result.error.statusCode).toBe(401);
     }
   });
 });

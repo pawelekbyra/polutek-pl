@@ -6,6 +6,7 @@ import { VideoStatus } from "@prisma/client";
 import { VIDEO_PROVIDER } from "../domain/video-asset.constants";
 import { isAllowedThumbnailUrl } from "@/lib/blob";
 import { VideoPolicy } from "../domain/video.policy";
+import { authorize } from "@/lib/modules/authz";
 
 export type DiagnosticIssue = {
   severity: "ERROR" | "WARNING";
@@ -22,6 +23,8 @@ export async function getAdminVideoDiagnostics(
   input: GetAdminVideoDiagnosticsInput,
   ctx: AppContext
 ): Promise<UseCaseResult<DiagnosticIssue[]>> {
+  const denied = await authorize(ctx, "video.preview", { videoId: input.videoId });
+  if (denied) return fail(denied);
   const repository = new VideoRepository(ctx.db.read);
 
   const video = await repository.findByIdWithAsset(input.videoId);
