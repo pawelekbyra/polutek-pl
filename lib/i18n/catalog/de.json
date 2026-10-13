@@ -733,5 +733,11 @@
  "Turning comments off blocks new comments; existing ones stay. Held comments wait in the Comments tab.": "Beim Deaktivieren der Kommentare sind keine neuen Kommentare mehr möglich; vorhandene bleiben erhalten. Zurückgehaltene Kommentare warten im Tab Kommentare.",
  "On": "An",
  "Hold for review": "Zur Prüfung zurückhalten",
- "Off": "Aus"
+ "Off": "Aus",
+ "Restore this video as a private draft?": "Dieses Video als privaten Entwurf wiederherstellen?",
+ "Video restored as a draft.": "Video als Entwurf wiederhergestellt.",
+ "Restore as draft": "Als Entwurf wiederherstellen",
+ "Unpublish this video? It will no longer be visible to the public and goes back to a private draft.": "Veröffentlichung dieses Videos zurücknehmen? Es ist dann öffentlich nicht mehr sichtbar und wird wieder ein privater Entwurf.",
+ "Unpublished. The video is now a private draft.": "Veröffentlichung zurückgenommen. Das Video ist jetzt ein privater Entwurf.",
+ "Unpublish": "Veröffentlichung zurücknehmen"
 }

@@ -733,5 +733,11 @@
  "Turning comments off blocks new comments; existing ones stay. Held comments wait in the Comments tab.": "关闭评论后将不再接收新评论，已有评论会保留。待审核的评论会在“评论”标签页中等待处理。",
  "On": "开启",
  "Hold for review": "暂留待审核",
- "Off": "关闭"
+ "Off": "关闭",
+ "Restore this video as a private draft?": "将此视频恢复为私密草稿？",
+ "Video restored as a draft.": "视频已恢复为草稿。",
+ "Restore as draft": "恢复为草稿",
+ "Unpublish this video? It will no longer be visible to the public and goes back to a private draft.": "取消发布此视频？它将不再对公众可见，并变回私密草稿。",
+ "Unpublished. The video is now a private draft.": "已取消发布。视频现在是私密草稿。",
+ "Unpublish": "取消发布"
 }

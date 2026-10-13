@@ -4,6 +4,7 @@ import { getCorrelationId } from "@/lib/utils/correlation";
 import { handleApiError } from "@/lib/errors";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
+import { authorize } from "@/lib/modules/authz";
 import {
   ThumbnailResponseService,
   PUBLIC_THUMBNAIL_CACHE_CONTROL,
@@ -45,11 +46,19 @@ export async function GET(
 
     // 2. Thumbnail Access Policy
     // - Published videos: thumbnails are public (regardless of patron-only playback).
-    // - Drafts/Archived/Unpublished: admin-only.
+    // - Drafts/Archived/Unpublished: platform staff and members of the video's
+    //   channel whose role allows `video.preview` (CLAUDE.md 4.23); nobody else.
     const isPublic = video.status === "PUBLISHED";
-    const isAdmin = actor.type === "admin";
+    let mayPreview = false;
+    if (!isPublic) {
+      if (actor.type === "admin") {
+        mayPreview = true;
+      } else if (actor.type !== "guest") {
+        mayPreview = (await authorize(ctx, "video.preview", { videoId: video.id })) === null;
+      }
+    }
 
-    if (!isPublic && !isAdmin) {
+    if (!isPublic && !mayPreview) {
       return NextResponse.json({ error: "Forbidden: Video is not public" }, { status: 403 });
     }
 
@@ -74,7 +83,7 @@ export async function GET(
 
     // 4. Delegate to ThumbnailResponseService to handle storage streaming/redirect.
     // Published thumbnails may be CDN-cached (same bytes for everyone); drafts
-    // are admin-only and must stay private so the CDN never serves them to guests.
+    // are for staff and channel members only and must stay private so the CDN never serves them to guests.
     return ThumbnailResponseService.getThumbnailResponse(
       video.id,
       resolvedUrl,

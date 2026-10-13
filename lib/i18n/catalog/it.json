@@ -733,5 +733,11 @@
  "Turning comments off blocks new comments; existing ones stay. Held comments wait in the Comments tab.": "Disattivando i commenti non se ne accettano di nuovi; quelli esistenti restano. I commenti in sospeso attendono nella scheda Commenti.",
  "On": "Attivi",
  "Hold for review": "Trattieni per la revisione",
- "Off": "Disattivati"
+ "Off": "Disattivati",
+ "Restore this video as a private draft?": "Ripristinare questo video come bozza privata?",
+ "Video restored as a draft.": "Video ripristinato come bozza.",
+ "Restore as draft": "Ripristina come bozza",
+ "Unpublish this video? It will no longer be visible to the public and goes back to a private draft.": "Annullare la pubblicazione di questo video? Non sarà più visibile al pubblico e tornerà a essere una bozza privata.",
+ "Unpublished. The video is now a private draft.": "Pubblicazione annullata. Il video è ora una bozza privata.",
+ "Unpublish": "Annulla pubblicazione"
 }

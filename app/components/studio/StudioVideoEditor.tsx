@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
-import { StudioApiError, jsonBody, studioApi, type StudioVideo } from "./studio-client";
+import { StudioApiError, jsonBody, studioApi, studioThumbnailSrc, type StudioVideo } from "./studio-client";
 import { confirmLeave, setUnsavedWork } from "./unsaved-guard";
 import { DESCRIPTION_MAX, TITLE_MAX, isFormDirty, toLocalInput, validateCoverFile, type EditorForm } from "./video-form";
 import VideoMoreOptions from "./VideoMoreOptions";
@@ -288,7 +288,24 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
                 <button type="submit" className={buttonClass} disabled={busy || !dirty || !form.title.trim()}>
                   {tx("Zapisz", "Save")}
                 </button>
-                {!published ? (
+                {video.status === "ARCHIVED" ? (
+                  <button
+                    type="button"
+                    className={ghostButtonClass}
+                    disabled={busy || dirty}
+                    title={dirty ? tx("Najpierw zapisz zmiany.", "Save your changes first.") : undefined}
+                    onClick={() => {
+                      if (!window.confirm(tx("Przywrócić film jako prywatny szkic?", "Restore this video as a private draft?"))) return;
+                      void run(
+                        () => studioApi(`${base}/publish`, { method: "POST", ...jsonBody({ action: "unpublish" }) }),
+                        tx("Film przywrócony jako szkic.", "Video restored as a draft."),
+                        false,
+                      );
+                    }}
+                  >
+                    {tx("Przywróć jako szkic", "Restore as draft")}
+                  </button>
+                ) : !published ? (
                   <button
                     type="button"
                     className={ghostButtonClass}
@@ -307,17 +324,43 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
                     {tx("Opublikuj", "Publish")}
                   </button>
                 ) : (
-                  <button
-                    type="button"
-                    className={ghostButtonClass}
-                    disabled={busy || dirty}
-                    title={dirty ? tx("Najpierw zapisz zmiany.", "Save your changes first.") : undefined}
-                    onClick={() =>
-                      run(() => studioApi(`${base}/publish`, { method: "POST", ...jsonBody({ action: "archive" }) }), tx("Film zarchiwizowany.", "Video archived."), false)
-                    }
-                  >
-                    {tx("Zarchiwizuj", "Archive")}
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      className={ghostButtonClass}
+                      disabled={busy || dirty}
+                      title={dirty ? tx("Najpierw zapisz zmiany.", "Save your changes first.") : undefined}
+                      onClick={() => {
+                        if (
+                          !window.confirm(
+                            tx(
+                              "Cofnąć publikację? Film przestanie być widoczny publicznie i wróci do prywatnego szkicu.",
+                              "Unpublish this video? It will no longer be visible to the public and goes back to a private draft.",
+                            ),
+                          )
+                        )
+                          return;
+                        void run(
+                          () => studioApi(`${base}/publish`, { method: "POST", ...jsonBody({ action: "unpublish" }) }),
+                          tx("Publikacja cofnięta. Film jest prywatnym szkicem.", "Unpublished. The video is now a private draft."),
+                          false,
+                        );
+                      }}
+                    >
+                      {tx("Cofnij publikację", "Unpublish")}
+                    </button>
+                    <button
+                      type="button"
+                      className={ghostButtonClass}
+                      disabled={busy || dirty}
+                      title={dirty ? tx("Najpierw zapisz zmiany.", "Save your changes first.") : undefined}
+                      onClick={() =>
+                        run(() => studioApi(`${base}/publish`, { method: "POST", ...jsonBody({ action: "archive" }) }), tx("Film zarchiwizowany.", "Video archived."), false)
+                      }
+                    >
+                      {tx("Zarchiwizuj", "Archive")}
+                    </button>
+                  </>
                 )}
               </div>
             </form>
@@ -346,7 +389,7 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
             {/* The DTO's thumbnailUrl is already a public src (proxy path or public bucket URL). */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={video.thumbnailUrl || `/api/videos/${encodeURIComponent(video.id)}/thumbnail`}
+              src={studioThumbnailSrc(video)}
               alt={tx("Miniatura filmu", "Video thumbnail")}
               className="aspect-video w-full rounded-xl bg-[var(--chan-surface)] object-cover"
             />

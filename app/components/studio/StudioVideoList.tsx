@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
-import { StudioApiError, studioApi, type StudioVideo, type StudioVideoList as VideoListData } from "./studio-client";
+import { StudioApiError, studioApi, studioThumbnailSrc, type StudioVideo, type StudioVideoList as VideoListData } from "./studio-client";
 import { buildVideoListQuery, type SortKey, type StatusFilter } from "./video-form";
 import { Badge, Card, Notice, buttonClass, ghostButtonClass, inputClass } from "./ui";
 
@@ -124,7 +124,7 @@ export default function StudioVideoList({ onUpload, onEdit }: { onUpload: () => 
                 {/* The list DTO's thumbnailUrl is already a public src (proxy path or public bucket URL). */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={video.thumbnailUrl || `/api/videos/${encodeURIComponent(video.id)}/thumbnail`}
+                  src={studioThumbnailSrc(video)}
                   alt=""
                   loading="lazy"
                   width={160}

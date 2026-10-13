@@ -12,6 +12,7 @@ const m = vi.hoisted(() => ({
   getAdminVideoDetails: vi.fn(),
   updateAdminVideo: vi.fn(),
   cancelAutoPublish: vi.fn(),
+  unpublishAdminVideo: vi.fn(),
   listPanelComments: vi.fn(),
   getModerationCounts: vi.fn(),
   hideAdminComment: vi.fn(),
@@ -37,6 +38,7 @@ vi.mock("@/lib/modules/video", () => ({
   publishAdminVideo: vi.fn(),
   archiveAdminVideo: vi.fn(),
   cancelAutoPublish: m.cancelAutoPublish,
+  unpublishAdminVideo: m.unpublishAdminVideo,
 }));
 vi.mock("@/lib/modules/admin-content", async () => ({
   slugify: (await vi.importActual<typeof import("@/lib/modules/admin-content/domain/files")>("@/lib/modules/admin-content/domain/files")).slugify,
@@ -239,6 +241,13 @@ describe("Studio API: videos", () => {
     expect(res.status).toBe(200);
     expect(m.cancelAutoPublish).toHaveBeenCalledWith("v1", ctx);
     expect((await publishPost(req("/api/studio/videos/v1/publish", json({ action: "delete" })), { params: Promise.resolve({ id: "v1" }) })).status).toBe(400);
+  });
+
+  it("unpublishes through the publish route's whitelist", async () => {
+    m.unpublishAdminVideo.mockResolvedValue({ ok: true, data: { id: "v1", status: "DRAFT" } });
+    const res = await publishPost(req("/api/studio/videos/v1/publish", json({ action: "unpublish" })), { params: Promise.resolve({ id: "v1" }) });
+    expect(res.status).toBe(200);
+    expect(m.unpublishAdminVideo).toHaveBeenCalledWith("v1", ctx);
   });
 
   it("rejects a title over 100 and a description over 5000 characters", async () => {

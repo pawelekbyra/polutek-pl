@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
-import { StudioApiError, jsonBody, studioApi, type StudioCommentList, type StudioMe, type StudioVideo, type StudioVideoList } from "./studio-client";
+import { StudioApiError, jsonBody, studioApi, studioThumbnailSrc, type StudioCommentList, type StudioMe, type StudioVideo, type StudioVideoList } from "./studio-client";
 import { Badge, Card, Field, Notice, buttonClass, focusRingClass, ghostButtonClass, inputClass } from "./ui";
 import { confirmLeave } from "./unsaved-guard";
 import StudioContent, { type ContentView } from "./StudioContent";
@@ -203,7 +203,7 @@ function Overview({ me, onOpen }: { me: StudioMe; onOpen: (s: SectionId, intent?
             {/* The list DTO's thumbnailUrl is already a public src (proxy path or public bucket URL). */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={lastVideo.thumbnailUrl || `/api/videos/${encodeURIComponent(lastVideo.id)}/thumbnail`}
+              src={studioThumbnailSrc(lastVideo)}
               alt=""
               width={160}
               height={90}

@@ -733,5 +733,11 @@
  "Turning comments off blocks new comments; existing ones stay. Held comments wait in the Comments tab.": "Désactiver les commentaires bloque les nouveaux ; les existants restent. Les commentaires retenus attendent dans l'onglet Commentaires.",
  "On": "Activés",
  "Hold for review": "Retenir pour examen",
- "Off": "Désactivés"
+ "Off": "Désactivés",
+ "Restore this video as a private draft?": "Restaurer cette vidéo en brouillon privé ?",
+ "Video restored as a draft.": "Vidéo restaurée en brouillon.",
+ "Restore as draft": "Restaurer en brouillon",
+ "Unpublish this video? It will no longer be visible to the public and goes back to a private draft.": "Dépublier cette vidéo ? Elle ne sera plus visible publiquement et redeviendra un brouillon privé.",
+ "Unpublished. The video is now a private draft.": "Vidéo dépubliée. C'est maintenant un brouillon privé.",
+ "Unpublish": "Dépublier"
 }

@@ -71,6 +71,8 @@ export interface StudioVideo {
   premiereAt: string | null;
   views: number;
   createdAt: string;
+  /** Changes with every save (also a new cover); used to bust the browser cache of the thumbnail. */
+  updatedAt?: string | null;
   publishedAt: string | null;
   commentsCount?: number;
   /** Set when the video publishes itself once processing is done. */
@@ -113,4 +115,16 @@ export interface PipelineSummaryState {
   /** Opaque summary string from the server (queued, encoding, ready, failed...). */
   summary?: unknown;
   [key: string]: unknown;
+}
+
+/**
+ * The image address for a video card: the DTO's `thumbnailUrl` (proxy path or public bucket URL) or the proxy path,
+ * with `?v=<updatedAt>` so a freshly uploaded cover shows up instead of the cached previous one.
+ */
+export function studioThumbnailSrc(video: Pick<StudioVideo, "id" | "thumbnailUrl" | "updatedAt">): string {
+  const src = video.thumbnailUrl || `/api/videos/${encodeURIComponent(video.id)}/thumbnail`;
+  if (!video.updatedAt) return src;
+  const stamp = Date.parse(video.updatedAt);
+  if (Number.isNaN(stamp)) return src;
+  return `${src}${src.includes("?") ? "&" : "?"}v=${stamp}`;
 }
