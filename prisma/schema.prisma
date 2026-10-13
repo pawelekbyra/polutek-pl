@@ -770,6 +770,12 @@ model Video {
   publishAfterAssetReadyRequestedAt DateTime?
   publishAfterAssetReadyCompletedAt DateTime?
   publishAfterAssetReadyError       String?
+  /// Free-form creator tags (max 15 of 30 characters, validated in the application; the database caps the count).
+  tags                              String[]    @default([])
+  /// One of the whitelist in lib/modules/video/domain/video-metadata.ts; null = not set.
+  category                          String?
+  /// Who may comment on the video: ON = published at once, HELD = every new comment waits for review, OFF = no new comments.
+  commentsMode                      VideoCommentsMode @default(ON)
   /// Platform moderation state, separate from publication status: a REMOVED video is never public whatever `status` says.
   moderationStatus                  VideoModerationStatus @default(VISIBLE)
   moderationReason                  String?
@@ -1207,6 +1213,12 @@ model VideoView {
 enum SystemRole {
   ADMIN
   USER
+}
+
+enum VideoCommentsMode {
+  ON
+  HELD
+  OFF
 }
 
 enum CommentStatus {

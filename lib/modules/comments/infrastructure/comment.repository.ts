@@ -18,6 +18,8 @@ export interface CreateCommentInput {
   creatorId: string;
   text: string;
   parentId?: string | null;
+  /** Defaults to VISIBLE; HELD_FOR_REVIEW puts the comment straight into the review queue. */
+  status?: CommentStatus;
 }
 
 /** Replies embedded with every top-level comment; the rest is paged through `findReplies`. */
@@ -200,8 +202,8 @@ export class CommentRepository {
   }
 
   async create(input: CreateCommentInput): Promise<Comment> {
-    const { authorId, videoId, creatorId, text, parentId } = input;
-    return await this.write.comment.create({ data: { authorId, videoId, creatorId, text, parentId, status: CommentStatus.VISIBLE } });
+    const { authorId, videoId, creatorId, text, parentId, status = CommentStatus.VISIBLE } = input;
+    return await this.write.comment.create({ data: { authorId, videoId, creatorId, text, parentId, status } });
   }
 
   async update(id: string, data: { text: string; editedAt: Date }): Promise<Comment> {

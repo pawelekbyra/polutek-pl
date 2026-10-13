@@ -337,7 +337,11 @@ export function useComments(
     },
     onSuccess: (data, _variables, context) => {
       if (!context?.optimisticId || !data?.comment) return;
-      updateCachedComments(queryClient, videoId, (c) => (c.id === context.optimisticId ? data.comment : c));
+      // A comment held for review comes back without its text (only moderators see it): the author keeps seeing
+      // what they wrote until the next load, when it simply is not listed until it is approved.
+      updateCachedComments(queryClient, videoId, (c) =>
+        c.id === context.optimisticId ? (data.comment.status === "VISIBLE" ? data.comment : { ...data.comment, text: c.text, author: c.author }) : c,
+      );
     },
     onError: (_err, _variables, context) => {
       if (context?.previousData) restoreCaches(queryClient, context.previousData);
