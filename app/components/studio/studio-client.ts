@@ -47,6 +47,7 @@ export interface StudioChannel {
   name: string;
   status: string;
   isVerified: boolean;
+  bio?: string | null;
   language: string | null;
   country: string | null;
 }

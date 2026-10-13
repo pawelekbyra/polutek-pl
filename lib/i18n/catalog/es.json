@@ -635,5 +635,15 @@
  "Change handle": "Cambiar alias",
  "Delete channel": "Eliminar canal",
  "The channel disappears at once. You can restore it for 30 days, then it is deleted for good. Type the channel name to confirm.": "El canal desaparece al instante. Puedes restaurarlo durante 30 días; después se elimina definitivamente. Escribe el nombre del canal para confirmar.",
- "Channel deleted. You can restore it for 30 days.": "Canal eliminado. Puedes restaurarlo durante 30 días."
+ "Channel deleted. You can restore it for 30 days.": "Canal eliminado. Puedes restaurarlo durante 30 días.",
+ "Spam or scam": "Spam o estafa",
+ "Adult content": "Contenido para adultos",
+ "Violence": "Violencia",
+ "Copyright violation": "Infracción de derechos de autor",
+ "Other reason": "Otro motivo",
+ "Thank you. Your report is queued for review.": "Gracias. Tu denuncia está en cola para revisión.",
+ "Reason for the report": "Motivo de la denuncia",
+ "Details (optional)": "Detalles (opcional)",
+ "Send report": "Enviar denuncia",
+ "Channels": "Canales"
 }

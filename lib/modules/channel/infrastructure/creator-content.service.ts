@@ -144,6 +144,23 @@ export class CreatorContentService {
     return rows.map((r) => r.slug);
   }
 
+  /** Publicly visible channels whose name or handle matches `query` (search page). Short queries match nothing. */
+  static async searchPublicChannels(query: string, limit = 12): Promise<{ id: string; slug: string; name: string; handle: string | null }[]> {
+    const q = query.trim().replace(/^@/, '').slice(0, 60);
+    if (q.length < 2) return [];
+    return prisma.creator.findMany({
+      where: {
+        isApproved: true,
+        deletedAt: null,
+        status: { in: ['ACTIVE', 'LIMITED'] },
+        OR: [{ name: { contains: q, mode: 'insensitive' } }, { handle: { contains: q, mode: 'insensitive' } }],
+      },
+      orderBy: [{ subscribersCount: 'desc' }, { name: 'asc' }],
+      take: limit,
+      select: { id: true, slug: true, name: true, handle: true },
+    });
+  }
+
   static async getConfiguredOrDefaultCreator(): Promise<PublicCreatorPageDTO | null> {
     const slug = MainChannelService.getConfiguredSlug();
     return this.getCreatorBySlug(slug);

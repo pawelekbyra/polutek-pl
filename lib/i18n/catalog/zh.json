@@ -635,5 +635,15 @@
  "Change handle": "更改用户名",
  "Delete channel": "删除频道",
  "The channel disappears at once. You can restore it for 30 days, then it is deleted for good. Type the channel name to confirm.": "频道会立即消失。30 天内可以恢复，之后将被永久删除。请输入频道名称以确认。",
- "Channel deleted. You can restore it for 30 days.": "频道已删除。30 天内可以恢复。"
+ "Channel deleted. You can restore it for 30 days.": "频道已删除。30 天内可以恢复。",
+ "Spam or scam": "垃圾信息或诈骗",
+ "Adult content": "成人内容",
+ "Violence": "暴力",
+ "Copyright violation": "侵犯版权",
+ "Other reason": "其他原因",
+ "Thank you. Your report is queued for review.": "谢谢。您的举报已进入审核队列。",
+ "Reason for the report": "举报原因",
+ "Details (optional)": "详细说明（可选）",
+ "Send report": "提交举报",
+ "Channels": "频道"
 }

@@ -12,6 +12,7 @@ import { createAppContext } from '@/lib/modules/shared/app-context';
 import ChannelVideoCard from '@/app/components/ChannelVideoCard';
 import { formatCount, getBaseUrl } from '@/lib/utils';
 import SubscribeButton from '@/app/components/SubscribeButton';
+import ReportButton from '@/app/components/ReportButton';
 import { prisma } from '@/lib/prisma';
 import { getLocaleAlternates, getLocalizedHref, isLocale, type Locale } from '@/lib/i18n/routing';
 import { SITE_TITLE } from '@/lib/constants';
@@ -161,6 +162,7 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
               creatorName={creator.name}
               initialIsSubscribed={initialSubscribed}
             />
+            <ReportButton targetType="CHANNEL" targetId={creator.id} className="mt-3" />
           </div>
         </header>
 

@@ -29,6 +29,7 @@ vi.mock("@/lib/prisma", () => ({
 vi.mock("@/app/components/Navbar", () => ({ default: () => <nav /> }));
 vi.mock("@/app/components/Footer", () => ({ default: () => <footer /> }));
 vi.mock("@/app/components/SubscribeButton", () => ({ default: () => <button type="button">Subscribe</button> }));
+vi.mock("@/app/components/ReportButton", () => ({ default: () => <button type="button">Report</button> }));
 vi.mock("@/app/components/ChannelVideoCard", () => ({
   default: ({ video }: { video: { title: string; creator?: { imageUrl?: string | null } } }) => (
     <article data-card-avatar={video.creator?.imageUrl ?? ""}>{video.title}</article>

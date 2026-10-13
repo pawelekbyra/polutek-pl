@@ -37,6 +37,7 @@ export interface ChannelSummaryDto {
   slug: string;
   handle: string | null;
   name: string;
+  bio: string | null;
   status: string;
   isVerified: boolean;
   language: string | null;
@@ -48,6 +49,7 @@ const SUMMARY_SELECT = {
   slug: true,
   handle: true,
   name: true,
+  bio: true,
   status: true,
   isVerified: true,
   language: true,

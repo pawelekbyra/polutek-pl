@@ -9,7 +9,7 @@ import { Card, Field, Notice, buttonClass, dangerButtonClass, inputClass } from 
 export default function StudioProfile({ channel, onChanged }: { channel: StudioChannel; onChanged: () => void }) {
   const { tx } = useLanguage();
   const [name, setName] = useState(channel.name);
-  const [bio, setBio] = useState("");
+  const [bio, setBio] = useState(channel.bio ?? "");
   const [handle, setHandle] = useState(channel.handle ?? "");
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<{ kind: "error" | "success"; text: string } | null>(null);
@@ -53,7 +53,7 @@ export default function StudioProfile({ channel, onChanged }: { channel: StudioC
               onClick={() =>
                 run(
                   "profile",
-                  () => studioApi("/api/studio/channel", { method: "PATCH", ...jsonBody({ name, ...(bio.trim() ? { bio } : {}) }) }),
+                  () => studioApi("/api/studio/channel", { method: "PATCH", ...jsonBody({ name, ...(bio.trim() !== (channel.bio ?? "").trim() ? { bio: bio.trim() === "" ? null : bio } : {}) }) }),
                   tx("Profil zapisany.", "Profile saved."),
                 )
               }

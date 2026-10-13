@@ -635,5 +635,15 @@
  "Change handle": "Modifier l'identifiant",
  "Delete channel": "Supprimer la chaîne",
  "The channel disappears at once. You can restore it for 30 days, then it is deleted for good. Type the channel name to confirm.": "La chaîne disparaît immédiatement. Vous pouvez la rétablir pendant 30 jours, puis elle est supprimée définitivement. Saisissez le nom de la chaîne pour confirmer.",
- "Channel deleted. You can restore it for 30 days.": "Chaîne supprimée. Vous pouvez la rétablir pendant 30 jours."
+ "Channel deleted. You can restore it for 30 days.": "Chaîne supprimée. Vous pouvez la rétablir pendant 30 jours.",
+ "Spam or scam": "Spam ou arnaque",
+ "Adult content": "Contenu pour adultes",
+ "Violence": "Violence",
+ "Copyright violation": "Violation du droit d'auteur",
+ "Other reason": "Autre motif",
+ "Thank you. Your report is queued for review.": "Merci. Votre signalement est en cours d'examen.",
+ "Reason for the report": "Motif du signalement",
+ "Details (optional)": "Détails (facultatif)",
+ "Send report": "Envoyer le signalement",
+ "Channels": "Chaînes"
 }
