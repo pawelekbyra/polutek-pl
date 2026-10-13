@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { useAuth, useUser } from "@/lib/auth/react";
 import { ADMIN_PANEL_ORIGIN } from "@/lib/admin-legacy-redirects";
+import { getLocalizedHref } from "@/lib/i18n/routing";
 import { ShieldCheck } from "../icons";
 import {
   DropdownMenu,
@@ -89,6 +90,10 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
             className={itemClassName}
           >
             {tx("Moje konto", "My account")}
+          </DropdownMenuItem>
+
+          <DropdownMenuItem render={<a href={getLocalizedHref(language, "studio")} />} className={itemClassName}>
+            {tx("Studio twórcy", "Creator Studio")}
           </DropdownMenuItem>
 
           {isAdmin && (

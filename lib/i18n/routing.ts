@@ -22,6 +22,7 @@ export const ROUTES = {
   channel: { pl: "/channel/:slug", en: "/en/channel/:slug" },
   terms: { pl: "/regulamin", en: "/en/terms" },
   privacy: { pl: "/polityka-prywatnosci", en: "/en/privacy-policy" },
+  studio: { pl: "/studio", en: "/en/studio" },
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;

@@ -1,5 +1,5 @@
 import { cancelEncode, getPipelineState } from "@/lib/modules/video-pipeline";
-import { studioError, studioResult, withStudio } from "@/lib/api/studio-route";
+import { studioError, studioJson, studioResult, withStudio } from "@/lib/api/studio-route";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +9,15 @@ type Params = { params: Promise<{ id: string }> };
 export async function GET(request: Request, props: Params) {
   return withStudio(request, { channel: true }, async ({ ctx }) => {
     const { id } = await props.params;
-    return studioResult(await getPipelineState({ videoId: id }, ctx));
+    const result = await getPipelineState({ videoId: id }, ctx);
+    if (!result.ok) return studioResult(result);
+    // Storage object keys and internal ids are platform business: the creator sees state, not paths.
+    const { assets, original, ...rest } = result.data;
+    return studioJson({
+      ...rest,
+      original: original ? { status: original.status, fileName: original.fileName, sizeBytes: original.sizeBytes, failureReason: original.failureReason } : null,
+      assets: assets.map((a) => ({ versionNumber: a.versionNumber, isActive: a.isActive, sizeBytes: a.sizeBytes, createdAt: a.createdAt })),
+    });
   });
 }
 

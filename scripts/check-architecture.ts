@@ -394,6 +394,7 @@ const AUTHZ_EXEMPT: Record<string, string> = {
   'lib/modules/video-pipeline/application/process-encode-job.ts': 'encode worker acting as system',
   'lib/modules/video-pipeline/application/worker-loop.ts': 'encode worker acting as system',
   'lib/modules/video-pipeline/application/output-cleanup.use-cases.ts': 'system cleanup invoked after an authorized delete',
+  'lib/modules/video-pipeline/application/channel-limits.ts': 'pure limit evaluation called from the authorized startOriginalUpload',
   'lib/modules/channel/application/channel-layout.service.ts': 'public sidebar read',
   'lib/modules/channel/application/home-content.loader.ts': 'public home read',
   'lib/modules/channel/application/main-channel.service.ts': 'channel resolver, no permissions',
