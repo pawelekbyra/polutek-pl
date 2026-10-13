@@ -55,8 +55,8 @@ Jedno miejsce decyzji: `lib/modules/authz` (`can()` czyste, `authorize()` w use 
 | 1 | Warstwa uprawnień (`authz`), bez zmiany zachowania | **zrobiony**: moduł `lib/modules/authz`, `authorize` w use case'ach wideo, potoku, treści i kanału, bramka `AUTHZ_EXEMPT`, testy macierzy |
 | 2 | Schemat i uzupełnienie danych (addytywnie) | **zrobiony**: migracja `20261013120000_multi_channel_schema` (kanał: status, uchwyt, członkowie, limity, zgłoszenia, decyzje, ostrzeżenia), wyłączniki `lib/platform-gates.ts`, limity `lib/platform-limits.ts`; **do zastosowania na produkcji dopiero na zgodę właściciela** |
 | 3 | Kanał z kontekstu żądania, koniec „kanału głównego” | **zrobiony w rdzeniu**: `AppContext.channelId`, dostęp publiczny z kanału filmu, cykl życia kanału, moderacja komentarzy per kanał, odpowiedź twórcy jako właściciel; **zostaje** przepisanie nazwy `MainChannelService` i stron publicznych na kanał z adresu (etap 7) |
-| 4 | Studio twórcy na `www` | nie zaczęty |
-| 5 | Panel: wszystkie kanały, zgłoszenia, sprzedaż | nie zaczęty |
+| 4 | Studio twórcy na `www` | **zrobiony**: `/studio` (Przegląd, Treści, Komentarze, Kanał i ustawienia), API `/api/studio/*` działa zawsze jako zwykły użytkownik, limity wgrywania; **nieprzetestowany w przeglądarce ani na bazie** (brak Dockera); luka: profil nie wczytuje istniejącego opisu |
+| 5 | Panel: wszystkie kanały, zgłoszenia, sprzedaż | **kanały i zgłoszenia zrobione**: `/kanaly` (lista, szczegóły, status z powodem, ostrzeżenia, poziom zaufania, decyzje); `ChannelModerationUseCases` z `ModerationDecision` i audytem; **zostaje**: filtr kanału w pozostałych ekranach, „zobacz jako twórca”, sprzedaż i rozliczenia (etap 6) |
 | 6 | Sprzedaż i wypłaty (za wyłącznikiem) | nie zaczęty |
 | 7 | Odkrywanie, `/@uchwyt`, wyszukiwarka, SEO | nie zaczęty |
 | 8 | Migracja czyszcząca (usunięcie `isPrimary`, `isApproved`, `MAIN_CREATOR_SLUG`) | **wymaga zgody właściciela i zasady dwóch wdrożeń** (`CLAUDE.md` §4.0) |
