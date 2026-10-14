@@ -11,7 +11,14 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(request: Request) {
   return withStudio(request, { channel: false }, async ({ ctx, channel, channels }) => {
-    const limits = channel ? await getChannelLimitsView(ctx, channel.id).catch(() => null) : null;
+    let limits: Awaited<ReturnType<typeof getChannelLimitsView>> = null;
+    if (channel) {
+      try {
+        limits = (await getChannelLimitsView(ctx, channel.id)) ?? null;
+      } catch {
+        limits = null;
+      }
+    }
     return studioJson({ channel, channels, channelCreation: gateMode("channelCreation"), limits });
   });
 }
