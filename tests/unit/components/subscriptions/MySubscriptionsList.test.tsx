@@ -9,6 +9,8 @@ vi.mock('@/app/components/LanguageContext', () => ({
   useLanguage: () => ({ tx: txFor('en'), language: 'en' }),
 }));
 vi.mock('@/lib/logger', () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() } }));
+// The bell is hidden in production (lib/ui-flags.ts); these tests exercise it with the flag on.
+vi.mock('@/lib/ui-flags', () => ({ SHOW_SUBSCRIPTION_BELL: true }));
 
 const rows: MySubscriptionRow[] = [
   { creatorId: 'c1', slug: 'one', handle: 'one', name: 'Channel One', imageUrl: null, notify: true, videosCount: 3, lastVideoAt: '2026-10-10T10:00:00.000Z', available: true },

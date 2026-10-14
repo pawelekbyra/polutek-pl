@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
 import BrandName from "./BrandName";
 import LanguageSwitcher from "./LanguageSwitcher";
-import NavDrawer from "./NavDrawer";
 import { useSwitchLanguage } from "./useSwitchLanguage";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
 import { Search, X, LogIn } from "lucide-react";
@@ -139,9 +138,8 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
           </div>
         ) : (
           <>
-            {/* Hamburger + logo */}
+            {/* Logo */}
             <div className="flex items-center shrink-0">
-              <NavDrawer />
               <BrandHomeLink
                 language={language}
                 isHome={isHome}
