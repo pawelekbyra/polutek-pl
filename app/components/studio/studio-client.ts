@@ -97,6 +97,7 @@ export interface StudioComment {
   createdAt: string;
   parentId: string | null;
   isHearted: boolean;
+  isPinned: boolean;
   creatorReplied: boolean;
   reportsCount: number;
   video: { id: string; title: string; slug: string } | null;

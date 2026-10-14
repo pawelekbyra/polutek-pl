@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Pin, PinOff } from "lucide-react";
 import { useLanguage } from "@/app/components/LanguageContext";
 import { StudioApiError, jsonBody, studioApi, type StudioComment, type StudioCommentList } from "./studio-client";
 import { Badge, Card, Notice, inputClass, smallButtonClass, smallDangerGhostButtonClass, smallGhostButtonClass } from "./ui";
@@ -90,6 +91,12 @@ export default function StudioComments() {
                 <strong className="text-[var(--chan-ink)]">{c.author?.name ?? tx("Usunięte konto", "Deleted account")}</strong>
                 {c.video && <span>· {c.video.title}</span>}
                 <Badge tone={c.status === "VISIBLE" ? "good" : "warn"}>{statusLabel[c.status]}</Badge>
+                {c.isPinned && (
+                  <span className="inline-flex items-center gap-1 font-semibold text-[var(--chan-blue)]">
+                    <Pin size={12} aria-hidden="true" className="fill-current" />
+                    {tx("Przypięty", "Pinned")}
+                  </span>
+                )}
                 {c.reportsCount > 0 && <Badge tone="warn">{tx("{0} zgłoszeń", "{0} reports", c.reportsCount)}</Badge>}
               </div>
               <p className="whitespace-pre-wrap text-[14px] text-[var(--chan-ink)]">{c.text ?? tx("(treść usunięta przez autora)", "(removed by the author)")}</p>
@@ -114,6 +121,12 @@ export default function StudioComments() {
                     <button type="button" className={smallGhostButtonClass} disabled={busyId === c.id} onClick={() => act(c.id, { action: c.isHearted ? "unheart" : "heart" })}>
                       {c.isHearted ? tx("Zabierz serce", "Remove heart") : tx("Daj serce", "Heart")}
                     </button>
+                    {!c.parentId && c.status === "VISIBLE" && (
+                      <button type="button" className={`${smallGhostButtonClass} gap-1.5`} disabled={busyId === c.id} onClick={() => act(c.id, { action: c.isPinned ? "unpin" : "pin" })}>
+                        {c.isPinned ? <PinOff size={14} aria-hidden="true" /> : <Pin size={14} aria-hidden="true" />}
+                        {c.isPinned ? tx("Odepnij", "Unpin") : tx("Przypnij", "Pin")}
+                      </button>
+                    )}
                     <button type="button" className={smallGhostButtonClass} onClick={() => setReplying(replying === c.id ? null : c.id)}>
                       {tx("Odpowiedz", "Reply")}
                     </button>
