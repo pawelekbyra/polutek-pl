@@ -77,7 +77,7 @@ describe('Comments Core Use Cases', () => {
   describe('createVideoComment', () => {
     it('denies non-patron on patron-only video (returns FORBIDDEN)', async () => {
       (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'LOGIN_REQUIRED' } });
-      mockPrisma.video.findUnique.mockResolvedValue({ id: videoId, creatorId: 'c1' });
+      mockPrisma.video.findUnique.mockResolvedValue({ id: videoId, creatorId: 'c1', creator: { userId: 'channel-owner' } });
       const result = await createVideoComment({ videoId, text: 'hello' }, createCtx({ type: 'user', userId }));
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -88,7 +88,7 @@ describe('Comments Core Use Cases', () => {
 
     it('allows patron on patron-only video', async () => {
       (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: true } });
-      mockPrisma.video.findUnique.mockResolvedValue({ id: videoId, creatorId: 'c1' });
+      mockPrisma.video.findUnique.mockResolvedValue({ id: videoId, creatorId: 'c1', creator: { userId: 'channel-owner' } });
       mockPrisma.comment.create.mockResolvedValue({ id: 'new-c', createdAt: new Date(), updatedAt: new Date() });
       mockPrisma.comment.findUnique.mockResolvedValue({ id: 'new-c', videoId, createdAt: new Date(), updatedAt: new Date(), author: { id: userId, role: 'USER' }, reactions: [] });
 
@@ -108,7 +108,7 @@ describe('Comments Core Use Cases', () => {
     it('lets an account whose mute has expired comment again', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({ commentMutedUntil: new Date(Date.now() - 1000) });
       (checkVideoAccess as any).mockResolvedValue({ ok: true, data: { hasAccess: true } });
-      mockPrisma.video.findUnique.mockResolvedValue({ id: videoId, creatorId: 'c1' });
+      mockPrisma.video.findUnique.mockResolvedValue({ id: videoId, creatorId: 'c1', creator: { userId: 'channel-owner' } });
       mockPrisma.comment.create.mockResolvedValue({ id: 'new-c', createdAt: new Date(), updatedAt: new Date() });
       mockPrisma.comment.findUnique.mockResolvedValue({ id: 'new-c', videoId, createdAt: new Date(), updatedAt: new Date(), author: { id: userId, role: 'USER' }, reactions: [] });
       const result = await createVideoComment({ videoId, text: 'hello' }, createCtx({ type: 'user', userId }));

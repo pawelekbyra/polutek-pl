@@ -49,12 +49,21 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
       if (event.key === "Escape") close();
     };
     document.addEventListener("keydown", onKey);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    // The page behind must not scroll: lock both the root and the body (either may be the scroller) and keep the
+    // layout from jumping when the scrollbar disappears.
+    const root = document.documentElement;
+    const body = document.body;
+    const previous = { rootOverflow: root.style.overflow, bodyOverflow: body.style.overflow, bodyPaddingRight: body.style.paddingRight };
+    const scrollbar = window.innerWidth - root.clientWidth;
+    root.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    if (scrollbar > 0) body.style.paddingRight = `${scrollbar}px`;
     closeRef.current?.focus();
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = previousOverflow;
+      root.style.overflow = previous.rootOverflow;
+      body.style.overflow = previous.bodyOverflow;
+      body.style.paddingRight = previous.bodyPaddingRight;
     };
   }, [open, close]);
 
@@ -113,13 +122,13 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
 
       {open ? (
         <div className="fixed inset-0 z-[1100]">
-          <button type="button" tabIndex={-1} aria-hidden="true" onClick={close} className="absolute inset-0 h-full w-full cursor-default bg-black/40" />
+          <button type="button" tabIndex={-1} aria-hidden="true" onClick={close} className="absolute inset-0 h-full w-full cursor-default touch-none bg-black/40" />
           <aside
             id={panelId}
             role="dialog"
             aria-modal="true"
             aria-label={tx("Menu konta", "Account menu")}
-            className="absolute right-0 top-0 flex h-full w-[min(88vw,320px)] flex-col bg-[var(--chan-card)] shadow-2xl animate-in slide-in-from-right duration-200"
+            className="absolute right-0 top-0 flex h-full w-[min(88vw,320px)] flex-col overscroll-contain bg-[var(--chan-card)] shadow-2xl animate-in slide-in-from-right duration-200"
           >
             <div className="flex items-start gap-3 border-b border-[var(--chan-line)] p-4">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--chan-line)]">
@@ -140,7 +149,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
               </button>
             </div>
 
-            <div className="flex flex-1 flex-col overflow-y-auto p-3">
+            <div className="flex flex-1 flex-col overflow-y-auto overscroll-contain p-3">
               <nav aria-label={tx("Nawigacja boczna", "Side navigation")} className="grid gap-1">
                 <Link href={getLocalizedHref(language, "home")} className={itemClass} onClick={() => setOpen(false)}>
                   <Home className={iconClass} strokeWidth={1.8} aria-hidden="true" />
@@ -164,7 +173,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
                 {isAdmin ? (
                   <a href={ADMIN_PANEL_ORIGIN} target="_blank" rel="noopener noreferrer" className={itemClass}>
                     <ShieldCheck className={iconClass} strokeWidth={1.8} aria-hidden="true" />
-                    {tx("Zarządzaj kanałem", "Manage channel")}
+                    {tx("Panel admina", "Admin panel")}
                   </a>
                 ) : null}
               </nav>

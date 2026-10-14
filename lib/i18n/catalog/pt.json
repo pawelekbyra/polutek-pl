@@ -191,7 +191,6 @@
  "M km": "M km",
  "MIN": "MIN",
  "Main navigation": "Navegação principal",
- "Manage channel": "Gerenciar canal",
  "Method:": "Forma:",
  "Minimum tip amount is {0} {1}": "O valor mínimo da gorjeta é {0} {1}",
  "MobilePay app": "App MobilePay",
@@ -761,5 +760,6 @@
  "Unsubscribe": "Cancelar subscrição",
  "Could not load your subscriptions. Please reload the page.": "Não foi possível carregar as suas subscrições. Recarregue a página.",
  "Latest videos": "Últimos vídeos",
- "Your subscribed channels have no videos yet.": "Os canais que subscreveu ainda não têm vídeos."
+ "Your subscribed channels have no videos yet.": "Os canais que subscreveu ainda não têm vídeos.",
+ "Admin panel": "Painel de administração"
 }

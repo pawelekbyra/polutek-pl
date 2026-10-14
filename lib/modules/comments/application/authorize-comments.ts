@@ -14,6 +14,16 @@ function toCommentError(denied: AppError): CommentError {
   return { type: "UNAUTHORIZED", message: denied.message };
 }
 
+/**
+ * Whether the signed-in viewer moderates the comments under `videoId` on the PUBLIC site: owner, manager or moderator
+ * of that video's channel (role matrix, `comment.moderate`). The platform-wide ADMIN role is deliberately not enough
+ * here: platform staff moderate in the admin panel, and a creator's comments are moderated by the creator.
+ */
+export async function canModerateVideoComments(ctx: AppContext, videoId: string): Promise<boolean> {
+  if (ctx.actor.type !== "user") return false;
+  return (await authorize(ctx, "comment.moderate", { videoId })) === null;
+}
+
 /** Returns an error when the actor may not do `action` on one of `commentIds` (comments that do not exist are left to the caller). */
 export async function authorizeComments(ctx: AppContext, action: AuthzAction, commentIds: string[]): Promise<CommentError | null> {
   if (ctx.actor.type !== "user") {

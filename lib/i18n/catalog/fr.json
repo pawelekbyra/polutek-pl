@@ -191,7 +191,6 @@
  "M km": "M km",
  "MIN": "MIN",
  "Main navigation": "Navigation principale",
- "Manage channel": "Gérer la chaîne",
  "Method:": "Moyen :",
  "Minimum tip amount is {0} {1}": "Le pourboire minimum est de {0} {1}",
  "MobilePay app": "Appli MobilePay",
@@ -761,5 +760,6 @@
  "Unsubscribe": "Se désabonner",
  "Could not load your subscriptions. Please reload the page.": "Impossible de charger vos abonnements. Veuillez recharger la page.",
  "Latest videos": "Dernières vidéos",
- "Your subscribed channels have no videos yet.": "Vos chaînes suivies n'ont pas encore de vidéos."
+ "Your subscribed channels have no videos yet.": "Vos chaînes suivies n'ont pas encore de vidéos.",
+ "Admin panel": "Panneau d'administration"
 }

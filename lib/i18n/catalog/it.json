@@ -191,7 +191,6 @@
  "M km": "mln km",
  "MIN": "MIN",
  "Main navigation": "Navigazione principale",
- "Manage channel": "Gestisci canale",
  "Method:": "Metodo:",
  "Minimum tip amount is {0} {1}": "L'importo minimo della mancia è {0} {1}",
  "MobilePay app": "App MobilePay",
@@ -761,5 +760,6 @@
  "Unsubscribe": "Annulla iscrizione",
  "Could not load your subscriptions. Please reload the page.": "Impossibile caricare le tue iscrizioni. Ricarica la pagina.",
  "Latest videos": "Ultimi video",
- "Your subscribed channels have no videos yet.": "I canali a cui sei iscritto non hanno ancora video."
+ "Your subscribed channels have no videos yet.": "I canali a cui sei iscritto non hanno ancora video.",
+ "Admin panel": "Pannello amministratore"
 }
