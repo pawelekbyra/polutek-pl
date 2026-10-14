@@ -442,8 +442,6 @@ model Creator {
   defaultThumbnailUrl     String?
   subscribersCount        Int            @default(0)
   displaySubscribersCount Int?
-  isApproved              Boolean        @default(false)
-  isPrimary               Boolean        @default(false)
   /// Public handle shown as @handle (3-30 chars a-z 0-9 . _ -). Unique case-insensitively through the partial index
   /// "Creator_handle_lower_key" (migration 20261013120000, not expressible in this schema). Null until chosen.
   handle                  String?

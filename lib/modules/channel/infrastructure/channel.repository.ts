@@ -11,26 +11,14 @@ export class ChannelRepository {
   }
 
   /**
-   * The platform's main channel: the `main_channel_id` setting (CLAUDE.md 4.24). Two emergency fallbacks keep the
-   * site up on a database where the stage 8 backfill has not run yet (deployment A); both go away in deployment B.
+   * The platform's main channel: only the `main_channel_id` setting (CLAUDE.md 4.24). There is no fallback to a
+   * slug variable or a flag on the row: a missing or dangling setting means "no main channel" (null).
    */
   async findMainChannel() {
     const setting = await (this.db as PrismaClient).appSetting.findUnique({ where: { key: MAIN_CHANNEL_SETTING_KEY } });
     const configuredId = setting?.value?.trim();
-    if (configuredId) {
-      const configured = await this.creator.findUnique({ where: { id: configuredId } });
-      if (configured) return configured;
-    }
-
-    // Fallback 1: the old MAIN_CREATOR_SLUG variable. usunąć we wdrożeniu B (docs/architecture/stage-8-deploy-B.md).
-    const legacySlug = process.env.MAIN_CREATOR_SLUG?.trim();
-    if (legacySlug) {
-      const bySlug = await this.creator.findUnique({ where: { slug: legacySlug } });
-      if (bySlug) return bySlug;
-    }
-
-    // Fallback 2: the old isPrimary flag (read only, never written). usunąć we wdrożeniu B (docs/architecture/stage-8-deploy-B.md).
-    return await this.creator.findFirst({ where: { isPrimary: true, deletedAt: null }, orderBy: { createdAt: "asc" } });
+    if (!configuredId) return null;
+    return await this.creator.findUnique({ where: { id: configuredId } });
   }
 
   async findById(id: string) {
