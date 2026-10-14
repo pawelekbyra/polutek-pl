@@ -270,7 +270,7 @@ Moderacja komentarzy, użytkownicy, wpłaty i rozsyłki są tylko w panelu.
 
 Brak Vercel Crons. Trasy `GET /api/cron/<nazwa>` (autoryzacja `Authorization: Bearer $CRON_SECRET`; trasy są publiczne w `middleware.ts`, a każda sama zwraca 401 bez sekretu) woła `scripts/serwerek/cron-runner.sh` z timerów systemd (godziny UTC):
 `send-broadcasts` (co minutę), `stripe-reconciliation` (co 15 min), `prune-unverified-accounts` (03:30), `prune-expired-auth` (03:45), `retention` (04:15), `abandon-stale-originals` (04:30), `prune-playback-sessions` (05:00),
-`purge-deleted-comments` (05:15), `sync-public-thumbnails` (06:00). Co robi każde i jak je sprawdzić: `docs/operations/SERWEREK.md` rozdz. 8. Test `tests/unit/security/cron-routes-reach-handler.test.ts` pilnuje, że trasa cron dociera do handlera, a nie do HTML.
+`purge-deleted-comments` (05:15), `sync-public-thumbnails` (06:00), `subscriber-snapshots` (23:50). Co robi każde i jak je sprawdzić: `docs/operations/SERWEREK.md` rozdz. 8. Test `tests/unit/security/cron-routes-reach-handler.test.ts` pilnuje, że trasa cron dociera do handlera, a nie do HTML.
 Nowe zadanie cykliczne = nowa trasa + timer w `deploy/serwerek/systemd/` + wiersz w tabeli SERWEREK.md.
 
 ## 7. Kluczowe pliki

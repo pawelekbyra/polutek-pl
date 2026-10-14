@@ -8,10 +8,11 @@ import { confirmLeave } from "./unsaved-guard";
 import StudioContent, { type ContentView } from "./StudioContent";
 import StudioComments from "./StudioComments";
 import StudioProfile from "./StudioProfile";
+import StudioAnalytics from "./StudioAnalytics";
 
-type SectionId = "overview" | "content" | "comments" | "profile";
+type SectionId = "overview" | "content" | "comments" | "analytics" | "profile";
 
-const SECTION_IDS: SectionId[] = ["overview", "content", "comments", "profile"];
+const SECTION_IDS: SectionId[] = ["overview", "content", "comments", "analytics", "profile"];
 
 function readSection(): SectionId {
   if (typeof window === "undefined") return "overview";
@@ -66,6 +67,7 @@ export default function StudioApp() {
     overview: tx("Panel", "Dashboard"),
     content: tx("Treści", "Content"),
     comments: tx("Komentarze", "Comments"),
+    analytics: tx("Statystyki", "Statistics"),
     profile: tx("Kanał i ustawienia", "Channel and settings"),
   };
 
@@ -111,6 +113,7 @@ export default function StudioApp() {
         {section === "overview" && <Overview me={me} onOpen={go} />}
         {section === "content" && <StudioContent initialView={contentIntent} />}
         {section === "comments" && <StudioComments />}
+        {section === "analytics" && <StudioAnalytics />}
         {section === "profile" && <StudioProfile channel={me.channel} onChanged={load} />}
       </div>
     </div>
