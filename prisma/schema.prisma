@@ -64,6 +64,8 @@ model User {
   channelBans           ChannelBan[]
   orders                Order[]
   entitlements          Entitlement[]
+  videoProgress         VideoProgress[]
+  moderationAppeals     ModerationAppeal[]
 
   @@index([email])
 }
@@ -474,6 +476,7 @@ model Creator {
   bans                    ChannelBan[]
   orders                  Order[]
   ledger                  LedgerEntry[]
+  subscriberSnapshots     SubscriberSnapshot[]
 }
 
 enum ChannelStatus {
@@ -579,6 +582,7 @@ model ContentReport {
 /// Statement of reasons (DSA art. 17): one immutable row per moderation decision. Append-only (trigger in the
 /// migration): to change a decision write a new one.
 model ModerationDecision {
+  appeals        ModerationAppeal[]
   id             String           @id @default(uuid())
   targetType     ReportTargetType
   targetId       String
@@ -667,6 +671,8 @@ model Subscription {
   id        String   @id @default(uuid())
   userId    String
   creatorId String
+  /// The bell: false = subscribed but no notifications for this channel.
+  notify    Boolean  @default(true)
   createdAt DateTime @default(now())
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -683,6 +689,8 @@ enum NotificationKind {
   COMMENT
   SUPPORT
   PATRON
+  NEW_VIDEO
+  MODERATION
 }
 
 model Notification {
@@ -694,6 +702,9 @@ model Notification {
   bodyPl    String           @db.Text
   bodyEn    String           @db.Text
   href      String?
+  /// Channel and video the notification is about (NEW_VIDEO, MODERATION); null for account-level kinds.
+  channelId String?
+  videoId   String?
   read      Boolean          @default(false)
   createdAt DateTime         @default(now())
 
@@ -711,6 +722,11 @@ model NotificationPreference {
   patronEnabled    Boolean  @default(true)
   commentEnabled   Boolean  @default(true)
   systemEnabled    Boolean  @default(true)
+  /// New video of a subscribed channel: in-app (bell) and e-mail.
+  newVideoInApp    Boolean  @default(true)
+  newVideoEmail    Boolean  @default(true)
+  /// Decisions about the user's own channel and videos.
+  moderationEnabled Boolean @default(true)
   updatedAt        DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -776,6 +792,8 @@ model Video {
   commentsMode                      VideoCommentsMode @default(ON)
   /// Platform moderation state, separate from publication status: a REMOVED video is never public whatever `status` says.
   moderationStatus                  VideoModerationStatus @default(VISIBLE)
+  /// Declared by the creator: adult content, signed-in viewers only (same effect as moderationStatus AGE_RESTRICTED).
+  isAdult                           Boolean     @default(false)
   moderationReason                  String?
   moderationChangedAt               DateTime?
   activeOriginalId                  String?     @unique
@@ -804,6 +822,7 @@ model Video {
   price        VideoPrice?
   orders       Order[]
   entitlements Entitlement[]
+  progress     VideoProgress[]
 
   @@index([creatorId, status])
   @@index([publishAfterAssetReady])
@@ -1636,4 +1655,62 @@ model LedgerEntry {
 
   @@index([channelId, availableAt])
   @@index([orderId])
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Wave 1-2 additions (docs/audit/2026-10-14/feature-gap-audit.md): growth history, resume watching, appeals.
+// ---------------------------------------------------------------------------------------------------------------
+
+/// One row per channel and day (UTC): the subscriber count at the end of the day. Written by a daily cron.
+model SubscriberSnapshot {
+  channelId   String
+  day         DateTime @db.Date
+  subscribers Int
+
+  channel Creator @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@id([channelId, day])
+}
+
+/// Where a signed-in viewer stopped in a video ("continue watching").
+model VideoProgress {
+  userId          String
+  videoId         String
+  positionSeconds Int
+  durationSeconds Int?
+  updatedAt       DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@id([userId, videoId])
+  @@index([userId, updatedAt])
+}
+
+enum AppealStatus {
+  PENDING
+  UPHELD
+  REJECTED
+}
+
+/// A creator's appeal against a moderation decision (DSA art. 20). Reviewed by a human; the decision itself stays
+/// immutable, the outcome is a new ModerationDecision referenced from `outcomeDecisionId`.
+model ModerationAppeal {
+  id                String       @id @default(uuid())
+  decisionId        String
+  userId            String
+  channelId         String?
+  text              String       @db.Text
+  status            AppealStatus @default(PENDING)
+  createdAt         DateTime     @default(now())
+  resolvedAt        DateTime?
+  resolvedByAdminId String?
+  outcomeDecisionId String?
+
+  decision ModerationDecision @relation(fields: [decisionId], references: [id])
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([decisionId])
+  @@index([userId])
 }
