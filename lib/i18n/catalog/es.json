@@ -751,5 +751,19 @@
  "Could not load your subscriptions.": "No se pudieron cargar tus suscripciones.",
  "You do not follow any channel yet.": "Aún no sigues ningún canal.",
  "Legal": "Legal",
- "Privacy policy": "Política de privacidad"
+ "Privacy policy": "Política de privacidad",
+ "All subscriptions": "Todas las suscripciones",
+ "This channel is not available.": "Este canal no está disponible.",
+ "Could not change notifications. Please try again.": "No se pudieron cambiar las notificaciones. Inténtalo de nuevo.",
+ "Notifications: on": "Notificaciones: activadas",
+ "Notifications: off": "Notificaciones: desactivadas",
+ "My subscriptions": "Mis suscripciones",
+ "Could not unsubscribe. Please try again.": "No se pudo cancelar la suscripción. Inténtalo de nuevo.",
+ "You are not subscribed to any channel yet.": "Aún no estás suscrito a ningún canal.",
+ "latest video": "último vídeo",
+ "channel unavailable": "canal no disponible",
+ "Unsubscribe": "Cancelar suscripción",
+ "Could not load your subscriptions. Please reload the page.": "No se pudieron cargar tus suscripciones. Recarga la página.",
+ "Latest videos": "Últimos vídeos",
+ "Your subscribed channels have no videos yet.": "Tus canales suscritos aún no tienen vídeos."
 }
