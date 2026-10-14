@@ -191,7 +191,6 @@
  "M km": "Mio. km",
  "MIN": "MIN",
  "Main navigation": "Hauptnavigation",
- "Manage channel": "Kanal verwalten",
  "Method:": "Methode:",
  "Minimum tip amount is {0} {1}": "Das Mindest-Trinkgeld beträgt {0} {1}",
  "MobilePay app": "MobilePay-App",
@@ -761,5 +760,6 @@
  "Unsubscribe": "Abbestellen",
  "Could not load your subscriptions. Please reload the page.": "Ihre Abos konnten nicht geladen werden. Bitte laden Sie die Seite neu.",
  "Latest videos": "Neueste Videos",
- "Your subscribed channels have no videos yet.": "Ihre abonnierten Kanäle haben noch keine Videos."
+ "Your subscribed channels have no videos yet.": "Ihre abonnierten Kanäle haben noch keine Videos.",
+ "Admin panel": "Admin-Panel"
 }

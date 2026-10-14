@@ -57,12 +57,13 @@ describe('R8 Comments Access and Permissions', () => {
   const createCtx = (actor: any) => createAppContext({ actor, prisma: mockPrisma });
 
   describe('Pin/Unpin Permissions', () => {
-    it('allows global admin to pin', async () => {
+    it('does not let a platform administrator pin on the public site (only the channel own people pin)', async () => {
       mockPrisma.comment.findUnique.mockResolvedValue({ id: 'c1', videoId, status: CommentStatus.VISIBLE });
       mockPrisma.video.findUnique.mockResolvedValue({ creator: { userId: creatorId } });
 
       const result = await pinComment({ commentId: 'c1' }, createCtx({ type: 'admin', userId: 'admin' }));
-      expect(result.ok).toBe(true);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.type).toBe('UNAUTHORIZED');
     });
 
     it('allows video creator to pin', async () => {

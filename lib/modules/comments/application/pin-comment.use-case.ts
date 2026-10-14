@@ -19,7 +19,8 @@ export async function pinComment(
   const { commentId } = input;
   const { actor, prisma } = ctx;
 
-  if (actor.type === 'guest' || actor.type === 'system') {
+  // Only the channel's own people pin (owner, manager, moderator); platform staff use the admin panel.
+  if (actor.type !== 'user') {
     return fail({ type: "UNAUTHORIZED", message: "Musisz być zalogowany." });
   }
 
