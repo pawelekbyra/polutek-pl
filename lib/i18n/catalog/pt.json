@@ -857,5 +857,18 @@
  "No notifications.": "Sem notificações.",
  "unread": "por ler",
  "Show older": "Mostrar mais antigas",
- "Mark all as read": "Marcar tudo como lido"
+ "Mark all as read": "Marcar tudo como lido",
+ "Start at current time": "Começar no momento atual",
+ "Continue watching": "Continuar a ver",
+ "resume at": "continuar em",
+ "Settings": "Definições",
+ "Quality": "Qualidade",
+ "Auto": "Automática",
+ "Playback speed": "Velocidade de reprodução",
+ "Normal": "Normal",
+ "Picture in picture": "Imagem na imagem",
+ "Exit picture in picture": "Sair de imagem na imagem",
+ "Resumed at": "Retomado em",
+ "Playing from": "A reproduzir a partir de",
+ "From the beginning": "Desde o início"
 }

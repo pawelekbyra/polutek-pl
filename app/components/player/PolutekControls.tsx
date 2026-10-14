@@ -23,6 +23,7 @@ import {
 } from "@vidstack/react/icons";
 import { cn } from "@/lib/utils";
 import { CaptionsSync, CaptionsToggleButton } from "./CaptionsToggle";
+import { PlayerSettingsMenu } from "./PlayerSettingsMenu";
 import { usePlayerCopy } from "./polutek-controls-copy";
 
 function CenterStage() {
@@ -163,6 +164,7 @@ export default function PolutekControls({ className }: { className?: string }) {
               </div>
               <div className="mc-group mc-group--right">
                 <CaptionsToggleButton />
+                <PlayerSettingsMenu />
                 <FullscreenToggleButton />
               </div>
             </div>

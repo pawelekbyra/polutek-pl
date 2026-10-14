@@ -74,7 +74,7 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   };
 }
 
-export default async function Home(props: { params: Promise<{ locale: string }>; searchParams: Promise<{ v?: string, q?: string }> }) {
+export default async function Home(props: { params: Promise<{ locale: string }>; searchParams: Promise<{ v?: string, q?: string, t?: string }> }) {
   const { locale: rawLocale } = await props.params;
   if (!isLocale(rawLocale)) notFound();
   const locale: Locale = rawLocale;
@@ -110,7 +110,7 @@ export default async function Home(props: { params: Promise<{ locale: string }>;
           dangerouslySetInnerHTML={{ __html: JSON.stringify(videoJsonLd).replace(/</g, '\\u003c') }}
         />
       ) : null}
-      <HomeExperience locale={locale} videoId={searchParams.v} q={searchParams.q} />
+      <HomeExperience locale={locale} videoId={searchParams.v} q={searchParams.q} t={searchParams.t} />
     </>
   );
 }

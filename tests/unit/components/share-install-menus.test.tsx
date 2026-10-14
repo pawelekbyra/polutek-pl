@@ -144,3 +144,43 @@ describe("ShareButton menu", () => {
     expect(screen.getByRole("menuitem", { name: "Send by email" })).toBeTruthy();
   });
 });
+
+describe("ShareButton: start at current time", () => {
+  beforeEach(() => {
+    mocks.language = "pl";
+    mocks.isMobile = false;
+    mocks.canNativeShare = false;
+    mocks.copied = false;
+    mocks.copyToClipboard.mockReset().mockResolvedValue(true);
+  });
+
+  afterEach(() => cleanup());
+
+  it("has no such item without a playback position", async () => {
+    render(<ShareButton title="Film" url="https://example.com/?v=film" getStartSeconds={() => null} />);
+    fireEvent.click(screen.getByRole("button", { name: "Udostępnij" }));
+    await screen.findByRole("menu");
+    expect(screen.queryByRole("menuitemcheckbox")).toBeNull();
+    expect(screen.getAllByRole("menuitem")).toHaveLength(11);
+  });
+
+  it("adds ?t= to the copied link only after the item is switched on", async () => {
+    render(<ShareButton title="Film" url="https://example.com/?v=film" getStartSeconds={() => 95} />);
+    fireEvent.click(screen.getByRole("button", { name: "Udostępnij" }));
+
+    const toggle = await screen.findByRole("menuitemcheckbox", { name: /Zacznij od aktualnego czasu/ });
+    expect(toggle.textContent).toContain("1:35");
+
+    // Off by default: the plain link.
+    fireEvent.click(screen.getByRole("menuitem", { name: "Kopiuj link" }));
+    expect(mocks.copyToClipboard).toHaveBeenLastCalledWith("https://example.com/?v=film");
+
+    fireEvent.click(toggle);
+    await waitFor(() => expect(toggle.getAttribute("aria-checked")).toBe("true"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Kopiuj link" }));
+    expect(mocks.copyToClipboard).toHaveBeenLastCalledWith("https://example.com/?v=film&t=95");
+    expect(
+      screen.getByRole("menuitem", { name: "Wyślij emailem" }).getAttribute("href"),
+    ).toContain(encodeURIComponent("https://example.com/?v=film&t=95"));
+  });
+});

@@ -51,7 +51,7 @@ app/                  strona publiczna (App Router): strony, komponenty (app/com
 apps/admin/           panel administratora (osobna aplikacja Next.js, port 3100): auth, proxy.ts, ekrany (app/(panel)), skrypty (admin-enroll)
 lib/modules/          logika domenowa, moduł = domain / application / infrastructure
   access/ audit/ authz/ channel/ comments/ email/ media/ patron/ payments/ playback/ privacy/ subscriptions/
-  translations/ users/ video/ video-pipeline/ admin-* (odczyty panelu)   shared/ (AppContext, Actor, wyniki)
+  translations/ users/ video/ video-pipeline/ watch-progress/ admin-* (odczyty panelu)   shared/ (AppContext, Actor, wyniki)
 lib/auth/ lib/i18n/ lib/telemetry/ lib/api/ ...   wspólne pomocnicze (jedyne wejście do Better Auth: lib/auth)
 prisma/               schema.prisma (jedno źródło prawdy) i migracje (§4.0)
 services/pp-collector/ kolektor telemetrii (kontener `collector`)
@@ -360,3 +360,11 @@ Gdy zmiana modyfikuje zachowanie, które agenci mają zachować, zaktualizuj ten
 - Wszystko odmawia, dopóki `PLATFORM_GATE_SALES` nie jest `on`. Prowizja (`PLATFORM_FEE_BP`, domyślnie 1000 = 10%, **wartość tymczasowa do decyzji właściciela**) i okres wstrzymania (`PLATFORM_PAYOUT_HOLD_DAYS`, 14) to konfiguracja, nie kod.
 - `LedgerEntry` jest tylko do dopisywania (wyzwalacz w migracji `20261013140000_sales_schema`); korekty to nowe wiersze.
 - **Nie ma** adaptera Stripe (sesja płatności, webhook, zwrot u operatora), ekranu zakupu ani wypłat: czekają na decyzję o podmiocie prawnym, rejestrację VAT i zgody Stripe. Bez nich nie wolno włączać `sales`.
+
+### 4.26 Wznawianie oglądania, start od czasu, ustawienia odtwarzacza
+- **Pozycja widza:** `VideoProgress(userId, videoId, positionSeconds, durationSeconds)`, moduł `lib/modules/watch-progress`. Zapis wyłącznie przez `POST /api/videos/[id]/progress` (zalogowany; zod; limit 60/min; kontrola `checkVideoAccess`, brak dostępu i premiera to 404). Reguły są w `lib/video-progress-rules.ts` (czyste, wspólne z odtwarzaczem): poniżej 5 s nic, od 95 % długości wiersz jest usuwany; długość filmu z bazy wygrywa z raportem klienta.
+  Gość trzyma pozycję w `localStorage` (`polutek:watch-progress`, do 30 filmów), te same reguły. Pozycję startową zalogowanego niesie `viewer-state` (po przełączeniu filmu) albo `userProfile.initialProgressSeconds` (film z serwera); nigdy plan odtwarzania (plan jest tylko z serwera, §4.3). Dane są w eksporcie danych konta (`videoProgress`), usuwa je kaskada konta.
+- **Odtwarzacz:** hook `player/useVideoProgress.ts` raportuje co ~10 s w trakcie odtwarzania, przy pauzie, końcu, ukryciu karty i zamknięciu (`sendBeacon`/`keepalive`); nic nie jest zapisywane pod bramą wejściową ani zanim znana jest zapisana pozycja (nie nadpisuje starej pierwszymi sekundami). Pozycja startowa jest stosowana raz na film (w `onCanPlay`, a pod bramą w błysku wejścia); komunikat „Wznowiono od mm:ss” z przyciskiem „Od początku” (`ResumeNotice`).
+- **`?t=`** (sekundy, `1m30s`, `1:30`; `lib/video-start-time.ts`): nadrzędne wobec wznowienia, walidowane i przycinane do długości, odczytywane raz na wczytanie strony dla pierwszego filmu i usuwane z adresu (canonical nigdy nie ma `t`). Menu Udostępnij ma pozycję „Zacznij od aktualnego czasu” (pozycja odczytana przy otwarciu menu z `player/playback-position.ts`).
+- **Ustawienia:** menu `player/PlayerSettingsMenu.tsx` (jakość: Auto + poziomy z manifestu, prędkość 0,5-2x, obraz w obrazie tylko gdy przeglądarka go daje); wybór w `localStorage` (`polutek:player-quality`, `polutek:player-rate`). Skróty prędkości Vidstack zostają wyłączone (jedno miejsce zmiany prędkości).
+- **Półka „Kontynuuj oglądanie”:** do 6 niedokończonych filmów widza (`listContinueWatching`), pod odtwarzaczem na stronie głównej. To lista własna widza: film `UNLISTED` otwarty z linku może na niej być, szkice, usunięte, płatne, premiery przed czasem i ukryte kanały nigdy. Miniatury i pasek mają proste rogi (decyzja właściciela).

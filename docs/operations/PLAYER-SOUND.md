@@ -9,7 +9,7 @@
 - **Start dźwięku wejścia i obrazu razem** (zgłoszenie 2026-10-11: na wolnym komputerze dźwięk ruszał osobno i później). Przyczyny: (a) przycisk ENTER pojawiał się po 6 s także bez zdekodowanego dźwięku, (b) kontekst audio bywa `suspended` albo budzi się z opóźnieniem po kliknięciu, a obraz biegł wtedy na zegarze ściennym i był o sekundy przed dźwiękiem (korekta ±15 % prędkości nie nadąża w 12 s). Teraz: ENTER nie istnieje, dopóki dźwięk nie jest zdekodowany (`GATE_SOUND_MAX_WAIT_MS` = 25 s; potem zwykłe wygaszenie bez animacji i dźwięku), a czas obrazu wynika z dźwięku (`gate-clock.ts`, `gate-sound.ts`): pierwsza klatka stoi, aż wyjście audio gra i dźwięk jest słyszalny; po 3 s bez startu dźwięk jest wyciszany, a obraz idzie cicho. Zmieniając długość pliku, zmień nazwę (nie nadpisuj).
 - **Widz, który wyciszył sam**: zostaje wyciszony po przeładowaniu, w nowej karcie i przy kolejnych odwiedzinach, bez przycisku zachęcającego.
 - Gdy przeglądarka sama mówi, że dźwięk nie jest dozwolony (`navigator.getAutoplayPolicy("mediaelement") !== "allowed"`, Firefox i nowsze Chromium), próba z dźwiękiem jest pomijana (start wyciszony od razu, bez błysku ikony blokady w Firefoksie).
-- Skróty prędkości Vidstack (`<` i `>`) są wyłączone, bo odtwarzacz nie ma sterowania prędkością (przycisk usunięty).
+- Prędkość (0,5-2x) i jakość zmienia się w menu „Ustawienia” (`player/PlayerSettingsMenu.tsx`, wybór w `localStorage`). Skróty prędkości Vidstack (`<` i `>`) zostają wyłączone: menu jest jedynym miejscem zmiany (skróty zmieniałyby prędkość po cichu i schodziły do 0,25x); nie ma konfliktu klawiszy z dźwiękiem (`m`, strzałki).
 
 ## Czego nie da się zrobić (zasady przeglądarek)
 
