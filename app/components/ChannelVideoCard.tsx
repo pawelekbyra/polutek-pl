@@ -58,7 +58,7 @@ export default function ChannelVideoCard({
     >
       <div className="block relative">
         <Link href={appendQueryString(getLocalizedHref(language, "home"), `v=${video.id}`)} className="absolute inset-0 z-0" />
-        <div className="channel-video-card-media relative aspect-video rounded-[13px] bg-black mb-3 z-10 overflow-hidden">
+        <div className="channel-video-card-media relative aspect-video rounded-none bg-black mb-3 z-10 overflow-hidden">
           <div className="relative h-full w-full">
             {video.thumbnailUrl ? (
               <Image

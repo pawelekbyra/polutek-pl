@@ -105,7 +105,7 @@ export const STUDIO_VIDEO_ORDER_BY: Record<(typeof STUDIO_VIDEO_SORTS)[number], 
 export const publishVideoSchema = z.object({ action: z.enum(["publish", "unlist", "unpublish", "archive", "cancel_auto_publish"]) });
 
 export const commentActionSchema = z.object({
-  action: z.enum(["hide", "approve", "restore", "hold", "delete", "heart", "unheart", "reply"]),
+  action: z.enum(["hide", "approve", "restore", "hold", "delete", "heart", "unheart", "pin", "unpin", "reply"]),
   text: z.string().max(2000).optional(),
   heart: z.boolean().optional(),
 });

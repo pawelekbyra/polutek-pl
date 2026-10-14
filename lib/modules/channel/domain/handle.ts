@@ -14,7 +14,7 @@ const RESERVED_ROUTES = [
   "c", "u", "v", "about", "help", "support", "terms", "privacy", "legal", "dmca", "report", "payouts", "wyplaty",
   "stripe", "status", "blog", "docs", "static", "assets", "cdn", "hls", "media", "video", "videos", "home", "index",
   "robots", "sitemap", "manifest", "favicon", "health", "cron", "webhooks", "unsubscribe", "reset-password", "sso-callback",
-  "regulamin", "polityka-prywatnosci", "privacy-policy", "search", "new", "edit", "delete", "me", "my", "null", "undefined",
+  "regulamin", "polityka-prywatnosci", "privacy-policy", "subskrypcje", "search", "new", "edit", "delete", "me", "my", "null", "undefined",
 ];
 const RESERVED_ROLES = [
   "official", "oficjalny", "oficjalna", "team", "staff", "moderator", "moderators", "mod", "mods", "system", "root",

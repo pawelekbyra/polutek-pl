@@ -5,7 +5,8 @@ import { formatDistance } from "date-fns";
 import { dateFnsLocale } from "@/lib/i18n/date-locale";
 import type { Locale } from "@/lib/i18n/routing";
 import { useOptionalTx } from "@/lib/i18n/language-context";
-import { Star, Trash2, Heart, MoreVertical, Edit, Flag, Link as LinkIcon } from "../../icons";
+import { Pin } from "lucide-react";
+import { Trash2, Heart, MoreVertical, Edit, Flag, Link as LinkIcon } from "../../icons";
 import { cn } from "@/lib/utils";
 import { CommentView, getAuthorBadge } from "../types";
 import { SafeAvatar } from "../../SafeAvatar";
@@ -262,7 +263,7 @@ function CommentItemComponent({
                 aria-label={tx("Przypięty", "Pinned")}
                 className="inline-flex shrink-0 text-[var(--chan-blue)]"
               >
-                <Star size={12} aria-hidden="true" className="fill-[var(--chan-blue)]" />
+                <Pin size={12} aria-hidden="true" className="fill-[var(--chan-blue)]" />
               </span>
             )}
           </div>
@@ -334,7 +335,7 @@ function CommentItemComponent({
                     onClick={() => onPin(comment.id, !comment.isPinned)}
                     className={menuItemClassName}
                   >
-                    <Star aria-hidden="true" size={16} />
+                    <Pin aria-hidden="true" size={16} />
                     {comment.isPinned
                       ? tx("Odepnij", "Unpin")
                       : tx("Przypnij", "Pin")}

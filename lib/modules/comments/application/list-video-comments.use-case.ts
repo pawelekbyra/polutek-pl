@@ -1,4 +1,5 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
+import { canModerateVideoComments } from "./authorize-comments";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { CommentDto, mapCommentToDto } from "../domain/comment.dto";
 import { CommentError, commentDatabaseError } from "../domain/comment.errors";
@@ -70,12 +71,10 @@ export async function listVideoComments(
   // 3. Authorization for viewer context
   const userId = actor.type === 'user' || actor.type === 'admin' ? actor.userId : null;
 
-  // Logic from CommentAccessService.canModerate:
-  // Global admin or creator of the video can moderate.
-  const isGlobalAdmin = actor.type === 'admin';
+  // Moderation on the public site is a role in the video's channel (owner, manager, moderator), not the global
+  // ADMIN role: platform staff moderate in the admin panel.
   const videoCreatorId = await repo.findVideoCreatorId(resolvedVideoId);
-  const isVideoOwner = userId !== null && videoCreatorId === userId;
-  const canModerate = isGlobalAdmin || isVideoOwner;
+  const canModerate = await canModerateVideoComments(ctx, resolvedVideoId);
 
   // 4. Fetch comments (one extra row tells whether another page exists)
   const [rows, totalCount] = await Promise.all([

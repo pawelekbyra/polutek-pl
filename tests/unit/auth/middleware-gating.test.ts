@@ -93,6 +93,28 @@ describe("proxy: protected routes", () => {
   });
 });
 
+describe("proxy: My subscriptions page", () => {
+  it.each(["/subskrypcje", "/pl/subskrypcje", "/en/subscriptions", "/de/subscriptions"])(
+    "gates %s: it needs a session",
+    async (path) => {
+      const response = await middleware(request(path));
+      expect(response.status).toBe(307);
+      expect(new URL(response.headers.get("location")!).searchParams.get("signin")).toBe("1");
+    },
+  );
+
+  it("serves the bare Polish path from /pl once signed in", async () => {
+    const response = await middleware(request("/subskrypcje", { cookie: SESSION_COOKIE }));
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-middleware-rewrite")).toContain("/pl/subskrypcje");
+  });
+
+  it("gates the API too", async () => {
+    const response = await middleware(request("/api/subscriptions", { method: "PATCH", headers: { origin: ORIGIN } }));
+    expect(response.status).toBe(401);
+  });
+});
+
 describe("proxy: retired old admin (phase 5)", () => {
   it.each([
     ["/admin", "https://admin.pawelperfect.com/"],

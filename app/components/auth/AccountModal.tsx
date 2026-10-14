@@ -79,7 +79,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
             <div className="mt-5 flex items-center justify-between border-t border-[var(--chan-line)] pt-4">
               {isAdmin ? (
                 <a href={ADMIN_PANEL_ORIGIN} target="_blank" rel="noopener noreferrer" className="font-sans text-[13px] font-bold text-[var(--chan-ink)] underline hover:text-[var(--chan-blue)]">
-                  {tx("Zarządzaj kanałem", "Manage channel")}
+                  {tx("Panel admina", "Admin panel")}
                 </a>
               ) : (
                 <span />

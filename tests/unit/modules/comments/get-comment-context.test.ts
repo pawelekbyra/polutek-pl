@@ -32,7 +32,9 @@ function comment(status: CommentStatus, authorDeleted = false) {
 
 describe('GET comment context (deep link) never leaks moderated content', () => {
   let repo: any;
-  const as = (actor: any) => createAppContext({ actor, prisma: {} as any });
+  // The video's channel decides who moderates (owner 'creator-1'); it is loaded through the authorization layer.
+  const prisma = { video: { findUnique: vi.fn().mockResolvedValue({ creator: { id: 'ch1', userId: 'creator-1', status: 'ACTIVE', members: [] } }) } };
+  const as = (actor: any) => createAppContext({ actor, prisma: prisma as any });
 
   beforeEach(() => {
     vi.clearAllMocks();
