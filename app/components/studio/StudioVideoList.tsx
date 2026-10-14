@@ -129,7 +129,7 @@ export default function StudioVideoList({ onUpload, onEdit }: { onUpload: () => 
                   loading="lazy"
                   width={160}
                   height={90}
-                  className="h-[54px] w-24 shrink-0 rounded-lg bg-[var(--chan-surface)] object-cover sm:h-[72px] sm:w-32"
+                  className="h-[54px] w-24 shrink-0 rounded-none bg-[var(--chan-surface)] object-cover sm:h-[72px] sm:w-32"
                 />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[14px] font-semibold text-[var(--chan-ink)]">{video.title}</p>
