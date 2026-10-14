@@ -140,7 +140,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-3">
+            <div className="flex flex-1 flex-col overflow-y-auto p-3">
               <nav aria-label={tx("Nawigacja boczna", "Side navigation")} className="grid gap-1">
                 <Link href={getLocalizedHref(language, "home")} className={itemClass} onClick={() => setOpen(false)}>
                   <Home className={iconClass} strokeWidth={1.8} aria-hidden="true" />
@@ -169,7 +169,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
                 ) : null}
               </nav>
 
-              <section aria-labelledby={`${panelId}-subs`} className="mt-4 grid gap-1 border-t border-[var(--chan-line)] pt-3">
+              <section aria-labelledby={`${panelId}-subs`} className="mb-4 mt-4 grid gap-1 border-t border-[var(--chan-line)] pt-3">
                 <h2 id={`${panelId}-subs`} className={sectionTitleClass}>
                   {tx("Subskrypcje", "Subscriptions")}
                 </h2>
@@ -198,7 +198,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
                 )}
               </section>
 
-              <nav aria-label={tx("Informacje prawne", "Legal")} className="mt-4 grid gap-1 border-t border-[var(--chan-line)] pt-3">
+              <nav aria-label={tx("Informacje prawne", "Legal")} className="mt-auto grid gap-1 border-t border-[var(--chan-line)] pt-3">
                 <Link href={getLocalizedHref(language, "terms")} className={itemClass} onClick={() => setOpen(false)}>
                   <BookOpen className={iconClass} strokeWidth={1.8} aria-hidden="true" />
                   {tx("Regulamin", "Terms")}
