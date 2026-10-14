@@ -14,7 +14,6 @@ describe('Channel Module Certification', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubEnv('MAIN_CREATOR_SLUG', '');
     mockPrisma.appSetting.findUnique.mockResolvedValue({ key: 'main_channel_id', value: '1' });
     mockPrisma.creator.findFirst.mockResolvedValue(null);
   });

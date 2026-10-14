@@ -42,7 +42,6 @@ describe('create/update pass the metadata to the repository', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.MAIN_CREATOR_SLUG = 'polutek';
     prisma.creator.findUnique.mockResolvedValue(channel);
   });
 

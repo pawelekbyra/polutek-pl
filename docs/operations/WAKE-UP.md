@@ -320,7 +320,7 @@ grep -c '^NEXT_PUBLIC_' build.env
 ```
 
 Lista zmiennych: `.env.example`, `lib/env/validation.ts` (wymagane w produkcji), `CLAUDE.md` §8. `EMAIL_PROVIDER=ses` wymaga `SES_SMTP_USER` i `SES_SMTP_PASS` (`EMAIL_SES.md`); bez nich zostaje Resend.
-`worker.env` (encoder) zrób z `app.env` tak: `grep -E '^(DATABASE_URL|CLOUDFLARE_R2_|MAIN_CREATOR_SLUG|NEXT_PUBLIC_R2_PUBLIC_HOST)' app.env > worker.env && chmod 600 worker.env`.
+`worker.env` (encoder) zrób z `app.env` tak: `grep -E '^(DATABASE_URL|CLOUDFLARE_R2_|NEXT_PUBLIC_R2_PUBLIC_HOST)' app.env > worker.env && chmod 600 worker.env`.
 Jeśli nie ma własnego toru poczty (rozdz. 5.2), usuń z `app.env` zmienną `EMAIL_OWN_SMTP_HOST` (inaczej każda wysyłka próbuje martwego hosta, zanim spadnie na tor główny).
 
 ### 4.4 Wdrożenie strony

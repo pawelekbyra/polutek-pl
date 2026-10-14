@@ -13,7 +13,6 @@ describe('Channel Module Use Cases', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubEnv('MAIN_CREATOR_SLUG', '');
     mockPrisma.appSetting.findUnique.mockResolvedValue({ key: 'main_channel_id', value: 'chan-1' });
     mockPrisma.creator.findFirst.mockResolvedValue(null);
   });

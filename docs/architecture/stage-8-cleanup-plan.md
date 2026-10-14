@@ -1,6 +1,6 @@
 # Etap 8: migracja czyszcząca (plan, NIE wykonana)
 
-Status (2026-10-14): **wdrożenie A zrobione w kodzie** (gałąź `feat/multi-creator-platform`, jeszcze niewdrożone na produkcji), **wdrożenie B przygotowane, nieuruchomione**: `stage-8-migration-B.sql` i `stage-8-deploy-B.md`. Nic nie zostało uruchomione na żadnej bazie produkcyjnej; migracja A (`20261014090000_main_channel_setting`) jest addytywna i sprawdzona na PGlite.
+Status (2026-10-14): **wdrożenie A zrobione w kodzie i działa na serwerze**; **wdrożenie B przygotowane w kodzie, NIEWDROŻONE na produkcji**: schemat bez `Creator.isApproved`/`isPrimary`, fallbacki usunięte, migracja `prisma/migrations/20261014120000_drop_creator_legacy_flags` (z zabezpieczeniem: przerywa się, gdy istnieją kanały, a `main_channel_id` brak lub wskazuje nieistniejący kanał), sprawdzona na PGlite. Uruchomienie na produkcji wymaga zgody właściciela i zrzutu `pre-deploy-*` (`stage-8-deploy-B.md`).
 
 ## Co zrobiło wdrożenie A
 - Kanał główny = `AppSetting` `main_channel_id` (`MainChannelService`, `isMainChannelId`); awaryjne fallbacki `MAIN_CREATOR_SLUG` i `isPrimary=true` oznaczone „usunąć we wdrożeniu B” (`channel.repository.ts`).

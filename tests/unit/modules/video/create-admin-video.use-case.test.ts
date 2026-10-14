@@ -22,7 +22,6 @@ describe('createAdminVideo use-case', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.MAIN_CREATOR_SLUG = 'polutek';
   });
 
   it('fails with MainChannelNotFoundError if no main channel', async () => {

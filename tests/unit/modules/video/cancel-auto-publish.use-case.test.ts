@@ -19,7 +19,6 @@ describe('cancelAutoPublish use-case', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.MAIN_CREATOR_SLUG = 'polutek';
     prisma.creator.findUnique.mockResolvedValue(channel);
     prisma.video.updateMany.mockResolvedValue({ count: 1 });
   });

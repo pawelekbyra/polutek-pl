@@ -46,7 +46,7 @@ Tabela `VideoEncodeJob` (migracja `20261003100000_add_video_encode_job`). Wybór
 
 `scripts/video-worker.ts` (logika w `lib/modules/video-pipeline/`), uruchamiany jako **osobny kontener `encoder`** w `deploy/serwerek/docker-compose.yml` (obraz `polutek-worker:<sha>`, target `worker` w `Dockerfile`, budowany przez `deploy.sh` obok aplikacji). Dlaczego kontener, a nie jednostka systemd na hoście: ten sam pipeline wdrożeń i rollbacku co aplikacja (obraz = kod + zależności + ffmpeg w znanej wersji 8.0.1), izolacja i limity (`mem_limit 1500m`, `cpu_shares 256`, `nice 10` w środku), restart i logi tak samo jak reszta stosu, brak instalowania `node_modules` na hoście. Crony systemd (Next.js `/api/cron/*`) zostają bez zmian: to krótkie żądania HTTP, nie długie procesy.
 
-Bezpieczeństwo workera: własny plik `worker.env` (tylko `DATABASE_URL`, `CLOUDFLARE_R2_*`, `MAIN_CREATOR_SLUG`, `NEXT_PUBLIC_R2_PUBLIC_HOST`; bez sekretów Stripe/auth), użytkownik `node`, brak portów.
+Bezpieczeństwo workera: własny plik `worker.env` (tylko `DATABASE_URL`, `CLOUDFLARE_R2_*`, `NEXT_PUBLIC_R2_PUBLIC_HOST`; bez sekretów Stripe/auth), użytkownik `node`, brak portów.
 
 Co robi dla zadania (`processEncodeJob`):
 
@@ -68,7 +68,6 @@ Co robi dla zadania (`processEncodeJob`):
 | `CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS` | app.env, worker.env | `polutek` (prywatny, oryginały) |
 | `CLOUDFLARE_R2_BUCKET_HLS` | app.env, worker.env | `polutek-hls` (domyślnie, gdy brak) |
 | `CLOUDFLARE_R2_BUCKET_THUMBNAILS_PRIVATE`, `NEXT_PUBLIC_R2_PUBLIC_HOST` | worker.env | miniatura z plakatu |
-| `MAIN_CREATOR_SLUG` | worker.env | potrzebny auto-publikacji |
 | `HLS_PRESET` (`slow`), `HLS_NICE` (`10`), `VIDEO_WORKER_WORK_DIR` (`/work`) | worker.env (opcjonalne) | |
 
 ## 4. Diagnostyka: zadanie utknęło / nie rusza
@@ -110,7 +109,7 @@ Ręczne awaryjne czyszczenie zadania: `update "VideoEncodeJob" set status='CANCE
 1. Scal PR-y, `deploy.sh <tag>` (migracje `VideoEncodeJob` i `VideoOriginal.upload*`, obraz `worker`).
 2. CORS bucketa oryginałów: `npx wrangler r2 bucket cors set polutek --file scripts/hls/originals-cors.json` (potrzebny token Cloudflare z uprawnieniem do R2).
 3. Upewnij się, że token R2 ma odczyt i zapis na `polutek`, `polutek-hls` i bucketach miniatur; w `app.env` muszą być `CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS=polutek` i (opcjonalnie) `CLOUDFLARE_R2_BUCKET_HLS=polutek-hls`.
-4. Na serwerze: `cd /opt/serwerek/apps/polutek && grep -E '^(DATABASE_URL|CLOUDFLARE_R2_|MAIN_CREATOR_SLUG|NEXT_PUBLIC_R2_PUBLIC_HOST)' app.env > worker.env && chmod 600 worker.env && mkdir -p /opt/serwerek/data/video-work && chown 1000:1000 /opt/serwerek/data/video-work`
+4. Na serwerze: `cd /opt/serwerek/apps/polutek && grep -E '^(DATABASE_URL|CLOUDFLARE_R2_|NEXT_PUBLIC_R2_PUBLIC_HOST)' app.env > worker.env && chmod 600 worker.env && mkdir -p /opt/serwerek/data/video-work && chown 1000:1000 /opt/serwerek/data/video-work`
 5. `ENCODER_IMAGE=polutek-worker:<tag> docker compose up -d --no-deps encoder` (albo ponowny `./deploy.sh <tag>`), `docker compose logs -f encoder` ma pokazać `started`. `ai-log "enabled video encoder"`.
 6. Test: nowy szkic, wgraj krótki plik, obserwuj Media -> Przetwarzanie.
 7. Timer sprzątania uploadów: `cp deploy/serwerek/systemd/polutek-cron-abandon-stale-originals.timer /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now polutek-cron-abandon-stale-originals.timer`.

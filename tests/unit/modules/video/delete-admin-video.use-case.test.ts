@@ -80,7 +80,6 @@ describe('deleteAdminVideo use-case', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.MAIN_CREATOR_SLUG = 'polutek';
     global.fetch = vi.fn();
   });
 

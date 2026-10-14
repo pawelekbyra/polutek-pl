@@ -23,7 +23,6 @@ describe('reorderAdminVideos use-case', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.MAIN_CREATOR_SLUG = 'polutek';
   });
 
   it('rejects entire batch if any video is outside main channel', async () => {

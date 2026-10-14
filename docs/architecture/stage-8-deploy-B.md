@@ -1,7 +1,7 @@
 # Etap 8, wdrożenie B: usunięcie `Creator.isPrimary` i `Creator.isApproved`
 
-Status: **przygotowane, NIEURUCHOMIONE.** Wymaga wyraźnej zgody właściciela w czacie (jedna zgoda na jedno działanie, CLAUDE.md §0, §4.0).
-Gotowy SQL: [`stage-8-migration-B.sql`](stage-8-migration-B.sql) (celowo poza `prisma/migrations`).
+Status: **przygotowane w kodzie (schemat, fallbacki, migracja `20261014120000_drop_creator_legacy_flags`), NIEWDROŻONE na produkcji.** Wymaga wyraźnej zgody właściciela w czacie (jedna zgoda na jedno działanie, CLAUDE.md §0, §4.0).
+Migracja jest w `prisma/migrations/20261014120000_drop_creator_legacy_flags/migration.sql` (z zabezpieczeniem na brak `main_channel_id`); [`stage-8-migration-B.sql`](stage-8-migration-B.sql) to pierwotny szkic bez zabezpieczenia (historyczny).
 
 ## Warunki wstępne
 

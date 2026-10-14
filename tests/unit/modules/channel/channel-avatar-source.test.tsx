@@ -122,10 +122,7 @@ describe("resolveChannelAvatarUrl", () => {
 });
 
 describe("channel avatar source (home page vs channel page)", () => {
-  const saved = process.env.MAIN_CREATOR_SLUG;
-
   beforeEach(() => {
-    process.env.MAIN_CREATOR_SLUG = "polutek";
     // An administrator is looking at the page: the viewer's own profile image is different from both
     // the channel owner's and the first administrator's.
     authMock.mockResolvedValue({ userId: "viewer-admin" });
@@ -133,8 +130,6 @@ describe("channel avatar source (home page vs channel page)", () => {
   });
 
   afterEach(() => {
-    if (saved === undefined) delete process.env.MAIN_CREATOR_SLUG;
-    else process.env.MAIN_CREATOR_SLUG = saved;
     vi.clearAllMocks();
   });
 

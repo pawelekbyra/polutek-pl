@@ -23,7 +23,6 @@ describe('archiveAdminVideo use-case', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.MAIN_CREATOR_SLUG = 'polutek';
   });
 
   it('returns VIDEO_NOT_FOUND if video missing', async () => {

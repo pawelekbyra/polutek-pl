@@ -9,7 +9,7 @@ function ctxWith(rows: Row[], opts: { channelId?: string; setting?: string | nul
     findUnique: vi.fn(async ({ where }: { where: { id?: string; slug?: string } }) =>
       rows.find((r) => (where.id ? r.id === where.id : r.slug === where.slug)) ?? null,
     ),
-    findFirst: vi.fn(async ({ where }: { where: { isPrimary?: boolean } }) => rows.find((r) => r.isPrimary === where.isPrimary && !r.deletedAt) ?? null),
+    findFirst: vi.fn(),
     update: vi.fn(),
     updateMany: vi.fn(),
   };
@@ -65,53 +65,41 @@ describe("MainChannelService with an active channel (CLAUDE.md 4.24)", () => {
     await expect(MainChannelService.getRequired(limited.ctx)).resolves.toMatchObject({ id: "main" });
   });
 
-  it("never needs isPrimary or isApproved on the row: status alone decides", async () => {
-    const { ctx } = ctxWith([{ ...main, isPrimary: false, isApproved: false }], { setting: "main" });
+  it("status alone decides: no legacy flag is needed on the row", async () => {
+    const { ctx } = ctxWith([main], { setting: "main" });
     await expect(MainChannelService.getRequired(ctx)).resolves.toMatchObject({ id: "main" });
   });
 });
 
-describe("main channel resolution order and temporary fallbacks (stage 8, deployment A)", () => {
-  it("prefers the setting over MAIN_CREATOR_SLUG and over the isPrimary flag", async () => {
+describe("main channel resolution (stage 8, deployment B: the setting is the only source)", () => {
+  it("reads only the setting, never a slug variable or a flag on the row", async () => {
     vi.stubEnv("MAIN_CREATOR_SLUG", "other");
-    const { ctx } = ctxWith([main, { ...other, isPrimary: true }], { setting: "main" });
+    const { ctx, creator } = ctxWith([main, other], { setting: "main" });
     expect((await MainChannelService.getOptional(ctx))?.id).toBe("main");
+    expect(creator.findFirst).not.toHaveBeenCalled();
   });
 
-  it("falls back to MAIN_CREATOR_SLUG when the setting is not there yet", async () => {
+  it("has no main channel when the setting is missing, even if MAIN_CREATOR_SLUG is set", async () => {
     vi.stubEnv("MAIN_CREATOR_SLUG", "main-slug");
-    const { ctx } = ctxWith([main, { ...other, isPrimary: true }], { setting: null });
-    expect((await MainChannelService.getOptional(ctx))?.id).toBe("main");
-  });
-
-  it("falls back to the channel flagged isPrimary when neither setting nor slug exist", async () => {
-    vi.stubEnv("MAIN_CREATOR_SLUG", "");
-    const { ctx } = ctxWith([other, { ...main, isPrimary: true }], { setting: null });
-    expect((await MainChannelService.getOptional(ctx))?.id).toBe("main");
-  });
-
-  it("falls through when the setting points at a channel that no longer exists", async () => {
-    vi.stubEnv("MAIN_CREATOR_SLUG", "");
-    const { ctx } = ctxWith([{ ...main, isPrimary: true }], { setting: "vanished" });
-    expect((await MainChannelService.getOptional(ctx))?.id).toBe("main");
-  });
-
-  it("has no main channel at all when nothing is configured", async () => {
-    vi.stubEnv("MAIN_CREATOR_SLUG", "");
-    const { ctx } = ctxWith([other], { setting: null });
+    const { ctx, creator } = ctxWith([main, other], { setting: null });
     expect(await MainChannelService.getOptional(ctx)).toBeNull();
     await expect(MainChannelService.getRequired(ctx)).rejects.toMatchObject({ code: "CHANNEL_NOT_FOUND" });
+    expect(creator.findFirst).not.toHaveBeenCalled();
   });
 
-  it("only reads: resolving the main channel never writes isPrimary or isApproved", async () => {
-    vi.stubEnv("MAIN_CREATOR_SLUG", "");
-    const { ctx, creator } = ctxWith([{ ...main, isPrimary: true }], { setting: null });
+  it("has no main channel when the setting points at a channel that no longer exists", async () => {
+    const { ctx } = ctxWith([main], { setting: "vanished" });
+    expect(await MainChannelService.getOptional(ctx)).toBeNull();
+  });
+
+  it("only reads: resolving the main channel never writes a channel row", async () => {
+    const { ctx, creator } = ctxWith([main], { setting: "main" });
     await MainChannelService.getRequired(ctx);
     expect(creator.update).not.toHaveBeenCalled();
     expect(creator.updateMany).not.toHaveBeenCalled();
   });
 
-  it("answers 'is this the main channel' by id (the one helper that replaces isPrimary comparisons)", async () => {
+  it("answers 'is this the main channel' by id (the one helper for main-channel comparisons)", async () => {
     const { ctx } = ctxWith([main, other], { setting: "main" });
     expect(await resolveMainChannelId(ctx.prisma)).toBe("main");
     expect(await isMainChannelId(ctx.prisma, "main")).toBe(true);

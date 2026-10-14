@@ -37,7 +37,6 @@ const ENV = {
   CLOUDFLARE_R2_BUCKET_THUMBNAILS_PRIVATE: 'priv',
   CLOUDFLARE_R2_BUCKET_THUMBNAILS_PUBLIC: 'pub',
   NEXT_PUBLIC_R2_PUBLIC_HOST: 'thumbs.example.com',
-  MAIN_CREATOR_SLUG: 'polutek',
 };
 const KEY = 'videos/v1/covers/abc.webp';
 const privateUrl = (k: string) => `https://acct.r2.cloudflarestorage.com/priv/${k}`;

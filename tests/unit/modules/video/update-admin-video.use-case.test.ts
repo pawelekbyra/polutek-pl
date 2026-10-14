@@ -25,7 +25,6 @@ describe('updateAdminVideo use-case', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.MAIN_CREATOR_SLUG = 'polutek';
   });
 
   it('returns VIDEO_NOT_FOUND if video missing', async () => {
@@ -84,7 +83,6 @@ describe('updateAdminVideo hero/sidebar contract', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.MAIN_CREATOR_SLUG = 'polutek';
   });
 
   it('allows hero only when public published video has READY own-HLS asset', async () => {

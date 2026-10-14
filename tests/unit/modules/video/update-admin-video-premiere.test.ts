@@ -18,7 +18,6 @@ describe('updateAdminVideo premieres', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.MAIN_CREATOR_SLUG = 'polutek';
     mockPrisma.video.updateMany.mockResolvedValue({ count: 1 });
     mockPrisma.creator.findUnique.mockResolvedValue(mockMainChannel);
   });
@@ -105,7 +104,6 @@ describe('createAdminVideo premieres', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.MAIN_CREATOR_SLUG = 'polutek';
     mockPrisma.creator.findUnique.mockResolvedValue(mockMainChannel);
   });
 

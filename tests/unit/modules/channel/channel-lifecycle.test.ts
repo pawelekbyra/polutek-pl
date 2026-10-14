@@ -34,9 +34,7 @@ function makeCtx(actor: Actor, opts: { settings?: Record<string, string>; channe
     user: { findUnique: vi.fn(async () => ({ email: "anna@example.com" })) },
     creator: {
       count: vi.fn(async ({ where }: { where: { userId: string } }) => channels.filter((c) => c.userId === where.userId && !c.deletedAt).length),
-      findFirst: vi.fn(async ({ where }: { where: { OR: Array<{ handle?: { equals: string }; slug?: { equals: string } }>; id?: { not: string }; isPrimary?: boolean } }) => {
-        // Emergency fallback of the main-channel resolver (stage 8 deployment A): the old flag, read only.
-        if (where.isPrimary !== undefined) return channels.find((c) => c.isPrimary === where.isPrimary && !c.deletedAt) ?? null;
+      findFirst: vi.fn(async ({ where }: { where: { OR: Array<{ handle?: { equals: string }; slug?: { equals: string } }>; id?: { not: string } } }) => {
         const wanted = where.OR[0].handle?.equals;
         return (
           channels.find(
