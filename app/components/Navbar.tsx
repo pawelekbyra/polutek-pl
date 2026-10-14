@@ -4,6 +4,7 @@ import React, { Suspense, useEffect, useState } from "react";
 import { useUser } from "@/lib/auth/react";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import UserMenu from "./auth/UserMenu";
+import NotificationBell from "./notifications/NotificationBell";
 import BrandHomeLink from "./BrandHomeLink";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
@@ -221,6 +222,8 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                 // size, without a placeholder animation, until the button or the avatar is known.
                 <div aria-hidden="true" className="h-[38px] w-[38px] shrink-0" />
               )}
+
+              {isLoaded && isSignedIn && <NotificationBell />}
 
               {isLoaded && isSignedIn && (
                 <UserMenu isAdmin={isAdmin} />

@@ -15,11 +15,15 @@ export interface SendNotificationInput {
 }
 
 // WELCOME is a one-time onboarding message and is never gated by a preference toggle.
-const PREFERENCE_FIELD_BY_KIND: Partial<Record<NotificationKind, "patronEnabled" | "commentEnabled" | "systemEnabled">> = {
+const PREFERENCE_FIELD_BY_KIND: Partial<
+  Record<NotificationKind, "patronEnabled" | "commentEnabled" | "systemEnabled" | "newVideoInApp" | "moderationEnabled">
+> = {
   PATRON: "patronEnabled",
   COMMENT: "commentEnabled",
   SYSTEM: "systemEnabled",
   SUPPORT: "systemEnabled",
+  NEW_VIDEO: "newVideoInApp",
+  MODERATION: "moderationEnabled",
 };
 
 async function isNotificationAllowed(db: Db, userId: string, kind: NotificationKind): Promise<boolean> {

@@ -393,6 +393,7 @@ const AUTHZ_EXEMPT: Record<string, string> = {
   'lib/modules/video/application/get-hero-video.use-case.ts': 'public read (whitelisted DTO)',
   'lib/modules/video/application/get-public-video-by-id.use-case.ts': 'public read (whitelisted DTO, access via checkVideoAccess)',
   'lib/modules/video/application/get-public-video-list.use-case.ts': 'public read (whitelisted DTO)',
+  'lib/modules/video/application/announce-published-video.ts': 'fire-and-forget hook called only by publishAdminVideo after it authorized and committed; the fan-out reads public data and writes the own notifications of subscribers',
   'lib/modules/video/application/ready-visibility.ts': 'pending "publish when ready" visibility setting; called only by authorized use cases and the pipeline worker acting as system',
   'lib/modules/video/application/prune-stale-playback-sessions.use-case.ts': 'cron acting as system',
   'lib/modules/video/application/publish-after-asset-ready.use-case.ts': 'pipeline worker acting as system',

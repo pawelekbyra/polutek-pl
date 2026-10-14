@@ -842,5 +842,20 @@
  "You have no published videos yet.": "您还没有已发布的视频。",
  "Channel video statistics": "频道视频统计",
  "Showing the newest {0} videos.": "显示最新的 {0} 个视频。",
- "Download CSV": "下载 CSV"
+ "Download CSV": "下载 CSV",
+ "Notifications": "通知",
+ "Could not save the setting. Please try again.": "无法保存设置，请重试。",
+ "Could not load notification settings.": "无法加载通知设置。",
+ "New videos (in the app)": "新视频（应用内）",
+ "A bell notification when a channel you follow publishes a video.": "当您关注的频道发布视频时，铃铛会通知您。",
+ "Reactions and replies to your comments.": "对您评论的回应和回复。",
+ "Service messages": "服务消息",
+ "Announcements and information from the service.": "来自服务的公告和信息。",
+ "New notifications: {0}": "新通知：{0}",
+ "Notifications, {0} unread": "通知，{0} 条未读",
+ "Could not load notifications.": "无法加载通知。",
+ "No notifications.": "没有通知。",
+ "unread": "未读",
+ "Show older": "显示更早的",
+ "Mark all as read": "全部标为已读"
 }
