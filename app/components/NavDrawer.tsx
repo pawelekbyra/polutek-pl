@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { BookOpen, Home, LayoutDashboard, Menu, ShieldCheck, Users, X } from "lucide-react";
+import { BookOpen, Home, LayoutDashboard, ShieldCheck, Users, X } from "lucide-react";
 import { useUser } from "@/lib/auth/react";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { useLanguage } from "./LanguageContext";
@@ -71,9 +71,12 @@ export default function NavDrawer() {
         aria-label={tx("Otwórz menu", "Open menu")}
         aria-expanded={open}
         aria-controls={panelId}
-        className="-ml-1 mr-3 flex h-[38px] w-[46px] shrink-0 items-center justify-center rounded-xl bg-[var(--chan-surface)] text-[var(--chan-ink)] transition-[background-color,box-shadow,transform] duration-160 hover:bg-[var(--chan-line)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95 active:bg-[var(--chan-line)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] md:mr-5"
+        className="-ml-1 mr-4 flex h-[38px] w-[44px] shrink-0 items-center justify-center rounded-lg text-[var(--chan-ink)] transition-[background-color,transform] duration-160 hover:bg-[var(--chan-surface)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] md:mr-6"
       >
-        <Menu className="h-[22px] w-[22px]" strokeWidth={2} aria-hidden="true" />
+        {/* Three plain lines, no frame or fill: the symbol alone, set apart from the logo by space. */}
+        <svg viewBox="0 0 28 20" className="h-[18px] w-[26px]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+          <path d="M2 3h24M2 10h24M2 17h24" />
+        </svg>
       </button>
 
       {open ? (
