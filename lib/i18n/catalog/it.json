@@ -751,5 +751,19 @@
  "Could not load your subscriptions.": "Impossibile caricare le tue iscrizioni.",
  "You do not follow any channel yet.": "Non segui ancora nessun canale.",
  "Legal": "Note legali",
- "Privacy policy": "Informativa sulla privacy"
+ "Privacy policy": "Informativa sulla privacy",
+ "All subscriptions": "Tutte le iscrizioni",
+ "This channel is not available.": "Questo canale non è disponibile.",
+ "Could not change notifications. Please try again.": "Impossibile modificare le notifiche. Riprova.",
+ "Notifications: on": "Notifiche: attive",
+ "Notifications: off": "Notifiche: disattivate",
+ "My subscriptions": "Le mie iscrizioni",
+ "Could not unsubscribe. Please try again.": "Impossibile annullare l'iscrizione. Riprova.",
+ "You are not subscribed to any channel yet.": "Non sei ancora iscritto a nessun canale.",
+ "latest video": "ultimo video",
+ "channel unavailable": "canale non disponibile",
+ "Unsubscribe": "Annulla iscrizione",
+ "Could not load your subscriptions. Please reload the page.": "Impossibile caricare le tue iscrizioni. Ricarica la pagina.",
+ "Latest videos": "Ultimi video",
+ "Your subscribed channels have no videos yet.": "I canali a cui sei iscritto non hanno ancora video."
 }

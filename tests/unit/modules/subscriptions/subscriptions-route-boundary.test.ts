@@ -12,7 +12,13 @@ import { AppError } from '@/lib/modules/shared/app-error';
 vi.mock('@/lib/api/auth');
 vi.mock('@/lib/auth/server');
 vi.mock('@/lib/rate-limit');
-vi.mock('@/lib/modules/subscriptions');
+vi.mock('@/lib/modules/subscriptions', async () => ({
+  ...(await vi.importActual<Record<string, unknown>>('@/lib/modules/subscriptions/domain/subscription-input')),
+  GetSubscriptionStatusUseCase: { execute: vi.fn() },
+  SubscribeUseCase: { execute: vi.fn() },
+  UnsubscribeUseCase: { execute: vi.fn() },
+  SetSubscriptionNotifyUseCase: { execute: vi.fn() },
+}));
 vi.mock('@/lib/modules/users');
 vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },

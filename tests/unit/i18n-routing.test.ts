@@ -90,3 +90,19 @@ describe('interface-only languages (de, es, fr, it, pt, zh)', () => {
     expect(isLocale('DE')).toBe(false);
   });
 });
+
+describe('My subscriptions route', () => {
+  it('has a Polish and an English path, mirrored for the UI-only languages', () => {
+    expect(getLocalizedHref('pl', 'subscriptions')).toBe('/subskrypcje');
+    expect(getLocalizedHref('en', 'subscriptions')).toBe('/en/subscriptions');
+    expect(getLocalizedHref('de', 'subscriptions')).toBe('/de/subscriptions');
+  });
+
+  it('is kept by the language switcher and the legacy-path mapping', () => {
+    expect(switchLocalePath('/subskrypcje', 'en')).toBe('/en/subscriptions');
+    expect(switchLocalePath('/pl/subskrypcje', 'de')).toBe('/de/subscriptions');
+    expect(switchLocalePath('/en/subscriptions', 'pl')).toBe('/subskrypcje');
+    expect(switchLocalePath('/de/subscriptions', 'en')).toBe('/en/subscriptions');
+    expect(localizedPathFromLegacyPath('/subskrypcje', 'en')).toBe('/en/subscriptions');
+  });
+});

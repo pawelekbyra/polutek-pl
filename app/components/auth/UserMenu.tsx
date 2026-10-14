@@ -92,6 +92,10 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
             {tx("Moje konto", "My account")}
           </DropdownMenuItem>
 
+          <DropdownMenuItem render={<a href={getLocalizedHref(language, "subscriptions")} />} className={itemClassName}>
+            {tx("Moje subskrypcje", "My subscriptions")}
+          </DropdownMenuItem>
+
           <DropdownMenuItem render={<a href={getLocalizedHref(language, "studio")} />} className={itemClassName}>
             {tx("Studio twórcy", "Creator Studio")}
           </DropdownMenuItem>

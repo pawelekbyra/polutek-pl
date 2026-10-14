@@ -145,6 +145,12 @@ export default function NavDrawer() {
                   ))}
                 </ul>
               )}
+              {isSignedIn ? (
+                <Link href={getLocalizedHref(language, "subscriptions")} className={itemClass} onClick={() => setOpen(false)}>
+                  <Users className="h-5 w-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                  {tx("Wszystkie subskrypcje", "All subscriptions")}
+                </Link>
+              ) : null}
             </section>
 
             <nav aria-label={tx("Informacje prawne", "Legal")} className="mt-auto grid gap-1 border-t border-[var(--chan-line)] pt-3">

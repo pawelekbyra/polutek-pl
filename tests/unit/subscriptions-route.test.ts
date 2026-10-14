@@ -20,7 +20,9 @@ vi.mock('@/lib/api/auth', () => ({
   getActorFromAuth: vi.fn(),
 }));
 
-vi.mock('@/lib/modules/subscriptions', () => ({
+vi.mock('@/lib/modules/subscriptions', async () => ({
+  ...(await vi.importActual<Record<string, unknown>>('@/lib/modules/subscriptions/domain/subscription-input')),
+  SetSubscriptionNotifyUseCase: { execute: vi.fn() },
   GetSubscriptionStatusUseCase: { execute: vi.fn() },
   SubscribeUseCase: { execute: vi.fn() },
   UnsubscribeUseCase: { execute: vi.fn() },

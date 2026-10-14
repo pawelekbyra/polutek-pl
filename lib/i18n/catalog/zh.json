@@ -751,5 +751,19 @@
  "Could not load your subscriptions.": "无法加载您的订阅。",
  "You do not follow any channel yet.": "您还没有关注任何频道。",
  "Legal": "法律信息",
- "Privacy policy": "隐私政策"
+ "Privacy policy": "隐私政策",
+ "All subscriptions": "全部订阅",
+ "This channel is not available.": "此频道不可用。",
+ "Could not change notifications. Please try again.": "无法更改通知设置，请重试。",
+ "Notifications: on": "通知：开",
+ "Notifications: off": "通知：关",
+ "My subscriptions": "我的订阅",
+ "Could not unsubscribe. Please try again.": "无法取消订阅，请重试。",
+ "You are not subscribed to any channel yet.": "您还没有订阅任何频道。",
+ "latest video": "最新视频",
+ "channel unavailable": "频道不可用",
+ "Unsubscribe": "取消订阅",
+ "Could not load your subscriptions. Please reload the page.": "无法加载您的订阅，请刷新页面。",
+ "Latest videos": "最新视频列表",
+ "Your subscribed channels have no videos yet.": "您订阅的频道还没有视频。"
 }

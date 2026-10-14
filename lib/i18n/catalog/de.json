@@ -751,5 +751,19 @@
  "Could not load your subscriptions.": "Ihre Abos konnten nicht geladen werden.",
  "You do not follow any channel yet.": "Sie folgen noch keinem Kanal.",
  "Legal": "Rechtliches",
- "Privacy policy": "Datenschutzerklärung"
+ "Privacy policy": "Datenschutzerklärung",
+ "All subscriptions": "Alle Abos",
+ "This channel is not available.": "Dieser Kanal ist nicht verfügbar.",
+ "Could not change notifications. Please try again.": "Benachrichtigungen konnten nicht geändert werden. Bitte versuchen Sie es erneut.",
+ "Notifications: on": "Benachrichtigungen: an",
+ "Notifications: off": "Benachrichtigungen: aus",
+ "My subscriptions": "Meine Abos",
+ "Could not unsubscribe. Please try again.": "Abmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+ "You are not subscribed to any channel yet.": "Sie haben noch keinen Kanal abonniert.",
+ "latest video": "neuestes Video",
+ "channel unavailable": "Kanal nicht verfügbar",
+ "Unsubscribe": "Abbestellen",
+ "Could not load your subscriptions. Please reload the page.": "Ihre Abos konnten nicht geladen werden. Bitte laden Sie die Seite neu.",
+ "Latest videos": "Neueste Videos",
+ "Your subscribed channels have no videos yet.": "Ihre abonnierten Kanäle haben noch keine Videos."
 }

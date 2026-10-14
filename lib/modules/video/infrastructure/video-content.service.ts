@@ -150,6 +150,30 @@ export class VideoContentService {
     return dto;
   }
 
+  /**
+   * The newest public videos of the given channels (the "My subscriptions" stream): published, not removed,
+   * of a publicly visible channel (CLAUDE.md 4.24), newest first. Ids come from the viewer's own subscriptions.
+   */
+  static async getLatestPublicVideosForChannels(channelIds: string[], limit = 30): Promise<PublicVideoDTO[]> {
+    if (channelIds.length === 0) return [];
+    const take = Math.min(Math.max(limit, 1), 60);
+    const videos = await prisma.video.findMany({
+      where: {
+        creatorId: { in: channelIds },
+        status: VideoStatus.PUBLISHED,
+        moderationStatus: { not: 'REMOVED' },
+        creator: publiclyVisibleChannelWhere(),
+        ...visiblePublishedAtFilter(new Date()),
+      },
+      include: {
+        creator: { include: { user: { select: { imageUrl: true, email: true } } } },
+      },
+      orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
+      take,
+    });
+    return videos.map((v) => this.mapToPublicVideoDTO(v));
+  }
+
   static async getAllVideos(): Promise<PublicVideoDTO[]> {
     try {
       const videos = await prisma.video.findMany({

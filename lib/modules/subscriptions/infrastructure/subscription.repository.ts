@@ -19,6 +19,7 @@ export class SubscriptionRepository {
       select: {
         id: true,
         createdAt: true,
+        notify: true,
       },
     });
   }
@@ -42,7 +43,7 @@ export class SubscriptionRepository {
     try {
       const subscription = await db.subscription.create({
         data: { userId, creatorId },
-        select: { id: true, createdAt: true },
+        select: { id: true, createdAt: true, notify: true },
       });
       return { subscription, created: true };
     } catch (error) {
@@ -52,7 +53,7 @@ export class SubscriptionRepository {
       ) {
         const subscription = await db.subscription.findUnique({
           where: { userId_creatorId: { userId, creatorId } },
-          select: { id: true, createdAt: true },
+          select: { id: true, createdAt: true, notify: true },
         });
         if (subscription) return { subscription, created: false };
       }
@@ -63,6 +64,42 @@ export class SubscriptionRepository {
   async countByCreatorId(creatorId: string, tx?: WriteTx) {
     const db = tx || (this.db as PrismaClient);
     return await db.subscription.count({ where: { creatorId } });
+  }
+
+  async countByUserId(userId: string, tx?: WriteTx) {
+    const db = tx || (this.db as PrismaClient);
+    return await db.subscription.count({ where: { userId } });
+  }
+
+  /** The bell of one subscription; `count` is 0 when the viewer does not subscribe to the channel. */
+  async setNotify(userId: string, creatorId: string, notify: boolean, tx?: WriteTx) {
+    const db = tx || (this.db as PrismaClient);
+    return await db.subscription.updateMany({ where: { userId, creatorId }, data: { notify } });
+  }
+
+  /** Every subscription of a user with the channel facts the "My subscriptions" page shows, newest first. */
+  async listForUser(userId: string) {
+    return await this.subscription.findMany({
+      where: { userId, creator: { deletedAt: null } },
+      orderBy: { createdAt: "desc" },
+      select: {
+        creatorId: true,
+        notify: true,
+        createdAt: true,
+        creator: {
+          select: {
+            id: true,
+            slug: true,
+            handle: true,
+            name: true,
+            status: true,
+            deletedAt: true,
+            subscribersCount: true,
+            user: { select: { imageUrl: true } },
+          },
+        },
+      },
+    });
   }
 
   async deleteByUserIdAndCreatorId(userId: string, creatorId: string, tx?: WriteTx) {
