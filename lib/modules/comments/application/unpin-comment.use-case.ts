@@ -3,6 +3,7 @@ import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { CommentError, commentDatabaseError } from "../domain/comment.errors";
 import { CommentRepository } from "../infrastructure/comment.repository";
 import { recordAuditEventSafe } from "@/lib/modules/audit";
+import { authorizeComments } from "./authorize-comments";
 
 export interface UnpinCommentInput {
   commentId: string;
@@ -19,16 +20,14 @@ export async function unpinComment(
     return fail({ type: "UNAUTHORIZED", message: "Musisz być zalogowany." });
   }
 
-  const userId = actor.userId;
   const repo = new CommentRepository(prisma);
 
   try {
     const comment = await repo.findCommentById(commentId);
     if (!comment) return fail({ type: "NOT_FOUND", message: "Komentarz nie istnieje." });
 
-    const videoCreatorId = await repo.findVideoCreatorId(comment.videoId);
-    const canUnpin = actor.type === 'admin' || videoCreatorId === userId;
-    if (!canUnpin) return fail({ type: "FORBIDDEN", message: "Brak uprawnień do odpięcia komentarza." });
+    const denied = await authorizeComments(ctx, "comment.pin", [commentId]);
+    if (denied) return fail(denied);
 
     if (!comment.pinnedAt) return ok(undefined);
     await repo.unpin(commentId);

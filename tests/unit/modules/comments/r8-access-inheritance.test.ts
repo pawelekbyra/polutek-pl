@@ -68,6 +68,8 @@ describe('R8 Comments Access and Permissions', () => {
     it('allows video creator to pin', async () => {
       mockPrisma.comment.findUnique.mockResolvedValue({ id: 'c1', videoId, status: CommentStatus.VISIBLE });
       mockPrisma.video.findUnique.mockResolvedValue({ creator: { userId: creatorId } });
+      // The channel of the comment's video decides (role matrix, comment.pin): the owner may pin.
+      mockPrisma.comment.findMany.mockResolvedValue([{ id: 'c1', video: { creatorId: 'ch1', creator: { userId: creatorId, status: 'ACTIVE' } } }]);
 
       const result = await pinComment({ commentId: 'c1' }, createCtx({ type: 'user', userId: creatorId }));
       expect(result.ok).toBe(true);
@@ -76,10 +78,11 @@ describe('R8 Comments Access and Permissions', () => {
     it('denies regular user to pin', async () => {
       mockPrisma.comment.findUnique.mockResolvedValue({ id: 'c1', videoId, status: CommentStatus.VISIBLE });
       mockPrisma.video.findUnique.mockResolvedValue({ creator: { userId: creatorId } });
+      mockPrisma.comment.findMany.mockResolvedValue([{ id: 'c1', video: { creatorId: 'ch1', creator: { userId: creatorId, status: 'ACTIVE' } } }]);
 
       const result = await pinComment({ commentId: 'c1' }, createCtx({ type: 'user', userId: 'other' }));
       expect(result.ok).toBe(false);
-      if (!result.ok) expect(result.error.type).toBe('FORBIDDEN');
+      if (!result.ok) expect(result.error.type).toBe('UNAUTHORIZED');
     });
 
     it('denies guest to pin', async () => {
