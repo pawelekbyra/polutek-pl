@@ -9,6 +9,7 @@ import { recordAuditEvent } from "@/lib/modules/audit";
 import { VideoNotFoundError, VideoNotOnMainChannelError } from "../domain/video.errors";
 import { VideoPolicy } from "../domain/video.policy";
 import { removePublicThumbnailCopy } from "./sync-public-thumbnail.service";
+import { clearReadyVisibility } from "./ready-visibility";
 
 export type DeleteAdminVideoError = VideoNotFoundError | VideoNotOnMainChannelError;
 
@@ -54,6 +55,7 @@ export async function deleteAdminVideo(
   });
 
   await removePublicThumbnailCopy(deleted.thumbnailPublicUrl, ctx);
+  await clearReadyVisibility(videoId, ctx);
 
   return ok(toAdminVideoDto(deleted));
 }

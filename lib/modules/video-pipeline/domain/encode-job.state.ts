@@ -71,6 +71,8 @@ export const PERMANENT = {
   TOO_LARGE_FRAME: "TOO_LARGE_FRAME",
   ORIGINAL_MISSING: "ORIGINAL_MISSING",
   VALIDATION_FAILED: "VALIDATION_FAILED",
+  /** The source is longer than the channel's `ChannelQuota.maxVideoSeconds` (never retried: the file will not shrink). */
+  CHANNEL_DURATION_LIMIT: "CHANNEL_DURATION_LIMIT",
 } as const;
 
 /** Hard bounds checked after ffprobe; they keep one bad file from monopolising the 2-vCPU server. */
@@ -79,6 +81,34 @@ export const ENCODE_LIMITS = {
   maxWidth: 7680,
   maxHeight: 4320,
 } as const;
+
+/**
+ * Whether a probed duration breaks a channel's length limit. The comparison is whole seconds: a container reports
+ * 1800.04 s for a 30-minute film, so up to (but excluding) one full second over the limit still fits. `null`
+ * limit = no per-channel limit (main channel, staff, legacy job).
+ */
+export function exceedsChannelDurationLimit(durationSeconds: number, limitSeconds: number | null): boolean {
+  if (limitSeconds === null || !Number.isFinite(limitSeconds)) return false;
+  return Math.floor(durationSeconds) > limitSeconds;
+}
+
+/** "1 h 5 min 3 s" style text for the Studio message (Polish abbreviations are the same in English). */
+export function formatDurationText(totalSeconds: number): string {
+  const seconds = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  const parts: string[] = [];
+  if (h) parts.push(`${h} h`);
+  if (m) parts.push(`${m} min`);
+  if (s || parts.length === 0) parts.push(`${s} s`);
+  return parts.join(" ");
+}
+
+/** The creator-facing reason stored in `failureReason` (the Studio shows it as is). */
+export function channelDurationLimitMessage(durationSeconds: number, limitSeconds: number): string {
+  return `Film trwa ${formatDurationText(durationSeconds)}, a limit Twojego kanału to ${formatDurationText(limitSeconds)}. Skróć film i prześlij go ponownie albo poproś o wyższy limit.`;
+}
 
 export interface ClassifiedFailure {
   code: string;

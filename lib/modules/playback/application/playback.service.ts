@@ -43,7 +43,9 @@ function isAdminPreviewSession(
 ): boolean {
   if (actorType !== 'admin') return false;
   // A published video whose premiere hasn't happened yet is still a preview.
-  return videoStatus !== VideoStatus.PUBLISHED || isUpcomingPremiere({ status: videoStatus, premiereAt });
+  // UNLISTED is a live video reachable by link: the admin's watches count like anyone else's.
+  const live = videoStatus === VideoStatus.PUBLISHED || videoStatus === VideoStatus.UNLISTED;
+  return !live || isUpcomingPremiere({ status: videoStatus, premiereAt });
 }
 
 // Poster goes to the browser: public R2 copy or the thumbnail proxy, never a private storage URL.

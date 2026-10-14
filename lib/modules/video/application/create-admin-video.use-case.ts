@@ -12,6 +12,7 @@ import { isAllowedPremiereChange } from "../domain/premiere";
 import { resolveVideoMetadata } from "../domain/video-metadata";
 import { Prisma } from "@prisma/client";
 import { isDerivedThumbnailUrl } from "@/lib/modules/media";
+import { setReadyVisibility } from "./ready-visibility";
 
 const DEFAULT_DRAFT_THUMBNAIL_URL = "/logo.png";
 
@@ -28,6 +29,11 @@ function normalizeCreateVideoInput(input: CreateVideoInput): CreateVideoInput | 
 
   if (!isAllowedPremiereChange(input.premiereAt, null)) {
     return new VideoInvalidPremiereError();
+  }
+
+  // "Niepubliczny" and a premiere exclude each other: a premiere is a public event.
+  if (input.readyVisibility === "UNLISTED" && input.premiereAt) {
+    return new VideoInvalidPremiereError("Film niepubliczny nie może mieć premiery.");
   }
 
   const metadata = resolveVideoMetadata(input);
@@ -49,6 +55,8 @@ function normalizeCreateVideoInput(input: CreateVideoInput): CreateVideoInput | 
     titleEn: input.titleEn?.trim() || null,
     descriptionEn: input.descriptionEn?.trim() || null,
     publishAfterAssetReady: input.publishAfterAssetReady === true,
+    ...(input.isAdult !== undefined ? { isAdult: input.isAdult === true } : {}),
+    readyVisibility: input.publishAfterAssetReady === true && input.readyVisibility === "UNLISTED" ? "UNLISTED" : "PUBLISHED",
   };
 }
 
@@ -138,6 +146,8 @@ export async function createAdminVideo(
         metadata: {
           title: video.title,
           publishAfterAssetReady: Boolean(normalizedInput.publishAfterAssetReady),
+          ...(normalizedInput.publishAfterAssetReady && normalizedInput.readyVisibility === "UNLISTED" ? { readyVisibility: "UNLISTED" } : {}),
+          ...(normalizedInput.isAdult !== undefined ? { isAdult: normalizedInput.isAdult } : {}),
           premiereAt: normalizedInput.premiereAt?.toISOString() ?? null,
           ...(normalizedInput.commentsMode ? { commentsMode: normalizedInput.commentsMode } : {}),
         }
@@ -147,6 +157,7 @@ export async function createAdminVideo(
     }
 
     if (normalizedInput.publishAfterAssetReady) {
+      if (normalizedInput.readyVisibility === "UNLISTED") await setReadyVisibility(video.id, "UNLISTED", ctx);
       try {
         await recordAuditEvent(ctx, {
           action: 'VIDEO_PUBLISH_AFTER_ASSET_READY_REQUESTED',

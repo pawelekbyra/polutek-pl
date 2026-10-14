@@ -11,6 +11,7 @@ import { VideoStatus } from "@prisma/client";
 import { toVideoAccessTier } from "@/lib/access-tier";
 import { canUseDemoFallbacks } from "@/lib/feature-flags";
 import { isUpcomingPremiere, toPremiereDate } from "@/lib/modules/video/domain/premiere";
+import { isAdultVideo, isLinkAccessibleStatus } from "@/lib/modules/video/domain/video-visibility";
 
 export type CheckVideoAccessInput = {
   videoIdOrSlug: string;
@@ -84,7 +85,9 @@ export async function checkVideoAccess(
     return ok({ hasAccess: false, reason: "NOT_FOUND" });
   }
 
-  const isPublished = video.status === VideoStatus.PUBLISHED &&
+  // PUBLISHED and UNLISTED are both reachable with the link and follow the same tier rules; UNLISTED is only
+  // kept off the lists (the list queries filter PUBLISHED themselves).
+  const isPublished = isLinkAccessibleStatus(video.status) &&
                       (!video.publishedAt || video.publishedAt <= now);
 
   if (!isPublished && !canPreview) {
@@ -105,8 +108,9 @@ export async function checkVideoAccess(
   // Staff and members of the channel with `video.preview` see their non-archived content
   if (canPreview) return decide({ hasAccess: true });
 
-  // Age-restricted videos are for signed-in viewers only (moderation state, not the access tier).
-  if (moderation === 'AGE_RESTRICTED' && actor.type === 'guest') {
+  // Adult videos are for signed-in viewers only (moderation state or the creator's own 18+ declaration, not the
+  // access tier).
+  if (isAdultVideo({ moderationStatus: moderation, isAdult: (video as { isAdult?: boolean }).isAdult }) && actor.type === 'guest') {
     return decide({ hasAccess: false, reason: "LOGIN_REQUIRED", requiredTier: "LOGGED_IN" });
   }
 

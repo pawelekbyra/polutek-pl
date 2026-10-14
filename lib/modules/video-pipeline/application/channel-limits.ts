@@ -30,6 +30,38 @@ export async function resolveChannelLimits(ctx: AppContext, channelId: string): 
   };
 }
 
+export interface ChannelLimitsView {
+  maxVideoSeconds: number;
+  maxUploadBytes: number;
+  maxUploadsPerDay: number;
+}
+
+/**
+ * The limits the Studio shows a creator (read only), or `null` when the channel has none of its own (the
+ * platform's flagship channel keeps the global limits). `channelId` must be a channel of the caller: the route
+ * takes it from the session's own memberships.
+ */
+export async function getChannelLimitsView(ctx: AppContext, channelId: string): Promise<ChannelLimitsView | null> {
+  if (await isMainChannelId(ctx.prisma, channelId)) return null;
+  const limits = await resolveChannelLimits(ctx, channelId);
+  return { maxVideoSeconds: limits.maxVideoSeconds, maxUploadBytes: limits.maxUploadBytes, maxUploadsPerDay: limits.maxUploadsPerDay };
+}
+
+/**
+ * The length limit (seconds) the encode worker enforces for one job, or `null` when none applies: no channel on
+ * the job, the platform's own flagship channel (global limit only), or a job requested by staff
+ * (`requestedById` is set only for staff actors, see `actorId`). Same source of truth as the upload limits.
+ */
+export async function resolveJobDurationLimit(
+  ctx: AppContext,
+  job: { channelId: string | null; requestedById: string | null },
+): Promise<number | null> {
+  if (!job.channelId) return null;
+  if (job.requestedById) return null;
+  if (await isMainChannelId(ctx.prisma, job.channelId)) return null;
+  return (await resolveChannelLimits(ctx, job.channelId)).maxVideoSeconds;
+}
+
 /** `null` when the upload fits, otherwise the error to return (413 too large, 429 too many, 507 no space). */
 export async function channelUploadLimitError(
   ctx: AppContext,

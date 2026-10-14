@@ -12,6 +12,7 @@ import { effectivePublishedAt, toPremiereDate } from '../domain/premiere';
 import { withFundraisingProgress } from './fundraising-progress.service';
 import { toVideoAccessTier } from '@/lib/access-tier';
 import { isVideoPubliclyVisible } from '../domain/public-visibility';
+import { isAdultVideo } from '../domain/video-visibility';
 
 export const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
   OR: [
@@ -53,7 +54,8 @@ export const publicVideoOrderBy: Prisma.VideoOrderByWithRelationInput[] = [
 export class VideoContentService {
   /**
    * Returns only PUBLIC and PUBLISHED videos for sitemap indexing.
-   * Strictly excludes LOGGED_IN videos.
+   * Strictly excludes LOGGED_IN videos, UNLISTED videos (link-only) and adult videos (signed-in viewers only:
+   * the creator's 18+ declaration and the AGE_RESTRICTED moderation state).
    */
   static async getSitemapVideos(): Promise<PublicVideoDTO[]> {
     const mainChannel = await MainChannelService.getOptional(createAppContext());
@@ -63,6 +65,8 @@ export class VideoContentService {
       where: {
         status: VideoStatus.PUBLISHED,
         tier: AccessTier.PUBLIC,
+        isAdult: false,
+        moderationStatus: { notIn: ['AGE_RESTRICTED', 'REMOVED'] },
         creatorId: mainChannel?.id || 'none',
         ...visiblePublishedAtFilter(now),
         creator: publiclyVisibleChannelWhere(),
@@ -128,6 +132,7 @@ export class VideoContentService {
         sidebarOrder: video.sidebarOrder ?? 0,
         publishedAt: effectivePublishedAt(video),
         premiereAt: toPremiereDate(video.premiereAt)?.toISOString() ?? null,
+        isAdult: isAdultVideo(video),
         creator: video.creator ? {
             id: video.creator.id,
             name: video.creator.name,

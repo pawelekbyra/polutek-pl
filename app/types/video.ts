@@ -85,6 +85,8 @@ export interface PublicVideoDTO {
   publishedAt?: Date | string | null;
   /** ISO time of a scheduled premiere, or null. Upcoming iff in the future (see lib/premiere.ts). */
   premiereAt?: string | null;
+  /** 18+: declared by the creator or set by moderation. Signed-in viewers only; shown as a badge. */
+  isAdult?: boolean;
   /**
    * Share of the video's fundraising goal reached, 0..1 (whole percents), or null/absent
    * when it has no goal. Never an amount: goals and totals stay server-side.

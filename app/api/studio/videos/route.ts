@@ -44,6 +44,8 @@ export async function POST(request: Request) {
           descriptionEn: body.data.descriptionEn ?? null,
           tier: body.data.tier ?? "PUBLIC",
           publishAfterAssetReady: body.data.publishAfterAssetReady === true,
+          ...(body.data.publishAs === "UNLISTED" ? { readyVisibility: "UNLISTED" as const } : {}),
+          ...(body.data.isAdult !== undefined ? { isAdult: body.data.isAdult } : {}),
           premiereAt: body.data.premiereAt ? new Date(body.data.premiereAt) : null,
           ...(body.data.tags !== undefined ? { tags: body.data.tags } : {}),
           ...(body.data.category !== undefined ? { category: body.data.category } : {}),

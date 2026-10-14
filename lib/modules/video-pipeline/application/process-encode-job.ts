@@ -3,6 +3,8 @@ import { mkdir, readdir, rm, stat } from "node:fs/promises";
 import type { Prisma, VideoEncodeJob } from "@prisma/client";
 import {
   ENCODE_LIMITS,
+  channelDurationLimitMessage,
+  exceedsChannelDurationLimit,
   EncodeCancelledError,
   EncodeJobError,
   EncodeStage,
@@ -79,6 +81,11 @@ export interface ProcessorPorts {
     findExisting(job: VideoEncodeJob, assetKey: string): Promise<string | null>;
     finalize(input: FinalizeInput): Promise<{ assetId: string }>;
   };
+  /**
+   * The channel's length limit for this job's source, in seconds, or null when none applies (the platform's main
+   * channel, a job requested by staff, no channel). Optional: without it only the global limit is enforced.
+   */
+  channelLimits?: { maxVideoSeconds(job: VideoEncodeJob): Promise<number | null> };
   audit(action: string, job: VideoEncodeJob, metadata: Record<string, unknown>): Promise<void>;
   now: () => Date;
   log: (message: string, extra?: Record<string, unknown>) => void;
@@ -236,6 +243,12 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
     }
     if (!(probe.duration > 0) || probe.duration > ENCODE_LIMITS.maxDurationSeconds) {
       throw new EncodeJobError(PERMANENT.TOO_LONG, `Dlugosc ${Math.round(probe.duration)} s poza limitem ${ENCODE_LIMITS.maxDurationSeconds} s.`, true);
+    }
+    // Per-channel length limit (ChannelQuota.maxVideoSeconds): known only now, so the job ends here with a
+    // reason the creator sees in the Studio. A failed lookup is a transient error (retried), never "no limit".
+    const channelLimit = (await ports.channelLimits?.maxVideoSeconds(job)) ?? null;
+    if (exceedsChannelDurationLimit(probe.duration, channelLimit)) {
+      throw new EncodeJobError(PERMANENT.CHANNEL_DURATION_LIMIT, channelDurationLimitMessage(probe.duration, channelLimit as number), true);
     }
     if (probe.width > ENCODE_LIMITS.maxWidth || probe.height > ENCODE_LIMITS.maxHeight) {
       throw new EncodeJobError(PERMANENT.TOO_LARGE_FRAME, `Rozdzielczosc ${probe.width}x${probe.height} poza limitem.`, true);
