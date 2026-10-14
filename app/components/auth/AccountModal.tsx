@@ -9,6 +9,7 @@ import { ProfileSection } from "./ProfileSection";
 import { EmailSection, ConnectionsSection, DangerSection } from "./AccountSections";
 import { SecuritySection } from "./SecuritySection";
 import { PasskeysSection } from "./PasskeysSection";
+import { NotificationsSection } from "./NotificationsSection";
 
 interface AccountModalProps {
   open: boolean;
@@ -16,7 +17,7 @@ interface AccountModalProps {
   isAdmin: boolean;
 }
 
-type Section = "profile" | "email" | "connections" | "security" | "passkeys" | "danger";
+type Section = "profile" | "notifications" | "email" | "connections" | "security" | "passkeys" | "danger";
 
 export default function AccountModal({ open, onOpenChange, isAdmin }: AccountModalProps) {
   const { user } = useUser();
@@ -33,6 +34,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
 
   const sections: { id: Section; label: string }[] = [
     { id: "profile", label: tx("Profil", "Profile") },
+    { id: "notifications", label: tx("Powiadomienia", "Notifications") },
     { id: "email", label: "E-mail" },
     { id: "connections", label: tx("Konta", "Connections") },
     { id: "security", label: tx("Hasło", "Security") },
@@ -69,6 +71,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
 
             <div className="mt-4 max-h-[60vh] overflow-y-auto pr-1">
               {section === "profile" && <ProfileSection tx={tx} />}
+              {section === "notifications" && <NotificationsSection tx={tx} />}
               {section === "email" && <EmailSection tx={tx} />}
               {section === "connections" && <ConnectionsSection tx={tx} />}
               {section === "security" && <SecuritySection tx={tx} />}
