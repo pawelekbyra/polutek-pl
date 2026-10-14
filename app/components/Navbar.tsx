@@ -5,6 +5,7 @@ import { useUser } from "@/lib/auth/react";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import UserMenu from "./auth/UserMenu";
 import NotificationBell from "./notifications/NotificationBell";
+import { SHOW_NOTIFICATION_BELL } from "@/lib/ui-flags";
 import BrandHomeLink from "./BrandHomeLink";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
@@ -28,7 +29,7 @@ type ServerAdminState = {
  */
 function NavbarLanguageSwitcher({ language }: { language: Locale }) {
   const switchLanguage = useSwitchLanguage();
-  return <LanguageSwitcher language={language} onSelect={switchLanguage} />;
+  return <LanguageSwitcher language={language} onSelect={switchLanguage} variant="icon" />;
 }
 
 // `isHome`: the page is the home page with the hero video (the logo then scrolls to its top).
@@ -201,9 +202,12 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
               </div>
 
               {/* Language switcher — one pill (globe, code, chevron) that opens the language list. */}
-              <Suspense fallback={<LanguageSwitcher language={language} onSelect={setLanguage} />}>
-                <NavbarLanguageSwitcher language={language} />
-              </Suspense>
+              {/* Signed-out visitors only: a signed-in user changes the language in the account panel (and in the footer). */}
+              {isSignedIn ? null : (
+                <Suspense fallback={<LanguageSwitcher language={language} onSelect={setLanguage} variant="icon" />}>
+                  <NavbarLanguageSwitcher language={language} />
+                </Suspense>
+              )}
 
               {isSignedIn ? null : isLoaded ? (
                 <button
@@ -223,7 +227,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                 <div aria-hidden="true" className="h-[38px] w-[38px] shrink-0" />
               )}
 
-              {isLoaded && isSignedIn && <NotificationBell />}
+              {SHOW_NOTIFICATION_BELL && isLoaded && isSignedIn && <NotificationBell />}
 
               {isLoaded && isSignedIn && (
                 <UserMenu isAdmin={isAdmin} />

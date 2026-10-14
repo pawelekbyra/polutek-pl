@@ -18,8 +18,9 @@ type Props = {
    * of all languages (no frame) in the page flow, so a scrolling card cannot clip it. Its root is
    * `display: contents`, so in a wrapping flex row the list takes a full line. Flags appear only in
    * the list rows; the buttons keep the neutral globe (owner decision: flag colours clash there).
+   * "icon" (navbar, signed-out visitors): the same floating list behind a round, globe-only button.
    */
-  variant?: "pill" | "inline";
+  variant?: "pill" | "inline" | "icon";
 };
 
 type OptionProps = {
@@ -140,6 +141,13 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
           <span>{tx("Język", "Language")}:</span>
           <span className="text-[var(--chan-ink)]">{current.label}</span>
           {chevron("h-3 w-3")}
+        </button>
+      ) : variant === "icon" ? (
+        <button
+          {...triggerProps}
+          className="flex h-[38px] w-[38px] items-center justify-center rounded-full text-[var(--chan-ink)] transition-[background-color,box-shadow] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
+        >
+          <Globe className="h-5 w-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
         </button>
       ) : (
         <button

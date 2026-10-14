@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, Home, LayoutDashboard, LogOut, Settings, ShieldCheck, Users, X } from "lucide-react";
@@ -9,9 +9,22 @@ import { ADMIN_PANEL_ORIGIN } from "@/lib/admin-legacy-redirects";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { useLanguage } from "../LanguageContext";
 import AccountModal from "./AccountModal";
+import LanguageSwitcher from "../LanguageSwitcher";
+import { useSwitchLanguage } from "../useSwitchLanguage";
 
 interface UserMenuProps {
   isAdmin: boolean;
+}
+
+/** "Language: Polski" in the account panel; useSwitchLanguage reads the URL, so it sits in its own Suspense. */
+function PanelLanguage() {
+  const { language } = useLanguage();
+  const switchLanguage = useSwitchLanguage();
+  return (
+    <div className="flex flex-wrap items-center px-1">
+      <LanguageSwitcher language={language} onSelect={switchLanguage} variant="inline" />
+    </div>
+  );
 }
 
 type SubscribedChannel = { id: string; slug: string; handle: string | null; name: string };
@@ -206,6 +219,12 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
                   </ul>
                 )}
               </section>
+
+              <div className="mt-4 border-t border-[var(--chan-line)] pt-3">
+                <Suspense fallback={null}>
+                  <PanelLanguage />
+                </Suspense>
+              </div>
 
               <nav aria-label={tx("Informacje prawne", "Legal")} className="mt-auto grid gap-1 border-t border-[var(--chan-line)] pt-3">
                 <Link href={getLocalizedHref(language, "terms")} className={itemClass} onClick={() => setOpen(false)}>
