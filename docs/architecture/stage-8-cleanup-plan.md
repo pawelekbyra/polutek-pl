@@ -1,7 +1,12 @@
 # Etap 8: migracja czyszcząca (plan, NIE wykonana)
 
-Status: **przygotowany, wymaga zgody właściciela** (CLAUDE.md §0, §4.0: kopia zapasowa, zasada dwóch wdrożeń).
-Nic w tym dokumencie nie zostało uruchomione na żadnej bazie.
+Status (2026-10-14): **wdrożenie A zrobione w kodzie** (gałąź `feat/multi-creator-platform`, jeszcze niewdrożone na produkcji), **wdrożenie B przygotowane, nieuruchomione**: `stage-8-migration-B.sql` i `stage-8-deploy-B.md`. Nic nie zostało uruchomione na żadnej bazie produkcyjnej; migracja A (`20261014090000_main_channel_setting`) jest addytywna i sprawdzona na PGlite.
+
+## Co zrobiło wdrożenie A
+- Kanał główny = `AppSetting` `main_channel_id` (`MainChannelService`, `isMainChannelId`); awaryjne fallbacki `MAIN_CREATOR_SLUG` i `isPrimary=true` oznaczone „usunąć we wdrożeniu B” (`channel.repository.ts`).
+- Widoczność publiczna = `Creator.status` in (ACTIVE, LIMITED) i `deletedAt` null; nic nie zapisuje `isApproved`/`isPrimary`.
+- Pasek boczny dostaje stan „staff” z Actora, nie czyta `User.role`.
+- Zostają świadomie (nie bramki dostępu): `User.role` w `lib/api/auth.ts` (źródło aktora `admin` na `www`), panel użytkowników/zmiana roli, `isLastAdmin`, ochrona komentarzy administratora, plakietka ADMIN w komentarzach, awatar pierwszego administratora jako fallback awatara kanału głównego, skrypty ops.
 
 ## Co usuwamy i dlaczego
 | Element | Zastąpiony przez | Warunek usunięcia |
