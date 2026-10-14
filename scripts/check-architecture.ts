@@ -18,6 +18,9 @@ const FORBIDDEN_IMPORTS = [
 const PREMIERE_HELPER_REASON =
   'Pure, dependency-free isUpcomingPremiere() helper (CLAUDE.md "Premieres"); the video barrel pulls media/channel code (circular deps) and several tests mock the whole @/lib/modules/video barrel, which would silently drop the premiere gate.';
 
+const VISIBILITY_HELPER_REASON =
+  'Pure, dependency-free status/18+ helpers (UNLISTED is link-reachable, adult is signed-in only); one definition shared by access and the video queries, and several tests mock the whole @/lib/modules/video barrel, which would silently drop the rule.';
+
 // Allowlist for cross-module internal imports where extracting to shared would cause circular deps.
 // Key: file path; value: map of "module/subPath" → reason string.
 const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, string>> = {
@@ -44,6 +47,7 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
   },
   'lib/modules/access/application/check-video-access.use-case.ts': {
     'video/domain/premiere': PREMIERE_HELPER_REASON,
+    'video/domain/video-visibility': VISIBILITY_HELPER_REASON,
     'channel/domain/channel.policy': 'Pure, no-side-effect policy class; many tests narrowly mock the whole @/lib/modules/channel barrel for MainChannelService only, and routing this through it would force every such test to also mock MainChannelPolicy.',
   },
 };
@@ -389,6 +393,7 @@ const AUTHZ_EXEMPT: Record<string, string> = {
   'lib/modules/video/application/get-hero-video.use-case.ts': 'public read (whitelisted DTO)',
   'lib/modules/video/application/get-public-video-by-id.use-case.ts': 'public read (whitelisted DTO, access via checkVideoAccess)',
   'lib/modules/video/application/get-public-video-list.use-case.ts': 'public read (whitelisted DTO)',
+  'lib/modules/video/application/ready-visibility.ts': 'pending "publish when ready" visibility setting; called only by authorized use cases and the pipeline worker acting as system',
   'lib/modules/video/application/prune-stale-playback-sessions.use-case.ts': 'cron acting as system',
   'lib/modules/video/application/publish-after-asset-ready.use-case.ts': 'pipeline worker acting as system',
   'lib/modules/video/application/record-playback-event.use-case.ts': 'viewer playback telemetry bound to the playback session fingerprint',

@@ -1,4 +1,5 @@
 import { MainChannelPolicy } from "@/lib/modules/channel/domain/channel.policy";
+import { isLinkAccessibleStatus } from "./video-visibility";
 
 type VisibilityInput = {
   status?: string | null;
@@ -8,12 +9,13 @@ type VisibilityInput = {
 };
 
 /**
- * Whether a video may be shown to the public at all (the same rules as `checkVideoAccess` without a preview right):
- * PUBLISHED and already due, not removed by moderation, on a publicly visible channel (CLAUDE.md 4.24).
+ * Whether a video may be opened by link by the public (the same rules as `checkVideoAccess` without a preview right):
+ * PUBLISHED or UNLISTED and already due, not removed by moderation, on a publicly visible channel (CLAUDE.md 4.24).
  * Tier and premiere gating are separate decisions made at playback.
  */
 export function isVideoPubliclyVisible(video: VisibilityInput, now: Date = new Date()): boolean {
-  if (video.status !== "PUBLISHED") return false;
+  // UNLISTED is reachable by link; it is kept off every list by the list queries, not here.
+  if (!isLinkAccessibleStatus(video.status)) return false;
   if (video.moderationStatus === "REMOVED") return false;
   if (video.publishedAt) {
     const at = video.publishedAt instanceof Date ? video.publishedAt : new Date(video.publishedAt);

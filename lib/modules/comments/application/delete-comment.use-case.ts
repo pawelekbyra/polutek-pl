@@ -1,4 +1,5 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
+import { canModerateVideoComments } from "./authorize-comments";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { CommentError, commentDatabaseError } from "../domain/comment.errors";
 import { CommentPolicy } from "../domain/comment.policy";
@@ -36,7 +37,7 @@ export async function deleteComment(
 
     const isAuthor = comment.authorId === userId;
     const videoCreatorId = await repo.findVideoCreatorId(comment.videoId);
-    const isModerator = actor.type === 'admin' || videoCreatorId === userId;
+    const isModerator = await canModerateVideoComments(ctx, comment.videoId);
 
     if (!CommentPolicy.canDeleteComment(actor, comment.authorId, isModerator)) {
       return fail({ type: "FORBIDDEN", message: "Nie masz uprawnień do usunięcia tego komentarza." });

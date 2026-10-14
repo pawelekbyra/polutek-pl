@@ -52,10 +52,18 @@ export interface StudioChannel {
   country: string | null;
 }
 
+/** The current channel's upload limits (read only); `null` when the channel has none of its own. */
+export interface StudioLimits {
+  maxVideoSeconds: number;
+  maxUploadBytes: number;
+  maxUploadsPerDay: number;
+}
+
 export interface StudioMe {
   channel: StudioChannel | null;
   channels: StudioChannel[];
   channelCreation: "off" | "invite" | "on";
+  limits?: StudioLimits | null;
 }
 
 export interface StudioVideo {
@@ -81,6 +89,8 @@ export interface StudioVideo {
   tags?: string[];
   category?: string | null;
   commentsMode?: "ON" | "HELD" | "OFF";
+  /** Creator's 18+ declaration. */
+  isAdult?: boolean;
 }
 
 export interface StudioVideoList {
@@ -97,6 +107,7 @@ export interface StudioComment {
   createdAt: string;
   parentId: string | null;
   isHearted: boolean;
+  isPinned: boolean;
   creatorReplied: boolean;
   reportsCount: number;
   video: { id: string; title: string; slug: string } | null;

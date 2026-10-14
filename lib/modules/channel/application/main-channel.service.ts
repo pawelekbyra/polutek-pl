@@ -71,6 +71,28 @@ export class MainChannelService {
     return channel;
   }
 
+  /**
+   * A channel addressed by id for a public, viewer-facing action (subscribing): it must exist and be publicly visible
+   * (CLAUDE.md 4.24). A hidden or missing channel is the same 404, so the answer does not reveal which one it is (4.23).
+   */
+  static async getPubliclyVisibleById(ctx: AppContext, channelId: string) {
+    const channel = await findChannelById(ctx.prisma, channelId);
+    if (!channel || isGone(channel) || !MainChannelPolicy.isPubliclyVisible(channel)) {
+      throw new ChannelNotFoundError(channelId);
+    }
+    return channel;
+  }
+
+  /**
+   * A channel addressed by id regardless of visibility (a viewer may always leave a channel that was suspended or
+   * deleted). Missing = 404.
+   */
+  static async getAnyById(ctx: AppContext, channelId: string) {
+    const channel = await findChannelById(ctx.prisma, channelId);
+    if (!channel) throw new ChannelNotFoundError(channelId);
+    return channel;
+  }
+
   /** Id of the platform's main channel (the `main_channel_id` setting), or null when none is configured. */
   static async getMainChannelId(ctx: AppContext): Promise<string | null> {
     return await resolveMainChannelId(ctx.prisma);

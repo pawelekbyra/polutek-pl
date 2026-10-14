@@ -304,6 +304,82 @@ describe('checkVideoAccess Use Case Matrix', () => {
     });
   });
 
+  describe('Unlisted videos (reachable by link, same tier rules as PUBLISHED)', () => {
+    const unlisted = { ...baseVideo, status: VideoStatus.UNLISTED };
+    const ask = (actor: any) => checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx(actor));
+
+    it('lets a guest watch an unlisted PUBLIC video', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue(unlisted);
+      const result = await ask({ type: 'guest' });
+      expect(result.ok && result.data).toMatchObject({ hasAccess: true, videoId: 'v1' });
+    });
+
+    it('asks a guest to sign in for an unlisted LOGGED_IN video and lets a signed-in viewer in', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue({ ...unlisted, tier: AccessTier.LOGGED_IN });
+      const guest = await ask({ type: 'guest' });
+      expect(guest.ok && guest.data).toMatchObject({ hasAccess: false, reason: 'LOGIN_REQUIRED' });
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1', isDeleted: false });
+      const user = await ask({ type: 'user', userId: 'u1' });
+      expect(user.ok && user.data.hasAccess).toBe(true);
+    });
+
+    it('still requires an entitlement for an unlisted PAID video', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue({ ...unlisted, tier: 'PAID' });
+      mockPrisma.entitlement.findFirst.mockResolvedValue(null);
+      const result = await ask({ type: 'user', userId: 'u1' });
+      expect(result.ok && result.data).toMatchObject({ hasAccess: false, reason: 'PAYMENT_REQUIRED' });
+    });
+
+    it('does not open an unlisted video of a channel that is not public, nor a removed one', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue({ ...unlisted, creator: { id: 'other', userId: 'owner-x', status: 'SUSPENDED' } });
+      const hidden = await ask({ type: 'guest' });
+      expect(hidden.ok && hidden.data.reason).toBe('NOT_FOUND');
+      mockPrisma.video.findFirst.mockResolvedValue({ ...unlisted, moderationStatus: 'REMOVED' });
+      const removed = await ask({ type: 'guest' });
+      expect(removed.ok && removed.data.reason).toBe('NOT_FOUND');
+    });
+
+    it('keeps an unlisted video that is not due yet closed', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue({ ...unlisted, publishedAt: new Date(now.getTime() + 10_000) });
+      const result = await ask({ type: 'guest' });
+      expect(result.ok && result.data.reason).toBe('NOT_FOUND');
+    });
+  });
+
+  describe('Adult videos declared by the creator (isAdult = AGE_RESTRICTED effect)', () => {
+    const adult = { ...baseVideo, isAdult: true };
+    const ask = (actor: any) => checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx(actor));
+
+    it('asks a guest to sign in even for a PUBLIC tier video', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue(adult);
+      const result = await ask({ type: 'guest' });
+      expect(result.ok && result.data).toMatchObject({ hasAccess: false, reason: 'LOGIN_REQUIRED', requiredTier: 'LOGGED_IN' });
+    });
+
+    it('lets a signed-in viewer watch it', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue(adult);
+      const result = await ask({ type: 'user', userId: 'u1' });
+      expect(result.ok && result.data.hasAccess).toBe(true);
+    });
+
+    it('applies to an unlisted adult video too and is identical to the moderation state', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue({ ...adult, status: VideoStatus.UNLISTED });
+      const declared = await ask({ type: 'guest' });
+      mockPrisma.video.findFirst.mockResolvedValue({ ...baseVideo, status: VideoStatus.UNLISTED, moderationStatus: 'AGE_RESTRICTED' });
+      const moderated = await ask({ type: 'guest' });
+      expect(declared.ok && declared.data).toEqual(moderated.ok && moderated.data);
+      expect(declared.ok && declared.data.reason).toBe('LOGIN_REQUIRED');
+    });
+
+    it('does not block the channel owner or staff previewing it', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue({ ...adult, creator: { ...baseVideo.creator, userId: 'owner-x' } });
+      const owner = await ask({ type: 'user', userId: 'owner-x' });
+      expect(owner.ok && owner.data.hasAccess).toBe(true);
+      const staff = await ask({ type: 'admin', userId: 'a1' });
+      expect(staff.ok && staff.data.hasAccess).toBe(true);
+    });
+  });
+
   describe("Premiere (SEC-10: same decision for id and slug)", () => {
     const premiereAt = new Date(now.getTime() + 86_400_000);
     const upcoming = { ...baseVideo, id: "3f2a1b4c-0000-4000-8000-000000000001", slug: "premiera", premiereAt };

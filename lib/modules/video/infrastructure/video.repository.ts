@@ -44,6 +44,13 @@ export interface CreateVideoInput {
   tags?: string[];
   category?: string | null;
   commentsMode?: VideoCommentsMode;
+  /** Creator's 18+ declaration (signed-in viewers only). */
+  isAdult?: boolean;
+  /**
+   * Only with `publishAfterAssetReady`: what the video becomes when processing finishes (default PUBLISHED).
+   * Not a column: the create use case stores it as a pending setting (application/ready-visibility.ts).
+   */
+  readyVisibility?: "PUBLISHED" | "UNLISTED";
 }
 
 export interface AdminUpdateVideoInput extends Partial<CreateVideoInput>, FundraisingGoalFields {
@@ -284,6 +291,7 @@ export class VideoRepository {
       ...(input.tags !== undefined ? { tags: input.tags } : {}),
       ...(input.category !== undefined ? { category: input.category } : {}),
       ...(input.commentsMode !== undefined ? { commentsMode: input.commentsMode } : {}),
+      ...(input.isAdult !== undefined ? { isAdult: input.isAdult === true } : {}),
     };
 
     return await tx.video.create({ data });
@@ -315,6 +323,7 @@ export class VideoRepository {
     if (data.tags !== undefined) updateData.tags = data.tags;
     if (data.category !== undefined) updateData.category = data.category;
     if (data.commentsMode !== undefined) updateData.commentsMode = data.commentsMode;
+    if (data.isAdult !== undefined) updateData.isAdult = data.isAdult === true;
     Object.assign(updateData, pickFundraisingUpdate(data));
 
     if (status && status !== VideoStatus.PUBLISHED) {

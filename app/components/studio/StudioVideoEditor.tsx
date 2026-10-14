@@ -5,7 +5,7 @@ import { useLanguage } from "@/app/components/LanguageContext";
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
 import { StudioApiError, jsonBody, studioApi, studioThumbnailSrc, type StudioVideo } from "./studio-client";
 import { confirmLeave, setUnsavedWork } from "./unsaved-guard";
-import { DESCRIPTION_MAX, TITLE_MAX, isFormDirty, toLocalInput, validateCoverFile, type EditorForm } from "./video-form";
+import { DESCRIPTION_MAX, TITLE_MAX, isFormDirty, toLocalInput, validateCoverFile, visibilityAction, type EditorForm, type EditorVisibility } from "./video-form";
 import VideoMoreOptions from "./VideoMoreOptions";
 import { Badge, Card, CharCounter, Field, Notice, ProgressBar, buttonClass, dangerButtonClass, ghostButtonClass, inputClass, smallGhostButtonClass } from "./ui";
 
@@ -30,6 +30,7 @@ function toForm(video: StudioVideo): EditorForm {
     tags: video.tags ?? [],
     category: video.category ?? "",
     commentsMode: video.commentsMode ?? "ON",
+    isAdult: video.isAdult === true,
   };
 }
 
@@ -44,6 +45,7 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
   const [message, setMessage] = useState<{ kind: "error" | "success"; text: string } | null>(null);
   const [confirmDelete, setConfirmDelete] = useState("");
   const [copied, setCopied] = useState(false);
+  const [visibility, setVisibility] = useState<EditorVisibility | null>(null);
 
   const base = `/api/studio/videos/${encodeURIComponent(id)}`;
   const dirty = form !== null && isFormDirty(form, baseline);
@@ -129,6 +131,7 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
             tags: form.tags,
             category: form.category || null,
             commentsMode: form.commentsMode,
+            isAdult: form.isAdult,
           }),
         }),
       tx("Zapisano.", "Saved."),
@@ -213,6 +216,47 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
     ARCHIVED: tx("Zarchiwizowany", "Archived"),
   };
   const published = video.status === "PUBLISHED";
+  const unlisted = video.status === "UNLISTED";
+  const linkLive = published || unlisted;
+  const currentVisibility: EditorVisibility | null = video.status === "ARCHIVED" ? null : (video.status as EditorVisibility);
+  const chosenVisibility: EditorVisibility = visibility ?? currentVisibility ?? "DRAFT";
+  const visibilityLabel: Record<EditorVisibility, string> = {
+    DRAFT: tx("Prywatny (szkic)", "Private (draft)"),
+    UNLISTED: tx("Niepubliczny", "Unlisted"),
+    PUBLISHED: tx("Publiczny", "Public"),
+  };
+  const visibilityHint: Record<EditorVisibility, string> = {
+    DRAFT: tx("Widzisz go tylko Ty i osoby z kanału.", "Only you and your channel's members can see it."),
+    UNLISTED: tx(
+      "Każdy z linkiem obejrzy film, ale nie pojawi się na listach ani w wyszukiwarce.",
+      "Anyone with the link can watch, but it does not appear in lists or search.",
+    ),
+    PUBLISHED: tx("Film jest widoczny na kanale, w wyszukiwarce i na listach.", "The video is visible on the channel, in search and in lists."),
+  };
+  const applyVisibility = () => {
+    if (!currentVisibility || chosenVisibility === currentVisibility) return;
+    if (
+      chosenVisibility === "DRAFT" &&
+      !window.confirm(
+        tx(
+          "Cofnąć publikację? Film przestanie być dostępny dla widzów i wróci do prywatnego szkicu.",
+          "Unpublish this video? Viewers will no longer be able to watch it and it goes back to a private draft.",
+        ),
+      )
+    )
+      return;
+    const success =
+      chosenVisibility === "DRAFT"
+        ? tx("Film jest prywatnym szkicem.", "The video is now a private draft.")
+        : chosenVisibility === "UNLISTED"
+          ? tx("Film jest niepubliczny: dostępny tylko z linkiem.", "The video is unlisted: available by link only.")
+          : tx("Film opublikowany.", "Video published.");
+    void run(
+      () => studioApi(`${base}/publish`, { method: "POST", ...jsonBody({ action: visibilityAction(chosenVisibility) }) }),
+      success,
+      false,
+    ).then(() => setVisibility(null));
+  };
   const premiereDate = video.premiereAt ? new Date(video.premiereAt) : null;
   const premiereUpcoming = premiereDate !== null && premiereDate.getTime() > Date.now();
 
@@ -254,13 +298,24 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
                   <option value="LOGGED_IN">{tx("Tylko zalogowani", "Signed-in viewers only")}</option>
                 </select>
               </Field>
-              <Field
-                label={tx("Premiera (opcjonalnie)", "Premiere (optional)")}
-                htmlFor="ed-premiere"
-                hint={tx("Zostaw puste, aby opublikować od razu.", "Leave empty to publish at once.")}
-              >
-                <input id="ed-premiere" type="datetime-local" className={inputClass} value={form.premiere} aria-describedby="ed-premiere-hint" onChange={(e) => set("premiere", e.target.value)} />
-              </Field>
+              <label htmlFor="ed-adult" className="flex min-h-10 cursor-pointer items-start gap-3 rounded-xl border border-[var(--chan-line)] p-3">
+                <input id="ed-adult" type="checkbox" checked={form.isAdult} className="mt-1 h-4 w-4" onChange={(e) => set("isAdult", e.target.checked)} />
+                <span className="grid gap-0.5">
+                  <span className="text-[14px] font-semibold text-[var(--chan-ink)]">{tx("Treści dla dorosłych (18+)", "Adult content (18+)")}</span>
+                  <span className="text-[12px] text-[var(--chan-muted)]">
+                    {tx("Film obejrzą tylko zalogowani widzowie i nie trafi do mapy strony.", "Only signed-in viewers can watch it, and it is left out of the sitemap.")}
+                  </span>
+                </span>
+              </label>
+              {!unlisted && (
+                <Field
+                  label={tx("Premiera (opcjonalnie)", "Premiere (optional)")}
+                  htmlFor="ed-premiere"
+                  hint={tx("Zostaw puste, aby opublikować od razu.", "Leave empty to publish at once.")}
+                >
+                  <input id="ed-premiere" type="datetime-local" className={inputClass} value={form.premiere} aria-describedby="ed-premiere-hint" onChange={(e) => set("premiere", e.target.value)} />
+                </Field>
+              )}
               <VideoMoreOptions
                 idPrefix="ed"
                 value={{ tags: form.tags, category: form.category, commentsMode: form.commentsMode }}
@@ -305,66 +360,59 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
                   >
                     {tx("Przywróć jako szkic", "Restore as draft")}
                   </button>
-                ) : !published ? (
+                ) : (
                   <button
                     type="button"
                     className={ghostButtonClass}
-                    disabled={busy || !ready || dirty}
-                    title={
-                      dirty
-                        ? tx("Najpierw zapisz zmiany.", "Save your changes first.")
-                        : ready
-                          ? undefined
-                          : tx("Film musi się najpierw przetworzyć.", "The video has to finish processing first.")
-                    }
+                    disabled={busy || dirty}
+                    title={dirty ? tx("Najpierw zapisz zmiany.", "Save your changes first.") : undefined}
                     onClick={() =>
-                      run(() => studioApi(`${base}/publish`, { method: "POST", ...jsonBody({ action: "publish" }) }), tx("Film opublikowany.", "Video published."), false)
+                      run(() => studioApi(`${base}/publish`, { method: "POST", ...jsonBody({ action: "archive" }) }), tx("Film zarchiwizowany.", "Video archived."), false)
                     }
                   >
-                    {tx("Opublikuj", "Publish")}
+                    {tx("Zarchiwizuj", "Archive")}
                   </button>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      className={ghostButtonClass}
-                      disabled={busy || dirty}
-                      title={dirty ? tx("Najpierw zapisz zmiany.", "Save your changes first.") : undefined}
-                      onClick={() => {
-                        if (
-                          !window.confirm(
-                            tx(
-                              "Cofnąć publikację? Film przestanie być widoczny publicznie i wróci do prywatnego szkicu.",
-                              "Unpublish this video? It will no longer be visible to the public and goes back to a private draft.",
-                            ),
-                          )
-                        )
-                          return;
-                        void run(
-                          () => studioApi(`${base}/publish`, { method: "POST", ...jsonBody({ action: "unpublish" }) }),
-                          tx("Publikacja cofnięta. Film jest prywatnym szkicem.", "Unpublished. The video is now a private draft."),
-                          false,
-                        );
-                      }}
-                    >
-                      {tx("Cofnij publikację", "Unpublish")}
-                    </button>
-                    <button
-                      type="button"
-                      className={ghostButtonClass}
-                      disabled={busy || dirty}
-                      title={dirty ? tx("Najpierw zapisz zmiany.", "Save your changes first.") : undefined}
-                      onClick={() =>
-                        run(() => studioApi(`${base}/publish`, { method: "POST", ...jsonBody({ action: "archive" }) }), tx("Film zarchiwizowany.", "Video archived."), false)
-                      }
-                    >
-                      {tx("Zarchiwizuj", "Archive")}
-                    </button>
-                  </>
                 )}
               </div>
             </form>
           </Card>
+
+          {currentVisibility && (
+            <Card title={tx("Widoczność", "Visibility")}>
+              <div className="grid max-w-xl gap-3">
+                <Field label={tx("Kto znajdzie ten film", "Who can find this video")} htmlFor="ed-visibility" hint={visibilityHint[chosenVisibility]}>
+                  <select
+                    id="ed-visibility"
+                    className={inputClass}
+                    value={chosenVisibility}
+                    disabled={busy}
+                    aria-describedby="ed-visibility-hint"
+                    onChange={(e) => setVisibility(e.target.value as EditorVisibility)}
+                  >
+                    {(["DRAFT", "UNLISTED", "PUBLISHED"] as EditorVisibility[]).map((option) => (
+                      <option key={option} value={option}>
+                        {visibilityLabel[option]}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                {chosenVisibility !== "DRAFT" && !ready && currentVisibility === "DRAFT" && (
+                  <p className="text-[12px] text-[var(--chan-muted)]">{tx("Film musi się najpierw przetworzyć.", "The video has to finish processing first.")}</p>
+                )}
+                <div>
+                  <button
+                    type="button"
+                    className={buttonClass}
+                    disabled={busy || dirty || chosenVisibility === currentVisibility || (chosenVisibility !== "DRAFT" && currentVisibility === "DRAFT" && !ready)}
+                    title={dirty ? tx("Najpierw zapisz zmiany.", "Save your changes first.") : undefined}
+                    onClick={applyVisibility}
+                  >
+                    {tx("Zmień widoczność", "Change visibility")}
+                  </button>
+                </div>
+              </div>
+            </Card>
+          )}
 
           <Card title={tx("Usuń film", "Delete video")}>
             <div className="grid max-w-xl gap-3">
@@ -391,10 +439,11 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
             <img
               src={studioThumbnailSrc(video)}
               alt={tx("Miniatura filmu", "Video thumbnail")}
-              className="aspect-video w-full rounded-xl bg-[var(--chan-surface)] object-cover"
+              className="aspect-video w-full rounded-none bg-[var(--chan-surface)] object-cover"
             />
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <Badge tone={published ? "good" : "neutral"}>{statusLabel[video.status]}</Badge>
+              {video.isAdult && <Badge tone="warn">18+</Badge>}
               <span className="text-[13px] text-[var(--chan-ink)]">{pipeline ? pipelineLabel[pipeline.summary] : tx("Sprawdzam…", "Checking…")}</span>
             </div>
             {pipeline?.job && pipeline.summary === "ENCODING" && (
@@ -441,8 +490,13 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
           </Card>
 
           <Card title={tx("Link do filmu", "Video link")}>
-            {published && watchUrl ? (
+            {linkLive && watchUrl ? (
               <div className="grid gap-2">
+                {unlisted && (
+                  <p className="text-[12px] text-[var(--chan-muted)]">
+                    {tx("Ten film jest niepubliczny: obejrzy go każdy, kto dostanie ten link.", "This video is unlisted: anyone who gets this link can watch it.")}
+                  </p>
+                )}
                 <input readOnly value={watchUrl} aria-label={tx("Link do filmu", "Video link")} className={inputClass} onFocus={(e) => e.currentTarget.select()} />
                 <div className="flex flex-wrap items-center gap-2">
                   <button type="button" className={smallGhostButtonClass} onClick={copyLink}>

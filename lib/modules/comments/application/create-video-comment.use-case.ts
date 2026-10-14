@@ -1,4 +1,5 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
+import { canModerateVideoComments } from "./authorize-comments";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { CommentDto, mapCommentToDto } from "../domain/comment.dto";
 import { CommentError, commentDatabaseError } from "../domain/comment.errors";
@@ -81,7 +82,7 @@ export async function createVideoComment(
     if (!video) return fail({ type: "NOT_FOUND", message: "Film nie istnieje." });
 
     const videoCreatorId = video.creator?.userId || null;
-    const canModerate = actor.type === 'admin' || videoCreatorId === userId;
+    const canModerate = await canModerateVideoComments(ctx, resolvedVideoId);
 
     // The creator's choice per video (Studio "Komentarze"); owner and staff are not limited by it.
     const newStatus = CommentPolicy.statusForNewComment(video.commentsMode, canModerate);

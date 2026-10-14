@@ -18,6 +18,7 @@ const m = vi.hoisted(() => ({
   hideAdminComment: vi.fn(),
   createCreatorReply: vi.fn(),
   startOriginalUpload: vi.fn(),
+  getChannelLimitsView: vi.fn(),
 }));
 
 vi.mock("@/lib/api/studio-session", () => ({ resolveStudioSession: m.resolveStudioSession }));
@@ -54,6 +55,7 @@ vi.mock("@/lib/modules/video-pipeline", () => ({
   completeOriginalMultipart: vi.fn(),
   getPipelineState: vi.fn(),
   cancelEncode: vi.fn(),
+  getChannelLimitsView: m.getChannelLimitsView,
 }));
 vi.mock("@/lib/modules/comments", () => ({
   listPanelComments: m.listPanelComments,
@@ -114,6 +116,15 @@ describe("Studio API: session and channel", () => {
     expect(body.channelCreation).toBe("off");
     process.env.PLATFORM_GATE_CHANNEL_CREATION = "invite";
     expect((await (await meGet(req("/api/studio/me"))).json()).channelCreation).toBe("invite");
+  });
+
+  it("exposes the current channel's limits (read only) and survives a failed lookup", async () => {
+    m.getChannelLimitsView.mockResolvedValueOnce({ maxVideoSeconds: 900, maxUploadBytes: 1000, maxUploadsPerDay: 5 });
+    expect((await (await meGet(req("/api/studio/me"))).json()).limits).toEqual({ maxVideoSeconds: 900, maxUploadBytes: 1000, maxUploadsPerDay: 5 });
+    m.getChannelLimitsView.mockRejectedValueOnce(new Error("db down"));
+    const failed = await meGet(req("/api/studio/me"));
+    expect(failed.status).toBe(200);
+    expect((await failed.json()).limits).toBeNull();
   });
 
   it("creates a channel with the validated body and answers 201", async () => {

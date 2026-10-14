@@ -41,6 +41,7 @@ interface ChannelHomeProps {
     totalPaid: number;
     initialInteraction?: { liked: boolean; disliked: boolean };
     initialIsSubscribed?: boolean;
+    initialNotify?: boolean;
     role?: string;
   } | null;
   /** Server-rendered sidebar layout, so the playlist is in the first HTML (see HomeExperience). */
@@ -342,7 +343,10 @@ function ChannelHomeContent({
                 initialInteraction={
                   selectedVideo.id === serverInteractionVideoId ? userProfile?.initialInteraction : undefined
                 }
-                initialIsSubscribed={userProfile?.initialIsSubscribed}
+                // The server resolved the subscription for the video it selected; another video may belong
+                // to another channel, so the button asks the API for that one.
+                initialIsSubscribed={selectedVideo.id === serverInteractionVideoId ? userProfile?.initialIsSubscribed : undefined}
+                initialNotify={selectedVideo.id === serverInteractionVideoId ? userProfile?.initialNotify : undefined}
                 startWithSound={selectionState.startWithSound}
               />
             </div>

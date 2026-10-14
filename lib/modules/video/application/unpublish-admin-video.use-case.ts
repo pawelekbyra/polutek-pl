@@ -8,9 +8,10 @@ import { recordAuditEvent } from "@/lib/modules/audit";
 import { toAdminVideoDto } from "../domain/video.dto";
 import { VideoNotFoundError } from "../domain/video.errors";
 import { syncPublicThumbnail } from "./sync-public-thumbnail.service";
+import { clearReadyVisibility } from "./ready-visibility";
 
 /**
- * Returns a video to a private draft. For PUBLISHED this is "unpublish", for ARCHIVED "restore as draft".
+ * Returns a video to a private draft. For PUBLISHED or UNLISTED this is "unpublish", for ARCHIVED "restore as draft".
  * Clears `isMainFeatured` / `showInSidebar` (a draft must not hold a public slot) and any pending auto-publish,
  * and removes the public thumbnail copy. Idempotent: a video that already is a draft is returned unchanged.
  */
@@ -55,6 +56,7 @@ export async function unpublishAdminVideo(
     return result;
   });
 
+  await clearReadyVisibility(videoId, ctx);
   await syncPublicThumbnail(updated, ctx);
 
   return ok(toAdminVideoDto(updated));

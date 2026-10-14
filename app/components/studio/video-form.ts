@@ -12,12 +12,17 @@ export const DESCRIPTION_MAX = 5000;
 export const COVER_MAX_BYTES = 5 * 1024 * 1024;
 export const COVER_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 
-/** What a creator can choose in step 2 of the wizard. */
-export type VisibilityMode = "private" | "auto" | "scheduled";
+/**
+ * What a creator can choose in step 2 of the wizard: Prywatny (draft), Niepubliczny (link only), Publiczny
+ * (publishes when processing finishes) and Zaplanowany (public from a chosen time).
+ */
+export type VisibilityMode = "private" | "unlisted" | "auto" | "scheduled";
 
 export interface VisibilityFields {
   publishAfterAssetReady: boolean;
   premiereAt: string | null;
+  /** Present only for "unlisted": what the video becomes when processing finishes. */
+  publishAs?: "UNLISTED";
 }
 
 export type VisibilityResult =
@@ -27,12 +32,14 @@ export type VisibilityResult =
 /**
  * Maps the visibility choice to the fields of `POST /api/studio/videos`.
  * - private: a plain draft, nothing is published on its own;
+ * - unlisted: when processing finishes the video becomes reachable by link only (never listed);
  * - auto: publish when processing finishes;
  * - scheduled: publish when processing finishes and wait for `premiereAt` (a "coming soon" premiere).
  * `premiereLocal` is the value of a `datetime-local` input (browser local time).
  */
 export function visibilityToFields(mode: VisibilityMode, premiereLocal: string, now: Date): VisibilityResult {
   if (mode === "private") return { ok: true, fields: { publishAfterAssetReady: false, premiereAt: null } };
+  if (mode === "unlisted") return { ok: true, fields: { publishAfterAssetReady: true, premiereAt: null, publishAs: "UNLISTED" } };
   if (mode === "auto") return { ok: true, fields: { publishAfterAssetReady: true, premiereAt: null } };
   if (!premiereLocal) return { ok: false, reason: "PREMIERE_REQUIRED" };
   const at = new Date(premiereLocal);
@@ -53,7 +60,7 @@ export function validateCoverFile(file: { type: string; size: number }): "TYPE" 
   return null;
 }
 
-export type StatusFilter = "ALL" | "DRAFT" | "PUBLISHED" | "ARCHIVED";
+export type StatusFilter = "ALL" | "DRAFT" | "PUBLISHED" | "UNLISTED" | "ARCHIVED";
 export type SortKey = "newest" | "views";
 
 export interface ListQuery {
@@ -87,6 +94,25 @@ export interface EditorForm {
   /** A key of `VIDEO_CATEGORIES` or "" for none. */
   category: string;
   commentsMode: VideoCommentsModeValue;
+  /** The creator's 18+ declaration: signed-in viewers only. */
+  isAdult: boolean;
+}
+
+/** The editor's visibility choice; maps 1:1 to the publish route's actions (draft = unpublish). */
+export type EditorVisibility = "DRAFT" | "UNLISTED" | "PUBLISHED";
+
+export function visibilityAction(target: EditorVisibility): "unpublish" | "unlist" | "publish" {
+  return target === "DRAFT" ? "unpublish" : target === "UNLISTED" ? "unlist" : "publish";
+}
+
+/** "1 h 5 min" / "30 min" text of a channel's length limit. */
+export function formatLimitDuration(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h > 0 && m > 0) return `${h} h ${m} min`;
+  if (h > 0) return `${h} h`;
+  return `${Math.max(1, m)} min`;
 }
 
 /** True when anything the creator can type differs from the saved baseline. */

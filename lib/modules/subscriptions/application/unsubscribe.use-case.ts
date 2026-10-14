@@ -6,6 +6,7 @@ import { ResendAudienceGateway } from "../infrastructure/resend-audience.gateway
 import { normalizeTrustedEmail } from "../domain/email-address";
 import { ProviderSyncStatus } from "../domain/provider-sync-status";
 import { createScopedLogger } from "@/lib/logger";
+import { resolveLeavableChannel } from "./resolve-subscription-channel";
 
 export interface UnsubscribeResultDto {
   isSubscribed: boolean;
@@ -20,13 +21,14 @@ export interface UnsubscribeResultDto {
 
 export type UnsubscribeInput = {
   trustedEmail: string;
+  /** Channel id to leave; omitted = the main channel. A channel that is no longer public can still be left. */
+  creatorId?: string | null;
   audienceGateway?: Pick<ResendAudienceGateway, 'syncExplicitUnsubscribe'>;
 };
 
 export class UnsubscribeUseCase {
   static async execute(ctx: AppContext, input: UnsubscribeInput): Promise<UnsubscribeResultDto> {
     const logger = createScopedLogger(ctx.requestId ?? null);
-    const mainChannel = await MainChannelService.getRequired(ctx);
     const userId = (ctx.actor.type === 'user' || ctx.actor.type === 'admin') ? ctx.actor.userId : null;
     if (!userId) {
        throw new Error("UserId is required for unsubscribe");
@@ -37,37 +39,38 @@ export class UnsubscribeUseCase {
       throw new Error("Trusted user email is required for unsubscribe");
     }
 
+    const channel = await resolveLeavableChannel(ctx, input.creatorId);
+
     const result = await ctx.db.writeTransaction(async (tx) => {
       const subscriptionRepo = new SubscriptionRepository(tx);
       const preferenceRepo = new EmailPreferenceRepository(tx);
 
-      const deleted = await subscriptionRepo.deleteByUserIdAndCreatorId(userId, mainChannel.id, tx);
-      const prefResult = await preferenceRepo.recordExplicitContentOptOut(userId, trustedEmail, tx);
+      const deleted = await subscriptionRepo.deleteByUserIdAndCreatorId(userId, channel.id, tx);
+      const remaining = await subscriptionRepo.countByUserId(userId, tx);
 
-      if (!prefResult.recorded && prefResult.reason === 'FOREIGN_EMAIL_CONFLICT') {
-        logger.warn(`[SUBSCRIPTION_IDENTITY_CONFLICT] userId=${userId} reason=${prefResult.reason}`);
+      // The e-mail consent belongs to the user, not to the channel: it is withdrawn only when the last
+      // subscription goes. Leaving one of several channels keeps the others' e-mails flowing.
+      if (remaining === 0) {
+        const prefResult = await preferenceRepo.recordExplicitContentOptOut(userId, trustedEmail, tx);
+        if (!prefResult.recorded && prefResult.reason === 'FOREIGN_EMAIL_CONFLICT') {
+          logger.warn(`[SUBSCRIPTION_IDENTITY_CONFLICT] userId=${userId} reason=${prefResult.reason}`);
+        }
       }
 
-      const syncedChannel = typeof MainChannelService.syncSubscribersCount === "function"
-        ? await MainChannelService.syncSubscribersCount(ctx, mainChannel.id, tx)
-        : await (async () => {
-            if (deleted.count > 0) {
-              await MainChannelService.decrementSubscribersCount(ctx, mainChannel.id, tx);
-            }
-            return await MainChannelService.getRequired(ctx);
-          })();
-      return { deletedCount: deleted.count, subscribersCount: syncedChannel.subscribersCount ?? 0 };
+      const synced = await MainChannelService.syncSubscribersCount(ctx, channel.id, tx);
+      return { deletedCount: deleted.count, remaining, subscribersCount: synced.subscribersCount ?? 0 };
     });
 
-    const providerSyncStatus = await (input.audienceGateway ?? new ResendAudienceGateway()).syncExplicitUnsubscribe(trustedEmail);
-    const finalChannel = await MainChannelService.getRequired(ctx);
+    const providerSyncStatus: ProviderSyncStatus = result.remaining === 0
+      ? await (input.audienceGateway ?? new ResendAudienceGateway()).syncExplicitUnsubscribe(trustedEmail)
+      : 'SYNCED';
 
     return {
       isSubscribed: false,
       deleted: result.deletedCount > 0,
-      subscribersCount: result.subscribersCount ?? finalChannel.subscribersCount ?? 0,
-      creatorId: mainChannel.id,
-      creatorSlug: mainChannel.slug,
+      subscribersCount: result.subscribersCount,
+      creatorId: channel.id,
+      creatorSlug: channel.slug,
       purpose: "EMAIL_NOTIFICATIONS",
       providerSyncStatus,
       message: "Email notifications disabled for this channel.",

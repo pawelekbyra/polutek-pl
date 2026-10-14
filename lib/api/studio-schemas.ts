@@ -40,6 +40,8 @@ const videoMetadataFields = {
   tags: studioTagsSchema.optional(),
   category: z.enum(VIDEO_CATEGORIES).nullable().optional(),
   commentsMode: z.enum(VIDEO_COMMENTS_MODES).optional(),
+  /** Creator's 18+ declaration: signed-in viewers only (same effect as the AGE_RESTRICTED moderation state). */
+  isAdult: z.boolean().optional(),
 };
 
 export const createVideoSchema = z.object({
@@ -56,7 +58,15 @@ export const createVideoSchema = z.object({
   publishAfterAssetReady: z.boolean().optional(),
   /** ISO instant of a scheduled premiere (must be in the future; the use case validates it). */
   premiereAt: z.string().datetime({ offset: true }).nullable().optional(),
+  /**
+   * What the video becomes when processing finishes (only with `publishAfterAssetReady`): `PUBLISHED` (default) or
+   * `UNLISTED` ("Niepubliczny": reachable by link, never listed). An unlisted video cannot have a premiere.
+   */
+  publishAs: z.enum(["PUBLISHED", "UNLISTED"]).optional(),
   ...videoMetadataFields,
+}).refine((value) => !(value.publishAs === "UNLISTED" && value.premiereAt), {
+  message: "Film niepubliczny nie może mieć premiery.",
+  path: ["premiereAt"],
 });
 
 export const updateVideoSchema = z.object({
@@ -87,10 +97,15 @@ export const STUDIO_VIDEO_ORDER_BY: Record<(typeof STUDIO_VIDEO_SORTS)[number], 
   views: "views",
 };
 
-export const publishVideoSchema = z.object({ action: z.enum(["publish", "unpublish", "archive", "cancel_auto_publish"]) });
+/**
+ * `publish` = Publiczny, `unlist` = Niepubliczny (link only), `unpublish` = back to a private draft (Prywatny),
+ * `archive`, `cancel_auto_publish`. PUBLISHED <-> UNLISTED <-> DRAFT are all allowed; each entry into PUBLISHED or
+ * UNLISTED goes through the publication blockers.
+ */
+export const publishVideoSchema = z.object({ action: z.enum(["publish", "unlist", "unpublish", "archive", "cancel_auto_publish"]) });
 
 export const commentActionSchema = z.object({
-  action: z.enum(["hide", "approve", "restore", "hold", "delete", "heart", "unheart", "reply"]),
+  action: z.enum(["hide", "approve", "restore", "hold", "delete", "heart", "unheart", "pin", "unpin", "reply"]),
   text: z.string().max(2000).optional(),
   heart: z.boolean().optional(),
 });

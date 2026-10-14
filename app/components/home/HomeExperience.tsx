@@ -109,6 +109,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
   let userDb = null;
   let initialInteraction = { liked: false, disliked: false };
   let initialIsSubscribed = false;
+  let initialNotify = true;
   let viewerPieces: Awaited<ReturnType<typeof loadViewerPieces>>;
 
   if (userId) {
@@ -132,7 +133,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
       }).catch(() => null) : null,
       selectedVideo?.creatorId ? prisma.subscription.findUnique({
         where: { userId_creatorId: { userId, creatorId: selectedVideo.creatorId } },
-        select: { id: true }
+        select: { id: true, notify: true }
       }).catch(() => null) : null,
       loadViewerPieces(),
     ]);
@@ -140,6 +141,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
     userDb = dbResult;
     initialInteraction = { liked: !!like, disliked: !!dislike };
     initialIsSubscribed = !!sub;
+    initialNotify = sub?.notify ?? true;
     viewerPieces = pieces;
   } else {
     viewerPieces = await loadViewerPieces();
@@ -158,7 +160,8 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
     totalPaid: (userDb && 'paymentTotals' in userDb) ? normalizePaymentTotals(userDb.paymentTotals) : 0,
     role: userDb?.role || 'USER',
     initialInteraction,
-    initialIsSubscribed
+    initialIsSubscribed,
+    initialNotify
   } : null;
 
   if (content.status === 'error' || content.status === 'empty') {
