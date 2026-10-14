@@ -16,15 +16,8 @@ export class MainChannelNotFoundError extends MainChannelError {
 
 export class MainChannelNotApprovedError extends MainChannelError {
   constructor(slug: string) {
-    super(`Main channel "${slug}" exists but is not approved.`, 403, 'CHANNEL_NOT_APPROVED');
+    super(`Main channel "${slug}" exists but is not publicly visible.`, 403, 'CHANNEL_NOT_APPROVED');
     this.name = 'MainChannelNotApprovedError';
-  }
-}
-
-export class MainChannelNotPrimaryError extends MainChannelError {
-  constructor(slug: string) {
-    super(`Main channel "${slug}" exists but is not marked as primary.`, 403, 'CHANNEL_NOT_PRIMARY');
-    this.name = 'MainChannelNotPrimaryError';
   }
 }
 

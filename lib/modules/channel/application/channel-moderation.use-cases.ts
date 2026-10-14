@@ -5,6 +5,7 @@ import { fail, ok, type UseCaseResult } from "@/lib/modules/shared/result";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { authorize } from "@/lib/modules/authz";
 import { defaultLimitsFor } from "@/lib/platform-limits";
+import { isMainChannelId, resolveMainChannelId } from "./main-channel.service";
 
 /**
  * Platform staff operations on creator channels (admin panel, stage 5). Every function authorizes first
@@ -17,7 +18,8 @@ export type StaffChannelRow = {
   slug: string;
   handle: string | null;
   status: ChannelStatus;
-  isPrimary: boolean;
+  /** The platform's main channel (the `main_channel_id` setting): protected from suspension and deletion. */
+  isMain: boolean;
   isVerified: boolean;
   ownerEmail: string | null;
   videoCount: number;
@@ -56,7 +58,7 @@ export async function listChannelsForStaff(
       skip: (page - 1) * input.pageSize,
       take: input.pageSize,
       select: {
-        id: true, name: true, slug: true, handle: true, status: true, isPrimary: true, isVerified: true,
+        id: true, name: true, slug: true, handle: true, status: true, isVerified: true,
         subscribersCount: true, createdAt: true,
         user: { select: { email: true } },
         _count: { select: { videos: true } },
@@ -69,8 +71,9 @@ export async function listChannelsForStaff(
     _count: { _all: true },
   });
   const openBy = new Map(open.map((o) => [o.channelId, o._count._all]));
+  const mainId = await resolveMainChannelId(ctx.prisma);
   const items: StaffChannelRow[] = rows.map((r) => ({
-    id: r.id, name: r.name, slug: r.slug, handle: r.handle, status: r.status, isPrimary: r.isPrimary,
+    id: r.id, name: r.name, slug: r.slug, handle: r.handle, status: r.status, isMain: r.id === mainId,
     isVerified: r.isVerified, ownerEmail: r.user?.email ?? null, videoCount: r._count.videos,
     subscribersCount: r.subscribersCount, openReports: openBy.get(r.id) ?? 0, createdAt: r.createdAt,
   }));
@@ -95,7 +98,7 @@ export async function getChannelForStaff(ctx: AppContext, channelId: string): Pr
     where: { id: channelId },
     select: {
       id: true, name: true, slug: true, handle: true, status: true, statusReason: true, statusChangedAt: true, bio: true,
-      isPrimary: true, isVerified: true, subscribersCount: true, createdAt: true, deletedAt: true,
+      isVerified: true, subscribersCount: true, createdAt: true, deletedAt: true,
       user: { select: { email: true } },
       members: { select: { userId: true, role: true, user: { select: { email: true } } } },
       quota: true,
@@ -111,6 +114,7 @@ export async function getChannelForStaff(ctx: AppContext, channelId: string): Pr
       select: { id: true, action: true, reasonCode: true, reasonPublic: true, createdAt: true },
     }),
   ]);
+  const isMain = await isMainChannelId(ctx.prisma, c.id);
   const level = c.quota?.trustLevel ?? 0;
   const d = defaultLimitsFor(level);
   const quota = {
@@ -123,7 +127,7 @@ export async function getChannelForStaff(ctx: AppContext, channelId: string): Pr
     usedStorageBytes: c.quota ? Number(c.quota.usedStorageBytes) : 0,
   };
   return ok({
-    id: c.id, name: c.name, slug: c.slug, handle: c.handle, status: c.status, isPrimary: c.isPrimary,
+    id: c.id, name: c.name, slug: c.slug, handle: c.handle, status: c.status, isMain,
     isVerified: c.isVerified, ownerEmail: c.user?.email ?? null, videoCount: c._count.videos,
     subscribersCount: c.subscribersCount, openReports, createdAt: c.createdAt,
     statusReason: c.statusReason, statusChangedAt: c.statusChangedAt, bio: c.bio, deletedAt: c.deletedAt,
@@ -144,9 +148,9 @@ export async function setChannelStatus(
   if (!SETTABLE.includes(input.status)) return fail(new AppError("Nieprawidłowy status kanału.", 400, "INVALID_STATUS"));
   const reason = input.reason.trim();
   if (reason.length < 5 || reason.length > 500) return fail(new AppError("Podaj powód (5-500 znaków).", 400, "REASON_REQUIRED"));
-  const channel = await ctx.prisma.creator.findUnique({ where: { id: input.channelId }, select: { id: true, status: true, isPrimary: true } });
+  const channel = await ctx.prisma.creator.findUnique({ where: { id: input.channelId }, select: { id: true, status: true } });
   if (!channel || channel.status === "DELETED") return fail(new AppError("Nie znaleziono kanału.", 404, "CHANNEL_NOT_FOUND"));
-  if (channel.isPrimary && heavy) return fail(new AppError("Kanału głównego nie można zawiesić ani zablokować.", 409, "PRIMARY_PROTECTED"));
+  if (heavy && (await isMainChannelId(ctx.prisma, channel.id))) return fail(new AppError("Kanału głównego nie można zawiesić ani zablokować.", 409, "PRIMARY_PROTECTED"));
   if (channel.status === input.status) return fail(new AppError("Kanał ma już ten status.", 409, "STATUS_UNCHANGED"));
   const adminId = ctx.actor.type === "admin" ? ctx.actor.userId : null;
   const now = ctx.now();
@@ -156,8 +160,6 @@ export async function setChannelStatus(
         where: { id: channel.id, status: channel.status },
         data: {
           status: input.status,
-          // Legacy flag kept equal to "publicly visible" until the stage 8 cleanup migration.
-          isApproved: input.status === "ACTIVE" || input.status === "LIMITED",
           statusReason: reason,
           statusChangedAt: now,
           statusChangedById: adminId,

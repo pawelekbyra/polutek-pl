@@ -35,7 +35,7 @@ export async function checkVideoAccess(
     where: isUuid(videoIdOrSlug) ? { id: videoIdOrSlug } : { slug: videoIdOrSlug },
     include: {
         creator: {
-            select: { id: true, slug: true, userId: true, isApproved: true, isPrimary: true, status: true, deletedAt: true }
+            select: { id: true, slug: true, userId: true, status: true, deletedAt: true }
         }
     }
   });

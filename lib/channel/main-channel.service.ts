@@ -14,10 +14,6 @@ export class MainChannelService {
     return NewService.getOptional(ctx);
   }
 
-  static getConfiguredSlug() {
-      return NewService.getConfiguredSlug();
-  }
-
   static async getPublicRequired() {
       const ctx = createAppContext();
       return NewService.getRequired(ctx);

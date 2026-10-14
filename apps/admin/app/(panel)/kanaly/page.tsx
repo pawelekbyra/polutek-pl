@@ -59,7 +59,7 @@ async function ChannelsTab({ q, status, page }: { q: string; status: string; pag
                 {c.handle ? <span className="muted">@{c.handle}</span> : null}
                 <div className="mod-meta">
                   <Badge kind={CHANNEL_STATUS[c.status]?.kind ?? ""}>{CHANNEL_STATUS[c.status]?.label ?? c.status}</Badge>
-                  {c.isPrimary ? <Badge kind="info" icon={false}>kanał główny</Badge> : null}
+                  {c.isMain ? <Badge kind="info" icon={false}>kanał główny</Badge> : null}
                   <span>{c.videoCount} filmów</span>
                   <span>{c.subscribersCount} subskrybentów</span>
                   {c.ownerEmail ? <span>{c.ownerEmail}</span> : null}

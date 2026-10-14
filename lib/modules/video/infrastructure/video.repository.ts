@@ -7,6 +7,7 @@ import { VideoNotFoundError, VideoNotOnMainChannelError, VideoInvalidHeroError, 
 import { VideoPolicy } from "../domain/video.policy";
 import { withPrimaryAsset } from "../domain/video-asset-selection";
 import { pickFundraisingUpdate, type FundraisingGoalFields } from "../domain/fundraising";
+import { publiclyVisibleChannelWhere } from "@/lib/modules/channel";
 import { isDerivedThumbnailUrl } from "@/lib/modules/media"; // derived thumbnail srcs are never stored
 
 type VideoWithAssetsAndOriginal = Video & {
@@ -172,10 +173,7 @@ export class VideoRepository {
             { publishedAt: { lte: now } }
         ],
         showInSidebar: true,
-        creator: {
-            isApproved: true,
-            isPrimary: true
-        }
+        creator: publiclyVisibleChannelWhere()
       },
       orderBy: [
         { sidebarOrder: 'asc' },
@@ -252,10 +250,7 @@ export class VideoRepository {
             { publishedAt: null },
             { publishedAt: { lte: now } }
         ],
-        creator: {
-            isApproved: true,
-            isPrimary: true
-        }
+        creator: publiclyVisibleChannelWhere()
       }
     });
   }

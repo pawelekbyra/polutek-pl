@@ -72,7 +72,7 @@ async function ChannelTab() {
   if (!settings?.creator) {
     return (
       <Empty icon="warn" title="Nie udało się wczytać kanału">
-        Sprawdź, czy kanał główny jest skonfigurowany (MAIN_CREATOR_SLUG) i zatwierdzony. Szczegóły w logu kontenera panelu.
+        Sprawdź, czy kanał główny jest skonfigurowany (ustawienie main_channel_id) i ma status Aktywny lub Ograniczony. Szczegóły w logu kontenera panelu.
       </Empty>
     );
   }

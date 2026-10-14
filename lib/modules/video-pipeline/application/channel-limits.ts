@@ -1,11 +1,12 @@
 import type { AppContext } from "@/lib/modules/shared/app-context";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { defaultLimitsFor, type ChannelLimits } from "@/lib/platform-limits";
+import { isMainChannelId } from "@/lib/modules/channel";
 
 /**
  * Per-channel upload limits (CLAUDE.md 4.24): the size of one file, uploads per UTC day, encode jobs waiting or
  * running, and total stored originals. The channel's `ChannelQuota` row overrides the defaults of its trust level.
- * The platform's own flagship channel (`isPrimary`) keeps the historical global limits only, and so do staff.
+ * The platform's own flagship channel (the `main_channel_id` setting) keeps the historical global limits only, and so do staff.
  *
  * Checked when an upload is reserved, not while bytes flow: a refusal costs nothing.
  */
@@ -32,11 +33,12 @@ export async function resolveChannelLimits(ctx: AppContext, channelId: string): 
 /** `null` when the upload fits, otherwise the error to return (413 too large, 429 too many, 507 no space). */
 export async function channelUploadLimitError(
   ctx: AppContext,
-  channel: { id: string; isPrimary: boolean },
+  channel: { id: string },
   fileSize: number,
 ): Promise<AppError | null> {
   // Limits protect the platform from creators; platform staff and the system are not creators.
-  if (channel.isPrimary || ctx.actor.type !== "user") return null;
+  if (ctx.actor.type !== "user") return null;
+  if (await isMainChannelId(ctx.prisma, channel.id)) return null;
 
   const limits = await resolveChannelLimits(ctx, channel.id);
   const mib = (bytes: number) => Math.round(bytes / (1024 * 1024));

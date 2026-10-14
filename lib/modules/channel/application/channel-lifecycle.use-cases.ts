@@ -8,7 +8,7 @@ import { authorize } from "@/lib/modules/authz";
 import { gateMode } from "@/lib/platform-gates";
 import { defaultLimitsFor } from "@/lib/platform-limits";
 import { handleCandidates, validateChannelName, validateHandle } from "../domain/handle";
-import { MainChannelService } from "./main-channel.service";
+import { MainChannelService, isMainChannelId } from "./main-channel.service";
 
 /**
  * Channel lifecycle: create, rename, change handle, delete and restore (docs/architecture/multi-creator-platform.md).
@@ -207,8 +207,6 @@ export async function createChannel(
           handle,
           name: name.name,
           status,
-          isApproved: status === "ACTIVE",
-          isPrimary: false,
           language: input.language ?? null,
           country: input.country ?? null,
         },
@@ -271,7 +269,7 @@ export async function updateChannelProfile(
   const data: Prisma.CreatorUpdateInput = {};
   let renamed = false;
   if (input.name !== undefined) {
-    const name = validateChannelName(input.name, { allowBrand: ctx.actor.type === "admin" || channel.isPrimary });
+    const name = validateChannelName(input.name, { allowBrand: ctx.actor.type === "admin" || (await isMainChannelId(ctx.prisma, channel.id)) });
     if (!name.ok) return fail(new AppError(name.message, 400, `CHANNEL_NAME_${name.problem}`));
     if (name.name !== channel.name) {
       if ((await recentChanges(ctx, channel.id, "CHANNEL_RENAMED")) >= NAME_CHANGE_LIMIT) {
@@ -370,7 +368,7 @@ export async function requestChannelDeletion(ctx: AppContext): Promise<UseCaseRe
     channel: { id: channel.id, ownerUserId: channel.userId, status: channel.status },
   });
   if (denied) return fail(denied);
-  if (channel.isPrimary) {
+  if (await isMainChannelId(ctx.prisma, channel.id)) {
     return fail(new AppError("Kanału głównego platformy nie można usunąć tą drogą.", 409, "CHANNEL_PRIMARY_PROTECTED"));
   }
 
@@ -379,7 +377,7 @@ export async function requestChannelDeletion(ctx: AppContext): Promise<UseCaseRe
   await ctx.db.writeTransaction(async (tx: WriteTx) => {
     await tx.creator.update({
       where: { id: channel.id },
-      data: { status: "DELETED", isApproved: false, deletedAt: now, deleteAfter, statusChangedAt: now, statusReason: "OWNER_DELETED" },
+      data: { status: "DELETED", deletedAt: now, deleteAfter, statusChangedAt: now, statusReason: "OWNER_DELETED" },
     });
     await recordAuditEvent(ctx, {
       action: "CHANNEL_DELETION_REQUESTED",
@@ -416,7 +414,7 @@ export async function restoreChannel(ctx: AppContext, channelId: string): Promis
   const restored = await ctx.db.writeTransaction(async (tx: WriteTx) => {
     const updated = await tx.creator.update({
       where: { id: row.id },
-      data: { status: "ACTIVE", isApproved: true, deletedAt: null, deleteAfter: null, statusChangedAt: now, statusReason: null },
+      data: { status: "ACTIVE", deletedAt: null, deleteAfter: null, statusChangedAt: now, statusReason: null },
       select: SUMMARY_SELECT,
     });
     await recordAuditEvent(ctx, {

@@ -8,7 +8,6 @@ x-app-env: &app-env
   DATABASE_URL_UNPOOLED: postgresql://polutek:polutek_test@db:5432/polutek
   NEXT_PUBLIC_APP_URL: http://localhost:3100
   BETTER_AUTH_SECRET: dummy-dummy-dummy-dummy-dummy-dummy-dummy-dummy
-  MAIN_CREATOR_SLUG: polutek
   MAIN_CREATOR_NAME: Test Creator
   ADMIN_EMAIL: admin@example.local
   EMAIL_UNSUBSCRIBE_SIGNING_SECRET: dummy-dummy-dummy-dummy-dummy-dummy-dummy

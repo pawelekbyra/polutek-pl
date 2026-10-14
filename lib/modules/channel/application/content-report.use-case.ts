@@ -27,13 +27,13 @@ export async function createContentReport(
   if (input.targetType === "VIDEO") {
     const video = await ctx.prisma.video.findUnique({
       where: { id: input.targetId },
-      select: { id: true, creatorId: true, status: true, moderationStatus: true, creator: { select: { isApproved: true, status: true, deletedAt: true } } },
+      select: { id: true, creatorId: true, status: true, moderationStatus: true, creator: { select: { status: true, deletedAt: true } } },
     });
     const visible = !!video && video.status === "PUBLISHED" && video.moderationStatus !== "REMOVED" && MainChannelPolicy.isPubliclyVisible(video.creator);
     if (!video || !visible) return fail(new AppError("Nie znaleziono treści.", 404, "NOT_FOUND"));
     channelId = video.creatorId;
   } else {
-    const channel = await ctx.prisma.creator.findUnique({ where: { id: input.targetId }, select: { id: true, isApproved: true, status: true, deletedAt: true } });
+    const channel = await ctx.prisma.creator.findUnique({ where: { id: input.targetId }, select: { id: true, status: true, deletedAt: true } });
     if (!channel || !MainChannelPolicy.isPubliclyVisible(channel)) return fail(new AppError("Nie znaleziono treści.", 404, "NOT_FOUND"));
     channelId = channel.id;
   }

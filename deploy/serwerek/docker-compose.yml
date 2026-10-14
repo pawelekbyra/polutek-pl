@@ -45,7 +45,7 @@ services:
     # ENCODER_IMAGE is set by deploy.sh to polutek-worker:<sha>. Own env file with only what it needs (no Stripe/auth secrets).
     image: ${ENCODER_IMAGE:-polutek-worker:current}
     restart: unless-stopped
-    env_file: ./worker.env        # DATABASE_URL (host "db"), CLOUDFLARE_R2_* (incl. _BUCKET_VIDEO_ORIGINALS, _BUCKET_HLS, _BUCKET_THUMBNAILS_PRIVATE), MAIN_CREATOR_SLUG, NEXT_PUBLIC_R2_PUBLIC_HOST
+    env_file: ./worker.env        # DATABASE_URL (host "db"), CLOUDFLARE_R2_* (incl. _BUCKET_VIDEO_ORIGINALS, _BUCKET_HLS, _BUCKET_THUMBNAILS_PRIVATE), NEXT_PUBLIC_R2_PUBLIC_HOST
     depends_on:
       db:
         condition: service_healthy

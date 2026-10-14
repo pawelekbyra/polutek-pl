@@ -17,14 +17,14 @@ const STATUS_CHOICES: [string, string][] = [
   ["BANNED", "Zablokowany (ukryty, wymaga potwierdzenia tożsamości)"],
 ];
 
-export function StatusForm({ channelId, status, isPrimary }: { channelId: string; status: string; isPrimary: boolean }) {
+export function StatusForm({ channelId, status, isMain }: { channelId: string; status: string; isMain: boolean }) {
   const { state, pending, errors, onSubmit, formRef } = useActionForm(setChannelStatusAction, { returnTo: `/kanaly/${channelId}` });
   return (
     <form ref={formRef} noValidate onSubmit={onSubmit}>
       <input type="hidden" name="channelId" value={channelId} />
       <Field id="s-status" label="Nowy status" error={errors.status}>
         <select className="input" name="status" defaultValue={status === "PENDING_REVIEW" ? "ACTIVE" : status} {...describe("s-status", errors.status)}>
-          {STATUS_CHOICES.filter(([v]) => !(isPrimary && (v === "SUSPENDED" || v === "BANNED"))).map(([v, l]) => (
+          {STATUS_CHOICES.filter(([v]) => !(isMain && (v === "SUSPENDED" || v === "BANNED"))).map(([v, l]) => (
             <option key={v} value={v}>{l}</option>
           ))}
         </select>

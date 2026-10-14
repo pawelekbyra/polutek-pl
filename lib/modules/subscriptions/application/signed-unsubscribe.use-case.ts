@@ -1,6 +1,5 @@
 import { AppContext } from '@/lib/modules/shared/app-context';
-import { MainChannelService } from '@/lib/modules/channel';
-import { flags } from '@/lib/feature-flags';
+import { MainChannelService, resolveMainChannelId } from '@/lib/modules/channel';
 import { createScopedLogger } from '@/lib/logger';
 import { verifyContentUnsubscribeToken } from '../domain/signed-unsubscribe-token';
 import { EmailPreferenceRepository } from '../infrastructure/email-preference.repository';
@@ -49,9 +48,8 @@ export class SignedContentUnsubscribeUseCase {
       });
       if (!user?.email) return 'pl' as const;
 
-      const mainCreator = flags.mainCreatorSlug
-        ? await tx.creator.findUnique({ where: { slug: flags.mainCreatorSlug }, select: { id: true } })
-        : null;
+      const mainChannelId = await resolveMainChannelId(tx);
+      const mainCreator = mainChannelId ? { id: mainChannelId } : null;
 
       if (mainCreator) {
         const deleted = await tx.subscription.deleteMany({ where: { userId: user.id, creatorId: mainCreator.id } });

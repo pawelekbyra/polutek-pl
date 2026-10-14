@@ -3,9 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { AccessTier, VideoStatus, Prisma } from '@prisma/client';
 import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { PublicVideoDTO } from '@/app/types/video';
-import { canUseDemoFallbacks, flags } from '@/lib/feature-flags';
+import { canUseDemoFallbacks } from '@/lib/feature-flags';
 import { getCanonicalVideoTitle } from '@/lib/video-title-overrides';
-import { MainChannelService, resolveChannelAvatarUrl } from '@/lib/modules/channel';
+import { MainChannelService, publiclyVisibleChannelWhere, resolveChannelAvatarUrl, resolveMainChannelId } from '@/lib/modules/channel';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { MediaPolicy, resolvePublicThumbnailSrc } from '@/lib/modules/media';
 import { effectivePublishedAt, toPremiereDate } from '../domain/premiere';
@@ -25,10 +25,7 @@ export async function buildPublicVideoWhere(now: Date = new Date()): Promise<Pri
   return {
     status: VideoStatus.PUBLISHED,
     creatorId: mainChannel?.id || 'none',
-    creator: {
-      isApproved: true,
-      isPrimary: true,
-    },
+    creator: publiclyVisibleChannelWhere(),
     ...visiblePublishedAtFilter(now),
   };
 }
@@ -68,10 +65,7 @@ export class VideoContentService {
         tier: AccessTier.PUBLIC,
         creatorId: mainChannel?.id || 'none',
         ...visiblePublishedAtFilter(now),
-        creator: {
-          isApproved: true,
-          isPrimary: true,
-        },
+        creator: publiclyVisibleChannelWhere(),
       },
       include: {
         creator: {
@@ -183,13 +177,13 @@ export class VideoContentService {
 
       const adminData = await findMainCreatorAdminAvatar();
 
-      const mainCreatorSlug = flags.mainCreatorSlug;
+      const mainChannelId = await resolveMainChannelId(prisma);
 
       const dtos = videos.map(v => this.mapToPublicVideoDTO({
         ...v,
         // Administrator fallback only for the main channel; the owner's own avatar still wins (see mapToPublicVideoDTO).
         creator: v.creator
-          ? { ...v.creator, imageUrl: v.creator.slug === mainCreatorSlug ? adminData?.imageUrl ?? null : null }
+          ? { ...v.creator, imageUrl: v.creator.id === mainChannelId ? adminData?.imageUrl ?? null : null }
           : null,
       }));
       // Amount-free goal progress (CLAUDE.md "Fundraising progress bar").
@@ -225,7 +219,7 @@ export class VideoContentService {
 
       const adminData = await findMainCreatorAdminAvatar();
       const creator = video.creator
-        ? { ...video.creator, imageUrl: video.creator.slug === flags.mainCreatorSlug ? adminData?.imageUrl ?? null : null }
+        ? { ...video.creator, imageUrl: video.creator.id === (await resolveMainChannelId(prisma)) ? adminData?.imageUrl ?? null : null }
         : null;
       const [dto] = await withFundraisingProgress([this.mapToPublicVideoDTO({ ...video, creator })], [video]);
       return dto;
@@ -280,9 +274,9 @@ export class VideoContentService {
 
       const adminData = await findMainCreatorAdminAvatar();
 
-      const mainCreatorSlug = flags.mainCreatorSlug;
+      const mainChannelId = await resolveMainChannelId(prisma);
       const adminFallbackImageUrl =
-        selectedVideo.creator?.slug === mainCreatorSlug ? adminData?.imageUrl ?? null : null;
+        selectedVideo.creator?.id === mainChannelId ? adminData?.imageUrl ?? null : null;
 
       const [dto] = await withFundraisingProgress([this.mapToPublicVideoDTO({
         ...selectedVideo,

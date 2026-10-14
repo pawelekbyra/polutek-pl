@@ -12,3 +12,4 @@ export * from "./domain/channel-avatar";
 // Repository is internal to the module
 export * from "./application/channel-moderation.use-cases";
 export * from "./application/content-report.use-case";
+export * from "./domain/main-channel-setting";

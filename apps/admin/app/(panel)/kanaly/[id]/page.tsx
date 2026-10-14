@@ -41,7 +41,7 @@ export default async function ChannelPage({ params }: Props) {
             {deleted ? (
               <p className="muted">Kanał został usunięty przez właściciela. Czyszczenie nastąpi po upływie okresu karencji.</p>
             ) : (
-              <StatusForm channelId={c.id} status={c.status} isPrimary={c.isPrimary} />
+              <StatusForm channelId={c.id} status={c.status} isMain={c.isMain} />
             )}
           </Card>
         </div>
@@ -53,7 +53,7 @@ export default async function ChannelPage({ params }: Props) {
               <li>Wgrań dziennie: {c.quota.maxUploadsPerDay}</li>
               <li>Zadań w kolejce: {c.quota.maxQueuedJobs}</li>
             </ul>
-            {c.isPrimary ? <p className="muted">Kanał główny nie podlega limitom wgrywania.</p> : <TrustForm channelId={c.id} level={c.quota.trustLevel} />}
+            {c.isMain ? <p className="muted">Kanał główny nie podlega limitom wgrywania.</p> : <TrustForm channelId={c.id} level={c.quota.trustLevel} />}
           </Card>
         </div>
         <div className="span-6">

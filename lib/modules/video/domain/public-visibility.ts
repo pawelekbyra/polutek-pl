@@ -4,7 +4,7 @@ type VisibilityInput = {
   status?: string | null;
   publishedAt?: Date | string | null;
   moderationStatus?: string | null;
-  creator?: { isApproved: boolean; status?: string | null; deletedAt?: Date | null } | null;
+  creator?: { status?: string | null; deletedAt?: Date | null } | null;
 };
 
 /**

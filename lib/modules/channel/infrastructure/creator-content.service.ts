@@ -4,7 +4,7 @@ import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { PublicCreatorPageDTO } from '@/app/types/video';
 import { canUseDemoFallbacks } from '@/lib/feature-flags';
 import { VideoContentService, findMainCreatorAdminAvatar, publicVideoOrderBy } from '@/lib/modules/video/infrastructure/video-content.service';
-import { MainChannelService } from '@/lib/modules/channel/application/main-channel.service';
+import { MainChannelService, isMainChannelId, resolveMainChannelId } from '@/lib/modules/channel/application/main-channel.service';
 import { resolveChannelAvatarUrl } from '@/lib/modules/channel/domain/channel-avatar';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { MainChannelPolicy } from '@/lib/modules/channel/domain/channel.policy';
@@ -20,8 +20,9 @@ export class CreatorContentService {
    */
   static async getCreatorBySlug(slug: string | null): Promise<PublicCreatorPageDTO | null> {
     if (!slug) return null;
-    const mainCreatorSlug = MainChannelService.getConfiguredSlug();
-    const isMainCreator = slug === mainCreatorSlug;
+    // Only the demo fallbacks (development) need to know whether this slug is the main channel's.
+    const isMainCreator = async () =>
+      slug === DEFAULT_CREATOR.slug || slug === (await MainChannelService.getMainSlug(createAppContext()).catch(() => null));
 
     try {
       const include = {
@@ -53,7 +54,7 @@ export class CreatorContentService {
         if (released) creator = await prisma.creator.findUnique({ where: { id: released.channelId }, include });
       }
 
-      const adminData = creator?.isPrimary ? await findMainCreatorAdminAvatar() : null;
+      const adminData = creator && (await isMainChannelId(prisma, creator.id)) ? await findMainCreatorAdminAvatar() : null;
 
       if (creator && MainChannelPolicy.isPubliclyVisible(creator)) {
         // Same rule as the home page's channel strip (resolveChannelAvatarUrl): the channel owner's
@@ -82,7 +83,7 @@ export class CreatorContentService {
         };
       }
 
-      if (!creator && isMainCreator && canUseDemoFallbacks()) {
+      if (!creator && canUseDemoFallbacks() && (await isMainCreator())) {
         return {
             id: DEFAULT_CREATOR.id,
             name: DEFAULT_CREATOR.name,
@@ -98,7 +99,7 @@ export class CreatorContentService {
       return null;
     } catch (e: unknown) {
       console.error("[GET_CREATOR_BY_SLUG_ERROR]", e);
-      if (isMainCreator && canUseDemoFallbacks()) {
+      if (canUseDemoFallbacks() && (await isMainCreator())) {
         return {
             ...DEFAULT_CREATOR,
             imageUrl: null,
@@ -115,7 +116,7 @@ export class CreatorContentService {
    */
   static async getConfiguredCreatorSummary(): Promise<HomeCreatorSummary | null> {
     const channel = await MainChannelService.getOptional(createAppContext());
-    if (channel?.isApproved && channel.isPrimary) {
+    if (channel && MainChannelPolicy.isPubliclyVisible(channel)) {
       return { id: channel.id, name: channel.name, slug: channel.slug, bio: channel.bio };
     }
     if (!channel && canUseDemoFallbacks()) {
@@ -129,10 +130,10 @@ export class CreatorContentService {
    * The main channel is listed separately by the caller; it is skipped here.
    */
   static async listPublicChannelSlugs(limit = 1000): Promise<string[]> {
+    const mainId = await resolveMainChannelId(prisma);
     const rows = await prisma.creator.findMany({
       where: {
-        isPrimary: false,
-        isApproved: true,
+        ...(mainId ? { id: { not: mainId } } : {}),
         deletedAt: null,
         status: { in: ['ACTIVE', 'LIMITED'] },
         videos: { some: { status: VideoStatus.PUBLISHED, moderationStatus: { not: 'REMOVED' } } },
@@ -150,7 +151,6 @@ export class CreatorContentService {
     if (q.length < 2) return [];
     return prisma.creator.findMany({
       where: {
-        isApproved: true,
         deletedAt: null,
         status: { in: ['ACTIVE', 'LIMITED'] },
         OR: [{ name: { contains: q, mode: 'insensitive' } }, { handle: { contains: q, mode: 'insensitive' } }],
@@ -162,7 +162,7 @@ export class CreatorContentService {
   }
 
   static async getConfiguredOrDefaultCreator(): Promise<PublicCreatorPageDTO | null> {
-    const slug = MainChannelService.getConfiguredSlug();
-    return this.getCreatorBySlug(slug);
+    const slug = await MainChannelService.getMainSlug(createAppContext()).catch(() => null);
+    return this.getCreatorBySlug(slug ?? (canUseDemoFallbacks() ? DEFAULT_CREATOR.slug : null));
   }
 }

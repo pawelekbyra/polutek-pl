@@ -1,7 +1,7 @@
 import type { PublicVideoDTO } from "@/app/types/video";
 import { prisma } from "@/lib/prisma";
 import { VideoStatus } from "@prisma/client";
-import { MainChannelService } from "@/lib/modules/channel";
+import { MainChannelService, publiclyVisibleChannelWhere } from "@/lib/modules/channel";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { VideoContentService, visiblePublishedAtFilter } from "@/lib/modules/video/infrastructure/video-content.service";
 
@@ -69,10 +69,7 @@ export class VideoSearchService {
       where: {
         creatorId: mainChannel?.id || "none",
         status: VideoStatus.PUBLISHED,
-        creator: {
-          isApproved: true,
-          isPrimary: true,
-        },
+        creator: publiclyVisibleChannelWhere(),
         ...visiblePublishedAtFilter(now),
       },
       include: {

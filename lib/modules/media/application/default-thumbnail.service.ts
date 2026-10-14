@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { flags } from "@/lib/feature-flags";
+import { resolveMainChannel } from "@/lib/modules/channel";
 
 const SETTING_KEY = "default_video_thumbnail";
 
@@ -12,14 +12,11 @@ async function resolveDefaultThumbnailUrl(): Promise<string | null> {
   if (cached !== undefined && now < cacheExpiresAt) return cached;
 
   // Creator.defaultThumbnailUrl takes precedence over AppSetting blob upload
-  const mainCreatorSlug = flags.mainCreatorSlug;
-  if (mainCreatorSlug) {
-    const creator = await prisma.creator.findUnique({ where: { slug: mainCreatorSlug }, select: { defaultThumbnailUrl: true } }).catch(() => null);
-    if (creator?.defaultThumbnailUrl) {
-      cached = creator.defaultThumbnailUrl;
-      cacheExpiresAt = now + CACHE_TTL_MS;
-      return cached;
-    }
+  const mainChannel = await resolveMainChannel(prisma).catch(() => null);
+  if (mainChannel?.defaultThumbnailUrl) {
+    cached = mainChannel.defaultThumbnailUrl;
+    cacheExpiresAt = now + CACHE_TTL_MS;
+    return cached;
   }
 
   const setting = await prisma.appSetting.findUnique({ where: { key: SETTING_KEY } }).catch(() => null);

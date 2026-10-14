@@ -2,7 +2,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { VideoStatus } from "@prisma/client";
 import { MediaPolicy } from "@/lib/modules/media";
 import { isHealthTokenValue } from "@/lib/api/health-token";
-import { MainChannelService } from "@/lib/modules/channel";
+import { MainChannelService, MainChannelPolicy, publiclyVisibleChannelWhere } from "@/lib/modules/channel";
 
 export interface HealthCheckResult {
   ok: boolean;
@@ -12,8 +12,8 @@ export interface HealthCheckResult {
     allVideosCount: number;
     publishedVideosCount: number;
     visibleVideosCount: number;
-    approvedCreatorExists: boolean;
-    primaryCreatorExists: boolean;
+    publicCreatorExists: boolean;
+    mainChannelPublic: boolean;
     mainFeaturedVideoExists: boolean;
     mediaHostsConfigured: boolean;
   };
@@ -35,21 +35,17 @@ export async function checkHealth(
       return { ok: false, database: "failed" };
   }
 
-  const approvedCreatorExists = await ctx.prisma.creator.findFirst({
-    where: { isApproved: true },
-  });
-  const primaryCreatorExists = await ctx.prisma.creator.findFirst({
-    where: { isPrimary: true, isApproved: true },
+  const publicCreatorExists = await ctx.prisma.creator.findFirst({
+    where: publiclyVisibleChannelWhere(),
+    select: { id: true },
   });
 
   const mainChannel = await MainChannelService.getOptional(ctx);
+  const mainChannelPublic = !!mainChannel && MainChannelPolicy.isPubliclyVisible(mainChannel);
   const publicWhere = {
     status: VideoStatus.PUBLISHED,
     creatorId: mainChannel?.id || 'none',
-    creator: {
-      isApproved: true,
-      isPrimary: true,
-    },
+    creator: publiclyVisibleChannelWhere(),
     ...MediaPolicy.visiblePublishedAtFilter(ctx.now()),
   };
 
@@ -81,8 +77,8 @@ export async function checkHealth(
       allVideosCount,
       publishedVideosCount,
       visibleVideosCount,
-      approvedCreatorExists: !!approvedCreatorExists,
-      primaryCreatorExists: !!primaryCreatorExists,
+      publicCreatorExists: !!publicCreatorExists,
+      mainChannelPublic,
       mainFeaturedVideoExists: !!mainFeaturedVideoExists,
       mediaHostsConfigured: MediaPolicy.getAllowedMediaHosts(process.env).size > 0,
     },

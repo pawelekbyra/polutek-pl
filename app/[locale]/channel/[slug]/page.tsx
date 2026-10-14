@@ -86,7 +86,7 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
   }
 
   const userCtx = createAppContext();
-  const [userDb, initialSubscribed] = await Promise.all([
+  const [, initialSubscribed] = await Promise.all([
     userId ? getOrCreateCurrentUser(userCtx, userId).catch(() => null) : Promise.resolve(null),
     userId
       ? prisma.subscription.findUnique({
@@ -105,7 +105,7 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
       creator.subscribersCount = freshCreator.subscribersCount;
   }
   // The channel's own avatar from the public creator DTO (resolveChannelAvatarUrl, same as the home
-  // page strip). Never the signed-in viewer's image: `userDb` below is only used for the role.
+  // page strip). Never the signed-in viewer's image.
   const channelAvatar = creator.imageUrl || null;
 
   const allVideos: PublicVideoDTO[] = (creator.videos || []).map((v: PublicVideoDTO) => ({
@@ -177,7 +177,6 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
                 key={video.id}
                 video={video}
                 isLoggedIn={!!userId}
-                role={userDb?.role}
                 index={index}
               />
             ))}

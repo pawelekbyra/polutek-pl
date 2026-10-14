@@ -40,10 +40,6 @@ export const DISPLAY_CHF_TO_PLN_RATE = positiveRateFromEnv(process.env.DISPLAY_C
 export const DISPLAY_GBP_TO_PLN_RATE = positiveRateFromEnv(process.env.DISPLAY_GBP_TO_PLN_RATE, 4.9);
 
 export const MAIN_CREATOR_NAME = process.env.MAIN_CREATOR_NAME || 'Configured Creator';
-// PAWELPERFECT.PL is a strict single-channel app. Keep the env override, but use the
-// seeded canonical slug as a safe production fallback so missing Vercel env does
-// not break the public home page or admin video list at runtime.
-export const MAIN_CREATOR_SLUG = process.env.MAIN_CREATOR_SLUG || 'polutek';
 const configuredAppName = process.env.NEXT_PUBLIC_APP_NAME?.trim();
 // Display brand string is "www.pawelperfect.com" (2026-09-30: new primary domain; was .pl; owner decision, 2026-08-01: lowercased from
 // the earlier all-caps "WWW.PAWELPERFECT.PL") — matches the Stripe statement descriptor and is

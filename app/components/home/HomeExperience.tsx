@@ -80,9 +80,9 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
   // after hydration — that fetch was one of the pieces popping in on its own. The
   // JSON round-trip gives exactly the shape `/api/channel/sidebar` returns (dates as
   // strings). On failure the client falls back to fetching it itself.
-  const loadSidebarLayout = async (): Promise<SidebarLayout | null> => {
+  const loadSidebarLayout = async (isStaff: boolean): Promise<SidebarLayout | null> => {
     try {
-      const layout = await ChannelLayoutService.getSidebarLayout(userId ?? null);
+      const layout = await ChannelLayoutService.getSidebarLayout(userId ?? null, undefined, { isStaff });
       return JSON.parse(JSON.stringify(layout)) as SidebarLayout;
     } catch (e) {
       logger.error("[HOME_SIDEBAR_LAYOUT_ERROR]", e);
@@ -99,7 +99,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
     }
     const actor = await getHomeViewerActor();
     const [sidebar, comments, playback] = await Promise.all([
-      loadSidebarLayout(),
+      loadSidebarLayout(actor?.type === 'admin'),
       loadInitialComments(selectedVideo.id, actor),
       loadHeroPlaybackPlan({ video: selectedVideo, actor, viewerKey }),
     ]);
