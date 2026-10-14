@@ -4,7 +4,7 @@ import { createAppContext } from '@/lib/modules/shared/app-context';
 import { AccessTier, VideoStatus } from '@prisma/client';
 
 describe('updateAdminVideo use-case', () => {
-  const mockMainChannel = { id: 'c1', slug: 'polutek', isApproved: true, isPrimary: true };
+  const mockMainChannel = { id: 'c1', slug: 'polutek', status: 'ACTIVE' };
   const mockPrisma = {
     video: {
       findUnique: vi.fn(),
@@ -13,7 +13,8 @@ describe('updateAdminVideo use-case', () => {
       findFirst: vi.fn(),
     },
     auditLog: { create: vi.fn() },
-    creator: { findUnique: vi.fn().mockResolvedValue(mockMainChannel) },
+    appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
+    creator: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn().mockResolvedValue(mockMainChannel) },
     $transaction: vi.fn((cb) => cb(mockPrisma)),
   } as any;
 
@@ -71,11 +72,12 @@ describe('updateAdminVideo use-case', () => {
 });
 
 describe('updateAdminVideo hero/sidebar contract', () => {
-  const mockMainChannel = { id: 'c1', slug: 'polutek', isApproved: true, isPrimary: true };
+  const mockMainChannel = { id: 'c1', slug: 'polutek', status: 'ACTIVE' };
   const mockPrisma = {
     video: { findUnique: vi.fn(), updateMany: vi.fn(), findFirst: vi.fn() },
     auditLog: { create: vi.fn() },
-    creator: { findUnique: vi.fn().mockResolvedValue(mockMainChannel) },
+    appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
+    creator: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn().mockResolvedValue(mockMainChannel) },
     $transaction: vi.fn((cb) => cb(mockPrisma)),
   } as any;
   const ctx = createAppContext({ actor: { type: 'admin', userId: 'a1' }, prisma: mockPrisma });

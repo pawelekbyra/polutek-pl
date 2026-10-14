@@ -3,7 +3,7 @@ import { reorderAdminVideos } from '@/lib/modules/video';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 
 describe('reorderAdminVideos use-case', () => {
-  const mockMainChannel = { id: 'c1', slug: 'polutek', isApproved: true, isPrimary: true };
+  const mockMainChannel = { id: 'c1', slug: 'polutek', status: 'ACTIVE' };
   const mockPrisma = {
     video: {
       findUnique: vi.fn(),
@@ -11,7 +11,8 @@ describe('reorderAdminVideos use-case', () => {
       updateMany: vi.fn(),
     },
     auditLog: { create: vi.fn() },
-    creator: { findUnique: vi.fn().mockResolvedValue(mockMainChannel) },
+    appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
+    creator: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn().mockResolvedValue(mockMainChannel) },
     $transaction: vi.fn((cb) => cb(mockPrisma)),
   } as any;
 

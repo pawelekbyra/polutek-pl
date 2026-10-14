@@ -7,7 +7,7 @@ vi.mock('resend', () => ({
     return { emails: { send: emailsSend } };
   }),
 }));
-vi.mock('@/lib/feature-flags', () => ({ flags: { mainCreatorSlug: 'polutek' } }));
+vi.mock('@/lib/feature-flags', () => ({ flags: {} }));
 
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { cancelBroadcast, countBroadcastAudience, createBroadcast, sendBroadcastTest } from '@/lib/modules/email';
@@ -18,7 +18,8 @@ function makeDb(users: User[], options: { suppressed?: string[]; existingByKey?:
   const created: any[] = [];
   const recipients: any[] = [];
   const db: any = {
-    creator: { findUnique: vi.fn(async () => ({ id: 'creator_1' })) },
+    appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
+    creator: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn(async () => ({ id: 'creator_1' })) },
     user: {
       findMany: vi.fn(async ({ where }: any) =>
         users

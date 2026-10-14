@@ -5,6 +5,8 @@ import { createAppContext } from '@/lib/modules/shared/app-context';
 
 vi.mock("@/lib/modules/channel", () => ({
   MainChannelService: { getOptional: vi.fn(), getRequired: vi.fn() },
+  MainChannelPolicy: { isPubliclyVisible: (c: { status?: string }) => c.status === 'ACTIVE' || c.status === 'LIMITED' },
+  publiclyVisibleChannelWhere: () => ({ status: { in: ['ACTIVE', 'LIMITED'] }, deletedAt: null }),
 }));
 
 describe('checkHealth Use Case', () => {
@@ -22,7 +24,7 @@ describe('checkHealth Use Case', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.HEALTHCHECK_TOKEN = 'test-token';
-    vi.mocked(MainChannelService.getOptional).mockResolvedValue({ id: 'main-channel-id' } as any);
+    vi.mocked(MainChannelService.getOptional).mockResolvedValue({ id: 'main-channel-id', status: 'ACTIVE' } as any);
   });
 
   const ctx = createAppContext({

@@ -7,6 +7,7 @@ vi.mock('@/lib/modules/channel', () => ({
   MainChannelService: {
     getOptional: vi.fn(),
   },
+  publiclyVisibleChannelWhere: () => ({ status: { in: ['ACTIVE', 'LIMITED'] }, deletedAt: null }),
 }));
 
 type TestVideo = {
@@ -14,7 +15,7 @@ type TestVideo = {
   status: VideoStatus;
   tier: AccessTier;
   publishedAt: Date | null;
-  creator: { isApproved: boolean; isPrimary: boolean };
+  creator: { status: string; deletedAt?: Date | null };
 };
 
 async function matchesPublicVideoWhere(video: TestVideo, now: Date) {
@@ -23,8 +24,8 @@ async function matchesPublicVideoWhere(video: TestVideo, now: Date) {
 
   const creatorIdMatches = video.creatorId === where.creatorId;
   const statusMatches = video.status === where.status;
-  const creatorMatches = video.creator.isApproved === (where.creator as any)?.isApproved &&
-                         video.creator.isPrimary === (where.creator as any)?.isPrimary;
+  const visible = (where.creator as any)?.status?.in as string[];
+  const creatorMatches = visible.includes(video.creator.status) && !video.creator.deletedAt === ((where.creator as any)?.deletedAt === null);
 
   const publishedAtMatches = publicationWindow.some((condition) => {
     if (condition.publishedAt === null) return video.publishedAt === null;
@@ -36,7 +37,7 @@ async function matchesPublicVideoWhere(video: TestVideo, now: Date) {
 
 describe('public video visibility policy', () => {
   const now = new Date('2026-05-31T12:00:00.000Z');
-  const mainChannel = { id: 'c1', slug: 'polutek', isApproved: true, isPrimary: true };
+  const mainChannel = { id: 'c1', slug: 'polutek', status: 'ACTIVE' };
 
   beforeEach(() => {
     vi.mocked(MainChannelService.getOptional).mockResolvedValue(mainChannel as any);
@@ -48,7 +49,7 @@ describe('public video visibility policy', () => {
       status: VideoStatus.PUBLISHED,
       tier: AccessTier.PUBLIC,
       publishedAt: new Date('2026-05-30T12:00:00.000Z'),
-      creator: { isApproved: true, isPrimary: true },
+      creator: { status: 'ACTIVE' },
     }, now)).toBe(true);
   });
 
@@ -58,17 +59,17 @@ describe('public video visibility policy', () => {
       status: VideoStatus.PUBLISHED,
       tier: AccessTier.PUBLIC,
       publishedAt: new Date('2026-05-30T12:00:00.000Z'),
-      creator: { isApproved: true, isPrimary: true },
+      creator: { status: 'ACTIVE' },
     }, now)).toBe(false);
   });
 
-  it('requires a primary creator flag for public home visibility', async () => {
+  it('hides videos of a channel waiting for review', async () => {
     expect(await matchesPublicVideoWhere({
       creatorId: 'c1',
       status: VideoStatus.PUBLISHED,
-      tier: AccessTier.LOGGED_IN,
+      tier: AccessTier.PUBLIC,
       publishedAt: new Date('2026-05-30T12:00:00.000Z'),
-      creator: { isApproved: true, isPrimary: false },
+      creator: { status: 'PENDING_REVIEW' },
     }, now)).toBe(false);
   });
 
@@ -79,18 +80,18 @@ describe('public video visibility policy', () => {
         status,
         tier: AccessTier.PUBLIC,
         publishedAt: new Date('2026-05-30T12:00:00.000Z'),
-        creator: { isApproved: true, isPrimary: true },
+        creator: { status: 'ACTIVE' },
       }, now)).toBe(false);
     }
   });
 
-  it('hides videos from non-approved creators', async () => {
+  it('hides videos of channels that are not publicly visible (PENDING_REVIEW, SUSPENDED, ...)', async () => {
     expect(await matchesPublicVideoWhere({
       creatorId: 'c1',
       status: VideoStatus.PUBLISHED,
       tier: AccessTier.PUBLIC,
       publishedAt: new Date('2026-05-30T12:00:00.000Z'),
-      creator: { isApproved: false, isPrimary: true },
+      creator: { status: 'SUSPENDED' },
     }, now)).toBe(false);
   });
 });

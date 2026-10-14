@@ -30,11 +30,12 @@ describe('video metadata rules', () => {
 });
 
 describe('create/update pass the metadata to the repository', () => {
-  const channel = { id: 'c1', slug: 'polutek', userId: 'owner', status: 'ACTIVE', isApproved: true, isPrimary: true };
+  const channel = { id: 'c1', slug: 'polutek', userId: 'owner', status: 'ACTIVE' };
   const prisma = {
     video: { create: vi.fn(), findFirst: vi.fn(), findUnique: vi.fn(), updateMany: vi.fn() },
     auditLog: { create: vi.fn() },
-    creator: { findUnique: vi.fn() },
+    appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
+    creator: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn() },
     $transaction: vi.fn((cb) => cb(prisma)),
   } as any;
   const ctx = createAppContext({ actor: { type: 'admin', userId: 'a1' }, prisma });

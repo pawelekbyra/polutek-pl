@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/lib/feature-flags', () => ({ flags: { mainCreatorSlug: 'polutek' } }));
+vi.mock('@/lib/feature-flags', () => ({ flags: {} }));
 vi.mock('@/lib/prisma', () => ({ prisma: {} }));
 
 import { buildNewUserNotice, newUserNotificationRecipient } from '@/lib/modules/email/application/notify-new-user';

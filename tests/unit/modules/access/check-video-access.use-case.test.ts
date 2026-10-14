@@ -37,7 +37,7 @@ describe('checkVideoAccess Use Case Matrix', () => {
     status: VideoStatus.PUBLISHED,
     tier: AccessTier.PUBLIC,
     publishedAt: new Date(now.getTime() - 1000),
-    creator: { id: mainChannel.id, isApproved: true, isPrimary: true }
+    creator: { id: mainChannel.id, status: 'ACTIVE' }
   };
 
   const createCtx = (actor: any) => createAppContext({ actor, prisma: mockPrisma, now: () => now });
@@ -246,9 +246,9 @@ describe('checkVideoAccess Use Case Matrix', () => {
 
     it('a video of a channel that is not public returns NOT_FOUND for a non-member', async () => {
         for (const creator of [
-          { id: 'other', userId: 'owner-x', isApproved: false, isPrimary: false, status: 'PENDING_REVIEW' },
-          { id: 'other', userId: 'owner-x', isApproved: true, isPrimary: false, status: 'SUSPENDED' },
-          { id: 'other', userId: 'owner-x', isApproved: true, isPrimary: false, status: 'ACTIVE', deletedAt: new Date(now.getTime() - 1000) },
+          { id: 'other', userId: 'owner-x', status: 'PENDING_REVIEW' },
+          { id: 'other', userId: 'owner-x', status: 'SUSPENDED' },
+          { id: 'other', userId: 'owner-x', status: 'ACTIVE', deletedAt: new Date(now.getTime() - 1000) },
         ]) {
           mockPrisma.video.findFirst.mockResolvedValue({ ...baseVideo, creatorId: 'other', creator });
           const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'u1' }));
@@ -261,7 +261,7 @@ describe('checkVideoAccess Use Case Matrix', () => {
         mockPrisma.video.findFirst.mockResolvedValue({
           ...baseVideo,
           creatorId: 'other',
-          creator: { id: 'other', userId: 'owner-x', isApproved: true, isPrimary: false, status: 'ACTIVE' },
+          creator: { id: 'other', userId: 'owner-x', status: 'ACTIVE' },
         });
         const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'guest' }));
         expect(result.ok && result.data.hasAccess).toBe(true);
@@ -273,7 +273,7 @@ describe('checkVideoAccess Use Case Matrix', () => {
           status: VideoStatus.DRAFT,
           publishedAt: null,
           creatorId: 'other',
-          creator: { id: 'other', userId: 'owner-x', isApproved: true, isPrimary: false, status: 'ACTIVE' },
+          creator: { id: 'other', userId: 'owner-x', status: 'ACTIVE' },
         };
         mockPrisma.video.findFirst.mockResolvedValue(draft);
         const owner = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'owner-x' }));

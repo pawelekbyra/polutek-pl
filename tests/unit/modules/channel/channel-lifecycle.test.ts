@@ -34,7 +34,9 @@ function makeCtx(actor: Actor, opts: { settings?: Record<string, string>; channe
     user: { findUnique: vi.fn(async () => ({ email: "anna@example.com" })) },
     creator: {
       count: vi.fn(async ({ where }: { where: { userId: string } }) => channels.filter((c) => c.userId === where.userId && !c.deletedAt).length),
-      findFirst: vi.fn(async ({ where }: { where: { OR: Array<{ handle?: { equals: string }; slug?: { equals: string } }>; id?: { not: string } } }) => {
+      findFirst: vi.fn(async ({ where }: { where: { OR: Array<{ handle?: { equals: string }; slug?: { equals: string } }>; id?: { not: string }; isPrimary?: boolean } }) => {
+        // Emergency fallback of the main-channel resolver (stage 8 deployment A): the old flag, read only.
+        if (where.isPrimary !== undefined) return channels.find((c) => c.isPrimary === where.isPrimary && !c.deletedAt) ?? null;
         const wanted = where.OR[0].handle?.equals;
         return (
           channels.find(
@@ -64,7 +66,7 @@ function makeCtx(actor: Actor, opts: { settings?: Record<string, string>; channe
 }
 
 const owner: Actor = { type: "user", userId: "u-owner" };
-const own = { id: "ch-1", slug: "moj-kanal", handle: "moj-kanal", name: "Mój kanał", userId: "u-owner", status: "ACTIVE", isApproved: true, isPrimary: false, deletedAt: null, deleteAfter: null };
+const own = { id: "ch-1", slug: "moj-kanal", handle: "moj-kanal", name: "Mój kanał", userId: "u-owner", status: "ACTIVE", deletedAt: null, deleteAfter: null };
 
 describe("createChannel", () => {
   beforeEach(() => {
@@ -93,7 +95,10 @@ describe("createChannel", () => {
     const { ctx, db, created } = makeCtx(owner);
     const result = await createChannel(ctx, { name: "  Mój   Kanał ", handle: "@Moj.Kanal", language: "pl" });
     expect(result.ok).toBe(true);
-    expect(created[0]).toMatchObject({ userId: "u-owner", slug: "moj.kanal", handle: "moj.kanal", name: "Mój Kanał", status: "PENDING_REVIEW", isApproved: false, isPrimary: false });
+    expect(created[0]).toMatchObject({ userId: "u-owner", slug: "moj.kanal", handle: "moj.kanal", name: "Mój Kanał", status: "PENDING_REVIEW" });
+    // Stage 8: the legacy flags are never written (the columns keep their defaults).
+    expect(created[0]).not.toHaveProperty("isApproved");
+    expect(created[0]).not.toHaveProperty("isPrimary");
     expect(db.channelMember.create).toHaveBeenCalledWith({ data: expect.objectContaining({ channelId: "new-channel", userId: "u-owner", role: "OWNER" }) });
     expect(db.channelQuota.create).toHaveBeenCalledTimes(1);
     expect(audit.recordAuditEvent).toHaveBeenCalledWith(ctx, expect.objectContaining({ action: "CHANNEL_CREATED", channelId: "new-channel" }), expect.anything());
@@ -108,7 +113,8 @@ describe("createChannel", () => {
     const invited = makeCtx(owner, { settings: { channel_creation_invites: JSON.stringify(["Anna@Example.com"]) } });
     const accepted = await createChannel(invited.ctx, { name: "Kanał", handle: "kanal" });
     expect(accepted.ok).toBe(true);
-    expect(invited.created[0]).toMatchObject({ status: "ACTIVE", isApproved: true });
+    expect(invited.created[0]).toMatchObject({ status: "ACTIVE" });
+    expect(invited.created[0]).not.toHaveProperty("isApproved");
   });
 
   it("enforces one channel per user by default and the configured limit otherwise", async () => {
@@ -204,9 +210,12 @@ describe("requestChannelDeletion and restoreChannel", () => {
     const { ctx, db } = makeCtx(owner, { channels: [own], channelId: "ch-1" });
     const result = await requestChannelDeletion(ctx);
     expect(result.ok && result.data.deleteAfter.getTime()).toBe(NOW.getTime() + CHANNEL_DELETION_GRACE_DAYS * DAY);
-    expect(db.creator.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: "DELETED", isApproved: false, statusReason: "OWNER_DELETED" }) }));
+    expect(db.creator.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: "DELETED", statusReason: "OWNER_DELETED" }) }));
+    const written = (db.creator.update.mock.calls[0] as unknown as [{ data: Row }])[0].data;
+    expect(written).not.toHaveProperty("isApproved");
 
-    const primary = makeCtx(owner, { channels: [{ ...own, isPrimary: true }], channelId: "ch-1" });
+    // The main channel is the main_channel_id setting, not a flag on the row.
+    const primary = makeCtx(owner, { channels: [own], channelId: "ch-1", settings: { main_channel_id: "ch-1" } });
     const refused = await requestChannelDeletion(primary.ctx);
     expect(!refused.ok && refused.error.code).toBe("CHANNEL_PRIMARY_PROTECTED");
   });
@@ -215,6 +224,9 @@ describe("requestChannelDeletion and restoreChannel", () => {
     const deleted = { ...own, status: "DELETED", deletedAt: NOW, deleteAfter: new Date(NOW.getTime() + 5 * DAY), statusReason: "OWNER_DELETED" };
     const inside = makeCtx(owner, { channels: [deleted] });
     expect((await restoreChannel(inside.ctx, "ch-1")).ok).toBe(true);
+    const restoredData = (inside.db.creator.update.mock.calls[0] as unknown as [{ data: Row }])[0].data;
+    expect(restoredData).toMatchObject({ status: "ACTIVE", deletedAt: null });
+    expect(restoredData).not.toHaveProperty("isApproved");
 
     const expired = makeCtx(owner, { channels: [{ ...deleted, deleteAfter: new Date(NOW.getTime() - 1000) }] });
     const late = await restoreChannel(expired.ctx, "ch-1");

@@ -77,7 +77,8 @@ describe('updateAdminVideo never stores a public-host thumbnail URL', () => {
         count: vi.fn().mockResolvedValue(0),
       },
       auditLog: { create: vi.fn() },
-      creator: { findUnique: vi.fn().mockResolvedValue({ id: 'c1', slug: 'polutek', isApproved: true, isPrimary: true }) },
+      appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
+      creator: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn().mockResolvedValue({ id: 'c1', slug: 'polutek', status: 'ACTIVE' }) },
     };
     prisma.$transaction = vi.fn((cb: any) => cb(prisma));
     return prisma;

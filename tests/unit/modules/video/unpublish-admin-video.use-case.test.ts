@@ -6,9 +6,10 @@ const syncPublicThumbnail = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/modules/video/application/sync-public-thumbnail.service', () => ({ syncPublicThumbnail }));
 
 describe('unpublishAdminVideo use-case', () => {
-  const channel = { id: 'c1', userId: 'owner1', status: 'ACTIVE', slug: 'kanal', isApproved: true, isPrimary: false };
+  const channel = { id: 'c1', userId: 'owner1', slug: 'kanal', status: 'ACTIVE' };
   const mockPrisma = {
     video: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
+    appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
     creator: { findUnique: vi.fn(), findFirst: vi.fn() },
     auditLog: { create: vi.fn() },
     $transaction: vi.fn((cb: any) => cb(mockPrisma)),

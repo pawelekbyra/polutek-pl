@@ -37,7 +37,7 @@ describe('PATRON tier needs sign-in only', () => {
     status: VideoStatus.PUBLISHED,
     tier: AccessTier.PATRON,
     publishedAt: new Date(now.getTime() - 1000),
-    creator: { id: mainChannel.id, isApproved: true, isPrimary: true },
+    creator: { id: mainChannel.id, status: 'ACTIVE' },
   };
 
   const createCtx = (actor: any) => createAppContext({ actor, prisma: mockPrisma, now: () => now });

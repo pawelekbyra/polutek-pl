@@ -9,7 +9,7 @@ vi.mock('resend', () => ({
 vi.mock('nodemailer', () => ({
   default: { createTransport: vi.fn(() => ({ sendMail, close: vi.fn() })) },
 }));
-vi.mock('@/lib/feature-flags', () => ({ flags: { mainCreatorSlug: 'polutek' } }));
+vi.mock('@/lib/feature-flags', () => ({ flags: {} }));
 vi.mock('@/lib/prisma', () => ({ prisma: {} }));
 
 import { sendEmail } from '@/lib/modules/email/infrastructure/resend-email.transport';

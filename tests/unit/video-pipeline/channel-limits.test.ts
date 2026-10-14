@@ -9,9 +9,16 @@ const NOW = new Date("2026-10-13T15:30:00Z");
 
 function ctxFor(
   actor: Actor,
-  state: { quota?: Record<string, number | bigint> | null; uploadsToday?: number; activeJobs?: number; storedBytes?: bigint | null } = {},
+  state: { mainChannelId?: string | null; quota?: Record<string, number | bigint> | null; uploadsToday?: number; activeJobs?: number; storedBytes?: bigint | null } = {},
 ) {
+  // The main channel is the main_channel_id setting (CLAUDE.md 4.24); "main" unless the test says otherwise.
+  const mainId = state.mainChannelId === undefined ? "main" : state.mainChannelId;
   const prisma = {
+    appSetting: { findUnique: vi.fn(async () => (mainId ? { value: mainId } : null)) },
+    creator: {
+      findUnique: vi.fn(async ({ where }: { where: { id?: string } }) => (where.id === mainId ? { id: mainId, status: "ACTIVE" } : null)),
+      findFirst: vi.fn(async () => null),
+    },
     channelQuota: { findUnique: vi.fn(async () => state.quota ?? null) },
     videoOriginal: {
       count: vi.fn(async () => state.uploadsToday ?? 0),
@@ -24,7 +31,7 @@ function ctxFor(
 }
 
 const user: Actor = { type: "user", userId: "u1" };
-const channel = { id: "ch-1", isPrimary: false };
+const channel = { id: "ch-1" };
 const small = 100 * 1024 * 1024;
 
 describe("channelUploadLimitError", () => {
@@ -35,13 +42,18 @@ describe("channelUploadLimitError", () => {
 
   it("does not limit the flagship channel, staff or the system", async () => {
     const { ctx, prisma } = ctxFor(user, { uploadsToday: 999 });
-    expect(await channelUploadLimitError(ctx, { id: "main", isPrimary: true }, 100 * GIB)).toBeNull();
+    expect(await channelUploadLimitError(ctx, { id: "main" }, 100 * GIB)).toBeNull();
     for (const actor of [{ type: "admin", userId: "a" } as const, { type: "system", reason: "w" } as const]) {
       const s = ctxFor(actor, { uploadsToday: 999 });
       expect(await channelUploadLimitError(s.ctx, channel, 100 * GIB)).toBeNull();
       expect(s.prisma.channelQuota.findUnique).not.toHaveBeenCalled();
     }
     expect(prisma.channelQuota.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("limits every channel when none is configured as the main channel", async () => {
+    const { ctx } = ctxFor(user, { mainChannelId: null, uploadsToday: TRUST_LEVEL_LIMITS[0].maxUploadsPerDay });
+    expect((await channelUploadLimitError(ctx, { id: "main" }, small))?.code).toBe("UPLOAD_DAILY_LIMIT");
   });
 
   it("refuses a file above the channel's single-file limit with 413", async () => {

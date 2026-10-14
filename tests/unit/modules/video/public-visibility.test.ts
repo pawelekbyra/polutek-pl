@@ -2,14 +2,22 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { isVideoPubliclyVisible } from '@/lib/modules/video/domain/public-visibility';
 
 const hoisted = vi.hoisted(() => ({ findFirst: vi.fn() }));
-vi.mock('@/lib/prisma', () => ({ prisma: { video: { findFirst: hoisted.findFirst }, user: { findFirst: vi.fn().mockResolvedValue(null) } } }));
+vi.mock('@/lib/prisma', () => ({
+  prisma: {
+    video: { findFirst: hoisted.findFirst },
+    user: { findFirst: vi.fn().mockResolvedValue(null) },
+    // No main channel configured: the avatar fallback for the main channel is not in play here.
+    appSetting: { findUnique: vi.fn().mockResolvedValue(null) },
+    creator: { findUnique: vi.fn().mockResolvedValue(null), findFirst: vi.fn().mockResolvedValue(null) },
+  },
+}));
 vi.mock('@/lib/modules/video/infrastructure/fundraising-progress.service', () => ({
   withFundraisingProgress: vi.fn(async (dtos: unknown[]) => dtos),
 }));
 
 import { VideoContentService } from '@/lib/modules/video/infrastructure/video-content.service';
 
-const activeChannel = { id: 'c2', slug: 'inny', name: 'Inny', isApproved: true, status: 'ACTIVE', deletedAt: null, user: { imageUrl: null, email: 'x@example.com' } };
+const activeChannel = { id: 'c2', slug: 'inny', name: 'Inny', status: 'ACTIVE', deletedAt: null, user: { imageUrl: null, email: 'x@example.com' } };
 const published = (over: Record<string, unknown> = {}) => ({
   id: 'v9',
   slug: 'film-z-innego-kanalu',
@@ -26,7 +34,7 @@ const published = (over: Record<string, unknown> = {}) => ({
 describe('isVideoPubliclyVisible', () => {
   const now = new Date('2026-06-01T12:00:00Z');
 
-  it('accepts a due, published video on an active approved channel (also LIMITED)', () => {
+  it('accepts a due, published video on an ACTIVE channel (also LIMITED)', () => {
     expect(isVideoPubliclyVisible(published(), now)).toBe(true);
     expect(isVideoPubliclyVisible(published({ creator: { ...activeChannel, status: 'LIMITED' } }), now)).toBe(true);
   });
@@ -47,9 +55,14 @@ describe('isVideoPubliclyVisible', () => {
     ['suspended', { status: 'SUSPENDED' }],
     ['banned', { status: 'BANNED' }],
     ['deleted', { deletedAt: new Date('2026-05-01') }],
-    ['not approved', { isApproved: false }],
+    ['pending review', { status: 'PENDING_REVIEW' }],
   ])('rejects a %s channel', (_label, patch) => {
     expect(isVideoPubliclyVisible(published({ creator: { ...activeChannel, ...patch } }), now)).toBe(false);
+  });
+
+  it('ignores the legacy isApproved flag: status alone decides', () => {
+    expect(isVideoPubliclyVisible(published({ creator: { ...activeChannel, isApproved: false } }), now)).toBe(true);
+    expect(isVideoPubliclyVisible(published({ creator: { ...activeChannel, status: 'PENDING_REVIEW', isApproved: true } }), now)).toBe(false);
   });
 
   it('rejects a video without a channel', () => {

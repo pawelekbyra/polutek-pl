@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { deleteAdminVideo } from '@/lib/modules/video';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 
-const mockMainChannel = { id: 'c1', slug: 'polutek', isApproved: true, isPrimary: true };
+const mockMainChannel = { id: 'c1', slug: 'polutek', status: 'ACTIVE' };
 
 function makeVideo(overrides: Record<string, unknown> = {}) {
   const now = new Date('2026-06-25T00:00:00.000Z');
@@ -60,7 +60,8 @@ function makeAsset(overrides: Record<string, unknown> = {}) {
 
 function makeCtx() {
   const prisma: any = {
-    creator: { findUnique: vi.fn().mockResolvedValue(mockMainChannel) },
+    appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
+    creator: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn().mockResolvedValue(mockMainChannel) },
     video: {
       findUnique: vi.fn(),
       delete: vi.fn(),

@@ -19,7 +19,14 @@ function makePrisma(over: Record<string, unknown> = {}) {
     channelQuota: { upsert: vi.fn(async () => ({})) },
   };
   const prisma = {
-    creator: { findUnique: vi.fn(async () => ({ id: "c1", status: "ACTIVE", isPrimary: false, quota: null })), findMany: vi.fn(async () => []), count: vi.fn(async () => 0) },
+    // No main channel configured by default (the main_channel_id setting); the "c1" row is an ordinary channel.
+    appSetting: { findUnique: vi.fn(async () => null) },
+    creator: {
+      findUnique: vi.fn(async ({ where }: { where: { id?: string } }) => (where.id === "c1" ? { id: "c1", status: "ACTIVE", quota: null } : null)),
+      findFirst: vi.fn(async () => null),
+      findMany: vi.fn(async () => []),
+      count: vi.fn(async () => 0),
+    },
     contentReport: { findUnique: vi.fn(async () => ({ id: "r1", status: "PENDING", targetType: "VIDEO", targetId: "v1", channelId: "c1", reason: "SPAM" })), groupBy: vi.fn(async () => []) },
     $transaction: async (fn: (t: typeof tx) => unknown) => fn(tx),
     ...over,
@@ -52,20 +59,21 @@ describe("channel moderation use cases", () => {
     if (!res.ok) expect((res.error as { code?: string }).code).toBe("REASON_REQUIRED");
   });
 
-  it("protects the primary channel from suspension", async () => {
-    const { prisma } = makePrisma({ creator: { findUnique: vi.fn(async () => ({ id: "c1", status: "ACTIVE", isPrimary: true })) } });
+  it("protects the main channel (the main_channel_id setting) from suspension and ban", async () => {
+    const { prisma } = makePrisma({ appSetting: { findUnique: vi.fn(async () => ({ value: "c1" })) } });
     const res = await setChannelStatus(ctxFor(staff, prisma), { channelId: "c1", status: "BANNED", reason: "powod testowy" });
     expect(res.ok).toBe(false);
     if (!res.ok) expect((res.error as { code?: string }).code).toBe("PRIMARY_PROTECTED");
   });
 
-  it("changes the status with a decision row and an audit row, keeping isApproved equal to visibility", async () => {
+  it("changes the status with a decision row and an audit row, without writing the legacy isApproved flag", async () => {
     const { prisma, tx } = makePrisma();
     const res = await setChannelStatus(ctxFor(staff, prisma), { channelId: "c1", status: "SUSPENDED", reason: "naruszenie zasad" });
     expect(res.ok).toBe(true);
-    const update = tx.creator.updateMany.mock.calls[0][0] as { where: { status: string }; data: { isApproved: boolean; status: string } };
+    const update = tx.creator.updateMany.mock.calls[0][0] as { where: { status: string }; data: Record<string, unknown> };
     expect(update.where.status).toBe("ACTIVE");
-    expect(update.data).toMatchObject({ status: "SUSPENDED", isApproved: false });
+    expect(update.data).toMatchObject({ status: "SUSPENDED" });
+    expect(update.data).not.toHaveProperty("isApproved");
     expect(tx.moderationDecision.create).toHaveBeenCalledTimes(1);
     expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
   });

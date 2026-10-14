@@ -3,11 +3,12 @@ import { cancelAutoPublish } from '@/lib/modules/video';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 
 describe('cancelAutoPublish use-case', () => {
-  const channel = { id: 'c1', slug: 'polutek', userId: 'owner', status: 'ACTIVE', isApproved: true, isPrimary: true };
+  const channel = { id: 'c1', slug: 'polutek', userId: 'owner', status: 'ACTIVE' };
   const prisma = {
     video: { findFirst: vi.fn(), updateMany: vi.fn() },
     auditLog: { create: vi.fn() },
-    creator: { findUnique: vi.fn().mockResolvedValue(channel) },
+    appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
+    creator: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn().mockResolvedValue(channel) },
     channelMember: { findFirst: vi.fn().mockResolvedValue(null) },
     $transaction: vi.fn((cb) => cb(prisma)),
   } as any;

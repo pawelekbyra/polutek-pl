@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { handle } = vi.hoisted(() => ({ handle: vi.fn() }));
 vi.mock('@/lib/modules/email/application/handle-resend-webhook.use-case', () => ({ handleResendWebhook: handle }));
-vi.mock('@/lib/feature-flags', () => ({ flags: { mainCreatorSlug: 'polutek' } }));
+vi.mock('@/lib/feature-flags', () => ({ flags: {} }));
 vi.mock('@/lib/prisma', () => ({ prisma: {} }));
 
 import { classifyBounce, parsePostfixLog } from '@/lib/modules/email/domain/postfix-log';

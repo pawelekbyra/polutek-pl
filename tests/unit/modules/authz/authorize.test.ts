@@ -17,7 +17,8 @@ function ctxFor(actor: Actor) {
     "vid-b": { creator: creators["ch-b"] },
   } as const;
   const prisma = {
-    creator: { findUnique: vi.fn(async ({ where }: { where: { id: string } }) => creators[where.id as keyof typeof creators] ?? null) },
+    appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
+    creator: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn(async ({ where }: { where: { id: string } }) => creators[where.id as keyof typeof creators] ?? null) },
     video: { findUnique: vi.fn(async ({ where }: { where: { id: string } }) => videos[where.id as keyof typeof videos] ?? null) },
   };
   const ctx = createAppContext({ actor, prisma: prisma as never }) as AppContext;

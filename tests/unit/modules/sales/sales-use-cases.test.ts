@@ -19,7 +19,8 @@ function makePrisma(over: Record<string, unknown> = {}) {
     order: { findUnique: vi.fn(async () => null) },
     video: { findUnique: vi.fn(async () => ({ id: "v1", creatorId: "c1", creator: CREATOR, tier: "PAID", status: "PUBLISHED", price: { currency: "PLN", amountMinor: 2000, payWhatYouWant: false, minAmountMinor: null } })) },
     entitlement: { findFirst: vi.fn(async () => null) },
-    creator: { findUnique: vi.fn(async () => ({ id: "c1", userId: "owner", status: "ACTIVE", members: [{ userId: "owner", role: "OWNER" }] })) },
+    appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
+    creator: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn(async () => ({ id: "c1", userId: "owner", status: "ACTIVE", members: [{ userId: "owner", role: "OWNER" }] })) },
     $transaction: async (fn: (t: typeof tx) => unknown) => fn(tx),
     ...over,
   };

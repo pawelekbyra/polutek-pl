@@ -9,7 +9,8 @@ const OWNER_AVATAR = "/api/avatars/channel-owner?v=3";
 const ADMIN_AVATAR = "/api/avatars/first-admin?v=9";
 const VIEWER_AVATAR = "/api/avatars/logged-in-viewer?v=7";
 
-const { creatorFindUnique, videoFindMany, videoFindFirst, userFindFirst, authMock, currentUserMock } = vi.hoisted(() => ({
+const { appSettingFindUnique, creatorFindUnique, videoFindMany, videoFindFirst, userFindFirst, authMock, currentUserMock } = vi.hoisted(() => ({
+  appSettingFindUnique: vi.fn(),
   creatorFindUnique: vi.fn(),
   videoFindMany: vi.fn(),
   videoFindFirst: vi.fn(),
@@ -20,6 +21,7 @@ const { creatorFindUnique, videoFindMany, videoFindFirst, userFindFirst, authMoc
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
+    appSetting: { findUnique: appSettingFindUnique },
     creator: { findUnique: creatorFindUnique },
     video: { findMany: videoFindMany, findFirst: videoFindFirst },
     user: { findFirst: userFindFirst },
@@ -74,8 +76,8 @@ function creatorRow(ownerImageUrl: string | null) {
     bio: "Opis",
     subscribersCount: 5,
     displaySubscribersCount: null,
-    isApproved: true,
-    isPrimary: true,
+    status: "ACTIVE",
+    deletedAt: null,
     user: { imageUrl: ownerImageUrl, email: "owner@example.com" },
     videos: [video("v1"), video("v2")],
   };
@@ -83,6 +85,8 @@ function creatorRow(ownerImageUrl: string | null) {
 
 function seed(ownerImageUrl: string | null, adminImageUrl: string | null) {
   const row = creatorRow(ownerImageUrl);
+  // The main channel is the main_channel_id setting (CLAUDE.md 4.24).
+  appSettingFindUnique.mockResolvedValue({ key: "main_channel_id", value: row.id });
   creatorFindUnique.mockResolvedValue(row);
   videoFindMany.mockResolvedValue(row.videos.map((v) => ({ ...v, creator: { ...row, videos: undefined } })));
   videoFindFirst.mockResolvedValue({ ...row.videos[0], creator: { ...row, videos: undefined } });
