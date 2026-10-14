@@ -69,6 +69,22 @@ export const AUDIT_LABEL: Record<string, string> = {
   VIDEO_TRANSLATION_SAVED: "Zapisane tłumaczenie filmu",
   VIDEO_TRANSLATION_APPROVED: "Zatwierdzone tłumaczenie",
   TRANSLATION_AI_DRAFTS_GENERATED: "Wygenerowane szkice tłumaczeń (AI)",
+  // multi-creator platform: channels, moderation, sales
+  CHANNEL_CREATED: "Kanał utworzony",
+  CHANNEL_HANDLE_CHANGED: "Zmiana uchwytu kanału",
+  CHANNEL_DELETION_REQUESTED: "Kanał usunięty (30 dni na przywrócenie)",
+  CHANNEL_RESTORED: "Kanał przywrócony",
+  CHANNEL_STATUS_CHANGED: "Zmiana statusu kanału",
+  CHANNEL_STRIKE_ISSUED: "Ostrzeżenie dla kanału",
+  CHANNEL_STRIKE_REVOKED: "Ostrzeżenie cofnięte",
+  CHANNEL_TRUST_LEVEL_CHANGED: "Zmiana poziomu zaufania kanału",
+  CONTENT_REPORT_RESOLVED: "Zgłoszenie treści rozstrzygnięte",
+  VIDEO_MODERATION_CHANGED: "Zmiana statusu moderacji filmu",
+  VIDEO_UNPUBLISHED: "Cofnięta publikacja",
+  VIDEO_PUBLISH_AFTER_ASSET_READY_CANCELLED: "Publikacja po zakodowaniu: anulowana",
+  VIDEO_PRICE_SET: "Ustawiona cena filmu",
+  ORDER_PAID: "Zamówienie opłacone",
+  ORDER_REFUNDED: "Zamówienie zwrócone",
 };
 
 export const auditLabel = (action: string) => AUDIT_LABEL[action] ?? action;
