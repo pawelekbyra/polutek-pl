@@ -20,6 +20,7 @@ import { EncodeJobError } from "@/lib/modules/video-pipeline/domain/encode-job.s
 import { EncodeJobRepository } from "@/lib/modules/video-pipeline/infrastructure/encode-job.repository";
 import { HlsWriter, OriginalsReader, hlsBucketName, makeR2Client, readR2Credentials } from "@/lib/modules/video-pipeline/infrastructure/r2-storage";
 import { createEncoder } from "@/lib/modules/video-pipeline/infrastructure/encoder.adapter";
+import { resolveJobDurationLimit } from "@/lib/modules/video-pipeline/application/channel-limits";
 import { createSelfHlsFinalizer } from "@/lib/modules/video-pipeline/application/finalize-self-hls";
 import { runWorkerLoop } from "@/lib/modules/video-pipeline/application/worker-loop";
 import { WORKER_HEARTBEAT_SETTING } from "@/lib/modules/video-pipeline/application/encode-queue.use-cases";
@@ -102,6 +103,11 @@ async function main() {
         if (free < required) {
           throw new EncodeJobError("DISK_FULL", `Za malo miejsca na dysku roboczym (wolne ${Math.round(free / 1e9)} GB, potrzeba ok. ${Math.round(required / 1e9)} GB).`, false);
         }
+      },
+      channelLimits: {
+        // A job run by the worker is the system actor, but the limit protects the platform from the channel's own
+        // uploads: resolved from the job's channel (staff-requested jobs and the main channel are exempt).
+        maxVideoSeconds: (job) => resolveJobDurationLimit(createAppContext({ prisma, actor: { type: "system", reason: "video_encode_worker" } }), job),
       },
       audit: async (action, job, metadata) =>
         recordAuditEventSafe(auditCtx, { action, targetType: "Video", targetId: job.videoId, metadata: { jobId: job.id, ...metadata } as never }),

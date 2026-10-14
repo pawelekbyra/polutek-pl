@@ -1,4 +1,5 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
+import { canModerateVideoComments } from "./authorize-comments";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { CommentDto, mapCommentToDto } from "../domain/comment.dto";
 import { CommentError, commentDatabaseError } from "../domain/comment.errors";
@@ -52,7 +53,7 @@ export async function updateComment(
     await repo.update(commentId, { text, editedAt: ctx.now() });
 
     const videoCreatorId = await repo.findVideoCreatorId(comment.videoId);
-    const canModerate = actor.type === 'admin' || videoCreatorId === userId;
+    const canModerate = await canModerateVideoComments(ctx, comment.videoId);
     const fullComment = await repo.findCommentForDto(commentId, userId, canModerate);
     if (!fullComment) return fail({ type: "NOT_FOUND", message: "Komentarz nie istnieje." });
 

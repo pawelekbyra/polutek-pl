@@ -21,6 +21,8 @@ export type PanelComment = {
   repliesCount: number;
   reportsCount: number;
   isHearted: boolean;
+  /** One top-level comment per video can be pinned (it stays first under the video). */
+  isPinned: boolean;
   creatorReplied: boolean;
   isQuestion: boolean;
   pendingReports: { id: string; reason: CommentReportReason; note: string | null; createdAt: string; reporter: string }[];
@@ -50,6 +52,7 @@ export function toPanelComment(c: PanelCommentRecord, now: Date): PanelComment {
     repliesCount: c._count.replies,
     reportsCount: c.reportsCount,
     isHearted: c.isHearted,
+    isPinned: c.pinnedAt !== null && c.pinnedAt !== undefined,
     creatorReplied: c.replies.length > 0,
     isQuestion: c.parentId === null && c.text.includes("?"),
     pendingReports: c.reports.map((r) => ({ id: r.id, reason: r.reason, note: r.note, createdAt: r.createdAt.toISOString(), reporter: r.reporter?.isDeleted ? "usunięte konto" : r.reporter?.name || "bez pseudonimu" })),

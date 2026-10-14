@@ -1,4 +1,5 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
+import { canModerateVideoComments } from "./authorize-comments";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { CommentDto, CommentDtoContext, canSeeCommentContent, mapCommentToDto } from "../domain/comment.dto";
 import { CommentError, commentDatabaseError } from "../domain/comment.errors";
@@ -46,7 +47,7 @@ export async function listCommentReplies(
 
     const userId = actor.type === 'user' || actor.type === 'admin' ? actor.userId : null;
     const videoCreatorId = await repo.findVideoCreatorId(parentComment.videoId);
-    const canModerate = actor.type === 'admin' || (userId !== null && videoCreatorId === userId);
+    const canModerate = await canModerateVideoComments(ctx, parentComment.videoId);
     const context: CommentDtoContext = { userId, canModerate, videoCreatorId, hasVideoAccess: accessResult.data.hasAccess };
 
     if (!canSeeCommentContent(parentComment, context) || parentComment.author?.isDeleted) return fail(NOT_FOUND);

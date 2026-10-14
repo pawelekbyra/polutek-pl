@@ -11,13 +11,11 @@ import { Feedback } from "./AccountSections";
 
 type Preferences = {
   newVideoInApp: boolean;
-  newVideoEmail: boolean;
   commentEnabled: boolean;
   systemEnabled: boolean;
-  emailConsent: boolean;
 };
 
-type ToggleKey = "newVideoInApp" | "newVideoEmail" | "commentEnabled" | "systemEnabled";
+type ToggleKey = keyof Preferences;
 
 export function NotificationsSection({ tx }: { tx: Tx }) {
   const [prefs, setPrefs] = useState<Preferences | null>(null);
@@ -98,16 +96,6 @@ export function NotificationsSection({ tx }: { tx: Tx }) {
       key: "systemEnabled",
       label: tx("Wiadomości serwisu", "Service messages"),
       hint: tx("Ogłoszenia i informacje od serwisu.", "Announcements and information from the service."),
-    },
-    {
-      key: "newVideoEmail",
-      label: tx("E-mail o nowych filmach", "E-mail about new videos"),
-      hint: prefs.emailConsent
-        ? tx("Wiadomość e-mail, gdy kanał, który obserwujesz, opublikuje film.", "An e-mail when a channel you follow publishes a video.")
-        : tx(
-            "Nie wyraziłeś/-aś zgody na e-maile o nowych treściach, więc nic nie wysyłamy. Zgodę włączysz przy obserwowaniu kanału.",
-            "You have not agreed to e-mails about new content, so we send nothing. You can turn it on when you follow a channel.",
-          ),
     },
   ];
 

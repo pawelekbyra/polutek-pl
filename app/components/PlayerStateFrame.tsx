@@ -19,8 +19,8 @@ export function PlayerStateFrame({ children, className, fill = false }: PlayerSt
       className={cn(
         "relative w-full overflow-hidden bg-black",
         fill
-          ? "h-full min-h-0 rounded-xl border border-black/10"
-          : "aspect-video min-h-0 sm:min-h-[220px] rounded-[20px] border border-black/10 shadow-[0_28px_60px_-24px_rgba(15,23,42,0.34)]",
+          ? "h-full min-h-0 rounded-none border border-black/10"
+          : "aspect-video min-h-0 sm:min-h-[220px] rounded-none border border-black/10 shadow-[0_28px_60px_-24px_rgba(15,23,42,0.34)]",
         className
       )}
     >

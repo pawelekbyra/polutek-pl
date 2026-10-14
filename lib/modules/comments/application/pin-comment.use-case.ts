@@ -5,6 +5,7 @@ import { CommentError, commentDatabaseError } from "../domain/comment.errors";
 import { CommentRepository } from "../infrastructure/comment.repository";
 import { recordAuditEventSafe } from "@/lib/modules/audit";
 import { CommentStatus } from "@prisma/client";
+import { authorizeComments } from "./authorize-comments";
 
 export interface PinCommentInput {
   commentId: string;
@@ -18,20 +19,20 @@ export async function pinComment(
   const { commentId } = input;
   const { actor, prisma } = ctx;
 
-  if (actor.type === 'guest' || actor.type === 'system') {
+  // Only the channel's own people pin (owner, manager, moderator); platform staff use the admin panel.
+  if (actor.type !== 'user') {
     return fail({ type: "UNAUTHORIZED", message: "Musisz być zalogowany." });
   }
 
-  const userId = actor.userId;
   const repo = new CommentRepository(prisma);
 
   try {
     const comment = await repo.findCommentById(commentId);
     if (!comment) return fail({ type: "NOT_FOUND", message: "Komentarz nie istnieje." });
 
-    const videoCreatorId = await repo.findVideoCreatorId(comment.videoId);
-    const canPin = actor.type === 'admin' || videoCreatorId === userId;
-    if (!canPin) return fail({ type: "FORBIDDEN", message: "Brak uprawnień do przypięcia komentarza." });
+    // Role matrix (CLAUDE.md 4.23): owner, manager and moderator of the video's channel, and platform staff.
+    const denied = await authorizeComments(ctx, "comment.pin", [commentId]);
+    if (denied) return fail(denied);
 
     if (comment.parentId) {
       return fail({ type: "VALIDATION_ERROR", message: "Tylko komentarze główne mogą być przypięte." });

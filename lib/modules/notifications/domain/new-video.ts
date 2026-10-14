@@ -2,24 +2,8 @@ import { getLocalizedHref } from "@/lib/i18n/routing";
 
 /**
  * New-video notification (kind NEW_VIDEO): who gets it is decided by the fan-out use case, this file
- * holds the pure parts: copy, link and the idempotency keys. No I/O.
+ * holds the pure parts: copy, link and the lock key. No I/O.
  */
-
-/** `AppSetting` key prefix of the "this video was fanned out" marker (value: ISO time). */
-export const NEW_VIDEO_MARKER_PREFIX = "new-video-fanout:";
-
-/**
- * `AppSetting` key holding the moment the sweep first ran. Videos that became public before it are
- * never notified (no back-fill of the catalogue when the feature is deployed).
- */
-export const NEW_VIDEO_SWEEP_SINCE_KEY = "new-video-fanout-since";
-
-/** Videos older than this (since publication or premiere) are never swept, whatever the marker says. */
-export const NEW_VIDEO_SWEEP_WINDOW_MS = 3 * 24 * 60 * 60 * 1000;
-
-export function newVideoMarkerKey(videoId: string): string {
-  return `${NEW_VIDEO_MARKER_PREFIX}${videoId}`;
-}
 
 /** Advisory-lock key serialising two fan-outs of the same video. */
 export function newVideoLockKey(videoId: string): string {

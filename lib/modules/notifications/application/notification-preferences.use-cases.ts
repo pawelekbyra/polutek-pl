@@ -14,23 +14,17 @@ function ownerId(ctx: AppContext): string {
 
 export async function getNotificationPreferences(ctx: AppContext): Promise<NotificationPreferencesDTO> {
   const userId = ownerId(ctx);
-  const [pref, mail] = await Promise.all([
-    ctx.prisma.notificationPreference.findUnique({ where: { userId } }),
-    ctx.prisma.emailPreference.findUnique({ where: { userId }, select: { marketingEmails: true } }),
-  ]);
+  const pref = await ctx.prisma.notificationPreference.findUnique({ where: { userId } });
   return {
     newVideoInApp: pref?.newVideoInApp ?? DEFAULT_NOTIFICATION_PREFERENCES.newVideoInApp,
-    newVideoEmail: pref?.newVideoEmail ?? DEFAULT_NOTIFICATION_PREFERENCES.newVideoEmail,
     commentEnabled: pref?.commentEnabled ?? DEFAULT_NOTIFICATION_PREFERENCES.commentEnabled,
     systemEnabled: pref?.systemEnabled ?? DEFAULT_NOTIFICATION_PREFERENCES.systemEnabled,
-    emailConsent: mail?.marketingEmails === true,
   };
 }
 
 /**
  * Saves the given toggles (the input is already validated by `updateNotificationPreferencesSchema`)
- * and returns the full state. Never touches the content-mail consent: that is only changed by the
- * subscribe and unsubscribe flows.
+ * and returns the full state.
  */
 export async function updateNotificationPreferences(
   ctx: AppContext,

@@ -109,7 +109,7 @@ export function PlayerLoadingState({
 
   return (
     <PlayerStateFrame
-      className={cn(className, "rounded-lg")}
+      className={cn(className, "rounded-none")}
       fill={fill || variant === "thumbnailCompact"}
     >
       <PlayerLoadingIndicator />

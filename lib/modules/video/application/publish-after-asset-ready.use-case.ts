@@ -4,12 +4,14 @@ import { publishAdminVideo } from "./publish-admin-video.use-case";
 import { MainChannelService } from "@/lib/modules/channel";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { VideoPolicy } from "../domain/video.policy";
+import { unlistAdminVideo } from "./unlist-admin-video.use-case";
+import { getReadyVisibility, setReadyVisibility, type ReadyVisibility } from "./ready-visibility";
 
-export async function requestPublishAfterAssetReady(videoId: string, ctx: AppContext): Promise<void> {
+export async function requestPublishAfterAssetReady(videoId: string, ctx: AppContext, visibility: ReadyVisibility = "PUBLISHED"): Promise<void> {
   const now = new Date();
   await (ctx.prisma as any).$transaction(async (tx: any) => {
     const current = await tx.video.findUnique({ where: { id: videoId } });
-    if (!current || current.publishAfterAssetReadyCompletedAt || current.status === "PUBLISHED") return;
+    if (!current || current.publishAfterAssetReadyCompletedAt || current.status === "PUBLISHED" || current.status === "UNLISTED") return;
     await tx.video.update({
       where: { id: videoId },
       data: {
@@ -28,6 +30,7 @@ export async function requestPublishAfterAssetReady(videoId: string, ctx: AppCon
       }, tx);
     }
   });
+  await setReadyVisibility(videoId, visibility, ctx);
 }
 
 export async function attemptPublishAfterAssetReady(videoId: string, ctx: AppContext, triggerProvider?: string): Promise<void> {
@@ -38,7 +41,7 @@ export async function attemptPublishAfterAssetReady(videoId: string, ctx: AppCon
     where: { id: videoId },
     select: { id: true, status: true, publishAfterAssetReady: true, publishAfterAssetReadyCompletedAt: true },
   });
-  if (!current?.publishAfterAssetReady || current.publishAfterAssetReadyCompletedAt || current.status === "PUBLISHED") return;
+  if (!current?.publishAfterAssetReady || current.publishAfterAssetReadyCompletedAt || current.status === "PUBLISHED" || current.status === "UNLISTED") return;
 
   // Publication is gated on readiness (the encode worker calls this once the own-HLS asset is
   // READY and routed). Auto-publish and manual publish (publish-admin-video.use-case.ts) must never
@@ -58,13 +61,17 @@ export async function attemptPublishAfterAssetReady(videoId: string, ctx: AppCon
     return;
   }
 
-  const result = await publishAdminVideo(videoId, ctx);
+  // "Niepubliczny" was chosen at creation: it becomes UNLISTED through the same blockers, never PUBLISHED.
+  // A failed read must not fall back to PUBLISHED: an unlisted video would leak onto the lists. Wait and retry.
+  const target = await getReadyVisibility(videoId, ctx).catch(() => null);
+  if (!target) return;
+  const result = target === "UNLISTED" ? await unlistAdminVideo(videoId, ctx) : await publishAdminVideo(videoId, ctx);
   if (result.ok) {
     await recordAuditEvent(ctx, {
       action: "VIDEO_PUBLISH_AFTER_ASSET_READY_COMPLETED",
       targetType: "Video",
       targetId: videoId,
-      metadata: { completedAt: new Date().toISOString(), triggeredByProvider: triggerProvider ?? null },
+      metadata: { completedAt: new Date().toISOString(), triggeredByProvider: triggerProvider ?? null, visibility: target },
     }).catch(() => undefined);
     return;
   }

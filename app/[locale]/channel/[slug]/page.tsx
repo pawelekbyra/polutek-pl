@@ -86,14 +86,14 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
   }
 
   const userCtx = createAppContext();
-  const [, initialSubscribed] = await Promise.all([
+  const [, initialSubscription] = await Promise.all([
     userId ? getOrCreateCurrentUser(userCtx, userId).catch(() => null) : Promise.resolve(null),
     userId
       ? prisma.subscription.findUnique({
           where: { userId_creatorId: { userId, creatorId: creator.id } },
-          select: { id: true },
-        }).catch(() => null).then(Boolean)
-      : Promise.resolve(false),
+          select: { id: true, notify: true },
+        }).catch(() => null)
+      : Promise.resolve(null),
   ]);
 
   const freshCreator = await prisma.creator.findUnique({
@@ -160,7 +160,8 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
               creatorId={creator.id}
               creatorSlug={creator.slug}
               creatorName={creator.name}
-              initialIsSubscribed={initialSubscribed}
+              initialIsSubscribed={Boolean(initialSubscription)}
+              initialNotify={initialSubscription?.notify ?? true}
             />
             <ReportButton targetType="CHANNEL" targetId={creator.id} className="mt-3" />
           </div>

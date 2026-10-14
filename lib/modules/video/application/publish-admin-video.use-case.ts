@@ -10,6 +10,7 @@ import { VideoNotFoundError, VideoNotReadyForPublicationError } from "../domain/
 import { VideoPolicy } from "../domain/video.policy";
 import { syncPublicThumbnail } from "./sync-public-thumbnail.service";
 import { announcePublishedVideo } from "./announce-published-video";
+import { clearReadyVisibility } from "./ready-visibility";
 
 export async function publishAdminVideo(
   videoId: string,
@@ -40,7 +41,8 @@ export async function publishAdminVideo(
         where: { id: videoId },
         data: {
             status: VideoStatus.PUBLISHED,
-            publishedAt: video.publishedAt || now,
+            // A video made public from "unlisted" is dated from now: it was not public before.
+            publishedAt: video.status === VideoStatus.UNLISTED ? now : (video.publishedAt || now),
             publishAfterAssetReady: false,
             publishAfterAssetReadyCompletedAt: now,
             publishAfterAssetReadyError: null,
@@ -57,9 +59,10 @@ export async function publishAdminVideo(
     return result;
   });
 
+  await clearReadyVisibility(videoId, ctx);
   await syncPublicThumbnail(updated, ctx);
 
-  // After the commit, best effort (never fails or undoes the publication; an upcoming premiere is announced when it starts).
+  // After the commit, best effort (never fails or undoes the publication; an upcoming premiere is skipped).
   await announcePublishedVideo(updated.id);
 
   return ok(toAdminVideoDto(updated));

@@ -6,6 +6,8 @@ import {
   restoreAdminComment,
   setAdminCommentHeart,
   createCreatorReply,
+  pinComment,
+  unpinComment,
 } from "@/lib/modules/comments";
 import { commentActionSchema } from "@/lib/api/studio-schemas";
 import { readStudioJson, studioError, studioJson, studioResult, withStudio } from "@/lib/api/studio-route";
@@ -15,7 +17,7 @@ export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
 
 /**
- * One moderation action on a comment of the channel: hide, approve, restore, hold, delete, heart, unheart or reply as
+ * One moderation action on a comment of the channel: hide, approve, restore, hold, delete, heart, unheart, pin, unpin or reply as
  * the creator. Each use case authorizes against the comment's own channel, so another channel's comment id is refused.
  */
 export async function POST(request: Request, props: Params) {
@@ -39,6 +41,10 @@ export async function POST(request: Request, props: Params) {
         return studioResult(await setAdminCommentHeart(ctx, { commentId: id, hearted: true }));
       case "unheart":
         return studioResult(await setAdminCommentHeart(ctx, { commentId: id, hearted: false }));
+      case "pin":
+        return studioResult(await pinComment({ commentId: id }, ctx));
+      case "unpin":
+        return studioResult(await unpinComment({ commentId: id }, ctx));
       case "reply":
         if (!text?.trim()) return studioError(400, "Wpisz treść odpowiedzi.", "VALIDATION_ERROR");
         return studioResult(await createCreatorReply(ctx, { commentId: id, text, heart }));

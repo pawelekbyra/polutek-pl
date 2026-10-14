@@ -78,6 +78,14 @@ export class VideoPolicy {
     return blockers;
   }
 
+  /**
+   * Setting a video to UNLISTED makes it reachable by link, so it needs exactly what publishing needs (title, slug,
+   * tier, a READY own-HLS route, not archived): an unlisted video must never be a link to an empty player.
+   */
+  static getUnlistBlockers(video: ContractVideo): VideoStateBlocker[] {
+    return this.getPublicationBlockers(video);
+  }
+
   static getHeroBlockers(video: ContractVideo): VideoStateBlocker[] {
     const blockers = this.getPublicationBlockers(video);
     if (video.status !== 'PUBLISHED') blockers.push({ code: 'VIDEO_HERO_NOT_PUBLISHED', message: 'Film Hero musi być OPUBLIKOWANY.', field: 'status' });

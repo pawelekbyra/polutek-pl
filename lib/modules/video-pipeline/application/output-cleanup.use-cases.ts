@@ -20,7 +20,7 @@ function defaultHlsWriter(): HlsWriter | null {
 
 /**
  * Deletes one own-HLS output (all objects under its version prefix + the asset row).
- * The asset that currently plays a PUBLISHED video cannot be deleted: re-encode first or unpublish.
+ * The asset that currently plays a PUBLISHED or UNLISTED video cannot be deleted: re-encode first or unpublish.
  */
 export async function deleteSelfHlsAsset(
   input: { videoId: string; assetId: string },
@@ -35,7 +35,7 @@ export async function deleteSelfHlsAsset(
     if (!version || asset.objectKey !== hlsAssetKey(video.id, version)) return fail(new AppError("Niepoprawny klucz wyniku.", 409, "ASSET_KEY_INVALID"));
 
     const active = await ctx.prisma.videoPlaybackRoute.findFirst({ where: { videoId: video.id, assetId: asset.id, status: "ACTIVE" }, select: { id: true } });
-    if (active && video.status === "PUBLISHED") {
+    if (active && (video.status === "PUBLISHED" || video.status === "UNLISTED")) {
       return fail(new AppError("Ta wersja gra opublikowany film. Cofnij publikację albo zakoduj film ponownie.", 409, "ASSET_IN_USE"));
     }
 

@@ -75,7 +75,6 @@ export class CommentPolicy {
   }
 
   static canDeleteComment(actor: Actor, commentAuthorId: string, isModeratorOfVideo: boolean): boolean {
-    if (actor.type === 'admin') return true;
     if (isModeratorOfVideo) return true;
     if (actor.type === 'user') {
         return actor.userId === commentAuthorId;
@@ -83,8 +82,7 @@ export class CommentPolicy {
     return false;
   }
 
-  static canModerateComment(actor: Actor, isModeratorOfVideo: boolean): boolean {
-    if (actor.type === 'admin') return true;
+  static canModerateComment(_actor: Actor, isModeratorOfVideo: boolean): boolean {
     return isModeratorOfVideo;
   }
 

@@ -38,6 +38,17 @@ async function fetchPage(cursor?: string, signal?: AbortSignal): Promise<BellPag
   }
 }
 
+async function fetchUnreadCount(signal?: AbortSignal): Promise<number | null> {
+  try {
+    const response = await fetch("/api/user/notifications/unread-count", { cache: "no-store", signal });
+    if (!response.ok) return null;
+    const body = (await response.json()) as { unreadCount?: unknown };
+    return typeof body.unreadCount === "number" ? body.unreadCount : null;
+  } catch {
+    return null;
+  }
+}
+
 function postRead(body: { id: string } | { all: true }) {
   // keepalive: the request survives the navigation that clicking a notification link starts.
   return fetch("/api/user/notifications/read", {
@@ -73,20 +84,37 @@ export default function NotificationBell() {
   const [announcement, setAnnouncement] = useState("");
   const knownUnread = useRef<number | null>(null);
 
+  const applyCount = useCallback(
+    (count: number) => {
+      setUnread(count);
+      const previous = knownUnread.current;
+      knownUnread.current = count;
+      if (previous !== null && count > previous) {
+        setAnnouncement(tx("Nowe powiadomienia: {0}", "New notifications: {0}", count));
+      }
+    },
+    [tx],
+  );
+
   const apply = useCallback(
     (page: BellPage, mode: "replace" | "append") => {
       setItems((current) =>
         mode === "append" ? [...current, ...page.items.filter((n) => !current.some((c) => c.id === n.id))] : page.items,
       );
       setNextCursor(page.nextCursor);
-      setUnread(page.unreadCount);
-      const previous = knownUnread.current;
-      knownUnread.current = page.unreadCount;
-      if (previous !== null && page.unreadCount > previous) {
-        setAnnouncement(tx("Nowe powiadomienia: {0}", "New notifications: {0}", page.unreadCount));
-      }
+      applyCount(page.unreadCount);
     },
-    [tx],
+    [applyCount],
+  );
+
+  // The light poll: just the number, never the list.
+  const pollCount = useCallback(
+    async (signal?: AbortSignal) => {
+      const count = await fetchUnreadCount(signal);
+      if (signal?.aborted || count === null) return;
+      applyCount(count);
+    },
+    [applyCount],
   );
 
   const refresh = useCallback(
@@ -106,9 +134,9 @@ export default function NotificationBell() {
   // Count on mount, then every minute while the tab is visible and again when it comes back.
   useEffect(() => {
     const controller = new AbortController();
-    void refresh(controller.signal);
+    void pollCount(controller.signal);
     const tick = () => {
-      if (document.visibilityState === "visible") void refresh(controller.signal);
+      if (document.visibilityState === "visible") void pollCount(controller.signal);
     };
     const timer = window.setInterval(tick, POLL_MS);
     document.addEventListener("visibilitychange", tick);
@@ -117,7 +145,7 @@ export default function NotificationBell() {
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", tick);
     };
-  }, [refresh]);
+  }, [pollCount]);
 
   const onOpenChange = (next: boolean) => {
     setOpen(next);
@@ -156,9 +184,9 @@ export default function NotificationBell() {
       : tx("Powiadomienia", "Notifications");
   const badge = unread > 99 ? "99+" : String(unread);
   const itemClassName =
-    "flex min-h-11 w-full flex-col items-start gap-0.5 rounded-xl px-3 py-2 text-left text-[13px] text-[var(--chan-ink)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]";
+    "flex min-h-11 w-full flex-col items-start gap-0.5 rounded-none px-3 py-2 text-left text-[13px] text-[var(--chan-ink)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]";
   const actionClassName =
-    "min-h-10 rounded-xl px-3 py-2 text-[13px] font-semibold text-[var(--chan-ink)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]";
+    "min-h-10 rounded-none px-3 py-2 text-[13px] font-semibold text-[var(--chan-ink)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]";
 
   return (
     <>
@@ -168,13 +196,13 @@ export default function NotificationBell() {
       <DropdownMenu open={open} onOpenChange={onOpenChange}>
         <DropdownMenuTrigger
           aria-label={label}
-          className="relative flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] active:scale-95 motion-reduce:transform-none motion-reduce:transition-none"
+          className="relative flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-none text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] active:scale-95 motion-reduce:transform-none motion-reduce:transition-none"
         >
           <Bell className="h-5 w-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
           {unread > 0 && (
             <span
               aria-hidden="true"
-              className="absolute right-0 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--chan-blue)] px-1 text-[10px] font-bold leading-none text-white"
+              className="absolute right-0 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-none bg-[var(--chan-blue)] px-1 text-[10px] font-bold leading-none text-white"
             >
               {badge}
             </span>
@@ -184,7 +212,7 @@ export default function NotificationBell() {
         <DropdownMenuContent
           align="end"
           sideOffset={8}
-          className="z-[1100] max-h-[70vh] w-[min(22rem,calc(100vw-1rem))] rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-1.5 font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.14)] ring-0"
+          className="z-[1100] max-h-[70vh] w-[min(22rem,calc(100vw-1rem))] rounded-none border border-[var(--chan-line)] bg-[var(--chan-card)] p-1.5 font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.14)] ring-0"
         >
           <DropdownMenuLabel className="px-3 py-2">
             <span className="text-[14px] font-bold text-[var(--chan-ink)]">{tx("Powiadomienia", "Notifications")}</span>
@@ -209,7 +237,7 @@ export default function NotificationBell() {
               <>
                 <span className="flex w-full items-start gap-2">
                   {!n.read && (
-                    <span aria-hidden="true" className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[var(--chan-blue)]" />
+                    <span aria-hidden="true" className="mt-1.5 h-2 w-2 shrink-0 rounded-none bg-[var(--chan-blue)]" />
                   )}
                   <span className={n.read ? "font-medium" : "font-bold"}>
                     {n.title}

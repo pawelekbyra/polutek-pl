@@ -39,8 +39,18 @@ describe('isVideoPubliclyVisible', () => {
     expect(isVideoPubliclyVisible(published({ creator: { ...activeChannel, status: 'LIMITED' } }), now)).toBe(true);
   });
 
-  it.each(['DRAFT', 'ARCHIVED', 'UNLISTED'])('rejects status %s', (status) => {
+  it.each(['DRAFT', 'ARCHIVED'])('rejects status %s', (status) => {
     expect(isVideoPubliclyVisible(published({ status }), now)).toBe(false);
+  });
+
+  it('accepts an UNLISTED video (reachable by link; the list queries filter it out themselves)', () => {
+    expect(isVideoPubliclyVisible(published({ status: 'UNLISTED' }), now)).toBe(true);
+  });
+
+  it('still rejects an UNLISTED video that is removed, not due, or on a hidden channel', () => {
+    expect(isVideoPubliclyVisible(published({ status: 'UNLISTED', moderationStatus: 'REMOVED' }), now)).toBe(false);
+    expect(isVideoPubliclyVisible(published({ status: 'UNLISTED', publishedAt: new Date('2026-07-01') }), now)).toBe(false);
+    expect(isVideoPubliclyVisible(published({ status: 'UNLISTED', creator: { ...activeChannel, status: 'SUSPENDED' } }), now)).toBe(false);
   });
 
   it('rejects a video removed by moderation', () => {
@@ -85,6 +95,21 @@ describe('VideoContentService.getPublicVideoByIdOrSlug', () => {
   it('returns null for a missing video', async () => {
     hoisted.findFirst.mockResolvedValue(null);
     expect(await VideoContentService.getPublicVideoByIdOrSlug('nope')).toBeNull();
+  });
+
+  it('loads an UNLISTED video by slug or id (the link works), with the DTO carrying its status', async () => {
+    hoisted.findFirst.mockResolvedValue(published({ status: 'UNLISTED' }));
+    const dto = await VideoContentService.getPublicVideoByIdOrSlug('film-z-innego-kanalu');
+    expect(dto).toMatchObject({ id: 'v9', status: 'UNLISTED' });
+  });
+
+  it('marks an adult video in the public DTO (declared or moderated)', async () => {
+    hoisted.findFirst.mockResolvedValue(published({ isAdult: true }));
+    expect(await VideoContentService.getPublicVideoByIdOrSlug('x')).toMatchObject({ isAdult: true });
+    hoisted.findFirst.mockResolvedValue(published({ moderationStatus: 'AGE_RESTRICTED' }));
+    expect(await VideoContentService.getPublicVideoByIdOrSlug('x')).toMatchObject({ isAdult: true });
+    hoisted.findFirst.mockResolvedValue(published());
+    expect(await VideoContentService.getPublicVideoByIdOrSlug('x')).toMatchObject({ isAdult: false });
   });
 
   it('returns null for a draft, an archived or a removed video and for a hidden channel', async () => {

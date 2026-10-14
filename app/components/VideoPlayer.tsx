@@ -417,7 +417,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
     const src = mountedStream.key === streamKey && mountedStream.url ? mountedStream.url : resolvedSource.src;
 
     return (
-        <div className="relative h-full w-full min-h-0 overflow-hidden rounded-[18px] border border-black/10 bg-black shadow-[0_18px_48px_rgba(15,23,42,0.16)] sm:min-h-[220px]">
+        <div className="relative h-full w-full min-h-0 overflow-hidden rounded-none border border-black/10 bg-black shadow-[0_18px_48px_rgba(15,23,42,0.16)] sm:min-h-[220px]">
             {loadError ? (
                 <PlayerErrorOverlay
                     errorCode="MEDIA_LOAD_FAILED"

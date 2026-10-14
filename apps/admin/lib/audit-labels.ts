@@ -81,6 +81,7 @@ export const AUDIT_LABEL: Record<string, string> = {
   CONTENT_REPORT_RESOLVED: "Zgłoszenie treści rozstrzygnięte",
   VIDEO_MODERATION_CHANGED: "Zmiana statusu moderacji filmu",
   VIDEO_UNPUBLISHED: "Cofnięta publikacja",
+  VIDEO_UNLISTED: "Ustawiono jako niepubliczny",
   VIDEO_PUBLISH_AFTER_ASSET_READY_CANCELLED: "Publikacja po zakodowaniu: anulowana",
   VIDEO_PRICE_SET: "Ustawiona cena filmu",
   ORDER_PAID: "Zamówienie opłacone",

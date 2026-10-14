@@ -9,12 +9,8 @@ export {
 export { broadcastNotification } from './application/broadcast-notification.use-case';
 export type { BroadcastAudience } from './application/broadcast-notification.use-case';
 export * from './domain/notification.dto';
-export {
-  fanOutNewVideo,
-  notifyNewVideoPublished,
-  notifyDuePublishedVideos,
-} from './application/new-video-fan-out.use-case';
-export type { NewVideoFanOutResult, NewVideoSweepResult } from './application/new-video-fan-out.use-case';
+export { fanOutNewVideo, notifyNewVideoPublished } from './application/new-video-fan-out.use-case';
+export type { NewVideoFanOutResult } from './application/new-video-fan-out.use-case';
 export { listUserNotifications, markNotificationsRead, countUnreadNotifications } from './application/user-notifications.use-cases';
 export { getNotificationPreferences, updateNotificationPreferences } from './application/notification-preferences.use-cases';
 export * from './domain/user-notifications';

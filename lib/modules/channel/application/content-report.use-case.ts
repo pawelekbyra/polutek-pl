@@ -29,7 +29,7 @@ export async function createContentReport(
       where: { id: input.targetId },
       select: { id: true, creatorId: true, status: true, moderationStatus: true, creator: { select: { status: true, deletedAt: true } } },
     });
-    const visible = !!video && video.status === "PUBLISHED" && video.moderationStatus !== "REMOVED" && MainChannelPolicy.isPubliclyVisible(video.creator);
+    const visible = !!video && (video.status === "PUBLISHED" || video.status === "UNLISTED") && video.moderationStatus !== "REMOVED" && MainChannelPolicy.isPubliclyVisible(video.creator);
     if (!video || !visible) return fail(new AppError("Nie znaleziono treści.", 404, "NOT_FOUND"));
     channelId = video.creatorId;
   } else {

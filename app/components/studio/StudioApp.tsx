@@ -8,10 +8,11 @@ import { confirmLeave } from "./unsaved-guard";
 import StudioContent, { type ContentView } from "./StudioContent";
 import StudioComments from "./StudioComments";
 import StudioProfile from "./StudioProfile";
+import StudioAnalytics from "./StudioAnalytics";
 
-type SectionId = "overview" | "content" | "comments" | "profile";
+type SectionId = "overview" | "content" | "comments" | "analytics" | "profile";
 
-const SECTION_IDS: SectionId[] = ["overview", "content", "comments", "profile"];
+const SECTION_IDS: SectionId[] = ["overview", "content", "comments", "analytics", "profile"];
 
 function readSection(): SectionId {
   if (typeof window === "undefined") return "overview";
@@ -66,6 +67,7 @@ export default function StudioApp() {
     overview: tx("Panel", "Dashboard"),
     content: tx("Treści", "Content"),
     comments: tx("Komentarze", "Comments"),
+    analytics: tx("Statystyki", "Statistics"),
     profile: tx("Kanał i ustawienia", "Channel and settings"),
   };
 
@@ -109,8 +111,9 @@ export default function StudioApp() {
           </div>
         )}
         {section === "overview" && <Overview me={me} onOpen={go} />}
-        {section === "content" && <StudioContent initialView={contentIntent} />}
+        {section === "content" && <StudioContent initialView={contentIntent} limits={me.limits ?? null} />}
         {section === "comments" && <StudioComments />}
+        {section === "analytics" && <StudioAnalytics />}
         {section === "profile" && <StudioProfile channel={me.channel} onChanged={load} />}
       </div>
     </div>
@@ -207,7 +210,7 @@ function Overview({ me, onOpen }: { me: StudioMe; onOpen: (s: SectionId, intent?
               alt=""
               width={160}
               height={90}
-              className="h-[54px] w-24 shrink-0 rounded-lg bg-[var(--chan-surface)] object-cover sm:h-[72px] sm:w-32"
+              className="h-[54px] w-24 shrink-0 rounded-none bg-[var(--chan-surface)] object-cover sm:h-[72px] sm:w-32"
             />
             <div className="min-w-0 flex-1">
               <p className="truncate text-[14px] font-semibold text-[var(--chan-ink)]">{lastVideo.title}</p>

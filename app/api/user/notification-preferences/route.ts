@@ -9,7 +9,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
-/** The viewer's notification toggles plus the read-only `emailConsent` (content-mail consent). */
+/** The viewer's notification toggles. */
 export async function GET() {
   try {
     const session = await viewerNotificationsContext("read");
@@ -21,11 +21,7 @@ export async function GET() {
   }
 }
 
-/**
- * Saves any of `newVideoInApp`, `newVideoEmail`, `commentEnabled`, `systemEnabled` (booleans, at least
- * one, no other keys). Changing `newVideoEmail` never grants mailing consent: that stays with the
- * subscribe and unsubscribe flows.
- */
+/** Saves any of `newVideoInApp`, `commentEnabled`, `systemEnabled` (booleans, at least one, no other keys). */
 export async function PATCH(req: NextRequest) {
   try {
     const session = await viewerNotificationsContext("write");

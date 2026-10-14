@@ -161,6 +161,31 @@ describe("processEncodeJob", () => {
     expect(await processEncodeJob(big.job, big.ports)).toBe("failed");
   });
 
+  describe("per-channel length limit (ChannelQuota.maxVideoSeconds)", () => {
+    it("fails a source over the channel limit with a creator-readable permanent reason", async () => {
+      const h = harness();
+      h.encoder.probe.mockResolvedValue({ ...GOOD_PROBE, duration: 901 });
+      h.ports.channelLimits = { maxVideoSeconds: vi.fn(async () => 900) };
+      expect(await processEncodeJob(h.job, h.ports)).toBe("failed");
+      expect(h.store.markFailedOrRetry).toHaveBeenCalledWith("job-1", "w1", expect.objectContaining({ code: "CHANNEL_DURATION_LIMIT", next: "FAILED", message: expect.stringContaining("15 min") }), expect.any(Date));
+      expect(h.encoder.encode).not.toHaveBeenCalled();
+    });
+
+    it("accepts a source exactly at the limit", async () => {
+      const h = harness();
+      h.encoder.probe.mockResolvedValue({ ...GOOD_PROBE, duration: 900 });
+      h.ports.channelLimits = { maxVideoSeconds: vi.fn(async () => 900) };
+      expect(await processEncodeJob(h.job, h.ports)).toBe("succeeded");
+    });
+
+    it("applies no channel limit when none resolves (main channel, staff job)", async () => {
+      const h = harness();
+      h.encoder.probe.mockResolvedValue({ ...GOOD_PROBE, duration: 5 * 3600 });
+      h.ports.channelLimits = { maxVideoSeconds: vi.fn(async () => null) };
+      expect(await processEncodeJob(h.job, h.ports)).toBe("succeeded");
+    });
+  });
+
   it("treats a source without video (audio-only) as a permanent failure", async () => {
     const h = harness();
     h.encoder.probe.mockRejectedValue(new Error("Source has no video stream"));

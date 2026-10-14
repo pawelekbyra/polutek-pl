@@ -7,15 +7,17 @@ import { ResendAudienceGateway } from "../infrastructure/resend-audience.gateway
 import { normalizeTrustedEmail } from "../domain/email-address";
 import { ProviderSyncStatus } from "../domain/provider-sync-status";
 import { SubscriptionStatusDto } from "./get-subscription-status.use-case";
+import { resolveSubscribableChannel } from "./resolve-subscription-channel";
 
 export type SubscribeInput = {
   trustedEmail: string;
+  /** Channel id to subscribe to (must be publicly visible); omitted = the main channel. */
+  creatorId?: string | null;
   audienceGateway?: Pick<ResendAudienceGateway, 'syncExplicitSubscribe'>;
 };
 
 export class SubscribeUseCase {
   static async execute(ctx: AppContext, input: SubscribeInput): Promise<SubscriptionStatusDto & { message: string; providerSyncStatus: ProviderSyncStatus }> {
-    const mainChannel = await MainChannelService.getRequired(ctx);
     const userId = (ctx.actor.type === 'user' || ctx.actor.type === 'admin') ? ctx.actor.userId : null;
     if (!userId) {
        throw new Error("UserId is required for subscribe");
@@ -25,6 +27,8 @@ export class SubscribeUseCase {
     if (!trustedEmail) {
       throw new Error("Trusted user email is required for subscribe");
     }
+
+    const channel = await resolveSubscribableChannel(ctx, input.creatorId);
 
     const result = await ctx.db.writeTransaction(async (tx) => {
       const subscriptionRepo = new SubscriptionRepository(tx);
@@ -40,32 +44,24 @@ export class SubscribeUseCase {
         );
       }
 
-      const result = typeof subscriptionRepo.createIfMissing === "function"
-        ? await subscriptionRepo.createIfMissing(userId, mainChannel.id, tx)
-        : await (async () => {
-            const existing = await subscriptionRepo.findByUserIdAndCreatorId(userId, mainChannel.id);
-            if (existing) return { subscription: existing, created: false };
-            const subscription = await subscriptionRepo.create(userId, mainChannel.id, tx);
-            await MainChannelService.incrementSubscribersCount(ctx, mainChannel.id, tx);
-            return { subscription, created: true };
-          })();
-      const syncedChannel = typeof MainChannelService.syncSubscribersCount === "function"
-        ? await MainChannelService.syncSubscribersCount(ctx, mainChannel.id, tx)
-        : await MainChannelService.getRequired(ctx);
+      // Idempotent: a second subscribe finds the row (unique userId+creatorId) and changes nothing.
+      const created = await subscriptionRepo.createIfMissing(userId, channel.id, tx);
+      // The counter is always recounted from the rows of this channel, so it cannot drift.
+      const synced = await MainChannelService.syncSubscribersCount(ctx, channel.id, tx);
 
-      return { ...result, subscribersCount: syncedChannel.subscribersCount ?? 0 };
+      return { ...created, subscribersCount: synced.subscribersCount ?? 0 };
     });
 
     const providerSyncStatus = await (input.audienceGateway ?? new ResendAudienceGateway()).syncExplicitSubscribe(trustedEmail);
-    const finalChannel = await MainChannelService.getRequired(ctx);
 
     return {
       isSubscribed: true,
       subscribedAt: result.subscription.createdAt,
-      subscribersCount: result.subscribersCount ?? finalChannel.subscribersCount ?? 0,
-      creatorId: mainChannel.id,
-      creatorSlug: mainChannel.slug,
+      subscribersCount: result.subscribersCount,
+      creatorId: channel.id,
+      creatorSlug: channel.slug,
       purpose: "EMAIL_NOTIFICATIONS",
+      notify: result.subscription.notify ?? true,
       providerSyncStatus,
       message: "Email notifications enabled for this channel.",
     };

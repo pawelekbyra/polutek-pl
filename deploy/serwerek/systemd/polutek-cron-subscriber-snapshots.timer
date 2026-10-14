@@ -1,0 +1,10 @@
+[Unit]
+Description=polutek cron subscriber-snapshots, daily 23:50 UTC (closing subscriber count of the UTC day)
+
+[Timer]
+OnCalendar=*-*-* 23:50:00 UTC
+Persistent=true
+Unit=polutek-cron@subscriber-snapshots.service
+
+[Install]
+WantedBy=timers.target
