@@ -739,5 +739,17 @@
  "Restore as draft": "Restaurar como rascunho",
  "Unpublish this video? It will no longer be visible to the public and goes back to a private draft.": "Anular a publicação deste vídeo? Ele deixará de ser visível ao público e voltará a ser um rascunho privado.",
  "Unpublished. The video is now a private draft.": "Publicação anulada. O vídeo agora é um rascunho privado.",
- "Unpublish": "Anular publicação"
+ "Unpublish": "Anular publicação",
+ "Open menu": "Abrir menu",
+ "Side menu": "Menu lateral",
+ "Menu": "Menu",
+ "Close menu": "Fechar menu",
+ "Side navigation": "Navegação lateral",
+ "Home": "Início",
+ "Subscriptions": "Subscrições",
+ "Sign in to see the channels you follow.": "Inicie sessão para ver os canais que segue.",
+ "Could not load your subscriptions.": "Não foi possível carregar as suas subscrições.",
+ "You do not follow any channel yet.": "Ainda não segue nenhum canal.",
+ "Legal": "Legal",
+ "Privacy policy": "Política de privacidade"
 }
