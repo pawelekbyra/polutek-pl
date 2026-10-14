@@ -739,5 +739,17 @@
  "Restore as draft": "恢复为草稿",
  "Unpublish this video? It will no longer be visible to the public and goes back to a private draft.": "取消发布此视频？它将不再对公众可见，并变回私密草稿。",
  "Unpublished. The video is now a private draft.": "已取消发布。视频现在是私密草稿。",
- "Unpublish": "取消发布"
+ "Unpublish": "取消发布",
+ "Open menu": "打开菜单",
+ "Side menu": "侧边菜单",
+ "Menu": "菜单",
+ "Close menu": "关闭菜单",
+ "Side navigation": "侧边导航",
+ "Home": "首页",
+ "Subscriptions": "订阅",
+ "Sign in to see the channels you follow.": "登录后即可查看您关注的频道。",
+ "Could not load your subscriptions.": "无法加载您的订阅。",
+ "You do not follow any channel yet.": "您还没有关注任何频道。",
+ "Legal": "法律信息",
+ "Privacy policy": "隐私政策"
 }

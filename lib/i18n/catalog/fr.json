@@ -739,5 +739,17 @@
  "Restore as draft": "Restaurer en brouillon",
  "Unpublish this video? It will no longer be visible to the public and goes back to a private draft.": "Dépublier cette vidéo ? Elle ne sera plus visible publiquement et redeviendra un brouillon privé.",
  "Unpublished. The video is now a private draft.": "Vidéo dépubliée. C'est maintenant un brouillon privé.",
- "Unpublish": "Dépublier"
+ "Unpublish": "Dépublier",
+ "Open menu": "Ouvrir le menu",
+ "Side menu": "Menu latéral",
+ "Menu": "Menu",
+ "Close menu": "Fermer le menu",
+ "Side navigation": "Navigation latérale",
+ "Home": "Accueil",
+ "Subscriptions": "Abonnements",
+ "Sign in to see the channels you follow.": "Connectez-vous pour voir les chaînes que vous suivez.",
+ "Could not load your subscriptions.": "Impossible de charger vos abonnements.",
+ "You do not follow any channel yet.": "Vous ne suivez encore aucune chaîne.",
+ "Legal": "Mentions légales",
+ "Privacy policy": "Politique de confidentialité"
 }
