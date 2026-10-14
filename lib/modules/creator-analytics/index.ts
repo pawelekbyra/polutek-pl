@@ -1,5 +1,5 @@
 /**
- * Creator analytics for the Studio (CLAUDE.md 4.23, docs/architecture/creator-analytics.md): per-channel read models
+ * Creator analytics for the Studio (CLAUDE.md 4.23): per-channel read models
  * (overview, video table, video detail with reach curve, CSV export) and the daily subscriber snapshot job.
  * Every query use case authorizes `channel.view_analytics` on the context channel; nothing here imports next/*.
  */
