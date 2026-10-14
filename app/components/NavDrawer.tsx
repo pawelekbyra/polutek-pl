@@ -71,7 +71,7 @@ export default function NavDrawer() {
         aria-label={tx("Otwórz menu", "Open menu")}
         aria-expanded={open}
         aria-controls={panelId}
-        className="-ml-1 mr-3 flex h-[38px] w-[46px] shrink-0 items-center justify-center rounded-xl border border-[var(--cm-line-82)] bg-[var(--cm-card-74-white)] text-[var(--chan-ink)] transition-[background-color,box-shadow,transform] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] md:mr-5"
+        className="-ml-1 mr-3 flex h-[38px] w-[46px] shrink-0 items-center justify-center rounded-xl bg-[var(--chan-surface)] text-[var(--chan-ink)] transition-[background-color,box-shadow,transform] duration-160 hover:bg-[var(--chan-line)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95 active:bg-[var(--chan-line)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] md:mr-5"
       >
         <Menu className="h-[22px] w-[22px]" strokeWidth={2} aria-hidden="true" />
       </button>
