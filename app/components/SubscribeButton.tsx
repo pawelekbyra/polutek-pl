@@ -10,6 +10,7 @@ import { useLanguage } from "./LanguageContext";
 import EmailSubscriptionConsentModal from "./subscriptions/EmailSubscriptionConsentModal";
 import { useClientReady } from "@/app/hooks/useClientEnvironment";
 import { Bell, BellOff, BellRing, Check } from "lucide-react";
+import { SHOW_SUBSCRIPTION_BELL } from "@/lib/ui-flags";
 
 interface SubscribeButtonProps {
   creatorId?: string;
@@ -185,7 +186,7 @@ export default function SubscribeButton({
         )}
         <span className="relative leading-none z-10">{effectiveIsSubscribed ? (t.subscribed || "Subskrajbd") : (t.subscribe || "Subskrajb")}</span>
       </motion.button>
-      {effectiveIsSubscribed && (
+      {SHOW_SUBSCRIPTION_BELL && effectiveIsSubscribed && (
         <button
           type="button"
           onClick={toggleNotify}

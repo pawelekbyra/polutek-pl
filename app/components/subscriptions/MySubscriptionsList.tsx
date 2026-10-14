@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { SHOW_SUBSCRIPTION_BELL } from "@/lib/ui-flags";
 import Link from "next/link";
 import { BellOff, BellRing } from "lucide-react";
 import { SafeAvatar } from "@/app/components/SafeAvatar";
@@ -131,6 +132,7 @@ export default function MySubscriptionsList({ initialRows }: { initialRows: MySu
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
+                {SHOW_SUBSCRIPTION_BELL && (
                 <button
                   type="button"
                   onClick={() => void toggleBell(row)}
@@ -142,6 +144,7 @@ export default function MySubscriptionsList({ initialRows }: { initialRows: MySu
                 >
                   {rowState.notify ? <BellRing size={16} strokeWidth={1.8} /> : <BellOff size={16} strokeWidth={1.8} />}
                 </button>
+                )}
                 <button
                   type="button"
                   onClick={() => void unsubscribe(row)}
