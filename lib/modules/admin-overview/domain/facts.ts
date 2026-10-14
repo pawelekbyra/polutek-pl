@@ -11,7 +11,7 @@ export const FACTS_AS_OF = "2026-10-04";
 
 export type ScheduledJob = { name: string; kind: "timer" | "cron"; schedule: string; purpose: string };
 
-/** 9 timers from deploy/serwerek/systemd + backup.sh and health.sh from the server crontab (SERWEREK.md chapter 8). */
+/** 10 timers from deploy/serwerek/systemd + backup.sh and health.sh from the server crontab (SERWEREK.md chapter 8). */
 export const SCHEDULED_JOBS: ScheduledJob[] = [
   { name: "send-broadcasts", kind: "timer", schedule: "co minutę", purpose: "wysyła kolejkę rozsyłek e-mail" },
   { name: "stripe-reconciliation", kind: "timer", schedule: "co 15 min", purpose: "dopina wpłaty potwierdzone w Stripe, zamyka porzucone" },
@@ -22,6 +22,7 @@ export const SCHEDULED_JOBS: ScheduledJob[] = [
   { name: "prune-playback-sessions", kind: "timer", schedule: "codziennie 05:00 UTC", purpose: "usuwa sesje odtwarzania bez obejrzenia (30 dni)" },
   { name: "purge-deleted-comments", kind: "timer", schedule: "codziennie 05:15 UTC", purpose: "kasuje treść komentarzy usuniętych przez autorów" },
   { name: "sync-public-thumbnails", kind: "timer", schedule: "codziennie 06:00 UTC", purpose: "synchronizuje publiczne miniatury w R2" },
+  { name: "subscriber-snapshots", kind: "timer", schedule: "codziennie 23:50 UTC", purpose: "zapisuje dzienną liczbę subskrybentów kanałów (wykres w Statystykach Studia)" },
   { name: "backup.sh", kind: "cron", schedule: "codziennie 02:30 (czas serwera)", purpose: "pg_dump wszystkich baz + konfiguracja, kopia w R2" },
   { name: "health.sh", kind: "cron", schedule: "co 5 min", purpose: "dysk, RAM, swap, usługi; alert e-mailem" },
 ];

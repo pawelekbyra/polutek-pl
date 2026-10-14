@@ -384,8 +384,10 @@ function checkAdminApp() {
 // A file in these modules' application layer must call authorize()/assertAuthorized()/requireVideo() or be listed
 // here with the reason it is exempt (public read, pure helper, worker/cron acting as `system`, or it only delegates
 // to a function that authorizes).
-const AUTHZ_MODULES = ['video', 'video-pipeline', 'admin-content', 'channel', 'sales'];
+const AUTHZ_MODULES = ['video', 'video-pipeline', 'admin-content', 'channel', 'sales', 'creator-analytics'];
 const AUTHZ_EXEMPT: Record<string, string> = {
+  'lib/modules/creator-analytics/application/context.ts': 'wiring helpers; every analytics use case calls authorize() itself',
+  'lib/modules/creator-analytics/application/snapshot-subscribers.use-case.ts': 'daily cron; refuses any actor other than system',
   'lib/modules/video/application/admin-video-payload.ts': 'pure DTO helper, no I/O',
   'lib/modules/video/application/get-admin-video-details.use-case.ts': 'delegates to getAdminVideoById and getAdminVideoDiagnostics, which authorize',
   'lib/modules/video/application/get-hero-video.use-case.ts': 'public read (whitelisted DTO)',

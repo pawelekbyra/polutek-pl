@@ -264,6 +264,7 @@ dopóki następny przebieg się nie powiedzie. Szablon: `polutek-cron@.service`.
 | `polutek-cron-prune-playback-sessions` | `prune-playback-sessions` | 05:00 | kasuje sesje odtwarzania starsze niż 30 dni, niezaliczone jako wyświetlenie |
 | `polutek-cron-purge-deleted-comments` | `purge-deleted-comments` | 05:15 | kasuje treść komentarzy usuniętych przez autorów ponad 30 dni temu |
 | `polutek-cron-sync-public-thumbnails` | `sync-public-thumbnails` | 06:00 | uzgadnia publiczny bucket miniatur z opublikowanymi filmami |
+| `polutek-cron-subscriber-snapshots` | `subscriber-snapshots` | 23:50 | zapisuje liczbę subskrybentów każdego aktywnego kanału na dzień UTC (`SubscriberSnapshot`, idempotentnie: ponowny przebieg tego samego dnia nadpisuje wiersz); zasila wykres w Statystykach Studia |
 | `serwerek-backup` | skrypt `backup.sh` | 02:30 czasu lokalnego (`Persistent=true`) | nocna kopia (patrz „Kopie zapasowe”) |
 | `serwerek-own-mail-events` | skrypt `own-mail-events.sh` → `POST /api/cron/own-mail-events` | co 5 min | wysyła log Postfixa własnego toru poczty do aplikacji: twarde odbicia adresu zawieszają adres, blokady po stronie odbiorców dają niezerowy kod wyjścia i alarm w `health.sh` (nic nie robi, gdy kontener `pp-mail-lab` nie działa; patrz [`MAIL-OWN-TRANSPORT.md`](MAIL-OWN-TRANSPORT.md)) |
 | `serwerek-restore-test` | skrypt `restore-test.sh` | niedziela 03:30 czasu lokalnego | test odtworzenia bazy |
