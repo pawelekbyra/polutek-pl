@@ -7,3 +7,4 @@ export * from "./domain/email-address";
 export * from "./application/signed-unsubscribe.use-case";
 export * from "./domain/signed-unsubscribe-token";
 export * from "./application/contact-removal.use-case";
+export * from "./application/list-subscribed-channels.use-case";
