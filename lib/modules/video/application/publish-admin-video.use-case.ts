@@ -9,6 +9,7 @@ import { toAdminVideoDto } from "../domain/video.dto";
 import { VideoNotFoundError, VideoNotReadyForPublicationError } from "../domain/video.errors";
 import { VideoPolicy } from "../domain/video.policy";
 import { syncPublicThumbnail } from "./sync-public-thumbnail.service";
+import { announcePublishedVideo } from "./announce-published-video";
 
 export async function publishAdminVideo(
   videoId: string,
@@ -57,6 +58,9 @@ export async function publishAdminVideo(
   });
 
   await syncPublicThumbnail(updated, ctx);
+
+  // After the commit, best effort (never fails or undoes the publication; an upcoming premiere is announced when it starts).
+  await announcePublishedVideo(updated.id);
 
   return ok(toAdminVideoDto(updated));
 }
