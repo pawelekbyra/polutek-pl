@@ -11,6 +11,8 @@ const DEFAULTS: Record<NotificationKind, { titlePl: string; titleEn: string; bod
   COMMENT: notificationTemplates.commentLike,
   SYSTEM: { titlePl: "Wiadomość systemowa", titleEn: "System message", bodyPl: "", bodyEn: "" },
   SUPPORT: { titlePl: "Wsparcie", titleEn: "Support", bodyPl: "", bodyEn: "" },
+  NEW_VIDEO: { titlePl: "Nowy film", titleEn: "New video", bodyPl: "", bodyEn: "" },
+  MODERATION: { titlePl: "Decyzja moderacji", titleEn: "Moderation decision", bodyPl: "", bodyEn: "" },
 };
 
 export const NOTIFICATION_TEMPLATE_KINDS = Object.keys(DEFAULTS) as NotificationKind[];
