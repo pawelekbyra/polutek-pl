@@ -46,6 +46,12 @@ const mockPrisma: any = {
     findFirst: vi.fn().mockResolvedValue(readyRouteVideo),
     update: vi.fn()
   },
+  // The target visibility of an auto-publication ("PUBLISHED" or "UNLISTED") is a small per-video setting.
+  appSetting: {
+    findUnique: vi.fn().mockResolvedValue(null),
+    deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    upsert: vi.fn(),
+  },
   $transaction: vi.fn((cb) => cb(mockPrisma))
 };
 

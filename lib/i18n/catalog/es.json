@@ -842,5 +842,20 @@
  "You have no published videos yet.": "Aún no tienes vídeos publicados.",
  "Channel video statistics": "Estadísticas de vídeo del canal",
  "Showing the newest {0} videos.": "Se muestran los {0} vídeos más recientes.",
- "Download CSV": "Descargar CSV"
+ "Download CSV": "Descargar CSV",
+ "Notifications": "Notificaciones",
+ "Could not save the setting. Please try again.": "No se pudo guardar el ajuste. Inténtalo de nuevo.",
+ "Could not load notification settings.": "No se pudieron cargar los ajustes de notificaciones.",
+ "New videos (in the app)": "Vídeos nuevos (en la aplicación)",
+ "A bell notification when a channel you follow publishes a video.": "Una notificación en la campana cuando un canal que sigues publica un vídeo.",
+ "Reactions and replies to your comments.": "Reacciones y respuestas a tus comentarios.",
+ "Service messages": "Mensajes del servicio",
+ "Announcements and information from the service.": "Anuncios e información del servicio.",
+ "New notifications: {0}": "Notificaciones nuevas: {0}",
+ "Notifications, {0} unread": "Notificaciones, {0} sin leer",
+ "Could not load notifications.": "No se pudieron cargar las notificaciones.",
+ "No notifications.": "No hay notificaciones.",
+ "unread": "sin leer",
+ "Show older": "Mostrar anteriores",
+ "Mark all as read": "Marcar todo como leído"
 }
