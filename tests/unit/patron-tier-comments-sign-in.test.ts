@@ -55,7 +55,7 @@ describe('PATRON tier comments need sign-in only', () => {
         creatorId: 'c1',
         tier: AccessTier.PATRON,
         status: VideoStatus.PUBLISHED,
-        creator: { id: 'c1', isApproved: true, isPrimary: true },
+        creator: { id: 'c1', status: 'ACTIVE' },
       });
 
       prismaMock.user.findUnique.mockResolvedValue({

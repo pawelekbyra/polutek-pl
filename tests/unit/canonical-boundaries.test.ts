@@ -47,7 +47,7 @@ describe("Canonical Boundaries Verification", () => {
         status: VideoStatus.DRAFT,
         tier: AccessTier.PUBLIC,
         publishedAt: null,
-        creator: { id: "main_channel_id", isApproved: true, isPrimary: true }
+        creator: { id: "main_channel_id", status: 'ACTIVE' }
       };
 
       mockPrisma.video.findFirst.mockResolvedValue(draftVideo);
@@ -70,7 +70,7 @@ describe("Canonical Boundaries Verification", () => {
         status: VideoStatus.DRAFT,
         tier: AccessTier.PUBLIC,
         publishedAt: null,
-        creator: { id: "main_channel_id", isApproved: true, isPrimary: true }
+        creator: { id: "main_channel_id", status: 'ACTIVE' }
       };
 
       mockPrisma.video.findFirst.mockResolvedValue(draftVideo);

@@ -20,6 +20,10 @@ export async function viewAsPerson(ctx: AppContext, userId: string): Promise<Use
     take: 60,
     select: { id: true, slug: true, title: true, tier: true },
   });
+  const paidIds = videos.filter((v) => (v.tier as string) === "PAID").map((v) => v.id);
+  const entitlements = paidIds.length
+    ? await ctx.prisma.entitlement.findMany({ where: { userId, videoId: { in: paidIds }, revokedAt: null }, select: { videoId: true } })
+    : [];
   await recordAuditEvent(ctx, { action: "ADMIN_VIEW_AS", targetType: "User", targetId: userId, metadata: { films: videos.length } });
-  return ok(explainAccess(user, videos, ctx.now()));
+  return ok(explainAccess(user, videos, ctx.now(), new Set(entitlements.map((e) => e.videoId))));
 }

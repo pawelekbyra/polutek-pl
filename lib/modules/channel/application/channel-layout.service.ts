@@ -45,15 +45,15 @@ export type SidebarSection = {
 };
 
 export class ChannelLayoutService {
-    static async getSidebarLayout(userId: string | null, currentVideoId?: string) {
+    /**
+     * `viewer.isStaff` comes from the resolved Actor (`actor.type === "admin"`, lib/api/auth), never from reading
+     * `User.role` here (stage 8): it only lifts the cosmetic lock flags, playback is still decided by checkVideoAccess.
+     */
+    static async getSidebarLayout(userId: string | null, currentVideoId?: string, viewer: { isStaff?: boolean } = {}) {
         let viewerState: SidebarViewerState = "ANONYMOUS";
 
         if (userId) {
-            const user = await prisma.user.findUnique({
-                where: { id: userId },
-                select: { role: true },
-            });
-            viewerState = user?.role === 'ADMIN' ? "ADMIN" : "LOGGED_IN";
+            viewerState = viewer.isStaff ? "ADMIN" : "LOGGED_IN";
         }
 
         const mainChannel = await MainChannelService.getRequired(createAppContext()).catch(() => null);

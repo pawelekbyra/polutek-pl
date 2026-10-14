@@ -5,6 +5,7 @@ import { WriteTx } from "@/lib/modules/shared/db";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { CommentError, commentDatabaseError } from "../domain/comment.errors";
 import { BULK_MODERATION_LIMIT, type StatusChange } from "./moderate-comments-bulk.use-case";
+import { authorizeComments, moderatorId } from "./authorize-comments";
 
 /** Statuses an undo may move a comment between. DELETED is final and can never be produced or left by an undo. */
 const REVERSIBLE: readonly CommentStatus[] = [CommentStatus.VISIBLE, CommentStatus.HELD_FOR_REVIEW, CommentStatus.HIDDEN];
@@ -22,9 +23,10 @@ export async function undoCommentModeration(
   ctx: AppContext,
   input: { changes: StatusChange[]; reports: { id: string; commentId: string }[] },
 ): Promise<UseCaseResult<{ restored: number; reopened: number }, CommentError>> {
-  if (ctx.actor.type !== "admin") return fail({ type: "UNAUTHORIZED", message: "Brak uprawnień administratora." });
-  const actorId = ctx.actor.userId;
   const { changes, reports } = input;
+  const denied = await authorizeComments(ctx, "comment.moderate", [...new Set([...changes.map((c) => c.commentId), ...reports.map((r) => r.commentId)])]);
+  if (denied) return fail(denied);
+  const actorId = moderatorId(ctx);
   const valid = changes.every((c) => REVERSIBLE.includes(c.from) && REVERSIBLE.includes(c.to) && c.from !== c.to);
   if (!valid || new Set(changes.map((c) => c.commentId)).size !== changes.length || changes.length > BULK_MODERATION_LIMIT || reports.length > BULK_MODERATION_LIMIT * 20) {
     return fail({ type: "VALIDATION_ERROR", message: "Tej zmiany nie da się cofnąć." });

@@ -6,7 +6,7 @@ vi.mock('resend', () => ({
     return { emails: { send: emailsSend } };
   }),
 }));
-vi.mock('@/lib/feature-flags', () => ({ flags: { mainCreatorSlug: 'polutek' } }));
+vi.mock('@/lib/feature-flags', () => ({ flags: {} }));
 vi.mock('@/lib/prisma', () => ({ prisma: {} }));
 
 const { sendMail } = vi.hoisted(() => ({ sendMail: vi.fn() }));

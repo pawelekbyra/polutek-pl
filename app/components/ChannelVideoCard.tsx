@@ -19,7 +19,6 @@ import { toVideoAccessTier } from "@/lib/access-tier";
 interface ChannelVideoCardProps {
   video: PublicVideoDTO;
   isLoggedIn: boolean;
-  role?: string;
   /** Position in the grid, used for a staggered mount-in animation. Optional so callers that don't care about ordering can omit it. */
   index?: number;
 }
@@ -27,7 +26,6 @@ interface ChannelVideoCardProps {
 export default function ChannelVideoCard({
   video,
   isLoggedIn,
-  role,
   index = 0,
 }: ChannelVideoCardProps) {
   const { t, language, tx } = useLanguage();

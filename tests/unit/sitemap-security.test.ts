@@ -15,6 +15,7 @@ vi.mock('@/lib/modules/channel', () => ({
   MainChannelService: {
     getOptional: vi.fn(),
   },
+  publiclyVisibleChannelWhere: () => ({ status: { in: ['ACTIVE', 'LIMITED'] }, deletedAt: null }),
 }));
 
 describe('Sitemap Security', () => {
@@ -34,10 +35,7 @@ describe('Sitemap Security', () => {
         tier: 'PUBLIC',
         status: 'PUBLISHED',
         creatorId: 'main-channel-id',
-        creator: {
-          isApproved: true,
-          isPrimary: true,
-        },
+        creator: { status: { in: ['ACTIVE', 'LIMITED'] }, deletedAt: null },
       }),
     }));
   });

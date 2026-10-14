@@ -1,5 +1,5 @@
 import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
-import { flags } from "@/lib/feature-flags";
+import { MAIN_CHANNEL_SETTING_KEY } from "../domain/main-channel-setting";
 import { PrismaClient } from "@prisma/client";
 
 export class ChannelRepository {
@@ -10,13 +10,15 @@ export class ChannelRepository {
       return (this.db as PrismaClient).creator;
   }
 
+  /**
+   * The platform's main channel: only the `main_channel_id` setting (CLAUDE.md 4.24). There is no fallback to a
+   * slug variable or a flag on the row: a missing or dangling setting means "no main channel" (null).
+   */
   async findMainChannel() {
-    const slug = flags.mainCreatorSlug;
-    if (!slug) return null;
-
-    return await this.creator.findUnique({
-      where: { slug },
-    });
+    const setting = await (this.db as PrismaClient).appSetting.findUnique({ where: { key: MAIN_CHANNEL_SETTING_KEY } });
+    const configuredId = setting?.value?.trim();
+    if (!configuredId) return null;
+    return await this.creator.findUnique({ where: { id: configuredId } });
   }
 
   async findById(id: string) {

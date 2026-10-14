@@ -423,6 +423,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           setIsInputFocused={setIsInputFocused}
           /** ground truth for the UI permission: */
           canComment={viewer?.canComment ?? false}
+          commentsDisabled={viewer?.commentsDisabled === true}
           isPending={postMutation.isPending}
           isViewerLoading={isLoading}
           errorMessage={composerError}

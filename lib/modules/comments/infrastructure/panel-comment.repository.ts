@@ -27,6 +27,8 @@ export type PanelCommentFilters = {
   authorId?: string;
   /** Top-level, visible comments with a question mark that the creator has not answered yet. */
   unansweredQuestions?: boolean;
+  /** Only comments under the videos of this channel (the Studio always sets it; staff may leave it out). */
+  channelId?: string;
   /** Only comments with at least one pending report. */
   reported?: boolean;
 };
@@ -36,6 +38,7 @@ export function panelCommentWhere(f: PanelCommentFilters): Prisma.CommentWhereIn
   if (f.q) and.push({ OR: [{ text: { contains: f.q, mode: "insensitive" } }, { author: { name: { contains: f.q, mode: "insensitive" } } }] });
   if (f.status) and.push({ status: f.status });
   if (f.videoId) and.push({ videoId: f.videoId });
+  if (f.channelId) and.push({ video: { creatorId: f.channelId } });
   if (f.authorId) and.push({ authorId: f.authorId });
   if (f.reported) and.push({ reports: { some: { status: "PENDING" } } });
   if (f.unansweredQuestions) {
@@ -59,16 +62,20 @@ export class PanelCommentRepository {
     return { items, total };
   }
 
-  queueCounts() {
+  queueCounts(channelId?: string | null) {
+    const inChannel: Prisma.CommentWhereInput = channelId ? { video: { creatorId: channelId } } : {};
     return Promise.all([
-      this.db.comment.count({ where: MODERATION_QUEUE_WHERE }),
-      this.db.comment.count({ where: { status: CommentStatus.HELD_FOR_REVIEW } }),
-      this.db.commentReport.count({ where: { status: "PENDING" } }),
+      this.db.comment.count({ where: { AND: [MODERATION_QUEUE_WHERE, inChannel] } }),
+      this.db.comment.count({ where: { status: CommentStatus.HELD_FOR_REVIEW, ...inChannel } }),
+      this.db.commentReport.count({ where: { status: "PENDING", ...(channelId ? { comment: { video: { creatorId: channelId } } } : {}) } }),
     ]).then(([comments, held, pendingReports]) => ({ comments, held, pendingReports }));
   }
 
-  async resolvedReports(page: number, pageSize: number) {
-    const where = { status: { not: "PENDING" as const } };
+  async resolvedReports(page: number, pageSize: number, channelId?: string | null) {
+    const where: Prisma.CommentReportWhereInput = {
+      status: { not: "PENDING" },
+      ...(channelId ? { comment: { video: { creatorId: channelId } } } : {}),
+    };
     const [items, total] = await Promise.all([
       this.db.commentReport.findMany({
         where,

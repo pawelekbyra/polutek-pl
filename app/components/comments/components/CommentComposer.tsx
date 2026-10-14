@@ -21,6 +21,8 @@ interface CommentComposerProps {
   isInputFocused: boolean;
   setIsInputFocused: (val: boolean) => void;
   canComment: boolean;
+  /** Comments are switched off for this video by its creator. */
+  commentsDisabled?: boolean;
   isPending: boolean;
   isViewerLoading?: boolean;
   errorMessage?: string | null;
@@ -54,6 +56,7 @@ export function CommentComposer({
   isInputFocused,
   setIsInputFocused,
   canComment,
+  commentsDisabled = false,
   isPending,
   isViewerLoading = false,
   errorMessage,
@@ -162,6 +165,12 @@ export function CommentComposer({
               >
                 {tx("Sprawdzamy możliwość komentowania...", "Checking comment access...")}
               </div>
+            </div>
+          ) : commentsDisabled ? (
+            <div className={fieldClassName}>
+              <p role="status" className="flex min-h-[2.75rem] w-full items-center justify-center px-3 py-2.5 text-center text-[13px] font-bold text-[var(--chan-muted)]">
+                {tx("Komentarze pod tym filmem są wyłączone.", "Comments are turned off for this video.")}
+              </p>
             </div>
           ) : !canComment ? (
             <div

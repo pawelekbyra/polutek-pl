@@ -11,7 +11,7 @@ import {
 import { SignedContentUnsubscribeUseCase } from '@/lib/modules/subscriptions/application/signed-unsubscribe.use-case';
 import { GET, POST } from '@/app/api/subscriptions/unsubscribe/route';
 
-vi.mock('@/lib/feature-flags', () => ({ flags: { mainCreatorSlug: 'polutek' } }));
+vi.mock('@/lib/feature-flags', () => ({ flags: {} }));
 
 const ORIGINAL_ENV = { ...process.env };
 const SECRET = 'a'.repeat(32);
@@ -61,7 +61,8 @@ function makeDb(options: { preferences?: PreferenceRow[]; userEmail?: string; la
     user: {
       findUnique: vi.fn().mockResolvedValue({ id: 'user_opaque_1', email: options.userEmail ?? 'person@example.com', language: options.language ?? 'pl' }),
     },
-    creator: { findUnique: vi.fn().mockResolvedValue({ id: 'creator_1' }), update: vi.fn().mockResolvedValue({ id: 'creator_1', subscribersCount: 4 }) },
+    appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
+    creator: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn().mockResolvedValue({ id: 'creator_1' }), update: vi.fn().mockResolvedValue({ id: 'creator_1', subscribersCount: 4 }) },
     subscription: {
       deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
       count: vi.fn().mockResolvedValue(4),

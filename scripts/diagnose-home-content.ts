@@ -1,6 +1,9 @@
-import { PrismaClient, VideoStatus } from '@prisma/client';
+import { PrismaClient, VideoStatus, type ChannelStatus } from '@prisma/client';
 
 const prisma = new PrismaClient();
+
+// Same rule as MainChannelPolicy.isPubliclyVisible (CLAUDE.md 4.24): ACTIVE or LIMITED, not deleted.
+const PUBLIC_CREATOR = { status: { in: ['ACTIVE', 'LIMITED'] as ChannelStatus[] }, deletedAt: null };
 
 async function main() {
   console.log("=== DIAGNOSTYKA TREŚCI (v5) ===");
@@ -16,9 +19,9 @@ async function main() {
     const counters = {
         allVideos: 0,
         published: 0,
-        approvedCreators: 0,
-        primaryCreators: 0,
-        approvedCreatorVideos: 0,
+        publicCreators: 0,
+        mainChannelConfigured: 0,
+        publicCreatorVideos: 0,
         publishWindow: 0,
         exactHomeQuery: 0,
     };
@@ -36,20 +39,20 @@ async function main() {
     counters.published = await safeCount({ status: VideoStatus.PUBLISHED });
 
     try {
-      counters.approvedCreators = await prisma.creator.count({ where: { isApproved: true } });
-      counters.primaryCreators = await prisma.creator.count({ where: { isPrimary: true } });
+      counters.publicCreators = await prisma.creator.count({ where: PUBLIC_CREATOR });
+      counters.mainChannelConfigured = await prisma.appSetting.count({ where: { key: 'main_channel_id' } });
     } catch (e: any) {
       console.error(`[DIAGNOSE_ERROR] Creator count failed: ${e.message}`);
     }
 
-    counters.approvedCreatorVideos = await safeCount({
+    counters.publicCreatorVideos = await safeCount({
       status: VideoStatus.PUBLISHED,
-      creator: { isApproved: true }
+      creator: PUBLIC_CREATOR
     });
 
     counters.publishWindow = await safeCount({
       status: VideoStatus.PUBLISHED,
-      creator: { isApproved: true },
+      creator: PUBLIC_CREATOR,
       OR: [
         { publishedAt: null },
         { publishedAt: { lte: now } }
@@ -59,9 +62,9 @@ async function main() {
     console.log(`\n--- Liczniki Etapowe ---`);
     console.log(`1. Wszystkie filmy (allVideosCount): ${counters.allVideos}`);
     console.log(`2. Filmy PUBLISHED: ${counters.published}`);
-    console.log(`3. Zatwierdzeni twórcy (approvedCreatorsCount): ${counters.approvedCreators}`);
-    console.log(`4. Główni twórcy (primaryCreatorsCount): ${counters.primaryCreators}`);
-    console.log(`5. Filmy PUBLISHED + Approved Creator (approvedCreatorVideosCount): ${counters.approvedCreatorVideos}`);
+    console.log(`3. Publiczne kanały (status ACTIVE/LIMITED, publicCreatorsCount): ${counters.publicCreators}`);
+    console.log(`4. Ustawienie kanału głównego main_channel_id (0 = brak): ${counters.mainChannelConfigured}`);
+    console.log(`5. Filmy PUBLISHED na publicznym kanale (publicCreatorVideosCount): ${counters.publicCreatorVideos}`);
     console.log(`6. Filmy w oknie publikacji (publishWindow): ${counters.publishWindow} (FINALNA WIDOCZNOŚĆ)`);
 
     console.log(`\n--- Szczegóły pierwszych 50 filmów ---`);
@@ -82,15 +85,15 @@ async function main() {
       const vTier = v.tier;
       const vPublishedAt = v.publishedAt ? new Date(v.publishedAt) : null;
       const cSlug = v.creator?.slug || 'MISSING';
-      const cApproved = v.creator?.isApproved || false;
-      const cPrimary = v.creator?.isPrimary || false;
+      const cStatus = v.creator?.status || 'MISSING';
+      const cPublic = !!v.creator && !v.creator.deletedAt && (cStatus === 'ACTIVE' || cStatus === 'LIMITED');
 
       if (vStatus === VideoStatus.DRAFT) reasons.push(`status is DRAFT`);
       else if (vStatus === VideoStatus.ARCHIVED) reasons.push(`status is ARCHIVED`);
       else if (vStatus !== VideoStatus.PUBLISHED) reasons.push(`status is ${vStatus}`);
 
       if (!v.creator) reasons.push("missing creator");
-      else if (!cApproved) reasons.push("creator is not approved");
+      else if (!cPublic) reasons.push(`creator is not public (status ${cStatus})`);
 
       if (vPublishedAt && vPublishedAt > now) reasons.push(`publishedAt is in the future (${vPublishedAt.toISOString()})`);
       if (!v.slug) reasons.push("missing slug");
@@ -100,7 +103,7 @@ async function main() {
       const isVisible = reasons.length === 0;
       console.log(`${String(i+1).padStart(2, ' ')}. [${isVisible ? 'WIDOCZNY' : 'UKRYTY'}] "${v.title}" (${v.slug})`);
       console.log(`    [ID: ${v.id}] [Status: ${vStatus}] [Tier: ${vTier}] [PubAt: ${vPublishedAt?.toISOString() || 'NULL'}]`);
-      console.log(`    [Creator: ${cSlug}] [Approved: ${cApproved}] [Primary: ${cPrimary}]`);
+      console.log(`    [Creator: ${cSlug}] [ChannelStatus: ${cStatus}] [Public: ${cPublic}]`);
       if (!isVisible) console.log(`    Powody: ${reasons.join(", ")}`);
     });
 
@@ -121,7 +124,8 @@ async function main() {
         console.log(`\n--- ROOT CAUSE IDENTIFICATION ---`);
         if (counters.allVideos === 0) console.log("ROOT CAUSE: DB is empty. Action: npm run db:setup:dev");
         else if (counters.published === 0) console.log("ROOT CAUSE: No videos are PUBLISHED. Action: npm run content:fix:main-creator");
-        else if (counters.approvedCreators === 0) console.log("ROOT CAUSE: No creators are approved. Action: npm run content:fix:main-creator");
+        else if (counters.publicCreators === 0) console.log("ROOT CAUSE: No channel is publicly visible (ACTIVE/LIMITED). Action: set the channel status in the admin panel");
+        else if (counters.mainChannelConfigured === 0) console.log("ROOT CAUSE: main_channel_id setting is missing. Action: apply migration 20261014090000_main_channel_setting or set it in the panel");
         else console.log("ROOT CAUSE: Possible schema mismatch or future publication dates. Action: npm run db:migrate:deploy");
     }
 

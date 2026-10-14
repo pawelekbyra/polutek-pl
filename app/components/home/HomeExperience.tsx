@@ -2,7 +2,7 @@ import { logger } from "@/lib/logger";
 import React from 'react';
 import Footer from '@/app/components/Footer';
 import { PublicVideoDTO } from '@/app/types/video';
-import { getHomeContentCached } from '@/lib/modules/channel/application/home-content.loader';
+import { getHomeContentCached, getHomeSelectionCached } from '@/lib/modules/channel/application/home-content.loader';
 import { normalizePaymentTotals } from '@/lib/modules/users/domain/payment-totals';
 import { prisma } from '@/lib/prisma';
 import { auth, type ServerSession } from "@/lib/auth/server";
@@ -42,12 +42,13 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
   const tx = await getServerTx(locale);
   // auth() and the home content are read once per request (React cache), shared with the page
   // and its metadata.
-  const [session, content] = await Promise.all([
+  const [session, content, selection] = await Promise.all([
     auth().catch((e) => {
       logger.error("[HOME_AUTH_ERROR]", e);
       return { userId: null, sessionId: null, user: null } as ServerSession;
     }),
     getHomeContentCached(),
+    getHomeSelectionCached(videoId),
   ]);
 
   const userId = session.userId;
@@ -61,7 +62,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
   // shared links using the id still resolve (see the id-or-slug match below), but redirect
   // to the slug form so there is exactly one canonical URL per video going forward.
   if (videoId) {
-    const matchedById = allVideos.find(v => v.id === videoId);
+    const matchedById = allVideos.find(v => v.id === videoId) ?? (selection.extraVideo?.id === videoId ? selection.extraVideo : undefined);
     if (matchedById?.slug && matchedById.slug !== videoId) {
       const canonicalParams = new URLSearchParams();
       if (q) canonicalParams.set('q', q);
@@ -70,17 +71,18 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
     }
   }
 
-  const selectedVideo =
-    (videoId ? allVideos.find(v => v.id === videoId || v.slug === videoId) : null) || mainVideo;
+  // A `?v=` outside the home list (another channel, or not in the sidebar) was loaded with the public visibility
+  // rules (getHomeSelectionCached); a hidden or unknown one has already fallen back to the hero.
+  const selectedVideo = selection.selectedVideo;
   const hasContent = content.status !== 'error' && content.status !== 'empty';
 
   // Sidebar layout is loaded here, with the page, rather than by a client-side fetch
   // after hydration — that fetch was one of the pieces popping in on its own. The
   // JSON round-trip gives exactly the shape `/api/channel/sidebar` returns (dates as
   // strings). On failure the client falls back to fetching it itself.
-  const loadSidebarLayout = async (): Promise<SidebarLayout | null> => {
+  const loadSidebarLayout = async (isStaff: boolean): Promise<SidebarLayout | null> => {
     try {
-      const layout = await ChannelLayoutService.getSidebarLayout(userId ?? null);
+      const layout = await ChannelLayoutService.getSidebarLayout(userId ?? null, undefined, { isStaff });
       return JSON.parse(JSON.stringify(layout)) as SidebarLayout;
     } catch (e) {
       logger.error("[HOME_SIDEBAR_LAYOUT_ERROR]", e);
@@ -97,7 +99,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
     }
     const actor = await getHomeViewerActor();
     const [sidebar, comments, playback] = await Promise.all([
-      loadSidebarLayout(),
+      loadSidebarLayout(actor?.type === 'admin'),
       loadInitialComments(selectedVideo.id, actor),
       loadHeroPlaybackPlan({ video: selectedVideo, actor, viewerKey }),
     ]);
@@ -225,6 +227,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
           <ChannelHome
             mainVideo={mainVideo}
             allVideos={allVideos}
+            extraVideo={selection.extraVideo}
             currentVideoId={videoId}
             userProfile={userProfile}
             initialSidebarLayout={viewerPieces.sidebar}

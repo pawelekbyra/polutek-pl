@@ -1,6 +1,8 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { MainChannelService } from "@/lib/modules/channel";
+import { authorize } from "@/lib/modules/authz";
+import { AppError } from "@/lib/modules/shared/app-error";
 import { VideoNotOnMainChannelError, VideoNotFoundError } from "../domain/video.errors";
 import { recordAuditEvent } from "@/lib/modules/audit";
 
@@ -18,9 +20,11 @@ export type ResyncAdminVideoStatsOutput = {
 export async function resyncAdminVideoStats(
   input: ResyncAdminVideoStatsInput,
   ctx: AppContext
-): Promise<UseCaseResult<ResyncAdminVideoStatsOutput, VideoNotFoundError | VideoNotOnMainChannelError>> {
+): Promise<UseCaseResult<ResyncAdminVideoStatsOutput, VideoNotFoundError | VideoNotOnMainChannelError | AppError>> {
   const { videoId } = input;
   const mainChannel = await MainChannelService.getRequired(ctx);
+  const denied = await authorize(ctx, "video.update", { channel: { id: mainChannel.id, ownerUserId: mainChannel.userId, status: mainChannel.status } });
+  if (denied) return fail(denied);
 
   const video = await ctx.prisma.video.findUnique({
     where: { id: videoId },

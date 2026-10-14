@@ -1,13 +1,14 @@
 import { AccessTier, VideoStatus } from '@prisma/client';
 import { validateAppEnv } from '@/lib/env/validation';
 import { visiblePublishedAtFilter } from '@/lib/modules/video/infrastructure/video-content.service';
+import { MAIN_CHANNEL_SETTING_KEY, MainChannelPolicy } from '@/lib/modules/channel';
 
 type DiagnosticCreator = {
   id: string;
   slug: string;
   name: string;
-  isApproved: boolean;
-  isPrimary: boolean;
+  status: string;
+  deletedAt: Date | null;
 };
 
 type DiagnosticVideo = {
@@ -16,6 +17,9 @@ type DiagnosticVideo = {
 };
 
 type DiagnosticDb = {
+  appSetting: {
+    findUnique(args: unknown): Promise<{ value: string } | null>;
+  };
   creator: {
     findUnique(args: unknown): Promise<DiagnosticCreator | null>;
   };
@@ -54,7 +58,6 @@ function push(checks: LaunchDiagnosticCheck[], check: LaunchDiagnosticCheck) {
 const requiredLaunchRuntimeVars = [
   'DATABASE_URL',
   'NEXT_PUBLIC_APP_URL',
-  'MAIN_CREATOR_SLUG',
 ] as const;
 
 function launchRuntimeEnvErrors(errors: string[]) {
@@ -95,46 +98,48 @@ export async function runLaunchContentDiagnostics(options: {
       : { name: `env:${key}`, status: 'FAIL', detail: `${key} is missing or empty.`, action: `Configure ${key} in the production environment.` });
   }
 
-  const slug = env.MAIN_CREATOR_SLUG?.trim() || null;
-  summary.mainCreatorSlug = slug;
+  // The main channel is the `main_channel_id` setting (CLAUDE.md 4.24), not an env variable or a flag.
+  const setting = await options.db.appSetting.findUnique({ where: { key: MAIN_CHANNEL_SETTING_KEY } });
+  const mainChannelId = setting?.value?.trim() || null;
 
-  if (!slug) {
+  if (!mainChannelId) {
+    push(checks, {
+      name: 'main channel setting',
+      status: 'FAIL',
+      detail: `The ${MAIN_CHANNEL_SETTING_KEY} setting is missing or empty.`,
+      action: 'Set the main channel in the admin panel (Ustawienia) or apply migration 20261014090000_main_channel_setting, then rerun diagnostics.',
+    });
     return finalize(checks, summary);
   }
 
   const creator = await options.db.creator.findUnique({
-    where: { slug },
-    select: { id: true, slug: true, name: true, isApproved: true, isPrimary: true },
+    where: { id: mainChannelId },
+    select: { id: true, slug: true, name: true, status: true, deletedAt: true },
   });
 
   if (!creator) {
     push(checks, {
       name: 'main creator exists',
       status: 'FAIL',
-      detail: `No Creator row exists for MAIN_CREATOR_SLUG=${slug}.`,
-      action: 'Create or repair the intended production creator, then rerun diagnostics. Use npm run content:fix:main-creator only if the operator intentionally wants its existing seed/repair behavior.',
+      detail: `No Creator row exists for ${MAIN_CHANNEL_SETTING_KEY}=${mainChannelId}.`,
+      action: 'Point the main channel setting at an existing channel, then rerun diagnostics. Use npm run content:fix:main-creator only if the operator intentionally wants its existing seed/repair behavior.',
     });
     return finalize(checks, summary);
   }
 
+  summary.mainCreatorSlug = creator.slug;
   push(checks, { name: 'main creator exists', status: 'PASS', detail: `Found creator ${creator.name} (${creator.slug}).` });
 
-  if (!creator.isApproved) {
-    push(checks, { name: 'main creator approved', status: 'FAIL', detail: 'Configured creator is not approved.', action: 'Approve the intended creator in the admin/database.' });
+  if (!MainChannelPolicy.isPubliclyVisible(creator)) {
+    push(checks, { name: 'main creator public', status: 'FAIL', detail: `Main channel is not publicly visible (status ${creator.status}).`, action: 'Set the main channel status to ACTIVE or LIMITED in the admin panel.' });
   } else {
-    push(checks, { name: 'main creator approved', status: 'PASS', detail: 'Configured creator is approved.' });
-  }
-
-  if (!creator.isPrimary) {
-    push(checks, { name: 'main creator primary', status: 'FAIL', detail: 'Configured creator is not marked primary.', action: 'Mark exactly the intended launch creator as primary.' });
-  } else {
-    push(checks, { name: 'main creator primary', status: 'PASS', detail: 'Configured creator is primary.' });
+    push(checks, { name: 'main creator public', status: 'PASS', detail: 'Main channel is ACTIVE or LIMITED and not deleted.' });
   }
 
   const baseWhere = {
     creatorId: creator.id,
     status: VideoStatus.PUBLISHED,
-    creator: { isApproved: true, isPrimary: true },
+    creator: { status: { in: ['ACTIVE', 'LIMITED'] as const }, deletedAt: null },
     ...visiblePublishedAtFilter(now),
   };
 

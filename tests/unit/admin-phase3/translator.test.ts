@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
-vi.mock("@/lib/feature-flags", () => ({ flags: { mainCreatorSlug: "main" } }));
+vi.mock("@/lib/feature-flags", () => ({ flags: {} }));
 const audit = vi.hoisted(() => ({ recordAuditEventSafe: vi.fn(async () => undefined), recordAuditEvent: vi.fn(async () => undefined) }));
 vi.mock("@/lib/modules/audit", () => audit);
 vi.mock("@/lib/modules/video", () => ({ updateAdminVideo: vi.fn(async () => ({ ok: true, data: {} })) }));
@@ -18,7 +18,8 @@ const video = { id: "v1", slug: "film", title: "Mój film", description: "Opis f
 function mk(over: { allowed?: string[]; existing?: object[] } = {}) {
   const upsert = vi.fn(async () => undefined);
   const prisma = {
-    creator: { findUnique: vi.fn(async () => ({ id: "ch", slug: "main", isApproved: true, isPrimary: true, userId: "u" })) },
+    appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
+    creator: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn(async () => ({ id: "ch", slug: "main", status: 'ACTIVE', userId: "u" })) },
     video: { findFirst: vi.fn(async () => video), findMany: vi.fn(async () => [video, { ...video, id: "v2", slug: "drugi", title: "Drugi" }]) },
     videoTranslation: { findUnique: vi.fn(async () => null), findMany: vi.fn(async () => over.existing ?? []), upsert, updateMany: vi.fn(async () => ({ count: 2 })) },
     videoSlugHistory: { findMany: vi.fn(async () => []), createMany: vi.fn() },

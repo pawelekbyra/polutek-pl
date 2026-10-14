@@ -55,7 +55,8 @@ describe('ChannelLayoutService patron access truth', () => {
     const { ChannelLayoutService } = await import('@/lib/modules/channel/application/channel-layout.service');
     const layout = await ChannelLayoutService.getSidebarLayout('user-1');
 
-    expect(findUnique).toHaveBeenCalledWith(expect.objectContaining({ select: { role: true } }));
+    // Stage 8: the layout never reads User.role; staff status arrives from the resolved Actor.
+    expect(findUnique).not.toHaveBeenCalled();
     expect(layout.viewerState).toBe('LOGGED_IN');
     expect(JSON.stringify(layout)).not.toContain('patronGrant');
   });
@@ -71,6 +72,15 @@ describe('ChannelLayoutService patron access truth', () => {
     expect(layout.sections.map((section) => section.type)).toEqual(['FREE', 'LOGGED_IN']);
     const item = layout.sections.find((section) => section.type === 'LOGGED_IN')?.items[0];
     expect(item).toMatchObject({ id: 'patron-video', tier: 'LOGGED_IN', isLocked: false });
+  });
+
+  it('marks the viewer as ADMIN only when the caller (the resolved Actor) says staff', async () => {
+    const { ChannelLayoutService } = await import('@/lib/modules/channel/application/channel-layout.service');
+    const layout = await ChannelLayoutService.getSidebarLayout('admin-1', undefined, { isStaff: true });
+
+    expect(layout.viewerState).toBe('ADMIN');
+    expect(findUnique).not.toHaveBeenCalled();
+    expect(layout.sections.find((section) => section.type === 'LOGGED_IN')?.items[0]).toMatchObject({ isLocked: false });
   });
 
   it('keeps it locked for guests', async () => {

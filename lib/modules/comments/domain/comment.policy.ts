@@ -1,4 +1,4 @@
-import { CommentStatus } from "@prisma/client";
+import { CommentStatus, VideoCommentsMode } from "@prisma/client";
 import { Actor } from "@/lib/modules/shared/actor";
 import { AccessDecisionDto } from "@/lib/modules/access";
 
@@ -18,6 +18,19 @@ const MODERATION_TRANSITIONS: Record<ModerationAction, readonly CommentStatus[]>
 };
 
 export class CommentPolicy {
+  /**
+   * Status a NEW comment (or viewer reply) gets under the video's `commentsMode`, or `null` when new comments are
+   * switched off. ON: visible at once; HELD: waits in the existing review queue (`HELD_FOR_REVIEW`, approved through
+   * the moderation use cases); OFF: rejected. People who moderate the video (its channel owner, platform staff)
+   * are never limited by the mode. Existing comments are not touched by a mode change.
+   */
+  static statusForNewComment(mode: VideoCommentsMode | null | undefined, canModerate: boolean): CommentStatus | null {
+    if (canModerate) return CommentStatus.VISIBLE;
+    if (mode === VideoCommentsMode.OFF) return null;
+    if (mode === VideoCommentsMode.HELD) return CommentStatus.HELD_FOR_REVIEW;
+    return CommentStatus.VISIBLE;
+  }
+
   /**
    * General rule: To perform any write interaction under a video,
    * the actor must have access to that video.

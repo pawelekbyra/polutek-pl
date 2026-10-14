@@ -4,13 +4,14 @@ import { createAppContext } from '@/lib/modules/shared/app-context';
 import { AccessTier, VideoStatus } from '@prisma/client';
 
 describe('createAdminVideo use-case', () => {
-  const mockMainChannel = { id: 'c1', slug: 'polutek', isApproved: true, isPrimary: true };
+  const mockMainChannel = { id: 'c1', slug: 'polutek', status: 'ACTIVE' };
   const mockPrisma = {
     video: {
       create: vi.fn(),
     },
     auditLog: { create: vi.fn() },
-    creator: { findUnique: vi.fn().mockResolvedValue(mockMainChannel) },
+    appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
+    creator: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn().mockResolvedValue(mockMainChannel) },
     $transaction: vi.fn((cb) => cb(mockPrisma)),
   } as any;
 
@@ -21,7 +22,6 @@ describe('createAdminVideo use-case', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.MAIN_CREATOR_SLUG = 'polutek';
   });
 
   it('fails with MainChannelNotFoundError if no main channel', async () => {

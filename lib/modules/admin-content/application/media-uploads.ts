@@ -9,6 +9,7 @@ import { fail, ok, type UseCaseResult } from "@/lib/modules/shared/result";
 import { R2ThumbnailStorageClient, parsePublicThumbnailUrl } from "@/lib/modules/media";
 import { getAdminVideoById, updateAdminVideo } from "@/lib/modules/video";
 import { recordAuditEventSafe } from "@/lib/modules/audit";
+import { authorize } from "@/lib/modules/authz";
 import { isSubtitleLanguage, setTranslationSubtitle } from "@/lib/modules/translations";
 import { COVER_MAX_BYTES, detectImage, validateVtt } from "../domain/files";
 
@@ -22,6 +23,8 @@ export async function uploadVideoCover(
   ctx: AppContext,
   storage: Pick<R2ThumbnailStorageClient, "putPrivate"> | null = R2ThumbnailStorageClient.isConfigured() ? new R2ThumbnailStorageClient() : null,
 ): Promise<UseCaseResult<{ thumbnailUrl: string }, AppError>> {
+  const denied = await authorize(ctx, "video.update", { videoId: input.videoId });
+  if (denied) return fail(denied);
   if (input.bytes.length > COVER_MAX_BYTES) return fail(new AppError("Miniatura może mieć najwyżej 5 MB.", 400, "COVER_TOO_LARGE"));
   const kind = detectImage(input.bytes);
   if (!kind) return fail(new AppError("To nie jest obraz JPG, PNG ani WebP.", 400, "COVER_INVALID_TYPE"));
@@ -51,6 +54,8 @@ export async function uploadVideoSubtitle(
   ctx: AppContext,
   storage: SubtitleStorage | null = defaultSubtitleStorage(),
 ): Promise<UseCaseResult<{ url: string; cues: number }, AppError>> {
+  const denied = await authorize(ctx, "video.subtitles", { videoId: input.videoId });
+  if (denied) return fail(denied);
   if (!isSubtitleLanguage(input.lang)) return fail(new AppError("Nieobsługiwany język napisów.", 400, "LANGUAGE_UNSUPPORTED"));
   const check = validateVtt(input.bytes);
   if (!check.ok) return fail(new AppError(check.reason, 400, "SUBTITLE_INVALID"));
@@ -77,6 +82,8 @@ export async function removeVideoSubtitle(
   ctx: AppContext,
   storage: SubtitleStorage | null = defaultSubtitleStorage(),
 ): Promise<UseCaseResult<{ removed: boolean }, AppError>> {
+  const denied = await authorize(ctx, "video.subtitles", { videoId: input.videoId });
+  if (denied) return fail(denied);
   if (!isSubtitleLanguage(input.lang)) return fail(new AppError("Nieobsługiwany język napisów.", 400, "LANGUAGE_UNSUPPORTED"));
   const current = await getAdminVideoById({ idOrSlug: input.videoId }, ctx);
   if (!current.ok) return fail(current.error as AppError);

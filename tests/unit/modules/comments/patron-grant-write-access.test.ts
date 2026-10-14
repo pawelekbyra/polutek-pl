@@ -29,7 +29,7 @@ vi.mock('@/lib/modules/audit', () => ({
 
 describe('Comments write access on PATRON-tier videos (sign-in only, no PatronGrant gate)', () => {
   const now = new Date('2026-01-01T12:00:00Z');
-  const mainChannel = { id: 'main-channel-id', slug: 'polutek', isApproved: true, isPrimary: true };
+  const mainChannel = { id: 'main-channel-id', slug: 'polutek', status: 'ACTIVE' };
   const videoId = '11111111-1111-4111-8111-111111111111';
   const commentId = 'comment-1';
   const userId = 'user-1';
@@ -43,7 +43,7 @@ describe('Comments write access on PATRON-tier videos (sign-in only, no PatronGr
     status: VideoStatus.PUBLISHED,
     tier: AccessTier.PATRON,
     publishedAt: new Date(now.getTime() - 1000),
-    creator: { id: mainChannel.id, userId: 'creator-1', isApproved: true, isPrimary: true },
+    creator: { id: mainChannel.id, userId: 'creator-1', status: 'ACTIVE' },
   };
 
   const publicVideo = {

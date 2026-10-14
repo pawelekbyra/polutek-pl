@@ -9,7 +9,8 @@ const OWNER_AVATAR = "/api/avatars/channel-owner?v=3";
 const ADMIN_AVATAR = "/api/avatars/first-admin?v=9";
 const VIEWER_AVATAR = "/api/avatars/logged-in-viewer?v=7";
 
-const { creatorFindUnique, videoFindMany, videoFindFirst, userFindFirst, authMock, currentUserMock } = vi.hoisted(() => ({
+const { appSettingFindUnique, creatorFindUnique, videoFindMany, videoFindFirst, userFindFirst, authMock, currentUserMock } = vi.hoisted(() => ({
+  appSettingFindUnique: vi.fn(),
   creatorFindUnique: vi.fn(),
   videoFindMany: vi.fn(),
   videoFindFirst: vi.fn(),
@@ -20,6 +21,7 @@ const { creatorFindUnique, videoFindMany, videoFindFirst, userFindFirst, authMoc
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
+    appSetting: { findUnique: appSettingFindUnique },
     creator: { findUnique: creatorFindUnique },
     video: { findMany: videoFindMany, findFirst: videoFindFirst },
     user: { findFirst: userFindFirst },
@@ -29,6 +31,7 @@ vi.mock("@/lib/prisma", () => ({
 vi.mock("@/app/components/Navbar", () => ({ default: () => <nav /> }));
 vi.mock("@/app/components/Footer", () => ({ default: () => <footer /> }));
 vi.mock("@/app/components/SubscribeButton", () => ({ default: () => <button type="button">Subscribe</button> }));
+vi.mock("@/app/components/ReportButton", () => ({ default: () => <button type="button">Report</button> }));
 vi.mock("@/app/components/ChannelVideoCard", () => ({
   default: ({ video }: { video: { title: string; creator?: { imageUrl?: string | null } } }) => (
     <article data-card-avatar={video.creator?.imageUrl ?? ""}>{video.title}</article>
@@ -73,8 +76,8 @@ function creatorRow(ownerImageUrl: string | null) {
     bio: "Opis",
     subscribersCount: 5,
     displaySubscribersCount: null,
-    isApproved: true,
-    isPrimary: true,
+    status: "ACTIVE",
+    deletedAt: null,
     user: { imageUrl: ownerImageUrl, email: "owner@example.com" },
     videos: [video("v1"), video("v2")],
   };
@@ -82,6 +85,8 @@ function creatorRow(ownerImageUrl: string | null) {
 
 function seed(ownerImageUrl: string | null, adminImageUrl: string | null) {
   const row = creatorRow(ownerImageUrl);
+  // The main channel is the main_channel_id setting (CLAUDE.md 4.24).
+  appSettingFindUnique.mockResolvedValue({ key: "main_channel_id", value: row.id });
   creatorFindUnique.mockResolvedValue(row);
   videoFindMany.mockResolvedValue(row.videos.map((v) => ({ ...v, creator: { ...row, videos: undefined } })));
   videoFindFirst.mockResolvedValue({ ...row.videos[0], creator: { ...row, videos: undefined } });
@@ -117,10 +122,7 @@ describe("resolveChannelAvatarUrl", () => {
 });
 
 describe("channel avatar source (home page vs channel page)", () => {
-  const saved = process.env.MAIN_CREATOR_SLUG;
-
   beforeEach(() => {
-    process.env.MAIN_CREATOR_SLUG = "polutek";
     // An administrator is looking at the page: the viewer's own profile image is different from both
     // the channel owner's and the first administrator's.
     authMock.mockResolvedValue({ userId: "viewer-admin" });
@@ -128,8 +130,6 @@ describe("channel avatar source (home page vs channel page)", () => {
   });
 
   afterEach(() => {
-    if (saved === undefined) delete process.env.MAIN_CREATOR_SLUG;
-    else process.env.MAIN_CREATOR_SLUG = saved;
     vi.clearAllMocks();
   });
 

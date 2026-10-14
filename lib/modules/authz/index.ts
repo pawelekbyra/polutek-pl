@@ -1,0 +1,11 @@
+export { AUTHZ_ACTIONS, isPlatformAction } from "./domain/actions";
+export type { AuthzAction } from "./domain/actions";
+export { can, roleOf } from "./domain/policy";
+export type { Decision, DenyReason } from "./domain/policy";
+export { toPrincipal } from "./domain/principal";
+export type { Principal } from "./domain/principal";
+export { CHANNEL_ROLES, CHANNEL_STATUSES } from "./domain/resources";
+export type { ChannelResource, ChannelRole, ChannelStatus } from "./domain/resources";
+export { ROLE_ACTIONS } from "./domain/matrix";
+export { authorize, assertAuthorized, denyError } from "./application/authorize";
+export type { AuthzTarget } from "./application/authorize";

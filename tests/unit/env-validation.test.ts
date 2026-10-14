@@ -16,7 +16,6 @@ const productionEnv = {
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_stripe',
   RESEND_API_KEY: 're_example',
   EMAIL_FROM: 'notifications@example.com',
-  MAIN_CREATOR_SLUG: 'creator-slug',
   REFERRAL_PATRON_THRESHOLD: '5',
   HEALTHCHECK_TOKEN: 'health-token',
   EMAIL_UNSUBSCRIBE_SIGNING_SECRET: '0123456789abcdef0123456789abcdef',
@@ -43,11 +42,11 @@ describe('validateAppEnv', () => {
     expect(badSecret.errors.join(' ')).toMatch(/whsec_/);
   });
 
-  it('requires the main creator slug in production', () => {
-    const result = validateAppEnv({ ...productionEnv, MAIN_CREATOR_SLUG: '' }, 'production');
+  it('does not require the retired MAIN_CREATOR_SLUG (the main channel is the main_channel_id setting)', () => {
+    const result = validateAppEnv(productionEnv, 'production');
 
-    expect(result.success).toBe(false);
-    expect(result.errors).toContain('MAIN_CREATOR_SLUG is required in production.');
+    expect(result.success).toBe(true);
+    expect(result.errors.join(' ')).not.toContain('MAIN_CREATOR_SLUG');
   });
 
   it('requires writable Redis or KV credentials in production', () => {
@@ -97,12 +96,12 @@ describe('validateAppEnv', () => {
     expect(result.errors.some((e) => /MUX|CLOUDFLARE_(ACCOUNT|API|WEBHOOK)/.test(e))).toBe(false);
   });
 
-  it('warns but does not fail when MAIN_CREATOR_SLUG is missing outside production', () => {
+  it('does not warn about MAIN_CREATOR_SLUG outside production any more', () => {
     const result = validateAppEnv({
       NODE_ENV: 'development',
     }, 'development');
 
     expect(result.success).toBe(true);
-    expect(result.warnings).toContain('MAIN_CREATOR_SLUG is not set; non-production single-creator pages will fall back to an approved creator from the database when available.');
+    expect(result.warnings.join(' ')).not.toContain('MAIN_CREATOR_SLUG');
   });
 });

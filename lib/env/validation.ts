@@ -28,7 +28,6 @@ const requiredProductionVars = [
   'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY',
   'RESEND_API_KEY',
   'EMAIL_FROM',
-  'MAIN_CREATOR_SLUG',
   'REFERRAL_PATRON_THRESHOLD',
   'HEALTHCHECK_TOKEN',
   'EMAIL_UNSUBSCRIBE_SIGNING_SECRET',
@@ -100,8 +99,6 @@ export function validateAppEnv(env: EnvRecord = process.env, mode: EnvValidation
     if (!hasWritableRateLimitStore(env)) {
       errors.push('Writable Redis/KV REST credentials are required in production for rate limiting: UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN or KV_REST_API_URL/KV_REST_API_TOKEN.');
     }
-  } else if (!hasValue(env, 'MAIN_CREATOR_SLUG')) {
-    warnings.push('MAIN_CREATOR_SLUG is not set; non-production single-creator pages will fall back to an approved creator from the database when available.');
   }
 
   // Stripe test and live objects never mix: a secret key of one mode with a publishable key of the other

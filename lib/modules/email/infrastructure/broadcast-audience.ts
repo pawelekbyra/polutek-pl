@@ -1,4 +1,4 @@
-import { flags } from "@/lib/feature-flags";
+import { resolveMainChannelId } from "@/lib/modules/channel";
 import { DbClient } from "../../shared/db";
 
 export type EligibleRecipient = {
@@ -18,10 +18,9 @@ export type EligibleRecipient = {
  * broadcast was created is skipped.
  */
 export async function findEligibleRecipients(db: DbClient, onlyUserIds?: string[]): Promise<EligibleRecipient[]> {
-  const slug = flags.mainCreatorSlug;
-  if (!slug) return [];
-  const creator = await db.creator.findUnique({ where: { slug }, select: { id: true } });
-  if (!creator) return [];
+  const mainChannelId = await resolveMainChannelId(db);
+  if (!mainChannelId) return [];
+  const creator = { id: mainChannelId };
   if (onlyUserIds && onlyUserIds.length === 0) return [];
 
   const users = await db.user.findMany({

@@ -11,6 +11,12 @@ export interface AppContext {
   client?: { ip?: string | null; userAgent?: string | null };
   /** Admin panel TRANSLATOR accounts only: the translation languages this actor may write. Absent = no restriction (owner). */
   allowedLanguages?: readonly string[];
+  /**
+   * The channel this request works on (CLAUDE.md 4.24). Set by the Studio and panel entry points after they resolved
+   * the channel; `MainChannelService` then returns it instead of the configured main channel. Absent = the main
+   * channel (the public site). Setting it never grants anything: every use case still authorizes (CLAUDE.md 4.23).
+   */
+  channelId?: string;
   waitUntil?: (promise: Promise<unknown>) => void;
   db: {
     read: ReadDb;
@@ -25,6 +31,7 @@ export function createAppContext(actorOrOverrides: Actor | Partial<AppContext> =
   let requestId: string | undefined;
   let client: AppContext['client'];
   let allowedLanguages: AppContext['allowedLanguages'];
+  let channelId: AppContext['channelId'];
   let waitUntil: ((promise: Promise<unknown>) => void) | undefined;
 
   if ('type' in actorOrOverrides) {
@@ -39,6 +46,7 @@ export function createAppContext(actorOrOverrides: Actor | Partial<AppContext> =
     requestId = overrides.requestId;
     client = overrides.client;
     allowedLanguages = overrides.allowedLanguages;
+    channelId = overrides.channelId;
     waitUntil = overrides.waitUntil;
   }
 
@@ -49,6 +57,7 @@ export function createAppContext(actorOrOverrides: Actor | Partial<AppContext> =
     requestId,
     client,
     allowedLanguages,
+    channelId,
     waitUntil,
     db: {
       read: prisma,

@@ -26,7 +26,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 vi.mock('@/lib/feature-flags', () => ({
-  flags: { mainCreatorSlug: 'polutek' },
+  flags: {},
   canUseDemoFallbacks: () => false,
 }));
 
@@ -106,7 +106,7 @@ type VideoRecord = {
   status: VideoStatus;
   publishedAt: Date | null;
   views: number;
-  creator?: { id: string; slug: string; isApproved: boolean; isPrimary: boolean };
+  creator?: { id: string; slug: string; status: string; deletedAt: Date | null };
   asset?: AssetRecord | null;
 };
 
@@ -139,7 +139,7 @@ function createHarness() {
     subscriptions: [] as any[],
   };
 
-  const creator = { id: 'creator_main', slug: 'polutek', name: 'Polutek', isApproved: true, isPrimary: true };
+  const creator = { id: 'creator_main', slug: 'polutek', name: 'Polutek', status: 'ACTIVE' };
   state.creators.set(creator.id, creator);
 
   const withTotalsAndGrants = (user: UserRecord) => ({

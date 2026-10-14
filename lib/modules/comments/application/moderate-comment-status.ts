@@ -6,6 +6,7 @@ import { CommentPolicy, ModerationAction } from "../domain/comment.policy";
 import { CommentRepository } from "../infrastructure/comment.repository";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { CommentStatus } from "@prisma/client";
+import { authorizeComments, moderatorId } from "./authorize-comments";
 
 export type StatusModerationAction = Exclude<ModerationAction, "delete">;
 
@@ -40,8 +41,9 @@ export async function moderateCommentStatus(
   action: StatusModerationAction,
   ctx: AppContext,
 ): Promise<UseCaseResult<void, CommentError>> {
-  if (ctx.actor.type !== "admin") return fail({ type: "UNAUTHORIZED", message: "Brak uprawnień administratora." });
-  const actorId = ctx.actor.userId;
+  const denied = await authorizeComments(ctx, "comment.moderate", [commentId]);
+  if (denied) return fail(denied);
+  const actorId = moderatorId(ctx);
   const target = TARGET_STATUS[action];
 
   try {

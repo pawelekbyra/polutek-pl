@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { authorizeComments, moderatorId } from "./authorize-comments";
 import { CommentDeletedReason, CommentReportStatus, CommentStatus } from "@prisma/client";
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
@@ -61,9 +62,10 @@ export async function moderateCommentsBulk(
   ctx: AppContext,
   input: { ids: string[]; action: BulkModerationAction; reports?: ReportHandling },
 ): Promise<UseCaseResult<BulkModerationResult, CommentError>> {
-  if (ctx.actor.type !== "admin") return fail({ type: "UNAUTHORIZED", message: "Brak uprawnień administratora." });
-  const actorId = ctx.actor.userId;
   const ids = [...new Set(input.ids)];
+  const denied = await authorizeComments(ctx, "comment.moderate", ids);
+  if (denied) return fail(denied);
+  const actorId = moderatorId(ctx);
   if (ids.length === 0) return fail({ type: "VALIDATION_ERROR", message: "Zaznacz co najmniej jeden komentarz." });
   if (ids.length > BULK_MODERATION_LIMIT) return fail({ type: "VALIDATION_ERROR", message: `Naraz można zmienić najwyżej ${BULK_MODERATION_LIMIT} komentarzy.` });
   const { action } = input;

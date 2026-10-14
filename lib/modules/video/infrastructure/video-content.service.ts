@@ -3,14 +3,15 @@ import { prisma } from '@/lib/prisma';
 import { AccessTier, VideoStatus, Prisma } from '@prisma/client';
 import { INITIAL_VIDEOS, DEFAULT_CREATOR } from '@/lib/data/initial-content';
 import { PublicVideoDTO } from '@/app/types/video';
-import { canUseDemoFallbacks, flags } from '@/lib/feature-flags';
+import { canUseDemoFallbacks } from '@/lib/feature-flags';
 import { getCanonicalVideoTitle } from '@/lib/video-title-overrides';
-import { MainChannelService, resolveChannelAvatarUrl } from '@/lib/modules/channel';
+import { MainChannelService, publiclyVisibleChannelWhere, resolveChannelAvatarUrl, resolveMainChannelId } from '@/lib/modules/channel';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { MediaPolicy, resolvePublicThumbnailSrc } from '@/lib/modules/media';
 import { effectivePublishedAt, toPremiereDate } from '../domain/premiere';
 import { withFundraisingProgress } from './fundraising-progress.service';
 import { toVideoAccessTier } from '@/lib/access-tier';
+import { isVideoPubliclyVisible } from '../domain/public-visibility';
 
 export const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
   OR: [
@@ -24,10 +25,7 @@ export async function buildPublicVideoWhere(now: Date = new Date()): Promise<Pri
   return {
     status: VideoStatus.PUBLISHED,
     creatorId: mainChannel?.id || 'none',
-    creator: {
-      isApproved: true,
-      isPrimary: true,
-    },
+    creator: publiclyVisibleChannelWhere(),
     ...visiblePublishedAtFilter(now),
   };
 }
@@ -67,10 +65,7 @@ export class VideoContentService {
         tier: AccessTier.PUBLIC,
         creatorId: mainChannel?.id || 'none',
         ...visiblePublishedAtFilter(now),
-        creator: {
-          isApproved: true,
-          isPrimary: true,
-        },
+        creator: publiclyVisibleChannelWhere(),
       },
       include: {
         creator: {
@@ -182,13 +177,13 @@ export class VideoContentService {
 
       const adminData = await findMainCreatorAdminAvatar();
 
-      const mainCreatorSlug = flags.mainCreatorSlug;
+      const mainChannelId = await resolveMainChannelId(prisma);
 
       const dtos = videos.map(v => this.mapToPublicVideoDTO({
         ...v,
         // Administrator fallback only for the main channel; the owner's own avatar still wins (see mapToPublicVideoDTO).
         creator: v.creator
-          ? { ...v.creator, imageUrl: v.creator.slug === mainCreatorSlug ? adminData?.imageUrl ?? null : null }
+          ? { ...v.creator, imageUrl: v.creator.id === mainChannelId ? adminData?.imageUrl ?? null : null }
           : null,
       }));
       // Amount-free goal progress (CLAUDE.md "Fundraising progress bar").
@@ -197,6 +192,40 @@ export class VideoContentService {
       console.error("[GET_ALL_VIDEOS_ERROR]", e);
       if (canUseDemoFallbacks()) return INITIAL_VIDEOS.filter(v => (v.tier as string) !== 'ADMIN').map(v => this.mapToPublicVideoDTO(v));
       throw e;
+    }
+  }
+
+  /**
+   * One video by id or slug for the public page, from any channel (slugs are globally unique), or null when the
+   * viewer must not see it: not found, not PUBLISHED or not yet due, removed by moderation, or on a channel that
+   * is not publicly visible (CLAUDE.md 4.24). Every refusal looks the same, so nothing about a hidden video leaks.
+   * Staff and channel previews are not applied here: an unpublished video is never shown on the public page.
+   */
+  static async getPublicVideoByIdOrSlug(idOrSlug: string): Promise<PublicVideoDTO | null> {
+    const key = idOrSlug.trim();
+    if (!key || key.length > 200) return null;
+    try {
+      const video = await prisma.video.findFirst({
+        where: { OR: [{ id: key }, { slug: key }] },
+        include: {
+          creator: {
+            include: {
+              user: { select: { imageUrl: true, email: true } },
+            },
+          },
+        },
+      });
+      if (!video || !isVideoPubliclyVisible(video as any)) return null;
+
+      const adminData = await findMainCreatorAdminAvatar();
+      const creator = video.creator
+        ? { ...video.creator, imageUrl: video.creator.id === (await resolveMainChannelId(prisma)) ? adminData?.imageUrl ?? null : null }
+        : null;
+      const [dto] = await withFundraisingProgress([this.mapToPublicVideoDTO({ ...video, creator })], [video]);
+      return dto;
+    } catch (e: unknown) {
+      console.error("[GET_PUBLIC_VIDEO_BY_ID_OR_SLUG_ERROR]", e);
+      return null;
     }
   }
 
@@ -245,9 +274,9 @@ export class VideoContentService {
 
       const adminData = await findMainCreatorAdminAvatar();
 
-      const mainCreatorSlug = flags.mainCreatorSlug;
+      const mainChannelId = await resolveMainChannelId(prisma);
       const adminFallbackImageUrl =
-        selectedVideo.creator?.slug === mainCreatorSlug ? adminData?.imageUrl ?? null : null;
+        selectedVideo.creator?.id === mainChannelId ? adminData?.imageUrl ?? null : null;
 
       const [dto] = await withFundraisingProgress([this.mapToPublicVideoDTO({
         ...selectedVideo,

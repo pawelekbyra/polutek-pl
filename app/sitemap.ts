@@ -47,6 +47,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
   const creator = await ContentService.getConfiguredOrDefaultCreator().catch(() => null);
   if (creator) routes.push(...localizedEntry(baseUrl, 'channel', 0.7, { params: { slug: creator.slug } }));
+  // Other creators' channels. A failure here must never take the whole sitemap down.
+  try {
+    const slugs = await ContentService.listPublicChannelSlugs();
+    for (const slug of slugs) routes.push(...localizedEntry(baseUrl, 'channel', 0.6, { params: { slug } }));
+  } catch {
+    // keep the entries collected so far
+  }
   const videos = await VideoContentService.getSitemapVideos().catch(() => []);
   // A video's canonical URL is the feed with ?v= (/watch/<slug> only redirects there).
   for (const video of videos) {

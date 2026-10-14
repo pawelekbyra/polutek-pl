@@ -3,6 +3,7 @@ import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
 import { toPublicCommentAuthor } from "@/lib/comments-public-author";
 import { CommentError, commentDatabaseError } from "../domain/comment.errors";
+import { scopeToChannel } from "./authorize-comments";
 import { MODERATION_QUEUE_WHERE, PanelCommentRepository, panelCommentWhere, type PanelCommentFilters, type PanelCommentRecord } from "../infrastructure/panel-comment.repository";
 
 /** A comment as the admin panel lists it. Plain data (ISO dates), safe to hand to client components. */
@@ -27,8 +28,6 @@ export type PanelComment = {
 
 export type PanelPage<T> = { items: T[]; total: number; page: number; pageSize: number; totalPages: number };
 
-const isAdmin = (ctx: AppContext) => ctx.actor.type === "admin";
-const forbidden = fail<CommentError>({ type: "FORBIDDEN", message: "Brak uprawnień administratora." });
 
 function clampPage(page?: number, pageSize?: number, fallback = 25) {
   return { page: Math.max(1, Math.floor(page || 1)), pageSize: Math.max(1, Math.min(100, Math.floor(pageSize || fallback))) };
@@ -59,10 +58,12 @@ export function toPanelComment(c: PanelCommentRecord, now: Date): PanelComment {
 
 /** Comments with filters (text/author, status, film, author, unanswered questions, reported); newest first. */
 export async function listPanelComments(ctx: AppContext, input: PanelCommentFilters & { page?: number; pageSize?: number }): Promise<UseCaseResult<PanelPage<PanelComment>, CommentError>> {
-  if (!isAdmin(ctx)) return forbidden;
+  const scope = await scopeToChannel(ctx, "comment.moderate", input.channelId);
+  if ("error" in scope) return fail(scope.error);
   const { page, pageSize } = clampPage(input.page, input.pageSize);
   try {
-    const { items, total } = await new PanelCommentRepository(ctx.prisma).list(panelCommentWhere(input), page, pageSize, "newest");
+    const where = panelCommentWhere({ ...input, channelId: scope.channelId ?? undefined });
+    const { items, total } = await new PanelCommentRepository(ctx.prisma).list(where, page, pageSize, "newest");
     const now = ctx.now();
     return ok({ items: items.map((c) => toPanelComment(c, now)), total, page, pageSize, totalPages: Math.ceil(total / pageSize) });
   } catch (error) {
@@ -71,11 +72,13 @@ export async function listPanelComments(ctx: AppContext, input: PanelCommentFilt
 }
 
 /** The moderation queue: held comments and comments with pending reports, oldest first (triage order). */
-export async function listModerationQueue(ctx: AppContext, input: { page?: number; pageSize?: number } = {}): Promise<UseCaseResult<PanelPage<PanelComment>, CommentError>> {
-  if (!isAdmin(ctx)) return forbidden;
+export async function listModerationQueue(ctx: AppContext, input: { page?: number; pageSize?: number; channelId?: string } = {}): Promise<UseCaseResult<PanelPage<PanelComment>, CommentError>> {
+  const scope = await scopeToChannel(ctx, "comment.moderate", input.channelId);
+  if ("error" in scope) return fail(scope.error);
   const { page, pageSize } = clampPage(input.page, input.pageSize);
   try {
-    const { items, total } = await new PanelCommentRepository(ctx.prisma).list(MODERATION_QUEUE_WHERE, page, pageSize, "oldest");
+    const where = scope.channelId ? { AND: [MODERATION_QUEUE_WHERE, { video: { creatorId: scope.channelId } }] } : MODERATION_QUEUE_WHERE;
+    const { items, total } = await new PanelCommentRepository(ctx.prisma).list(where, page, pageSize, "oldest");
     const now = ctx.now();
     return ok({ items: items.map((c) => toPanelComment(c, now)), total, page, pageSize, totalPages: Math.ceil(total / pageSize) });
   } catch (error) {
@@ -86,11 +89,12 @@ export async function listModerationQueue(ctx: AppContext, input: { page?: numbe
 export type ResolvedReportRow = { id: string; status: CommentReportStatus; reason: CommentReportReason; resolvedAt: string | null; reporter: string; comment: { id: string; text: string | null; status: CommentStatus; author: string; videoTitle: string; videoSlug: string } };
 
 /** History of closed reports (upheld or dismissed), newest decision first. */
-export async function listResolvedReports(ctx: AppContext, input: { page?: number; pageSize?: number } = {}): Promise<UseCaseResult<PanelPage<ResolvedReportRow>, CommentError>> {
-  if (!isAdmin(ctx)) return forbidden;
+export async function listResolvedReports(ctx: AppContext, input: { page?: number; pageSize?: number; channelId?: string } = {}): Promise<UseCaseResult<PanelPage<ResolvedReportRow>, CommentError>> {
+  const scope = await scopeToChannel(ctx, "comment.moderate", input.channelId);
+  if ("error" in scope) return fail(scope.error);
   const { page, pageSize } = clampPage(input.page, input.pageSize);
   try {
-    const { items, total } = await new PanelCommentRepository(ctx.prisma).resolvedReports(page, pageSize);
+    const { items, total } = await new PanelCommentRepository(ctx.prisma).resolvedReports(page, pageSize, scope.channelId);
     return ok({
       total,
       page,
@@ -118,10 +122,11 @@ export async function listResolvedReports(ctx: AppContext, input: { page?: numbe
 }
 
 /** Counters for the tab badges: comments in the queue, held, pending reports. */
-export async function getModerationCounts(ctx: AppContext): Promise<UseCaseResult<{ comments: number; held: number; pendingReports: number }, CommentError>> {
-  if (!isAdmin(ctx)) return forbidden;
+export async function getModerationCounts(ctx: AppContext, input: { channelId?: string } = {}): Promise<UseCaseResult<{ comments: number; held: number; pendingReports: number }, CommentError>> {
+  const scope = await scopeToChannel(ctx, "comment.moderate", input.channelId);
+  if ("error" in scope) return fail(scope.error);
   try {
-    return ok(await new PanelCommentRepository(ctx.prisma).queueCounts());
+    return ok(await new PanelCommentRepository(ctx.prisma).queueCounts(scope.channelId));
   } catch (error) {
     return fail(commentDatabaseError("COMMENT_QUEUE_COUNTS_ERROR", error));
   }

@@ -76,12 +76,18 @@ export async function createVideoComment(
     const repo = new CommentRepository(prisma);
     const video = await prisma.video.findUnique({
       where: { id: resolvedVideoId },
-      select: { creatorId: true, creator: { select: { userId: true } } }
+      select: { creatorId: true, commentsMode: true, creator: { select: { userId: true } } }
     });
     if (!video) return fail({ type: "NOT_FOUND", message: "Film nie istnieje." });
 
     const videoCreatorId = video.creator?.userId || null;
     const canModerate = actor.type === 'admin' || videoCreatorId === userId;
+
+    // The creator's choice per video (Studio "Komentarze"); owner and staff are not limited by it.
+    const newStatus = CommentPolicy.statusForNewComment(video.commentsMode, canModerate);
+    if (newStatus === null) {
+      return fail({ type: "FORBIDDEN", code: "COMMENTS_DISABLED", message: "Komentarze pod tym filmem są wyłączone." });
+    }
 
     let finalParentId: string | null = null;
     if (parentId) {
@@ -104,13 +110,14 @@ export async function createVideoComment(
       creatorId: video.creatorId,
       text,
       parentId: finalParentId,
+      status: newStatus,
     });
 
     await recordAuditEventSafe(ctx, {
       action: "COMMENT_CREATE",
       targetType: "COMMENT",
       targetId: newComment.id,
-      metadata: { videoId: resolvedVideoId, parentId: finalParentId }
+      metadata: { videoId: resolvedVideoId, parentId: finalParentId, ...(newStatus !== CommentStatus.VISIBLE ? { heldByCommentsMode: true } : {}) }
     });
 
     const commentWithRelations = await repo.findCommentForDto(newComment.id, userId, canModerate);

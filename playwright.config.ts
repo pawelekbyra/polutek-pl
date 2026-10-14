@@ -7,10 +7,6 @@ const baseURL =
 const reuseExistingServer =
   !!process.env.E2E_BASE_URL || process.env.PLAYWRIGHT_REUSE_SERVER === "true";
 const webServerCommand = process.env.E2E_WEB_SERVER_COMMAND || "npm run dev";
-const mainCreatorSlug =
-  process.env.MAIN_CREATOR_SLUG ||
-  process.env.E2E_CREATOR_SLUG ||
-  "main-creator";
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -36,7 +32,6 @@ export default defineConfig({
         env: {
           ...process.env,
           ENABLE_DEMO_FALLBACKS: process.env.ENABLE_DEMO_FALLBACKS || "true",
-          MAIN_CREATOR_SLUG: mainCreatorSlug,
         },
         reuseExistingServer: true,
         timeout: 120_000,

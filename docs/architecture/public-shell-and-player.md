@@ -12,7 +12,7 @@ Dźwięk w odtwarzaczu i przycisk logo: `../operations/PLAYER-SOUND.md`. Języki
   Bez twardych „3D” cieni przesuniętych i bez nowych literalnych kolorów akcentu. Okno napiwku ma białe tło karty (`.tip-gate-surface` w `globals.css`).
 - Logo: `public/logo-glasses.svg` jako zwykły `<img>` w `BrandName.tsx`; w pasku przycisk logo to `BrandHomeLink` (`PLAYER-SOUND.md`). Nie zmniejszaj logo bez sprawdzenia, że wypełnia slot paska. Przycisk logowania w pasku to ikona 38x38 poniżej `sm:`.
 - Wewnętrzne identyfikatory zostały po rebrandzie celowo: `.polutek-vidstack-player`, `PolutekControls.tsx`, zdarzenia `polutek:open-support`, `polutek:gate-enter`, klucze `polutek:*` w `localStorage`/`sessionStorage`.
-  `MAIN_CREATOR_SLUG` ma awaryjną wartość `'polutek'` (klucz wyszukiwania w bazie, prawdziwy `Creator.slug`; zmieniaj tylko razem z migracją danych).
+  Kanał główny to ustawienie `main_channel_id` (id kanału), a nie zmienna `MAIN_CREATOR_SLUG` (CLAUDE.md §4.24).
 - Przełącznik języków: pigułka w pasku z ikoną globusa (bez flagi), lista w wierszach z flagami (`public/flags/`, circle-flags MIT, `THIRD_PARTY_NOTICES.md`); stan i klawiatura w `app/components/language-switcher/`.
 - Instalacja jako aplikacja: `InstallAppMenu` istnieje, ale nie jest nigdzie zamontowany (przycisk usunięto na prośbę właściciela); `public/manifest.json` ma `orientation: portrait-primary`.
   `RotateDeviceGuard.tsx` i `OrientationLock.tsx` istnieją w repozytorium, ale **nie są zamontowane** w `app/layout.tsx` (stan 2026-10-05).

@@ -1,56 +1,49 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getMainChannel, getRequiredMainChannel } from '@/lib/modules/channel';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import { flags } from '@/lib/feature-flags';
-
-vi.mock('@/lib/feature-flags', () => ({
-  flags: {
-    mainCreatorSlug: 'test-slug'
-  }
-}));
 
 describe('Channel Module Use Cases', () => {
   const mockPrisma = {
+    appSetting: { findUnique: vi.fn() },
     creator: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
     },
   };
 
-  const ctx = createAppContext({ prisma: mockPrisma as any });
-
   beforeEach(() => {
     vi.clearAllMocks();
+    mockPrisma.appSetting.findUnique.mockResolvedValue({ key: 'main_channel_id', value: 'chan-1' });
+    mockPrisma.creator.findFirst.mockResolvedValue(null);
   });
 
+  // The main-channel read is memoized per database client within a render, so each test gets its own context.
+  const ctxFor = () => createAppContext({ prisma: { ...mockPrisma } as any });
+
   describe('getMainChannel', () => {
-    it('returns channel from repository', async () => {
+    it('returns the channel named by the main_channel_id setting', async () => {
       mockPrisma.creator.findUnique.mockResolvedValue({ id: 'chan-1', slug: 'test-slug' });
-      const result = await getMainChannel(ctx);
+      const result = await getMainChannel(ctxFor());
       expect(result?.id).toBe('chan-1');
-      expect(mockPrisma.creator.findUnique).toHaveBeenCalledWith({
-        where: { slug: 'test-slug' }
-      });
+      expect(mockPrisma.appSetting.findUnique).toHaveBeenCalledWith({ where: { key: 'main_channel_id' } });
+      expect(mockPrisma.creator.findUnique).toHaveBeenCalledWith({ where: { id: 'chan-1' } });
     });
   });
 
   describe('getRequiredMainChannel', () => {
     it('throws if channel not found', async () => {
       mockPrisma.creator.findUnique.mockResolvedValue(null);
-      await expect(getRequiredMainChannel(ctx)).rejects.toThrow('test-slug');
+      await expect(getRequiredMainChannel(ctxFor())).rejects.toThrow('not found');
     });
 
-    it('throws if not approved', async () => {
-      mockPrisma.creator.findUnique.mockResolvedValue({ id: '1', isApproved: false });
-      await expect(getRequiredMainChannel(ctx)).rejects.toThrow('not approved');
+    it('throws if the channel is not publicly visible', async () => {
+      mockPrisma.creator.findUnique.mockResolvedValue({ id: '1', slug: 'c', status: 'PENDING_REVIEW', deletedAt: null });
+      await expect(getRequiredMainChannel(ctxFor())).rejects.toThrow('not publicly visible');
     });
 
-    it('returns channel if all checks pass', async () => {
-      mockPrisma.creator.findUnique.mockResolvedValue({
-        id: '1',
-        isApproved: true,
-        isPrimary: true
-      });
-      const result = await getRequiredMainChannel(ctx);
+    it('returns an ACTIVE channel', async () => {
+      mockPrisma.creator.findUnique.mockResolvedValue({ id: '1', slug: 'c', status: 'ACTIVE', deletedAt: null });
+      const result = await getRequiredMainChannel(ctxFor());
       expect(result.id).toBe('1');
     });
   });

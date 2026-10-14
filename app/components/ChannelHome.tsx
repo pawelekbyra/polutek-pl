@@ -21,12 +21,18 @@ import { useSearchParams } from "next/navigation";
 // Rendered on the server with its first page (HomeExperience), so the list is in the first HTML.
 import EmbeddedComments from "./comments/EmbeddedComments";
 import type { InitialCommentsPage } from "./comments/initial-comments";
+import { pickHomeVideo } from "@/lib/home-video-selection";
 
 const SupportModal = dynamic(() => import("./channel/SupportModal"), { ssr: false });
 
 interface ChannelHomeProps {
   mainVideo: PublicVideoDTO | null;
   allVideos: PublicVideoDTO[];
+  /**
+   * The selected video when `?v=` points outside `allVideos` (another channel or not in the sidebar), already
+   * checked for public visibility by the server. It is playable and selectable but is not added to the sidebar.
+   */
+  extraVideo?: PublicVideoDTO | null;
   currentVideoId?: string;
   userProfile?: {
     id: string;
@@ -64,6 +70,7 @@ type ChannelViewState = {
 export default function ChannelHome({
   mainVideo,
   allVideos = [],
+  extraVideo = null,
   currentVideoId,
   userProfile,
   initialSidebarLayout,
@@ -72,17 +79,17 @@ export default function ChannelHome({
   initialPlayback,
   renderedAt,
 }: ChannelHomeProps) {
-  const selectedVideo =
-    (allVideos || []).find(
-      (v) => v.id === currentVideoId || v.slug === currentVideoId,
-    ) || mainVideo;
+  const selectedVideo = pickHomeVideo(currentVideoId, { allVideos: allVideos || [], mainVideo, extraVideo });
+  // The preloader looks videos up by id, so it also knows the extra one (the sidebar does not).
+  const preloadVideos = extraVideo && !(allVideos || []).some((v) => v.id === extraVideo.id) ? [...(allVideos || []), extraVideo] : allVideos;
 
   return (
     <RenderClockProvider renderedAt={renderedAt}>
-    <AppPreloadProvider selectedVideo={selectedVideo} allVideos={allVideos} initialPlayback={initialPlayback}>
+    <AppPreloadProvider selectedVideo={selectedVideo} allVideos={preloadVideos} initialPlayback={initialPlayback}>
       <ChannelHomeContent
         mainVideo={mainVideo}
         allVideos={allVideos}
+        extraVideo={extraVideo}
         currentVideoId={currentVideoId}
         userProfile={userProfile}
         initialSidebarLayout={initialSidebarLayout}
@@ -117,6 +124,7 @@ function readHistoryVideoId(state: unknown): string | undefined {
 function ChannelHomeContent({
   mainVideo,
   allVideos = [],
+  extraVideo = null,
   currentVideoId,
   userProfile,
   initialSidebarLayout,
@@ -131,7 +139,7 @@ function ChannelHomeContent({
     startWithSound: false,
   }));
   const resolveVideoId = (idOrSlug: string | undefined) =>
-    ((allVideos || []).find((v) => v.id === idOrSlug || v.slug === idOrSlug) || mainVideo)?.id;
+    pickHomeVideo(idOrSlug, { allVideos: allVideos || [], mainVideo, extraVideo })?.id;
   if (selectionState.routeVideoId !== currentVideoId) {
     // The server route changed (a real navigation, or a refresh of the URL a shallow
     // switch already pushed). Keep the open tab when it's still the same video.
@@ -147,10 +155,7 @@ function ChannelHomeContent({
     selectionState.routeVideoId === currentVideoId
       ? selectionState.selectedVideoId
       : currentVideoId;
-  const selectedVideo =
-    (allVideos || []).find(
-      (v) => v.id === clientSelectedVideoId || v.slug === clientSelectedVideoId,
-    ) || mainVideo;
+  const selectedVideo = pickHomeVideo(clientSelectedVideoId, { allVideos: allVideos || [], mainVideo, extraVideo });
   // The server computed the viewer's like/dislike only for the video it rendered;
   // after a shallow switch Hero fetches it for the newly selected video itself.
   const serverInteractionVideoId = resolveVideoId(currentVideoId);

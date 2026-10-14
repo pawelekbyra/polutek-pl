@@ -1,11 +1,12 @@
 import { AccessTier, VideoStatus } from "@prisma/client";
 import { InternalVideoDTO as Video } from "@/app/types/video";
-import { MAIN_CREATOR_NAME, MAIN_CREATOR_SLUG } from '../constants';
+import { MAIN_CREATOR_NAME } from '../constants';
 
 export const DEFAULT_CREATOR = {
   id: "creator_default",
   name: MAIN_CREATOR_NAME,
-  slug: MAIN_CREATOR_SLUG,
+  // Demo content only (ENABLE_DEMO_FALLBACKS, never production); the real main channel is the `main_channel_id` setting.
+  slug: 'demo-creator',
   bio: `Oficjalny kanał ${MAIN_CREATOR_NAME}. Ekskluzywne materiały VOD i niezależne śledztwa.`,
   subscribersCount: 1250000,
 };

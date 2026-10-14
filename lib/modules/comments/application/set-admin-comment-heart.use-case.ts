@@ -5,13 +5,15 @@ import { WriteTx } from "@/lib/modules/shared/db";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { CommentError, commentDatabaseError } from "../domain/comment.errors";
 import { CommentRepository } from "../infrastructure/comment.repository";
+import { authorizeComments } from "./authorize-comments";
 
 /**
  * Sets the creator's heart to an explicit state (idempotent, unlike `toggleAdminCommentHeart`, which flips and so
  * double-fires on a repeated request). No change means no write and no audit row.
  */
 export async function setAdminCommentHeart(ctx: AppContext, input: { commentId: string; hearted: boolean }): Promise<UseCaseResult<{ isHearted: boolean; changed: boolean }, CommentError>> {
-  if (ctx.actor.type !== "admin") return fail({ type: "UNAUTHORIZED", message: "Brak uprawnień administratora." });
+  const denied = await authorizeComments(ctx, "comment.heart", [input.commentId]);
+  if (denied) return fail(denied);
   try {
     const comment = await new CommentRepository(ctx.prisma).findCommentById(input.commentId);
     if (!comment) return fail({ type: "NOT_FOUND", message: "Komentarz nie istnieje." });

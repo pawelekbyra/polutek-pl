@@ -36,8 +36,8 @@ describe('Access Source of Truth (#1036)', () => {
     vi.mocked(mockPrisma.creator.findUnique).mockResolvedValue({
         id: mainChannelId,
         slug: 'main',
-        isApproved: true,
-        isPrimary: true,
+        status: 'ACTIVE',
+        deletedAt: null,
     } as any);
   });
 
@@ -51,7 +51,7 @@ describe('Access Source of Truth (#1036)', () => {
       tier: AccessTier.PATRON,
       status: VideoStatus.PUBLISHED,
       creatorId: mainChannelId,
-      creator: { isApproved: true, isPrimary: true }
+      creator: { status: 'ACTIVE' }
     } as any);
 
     // Mock user: cache says isPatron=false
@@ -83,7 +83,7 @@ describe('Access Source of Truth (#1036)', () => {
       tier: AccessTier.PATRON,
       status: VideoStatus.PUBLISHED,
       creatorId: mainChannelId,
-      creator: { isApproved: true, isPrimary: true }
+      creator: { status: 'ACTIVE' }
     } as any);
     vi.mocked(mockPrisma.user.findUnique).mockResolvedValue({
       id: 'user-1',
@@ -107,7 +107,7 @@ describe('Access Source of Truth (#1036)', () => {
       tier: AccessTier.PATRON,
       status: VideoStatus.PUBLISHED,
       creatorId: mainChannelId,
-      creator: { isApproved: true, isPrimary: true }
+      creator: { status: 'ACTIVE' }
     } as any);
 
     const result = await VideoContentService.getVideoAccess(null, videoId);
@@ -126,7 +126,7 @@ describe('Access Source of Truth (#1036)', () => {
        tier: AccessTier.PUBLIC,
        status: VideoStatus.PUBLISHED,
        creatorId: mainChannelId,
-       creator: { isApproved: true, isPrimary: true }
+       creator: { status: 'ACTIVE' }
      } as any);
 
      vi.mocked(mockPrisma.user.findUnique).mockResolvedValue({

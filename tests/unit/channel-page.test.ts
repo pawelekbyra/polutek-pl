@@ -5,7 +5,6 @@ import { join } from 'node:path';
 describe('/[locale]/channel/[slug] page', () => {
   it('keeps /channel/[MAIN_CREATOR_SLUG] active when ENABLE_MULTI_CREATOR=false instead of redirecting to homepage', () => {
     process.env.ENABLE_MULTI_CREATOR = 'false';
-    process.env.MAIN_CREATOR_SLUG = 'configured-channel';
 
     const source = readFileSync(join(process.cwd(), 'app/[locale]/channel/[slug]/page.tsx'), 'utf8');
 

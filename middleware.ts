@@ -5,6 +5,7 @@ import { SESSION_COOKIE_PREFIX } from "@/lib/auth/config";
 import { generateCSP } from "@/lib/utils/security";
 import { checkAdminCsrf } from "@/lib/api/csrf";
 import { isLegacyAdminApiPath, resolveLegacyAdminRedirect } from "@/lib/admin-legacy-redirects";
+import { handlePathRewrite } from "@/lib/channel-handle-path";
 import { getRouteLocaleFromPathname, ROUTE_LOCALE_HEADER, SUPPORTED_LOCALES, UI_ONLY_LOCALES } from "@/lib/i18n/routing";
 
 // The interface-only languages (de, es, ...) mirror the English public routes under their own prefix.
@@ -13,6 +14,7 @@ const UI_ONLY_PUBLIC_ROUTES = UI_ONLY_LOCALES.flatMap((locale) => [
   `/${locale}/search`,
   `/${locale}/watch/(.*)`,
   `/${locale}/channel/(.*)`,
+  `/${locale}/@(.*)`,
   `/${locale}/terms`,
   `/${locale}/privacy-policy`,
   `/${locale}/regulamin`,
@@ -29,6 +31,7 @@ const isPublicRoute = createRouteMatcher([
   '/pl/search',
   '/pl/watch/(.*)',
   '/pl/channel/(.*)',
+  '/pl/@(.*)',
   '/pl/regulamin',
   '/pl/polityka-prywatnosci',
   '/pl/terms',
@@ -37,6 +40,7 @@ const isPublicRoute = createRouteMatcher([
   '/en/search',
   '/en/watch/(.*)',
   '/en/channel/(.*)',
+  '/en/@(.*)',
   '/en/terms',
   '/en/privacy-policy',
   '/en/regulamin',
@@ -46,6 +50,8 @@ const isPublicRoute = createRouteMatcher([
   '/search',
   '/watch/(.*)',
   '/channel/(.*)',
+  // A channel's public address: /@handle is rewritten to its channel page below.
+  '/@(.*)',
   '/regulamin',
   '/polityka-prywatnosci',
   '/terms',
@@ -155,9 +161,9 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.json({ error: 'Not found' }, { status: 404, headers: { 'Cache-Control': 'no-store' } });
   }
 
-  // Account mutations (nickname, avatar, language, deletion, ...) get a cross-origin guard (lib/api/csrf.ts).
-  // Better Auth's own endpoints check the origin themselves.
-  if (req.nextUrl.pathname.startsWith('/api/user/')) {
+  // Account mutations (nickname, avatar, language, deletion, ...) and the Studio API (channel, videos, uploads,
+  // comments) get a cross-origin guard (lib/api/csrf.ts). Better Auth's own endpoints check the origin themselves.
+  if (req.nextUrl.pathname.startsWith('/api/user/') || req.nextUrl.pathname.startsWith('/api/studio/')) {
     const csrf = checkAdminCsrf(req);
     if (csrf) return NextResponse.json(csrf.body, { status: csrf.status });
   }
@@ -185,7 +191,14 @@ export default async function middleware(req: NextRequest) {
   // Bare paths ("/", "/regulamin", ...) are served from their /pl counterpart. The rewrite happens
   // here, after the gates above, so a rewritten page gets the same session gate, request id and
   // security headers as every other response.
-  const rewriteUrl = polishRewriteUrl(req);
+  const handleTarget = handlePathRewrite(req.nextUrl.pathname);
+  let rewriteUrl: URL | null;
+  if (handleTarget) {
+    rewriteUrl = new URL(req.nextUrl);
+    rewriteUrl.pathname = handleTarget;
+  } else {
+    rewriteUrl = polishRewriteUrl(req);
+  }
   const init = { request: { headers: requestHeaders } };
   const response = rewriteUrl ? NextResponse.rewrite(rewriteUrl, init) : NextResponse.next(init);
 

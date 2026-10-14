@@ -32,10 +32,7 @@ describe('VideoRepository Predicates', () => {
             { publishedAt: { lte: now } }
           ],
           showInSidebar: true,
-          creator: {
-            isApproved: true,
-            isPrimary: true
-          }
+          creator: { status: { in: ['ACTIVE', 'LIMITED'] }, deletedAt: null }
         },
         orderBy: [
           { sidebarOrder: 'asc' },
@@ -60,10 +57,7 @@ describe('VideoRepository Predicates', () => {
             { publishedAt: null },
             { publishedAt: { lte: now } }
           ],
-          creator: {
-            isApproved: true,
-            isPrimary: true
-          }
+          creator: { status: { in: ['ACTIVE', 'LIMITED'] }, deletedAt: null }
         }
       });
     });

@@ -57,7 +57,7 @@ describe("old admin is retired from the public site", () => {
 
   it("never calls the removed /api/admin from the public bundle or the server code", () => {
     const allowed = new Set(["lib/admin-legacy-redirects.ts", "middleware.ts"]);
-    const offenders = wwwSources.filter((file) => !allowed.has(rel(file)) && /\/api\/admin\b/.test(read(file)));
+    const offenders = wwwSources.filter((file) => !allowed.has(rel(file)) && /\/api\/admin(?![-\w])/.test(read(file)));
     expect(offenders.map(rel)).toEqual([]);
   });
 

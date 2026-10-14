@@ -14,6 +14,8 @@ export interface CreateAuditLogInput {
   requestId?: string | null;
   ip?: string | null;
   userAgent?: string | null;
+  /** Channel the event concerns; lets the panel filter per channel. Absent = platform-wide. */
+  channelId?: string | null;
 }
 
 export class AuditRepository {
@@ -34,6 +36,7 @@ export class AuditRepository {
         requestId: data.requestId ?? null,
         ip: data.ip ?? null,
         userAgent: data.userAgent ?? null,
+        ...(data.channelId ? { channelId: data.channelId } : {}),
       },
     });
   }

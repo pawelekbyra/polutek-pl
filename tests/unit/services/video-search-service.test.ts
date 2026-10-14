@@ -7,6 +7,7 @@ const getOptional = vi.fn();
 vi.mock("@/lib/prisma", () => ({ prisma: { video: { findMany } } }));
 vi.mock("@/lib/modules/channel", async () => ({
   MainChannelService: { getOptional },
+  publiclyVisibleChannelWhere: () => ({ status: { in: ['ACTIVE', 'LIMITED'] }, deletedAt: null }),
   // The real, pure resolver (the search DTOs use it for the channel avatar).
   ...(await vi.importActual<typeof import("@/lib/modules/channel/domain/channel-avatar")>("@/lib/modules/channel/domain/channel-avatar")),
 }));
@@ -69,7 +70,7 @@ describe("VideoSearchService", () => {
       where: expect.objectContaining({
         creatorId: "creator-main",
         status: VideoStatus.PUBLISHED,
-        creator: { isApproved: true, isPrimary: true },
+        creator: { status: { in: ['ACTIVE', 'LIMITED'] }, deletedAt: null },
       }),
     }));
     expect(findMany.mock.calls[0][0].where).not.toHaveProperty("showInSidebar");

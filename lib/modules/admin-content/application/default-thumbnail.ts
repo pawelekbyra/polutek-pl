@@ -5,6 +5,7 @@
  * www admin route: same setting, but R2 only (no Vercel Blob fallback), bytes checked by magic number,
  * the new file is saved before the old one is deleted (no gap), every change is audited with before/after.
  */
+import { authorize } from "@/lib/modules/authz";
 import type { AppContext } from "@/lib/modules/shared/app-context";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { fail, ok, type UseCaseResult } from "@/lib/modules/shared/result";
@@ -50,7 +51,8 @@ export async function setDefaultThumbnail(
   storage: PutStorage | null = R2ThumbnailStorageClient.isConfigured() ? new R2ThumbnailStorageClient() : null,
   deleteStored: (url: string) => Promise<unknown> = (url) => MediaStorageService.deleteOwnedThumbnail(url),
 ): Promise<UseCaseResult<{ storageUrl: string; replaced: boolean }, AppError>> {
-  if (ctx.actor.type !== "admin") return fail(new AppError("Tylko administrator zmienia domyślną miniaturę.", 403, "FORBIDDEN"));
+  const denied = await authorize(ctx, "platform.settings");
+  if (denied) return fail(denied);
   if (input.bytes.length === 0) return fail(new AppError("Plik jest pusty.", 400, "COVER_INVALID_TYPE"));
   if (input.bytes.length > COVER_MAX_BYTES) return fail(new AppError("Miniatura może mieć najwyżej 5 MB.", 400, "COVER_TOO_LARGE"));
   const kind = detectImage(input.bytes);
@@ -84,7 +86,8 @@ export async function removeDefaultThumbnail(
   ctx: AppContext,
   deleteStored: (url: string) => Promise<unknown> = (url) => MediaStorageService.deleteOwnedThumbnail(url),
 ): Promise<UseCaseResult<{ deleted: boolean }, AppError>> {
-  if (ctx.actor.type !== "admin") return fail(new AppError("Tylko administrator zmienia domyślną miniaturę.", 403, "FORBIDDEN"));
+  const denied = await authorize(ctx, "platform.settings");
+  if (denied) return fail(denied);
   const before = await ctx.prisma.appSetting.findUnique({ where: { key: DEFAULT_THUMBNAIL_SETTING_KEY } });
   if (!before) {
     // Nothing uploaded, but an old typed URL may still be set on the channel: removing means clearing it too.

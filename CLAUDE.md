@@ -11,7 +11,7 @@ Numeracja §4.x jest stabilna: odwołują się do niej komentarze w kodzie i tes
 
 - **Produkcja:** `www.pawelperfect.com` działa na jednym serwerze Hetzner (`serwerek`, CPX22: 2 vCPU, 4 GB RAM) w Dockerze za Cloudflare Tunnel; baza to lokalny Postgres 17, Redis też lokalny. Vercel, Neon, Clerk,
   Mux, Cloudflare Stream, YouTube i Vimeo nie są już używane. Opis serwera, wdrożenia, kopie, crony: `docs/operations/SERWEREK.md`. Ostatnie wdrożenie i otwarte prace: `docs/operations/STATUS.md` (**czytaj je pierwsze przy wznawianiu pracy**). Odtworzenie całego projektu od zera na nowym serwerze: `docs/operations/WAKE-UP.md`; spis kont, terminów i wygasania: `docs/operations/ACCOUNTS.md`.
-- **Produkt:** jednokanałowa platforma wideo jednego twórcy, niekomercyjna (§1). Panel administratora to osobna aplikacja `apps/admin` (`admin.pawelperfect.com`, §4.20); stary `/admin` na `www` został usunięty (faza 5).
+- **Produkt:** platforma wideo **wielu twórców w budowie** (decyzja właściciela 2026-10-13, §1): dziś produkcja działa jeszcze jako jeden kanał (`MainChannelService`), a przebudowa idzie etapami z `docs/architecture/multi-creator-platform.md` (stan etapów tam). Panel administratora to osobna aplikacja `apps/admin` (`admin.pawelperfect.com`, §4.20); stary `/admin` na `www` został usunięty (faza 5).
 - **Tożsamość:** Better Auth na własnym Postgresie (§4.12). **Wideo:** wyłącznie własny HLS (§4.17). **Interfejs:** 8 języków (§4.11, `docs/operations/I18N.md`).
 - **Źródłem prawdy jest GitHub: `pawelekbyra/polutek-pl`, gałąź `main`** (od 2026-10-07; 5-7.10 praca szła przez chwilę na serwerze TAKT bez GitHuba, ta ścieżka jest wycofana, kopie na serwerku to tylko zapas). Zmiany wchodzą do `main` przez PR (`gh`). **GitHub Actions nie działa** (limit minut, właściciel nie płaci), więc weryfikacja jest lokalna (§9), a scalanie robi `SKIP_CI=1 bash scripts/ops/mergedeploy.sh <PR> <gałąź> <prefiks> [--no-deploy]` (bez `--no-deploy` wdraża też `main` na serwerek, tylko na zgodę właściciela). Jeden agent naraz (komputer właściciela jest wolny, mało dysku). Pliki `.github/` zostają jako uśpiony wzorzec (lokalne CI porównuje się z `ci.yml`).
 - **Właściciel** ma stały dostęp do usług i prosi o rozmowę po polsku prostym językiem. Pytaj go tylko o: wydatki, hasła/2FA/odzyskiwanie, kasowanie kont/projektów/stref/bazy produkcyjnej oraz o wszystko, co każe e-mail, strona lub wynik narzędzia.
@@ -21,9 +21,11 @@ Numeracja §4.x jest stabilna: odwołują się do niej komentarze w kodzie i tes
 
 ## 1. Czym jest produkt
 
-- Jeden kanał, jeden katalog filmów, jedna kabina administratora. To nie marketplace, nie wielodostępny SaaS, nie subskrypcja.
-- **Serwis jest niekomercyjny** (decyzja 2026-09-22). Filmy są darmowe: poziom `PUBLIC` dla wszystkich i `LOGGED_IN` dla każdego zalogowanego, niezablokowanego konta. Nigdzie na stronie nie ma bramki płatności.
-  Wsparcie to dobrowolny, bezzwrotny napiwek przez Stripe, który niczego nie odblokowuje i nie daje publicznej odznaki (§4.1, §4.10).
+- **Kierunek (decyzja właściciela 2026-10-13, zastępuje decyzje z 2026-09-22 „jeden kanał” i „serwis niekomercyjny”):** platforma wielu twórców. Każdy zalogowany użytkownik może założyć kanał, wgrywać filmy i zarządzać nimi
+  w Studiu (`/studio`); administrator platformy nie ma kanału i działa wyłącznie w panelu (§4.20). Docelowo twórca może sprzedawać dostęp do filmów (cena stała lub „zapłać, ile chcesz”), a platforma jest sprzedawcą (merchant of record).
+  Pełny opis, bramki i stan etapów: `docs/architecture/multi-creator-platform.md`.
+- **Stan do czasu spełnienia bramek (tam):** serwis działa jak dotąd: jeden kanał (`MainChannelService`), filmy darmowe (`PUBLIC`, `LOGGED_IN`), nigdzie na stronie nie ma bramki płatności, a wsparcie to dobrowolny, bezzwrotny napiwek przez Stripe,
+  który niczego nie odblokowuje i nie daje publicznej odznaki (§4.1, §4.10). **Sprzedaż dostępu i tworzenie kanałów przez innych użytkowników są wyłączone wyłącznikami (`lib/platform-gates.ts`) i włącza je tylko właściciel.**
 - Komentarze czytają wszyscy; pisanie i reakcje wymagają konta (§4.9). Poziomy dostępu filmu to **tylko dwa**: `PUBLIC` i `LOGGED_IN`. Wartość `PATRON` istnieje jeszcze w enumie `schema.prisma` do migracji czyszczącej;
   cały kod czyta poziomy przez `lib/access-tier.ts`, który traktuje zabłąkane `PATRON` jak `LOGGED_IN`.
 
@@ -48,7 +50,7 @@ Numeracja §4.x jest stabilna: odwołują się do niej komentarze w kodzie i tes
 app/                  strona publiczna (App Router): strony, komponenty (app/components), trasy API (app/api)
 apps/admin/           panel administratora (osobna aplikacja Next.js, port 3100): auth, proxy.ts, ekrany (app/(panel)), skrypty (admin-enroll)
 lib/modules/          logika domenowa, moduł = domain / application / infrastructure
-  access/ audit/ channel/ comments/ email/ media/ patron/ payments/ playback/ privacy/ subscriptions/
+  access/ audit/ authz/ channel/ comments/ email/ media/ patron/ payments/ playback/ privacy/ subscriptions/
   translations/ users/ video/ video-pipeline/ admin-* (odczyty panelu)   shared/ (AppContext, Actor, wyniki)
 lib/auth/ lib/i18n/ lib/telemetry/ lib/api/ ...   wspólne pomocnicze (jedyne wejście do Better Auth: lib/auth)
 prisma/               schema.prisma (jedno źródło prawdy) i migracje (§4.0)
@@ -90,7 +92,7 @@ Webhook weryfikuje podpis na surowym ciele; zwroty administratora mają klucz id
 
 ### 4.4 Kontrola dostępu
 
-Dostęp sprawdza `checkVideoAccess()` (`lib/modules/access/`), aktor z `getActorFromAuth()`. Dwa poziomy: `PUBLIC` (wszyscy) i `LOGGED_IN` (każde zalogowane, niezablokowane konto; gość dostaje `LOGIN_REQUIRED`).
+Dostęp sprawdza `checkVideoAccess()` (`lib/modules/access/`), aktor z `getActorFromAuth()`. Dwa poziomy: `PUBLIC` (wszyscy) i `LOGGED_IN` (każde zalogowane, niezablokowane konto; gość dostaje `LOGIN_REQUIRED`). Trzeci, `PAID` (etap 6, za wyłącznikiem `sales`), wymaga aktywnego `Entitlement`; brak zakupu = `PAYMENT_REQUIRED`. `PAID` czyta się z surowej kolumny, nigdy przez `toVideoAccessTier` (ten mapuje nieznane wartości na `LOGGED_IN`, więc wpuściłby każdego). Film `PAID` nie traci poziomu przez formularz edycji (`update-admin-video` pomija `tier`); cena i poziom zmieniają się tylko przez `setVideoPrice`.
 Poziom czytaj wyłącznie przez `toVideoAccessTier()` / `parseVideoAccessTier()` / `accessTierWhere()` z `lib/access-tier.ts` (czyste, bezpieczne dla klienta); publiczne DTO, układ sidebara i `requiredTier` niosą tylko dwie wartości.
 Stanów odmowy jest dwa: `LOGIN_REQUIRED` i wyświetlany `COMING_SOON` (§4.15); `PATRON_REQUIRED` nie istnieje.
 
@@ -116,6 +118,7 @@ Trasa `/api/videos/[id]/thumbnail` jest publiczna w `middleware.ts`; każda zmia
 
 Dislike nie ma publicznego licznika; reakcje to stan docelowy (idempotentne); `mapCommentToDto` to biała lista; brak publicznego wyróżnienia wspierających; moderacja to maszyna stanów (`CommentPolicy`), błędy bazy nie trafiają do klienta;
 moderacja (ukrycie, przywrócenie, serce, odpowiedź twórcy) jest tylko w panelu.
+`Video.commentsMode` (`ON`/`HELD`/`OFF`, wybór twórcy w Studiu) rozstrzyga wyłącznie `CommentPolicy.statusForNewComment` w `createVideoComment`: `HELD` zakłada komentarz od razu jako `HELD_FOR_REVIEW` (ta sama kolejka co ręczne wstrzymanie, bez drugiej logiki), `OFF` odrzuca nowy komentarz błędem `COMMENTS_DISABLED`, a istniejące zostają czytelne; właściciel kanału i personel nie są ograniczani, a `createCreatorReply` trybu nie sprawdza.
 Kliknięcie imienia lub awatara autora komentarza otwiera małą kartę profilu (`UserProfileCard`), zbudowaną wyłącznie z DTO komentarza (nazwa, awatar, odznaka „Twórca”; starego `username` nie pokazujemy): bez nowych zapytań i bez żadnych danych prywatnych; usunięty użytkownik nie ma karty, a własne komentarze widza pokazują jego bieżący awatar. Szczegóły: `docs/architecture/comments-and-reactions.md`.
 
 ### 4.10 Okno napiwku: jedna droga płatności
@@ -173,9 +176,10 @@ Strona główna jest `force-dynamic` + `no-store` (nigdy do współdzielonego ca
 
 - Nie przywracaj dokumentów „sterujących” (raporty, roadmapy, role agentów): trwałe wnioski idą do tego pliku, `docs/architecture/` albo `docs/audit/`.
 - Nie wprowadzaj pól wspierających do `User`, nie traktuj sesji jako autorytetu, nie omijaj `fulfillPayment()`, nie ujawniaj URL/tokenów odtwarzania ani nie montuj odtwarzacza dla planu odmowy.
+- Nie przywracaj `Creator.isApproved`, `Creator.isPrimary` ani zmiennej `MAIN_CREATOR_SLUG`: widoczność to `Creator.status`, kanał główny to ustawienie `main_channel_id` (§4.24; pilnuje tego `tests/unit/stage-8-legacy-flags-removed.test.ts`).
 - Nie zamieniaj Better Auth na inną usługę i zachowaj własne UI logowania. Nie dodawaj trwałych/offline cache dla logowania, płatności, `media-source`, odtwarzania i danych użytkownika.
 - Nie dodawaj drugiej ścieżki tworzenia użytkownika. Nie dodawaj tras ani UI administratora do `www`: ich miejsce to `apps/admin`.
-- Nie przywracaj drugiego dostawcy wideo bez wyraźnej decyzji właściciela. Nie wprowadzaj opłat za dostęp do treści.
+- Nie przywracaj drugiego dostawcy wideo bez wyraźnej decyzji właściciela. Nie włączaj sprzedaży dostępu do treści ani tworzenia kanałów przez innych użytkowników, dopóki nie są spełnione bramki z `docs/architecture/multi-creator-platform.md` i właściciel nie włączy wyłącznika.
 
 ### 4.15 Premieres (zaplanowane wydania)
 
@@ -231,6 +235,31 @@ Panel ma osobne, ścisłe CSP z nonce (§4.20).
 ### 4.22 Awatar kanału
 
 Awatar kanału (pasek pod odtwarzaczem na stronie głównej, nagłówek `/channel/[slug]`, DTO filmów) wyznacza wyłącznie `resolveChannelAvatarUrl()` (`lib/modules/channel/domain/channel-avatar.ts`): konto właściciela kanału (`Creator.user.imageUrl`), a dopiero potem pierwszy administrator. Obrazek zalogowanego widza (sesja, `userDb`) nigdy nie jest wejściem; widzi go tylko pasek nawigacji i komentarze (§4.9). Nie dopisuj drugiej ścieżki; test: `tests/unit/modules/channel/channel-avatar-source.test.tsx`.
+
+### 4.23 Uprawnienia: jedno miejsce decyzji (`lib/modules/authz`)
+
+Kto co może w kanale i na platformie rozstrzyga **wyłącznie** `can(principal, action, resource)` (`lib/modules/authz/domain/policy.ts`, czyste, bez I/O); macierz ról i akcji jest w `matrix.ts`, lista akcji w `actions.ts` (lista zamknięta: nowa możliwość = nowa akcja + wiersz macierzy, test kontraktowy pilnuje).
+`authorize(ctx, action, target)` dociąga fakty (kanał, właściciel) i zwraca `AppError` albo `null`; `assertAuthorized()` rzuca. Reguły:
+- **Sprawdzenie jest w use case'ie, nie w trasie.** Każdy use case modułów `video`, `video-pipeline`, `admin-content`, `channel`, który zmienia lub ujawnia treść kanału, woła `authorize`/`assertAuthorized`/`requireVideo` albo jest na liście `AUTHZ_EXEMPT` w `scripts/check-architecture.ts` z uzasadnieniem (odczyt publiczny, pracownik/cron jako `system`, deleguje do funkcji z autoryzacją). Bramka to egzekwuje.
+- **Rodzaje podmiotów:** `guest` (401), `user` (tylko we własnym kanale wg roli; konto z `onboardingPending` nie działa), `staff` (aktor typu `admin`: konto panelu albo dawna rola ADMIN na www; akcje `platform.*` i treści kanału, ale **nie** zmiana konta wypłat ani członków kanału), `system` (workery i crony; nie jest osiągalny z żądania).
+- **Personel nie jest twórcą:** akcja `comment.reply_as_creator` dla personelu jest wyjątkiem przejściowym (`LEGACY_STAFF_ALLOWED`), który znika, gdy autorem odpowiedzi staje się właściciel kanału (etap 3).
+- **Status kanału** (`SUSPENDED`, `BANNED`, `DELETED`) zamraża zmiany dla członków; `LIMITED` odbiera tworzenie, upload i publikację oraz zmianę wypłat. Personel nadal może działać (tak kanał odmraża się).
+- Decyzje odmowne nie ujawniają faktów: nieistniejący zasób to 404, brak dostępu 403, brak logowania 401.
+- Pole `userId` aktora `admin` oznacza `User.id` (www) albo `AdminUser.id` (panel); `principal.staffId` zachowuje tę dwuznaczność do etapu 2, nie używaj go do porównań z `Creator.userId`.
+
+### 4.24 Kanał, członkostwo i wyłączniki platformy
+
+- **`Creator` jest kanałem** (w domenie „Channel”). Ma `status` (`ChannelStatus`: `PENDING_REVIEW`, `ACTIVE`, `LIMITED`, `SUSPENDED`, `BANNED`, `DELETED`), `handle` (unikalny bez względu na wielkość liter przez indeks częściowy `Creator_handle_lower_key`, którego Prisma nie wyraża) oraz członków w `ChannelMember`.
+  Właściciel (`Creator.userId`) ma wiersz `OWNER`; autoryzacja używa wiersza, a gdy go brak, `Creator.userId` (§4.23). Zmiany statusu kanału i `Video.moderationStatus` przechodzą wyłącznie przez use case'y modułów `channel` i `video`, a każda decyzja moderacyjna zapisuje niemodyfikowalny `ModerationDecision` (trigger bazy, uzasadnienie z art. 17 DSA).
+- **Wyłączniki** (`lib/platform-gates.ts`, zmienne `PLATFORM_GATE_*`): `channelCreation` (`off`/`invite`/`on`), `sales`, `payouts`. Domyślnie wszystkie wyłączone, nieznana wartość znaczy `off`; kod nowych możliwości sprawdza wyłącznik na wejściu i nie zakłada, że jest włączony.
+  Włącza je wyłącznie właściciel, po liście kontrolnej z `docs/architecture/multi-creator-platform.md`.
+- **Kanał kontekstu:** `AppContext.channelId` wskazuje kanał, na którym pracuje żądanie (ustawia go wejście Studia albo panelu po rozwiązaniu kanału; nigdy nie nadaje uprawnień, §4.23).
+  `MainChannelService.getRequired/getOptional` zwracają kanał kontekstu, a bez niego kanał główny platformy (strona publiczna): ustawienie `AppSetting` `main_channel_id` (id kanału; ochrona kanału głównego przed zawieszeniem/usunięciem to porównanie z tym id przez `isMainChannelId`/`MainChannelService.isMainChannel`). Nie ma fallbacków: brak lub wiszące ustawienie = brak kanału głównego (zmienna `MAIN_CREATOR_SLUG` i flaga `isPrimary` zostały usunięte w etapie 8, wdrożenie B). Nazwa jest historyczna; nowy kod myśli „kanał kontekstu”. Kanał usunięty (`DELETED`, `deletedAt`) jest „nie znaleziony”.
+  Cykl życia kanału (zakładanie za wyłącznikiem, uchwyt, nazwa, usunięcie z 30 dniami na przywrócenie) to `lib/modules/channel/application/channel-lifecycle.use-cases.ts`; reguły uchwytu i nazwy to czyste funkcje w `domain/handle.ts` (ASCII, 3-30 znaków, lista zastrzeżonych, zmiana najwyżej 2 razy na 14 dni, stary uchwyt zarezerwowany 180 dni).
+- **Dostęp publiczny jest per film, nie per witryna:** `checkVideoAccess` bierze kanał z filmu (slugi są globalnie unikalne). Kanał jest publiczny wyłącznie wtedy, gdy ma status `ACTIVE` lub `LIMITED` i nie jest usunięty (`MainChannelPolicy.isPubliclyVisible`, filtr Prisma `publiclyVisibleChannelWhere()`); pola `isApproved` już nie ma w schemacie; film `REMOVED` widzi tylko personel,
+  a szkic widzi personel i członek kanału z uprawnieniem `video.preview`. Moderacja komentarzy (`authorizeComments`, `scopeToChannel`) sprawdza uprawnienie w kanale komentarza; listy w Studiu muszą być zawężone do kanału.
+- **Limity kanału** (`lib/platform-limits.ts`, nadpisywane wierszem `ChannelQuota`): rozmiar pliku, długość, liczba uploadów na dobę i zadań w kolejce, miejsce; egzekwowane przy rezerwacji uploadu, nie w trakcie.
+- Schemat wielokanałowy jest addytywny (migracja `20261013120000_multi_channel_schema`). **Etap 8 (wdrożenia A i B) jest zrobiony w kodzie:** migracja `20261014090000_main_channel_setting` zasiała `main_channel_id`, a migracja `20261014120000_drop_creator_legacy_flags` usuwa kolumny `Creator.isApproved` i `Creator.isPrimary` (przerywa się, gdy istnieją kanały, a ustawienia `main_channel_id` brak lub wskazuje nieistniejący kanał). Zmienna `MAIN_CREATOR_SLUG` nie istnieje. **Stan wdrożenia B na serwerze: patrz `docs/operations/STATUS.md`** (wymaga zgody właściciela i zrzutu `pre-deploy-*`; procedura i wycofanie: `docs/architecture/stage-8-deploy-B.md`). Rola `User.role = ADMIN` nie jest już bramką w widoku paska bocznego (staff z Actora); zostaje źródłem aktora `admin` na `www` (`lib/api/auth.ts`) i danymi w panelu użytkowników.
 
 ## 5. Administracja
 
@@ -321,3 +350,9 @@ Wdrożenie (`git archive` → `deploy.sh`, panel `deploy-admin.sh`, rollback `--
 Indeks: `docs/README.md`. Najczęściej potrzebne: `docs/operations/STATUS.md` (otwarte prace i decyzje), `SERWEREK.md` (serwer), `ADMIN-PANEL.md`, `LOCAL-CI.md`, `VIDEO-PIPELINE.md`, `I18N.md`, `PLAYER-SOUND.md`;
 `docs/architecture/` (m.in. `auth-better-auth.md`, `payments-and-tips.md`, `premieres-and-fundraising.md`, `thumbnails-r2.md`, `comments-and-reactions.md`, `public-shell-and-player.md`, `i18n-and-legal.md`, `privacy-email-retention.md`, `database-and-migrations.md`).
 Gdy zmiana modyfikuje zachowanie, które agenci mają zachować, zaktualizuj ten plik i właściwy dokument w tej samej zmianie. Bieżące prace śledź w `STATUS.md`, nie w nowych plikach „roadmap”.
+
+### 4.25 Sprzedaż (etap 6, wyłączona domyślnie)
+- Moduł `lib/modules/sales`: `splitSale` (czysta arytmetyka groszy: brutto = VAT + netto, netto = prowizja + udział twórcy; ten sam warunek jako `CHECK` w bazie), `setVideoPrice`, `quoteVideoPurchase`, `recordOrderPaid` (idempotentne po `providerRef`, wołane przez webhook jako aktor `system`), `refundOrder` (najpierw operator płatności, potem księgi; pełny zwrot cofa uprawnienie), `getChannelBalance`.
+- Wszystko odmawia, dopóki `PLATFORM_GATE_SALES` nie jest `on`. Prowizja (`PLATFORM_FEE_BP`, domyślnie 1000 = 10%, **wartość tymczasowa do decyzji właściciela**) i okres wstrzymania (`PLATFORM_PAYOUT_HOLD_DAYS`, 14) to konfiguracja, nie kod.
+- `LedgerEntry` jest tylko do dopisywania (wyzwalacz w migracji `20261013140000_sales_schema`); korekty to nowe wiersze.
+- **Nie ma** adaptera Stripe (sesja płatności, webhook, zwrot u operatora), ekranu zakupu ani wypłat: czekają na decyzję o podmiocie prawnym, rejestrację VAT i zgody Stripe. Bez nich nie wolno włączać `sales`.

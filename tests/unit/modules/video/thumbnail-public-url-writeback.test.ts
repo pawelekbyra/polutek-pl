@@ -37,7 +37,6 @@ const ENV = {
   CLOUDFLARE_R2_BUCKET_THUMBNAILS_PRIVATE: 'priv',
   CLOUDFLARE_R2_BUCKET_THUMBNAILS_PUBLIC: 'pub',
   NEXT_PUBLIC_R2_PUBLIC_HOST: 'thumbs.example.com',
-  MAIN_CREATOR_SLUG: 'polutek',
 };
 const KEY = 'videos/v1/covers/abc.webp';
 const privateUrl = (k: string) => `https://acct.r2.cloudflarestorage.com/priv/${k}`;
@@ -77,7 +76,8 @@ describe('updateAdminVideo never stores a public-host thumbnail URL', () => {
         count: vi.fn().mockResolvedValue(0),
       },
       auditLog: { create: vi.fn() },
-      creator: { findUnique: vi.fn().mockResolvedValue({ id: 'c1', slug: 'polutek', isApproved: true, isPrimary: true }) },
+      appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
+      creator: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn().mockResolvedValue({ id: 'c1', slug: 'polutek', status: 'ACTIVE' }) },
     };
     prisma.$transaction = vi.fn((cb: any) => cb(prisma));
     return prisma;

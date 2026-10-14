@@ -4,7 +4,7 @@ Jedyna lista otwartych prac. Aktualizuj ją w tym samym PR, który coś zamyka a
 zrobionych tu nie trzymamy (są w git). Przed uznaniem punktu za otwarty sprawdź stan faktyczny
 (`git log origin/main`, `gh pr list`, serwer, DNS).
 
-Ostatnia aktualizacja: 2026-10-12 (dopisana sekcja „Stan 2026-10-12: decyzje i otwarte pytania”, badania w `docs/audit/2026-10-12/`; reszta pliku bez zmian od 2026-10-07: GitHub znów jest źródłem prawdy; praca na serwerze TAKT i bez GitHuba z 5-7.10 jest wycofana, jej gałęzie są w `main`;
+Ostatnia aktualizacja: 2026-10-13 (dopisana sekcja „Stan 2026-10-13: platforma wielu twórców”; wcześniej 2026-10-12: dopisana sekcja „Stan 2026-10-12: decyzje i otwarte pytania”, badania w `docs/audit/2026-10-12/`; reszta pliku bez zmian od 2026-10-07: GitHub znów jest źródłem prawdy; praca na serwerze TAKT i bez GitHuba z 5-7.10 jest wycofana, jej gałęzie są w `main`;
 wcześniej wszystkie prace agentów były wstrzymane na prośbę właściciela).
 
 ## Jak wznowić pracę (przeczytaj najpierw)
@@ -133,6 +133,17 @@ Pomysł pracy agenta bezpośrednio na serwerku bez GitHuba (bundle, własne repo
 - Zakładki komentarze/filmy na telefonie: oba podkreślenia niebieskie. Okładka kanału twórcy usunięta z kodu i panelu (`Creator.bannerUrl` do usunięcia migracją).
 - Odstęp pola komentarza od pierwszego komentarza: 24 px. Plakietki komentarzy są pod avatarem.
 
+## Stan 2026-10-13: platforma wielu twórców (w budowie)
+
+Decyzja właściciela (czat 2026-10-13): przejście z jednego kanału na platformę wielu twórców, ze sprzedażą dostępu i platformą jako sprzedawcą (MoR).
+Opis, bramki, stan etapów: [`../architecture/multi-creator-platform.md`](../architecture/multi-creator-platform.md); badania: [`../audit/2026-10-13/`](../audit/2026-10-13/README.md).
+
+- **Otwarte decyzje właściciela:** forma prawna i rezydencja (sp. z o.o. w PL, Cypr, Hongkong, USA z zarządem w USA; bez rozstrzygnięcia nie ma płatnej sprzedaży ani wypłat),
+  prowizja platformy (rekomendacja 10% od netto), pilotaż na zaproszenie, wiek twórców (16+ konto, 18+ sprzedaż), usunięcie paska zbiórki „Tajny Projekt”.
+- **Bramki przed otwarciem dla obcych:** wpis KRRiT (14 dni przed), punkty kontaktowe DSA, formularz zgłoszeń, regulaminy, zgoda Stripe, narzędzia CSAM.
+  W kodzie są wyłącznikami (`lib/platform-gates.ts`), domyślnie wyłączone.
+- **Wdrożenie na produkcję tych zmian tylko na wyraźną zgodę właściciela** (jedna zgoda na jedno wdrożenie, `CLAUDE.md` §0). Praca idzie na gałęzi `feat/multi-creator-platform`.
+
 ## Stan 2026-10-12: decyzje i otwarte pytania
 
 Źródło: badania z sesji 2026-10-12 w [`../audit/2026-10-12/`](../audit/2026-10-12/README.md) (indeks, wnioski, lista decyzji i pytań do doradców). To są badania, nie decyzje: nic poniżej nie zmienia kodu ani zasad z `CLAUDE.md`.
@@ -189,3 +200,14 @@ GitHub Actions dla prywatnego repo nie startuje (limit minut; decyzja właścici
 
 - PP Support: właściciel włącza 2FA na swoim koncie; testowe rozmowy do zamknięcia (w odprawie widać 17 czekających > 24 h, głównie alerty i raporty DMARC).
 - Tłumaczenia DE/ES/FR/IT/PT/ZH to makiety (przełącznik języków pokazuje je jak działające, bez tłumaczeń).
+
+## Stan 2026-10-13 (wieczór): etapy 0-8 platformy wielu twórców
+
+Gałąź `feat/multi-creator-platform`, **niewdrożona, niewypchnięta**. Etapy 0-4 zrobione; 5 (panel „Kanały”, zgłoszenia), 6 (sprzedaż: rdzeń bez Stripe), 7 (strony kanałów, `/@uchwyt`, zgłoszenia) w części; 8 tylko jako plan (`docs/architecture/stage-8-cleanup-plan.md`).
+Niesprawdzone: brak bazy i przeglądarki w tej sesji, więc migracje SQL (`20261013120000`, `20261013140000`), Studio i panel „Kanały” nie były uruchomione end to end. Testy jednostkowe, typecheck i bramka architektury przechodzą; 1 test (`legacy-admin-retired`) pada z powodu separatorów ścieżek Windows, jak wcześniej.
+
+Uzupełnienie: migracje (66) zastosowane i sprawdzone na prawdziwym silniku Postgres (PGlite, poza repo): backfill, wyzwalacze tylko-do-dopisywania, ograniczenia kwot, unikalność uchwytu bez względu na wielkość liter. Kolejka kodowania jest sprawiedliwa między kanałami (kanał, który najdłużej nie dostał kodera, idzie pierwszy), SQL sprawdzony na tym samym silniku. Nadal niesprawdzone w przeglądarce: Studio, panel Kanały, przycisk Zgłoś.
+
+## Stan 2026-10-14: etap 8 wdrozony
+
+Serwerek: strona `polutek-app:s8b4dfae62a`, panel `polutek-admin:s8b4dfae62a`, migracje do `20261014120000_drop_creator_legacy_flags` zastosowane (kolumny `Creator.isPrimary` i `Creator.isApproved` usuniete, kanal glowny z ustawienia `main_channel_id`). Kopie zapasowe `fail=0` przed kazdym wdrozeniem; stare `src` w `/root/src-before-*`. Gałąź `feat/multi-creator-platform` nadal nie jest scalona z `main` (PR #1781, draft).

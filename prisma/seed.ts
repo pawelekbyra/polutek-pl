@@ -3,7 +3,7 @@ import { PrismaClient, AccessTier, SystemRole, VideoStatus } from '@prisma/clien
 const prisma = new PrismaClient();
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@example.local";
-const MAIN_CREATOR_SLUG = process.env.MAIN_CREATOR_SLUG || "polutek";
+const SEED_CREATOR_SLUG = process.env.SEED_CREATOR_SLUG || "polutek";
 const MAIN_CREATOR_NAME = process.env.MAIN_CREATOR_NAME || "Configured Creator";
 
 async function main() {
@@ -26,23 +26,28 @@ async function main() {
 
   // 2. Create the Creator profile
   const creator = await prisma.creator.upsert({
-    where: { slug: MAIN_CREATOR_SLUG },
+    where: { slug: SEED_CREATOR_SLUG },
     update: {
       name: MAIN_CREATOR_NAME,
       bio: `Oficjalny kanał ${MAIN_CREATOR_NAME}. Ekskluzywne materiały VOD i niezależne treści.`,
       subscribersCount: 1250000,
-      isApproved: true,
-      isPrimary: true,
+      status: 'ACTIVE',
     },
     create: {
       userId: adminUser.id,
-      slug: MAIN_CREATOR_SLUG,
+      slug: SEED_CREATOR_SLUG,
       name: MAIN_CREATOR_NAME,
       bio: `Oficjalny kanał ${MAIN_CREATOR_NAME}. Ekskluzywne materiały VOD i niezależne treści.`,
       subscribersCount: 1250000,
-      isApproved: true,
-      isPrimary: true,
+      status: 'ACTIVE',
     },
+  });
+
+  // The seeded channel is the platform's main channel (CLAUDE.md 4.24: the main_channel_id setting).
+  await prisma.appSetting.upsert({
+    where: { key: 'main_channel_id' },
+    update: { value: creator.id },
+    create: { key: 'main_channel_id', value: creator.id },
   });
 
   // 3. Define Videos

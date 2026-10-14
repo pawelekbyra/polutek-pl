@@ -1,8 +1,8 @@
 import { cache } from "react";
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { ChannelRepository } from "../infrastructure/channel.repository";
-import { MainChannelNotFoundError, MainChannelNotApprovedError, MainChannelNotPrimaryError } from "../domain/channel.errors";
-import { flags } from "@/lib/feature-flags";
+import { ChannelNotFoundError, MainChannelNotFoundError, MainChannelNotApprovedError } from "../domain/channel.errors";
+import { MainChannelPolicy } from "../domain/channel.policy";
 import { ReadDb, WriteTx } from "../../shared/db";
 
 /**
@@ -12,33 +12,78 @@ import { ReadDb, WriteTx } from "../../shared/db";
  * client is a different key, so a write path never reads a stale row.
  */
 const findMainChannel = cache((db: ReadDb) => new ChannelRepository(db).findMainChannel());
+const findChannelById = cache((db: ReadDb, id: string) => new ChannelRepository(db).findById(id));
+
+/**
+ * The platform's main channel (the one the home page shows) from the `main_channel_id` setting, or null.
+ * One place resolves it (CLAUDE.md 4.24); `Creator.isPrimary` and `MAIN_CREATOR_SLUG` are no longer the source.
+ */
+export async function resolveMainChannel(db: ReadDb) {
+  return await findMainChannel(db);
+}
+
+export async function resolveMainChannelId(db: ReadDb): Promise<string | null> {
+  return (await findMainChannel(db))?.id ?? null;
+}
+
+/** Is this channel the platform's main channel? Replaces every `isPrimary` comparison (protection from suspension, limits, avatar). */
+export async function isMainChannelId(db: ReadDb, channelId: string | null | undefined): Promise<boolean> {
+  if (!channelId) return false;
+  return (await resolveMainChannelId(db)) === channelId;
+}
+
+/** A channel that was soft deleted (or marked DELETED) is not found for any context. */
+function isGone(channel: { status?: string | null; deletedAt?: Date | null }): boolean {
+  return channel.status === 'DELETED' || channel.deletedAt != null;
+}
 
 export class MainChannelService {
+  /**
+   * The channel of this context: `ctx.channelId` when a Studio or panel entry point set it, otherwise the
+   * configured main channel (the public site). The name is historical; see CLAUDE.md 4.24.
+   */
   static async getOptional(ctx: AppContext) {
+    if (ctx.channelId) {
+      const channel = await findChannelById(ctx.prisma, ctx.channelId);
+      return channel && !isGone(channel) ? channel : null;
+    }
     return await findMainChannel(ctx.prisma);
   }
 
   static async getRequired(ctx: AppContext) {
+    if (ctx.channelId) {
+      const channel = await findChannelById(ctx.prisma, ctx.channelId);
+      if (!channel || isGone(channel)) throw new ChannelNotFoundError(ctx.channelId);
+      return channel;
+    }
+
     const channel = await this.getOptional(ctx);
-    const slug = flags.mainCreatorSlug;
 
     if (!channel) {
-      throw new MainChannelNotFoundError(slug || 'unknown');
+      throw new MainChannelNotFoundError('main');
     }
 
-    if (!channel.isApproved) {
-      throw new MainChannelNotApprovedError(slug || 'unknown');
-    }
-
-    if (!channel.isPrimary) {
-      throw new MainChannelNotPrimaryError(slug || 'unknown');
+    // Public visibility is the channel status alone (ACTIVE or LIMITED, not deleted), CLAUDE.md 4.24.
+    if (!MainChannelPolicy.isPubliclyVisible(channel)) {
+      throw new MainChannelNotApprovedError(channel.slug);
     }
 
     return channel;
   }
 
-  static getConfiguredSlug() {
-      return flags.mainCreatorSlug;
+  /** Id of the platform's main channel (the `main_channel_id` setting), or null when none is configured. */
+  static async getMainChannelId(ctx: AppContext): Promise<string | null> {
+    return await resolveMainChannelId(ctx.prisma);
+  }
+
+  /** Stable slug of the main channel (for the sitemap and demo fallbacks), or null. */
+  static async getMainSlug(ctx: AppContext): Promise<string | null> {
+    return (await findMainChannel(ctx.prisma))?.slug ?? null;
+  }
+
+  /** The one place that answers "is this the main channel" (replaces `Creator.isPrimary`). */
+  static async isMainChannel(ctx: AppContext, channelId: string | null | undefined): Promise<boolean> {
+    return await isMainChannelId(ctx.prisma, channelId);
   }
 
   static async incrementSubscribersCount(ctx: AppContext, channelId: string, tx: WriteTx) {

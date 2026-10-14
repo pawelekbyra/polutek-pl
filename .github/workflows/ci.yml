@@ -23,7 +23,6 @@ env:
   RESEND_API_KEY: re_example
   EMAIL_FROM: notifications@example.com
   ADMIN_EMAIL: admin@example.com
-  MAIN_CREATOR_SLUG: ci-creator
   REFERRAL_PATRON_THRESHOLD: "5"
   HEALTHCHECK_TOKEN: ci-health-token
   EMAIL_UNSUBSCRIBE_SIGNING_SECRET: ci-email-unsubscribe-signing-secret-0001

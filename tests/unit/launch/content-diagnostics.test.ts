@@ -16,7 +16,6 @@ function productionEnv(overrides: Record<string, string | undefined> = {}): Node
     RESEND_API_KEY: 're_test',
     EMAIL_FROM: 'Polutek <noreply@polutek.pl>',
     ADMIN_CLERK_USER_IDS: 'admin_1',
-    MAIN_CREATOR_SLUG: 'polutek',
     REFERRAL_PATRON_THRESHOLD: '10',
     HEALTHCHECK_TOKEN: 'token',
     EMAIL_UNSUBSCRIBE_SIGNING_SECRET: 'x'.repeat(32),
@@ -27,8 +26,11 @@ function productionEnv(overrides: Record<string, string | undefined> = {}): Node
   };
 }
 
-function db({ creator, publicVideoCount = 1, sidebarVideoCount = 1, featured = { slug: 'welcome', title: 'Welcome' } }: any) {
+function db({ creator, setting = creator ? { value: creator.id } : null, publicVideoCount = 1, sidebarVideoCount = 1, featured = { slug: 'welcome', title: 'Welcome' } }: any) {
   return {
+    appSetting: {
+      findUnique: async () => setting,
+    },
     creator: {
       findUnique: async () => creator,
     },
@@ -39,19 +41,19 @@ function db({ creator, publicVideoCount = 1, sidebarVideoCount = 1, featured = {
   };
 }
 
-const visibleCreator = { id: 'creator_1', slug: 'polutek', name: 'Polutek', isApproved: true, isPrimary: true };
+const visibleCreator = { id: 'creator_1', slug: 'polutek', name: 'Polutek', status: 'ACTIVE', deletedAt: null };
 
 describe('launch content diagnostics', () => {
-  it('fails when MAIN_CREATOR_SLUG is missing and does not continue to false content checks', async () => {
-    const result = await runLaunchContentDiagnostics({ env: productionEnv({ MAIN_CREATOR_SLUG: '' }), db: db({ creator: null }) });
+  it('fails when the main_channel_id setting is missing and does not continue to false content checks', async () => {
+    const result = await runLaunchContentDiagnostics({ env: productionEnv(), db: db({ creator: null, setting: null }) });
 
     expect(result.ok).toBe(false);
-    expect(result.checks.some((check) => check.name === 'env:MAIN_CREATOR_SLUG' && check.status === 'FAIL')).toBe(true);
+    expect(result.checks.some((check) => check.name === 'main channel setting' && check.status === 'FAIL')).toBe(true);
     expect(result.checks.some((check) => check.name === 'main creator exists')).toBe(false);
   });
 
-  it('fails when configured slug has no creator', async () => {
-    const result = await runLaunchContentDiagnostics({ env: productionEnv(), db: db({ creator: null }) });
+  it('fails when the configured main channel id has no creator', async () => {
+    const result = await runLaunchContentDiagnostics({ env: productionEnv(), db: db({ creator: null, setting: { value: 'gone' } }) });
 
     expect(result.ok).toBe(false);
     expect(result.checks).toContainEqual(expect.objectContaining({ name: 'main creator exists', status: 'FAIL' }));
@@ -68,14 +70,21 @@ describe('launch content diagnostics', () => {
     expect(result.checks).toContainEqual(expect.objectContaining({ name: 'homepage featured inventory', status: 'FAIL' }));
   });
 
-  it('passes with a public primary approved creator and public video inventory', async () => {
+  it('fails when the main channel exists but is not publicly visible (status)', async () => {
+    const result = await runLaunchContentDiagnostics({ env: productionEnv(), db: db({ creator: { ...visibleCreator, status: 'SUSPENDED' } }) });
+
+    expect(result.ok).toBe(false);
+    expect(result.checks).toContainEqual(expect.objectContaining({ name: 'main creator public', status: 'FAIL' }));
+  });
+
+  it('passes with a public main channel and public video inventory', async () => {
     const result = await runLaunchContentDiagnostics({ env: productionEnv(), db: db({ creator: visibleCreator }) });
 
     expect(result.ok).toBe(true);
     expect(result.summary).toMatchObject({ mainCreatorSlug: 'polutek', publicVideoCount: 1, sidebarVideoCount: 1, homepageFeaturedVideoSlug: 'welcome' });
   });
 
-  it('does not produce a false pass when production config is missing beyond MAIN_CREATOR_SLUG', async () => {
+  it('does not produce a false pass when production config is missing beyond the main channel setting', async () => {
     const result = await runLaunchContentDiagnostics({ env: productionEnv({ DATABASE_URL: '' }), db: db({ creator: visibleCreator }) });
 
     expect(result.ok).toBe(false);

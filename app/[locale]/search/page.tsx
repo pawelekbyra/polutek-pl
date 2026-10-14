@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
+import { CreatorContentService } from "@/lib/modules/channel/infrastructure/creator-content.service";
 import { VideoSearchService } from "@/lib/modules/video/application/video-search.service";
 import { getLocalizedHref, isLocale, toContentLocale, type Locale } from "@/lib/i18n/routing";
 import { getServerTx } from "@/lib/i18n/server-tx";
@@ -30,9 +31,10 @@ export default async function SearchPage(props: SearchPageProps) {
   const rawQuery = searchParams.q ?? "";
   const normalizedQuery = VideoSearchService.normalizeQuery(rawQuery);
   // The viewer's session goes into the first HTML, so the navbar renders final (no loading state).
-  const [results, session] = await Promise.all([
+  const [results, session, channels] = await Promise.all([
     normalizedQuery ? VideoSearchService.searchPublicVideos(rawQuery) : Promise.resolve([]),
     auth(),
+    normalizedQuery ? CreatorContentService.searchPublicChannels(rawQuery).catch(() => []) : Promise.resolve([]),
   ]);
 
   return (
@@ -60,10 +62,25 @@ export default async function SearchPage(props: SearchPageProps) {
 
         {!normalizedQuery ? (
           <EmptySearchState locale={locale} tx={tx} message={tx("Brak zapytania do wyszukania.", "No search query.")} />
-        ) : results.length === 0 ? (
+        ) : results.length === 0 && channels.length === 0 ? (
           <EmptySearchState locale={locale} tx={tx} message={tx("Nie znaleziono publicznych materiałów dla tej frazy.", "No public videos found for this phrase.")} />
         ) : (
           <div className="grid gap-4">
+            {channels.length > 0 ? (
+              <section aria-label={tx("Kanały", "Channels")} className="grid gap-2">
+                <h2 className="text-xs font-bold uppercase tracking-widest text-[var(--chan-muted)]">{tx("Kanały", "Channels")}</h2>
+                {channels.map((channel) => (
+                  <Link
+                    key={channel.id}
+                    href={getLocalizedHref(locale, "channel", { slug: channel.slug })}
+                    className="flex items-center justify-between rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-4 py-3 transition hover:bg-[var(--chan-surface)]"
+                  >
+                    <span className="font-brand text-base font-bold text-[var(--chan-ink)]">{channel.name}</span>
+                    <span className="text-sm text-[var(--chan-muted)]">@{channel.handle ?? channel.slug}</span>
+                  </Link>
+                ))}
+              </section>
+            ) : null}
             {results.map((video) => (
               <Link
                 key={video.id}

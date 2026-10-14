@@ -1,11 +1,11 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { UseCaseResult, ok } from "@/lib/modules/shared/result";
 import { AccessDecisionDto } from "../domain/access-decision.dto";
-import { MainChannelService } from "@/lib/modules/channel";
+import { can, toPrincipal } from "@/lib/modules/authz";
 // Deep import deliberate: many tests mock the whole @/lib/modules/channel barrel
-// narrowly (for MainChannelService only), and this is a pure, side-effect-free
-// policy class — routing it through that barrel would force every such test to
-// also mock MainChannelPolicy. Allowlisted in scripts/check-architecture.ts.
+// narrowly, and this is a pure, side-effect-free policy class — routing it through
+// that barrel would force every such test to also mock MainChannelPolicy.
+// Allowlisted in scripts/check-architecture.ts.
 import { MainChannelPolicy } from "@/lib/modules/channel/domain/channel.policy";
 import { VideoStatus } from "@prisma/client";
 import { toVideoAccessTier } from "@/lib/access-tier";
@@ -18,7 +18,8 @@ export type CheckVideoAccessInput = {
 
 /**
  * checkVideoAccess is the central decision point for video content gating.
- * It enforces main-channel scoping, visibility rules, and tier-based access.
+ * It enforces channel visibility (the video's own channel, CLAUDE.md 4.24), moderation state, publication
+ * rules and tier-based access. Slugs are globally unique, so the channel never has to be passed in.
  */
 export async function checkVideoAccess(
   input: CheckVideoAccessInput,
@@ -28,18 +29,13 @@ export async function checkVideoAccess(
   const { actor, prisma } = ctx;
   const now = ctx.now();
 
-  // 1. Resolve main channel
-  const mainChannel = await MainChannelService.getRequired(ctx);
-
-  // 2. Resolve video
+  // 1. Resolve the video together with its own channel
   const { isUuid } = await import("@/lib/utils/uuid");
   let video = await prisma.video.findFirst({
-    where: isUuid(videoIdOrSlug)
-      ? { id: videoIdOrSlug, creatorId: mainChannel.id }
-      : { slug: videoIdOrSlug, creatorId: mainChannel.id },
+    where: isUuid(videoIdOrSlug) ? { id: videoIdOrSlug } : { slug: videoIdOrSlug },
     include: {
         creator: {
-            select: { id: true, slug: true, isApproved: true, isPrimary: true }
+            select: { id: true, slug: true, userId: true, status: true, deletedAt: true }
         }
     }
   });
@@ -59,23 +55,31 @@ export async function checkVideoAccess(
       }
   }
 
-  // Admin bypass check (only within main channel)
-  const isAdmin = actor.type === 'admin';
-
   if (!video) return ok({ hasAccess: false, reason: "NOT_FOUND" });
 
-  // 3. Main-channel scoping & Approved Primary Check
-  // Admin bypass is scoped to the main channel. Off-channel video remains NOT_FOUND in strict single-channel mode.
-  const isMainChannelVideo = MainChannelPolicy.isVideoOnMainChannel(video, mainChannel.id) &&
-                             !!video.creator &&
-                             MainChannelPolicy.isPublicMainChannel(video.creator);
+  // 2. Who may look at an unpublished or hidden video: platform staff, and members of the video's channel whose
+  // role allows `video.preview` (CLAUDE.md 4.23). Nobody else, whatever they pass in.
+  const channel = video.creator;
+  const isStaff = actor.type === 'admin';
+  const canPreview = isStaff || (
+    actor.type === 'user' && !!channel &&
+    can(toPrincipal(actor), "video.preview", { id: channel.id, ownerUserId: channel.userId, status: channel.status }).allow
+  );
 
-  // For fallbacks, we might not have a full creator object in the same way, but MainChannelService.getRequired ensures mainChannel is valid.
-  if (!isMainChannelVideo && !canUseDemoFallbacks()) {
+  // 3. Channel visibility (any channel, not only the main one)
+  const channelVisible = !!channel && MainChannelPolicy.isPubliclyVisible(channel);
+
+  // For fallbacks there is no channel row; demo content is public.
+  if (!channelVisible && !canPreview && !canUseDemoFallbacks()) {
     return ok({ hasAccess: false, reason: "NOT_FOUND" });
   }
 
-  // 4. Visibility rules (Archived/Published/Draft)
+  // 4. Moderation and visibility rules (Removed/Archived/Published/Draft)
+  const moderation = (video as { moderationStatus?: string }).moderationStatus;
+  if (moderation === 'REMOVED' && !isStaff) {
+    return ok({ hasAccess: false, reason: "NOT_FOUND" });
+  }
+
   if (video.status === VideoStatus.ARCHIVED) {
     return ok({ hasAccess: false, reason: "NOT_FOUND" });
   }
@@ -83,7 +87,7 @@ export async function checkVideoAccess(
   const isPublished = video.status === VideoStatus.PUBLISHED &&
                       (!video.publishedAt || video.publishedAt <= now);
 
-  if (!isPublished && !isAdmin) {
+  if (!isPublished && !canPreview) {
     return ok({ hasAccess: false, reason: "NOT_FOUND" });
   }
 
@@ -92,14 +96,35 @@ export async function checkVideoAccess(
   // from `premiereAt`, so a slug cannot skip it (audit SEC-10). The tier decision itself does not
   // change: comments on an upcoming premiere stay usable (CLAUDE.md "Premieres").
   const resolvedVideoId = video.id;
-  const upcomingPremiereAt = !isAdmin && isUpcomingPremiere(video, now)
+  const upcomingPremiereAt = !canPreview && isUpcomingPremiere(video, now)
     ? toPremiereDate(video.premiereAt)?.toISOString()
     : undefined;
   const decide = (decision: AccessDecisionDto) =>
     ok({ ...decision, videoId: resolvedVideoId, ...(upcomingPremiereAt ? { premiereAt: upcomingPremiereAt } : {}) });
 
-  // Admin access granted for existing main-channel non-archived content
-  if (isAdmin) return decide({ hasAccess: true });
+  // Staff and members of the channel with `video.preview` see their non-archived content
+  if (canPreview) return decide({ hasAccess: true });
+
+  // Age-restricted videos are for signed-in viewers only (moderation state, not the access tier).
+  if (moderation === 'AGE_RESTRICTED' && actor.type === 'guest') {
+    return decide({ hasAccess: false, reason: "LOGIN_REQUIRED", requiredTier: "LOGGED_IN" });
+  }
+
+  // 5a. Paid videos (stage 6): the viewer needs a live entitlement. Read from the raw column on purpose:
+  // `toVideoAccessTier` maps every unknown value to LOGGED_IN, which would let any account in.
+  if ((video.tier as string) === "PAID") {
+    if (actor.type === 'guest') {
+      return decide({ hasAccess: false, reason: "LOGIN_REQUIRED", requiredTier: "LOGGED_IN" });
+    }
+    if (actor.type !== 'user') return decide({ hasAccess: false, reason: "FORBIDDEN" });
+    const entitlement = await prisma.entitlement.findFirst({
+      where: { userId: actor.userId, videoId: resolvedVideoId, revokedAt: null },
+      select: { id: true },
+    });
+    return entitlement
+      ? decide({ hasAccess: true })
+      : decide({ hasAccess: false, reason: "PAYMENT_REQUIRED", requiredTier: "LOGGED_IN" });
+  }
 
   // 5. Tier-based access: two levels (lib/access-tier.ts).
   const tier = toVideoAccessTier(video.tier);

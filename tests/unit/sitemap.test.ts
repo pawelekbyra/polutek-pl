@@ -9,6 +9,7 @@ vi.mock('@/lib/site-stage', async (importOriginal) => ({ ...(await importOrigina
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
     creator: { findUnique: vi.fn(), findFirst: vi.fn() },
     video: { findMany: vi.fn() },
   },
