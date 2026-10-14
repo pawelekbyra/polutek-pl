@@ -19,6 +19,16 @@ function buildPlayerCopy(tx: Tx) {
     enableCaptions: tx("Włącz napisy", "Turn captions on"),
     exitFullscreen: tx("Zamknij pełny ekran", "Exit fullscreen"),
     fullscreen: tx("Pełny ekran", "Fullscreen"),
+    settings: tx("Ustawienia", "Settings"),
+    quality: tx("Jakość", "Quality"),
+    qualityAuto: tx("Auto", "Auto"),
+    speed: tx("Prędkość odtwarzania", "Playback speed"),
+    speedNormal: tx("Normalna", "Normal"),
+    pictureInPicture: tx("Obraz w obrazie", "Picture in picture"),
+    exitPictureInPicture: tx("Zamknij obraz w obrazie", "Exit picture in picture"),
+    resumedAt: tx("Wznowiono od", "Resumed at"),
+    startsAt: tx("Odtwarzanie od", "Playing from"),
+    startOver: tx("Od początku", "From the beginning"),
   };
 }
 

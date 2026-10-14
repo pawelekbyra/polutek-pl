@@ -45,6 +45,10 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
   'lib/modules/video/domain/public-visibility.ts': {
     'channel/domain/channel.policy': 'Pure, no-side-effect policy class (the one rule for a publicly visible channel); the video domain needs only that predicate, not the channel barrel with its services.',
   },
+  'lib/modules/watch-progress/domain/continue-watching.ts': {
+    'video/domain/premiere': PREMIERE_HELPER_REASON,
+    'video/domain/video-visibility': VISIBILITY_HELPER_REASON,
+  },
   'lib/modules/access/application/check-video-access.use-case.ts': {
     'video/domain/premiere': PREMIERE_HELPER_REASON,
     'video/domain/video-visibility': VISIBILITY_HELPER_REASON,

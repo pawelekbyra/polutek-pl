@@ -51,3 +51,9 @@ Dźwięk w odtwarzaczu i przycisk logo: `../operations/PLAYER-SOUND.md`. Języki
 `VideoPlayer` montuje tylko ścieżkę w języku strony (`pickCaptionTrack()` w `player/captions.ts`, bez języka zastępczego); host `.vtt` musi być w CSP `connect-src`. Przycisk CC (`player/CaptionsToggle.tsx`) to tylko włącznik
 (klawisz `c`, `aria-pressed`), ukryty gdy brak ścieżki w języku strony; wybór to preferencja widza w `localStorage` (`polutek:captions`, domyślnie włączone). Pliki lokalne: `public/subtitles/<slug>/<język>.vtt`;
 `tests/unit/subtitles-files.test.ts` sprawdza je z długością filmu. Zarządzany upload i walidacja napisów nie są kompletne.
+
+## Wznawianie oglądania, `?t=` i ustawienia (2026-10-14)
+
+Pełny opis niezmienników: CLAUDE.md §4.26. Skrót: `POST /api/videos/[id]/progress` zapisuje pozycję zalogowanego (`watch-progress`), gość używa `localStorage`; `useVideoProgress` w `VideoPlayer` stosuje pozycję startową (`?t=` wygrywa), raportuje co ~10 s i przy zamknięciu karty, a `ResumeNotice` pokazuje „Wznowiono od mm:ss” z przyciskiem „Od początku”.
+`PlayerSettingsMenu` (w `PolutekControls`) daje jakość (Auto + poziomy z manifestu HLS), prędkość 0,5-2x i obraz w obrazie. Półka „Kontynuuj oglądanie” (`channel/ContinueWatchingShelf.tsx`) jest renderowana w `ChannelHome` z danych `HomeExperience`.
+Menu Udostępnij (`ShareButton`, `getStartSeconds`) dodaje pozycję „Zacznij od aktualnego czasu”, która dopisuje `?t=` do linków menu.

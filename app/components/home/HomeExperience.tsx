@@ -23,6 +23,7 @@ import {
 import { resolvePlaybackViewerKey } from '@/app/components/preload/playback-viewer-key';
 import { getHomeViewerActor, loadHeroPlaybackPlan, loadInitialComments } from './home-viewer-data';
 import { getServerTx } from '@/lib/i18n/server-tx';
+import { getVideoProgressSeconds, listContinueWatching } from '@/lib/modules/watch-progress';
 
 interface HomeExperienceProps {
   locale: Locale;
@@ -30,6 +31,8 @@ interface HomeExperienceProps {
   videoId?: string;
   /** Search query from ?q= (optional, used to preserve canonical redirects). */
   q?: string;
+  /** Start time from ?t= (optional, only kept across the id -> slug canonical redirect; the player reads it). */
+  t?: string;
 }
 
 /**
@@ -38,7 +41,7 @@ interface HomeExperienceProps {
  * the temporary /logoN font bake-off pages, so the two stay pixel-identical apart
  * from the wordmark font.
  */
-export default async function HomeExperience({ locale, videoId, q }: HomeExperienceProps) {
+export default async function HomeExperience({ locale, videoId, q, t }: HomeExperienceProps) {
   const tx = await getServerTx(locale);
   // auth() and the home content are read once per request (React cache), shared with the page
   // and its metadata.
@@ -67,6 +70,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
       const canonicalParams = new URLSearchParams();
       if (q) canonicalParams.set('q', q);
       canonicalParams.set('v', matchedById.slug);
+      if (t) canonicalParams.set('t', t);
       redirect(`${getLocalizedHref(locale, 'home')}?${canonicalParams.toString()}`);
     }
   }
@@ -110,6 +114,8 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
   let initialInteraction = { liked: false, disliked: false };
   let initialIsSubscribed = false;
   let initialNotify = true;
+  let initialProgressSeconds: number | null = null;
+  let continueWatching: Awaited<ReturnType<typeof listContinueWatching>> = [];
   let viewerPieces: Awaited<ReturnType<typeof loadViewerPieces>>;
 
   if (userId) {
@@ -117,7 +123,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
 
     // Loads (never creates) the viewer's row; fails closed for a missing or deleted account.
     const userCtx = createAppContext();
-    const [, dbResult, like, dislike, sub, pieces] = await Promise.all([
+    const [, dbResult, like, dislike, sub, pieces, progressSeconds, shelf] = await Promise.all([
       getOrCreateCurrentUser(userCtx, userId).catch((e) => {
         logger.error("[HOME_USER_FETCH_ERROR]", e);
       }),
@@ -136,9 +142,17 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
         select: { id: true, notify: true }
       }).catch(() => null) : null,
       loadViewerPieces(),
+      // Resume watching: this viewer's own saved position and unfinished videos (never blocks the page).
+      targetVideoId ? getVideoProgressSeconds(userId, targetVideoId, userCtx).catch(() => null) : null,
+      listContinueWatching(userId, userCtx).catch((e) => {
+        logger.error("[HOME_CONTINUE_WATCHING_ERROR]", e);
+        return [];
+      }),
     ]);
 
     userDb = dbResult;
+    initialProgressSeconds = progressSeconds ?? null;
+    continueWatching = shelf;
     initialInteraction = { liked: !!like, disliked: !!dislike };
     initialIsSubscribed = !!sub;
     initialNotify = sub?.notify ?? true;
@@ -161,7 +175,8 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
     role: userDb?.role || 'USER',
     initialInteraction,
     initialIsSubscribed,
-    initialNotify
+    initialNotify,
+    initialProgressSeconds,
   } : null;
 
   if (content.status === 'error' || content.status === 'empty') {
@@ -238,6 +253,7 @@ export default async function HomeExperience({ locale, videoId, q }: HomeExperie
             initialComments={viewerPieces.comments}
             initialPlayback={viewerPieces.playback}
             renderedAt={renderedAt}
+            continueWatching={continueWatching}
           />
         </main>
         <Footer />

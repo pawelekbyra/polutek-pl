@@ -22,6 +22,8 @@ import { useSearchParams } from "next/navigation";
 import EmbeddedComments from "./comments/EmbeddedComments";
 import type { InitialCommentsPage } from "./comments/initial-comments";
 import { pickHomeVideo } from "@/lib/home-video-selection";
+import { ContinueWatchingShelf } from "./channel/ContinueWatchingShelf";
+import type { ContinueWatchingItem } from "@/lib/modules/watch-progress/domain/continue-watching";
 
 const SupportModal = dynamic(() => import("./channel/SupportModal"), { ssr: false });
 
@@ -42,8 +44,12 @@ interface ChannelHomeProps {
     initialInteraction?: { liked: boolean; disliked: boolean };
     initialIsSubscribed?: boolean;
     initialNotify?: boolean;
+    /** The viewer's saved position in the server-selected video (resume watching). */
+    initialProgressSeconds?: number | null;
     role?: string;
   } | null;
+  /** The signed-in viewer's unfinished videos ("Continue watching"), computed on the server. */
+  continueWatching?: ContinueWatchingItem[] | null;
   /** Server-rendered sidebar layout, so the playlist is in the first HTML (see HomeExperience). */
   initialSidebarLayout?: SidebarLayout | null;
   /** Viewer the server-rendered layout was built for (`sidebarLayoutViewerKey`). */
@@ -79,6 +85,7 @@ export default function ChannelHome({
   initialComments,
   initialPlayback,
   renderedAt,
+  continueWatching,
 }: ChannelHomeProps) {
   const selectedVideo = pickHomeVideo(currentVideoId, { allVideos: allVideos || [], mainVideo, extraVideo });
   // The preloader looks videos up by id, so it also knows the extra one (the sidebar does not).
@@ -96,6 +103,7 @@ export default function ChannelHome({
         initialSidebarLayout={initialSidebarLayout}
         initialSidebarViewerKey={initialSidebarViewerKey}
         initialComments={initialComments}
+        continueWatching={continueWatching}
       />
     </AppPreloadProvider>
     </RenderClockProvider>
@@ -131,6 +139,7 @@ function ChannelHomeContent({
   initialSidebarLayout,
   initialSidebarViewerKey,
   initialComments,
+  continueWatching,
 }: ChannelHomeProps) {
   const { t, language, tx } = useLanguage();
   const [selectionState, setSelectionState] = useState<ChannelViewState>(() => ({
@@ -309,6 +318,16 @@ function ChannelHomeContent({
     setActiveTab("comments");
   };
 
+  // A shelf item opens its video in place when it is one of the home list's, else by address.
+  const handleContinueWatchingSelect = (item: ContinueWatchingItem) => {
+    const known = [...(allVideos || []), ...(extraVideo ? [extraVideo] : [])].find((v) => v.id === item.videoId);
+    if (known) {
+      handleVideoSelect(known.id);
+      return;
+    }
+    window.location.assign(`${getLocalizedHref(language, "home")}?v=${encodeURIComponent(item.slug)}`);
+  };
+
   const commonSidebarProps = {
     sortedVideos,
     selectedVideoId: selectedVideo.id,
@@ -348,8 +367,18 @@ function ChannelHomeContent({
                 initialIsSubscribed={selectedVideo.id === serverInteractionVideoId ? userProfile?.initialIsSubscribed : undefined}
                 initialNotify={selectedVideo.id === serverInteractionVideoId ? userProfile?.initialNotify : undefined}
                 startWithSound={selectionState.startWithSound}
+                initialProgressSeconds={
+                  selectedVideo.id === serverInteractionVideoId ? userProfile?.initialProgressSeconds : undefined
+                }
               />
             </div>
+
+            {userProfile && continueWatching && continueWatching.length > 0 && (
+              <ContinueWatchingShelf
+                items={continueWatching.filter((item) => item.videoId !== selectedVideo.id)}
+                onSelect={handleContinueWatchingSelect}
+              />
+            )}
 
             <div className="-mx-4 mt-5 flex border-b border-[var(--cm-line-80)] font-sans md:-mx-6 lg:hidden">
               {(["comments", "videos"] as const).map((tab) => {

@@ -24,6 +24,8 @@ import { cn } from "@/lib/utils";
 import { useMemo, useState } from "react";
 import type { Tx } from "@/lib/i18n/ui";
 import { useLanguage } from "./LanguageContext";
+import { ShareStartAtItem } from "./ShareStartAtItem";
+import { withStartTime } from "@/lib/video-start-time";
 
 interface ShareButtonProps {
   url?: string;
@@ -32,6 +34,11 @@ interface ShareButtonProps {
   className?: string;
   /** Stretch to fill remaining row width on mobile, matching desktop's fixed width from `lg` up. */
   fill?: boolean;
+  /**
+   * Whole seconds of the current playback position (null: unknown). When given and above zero, the menu
+   * offers "Start at current time", which adds `?t=` to the links it hands out.
+   */
+  getStartSeconds?: () => number | null;
 }
 
 function buildShareCopy(tx: Tx) {
@@ -49,6 +56,7 @@ function buildShareCopy(tx: Tx) {
     shareOnWykop: tx("Udostępnij na Wykop", "Share on Wykop"),
     shareOnPinterest: tx("Zapisz na Pinterest", "Save on Pinterest"),
     shareByEmail: tx("Wyślij emailem", "Send by email"),
+    startAtCurrent: tx("Zacznij od aktualnego czasu", "Start at current time"),
   };
 }
 
@@ -70,15 +78,22 @@ export default function ShareButton({
   text,
   className,
   fill = false,
+  getStartSeconds,
 }: ShareButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { t, tx } = useLanguage();
   const { isMobile, canNativeShare, share, copied, copyToClipboard } = useShare();
   const copy = useMemo(() => buildShareCopy(tx), [tx]);
-  const url = propUrl ?? (typeof window !== "undefined" ? window.location.href : "");
+  const baseUrl = propUrl ?? (typeof window !== "undefined" ? window.location.href : "");
+  // "Start at current time": the position is read when the menu opens, so the link matches what the
+  // viewer was looking at, not a moving target.
+  const [startSeconds, setStartSeconds] = useState<number | null>(null);
+  const [startAtCurrent, setStartAtCurrent] = useState(false);
+  const url = startAtCurrent && startSeconds ? withStartTime(baseUrl, startSeconds) : baseUrl;
   const useNativeShare = isMobile && canNativeShare;
 
   const handleOpenChange = (open: boolean) => {
+    if (open && getStartSeconds) setStartSeconds(getStartSeconds());
     if (open && useNativeShare) {
       void share({ title, text, url }).then((result) => {
         if (result === "failed" || result === "unsupported") {
@@ -130,6 +145,16 @@ export default function ShareButton({
           {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
           <span>{copied ? copy.copied : copy.copyLink}</span>
         </DropdownMenuItem>
+
+        {getStartSeconds && startSeconds !== null && startSeconds > 0 && (
+          <ShareStartAtItem
+            seconds={startSeconds}
+            label={copy.startAtCurrent}
+            checked={startAtCurrent}
+            onCheckedChange={setStartAtCurrent}
+            className={cn(itemClassName, "pr-9")}
+          />
+        )}
 
         <DropdownMenuSeparator className="mx-0 bg-[var(--chan-line)]" />
 

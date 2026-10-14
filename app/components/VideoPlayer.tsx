@@ -24,6 +24,8 @@ import {
     writeVolume,
 } from './player/sound-preference';
 import { useUnmuteOnFirstGesture } from './player/useUnmuteOnFirstGesture';
+import { useVideoProgress } from './player/useVideoProgress';
+import { ResumeNotice } from './player/ResumeNotice';
 import { resolvePlaybackSource } from './playback-source';
 import { shouldSendViewForPlaybackPosition } from './video-view-threshold';
 import { usePlaybackTelemetry } from '@/lib/hooks/usePlaybackTelemetry';
@@ -55,6 +57,13 @@ interface VideoPlayerProps {
      * session (sound-preference.ts). Without it the video starts muted (autoplay policy).
      */
     startWithSound?: boolean;
+    /** The viewer is signed in: the position is saved on the server (guests: in the browser). */
+    signedIn?: boolean;
+    /**
+     * The signed-in viewer's saved position in this video: seconds, null (nothing to resume) or
+     * undefined (not known yet). Ignored for guests. A `?t=` start in the address wins over it.
+     */
+    resumeSeconds?: number | null;
 }
 
 
@@ -69,10 +78,11 @@ function normalizeTextTracks(tracks: VideoTextTrackDTO[] | undefined): VideoText
     });
 }
 
-// Vidstack's defaults, minus the playback-speed keys ("<" / ">"): the player has no speed control.
+// Vidstack's defaults, minus the playback-speed keys ("<" / ">"): speed has one control, the settings
+// menu (which remembers the choice); the shortcuts would change it silently and step down to 0.25x.
 const PLAYER_KEY_SHORTCUTS = { speedUp: '', slowDown: '' };
 
-export default function VideoPlayer({ video, onViewCounted, revealKey, startWithSound = false }: VideoPlayerProps) {
+export default function VideoPlayer({ video, onViewCounted, revealKey, startWithSound = false, signedIn = false, resumeSeconds }: VideoPlayerProps) {
     const { playbackPlan, refreshPlaybackPlan, renewPlaybackPlan, isLoading } = useVideoAccess();
     // The player never receives admin status from the session (the server decides); admin-only
     // diagnostics in the overlays stay off for viewers.
@@ -109,6 +119,21 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
     // From the click on the entry gate until its flash the hero must stay paused at its start (the
     // warp has its own sound): any play in between (a resumed autoplay, a buffering restart) is undone.
     const gateHoldRef = useRef(false);
+    // Resume watching and the ?t= start (player/useVideoProgress.ts): the start position, the position
+    // reports (every ~10 s, pause, tab close) and the "Resumed at" notice.
+    const progress = useVideoProgress({
+        playerRef: player,
+        videoId: video.id,
+        signedIn,
+        serverPositionSeconds: signedIn ? resumeSeconds : null,
+        // Not while the entry gate is up or holds the hero: the muted loop behind the gate is not "watching",
+        // and the start position is applied in the entry flash (handleGateEnter).
+        isGateHeld: () => gateHoldRef.current || !shouldSkipGate(),
+    });
+    const progressRef = useRef(progress);
+    useEffect(() => {
+        progressRef.current = progress;
+    });
     // Sound. `muted` mirrors the player (and is what a remounted player starts with); until the
     // per-video reset below decides, the player is not mounted yet. `userMuted`: the viewer's own
     // mute choice this session. `isPlaying` drives the unmute hint.
@@ -315,6 +340,9 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
             if (!current) return;
             const target: { currentTime: number; muted: boolean; play: () => Promise<void> } = mediaOf() ?? current;
             target.currentTime = 0;
+            // The hero starts from the beginning, unless the address names a time (?t=) or the viewer
+            // has a saved position in it: then it starts there.
+            progressRef.current.applyStart(target);
             target.muted = viewerMuted;
             // Refused with sound (the gesture's permission did not carry over): play muted with the
             // unmute hint rather than stay paused.
@@ -452,6 +480,10 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                                 resumeRef.current = null;
                                 if (resume.time > 0) player.current.currentTime = resume.time;
                                 if (resume.play) void player.current.play().catch(() => undefined);
+                            } else if (shouldSkipGate() && !gateHoldRef.current) {
+                                // No entry gate pending: start where the address or the saved position says.
+                                // (Under the gate this happens in the entry flash, see handleGateEnter.)
+                                progressRef.current.applyStart();
                             }
                             // Check buffered amount immediately at canPlay too.
                             if (!bufferedEnoughRef.current) {
@@ -491,6 +523,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                             setIsPlaying(false);
                             qoe.paused();
                             sendEvent('PLAY_PAUSED');
+                            progress.saveNow(false);
                         }}
                         onVolumeChange={(detail: { muted: boolean }) => {
                             setMuted(detail.muted);
@@ -520,6 +553,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                             setIsPlaying(false);
                             qoe.ended();
                             void sendEvent('ENDED');
+                            progress.saveNow(false);
                             if (player.current) void maybeSendView(player.current.currentTime, player.current.duration);
                         }}
                         onSeeking={() => qoe.seekStarted()}
@@ -533,6 +567,8 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                             setHasRenderedFrame(true);
                             recoveryAttemptedRef.current = false;
                             qoe.playing();
+                            // Safety net: a start position not applied yet (late saved position, gate left).
+                            if (!gateHoldRef.current && shouldSkipGate()) progressRef.current.applyStart();
                         }}
                         onTimeUpdate={(event: any) => {
                             const detail = typeof event.detail === 'number'
@@ -543,6 +579,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                             if (currentTime > 0 && !hasStartedPlayback) setHasStartedPlayback(true);
                             if (currentTime > 0 && !hasRenderedFrame) setHasRenderedFrame(true);
 
+                            progress.noteTime(currentTime, Number.isFinite(duration) && duration ? duration : null);
                             void maybeSendView(currentTime, duration);
                         }}
                         onProviderChange={handleProviderChange}
@@ -575,6 +612,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                         </div>
                     )}
                     <UnmuteHint visible={isPlaying && muted && !userMuted} onUnmute={handleUnmuteHint} />
+                    <ResumeNotice notice={progress.notice} onStartOver={progress.startOver} onDismiss={progress.dismissNotice} />
                 </div>
             )}
         </div>

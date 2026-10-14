@@ -17,6 +17,7 @@ import { logger } from '@/lib/logger';
 import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import SubscribeButton from './SubscribeButton';
 import ShareButton from './ShareButton';
+import { getPlaybackPosition } from './player/playback-position';
 import { FundraisingProgressBar } from './FundraisingProgressBar';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import { ThumbsUp, ThumbsDown, Coins } from 'lucide-react';
@@ -30,6 +31,8 @@ interface HeroProps {
   initialNotify?: boolean;
   /** The viewer picked this video with a click or tap: start it with sound (see VideoPlayer). */
   startWithSound?: boolean;
+  /** The signed-in viewer's saved position in this video (server-rendered; resume watching). */
+  initialProgressSeconds?: number | null;
 }
 
 // Fixed locale and time zone: the server and the browser format these the same way, so the first
@@ -80,7 +83,7 @@ async function sendVideoReaction(videoId: string, target: ReactionTarget): Promi
   return last;
 }
 
-const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscribed, initialNotify, startWithSound = false }) => {
+const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscribed, initialNotify, startWithSound = false, initialProgressSeconds }) => {
   const { t, language, tx } = useLanguage();
   const toast = useToast();
   const { userId } = useAuth();
@@ -140,6 +143,15 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   // switch): fetch the viewer's own state, unless they already clicked meanwhile.
   const userActedRef = React.useRef(false);
   const hasInitialInteraction = initialInteraction !== undefined;
+  // The saved position (resume watching) arrives with the same request after a shallow switch.
+  const [fetchedProgress, setFetchedProgress] = useState<{ videoId: string; seconds: number | null } | null>(null);
+  const resumeSeconds: number | null | undefined = !userId
+    ? null
+    : hasInitialInteraction
+      ? (initialProgressSeconds ?? null)
+      : fetchedProgress?.videoId === video.id
+        ? fetchedProgress.seconds
+        : undefined;
   useEffect(() => {
     userActedRef.current = false;
     if (!userId || hasInitialInteraction) return;
@@ -149,11 +161,18 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
       signal: controller.signal,
     })
       .then((response) => (response.ok ? response.json() : null))
-      .then((data: { liked?: boolean; disliked?: boolean } | null) => {
+      .then((data: { liked?: boolean; disliked?: boolean; progressSeconds?: number | null } | null) => {
+        setFetchedProgress({
+          videoId: video.id,
+          seconds: data && typeof data.progressSeconds === 'number' ? data.progressSeconds : null,
+        });
         if (!data || userActedRef.current) return;
         setInteractionState((current) => ({ ...current, isLiked: !!data.liked, isDisliked: !!data.disliked }));
       })
-      .catch(() => undefined);
+      .catch((error: unknown) => {
+        if ((error as { name?: string } | null)?.name === 'AbortError') return;
+        setFetchedProgress({ videoId: video.id, seconds: null });
+      });
     return () => controller.abort();
   }, [video.id, userId, hasInitialInteraction]);
 
@@ -255,6 +274,8 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
               video={video}
               revealKey="player"
               startWithSound={startWithSound}
+              signedIn={Boolean(userId)}
+              resumeSeconds={resumeSeconds}
               onViewCounted={() => setLocalViewsCount((views) => views + 1)}
             />
           </PremiumWrapper>
@@ -365,6 +386,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                </div>
                <ShareButton
                  url={mounted ? `${window.location.origin}/?v=${encodeURIComponent(video.slug)}` : ''}
+                 getStartSeconds={() => getPlaybackPosition(video.id)}
                  title={displayTitle}
                  text={video.description || undefined}
                  className={styles.secondaryAction}

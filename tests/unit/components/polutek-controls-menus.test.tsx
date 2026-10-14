@@ -9,6 +9,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const media = vi.hoisted(() => ({
   state: {} as Record<string, unknown>,
   toggleCaptions: vi.fn(),
+  changeQuality: vi.fn(),
+  changePlaybackRate: vi.fn(),
+  enterPictureInPicture: vi.fn(),
+  exitPictureInPicture: vi.fn(),
 }));
 
 vi.mock("@vidstack/react", async () => {
@@ -37,7 +41,13 @@ vi.mock("@vidstack/react", async () => {
     VolumeSlider: slider,
     isTrackCaptionKind: (track: { kind: string }) => track.kind === "subtitles" || track.kind === "captions",
     useMediaState: (name: string) => media.state[name],
-    useMediaRemote: () => ({ toggleCaptions: media.toggleCaptions }),
+    useMediaRemote: () => ({
+      toggleCaptions: media.toggleCaptions,
+      changeQuality: media.changeQuality,
+      changePlaybackRate: media.changePlaybackRate,
+      enterPictureInPicture: media.enterPictureInPicture,
+      exitPictureInPicture: media.exitPictureInPicture,
+    }),
     useMediaPlayer: () => ({ textTracks: (media.state.textTracks as unknown[]) ?? [] }),
   };
 });
@@ -55,10 +65,15 @@ vi.mock("@vidstack/react/icons", () => {
 
 import PolutekControls from "@/app/components/player/PolutekControls";
 
-describe("PolutekControls: captions switch, no speed control", () => {
+describe("PolutekControls: captions switch and settings menu", () => {
   beforeEach(() => {
     document.documentElement.lang = "pl";
     media.toggleCaptions.mockReset();
+    media.changeQuality.mockReset();
+    media.changePlaybackRate.mockReset();
+    media.enterPictureInPicture.mockReset();
+    media.exitPictureInPicture.mockReset();
+    try { localStorage.clear(); } catch {}
     media.state = {
       paused: false, waiting: false, ended: false, muted: false, volume: 1, canSetVolume: true,
       canFullscreen: true, fullscreen: false, controlsVisible: true,
@@ -74,11 +89,140 @@ describe("PolutekControls: captions switch, no speed control", () => {
     expect(view.queryByRole("menu")).toBeNull();
   });
 
-  it("has no playback speed control at all", () => {
+  it("keeps the settings menu closed until the viewer opens it", () => {
     const view = render(<PolutekControls />);
-    expect(view.queryByRole("button", { name: /Prędkość/i })).toBeNull();
+    const trigger = view.getByRole("button", { name: "Ustawienia" });
+    expect(trigger.getAttribute("aria-haspopup")).toBe("menu");
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
     expect(view.queryByRole("menu")).toBeNull();
     expect(view.queryAllByRole("menuitemradio")).toHaveLength(0);
+  });
+
+  it("offers speeds from 0.5x to 2x, marks the current one and remembers the choice", () => {
+    media.state = { ...media.state, playbackRate: 1 };
+    const view = render(<PolutekControls />);
+    fireEvent.click(view.getByRole("button", { name: "Ustawienia" }));
+
+    expect(view.getByRole("menu")).toBeTruthy();
+    const speeds = view.getAllByRole("menuitemradio").map((el) => el.textContent);
+    expect(speeds).toEqual(["0.5x", "0.75x", "Normalna", "1.25x", "1.5x", "2x"]);
+    expect(view.getByRole("menuitemradio", { name: "Normalna" }).getAttribute("aria-checked")).toBe("true");
+
+    fireEvent.click(view.getByRole("menuitemradio", { name: "1.5x" }));
+    expect(media.changePlaybackRate).toHaveBeenCalledWith(1.5);
+    expect(localStorage.getItem("polutek:player-rate")).toBe("1.5");
+    // The menu closes after a choice.
+    expect(view.queryByRole("menu")).toBeNull();
+  });
+
+  it("restores the saved speed when the player becomes ready", () => {
+    localStorage.setItem("polutek:player-rate", "1.25");
+    media.state = { ...media.state, playbackRate: 1, canPlay: true };
+    render(<PolutekControls />);
+    expect(media.changePlaybackRate).toHaveBeenCalledWith(1.25);
+  });
+
+  it("lists Auto and the manifest's renditions (best first) only when the stream has several", () => {
+    media.state = {
+      ...media.state,
+      autoQuality: true,
+      quality: { height: 720 },
+      qualities: [{ height: 360 }, { height: 720 }, { height: 1080 }],
+    };
+    const view = render(<PolutekControls />);
+    fireEvent.click(view.getByRole("button", { name: "Ustawienia" }));
+
+    const labels = view.getAllByRole("menuitemradio").map((el) => el.textContent);
+    expect(labels.slice(0, 4)).toEqual(["Auto (720p)", "1080p", "720p", "360p"]);
+    expect(view.getByRole("menuitemradio", { name: "Auto (720p)" }).getAttribute("aria-checked")).toBe("true");
+
+    fireEvent.click(view.getByRole("menuitemradio", { name: "1080p" }));
+    // The index is the one in the player's own list, not the sorted position.
+    expect(media.changeQuality).toHaveBeenCalledWith(2);
+    expect(localStorage.getItem("polutek:player-quality")).toBe("1080");
+  });
+
+  it("has no quality group for a single rendition", () => {
+    media.state = { ...media.state, autoQuality: true, qualities: [{ height: 720 }] };
+    const view = render(<PolutekControls />);
+    fireEvent.click(view.getByRole("button", { name: "Ustawienia" }));
+    expect(view.queryByRole("menuitemradio", { name: /Auto/ })).toBeNull();
+    expect(view.getAllByRole("menuitemradio")).toHaveLength(6);
+  });
+
+  it("Auto switches back to automatic selection and is remembered", () => {
+    media.state = {
+      ...media.state,
+      autoQuality: false,
+      quality: { height: 360 },
+      qualities: [{ height: 360 }, { height: 720 }],
+    };
+    const view = render(<PolutekControls />);
+    fireEvent.click(view.getByRole("button", { name: "Ustawienia" }));
+    fireEvent.click(view.getByRole("menuitemradio", { name: "Auto" }));
+
+    expect(media.changeQuality).toHaveBeenLastCalledWith(-1);
+    expect(localStorage.getItem("polutek:player-quality")).toBe("auto");
+  });
+
+  it("re-applies the saved quality once the renditions are known, and ignores a height the video lacks", () => {
+    localStorage.setItem("polutek:player-quality", "720");
+    media.state = { ...media.state, autoQuality: true, qualities: [{ height: 360 }, { height: 720 }] };
+    render(<PolutekControls />);
+    expect(media.changeQuality).toHaveBeenCalledWith(1);
+
+    cleanup();
+    media.changeQuality.mockReset();
+    localStorage.setItem("polutek:player-quality", "2160");
+    render(<PolutekControls />);
+    expect(media.changeQuality).not.toHaveBeenCalled();
+  });
+
+  it("shows picture-in-picture only where the browser offers it", () => {
+    const withoutPip = render(<PolutekControls />);
+    fireEvent.click(withoutPip.getByRole("button", { name: "Ustawienia" }));
+    expect(withoutPip.queryByRole("menuitem", { name: "Obraz w obrazie" })).toBeNull();
+    cleanup();
+
+    media.state = { ...media.state, canPictureInPicture: true, pictureInPicture: false };
+    const withPip = render(<PolutekControls />);
+    fireEvent.click(withPip.getByRole("button", { name: "Ustawienia" }));
+    fireEvent.click(withPip.getByRole("menuitem", { name: "Obraz w obrazie" }));
+    expect(media.enterPictureInPicture).toHaveBeenCalledTimes(1);
+  });
+
+  it("is keyboard operable: arrows move between items, Escape closes and returns the focus", () => {
+    const view = render(<PolutekControls />);
+    const trigger = view.getByRole("button", { name: "Ustawienia" });
+    fireEvent.click(trigger);
+
+    const items = view.getAllByRole("menuitemradio");
+    // The focus starts on the checked item (normal speed).
+    expect(document.activeElement).toBe(items[2]);
+    fireEvent.keyDown(items[2], { key: "ArrowDown" });
+    expect(document.activeElement).toBe(items[3]);
+    fireEvent.keyDown(items[3], { key: "Home" });
+    expect(document.activeElement).toBe(items[0]);
+    fireEvent.keyDown(items[0], { key: "End" });
+    expect(document.activeElement).toBe(items[items.length - 1]);
+    fireEvent.keyDown(items[items.length - 1], { key: "Escape" });
+
+    expect(view.queryByRole("menu")).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("closes when the controls hide", () => {
+    const view = render(<PolutekControls />);
+    fireEvent.click(view.getByRole("button", { name: "Ustawienia" }));
+    expect(view.getByRole("menu")).toBeTruthy();
+    media.state = { ...media.state, controlsVisible: false };
+    view.rerender(<PolutekControls />);
+    expect(view.queryByRole("menu")).toBeNull();
+  });
+
+  it("keeps the speed keyboard shortcuts off (the menu is the only speed control)", () => {
+    const source = readFileSync(join(process.cwd(), "app/components/VideoPlayer.tsx"), "utf8");
+    expect(source).toMatch(/PLAYER_KEY_SHORTCUTS = \{ speedUp: '', slowDown: '' \}/);
   });
 
   it("has no CC button for a video without captions", () => {
