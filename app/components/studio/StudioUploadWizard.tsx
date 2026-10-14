@@ -320,7 +320,7 @@ export default function StudioUploadWizard({
           {coverError && <Notice kind="error">{coverError}</Notice>}
           {coverPreview && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={coverPreview} alt={tx("Podgląd miniatury", "Thumbnail preview")} className="aspect-video w-full max-w-xs rounded-none bg-[var(--chan-surface)] object-cover" />
+            <img src={coverPreview} alt={tx("Podgląd miniatury", "Thumbnail preview")} className="aspect-video w-full max-w-xs rounded-xl bg-[var(--chan-surface)] object-cover" />
           )}
           <div className="flex flex-wrap gap-2">
             <button type="submit" className={buttonClass} disabled={!file || !title.trim()}>

@@ -5,6 +5,7 @@ import { useUser } from "@/lib/auth/react";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import UserMenu from "./auth/UserMenu";
 import NotificationBell from "./notifications/NotificationBell";
+import { SHOW_NOTIFICATION_BELL } from "@/lib/ui-flags";
 import BrandHomeLink from "./BrandHomeLink";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "./LanguageContext";
@@ -226,7 +227,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                 <div aria-hidden="true" className="h-[38px] w-[38px] shrink-0" />
               )}
 
-              {isLoaded && isSignedIn && <NotificationBell />}
+              {SHOW_NOTIFICATION_BELL && isLoaded && isSignedIn && <NotificationBell />}
 
               {isLoaded && isSignedIn && (
                 <UserMenu isAdmin={isAdmin} />

@@ -421,7 +421,7 @@ function PlaybackPlanStateOverlay({
   }
 
   return (
-    <PlayerStateFrame className={isThumbnail ? "rounded-none" : undefined}>
+    <PlayerStateFrame className={isThumbnail ? "rounded-lg" : undefined}>
       <div className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-[var(--chan-nav)] p-6 text-center text-[var(--chan-ink)] [container-type:inline-size]">
         <div
           aria-hidden="true"

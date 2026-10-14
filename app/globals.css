@@ -103,7 +103,7 @@
   }
 
   .channel-video-card {
-    border-radius: 0;
+    border-radius: 16px;
     transition: transform .2s ease;
   }
 

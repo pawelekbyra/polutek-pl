@@ -87,7 +87,7 @@ export default async function SearchPage(props: SearchPageProps) {
                 href={getLocalizedHref(locale, "watch", { slug: video.slug || video.id })}
                 className="group flex gap-4 rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-3 transition hover:bg-[var(--chan-surface)]"
               >
-                <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded-none bg-[var(--chan-ink)] sm:h-32 sm:w-56">
+                <div className="relative h-24 w-40 shrink-0 overflow-hidden rounded-xl bg-[var(--chan-ink)] sm:h-32 sm:w-56">
                   {video.thumbnailUrl ? (
                     <Image
                       src={video.thumbnailUrl}
