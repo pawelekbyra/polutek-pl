@@ -74,7 +74,7 @@ export default function NavDrawer() {
         className="-ml-1 mr-0 flex h-[38px] w-[40px] shrink-0 items-center justify-center rounded-lg text-[var(--chan-ink)] transition-[background-color,transform] duration-160 hover:bg-[var(--chan-surface)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
       >
         {/* Three plain lines, no frame or fill: the symbol alone, the logo sits right next to it. */}
-        <svg viewBox="0 0 28 20" className="h-[18px] w-[26px]" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+        <svg viewBox="0 0 28 20" className="h-[18px] w-[26px]" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
           <path d="M2 3h24M2 10h24M2 17h24" />
         </svg>
       </button>
