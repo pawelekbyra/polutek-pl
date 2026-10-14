@@ -857,5 +857,18 @@
  "No notifications.": "没有通知。",
  "unread": "未读",
  "Show older": "显示更早的",
- "Mark all as read": "全部标为已读"
+ "Mark all as read": "全部标为已读",
+ "Start at current time": "从当前时间开始",
+ "Continue watching": "继续观看",
+ "resume at": "从此处继续",
+ "Settings": "设置",
+ "Quality": "画质",
+ "Auto": "自动",
+ "Playback speed": "播放速度",
+ "Normal": "正常",
+ "Picture in picture": "画中画",
+ "Exit picture in picture": "退出画中画",
+ "Resumed at": "已从此处继续",
+ "Playing from": "从此处播放",
+ "From the beginning": "从头开始"
 }
