@@ -28,7 +28,7 @@ type ServerAdminState = {
  */
 function NavbarLanguageSwitcher({ language }: { language: Locale }) {
   const switchLanguage = useSwitchLanguage();
-  return <LanguageSwitcher language={language} onSelect={switchLanguage} />;
+  return <LanguageSwitcher language={language} onSelect={switchLanguage} variant="icon" />;
 }
 
 // `isHome`: the page is the home page with the hero video (the logo then scrolls to its top).
@@ -201,9 +201,12 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
               </div>
 
               {/* Language switcher — one pill (globe, code, chevron) that opens the language list. */}
-              <Suspense fallback={<LanguageSwitcher language={language} onSelect={setLanguage} />}>
-                <NavbarLanguageSwitcher language={language} />
-              </Suspense>
+              {/* Signed-out visitors only: a signed-in user changes the language in the account panel (and in the footer). */}
+              {isSignedIn ? null : (
+                <Suspense fallback={<LanguageSwitcher language={language} onSelect={setLanguage} variant="icon" />}>
+                  <NavbarLanguageSwitcher language={language} />
+                </Suspense>
+              )}
 
               {isSignedIn ? null : isLoaded ? (
                 <button

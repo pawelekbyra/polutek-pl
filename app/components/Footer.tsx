@@ -1,9 +1,22 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { useLanguage } from './LanguageContext';
 import { getLocalizedHref } from '@/lib/i18n/routing';
+import LanguageSwitcher from './LanguageSwitcher';
+import { useSwitchLanguage } from './useSwitchLanguage';
+
+/** The language list in the footer; useSwitchLanguage reads the URL, so it sits in its own Suspense. */
+function FooterLanguage() {
+  const { language } = useLanguage();
+  const switchLanguage = useSwitchLanguage();
+  return (
+    <div className="flex flex-wrap items-center">
+      <LanguageSwitcher language={language} onSelect={switchLanguage} variant="inline" />
+    </div>
+  );
+}
 
 const Footer = () => {
   const { language, tx } = useLanguage();
@@ -19,7 +32,11 @@ const Footer = () => {
       />
       <div className="mx-auto flex max-w-[1180px] flex-col items-center justify-center gap-[14px] px-6 py-[26px] md:flex-row md:justify-between md:gap-[14px]">
         {/* Equal flexible side columns keep the brand centred, and the right one grows with long labels (de, fr). */}
-        <div className="hidden md:block md:flex-1" />
+        <div className="order-3 flex w-full justify-center md:order-none md:w-auto md:flex-1 md:justify-start">
+          <Suspense fallback={null}>
+            <FooterLanguage />
+          </Suspense>
+        </div>
 
         <span className="font-brand order-2 flex items-center gap-2 text-center text-[12px] font-bold uppercase tracking-[0.22em] text-[var(--chan-muted-2)] md:order-none">
           <span aria-hidden="true" className="inline-flex h-1 w-1 rounded-full bg-[var(--chan-blue)]" />
