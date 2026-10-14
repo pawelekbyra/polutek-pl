@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
-import { StudioApiError, jsonBody, studioApi } from "./studio-client";
+import { StudioApiError, jsonBody, studioApi, type StudioLimits } from "./studio-client";
 import { uploadOriginal, type UploadProgress } from "./upload-original";
 import { confirmLeave, setUnsavedWork } from "./unsaved-guard";
-import { DESCRIPTION_MAX, TITLE_MAX, titleFromFileName, validateCoverFile, visibilityToFields, type VisibilityMode } from "./video-form";
+import { DESCRIPTION_MAX, TITLE_MAX, formatLimitDuration, titleFromFileName, validateCoverFile, visibilityToFields, type VisibilityMode } from "./video-form";
 import VideoMoreOptions from "./VideoMoreOptions";
 import type { VideoCommentsModeValue } from "@/lib/video-metadata";
 import { Card, CharCounter, Field, Notice, ProgressBar, buttonClass, ghostButtonClass, inputClass } from "./ui";
@@ -23,7 +23,16 @@ function formatBytes(bytes: number): string {
  * Upload wizard: (1) file and details, (2) visibility, (3) sending. The draft is created when sending starts,
  * as a private draft, so closing the tab or cancelling halfway leaves a private draft and nothing public.
  */
-export default function StudioUploadWizard({ onCancel, onFinished }: { onCancel: () => void; onFinished: (id: string) => void }) {
+export default function StudioUploadWizard({
+  onCancel,
+  onFinished,
+  limits,
+}: {
+  onCancel: () => void;
+  onFinished: (id: string) => void;
+  /** The channel's limits (read only); the server enforces them, this only tells the creator up front. */
+  limits?: StudioLimits | null;
+}) {
   const { tx } = useLanguage();
   const [step, setStep] = useState<Step>(1);
   const [file, setFile] = useState<File | null>(null);
@@ -35,6 +44,7 @@ export default function StudioUploadWizard({ onCancel, onFinished }: { onCancel:
   const [mode, setMode] = useState<VisibilityMode>("private");
   const [premiere, setPremiere] = useState("");
   const [tier, setTier] = useState<Tier>("PUBLIC");
+  const [isAdult, setIsAdult] = useState(false);
   const [tags, setTags] = useState<string[]>([]);
   const [category, setCategory] = useState("");
   const [commentsMode, setCommentsMode] = useState<VideoCommentsModeValue>("ON");
@@ -82,7 +92,8 @@ export default function StudioUploadWizard({ onCancel, onFinished }: { onCancel:
 
   const visibilityLabel: Record<VisibilityMode, string> = {
     private: tx("Prywatny (szkic)", "Private (draft)"),
-    auto: tx("Opublikuj automatycznie po przetworzeniu", "Publish automatically after processing"),
+    unlisted: tx("Niepubliczny", "Unlisted"),
+    auto: tx("Publiczny (po przetworzeniu)", "Public (after processing)"),
     scheduled: tx("Zaplanowany", "Scheduled"),
   };
 
@@ -142,8 +153,10 @@ export default function StudioUploadWizard({ onCancel, onFinished }: { onCancel:
             tags,
             category: category || null,
             commentsMode,
+            isAdult,
             publishAfterAssetReady: visibility.fields.publishAfterAssetReady,
             premiereAt: visibility.fields.premiereAt,
+            ...(visibility.fields.publishAs ? { publishAs: visibility.fields.publishAs } : {}),
           }),
         });
         id = draft.id;
@@ -243,10 +256,25 @@ export default function StudioUploadWizard({ onCancel, onFinished }: { onCancel:
               }}
             />
           </Field>
+          {limits && (
+            <p className="text-[13px] text-[var(--chan-muted)]">
+              {tx(
+                "Limit Twojego kanału: film do {0}, plik do {1}.",
+                "Your channel limit: videos up to {0}, files up to {1}.",
+                formatLimitDuration(limits.maxVideoSeconds),
+                formatBytes(limits.maxUploadBytes),
+              )}
+            </p>
+          )}
           {file && (
             <p className="text-[13px] text-[var(--chan-muted)]">
               {file.name} · {formatBytes(file.size)}
             </p>
+          )}
+          {file && limits && file.size > limits.maxUploadBytes && (
+            <Notice kind="error">
+              {tx("Ten plik jest większy niż limit Twojego kanału ({0}).", "This file is larger than your channel limit ({0}).", formatBytes(limits.maxUploadBytes))}
+            </Notice>
           )}
           <Field label={tx("Tytuł", "Title")} htmlFor="wz-title" counter={<CharCounter id="wz-title-count" value={title} max={TITLE_MAX} />}>
             <input
@@ -312,6 +340,13 @@ export default function StudioUploadWizard({ onCancel, onFinished }: { onCancel:
             {(
               [
                 ["private", tx("Film zostaje szkicem. Opublikujesz go sam, gdy będzie gotowy.", "The video stays a draft. You publish it yourself when it is ready.")],
+                [
+                  "unlisted",
+                  tx(
+                    "Każdy z linkiem obejrzy film po przetworzeniu, ale nie pojawi się na listach ani w wyszukiwarce.",
+                    "Anyone with the link can watch after processing, but it does not appear in lists or search.",
+                  ),
+                ],
                 ["auto", tx("Film pojawi się na kanale, gdy tylko skończy się przetwarzanie.", "The video goes live as soon as processing finishes.")],
                 ["scheduled", tx("Film opublikuje się po przetworzeniu i będzie czekał do wybranego terminu.", "The video publishes after processing and waits for the chosen time.")],
               ] as [VisibilityMode, string][]
@@ -365,6 +400,15 @@ export default function StudioUploadWizard({ onCancel, onFinished }: { onCancel:
               <option value="LOGGED_IN">{tx("Tylko zalogowani", "Signed-in viewers only")}</option>
             </select>
           </Field>
+          <label htmlFor="wz-adult" className="flex min-h-10 cursor-pointer items-start gap-3 rounded-xl border border-[var(--chan-line)] p-3">
+            <input id="wz-adult" type="checkbox" checked={isAdult} className="mt-1 h-4 w-4" onChange={(e) => setIsAdult(e.target.checked)} />
+            <span className="grid gap-0.5">
+              <span className="text-[14px] font-semibold text-[var(--chan-ink)]">{tx("Treści dla dorosłych (18+)", "Adult content (18+)")}</span>
+              <span className="text-[12px] text-[var(--chan-muted)]">
+                {tx("Film obejrzą tylko zalogowani widzowie i nie trafi do mapy strony.", "Only signed-in viewers can watch it, and it is left out of the sitemap.")}
+              </span>
+            </span>
+          </label>
           <VideoMoreOptions
             idPrefix="wz"
             value={{ tags, category, commentsMode }}

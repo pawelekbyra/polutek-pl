@@ -45,10 +45,11 @@ export async function GET(
     }
 
     // 2. Thumbnail Access Policy
-    // - Published videos: thumbnails are public (regardless of patron-only playback).
+    // - Published and unlisted videos: thumbnails are public (regardless of patron-only playback).
     // - Drafts/Archived/Unpublished: platform staff and members of the video's
     //   channel whose role allows `video.preview` (CLAUDE.md 4.23); nobody else.
-    const isPublic = video.status === "PUBLISHED";
+    // An unlisted video is reachable by link, so its cover is too (it is never copied to the public bucket).
+    const isPublic = video.status === "PUBLISHED" || video.status === "UNLISTED";
     let mayPreview = false;
     if (!isPublic) {
       if (actor.type === "admin") {

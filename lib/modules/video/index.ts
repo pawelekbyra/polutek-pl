@@ -30,3 +30,6 @@ export * from './domain/video-asset.constants';
 export * from './application/video-playback-route.service';
 export * from './application/prune-stale-playback-sessions.use-case';
 export * from './application/sync-public-thumbnail.service';
+export * from './application/unlist-admin-video.use-case';
+export * from './application/ready-visibility';
+export * from './domain/video-visibility';

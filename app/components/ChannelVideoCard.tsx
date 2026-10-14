@@ -83,6 +83,15 @@ export default function ChannelVideoCard({
                 {video.duration}
               </div>
             )}
+            {/* 18+ (creator's declaration or moderation): signed-in viewers only */}
+            {video.isAdult && (
+              <div
+                data-testid="adult-badge"
+                className="absolute left-2 top-2 z-30 rounded-full bg-red-600 px-2 py-[3px] text-[9px] font-black leading-none tracking-[0.1em] text-white pointer-events-none"
+              >
+                18+
+              </div>
+            )}
             {/* Access Indicator Badge on Thumbnail */}
             {badge && (
               <div

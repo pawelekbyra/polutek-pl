@@ -104,6 +104,8 @@ export interface AdminVideoDto extends BaseVideoDto {
   tags: string[];
   category: string | null;
   commentsMode: "ON" | "HELD" | "OFF";
+  /** Declared by the creator: adult content, signed-in viewers only (same effect as moderation AGE_RESTRICTED). */
+  isAdult: boolean;
 }
 
 export type PublicVideoInput = BaseVideoDto & Record<string, unknown>;
@@ -281,6 +283,7 @@ export function toAdminVideoDto(input: AdminVideoInput | unknown): AdminVideoDto
     tags: Array.isArray(video.tags) ? (video.tags as unknown[]).filter((tag): tag is string => typeof tag === "string") : [],
     category: typeof video.category === "string" ? video.category : null,
     commentsMode: video.commentsMode === "HELD" || video.commentsMode === "OFF" ? video.commentsMode : "ON",
+    isAdult: video.isAdult === true,
   };
 }
 

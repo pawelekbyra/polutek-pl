@@ -82,6 +82,7 @@ export default function StudioVideoList({ onUpload, onEdit }: { onUpload: () => 
             <option value="ALL">{tx("Wszystkie", "All")}</option>
             <option value="DRAFT">{tx("Szkice", "Drafts")}</option>
             <option value="PUBLISHED">{tx("Opublikowane", "Published")}</option>
+            <option value="UNLISTED">{tx("Niepubliczne", "Unlisted")}</option>
             <option value="ARCHIVED">{tx("Zarchiwizowane", "Archived")}</option>
           </select>
         </div>
@@ -135,6 +136,7 @@ export default function StudioVideoList({ onUpload, onEdit }: { onUpload: () => 
                   <p className="truncate text-[14px] font-semibold text-[var(--chan-ink)]">{video.title}</p>
                   <p className="mt-1 flex flex-wrap items-center gap-2 text-[12px] text-[var(--chan-muted)]">
                     <Badge tone={video.status === "PUBLISHED" ? "good" : "neutral"}>{statusLabel[video.status]}</Badge>
+                    {video.isAdult && <Badge tone="warn">18+</Badge>}
                     <span>{video.tier === "PUBLIC" ? tx("Dla wszystkich", "Public") : tx("Dla zalogowanych", "Signed-in only")}</span>
                     <span>{tx("{0} wyświetleń", "{0} views", video.views)}</span>
                     {typeof video.commentsCount === "number" && <span>{tx("Komentarze: {0}", "Comments: {0}", video.commentsCount)}</span>}

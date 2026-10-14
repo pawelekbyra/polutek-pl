@@ -8,6 +8,7 @@ import { AdminVideoDto, toAdminVideoDto } from "../domain/video.dto";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { VideoNotFoundError } from "../domain/video.errors";
 import { VideoPolicy } from "../domain/video.policy";
+import { clearReadyVisibility } from "./ready-visibility";
 
 /**
  * "Anuluj automatyczną publikację": clears the publish-when-processing-finishes flag of a video that has not been
@@ -27,12 +28,12 @@ export async function cancelAutoPublish(
   const video = await repository.findByIdForMainChannel(videoId, channel.id);
   if (!video || !VideoPolicy.isOnMainChannel(video, channel.id)) return fail(new VideoNotFoundError(videoId));
 
-  if (!video.publishAfterAssetReady || video.status === "PUBLISHED") return ok(toAdminVideoDto(video));
+  if (!video.publishAfterAssetReady || video.status === "PUBLISHED" || video.status === "UNLISTED") return ok(toAdminVideoDto(video));
 
   await ctx.db.writeTransaction(async (tx) => {
     // Conditional on the flag still being set: a publication that won the race keeps its completed state.
     const { count } = await tx.video.updateMany({
-      where: { id: videoId, creatorId: channel.id, publishAfterAssetReady: true, status: { not: "PUBLISHED" } },
+      where: { id: videoId, creatorId: channel.id, publishAfterAssetReady: true, status: { notIn: ["PUBLISHED", "UNLISTED"] } },
       data: { publishAfterAssetReady: false, publishAfterAssetReadyRequestedAt: null, publishAfterAssetReadyError: null },
     });
     if (count === 1) {
@@ -43,6 +44,8 @@ export async function cancelAutoPublish(
       );
     }
   });
+
+  await clearReadyVisibility(videoId, ctx);
 
   const fresh = await repository.findByIdForMainChannel(videoId, channel.id);
   if (!fresh) return fail(new VideoNotFoundError(videoId));

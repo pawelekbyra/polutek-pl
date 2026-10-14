@@ -79,7 +79,7 @@ export async function quoteVideoPurchase(
   if (!isGateOpen("sales", env)) return fail(salesClosed());
   if (ctx.actor.type !== "user") return fail(new AppError("Zaloguj się, aby kupić dostęp.", 401, "UNAUTHENTICATED"));
   const video = await ctx.prisma.video.findUnique({ where: { id: input.videoId }, select: { id: true, tier: true, status: true, price: true } });
-  if (!video || video.tier !== "PAID" || !video.price || video.status !== "PUBLISHED") {
+  if (!video || video.tier !== "PAID" || !video.price || !(video.status === "PUBLISHED" || video.status === "UNLISTED")) {
     return fail(new AppError("Ten film nie jest dostępny do kupienia.", 404, "NOT_FOR_SALE"));
   }
   const owned = await ctx.prisma.entitlement.findFirst({ where: { userId: ctx.actor.userId, videoId: video.id, revokedAt: null }, select: { id: true } });

@@ -11,6 +11,8 @@ import { VideoPolicy } from "../domain/video.policy";
 import { syncPublicThumbnail } from "./sync-public-thumbnail.service";
 import { publishAdminVideo } from "./publish-admin-video.use-case";
 import { isAllowedPremiereChange, isUpcomingPremiere } from "../domain/premiere";
+import { isAllowedStatusTransition } from "../domain/video-visibility";
+import { clearReadyVisibility } from "./ready-visibility";
 import { resolveVideoMetadata } from "../domain/video-metadata";
 import {
     VideoNotFoundError,
@@ -45,6 +47,21 @@ export async function updateAdminVideo(
 
   const nextStatus = input.status || existing.status;
   const nextTier = input.tier || existing.tier;
+
+  if (input.status === 'UNLISTED' && !isAllowedStatusTransition(existing.status, 'UNLISTED')) {
+      return fail(new VideoNotReadyForPublicationError("Zarchiwizowany film trzeba najpierw przywrócić do szkicu.", "VIDEO_PUBLICATION_ARCHIVED"));
+  }
+
+  // UNLISTED is reachable by link, so entering it needs what publishing needs (a READY own-HLS route etc.), and a
+  // premiere (a public event) is not possible on an unlisted video.
+  const becomesUnlisted = nextStatus === 'UNLISTED' && existing.status !== 'UNLISTED';
+  if (becomesUnlisted && existing.status !== 'PUBLISHED') {
+      const blockers = VideoPolicy.getUnlistBlockers({ ...existing, tier: nextTier });
+      if (blockers.length > 0) return fail(new VideoNotReadyForPublicationError(blockers[0].message, blockers[0].code));
+  }
+  if (nextStatus === 'UNLISTED' && input.premiereAt instanceof Date) {
+      return fail(new VideoInvalidPremiereError("Film niepubliczny nie może mieć premiery."));
+  }
 
   // Only re-validate hero eligibility when this update actually promotes the video to
   // Hero (false/unset -> true). The edit form always resubmits the video's current
@@ -88,6 +105,12 @@ export async function updateAdminVideo(
       safeInput.isMainFeatured = false;
       safeInput.showInSidebar = false;
   }
+  if (becomesUnlisted) {
+      // Reachable from now on; an unlisted video holds no premiere.
+      safeInput.publishedAt = existing.publishedAt ?? ctx.now();
+      safeInput.premiereAt = null;
+      safeInput.publishAfterAssetReady = false;
+  }
 
   const updated = await (ctx.prisma as any).$transaction(async (tx: any) => {
     const video = await repository.updateForMainChannel(safeInput, mainChannel.id, tx);
@@ -118,6 +141,8 @@ export async function updateAdminVideo(
     return video;
   });
 
+
+  if (input.status && input.status !== existing.status) await clearReadyVisibility(updated.id, ctx);
 
   // Unpublishing drops the public R2 copy; a new cover on a published video
   // gets copied there. Runs before the old private object is deleted below.

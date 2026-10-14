@@ -109,7 +109,7 @@ export default function StudioApp() {
           </div>
         )}
         {section === "overview" && <Overview me={me} onOpen={go} />}
-        {section === "content" && <StudioContent initialView={contentIntent} />}
+        {section === "content" && <StudioContent initialView={contentIntent} limits={me.limits ?? null} />}
         {section === "comments" && <StudioComments />}
         {section === "profile" && <StudioProfile channel={me.channel} onChanged={load} />}
       </div>

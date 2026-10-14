@@ -7,6 +7,7 @@ import { getBetaSiteText } from '@/lib/site-stage-metadata';
 import { getVideoDisplayDescription, getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import { notFound } from 'next/navigation';
 import HomeExperience from '@/app/components/home/HomeExperience';
+import { shouldNoIndexVideo } from '@/lib/modules/video/domain/video-visibility';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,7 +45,12 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   // Beta: neutral title and description everywhere (tab, search, social); the hero video's title is not used.
   const betaText = await getBetaSiteText(locale);
 
+  // An unlisted video (link only) and an adult one (signed-in viewers only) must never be indexed: the page of
+  // such a video says so, whatever the site stage is. The fallback to the hero never carries this status.
+  const noIndexVideo = shouldNoIndexVideo(selectedVideo ? { status: selectedVideo.status, isAdult: selectedVideo.isAdult } : null);
+
   return {
+    ...(noIndexVideo ? { robots: { index: false, follow: false, nocache: true } } : {}),
     // Browser tab always reads www.pawelperfect.com regardless of the selected video; the
     // per-video title is kept only for social/OG previews below.
     title: betaText?.title ?? SITE_TITLE,
@@ -76,7 +82,8 @@ export default async function Home(props: { params: Promise<{ locale: string }>;
 
   const { selectedVideo } = await getHomeSelectionCached(searchParams.v);
 
-  const videoJsonLd = selectedVideo
+  // Structured data is search-engine bait: an unlisted or adult video gets none.
+  const videoJsonLd = selectedVideo && !shouldNoIndexVideo({ status: selectedVideo.status, isAdult: selectedVideo.isAdult })
     ? {
         '@context': 'https://schema.org',
         '@type': 'VideoObject',
