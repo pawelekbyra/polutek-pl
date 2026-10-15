@@ -53,6 +53,7 @@ export const TIER_LABEL: Record<string, string> = { PUBLIC: "Publiczny", LOGGED_
 export function statusOf(v: Pick<AdminVideoDto, "status" | "premiereAt">, now: Date): { kind: StateKind | ""; label: string; icon?: "calendar" | "archive" | "note" } {
   if (isUpcomingPremiere(v, now)) return { kind: "info", label: "Premiera", icon: "calendar" };
   if (v.status === "PUBLISHED") return { kind: "ok", label: "Opublikowany" };
+  if (v.status === "UNLISTED") return { kind: "info", label: "Niepubliczny" };
   if (v.status === "ARCHIVED") return { kind: "", label: "Archiwum", icon: "archive" };
   return { kind: "", label: "Szkic", icon: "note" };
 }
