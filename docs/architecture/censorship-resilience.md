@@ -24,7 +24,7 @@ Kierunek jest sensowny, jeśli rozumiemy go jako **"wielu operatorów i wiele ś
 ### 3.1 Jak działały platformy "odporne"
 
 - **Odysee/LBRY dostarcza wideo głównie z infrastruktury operatora.** Repozytorium reflector opisuje serwer przyjmujący bloby do magazynu obiektowego (S3/Wasabi) ze stanem w MySQL oraz warstwowe cache dyskowe łączone w łańcuch regionów, czyli w praktyce CDN. Blockchain trzyma indeks. https://git.pigg.es/LBRYFoundation/reflector.go/raw/branch/master/readme.md
-- **Odysee i Arweave.** W 2024 Forward Research (twórcy Arweave) przejęło Odysee po upadku LBRY Inc. (SEC) i zapowiedziało przejście na Arweave. Nie znaleziono żadnych komunikatów z 2025 do 2026, więc stan migracji jest nieznany. https://www.businesswire.com/news/home/20240606839450/en
+- **Odysee i Arweave.** W 2024 Forward Research (twórcy Arweave) przejęło Odysee po upadku LBRY Inc. (SEC) i zapowiedziało przejście na Arweave. W 2025 Odysee wygaszało napiwki w LBC na rzecz płatności opartych na Arweave (do lipca 2025), więc migracja trwała; źródła pierwotne potwierdzające jej zakończenie nie znalezione, stan na 2026 nieznany. https://reclaimthenet.org/odysee-decentralized-payments-arweave-wander-wallet-lbc-phaseout https://www.businesswire.com/news/home/20240606839450/en
 - **BitChute** reklamował P2P (WebTorrent), ale raport z 2019 nie znalazł transferu P2P, wszystkie wideo szły z ich serwerów. Stracił Stripe i PayPal (2018) oraz, według własnych słów, część hostingu, biuro i konto bankowe. https://reclaimthenet.org/tag/bitchute
 - **Parler** (2021): AWS zawiesił usługę, a Apple i Google usunęły aplikację ze sklepów. Dla nas lekcja: sklepy z aplikacjami i hyperscaler to punkty jednego klucza.
 - **Rumble** zbudował własny CDN i centra danych, w czym częściowo widzi niezależność od hyperscalerów; po przejęciu Northern Data (czerwiec 2026) ma kilka do kilkunastu lokalizacji. To skala rzędu setek milionów dolarów, nie wzorzec dla nas. Liczb kosztów bandwidth nie udało się potwierdzić w źródłach pierwotnych (sprawdzić w raportach SEC). https://finance.yahoo.com/technology/ai/articles/rumble-eyes-3b-ai-compute-040202696.html
@@ -48,18 +48,18 @@ Kierunek jest sensowny, jeśli rozumiemy go jako **"wielu operatorów i wiele ś
 
 ### 3.5 Multi-CDN w HLS (standard)
 
-- **HLS Content Steering** (`EXT-X-CONTENT-STEERING`) to standardowy sposób przełączania między CDN: każdy CDN jest "pathway", odtwarzacz pobiera mały JSON z priorytetami (TTL, `PATHWAY-PRIORITY`) i sam przełącza źródło bez przeładowania strumienia. Wsparcie: hls.js (od 1.4 do 1.5, sprawdzić wersję), Shaka (od 4.6), dash.js, AVPlayer. Wymaga serwera sterującego (bezstanowy, wysoko dostępny, sam jest zależnością). https://dev.to/masonwritescode/build-multi-cdn-failover-with-hls-content-steering-hlsjs-and-a-40-line-server-1l8i
-- To rozwiązuje nasz problem "wielu originów" bez własnej logiki w odtwarzaczu. Trzeba sprawdzić, czy Vidstack przepuszcza steering z hls.js.
+- **HLS Content Steering** (`EXT-X-CONTENT-STEERING`) to standardowy sposób przełączania między CDN: każdy CDN jest "pathway", odtwarzacz pobiera mały JSON z priorytetami (TTL, `PATHWAY-PRIORITY`) i sam przełącza źródło bez przeładowania strumienia. Wsparcie: **zweryfikowane w naszym kodzie: hls.js 1.7.3 (wersja z package.json) ma wbudowany `ContentSteeringController` i parser tagu `EXT-X-CONTENT-STEERING`**; inne źródła podają Shaka od 4.6, dash.js, AVPlayer. Wymaga serwera sterującego (bezstanowy, wysoko dostępny, sam jest zależnością). https://dev.to/masonwritescode/build-multi-cdn-failover-with-hls-content-steering-hlsjs-and-a-40-line-server-1l8i
+- To rozwiązuje nasz problem "wielu originów" bez własnej logiki w odtwarzaczu. Nasz odtwarzacz przekazuje Vidstackowi własną instancję biblioteki hls.js (`provider.library` w `app/components/player/self-hls.ts`), więc steering działa po stronie hls.js bez zmian w Vidstack. Do zrobienia: `xhrSetup` (podpisywanie żądań) musi obsłużyć adresy innych originów, a manifest musi być generowany z tagiem i listą pathway'ów (tego nie sprawdzano w praktyce).
 
 ### 3.6 Koszty edge
 
-- **Bunny** (ceny z 2026, niezweryfikowane na stronie producenta): Standard ok. $0,01/GB w Europie i USA, $0,03 Azja i Oceania, $0,045 Ameryka Płd., $0,06 Bliski Wschód i Afryka; Volume tier $0,005/GB do 500 TB. Przy 50 TB/mies. ok. $250 do $500. Zgłaszane minimum miesięczne ok. $50.
+- **Bunny** (zweryfikowane na bunny.net/pricing/cdn, 2026-10-15): Standard (119 PoP) $0,01/GB Europa i Ameryka Płn., $0,03 Azja i Oceania, $0,045 Ameryka Płd., $0,06 Bliski Wschód i Afryka; Volume (tylko 10 PoP, jedna stawka globalna) $0,005/GB do 500 TB, $0,004 do 1 PB, $0,002 do 2 PB. Minimum miesięczne $1 (wcześniejsza wzmianka o $50 z zestawień okazała się nieprawdziwa). Przy 50 TB/mies. w Europie i USA ok. $500 (Standard) lub $250 (Volume, ale tylko 10 PoP, więc gorsze pokrycie).
 - **Własny edge** wygrywa dopiero przy stałym, przewidywalnym dużym wolumenie i gdy jest ktoś do utrzymania. Koszt to nie tylko VPS, ale transfer (limity portu, "unmetered" to nie "bez limitu"), miss cache (egress z origina) i godziny pracy. Rozsądny punkt wyjścia: **tani CDN jako jedna ścieżka + własny origin w dwóch miejscach**, a własny edge dopiero po pomiarach.
 
 ### 3.7 Hosting, prawo i domeny
 
 - **Hetzner** (DSA art. 6(1)): po zgłoszeniu informuje klienta, żąda usunięcia i oświadczenia w terminie (ok. 24 h); przy braku odpowiedzi może zablokować IP; jest ścieżka odwołania. Anegdotycznie zdarzały się wyłączenia całego konta po niezauważonym mailu. Wniosek: **skrzynka abuse musi być monitorowana, a ścieżka odpowiedzi szybka**, bo to najczęstsza realna przyczyna "zdjęcia". https://www.hetzner.com/de/legal/digital-services-act/
-- **DSA:** hosting nie odpowiada za nielegalną treść, jeśli po otrzymaniu zgłoszenia działa niezwłocznie; trzeba mieć mechanizm zgłoszeń (art. 16) i uzasadnienia usunięć (art. 17). Mikro i małe firmy są zwolnione z części obowiązków platform (art. 19 do 28), ale nie z art. 16 i 17. Pełne stosowanie od 17.02.2024. Nasz moduł moderacji i odwołań (CLAUDE.md §4.27) jest zgodny z tym kierunkiem. Weryfikacja numerów artykułów w tekście rozporządzenia 2022/2065 przed poleganiem.
+- **DSA:** hosting nie odpowiada za nielegalną treść, jeśli po otrzymaniu zgłoszenia działa niezwłocznie; trzeba mieć mechanizm zgłoszeń (art. 16) i uzasadnienia usunięć (art. 17). Mikro i małe firmy są zwolnione z części obowiązków platform (art. 19 do 28), ale nie z art. 16 i 17. Pełne stosowanie od 17.02.2024. Zweryfikowano w tekście: art. 16 (mechanizm zgłoszeń, dotyczy dostawców hostingu; wystarczająco szczegółowe zgłoszenie = faktyczna wiedza wg art. 6), art. 17 (uzasadnienie ograniczeń, m.in. ograniczenie widoczności, wstrzymanie płatności, zawieszenie konta) oraz art. 19 (zwolnienie mikro i małych platform z sekcji obowiązków platform, z wyjątkiem art. 24 ust. 3; zwolnienie trwa 12 miesięcy po utracie statusu). Nasz moduł moderacji i odwołań (CLAUDE.md §4.27) jest zgodny z tym kierunkiem.
 - **Domeny:** sądowe zawieszenia domen następują na poziomie rejestratora i rejestru, a ccTLD zależą od woli krajowego rejestru (czasem szybko, czasem wcale). Strony po zawieszeniu często przenoszą się na inną domenę, co potwierdza sens listy mirrorów. Rejestry gTLD mają kontrakty ICANN z procedurą nadużyć. Domena na nazwie firmy, z rzeczywistym kontaktem abuse, jest mniej narażona niż anonimowa.
 
 ## 4. Porównanie opcji
@@ -108,8 +108,8 @@ Kierunek jest sensowny, jeśli rozumiemy go jako **"wielu operatorów i wiele ś
 ## 8. Otwarte pytania
 
 - Czy nasza skala widowni uzasadnia P2P i własny edge (pomiar: bajty z peerów vs CDN)?
-- Czy Vidstack przepuszcza `EXT-X-CONTENT-STEERING` z hls.js i w jakiej wersji?
+- Jak `xhrSetup` (podpisywanie żądań) ma działać dla wielu originów i jak generować manifest z pathway'ami.
 - Aktualny stan Odysee/Arweave (źródła pierwotne).
 - Jak podpisywać tokeny dostępu między originami.
-- Aktualne ceny CDN (strony producentów) i limity transferu u hosterów.
+- Limity transferu i polityka bandwidth u hosterów (np. Hetzner), do sprawdzenia w ich regulaminach.
 - Polityka prywatności: zapis o P2P i ujawnianiu IP.
