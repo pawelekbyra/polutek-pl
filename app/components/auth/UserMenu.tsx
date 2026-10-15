@@ -16,15 +16,11 @@ interface UserMenuProps {
   isAdmin: boolean;
 }
 
-/** "Language: Polski" in the account panel; useSwitchLanguage reads the URL, so it sits in its own Suspense. */
+/** The language button of the account panel; useSwitchLanguage reads the URL, so it sits in its own Suspense. */
 function PanelLanguage() {
   const { language } = useLanguage();
   const switchLanguage = useSwitchLanguage();
-  return (
-    <div className="flex flex-wrap items-center px-1">
-      <LanguageSwitcher language={language} onSelect={switchLanguage} variant="inline" />
-    </div>
-  );
+  return <LanguageSwitcher language={language} onSelect={switchLanguage} variant="dropdown" />;
 }
 
 type SubscribedChannel = { id: string; slug: string; handle: string | null; name: string };
@@ -143,7 +139,8 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
             aria-label={tx("Menu konta", "Account menu")}
             className="absolute right-0 top-0 flex h-full w-[min(88vw,320px)] flex-col overscroll-contain bg-[var(--chan-card)] shadow-2xl animate-in slide-in-from-right duration-200"
           >
-            <div className="flex items-start gap-3 border-b border-[var(--chan-line)] p-4">
+            <div className="border-b border-[var(--chan-line)]">
+            <div className="flex items-start gap-3 p-4 pb-2">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--chan-line)]">
                 {avatarImage(48)}
               </span>
@@ -160,6 +157,12 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
               >
                 <X className={iconClass} strokeWidth={1.8} aria-hidden="true" />
               </button>
+            </div>
+            <div className="flex justify-end px-4 pb-3">
+              <Suspense fallback={null}>
+                <PanelLanguage />
+              </Suspense>
+            </div>
             </div>
 
             <div className="flex flex-1 flex-col overflow-y-auto overscroll-contain p-3">
@@ -219,12 +222,6 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
                   </ul>
                 )}
               </section>
-
-              <div className="mt-4 border-t border-[var(--chan-line)] pt-3">
-                <Suspense fallback={null}>
-                  <PanelLanguage />
-                </Suspense>
-              </div>
 
               <nav aria-label={tx("Informacje prawne", "Legal")} className="mt-auto grid gap-1 border-t border-[var(--chan-line)] pt-3">
                 <Link href={getLocalizedHref(language, "terms")} className={itemClass} onClick={() => setOpen(false)}>

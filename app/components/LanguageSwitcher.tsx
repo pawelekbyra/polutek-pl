@@ -18,9 +18,11 @@ type Props = {
    * of all languages (no frame) in the page flow, so a scrolling card cannot clip it. Its root is
    * `display: contents`, so in a wrapping flex row the list takes a full line. Flags appear only in
    * the list rows; the buttons keep the neutral globe (owner decision: flag colours clash there).
+   * "dropdown" (account panel): a compact "[globe] Polski" button that opens the list as a floating menu under it
+   * (it overlays the content, the row itself never grows).
    * "icon" (navbar, signed-out visitors): the same floating list behind a round, globe-only button.
    */
-  variant?: "pill" | "inline" | "icon";
+  variant?: "pill" | "inline" | "icon" | "dropdown";
 };
 
 type OptionProps = {
@@ -142,6 +144,15 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
           <span className="text-[var(--chan-ink)]">{current.label}</span>
           {chevron("h-3 w-3")}
         </button>
+      ) : variant === "dropdown" ? (
+        <button
+          {...triggerProps}
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[var(--chan-line)] px-2.5 text-[13px] font-semibold text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
+        >
+          <Globe className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+          <span>{current.label}</span>
+          {chevron("h-3.5 w-3.5 text-[var(--chan-muted)]")}
+        </button>
       ) : variant === "icon" ? (
         <button
           {...triggerProps}
@@ -171,7 +182,11 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
 
       {open && !inline ? (
         <div
-          className={`${styles.panel} fixed left-2 right-2 top-[60px] z-[1100] flex flex-col overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.14)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+8px)] sm:w-[256px]`}
+          className={
+            variant === "dropdown"
+              ? `${styles.panel} absolute right-0 top-[calc(100%+6px)] z-[1200] flex w-[min(256px,80vw)] flex-col overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.18)]`
+              : `${styles.panel} fixed left-2 right-2 top-[60px] z-[1100] flex flex-col overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.14)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+8px)] sm:w-[256px]`
+          }
         >
           <div
             {...listboxProps}
