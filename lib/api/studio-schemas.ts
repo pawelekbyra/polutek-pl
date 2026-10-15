@@ -117,3 +117,17 @@ export const studioCommentsQuerySchema = z.object({
   reported: z.enum(["1", "true"]).optional(),
   page: z.coerce.number().int().min(1).max(10_000).optional(),
 });
+
+/** An appeal against a moderation decision (DSA art. 20): 20-2000 characters. */
+export const moderationAppealSchema = z.object({ text: z.string().trim().min(20).max(2000) }).strict();
+
+/** Blocking a viewer from commenting on the channel; `until` empty = until further notice. */
+export const channelBanSchema = z
+  .object({
+    userId: z.string().trim().min(1).max(64),
+    until: z.string().trim().datetime({ offset: true }).nullable().optional(),
+    reason: z.string().trim().max(500).nullable().optional(),
+  })
+  .strict();
+
+export const channelUnbanSchema = z.object({ userId: z.string().trim().min(1).max(64) }).strict();

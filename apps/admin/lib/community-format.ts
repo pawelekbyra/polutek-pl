@@ -6,7 +6,7 @@ export const COMMENT_STATUS: Record<string, { kind: "ok" | "warn" | "info" | "";
   DELETED: { kind: "", label: "Usunięty" },
 };
 
-export const REPORT_REASON: Record<string, string> = { SPAM: "spam", HARASSMENT: "nękanie", HATE: "nienawiść", NSFW: "treści dla dorosłych", SPOILER: "spoiler", OTHER: "inne" };
+export const REPORT_REASON: Record<string, string> = { SPAM: "spam", HARASSMENT: "nękanie", HATE: "nienawiść", VIOLENCE: "przemoc", COPYRIGHT: "prawa autorskie", NSFW: "treści dla dorosłych", SPOILER: "spoiler", OTHER: "inne" };
 
 export const PAYMENT_STATUS: Record<string, string> = { SUCCEEDED: "opłacona", PENDING: "w toku", FAILED: "nieudana", CANCELED: "anulowana", REFUNDED: "zwrócona", PARTIALLY_REFUNDED: "częściowo zwrócona", DISPUTED: "spór", CHARGEBACK_LOST: "spór przegrany" };
 

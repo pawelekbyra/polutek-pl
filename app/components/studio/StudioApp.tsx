@@ -7,12 +7,13 @@ import { Badge, Card, Field, Notice, buttonClass, focusRingClass, ghostButtonCla
 import { confirmLeave } from "./unsaved-guard";
 import StudioContent, { type ContentView } from "./StudioContent";
 import StudioComments from "./StudioComments";
+import StudioDecisions from "./StudioDecisions";
 import StudioProfile from "./StudioProfile";
 import StudioAnalytics from "./StudioAnalytics";
 
-type SectionId = "overview" | "content" | "comments" | "analytics" | "profile";
+type SectionId = "overview" | "content" | "comments" | "decisions" | "analytics" | "profile";
 
-const SECTION_IDS: SectionId[] = ["overview", "content", "comments", "analytics", "profile"];
+const SECTION_IDS: SectionId[] = ["overview", "content", "comments", "decisions", "analytics", "profile"];
 
 function readSection(): SectionId {
   if (typeof window === "undefined") return "overview";
@@ -67,6 +68,7 @@ export default function StudioApp() {
     overview: tx("Panel", "Dashboard"),
     content: tx("Treści", "Content"),
     comments: tx("Komentarze", "Comments"),
+    decisions: tx("Decyzje i odwołania", "Decisions and appeals"),
     analytics: tx("Statystyki", "Statistics"),
     profile: tx("Kanał i ustawienia", "Channel and settings"),
   };
@@ -113,6 +115,7 @@ export default function StudioApp() {
         {section === "overview" && <Overview me={me} onOpen={go} />}
         {section === "content" && <StudioContent initialView={contentIntent} limits={me.limits ?? null} />}
         {section === "comments" && <StudioComments />}
+        {section === "decisions" && <StudioDecisions />}
         {section === "analytics" && <StudioAnalytics />}
         {section === "profile" && <StudioProfile channel={me.channel} onChanged={load} />}
       </div>

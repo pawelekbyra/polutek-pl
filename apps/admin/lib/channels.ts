@@ -2,8 +2,8 @@
  * Data of the "Kanały" screens: the channel module read models with the panel admin as actor. Errors surface as
  * exceptions so the segment error page shows them, never an empty list that looks like "no data".
  */
-import type { ChannelStatus, ContentReportStatus } from "@prisma/client";
-import { getChannelForStaff, listChannelVideosForStaff, listChannelsForStaff, listContentReports, type StaffChannelDetail, type StaffChannelList, type StaffVideoRow } from "@/lib/modules/channel";
+import type { AppealStatus, ChannelStatus, ContentReportStatus } from "@prisma/client";
+import { getChannelForStaff, listAppealsForStaff, listChannelVideosForStaff, listChannelsForStaff, listContentReports, type StaffChannelDetail, type StaffChannelList, type StaffVideoRow } from "@/lib/modules/channel";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { isDevFixturesEnabled } from "./config";
 
@@ -52,4 +52,16 @@ export async function loadReports(f: { status: ContentReportStatus | undefined; 
 export async function loadChannelVideos(channelId: string): Promise<StaffVideoRow[]> {
   if (isDevFixturesEnabled()) return [];
   return unwrap(await listChannelVideosForStaff(readCtx(), channelId));
+}
+
+export const APPEAL_STATUS: Record<string, { kind: "ok" | "warn" | "crit" | "info" | ""; label: string }> = {
+  PENDING: { kind: "warn", label: "Czeka na decyzję" },
+  UPHELD: { kind: "ok", label: "Uwzględnione" },
+  REJECTED: { kind: "", label: "Oddalone" },
+};
+
+/** The appeal queue (DSA art. 20). `status` undefined = the whole history. */
+export async function loadAppeals(f: { status: AppealStatus | undefined; page: number }) {
+  if (isDevFixturesEnabled()) return { items: [], total: 0, page: 1, pageSize: CHANNELS_PAGE_SIZE, totalPages: 0 };
+  return unwrap(await listAppealsForStaff(readCtx(), { status: f.status, page: f.page, pageSize: CHANNELS_PAGE_SIZE }));
 }

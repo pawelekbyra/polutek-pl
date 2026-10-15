@@ -3,6 +3,7 @@ import type { AppContext } from "@/lib/modules/shared/app-context";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { fail, ok, type UseCaseResult } from "@/lib/modules/shared/result";
 import { MainChannelPolicy } from "../domain/channel.policy";
+import { sendReportReceipt } from "../infrastructure/moderation-notice";
 
 /**
  * A signed-in viewer reports a video or a channel (DSA notice mechanism). Comments have their own report flow.
@@ -50,5 +51,7 @@ export async function createContentReport(
     data: { targetType: input.targetType, targetId: input.targetId, channelId, reporterId, reason: input.reason, note },
     select: { id: true },
   });
+  // Receipt to the reporter (DSA art. 16(4)); best effort, never fails the report.
+  await sendReportReceipt(ctx, { reportId: report.id, reporterId });
   return ok({ id: report.id });
 }

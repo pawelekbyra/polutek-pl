@@ -50,3 +50,10 @@ export { getEmailTemplateDefault, previewEmailTemplate, getDeliverability, getSu
 export type { TemplatePreview, Deliverability, SuppressionView } from "./application/admin-communication";
 export { findPlaceholders } from "./domain/render-email";
 export * from "./domain/email.errors";
+export {
+  sendModerationDecisionEmail,
+  sendReporterEmail,
+  buildModerationDecisionEmail,
+  buildReporterEmail,
+} from "./application/send-moderation-email";
+export type { ModerationEmailInput, ReporterEmailInput } from "./application/send-moderation-email";

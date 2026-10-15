@@ -32,6 +32,7 @@ describe('Comments Core Use Cases', () => {
         update: vi.fn(),
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
+      channelBan: { findUnique: vi.fn().mockResolvedValue(null) },
       video: {
         findUnique: vi.fn(),
       },

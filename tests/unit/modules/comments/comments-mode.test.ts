@@ -40,6 +40,7 @@ describe('createVideoComment under commentsMode', () => {
         create: vi.fn().mockResolvedValue({ id: 'new-c' }),
       },
       video: { findUnique: vi.fn() },
+      channelBan: { findUnique: vi.fn().mockResolvedValue(null) },
       user: { findUnique: vi.fn().mockResolvedValue({ commentMutedUntil: null }) },
       $transaction: vi.fn((cb) => cb(prisma)),
     };

@@ -5,6 +5,7 @@ import { Pin, PinOff } from "lucide-react";
 import { useLanguage } from "@/app/components/LanguageContext";
 import { StudioApiError, jsonBody, studioApi, type StudioComment, type StudioCommentList } from "./studio-client";
 import { Badge, Card, Notice, inputClass, smallButtonClass, smallDangerGhostButtonClass, smallGhostButtonClass } from "./ui";
+import { BlockViewerButton, BlockedViewersCard } from "./StudioBans";
 
 type Filter = "all" | "held" | "reported";
 
@@ -57,6 +58,7 @@ export default function StudioComments() {
   };
 
   return (
+    <div className="grid gap-4">
     <Card
       title={tx("Komentarze", "Comments")}
       actions={
@@ -135,6 +137,7 @@ export default function StudioComments() {
                     </button>
                   </>
                 )}
+                {c.author && <BlockViewerButton userId={c.author.id} name={c.author.name} />}
               </div>
               {replying === c.id && (
                 <div className="grid gap-2">
@@ -158,5 +161,7 @@ export default function StudioComments() {
         </ul>
       )}
     </Card>
+    <BlockedViewersCard />
+    </div>
   );
 }

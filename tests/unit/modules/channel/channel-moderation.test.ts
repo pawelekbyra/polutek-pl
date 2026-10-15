@@ -15,7 +15,7 @@ function makePrisma(over: Record<string, unknown> = {}) {
     moderationDecision: { create: vi.fn(async () => ({ id: "dec1" })) },
     auditLog: { create: vi.fn(async () => ({})) },
     contentReport: { updateMany: vi.fn(async () => ({ count: 1 })), update: vi.fn(async () => ({})) },
-    video: { update: vi.fn(async () => ({})) },
+    video: { update: vi.fn(async () => ({})), findUnique: vi.fn(async () => ({ moderationStatus: "VISIBLE", title: "Film" })) },
     channelQuota: { upsert: vi.fn(async () => ({})) },
   };
   const prisma = {
