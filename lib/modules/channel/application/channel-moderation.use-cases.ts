@@ -6,6 +6,7 @@ import { recordAuditEvent } from "@/lib/modules/audit";
 import { authorize } from "@/lib/modules/authz";
 import { defaultLimitsFor } from "@/lib/platform-limits";
 import { isMainChannelId, resolveMainChannelId } from "./main-channel.service";
+import { notifyChannelOwnerOfDecision, notifyReporterOfDecision } from "../infrastructure/moderation-notice";
 
 /**
  * Platform staff operations on creator channels (admin panel, stage 5). Every function authorizes first
@@ -154,6 +155,8 @@ export async function setChannelStatus(
   if (channel.status === input.status) return fail(new AppError("Kanał ma już ten status.", 409, "STATUS_UNCHANGED"));
   const adminId = ctx.actor.type === "admin" ? ctx.actor.userId : null;
   const now = ctx.now();
+  const statementPublic = input.reasonPublic?.trim().slice(0, 500) || reason;
+  let decisionId: string | null = null;
   try {
     await ctx.db.writeTransaction(async (tx) => {
       const { count } = await tx.creator.updateMany({
@@ -166,28 +169,34 @@ export async function setChannelStatus(
         },
       });
       if (count === 0) throw new AppError("Status kanału zmienił się w międzyczasie. Odśwież stronę.", 409, "STATUS_CONFLICT");
-      await tx.moderationDecision.create({
+      const decision = await tx.moderationDecision.create({
         data: {
           targetType: "CHANNEL", targetId: channel.id, channelId: channel.id,
           action: `CHANNEL_${input.status}`, reasonCode: "STAFF_DECISION",
-          reasonPublic: input.reasonPublic?.trim().slice(0, 500) || reason, reasonInternal: reason, actorAdminId: adminId,
+          reasonPublic: statementPublic, reasonInternal: reason, actorAdminId: adminId,
         },
+        select: { id: true },
       });
+      decisionId = decision?.id ?? null;
       await recordAuditEvent(ctx, {
         action: "CHANNEL_STATUS_CHANGED", targetType: "Creator", targetId: channel.id, channelId: channel.id,
-        metadata: { before: { status: channel.status }, after: { status: input.status }, reason },
+        metadata: { before: { status: channel.status }, after: { status: input.status }, reason, decisionId },
       }, tx);
     });
   } catch (error) {
     if (error instanceof AppError) return fail(error);
     throw error;
   }
+  // After the commit and best effort: a failed notification never undoes the decision.
+  if (decisionId) {
+    await notifyChannelOwnerOfDecision(ctx, { decisionId, channelId: channel.id, action: `CHANNEL_${input.status}`, reasonPublic: statementPublic });
+  }
   return ok({ status: input.status });
 }
 
 export async function issueChannelStrike(
   ctx: AppContext,
-  input: { channelId: string; policy: string; reason: string; expiresInDays?: number },
+  input: { channelId: string; policy: string; reason: string; reasonPublic?: string; expiresInDays?: number },
 ): Promise<UseCaseResult<{ id: string }, AppError>> {
   const denied = await authorize(ctx, "platform.moderate_channel");
   if (denied) return fail(denied);
@@ -202,15 +211,28 @@ export async function issueChannelStrike(
   const adminId = ctx.actor.userId;
   const days = Math.min(Math.max(Math.trunc(input.expiresInDays ?? 90), 1), 365);
   const expiresAt = new Date(ctx.now().getTime() + days * 86_400_000);
-  const strike = await ctx.db.writeTransaction(async (tx) => {
+  const statementPublic = input.reasonPublic?.trim().slice(0, 500) || reason;
+  const issued = await ctx.db.writeTransaction(async (tx) => {
     const row = await tx.channelStrike.create({ data: { channelId: channel.id, reason, policy, issuedByAdminId: adminId, expiresAt }, select: { id: true } });
+    // A warning is a decision with a statement of reasons too (DSA art. 17), so the creator can see and appeal it.
+    const decision = await tx.moderationDecision.create({
+      data: {
+        targetType: "CHANNEL", targetId: channel.id, channelId: channel.id,
+        action: "CHANNEL_STRIKE_ISSUED", reasonCode: policy,
+        reasonPublic: statementPublic, reasonInternal: reason, actorAdminId: adminId,
+      },
+      select: { id: true },
+    });
     await recordAuditEvent(ctx, {
       action: "CHANNEL_STRIKE_ISSUED", targetType: "Creator", targetId: channel.id, channelId: channel.id,
-      metadata: { strikeId: row.id, policy, reason, expiresAt: expiresAt.toISOString() },
+      metadata: { strikeId: row.id, policy, reason, expiresAt: expiresAt.toISOString(), decisionId: decision?.id ?? null },
     }, tx);
-    return row;
+    return { strikeId: row.id, decisionId: decision?.id ?? null };
   });
-  return ok({ id: strike.id });
+  if (issued.decisionId) {
+    await notifyChannelOwnerOfDecision(ctx, { decisionId: issued.decisionId, channelId: channel.id, action: "CHANNEL_STRIKE_ISSUED", reasonPublic: statementPublic });
+  }
+  return ok({ id: issued.strikeId });
 }
 
 export async function revokeChannelStrike(ctx: AppContext, input: { strikeId: string; reason: string }): Promise<UseCaseResult<undefined, AppError>> {
@@ -315,6 +337,9 @@ export async function resolveContentReport(
   if (report.status !== "PENDING") return fail(new AppError("To zgłoszenie jest już rozstrzygnięte.", 409, "REPORT_RESOLVED"));
   const adminId = ctx.actor.type === "admin" ? ctx.actor.userId : null;
   const now = ctx.now();
+  let decisionId: string | null = null;
+  let tookDown = false;
+  let videoTitle: string | null = null;
   try {
     await ctx.db.writeTransaction(async (tx) => {
       const { count } = await tx.contentReport.updateMany({
@@ -323,7 +348,14 @@ export async function resolveContentReport(
       });
       if (count === 0) throw new AppError("To zgłoszenie jest już rozstrzygnięte.", 409, "REPORT_RESOLVED");
       const takedown = input.outcome === "ACTION_TAKEN" && input.removeVideo === true && report.targetType === "VIDEO";
-      if (takedown) await tx.video.update({ where: { id: report.targetId }, data: { moderationStatus: "REMOVED" } });
+      // The previous moderation status is kept in the audit row, so an upheld appeal can restore it.
+      let beforeModeration: string | null = null;
+      if (takedown) {
+        const before = await tx.video.findUnique({ where: { id: report.targetId }, select: { moderationStatus: true, title: true } });
+        beforeModeration = before ? String(before.moderationStatus) : null;
+        videoTitle = before?.title ?? null;
+        await tx.video.update({ where: { id: report.targetId }, data: { moderationStatus: "REMOVED" } });
+      }
       const decision = await tx.moderationDecision.create({
         data: {
           targetType: report.targetType, targetId: report.targetId, channelId: report.channelId,
@@ -333,15 +365,35 @@ export async function resolveContentReport(
         },
         select: { id: true },
       });
+      decisionId = decision.id;
+      tookDown = takedown;
       await tx.contentReport.update({ where: { id: report.id }, data: { decisionId: decision.id } });
       await recordAuditEvent(ctx, {
         action: "CONTENT_REPORT_RESOLVED", targetType: "ContentReport", targetId: report.id, channelId: report.channelId ?? undefined,
-        metadata: { outcome: input.outcome, decisionId: decision.id, takedown },
+        metadata: {
+          outcome: input.outcome, decisionId: decision.id, takedown, reason: report.reason,
+          ...(takedown ? { before: { moderationStatus: beforeModeration }, after: { moderationStatus: "REMOVED" } } : {}),
+        },
       }, tx);
     });
   } catch (error) {
     if (error instanceof AppError) return fail(error);
     throw error;
+  }
+  // After the commit and best effort. The creator hears about decisions that touched their content; the reporter
+  // always hears the outcome (DSA art. 16(5)).
+  if (decisionId) {
+    const action = tookDown ? "VIDEO_REMOVED" : input.outcome === "DISMISSED" ? "REPORT_DISMISSED" : "REPORT_ACTION_TAKEN";
+    if (input.outcome === "ACTION_TAKEN" && report.channelId) {
+      await notifyChannelOwnerOfDecision(ctx, {
+        decisionId, channelId: report.channelId, action, reasonPublic,
+        videoId: report.targetType === "VIDEO" ? report.targetId : null, subjectLabel: videoTitle,
+      });
+    }
+    await notifyReporterOfDecision(ctx, {
+      reportId: report.id, reporterId: report.reporterId, reporterEmail: report.reporterEmail,
+      actionTaken: input.outcome === "ACTION_TAKEN", reasonPublic, decisionId,
+    });
   }
   return ok(undefined);
 }
@@ -386,23 +438,32 @@ export async function setVideoModerationStatus(
   if (!VIDEO_MODERATION.includes(input.status)) return fail(new AppError("Nieprawidłowy status moderacji.", 400, "INVALID_STATUS"));
   const reason = input.reason.trim();
   if (reason.length < 5 || reason.length > 500) return fail(new AppError("Podaj powód (5-500 znaków).", 400, "REASON_REQUIRED"));
-  const video = await ctx.prisma.video.findUnique({ where: { id: input.videoId }, select: { id: true, creatorId: true, moderationStatus: true } });
+  const video = await ctx.prisma.video.findUnique({ where: { id: input.videoId }, select: { id: true, creatorId: true, moderationStatus: true, title: true } });
   if (!video) return fail(new AppError("Nie znaleziono filmu.", 404, "VIDEO_NOT_FOUND"));
   if (video.moderationStatus === input.status) return fail(new AppError("Film ma już ten status.", 409, "STATUS_UNCHANGED"));
   const adminId = ctx.actor.type === "admin" ? ctx.actor.userId : null;
-  await ctx.db.writeTransaction(async (tx) => {
+  const statementPublic = input.reasonPublic?.trim().slice(0, 500) || reason;
+  const decisionId = await ctx.db.writeTransaction(async (tx) => {
     await tx.video.update({ where: { id: video.id }, data: { moderationStatus: input.status } });
-    await tx.moderationDecision.create({
+    const decision = await tx.moderationDecision.create({
       data: {
         targetType: "VIDEO", targetId: video.id, channelId: video.creatorId,
         action: `VIDEO_${input.status}`, reasonCode: "STAFF_DECISION",
-        reasonPublic: input.reasonPublic?.trim().slice(0, 500) || reason, reasonInternal: reason, actorAdminId: adminId,
+        reasonPublic: statementPublic, reasonInternal: reason, actorAdminId: adminId,
       },
+      select: { id: true },
     });
+    const id: string | null = decision?.id ?? null;
     await recordAuditEvent(ctx, {
       action: "VIDEO_MODERATION_CHANGED", targetType: "Video", targetId: video.id, channelId: video.creatorId,
-      metadata: { before: { moderationStatus: video.moderationStatus }, after: { moderationStatus: input.status }, reason },
+      metadata: { before: { moderationStatus: video.moderationStatus }, after: { moderationStatus: input.status }, reason, decisionId: id },
     }, tx);
+    return id;
   });
+  if (decisionId) {
+    await notifyChannelOwnerOfDecision(ctx, {
+      decisionId, channelId: video.creatorId, videoId: video.id, action: `VIDEO_${input.status}`, reasonPublic: statementPublic, subjectLabel: video.title,
+    });
+  }
   return ok(undefined);
 }

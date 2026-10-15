@@ -82,7 +82,7 @@ export function StrikeForm({ channelId }: { channelId: string }) {
           </Field>
         </div>
         <div className="span-12">
-          <Field id="k-reason" label="Powód" error={errors.reason}>
+          <Field id="k-reason" label="Powód (twórca zobaczy go w powiadomieniu i w Studiu)" error={errors.reason}>
             <textarea className="input" name="reason" rows={2} maxLength={500} required {...describe("k-reason", errors.reason, true)} />
           </Field>
         </div>
@@ -112,11 +112,14 @@ export function RevokeStrikeForm({ channelId, strikeId }: { channelId: string; s
 export function ReportForm({ reportId, canRemoveVideo }: { reportId: string; canRemoveVideo: boolean }) {
   const { state, pending, errors, onSubmit, formRef } = useActionForm(resolveReportAction);
   // FormData built from the form never carries the clicked submit button, so the outcome travels in a hidden field.
-  const decide = (outcome: "DISMISSED" | "ACTION_TAKEN") => {
+  const decide = (outcome: "DISMISSED" | "ACTION_TAKEN", hideVideo = false) => {
     const form = formRef.current;
     const field = form?.elements.namedItem("outcome");
     if (!form || !(field instanceof HTMLInputElement)) return;
     field.value = outcome;
+    // "Uznaj i ukryj film": one step, the same removal the checkbox performs.
+    const remove = form.elements.namedItem("removeVideo");
+    if (hideVideo && remove instanceof HTMLInputElement) remove.checked = true;
     form.requestSubmit();
   };
   return (
@@ -139,7 +142,10 @@ export function ReportForm({ reportId, canRemoveVideo }: { reportId: string; can
         <span />
         <span className="tile-link-row">
           <button type="button" className="btn" aria-busy={pending} onClick={() => decide("DISMISSED")}>Oddal</button>
-          <button type="button" className="btn btn-primary" aria-busy={pending} onClick={() => decide("ACTION_TAKEN")}>Uznaj zgłoszenie</button>
+          {canRemoveVideo ? (
+            <button type="button" className="btn btn-primary" aria-busy={pending} onClick={() => decide("ACTION_TAKEN", true)}>Uznaj i ukryj film</button>
+          ) : null}
+          <button type="button" className={canRemoveVideo ? "btn" : "btn btn-primary"} aria-busy={pending} onClick={() => decide("ACTION_TAKEN")}>Uznaj zgłoszenie</button>
         </span>
       </div>
     </form>

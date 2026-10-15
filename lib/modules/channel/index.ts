@@ -13,3 +13,5 @@ export * from "./domain/channel-avatar";
 export * from "./application/channel-moderation.use-cases";
 export * from "./application/content-report.use-case";
 export * from "./domain/main-channel-setting";
+export * from "./application/moderation-appeals.use-cases";
+export * from "./domain/moderation-appeal.policy";

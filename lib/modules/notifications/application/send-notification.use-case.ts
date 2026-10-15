@@ -12,6 +12,13 @@ export interface SendNotificationInput {
   bodyPl: string;
   bodyEn: string;
   href?: string;
+  /** Channel and video the notification is about (NEW_VIDEO, MODERATION). */
+  channelId?: string;
+  videoId?: string;
+  /** Deliver even when the recipient switched this category off (decisions that restrict a channel, DSA art. 17). */
+  force?: boolean;
+  /** Use the given text as is, never an admin-edited template (the text carries the statement of reasons). */
+  skipTemplate?: boolean;
 }
 
 // WELCOME is a one-time onboarding message and is never gated by a preference toggle.
@@ -44,10 +51,10 @@ export async function sendNotification(input: SendNotificationInput, tx?: Db) {
   const db = tx ?? prisma;
 
   try {
-    const allowed = await isNotificationAllowed(db, input.userId, input.kind);
+    const allowed = input.force === true || (await isNotificationAllowed(db, input.userId, input.kind));
     if (!allowed) return null;
 
-    const override = await db.notificationTemplate.findUnique({ where: { kind: input.kind } });
+    const override = input.skipTemplate ? null : await db.notificationTemplate.findUnique({ where: { kind: input.kind } });
 
     const notification = await db.notification.create({
       data: {
@@ -58,6 +65,8 @@ export async function sendNotification(input: SendNotificationInput, tx?: Db) {
         bodyPl: override?.bodyPl ?? input.bodyPl,
         bodyEn: override?.bodyEn ?? input.bodyEn,
         href: input.href,
+        ...(input.channelId ? { channelId: input.channelId } : {}),
+        ...(input.videoId ? { videoId: input.videoId } : {}),
       },
     });
 

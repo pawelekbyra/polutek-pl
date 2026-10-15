@@ -10,6 +10,7 @@ import { recordAuditEventSafe } from "@/lib/modules/audit";
 import { isUuid } from "@/lib/utils/uuid";
 import { countGraphemes } from "@/lib/utils/graphemes";
 import { CommentStatus } from "@prisma/client";
+import { isBannedFromChannel } from "./channel-ban.use-cases";
 
 export interface CreateVideoCommentInput {
   videoId: string;
@@ -83,6 +84,12 @@ export async function createVideoComment(
 
     const videoCreatorId = video.creator?.userId || null;
     const canModerate = await canModerateVideoComments(ctx, resolvedVideoId);
+
+    // The channel's block list (Studio "Zablokuj użytkownika"): the viewer may watch but not comment or reply.
+    // The reason and the end date are the creator's business and never reach the viewer.
+    if (!canModerate && (await isBannedFromChannel(prisma, video.creatorId, userId, ctx.now()))) {
+      return fail({ type: "FORBIDDEN", code: "CHANNEL_BANNED", message: "Nie możesz komentować filmów tego kanału." });
+    }
 
     // The creator's choice per video (Studio "Komentarze"); owner and staff are not limited by it.
     const newStatus = CommentPolicy.statusForNewComment(video.commentsMode, canModerate);

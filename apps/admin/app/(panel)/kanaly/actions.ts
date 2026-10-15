@@ -5,7 +5,7 @@
  */
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { issueChannelStrike, resolveContentReport, revokeChannelStrike, setChannelStatus, setChannelTrustLevel, setVideoModerationStatus } from "@/lib/modules/channel";
+import { issueChannelStrike, resolveContentReport, resolveModerationAppeal, revokeChannelStrike, setChannelStatus, setChannelTrustLevel, setVideoModerationStatus } from "@/lib/modules/channel";
 import { openGate } from "@admin/lib/actions/gate";
 import { RATE } from "@admin/lib/actions/rate-limit";
 import { errorMessage, zodFieldErrors, type ActionResult } from "@admin/lib/actions/panel";
@@ -127,4 +127,30 @@ export async function setVideoModerationAction(_prev: ActionResult | null, fd: F
   if (!res.ok) return { ok: false, ...errorMessage(res.error) };
   revalidatePath(`/kanaly/${channelId}`);
   return { ok: true, message: "Status filmu zmieniony." };
+}
+
+const appealSchema = z
+  .object({
+    appealId: z.string().min(1).max(100),
+    outcome: z.enum(["UPHELD", "REJECTED"]),
+    reasonPublic: z.string().trim().min(3, "Podaj uzasadnienie dla twórcy (co najmniej 3 znaki).").max(500, "Najwyżej 500 znaków."),
+    reasonInternal: z.string().trim().max(500).optional(),
+  })
+  .strict();
+
+/** "Uwzględnij" reverses the effect of the decision; "Oddal" only records the reasons. Both write a new decision. */
+export async function resolveAppealAction(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
+  const gate = await openGate({ path: "/kanaly", rate: RATE.security });
+  if (!gate.ok) return gate.result;
+  const parsed = appealSchema.safeParse({
+    appealId: text(fd, "appealId"),
+    outcome: text(fd, "outcome"),
+    reasonPublic: text(fd, "reasonPublic"),
+    reasonInternal: text(fd, "reasonInternal") || undefined,
+  });
+  if (!parsed.success) return bad(parsed.error.issues);
+  const res = await resolveModerationAppeal(gate.ctx, parsed.data);
+  if (!res.ok) return { ok: false, ...errorMessage(res.error) };
+  revalidatePath("/kanaly");
+  return { ok: true, message: parsed.data.outcome === "UPHELD" ? `Odwołanie uwzględnione. ${res.data.note}` : "Odwołanie oddalone. Twórca dostał uzasadnienie." };
 }
