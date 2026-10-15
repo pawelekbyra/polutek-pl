@@ -28,7 +28,7 @@ export const CONTENT_PAGE_SIZE = 20;
 
 export type ContentFilters = {
   q?: string;
-  status?: "PUBLISHED" | "DRAFT" | "ARCHIVED";
+  status?: "PUBLISHED" | "UNLISTED" | "DRAFT" | "ARCHIVED";
   tier?: "PUBLIC" | "LOGGED_IN";
   hls?: "READY" | "PROCESSING" | "FAILED" | "MISSING_SOURCE";
   sort?: "created" | "published" | "title" | "views";

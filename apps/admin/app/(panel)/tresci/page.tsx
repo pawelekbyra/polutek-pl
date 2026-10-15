@@ -12,7 +12,7 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 
 const pick = <T extends string>(v: unknown, allowed: readonly T[]): T | undefined => (typeof v === "string" && (allowed as readonly string[]).includes(v) ? (v as T) : undefined);
 
-const STATUS = [["", "Wszystkie statusy"], ["PUBLISHED", "Opublikowane"], ["DRAFT", "Szkice"], ["ARCHIVED", "Archiwum"]] as const;
+const STATUS = [["", "Wszystkie statusy"], ["PUBLISHED", "Opublikowane"], ["UNLISTED", "Niepubliczne"], ["DRAFT", "Szkice"], ["ARCHIVED", "Archiwum"]] as const;
 const TIERS = [["", "Każdy dostęp"], ["PUBLIC", "Publiczny"], ["LOGGED_IN", "Po zalogowaniu"]] as const;
 const HLS = [["", "Każdy stan wideo"], ["READY", "Wideo gotowe"], ["PROCESSING", "W kodowaniu"], ["FAILED", "Błąd kodowania"], ["MISSING_SOURCE", "Bez oryginału"]] as const;
 const SORTS = [["created", "Najnowsze"], ["published", "Data publikacji"], ["title", "Tytuł"], ["views", "Obejrzenia"]] as const;
@@ -29,7 +29,7 @@ export default async function ContentListPage({ searchParams }: Props) {
   const sp = await searchParams;
   const filters: ContentFilters = {
     q: typeof sp.q === "string" ? sp.q.slice(0, 120) : undefined,
-    status: pick(sp.status, ["PUBLISHED", "DRAFT", "ARCHIVED"] as const),
+    status: pick(sp.status, ["PUBLISHED", "UNLISTED", "DRAFT", "ARCHIVED"] as const),
     tier: pick(sp.tier, ["PUBLIC", "LOGGED_IN"] as const),
     hls: pick(sp.hls, ["READY", "PROCESSING", "FAILED", "MISSING_SOURCE"] as const),
     sort: pick(sp.sort, ["created", "published", "title", "views"] as const),

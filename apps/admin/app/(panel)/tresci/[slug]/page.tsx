@@ -29,7 +29,7 @@ export default async function FilmPage({ params }: Props) {
   const warnings = v.diagnostics.filter((d) => d.severity === "WARNING");
   const publishBlockers = errors.filter((d) => d.code?.startsWith("VIDEO_PUBLICATION_"));
   const upcoming = st.label === "Premiera";
-  const ops = v.status === "PUBLISHED" ? (["unpublish", "archive", "duplicate"] as const) : v.status === "ARCHIVED" ? (["restore", "duplicate"] as const) : (["publish", "archive", "duplicate"] as const);
+  const ops = v.status === "PUBLISHED" || v.status === "UNLISTED" ? (["unpublish", "archive", "duplicate"] as const) : v.status === "ARCHIVED" ? (["restore", "duplicate"] as const) : (["publish", "archive", "duplicate"] as const);
 
   return (
     <>

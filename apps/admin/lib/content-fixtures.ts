@@ -13,7 +13,7 @@ const D = 24 * H;
 type Seed = {
   slug: string;
   title: string;
-  status: "PUBLISHED" | "DRAFT" | "ARCHIVED";
+  status: "PUBLISHED" | "UNLISTED" | "DRAFT" | "ARCHIVED";
   tier: "PUBLIC" | "LOGGED_IN";
   hls: "READY" | "PROCESSING" | "FAILED" | "MISSING_SOURCE";
   thumb: ThumbnailState;
