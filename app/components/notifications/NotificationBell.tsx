@@ -184,9 +184,9 @@ export default function NotificationBell() {
       : tx("Powiadomienia", "Notifications");
   const badge = unread > 99 ? "99+" : String(unread);
   const itemClassName =
-    "flex min-h-11 w-full flex-col items-start gap-0.5 rounded-none px-3 py-2 text-left text-[13px] text-[var(--chan-ink)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]";
+    "flex min-h-12 w-full flex-col items-start gap-0.5 rounded-xl px-3 py-2.5 text-left text-[13px] text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]";
   const actionClassName =
-    "min-h-10 rounded-none px-3 py-2 text-[13px] font-semibold text-[var(--chan-ink)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]";
+    "min-h-10 rounded-xl px-3 py-2 text-[13px] font-semibold text-[var(--chan-muted)] hover:text-[var(--chan-ink)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]";
 
   return (
     <>
@@ -196,13 +196,13 @@ export default function NotificationBell() {
       <DropdownMenu open={open} onOpenChange={onOpenChange}>
         <DropdownMenuTrigger
           aria-label={label}
-          className="relative flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-none text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] active:scale-95 motion-reduce:transform-none motion-reduce:transition-none"
+          className="relative flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] active:scale-95 motion-reduce:transform-none motion-reduce:transition-none"
         >
           <Bell className="h-5 w-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
           {unread > 0 && (
             <span
               aria-hidden="true"
-              className="absolute right-0 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-none bg-[var(--chan-blue)] px-1 text-[10px] font-bold leading-none text-white"
+              className="absolute right-0 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--chan-blue)] px-1 text-[10px] font-bold leading-none text-white"
             >
               {badge}
             </span>
@@ -212,12 +212,12 @@ export default function NotificationBell() {
         <DropdownMenuContent
           align="end"
           sideOffset={8}
-          className="z-[1100] max-h-[70vh] w-[min(22rem,calc(100vw-1rem))] rounded-none border border-[var(--chan-line)] bg-[var(--chan-card)] p-1.5 font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.14)] ring-0"
+          className="z-[1100] max-h-[70vh] w-[min(22rem,calc(100vw-1rem))] overflow-y-auto rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-2 font-sans text-[var(--chan-ink)] shadow-[0_24px_60px_-18px_rgba(15,23,42,0.28)] ring-0"
         >
-          <DropdownMenuLabel className="px-3 py-2">
-            <span className="text-[14px] font-bold text-[var(--chan-ink)]">{tx("Powiadomienia", "Notifications")}</span>
+          <DropdownMenuLabel className="px-3 pb-1 pt-2">
+            <span className="text-[15px] font-bold text-[var(--chan-ink)]">{tx("Powiadomienia", "Notifications")}</span>
           </DropdownMenuLabel>
-          <DropdownMenuSeparator className="mx-1 bg-[var(--chan-line)]" />
+          <DropdownMenuSeparator className="mx-2 my-1 bg-[var(--chan-line)]" />
 
           {status === "loading" && items.length === 0 && (
             <p className="px-3 py-4 text-[13px] text-[var(--chan-muted)]">{tx("Ładowanie…", "Loading…")}</p>
@@ -237,7 +237,7 @@ export default function NotificationBell() {
               <>
                 <span className="flex w-full items-start gap-2">
                   {!n.read && (
-                    <span aria-hidden="true" className="mt-1.5 h-2 w-2 shrink-0 rounded-none bg-[var(--chan-blue)]" />
+                    <span aria-hidden="true" className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[var(--chan-blue)]" />
                   )}
                   <span className={n.read ? "font-medium" : "font-bold"}>
                     {n.title}
@@ -255,18 +255,18 @@ export default function NotificationBell() {
                 key={n.id}
                 onClick={() => markRead(n.id)}
                 render={<a href={link.href} {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})} />}
-                className={itemClassName}
+                className={`${itemClassName} ${n.read ? "" : "bg-[var(--chan-blue)]/[0.07]"}`}
               >
                 {content}
               </DropdownMenuItem>
             ) : (
-              <DropdownMenuItem key={n.id} onClick={() => markRead(n.id)} className={itemClassName}>
+              <DropdownMenuItem key={n.id} onClick={() => markRead(n.id)} className={`${itemClassName} ${n.read ? "" : "bg-[var(--chan-blue)]/[0.07]"}`}>
                 {content}
               </DropdownMenuItem>
             );
           })}
 
-          {(nextCursor || unread > 0) && <DropdownMenuSeparator className="mx-1 bg-[var(--chan-line)]" />}
+          {(nextCursor || unread > 0) && <DropdownMenuSeparator className="mx-2 my-1 bg-[var(--chan-line)]" />}
           {nextCursor && (
             <DropdownMenuItem closeOnClick={false} onClick={() => void loadMore()} className={actionClassName}>
               {tx("Pokaż starsze", "Show older")}
