@@ -1157,6 +1157,8 @@ model Comment {
   reports   CommentReport[]
 
   @@index([videoId, pinnedAt, createdAt])
+  // Also: a partial unique index "Comment_one_pinned_per_video" (videoId) WHERE pinnedAt IS NOT NULL lives only in the
+  // migration 20261019140000 (Prisma cannot declare partial indexes).
   @@index([authorId])
   @@index([videoId, createdAt])
   @@index([parentId, createdAt])
