@@ -2,6 +2,7 @@
 
 import { scrollToWatchTabsWhenSettled } from "./scroll-to-watch-tabs";
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   MessageSquare,
   Loader2,
@@ -191,6 +192,11 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     commentsTopRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
   }, []);
 
+  // The round "back up" button: on a phone it goes where a new comment goes (the KOMENTARZE/FILMY tab row on top).
+  const handleBackToTop = useCallback(() => {
+    if (!scrollToWatchTabsWhenSettled(scrollBehavior())) scrollToCommentsTop();
+  }, [scrollToCommentsTop]);
+
   const { mutate: postComment } = postMutation;
 
   const comments = data?.pages?.flatMap((page) => page.comments || []) ?? [];
@@ -337,11 +343,13 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       className="relative flex max-w-full flex-col gap-4 pb-4"
     >
       {/* Back to comments top */}
-      {showStickyHeader && (
-        <div className="fixed bottom-5 right-5 z-50 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-200 sm:bottom-6 sm:right-6">
+      {showStickyHeader &&
+        createPortal(
+        // In the body, so "fixed" is the screen corner whatever transforms the comments column has.
+        <div className="fixed bottom-[max(12px,env(safe-area-inset-bottom))] right-3 z-50 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-3 motion-safe:duration-200 sm:bottom-6 sm:right-6">
           <button
             type="button"
-            onClick={scrollToCommentsTop}
+            onClick={handleBackToTop}
             aria-label={tx("Wróć do początku komentarzy", "Back to the top of comments")}
             className="group flex h-12 w-12 items-center justify-center rounded-full bg-[var(--chan-blue)] text-white shadow-[0_10px_30px_var(--cm-blue-35)] ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:bg-[var(--cm-blue-86-black)] hover:shadow-[0_14px_36px_var(--cm-blue-42)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:translate-y-0 active:scale-95 motion-reduce:transition-none"
           >
@@ -360,8 +368,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               <path d="M6 14l6-6 6 6" />
             </svg>
           </button>
-        </div>
-      )}
+        </div>,
+        document.body,
+        )}
 
       <div className="flex flex-row items-center justify-between gap-2 sm:gap-3">
         <div className="flex items-center gap-3 min-w-0">
