@@ -64,6 +64,23 @@ function useHiddenPreference(key: string) {
   return [hidden, update] as const;
 }
 
+/** The rail starts below the top bar: publish the bar's height as --pp-topbar-h (it can differ per page and breakpoint). */
+function useTopbarHeight(routeKey: string) {
+  useEffect(() => {
+    const bar = document.querySelector<HTMLElement>("header.polutek-watch-nav");
+    if (!bar) return;
+    const publish = () => document.documentElement.style.setProperty("--pp-topbar-h", `${Math.round(bar.getBoundingClientRect().height)}px`);
+    publish();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(publish);
+    observer?.observe(bar);
+    window.addEventListener("resize", publish);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", publish);
+    };
+  }, [routeKey]);
+}
+
 function BottomBar({ active }: { active: SectionId }) {
   const { tx } = useLanguage();
   const items = useSectionItems();
@@ -134,6 +151,7 @@ function BottomBar({ active }: { active: SectionId }) {
 }
 
 function Rail({ active }: { active: SectionId }) {
+  useTopbarHeight(active);
   const { tx } = useLanguage();
   const items = useSectionItems();
   const [hidden, setHidden] = useHiddenPreference(SECTION_RAIL_STORAGE_KEY);
@@ -156,7 +174,7 @@ function Rail({ active }: { active: SectionId }) {
 
   return (
     <aside
-      className="pp-section-rail fixed bottom-0 left-0 top-0 z-[900] hidden w-16 flex-col items-center border-r border-[var(--chan-line)] bg-[var(--chan-nav)] pb-4 pt-[72px] lg:flex"
+      className="pp-section-rail fixed bottom-0 left-0 top-[var(--pp-topbar-h,64px)] z-[900] hidden w-16 flex-col items-center border-r border-t border-[var(--chan-line)] bg-[var(--chan-nav)] pb-4 pt-4 lg:flex"
       data-open="true"
     >
       <nav aria-label={tx("Sekcje serwisu", "Service sections")} className="flex flex-1 flex-col items-center gap-2">
