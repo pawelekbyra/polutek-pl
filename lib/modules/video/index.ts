@@ -33,3 +33,5 @@ export * from './application/sync-public-thumbnail.service';
 export * from './application/unlist-admin-video.use-case';
 export * from './application/ready-visibility';
 export * from './domain/video-visibility';
+export * from './domain/search-query';
+export * from './application/public-search.service';

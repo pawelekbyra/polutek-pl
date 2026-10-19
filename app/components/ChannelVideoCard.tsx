@@ -15,6 +15,7 @@ import AccessLockOverlay from "./AccessLockOverlay";
 import { NajsIcon } from "./najs/primitives";
 import { getLocalizedHref, appendQueryString } from "@/lib/i18n/routing";
 import { toVideoAccessTier } from "@/lib/access-tier";
+import VideoTaxonomyChips from "./search/VideoTaxonomyChips";
 
 interface ChannelVideoCardProps {
   video: PublicVideoDTO;
@@ -137,6 +138,7 @@ export default function ChannelVideoCard({
                 )}
               </div>
             </div>
+            <VideoTaxonomyChips category={video.category} tags={[]} locale={language} tx={tx} className="mt-1.5" />
           </div>
         </div>
       </div>

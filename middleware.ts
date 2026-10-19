@@ -63,6 +63,9 @@ const isPublicRoute = createRouteMatcher([
   // both serve PUBLIC-tier published videos only and decide that themselves. The RSS feed is /channel/<slug>/feed.xml (above).
   '/embed/(.*)',
   '/api/oembed',
+  // Public cross-channel search and its category/tag facets: visibility is decided in the query (lib/modules/video public-search).
+  '/api/search',
+  '/api/search/categories',
   // A channel's public address: /@handle is rewritten to its channel page below.
   '/@(.*)',
   '/regulamin',

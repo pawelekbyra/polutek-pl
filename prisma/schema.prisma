@@ -813,6 +813,11 @@ model Video {
   tags                              String[]    @default([])
   /// One of the whitelist in lib/modules/video/domain/video-metadata.ts; null = not set.
   category                          String?
+  /// Normalized search text (title, tags, category, PUBLIC descriptions), written ONLY by the database trigger
+  /// video_search_refresh() of migration 20261019170000_video_search. Never set it from the application.
+  searchText                        String      @default("")
+  /// "duration" ("12:45") parsed to seconds by the same trigger; null when it is not a valid time.
+  durationSeconds                   Int?
   /// Who may comment on the video: ON = published at once, HELD = every new comment waits for review, OFF = no new comments.
   commentsMode                      VideoCommentsMode @default(ON)
   /// Platform moderation state, separate from publication status: a REMOVED video is never public whatever `status` says.

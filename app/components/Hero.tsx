@@ -19,6 +19,7 @@ import SubscribeButton from './SubscribeButton';
 import ShareButton from './ShareButton';
 import { getPlaybackPosition } from './player/playback-position';
 import { FundraisingProgressBar } from './FundraisingProgressBar';
+import VideoTaxonomyChips from './search/VideoTaxonomyChips';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import { ThumbsUp, ThumbsDown, Coins } from 'lucide-react';
 import styles from './watch-actions.module.css';
@@ -474,6 +475,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
              </div>
            </div>
         </div>
+        <VideoTaxonomyChips category={video.category} tags={video.tags} locale={language} tx={tx} className="mt-2 px-1" />
       </div>
     </section>
   );

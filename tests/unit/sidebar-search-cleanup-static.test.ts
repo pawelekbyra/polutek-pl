@@ -7,7 +7,7 @@ const source = (path: string) => readFileSync(path, "utf8");
 describe("#1104 search/sidebar cleanup contracts", () => {
   it("search page uses the dedicated search service and slug-first result links", () => {
     const page = source("app/[locale]/search/page.tsx");
-    expect(page).toContain("VideoSearchService.searchPublicVideos");
+    expect(page).toContain("searchPublicVideos(params, viewer)");
     expect(page).not.toContain("getSitemapVideos");
     expect(page).toContain("getLocalizedHref(locale, \"watch\", { slug: video.slug || video.id })");
   });

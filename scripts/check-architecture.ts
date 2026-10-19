@@ -422,6 +422,7 @@ const AUTHZ_EXEMPT: Record<string, string> = {
   'lib/modules/video/application/sync-public-thumbnail.service.ts': 'cron/pipeline acting as system',
   'lib/modules/video/application/video-playback-route.service.ts': 'pipeline worker acting as system',
   'lib/modules/video/application/video-search.service.ts': 'public read (whitelisted DTO)',
+  'lib/modules/video/application/public-search.service.ts': 'public read: only PUBLISHED videos of publicly visible channels (visibilitySql), gated tiers reduced to title and thumbnail',
   'lib/modules/video-pipeline/application/finalize-self-hls.ts': 'encode worker acting as system',
   'lib/modules/video-pipeline/application/process-encode-job.ts': 'encode worker acting as system',
   'lib/modules/video-pipeline/application/worker-loop.ts': 'encode worker acting as system',
