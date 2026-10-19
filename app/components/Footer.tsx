@@ -13,7 +13,7 @@ function FooterLanguage() {
   const switchLanguage = useSwitchLanguage();
   return (
     <div className="flex flex-wrap items-center">
-      <LanguageSwitcher language={language} onSelect={switchLanguage} variant="inline" />
+      <LanguageSwitcher language={language} onSelect={switchLanguage} variant="dropup" />
     </div>
   );
 }
