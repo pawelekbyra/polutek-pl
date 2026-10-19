@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -26,7 +26,8 @@ const wwwSources = ["app", "lib", "scripts", "middleware.ts", "next.config.mjs"]
   return statSync(full).isDirectory() ? walk(full) : [full];
 });
 const read = (file: string) => readFileSync(file, "utf8");
-const rel = (file: string) => relative(root, file);
+// Forward slashes on every OS: the allow-lists below are written with "/" (on Windows `relative` gives "\\").
+const rel = (file: string) => relative(root, file).split(sep).join("/");
 
 describe("old admin is retired from the public site", () => {
   it("has no app/admin pages and no app/api/admin routes", () => {
