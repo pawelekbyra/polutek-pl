@@ -163,3 +163,33 @@ describe("authz matrix contract", () => {
     }
   });
 });
+
+describe("authz matrix: playlists", () => {
+  const PLAYLIST_ACTIONS = AUTHZ_ACTIONS.filter((a) => a.startsWith("playlist."));
+
+  it("has the four playlist actions", () => {
+    expect([...PLAYLIST_ACTIONS].sort()).toEqual(["playlist.create", "playlist.delete", "playlist.manage_items", "playlist.update"]);
+  });
+
+  it("owner, manager and editor manage playlists; moderator and translator never do", () => {
+    for (const role of ["OWNER", "MANAGER", "EDITOR"] as const) {
+      for (const action of PLAYLIST_ACTIONS) expect(ROLE_ACTIONS[role].has(action), `${role} ${action}`).toBe(true);
+    }
+    for (const role of ["MODERATOR", "TRANSLATOR"] as const) {
+      for (const action of PLAYLIST_ACTIONS) expect(ROLE_ACTIONS[role].has(action), `${role} ${action}`).toBe(false);
+    }
+  });
+
+  it("a stranger and a guest are denied; staff acts as on any channel content; a frozen channel is read-only", () => {
+    for (const action of PLAYLIST_ACTIONS) {
+      expect(can(stranger, action, channel), action).toEqual({ allow: false, reason: "NOT_A_MEMBER" });
+      expect(can(guest, action, channel), action).toEqual({ allow: false, reason: "UNAUTHENTICATED" });
+      expect(can(staff, action, channel).allow, action).toBe(true);
+      expect(can(owner, action, { ...channel, status: "SUSPENDED" }), action).toEqual({ allow: false, reason: "CHANNEL_FROZEN" });
+    }
+  });
+
+  it("a limited channel keeps its playlists (the platform only restricts uploads and selling)", () => {
+    for (const action of PLAYLIST_ACTIONS) expect(can(owner, action, { ...channel, status: "LIMITED" }).allow, action).toBe(true);
+  });
+});

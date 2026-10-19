@@ -34,6 +34,7 @@ import { buildSelfHlsConfig, loadHlsLibrary, streamIdentity } from './player/sel
 import { pickCaptionTrack, writeCaptionsEnabled } from './player/captions';
 import { useOptionalLanguage } from './LanguageContext';
 import { useOptionalTx } from "@/lib/i18n/language-context";
+import { announceVideoEnded } from './playlists/video-ended-event';
 
 // The player is on the home page above the fold: start fetching hls.js (our own chunk) right
 // away, so it is ready before the playback plan arrives and the stream is never fetched twice
@@ -559,6 +560,8 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                             void sendEvent('ENDED');
                             progress.saveNow(false);
                             if (player.current) void maybeSendView(player.current.currentTime, player.current.duration);
+                            // The playlist queue on the watch page starts the next video from this (docs/architecture/playlists.md).
+                            announceVideoEnded(video.id);
                         }}
                         onSeeking={() => qoe.seekStarted()}
                         onWaiting={() => qoe.waiting()}

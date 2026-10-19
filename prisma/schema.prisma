@@ -477,6 +477,7 @@ model Creator {
   orders                  Order[]
   ledger                  LedgerEntry[]
   subscriberSnapshots     SubscriberSnapshot[]
+  playlists               Playlist[]
 }
 
 enum ChannelStatus {
@@ -831,6 +832,7 @@ model Video {
   orders       Order[]
   entitlements Entitlement[]
   progress     VideoProgress[]
+  playlistItems PlaylistItem[]
 
   @@index([creatorId, status])
   @@index([publishAfterAssetReady])
@@ -1723,4 +1725,48 @@ model ModerationAppeal {
   @@index([status, createdAt])
   @@index([decisionId])
   @@index([userId])
+}
+
+enum PlaylistVisibility {
+  PUBLIC
+  UNLISTED
+  PRIVATE
+}
+
+/// A creator-curated, ordered list of ONE channel's videos (docs/architecture/playlists.md). Not the home sidebar:
+/// that is `Video.sidebarOrder`/`showInSidebar` (ChannelLayoutService). Soft delete through `deletedAt`; the slug is
+/// unique per channel and kept after a soft delete (a link never silently points to another list).
+model Playlist {
+  id          String             @id @default(uuid())
+  channelId   String
+  title       String
+  description String?
+  visibility  PlaylistVisibility @default(PUBLIC)
+  slug        String
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  deletedAt   DateTime?
+
+  channel Creator        @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  items   PlaylistItem[]
+
+  @@unique([channelId, slug])
+  @@index([channelId, deletedAt, visibility])
+}
+
+/// One video in a playlist. `position` orders the list (ascending, gaps allowed after removals); a video appears
+/// at most once per playlist and only in a playlist of its own channel (enforced in the use case).
+model PlaylistItem {
+  id         String   @id @default(uuid())
+  playlistId String
+  videoId    String
+  position   Int
+  addedAt    DateTime @default(now())
+
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  video    Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, videoId])
+  @@index([playlistId, position])
+  @@index([videoId])
 }
