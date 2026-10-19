@@ -3,6 +3,7 @@ import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { completeOnboarding } from "@/lib/modules/users";
 import { notifyOwnerOfNewUser, resolveEmailLanguage, sendWelcomeEmail } from "@/lib/modules/email";
+import { sendNotification, notificationTemplates } from "@/lib/modules/notifications";
 import { handleApiError } from "@/lib/errors";
 import { isLocale } from "@/lib/i18n/routing";
 import { logger } from "@/lib/logger";
@@ -29,6 +30,8 @@ export async function POST(req: NextRequest) {
     // Older accounts that are only asked for a (new) nickname were welcomed long ago.
     const isNewAccount = Date.now() - user.createdAt.getTime() < 24 * 60 * 60 * 1000;
     if (isNewAccount) {
+      // The welcome in the bell: every new account gets it, whatever way it signed up (never gated by a preference).
+      void sendNotification({ userId: actor.userId, ...notificationTemplates.welcome, href: "/" });
       void sendWelcomeEmail(user.email, resolveEmailLanguage(user.language)).catch((error) => {
         logger.error("[onboarding] welcome email failed", error instanceof Error ? error.message : String(error));
       });

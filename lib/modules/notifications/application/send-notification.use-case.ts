@@ -95,6 +95,22 @@ export const notificationTemplates = {
     bodyPl: "Twój napiwek dotarł. Dziękuję, to dla mnie wiele znaczy.",
     bodyEn: "Your tip has arrived. Thank you, it means a lot to me.",
   },
+  // Somebody answered the recipient's comment (the body is "name: start of the reply", built per notification).
+  commentReply: {
+    kind: "COMMENT" as NotificationKind,
+    titlePl: "Nowa odpowiedź na Twój komentarz",
+    titleEn: "New reply to your comment",
+    bodyPl: "Ktoś odpowiedział na Twój komentarz.",
+    bodyEn: "Someone replied to your comment.",
+  },
+  // The channel's creator liked or hearted the recipient's comment.
+  creatorLike: {
+    kind: "COMMENT" as NotificationKind,
+    titlePl: "Twórca polubił Twój komentarz",
+    titleEn: "The creator liked your comment",
+    bodyPl: "Twórca kanału docenił Twój komentarz.",
+    bodyEn: "The channel's creator appreciated your comment.",
+  },
   commentLike: {
     kind: "COMMENT" as NotificationKind,
     titlePl: "Twój komentarz polubiono",

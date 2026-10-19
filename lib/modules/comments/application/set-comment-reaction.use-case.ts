@@ -8,6 +8,7 @@ import { CommentRepository } from "../infrastructure/comment.repository";
 import type { ReactionTarget } from "../domain/comment.dto";
 import { CommentStatus, PrismaClient } from "@prisma/client";
 import { sendNotification, notificationTemplates } from "@/lib/modules/notifications";
+import { notifyCreatorLike } from "./comment-notifications";
 
 export interface SetCommentReactionInput {
   commentId: string;
@@ -64,7 +65,12 @@ export async function setCommentReaction(
     // roll back or fail the reaction itself. Only a like that actually got added notifies.
     if (likeDelta > 0 && comment.authorId !== userId) {
       try {
-        const video = await (prisma as PrismaClient).video.findUnique({ where: { id: comment.videoId }, select: { slug: true } });
+        const video = await (prisma as PrismaClient).video.findUnique({ where: { id: comment.videoId }, select: { slug: true, creator: { select: { userId: true } } } });
+        // The creator's like is its own, more personal notification (once per comment), instead of the anonymous one.
+        if (video?.creator?.userId === userId) {
+          await notifyCreatorLike({ commentId });
+          return ok(result);
+        }
         await sendNotification({
           userId: comment.authorId,
           kind: notificationTemplates.commentLike.kind,
