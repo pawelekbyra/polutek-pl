@@ -153,10 +153,9 @@ export const MobileCommentComposer = React.forwardRef<MobileComposerHandle, Prop
         }}
         className={cn(
           "fixed inset-x-0 z-[1101] rounded-t-2xl border-t border-[var(--chan-line)] bg-[var(--chan-card)] shadow-[0_-12px_32px_rgba(15,23,42,0.18)]",
-          // Slides up on open; on close it only fades (no sliding down while the keyboard leaves).
-          open
-            ? "animate-in fade-in slide-in-from-bottom-3 duration-200 motion-reduce:animate-none"
-            : "pointer-events-none opacity-0 transition-opacity duration-150 motion-reduce:transition-none",
+          // Slides up on open. On close it is gone at once: fading or sliding it while the keyboard leaves looked
+          // like a ghost bar over the page (it stays focusable, invisible, so the next tap can open the keyboard).
+          open ? "animate-in slide-in-from-bottom-3 duration-200 motion-reduce:animate-none" : "pointer-events-none opacity-0",
         )}
       >
         {replyTo ? (
