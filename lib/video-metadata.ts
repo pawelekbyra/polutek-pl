@@ -10,6 +10,24 @@ export const VIDEO_TAG_MAX_LENGTH = 30;
 export const VIDEO_CATEGORIES = ["education", "entertainment", "music", "gaming", "news", "science", "sports", "people", "howto", "other"] as const;
 export type VideoCategory = (typeof VIDEO_CATEGORIES)[number];
 
+/**
+ * Display names of the categories, written once. The Studio and the search page render them through
+ * `videoCategoryLabel()` (lib/video-category-label.ts), whose literal `tx()` texts are checked against this table
+ * by tests/unit/modules/video/search-query.test.ts, so the two can never drift apart.
+ */
+export const VIDEO_CATEGORY_LABELS: Readonly<Record<VideoCategory, { pl: string; en: string }>> = {
+  education: { pl: "Edukacja", en: "Education" },
+  entertainment: { pl: "Rozrywka", en: "Entertainment" },
+  music: { pl: "Muzyka", en: "Music" },
+  gaming: { pl: "Gry", en: "Gaming" },
+  news: { pl: "Wiadomości", en: "News" },
+  science: { pl: "Nauka i technika", en: "Science and technology" },
+  sports: { pl: "Sport", en: "Sports" },
+  people: { pl: "Ludzie i blogi", en: "People and blogs" },
+  howto: { pl: "Poradniki", en: "How-to" },
+  other: { pl: "Inne", en: "Other" },
+};
+
 /** Same values as the Prisma enum `VideoCommentsMode`: ON = published at once, HELD = review first, OFF = no new comments. */
 export const VIDEO_COMMENTS_MODES = ["ON", "HELD", "OFF"] as const;
 export type VideoCommentsModeValue = (typeof VIDEO_COMMENTS_MODES)[number];

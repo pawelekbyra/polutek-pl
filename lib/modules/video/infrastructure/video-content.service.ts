@@ -13,6 +13,7 @@ import { withFundraisingProgress } from './fundraising-progress.service';
 import { toVideoAccessTier } from '@/lib/access-tier';
 import { isVideoPubliclyVisible } from '../domain/public-visibility';
 import { isAdultVideo } from '../domain/video-visibility';
+import { isVideoCategory } from '@/lib/video-metadata';
 
 export const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
   OR: [
@@ -133,6 +134,8 @@ export class VideoContentService {
         publishedAt: effectivePublishedAt(video),
         premiereAt: toPremiereDate(video.premiereAt)?.toISOString() ?? null,
         isAdult: isAdultVideo(video),
+        tags: Array.isArray(video.tags) ? video.tags.filter((tag: unknown): tag is string => typeof tag === 'string') : [],
+        category: isVideoCategory(video.category) ? video.category : null,
         creator: video.creator ? {
             id: video.creator.id,
             name: video.creator.name,

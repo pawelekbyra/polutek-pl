@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
 import { VIDEO_CATEGORIES, type VideoCommentsModeValue } from "@/lib/video-metadata";
+import { videoCategoryLabel } from "@/lib/video-category-label";
 import { TAG_MAX_LENGTH, TAGS_MAX, addTagsFromInput, removeTag, tagCounterText, type TagInputProblem } from "./video-form";
 import { Field, inputClass } from "./ui";
 
@@ -30,19 +31,6 @@ export default function VideoMoreOptions({
   const { tx } = useLanguage();
   const [draft, setDraft] = useState("");
   const [problem, setProblem] = useState<TagInputProblem | null>(null);
-
-  const categoryLabel: Record<(typeof VIDEO_CATEGORIES)[number], string> = {
-    education: tx("Edukacja", "Education"),
-    entertainment: tx("Rozrywka", "Entertainment"),
-    music: tx("Muzyka", "Music"),
-    gaming: tx("Gry", "Gaming"),
-    news: tx("Wiadomości", "News"),
-    science: tx("Nauka i technika", "Science and technology"),
-    sports: tx("Sport", "Sports"),
-    people: tx("Ludzie i blogi", "People and blogs"),
-    howto: tx("Poradniki", "How-to"),
-    other: tx("Inne", "Other"),
-  };
 
   const commit = (text: string) => {
     const result = addTagsFromInput(value.tags, text);
@@ -142,7 +130,7 @@ export default function VideoMoreOptions({
             <option value="">{tx("Brak", "None")}</option>
             {VIDEO_CATEGORIES.map((key) => (
               <option key={key} value={key}>
-                {categoryLabel[key]}
+                {videoCategoryLabel(tx, key)}
               </option>
             ))}
           </select>
