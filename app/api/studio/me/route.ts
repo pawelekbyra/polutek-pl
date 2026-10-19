@@ -1,5 +1,6 @@
 import { gateMode } from "@/lib/platform-gates";
 import { getChannelLimitsView } from "@/lib/modules/video-pipeline";
+import { canCreateChannel } from "@/lib/modules/channel";
 import { studioJson, withStudio } from "@/lib/api/studio-route";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,7 @@ export async function GET(request: Request) {
         limits = null;
       }
     }
-    return studioJson({ channel, channels, channelCreation: gateMode("channelCreation"), limits });
+    const canCreate = channel ? false : await canCreateChannel(ctx).catch(() => false);
+    return studioJson({ channel, channels, channelCreation: gateMode("channelCreation"), canCreateChannel: canCreate, limits });
   });
 }

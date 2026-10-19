@@ -63,6 +63,8 @@ export interface StudioMe {
   channel: StudioChannel | null;
   channels: StudioChannel[];
   channelCreation: "off" | "invite" | "on";
+  /** This account may create a channel now (gate on, or invited). False for an account that already has one. */
+  canCreateChannel?: boolean;
   limits?: StudioLimits | null;
 }
 
