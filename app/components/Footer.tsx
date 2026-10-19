@@ -40,7 +40,7 @@ const Footer = () => {
 
         {/* pl- offsets the trailing letter-spacing, so the name sits exactly on the centre line. */}
         <span className="font-brand order-2 pl-[0.22em] text-center text-[12px] font-bold uppercase leading-none tracking-[0.22em] text-[var(--chan-muted-2)] md:order-none">
-          WWW.PAWELPERFECT.COM
+          WWW.POLUTEK.COM
         </span>
 
         <div className="order-1 flex shrink-0 items-center justify-center gap-[26px] text-center leading-none md:order-none md:flex-1 md:justify-end">

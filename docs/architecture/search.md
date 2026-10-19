@@ -1,6 +1,6 @@
 # Wyszukiwarka publiczna (wszystkie kanały)
 
-Stan obecny. Reguły skrótowo w CLAUDE.md §4.29.
+Stan obecny. Reguły skrótowo w CLAUDE.md §4.30.
 
 ## Dane
 

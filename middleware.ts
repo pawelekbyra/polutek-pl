@@ -16,6 +16,7 @@ const UI_ONLY_PUBLIC_ROUTES = UI_ONLY_LOCALES.flatMap((locale) => [
   `/${locale}/search`,
   `/${locale}/watch/(.*)`,
   `/${locale}/channel/(.*)`,
+  `/${locale}/playlist/(.*)`,
   `/${locale}/@(.*)`,
   `/${locale}/terms`,
   `/${locale}/privacy-policy`,
@@ -33,6 +34,8 @@ const isPublicRoute = createRouteMatcher([
   '/pl/search',
   '/pl/watch/(.*)',
   '/pl/channel/(.*)',
+  '/pl/playlista/(.*)',
+  '/pl/playlist/(.*)',
   '/pl/@(.*)',
   '/pl/regulamin',
   '/pl/polityka-prywatnosci',
@@ -42,6 +45,8 @@ const isPublicRoute = createRouteMatcher([
   '/en/search',
   '/en/watch/(.*)',
   '/en/channel/(.*)',
+  '/en/playlist/(.*)',
+  '/en/playlista/(.*)',
   '/en/@(.*)',
   '/en/terms',
   '/en/privacy-policy',
@@ -52,6 +57,8 @@ const isPublicRoute = createRouteMatcher([
   '/search',
   '/watch/(.*)',
   '/channel/(.*)',
+  '/playlista/(.*)',
+  '/playlist/(.*)',
   // Embeddable player (the only page other sites may frame, see generateCSP) and its oEmbed discovery endpoint:
   // both serve PUBLIC-tier published videos only and decide that themselves. The RSS feed is /channel/<slug>/feed.xml (above).
   '/embed/(.*)',
@@ -102,6 +109,8 @@ const isPublicRoute = createRouteMatcher([
   '/api/channel/sidebar',
   // User avatars shown next to public comments; the route hides deleted accounts itself.
   '/api/avatars/(.*)',
+  // Channel banners shown on public channel pages; the route serves only publicly visible channels.
+  '/api/channel-banners/(.*)',
   // Only GET comments is public if product requires it
   '/api/comments',
   '/api/comments/(.*)/replies',

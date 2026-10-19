@@ -25,6 +25,9 @@ import type { InitialCommentsPage } from "./comments/initial-comments";
 import { pickHomeVideo } from "@/lib/home-video-selection";
 import { ContinueWatchingShelf } from "./channel/ContinueWatchingShelf";
 import type { ContinueWatchingItem } from "@/lib/modules/watch-progress/domain/continue-watching";
+import type { PlaylistQueueDto } from "@/lib/modules/playlists/domain/playlist.dto";
+import { PlaylistQueueLayer } from "./playlists/PlaylistQueuePanel";
+import { planSidebarSwitch } from "./playlists/queue-navigation";
 
 const SupportModal = dynamic(() => import("./channel/SupportModal"), { ssr: false });
 
@@ -55,6 +58,8 @@ interface ChannelHomeProps {
   initialSidebarLayout?: SidebarLayout | null;
   /** Viewer the server-rendered layout was built for (`sidebarLayoutViewerKey`). */
   initialSidebarViewerKey?: string;
+  /** The playlist the page was opened in (`?list=<slug>`), already filtered for this viewer (docs/architecture/playlists.md). */
+  playlistQueue?: PlaylistQueueDto | null;
   /** First page of the selected video's comments, rendered on the server. */
   initialComments?: InitialCommentsPage | null;
   /** The selected video's playback plan, made on the server for this viewer. */
@@ -87,6 +92,7 @@ export default function ChannelHome({
   initialPlayback,
   renderedAt,
   continueWatching,
+  playlistQueue,
 }: ChannelHomeProps) {
   const selectedVideo = pickHomeVideo(currentVideoId, { allVideos: allVideos || [], mainVideo, extraVideo });
   // The preloader looks videos up by id, so it also knows the extra one (the sidebar does not).
@@ -105,6 +111,7 @@ export default function ChannelHome({
         initialSidebarViewerKey={initialSidebarViewerKey}
         initialComments={initialComments}
         continueWatching={continueWatching}
+        playlistQueue={playlistQueue}
       />
     </AppPreloadProvider>
     </RenderClockProvider>
@@ -141,8 +148,12 @@ function ChannelHomeContent({
   initialSidebarViewerKey,
   initialComments,
   continueWatching,
+  playlistQueue,
 }: ChannelHomeProps) {
   const { t, language, tx } = useLanguage();
+  // Playlist context stays until the viewer picks a video outside the playlist.
+  const [closedQueueSlug, setClosedQueueSlug] = useState<string | null>(null);
+  const queue = playlistQueue && playlistQueue.slug !== closedQueueSlug ? playlistQueue : null;
   const [selectionState, setSelectionState] = useState<ChannelViewState>(() => ({
     routeVideoId: currentVideoId,
     selectedVideoId: currentVideoId,
@@ -296,30 +307,30 @@ function ChannelHomeContent({
   // first seconds of the stream and the first page of comments, so a click lands on a ready
   // player and ready comments instead of a spinner and a skeleton.
   // Called from a click/tap (a user gesture), so the picked video starts with sound.
+  // `query` is the address' query string without "?" (`v=<slug>`, plus the playlist context inside a playlist).
+  const switchVideo = (clickedId: string, query: string) => {
+    preloader?.selectVideo(clickedId);
+    void preloader?.warmVideo(clickedId, { includeComments: true, priority: "critical" });
+    setSelectionState({
+      routeVideoId: currentVideoId,
+      selectedVideoId: clickedId,
+      activeTab: "comments",
+      startWithSound: true,
+    });
+    // Shallow switch: address and history without a server round trip (a router navigation re-rendered the whole
+    // page and showed the loading screen on every click; Next.js syncs its router with history.pushState).
+    try {
+      window.history.pushState({ [VIDEO_HISTORY_STATE_KEY]: clickedId }, "", `${getLocalizedHref(language, "home")}?${query}`);
+    } catch {
+      // Selection already switched locally; a failed URL update is only cosmetic.
+    }
+  };
+
   const handleVideoSelect = (clickedId?: string) => {
     if (clickedId && clickedId !== selectedVideo.id) {
-      preloader?.selectVideo(clickedId);
-      void preloader?.warmVideo(clickedId, { includeComments: true, priority: "critical" });
-      setSelectionState({
-        routeVideoId: currentVideoId,
-        selectedVideoId: clickedId,
-        activeTab: "comments",
-        startWithSound: true,
-      });
-      // Shallow switch: update the address and history without a server round trip.
-      // A router navigation here re-rendered the whole page on the server and showed
-      // the route's loading screen on every click. Next.js syncs its router with
-      // history.pushState, so useSearchParams, refreshes and deep links stay correct.
-      const clicked = (allVideos || []).find((v) => v.id === clickedId);
-      try {
-        window.history.pushState(
-          { [VIDEO_HISTORY_STATE_KEY]: clickedId },
-          "",
-          `${getLocalizedHref(language, "home")}?v=${encodeURIComponent(clicked?.slug || clickedId)}`,
-        );
-      } catch {
-        // Selection already switched locally; a failed URL update is only cosmetic.
-      }
+      const plan = planSidebarSwitch(queue, clickedId, (allVideos || []).find((v) => v.id === clickedId)?.slug);
+      if (plan.leaveQueue && queue) setClosedQueueSlug(queue.slug);
+      switchVideo(clickedId, plan.query);
       return;
     }
     setActiveTab("comments");
@@ -344,6 +355,18 @@ function ChannelHomeContent({
     initialLayout: initialSidebarLayout,
     initialLayoutViewerKey: initialSidebarViewerKey,
   };
+
+  const queueLayer = (autoAdvance: boolean) =>
+    queue ? (
+      <PlaylistQueueLayer
+        queue={queue}
+        currentVideoId={selectedVideo.id}
+        knownVideoIds={[...(allVideos || []), ...(extraVideo ? [extraVideo] : [])].map((v) => v.id)}
+        language={language}
+        onSwitch={switchVideo}
+        autoAdvance={autoAdvance}
+      />
+    ) : null;
 
   const comments = (
     <EmbeddedComments
@@ -379,6 +402,8 @@ function ChannelHomeContent({
                 }
               />
             </div>
+
+            {queue && <div className="mb-1 lg:hidden">{queueLayer(true)}</div>}
 
             {userProfile && continueWatching && continueWatching.length > 0 && (
               <ContinueWatchingShelf
@@ -427,6 +452,7 @@ function ChannelHomeContent({
             </div>
           </div>
           <div className="hidden lg:col-span-4 lg:flex lg:flex-col lg:gap-4">
+            {queueLayer(false)}
             <aside className="lg:flex lg:flex-col lg:gap-0 lg:overflow-y-auto rounded-[24px] border border-[var(--cm-line-80)] bg-[var(--cm-card-88-white)] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(23,23,23,0.03),0_24px_50px_-26px_rgba(23,23,23,0.2)]">
               <SidebarPlaylist {...commonSidebarProps} />
             </aside>

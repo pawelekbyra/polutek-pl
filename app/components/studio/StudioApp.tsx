@@ -10,10 +10,11 @@ import StudioComments from "./StudioComments";
 import StudioDecisions from "./StudioDecisions";
 import StudioProfile from "./StudioProfile";
 import StudioAnalytics from "./StudioAnalytics";
+import StudioPlaylists from "./StudioPlaylists";
 
-type SectionId = "overview" | "content" | "comments" | "decisions" | "analytics" | "profile";
+type SectionId = "overview" | "content" | "playlists" | "comments" | "decisions" | "analytics" | "profile";
 
-const SECTION_IDS: SectionId[] = ["overview", "content", "comments", "decisions", "analytics", "profile"];
+const SECTION_IDS: SectionId[] = ["overview", "content", "playlists", "comments", "decisions", "analytics", "profile"];
 
 function readSection(): SectionId {
   if (typeof window === "undefined") return "overview";
@@ -67,6 +68,7 @@ export default function StudioApp() {
   const labels: Record<SectionId, string> = {
     overview: tx("Panel", "Dashboard"),
     content: tx("Treści", "Content"),
+    playlists: tx("Playlisty", "Playlists"),
     comments: tx("Komentarze", "Comments"),
     decisions: tx("Decyzje i odwołania", "Decisions and appeals"),
     analytics: tx("Statystyki", "Statistics"),
@@ -114,6 +116,7 @@ export default function StudioApp() {
         )}
         {section === "overview" && <Overview me={me} onOpen={go} />}
         {section === "content" && <StudioContent initialView={contentIntent} limits={me.limits ?? null} />}
+        {section === "playlists" && <StudioPlaylists channelSlug={me.channel.slug} />}
         {section === "comments" && <StudioComments />}
         {section === "decisions" && <StudioDecisions />}
         {section === "analytics" && <StudioAnalytics />}

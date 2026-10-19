@@ -13,6 +13,9 @@ const CONTENT_EDIT: readonly AuthzAction[] = [
   "video.translate",
 ];
 
+/** Playlists are content editing: owner, manager and editor manage them; moderators and translators do not. */
+const PLAYLIST_MANAGE: readonly AuthzAction[] = ["playlist.create", "playlist.update", "playlist.delete", "playlist.manage_items"];
+
 const COMMENT_MODERATION: readonly AuthzAction[] = ["comment.moderate", "comment.pin", "comment.heart"];
 
 /** What each role may do inside its own channel. Staff and system are handled in `policy.ts`, not here. */
@@ -24,6 +27,7 @@ export const ROLE_ACTIONS: Readonly<Record<ChannelRole, ReadonlySet<AuthzAction>
     "channel.manage_members",
     "channel.view_analytics",
     ...CONTENT_EDIT,
+    ...PLAYLIST_MANAGE,
     "video.delete",
     "video.set_price",
     ...COMMENT_MODERATION,
@@ -35,13 +39,14 @@ export const ROLE_ACTIONS: Readonly<Record<ChannelRole, ReadonlySet<AuthzAction>
     "channel.update",
     "channel.view_analytics",
     ...CONTENT_EDIT,
+    ...PLAYLIST_MANAGE,
     "video.delete",
     "video.set_price",
     ...COMMENT_MODERATION,
     "comment.reply_as_creator",
     "payout.view",
   ]),
-  EDITOR: new Set<AuthzAction>(["channel.view_analytics", ...CONTENT_EDIT]),
+  EDITOR: new Set<AuthzAction>(["channel.view_analytics", ...CONTENT_EDIT, ...PLAYLIST_MANAGE]),
   MODERATOR: new Set<AuthzAction>([...COMMENT_MODERATION, "video.preview"]),
   TRANSLATOR: new Set<AuthzAction>(["video.preview", "video.subtitles", "video.translate"]),
 };

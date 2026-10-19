@@ -32,14 +32,20 @@ export function avatarProblemMessage(problem: AvatarProblem, tx: Tx): string {
 
 const DATA_URL_PATTERN = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/]+={0,2})$/;
 
+/** Server-side check of an avatar data URL sent by the browser (see validateImageDataUrl). */
+export function validateAvatarDataUrl(value: unknown) {
+  return validateImageDataUrl(value, AVATAR_MAX_DATA_URL_CHARS);
+}
+
 /**
- * Server-side check of an avatar data URL sent by the browser: right type, plain base64, small,
- * and the decoded bytes start with the matching image signature.
+ * Server-side check of an image data URL sent by the browser: right type, plain base64, within `maxChars`,
+ * and the decoded bytes start with the matching image signature. Shared by avatars and channel banners.
  */
-export function validateAvatarDataUrl(
+export function validateImageDataUrl(
   value: unknown,
+  maxChars: number,
 ): { ok: true; value: string; mime: string; bytes: Buffer } | { ok: false } {
-  if (typeof value !== "string" || value.length > AVATAR_MAX_DATA_URL_CHARS) return { ok: false };
+  if (typeof value !== "string" || value.length > maxChars) return { ok: false };
   const match = DATA_URL_PATTERN.exec(value);
   if (!match) return { ok: false };
   const bytes = Buffer.from(match[2], "base64");

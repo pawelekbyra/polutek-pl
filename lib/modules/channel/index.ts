@@ -9,6 +9,9 @@ export * from "./domain/handle";
 export * from "./domain/channel.policy";
 export * from "./domain/channel.errors";
 export * from "./domain/channel-avatar";
+export * from "./domain/channel-banner";
+export * from "./domain/channel-about";
+export * from "./application/channel-about.use-cases";
 // Repository is internal to the module
 export * from "./application/channel-moderation.use-cases";
 export * from "./application/content-report.use-case";

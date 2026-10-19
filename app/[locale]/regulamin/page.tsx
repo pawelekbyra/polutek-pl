@@ -3,7 +3,8 @@ import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/Footer';
 import Link from 'next/link';
 import { ArrowLeft } from '@/app/components/icons';
-import { RegulaminContent, LEGAL_EFFECTIVE_DATE } from '@/app/components/legal/LegalDocs';
+import { RegulaminContent } from '@/app/components/legal/LegalDocs';
+import { REGULAMIN_EFFECTIVE_DATE } from '@/app/components/legal/RegulaminPlatformy';
 import { notFound } from 'next/navigation';
 import { getLocaleAlternates, getLocalizedHref } from '@/lib/i18n/routing';
 import { getBaseUrl } from '@/lib/utils';
@@ -15,8 +16,8 @@ export const dynamic = 'force-static';
 export const revalidate = 3600;
 
 export const metadata = {
-  title: 'Regulamin serwisu WWW.PAWELPERFECT.COM',
-  description: 'Regulamin serwisu WWW.PAWELPERFECT.COM: zasady korzystania, dobrowolne wsparcie Twórcy, reklamacje.',
+  title: 'Regulamin platformy POLUTEK.COM',
+  description: 'Regulamin platformy POLUTEK.COM',
   alternates: getLocaleAlternates('pl', 'terms', { baseUrl: getBaseUrl() }),
 };
 
@@ -28,8 +29,8 @@ export default async function RegulaminPage(props: { params: Promise<{ locale: s
       <Navbar />
       <main id="main" tabIndex={-1} className="mx-auto max-w-3xl px-4 py-16 focus:outline-none">
         <header className="mb-10 border-b-2 border-[var(--chan-ink)]/10 pb-8">
-          <h1 className="text-[clamp(1.25rem,5.4vw,1.875rem)] font-black uppercase tracking-tighter [overflow-wrap:anywhere]">Regulamin serwisu WWW.PAWELPERFECT.COM</h1>
-          <p className="mt-2 text-sm text-[var(--chan-muted)]">{LEGAL_EFFECTIVE_DATE}</p>
+          <h1 className="text-[clamp(1.25rem,5.4vw,1.875rem)] font-black uppercase tracking-tighter [overflow-wrap:anywhere]">Regulamin platformy POLUTEK.COM</h1>
+          <p className="mt-2 text-sm text-[var(--chan-muted)]">{REGULAMIN_EFFECTIVE_DATE}</p>
         </header>
 
         <RegulaminContent />

@@ -8,6 +8,7 @@ const { getCreatorBySlug, creatorFindUnique } = vi.hoisted(() => ({
 
 vi.mock("@/app/components/Navbar", () => ({ default: () => <nav data-testid="navbar" /> }));
 vi.mock("@/app/components/Footer", () => ({ default: () => <footer /> }));
+vi.mock("@/app/components/playlists/ChannelPlaylistsSection", () => ({ default: () => null }));
 vi.mock("@/app/components/SubscribeButton", () => ({ default: () => <button type="button">Subscribe</button> }));
 vi.mock("@/app/components/ReportButton", () => ({ default: () => <button type="button">Report</button> }));
 vi.mock("@/app/components/ChannelVideoCard", () => ({
@@ -56,12 +57,13 @@ describe("/[locale]/channel/[slug] header", () => {
     });
   });
 
-  it("renders the profile card as the whole header, without a cover photo", async () => {
+  it("renders the profile card as the header and ignores a legacy cover value", async () => {
     const html = await render();
 
     expect(html).not.toContain("old-cover.jpg");
     expect(html).not.toContain("channel-hero-banner");
-    expect(html).not.toContain("aspect-[6/1]");
+    // No banner uploaded: no banner element at all.
+    expect(html).not.toContain("channel-banner");
 
     const header = html.slice(html.indexOf("<header"), html.indexOf("</header>"));
     expect(header).toContain('class="channel-profile');
@@ -73,6 +75,45 @@ describe("/[locale]/channel/[slug] header", () => {
     expect(header).toContain("/api/avatars/u1?v=1");
     // Nothing but the navbar sits between the top of the page and the header.
     expect(html.indexOf("<header")).toBeLessThan(html.indexOf("channel-tabs"));
+  });
+
+  it("shows the uploaded banner above the header and an About tab with links, stats and opt-in contact", async () => {
+    creatorFindUnique.mockResolvedValueOnce({ subscribersCount: 12500, displaySubscribersCount: null });
+    getCreatorBySlug.mockResolvedValueOnce({
+      id: "creator-1",
+      name: "Paweł Perfect",
+      slug: "polutek",
+      imageUrl: null,
+      bio: "Opis kanału",
+      subscribersCount: 12500,
+      about: {
+        bannerImageUrl: "/api/channel-banners/creator-1?v=1",
+        links: [{ title: "Sklep", url: "https://example.com/" }],
+        contactEmail: "kontakt@example.com",
+        joinedAt: "2025-03-04T00:00:00.000Z",
+        totalViews: 2500,
+      },
+      videos: [],
+    });
+
+    const html = await render("en");
+
+    expect(html.indexOf("channel-banner")).toBeGreaterThan(-1);
+    expect(html.indexOf("channel-banner")).toBeLessThan(html.indexOf("<header"));
+    expect(html).toContain("/api/channel-banners/creator-1?v=1");
+    expect(html).toContain('role="tablist"');
+    expect(html).toContain('id="channel-panel-about"');
+    expect(html).toContain('rel="noopener nofollow ugc"');
+    expect(html).toContain('href="https://example.com/"');
+    expect(html).toContain("mailto:kontakt@example.com");
+    expect(html).toContain("12.5K");
+    expect(html).toContain("March 4, 2025");
+  });
+
+  it("does not show a contact block or links when the creator set none", async () => {
+    const html = await render("en");
+    expect(html).not.toContain("mailto:");
+    expect(html).not.toContain("nofollow");
   });
 
   it("labels the video count in English on the English page", async () => {
