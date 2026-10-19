@@ -32,7 +32,7 @@ export default async function PrivacyPolicyPage(props: { params: Promise<{ local
       <Navbar />
       <main id="main" tabIndex={-1} lang="en" className="mx-auto max-w-3xl px-4 py-16">
         <header className="mb-10 border-b-2 border-[var(--chan-ink)]/10 pb-8">
-          <h1 className="text-3xl font-black uppercase tracking-tighter">Privacy Policy — WWW.PAWELPERFECT.COM</h1>
+          <h1 className="text-[clamp(1.25rem,5.4vw,1.875rem)] font-black uppercase tracking-tighter [overflow-wrap:anywhere]">Privacy Policy — WWW.PAWELPERFECT.COM</h1>
           <p className="mt-2 text-sm text-[var(--chan-muted)]">{LEGAL_EFFECTIVE_DATE_EN}</p>
           <p className="mt-1 text-sm text-[var(--chan-muted)]">
             This is a translation provided for convenience. In case of any discrepancy, the Polish-language version
