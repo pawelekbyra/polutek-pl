@@ -24,6 +24,7 @@ export async function sendSupportThanksNotification(userId: string) {
   await sendNotification({
     userId,
     kind: template.kind,
+    templateKey: template.templateKey,
     titlePl: template.titlePl,
     titleEn: template.titleEn,
     bodyPl: template.bodyPl,

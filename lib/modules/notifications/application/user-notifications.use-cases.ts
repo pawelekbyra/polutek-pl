@@ -7,6 +7,7 @@ import {
   notificationLanguage,
   safeNotificationHref,
 } from "../domain/user-notifications";
+import { notificationViewerLanguage, renderNotification } from "../domain/notification-render";
 
 /** The signed-in viewer's notification feed. Only ever the caller's own rows (the user id comes from the actor). */
 
@@ -33,22 +34,28 @@ export async function listUserNotifications(
       take: query.limit + 1,
       // A cursor id that is not the caller's only repositions inside the caller's own rows.
       ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
-      select: { id: true, kind: true, titlePl: true, titleEn: true, bodyPl: true, bodyEn: true, href: true, read: true, createdAt: true },
+      select: { id: true, kind: true, titlePl: true, titleEn: true, bodyPl: true, bodyEn: true, templateKey: true, params: true, href: true, read: true, createdAt: true },
     }),
     ctx.prisma.notification.count({ where: { userId, read: false } }),
   ]);
 
   const pl = notificationLanguage(user?.language) === "pl";
+  const language = notificationViewerLanguage(user?.language);
   const page = rows.slice(0, query.limit);
-  const items: UserNotificationDTO[] = page.map((n) => ({
-    id: n.id,
-    kind: n.kind,
-    title: pl ? n.titlePl : n.titleEn,
-    body: pl ? n.bodyPl : n.bodyEn,
-    href: safeNotificationHref(n.href),
-    read: n.read,
-    createdAt: n.createdAt.toISOString(),
-  }));
+  const items: UserNotificationDTO[] = page.map((n) => {
+    // Polish and English always read the stored text (as before); other languages use the keyed template when the
+    // row has one, and fall back to the stored English text otherwise (old rows, unknown keys, statements of reasons).
+    const rendered = pl || language === "en" ? null : renderNotification(n.templateKey, n.params, language);
+    return {
+      id: n.id,
+      kind: n.kind,
+      title: rendered ? rendered.title : pl ? n.titlePl : n.titleEn,
+      body: rendered ? rendered.body : pl ? n.bodyPl : n.bodyEn,
+      href: safeNotificationHref(n.href),
+      read: n.read,
+      createdAt: n.createdAt.toISOString(),
+    };
+  });
   return { items, nextCursor: rows.length > query.limit ? page[page.length - 1].id : null, unreadCount };
 }
 

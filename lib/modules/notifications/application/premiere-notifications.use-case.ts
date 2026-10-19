@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
-import { buildPremiereCopy, newVideoHref } from "../domain/new-video";
+import { buildNewVideoParams, buildPremiereCopy, newVideoHref } from "../domain/new-video";
 import { deliverNewVideoNotifications } from "./new-video-fan-out.use-case";
 
 /**
@@ -69,12 +69,14 @@ export async function notifyDuePremieres(deps: PremiereNotificationsDeps = {}): 
     if (claim.count !== 1) continue;
     result.claimed += 1;
     try {
-      const copy = buildPremiereCopy({ channelName: video.creator.name, title: video.title, titleEn: video.titleEn });
+      const copyInput = { channelName: video.creator.name, title: video.title, titleEn: video.titleEn };
+      const copy = buildPremiereCopy(copyInput);
       result.notifications += await deliverNewVideoNotifications(db, {
         videoId: video.id,
         channel: video.creator,
         copy,
         href: newVideoHref(video.slug),
+        template: { key: "premiere", params: buildNewVideoParams(copyInput) },
       });
     } catch (error) {
       result.failed += 1;
