@@ -19,6 +19,7 @@ const m = vi.hoisted(() => ({
   createCreatorReply: vi.fn(),
   startOriginalUpload: vi.fn(),
   getChannelLimitsView: vi.fn(),
+  canCreateChannel: vi.fn(async () => false),
 }));
 
 vi.mock("@/lib/api/studio-session", () => ({ resolveStudioSession: m.resolveStudioSession }));
@@ -30,6 +31,7 @@ vi.mock("@/lib/modules/channel", () => ({
   checkHandleAvailability: m.checkHandleAvailability,
   restoreChannel: vi.fn(),
   listMyChannels: vi.fn(),
+  canCreateChannel: m.canCreateChannel,
 }));
 vi.mock("@/lib/modules/video", () => ({
   createAdminVideo: m.createAdminVideo,
@@ -116,6 +118,14 @@ describe("Studio API: session and channel", () => {
     expect(body.channelCreation).toBe("off");
     process.env.PLATFORM_GATE_CHANNEL_CREATION = "invite";
     expect((await (await meGet(req("/api/studio/me"))).json()).channelCreation).toBe("invite");
+  });
+
+  it("tells /me whether an account without a channel may create one (the Studio link depends on it)", async () => {
+    m.resolveStudioSession.mockResolvedValue({ ...session, channel: null, channels: [] });
+    m.canCreateChannel.mockResolvedValueOnce(true);
+    expect((await (await meGet(req("/api/studio/me"))).json()).canCreateChannel).toBe(true);
+    m.canCreateChannel.mockRejectedValueOnce(new Error("db"));
+    expect((await (await meGet(req("/api/studio/me"))).json()).canCreateChannel).toBe(false);
   });
 
   it("exposes the current channel's limits (read only) and survives a failed lookup", async () => {

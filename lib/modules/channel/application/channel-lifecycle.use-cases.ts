@@ -160,6 +160,15 @@ export interface CreateChannelInput {
   country?: string | null;
 }
 
+/** Whether this account may create a channel right now: gate on, or gate on invite and the account is invited. */
+export async function canCreateChannel(ctx: AppContext): Promise<boolean> {
+  const mode = gateMode("channelCreation");
+  if (mode === "on") return true;
+  if (mode !== "invite") return false;
+  const userId = userIdOf(ctx);
+  return userId ? isInvited(ctx, userId) : false;
+}
+
 export async function createChannel(
   ctx: AppContext,
   input: CreateChannelInput,

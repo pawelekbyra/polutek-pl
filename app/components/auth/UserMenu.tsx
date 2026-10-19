@@ -47,6 +47,8 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
   const [accountOpen, setAccountOpen] = useState(false);
   const [channels, setChannels] = useState<SubscribedChannel[] | null>(null);
   const [failed, setFailed] = useState(false);
+  // Studio is only offered to accounts that have a channel or may create one (the creation gate is closed for most).
+  const [studioAccess, setStudioAccess] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
@@ -110,6 +112,18 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
       .then((data) => setChannels(data.items))
       .catch(() => {
         if (!controller.signal.aborted) setFailed(true);
+      });
+    return () => controller.abort();
+  }, [open, userId]);
+
+  useEffect(() => {
+    if (!open || !userId) return;
+    const controller = new AbortController();
+    fetch("/api/studio/me", { cache: "no-store", signal: controller.signal })
+      .then((response) => (response.ok ? (response.json() as Promise<{ channels?: unknown[]; canCreateChannel?: boolean }>) : Promise.reject(new Error("status"))))
+      .then((data) => setStudioAccess((data.channels?.length ?? 0) > 0 || data.canCreateChannel === true))
+      .catch(() => {
+        if (!controller.signal.aborted) setStudioAccess(false);
       });
     return () => controller.abort();
   }, [open, userId]);
@@ -200,10 +214,12 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
                   <Home className={iconClass} strokeWidth={1.8} aria-hidden="true" />
                   {tx("Strona główna", "Home")}
                 </Link>
-                <Link href={getLocalizedHref(language, "studio")} className={itemClass} onClick={dismiss}>
-                  <LayoutDashboard className={iconClass} strokeWidth={1.8} aria-hidden="true" />
-                  {tx("Studio twórcy", "Creator Studio")}
-                </Link>
+                {studioAccess ? (
+                  <Link href={getLocalizedHref(language, "studio")} className={itemClass} onClick={dismiss}>
+                    <LayoutDashboard className={iconClass} strokeWidth={1.8} aria-hidden="true" />
+                    {tx("Studio twórcy", "Creator Studio")}
+                  </Link>
+                ) : null}
                 <button
                   type="button"
                   className={itemClass}
