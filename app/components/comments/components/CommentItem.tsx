@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useRenderClock } from "../../RenderClock";
+import { useLongPress } from "../hooks/useLongPress";
 
 interface CommentItemProps {
   comment: CommentView;
@@ -84,6 +85,12 @@ function CommentItemComponent({
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
+  // Edit, delete and pin are the actions people reach for on their own comments or as moderators: those get a
+  // quiet visible button. Reporting someone else's comment is rare, so a plain viewer on a touch screen gets no
+  // button at all and holds the comment instead (with a mouse the button still shows on hover).
+  const hasPrimaryActions = comment.viewerCanEdit || comment.viewerCanDelete || (!isReply && comment.viewerCanPin);
+  const hasAnyAction = hasPrimaryActions || comment.viewerCanReport;
+  const longPress = useLongPress(() => setShowMenu(true), Boolean(userProfile) && hasAnyAction && !isEditing);
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const toast = useToast();
@@ -271,17 +278,20 @@ function CommentItemComponent({
             <DropdownMenu open={showMenu} onOpenChange={setShowMenu}>
               <DropdownMenuTrigger
                 className={cn(
-                  "absolute -top-[9px] right-0 grid h-9 w-9 place-items-center rounded-full transition-[opacity,background-color] hover:bg-[var(--chan-surface)] focus-visible:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transition-none",
-                  // Revealed on hover only where hover exists; on touch screens it is always visible.
-                  showMenu
-                    ? "opacity-100"
-                    : "opacity-100 [@media(hover:hover)]:opacity-0 group-hover/comment:opacity-100 group-hover/reply:opacity-100 group-focus-within/comment:opacity-100 group-focus-within/reply:opacity-100 focus:opacity-100",
+                  "absolute -top-[9px] right-0 grid h-9 w-9 place-items-center rounded-full text-[var(--chan-muted-2)] transition-[opacity,background-color,color] hover:bg-[var(--chan-surface)] hover:text-[var(--chan-ink)] focus-visible:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transition-none",
+                  // Revealed on hover where hover exists. On a touch screen it shows (quietly) only when there is
+                  // something to do beyond reporting; otherwise it stays out of sight and out of reach.
+                  hasPrimaryActions
+                    ? showMenu
+                      ? "opacity-100"
+                      : "opacity-100 [@media(hover:hover)]:opacity-0 group-hover/comment:opacity-100 group-hover/reply:opacity-100 group-focus-within/comment:opacity-100 group-focus-within/reply:opacity-100 focus:opacity-100"
+                    : "pointer-events-none opacity-0 [@media(hover:hover)]:pointer-events-auto group-hover/comment:opacity-100 group-hover/reply:opacity-100 group-focus-within/comment:opacity-100 group-focus-within/reply:opacity-100 focus:opacity-100",
                 )}
                 aria-label={
                   tx("Akcje komentarza", "Comment actions")
                 }
               >
-                <MoreVertical aria-hidden="true" size={16} />
+                <MoreVertical aria-hidden="true" size={14} />
               </DropdownMenuTrigger>
 
               <DropdownMenuContent
@@ -378,7 +388,10 @@ function CommentItemComponent({
             </div>
           </div>
         ) : (
-          <p className="mt-0.5 whitespace-pre-wrap break-words text-[14px] leading-5 text-[var(--chan-ink)]">
+          <p
+            {...longPress}
+            className="mt-0.5 whitespace-pre-wrap break-words text-[14px] leading-5 text-[var(--chan-ink)] pointer-coarse:select-none pointer-coarse:[-webkit-touch-callout:none]"
+          >
             {comment.text}
           </p>
         )}
