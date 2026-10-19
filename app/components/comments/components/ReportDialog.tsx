@@ -11,13 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { CommentReportReasonDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import type { Locale } from "@/lib/i18n/routing";
 import type { Tx } from "@/lib/i18n/ui";
@@ -84,21 +77,43 @@ export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDial
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor={`${idPrefix}-reason`}>
+          <fieldset className="grid gap-1.5">
+            <legend className="mb-1 text-sm font-medium leading-none">
               {tx("Powód", "Reason")}
-            </Label>
-            <Select value={reason} onValueChange={(v) => setReason(v as CommentReportReasonDto)}>
-              <SelectTrigger id={`${idPrefix}-reason`}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(REASON_LABELS) as CommentReportReasonDto[]).map((value) => (
-                  <SelectItem key={value} value={value}>{REASON_LABELS[value](tx)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+            </legend>
+            <div role="radiogroup" aria-label={tx("Powód", "Reason")} className="grid gap-1">
+              {(Object.keys(REASON_LABELS) as CommentReportReasonDto[]).map((value) => {
+                const selected = value === reason;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => setReason(value)}
+                    disabled={isSubmitting}
+                    className={
+                      "flex min-h-11 items-center gap-3 rounded-xl border px-3 text-left text-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] " +
+                      (selected
+                        ? "border-[var(--chan-blue)] bg-[var(--chan-blue-soft)] font-semibold text-[var(--chan-ink)]"
+                        : "border-[var(--chan-line)] text-[var(--chan-ink)] hover:bg-[var(--chan-surface)]")
+                    }
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={
+                        "grid h-4 w-4 shrink-0 place-items-center rounded-full border " +
+                        (selected ? "border-[var(--chan-blue)]" : "border-[var(--chan-muted-2)]")
+                      }
+                    >
+                      {selected ? <span className="h-2 w-2 rounded-full bg-[var(--chan-blue)]" /> : null}
+                    </span>
+                    {REASON_LABELS[value](tx)}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
           <div className="grid gap-2">
             <Label htmlFor={`${idPrefix}-note`}>
               {tx("Opcjonalna notatka", "Optional note")}
