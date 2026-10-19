@@ -380,7 +380,7 @@ function ChannelHomeContent({
               />
             )}
 
-            <div className="-mx-4 mt-5 flex border-b border-[var(--cm-line-80)] font-sans md:-mx-6 lg:hidden">
+            <div id="watch-tabs" className="-mx-4 mt-5 flex border-b border-[var(--cm-line-80)] font-sans md:-mx-6 lg:hidden">
               {(["comments", "videos"] as const).map((tab) => {
                 const isActive = activeTab === tab;
                 return (

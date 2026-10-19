@@ -1,5 +1,6 @@
 "use client";
 
+import { scrollToWatchTabs } from "./scroll-to-watch-tabs";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   MessageSquare,
@@ -289,9 +290,13 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               mobileComposerRef.current?.close();
               // Show where the comment landed: the thread that was answered, or the top of the list.
               const answered = replyTo ? document.getElementById(`comment-${replyTo}`) : null;
-              requestAnimationFrame(() =>
-                (answered ?? composerRef.current)?.scrollIntoView({ behavior: scrollBehavior(), block: answered ? "center" : "start" }),
-              );
+              requestAnimationFrame(() => {
+                if (answered) {
+                  answered.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
+                } else if (!scrollToWatchTabs(scrollBehavior())) {
+                  composerRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
+                }
+              });
             }
           },
           onError: (error) => {
