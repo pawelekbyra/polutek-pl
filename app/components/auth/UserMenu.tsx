@@ -29,6 +29,8 @@ type SubscribedChannel = { id: string; slug: string; handle: string | null; name
 const PANEL_CHANNEL_LIMIT = 8;
 /** Length of the slide-out (matches duration-200 on the panel and its backdrop). */
 const PANEL_EXIT_MS = 200;
+/** Studio access per account for the lifetime of the page session, so navigating does not ask again. */
+const studioAccessCache = new Map<string, boolean>();
 
 /**
  * Account panel. The avatar in the top bar opens a side panel from the right: who is signed in, the main places of
@@ -48,7 +50,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
   const [channels, setChannels] = useState<SubscribedChannel[] | null>(null);
   const [failed, setFailed] = useState(false);
   // Studio is only offered to accounts that have a channel or may create one (the creation gate is closed for most).
-  const [studioAccess, setStudioAccess] = useState(false);
+  const [studioAccessState, setStudioAccessState] = useState<{ userId: string; value: boolean } | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
@@ -116,17 +118,24 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
     return () => controller.abort();
   }, [open, userId]);
 
+  // Read as soon as the avatar is on screen, so the answer is there before the panel is opened: the link is never
+  // shown "for a moment" and then removed, and it appears only once the account is known to be allowed.
   useEffect(() => {
-    if (!open || !userId) return;
+    if (!userId || studioAccessCache.has(userId)) return;
     const controller = new AbortController();
     fetch("/api/studio/me", { cache: "no-store", signal: controller.signal })
       .then((response) => (response.ok ? (response.json() as Promise<{ channels?: unknown[]; canCreateChannel?: boolean }>) : Promise.reject(new Error("status"))))
-      .then((data) => setStudioAccess((data.channels?.length ?? 0) > 0 || data.canCreateChannel === true))
+      .then((data) => {
+        const value = (data.channels?.length ?? 0) > 0 || data.canCreateChannel === true;
+        studioAccessCache.set(userId, value);
+        setStudioAccessState({ userId, value });
+      })
       .catch(() => {
-        if (!controller.signal.aborted) setStudioAccess(false);
+        // Unknown: keep the link hidden for now and ask again on the next mount.
       });
     return () => controller.abort();
-  }, [open, userId]);
+  }, [userId]);
+  const studioAccess = userId ? (studioAccessCache.get(userId) ?? (studioAccessState?.userId === userId ? studioAccessState.value : false)) : false;
 
   if (!user) return null;
 
