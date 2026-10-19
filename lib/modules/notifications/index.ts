@@ -16,3 +16,5 @@ export { listUserNotifications, markNotificationsRead, countUnreadNotifications 
 export { getNotificationPreferences, updateNotificationPreferences } from './application/notification-preferences.use-cases';
 export * from './domain/user-notifications';
 export * from './domain/notification-preferences';
+export { notifyDuePremieres } from './application/premiere-notifications.use-case';
+export type { PremiereNotificationsResult } from './application/premiere-notifications.use-case';

@@ -9,6 +9,7 @@ import { recordAuditEvent } from "@/lib/modules/audit";
 import { MediaStorageService, isDerivedThumbnailUrl, isThumbnailProxyPath } from "@/lib/modules/media";
 import { VideoPolicy } from "../domain/video.policy";
 import { syncPublicThumbnail } from "./sync-public-thumbnail.service";
+import { announcePublishedVideo } from './announce-published-video';
 import { publishAdminVideo } from "./publish-admin-video.use-case";
 import { isAllowedPremiereChange, isUpcomingPremiere } from "../domain/premiere";
 import { isAllowedStatusTransition } from "../domain/video-visibility";
@@ -98,7 +99,8 @@ export async function updateAdminVideo(
   delete safeInput.publishedAt;
   // "Natychmiast" on a published video whose premiere hasn't happened yet: it goes
   // live now, so it is dated now (not from when it was first published).
-  if (input.premiereAt === null && existing.status === 'PUBLISHED' && isUpcomingPremiere(existing, ctx.now())) {
+  const goesLiveNow = input.premiereAt === null && existing.status === 'PUBLISHED' && isUpcomingPremiere(existing, ctx.now());
+  if (goesLiveNow) {
       safeInput.publishedAt = ctx.now();
   }
   if (input.status && input.status !== 'PUBLISHED') {
@@ -141,6 +143,10 @@ export async function updateAdminVideo(
     return video;
   });
 
+
+  // The premiere was dropped ("Natychmiast"): the video is live now and its premiere date no longer exists for the
+  // premiere cron, so it is announced like a new video (idempotent; never throws; skipped while it is not announceable).
+  if (goesLiveNow && updated.status === 'PUBLISHED') await announcePublishedVideo(updated.id);
 
   if (input.status && input.status !== existing.status) await clearReadyVisibility(updated.id, ctx);
 

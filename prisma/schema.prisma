@@ -771,6 +771,9 @@ model Video {
   // Scheduled premiere: while status = PUBLISHED and premiereAt > now the video is "upcoming"
   // (listed under "Coming soon", never playable). Null or past = ordinary video. See CLAUDE.md "Premieres".
   premiereAt                        DateTime?
+  // Set once the viewers were told about this video (publish-time fan-out, or the premiere cron when premiereAt
+  // passed). Claimed atomically (update where null), so a video is announced at most once. See CLAUDE.md 4.18.
+  premiereNotifiedAt                DateTime?
   // Fundraising goal shown as an amount-free progress bar under the title (CLAUDE.md
   // "Fundraising progress bar"). Null goal = no bar. Never exposed in public DTOs.
   fundraisingGoalMinor              Int?
