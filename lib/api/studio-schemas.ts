@@ -21,6 +21,15 @@ export const updateChannelProfileSchema = z.object({
   country: z.string().trim().length(2).nullable().optional(),
 });
 
+/** About links and public contact e-mail; the use case validates the content (https, lengths, count). */
+export const updateChannelAboutSchema = z.object({
+  links: z.array(z.object({ title: z.string().max(200), url: z.string().max(600) })).max(20).optional(),
+  contactEmail: z.string().max(300).nullable().optional(),
+});
+
+/** Browser-cropped banner as a data URL, or null to remove it (the use case validates type, size and signature). */
+export const setChannelBannerSchema = z.object({ dataUrl: z.string().max(600_000).nullable() });
+
 export const changeHandleSchema = z.object({ handle: trimmed(60, 1) });
 
 export const restoreChannelSchema = z.object({ channelId: z.string().min(1).max(64) });

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
 import { StudioApiError, jsonBody, studioApi, type StudioChannel } from "./studio-client";
+import StudioChannelAbout from "./StudioChannelAbout";
 import { Card, Field, Notice, buttonClass, dangerButtonClass, inputClass } from "./ui";
 
 /** Studio -> Channel and settings: name, bio, handle and the channel deletion. */
@@ -63,6 +64,8 @@ export default function StudioProfile({ channel, onChanged }: { channel: StudioC
           </div>
         </div>
       </Card>
+
+      <StudioChannelAbout />
 
       <Card title={tx("Uchwyt", "Handle")}>
         <div className="grid max-w-xl gap-4">

@@ -61,6 +61,8 @@ export type PublicCreatorPageDTO = PublicCreatorDTO & {
   /** The channel's public @handle (null until chosen); the URL /@handle resolves to the channel. */
   handle?: string | null;
   userId?: string;
+  /** Public About/banner fields (allowlist, lib/modules/channel/domain/channel-about.ts). */
+  about?: import("@/lib/modules/channel/domain/channel-about").PublicChannelAbout;
   videos: PublicVideoDTO[];
 };
 
