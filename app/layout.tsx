@@ -19,6 +19,7 @@ import { AuthModalProvider } from "@/app/components/auth/AuthModalProvider";
 import { TelemetryBeacon } from "@/app/components/telemetry/TelemetryBeacon";
 import { isTelemetryBeaconEnabled } from "@/lib/telemetry/config";
 import { GATE_BOOT_SCRIPT } from "@/app/components/preload/matrix-rain-engine";
+import { COMMENT_DEEP_LINK_CAPTURE_SCRIPT } from "@/app/components/comments/deep-link";
 
 export async function generateMetadata(): Promise<Metadata> {
   const betaText = await getBetaSiteText(await resolveDocumentLanguage());
@@ -85,6 +86,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             Inline on purpose (the CSP allows inline scripts); Next merges its own metadata tags
             (viewport, manifest, icons) into this <head>. */}
         <script dangerouslySetInnerHTML={{ __html: GATE_BOOT_SCRIPT }} />
+        {/* Writes down a #comment-... target before the address is rewritten (see comments/deep-link.ts). */}
+        <script dangerouslySetInnerHTML={{ __html: COMMENT_DEEP_LINK_CAPTURE_SCRIPT }} />
       </head>
       <body className="font-sans bg-background text-foreground min-h-[100dvh] relative" suppressHydrationWarning>
         <ServiceWorkerCleanup />

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Hero from "./Hero";
 import { PublicVideoDTO } from "../types/video";
@@ -20,6 +20,7 @@ import { RenderClockProvider } from "./RenderClock";
 import { useSearchParams } from "next/navigation";
 // Rendered on the server with its first page (HomeExperience), so the list is in the first HTML.
 import EmbeddedComments from "./comments/EmbeddedComments";
+import { openedWithCommentDeepLink } from "./comments/deep-link";
 import type { InitialCommentsPage } from "./comments/initial-comments";
 import { pickHomeVideo } from "@/lib/home-video-selection";
 import { ContinueWatchingShelf } from "./channel/ContinueWatchingShelf";
@@ -176,7 +177,13 @@ function ChannelHomeContent({
     setSelectionState((current) => ({ ...current, activeTab }));
   };
 
+  // The first run (the page just opened) takes a phone to the player, except when the page was opened by a link to a
+  // comment: that one scrolls to the comment instead.
+  const firstMediaScroll = useRef(true);
   useEffect(() => {
+    const first = firstMediaScroll.current;
+    firstMediaScroll.current = false;
+    if (first && openedWithCommentDeepLink()) return;
     if (selectedVideo?.id) {
       scrollToMediaOnMobile();
     }
