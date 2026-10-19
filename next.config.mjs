@@ -57,10 +57,6 @@ const nextConfig = {
             value: 'nosniff',
           },
           {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
             // OWASP: the legacy XSS auditor is gone from current browsers and was itself an attack vector; 0 disables it.
             key: 'X-XSS-Protection',
             value: '0',
@@ -78,6 +74,14 @@ const nextConfig = {
             value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
           }
         ],
+      },
+      {
+        // Legacy framing ban for every page EXCEPT the embeddable player (/embed/<slug>), the only page other sites may
+        // frame. The modern rule (CSP frame-ancestors) is decided in one place, generateCSP() in lib/utils/security.ts,
+        // and middleware.ts passes embeddable only for /embed/*; this header must stay off exactly the same path
+        // (tests/unit/embed/framing-headers.test.ts), because an X-Frame-Options: DENY would defeat frame-ancestors *.
+        source: '/((?!embed/).*)',
+        headers: [{ key: 'X-Frame-Options', value: 'DENY' }],
       },
       ...(siteIsBeta
         ? [{

@@ -21,6 +21,7 @@ import { countedNoun } from '@/lib/i18n/plurals';
 import { notFound, redirect } from 'next/navigation';
 import ChannelTabs from '@/app/components/channel/ChannelTabs';
 import ChannelAbout from '@/app/components/channel/ChannelAbout';
+import { buildChannelFeedPath } from '@/lib/embed/paths';
 
 export const revalidate = 60;
 
@@ -42,7 +43,11 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   return {
     // Browser tab always reads www.pawelperfect.com; creator name stays in OG/twitter below.
     title: SITE_TITLE,
-    alternates: getLocaleAlternates(locale, "channel", { params: { slug: creator.slug }, baseUrl }),
+    alternates: {
+      ...getLocaleAlternates(locale, "channel", { params: { slug: creator.slug }, baseUrl }),
+      // Feed readers discover the channel's RSS feed here.
+      types: { 'application/rss+xml': `${baseUrl}${buildChannelFeedPath(creator.slug)}` },
+    },
     description: creator.bio ?? (tx("Kanał {0} — materiały wideo", "{0} video channel", creator.name)),
     openGraph: {
       title: creator.name,

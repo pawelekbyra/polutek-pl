@@ -47,7 +47,7 @@ export async function notifyCommentLike(input: { commentId: string; likerId: str
       select: { id: true },
     });
     if (recent) return;
-    await sendNotification({ userId: comment.authorId, kind: t.kind, titlePl: t.titlePl, titleEn: t.titleEn, bodyPl: t.bodyPl, bodyEn: t.bodyEn, href });
+    await sendNotification({ userId: comment.authorId, kind: t.kind, templateKey: t.templateKey, titlePl: t.titlePl, titleEn: t.titleEn, bodyPl: t.bodyPl, bodyEn: t.bodyEn, href });
   } catch (error) {
     console.error("[COMMENT_LIKE_NOTIFICATION_ERROR]", error);
   }
@@ -67,6 +67,8 @@ export async function notifyCommentReply(input: { answeredCommentId: string; rep
     await sendNotification({
       userId: answered.authorId,
       kind: t.kind,
+      templateKey: t.templateKey,
+      params: { text: body },
       titlePl: t.titlePl,
       titleEn: t.titleEn,
       bodyPl: body,
@@ -106,7 +108,7 @@ export async function notifyCreatorLike(input: { commentId: string }): Promise<v
       select: { id: true },
     });
     if (already) return;
-    await sendNotification({ userId: comment.authorId, kind: t.kind, titlePl: t.titlePl, titleEn: t.titleEn, bodyPl: t.bodyPl, bodyEn: t.bodyEn, href, skipTemplate: true });
+    await sendNotification({ userId: comment.authorId, kind: t.kind, templateKey: t.templateKey, titlePl: t.titlePl, titleEn: t.titleEn, bodyPl: t.bodyPl, bodyEn: t.bodyEn, href, skipTemplate: true });
   } catch (error) {
     console.error("[CREATOR_LIKE_NOTIFICATION_ERROR]", error);
   }

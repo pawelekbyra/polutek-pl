@@ -68,6 +68,31 @@ describe("viewer notifications", () => {
     expect(notification.findMany.mock.calls[0][0].where).toEqual({ userId: "me", read: false });
   });
 
+  it("renders keyed rows in the account language and falls back to stored text otherwise", async () => {
+    const keyed = { ...row("k"), templateKey: "new_video", params: { channelName: "Kanał", title: "Film", titleEn: "Movie" } };
+    const unknown = { ...row("u"), templateKey: "gone", params: {} };
+    const noParams = { ...row("n"), templateKey: "new_video", params: null };
+    const old = { ...row("o"), templateKey: null, params: null };
+    const { ctx, prisma } = ctxFor(user, { findMany: vi.fn().mockResolvedValue([keyed, unknown, noParams, old]) });
+
+    prisma.user.findUnique.mockResolvedValue({ language: "de" });
+    const de = await listUserNotifications(ctx, { limit: 10 });
+    expect(de.items[0]).toMatchObject({ title: "Neues Video: Kanał", body: "Movie" });
+    for (const item of de.items.slice(1)) expect(item).toMatchObject({ title: "Title", body: "Body" });
+
+    prisma.user.findUnique.mockResolvedValue({ language: "zh" });
+    expect((await listUserNotifications(ctx, { limit: 10 })).items[0].title).toBe("新视频：Kanał");
+
+    // Polish and English keep reading the stored text exactly as before.
+    prisma.user.findUnique.mockResolvedValue({ language: "pl" });
+    expect((await listUserNotifications(ctx, { limit: 10 })).items[0]).toMatchObject({ title: "Tytul", body: "Tresc" });
+    prisma.user.findUnique.mockResolvedValue({ language: "en" });
+    expect((await listUserNotifications(ctx, { limit: 10 })).items[0]).toMatchObject({ title: "Title", body: "Body" });
+    // An unsupported account language reads English.
+    prisma.user.findUnique.mockResolvedValue({ language: "ru" });
+    expect((await listUserNotifications(ctx, { limit: 10 })).items[0]).toMatchObject({ title: "Title" });
+  });
+
   it("drops unsafe links", async () => {
     const { ctx } = ctxFor(user, { findMany: vi.fn().mockResolvedValue([row("a", "javascript:alert(1)")]) });
     expect((await listUserNotifications(ctx, { limit: 5 })).items[0].href).toBeNull();

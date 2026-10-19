@@ -2,7 +2,8 @@ import type { PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 import { isUpcomingPremiere } from "@/lib/premiere";
-import { applyNewVideoTemplate, buildNewVideoCopy, newVideoHref, newVideoLockKey } from "../domain/new-video";
+import { applyNewVideoTemplate, buildNewVideoCopy, buildNewVideoParams, newVideoHref, newVideoLockKey } from "../domain/new-video";
+import type { NotificationParams, NotificationTemplateKey } from "../domain/notification-render";
 
 /**
  * NEW_VIDEO fan-out (CLAUDE.md 4.18): when a video becomes publicly available as PUBLISHED, the
@@ -72,7 +73,9 @@ export async function fanOutNewVideo(videoId: string, deps: NewVideoFanOutDeps =
   const copy = applyNewVideoTemplate(override, buildNewVideoCopy(input), input);
   const href = newVideoHref(video.slug);
 
-  const inApp = await deliverNewVideoNotifications(db, { videoId: video.id, channel, copy, href });
+  // An admin-edited template is static text: such rows keep it as written and carry no per-language key.
+  const template = override ? undefined : { key: "new_video" as const, params: buildNewVideoParams(input) };
+  const inApp = await deliverNewVideoNotifications(db, { videoId: video.id, channel, copy, href, template });
   // The publish-time fan-out counts as "announced": the premiere cron must never send a second one.
   await markPremiereNotified(db, video.id, now);
 
@@ -85,6 +88,8 @@ export type DeliverInput = {
   channel: { id: string; userId: string };
   copy: { titlePl: string; titleEn: string; bodyPl: string; bodyEn: string };
   href: string;
+  /** Key and values for the per-language rendering; omitted when the copy is an admin override. */
+  template?: { key: NotificationTemplateKey; params: NotificationParams };
 };
 
 /**
@@ -131,6 +136,7 @@ export async function deliverNewVideoNotifications(db: PrismaClient, input: Deli
             bodyPl: copy.bodyPl,
             bodyEn: copy.bodyEn,
             href,
+            ...(input.template ? { templateKey: input.template.key, params: input.template.params } : {}),
             channelId: channel.id,
             videoId: video.id,
           })),

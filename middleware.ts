@@ -7,6 +7,8 @@ import { checkAdminCsrf } from "@/lib/api/csrf";
 import { isLegacyAdminApiPath, resolveLegacyAdminRedirect } from "@/lib/admin-legacy-redirects";
 import { handlePathRewrite } from "@/lib/channel-handle-path";
 import { getRouteLocaleFromPathname, ROUTE_LOCALE_HEADER, SUPPORTED_LOCALES, UI_ONLY_LOCALES } from "@/lib/i18n/routing";
+import { resolveEmbedLanguage } from "@/lib/i18n/accept-language";
+import { isChannelFeedPath, isEmbedPath } from "@/lib/embed/paths";
 
 // The interface-only languages (de, es, ...) mirror the English public routes under their own prefix.
 const UI_ONLY_PUBLIC_ROUTES = UI_ONLY_LOCALES.flatMap((locale) => [
@@ -50,6 +52,10 @@ const isPublicRoute = createRouteMatcher([
   '/search',
   '/watch/(.*)',
   '/channel/(.*)',
+  // Embeddable player (the only page other sites may frame, see generateCSP) and its oEmbed discovery endpoint:
+  // both serve PUBLIC-tier published videos only and decide that themselves. The RSS feed is /channel/<slug>/feed.xml (above).
+  '/embed/(.*)',
+  '/api/oembed',
   // A channel's public address: /@handle is rewritten to its channel page below.
   '/@(.*)',
   '/regulamin',
@@ -114,6 +120,8 @@ const LOCALE_EXEMPT_PATHS = new Set(['/manifest.json', '/robots.txt', '/sitemap.
 
 function shouldRewriteForPolish(pathname: string): boolean {
   if (LOCALE_EXEMPT_PATHS.has(pathname)) return false;
+  // The embeddable player and the RSS feed have no language prefix: the player negotiates its own language (below).
+  if (isEmbedPath(pathname) || isChannelFeedPath(pathname)) return false;
 
   // Check if pathname is already localized or is a route that should not be locale-prefixed.
   const startsWithLocaleOrSystemRoute = new RegExp(`^/(?:${SUPPORTED_LOCALES.join('|')}|api|\\.)(?:/|$)`).test(pathname);
@@ -187,7 +195,16 @@ export default async function middleware(req: NextRequest) {
   // The locale written in the URL, for <html lang> (lib/i18n/server-language.ts). Set only by this
   // proxy: a value sent by the client is dropped.
   const routeLocale = getRouteLocaleFromPathname(req.nextUrl.pathname);
-  if (routeLocale) requestHeaders.set(ROUTE_LOCALE_HEADER, routeLocale);
+  const embedded = isEmbedPath(req.nextUrl.pathname);
+  if (embedded) {
+    // The embed names its own language from the URL and two request headers only (?lang=, CF-IPCountry, Accept-Language):
+    // the root layout then never reads a cookie or a session to render it.
+    requestHeaders.set(ROUTE_LOCALE_HEADER, resolveEmbedLanguage({
+      langParam: req.nextUrl.searchParams.get('lang'),
+      country: req.headers.get('cf-ipcountry'),
+      acceptLanguage: req.headers.get('accept-language'),
+    }));
+  } else if (routeLocale) requestHeaders.set(ROUTE_LOCALE_HEADER, routeLocale);
   else requestHeaders.delete(ROUTE_LOCALE_HEADER);
 
   // Bare paths ("/", "/regulamin", ...) are served from their /pl counterpart. The rewrite happens
@@ -205,7 +222,11 @@ export default async function middleware(req: NextRequest) {
   const response = rewriteUrl ? NextResponse.rewrite(rewriteUrl, init) : NextResponse.next(init);
 
   response.headers.set('x-request-id', requestId);
-  response.headers.set('Content-Security-Policy', generateCSP());
+  // Framing: only the embeddable player may be framed (by any site); everything else stays frame-ancestors 'none'.
+  // The decision is made inside generateCSP (the one place); next.config.mjs leaves X-Frame-Options off /embed/* to match.
+  response.headers.set('Content-Security-Policy', generateCSP({ embeddable: embedded }));
+  // The embed is a playback surface, never a landing page: keep it out of search indexes whatever the site stage is.
+  if (embedded) response.headers.set('X-Robots-Tag', 'noindex, nofollow');
   return response;
 }
 

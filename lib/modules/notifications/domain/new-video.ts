@@ -1,4 +1,5 @@
 import { getLocalizedHref } from "@/lib/i18n/routing";
+import type { NotificationParams } from "./notification-render";
 
 /**
  * New-video notification (kind NEW_VIDEO): who gets it is decided by the fan-out use case, this file
@@ -26,6 +27,13 @@ export type NewVideoCopy = { titlePl: string; titleEn: string; bodyPl: string; b
 function clip(value: string, max: number): string {
   const text = value.replace(/\s+/g, " ").trim();
   return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
+}
+
+/** Placeholder values of the per-language templates `new_video` and `premiere` (the viewer's language picks the wording). */
+export function buildNewVideoParams(input: NewVideoCopyInput): NotificationParams {
+  const params: NotificationParams = { channelName: clip(input.channelName, 80), title: clip(input.title, 200) };
+  if (input.titleEn?.trim()) params.titleEn = clip(input.titleEn, 200);
+  return params;
 }
 
 /** Default text: the headline names the channel, the body names the video. */

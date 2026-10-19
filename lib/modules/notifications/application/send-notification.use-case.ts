@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NotificationKind } from "@prisma/client";
 import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
+import type { NotificationParams, NotificationTemplateKey } from "../domain/notification-render";
 
 type Db = ReadDb | WriteTx;
 
@@ -11,6 +12,12 @@ export interface SendNotificationInput {
   titleEn: string;
   bodyPl: string;
   bodyEn: string;
+  /**
+   * Template key + placeholder values: lets the bell show the notification in any UI language. The pl/en text above
+   * stays the fallback. Dropped when an admin template override replaces the text (the override is static text).
+   */
+  templateKey?: NotificationTemplateKey;
+  params?: NotificationParams;
   href?: string;
   /** Channel and video the notification is about (NEW_VIDEO, MODERATION). */
   channelId?: string;
@@ -65,6 +72,7 @@ export async function sendNotification(input: SendNotificationInput, tx?: Db) {
         bodyPl: override?.bodyPl ?? input.bodyPl,
         bodyEn: override?.bodyEn ?? input.bodyEn,
         href: input.href,
+        ...(input.templateKey && !override ? { templateKey: input.templateKey, params: input.params ?? {} } : {}),
         ...(input.channelId ? { channelId: input.channelId } : {}),
         ...(input.videoId ? { videoId: input.videoId } : {}),
       },
@@ -82,6 +90,7 @@ export async function sendNotification(input: SendNotificationInput, tx?: Db) {
 export const notificationTemplates = {
   welcome: {
     kind: "WELCOME" as NotificationKind,
+    templateKey: "welcome" as NotificationTemplateKey,
     titlePl: "Witaj!",
     titleEn: "Welcome!",
     bodyPl: "Dziękujemy za dołączenie! Wszystkie filmy są dostępne po zalogowaniu.",
@@ -90,6 +99,7 @@ export const notificationTemplates = {
   // A tip is a voluntary gift that unlocks nothing (Regulamin §4): thanks only, no promise of access.
   supportThanks: {
     kind: "PATRON" as NotificationKind,
+    templateKey: "support_thanks" as NotificationTemplateKey,
     titlePl: "Dziękuję za wsparcie!",
     titleEn: "Thank you for your support!",
     bodyPl: "Twój napiwek dotarł. Dziękuję, to dla mnie wiele znaczy.",
@@ -98,6 +108,7 @@ export const notificationTemplates = {
   // Somebody answered the recipient's comment (the body is "name: start of the reply", built per notification).
   commentReply: {
     kind: "COMMENT" as NotificationKind,
+    templateKey: "comment_reply" as NotificationTemplateKey,
     titlePl: "Nowa odpowiedź na Twój komentarz",
     titleEn: "New reply to your comment",
     bodyPl: "Ktoś odpowiedział na Twój komentarz.",
@@ -106,6 +117,7 @@ export const notificationTemplates = {
   // The channel's creator liked or hearted the recipient's comment.
   creatorLike: {
     kind: "COMMENT" as NotificationKind,
+    templateKey: "creator_like" as NotificationTemplateKey,
     titlePl: "Twórca polubił Twój komentarz",
     titleEn: "The creator liked your comment",
     bodyPl: "Twórca kanału docenił Twój komentarz.",
@@ -113,6 +125,7 @@ export const notificationTemplates = {
   },
   commentLike: {
     kind: "COMMENT" as NotificationKind,
+    templateKey: "comment_like" as NotificationTemplateKey,
     titlePl: "Twój komentarz polubiono",
     titleEn: "Your comment got a like",
     bodyPl: "Komuś spodobał się Twój komentarz.",
