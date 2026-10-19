@@ -7,6 +7,7 @@ import { VideoContentService, findMainCreatorAdminAvatar, publicVideoOrderBy } f
 import { MainChannelService, isMainChannelId, resolveMainChannelId } from '@/lib/modules/channel/application/main-channel.service';
 import { resolveChannelAvatarUrl } from '@/lib/modules/channel/domain/channel-avatar';
 import { createAppContext } from '@/lib/modules/shared/app-context';
+import { toPublicChannelAbout } from '@/lib/modules/channel/domain/channel-about';
 import { MainChannelPolicy } from '@/lib/modules/channel/domain/channel.policy';
 
 /** What the home page needs to know about the channel itself (metadata only, no video list). */
@@ -79,6 +80,7 @@ export class CreatorContentService {
             bio: creator.bio,
             userId: creator.userId,
             subscribersCount: creator.subscribersCount ?? 0,
+            about: toPublicChannelAbout(creator, videos),
             videos
         };
       }

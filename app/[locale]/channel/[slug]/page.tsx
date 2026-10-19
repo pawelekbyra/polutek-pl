@@ -19,6 +19,8 @@ import { SITE_TITLE } from '@/lib/constants';
 import { getServerTx } from '@/lib/i18n/server-tx';
 import { countedNoun } from '@/lib/i18n/plurals';
 import { notFound, redirect } from 'next/navigation';
+import ChannelTabs from '@/app/components/channel/ChannelTabs';
+import ChannelAbout from '@/app/components/channel/ChannelAbout';
 import { buildChannelFeedPath } from '@/lib/embed/paths';
 
 export const revalidate = 60;
@@ -33,6 +35,11 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
 
   const baseUrl = getBaseUrl();
 
+  // Social preview picture: the banner when the channel has one, otherwise its avatar (absolute address).
+  const previewPath = creator.about?.bannerImageUrl ?? creator.imageUrl ?? null;
+  const previewImage = previewPath ? (previewPath.startsWith('/') ? `${baseUrl}${previewPath}` : previewPath) : null;
+  const canonicalPath = getLocaleAlternates(locale, "channel", { params: { slug: creator.slug }, baseUrl }).canonical;
+
   return {
     // Browser tab always reads www.pawelperfect.com; creator name stays in OG/twitter below.
     title: SITE_TITLE,
@@ -46,10 +53,13 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
       title: creator.name,
       description: creator.bio ?? (tx("Kanał {0}", "{0} channel", creator.name)),
       type: 'website',
+      url: canonicalPath,
+      ...(previewImage ? { images: [{ url: previewImage, alt: creator.name }] } : {}),
     },
     twitter: {
-      card: 'summary',
+      card: creator.about?.bannerImageUrl ? 'summary_large_image' : 'summary',
       title: creator.name,
+      ...(previewImage ? { images: [previewImage] } : {}),
     },
   };
 }
@@ -124,6 +134,8 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
     }
   }));
 
+  const aboutData = creator.about ?? { bannerImageUrl: null, links: [], contactEmail: null, joinedAt: '', totalViews: allVideos.reduce((sum, v) => sum + (v.views ?? 0), 0) };
+  const bannerUrl = aboutData.bannerImageUrl;
   const displayName = creator.name;
   const displayBio = creator.bio || (tx("Witamy na oficjalnym kanale.", "Welcome to the official channel."));
 
@@ -132,7 +144,13 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
       <Navbar />
 
       <main id="main" tabIndex={-1} className="max-w-[1284px] mx-auto px-4 md:px-6 lg:px-8 pt-4 pb-6 md:pt-8 focus:outline-none">
-        {/* The channel header is the profile card itself: one creator, no cover photo. */}
+        {bannerUrl && (
+          // Fixed 4:1 picture; on narrow screens a taller 3:1 crop (object-cover) keeps the centre visible.
+          <div className="channel-banner mb-5 aspect-[3/1] w-full overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-surface)] sm:aspect-[4/1]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={bannerUrl} alt="" width={1280} height={320} className="h-full w-full object-cover" decoding="async" />
+          </div>
+        )}
         <header className="channel-profile flex flex-col items-center gap-5 text-center md:flex-row md:items-center md:gap-8 md:text-left">
           <div className="channel-profile-avatar w-28 h-28 md:w-40 md:h-40 rounded-full border border-[var(--chan-line)] shrink-0">
              <SafeAvatar
@@ -172,10 +190,11 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
           </div>
         </header>
 
-        <div className="channel-tabs flex border-b border-[var(--chan-line)] mt-7 overflow-x-auto no-scrollbar gap-8">
-           <div className="channel-tab-active pb-3 border-b-2 border-[var(--chan-ink)] text-[13px] font-bold uppercase tracking-[0.14em] font-sans" aria-current="page">{tx("Wideo", "Videos")}</div>
-        </div>
-
+        <ChannelTabs
+          ariaLabel={tx("Sekcje kanału", "Channel sections")}
+          labels={{ videos: tx("Wideo", "Videos"), about: tx("O kanale", "About") }}
+          videos={(
+            <>
         {allVideos.length > 0 ? (
           <div className="channel-video-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-8 py-7">
             {allVideos.map((video, index) => (
@@ -197,6 +216,19 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
              </Link>
           </div>
         )}
+            </>
+          )}
+          about={(
+            <ChannelAbout
+              tx={tx}
+              locale={locale}
+              description={displayBio}
+              about={aboutData}
+              subscribersCount={creator.subscribersCount || 0}
+              videoCount={allVideos.length}
+            />
+          )}
+        />
       </main>
       <Footer />
     </div>

@@ -52,6 +52,13 @@ export interface StudioChannel {
   country: string | null;
 }
 
+/** About tab data of the current channel (Studio forms). */
+export interface StudioChannelAbout {
+  links: { title: string; url: string }[];
+  contactEmail: string | null;
+  bannerUrl: string | null;
+}
+
 /** The current channel's upload limits (read only); `null` when the channel has none of its own. */
 export interface StudioLimits {
   maxVideoSeconds: number;
