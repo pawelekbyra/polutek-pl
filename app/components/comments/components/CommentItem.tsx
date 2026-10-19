@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { CommentView, getAuthorBadge } from "../types";
 import { SafeAvatar } from "../../SafeAvatar";
 import { ReportDialog } from "./ReportDialog";
+import { DeleteCommentDialog } from "./DeleteCommentDialog";
 import { UserProfileCard } from "./UserProfileCard";
 import {
   CommentReportReasonDto,
@@ -85,6 +86,7 @@ function CommentItemComponent({
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   // Edit, delete and pin are the actions people reach for on their own comments or as moderators: those get a
   // quiet visible button. Reporting someone else's comment is rare, so a plain viewer on a touch screen gets no
   // button at all and holds the comment instead (with a mouse the button still shows on hover).
@@ -310,9 +312,7 @@ function CommentItemComponent({
                 )}
                 {comment.viewerCanDelete && (
                   <DropdownMenuItem
-                    onClick={() => {
-                      if (confirm(t.deleteComment)) onDelete(comment.id);
-                    }}
+                    onClick={() => setIsDeleteDialogOpen(true)}
                     className={cn(menuItemClassName, "text-[var(--chan-muted-2)]")}
                   >
                     <Trash2 aria-hidden="true" size={14} />
@@ -406,6 +406,13 @@ function CommentItemComponent({
             badge={authorBadge}
           />
         )}
+
+        <DeleteCommentDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+          onConfirm={() => onDelete(comment.id)}
+          language={language}
+        />
 
         <ReportDialog
           isOpen={isReportDialogOpen}

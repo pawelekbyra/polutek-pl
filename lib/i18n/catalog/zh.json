@@ -912,5 +912,7 @@
  "Deadline: {0}": "截止日期：{0}",
  "Why are you appealing?": "您为何申诉？",
  "20 to 2000 characters. Say what you think was judged wrongly.": "20 至 2000 个字符。请说明您认为哪里判断有误。",
- "Send appeal": "提交申诉"
+ "Send appeal": "提交申诉",
+ "Delete comment?": "删除评论？",
+ "The comment will disappear from the conversation.": "该评论将从对话中消失。"
 }

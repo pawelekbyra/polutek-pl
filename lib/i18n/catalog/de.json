@@ -912,5 +912,7 @@
  "Deadline: {0}": "Frist: {0}",
  "Why are you appealing?": "Warum legen Sie Einspruch ein?",
  "20 to 2000 characters. Say what you think was judged wrongly.": "20 bis 2000 Zeichen. Schreiben Sie, was Ihrer Meinung nach falsch beurteilt wurde.",
- "Send appeal": "Einspruch senden"
+ "Send appeal": "Einspruch senden",
+ "Delete comment?": "Kommentar löschen?",
+ "The comment will disappear from the conversation.": "Der Kommentar verschwindet aus der Unterhaltung."
 }

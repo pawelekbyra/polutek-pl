@@ -912,5 +912,7 @@
  "Deadline: {0}": "Prazo: {0}",
  "Why are you appealing?": "Porque está a recorrer?",
  "20 to 2000 characters. Say what you think was judged wrongly.": "De 20 a 2000 caracteres. Diga o que acha que foi mal avaliado.",
- "Send appeal": "Enviar recurso"
+ "Send appeal": "Enviar recurso",
+ "Delete comment?": "Eliminar comentário?",
+ "The comment will disappear from the conversation.": "O comentário desaparecerá da conversa."
 }
