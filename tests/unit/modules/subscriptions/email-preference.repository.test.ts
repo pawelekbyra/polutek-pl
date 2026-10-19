@@ -6,7 +6,9 @@ const prismaMock = {
     findUnique: vi.fn(),
     update: vi.fn(),
     create: vi.fn(),
+    delete: vi.fn(),
   },
+  user: { findUnique: vi.fn() },
 };
 
 describe('EmailPreferenceRepository identity resolution', () => {
@@ -55,6 +57,7 @@ describe('EmailPreferenceRepository identity resolution', () => {
       prismaMock.emailPreference.findUnique
         .mockResolvedValueOnce(existing) // by userId
         .mockResolvedValueOnce(conflict); // by email (conflict check)
+      prismaMock.user.findUnique.mockResolvedValue({ email: 'new@example.com', isDeleted: false }); // user_2 still has it
 
       const result = await repository.recordExplicitContentOptIn('user_1', 'new@example.com');
 
@@ -83,12 +86,46 @@ describe('EmailPreferenceRepository identity resolution', () => {
       prismaMock.emailPreference.findUnique
         .mockResolvedValueOnce(null) // by userId
         .mockResolvedValueOnce(byEmail); // by email
+      prismaMock.user.findUnique.mockResolvedValue({ email: 'TEST@example.com', isDeleted: false }); // user_2 really has it
 
       const result = await repository.recordExplicitContentOptIn('user_1', 'test@example.com');
 
       expect(result).toEqual({ id: null, recorded: false, reason: 'FOREIGN_EMAIL_CONFLICT' });
       expect(prismaMock.emailPreference.update).not.toHaveBeenCalled();
       expect(prismaMock.emailPreference.create).not.toHaveBeenCalled();
+    });
+
+    describe('a leftover row of someone who changed their address', () => {
+      const leftover = { id: 'pref_old', userId: 'user_2', email: 'test@example.com' };
+
+      it('is released and keeps its consent under the current address of its owner, so the new holder can subscribe', async () => {
+        prismaMock.emailPreference.findUnique
+          .mockResolvedValueOnce(null) // user_1 has no row yet
+          .mockResolvedValueOnce(leftover); // the address is on user_2's old row
+        prismaMock.user.findUnique.mockResolvedValue({ email: 'user2-new@example.com', isDeleted: false });
+        prismaMock.emailPreference.create.mockResolvedValue({ id: 'pref_new' });
+
+        const result = await repository.recordExplicitContentOptIn('user_1', 'test@example.com');
+
+        expect(prismaMock.emailPreference.update).toHaveBeenCalledWith({
+          where: { id: 'pref_old' },
+          data: { email: 'user2-new@example.com' },
+          select: { id: true },
+        });
+        expect(prismaMock.emailPreference.create).toHaveBeenCalled();
+        expect(result).toEqual({ id: 'pref_new', recorded: true });
+      });
+
+      it('is dropped when its owner no longer exists or was deleted', async () => {
+        prismaMock.emailPreference.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce(leftover);
+        prismaMock.user.findUnique.mockResolvedValue({ email: 'test@example.com', isDeleted: true });
+        prismaMock.emailPreference.create.mockResolvedValue({ id: 'pref_new' });
+
+        const result = await repository.recordExplicitContentOptIn('user_1', 'test@example.com');
+
+        expect(prismaMock.emailPreference.delete).toHaveBeenCalledWith({ where: { id: 'pref_old' } });
+        expect(result).toEqual({ id: 'pref_new', recorded: true });
+      });
     });
 
     it('creates new record when neither userId nor email exist', async () => {

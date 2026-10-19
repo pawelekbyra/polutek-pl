@@ -456,6 +456,12 @@ model Creator {
   statusChangedById       String?
   /// Storage value of the channel avatar (same rule as Video.thumbnailUrl: never a derived address).
   avatarUrl               String?
+  /// Set when the channel has a banner (ChannelBanner row); the public address carries it as the cache version.
+  bannerUpdatedAt         DateTime?
+  /// "About" links: JSON array of { title, url } (https only, at most 5), validated in lib/modules/channel/domain/channel-about.ts.
+  links                   Json?
+  /// Contact e-mail the creator chose to show on the About tab. Null = nothing is shown (never the account e-mail).
+  publicContactEmail      String?
   country                 String?
   language                String?
   isVerified              Boolean        @default(false)
@@ -478,6 +484,16 @@ model Creator {
   ledger                  LedgerEntry[]
   subscriberSnapshots     SubscriberSnapshot[]
   playlists               Playlist[]
+  banner                  ChannelBanner?
+}
+
+/// Channel banner image: browser-resized 4:1 JPEG/PNG/WebP stored like UserAvatar, served by /api/channel-banners/[channelId].
+model ChannelBanner {
+  channelId String   @id
+  mime      String
+  data      Bytes
+  updatedAt DateTime @updatedAt
+  channel   Creator  @relation(fields: [channelId], references: [id], onDelete: Cascade)
 }
 
 enum ChannelStatus {

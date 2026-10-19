@@ -106,6 +106,8 @@ const isPublicRoute = createRouteMatcher([
   '/api/channel/sidebar',
   // User avatars shown next to public comments; the route hides deleted accounts itself.
   '/api/avatars/(.*)',
+  // Channel banners shown on public channel pages; the route serves only publicly visible channels.
+  '/api/channel-banners/(.*)',
   // Only GET comments is public if product requires it
   '/api/comments',
   '/api/comments/(.*)/replies',
