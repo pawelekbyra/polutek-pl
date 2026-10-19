@@ -6,6 +6,7 @@ import { recordAuditEvent } from "@/lib/modules/audit";
 import { authorize } from "@/lib/modules/authz";
 import { countGraphemes } from "@/lib/utils/graphemes";
 import { CommentError, commentDatabaseError } from "../domain/comment.errors";
+import { notifyCommentReply, notifyCreatorLike } from "./comment-notifications";
 
 export const CREATOR_REPLY_MAX_GRAPHEMES = 2000;
 /** The same text under the same thread within this window is the same reply sent twice (double click, retry). */
@@ -61,7 +62,7 @@ export async function createCreatorReply(
         where: { parentId: root.id, authorId, text, status: { not: CommentStatus.DELETED }, createdAt: { gte: new Date(now.getTime() - DUPLICATE_WINDOW_MS) } },
         select: { id: true },
       });
-      if (existing) return { id: existing.id, duplicate: true };
+      if (existing) return { id: existing.id, duplicate: true, hearted: false };
       const created = await tx.comment.create({
         data: { authorId, videoId: target.videoId, creatorId: target.video!.creatorId, text, parentId: root.id, status: CommentStatus.VISIBLE },
         select: { id: true },
@@ -69,8 +70,13 @@ export async function createCreatorReply(
       const hearted = input.heart === true && !target.isHearted;
       if (hearted) await tx.comment.update({ where: { id: target.id }, data: { isHearted: true } });
       await recordAuditEvent(ctx, { action: "COMMENT_CREATOR_REPLY", targetType: "COMMENT", targetId: created.id, metadata: { replyTo: target.id, threadRoot: root.id, videoId: target.videoId, hearted, ...(ctx.actor.type === "admin" ? { onBehalfOf: creatorUserId } : {}) }, channelId: target.video!.creatorId }, tx);
-      return { id: created.id, duplicate: false };
+      return { id: created.id, duplicate: false, hearted };
     });
+    // The author of the answered comment hears about the answer and about the heart (best effort, once per answer).
+    if (!outcome.duplicate) {
+      await notifyCommentReply({ answeredCommentId: target.id, replierId: authorId, replyText: text });
+      if (outcome.hearted) await notifyCreatorLike({ commentId: target.id });
+    }
     return ok({ id: outcome.id, parentId: root.id, duplicate: outcome.duplicate });
   } catch (error) {
     return fail(commentDatabaseError("COMMENT_CREATOR_REPLY_ERROR", error));

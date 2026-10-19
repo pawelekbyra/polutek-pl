@@ -6,6 +6,7 @@ import { CommentRepository } from "../infrastructure/comment.repository";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { CommentStatus } from "@prisma/client";
 import { authorizeComments } from "./authorize-comments";
+import { notifyCreatorLike } from "./comment-notifications";
 
 export async function toggleAdminCommentHeart(commentId: string, ctx: AppContext): Promise<UseCaseResult<{ isHearted: boolean }, CommentError>> {
   const denied = await authorizeComments(ctx, "comment.heart", [commentId]);
@@ -19,6 +20,7 @@ export async function toggleAdminCommentHeart(commentId: string, ctx: AppContext
       await new CommentRepository(tx).setHeart(commentId, isHearted);
       await recordAuditEvent(ctx, { action: isHearted ? "COMMENT_HEART" : "COMMENT_UNHEART", targetType: "COMMENT", targetId: commentId }, tx);
     });
+    if (isHearted) await notifyCreatorLike({ commentId });
     return ok({ isHearted });
   } catch (error) {
     return fail(commentDatabaseError("COMMENT_HEART_ERROR", error));

@@ -11,6 +11,7 @@ import { isUuid } from "@/lib/utils/uuid";
 import { countGraphemes } from "@/lib/utils/graphemes";
 import { CommentStatus } from "@prisma/client";
 import { isBannedFromChannel } from "./channel-ban.use-cases";
+import { notifyCommentReply } from "./comment-notifications";
 
 export interface CreateVideoCommentInput {
   videoId: string;
@@ -127,6 +128,11 @@ export async function createVideoComment(
       targetId: newComment.id,
       metadata: { videoId: resolvedVideoId, parentId: finalParentId, ...(newStatus !== CommentStatus.VISIBLE ? { heldByCommentsMode: true } : {}) }
     });
+
+    // An answer that people can see tells the author of the answered comment (best effort, never blocks the answer).
+    if (parentId && newStatus === CommentStatus.VISIBLE) {
+      await notifyCommentReply({ answeredCommentId: parentId, replierId: userId, replyText: text });
+    }
 
     const commentWithRelations = await repo.findCommentForDto(newComment.id, userId, canModerate);
     if (!commentWithRelations) return fail(commentDatabaseError("COMMENT_CREATE_READBACK_ERROR", new Error("Created comment not found")));
