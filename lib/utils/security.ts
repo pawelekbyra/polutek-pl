@@ -11,7 +11,15 @@ function getR2UploadHosts() {
   ].filter((host): host is string => Boolean(host))));
 }
 
-export function generateCSP() {
+export type CspOptions = {
+  /**
+   * The response may be framed by any site: ONLY the embeddable player page (`/embed/<slug>`, see lib/embed/paths.ts).
+   * This is the one place that decides framing; every other response keeps `frame-ancestors 'none'`.
+   */
+  embeddable?: boolean;
+};
+
+export function generateCSP({ embeddable = false }: CspOptions = {}) {
   // Google sign-in (redirect flow needs nothing here; One Tap loads Google's script, iframe and
   // posts back to the app). Turnstile is the sign-up/sign-in bot check.
   const googleAuthHosts = ['accounts.google.com'];
@@ -91,7 +99,7 @@ export function generateCSP() {
     "default-src 'self'",
     "base-uri 'self'",
     "object-src 'none'",
-    "frame-ancestors 'none'",
+    embeddable ? "frame-ancestors *" : "frame-ancestors 'none'",
     "form-action 'self'",
     `script-src 'self' ${scriptHosts} ${inlineDirective}${devScriptSource}`,
     `script-src-elem 'self' ${scriptHosts} ${inlineDirective}`,

@@ -35,6 +35,8 @@ const KEEP_URL_PATTERNS: RegExp[] = [
   /^\/api(?:\/|$)/,
   /^\/sso-callback(?:\/|$)/,
   /^\/unsubscribe(?:\/|$)/,
+  // The embeddable player lives in other sites' iframes: its address must stay what the embed code says.
+  /^\/embed\//,
 ];
 
 function shouldKeepUrl(pathname: string): boolean {

@@ -8,6 +8,8 @@ import { getVideoDisplayDescription, getVideoDisplayTitle } from '@/lib/video-ti
 import { notFound } from 'next/navigation';
 import HomeExperience from '@/app/components/home/HomeExperience';
 import { shouldNoIndexVideo } from '@/lib/modules/video/domain/video-visibility';
+import { buildChannelFeedPath } from '@/lib/embed/paths';
+import { buildOembedDiscoveryUrl, isOembedDiscoverable } from '@/lib/embed/discovery';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +43,16 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   const { selectedVideo } = await getHomeSelectionCached(selectedVideoId);
   const baseUrl = getBaseUrl();
   const canonicalSlug = selectedVideoId ? selectedVideo?.slug ?? selectedVideoId : undefined;
-  const alternates = getLocaleAlternates(locale, 'home', { query: videoQuery(canonicalSlug), baseUrl });
+  const baseAlternates = getLocaleAlternates(locale, 'home', { query: videoQuery(canonicalSlug), baseUrl });
+  // Feed readers find the channel's RSS here; oEmbed consumers find the endpoint for a video anyone may embed
+  // (PUBLIC tier, published, not 18+, not an upcoming premiere). The oEmbed URL names this page's canonical address.
+  const alternates = {
+    ...baseAlternates,
+    types: {
+      ...(creator ? { 'application/rss+xml': `${baseUrl}${buildChannelFeedPath(creator.slug)}` } : {}),
+      ...(canonicalSlug && selectedVideo?.slug === canonicalSlug && isOembedDiscoverable(selectedVideo) ? { 'application/json+oembed': buildOembedDiscoveryUrl(baseUrl, baseAlternates.canonical) } : {}),
+    },
+  };
   // Beta: neutral title and description everywhere (tab, search, social); the hero video's title is not used.
   const betaText = await getBetaSiteText(locale);
 

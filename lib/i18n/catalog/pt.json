@@ -914,5 +914,9 @@
  "20 to 2000 characters. Say what you think was judged wrongly.": "De 20 a 2000 caracteres. Diga o que acha que foi mal avaliado.",
  "Send appeal": "Enviar recurso",
  "Delete comment?": "Eliminar comentário?",
- "The comment will disappear from the conversation.": "O comentário desaparecerá da conversa."
+ "The comment will disappear from the conversation.": "O comentário desaparecerá da conversa.",
+ "This video can only be watched on the site.": "Este vídeo só pode ser visto no site.",
+ "Watch on {0}": "Assistir em {0}",
+ "Video unavailable": "Vídeo indisponível",
+ "This video does not exist or is no longer public.": "Este vídeo não existe ou já não é público."
 }
