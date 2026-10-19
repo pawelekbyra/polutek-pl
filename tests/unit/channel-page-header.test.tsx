@@ -8,6 +8,7 @@ const { getCreatorBySlug, creatorFindUnique } = vi.hoisted(() => ({
 
 vi.mock("@/app/components/Navbar", () => ({ default: () => <nav data-testid="navbar" /> }));
 vi.mock("@/app/components/Footer", () => ({ default: () => <footer /> }));
+vi.mock("@/app/components/playlists/ChannelPlaylistsSection", () => ({ default: () => null }));
 vi.mock("@/app/components/SubscribeButton", () => ({ default: () => <button type="button">Subscribe</button> }));
 vi.mock("@/app/components/ReportButton", () => ({ default: () => <button type="button">Report</button> }));
 vi.mock("@/app/components/ChannelVideoCard", () => ({

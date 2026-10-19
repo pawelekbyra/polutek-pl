@@ -21,6 +21,7 @@ import { countedNoun } from '@/lib/i18n/plurals';
 import { notFound, redirect } from 'next/navigation';
 import ChannelTabs from '@/app/components/channel/ChannelTabs';
 import ChannelAbout from '@/app/components/channel/ChannelAbout';
+import ChannelPlaylistsSection from '@/app/components/playlists/ChannelPlaylistsSection';
 import { buildChannelFeedPath } from '@/lib/embed/paths';
 
 export const revalidate = 60;
@@ -216,6 +217,7 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
              </Link>
           </div>
         )}
+            <ChannelPlaylistsSection channelId={creator.id} channelSlug={creator.slug} locale={locale} signedIn={!!userId} />
             </>
           )}
           about={(
