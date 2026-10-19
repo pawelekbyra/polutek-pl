@@ -135,7 +135,7 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
   } as const;
 
   return (
-    <div ref={rootRef} className={inline ? "contents" : "relative shrink-0"}>
+    <div ref={rootRef} className={inline ? "contents" : variant === "dropup" ? "relative flex shrink-0 leading-none" : "relative shrink-0"}>
       {inline ? (
         <button
           {...triggerProps}
