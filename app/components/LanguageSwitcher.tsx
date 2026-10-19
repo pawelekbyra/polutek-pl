@@ -149,7 +149,7 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
       ) : variant === "dropup" ? (
         <button
           {...triggerProps}
-          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold text-[var(--chan-muted)] transition-colors hover:bg-[var(--chan-surface)] hover:text-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] pointer-coarse:min-h-11"
+          className="inline-flex items-center gap-1.5 rounded-full text-[12.5px] font-medium leading-none text-[var(--chan-muted)] transition-colors hover:text-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-4 focus-visible:ring-offset-transparent"
         >
           <Globe className="h-3.5 w-3.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
           <span>{tx("Język", "Language")}:</span>

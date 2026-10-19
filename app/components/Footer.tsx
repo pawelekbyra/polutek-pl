@@ -12,7 +12,7 @@ function FooterLanguage() {
   const { language } = useLanguage();
   const switchLanguage = useSwitchLanguage();
   return (
-    <div className="flex flex-wrap items-center">
+    <div className="flex items-center">
       <LanguageSwitcher language={language} onSelect={switchLanguage} variant="dropup" />
     </div>
   );
@@ -38,13 +38,12 @@ const Footer = () => {
           </Suspense>
         </div>
 
-        <span className="font-brand order-2 flex items-center gap-2 text-center text-[12px] font-bold uppercase tracking-[0.22em] text-[var(--chan-muted-2)] md:order-none">
-          <span aria-hidden="true" className="inline-flex h-1 w-1 rounded-full bg-[var(--chan-blue)]" />
+        {/* pl- offsets the trailing letter-spacing, so the name sits exactly on the centre line. */}
+        <span className="font-brand order-2 pl-[0.22em] text-center text-[12px] font-bold uppercase leading-none tracking-[0.22em] text-[var(--chan-muted-2)] md:order-none">
           WWW.PAWELPERFECT.COM
-          <span aria-hidden="true" className="inline-flex h-1 w-1 rounded-full bg-[var(--chan-blue)]" />
         </span>
 
-        <div className="order-1 flex shrink-0 justify-center gap-[26px] text-center md:order-none md:flex-1 md:justify-end">
+        <div className="order-1 flex shrink-0 items-center justify-center gap-[26px] text-center leading-none md:order-none md:flex-1 md:justify-end">
           <Link href={getLocalizedHref(language, "terms")} className={linkClass}>
             {tx("Regulamin", "Terms")}
           </Link>
