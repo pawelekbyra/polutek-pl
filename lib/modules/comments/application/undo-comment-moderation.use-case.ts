@@ -42,7 +42,7 @@ export async function undoCommentModeration(
         const { to, from } = group[0];
         const { count } = await tx.comment.updateMany({
           where: { id: { in: group.map((c) => c.commentId) }, status: to },
-          data: from === CommentStatus.VISIBLE ? { status: from, moderatedAt: null, moderatedById: null } : { status: from, moderatedAt: now, moderatedById: actorId },
+          data: from === CommentStatus.VISIBLE ? { status: from, moderatedAt: null, moderatedById: null } : { status: from, moderatedAt: now, moderatedById: actorId, pinnedAt: null },
         });
         if (count !== group.length) throw new UndoConflict("Komentarz został w międzyczasie zmieniony: nie cofam, żeby nie nadpisać nowszej decyzji.");
       }
