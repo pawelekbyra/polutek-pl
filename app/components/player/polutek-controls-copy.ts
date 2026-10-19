@@ -26,9 +26,6 @@ function buildPlayerCopy(tx: Tx) {
     speedNormal: tx("Normalna", "Normal"),
     pictureInPicture: tx("Obraz w obrazie", "Picture in picture"),
     exitPictureInPicture: tx("Zamknij obraz w obrazie", "Exit picture in picture"),
-    resumedAt: tx("Wznowiono od", "Resumed at"),
-    startsAt: tx("Odtwarzanie od", "Playing from"),
-    startOver: tx("Od początku", "From the beginning"),
   };
 }
 

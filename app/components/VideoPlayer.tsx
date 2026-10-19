@@ -25,7 +25,6 @@ import {
 } from './player/sound-preference';
 import { useUnmuteOnFirstGesture } from './player/useUnmuteOnFirstGesture';
 import { useVideoProgress } from './player/useVideoProgress';
-import { ResumeNotice } from './player/ResumeNotice';
 import { resolvePlaybackSource } from './playback-source';
 import { shouldSendViewForPlaybackPosition } from './video-view-threshold';
 import { usePlaybackTelemetry } from '@/lib/hooks/usePlaybackTelemetry';
@@ -120,7 +119,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
     // warp has its own sound): any play in between (a resumed autoplay, a buffering restart) is undone.
     const gateHoldRef = useRef(false);
     // Resume watching and the ?t= start (player/useVideoProgress.ts): the start position, the position
-    // reports (every ~10 s, pause, tab close) and the "Resumed at" notice.
+    // reports (every ~10 s, pause, tab close) (resuming is silent, like YouTube: no on-screen notice).
     const progress = useVideoProgress({
         playerRef: player,
         videoId: video.id,
@@ -612,7 +611,6 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                         </div>
                     )}
                     <UnmuteHint visible={isPlaying && muted && !userMuted} onUnmute={handleUnmuteHint} />
-                    <ResumeNotice notice={progress.notice} onStartOver={progress.startOver} onDismiss={progress.dismissNotice} />
                 </div>
             )}
         </div>
