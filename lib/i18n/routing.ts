@@ -20,6 +20,8 @@ export const ROUTES = {
   search: { pl: "/search", en: "/en/search" },
   watch: { pl: "/watch/:slug", en: "/en/watch/:slug" },
   channel: { pl: "/channel/:slug", en: "/en/channel/:slug" },
+  // A creator's playlist: /playlista/<channel slug>/<playlist slug> (pl), /en/playlist/<channel slug>/<playlist slug> (en).
+  playlist: { pl: "/playlista/:channel/:slug", en: "/en/playlist/:channel/:slug" },
   terms: { pl: "/regulamin", en: "/en/terms" },
   privacy: { pl: "/polityka-prywatnosci", en: "/en/privacy-policy" },
   studio: { pl: "/studio", en: "/en/studio" },
@@ -29,7 +31,7 @@ export const ROUTES = {
 
 export type RouteKey = keyof typeof ROUTES;
 
-type RouteParams = { slug?: string };
+type RouteParams = { slug?: string; /** Channel slug of the `playlist` route. */ channel?: string };
 
 export function isLocale(value: unknown): value is Locale {
   return typeof value === "string" && (SUPPORTED_LOCALES as readonly string[]).includes(value);
@@ -45,6 +47,10 @@ export function getLocalizedHref(locale: Locale, routeKey: RouteKey, params: Rou
   // UI-only languages mirror the English routes under their own prefix: /en/search -> /de/search.
   const href0 = ROUTES[routeKey][toContentLocale(locale)] as string;
   let href = locale === "pl" || locale === "en" ? href0 : href0.replace(/^\/en(?=\/|$)/, `/${locale}`);
+  if (href.includes(":channel")) {
+    if (!params.channel) throw new Error(`Missing channel for localized route ${routeKey}`);
+    href = href.replace(":channel", encodeURIComponent(params.channel));
+  }
   if (href.includes(":slug")) {
     if (!params.slug) throw new Error(`Missing slug for localized route ${routeKey}`);
     href = href.replace(":slug", encodeURIComponent(params.slug));
@@ -64,6 +70,8 @@ export function localizedPathFromLegacyPath(pathname: string, locale: Locale): s
   if (watch) return getLocalizedHref(locale, "watch", { slug: decodeURIComponent(watch[1] ?? "") });
   const channel = pathname.match(/^\/channel\/([^/]+)\/?$/);
   if (channel) return getLocalizedHref(locale, "channel", { slug: decodeURIComponent(channel[1] ?? "") });
+  const playlist = pathname.match(/^\/playlista?\/([^/]+)\/([^/]+)\/?$/);
+  if (playlist) return getLocalizedHref(locale, "playlist", { channel: decodeURIComponent(playlist[1] ?? ""), slug: decodeURIComponent(playlist[2] ?? "") });
   if (pathname === "/regulamin") return getLocalizedHref(locale, "terms");
   if (pathname === "/polityka-prywatnosci") return getLocalizedHref(locale, "privacy");
   if (pathname === "/subskrypcje") return getLocalizedHref(locale, "subscriptions");
@@ -76,7 +84,10 @@ export function switchLocalePath(pathname: string, targetLocale: Locale): string
   if (!currentLocale) return localizedPathFromLegacyPath(pathname, targetLocale) ?? getLocalizedHref(targetLocale, "home");
   const rest = parts.slice(1);
   if (rest.length === 0) return getLocalizedHref(targetLocale, "home");
-  const [segment, slug] = rest;
+  const [segment, slug, third] = rest;
+  if ((segment === "playlist" || segment === "playlista") && slug && third) {
+    return getLocalizedHref(targetLocale, "playlist", { channel: decodeURIComponent(slug), slug: decodeURIComponent(third) });
+  }
   if (segment === "watch" && slug) return getLocalizedHref(targetLocale, "watch", { slug: decodeURIComponent(slug) });
   if (segment === "channel" && slug) return getLocalizedHref(targetLocale, "channel", { slug: decodeURIComponent(slug) });
   if (segment === "search") return getLocalizedHref(targetLocale, "search");

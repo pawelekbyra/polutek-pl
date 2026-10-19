@@ -34,6 +34,11 @@ const hotspotExceptions: Record<string, HotspotException> = {
     reason:
       "Central icon barrel/component registry; tolerated as pre-existing generated-style UI asset debt after Next 15 recovery, but block further unbounded growth.",
   },
+  "app/components/ChannelHome.tsx": {
+    maxLines: 470,
+    reason:
+      "Watch-page shell; grew by the playlist context (docs/architecture/playlists.md: queue state, shallow switch shared with the sidebar). The queue logic itself lives in app/components/playlists/.",
+  },
   "app/components/Hero.tsx": {
     maxLines: 500,
     reason: knownUiHotspotReason,

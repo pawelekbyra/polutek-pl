@@ -24,6 +24,7 @@ import { resolvePlaybackViewerKey } from '@/app/components/preload/playback-view
 import { getHomeViewerActor, loadHeroPlaybackPlan, loadInitialComments } from './home-viewer-data';
 import { getServerTx } from '@/lib/i18n/server-tx';
 import { getVideoProgressSeconds, listContinueWatching } from '@/lib/modules/watch-progress';
+import { getPlaylistQueue, parseListParam, parseQueueIndex, PLAYLIST_INDEX_PARAM, PLAYLIST_LIST_PARAM } from '@/lib/modules/playlists';
 
 interface HomeExperienceProps {
   locale: Locale;
@@ -33,6 +34,10 @@ interface HomeExperienceProps {
   q?: string;
   /** Start time from ?t= (optional, only kept across the id -> slug canonical redirect; the player reads it). */
   t?: string;
+  /** Playlist context from ?list=<slug> (optional): the watch page shows that playlist's queue. */
+  list?: string;
+  /** 1-based place in the playlist from ?i= (optional hint; the server finds the real place by video id). */
+  i?: string;
 }
 
 /**
@@ -41,7 +46,7 @@ interface HomeExperienceProps {
  * the temporary /logoN font bake-off pages, so the two stay pixel-identical apart
  * from the wordmark font.
  */
-export default async function HomeExperience({ locale, videoId, q, t }: HomeExperienceProps) {
+export default async function HomeExperience({ locale, videoId, q, t, list, i }: HomeExperienceProps) {
   const tx = await getServerTx(locale);
   // auth() and the home content are read once per request (React cache), shared with the page
   // and its metadata.
@@ -71,6 +76,13 @@ export default async function HomeExperience({ locale, videoId, q, t }: HomeExpe
       if (q) canonicalParams.set('q', q);
       canonicalParams.set('v', matchedById.slug);
       if (t) canonicalParams.set('t', t);
+      // The playlist context survives the id -> slug redirect.
+      const listSlug = parseListParam(list);
+      if (listSlug) {
+        canonicalParams.set(PLAYLIST_LIST_PARAM, listSlug);
+        const index = parseQueueIndex(i);
+        if (index) canonicalParams.set(PLAYLIST_INDEX_PARAM, String(index));
+      }
       redirect(`${getLocalizedHref(locale, 'home')}?${canonicalParams.toString()}`);
     }
   }
@@ -79,6 +91,16 @@ export default async function HomeExperience({ locale, videoId, q, t }: HomeExpe
   // rules (getHomeSelectionCached); a hidden or unknown one has already fallen back to the hero.
   const selectedVideo = selection.selectedVideo;
   const hasContent = content.status !== 'error' && content.status !== 'empty';
+
+  // `?list=<slug>`: the open video's playlist, with only the items this viewer may see. A hidden, private, unknown or
+  // foreign list (or a video that is not in it) simply gives no queue: the page behaves as without `?list=`.
+  const listSlug = parseListParam(list);
+  const playlistQueue = listSlug && selectedVideo
+    ? await getPlaylistQueue({ videoId: selectedVideo.id, listSlug, signedIn: Boolean(userId) }).catch((e) => {
+        logger.error('[HOME_PLAYLIST_QUEUE_ERROR]', e);
+        return null;
+      })
+    : null;
 
   // Sidebar layout is loaded here, with the page, rather than by a client-side fetch
   // after hydration — that fetch was one of the pieces popping in on its own. The
@@ -254,6 +276,7 @@ export default async function HomeExperience({ locale, videoId, q, t }: HomeExpe
             initialPlayback={viewerPieces.playback}
             renderedAt={renderedAt}
             continueWatching={continueWatching}
+            playlistQueue={playlistQueue}
           />
         </main>
         <Footer />

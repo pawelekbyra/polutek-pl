@@ -23,6 +23,11 @@ export const AUTHZ_ACTIONS = [
   "video.subtitles",
   "video.translate",
   "video.set_price",
+  // Playlists: creator-curated lists of the channel's videos (docs/architecture/playlists.md)
+  "playlist.create",
+  "playlist.update",
+  "playlist.delete",
+  "playlist.manage_items",
   // Comments on the channel's videos
   "comment.moderate",
   "comment.pin",

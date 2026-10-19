@@ -55,6 +55,13 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
   'lib/modules/syndication/application/get-embed-view.use-case.ts': {
     'video/infrastructure/video-content.service': 'mapToPublicVideoDTO is the single point that builds (and safety-checks) every PublicVideoDTO; it is an infra service the video barrel does not export.',
   },
+  'lib/modules/playlists/domain/playlist-visibility.ts': {
+    'video/domain/video-visibility': VISIBILITY_HELPER_REASON,
+    'channel/domain/channel.policy': 'Pure, no-side-effect policy class (the one rule for a publicly visible channel); the playlist rule needs only that predicate, not the channel barrel with its services.',
+  },
+  'lib/modules/playlists/infrastructure/public-playlist.repository.ts': {
+    'video/domain/video-visibility': VISIBILITY_HELPER_REASON,
+  },
   'lib/modules/watch-progress/domain/continue-watching.ts': {
     'video/domain/premiere': PREMIERE_HELPER_REASON,
     'video/domain/video-visibility': VISIBILITY_HELPER_REASON,
@@ -398,7 +405,7 @@ function checkAdminApp() {
 // A file in these modules' application layer must call authorize()/assertAuthorized()/requireVideo() or be listed
 // here with the reason it is exempt (public read, pure helper, worker/cron acting as `system`, or it only delegates
 // to a function that authorizes).
-const AUTHZ_MODULES = ['video', 'video-pipeline', 'admin-content', 'channel', 'sales', 'creator-analytics'];
+const AUTHZ_MODULES = ['video', 'video-pipeline', 'admin-content', 'channel', 'sales', 'creator-analytics', 'playlists'];
 const AUTHZ_EXEMPT: Record<string, string> = {
   'lib/modules/creator-analytics/application/context.ts': 'wiring helpers; every analytics use case calls authorize() itself',
   'lib/modules/creator-analytics/application/snapshot-subscribers.use-case.ts': 'daily cron; refuses any actor other than system',
@@ -424,6 +431,7 @@ const AUTHZ_EXEMPT: Record<string, string> = {
   'lib/modules/channel/application/channel-layout.service.ts': 'public sidebar read',
   'lib/modules/channel/application/home-content.loader.ts': 'public home read',
   'lib/modules/channel/application/main-channel.service.ts': 'channel resolver, no permissions',
+  'lib/modules/playlists/application/playlist-public.use-cases.ts': 'public read (whitelisted DTOs; PRIVATE, deleted and hidden-channel playlists are "not found", items filtered per viewer)',
 };
 
 function checkAuthorizationCoverage() {
