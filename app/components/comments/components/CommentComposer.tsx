@@ -10,7 +10,7 @@ import { countGraphemes } from "@/lib/utils/graphemes";
 import type { Locale } from "@/lib/i18n/routing";
 import { useOptionalTx } from "@/lib/i18n/language-context";
 
-interface CommentComposerProps {
+export interface CommentComposerProps {
   userProfile: any;
   userAvatarUrl: string | null;
   replyTo: string | null;
@@ -31,7 +31,7 @@ interface CommentComposerProps {
   language: Locale;
 }
 
-const QUICK_EMOJIS = ["😀", "😂", "🔥", "👏", "❤️", "🙏", "💯", "😮"];
+export const QUICK_EMOJIS = ["😀", "😂", "🔥", "👏", "❤️", "🙏", "💯", "😮"];
 const EXTENDED_EMOJIS = Array.from(new Set([
   "😀","😁","😂","🤣","😃","😄","😅","😆","😉","😊","😋","😎","😍","😘","🥰","😗","😙","😚","🙂","🤗",
   "🤩","🤔","🤨","😐","😑","😶","🙄","😏","😣","😥","😮","🤐","😯","😪","😫","🥱","😴","😌","😛","😜",
