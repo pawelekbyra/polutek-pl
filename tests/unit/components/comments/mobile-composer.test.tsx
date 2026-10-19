@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, act } from '@testing-library/react';
 import React from 'react';
 import { MobileCommentComposer, type MobileComposerHandle } from '@/app/components/comments/components/MobileCommentComposer';
 import { keyboardInsetOf } from '@/app/components/comments/hooks/useKeyboardInset';
@@ -77,6 +77,18 @@ describe('phone comment composer', () => {
     typed.ref.current?.open();
     typed.ref.current?.close();
     expect(typed.props.setReplyTo).not.toHaveBeenCalled();
+  });
+
+  it('has a "more emoji" panel that inserts the tapped emoji and closes with the bar', () => {
+    const { ref, props } = renderComposer();
+    act(() => ref.current?.open());
+    expect(screen.queryByRole('group', { name: 'Wybierz emoji' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Więcej emoji' }));
+    const panel = screen.getByRole('group', { name: 'Wybierz emoji' });
+    fireEvent.click(panel.querySelector('button')!);
+    expect(props.setNewComment).toHaveBeenCalledTimes(1);
+    act(() => ref.current?.close());
+    expect(screen.queryByRole('group', { name: 'Wybierz emoji' })).toBeNull();
   });
 
   it('falls back to the regular message when the viewer cannot comment', () => {
