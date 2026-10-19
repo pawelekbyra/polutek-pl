@@ -27,6 +27,9 @@ export const ROUTES = {
   studio: { pl: "/studio", en: "/en/studio" },
   // The viewer's own subscriptions: signed-in only (middleware gate), never indexed, so not in the public mirrors.
   subscriptions: { pl: "/subskrypcje", en: "/en/subscriptions" },
+  // Prototype sections (flag SHOW_SECTION_NAV): demo photo feed and demo shop.
+  photos: { pl: "/zdjecia", en: "/en/photos" },
+  shop: { pl: "/sklep", en: "/en/shop" },
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;
@@ -75,6 +78,8 @@ export function localizedPathFromLegacyPath(pathname: string, locale: Locale): s
   if (pathname === "/regulamin") return getLocalizedHref(locale, "terms");
   if (pathname === "/polityka-prywatnosci") return getLocalizedHref(locale, "privacy");
   if (pathname === "/subskrypcje") return getLocalizedHref(locale, "subscriptions");
+  if (pathname === "/zdjecia") return getLocalizedHref(locale, "photos");
+  if (pathname === "/sklep") return getLocalizedHref(locale, "shop");
   return null;
 }
 
@@ -94,6 +99,8 @@ export function switchLocalePath(pathname: string, targetLocale: Locale): string
   if (segment === "regulamin" || segment === "terms") return getLocalizedHref(targetLocale, "terms");
   if (segment === "polityka-prywatnosci" || segment === "privacy-policy") return getLocalizedHref(targetLocale, "privacy");
   if (segment === "subskrypcje" || segment === "subscriptions") return getLocalizedHref(targetLocale, "subscriptions");
+  if (segment === "zdjecia" || segment === "photos") return getLocalizedHref(targetLocale, "photos");
+  if (segment === "sklep" || segment === "shop") return getLocalizedHref(targetLocale, "shop");
   if (segment === "studio") return getLocalizedHref(targetLocale, "studio");
   return getLocalizedHref(targetLocale, "home");
 }
