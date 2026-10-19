@@ -1009,4 +1009,6 @@
 }
 @media (min-width: 1024px) {
   body:has(.pp-section-rail[data-open="true"]) { padding-left: 4rem; }
+  /* The top bar keeps the full width (the rail starts below it): cancel the room made for the rail. */
+  body:has(.pp-section-rail[data-open="true"]) header.polutek-watch-nav { margin-left: -4rem; }
 }
