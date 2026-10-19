@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { CommentReportReasonDto } from "@/lib/modules/comments/domain/comment-frontend.dto";
 import { CommentComposer } from "./components/CommentComposer";
+import { MobileCommentComposer, type MobileComposerHandle } from "./components/MobileCommentComposer";
+import { useIsPhone } from "./hooks/useIsPhone";
 import { CommentItem } from "./components/CommentItem";
 import { AnimatePresence } from "framer-motion";
 import { CommentMotionItem, AnimatedCount } from "./components/comment-motion";
@@ -197,6 +199,9 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   const replyingToAuthor = replyTo
     ? comments.find((c) => c.id === replyTo)?.author?.displayName
     : null;
+  const replyingToSnippet = replyTo
+    ? (comments.find((c) => c.id === replyTo)?.text ?? "").replace(/\s+/g, " ").trim().slice(0, 60) || null
+    : null;
 
   const { mutateAsync: likeMutateAsync } = likeMutation;
   const { mutateAsync: dislikeMutateAsync } = dislikeMutation;
@@ -237,14 +242,21 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
     [dislikeMutateAsync, markReactionSettled],
   );
   const composerRef = useRef<HTMLDivElement>(null);
+  const mobileComposerRef = useRef<MobileComposerHandle>(null);
+  const isPhone = useIsPhone();
   const handleReply = useCallback((id: string) => {
     setReplyTo(id);
+    if (isPhone) {
+      // Phone: the bar above the keyboard, opened right inside the tap (iOS raises the keyboard only then).
+      mobileComposerRef.current?.open();
+      return;
+    }
     // Bring the reply field into view and put the cursor in it (not the top of the page).
     requestAnimationFrame(() => {
       composerRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
       composerRef.current?.querySelector("textarea")?.focus({ preventScroll: true });
     });
-  }, []);
+  }, [isPhone]);
   const handleDelete = useCallback((id: string) => deleteMutate(id), [deleteMutate]);
   const handlePin = useCallback(
     (id: string, pinned: boolean) => pinMutate({ commentId: id, pinned }),
@@ -273,6 +285,14 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             setNewComment("");
             setReplyTo(null);
             setIsInputFocused(false);
+            if (isPhone) {
+              mobileComposerRef.current?.close();
+              // Show where the comment landed: the thread that was answered, or the top of the list.
+              const answered = replyTo ? document.getElementById(`comment-${replyTo}`) : null;
+              requestAnimationFrame(() =>
+                (answered ?? composerRef.current)?.scrollIntoView({ behavior: scrollBehavior(), block: answered ? "center" : "start" }),
+              );
+            }
           },
           onError: (error) => {
             const message =
@@ -288,6 +308,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       newComment,
       userProfile,
       replyTo,
+      isPhone,
       postComment,
       postMutation.isPending,
       language,
@@ -408,6 +429,33 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       </div>
 
       <div ref={composerRef}>
+        {isPhone ? (
+        <MobileCommentComposer
+          ref={mobileComposerRef}
+          replyingToSnippet={replyingToSnippet}
+          userProfile={userProfile}
+          userAvatarUrl={userAvatarUrl}
+          replyTo={replyTo}
+          replyingToAuthor={replyingToAuthor}
+          newComment={newComment}
+          setNewComment={(value) => {
+            setNewComment(value);
+            if (composerError) setComposerError(null);
+          }}
+          setReplyTo={setReplyTo}
+          isInputFocused={isInputFocused}
+          setIsInputFocused={setIsInputFocused}
+          /** ground truth for the UI permission: */
+          canComment={viewer?.canComment ?? false}
+          commentsDisabled={viewer?.commentsDisabled === true}
+          isPending={postMutation.isPending}
+          isViewerLoading={isLoading}
+          errorMessage={composerError}
+          handleSubmit={handleSubmit}
+          t={t}
+          language={language}
+        />
+        ) : (
         <CommentComposer
           userProfile={userProfile}
           userAvatarUrl={userAvatarUrl}
@@ -431,6 +479,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
           t={t}
           language={language}
         />
+        )}
       </div>
 
       <div
