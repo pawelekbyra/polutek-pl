@@ -15,6 +15,7 @@ export type { NewVideoFanOutResult } from './application/new-video-fan-out.use-c
 export { listUserNotifications, markNotificationsRead, countUnreadNotifications } from './application/user-notifications.use-cases';
 export { getNotificationPreferences, updateNotificationPreferences } from './application/notification-preferences.use-cases';
 export * from './domain/user-notifications';
+export * from './domain/notification-render';
 export * from './domain/notification-preferences';
 export { notifyDuePremieres } from './application/premiere-notifications.use-case';
 export type { PremiereNotificationsResult } from './application/premiere-notifications.use-case';

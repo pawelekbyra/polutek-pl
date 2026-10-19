@@ -705,6 +705,11 @@ model Notification {
   /// Channel and video the notification is about (NEW_VIDEO, MODERATION); null for account-level kinds.
   channelId String?
   videoId   String?
+  /// Key of the per-language template (notification-render.ts) and its placeholder values; null on old rows and on rows
+  /// whose text must stay as written (admin-edited template, moderation statement of reasons). titlePl/titleEn and
+  /// bodyPl/bodyEn always hold the finished Polish/English text as the fallback.
+  templateKey String?
+  params      Json?
   read      Boolean          @default(false)
   createdAt DateTime         @default(now())
 

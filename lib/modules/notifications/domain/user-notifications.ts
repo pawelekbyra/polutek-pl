@@ -26,7 +26,7 @@ export type MarkNotificationsReadInput = z.infer<typeof markNotificationsReadSch
 export interface UserNotificationDTO {
   id: string;
   kind: NotificationKind;
-  /** Already in the viewer's language (Polish or English). */
+  /** Already in the viewer's language (any of the eight UI languages when the row is keyed, else Polish or English). */
   title: string;
   body: string;
   /** In-site path or https address; null when the notification has no (safe) link. */
