@@ -1,4 +1,5 @@
 export { sendNotification, notificationTemplates } from './application/send-notification.use-case';
+export { pruneOldNotifications } from './application/prune-notifications.use-case';
 export { listAdminNotifications } from './application/list-admin-notifications.use-case';
 export {
   listNotificationTemplates,

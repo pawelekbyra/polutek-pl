@@ -6,9 +6,8 @@ import { CommentPolicy } from "../domain/comment.policy";
 import { checkVideoAccess } from "@/lib/modules/access";
 import { CommentRepository } from "../infrastructure/comment.repository";
 import type { ReactionTarget } from "../domain/comment.dto";
-import { CommentStatus, PrismaClient } from "@prisma/client";
-import { sendNotification, notificationTemplates } from "@/lib/modules/notifications";
-import { notifyCreatorLike } from "./comment-notifications";
+import { CommentStatus } from "@prisma/client";
+import { notifyCommentLike, notifyCreatorLike } from "./comment-notifications";
 
 export interface SetCommentReactionInput {
   commentId: string;
@@ -19,6 +18,8 @@ export interface SetCommentReactionInput {
 export interface CommentReactionResult {
   viewerReaction: "LIKE" | "DISLIKE" | null;
   likesCount: number;
+  /** Only when the reacting viewer is the channel's creator: the comment's heart after this reaction. */
+  isHearted?: boolean;
 }
 
 export async function setCommentReaction(
@@ -61,31 +62,26 @@ export async function setCommentReaction(
       return { result: await txRepo.getCommentReactionSnapshot(userId, commentId), likeDelta };
     });
 
-    // Best-effort side effect, kept outside the transaction: a notification failure must never
-    // roll back or fail the reaction itself. Only a like that actually got added notifies.
-    if (likeDelta > 0 && comment.authorId !== userId) {
-      try {
-        const video = await (prisma as PrismaClient).video.findUnique({ where: { id: comment.videoId }, select: { slug: true, creator: { select: { userId: true } } } });
-        // The creator's like is its own, more personal notification (once per comment), instead of the anonymous one.
-        if (video?.creator?.userId === userId) {
-          await notifyCreatorLike({ commentId });
-          return ok(result);
-        }
-        await sendNotification({
-          userId: comment.authorId,
-          kind: notificationTemplates.commentLike.kind,
-          titlePl: notificationTemplates.commentLike.titlePl,
-          titleEn: notificationTemplates.commentLike.titleEn,
-          bodyPl: notificationTemplates.commentLike.bodyPl,
-          bodyEn: notificationTemplates.commentLike.bodyEn,
-          href: video ? `/?v=${encodeURIComponent(video.slug)}#comment-${commentId}` : undefined,
-        });
-      } catch (notificationError) {
-        console.error("[COMMENT_LIKE_NOTIFICATION_ERROR]", notificationError);
+    // The creator's like IS the heart: when the channel's creator likes a comment it gets the creator's heart (and
+    // its author is told once), and taking the like back takes the heart off. Anyone else's like is a plain like.
+    let isHearted: boolean | undefined;
+    const creatorUserId = await new CommentRepository(prisma).findVideoCreatorId(comment.videoId);
+    const likedByCreator = creatorUserId === userId && comment.authorId !== userId;
+    if (likedByCreator && likeDelta !== 0) {
+      isHearted = likeDelta > 0;
+      if (comment.isHearted !== isHearted) {
+        await ctx.db.writeTransaction(async (tx: WriteTx) => new CommentRepository(tx).setHeart(commentId, isHearted!));
+        if (isHearted) await notifyCreatorLike({ commentId });
       }
     }
 
-    return ok(result);
+    // Best-effort side effect, kept outside the transaction: a notification failure must never
+    // roll back or fail the reaction itself. Only a like that actually got added notifies.
+    if (likeDelta > 0 && comment.authorId !== userId && !likedByCreator) {
+      await notifyCommentLike({ commentId, likerId: userId });
+    }
+
+    return ok(isHearted === undefined ? result : { ...result, isHearted });
   } catch (error) {
     return fail(commentDatabaseError("COMMENT_REACTION_ERROR", error));
   }

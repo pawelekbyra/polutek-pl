@@ -159,6 +159,8 @@ export class AccountDeletionCleanupUseCase {
       if (creatorIds.length > 0) await resyncCreatorSubscriberCounts(tx, creatorIds);
 
       await eraseCommentContent(tx, input.userId, now);
+      // The bell of a deleted account is gone with it.
+      await tx.notification.deleteMany({ where: { userId: input.userId } });
       await anonymizeEmailHistory(tx, input.userId, [...new Set([...(originalEmail ? [originalEmail] : []), ...contactEmails])], tombstoneEmail);
 
       // PA-03: the Stripe Customer holds the e-mail; queue its erasure in this transaction (the Payment ledger stays).

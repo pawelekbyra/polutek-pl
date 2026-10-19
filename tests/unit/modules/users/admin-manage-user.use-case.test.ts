@@ -41,6 +41,7 @@ beforeEach(() => {
     creator: { updateMany: vi.fn() },
     emailPreference: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }), findMany: vi.fn().mockResolvedValue([]) },
     comment: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
+    notification: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
     broadcastEmailRecipient: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
     emailEvent: { updateMany: vi.fn().mockResolvedValue({ count: 0 }) },
     session: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },

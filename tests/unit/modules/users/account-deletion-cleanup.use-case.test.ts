@@ -53,6 +53,7 @@ describe('AccountDeletionCleanupUseCase', () => {
       passkey: { deleteMany: vi.fn().mockResolvedValue({ count: 1 }) },
       userAvatar: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
       comment: { updateMany: vi.fn().mockResolvedValue({ count: 3 }) },
+      notification: { deleteMany: vi.fn().mockResolvedValue({ count: 2 }) },
       broadcastEmailRecipient: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
       emailEvent: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
       resendContactRemoval: {

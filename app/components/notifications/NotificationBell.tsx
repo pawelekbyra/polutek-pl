@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { localizedPathFromLegacyPath } from "@/lib/i18n/routing";
 import { useLanguage } from "../LanguageContext";
+import { NOTIFICATIONS_CHANGED_EVENT, formatNotificationAge } from "./notification-events";
 
 type BellItem = {
   id: string;
@@ -63,9 +64,12 @@ function postRead(body: { id: string } | { all: true }) {
 function resolveHref(href: string | null, language: Parameters<typeof localizedPathFromLegacyPath>[1]) {
   if (href === null) return { href: null, external: false };
   if (/^https:/i.test(href)) return { href, external: true };
-  const [path, ...query] = href.split("?");
+  // The anchor (#comment-...) is carried through untouched; the rest is localized as before.
+  const hashAt = href.indexOf("#");
+  const hash = hashAt >= 0 ? href.slice(hashAt) : "";
+  const [path, ...query] = (hashAt >= 0 ? href.slice(0, hashAt) : href).split("?");
   const localized = localizedPathFromLegacyPath(path ?? href, language) ?? path ?? href;
-  return { href: query.length > 0 ? `${localized}?${query.join("?")}` : localized, external: false };
+  return { href: `${query.length > 0 ? `${localized}?${query.join("?")}` : localized}${hash}`, external: false };
 }
 
 /**
@@ -145,6 +149,13 @@ export default function NotificationBell() {
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", tick);
     };
+  }, [pollCount]);
+
+  // Something just created a notification for this viewer (a new account's welcome): count it now, not in a minute.
+  useEffect(() => {
+    const onChanged = () => void pollCount();
+    window.addEventListener(NOTIFICATIONS_CHANGED_EVENT, onChanged);
+    return () => window.removeEventListener(NOTIFICATIONS_CHANGED_EVENT, onChanged);
   }, [pollCount]);
 
   const onOpenChange = (next: boolean) => {
@@ -245,8 +256,12 @@ export default function NotificationBell() {
                   </span>
                 </span>
                 {n.body && <span className="line-clamp-2 w-full text-[12px] text-[var(--chan-muted)]">{n.body}</span>}
-                <time dateTime={n.createdAt} className="text-[11px] text-[var(--chan-muted)]">
-                  {new Date(n.createdAt).toLocaleString(language, { dateStyle: "medium", timeStyle: "short" })}
+                <time
+                  dateTime={n.createdAt}
+                  title={new Date(n.createdAt).toLocaleString(language, { dateStyle: "medium", timeStyle: "short" })}
+                  className="text-[11px] text-[var(--chan-muted)]"
+                >
+                  {formatNotificationAge(n.createdAt, language)}
                 </time>
               </>
             );

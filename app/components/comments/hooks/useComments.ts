@@ -32,6 +32,8 @@ type PostCommentResponse = {
 type ReactionResponse = {
   viewerReaction?: CommentView["viewerReaction"];
   likesCount?: number;
+  /** Present when the viewer is the channel's creator: their like is the comment's heart. */
+  isHearted?: boolean;
 };
 
 /** Page size of "show more replies". */
@@ -391,7 +393,15 @@ export function useComments(
       if (typeof response?.likesCount !== "number" || response.viewerReaction === undefined) return;
       if (reactionChains.current.has(commentId)) return; // a newer click is still on its way
       updateCachedComments(queryClient, videoId, (c) =>
-        c.id === commentId ? { ...c, likesCount: response.likesCount!, viewerReaction: response.viewerReaction ?? null } : c,
+        c.id === commentId
+          ? {
+              ...c,
+              likesCount: response.likesCount!,
+              viewerReaction: response.viewerReaction ?? null,
+              // The creator's like is the heart: it shows at once, without a refetch.
+              ...(typeof response.isHearted === "boolean" ? { isHearted: response.isHearted } : {}),
+            }
+          : c,
       );
     },
     onError: () => {

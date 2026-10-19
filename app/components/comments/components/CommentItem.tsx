@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRenderClock } from "../../RenderClock";
 import { useLongPress } from "../hooks/useLongPress";
+import { consumeCommentDeepLink } from "../deep-link";
 
 interface CommentItemProps {
   comment: CommentView;
@@ -122,17 +123,21 @@ function CommentItemComponent({
   const now = useRenderClock();
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.location.hash === `#comment-${comment.id}`) {
+    if (typeof window !== "undefined" && consumeCommentDeepLink(comment.id)) {
       setIsHighlighted(true);
       const shouldReduceMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
-      commentRef.current?.scrollIntoView({
-        behavior: shouldReduceMotion ? "auto" : "smooth",
-        block: "center",
-      });
+      const scrollToComment = (behavior: ScrollBehavior) =>
+        commentRef.current?.scrollIntoView({ behavior, block: "center" });
+      scrollToComment(shouldReduceMotion ? "auto" : "smooth");
+      // The player and thumbnails above are still settling: look once more so the comment stays centered.
+      const settle = setTimeout(() => scrollToComment("auto"), 700);
       const timer = setTimeout(() => setIsHighlighted(false), 3000);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(settle);
+        clearTimeout(timer);
+      };
     }
   }, [comment.id]);
 
