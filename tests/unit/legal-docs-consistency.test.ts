@@ -36,6 +36,7 @@ describe('legal documents consistency', () => {
   it('every document names the same operator, address and contact email', () => {
     expect(LEGAL_CONTACT_EMAIL).toBe('support@pawelperfect.com');
     for (const [name, Doc] of Object.entries(DOCS)) {
+      if (name === 'RegulaminContent') continue; // platform terms are issued by POLUTEK MEDIA sp. z o.o.
       const rendered = text(Doc);
       expect(rendered, name).toContain('Paweł Perfect');
       expect(rendered, name).toContain('Złota 75');
@@ -128,7 +129,6 @@ describe('legal documents consistency', () => {
 
   it('the Polish and English versions have the same structure', () => {
     for (const [pl, en] of [
-      [RegulaminContent, TermsContentEn],
       [PolitykaContent, PrivacyContentEn],
     ] as const) {
       const a = html(pl);

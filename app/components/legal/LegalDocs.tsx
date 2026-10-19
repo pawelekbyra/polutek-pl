@@ -1,4 +1,5 @@
 import React from 'react';
+import { RegulaminPlatformyBody } from '@/app/components/legal/RegulaminPlatformy';
 import { formatLegalDateEn, formatLegalDatePl } from '@/lib/legal/version';
 import { TECHNICAL_DATA_RETENTION_DAYS } from '@/lib/modules/privacy/domain/retention';
 import { TELEMETRY_AGGREGATE_RETENTION_MONTHS, TELEMETRY_RAW_RETENTION_DAYS } from '@/lib/telemetry/retention';
@@ -27,100 +28,7 @@ export function LegalSection({ nr, title, children }: { nr: string; title: strin
 
 /** Full Terms of Service body (no page chrome), shared by the /regulamin page and the support-box modal. */
 export function RegulaminContent() {
-  return (
-    <>
-      <div className="space-y-10">
-        <LegalSection nr="1" title="Informacje o serwisie">
-          <ol className="list-decimal space-y-2 pl-5">
-            <li>
-              Twórcą i administratorem serwisu WWW.PAWELPERFECT.COM jest Paweł Perfect (dalej: „Twórca”). Adres do
-              doręczeń: ul. Złota 75, 00-819 Warszawa, e-mail w sprawach technicznych:{' '}
-              <a href="mailto:support@pawelperfect.com" className="underline hover:text-primary">support@pawelperfect.com</a>.
-            </li>
-            <li>
-              Serwis ma charakter niekomercyjny. Twórca nie prowadzi za pośrednictwem Serwisu sprzedaży towarów, usług
-              ani treści cyfrowych. Wszelkie wpłaty dokonywane na rzecz Twórcy mają charakter dobrowolnego wsparcia
-              (darowizny) i nie stanowią zapłaty za towary, usługi ani treści cyfrowe.
-            </li>
-          </ol>
-        </LegalSection>
-
-        <LegalSection nr="2" title="Zakres serwisu i wymagania techniczne">
-          <ol className="list-decimal space-y-2 pl-5">
-            <li>
-              Serwis udostępnia materiały wideo. Dostęp do treści nigdy nie wymaga płatności — dobrowolne wsparcie
-              Twórcy nie wpływa na to, co użytkownik może oglądać.
-            </li>
-            <li>
-              Część materiałów wideo oraz niektóre funkcje, np. komentowanie, wymagają założenia bezpłatnego konta.
-              Pozostałe materiały są dostępne bez logowania.
-            </li>
-            <li>
-              Do korzystania z serwisu potrzebne są urządzenie z aktualną przeglądarką internetową z włączoną obsługą
-              JavaScript oraz dostęp do internetu. Założenie konta wymaga podania adresu e-mail.
-            </li>
-            <li>
-              Twórca nie gwarantuje poprawnego działania serwisu w przestarzałych przeglądarkach, na urządzeniach
-              nieobsługujących nowoczesnych standardów wideo ani przy zablokowanych skryptach lub elementach
-              potrzebnych do logowania i odtwarzania.
-            </li>
-          </ol>
-        </LegalSection>
-
-        <LegalSection nr="3" title="Konto i zasady korzystania">
-          <ol className="list-decimal space-y-2 pl-5">
-            <li>
-              Konto jest bezpłatne i można je usunąć w każdej chwili.
-            </li>
-            <li>
-              W serwisie, w szczególności w komentarzach, nie wolno publikować treści bezprawnych, obraźliwych ani
-              spamu. Twórca może usuwać takie treści, a w przypadku rażących naruszeń zablokować konto bez wcześniejszego ostrzeżenia.
-            </li>
-          </ol>
-        </LegalSection>
-
-        <LegalSection nr="4" title="Wsparcie Twórcy">
-          <ol className="list-decimal space-y-2 pl-5">
-            <li>
-              Osoba posiadająca konto może przekazać Twórcy dobrowolne wsparcie w dowolnej kwocie jako wyraz
-              podziękowania za udostępnione materiały. Przekazanie wsparcia wymaga zalogowania się do serwisu.
-            </li>
-            <li>
-              Wsparcie jest darowizną na rzecz Twórcy. Nie jest ceną ani wynagrodzeniem za jakiekolwiek treści lub usługi.
-            </li>
-            <li>
-              Wsparcie nie daje dostępu do żadnych treści, funkcji, wyróżnień ani innych korzyści. Nie zobowiązuje też
-              Twórcy do żadnego świadczenia, np. do publikowania nowych materiałów.
-            </li>
-            <li>
-              Wsparcie nie jest zapłatą za sprzedaż, dlatego Twórca nie wystawia do niego faktur ani rachunków.
-            </li>
-            <li>
-              Płatności obsługuje Stripe. Twórca nie przechowuje danych kart płatniczych. Potwierdzenie wpłaty wysyła operator płatności.
-            </li>
-            <li>
-              Wsparcie nie podlega zwrotowi, z wyjątkiem wpłat dokonanych omyłkowo (np. podwójna płatność lub błędna
-              kwota) albo bez zgody posiadacza karty.
-            </li>
-          </ol>
-        </LegalSection>
-
-        <LegalSection nr="5" title="Zmiany regulaminu">
-          <ol className="list-decimal space-y-2 pl-5">
-            <li>
-              Twórca może zmienić regulamin, w szczególności w razie zmiany przepisów, funkcji serwisu lub sposobu jego działania.
-            </li>
-            <li>
-              Zmiany regulaminu wchodzą w życie z chwilą ich opublikowania w serwisie.
-            </li>
-            <li>
-              Dalsze korzystanie z serwisu po opublikowaniu zmian oznacza ich akceptację.
-            </li>
-          </ol>
-        </LegalSection>
-      </div>
-    </>
-  );
+  return <RegulaminPlatformyBody LegalSection={LegalSection} />;
 }
 
 function ContactLink() {
