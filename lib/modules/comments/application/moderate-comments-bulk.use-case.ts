@@ -96,8 +96,8 @@ export async function moderateCommentsBulk(
         const { effective, from } = group[0];
         const data =
           effective === "delete"
-            ? { status: CommentStatus.DELETED, deletedAt: now, deletedById: actorId, deletedReason: CommentDeletedReason.MODERATOR_DELETED }
-            : { status: TARGET[effective], moderatedAt: now, moderatedById: actorId };
+            ? { status: CommentStatus.DELETED, pinnedAt: null, deletedAt: now, deletedById: actorId, deletedReason: CommentDeletedReason.MODERATOR_DELETED }
+            : { status: TARGET[effective], moderatedAt: now, moderatedById: actorId, ...(TARGET[effective] === CommentStatus.VISIBLE ? {} : { pinnedAt: null }) };
         const { count } = await tx.comment.updateMany({ where: { id: { in: group.map((c) => c.commentId) }, status: from }, data });
         if (count !== group.length) throw new BatchConflict("Któryś komentarz zmienił się w międzyczasie. Odśwież listę.");
       }

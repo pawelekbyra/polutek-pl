@@ -172,7 +172,7 @@ describe('AccountDeletionCleanupUseCase', () => {
 
     expect(prisma.comment.updateMany).toHaveBeenCalledWith({
       where: { authorId: 'u1', status: { not: 'DELETED' } },
-      data: { status: 'DELETED', deletedAt: NOW, deletedById: 'u1', deletedReason: 'AUTHOR_DELETED' },
+      data: { status: 'DELETED', pinnedAt: null, deletedAt: NOW, deletedById: 'u1', deletedReason: 'AUTHOR_DELETED' },
     });
     expect(prisma.comment.updateMany).toHaveBeenCalledWith({
       where: { authorId: 'u1', OR: [{ text: { not: '' } }, { imageUrl: { not: null } }] },

@@ -236,7 +236,8 @@ export class CommentRepository {
   async softDelete(id: string, data: { deletedAt: Date; deletedById: string; deletedReason: CommentDeletedReason }): Promise<boolean> {
     const { count } = await this.write.comment.updateMany({
       where: { id, status: { not: CommentStatus.DELETED } },
-      data: { status: CommentStatus.DELETED, ...data },
+      // A deleted comment is no longer pinned (a pin only makes sense for a visible comment).
+      data: { status: CommentStatus.DELETED, pinnedAt: null, ...data },
     });
     return count > 0;
   }
@@ -264,7 +265,9 @@ export class CommentRepository {
    * state machine lives in `CommentPolicy`). Returns whether the transition happened.
    */
   async transitionStatus(id: string, from: readonly CommentStatus[], data: { status: CommentStatus; moderatedAt: Date | null; moderatedById: string | null }): Promise<boolean> {
-    const { count } = await this.write.comment.updateMany({ where: { id, status: { in: [...from] } }, data });
+    // Leaving VISIBLE (hidden, held for review) also drops the pin.
+    const unpin = data.status === CommentStatus.VISIBLE ? {} : { pinnedAt: null };
+    const { count } = await this.write.comment.updateMany({ where: { id, status: { in: [...from] } }, data: { ...data, ...unpin } });
     return count > 0;
   }
 

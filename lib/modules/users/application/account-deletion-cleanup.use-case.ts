@@ -40,7 +40,7 @@ const REDACTED_EMAIL_EVENT_PAYLOAD = { redacted: 'ACCOUNT_DELETED' };
 async function eraseCommentContent(tx: any, userId: string, now: Date) {
   await tx.comment.updateMany({
     where: { authorId: userId, status: { not: CommentStatus.DELETED } },
-    data: { status: CommentStatus.DELETED, deletedAt: now, deletedById: userId, deletedReason: CommentDeletedReason.AUTHOR_DELETED },
+    data: { status: CommentStatus.DELETED, pinnedAt: null, deletedAt: now, deletedById: userId, deletedReason: CommentDeletedReason.AUTHOR_DELETED },
   });
   await tx.comment.updateMany({
     where: { authorId: userId, OR: [{ text: { not: '' } }, { imageUrl: { not: null } }] },
