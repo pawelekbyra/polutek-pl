@@ -30,7 +30,7 @@ const Footer = () => {
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,var(--cm-line-92)_18%,var(--cm-line-92)_82%,transparent)]"
       />
-      <div className="mx-auto flex max-w-[1180px] flex-col items-center justify-center gap-[14px] px-6 py-[26px] md:flex-row md:justify-between md:gap-[14px]">
+      <div className="mx-auto flex max-w-[1180px] flex-col items-center justify-center gap-[14px] px-6 pb-[26px] pt-[14px] md:flex-row md:py-[26px] md:justify-between md:gap-[14px]">
         {/* Equal flexible side columns keep the brand centred, and the right one grows with long labels (de, fr). */}
         <div className="order-3 flex w-full justify-center md:order-none md:w-auto md:flex-1 md:justify-start">
           <Suspense fallback={null}>
