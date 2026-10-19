@@ -1,6 +1,6 @@
 "use client";
 
-import { scrollToWatchTabs } from "./scroll-to-watch-tabs";
+import { scrollToWatchTabsWhenSettled } from "./scroll-to-watch-tabs";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   MessageSquare,
@@ -293,7 +293,7 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
               requestAnimationFrame(() => {
                 if (answered) {
                   answered.scrollIntoView({ behavior: scrollBehavior(), block: "center" });
-                } else if (!scrollToWatchTabs(scrollBehavior())) {
+                } else if (!scrollToWatchTabsWhenSettled(scrollBehavior())) {
                   composerRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
                 }
               });
