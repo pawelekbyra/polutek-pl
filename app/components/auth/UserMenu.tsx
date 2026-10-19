@@ -27,6 +27,8 @@ type SubscribedChannel = { id: string; slug: string; handle: string | null; name
 
 /** How many followed channels the panel lists; the rest is one click away on the subscriptions page. */
 const PANEL_CHANNEL_LIMIT = 8;
+/** Length of the slide-out (matches duration-200 on the panel and its backdrop). */
+const PANEL_EXIT_MS = 200;
 
 /**
  * Account panel. The avatar in the top bar opens a side panel from the right: who is signed in, the main places of
@@ -40,6 +42,8 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
   const { signOut } = useAuth();
   const { language, tx } = useLanguage();
   const [open, setOpen] = useState(false);
+  // The panel slides out before it unmounts: `closing` plays the exit animation, then `open` goes false.
+  const [closing, setClosing] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [channels, setChannels] = useState<SubscribedChannel[] | null>(null);
   const [failed, setFailed] = useState(false);
@@ -47,10 +51,29 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
 
-  const close = useCallback(() => {
-    setOpen(false);
-    triggerRef.current?.focus();
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const dismiss = useCallback(() => {
+    if (closeTimer.current) return;
+    setClosing(true);
+    closeTimer.current = setTimeout(() => {
+      closeTimer.current = null;
+      setOpen(false);
+      setClosing(false);
+    }, PANEL_EXIT_MS);
   }, []);
+
+  const close = useCallback(() => {
+    dismiss();
+    triggerRef.current?.focus();
+  }, [dismiss]);
+
+  useEffect(
+    () => () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -131,13 +154,19 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
 
       {open ? (
         <div className="fixed inset-0 z-[1100]">
-          <button type="button" tabIndex={-1} aria-hidden="true" onClick={close} className="absolute inset-0 h-full w-full cursor-default touch-none bg-black/40" />
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden="true"
+            onClick={close}
+            className={`absolute inset-0 h-full w-full cursor-default touch-none bg-black/40 duration-200 ${closing ? "animate-out fade-out fill-mode-forwards" : "animate-in fade-in"}`}
+          />
           <aside
             id={panelId}
             role="dialog"
             aria-modal="true"
             aria-label={tx("Menu konta", "Account menu")}
-            className="absolute right-0 top-0 flex h-full w-[min(88vw,320px)] flex-col overscroll-contain bg-[var(--chan-card)] shadow-2xl animate-in slide-in-from-right duration-200"
+            className={`absolute right-0 top-0 flex h-full w-[min(88vw,320px)] flex-col overscroll-contain bg-[var(--chan-card)] shadow-2xl duration-200 ${closing ? "animate-out slide-out-to-right fill-mode-forwards" : "animate-in slide-in-from-right"}`}
           >
             <div className="border-b border-[var(--chan-line)]">
             <div className="flex items-start gap-3 p-4 pb-2">
@@ -167,11 +196,11 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
 
             <div className="flex flex-1 flex-col overflow-y-auto overscroll-contain p-3">
               <nav aria-label={tx("Nawigacja boczna", "Side navigation")} className="grid gap-1">
-                <Link href={getLocalizedHref(language, "home")} className={itemClass} onClick={() => setOpen(false)}>
+                <Link href={getLocalizedHref(language, "home")} className={itemClass} onClick={dismiss}>
                   <Home className={iconClass} strokeWidth={1.8} aria-hidden="true" />
                   {tx("Strona główna", "Home")}
                 </Link>
-                <Link href={getLocalizedHref(language, "studio")} className={itemClass} onClick={() => setOpen(false)}>
+                <Link href={getLocalizedHref(language, "studio")} className={itemClass} onClick={dismiss}>
                   <LayoutDashboard className={iconClass} strokeWidth={1.8} aria-hidden="true" />
                   {tx("Studio twórcy", "Creator Studio")}
                 </Link>
@@ -179,7 +208,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
                   type="button"
                   className={itemClass}
                   onClick={() => {
-                    setOpen(false);
+                    dismiss();
                     setAccountOpen(true);
                   }}
                 >
@@ -198,7 +227,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
                 <h2 id={`${panelId}-subs`} className={sectionTitleClass}>
                   {tx("Subskrypcje", "Subscriptions")}
                 </h2>
-                <Link href={getLocalizedHref(language, "subscriptions")} className={itemClass} onClick={() => setOpen(false)}>
+                <Link href={getLocalizedHref(language, "subscriptions")} className={itemClass} onClick={dismiss}>
                   <Users className={iconClass} strokeWidth={1.8} aria-hidden="true" />
                   {tx("Wszystkie subskrypcje", "All subscriptions")}
                 </Link>
@@ -214,7 +243,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
                   <ul className="grid gap-1">
                     {visibleChannels.map((channel) => (
                       <li key={channel.id}>
-                        <Link href={getLocalizedHref(language, "channel", { slug: channel.slug })} className={itemClass} onClick={() => setOpen(false)}>
+                        <Link href={getLocalizedHref(language, "channel", { slug: channel.slug })} className={itemClass} onClick={dismiss}>
                           <span className="min-w-0 truncate pl-8">{channel.name}</span>
                         </Link>
                       </li>
@@ -224,11 +253,11 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
               </section>
 
               <nav aria-label={tx("Informacje prawne", "Legal")} className="mt-auto grid gap-1 border-t border-[var(--chan-line)] pt-3">
-                <Link href={getLocalizedHref(language, "terms")} className={itemClass} onClick={() => setOpen(false)}>
+                <Link href={getLocalizedHref(language, "terms")} className={itemClass} onClick={dismiss}>
                   <BookOpen className={iconClass} strokeWidth={1.8} aria-hidden="true" />
                   {tx("Regulamin", "Terms")}
                 </Link>
-                <Link href={getLocalizedHref(language, "privacy")} className={itemClass} onClick={() => setOpen(false)}>
+                <Link href={getLocalizedHref(language, "privacy")} className={itemClass} onClick={dismiss}>
                   <ShieldCheck className={iconClass} strokeWidth={1.8} aria-hidden="true" />
                   {tx("Polityka prywatności", "Privacy policy")}
                 </Link>
