@@ -1,4 +1,5 @@
 "use client";
+import { insertBelowPinned, pinnedFirst } from "./pinned-order";
 
 import { useCallback, useRef } from "react";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient, InfiniteData, QueryClient } from "@tanstack/react-query";
@@ -327,7 +328,7 @@ export function useComments(
           queryClient.setQueryData<CommentsData>(queryKey, (old) => {
             if (!old?.pages[0]) return old;
             const first = old.pages[0];
-            const comments = String(queryKey[2]) === "newest" ? [optimisticComment, ...first.comments] : first.comments;
+            const comments = String(queryKey[2]) === "newest" ? insertBelowPinned(first.comments, optimisticComment) : first.comments;
             return { ...old, pages: [{ ...first, totalCount: first.totalCount + 1, comments }, ...old.pages.slice(1)] };
           });
         }
@@ -438,7 +439,7 @@ export function useComments(
         if (c.parentId) return c;
         if (c.id === commentId) return { ...c, isPinned: pinned, pinnedAt: pinned ? pinnedAt : null };
         return pinned && c.isPinned ? { ...c, isPinned: false, pinnedAt: null } : c;
-      });
+      }, (page, index) => (index === 0 ? { ...page, comments: pinnedFirst(page.comments) } : page));
       return { previousData };
     },
     onError: (_err, _variables, context) => {

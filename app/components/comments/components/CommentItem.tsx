@@ -6,7 +6,7 @@ import { dateFnsLocale } from "@/lib/i18n/date-locale";
 import type { Locale } from "@/lib/i18n/routing";
 import { useOptionalTx } from "@/lib/i18n/language-context";
 import { Pin } from "lucide-react";
-import { Trash2, Heart, MoreVertical, Edit, Flag, Link as LinkIcon } from "../../icons";
+import { Trash2, Heart, MoreVertical, Edit, Flag } from "../../icons";
 import { cn } from "@/lib/utils";
 import { CommentView, getAuthorBadge } from "../types";
 import { SafeAvatar } from "../../SafeAvatar";
@@ -289,18 +289,6 @@ function CommentItemComponent({
                 sideOffset={6}
                 className="z-[1100] w-52 rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-1.5 text-[var(--chan-ink)] shadow-[0_14px_34px_-16px_rgba(15,23,42,0.3)] ring-0"
               >
-                <DropdownMenuItem
-                  onClick={() => {
-                    const url = new URL(window.location.href);
-                    url.hash = `comment-${comment.id}`;
-                    void navigator.clipboard.writeText(url.toString());
-                  }}
-                  className={menuItemClassName}
-                >
-                  <LinkIcon aria-hidden="true" size={14} />
-                  {tx("Kopiuj link", "Copy link")}
-                </DropdownMenuItem>
-
                 {comment.viewerCanEdit && (
                   <DropdownMenuItem
                     onClick={startEditing}
