@@ -20,9 +20,11 @@ type Props = {
    * the list rows; the buttons keep the neutral globe (owner decision: flag colours clash there).
    * "dropdown" (account panel): a compact "[globe] Polski" button that opens the list as a floating menu under it
    * (it overlays the content, the row itself never grows).
+   * "dropup" (footer): the inline-style "[globe] Language: English" link, but the list floats ABOVE it, so opening it
+   * never makes the page longer (the footer sits at the bottom).
    * "icon" (navbar, signed-out visitors): the same floating list behind a round, globe-only button.
    */
-  variant?: "pill" | "inline" | "icon" | "dropdown";
+  variant?: "pill" | "inline" | "icon" | "dropdown" | "dropup";
 };
 
 type OptionProps = {
@@ -114,7 +116,7 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
 
   const chevron = (className: string) => (
     <ChevronDown
-      className={`${className} shrink-0 transition-transform duration-150 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
+      className={`${className} shrink-0 transition-transform duration-150 motion-reduce:transition-none ${open !== (variant === "dropup") ? "rotate-180" : ""}`}
       strokeWidth={2}
       aria-hidden="true"
     />
@@ -138,6 +140,16 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
         <button
           {...triggerProps}
           className="ml-auto inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold text-[var(--chan-muted)] transition-colors hover:bg-[var(--chan-surface)] hover:text-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] pointer-coarse:min-h-11"
+        >
+          <Globe className="h-3.5 w-3.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+          <span>{tx("Język", "Language")}:</span>
+          <span className="text-[var(--chan-ink)]">{current.label}</span>
+          {chevron("h-3 w-3")}
+        </button>
+      ) : variant === "dropup" ? (
+        <button
+          {...triggerProps}
+          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-semibold text-[var(--chan-muted)] transition-colors hover:bg-[var(--chan-surface)] hover:text-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] pointer-coarse:min-h-11"
         >
           <Globe className="h-3.5 w-3.5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
           <span>{tx("Język", "Language")}:</span>
@@ -183,14 +195,16 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
       {open && !inline ? (
         <div
           className={
-            variant === "dropdown"
+            variant === "dropup"
+              ? `${styles.panelUp} absolute bottom-[calc(100%+6px)] left-0 z-[1200] flex w-[min(256px,calc(100vw-32px))] flex-col overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] font-sans text-[var(--chan-ink)] shadow-[0_-20px_50px_rgba(15,23,42,0.18)]`
+              : variant === "dropdown"
               ? `${styles.panel} absolute right-0 top-[calc(100%+6px)] z-[1200] flex w-[min(256px,80vw)] flex-col overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.18)]`
               : `${styles.panel} fixed left-2 right-2 top-[60px] z-[1100] flex flex-col overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.14)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+8px)] sm:w-[256px]`
           }
         >
           <div
             {...listboxProps}
-            className={`${styles.scroller} max-h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain p-1.5 outline-none`}
+            className={`${styles.scroller} ${variant === "dropup" ? "max-h-[min(60dvh,420px)]" : "max-h-[calc(100dvh-72px)]"} overflow-y-auto overscroll-contain p-1.5 outline-none`}
           >
             {rows(false)}
           </div>
