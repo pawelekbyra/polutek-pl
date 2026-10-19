@@ -45,6 +45,16 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
   'lib/modules/video/domain/public-visibility.ts': {
     'channel/domain/channel.policy': 'Pure, no-side-effect policy class (the one rule for a publicly visible channel); the video domain needs only that predicate, not the channel barrel with its services.',
   },
+  'lib/modules/syndication/domain/embed-eligibility.ts': {
+    'video/domain/video-visibility': VISIBILITY_HELPER_REASON,
+    'channel/domain/channel.policy': 'Pure, no-side-effect policy class (the one rule for a publicly visible channel); the embed rule needs only that predicate, not the channel barrel with its services.',
+  },
+  'lib/modules/syndication/domain/rss.ts': {
+    'video/domain/video-visibility': VISIBILITY_HELPER_REASON,
+  },
+  'lib/modules/syndication/application/get-embed-view.use-case.ts': {
+    'video/infrastructure/video-content.service': 'mapToPublicVideoDTO is the single point that builds (and safety-checks) every PublicVideoDTO; it is an infra service the video barrel does not export.',
+  },
   'lib/modules/watch-progress/domain/continue-watching.ts': {
     'video/domain/premiere': PREMIERE_HELPER_REASON,
     'video/domain/video-visibility': VISIBILITY_HELPER_REASON,

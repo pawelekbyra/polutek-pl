@@ -233,7 +233,7 @@ Druga aplikacja Next.js w tym repo (wspólny `node_modules`, `npm run admin:buil
 
 CSP strony buduje `generateCSP()` w `lib/utils/security.ts` (middleware dokłada je do odpowiedzi): hosty Google (logowanie, One Tap), Turnstile, Stripe, własnego HLS (`video.pawelperfect.com` + `HLS_DELIVERY_BASE_URL`), R2/miniatur.
 `script-src` i `style-src` zawierają `'unsafe-inline'` (znana słabość, decyzja 2026-10-03; zmiana na nonce wymaga osobnego planu i ponownego sprawdzenia Stripe/Google/Turnstile). Czcionki są lokalne. Nowy zewnętrzny host dopisuj tam, nie omijaj CSP.
-Panel ma osobne, ścisłe CSP z nonce (§4.20).
+Panel ma osobne, ścisłe CSP z nonce (§4.20). Jedyny wyjątek od `frame-ancestors 'none'` to odtwarzacz do osadzania `/embed/<slug>` (§4.28), decydowany w tym samym `generateCSP({ embeddable })`.
 
 ### 4.22 Awatar kanału
 
@@ -374,3 +374,10 @@ Gdy zmiana modyfikuje zachowanie, które agenci mają zachować, zaktualizuj ten
 - **Odwołania (DSA art. 17 i 20):** `ModerationDecision` jest niezmienna (trigger); wynik odwołania to NOWA decyzja (`APPEAL_UPHELD`/`APPEAL_REJECTED`) wskazana z `ModerationAppeal.outcomeDecisionId`. Twórca (OWNER/MANAGER kanału, także gdy kanał jest zawieszony) widzi decyzje i uzasadnienia w Studiu → „Decyzje i odwołania” i odwołuje się raz na decyzję, w 6 miesięcy (`moderation-appeals.use-cases.ts`, reguły czyste w `moderation-appeal.policy.ts`). Kolejka personelu: `/kanaly` w panelu (`resolveModerationAppeal`, akcja `platform.moderate_channel`); uwzględnienie cofa skutek decyzji tylko, gdy stan nie zmienił się od tamtej pory. `reasonInternal` nigdy nie trafia do twórcy.
 - **Powiadomienia:** `notifyChannelOwnerOfDecision` (`lib/modules/channel/infrastructure/moderation-notice.ts`) po zatwierdzeniu decyzji wysyła powiadomienie `MODERATION` (+ e-mail pl/en); ciężkie decyzje (zawieszenie, blokada, usunięcie filmu) omijają wyłączenie kategorii. Zgłaszający dostaje potwierdzenie i wynik (art. 16).
 - **Blokada widza na kanale:** `ChannelBan(channelId, userId, until?, reason?)`; banuje i odbanowuje rola z `comment.moderate` (OWNER, MANAGER, MODERATOR) przez authz, ze Studia → Komentarze (`/api/studio/bans`). Egzekwuje ją `createVideoComment` (`CHANNEL_BANNED`, także odpowiedzi); zablokowany nadal ogląda. Nie blokuje się właściciela, członków, siebie ani administratora; powód widzi tylko kanał.
+
+### 4.28 Syndykacja: RSS, oEmbed, odtwarzacz do osadzania
+
+- **Trzy publiczne powierzchnie** (moduł `lib/modules/syndication`, pomocniki `lib/embed/`; opis: `docs/architecture/syndication-embed.md`): kanał RSS `/channel/<slug>/feed.xml` (do 50 filmów `PUBLISHED`, wymagalnych, nie 18+, z kanału widocznego; tylko tytuł, link, data, krótki opis, miniatura tylko dla `PUBLIC`; **nigdy `<enclosure>`**), oEmbed `/api/oembed` i strona `/embed/<slug>`.
+- **Osadzić wolno wyłącznie film `PUBLIC` + `PUBLISHED`** (surowy `tier`, nigdy przez `toVideoAccessTier`; nie 18+, nie nadchodząca premiera, kanał widoczny): jedna reguła `decideEmbed()`. Inne opublikowane filmy dostają na `/embed` kartę „Obejrzyj na stronie”, a oEmbed odpowiada identycznym 404 dla wszystkiego, czego nie wolno osadzić (żadnego przecieku istnienia). Plan i token odtwarzania nadal tylko z `PlaybackService` (§4.3).
+- **Ramkowanie:** `frame-ancestors *` wyłącznie dla `/embed/<slug>` (`isEmbedPath`), reszta zostaje `'none'`. CSP zmienia się w jednym miejscu (`generateCSP({ embeddable })`), a `X-Frame-Options: DENY` w `next.config.mjs` jest wyłączony tylko dla `/embed/*`; pilnuje tego `tests/unit/syndication/framing-headers.test.ts`. Strona osadzenia: `noindex`, bez `auth()`/ciasteczek po stronie serwera (język z `?lang=`/nagłówków liczy proxy), bez autoodtwarzania, limity na IP.
+- Kod `<iframe>` dla przyszłego „Udostępnij → Osadź” daje wyłącznie `buildEmbedSnippet()` (`lib/embed/embed-snippet.ts`). Nowa trasa publiczna tego rodzaju musi trafić do `isPublicRoute` w `middleware.ts`, a adresy bez prefiksu języka do `shouldRewriteForPolish`.

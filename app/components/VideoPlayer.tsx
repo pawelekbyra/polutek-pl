@@ -63,6 +63,11 @@ interface VideoPlayerProps {
      * undefined (not known yet). Ignored for guests. A `?t=` start in the address wins over it.
      */
     resumeSeconds?: number | null;
+    /**
+     * Start playing by itself (muted, the site default). The embeddable player (app/embed) turns it off: a player
+     * inside another site's page must wait for the viewer's own play click.
+     */
+    autoPlay?: boolean;
 }
 
 
@@ -81,7 +86,7 @@ function normalizeTextTracks(tracks: VideoTextTrackDTO[] | undefined): VideoText
 // menu (which remembers the choice); the shortcuts would change it silently and step down to 0.25x.
 const PLAYER_KEY_SHORTCUTS = { speedUp: '', slowDown: '' };
 
-export default function VideoPlayer({ video, onViewCounted, revealKey, startWithSound = false, signedIn = false, resumeSeconds }: VideoPlayerProps) {
+export default function VideoPlayer({ video, onViewCounted, revealKey, startWithSound = false, signedIn = false, resumeSeconds, autoPlay = true }: VideoPlayerProps) {
     const { playbackPlan, refreshPlaybackPlan, renewPlaybackPlan, isLoading } = useVideoAccess();
     // The player never receives admin status from the session (the server decides); admin-only
     // diagnostics in the overlays stay off for viewers.
@@ -292,7 +297,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
         return () => clearInterval(interval);
     }, [isMounted, tracking, sendEvent]);
 
-    const autoPlayWanted = playerConfig ? (playerConfig.autoplayAllowed && playerConfig.mutedAutoplay) : true;
+    const autoPlayWanted = autoPlay && (playerConfig ? (playerConfig.autoplayAllowed && playerConfig.mutedAutoplay) : true);
     const resolvedSource = resolvePlaybackSource({
         kind: videoSourceKind,
         playbackUrl: videoUrl,

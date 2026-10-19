@@ -914,5 +914,9 @@
  "20 to 2000 characters. Say what you think was judged wrongly.": "20 至 2000 个字符。请说明您认为哪里判断有误。",
  "Send appeal": "提交申诉",
  "Delete comment?": "删除评论？",
- "The comment will disappear from the conversation.": "该评论将从对话中消失。"
+ "The comment will disappear from the conversation.": "该评论将从对话中消失。",
+ "This video can only be watched on the site.": "此视频只能在网站上观看。",
+ "Watch on {0}": "在 {0} 上观看",
+ "Video unavailable": "视频不可用",
+ "This video does not exist or is no longer public.": "此视频不存在或已不再公开。"
 }

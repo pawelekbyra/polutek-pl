@@ -34,6 +34,7 @@ albo znika w tym samym PR. Historia jest w git.
 | Premiery i pasek zbiórki | [`architecture/premieres-and-fundraising.md`](architecture/premieres-and-fundraising.md) |
 | Komentarze i reakcje | [`architecture/comments-and-reactions.md`](architecture/comments-and-reactions.md) |
 | Powłoka publiczna, ładowanie, odtwarzacz, napisy | [`architecture/public-shell-and-player.md`](architecture/public-shell-and-player.md) |
+| Syndykacja: RSS, oEmbed, odtwarzacz do osadzania, ramkowanie | [`architecture/syndication-embed.md`](architecture/syndication-embed.md) |
 | Wybór języka i dokumenty prawne | [`architecture/i18n-and-legal.md`](architecture/i18n-and-legal.md) |
 | Prywatność, retencja, e-mail | [`architecture/privacy-email-retention.md`](architecture/privacy-email-retention.md) |
 | Baza i migracje | [`architecture/database-and-migrations.md`](architecture/database-and-migrations.md) |
