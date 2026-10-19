@@ -41,6 +41,19 @@ export function buildNewVideoCopy(input: NewVideoCopyInput): NewVideoCopy {
   };
 }
 
+/** Default text of the premiere notification (the moment the scheduled premiere starts). */
+export function buildPremiereCopy(input: NewVideoCopyInput): NewVideoCopy {
+  const channel = clip(input.channelName, 80);
+  const title = clip(input.title, 200);
+  const titleEn = clip(input.titleEn?.trim() ? input.titleEn : input.title, 200);
+  return {
+    titlePl: `Premiera: ${title}`,
+    titleEn: `Premiere: ${titleEn}`,
+    bodyPl: `Film właśnie się zaczął na kanale ${channel}`,
+    bodyEn: `The video just premiered on ${channel}`,
+  };
+}
+
 /**
  * An admin override (NotificationTemplate NEW_VIDEO) is static text with two optional placeholders,
  * `{{channelName}}` and `{{videoTitle}}`; without them it would lose the one thing worth saying.

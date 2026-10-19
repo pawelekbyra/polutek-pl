@@ -1,0 +1,11 @@
+[Unit]
+Description=polutek cron premiere-notifications, every minute (tells followers a scheduled premiere has started; idle when nothing is due)
+
+[Timer]
+OnCalendar=*-*-* *:*:00 UTC
+Persistent=false
+AccuracySec=5s
+Unit=polutek-cron@premiere-notifications.service
+
+[Install]
+WantedBy=timers.target

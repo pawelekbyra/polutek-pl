@@ -36,7 +36,7 @@ function makeDb(opts: { video?: unknown; subscribers?: string[]; existing?: stri
     },
   };
   const db = {
-    video: { findUnique: vi.fn().mockResolvedValue("video" in opts ? opts.video : makeVideo()) },
+    video: { findUnique: vi.fn().mockResolvedValue("video" in opts ? opts.video : makeVideo()), updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
     notificationTemplate: { findUnique: vi.fn().mockResolvedValue(null) },
     subscription: { findMany: vi.fn().mockResolvedValue((opts.subscribers ?? []).map((userId) => ({ userId }))) },
     $transaction: vi.fn(async (fn: (t: typeof tx) => unknown) => fn(tx)),
@@ -114,5 +114,25 @@ describe("notifyNewVideoPublished", () => {
     const { db, raw } = makeDb({ subscribers: ["u1"] });
     raw.$transaction.mockRejectedValueOnce(new Error("db down"));
     await expect(notifyNewVideoPublished("v1", { db, now: () => NOW })).resolves.toEqual({ status: "error" });
+  });
+});
+
+describe("publish-time fan-out and premiereNotifiedAt", () => {
+  it("marks the video as announced (only while still null) so the premiere cron skips it", async () => {
+    const { db, raw } = makeDb({ subscribers: ["u1"] });
+    await fanOutNewVideo("v1", { db, now: () => NOW });
+    expect(raw.video.updateMany).toHaveBeenCalledWith({ where: { id: "v1", premiereNotifiedAt: null }, data: { premiereNotifiedAt: NOW } });
+  });
+
+  it("does not mark an upcoming premiere (the cron announces it later)", async () => {
+    const { db, raw } = makeDb({ video: makeVideo({ premiereAt: new Date("2026-10-20T10:00:00Z") }), subscribers: ["u1"] });
+    expect(await fanOutNewVideo("v1", { db, now: () => NOW })).toEqual({ status: "skipped", reason: "UPCOMING_PREMIERE" });
+    expect(raw.video.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("a failing mark does not fail the already delivered fan-out", async () => {
+    const { db, raw } = makeDb({ subscribers: ["u1"] });
+    raw.video.updateMany.mockRejectedValueOnce(new Error("db"));
+    await expect(fanOutNewVideo("v1", { db, now: () => NOW })).resolves.toEqual({ status: "done", inApp: 1 });
   });
 });

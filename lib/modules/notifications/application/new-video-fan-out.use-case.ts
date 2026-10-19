@@ -12,7 +12,8 @@ import { applyNewVideoTemplate, buildNewVideoCopy, newVideoHref, newVideoLockKey
  * - Runs AFTER the publication committed, never inside its transaction; `notifyNewVideoPublished`
  *   swallows every error, so a failing notification can never undo or fail a publication.
  * - Only PUBLISHED without an upcoming premiere. UNLISTED, DRAFT, ARCHIVED and scheduled premieres
- *   are skipped (a premiere is not announced when it starts yet: no trigger exists for that).
+ *   are skipped; a scheduled premiere is announced when it starts by `premiere-notifications.use-case.ts`
+ *   (cron). A completed fan-out sets `Video.premiereNotifiedAt`, so that cron never repeats it.
  * - Audience: `Subscription.notify = true` and `NotificationPreference.newVideoInApp` (no row = on).
  *   The channel owner is not notified of their own video. Written with `createMany` in chunks.
  * - Idempotent per (user, video): rows of kind NEW_VIDEO for the video are read under an advisory
@@ -55,7 +56,7 @@ export async function fanOutNewVideo(videoId: string, deps: NewVideoFanOutDeps =
   });
   if (!video) return { status: "skipped", reason: "NOT_FOUND" };
   if (video.status !== "PUBLISHED") return { status: "skipped", reason: "NOT_PUBLISHED" };
-  // A scheduled premiere is not announced (left for a later step).
+  // A scheduled premiere is announced when it starts (premiere-notifications cron).
   if (isUpcomingPremiere({ status: video.status, premiereAt: video.premiereAt }, now)) {
     return { status: "skipped", reason: "UPCOMING_PREMIERE" };
   }
@@ -71,6 +72,29 @@ export async function fanOutNewVideo(videoId: string, deps: NewVideoFanOutDeps =
   const copy = applyNewVideoTemplate(override, buildNewVideoCopy(input), input);
   const href = newVideoHref(video.slug);
 
+  const inApp = await deliverNewVideoNotifications(db, { videoId: video.id, channel, copy, href });
+  // The publish-time fan-out counts as "announced": the premiere cron must never send a second one.
+  await markPremiereNotified(db, video.id, now);
+
+  return { status: "done", inApp };
+}
+
+
+export type DeliverInput = {
+  videoId: string;
+  channel: { id: string; userId: string };
+  copy: { titlePl: string; titleEn: string; bodyPl: string; bodyEn: string };
+  href: string;
+};
+
+/**
+ * The shared delivery step (publish-time and premiere fan-outs): the audience in one set query, then
+ * `createMany` in chunks under an advisory lock, skipping users who already have a NEW_VIDEO row for
+ * the video. Returns the number of notifications written.
+ */
+export async function deliverNewVideoNotifications(db: PrismaClient, input: DeliverInput): Promise<number> {
+  const { channel, copy, href } = input;
+  const video = { id: input.videoId };
   // One set query for the audience (never one query per follower).
   const subscribers = await db.subscription.findMany({
     where: {
@@ -116,7 +140,16 @@ export async function fanOutNewVideo(videoId: string, deps: NewVideoFanOutDeps =
     });
   }
 
-  return { status: "done", inApp };
+  return inApp;
+}
+
+/** Marks the premiere as announced; only the first writer wins (`premiereNotifiedAt` still null). Never throws. */
+async function markPremiereNotified(db: PrismaClient, videoId: string, now: Date): Promise<void> {
+  try {
+    await db.video.updateMany({ where: { id: videoId, premiereNotifiedAt: null }, data: { premiereNotifiedAt: now } });
+  } catch (error) {
+    logger.error("[notifications] marking premiereNotifiedAt failed", { videoId, error: error instanceof Error ? error.message : String(error) });
+  }
 }
 
 /**
