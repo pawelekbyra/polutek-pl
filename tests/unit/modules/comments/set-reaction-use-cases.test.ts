@@ -4,12 +4,14 @@ import { setVideoReaction } from '@/lib/modules/comments/application/set-video-r
 import { CommentRepository } from '@/lib/modules/comments/infrastructure/comment.repository';
 import { checkVideoAccess } from '@/lib/modules/access';
 import { sendNotification } from '@/lib/modules/notifications';
+import { notifyCommentLike, notifyCreatorLike } from '@/lib/modules/comments/application/comment-notifications';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { ok } from '@/lib/modules/shared/result';
 import { CommentStatus } from '@prisma/client';
 
 vi.mock('@/lib/modules/comments/infrastructure/comment.repository', () => ({ CommentRepository: vi.fn() }));
 vi.mock('@/lib/modules/access', () => ({ checkVideoAccess: vi.fn() }));
+vi.mock('@/lib/modules/comments/application/comment-notifications', () => ({ notifyCommentLike: vi.fn(), notifyCreatorLike: vi.fn() }));
 vi.mock('@/lib/modules/notifications', () => ({
   sendNotification: vi.fn(),
   notificationTemplates: { commentLike: { kind: 'COMMENT', titlePl: '', titleEn: '', bodyPl: '', bodyEn: '' } },
@@ -25,6 +27,8 @@ describe('reaction use cases (target state)', () => {
     repo = {
       findCommentById: vi.fn().mockResolvedValue({ id: 'c1', videoId: 'v1', authorId: 'author-1', status: CommentStatus.VISIBLE, author: { isDeleted: false } }),
       setCommentReaction: vi.fn().mockResolvedValue({ likeDelta: 1 }),
+      findVideoCreatorId: vi.fn().mockResolvedValue('creator-1'),
+      setHeart: vi.fn().mockResolvedValue(undefined),
       getCommentReactionSnapshot: vi.fn().mockResolvedValue({ viewerReaction: 'LIKE', likesCount: 4 }),
       setVideoReaction: vi.fn(),
       getVideoReactionSnapshot: vi.fn().mockResolvedValue({ liked: true, disliked: false, likesCount: 9, dislikesCount: 0 }),
@@ -53,11 +57,40 @@ describe('reaction use cases (target state)', () => {
     const result = await setCommentReaction({ commentId: 'c1', reaction: 'LIKE' }, user());
     expect(result).toEqual({ ok: true, data: { viewerReaction: 'LIKE', likesCount: 4 } });
     expect(repo.setCommentReaction).toHaveBeenCalledWith('u1', 'c1', 'LIKE');
-    expect(sendNotification).toHaveBeenCalledTimes(1);
+    expect(notifyCommentLike).toHaveBeenCalledTimes(1);
+    expect(repo.setHeart).not.toHaveBeenCalled();
 
     repo.setCommentReaction.mockResolvedValue({ likeDelta: 0 }); // second click: nothing changed
     await setCommentReaction({ commentId: 'c1', reaction: 'LIKE' }, user());
-    expect(sendNotification).toHaveBeenCalledTimes(1);
+    expect(notifyCommentLike).toHaveBeenCalledTimes(1);
+  });
+
+  describe("the creator's like is the heart", () => {
+    const creator = () => createAppContext({ actor: { type: 'user', userId: 'creator-1' }, prisma: prisma as any });
+
+    it("a like from the channel's creator puts the heart on the comment and tells its author once, not as a plain like", async () => {
+      const result = await setCommentReaction({ commentId: 'c1', reaction: 'LIKE' }, creator());
+      expect(result).toEqual({ ok: true, data: { viewerReaction: 'LIKE', likesCount: 4, isHearted: true } });
+      expect(repo.setHeart).toHaveBeenCalledWith('c1', true);
+      expect(notifyCreatorLike).toHaveBeenCalledWith({ commentId: 'c1' });
+      expect(notifyCommentLike).not.toHaveBeenCalled();
+    });
+
+    it('taking the like back takes the heart off without a notification', async () => {
+      repo.findCommentById.mockResolvedValue({ id: 'c1', videoId: 'v1', authorId: 'author-1', status: CommentStatus.VISIBLE, isHearted: true, author: { isDeleted: false } });
+      repo.setCommentReaction.mockResolvedValue({ likeDelta: -1 });
+      repo.getCommentReactionSnapshot.mockResolvedValue({ viewerReaction: null, likesCount: 3 });
+      const result = await setCommentReaction({ commentId: 'c1', reaction: null }, creator());
+      expect(result).toEqual({ ok: true, data: { viewerReaction: null, likesCount: 3, isHearted: false } });
+      expect(repo.setHeart).toHaveBeenCalledWith('c1', false);
+      expect(notifyCreatorLike).not.toHaveBeenCalled();
+    });
+
+    it('the creator liking their own comment, or a dislike, leaves the heart alone', async () => {
+      repo.findCommentById.mockResolvedValue({ id: 'c1', videoId: 'v1', authorId: 'creator-1', status: CommentStatus.VISIBLE, author: { isDeleted: false } });
+      await setCommentReaction({ commentId: 'c1', reaction: 'LIKE' }, creator());
+      expect(repo.setHeart).not.toHaveBeenCalled();
+    });
   });
 
   it('does not accept reactions to a comment the viewer cannot see', async () => {

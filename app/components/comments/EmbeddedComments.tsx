@@ -27,6 +27,7 @@ import type { CommentReportReasonDto } from "@/lib/modules/comments/domain/comme
 import { CommentComposer } from "./components/CommentComposer";
 import { MobileCommentComposer, type MobileComposerHandle } from "./components/MobileCommentComposer";
 import { useIsPhone } from "./hooks/useIsPhone";
+import { clearCommentDeepLink, pendingCommentDeepLink } from "./deep-link";
 import { CommentItem } from "./components/CommentItem";
 import { AnimatePresence } from "framer-motion";
 import { CommentMotionItem, AnimatedCount } from "./components/comment-motion";
@@ -198,6 +199,16 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
   }, [scrollToCommentsTop]);
 
   const { mutate: postComment } = postMutation;
+
+  // A link to a comment that is not on the first page (a notification about an older comment): load further pages
+  // until it is on screen (its own item scrolls to it), or give up once the list is exhausted.
+  useEffect(() => {
+    const target = pendingCommentDeepLink();
+    if (!target || isLoading || isFetchingNextPage) return;
+    if (document.getElementById(`comment-${target}`)) return;
+    if (hasNextPage) void fetchNextPage();
+    else clearCommentDeepLink();
+  }, [data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]);
 
   const comments = data?.pages?.flatMap((page) => page.comments || []) ?? [];
   const totalCount = data?.pages?.[0]?.totalCount ?? 0;

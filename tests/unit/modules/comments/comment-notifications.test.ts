@@ -35,7 +35,7 @@ describe('notifyCommentReply', () => {
       kind: 'COMMENT',
       titlePl: 'Nowa odpowiedź na Twój komentarz',
       bodyPl: 'Ala: Świetny film!',
-      href: '/?v=film#comment-c1',
+      href: '/watch/film#comment-c1',
       skipTemplate: true,
     });
   });
@@ -65,7 +65,7 @@ describe('notifyCreatorLike', () => {
     expect((m.sendNotification.mock.calls[0] as unknown as [Record<string, unknown>])[0]).toMatchObject({
       userId: 'author',
       titlePl: 'Twórca polubił Twój komentarz',
-      href: '/?v=film#comment-c1',
+      href: '/watch/film#comment-c1',
     });
 
     m.sendNotification.mockClear();

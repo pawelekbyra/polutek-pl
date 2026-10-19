@@ -41,6 +41,7 @@ async function handle(request: NextRequest, commentId: string, reaction: Reactio
       liked: result.data.viewerReaction === "LIKE",
       viewerReaction: result.data.viewerReaction,
       likesCount: result.data.likesCount,
+      ...(result.data.isHearted === undefined ? {} : { isHearted: result.data.isHearted }),
     });
   } catch (error: unknown) {
     scopedLogger.error(tag, error);

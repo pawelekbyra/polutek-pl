@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     const isNewAccount = Date.now() - user.createdAt.getTime() < 24 * 60 * 60 * 1000;
     if (isNewAccount) {
       // The welcome in the bell: every new account gets it, whatever way it signed up (never gated by a preference).
-      void sendNotification({ userId: actor.userId, ...notificationTemplates.welcome, href: "/" });
+      await sendNotification({ userId: actor.userId, ...notificationTemplates.welcome, href: "/" });
       void sendWelcomeEmail(user.email, resolveEmailLanguage(user.language)).catch((error) => {
         logger.error("[onboarding] welcome email failed", error instanceof Error ? error.message : String(error));
       });

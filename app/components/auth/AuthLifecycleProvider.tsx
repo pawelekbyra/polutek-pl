@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import React, { useEffect, useRef, useState } from "react";
 import UnsubscribedEmailConsentPrompt from "../subscriptions/UnsubscribedEmailConsentPrompt";
 import { refreshSession, useUser } from "@/lib/auth/react";
+import { announceNotificationsChanged } from "../notifications/notification-events";
 
 /**
  * App-wide reactions to the session: refresh server-rendered state on a live sign-in/sign-out,
@@ -36,6 +37,27 @@ export default function AuthLifecycleProvider({ children }: { children: React.Re
       router.refresh();
     }
     wasSignedInRef.current = isSignedIn;
+  }, [isLoaded, user, router, queryClient]);
+
+  // The same person's profile changes while the page stays open (finishing the first-sign-in dialog, a new nickname
+  // or avatar): the comments on screen were fetched for the old state ("sign in to comment" for a new account, the
+  // old name under their own comments), and the first-sign-in welcome has just been put in the bell.
+  const profileKeyRef = useRef<{ userId: string; key: string } | null>(null);
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (!user) {
+      profileKeyRef.current = null;
+      return;
+    }
+    const key = [user.fullName, user.imageUrl, user.onboardingPending].join("|");
+    const previous = profileKeyRef.current;
+    profileKeyRef.current = { userId: user.id, key };
+    if (previous && previous.userId === user.id && previous.key !== key) {
+      void queryClient.invalidateQueries({ queryKey: ["comments"] });
+      void queryClient.invalidateQueries({ queryKey: ["comment-replies"] });
+      router.refresh();
+      announceNotificationsChanged();
+    }
   }, [isLoaded, user, router, queryClient]);
 
   // A different person signing in during the same page session must get their own saved language

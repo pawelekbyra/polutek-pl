@@ -2,6 +2,8 @@
 
 import { Suspense, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+// Evaluated first: remembers a #comment-... target before the address is collapsed below.
+import "./comments/deep-link";
 
 /**
  * Public URL masking.
