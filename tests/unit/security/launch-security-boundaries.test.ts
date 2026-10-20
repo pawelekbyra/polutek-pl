@@ -79,7 +79,10 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
     expect(CommentPolicy.canReactToComment({ type: 'user', userId: 'u1' }, { hasAccess: false, reason: 'LOGIN_REQUIRED' })).toBe(false);
     expect(CommentPolicy.canUpdateComment({ type: 'user', userId: 'u1' }, 'u2')).toBe(false);
     expect(CommentPolicy.canUpdateComment({ type: 'user', userId: 'u1' }, 'u1')).toBe(true);
-    expect(CommentPolicy.canDeleteComment({ type: 'admin', userId: 'admin-1' }, 'u2', false)).toBe(true);
+    // Platform ADMIN alone is not a public-site moderator; only a channel moderator (isModeratorOfVideo) deletes others' comments.
+    expect(CommentPolicy.canDeleteComment({ type: 'admin', userId: 'admin-1' }, 'u2', false)).toBe(false);
+    expect(CommentPolicy.canDeleteComment({ type: 'user', userId: 'mod-1' }, 'u2', true)).toBe(true);
+    expect(CommentPolicy.canDeleteComment({ type: 'user', userId: 'u1' }, 'u2', false)).toBe(false);
     expect(CommentPolicy.canReportComment({ type: 'guest' }, { hasAccess: true })).toBe(false);
   });
 
