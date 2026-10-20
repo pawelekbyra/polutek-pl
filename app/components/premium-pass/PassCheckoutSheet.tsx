@@ -202,21 +202,17 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
             )}
           </div>
 
+          <div className={styles.seller}>
+            <ShieldIcon />
+            <span>{tx("Bezpieczne połączenie", "Secure connection")} · {sellerLine(tx)} · support@pawelperfect.com</span>
+          </div>
           {step.kind === "form" && (
             <div className={styles.pay}>
               <button type="button" className={styles.inkBtn} onClick={() => void submit("success")}>
                 {tx("Zamawiam i płacę {0}", "Order and pay {0}", total)}
               </button>
-              <small className={styles.payNote}>{tx("Demo: bez obciążenia", "Demo: no charge")}</small>
-              <button type="button" className={styles.ghostBtn} onClick={() => void submit("declined")}>
-                {tx("Symuluj odrzuconą płatność", "Simulate a declined payment")}
-              </button>
             </div>
           )}
-          <div className={styles.seller}>
-            <ShieldIcon />
-            <span>{tx("Bezpieczne połączenie", "Secure connection")} · {sellerLine(tx)} · support@pawelperfect.com</span>
-          </div>
         </DialogPrimitive.Popup>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>

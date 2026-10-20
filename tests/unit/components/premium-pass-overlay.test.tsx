@@ -60,7 +60,7 @@ describe('PremiumPassOverlay', () => {
     renderOverlay(true);
     fireEvent.click(screen.getAllByRole('button', { name: /Kup wejściówkę · od 14,99/ })[0]!);
     const dialog = await screen.findByRole('dialog');
-    expect(dialog).toHaveTextContent('Demo: bez obciążenia');
+    expect(dialog).toHaveTextContent('Zamawiam i płacę');
     expect(dialog).toHaveTextContent('Wejściówka 7 dni');
     expect(dialog).toHaveTextContent('Wejściówka 30 dni');
     expect(dialog).toHaveTextContent('Najlepsza wartość');
@@ -89,16 +89,5 @@ describe('PremiumPassOverlay', () => {
     renderOverlay(true, '2026-11-20T10:00:00.000Z');
     expect(screen.getByRole('status')).toHaveTextContent('Twoja wejściówka wygasła 20.11.2026.');
     expect(screen.getAllByRole('button', { name: /Kup nową wejściówkę/ }).length).toBeGreaterThan(0);
-  });
-
-  it('simulated decline: "nothing was charged" and retry', async () => {
-    renderOverlay(true);
-    fireEvent.click(screen.getAllByRole('button', { name: /Kup wejściówkę/ })[0]!);
-    await screen.findByRole('dialog');
-    fireEvent.click(screen.getByRole('checkbox', { name: /Akceptuję/ }));
-    fireEvent.click(screen.getByRole('checkbox', { name: /Chcę dostępu od razu/ }));
-    fireEvent.click(screen.getByRole('button', { name: /Symuluj odrzuconą płatność/ }));
-    await waitFor(() => expect(screen.getByText('Płatność nie przeszła. Nic nie zostało pobrane.')).toBeInTheDocument(), { timeout: 4000 });
-    expect(screen.getByRole('button', { name: 'Spróbuj ponownie' })).toBeInTheDocument();
   });
 });
