@@ -92,11 +92,13 @@ describe("Canonical Boundaries Verification", () => {
         expect(CommentPolicy.canUpdateComment(revokedAdminActor, "other_author")).toBe(false);
     });
 
-    it("VERIFY: Actor of type 'admin' CAN perform moderator actions", () => {
+    it("VERIFY: moderation on the public site is a channel role: platform admin needs isModeratorOfVideo", () => {
         const adminActor = { type: "admin" as const, userId: "admin_1" };
 
-        expect(CommentPolicy.canModerateComment(adminActor, false)).toBe(true);
-        expect(CommentPolicy.canDeleteComment(adminActor, "other_author", false)).toBe(true);
+        expect(CommentPolicy.canModerateComment(adminActor, false)).toBe(false);
+        expect(CommentPolicy.canModerateComment(adminActor, true)).toBe(true);
+        expect(CommentPolicy.canDeleteComment(adminActor, "other_author", false)).toBe(false);
+        expect(CommentPolicy.canDeleteComment(adminActor, "other_author", true)).toBe(true);
         // Moderators hide or delete; they never rewrite someone else's words.
         expect(CommentPolicy.canUpdateComment(adminActor, "other_author")).toBe(false);
         expect(CommentPolicy.canUpdateComment(adminActor, "admin_1")).toBe(true);
