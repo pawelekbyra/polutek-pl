@@ -20,7 +20,7 @@ export function ChaptersSeekListener({ videoId }: { videoId: string }) {
       if (!detail || detail.videoId !== videoId) return;
       seekPlayerTo(player, detail.seconds);
       const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-      player.el?.scrollIntoView({ block: "nearest", behavior: reduce ? "auto" : "smooth" });
+      player.el?.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
     };
     window.addEventListener(SEEK_REQUEST_EVENT, onRequest);
     return () => window.removeEventListener(SEEK_REQUEST_EVENT, onRequest);
