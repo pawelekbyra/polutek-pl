@@ -16,7 +16,7 @@ describe('locale-first public routing', () => {
     expect(localizedPathFromLegacyPath('/channel/main', 'en')).toBe('/en/channel/main');
     expect(localizedPathFromLegacyPath('/regulamin', 'en')).toBe('/en/terms');
     expect(localizedPathFromLegacyPath('/polityka-prywatnosci', 'pl')).toBe('/polityka-prywatnosci');
-    expect(localizedPathFromLegacyPath('/nie-ma-takiej', 'pl')).toBeNull();
+    expect(localizedPathFromLegacyPath('/sklep', 'pl')).toBeNull();
   });
 
   it('switches between equivalent localized public routes', () => {

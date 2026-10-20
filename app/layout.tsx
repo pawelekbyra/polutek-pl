@@ -12,8 +12,6 @@ import { getBetaSiteText, getStageRobots } from "@/lib/site-stage-metadata";
 import { ServiceWorkerCleanup } from "@/app/components/ServiceWorkerCleanup";
 import { ZoomLock } from "@/app/components/ZoomLock";
 import { UrlMask } from "@/app/components/UrlMask";
-import SectionNav from "@/app/components/sections/SectionNav";
-import { SHOW_SECTION_NAV } from "@/lib/ui-flags";
 import { resolveDocumentLanguage } from "@/lib/i18n/server-language";
 import { loadCatalog } from "@/lib/i18n/catalog";
 import { htmlLang } from "@/lib/i18n/ui";
@@ -101,7 +99,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <AuthLifecycleProvider>
                 <AuthModalProvider>
                   {children}
-                  {SHOW_SECTION_NAV ? <SectionNav /> : null}
                 </AuthModalProvider>
                 <TelemetryBeacon enabled={isTelemetryBeaconEnabled()} />
               </AuthLifecycleProvider>
