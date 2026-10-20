@@ -20,6 +20,8 @@ import ShareButton from './ShareButton';
 import { getPlaybackPosition } from './player/playback-position';
 import { FundraisingProgressBar } from './FundraisingProgressBar';
 import VideoTaxonomyChips from './search/VideoTaxonomyChips';
+import { LinkedDescription } from './video/LinkedDescription';
+import { DescriptionChapters } from './video/DescriptionChapters';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import { ThumbsUp, ThumbsDown, Coins } from 'lucide-react';
 import styles from './watch-actions.module.css';
@@ -440,7 +442,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
              <div className="text-[12px] text-[var(--chan-body)] leading-[1.5] whitespace-pre-wrap">
                 {isExpanded ? (
                   <>
-                    {displayDescription.trimEnd()}
+                    <LinkedDescription text={displayDescription.trimEnd()} videoId={video.id} />
                     {" "}
                     <button
                       type="button"
@@ -456,7 +458,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                   </>
                 ) : (
                   <>
-                    {truncateAtWord(displayDescription, 160)}
+                    <LinkedDescription text={truncateAtWord(displayDescription, 160)} videoId={video.id} />
                     {displayDescription.length > 160 && (
                       <button
                         type="button"
@@ -473,6 +475,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                   </>
                 )}
              </div>
+             <DescriptionChapters videoId={video.id} />
            </div>
         </div>
         <VideoTaxonomyChips category={video.category} tags={video.tags} locale={language} tx={tx} className="mt-2 px-1" />

@@ -35,6 +35,8 @@ import { pickCaptionTrack, writeCaptionsEnabled } from './player/captions';
 import { useOptionalLanguage } from './LanguageContext';
 import { useOptionalTx } from "@/lib/i18n/language-context";
 import { announceVideoEnded } from './playlists/video-ended-event';
+import { ChaptersParts } from './player/chapters/ChaptersParts';
+import { CHAPTER_KEY_SHORTCUTS } from './player/chapters/chapter-keys';
 
 // The player is on the home page above the fold: start fetching hls.js (our own chunk) right
 // away, so it is ready before the playback plan arrives and the stream is never fetched twice
@@ -85,7 +87,8 @@ function normalizeTextTracks(tracks: VideoTextTrackDTO[] | undefined): VideoText
 
 // Vidstack's defaults, minus the playback-speed keys ("<" / ">"): speed has one control, the settings
 // menu (which remembers the choice); the shortcuts would change it silently and step down to 0.25x.
-const PLAYER_KEY_SHORTCUTS = { speedUp: '', slowDown: '' };
+// Plus the next/previous chapter keys (player/chapters/chapter-keys.ts).
+const PLAYER_KEY_SHORTCUTS = { speedUp: '', slowDown: '', ...CHAPTER_KEY_SHORTCUTS };
 
 export default function VideoPlayer({ video, onViewCounted, revealKey, startWithSound = false, signedIn = false, resumeSeconds, autoPlay = true }: VideoPlayerProps) {
     const { playbackPlan, refreshPlaybackPlan, renewPlaybackPlan, isLoading } = useVideoAccess();
@@ -608,6 +611,7 @@ export default function VideoPlayer({ video, onViewCounted, revealKey, startWith
                                 />
                             )}
                         </MediaProvider>
+                        <ChaptersParts videoId={video.id} chapters={playerConfig?.chapters} />
                         {(playerConfig ? playerConfig.controls : true) && <PolutekControls />}
                     </MediaPlayer>
                     {!bufferingOverlayTimedOut && (

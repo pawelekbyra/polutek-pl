@@ -26,6 +26,8 @@ function buildPlayerCopy(tx: Tx) {
     speedNormal: tx("Normalna", "Normal"),
     pictureInPicture: tx("Obraz w obrazie", "Picture in picture"),
     exitPictureInPicture: tx("Zamknij obraz w obrazie", "Exit picture in picture"),
+    chapters: tx("Rozdziały", "Chapters"),
+    chapterOf: (position: number, total: number) => tx("Rozdział {0} z {1}", "Chapter {0} of {1}", position, total),
   };
 }
 

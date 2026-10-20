@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/auth/react", () => ({ useAuth: () => ({ isLoaded: true, orgRole: null }) }));
 vi.mock("next/image", () => ({ default: () => null }));
 vi.mock("@/app/components/player/PolutekControls", () => ({ default: () => null }));
+vi.mock("@/app/components/player/chapters/ChaptersParts", () => ({ ChaptersParts: () => null }));
 vi.mock("@/lib/hooks/usePlaybackTelemetry", () => ({
   usePlaybackTelemetry: () => async () => ({ ok: true }),
 }));
@@ -492,6 +493,8 @@ describe("VideoPlayer restores the viewer's sound after a reload", () => {
 
   it("turns off the playback-speed keys (the player has no speed control)", async () => {
     await mountAfterReload();
-    expect(mocks.lastPlayerProps?.keyShortcuts).toEqual({ speedUp: "", slowDown: "" });
+    expect(mocks.lastPlayerProps?.keyShortcuts).toMatchObject({ speedUp: "", slowDown: "" });
+    // ...and adds the next/previous chapter keys (player/chapters/chapter-keys.ts).
+    expect(Object.keys(mocks.lastPlayerProps?.keyShortcuts as object)).toEqual(["speedUp", "slowDown", "nextChapter", "previousChapter"]);
   });
 });

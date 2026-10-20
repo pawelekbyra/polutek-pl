@@ -24,6 +24,9 @@ import {
 import { cn } from "@/lib/utils";
 import { CaptionsSync, CaptionsToggleButton } from "./CaptionsToggle";
 import { PlayerSettingsMenu } from "./PlayerSettingsMenu";
+import { ChapterLabel } from "./chapters/ChapterLabel";
+import { ChaptersMenu } from "./chapters/ChaptersMenu";
+import { ChaptersMenuProvider } from "./chapters/chapters-menu-context";
 import { usePlayerCopy } from "./polutek-controls-copy";
 
 function CenterStage() {
@@ -104,13 +107,23 @@ function ScrubBar() {
   const copy = usePlayerCopy();
   return (
     <TimeSlider.Root className="mc-scrub" aria-label={copy.progress}>
-      <TimeSlider.Track className="mc-scrub-track">
-        <TimeSlider.Progress className="mc-scrub-buffer" />
-        <TimeSlider.TrackFill className="mc-scrub-fill" />
-      </TimeSlider.Track>
+      {/* One segment per chapter (Vidstack sizes them); without chapters there is one, as before. */}
+      <TimeSlider.Chapters className="mc-scrub-chapters">
+        {(cues, forwardRef) =>
+          cues.map((cue) => (
+            <div key={cue.startTime} ref={forwardRef} className="mc-scrub-chapter">
+              <TimeSlider.Track className="mc-scrub-track">
+                <TimeSlider.Progress className="mc-scrub-buffer" />
+                <TimeSlider.TrackFill className="mc-scrub-fill" />
+              </TimeSlider.Track>
+            </div>
+          ))
+        }
+      </TimeSlider.Chapters>
       <TimeSlider.Thumb className="mc-scrub-thumb" />
       <TimeSlider.Preview className="mc-scrub-preview">
         <TimeSlider.Value />
+        <TimeSlider.ChapterTitle className="mc-scrub-preview-chapter" />
       </TimeSlider.Preview>
     </TimeSlider.Root>
   );
@@ -134,7 +147,7 @@ export default function PolutekControls({ className }: { className?: string }) {
   const controlsVisible = useMediaState("controlsVisible");
 
   return (
-    <>
+    <ChaptersMenuProvider>
       <Gesture className="mc-gesture" event="pointerup" action="toggle:paused" />
       <Gesture className="mc-gesture" event="dblpointerup" action="toggle:fullscreen" />
       <CaptionsSync />
@@ -160,10 +173,12 @@ export default function PolutekControls({ className }: { className?: string }) {
                   <Time type="current" />
                   <span aria-hidden="true" className="mc-time-sep">/</span>
                   <Time type="duration" className="mc-time-dur" />
+                  <ChapterLabel />
                 </div>
               </div>
               <div className="mc-group mc-group--right">
                 <CaptionsToggleButton />
+                <ChaptersMenu />
                 <PlayerSettingsMenu />
                 <FullscreenToggleButton />
               </div>
@@ -171,6 +186,6 @@ export default function PolutekControls({ className }: { className?: string }) {
           </div>
         </div>
       </div>
-    </>
+    </ChaptersMenuProvider>
   );
 }
