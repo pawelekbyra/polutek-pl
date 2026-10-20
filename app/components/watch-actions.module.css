@@ -121,6 +121,28 @@
   filter: none;
 }
 
+/* Wspieraj in the premium gold (owner request, 2026-10-21): the same amber as the premium pass badge and CTA. */
+.supportAction {
+  border-color: color-mix(in srgb, var(--chan-amber-strong) 70%, transparent);
+  background: linear-gradient(180deg, var(--chan-amber-bright), var(--chan-amber)) !important;
+  color: var(--chan-amber-ink) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 8px 18px -8px rgba(245, 158, 11, 0.75) !important;
+}
+
+.supportAction:hover {
+  border-color: var(--chan-amber-strong);
+  background: linear-gradient(180deg, #fcd34d, var(--chan-amber-strong)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 12px 24px -8px rgba(245, 158, 11, 0.85) !important;
+}
+
+.supportAction:focus-visible {
+  outline-color: var(--chan-amber-strong);
+}
+
 .actionButton:focus-visible,
 .secondaryAction:focus-visible,
 .subscribeAction:focus-visible,
