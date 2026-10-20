@@ -42,7 +42,7 @@ vi.mock("@vidstack/react", async () => {
   });
   MediaPlayer.displayName = "MediaPlayer";
   const Track = (props: Record<string, unknown>) => <span data-testid="track" data-src={String(props.src)} data-lang={String(props.language)} />;
-  return { MediaPlayer, MediaProvider: ({ children }: { children?: React.ReactNode }) => <>{children}</>, Track, isHLSProvider: () => false };
+  return { MediaPlayer, MediaProvider: ({ children }: { children?: React.ReactNode }) => <>{children}</>, Track, isHLSProvider: () => false, MEDIA_KEY_SHORTCUTS: {} };
 });
 
 import VideoPlayer from "@/app/components/VideoPlayer";

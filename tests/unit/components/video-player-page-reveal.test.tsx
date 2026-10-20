@@ -36,7 +36,7 @@ vi.mock("@vidstack/react", async () => {
     return <div data-testid="media-player">{props.children as React.ReactNode}</div>;
   });
   MediaPlayer.displayName = "MediaPlayer";
-  return { MediaPlayer, MediaProvider: () => null };
+  return { MediaPlayer, MediaProvider: () => null, MEDIA_KEY_SHORTCUTS: { togglePaused: "k Space", toggleMuted: "m", seekForward: "l ArrowRight", speedUp: ">" } };
 });
 
 import VideoPlayer from "@/app/components/VideoPlayer";
@@ -491,10 +491,9 @@ describe("VideoPlayer restores the viewer's sound after a reload", () => {
     expect(readSoundPreference().muted).toBe(true);
   });
 
-  it("turns off the playback-speed keys (the player has no speed control)", async () => {
+  it("keeps Vidstack's default keys, turns off the speed keys and adds the chapter keys", async () => {
     await mountAfterReload();
-    expect(mocks.lastPlayerProps?.keyShortcuts).toMatchObject({ speedUp: "", slowDown: "" });
-    // ...and adds the next/previous chapter keys (player/chapters/chapter-keys.ts).
-    expect(Object.keys(mocks.lastPlayerProps?.keyShortcuts as object)).toEqual(["speedUp", "slowDown", "nextChapter", "previousChapter"]);
+    expect(mocks.lastPlayerProps?.keyShortcuts).toMatchObject({ togglePaused: "k Space", toggleMuted: "m", speedUp: "", slowDown: "" });
+    expect(Object.keys(mocks.lastPlayerProps?.keyShortcuts as object)).toEqual(expect.arrayContaining(["nextChapter", "previousChapter"]));
   });
 });
