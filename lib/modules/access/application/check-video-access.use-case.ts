@@ -12,6 +12,7 @@ import { toVideoAccessTier } from "@/lib/access-tier";
 import { canUseDemoFallbacks } from "@/lib/feature-flags";
 import { isUpcomingPremiere, toPremiereDate } from "@/lib/modules/video/domain/premiere";
 import { isAdultVideo, isLinkAccessibleStatus } from "@/lib/modules/video/domain/video-visibility";
+import { premiumPassGate } from "@/lib/modules/experiment-premium-pass"; // experiment: premium-pass (docs/experiments/premium-pass.md)
 
 export type CheckVideoAccessInput = {
   videoIdOrSlug: string;
@@ -102,8 +103,15 @@ export async function checkVideoAccess(
   const upcomingPremiereAt = !canPreview && isUpcomingPremiere(video, now)
     ? toPremiereDate(video.premiereAt)?.toISOString()
     : undefined;
+  let premiumPassUntil: string | undefined;
   const decide = (decision: AccessDecisionDto) =>
-    ok({ ...decision, videoId: resolvedVideoId, ...(upcomingPremiereAt ? { premiereAt: upcomingPremiereAt } : {}) });
+    ok({ ...decision, videoId: resolvedVideoId, ...(upcomingPremiereAt ? { premiereAt: upcomingPremiereAt } : {}), ...(decision.hasAccess && premiumPassUntil ? { premiumPassUntil } : {}) });
+
+  // experiment: premium-pass (docs/experiments/premium-pass.md): a live video behind the demo pass needs an active
+  // pass, for staff on the public site too (owner decision 2026-10-20). Off = null, nothing changes.
+  const passGate = isPublished ? await premiumPassGate(ctx, video, now) : null;
+  if (passGate && "denied" in passGate) return decide({ hasAccess: false, reason: "PASS_REQUIRED" });
+  if (passGate) premiumPassUntil = passGate.activeUntil;
 
   // Staff and members of the channel with `video.preview` see their non-archived content
   if (canPreview) return decide({ hasAccess: true });

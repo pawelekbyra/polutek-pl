@@ -68,6 +68,8 @@ export async function createVideoComment(
       if (accessResult.data.reason === 'NOT_FOUND' || accessResult.data.reason === 'DELETED') {
         return fail({ type: "NOT_FOUND", message: "Film nie istnieje." });
       }
+      // experiment: premium-pass (docs/experiments/premium-pass.md): the composer says "get the pass to comment".
+      if (accessResult.data.reason === 'PASS_REQUIRED') return fail({ type: "FORBIDDEN", code: "PASS_REQUIRED", message: "Kup wejściówkę, aby komentować ten film." });
       return fail({ type: "FORBIDDEN", message: "Brak uprawnień do komentowania." });
     }
 

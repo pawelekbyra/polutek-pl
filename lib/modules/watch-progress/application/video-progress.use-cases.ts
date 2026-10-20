@@ -4,6 +4,7 @@ import { fail, ok, type UseCaseResult } from "@/lib/modules/shared/result";
 import { checkVideoAccess } from "@/lib/modules/access";
 import { publiclyVisibleChannelWhere } from "@/lib/modules/channel";
 import { resolvePublicThumbnailSrc } from "@/lib/modules/media";
+import { premiumPassLockedIds } from "@/lib/modules/experiment-premium-pass"; // experiment: premium-pass (docs/experiments/premium-pass.md)
 import {
   CONTINUE_WATCHING_LIMIT,
   pickContinueWatching,
@@ -136,6 +137,7 @@ export async function listContinueWatching(
           moderationStatus: true,
           publishedAt: true,
           premiereAt: true,
+          isMainFeatured: true,
           duration: true,
           thumbnailUrl: true,
           thumbnailPublicUrl: true,
@@ -145,7 +147,9 @@ export async function listContinueWatching(
     },
   });
 
-  const candidates = rows.map((row) => ({
+  // experiment: premium-pass: a pass video without an active pass is not on the shelf (like a paid one).
+  const passLocked = await premiumPassLockedIds({ prisma: ctx.prisma, actor: { type: "user", userId } }, rows.map((row) => row.video), now);
+  const candidates = rows.filter((row) => !passLocked.has(row.video.id)).map((row) => ({
     positionSeconds: row.positionSeconds,
     durationSeconds: row.durationSeconds,
     updatedAt: row.updatedAt,

@@ -3,3 +3,4 @@
 deploy/serwerek/** text eol=lf
 scripts/serwerek/** text eol=lf
 scripts/ops/** text eol=lf
+scripts/experiments/** text eol=lf

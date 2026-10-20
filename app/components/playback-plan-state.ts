@@ -8,6 +8,7 @@ const SAFE_PLAYBACK_STATES: PlaybackPlanStatus[] = [
   "READY",
   "LOGIN_REQUIRED",
   "COMING_SOON",
+  "PASS_REQUIRED", // experiment: premium-pass (docs/experiments/premium-pass.md)
   "VIDEO_NOT_READY",
   "NO_PRIMARY_ASSET",
   "PROCESSING",
@@ -18,6 +19,7 @@ const SAFE_PLAYBACK_STATES: PlaybackPlanStatus[] = [
 export const BLOCKED_PLAYBACK_STATES = new Set<PlaybackPlanStatus>([
   "LOGIN_REQUIRED",
   "COMING_SOON",
+  "PASS_REQUIRED", // experiment: premium-pass (docs/experiments/premium-pass.md)
   "VIDEO_NOT_READY",
   "NO_PRIMARY_ASSET",
   "PROCESSING",
@@ -57,6 +59,16 @@ export function playbackPlanStateMessages(
       description: tx(
         "Ten film ma zaplanowaną premierę. Odtwarzanie ruszy automatycznie w chwili premiery.",
         "This video has a scheduled premiere. Playback starts automatically at the premiere.",
+      ),
+      action: "retry",
+      actionLabel: tx("Sprawdź ponownie", "Check again"),
+    },
+    // experiment: premium-pass: rendered as PremiumPassOverlay; this copy is only the fallback text.
+    PASS_REQUIRED: {
+      title: tx("Ten film jest w wejściówce Premium.", "This video is part of the Premium pass."),
+      description: tx(
+        "Wejściówka to pokaz (tryb demo): nic nie zostanie pobrane.",
+        "The pass is a demo: nothing will be charged.",
       ),
       action: "retry",
       actionLabel: tx("Sprawdź ponownie", "Check again"),

@@ -7,6 +7,7 @@ import { createAppContext } from '@/lib/modules/shared/app-context';
 import { resolvePublicThumbnailSrc } from '@/lib/modules/media';
 // Deep import allowlisted in scripts/check-architecture.ts (pure helper).
 import { effectivePublishedAt, isUpcomingPremiere, toPremiereDate } from '@/lib/modules/video/domain/premiere';
+import { premiumPassViewerFacts } from '@/lib/modules/experiment-premium-pass'; // experiment: premium-pass (docs/experiments/premium-pass.md)
 
 // Whether someone tipped never reaches public data (owner decision 2026-10-04): no PATRON state.
 export type SidebarViewerState = "ANONYMOUS" | "LOGGED_IN" | "ADMIN";
@@ -29,6 +30,8 @@ export type SidebarItem = {
     sidebarOrder?: number | null;
     creatorId: string;
     isLocked: boolean;
+    /** experiment: premium-pass: behind the demo pass for this viewer (locked unless the viewer holds an active pass). */
+    premium?: true;
     creator?: {
         id: string;
         name: string;
@@ -62,6 +65,8 @@ export class ChannelLayoutService {
         }
 
         const now = new Date();
+        // experiment: premium-pass: one AppSetting read per layout, only while the experiment is visible to this viewer.
+        const pass = await premiumPassViewerFacts(createAppContext({ actor: userId ? (viewer.isStaff ? { type: 'admin', userId } : { type: 'user', userId }) : { type: 'guest' } }), now);
         const videos = await prisma.video.findMany({
             where: {
                 creatorId: mainChannel.id,
@@ -111,7 +116,8 @@ export class ChannelLayoutService {
             sidebarOrder: v.sidebarOrder,
             creatorId: v.creatorId,
             // An upcoming premiere is never playable before its time, for anyone.
-            isLocked: isUpcomingPremiere(v, now) ? viewerState !== "ADMIN" : this.isLocked(v.tier, viewerState),
+            isLocked: isUpcomingPremiere(v, now) ? viewerState !== "ADMIN" : pass?.isPremium(v) ? !pass.hasActivePass : this.isLocked(v.tier, viewerState),
+            ...(pass?.isPremium(v) ? { premium: true as const } : {}),
             creator: v.creator ? {
                 id: v.creator.id,
                 name: v.creator.name,

@@ -16,6 +16,7 @@ import { NajsIcon } from "./najs/primitives";
 import { getLocalizedHref, appendQueryString } from "@/lib/i18n/routing";
 import { toVideoAccessTier } from "@/lib/access-tier";
 import VideoTaxonomyChips from "./search/VideoTaxonomyChips";
+import { PremiumThumbBadge } from "./premium-pass/PremiumBadge"; // experiment: premium-pass (docs/experiments/premium-pass.md)
 
 interface ChannelVideoCardProps {
   video: PublicVideoDTO;
@@ -44,13 +45,15 @@ export default function ChannelVideoCard({
 
   const getAccessBadge = () => {
     if (!mounted) return null;
+    if (video.premiumPass) return { text: tx("Wejściówka", "Pass"), variant: "locked" }; // experiment: premium-pass
     if (tier === "PUBLIC") return { text: tx("Publiczne", "Public"), variant: "public" };
     if (!hasAccess) return { text: tx("Logowanie", "Login"), variant: "locked" };
     return { text: tx("Odblok.", "Unlocked"), variant: "unlocked" };
   };
 
   const badge = getAccessBadge();
-  const lockState = !hasAccess ? "LOGIN_REQUIRED" : null;
+  // experiment: premium-pass: a pass video shows the PREMIUM plate instead of the sign-in wall.
+  const lockState = !hasAccess && !video.premiumPass ? "LOGIN_REQUIRED" : null;
 
   return (
     <div
@@ -79,13 +82,14 @@ export default function ChannelVideoCard({
                 <AccessLockOverlay state={lockState} variant="thumbnailCompact" />
               </div>
             )}
+            {video.premiumPass && <PremiumThumbBadge locked />}
             {video.duration && !lockState && (
               <div className="absolute bottom-2 right-2 bg-black/80 text-white text-[12px] font-bold px-1.5 py-0.5 rounded z-30">
                 {video.duration}
               </div>
             )}
             {/* 18+ (creator's declaration or moderation): signed-in viewers only */}
-            {video.isAdult && (
+            {video.isAdult && !video.premiumPass && (
               <div
                 data-testid="adult-badge"
                 className="absolute left-2 top-2 z-30 rounded-full bg-red-600 px-2 py-[3px] text-[9px] font-black leading-none tracking-[0.1em] text-white pointer-events-none"

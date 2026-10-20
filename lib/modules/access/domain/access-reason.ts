@@ -4,4 +4,6 @@ export type AccessDecisionReason =
   | "DELETED"
   | "FORBIDDEN"
   /** Paid video and the viewer owns no entitlement for it (stage 6). */
-  | "PAYMENT_REQUIRED";
+  | "PAYMENT_REQUIRED"
+  // experiment: premium-pass (docs/experiments/premium-pass.md): video behind the demo pass, viewer has no active pass.
+  | "PASS_REQUIRED";
