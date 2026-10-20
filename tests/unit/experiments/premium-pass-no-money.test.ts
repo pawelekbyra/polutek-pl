@@ -70,11 +70,11 @@ describe("premium-pass never touches money", () => {
     expect(useCase).toContain(".strict()");
   });
 
-  it("every purchase screen has the DEMO ribbon", () => {
+  it("the offer page and the locked stage have the DEMO marker (the checkout modal keeps only the 'no charge' caption)", () => {
     const sheet = fs.readFileSync(path.join(process.cwd(), "app/components/premium-pass/PassCheckoutSheet.tsx"), "utf8");
     const offer = fs.readFileSync(path.join(process.cwd(), "app/components/premium-pass/PassOfferPage.tsx"), "utf8");
     const stage = fs.readFileSync(path.join(process.cwd(), "app/components/premium-pass/PremiumPassOverlay.tsx"), "utf8");
-    expect(sheet).toContain("<DemoRibbon");
+    expect(sheet).toContain("Demo: bez obciążenia");
     expect(offer).toContain("<DemoRibbon");
     expect(stage).toContain('tx("TRYB DEMO", "DEMO MODE")');
   });

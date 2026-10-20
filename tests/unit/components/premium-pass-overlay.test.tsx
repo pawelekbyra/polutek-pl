@@ -60,7 +60,7 @@ describe('PremiumPassOverlay', () => {
     renderOverlay(true);
     fireEvent.click(screen.getAllByRole('button', { name: /Kup wejściówkę · od 14,99/ })[0]!);
     const dialog = await screen.findByRole('dialog');
-    expect(dialog).toHaveTextContent('Tryb demo · płatność symulowana · nic nie zostanie pobrane');
+    expect(dialog).toHaveTextContent('Demo: bez obciążenia');
     expect(dialog).toHaveTextContent('Wejściówka 7 dni');
     expect(dialog).toHaveTextContent('Wejściówka 30 dni');
     expect(dialog).toHaveTextContent('Najlepsza wartość');
