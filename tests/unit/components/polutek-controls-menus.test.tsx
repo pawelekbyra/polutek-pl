@@ -225,9 +225,9 @@ describe("PolutekControls: captions switch and settings menu", () => {
     expect(view.queryByRole("menu")).toBeNull();
   });
 
-  it("keeps the speed keyboard shortcuts off (the menu is the only speed control)", () => {
+  it("keeps Vidstack's default keys, minus the speed keys (the menu is the only speed control)", () => {
     const source = readFileSync(join(process.cwd(), "app/components/VideoPlayer.tsx"), "utf8");
-    expect(source).toMatch(/PLAYER_KEY_SHORTCUTS = \{ speedUp: '', slowDown: '', \.\.\.CHAPTER_KEY_SHORTCUTS \}/);
+    expect(source).toMatch(/PLAYER_KEY_SHORTCUTS = \{ \.\.\.MEDIA_KEY_SHORTCUTS, speedUp: '', slowDown: '', \.\.\.CHAPTER_KEY_SHORTCUTS \}/);
   });
 
   it("has no CC button for a video without captions", () => {
