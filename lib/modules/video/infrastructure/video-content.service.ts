@@ -14,6 +14,7 @@ import { toVideoAccessTier } from '@/lib/access-tier';
 import { isVideoPubliclyVisible } from '../domain/public-visibility';
 import { isAdultVideo } from '../domain/video-visibility';
 import { isVideoCategory } from '@/lib/video-metadata';
+import { isPremiumPassVideoForEveryone } from '@/lib/modules/experiment-premium-pass'; // experiment: premium-pass (docs/experiments/premium-pass.md)
 
 export const visiblePublishedAtFilter = (now: Date): Prisma.VideoWhereInput => ({
   OR: [
@@ -136,6 +137,8 @@ export class VideoContentService {
         isAdult: isAdultVideo(video),
         tags: Array.isArray(video.tags) ? video.tags.filter((tag: unknown): tag is string => typeof tag === 'string') : [],
         category: isVideoCategory(video.category) ? video.category : null,
+        // experiment: premium-pass: behind the demo pass for every visitor (mode `all`); viewer-independent marker.
+        ...(isPremiumPassVideoForEveryone(video) ? { premiumPass: true as const } : {}),
         creator: video.creator ? {
             id: video.creator.id,
             name: video.creator.name,

@@ -34,6 +34,7 @@ import {
   playbackPlanStateMessages,
   isPlayablePlaybackPlan,
 } from "./playback-plan-state";
+import { PremiumPassOverlay, PremiumPassPlaying, readPassView, type PassView } from "./premium-pass"; // experiment: premium-pass (docs/experiments/premium-pass.md)
 
 export { useVideoAccess };
 export {
@@ -48,6 +49,7 @@ type PlanView = {
   playbackState: PlaybackPlanStatus | null;
   planPremiereAt: string | null;
   requiredTier: AccessTierDto | null;
+  passView: PassView | null; // experiment: premium-pass
 };
 
 /**
@@ -74,6 +76,7 @@ function viewForPlan(rawData: unknown, videoId: string, isGuest: boolean): PlanV
     playbackState,
     planPremiereAt: playbackState === "COMING_SOON" && typeof data.premiereAt === "string" ? data.premiereAt : null,
     requiredTier: parseVideoAccessTier(requiredTier),
+    passView: playbackState === "PASS_REQUIRED" ? readPassView(data) : null,
   };
 }
 
@@ -97,6 +100,8 @@ interface PremiumWrapperProps {
    * has settled into its final first state (player, lock, error or coming soon).
    */
   revealKey?: string;
+  /** experiment: premium-pass: the video may be behind the demo pass (PublicVideoDTO.premiumPass): guests ask the server too. */
+  premiumPass?: boolean;
 }
 
 export default function PremiumWrapper({
@@ -107,6 +112,7 @@ export default function PremiumWrapper({
   premiereAt,
   revealKey,
   onAccessLoad,
+  premiumPass,
 }: PremiumWrapperProps) {
   const { userId, isLoaded, sessionId } = useAuth();
   const premiereNow = usePremiereClock([premiereAt]);
@@ -141,6 +147,7 @@ export default function PremiumWrapper({
   // Premiere time the server reported on a COMING_SOON plan (defensive: the DTO
   // is the primary signal, but the server clock has the last word).
   const [planPremiereAt, setPlanPremiereAt] = useState<string | null>(initialView?.view.planPremiereAt ?? null);
+  const [passView, setPassView] = useState<PassView | null>(initialView?.view.passView ?? null);
   const requestGenerationRef = useRef(0);
   const directRequestControllerRef = useRef<AbortController | null>(null);
 
@@ -181,7 +188,7 @@ export default function PremiumWrapper({
       return;
     }
 
-    if (!userId && !isPublic) {
+    if (!userId && !isPublic && !premiumPass) {
       setHasAccess(false);
       setPlaybackPlan(null);
       setPlaybackState(deniedState);
@@ -225,6 +232,7 @@ export default function PremiumWrapper({
       onAccessLoad?.(view.hasAccess);
       setPlaybackState(view.playbackState);
       setPlanPremiereAt(view.planPremiereAt);
+      setPassView(view.passView);
       setPlaybackPlan(view.playbackPlan);
       if (view.requiredTier) setDbTier(view.requiredTier);
       setFetchError(null);
@@ -242,7 +250,7 @@ export default function PremiumWrapper({
         setIsLoading(false);
       }
     }
-  }, [deniedState, getPreloadedPlaybackPlan, invalidatePreloadedPlaybackPlan, isPublic, isUpcoming, onAccessLoad, userId, videoId, viewerKey, warmPreloadedVideo]);
+  }, [deniedState, getPreloadedPlaybackPlan, invalidatePreloadedPlaybackPlan, isPublic, isUpcoming, onAccessLoad, premiumPass, userId, videoId, viewerKey, warmPreloadedVideo]);
 
   useEffect(() => {
     void checkAccess();
@@ -291,7 +299,7 @@ export default function PremiumWrapper({
   // Upcoming premiere, decided from the DTO before any plan fetch: signed-in
   // viewers get the countdown, guests the sign-in lock (whatever the tier).
   const showsComingSoon = isUpcoming && isLoaded && Boolean(userId);
-  const showsGuestLock = isLoaded && !userId && (!isPublic || isUpcoming);
+  const showsGuestLock = isLoaded && !userId && ((!isPublic && !premiumPass) || isUpcoming);
 
   // Server says COMING_SOON although our clock says the premiere passed (clock
   // skew): ask again at the server's premiere time, at most every 5 s.
@@ -373,7 +381,7 @@ export default function PremiumWrapper({
 
     return (
       <VideoAccessContext.Provider value={contextValue}>
-        <div className="h-full w-full">{children}</div>
+        <div className="relative h-full w-full">{children}<PremiumPassPlaying until={playbackPlan.access.premiumPassUntil} onRefresh={refreshPlaybackPlan} /></div>
       </VideoAccessContext.Provider>
     );
   }
@@ -385,6 +393,7 @@ export default function PremiumWrapper({
         onRetry={refreshPlaybackPlan}
         variant={variant}
         premiereAt={planPremiereAt}
+        passView={passView}
       />
     </VideoAccessContext.Provider>
   );
@@ -396,6 +405,7 @@ interface PlaybackPlanStateOverlayProps {
   variant: "default" | "thumbnail" | "thumbnailCompact";
   /** Only for COMING_SOON: the premiere time the server reported. */
   premiereAt?: string | null;
+  passView?: PassView | null; // experiment: premium-pass
 }
 
 function PlaybackPlanStateOverlay({
@@ -403,6 +413,7 @@ function PlaybackPlanStateOverlay({
   onRetry,
   variant,
   premiereAt,
+  passView,
 }: PlaybackPlanStateOverlayProps) {
   const tx = useOptionalTx();
   const safeState = BLOCKED_PLAYBACK_STATES.has(state) ? state : "ERROR";
@@ -419,6 +430,9 @@ function PlaybackPlanStateOverlay({
   if (safeState === "LOGIN_REQUIRED") {
     return <AccessLockOverlay state={safeState} variant={variant} />;
   }
+
+  // experiment: premium-pass: the locked stage with the demo offer (never the player, never a stream request).
+  if (safeState === "PASS_REQUIRED" && passView) return <PremiumPassOverlay {...passView} variant={variant} onRefresh={() => onRetry?.()} />;
 
   return (
     <PlayerStateFrame className={isThumbnail ? "rounded-lg" : undefined}>

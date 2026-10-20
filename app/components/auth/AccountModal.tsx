@@ -10,6 +10,8 @@ import { EmailSection, ConnectionsSection, DangerSection } from "./AccountSectio
 import { SecuritySection } from "./SecuritySection";
 import { PasskeysSection } from "./PasskeysSection";
 import { NotificationsSection } from "./NotificationsSection";
+import { PassAccountSection } from "../premium-pass/PassAccountSection"; // experiment: premium-pass (docs/experiments/premium-pass.md)
+import { usePremiumPassStatus } from "../premium-pass/usePremiumPass"; // experiment: premium-pass
 
 interface AccountModalProps {
   open: boolean;
@@ -17,7 +19,7 @@ interface AccountModalProps {
   isAdmin: boolean;
 }
 
-type Section = "profile" | "notifications" | "email" | "connections" | "security" | "passkeys" | "danger";
+type Section = "profile" | "notifications" | "email" | "connections" | "security" | "passkeys" | "danger" | "pass";
 
 export default function AccountModal({ open, onOpenChange, isAdmin }: AccountModalProps) {
   const { user } = useUser();
@@ -25,6 +27,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
   const { language } = useLanguage();
   const { tx } = useLanguage();
   const [section, setSection] = useState<Section>("profile");
+  const pass = usePremiumPassStatus(open); // experiment: premium-pass: null when the experiment is invisible (404)
 
   useEffect(() => {
     if (open) setSection("profile");
@@ -40,6 +43,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
     { id: "security", label: tx("Hasło", "Security") },
     { id: "passkeys", label: tx("Klucze dostępu", "Passkeys") },
     { id: "danger", label: tx("Usuń", "Delete") },
+    ...(pass.status ? [{ id: "pass" as const, label: tx("Wejściówka", "Pass") }] : []),
   ];
 
   return (
@@ -77,6 +81,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
               {section === "security" && <SecuritySection tx={tx} />}
               {section === "passkeys" && <PasskeysSection tx={tx} />}
               {section === "danger" && <DangerSection tx={tx} onDeleted={() => onOpenChange(false)} />}
+              {section === "pass" && pass.status && <PassAccountSection tx={tx} status={pass.status} />}
             </div>
 
             <div className="mt-5 flex items-center justify-between border-t border-[var(--chan-line)] pt-4">

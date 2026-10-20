@@ -1,6 +1,7 @@
 import { MainChannelPolicy } from "@/lib/modules/channel/domain/channel.policy";
 import { isAdultVideo } from "@/lib/modules/video/domain/video-visibility";
 import { isUpcomingPremiere, toPremiereDate } from "@/lib/premiere";
+import { isPremiumPassVideoForEveryone } from "@/lib/modules/experiment-premium-pass"; // experiment: premium-pass (docs/experiments/premium-pass.md)
 
 /** What the embed surfaces (the embeddable player page and the oEmbed endpoint) may do with a video. */
 export type EmbedDecision =
@@ -20,6 +21,9 @@ export type EmbedCandidate = {
   publishedAt?: Date | string | null;
   premiereAt?: Date | string | null;
   creator?: { status?: string | null; deletedAt?: Date | null } | null;
+  /** experiment: premium-pass: a video behind the demo pass for everyone is site-only. */
+  slug?: string | null;
+  isMainFeatured?: boolean | null;
 };
 
 /**
@@ -39,5 +43,6 @@ export function decideEmbed(video: EmbedCandidate | null | undefined, now: Date 
   if (video.tier !== "PUBLIC") return "site-only";
   if (isAdultVideo(video)) return "site-only";
   if (isUpcomingPremiere({ status: video.status, premiereAt: video.premiereAt }, now)) return "site-only";
+  if (isPremiumPassVideoForEveryone(video, process.env, now)) return "site-only"; // experiment: premium-pass
   return "embeddable";
 }

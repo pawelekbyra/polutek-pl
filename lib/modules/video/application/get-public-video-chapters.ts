@@ -29,11 +29,12 @@ export const getPublicVideoChapters = cache(async (videoId: string): Promise<Pub
  * at all (so no extra query for other videos).
  */
 export async function getPublicChapterClips(input: {
-  video: { id: string; slug: string; tier?: string | null; status?: string | null; isAdult?: boolean | null; moderationStatus?: string | null };
+  video: { id: string; slug: string; tier?: string | null; status?: string | null; isAdult?: boolean | null; moderationStatus?: string | null; premiumPass?: boolean };
   language: string;
   pageUrl: string;
 }): Promise<ChapterClip[] | null> {
   if (!canExposeChapterClips(input.video)) return null;
+  if (input.video.premiumPass) return null; // experiment: premium-pass (docs/experiments/premium-pass.md): no chapter titles of a pass video
   const found = await getPublicVideoChapters(input.video.id);
   if (!found) return null;
   return buildChapterClips({ chapters: found.chapters, durationSeconds: found.durationSeconds, language: input.language, pageUrl: input.pageUrl, slug: input.video.slug });

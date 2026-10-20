@@ -272,6 +272,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             requiredTier={video.tier}
             premiereAt={video.premiereAt}
             revealKey="player"
+            premiumPass={video.premiumPass} // experiment: premium-pass (docs/experiments/premium-pass.md)
           >
             <VideoPlayer
               video={video}

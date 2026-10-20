@@ -69,6 +69,7 @@ async function parseCommentPostResponse(res: Response, tx: Tx): Promise<PostComm
       message =
         code === "AUTH_REQUIRED" ? tx("Musisz być zalogowany, żeby komentować.", "You must be signed in to comment.") :
         code === "ONBOARDING_REQUIRED" ? tx("Najpierw wybierz pseudonim w oknie powitalnym, potem możesz komentować.", "Choose a nickname in the welcome window first, then you can comment.") :
+        code === "PASS_REQUIRED" ? tx("Kup wejściówkę, aby komentować ten film.", "Get the pass to comment on this video.") : // experiment: premium-pass
         code === "COMMENT_FORBIDDEN" ? tx("Nie masz uprawnień do komentowania tego filmu.", "You don't have permission to comment on this video.") :
         code === "COMMENT_RATE_LIMITED" ? tx("Zbyt dużo komentarzy. Spróbuj ponownie za chwilę.", "Too many comments. Try again in a moment.") :
         code === "COMMENT_VALIDATION_ERROR" ? tx("Nieprawidłowe dane komentarza.", "Invalid comment data.") :

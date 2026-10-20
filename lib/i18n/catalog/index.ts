@@ -8,6 +8,13 @@ import type { Catalog } from "@/lib/i18n/ui";
  * hands it to the LanguageProvider, so the first paint is already translated.
  */
 export async function loadCatalog(locale: Locale): Promise<Catalog | null> {
+  const base = await loadBaseCatalog(locale);
+  // experiment: premium-pass (docs/experiments/premium-pass.md): its texts live in their own files, so the revert
+  // never collides with later edits of the big catalogs.
+  return base ? { ...base, ...(await loadPremiumPassCatalog(locale)) } : base;
+}
+
+async function loadBaseCatalog(locale: Locale): Promise<Catalog | null> {
   switch (locale) {
     case "de":
       return (await import("./de.json")).default;
@@ -23,5 +30,25 @@ export async function loadCatalog(locale: Locale): Promise<Catalog | null> {
       return (await import("./zh.json")).default;
     default:
       return null;
+  }
+}
+
+// experiment: premium-pass
+async function loadPremiumPassCatalog(locale: Locale): Promise<Catalog> {
+  switch (locale) {
+    case "de":
+      return (await import("./premium-pass/de.json")).default;
+    case "es":
+      return (await import("./premium-pass/es.json")).default;
+    case "fr":
+      return (await import("./premium-pass/fr.json")).default;
+    case "it":
+      return (await import("./premium-pass/it.json")).default;
+    case "pt":
+      return (await import("./premium-pass/pt.json")).default;
+    case "zh":
+      return (await import("./premium-pass/zh.json")).default;
+    default:
+      return {};
   }
 }

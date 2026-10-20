@@ -10,6 +10,7 @@ import { PublicVideoDTO } from "@/app/types/video";
 import { useAuth } from "@/lib/auth/react";
 import { useEffect, useRef, useState } from "react";
 import AccessLockOverlay from "../AccessLockOverlay";
+import { PremiumThumbBadge } from "../premium-pass/PremiumBadge"; // experiment: premium-pass (docs/experiments/premium-pass.md)
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { NajsIcon } from "../najs/primitives";
 import { useAppPreload } from "../preload/AppPreloadProvider";
@@ -136,9 +137,10 @@ export function SidebarPlaylist({
     // UPCOMING section wins over our clock until the layout is refetched.
     const isUpcoming = inUpcomingSection || isUpcomingPremiere(video, premiereNow);
     // Otherwise signing in is the only gate (CLAUDE.md §4.4).
+    const premium = (video as { premium?: boolean }).premium === true; // experiment: premium-pass
     const lockState = isUpcoming
       ? isSignedIn ? "COMING_SOON" : "LOGIN_REQUIRED"
-      : !hasAccess ? "LOGIN_REQUIRED" : null;
+      : !hasAccess && !premium ? "LOGIN_REQUIRED" : null;
     // Intent (pointer over the tile, touch on it, keyboard focus) warms what a click will need:
     // the playback plan, the first seconds of the stream and the first page of comments.
     const warmVideoOnIntent = (input: WarmupInput) => {
@@ -218,6 +220,7 @@ export function SidebarPlaylist({
                 </div>
               )}
 
+              {premium && !isUpcoming && <PremiumThumbBadge locked={!hasAccess} />}
               {video.duration && !lockState && (
                 <div className="absolute bottom-[5px] right-[5px] bg-black/80 text-white text-[10px] font-bold px-[5px] py-0.5 rounded-[4px] z-30 pointer-events-none font-mono">
                   {video.duration}

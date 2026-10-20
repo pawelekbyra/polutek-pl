@@ -15,4 +15,6 @@ export type AccessDecisionDto = {
    * refused until then (CLAUDE.md "Premieres"); `hasAccess` still covers comments and reactions.
    */
   premiereAt?: string;
+  /** experiment: premium-pass (docs/experiments/premium-pass.md): ISO end of the viewer's active demo pass for this video. */
+  premiumPassUntil?: string;
 };

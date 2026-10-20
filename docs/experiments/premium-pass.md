@@ -1,6 +1,19 @@
 # Eksperyment „Wejściówka Premium”: plan wdrożenia (2026-10-20)
 
-Status: **plan do akceptacji właściciela, nic nie jest zbudowane**. Makieta wyglądu: [`premium-pass-mockup.html`](premium-pass-mockup.html) (otwórz plik w przeglądarce; przełącznik jasny/ciemny i telefon/komputer).
+Status: **zbudowane na gałęzi `exp/premium-pass` (PR do `main`, nie scalone, nie wdrożone)**, z decyzjami właściciela z 2026-10-20 (niżej). Makieta wyglądu: [`premium-pass-mockup.html`](premium-pass-mockup.html) (otwórz plik w przeglądarce; przełącznik jasny/ciemny i telefon/komputer).
+
+### Decyzje właściciela (2026-10-20) i odstępstwa implementacji od planu
+
+Te punkty **zastępują** odpowiadające im miejsca niżej (rozdziały 2, 3, 7, 8, 9, 12, 16, 19):
+
+1. **Dwie wejściówki:** „Wejściówka 7 dni” **14,99 zł** i „Wejściówka 30 dni” **29,00 zł** (ceny brutto, „cena brutto, zawiera 23% VAT”). 30 dni ma etykietę „Najlepsza wartość”, bez przekreśleń i bez obniżek (Omnibus nie dotyczy). Wybór jest na scenie filmu (obie ceny), na stronie oferty (dwie karty) i w kasie (dwa kafelki, domyślnie 30 dni). Ceny są stałe w kodzie (`PASS_PRODUCTS`), zmienne `PREMIUM_PASS_PRICE_MINOR` i `PREMIUM_PASS_DAYS` nie istnieją.
+2. **Zablokowane filmy:** `jj` i `test-transkodowania`. To domyślna lista, gdy `PREMIUM_PASS_VIDEO_SLUGS` nie jest ustawiona (konfiguracja, nigdy zmiana `Video.tier`).
+3. **Tryb na produkcji: `all`** (wszyscy widzą paywall). `off|testers|all` zostają.
+4. **ADMIN też za bramką:** gdy eksperyment jest widoczny, bramka wejściówki działa także dla ADMIN na `www` (właściciel widzi paywall na swoim koncie); Studio i panel `admin.pawelperfect.com` bez zmian (panel ma własny `admin.env`, Studio nie odtwarza filmów). **Panel demo** („Wygaś / Usuń moją wejściówkę”) ma każdy zalogowany widz, dla którego eksperyment jest widoczny, i działa wyłącznie na jego własnym wierszu.
+5. **Sprzedawca w kasie i potwierdzeniu:** „Sprzedawca: POLUTEK Sp. z o.o. (dane demo)”; ceny „cena brutto, zawiera 23% VAT”.
+6. **Adres strony oferty: `/premium`** (`/en/premium`, `/<lang>/premium`), regulamin demo: `/regulamin-premium`, `/en/premium-terms`. Powód: `matcher` w `middleware.ts` pomija **każdą ścieżkę zawierającą „js”** (zgubiony `\` w `"\.(?:…|js(?!on)|…)"`), więc `/wejsciowka` omijałaby proxy (bez przepisania na `/pl`, bez bramki i CSP). Błąd matchera jest osobnym zadaniem, poza eksperymentem.
+7. **Test na Postgresie** leży w `tests/postgres/premium-pass-ledgers.pg.test.ts` (tam są testy `*.pg.test.ts` w tym repo).
+8. **Chip „Premium · ważna do …”** pokazuje się przez kilka sekund w rogu odtwarzacza (montuje go `PremiumWrapper`), bo `Hero.tsx` jest przy budżecie; `Hero` dostał tylko jedną linię (`premiumPass={video.premiumPass}`), żeby gość z linkiem do filmu `LOGGED_IN` zobaczył ofertę zamiast ściany logowania.
 
 Eksperyment pokazuje, jak wyglądałaby na `www.pawelperfect.com` profesjonalna sprzedaż **wejściówki** do tajnych materiałów premium. **Nigdy nie pobiera pieniędzy**: płatność jest symulowana na serwerze i nie ma w niej formularza karty ani połączenia z płatnościami. Całość działa za jednym przełącznikiem, wchodzi jednym commitem (squash) i znika jednym poleceniem (§17).
 
@@ -8,10 +21,10 @@ Eksperyment pokazuje, jak wyglądałaby na `www.pawelperfect.com` profesjonalna 
 
 ## 0. Najważniejsze w pięciu punktach
 
-1. **Produkt:** „Wejściówka 30 dni”, jednorazowa, **bez subskrypcji i bez odnawiania**, 29,00 zł brutto. Otwiera wszystkie filmy oznaczone jako Premium na czas 30 dni od zakupu.
+1. **Produkt:** dwie jednorazowe wejściówki, **bez subskrypcji i bez odnawiania**: 7 dni za 14,99 zł i 30 dni za 29,00 zł brutto. Otwierają wszystkie filmy oznaczone jako Premium na swój czas od zakupu.
 2. **Pieniądze:** produkcyjny klucz Stripe jest w trybie **live** (sprawdzony prefiks 2026-10-20), więc eksperyment **w ogóle nie dotyka Stripe**: brak `loadStripe`, brak intentów, brak pól karty. „Płatność” to przycisk symulacji na serwerze (`provider = DEMO`). Na każdym ekranie zakupu jest stały pas „TRYB DEMO: nic nie zostanie pobrane”.
 3. **Baza:** **zero migracji**. Filmy Premium to lista slugów w zmiennej środowiskowej (kolumna `Video.tier` się nie zmienia), a wejściówka demo to wiersz w istniejącej tabeli `AppSetting` (klucz `xp.premium_pass:<userId>`).
-4. **Kto widzi:** przełącznik `PREMIUM_PASS_EXPERIMENT=off|testers|all` w `app.env` (czytany w trakcie działania, bez przebudowy). Start w `testers`: eksperyment widzą tylko wskazane konta testowe, reszta świata widzi stronę jak dziś.
+4. **Kto widzi:** przełącznik `PREMIUM_PASS_EXPERIMENT=off|testers|all` w `app.env` (czytany w trakcie działania, bez przebudowy). Decyzja właściciela: produkcja w `all` (wszyscy, także ADMIN na `www`); `testers` zostaje do testów na wskazanych kontach.
 5. **Wycofanie:** `bash scripts/experiments/premium-pass-revert.sh` (pełne: revert commita + wdrożenie + sprzątanie) albo `bash scripts/experiments/premium-pass-revert.sh --flag-only` (wyłączenie w kilka sekund, bez wdrożenia).
 
 ---
@@ -536,7 +549,7 @@ Jeden agent naraz (zasada repo), w kolejności:
 
 PR ma tytuł `experiment(premium-pass): demo backstage pass with simulated checkout`, a commit squash (opis scalenia) musi zawierać linię-przyczepkę **`Experiment-Id: premium-pass`** (skrypt wycofania szuka po niej). Każda późniejsza poprawka eksperymentu też ma tę linię w opisie scalenia.
 
-Wdrożenie z `PREMIUM_PASS_EXPERIMENT=testers`, `PREMIUM_PASS_TESTER_IDS=<id konta testowego właściciela>`, `PREMIUM_PASS_VIDEO_SLUGS=jj,test-transkodowania` dopisanymi do `app.env` (z kopią pliku i wpisem `ai-log`).
+Wdrożenie (decyzja właściciela) z `PREMIUM_PASS_EXPERIMENT=all` i `PREMIUM_PASS_VIDEO_SLUGS=jj,test-transkodowania` dopisanymi do `app.env` (z kopią pliku i wpisem `ai-log`); `PREMIUM_PASS_TESTER_IDS` potrzebne tylko w trybie `testers`.
 
 ---
 
@@ -573,7 +586,7 @@ Uruchomienie polecenia przez właściciela jest jego zgodą na wdrożenie i zmia
 
 | # | Sprawdzenie | Oczekiwane |
 |---|---|---|
-| a | `curl -s -o /dev/null -w "%{http_code}" https://www.pawelperfect.com/wejsciowka` | `404` |
+| a | `curl -s -o /dev/null -w "%{http_code}" https://www.pawelperfect.com/premium` | `404` (flaga off) albo `307` (kod wycofany: ścieżka nie jest już publiczna) |
 | b | `curl -s https://www.pawelperfect.com/api/media-source/<id jj>` jako gość | `status: "LOGIN_REQUIRED"` (jak przed eksperymentem), nigdzie `PASS_REQUIRED` |
 | c | `curl -sI https://www.pawelperfect.com/en` | `200`, `X-Robots-Tag: noindex` |
 | d | `git grep -n "Experiment-Id: premium-pass"` na nowym `origin/main` w kodzie (`app`, `lib`) | brak plików eksperymentu |
