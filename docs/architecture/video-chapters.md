@@ -1,6 +1,6 @@
 # Rozdziały filmów (chapters): specyfikacja wdrożeniowa
 
-Stan na 2026-10-20. **Dokument projektowy, nic z tego nie jest jeszcze zbudowane.** Rozdziały („chapters”, jak na YouTube) to lista `czas → tytuł` zapisana przy filmie przez twórcę: dzieli pasek postępu na odcinki, pokazuje tytuł rozdziału, ma panel „Rozdziały” z przeskokiem i klikalne znaczniki czasu w opisie.
+Stan na 2026-10-20. **Stan budowy (2026-10-20): zadanie 1 z sekcji 12 (dane, domena, Studio, plan odtwarzania) jest zbudowane; zadania 2 (odtwarzacz i karta opisu) i 3 (SEO i wyszukiwarka) czekają, więc poniższe opisy odtwarzacza, karty opisu, JSON-LD i wyszukiwania są nadal projektem.** Rozdziały („chapters”, jak na YouTube) to lista `czas → tytuł` zapisana przy filmie przez twórcę: dzieli pasek postępu na odcinki, pokazuje tytuł rozdziału, ma panel „Rozdziały” z przeskokiem i klikalne znaczniki czasu w opisie.
 Dokument ma wystarczyć, żeby trzy niezależne zadania (sekcja 12) dało się wykonać bez zgadywania. Fakty z kodu mają wskazane pliki i linie (stan `origin/main` z 2026-10-20, `f1664b7f`); zdania oznaczone **[niezweryfikowane]** nie zostały sprawdzone w źródle pierwotnym.
 
 ## 1. Co jest dziś (fakty z kodu)
@@ -266,7 +266,8 @@ Komunikaty błędów API (`AppError`) są po polsku jak reszta (`VIDEO_TAGS_TOO_
 
 Zasada: każde zadanie jedna gałąź i jeden PR, małe, niezależnie testowalne, kolejność **1 → 2 → 3** (2 wymaga kontraktu `Chapter` i planu z zadania 1; 3 jest niezależne od 2, ale po 1). Wszystkie: nowe pliki jak sąsiednie pod względem końców linii, `git diff --stat` bez przepisywania całych plików, `npm run quality` i `quality:hotspots`, merge i wdrożenie według memory (bez pytania: merge + backup + deploy).
 
-### Zadanie 1: dane, domena, Studio, plan (backend + Studio)
+### Zadanie 1: dane, domena, Studio, plan (backend + Studio), ZBUDOWANE
+Odstępstwa od planu: `AdminVideoDto`/`StudioVideo` niosą też `durationSeconds` (edytor waliduje wobec długości filmu); `PATCH` z Studia wysyła `chapters` tylko, gdy lista się zmieniła (zwykły zapis nie przepisuje ani nie audytuje rozdziałów); `toForm` z edytora przeniesiono do `videoToForm` w `studio/video-form.ts` (plik edytora ma teraz 518 linii zamiast 527; `StudioVideoEditor.tsx` i `StudioUploadWizard.tsx` nadal przekraczają budżet 450 jak przed zadaniem). Zod-owy `studioChaptersSchema` jest eksportowany ze `studio-schemas.ts`.
 Pliki:
 - NOWE `lib/video-chapters.ts` (moduł z sekcji 4.2) i `scanTimestamps` w nim; testy `tests/unit/video-chapters.test.ts`.
 - NOWE `prisma/migrations/20261020120000_video_chapters/migration.sql`; EDYCJA `prisma/schema.prisma` (jedna linia w `Video`).

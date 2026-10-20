@@ -1,3 +1,5 @@
+import type { Chapter } from "@/lib/video-chapters";
+
 export type PlaybackPlanStatus =
   | "READY"
   | "LOGIN_REQUIRED"
@@ -61,6 +63,8 @@ export type PlaybackPlan = {
     poster: string;
     title: string;
     textTracks?: VideoTextTrackContract[];
+    /** Chapters of the video; only a plan that can play carries them (like subtitles), absent without chapters. */
+    chapters?: Chapter[];
   };
   diagnostics: {
     warnings: string[];

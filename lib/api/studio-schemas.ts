@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 import { VIDEO_CATEGORIES, VIDEO_COMMENTS_MODES, VIDEO_TAG_MAX_LENGTH, VIDEO_TAGS_MAX, normalizeTags } from "@/lib/video-metadata";
+import { CHAPTERS_MAX } from "@/lib/video-chapters";
 
 const trimmed = (max: number, min = 0) => z.string().trim().min(min).max(max);
 
@@ -44,9 +45,15 @@ export const studioTagsSchema = z
   .transform(normalizeTags)
   .pipe(z.array(z.string().min(1).max(VIDEO_TAG_MAX_LENGTH)).max(VIDEO_TAGS_MAX));
 
+/** Chapters: shape and field limits only; the domain rules (order, gaps, length of the video) are checked by the use case. */
+export const studioChaptersSchema = z
+  .array(z.object({ startSeconds: z.number().int().min(0).max(86400), title: z.string().max(200), titleEn: z.string().max(200).nullable().optional() }))
+  .max(CHAPTERS_MAX);
+
 /** Whitelists of the "Więcej opcji" section; `category: null` clears the category. */
 const videoMetadataFields = {
   tags: studioTagsSchema.optional(),
+  chapters: studioChaptersSchema.nullable().optional(),
   category: z.enum(VIDEO_CATEGORIES).nullable().optional(),
   commentsMode: z.enum(VIDEO_COMMENTS_MODES).optional(),
   /** Creator's 18+ declaration: signed-in viewers only (same effect as the AGE_RESTRICTED moderation state). */
