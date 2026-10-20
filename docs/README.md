@@ -36,7 +36,7 @@ albo znika w tym samym PR. Historia jest w git.
 | Powłoka publiczna, ładowanie, odtwarzacz, napisy | [`architecture/public-shell-and-player.md`](architecture/public-shell-and-player.md) |
 | Syndykacja: RSS, oEmbed, odtwarzacz do osadzania, ramkowanie | [`architecture/syndication-embed.md`](architecture/syndication-embed.md) |
 | Playlisty twórcy (różnica względem paska bocznego), widoczność, kolejka na stronie filmu | [`architecture/playlists.md`](architecture/playlists.md) |
-| Rozdziały filmów (specyfikacja wdrożeniowa; zadania 1 i 2, czyli dane, Studio, plan odtwarzania, odtwarzacz i karta opisu, zbudowane, SEO jeszcze nie): model danych, odtwarzacz, Studio, SEO | [`architecture/video-chapters.md`](architecture/video-chapters.md) |
+| Rozdziały filmów (specyfikacja wdrożeniowa; zadania 1-3, czyli dane, Studio, plan odtwarzania, odtwarzacz, karta opisu, SEO i wyszukiwarka, zbudowane): model danych, odtwarzacz, Studio, SEO | [`architecture/video-chapters.md`](architecture/video-chapters.md) |
 | Wybór języka i dokumenty prawne | [`architecture/i18n-and-legal.md`](architecture/i18n-and-legal.md) |
 | Prywatność, retencja, e-mail | [`architecture/privacy-email-retention.md`](architecture/privacy-email-retention.md) |
 | Baza i migracje | [`architecture/database-and-migrations.md`](architecture/database-and-migrations.md) |

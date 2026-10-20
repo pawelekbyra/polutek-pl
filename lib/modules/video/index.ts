@@ -35,3 +35,4 @@ export * from './application/ready-visibility';
 export * from './domain/video-visibility';
 export * from './domain/search-query';
 export * from './application/public-search.service';
+export * from './application/get-public-video-chapters';
