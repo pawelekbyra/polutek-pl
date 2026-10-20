@@ -4,8 +4,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     MediaPlayer,
     MediaProvider,
-    Track,
-    isHLSProvider,
+    MEDIA_KEY_SHORTCUTS,
+    Track, isHLSProvider,
     type MediaPlayerInstance,
     type MediaProviderAdapter,
 } from '@vidstack/react';
@@ -85,10 +85,10 @@ function normalizeTextTracks(tracks: VideoTextTrackDTO[] | undefined): VideoText
     });
 }
 
-// Vidstack's defaults, minus the playback-speed keys ("<" / ">"): speed has one control, the settings
-// menu (which remembers the choice); the shortcuts would change it silently and step down to 0.25x.
-// Plus the next/previous chapter keys (player/chapters/chapter-keys.ts).
-const PLAYER_KEY_SHORTCUTS = { speedUp: '', slowDown: '', ...CHAPTER_KEY_SHORTCUTS };
+// `keyShortcuts` REPLACES Vidstack's defaults, so spread them back in (Space/k, m, f, c, arrows, digits), minus the
+// playback-speed keys ("<" / ">"): speed has one control, the settings menu (which remembers the choice); the
+// shortcuts would change it silently and step down to 0.25x. Plus the next/previous chapter keys (chapter-keys.ts).
+const PLAYER_KEY_SHORTCUTS = { ...MEDIA_KEY_SHORTCUTS, speedUp: '', slowDown: '', ...CHAPTER_KEY_SHORTCUTS };
 
 export default function VideoPlayer({ video, onViewCounted, revealKey, startWithSound = false, signedIn = false, resumeSeconds, autoPlay = true }: VideoPlayerProps) {
     const { playbackPlan, refreshPlaybackPlan, renewPlaybackPlan, isLoading } = useVideoAccess();
