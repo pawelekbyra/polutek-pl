@@ -33,7 +33,7 @@ export function DescriptionChapters({ videoId }: { videoId: string }) {
       <div className="mb-1 text-[12px] font-bold text-[var(--chan-ink)]">
         {tx("Rozdziały", "Chapters")} <span className="font-semibold tabular-nums text-[var(--chan-muted)]">({chapters.length})</span>
       </div>
-      <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
+      <ul className="m-0 flex list-none flex-col gap-0 p-0">
         {visible.map((chapter, index) => (
           <li key={chapter.startSeconds}>
             <button
@@ -41,7 +41,7 @@ export function DescriptionChapters({ videoId }: { videoId: string }) {
               aria-current={index === activeIndex ? "true" : undefined}
               onClick={() => requestSeek(videoId, chapter.startSeconds)}
               className={cn(
-                "flex min-h-8 w-full cursor-pointer items-baseline gap-3 rounded-xl px-2 py-1 text-left text-[12px] leading-[1.4] hover:bg-[var(--chan-blue-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]",
+                "flex w-full cursor-pointer items-baseline gap-3 rounded-lg px-2 py-0.5 text-left text-[12px] leading-[1.35] hover:bg-[var(--chan-blue-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]",
                 index === activeIndex && "bg-[var(--chan-blue-soft)] font-bold",
               )}
             >
