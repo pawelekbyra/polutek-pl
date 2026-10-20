@@ -216,8 +216,8 @@ Grep `role ===/!== 'ADMIN'`, `isAdmin`, `actor.type ===/!== 'admin'`, `SystemRol
 | 38 | `update-comment.use-case.ts:55` | `canModerate` (DTO) | OWN |
 | 39 | `report-comment.use-case.ts:54` | nie można zgłosić komentarza ADMINA ani twórcy filmu | twórca: zostaje (OWN); ADMIN: DEL (albo SA, jeśli superadmin ma konto na `www`) |
 | 40 | `comment.policy.ts:58` | edycja własnego komentarza (`user|admin`) | USR |
-| 41 | `comment.policy.ts:65` | `canDeleteComment`: admin zawsze | OWN lub SA (w panelu) |
-| 42 | `comment.policy.ts:74` | `canModerateComment`: admin zawsze | OWN lub SA |
+| 41 | `comment.policy.ts:65` | `canDeleteComment`: ~~admin zawsze~~ (naprawione: tylko autor lub moderator kanału, rola ADMIN platformy nie wystarcza) | OWN lub SA (w panelu) |
+| 42 | `comment.policy.ts:74` | `canModerateComment`: ~~admin zawsze~~ (naprawione: tylko autor lub moderator kanału, rola ADMIN platformy nie wystarcza) | OWN lub SA |
 | 43 | `lib/comments-public-author.ts:31` | odznaka `ADMIN` w DTO (UI jej nie pokazuje: `app/components/comments/types.ts:6-14` pokazuje tylko `AUTHOR`) | DEL z DTO; odznaka „Twórca” (`:32`) zostaje (OWN) |
 
 #### Subskrypcje, płatności, użytkownicy (www-ścieżki)
