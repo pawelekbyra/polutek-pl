@@ -72,7 +72,7 @@ describe("limits and helpers", () => {
   });
 
   it("detects unsaved changes against the baseline", () => {
-    const baseline: EditorForm = { title: "A", titleEn: "", description: "", descriptionEn: "", tier: "PUBLIC", premiere: "", tags: [], category: "", commentsMode: "ON" };
+    const baseline: EditorForm = { title: "A", titleEn: "", description: "", descriptionEn: "", tier: "PUBLIC", premiere: "", tags: [], category: "", commentsMode: "ON", isAdult: false, chapters: [] };
     expect(isFormDirty(baseline, baseline)).toBe(false);
     expect(isFormDirty({ ...baseline }, baseline)).toBe(false);
     expect(isFormDirty({ ...baseline, description: "x" }, baseline)).toBe(true);
@@ -134,7 +134,7 @@ describe("tags input", () => {
 
   it("removes a tag by index and treats tag changes as unsaved work", () => {
     expect(removeTag(["a", "b", "c"], 1)).toEqual(["a", "c"]);
-    const baseline: EditorForm = { title: "A", titleEn: "", description: "", descriptionEn: "", tier: "PUBLIC", premiere: "", tags: ["a"], category: "", commentsMode: "ON" };
+    const baseline: EditorForm = { title: "A", titleEn: "", description: "", descriptionEn: "", tier: "PUBLIC", premiere: "", tags: ["a"], category: "", commentsMode: "ON", isAdult: false, chapters: [] };
     expect(isFormDirty({ ...baseline, tags: ["a"] }, baseline)).toBe(false);
     expect(isFormDirty({ ...baseline, tags: ["a", "b"] }, baseline)).toBe(true);
     expect(isFormDirty({ ...baseline, commentsMode: "OFF" }, baseline)).toBe(true);

@@ -120,6 +120,6 @@ describe('dirty state and the form of a saved video', () => {
       chapters: [{ startSeconds: 0, title: 'A' }, { startSeconds: 60, title: 'B' }, { startSeconds: 120, title: 'C' }],
     });
     expect(form.chapters.map((r) => r.time)).toEqual(['0:00', '1:00', '2:00']);
-    expect(videoToForm({ ...({} as never), id: 'v', title: 'T', titleEn: null, description: null, descriptionEn: null, slug: 's', status: 'DRAFT', tier: 'PUBLIC', thumbnailUrl: null, premiereAt: null, views: 0, createdAt: '', publishedAt: null }).chapters).toEqual([]);
+    expect(videoToForm({ id: 'v', title: 'T', titleEn: null, description: null, descriptionEn: null, slug: 's', status: 'DRAFT', tier: 'PUBLIC', thumbnailUrl: null, premiereAt: null, views: 0, createdAt: '', publishedAt: null }).chapters).toEqual([]);
   });
 });
