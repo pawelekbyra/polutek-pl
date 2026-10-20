@@ -27,9 +27,6 @@ const KEEP_URL_PATTERNS: RegExp[] = [
   /^\/polityka-prywatnosci\/?$/,
   /^\/(?:en|de|es|fr|it|pt|zh)\/terms\/?$/,
   /^\/(?:en|de|es|fr|it|pt|zh)\/privacy-policy\/?$/,
-  // Prototype sections (flag SHOW_SECTION_NAV): Photos and Shop keep their own address, so back/forward works.
-  /^\/(?:zdjecia|sklep)\/?$/,
-  /^\/(?:en|de|es|fr|it|pt|zh)\/(?:photos|shop)\/?$/,
   // TEMPORARY logo font bake-off pages keep their /logoN address so they can be
   // compared. Remove alongside the experiment.
   /^\/logo\d+\/?$/,

@@ -1002,11 +1002,3 @@
 @media (prefers-reduced-motion:reduce) {
   .polutek-vidstack-player .vds-captions { transition: none; }
 }
-
-/* Prototype section navigation (SHOW_SECTION_NAV): room for the bar/rail only while one is shown. */
-@media (max-width: 1023px) {
-  body:has(.pp-section-bar[data-open="true"]) { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
-}
-@media (min-width: 1024px) {
-  body:has(.pp-section-rail[data-open="true"]) { padding-left: 4rem; }
-}
