@@ -80,7 +80,7 @@ export async function updateAdminVideo(
       if (blockers.length > 0) return fail(new VideoInvalidSidebarError(`${blockers[0].code}: ${blockers[0].message}`));
   }
 
-  const metadata = resolveVideoMetadata(input);
+  const metadata = resolveVideoMetadata(input, { durationSeconds: existing.durationSeconds });
   if (metadata instanceof AppError) return fail(metadata);
 
   const safeInput = { ...input, ...metadata };
@@ -128,6 +128,8 @@ export async function updateAdminVideo(
       metadata: {
         changed: Object.keys(safeInput).filter(k => k !== 'id'),
         ...(safeInput.commentsMode !== undefined ? { commentsMode: safeInput.commentsMode } : {}),
+        // Only the count, never the titles (audit metadata holds ids, counters and statuses).
+        ...(safeInput.chapters !== undefined ? { chaptersCount: safeInput.chapters === null ? null : safeInput.chapters.length } : {}),
         ...(safeInput.premiereAt !== undefined ? { premiereAt: safeInput.premiereAt?.toISOString() ?? null } : {}),
         ...(safeInput.fundraisingGoalMinor !== undefined ? {
           fundraisingGoal: safeInput.fundraisingGoalMinor === null ? null : {

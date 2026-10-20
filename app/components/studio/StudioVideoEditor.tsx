@@ -5,7 +5,9 @@ import { useLanguage } from "@/app/components/LanguageContext";
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
 import { StudioApiError, jsonBody, studioApi, studioThumbnailSrc, type StudioVideo } from "./studio-client";
 import { confirmLeave, setUnsavedWork } from "./unsaved-guard";
-import { DESCRIPTION_MAX, TITLE_MAX, isFormDirty, toLocalInput, validateCoverFile, visibilityAction, type EditorForm, type EditorVisibility } from "./video-form";
+import { DESCRIPTION_MAX, TITLE_MAX, isFormDirty, validateCoverFile, videoToForm, visibilityAction, type EditorForm, type EditorVisibility } from "./video-form";
+import { areChaptersEqual, chaptersPayload, rowProblems } from "./chapters-form";
+import VideoChaptersEditor from "./VideoChaptersEditor";
 import VideoMoreOptions from "./VideoMoreOptions";
 import { Badge, Card, CharCounter, Field, Notice, ProgressBar, buttonClass, dangerButtonClass, ghostButtonClass, inputClass, smallGhostButtonClass } from "./ui";
 
@@ -17,21 +19,6 @@ export interface PipelineView {
 
 function errorText(e: unknown, fallback: string): string {
   return e instanceof StudioApiError ? e.message : fallback;
-}
-
-function toForm(video: StudioVideo): EditorForm {
-  return {
-    title: video.title,
-    titleEn: video.titleEn ?? "",
-    description: video.description ?? "",
-    descriptionEn: video.descriptionEn ?? "",
-    tier: video.tier,
-    premiere: toLocalInput(video.premiereAt),
-    tags: video.tags ?? [],
-    category: video.category ?? "",
-    commentsMode: video.commentsMode ?? "ON",
-    isAdult: video.isAdult === true,
-  };
 }
 
 /** Studio -> video editor: form on the left, preview card (thumbnail, processing, status, link) on the right. */
@@ -49,6 +36,7 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
 
   const base = `/api/studio/videos/${encodeURIComponent(id)}`;
   const dirty = form !== null && isFormDirty(form, baseline);
+  const chaptersOk = form === null || rowProblems(form.chapters, video?.durationSeconds).length === 0;
 
   /** `resetForm` replaces what the creator typed with the saved values; leave it off while editing. */
   const loadVideo = useCallback(
@@ -56,7 +44,7 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
       const data = await studioApi<StudioVideo>(base);
       setVideo(data);
       if (resetForm) {
-        const next = toForm(data);
+        const next = videoToForm(data);
         setForm(next);
         setBaseline(next);
       }
@@ -129,6 +117,8 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
             tier: form.tier,
             premiereAt: form.premiere ? new Date(form.premiere).toISOString() : null,
             tags: form.tags,
+            // Only a changed list is sent: a plain save never rewrites (or audits) the chapters.
+            ...(areChaptersEqual(form.chapters, baseline?.chapters) ? {} : { chapters: chaptersPayload(form.chapters) }),
             category: form.category || null,
             commentsMode: form.commentsMode,
             isAdult: form.isAdult,
@@ -277,7 +267,7 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
               className="grid gap-4"
               onSubmit={(e) => {
                 e.preventDefault();
-                if (dirty && form.title.trim() && !busy) void save();
+                if (dirty && chaptersOk && form.title.trim() && !busy) void save();
               }}
             >
               <Field label={tx("Tytuł (PL)", "Title (PL)")} htmlFor="ed-title" counter={<CharCounter id="ed-title-count" value={form.title} max={TITLE_MAX} />}>
@@ -322,6 +312,7 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
                 onChange={(next) => setForm({ ...form, ...next })}
                 disabled={busy}
               />
+              <VideoChaptersEditor rows={form.chapters} onChange={(chapters) => set("chapters", chapters)} durationSeconds={video.durationSeconds ?? null} tier={form.tier} descriptions={{ pl: form.description, en: form.descriptionEn }} disabled={busy} />
               <Field label={tx("Miniatura", "Thumbnail")} htmlFor="ed-cover" hint={tx("JPG, PNG lub WebP do 5 MB. Zapisuje się od razu.", "JPG, PNG or WebP up to 5 MB. Saved at once.")}>
                 <input
                   id="ed-cover"
@@ -340,7 +331,7 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
               {message && <Notice kind={message.kind}>{message.text}</Notice>}
               {dirty && <p className="text-[12px] font-semibold text-amber-700">{tx("Masz niezapisane zmiany.", "You have unsaved changes.")}</p>}
               <div className="flex flex-wrap gap-2">
-                <button type="submit" className={buttonClass} disabled={busy || !dirty || !form.title.trim()}>
+                <button type="submit" className={buttonClass} disabled={busy || !dirty || !chaptersOk || !form.title.trim()}>
                   {tx("Zapisz", "Save")}
                 </button>
                 {video.status === "ARCHIVED" ? (

@@ -10,6 +10,7 @@ import { VideoStatus, type VideoAsset } from '@prisma/client';
 import { buildSelfHlsPlan } from './self-hls-plan';
 import { assetSizeToNumber } from '@/lib/modules/video';
 import { SelfHlsTokenService } from '../infrastructure/self-hls-token.service';
+import { parseStoredChapters, type Chapter } from '@/lib/video-chapters';
 
 export type PlaybackErrorCode =
   | "VIDEO_NOT_FOUND"
@@ -65,7 +66,7 @@ function safeSubtitleUrl(value: string | null | undefined): string | null {
   }
 }
 
-function playerFor(video?: { thumbnailUrl?: string | null; title?: string | null; subtitleUrlPl?: string | null; subtitleUrlEn?: string | null } | null, controls = false): PlayerDefaults['player'] {
+function playerFor(video?: { thumbnailUrl?: string | null; title?: string | null; subtitleUrlPl?: string | null; subtitleUrlEn?: string | null } | null, controls = false, chapters: Chapter[] = []): PlayerDefaults['player'] {
   const textTracks: PlayerDefaults['player']['textTracks'] = [];
   const pl = safeSubtitleUrl(video?.subtitleUrlPl);
   const en = safeSubtitleUrl(video?.subtitleUrlEn);
@@ -78,6 +79,7 @@ function playerFor(video?: { thumbnailUrl?: string | null; title?: string | null
     poster: video?.thumbnailUrl || '',
     title: video?.title || '',
     ...(textTracks.length > 0 ? { textTracks } : {}),
+    ...(chapters.length > 0 ? { chapters } : {}),
   };
 }
 
@@ -305,8 +307,8 @@ export class PlaybackService {
       ipHash,
       userAgentHash,
       safeAsset,
-      // Subtitles only on the playable plan: denied plans are built without them (no URL leaks).
-      player: playerFor({ thumbnailUrl, title, subtitleUrlPl: video.subtitleUrlPl, subtitleUrlEn: video.subtitleUrlEn }, true),
+      // Subtitles and chapters only on the playable plan: denied plans are built without them (no URL or title leaks).
+      player: playerFor({ thumbnailUrl, title, subtitleUrlPl: video.subtitleUrlPl, subtitleUrlEn: video.subtitleUrlEn }, true, parseStoredChapters(video.chapters)),
       warnings,
       reuseSessionId: options.reuseSessionId,
     }).catch((e) => {

@@ -2,6 +2,7 @@
  * Browser-side client of the Studio API (`/api/studio/*`). Every call is same-origin with the session cookie;
  * errors carry the server's message and code so the UI can show them as they are.
  */
+import type { Chapter } from "@/lib/video-chapters";
 
 export class StudioApiError extends Error {
   constructor(
@@ -96,6 +97,10 @@ export interface StudioVideo {
   publishAfterAssetReady?: boolean;
   /** Creator metadata (lib/video-metadata.ts). */
   tags?: string[];
+  /** Length of the video in seconds when known (parsed from its duration text by the database). */
+  durationSeconds?: number | null;
+  /** Chapters (lib/video-chapters.ts); the GET of a video always sends the list, empty when there are none. */
+  chapters?: Chapter[];
   category?: string | null;
   commentsMode?: "ON" | "HELD" | "OFF";
   /** Creator's 18+ declaration. */

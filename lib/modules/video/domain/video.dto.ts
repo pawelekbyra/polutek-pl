@@ -4,6 +4,7 @@ import { assetSizeToNumber } from "./asset-size";
 import { resolvePublicThumbnailSrc } from "@/lib/modules/media";
 import { effectivePublishedAt, toPremiereDate } from "./premiere";
 import { toVideoAccessTier } from "@/lib/access-tier";
+import { parseStoredChapters, type Chapter } from "@/lib/video-chapters";
 
 export interface BaseVideoDto {
   id: string;
@@ -102,6 +103,10 @@ export interface AdminVideoDto extends BaseVideoDto {
   fundraisingManualPercent: number | null;
   /** Creator metadata (Studio "Więcej opcji"). */
   tags: string[];
+  /** Chapters for the Studio editor (never in the public DTO: they travel in the playback plan). */
+  chapters: Chapter[];
+  /** Length of the video in seconds when known (the editor validates chapters against it). */
+  durationSeconds: number | null;
   category: string | null;
   commentsMode: "ON" | "HELD" | "OFF";
   /** Declared by the creator: adult content, signed-in viewers only (same effect as moderation AGE_RESTRICTED). */
@@ -281,6 +286,8 @@ export function toAdminVideoDto(input: AdminVideoInput | unknown): AdminVideoDto
     fundraisingStartAt: video.fundraisingStartAt instanceof Date ? video.fundraisingStartAt : null,
     fundraisingManualPercent: typeof video.fundraisingManualPercent === "number" ? video.fundraisingManualPercent : null,
     tags: Array.isArray(video.tags) ? (video.tags as unknown[]).filter((tag): tag is string => typeof tag === "string") : [],
+    chapters: parseStoredChapters(video.chapters),
+    durationSeconds: typeof video.durationSeconds === "number" ? video.durationSeconds : null,
     category: typeof video.category === "string" ? video.category : null,
     commentsMode: video.commentsMode === "HELD" || video.commentsMode === "OFF" ? video.commentsMode : "ON",
     isAdult: video.isAdult === true,

@@ -9,6 +9,7 @@ import { withPrimaryAsset } from "../domain/video-asset-selection";
 import { pickFundraisingUpdate, type FundraisingGoalFields } from "../domain/fundraising";
 import { publiclyVisibleChannelWhere } from "@/lib/modules/channel";
 import { isDerivedThumbnailUrl } from "@/lib/modules/media"; // derived thumbnail srcs are never stored
+import type { ChapterInput } from "@/lib/video-chapters";
 
 type VideoWithAssetsAndOriginal = Video & {
   assets: VideoAsset[];
@@ -44,6 +45,8 @@ export interface CreateVideoInput {
   tags?: string[];
   category?: string | null;
   commentsMode?: VideoCommentsMode;
+  /** Validated by resolveVideoMetadata; null clears. Written on update only (a new video has no length yet). */
+  chapters?: ChapterInput[] | null;
   /** Creator's 18+ declaration (signed-in viewers only). */
   isAdult?: boolean;
   /**
@@ -321,6 +324,8 @@ export class VideoRepository {
     if (data.premiereAt !== undefined) updateData.premiereAt = data.premiereAt;
     if (data.publishedAt !== undefined) updateData.publishedAt = data.publishedAt;
     if (data.tags !== undefined) updateData.tags = data.tags;
+    // A JSON null would be stored as the JSON value null; clearing must write SQL NULL.
+    if (data.chapters !== undefined) updateData.chapters = data.chapters === null ? Prisma.DbNull : (data.chapters as unknown as Prisma.InputJsonValue);
     if (data.category !== undefined) updateData.category = data.category;
     if (data.commentsMode !== undefined) updateData.commentsMode = data.commentsMode;
     if (data.isAdult !== undefined) updateData.isAdult = data.isAdult === true;

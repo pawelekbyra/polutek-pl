@@ -811,6 +811,8 @@ model Video {
   publishAfterAssetReadyError       String?
   /// Free-form creator tags (max 15 of 30 characters, validated in the application; the database caps the count).
   tags                              String[]    @default([])
+  /// Chapters of the video ([{ startSeconds, title, titleEn? }], 3-50, first at 0): lib/video-chapters.ts, docs/architecture/video-chapters.md. NULL = none; always read through parseStoredChapters().
+  chapters                          Json?
   /// One of the whitelist in lib/modules/video/domain/video-metadata.ts; null = not set.
   category                          String?
   /// Normalized search text (title, tags, category, PUBLIC descriptions), written ONLY by the database trigger

@@ -5,6 +5,8 @@
  */
 
 import { VIDEO_TAG_MAX_LENGTH, VIDEO_TAGS_MAX, normalizeTag, type VideoCommentsModeValue } from "@/lib/video-metadata";
+import { areChaptersEqual, chapterRows, type ChapterRow } from "./chapters-form";
+import type { StudioVideo } from "./studio-client";
 
 export { VIDEO_TAG_MAX_LENGTH as TAG_MAX_LENGTH, VIDEO_TAGS_MAX as TAGS_MAX };
 export const TITLE_MAX = 100;
@@ -96,6 +98,25 @@ export interface EditorForm {
   commentsMode: VideoCommentsModeValue;
   /** The creator's 18+ declaration: signed-in viewers only. */
   isAdult: boolean;
+  /** The chapter lines (see chapters-form.ts). */
+  chapters: ChapterRow[];
+}
+
+/** The editor form of a saved video. */
+export function videoToForm(video: StudioVideo): EditorForm {
+  return {
+    title: video.title,
+    titleEn: video.titleEn ?? "",
+    description: video.description ?? "",
+    descriptionEn: video.descriptionEn ?? "",
+    tier: video.tier,
+    premiere: toLocalInput(video.premiereAt),
+    tags: video.tags ?? [],
+    category: video.category ?? "",
+    commentsMode: video.commentsMode ?? "ON",
+    isAdult: video.isAdult === true,
+    chapters: chapterRows(video.chapters ?? []),
+  };
 }
 
 /** The editor's visibility choice; maps 1:1 to the publish route's actions (draft = unpublish). */
@@ -119,6 +140,7 @@ export function formatLimitDuration(totalSeconds: number): string {
 export function isFormDirty(form: EditorForm, baseline: EditorForm | null): boolean {
   if (!baseline) return false;
   return (Object.keys(baseline) as (keyof EditorForm)[]).some((key) => {
+    if (key === "chapters") return !areChaptersEqual(form.chapters, baseline.chapters);
     const a = form[key];
     const b = baseline[key];
     if (Array.isArray(a) && Array.isArray(b)) return a.length !== b.length || a.some((item, index) => item !== b[index]);
