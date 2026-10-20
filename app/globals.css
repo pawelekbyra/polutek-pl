@@ -1003,34 +1003,12 @@
   .polutek-vidstack-player .vds-captions { transition: none; }
 }
 
-/* Prototype section navigation (SHOW_SECTION_NAV): the phone dock floats over the page; the desktop rail makes room only
-   while it is open, and the room opens and closes smoothly. */
-.pp-dock {
-  /* Elliptical right side: the dock bulges into an arc. */
-  border-radius: 0 50% 50% 0 / 0 50% 50% 0;
-  border: 1px solid var(--chan-line);
-  border-left: 0;
-  background: color-mix(in srgb, var(--chan-card) 86%, transparent);
-  box-shadow: 4px 0 28px rgba(17, 24, 39, 0.16);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-}
-.pp-dock-tab {
-  border-radius: 0 100% 100% 0 / 0 50% 50% 0;
-  border: 1px solid var(--chan-line);
-  border-left: 0;
-  background: color-mix(in srgb, var(--chan-card) 90%, transparent);
-  box-shadow: 3px 0 14px rgba(17, 24, 39, 0.14);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-}
-@media (prefers-reduced-motion: reduce) {
-  .pp-dock, .pp-dock *, .pp-dock-tab, .pp-section-rail { transition-duration: 1ms !important; transition-delay: 0ms !important; }
+/* Prototype section navigation (SHOW_SECTION_NAV): room for the bar/rail only while one is shown. */
+@media (max-width: 1023px) {
+  body:has(.pp-section-bar[data-open="true"]) { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
 }
 @media (min-width: 1024px) {
-  body { transition: padding-left 320ms cubic-bezier(0.22, 1, 0.36, 1); }
   body:has(.pp-section-rail[data-open="true"]) { padding-left: 4rem; }
   /* The top bar keeps the full width (the rail starts below it): cancel the room made for the rail. */
-  header.polutek-watch-nav { transition: margin-left 320ms cubic-bezier(0.22, 1, 0.36, 1), width 320ms cubic-bezier(0.22, 1, 0.36, 1); }
   body:has(.pp-section-rail[data-open="true"]) header.polutek-watch-nav { margin-left: -4rem; width: calc(100% + 4rem); }
 }
