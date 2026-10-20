@@ -816,7 +816,7 @@ model Video {
   /// One of the whitelist in lib/modules/video/domain/video-metadata.ts; null = not set.
   category                          String?
   /// Normalized search text (title, tags, category, PUBLIC descriptions), written ONLY by the database trigger
-  /// video_search_refresh() of migration 20261019170000_video_search. Never set it from the application.
+  /// video_search_refresh() (migrations 20261019170000_video_search and 20261020130000_video_chapters_search). Never set it from the application.
   searchText                        String      @default("")
   /// "duration" ("12:45") parsed to seconds by the same trigger; null when it is not a valid time.
   durationSeconds                   Int?

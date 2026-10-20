@@ -4,7 +4,7 @@ Stan obecny. Reguły skrótowo w CLAUDE.md §4.30.
 
 ## Dane
 
-- `Video.searchText` (tekst znormalizowany: tytuł PL/EN, tagi, kategoria, opis tylko dla `PUBLIC`) i `Video.durationSeconds` (z tekstu `duration`) są zapisywane **wyłącznie** przez trigger `video_search_refresh()` (migracja `20261019170000_video_search`). Każda ścieżka zapisu (Studio, panel, skrypty) jest więc objęta bez zmian w kodzie aplikacji. Migracja robi też uzupełnienie istniejących wierszy.
+- `Video.searchText` (tekst znormalizowany: tytuł PL/EN, tagi, kategoria, opis i tytuły rozdziałów tylko dla `PUBLIC`) i `Video.durationSeconds` (z tekstu `duration`) są zapisywane **wyłącznie** przez trigger `video_search_refresh()` (migracja `20261019170000_video_search`). Każda ścieżka zapisu (Studio, panel, skrypty) jest więc objęta bez zmian w kodzie aplikacji. Migracja robi też uzupełnienie istniejących wierszy. Tytuły rozdziałów (`Video.chapters`, PL i EN, do 2000 znaków) dopisuje następna migracja `20261020130000_video_chapters_search` (nowa wersja funkcji, trigger reaguje też na zmianę `chapters`; reszta bez zmian, `video_search_normalize()` nietknięta); filmy nie-`PUBLIC` nie dostają ich w `searchText`.
 - `video_search_normalize(text)`: `translate()` ze składanych znaków (polskie i inne łacińskie diakrytyki, małe i wielkie), `lower()`, usunięcie znaków łączących, separatory (biały znak, ASCII-interpunkcja, typograficzne cudzysłowy i myślniki) do jednej spacji. Lustro w TS: `normalizeSearchText()`; test `search-query.test.ts` pilnuje identycznych tablic.
 - Indeksy (częściowe, tylko `PUBLISHED`): GIN `to_tsvector('simple', "searchText")`, `(category, publishedAt DESC)`, `(views DESC, publishedAt DESC)`.
 

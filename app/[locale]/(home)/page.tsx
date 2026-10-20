@@ -8,6 +8,7 @@ import { getVideoDisplayDescription, getVideoDisplayTitle } from '@/lib/video-ti
 import { notFound } from 'next/navigation';
 import HomeExperience from '@/app/components/home/HomeExperience';
 import { shouldNoIndexVideo } from '@/lib/modules/video/domain/video-visibility';
+import { getPublicChapterClips } from '@/lib/modules/video/application/get-public-video-chapters';
 import { buildChannelFeedPath } from '@/lib/embed/paths';
 import { buildOembedDiscoveryUrl, isOembedDiscoverable } from '@/lib/embed/discovery';
 
@@ -94,7 +95,11 @@ export default async function Home(props: { params: Promise<{ locale: string }>;
   const { selectedVideo } = await getHomeSelectionCached(searchParams.v);
 
   // Structured data is search-engine bait: an unlisted or adult video gets none.
-  const videoJsonLd = selectedVideo && !shouldNoIndexVideo({ status: selectedVideo.status, isAdult: selectedVideo.isAdult })
+  const indexable = selectedVideo && !shouldNoIndexVideo({ status: selectedVideo.status, isAdult: selectedVideo.isAdult });
+  const pageUrl = `${getBaseUrl()}${getExplicitLocaleHref(locale, 'home')}`;
+  // Chapters become `Clip` parts only for a PUBLIC, listed video (one extra read, and only then).
+  const chapterClips = selectedVideo && indexable ? await getPublicChapterClips({ video: selectedVideo, language: locale, pageUrl }) : null;
+  const videoJsonLd = selectedVideo && indexable
     ? {
         '@context': 'https://schema.org',
         '@type': 'VideoObject',
@@ -109,7 +114,8 @@ export default async function Home(props: { params: Promise<{ locale: string }>;
         ],
         uploadDate: selectedVideo.publishedAt ? new Date(selectedVideo.publishedAt).toISOString() : undefined,
         duration: durationToIso8601(selectedVideo.duration),
-        embedUrl: `${getBaseUrl()}${getExplicitLocaleHref(locale, 'home')}?${videoQuery(selectedVideo.slug)}`,
+        embedUrl: `${pageUrl}?${videoQuery(selectedVideo.slug)}`,
+        ...(chapterClips ? { hasPart: chapterClips } : {}),
       }
     : null;
 
