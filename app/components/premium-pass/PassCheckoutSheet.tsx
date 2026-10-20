@@ -12,7 +12,6 @@ import type { PremiumPassOffer, PassOfferProduct } from "@/lib/modules/experimen
 import { defaultProduct } from "@/lib/modules/experiment-premium-pass/domain/offer";
 import { maskEmail, type PassMethod, type PassStatusDto } from "@/lib/modules/experiment-premium-pass/domain/pass-state";
 import { useLanguage } from "../LanguageContext";
-import { DemoRibbon } from "./DemoRibbon";
 import { CrossIcon, ShieldIcon, TicketIcon } from "./PassIcons";
 import { PassMethodPicker, usePassMethods } from "./PassMethodPicker";
 import { PassAlreadyActive, PassDeclined, PassSuccess } from "./PassSuccess";
@@ -115,7 +114,6 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
       <DialogPrimitive.Portal>
         <DialogPrimitive.Backdrop className={styles.overlay} />
         <DialogPrimitive.Popup className={cn(styles.pass, styles.sheet)} aria-labelledby={`${ids}-title`} aria-busy={busy} initialFocus={titleRef}>
-          <DemoRibbon paid={step.kind === "success"} />
           <div className={styles.sheetHead}>
             <DialogPrimitive.Title render={<h2 ref={titleRef} tabIndex={-1} id={`${ids}-title`} className={styles.sheetTitle} />}>
               {tx("Kasa", "Checkout")}
