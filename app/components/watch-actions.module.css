@@ -123,7 +123,7 @@
 
 /* Wspieraj in the premium gold (owner request, 2026-10-21): the same amber as the premium pass badge and CTA. */
 .supportAction {
-  border-color: color-mix(in srgb, var(--chan-amber-strong) 70%, transparent);
+  border-color: var(--chan-amber-strong);
   background: linear-gradient(180deg, var(--chan-amber-bright), var(--chan-amber)) !important;
   color: var(--chan-amber-ink) !important;
   box-shadow:
