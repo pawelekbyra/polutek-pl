@@ -64,6 +64,12 @@ albo znika w tym samym PR. Historia jest w git.
 | Google Workspace (do czasu anulowania) | [`operations/GOOGLE_ACCESS.md`](operations/GOOGLE_ACCESS.md), [`operations/DNS_BACKUP_mail_2026-10-02.md`](operations/DNS_BACKUP_mail_2026-10-02.md) |
 | Licencje oprogramowania obcego | [`operations/THIRD_PARTY_NOTICES.md`](operations/THIRD_PARTY_NOTICES.md) |
 
+## Eksperymenty (`experiments/`)
+
+| Temat | Plik |
+|---|---|
+| Wejściówka Premium (plan, bez pobierania pieniędzy, wycofanie jednym poleceniem) i makieta wyglądu | [`experiments/premium-pass.md`](experiments/premium-pass.md), makieta: `experiments/premium-pass-mockup.html` |
+
 ## Audyty (`audit/`)
 
 [`audit/2026-10-03/`](audit/2026-10-03/) zawiera raporty z przeglądu całego projektu (bezpieczeństwo,
