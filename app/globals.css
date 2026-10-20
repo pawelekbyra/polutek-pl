@@ -799,12 +799,12 @@
 
   .mc-scrub-buffer {
     position:absolute; inset:0 auto 0 0;
-    width:var(--slider-progress);
+    width:var(--chapter-progress, var(--slider-progress));
     background: rgba(255,255,255,.75);
   }
   .mc-scrub-fill {
     position:absolute; inset:0 auto 0 0;
-    width:var(--slider-fill);
+    width:var(--chapter-fill, var(--slider-fill));
     /* Watched portion: the site's blue accent, matching the primary
        action/nav color used elsewhere (--chan-blue), instead of plain white. */
     background: var(--chan-blue);
@@ -949,6 +949,44 @@
 
   @keyframes mc-spin { to { transform:rotate(360deg); } }
 
+  /* Chapters (docs/architecture/video-chapters.md): Vidstack sizes the segments (inline width in %) and sets
+     --chapter-fill / --chapter-progress on each; here is only the 2px gap between them. Without chapters there is
+     one segment, so the bar looks exactly as before. The slider itself stays the pointer target. */
+  .mc-scrub-chapters { display:flex; width:100%; }
+  .mc-scrub-chapter { flex:none; box-sizing:border-box; }
+  .mc-scrub-chapter:not(:last-child) { padding-right:2px; }
+  .mc-scrub-preview { text-align:center; }
+  .mc-scrub-preview-chapter {
+    max-width:28ch; margin-top:2px; overflow:hidden; text-overflow:ellipsis;
+    font-weight:500; color: rgba(255,255,255,.8);
+  }
+  .mc-scrub-preview-chapter:empty { display:none; }
+
+  /* Title of the chapter being played, next to the time (the only place a phone shows it). */
+  /* Only the time pill gives way when the row is short (the buttons and the right group keep their size). */
+  .mc-time { min-width:0; }
+  .mc-group--right, .mc-group > :not(.mc-time) { flex-shrink:0; }
+  .mc-chapter-label {
+    flex:0 1 auto; min-width:0; max-width:28ch;
+    padding:0; border:0; border-radius:4px; background:transparent;
+    color:inherit; font:inherit; text-align:left; cursor:pointer;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .mc-chapter-label::before { content:"\00b7"; margin-right:6px; color: rgba(255,255,255,.4); }
+  .mc-chapter-label:hover { text-decoration:underline; }
+  .mc-chapter-label:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+
+  /* Chapters panel: the settings menu's pattern, one row per chapter (time, title). */
+  .mc-chapters-panel {
+    min-width:240px; max-width:min(360px, 80vw);
+    max-height:min(320px, calc(var(--media-height, 420px) * .6));
+    animation: mc-chapters-in .14s ease-out;
+  }
+  @keyframes mc-chapters-in { from { opacity:0; transform:translateY(4px); } }
+  .mc-chapter-item { justify-content:flex-start; gap:10px; }
+  .mc-chapter-item-time { flex:none; min-width:3.4em; font-variant-numeric:tabular-nums; color: rgba(255,255,255,.62); }
+  .mc-chapter-item-title { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
   @media (max-width:640px) {
     .mc-bottom { padding:0; }
     .mc-bar { border-radius:0; padding:0 6px; }
@@ -957,6 +995,16 @@
        legible on mobile rather than shrinking further. */
     .mc-time { font-size:11px; margin-left:0; padding:0 8px; }
     .mc-time-sep, .mc-time-dur { display:none; }
+    .mc-chapter-label { max-width:min(40vw, 20ch); }
+    /* The chapters panel is a sheet over the bottom of the player (inside its frame, no corners of its own):
+       its anchor is the control bar, not the button, so it spans the player's width. */
+    .mc-chapters { position:static; }
+    .mc-chapters-panel {
+      left:0; right:0; bottom:100%; min-width:0; max-width:none;
+      max-height:calc(var(--media-height, 211px) * .6);
+      border-width:1px 0 0;
+      background: rgba(12,12,12,.98);
+    }
     /* Volume was previously hidden entirely on mobile (no room for the
        hover-reveal slider, since touch has no hover) — that left phone
        viewers with no way to mute/adjust volume at all. Keep the mute
@@ -972,6 +1020,7 @@
     .mc-scrim, .mc-bottom, .mc-btn, .mc-hero,
     .mc-vol-slider, .mc-scrub-track, .mc-scrub-thumb { transition:none; }
     .mc-spinner-ring { animation:none; }
+    .mc-chapters-panel { animation:none; }
   }
 
   @media (hover:none) { .mc-scrub-preview { display:none; } }

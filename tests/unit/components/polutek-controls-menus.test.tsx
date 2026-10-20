@@ -29,7 +29,10 @@ vi.mock("@vidstack/react", async () => {
       },
       children,
     );
-  const slider = { Root: Box, Track: Box, TrackFill: Box, Thumb: Box, Progress: Box, Preview: Box, Value: Box };
+  // Chapters: without a chapters track Vidstack hands the render function one empty cue (a single segment).
+  const Chapters = ({ children }: { children: (cues: unknown[], ref: () => void) => React.ReactNode }) =>
+    ReactModule.createElement("div", null, children([{ startTime: 0 }], () => undefined));
+  const slider = { Root: Box, Track: Box, TrackFill: Box, Thumb: Box, Progress: Box, Preview: Box, Value: Box, Chapters, ChapterTitle: Box };
   return {
     Captions: Box,
     FullscreenButton: Btn,
@@ -49,6 +52,8 @@ vi.mock("@vidstack/react", async () => {
       exitPictureInPicture: media.exitPictureInPicture,
     }),
     useMediaPlayer: () => ({ textTracks: (media.state.textTracks as unknown[]) ?? [] }),
+    useChapterOptions: () => [],
+    useChapterTitle: () => "",
   };
 });
 vi.mock("@vidstack/react/icons", () => {
@@ -57,7 +62,7 @@ vi.mock("@vidstack/react/icons", () => {
   const marked = (id: string) => (props: { className?: string }) =>
     React.createElement("svg", { "data-testid": id, className: props.className, "aria-hidden": "true" });
   return {
-    FullscreenExitIcon: icon, FullscreenIcon: icon, MuteIcon: icon,
+    ChaptersIcon: icon, FullscreenExitIcon: icon, FullscreenIcon: icon, MuteIcon: icon,
     PauseIcon: icon, PlayIcon: marked("play-icon"), ReplayIcon: marked("replay-icon"),
     VolumeHighIcon: icon, VolumeLowIcon: icon,
   };
@@ -222,7 +227,7 @@ describe("PolutekControls: captions switch and settings menu", () => {
 
   it("keeps the speed keyboard shortcuts off (the menu is the only speed control)", () => {
     const source = readFileSync(join(process.cwd(), "app/components/VideoPlayer.tsx"), "utf8");
-    expect(source).toMatch(/PLAYER_KEY_SHORTCUTS = \{ speedUp: '', slowDown: '' \}/);
+    expect(source).toMatch(/PLAYER_KEY_SHORTCUTS = \{ speedUp: '', slowDown: '', \.\.\.CHAPTER_KEY_SHORTCUTS \}/);
   });
 
   it("has no CC button for a video without captions", () => {

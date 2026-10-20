@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("next/image", () => ({ default: () => null }));
 vi.mock("@/app/components/player/PolutekControls", () => ({ default: () => null }));
+vi.mock("@/app/components/player/chapters/ChaptersParts", () => ({ ChaptersParts: () => null }));
 vi.mock("@/app/components/preload/PageRevealGate", () => ({ usePageRevealReady: () => undefined }));
 vi.mock("@/app/components/PlayerErrorOverlay", () => ({ PlayerErrorOverlay: ({ errorCode }: { errorCode: string }) => <div data-testid="player-error">{errorCode}</div> }));
 vi.mock("@/lib/hooks/usePlaybackTelemetry", () => ({

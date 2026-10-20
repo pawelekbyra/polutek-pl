@@ -1058,5 +1058,9 @@
  "Time beyond the length of the video.": "Tempo para além da duração do vídeo.",
  "The title cannot be empty.": "O título não pode estar vazio.",
  "The title can be at most {0} characters.": "O título pode ter no máximo {0} caracteres.",
- "Invalid time (e.g. 12:30).": "Hora inválida (p. ex., 12:30)."
+ "Invalid time (e.g. 12:30).": "Hora inválida (p. ex., 12:30).",
+ "Chapters": "Capítulos",
+ "Chapter {0} of {1}": "Capítulo {0} de {1}",
+ "Go to {0}": "Ir para {0}",
+ "Show all ({0})": "Mostrar tudo ({0})"
 }

@@ -1058,5 +1058,9 @@
  "Time beyond the length of the video.": "时间超出了视频长度。",
  "The title cannot be empty.": "标题不能为空。",
  "The title can be at most {0} characters.": "标题最多 {0} 个字符。",
- "Invalid time (e.g. 12:30).": "时间无效（例如 12:30）。"
+ "Invalid time (e.g. 12:30).": "时间无效（例如 12:30）。",
+ "Chapters": "章节",
+ "Chapter {0} of {1}": "第 {0} 章，共 {1} 章",
+ "Go to {0}": "跳转到 {0}",
+ "Show all ({0})": "显示全部（{0}）"
 }
