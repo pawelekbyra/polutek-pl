@@ -67,16 +67,12 @@ function useHiddenPreference(key: string) {
 /** The rail starts below the top bar: publish the bar's height as --pp-topbar-h (it can differ per page and breakpoint). */
 function useTopbarHeight(routeKey: string) {
   useEffect(() => {
-    // A page can carry more than one top bar element (a hidden loading/skeleton copy has no height): use the visible one.
-    const bars = Array.from(document.querySelectorAll<HTMLElement>("header.polutek-watch-nav"));
-    if (bars.length === 0) return;
-    const publish = () => {
-      const height = Math.max(0, ...bars.map((bar) => Math.round(bar.getBoundingClientRect().height)));
-      document.documentElement.style.setProperty("--pp-topbar-h", `${height > 0 ? height : 64}px`);
-    };
+    const bar = document.querySelector<HTMLElement>("header.polutek-watch-nav");
+    if (!bar) return;
+    const publish = () => document.documentElement.style.setProperty("--pp-topbar-h", `${Math.round(bar.getBoundingClientRect().height)}px`);
     publish();
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(publish);
-    bars.forEach((bar) => observer?.observe(bar));
+    observer?.observe(bar);
     window.addEventListener("resize", publish);
     return () => {
       observer?.disconnect();
