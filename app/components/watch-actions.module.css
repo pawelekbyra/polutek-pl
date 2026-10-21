@@ -486,6 +486,19 @@
   }
 }
 
+/* Phones around 360px wide: the channel name ("Paweł Perfect Inc.") has to fit in full, so the channel row gives it the room
+   the "..." took: a smaller gap between avatar, name and Subscribe, and a slimmer Subscribe button (about 20px in all). */
+@media (max-width: 420px) {
+  .creatorStrip {
+    gap: 8px !important;
+  }
+
+  .creatorStrip .subscribeAction {
+    padding-left: 9px !important;
+    padding-right: 9px !important;
+  }
+}
+
 /* Narrow phones: the three buttons share one row, so "Zostań patronem" gets the room. */
 @media (max-width: 420px) {
   .supportAction {
