@@ -329,7 +329,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
         <DialogPrimitive.Backdrop className={styles.overlay} />
         <DialogPrimitive.Popup className={cn(styles.pass, styles.sheet)} aria-labelledby={`${ids}-title`} aria-busy={locked} initialFocus={titleRef}>
           <div className={styles.sheetHead}>
-            <DialogPrimitive.Title render={<h2 ref={titleRef} tabIndex={-1} id={`${ids}-title`} className={styles.sheetTitle} />}>
+            <DialogPrimitive.Title render={<h2 ref={titleRef} tabIndex={-1} id={`${ids}-title`} className={cn(styles.sheetTitle, styles.srOnly)} />}>
               {tx("Zostań patronem", "Become a patron")}
               {testMode && <span className={styles.testBadge}>{tx("Tryb testowy", "Test mode")}</span>}
             </DialogPrimitive.Title>
