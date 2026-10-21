@@ -23,7 +23,7 @@ import EmbeddedComments from "./comments/EmbeddedComments";
 import { openedWithCommentDeepLink } from "./comments/deep-link";
 import type { InitialCommentsPage } from "./comments/initial-comments";
 import { pickHomeVideo } from "@/lib/home-video-selection";
-import { ContinueWatchingShelf } from "./channel/ContinueWatchingShelf";
+import { ViewerShelves } from "./channel/ViewerShelves";
 import type { ContinueWatchingItem } from "@/lib/modules/watch-progress/domain/continue-watching";
 import type { PlaylistQueueDto } from "@/lib/modules/playlists/domain/playlist.dto";
 import { PlaylistQueueLayer } from "./playlists/PlaylistQueuePanel";
@@ -45,7 +45,7 @@ interface ChannelHomeProps {
     email: string;
     imageUrl?: string | null;
     totalPaid: number;
-    initialInteraction?: { liked: boolean; disliked: boolean };
+    initialInteraction?: { liked: boolean; disliked: boolean; favorited?: boolean };
     initialIsSubscribed?: boolean;
     initialNotify?: boolean;
     /** The viewer's saved position in the server-selected video (resume watching). */
@@ -337,7 +337,7 @@ function ChannelHomeContent({
   };
 
   // A shelf item opens its video in place when it is one of the home list's, else by address.
-  const handleContinueWatchingSelect = (item: ContinueWatchingItem) => {
+  const handleContinueWatchingSelect = (item: Pick<ContinueWatchingItem, "videoId" | "slug">) => {
     const known = [...(allVideos || []), ...(extraVideo ? [extraVideo] : [])].find((v) => v.id === item.videoId);
     if (known) {
       handleVideoSelect(known.id);
@@ -405,12 +405,7 @@ function ChannelHomeContent({
 
             {queue && <div className="mb-1 lg:hidden">{queueLayer(true)}</div>}
 
-            {userProfile && continueWatching && continueWatching.length > 0 && (
-              <ContinueWatchingShelf
-                items={continueWatching.filter((item) => item.videoId !== selectedVideo.id)}
-                onSelect={handleContinueWatchingSelect}
-              />
-            )}
+            {userProfile && <ViewerShelves continueWatching={continueWatching ?? []} currentVideoId={selectedVideo.id} onSelect={handleContinueWatchingSelect} />}
 
             <div id="watch-tabs" className="-mx-4 mt-5 flex border-b border-[var(--cm-line-80)] font-sans md:-mx-6 lg:hidden">
               {(["comments", "videos"] as const).map((tab) => {

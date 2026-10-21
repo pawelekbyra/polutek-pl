@@ -65,6 +65,7 @@ model User {
   orders                Order[]
   entitlements          Entitlement[]
   videoProgress         VideoProgress[]
+  videoFavorites        VideoFavorite[]
   moderationAppeals     ModerationAppeal[]
 
   @@index([email])
@@ -855,6 +856,7 @@ model Video {
   orders       Order[]
   entitlements Entitlement[]
   progress     VideoProgress[]
+  favorites    VideoFavorite[]
   playlistItems PlaylistItem[]
 
   @@index([creatorId, status])
@@ -1131,6 +1133,20 @@ model VideoLike {
   @@unique([userId, videoId])
   @@index([videoId])
   @@index([userId])
+}
+
+/// A video the signed-in viewer saved to their favorites ("Dodaj do ulubionych"); private to the viewer.
+model VideoFavorite {
+  id        String   @id @default(uuid())
+  userId    String
+  videoId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, videoId])
+  @@index([videoId])
+  @@index([userId, createdAt])
 }
 
 model VideoDislike {

@@ -176,6 +176,45 @@
   line-height: 1.05 !important;
 }
 
+/* "Dodaj do ulubionych": a small square icon button before Zostań patronem, in the same black-with-white-frame look as
+   the like cluster. Pressed (saved): the heart fills with the bright blue of a pressed like; the frame stays white. */
+.favoriteAction {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid #ffffff;
+  background: #2b2c2e !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.55);
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.favoriteAction svg {
+  stroke: currentColor;
+}
+
+.favoriteAction:hover {
+  background: #3a3b3e !important;
+  transform: translateY(-1px);
+}
+
+.favoriteAction[aria-pressed="true"] {
+  color: #3b82f6 !important;
+}
+
+.favoriteAction[aria-pressed="true"] svg {
+  fill: currentColor;
+}
+
+.favoriteAction:focus-visible {
+  outline: 3px solid var(--cm-blue-22-2);
+  outline-offset: 2px;
+}
+
 /* Wspieraj in the premium gold (owner request, 2026-10-21): the same amber as the premium pass badge and CTA. */
 .supportAction {
   border-color: var(--chan-amber-strong);
@@ -337,7 +376,7 @@
 
   .actionRail {
     display: grid;
-    grid-template-columns: auto auto minmax(0, 1fr);
+    grid-template-columns: auto auto auto minmax(0, 1fr);
     gap: 8px;
   }
 
@@ -380,8 +419,8 @@
   }
 
   .supportAction svg {
-    width: 15px;
-    height: 15px;
+    width: 20px;
+    height: 20px;
   }
 
   .secondaryAction {
@@ -399,6 +438,7 @@
   .actionButton,
   .secondaryAction,
   .subscribeAction,
+  .favoriteAction,
   .supportAction {
     transition: none;
   }
