@@ -174,7 +174,7 @@ describe('patron checkout, step 2 in demo mode (simulated payment)', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') }));
 
     const pay = await within(dialog).findByRole('button', { name: N('Zapłać 29,99 zł') });
-    expect(within(dialog).getByRole('listitem', { current: 'step' })).toHaveTextContent('Płatność');
+    expect(within(dialog).getByRole('listitem', { current: 'step' })).toHaveAttribute('aria-label', 'Płatność');
     const boxes = within(dialog).getAllByRole('checkbox');
     expect(boxes).toHaveLength(2);
     expect(within(dialog).getByRole('checkbox', { name: /Akceptuję/ })).toBeInTheDocument();

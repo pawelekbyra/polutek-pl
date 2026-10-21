@@ -333,24 +333,18 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
               {tx("Zostań patronem", "Become a patron")}
               {testMode && <span className={styles.testBadge}>{tx("Tryb testowy", "Test mode")}</span>}
             </DialogPrimitive.Title>
+            {showSteps && (
+              <ol className={styles.stepDots} aria-label={tx("Etapy zakupu", "Checkout steps")}>
+                <li aria-current={stepNumber === 1 ? "step" : undefined} aria-label={tx("Dostęp", "Access")} className={cn(styles.stepPip, stepNumber === 1 && styles.stepPipNow)} />
+                <li aria-current={stepNumber === 2 ? "step" : undefined} aria-label={tx("Płatność", "Payment")} className={cn(styles.stepPip, stepNumber === 2 && styles.stepPipNow)} />
+              </ol>
+            )}
             <DialogPrimitive.Close className={styles.close} disabled={locked} aria-label={tx("Zamknij", "Close")}>
               <CrossIcon className="h-4 w-4" />
             </DialogPrimitive.Close>
           </div>
 
-          {showSteps && (
-            <>
-              <ol className={styles.steps} aria-label={tx("Etapy zakupu", "Checkout steps")}>
-                <li aria-current={stepNumber === 1 ? "step" : undefined} className={cn(styles.stepItem, stepNumber === 1 && styles.stepNow)}>
-                  <span className={styles.stepDot} aria-hidden="true">1</span>{tx("Dostęp", "Access")}
-                </li>
-                <li aria-current={stepNumber === 2 ? "step" : undefined} className={cn(styles.stepItem, stepNumber === 2 && styles.stepNow)}>
-                  <span className={styles.stepDot} aria-hidden="true">2</span>{tx("Płatność", "Payment")}
-                </li>
-              </ol>
-              <p className={styles.srOnly} role="status" aria-live="polite">{tx("Krok {0} z 2", "Step {0} of 2", stepNumber)}</p>
-            </>
-          )}
+          {showSteps && <p className={styles.srOnly} role="status" aria-live="polite">{tx("Krok {0} z 2", "Step {0} of 2", stepNumber)}</p>}
           {testMode && stage.kind !== "success" && (
             <p className={styles.testNote}>{tx("Tryb testowy: nic nie zostanie pobrane naprawdę. Karta testowa: 4242 4242 4242 4242, dowolna data i CVC.", "Test mode: nothing is really charged. Test card: 4242 4242 4242 4242, any date and CVC.")}</p>
           )}
