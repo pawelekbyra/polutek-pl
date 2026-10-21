@@ -228,7 +228,7 @@ function CommentItemComponent({
               src={avatarSrc}
               alt={comment.author?.displayName || "Avatar"}
               size={avatarSize}
-              className="border border-[var(--chan-line)]"
+              className={cn("border border-[var(--chan-line)]", authorBadge && "border-[var(--chan-blue)] ring-2 ring-[var(--cm-blue-22)]")}
             />
           </button>
         ) : (
@@ -236,7 +236,7 @@ function CommentItemComponent({
             src={avatarSrc}
             alt={comment.author?.displayName || "Avatar"}
             size={avatarSize}
-            className="border border-[var(--chan-line)]"
+            className={cn("border border-[var(--chan-line)]", authorBadge && "border-[var(--chan-blue)] ring-2 ring-[var(--cm-blue-22)]")}
           />
         )}
         {authorBadge && (

@@ -9,6 +9,7 @@ import {
   DialogPortal,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { X } from "../../icons";
 import { SafeAvatar } from "../../SafeAvatar";
 import { AuthorBadge } from "./AuthorBadge";
@@ -71,7 +72,7 @@ export function UserProfileCard({
                 src={avatarSrc}
                 alt=""
                 size={PROFILE_AVATAR_SIZE}
-                className="ring-4 ring-[var(--chan-card)] shadow-[0_14px_34px_-14px_rgba(15,23,42,0.5)]"
+                className={cn("ring-4 shadow-[0_14px_34px_-14px_rgba(15,23,42,0.5)]", badge ? "ring-[var(--cm-blue-22)] border-2 border-[var(--chan-blue)]" : "ring-[var(--chan-card)]")}
               />
             </div>
 
