@@ -125,8 +125,8 @@
    so the "pressed" state can switch them to a light blue on the black. */
 .actionCluster,
 .secondaryAction {
-  --watch-black: #0b0b0d;
-  border-color: #0b0b0d;
+  --watch-black: #2b2c2e;
+  border-color: #2b2c2e;
   background: var(--watch-black) !important;
   color: #ffffff !important;
   box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.55);
@@ -140,7 +140,7 @@
 
 /* A pressed like/dislike: the icon fills in white and the segment lifts a shade, instead of changing the hue. */
 .actionCluster .actionButton[aria-pressed="true"] {
-  background: #2c2c32;
+  background: #3d3e41;
 }
 
 .actionCluster .actionButton[aria-pressed="true"] svg {
@@ -157,12 +157,12 @@
 }
 
 .actionCluster .actionButton:hover {
-  background: #26262b;
+  background: #3a3b3e;
 }
 
 .secondaryAction:hover {
-  background: #26262b !important;
-  border-color: #26262b;
+  background: #3a3b3e !important;
+  border-color: #3a3b3e;
 }
 
 .supportAction span {
