@@ -221,6 +221,16 @@
   background: var(--cm-blue-90-black) !important;
 }
 
+/* The like and dislike halves share the cluster's width, so it has no empty space at the end. */
+.actionRail .actionCluster {
+  width: 100%;
+}
+
+.actionCluster .actionButton {
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
 /* A pressed like/dislike: the icon fills in white. */
 .actionCluster .actionButton[aria-pressed="true"] svg {
   fill: currentColor;
@@ -401,8 +411,9 @@
 
   .actionRail {
     display: grid;
-    /* Like cluster, Share and Subscribe: three equal parts, edge to edge. */
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    /* Each button gets the width its content needs; the space left over is shared equally, so the row runs edge to edge
+       and no label is squeezed ("Subskrajbd" with its check) while another button is mostly empty. */
+    grid-template-columns: auto auto auto;
     gap: 8px;
   }
 
