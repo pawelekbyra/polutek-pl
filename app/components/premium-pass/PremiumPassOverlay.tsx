@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useId, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/react";
 import { getLocalizedHref } from "@/lib/i18n/routing";
+import { patronCurrencyForLanguage } from "@/lib/modules/experiment-premium-pass/domain/config";
 import { cheapestProduct, type PremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
 import { useAuthModal } from "../auth/AuthModalProvider";
 import { useLanguage } from "../LanguageContext";
@@ -57,7 +58,8 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
   const titleId = useId();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const signedIn = Boolean(userId) && offer.signedIn;
-  const from = price(language, cheapestProduct(offer).priceMinor);
+  const currency = patronCurrencyForLanguage(language);
+  const from = price(language, cheapestProduct(offer, currency).prices[currency], currency);
   const demo = offer.payments.mode === "demo";
   const testMode = offer.payments.mode === "stripe" && offer.payments.available && offer.payments.stripeMode === "test";
 

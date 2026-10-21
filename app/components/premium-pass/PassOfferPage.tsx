@@ -15,6 +15,7 @@ import {
   getPremiumPassStatus,
   listPremiumPassVideos,
   notePassFunnelEvent,
+  patronCurrencyForLanguage,
   premiumPassFor,
   resolvePremiumPayments,
   toPremiumPaymentsDto,
@@ -29,7 +30,7 @@ import { APP_NAME } from "@/lib/constants";
 import { DemoRibbon } from "./DemoRibbon";
 import { LockIcon, ShieldIcon } from "./PassIcons";
 import { PassOfferActions, PassOfferDemoControls } from "./PassOfferActions";
-import { passDate, price, productName, vatLine } from "./pass-copy";
+import { PATRON_SUPPORT_EMAIL, passDate, price, productName, vatLine } from "./pass-copy";
 import styles from "./premium-pass.module.css";
 
 export type PassOfferPageProps = { params: Promise<{ locale: string }> };
@@ -61,6 +62,7 @@ export default async function PassOfferPage({ params }: PassOfferPageProps) {
   const payments = toPremiumPaymentsDto(resolvePremiumPayments());
   const offer = status?.ok ? status.data.offer : buildPremiumPassOffer({ signedIn: false, premiumCount: rows.length, payments });
   const demo = payments.mode === "demo";
+  const currency = patronCurrencyForLanguage(locale);
   const testMode = payments.mode === "stripe" && payments.available && payments.stripeMode === "test";
   await notePassFunnelEvent(ctx, "offer_view");
   const firstSlug = rows[0]?.slug ?? null;
@@ -121,7 +123,7 @@ export default async function PassOfferPage({ params }: PassOfferPageProps) {
                     {product.bestValue && <span className={styles.bestValue}>{tx("Najlepsza wartość", "Best value")}</span>}
                     <h2 id={`pass-${product.id}`} className={styles.kicker}>{productName(tx, product.id)}</h2>
                     <div className={styles.price}>
-                      <b>{price(locale, product.priceMinor)}</b>
+                      <b>{price(locale, product.prices[currency], currency)}</b>
                       <span>{tx("jednorazowo", "one-time")}</span>
                     </div>
                     <div className={styles.muted}>{vatLine(tx, offer.vatRatePercent)}</div>
@@ -163,7 +165,7 @@ export default async function PassOfferPage({ params }: PassOfferPageProps) {
               </details>
               <details>
                 <summary>{tx("Kontakt", "Contact")}</summary>
-                <p>support@pawelperfect.com</p>
+                <p>{PATRON_SUPPORT_EMAIL}</p>
               </details>
             </section>
           </div>

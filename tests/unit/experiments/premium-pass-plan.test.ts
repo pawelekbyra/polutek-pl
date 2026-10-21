@@ -68,9 +68,10 @@ describe("PASS_REQUIRED playback plan", () => {
       expect(json).not.toContain("Środek");
       expect(prisma.videoPlaybackSession.create).not.toHaveBeenCalled();
       expect(result.access.offer).toMatchObject({
-        currency: "PLN", premiumCount: 2, signedIn: actor.type !== "guest", defaultProductId: "ACCESS_LIFETIME", payments: { mode: "demo" },
+        premiumCount: 2, signedIn: actor.type !== "guest", defaultProductId: "ACCESS_LIFETIME", payments: { mode: "demo" },
       });
-      expect(result.access.offer?.products.map((p) => [p.id, p.priceMinor, p.days])).toEqual([["ACCESS_30D", 1499, 30], ["ACCESS_LIFETIME", 2999, null]]);
+      expect(result.access.offer?.products.map((p) => [p.id, p.prices.PLN, p.days])).toEqual([["ACCESS_30D", 1499, 30], ["ACCESS_LIFETIME", 2999, null]]);
+      expect(result.access.offer?.currencies).toEqual(["PLN", "EUR", "USD", "CHF", "GBP"]);
     });
   }
 

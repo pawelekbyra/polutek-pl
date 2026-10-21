@@ -44,6 +44,7 @@ describe('premium-pass demo purchase against the real schema', () => {
     const result = await checkoutDemoPass(ctx, {
       requestId: randomUUID(),
       productId: 'ACCESS_30D',
+      currency: 'PLN',
       method: 'blik',
       consents: { terms: true, waiver: true },
       simulate: 'success',
@@ -55,6 +56,7 @@ describe('premium-pass demo purchase against the real schema', () => {
     const declined = await checkoutDemoPass(createAppContext({ actor: { type: 'user', userId: `${userId}-b` }, prisma }), {
       requestId: randomUUID(),
       productId: 'ACCESS_LIFETIME',
+      currency: 'PLN',
       method: 'card',
       consents: { terms: true, waiver: true },
       simulate: 'declined',

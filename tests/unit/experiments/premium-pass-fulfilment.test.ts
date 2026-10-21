@@ -52,12 +52,12 @@ function signedRequest(type: string, object: Record<string, unknown>, options: {
   });
 }
 
-function intent(payment: { id: string; stripeIntentId: string; amountMinor: number }, extra: Record<string, unknown> = {}) {
+function intent(payment: { id: string; stripeIntentId: string; amountMinor: number; currency?: string }, extra: Record<string, unknown> = {}) {
   return {
     id: payment.stripeIntentId,
     object: "payment_intent",
     amount: payment.amountMinor,
-    currency: "pln",
+    currency: (payment.currency ?? "PLN").toLowerCase(),
     status: "succeeded",
     metadata: { paymentId: payment.id, userId: "user_1", purpose: "premium_pass" },
     ...extra,
@@ -210,12 +210,16 @@ describe("patron zone access from the verified webhook", () => {
     expect(grant()).toBeNull();
   });
 
-  it("fails closed: a payment whose amount is not exactly its product's price is recorded as received but grants no access", async () => {
+  it("fails closed: a payment whose amount or currency is not exactly the table's price for its product is recorded as received but grants no access", async () => {
+    const life = { purpose: "premium_pass", productId: "ACCESS_LIFETIME" };
     const cases = [
       seedPatronPayment({ amountMinor: 200 }), // re-priced below
       seedPatronPayment({ amountMinor: 2999 }), // lifetime price on the 30-day product
-      seedPatronPayment({ amountMinor: 1499, metadata: { purpose: "premium_pass", productId: "ACCESS_LIFETIME" } }), // 30-day price on the lifetime product
+      seedPatronPayment({ amountMinor: 1499, metadata: life }), // 30-day price on the lifetime product
       seedPatronPayment({ amountMinor: 1499, metadata: { purpose: "premium_pass", productId: "ACCESS_FOREVER" } }), // unknown product
+      seedPatronPayment({ amountMinor: 1499, currency: "EUR" }), // PLN price paid in euro
+      seedPatronPayment({ amountMinor: 399, currency: "PLN" }), // euro price paid in zloty
+      seedPatronPayment({ amountMinor: 399, currency: "SEK" }), // a currency the table does not know
     ];
     for (const payment of cases) {
       const res = await POST(signedRequest("payment_intent.succeeded", intent(payment)));
@@ -223,6 +227,16 @@ describe("patron zone access from the verified webhook", () => {
       expect(payment.status).toBe("SUCCEEDED");
     }
     expect(grant()).toBeNull();
+  });
+
+  it("another supported currency grants at its own table price and the record keeps the paid currency", async () => {
+    const eur = seedPatronPayment({ amountMinor: 399, currency: "EUR" });
+    await POST(signedRequest("payment_intent.succeeded", intent(eur)));
+    expect(grant()).toMatchObject({ currency: "EUR", priceMinor: 399, totalMinor: 399, productId: "ACCESS_30D", lifetime: false });
+    const usdLife = seedPatronPayment({ amountMinor: 899, currency: "USD", metadata: { purpose: "premium_pass", productId: "ACCESS_LIFETIME" } });
+    await POST(signedRequest("payment_intent.succeeded", intent(usdLife)));
+    // totals never mix currencies: the paid currency changed, so the running total restarts
+    expect(grant()).toMatchObject({ currency: "USD", priceMinor: 899, totalMinor: 899, lifetime: true });
   });
 
   it("never grants when the intent metadata names another account", async () => {

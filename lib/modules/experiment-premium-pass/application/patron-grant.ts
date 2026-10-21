@@ -7,7 +7,7 @@
 // nothing is granted and the owner is alerted.
 import { recordAlert } from "@/lib/observability";
 import type { WriteTx } from "@/lib/modules/shared/db";
-import { PATRON_CURRENCY, patronProduct } from "../domain/config";
+import { isPatronCurrency, patronPrice, patronProduct } from "../domain/config";
 import { addDays, applyProduct, type PassRecord } from "../domain/pass-state";
 import { lockPass, readPass, writePass } from "../infrastructure/pass-store";
 
@@ -40,9 +40,10 @@ export type GrantInput = {
 
 export async function grantPatronAccessForPayment(tx: WriteTx, input: GrantInput): Promise<{ granted: boolean }> {
   const product = patronProduct(input.productId);
-  // Fail closed: an unknown product, a currency other than PLN or an amount that is not exactly the product's price
-  // is a bug or tampering. The payment stays in the ledger as received; the owner decides by hand (refund or grant).
-  if (!product || input.currency.toUpperCase() !== PATRON_CURRENCY || input.amountMinor !== product.priceMinor) {
+  const currency = input.currency.toUpperCase();
+  // Fail closed: an unknown product or currency, or an amount that is not exactly the table's price for this product in
+  // this currency, is a bug or tampering. The payment stays in the ledger as received; the owner decides by hand (refund or grant).
+  if (!product || !isPatronCurrency(currency) || input.amountMinor !== patronPrice(product.id, currency)) {
     recordAlert("premium_pass.unexpected_payment", { paymentId: input.paymentId });
     return { granted: false };
   }
@@ -60,8 +61,8 @@ export async function grantPatronAccessForPayment(tx: WriteTx, input: GrantInput
     ref: input.paymentId,
     productId: product.id,
     priceMinor: input.amountMinor,
-    totalMinor: (keepsStripeHistory ? current.totalMinor : 0) + input.amountMinor,
-    currency: PATRON_CURRENCY,
+    totalMinor: (keepsStripeHistory && current.currency === currency ? current.totalMinor : 0) + input.amountMinor,
+    currency,
     method: input.method?.trim() || "stripe",
     paymentIds: [...(keepsStripeHistory ? current.paymentIds : []), input.paymentId],
     lifetime: next.lifetime,

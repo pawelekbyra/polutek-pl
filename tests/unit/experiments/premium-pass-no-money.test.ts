@@ -71,7 +71,8 @@ describe("premium-pass: where money can move", () => {
     expect(checkout.indexOf("purchaseBlock(")).toBeGreaterThan(-1);
     expect(checkout.indexOf("purchaseBlock(")).toBeLessThan(checkout.indexOf("createCheckoutIntent("));
     // the amount is the product's price from the server table, never a client field
-    expect(checkout).toContain("amountMinor: product.priceMinor");
+    expect(checkout).toContain("patronPrice(input.productId, input.currency)");
+    expect(checkout).toMatch(/\{ userId, amountMinor, currency: input\.currency,/);
     expect(checkout).not.toMatch(/input\.amountMinor/);
   });
 

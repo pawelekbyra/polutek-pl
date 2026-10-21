@@ -1,7 +1,7 @@
 // experiment: premium-pass (docs/experiments/premium-pass.md)
 // The patron-zone access grant of one account and its state. Pure: no I/O, safe on the client.
 import { z } from "zod";
-import { PATRON_CURRENCY, PATRON_MAX_AHEAD_DAYS, type PatronProduct } from "./config";
+import { PATRON_CURRENCIES, PATRON_CURRENCY, PATRON_MAX_AHEAD_DAYS, type PatronProduct } from "./config";
 
 /** Methods the demo checkout offers (the Stripe flow uses Stripe's own method ids, any string). */
 export const PASS_METHODS = ["blik", "card", "apple_pay", "google_pay", "p24"] as const;
@@ -29,7 +29,8 @@ export const passRecordSchema = z
     productId: z.enum(["ACCESS_30D", "ACCESS_LIFETIME"]),
     priceMinor: z.number().int().nonnegative(),
     totalMinor: z.number().int().nonnegative(),
-    currency: z.literal(PATRON_CURRENCY),
+    /** Currency of the last payment; `totalMinor` adds up payments of this currency only (it restarts when it changes). */
+    currency: z.enum(PATRON_CURRENCIES),
     method: z.string().min(1).max(40),
     requestId: z.string().uuid().optional(),
     paymentIds: z.array(z.string().min(1).max(64)).max(200),
@@ -169,6 +170,7 @@ export type PassStatusDto =
       grantedAt: string;
       method: string;
       priceMinor: number;
+      currency: string;
       totalMinor: number;
       waiverAt: string;
     };
@@ -186,6 +188,7 @@ export function toPassStatusDto(state: PassState): PassStatusDto {
     grantedAt: record.grantedAt,
     method: record.method,
     priceMinor: record.priceMinor,
+    currency: record.currency,
     totalMinor: record.totalMinor,
     waiverAt: record.consents.waiverAt,
   };

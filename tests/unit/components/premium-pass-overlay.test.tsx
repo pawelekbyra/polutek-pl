@@ -77,12 +77,12 @@ describe('PremiumPassOverlay (patron zone)', () => {
     expect(screen.queryByText('TRYB TESTOWY')).toBeNull();
   });
 
-  it('signed in: the CTA opens the two-step checkout on step 1, without a DEMO bar inside it', async () => {
+  it('signed in: the CTA opens the three-step checkout on step 1, without a DEMO bar inside it', async () => {
     renderOverlay(true);
     fireEvent.click(screen.getAllByRole('button', { name: /Zostań patronem · od 14,99\s*zł/ })[0]!);
     const dialog = await screen.findByRole('dialog');
     expect(dialog).toHaveTextContent('Zostań patronem');
-    expect(dialog).toHaveTextContent('Zostań patronem i uzyskaj dostęp do strefy premium');
+    expect(dialog).toHaveTextContent('Uzyskaj dostęp do strefy premium');
     expect(dialog).toHaveTextContent('Wybierz dostęp');
     expect(dialog).toHaveTextContent('Sprzedawca: POLUTEK Sp. z o.o.');
     expect(dialog).not.toHaveTextContent('dane demo');
