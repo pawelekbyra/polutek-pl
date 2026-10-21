@@ -362,7 +362,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                          likePulse && "motion-safe:animate-[polutek-reaction-pop_320ms_cubic-bezier(0.34,1.56,0.64,1)_both]",
                        )}
                        strokeWidth={1.8}
-                       color={interactionState.isLiked ? "var(--chan-blue)" : "var(--chan-ink)"}
+                       color="currentColor"
                      />
                      <span className="text-[12px] font-bold">{interactionState.likesCount.toLocaleString(intlLocale(language))}</span>
                   </button>
@@ -384,7 +384,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                          dislikePulse && "motion-safe:animate-[polutek-reaction-pop_320ms_cubic-bezier(0.34,1.56,0.64,1)_both]",
                        )}
                        strokeWidth={1.8}
-                       color={interactionState.isDisliked ? "var(--chan-blue)" : "var(--chan-ink)"}
+                       color="currentColor"
                      />
                   </button>
                </div>
