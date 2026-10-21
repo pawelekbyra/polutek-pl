@@ -138,13 +138,13 @@
   color: #ffffff !important;
 }
 
-/* A pressed like/dislike: the icon fills in white and the segment lifts a shade, instead of changing the hue. */
+/* A pressed like/dislike: icon and count turn the premium gold (outline only, no fill). */
 .actionCluster .actionButton[aria-pressed="true"] {
-  background: #3d3e41;
+  color: var(--chan-amber-bright) !important;
 }
 
 .actionCluster .actionButton[aria-pressed="true"] svg {
-  fill: currentColor;
+  fill: none;
 }
 
 .actionCluster svg,
