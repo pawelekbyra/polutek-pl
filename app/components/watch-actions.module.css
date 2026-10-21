@@ -242,6 +242,8 @@
 .subscribeAction,
 .supportAction {
   border-radius: 4px !important;
+  /* No dark edge: the border area shows the button's own colour. */
+  border-color: transparent !important;
 }
 
 /* The like and dislike halves share the cluster's width, so it has no empty space at the end. */
