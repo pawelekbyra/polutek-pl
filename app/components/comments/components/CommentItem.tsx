@@ -228,7 +228,7 @@ function CommentItemComponent({
               src={avatarSrc}
               alt={comment.author?.displayName || "Avatar"}
               size={avatarSize}
-              className={cn("border border-[var(--chan-line)]", authorBadge && "border-[var(--chan-blue)] ring-2 ring-[var(--cm-blue-22)]")}
+              className={cn("border border-[var(--chan-line)]", authorBadge && "border-transparent ring-2 ring-[var(--chan-blue)] ring-offset-2 ring-offset-[var(--chan-card)]")}
             />
           </button>
         ) : (
@@ -236,13 +236,8 @@ function CommentItemComponent({
             src={avatarSrc}
             alt={comment.author?.displayName || "Avatar"}
             size={avatarSize}
-            className={cn("border border-[var(--chan-line)]", authorBadge && "border-[var(--chan-blue)] ring-2 ring-[var(--cm-blue-22)]")}
+            className={cn("border border-[var(--chan-line)]", authorBadge && "border-transparent ring-2 ring-[var(--chan-blue)] ring-offset-2 ring-offset-[var(--chan-card)]")}
           />
-        )}
-        {authorBadge && (
-          <span className="absolute left-1/2 top-full mt-1 -translate-x-1/2">
-            <AuthorBadge kind={authorBadge} language={language} />
-          </span>
         )}
       </div>
       <div className="relative z-[5] min-w-0 flex-1">
@@ -265,6 +260,7 @@ function CommentItemComponent({
                 {profileName}
               </span>
             )}
+            {authorBadge && <AuthorBadge kind={authorBadge} language={language} />}
             <time
               className="shrink-0 whitespace-nowrap text-[12px] leading-[18px] text-[var(--chan-muted)]"
               dateTime={validCreatedAt ? comment.createdAt : undefined}
