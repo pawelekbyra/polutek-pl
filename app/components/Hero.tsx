@@ -18,14 +18,14 @@ import { logger } from '@/lib/logger';
 import { getVideoDisplayTitle } from '@/lib/video-title-overrides';
 import SubscribeButton from './SubscribeButton';
 import ShareButton from './ShareButton';
-import FavoriteButton from './FavoriteButton';
 import { getPlaybackPosition } from './player/playback-position';
 import { FundraisingProgressBar } from './FundraisingProgressBar';
 import VideoTaxonomyChips from './search/VideoTaxonomyChips';
 import { LinkedDescription } from './video/LinkedDescription';
 import { DescriptionChapters } from './video/DescriptionChapters';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
-import { ThumbsUp, ThumbsDown } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Rocket } from 'lucide-react';
+import { PATRON_MIN_MINOR } from '@/lib/modules/experiment-premium-pass/domain/config';
 import styles from './watch-actions.module.css';
 
 interface HeroProps {
@@ -397,7 +397,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                  text={video.description || undefined}
                  className={styles.secondaryAction}
                />
-               <FavoriteButton videoId={video.id} initialFavorited={initialInteraction ? !!initialInteraction.favorited : undefined} />
                {/* Hero only ever renders inside ChannelHome, whose listener for the
                    "polutek:open-support" event (also used by AccessLockOverlay) opens the
                    tip gate (SupportModal). It deliberately does not touch the URL: a router
@@ -420,7 +419,9 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                  aria-label={tx("Zostań patronem", "Become a patron")}
                  title={tx("Zostań patronem", "Become a patron")}
                >
-                 <span className="leading-none">{tx("Zostań patronem", "Become a patron")}</span>
+                 <Rocket aria-hidden="true" className="h-[18px] w-[18px] shrink-0" strokeWidth={1.9} />
+                 <span className={cn("leading-none", styles.supportLabel)}>{tx("Zostań patronem", "Become a patron")}</span>
+                 <span className={styles.supportPrice}>{PATRON_MIN_MINOR / 100} PLN</span>
                </button>
             </div>
           </div>

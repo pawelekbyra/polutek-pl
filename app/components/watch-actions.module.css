@@ -127,6 +127,25 @@
   line-height: 1.05 !important;
 }
 
+/* "Zostań patronem": rocket on the left, the label on two lines, and the minimum price as a small dark pill on the right. */
+.supportAction .supportLabel {
+  max-width: 5.5em;
+}
+
+.supportAction .supportPrice {
+  flex: none;
+  padding: 4px 7px;
+  border-radius: 8px;
+  background: var(--chan-amber-ink);
+  color: var(--chan-amber-bright);
+  font-size: 11.5px;
+  font-weight: 800;
+  line-height: 1 !important;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 /* "Dodaj do ulubionych": a small square icon button before Zostań patronem, in the same cream look as the like cluster and
    Share (the plain --watch-control-* surface). Pressed (saved): the icon turns the blue of a pressed like. */
 .favoriteAction {
