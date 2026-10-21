@@ -236,6 +236,14 @@
   background: #f26b0d !important;
 }
 
+/* Button shape (owner screenshot, 2026-10-21): nearly rectangular, a 4px corner instead of the rounded 12px pills. */
+.actionCluster,
+.secondaryAction,
+.subscribeAction,
+.supportAction {
+  border-radius: 4px !important;
+}
+
 /* The like and dislike halves share the cluster's width, so it has no empty space at the end. */
 .actionRail .actionCluster {
   width: 100%;
