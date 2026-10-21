@@ -96,6 +96,7 @@ export async function createCheckoutIntent(
         metadata: {
           ...(input.requestId ? { requestId: input.requestId } : {}),
           ...(input.purpose ? { purpose: input.purpose } : {}),
+          ...(input.purpose && input.productId ? { productId: input.productId } : {}),
         },
         requestId: input.requestId ?? null,
       }, ctx.prisma);
@@ -143,6 +144,7 @@ async function createIntentFor(payment: PaymentDto, user: CheckoutUser, ctx: App
       userId: user.id,
       paymentId: payment.id,
       ...(isPremiumPassPayment(payment.metadata) ? { purpose: PAYMENT_PURPOSE_PREMIUM_PASS } : {}),
+      ...(isPremiumPassPayment(payment.metadata) && typeof payment.metadata?.productId === "string" ? { productId: payment.metadata.productId } : {}),
       ...(payment.requestId ? { requestId: payment.requestId } : {}),
       creatorId: payment.creatorId,
     },
@@ -190,7 +192,10 @@ async function reuseAttempt(
     return success(terminal({ ...existing, status: intent.status === "canceled" ? PaymentStatus.CANCELED : PaymentStatus.SUCCEEDED }));
   }
 
-  const changed = existing.amountMinor !== input.amountMinor || existing.currency !== currency;
+  // experiment: premium-pass: another product on the same attempt moves the amount AND the product id together.
+  const existingMeta = (existing.metadata && typeof existing.metadata === "object" ? existing.metadata : {}) as Record<string, unknown>;
+  const productChanged = Boolean(input.purpose && input.productId && existingMeta.productId !== input.productId);
+  const changed = existing.amountMinor !== input.amountMinor || existing.currency !== currency || productChanged;
   if (!changed) return success(ready(existing.id, intent));
 
   if (!UPDATABLE_INTENT_STATES.has(intent.status)) {
@@ -203,8 +208,9 @@ async function reuseAttempt(
   intent = await stripe.paymentIntents.update(intent.id, {
     amount: input.amountMinor,
     currency: PaymentPolicy.getStripeCurrency(currency),
+    ...(productChanged ? { metadata: { productId: input.productId! } } : {}),
   });
-  const count = await repo.updatePendingPaymentAmount(existing.id, input.amountMinor, currency, ctx.prisma);
+  const count = await repo.updatePendingPaymentAmount(existing.id, input.amountMinor, currency, ctx.prisma, productChanged ? { ...existingMeta, productId: input.productId } : undefined);
   if (count === 0) {
     // The row stopped being PENDING in between (paid or canceled): treat as finished.
     const current = await repo.findById(existing.id, ctx.db.read);

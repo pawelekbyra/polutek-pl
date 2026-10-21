@@ -55,7 +55,7 @@ const { GET: status } = await import("@/app/api/user/premium-pass/route");
 const REQ = "8b1f9f3e-1d2c-4a5b-9c7d-0e1f2a3b4c5d";
 const body = (overrides: Record<string, unknown> = {}) => ({
   requestId: REQ,
-  amountMinor: 2500,
+  productId: "ACCESS_30D",
   method: "blik",
   consents: { terms: true, waiver: true },
   simulate: "success",
@@ -65,6 +65,11 @@ const post = (handler: (req: NextRequest) => Promise<Response>, url: string, pay
   handler(new NextRequest(`https://www.pawelperfect.com${url}`, { method: "POST", body: JSON.stringify(payload), headers: { "content-type": "application/json" } }));
 const passKeys = () => [...store.keys()].filter((k) => k.startsWith("xp.premium_pass:"));
 const DAY = 86_400_000;
+const row = (over: Record<string, unknown>) => JSON.stringify({
+  v: 3, provider: "STRIPE", ref: "pay_0", productId: "ACCESS_30D", priceMinor: 1499, totalMinor: 1499, currency: "PLN", method: "blik", paymentIds: ["pay_0"],
+  lifetime: false, lifetimePaymentId: null, grantedAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 10 * DAY).toISOString(),
+  consents: { termsVersion: "x", waiverAt: new Date().toISOString() }, ...over,
+});
 
 const STRIPE_ENV = ["PREMIUM_PASS_PAYMENTS", "STRIPE_SECRET_KEY", "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY", "STRIPE_WEBHOOK_SECRET", "PLATFORM_GATE_SALES"] as const;
 function setStripe(mode: "test" | "live", gate?: "on") {
@@ -106,18 +111,16 @@ describe("POST /api/user/premium-pass/checkout (demo mode, simulated)", () => {
   });
 
   it("400 for unknown fields (no card or BLIK data is ever accepted) and bad values", async () => {
-    for (const bad of [body({ cardNumber: "4242424242424242" }), body({ blikCode: "123456" }), body({ method: "paypal" }), body({ requestId: "x" }), body({ simulate: "charge" }), body({ product: "PASS_7D" }), body({ amountMinor: 12.5 }), body({ amountMinor: "2500" })]) {
+    for (const bad of [body({ cardNumber: "4242424242424242" }), body({ blikCode: "123456" }), body({ method: "paypal" }), body({ requestId: "x" }), body({ simulate: "charge" }), body({ product: "PASS_7D" }), body({ productId: "ACCESS_365D" }), body({ productId: 1 }), body({ amountMinor: 1 }), body({ amountMinor: 2999 })]) {
       const res = await post(checkout, "/api/user/premium-pass/checkout", bad);
       expect(res.status).toBe(400);
     }
     expect(passKeys()).toEqual([]);
   });
 
-  it("400 AMOUNT_INVALID below the minimum or above the maximum, nothing written", async () => {
-    for (const amountMinor of [1999, 499, 0, -500, 100_001]) {
-      const res = await post(checkout, "/api/user/premium-pass/checkout", body({ amountMinor }));
-      expect(res.status).toBe(400);
-      expect(await res.json()).toEqual({ code: "AMOUNT_INVALID" });
+  it("takes no amount from the client: only the two known product ids exist", async () => {
+    for (const bad of [body({ productId: "ACCESS_FREE" }), body({ productId: undefined }), body({ amountMinor: 1, productId: "ACCESS_LIFETIME" })]) {
+      expect((await post(checkout, "/api/user/premium-pass/checkout", bad)).status).toBe(400);
     }
     expect(passKeys()).toEqual([]);
   });
@@ -136,41 +139,59 @@ describe("POST /api/user/premium-pass/checkout (demo mode, simulated)", () => {
     expect(passKeys()).toEqual([]);
   });
 
-  it("success writes one DEMO row for the typed amount; the same requestId gives the same answer; another payment extends by 30 days", async () => {
-    const first = await post(checkout, "/api/user/premium-pass/checkout", body({ amountMinor: 2550, method: "card" }));
+  it("30 days: one DEMO row at the product's price; the same requestId gives the same answer; another payment extends by 30 days", async () => {
+    const first = await post(checkout, "/api/user/premium-pass/checkout", body({ method: "card" }));
     expect(first.status).toBe(200);
     expect(first.headers.get("cache-control")).toBe("private, no-store");
     const receipt = (await first.json()).pass;
-    expect(receipt).toMatchObject({ state: "active", provider: "DEMO", priceMinor: 2550, totalMinor: 2550, method: "card" });
+    expect(receipt).toMatchObject({ state: "active", provider: "DEMO", productId: "ACCESS_30D", lifetime: false, priceMinor: 1499, totalMinor: 1499, method: "card" });
     expect(receipt.ref).toMatch(/^DEMO-/);
     expect(receipt.requestId).toBeUndefined();
     expect(receipt.paymentIds).toBeUndefined();
     expect(passKeys()).toEqual(["xp.premium_pass:u1"]);
-    const row = JSON.parse(store.get("xp.premium_pass:u1")!);
-    expect(row).toMatchObject({ v: 2, provider: "DEMO", currency: "PLN", priceMinor: 2550, consents: { termsVersion: "patron-2026-10-draft" } });
-    expect(new Date(row.expiresAt).getTime() - new Date(row.grantedAt).getTime()).toBe(30 * DAY);
-    expect(JSON.stringify(row)).not.toMatch(/@|email/i);
+    const saved = JSON.parse(store.get("xp.premium_pass:u1")!);
+    expect(saved).toMatchObject({ v: 3, provider: "DEMO", currency: "PLN", priceMinor: 1499, lifetime: false, consents: { termsVersion: "patron-2026-10-draft" } });
+    expect(new Date(saved.expiresAt).getTime() - new Date(saved.grantedAt).getTime()).toBe(30 * DAY);
+    expect(JSON.stringify(saved)).not.toMatch(/@|email/i);
 
-    const again = await post(checkout, "/api/user/premium-pass/checkout", body({ amountMinor: 2550, method: "card" }));
-    expect(again.status).toBe(200);
+    const again = await post(checkout, "/api/user/premium-pass/checkout", body({ method: "card" }));
     expect((await again.json()).pass.ref).toBe(receipt.ref);
-    expect(JSON.parse(store.get("xp.premium_pass:u1")!).expiresAt).toBe(row.expiresAt);
+    expect(JSON.parse(store.get("xp.premium_pass:u1")!).expiresAt).toBe(saved.expiresAt);
 
-    const other = await post(checkout, "/api/user/premium-pass/checkout", body({ requestId: "1b1f9f3e-1d2c-4a5b-9c7d-0e1f2a3b4c5d", amountMinor: 2000 }));
+    const other = await post(checkout, "/api/user/premium-pass/checkout", body({ requestId: "1b1f9f3e-1d2c-4a5b-9c7d-0e1f2a3b4c5d" }));
     expect(other.status).toBe(200);
     const extended = JSON.parse(store.get("xp.premium_pass:u1")!);
-    expect(new Date(extended.expiresAt).getTime() - new Date(row.expiresAt).getTime()).toBe(30 * DAY);
-    expect(extended).toMatchObject({ priceMinor: 2000, totalMinor: 4550, grantedAt: row.grantedAt });
+    expect(new Date(extended.expiresAt).getTime() - new Date(saved.expiresAt).getTime()).toBe(30 * DAY);
+    expect(extended).toMatchObject({ totalMinor: 2998, grantedAt: saved.grantedAt });
   });
 
-  it("refuses to extend beyond the 365-day horizon", async () => {
-    store.set("xp.premium_pass:u1", JSON.stringify({
-      v: 2, provider: "DEMO", ref: "DEMO-AAAA-BBBB", priceMinor: 500, totalMinor: 500, currency: "PLN", method: "blik", paymentIds: [],
-      grantedAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 340 * DAY).toISOString(), consents: { termsVersion: "x", waiverAt: new Date().toISOString() },
-    }));
+  it("unlimited: a lifetime marker, no end date, the product's price; then nothing more can be bought", async () => {
+    const res = await post(checkout, "/api/user/premium-pass/checkout", body({ productId: "ACCESS_LIFETIME" }));
+    expect(res.status).toBe(200);
+    const receipt = (await res.json()).pass;
+    expect(receipt).toMatchObject({ state: "active", lifetime: true, expiresAt: null, productId: "ACCESS_LIFETIME", priceMinor: 2999 });
+    expect(JSON.parse(store.get("xp.premium_pass:u1")!)).toMatchObject({ lifetime: true, expiresAt: null });
+    for (const productId of ["ACCESS_30D", "ACCESS_LIFETIME"]) {
+      const more = await post(checkout, "/api/user/premium-pass/checkout", body({ requestId: crypto.randomUUID(), productId }));
+      expect(more.status).toBe(409);
+      expect((await more.json()).code).toBe("ALREADY_LIFETIME");
+    }
+    expect(JSON.parse(store.get("xp.premium_pass:u1")!).totalMinor).toBe(2999);
+  });
+
+  it("unlimited while a 30-day access runs converts it to lifetime", async () => {
+    await post(checkout, "/api/user/premium-pass/checkout", body());
+    const res = await post(checkout, "/api/user/premium-pass/checkout", body({ requestId: crypto.randomUUID(), productId: "ACCESS_LIFETIME" }));
+    expect(res.status).toBe(200);
+    expect(JSON.parse(store.get("xp.premium_pass:u1")!)).toMatchObject({ lifetime: true, totalMinor: 4498 });
+  });
+
+  it("refuses 30 more days beyond the 365-day horizon, but unlimited is still allowed", async () => {
+    store.set("xp.premium_pass:u1", row({ provider: "DEMO", expiresAt: new Date(Date.now() + 340 * DAY).toISOString(), paymentIds: [] }));
     const res = await post(checkout, "/api/user/premium-pass/checkout", body({ requestId: "3b1f9f3e-1d2c-4a5b-9c7d-0e1f2a3b4c5d" }));
     expect(res.status).toBe(409);
     expect((await res.json()).code).toBe("MAX_AHEAD");
+    expect((await post(checkout, "/api/user/premium-pass/checkout", body({ requestId: "4b1f9f3e-1d2c-4a5b-9c7d-0e1f2a3b4c5d", productId: "ACCESS_LIFETIME" }))).status).toBe(200);
   });
 
   it("ADMIN on the public site can use the demo checkout too", async () => {
@@ -207,7 +228,7 @@ describe("POST /api/user/premium-pass/checkout (demo mode, simulated)", () => {
 });
 
 describe("POST /api/user/premium-pass/intent (stripe mode: the real payment starts here)", () => {
-  const input = (overrides: Record<string, unknown> = {}) => ({ requestId: REQ, amountMinor: 2500, ...overrides });
+  const input = (overrides: Record<string, unknown> = {}) => ({ requestId: REQ, productId: "ACCESS_LIFETIME", ...overrides });
   beforeEach(() => {
     createCheckoutIntent.mockResolvedValue({ ok: true, data: { paymentId: "pay_1", clientSecret: "pi_1_secret_x", paymentMethodTypes: ["blik", "card", "p24"] } });
   });
@@ -247,27 +268,23 @@ describe("POST /api/user/premium-pass/intent (stripe mode: the real payment star
     expect(createCheckoutIntent).not.toHaveBeenCalled();
   });
 
-  it("validates the amount on the server and accepts nothing else from the client", async () => {
+  it("accepts only a known product id and nothing else from the client (no amount, no currency, no user)", async () => {
     setStripe("test");
-    for (const amountMinor of [1999, 499, 100_001, 0, -1]) {
-      const res = await post(intent, "/api/user/premium-pass/intent", input({ amountMinor }));
-      expect(res.status).toBe(400);
-      expect((await res.json()).code).toBe("AMOUNT_INVALID");
-    }
-    for (const bad of [input({ amountMinor: 25.5 }), input({ amountMinor: "2500" }), input({ currency: "EUR" }), input({ userId: "u2" }), input({ purpose: "tip" }), input({ requestId: "nope" }), {}]) {
+    for (const bad of [input({ productId: "ACCESS_FREE" }), input({ productId: "" }), input({ amountMinor: 1 }), input({ amountMinor: 2999 }), input({ currency: "EUR" }), input({ userId: "u2" }), input({ purpose: "tip" }), input({ requestId: "nope" }), { requestId: REQ }, {}]) {
       expect((await post(intent, "/api/user/premium-pass/intent", bad)).status).toBe(400);
     }
     expect(createCheckoutIntent).not.toHaveBeenCalled();
   });
 
-  it("creates the payment through the tip gateway's createCheckoutIntent: PLN, the session's user, purpose premium_pass", async () => {
+  it("derives the amount from the product table: PLN, the session's user, purpose premium_pass, the product id", async () => {
     setStripe("test");
-    const res = await post(intent, "/api/user/premium-pass/intent", input({ amountMinor: 2234 }));
+    const res = await post(intent, "/api/user/premium-pass/intent", input());
     expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toBe("private, no-store");
     expect(await res.json()).toEqual({ paymentId: "pay_1", clientSecret: "pi_1_secret_x", paymentMethodTypes: ["blik", "card", "p24"], terminal: false });
-    expect(createCheckoutIntent).toHaveBeenCalledTimes(1);
-    expect(createCheckoutIntent.mock.calls[0]![0]).toEqual({ userId: "u1", amountMinor: 2234, currency: "PLN", requestId: REQ, purpose: "premium_pass" });
+    expect(createCheckoutIntent.mock.calls[0]![0]).toEqual({ userId: "u1", amountMinor: 2999, currency: "PLN", requestId: REQ, purpose: "premium_pass", productId: "ACCESS_LIFETIME" });
+    await post(intent, "/api/user/premium-pass/intent", input({ productId: "ACCESS_30D" }));
+    expect(createCheckoutIntent.mock.calls[1]![0]).toMatchObject({ amountMinor: 1499, productId: "ACCESS_30D" });
     expect(passKeys()).toEqual([]); // starting a payment grants nothing
   });
 
@@ -276,16 +293,25 @@ describe("POST /api/user/premium-pass/intent (stripe mode: the real payment star
     expect((await post(intent, "/api/user/premium-pass/intent", input())).status).toBe(200);
   });
 
-  it("refuses another payment when the access already runs beyond the horizon", async () => {
+  it("refuses any payment before it exists when unlimited access is already held", async () => {
     setStripe("test");
-    store.set("xp.premium_pass:u1", JSON.stringify({
-      v: 2, provider: "STRIPE", ref: "pay_0", priceMinor: 500, totalMinor: 500, currency: "PLN", method: "blik", paymentIds: ["pay_0"],
-      grantedAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 340 * DAY).toISOString(), consents: { termsVersion: "x", waiverAt: new Date().toISOString() },
-    }));
-    const res = await post(intent, "/api/user/premium-pass/intent", input());
+    store.set("xp.premium_pass:u1", row({ lifetime: true, lifetimePaymentId: "pay_0" }));
+    for (const productId of ["ACCESS_30D", "ACCESS_LIFETIME"]) {
+      const res = await post(intent, "/api/user/premium-pass/intent", input({ productId }));
+      expect(res.status).toBe(409);
+      expect((await res.json()).code).toBe("ALREADY_LIFETIME");
+    }
+    expect(createCheckoutIntent).not.toHaveBeenCalled();
+  });
+
+  it("refuses 30 more days beyond the horizon before a payment exists, but allows unlimited (it converts)", async () => {
+    setStripe("test");
+    store.set("xp.premium_pass:u1", row({ expiresAt: new Date(Date.now() + 340 * DAY).toISOString() }));
+    const res = await post(intent, "/api/user/premium-pass/intent", input({ productId: "ACCESS_30D" }));
     expect(res.status).toBe(409);
     expect((await res.json()).code).toBe("MAX_AHEAD");
     expect(createCheckoutIntent).not.toHaveBeenCalled();
+    expect((await post(intent, "/api/user/premium-pass/intent", input({ productId: "ACCESS_LIFETIME" }))).status).toBe(200);
   });
 
   it("maps a finished attempt, a payment in progress and a provider error", async () => {
@@ -356,6 +382,12 @@ describe("POST /api/user/premium-pass/demo (own access only, demo mode or Stripe
     expect(store.has("xp.premium_pass:u1")).toBe(false);
   });
 
+  it("expire also ends an unlimited access (the panel is for looking at the expired state)", async () => {
+    await post(checkout, "/api/user/premium-pass/checkout", body({ productId: "ACCESS_LIFETIME" }));
+    const res = await post(demo, "/api/user/premium-pass/demo", { action: "expire" });
+    expect((await res.json()).pass).toMatchObject({ state: "expired", lifetime: false });
+  });
+
   it("after expiry a new demo payment is allowed", async () => {
     await post(checkout, "/api/user/premium-pass/checkout", body());
     await post(demo, "/api/user/premium-pass/demo", { action: "expire" });
@@ -364,10 +396,7 @@ describe("POST /api/user/premium-pass/demo (own access only, demo mode or Stripe
   });
 
   it("with LIVE keys it cannot remove the proof of a real payment; with TEST keys it can", async () => {
-    store.set("xp.premium_pass:u1", JSON.stringify({
-      v: 2, provider: "STRIPE", ref: "pay_0", priceMinor: 500, totalMinor: 500, currency: "PLN", method: "blik", paymentIds: ["pay_0"],
-      grantedAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 10 * DAY).toISOString(), consents: { termsVersion: "x", waiverAt: new Date().toISOString() },
-    }));
+    store.set("xp.premium_pass:u1", row({}));
     setStripe("live", "on");
     expect((await post(demo, "/api/user/premium-pass/demo", { action: "reset" })).status).toBe(409);
     setStripe("live");

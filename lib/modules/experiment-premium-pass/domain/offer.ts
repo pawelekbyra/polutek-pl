@@ -1,27 +1,18 @@
 // experiment: premium-pass (docs/experiments/premium-pass.md)
 // The offer the browser gets inside a PASS_REQUIRED playback plan and from /api/user/premium-pass. Offer data, never
 // access data: it carries no source, token or session. Pure, safe on the client.
-import {
-  PATRON_ACCESS_DAYS,
-  PATRON_CURRENCY,
-  PATRON_DEFAULT_MINOR,
-  PATRON_MAX_MINOR,
-  PATRON_MIN_MINOR,
-  PATRON_SUGGESTED_MINOR,
-  PATRON_VAT_RATE_PERCENT,
-} from "./config";
+import { PATRON_CURRENCY, PATRON_DEFAULT_PRODUCT_ID, PATRON_PRODUCTS, PATRON_VAT_RATE_PERCENT, patronProduct, type PatronProductId } from "./config";
 import { readPremiumPaymentsDto, type PremiumPaymentsDto } from "./payments-mode";
+
+export type PatronOfferProduct = { id: PatronProductId; days: number | null; priceMinor: number; bestValue?: true };
 
 export type PremiumPassOffer = {
   currency: typeof PATRON_CURRENCY;
   vatRatePercent: number;
-  /** Days of access one payment grants. */
-  accessDays: number;
-  minMinor: number;
-  maxMinor: number;
-  suggestedMinor: number[];
-  defaultMinor: number;
-  /** Number of videos in the patron zone (for "All patron videos (2)"). */
+  /** The two options, in display order. The server derives every amount from its own table, not from this copy. */
+  products: PatronOfferProduct[];
+  defaultProductId: PatronProductId;
+  /** Number of videos in the patron zone (for "All patron zone videos (2)"). */
   premiumCount: number;
   signedIn: boolean;
   /** The viewer's own access ended on this date (ISO): shows the "expired" banner. */
@@ -39,11 +30,8 @@ export function buildPremiumPassOffer(args: {
   return {
     currency: PATRON_CURRENCY,
     vatRatePercent: PATRON_VAT_RATE_PERCENT,
-    accessDays: PATRON_ACCESS_DAYS,
-    minMinor: PATRON_MIN_MINOR,
-    maxMinor: PATRON_MAX_MINOR,
-    suggestedMinor: [...PATRON_SUGGESTED_MINOR],
-    defaultMinor: PATRON_DEFAULT_MINOR,
+    products: PATRON_PRODUCTS.map((p) => ({ id: p.id, days: p.days, priceMinor: p.priceMinor, ...(p.bestValue ? { bestValue: true as const } : {}) })),
+    defaultProductId: PATRON_DEFAULT_PRODUCT_ID,
     premiumCount: args.premiumCount,
     signedIn: args.signedIn,
     ...(args.expiredAt ? { expiredAt: args.expiredAt } : {}),
@@ -51,37 +39,35 @@ export function buildPremiumPassOffer(args: {
   };
 }
 
-function minorList(value: unknown, fallback: readonly number[]): number[] {
-  const list = Array.isArray(value) ? value.filter((n): n is number => Number.isInteger(n) && n > 0) : [];
-  return list.length > 0 ? list : [...fallback];
-}
-
 /** Only well-formed offers reach the UI (a plan is parsed defensively, like every plan field). */
 export function readPremiumPassOffer(value: unknown): PremiumPassOffer | null {
   if (!value || typeof value !== "object") return null;
   const offer = value as Partial<PremiumPassOffer>;
-  if (!offer.payments || typeof offer.payments !== "object" || !Number.isInteger(offer.minMinor) || !Number.isInteger(offer.maxMinor)) return null;
+  if (!offer.payments || typeof offer.payments !== "object" || !Array.isArray(offer.products)) return null;
+  const products = offer.products.filter(
+    (p): p is PatronOfferProduct => !!p && patronProduct(p.id) !== null && Number.isInteger(p.priceMinor) && (p.days === null || Number.isInteger(p.days)),
+  );
+  if (products.length === 0) return null;
   const base = buildPremiumPassOffer({ signedIn: offer.signedIn === true, premiumCount: typeof offer.premiumCount === "number" ? offer.premiumCount : 0 });
   return {
     ...base,
     vatRatePercent: typeof offer.vatRatePercent === "number" ? offer.vatRatePercent : base.vatRatePercent,
-    accessDays: Number.isInteger(offer.accessDays) && (offer.accessDays as number) > 0 ? (offer.accessDays as number) : base.accessDays,
-    minMinor: offer.minMinor as number,
-    maxMinor: offer.maxMinor as number,
-    suggestedMinor: minorList(offer.suggestedMinor, base.suggestedMinor),
-    defaultMinor: Number.isInteger(offer.defaultMinor) ? (offer.defaultMinor as number) : base.defaultMinor,
+    products,
+    defaultProductId: products.some((p) => p.id === offer.defaultProductId) ? (offer.defaultProductId as PatronProductId) : products[0]!.id,
     ...(typeof offer.expiredAt === "string" ? { expiredAt: offer.expiredAt } : {}),
     payments: readPremiumPaymentsDto(offer.payments),
   };
 }
 
-/** `25,00 zł` (pl), `PLN 25.00` (en), local format elsewhere. `intlLocale` comes from lib/i18n/ui. */
+/** `29,99 zł` (pl), `PLN 29.99` (en), local format elsewhere. `intlLocale` comes from lib/i18n/ui. */
 export function formatPassPrice(priceMinor: number, locale: string, currency: string = PATRON_CURRENCY): string {
-  const whole = priceMinor % 100 === 0;
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency,
-    minimumFractionDigits: whole ? 0 : 2,
-    maximumFractionDigits: 2,
-  }).format(priceMinor / 100);
+  return new Intl.NumberFormat(locale, { style: "currency", currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(priceMinor / 100);
+}
+
+export function cheapestProduct(offer: Pick<PremiumPassOffer, "products">): PatronOfferProduct {
+  return offer.products.reduce((min, p) => (p.priceMinor < min.priceMinor ? p : min), offer.products[0]!);
+}
+
+export function defaultProduct(offer: Pick<PremiumPassOffer, "products" | "defaultProductId">): PatronOfferProduct {
+  return offer.products.find((p) => p.id === offer.defaultProductId) ?? offer.products[0]!;
 }

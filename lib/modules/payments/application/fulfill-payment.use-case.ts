@@ -89,11 +89,12 @@ export async function fulfillPayment(
       // and the access are recorded together or not at all; it adds no supporter marker and sends no tip thank-you.
       const premium = isPremiumPassPayment(payment.metadata);
       if (premium) {
-        const { grantPatronAccessForPayment, readPaymentConsents } = await import("@/lib/modules/experiment-premium-pass");
+        const { grantPatronAccessForPayment, readPaymentConsents, readPaymentProductId } = await import("@/lib/modules/experiment-premium-pass");
         const method = (payment.metadata as { method?: unknown } | null)?.method;
         await grantPatronAccessForPayment(tx, {
           userId: payment.userId,
           paymentId: payment.id,
+          productId: readPaymentProductId(payment.metadata),
           amountMinor: payment.amountMinor,
           currency: payment.currency,
           method: typeof method === 'string' ? method : null,

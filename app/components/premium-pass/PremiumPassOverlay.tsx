@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useId, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/react";
 import { getLocalizedHref } from "@/lib/i18n/routing";
-import type { PremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
+import { cheapestProduct, type PremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
 import { useAuthModal } from "../auth/AuthModalProvider";
 import { useLanguage } from "../LanguageContext";
 import { PlayerStateFrame } from "../PlayerStateFrame";
@@ -57,7 +57,7 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
   const titleId = useId();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const signedIn = Boolean(userId) && offer.signedIn;
-  const from = price(language, offer.minMinor);
+  const from = price(language, cheapestProduct(offer).priceMinor);
   const demo = offer.payments.mode === "demo";
   const testMode = offer.payments.mode === "stripe" && offer.payments.available && offer.payments.stripeMode === "test";
 
@@ -113,8 +113,8 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
               <div className={styles.offerName}>{tx("Zostań patronem i uzyskaj dostęp do strefy premium", "Become a patron and get access to the premium zone")}</div>
               <ul className={styles.offerPerks}>
                 <li>{tx("Wszystkie filmy strefy patrona ({0})", "All patron zone videos ({0})", offer.premiumCount)}</li>
-                <li>{tx("płacisz, ile chcesz, od {0}", "pay what you want, from {0}", from)}</li>
-                <li>{tx("dostęp na {0} dni, bez subskrypcji", "access for {0} days, no subscription", offer.accessDays)}</li>
+                <li>{tx("dostęp na 30 dni od {0}", "30-day access from {0}", from)}</li>
+                <li>{tx("albo dostęp bez limitu, bez subskrypcji", "or unlimited access, no subscription")}</li>
               </ul>
             </div>
             <button type="button" className={styles.goldBtn} onClick={start}>
@@ -128,7 +128,7 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
           </button>
           <span className={styles.tiny}>
             {signedIn
-              ? tx("Dostęp na {0} dni, bez subskrypcji, nie odnawia się", "Access for {0} days, no subscription, does not renew", offer.accessDays)
+              ? tx("Dostęp na 30 dni albo bez limitu, bez subskrypcji", "30-day or unlimited access, no subscription")
               : tx("Konto jest darmowe. Po zalogowaniu wrócisz do zakupu.", "The account is free. After signing in you come back to the purchase.")}
             {" · "}
             <a className={styles.stageLink} href={getLocalizedHref(language, "pass")}>{tx("Co jest w środku?", "What's inside?")}</a>

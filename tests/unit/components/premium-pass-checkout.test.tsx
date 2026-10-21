@@ -41,8 +41,8 @@ const jsonBody = (needle: string, index = 0) => JSON.parse(String(calls(needle)[
 
 function activePass(provider: 'DEMO' | 'STRIPE') {
   return {
-    state: 'active', provider, ref: provider === 'DEMO' ? 'DEMO-AAAA-BBBB' : 'pay_1', expiresAt: '2026-11-20T10:00:00.000Z', grantedAt: '2026-10-21T10:00:00.000Z',
-    method: 'blik', priceMinor: 2000, totalMinor: 2000, waiverAt: '2026-10-21T10:00:00.000Z',
+    state: 'active', lifetime: false, productId: 'ACCESS_LIFETIME', provider, ref: provider === 'DEMO' ? 'DEMO-AAAA-BBBB' : 'pay_1', expiresAt: '2026-11-20T10:00:00.000Z', grantedAt: '2026-10-21T10:00:00.000Z',
+    method: 'blik', priceMinor: 2999, totalMinor: 2999, waiverAt: '2026-10-21T10:00:00.000Z',
   };
 }
 
@@ -73,23 +73,27 @@ describe('patron checkout, step 1', () => {
     vi.unstubAllGlobals();
   });
 
-  it('offers suggested amounts, an own amount, a method dropdown and Terms/Privacy as links only', async () => {
+  it('offers two option cards (unlimited preselected, best value), a method dropdown and Terms/Privacy as links only', async () => {
     open();
     const dialog = await screen.findByRole('dialog');
-    // pay what you want: one prefilled field (the minimum), no suggested-amount buttons
-    expect(within(dialog).queryAllByRole('radio')).toHaveLength(0);
     expect(within(dialog).getByRole('heading', { name: 'Zostań patronem i uzyskaj dostęp do strefy premium' })).toBeInTheDocument();
-    expect(within(dialog).getByText('Zapłać ile chcesz. Minimum 20 zł.')).toBeInTheDocument();
-    expect((within(dialog).getByRole('textbox', { name: 'Twoja kwota' }) as HTMLInputElement).value).toBe('20');
-    expect(within(dialog).getByRole('textbox', { name: 'Twoja kwota' })).toBeInTheDocument();
+    const group = within(dialog).getByRole('group', { name: 'Wybierz dostęp' });
+    const cards = within(group).getAllByRole('radio') as HTMLInputElement[];
+    expect(cards.map((r) => r.value)).toEqual(['ACCESS_30D', 'ACCESS_LIFETIME']);
+    expect(cards.map((r) => r.checked)).toEqual([false, true]);
+    expect(within(group).getByText('Dostęp na 30 dni')).toBeInTheDocument();
+    expect(within(group).getByText('Dostęp bez limitu')).toBeInTheDocument();
+    expect(within(group).getByText('jednorazowo, 30 dni')).toBeInTheDocument();
+    expect(within(group).getByText('Najlepsza wartość')).toBeInTheDocument();
+    expect(within(group).getAllByText('Najlepsza wartość')).toHaveLength(1);
+    expect(within(dialog).queryByRole('textbox')).toBeNull(); // no custom amount field
+    expect(within(dialog).queryByText(/Zapłać ile chcesz/)).toBeNull();
     expect(within(dialog).getByRole('combobox', { name: 'Metoda płatności' })).toBeInTheDocument();
     // no checkbox here: the consent is given in step 2
     expect(within(dialog).queryAllByRole('checkbox')).toHaveLength(0);
-    const terms = within(dialog).getByRole('link', { name: 'Regulamin strefy patrona' });
-    const privacy = within(dialog).getByRole('link', { name: 'Polityka prywatności' });
-    expect(terms).toHaveAttribute('href', '/regulamin-premium');
-    expect(privacy).toHaveAttribute('href', expect.stringContaining('polityka-prywatnosci'));
-    expect(within(dialog).getByRole('button', { name: N('Dalej · 20 zł') })).toBeInTheDocument();
+    expect(within(dialog).getByRole('link', { name: 'Regulamin strefy patrona' })).toHaveAttribute('href', '/regulamin-premium');
+    expect(within(dialog).getByRole('link', { name: 'Polityka prywatności' })).toHaveAttribute('href', expect.stringContaining('polityka-prywatnosci'));
+    expect(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeInTheDocument();
     expect(dialog.querySelector('[data-demo-ribbon]')).toBeNull();
   });
 
@@ -122,30 +126,33 @@ describe('patron checkout, step 1', () => {
     expect(combo).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('own amount: replaces the suggestion, updates the button, and the limits are enforced with a message', async () => {
+  it('choosing an option updates the summary and the button price (brutto, VAT 23%)', async () => {
     open();
     const dialog = await screen.findByRole('dialog');
-    const field = within(dialog).getByRole('textbox', { name: 'Twoja kwota' });
-    expect(within(dialog).getByRole('button', { name: N('Dalej · 20 zł') })).toBeInTheDocument();
-    fireEvent.change(field, { target: { value: '25,50' } });
-    expect(within(dialog).getByRole('button', { name: N('Dalej · 25,50 zł') })).toBeInTheDocument();
+    expect(within(dialog).getByText('Razem do zapłaty (brutto)').parentElement).toHaveTextContent('29,99');
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Dostęp na 30 dni/ }));
+    expect(within(dialog).getByRole('button', { name: N('Dalej · 14,99 zł') })).toBeInTheDocument();
+    expect(within(dialog).getByText('Razem do zapłaty (brutto)').parentElement).toHaveTextContent('14,99');
+    expect(within(dialog).getByText('kwota brutto, zawiera 23% VAT')).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Dostęp bez limitu/ }));
+    expect(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeInTheDocument();
+  });
 
-    for (const low of ['19,99', '5', '15']) {
-      fireEvent.change(field, { target: { value: low } });
-      expect(within(dialog).getByRole('alert')).toHaveTextContent('Kwota jest za niska. Minimum: 20 zł.');
-      expect(field).toHaveAttribute('aria-invalid', 'true');
-    }
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Dalej' }));
-    expect(within(dialog).getByText('Zostań patronem i uzyskaj dostęp do strefy premium')).toBeInTheDocument(); // still step 1
+  it('with unlimited access already held: says so and offers nothing to buy', async () => {
+    route({ '/api/user/premium-pass?': () => new Response(JSON.stringify({ offer: {}, pass: { ...activePass('STRIPE'), lifetime: true, expiresAt: null } }), { status: 200 }) });
+    open();
+    const dialog = await screen.findByRole('dialog');
+    expect(await within(dialog).findByText('Masz już dostęp bez limitu.')).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeDisabled();
+    for (const radio of within(dialog).getAllByRole('radio')) expect(radio).toBeDisabled();
+  });
 
-    fireEvent.change(field, { target: { value: '1001' } });
-    expect(within(dialog).getByRole('alert')).toHaveTextContent('Kwota jest za wysoka. Maksimum: 1000 zł.');
-    fireEvent.change(field, { target: { value: 'abc' } });
-    expect(within(dialog).getByRole('alert')).toHaveTextContent('Wpisz kwotę cyframi');
-    fireEvent.change(field, { target: { value: '' } });
-    expect(within(dialog).getByRole('alert')).toHaveTextContent('Wpisz kwotę (co najmniej 20 zł).');
-    fireEvent.change(field, { target: { value: '50' } });
-    expect(within(dialog).getByRole('button', { name: N('Dalej · 50 zł') })).toBeInTheDocument();
+  it('a running 30-day access explains extension and conversion', async () => {
+    route({ '/api/user/premium-pass?': () => new Response(JSON.stringify({ offer: {}, pass: activePass('STRIPE') }), { status: 200 }) });
+    open();
+    const dialog = await screen.findByRole('dialog');
+    expect(await within(dialog).findByText(/Masz dostęp do 20\.11\.2026/)).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeEnabled();
   });
 });
 
@@ -164,9 +171,9 @@ describe('patron checkout, step 2 in demo mode (simulated payment)', () => {
   it('asks for both boxes HERE, shows errors instead of paying, then pays the chosen amount', async () => {
     const { onWatch } = open();
     const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 20 zł') }));
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') }));
 
-    const pay = await within(dialog).findByRole('button', { name: N('Zapłać 20 zł') });
+    const pay = await within(dialog).findByRole('button', { name: N('Zapłać 29,99 zł') });
     expect(within(dialog).getByRole('listitem', { current: 'step' })).toHaveTextContent('Płatność');
     const boxes = within(dialog).getAllByRole('checkbox');
     expect(boxes).toHaveLength(2);
@@ -178,9 +185,9 @@ describe('patron checkout, step 2 in demo mode (simulated payment)', () => {
     expect(calls('/premium-pass/checkout')).toHaveLength(0);
 
     boxes.forEach((box) => fireEvent.click(box));
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Zapłać 20 zł') }));
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Zapłać 29,99 zł') }));
     expect(await within(dialog).findByRole('heading', { name: 'Jesteś patronem. Dziękuję!' }, { timeout: 4000 })).toBeInTheDocument();
-    expect(jsonBody('/premium-pass/checkout')).toMatchObject({ amountMinor: 2000, method: 'blik', consents: { terms: true, waiver: true }, simulate: 'success' });
+    expect(jsonBody('/premium-pass/checkout')).toMatchObject({ productId: 'ACCESS_LIFETIME', method: 'blik', consents: { terms: true, waiver: true }, simulate: 'success' });
     expect(dialog).toHaveTextContent('Strefa patrona jest otwarta do 20.11.2026');
     fireEvent.click(within(dialog).getByRole('button', { name: 'Wejdź do strefy patrona' }));
     expect(onWatch).toHaveBeenCalled();
@@ -189,19 +196,19 @@ describe('patron checkout, step 2 in demo mode (simulated payment)', () => {
   it('"Zmień" goes back to step 1 with the choice kept', async () => {
     open();
     const dialog = await screen.findByRole('dialog');
-    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Twoja kwota' }), { target: { value: '42' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 42 zł') }));
-    await within(dialog).findByRole('button', { name: N('Zapłać 42 zł') });
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Dostęp na 30 dni/ }));
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 14,99 zł') }));
+    await within(dialog).findByRole('button', { name: N('Zapłać 14,99 zł') });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Zmień' }));
-    expect(await within(dialog).findByRole('button', { name: N('Dalej · 42 zł') })).toBeInTheDocument();
-    expect((within(dialog).getByRole('textbox', { name: 'Twoja kwota' }) as HTMLInputElement).value).toBe('42');
+    expect(await within(dialog).findByRole('button', { name: N('Dalej · 14,99 zł') })).toBeInTheDocument();
+    expect((within(dialog).getByRole('radio', { name: /Dostęp na 30 dni/ }) as HTMLInputElement).checked).toBe(true);
   });
 
   it('never asks Stripe for anything in demo mode', async () => {
     open();
     const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 20 zł') }));
-    await within(dialog).findByRole('button', { name: N('Zapłać 20 zł') });
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') }));
+    await within(dialog).findByRole('button', { name: N('Zapłać 29,99 zł') });
     expect(getStripeBrowser).not.toHaveBeenCalled();
     expect(calls('/intent')).toHaveLength(0);
     expect(screen.queryByTestId('stripe-elements')).toBeNull();
@@ -229,17 +236,17 @@ describe('patron checkout, step 2 with real Stripe payments', () => {
     vi.unstubAllGlobals();
   });
 
-  it('test mode: labelled "Tryb testowy", Stripe.js is requested only now, the payment is created for the typed amount', async () => {
+  it('test mode: labelled "Tryb testowy", Stripe.js is requested only now, the payment is created for the chosen product (no amount sent)', async () => {
     open({ mode: 'stripe', available: true, stripeMode: 'test' });
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText('Tryb testowy')).toBeInTheDocument();
     await waitFor(() => expect(getStripeBrowser).toHaveBeenCalledTimes(1));
-    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Twoja kwota' }), { target: { value: '29,99' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') }));
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Dostęp na 30 dni/ }));
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 14,99 zł') }));
     await within(dialog).findByTestId('stripe-elements');
-    expect(jsonBody('/premium-pass/intent')).toMatchObject({ amountMinor: 2999 });
+    expect(jsonBody('/premium-pass/intent')).toMatchObject({ productId: 'ACCESS_30D' });
     expect(jsonBody('/premium-pass/intent').requestId).toMatch(/^[0-9a-f-]{36}$/);
-    expect(Object.keys(jsonBody('/premium-pass/intent')).sort()).toEqual(['amountMinor', 'requestId']);
+    expect(Object.keys(jsonBody('/premium-pass/intent')).sort()).toEqual(['productId', 'requestId']);
   });
 
   it('live mode shows no test label', async () => {
@@ -251,9 +258,9 @@ describe('patron checkout, step 2 with real Stripe payments', () => {
   it('the BLIK form is the tip gateway\'s; paying needs the code AND both boxes; consent is recorded before the confirmation; access shows after the server confirms', async () => {
     open({ mode: 'stripe', available: true, stripeMode: 'test' });
     const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 20 zł') }));
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') }));
     const code = await within(dialog).findByRole('textbox', { name: 'Kod BLIK' });
-    const pay = within(dialog).getByRole('button', { name: N('Zapłać 20 zł') });
+    const pay = within(dialog).getByRole('button', { name: N('Zapłać 29,99 zł') });
     fireEvent.change(code, { target: { value: '123456' } });
     expect(pay).toBeDisabled(); // boxes not ticked
     const boxes = within(dialog).getAllByRole('checkbox');
@@ -283,11 +290,11 @@ describe('patron checkout, step 2 with real Stripe payments', () => {
     });
     open({ mode: 'stripe', available: true, stripeMode: 'test' });
     const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 20 zł') }));
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') }));
     const code = await within(dialog).findByRole('textbox', { name: 'Kod BLIK' });
     fireEvent.change(code, { target: { value: '123456' } });
     within(dialog).getAllByRole('checkbox').forEach((box) => fireEvent.click(box));
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Zapłać 20 zł') }));
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Zapłać 29,99 zł') }));
     expect(await within(dialog).findByRole('alert')).toHaveTextContent('Nie udało się zapisać Twojej zgody');
     expect(confirmBlikPayment).not.toHaveBeenCalled();
   });
@@ -298,7 +305,7 @@ describe('patron checkout, step 2 with real Stripe payments', () => {
     });
     open({ mode: 'stripe', available: true, stripeMode: 'test' });
     const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 20 zł') })); // BLIK is the default
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') })); // BLIK is the default
     expect(await within(dialog).findByText('Ta metoda nie jest dostępna dla tej płatności. Wybierz inną.')).toBeInTheDocument();
     expect(within(dialog).getByRole('combobox', { name: 'Metoda płatności' })).toHaveTextContent('Karta');
     expect(within(dialog).queryByTestId('stripe-elements')).toBeNull();
@@ -308,9 +315,18 @@ describe('patron checkout, step 2 with real Stripe payments', () => {
     open({ mode: 'stripe', available: false });
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByRole('alert')).toHaveTextContent('Płatności są chwilowo niedostępne');
-    expect(within(dialog).getByRole('button', { name: N('Dalej · 20 zł') })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeDisabled();
     expect(getStripeBrowser).not.toHaveBeenCalled();
     expect(calls('/intent')).toHaveLength(0);
     expect(calls('/checkout')).toHaveLength(0);
+  });
+
+  it('a refusal from the server (unlimited already held) ends in "Masz już dostęp bez limitu", no payment form', async () => {
+    route({ '/premium-pass/intent': () => new Response(JSON.stringify({ code: 'ALREADY_LIFETIME' }), { status: 409 }) });
+    open({ mode: 'stripe', available: true, stripeMode: 'test' });
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') }));
+    expect(await within(dialog).findByRole('heading', { name: 'Masz już dostęp bez limitu' })).toBeInTheDocument();
+    expect(within(dialog).queryByRole('textbox', { name: 'Kod BLIK' })).toBeNull();
   });
 });

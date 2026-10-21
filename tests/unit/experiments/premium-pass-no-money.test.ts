@@ -67,7 +67,12 @@ describe("premium-pass: where money can move", () => {
     const checkout = read("lib/modules/experiment-premium-pass/application/patron-checkout.use-case.ts");
     expect(checkout.indexOf("resolvePremiumPayments()")).toBeGreaterThan(-1);
     expect(checkout.indexOf("resolvePremiumPayments()")).toBeLessThan(checkout.indexOf("createCheckoutIntent("));
-    expect(checkout.indexOf("validatePatronAmount(")).toBeLessThan(checkout.indexOf("createCheckoutIntent("));
+    expect(checkout.indexOf("patronProduct(")).toBeGreaterThan(-1);
+    expect(checkout.indexOf("purchaseBlock(")).toBeGreaterThan(-1);
+    expect(checkout.indexOf("purchaseBlock(")).toBeLessThan(checkout.indexOf("createCheckoutIntent("));
+    // the amount is the product's price from the server table, never a client field
+    expect(checkout).toContain("amountMinor: product.priceMinor");
+    expect(checkout).not.toMatch(/input\.amountMinor/);
   });
 
   it("access is granted only by the payments module's fulfilment, never by a route, a component or the experiment's own use cases", () => {
@@ -114,8 +119,7 @@ describe("premium-pass: where money can move", () => {
       for (const match of text.matchAll(/<input\b[^>]*>/g)) {
         const tag = match[0];
         const isChoice = /type=["'](?:radio|checkbox)["']/.test(tag);
-        const isAmount = /type=["']text["']/.test(tag) && /inputMode=["']decimal["']/.test(tag) && file.endsWith("PassAmountStep.tsx");
-        if (!isChoice && !isAmount) offenders.push(`${file}: ${tag.slice(0, 60)}`);
+        if (!isChoice) offenders.push(`${file}: ${tag.slice(0, 60)}`);
       }
     }
     expect(offenders).toEqual([]);

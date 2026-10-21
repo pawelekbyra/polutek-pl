@@ -111,8 +111,8 @@ export async function applyRefundedTotal(
 
     if (newStatus === PaymentStatus.REFUNDED && isPremiumPassPayment(payment.metadata)) {
       // experiment: premium-pass: a fully refunded patron-zone payment takes its period of access back.
-      const { revokePatronAccessForPayment } = await import("@/lib/modules/experiment-premium-pass");
-      await revokePatronAccessForPayment(tx, { userId: payment.userId, paymentId: payment.id, amountMinor: payment.amountMinor, now: ctx.now() });
+      const { revokePatronAccessForPayment, readPaymentProductId } = await import("@/lib/modules/experiment-premium-pass");
+      await revokePatronAccessForPayment(tx, { userId: payment.userId, paymentId: payment.id, productId: readPaymentProductId(payment.metadata), amountMinor: payment.amountMinor, now: ctx.now() });
     } else if (newStatus === PaymentStatus.REFUNDED) {
       // A fully refunded tip no longer counts; the supporter marker goes only when no other
       // paid tip is left. A partial refund leaves the tip counting.

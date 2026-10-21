@@ -10,14 +10,15 @@ import { recordTermsAcceptance } from "@/lib/modules/users";
 import { LEGAL_DOCUMENTS_VERSION } from "@/lib/legal/version";
 import { logger } from "@/lib/logger";
 import type { AppContext } from "@/lib/modules/shared/app-context";
-import { PATRON_CURRENCY, premiumPassFor, validatePatronAmount } from "../domain/config";
+import { PATRON_CURRENCY, patronProduct, premiumPassFor } from "../domain/config";
 import { resolvePremiumPayments } from "../domain/payments-mode";
-import { PASS_TERMS_VERSION, passStateOf, wouldExceedMaxAhead } from "../domain/pass-state";
+import { PASS_TERMS_VERSION, purchaseBlock } from "../domain/pass-state";
 import { countFunnelEvent, readPass } from "../infrastructure/pass-store";
 import { passUserId } from "./pass-access";
 import type { PassResult } from "./checkout-demo.use-case";
 
-export const patronIntentInputSchema = z.object({ requestId: z.string().uuid(), amountMinor: z.number().int() }).strict();
+// The client names a product, never an amount: the server derives the amount from its own product table.
+export const patronIntentInputSchema = z.object({ requestId: z.string().uuid(), productId: z.enum(["ACCESS_30D", "ACCESS_LIFETIME"]) }).strict();
 export type PatronIntentInput = z.infer<typeof patronIntentInputSchema>;
 
 export const patronConsentInputSchema = z
@@ -37,7 +38,7 @@ export type PatronIntentData = {
   terminal: boolean;
 };
 
-/** Creates or updates (amount changed) the PaymentIntent of one patron payment attempt. */
+/** Creates or updates (another product chosen) the PaymentIntent of one patron payment attempt. */
 export async function startPatronPayment(ctx: AppContext, input: PatronIntentInput): Promise<PassResult<PatronIntentData>> {
   if (!premiumPassFor(ctx.actor)) return { ok: false, code: "NOT_VISIBLE" };
   const userId = passUserId(ctx.actor);
@@ -50,20 +51,21 @@ export async function startPatronPayment(ctx: AppContext, input: PatronIntentInp
     return { ok: false, code: "PAYMENTS_UNAVAILABLE" };
   }
 
-  // Server-side amount validation: integer minor units (PLN only) within the min and max. The client's own check is
-  // only a convenience.
-  if (validatePatronAmount(input.amountMinor) !== null) return { ok: false, code: "AMOUNT_INVALID" };
+  const product = patronProduct(input.productId);
+  if (!product) return { ok: false, code: "PRODUCT_INVALID" };
 
+  // Refused BEFORE any payment exists: unlimited access already held, or 30 more days would pass the horizon.
   const now = ctx.now();
   const current = await readPass(ctx.prisma, userId);
-  const state = passStateOf(current, now);
-  if (wouldExceedMaxAhead(state.state === "none" ? null : state.record, now)) {
+  const block = purchaseBlock(current, product, now);
+  if (block === "ALREADY_LIFETIME") return { ok: false, code: "ALREADY_LIFETIME" };
+  if (block === "MAX_AHEAD") {
     await countFunnelEvent(ctx, "max_ahead");
-    return { ok: false, code: "MAX_AHEAD", expiresAt: state.state === "none" ? undefined : state.record.expiresAt };
+    return { ok: false, code: "MAX_AHEAD", expiresAt: current?.expiresAt ?? undefined };
   }
 
   const result = await createCheckoutIntent(
-    { userId, amountMinor: input.amountMinor, currency: PATRON_CURRENCY, requestId: input.requestId, purpose: "premium_pass" },
+    { userId, amountMinor: product.priceMinor, currency: PATRON_CURRENCY, requestId: input.requestId, purpose: "premium_pass", productId: product.id },
     ctx,
   );
   if (!result.ok) return { ok: false, code: result.error.code === "PAYMENT_IN_PROGRESS" ? "PAYMENT_IN_PROGRESS" : "PAYMENT_FAILED" };

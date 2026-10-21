@@ -14,25 +14,26 @@ import { price } from "./pass-copy";
 import styles from "./premium-pass.module.css";
 
 /** The button and the checkout it opens; `firstSlug` is where "enter the patron zone" goes after a success. */
-export function PassOfferActions({ offer, firstSlug }: { offer: PremiumPassOffer; firstSlug: string | null }) {
+export function PassOfferActions({ offer, productId, firstSlug }: { offer: PremiumPassOffer; productId: string; firstSlug: string | null }) {
   const { tx, language } = useLanguage();
   const { userId, isLoaded } = useAuth();
   const { open: openAuthModal } = useAuthModal();
   const [open, setOpen] = useState(false);
+  const product = offer.products.find((p) => p.id === productId) ?? offer.products[0]!;
 
   // After sign-in the page is shown again; the marker set before the sign-in window reopens the checkout.
   useEffect(() => {
     if (!isLoaded || !userId) return;
     try {
       const url = new URL(window.location.href);
-      if (url.searchParams.get(PASS_CHECKOUT_PARAM) !== "checkout") return;
+      if (url.searchParams.get(PASS_CHECKOUT_PARAM) !== productId) return;
       url.searchParams.delete(PASS_CHECKOUT_PARAM);
       window.history.replaceState(window.history.state, "", url.toString());
       setOpen(true);
     } catch {
       // ignore
     }
-  }, [isLoaded, userId]);
+  }, [isLoaded, userId, productId]);
 
   const buy = useCallback(() => {
     if (userId) {
@@ -41,13 +42,13 @@ export function PassOfferActions({ offer, firstSlug }: { offer: PremiumPassOffer
     }
     try {
       const url = new URL(window.location.href);
-      url.searchParams.set(PASS_CHECKOUT_PARAM, "checkout");
+      url.searchParams.set(PASS_CHECKOUT_PARAM, productId);
       window.history.replaceState(window.history.state, "", url.toString());
     } catch {
       // ignore
     }
     openAuthModal("sign-in");
-  }, [openAuthModal, userId]);
+  }, [openAuthModal, userId, productId]);
 
   const watch = () => {
     const home = getLocalizedHref(language, "home");
@@ -58,9 +59,9 @@ export function PassOfferActions({ offer, firstSlug }: { offer: PremiumPassOffer
     <>
       <button type="button" className={styles.inkBtn} onClick={buy}>
         <TicketIcon />
-        {userId ? tx("Zostań patronem · od {0}", "Become a patron · from {0}", price(language, offer.minMinor)) : tx("Zaloguj się i zostań patronem", "Sign in to become a patron")}
+        {userId ? tx("Zostań patronem · {0}", "Become a patron · {0}", price(language, product.priceMinor)) : tx("Zaloguj się i zostań patronem", "Sign in to become a patron")}
       </button>
-      {userId && <PassCheckoutSheet open={open} onOpenChange={setOpen} offer={{ ...offer, signedIn: true }} onWatch={watch} />}
+      {userId && <PassCheckoutSheet open={open} onOpenChange={setOpen} offer={{ ...offer, signedIn: true }} initialProductId={productId} onWatch={watch} />}
     </>
   );
 }
