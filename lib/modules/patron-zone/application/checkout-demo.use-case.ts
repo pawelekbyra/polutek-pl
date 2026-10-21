@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md)
+// patron zone (docs/architecture/patron-zone.md)
 // The SIMULATED checkout (`PREMIUM_PASS_PAYMENTS=demo`, the default). It NEVER takes money: there is no payment
 // provider here, no card or BLIK data is accepted (the schema is strict), and the only effect of a "successful
 // payment" is one AppSetting row with provider DEMO. In `stripe` mode this use case refuses (WRONG_MODE), so the demo

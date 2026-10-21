@@ -1,9 +1,10 @@
 "use client";
-// experiment: premium-pass (docs/experiments/premium-pass.md): what PremiumWrapper mounts for the demo pass.
+// patron zone (docs/architecture/patron-zone.md): what PremiumWrapper mounts for the demo pass.
 import React from "react";
-import { readPremiumPassOffer, type PremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
+import { readPremiumPassOffer, type PremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
 import { PremiumPlayerChip } from "./PremiumBadge";
 import { DemoControls } from "./DemoControls";
+import { usePremiumPassStatus } from "./usePremiumPass";
 
 export { PremiumPassOverlay } from "./PremiumPassOverlay";
 
@@ -19,13 +20,20 @@ export function readPassView(plan: unknown): PassView | null {
   return { offer, poster, title };
 }
 
-/** Over a playing pass video: the "valid until" chip and the demo panel (expire / delete my pass). */
+/** The demo panel over a playing pass video: only when the server says payments are in demo mode (never in `stripe` mode). */
+function PassDemoPanel({ onRefresh }: { onRefresh: () => void }) {
+  const { status } = usePremiumPassStatus(true);
+  if (status?.offer.payments.mode !== "demo") return null;
+  return <DemoControls onChanged={onRefresh} />;
+}
+
+/** Over a playing pass video: the "valid until" chip and, in demo mode only, the demo panel (expire / delete my pass). */
 export function PremiumPassPlaying({ until, onRefresh }: { until?: string; onRefresh: () => void }) {
   if (!until) return null;
   return (
     <>
       <PremiumPlayerChip until={until} />
-      <DemoControls onChanged={onRefresh} />
+      <PassDemoPanel onRefresh={onRefresh} />
     </>
   );
 }

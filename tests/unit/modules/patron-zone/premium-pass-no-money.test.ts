@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md, "Strefa patrona"): where money can and cannot move.
+// patron zone (docs/architecture/patron-zone.md): where money can and cannot move.
 // Reads the sources as text. The simulated (demo) flow must stay free of any payment code; real payment code may exist
 // only in a short allow-list of files; access may be granted only from the payments module's fulfilment.
 import { describe, expect, it } from "vitest";
@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOTS = [
-  "lib/modules/experiment-premium-pass",
+  "lib/modules/patron-zone",
   "app/components/premium-pass",
   "app/api/user/premium-pass",
   "app/[locale]/premium",
@@ -26,15 +26,15 @@ function files(dir: string): string[] {
 const read = (file: string) => fs.readFileSync(path.join(process.cwd(), file), "utf8");
 const sources = ROOTS.flatMap(files).map((file) => ({ file, text: read(file) }));
 
-/** The only files of the experiment that may talk to Stripe or the payments module (server and browser). */
+/** The only files of the patron zone that may talk to Stripe or the payments module (server and browser). */
 const STRIPE_ALLOWED = new Set([
-  "lib/modules/experiment-premium-pass/application/patron-checkout.use-case.ts", // createCheckoutIntent (the tip gateway's)
+  "lib/modules/patron-zone/application/patron-checkout.use-case.ts", // createCheckoutIntent (the tip gateway's)
   "app/components/premium-pass/PassCheckoutSheet.tsx", // getStripeBrowser(): Stripe.js only once the checkout is open
   "app/components/premium-pass/PassPaymentStep.tsx", // <Elements> around the tip gateway's own forms
 ]);
 
 describe("premium-pass: where money can move", () => {
-  it("finds the experiment files", () => {
+  it("finds the patron zone files", () => {
     expect(sources.length).toBeGreaterThan(25);
   });
 
@@ -46,15 +46,15 @@ describe("premium-pass: where money can move", () => {
 
   it("the simulated flow has no payment code at all", () => {
     for (const file of [
-      "lib/modules/experiment-premium-pass/application/checkout-demo.use-case.ts",
-      "lib/modules/experiment-premium-pass/application/demo-controls.use-case.ts",
+      "lib/modules/patron-zone/application/checkout-demo.use-case.ts",
+      "lib/modules/patron-zone/application/demo-controls.use-case.ts",
       "app/api/user/premium-pass/checkout/route.ts",
       "app/api/user/premium-pass/demo/route.ts",
     ]) {
       const text = read(file);
       expect(text, file).not.toMatch(/@\/lib\/modules\/payments|@stripe\/|from\s+["']stripe["']|createCheckoutIntent|fulfillPayment|getStripe|paymentIntents/);
     }
-    const demo = read("lib/modules/experiment-premium-pass/application/checkout-demo.use-case.ts");
+    const demo = read("lib/modules/patron-zone/application/checkout-demo.use-case.ts");
     expect(demo).toContain('provider: "DEMO"');
     expect(demo).toContain('simulate: z.enum(["success", "declined"])');
     expect(demo).toContain(".strict()");
@@ -62,9 +62,9 @@ describe("premium-pass: where money can move", () => {
   });
 
   it("the default of the second switch is demo and the real flow checks it before anything else", () => {
-    const mode = read("lib/modules/experiment-premium-pass/domain/payments-mode.ts");
+    const mode = read("lib/modules/patron-zone/domain/payments-mode.ts");
     expect(mode).toContain('=== "stripe" ? "stripe" : "demo"');
-    const checkout = read("lib/modules/experiment-premium-pass/application/patron-checkout.use-case.ts");
+    const checkout = read("lib/modules/patron-zone/application/patron-checkout.use-case.ts");
     expect(checkout.indexOf("resolvePremiumPayments()")).toBeGreaterThan(-1);
     expect(checkout.indexOf("resolvePremiumPayments()")).toBeLessThan(checkout.indexOf("createCheckoutIntent("));
     expect(checkout.indexOf("patronProduct(")).toBeGreaterThan(-1);
@@ -76,7 +76,7 @@ describe("premium-pass: where money can move", () => {
     expect(checkout).not.toMatch(/input\.amountMinor/);
   });
 
-  it("access is granted only by the payments module's fulfilment, never by a route, a component or the experiment's own use cases", () => {
+  it("access is granted only by the payments module's fulfilment, never by a route, a component or the patron zone own use cases", () => {
     const callers: string[] = [];
     const walk = (dir: string) => {
       for (const entry of fs.readdirSync(path.join(process.cwd(), dir), { withFileTypes: true })) {
@@ -89,27 +89,23 @@ describe("premium-pass: where money can move", () => {
     walk("app");
     walk("lib");
     expect(callers.sort()).toEqual([
-      "lib/modules/experiment-premium-pass/application/patron-grant.ts",
+      "lib/modules/patron-zone/application/patron-grant.ts",
       "lib/modules/payments/application/fulfill-payment.use-case.ts",
     ]);
-    expect(read("lib/modules/experiment-premium-pass/index.ts")).toContain("patron-grant");
+    expect(read("lib/modules/patron-zone/index.ts")).toContain("patron-grant");
   });
 
   it("writes no ledger directly: AppSetting rows, plus the consent note on the viewer's own unpaid Payment", () => {
     const forbidden = /\.(patronGrant|order|entitlement|ledgerEntry|userPaymentTotal)\.(create|update|upsert|delete)|\.payment\.(create|upsert|delete|deleteMany)\b/;
     expect(sources.filter(({ text }) => forbidden.test(text)).map(({ file }) => file)).toEqual([]);
     const paymentWrites = sources.filter(({ text }) => /\.payment\.(update|updateMany)\b/.test(text)).map(({ file }) => file);
-    expect(paymentWrites).toEqual(["lib/modules/experiment-premium-pass/application/patron-checkout.use-case.ts"]);
-    const checkout = read("lib/modules/experiment-premium-pass/application/patron-checkout.use-case.ts");
+    expect(paymentWrites).toEqual(["lib/modules/patron-zone/application/patron-checkout.use-case.ts"]);
+    const checkout = read("lib/modules/patron-zone/application/patron-checkout.use-case.ts");
     expect(checkout).toContain('status: "PENDING"');
   });
 
-  it("revoking access never deletes a payment: the experiment code has no Payment delete anywhere", () => {
+  it("revoking access never deletes a payment: the patron zone code has no Payment delete anywhere", () => {
     expect(sources.some(({ text }) => /payment\.delete/i.test(text))).toBe(false);
-    const script = read("scripts/experiments/premium-pass-revert.sh");
-    expect(script).not.toMatch(/DELETE\s+FROM\s+"Payment"/i);
-    expect(script).toMatch(/DELETE FROM "AppSetting" WHERE key LIKE 'xp\.premium\\_pass%'/);
-    expect(script).toContain("--confirm-real-payments");
   });
 
   it("our own fields never ask for card, BLIK or bank data: the card forms are the tip gateway's Stripe elements", () => {

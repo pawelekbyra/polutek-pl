@@ -1,12 +1,12 @@
 "use client";
-// experiment: premium-pass (docs/experiments/premium-pass.md): the end states of the checkout: success with the receipt
+// patron zone (docs/architecture/patron-zone.md): the end states of the checkout: success with the receipt
 // (the art. 21 u.p.k. confirmation, shown on screen), a payment still being confirmed, and a payment that did not go
 // through. All announce themselves politely (aria-live) and take focus through their heading.
 import React, { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/routing";
 import type { Tx } from "@/lib/i18n/ui";
-import type { PassStatusDto } from "@/lib/modules/experiment-premium-pass/domain/pass-state";
+import type { PassStatusDto } from "@/lib/modules/patron-zone/domain/pass-state";
 import { CheckIcon, CrossIcon, PlayIcon } from "./PassIcons";
 import { methodLabel, passDate, price, productName, sellerName } from "./pass-copy";
 import styles from "./premium-pass.module.css";

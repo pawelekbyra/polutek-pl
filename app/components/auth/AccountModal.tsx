@@ -10,8 +10,8 @@ import { EmailSection, ConnectionsSection, DangerSection } from "./AccountSectio
 import { SecuritySection } from "./SecuritySection";
 import { PasskeysSection } from "./PasskeysSection";
 import { NotificationsSection } from "./NotificationsSection";
-import { PassAccountSection } from "../premium-pass/PassAccountSection"; // experiment: premium-pass (docs/experiments/premium-pass.md)
-import { usePremiumPassStatus } from "../premium-pass/usePremiumPass"; // experiment: premium-pass
+import { PassAccountSection } from "../premium-pass/PassAccountSection"; // patron zone (docs/architecture/patron-zone.md)
+import { usePremiumPassStatus } from "../premium-pass/usePremiumPass"; // patron zone
 
 interface AccountModalProps {
   open: boolean;
@@ -27,7 +27,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
   const { language } = useLanguage();
   const { tx } = useLanguage();
   const [section, setSection] = useState<Section>("profile");
-  const pass = usePremiumPassStatus(open); // experiment: premium-pass: null when the experiment is invisible (404)
+  const pass = usePremiumPassStatus(open); // patron zone: null when the patron zone is invisible (404)
 
   useEffect(() => {
     if (open) setSection("profile");

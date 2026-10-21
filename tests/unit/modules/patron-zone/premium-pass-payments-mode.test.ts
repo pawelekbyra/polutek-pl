@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md, "Strefa patrona"): the second switch,
+// patron zone (docs/architecture/patron-zone.md): the second switch,
 // PREMIUM_PASS_PAYMENTS=demo|stripe. Fail closed: real charges must never be possible by accident.
 import { describe, expect, it } from "vitest";
 import {
@@ -7,7 +7,7 @@ import {
   resolvePremiumPayments,
   stripeKeyMode,
   toPremiumPaymentsDto,
-} from "@/lib/modules/experiment-premium-pass";
+} from "@/lib/modules/patron-zone";
 
 const live = { STRIPE_SECRET_KEY: "sk_live_x", NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_live_x", STRIPE_WEBHOOK_SECRET: "whsec_x" };
 const test = { STRIPE_SECRET_KEY: "sk_test_x", NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_x", STRIPE_WEBHOOK_SECRET: "whsec_x" };

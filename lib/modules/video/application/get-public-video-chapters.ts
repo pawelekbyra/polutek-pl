@@ -34,7 +34,7 @@ export async function getPublicChapterClips(input: {
   pageUrl: string;
 }): Promise<ChapterClip[] | null> {
   if (!canExposeChapterClips(input.video)) return null;
-  if (input.video.premiumPass) return null; // experiment: premium-pass (docs/experiments/premium-pass.md): no chapter titles of a pass video
+  if (input.video.premiumPass) return null; // patron zone (docs/architecture/patron-zone.md): no chapter titles of a pass video
   const found = await getPublicVideoChapters(input.video.id);
   if (!found) return null;
   return buildChapterClips({ chapters: found.chapters, durationSeconds: found.durationSeconds, language: input.language, pageUrl: input.pageUrl, slug: input.video.slug });

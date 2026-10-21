@@ -11,7 +11,7 @@ import { buildSelfHlsPlan } from './self-hls-plan';
 import { assetSizeToNumber } from '@/lib/modules/video';
 import { SelfHlsTokenService } from '../infrastructure/self-hls-token.service';
 import { parseStoredChapters, type Chapter } from '@/lib/video-chapters';
-import { premiumPassOfferFor } from '@/lib/modules/experiment-premium-pass'; // experiment: premium-pass (docs/experiments/premium-pass.md)
+import { premiumPassOfferFor } from '@/lib/modules/patron-zone'; // patron zone (docs/architecture/patron-zone.md)
 
 export type PlaybackErrorCode =
   | "VIDEO_NOT_FOUND"
@@ -86,7 +86,7 @@ function playerFor(video?: { thumbnailUrl?: string | null; title?: string | null
 
 function toStatus(reason?: string): PlaybackPlanStatus {
   if (reason === 'LOGIN_REQUIRED') return 'LOGIN_REQUIRED';
-  if (reason === 'PASS_REQUIRED') return 'PASS_REQUIRED'; // experiment: premium-pass
+  if (reason === 'PASS_REQUIRED') return 'PASS_REQUIRED'; // patron zone
   if (reason === 'NOT_FOUND' || reason === 'VIDEO_NOT_FOUND') return 'UNAVAILABLE';
   return 'ERROR';
 }
@@ -236,7 +236,7 @@ export class PlaybackService {
             requiredTier: decision.requiredTier,
             warnings: [decision.reason || 'Access denied'],
         });
-        // experiment: premium-pass (docs/experiments/premium-pass.md): offer data only (prices, no source/token/session).
+        // patron zone (docs/architecture/patron-zone.md): offer data only (prices, no source/token/session).
         const offer = decision.reason === 'PASS_REQUIRED' ? await premiumPassOfferFor(ctx, ctx.now()) : null;
         return offer ? { ...deniedPlan, access: { ...deniedPlan.access, offer } } : deniedPlan;
     }
@@ -320,7 +320,7 @@ export class PlaybackService {
       console.error('[PLAYBACK_SERVICE] SELF_HLS resolution failed', e);
       return null;
     });
-    // experiment: premium-pass: the playable plan of a pass video says until when the viewer's pass runs.
+    // patron zone: the playable plan of a pass video says until when the viewer's pass runs.
     if (plan && decision.premiumPassUntil) return { ...plan, access: { ...plan.access, premiumPassUntil: decision.premiumPassUntil } };
     if (plan) return plan;
 

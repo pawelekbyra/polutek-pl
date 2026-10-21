@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md)
+// patron zone (docs/architecture/patron-zone.md)
 // The SECOND switch: whether a payment in the patron zone is simulated or goes through Stripe. Pure (env passed in),
 // safe on the client for the DTO type. Fail closed: only the exact value `stripe` ever reaches Stripe, and a `stripe`
 // mode that is not completely and consistently configured offers NO payment at all (it never falls back to the

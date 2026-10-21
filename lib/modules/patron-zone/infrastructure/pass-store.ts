@@ -1,8 +1,8 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md)
-// The only reader and writer of the experiment's AppSetting rows (no schema change, no migration):
+// patron zone (docs/architecture/patron-zone.md)
+// The only reader and writer of the patron zone AppSetting rows (no schema change, no migration):
 //   xp.premium_pass:<User.id>              the patron-zone access grant of an account (JSON, zod-checked on read)
 //   xp.premium_pass.stats:<YYYY-MM-DD>     anonymous daily funnel counters (no account id)
-// The revert script deletes every `xp.premium_pass%` row (after exporting them). The real money is in the existing
+// The `xp.premium_pass` key prefix is historical and stays (renaming it would orphan every grant). The real money is in the existing
 // Payment ledger, written by the payments module, never here; nothing here touches PatronGrant, Order, Entitlement
 // or LedgerEntry.
 import type { AppContext } from "@/lib/modules/shared/app-context";
@@ -23,8 +23,8 @@ export async function writePass(db: Pick<DbClient, "appSetting">, userId: string
   const value = JSON.stringify(record);
   await db.appSetting.upsert({
     where: { key: passKey(userId) },
-    create: { key: passKey(userId), value, updatedBy: "experiment:premium-pass" },
-    update: { value, updatedBy: "experiment:premium-pass" },
+    create: { key: passKey(userId), value, updatedBy: "patron-zone" },
+    update: { value, updatedBy: "patron-zone" },
   });
 }
 
@@ -61,7 +61,7 @@ export async function countFunnelEvent(ctx: Pick<AppContext, "prisma" | "now">, 
     }
     counts[event] = (Number.isFinite(counts[event]) ? counts[event] : 0) + 1;
     const value = JSON.stringify(counts);
-    await ctx.prisma.appSetting.upsert({ where: { key }, create: { key, value, updatedBy: "experiment:premium-pass" }, update: { value } });
+    await ctx.prisma.appSetting.upsert({ where: { key }, create: { key, value, updatedBy: "patron-zone" }, update: { value } });
   } catch (error) {
     console.warn("[premium-pass] funnel counter not saved", error instanceof Error ? error.message : "unknown");
   }

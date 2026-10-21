@@ -1,8 +1,8 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md): shared labels and formatting of the patron-zone UI.
+// patron zone (docs/architecture/patron-zone.md): shared labels and formatting of the patron-zone UI.
 import type { Tx } from "@/lib/i18n/ui";
 import { intlLocale } from "@/lib/i18n/ui";
 import type { Locale } from "@/lib/i18n/routing";
-import { formatPassPrice } from "@/lib/modules/experiment-premium-pass/domain/offer";
+import { formatPassPrice } from "@/lib/modules/patron-zone/domain/offer";
 import { describeTipMethod } from "../support/tip-flow-config";
 
 /** Owner decision 2026-10-20: the seller shown in the checkout and the receipt (the company does not exist yet). */

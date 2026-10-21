@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md)
+// patron zone (docs/architecture/patron-zone.md)
 // What a Payment row is for. A tip has no purpose marker (every payment before the patron zone is a tip); a payment
 // for the patron zone carries `metadata.purpose` on the Payment row AND on its PaymentIntent, so the one canonical
 // fulfilment path (fulfillPayment) can tell them apart without a schema change.

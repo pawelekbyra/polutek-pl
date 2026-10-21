@@ -41,9 +41,11 @@ potwierdzenie w Stripe.js -> płatność udana w Stripe
   `pending`/`processing` neutralny ekran przetwarzania. Pętla uzgadniania tylko **podnosi** ekran przetwarzania do sukcesu, nigdy nie cofa pokazanego sukcesu; do UI nie trafia surowy enum ani żargon „webhook”.
   Zamknięcie ekranu sukcesu robi pełne `window.location` do czystego adresu (nie `router.replace`), żeby wszystkie powierzchnie renderowane na serwerze wróciły świeże.
 
-## Okno napiwku (jedyna droga płatności)
+## Okno napiwku (ukryte od 2026-10-21, kod zostaje celowo)
 
-`app/components/channel/SupportModal.tsx` (+ `app/components/support/*`), otwierane zdarzeniem `polutek:open-support` (przycisk „Wspieraj”, `AccessLockOverlay`), obsługiwane w `ChannelHome`.
+Okno jest nieosiągalne z interfejsu: `TIP_GATE_ENABLED = false` (`app/components/channel/tip-gate.ts`), nic nie wysyła `polutek:open-support`, a `?support=1` i powrót ze Stripe nie otwierają go. Złoty przycisk „Kup se Premium” w Hero otwiera kasę strefy patrona (`patron-zone.md`). Część `app/components/support/*` (`TipPayStep`, `TipPayFrame`, `TipSelect`) jest współdzielona z tą kasą i działa. Poniżej opis okna, gdy jest włączone.
+
+`app/components/channel/SupportModal.tsx` (+ `app/components/support/*`), otwierane zdarzeniem `polutek:open-support`, obsługiwane w `ChannelHome` (po włączeniu `TIP_GATE_ENABLED`).
 Niezalogowany najpierw dostaje okno logowania. `ChannelHome` otwiera je też przy wejściu na `?support=1` (parametr jest od razu usuwany) i po powrocie ze Stripe (`?success=true&payment_id=...`, krok podziękowania; `UrlMask` zachowuje te parametry do tego czasu).
 Montowane tylko, gdy otwarte; Stripe.js ładuje się leniwie stamtąd (`lib/payments/stripe-browser.ts`, `@stripe/stripe-js/pure`). **Nigdy nie dodawaj `loadStripe()` na poziomie modułu.**
 
@@ -61,8 +63,8 @@ Kolumny `patronThresholdMinor` (martwa) i `patronBoxMinMinor` (liczy się jako m
 
 Opis i źródło danych (liczy wszystkie udane napiwki kanału): `premieres-and-fundraising.md`.
 
-## Płatności strefy patrona (eksperyment premium-pass)
+## Płatności strefy patrona
 
 Za przełącznikiem `PREMIUM_PASS_PAYMENTS=stripe` (domyślnie `demo`, bez pieniędzy) ten sam stos obsługuje też prawdziwą płatność za dostęp do strefy patrona: `createCheckoutIntent({ purpose: "premium_pass" })`, ten sam webhook,
 szybka ścieżka i cron. Płatność ma `metadata.purpose = "premium_pass"` (wiersz `Payment` i PaymentIntent). `fulfillPayment()` dla niej zamiast znacznika wspierającego i maila napiwkowego przyznaje dostęp
-(`AppSetting xp.premium_pass:<userId>`, w tej samej transakcji), pełny zwrot zdejmuje jej 30 dni, a pasek zbiórki jej nie liczy (to sprzedaż, nie napiwek). Pełny opis, limity i włączanie: `../experiments/premium-pass.md`.
+(`AppSetting xp.premium_pass:<userId>`, w tej samej transakcji), pełny zwrot zdejmuje jej 30 dni, a pasek zbiórki jej nie liczy (to sprzedaż, nie napiwek). Pełny opis, limity i włączanie: `patron-zone.md`; braki przed prawdziwą sprzedażą: `patron-zone-audit.md`.

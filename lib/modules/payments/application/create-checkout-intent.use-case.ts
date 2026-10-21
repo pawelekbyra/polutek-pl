@@ -24,7 +24,7 @@ export function tipIntentDescription(language: string | null | undefined): strin
   return !language || language === "pl" ? `Napiwek dla ${APP_NAME}` : `Tip for ${APP_NAME}`;
 }
 
-/** Shown in the BLIK app and on statements for a patron-zone payment (experiment: premium-pass); never from the client. */
+/** Shown in the BLIK app and on statements for a patron-zone payment (patron zone); never from the client. */
 export function patronIntentDescription(language: string | null | undefined): string {
   return !language || language === "pl" ? `Dostęp do strefy patrona: ${APP_NAME}` : `Patron zone access: ${APP_NAME}`;
 }
@@ -169,7 +169,7 @@ async function reuseAttempt(
   const stripe = getStripeClient();
   const currency = PaymentPolicy.getDbCurrency(input.currency);
 
-  // experiment: premium-pass: a tip attempt and a patron-zone attempt never touch each other's payment. Otherwise the
+  // patron zone: a tip attempt and a patron-zone attempt never touch each other's payment. Otherwise the
   // tip route (its own, lower limits) could re-price a patron payment through its request id.
   if (isPremiumPassPayment(existing.metadata) !== (input.purpose === PAYMENT_PURPOSE_PREMIUM_PASS)) {
     return failure(new InvalidPaymentRequestError("This payment attempt belongs to another flow."));
@@ -192,7 +192,7 @@ async function reuseAttempt(
     return success(terminal({ ...existing, status: intent.status === "canceled" ? PaymentStatus.CANCELED : PaymentStatus.SUCCEEDED }));
   }
 
-  // experiment: premium-pass: another product on the same attempt moves the amount AND the product id together.
+  // patron zone: another product on the same attempt moves the amount AND the product id together.
   const existingMeta = (existing.metadata && typeof existing.metadata === "object" ? existing.metadata : {}) as Record<string, unknown>;
   const productChanged = Boolean(input.purpose && input.productId && existingMeta.productId !== input.productId);
   const changed = existing.amountMinor !== input.amountMinor || existing.currency !== currency || productChanged;

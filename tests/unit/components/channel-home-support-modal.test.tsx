@@ -7,7 +7,14 @@ import ChannelHome from '@/app/components/ChannelHome';
 import type { PublicVideoDTO } from '@/app/types/video';
 import { txFor } from "../i18n/mock-language";
 
-const mocks = vi.hoisted(() => ({ search: '' }));
+const mocks = vi.hoisted(() => ({ search: '', tipGate: true }));
+
+// The tip gate is hidden in production (TIP_GATE_ENABLED = false); these tests switch it back on to keep its code covered.
+vi.mock('@/app/components/channel/tip-gate', () => ({
+  get TIP_GATE_ENABLED() {
+    return mocks.tipGate;
+  },
+}));
 
 vi.mock('next/navigation', () => ({ useSearchParams: () => new URLSearchParams(mocks.search) }));
 vi.mock('next/dynamic', () => ({
@@ -49,6 +56,7 @@ const signedIn = { id: 'u', email: '', totalPaid: 0 };
 describe('ChannelHome tip gate (SupportModal)', () => {
   beforeEach(() => {
     mocks.search = '';
+    mocks.tipGate = true;
     window.scrollTo = vi.fn() as never;
     window.matchMedia = vi.fn().mockImplementation(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })) as never;
   });
@@ -86,5 +94,15 @@ describe('ChannelHome tip gate (SupportModal)', () => {
     expect(screen.getByTestId('support-modal')).toBeInTheDocument();
     // Stripped at once, so a refresh doesn't open the gate again; the open video stays.
     expect(window.location.search).toBe('?v=first');
+  });
+
+  it('is unreachable while hidden: no event, no Stripe return and no ?support=1 link opens it', () => {
+    mocks.tipGate = false;
+    mocks.search = 'support=1';
+    render(<ChannelHome mainVideo={video} allVideos={[video]} userProfile={signedIn} />);
+    act(() => {
+      window.dispatchEvent(new CustomEvent('polutek:open-support'));
+    });
+    expect(screen.queryByTestId('support-modal')).toBeNull();
   });
 });

@@ -110,8 +110,8 @@ export async function applyRefundedTotal(
     await repo.decrementUserPaymentTotal(payment.userId, payment.currency, deltaRefundMinor, tx);
 
     if (newStatus === PaymentStatus.REFUNDED && isPremiumPassPayment(payment.metadata)) {
-      // experiment: premium-pass: a fully refunded patron-zone payment takes its period of access back.
-      const { revokePatronAccessForPayment, readPaymentProductId } = await import("@/lib/modules/experiment-premium-pass");
+      // patron zone: a fully refunded patron-zone payment takes its period of access back.
+      const { revokePatronAccessForPayment, readPaymentProductId } = await import("@/lib/modules/patron-zone");
       await revokePatronAccessForPayment(tx, { userId: payment.userId, paymentId: payment.id, productId: readPaymentProductId(payment.metadata), amountMinor: payment.amountMinor, now: ctx.now() });
     } else if (newStatus === PaymentStatus.REFUNDED) {
       // A fully refunded tip no longer counts; the supporter marker goes only when no other

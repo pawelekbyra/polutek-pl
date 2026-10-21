@@ -1,10 +1,10 @@
 "use client";
-// experiment: premium-pass (docs/experiments/premium-pass.md, section 8.2): the "become a patron" button of the offer page.
+// patron zone (docs/architecture/patron-zone.md): the "become a patron" button of the offer page.
 import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/react";
 import { getLocalizedHref } from "@/lib/i18n/routing";
-import { patronCurrencyForLanguage } from "@/lib/modules/experiment-premium-pass/domain/config";
-import type { PremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
+import { patronCurrencyForLanguage } from "@/lib/modules/patron-zone/domain/config";
+import type { PremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
 import { useAuthModal } from "../auth/AuthModalProvider";
 import { useLanguage } from "../LanguageContext";
 import { PassCheckoutSheet } from "./PassCheckoutSheet";

@@ -1,8 +1,8 @@
 "use client";
-// experiment: premium-pass (docs/experiments/premium-pass.md): browser side of the patron-zone API (own account only).
+// patron zone (docs/architecture/patron-zone.md): browser side of the patron-zone API (own account only).
 import { useCallback, useEffect, useState } from "react";
-import type { PremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
-import type { PassMethod, PassStatusDto } from "@/lib/modules/experiment-premium-pass/domain/pass-state";
+import type { PremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
+import type { PassMethod, PassStatusDto } from "@/lib/modules/patron-zone/domain/pass-state";
 
 export type PremiumPassStatus = { offer: PremiumPassOffer; pass: PassStatusDto };
 
@@ -136,7 +136,7 @@ export async function postDemoControl(action: "expire" | "reset"): Promise<PassS
   }
 }
 
-/** The viewer's access status, or null while loading / when the experiment is invisible to them (404). */
+/** The viewer's access status, or null while loading / when the patron zone is invisible to them (404). */
 export function usePremiumPassStatus(enabled: boolean) {
   const [status, setStatus] = useState<PremiumPassStatus | null>(null);
   const [loaded, setLoaded] = useState(false);

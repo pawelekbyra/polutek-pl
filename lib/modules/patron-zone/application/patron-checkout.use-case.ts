@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md)
+// patron zone (docs/architecture/patron-zone.md)
 // The REAL payment of the patron zone (`PREMIUM_PASS_PAYMENTS=stripe`). It reuses the tip gateway's payment stack
 // whole: `createCheckoutIntent` (one Payment row + one PaymentIntent per attempt, amount updated in place), the
 // Stripe webhook, the payment-status fast path and the reconciliation cron. This file only decides WHETHER and FOR

@@ -34,7 +34,7 @@ import {
   playbackPlanStateMessages,
   isPlayablePlaybackPlan,
 } from "./playback-plan-state";
-import { PremiumPassOverlay, PremiumPassPlaying, readPassView, type PassView } from "./premium-pass"; // experiment: premium-pass (docs/experiments/premium-pass.md)
+import { PremiumPassOverlay, PremiumPassPlaying, readPassView, type PassView } from "./premium-pass"; // patron zone (docs/architecture/patron-zone.md)
 
 export { useVideoAccess };
 export {
@@ -49,7 +49,7 @@ type PlanView = {
   playbackState: PlaybackPlanStatus | null;
   planPremiereAt: string | null;
   requiredTier: AccessTierDto | null;
-  passView: PassView | null; // experiment: premium-pass
+  passView: PassView | null; // patron zone
 };
 
 /**
@@ -100,7 +100,7 @@ interface PremiumWrapperProps {
    * has settled into its final first state (player, lock, error or coming soon).
    */
   revealKey?: string;
-  /** experiment: premium-pass: the video may be behind the demo pass (PublicVideoDTO.premiumPass): guests ask the server too. */
+  /** patron zone: the video may be behind the demo pass (PublicVideoDTO.premiumPass): guests ask the server too. */
   premiumPass?: boolean;
 }
 
@@ -405,7 +405,7 @@ interface PlaybackPlanStateOverlayProps {
   variant: "default" | "thumbnail" | "thumbnailCompact";
   /** Only for COMING_SOON: the premiere time the server reported. */
   premiereAt?: string | null;
-  passView?: PassView | null; // experiment: premium-pass
+  passView?: PassView | null; // patron zone
 }
 
 function PlaybackPlanStateOverlay({
@@ -431,7 +431,7 @@ function PlaybackPlanStateOverlay({
     return <AccessLockOverlay state={safeState} variant={variant} />;
   }
 
-  // experiment: premium-pass: the locked stage with the demo offer (never the player, never a stream request).
+  // patron zone: the locked stage with the demo offer (never the player, never a stream request).
   if (safeState === "PASS_REQUIRED" && passView) return <PremiumPassOverlay {...passView} variant={variant} onRefresh={() => onRetry?.()} />;
 
   return (

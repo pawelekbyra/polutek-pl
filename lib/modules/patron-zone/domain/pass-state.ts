@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md)
+// patron zone (docs/architecture/patron-zone.md)
 // The patron-zone access grant of one account and its state. Pure: no I/O, safe on the client.
 import { z } from "zod";
 import { PATRON_CURRENCIES, PATRON_CURRENCY, PATRON_MAX_AHEAD_DAYS, type PatronProduct } from "./config";
@@ -42,7 +42,7 @@ export const passRecordSchema = z
   })
   .refine((r) => r.lifetime || r.expiresAt !== null, "a record that is not lifetime needs an end date");
 
-/** Earlier versions of the experiment (fixed passes, then pay-what-you-want, demo or real): still readable as 30-day grants. */
+/** Earlier versions of the patron zone (fixed passes, then pay-what-you-want, demo or real): still readable as 30-day grants. */
 const legacyV2Schema = z.object({
   v: z.literal(2),
   provider: z.enum(["DEMO", "STRIPE"]),

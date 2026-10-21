@@ -1,5 +1,5 @@
 "use client";
-// experiment: premium-pass (docs/experiments/premium-pass.md): step 2 of the checkout. The payment of the chosen
+// patron zone (docs/architecture/patron-zone.md): step 2 of the checkout. The payment of the chosen
 // method, drawn by the tip gateway's own forms (BLIK, Przelewy24, card, wallets, Stripe's Payment Element), and THE
 // place where the viewer accepts the Terms and the Privacy Policy. In demo mode the same screen has no payment form:
 // the payment is simulated by the server.

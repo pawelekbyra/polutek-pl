@@ -21,7 +21,7 @@ export interface TipPayStepProps {
   onChangeMethod: () => void;
   onConfirmed: (outcome: TipConfirmOutcome) => void;
   /**
-   * experiment: premium-pass (docs/experiments/premium-pass.md): the patron-zone payment reuses these forms. All
+   * patron zone (docs/architecture/patron-zone.md): the patron-zone payment reuses these forms. All
    * optional; a tip passes none of them and behaves exactly as before.
    */
   patron?: {

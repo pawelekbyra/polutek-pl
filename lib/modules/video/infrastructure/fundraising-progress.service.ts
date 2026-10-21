@@ -10,7 +10,7 @@ import {
 } from "../domain/fundraising";
 
 /** A successful tip that still counts: fully kept, or kept minus the refunded part. */
-/** experiment: premium-pass: `PAYMENT_PURPOSE_PREMIUM_PASS` of the payments module (not imported: its barrel would pull Stripe into the video module). */
+/** patron zone: `PAYMENT_PURPOSE_PREMIUM_PASS` of the payments module (not imported: its barrel would pull Stripe into the video module). */
 const PATRON_PAYMENT_PURPOSE = "premium_pass";
 
 const COUNTED_STATUSES = [PaymentStatus.SUCCEEDED, PaymentStatus.PARTIALLY_REFUNDED];
@@ -36,7 +36,7 @@ async function queryTipTotals(startAt: Date | null, creatorId: string | null): P
   };
   const [rows, patronRows] = await Promise.all([
     prisma.payment.groupBy({ by: ["currency"], where, _sum: { amountMinor: true, refundedAmountMinor: true } }),
-    // experiment: premium-pass (docs/experiments/premium-pass.md): payments for the patron zone are sales, not tips,
+    // patron zone (docs/architecture/patron-zone.md): payments for the patron zone are sales, not tips,
     // so they do not fill the tip bar. Selected by their marker and subtracted (a JSON "not equal" would also drop
     // the old rows that have no marker at all).
     prisma.payment.groupBy({

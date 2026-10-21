@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md)
+// patron zone (docs/architecture/patron-zone.md)
 // What the access decision, the playback plan, the sidebar and the shelf ask about the pass.
 import type { AppContext } from "@/lib/modules/shared/app-context";
 import type { Actor } from "@/lib/modules/shared/actor";
@@ -22,7 +22,7 @@ export async function viewerPassState(ctx: Pick<AppContext, "prisma" | "actor">,
 }
 
 /**
- * The pass gate of `checkVideoAccess`. null = the experiment does not concern this viewer or video (the decision goes
+ * The pass gate of `checkVideoAccess`. null = the patron zone does not concern this viewer or video (the decision goes
  * on exactly as without it). Applies to ADMIN on the public site too (owner decision 2026-10-20).
  */
 export async function premiumPassGate(ctx: Pick<AppContext, "prisma" | "actor">, video: PremiumPassVideoFacts, now: Date): Promise<PremiumPassGate> {
@@ -62,7 +62,7 @@ export async function premiumPassOfferFor(ctx: Pick<AppContext, "prisma" | "acto
 
 /**
  * Sidebar and shelf: which of these videos are behind the pass for this viewer, and whether the viewer holds an
- * active pass. null when the experiment is invisible to the viewer.
+ * active pass. null when the patron zone is invisible to the viewer.
  */
 export async function premiumPassViewerFacts(ctx: Pick<AppContext, "prisma" | "actor">, now: Date): Promise<{ isPremium: (video: PremiumPassVideoFacts) => boolean; hasActivePass: boolean } | null> {
   const config = premiumPassFor(ctx.actor);

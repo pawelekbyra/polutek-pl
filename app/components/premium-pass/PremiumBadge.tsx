@@ -1,5 +1,5 @@
 "use client";
-// experiment: premium-pass (docs/experiments/premium-pass.md, section 8.5): the PATRON plate on tiles and the
+// patron zone (docs/architecture/patron-zone.md): the PATRON plate on tiles and the
 // "access until" chip on a playing patron-zone video. Text, not only colour; the lock is decoration next to the text.
 import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";

@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md)
+// patron zone (docs/architecture/patron-zone.md)
 // The offer the browser gets inside a PASS_REQUIRED playback plan and from /api/user/premium-pass. Offer data, never
 // access data: it carries no source, token or session. Pure, safe on the client.
 import {
@@ -74,11 +74,6 @@ export function readPremiumPassOffer(value: unknown): PremiumPassOffer | null {
 /** `29,99 zł` (pl), `PLN 29.99` (en), local format elsewhere, in the given currency. `intlLocale` comes from lib/i18n/ui. */
 export function formatPassPrice(priceMinor: number, locale: string, currency: string = PATRON_CURRENCY): string {
   return new Intl.NumberFormat(locale, { style: "currency", currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(priceMinor / 100);
-}
-
-/** The price of an offer product in a currency (the offer's copy of the server table, for display only). */
-export function offerPrice(product: Pick<PatronOfferProduct, "prices">, currency: PatronCurrency): number {
-  return product.prices[currency];
 }
 
 export function cheapestProduct(offer: Pick<PremiumPassOffer, "products">, currency: PatronCurrency = PATRON_CURRENCY): PatronOfferProduct {

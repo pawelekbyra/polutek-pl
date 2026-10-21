@@ -85,7 +85,7 @@ describe("withFundraisingProgress", () => {
     expect(where.OR).toEqual([{ creatorId: "c1" }, { creatorId: null }]);
   });
 
-  it("patron-zone payments are sales, not tips: they are subtracted from the tip bar (experiment: premium-pass)", async () => {
+  it("patron-zone payments are sales, not tips: they are subtracted from the tip bar (patron zone)", async () => {
     groupBy.mockResolvedValueOnce([{ currency: "PLN", _sum: { amountMinor: 800_00, refundedAmountMinor: 0 } }]);
     groupBy.mockResolvedValueOnce([{ currency: "PLN", _sum: { amountMinor: 300_00, refundedAmountMinor: 0 } }]);
     const result = await withFundraisingProgress(dtos, rows);

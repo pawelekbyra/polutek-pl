@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md, "Strefa patrona"): the simulated checkout (demo mode),
+// patron zone (docs/architecture/patron-zone.md): the simulated checkout (demo mode),
 // the real-payment start and consent routes (stripe mode) and the demo panel. Stripe itself is mocked: no network.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
@@ -96,7 +96,7 @@ afterEach(() => {
 });
 
 describe("POST /api/user/premium-pass/checkout (demo mode, simulated)", () => {
-  it("404 when the experiment is off or invisible to the viewer", async () => {
+  it("404 when the patron zone is off or invisible to the viewer", async () => {
     delete process.env.PREMIUM_PASS_EXPERIMENT;
     expect((await post(checkout, "/api/user/premium-pass/checkout", body())).status).toBe(404);
     process.env.PREMIUM_PASS_EXPERIMENT = "testers";
@@ -251,7 +251,7 @@ describe("POST /api/user/premium-pass/intent (stripe mode: the real payment star
     createCheckoutIntent.mockResolvedValue({ ok: true, data: { paymentId: "pay_1", clientSecret: "pi_1_secret_x", paymentMethodTypes: ["blik", "card", "p24"] } });
   });
 
-  it("404 when the experiment is off, 401 for a guest", async () => {
+  it("404 when the patron zone is off, 401 for a guest", async () => {
     setStripe("test");
     delete process.env.PREMIUM_PASS_EXPERIMENT;
     expect((await post(intent, "/api/user/premium-pass/intent", input())).status).toBe(404);
@@ -394,7 +394,7 @@ describe("POST /api/user/premium-pass/consent (step 2, right before the payment 
   });
 });
 
-describe("POST /api/user/premium-pass/demo (own access only, demo mode or Stripe TEST keys only)", () => {
+describe("POST /api/user/premium-pass/demo (own access only, demo mode only)", () => {
   it("expires and deletes the caller's access, never another account's", async () => {
     await post(checkout, "/api/user/premium-pass/checkout", body());
     actor = { type: "user", userId: "u2" };
@@ -423,14 +423,16 @@ describe("POST /api/user/premium-pass/demo (own access only, demo mode or Stripe
     expect(res.status).toBe(200);
   });
 
-  it("with LIVE keys it cannot remove the proof of a real payment; with TEST keys it can", async () => {
+  it("in stripe mode (live or test keys) it cannot remove the proof of a payment", async () => {
     store.set("xp.premium_pass:u1", row({}));
-    setStripe("live", "on");
-    expect((await post(demo, "/api/user/premium-pass/demo", { action: "reset" })).status).toBe(409);
-    setStripe("live");
-    expect((await post(demo, "/api/user/premium-pass/demo", { action: "reset" })).status).toBe(409);
+    for (const mode of ["live", "test"] as const) {
+      setStripe(mode, "on");
+      const res = await post(demo, "/api/user/premium-pass/demo", { action: "reset" });
+      expect(res.status).toBe(409);
+      expect((await res.json()).code).toBe("WRONG_MODE");
+    }
     expect(store.has("xp.premium_pass:u1")).toBe(true);
-    setStripe("test");
+    process.env.PREMIUM_PASS_PAYMENTS = "demo";
     expect((await post(demo, "/api/user/premium-pass/demo", { action: "reset" })).status).toBe(200);
     expect(store.has("xp.premium_pass:u1")).toBe(false);
   });

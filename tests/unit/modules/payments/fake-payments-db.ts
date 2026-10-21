@@ -109,7 +109,7 @@ export function createFakePaymentsDb() {
     user: table([], { prefix: 'user' }),
     userPaymentTotal: table([], { prefix: 'upt' }),
     paymentCurrencySetting: table([], { prefix: 'pcs' }),
-    // experiment: premium-pass: the patron-zone access grant lives in AppSetting rows.
+    // patron zone: the patron-zone access grant lives in AppSetting rows.
     appSetting: table([], { prefix: 'set', unique: [['key']] }),
     async $executeRaw() {
       return 1;

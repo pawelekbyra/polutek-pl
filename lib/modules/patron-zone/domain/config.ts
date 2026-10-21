@@ -1,13 +1,12 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md)
-// The one switch of the demo "backstage pass" experiment. Pure: no I/O, safe on the client. Every place that
-// behaves differently during the experiment asks only `premiumPassFor()` / `isPremiumPassVideo()` from here.
-// Money only flows in `PREMIUM_PASS_PAYMENTS=stripe` mode (domain/payments-mode.ts); the default `demo` never takes any.
+// patron zone (docs/architecture/patron-zone.md)
+// The feature switch of the patron zone (the env names are historical and stay: PREMIUM_PASS_EXPERIMENT = off|testers|all).
+// Pure: no I/O, safe on the client. Every place that behaves differently for the patron zone asks only
+// `premiumPassFor()` / `isPremiumPassVideo()` from here. Money only flows in `PREMIUM_PASS_PAYMENTS=stripe` mode
+// (domain/payments-mode.ts); the default `demo` never takes any.
 
 import type { Actor } from "@/lib/modules/shared/actor";
 import { isUpcomingPremiere } from "@/lib/premiere";
 import { SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
-
-export const PREMIUM_PASS_EXPERIMENT_ID = "premium-pass";
 
 export type PremiumPassMode = "off" | "testers" | "all";
 
@@ -107,7 +106,7 @@ export function parsePremiumPassMode(value: string | undefined): PremiumPassMode
   return normalized === "testers" || normalized === "all" ? normalized : "off";
 }
 
-/** The experiment configuration, or null when it is off. Read at request time (app.env, no rebuild). */
+/** The patron zone configuration, or null when it is off. Read at request time (app.env, no rebuild). */
 export function readPremiumPassConfig(env: PremiumPassEnv = process.env): PremiumPassConfig | null {
   const mode = parsePremiumPassMode(env.PREMIUM_PASS_EXPERIMENT);
   if (mode === "off") return null;
@@ -120,7 +119,7 @@ function actorUserId(actor: Actor): string | null {
 }
 
 /**
- * The configuration when the experiment is visible to this viewer, else null (the site behaves exactly as without
+ * The configuration when the patron zone is visible to this viewer, else null (the site behaves exactly as without
  * it). `all`: everyone, guests and ADMIN included (owner decision: the owner sees the paywall on his own account).
  * `testers`: only the listed account ids. `system` actors (workers, crons) never see it.
  */

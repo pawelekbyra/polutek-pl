@@ -10,7 +10,7 @@ import { PublicVideoDTO } from "@/app/types/video";
 import { useAuth } from "@/lib/auth/react";
 import { useEffect, useRef, useState } from "react";
 import AccessLockOverlay from "../AccessLockOverlay";
-import { PremiumThumbBadge } from "../premium-pass/PremiumBadge"; // experiment: premium-pass (docs/experiments/premium-pass.md)
+import { PremiumThumbBadge } from "../premium-pass/PremiumBadge"; // patron zone (docs/architecture/patron-zone.md)
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { NajsIcon } from "../najs/primitives";
 import { useAppPreload } from "../preload/AppPreloadProvider";
@@ -137,7 +137,7 @@ export function SidebarPlaylist({
     // UPCOMING section wins over our clock until the layout is refetched.
     const isUpcoming = inUpcomingSection || isUpcomingPremiere(video, premiereNow);
     // Otherwise signing in is the only gate (CLAUDE.md §4.4).
-    const premium = (video as { premium?: boolean }).premium === true; // experiment: premium-pass
+    const premium = (video as { premium?: boolean }).premium === true; // patron zone
     const lockState = isUpcoming
       ? isSignedIn ? "COMING_SOON" : "LOGIN_REQUIRED"
       : !hasAccess && !premium ? "LOGIN_REQUIRED" : null;

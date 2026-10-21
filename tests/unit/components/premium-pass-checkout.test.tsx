@@ -1,12 +1,12 @@
 /** @vitest-environment jsdom */
-// experiment: premium-pass (docs/experiments/premium-pass.md): the three-step checkout (1 currency + option, 2 payment method, 3 payment + the two boxes; the order summary in all three). Stripe.js and Elements are stubs: no network, no charge.
+// patron zone (docs/architecture/patron-zone.md): the three-step checkout (1 currency + option, 2 payment method, 3 payment + the two boxes; the order summary in all three). Stripe.js and Elements are stubs: no network, no charge.
 import '@testing-library/jest-dom/vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { txFor } from '../i18n/mock-language';
-import { buildPremiumPassOffer } from '@/lib/modules/experiment-premium-pass/domain/offer';
-import type { PremiumPaymentsDto } from '@/lib/modules/experiment-premium-pass/domain/payments-mode';
+import { buildPremiumPassOffer } from '@/lib/modules/patron-zone/domain/offer';
+import type { PremiumPaymentsDto } from '@/lib/modules/patron-zone/domain/payments-mode';
 
 vi.mock('@/lib/auth/react', () => ({
   useAuth: () => ({ userId: 'u1', isLoaded: true }),

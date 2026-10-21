@@ -97,7 +97,7 @@ export interface PublicVideoDTO {
    * when it has no goal. Never an amount: goals and totals stay server-side.
    */
   fundraisingProgress?: number | null;
-  /** experiment: premium-pass (docs/experiments/premium-pass.md): behind the demo pass for every visitor. */
+  /** patron zone (docs/architecture/patron-zone.md): behind the demo pass for every visitor. */
   premiumPass?: true;
   creator?: PublicCreatorDTO;
   // Subtitles are not part of the public DTO: they come only with a playable plan.

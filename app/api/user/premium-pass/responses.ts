@@ -1,6 +1,6 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md)
+// patron zone (docs/architecture/patron-zone.md)
 import { NextResponse } from "next/server";
-import type { PassErrorCode } from "@/lib/modules/experiment-premium-pass";
+import type { PassErrorCode } from "@/lib/modules/patron-zone";
 
 export const PASS_NO_STORE = { "Cache-Control": "private, no-store" } as const;
 
@@ -20,7 +20,7 @@ const STATUS: Record<PassErrorCode, number> = {
   PAYMENT_NOT_FOUND: 404,
 };
 
-/** NOT_VISIBLE looks exactly like a missing route: nothing reveals that the experiment exists. */
+/** NOT_VISIBLE looks exactly like a missing route: nothing reveals that the patron zone exists. */
 export function passErrorResponse(result: { code: PassErrorCode; expiresAt?: string }) {
   const body = result.code === "NOT_VISIBLE"
     ? { error: "Not found" }

@@ -1,5 +1,5 @@
 /**
- * experiment: premium-pass (docs/experiments/premium-pass.md, section 4): a simulated purchase (demo mode) on a real
+ * patron zone (docs/architecture/patron-zone.md): a simulated purchase (demo mode) on a real
  * Postgres writes exactly one AppSetting row and nothing into any money table.
  *
  *   DATABASE_URL=postgresql://... npx vitest run --config vitest.postgres.config.ts tests/postgres/premium-pass-ledgers.pg.test.ts
@@ -7,7 +7,7 @@
 import { randomUUID } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { checkoutDemoPass, runPassDemoControl } from '@/lib/modules/experiment-premium-pass';
+import { checkoutDemoPass, runPassDemoControl } from '@/lib/modules/patron-zone';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 
 const prisma = new PrismaClient();

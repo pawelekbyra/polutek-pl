@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md, section 15): the access matrix.
+// patron zone (docs/architecture/patron-zone.md): the access matrix.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AccessTier, VideoStatus } from "@prisma/client";
 import { checkVideoAccess } from "@/lib/modules/access";
@@ -86,7 +86,7 @@ describe("premium-pass access matrix", () => {
     }
   });
 
-  it("off gives exactly the decisions of a site without the experiment, and never reads a pass", async () => {
+  it("off gives exactly the decisions of a site without the patron zone, and never reads a pass", async () => {
     for (const video of Object.keys(videos) as VideoKey[]) {
       for (const actor of Object.values(actors)) {
         setMode("unset");
@@ -126,7 +126,7 @@ describe("premium-pass access matrix", () => {
     });
   }
 
-  it("ADMIN on the public site sees the paywall too while the experiment is on (owner decision)", async () => {
+  it("ADMIN on the public site sees the paywall too while the patron zone is on (owner decision)", async () => {
     setMode("all");
     const { decision } = await decide("premium", actors.admin!);
     expect(decision).toMatchObject({ hasAccess: false, reason: "PASS_REQUIRED" });

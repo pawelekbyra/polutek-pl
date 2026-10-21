@@ -1,12 +1,12 @@
 /** @vitest-environment jsdom */
-// experiment: premium-pass (docs/experiments/premium-pass.md, section 15): the locked stage of the patron zone.
+// patron zone (docs/architecture/patron-zone.md): the locked stage of the patron zone.
 import '@testing-library/jest-dom/vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { txFor } from '../i18n/mock-language';
-import { buildPremiumPassOffer } from '@/lib/modules/experiment-premium-pass/domain/offer';
-import type { PremiumPaymentsDto } from '@/lib/modules/experiment-premium-pass/domain/payments-mode';
+import { buildPremiumPassOffer } from '@/lib/modules/patron-zone/domain/offer';
+import type { PremiumPaymentsDto } from '@/lib/modules/patron-zone/domain/payments-mode';
 
 const auth = { userId: 'u1' as string | null, isLoaded: true };
 vi.mock('@/lib/auth/react', () => ({
@@ -75,6 +75,21 @@ describe('PremiumPassOverlay (patron zone)', () => {
     renderOverlay(true, undefined, { mode: 'stripe', available: true, stripeMode: 'live' });
     expect(screen.queryByText('TRYB DEMO')).toBeNull();
     expect(screen.queryByText('TRYB TESTOWY')).toBeNull();
+  });
+
+  it('the DEMO panel exists only in demo mode: never with Stripe test or live keys', async () => {
+    renderOverlay(true);
+    expect(await screen.findByRole('button', { name: 'DEMO' })).toBeInTheDocument();
+    cleanup();
+    renderOverlay(true, undefined, { mode: 'stripe', available: true, stripeMode: 'test' });
+    expect(screen.queryByRole('button', { name: 'DEMO' })).toBeNull();
+    cleanup();
+    renderOverlay(true, undefined, { mode: 'stripe', available: true, stripeMode: 'live' });
+    expect(screen.queryByRole('button', { name: 'DEMO' })).toBeNull();
+    cleanup();
+    renderOverlay(true, undefined, { mode: 'stripe', available: false });
+    expect(screen.queryByRole('button', { name: 'DEMO' })).toBeNull();
+    expect(document.querySelector('[data-demo-ribbon]')).toBeNull();
   });
 
   it('signed in: the CTA opens the three-step checkout on step 1, without a DEMO bar inside it', async () => {

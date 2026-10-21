@@ -53,7 +53,7 @@ export async function listVideoComments(
   // Comments inherit video access for writing/interacting, but are publicly readable
   // if the video is published (even if it's patron-only).
   if (!accessResult.data.hasAccess) {
-    // experiment: premium-pass (docs/experiments/premium-pass.md): comments of a pass video stay readable (social proof).
+    // patron zone (docs/architecture/patron-zone.md): comments of a pass video stay readable (social proof).
     const isPubliclyReadableReason = accessResult.data.reason === 'LOGIN_REQUIRED' || accessResult.data.reason === 'PASS_REQUIRED';
 
     if (!isPubliclyReadableReason) {
