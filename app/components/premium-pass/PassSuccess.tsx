@@ -26,7 +26,7 @@ export function PassReceipt({ tx, language, pass }: { tx: Tx; language: Locale; 
       <div><dt>{tx("Produkt", "Product")}</dt><dd>{productName(tx, pass.productId)}</dd></div>
       <div>
         <dt>{tx("Kwota", "Amount")}</dt>
-        <dd>{price(language, pass.priceMinor)} {tx("brutto", "gross")} {demo && <span className={styles.muted}>{tx("(demo: 0 zł)", "(demo: PLN 0)")}</span>}</dd>
+        <dd>{price(language, pass.priceMinor, pass.currency)} {tx("brutto", "gross")} {demo && <span className={styles.muted}>{tx("(demo: nic nie pobrano)", "(demo: nothing charged)")}</span>}</dd>
       </div>
       <div><dt>{tx("Metoda", "Method")}</dt><dd>{methodLabel(tx, pass.method)}{demo ? ` ${tx("(symulacja)", "(simulated)")}` : ""}</dd></div>
       <div><dt>{tx("Ważny do", "Valid until")}</dt><dd>{pass.lifetime || !pass.expiresAt ? tx("Dostęp bez limitu", "Unlimited access") : passDate(language, pass.expiresAt, true)}</dd></div>

@@ -10,6 +10,9 @@ export function sellerName(tx: Tx): string {
   return tx("POLUTEK Sp. z o.o. (dane demo)", "POLUTEK Sp. z o.o. (demo data)");
 }
 
+/** The one contact address of the patron zone (owner decision 2026-10-21). */
+export const PATRON_SUPPORT_EMAIL = "support@polutek.com";
+
 export function sellerLine(tx: Tx): string {
   return tx("Sprzedawca: {0}", "Seller: {0}", sellerName(tx));
 }
@@ -23,8 +26,8 @@ export function methodLabel(tx: Tx, method: string): string {
   return describeTipMethod(method, tx).title;
 }
 
-export function price(language: Locale, minor: number): string {
-  return formatPassPrice(minor, intlLocale(language));
+export function price(language: Locale, minor: number, currency: string = "PLN"): string {
+  return formatPassPrice(minor, intlLocale(language), currency);
 }
 
 export function productName(tx: Tx, id: string): string {

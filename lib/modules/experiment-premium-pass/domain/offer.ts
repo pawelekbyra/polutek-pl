@@ -1,13 +1,24 @@
 // experiment: premium-pass (docs/experiments/premium-pass.md)
 // The offer the browser gets inside a PASS_REQUIRED playback plan and from /api/user/premium-pass. Offer data, never
 // access data: it carries no source, token or session. Pure, safe on the client.
-import { PATRON_CURRENCY, PATRON_DEFAULT_PRODUCT_ID, PATRON_PRODUCTS, PATRON_VAT_RATE_PERCENT, patronProduct, type PatronProductId } from "./config";
+import {
+  PATRON_CURRENCIES,
+  PATRON_CURRENCY,
+  PATRON_DEFAULT_PRODUCT_ID,
+  PATRON_PRICES,
+  PATRON_PRODUCTS,
+  PATRON_VAT_RATE_PERCENT,
+  patronProduct,
+  type PatronCurrency,
+  type PatronProductId,
+} from "./config";
 import { readPremiumPaymentsDto, type PremiumPaymentsDto } from "./payments-mode";
 
-export type PatronOfferProduct = { id: PatronProductId; days: number | null; priceMinor: number; bestValue?: true };
+export type PatronOfferProduct = { id: PatronProductId; days: number | null; prices: Record<PatronCurrency, number>; bestValue?: true };
 
 export type PremiumPassOffer = {
-  currency: typeof PATRON_CURRENCY;
+  /** The currencies of the checkout (the tip gateway's list) and their price per product. */
+  currencies: PatronCurrency[];
   vatRatePercent: number;
   /** The two options, in display order. The server derives every amount from its own table, not from this copy. */
   products: PatronOfferProduct[];
@@ -28,9 +39,9 @@ export function buildPremiumPassOffer(args: {
   payments?: PremiumPaymentsDto;
 }): PremiumPassOffer {
   return {
-    currency: PATRON_CURRENCY,
+    currencies: [...PATRON_CURRENCIES],
     vatRatePercent: PATRON_VAT_RATE_PERCENT,
-    products: PATRON_PRODUCTS.map((p) => ({ id: p.id, days: p.days, priceMinor: p.priceMinor, ...(p.bestValue ? { bestValue: true as const } : {}) })),
+    products: PATRON_PRODUCTS.map((p) => ({ id: p.id, days: p.days, prices: { ...PATRON_PRICES[p.id] }, ...(p.bestValue ? { bestValue: true as const } : {}) })),
     defaultProductId: PATRON_DEFAULT_PRODUCT_ID,
     premiumCount: args.premiumCount,
     signedIn: args.signedIn,
@@ -45,7 +56,8 @@ export function readPremiumPassOffer(value: unknown): PremiumPassOffer | null {
   const offer = value as Partial<PremiumPassOffer>;
   if (!offer.payments || typeof offer.payments !== "object" || !Array.isArray(offer.products)) return null;
   const products = offer.products.filter(
-    (p): p is PatronOfferProduct => !!p && patronProduct(p.id) !== null && Number.isInteger(p.priceMinor) && (p.days === null || Number.isInteger(p.days)),
+    (p): p is PatronOfferProduct =>
+      !!p && patronProduct(p.id) !== null && !!p.prices && PATRON_CURRENCIES.every((c) => Number.isInteger(p.prices[c])) && (p.days === null || Number.isInteger(p.days)),
   );
   if (products.length === 0) return null;
   const base = buildPremiumPassOffer({ signedIn: offer.signedIn === true, premiumCount: typeof offer.premiumCount === "number" ? offer.premiumCount : 0 });
@@ -59,13 +71,18 @@ export function readPremiumPassOffer(value: unknown): PremiumPassOffer | null {
   };
 }
 
-/** `29,99 zł` (pl), `PLN 29.99` (en), local format elsewhere. `intlLocale` comes from lib/i18n/ui. */
+/** `29,99 zł` (pl), `PLN 29.99` (en), local format elsewhere, in the given currency. `intlLocale` comes from lib/i18n/ui. */
 export function formatPassPrice(priceMinor: number, locale: string, currency: string = PATRON_CURRENCY): string {
   return new Intl.NumberFormat(locale, { style: "currency", currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(priceMinor / 100);
 }
 
-export function cheapestProduct(offer: Pick<PremiumPassOffer, "products">): PatronOfferProduct {
-  return offer.products.reduce((min, p) => (p.priceMinor < min.priceMinor ? p : min), offer.products[0]!);
+/** The price of an offer product in a currency (the offer's copy of the server table, for display only). */
+export function offerPrice(product: Pick<PatronOfferProduct, "prices">, currency: PatronCurrency): number {
+  return product.prices[currency];
+}
+
+export function cheapestProduct(offer: Pick<PremiumPassOffer, "products">, currency: PatronCurrency = PATRON_CURRENCY): PatronOfferProduct {
+  return offer.products.reduce((min, p) => (p.prices[currency] < min.prices[currency] ? p : min), offer.products[0]!);
 }
 
 export function defaultProduct(offer: Pick<PremiumPassOffer, "products" | "defaultProductId">): PatronOfferProduct {

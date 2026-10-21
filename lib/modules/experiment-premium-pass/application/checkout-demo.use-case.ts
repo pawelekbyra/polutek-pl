@@ -5,7 +5,7 @@
 // can never hand out access that a real payment should have paid for. The real flow is patron-checkout.use-case.ts.
 import { z } from "zod";
 import type { AppContext } from "@/lib/modules/shared/app-context";
-import { PATRON_CURRENCY, patronProduct, premiumPassFor } from "../domain/config";
+import { PATRON_CURRENCIES, patronPrice, patronProduct, premiumPassFor } from "../domain/config";
 import { resolvePremiumPayments, toPremiumPaymentsDto } from "../domain/payments-mode";
 import {
   applyProduct,
@@ -26,6 +26,7 @@ export const checkoutDemoInputSchema = z
   .object({
     requestId: z.string().uuid(),
     productId: z.enum(["ACCESS_30D", "ACCESS_LIFETIME"]),
+    currency: z.enum(PATRON_CURRENCIES),
     method: z.enum(PASS_METHODS),
     consents: z.object({ terms: z.boolean(), waiver: z.boolean() }).strict(),
     simulate: z.enum(["success", "declined"]),
@@ -89,7 +90,8 @@ export async function checkoutDemoPass(ctx: Pick<AppContext, "prisma" | "actor" 
   await countFunnelEvent(ctx, "checkout_submit");
   if (!input.consents.terms || !input.consents.waiver) return { ok: false, code: "CONSENT_REQUIRED" };
   const product = patronProduct(input.productId);
-  if (!product) return { ok: false, code: "PRODUCT_INVALID" };
+  const amountMinor = patronPrice(input.productId, input.currency);
+  if (!product || amountMinor === null) return { ok: false, code: "PRODUCT_INVALID" };
 
   const now = ctx.now();
   const current = await readPass(ctx.prisma, userId);
@@ -114,9 +116,9 @@ export async function checkoutDemoPass(ctx: Pick<AppContext, "prisma" | "actor" 
     provider: "DEMO",
     ref: newDemoRef(),
     productId: product.id,
-    priceMinor: product.priceMinor,
-    totalMinor: (active ? current.totalMinor : 0) + product.priceMinor,
-    currency: PATRON_CURRENCY,
+    priceMinor: amountMinor,
+    totalMinor: (active && current.currency === input.currency ? current.totalMinor : 0) + amountMinor,
+    currency: input.currency,
     method: input.method,
     requestId: input.requestId,
     paymentIds: [],

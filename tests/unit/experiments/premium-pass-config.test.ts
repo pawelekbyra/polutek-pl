@@ -6,7 +6,12 @@ import {
   isPremiumPassVideoForEveryone,
   PATRON_DEFAULT_PRODUCT_ID,
   PATRON_MAX_AHEAD_DAYS,
+  PATRON_CURRENCIES,
+  PATRON_PRICES,
   PATRON_PRODUCTS,
+  isPatronCurrency,
+  patronCurrencyForLanguage,
+  patronPrice,
   patronProduct,
   parsePremiumPassMode,
   premiumPassFor,
@@ -86,27 +91,50 @@ describe("the two options, the offer and the access record", () => {
 
   it("two fixed options with the owner's prices; the unlimited one is the default and the best value; no other product exists", () => {
     expect(PATRON_PRODUCTS).toEqual([
-      { id: "ACCESS_30D", days: 30, priceMinor: 1499 },
-      { id: "ACCESS_LIFETIME", days: null, priceMinor: 2999, bestValue: true },
+      { id: "ACCESS_30D", days: 30 },
+      { id: "ACCESS_LIFETIME", days: null, bestValue: true },
     ]);
+    expect([patronPrice("ACCESS_30D", "PLN"), patronPrice("ACCESS_LIFETIME", "PLN")]).toEqual([1499, 2999]);
     expect(PATRON_DEFAULT_PRODUCT_ID).toBe("ACCESS_LIFETIME");
     for (const unknown of ["ACCESS_7D", "", null, undefined, 1, "access_30d", { id: "ACCESS_30D" }]) expect(patronProduct(unknown)).toBeNull();
     expect(formatPassPrice(1499, "pl-PL").replace(/\s/g, " ")).toBe("14,99 zł");
     expect(formatPassPrice(2999, "pl-PL").replace(/\s/g, " ")).toBe("29,99 zł");
   });
 
+  it("the price table covers every product in every currency of the tip gateway; unknown input is never priced", () => {
+    expect([...PATRON_CURRENCIES]).toEqual(["PLN", "EUR", "USD", "CHF", "GBP"]);
+    for (const product of PATRON_PRODUCTS) {
+      for (const currency of PATRON_CURRENCIES) {
+        const amount = patronPrice(product.id, currency)!;
+        expect(Number.isInteger(amount) && amount >= 200).toBe(true); // above Stripe's minimum charge
+        expect(amount).toBe(PATRON_PRICES[product.id][currency]);
+      }
+      expect(PATRON_PRICES[product.id].PLN).toBe(product.id === "ACCESS_30D" ? 1499 : 2999);
+    }
+    for (const currency of PATRON_CURRENCIES) expect(PATRON_PRICES.ACCESS_LIFETIME[currency]).toBeGreaterThan(PATRON_PRICES.ACCESS_30D[currency]);
+    expect(patronPrice("ACCESS_30D", "eur")).toBe(399); // case-insensitive like Stripe's lower-case codes
+    for (const [id, cur] of [["ACCESS_FREE", "PLN"], ["ACCESS_30D", "SEK"], ["ACCESS_30D", ""], [null, "PLN"], ["ACCESS_30D", null], ["__proto__", "PLN"], ["ACCESS_30D", "__proto__"]] as const) expect(patronPrice(id, cur)).toBeNull();
+    expect(isPatronCurrency("EUR")).toBe(true);
+    expect(isPatronCurrency("eur")).toBe(false);
+    expect(isPatronCurrency("SEK")).toBe(false);
+    expect([patronCurrencyForLanguage("pl"), patronCurrencyForLanguage("de"), patronCurrencyForLanguage("en"), patronCurrencyForLanguage("zh")]).toEqual(["PLN", "EUR", "USD", "USD"]);
+  });
+
   it("offer: PLN, VAT, both products, default, payments info; a malformed offer is dropped", () => {
     const offer = buildPremiumPassOffer({ signedIn: true, premiumCount: 2, expiredAt: "2026-11-20T10:00:00.000Z", payments: { mode: "stripe", available: true, stripeMode: "test" } });
-    expect(offer).toMatchObject({ currency: "PLN", vatRatePercent: 23, defaultProductId: "ACCESS_LIFETIME", premiumCount: 2, signedIn: true, expiredAt: "2026-11-20T10:00:00.000Z", payments: { mode: "stripe", available: true, stripeMode: "test" } });
-    expect(offer.products.map((p) => [p.id, p.priceMinor, p.days])).toEqual([["ACCESS_30D", 1499, 30], ["ACCESS_LIFETIME", 2999, null]]);
+    expect(offer).toMatchObject({ currencies: ["PLN", "EUR", "USD", "CHF", "GBP"], vatRatePercent: 23, defaultProductId: "ACCESS_LIFETIME", premiumCount: 2, signedIn: true, expiredAt: "2026-11-20T10:00:00.000Z", payments: { mode: "stripe", available: true, stripeMode: "test" } });
+    expect(offer.products.map((p) => [p.id, p.prices.PLN, p.days])).toEqual([["ACCESS_30D", 1499, 30], ["ACCESS_LIFETIME", 2999, null]]);
+    expect(offer.products[0]!.prices).toEqual({ PLN: 1499, EUR: 399, USD: 449, CHF: 399, GBP: 349 });
     expect(cheapestProduct(offer).id).toBe("ACCESS_30D");
+    expect(cheapestProduct(offer, "EUR").prices.EUR).toBe(399);
     expect(defaultProduct(offer).id).toBe("ACCESS_LIFETIME");
     expect(Object.keys(offer)).not.toEqual(expect.arrayContaining(["minMinor", "maxMinor", "suggestedMinor", "defaultMinor"]));
     expect(buildPremiumPassOffer({ signedIn: false, premiumCount: 0 }).payments).toEqual({ mode: "demo" });
     expect(readPremiumPassOffer(offer)).toEqual(offer);
     expect(readPremiumPassOffer({ ...offer, payments: undefined })).toBeNull();
     expect(readPremiumPassOffer({ ...offer, products: [] })).toBeNull();
-    expect(readPremiumPassOffer({ ...offer, products: [{ id: "ACCESS_FREE", days: 1, priceMinor: 0 }] })).toBeNull();
+    expect(readPremiumPassOffer({ ...offer, products: [{ id: "ACCESS_FREE", days: 1, prices: offer.products[0]!.prices }] })).toBeNull();
+    expect(readPremiumPassOffer({ ...offer, products: [{ id: "ACCESS_30D", days: 30, prices: { PLN: 1499 } }] })).toBeNull();
     expect(readPremiumPassOffer("x")).toBeNull();
     expect(readPremiumPassOffer({ ...offer, payments: { mode: "live" } })!.payments).toEqual({ mode: "stripe", available: false });
   });
@@ -115,7 +143,7 @@ describe("the two options, the offer and the access record", () => {
     expect(parsePassRecord("{not json")).toBeNull();
     expect(parsePassRecord(JSON.stringify({ v: 4 }))).toBeNull();
     expect(parsePassRecord(JSON.stringify({ ...base, provider: "PAYPAL" }))).toBeNull();
-    expect(parsePassRecord(JSON.stringify({ ...base, currency: "EUR" }))).toBeNull();
+    expect(parsePassRecord(JSON.stringify({ ...base, currency: "SEK" }))).toBeNull();
     expect(parsePassRecord(JSON.stringify({ ...base, productId: "ACCESS_7D" }))).toBeNull();
     expect(parsePassRecord(JSON.stringify({ ...base, expiresAt: null }))).toBeNull();
     const parsed = parsePassRecord(JSON.stringify(base))!;

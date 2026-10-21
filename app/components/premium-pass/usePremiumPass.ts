@@ -28,6 +28,7 @@ export async function fetchPassStatus(intent?: "checkout"): Promise<PremiumPassS
 export async function postDemoCheckout(input: {
   requestId: string;
   productId: string;
+  currency: string;
   method: PassMethod;
   simulate: "success" | "declined";
 }): Promise<CheckoutOutcome> {
@@ -59,7 +60,7 @@ export type IntentOutcome =
   | { kind: "error" };
 
 /** Creates (or, for the same attempt, updates the amount of) the PaymentIntent. Real payments: `stripe` mode only. */
-export async function postPatronIntent(input: { requestId: string; productId: string }): Promise<IntentOutcome> {
+export async function postPatronIntent(input: { requestId: string; productId: string; currency: string }): Promise<IntentOutcome> {
   try {
     const res = await fetch("/api/user/premium-pass/intent", {
       method: "POST",

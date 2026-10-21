@@ -5,6 +5,7 @@
 
 import type { Actor } from "@/lib/modules/shared/actor";
 import { isUpcomingPremiere } from "@/lib/premiere";
+import { SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
 
 export const PREMIUM_PASS_EXPERIMENT_ID = "premium-pass";
 
@@ -16,10 +17,15 @@ export type PremiumPassMode = "off" | "testers" | "all";
  * A 30-day option adds 30 days (from the current end when still active); the unlimited option is a lifetime grant.
  * Nothing renews by itself (no subscription).
  */
-export const PATRON_CURRENCY = "PLN";
 export const PATRON_VAT_RATE_PERCENT = 23;
 /** Access can be extended by 30-day payments, but never to more than this many days ahead of now. */
 export const PATRON_MAX_AHEAD_DAYS = 365;
+
+/** The currencies the tip gateway supports (lib/constants.ts) are the currencies of the patron checkout. */
+export const PATRON_CURRENCIES = SUPPORTED_CURRENCIES;
+export type PatronCurrency = SupportedCurrency;
+/** The currency of a Polish viewer and the fallback of everything else (the first currency of the product table). */
+export const PATRON_CURRENCY: PatronCurrency = "PLN";
 
 export type PatronProductId = "ACCESS_30D" | "ACCESS_LIFETIME";
 
@@ -27,16 +33,48 @@ export type PatronProduct = {
   id: PatronProductId;
   /** Days of access added by one payment; null = lifetime (unlimited). */
   days: number | null;
-  /** Gross price in minor units (grosze), VAT included. One honest price: no strikethrough, no "was" price. */
-  priceMinor: number;
   /** Shown as a plain "best value" label; never a discount claim. */
   bestValue?: true;
 };
 
 export const PATRON_PRODUCTS: readonly PatronProduct[] = [
-  { id: "ACCESS_30D", days: 30, priceMinor: 1499 },
-  { id: "ACCESS_LIFETIME", days: null, priceMinor: 2999, bestValue: true },
+  { id: "ACCESS_30D", days: 30 },
+  { id: "ACCESS_LIFETIME", days: null, bestValue: true },
 ] as const;
+
+/**
+ * THE price table: product x currency, gross amounts in minor units (VAT 23% included), one honest price each (no
+ * strikethrough, no "was" price). PLN is the owner's price; the other currencies are round-ish retail prices at roughly
+ * the PLN price at 2026-10 rates (1 PLN ~ 0.24 EUR / 0.27 USD / 0.20 GBP / 0.22 CHF), all above Stripe's minimum charge.
+ * The owner edits the numbers here; the server derives every amount from this table and the fulfilment verifies
+ * amount and currency against it. The browser only names a product and a currency.
+ */
+export const PATRON_PRICES: Readonly<Record<PatronProductId, Readonly<Record<PatronCurrency, number>>>> = {
+  ACCESS_30D: { PLN: 1499, EUR: 399, USD: 449, GBP: 349, CHF: 399 },
+  ACCESS_LIFETIME: { PLN: 2999, EUR: 799, USD: 899, GBP: 699, CHF: 799 },
+};
+
+/** The price of a product in a currency, or null for an unknown product or currency (nothing is ever guessed). */
+export function patronPrice(productId: unknown, currency: unknown): number | null {
+  if (typeof productId !== "string" || typeof currency !== "string") return null;
+  const row = (PATRON_PRICES as Record<string, Record<string, number> | undefined>)[productId];
+  const amount = row?.[currency.toUpperCase()];
+  return typeof amount === "number" ? amount : null;
+}
+
+export function isPatronCurrency(value: unknown): value is PatronCurrency {
+  return typeof value === "string" && (PATRON_CURRENCIES as readonly string[]).includes(value);
+}
+
+/**
+ * The currency a page without a browser (the offer page, rendered on the server) shows: Polish gets PLN, German, French,
+ * Italian, Spanish and Portuguese get EUR, the rest USD. The checkout itself starts from the tip gateway's own
+ * `detectDefaultCurrency` and lets the viewer change it.
+ */
+export function patronCurrencyForLanguage(language: string): PatronCurrency {
+  if (language === "pl") return "PLN";
+  return ["de", "fr", "it", "es", "pt"].includes(language) ? "EUR" : "USD";
+}
 
 export const PATRON_DEFAULT_PRODUCT_ID: PatronProductId = "ACCESS_LIFETIME";
 

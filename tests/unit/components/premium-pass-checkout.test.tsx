@@ -1,7 +1,5 @@
 /** @vitest-environment jsdom */
-// experiment: premium-pass (docs/experiments/premium-pass.md, "Strefa patrona"): the two-step checkout. Step 1: amount
-// (suggested or own), payment method dropdown, Terms/Privacy as LINKS. Step 2: the payment and the two boxes. Stripe.js
-// and Elements are replaced by stubs: no network, no charge.
+// experiment: premium-pass (docs/experiments/premium-pass.md): the three-step checkout (1 currency + option, 2 payment method, 3 payment + the two boxes; the order summary in all three). Stripe.js and Elements are stubs: no network, no charge.
 import '@testing-library/jest-dom/vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -42,7 +40,7 @@ const jsonBody = (needle: string, index = 0) => JSON.parse(String(calls(needle)[
 function activePass(provider: 'DEMO' | 'STRIPE') {
   return {
     state: 'active', lifetime: false, productId: 'ACCESS_LIFETIME', provider, ref: provider === 'DEMO' ? 'DEMO-AAAA-BBBB' : 'pay_1', expiresAt: '2026-11-20T10:00:00.000Z', grantedAt: '2026-10-21T10:00:00.000Z',
-    method: 'blik', priceMinor: 2999, totalMinor: 2999, waiverAt: '2026-10-21T10:00:00.000Z',
+    method: 'blik', priceMinor: 2999, currency: 'PLN', totalMinor: 2999, waiverAt: '2026-10-21T10:00:00.000Z',
   };
 }
 
@@ -62,7 +60,18 @@ function open(payments?: PremiumPaymentsDto) {
   return { offer, onWatch };
 }
 
-describe('patron checkout, step 1', () => {
+
+type Dialog = ReturnType<typeof within>;
+const clickNext = (dialog: Dialog, label: string) => fireEvent.click(dialog.getByRole('button', { name: N(label) }));
+const summaryOf = (dialog: Dialog) => dialog.getByRole('group', { name: 'Podsumowanie zamówienia' });
+
+async function pickCurrency(dialog: Dialog, title: string) {
+  const combo = dialog.getByRole('combobox', { name: 'Waluta' });
+  fireEvent.click(combo);
+  fireEvent.click(await screen.findByRole('option', { name: new RegExp(title) }));
+}
+
+describe('patron checkout, step 1 (currency and option)', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', fetchMock);
     fetchMock.mockReset();
@@ -73,94 +82,170 @@ describe('patron checkout, step 1', () => {
     vi.unstubAllGlobals();
   });
 
-  it('offers two option cards (unlimited preselected, best value), a method dropdown and Terms/Privacy as links only', async () => {
+  it('offers only the currency and the two option cards (unlimited preselected, best value) and the order summary', async () => {
     open();
-    const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByRole('heading', { name: 'Zostań patronem i uzyskaj dostęp do strefy premium' })).toBeInTheDocument();
-    const group = within(dialog).getByRole('group', { name: 'Wybierz dostęp' });
+    const dialog = within(await screen.findByRole('dialog'));
+    expect(dialog.getByRole('heading', { name: 'Uzyskaj dostęp do strefy premium' })).toBeInTheDocument();
+    expect(dialog.queryByText(/Zostań patronem i uzyskaj/)).toBeNull(); // the lead no longer repeats the title
+    expect(dialog.getByRole('combobox', { name: 'Waluta' })).toHaveTextContent('Złoty (PLN)');
+    const group = dialog.getByRole('group', { name: 'Wybierz dostęp' });
     const cards = within(group).getAllByRole('radio') as HTMLInputElement[];
-    expect(cards.map((r) => r.value)).toEqual(['ACCESS_30D', 'ACCESS_LIFETIME']);
-    expect(cards.map((r) => r.checked)).toEqual([false, true]);
-    expect(within(group).getByText('Dostęp na 30 dni')).toBeInTheDocument();
-    expect(within(group).getByText('Dostęp bez limitu')).toBeInTheDocument();
-    expect(within(group).getByText('jednorazowo, 30 dni')).toBeInTheDocument();
-    expect(within(group).getByText('Najlepsza wartość')).toBeInTheDocument();
+    expect(cards.map((r) => [r.value, r.checked])).toEqual([['ACCESS_30D', false], ['ACCESS_LIFETIME', true]]);
     expect(within(group).getAllByText('Najlepsza wartość')).toHaveLength(1);
-    expect(within(dialog).queryByRole('textbox')).toBeNull(); // no custom amount field
-    expect(within(dialog).queryByText(/Zapłać ile chcesz/)).toBeNull();
-    expect(within(dialog).getByRole('combobox', { name: 'Metoda płatności' })).toBeInTheDocument();
-    // no checkbox here: the consent is given in step 2
-    expect(within(dialog).queryAllByRole('checkbox')).toHaveLength(0);
-    expect(within(dialog).getByRole('link', { name: 'Regulamin strefy patrona' })).toHaveAttribute('href', '/regulamin-premium');
-    expect(within(dialog).getByRole('link', { name: 'Polityka prywatności' })).toHaveAttribute('href', expect.stringContaining('polityka-prywatnosci'));
-    expect(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeInTheDocument();
-    expect(dialog.querySelector('[data-demo-ribbon]')).toBeNull();
+    expect(summaryOf(dialog)).toHaveTextContent('Dostęp bez limitu');
+    expect(summaryOf(dialog)).toHaveTextContent('29,99');
+    expect(summaryOf(dialog)).toHaveTextContent('zawiera 23% VAT');
+    // payment method and legal links belong to step 2; nothing to tick, no text field
+    expect(dialog.queryByRole('combobox', { name: 'Metoda płatności' })).toBeNull();
+    expect(dialog.queryAllByRole('checkbox')).toHaveLength(0);
+    expect(dialog.queryByRole('textbox')).toBeNull();
+    expect(dialog.getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeInTheDocument();
+    expect(screen.getByRole('dialog').querySelector('[data-demo-ribbon]')).toBeNull();
   });
 
-  it('has a step indicator and announces the step', async () => {
+  it('has three step dots, marks the current one and announces "Krok 1 z 3"', async () => {
     open();
-    const dialog = await screen.findByRole('dialog');
-    const steps = within(dialog).getByRole('list', { name: 'Etapy zakupu' });
-    const items = within(steps).getAllByRole('listitem');
-    expect(items[0]).toHaveAttribute('aria-current', 'step');
-    expect(items[1]).not.toHaveAttribute('aria-current');
-    expect(within(dialog).getByText('Krok 1 z 2')).toHaveAttribute('aria-live', 'polite');
+    const dialog = within(await screen.findByRole('dialog'));
+    const dots = within(dialog.getByRole('list', { name: 'Etapy zakupu' })).getAllByRole('listitem');
+    expect(dots).toHaveLength(3);
+    expect(dots[0]).toHaveAttribute('aria-current', 'step');
+    expect(dots[1]).not.toHaveAttribute('aria-current');
+    expect(dialog.getByText('Krok 1 z 3')).toHaveAttribute('aria-live', 'polite');
   });
 
-  it('the dropdown works from the keyboard and lists the available methods', async () => {
+  it('lists the tip gateway\'s currencies and the prices follow the chosen currency', async () => {
     open();
-    const combo = await screen.findByRole('combobox', { name: 'Metoda płatności' });
+    const dialog = within(await screen.findByRole('dialog'));
+    const combo = dialog.getByRole('combobox', { name: 'Waluta' });
+    fireEvent.click(combo);
+    const titles = (await screen.findAllByRole('option')).map((o) => o.textContent);
+    expect(titles).toEqual([
+      expect.stringContaining('Złoty'), expect.stringContaining('Euro'), expect.stringContaining('Dolar'), expect.stringContaining('Frank'), expect.stringContaining('Funt'),
+    ]);
+    fireEvent.click(await screen.findByRole('option', { name: /Euro/ }));
+    expect(combo).toHaveTextContent('Euro (EUR)');
+    expect(dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }).closest('label')).toHaveTextContent('3,99');
+    expect(dialog.getByRole('radio', { name: /Dostęp bez limitu/ }).closest('label')).toHaveTextContent('7,99');
+    expect(dialog.getByRole('button', { name: N('Dalej · 7,99 €') })).toBeInTheDocument();
+    expect(summaryOf(dialog)).toHaveTextContent('7,99');
+    await pickCurrency(dialog, 'Dolar');
+    expect(dialog.getByRole('button', { name: /Dalej · 8,99/ })).toBeInTheDocument();
+    await pickCurrency(dialog, 'Funt');
+    expect(dialog.getByRole('button', { name: /Dalej · 6,99/ })).toBeInTheDocument();
+    await pickCurrency(dialog, 'Frank');
+    expect(dialog.getByRole('button', { name: /Dalej · 7,99/ })).toBeInTheDocument();
+    await pickCurrency(dialog, 'Złoty');
+    expect(dialog.getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeInTheDocument();
+  });
+
+  it('choosing an option updates the summary and the button price', async () => {
+    open();
+    const dialog = within(await screen.findByRole('dialog'));
+    fireEvent.click(dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }));
+    expect(dialog.getByRole('button', { name: N('Dalej · 14,99 zł') })).toBeInTheDocument();
+    expect(summaryOf(dialog)).toHaveTextContent('Dostęp na 30 dni');
+    expect(summaryOf(dialog)).toHaveTextContent('14,99');
+    fireEvent.click(dialog.getByRole('radio', { name: /Dostęp bez limitu/ }));
+    expect(dialog.getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeInTheDocument();
+  });
+
+  it('with unlimited access already held: says so and offers nothing to buy', async () => {
+    route({ '/api/user/premium-pass?': () => new Response(JSON.stringify({ offer: {}, pass: { ...activePass('STRIPE'), lifetime: true, expiresAt: null } }), { status: 200 }) });
+    open();
+    const dialog = within(await screen.findByRole('dialog'));
+    expect(await dialog.findByText('Masz już dostęp bez limitu.')).toBeInTheDocument();
+    expect(dialog.getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeDisabled();
+    for (const radio of dialog.getAllByRole('radio')) expect(radio).toBeDisabled();
+  });
+
+  it('a running 30-day access explains extension and conversion', async () => {
+    route({ '/api/user/premium-pass?': () => new Response(JSON.stringify({ offer: {}, pass: activePass('STRIPE') }), { status: 200 }) });
+    open();
+    const dialog = within(await screen.findByRole('dialog'));
+    expect(await dialog.findByText(/Masz dostęp do 20\.11\.2026/)).toBeInTheDocument();
+    expect(dialog.getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeEnabled();
+  });
+});
+
+describe('patron checkout, step 2 (payment method)', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', fetchMock);
+    fetchMock.mockReset();
+    route({});
+  });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it('shows the method dropdown, the order summary and Terms/Privacy as links only; nothing to tick yet', async () => {
+    open();
+    const dialog = within(await screen.findByRole('dialog'));
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    expect(await dialog.findByRole('heading', { name: 'Metoda płatności' })).toBeInTheDocument();
+    expect(dialog.getByText('Krok 2 z 3')).toBeInTheDocument();
+    expect(within(dialog.getByRole('list', { name: 'Etapy zakupu' })).getAllByRole('listitem')[1]).toHaveAttribute('aria-current', 'step');
+    expect(dialog.getByRole('combobox', { name: 'Metoda płatności' })).toBeInTheDocument();
+    expect(summaryOf(dialog)).toHaveTextContent('29,99');
+    expect(dialog.getByRole('link', { name: 'Regulamin strefy patrona' })).toHaveAttribute('href', '/regulamin-premium');
+    expect(dialog.getByRole('link', { name: 'Polityka prywatności' })).toHaveAttribute('href', expect.stringContaining('polityka-prywatnosci'));
+    expect(dialog.queryAllByRole('checkbox')).toHaveLength(0);
+    expect(dialog.queryByRole('radio')).toBeNull();
+    expect(dialog.getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeInTheDocument();
+    expect(fetchMock.mock.calls.filter(([u]) => String(u).includes('/intent'))).toHaveLength(0);
+  });
+
+  it('the dropdown works from the keyboard; PLN lists BLIK, Przelewy24 and card', async () => {
+    open();
+    const dialog = within(await screen.findByRole('dialog'));
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    const combo = await dialog.findByRole('combobox', { name: 'Metoda płatności' });
     expect(combo).toHaveAttribute('aria-expanded', 'false');
     combo.focus();
     fireEvent.keyDown(combo, { key: 'ArrowDown' });
     expect(combo).toHaveAttribute('aria-expanded', 'true');
-    const list = await screen.findByRole('listbox');
-    const options = within(list).getAllByRole('option');
+    const options = within(await screen.findByRole('listbox')).getAllByRole('option');
     expect(options.map((o) => o.textContent)).toEqual([expect.stringContaining('BLIK'), expect.stringContaining('Przelewy24'), expect.stringContaining('Karta')]);
     fireEvent.keyDown(combo, { key: 'ArrowDown' });
     fireEvent.keyDown(combo, { key: 'Enter' });
-    expect(combo).toHaveAttribute('aria-expanded', 'false');
     expect(combo).toHaveTextContent('Przelewy24');
     fireEvent.keyDown(combo, { key: 'ArrowDown' });
     fireEvent.keyDown(combo, { key: 'Escape' });
     expect(combo).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('choosing an option updates the summary and the button price (brutto, VAT 23%)', async () => {
+  it('other currencies get the card only (BLIK and Przelewy24 are Polish methods) and the summary is in that currency', async () => {
     open();
-    const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByText('Razem do zapłaty (brutto)').parentElement).toHaveTextContent('29,99');
-    fireEvent.click(within(dialog).getByRole('radio', { name: /Dostęp na 30 dni/ }));
-    expect(within(dialog).getByRole('button', { name: N('Dalej · 14,99 zł') })).toBeInTheDocument();
-    expect(within(dialog).getByText('Razem do zapłaty (brutto)').parentElement).toHaveTextContent('14,99');
-    expect(within(dialog).getByText('kwota brutto, zawiera 23% VAT')).toBeInTheDocument();
-    fireEvent.click(within(dialog).getByRole('radio', { name: /Dostęp bez limitu/ }));
-    expect(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeInTheDocument();
+    const dialog = within(await screen.findByRole('dialog'));
+    await pickCurrency(dialog, 'Euro');
+    clickNext(dialog, 'Dalej · 7,99 €');
+    const combo = await dialog.findByRole('combobox', { name: 'Metoda płatności' });
+    expect(combo).toHaveTextContent('Karta');
+    fireEvent.click(combo);
+    expect(within(await screen.findByRole('listbox')).getAllByRole('option')).toHaveLength(1);
+    expect(summaryOf(dialog)).toHaveTextContent('7,99');
   });
 
-  it('with unlimited access already held: says so and offers nothing to buy', async () => {
-    route({ '/api/user/premium-pass?': () => new Response(JSON.stringify({ offer: {}, pass: { ...activePass('STRIPE'), lifetime: true, expiresAt: null } }), { status: 200 }) });
+  it('the back arrow returns to step 1 and keeps the currency and the option', async () => {
     open();
-    const dialog = await screen.findByRole('dialog');
-    expect(await within(dialog).findByText('Masz już dostęp bez limitu.')).toBeInTheDocument();
-    expect(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeDisabled();
-    for (const radio of within(dialog).getAllByRole('radio')) expect(radio).toBeDisabled();
-  });
-
-  it('a running 30-day access explains extension and conversion', async () => {
-    route({ '/api/user/premium-pass?': () => new Response(JSON.stringify({ offer: {}, pass: activePass('STRIPE') }), { status: 200 }) });
-    open();
-    const dialog = await screen.findByRole('dialog');
-    expect(await within(dialog).findByText(/Masz dostęp do 20\.11\.2026/)).toBeInTheDocument();
-    expect(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeEnabled();
+    const dialog = within(await screen.findByRole('dialog'));
+    await pickCurrency(dialog, 'Euro');
+    fireEvent.click(dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }));
+    clickNext(dialog, 'Dalej · 3,99 €');
+    await dialog.findByRole('heading', { name: 'Metoda płatności' });
+    fireEvent.click(dialog.getByRole('button', { name: 'Wstecz' }));
+    expect(await dialog.findByRole('heading', { name: 'Uzyskaj dostęp do strefy premium' })).toBeInTheDocument();
+    expect(dialog.getByRole('combobox', { name: 'Waluta' })).toHaveTextContent('Euro (EUR)');
+    expect((dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }) as HTMLInputElement).checked).toBe(true);
   });
 });
 
-describe('patron checkout, step 2 in demo mode (simulated payment)', () => {
+describe('patron checkout, step 3 in demo mode (simulated payment)', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', fetchMock);
     fetchMock.mockReset();
     window.sessionStorage.clear();
+    window.localStorage.clear(); // the last-used method is remembered across checkouts
     route({ '/premium-pass/checkout': () => new Response(JSON.stringify({ pass: activePass('DEMO') }), { status: 200 }) });
   });
   afterEach(() => {
@@ -168,54 +253,96 @@ describe('patron checkout, step 2 in demo mode (simulated payment)', () => {
     vi.unstubAllGlobals();
   });
 
-  it('asks for both boxes HERE, shows errors instead of paying, then pays the chosen amount', async () => {
-    const { onWatch } = open();
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') }));
+  async function toStep3(dialog: Dialog, label = 'Dalej · 29,99 zł') {
+    clickNext(dialog, label);
+    await dialog.findByRole('heading', { name: 'Metoda płatności' });
+    clickNext(dialog, label);
+    await dialog.findByRole('heading', { name: 'Płatność' });
+  }
 
-    const pay = await within(dialog).findByRole('button', { name: N('Zapłać 29,99 zł') });
-    expect(within(dialog).getByRole('listitem', { current: 'step' })).toHaveAttribute('aria-label', 'Płatność');
-    const boxes = within(dialog).getAllByRole('checkbox');
+  it('asks for both boxes HERE, with the order summary still visible; errors instead of paying; then pays', async () => {
+    const { onWatch } = open();
+    const dialog = within(await screen.findByRole('dialog'));
+    await toStep3(dialog);
+    expect(dialog.getByText('Krok 3 z 3')).toBeInTheDocument();
+    expect(summaryOf(dialog)).toHaveTextContent('Dostęp bez limitu');
+    expect(summaryOf(dialog)).toHaveTextContent('29,99');
+    const pay = dialog.getByRole('button', { name: N('Zapłać 29,99 zł') });
+    const boxes = dialog.getAllByRole('checkbox');
     expect(boxes).toHaveLength(2);
-    expect(within(dialog).getByRole('checkbox', { name: /Akceptuję/ })).toBeInTheDocument();
-    expect(within(dialog).getByText('Zaznacz obie zgody, aby zapłacić.')).toBeInTheDocument();
+    expect(dialog.getByText('Zaznacz obie zgody, aby zapłacić.')).toBeInTheDocument();
 
     fireEvent.click(pay);
-    expect(within(dialog).getAllByText('Zaznacz to pole, aby kontynuować.')).toHaveLength(2);
+    expect(dialog.getAllByText('Zaznacz to pole, aby kontynuować.')).toHaveLength(2);
     expect(calls('/premium-pass/checkout')).toHaveLength(0);
 
     boxes.forEach((box) => fireEvent.click(box));
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Zapłać 29,99 zł') }));
-    expect(await within(dialog).findByRole('heading', { name: 'Jesteś patronem. Dziękuję!' }, { timeout: 4000 })).toBeInTheDocument();
-    expect(jsonBody('/premium-pass/checkout')).toMatchObject({ productId: 'ACCESS_LIFETIME', method: 'blik', consents: { terms: true, waiver: true }, simulate: 'success' });
-    expect(dialog).toHaveTextContent('Strefa patrona jest otwarta do 20.11.2026');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Wejdź do strefy patrona' }));
+    fireEvent.click(dialog.getByRole('button', { name: N('Zapłać 29,99 zł') }));
+    expect(await dialog.findByRole('heading', { name: 'Jesteś patronem. Dziękuję!' }, { timeout: 4000 })).toBeInTheDocument();
+    expect(jsonBody('/premium-pass/checkout')).toMatchObject({ productId: 'ACCESS_LIFETIME', currency: 'PLN', method: 'blik', consents: { terms: true, waiver: true }, simulate: 'success' });
+    expect(Object.keys(jsonBody('/premium-pass/checkout'))).not.toContain('amountMinor');
+    fireEvent.click(dialog.getByRole('button', { name: 'Wejdź do strefy patrona' }));
     expect(onWatch).toHaveBeenCalled();
   });
 
-  it('"Zmień" goes back to step 1 with the choice kept', async () => {
+  it('pays in the chosen currency', async () => {
     open();
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('radio', { name: /Dostęp na 30 dni/ }));
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 14,99 zł') }));
-    await within(dialog).findByRole('button', { name: N('Zapłać 14,99 zł') });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Zmień' }));
-    expect(await within(dialog).findByRole('button', { name: N('Dalej · 14,99 zł') })).toBeInTheDocument();
-    expect((within(dialog).getByRole('radio', { name: /Dostęp na 30 dni/ }) as HTMLInputElement).checked).toBe(true);
+    const dialog = within(await screen.findByRole('dialog'));
+    await pickCurrency(dialog, 'Dolar');
+    fireEvent.click(dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }));
+    await toStep3(dialog, 'Dalej · 4,49 USD');
+    expect(dialog.getByRole('button', { name: /Zapłać 4,49/ })).toBeInTheDocument();
+    dialog.getAllByRole('checkbox').forEach((box) => fireEvent.click(box));
+    fireEvent.click(dialog.getByRole('button', { name: /Zapłać 4,49/ }));
+    await dialog.findByRole('heading', { name: 'Jesteś patronem. Dziękuję!' }, { timeout: 4000 });
+    expect(jsonBody('/premium-pass/checkout')).toMatchObject({ productId: 'ACCESS_30D', currency: 'USD' });
+  });
+
+  it('"Zmień" and the back arrow go back to step 2 with the choices kept', async () => {
+    open();
+    const dialog = within(await screen.findByRole('dialog'));
+    fireEvent.click(dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }));
+    await toStep3(dialog, 'Dalej · 14,99 zł');
+    fireEvent.click(dialog.getByRole('button', { name: 'Zmień' }));
+    expect(await dialog.findByRole('heading', { name: 'Metoda płatności' })).toBeInTheDocument();
+    expect(summaryOf(dialog)).toHaveTextContent('14,99');
+    clickNext(dialog, 'Dalej · 14,99 zł');
+    await dialog.findByRole('heading', { name: 'Płatność' });
+    fireEvent.click(dialog.getByRole('button', { name: 'Wstecz' }));
+    await dialog.findByRole('heading', { name: 'Metoda płatności' });
+    fireEvent.click(dialog.getByRole('button', { name: 'Wstecz' }));
+    expect((await dialog.findByRole('radio', { name: /Dostęp na 30 dni/ }) as HTMLInputElement).checked).toBe(true);
+  });
+
+  it('moves focus to the heading of each step', async () => {
+    open();
+    const dialog = within(await screen.findByRole('dialog'));
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    const second = await dialog.findByRole('heading', { name: 'Metoda płatności' });
+    await waitFor(() => expect(document.activeElement).toBe(second));
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    const third = await dialog.findByRole('heading', { name: 'Płatność' });
+    await waitFor(() => expect(document.activeElement).toBe(third));
   });
 
   it('never asks Stripe for anything in demo mode', async () => {
     open();
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') }));
-    await within(dialog).findByRole('button', { name: N('Zapłać 29,99 zł') });
+    const dialog = within(await screen.findByRole('dialog'));
+    await toStep3(dialog);
     expect(getStripeBrowser).not.toHaveBeenCalled();
     expect(calls('/intent')).toHaveLength(0);
     expect(screen.queryByTestId('stripe-elements')).toBeNull();
   });
+
+  it('the footer shows the seller and support@polutek.com on two lines', async () => {
+    open();
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('support@polutek.com');
+    expect(dialog).not.toHaveTextContent('pawelperfect.com');
+  });
 });
 
-describe('patron checkout, step 2 with real Stripe payments', () => {
+describe('patron checkout, step 3 with real Stripe payments', () => {
   const READY = { paymentId: 'pay_1', clientSecret: 'pi_1_secret_x', paymentMethodTypes: ['blik', 'card', 'p24'], terminal: false };
   beforeEach(() => {
     vi.stubGlobal('fetch', fetchMock);
@@ -223,6 +350,7 @@ describe('patron checkout, step 2 with real Stripe payments', () => {
     confirmBlikPayment.mockReset();
     vi.mocked(getStripeBrowser).mockClear();
     window.sessionStorage.clear();
+    window.localStorage.clear(); // the last-used method is remembered across checkouts
     route({
       '/premium-pass/intent': () => new Response(JSON.stringify(READY), { status: 200 }),
       '/premium-pass/consent': () => new Response(JSON.stringify({ recorded: true }), { status: 200 }),
@@ -236,34 +364,43 @@ describe('patron checkout, step 2 with real Stripe payments', () => {
     vi.unstubAllGlobals();
   });
 
-  it('test mode: labelled "Tryb testowy", Stripe.js is requested only now, the payment is created for the chosen product (no amount sent)', async () => {
-    open({ mode: 'stripe', available: true, stripeMode: 'test' });
-    const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByText('Tryb testowy')).toBeInTheDocument();
+  const TEST = { mode: 'stripe', available: true, stripeMode: 'test' } as const;
+
+  it('test mode: labelled "Tryb testowy", Stripe.js only now; the payment is created at the step 2 -> 3 move, for product and currency (no amount sent)', async () => {
+    open(TEST);
+    const dialog = within(await screen.findByRole('dialog'));
+    expect(dialog.getByText('Tryb testowy')).toBeInTheDocument();
     await waitFor(() => expect(getStripeBrowser).toHaveBeenCalledTimes(1));
-    fireEvent.click(within(dialog).getByRole('radio', { name: /Dostęp na 30 dni/ }));
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 14,99 zł') }));
-    await within(dialog).findByTestId('stripe-elements');
-    expect(jsonBody('/premium-pass/intent')).toMatchObject({ productId: 'ACCESS_30D' });
+    await pickCurrency(dialog, 'Euro');
+    fireEvent.click(dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }));
+    clickNext(dialog, 'Dalej · 3,99 €');
+    await dialog.findByRole('heading', { name: 'Metoda płatności' });
+    expect(calls('/intent')).toHaveLength(0); // nothing is created by choosing currency, option or method
+    clickNext(dialog, 'Dalej · 3,99 €');
+    await screen.findAllByTestId('stripe-elements');
+    expect(jsonBody('/premium-pass/intent')).toMatchObject({ productId: 'ACCESS_30D', currency: 'EUR' });
     expect(jsonBody('/premium-pass/intent').requestId).toMatch(/^[0-9a-f-]{36}$/);
-    expect(Object.keys(jsonBody('/premium-pass/intent')).sort()).toEqual(['productId', 'requestId']);
+    expect(Object.keys(jsonBody('/premium-pass/intent')).sort()).toEqual(['currency', 'productId', 'requestId']);
   });
 
   it('live mode shows no test label', async () => {
     open({ mode: 'stripe', available: true, stripeMode: 'live' });
-    const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).queryByText('Tryb testowy')).toBeNull();
+    const dialog = within(await screen.findByRole('dialog'));
+    expect(dialog.queryByText('Tryb testowy')).toBeNull();
   });
 
-  it('the BLIK form is the tip gateway\'s; paying needs the code AND both boxes; consent is recorded before the confirmation; access shows after the server confirms', async () => {
-    open({ mode: 'stripe', available: true, stripeMode: 'test' });
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') }));
-    const code = await within(dialog).findByRole('textbox', { name: 'Kod BLIK' });
-    const pay = within(dialog).getByRole('button', { name: N('Zapłać 29,99 zł') });
+  it('the BLIK form is the tip gateway\'s; the summary stays visible; paying needs the code AND both boxes; consent is recorded before the confirmation; access shows after the server confirms', async () => {
+    open(TEST);
+    const dialog = within(await screen.findByRole('dialog'));
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    await dialog.findByRole('heading', { name: 'Metoda płatności' });
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    const code = await dialog.findByRole('textbox', { name: 'Kod BLIK' });
+    expect(summaryOf(dialog)).toHaveTextContent('29,99');
+    const pay = dialog.getByRole('button', { name: N('Zapłać 29,99 zł') });
     fireEvent.change(code, { target: { value: '123456' } });
     expect(pay).toBeDisabled(); // boxes not ticked
-    const boxes = within(dialog).getAllByRole('checkbox');
+    const boxes = dialog.getAllByRole('checkbox');
     expect(boxes).toHaveLength(2);
     fireEvent.click(boxes[0]!);
     expect(pay).toBeDisabled();
@@ -271,16 +408,13 @@ describe('patron checkout, step 2 with real Stripe payments', () => {
     expect(pay).toBeEnabled();
 
     fireEvent.click(pay);
-    expect(await within(dialog).findByRole('heading', { name: 'Jesteś patronem. Dziękuję!' }, { timeout: 4000 })).toBeInTheDocument();
+    expect(await dialog.findByRole('heading', { name: 'Jesteś patronem. Dziękuję!' }, { timeout: 4000 })).toBeInTheDocument();
     expect(jsonBody('/premium-pass/consent')).toEqual({ paymentId: 'pay_1', method: 'blik', consents: { terms: true, waiver: true } });
     expect(confirmBlikPayment).toHaveBeenCalledTimes(1);
     expect(confirmBlikPayment.mock.calls[0]![0]).toBe('pi_1_secret_x');
-    // order: consent first, then the confirmation, then the status poll
     const order = fetchMock.mock.calls.map(([url]) => String(url));
     expect(order.findIndex((u) => u.includes('/consent'))).toBeLessThan(order.findIndex((u) => u.includes('/api/payments/pay_1')));
-    // the browser never wrote access: it only read the status
-    expect(calls('/premium-pass/checkout')).toHaveLength(0);
-    expect(dialog).toHaveTextContent('Strefa patrona jest otwarta do 20.11.2026');
+    expect(calls('/premium-pass/checkout')).toHaveLength(0); // the browser never writes access
   });
 
   it('a failed consent write stops the payment before Stripe is asked', async () => {
@@ -288,34 +422,36 @@ describe('patron checkout, step 2 with real Stripe payments', () => {
       '/premium-pass/intent': () => new Response(JSON.stringify(READY), { status: 200 }),
       '/premium-pass/consent': () => new Response('{}', { status: 500 }),
     });
-    open({ mode: 'stripe', available: true, stripeMode: 'test' });
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') }));
-    const code = await within(dialog).findByRole('textbox', { name: 'Kod BLIK' });
+    open(TEST);
+    const dialog = within(await screen.findByRole('dialog'));
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    await dialog.findByRole('heading', { name: 'Metoda płatności' });
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    const code = await dialog.findByRole('textbox', { name: 'Kod BLIK' });
     fireEvent.change(code, { target: { value: '123456' } });
-    within(dialog).getAllByRole('checkbox').forEach((box) => fireEvent.click(box));
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Zapłać 29,99 zł') }));
-    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Nie udało się zapisać Twojej zgody');
+    dialog.getAllByRole('checkbox').forEach((box) => fireEvent.click(box));
+    fireEvent.click(dialog.getByRole('button', { name: N('Zapłać 29,99 zł') }));
+    expect(await dialog.findByRole('alert')).toHaveTextContent('Nie udało się zapisać Twojej zgody');
     expect(confirmBlikPayment).not.toHaveBeenCalled();
   });
 
-  it('a method Stripe does not allow for this payment sends the viewer back to choose another, with a message', async () => {
-    route({
-      '/premium-pass/intent': () => new Response(JSON.stringify({ ...READY, paymentMethodTypes: ['card'] }), { status: 200 }),
-    });
-    open({ mode: 'stripe', available: true, stripeMode: 'test' });
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') })); // BLIK is the default
-    expect(await within(dialog).findByText('Ta metoda nie jest dostępna dla tej płatności. Wybierz inną.')).toBeInTheDocument();
-    expect(within(dialog).getByRole('combobox', { name: 'Metoda płatności' })).toHaveTextContent('Karta');
-    expect(within(dialog).queryByTestId('stripe-elements')).toBeNull();
+  it('a method Stripe does not allow for this payment keeps the viewer in step 2 with a message', async () => {
+    route({ '/premium-pass/intent': () => new Response(JSON.stringify({ ...READY, paymentMethodTypes: ['card'] }), { status: 200 }) });
+    open(TEST);
+    const dialog = within(await screen.findByRole('dialog'));
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    await dialog.findByRole('heading', { name: 'Metoda płatności' });
+    clickNext(dialog, 'Dalej · 29,99 zł'); // BLIK is the default
+    expect(await dialog.findByText('Ta metoda nie jest dostępna dla tej płatności. Wybierz inną.')).toBeInTheDocument();
+    expect(dialog.getByRole('combobox', { name: 'Metoda płatności' })).toHaveTextContent('Karta');
+    expect(screen.queryByTestId('stripe-elements')).toBeNull();
   });
 
   it('stripe mode that is not fully configured offers no payment and never falls back to the simulation', async () => {
     open({ mode: 'stripe', available: false });
-    const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByRole('alert')).toHaveTextContent('Płatności są chwilowo niedostępne');
-    expect(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeDisabled();
+    const dialog = within(await screen.findByRole('dialog'));
+    expect(dialog.getByRole('alert')).toHaveTextContent('Płatności są chwilowo niedostępne');
+    expect(dialog.getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeDisabled();
     expect(getStripeBrowser).not.toHaveBeenCalled();
     expect(calls('/intent')).toHaveLength(0);
     expect(calls('/checkout')).toHaveLength(0);
@@ -323,10 +459,12 @@ describe('patron checkout, step 2 with real Stripe payments', () => {
 
   it('a refusal from the server (unlimited already held) ends in "Masz już dostęp bez limitu", no payment form', async () => {
     route({ '/premium-pass/intent': () => new Response(JSON.stringify({ code: 'ALREADY_LIFETIME' }), { status: 409 }) });
-    open({ mode: 'stripe', available: true, stripeMode: 'test' });
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') }));
-    expect(await within(dialog).findByRole('heading', { name: 'Masz już dostęp bez limitu' })).toBeInTheDocument();
-    expect(within(dialog).queryByRole('textbox', { name: 'Kod BLIK' })).toBeNull();
+    open(TEST);
+    const dialog = within(await screen.findByRole('dialog'));
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    await dialog.findByRole('heading', { name: 'Metoda płatności' });
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    expect(await dialog.findByRole('heading', { name: 'Masz już dostęp bez limitu' })).toBeInTheDocument();
+    expect(dialog.queryByRole('textbox', { name: 'Kod BLIK' })).toBeNull();
   });
 });

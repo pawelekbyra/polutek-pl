@@ -10,10 +10,17 @@ wszystko, co mówi o dwóch wejściówkach (7 i 30 dni), o stałych cenach, o �
 
 ### Co to jest i ile kosztuje (decyzja właściciela 2026-10-21: wybór z dwóch stałych opcji; „zapłać ile chcesz” odpadło)
 
-- **Dwie opcje** (karty wyboru na górze kroku 1, jak w pierwszej wersji; tabela `PATRON_PRODUCTS` w `domain/config.ts`): **„Dostęp na 30 dni” 14,99 zł** (`ACCESS_30D`, 1499 gr) i **„Dostęp bez limitu” 29,99 zł**
-  (`ACCESS_LIFETIME`, 2999 gr, etykieta „Najlepsza wartość”, domyślnie zaznaczona). Ceny brutto w PLN, zawierają 23% VAT. Nie ma pola własnej kwoty ani limitów kwoty.
-- **Serwer przyjmuje tylko dwa znane identyfikatory produktu i sam bierze kwotę z tabeli** (przeglądarka nigdy nie podaje kwoty; trasy są `strict`). Identyfikator produktu jedzie w metadanych `Payment` i PaymentIntent.
-  Przy rozliczeniu `fulfillPayment()` sprawdza, że kwota == cena produktu i waluta == PLN; inaczej **brak dostępu i alert** (wpłata zostaje w księdze, właściciel decyduje ręcznie).
+- **Dwie opcje** (karty wyboru w kroku 1; `PATRON_PRODUCTS` w `domain/config.ts`): **„Dostęp na 30 dni”** (`ACCESS_30D`) i **„Dostęp bez limitu”** (`ACCESS_LIFETIME`, etykieta „Najlepsza wartość”, domyślnie zaznaczona).
+- **Cennik produkt × waluta** (`PATRON_PRICES`, ceny brutto w groszach/centach, zawierają 23% VAT; właściciel zmienia liczby w jednym miejscu). Waluty to lista bramki napiwkowej (`SUPPORTED_CURRENCIES`):
+
+  | | PLN | EUR | USD | CHF | GBP |
+  |---|---|---|---|---|---|
+  | Dostęp na 30 dni | 14,99 | 3,99 | 4,49 | 3,99 | 3,49 |
+  | Dostęp bez limitu | 29,99 | 7,99 | 8,99 | 7,99 | 6,99 |
+
+  PLN to cena właściciela; pozostałe to okrągłe ceny detaliczne z grubsza wg kursów z 2026-10 (1 PLN ≈ 0,24 EUR / 0,27 USD / 0,22 CHF / 0,20 GBP), wszystkie powyżej minimalnej opłaty Stripe.
+- **Serwer przyjmuje tylko znany identyfikator produktu i znaną walutę (wielkie litery, lista bramki napiwkowej) i sam bierze kwotę z cennika** (przeglądarka nigdy nie podaje kwoty; trasy są `strict`; PaymentIntent powstaje w wybranej walucie). Identyfikator produktu jedzie w metadanych `Payment` i PaymentIntent.
+  Przy rozliczeniu `fulfillPayment()` sprawdza, że kwota == cena z cennika dla produktu i waluty płatności (znana waluta); inaczej **brak dostępu i alert** (wpłata zostaje w księdze, właściciel decyduje ręcznie).
 - **Dostęp na 30 dni** dodaje 30 dni (od końca trwającego dostępu, inaczej od teraz); nie sięga dalej niż **365 dni od teraz** (dalsza wpłata jest odrzucana przed pobraniem pieniędzy, `MAX_AHEAD`).
 - **Dostęp bez limitu** zapisuje jawny znacznik `lifetime: true` (+ `lifetimePaymentId`) w wierszu `AppSetting`, **nie** odległą datę. Kupiony przy trwających 30 dniach **zamienia je na stały** (data końca zostaje tylko jako historia).
   Gdy znacznik już jest, **każdy zakup jest odrzucany przed płatnością** („Masz już dostęp bez limitu”, `ALREADY_LIFETIME`). UI pokazuje wtedy „Dostęp bez limitu” zamiast daty końca (`PassStatusDto.lifetime`).
@@ -34,22 +41,21 @@ wszystko, co mówi o dwóch wejściówkach (7 i 30 dni), o stałych cenach, o �
   założeniem spółki. Przy kluczach testowych kasa i oferta mają widoczną etykietę **„Tryb testowy”** (z podpowiedzią karty `4242…`); przy live nie ma żadnej etykiety.
 - Panel „DEMO” (wygaś / usuń mój dostęp) działa tylko w trybie `demo` i przy kluczach testowych; przy live serwer go odrzuca (dostęp jest wtedy dowodem prawdziwej wpłaty).
 
-### Kasa w dwóch krokach (`PassCheckoutSheet`, pełna wysokość, bez paska demo)
+### Kasa w trzech krokach (`PassCheckoutSheet`, pełna wysokość, bez paska demo)
 
-1. **Krok 1:** nagłówek „Zostań patronem i uzyskaj dostęp do strefy premium”, linia „Wybierz dostęp”, **dwie karty wyboru** (nazwa, duża cena, krótka notka, „Najlepsza wartość” na lepszej), **lista rozwijana metod płatności** (to samo `TipSelect` i te same kafelki, co w bramce napiwkowej, bez makiety „Crypto”),
-   regulamin i polityka prywatności **tylko jako linki**, przycisk „Dalej · kwota”. Zapytanie o PaymentIntent idzie dopiero przy „Dalej” (nie przy otwarciu okna), więc samo otwarcie niczego nie tworzy. Jeśli Stripe nie dopuszcza wybranej
-   metody dla tej płatności, kasa zostaje w kroku 1, zawęża listę do dozwolonych i mówi, że trzeba wybrać inną.
-2. **Krok 2:** formularz wybranej metody to **te same formularze, co w bramce napiwkowej** (`TipPayStep`: BLIK, Przelewy24, karta, Apple/Google Pay, reszta przez Payment Element; w `TipPayFrame` doszedł opcjonalny `patron`,
-   napiwek go nie przekazuje i działa jak dotąd) oraz **dwa pola wyboru**: „Akceptuję regulamin i politykę prywatności” i zgoda na natychmiastowy dostęp z utratą prawa odstąpienia (art. 38 pkt 13 ustawy o prawach konsumenta;
+1. **Krok 1:** nagłówek „Zostań patronem” w wierszu z kropkami kroków (3 kropki) i krzyżykiem, pod nim „Uzyskaj dostęp do strefy premium” (nie powtarza tytułu), **wybór waluty** (to samo `TipSelect`, ta sama lista i nazwy walut co w bramce napiwkowej; domyślnie `detectDefaultCurrency`: PLN dla polskiego interfejsu, inaczej wg regionu przeglądarki) i **dwie karty wyboru** (nazwa, duża cena w tej walucie, notka, „Najlepsza wartość”) oraz **podsumowanie zamówienia**.
+2. **Krok 2:** **lista rozwijana metod płatności** (to samo `TipSelect` i kafelki, co w bramce napiwkowej; PLN: BLIK, Przelewy24, karta; inne waluty: karta, a Stripe zawęża listę przy tworzeniu płatności), **podsumowanie zamówienia** i regulamin z polityką prywatności **tylko jako linki**. „Wstecz” wraca do kroku 1 z zachowanym wyborem.
+   Zapytanie o PaymentIntent idzie dopiero przy przejściu z kroku 2 do 3 (nie przy otwarciu okna, zmianie waluty, opcji czy metody). Jeśli Stripe nie dopuszcza wybranej metody dla tej płatności, kasa zostaje w kroku 2, zawęża listę i mówi, że trzeba wybrać inną.
+3. **Krok 3:** formularz wybranej metody to **te same formularze, co w bramce napiwkowej** (`TipPayStep`: BLIK, Przelewy24, karta, Apple/Google Pay, reszta przez Payment Element; w `TipPayFrame` jest opcjonalny `patron`, napiwek go nie przekazuje i działa jak dotąd), jednowierszowe **podsumowanie zamówienia** na górze (zawsze widoczne) oraz **dwa pola wyboru**: „Akceptuję regulamin i politykę prywatności” i zgoda na natychmiastowy dostęp z utratą prawa odstąpienia (art. 38 pkt 13 ustawy o prawach konsumenta;
    zostawiona świadomie, można ją usunąć na wyraźną decyzję właściciela). Przycisk płatności jest nieaktywny, dopóki oba nie są zaznaczone (portfel Apple/Google nie otwiera się bez zgód). Tuż przed potwierdzeniem w Stripe
-   przeglądarka zapisuje zgodę na swojej nieopłaconej płatności (`POST /api/user/premium-pass/consent` → `Payment.metadata.consents`); jeśli zapis się nie uda, płatność nie rusza.
-3. Dostępność: wskaźnik kroków (`<ol>`, `aria-current="step"`), komunikat `aria-live` „Krok 2 z 2”, fokus przenosi się na nagłówek kroku, lista rozwijana obsługiwana klawiaturą (strzałki, Enter, Esc), błędy w `role="alert"`,
+   przeglądarka zapisuje zgodę na swojej nieopłaconej płatności (`POST /api/user/premium-pass/consent` → `Payment.metadata.consents`); jeśli zapis się nie uda, płatność nie rusza. Podsumowanie zamówienia (nazwa, cena brutto w wybranej walucie, VAT 23%) jest widoczne we wszystkich trzech krokach.
+4. Dostępność: wskaźnik kroków (`<ol>` z 3 kropkami, `aria-current="step"`), komunikat `aria-live` „Krok {n} z 3”, fokus przenosi się na nagłówek kroku, lista rozwijana obsługiwana klawiaturą (strzałki, Enter, Esc), błędy w `role="alert"`,
    animacje wyłączone przy `prefers-reduced-motion`, układ sprawdzony na 375 px.
 
 ### Przepływ pieniędzy i przyznawanie dostępu (nie ma równoległego stosu płatności)
 
 ```
-Dalej (krok 1)  -> POST /api/user/premium-pass/intent        (tylko tryb stripe + dostępne; klient podaje tylko id produktu, kwota z tabeli serwera)
+Dalej (krok 2)  -> POST /api/user/premium-pass/intent        (tylko tryb stripe + dostępne; klient podaje tylko id produktu i walutę, kwota z cennika serwera)
                 -> createCheckoutIntent({ purpose: "premium_pass" })  [to samo, co napiwki]: jeden wiersz Payment (PENDING) + jeden PaymentIntent,
                    metadata: userId, paymentId, requestId, creatorId, purpose; opis „Dostęp do strefy patrona: …”; automatic_payment_methods
 Krok 2          -> POST .../consent  -> Stripe.js potwierdza wybraną metodą (te same formularze, co napiwek)
@@ -344,7 +350,7 @@ Strona oferty (pricing). `noindex` jak cała beta, w `isPublicRoute` i `shouldRe
 ```
 
 - Teksty: „Wejściówka za kulisy” / „Backstage pass”; „Jedna opłata, 30 dni, bez subskrypcji.” / „One payment, 30 days, no subscription.”; „cena brutto, zawiera VAT” / „price includes VAT” (do potwierdzenia, §19).
-- FAQ (akordeon `<details>`): odnawianie (nie), urządzenia (każde po zalogowaniu), od kiedy liczy się czas (od zakupu), odstąpienie (§9), co gdy film zniknie, kontakt `support@pawelperfect.com`.
+- FAQ (akordeon `<details>`): odnawianie (nie), urządzenia (każde po zalogowaniu), od kiedy liczy się czas (od zakupu), odstąpienie (§9), co gdy film zniknie, kontakt `support@polutek.com`.
 - Wariant B (pytanie do właściciela): dwie karty obok siebie, „7 dni · 14,99 zł” i „30 dni · 29 zł · Najczęściej wybierana”.
 - Telefon: karta ceny na całą szerokość (16 px marginesu), CTA przyklejony u dołu ekranu (`position: sticky`, z `scroll-margin` tak, by fokus nie był zasłonięty, WCAG 2.4.11).
 

@@ -56,6 +56,7 @@ const REQ = "8b1f9f3e-1d2c-4a5b-9c7d-0e1f2a3b4c5d";
 const body = (overrides: Record<string, unknown> = {}) => ({
   requestId: REQ,
   productId: "ACCESS_30D",
+  currency: "PLN",
   method: "blik",
   consents: { terms: true, waiver: true },
   simulate: "success",
@@ -118,8 +119,8 @@ describe("POST /api/user/premium-pass/checkout (demo mode, simulated)", () => {
     expect(passKeys()).toEqual([]);
   });
 
-  it("takes no amount from the client: only the two known product ids exist", async () => {
-    for (const bad of [body({ productId: "ACCESS_FREE" }), body({ productId: undefined }), body({ amountMinor: 1, productId: "ACCESS_LIFETIME" })]) {
+  it("takes no amount from the client: only the two known product ids and the tip gateway's currencies exist", async () => {
+    for (const bad of [body({ productId: "ACCESS_FREE" }), body({ productId: undefined }), body({ amountMinor: 1, productId: "ACCESS_LIFETIME" }), body({ currency: "SEK" }), body({ currency: undefined }), body({ currency: "eur" })]) {
       expect((await post(checkout, "/api/user/premium-pass/checkout", bad)).status).toBe(400);
     }
     expect(passKeys()).toEqual([]);
@@ -186,6 +187,23 @@ describe("POST /api/user/premium-pass/checkout (demo mode, simulated)", () => {
     expect(JSON.parse(store.get("xp.premium_pass:u1")!)).toMatchObject({ lifetime: true, totalMinor: 4498 });
   });
 
+  it("the price follows the chosen currency (server table), the receipt shows the paid currency", async () => {
+    const expected: Array<[string, string, number]> = [["ACCESS_30D", "EUR", 399], ["ACCESS_30D", "USD", 449], ["ACCESS_30D", "GBP", 349], ["ACCESS_30D", "CHF", 399], ["ACCESS_LIFETIME", "EUR", 799], ["ACCESS_LIFETIME", "USD", 899], ["ACCESS_LIFETIME", "GBP", 699], ["ACCESS_LIFETIME", "CHF", 799]];
+    for (const [productId, currency, priceMinor] of expected) {
+      store.clear();
+      const res = await post(checkout, "/api/user/premium-pass/checkout", body({ requestId: crypto.randomUUID(), productId, currency }));
+      expect(res.status).toBe(200);
+      expect((await res.json()).pass).toMatchObject({ productId, currency, priceMinor });
+      expect(JSON.parse(store.get("xp.premium_pass:u1")!)).toMatchObject({ currency, priceMinor });
+    }
+  });
+
+  it("paying again in another currency restarts the running total (a total never mixes currencies)", async () => {
+    await post(checkout, "/api/user/premium-pass/checkout", body());
+    await post(checkout, "/api/user/premium-pass/checkout", body({ requestId: crypto.randomUUID(), currency: "EUR" }));
+    expect(JSON.parse(store.get("xp.premium_pass:u1")!)).toMatchObject({ currency: "EUR", priceMinor: 399, totalMinor: 399 });
+  });
+
   it("refuses 30 more days beyond the 365-day horizon, but unlimited is still allowed", async () => {
     store.set("xp.premium_pass:u1", row({ provider: "DEMO", expiresAt: new Date(Date.now() + 340 * DAY).toISOString(), paymentIds: [] }));
     const res = await post(checkout, "/api/user/premium-pass/checkout", body({ requestId: "3b1f9f3e-1d2c-4a5b-9c7d-0e1f2a3b4c5d" }));
@@ -228,7 +246,7 @@ describe("POST /api/user/premium-pass/checkout (demo mode, simulated)", () => {
 });
 
 describe("POST /api/user/premium-pass/intent (stripe mode: the real payment starts here)", () => {
-  const input = (overrides: Record<string, unknown> = {}) => ({ requestId: REQ, productId: "ACCESS_LIFETIME", ...overrides });
+  const input = (overrides: Record<string, unknown> = {}) => ({ requestId: REQ, productId: "ACCESS_LIFETIME", currency: "PLN", ...overrides });
   beforeEach(() => {
     createCheckoutIntent.mockResolvedValue({ ok: true, data: { paymentId: "pay_1", clientSecret: "pi_1_secret_x", paymentMethodTypes: ["blik", "card", "p24"] } });
   });
@@ -268,9 +286,9 @@ describe("POST /api/user/premium-pass/intent (stripe mode: the real payment star
     expect(createCheckoutIntent).not.toHaveBeenCalled();
   });
 
-  it("accepts only a known product id and nothing else from the client (no amount, no currency, no user)", async () => {
+  it("accepts only a known product id and a known currency, nothing else (no amount, no user)", async () => {
     setStripe("test");
-    for (const bad of [input({ productId: "ACCESS_FREE" }), input({ productId: "" }), input({ amountMinor: 1 }), input({ amountMinor: 2999 }), input({ currency: "EUR" }), input({ userId: "u2" }), input({ purpose: "tip" }), input({ requestId: "nope" }), { requestId: REQ }, {}]) {
+    for (const bad of [input({ productId: "ACCESS_FREE" }), input({ productId: "" }), input({ amountMinor: 1 }), input({ amountMinor: 2999 }), input({ currency: "SEK" }), input({ currency: "pln" }), input({ currency: undefined }), input({ currency: "BTC" }), input({ userId: "u2" }), input({ purpose: "tip" }), input({ requestId: "nope" }), { requestId: REQ }, {}]) {
       expect((await post(intent, "/api/user/premium-pass/intent", bad)).status).toBe(400);
     }
     expect(createCheckoutIntent).not.toHaveBeenCalled();
@@ -291,6 +309,16 @@ describe("POST /api/user/premium-pass/intent (stripe mode: the real payment star
   it("works with live keys once the sales gate is on", async () => {
     setStripe("live", "on");
     expect((await post(intent, "/api/user/premium-pass/intent", input())).status).toBe(200);
+  });
+
+  it("derives the amount from the product x currency table and passes that currency to the payment", async () => {
+    setStripe("test");
+    const cases: Array<[string, string, number]> = [["ACCESS_30D", "PLN", 1499], ["ACCESS_LIFETIME", "PLN", 2999], ["ACCESS_30D", "EUR", 399], ["ACCESS_LIFETIME", "EUR", 799], ["ACCESS_30D", "USD", 449], ["ACCESS_LIFETIME", "USD", 899], ["ACCESS_30D", "GBP", 349], ["ACCESS_LIFETIME", "GBP", 699], ["ACCESS_30D", "CHF", 399], ["ACCESS_LIFETIME", "CHF", 799]];
+    for (const [productId, currency, amountMinor] of cases) {
+      createCheckoutIntent.mockClear();
+      expect((await post(intent, "/api/user/premium-pass/intent", input({ productId, currency }))).status).toBe(200);
+      expect(createCheckoutIntent.mock.calls[0]![0]).toEqual({ userId: "u1", amountMinor, currency, requestId: REQ, purpose: "premium_pass", productId });
+    }
   });
 
   it("refuses any payment before it exists when unlimited access is already held", async () => {

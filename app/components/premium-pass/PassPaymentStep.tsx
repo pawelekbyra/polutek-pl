@@ -7,6 +7,7 @@ import React, { useMemo } from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import type { Stripe, StripeElementsOptions } from "@stripe/stripe-js";
 import { cn } from "@/lib/utils";
+import type { SupportedCurrency } from "@/lib/constants";
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
 import { txRich } from "@/lib/i18n/rich";
 import { stripeLocale, type Tx } from "@/lib/i18n/ui";
@@ -70,11 +71,11 @@ export function PassConsent({
 }
 
 /** Demo mode: a summary strip like the tip gateway's, in place of a payment form. */
-export function PassDemoSummary({ tx, language, amountMinor, method, onChangeMethod }: { tx: Tx; language: Locale; amountMinor: number; method: string; onChangeMethod: () => void }) {
+export function PassDemoSummary({ tx, language, amountMinor, currency, method, onChangeMethod }: { tx: Tx; language: Locale; amountMinor: number; currency: string; method: string; onChangeMethod: () => void }) {
   return (
     <div className={styles.strip}>
       <p>
-        <b>{price(language, amountMinor)}</b> · {describeTipMethod(method, tx).title}
+        <b>{price(language, amountMinor, currency)}</b> · {describeTipMethod(method, tx).title}
       </p>
       <button type="button" className={styles.ghostBtn} onClick={onChangeMethod}>{tx("Zmień", "Change")}</button>
     </div>
@@ -89,6 +90,7 @@ const APPEARANCE: StripeElementsOptions["appearance"] = {
 export interface PassStripePayProps {
   language: Locale;
   amountMinor: number;
+  currency: SupportedCurrency;
   method: string;
   clientSecret: string;
   paymentId: string;
@@ -110,11 +112,11 @@ export function PassStripePay(props: PassStripePayProps) {
   );
   return (
     <div className={styles.payHost}>
-      <Elements key={`${props.clientSecret}:${props.amountMinor}`} stripe={props.stripePromise} options={options}>
+      <Elements key={`${props.clientSecret}:${props.amountMinor}:${props.currency}`} stripe={props.stripePromise} options={options}>
         <TipPayStep
           language={props.language}
           amount={props.amountMinor / 100}
-          currency="PLN"
+          currency={props.currency}
           method={props.method}
           clientSecret={props.clientSecret}
           paymentId={props.paymentId}

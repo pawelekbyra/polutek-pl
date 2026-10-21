@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/react";
 import { getLocalizedHref } from "@/lib/i18n/routing";
+import { patronCurrencyForLanguage } from "@/lib/modules/experiment-premium-pass/domain/config";
 import type { PremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
 import { useAuthModal } from "../auth/AuthModalProvider";
 import { useLanguage } from "../LanguageContext";
@@ -20,6 +21,7 @@ export function PassOfferActions({ offer, productId, firstSlug }: { offer: Premi
   const { open: openAuthModal } = useAuthModal();
   const [open, setOpen] = useState(false);
   const product = offer.products.find((p) => p.id === productId) ?? offer.products[0]!;
+  const currency = patronCurrencyForLanguage(language);
 
   // After sign-in the page is shown again; the marker set before the sign-in window reopens the checkout.
   useEffect(() => {
@@ -59,7 +61,7 @@ export function PassOfferActions({ offer, productId, firstSlug }: { offer: Premi
     <>
       <button type="button" className={styles.inkBtn} onClick={buy}>
         <TicketIcon />
-        {userId ? tx("Zostań patronem · {0}", "Become a patron · {0}", price(language, product.priceMinor)) : tx("Zaloguj się i zostań patronem", "Sign in to become a patron")}
+        {userId ? tx("Zostań patronem · {0}", "Become a patron · {0}", price(language, product.prices[currency], currency)) : tx("Zaloguj się i zostań patronem", "Sign in to become a patron")}
       </button>
       {userId && <PassCheckoutSheet open={open} onOpenChange={setOpen} offer={{ ...offer, signedIn: true }} initialProductId={productId} onWatch={watch} />}
     </>
