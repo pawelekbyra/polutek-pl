@@ -166,7 +166,9 @@
 }
 
 .supportAction span {
-  white-space: nowrap;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.05 !important;
 }
 
 /* Wspieraj in the premium gold (owner request, 2026-10-21): the same amber as the premium pass badge and CTA. */
