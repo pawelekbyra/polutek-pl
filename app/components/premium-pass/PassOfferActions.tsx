@@ -1,5 +1,5 @@
 "use client";
-// experiment: premium-pass (docs/experiments/premium-pass.md, section 8.2): the buy buttons of the offer page.
+// experiment: premium-pass (docs/experiments/premium-pass.md, section 8.2): the "become a patron" button of the offer page.
 import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/react";
 import { getLocalizedHref } from "@/lib/i18n/routing";
@@ -13,43 +13,41 @@ import { PASS_CHECKOUT_PARAM } from "./PremiumPassOverlay";
 import { price } from "./pass-copy";
 import styles from "./premium-pass.module.css";
 
-type Pending = { productId: string } | null;
-
-/** One shared checkout for every card of the page; `productId` preselects the card's pass. */
-export function PassOfferActions({ offer, productId, firstSlug }: { offer: PremiumPassOffer; productId: string; firstSlug: string | null }) {
+/** The button and the checkout it opens; `firstSlug` is where "enter the patron zone" goes after a success. */
+export function PassOfferActions({ offer, firstSlug }: { offer: PremiumPassOffer; firstSlug: string | null }) {
   const { tx, language } = useLanguage();
   const { userId, isLoaded } = useAuth();
   const { open: openAuthModal } = useAuthModal();
-  const [pending, setPending] = useState<Pending>(null);
-  const product = offer.products.find((p) => p.id === productId) ?? offer.products[0]!;
+  const [open, setOpen] = useState(false);
 
+  // After sign-in the page is shown again; the marker set before the sign-in window reopens the checkout.
   useEffect(() => {
     if (!isLoaded || !userId) return;
     try {
       const url = new URL(window.location.href);
-      if (url.searchParams.get(PASS_CHECKOUT_PARAM) !== productId) return;
+      if (url.searchParams.get(PASS_CHECKOUT_PARAM) !== "checkout") return;
       url.searchParams.delete(PASS_CHECKOUT_PARAM);
       window.history.replaceState(window.history.state, "", url.toString());
-      setPending({ productId });
+      setOpen(true);
     } catch {
       // ignore
     }
-  }, [isLoaded, userId, productId]);
+  }, [isLoaded, userId]);
 
   const buy = useCallback(() => {
     if (userId) {
-      setPending({ productId });
+      setOpen(true);
       return;
     }
     try {
       const url = new URL(window.location.href);
-      url.searchParams.set(PASS_CHECKOUT_PARAM, productId);
+      url.searchParams.set(PASS_CHECKOUT_PARAM, "checkout");
       window.history.replaceState(window.history.state, "", url.toString());
     } catch {
       // ignore
     }
     openAuthModal("sign-in");
-  }, [openAuthModal, productId, userId]);
+  }, [openAuthModal, userId]);
 
   const watch = () => {
     const home = getLocalizedHref(language, "home");
@@ -60,19 +58,9 @@ export function PassOfferActions({ offer, productId, firstSlug }: { offer: Premi
     <>
       <button type="button" className={styles.inkBtn} onClick={buy}>
         <TicketIcon />
-        {userId
-          ? tx("Kup wejściówkę · {0}", "Get the pass · {0}", price(language, product.priceMinor))
-          : tx("Zaloguj się i kup wejściówkę", "Sign in to get the pass")}
+        {userId ? tx("Zostań patronem · od {0}", "Become a patron · from {0}", price(language, offer.minMinor)) : tx("Zaloguj się i zostań patronem", "Sign in to become a patron")}
       </button>
-      {userId && (
-        <PassCheckoutSheet
-          open={pending !== null}
-          onOpenChange={(open) => { if (!open) setPending(null); }}
-          offer={{ ...offer, signedIn: true }}
-          initialProductId={pending?.productId ?? productId}
-          onWatch={watch}
-        />
-      )}
+      {userId && <PassCheckoutSheet open={open} onOpenChange={setOpen} offer={{ ...offer, signedIn: true }} onWatch={watch} />}
     </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
-// experiment: premium-pass (docs/experiments/premium-pass.md, section 8.5): the PREMIUM plate on tiles and the
-// "valid until" chip on a playing pass video. Text, not only colour; the lock is decoration next to the text.
+// experiment: premium-pass (docs/experiments/premium-pass.md, section 8.5): the PATRON plate on tiles and the
+// "access until" chip on a playing patron-zone video. Text, not only colour; the lock is decoration next to the text.
 import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "../LanguageContext";
@@ -8,20 +8,20 @@ import { CheckIcon, LockIcon } from "./PassIcons";
 import { passDate } from "./pass-copy";
 import styles from "./premium-pass.module.css";
 
-/** On a thumbnail: blurred veil + gold plate (locked), or the plate alone (viewer holds a pass). */
+/** On a thumbnail: blurred veil + gold plate (locked), or the plate alone (viewer is a patron). */
 export function PremiumThumbBadge({ locked }: { locked: boolean }) {
   return (
     <>
       {locked && <span aria-hidden="true" className={styles.thumbVeil} />}
       <span className={cn(styles.pass, styles.badge, styles.thumbBadge)}>
         {locked && <LockIcon />}
-        PREMIUM
+        PATRON
       </span>
     </>
   );
 }
 
-/** Over the playing video for a few seconds: "Premium · valid until 20.11.2026". */
+/** Over the playing video for a few seconds: "Patron · access until 20.11.2026". */
 export function PremiumPlayerChip({ until }: { until: string }) {
   const { tx, language } = useLanguage();
   const [visible, setVisible] = useState(true);
@@ -33,7 +33,7 @@ export function PremiumPlayerChip({ until }: { until: string }) {
   return (
     <span className={cn(styles.pass, styles.chip, styles.playerChip)} role="status">
       <CheckIcon />
-      {tx("Premium · ważna do {0}", "Premium · valid until {0}", passDate(language, until))}
+      {tx("Patron · dostęp do {0}", "Patron · access until {0}", passDate(language, until))}
     </span>
   );
 }

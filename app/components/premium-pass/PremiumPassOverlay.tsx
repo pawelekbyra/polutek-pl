@@ -1,19 +1,19 @@
 "use client";
 // experiment: premium-pass (docs/experiments/premium-pass.md, section 8.1): the locked stage in place of the player
-// for a PASS_REQUIRED plan. The player is never mounted here and nothing about the stream is requested: the plan
-// carries only offer data (prices) and the public poster.
+// for a PASS_REQUIRED plan (the patron zone). The player is never mounted here and nothing about the stream is
+// requested: the plan carries only offer data (amounts) and the public poster.
 import React, { useCallback, useEffect, useId, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/react";
 import { getLocalizedHref } from "@/lib/i18n/routing";
-import { cheapestProduct, type PremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
+import type { PremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
 import { useAuthModal } from "../auth/AuthModalProvider";
 import { useLanguage } from "../LanguageContext";
 import { PlayerStateFrame } from "../PlayerStateFrame";
 import { PassCheckoutSheet } from "./PassCheckoutSheet";
 import { DemoControls } from "./DemoControls";
 import { LockIcon, TicketIcon } from "./PassIcons";
-import { passDate, passName, price } from "./pass-copy";
+import { passDate, price } from "./pass-copy";
 import styles from "./premium-pass.module.css";
 
 /** Set before the sign-in window opens; read once after sign-in to reopen the checkout on the same video. */
@@ -57,7 +57,9 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
   const titleId = useId();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const signedIn = Boolean(userId) && offer.signedIn;
-  const from = price(language, cheapestProduct(offer).priceMinor);
+  const from = price(language, offer.minMinor);
+  const demo = offer.payments.mode === "demo";
+  const testMode = offer.payments.mode === "stripe" && offer.payments.available && offer.payments.stripeMode === "test";
 
   // After sign-in the plan is requested again; the overlay of the new (signed-in) plan reopens the checkout.
   useEffect(() => {
@@ -76,44 +78,43 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
   if (variant !== "default") {
     return (
       <PlayerStateFrame fill className={cn(styles.pass, "rounded-md")}>
-        <div className={styles.stage} role="img" aria-label={tx("Film Premium (wejściówka)", "Premium video (pass)")}>
+        <div className={styles.stage} role="img" aria-label={tx("Film w strefie patrona", "Patron zone video")}>
           {poster && <div className={styles.poster} style={{ backgroundImage: `url("${poster}")` }} aria-hidden="true" />}
-          <span className={cn(styles.badge, styles.stageBadge)}><LockIcon />PREMIUM</span>
+          <span className={cn(styles.badge, styles.stageBadge)}><LockIcon />PATRON</span>
         </div>
       </PlayerStateFrame>
     );
   }
 
   const ctaLabel = !signedIn
-    ? tx("Zaloguj się i kup wejściówkę", "Sign in to get the pass")
+    ? tx("Zaloguj się i zostań patronem", "Sign in to become a patron")
     : offer.expiredAt
-      ? tx("Kup nową wejściówkę · od {0}", "Get a new pass · from {0}", from)
-      : tx("Kup wejściówkę · od {0}", "Get the pass · from {0}", from);
+      ? tx("Wesprzyj ponownie · od {0}", "Support again · from {0}", from)
+      : tx("Zostań patronem · od {0}", "Become a patron · from {0}", from);
 
   return (
     <PlayerStateFrame className="rounded-none">
       <section className={cn(styles.pass, styles.stage)} aria-labelledby={titleId} data-premium-pass-stage="">
         {poster && <div className={styles.poster} style={{ backgroundImage: `url("${poster}")` }} aria-hidden="true" />}
-        <span className={cn(styles.badge, styles.stageBadge)}><LockIcon />PREMIUM</span>
-        <span className={styles.stageDemo}>{tx("TRYB DEMO", "DEMO MODE")}</span>
+        <span className={cn(styles.badge, styles.stageBadge)}><LockIcon />PATRON</span>
+        {demo && <span className={styles.stageDemo}>{tx("TRYB DEMO", "DEMO MODE")}</span>}
+        {testMode && <span className={styles.stageDemo}>{tx("TRYB TESTOWY", "TEST MODE")}</span>}
         <div className={styles.stageInner}>
           {offer.expiredAt && (
             <span className={styles.expired} role="status">
-              {tx("Twoja wejściówka wygasła {0}.", "Your pass expired on {0}.", passDate(language, offer.expiredAt))}
+              {tx("Twój dostęp do strefy patrona wygasł {0}.", "Your patron zone access expired on {0}.", passDate(language, offer.expiredAt))}
             </span>
           )}
           <div className={styles.lockRing} aria-hidden="true"><LockIcon /></div>
-          <h2 id={titleId} className={styles.stageTitle}>{tx("Materiał za kulisami", "Behind the scenes")}</h2>
-          <p className={styles.stageSub}>{title ? `${title} · ` : ""}{tx("w wejściówce Premium", "part of the Premium pass")}</p>
+          <h2 id={titleId} className={styles.stageTitle}>{tx("Strefa patrona", "Patron zone")}</h2>
+          <p className={styles.stageSub}>{title ? `${title} · ` : ""}{tx("tylko dla patronów projektu", "for the project's patrons only")}</p>
           <div className={styles.offer}>
             <div>
-              <div className={styles.offerName}>
-                {offer.products.map((p) => `${passName(tx, p.id)} · ${price(language, p.priceMinor)}`).join("  |  ")}
-              </div>
+              <div className={styles.offerName}>{tx("Zostań patronem projektu", "Become a patron of the project")}</div>
               <ul className={styles.offerPerks}>
-                <li>{tx("Wszystkie filmy Premium ({0})", "All Premium videos ({0})", offer.premiumCount)}</li>
-                <li>{tx("bez subskrypcji", "no subscription")}</li>
-                <li>{tx("dostęp od razu", "instant access")}</li>
+                <li>{tx("Wszystkie filmy strefy patrona ({0})", "All patron zone videos ({0})", offer.premiumCount)}</li>
+                <li>{tx("płacisz, ile chcesz, od {0}", "pay what you want, from {0}", from)}</li>
+                <li>{tx("dostęp na {0} dni, bez subskrypcji", "access for {0} days, no subscription", offer.accessDays)}</li>
               </ul>
             </div>
             <button type="button" className={styles.goldBtn} onClick={start}>
@@ -127,7 +128,7 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
           </button>
           <span className={styles.tiny}>
             {signedIn
-              ? tx("Bez subskrypcji, nie odnawia się", "No subscription, does not renew")
+              ? tx("Dostęp na {0} dni, bez subskrypcji, nie odnawia się", "Access for {0} days, no subscription, does not renew", offer.accessDays)
               : tx("Konto jest darmowe. Po zalogowaniu wrócisz do zakupu.", "The account is free. After signing in you come back to the purchase.")}
             {" · "}
             <a className={styles.stageLink} href={getLocalizedHref(language, "pass")}>{tx("Co jest w środku?", "What's inside?")}</a>
@@ -137,7 +138,7 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
       {signedIn && (
         <>
           <PassCheckoutSheet open={checkoutOpen} onOpenChange={setCheckoutOpen} offer={offer} onWatch={onRefresh} />
-          <DemoControls onChanged={onRefresh} />
+          {(demo || testMode) && <DemoControls onChanged={onRefresh} />}
         </>
       )}
     </PlayerStateFrame>

@@ -20,6 +20,20 @@ export interface TipPayStepProps {
   stripePromise: Promise<Stripe | null> | null;
   onChangeMethod: () => void;
   onConfirmed: (outcome: TipConfirmOutcome) => void;
+  /**
+   * experiment: premium-pass (docs/experiments/premium-pass.md): the patron-zone payment reuses these forms. All
+   * optional; a tip passes none of them and behaves exactly as before.
+   */
+  patron?: {
+    /** Where redirect methods come back (instead of the tip gate's thank-you URL). */
+    returnUrl: string;
+    /** The two boxes under the form (Terms + Privacy Policy, immediate access). */
+    consent: React.ReactNode;
+    /** False until both boxes are ticked: the confirm button is disabled and a wallet button does not open. */
+    accepted: boolean;
+    /** Runs right before every confirmation (records the consent on the server); false aborts it. */
+    beforeConfirm: () => Promise<boolean>;
+  };
 }
 
 /** Heading + "20 zł · BLIK · Zmień" strip shared by every per-method form. */
@@ -49,6 +63,7 @@ export function PayStepFrame({
         </button>
       </div>
       {children}
+      {props.patron?.consent}
     </TipStepLayout>
   );
 }

@@ -60,9 +60,10 @@ describe("withFundraisingProgress", () => {
   const dtos = [{ id: "goal", title: "A" }, { id: "plain", title: "B" }];
 
   it("adds only a fraction — no goal or raised amount ever reaches the DTO", async () => {
-    groupBy.mockResolvedValue([
+    groupBy.mockResolvedValueOnce([
       { currency: "PLN", _sum: { amountMinor: 600_00, refundedAmountMinor: 100_00 } },
     ]);
+    groupBy.mockResolvedValueOnce([]); // no patron-zone payments
     const result = await withFundraisingProgress(dtos, rows);
     expect(result).toEqual([
       { id: "goal", title: "A", fundraisingProgress: 0.5 },
@@ -77,18 +78,27 @@ describe("withFundraisingProgress", () => {
   it("counts net successful tips since the goal start for the channel", async () => {
     groupBy.mockResolvedValue([]);
     await withFundraisingProgress(dtos, rows);
-    expect(groupBy).toHaveBeenCalledTimes(1);
+    expect(groupBy).toHaveBeenCalledTimes(2);
     const where = groupBy.mock.calls[0][0].where;
     expect(where.status).toEqual({ in: ["SUCCEEDED", "PARTIALLY_REFUNDED"] });
     expect(where.createdAt).toEqual({ gte: start });
     expect(where.OR).toEqual([{ creatorId: "c1" }, { creatorId: null }]);
   });
 
+  it("patron-zone payments are sales, not tips: they are subtracted from the tip bar (experiment: premium-pass)", async () => {
+    groupBy.mockResolvedValueOnce([{ currency: "PLN", _sum: { amountMinor: 800_00, refundedAmountMinor: 0 } }]);
+    groupBy.mockResolvedValueOnce([{ currency: "PLN", _sum: { amountMinor: 300_00, refundedAmountMinor: 0 } }]);
+    const result = await withFundraisingProgress(dtos, rows);
+    expect(result[0].fundraisingProgress).toBe(0.5); // (800 - 300) / 1000
+    expect(groupBy.mock.calls[1][0].where.metadata).toEqual({ path: ["purpose"], equals: "premium_pass" });
+    expect(groupBy.mock.calls[1][0].where.status).toEqual({ in: ["SUCCEEDED", "PARTIALLY_REFUNDED"] });
+  });
+
   it("caches totals between requests", async () => {
     groupBy.mockResolvedValue([]);
     await withFundraisingProgress(dtos, rows);
     await withFundraisingProgress(dtos, rows);
-    expect(groupBy).toHaveBeenCalledTimes(1);
+    expect(groupBy).toHaveBeenCalledTimes(2); // one request = the tip query + the patron-zone query, cached together
   });
 
   it("hides the bar (null) when the aggregate fails", async () => {
@@ -136,7 +146,8 @@ describe("hand-set fill (fundraisingManualPercent)", () => {
   });
 
   it("falls back to the goal when the hand-set fill is off", async () => {
-    groupBy.mockResolvedValue([{ currency: "PLN", _sum: { amountMinor: 250_00, refundedAmountMinor: 0 } }]);
+    groupBy.mockResolvedValueOnce([{ currency: "PLN", _sum: { amountMinor: 250_00, refundedAmountMinor: 0 } }]);
+    groupBy.mockResolvedValueOnce([]);
     const rows = [{ id: "goal", creatorId: "c1", fundraisingGoalMinor: 1_000_00, fundraisingGoalCurrency: "PLN", fundraisingManualPercent: null }];
     const [dto] = await withFundraisingProgress([{ id: "goal" }], rows);
     expect(dto.fundraisingProgress).toBe(0.25);

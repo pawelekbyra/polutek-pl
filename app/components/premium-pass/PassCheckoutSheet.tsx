@@ -1,218 +1,444 @@
 "use client";
-// experiment: premium-pass (docs/experiments/premium-pass.md, section 8.3): the simulated checkout. One screen: the
-// total is always visible and repeated on the button. NEVER takes money: no payment provider, no card/BLIK fields;
-// the server answers a simulated success or decline (provider DEMO).
-import React, { useEffect, useId, useRef, useState } from "react";
+// experiment: premium-pass (docs/experiments/premium-pass.md, section 8.3): the checkout of the patron zone, in two
+// steps. Step 1: the amount (suggested or own), the payment method (the tip gateway's dropdown) and the Terms / Privacy
+// Policy as links. Step 2: the payment of the chosen method (the tip gateway's own forms, real Stripe) and the two
+// boxes. In demo mode (the default) step 2 has no payment form and the server simulates the payment. Access is NEVER
+// granted from here: the server grants it when Stripe confirms the payment; this component only waits and displays.
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
+import type { Stripe } from "@stripe/stripe-js";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/lib/auth/react";
-import { getLocalizedHref } from "@/lib/i18n/routing";
-import { txRich } from "@/lib/i18n/rich";
-import type { PremiumPassOffer, PassOfferProduct } from "@/lib/modules/experiment-premium-pass/domain/offer";
-import { defaultProduct } from "@/lib/modules/experiment-premium-pass/domain/offer";
+import { getStripeBrowser } from "@/lib/payments/stripe-browser";
+import type { PremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
 import { maskEmail, type PassMethod, type PassStatusDto } from "@/lib/modules/experiment-premium-pass/domain/pass-state";
 import { useLanguage } from "../LanguageContext";
-import { CrossIcon, ShieldIcon, TicketIcon } from "./PassIcons";
-import { PassMethodPicker, usePassMethods } from "./PassMethodPicker";
-import { PassAlreadyActive, PassDeclined, PassSuccess } from "./PassSuccess";
-import { newRequestId, passDate, passName, price, sellerLine, vatLine } from "./pass-copy";
-import { fetchPassStatus, postDemoCheckout } from "./usePremiumPass";
+import { TIP_WALLETS, getTipMethodTiles, readLastTipMethod, rememberTipMethod, type TipWallet } from "../support/tip-flow-config";
+import { TipBackContext } from "../support/TipStepLayout";
+import { CrossIcon, ShieldIcon } from "./PassIcons";
+import { PassAmountStep, usePassAmount } from "./PassAmountStep";
+import { PassConsent, PassDemoSummary, PassStripePay, type PassConsentErrors, type PassConsentState } from "./PassPaymentStep";
+import { PassDeclined, PassMaxAhead, PassPending, PassSuccess } from "./PassSuccess";
+import { newRequestId, passDate, price, sellerLine } from "./pass-copy";
+import { fetchPassStatus, pollPatronPayment, postDemoCheckout, postPatronConsent, postPatronIntent } from "./usePremiumPass";
 import styles from "./premium-pass.module.css";
 
-type Step =
-  | { kind: "form" }
-  | { kind: "processing" }
-  | { kind: "success"; pass: Exclude<PassStatusDto, { state: "none" }> }
-  | { kind: "declined" }
-  | { kind: "already"; expiresAt?: string }
-  | { kind: "error" };
+type ActivePass = Exclude<PassStatusDto, { state: "none" }>;
 
-const PROCESSING_MS = 1_200;
+type Stage =
+  | { kind: "amount" }
+  | { kind: "pay" }
+  | { kind: "processing" }
+  | { kind: "success"; pass: ActivePass }
+  | { kind: "pending"; paymentId: string; timedOut: boolean }
+  | { kind: "declined" }
+  | { kind: "max-ahead"; expiresAt?: string };
+
+/** Query parameter of the return URL of redirect methods (Przelewy24, bank redirects). */
+export const PASS_PAYMENT_PARAM = "pass_payment";
+const RETURN_PARAMS = [PASS_PAYMENT_PARAM, "payment_intent", "payment_intent_client_secret", "redirect_status", "pass"];
+const ATTEMPT_KEY = "pp:patron-attempt-id";
+const DEMO_PROCESSING_MS = 1_200;
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** One attempt = one request id = one PaymentIntent on the server (kept for the tab, like the tip gateway's). */
+function attemptId(): string {
+  try {
+    const stored = window.sessionStorage.getItem(ATTEMPT_KEY);
+    if (stored) return stored;
+    const fresh = newRequestId();
+    window.sessionStorage.setItem(ATTEMPT_KEY, fresh);
+    return fresh;
+  } catch {
+    return newRequestId();
+  }
+}
+
+function resetAttempt() {
+  try {
+    window.sessionStorage.removeItem(ATTEMPT_KEY);
+  } catch {
+    // storage blocked: the next attempt simply gets a new id
+  }
+}
+
+/** Demo mode has no Stripe to ask, so the wallets are guessed from the browser (as the old method tiles did). */
+function guessWallets(): TipWallet[] {
+  const w = window as unknown as { ApplePaySession?: unknown };
+  const chromium = /Chrome|CriOS|Android/.test(navigator.userAgent) && !/Edg\//.test(navigator.userAgent);
+  return [...(w.ApplePaySession ? (["apple_pay"] as const) : []), ...(chromium ? (["google_pay"] as const) : [])];
+}
+
+function buildReturnUrl(paymentId: string): string {
+  const url = new URL(window.location.href);
+  RETURN_PARAMS.forEach((key) => url.searchParams.delete(key));
+  url.hash = "";
+  url.searchParams.set(PASS_PAYMENT_PARAM, paymentId);
+  return url.toString();
+}
 
 export interface PassCheckoutSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   offer: PremiumPassOffer;
-  initialProductId?: string;
-  /** "Watch now" after a success (refreshes the playback plan). */
+  /** "Enter the patron zone" after a success (refreshes the playback plan). */
   onWatch: () => void;
   watchLabel?: string;
 }
 
-export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId, onWatch, watchLabel }: PassCheckoutSheetProps) {
+export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLabel }: PassCheckoutSheetProps) {
   const { tx, language } = useLanguage();
   const { user } = useUser();
-  const methods = usePassMethods();
   const ids = useId();
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const termsRef = useRef<HTMLInputElement>(null);
   const waiverRef = useRef<HTMLInputElement>(null);
-  const requestIdRef = useRef<string>(newRequestId());
-  const [step, setStep] = useState<Step>({ kind: "form" });
-  const [productId, setProductId] = useState<string>(initialProductId ?? defaultProduct(offer).id);
-  const [method, setMethod] = useState<PassMethod>("blik");
-  const [terms, setTerms] = useState(false);
-  const [waiver, setWaiver] = useState(false);
-  const [errors, setErrors] = useState<{ terms?: boolean; waiver?: boolean }>({});
+  const returnedPaymentRef = useRef<string | null>(null);
+  const returnedFailedRef = useRef(false);
+  const cancelledRef = useRef(false);
+
+  const stripeMode = offer.payments.mode === "stripe";
+  const stripeReady = offer.payments.mode === "stripe" && offer.payments.available;
+  const testMode = offer.payments.mode === "stripe" && offer.payments.available && offer.payments.stripeMode === "test";
+
+  const amount = usePassAmount(offer);
+  const [stage, setStage] = useState<Stage>({ kind: "amount" });
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
+  const [wallets, setWallets] = useState<TipWallet[]>([]);
+  const [stripeTypes, setStripeTypes] = useState<string[] | null>(null);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [intent, setIntent] = useState<{ paymentId: string; clientSecret: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [tried, setTried] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [consent, setConsent] = useState<PassConsentState>({ terms: false, waiver: false });
+  const [consentErrors, setConsentErrors] = useState<PassConsentErrors>({});
+  const [activeUntil, setActiveUntil] = useState<string | undefined>();
+
+  const methods = useMemo(
+    () => (stripeReady ? getTipMethodTiles(stripeTypes ?? ["blik", "card", "p24"], wallets, false) : getTipMethodTiles(["blik", "card", "p24"], wallets, false)),
+    [stripeReady, stripeTypes, wallets],
+  );
+  const method = picked && methods.includes(picked) ? picked : (() => {
+    const last = readLastTipMethod();
+    return last && methods.includes(last) ? last : methods[0] ?? null;
+  })();
+  const amountMinor = amount.minor;
+  const total = amountMinor === null ? "" : price(language, amountMinor);
+  const processing = stage.kind === "processing";
+  const locked = busy || processing;
+  const email = maskEmail(user?.primaryEmailAddress?.emailAddress);
+  const formatDate = (iso: string) => passDate(language, iso, true);
+
+  // ---- opening: a fresh attempt (or the return from a redirect method), Stripe.js only from here
+  const finish = useCallback(async (paymentId: string, attempts: number) => {
+    setStage({ kind: "processing" });
+    const result = await pollPatronPayment(paymentId, { attempts, isCancelled: () => cancelledRef.current });
+    if (cancelledRef.current) return;
+    if (result === "FAILED") {
+      setStage({ kind: "declined" });
+      return;
+    }
+    if (result === "SUCCEEDED") {
+      resetAttempt();
+      const status = await fetchPassStatus();
+      if (status && status.pass.state === "active") {
+        setStage({ kind: "success", pass: status.pass });
+        return;
+      }
+    }
+    setStage({ kind: "pending", paymentId, timedOut: true });
+  }, []);
 
   useEffect(() => {
     if (!open) return;
-    // A fresh attempt each time the sheet opens; the status read also counts "checkout_open" (anonymous).
-    requestIdRef.current = newRequestId();
-    setStep({ kind: "form" });
-    setErrors({});
-    setProductId(initialProductId ?? defaultProduct(offer).id);
+    cancelledRef.current = false;
+    setBusy(false);
+    setTried(false);
+    setNotice(null);
+    setConsent({ terms: false, waiver: false });
+    setConsentErrors({});
+    setIntent(null);
+    setStripeTypes(null);
+    setActiveUntil(undefined);
+    if (stripeReady) {
+      // The first and only place that asks for Stripe.js: the checkout was opened.
+      const promise = getStripeBrowser();
+      setStripePromise(promise);
+      promise
+        .then((stripe) => stripe?.paymentRequest({ country: "PL", currency: "pln", total: { label: "Patron", amount: 100 }, disableWallets: ["link", "browserCard"] }).canMakePayment())
+        .then((result) => { if (!cancelledRef.current) setWallets(TIP_WALLETS.filter((wallet) => (wallet === "apple_pay" ? result?.applePay : result?.googlePay))); })
+        .catch(() => undefined);
+    } else {
+      setWallets(guessWallets());
+    }
+    if (returnedFailedRef.current) {
+      returnedFailedRef.current = false;
+      setStage({ kind: "declined" });
+      return () => { cancelledRef.current = true; };
+    }
+    const returned = returnedPaymentRef.current;
+    if (returned) {
+      returnedPaymentRef.current = null;
+      void finish(returned, 10);
+      return () => { cancelledRef.current = true; };
+    }
+    setStage({ kind: "amount" });
     void fetchPassStatus("checkout").then((status) => {
-      if (status?.pass.state === "active") setStep({ kind: "already", expiresAt: status.pass.expiresAt });
+      if (cancelledRef.current) return;
+      if (status?.pass.state === "active") setActiveUntil(status.pass.expiresAt);
     });
+    return () => { cancelledRef.current = true; };
     // Only on opening: a re-render of the parent (new offer object) must not reset an attempt in progress.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const product: PassOfferProduct = offer.products.find((p) => p.id === productId) ?? defaultProduct(offer);
-  const total = price(language, product.priceMinor);
-  const validUntil = passDate(language, new Date(Date.now() + product.days * 86_400_000).toISOString());
-  const email = maskEmail(user?.primaryEmailAddress?.emailAddress);
-  const busy = step.kind === "processing";
-  const termsHref = getLocalizedHref(language, "passTerms");
-  const privacyHref = getLocalizedHref(language, "privacy");
+  // Back from a redirect method (Przelewy24...): reopen the checkout on the waiting screen and strip our parameters.
+  useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      const returned = url.searchParams.get(PASS_PAYMENT_PARAM);
+      if (!returned) return;
+      const status = url.searchParams.get("redirect_status");
+      RETURN_PARAMS.forEach((key) => url.searchParams.delete(key));
+      window.history.replaceState(window.history.state, "", url.toString());
+      if (status === "failed") {
+        returnedFailedRef.current = true;
+        onOpenChange(true);
+        return;
+      }
+      returnedPaymentRef.current = returned;
+      onOpenChange(true);
+    } catch {
+      // ignore: the viewer just sees the page
+    }
+    // Once, on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const submit = async (simulate: "success" | "declined") => {
-    const missing = { terms: !terms, waiver: !waiver };
-    setErrors(missing);
-    if (missing.terms || missing.waiver) {
+  // Focus follows the step: the heading of the new step takes focus, screen readers announce it.
+  const firstStage = useRef(true);
+  useEffect(() => {
+    if (firstStage.current) {
+      firstStage.current = false;
+      return;
+    }
+    const frame = requestAnimationFrame(() => headingRef.current?.focus({ preventScroll: true }));
+    return () => cancelAnimationFrame(frame);
+  }, [stage.kind]);
+
+  // ---- step 1 -> 2
+  const next = async () => {
+    setTried(true);
+    setNotice(null);
+    if (amountMinor === null || amount.problem !== null || !method) return;
+    if (stripeMode && !stripeReady) {
+      // Never falls back to the simulated payment: that would hand out access for no money.
+      setNotice(tx("Płatności są chwilowo niedostępne. Spróbuj ponownie później.", "Payments are temporarily unavailable. Please try again later."));
+      return;
+    }
+    if (!stripeReady) {
+      setStage({ kind: "pay" });
+      return;
+    }
+    setBusy(true);
+    let outcome = await postPatronIntent({ requestId: attemptId(), amountMinor });
+    if (outcome.kind === "terminal") {
+      resetAttempt();
+      outcome = await postPatronIntent({ requestId: attemptId(), amountMinor });
+    }
+    setBusy(false);
+    if (cancelledRef.current) return;
+    if (outcome.kind === "ready") {
+      const tiles = getTipMethodTiles(outcome.paymentMethodTypes, wallets, false);
+      setStripeTypes(outcome.paymentMethodTypes);
+      if (!tiles.includes(method)) {
+        setPicked(tiles[0] ?? null);
+        setNotice(tx("Ta metoda nie jest dostępna dla tej płatności. Wybierz inną.", "This method is not available for this payment. Please choose another."));
+        return;
+      }
+      setIntent({ paymentId: outcome.paymentId, clientSecret: outcome.clientSecret });
+      rememberTipMethod(method);
+      setStage({ kind: "pay" });
+    } else if (outcome.kind === "max-ahead") {
+      setStage({ kind: "max-ahead", expiresAt: outcome.expiresAt });
+    } else if (outcome.kind === "in-progress") {
+      setNotice(tx("Ta płatność jest właśnie opłacana (np. czeka na potwierdzenie w banku). Dokończ ją albo spróbuj za kilka minut.", "This payment is being paid right now (e.g. waiting for your bank). Finish it or try again in a few minutes."));
+    } else if (outcome.kind === "unavailable") {
+      setNotice(tx("Płatności są chwilowo niedostępne. Spróbuj ponownie później.", "Payments are temporarily unavailable. Please try again later."));
+    } else {
+      setNotice(tx("Nie udało się rozpocząć płatności. Spróbuj ponownie za chwilę.", "The payment could not be started. Please try again in a moment."));
+    }
+  };
+
+  const backToAmount = () => setStage({ kind: "amount" });
+
+  // ---- step 2: demo
+  const payDemo = async () => {
+    const missing = { terms: !consent.terms, waiver: !consent.waiver };
+    setConsentErrors(missing);
+    if (missing.terms || missing.waiver || amountMinor === null || !method) {
       const first = missing.terms ? termsRef.current : waiverRef.current;
       first?.focus();
       first?.scrollIntoView?.({ block: "center", behavior: "smooth" });
       return;
     }
-    setStep({ kind: "processing" });
+    setStage({ kind: "processing" });
     const [outcome] = await Promise.all([
-      postDemoCheckout({ requestId: requestIdRef.current, product: product.id, method, simulate }),
-      wait(PROCESSING_MS),
+      postDemoCheckout({ requestId: attemptId(), amountMinor, method: method as PassMethod, simulate: "success" }),
+      wait(DEMO_PROCESSING_MS),
     ]);
-    if (outcome.kind === "success") setStep({ kind: "success", pass: outcome.pass as Exclude<PassStatusDto, { state: "none" }> });
-    else if (outcome.kind === "declined") {
-      requestIdRef.current = newRequestId();
-      setStep({ kind: "declined" });
-    } else if (outcome.kind === "already") setStep({ kind: "already", expiresAt: outcome.expiresAt });
-    else if (outcome.kind === "consent") {
-      setStep({ kind: "form" });
-      setErrors({ terms: !terms, waiver: !waiver });
-    } else setStep({ kind: "error" });
+    if (cancelledRef.current) return;
+    if (outcome.kind === "success" && outcome.pass.state !== "none") {
+      resetAttempt();
+      setStage({ kind: "success", pass: outcome.pass });
+    } else if (outcome.kind === "declined") {
+      resetAttempt();
+      setStage({ kind: "declined" });
+    } else if (outcome.kind === "max-ahead") {
+      setStage({ kind: "max-ahead", expiresAt: outcome.expiresAt });
+    } else {
+      setStage({ kind: "declined" });
+    }
   };
 
-  const consentError = tx("Zaznacz to pole, aby kontynuować.", "Tick this box to continue.");
+  // ---- step 2: Stripe
+  const beforeConfirm = useCallback(
+    () => (intent && method ? postPatronConsent({ paymentId: intent.paymentId, method }) : Promise.resolve(false)),
+    [intent, method],
+  );
+
   const watch = () => {
     onOpenChange(false);
     onWatch();
   };
 
+  const stepNumber = stage.kind === "amount" ? 1 : stage.kind === "pay" ? 2 : null;
+  const showSteps = stepNumber !== null;
+  const retry = () => { resetAttempt(); setIntent(null); setStage({ kind: "amount" }); };
+
+  const heading = (text: string) => (
+    <h3 ref={headingRef} tabIndex={-1} className={styles.stepTitle}>{text}</h3>
+  );
+
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={(next) => { if (!busy) onOpenChange(next); }} disablePointerDismissal={busy}>
+    <DialogPrimitive.Root open={open} onOpenChange={(next) => { if (!locked) onOpenChange(next); }} disablePointerDismissal>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Backdrop className={styles.overlay} />
-        <DialogPrimitive.Popup className={cn(styles.pass, styles.sheet)} aria-labelledby={`${ids}-title`} aria-busy={busy} initialFocus={titleRef}>
+        <DialogPrimitive.Popup className={cn(styles.pass, styles.sheet)} aria-labelledby={`${ids}-title`} aria-busy={locked} initialFocus={titleRef}>
           <div className={styles.sheetHead}>
             <DialogPrimitive.Title render={<h2 ref={titleRef} tabIndex={-1} id={`${ids}-title`} className={styles.sheetTitle} />}>
-              {tx("Kasa", "Checkout")}
+              {tx("Zostań patronem", "Become a patron")}
+              {testMode && <span className={styles.testBadge}>{tx("Tryb testowy", "Test mode")}</span>}
             </DialogPrimitive.Title>
-            <DialogPrimitive.Close className={styles.close} disabled={busy} aria-label={tx("Zamknij", "Close")}>
+            <DialogPrimitive.Close className={styles.close} disabled={locked} aria-label={tx("Zamknij", "Close")}>
               <CrossIcon className="h-4 w-4" />
             </DialogPrimitive.Close>
           </div>
 
-          <div className={styles.sheetBody}>
-            {step.kind === "success" && <PassSuccess tx={tx} language={language} pass={step.pass} onWatch={watch} watchLabel={watchLabel} />}
-            {step.kind === "already" && <PassAlreadyActive tx={tx} language={language} expiresAt={step.expiresAt} onWatch={watch} />}
-            {step.kind === "declined" && <PassDeclined tx={tx} onRetry={() => void submit("success")} onChangeMethod={() => setStep({ kind: "form" })} />}
-            {step.kind === "error" && (
-              <div className={styles.result} aria-live="polite">
-                <h3 className={styles.resultTitle}>{tx("Coś poszło nie tak", "Something went wrong")}</h3>
-                <p className={styles.resultText}>{tx("Nic nie zostało pobrane. Spróbuj ponownie za chwilę.", "Nothing was charged. Please try again in a moment.")}</p>
-                <button type="button" className={styles.lineBtn} onClick={() => setStep({ kind: "form" })}>{tx("Wróć do kasy", "Back to checkout")}</button>
+          {showSteps && (
+            <>
+              <ol className={styles.steps} aria-label={tx("Etapy zakupu", "Checkout steps")}>
+                <li aria-current={stepNumber === 1 ? "step" : undefined} className={cn(styles.stepItem, stepNumber === 1 && styles.stepNow)}>
+                  <span className={styles.stepDot} aria-hidden="true">1</span>{tx("Kwota", "Amount")}
+                </li>
+                <li aria-current={stepNumber === 2 ? "step" : undefined} className={cn(styles.stepItem, stepNumber === 2 && styles.stepNow)}>
+                  <span className={styles.stepDot} aria-hidden="true">2</span>{tx("Płatność", "Payment")}
+                </li>
+              </ol>
+              <p className={styles.srOnly} role="status" aria-live="polite">{tx("Krok {0} z 2", "Step {0} of 2", stepNumber)}</p>
+            </>
+          )}
+          {testMode && stage.kind !== "success" && (
+            <p className={styles.testNote}>{tx("Tryb testowy: nic nie zostanie pobrane naprawdę. Karta testowa: 4242 4242 4242 4242, dowolna data i CVC.", "Test mode: nothing is really charged. Test card: 4242 4242 4242 4242, any date and CVC.")}</p>
+          )}
+
+          {stage.kind === "amount" && (
+            <>
+              <div className={styles.sheetBody}>
+                {heading(tx("Ile chcesz wesprzeć?", "How much do you want to give?"))}
+                <PassAmountStep
+                  tx={tx}
+                  language={language}
+                  offer={offer}
+                  amount={amount}
+                  methods={methods}
+                  method={method}
+                  onMethod={(value) => { setPicked(value); setNotice(null); }}
+                  activeUntil={activeUntil}
+                  notice={notice}
+                  unavailable={stripeMode && !stripeReady}
+                  busy={busy}
+                  tried={tried}
+                  formatDate={formatDate}
+                />
               </div>
-            )}
-            {(step.kind === "form" || step.kind === "processing") && (
-              <>
-                <fieldset className={styles.products} disabled={busy}>
-                  <legend className={styles.label}>{tx("Wybierz wejściówkę", "Choose your pass")}</legend>
-                  {offer.products.map((p) => (
-                    <label key={p.id} className={styles.product}>
-                      <input type="radio" name="pass-product" value={p.id} checked={p.id === product.id} onChange={() => setProductId(p.id)} />
-                      {p.bestValue && <span className={styles.bestValue}>{tx("Najlepsza wartość", "Best value")}</span>}
-                      <span className={styles.productName}>{passName(tx, p.id)}</span>
-                      <span className={styles.productPrice}>{price(language, p.priceMinor)}</span>
-                      <span className={styles.productNote}>{tx("jednorazowo, {0} dni", "one-time, {0} days", p.days)}</span>
-                    </label>
-                  ))}
-                </fieldset>
+              <div className={styles.pay}>
+                <button type="button" className={styles.inkBtn} onClick={() => void next()} disabled={busy || (stripeMode && !stripeReady)} aria-busy={busy || undefined}>
+                  {busy ? tx("Chwileczkę…", "One moment…") : amountMinor !== null && amount.problem === null ? tx("Dalej · {0}", "Next · {0}", total) : tx("Dalej", "Next")}
+                </button>
+              </div>
+            </>
+          )}
 
-                <div className={styles.order}>
-                  <div className={styles.orderLine}>
-                    <span className={styles.ticket}><TicketIcon /></span>
-                    <div>
-                      <b>{passName(tx, product.id)} · Premium</b>
-                      <div className={styles.muted}>{tx("ważna do {0}, nie odnawia się", "valid until {0}, does not renew", validUntil)}</div>
-                    </div>
-                    <b>{total}</b>
-                  </div>
-                  <div className={styles.orderTotal}>
-                    <span>{tx("Razem do zapłaty (brutto)", "Total to pay (incl. VAT)")}</span>
-                    <b>{total}</b>
-                  </div>
-                </div>
-                <p className={styles.muted} style={{ margin: "-6px 0 0" }}>
-                  {vatLine(tx, offer.vatRatePercent)}
-                  {email ? ` · ${tx("Potwierdzenie trafi na {0}", "The confirmation goes to {0}", email)}` : ""}
-                </p>
+          {stage.kind === "pay" && amountMinor !== null && method && stripeReady && intent && (
+            <>
+              <div className={styles.payHead}>{heading(tx("Płatność", "Payment"))}</div>
+              <TipBackContext.Provider value={{ onBack: backToAmount, label: tx("Wstecz", "Back") }}>
+                <PassStripePay
+                  language={language}
+                  amountMinor={amountMinor}
+                  method={method}
+                  clientSecret={intent.clientSecret}
+                  paymentId={intent.paymentId}
+                  userEmail={user?.primaryEmailAddress?.emailAddress}
+                  stripePromise={stripePromise}
+                  returnUrl={buildReturnUrl(intent.paymentId)}
+                  accepted={consent.terms && consent.waiver}
+                  beforeConfirm={beforeConfirm}
+                  onChangeMethod={backToAmount}
+                  onConfirmed={(outcome) => void finish(intent.paymentId, outcome === "succeeded" ? 6 : 10)}
+                  consent={<PassConsent tx={tx} language={language} ids={ids} value={consent} errors={consentErrors} onChange={(value) => { setConsent(value); setConsentErrors({}); }} />}
+                />
+              </TipBackContext.Provider>
+            </>
+          )}
 
-                {step.kind === "processing" ? (
-                  <>
-                    <div className={styles.progress} aria-live="polite"><span>{tx("Łączę z operatorem płatności (demo)…", "Contacting the payment provider (demo)…")}</span></div>
-                    <p className={styles.fine}>{tx("Nie zamykaj okna. To potrwa chwilę.", "Do not close this window. It only takes a moment.")}</p>
-                  </>
-                ) : (
-                  <>
-                    <PassMethodPicker tx={tx} methods={methods} value={method} onChange={setMethod} labelId={`${ids}-method`} />
-                    <div className={cn(styles.consent, errors.terms && styles.consentError)}>
-                      <input ref={termsRef} id={`${ids}-terms`} type="checkbox" checked={terms} onChange={(e) => { setTerms(e.target.checked); setErrors((x) => ({ ...x, terms: false })); }} aria-invalid={errors.terms || undefined} aria-describedby={errors.terms ? `${ids}-terms-error` : undefined} />
-                      <label htmlFor={`${ids}-terms`}>
-                        {txRich(
-                          tx,
-                          "Akceptuję {0} i {1}.",
-                          "I accept the {0} and the {1}.",
-                          <a href={termsHref} target="_blank" rel="noopener">{tx("Regulamin wejściówki", "Pass Terms")}</a>,
-                          <a href={privacyHref} target="_blank" rel="noopener">{tx("Politykę prywatności", "Privacy Policy")}</a>,
-                        )}
-                      </label>
-                      {errors.terms && <p id={`${ids}-terms-error`} className={styles.error}>{consentError}</p>}
-                    </div>
-                    <div className={cn(styles.consent, errors.waiver && styles.consentError)}>
-                      <input ref={waiverRef} id={`${ids}-waiver`} type="checkbox" checked={waiver} onChange={(e) => { setWaiver(e.target.checked); setErrors((x) => ({ ...x, waiver: false })); }} aria-invalid={errors.waiver || undefined} aria-describedby={errors.waiver ? `${ids}-waiver-error` : undefined} />
-                      <label htmlFor={`${ids}-waiver`}>
-                        {tx("Chcę dostępu od razu. Wiem, że gdy zacznę oglądać, tracę prawo odstąpienia od umowy.", "I want access right away. I understand that once I start watching, I lose my right to withdraw.")}
-                      </label>
-                      {errors.waiver && <p id={`${ids}-waiver-error`} className={styles.error}>{consentError}</p>}
-                    </div>
-                  </>
-                )}
-              </>
-            )}
-          </div>
+          {stage.kind === "pay" && amountMinor !== null && method && !stripeMode && (
+            <>
+              <div className={styles.sheetBody}>
+                {heading(tx("Płatność", "Payment"))}
+                <PassDemoSummary tx={tx} language={language} amountMinor={amountMinor} method={method} onChangeMethod={backToAmount} />
+                <PassConsent tx={tx} language={language} ids={ids} value={consent} errors={consentErrors} onChange={(value) => { setConsent(value); setConsentErrors({}); }} termsRef={termsRef} waiverRef={waiverRef} />
+                {email && <p className={styles.muted} style={{ margin: 0 }}>{tx("Potwierdzenie trafi na {0}", "The confirmation goes to {0}", email)}</p>}
+              </div>
+              <div className={styles.pay}>
+                <button type="button" className={styles.inkBtn} onClick={() => void payDemo()}>
+                  {tx("Zapłać {0}", "Pay {0}", total)}
+                </button>
+              </div>
+            </>
+          )}
+
+          {(stage.kind === "processing" || stage.kind === "success" || stage.kind === "pending" || stage.kind === "declined" || stage.kind === "max-ahead") && (
+            <div className={styles.sheetBody}>
+              {stage.kind === "processing" && (
+                <PassPending ref={headingRef} tx={tx} timedOut={false} onCheck={() => undefined} onClose={() => onOpenChange(false)} />
+              )}
+              {stage.kind === "success" && <PassSuccess ref={headingRef} tx={tx} language={language} pass={stage.pass} onWatch={watch} watchLabel={watchLabel} />}
+              {stage.kind === "pending" && (
+                <PassPending ref={headingRef} tx={tx} timedOut={stage.timedOut} onCheck={() => void finish(stage.paymentId, 4)} onClose={() => onOpenChange(false)} />
+              )}
+              {stage.kind === "declined" && <PassDeclined ref={headingRef} tx={tx} onRetry={retry} onChangeMethod={retry} />}
+              {stage.kind === "max-ahead" && <PassMaxAhead ref={headingRef} tx={tx} language={language} expiresAt={stage.expiresAt} onWatch={watch} />}
+            </div>
+          )}
 
           <div className={styles.seller}>
             <ShieldIcon />
             <span>{tx("Bezpieczne połączenie", "Secure connection")} · {sellerLine(tx)} · support@pawelperfect.com</span>
           </div>
-          {step.kind === "form" && (
-            <div className={styles.pay}>
-              <button type="button" className={styles.inkBtn} onClick={() => void submit("success")}>
-                {tx("Zamawiam i płacę {0}", "Order and pay {0}", total)}
-              </button>
-            </div>
-          )}
         </DialogPrimitive.Popup>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>

@@ -6,6 +6,7 @@ import { PaymentRepository } from "../infrastructure/payment.repository";
 import { PaymentError } from "../domain/payment.errors";
 import { PaymentDto } from "../domain/payment.dto";
 import { logger } from "@/lib/logger";
+import { isPremiumPassPayment } from "../domain/payment.purpose";
 import { recordMetric, recordAlert } from "@/lib/observability";
 import { revokeSupporterGrantIfNoPaidTips, restoreSupporterGrantRevokedFor } from "./supporter-grant";
 
@@ -108,7 +109,11 @@ export async function applyRefundedTotal(
     recordMetric('payment.refund_received', { status: newStatus, deltaMinor: deltaRefundMinor, fullRefund: cappedRefunded >= payment.amountMinor });
     await repo.decrementUserPaymentTotal(payment.userId, payment.currency, deltaRefundMinor, tx);
 
-    if (newStatus === PaymentStatus.REFUNDED) {
+    if (newStatus === PaymentStatus.REFUNDED && isPremiumPassPayment(payment.metadata)) {
+      // experiment: premium-pass: a fully refunded patron-zone payment takes its period of access back.
+      const { revokePatronAccessForPayment } = await import("@/lib/modules/experiment-premium-pass");
+      await revokePatronAccessForPayment(tx, { userId: payment.userId, paymentId: payment.id, amountMinor: payment.amountMinor, now: ctx.now() });
+    } else if (newStatus === PaymentStatus.REFUNDED) {
       // A fully refunded tip no longer counts; the supporter marker goes only when no other
       // paid tip is left. A partial refund leaves the tip counting.
       await revokeSupporterGrantIfNoPaidTips({

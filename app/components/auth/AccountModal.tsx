@@ -43,7 +43,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin }: AccountMod
     { id: "security", label: tx("Hasło", "Security") },
     { id: "passkeys", label: tx("Klucze dostępu", "Passkeys") },
     { id: "danger", label: tx("Usuń", "Delete") },
-    ...(pass.status ? [{ id: "pass" as const, label: tx("Wejściówka", "Pass") }] : []),
+    ...(pass.status ? [{ id: "pass" as const, label: tx("Strefa patrona", "Patron zone") }] : []),
   ];
 
   return (

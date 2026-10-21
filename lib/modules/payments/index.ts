@@ -14,6 +14,7 @@ export * from "./application/reconcile-payment.use-case";
 export * from "./application/reconcile-refunds.use-case";
 export * from "./application/stripe-customer-anonymization.use-case";
 export * from "./domain/payment.dto";
+export * from "./domain/payment.purpose";
 export * from "./domain/admin-payment.dto";
 export * from "./domain/payment.errors";
 export * from "./domain/payment.policy";

@@ -1,6 +1,6 @@
 /**
  * A small in-memory stand-in for the Prisma tables the payment flow touches (Payment, StripeEvent,
- * PatronGrant, User, UserPaymentTotal). It implements only the query shapes the code uses, with
+ * PatronGrant, User, UserPaymentTotal, AppSetting). It implements only the query shapes the code uses, with
  * real filtering, so tests assert behaviour (resulting rows) rather than mocked call arguments.
  */
 import { Prisma } from '@prisma/client';
@@ -109,6 +109,8 @@ export function createFakePaymentsDb() {
     user: table([], { prefix: 'user' }),
     userPaymentTotal: table([], { prefix: 'upt' }),
     paymentCurrencySetting: table([], { prefix: 'pcs' }),
+    // experiment: premium-pass: the patron-zone access grant lives in AppSetting rows.
+    appSetting: table([], { prefix: 'set', unique: [['key']] }),
     async $executeRaw() {
       return 1;
     },

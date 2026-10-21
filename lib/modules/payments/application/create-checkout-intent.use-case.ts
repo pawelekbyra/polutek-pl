@@ -4,6 +4,7 @@ import { UseCaseResult, ok as success, fail as failure } from "@/lib/modules/sha
 import { PaymentStatus, Prisma } from "@prisma/client";
 import { CreateCheckoutIntentInput, CheckoutResultDto, PaymentDto } from "../domain/payment.dto";
 import { PaymentPolicy } from "../domain/payment.policy";
+import { isPremiumPassPayment, PAYMENT_PURPOSE_PREMIUM_PASS } from "../domain/payment.purpose";
 import { InvalidPaymentRequestError, UserNotFoundError, PaymentProviderError, PaymentError } from "../domain/payment.errors";
 import { PaymentRepository } from "../infrastructure/payment.repository";
 import { MainChannelService } from "@/lib/modules/channel";
@@ -21,6 +22,11 @@ const UPDATABLE_INTENT_STATES: ReadonlySet<Stripe.PaymentIntent.Status> = new Se
 export function tipIntentDescription(language: string | null | undefined): string {
   // Polish for a Polish (or unknown) account; every other interface language gets English.
   return !language || language === "pl" ? `Napiwek dla ${APP_NAME}` : `Tip for ${APP_NAME}`;
+}
+
+/** Shown in the BLIK app and on statements for a patron-zone payment (experiment: premium-pass); never from the client. */
+export function patronIntentDescription(language: string | null | undefined): string {
+  return !language || language === "pl" ? `Dostęp do strefy patrona: ${APP_NAME}` : `Patron zone access: ${APP_NAME}`;
 }
 
 class PaymentInProgressError extends PaymentError {
@@ -87,7 +93,10 @@ export async function createCheckoutIntent(
         amountMinor: input.amountMinor,
         currency,
         status: PaymentStatus.PENDING,
-        metadata: input.requestId ? { requestId: input.requestId } : {},
+        metadata: {
+          ...(input.requestId ? { requestId: input.requestId } : {}),
+          ...(input.purpose ? { purpose: input.purpose } : {}),
+        },
         requestId: input.requestId ?? null,
       }, ctx.prisma);
     } catch (error) {
@@ -129,10 +138,11 @@ async function createIntentFor(payment: PaymentDto, user: CheckoutUser, ctx: App
     amount: payment.amountMinor,
     currency: PaymentPolicy.getStripeCurrency(payment.currency),
     customer: user.stripeCustomerId ?? undefined,
-    description: tipIntentDescription(user.language),
+    description: isPremiumPassPayment(payment.metadata) ? patronIntentDescription(user.language) : tipIntentDescription(user.language),
     metadata: {
       userId: user.id,
       paymentId: payment.id,
+      ...(isPremiumPassPayment(payment.metadata) ? { purpose: PAYMENT_PURPOSE_PREMIUM_PASS } : {}),
       ...(payment.requestId ? { requestId: payment.requestId } : {}),
       creatorId: payment.creatorId,
     },
@@ -156,6 +166,12 @@ async function reuseAttempt(
   const repo = new PaymentRepository();
   const stripe = getStripeClient();
   const currency = PaymentPolicy.getDbCurrency(input.currency);
+
+  // experiment: premium-pass: a tip attempt and a patron-zone attempt never touch each other's payment. Otherwise the
+  // tip route (its own, lower limits) could re-price a patron payment through its request id.
+  if (isPremiumPassPayment(existing.metadata) !== (input.purpose === PAYMENT_PURPOSE_PREMIUM_PASS)) {
+    return failure(new InvalidPaymentRequestError("This payment attempt belongs to another flow."));
+  }
 
   // Paid, failed to start, canceled: the client starts a fresh attempt with a new requestId.
   if (existing.status !== PaymentStatus.PENDING) {

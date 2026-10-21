@@ -96,7 +96,7 @@ export const TIP_WALLETS: readonly TipWallet[] = ["apple_pay", "google_pay"];
  * Apple Pay / Google Pay are card payments to Stripe, so they only get a tile when the intent
  * allows cards and the browser says the wallet is set up on this device.
  */
-export function getTipMethodTiles(paymentMethodTypes: string[], wallets: readonly TipWallet[] = []): string[] {
+export function getTipMethodTiles(paymentMethodTypes: string[], wallets: readonly TipWallet[] = [], includeCryptoPlaceholder = true): string[] {
   const rank = (type: string) => {
     const index = METHOD_ORDER.indexOf(type);
     return index === -1 ? METHOD_ORDER.length : index;
@@ -105,7 +105,7 @@ export function getTipMethodTiles(paymentMethodTypes: string[], wallets: readonl
   const tiles = [...new Set(withWallets)]
     .filter((type) => !HIDDEN_TILE_METHODS.has(type))
     .sort((a, b) => rank(a) - rank(b));
-  return [...(tiles.length > 0 ? tiles : [TIP_FALLBACK_METHOD]), TIP_CRYPTO_PLACEHOLDER];
+  return [...(tiles.length > 0 ? tiles : [TIP_FALLBACK_METHOD]), ...(includeCryptoPlaceholder ? [TIP_CRYPTO_PLACEHOLDER] : [])];
 }
 
 export function describeTipMethod(type: string, tx: Tx): {

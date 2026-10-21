@@ -1,6 +1,7 @@
 "use client";
-// experiment: premium-pass (docs/experiments/premium-pass.md, section 8.7): the DEMO strip on every purchase screen.
-// It cannot be turned off by configuration.
+// experiment: premium-pass (docs/experiments/premium-pass.md, section 8.7): the DEMO strip on the offer page, the
+// terms and the account section while `PREMIUM_PASS_PAYMENTS=demo`. Never inside the checkout modal. With real
+// payments (`stripe`) the callers do not render it.
 import React from "react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "../LanguageContext";

@@ -1,4 +1,5 @@
 import { PaymentStatus } from "@prisma/client";
+import type { PAYMENT_PURPOSE_PREMIUM_PASS } from "./payment.purpose";
 
 export interface PaymentDto {
   id: string;
@@ -22,6 +23,8 @@ export interface CreateCheckoutIntentInput {
   amountMinor: number;
   currency: string;
   requestId?: string;
+  /** Set by the patron zone (experiment: premium-pass); absent for a tip. */
+  purpose?: typeof PAYMENT_PURPOSE_PREMIUM_PASS;
 }
 
 export interface CheckoutResultDto {

@@ -15,9 +15,10 @@ export function buildTipReturnUrl(paymentId: string | null): string {
 export function readConfirmResult(
   result: PaymentIntentResult,
   tx: Tx,
+  patron = false, // experiment: premium-pass: the patron-zone payment reuses these forms
 ): { outcome: TipConfirmOutcome } | { error: string } {
   if (result.error) {
-    return { error: result.error.message || (tx("Nie udało się wysłać napiwku.", "The tip could not be sent.")) };
+    return { error: result.error.message || (patron ? tx("Nie udało się zrealizować płatności.", "The payment could not be completed.") : tx("Nie udało się wysłać napiwku.", "The tip could not be sent.")) };
   }
   const status = result.paymentIntent?.status;
   if (status === "succeeded") return { outcome: "succeeded" };

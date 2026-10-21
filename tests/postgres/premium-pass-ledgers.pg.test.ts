@@ -1,6 +1,6 @@
 /**
- * experiment: premium-pass (docs/experiments/premium-pass.md, section 4): a simulated purchase on a real Postgres
- * writes exactly one AppSetting row and nothing into any money table.
+ * experiment: premium-pass (docs/experiments/premium-pass.md, section 4): a simulated purchase (demo mode) on a real
+ * Postgres writes exactly one AppSetting row and nothing into any money table.
  *
  *   DATABASE_URL=postgresql://... npx vitest run --config vitest.postgres.config.ts tests/postgres/premium-pass-ledgers.pg.test.ts
  */
@@ -28,6 +28,7 @@ async function ledgerCounts() {
 
 beforeAll(() => {
   process.env.PREMIUM_PASS_EXPERIMENT = 'all';
+  delete process.env.PREMIUM_PASS_PAYMENTS; // the default: demo
 });
 
 afterAll(async () => {
@@ -42,18 +43,18 @@ describe('premium-pass demo purchase against the real schema', () => {
     const ctx = createAppContext({ actor: { type: 'user', userId }, prisma });
     const result = await checkoutDemoPass(ctx, {
       requestId: randomUUID(),
-      product: 'PASS_30D',
+      amountMinor: 2900,
       method: 'blik',
       consents: { terms: true, waiver: true },
       simulate: 'success',
     });
     expect(result.ok).toBe(true);
     const row = await prisma.appSetting.findUniqueOrThrow({ where: { key } });
-    expect(JSON.parse(row.value)).toMatchObject({ provider: 'DEMO', product: 'PASS_30D', priceMinor: 2900 });
+    expect(JSON.parse(row.value)).toMatchObject({ v: 2, provider: 'DEMO', priceMinor: 2900, totalMinor: 2900 });
 
     const declined = await checkoutDemoPass(createAppContext({ actor: { type: 'user', userId: `${userId}-b` }, prisma }), {
       requestId: randomUUID(),
-      product: 'PASS_7D',
+      amountMinor: 1500,
       method: 'card',
       consents: { terms: true, waiver: true },
       simulate: 'declined',

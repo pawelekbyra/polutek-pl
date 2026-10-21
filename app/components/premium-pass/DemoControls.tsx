@@ -1,6 +1,7 @@
 "use client";
 // experiment: premium-pass (docs/experiments/premium-pass.md, section 7): the demo panel. Any signed-in viewer who
-// sees the experiment may expire or delete THEIR OWN demo pass, to look at every state without waiting 7/30 days.
+// sees the experiment may expire or delete THEIR OWN access, to look at every state without waiting. Shown only in demo
+// mode or with Stripe TEST keys (the server refuses it with live keys).
 import React, { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
@@ -25,10 +26,10 @@ export function DemoControls({ onChanged }: { onChanged: () => void }) {
     const result = await postDemoControl(action);
     setBusy(false);
     if (!result && action === "expire") {
-      setMessage(tx("Nie masz jeszcze wejściówki demo.", "You do not have a demo pass yet."));
+      setMessage(tx("Nie masz jeszcze dostępu do strefy patrona.", "You do not have patron zone access yet."));
       return;
     }
-    setMessage(action === "expire" ? tx("Wejściówka wygasła.", "The pass has expired.") : tx("Wejściówka usunięta.", "The pass was deleted."));
+    setMessage(action === "expire" ? tx("Dostęp wygasł.", "Access has expired.") : tx("Dostęp usunięty.", "Access deleted."));
     onChanged();
   };
 
@@ -37,9 +38,9 @@ export function DemoControls({ onChanged }: { onChanged: () => void }) {
       {open && (
         <div id={panelId} className={styles.panel} role="region" aria-label={tx("Panel demo", "Demo panel")}>
           <strong>{tx("Panel demo", "Demo panel")}</strong>
-          <span className={styles.muted}>{tx("Działa tylko na Twojej wejściówce demo.", "Works on your own demo pass only.")}</span>
-          <button type="button" className={styles.lineBtn} disabled={busy} onClick={() => void run("expire")}>{tx("Wygaś moją wejściówkę teraz", "Expire my pass now")}</button>
-          <button type="button" className={styles.lineBtn} disabled={busy} onClick={() => void run("reset")}>{tx("Usuń moją wejściówkę", "Delete my pass")}</button>
+          <span className={styles.muted}>{tx("Działa tylko na Twoim własnym dostępie.", "Works on your own access only.")}</span>
+          <button type="button" className={styles.lineBtn} disabled={busy} onClick={() => void run("expire")}>{tx("Wygaś mój dostęp teraz", "Expire my access now")}</button>
+          <button type="button" className={styles.lineBtn} disabled={busy} onClick={() => void run("reset")}>{tx("Usuń mój dostęp", "Delete my access")}</button>
           <p className={styles.muted} role="status" aria-live="polite" style={{ margin: 0, minHeight: 16 }}>{message}</p>
         </div>
       )}
