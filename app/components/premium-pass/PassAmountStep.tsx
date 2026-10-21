@@ -13,21 +13,17 @@ import { TipSelect } from "../support/TipSelect";
 import { currencySymbol, parseAmountInput, price, vatLine } from "./pass-copy";
 import styles from "./premium-pass.module.css";
 
-/** The chosen amount: one of the suggested ones, or what the viewer typed. */
+/** The chosen amount: what the viewer typed (pay what you want), prefilled with the minimum. */
 export function usePassAmount(offer: PremiumPassOffer) {
-  const [preset, setPreset] = useState<number | null>(null);
   const [custom, setCustom] = useState(String(offer.defaultMinor / 100));
-  const typed = preset === null ? parseAmountInput(custom) : null;
-  const minor = preset ?? typed;
+  const minor = parseAmountInput(custom);
   const problem: "empty" | "invalid" | "low" | "high" | null =
     minor === null ? (custom.trim() === "" ? "empty" : "invalid") : minor < offer.minMinor ? "low" : minor > offer.maxMinor ? "high" : null;
   return {
     minor: problem === null ? minor : null,
-    preset,
     custom,
     problem,
-    choosePreset: (value: number) => { setPreset(value); setCustom(""); },
-    typeCustom: (value: string) => { setPreset(null); setCustom(value); },
+    typeCustom: setCustom,
   };
 }
 
@@ -77,7 +73,6 @@ export function PassAmountStep({ tx, language, offer, amount, methods, method, o
       )}
 
       <div className={styles.amountHead}>
-        <h3 className={styles.amountTitle}>{tx("Zostań patronem i uzyskaj dostęp do strefy premium", "Become a patron and get access to the premium zone")}</h3>
         <p className={styles.amountLead}>{tx("Zapłać ile chcesz. Minimum {0}.", "Pay what you want. Minimum {0}.", price(language, offer.minMinor))}</p>
       </div>
 
@@ -94,7 +89,7 @@ export function PassAmountStep({ tx, language, offer, amount, methods, method, o
             value={amount.custom}
             placeholder={String(offer.minMinor / 100)}
             onChange={(event) => amount.typeCustom(event.target.value)}
-            aria-invalid={showProblem && amount.preset === null ? true : undefined}
+            aria-invalid={showProblem ? true : undefined}
             aria-describedby={`${ids}-help`}
           />
           <span aria-hidden="true">{currencySymbol(language)}</span>

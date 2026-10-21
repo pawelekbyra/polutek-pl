@@ -4,13 +4,13 @@ Status: **zbudowane na gałęzi `exp/premium-pass` (PR do `main`, nie scalone, n
 
 ## Strefa patrona: prawdziwa płatność Stripe za dostęp (2026-10-21, zastępuje produkty i kasę poniżej)
 
-Decyzja właściciela z 2026-10-21: z „wejściówki” robimy **„Zostań patronem projektu i uzyskaj dostęp do strefy patrona”** z prawdziwą płatnością przez Stripe. Poniższe punkty **zastępują** w tym dokumencie
+Decyzja właściciela z 2026-10-21: z „wejściówki” robimy **„Zostań patronem i uzyskaj dostęp do strefy premium”** z prawdziwą płatnością przez Stripe. Poniższe punkty **zastępują** w tym dokumencie
 wszystko, co mówi o dwóch wejściówkach (7 i 30 dni), o stałych cenach, o „nigdy nie pobiera pieniędzy” i o kasie bez Stripe (rozdz. 0, 2, 4, 5, 8 i decyzje 1 i 5 wyżej). Reszta (przełącznik
 `PREMIUM_PASS_EXPERIMENT`, lista filmów, bramka dostępu, plan `PASS_REQUIRED`, wycofanie) zostaje.
 
 ### Co to jest i ile kosztuje
 
-- **Płacisz, ile chcesz:** propozycje **10 / 25 / 50 / 100 zł** (domyślnie 25 zł) albo własna kwota. **Minimum 5 zł, maksimum 1000 zł** (PLN, kwota brutto w groszach, liczba całkowita). Minimum jest wyżej
+- **Płacisz, ile chcesz (decyzja właściciela po pierwszej wersji):** jedno pole kwoty, **bez propozycji kwot**, wstępnie wypełnione minimum. **Minimum 20 zł, maksimum 1000 zł** (PLN, kwota brutto w groszach, liczba całkowita). Minimum jest wyżej
   niż twarda dolna granica Stripe dla PLN (2 zł); limity są stałe w kodzie (`PATRON_*` w `domain/config.ts`), egzekwowane na serwerze (`validatePatronAmount`), nie w przeglądarce.
 - **Długość dostępu:** każda udana wpłata daje **30 dni**, niezależnie od kwoty. Wpłata przy trwającym dostępie **przedłuża go o kolejne 30 dni od jego końca** (nic się nie odnawia samo, to nie subskrypcja).
   Dostęp nie może sięgać dalej niż **365 dni od teraz**: dalsza wpłata jest wtedy odrzucana przed pobraniem pieniędzy (`MAX_AHEAD`).
@@ -32,7 +32,7 @@ wszystko, co mówi o dwóch wejściówkach (7 i 30 dni), o stałych cenach, o �
 
 ### Kasa w dwóch krokach (`PassCheckoutSheet`, pełna wysokość, bez paska demo)
 
-1. **Krok 1:** kwota (propozycje + własna), **lista rozwijana metod płatności** (to samo `TipSelect` i te same kafelki, co w bramce napiwkowej: `getTipMethodTiles`, bez makiety „Crypto”),
+1. **Krok 1:** nagłówek „Zostań patronem i uzyskaj dostęp do strefy premium” z leadem „Zapłać ile chcesz. Minimum 20 zł.”, jedno pole kwoty, **lista rozwijana metod płatności** (to samo `TipSelect` i te same kafelki, co w bramce napiwkowej: `getTipMethodTiles`, bez makiety „Crypto”),
    regulamin i polityka prywatności **tylko jako linki**, przycisk „Dalej · kwota”. Zapytanie o PaymentIntent idzie dopiero przy „Dalej” (nie przy otwarciu okna), więc samo otwarcie niczego nie tworzy. Jeśli Stripe nie dopuszcza wybranej
    metody dla tej płatności, kasa zostaje w kroku 1, zawęża listę do dozwolonych i mówi, że trzeba wybrać inną.
 2. **Krok 2:** formularz wybranej metody to **te same formularze, co w bramce napiwkowej** (`TipPayStep`: BLIK, Przelewy24, karta, Apple/Google Pay, reszta przez Payment Element; w `TipPayFrame` doszedł opcjonalny `patron`,

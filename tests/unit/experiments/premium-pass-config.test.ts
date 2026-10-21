@@ -80,19 +80,19 @@ describe("which videos are behind the pass", () => {
 
 describe("amounts, access length and the access record", () => {
   it("pay what you want: owner-agreed limits, suggested amounts inside them, one access length", () => {
-    expect([PATRON_MIN_MINOR, PATRON_MAX_MINOR, PATRON_DEFAULT_MINOR]).toEqual([500, 100_000, 2500]);
-    expect(PATRON_SUGGESTED_MINOR).toEqual([1000, 2500, 5000, 10_000]);
-    expect(PATRON_SUGGESTED_MINOR.every((v) => validatePatronAmount(v) === null)).toBe(true);
-    expect(PATRON_SUGGESTED_MINOR).toContain(PATRON_DEFAULT_MINOR);
+    expect([PATRON_MIN_MINOR, PATRON_MAX_MINOR, PATRON_DEFAULT_MINOR]).toEqual([2000, 100_000, 2000]);
+    expect(PATRON_SUGGESTED_MINOR).toEqual([]); // owner decision: no suggested amounts, one free field
+    expect(validatePatronAmount(PATRON_DEFAULT_MINOR)).toBeNull();
     expect(PATRON_ACCESS_DAYS).toBe(30);
     expect(formatPassPrice(1000, "pl-PL").replace(/\s/g, " ")).toBe("10 zł");
     expect(formatPassPrice(1550, "pl-PL").replace(/\s/g, " ")).toBe("15,50 zł");
   });
 
   it("validates amounts on the server: integers (grosze) within [min, max] only", () => {
-    expect(validatePatronAmount(500)).toBeNull();
+    expect(validatePatronAmount(2000)).toBeNull();
     expect(validatePatronAmount(100_000)).toBeNull();
-    expect(validatePatronAmount(499)).toBe("TOO_LOW");
+    expect(validatePatronAmount(1999)).toBe("TOO_LOW");
+    expect(validatePatronAmount(500)).toBe("TOO_LOW");
     expect(validatePatronAmount(100_001)).toBe("TOO_HIGH");
     expect(validatePatronAmount(0)).toBe("TOO_LOW");
     expect(validatePatronAmount(-500)).toBe("TOO_LOW");
@@ -102,8 +102,8 @@ describe("amounts, access length and the access record", () => {
   it("offer: PLN, VAT, amounts, access days, payments info; a malformed offer is dropped", () => {
     const offer = buildPremiumPassOffer({ signedIn: true, premiumCount: 2, expiredAt: "2026-11-20T10:00:00.000Z", payments: { mode: "stripe", available: true, stripeMode: "test" } });
     expect(offer).toMatchObject({
-      currency: "PLN", vatRatePercent: 23, accessDays: 30, minMinor: 500, maxMinor: 100_000, defaultMinor: 2500,
-      suggestedMinor: [1000, 2500, 5000, 10_000], premiumCount: 2, signedIn: true, expiredAt: "2026-11-20T10:00:00.000Z",
+      currency: "PLN", vatRatePercent: 23, accessDays: 30, minMinor: 2000, maxMinor: 100_000, defaultMinor: 2000,
+      suggestedMinor: [], premiumCount: 2, signedIn: true, expiredAt: "2026-11-20T10:00:00.000Z",
       payments: { mode: "stripe", available: true, stripeMode: "test" },
     });
     expect(buildPremiumPassOffer({ signedIn: false, premiumCount: 0 }).payments).toEqual({ mode: "demo" });

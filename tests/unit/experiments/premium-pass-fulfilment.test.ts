@@ -134,7 +134,7 @@ describe("patron zone access from the verified webhook", () => {
   });
 
   it("a second payment while access is active extends it from its end; the amount does not change the length", async () => {
-    const first = seedPatronPayment({ amountMinor: 500 });
+    const first = seedPatronPayment({ amountMinor: 2000 });
     const second = seedPatronPayment({ amountMinor: 100_000 });
     await POST(signedRequest("payment_intent.succeeded", intent(first)));
     const afterFirst = grant()!;
@@ -143,7 +143,7 @@ describe("patron zone access from the verified webhook", () => {
 
     expect(new Date(afterFirst.expiresAt).getTime() - new Date(afterFirst.grantedAt).getTime()).toBe(30 * DAY);
     expect(new Date(afterSecond.expiresAt).getTime() - new Date(afterFirst.expiresAt).getTime()).toBe(30 * DAY);
-    expect(afterSecond).toMatchObject({ totalMinor: 100_500, priceMinor: 100_000, paymentIds: [first.id, second.id], grantedAt: afterFirst.grantedAt });
+    expect(afterSecond).toMatchObject({ totalMinor: 102_000, priceMinor: 100_000, paymentIds: [first.id, second.id], grantedAt: afterFirst.grantedAt });
   });
 
   it("after an ended access a new payment starts a fresh 30 days from now", async () => {
@@ -181,7 +181,7 @@ describe("patron zone access from the verified webhook", () => {
   });
 
   it("never grants when Stripe's amount differs from the local row (amount is decided server-side)", async () => {
-    const payment = seedPatronPayment({ amountMinor: 500 });
+    const payment = seedPatronPayment({ amountMinor: 2000 });
     const res = await POST(signedRequest("payment_intent.succeeded", intent(payment, { amount: 100_000 })));
     expect(res.status).toBeGreaterThanOrEqual(500);
     expect(payment.status).toBe("PENDING");
