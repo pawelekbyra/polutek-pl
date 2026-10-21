@@ -138,13 +138,13 @@
   color: #ffffff !important;
 }
 
-/* A pressed like/dislike: icon and count turn the premium gold (outline only, no fill). */
+/* A pressed like/dislike: icon (filled) and count turn the bright blue. */
 .actionCluster .actionButton[aria-pressed="true"] {
-  color: var(--chan-amber-bright) !important;
+  color: #3b82f6 !important;
 }
 
 .actionCluster .actionButton[aria-pressed="true"] svg {
-  fill: none;
+  fill: currentColor;
 }
 
 .actionCluster svg,
