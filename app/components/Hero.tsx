@@ -400,7 +400,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                  text={video.description || undefined}
                  className={styles.secondaryAction}
                />
-               <div className="min-w-0 [&>div]:w-full">
+               <div className="order-first min-w-0 [&>div]:w-full">
                   <SubscribeButton
                     creatorId={video.creatorId}
                     creatorSlug={video.creator?.slug}
