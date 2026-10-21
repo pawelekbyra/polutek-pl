@@ -252,6 +252,16 @@
   text-shadow: none !important;
 }
 
+/* Share in green #4CAF50 (owner request, 2026-10-21), flat like the other buttons. */
+.secondaryAction {
+  background: #4caf50 !important;
+  box-shadow: 0 6px 14px -8px rgba(76, 175, 80, 0.7) !important;
+}
+
+.secondaryAction:hover {
+  background: #43a047 !important;
+}
+
 /* The like and dislike halves share the cluster's width, so it has no empty space at the end. */
 /* Phones: the cluster fills its grid cell (on desktop it keeps its natural width). */
 @media (max-width: 1023px) {
@@ -492,20 +502,6 @@
   .creatorStrip .subscribeAction {
     padding-left: 9px !important;
     padding-right: 9px !important;
-  }
-}
-
-/* Subscribe sits as close to the channel name and subscriber count as "Kup se Premium" sits to the like cluster: 8px (the grid
-   gap of the action row). The row's own gap is 13px (12px on narrow phones), so the slot pulls 5px (4px) back. */
-@media (max-width: 1023px) {
-  .subscribeSlot {
-    margin-left: -5px;
-  }
-}
-
-@media (max-width: 420px) {
-  .subscribeSlot {
-    margin-left: -4px;
   }
 }
 
