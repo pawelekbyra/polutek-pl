@@ -187,7 +187,7 @@ describe('patron checkout, step 2 (payment method)', () => {
     expect(within(dialog.getByRole('list', { name: 'Etapy zakupu' })).getAllByRole('listitem')[1]).toHaveAttribute('aria-current', 'step');
     expect(dialog.getByRole('combobox', { name: 'Metoda płatności' })).toBeInTheDocument();
     expect(summaryOf(dialog)).toHaveTextContent('29,99');
-    expect(dialog.getByRole('link', { name: 'Regulamin strefy patrona' })).toHaveAttribute('href', '/regulamin-premium');
+    expect(dialog.getByRole('link', { name: 'Regulamin' })).toHaveAttribute('href', '/regulamin-premium');
     expect(dialog.getByRole('link', { name: 'Polityka prywatności' })).toHaveAttribute('href', expect.stringContaining('polityka-prywatnosci'));
     expect(dialog.queryAllByRole('checkbox')).toHaveLength(0);
     expect(dialog.queryByRole('radio')).toBeNull();

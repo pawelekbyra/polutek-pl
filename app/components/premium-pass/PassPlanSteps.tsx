@@ -144,8 +144,11 @@ export function PassLegalLinks({ tx, language }: { tx: Tx; language: Locale }) {
   return (
     <p className={styles.legalLinks}>
       {tx("Przed zapłatą zapoznaj się z dokumentami:", "Before you pay, read the documents:")}
-      <a href={getLocalizedHref(language, "passTerms")} target="_blank" rel="noopener">{tx("Regulamin strefy patrona", "Patron Zone Terms")}</a>
-      <a href={getLocalizedHref(language, "privacy")} target="_blank" rel="noopener">{tx("Polityka prywatności", "Privacy Policy")}</a>
+      <span className={styles.legalRow}>
+        <a href={getLocalizedHref(language, "passTerms")} target="_blank" rel="noopener">{tx("Regulamin", "Terms")}</a>
+        {" "}{tx("i", "and")}{" "}
+        <a href={getLocalizedHref(language, "privacy")} target="_blank" rel="noopener">{tx("Polityka prywatności", "Privacy Policy")}</a>
+      </span>
     </p>
   );
 }
