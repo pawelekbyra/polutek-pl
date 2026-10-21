@@ -60,3 +60,9 @@ Kolumny `patronThresholdMinor` (martwa) i `patronBoxMinMinor` (liczy się jako m
 ## Pasek zbiórki
 
 Opis i źródło danych (liczy wszystkie udane napiwki kanału): `premieres-and-fundraising.md`.
+
+## Płatności strefy patrona (eksperyment premium-pass)
+
+Za przełącznikiem `PREMIUM_PASS_PAYMENTS=stripe` (domyślnie `demo`, bez pieniędzy) ten sam stos obsługuje też prawdziwą płatność za dostęp do strefy patrona: `createCheckoutIntent({ purpose: "premium_pass" })`, ten sam webhook,
+szybka ścieżka i cron. Płatność ma `metadata.purpose = "premium_pass"` (wiersz `Payment` i PaymentIntent). `fulfillPayment()` dla niej zamiast znacznika wspierającego i maila napiwkowego przyznaje dostęp
+(`AppSetting xp.premium_pass:<userId>`, w tej samej transakcji), pełny zwrot zdejmuje jej 30 dni, a pasek zbiórki jej nie liczy (to sprzedaż, nie napiwek). Pełny opis, limity i włączanie: `../experiments/premium-pass.md`.

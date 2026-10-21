@@ -8,9 +8,15 @@ const STATUS: Record<PassErrorCode, number> = {
   NOT_VISIBLE: 404,
   UNAUTHORIZED: 401,
   CONSENT_REQUIRED: 400,
-  PASS_ALREADY_ACTIVE: 409,
+  WRONG_MODE: 409,
+  PAYMENTS_UNAVAILABLE: 503,
+  AMOUNT_INVALID: 400,
+  MAX_AHEAD: 409,
   DEMO_DECLINED: 402,
   NO_PASS: 404,
+  PAYMENT_IN_PROGRESS: 409,
+  PAYMENT_FAILED: 502,
+  PAYMENT_NOT_FOUND: 404,
 };
 
 /** NOT_VISIBLE looks exactly like a missing route: nothing reveals that the experiment exists. */

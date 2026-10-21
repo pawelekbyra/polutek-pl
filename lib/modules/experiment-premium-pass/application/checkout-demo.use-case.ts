@@ -1,30 +1,31 @@
 // experiment: premium-pass (docs/experiments/premium-pass.md)
-// The simulated checkout. It NEVER takes money: there is no payment provider here, no card or BLIK data is accepted
-// (the schema is strict), and the only effect of a "successful payment" is one AppSetting row with provider DEMO.
-// tests/unit/experiments/premium-pass-no-money.test.ts guards that no payment code is ever imported into the experiment.
+// The SIMULATED checkout (`PREMIUM_PASS_PAYMENTS=demo`, the default). It NEVER takes money: there is no payment
+// provider here, no card or BLIK data is accepted (the schema is strict), and the only effect of a "successful
+// payment" is one AppSetting row with provider DEMO. In `stripe` mode this use case refuses (WRONG_MODE), so the demo
+// can never hand out access that a real payment should have paid for. The real flow is patron-checkout.use-case.ts.
 import { z } from "zod";
 import type { AppContext } from "@/lib/modules/shared/app-context";
-import { PASS_CURRENCY, passProduct, premiumPassFor, PASS_PRODUCTS, type PassProductId } from "../domain/config";
+import { PATRON_CURRENCY, premiumPassFor, validatePatronAmount } from "../domain/config";
+import { resolvePremiumPayments, toPremiumPaymentsDto } from "../domain/payments-mode";
 import {
-  addDays,
+  extendedExpiry,
   newDemoRef,
   PASS_METHODS,
   PASS_TERMS_VERSION,
   passStateOf,
   toPassStatusDto,
-  type DemoPassRecord,
+  wouldExceedMaxAhead,
+  type PassRecord,
   type PassStatusDto,
 } from "../domain/pass-state";
 import { buildPremiumPassOffer, type PremiumPassOffer } from "../domain/offer";
-import { countFunnelEvent, readDemoPass, writeDemoPass } from "../infrastructure/pass-store";
+import { countFunnelEvent, readPass, writePass } from "../infrastructure/pass-store";
 import { listPremiumPassVideos, passUserId } from "./pass-access";
-
-const productIds = PASS_PRODUCTS.map((p) => p.id) as [PassProductId, ...PassProductId[]];
 
 export const checkoutDemoInputSchema = z
   .object({
     requestId: z.string().uuid(),
-    product: z.enum(productIds),
+    amountMinor: z.number().int(),
     method: z.enum(PASS_METHODS),
     consents: z.object({ terms: z.boolean(), waiver: z.boolean() }).strict(),
     simulate: z.enum(["success", "declined"]),
@@ -33,71 +34,91 @@ export const checkoutDemoInputSchema = z
 
 export type CheckoutDemoInput = z.infer<typeof checkoutDemoInputSchema>;
 
-export type PassErrorCode = "NOT_VISIBLE" | "UNAUTHORIZED" | "CONSENT_REQUIRED" | "PASS_ALREADY_ACTIVE" | "DEMO_DECLINED" | "NO_PASS";
+export type PassErrorCode =
+  | "NOT_VISIBLE"
+  | "UNAUTHORIZED"
+  | "CONSENT_REQUIRED"
+  | "WRONG_MODE"
+  | "PAYMENTS_UNAVAILABLE"
+  | "AMOUNT_INVALID"
+  | "MAX_AHEAD"
+  | "DEMO_DECLINED"
+  | "NO_PASS"
+  | "PAYMENT_IN_PROGRESS"
+  | "PAYMENT_FAILED"
+  | "PAYMENT_NOT_FOUND";
 
 export type PassResult<T> = { ok: true; data: T } | { ok: false; code: PassErrorCode; expiresAt?: string };
 
 export type PremiumPassStatus = { offer: PremiumPassOffer; pass: PassStatusDto };
 
-/** Offer and the viewer's own pass (GET /api/user/premium-pass). */
+/** Offer and the viewer's own access (GET /api/user/premium-pass). */
 export async function getPremiumPassStatus(ctx: Pick<AppContext, "prisma" | "actor" | "now">): Promise<PassResult<PremiumPassStatus>> {
   const config = premiumPassFor(ctx.actor);
   if (!config) return { ok: false, code: "NOT_VISIBLE" };
   const userId = passUserId(ctx.actor);
   if (!userId) return { ok: false, code: "UNAUTHORIZED" };
   const now = ctx.now();
-  const [videos, record] = await Promise.all([listPremiumPassVideos(ctx, config, now), readDemoPass(ctx, userId)]);
+  const [videos, record] = await Promise.all([listPremiumPassVideos(ctx, config, now), readPass(ctx.prisma, userId)]);
   const state = passStateOf(record, now);
   return {
     ok: true,
     data: {
-      offer: buildPremiumPassOffer({ signedIn: true, premiumCount: videos.length, expiredAt: state.state === "expired" ? state.record.expiresAt : null }),
+      offer: buildPremiumPassOffer({
+        signedIn: true,
+        premiumCount: videos.length,
+        expiredAt: state.state === "expired" ? state.record.expiresAt : null,
+        payments: toPremiumPaymentsDto(resolvePremiumPayments()),
+      }),
       pass: toPassStatusDto(state),
     },
   };
 }
 
 /**
- * `success` writes the demo pass and answers with its receipt; `declined` writes nothing. The same `requestId` twice
- * returns the same receipt (double click, two tabs); another purchase while a pass is active is refused.
+ * `success` writes (or extends) the demo access and answers with its receipt; `declined` writes nothing. The same
+ * `requestId` twice returns the same receipt (double click, two tabs). Paying while access is active extends it.
  */
 export async function checkoutDemoPass(ctx: Pick<AppContext, "prisma" | "actor" | "now">, input: CheckoutDemoInput): Promise<PassResult<PassStatusDto>> {
   const config = premiumPassFor(ctx.actor);
   if (!config) return { ok: false, code: "NOT_VISIBLE" };
   const userId = passUserId(ctx.actor);
   if (!userId) return { ok: false, code: "UNAUTHORIZED" };
+  if (resolvePremiumPayments().mode !== "demo") return { ok: false, code: "WRONG_MODE" };
   await countFunnelEvent(ctx, "checkout_submit");
   if (!input.consents.terms || !input.consents.waiver) return { ok: false, code: "CONSENT_REQUIRED" };
+  if (validatePatronAmount(input.amountMinor) !== null) return { ok: false, code: "AMOUNT_INVALID" };
 
   const now = ctx.now();
-  const existing = passStateOf(await readDemoPass(ctx, userId), now);
-  if (existing.state !== "none" && existing.record.requestId === input.requestId) {
-    return { ok: true, data: toPassStatusDto(existing) };
+  const current = await readPass(ctx.prisma, userId);
+  if (current && current.provider === "DEMO" && current.requestId === input.requestId) {
+    return { ok: true, data: toPassStatusDto(passStateOf(current, now)) };
   }
-  if (existing.state === "active") {
-    await countFunnelEvent(ctx, "already_active");
-    return { ok: false, code: "PASS_ALREADY_ACTIVE", expiresAt: existing.record.expiresAt };
+  if (wouldExceedMaxAhead(current, now)) {
+    await countFunnelEvent(ctx, "max_ahead");
+    return { ok: false, code: "MAX_AHEAD", expiresAt: current?.expiresAt };
   }
   if (input.simulate === "declined") {
     await countFunnelEvent(ctx, "demo_declined");
     return { ok: false, code: "DEMO_DECLINED" };
   }
 
-  const product = passProduct(input.product)!;
-  const record: DemoPassRecord = {
-    v: 1,
-    product: product.id,
+  const active = current && new Date(current.expiresAt).getTime() > now.getTime();
+  const record: PassRecord = {
+    v: 2,
     provider: "DEMO",
     ref: newDemoRef(),
-    priceMinor: product.priceMinor,
-    currency: PASS_CURRENCY,
+    priceMinor: input.amountMinor,
+    totalMinor: (active ? current.totalMinor : 0) + input.amountMinor,
+    currency: PATRON_CURRENCY,
     method: input.method,
     requestId: input.requestId,
-    grantedAt: now.toISOString(),
-    expiresAt: addDays(now, product.days).toISOString(),
+    paymentIds: [],
+    grantedAt: active ? current.grantedAt : now.toISOString(),
+    expiresAt: extendedExpiry(current, now).toISOString(),
     consents: { termsVersion: PASS_TERMS_VERSION, waiverAt: now.toISOString() },
   };
-  await writeDemoPass(ctx, userId, record);
+  await writePass(ctx.prisma, userId, record);
   await countFunnelEvent(ctx, "demo_success");
   return { ok: true, data: toPassStatusDto({ state: "active", record }) };
 }

@@ -5,7 +5,8 @@ import type { Actor } from "@/lib/modules/shared/actor";
 import { isPremiumPassVideo, premiumPassFor, type PremiumPassConfig, type PremiumPassVideoFacts } from "../domain/config";
 import { passStateOf, type PassState } from "../domain/pass-state";
 import { buildPremiumPassOffer, type PremiumPassOffer } from "../domain/offer";
-import { readDemoPass } from "../infrastructure/pass-store";
+import { resolvePremiumPayments, toPremiumPaymentsDto } from "../domain/payments-mode";
+import { readPass } from "../infrastructure/pass-store";
 
 export type PremiumPassGate = { denied: true } | { activeUntil: string } | null;
 
@@ -13,10 +14,10 @@ export function passUserId(actor: Actor): string | null {
   return actor.type === "user" || actor.type === "admin" ? actor.userId : null;
 }
 
-/** The viewer's own pass state (guests: none). */
+/** The viewer's own patron-zone access state (guests: none). */
 export async function viewerPassState(ctx: Pick<AppContext, "prisma" | "actor">, now: Date): Promise<PassState> {
   const userId = passUserId(ctx.actor);
-  return userId ? passStateOf(await readDemoPass(ctx, userId), now) : { state: "none" };
+  return userId ? passStateOf(await readPass(ctx.prisma, userId), now) : { state: "none" };
 }
 
 /**
@@ -54,6 +55,7 @@ export async function premiumPassOfferFor(ctx: Pick<AppContext, "prisma" | "acto
     signedIn: passUserId(ctx.actor) !== null,
     premiumCount: videos.length,
     expiredAt: state.state === "expired" ? state.record.expiresAt : null,
+    payments: toPremiumPaymentsDto(resolvePremiumPayments()),
   });
 }
 

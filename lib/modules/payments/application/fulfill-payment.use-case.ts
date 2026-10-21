@@ -9,6 +9,7 @@ import { sendSupportThanksNotification } from "@/lib/modules/patron";
 import { sendBecomePatronEmail, sendDonationThankYouEmail } from "@/lib/modules/email";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { ensureSupporterGrant } from "./supporter-grant";
+import { isPremiumPassPayment } from "../domain/payment.purpose";
 
 export interface FulfillPaymentInput {
   paymentId: string;
@@ -83,8 +84,26 @@ export async function fulfillPayment(
 
       await repo.incrementUserPaymentTotal(payment.userId, payment.currency, payment.amountMinor, tx);
 
+      // experiment: premium-pass (docs/experiments/premium-pass.md): a patron-zone payment is not a tip. It grants the
+      // patron-zone access (extending it when still active) here, in the same transaction as the CAS, so the payment
+      // and the access are recorded together or not at all; it adds no supporter marker and sends no tip thank-you.
+      const premium = isPremiumPassPayment(payment.metadata);
+      if (premium) {
+        const { grantPatronAccessForPayment, readPaymentConsents } = await import("@/lib/modules/experiment-premium-pass");
+        const method = (payment.metadata as { method?: unknown } | null)?.method;
+        await grantPatronAccessForPayment(tx, {
+          userId: payment.userId,
+          paymentId: payment.id,
+          amountMinor: payment.amountMinor,
+          currency: payment.currency,
+          method: typeof method === 'string' ? method : null,
+          consents: readPaymentConsents(payment.metadata),
+          now: ctx.now(),
+        });
+      }
+
       // "wpłacił = patron": every successful tip marks the payer, no amount threshold.
-      const { created } = await ensureSupporterGrant({ userId: payment.userId, paymentId: payment.id }, ctx, tx);
+      const { created } = premium ? { created: false } : await ensureSupporterGrant({ userId: payment.userId, paymentId: payment.id }, ctx, tx);
 
       if (payment.status !== PaymentStatus.PENDING) {
         logger.warn(`[FulfillPayment] Payment ${payment.id} recovered from ${payment.status}: Stripe reports it succeeded.`);
@@ -97,6 +116,7 @@ export async function fulfillPayment(
         // Polish only for a Polish account; every other interface language gets English e-mails.
         language: user.language === 'pl' ? 'pl' as const : 'en' as const,
         becameSupporterNow: created,
+        premium,
       };
     });
 
@@ -104,7 +124,7 @@ export async function fulfillPayment(
       return ok({ isFirstFulfillment: false });
     }
 
-    if (input.notifyPayer !== false) {
+    if (input.notifyPayer !== false && !result.premium) {
       await thankPayer(input, result, ctx);
     }
 

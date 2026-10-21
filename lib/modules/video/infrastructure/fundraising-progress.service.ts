@@ -10,6 +10,9 @@ import {
 } from "../domain/fundraising";
 
 /** A successful tip that still counts: fully kept, or kept minus the refunded part. */
+/** experiment: premium-pass: `PAYMENT_PURPOSE_PREMIUM_PASS` of the payments module (not imported: its barrel would pull Stripe into the video module). */
+const PATRON_PAYMENT_PURPOSE = "premium_pass";
+
 const COUNTED_STATUSES = [PaymentStatus.SUCCEEDED, PaymentStatus.PARTIALLY_REFUNDED];
 
 /**
@@ -25,19 +28,27 @@ export function __resetFundraisingTotalsCacheForTests() {
 }
 
 async function queryTipTotals(startAt: Date | null, creatorId: string | null): Promise<CurrencyTotal[]> {
-  const rows = await prisma.payment.groupBy({
-    by: ["currency"],
-    where: {
-      status: { in: COUNTED_STATUSES },
-      ...(startAt ? { createdAt: { gte: startAt } } : {}),
-      // Single-channel app: the channel's tips, plus old rows saved before creatorId existed.
-      ...(creatorId ? { OR: [{ creatorId }, { creatorId: null }] } : {}),
-    },
-    _sum: { amountMinor: true, refundedAmountMinor: true },
-  });
+  const where = {
+    status: { in: COUNTED_STATUSES },
+    ...(startAt ? { createdAt: { gte: startAt } } : {}),
+    // Single-channel app: the channel's tips, plus old rows saved before creatorId existed.
+    ...(creatorId ? { OR: [{ creatorId }, { creatorId: null }] } : {}),
+  };
+  const [rows, patronRows] = await Promise.all([
+    prisma.payment.groupBy({ by: ["currency"], where, _sum: { amountMinor: true, refundedAmountMinor: true } }),
+    // experiment: premium-pass (docs/experiments/premium-pass.md): payments for the patron zone are sales, not tips,
+    // so they do not fill the tip bar. Selected by their marker and subtracted (a JSON "not equal" would also drop
+    // the old rows that have no marker at all).
+    prisma.payment.groupBy({
+      by: ["currency"],
+      where: { ...where, metadata: { path: ["purpose"], equals: PATRON_PAYMENT_PURPOSE } },
+      _sum: { amountMinor: true, refundedAmountMinor: true },
+    }),
+  ]);
+  const patronNet = new Map(patronRows.map((row) => [row.currency, (row._sum.amountMinor ?? 0) - (row._sum.refundedAmountMinor ?? 0)]));
   return rows.map((row) => ({
     currency: row.currency,
-    netMinor: (row._sum.amountMinor ?? 0) - (row._sum.refundedAmountMinor ?? 0),
+    netMinor: (row._sum.amountMinor ?? 0) - (row._sum.refundedAmountMinor ?? 0) - (patronNet.get(row.currency) ?? 0),
   }));
 }
 

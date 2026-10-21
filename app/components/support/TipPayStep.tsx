@@ -35,7 +35,7 @@ export function TipPayStep(props: TipPayStepProps) {
 }
 
 /** Shared submit state + result handling for the per-method forms. */
-function useTipConfirm(tx: Tx, onConfirmed: (outcome: TipConfirmOutcome) => void) {
+function useTipConfirm(tx: Tx, onConfirmed: (outcome: TipConfirmOutcome) => void, patron?: TipPayStepProps["patron"]) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // A ref, not the `busy` state: two quick clicks land before React re-renders, and a second
@@ -49,7 +49,11 @@ function useTipConfirm(tx: Tx, onConfirmed: (outcome: TipConfirmOutcome) => void
     setError(null);
     let read: ReturnType<typeof readConfirmResult>;
     try {
-      read = readConfirmResult(await confirm(), tx);
+      if (patron && !(await patron.beforeConfirm())) {
+        setError(tx("Nie udało się zapisać Twojej zgody. Spróbuj ponownie.", "We could not save your consent. Please try again."));
+        return false;
+      }
+      read = readConfirmResult(await confirm(), tx, Boolean(patron));
     } finally {
       inFlight.current = false;
       setBusy(false);
@@ -98,9 +102,9 @@ function toMinor(amount: number) {
   return Math.round(amount * 100);
 }
 
-function sendLabel(tx: Tx, amount: number, currency: SupportedCurrency, language: Locale) {
+function sendLabel(tx: Tx, amount: number, currency: SupportedCurrency, language: Locale, patron = false) {
   const formatted = formatTipAmount(amount, currency, language);
-  return tx("Wyślij {0}", "Send {0}", formatted);
+  return patron ? tx("Zapłać {0}", "Pay {0}", formatted) : tx("Wyślij {0}", "Send {0}", formatted);
 }
 
 function BlikForm(props: TipPayStepProps) {
@@ -108,8 +112,9 @@ function BlikForm(props: TipPayStepProps) {
   const tx = useOptionalTx(language);
   const stripe = useStripe();
   const [code, setCode] = useState("");
-  const { busy, error, run } = useTipConfirm(tx, onConfirmed);
+  const { busy, error, run } = useTipConfirm(tx, onConfirmed, props.patron);
   const valid = /^\d{6}$/.test(code);
+  const blocked = props.patron ? !props.patron.accepted : false;
 
   return (
     <PayStepFrame
@@ -117,9 +122,9 @@ function BlikForm(props: TipPayStepProps) {
       footer={
         <SendButton
           busy={busy}
-          disabled={!valid || !stripe}
+          disabled={!valid || !stripe || blocked}
           tx={tx}
-          label={sendLabel(tx, amount, currency, language)}
+          label={sendLabel(tx, amount, currency, language, Boolean(props.patron))}
           // Stripe.js waits here (up to 60 s) until the payment is approved in the banking app.
           busyLabel={tx("Potwierdź w aplikacji banku…", "Approve in your banking app…")}
           onClick={async () => {
@@ -151,7 +156,9 @@ function BlikForm(props: TipPayStepProps) {
         />
       </label>
       <p className="mt-2 text-[12px] text-[var(--chan-muted)]">
-        {tx("Po wysłaniu masz 60 sekund na potwierdzenie napiwku w aplikacji banku.", "After sending, you have 60 seconds to confirm the tip in your banking app.")}
+        {props.patron
+          ? tx("Po zapłacie masz 60 sekund na potwierdzenie w aplikacji banku.", "After you pay, you have 60 seconds to confirm in your banking app.")
+          : tx("Po wysłaniu masz 60 sekund na potwierdzenie napiwku w aplikacji banku.", "After sending, you have 60 seconds to confirm the tip in your banking app.")}
       </p>
       <ErrorLine error={error} />
     </PayStepFrame>
@@ -162,7 +169,7 @@ function RedirectForm(props: TipPayStepProps) {
   const { language, clientSecret, paymentId, userEmail, onConfirmed } = props;
   const tx = useOptionalTx(language);
   const stripe = useStripe();
-  const { busy, error, run } = useTipConfirm(tx, onConfirmed);
+  const { busy, error, run } = useTipConfirm(tx, onConfirmed, props.patron);
 
   return (
     <PayStepFrame
@@ -170,7 +177,7 @@ function RedirectForm(props: TipPayStepProps) {
       footer={
         <SendButton
           busy={busy}
-          disabled={!stripe || !userEmail}
+          disabled={!stripe || !userEmail || (props.patron ? !props.patron.accepted : false)}
           tx={tx}
           label={tx("Przejdź do Przelewy24", "Continue to Przelewy24")}
           onClick={() =>
@@ -179,7 +186,7 @@ function RedirectForm(props: TipPayStepProps) {
             run(() =>
               stripe.confirmP24Payment(clientSecret, {
                 payment_method: { billing_details: { email: userEmail } },
-                return_url: buildTipReturnUrl(paymentId),
+                return_url: props.patron?.returnUrl ?? buildTipReturnUrl(paymentId),
               }),
             )
           }
@@ -217,7 +224,7 @@ function CardFormInner(props: TipPayStepProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [complete, setComplete] = useState(false);
-  const { busy, error, run } = useTipConfirm(tx, onConfirmed);
+  const { busy, error, run } = useTipConfirm(tx, onConfirmed, props.patron);
 
   const send = () => {
     const card = elements?.getElement(CardElement);
@@ -233,7 +240,7 @@ function CardFormInner(props: TipPayStepProps) {
     <PayStepFrame
       props={props}
       footer={
-        <SendButton busy={busy} disabled={!complete || !stripe} tx={tx} label={sendLabel(tx, amount, currency, language)} onClick={send} />
+        <SendButton busy={busy} disabled={!complete || !stripe || (props.patron ? !props.patron.accepted : false)} tx={tx} label={sendLabel(tx, amount, currency, language, Boolean(props.patron))} onClick={send} />
       }
     >
       <div className="rounded-[14px] border-2 border-[var(--cm-amber-38)] bg-white px-4 py-4 transition-[border-color,box-shadow] focus-within:border-[var(--chan-ink)] focus-within:shadow-[0_0_0_4px_var(--cm-amber-18)]">
@@ -256,7 +263,7 @@ function FallbackForm({ deferred, ...props }: TipPayStepProps & { deferred?: boo
   const tx = useOptionalTx(language);
   const stripe = useStripe();
   const elements = useElements();
-  const { busy, error, run } = useTipConfirm(tx, onConfirmed);
+  const { busy, error, run } = useTipConfirm(tx, onConfirmed, props.patron);
 
   const send = () =>
     stripe &&
@@ -270,7 +277,7 @@ function FallbackForm({ deferred, ...props }: TipPayStepProps & { deferred?: boo
         elements,
         ...(deferred ? { clientSecret } : {}),
         confirmParams: {
-          return_url: buildTipReturnUrl(paymentId),
+          return_url: props.patron?.returnUrl ?? buildTipReturnUrl(paymentId),
           ...(userEmail ? { payment_method_data: { billing_details: { email: userEmail } } } : {}),
         },
         redirect: "if_required",
@@ -281,7 +288,7 @@ function FallbackForm({ deferred, ...props }: TipPayStepProps & { deferred?: boo
     <PayStepFrame
       props={props}
       footer={
-        <SendButton busy={busy} disabled={!stripe || !elements} tx={tx} label={sendLabel(tx, amount, currency, language)} onClick={send} />
+        <SendButton busy={busy} disabled={!stripe || !elements || (props.patron ? !props.patron.accepted : false)} tx={tx} label={sendLabel(tx, amount, currency, language, Boolean(props.patron))} onClick={send} />
       }
     >
       <PaymentElement

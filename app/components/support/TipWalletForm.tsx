@@ -13,7 +13,7 @@ import { useOptionalTx } from "@/lib/i18n/language-context";
  * rules), and Stripe decides whether this device can show it.
  */
 export function TipWalletForm(props: TipPayStepProps) {
-  const { language, method, paymentId, onConfirmed, onChangeMethod } = props;
+  const { language, method, paymentId, onConfirmed, onChangeMethod, patron } = props;
   const tx = useOptionalTx(language);
   const stripe = useStripe();
   const elements = useElements();
@@ -24,12 +24,16 @@ export function TipWalletForm(props: TipPayStepProps) {
   const confirm = async () => {
     if (!stripe || !elements) return;
     setError(null);
+    if (patron && !(await patron.beforeConfirm())) {
+      setError(tx("Nie udało się zapisać Twojej zgody. Spróbuj ponownie.", "We could not save your consent. Please try again."));
+      return;
+    }
     const result = await stripe.confirmPayment({
       elements,
-      confirmParams: { return_url: buildTipReturnUrl(paymentId) },
+      confirmParams: { return_url: patron?.returnUrl ?? buildTipReturnUrl(paymentId) },
       redirect: "if_required",
     });
-    const read = readConfirmResult(result, tx);
+    const read = readConfirmResult(result, tx, Boolean(patron));
     if ("outcome" in read) onConfirmed(read.outcome);
     else setError(read.error);
   };
@@ -48,7 +52,7 @@ export function TipWalletForm(props: TipPayStepProps) {
         <ExpressCheckoutElement
           options={{
             buttonHeight: 52,
-            buttonType: { applePay: "donate", googlePay: "donate" },
+            buttonType: patron ? { applePay: "plain", googlePay: "plain" } : { applePay: "donate", googlePay: "donate" },
             buttonTheme: { applePay: "black", googlePay: "black" },
             paymentMethods: {
               applePay: wallet === "applePay" ? "always" : "never",
@@ -62,6 +66,15 @@ export function TipWalletForm(props: TipPayStepProps) {
           onReady={({ availablePaymentMethods }) =>
             setState(availablePaymentMethods?.[wallet] ? "ready" : "unavailable")
           }
+          // The wallet sheet opens only once both boxes are ticked (patron payment); a tip has no click handler.
+          onClick={patron ? (event) => {
+            if (!patron.accepted) {
+              setError(tx("Zaznacz zgody powyżej, aby zapłacić.", "Tick the boxes above to pay."));
+              return;
+            }
+            setError(null);
+            event.resolve();
+          } : undefined}
           onConfirm={() => void confirm()}
         />
       </div>
@@ -72,7 +85,9 @@ export function TipWalletForm(props: TipPayStepProps) {
       <p className="text-[14px] leading-[1.6] text-[var(--chan-body)]">
         {state === "unavailable"
           ? tx("Ta metoda nie jest dostępna na tym urządzeniu albo w tej przeglądarce. Wybierz inną.", "This method isn't available on this device or browser. Please choose another one.")
-          : tx("Kliknij przycisk na dole — otworzy się okno portfela, w którym potwierdzisz napiwek.", "Tap the button below — your wallet opens so you can confirm the tip.")}
+          : patron
+            ? tx("Zaznacz zgody, potem kliknij przycisk na dole — otworzy się okno portfela, w którym potwierdzisz płatność.", "Tick the boxes, then tap the button below — your wallet opens so you can confirm the payment.")
+            : tx("Kliknij przycisk na dole — otworzy się okno portfela, w którym potwierdzisz napiwek.", "Tap the button below — your wallet opens so you can confirm the tip.")}
       </p>
       <ErrorLine error={error} />
     </PayStepFrame>

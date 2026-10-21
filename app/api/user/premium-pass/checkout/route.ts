@@ -1,5 +1,6 @@
 // experiment: premium-pass (docs/experiments/premium-pass.md)
-// Simulated checkout of the demo pass. Never takes money: no payment provider, no card/BLIK data (strict schema).
+// SIMULATED checkout (PREMIUM_PASS_PAYMENTS=demo). Never takes money: no payment provider, no card/BLIK data (strict
+// schema); in `stripe` mode it answers WRONG_MODE. The real flow is ../intent + the Stripe webhook.
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/errors";
 import { getActorFromAuth } from "@/lib/api/auth";
