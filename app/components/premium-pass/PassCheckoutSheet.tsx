@@ -1,6 +1,6 @@
 "use client";
 // experiment: premium-pass (docs/experiments/premium-pass.md, section 8.3): the checkout of the patron zone, in two
-// steps. Step 1: the amount (suggested or own), the payment method (the tip gateway's dropdown) and the Terms / Privacy
+// steps. Step 1: a choice of two fixed options, the payment method (the tip gateway's dropdown) and the Terms / Privacy
 // Policy as links. Step 2: the payment of the chosen method (the tip gateway's own forms, real Stripe) and the two
 // boxes. In demo mode (the default) step 2 has no payment form and the server simulates the payment. Access is NEVER
 // granted from here: the server grants it when Stripe confirms the payment; this component only waits and displays.
@@ -10,13 +10,13 @@ import type { Stripe } from "@stripe/stripe-js";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/lib/auth/react";
 import { getStripeBrowser } from "@/lib/payments/stripe-browser";
-import type { PremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
+import { defaultProduct, type PremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
 import { maskEmail, type PassMethod, type PassStatusDto } from "@/lib/modules/experiment-premium-pass/domain/pass-state";
 import { useLanguage } from "../LanguageContext";
 import { TIP_WALLETS, getTipMethodTiles, readLastTipMethod, rememberTipMethod, type TipWallet } from "../support/tip-flow-config";
 import { TipBackContext } from "../support/TipStepLayout";
 import { CrossIcon, ShieldIcon } from "./PassIcons";
-import { PassAmountStep, usePassAmount } from "./PassAmountStep";
+import { PassOptionStep } from "./PassOptionStep";
 import { PassConsent, PassDemoSummary, PassStripePay, type PassConsentErrors, type PassConsentState } from "./PassPaymentStep";
 import { PassDeclined, PassMaxAhead, PassPending, PassSuccess } from "./PassSuccess";
 import { newRequestId, passDate, price, sellerLine } from "./pass-copy";
@@ -32,7 +32,7 @@ type Stage =
   | { kind: "success"; pass: ActivePass }
   | { kind: "pending"; paymentId: string; timedOut: boolean }
   | { kind: "declined" }
-  | { kind: "max-ahead"; expiresAt?: string };
+  | { kind: "max-ahead"; expiresAt?: string; lifetime?: boolean };
 
 /** Query parameter of the return URL of redirect methods (Przelewy24, bank redirects). */
 export const PASS_PAYMENT_PARAM = "pass_payment";
@@ -81,12 +81,14 @@ export interface PassCheckoutSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   offer: PremiumPassOffer;
+  /** Preselects an option (the offer page cards). */
+  initialProductId?: string;
   /** "Enter the patron zone" after a success (refreshes the playback plan). */
   onWatch: () => void;
   watchLabel?: string;
 }
 
-export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLabel }: PassCheckoutSheetProps) {
+export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId, onWatch, watchLabel }: PassCheckoutSheetProps) {
   const { tx, language } = useLanguage();
   const { user } = useUser();
   const ids = useId();
@@ -102,7 +104,8 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLab
   const stripeReady = offer.payments.mode === "stripe" && offer.payments.available;
   const testMode = offer.payments.mode === "stripe" && offer.payments.available && offer.payments.stripeMode === "test";
 
-  const amount = usePassAmount(offer);
+  const [productId, setProductId] = useState<string>(initialProductId ?? defaultProduct(offer).id);
+  const product = offer.products.find((p) => p.id === productId) ?? defaultProduct(offer);
   const [stage, setStage] = useState<Stage>({ kind: "amount" });
   const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
   const [wallets, setWallets] = useState<TipWallet[]>([]);
@@ -110,11 +113,10 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLab
   const [picked, setPicked] = useState<string | null>(null);
   const [intent, setIntent] = useState<{ paymentId: string; clientSecret: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  const [tried, setTried] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [consent, setConsent] = useState<PassConsentState>({ terms: false, waiver: false });
   const [consentErrors, setConsentErrors] = useState<PassConsentErrors>({});
-  const [activeUntil, setActiveUntil] = useState<string | undefined>();
+  const [access, setAccess] = useState<{ lifetime: boolean; expiresAt: string | null } | null>(null);
 
   const methods = useMemo(
     () => (stripeReady ? getTipMethodTiles(stripeTypes ?? ["blik", "card", "p24"], wallets, false) : getTipMethodTiles(["blik", "card", "p24"], wallets, false)),
@@ -124,8 +126,8 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLab
     const last = readLastTipMethod();
     return last && methods.includes(last) ? last : methods[0] ?? null;
   })();
-  const amountMinor = amount.minor;
-  const total = amountMinor === null ? "" : price(language, amountMinor);
+  const amountMinor = product.priceMinor;
+  const total = price(language, amountMinor);
   const processing = stage.kind === "processing";
   const locked = busy || processing;
   const email = maskEmail(user?.primaryEmailAddress?.emailAddress);
@@ -155,13 +157,13 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLab
     if (!open) return;
     cancelledRef.current = false;
     setBusy(false);
-    setTried(false);
+    setProductId(initialProductId ?? defaultProduct(offer).id);
     setNotice(null);
     setConsent({ terms: false, waiver: false });
     setConsentErrors({});
     setIntent(null);
     setStripeTypes(null);
-    setActiveUntil(undefined);
+    setAccess(null);
     if (stripeReady) {
       // The first and only place that asks for Stripe.js: the checkout was opened.
       const promise = getStripeBrowser();
@@ -187,7 +189,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLab
     setStage({ kind: "amount" });
     void fetchPassStatus("checkout").then((status) => {
       if (cancelledRef.current) return;
-      if (status?.pass.state === "active") setActiveUntil(status.pass.expiresAt);
+      if (status?.pass.state === "active") setAccess({ lifetime: status.pass.lifetime, expiresAt: status.pass.expiresAt });
     });
     return () => { cancelledRef.current = true; };
     // Only on opening: a re-render of the parent (new offer object) must not reset an attempt in progress.
@@ -230,9 +232,8 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLab
 
   // ---- step 1 -> 2
   const next = async () => {
-    setTried(true);
     setNotice(null);
-    if (amountMinor === null || amount.problem !== null || !method) return;
+    if (!method || access?.lifetime) return;
     if (stripeMode && !stripeReady) {
       // Never falls back to the simulated payment: that would hand out access for no money.
       setNotice(tx("Płatności są chwilowo niedostępne. Spróbuj ponownie później.", "Payments are temporarily unavailable. Please try again later."));
@@ -243,10 +244,10 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLab
       return;
     }
     setBusy(true);
-    let outcome = await postPatronIntent({ requestId: attemptId(), amountMinor });
+    let outcome = await postPatronIntent({ requestId: attemptId(), productId: product.id });
     if (outcome.kind === "terminal") {
       resetAttempt();
-      outcome = await postPatronIntent({ requestId: attemptId(), amountMinor });
+      outcome = await postPatronIntent({ requestId: attemptId(), productId: product.id });
     }
     setBusy(false);
     if (cancelledRef.current) return;
@@ -262,7 +263,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLab
       rememberTipMethod(method);
       setStage({ kind: "pay" });
     } else if (outcome.kind === "max-ahead") {
-      setStage({ kind: "max-ahead", expiresAt: outcome.expiresAt });
+      setStage({ kind: "max-ahead", expiresAt: outcome.expiresAt, lifetime: outcome.lifetime });
     } else if (outcome.kind === "in-progress") {
       setNotice(tx("Ta płatność jest właśnie opłacana (np. czeka na potwierdzenie w banku). Dokończ ją albo spróbuj za kilka minut.", "This payment is being paid right now (e.g. waiting for your bank). Finish it or try again in a few minutes."));
     } else if (outcome.kind === "unavailable") {
@@ -278,7 +279,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLab
   const payDemo = async () => {
     const missing = { terms: !consent.terms, waiver: !consent.waiver };
     setConsentErrors(missing);
-    if (missing.terms || missing.waiver || amountMinor === null || !method) {
+    if (missing.terms || missing.waiver || !method) {
       const first = missing.terms ? termsRef.current : waiverRef.current;
       first?.focus();
       first?.scrollIntoView?.({ block: "center", behavior: "smooth" });
@@ -286,7 +287,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLab
     }
     setStage({ kind: "processing" });
     const [outcome] = await Promise.all([
-      postDemoCheckout({ requestId: attemptId(), amountMinor, method: method as PassMethod, simulate: "success" }),
+      postDemoCheckout({ requestId: attemptId(), productId: product.id, method: method as PassMethod, simulate: "success" }),
       wait(DEMO_PROCESSING_MS),
     ]);
     if (cancelledRef.current) return;
@@ -297,7 +298,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLab
       resetAttempt();
       setStage({ kind: "declined" });
     } else if (outcome.kind === "max-ahead") {
-      setStage({ kind: "max-ahead", expiresAt: outcome.expiresAt });
+      setStage({ kind: "max-ahead", expiresAt: outcome.expiresAt, lifetime: outcome.lifetime });
     } else {
       setStage({ kind: "declined" });
     }
@@ -341,7 +342,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLab
             <>
               <ol className={styles.steps} aria-label={tx("Etapy zakupu", "Checkout steps")}>
                 <li aria-current={stepNumber === 1 ? "step" : undefined} className={cn(styles.stepItem, stepNumber === 1 && styles.stepNow)}>
-                  <span className={styles.stepDot} aria-hidden="true">1</span>{tx("Kwota", "Amount")}
+                  <span className={styles.stepDot} aria-hidden="true">1</span>{tx("Dostęp", "Access")}
                 </li>
                 <li aria-current={stepNumber === 2 ? "step" : undefined} className={cn(styles.stepItem, stepNumber === 2 && styles.stepNow)}>
                   <span className={styles.stepDot} aria-hidden="true">2</span>{tx("Płatność", "Payment")}
@@ -358,31 +359,31 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLab
             <>
               <div className={styles.sheetBody}>
                 {heading(tx("Zostań patronem i uzyskaj dostęp do strefy premium", "Become a patron and get access to the premium zone"))}
-                <PassAmountStep
+                <PassOptionStep
                   tx={tx}
                   language={language}
                   offer={offer}
-                  amount={amount}
+                  product={product}
+                  onProduct={(id) => { setProductId(id); setNotice(null); }}
                   methods={methods}
                   method={method}
                   onMethod={(value) => { setPicked(value); setNotice(null); }}
-                  activeUntil={activeUntil}
+                  access={access}
                   notice={notice}
                   unavailable={stripeMode && !stripeReady}
                   busy={busy}
-                  tried={tried}
                   formatDate={formatDate}
                 />
               </div>
               <div className={styles.pay}>
-                <button type="button" className={styles.inkBtn} onClick={() => void next()} disabled={busy || (stripeMode && !stripeReady)} aria-busy={busy || undefined}>
-                  {busy ? tx("Chwileczkę…", "One moment…") : amountMinor !== null && amount.problem === null ? tx("Dalej · {0}", "Next · {0}", total) : tx("Dalej", "Next")}
+                <button type="button" className={styles.inkBtn} onClick={() => void next()} disabled={busy || access?.lifetime === true || (stripeMode && !stripeReady)} aria-busy={busy || undefined}>
+                  {busy ? tx("Chwileczkę…", "One moment…") : tx("Dalej · {0}", "Next · {0}", total)}
                 </button>
               </div>
             </>
           )}
 
-          {stage.kind === "pay" && amountMinor !== null && method && stripeReady && intent && (
+          {stage.kind === "pay" && method && stripeReady && intent && (
             <>
               <div className={styles.payHead}>{heading(tx("Płatność", "Payment"))}</div>
               <TipBackContext.Provider value={{ onBack: backToAmount, label: tx("Wstecz", "Back") }}>
@@ -405,7 +406,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLab
             </>
           )}
 
-          {stage.kind === "pay" && amountMinor !== null && method && !stripeMode && (
+          {stage.kind === "pay" && method && !stripeMode && (
             <>
               <div className={styles.sheetBody}>
                 {heading(tx("Płatność", "Payment"))}
@@ -431,7 +432,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLab
                 <PassPending ref={headingRef} tx={tx} timedOut={stage.timedOut} onCheck={() => void finish(stage.paymentId, 4)} onClose={() => onOpenChange(false)} />
               )}
               {stage.kind === "declined" && <PassDeclined ref={headingRef} tx={tx} onRetry={retry} onChangeMethod={retry} />}
-              {stage.kind === "max-ahead" && <PassMaxAhead ref={headingRef} tx={tx} language={language} expiresAt={stage.expiresAt} onWatch={watch} />}
+              {stage.kind === "max-ahead" && <PassMaxAhead ref={headingRef} tx={tx} language={language} expiresAt={stage.expiresAt} lifetime={stage.lifetime} onWatch={watch} />}
             </div>
           )}
 

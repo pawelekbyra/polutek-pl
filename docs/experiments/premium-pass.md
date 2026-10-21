@@ -8,13 +8,17 @@ Decyzja właściciela z 2026-10-21: z „wejściówki” robimy **„Zostań pat
 wszystko, co mówi o dwóch wejściówkach (7 i 30 dni), o stałych cenach, o „nigdy nie pobiera pieniędzy” i o kasie bez Stripe (rozdz. 0, 2, 4, 5, 8 i decyzje 1 i 5 wyżej). Reszta (przełącznik
 `PREMIUM_PASS_EXPERIMENT`, lista filmów, bramka dostępu, plan `PASS_REQUIRED`, wycofanie) zostaje.
 
-### Co to jest i ile kosztuje
+### Co to jest i ile kosztuje (decyzja właściciela 2026-10-21: wybór z dwóch stałych opcji; „zapłać ile chcesz” odpadło)
 
-- **Płacisz, ile chcesz (decyzja właściciela po pierwszej wersji):** jedno pole kwoty, **bez propozycji kwot**, wstępnie wypełnione minimum. **Minimum 20 zł, maksimum 1000 zł** (PLN, kwota brutto w groszach, liczba całkowita). Minimum jest wyżej
-  niż twarda dolna granica Stripe dla PLN (2 zł); limity są stałe w kodzie (`PATRON_*` w `domain/config.ts`), egzekwowane na serwerze (`validatePatronAmount`), nie w przeglądarce.
-- **Długość dostępu:** każda udana wpłata daje **30 dni**, niezależnie od kwoty. Wpłata przy trwającym dostępie **przedłuża go o kolejne 30 dni od jego końca** (nic się nie odnawia samo, to nie subskrypcja).
-  Dostęp nie może sięgać dalej niż **365 dni od teraz**: dalsza wpłata jest wtedy odrzucana przed pobraniem pieniędzy (`MAX_AHEAD`).
-- Zablokowane filmy, tryb widoczności i bramka dostępu bez zmian. Zniknęły produkty `PASS_7D` / `PASS_30D`, kafelki metod płatności, kafelki produktów i pas DEMO w oknie kasy.
+- **Dwie opcje** (karty wyboru na górze kroku 1, jak w pierwszej wersji; tabela `PATRON_PRODUCTS` w `domain/config.ts`): **„Dostęp na 30 dni” 14,99 zł** (`ACCESS_30D`, 1499 gr) i **„Dostęp bez limitu” 29,99 zł**
+  (`ACCESS_LIFETIME`, 2999 gr, etykieta „Najlepsza wartość”, domyślnie zaznaczona). Ceny brutto w PLN, zawierają 23% VAT. Nie ma pola własnej kwoty ani limitów kwoty.
+- **Serwer przyjmuje tylko dwa znane identyfikatory produktu i sam bierze kwotę z tabeli** (przeglądarka nigdy nie podaje kwoty; trasy są `strict`). Identyfikator produktu jedzie w metadanych `Payment` i PaymentIntent.
+  Przy rozliczeniu `fulfillPayment()` sprawdza, że kwota == cena produktu i waluta == PLN; inaczej **brak dostępu i alert** (wpłata zostaje w księdze, właściciel decyduje ręcznie).
+- **Dostęp na 30 dni** dodaje 30 dni (od końca trwającego dostępu, inaczej od teraz); nie sięga dalej niż **365 dni od teraz** (dalsza wpłata jest odrzucana przed pobraniem pieniędzy, `MAX_AHEAD`).
+- **Dostęp bez limitu** zapisuje jawny znacznik `lifetime: true` (+ `lifetimePaymentId`) w wierszu `AppSetting`, **nie** odległą datę. Kupiony przy trwających 30 dniach **zamienia je na stały** (data końca zostaje tylko jako historia).
+  Gdy znacznik już jest, **każdy zakup jest odrzucany przed płatnością** („Masz już dostęp bez limitu”, `ALREADY_LIFETIME`). UI pokazuje wtedy „Dostęp bez limitu” zamiast daty końca (`PassStatusDto.lifetime`).
+- Pełny zwrot płatności zdejmuje jej udział: dla opcji bez limitu znacznik `lifetime` (jeśli pochodził z tej płatności), dla 30 dni jej 30 dni.
+- Zablokowane filmy, tryb widoczności i bramka dostępu bez zmian. Zniknęły produkty `PASS_7D` / `PASS_30D`, kafelki metod płatności i pas DEMO w oknie kasy.
 
 ### Dwa przełączniki (oba w `app.env`, czytane w trakcie działania)
 
@@ -32,7 +36,7 @@ wszystko, co mówi o dwóch wejściówkach (7 i 30 dni), o stałych cenach, o �
 
 ### Kasa w dwóch krokach (`PassCheckoutSheet`, pełna wysokość, bez paska demo)
 
-1. **Krok 1:** nagłówek „Zostań patronem i uzyskaj dostęp do strefy premium” z leadem „Zapłać ile chcesz. Minimum 20 zł.”, jedno pole kwoty, **lista rozwijana metod płatności** (to samo `TipSelect` i te same kafelki, co w bramce napiwkowej: `getTipMethodTiles`, bez makiety „Crypto”),
+1. **Krok 1:** nagłówek „Zostań patronem i uzyskaj dostęp do strefy premium”, linia „Wybierz dostęp”, **dwie karty wyboru** (nazwa, duża cena, krótka notka, „Najlepsza wartość” na lepszej), **lista rozwijana metod płatności** (to samo `TipSelect` i te same kafelki, co w bramce napiwkowej, bez makiety „Crypto”),
    regulamin i polityka prywatności **tylko jako linki**, przycisk „Dalej · kwota”. Zapytanie o PaymentIntent idzie dopiero przy „Dalej” (nie przy otwarciu okna), więc samo otwarcie niczego nie tworzy. Jeśli Stripe nie dopuszcza wybranej
    metody dla tej płatności, kasa zostaje w kroku 1, zawęża listę do dozwolonych i mówi, że trzeba wybrać inną.
 2. **Krok 2:** formularz wybranej metody to **te same formularze, co w bramce napiwkowej** (`TipPayStep`: BLIK, Przelewy24, karta, Apple/Google Pay, reszta przez Payment Element; w `TipPayFrame` doszedł opcjonalny `patron`,
@@ -45,7 +49,7 @@ wszystko, co mówi o dwóch wejściówkach (7 i 30 dni), o stałych cenach, o �
 ### Przepływ pieniędzy i przyznawanie dostępu (nie ma równoległego stosu płatności)
 
 ```
-Dalej (krok 1)  -> POST /api/user/premium-pass/intent        (tylko tryb stripe + dostępne; kwota walidowana na serwerze)
+Dalej (krok 1)  -> POST /api/user/premium-pass/intent        (tylko tryb stripe + dostępne; klient podaje tylko id produktu, kwota z tabeli serwera)
                 -> createCheckoutIntent({ purpose: "premium_pass" })  [to samo, co napiwki]: jeden wiersz Payment (PENDING) + jeden PaymentIntent,
                    metadata: userId, paymentId, requestId, creatorId, purpose; opis „Dostęp do strefy patrona: …”; automatic_payment_methods
 Krok 2          -> POST .../consent  -> Stripe.js potwierdza wybraną metodą (te same formularze, co napiwek)
@@ -58,11 +62,11 @@ Stripe          -> webhook payment_intent.succeeded (podpis weryfikowany na suro
 
 - **Dostęp jest przyznawany wyłącznie przez `fulfillPayment()`** po weryfikacji, że Stripe mówi `succeeded`, a kwota, waluta, intent i użytkownik zgadzają się z wierszem `Payment` (test `premium-pass-no-money.test.ts` pilnuje, że żadna trasa
   ani komponent nie woła `grantPatronAccessForPayment`). Przeglądarka tylko czeka (`GET /api/payments/[id]`) i czyta status.
-- **Pełny zwrot** (`REFUNDED`) zdejmuje 30 dni tej wpłaty z dostępu (`revokePatronAccessForPayment`, z `applyRefundedTotal`). **Częściowy zwrot, spór i cofnięty zwrot** właściciel obsługuje ręcznie (dostęp się nie zmienia samoczynnie).
+- **Pełny zwrot** (`REFUNDED`) zdejmuje udział tej wpłaty z dostępu: 30 dni albo znacznik lifetime (`revokePatronAccessForPayment`, z `applyRefundedTotal`). **Częściowy zwrot, spór i cofnięty zwrot** właściciel obsługuje ręcznie (dostęp się nie zmienia samoczynnie).
   **Zwroty robi właściciel ręcznie** (panel Stripe albo „Płatności” w panelu); kod niczego nie zwraca sam.
 - **Księga:** płatność idzie do istniejącej tabeli `Payment` (ta sama, co napiwki; widać ją w panelu „Płatności” i „Przychody”), bo dostaje za darmo webhook, uzgadnianie, zwroty, spory i audyt. Odróżnia ją `metadata.purpose`
   (bez migracji). Pasek zbiórki liczy tylko napiwki: płatności strefy patrona są od niego odejmowane (`fundraising-progress.service.ts`). Mapowanie „kto ma dostęp do kiedy” zostaje w `AppSetting` (`xp.premium_pass:<userId>`, wersja 2:
-  `provider` DEMO|STRIPE, `paymentIds`, `totalMinor`, zgody); stare wiersze v1 (dwie wejściówki demo) są czytane jako dostęp demo.
+  `v: 3`: `provider` DEMO|STRIPE, `productId`, `paymentIds`, `totalMinor`, `lifetime`, `lifetimePaymentId`, `expiresAt` (null tylko przy lifetime bez 30-dniowej historii), zgody); starsze wiersze v1 i v2 są czytane jako dostęp na 30 dni.
 - **Czego nie ma:** migracji bazy, osobnego klienta Stripe, osobnego webhooka, zapisu do `Order`/`Entitlement`/`LedgerEntry`/`PatronGrant`, maila z potwierdzeniem (wymóg trwałego nośnika z art. 21 u.p.k. czeka na decyzję i spółkę).
 
 ### Jak włączyć (tylko właściciel, nic z tego nie robi kod ani agent)

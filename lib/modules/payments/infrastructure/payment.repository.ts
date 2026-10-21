@@ -126,10 +126,10 @@ export class PaymentRepository {
     return count;
   }
 
-  async updatePendingPaymentAmount(paymentId: string, amountMinor: number, currency: string, tx: WriteTx): Promise<number> {
+  async updatePendingPaymentAmount(paymentId: string, amountMinor: number, currency: string, tx: WriteTx, metadata?: Prisma.InputJsonValue): Promise<number> {
     const { count } = await tx.payment.updateMany({
       where: { id: paymentId, status: PaymentStatus.PENDING },
-      data: { amountMinor, currency },
+      data: { amountMinor, currency, ...(metadata ? { metadata } : {}) },
     });
     return count;
   }

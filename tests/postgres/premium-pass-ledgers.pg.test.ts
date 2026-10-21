@@ -43,18 +43,18 @@ describe('premium-pass demo purchase against the real schema', () => {
     const ctx = createAppContext({ actor: { type: 'user', userId }, prisma });
     const result = await checkoutDemoPass(ctx, {
       requestId: randomUUID(),
-      amountMinor: 2900,
+      productId: 'ACCESS_30D',
       method: 'blik',
       consents: { terms: true, waiver: true },
       simulate: 'success',
     });
     expect(result.ok).toBe(true);
     const row = await prisma.appSetting.findUniqueOrThrow({ where: { key } });
-    expect(JSON.parse(row.value)).toMatchObject({ v: 2, provider: 'DEMO', priceMinor: 2900, totalMinor: 2900 });
+    expect(JSON.parse(row.value)).toMatchObject({ v: 3, provider: 'DEMO', priceMinor: 1499, totalMinor: 1499, lifetime: false });
 
     const declined = await checkoutDemoPass(createAppContext({ actor: { type: 'user', userId: `${userId}-b` }, prisma }), {
       requestId: randomUUID(),
-      amountMinor: 1500,
+      productId: 'ACCESS_LIFETIME',
       method: 'card',
       consents: { terms: true, waiver: true },
       simulate: 'declined',

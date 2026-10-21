@@ -2,11 +2,13 @@
 // Writes and withdraws the patron-zone access grant for a REAL (Stripe) payment. Called ONLY from the payments
 // module's fulfillPayment() (verified webhook, payment-status fast path, reconciliation cron), inside its transaction,
 // once Stripe reports the PaymentIntent `succeeded` with the amount, currency, intent and user checked against the
-// local Payment row. Never from a client request. Idempotent: a payment id is applied at most once.
+// local Payment row. Never from a client request. Idempotent: a payment id is applied at most once. The product comes
+// from the server-written `Payment.metadata.productId` and the amount must equal that product's price (PLN), else
+// nothing is granted and the owner is alerted.
 import { recordAlert } from "@/lib/observability";
 import type { WriteTx } from "@/lib/modules/shared/db";
-import { PATRON_ACCESS_DAYS, PATRON_CURRENCY, validatePatronAmount } from "../domain/config";
-import { addDays, extendedExpiry, type PassRecord } from "../domain/pass-state";
+import { PATRON_CURRENCY, patronProduct } from "../domain/config";
+import { addDays, applyProduct, type PassRecord } from "../domain/pass-state";
 import { lockPass, readPass, writePass } from "../infrastructure/pass-store";
 
 export type PatronPaymentConsents = { termsVersion: string; waiverAt: string };
@@ -18,9 +20,16 @@ export function readPaymentConsents(metadata: unknown): PatronPaymentConsents | 
   return Number.isNaN(Date.parse(consents.waiverAt)) ? null : { termsVersion: consents.termsVersion, waiverAt: consents.waiverAt };
 }
 
+/** The product id the server wrote on the payment (`metadata.productId`); payments from before the options are 30-day. */
+export function readPaymentProductId(metadata: unknown): string {
+  const id = (metadata as { productId?: unknown } | null)?.productId;
+  return typeof id === "string" ? id : "ACCESS_30D";
+}
+
 export type GrantInput = {
   userId: string;
   paymentId: string;
+  productId: string;
   amountMinor: number;
   currency: string;
   /** Stripe method type of the payment when known (`blik`, `card`, ...). */
@@ -29,58 +38,77 @@ export type GrantInput = {
   now: Date;
 };
 
-export async function grantPatronAccessForPayment(tx: WriteTx, input: GrantInput): Promise<{ granted: boolean; expiresAt: string }> {
+export async function grantPatronAccessForPayment(tx: WriteTx, input: GrantInput): Promise<{ granted: boolean }> {
+  const product = patronProduct(input.productId);
+  // Fail closed: an unknown product, a currency other than PLN or an amount that is not exactly the product's price
+  // is a bug or tampering. The payment stays in the ledger as received; the owner decides by hand (refund or grant).
+  if (!product || input.currency.toUpperCase() !== PATRON_CURRENCY || input.amountMinor !== product.priceMinor) {
+    recordAlert("premium_pass.unexpected_payment", { paymentId: input.paymentId });
+    return { granted: false };
+  }
+
   await lockPass(tx, input.userId);
   const current = await readPass(tx, input.userId);
-  if (current?.paymentIds.includes(input.paymentId)) return { granted: false, expiresAt: current.expiresAt };
-
-  // The amount was validated when the payment was created (and the tip route cannot re-price it). An amount outside
-  // the limits here would be a bug or tampering: fail closed, grant nothing, alert the owner. The payment stays in the
-  // ledger as received, so the owner decides by hand (refund in Stripe, or grant after a look).
-  if (input.currency.toUpperCase() !== PATRON_CURRENCY || validatePatronAmount(input.amountMinor) !== null) {
-    recordAlert("premium_pass.unexpected_payment", { paymentId: input.paymentId });
-    return { granted: false, expiresAt: current?.expiresAt ?? input.now.toISOString() };
-  }
+  if (current?.paymentIds.includes(input.paymentId)) return { granted: false };
   if (!input.consents) recordAlert("premium_pass.paid_without_consent", { paymentId: input.paymentId });
 
-  const active = current && new Date(current.expiresAt).getTime() > input.now.getTime();
-  const expiresAt = extendedExpiry(current, input.now).toISOString();
+  const next = applyProduct(current, product, input.now);
   const keepsStripeHistory = current?.provider === "STRIPE";
   const record: PassRecord = {
-    v: 2,
+    v: 3,
     provider: "STRIPE",
     ref: input.paymentId,
+    productId: product.id,
     priceMinor: input.amountMinor,
     totalMinor: (keepsStripeHistory ? current.totalMinor : 0) + input.amountMinor,
     currency: PATRON_CURRENCY,
     method: input.method?.trim() || "stripe",
     paymentIds: [...(keepsStripeHistory ? current.paymentIds : []), input.paymentId],
-    grantedAt: active && keepsStripeHistory ? current.grantedAt : input.now.toISOString(),
-    expiresAt,
+    lifetime: next.lifetime,
+    lifetimePaymentId: product.days === null ? input.paymentId : keepsStripeHistory ? current.lifetimePaymentId : null,
+    grantedAt: next.grantedAt,
+    expiresAt: next.expiresAt,
     consents: input.consents ?? { termsVersion: "none", waiverAt: input.now.toISOString() },
   };
   await writePass(tx, input.userId, record);
-  return { granted: true, expiresAt };
+  return { granted: true };
 }
 
 /**
- * A payment was refunded in full: its period leaves the grant. A partial refund, a dispute and a refund that failed
- * later are handled by the owner by hand (docs/experiments/premium-pass.md); only the full refund is automatic.
+ * A payment was refunded in full: that payment's grant leaves the record (the lifetime marker when it came from this
+ * payment, otherwise its 30 days). A partial refund, a dispute and a refund that failed later are handled by the owner
+ * by hand (docs/experiments/premium-pass.md); only the full refund is automatic.
  */
 export async function revokePatronAccessForPayment(
   tx: WriteTx,
-  input: { userId: string; paymentId: string; amountMinor: number; now: Date },
+  input: { userId: string; paymentId: string; productId: string; amountMinor: number; now: Date },
 ): Promise<{ revoked: boolean }> {
   await lockPass(tx, input.userId);
   const current = await readPass(tx, input.userId);
   if (!current || !current.paymentIds.includes(input.paymentId)) return { revoked: false };
-  const shortened = addDays(new Date(current.expiresAt), -PATRON_ACCESS_DAYS);
-  const expiresAt = (shortened.getTime() > input.now.getTime() ? shortened : input.now).toISOString();
-  await writePass(tx, input.userId, {
+
+  const product = patronProduct(input.productId);
+  let lifetime = current.lifetime;
+  let lifetimePaymentId = current.lifetimePaymentId;
+  let expiresAt = current.expiresAt;
+  if (current.lifetimePaymentId === input.paymentId) {
+    lifetime = false;
+    lifetimePaymentId = null;
+  } else if (product?.days && expiresAt) {
+    const shortened = addDays(new Date(expiresAt), -product.days);
+    expiresAt = (shortened.getTime() > input.now.getTime() ? shortened : input.now).toISOString();
+  }
+  // a record that is no longer lifetime always has an end date: if none is left, access ends now
+  if (!lifetime && expiresAt === null) expiresAt = input.now.toISOString();
+
+  const revoked: PassRecord = {
     ...current,
     paymentIds: current.paymentIds.filter((id) => id !== input.paymentId),
     totalMinor: Math.max(0, current.totalMinor - input.amountMinor),
+    lifetime,
+    lifetimePaymentId,
     expiresAt,
-  });
+  };
+  await writePass(tx, input.userId, revoked);
   return { revoked: true };
 }

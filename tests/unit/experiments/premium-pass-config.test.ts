@@ -4,19 +4,16 @@ import {
   DEFAULT_PREMIUM_SLUGS,
   isPremiumPassVideo,
   isPremiumPassVideoForEveryone,
-  PATRON_ACCESS_DAYS,
-  PATRON_DEFAULT_MINOR,
+  PATRON_DEFAULT_PRODUCT_ID,
   PATRON_MAX_AHEAD_DAYS,
-  PATRON_MAX_MINOR,
-  PATRON_MIN_MINOR,
-  PATRON_SUGGESTED_MINOR,
+  PATRON_PRODUCTS,
+  patronProduct,
   parsePremiumPassMode,
   premiumPassFor,
   readPremiumPassConfig,
-  validatePatronAmount,
 } from "@/lib/modules/experiment-premium-pass";
-import { formatPassPrice, readPremiumPassOffer, buildPremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
-import { extendedExpiry, maskEmail, newDemoRef, parsePassRecord, passStateOf, wouldExceedMaxAhead } from "@/lib/modules/experiment-premium-pass/domain/pass-state";
+import { cheapestProduct, defaultProduct, formatPassPrice, readPremiumPassOffer, buildPremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
+import { applyProduct, extendedExpiry, maskEmail, newDemoRef, parsePassRecord, passStateOf, purchaseBlock, toPassStatusDto } from "@/lib/modules/experiment-premium-pass/domain/pass-state";
 
 const now = new Date("2026-10-21T10:00:00.000Z");
 const live = { slug: "jj", status: "PUBLISHED", isMainFeatured: false, premiereAt: null };
@@ -78,53 +75,49 @@ describe("which videos are behind the pass", () => {
   });
 });
 
-describe("amounts, access length and the access record", () => {
-  it("pay what you want: owner-agreed limits, suggested amounts inside them, one access length", () => {
-    expect([PATRON_MIN_MINOR, PATRON_MAX_MINOR, PATRON_DEFAULT_MINOR]).toEqual([2000, 100_000, 2000]);
-    expect(PATRON_SUGGESTED_MINOR).toEqual([]); // owner decision: no suggested amounts, one free field
-    expect(validatePatronAmount(PATRON_DEFAULT_MINOR)).toBeNull();
-    expect(PATRON_ACCESS_DAYS).toBe(30);
-    expect(formatPassPrice(1000, "pl-PL").replace(/\s/g, " ")).toBe("10 zł");
-    expect(formatPassPrice(1550, "pl-PL").replace(/\s/g, " ")).toBe("15,50 zł");
+describe("the two options, the offer and the access record", () => {
+  const DAY = 86_400_000;
+  const thirty = patronProduct("ACCESS_30D")!;
+  const life = patronProduct("ACCESS_LIFETIME")!;
+  const base = {
+    v: 3, provider: "STRIPE", ref: "pay_1", productId: "ACCESS_30D", priceMinor: 1499, totalMinor: 1499, currency: "PLN", method: "blik", paymentIds: ["pay_1"],
+    lifetime: false, lifetimePaymentId: null, grantedAt: now.toISOString(), expiresAt: "2026-11-20T10:00:00.000Z", consents: { termsVersion: "patron-2026-10-draft", waiverAt: now.toISOString() },
+  };
+
+  it("two fixed options with the owner's prices; the unlimited one is the default and the best value; no other product exists", () => {
+    expect(PATRON_PRODUCTS).toEqual([
+      { id: "ACCESS_30D", days: 30, priceMinor: 1499 },
+      { id: "ACCESS_LIFETIME", days: null, priceMinor: 2999, bestValue: true },
+    ]);
+    expect(PATRON_DEFAULT_PRODUCT_ID).toBe("ACCESS_LIFETIME");
+    for (const unknown of ["ACCESS_7D", "", null, undefined, 1, "access_30d", { id: "ACCESS_30D" }]) expect(patronProduct(unknown)).toBeNull();
+    expect(formatPassPrice(1499, "pl-PL").replace(/\s/g, " ")).toBe("14,99 zł");
+    expect(formatPassPrice(2999, "pl-PL").replace(/\s/g, " ")).toBe("29,99 zł");
   });
 
-  it("validates amounts on the server: integers (grosze) within [min, max] only", () => {
-    expect(validatePatronAmount(2000)).toBeNull();
-    expect(validatePatronAmount(100_000)).toBeNull();
-    expect(validatePatronAmount(1999)).toBe("TOO_LOW");
-    expect(validatePatronAmount(500)).toBe("TOO_LOW");
-    expect(validatePatronAmount(100_001)).toBe("TOO_HIGH");
-    expect(validatePatronAmount(0)).toBe("TOO_LOW");
-    expect(validatePatronAmount(-500)).toBe("TOO_LOW");
-    for (const bad of [12.5, Number.NaN, Infinity, "2500", null, undefined]) expect(validatePatronAmount(bad)).toBe("INTEGER");
-  });
-
-  it("offer: PLN, VAT, amounts, access days, payments info; a malformed offer is dropped", () => {
+  it("offer: PLN, VAT, both products, default, payments info; a malformed offer is dropped", () => {
     const offer = buildPremiumPassOffer({ signedIn: true, premiumCount: 2, expiredAt: "2026-11-20T10:00:00.000Z", payments: { mode: "stripe", available: true, stripeMode: "test" } });
-    expect(offer).toMatchObject({
-      currency: "PLN", vatRatePercent: 23, accessDays: 30, minMinor: 2000, maxMinor: 100_000, defaultMinor: 2000,
-      suggestedMinor: [], premiumCount: 2, signedIn: true, expiredAt: "2026-11-20T10:00:00.000Z",
-      payments: { mode: "stripe", available: true, stripeMode: "test" },
-    });
+    expect(offer).toMatchObject({ currency: "PLN", vatRatePercent: 23, defaultProductId: "ACCESS_LIFETIME", premiumCount: 2, signedIn: true, expiredAt: "2026-11-20T10:00:00.000Z", payments: { mode: "stripe", available: true, stripeMode: "test" } });
+    expect(offer.products.map((p) => [p.id, p.priceMinor, p.days])).toEqual([["ACCESS_30D", 1499, 30], ["ACCESS_LIFETIME", 2999, null]]);
+    expect(cheapestProduct(offer).id).toBe("ACCESS_30D");
+    expect(defaultProduct(offer).id).toBe("ACCESS_LIFETIME");
+    expect(Object.keys(offer)).not.toEqual(expect.arrayContaining(["minMinor", "maxMinor", "suggestedMinor", "defaultMinor"]));
     expect(buildPremiumPassOffer({ signedIn: false, premiumCount: 0 }).payments).toEqual({ mode: "demo" });
     expect(readPremiumPassOffer(offer)).toEqual(offer);
     expect(readPremiumPassOffer({ ...offer, payments: undefined })).toBeNull();
-    expect(readPremiumPassOffer({ ...offer, minMinor: "5" })).toBeNull();
+    expect(readPremiumPassOffer({ ...offer, products: [] })).toBeNull();
+    expect(readPremiumPassOffer({ ...offer, products: [{ id: "ACCESS_FREE", days: 1, priceMinor: 0 }] })).toBeNull();
     expect(readPremiumPassOffer("x")).toBeNull();
-    // unknown payment info is read as "no payment possible", never as demo
     expect(readPremiumPassOffer({ ...offer, payments: { mode: "live" } })!.payments).toEqual({ mode: "stripe", available: false });
   });
 
-  const base = {
-    v: 2, provider: "STRIPE", ref: "pay_1", priceMinor: 2500, totalMinor: 2500, currency: "PLN", method: "blik", paymentIds: ["pay_1"],
-    grantedAt: now.toISOString(), expiresAt: "2026-11-20T10:00:00.000Z", consents: { termsVersion: "patron-2026-10-draft", waiverAt: now.toISOString() },
-  };
-
-  it("bad JSON is no access, never an exception; expiry is computed on read", () => {
+  it("bad JSON is no access, never an exception; a non-lifetime record needs an end date; expiry is computed on read", () => {
     expect(parsePassRecord("{not json")).toBeNull();
-    expect(parsePassRecord(JSON.stringify({ v: 3 }))).toBeNull();
+    expect(parsePassRecord(JSON.stringify({ v: 4 }))).toBeNull();
     expect(parsePassRecord(JSON.stringify({ ...base, provider: "PAYPAL" }))).toBeNull();
     expect(parsePassRecord(JSON.stringify({ ...base, currency: "EUR" }))).toBeNull();
+    expect(parsePassRecord(JSON.stringify({ ...base, productId: "ACCESS_7D" }))).toBeNull();
+    expect(parsePassRecord(JSON.stringify({ ...base, expiresAt: null }))).toBeNull();
     const parsed = parsePassRecord(JSON.stringify(base))!;
     expect(parsed).toEqual(base);
     expect(passStateOf(parsed, now).state).toBe("active");
@@ -132,28 +125,56 @@ describe("amounts, access length and the access record", () => {
     expect(passStateOf(null, now).state).toBe("none");
   });
 
-  it("still reads the first version of the experiment (two fixed passes) as a demo grant", () => {
-    const legacy = {
+  it("a lifetime record has an explicit marker, no date, and is active whatever the date", () => {
+    const record = parsePassRecord(JSON.stringify({ ...base, productId: "ACCESS_LIFETIME", lifetime: true, lifetimePaymentId: "pay_1", expiresAt: null }))!;
+    expect(record.lifetime).toBe(true);
+    expect(passStateOf(record, new Date("2126-01-01T00:00:00.000Z")).state).toBe("active");
+    expect(toPassStatusDto(passStateOf(record, now))).toMatchObject({ state: "active", lifetime: true, expiresAt: null, productId: "ACCESS_LIFETIME" });
+    expect(toPassStatusDto(passStateOf(parsePassRecord(JSON.stringify(base)), now))).toMatchObject({ lifetime: false, expiresAt: "2026-11-20T10:00:00.000Z" });
+  });
+
+  it("still reads earlier versions (fixed passes, pay-what-you-want) as 30-day grants", () => {
+    const v1 = {
       v: 1, product: "PASS_7D", provider: "DEMO", ref: "DEMO-7Q4K-2M9X", priceMinor: 1499, currency: "PLN", method: "blik",
       requestId: "8b1f9f3e-1d2c-4a5b-9c7d-0e1f2a3b4c5d", grantedAt: now.toISOString(), expiresAt: "2026-10-28T10:00:00.000Z",
       consents: { termsVersion: "demo-2026-10", waiverAt: now.toISOString() },
     };
-    const parsed = parsePassRecord(JSON.stringify(legacy))!;
-    expect(parsed).toMatchObject({ v: 2, provider: "DEMO", ref: "DEMO-7Q4K-2M9X", priceMinor: 1499, totalMinor: 1499, paymentIds: [] });
-    expect(passStateOf(parsed, now).state).toBe("active");
+    expect(parsePassRecord(JSON.stringify(v1))).toMatchObject({ v: 3, provider: "DEMO", productId: "ACCESS_30D", totalMinor: 1499, paymentIds: [], lifetime: false, lifetimePaymentId: null });
+    const { v: _v, productId: _p, lifetime: _l, lifetimePaymentId: _lp, ...rest } = base;
+    const v2 = parsePassRecord(JSON.stringify({ ...rest, v: 2, priceMinor: 2000, totalMinor: 2000 }))!;
+    expect(v2).toMatchObject({ v: 3, provider: "STRIPE", productId: "ACCESS_30D", priceMinor: 2000, lifetime: false, expiresAt: base.expiresAt, paymentIds: ["pay_1"] });
   });
 
-  it("a payment extends access from its end when active, from now otherwise; the horizon is capped", () => {
+  it("30 days extends from the end when active, from now otherwise", () => {
     const active = parsePassRecord(JSON.stringify(base))!;
-    expect(extendedExpiry(active, now).toISOString()).toBe("2026-12-20T10:00:00.000Z");
-    expect(extendedExpiry(null, now).toISOString()).toBe("2026-11-20T10:00:00.000Z");
-    expect(extendedExpiry({ ...active, expiresAt: "2026-01-01T00:00:00.000Z" }, now).toISOString()).toBe("2026-11-20T10:00:00.000Z");
-    expect(wouldExceedMaxAhead(null, now)).toBe(false);
-    expect(wouldExceedMaxAhead(active, now)).toBe(false);
-    const farAhead = { ...active, expiresAt: new Date(now.getTime() + (PATRON_MAX_AHEAD_DAYS - 29) * 86_400_000).toISOString() };
-    expect(wouldExceedMaxAhead(farAhead, now)).toBe(true);
-    const justInside = { ...active, expiresAt: new Date(now.getTime() + (PATRON_MAX_AHEAD_DAYS - 30) * 86_400_000).toISOString() };
-    expect(wouldExceedMaxAhead(justInside, now)).toBe(false);
+    expect(extendedExpiry(active, 30, now).toISOString()).toBe("2026-12-20T10:00:00.000Z");
+    expect(extendedExpiry(null, 30, now).toISOString()).toBe("2026-11-20T10:00:00.000Z");
+    expect(extendedExpiry({ ...active, expiresAt: "2026-01-01T00:00:00.000Z" }, 30, now).toISOString()).toBe("2026-11-20T10:00:00.000Z");
+    expect(applyProduct(null, thirty, now)).toEqual({ lifetime: false, expiresAt: "2026-11-20T10:00:00.000Z", grantedAt: now.toISOString() });
+  });
+
+  it("unlimited sets the lifetime marker (keeping a running end date only as history); 30 days on top of lifetime changes nothing", () => {
+    const active = parsePassRecord(JSON.stringify(base))!;
+    expect(applyProduct(null, life, now)).toEqual({ lifetime: true, expiresAt: null, grantedAt: now.toISOString() });
+    expect(applyProduct(active, life, now)).toEqual({ lifetime: true, expiresAt: base.expiresAt, grantedAt: base.grantedAt });
+    const lifetime = { ...active, lifetime: true, expiresAt: null };
+    expect(applyProduct(lifetime, thirty, now)).toMatchObject({ lifetime: true, expiresAt: null });
+  });
+
+  it("purchase rules: lifetime blocks everything; 30 days is capped 365 days ahead; unlimited is never capped", () => {
+    const active = parsePassRecord(JSON.stringify(base))!;
+    expect(purchaseBlock(null, thirty, now)).toBeNull();
+    expect(purchaseBlock(null, life, now)).toBeNull();
+    expect(purchaseBlock(active, thirty, now)).toBeNull();
+    expect(purchaseBlock(active, life, now)).toBeNull();
+    const lifetime = { ...active, lifetime: true };
+    expect(purchaseBlock(lifetime, thirty, now)).toBe("ALREADY_LIFETIME");
+    expect(purchaseBlock(lifetime, life, now)).toBe("ALREADY_LIFETIME");
+    const far = { ...active, expiresAt: new Date(now.getTime() + (PATRON_MAX_AHEAD_DAYS - 29) * DAY).toISOString() };
+    expect(purchaseBlock(far, thirty, now)).toBe("MAX_AHEAD");
+    expect(purchaseBlock(far, life, now)).toBeNull();
+    const inside = { ...active, expiresAt: new Date(now.getTime() + (PATRON_MAX_AHEAD_DAYS - 30) * DAY).toISOString() };
+    expect(purchaseBlock(inside, thirty, now)).toBeNull();
   });
 
   it("DEMO- reference and masked e-mail", () => {

@@ -5,16 +5,16 @@
 // can never hand out access that a real payment should have paid for. The real flow is patron-checkout.use-case.ts.
 import { z } from "zod";
 import type { AppContext } from "@/lib/modules/shared/app-context";
-import { PATRON_CURRENCY, premiumPassFor, validatePatronAmount } from "../domain/config";
+import { PATRON_CURRENCY, patronProduct, premiumPassFor } from "../domain/config";
 import { resolvePremiumPayments, toPremiumPaymentsDto } from "../domain/payments-mode";
 import {
-  extendedExpiry,
+  applyProduct,
   newDemoRef,
   PASS_METHODS,
   PASS_TERMS_VERSION,
   passStateOf,
+  purchaseBlock,
   toPassStatusDto,
-  wouldExceedMaxAhead,
   type PassRecord,
   type PassStatusDto,
 } from "../domain/pass-state";
@@ -25,7 +25,7 @@ import { listPremiumPassVideos, passUserId } from "./pass-access";
 export const checkoutDemoInputSchema = z
   .object({
     requestId: z.string().uuid(),
-    amountMinor: z.number().int(),
+    productId: z.enum(["ACCESS_30D", "ACCESS_LIFETIME"]),
     method: z.enum(PASS_METHODS),
     consents: z.object({ terms: z.boolean(), waiver: z.boolean() }).strict(),
     simulate: z.enum(["success", "declined"]),
@@ -40,7 +40,8 @@ export type PassErrorCode =
   | "CONSENT_REQUIRED"
   | "WRONG_MODE"
   | "PAYMENTS_UNAVAILABLE"
-  | "AMOUNT_INVALID"
+  | "PRODUCT_INVALID"
+  | "ALREADY_LIFETIME"
   | "MAX_AHEAD"
   | "DEMO_DECLINED"
   | "NO_PASS"
@@ -87,35 +88,42 @@ export async function checkoutDemoPass(ctx: Pick<AppContext, "prisma" | "actor" 
   if (resolvePremiumPayments().mode !== "demo") return { ok: false, code: "WRONG_MODE" };
   await countFunnelEvent(ctx, "checkout_submit");
   if (!input.consents.terms || !input.consents.waiver) return { ok: false, code: "CONSENT_REQUIRED" };
-  if (validatePatronAmount(input.amountMinor) !== null) return { ok: false, code: "AMOUNT_INVALID" };
+  const product = patronProduct(input.productId);
+  if (!product) return { ok: false, code: "PRODUCT_INVALID" };
 
   const now = ctx.now();
   const current = await readPass(ctx.prisma, userId);
   if (current && current.provider === "DEMO" && current.requestId === input.requestId) {
     return { ok: true, data: toPassStatusDto(passStateOf(current, now)) };
   }
-  if (wouldExceedMaxAhead(current, now)) {
+  const block = purchaseBlock(current, product, now);
+  if (block === "ALREADY_LIFETIME") return { ok: false, code: "ALREADY_LIFETIME" };
+  if (block === "MAX_AHEAD") {
     await countFunnelEvent(ctx, "max_ahead");
-    return { ok: false, code: "MAX_AHEAD", expiresAt: current?.expiresAt };
+    return { ok: false, code: "MAX_AHEAD", expiresAt: current?.expiresAt ?? undefined };
   }
   if (input.simulate === "declined") {
     await countFunnelEvent(ctx, "demo_declined");
     return { ok: false, code: "DEMO_DECLINED" };
   }
 
-  const active = current && new Date(current.expiresAt).getTime() > now.getTime();
+  const active = current !== null && passStateOf(current, now).state === "active";
+  const next = applyProduct(current, product, now);
   const record: PassRecord = {
-    v: 2,
+    v: 3,
     provider: "DEMO",
     ref: newDemoRef(),
-    priceMinor: input.amountMinor,
-    totalMinor: (active ? current.totalMinor : 0) + input.amountMinor,
+    productId: product.id,
+    priceMinor: product.priceMinor,
+    totalMinor: (active ? current.totalMinor : 0) + product.priceMinor,
     currency: PATRON_CURRENCY,
     method: input.method,
     requestId: input.requestId,
     paymentIds: [],
-    grantedAt: active ? current.grantedAt : now.toISOString(),
-    expiresAt: extendedExpiry(current, now).toISOString(),
+    lifetime: next.lifetime,
+    lifetimePaymentId: null,
+    grantedAt: next.grantedAt,
+    expiresAt: next.expiresAt,
     consents: { termsVersion: PASS_TERMS_VERSION, waiverAt: now.toISOString() },
   };
   await writePass(ctx.prisma, userId, record);

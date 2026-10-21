@@ -7,9 +7,7 @@ import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import { getActorFromAuth } from "@/lib/api/auth";
 import {
-  PATRON_ACCESS_DAYS,
-  PATRON_MAX_MINOR,
-  PATRON_MIN_MINOR,
+  PATRON_PRODUCTS,
   PATRON_VAT_RATE_PERCENT,
   premiumPassFor,
   resolvePremiumPayments,
@@ -54,7 +52,7 @@ export default async function PassTermsPage({ params, expected }: PassTermsPageP
         </p>
         <ul className="mt-4 list-disc space-y-2 pl-5 text-[15px] leading-relaxed">
           <li>{tx("Strefa patrona to zamknięta część serwisu z filmami dla patronów projektu.", "The patron zone is a closed part of the site with videos for the project's patrons.")}</li>
-          <li>{tx("Płacisz, ile chcesz: od {0} do {1}. Każda wpłata daje dostęp na {2} dni, a kolejna wpłata przedłuża go o kolejne dni.", "You pay what you want: from {0} to {1}. Every payment gives access for {2} days, and another payment extends it by another period.", price(locale, PATRON_MIN_MINOR), price(locale, PATRON_MAX_MINOR), PATRON_ACCESS_DAYS)}</li>
+          <li>{tx("Dostęp na 30 dni kosztuje {0}, a dostęp bez limitu {1}. Dostęp na 30 dni możesz przedłużać kolejnymi wpłatami; dostęp bez limitu płacisz raz i nie ma on końca.", "30-day access costs {0} and unlimited access {1}. You can extend 30-day access with further payments; unlimited access is paid once and has no end date.", price(locale, PATRON_PRODUCTS[0]!.priceMinor), price(locale, PATRON_PRODUCTS[1]!.priceMinor))}</li>
           <li>{tx("To nie jest subskrypcja: nic nie odnawia się samo i nie ma czego anulować.", "This is not a subscription: nothing renews by itself and there is nothing to cancel.")}</li>
           <li>{tx("Dostęp otwiera się od razu po potwierdzeniu płatności. Przed zapłatą prosimy o zgodę na to, że od rozpoczęcia oglądania tracisz prawo odstąpienia od umowy (treści cyfrowe).", "Access opens right after the payment is confirmed. Before you pay we ask for your consent that once you start watching you lose the right to withdraw from the contract (digital content).")}</li>
           <li>{tx("Reklamacje i zwroty: support@pawelperfect.com.", "Complaints and refunds: support@pawelperfect.com.")}</li>

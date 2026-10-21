@@ -32,7 +32,7 @@ vi.mock("@/lib/modules/payments/infrastructure/stripe-client", () => ({
 }));
 
 const { POST } = await import("@/app/api/webhooks/stripe/route");
-const { parsePassRecord } = await import("@/lib/modules/experiment-premium-pass");
+const { parsePassRecord, passStateOf } = await import("@/lib/modules/experiment-premium-pass");
 
 let eventSeq = 0;
 function signedRequest(type: string, object: Record<string, unknown>, options: { livemode?: boolean; secret?: string; id?: string } = {}) {
@@ -70,13 +70,13 @@ function seedPatronPayment(overrides: Record<string, unknown> = {}) {
     id: `pay_${n}`,
     userId: "user_1",
     creatorId: "creator_1",
-    amountMinor: 2500,
+    amountMinor: 1499,
     currency: "PLN",
     status: "PENDING",
     stripeIntentId: `pi_${n}`,
     refundedAmountMinor: 0,
     requestId: null,
-    metadata: { purpose: "premium_pass", method: "blik", consents: { termsVersion: "patron-2026-10-draft", waiverAt: "2026-10-21T10:00:00.000Z" } },
+    metadata: { purpose: "premium_pass", productId: "ACCESS_30D", method: "blik", consents: { termsVersion: "patron-2026-10-draft", waiverAt: "2026-10-21T10:00:00.000Z" } },
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
@@ -107,11 +107,11 @@ describe("patron zone access from the verified webhook", () => {
     expect(res.status).toBe(200);
     expect(payment.status).toBe("SUCCEEDED");
     const record = grant()!;
-    expect(record).toMatchObject({ v: 2, provider: "STRIPE", ref: payment.id, priceMinor: 2500, totalMinor: 2500, currency: "PLN", method: "blik", paymentIds: [payment.id] });
+    expect(record).toMatchObject({ v: 3, provider: "STRIPE", ref: payment.id, productId: "ACCESS_30D", priceMinor: 1499, totalMinor: 1499, currency: "PLN", method: "blik", paymentIds: [payment.id], lifetime: false, lifetimePaymentId: null });
     expect(record.consents).toEqual({ termsVersion: "patron-2026-10-draft", waiverAt: "2026-10-21T10:00:00.000Z" });
-    const days = (new Date(record.expiresAt).getTime() - new Date(record.grantedAt).getTime()) / DAY;
+    const days = (new Date(record.expiresAt!).getTime() - new Date(record.grantedAt).getTime()) / DAY;
     expect(days).toBe(30);
-    expect(db.userPaymentTotal.rows[0]).toMatchObject({ userId: "user_1", currency: "PLN", amountMinor: 2500 });
+    expect(db.userPaymentTotal.rows[0]).toMatchObject({ userId: "user_1", currency: "PLN", amountMinor: 1499 });
     expect(db.patronGrant.rows).toHaveLength(0);
     expect(sendBecomePatronEmail).not.toHaveBeenCalled();
     expect(sendDonationThankYouEmail).not.toHaveBeenCalled();
@@ -130,20 +130,42 @@ describe("patron zone access from the verified webhook", () => {
     expect(replay.status).toBe(200);
     expect(other.status).toBe(200);
     expect(grant()).toEqual(first);
-    expect(db.userPaymentTotal.rows[0].amountMinor).toBe(2500);
+    expect(db.userPaymentTotal.rows[0].amountMinor).toBe(1499);
   });
 
-  it("a second payment while access is active extends it from its end; the amount does not change the length", async () => {
-    const first = seedPatronPayment({ amountMinor: 2000 });
-    const second = seedPatronPayment({ amountMinor: 100_000 });
+  it("a second 30-day payment while access is active extends it from its end", async () => {
+    const first = seedPatronPayment();
+    const second = seedPatronPayment();
     await POST(signedRequest("payment_intent.succeeded", intent(first)));
     const afterFirst = grant()!;
     await POST(signedRequest("payment_intent.succeeded", intent(second)));
     const afterSecond = grant()!;
 
-    expect(new Date(afterFirst.expiresAt).getTime() - new Date(afterFirst.grantedAt).getTime()).toBe(30 * DAY);
-    expect(new Date(afterSecond.expiresAt).getTime() - new Date(afterFirst.expiresAt).getTime()).toBe(30 * DAY);
-    expect(afterSecond).toMatchObject({ totalMinor: 102_000, priceMinor: 100_000, paymentIds: [first.id, second.id], grantedAt: afterFirst.grantedAt });
+    expect(new Date(afterFirst.expiresAt!).getTime() - new Date(afterFirst.grantedAt).getTime()).toBe(30 * DAY);
+    expect(new Date(afterSecond.expiresAt!).getTime() - new Date(afterFirst.expiresAt!).getTime()).toBe(30 * DAY);
+    expect(afterSecond).toMatchObject({ totalMinor: 2998, priceMinor: 1499, paymentIds: [first.id, second.id], grantedAt: afterFirst.grantedAt });
+  });
+
+  it("the unlimited option stores an explicit lifetime marker, not a far-future date", async () => {
+    const payment = seedPatronPayment({ amountMinor: 2999, metadata: { purpose: "premium_pass", productId: "ACCESS_LIFETIME", method: "card" } });
+    await POST(signedRequest("payment_intent.succeeded", intent(payment)));
+    const record = grant()!;
+    expect(record).toMatchObject({ productId: "ACCESS_LIFETIME", priceMinor: 2999, lifetime: true, lifetimePaymentId: payment.id, expiresAt: null, paymentIds: [payment.id] });
+    expect(passStateOf(record, new Date("2099-01-01T00:00:00.000Z")).state).toBe("active");
+    expect(JSON.stringify(record)).not.toMatch(/20[3-9]\d-|2[1-9]\d\d-/);
+  });
+
+  it("unlimited bought while a 30-day access runs converts it to lifetime; a later 30-day payment adds nothing", async () => {
+    const first = seedPatronPayment();
+    await POST(signedRequest("payment_intent.succeeded", intent(first)));
+    const running = grant()!;
+    const life = seedPatronPayment({ amountMinor: 2999, metadata: { purpose: "premium_pass", productId: "ACCESS_LIFETIME" } });
+    await POST(signedRequest("payment_intent.succeeded", intent(life)));
+    const converted = grant()!;
+    expect(converted).toMatchObject({ lifetime: true, lifetimePaymentId: life.id, totalMinor: 4498, grantedAt: running.grantedAt, paymentIds: [first.id, life.id] });
+    const late = seedPatronPayment();
+    await POST(signedRequest("payment_intent.succeeded", intent(late)));
+    expect(grant()).toMatchObject({ lifetime: true, expiresAt: converted.expiresAt, paymentIds: [first.id, life.id, late.id] });
   });
 
   it("after an ended access a new payment starts a fresh 30 days from now", async () => {
@@ -154,11 +176,11 @@ describe("patron zone access from the verified webhook", () => {
     const payment = seedPatronPayment();
     await POST(signedRequest("payment_intent.succeeded", intent(payment)));
     const record = grant()!;
-    expect(new Date(record.expiresAt).getTime() - Date.now()).toBeGreaterThan(29 * DAY);
-    expect(new Date(record.expiresAt).getTime() - Date.now()).toBeLessThanOrEqual(30 * DAY);
+    expect(new Date(record.expiresAt!).getTime() - Date.now()).toBeGreaterThan(29 * DAY);
+    expect(new Date(record.expiresAt!).getTime() - Date.now()).toBeLessThanOrEqual(30 * DAY);
     // the list of applied payments is the idempotency memory: it survives the end of an access period
     expect(record.paymentIds).toEqual(["old", payment.id]);
-    expect(record.totalMinor).toBe(3500);
+    expect(record.totalMinor).toBe(2499);
     expect(record.grantedAt).not.toBe("2026-01-01T10:00:00.000Z");
   });
 
@@ -188,14 +210,18 @@ describe("patron zone access from the verified webhook", () => {
     expect(grant()).toBeNull();
   });
 
-  it("fails closed: a payment outside the limits (e.g. re-priced) is recorded as received but grants no access", async () => {
-    const cheap = seedPatronPayment({ amountMinor: 200 });
-    const res = await POST(signedRequest("payment_intent.succeeded", intent(cheap)));
-    expect(res.status).toBe(200);
-    expect(cheap.status).toBe("SUCCEEDED");
-    expect(grant()).toBeNull();
-    const huge = seedPatronPayment({ amountMinor: 100_001 });
-    await POST(signedRequest("payment_intent.succeeded", intent(huge)));
+  it("fails closed: a payment whose amount is not exactly its product's price is recorded as received but grants no access", async () => {
+    const cases = [
+      seedPatronPayment({ amountMinor: 200 }), // re-priced below
+      seedPatronPayment({ amountMinor: 2999 }), // lifetime price on the 30-day product
+      seedPatronPayment({ amountMinor: 1499, metadata: { purpose: "premium_pass", productId: "ACCESS_LIFETIME" } }), // 30-day price on the lifetime product
+      seedPatronPayment({ amountMinor: 1499, metadata: { purpose: "premium_pass", productId: "ACCESS_FOREVER" } }), // unknown product
+    ];
+    for (const payment of cases) {
+      const res = await POST(signedRequest("payment_intent.succeeded", intent(payment)));
+      expect(res.status).toBe(200);
+      expect(payment.status).toBe("SUCCEEDED");
+    }
     expect(grant()).toBeNull();
   });
 
@@ -221,17 +247,35 @@ describe("patron zone access from the verified webhook", () => {
     await POST(signedRequest("payment_intent.succeeded", intent(first)));
     await POST(signedRequest("payment_intent.succeeded", intent(second)));
     const both = grant()!;
+    const refundEvent = () => signedRequest("charge.refunded", { id: "ch_1", object: "charge", payment_intent: second.stripeIntentId, metadata: { paymentId: second.id } });
 
-    stripeRefunds.set(second.stripeIntentId, [{ id: "re_1", amount: 1000, status: "succeeded" }]);
-    await POST(signedRequest("charge.refunded", { id: "ch_1", object: "charge", payment_intent: second.stripeIntentId, metadata: { paymentId: second.id } }));
+    stripeRefunds.set(second.stripeIntentId, [{ id: "re_1", amount: 500, status: "succeeded" }]);
+    await POST(refundEvent());
     expect(grant()).toEqual(both);
 
-    stripeRefunds.set(second.stripeIntentId, [{ id: "re_1", amount: 2500, status: "succeeded" }]);
-    await POST(signedRequest("charge.refunded", { id: "ch_1", object: "charge", payment_intent: second.stripeIntentId, metadata: { paymentId: second.id } }));
+    stripeRefunds.set(second.stripeIntentId, [{ id: "re_1", amount: 1499, status: "succeeded" }]);
+    await POST(refundEvent());
     const after = grant()!;
     expect(second.status).toBe("REFUNDED");
     expect(after.paymentIds).toEqual([first.id]);
-    expect(after.totalMinor).toBe(2500);
-    expect(new Date(both.expiresAt).getTime() - new Date(after.expiresAt).getTime()).toBe(30 * DAY);
+    expect(after.totalMinor).toBe(1499);
+    expect(new Date(both.expiresAt!).getTime() - new Date(after.expiresAt!).getTime()).toBe(30 * DAY);
+  });
+
+  it("a full refund of the unlimited payment removes the lifetime marker; of a 30-day payment it leaves it", async () => {
+    const thirty = seedPatronPayment();
+    const life = seedPatronPayment({ amountMinor: 2999, metadata: { purpose: "premium_pass", productId: "ACCESS_LIFETIME" } });
+    await POST(signedRequest("payment_intent.succeeded", intent(thirty)));
+    await POST(signedRequest("payment_intent.succeeded", intent(life)));
+    const refund = (p: { id: string; stripeIntentId: string }, amount: number) => {
+      stripeRefunds.set(p.stripeIntentId, [{ id: `re_${p.id}`, amount, status: "succeeded" }]);
+      return POST(signedRequest("charge.refunded", { id: `ch_${p.id}`, object: "charge", payment_intent: p.stripeIntentId, metadata: { paymentId: p.id } }));
+    };
+    await refund(thirty, 1499);
+    expect(grant()).toMatchObject({ lifetime: true, lifetimePaymentId: life.id, paymentIds: [life.id] });
+    await refund(life, 2999);
+    const ended = grant()!;
+    expect(ended).toMatchObject({ lifetime: false, lifetimePaymentId: null, paymentIds: [], totalMinor: 0 });
+    expect(passStateOf(ended, new Date(Date.now() + 1000)).state).toBe("expired");
   });
 });

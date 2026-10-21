@@ -57,14 +57,14 @@ describe('PremiumPassOverlay (patron zone)', () => {
     expect(screen.getByText('TRYB DEMO')).toBeInTheDocument();
   });
 
-  it('shows the pay-what-you-want offer: minimum amount, access length, no fixed passes', () => {
+  it('shows the two-option offer: the cheapest price, unlimited access, no pay-what-you-want', () => {
     renderOverlay(true);
-    expect(screen.getAllByRole('button', { name: /Zostań patronem · od 20\s*zł/ }).length).toBeGreaterThan(0);
-    expect(screen.getByText(/płacisz, ile chcesz, od 20\s*zł/)).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /Zostań patronem · od 14,99\s*zł/ }).length).toBeGreaterThan(0);
+    expect(screen.getByText(/dostęp na 30 dni od 14,99\s*zł/)).toBeInTheDocument();
+    expect(screen.getByText(/albo dostęp bez limitu, bez subskrypcji/)).toBeInTheDocument();
     expect(screen.getByText('Zostań patronem i uzyskaj dostęp do strefy premium')).toBeInTheDocument();
-    expect(screen.getByText(/dostęp na 30 dni, bez subskrypcji/)).toBeInTheDocument();
-    expect(screen.queryByText(/Wejściówka/)).toBeNull();
-    expect(screen.queryByText(/7 dni/)).toBeNull();
+    expect(screen.queryByText(/ile chcesz/)).toBeNull();
+    expect(screen.queryByText(/20\s*zł/)).toBeNull();
   });
 
   it('shows no demo marker in stripe mode and a test marker with test keys', () => {
@@ -79,10 +79,11 @@ describe('PremiumPassOverlay (patron zone)', () => {
 
   it('signed in: the CTA opens the two-step checkout on step 1, without a DEMO bar inside it', async () => {
     renderOverlay(true);
-    fireEvent.click(screen.getAllByRole('button', { name: /Zostań patronem · od 20\s*zł/ })[0]!);
+    fireEvent.click(screen.getAllByRole('button', { name: /Zostań patronem · od 14,99\s*zł/ })[0]!);
     const dialog = await screen.findByRole('dialog');
     expect(dialog).toHaveTextContent('Zostań patronem');
     expect(dialog).toHaveTextContent('Zostań patronem i uzyskaj dostęp do strefy premium');
+    expect(dialog).toHaveTextContent('Wybierz dostęp');
     expect(dialog).toHaveTextContent('Sprzedawca: POLUTEK Sp. z o.o. (dane demo)');
     expect(dialog.querySelector('[data-demo-ribbon]')).toBeNull();
   });

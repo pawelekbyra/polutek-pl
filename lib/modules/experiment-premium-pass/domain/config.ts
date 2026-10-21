@@ -11,28 +11,37 @@ export const PREMIUM_PASS_EXPERIMENT_ID = "premium-pass";
 export type PremiumPassMode = "off" | "testers" | "all";
 
 /**
- * The patron zone: pay what you want (a suggested amount or your own), every payment grants the same access time.
- * Decisions (docs/experiments/premium-pass.md, "Strefa patrona"): the amount does not change the length of access,
- * a payment while access is active extends it, and nothing renews by itself (no subscription).
+ * The patron zone: a choice of TWO FIXED OPTIONS (owner decision 2026-10-21, replaces pay-what-you-want). The server
+ * knows only these product ids and derives the amount from this table: it never takes an amount from the client.
+ * A 30-day option adds 30 days (from the current end when still active); the unlimited option is a lifetime grant.
+ * Nothing renews by itself (no subscription).
  */
 export const PATRON_CURRENCY = "PLN";
 export const PATRON_VAT_RATE_PERCENT = 23;
-/** Days of patron-zone access one successful payment grants (added to the current end when still active). */
-export const PATRON_ACCESS_DAYS = 30;
-/** Access can be extended by paying again, but never to more than this many days ahead of now. */
+/** Access can be extended by 30-day payments, but never to more than this many days ahead of now. */
 export const PATRON_MAX_AHEAD_DAYS = 365;
-/** Gross amounts in minor units (grosze). The minimum is also above Stripe's own floor for PLN (2 zł). */
-export const PATRON_MIN_MINOR = 2000;
-export const PATRON_MAX_MINOR = 100_000;
-export const PATRON_SUGGESTED_MINOR: readonly number[] = [];
-export const PATRON_DEFAULT_MINOR = 2000;
 
-/** The one place that decides whether an amount may be charged: integer minor units within [min, max]. */
-export function validatePatronAmount(amountMinor: unknown): "INTEGER" | "TOO_LOW" | "TOO_HIGH" | null {
-  if (typeof amountMinor !== "number" || !Number.isInteger(amountMinor)) return "INTEGER";
-  if (amountMinor < PATRON_MIN_MINOR) return "TOO_LOW";
-  if (amountMinor > PATRON_MAX_MINOR) return "TOO_HIGH";
-  return null;
+export type PatronProductId = "ACCESS_30D" | "ACCESS_LIFETIME";
+
+export type PatronProduct = {
+  id: PatronProductId;
+  /** Days of access added by one payment; null = lifetime (unlimited). */
+  days: number | null;
+  /** Gross price in minor units (grosze), VAT included. One honest price: no strikethrough, no "was" price. */
+  priceMinor: number;
+  /** Shown as a plain "best value" label; never a discount claim. */
+  bestValue?: true;
+};
+
+export const PATRON_PRODUCTS: readonly PatronProduct[] = [
+  { id: "ACCESS_30D", days: 30, priceMinor: 1499 },
+  { id: "ACCESS_LIFETIME", days: null, priceMinor: 2999, bestValue: true },
+] as const;
+
+export const PATRON_DEFAULT_PRODUCT_ID: PatronProductId = "ACCESS_LIFETIME";
+
+export function patronProduct(id: unknown): PatronProduct | null {
+  return PATRON_PRODUCTS.find((product) => product.id === id) ?? null;
 }
 
 /** Owner decision 2026-10-20: locked videos when PREMIUM_PASS_VIDEO_SLUGS is not set (config, never a DB tier change). */

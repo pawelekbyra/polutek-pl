@@ -53,11 +53,12 @@ beforeEach(() => {
 
 describe('createCheckoutIntent: patron-zone payments (experiment: premium-pass)', () => {
   it('marks the payment and its intent with the purpose and uses the patron description', async () => {
-    const result = await createCheckoutIntent({ userId: 'user_1', amountMinor: 2500, currency: 'PLN', requestId: REQUEST, purpose: 'premium_pass' }, userCtx());
+    const result = await createCheckoutIntent({ userId: 'user_1', amountMinor: 2999, currency: 'PLN', requestId: REQUEST, purpose: 'premium_pass', productId: 'ACCESS_LIFETIME' }, userCtx());
     expect(result.ok).toBe(true);
-    expect(db.payment.rows[0].metadata).toEqual({ requestId: REQUEST, purpose: 'premium_pass' });
+    expect(db.payment.rows[0].metadata).toEqual({ requestId: REQUEST, purpose: 'premium_pass', productId: 'ACCESS_LIFETIME' });
     const params = stripe.paymentIntents.create.mock.calls[0]![0];
-    expect(params.metadata).toMatchObject({ userId: 'user_1', purpose: 'premium_pass', paymentId: db.payment.rows[0].id });
+    expect(params.metadata).toMatchObject({ userId: 'user_1', purpose: 'premium_pass', productId: 'ACCESS_LIFETIME', paymentId: db.payment.rows[0].id });
+    expect(params.amount).toBe(2999);
     expect(params.description).toMatch(/^Dostęp do strefy patrona/);
   });
 
@@ -68,11 +69,11 @@ describe('createCheckoutIntent: patron-zone payments (experiment: premium-pass)'
   });
 
   it('the tip route cannot re-price a patron payment through its request id, and the other way round', async () => {
-    await createCheckoutIntent({ userId: 'user_1', amountMinor: 2500, currency: 'PLN', requestId: REQUEST, purpose: 'premium_pass' }, userCtx());
+    await createCheckoutIntent({ userId: 'user_1', amountMinor: 1499, currency: 'PLN', requestId: REQUEST, purpose: 'premium_pass', productId: 'ACCESS_30D' }, userCtx());
     const retarget = await createCheckoutIntent({ userId: 'user_1', amountMinor: 200, currency: 'PLN', requestId: REQUEST }, userCtx());
     expect(retarget.ok).toBe(false);
     expect(stripe.paymentIntents.update).not.toHaveBeenCalled();
-    expect(db.payment.rows[0].amountMinor).toBe(2500);
+    expect(db.payment.rows[0].amountMinor).toBe(1499);
 
     const OTHER = '9a1b2f1e-2f4c-4f8a-9d61-3c6c1d2b8a99';
     await createCheckoutIntent({ userId: 'user_1', amountMinor: 1000, currency: 'PLN', requestId: OTHER }, userCtx());
@@ -80,13 +81,15 @@ describe('createCheckoutIntent: patron-zone payments (experiment: premium-pass)'
     expect(wrongWay.ok).toBe(false);
   });
 
-  it('the same patron attempt with a new amount updates its intent in place', async () => {
-    await createCheckoutIntent({ userId: 'user_1', amountMinor: 2500, currency: 'PLN', requestId: REQUEST, purpose: 'premium_pass' }, userCtx());
-    const again = await createCheckoutIntent({ userId: 'user_1', amountMinor: 5000, currency: 'PLN', requestId: REQUEST, purpose: 'premium_pass' }, userCtx());
+  it('the same patron attempt with another product updates amount, intent metadata and the payment row together', async () => {
+    await createCheckoutIntent({ userId: 'user_1', amountMinor: 2999, currency: 'PLN', requestId: REQUEST, purpose: 'premium_pass', productId: 'ACCESS_LIFETIME' }, userCtx());
+    const again = await createCheckoutIntent({ userId: 'user_1', amountMinor: 1499, currency: 'PLN', requestId: REQUEST, purpose: 'premium_pass', productId: 'ACCESS_30D' }, userCtx());
     expect(again.ok).toBe(true);
     expect(stripe.paymentIntents.update).toHaveBeenCalledTimes(1);
+    expect(stripe.paymentIntents.update.mock.calls[0]![1]).toMatchObject({ amount: 1499, metadata: { productId: 'ACCESS_30D' } });
     expect(db.payment.rows).toHaveLength(1);
-    expect(db.payment.rows[0].amountMinor).toBe(5000);
+    expect(db.payment.rows[0].amountMinor).toBe(1499);
+    expect(db.payment.rows[0].metadata).toEqual({ requestId: REQUEST, purpose: 'premium_pass', productId: 'ACCESS_30D' });
   });
 });
 

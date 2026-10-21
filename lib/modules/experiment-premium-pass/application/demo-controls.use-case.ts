@@ -29,7 +29,8 @@ export async function runPassDemoControl(ctx: Pick<AppContext, "prisma" | "actor
   }
   const record = await readPass(ctx.prisma, userId);
   if (!record) return { ok: false, code: "NO_PASS" };
-  const expired: PassRecord = { ...record, expiresAt: new Date(now.getTime() - 1000).toISOString() };
+  // "expire" ends everything, a lifetime marker included (the panel is for looking at the expired state)
+  const expired: PassRecord = { ...record, lifetime: false, lifetimePaymentId: null, expiresAt: new Date(now.getTime() - 1000).toISOString() };
   await writePass(ctx.prisma, userId, expired);
   return { ok: true, data: toPassStatusDto(passStateOf(expired, now)) };
 }

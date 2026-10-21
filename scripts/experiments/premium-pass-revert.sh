@@ -100,7 +100,7 @@ real_payments_report() {
     "SELECT count(*) FROM \"Payment\" WHERE status = 'PENDING' AND metadata->>'purpose' = 'premium_pass';" "SQL" | remote_read 2>/dev/null | tr -d '[:space:]')
   REAL_PAYMENTS=$(printf '%s\n' "docker exec -i $DB_CONTAINER sh -c 'psql -U \"\$POSTGRES_USER\" -d \"\$POSTGRES_DB\" -tA' <<'SQL'" \
     "SELECT count(*) FROM \"Payment\" WHERE metadata->>'purpose' = 'premium_pass';" "SQL" | remote_read 2>/dev/null | tr -d '[:space:]')
-  log "prawdziwe płatności strefy patrona w księdze Payment: ${REAL_PAYMENTS:-?} (w toku: ${REAL_PENDING:-?}); dostępy z prawdziwych wpłat: ${REAL_GRANTS:-?}"
+  log "prawdziwe płatności strefy patrona w księdze Payment: ${REAL_PAYMENTS:-?} (w toku: ${REAL_PENDING:-?}); dostępy z prawdziwych wpłat (w tym „bez limitu”, znacznik lifetime): ${REAL_GRANTS:-?}"
   log "wiersze Payment zostają zawsze (to księga pieniędzy); zwroty robi właściciel ręcznie w panelu Stripe"
 }
 
