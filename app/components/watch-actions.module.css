@@ -333,8 +333,16 @@
 
   .actionRail {
     display: grid;
-    grid-template-columns: auto auto auto minmax(0, 1fr);
+    /* The like cluster takes what its digits need (a count of several digits widens it); Share and the patron button split
+       the rest, so the row always runs edge to edge. */
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1.25fr);
     gap: 8px;
+  }
+
+  .actionRail .secondaryAction {
+    display: flex;
+    width: 100%;
+    justify-content: center;
   }
 
   /* Wspieraj is now the row's last item, so it takes over the "stretch to fill
