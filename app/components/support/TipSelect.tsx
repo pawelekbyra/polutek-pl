@@ -138,10 +138,10 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
       </span>
       <div
         className={cn(
-          "rounded-[16px] border-2 bg-[var(--chan-amber-soft)] transition-[border-color,box-shadow] duration-150 motion-reduce:transition-none",
+          "rounded-[16px] border-2 bg-[var(--chan-blue-soft)] transition-[border-color,box-shadow] duration-150 motion-reduce:transition-none",
           open
-            ? "border-[var(--chan-ink)] shadow-[0_10px_24px_-14px_var(--cm-amber-62)]"
-            : "border-[var(--cm-amber-38)] hover:border-[var(--chan-ink)]",
+            ? "border-[var(--chan-ink)] shadow-[0_10px_24px_-14px_var(--cm-blue-34)]"
+            : "border-[var(--cm-blue-28)] hover:border-[var(--chan-ink)]",
         )}
       >
         <button
@@ -199,15 +199,15 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
                   onPointerEnter={() => setActive(index)}
                   className={cn(
                     "flex cursor-pointer items-center gap-3 rounded-[12px] px-3 py-2.5 transition-colors",
-                    index === active && "bg-[var(--chan-amber-soft)]",
+                    index === active && "bg-[var(--chan-blue-soft)]",
                   )}
                 >
                   {ItemIcon ? (
-                    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--chan-amber-soft)]">
+                    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--cm-blue-14)]">
                       <ItemIcon className="h-5 w-5" />
                     </span>
                   ) : itemIconStr ? (
-                    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--chan-amber-soft)] text-[14px] font-bold text-[var(--chan-ink)]">{itemIconStr}</span>
+                    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--cm-blue-14)] text-[14px] font-bold text-[var(--chan-ink)]">{itemIconStr}</span>
                   ) : null}
                   <span className="min-w-0 flex-1">
                     <span className="block text-[14px] font-bold text-[var(--chan-ink)]">{option.title}</span>

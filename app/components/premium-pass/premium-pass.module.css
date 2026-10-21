@@ -98,7 +98,7 @@
 .order { border: 1px solid var(--chan-line, #e1e6ef); border-radius: 14px; overflow: hidden; }
 .orderLine { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 12px 14px; }
 .muted { color: var(--chan-muted, #5d6679); font-size: 12px; }
-.orderTotal { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 11px 14px; background: var(--chan-surface, #f0f3f8); border-top: 1px solid var(--chan-line, #e1e6ef); font-size: 14px; }
+.orderTotal { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 11px 14px; background: #d4e7ff; border-top: 1px solid var(--chan-line, #e1e6ef); font-size: 14px; }
 .orderTotal b { font-size: 18px; letter-spacing: -.01em; }
 .consent { display: grid; grid-template-columns: 18px 1fr; gap: 8px; font-size: 12px; line-height: 1.4; align-items: start; color: var(--chan-body, #344054); }
 .consent input { width: 16px; height: 16px; margin: 1px 0 0; accent-color: var(--chan-ink, #111827); cursor: pointer; }
