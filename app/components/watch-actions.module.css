@@ -328,22 +328,17 @@
   line-height: 1.65;
 }
 
-/* Description panel: a very light, translucent blue surface that matches the blue buttons above it (owner, 2026-10-21). */
+/* Description panel: the same flat style as the buttons above it (owner, 2026-10-21): a solid pale blue, a 2px corner,
+   no transparency, no gradient, no border, no shadow. */
 .descPanel {
   margin-top: 12px !important;
   /* same space above and below the text */
   padding-top: 12px !important;
   padding-bottom: 12px !important;
-  background:
-    linear-gradient(
-      180deg,
-      var(--cm-blue-9),
-      var(--cm-blue-7)
-    );
-  border-color: var(--cm-blue-22);
-  box-shadow:
-    inset 0 1px 0 var(--cm-white-70),
-    0 1px 2px var(--cm-blue-8);
+  background: #e4ecfd !important;
+  border: 0 !important;
+  border-radius: 2px !important;
+  box-shadow: none !important;
 }
 
 
