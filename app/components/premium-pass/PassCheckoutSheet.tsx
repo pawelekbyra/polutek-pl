@@ -15,11 +15,11 @@ import { maskEmail, type PassMethod, type PassStatusDto } from "@/lib/modules/ex
 import { useLanguage } from "../LanguageContext";
 import { TIP_WALLETS, getTipMethodTiles, readLastTipMethod, rememberTipMethod, type TipWallet } from "../support/tip-flow-config";
 import { TipBackContext } from "../support/TipStepLayout";
-import { CrossIcon, ShieldIcon } from "./PassIcons";
+import { CrossIcon } from "./PassIcons";
 import { PassOptionStep } from "./PassOptionStep";
 import { PassConsent, PassDemoSummary, PassStripePay, type PassConsentErrors, type PassConsentState } from "./PassPaymentStep";
 import { PassDeclined, PassMaxAhead, PassPending, PassSuccess } from "./PassSuccess";
-import { newRequestId, passDate, price, sellerLine } from "./pass-copy";
+import { newRequestId, passDate, price } from "./pass-copy";
 import { fetchPassStatus, pollPatronPayment, postDemoCheckout, postPatronConsent, postPatronIntent } from "./usePremiumPass";
 import styles from "./premium-pass.module.css";
 
@@ -437,8 +437,8 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
           )}
 
           <div className={styles.seller}>
-            <ShieldIcon />
-            <span>{tx("Bezpieczne połączenie", "Secure connection")} · {sellerLine(tx)} · support@pawelperfect.com</span>
+            <span>{tx("Sprzedawca: {0}", "Seller: {0}", "POLUTEK Sp. z o.o.")}</span>
+            <span>support@pawelperfect.com</span>
           </div>
         </DialogPrimitive.Popup>
       </DialogPrimitive.Portal>
