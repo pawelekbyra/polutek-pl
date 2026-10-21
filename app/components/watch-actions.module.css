@@ -229,16 +229,16 @@
   background: rgba(0, 0, 0, 0.14) !important;
 }
 
-/* Subscribe: flat muted gold, no sheen, no dark outline and an almost square 2px corner (owner request, 2026-10-21). */
+/* Subscribe: flat red-orange (#F4511E), no sheen, no dark outline and an almost square 2px corner (owner request, 2026-10-21). */
 .subscribeAction {
-  background: #e3b63c !important;
+  background: #f4511e !important;
   border-color: transparent !important;
   border-radius: 2px !important;
-  box-shadow: 0 6px 14px -8px rgba(207, 160, 34, 0.7) !important;
+  box-shadow: 0 6px 14px -8px rgba(244, 81, 30, 0.7) !important;
 }
 
 .subscribeAction:hover {
-  background: #d9aa2c !important;
+  background: #e0430f !important;
 }
 
 .subscribeAction,
@@ -410,8 +410,11 @@
 }
 
 @media (max-width: 1023px) {
+  /* The channel row (avatar, name, Subscribe) sits 10px above the divider, as the buttons sit 10px below it (it was 16 / 10):
+     the row moves 6px down, the total height stays the same, so the buttons do not move. */
   .creatorStrip {
-    padding-bottom: 11px;
+    padding-top: 8px;
+    padding-bottom: 5px;
     border-bottom: 1px solid var(--cm-line-76-2);
   }
 }
