@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Heart } from "lucide-react";
+import { Rocket } from "lucide-react";
 import { useAuth } from "@/lib/auth/react";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import { useLanguage } from "./LanguageContext";
@@ -130,7 +130,7 @@ export default function FavoriteButton({
       title={label}
       className={cn("relative flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] active:scale-95", styles.favoriteAction, className)}
     >
-      <Heart aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={1.8} />
+      <Rocket aria-hidden="true" className="h-[18px] w-[18px]" strokeWidth={1.8} />
     </button>
   );
 }
