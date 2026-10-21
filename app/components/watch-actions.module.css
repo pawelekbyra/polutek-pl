@@ -185,10 +185,10 @@
 }
 
 /* Layout v2 (owner, 2026-10-21): like cluster, Share and Subscribe are solid blue with white text and share the row in
-   three equal parts; the gold "Kup se Premium" button sits in the channel row, on the right. */
+   three equal parts; the "Kup se Premium" button leads the lower row and Subscribe sits in the channel row, on the right. */
 .actionCluster,
 .secondaryAction,
-.actionRail .subscribeAction {
+.subscribeAction {
   border: 1px solid var(--cm-blue-62-black);
   background: var(--chan-blue) !important;
   color: #ffffff !important;
@@ -200,14 +200,14 @@
 .actionCluster .actionButton,
 .secondaryAction,
 .secondaryAction *,
-.actionRail .subscribeAction,
-.actionRail .subscribeAction * {
+.subscribeAction,
+.subscribeAction * {
   color: #ffffff !important;
 }
 
 .actionCluster svg,
 .secondaryAction svg,
-.actionRail .subscribeAction svg {
+.subscribeAction svg {
   stroke: currentColor !important;
 }
 
@@ -224,7 +224,7 @@
 }
 
 /* Subscribe in flat red-orange (vermilion #F4511E) (owner request, 2026-10-21; the sheen was removed from Subscribe, Like and Share). */
-.actionRail .subscribeAction {
+.subscribeAction {
   border: 1px solid #c63d0e;
   background: #f4511e !important;
   box-shadow:
@@ -232,7 +232,7 @@
     0 8px 18px -8px rgba(244, 81, 30, 0.7) !important;
 }
 
-.actionRail .subscribeAction:hover {
+.subscribeAction:hover {
   background: #e0430f !important;
 }
 
@@ -251,18 +251,12 @@
   fill: currentColor;
 }
 
-.creatorStrip .supportAction {
+.actionRail .supportAction {
   flex: none;
   width: auto;
-  margin-left: auto;
+  justify-content: center;
   padding-left: 14px !important;
   padding-right: 14px !important;
-}
-
-.actionRail .subscribeAction {
-  flex: 1 1 auto;
-  width: 100%;
-  justify-content: center;
 }
 
 /* "Kup se Premium": glossy black (owner request, 2026-10-21): a lighter top half and a darker bottom half make the sheen,
