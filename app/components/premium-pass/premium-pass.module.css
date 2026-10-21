@@ -145,7 +145,7 @@
 .bestValue { justify-self: start; margin-bottom: 2px; padding: 2px 7px; border-radius: 6px; background: var(--chan-ink, #111827); color: var(--chan-card, #fff); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 14px; align-items: stretch; }
 @media (max-width: 340px) { .products { grid-template-columns: minmax(0, 1fr); } }
-.legalLinks a { display: block; }
+.legalRow { display: block; }
 .legalLinks a, .consent a { color: var(--chan-blue, #2563eb); text-decoration: underline; text-underline-offset: 2px; }
 .consents { display: grid; gap: 8px; margin-top: 12px; }
 .strip { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--chan-line, #e1e6ef); background: var(--chan-amber-soft, #fff3d6); font-size: 14px; }
