@@ -132,6 +132,11 @@
   box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.55);
 }
 
+/* The frame of the like cluster stays white in every state (only the icon and the count turn blue). */
+.actionCluster {
+  border-color: #ffffff;
+}
+
 .actionCluster .actionButton,
 .secondaryAction,
 .secondaryAction * {

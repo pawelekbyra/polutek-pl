@@ -77,7 +77,7 @@ describe('Hero "Premium" (support) button', () => {
     vi.clearAllMocks();
   });
 
-  it('dispatches polutek:open-support for a signed-in click without any router navigation', () => {
+  it('dispatches polutek:open-patron for a signed-in click without any router navigation', () => {
     render(<Hero video={video} />);
 
     const button = screen.getByRole('button', { name: /zostań patronem/i });
@@ -85,7 +85,7 @@ describe('Hero "Premium" (support) button', () => {
 
     const dispatchedEvents = dispatchSpy.mock.calls
       .map(([event]: [Event]): Event => event)
-      .filter((event: Event) => event.type === 'polutek:open-support');
+      .filter((event: Event) => event.type === 'polutek:open-patron');
     expect(dispatchedEvents).toHaveLength(1);
 
     // A router navigation re-rendered the whole page on the server and flashed the
@@ -106,7 +106,7 @@ describe('Hero "Premium" (support) button', () => {
     expect(mockOpenAuthModal).toHaveBeenCalledWith('sign-in');
     const dispatchedEvents = dispatchSpy.mock.calls
       .map(([event]: [Event]): Event => event)
-      .filter((event: Event) => event.type === 'polutek:open-support');
+      .filter((event: Event) => event.type === 'polutek:open-patron');
     expect(dispatchedEvents).toHaveLength(0);
     expect(mockReplace).not.toHaveBeenCalled();
   });
