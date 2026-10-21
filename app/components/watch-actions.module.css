@@ -184,6 +184,62 @@
   outline-offset: 2px;
 }
 
+/* Layout v2 (owner, 2026-10-21): like cluster, Share and Subscribe are solid blue with white text and share the row in
+   three equal parts; the gold "Kup se Premium" button sits in the channel row, on the right. */
+.actionCluster,
+.secondaryAction,
+.actionRail .subscribeAction {
+  border: 1px solid var(--cm-blue-62-black);
+  background: var(--chan-blue) !important;
+  color: #ffffff !important;
+  box-shadow:
+    inset 0 1px 0 var(--cm-white-30),
+    0 8px 18px -8px var(--cm-blue-60) !important;
+}
+
+.actionCluster .actionButton,
+.secondaryAction,
+.secondaryAction *,
+.actionRail .subscribeAction,
+.actionRail .subscribeAction * {
+  color: #ffffff !important;
+}
+
+.actionCluster svg,
+.secondaryAction svg,
+.actionRail .subscribeAction svg {
+  stroke: currentColor !important;
+}
+
+.actionCluster > span {
+  background: rgba(255, 255, 255, 0.35) !important;
+}
+
+.actionCluster .actionButton:hover,
+.actionRail .subscribeAction:hover,
+.secondaryAction:hover {
+  background: var(--cm-blue-90-black) !important;
+}
+
+/* A pressed like/dislike: the icon fills in white. */
+.actionCluster .actionButton[aria-pressed="true"] svg {
+  fill: currentColor;
+}
+
+.creatorStrip .supportAction {
+  flex: none;
+  width: auto;
+  margin-left: auto;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+}
+
+.actionRail .subscribeAction {
+  flex: 1 1 auto;
+  width: 100%;
+  justify-content: center;
+}
+
 /* Wspieraj in the premium gold (owner request, 2026-10-21): the same amber as the premium pass badge and CTA. */
 .supportAction {
   border-color: var(--chan-amber-strong);
@@ -345,10 +401,8 @@
 
   .actionRail {
     display: grid;
-    /* Order on screen: the gold button first, then the like cluster, then Share. The gold button and the like cluster
-       take what their content needs (a count of several digits widens the cluster); Share takes the rest, so the row
-       always runs edge to edge. */
-    grid-template-columns: auto auto minmax(0, 1fr);
+    /* Like cluster, Share and Subscribe: three equal parts, edge to edge. */
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -358,9 +412,7 @@
     justify-content: center;
   }
 
-  /* The gold button is the first item of the row (it comes last in the markup). */
   .supportAction {
-    order: -1;
     width: auto;
     padding-left: 14px !important;
     padding-right: 14px !important;

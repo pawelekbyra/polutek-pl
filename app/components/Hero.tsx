@@ -323,25 +323,29 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                      {formatCount(subscribersCount)} {subscribersLabel}
                   </span>
                </div>
-               <div className="ml-auto shrink-0 lg:ml-[6px]">
-                  <SubscribeButton
-                    creatorId={video.creatorId}
-                    creatorSlug={video.creator?.slug}
-                    creatorName={video.creator?.name}
-                    variant="compact"
-                    className={cn("rounded-[12px]", styles.subscribeAction)}
-                    // Unknown for this video's channel (the viewer picked a video of another channel):
-                    // the button asks the API for the status of exactly this channel.
-                    initialIsSubscribed={initialIsSubscribed === undefined ? undefined : localSubState.isSubscribed}
-                    initialNotify={initialNotify}
-                    onStatusChange={(isSubscribed: boolean, subscribersCount?: number) => {
-                        setLocalSubState(prev => ({
-                            isSubscribed,
-                            subscribersCount: subscribersCount ?? (isSubscribed ? prev.subscribersCount + 1 : Math.max(0, prev.subscribersCount - 1))
-                        }));
-                    }}
-                  />
-               </div>
+               {/* The gold patron button: PatronCheckoutHost (mounted below) opens the patron checkout on the
+                   "polutek:open-patron" event. It deliberately does not touch the URL: a router navigation
+                   re-renders the whole page on the server. Signed-out click opens sign-in first, since buying
+                   needs an account. The row's last item, so it fills the remaining space (flex-1 below lg:,
+                   fixed above it). The old tip gate is hidden (app/components/channel/tip-gate.ts). */}
+               <button
+                 type="button"
+                 onClick={() => {
+                   if (!userId) {
+                     openAuthModal("sign-in");
+                     return;
+                   }
+                   window.dispatchEvent(new CustomEvent("polutek:open-patron"));
+                 }}
+                 className={cn(
+                   "relative ml-auto flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-[12px] bg-[var(--chan-surface)] px-3 font-sans text-sm font-bold text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95 lg:flex-none",
+                   styles.supportAction,
+                 )}
+                 aria-label={tx("Kup se Premium", "Get Premium")}
+                 title={tx("Kup se Premium", "Get Premium")}
+               >
+                 <span className={styles.supportLabel}>{tx("Kup se Premium", "Get Premium")}</span>
+               </button>
             </div>
 
             <div className={cn("flex w-full flex-wrap items-center gap-2 lg:w-auto lg:flex-nowrap", styles.actionRail)}>
@@ -396,29 +400,25 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                  text={video.description || undefined}
                  className={styles.secondaryAction}
                />
-               {/* The gold patron button: PatronCheckoutHost (mounted below) opens the patron checkout on the
-                   "polutek:open-patron" event. It deliberately does not touch the URL: a router navigation
-                   re-renders the whole page on the server. Signed-out click opens sign-in first, since buying
-                   needs an account. The row's last item, so it fills the remaining space (flex-1 below lg:,
-                   fixed above it). The old tip gate is hidden (app/components/channel/tip-gate.ts). */}
-               <button
-                 type="button"
-                 onClick={() => {
-                   if (!userId) {
-                     openAuthModal("sign-in");
-                     return;
-                   }
-                   window.dispatchEvent(new CustomEvent("polutek:open-patron"));
-                 }}
-                 className={cn(
-                   "relative flex h-9 flex-1 items-center justify-center gap-1.5 rounded-[12px] bg-[var(--chan-surface)] px-3 font-sans text-sm font-bold text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95 lg:flex-none",
-                   styles.supportAction,
-                 )}
-                 aria-label={tx("Kup se Premium", "Get Premium")}
-                 title={tx("Kup se Premium", "Get Premium")}
-               >
-                 <span className={styles.supportLabel}>{tx("Kup se Premium", "Get Premium")}</span>
-               </button>
+               <div className="min-w-0 [&>div]:w-full">
+                  <SubscribeButton
+                    creatorId={video.creatorId}
+                    creatorSlug={video.creator?.slug}
+                    creatorName={video.creator?.name}
+                    variant="compact"
+                    className={cn("rounded-[12px]", styles.subscribeAction)}
+                    // Unknown for this video's channel (the viewer picked a video of another channel):
+                    // the button asks the API for the status of exactly this channel.
+                    initialIsSubscribed={initialIsSubscribed === undefined ? undefined : localSubState.isSubscribed}
+                    initialNotify={initialNotify}
+                    onStatusChange={(isSubscribed: boolean, subscribersCount?: number) => {
+                        setLocalSubState(prev => ({
+                            isSubscribed,
+                            subscribersCount: subscribersCount ?? (isSubscribed ? prev.subscribersCount + 1 : Math.max(0, prev.subscribersCount - 1))
+                        }));
+                    }}
+                  />
+               </div>
             </div>
           </div>
         </div>
