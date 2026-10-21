@@ -323,7 +323,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                      {formatCount(subscribersCount)} {subscribersLabel}
                   </span>
                </div>
-               <div className="shrink-0 lg:ml-[6px]">
+               <div className="flex min-w-0 flex-1 justify-center lg:flex-none lg:justify-start lg:ml-[6px]">
                   <SubscribeButton
                     creatorId={video.creatorId}
                     creatorSlug={video.creator?.slug}
