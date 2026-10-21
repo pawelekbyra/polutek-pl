@@ -272,16 +272,20 @@
   padding-right: 14px !important;
 }
 
-/* "Kup se Premium": flat red-orange #F4511E, the colour Subscribe had before it went black (owner request, 2026-10-21). */
+/* "Kup se Premium": flat yellow #F8D13F (owner request, 2026-10-21) with dark text, white would not be readable on it. */
 .supportAction {
   border-color: transparent;
-  background: #f4511e !important;
-  color: #ffffff !important;
-  box-shadow: 0 6px 14px -8px rgba(244, 81, 30, 0.7) !important;
+  background: #f8d13f !important;
+  color: #3b2a00 !important;
+  box-shadow: 0 6px 14px -8px rgba(248, 209, 63, 0.8) !important;
 }
 
 .supportAction:hover {
-  background: #e0430f !important;
+  background: #efc52c !important;
+}
+
+.supportAction * {
+  color: #3b2a00 !important;
 }
 
 .supportAction:focus-visible {
