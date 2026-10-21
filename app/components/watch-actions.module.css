@@ -132,6 +132,10 @@
   letter-spacing: 0.01em;
 }
 
+.supportAction {
+  gap: 4px;
+}
+
 .supportAction .supportDivider {
   flex: none;
   width: 1px;
@@ -385,7 +389,7 @@
 /* Narrow phones: the three buttons share one row, so "Zostań patronem" gets the room. */
 @media (max-width: 420px) {
   .supportAction {
-    gap: 5px !important;
+    gap: 3px !important;
     padding-left: 8px !important;
     padding-right: 8px !important;
     font-size: 13px !important;
