@@ -25,7 +25,6 @@ import { LinkedDescription } from './video/LinkedDescription';
 import { DescriptionChapters } from './video/DescriptionChapters';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
 import { ThumbsUp, ThumbsDown, Rocket } from 'lucide-react';
-import { PATRON_MIN_MINOR } from '@/lib/modules/experiment-premium-pass/domain/config';
 import styles from './watch-actions.module.css';
 
 interface HeroProps {
@@ -421,7 +420,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                >
                  <Rocket aria-hidden="true" className="h-[18px] w-[18px] shrink-0" strokeWidth={1.9} />
                  <span className={cn("leading-none", styles.supportLabel)}>{tx("Zostań patronem", "Become a patron")}</span>
-                 <span className={styles.supportPrice}>{PATRON_MIN_MINOR / 100} PLN</span>
                </button>
             </div>
           </div>
