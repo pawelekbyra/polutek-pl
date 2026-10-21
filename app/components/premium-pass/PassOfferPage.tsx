@@ -78,7 +78,7 @@ export default async function PassOfferPage({ params }: PassOfferPageProps) {
                 {demo && ` · ${tx("tryb demo", "demo mode")}`}
                 {testMode && ` · ${tx("tryb testowy", "test mode")}`}
               </div>
-              <h1 id="pass-title" className={styles.heroTitle}>{tx("Zostań patronem projektu", "Become a patron of the project")}</h1>
+              <h1 id="pass-title" className={styles.heroTitle}>{tx("Zostań patronem i uzyskaj dostęp do strefy premium", "Become a patron and get access to the premium zone")}</h1>
               <p className={styles.heroLead}>
                 {tx(
                   "Wesprzyj projekt i wejdź do strefy patrona: materiały, których nie ma nigdzie indziej. Płacisz, ile chcesz, a dostęp trwa {0} dni. Bez subskrypcji.",
@@ -119,10 +119,6 @@ export default async function PassOfferPage({ params }: PassOfferPageProps) {
                   <span>{tx("płacisz, ile chcesz", "pay what you want")}</span>
                 </div>
                 <div className={styles.muted}>{vatLine(tx, offer.vatRatePercent)}</div>
-                <ul className={styles.amountHints} aria-label={tx("Proponowane kwoty", "Suggested amounts")}>
-                  {offer.suggestedMinor.map((value) => <li key={value}>{price(locale, value)}</li>)}
-                  <li>{tx("własna kwota", "your own amount")}</li>
-                </ul>
                 <ul className={styles.perks}>
                   <li>{tx("Wszystkie filmy strefy patrona ({0})", "All patron zone videos ({0})", offer.premiumCount)}</li>
                   <li>{tx("Dostęp od razu, na {0} dni od każdej wpłaty", "Instant access for {0} days after every payment", offer.accessDays)}</li>
@@ -147,7 +143,7 @@ export default async function PassOfferPage({ params }: PassOfferPageProps) {
               </details>
               <details>
                 <summary>{tx("Ile mogę wpłacić?", "How much can I pay?")}</summary>
-                <p>{tx("Od {0} do {1}, możesz wybrać proponowaną kwotę albo wpisać własną. Kwota nie zmienia długości dostępu.", "From {0} to {1}: pick a suggested amount or enter your own. The amount does not change how long access lasts.", price(locale, offer.minMinor), price(locale, offer.maxMinor))}</p>
+                <p>{tx("Od {0} do {1}, wpisz kwotę, jaką chcesz. Kwota nie zmienia długości dostępu.", "From {0} to {1}: enter any amount you like. The amount does not change how long access lasts.", price(locale, offer.minMinor), price(locale, offer.maxMinor))}</p>
               </details>
               <details>
                 <summary>{tx("Od kiedy liczy się czas?", "When does the time start?")}</summary>

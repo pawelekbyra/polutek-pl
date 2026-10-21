@@ -225,3 +225,6 @@
   .progress::before { animation: none; opacity: .5; }
   .checkAnim path { animation: none; stroke-dashoffset: 0; }
 }
+.amountHead { display: grid; gap: 4px; }
+.amountTitle { margin: 0; font-size: 20px; line-height: 1.2; font-weight: 800; letter-spacing: -.015em; }
+.amountLead { margin: 0; font-size: 15px; font-weight: 700; color: var(--chan-body, #344054); }

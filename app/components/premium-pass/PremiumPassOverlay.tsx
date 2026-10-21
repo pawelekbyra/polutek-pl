@@ -110,7 +110,7 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
           <p className={styles.stageSub}>{title ? `${title} · ` : ""}{tx("tylko dla patronów projektu", "for the project's patrons only")}</p>
           <div className={styles.offer}>
             <div>
-              <div className={styles.offerName}>{tx("Zostań patronem projektu", "Become a patron of the project")}</div>
+              <div className={styles.offerName}>{tx("Zostań patronem i uzyskaj dostęp do strefy premium", "Become a patron and get access to the premium zone")}</div>
               <ul className={styles.offerPerks}>
                 <li>{tx("Wszystkie filmy strefy patrona ({0})", "All patron zone videos ({0})", offer.premiumCount)}</li>
                 <li>{tx("płacisz, ile chcesz, od {0}", "pay what you want, from {0}", from)}</li>
