@@ -68,7 +68,7 @@ albo znika w tym samym PR. Historia jest w git.
 
 | Temat | Plik |
 |---|---|
-| Wejściówka Premium (plan, bez pobierania pieniędzy, wycofanie jednym poleceniem) i makieta wyglądu | [`experiments/premium-pass.md`](experiments/premium-pass.md), makieta: `experiments/premium-pass-mockup.html` |
+| Strefa patrona / Wejściówka Premium (plan, prawdziwa płatność Stripe za przełącznikiem, wycofanie jednym poleceniem) i makieta wyglądu | [`experiments/premium-pass.md`](experiments/premium-pass.md), makieta: `experiments/premium-pass-mockup.html` |
 
 ## Audyty (`audit/`)
 

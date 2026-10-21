@@ -1,6 +1,87 @@
-# Eksperyment „Wejściówka Premium”: plan wdrożenia (2026-10-20)
+# Eksperyment „Wejściówka Premium” → „Strefa patrona”: plan wdrożenia (2026-10-20, zmiana 2026-10-21)
 
 Status: **zbudowane na gałęzi `exp/premium-pass` (PR do `main`, nie scalone, nie wdrożone)**, z decyzjami właściciela z 2026-10-20 (niżej). Makieta wyglądu: [`premium-pass-mockup.html`](premium-pass-mockup.html) (otwórz plik w przeglądarce; przełącznik jasny/ciemny i telefon/komputer).
+
+## Strefa patrona: prawdziwa płatność Stripe za dostęp (2026-10-21, zastępuje produkty i kasę poniżej)
+
+Decyzja właściciela z 2026-10-21: z „wejściówki” robimy **„Zostań patronem projektu i uzyskaj dostęp do strefy patrona”** z prawdziwą płatnością przez Stripe. Poniższe punkty **zastępują** w tym dokumencie
+wszystko, co mówi o dwóch wejściówkach (7 i 30 dni), o stałych cenach, o „nigdy nie pobiera pieniędzy” i o kasie bez Stripe (rozdz. 0, 2, 4, 5, 8 i decyzje 1 i 5 wyżej). Reszta (przełącznik
+`PREMIUM_PASS_EXPERIMENT`, lista filmów, bramka dostępu, plan `PASS_REQUIRED`, wycofanie) zostaje.
+
+### Co to jest i ile kosztuje
+
+- **Płacisz, ile chcesz:** propozycje **10 / 25 / 50 / 100 zł** (domyślnie 25 zł) albo własna kwota. **Minimum 5 zł, maksimum 1000 zł** (PLN, kwota brutto w groszach, liczba całkowita). Minimum jest wyżej
+  niż twarda dolna granica Stripe dla PLN (2 zł); limity są stałe w kodzie (`PATRON_*` w `domain/config.ts`), egzekwowane na serwerze (`validatePatronAmount`), nie w przeglądarce.
+- **Długość dostępu:** każda udana wpłata daje **30 dni**, niezależnie od kwoty. Wpłata przy trwającym dostępie **przedłuża go o kolejne 30 dni od jego końca** (nic się nie odnawia samo, to nie subskrypcja).
+  Dostęp nie może sięgać dalej niż **365 dni od teraz**: dalsza wpłata jest wtedy odrzucana przed pobraniem pieniędzy (`MAX_AHEAD`).
+- Zablokowane filmy, tryb widoczności i bramka dostępu bez zmian. Zniknęły produkty `PASS_7D` / `PASS_30D`, kafelki metod płatności, kafelki produktów i pas DEMO w oknie kasy.
+
+### Dwa przełączniki (oba w `app.env`, czytane w trakcie działania)
+
+| Zmienna | Wartości | Domyślnie |
+|---|---|---|
+| `PREMIUM_PASS_EXPERIMENT` | `off` \| `testers` \| `all` | `off` |
+| `PREMIUM_PASS_PAYMENTS` | `demo` \| `stripe` (dokładnie `stripe`, każda inna wartość to `demo`) | `demo` |
+
+- **`demo`** (domyślnie): kasa wygląda jak prawdziwa, ale serwer tylko symuluje płatność (wiersz `AppSetting` z `provider: "DEMO"`); nie dotyka Stripe. Nic się nie zmienia, dopóki właściciel nie ustawi `stripe`.
+- **`stripe`**: prawdziwa płatność, ale tylko gdy **wszystko** się zgadza (`resolvePremiumPayments`, `domain/payments-mode.ts`); inaczej kasa pokazuje „Płatności są chwilowo niedostępne” i **nigdy nie spada do trybu demo**
+  (demo daje dostęp bez pieniędzy). Warunki: `STRIPE_SECRET_KEY` i `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` są **tego samego trybu** (test z test, live z live; mieszanka = niedostępne), `STRIPE_WEBHOOK_SECRET` jest ustawiony,
+  a dla kluczy **live** otwarta jest globalna bramka sprzedaży `PLATFORM_GATE_SALES=on`. Klucze **testowe** działają przy zamkniętej bramce (żadne prawdziwe pieniądze się nie ruszają), tak właściciel sprawdza całość przed
+  założeniem spółki. Przy kluczach testowych kasa i oferta mają widoczną etykietę **„Tryb testowy”** (z podpowiedzią karty `4242…`); przy live nie ma żadnej etykiety.
+- Panel „DEMO” (wygaś / usuń mój dostęp) działa tylko w trybie `demo` i przy kluczach testowych; przy live serwer go odrzuca (dostęp jest wtedy dowodem prawdziwej wpłaty).
+
+### Kasa w dwóch krokach (`PassCheckoutSheet`, pełna wysokość, bez paska demo)
+
+1. **Krok 1:** kwota (propozycje + własna), **lista rozwijana metod płatności** (to samo `TipSelect` i te same kafelki, co w bramce napiwkowej: `getTipMethodTiles`, bez makiety „Crypto”),
+   regulamin i polityka prywatności **tylko jako linki**, przycisk „Dalej · kwota”. Zapytanie o PaymentIntent idzie dopiero przy „Dalej” (nie przy otwarciu okna), więc samo otwarcie niczego nie tworzy. Jeśli Stripe nie dopuszcza wybranej
+   metody dla tej płatności, kasa zostaje w kroku 1, zawęża listę do dozwolonych i mówi, że trzeba wybrać inną.
+2. **Krok 2:** formularz wybranej metody to **te same formularze, co w bramce napiwkowej** (`TipPayStep`: BLIK, Przelewy24, karta, Apple/Google Pay, reszta przez Payment Element; w `TipPayFrame` doszedł opcjonalny `patron`,
+   napiwek go nie przekazuje i działa jak dotąd) oraz **dwa pola wyboru**: „Akceptuję regulamin i politykę prywatności” i zgoda na natychmiastowy dostęp z utratą prawa odstąpienia (art. 38 pkt 13 ustawy o prawach konsumenta;
+   zostawiona świadomie, można ją usunąć na wyraźną decyzję właściciela). Przycisk płatności jest nieaktywny, dopóki oba nie są zaznaczone (portfel Apple/Google nie otwiera się bez zgód). Tuż przed potwierdzeniem w Stripe
+   przeglądarka zapisuje zgodę na swojej nieopłaconej płatności (`POST /api/user/premium-pass/consent` → `Payment.metadata.consents`); jeśli zapis się nie uda, płatność nie rusza.
+3. Dostępność: wskaźnik kroków (`<ol>`, `aria-current="step"`), komunikat `aria-live` „Krok 2 z 2”, fokus przenosi się na nagłówek kroku, lista rozwijana obsługiwana klawiaturą (strzałki, Enter, Esc), błędy w `role="alert"`,
+   animacje wyłączone przy `prefers-reduced-motion`, układ sprawdzony na 375 px.
+
+### Przepływ pieniędzy i przyznawanie dostępu (nie ma równoległego stosu płatności)
+
+```
+Dalej (krok 1)  -> POST /api/user/premium-pass/intent        (tylko tryb stripe + dostępne; kwota walidowana na serwerze)
+                -> createCheckoutIntent({ purpose: "premium_pass" })  [to samo, co napiwki]: jeden wiersz Payment (PENDING) + jeden PaymentIntent,
+                   metadata: userId, paymentId, requestId, creatorId, purpose; opis „Dostęp do strefy patrona: …”; automatic_payment_methods
+Krok 2          -> POST .../consent  -> Stripe.js potwierdza wybraną metodą (te same formularze, co napiwek)
+Stripe          -> webhook payment_intent.succeeded (podpis weryfikowany na surowym ciele; zdarzenie z innym livemode niż klucz jest ignorowane)
+                   | GET /api/payments/[id] (szybka ścieżka) | cron uzgadniania  ->  fulfillPayment()   (jedyna droga, idempotentna, CAS)
+                -> w tej samej transakcji: Payment = SUCCEEDED, UserPaymentTotal, a dla payment.metadata.purpose = premium_pass
+                   grantPatronAccessForPayment(): wiersz AppSetting `xp.premium_pass:<userId>` (blokada advisory na konto, id płatności zapisane raz)
+                   -> bez znacznika wspierającego (PatronGrant) i bez maila „dziękuję za napiwek”
+```
+
+- **Dostęp jest przyznawany wyłącznie przez `fulfillPayment()`** po weryfikacji, że Stripe mówi `succeeded`, a kwota, waluta, intent i użytkownik zgadzają się z wierszem `Payment` (test `premium-pass-no-money.test.ts` pilnuje, że żadna trasa
+  ani komponent nie woła `grantPatronAccessForPayment`). Przeglądarka tylko czeka (`GET /api/payments/[id]`) i czyta status.
+- **Pełny zwrot** (`REFUNDED`) zdejmuje 30 dni tej wpłaty z dostępu (`revokePatronAccessForPayment`, z `applyRefundedTotal`). **Częściowy zwrot, spór i cofnięty zwrot** właściciel obsługuje ręcznie (dostęp się nie zmienia samoczynnie).
+  **Zwroty robi właściciel ręcznie** (panel Stripe albo „Płatności” w panelu); kod niczego nie zwraca sam.
+- **Księga:** płatność idzie do istniejącej tabeli `Payment` (ta sama, co napiwki; widać ją w panelu „Płatności” i „Przychody”), bo dostaje za darmo webhook, uzgadnianie, zwroty, spory i audyt. Odróżnia ją `metadata.purpose`
+  (bez migracji). Pasek zbiórki liczy tylko napiwki: płatności strefy patrona są od niego odejmowane (`fundraising-progress.service.ts`). Mapowanie „kto ma dostęp do kiedy” zostaje w `AppSetting` (`xp.premium_pass:<userId>`, wersja 2:
+  `provider` DEMO|STRIPE, `paymentIds`, `totalMinor`, zgody); stare wiersze v1 (dwie wejściówki demo) są czytane jako dostęp demo.
+- **Czego nie ma:** migracji bazy, osobnego klienta Stripe, osobnego webhooka, zapisu do `Order`/`Entitlement`/`LedgerEntry`/`PatronGrant`, maila z potwierdzeniem (wymóg trwałego nośnika z art. 21 u.p.k. czeka na decyzję i spółkę).
+
+### Jak włączyć (tylko właściciel, nic z tego nie robi kod ani agent)
+
+Test na produkcji bez prawdziwych pieniędzy wymaga kluczy testowych (inna para kluczy i osobny endpoint webhooka w Stripe w trybie testowym; dziś na produkcji jest klucz **live**, więc test najlepiej na osobnym środowisku):
+`PREMIUM_PASS_EXPERIMENT=all`, `PREMIUM_PASS_PAYMENTS=stripe`, `STRIPE_SECRET_KEY=sk_test_…`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_…` (zmienna `NEXT_PUBLIC_` jest wbudowana w obraz: wymaga przebudowy),
+`STRIPE_WEBHOOK_SECRET=whsec_…` (endpoint `/api/webhooks/stripe`, zdarzenia `payment_intent.*`, `charge.refunded`, `refund.*`, `charge.dispute.*`).
+**Prawdziwa sprzedaż** (po założeniu POLUTEK Sp. z o.o., regulaminie od prawnika, VAT i zatwierdzeniu Stripe): klucze live + `PLATFORM_GATE_SALES=on` + `PREMIUM_PASS_PAYMENTS=stripe`. Dopóki bramka sprzedaży jest wyłączona,
+klucze live nigdy nie pobiorą pieniędzy z tej funkcji (kasa pokazuje „niedostępne”).
+
+### Wycofanie, gdy są już prawdziwe płatności
+
+`premium-pass-revert.sh --flag-only` ustawia `PREMIUM_PASS_EXPERIMENT=off` **i** `PREMIUM_PASS_PAYMENTS=demo` (nikt nowy nie zapłaci; trasy odpowiadają 404). Webhook i uzgadnianie nadal rozliczają wpłaty w toku i przyznają dostęp (mapowanie
+dostępu leży w bazie, nie zależy od przełącznika). **Pełne wycofanie:** commity eksperymentu (też te w module płatności) cofa `git revert`; skrypt **nigdy nie usuwa wierszy `Payment`**, kasuje tylko mapowanie dostępu
+(`AppSetting xp.premium_pass%`) i najpierw zapisuje je do pliku `premium-pass-grants-<czas>.tsv` na serwerze. Gdy istnieją dostępy z prawdziwych wpłat albo wpłaty w toku, skrypt **odmawia** (kod wyjścia 6), dopóki nie podasz
+`--confirm-real-payments` (flaga zostaje wtedy wyłączona). **Po wycofaniu kodu** wpłata, która jeszcze była `PENDING`, zostałaby rozliczona jak napiwek (stary kod nie zna celu płatności), więc przed pełnym wycofaniem
+poczekaj, aż wpłaty w toku się rozstrzygną. Zwroty za dostęp, który znika, robi właściciel ręcznie.
+
+---
 
 ### Decyzje właściciela (2026-10-20) i odstępstwa implementacji od planu
 
