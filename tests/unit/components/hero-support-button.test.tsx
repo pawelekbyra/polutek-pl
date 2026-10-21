@@ -65,7 +65,7 @@ const video = {
   creator: { id: 'creator_1', name: 'Creator', slug: 'creator', subscribersCount: 0 },
 } as unknown as PublicVideoDTO;
 
-describe('Hero "Wspieraj" button', () => {
+describe('Hero "Premium" (support) button', () => {
   let dispatchSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
@@ -80,7 +80,7 @@ describe('Hero "Wspieraj" button', () => {
   it('dispatches polutek:open-support for a signed-in click without any router navigation', () => {
     render(<Hero video={video} />);
 
-    const button = screen.getByRole('button', { name: /wspieraj/i });
+    const button = screen.getByRole('button', { name: /premium/i });
     fireEvent.click(button);
 
     const dispatchedEvents = dispatchSpy.mock.calls
@@ -100,7 +100,7 @@ describe('Hero "Wspieraj" button', () => {
     mockUseAuth.mockReturnValue({ userId: null });
     render(<Hero video={video} />);
 
-    const button = screen.getByRole('button', { name: /wspieraj/i });
+    const button = screen.getByRole('button', { name: /premium/i });
     fireEvent.click(button);
 
     expect(mockOpenAuthModal).toHaveBeenCalledWith('sign-in');
