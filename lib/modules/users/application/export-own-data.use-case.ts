@@ -18,12 +18,14 @@ export interface OwnDataExport {
   payments: unknown[];
   /** Saved "resume watching" positions (one row per video, seconds). */
   videoProgress: { videoId: string; positionSeconds: number; durationSeconds: number | null; updatedAt: Date }[];
+  /** Videos saved to the person's favorites. */
+  videoFavorites: { videoId: string; createdAt: Date }[];
 }
 
 export class ExportOwnDataUseCase {
   static async execute(ctx: AppContext, userId: string): Promise<OwnDataExport> {
     const prisma = ctx.prisma;
-    const [user, comments, likes, dislikes, commentReactions, subscriptions, emailPreferences, payments, videoProgress] = await Promise.all([
+    const [user, comments, likes, dislikes, commentReactions, subscriptions, emailPreferences, payments, videoProgress, videoFavorites] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -61,6 +63,7 @@ export class ExportOwnDataUseCase {
         select: { videoId: true, positionSeconds: true, durationSeconds: true, updatedAt: true },
         orderBy: { updatedAt: "desc" },
       }),
+      prisma.videoFavorite.findMany({ where: { userId }, select: { videoId: true, createdAt: true }, orderBy: { createdAt: "desc" } }),
     ]);
 
     return {
@@ -76,6 +79,7 @@ export class ExportOwnDataUseCase {
       emailPreferences,
       payments,
       videoProgress,
+      videoFavorites,
     };
   }
 }

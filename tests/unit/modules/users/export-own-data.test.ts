@@ -12,6 +12,7 @@ function fakeCtx() {
     subscription: find([]),
     emailPreference: find([]),
     payment: find([{ id: "p1", amountMinor: 500, currency: "PLN", status: "SUCCEEDED" }]),
+    videoFavorite: find([{ videoId: "v3", createdAt: new Date(0) }]),
     videoProgress: find([{ videoId: "v1", positionSeconds: 120, durationSeconds: 600, updatedAt: new Date(0) }]),
   };
   return { prisma, ctx: { prisma, now: () => new Date("2026-10-05T10:00:00Z") } as never };
@@ -30,11 +31,13 @@ describe("ExportOwnDataUseCase", () => {
     expect(data.videoProgress).toEqual([
       { videoId: "v1", positionSeconds: 120, durationSeconds: 600, updatedAt: new Date(0) },
     ]);
+    expect(data.videoFavorites).toEqual([{ videoId: "v3", createdAt: new Date(0) }]);
     // every query is scoped to this account
     expect(prisma.comment.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { authorId: "u1" } }));
     expect(prisma.payment.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
     expect(prisma.emailPreference.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
     expect(prisma.videoProgress.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
+    expect(prisma.videoFavorite.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: "u1" } }));
   });
 
   it("never selects secrets, tokens or IP addresses", async () => {

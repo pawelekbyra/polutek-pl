@@ -24,6 +24,7 @@ import { resolvePlaybackViewerKey } from '@/app/components/preload/playback-view
 import { getHomeViewerActor, loadHeroPlaybackPlan, loadInitialComments } from './home-viewer-data';
 import { getServerTx } from '@/lib/i18n/server-tx';
 import { getVideoProgressSeconds, listContinueWatching } from '@/lib/modules/watch-progress';
+import { isVideoFavorited } from '@/lib/modules/favorites';
 import { getPlaylistQueue, parseListParam, parseQueueIndex, PLAYLIST_INDEX_PARAM, PLAYLIST_LIST_PARAM } from '@/lib/modules/playlists';
 
 interface HomeExperienceProps {
@@ -133,7 +134,7 @@ export default async function HomeExperience({ locale, videoId, q, t, list, i }:
   };
 
   let userDb = null;
-  let initialInteraction = { liked: false, disliked: false };
+  let initialInteraction = { liked: false, disliked: false, favorited: false };
   let initialIsSubscribed = false;
   let initialNotify = true;
   let initialProgressSeconds: number | null = null;
@@ -145,7 +146,7 @@ export default async function HomeExperience({ locale, videoId, q, t, list, i }:
 
     // Loads (never creates) the viewer's row; fails closed for a missing or deleted account.
     const userCtx = createAppContext();
-    const [, dbResult, like, dislike, sub, pieces, progressSeconds, shelf] = await Promise.all([
+    const [, dbResult, like, dislike, favorited, sub, pieces, progressSeconds, shelf] = await Promise.all([
       getOrCreateCurrentUser(userCtx, userId).catch((e) => {
         logger.error("[HOME_USER_FETCH_ERROR]", e);
       }),
@@ -159,6 +160,7 @@ export default async function HomeExperience({ locale, videoId, q, t, list, i }:
       targetVideoId ? prisma.videoDislike.findUnique({
         where: { userId_videoId: { userId, videoId: targetVideoId } }
       }).catch(() => null) : null,
+      targetVideoId ? isVideoFavorited(userId, targetVideoId, userCtx).catch(() => false) : false,
       selectedVideo?.creatorId ? prisma.subscription.findUnique({
         where: { userId_creatorId: { userId, creatorId: selectedVideo.creatorId } },
         select: { id: true, notify: true }
@@ -175,7 +177,7 @@ export default async function HomeExperience({ locale, videoId, q, t, list, i }:
     userDb = dbResult;
     initialProgressSeconds = progressSeconds ?? null;
     continueWatching = shelf;
-    initialInteraction = { liked: !!like, disliked: !!dislike };
+    initialInteraction = { liked: !!like, disliked: !!dislike, favorited };
     initialIsSubscribed = !!sub;
     initialNotify = sub?.notify ?? true;
     viewerPieces = pieces;

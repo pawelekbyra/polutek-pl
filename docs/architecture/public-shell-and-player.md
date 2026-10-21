@@ -55,5 +55,7 @@ Dźwięk w odtwarzaczu i przycisk logo: `../operations/PLAYER-SOUND.md`. Języki
 ## Wznawianie oglądania, `?t=` i ustawienia (2026-10-14)
 
 Pełny opis niezmienników: CLAUDE.md §4.26. Skrót: `POST /api/videos/[id]/progress` zapisuje pozycję zalogowanego (`watch-progress`), gość używa `localStorage`; `useVideoProgress` w `VideoPlayer` stosuje pozycję startową (`?t=` wygrywa), raportuje co ~10 s i przy zamknięciu karty, a `ResumeNotice` pokazuje „Wznowiono od mm:ss” z przyciskiem „Od początku”.
+
+**Ulubione:** przycisk-serce „Dodaj do ulubionych” w rzędzie akcji `Hero` (`app/components/FavoriteButton.tsx`, tuż przed „Zostań patronem”) zapisuje film do prywatnej listy widza (`VideoFavorite`, moduł `lib/modules/favorites`, `PUT /api/videos/[id]/favorite`), a półka „Ulubione” (`channel/FavoritesShelf`, `GET /api/user/favorites`) stoi pod odtwarzaczem obok „Kontynuuj oglądanie”. Opis: CLAUDE.md §4.26.
 `PlayerSettingsMenu` (w `PolutekControls`) daje jakość (Auto + poziomy z manifestu HLS), prędkość 0,5-2x i obraz w obrazie. Półka „Kontynuuj oglądanie” (`channel/ContinueWatchingShelf.tsx`) jest renderowana w `ChannelHome` z danych `HomeExperience`.
 Menu Udostępnij (`ShareButton`, `getStartSeconds`) dodaje pozycję „Zacznij od aktualnego czasu”, która dopisuje `?t=` do linków menu.
