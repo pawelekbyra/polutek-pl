@@ -121,75 +121,30 @@
   filter: none;
 }
 
-/* Like/dislike and Share in black with white text (owner request, 2026-10-21). The icons draw with currentColor
-   so the "pressed" state can switch them to a light blue on the black. */
-.actionCluster,
-.secondaryAction {
-  --watch-black: #2b2c2e;
-  border-color: #2b2c2e;
-  background: var(--watch-black) !important;
-  color: #ffffff !important;
-  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.55);
-}
-
-/* The frame of the like cluster stays white in every state (only the icon and the count turn blue). */
-.actionCluster {
-  border-color: #ffffff;
-}
-
-.actionCluster .actionButton,
-.secondaryAction,
-.secondaryAction * {
-  color: #ffffff !important;
-}
-
-/* A pressed like/dislike: icon (filled) and count turn the bright blue. */
-.actionCluster .actionButton[aria-pressed="true"] {
-  color: #3b82f6 !important;
-}
-
-.actionCluster .actionButton[aria-pressed="true"] svg {
-  fill: currentColor;
-}
-
-.actionCluster svg,
-.secondaryAction svg {
-  stroke: currentColor !important;
-}
-
-.actionCluster > span {
-  background: rgba(255, 255, 255, 0.28) !important;
-}
-
-.actionCluster .actionButton:hover {
-  background: #3a3b3e;
-}
-
-.secondaryAction:hover {
-  background: #3a3b3e !important;
-  border-color: #3a3b3e;
-}
-
 .supportAction span {
   white-space: normal;
   text-align: center;
   line-height: 1.05 !important;
 }
 
-/* "Dodaj do ulubionych": a small square icon button before Zostań patronem, in the same black-with-white-frame look as
-   the like cluster. Pressed (saved): the heart fills with the bright blue of a pressed like; the frame stays white. */
+/* "Dodaj do ulubionych": a small square icon button before Zostań patronem, in the same cream look as the like cluster and
+   Share (the plain --watch-control-* surface). Pressed (saved): the icon turns the blue of a pressed like. */
 .favoriteAction {
   flex: none;
   width: 36px;
   height: 36px;
   padding: 0;
-  border: 1px solid #ffffff;
-  background: #2b2c2e !important;
-  color: #ffffff !important;
-  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--watch-control-border);
+  background: var(--watch-control-bg) !important;
+  color: var(--chan-ink) !important;
+  box-shadow:
+    0 1px 2px rgba(23, 23, 23, 0.04),
+    0 5px 14px rgba(23, 23, 23, 0.045);
   transition:
     transform 160ms ease,
+    border-color 160ms ease,
     background-color 160ms ease,
+    box-shadow 160ms ease,
     color 160ms ease;
 }
 
@@ -198,16 +153,13 @@
 }
 
 .favoriteAction:hover {
-  background: #3a3b3e !important;
   transform: translateY(-1px);
+  border-color: var(--cm-blue-28-wc-border);
+  background: var(--watch-control-hover) !important;
 }
 
 .favoriteAction[aria-pressed="true"] {
-  color: #3b82f6 !important;
-}
-
-.favoriteAction[aria-pressed="true"] svg {
-  fill: currentColor;
+  color: var(--chan-blue) !important;
 }
 
 .favoriteAction:focus-visible {
@@ -409,7 +361,7 @@
   }
 }
 
-/* Narrow phones: the three buttons share one row, so "Zostań patronem" gets the room the black ones give up. */
+/* Narrow phones: the three buttons share one row, so "Zostań patronem" gets the room. */
 @media (max-width: 420px) {
   .supportAction {
     gap: 5px !important;
