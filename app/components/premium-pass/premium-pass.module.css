@@ -87,9 +87,11 @@
 .sheet { position: fixed; z-index: 9991; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(520px, 100vw); height: 100dvh; max-height: 100dvh; display: flex; flex-direction: column; overflow: hidden; background: var(--chan-card, #fff); color: var(--chan-ink, #111827); border: 1px solid var(--chan-line, #e1e6ef); border-top: 0; border-bottom: 0; border-radius: 0; box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .6); outline: none; animation: sheetIn 220ms var(--ease-enter, ease) both; }
 @keyframes sheetIn { from { opacity: 0; transform: translate(-50%, calc(-50% + 10px)); } to { opacity: 1; transform: translate(-50%, -50%); } }
 /* Title and close button on one row (the close button keeps its corner); everything below sits tight under it. */
-.sheetHead { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 0; }
-.sheetTitle { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
-.close { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--chan-line, #e1e6ef); background: var(--chan-card, #fff); display: grid; place-items: center; color: var(--chan-muted, #5d6679); cursor: pointer; }
+.sheetHead { position: relative; display: block; padding: 14px 18px 0; }
+.sheetHead + .sheetBody { padding-top: 28px; }
+.sheetTitle { margin: 0; padding-right: 64px; font-size: 19px; line-height: 1.1; font-weight: 800; letter-spacing: -.01em; }
+/* The close button stays in its corner and no longer sets the height of the row: the title's top edge lines up with the button's top edge and everything below rises. */
+.close { position: absolute; top: 14px; right: 18px; z-index: 3; width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--chan-line, #e1e6ef); background: var(--chan-card, #fff); display: grid; place-items: center; color: var(--chan-muted, #5d6679); cursor: pointer; }
 .close:disabled { opacity: .4; cursor: not-allowed; }
 .sheetBody { padding: 0 18px 18px; display: flex; flex-direction: column; gap: 14px; flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .sheetBody > * { flex-shrink: 0; }
@@ -115,7 +117,7 @@
 
 /* ---------- patron checkout: steps, amount, notices ---------- */
 .srOnly { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-.steps { display: flex; gap: 8px; margin: 0; padding: 0 18px 4px; list-style: none; }
+.steps { display: flex; gap: 8px; margin: 0; padding: 10px 70px 4px 18px; list-style: none; }
 .stepItem { display: flex; align-items: center; gap: 8px; flex: 1; min-height: 32px; font-size: 13px; font-weight: 700; color: var(--chan-muted, #5d6679); }
 .stepNow { color: var(--chan-ink, #111827); }
 .stepDot { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 800; border: 2px solid var(--chan-line, #e1e6ef); background: var(--chan-card, #fff); }
