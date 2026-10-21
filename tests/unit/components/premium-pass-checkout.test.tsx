@@ -334,10 +334,11 @@ describe('patron checkout, step 3 in demo mode (simulated payment)', () => {
     expect(screen.queryByTestId('stripe-elements')).toBeNull();
   });
 
-  it('the footer shows the seller and support@polutek.com on two lines', async () => {
+  it('the footer shows only the seller, with the full abbreviation and no e-mail', async () => {
     open();
     const dialog = await screen.findByRole('dialog');
-    expect(dialog).toHaveTextContent('support@polutek.com');
+    expect(dialog.textContent?.replace(/ /g, ' ')).toContain('Sprzedawca: POLUTEK Sp. z o.o.');
+    expect(dialog).not.toHaveTextContent('@polutek.com');
     expect(dialog).not.toHaveTextContent('pawelperfect.com');
   });
 });
