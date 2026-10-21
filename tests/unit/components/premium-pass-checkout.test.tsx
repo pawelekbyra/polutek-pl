@@ -42,7 +42,7 @@ const jsonBody = (needle: string, index = 0) => JSON.parse(String(calls(needle)[
 function activePass(provider: 'DEMO' | 'STRIPE') {
   return {
     state: 'active', provider, ref: provider === 'DEMO' ? 'DEMO-AAAA-BBBB' : 'pay_1', expiresAt: '2026-11-20T10:00:00.000Z', grantedAt: '2026-10-21T10:00:00.000Z',
-    method: 'blik', priceMinor: 2500, totalMinor: 2500, waiverAt: '2026-10-21T10:00:00.000Z',
+    method: 'blik', priceMinor: 2000, totalMinor: 2000, waiverAt: '2026-10-21T10:00:00.000Z',
   };
 }
 
@@ -76,10 +76,12 @@ describe('patron checkout, step 1', () => {
   it('offers suggested amounts, an own amount, a method dropdown and Terms/Privacy as links only', async () => {
     open();
     const dialog = await screen.findByRole('dialog');
-    const amounts = within(dialog).getAllByRole('radio');
-    expect(amounts.map((r) => (r as HTMLInputElement).value)).toEqual(['1000', '2500', '5000', '10000']);
-    expect((within(dialog).getByRole('radio', { name: /25\s*zł/ }) as HTMLInputElement).checked).toBe(true);
-    expect(within(dialog).getByRole('textbox', { name: 'Albo wpisz własną kwotę' })).toBeInTheDocument();
+    // pay what you want: one prefilled field (the minimum), no suggested-amount buttons
+    expect(within(dialog).queryAllByRole('radio')).toHaveLength(0);
+    expect(within(dialog).getByRole('heading', { name: 'Zostań patronem i uzyskaj dostęp do strefy premium' })).toBeInTheDocument();
+    expect(within(dialog).getByText('Zapłać ile chcesz. Minimum 20 zł.')).toBeInTheDocument();
+    expect((within(dialog).getByRole('textbox', { name: 'Twoja kwota' }) as HTMLInputElement).value).toBe('20');
+    expect(within(dialog).getByRole('textbox', { name: 'Twoja kwota' })).toBeInTheDocument();
     expect(within(dialog).getByRole('combobox', { name: 'Metoda płatności' })).toBeInTheDocument();
     // no checkbox here: the consent is given in step 2
     expect(within(dialog).queryAllByRole('checkbox')).toHaveLength(0);
@@ -87,7 +89,7 @@ describe('patron checkout, step 1', () => {
     const privacy = within(dialog).getByRole('link', { name: 'Polityka prywatności' });
     expect(terms).toHaveAttribute('href', '/regulamin-premium');
     expect(privacy).toHaveAttribute('href', expect.stringContaining('polityka-prywatnosci'));
-    expect(within(dialog).getByRole('button', { name: N('Dalej · 25 zł') })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: N('Dalej · 20 zł') })).toBeInTheDocument();
     expect(dialog.querySelector('[data-demo-ribbon]')).toBeNull();
   });
 
@@ -123,24 +125,26 @@ describe('patron checkout, step 1', () => {
   it('own amount: replaces the suggestion, updates the button, and the limits are enforced with a message', async () => {
     open();
     const dialog = await screen.findByRole('dialog');
-    const field = within(dialog).getByRole('textbox', { name: 'Albo wpisz własną kwotę' });
-    fireEvent.change(field, { target: { value: '15,50' } });
-    expect(within(dialog).getAllByRole('radio').some((r) => (r as HTMLInputElement).checked)).toBe(false);
-    expect(within(dialog).getByRole('button', { name: N('Dalej · 15,50 zł') })).toBeInTheDocument();
+    const field = within(dialog).getByRole('textbox', { name: 'Twoja kwota' });
+    expect(within(dialog).getByRole('button', { name: N('Dalej · 20 zł') })).toBeInTheDocument();
+    fireEvent.change(field, { target: { value: '25,50' } });
+    expect(within(dialog).getByRole('button', { name: N('Dalej · 25,50 zł') })).toBeInTheDocument();
 
-    fireEvent.change(field, { target: { value: '3' } });
-    expect(within(dialog).getByRole('alert')).toHaveTextContent('Kwota jest za niska. Minimum: 5 zł.');
-    expect(field).toHaveAttribute('aria-invalid', 'true');
+    for (const low of ['19,99', '5', '15']) {
+      fireEvent.change(field, { target: { value: low } });
+      expect(within(dialog).getByRole('alert')).toHaveTextContent('Kwota jest za niska. Minimum: 20 zł.');
+      expect(field).toHaveAttribute('aria-invalid', 'true');
+    }
     fireEvent.click(within(dialog).getByRole('button', { name: 'Dalej' }));
-    expect(within(dialog).getByText('Ile chcesz wesprzeć?')).toBeInTheDocument(); // still step 1
+    expect(within(dialog).getByText('Zostań patronem i uzyskaj dostęp do strefy premium')).toBeInTheDocument(); // still step 1
 
     fireEvent.change(field, { target: { value: '1001' } });
     expect(within(dialog).getByRole('alert')).toHaveTextContent('Kwota jest za wysoka. Maksimum: 1000 zł.');
     fireEvent.change(field, { target: { value: 'abc' } });
     expect(within(dialog).getByRole('alert')).toHaveTextContent('Wpisz kwotę cyframi');
-
-    fireEvent.click(within(dialog).getByRole('radio', { name: /50\s*zł/ }));
-    expect((field as HTMLInputElement).value).toBe('');
+    fireEvent.change(field, { target: { value: '' } });
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('Wpisz kwotę (co najmniej 20 zł).');
+    fireEvent.change(field, { target: { value: '50' } });
     expect(within(dialog).getByRole('button', { name: N('Dalej · 50 zł') })).toBeInTheDocument();
   });
 });
@@ -160,9 +164,9 @@ describe('patron checkout, step 2 in demo mode (simulated payment)', () => {
   it('asks for both boxes HERE, shows errors instead of paying, then pays the chosen amount', async () => {
     const { onWatch } = open();
     const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 25 zł') }));
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 20 zł') }));
 
-    const pay = await within(dialog).findByRole('button', { name: N('Zapłać 25 zł') });
+    const pay = await within(dialog).findByRole('button', { name: N('Zapłać 20 zł') });
     expect(within(dialog).getByRole('listitem', { current: 'step' })).toHaveTextContent('Płatność');
     const boxes = within(dialog).getAllByRole('checkbox');
     expect(boxes).toHaveLength(2);
@@ -174,9 +178,9 @@ describe('patron checkout, step 2 in demo mode (simulated payment)', () => {
     expect(calls('/premium-pass/checkout')).toHaveLength(0);
 
     boxes.forEach((box) => fireEvent.click(box));
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Zapłać 25 zł') }));
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Zapłać 20 zł') }));
     expect(await within(dialog).findByRole('heading', { name: 'Jesteś patronem. Dziękuję!' }, { timeout: 4000 })).toBeInTheDocument();
-    expect(jsonBody('/premium-pass/checkout')).toMatchObject({ amountMinor: 2500, method: 'blik', consents: { terms: true, waiver: true }, simulate: 'success' });
+    expect(jsonBody('/premium-pass/checkout')).toMatchObject({ amountMinor: 2000, method: 'blik', consents: { terms: true, waiver: true }, simulate: 'success' });
     expect(dialog).toHaveTextContent('Strefa patrona jest otwarta do 20.11.2026');
     fireEvent.click(within(dialog).getByRole('button', { name: 'Wejdź do strefy patrona' }));
     expect(onWatch).toHaveBeenCalled();
@@ -185,19 +189,19 @@ describe('patron checkout, step 2 in demo mode (simulated payment)', () => {
   it('"Zmień" goes back to step 1 with the choice kept', async () => {
     open();
     const dialog = await screen.findByRole('dialog');
-    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Albo wpisz własną kwotę' }), { target: { value: '12' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 12 zł') }));
-    await within(dialog).findByRole('button', { name: N('Zapłać 12 zł') });
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Twoja kwota' }), { target: { value: '42' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 42 zł') }));
+    await within(dialog).findByRole('button', { name: N('Zapłać 42 zł') });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Zmień' }));
-    expect(await within(dialog).findByRole('button', { name: N('Dalej · 12 zł') })).toBeInTheDocument();
-    expect((within(dialog).getByRole('textbox', { name: 'Albo wpisz własną kwotę' }) as HTMLInputElement).value).toBe('12');
+    expect(await within(dialog).findByRole('button', { name: N('Dalej · 42 zł') })).toBeInTheDocument();
+    expect((within(dialog).getByRole('textbox', { name: 'Twoja kwota' }) as HTMLInputElement).value).toBe('42');
   });
 
   it('never asks Stripe for anything in demo mode', async () => {
     open();
     const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 25 zł') }));
-    await within(dialog).findByRole('button', { name: N('Zapłać 25 zł') });
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 20 zł') }));
+    await within(dialog).findByRole('button', { name: N('Zapłać 20 zł') });
     expect(getStripeBrowser).not.toHaveBeenCalled();
     expect(calls('/intent')).toHaveLength(0);
     expect(screen.queryByTestId('stripe-elements')).toBeNull();
@@ -230,10 +234,10 @@ describe('patron checkout, step 2 with real Stripe payments', () => {
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText('Tryb testowy')).toBeInTheDocument();
     await waitFor(() => expect(getStripeBrowser).toHaveBeenCalledTimes(1));
-    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Albo wpisz własną kwotę' }), { target: { value: '19,99' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 19,99 zł') }));
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Twoja kwota' }), { target: { value: '29,99' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 29,99 zł') }));
     await within(dialog).findByTestId('stripe-elements');
-    expect(jsonBody('/premium-pass/intent')).toMatchObject({ amountMinor: 1999 });
+    expect(jsonBody('/premium-pass/intent')).toMatchObject({ amountMinor: 2999 });
     expect(jsonBody('/premium-pass/intent').requestId).toMatch(/^[0-9a-f-]{36}$/);
     expect(Object.keys(jsonBody('/premium-pass/intent')).sort()).toEqual(['amountMinor', 'requestId']);
   });
@@ -247,9 +251,9 @@ describe('patron checkout, step 2 with real Stripe payments', () => {
   it('the BLIK form is the tip gateway\'s; paying needs the code AND both boxes; consent is recorded before the confirmation; access shows after the server confirms', async () => {
     open({ mode: 'stripe', available: true, stripeMode: 'test' });
     const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 25 zł') }));
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 20 zł') }));
     const code = await within(dialog).findByRole('textbox', { name: 'Kod BLIK' });
-    const pay = within(dialog).getByRole('button', { name: N('Zapłać 25 zł') });
+    const pay = within(dialog).getByRole('button', { name: N('Zapłać 20 zł') });
     fireEvent.change(code, { target: { value: '123456' } });
     expect(pay).toBeDisabled(); // boxes not ticked
     const boxes = within(dialog).getAllByRole('checkbox');
@@ -279,11 +283,11 @@ describe('patron checkout, step 2 with real Stripe payments', () => {
     });
     open({ mode: 'stripe', available: true, stripeMode: 'test' });
     const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 25 zł') }));
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 20 zł') }));
     const code = await within(dialog).findByRole('textbox', { name: 'Kod BLIK' });
     fireEvent.change(code, { target: { value: '123456' } });
     within(dialog).getAllByRole('checkbox').forEach((box) => fireEvent.click(box));
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Zapłać 25 zł') }));
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Zapłać 20 zł') }));
     expect(await within(dialog).findByRole('alert')).toHaveTextContent('Nie udało się zapisać Twojej zgody');
     expect(confirmBlikPayment).not.toHaveBeenCalled();
   });
@@ -294,7 +298,7 @@ describe('patron checkout, step 2 with real Stripe payments', () => {
     });
     open({ mode: 'stripe', available: true, stripeMode: 'test' });
     const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 25 zł') })); // BLIK is the default
+    fireEvent.click(within(dialog).getByRole('button', { name: N('Dalej · 20 zł') })); // BLIK is the default
     expect(await within(dialog).findByText('Ta metoda nie jest dostępna dla tej płatności. Wybierz inną.')).toBeInTheDocument();
     expect(within(dialog).getByRole('combobox', { name: 'Metoda płatności' })).toHaveTextContent('Karta');
     expect(within(dialog).queryByTestId('stripe-elements')).toBeNull();
@@ -304,7 +308,7 @@ describe('patron checkout, step 2 with real Stripe payments', () => {
     open({ mode: 'stripe', available: false });
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByRole('alert')).toHaveTextContent('Płatności są chwilowo niedostępne');
-    expect(within(dialog).getByRole('button', { name: N('Dalej · 25 zł') })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: N('Dalej · 20 zł') })).toBeDisabled();
     expect(getStripeBrowser).not.toHaveBeenCalled();
     expect(calls('/intent')).toHaveLength(0);
     expect(calls('/checkout')).toHaveLength(0);

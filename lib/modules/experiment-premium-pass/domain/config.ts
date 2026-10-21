@@ -22,10 +22,10 @@ export const PATRON_ACCESS_DAYS = 30;
 /** Access can be extended by paying again, but never to more than this many days ahead of now. */
 export const PATRON_MAX_AHEAD_DAYS = 365;
 /** Gross amounts in minor units (grosze). The minimum is also above Stripe's own floor for PLN (2 zł). */
-export const PATRON_MIN_MINOR = 500;
+export const PATRON_MIN_MINOR = 2000;
 export const PATRON_MAX_MINOR = 100_000;
-export const PATRON_SUGGESTED_MINOR: readonly number[] = [1000, 2500, 5000, 10_000];
-export const PATRON_DEFAULT_MINOR = 2500;
+export const PATRON_SUGGESTED_MINOR: readonly number[] = [];
+export const PATRON_DEFAULT_MINOR = 2000;
 
 /** The one place that decides whether an amount may be charged: integer minor units within [min, max]. */
 export function validatePatronAmount(amountMinor: unknown): "INTEGER" | "TOO_LOW" | "TOO_HIGH" | null {

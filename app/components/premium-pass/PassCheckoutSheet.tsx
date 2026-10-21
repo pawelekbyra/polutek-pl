@@ -357,7 +357,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, onWatch, watchLab
           {stage.kind === "amount" && (
             <>
               <div className={styles.sheetBody}>
-                {heading(tx("Ile chcesz wesprzeć?", "How much do you want to give?"))}
+                {heading(tx("Zostań patronem i uzyskaj dostęp do strefy premium", "Become a patron and get access to the premium zone"))}
                 <PassAmountStep
                   tx={tx}
                   language={language}

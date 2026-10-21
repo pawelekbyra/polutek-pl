@@ -13,21 +13,17 @@ import { TipSelect } from "../support/TipSelect";
 import { currencySymbol, parseAmountInput, price, vatLine } from "./pass-copy";
 import styles from "./premium-pass.module.css";
 
-/** The chosen amount: one of the suggested ones, or what the viewer typed. */
+/** The chosen amount: what the viewer typed (pay what you want), prefilled with the minimum. */
 export function usePassAmount(offer: PremiumPassOffer) {
-  const [preset, setPreset] = useState<number | null>(offer.defaultMinor);
-  const [custom, setCustom] = useState("");
-  const typed = preset === null ? parseAmountInput(custom) : null;
-  const minor = preset ?? typed;
+  const [custom, setCustom] = useState(String(offer.defaultMinor / 100));
+  const minor = parseAmountInput(custom);
   const problem: "empty" | "invalid" | "low" | "high" | null =
     minor === null ? (custom.trim() === "" ? "empty" : "invalid") : minor < offer.minMinor ? "low" : minor > offer.maxMinor ? "high" : null;
   return {
     minor: problem === null ? minor : null,
-    preset,
     custom,
     problem,
-    choosePreset: (value: number) => { setPreset(value); setCustom(""); },
-    typeCustom: (value: string) => { setPreset(null); setCustom(value); },
+    typeCustom: setCustom,
   };
 }
 
@@ -61,7 +57,7 @@ export function PassAmountStep({ tx, language, offer, amount, methods, method, o
         ? tx("Kwota jest za wysoka. Maksimum: {0}.", "Amount too high. Maximum: {0}.", price(language, offer.maxMinor))
         : amount.problem === "invalid"
           ? tx("Wpisz kwotę cyframi, np. 15 lub 15,50.", "Enter the amount in digits, e.g. 15 or 15.50.")
-          : tx("Wybierz albo wpisz kwotę (co najmniej {0}).", "Choose or enter an amount (at least {0}).", price(language, offer.minMinor));
+          : tx("Wpisz kwotę (co najmniej {0}).", "Enter an amount (at least {0}).", price(language, offer.minMinor));
 
   return (
     <>
@@ -76,18 +72,12 @@ export function PassAmountStep({ tx, language, offer, amount, methods, method, o
         </p>
       )}
 
-      <fieldset className={styles.amounts} disabled={busy}>
-        <legend className={styles.label}>{tx("Wybierz kwotę wsparcia", "Choose your support amount")}</legend>
-        {offer.suggestedMinor.map((value) => (
-          <label key={value} className={styles.product}>
-            <input type="radio" name="patron-amount" value={value} checked={amount.preset === value} onChange={() => amount.choosePreset(value)} />
-            <span className={styles.productPrice}>{price(language, value)}</span>
-          </label>
-        ))}
-      </fieldset>
+      <div className={styles.amountHead}>
+        <p className={styles.amountLead}>{tx("Zapłać ile chcesz. Minimum {0}.", "Pay what you want. Minimum {0}.", price(language, offer.minMinor))}</p>
+      </div>
 
       <div className={styles.fieldBlock}>
-        <label htmlFor={`${ids}-custom`} className={styles.label}>{tx("Albo wpisz własną kwotę", "Or enter your own amount")}</label>
+        <label htmlFor={`${ids}-custom`} className={styles.label}>{tx("Twoja kwota", "Your amount")}</label>
         <div className={styles.field}>
           <input
             id={`${ids}-custom`}
@@ -99,7 +89,7 @@ export function PassAmountStep({ tx, language, offer, amount, methods, method, o
             value={amount.custom}
             placeholder={String(offer.minMinor / 100)}
             onChange={(event) => amount.typeCustom(event.target.value)}
-            aria-invalid={showProblem && amount.preset === null ? true : undefined}
+            aria-invalid={showProblem ? true : undefined}
             aria-describedby={`${ids}-help`}
           />
           <span aria-hidden="true">{currencySymbol(language)}</span>
