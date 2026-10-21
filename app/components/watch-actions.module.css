@@ -363,6 +363,31 @@
   }
 }
 
+/* Narrow phones: the three buttons share one row, so "Zostań patronem" gets the room the black ones give up. */
+@media (max-width: 420px) {
+  .supportAction {
+    gap: 5px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    font-size: 13px !important;
+  }
+
+  .supportAction svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .secondaryAction {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .actionCluster .actionButton {
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .actionButton,
   .secondaryAction,
