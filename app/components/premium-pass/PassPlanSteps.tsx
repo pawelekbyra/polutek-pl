@@ -82,12 +82,6 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
         </p>
       )}
 
-      <TipSelect
-        label={tx("Waluta", "Currency")}
-        value={currency}
-        onChange={(code) => onCurrency(code as PatronCurrency)}
-        options={offer.currencies.map((code) => ({ value: code, icon: TIP_CURRENCY_SYMBOLS[code], title: tipCurrencyTitle(tx, code) }))}
-      />
 
       <fieldset className={styles.products} disabled={busy || access?.lifetime === true}>
         <legend className={styles.amountLead}>{tx("Wybierz dostęp", "Choose your access")}</legend>
@@ -101,6 +95,13 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
           </label>
         ))}
       </fieldset>
+
+      <TipSelect
+        label={tx("Waluta", "Currency")}
+        value={currency}
+        onChange={(code) => onCurrency(code as PatronCurrency)}
+        options={offer.currencies.map((code) => ({ value: code, icon: TIP_CURRENCY_SYMBOLS[code], title: tipCurrencyTitle(tx, code) }))}
+      />
       {notice && <p className={styles.noticeWarn} role="alert">{notice}</p>}
 
       <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} />
