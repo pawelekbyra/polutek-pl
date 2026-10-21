@@ -302,7 +302,7 @@
   line-height: 1.65;
 }
 
-/* Description panel: a soft, light warm-gray surface. */
+/* Description panel: a very light, translucent blue surface that matches the blue buttons above it (owner, 2026-10-21). */
 .descPanel {
   margin-top: 12px !important;
   /* same space above and below the text */
@@ -311,13 +311,13 @@
   background:
     linear-gradient(
       180deg,
-      var(--cm-surface-62-white),
-      var(--cm-surface-80-white)
+      var(--cm-blue-9),
+      var(--cm-blue-7)
     );
-  border-color: var(--cm-line-78-ink-2);
+  border-color: var(--cm-blue-22);
   box-shadow:
     inset 0 1px 0 var(--cm-white-70),
-    0 1px 2px rgba(23, 23, 23, 0.03);
+    0 1px 2px var(--cm-blue-8);
 }
 
 
