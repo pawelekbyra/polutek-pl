@@ -25,7 +25,7 @@ import VideoTaxonomyChips from './search/VideoTaxonomyChips';
 import { LinkedDescription } from './video/LinkedDescription';
 import { DescriptionChapters } from './video/DescriptionChapters';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
-import { ThumbsUp, ThumbsDown, Trophy } from 'lucide-react';
+import { ThumbsUp, ThumbsDown } from 'lucide-react';
 import styles from './watch-actions.module.css';
 
 interface HeroProps {
@@ -420,7 +420,6 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                  aria-label={tx("Zostań patronem", "Become a patron")}
                  title={tx("Zostań patronem", "Become a patron")}
                >
-                 <Trophy aria-hidden="true" className="h-5 w-5 shrink-0" strokeWidth={1.8} />
                  <span className="leading-none">{tx("Zostań patronem", "Become a patron")}</span>
                </button>
             </div>
