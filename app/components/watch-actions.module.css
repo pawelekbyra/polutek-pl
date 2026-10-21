@@ -417,6 +417,12 @@
     padding-bottom: 5px;
     border-bottom: 1px solid var(--cm-line-76-2);
   }
+  /* Even rhythm of the three rows: the title's last line to the channel row is now 21px (it was 30), the same as the
+     channel row to the action buttons (Subscribe's bottom to the buttons' top). The title keeps its 8px bottom margin;
+     the -5px makes the two margins add up to 3px instead of 12px. */
+  .metaRow {
+    margin-top: -5px !important;
+  }
 }
 
 /* Below 1024px the player is full-bleed edge-to-edge (see Hero.tsx) — the desktop
