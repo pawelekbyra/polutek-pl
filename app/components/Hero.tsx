@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth/react";
 import { useAuthModal } from './auth/AuthModalProvider';
 import { cn, formatCount } from '@/lib/utils';
 import PremiumWrapper from './PremiumWrapper';
+import { PatronCheckoutHost } from './premium-pass/PatronCheckoutHost';
 import Link from 'next/link';
 import VideoPlayer from './VideoPlayer';
 import { SafeAvatar } from './SafeAvatar';
@@ -408,7 +409,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                      openAuthModal("sign-in");
                      return;
                    }
-                   window.dispatchEvent(new CustomEvent("polutek:open-support"));
+                   window.dispatchEvent(new CustomEvent("polutek:open-patron"));
                  }}
                  className={cn(
                    "relative flex h-9 flex-1 items-center justify-center gap-1.5 rounded-[12px] bg-[var(--chan-surface)] px-3 font-sans text-sm font-bold text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95 lg:flex-none",
@@ -481,6 +482,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
         </div>
         <VideoTaxonomyChips category={video.category} tags={video.tags} locale={language} tx={tx} className="mt-2 px-1" />
       </div>
+      <PatronCheckoutHost />
     </section>
   );
 };
