@@ -247,8 +247,11 @@
 }
 
 /* The like and dislike halves share the cluster's width, so it has no empty space at the end. */
-.actionRail .actionCluster {
-  width: 100%;
+/* Phones: the cluster fills its grid cell (on desktop it keeps its natural width). */
+@media (max-width: 1023px) {
+  .actionRail .actionCluster {
+    width: 100%;
+  }
 }
 
 .actionCluster .actionButton {
@@ -464,7 +467,9 @@
   }
 
   .creatorStrip {
-    min-width: 280px;
+    /* The channel row keeps the width of its content (avatar, name, Subscribe): it must not shrink under the action row. */
+    flex: none;
+    min-width: max-content;
   }
 
   .actionRail {
