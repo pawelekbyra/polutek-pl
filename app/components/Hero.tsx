@@ -414,11 +414,11 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                    "relative flex h-9 flex-1 items-center justify-center gap-1.5 rounded-[12px] bg-[var(--chan-surface)] px-3 font-sans text-sm font-bold text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95 lg:flex-none",
                    styles.supportAction,
                  )}
-                 aria-label={tx("Kup Premium", "Get Premium")}
-                 title={tx("Kup Premium", "Get Premium")}
+                 aria-label={tx("Zostań patronem", "Become a patron")}
+                 title={tx("Zostań patronem", "Become a patron")}
                >
                  <Trophy aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={1.8} />
-                 <span className="leading-none">{tx("Kup Premium", "Get Premium")}</span>
+                 <span className="leading-none">{tx("Zostań patronem", "Become a patron")}</span>
                </button>
             </div>
           </div>
