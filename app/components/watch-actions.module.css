@@ -490,6 +490,20 @@
   }
 }
 
+/* Subscribe sits as close to the channel name and subscriber count as "Kup se Premium" sits to the like cluster: 8px (the grid
+   gap of the action row). The row's own gap is 13px (12px on narrow phones), so the slot pulls 5px (4px) back. */
+@media (max-width: 1023px) {
+  .subscribeSlot {
+    margin-left: -5px;
+  }
+}
+
+@media (max-width: 420px) {
+  .subscribeSlot {
+    margin-left: -4px;
+  }
+}
+
 /* Narrow phones: the three buttons share one row, so "Zostań patronem" gets the room. */
 @media (max-width: 420px) {
   .supportAction {
