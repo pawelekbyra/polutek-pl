@@ -51,7 +51,7 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('createCheckoutIntent: patron-zone payments (experiment: premium-pass)', () => {
+describe('createCheckoutIntent: patron-zone payments (patron zone)', () => {
   it('marks the payment and its intent with the purpose and uses the patron description', async () => {
     const result = await createCheckoutIntent({ userId: 'user_1', amountMinor: 2999, currency: 'PLN', requestId: REQUEST, purpose: 'premium_pass', productId: 'ACCESS_LIFETIME' }, userCtx());
     expect(result.ok).toBe(true);

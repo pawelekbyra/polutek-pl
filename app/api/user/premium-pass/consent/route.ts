@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md)
+// patron zone (docs/architecture/patron-zone.md)
 // Step 2 of the checkout: the two boxes (Terms + Privacy Policy, immediate access) were ticked; the browser records
 // that on its own unpaid patron payment right before it confirms the payment with Stripe.
 import { NextRequest, NextResponse } from "next/server";
@@ -6,7 +6,7 @@ import { handleApiError } from "@/lib/errors";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { passUserId, patronConsentInputSchema, premiumPassFor, recordPatronConsent } from "@/lib/modules/experiment-premium-pass";
+import { passUserId, patronConsentInputSchema, premiumPassFor, recordPatronConsent } from "@/lib/modules/patron-zone";
 import { passErrorResponse, passInvalidRequest, PASS_NO_STORE } from "../responses";
 
 export const dynamic = "force-dynamic";

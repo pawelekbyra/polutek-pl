@@ -1,5 +1,5 @@
 "use client";
-// experiment: premium-pass (docs/experiments/premium-pass.md, section 8.3): the checkout of the patron zone, in three
+// patron zone (docs/architecture/patron-zone.md): the checkout of the patron zone, in three
 // steps, the order summary visible in all of them. Step 1: the currency (the tip gateway's picker) and a choice of two
 // fixed options. Step 2: the payment method (the tip gateway's dropdown) and the Terms / Privacy Policy as links.
 // Step 3: the payment of the chosen method (the tip gateway's own forms, real Stripe) and the two boxes. In demo mode
@@ -12,9 +12,9 @@ import { cn } from "@/lib/utils";
 import { useUser } from "@/lib/auth/react";
 import { getStripeBrowser } from "@/lib/payments/stripe-browser";
 import { detectDefaultCurrency } from "@/lib/payments/detect-currency";
-import type { PatronCurrency } from "@/lib/modules/experiment-premium-pass/domain/config";
-import { defaultProduct, type PremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
-import { maskEmail, type PassMethod, type PassStatusDto } from "@/lib/modules/experiment-premium-pass/domain/pass-state";
+import type { PatronCurrency } from "@/lib/modules/patron-zone/domain/config";
+import { defaultProduct, type PremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
+import { maskEmail, type PassMethod, type PassStatusDto } from "@/lib/modules/patron-zone/domain/pass-state";
 import { useLanguage } from "../LanguageContext";
 import { TIP_WALLETS, getTipMethodTiles, readLastTipMethod, rememberTipMethod, type TipWallet } from "../support/tip-flow-config";
 import { TipBackContext } from "../support/TipStepLayout";

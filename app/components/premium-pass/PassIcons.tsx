@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md): icons the shared set does not have.
+// patron zone (docs/architecture/patron-zone.md): icons the shared set does not have.
 import React from "react";
 
 type P = { className?: string };

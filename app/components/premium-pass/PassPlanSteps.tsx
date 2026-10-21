@@ -1,5 +1,5 @@
 "use client";
-// experiment: premium-pass (docs/experiments/premium-pass.md): the first two of the three checkout steps and the order
+// patron zone (docs/architecture/patron-zone.md): the first two of the three checkout steps and the order
 // summary that stays visible in all three. Step 1: the currency (the tip gateway's own currency picker and list) and
 // the choice of two fixed options, prices in that currency. Step 2: the payment method (the tip gateway's dropdown)
 // and the Terms / Privacy Policy as plain LINKS: nothing to tick before step 3. The browser only names a product and a
@@ -8,8 +8,8 @@ import React, { useId } from "react";
 import type { Locale } from "@/lib/i18n/routing";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import type { Tx } from "@/lib/i18n/ui";
-import type { PatronCurrency } from "@/lib/modules/experiment-premium-pass/domain/config";
-import type { PatronOfferProduct, PremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
+import type { PatronCurrency } from "@/lib/modules/patron-zone/domain/config";
+import type { PatronOfferProduct, PremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
 import { TIP_CURRENCY_SYMBOLS, describeTipMethod, tipCurrencyTitle } from "../support/tip-flow-config";
 import { TipSelect } from "../support/TipSelect";
 import { price, productName, productNote, vatLine } from "./pass-copy";

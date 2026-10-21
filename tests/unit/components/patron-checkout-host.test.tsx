@@ -15,21 +15,24 @@ describe('PatronCheckoutHost', () => {
   beforeEach(() => fetchPassStatus.mockReset());
   afterEach(cleanup);
 
-  it('opens the patron checkout when the experiment is visible', async () => {
+  it('opens the patron checkout when the patron zone is visible', async () => {
     fetchPassStatus.mockResolvedValue({ offer: { minMinor: 2000, maxMinor: 100000 }, pass: { state: 'none' } });
     const { findByRole } = render(<PatronCheckoutHost />);
     window.dispatchEvent(new CustomEvent('polutek:open-patron'));
     expect((await findByRole('dialog')).textContent).toBe('patron checkout');
   });
 
-  it('falls back to the old tip gate when the experiment is off', async () => {
+  it('opens nothing when the patron zone is off and never falls back to the hidden tip gate', async () => {
     fetchPassStatus.mockResolvedValue(null);
     const seen: string[] = [];
     const listener = (event: Event) => seen.push(event.type);
     window.addEventListener('polutek:open-support', listener);
-    render(<PatronCheckoutHost />);
+    const { queryByRole } = render(<PatronCheckoutHost />);
     window.dispatchEvent(new CustomEvent('polutek:open-patron'));
-    await waitFor(() => expect(seen).toEqual(['polutek:open-support']));
+    await waitFor(() => expect(fetchPassStatus).toHaveBeenCalledWith('checkout'));
+    await Promise.resolve();
+    expect(queryByRole('dialog')).toBeNull();
+    expect(seen).toEqual([]);
     window.removeEventListener('polutek:open-support', listener);
   });
 });

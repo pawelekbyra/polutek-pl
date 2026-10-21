@@ -16,7 +16,7 @@ import { NajsIcon } from "./najs/primitives";
 import { getLocalizedHref, appendQueryString } from "@/lib/i18n/routing";
 import { toVideoAccessTier } from "@/lib/access-tier";
 import VideoTaxonomyChips from "./search/VideoTaxonomyChips";
-import { PremiumThumbBadge } from "./premium-pass/PremiumBadge"; // experiment: premium-pass (docs/experiments/premium-pass.md)
+import { PremiumThumbBadge } from "./premium-pass/PremiumBadge"; // patron zone (docs/architecture/patron-zone.md)
 
 interface ChannelVideoCardProps {
   video: PublicVideoDTO;
@@ -45,14 +45,14 @@ export default function ChannelVideoCard({
 
   const getAccessBadge = () => {
     if (!mounted) return null;
-    if (video.premiumPass) return { text: tx("Patron", "Patron"), variant: "locked" }; // experiment: premium-pass
+    if (video.premiumPass) return { text: tx("Patron", "Patron"), variant: "locked" }; // patron zone
     if (tier === "PUBLIC") return { text: tx("Publiczne", "Public"), variant: "public" };
     if (!hasAccess) return { text: tx("Logowanie", "Login"), variant: "locked" };
     return { text: tx("Odblok.", "Unlocked"), variant: "unlocked" };
   };
 
   const badge = getAccessBadge();
-  // experiment: premium-pass: a pass video shows the PREMIUM plate instead of the sign-in wall.
+  // patron zone: a pass video shows the PREMIUM plate instead of the sign-in wall.
   const lockState = !hasAccess && !video.premiumPass ? "LOGIN_REQUIRED" : null;
 
   return (

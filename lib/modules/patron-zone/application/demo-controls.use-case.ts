@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md)
+// patron zone (docs/architecture/patron-zone.md)
 import { z } from "zod";
 import type { AppContext } from "@/lib/modules/shared/app-context";
 import { premiumPassFor } from "../domain/config";
@@ -11,9 +11,9 @@ import type { PassResult } from "./checkout-demo.use-case";
 export const demoControlInputSchema = z.object({ action: z.enum(["expire", "reset"]) }).strict();
 
 /**
- * The demo panel: lets any signed-in viewer who sees the experiment expire or delete THEIR OWN access, to look at every
- * state without waiting. There is no way to touch another account's row. Only in demo mode or with Stripe TEST keys:
- * with live keys the grant is the proof of a real payment and no panel may remove it.
+ * The demo panel: lets any signed-in viewer who sees the patron zone expire or delete THEIR OWN access, to look at every
+ * state without waiting. There is no way to touch another account's row. Only in demo mode (PREMIUM_PASS_PAYMENTS=demo):
+ * in `stripe` mode (test or live keys) a grant is the proof of a payment and no panel may remove it.
  */
 export async function runPassDemoControl(ctx: Pick<AppContext, "prisma" | "actor" | "now">, input: z.infer<typeof demoControlInputSchema>): Promise<PassResult<PassStatusDto>> {
   const config = premiumPassFor(ctx.actor);
@@ -21,7 +21,7 @@ export async function runPassDemoControl(ctx: Pick<AppContext, "prisma" | "actor
   const userId = passUserId(ctx.actor);
   if (!userId) return { ok: false, code: "UNAUTHORIZED" };
   const payments = resolvePremiumPayments();
-  if (payments.mode === "stripe" && !(payments.available && payments.stripeMode === "test")) return { ok: false, code: "WRONG_MODE" };
+  if (payments.mode !== "demo") return { ok: false, code: "WRONG_MODE" };
   const now = ctx.now();
   if (input.action === "reset") {
     await deletePass(ctx.prisma, userId);

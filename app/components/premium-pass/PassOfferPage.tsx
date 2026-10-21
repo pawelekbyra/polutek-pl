@@ -1,6 +1,6 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md, section 8.2): the offer page /premium, /en/premium,
+// patron zone (docs/architecture/patron-zone.md): the offer page /premium, /en/premium,
 // /<lang>/premium: "become a patron of the project and get into the patron zone". Rendered per viewer (404 when the
-// experiment is invisible to them), never indexed.
+// patron zone is invisible to them), never indexed.
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
@@ -20,7 +20,7 @@ import {
   resolvePremiumPayments,
   toPremiumPaymentsDto,
   type PassStatusDto,
-} from "@/lib/modules/experiment-premium-pass";
+} from "@/lib/modules/patron-zone";
 import { VideoContentService } from "@/lib/modules/video/infrastructure/video-content.service";
 import type { PublicVideoDTO } from "@/app/types/video";
 import { getServerTx } from "@/lib/i18n/server-tx";
@@ -171,7 +171,7 @@ export default async function PassOfferPage({ params }: PassOfferPageProps) {
           </div>
         </main>
         <Footer />
-        {session.userId && (demo || testMode) && <PassOfferDemoControls />}
+        {session.userId && demo && <PassOfferDemoControls />}
       </div>
     </AuthSessionSeedProvider>
   );

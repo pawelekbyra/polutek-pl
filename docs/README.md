@@ -30,6 +30,8 @@ albo znika w tym samym PR. Historia jest w git.
 | Temat | Plik |
 |---|---|
 | Napiwki, płatności, ewidencja wspierających | [`architecture/payments-and-tips.md`](architecture/payments-and-tips.md) |
+| Strefa patrona (płatny dostęp do filmów): przełączniki, kasa, przepływ pieniędzy | [`architecture/patron-zone.md`](architecture/patron-zone.md) |
+| Strefa patrona: audyt przed prawdziwą sprzedażą (P0/P1/P2) | [`architecture/patron-zone-audit.md`](architecture/patron-zone-audit.md) |
 | Miniatury w R2 | [`architecture/thumbnails-r2.md`](architecture/thumbnails-r2.md) |
 | Premiery i pasek zbiórki | [`architecture/premieres-and-fundraising.md`](architecture/premieres-and-fundraising.md) |
 | Komentarze i reakcje | [`architecture/comments-and-reactions.md`](architecture/comments-and-reactions.md) |
@@ -63,12 +65,6 @@ albo znika w tym samym PR. Historia jest w git.
 | Dostępy agentów do usług (bez sekretów) | [`operations/AGENT_ACCESS.md`](operations/AGENT_ACCESS.md) |
 | Google Workspace (do czasu anulowania) | [`operations/GOOGLE_ACCESS.md`](operations/GOOGLE_ACCESS.md), [`operations/DNS_BACKUP_mail_2026-10-02.md`](operations/DNS_BACKUP_mail_2026-10-02.md) |
 | Licencje oprogramowania obcego | [`operations/THIRD_PARTY_NOTICES.md`](operations/THIRD_PARTY_NOTICES.md) |
-
-## Eksperymenty (`experiments/`)
-
-| Temat | Plik |
-|---|---|
-| Strefa patrona / Wejściówka Premium (plan, prawdziwa płatność Stripe za przełącznikiem, wycofanie jednym poleceniem) i makieta wyglądu | [`experiments/premium-pass.md`](experiments/premium-pass.md), makieta: `experiments/premium-pass-mockup.html` |
 
 ## Audyty (`audit/`)
 

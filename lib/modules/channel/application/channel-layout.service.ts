@@ -7,7 +7,7 @@ import { createAppContext } from '@/lib/modules/shared/app-context';
 import { resolvePublicThumbnailSrc } from '@/lib/modules/media';
 // Deep import allowlisted in scripts/check-architecture.ts (pure helper).
 import { effectivePublishedAt, isUpcomingPremiere, toPremiereDate } from '@/lib/modules/video/domain/premiere';
-import { premiumPassViewerFacts } from '@/lib/modules/experiment-premium-pass'; // experiment: premium-pass (docs/experiments/premium-pass.md)
+import { premiumPassViewerFacts } from '@/lib/modules/patron-zone'; // patron zone (docs/architecture/patron-zone.md)
 
 // Whether someone tipped never reaches public data (owner decision 2026-10-04): no PATRON state.
 export type SidebarViewerState = "ANONYMOUS" | "LOGGED_IN" | "ADMIN";
@@ -30,7 +30,7 @@ export type SidebarItem = {
     sidebarOrder?: number | null;
     creatorId: string;
     isLocked: boolean;
-    /** experiment: premium-pass: behind the demo pass for this viewer (locked unless the viewer holds an active pass). */
+    /** patron zone: behind the demo pass for this viewer (locked unless the viewer holds an active pass). */
     premium?: true;
     creator?: {
         id: string;
@@ -65,7 +65,7 @@ export class ChannelLayoutService {
         }
 
         const now = new Date();
-        // experiment: premium-pass: one AppSetting read per layout, only while the experiment is visible to this viewer.
+        // patron zone: one AppSetting read per layout, only while the patron zone is visible to this viewer.
         const pass = await premiumPassViewerFacts(createAppContext({ actor: userId ? (viewer.isStaff ? { type: 'admin', userId } : { type: 'user', userId }) : { type: 'guest' } }), now);
         const videos = await prisma.video.findMany({
             where: {

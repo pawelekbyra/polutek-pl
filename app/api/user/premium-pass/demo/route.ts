@@ -1,10 +1,10 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md)
-// Demo panel: expire or delete the caller's OWN demo pass (any signed-in viewer who sees the experiment).
+// patron zone (docs/architecture/patron-zone.md)
+// Demo panel: expire or delete the caller's OWN demo pass (any signed-in viewer who sees the patron zone).
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/errors";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { demoControlInputSchema, runPassDemoControl } from "@/lib/modules/experiment-premium-pass";
+import { demoControlInputSchema, runPassDemoControl } from "@/lib/modules/patron-zone";
 import { passErrorResponse, passInvalidRequest, PASS_NO_STORE } from "../responses";
 
 export const dynamic = "force-dynamic";

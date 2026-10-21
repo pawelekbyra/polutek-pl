@@ -1,10 +1,10 @@
 "use client";
-// experiment: premium-pass (docs/experiments/premium-pass.md): Hero's "Zostań patronem" button opens the patron checkout
-// (the two-step Stripe one) through the "polutek:open-patron" event. When the experiment is not visible to the viewer
-// (flag off, 404 from the offer route) it falls back to the old tip gate (SupportModal, "polutek:open-support"), which
-// stays in the code: switching the experiment off puts the button back on the tip gate by itself.
+// patron zone (docs/architecture/patron-zone.md): the gold "Kup se Premium" button in Hero opens the patron checkout
+// (the three-step Stripe one) through the "polutek:open-patron" event. When the patron zone is not visible to the
+// viewer (PREMIUM_PASS_EXPERIMENT=off, the offer route answers 404) nothing opens: the old tip gate is hidden and
+// is no longer a fallback (app/components/channel/tip-gate.ts).
 import React, { useEffect, useState } from "react";
-import type { PremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
+import type { PremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
 import { PassCheckoutSheet } from "./PassCheckoutSheet";
 import { fetchPassStatus } from "./usePremiumPass";
 
@@ -18,11 +18,7 @@ export function PatronCheckoutHost() {
     let alive = true;
     const onOpen = () => {
       void fetchPassStatus("checkout").then((status) => {
-        if (!alive) return;
-        if (!status) {
-          window.dispatchEvent(new CustomEvent("polutek:open-support"));
-          return;
-        }
+        if (!alive || !status) return;
         setOffer({ ...status.offer, signedIn: true });
         setOpen(true);
       });

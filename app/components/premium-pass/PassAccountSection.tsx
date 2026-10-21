@@ -1,5 +1,5 @@
 "use client";
-// experiment: premium-pass (docs/experiments/premium-pass.md, section 8.6): "My account -> Patron zone". No "cancel
+// patron zone (docs/architecture/patron-zone.md): "My account -> Patron zone". No "cancel
 // subscription" button: there is no subscription.
 import React from "react";
 import type { Tx } from "@/lib/i18n/ui";

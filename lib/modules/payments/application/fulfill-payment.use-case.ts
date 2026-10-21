@@ -84,12 +84,12 @@ export async function fulfillPayment(
 
       await repo.incrementUserPaymentTotal(payment.userId, payment.currency, payment.amountMinor, tx);
 
-      // experiment: premium-pass (docs/experiments/premium-pass.md): a patron-zone payment is not a tip. It grants the
+      // patron zone (docs/architecture/patron-zone.md): a patron-zone payment is not a tip. It grants the
       // patron-zone access (extending it when still active) here, in the same transaction as the CAS, so the payment
       // and the access are recorded together or not at all; it adds no supporter marker and sends no tip thank-you.
       const premium = isPremiumPassPayment(payment.metadata);
       if (premium) {
-        const { grantPatronAccessForPayment, readPaymentConsents, readPaymentProductId } = await import("@/lib/modules/experiment-premium-pass");
+        const { grantPatronAccessForPayment, readPaymentConsents, readPaymentProductId } = await import("@/lib/modules/patron-zone");
         const method = (payment.metadata as { method?: unknown } | null)?.method;
         await grantPatronAccessForPayment(tx, {
           userId: payment.userId,

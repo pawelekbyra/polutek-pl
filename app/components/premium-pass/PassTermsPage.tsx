@@ -1,6 +1,6 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md, section 9): the DRAFT "Patron Zone Terms" page.
+// patron zone (docs/architecture/patron-zone.md): the DRAFT "Patron Zone Terms" page.
 // A short list of what the patron zone is; the real terms come with a lawyer before the first real sale. 404 when the
-// experiment is invisible to the viewer. The site's real legal documents (LegalDocs.tsx) do not change.
+// patron zone is invisible to the viewer. The site's real legal documents (LegalDocs.tsx) do not change.
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Navbar from "@/app/components/Navbar";
@@ -11,7 +11,7 @@ import {
   PATRON_VAT_RATE_PERCENT,
   premiumPassFor,
   resolvePremiumPayments,
-} from "@/lib/modules/experiment-premium-pass";
+} from "@/lib/modules/patron-zone";
 import { getServerTx } from "@/lib/i18n/server-tx";
 import { getLocalizedHref, isLocale, type Locale } from "@/lib/i18n/routing";
 import { APP_NAME } from "@/lib/constants";

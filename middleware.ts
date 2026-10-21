@@ -22,8 +22,8 @@ const UI_ONLY_PUBLIC_ROUTES = UI_ONLY_LOCALES.flatMap((locale) => [
   `/${locale}/privacy-policy`,
   `/${locale}/regulamin`,
   `/${locale}/polityka-prywatnosci`,
-  `/${locale}/premium`, // experiment: premium-pass (docs/experiments/premium-pass.md)
-  `/${locale}/premium-terms`, // experiment: premium-pass
+  `/${locale}/premium`, // patron zone (docs/architecture/patron-zone.md)
+  `/${locale}/premium-terms`, // patron zone
 ]);
 
 const isPublicRoute = createRouteMatcher([
@@ -116,7 +116,7 @@ const isPublicRoute = createRouteMatcher([
   // Only GET comments is public if product requires it
   '/api/comments',
   '/api/comments/(.*)/replies',
-  // experiment: premium-pass (docs/experiments/premium-pass.md): the demo pass offer; each page answers 404 when the experiment is off.
+  // patron zone (docs/architecture/patron-zone.md): the demo pass offer; each page answers 404 when the patron zone is off.
   '/premium', '/pl/premium', '/en/premium', '/regulamin-premium', '/pl/regulamin-premium', '/en/premium-terms',
   ...UI_ONLY_PUBLIC_ROUTES,
 ]);

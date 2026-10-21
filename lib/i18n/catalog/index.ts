@@ -9,8 +9,8 @@ import type { Catalog } from "@/lib/i18n/ui";
  */
 export async function loadCatalog(locale: Locale): Promise<Catalog | null> {
   const base = await loadBaseCatalog(locale);
-  // experiment: premium-pass (docs/experiments/premium-pass.md): its texts live in their own files, so the revert
-  // never collides with later edits of the big catalogs.
+  // patron zone (docs/architecture/patron-zone.md): its texts live in their own files, so they never collide with
+  // edits of the big catalogs.
   return base ? { ...base, ...(await loadPremiumPassCatalog(locale)) } : base;
 }
 
@@ -33,7 +33,7 @@ async function loadBaseCatalog(locale: Locale): Promise<Catalog | null> {
   }
 }
 
-// experiment: premium-pass
+// patron zone (docs/architecture/patron-zone.md)
 async function loadPremiumPassCatalog(locale: Locale): Promise<Catalog> {
   switch (locale) {
     case "de":

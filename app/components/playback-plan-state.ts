@@ -8,7 +8,7 @@ const SAFE_PLAYBACK_STATES: PlaybackPlanStatus[] = [
   "READY",
   "LOGIN_REQUIRED",
   "COMING_SOON",
-  "PASS_REQUIRED", // experiment: premium-pass (docs/experiments/premium-pass.md)
+  "PASS_REQUIRED", // patron zone (docs/architecture/patron-zone.md)
   "VIDEO_NOT_READY",
   "NO_PRIMARY_ASSET",
   "PROCESSING",
@@ -19,7 +19,7 @@ const SAFE_PLAYBACK_STATES: PlaybackPlanStatus[] = [
 export const BLOCKED_PLAYBACK_STATES = new Set<PlaybackPlanStatus>([
   "LOGIN_REQUIRED",
   "COMING_SOON",
-  "PASS_REQUIRED", // experiment: premium-pass (docs/experiments/premium-pass.md)
+  "PASS_REQUIRED", // patron zone (docs/architecture/patron-zone.md)
   "VIDEO_NOT_READY",
   "NO_PRIMARY_ASSET",
   "PROCESSING",
@@ -63,7 +63,7 @@ export function playbackPlanStateMessages(
       action: "retry",
       actionLabel: tx("Sprawdź ponownie", "Check again"),
     },
-    // experiment: premium-pass: rendered as PremiumPassOverlay; this copy is only the fallback text.
+    // patron zone: rendered as PremiumPassOverlay; this copy is only the fallback text.
     PASS_REQUIRED: {
       title: tx("Ten film jest w strefie patrona.", "This video is in the patron zone."),
       description: tx(

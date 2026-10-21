@@ -1,5 +1,5 @@
 /**
- * experiment: premium-pass (docs/experiments/premium-pass.md, "Strefa patrona"): the patron-zone access is granted ONLY
+ * patron zone (docs/architecture/patron-zone.md): the patron-zone access is granted ONLY
  * by the verified Stripe webhook / fulfillPayment(). Payloads are signed with Stripe's own test helper and verified by
  * the real `constructEvent`; only the database (in-memory fake), e-mail, notifications, audit and the Stripe API client
  * are replaced. No network, no charge.
@@ -7,7 +7,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import Stripe from "stripe";
 import { NextRequest } from "next/server";
-import { createFakePaymentsDb } from "../modules/payments/fake-payments-db";
+import { createFakePaymentsDb } from "../payments/fake-payments-db";
 
 const SECRET = "whsec_test_signing_secret_for_unit_tests";
 const db = createFakePaymentsDb();
@@ -32,7 +32,7 @@ vi.mock("@/lib/modules/payments/infrastructure/stripe-client", () => ({
 }));
 
 const { POST } = await import("@/app/api/webhooks/stripe/route");
-const { parsePassRecord, passStateOf } = await import("@/lib/modules/experiment-premium-pass");
+const { parsePassRecord, passStateOf } = await import("@/lib/modules/patron-zone");
 
 let eventSeq = 0;
 function signedRequest(type: string, object: Record<string, unknown>, options: { livemode?: boolean; secret?: string; id?: string } = {}) {

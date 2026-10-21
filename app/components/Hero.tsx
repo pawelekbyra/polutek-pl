@@ -273,7 +273,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
             requiredTier={video.tier}
             premiereAt={video.premiereAt}
             revealKey="player"
-            premiumPass={video.premiumPass} // experiment: premium-pass (docs/experiments/premium-pass.md)
+            premiumPass={video.premiumPass} // patron zone (docs/architecture/patron-zone.md)
           >
             <VideoPlayer
               video={video}
@@ -396,12 +396,11 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                  text={video.description || undefined}
                  className={styles.secondaryAction}
                />
-               {/* Hero only ever renders inside ChannelHome, whose listener for the
-                   "polutek:open-support" event (also used by AccessLockOverlay) opens the
-                   tip gate (SupportModal). It deliberately does not touch the URL: a router
-                   navigation re-renders the whole page on the server. Signed-out click opens
-                   sign-in first, since tipping needs an account. The row's last item, so it
-                   fills the remaining space (flex-1 below lg:, fixed above it). */}
+               {/* The gold patron button: PatronCheckoutHost (mounted below) opens the patron checkout on the
+                   "polutek:open-patron" event. It deliberately does not touch the URL: a router navigation
+                   re-renders the whole page on the server. Signed-out click opens sign-in first, since buying
+                   needs an account. The row's last item, so it fills the remaining space (flex-1 below lg:,
+                   fixed above it). The old tip gate is hidden (app/components/channel/tip-gate.ts). */}
                <button
                  type="button"
                  onClick={() => {

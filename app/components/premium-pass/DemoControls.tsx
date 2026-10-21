@@ -1,7 +1,7 @@
 "use client";
-// experiment: premium-pass (docs/experiments/premium-pass.md, section 7): the demo panel. Any signed-in viewer who
-// sees the experiment may expire or delete THEIR OWN access, to look at every state without waiting. Shown only in demo
-// mode or with Stripe TEST keys (the server refuses it with live keys).
+// patron zone (docs/architecture/patron-zone.md): the demo panel. Any signed-in viewer who
+// sees the patron zone may expire or delete THEIR OWN access, to look at every state without waiting. Shown only while
+// PREMIUM_PASS_PAYMENTS=demo (callers check the mode; the server refuses it in `stripe` mode).
 import React, { useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";

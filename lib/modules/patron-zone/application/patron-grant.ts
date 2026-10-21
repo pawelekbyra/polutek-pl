@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md)
+// patron zone (docs/architecture/patron-zone.md)
 // Writes and withdraws the patron-zone access grant for a REAL (Stripe) payment. Called ONLY from the payments
 // module's fulfillPayment() (verified webhook, payment-status fast path, reconciliation cron), inside its transaction,
 // once Stripe reports the PaymentIntent `succeeded` with the amount, currency, intent and user checked against the
@@ -78,7 +78,7 @@ export async function grantPatronAccessForPayment(tx: WriteTx, input: GrantInput
 /**
  * A payment was refunded in full: that payment's grant leaves the record (the lifetime marker when it came from this
  * payment, otherwise its 30 days). A partial refund, a dispute and a refund that failed later are handled by the owner
- * by hand (docs/experiments/premium-pass.md); only the full refund is automatic.
+ * by hand (docs/architecture/patron-zone.md); only the full refund is automatic.
  */
 export async function revokePatronAccessForPayment(
   tx: WriteTx,

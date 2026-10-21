@@ -1,13 +1,13 @@
 "use client";
-// experiment: premium-pass (docs/experiments/premium-pass.md, section 8.1): the locked stage in place of the player
+// patron zone (docs/architecture/patron-zone.md): the locked stage in place of the player
 // for a PASS_REQUIRED plan (the patron zone). The player is never mounted here and nothing about the stream is
 // requested: the plan carries only offer data (amounts) and the public poster.
 import React, { useCallback, useEffect, useId, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/react";
 import { getLocalizedHref } from "@/lib/i18n/routing";
-import { patronCurrencyForLanguage } from "@/lib/modules/experiment-premium-pass/domain/config";
-import { cheapestProduct, type PremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
+import { patronCurrencyForLanguage } from "@/lib/modules/patron-zone/domain/config";
+import { cheapestProduct, type PremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
 import { useAuthModal } from "../auth/AuthModalProvider";
 import { useLanguage } from "../LanguageContext";
 import { PlayerStateFrame } from "../PlayerStateFrame";
@@ -140,7 +140,7 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
       {signedIn && (
         <>
           <PassCheckoutSheet open={checkoutOpen} onOpenChange={setCheckoutOpen} offer={offer} onWatch={onRefresh} />
-          {(demo || testMode) && <DemoControls onChanged={onRefresh} />}
+          {demo && <DemoControls onChanged={onRefresh} />}
         </>
       )}
     </PlayerStateFrame>

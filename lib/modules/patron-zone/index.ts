@@ -1,7 +1,7 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md)
-// Patron zone (formerly the demo "backstage pass"): simulated checkout by default, real Stripe payments only with
-// PREMIUM_PASS_PAYMENTS=stripe. Removed as a whole by
-// scripts/experiments/premium-pass-revert.sh.
+// patron zone (docs/architecture/patron-zone.md)
+// Patron zone (paid access to selected videos): simulated checkout by default, real Stripe payments only with
+// PREMIUM_PASS_PAYMENTS=stripe. Feature switches: PREMIUM_PASS_EXPERIMENT, PREMIUM_PASS_PAYMENTS, PREMIUM_PASS_VIDEO_SLUGS,
+// PREMIUM_PASS_TESTER_IDS (names kept from the pilot so production needs no change).
 export * from "./domain/config";
 export * from "./domain/payments-mode";
 export * from "./domain/pass-state";

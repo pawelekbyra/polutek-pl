@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md)
+// patron zone (docs/architecture/patron-zone.md)
 // Starts (or updates the amount of) the REAL payment of the patron zone: one Payment row + one PaymentIntent per
 // attempt, through the tip gateway's own createCheckoutIntent. Only in `PREMIUM_PASS_PAYMENTS=stripe` mode and only
 // when the payments are fully configured (see domain/payments-mode.ts). It never grants access.
@@ -7,7 +7,7 @@ import { handleApiError } from "@/lib/errors";
 import { getActorFromAuth } from "@/lib/api/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { createAppContext } from "@/lib/modules/shared/app-context";
-import { passUserId, patronIntentInputSchema, premiumPassFor, startPatronPayment } from "@/lib/modules/experiment-premium-pass";
+import { passUserId, patronIntentInputSchema, premiumPassFor, startPatronPayment } from "@/lib/modules/patron-zone";
 import { passErrorResponse, passInvalidRequest, PASS_NO_STORE } from "../responses";
 
 export const dynamic = "force-dynamic";

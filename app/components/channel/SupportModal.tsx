@@ -1,4 +1,6 @@
 "use client";
+// Hidden since 2026-10-21, kept on purpose: nothing opens this modal (app/components/channel/tip-gate.ts). Several
+// app/components/support/* parts (TipPayStep, TipPayFrame, TipSelect, ...) are shared with the patron checkout and live.
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Elements } from "@stripe/react-stripe-js";

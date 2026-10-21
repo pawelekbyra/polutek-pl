@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md): thin route, the page lives in app/components/premium-pass.
+// patron zone (docs/architecture/patron-zone.md): thin route, the page lives in app/components/premium-pass.
 import PassTermsPage, { passTermsMetadata, type PassTermsPageProps } from "@/app/components/premium-pass/PassTermsPage";
 
 export const dynamic = "force-dynamic";

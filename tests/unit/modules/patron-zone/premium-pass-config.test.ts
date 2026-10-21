@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md)
+// patron zone (docs/architecture/patron-zone.md)
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_PREMIUM_SLUGS,
@@ -16,9 +16,9 @@ import {
   parsePremiumPassMode,
   premiumPassFor,
   readPremiumPassConfig,
-} from "@/lib/modules/experiment-premium-pass";
-import { cheapestProduct, defaultProduct, formatPassPrice, readPremiumPassOffer, buildPremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
-import { applyProduct, extendedExpiry, maskEmail, newDemoRef, parsePassRecord, passStateOf, purchaseBlock, toPassStatusDto } from "@/lib/modules/experiment-premium-pass/domain/pass-state";
+} from "@/lib/modules/patron-zone";
+import { cheapestProduct, defaultProduct, formatPassPrice, readPremiumPassOffer, buildPremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
+import { applyProduct, extendedExpiry, maskEmail, newDemoRef, parsePassRecord, passStateOf, purchaseBlock, toPassStatusDto } from "@/lib/modules/patron-zone/domain/pass-state";
 
 const now = new Date("2026-10-21T10:00:00.000Z");
 const live = { slug: "jj", status: "PUBLISHED", isMainFeatured: false, premiereAt: null };

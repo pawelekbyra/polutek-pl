@@ -1,4 +1,4 @@
-// experiment: premium-pass (docs/experiments/premium-pass.md, section 6.2): a PASS_REQUIRED plan is a denied plan
+// patron zone (docs/architecture/patron-zone.md): a PASS_REQUIRED plan is a denied plan
 // like any other (no source, token, session, chapters or subtitles) and carries only the offer.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PlaybackService } from "@/lib/modules/playback";

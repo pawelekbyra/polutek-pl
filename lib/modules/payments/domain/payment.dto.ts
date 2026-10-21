@@ -23,7 +23,7 @@ export interface CreateCheckoutIntentInput {
   amountMinor: number;
   currency: string;
   requestId?: string;
-  /** Set by the patron zone (experiment: premium-pass); absent for a tip. */
+  /** Set by the patron zone (patron zone); absent for a tip. */
   purpose?: typeof PAYMENT_PURPOSE_PREMIUM_PASS;
   /** The patron-zone product (the server's own table): carried in the Payment and PaymentIntent metadata. */
   productId?: string;

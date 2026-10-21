@@ -1,12 +1,12 @@
 import type { Chapter } from "@/lib/video-chapters";
-import type { PremiumPassOffer } from "@/lib/modules/experiment-premium-pass"; // experiment: premium-pass
+import type { PremiumPassOffer } from "@/lib/modules/patron-zone"; // patron zone
 
 export type PlaybackPlanStatus =
   | "READY"
   | "LOGIN_REQUIRED"
   // Scheduled premiere not reached yet (signed-in viewer). Guests get LOGIN_REQUIRED instead.
   | "COMING_SOON"
-  // experiment: premium-pass (docs/experiments/premium-pass.md): video behind the demo pass; the plan carries `access.offer`.
+  // patron zone (docs/architecture/patron-zone.md): video behind the demo pass; the plan carries `access.offer`.
   | "PASS_REQUIRED"
   | "VIDEO_NOT_READY"
   | "NO_PRIMARY_ASSET"
@@ -57,9 +57,9 @@ export type PlaybackPlan = {
     allowed: boolean;
     reason?: string;
     requiredTier?: string;
-    /** experiment: premium-pass: only on a PASS_REQUIRED plan (prices of the demo passes, never access data). */
+    /** patron zone: only on a PASS_REQUIRED plan (prices of the demo passes, never access data). */
     offer?: PremiumPassOffer;
-    /** experiment: premium-pass: only on a playable plan of a pass video, ISO end of the viewer's pass. */
+    /** patron zone: only on a playable plan of a pass video, ISO end of the viewer's pass. */
     premiumPassUntil?: string;
   };
   source?: PlaybackSourceContract;

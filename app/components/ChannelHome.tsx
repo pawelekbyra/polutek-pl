@@ -28,7 +28,9 @@ import type { ContinueWatchingItem } from "@/lib/modules/watch-progress/domain/c
 import type { PlaylistQueueDto } from "@/lib/modules/playlists/domain/playlist.dto";
 import { PlaylistQueueLayer } from "./playlists/PlaylistQueuePanel";
 import { planSidebarSwitch } from "./playlists/queue-navigation";
+import { TIP_GATE_ENABLED } from "./channel/tip-gate";
 
+// Hidden since 2026-10-21, kept on purpose (see tip-gate.ts).
 const SupportModal = dynamic(() => import("./channel/SupportModal"), { ssr: false });
 
 interface ChannelHomeProps {
@@ -247,13 +249,14 @@ function ChannelHomeContent({
     return () => window.removeEventListener(GO_HOME_EVENT, goToHero);
   }, [goToHero]);
 
-  // The tip gate (SupportModal) opens on the "polutek:open-support" event, dispatched by Hero's
-  // "Wspieraj" button and AccessLockOverlay. It is mounted only while open, so Stripe.js is loaded
-  // only by viewers who actually open it.
+  // Hidden since 2026-10-21, kept on purpose: the tip gate (SupportModal) is switched off by TIP_GATE_ENABLED, so
+  // nothing opens it (the "polutek:open-support" event has no dispatcher, the URL triggers below are inert). It is
+  // mounted only while open, so Stripe.js would be loaded only by viewers who actually open it.
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const openSupport = useCallback(() => setIsSupportModalOpen(true), []);
 
   useEffect(() => {
+    if (!TIP_GATE_ENABLED) return;
     window.addEventListener("polutek:open-support", openSupport);
     return () => window.removeEventListener("polutek:open-support", openSupport);
   }, [openSupport]);
@@ -265,7 +268,7 @@ function ChannelHomeContent({
   const wantsSupport = searchParams.get("support") === "1";
   const isStripeReturn = searchParams.get("success") === "true" && Boolean(searchParams.get("payment_id"));
   useEffect(() => {
-    if (!userProfile || !(wantsSupport || isStripeReturn)) return;
+    if (!TIP_GATE_ENABLED || !userProfile || !(wantsSupport || isStripeReturn)) return;
     setIsSupportModalOpen(true);
     if (wantsSupport) {
       try {
