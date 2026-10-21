@@ -121,6 +121,45 @@
   filter: none;
 }
 
+/* Like/dislike and Share in black with white text (owner request, 2026-10-21). The icons draw with currentColor
+   so the "pressed" state can switch them to a light blue on the black. */
+.actionCluster,
+.secondaryAction {
+  --watch-black: #0b0b0d;
+  border-color: #0b0b0d;
+  background: var(--watch-black) !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.55);
+}
+
+.actionCluster .actionButton,
+.secondaryAction,
+.secondaryAction * {
+  color: #ffffff !important;
+}
+
+.actionCluster .actionButton[aria-pressed="true"] {
+  color: #7ea8ff !important;
+}
+
+.actionCluster svg,
+.secondaryAction svg {
+  stroke: currentColor !important;
+}
+
+.actionCluster > span {
+  background: rgba(255, 255, 255, 0.28) !important;
+}
+
+.actionCluster .actionButton:hover {
+  background: #26262b;
+}
+
+.secondaryAction:hover {
+  background: #26262b !important;
+  border-color: #26262b;
+}
+
 /* Wspieraj in the premium gold (owner request, 2026-10-21): the same amber as the premium pass badge and CTA. */
 .supportAction {
   border-color: var(--chan-amber-strong);
