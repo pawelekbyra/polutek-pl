@@ -23,7 +23,7 @@ import { CrossIcon } from "./PassIcons";
 import { PassMethodStep, PassOrderSummary, PassPlanStep } from "./PassPlanSteps";
 import { PassConsent, PassDemoSummary, PassStripePay, type PassConsentErrors, type PassConsentState } from "./PassPaymentStep";
 import { PassDeclined, PassMaxAhead, PassPending, PassSuccess } from "./PassSuccess";
-import { PATRON_SUPPORT_EMAIL, newRequestId, passDate, price } from "./pass-copy";
+import { newRequestId, passDate, price } from "./pass-copy";
 import { fetchPassStatus, pollPatronPayment, postDemoCheckout, postPatronConsent, postPatronIntent } from "./usePremiumPass";
 import styles from "./premium-pass.module.css";
 
@@ -486,8 +486,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
           )}
 
           <div className={styles.seller}>
-            <span>{tx("Sprzedawca: {0}", "Seller: {0}", "POLUTEK Sp. z o.o.")}</span>
-            <span>{PATRON_SUPPORT_EMAIL}</span>
+            <span>{tx("Sprzedawca: {0}", "Seller: {0}", "POLUTEK Sp. z o.o.")}</span>
           </div>
         </DialogPrimitive.Popup>
       </DialogPrimitive.Portal>
