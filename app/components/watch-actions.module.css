@@ -72,14 +72,13 @@
   position: relative;
   min-height: 36px;
   overflow: hidden;
-  /* Solid --chan-blue — owner request, 2026-08-02: Subscribe is the one blue button in
-     this row; Wspieraj/like-dislike/Share stay on the plain neutral surface style. */
-  border: 1px solid var(--cm-blue-62-black);
-  background: var(--chan-blue) !important;
-  color: white !important;
+  /* Cream like Share and the like cluster (owner request, 2026-10-21; it was solid blue since 2026-08-02). */
+  border: 1px solid var(--watch-control-border);
+  background: var(--watch-control-bg) !important;
+  color: var(--chan-ink) !important;
   box-shadow:
-    inset 0 1px 0 var(--cm-white-30),
-    0 8px 18px -8px var(--cm-blue-60) !important;
+    0 1px 2px rgba(23, 23, 23, 0.04),
+    0 5px 14px rgba(23, 23, 23, 0.045) !important;
 }
 
 .secondaryAction,
@@ -113,11 +112,11 @@
 }
 
 .subscribeAction:hover {
-  border-color: var(--cm-blue-70-black);
-  background: var(--cm-blue-90-black) !important;
+  border-color: var(--cm-blue-28-wc-border);
+  background: var(--watch-control-hover) !important;
   box-shadow:
-    inset 0 1px 0 var(--cm-white-30),
-    0 12px 24px -8px var(--cm-blue-62) !important;
+    0 2px 4px rgba(23, 23, 23, 0.05),
+    0 9px 20px rgba(23, 23, 23, 0.07) !important;
   filter: none;
 }
 
