@@ -230,22 +230,22 @@
   background: rgba(0, 0, 0, 0.14) !important;
 }
 
-/* Subscribe in pure red #FF0000 (owner request, 2026-10-21), with the same sheen as the other buttons. */
+/* Subscribe in orange (owner request, 2026-10-21), with the same sheen as the other buttons. */
 .actionRail .subscribeAction {
-  border: 1px solid #b30000;
+  border: 1px solid #c25f05;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0) 51%),
-    linear-gradient(180deg, #ff4040 0%, #ff0000 52%, #d10000 100%) !important;
+    linear-gradient(180deg, #ffa13d 0%, #f58a1f 52%, #dd6f08 100%) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
     inset 0 -1px 0 rgba(255, 255, 255, 0.08),
-    0 8px 18px -8px rgba(255, 0, 0, 0.7) !important;
+    0 8px 18px -8px rgba(245, 138, 31, 0.75) !important;
 }
 
 .actionRail .subscribeAction:hover {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0) 51%),
-    linear-gradient(180deg, #f53030 0%, #e60000 52%, #b80000 100%) !important;
+    linear-gradient(180deg, #f79a35 0%, #e87d14 52%, #c85f05 100%) !important;
 }
 
 /* The like and dislike halves share the cluster's width, so it has no empty space at the end. */
