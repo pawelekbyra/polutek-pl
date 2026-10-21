@@ -338,8 +338,8 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   const showSteps = stepNumber !== null;
   const retry = () => { resetAttempt(); setIntent(null); setStage({ kind: "plan" }); };
 
-  const heading = (text: string) => (
-    <h3 ref={headingRef} tabIndex={-1} className={styles.stepTitle}>{text}</h3>
+  const heading = (text: string, lowered = false) => (
+    <h3 ref={headingRef} tabIndex={-1} className={cn(styles.stepTitle, lowered && styles.stepTitleLow)}>{text}</h3>
   );
 
   return (
@@ -371,7 +371,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
           {stage.kind === "plan" && (
             <>
               <div className={styles.sheetBody}>
-                {heading(tx("Uzyskaj dostęp do strefy premium", "Get access to the premium zone"))}
+                {heading(tx("Uzyskaj dostęp do strefy premium", "Get access to the premium zone"), true)}
                 <PassPlanStep
                   tx={tx}
                   language={language}
