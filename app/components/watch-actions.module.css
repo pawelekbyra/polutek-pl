@@ -138,8 +138,13 @@
   color: #ffffff !important;
 }
 
+/* A pressed like/dislike: the icon fills in white and the segment lifts a shade, instead of changing the hue. */
 .actionCluster .actionButton[aria-pressed="true"] {
-  color: #7ea8ff !important;
+  background: #2c2c32;
+}
+
+.actionCluster .actionButton[aria-pressed="true"] svg {
+  fill: currentColor;
 }
 
 .actionCluster svg,
@@ -158,6 +163,10 @@
 .secondaryAction:hover {
   background: #26262b !important;
   border-color: #26262b;
+}
+
+.supportAction span {
+  white-space: nowrap;
 }
 
 /* Wspieraj in the premium gold (owner request, 2026-10-21): the same amber as the premium pass badge and CTA. */
