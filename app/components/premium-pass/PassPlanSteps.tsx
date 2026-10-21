@@ -105,6 +105,7 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
       {notice && <p className={styles.noticeWarn} role="alert">{notice}</p>}
 
       <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} />
+      <PassLegalLinks tx={tx} language={language} />
     </>
   );
 }
@@ -134,15 +135,22 @@ export function PassMethodStep({ tx, language, offer, product, currency, methods
 
       <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} />
 
-      <p className={styles.legalLinks}>
+      <PassLegalLinks tx={tx} language={language} />
+    </>
+  );
+}
+
+/** Terms and Privacy Policy as small links at the bottom of steps 1 and 2 (the consent itself is ticked in step 3). */
+export function PassLegalLinks({ tx, language }: { tx: Tx; language: Locale }) {
+  return (
+    <p className={styles.legalLinks}>
         {txRich(
           tx,
-          "Przed zapłatą zapoznaj się z dokumentami: {0} i {1}. Zgodę potwierdzisz w następnym kroku.",
-          "Before you pay, read the documents: {0} and {1}. You confirm your consent in the next step.",
+          "Przed zapłatą zapoznaj się z dokumentami: {0} i {1}.",
+          "Before you pay, read the documents: {0} and {1}.",
           <a href={getLocalizedHref(language, "passTerms")} target="_blank" rel="noopener">{tx("Regulamin strefy patrona", "Patron Zone Terms")}</a>,
           <a href={getLocalizedHref(language, "privacy")} target="_blank" rel="noopener">{tx("Polityka prywatności", "Privacy Policy")}</a>,
         )}
-      </p>
-    </>
+    </p>
   );
 }
