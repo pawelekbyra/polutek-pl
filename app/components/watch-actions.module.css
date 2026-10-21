@@ -228,16 +228,16 @@
   background: rgba(0, 0, 0, 0.14) !important;
 }
 
-/* Subscribe: flat red-orange (#F4511E), no sheen, no dark outline and an almost square 2px corner (owner request, 2026-10-21). */
+/* Subscribe: flat black, no sheen, no outline and an almost square 2px corner (owner request, 2026-10-21). */
 .subscribeAction {
-  background: #f4511e !important;
+  background: #0f0f12 !important;
   border-color: transparent !important;
   border-radius: 2px !important;
-  box-shadow: 0 6px 14px -8px rgba(244, 81, 30, 0.7) !important;
+  box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.6) !important;
 }
 
 .subscribeAction:hover {
-  background: #e0430f !important;
+  background: #26262b !important;
 }
 
 .subscribeAction,
@@ -269,16 +269,16 @@
   padding-right: 14px !important;
 }
 
-/* "Kup se Premium": flat black, no sheen (owner request, 2026-10-21). */
+/* "Kup se Premium": flat blue, no sheen (owner request, 2026-10-21). */
 .supportAction {
   border-color: transparent;
-  background: #0f0f12 !important;
+  background: var(--chan-blue) !important;
   color: #ffffff !important;
-  box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.6) !important;
+  box-shadow: 0 6px 14px -8px var(--cm-blue-60) !important;
 }
 
 .supportAction:hover {
-  background: #26262b !important;
+  background: var(--cm-blue-90-black) !important;
 }
 
 .supportAction:focus-visible {
