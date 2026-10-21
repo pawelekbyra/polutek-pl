@@ -80,7 +80,7 @@ describe('Hero "Premium" (support) button', () => {
   it('dispatches polutek:open-patron for a signed-in click without any router navigation', () => {
     render(<Hero video={video} />);
 
-    const button = screen.getByRole('button', { name: /zostań patronem/i });
+    const button = screen.getByRole('button', { name: /kup se premium/i });
     fireEvent.click(button);
 
     const dispatchedEvents = dispatchSpy.mock.calls
@@ -100,7 +100,7 @@ describe('Hero "Premium" (support) button', () => {
     mockUseAuth.mockReturnValue({ userId: null });
     render(<Hero video={video} />);
 
-    const button = screen.getByRole('button', { name: /zostań patronem/i });
+    const button = screen.getByRole('button', { name: /kup se premium/i });
     fireEvent.click(button);
 
     expect(mockOpenAuthModal).toHaveBeenCalledWith('sign-in');

@@ -7,7 +7,6 @@
 import React, { useId } from "react";
 import type { Locale } from "@/lib/i18n/routing";
 import { getLocalizedHref } from "@/lib/i18n/routing";
-import { txRich } from "@/lib/i18n/rich";
 import type { Tx } from "@/lib/i18n/ui";
 import type { PatronCurrency } from "@/lib/modules/experiment-premium-pass/domain/config";
 import type { PatronOfferProduct, PremiumPassOffer } from "@/lib/modules/experiment-premium-pass/domain/offer";
@@ -144,13 +143,9 @@ export function PassMethodStep({ tx, language, offer, product, currency, methods
 export function PassLegalLinks({ tx, language }: { tx: Tx; language: Locale }) {
   return (
     <p className={styles.legalLinks}>
-        {txRich(
-          tx,
-          "Przed zapłatą zapoznaj się z dokumentami: {0} i {1}.",
-          "Before you pay, read the documents: {0} and {1}.",
-          <a href={getLocalizedHref(language, "passTerms")} target="_blank" rel="noopener">{tx("Regulamin strefy patrona", "Patron Zone Terms")}</a>,
-          <a href={getLocalizedHref(language, "privacy")} target="_blank" rel="noopener">{tx("Polityka prywatności", "Privacy Policy")}</a>,
-        )}
+      {tx("Przed zapłatą zapoznaj się z dokumentami:", "Before you pay, read the documents:")}
+      <a href={getLocalizedHref(language, "passTerms")} target="_blank" rel="noopener">{tx("Regulamin strefy patrona", "Patron Zone Terms")}</a>
+      <a href={getLocalizedHref(language, "privacy")} target="_blank" rel="noopener">{tx("Polityka prywatności", "Privacy Policy")}</a>
     </p>
   );
 }
