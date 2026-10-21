@@ -223,17 +223,17 @@
   background: rgba(0, 0, 0, 0.14) !important;
 }
 
-/* Subscribe in flat orange (owner request, 2026-10-21; the sheen was removed from Subscribe, Like and Share). */
+/* Subscribe in flat red-orange (vermilion #F4511E) (owner request, 2026-10-21; the sheen was removed from Subscribe, Like and Share). */
 .actionRail .subscribeAction {
-  border: 1px solid #c25f05;
-  background: #f58a1f !important;
+  border: 1px solid #c63d0e;
+  background: #f4511e !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 8px 18px -8px rgba(245, 138, 31, 0.75) !important;
+    0 8px 18px -8px rgba(244, 81, 30, 0.7) !important;
 }
 
 .actionRail .subscribeAction:hover {
-  background: #e87d14 !important;
+  background: #e0430f !important;
 }
 
 /* The like and dislike halves share the cluster's width, so it has no empty space at the end. */
