@@ -116,7 +116,8 @@
 @keyframes sweep { from { transform: translateX(-100%); } to { transform: translateX(170%); } }
 
 /* ---------- patron checkout: steps, amount, notices ---------- */
-.stepDots { display: flex; gap: 6px; margin: 7px 0 0; padding: 0; list-style: none; }
+/* Pushed to the right, next to the close button (44 px wide, 18 px from the edge, plus a small gap). */
+.stepDots { display: flex; gap: 6px; margin: 7px 56px 0 auto; padding: 0; list-style: none; }
 .stepPip { width: 8px; height: 8px; border-radius: 50%; background: var(--chan-line-soft, #d5dce8); transition: background-color 160ms ease; }
 .stepPipNow { background: var(--chan-ink, #111827); }
 .srOnly { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
