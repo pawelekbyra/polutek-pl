@@ -476,7 +476,7 @@
    the "..." took: a smaller gap between avatar, name and Subscribe, and a slimmer Subscribe button (about 20px in all). */
 @media (max-width: 420px) {
   .creatorStrip {
-    gap: 8px !important;
+    gap: 12px !important;
   }
 
   .creatorStrip .subscribeAction {
