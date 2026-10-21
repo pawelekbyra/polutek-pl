@@ -105,7 +105,7 @@
 .consentError input { outline: 2px solid var(--pass-err); outline-offset: 2px; }
 .error { grid-column: 2; margin: -4px 0 0; color: var(--pass-err); font-size: 13px; font-weight: 600; }
 .pay { position: sticky; bottom: 0; display: grid; gap: 6px; text-align: center; padding: 10px 18px calc(12px + env(safe-area-inset-bottom)); background: var(--chan-card, #fff); border-top: 1px solid var(--chan-line, #e1e6ef); }
-.seller { border-top: 1px solid var(--chan-line, #e1e6ef); padding: 10px 18px 12px; display: flex; gap: 8px; align-items: center; color: var(--chan-muted, #5d6679); font-size: 12px; line-height: 1.4; }
+.seller { border-top: 1px solid var(--chan-line, #e1e6ef); padding: 10px 18px 12px; display: flex; flex-direction: column; gap: 2px; align-items: center; text-align: center; color: var(--chan-muted, #5d6679); font-size: 12px; line-height: 1.4; }
 .seller svg { width: 14px; height: 14px; flex: 0 0 auto; }
 .progress { position: relative; overflow: hidden; display: grid; place-items: center; min-height: 52px; border-radius: 14px; background: var(--chan-surface, #f0f3f8); border: 1px solid var(--chan-line, #e1e6ef); font-size: 14px; font-weight: 700; }
 .progress::before { content: ""; position: absolute; inset: 0 40% 0 0; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--chan-amber, #f59e0b) 35%, transparent)); animation: sweep 1.2s ease-in-out infinite; }

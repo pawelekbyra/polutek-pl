@@ -67,7 +67,6 @@
  "Payments are handled by a payment provider (in the demo: simulated, nothing is charged)": "I pagamenti sono gestiti da un fornitore (nella demo: simulati, non viene addebitato nulla)",
  "Payments are temporarily unavailable. Please try again later.": "I pagamenti sono temporaneamente non disponibili. Riprova più tardi.",
  "Product": "Prodotto",
- "Secure connection": "Connessione sicura",
  "Seller": "Venditore",
  "Seller: {0}": "Venditore: {0}",
  "Sign in to become a patron": "Accedi per diventare sostenitore",
