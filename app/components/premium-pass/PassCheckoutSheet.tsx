@@ -23,7 +23,7 @@ import { CrossIcon } from "./PassIcons";
 import { PassMethodStep, PassOrderSummary, PassPlanStep } from "./PassPlanSteps";
 import { PassConsent, PassDemoSummary, PassStripePay, type PassConsentErrors, type PassConsentState } from "./PassPaymentStep";
 import { PassDeclined, PassMaxAhead, PassPending, PassSuccess } from "./PassSuccess";
-import { newRequestId, passDate, price } from "./pass-copy";
+import { newRequestId, price } from "./pass-copy";
 import { fetchPassStatus, pollPatronPayment, postDemoCheckout, postPatronConsent, postPatronIntent } from "./usePremiumPass";
 import styles from "./premium-pass.module.css";
 
@@ -142,7 +142,6 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   const processing = stage.kind === "processing";
   const locked = busy || processing;
   const email = maskEmail(user?.primaryEmailAddress?.emailAddress);
-  const formatDate = (iso: string) => passDate(language, iso, true);
 
   // ---- opening: a fresh attempt (or the return from a redirect method), Stripe.js only from here
   const finish = useCallback(async (paymentId: string, attempts: number) => {
@@ -384,7 +383,6 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
                   notice={notice}
                   unavailable={stripeMode && !stripeReady}
                   busy={busy}
-                  formatDate={formatDate}
                 />
               </div>
               <div className={styles.pay}>

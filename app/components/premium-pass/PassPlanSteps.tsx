@@ -62,20 +62,13 @@ export interface PassPlanStepProps extends CommonProps {
   onCurrency: (currency: PatronCurrency) => void;
   /** The viewer's own running access: unlimited blocks a new purchase, a 30-day one is extended or converted. */
   access: { lifetime: boolean; expiresAt: string | null } | null;
-  formatDate: (iso: string) => string;
 }
 
 /** Step 1: currency and option, with the order summary. */
-export function PassPlanStep({ tx, language, offer, product, currency, onProduct, onCurrency, access, notice, unavailable, busy, formatDate }: PassPlanStepProps) {
+export function PassPlanStep({ tx, language, offer, product, currency, onProduct, onCurrency, access, notice, unavailable, busy }: PassPlanStepProps) {
   const ids = useId();
   return (
     <>
-      {access?.lifetime && <p className={styles.notice} role="status">{tx("Masz już dostęp bez limitu.", "You already have unlimited access.")}</p>}
-      {access && !access.lifetime && access.expiresAt && (
-        <p className={styles.notice} role="status">
-          {tx("Masz dostęp do {0}. 30 dni przedłuża go, dostęp bez limitu zamienia go na stały.", "You have access until {0}. 30 days extends it, unlimited access makes it permanent.", formatDate(access.expiresAt))}
-        </p>
-      )}
       {unavailable && (
         <p className={styles.noticeWarn} role="alert">
           {tx("Płatności są chwilowo niedostępne. Spróbuj ponownie później.", "Payments are temporarily unavailable. Please try again later.")}

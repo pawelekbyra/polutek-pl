@@ -149,21 +149,21 @@ describe('patron checkout, step 1 (currency and option)', () => {
     expect(dialog.getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeInTheDocument();
   });
 
-  it('with unlimited access already held: says so and offers nothing to buy', async () => {
+  it('with unlimited access already held: no "you already have access" message, and nothing to buy', async () => {
     route({ '/api/user/premium-pass?': () => new Response(JSON.stringify({ offer: {}, pass: { ...activePass('STRIPE'), lifetime: true, expiresAt: null } }), { status: 200 }) });
     open();
     const dialog = within(await screen.findByRole('dialog'));
-    expect(await dialog.findByText('Masz już dostęp bez limitu.')).toBeInTheDocument();
-    expect(dialog.getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeDisabled();
+    await waitFor(() => expect(dialog.getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeDisabled());
+    expect(dialog.queryByText(/Masz już dostęp/)).toBeNull();
     for (const radio of dialog.getAllByRole('radio')) expect(radio).toBeDisabled();
   });
 
-  it('a running 30-day access explains extension and conversion', async () => {
+  it('a running 30-day access can be extended, without any notice about the current access', async () => {
     route({ '/api/user/premium-pass?': () => new Response(JSON.stringify({ offer: {}, pass: activePass('STRIPE') }), { status: 200 }) });
     open();
     const dialog = within(await screen.findByRole('dialog'));
-    expect(await dialog.findByText(/Masz dostęp do 20\.11\.2026/)).toBeInTheDocument();
-    expect(dialog.getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeEnabled();
+    await waitFor(() => expect(dialog.getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeEnabled());
+    expect(dialog.queryByText(/Masz dostęp do/)).toBeNull();
   });
 });
 
