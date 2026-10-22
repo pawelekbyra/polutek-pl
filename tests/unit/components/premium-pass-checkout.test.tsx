@@ -91,7 +91,7 @@ describe('patron checkout, step 1 (currency and option)', () => {
     const group = dialog.getByRole('group', { name: 'Wybierz dostęp' });
     const cards = within(group).getAllByRole('radio') as HTMLInputElement[];
     expect(cards.map((r) => [r.value, r.checked])).toEqual([['ACCESS_30D', false], ['ACCESS_LIFETIME', true]]);
-    expect(within(group).getAllByText('Najlepsza wartość')).toHaveLength(1);
+    expect(within(group).getAllByText('Bestseller')).toHaveLength(1);
     expect(summaryOf(dialog)).toHaveTextContent('Dostęp bez limitu');
     expect(summaryOf(dialog)).toHaveTextContent('29,99');
     expect(summaryOf(dialog)).toHaveTextContent('zawiera 23% VAT');

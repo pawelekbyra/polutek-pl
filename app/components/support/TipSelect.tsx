@@ -140,11 +140,11 @@ export function TipSelect({ label, value, options, onChange, disabled = false }:
       </span>
       <div
         className={cn(
-          "rounded-[16px] border-2 bg-[var(--chan-blue-soft)] transition-[border-color,box-shadow] duration-150 motion-reduce:transition-none",
+          "rounded-[16px] border-2 bg-[#d4e7ff] transition-[border-color,box-shadow] duration-150 motion-reduce:transition-none",
           open
-            ? "border-[var(--chan-ink)] shadow-[0_10px_24px_-14px_var(--cm-blue-34)]"
-            : "border-[var(--cm-blue-28)] hover:border-[var(--chan-ink)]",
-          disabled && "pointer-events-none opacity-50 hover:border-[var(--cm-blue-28)]",
+            ? "border-[var(--chan-ink)] shadow-[0_10px_24px_-14px_rgba(70,140,230,0.55)]"
+            : "border-[#9fc3f5] hover:border-[var(--chan-ink)]",
+          disabled && "pointer-events-none opacity-50 hover:border-[#9fc3f5]",
         )}
       >
         <button
@@ -203,15 +203,15 @@ export function TipSelect({ label, value, options, onChange, disabled = false }:
                   onPointerEnter={() => setActive(index)}
                   className={cn(
                     "flex cursor-pointer items-center gap-3 rounded-[12px] px-3 py-2.5 transition-colors",
-                    index === active && "bg-[var(--chan-blue-soft)]",
+                    index === active && "bg-[#e6f0ff]",
                   )}
                 >
                   {ItemIcon ? (
-                    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--cm-blue-14)]">
+                    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#d4e7ff]">
                       <ItemIcon className="h-5 w-5" />
                     </span>
                   ) : itemIconStr ? (
-                    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--cm-blue-14)] text-[14px] font-bold text-[var(--chan-ink)]">{itemIconStr}</span>
+                    <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#d4e7ff] text-[14px] font-bold text-[var(--chan-ink)]">{itemIconStr}</span>
                   ) : null}
                   <span className="min-w-0 flex-1">
                     <span className="block text-[14px] font-bold text-[var(--chan-ink)]">{option.title}</span>

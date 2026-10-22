@@ -81,7 +81,7 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
         {offer.products.map((p) => (
           <label key={p.id} className={styles.product}>
             <input type="radio" name={`${ids}-product`} value={p.id} checked={p.id === product.id} onChange={() => onProduct(p.id)} />
-            {p.bestValue && <span className={styles.bestValue}>{tx("Najlepsza wartość", "Best value")}</span>}
+            {p.bestValue && <span className={styles.bestValue}>{tx("Bestseller", "Bestseller")}</span>}
             <span className={styles.productName}>{productName(tx, p.id)}</span>
             <span className={styles.productPrice}>{price(language, p.prices[currency], currency)}</span>
             <span className={styles.productNote}>{productNote(tx, p)}</span>

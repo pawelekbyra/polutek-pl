@@ -337,8 +337,9 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   const showSteps = stepNumber !== null;
   const retry = () => { resetAttempt(); setIntent(null); setStage({ kind: "plan" }); };
 
-  const heading = (text: string, lowered = false) => (
-    <h3 ref={headingRef} tabIndex={-1} className={cn(styles.stepTitle, lowered && styles.stepTitleLow)}>{text}</h3>
+  // `hidden`: the heading stays for screen readers and for the focus of the step, it is just not drawn (step 1 has no subtitle).
+  const heading = (text: string, hidden = false) => (
+    <h3 ref={headingRef} tabIndex={-1} className={cn(styles.stepTitle, hidden && styles.srOnly)}>{text}</h3>
   );
 
   return (
