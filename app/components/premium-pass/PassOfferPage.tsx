@@ -120,7 +120,7 @@ export default async function PassOfferPage({ params }: PassOfferPageProps) {
               <div className={styles.cards}>
                 {offer.products.map((product) => (
                   <article key={product.id} className={`${styles.priceCard} ${product.bestValue ? styles.priceCardBest : ""}`} aria-labelledby={`pass-${product.id}`}>
-                    {product.bestValue && <span className={styles.bestValue}>{tx("Najlepsza wartość", "Best value")}</span>}
+                    {product.bestValue && <span className={styles.bestValue}>{tx("Bestseller", "Bestseller")}</span>}
                     <h2 id={`pass-${product.id}`} className={styles.kicker}>{productName(tx, product.id)}</h2>
                     <div className={styles.price}>
                       <b>{price(locale, product.prices[currency], currency)}</b>
