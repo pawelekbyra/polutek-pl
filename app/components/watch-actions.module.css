@@ -129,8 +129,8 @@
 
 /* The gold button reads "PREMIUM | 15 PLN" on one line. */
 /* "Kup se Premium" as a call to action (owner, 2026-10-22): the button keeps the neutral surface, the TEXT stands out. A heavier
-   weight; "Kup se" in the dark ink and "Premium" in a warm amber (the gradient does the split in every language); a light
-   sheen that sweeps across the letters every few seconds; and an amber sparkle in front. Static with reduced motion. */
+   weight; all of it in the dark ink; a light
+   sheen that slowly sweeps across the letters (every 9 seconds); and an amber sparkle in front. Static with reduced motion. */
 .supportAction .supportLabel {
   font-size: 14px;
   font-weight: 800;
@@ -139,10 +139,10 @@
   -webkit-text-fill-color: transparent;
   background:
     linear-gradient(100deg, rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0) 62%) 160% 0 / 260% 100% no-repeat,
-    linear-gradient(90deg, #111827 0%, #111827 34%, #b45309 56%, #e0640c 100%);
+    linear-gradient(90deg, #111827, #111827);
   -webkit-background-clip: text;
   background-clip: text;
-  animation: ctaSheen 5.5s ease-in-out infinite;
+  animation: ctaSheen 9s ease-in-out infinite;
 }
 
 .supportAction .supportSpark {
@@ -155,7 +155,7 @@
 }
 
 @keyframes ctaSheen {
-  0%, 68% { background-position: 160% 0, 0 0; }
+  0%, 62% { background-position: 160% 0, 0 0; }
   100% { background-position: -70% 0, 0 0; }
 }
 
