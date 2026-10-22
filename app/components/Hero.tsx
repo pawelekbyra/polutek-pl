@@ -24,7 +24,7 @@ import VideoTaxonomyChips from './search/VideoTaxonomyChips';
 import { LinkedDescription } from './video/LinkedDescription';
 import { DescriptionChapters } from './video/DescriptionChapters';
 import { MAIN_CREATOR_NAME } from '@/lib/constants';
-import { ThumbsUp, ThumbsDown } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Sparkles } from 'lucide-react';
 import styles from './watch-actions.module.css';
 
 interface HeroProps {
@@ -366,6 +366,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                  aria-label={tx("Kup se Premium", "Get Premium")}
                  title={tx("Kup se Premium", "Get Premium")}
                >
+                 <Sparkles aria-hidden="true" className={styles.supportSpark} strokeWidth={2.2} />
                  <span className={styles.supportLabel}>{tx("Kup se Premium", "Get Premium")}</span>
                </button>
                <div className={cn("relative flex h-[36px] shrink-0 items-center rounded-[12px] bg-[var(--chan-surface)]", styles.actionCluster)}>

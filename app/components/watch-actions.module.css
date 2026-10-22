@@ -128,8 +128,39 @@
 }
 
 /* The gold button reads "PREMIUM | 15 PLN" on one line. */
+/* "Kup se Premium" as a call to action (owner, 2026-10-22): the button keeps the neutral surface, the TEXT stands out. A heavier
+   weight; "Kup se" in the dark ink and "Premium" in a warm amber (the gradient does the split in every language); a light
+   sheen that sweeps across the letters every few seconds; and an amber sparkle in front. Static with reduced motion. */
 .supportAction .supportLabel {
-  letter-spacing: 0.01em;
+  font-weight: 800;
+  letter-spacing: 0.015em;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent;
+  background:
+    linear-gradient(100deg, rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0) 62%) 160% 0 / 260% 100% no-repeat,
+    linear-gradient(90deg, #111827 0%, #111827 36%, #b45309 60%, #d97706 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: ctaSheen 5.5s ease-in-out infinite;
+}
+
+.supportAction .supportSpark {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: #f59e0b;
+  fill: #fbbf24;
+  animation: ctaTwinkle 2.8s ease-in-out infinite;
+}
+
+@keyframes ctaSheen {
+  0%, 68% { background-position: 160% 0, 0 0; }
+  100% { background-position: -70% 0, 0 0; }
+}
+
+@keyframes ctaTwinkle {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  50% { transform: scale(0.82) rotate(12deg); opacity: 0.8; }
 }
 
 .supportAction {
@@ -437,6 +468,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .supportAction .supportLabel,
+  .supportAction .supportSpark {
+    animation: none;
+  }
+
   .actionButton,
   .secondaryAction,
   .subscribeAction,
