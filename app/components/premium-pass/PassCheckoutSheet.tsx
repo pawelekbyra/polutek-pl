@@ -370,7 +370,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
 
           {stage.kind === "plan" && (
             <>
-              <div className={styles.sheetBody}>
+              <div className={cn(styles.sheetBody, styles.bodyAfterTitle)}>
                 {heading(tx("Uzyskaj dostęp do strefy premium", "Get access to the premium zone"), true)}
                 <PassPlanStep
                   tx={tx}
