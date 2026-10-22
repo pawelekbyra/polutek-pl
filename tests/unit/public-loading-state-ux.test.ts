@@ -20,7 +20,12 @@ describe("public loading/access state UX contracts", () => {
 
   it("uses the custom responsive Polutek player controls", () => {
     const player = read("app/components/VideoPlayer.tsx");
-    const controls = read("app/components/player/PolutekControls.tsx");
+    // The bar is split over PolutekControls.tsx and player/controls/* (hotspot budget); read them as one.
+    const controls = [
+      "app/components/player/PolutekControls.tsx",
+      "app/components/player/controls/ControlButtons.tsx",
+      "app/components/player/controls/ScrubBar.tsx",
+    ].map(read).join("\n");
     const controlsCopy = read(
       "app/components/player/polutek-controls-copy.ts",
     );
@@ -54,20 +59,20 @@ describe("public loading/access state UX contracts", () => {
     // that this mc-* scheme is the entire visible git history for this file (not a recent
     // change). These are today's equivalents of the same responsive/accessibility intent:
     for (const responsiveContract of [
-      // Buttons are 30x30 (mc-btn) rather than 44x44 — comfortably above WCAG 2.2 AA's
-      // 24px Target Size (Minimum), consistent with this codebase's established
-      // precedent elsewhere (see CommentItem.tsx's 32px reaction buttons).
-      "width:30px; height:30px;",
-      // Scrub track thickens on hover/focus, just at 4px instead of the old 5px.
-      ".mc-scrub:focus-visible .mc-scrub-track { height:4px; }",
+      // Buttons are 36px (44px tall on touch): above WCAG 2.2 AA's 24px Target Size (Minimum).
+      "--mc-btn: 36px;",
+      ".mc-btn { height:44px; }",
+      // The track is a 24px hit area (44px on touch) around a 3px line that grows to 5px.
+      "width:100%; height:24px;",
+      ".mc-scrub { height:44px;",
+      ".mc-scrub[data-focus] .mc-scrub-track { height:5px; }",
       "prefers-reduced-motion:reduce",
-      // Renamed selectors, same intent: hide the "/duration" readout on narrow screens.
-      ".mc-time-sep, .mc-time-dur { display:none; }",
-      // Deliberately reversed, not just renamed: volume used to be hidden entirely on
-      // mobile (no way to mute/adjust on touch, since :hover never fires there) — the
-      // in-file comment above this rule explains that was a real gap, now fixed by
-      // pinning the slider open at a compact width instead of hiding it.
-      "width:36px; opacity:1; margin-right:4px; overflow:visible;",
+      // Narrow screens drop the duration, picture-in-picture and the chapters button (the last two
+      // move into the settings menu).
+      ".mc-duration, .mc-pip, .mc-chapters > .mc-btn { display:none; }",
+      // Touch keeps the mute toggle (never hidden) and drops only the slider: the hardware buttons
+      // set the level, and iOS does not let a page do it.
+      "@media (hover:none) { .mc-vol-slider { display:none; } }",
     ]) {
       expect(globalStyles).toContain(responsiveContract);
     }

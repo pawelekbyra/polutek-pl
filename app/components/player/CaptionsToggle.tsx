@@ -5,39 +5,41 @@ import { isTrackCaptionKind, useMediaPlayer, useMediaRemote, useMediaState } fro
 import { useCaptionsEnabled } from "./captions";
 import { usePlayerCopy } from "./polutek-controls-copy";
 
-// Vidstack's closed-captions glyph (media-icons "closed-captions", 32x32).
-const CC_PATH =
-  "M4.6661 6.66699C4.29791 6.66699 3.99943 6.96547 3.99943 7.33366V24.667C3.99943 25.0352 4.29791 25.3337 4.6661 25.3337H27.3328C27.701 25.3337 27.9994 25.0352 27.9994 24.667V7.33366C27.9994 6.96547 27.701 6.66699 27.3328 6.66699H4.6661ZM8.66667 21.3333C8.29848 21.3333 8 21.0349 8 20.6667V11.3333C8 10.9651 8.29848 10.6667 8.66667 10.6667H14C14.3682 10.6667 14.6667 10.9651 14.6667 11.3333V12.6667C14.6667 13.0349 14.3682 13.3333 14 13.3333H10.8C10.7264 13.3333 10.6667 13.393 10.6667 13.4667V18.5333C10.6667 18.607 10.7264 18.6667 10.8 18.6667H14C14.3682 18.6667 14.6667 18.9651 14.6667 19.3333V20.6667C14.6667 21.0349 14.3682 21.3333 14 21.3333H8.66667ZM18 21.3333C17.6318 21.3333 17.3333 21.0349 17.3333 20.6667V11.3333C17.3333 10.9651 17.6318 10.6667 18 10.6667H23.3333C23.7015 10.6667 24 10.9651 24 11.3333V12.6667C24 13.0349 23.7015 13.3333 23.3333 13.3333H20.1333C20.0597 13.3333 20 13.393 20 13.4667V18.5333C20 18.607 20.0597 18.6667 20.1333 18.6667H23.3333C23.7015 18.6667 24 18.9651 24 19.3333V20.6667C24 21.0349 23.7015 21.3333 23.3333 21.3333H18Z";
-
-/** The CC glyph; `crossed` adds a diagonal slash with a cut-out gap around it (captions off). */
+/**
+ * The CC glyph, drawn like the rest of the bar's line icons (20px box, 1.5px stroke): a rounded frame with two
+ * "C" arcs. `crossed` adds a diagonal slash with a cut-out gap around it (captions off).
+ */
 export function CaptionsIcon({ crossed }: { crossed: boolean }) {
   const maskId = `mc-cc-mask-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   return (
     <svg
-      viewBox="0 0 32 32"
+      viewBox="0 0 20 20"
+      width={20}
+      height={20}
       className="mc-icon"
       aria-hidden="true"
       focusable="false"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
       data-crossed={crossed ? "true" : "false"}
     >
       {crossed && (
         <defs>
-          <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
-            <rect width="32" height="32" fill="white" />
-            <line x1="3" y1="3" x2="29" y2="29" stroke="black" strokeWidth="6" strokeLinecap="round" />
+          <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
+            <rect width="20" height="20" fill="white" stroke="none" />
+            <line x1="2" y1="2" x2="18" y2="18" stroke="black" strokeWidth="4.5" />
           </mask>
         </defs>
       )}
-      <path
-        d={CC_PATH}
-        fill="currentColor"
-        fillRule="evenodd"
-        clipRule="evenodd"
-        mask={crossed ? `url(#${maskId})` : undefined}
-      />
-      {crossed && (
-        <line x1="4" y1="4" x2="28" y2="28" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-      )}
+      <g mask={crossed ? `url(#${maskId})` : undefined}>
+        <rect x="2.25" y="4.25" width="15.5" height="11.5" rx="3" />
+        <path d="M9.1 8.4a2 2 0 1 0 0 3.2" />
+        <path d="M14.1 8.4a2 2 0 1 0 0 3.2" />
+      </g>
+      {crossed && <line x1="3" y1="3" x2="17" y2="17" />}
     </svg>
   );
 }

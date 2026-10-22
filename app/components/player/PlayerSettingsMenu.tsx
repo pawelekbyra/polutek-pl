@@ -1,9 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
-import { useMediaRemote, useMediaState } from "@vidstack/react";
+import { isTrackCaptionKind, useChapterOptions, useChapterTitle, useMediaRemote, useMediaState } from "@vidstack/react";
+import { ChevronRight, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useChaptersMenu } from "./chapters/chapters-menu-context";
+import { LINE_ICON } from "./controls/ControlButtons";
 import { usePlayerCopy } from "./polutek-controls-copy";
+import { qualityBadge } from "./quality-label";
+import { CAPTIONS_IN_MENU_QUERY } from "./controls/ControlButtons";
+import { useMediaQuery } from "./use-media-query";
 import {
   PLAYBACK_RATES,
   pickQualityIndexForHeight,
@@ -13,11 +19,13 @@ import {
   writeRatePreference,
 } from "./player-preferences";
 
-// Material "settings" glyph (24x24).
-const GEAR_PATH =
-  "M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z";
-
 type QualityLike = { height: number };
+
+/** The menu's items in DOM order, minus the ones CSS hides on this screen (they cannot take the focus). */
+function menuItems(menu: HTMLElement | null): HTMLElement[] {
+  const all = Array.from(menu?.querySelectorAll<HTMLElement>('[role^="menuitem"]') ?? []);
+  return all.filter((el) => typeof getComputedStyle !== "function" || getComputedStyle(el).display !== "none");
+}
 
 function rateLabel(rate: number, normal: string): string {
   return rate === 1 ? normal : `${rate}x`;
@@ -25,7 +33,10 @@ function rateLabel(rate: number, normal: string): string {
 
 /**
  * The player's settings menu: quality (Auto + the renditions of the HLS manifest), speed (0.5x-2x)
- * and picture-in-picture where the browser offers it. The viewer's choices are remembered
+ * and picture-in-picture where the browser offers it. On narrow screens it also holds the entries the bar drops
+ * there (picture-in-picture, the chapters panel; `mc-menu-item--narrow`), and below 400px the captions switch
+ * (rendered only then, so the keyboard never lands on a hidden item). The trigger shows the quality of the
+ * rendition being played ("HD", "4K", "SD"), or a gear while that is unknown. The viewer's choices are remembered
  * (player-preferences.ts). It is a plain button + menu (roles `menu`, `menuitemradio`): Enter/Space
  * opens it, arrows move, Escape closes and returns the focus. Speed keyboard shortcuts stay off
  * (VideoPlayer's `keyShortcuts`): the menu is the one control, so nothing can change speed silently.
@@ -41,6 +52,13 @@ export function PlayerSettingsMenu() {
   const controlsVisible = useMediaState("controlsVisible") as boolean | undefined;
   const canPip = useMediaState("canPictureInPicture") as boolean | undefined;
   const inPip = useMediaState("pictureInPicture") as boolean | undefined;
+  const chapterOptions = useChapterOptions();
+  const chapterTitle = useChapterTitle();
+  const chaptersMenu = useChaptersMenu();
+  const hasCaptions = useMediaState("hasCaptions") as boolean | undefined;
+  const textTrack = useMediaState("textTrack");
+  const captionsInMenu = useMediaQuery(CAPTIONS_IN_MENU_QUERY) && Boolean(hasCaptions);
+  const captionsOn = Boolean(textTrack && isTrackCaptionKind(textTrack));
 
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -99,16 +117,16 @@ export function PlayerSettingsMenu() {
   // Focus moves into the menu (the checked speed, else the first item) when it opens.
   useEffect(() => {
     if (!open) return;
-    const items = menuRef.current?.querySelectorAll<HTMLElement>('[role^="menuitem"]');
-    if (!items || items.length === 0) return;
-    const checked = Array.from(items).find((el) => el.getAttribute("aria-checked") === "true");
+    const items = menuItems(menuRef.current);
+    if (items.length === 0) return;
+    const checked = items.find((el) => el.getAttribute("aria-checked") === "true");
     (checked ?? items[0]).focus();
     // Only on opening.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const onMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const items = Array.from(menuRef.current?.querySelectorAll<HTMLElement>('[role^="menuitem"]') ?? []);
+    const items = menuItems(menuRef.current);
     const current = items.indexOf(document.activeElement as HTMLElement);
     const focusAt = (index: number) => {
       if (items.length === 0) return;
@@ -156,12 +174,24 @@ export function PlayerSettingsMenu() {
     close(true);
   };
 
+  const toggleCaptions = (event: { nativeEvent: Event }) => {
+    remote.toggleCaptions(event.nativeEvent);
+    close(true);
+  };
+
   const togglePip = () => {
     if (inPip) remote.exitPictureInPicture?.();
     else remote.enterPictureInPicture?.();
     close(true);
   };
 
+  const openChapters = () => {
+    close(false);
+    chaptersMenu.setOpen(true);
+  };
+
+  const badge = qualityBadge(quality?.height);
+  const triggerLabel = badge ? `${copy.settings} (${badge})` : copy.settings;
   const qualityTitleId = `${menuId}-quality`;
   const speedTitleId = `${menuId}-speed`;
   const autoLabel =
@@ -172,17 +202,15 @@ export function PlayerSettingsMenu() {
       <button
         ref={triggerRef}
         type="button"
-        className="mc-btn"
-        aria-label={copy.settings}
-        title={copy.settings}
+        className={cn("mc-btn", badge && "mc-btn--badge")}
+        aria-label={triggerLabel}
+        title={triggerLabel}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
         onClick={() => setOpen((value) => !value)}
       >
-        <svg viewBox="0 0 24 24" className="mc-icon" aria-hidden="true" focusable="false">
-          <path d={GEAR_PATH} fill="currentColor" />
-        </svg>
+        {badge ? <span className="mc-quality-badge" aria-hidden="true">{badge}</span> : <Settings {...LINE_ICON} />}
       </button>
 
       {open && (
@@ -240,8 +268,38 @@ export function PlayerSettingsMenu() {
             ))}
           </div>
 
+          {captionsInMenu ? (
+            <div className="mc-menu-sep" role="separator" />
+          ) : (canPip || chapterOptions.length > 0) && <div className="mc-menu-sep mc-menu-item--narrow" role="separator" />}
+          {captionsInMenu && (
+            <button
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={captionsOn}
+              aria-keyshortcuts="c"
+              className={cn("mc-menu-item", captionsOn && "mc-menu-item--on")}
+              onClick={toggleCaptions}
+            >
+              {copy.captions}
+            </button>
+          )}
+          {chapterOptions.length > 0 && (
+            <button
+              type="button"
+              role="menuitem"
+              aria-haspopup="menu"
+              className="mc-menu-item mc-menu-item--narrow mc-menu-item--nav"
+              onClick={openChapters}
+            >
+              <span>{copy.chapters}</span>
+              <span className="mc-menu-item-hint">
+                {chapterTitle ? <span className="mc-menu-item-hint-text">{chapterTitle}</span> : null}
+                <ChevronRight size={16} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
+              </span>
+            </button>
+          )}
           {canPip && (
-            <button type="button" role="menuitem" className="mc-menu-item mc-menu-item--pip" onClick={togglePip}>
+            <button type="button" role="menuitem" className="mc-menu-item mc-menu-item--narrow" onClick={togglePip}>
               {inPip ? copy.exitPictureInPicture : copy.pictureInPicture}
             </button>
           )}
