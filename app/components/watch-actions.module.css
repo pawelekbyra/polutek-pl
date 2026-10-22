@@ -132,13 +132,14 @@
    weight; "Kup se" in the dark ink and "Premium" in a warm amber (the gradient does the split in every language); a light
    sheen that sweeps across the letters every few seconds; and an amber sparkle in front. Static with reduced motion. */
 .supportAction .supportLabel {
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: 0.015em;
   color: transparent !important;
   -webkit-text-fill-color: transparent;
   background:
     linear-gradient(100deg, rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0) 62%) 160% 0 / 260% 100% no-repeat,
-    linear-gradient(90deg, #111827 0%, #111827 36%, #b45309 60%, #d97706 100%);
+    linear-gradient(90deg, #111827 0%, #111827 34%, #b45309 56%, #e0640c 100%);
   -webkit-background-clip: text;
   background-clip: text;
   animation: ctaSheen 5.5s ease-in-out infinite;
