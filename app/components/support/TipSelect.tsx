@@ -17,6 +17,8 @@ interface TipSelectProps {
   value: string | null;
   options: TipSelectOption[];
   onChange: (value: string) => void;
+  /** Greyed out and not openable (e.g. while the choice is locked). */
+  disabled?: boolean;
 }
 
 interface ListPosition {
@@ -64,7 +66,7 @@ function measureList(trigger: HTMLElement): ListPosition {
  * The gate's own dropdown (instead of the browser's system list): a warm field whose list
  * floats on top of the step, so nothing below it moves.
  */
-export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
+export function TipSelect({ label, value, options, onChange, disabled = false }: TipSelectProps) {
   const [position, setPosition] = useState<ListPosition | null>(null);
   const open = position !== null;
   const [active, setActive] = useState(0);
@@ -142,6 +144,7 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
           open
             ? "border-[var(--chan-ink)] shadow-[0_10px_24px_-14px_var(--cm-blue-34)]"
             : "border-[var(--cm-blue-28)] hover:border-[var(--chan-ink)]",
+          disabled && "pointer-events-none opacity-50 hover:border-[var(--cm-blue-28)]",
         )}
       >
         <button
@@ -152,6 +155,7 @@ export function TipSelect({ label, value, options, onChange }: TipSelectProps) {
           aria-haspopup="listbox"
           aria-expanded={open}
           aria-controls={listId}
+          disabled={disabled}
           onClick={toggle}
           onKeyDown={onKeyDown}
           className="flex min-h-[52px] w-full items-center gap-3 px-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--chan-ink)]"

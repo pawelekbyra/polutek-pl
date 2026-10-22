@@ -93,6 +93,7 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
         label={tx("Waluta", "Currency")}
         value={currency}
         onChange={(code) => onCurrency(code as PatronCurrency)}
+        disabled={busy || access?.lifetime === true}
         options={offer.currencies.map((code) => ({ value: code, icon: TIP_CURRENCY_SYMBOLS[code], title: tipCurrencyTitle(tx, code) }))}
       />
       {notice && <p className={styles.noticeWarn} role="alert">{notice}</p>}

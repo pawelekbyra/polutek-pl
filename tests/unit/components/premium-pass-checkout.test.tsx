@@ -155,6 +155,7 @@ describe('patron checkout, step 1 (currency and option)', () => {
     const dialog = within(await screen.findByRole('dialog'));
     await waitFor(() => expect(dialog.getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeDisabled());
     expect(dialog.queryByText(/Masz już dostęp/)).toBeNull();
+    expect(dialog.getByRole('combobox', { name: 'Waluta' })).toBeDisabled();
     for (const radio of dialog.getAllByRole('radio')) expect(radio).toBeDisabled();
   });
 
