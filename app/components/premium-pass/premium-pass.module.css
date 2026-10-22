@@ -88,6 +88,8 @@
 /* Title and close button on one row (the close button keeps its corner); everything below sits tight under it. */
 .sheetHead { position: relative; display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px 0; }
 .sheetHead + .sheetBody { padding-top: 28px; }
+/* Step 1 has no subtitle under the title: one blank text line (about 20px) before "Wybierz dostęp". */
+.sheetBody.bodyAfterTitle { padding-top: 20px; }
 .sheetTitle { margin: 0; font-size: 19px; line-height: 1.1; font-weight: 800; letter-spacing: -.01em; }
 /* The close button stays in its corner and no longer sets the height of the row: the title's top edge lines up with the button's top edge and everything below rises. */
 .close { position: absolute; top: 14px; right: 18px; z-index: 3; width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--chan-line, #e1e6ef); background: var(--chan-card, #fff); display: grid; place-items: center; color: var(--chan-muted, #5d6679); cursor: pointer; }
