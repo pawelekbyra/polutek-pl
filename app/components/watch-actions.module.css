@@ -128,18 +128,16 @@
 }
 
 /* The gold button reads "PREMIUM | 15 PLN" on one line. */
-/* "Kup se Premium" as a call to action (owner, 2026-10-22): the button keeps the neutral surface, the TEXT stands out. A heavier
-   weight; all of it in the dark ink; a light
+/* "Kup se Premium" as a call to action (owner, 2026-10-22): the button keeps the neutral surface, the TEXT stands out. The same
+   size, weight and ink as the other buttons; a light
    sheen that slowly sweeps across the letters (every 9 seconds); and an amber sparkle in front. Static with reduced motion. */
 .supportAction .supportLabel {
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.015em;
+  /* Same type as the other buttons: no own size, weight or letter-spacing (they come from the button). */
   color: transparent !important;
   -webkit-text-fill-color: transparent;
   background:
     linear-gradient(100deg, rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0) 62%) 160% 0 / 260% 100% no-repeat,
-    linear-gradient(90deg, #111827, #111827);
+    linear-gradient(90deg, var(--chan-ink), var(--chan-ink));
   -webkit-background-clip: text;
   background-clip: text;
   animation: ctaSheen 9s ease-in-out infinite;
