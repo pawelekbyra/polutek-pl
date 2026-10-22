@@ -1009,10 +1009,16 @@
   }
   @media (hover:none) { .mc-vol-slider { display:none; } }
 
+  /* Narrow screens: the track must dominate the row (owner's reference). Icons stay 20px; buttons shrink to
+     32px boxes (still above the 24px AA minimum), gaps go to 0, the play pill and side padding tighten. The
+     44px touch hit area stays on the track only. */
   @media (max-width:640px) {
-    .mc-controls { --mc-pad-x: 6px; --mc-pad-b: 2px; }
-    .mc-track-area { margin:0 8px; }
-    .mc-group { gap:0; }
+    .mc-controls { --mc-pad-x: 4px; --mc-pad-b: 2px; --mc-btn: 32px; }
+    .mc-bar, .mc-group { gap:0; }
+    .mc-btn, .mc-play { height: var(--mc-btn); }
+    .mc-play { width:34px; height:26px; }
+    .mc-btn--badge { padding:0 4px; }
+    .mc-track-area { margin:0 6px; }
     .mc-duration, .mc-pip, .mc-chapters > .mc-btn { display:none; }
     .mc-menu-item--narrow { display:flex; }
     .mc-menu-sep.mc-menu-item--narrow { display:block; }
@@ -1032,6 +1038,11 @@
      settings menu's "Chapters" entry. */
   @media (max-width:480px) {
     .mc-chip--playhead .mc-chip-chapter { display:none; }
+  }
+  /* Below 400px the captions switch moves into the settings menu ("Napisy" entry, CAPTIONS_IN_MENU_QUERY), so the
+     phone row is: play | track | sound | quality | fullscreen. */
+  @media (max-width:399px) {
+    .mc-caption { display:none; }
   }
 
   @media (prefers-reduced-motion:reduce) {

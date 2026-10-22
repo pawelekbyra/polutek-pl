@@ -1,13 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
-import { useChapterOptions, useChapterTitle, useMediaRemote, useMediaState } from "@vidstack/react";
+import { isTrackCaptionKind, useChapterOptions, useChapterTitle, useMediaRemote, useMediaState } from "@vidstack/react";
 import { ChevronRight, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChaptersMenu } from "./chapters/chapters-menu-context";
 import { LINE_ICON } from "./controls/ControlButtons";
 import { usePlayerCopy } from "./polutek-controls-copy";
 import { qualityBadge } from "./quality-label";
+import { CAPTIONS_IN_MENU_QUERY } from "./controls/ControlButtons";
+import { useMediaQuery } from "./use-media-query";
 import {
   PLAYBACK_RATES,
   pickQualityIndexForHeight,
@@ -19,6 +21,12 @@ import {
 
 type QualityLike = { height: number };
 
+/** The menu's items in DOM order, minus the ones CSS hides on this screen (they cannot take the focus). */
+function menuItems(menu: HTMLElement | null): HTMLElement[] {
+  const all = Array.from(menu?.querySelectorAll<HTMLElement>('[role^="menuitem"]') ?? []);
+  return all.filter((el) => typeof getComputedStyle !== "function" || getComputedStyle(el).display !== "none");
+}
+
 function rateLabel(rate: number, normal: string): string {
   return rate === 1 ? normal : `${rate}x`;
 }
@@ -26,7 +34,8 @@ function rateLabel(rate: number, normal: string): string {
 /**
  * The player's settings menu: quality (Auto + the renditions of the HLS manifest), speed (0.5x-2x)
  * and picture-in-picture where the browser offers it. On narrow screens it also holds the entries the bar drops
- * there (picture-in-picture, the chapters panel; `mc-menu-item--narrow`). The trigger shows the quality of the
+ * there (picture-in-picture, the chapters panel; `mc-menu-item--narrow`), and below 400px the captions switch
+ * (rendered only then, so the keyboard never lands on a hidden item). The trigger shows the quality of the
  * rendition being played ("HD", "4K", "SD"), or a gear while that is unknown. The viewer's choices are remembered
  * (player-preferences.ts). It is a plain button + menu (roles `menu`, `menuitemradio`): Enter/Space
  * opens it, arrows move, Escape closes and returns the focus. Speed keyboard shortcuts stay off
@@ -46,6 +55,10 @@ export function PlayerSettingsMenu() {
   const chapterOptions = useChapterOptions();
   const chapterTitle = useChapterTitle();
   const chaptersMenu = useChaptersMenu();
+  const hasCaptions = useMediaState("hasCaptions") as boolean | undefined;
+  const textTrack = useMediaState("textTrack");
+  const captionsInMenu = useMediaQuery(CAPTIONS_IN_MENU_QUERY) && Boolean(hasCaptions);
+  const captionsOn = Boolean(textTrack && isTrackCaptionKind(textTrack));
 
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -104,16 +117,16 @@ export function PlayerSettingsMenu() {
   // Focus moves into the menu (the checked speed, else the first item) when it opens.
   useEffect(() => {
     if (!open) return;
-    const items = menuRef.current?.querySelectorAll<HTMLElement>('[role^="menuitem"]');
-    if (!items || items.length === 0) return;
-    const checked = Array.from(items).find((el) => el.getAttribute("aria-checked") === "true");
+    const items = menuItems(menuRef.current);
+    if (items.length === 0) return;
+    const checked = items.find((el) => el.getAttribute("aria-checked") === "true");
     (checked ?? items[0]).focus();
     // Only on opening.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const onMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const items = Array.from(menuRef.current?.querySelectorAll<HTMLElement>('[role^="menuitem"]') ?? []);
+    const items = menuItems(menuRef.current);
     const current = items.indexOf(document.activeElement as HTMLElement);
     const focusAt = (index: number) => {
       if (items.length === 0) return;
@@ -158,6 +171,11 @@ export function PlayerSettingsMenu() {
   const chooseRate = (value: number) => {
     remote.changePlaybackRate?.(value);
     writeRatePreference(value);
+    close(true);
+  };
+
+  const toggleCaptions = (event: { nativeEvent: Event }) => {
+    remote.toggleCaptions(event.nativeEvent);
     close(true);
   };
 
@@ -250,7 +268,21 @@ export function PlayerSettingsMenu() {
             ))}
           </div>
 
-          {(canPip || chapterOptions.length > 0) && <div className="mc-menu-sep mc-menu-item--narrow" role="separator" />}
+          {captionsInMenu ? (
+            <div className="mc-menu-sep" role="separator" />
+          ) : (canPip || chapterOptions.length > 0) && <div className="mc-menu-sep mc-menu-item--narrow" role="separator" />}
+          {captionsInMenu && (
+            <button
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={captionsOn}
+              aria-keyshortcuts="c"
+              className={cn("mc-menu-item", captionsOn && "mc-menu-item--on")}
+              onClick={toggleCaptions}
+            >
+              {copy.captions}
+            </button>
+          )}
           {chapterOptions.length > 0 && (
             <button
               type="button"
