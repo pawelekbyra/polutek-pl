@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 
-/** Whether the chapters panel is open. Shared by the chapter label next to the time and the panel's own button. */
+/** Whether the chapters panel is open. Shared by the panel's own button and the settings menu's "Chapters" entry. */
 interface ChaptersMenuState {
   open: boolean;
   setOpen: (open: boolean | ((open: boolean) => boolean)) => void;

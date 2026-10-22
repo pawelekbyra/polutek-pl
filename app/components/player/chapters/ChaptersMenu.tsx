@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useId, useRef, type KeyboardEvent } from "react";
 import { useChapterOptions, useMediaPlayer, useMediaState } from "@vidstack/react";
-import { ChaptersIcon } from "@vidstack/react/icons";
+import { ListVideo } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LINE_ICON } from "../controls/ControlButtons";
 import { formatClock } from "@/lib/video-start-time";
 import { usePlayerCopy } from "../polutek-controls-copy";
 import { useChaptersMenu } from "./chapters-menu-context";
@@ -12,7 +13,8 @@ import { seekPlayerTo } from "./seek-player";
 /**
  * The chapters button and its panel (same pattern as PlayerSettingsMenu): a button plus `role="menu"`; arrows, Home and
  * End move, Enter/Space jump to the chapter and close, Escape closes and returns the focus. On a phone the panel is a
- * sheet over the bottom of the player (globals.css), inside its frame. Nothing without chapters.
+ * sheet over the bottom of the player (globals.css), inside its frame, and the button itself gives way to the
+ * settings menu's "Chapters" entry (the row keeps its room for the track). Nothing without chapters.
  */
 export function ChaptersMenu() {
   const copy = usePlayerCopy();
@@ -36,12 +38,12 @@ export function ChaptersMenu() {
     if (open && controlsVisible === false) setOpen(false);
   }, [open, controlsVisible, setOpen]);
 
-  // A click or tap outside closes it (the label next to the time is its own toggle).
+  // A click or tap outside closes it (the settings menu's "Chapters" entry, on narrow screens, opens it).
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Element | null;
-      if (rootRef.current?.contains(target as Node) || target?.closest?.(".mc-chapter-label")) return;
+      if (rootRef.current?.contains(target as Node) || target?.closest?.(".mc-menu-item--nav")) return;
       setOpen(false);
     };
     document.addEventListener("pointerdown", onPointerDown, true);
@@ -119,7 +121,7 @@ export function ChaptersMenu() {
         aria-controls={open ? menuId : undefined}
         onClick={() => setOpen((value) => !value)}
       >
-        <ChaptersIcon className="mc-icon" aria-hidden="true" />
+        <ListVideo {...LINE_ICON} />
       </button>
 
       {open && (

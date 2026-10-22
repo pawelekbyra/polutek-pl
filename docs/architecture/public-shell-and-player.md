@@ -21,7 +21,8 @@ Dźwięk w odtwarzaczu i przycisk logo: `../operations/PLAYER-SOUND.md`. Języki
 - Blokady i stany odtwarzacza (`PlayerLoadingState`, `AccessLockOverlay`, `PlayerErrorOverlay`, `PlayerStateFrame`) mają pasujący wygląd; stany odmowy nigdy nie trzymają zamontowanego odtwarzacza.
   Ruch w tle zatrzymuje `prefers-reduced-motion`.
 - Blokady `AccessLockOverlay`: tylko dwa stany, `LOGIN_REQUIRED` („ściana graffiti”: jeden element `role="button"` obsługiwany kliknięciem, Enter i Spacją) i wyświetlany `COMING_SOON` (kokpit). Kompaktowe blokady w listach są statyczne.
-- Odtwarzacz: własne sterowanie (`app/components/player/PolutekControls.tsx`) zamiast stockowego układu Vidstack; źródło tylko `self_hls` (`app/components/playback-source.ts`).
+- Odtwarzacz: własne sterowanie (`app/components/player/PolutekControls.tsx` + `player/controls/`) zamiast stockowego układu Vidstack; źródło tylko `self_hls` (`app/components/playback-source.ts`).
+  **Pasek sterowania (2026-10-22):** jeden smukły rząd na łagodnym gradiencie u dołu kadru: z lewej ciemna pigułka play/pauza, potem cienki pas postępu (3 px, 5 px przy najechaniu, przeciąganiu i fokusie; obszar trafienia 24 px, na dotyku 44 px; segmenty rozdziałów; wypełnienie `--chan-blue`, bufor biały 30 %, biała kropka przy interakcji, na dotyku widoczna zawsze) z ciemnym dymkiem czasu nad głowicą (przy najechaniu/przeciąganiu: czas i rozdział pod wskaźnikiem), na szerokim ekranie długość filmu, a z prawej ikony liniowe 20 px / 1,5 px: dźwięk (suwak tylko z myszą), napisy (gdy są), rozdziały, obraz w obrazie, przycisk ustawień z jakością („4K”/„HD”/„SD” z wysokości granego poziomu, `player/quality-label.ts`; zębatka, gdy nieznana) i pełny ekran. Do 640 px rząd chowa długość, rozdziały i obraz w obrazie (oba są wtedy w menu ustawień), więc telefon 360 px ma długi pas. Style: `.mc-*` w `app/globals.css`.
 
 ## Powłoka i ładowanie pierwszego widoku
 

@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const media = vi.hoisted(() => ({
   state: {} as Record<string, unknown>,
+  chapters: [] as { cue: { startTime: number }; label: string; selected: boolean }[],
+  chapterTitle: "",
   toggleCaptions: vi.fn(),
   changeQuality: vi.fn(),
   changePlaybackRate: vi.fn(),
@@ -39,7 +41,7 @@ vi.mock("@vidstack/react", async () => {
     Gesture: Box,
     MuteButton: Btn,
     PlayButton: Btn,
-    Time: Box,
+    Time: ({ className }: { className?: string }) => ReactModule.createElement("span", { className }),
     TimeSlider: slider,
     VolumeSlider: slider,
     isTrackCaptionKind: (track: { kind: string }) => track.kind === "subtitles" || track.kind === "captions",
@@ -52,8 +54,8 @@ vi.mock("@vidstack/react", async () => {
       exitPictureInPicture: media.exitPictureInPicture,
     }),
     useMediaPlayer: () => ({ textTracks: (media.state.textTracks as unknown[]) ?? [] }),
-    useChapterOptions: () => [],
-    useChapterTitle: () => "",
+    useChapterOptions: () => media.chapters,
+    useChapterTitle: () => media.chapterTitle,
   };
 });
 vi.mock("@vidstack/react/icons", () => {
@@ -78,6 +80,8 @@ describe("PolutekControls: captions switch and settings menu", () => {
     media.changePlaybackRate.mockReset();
     media.enterPictureInPicture.mockReset();
     media.exitPictureInPicture.mockReset();
+    media.chapters = [];
+    media.chapterTitle = "";
     try { localStorage.clear(); } catch {}
     media.state = {
       paused: false, waiting: false, ended: false, muted: false, volume: 1, canSetVolume: true,
@@ -135,7 +139,7 @@ describe("PolutekControls: captions switch and settings menu", () => {
       qualities: [{ height: 360 }, { height: 720 }, { height: 1080 }],
     };
     const view = render(<PolutekControls />);
-    fireEvent.click(view.getByRole("button", { name: "Ustawienia" }));
+    fireEvent.click(view.getByRole("button", { name: "Ustawienia (HD)" }));
 
     const labels = view.getAllByRole("menuitemradio").map((el) => el.textContent);
     expect(labels.slice(0, 4)).toEqual(["Auto (720p)", "1080p", "720p", "360p"]);
@@ -163,7 +167,7 @@ describe("PolutekControls: captions switch and settings menu", () => {
       qualities: [{ height: 360 }, { height: 720 }],
     };
     const view = render(<PolutekControls />);
-    fireEvent.click(view.getByRole("button", { name: "Ustawienia" }));
+    fireEvent.click(view.getByRole("button", { name: "Ustawienia (SD)" }));
     fireEvent.click(view.getByRole("menuitemradio", { name: "Auto" }));
 
     expect(media.changeQuality).toHaveBeenLastCalledWith(-1);
@@ -234,6 +238,96 @@ describe("PolutekControls: captions switch and settings menu", () => {
     media.state = { ...media.state, hasCaptions: false, textTrack: null };
     const view = render(<PolutekControls />);
     expect(view.queryByRole("button", { name: "Napisy" })).toBeNull();
+  });
+});
+
+describe("PolutekControls: one-row bar (quality badge, time chip, picture-in-picture, chapters entry)", () => {
+  beforeEach(() => {
+    document.documentElement.lang = "pl";
+    media.enterPictureInPicture.mockReset();
+    media.chapters = [];
+    media.chapterTitle = "";
+    media.state = {
+      paused: false, waiting: false, ended: false, muted: false, volume: 1, canSetVolume: true,
+      canFullscreen: true, fullscreen: false, controlsVisible: true, hasCaptions: false, textTracks: [],
+      duration: 600, live: false,
+    };
+  });
+  afterEach(() => cleanup());
+
+  it("the settings button shows the quality being played (4K / HD / SD), named in its label too", () => {
+    for (const [height, badge] of [[2160, "4K"], [1080, "HD"], [720, "HD"], [480, "SD"]] as const) {
+      media.state = { ...media.state, quality: { height }, qualities: [{ height: 360 }, { height }] };
+      const view = render(<PolutekControls />);
+      const trigger = view.getByRole("button", { name: `Ustawienia (${badge})` });
+      expect(trigger.querySelector(".mc-quality-badge")?.textContent).toBe(badge);
+      expect(trigger.className).toContain("mc-btn--badge");
+      cleanup();
+    }
+  });
+
+  it("falls back to a gear while the quality is unknown", () => {
+    const view = render(<PolutekControls />);
+    const trigger = view.getByRole("button", { name: "Ustawienia" });
+    expect(trigger.querySelector(".mc-quality-badge")).toBeNull();
+    expect(trigger.querySelector("svg")).not.toBeNull();
+  });
+
+  it("lays play, track, duration and the icon group out in one row, with the time chip on the track", () => {
+    const view = render(<PolutekControls />);
+    const bar = view.container.querySelector(".mc-bar")!;
+    const children = Array.from(bar.children);
+    expect(children[0].className).toContain("mc-play");
+    expect(children.some((el) => el.classList.contains("mc-track-area"))).toBe(true);
+    expect(children[children.length - 1].className).toBe("mc-group");
+    expect(view.container.querySelector(".mc-track-area .mc-chip--playhead")).not.toBeNull();
+    // The chip is decoration: the slider announces the time.
+    expect(view.container.querySelector(".mc-chip--playhead")?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("shows the total length only for a finite, non-live video", () => {
+    const vod = render(<PolutekControls />);
+    expect(vod.container.querySelector(".mc-duration")).not.toBeNull();
+    cleanup();
+    media.state = { ...media.state, live: true, duration: Infinity };
+    const live = render(<PolutekControls />);
+    expect(live.container.querySelector(".mc-duration")).toBeNull();
+  });
+
+  it("puts picture-in-picture on the bar only where the browser offers it", () => {
+    const without = render(<PolutekControls />);
+    expect(without.queryByRole("button", { name: "Obraz w obrazie" })).toBeNull();
+    cleanup();
+    media.state = { ...media.state, canPictureInPicture: true, pictureInPicture: false };
+    const view = render(<PolutekControls />);
+    fireEvent.click(view.getByRole("button", { name: "Obraz w obrazie" }));
+    expect(media.enterPictureInPicture).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers the chapters panel from the settings menu (the phone row has no chapters button)", () => {
+    media.chapters = [
+      { cue: { startTime: 0 }, label: "Wstęp", selected: false },
+      { cue: { startTime: 20 }, label: "Temat", selected: true },
+      { cue: { startTime: 40 }, label: "Koniec", selected: false },
+    ];
+    media.chapterTitle = "Temat";
+    const view = render(<PolutekControls />);
+    fireEvent.click(view.getByRole("button", { name: "Ustawienia" }));
+    const entry = view.getByRole("menuitem", { name: /Rozdziały/ });
+    expect(entry.textContent).toContain("Temat");
+    fireEvent.click(entry);
+    // The settings menu closed and the chapters panel opened in its place.
+    const menus = view.getAllByRole("menu");
+    expect(menus).toHaveLength(1);
+    expect(menus[0].getAttribute("aria-label")).toBe("Rozdziały");
+  });
+
+  it("gives every bar button an accessible name", () => {
+    media.state = { ...media.state, hasCaptions: true, textTrack: null, canPictureInPicture: true, quality: { height: 1080 } };
+    const view = render(<PolutekControls />);
+    for (const button of Array.from(view.container.querySelectorAll(".mc-bar button"))) {
+      expect(button.getAttribute("aria-label")?.trim()).toBeTruthy();
+    }
   });
 });
 
