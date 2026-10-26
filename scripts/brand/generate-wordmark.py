@@ -141,7 +141,7 @@ def glyph_outline(font, ch, x, dot=False, small=False):
 
 # ---------------------------------------------------------------- play badge
 BADGE_H, BADGE_W = 120.0, 168.0          # 1.2 x cap, 1.4 : 1
-BADGE_GAP = 45.0                          # to the P: 0.45 x cap
+BADGE_GAP = 32.0                          # to the P: 0.32 x cap
 CY = 50.0                                 # vertically centred on the cap-height middle
 
 
