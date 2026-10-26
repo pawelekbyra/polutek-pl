@@ -18,7 +18,14 @@ export function PassSellerCard({ tx, compact }: { tx: Tx; compact?: boolean }) {
       <div className={styles.sellerCardRow}>
         <Building2 className={styles.sellerCardIcon} strokeWidth={1.6} aria-hidden="true" focusable="false" />
         <div className={styles.sellerCardText}>
-          <b>{tx("Sprzedawca: {0}", "Seller: {0}", PATRON_SELLER.name)}</b>
+          {compact ? (
+            <b>{tx("Sprzedawca: {0}", "Seller: {0}", PATRON_SELLER.name)}</b>
+          ) : (
+            <>
+              <span className={styles.sellerLabel}>{tx("Sprzedawca", "Seller")}:</span>
+              <b>{PATRON_SELLER.name}</b>
+            </>
+          )}
           {details.length > 0 && <span>{details.join(", ")}</span>}
         </div>
         <button
