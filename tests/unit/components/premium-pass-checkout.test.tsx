@@ -339,7 +339,9 @@ describe('patron checkout, step 3 in demo mode (simulated payment)', () => {
     open();
     const dialog = await screen.findByRole('dialog');
     expect(dialog.querySelectorAll('[data-seller-card]')).toHaveLength(1);
-    expect(dialog.querySelector('[data-secure-footer]')).toHaveTextContent('Tryb demonstracyjny: nic nie zostanie pobrane.');
+    // Steps 1 and 2 carry the two documents in the footer (no 'read the documents' box); the notice returns in step 3.
+    expect(dialog.querySelector('[data-legal-footer]')).toHaveTextContent('Regulamin i Polityka prywatności');
+    expect(dialog).not.toHaveTextContent('Przed zapłatą zapoznaj się');
     expect(dialog).not.toHaveTextContent('@polutek.com');
     expect(dialog).not.toHaveTextContent('pawelperfect.com');
   });
@@ -397,7 +399,7 @@ describe('patron checkout, step 3 with real Stripe payments', () => {
     const dialog = within(await screen.findByRole('dialog'));
     const root = screen.getByRole('dialog');
     expect(root.querySelector('[data-seller-card]')).toHaveTextContent('Spółka zarejestrowana w Polsce');
-    expect(root.querySelector('[data-secure-footer]')).toHaveTextContent('Płatność jest szyfrowana i obsługuje ją zaufany operator płatności.');
+    expect(root.querySelector('[data-legal-footer]')).toHaveTextContent('Regulamin i Polityka prywatności');
     clickNext(dialog, 'Dalej · 29,99 zł');
     await dialog.findByRole('heading', { name: 'Metoda płatności' });
     expect(root.querySelector('[data-seller-card]')).toHaveTextContent('Spółka zarejestrowana w Polsce');
@@ -405,6 +407,7 @@ describe('patron checkout, step 3 with real Stripe payments', () => {
     await dialog.findByRole('textbox', { name: 'Kod BLIK' });
     expect(root.querySelectorAll('[data-seller-card]')).toHaveLength(1);
     expect(root.querySelector('[data-seller-card]')).not.toHaveTextContent('Spółka zarejestrowana');
+    expect(root.querySelector('[data-secure-footer]')).toHaveTextContent('Płatność jest szyfrowana i obsługuje ją zaufany operator płatności.');
     expect(root.querySelector('[data-secure-footer]')!.textContent).not.toMatch(/stripe/i);
   });
 
