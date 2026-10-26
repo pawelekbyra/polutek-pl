@@ -1,5 +1,5 @@
 /**
- * The POLUTEK.COM lockup as outlined SVG paths: a flat play badge, then the wordmark. No web font,
+ * The POLUTEK.COM lockup as outlined SVG paths: a flat play badge (blue fill, black inset outline), then the wordmark. No web font,
  * no <text>, crisp at any DPR.
  *
  * Artwork: the letters are modified outlines of Nunito (SIL Open Font License 1.1, notice in
@@ -12,10 +12,16 @@
  * 100-unit cap height, so `h-[21px]` gives a 17.5px cap height; without the badge the viewBox is
  * 102.4 units tall. On phones narrower than 350px the default shrinks to 18px so the lockup stays clear of the
  * search, bell and avatar buttons.
+ *
+ * Header height: this svg never decides the height of the top bar. It is `display: block` (no inline
+ * baseline gap), has a fixed height from its class (21px phones, 25px md+, both below the 38px of the
+ * bar's content row), no margin or padding, and its link is a 44px touch target pulled back with
+ * -my-[3px] so the bar still gets 38px from it (tests/unit/components/navbar-logo-height.test.tsx).
  */
 import { cn } from "@/lib/utils";
 import {
-  BADGE_PATH,
+  BADGE_FILL_PATH,
+  BADGE_OUTLINE_PATH,
   INK_PATH,
   PLAY_PATH,
   WORDMARK_TEXT_X,
@@ -44,11 +50,12 @@ export default function PolutekWordmark({
       focusable="false"
       data-brand-logo="wordmark"
       data-brand-badge={badge ? "true" : "false"}
-      className={cn("block h-[21px] w-auto shrink-0 select-none overflow-visible max-[350px]:h-[18px] md:h-[25px]", className)}
+      className={cn("m-0 block h-[21px] w-auto shrink-0 select-none overflow-visible p-0 max-[350px]:h-[18px] md:h-[25px]", className)}
     >
       {badge ? (
         <>
-          <path style={{ fill: "var(--chan-blue, #2563eb)" }} d={BADGE_PATH} />
+          <path style={{ fill: "var(--chan-ink, #111827)" }} d={BADGE_OUTLINE_PATH} />
+          <path style={{ fill: "var(--chan-blue, #2563eb)" }} d={BADGE_FILL_PATH} />
           <path fill="#fff" d={PLAY_PATH} />
         </>
       ) : null}
