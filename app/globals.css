@@ -728,15 +728,28 @@
   }
   .mc-icon--solid { width:18px; height:18px; }
 
-  /* Play/pause: the only control with a surface, a compact dark glass pill. */
+  /* Play/pause: the only bar control with a surface, a soft glass pill (translucent dark, 1px inner hairline,
+     blur where supported). Press scales to .96; the focus ring is a white gap plus the brand blue, visible on
+     any frame. The two glyphs cross-fade in 160ms (PlayPauseGlyph). */
   .mc-play {
     width:40px; height:28px;
-    background: var(--mc-glass);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.1), 0 2px 8px rgba(0,0,0,.18);
-    backdrop-filter: blur(12px) saturate(1.4);
-    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+    background: rgba(14,15,18,.58);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 2px 8px rgba(0,0,0,.16);
+    backdrop-filter: blur(10px) saturate(1.3);
+    -webkit-backdrop-filter: blur(10px) saturate(1.3);
   }
-  .mc-play .mc-icon { filter:none; }
+  .mc-play:active { transform: scale(.96); }
+  .mc-play:focus-visible {
+    outline:none;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 0 0 2px rgba(255,255,255,.92), 0 0 0 4px var(--chan-blue);
+  }
+  .mc-glyph-swap { position:relative; display:block; width:20px; height:20px; }
+  .mc-glyph-swap > svg {
+    position:absolute; inset:0; width:100%; height:100%;
+    transition: opacity .16s var(--mc-ease), transform .16s var(--mc-ease);
+  }
+  .mc-glyph-swap[data-state="paused"] > [data-testid="pause-icon"],
+  .mc-glyph-swap[data-state="playing"] > [data-testid="play-icon"] { opacity:0; transform: scale(.8); }
 
   /* Quality badge on the settings button: a 1.5px outline box, the same stroke as the icons. */
   .mc-btn--badge { width:auto; min-width: var(--mc-btn); padding:0 6px; }
@@ -940,6 +953,8 @@
 
   /* Centre overlay while paused / ended / buffering. */
   .mc-center {
+    --mc-ease: cubic-bezier(.2, 0, 0, 1);
+    --mc-ease-out: cubic-bezier(.16, 1, .3, 1);
     position:absolute; inset:0; z-index:12;
     display:grid; place-items:center;
     pointer-events:none;
@@ -948,24 +963,32 @@
     background:linear-gradient(rgba(0,0,0,.28), rgba(0,0,0,.52));
   }
 
+  /* Centre button: a 56px soft glass circle (not a heavy disc), the same recipe as the pill, entering with the
+     bar's easing. */
   .mc-hero {
     display:grid; place-items:center;
-    width:56px; height:56px;
+    width:56px; height:56px; padding:0;
     border:0; border-radius:999px;
-    background: rgba(14,15,18,.62);
-    backdrop-filter: blur(12px) saturate(1.4);
-    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+    background: rgba(14,15,18,.55);
+    backdrop-filter: blur(10px) saturate(1.3);
+    -webkit-backdrop-filter: blur(10px) saturate(1.3);
     color:#fff;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 12px 32px rgba(0,0,0,.3);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 10px 28px rgba(0,0,0,.24);
     pointer-events:auto;
-    transition: background-color .2s cubic-bezier(.2, 0, 0, 1), transform .2s cubic-bezier(.2, 0, 0, 1);
+    transition: background-color .16s var(--mc-ease), transform .16s var(--mc-ease);
+    animation: mc-hero-in .24s var(--mc-ease-out);
     cursor:pointer;
+    -webkit-tap-highlight-color: transparent;
   }
-  .mc-hero:hover { background: rgba(14,15,18,.74); transform:scale(1.05); }
-  .mc-hero:active { transform:scale(.95); }
-  .mc-hero:focus-visible { outline:2px solid #fff; outline-offset:3px; }
+  @keyframes mc-hero-in { from { opacity:0; transform: scale(.9); } }
+  @media (hover:hover) { .mc-hero:hover { background: rgba(14,15,18,.7); } }
+  .mc-hero:active { transform: scale(.96); }
+  .mc-hero:focus-visible {
+    outline:none;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 0 0 2px rgba(255,255,255,.92), 0 0 0 4px var(--chan-blue);
+  }
 
-  .mc-hero-icon { width:28px; height:28px; }
+  .mc-hero-icon { display:block; width:28px; height:28px; }
 
   .mc-spinner {
     display:grid; place-items:center;
@@ -1013,7 +1036,15 @@
      32px boxes (still above the 24px AA minimum), gaps go to 0, the play pill and side padding tighten. The
      44px touch hit area stays on the track only. */
   @media (max-width:640px) {
-    .mc-controls { --mc-pad-x: 4px; --mc-pad-b: 2px; --mc-btn: 32px; }
+    /* The row hugs the bottom edge: 36px tall with 1px under it puts the pill ~6px (the icons ~9px) above the
+       frame's bottom edge; the 44px track hit area overlaps that margin. Landscape notches / home indicator are
+       added through the safe-area insets. */
+    .mc-controls { --mc-pad-x: 4px; --mc-pad-b: 1px; --mc-btn: 32px; --mc-row: 36px; }
+    .mc-bottom {
+      padding-left: calc(var(--mc-pad-x) + env(safe-area-inset-left, 0px));
+      padding-right: calc(var(--mc-pad-x) + env(safe-area-inset-right, 0px));
+      padding-bottom: calc(var(--mc-pad-b) + env(safe-area-inset-bottom, 0px));
+    }
     .mc-bar, .mc-group { gap:0; }
     .mc-btn, .mc-play { height: var(--mc-btn); }
     .mc-play { width:34px; height:26px; }
@@ -1032,7 +1063,7 @@
       border-width:1px 0 0;
       background: rgba(14,15,18,.98);
     }
-    .mc-hero { width:52px; height:52px; }
+    .mc-hero { width:56px; height:56px; }
   }
   /* A phone's rest chip says only the time, like the reference; the chapter is in the drag preview and in the
      settings menu's "Chapters" entry. */
@@ -1046,8 +1077,9 @@
   }
 
   @media (prefers-reduced-motion:reduce) {
-    .mc-scrim, .mc-bottom, .mc-btn, .mc-hero, .mc-chip,
+    .mc-scrim, .mc-bottom, .mc-btn, .mc-hero, .mc-chip, .mc-glyph-swap > svg,
     .mc-vol-slider, .mc-scrub-track, .mc-scrub-thumb { transition:none; }
+    .mc-hero { animation:none; }
     .mc-spinner-ring { animation:none; }
     .mc-menu { animation:none; }
   }

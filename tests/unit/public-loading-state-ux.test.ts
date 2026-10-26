@@ -79,9 +79,9 @@ describe("public loading/access state UX contracts", () => {
 
     expect(controlsCopy).toContain("Odtwórz ponownie");
     expect(controls).toContain("mc-center--ended");
-    // Icons were moved from lucide-react to Vidstack's own icon set
-    // (@vidstack/react/icons) as part of the same mc-* rewrite.
-    expect(controls).toContain('from "@vidstack/react/icons"');
+    // Icons: lucide line icons plus the custom play/pause/replay family (controls/PlayerIcons.tsx).
+    expect(controls).toContain('from "lucide-react"');
+    expect(controls).toContain("PlayerIcons");
     expect(controls).not.toContain("SeekButton");
     expect(controls).not.toContain("PIPButton");
     expect(controls).not.toContain("Cofnij 10 sekund");
