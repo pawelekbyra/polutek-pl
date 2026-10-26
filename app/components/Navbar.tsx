@@ -145,12 +145,10 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
               <BrandHomeLink
                 language={language}
                 isHome={isHome}
-                className="flex h-[38px] shrink-0 items-center gap-0 rounded-md transition-all hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:scale-95"
+                className="-my-[3px] ml-2 flex h-[44px] shrink-0 items-center gap-0 rounded-md transition-opacity duration-150 hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 active:opacity-70 motion-reduce:transition-none md:ml-0"
               >
-                <BrandName
-                  className="h-[28px] md:h-[34px]"
-                  decorative
-                />
+                {/* The link box is 44px tall for touch but contributes 38px to the bar (-my-[3px]); ml-2 on phones lines the logo up with the 16px page gutter. */}
+                <BrandName decorative />
               </BrandHomeLink>
             </div>
 
