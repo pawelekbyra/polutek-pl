@@ -82,7 +82,7 @@ export const PassPending = forwardRef<HTMLHeadingElement, { tx: Tx; timedOut: bo
         {timedOut && (
           <div className={styles.row}>
             <button type="button" className={styles.lineBtn} onClick={onClose}>{tx("Zamknij", "Close")}</button>
-            <button type="button" className={styles.inkBtn} style={{ flex: 1, minHeight: 44, fontSize: 14 }} onClick={onCheck} data-autofocus="">{tx("Sprawdź ponownie", "Check again")}</button>
+            <button type="button" className={cn(styles.inkBtn, styles.rowBtn)} onClick={onCheck} data-autofocus="">{tx("Sprawdź ponownie", "Check again")}</button>
           </div>
         )}
       </div>
@@ -99,7 +99,7 @@ export const PassDeclined = forwardRef<HTMLHeadingElement, { tx: Tx; onRetry: ()
         <p className={styles.resultText}>{tx("Płatność nie przeszła. Nic nie zostało pobrane.", "The payment did not go through. Nothing was charged.")}</p>
         <div className={styles.row}>
           <button type="button" className={styles.lineBtn} onClick={onChangeMethod}>{tx("Zmień metodę", "Change method")}</button>
-          <button type="button" className={styles.inkBtn} style={{ flex: 1, minHeight: 44, fontSize: 14 }} onClick={onRetry} data-autofocus="">
+          <button type="button" className={cn(styles.inkBtn, styles.rowBtn)} onClick={onRetry} data-autofocus="">
             {retryLabel ?? tx("Spróbuj ponownie", "Try again")}
           </button>
         </div>

@@ -26,6 +26,9 @@ interface ListPosition {
   style: React.CSSProperties;
 }
 
+/** The one typography of a field label in the gate and the patron checkout (13 px, body colour, 8 px above the field); the checkout's own labels (legend, step heading) import it. */
+export const FIELD_LABEL_CLASS = "mb-2 block text-[13px] leading-[1.55] text-[var(--chan-body)]";
+
 const LIST_GAP = 6;
 const EDGE = 8;
 
@@ -135,7 +138,7 @@ export function TipSelect({ label, value, options, onChange, disabled = false }:
 
   return (
     <div ref={rootRef} className="block">
-      <span id={labelId} className="mb-2 block text-[13px] leading-[1.55] text-[var(--chan-body)]">
+      <span id={labelId} className={FIELD_LABEL_CLASS}>
         {label}
       </span>
       <div

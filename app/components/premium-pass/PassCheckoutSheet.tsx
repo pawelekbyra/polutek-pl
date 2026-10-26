@@ -18,12 +18,12 @@ import { maskEmail, type PassMethod, type PassStatusDto } from "@/lib/modules/pa
 import { useLanguage } from "../LanguageContext";
 import { TIP_WALLETS, getTipMethodTiles, readLastTipMethod, rememberTipMethod, type TipWallet } from "../support/tip-flow-config";
 import { TipBackContext } from "../support/TipStepLayout";
+import { FIELD_LABEL_CLASS } from "../support/TipSelect";
 import { ArrowLeft } from "../icons";
 import { CrossIcon } from "./PassIcons";
-import { PassMethodStep, PassOrderSummary, PassPlanStep } from "./PassPlanSteps";
+import { PassMethodStep, PassPayHead, PassPlanStep } from "./PassPlanSteps";
 import { PassConsent, PassDemoSummary, PassStripePay, type PassConsentErrors, type PassConsentState } from "./PassPaymentStep";
 import { PassSecurityFooter } from "./PassSecurityFooter";
-import { PassSellerCard } from "./PassSellerCard";
 import { PassDeclined, PassMaxAhead, PassPending, PassSuccess } from "./PassSuccess";
 import { newRequestId, price } from "./pass-copy";
 import { fetchPassStatus, pollPatronPayment, postDemoCheckout, postPatronConsent, postPatronIntent } from "./usePremiumPass";
@@ -341,7 +341,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
 
   // `hidden`: the heading stays for screen readers and for the focus of the step, it is just not drawn (step 1 has no subtitle).
   const heading = (text: string, hidden = false) => (
-    <h3 ref={headingRef} tabIndex={-1} className={cn(styles.stepTitle, hidden && styles.srOnly)}>{text}</h3>
+    <h3 ref={headingRef} tabIndex={-1} className={cn(styles.stepTitle, hidden ? styles.srOnly : FIELD_LABEL_CLASS)}>{text}</h3>
   );
 
   return (
@@ -351,15 +351,8 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
         <DialogPrimitive.Popup className={cn(styles.pass, styles.sheet)} aria-labelledby={`${ids}-title`} aria-busy={locked} initialFocus={titleRef}>
           <div className={styles.sheetHead}>
             <DialogPrimitive.Title render={<h2 ref={titleRef} tabIndex={-1} id={`${ids}-title`} className={styles.sheetTitle} />}>
-              {tx("Zostań patronem", "Become a patron")}
+              {tx("Kup se Premium", "Get Premium")}
             </DialogPrimitive.Title>
-            {showSteps && (
-              <ol className={styles.stepDots} aria-label={tx("Etapy zakupu", "Checkout steps")}>
-                <li aria-current={stepNumber === 1 ? "step" : undefined} aria-label={tx("Dostęp", "Access")} className={cn(styles.stepPip, stepNumber === 1 && styles.stepPipNow)} />
-                <li aria-current={stepNumber === 2 ? "step" : undefined} aria-label={tx("Metoda", "Method")} className={cn(styles.stepPip, stepNumber === 2 && styles.stepPipNow)} />
-                <li aria-current={stepNumber === 3 ? "step" : undefined} aria-label={tx("Płatność", "Payment")} className={cn(styles.stepPip, stepNumber === 3 && styles.stepPipNow)} />
-              </ol>
-            )}
             <DialogPrimitive.Close className={styles.close} disabled={locked} aria-label={tx("Zamknij", "Close")}>
               <CrossIcon className="h-4 w-4" />
             </DialogPrimitive.Close>
@@ -399,7 +392,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
           {stage.kind === "method" && (
             <>
               <div className={styles.sheetBody}>
-                {heading(tx("Metoda płatności", "Payment method"))}
+                {heading(tx("Metoda płatności", "Payment method"), true)}
                 <PassMethodStep
                   tx={tx}
                   language={language}
@@ -428,11 +421,9 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
           {stage.kind === "pay" && method && stripeReady && intent && (
             <>
               <div className={styles.payHead}>
-                {heading(tx("Płatność", "Payment"))}
-                <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} compact />
-                <PassSellerCard tx={tx} compact />
+                <PassPayHead heading={heading(tx("Płatność", "Payment"))} tx={tx} language={language} offer={offer} product={product} currency={currency} />
               </div>
-              <TipBackContext.Provider value={{ onBack: backToMethod, label: tx("Wstecz", "Back") }}>
+              <TipBackContext.Provider value={{ onBack: backToMethod, label: tx("Wstecz", "Back"), patron: true }}>
                 <PassStripePay
                   language={language}
                   amountMinor={amountMinor}
@@ -447,7 +438,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
                   beforeConfirm={beforeConfirm}
                   onChangeMethod={backToMethod}
                   onConfirmed={(outcome) => void finish(intent.paymentId, outcome === "succeeded" ? 6 : 10)}
-                  consent={<PassConsent tx={tx} language={language} ids={ids} value={consent} errors={consentErrors} onChange={(value) => { setConsent(value); setConsentErrors({}); }} />}
+                  consent={<PassConsent spaced tx={tx} language={language} ids={ids} value={consent} errors={consentErrors} onChange={(value) => { setConsent(value); setConsentErrors({}); }} />}
                 />
               </TipBackContext.Provider>
             </>
@@ -456,12 +447,10 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
           {stage.kind === "pay" && method && !stripeMode && (
             <>
               <div className={styles.sheetBody}>
-                {heading(tx("Płatność", "Payment"))}
-                <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} compact />
-                <PassSellerCard tx={tx} compact />
+                <PassPayHead heading={heading(tx("Płatność", "Payment"))} tx={tx} language={language} offer={offer} product={product} currency={currency} />
                 <PassDemoSummary tx={tx} language={language} amountMinor={amountMinor} currency={currency} method={method} onChangeMethod={backToMethod} />
                 <PassConsent tx={tx} language={language} ids={ids} value={consent} errors={consentErrors} onChange={(value) => { setConsent(value); setConsentErrors({}); }} termsRef={termsRef} waiverRef={waiverRef} />
-                {email && <p className={styles.muted} style={{ margin: 0 }}>{tx("Potwierdzenie trafi na {0}", "The confirmation goes to {0}", email)}</p>}
+                {email && <p className={styles.muted}>{tx("Potwierdzenie trafi na {0}", "The confirmation goes to {0}", email)}</p>}
               </div>
               <div className={styles.pay}>
                 <div className={styles.payRow}>
@@ -488,7 +477,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
             </div>
           )}
 
-          {(stage.kind === "plan" || stage.kind === "method" || stage.kind === "pay") && <PassSecurityFooter tx={tx} demo={!stripeMode} language={language} links={stage.kind !== "pay"} />}
+          {stepNumber !== null && <PassSecurityFooter tx={tx} demo={!stripeMode} language={language} links={stage.kind !== "pay"} step={stepNumber} />}
         </DialogPrimitive.Popup>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>

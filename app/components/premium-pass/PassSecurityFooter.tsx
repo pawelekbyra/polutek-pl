@@ -8,9 +8,31 @@ import { Lock } from "lucide-react";
 import type { Tx } from "@/lib/i18n/ui";
 import type { Locale } from "@/lib/i18n/routing";
 import { getLocalizedHref } from "@/lib/i18n/routing";
+import { cn } from "@/lib/utils";
 import styles from "./premium-pass.module.css";
 
-export function PassSecurityFooter({ tx, demo, language, links = false }: { tx: Tx; demo: boolean; language: Locale; links?: boolean }) {
+/** The three step dots, centred above the footer line (they used to sit next to the title). */
+function PassStepDots({ tx, step }: { tx: Tx; step: number }) {
+  const pips = [tx("Dostęp", "Access"), tx("Metoda", "Method"), tx("Płatność", "Payment")];
+  return (
+    <ol className={styles.stepDots} aria-label={tx("Etapy zakupu", "Checkout steps")}>
+      {pips.map((label, i) => (
+        <li key={label} aria-current={step === i + 1 ? "step" : undefined} aria-label={label} className={cn(styles.stepPip, step === i + 1 && styles.stepPipNow)} />
+      ))}
+    </ol>
+  );
+}
+
+export function PassSecurityFooter({ tx, demo, language, links = false, step }: { tx: Tx; demo: boolean; language: Locale; links?: boolean; step?: number }) {
+  return (
+    <>
+      {step !== undefined && <PassStepDots tx={tx} step={step} />}
+      <PassFooterLine tx={tx} demo={demo} language={language} links={links} />
+    </>
+  );
+}
+
+function PassFooterLine({ tx, demo, language, links }: { tx: Tx; demo: boolean; language: Locale; links: boolean }) {
   if (links) {
     return (
       <p className={styles.secureFooter} data-secure-footer="" data-legal-footer="">

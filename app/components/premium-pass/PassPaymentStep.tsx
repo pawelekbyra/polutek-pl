@@ -30,6 +30,7 @@ export function PassConsent({
   onChange,
   termsRef,
   waiverRef,
+  spaced,
 }: {
   tx: Tx;
   language: Locale;
@@ -39,10 +40,12 @@ export function PassConsent({
   onChange: (next: PassConsentState) => void;
   termsRef?: React.Ref<HTMLInputElement>;
   waiverRef?: React.Ref<HTMLInputElement>;
+  /** Under a Stripe form (no flex gap around it): adds the field gap above. */
+  spaced?: boolean;
 }) {
   const consentError = tx("Zaznacz to pole, aby kontynuować.", "Tick this box to continue.");
   return (
-    <div className={styles.consents}>
+    <div className={cn(styles.consents, spaced && styles.consentsSpaced)}>
       <div className={cn(styles.consent, errors.terms && styles.consentError)}>
         <input ref={termsRef} id={`${ids}-terms`} type="checkbox" checked={value.terms} onChange={(e) => onChange({ ...value, terms: e.target.checked })} aria-invalid={errors.terms || undefined} aria-describedby={errors.terms ? `${ids}-terms-error` : undefined} />
         <label htmlFor={`${ids}-terms`}>
@@ -64,7 +67,7 @@ export function PassConsent({
         {errors.waiver && <p id={`${ids}-waiver-error`} className={styles.error}>{consentError}</p>}
       </div>
       {!(value.terms && value.waiver) && (
-        <p className={styles.muted} style={{ margin: 0 }}>{tx("Zaznacz obie zgody, aby zapłacić.", "Tick both boxes to pay.")}</p>
+        <p className={styles.muted}>{tx("Zaznacz obie zgody, aby zapłacić.", "Tick both boxes to pay.")}</p>
       )}
     </div>
   );

@@ -5,13 +5,14 @@
 // and the Terms / Privacy Policy as plain LINKS: nothing to tick before step 3. The browser only names a product and a
 // currency; the server owns the price table.
 import React, { useId } from "react";
+import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/routing";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import type { Tx } from "@/lib/i18n/ui";
 import type { PatronCurrency } from "@/lib/modules/patron-zone/domain/config";
 import type { PatronOfferProduct, PremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
 import { TIP_CURRENCY_SYMBOLS, describeTipMethod, tipCurrencyTitle } from "../support/tip-flow-config";
-import { TipSelect } from "../support/TipSelect";
+import { FIELD_LABEL_CLASS, TipSelect } from "../support/TipSelect";
 import { PassSellerCard } from "./PassSellerCard";
 import { price, productName, productNote, vatLine } from "./pass-copy";
 import styles from "./premium-pass.module.css";
@@ -42,7 +43,7 @@ export function PassOrderSummary({ tx, language, offer, product, currency, compa
           <b>{total}</b>
         </div>
       </div>
-      <p className={styles.muted} style={{ margin: "6px 0 0" }}>{vatLine(tx, offer.vatRatePercent)}</p>
+      <p className={cn(styles.muted, styles.vatLine)}>{vatLine(tx, offer.vatRatePercent)}</p>
     </div>
   );
 }
@@ -75,14 +76,12 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
           {tx("Płatności są chwilowo niedostępne. Spróbuj ponownie później.", "Payments are temporarily unavailable. Please try again later.")}
         </p>
       )}
-
-
       <fieldset className={styles.products} disabled={busy || access?.lifetime === true}>
-        <legend className={styles.amountLead}>{tx("Wybierz dostęp", "Choose your access")}</legend>
+        <legend className={FIELD_LABEL_CLASS}>{tx("Wybierz dostęp", "Choose your access")}</legend>
         {offer.products.map((p) => (
           <label key={p.id} className={styles.product}>
             <input type="radio" name={`${ids}-product`} value={p.id} checked={p.id === product.id} onChange={() => onProduct(p.id)} />
-            {p.bestValue && <span className={styles.bestValue}>{tx("Bestseller", "Bestseller")}</span>}
+            {p.bestValue ? <span className={styles.bestValue}>{tx("Bestseller", "Bestseller")}</span> : <span className={styles.badgeSlot} aria-hidden="true" />}
             <span className={styles.productName}>{productName(tx, p.id)}</span>
             <span className={styles.productPrice}>{price(language, p.prices[currency], currency)}</span>
             <span className={styles.productNote}>{productNote(tx, p)}</span>
@@ -101,6 +100,19 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
 
       <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} />
       <PassSellerCard tx={tx} />
+    </>
+  );
+}
+
+/** Step 3 head (both modes): the label-style heading with the order summary under it (8 px, like any field), then the seller card. */
+export function PassPayHead({ heading, tx, ...summary }: { heading: React.ReactNode; tx: Tx; language: Locale; offer: PremiumPassOffer; product: PatronOfferProduct; currency: PatronCurrency }) {
+  return (
+    <>
+      <div>
+        {heading}
+        <PassOrderSummary tx={tx} {...summary} compact />
+      </div>
+      <PassSellerCard tx={tx} compact />
     </>
   );
 }
@@ -129,7 +141,6 @@ export function PassMethodStep({ tx, language, offer, product, currency, methods
       {notice && <p className={styles.noticeWarn} role="alert">{notice}</p>}
 
       <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} />
-
       <PassSellerCard tx={tx} />
     </>
   );
