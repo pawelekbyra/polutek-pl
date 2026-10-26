@@ -1,142 +1,243 @@
-"""Usage: python generate-wordmark.py '{}' out.json  (optional first arg: JSON of per-pair gap overrides; env WT = stroke weight).
-The JSON paths (ink / blue) are pasted into app/components/brand/PolutekWordmark.tsx and public/brand/*.svg.
-Generates the POLUTEK.COM wordmark as outlined SVG paths (no font, original geometry).
-Every glyph is a union of round-capped strokes (capsules, circular arcs, dots) of one weight W,
-emitted as closed outlines that all wind the same way (nonzero fill => clean union, no seams)."""
-import math, json, sys
+"""Generates the POLUTEK.COM lockup (play badge + wordmark) as outlined SVG paths.
 
-W = float(__import__("os").environ.get("WT","24"))
-H = W / 2
+Usage (from the repo root):
+    python scripts/brand/generate-wordmark.py --font path/to/Nunito[wght].ttf [--gaps gaps.json]
+"POLUTEK" and ".COM" are both ink (".COM" is small, on the baseline); the badge is the brand blue.
+Writes app/components/brand/polutek-wordmark-paths.ts and public/brand/polutek-wordmark*.svg.
+
+The letters are outlines of Nunito (variable font, SIL Open Font License 1.1, copyright 2014 The
+Nunito Project Authors, https://github.com/googlefonts/nunito), modified: each letter is taken at its own
+weight and narrowed horizontally so that stem weight (~0.22 of cap height), horizontal stroke weight
+(~0.19) and letter widths match the owner's reference rendering, then re-spaced optically. See
+public/brand/NOTICE-Nunito-OFL.txt for the licence. The badge is original geometry.
+Cap height = 100 units, baseline y = 100.
+"""
+import json
+import math
+import os
+import sys
+
+SV = 22.4            # vertical stem weight (reference: 0.232 of cap; ours is ~3% lighter)
+SH = 19.2            # horizontal stroke weight (reference: 0.199 of cap)
+HV, HH = SV / 2, SH / 2
+OV = 1.2             # optical overshoot of round letters
+CAP = 100.0
+
+
 def f(v):
     s = ("%.2f" % v).rstrip("0").rstrip(".")
     return "0" if s in ("-0", "") else s
 
-def area_poly(pts):
-    a = 0
-    for i in range(len(pts)):
-        x1, y1 = pts[i]; x2, y2 = pts[(i + 1) % len(pts)]
-        a += x1 * y2 - x2 * y1
-    return a / 2
 
-def capsule(p1, p2, r=H):
+def area_poly(pts):
+    return sum(pts[i][0] * pts[(i + 1) % len(pts)][1] - pts[(i + 1) % len(pts)][0] * pts[i][1] for i in range(len(pts))) / 2
+
+
+def capsule(p1, p2, r):
     (x1, y1), (x2, y2) = p1, p2
     dx, dy = x2 - x1, y2 - y1
-    L = math.hypot(dx, dy)
-    nx, ny = -dy / L * r, dx / L * r
-    # polygon sample to test orientation (y down: positive area = clockwise visually)
-    pts = [(x1 + nx, y1 + ny), (x2 + nx, y2 + ny), (x2 - nx, y2 - ny), (x1 - nx, y1 - ny)]
-    if area_poly(pts) < 0:
+    n = math.hypot(dx, dy)
+    nx, ny = -dy / n * r, dx / n * r
+    if area_poly([(x1 + nx, y1 + ny), (x2 + nx, y2 + ny), (x2 - nx, y2 - ny), (x1 - nx, y1 - ny)]) < 0:
         nx, ny = -nx, -ny
-    d = "M%s %sL%s %sA%s %s 0 0 1 %s %sL%s %sA%s %s 0 0 1 %s %sZ" % (
+    return "M%s %sL%s %sA%s %s 0 0 1 %s %sL%s %sA%s %s 0 0 1 %s %sZ" % (
         f(x1 + nx), f(y1 + ny), f(x2 + nx), f(y2 + ny), f(r), f(r), f(x2 - nx), f(y2 - ny),
         f(x1 - nx), f(y1 - ny), f(r), f(r), f(x1 + nx), f(y1 + ny))
-    return d
 
-def pt(c, R, a):
-    return (c[0] + R * math.cos(math.radians(a)), c[1] + R * math.sin(math.radians(a)))
 
-def arc(c, R, a0, a1, r=H):
-    """Stroke along circle (centre c, radius R) from angle a0 to a1 degrees (y down, clockwise
-    on screen when a1>a0), round caps radius r."""
-    if a1 < a0:
-        a0, a1 = a1, a0
-    big = 1 if (a1 - a0) > 180 else 0
-    o0, o1 = pt(c, R + r, a0), pt(c, R + r, a1)
-    i0, i1 = pt(c, R - r, a0), pt(c, R - r, a1)
-    # outer a0->a1 (sweep 1), end cap a1 outer->inner (sweep 1 semicircle), inner back (sweep 0), start cap
-    return "M%s %sA%s %s 0 %d 1 %s %sA%s %s 0 0 1 %s %sA%s %s 0 %d 0 %s %sA%s %s 0 0 1 %s %sZ" % (
-        f(o0[0]), f(o0[1]), f(R + r), f(R + r), big, f(o1[0]), f(o1[1]),
-        f(r), f(r), f(i1[0]), f(i1[1]),
-        f(R - r), f(R - r), big, f(i0[0]), f(i0[1]),
-        f(r), f(r), f(o0[0]), f(o0[1]))
-
-def dot(c, r):
+def circle(c, r):
     return "M%s %sA%s %s 0 1 1 %s %sA%s %s 0 1 1 %s %sZ" % (
         f(c[0] - r), f(c[1]), f(r), f(r), f(c[0] + r), f(c[1]), f(r), f(r), f(c[0] - r), f(c[1]))
 
-TOP, BOT = H, 100 - H      # stroke centre-lines for flat extremes
-MID = 50
-OV = 1.0                   # round overshoot
-RO = 40.0                  # O / C centre-line radius
 
-def G_P():
-    x = H; R = 28
-    cx = 20 + H
-    return 71, [capsule((x, TOP), (x, BOT)), capsule((x, TOP), (cx, TOP)),
-                capsule((x, TOP + 2 * R), (cx, TOP + 2 * R)), arc((cx, TOP + R), R, -90, 90)]
-def G_O():
-    c = (RO + H + 0.0, 50)
-    return 2 * (RO + H), [arc(c, RO, -90, 90), arc(c, RO, 90, 270)]
-def G_L():
-    return 61, [capsule((H, TOP), (H, BOT)), capsule((H, BOT), (50, BOT))]
-def G_U():
-    w = 80; r = (w - W) / 2
-    cy = 100 - H + OV - r
-    return w, [capsule((H, TOP), (H, cy)), capsule((w - H, TOP), (w - H, cy)), arc((w / 2, cy), r, 0, 180)]
-def G_T():
-    w = 78
-    return w, [capsule((H, TOP), (w - H, TOP)), capsule((w / 2, TOP), (w / 2, BOT))]
-def G_E():
-    return 66, [capsule((H, TOP), (H, BOT)), capsule((H, TOP), (55, TOP)), capsule((H, MID), (49, MID)), capsule((H, BOT), (55, BOT))]
-def G_K():
-    return 79, [capsule((H, TOP), (H, BOT)), capsule((69, TOP), (16, 55)), capsule((40, 38), (69, BOT))]
-def G_DOT():
-    r = 12.2
-    return 2 * r, [dot((r, 100 - r + 0.3), r)]
-def G_C():
-    c = (RO + H, 50)
-    a = 42
-    ext = c[0] + RO * math.cos(math.radians(a)) + H
-    return ext, [arc(c, RO, a, 360 - a)]
-def G_M():
-    w = 100
-    return w, [capsule((H, TOP), (H, BOT)), capsule((w - H, TOP), (w - H, BOT)),
-               capsule((H + 1, TOP + 2), (w / 2, 66)), capsule((w - H - 1, TOP + 2), (w / 2, 66))]
+def ep(c, rx, ry, t):
+    a = math.radians(t)
+    return (c[0] + rx * math.cos(a), c[1] + ry * math.sin(a))
 
-GL = {"P": G_P, "O": G_O, "L": G_L, "U": G_U, "T": G_T, "E": G_E, "K": G_K, ".": G_DOT, "C": G_C, "M": G_M}
-# gaps (outer edge to outer edge) AFTER each glyph in POLUTEK.COM
-word = ["P", "O", "L", "U", "T", "E", "K", ".", "C", "O", "M"]
-GAP = json.loads(sys.argv[1]) if len(sys.argv) > 1 else {}
-gaps_default = {"P-O": 7, "O-L": 7, "L-U": 6, "U-T": 7, "T-E": 5, "E-K": 8, "K-.": 4, ".-C": 5, "C-O": 6, "O-M": 7}
-gaps_default.update(GAP)
 
-x = 0.0
-ink, blue = [], []
-for i, ch in enumerate(word):
-    w, parts = GL[ch]()
-    # horizontal translate inside path by wrapping coordinates: re-generate with offset via transform-free approach
-    parts_x = []
-    for p in parts:
-        parts_x.append((x, p))
-    (blue if i >= 7 else ink).extend(parts_x)
-    if i < len(word) - 1:
-        x += w + gaps_default["%s-%s" % (ch, word[i + 1])]
-    else:
-        x += w
-TOTAL = x
+def ring_full(c, rxo, ryo, rxi, ryi):
+    """Closed elliptical ring: outer clockwise, inner counter-clockwise (a hole)."""
+    return ("M%s %sA%s %s 0 1 1 %s %sA%s %s 0 1 1 %s %sZ" % (f(c[0] + rxo), f(c[1]), f(rxo), f(ryo), f(c[0] - rxo), f(c[1]), f(rxo), f(ryo), f(c[0] + rxo), f(c[1]))
+            + "M%s %sA%s %s 0 1 0 %s %sA%s %s 0 1 0 %s %sZ" % (f(c[0] + rxi), f(c[1]), f(rxi), f(ryi), f(c[0] - rxi), f(c[1]), f(rxi), f(ryi), f(c[0] + rxi), f(c[1])))
 
-import re
-def shift(d, dx):
-    # shift absolute coords; path commands used: M L A (A has radii/flags that are not shifted)
+
+def ring_part(c, rxo, ryo, rxi, ryi, t0, t1):
+    """Part of an elliptical ring between parametric angles t0 < t1 (degrees, clockwise on screen)."""
+    big = 1 if (t1 - t0) > 180 else 0
+    o0, o1 = ep(c, rxo, ryo, t0), ep(c, rxo, ryo, t1)
+    i0, i1 = ep(c, rxi, ryi, t0), ep(c, rxi, ryi, t1)
+    return "M%s %sA%s %s 0 %d 1 %s %sL%s %sA%s %s 0 %d 0 %s %sZ" % (
+        f(o0[0]), f(o0[1]), f(rxo), f(ryo), big, f(o1[0]), f(o1[1]), f(i1[0]), f(i1[1]),
+        f(rxi), f(ryi), big, f(i0[0]), f(i0[1]))
+
+
+def round_cap(c, rxo, ryo, rxi, ryi, t):
+    """Round end for a ring cut at parametric angle t: a disc whose diameter is the local stroke."""
+    o, i = ep(c, rxo, ryo, t), ep(c, rxi, ryi, t)
+    return circle(((o[0] + i[0]) / 2, (o[1] + i[1]) / 2), math.hypot(o[0] - i[0], o[1] - i[1]) / 2)
+
+
+# ---------------------------------------------------------------- glyphs (Nunito outlines)
+CAP_W = {  # target ink width / cap height (measured from the reference, +-4%), per glyph
+    "P": 0.715, "O": 0.90, "L": 0.607, "U": 0.794, "T": 0.77, "E": 0.607, "K": 0.765, "C": 0.735, "M": 1.06,
+}
+WGHT = {"P": 900, "O": 875, "L": 900, "U": 875, "T": 900, "E": 900, "K": 875, "C": 1000, "M": 1000, ".": 1000}
+# ".COM": small, black, on the same baseline: cap height about a third of the big letters. A heavier
+# instance (1000 vs 875-900) keeps the stems readable at 6-7 px, the proportions stay natural.
+SMALL_CAP = 33.0
+SMALL_XS = 1.0
+SMALL_FROM = 7            # index of "." in WORD
+DOT_D = 10.0         # the dot is as wide as a stem
+WORD = ["P", "O", "L", "U", "T", "E", "K", ".", "C", "O", "M"]
+# Optical gaps (edge to edge, cap/100 units) after each pair, tuned so the area between neighbouring
+# glyph profiles is even.
+GAPS = {"P-O": 10.8, "O-L": 14.7, "L-U": 5, "U-T": 5, "T-E": 5, "E-K": 14.2, "K-.": 12, ".-C": 5.5, "C-O": 5.5, "O-M": 5.8}
+
+
+def load_font(path):
+    from fontTools.ttLib import TTFont
+    from fontTools.varLib import instancer
+    cache = {}
+
+    def get(w):
+        if w not in cache:
+            cache[w] = instancer.instantiateVariableFont(TTFont(path), {"wght": w}, inplace=False)
+        return cache[w]
+    return get
+
+
+def glyph_outline(font, ch, x, dot=False, small=False):
+    """Returns (ink width, path) of glyph ch placed with its left ink edge at x (cap = 100 units).
+    small=True draws the ".COM" letters: cap SMALL_CAP units tall on the same baseline, from a heavier
+    instance (so the stems stay readable at 6-7 px) and with natural (not narrowed) proportions."""
+    from fontTools.pens.boundsPen import BoundsPen
+    from fontTools.pens.svgPathPen import SVGPathPen
+    from fontTools.pens.transformPen import TransformPen
+    gs = font.getGlyphSet()
+    cmap = font.getBestCmap()
+    lb = BoundsPen(gs); gs[cmap[ord("L")]].draw(lb)
+    cap = lb.bounds[3] - lb.bounds[1]
+    unit = 100.0 / cap
+    bp = BoundsPen(gs); gs[cmap[ord(ch)]].draw(bp)
+    x0, y0, x1, y1 = bp.bounds
+    if dot:
+        sx = sy = DOT_D / (x1 - x0)
+        # sit the dot on the baseline with a hair of overshoot
+        ty = (100 + 0.1) + y0 * sy
+        pen = SVGPathPen(gs, ntos=f)
+        gs[cmap[ord(ch)]].draw(TransformPen(pen, (sx, 0, 0, -sy, x - x0 * sx, ty)))
+        return (x1 - x0) * sx, pen.getCommands()
+    if small:
+        u = SMALL_CAP / cap
+        sx = u * SMALL_XS
+        pen = SVGPathPen(gs, ntos=f)
+        gs[cmap[ord(ch)]].draw(TransformPen(pen, (sx, 0, 0, -u, x - x0 * sx, 100.0)))
+        return (x1 - x0) * sx, pen.getCommands()
+    sx = CAP_W[ch] * cap / (x1 - x0) * unit            # horizontal scale to the target width
+    pen = SVGPathPen(gs, ntos=f)
+    gs[cmap[ord(ch)]].draw(TransformPen(pen, (sx, 0, 0, -unit, x - x0 * sx, 100.0)))
+    return (x1 - x0) * sx, pen.getCommands()
+
+
+# ---------------------------------------------------------------- play badge
+BADGE_H, BADGE_W = 120.0, 168.0          # 1.2 x cap, 1.4 : 1
+BADGE_GAP = 45.0                          # to the P: 0.45 x cap
+CY = 50.0                                 # vertically centred on the cap-height middle
+
+
+def badge_path():
+    x0, y0, w, h = 0.0, CY - BADGE_H / 2, BADGE_W, BADGE_H
+    r = 0.30 * h
+    c = 0.36 * r
+    x1, y1 = x0 + w, y0 + h
+    return ("M%s %sL%s %sC%s %s %s %s %s %sL%s %sC%s %s %s %s %s %sL%s %sC%s %s %s %s %s %sL%s %sC%s %s %s %s %s %sZ" % (
+        f(x0 + r), f(y0), f(x1 - r), f(y0), f(x1 - c), f(y0), f(x1), f(y0 + c), f(x1), f(y0 + r),
+        f(x1), f(y1 - r), f(x1), f(y1 - c), f(x1 - c), f(y1), f(x1 - r), f(y1),
+        f(x0 + r), f(y1), f(x0 + c), f(y1), f(x0), f(y1 - c), f(x0), f(y1 - r),
+        f(x0), f(y0 + r), f(x0), f(y0 + c), f(x0 + c), f(y0), f(x0 + r), f(y0)))
+
+
+def rounded_polygon(pts, rr, cw=True):
+    n = len(pts)
     out = []
-    for m in re.finditer(r"([MLAZ])([^MLAZ]*)", d):
-        cmd, args = m.group(1), m.group(2).strip()
-        if cmd == "Z":
-            out.append("Z"); continue
-        nums = [float(n) for n in re.findall(r"-?\d+\.?\d*", args)]
-        if cmd in "ML":
-            nums[0] += dx
-        elif cmd == "A":
-            nums[5] += dx
-        # flags: re-emit
-        if cmd == "A":
-            out.append("A%s %s %s %d %d %s %s" % (f(nums[0]), f(nums[1]), f(nums[2]), int(nums[3]), int(nums[4]), f(nums[5]), f(nums[6])))
-        else:
-            out.append("%s%s %s" % (cmd, f(nums[0]), f(nums[1])))
-    return "".join(out)
+    for i in range(n):
+        p, v, q = pts[i - 1], pts[i], pts[(i + 1) % n]
+        a = (p[0] - v[0], p[1] - v[1]); b = (q[0] - v[0], q[1] - v[1])
+        la, lb = math.hypot(*a), math.hypot(*b)
+        ua, ub = (a[0] / la, a[1] / la), (b[0] / lb, b[1] / lb)
+        ang = math.acos(max(-1, min(1, ua[0] * ub[0] + ua[1] * ub[1])))
+        d = rr / math.tan(ang / 2)
+        s = (v[0] + ua[0] * d, v[1] + ua[1] * d); e = (v[0] + ub[0] * d, v[1] + ub[1] * d)
+        out.append("%s%s %s" % ("M" if i == 0 else "L", f(s[0]), f(s[1])))
+        out.append("A%s %s 0 0 %d %s %s" % (f(rr), f(rr), 1 if cw else 0, f(e[0]), f(e[1])))
+    return "".join(out) + "Z"
 
-ink_d = "".join(shift(p, dx) for dx, p in ink)
-blue_d = "".join(shift(p, dx) for dx, p in blue)
-res = {"width": round(TOTAL, 2), "minY": -OV, "height": 100 + 2 * OV, "ink": ink_d, "blue": blue_d}
-json.dump(res, open(sys.argv[2] if len(sys.argv) > 2 else "wordmark.json", "w"))
-print("total width", TOTAL, "ink len", len(ink_d), "blue len", len(blue_d))
+
+def triangle_path(cw=True):
+    ht = 0.47 * BADGE_H
+    wt = 0.85 * ht
+    left = BADGE_W / 2 - wt / 2 + 0.10 * wt
+    pts = [(left, CY - ht / 2), (left + wt, CY), (left, CY + ht / 2)]    # clockwise on screen
+    if not cw:
+        pts = pts[::-1]
+    return rounded_polygon(pts, 0.12 * ht, cw)
+
+
+def build(gaps, fontget):
+    x = 0.0
+    glyphs, ink = [], []
+    for i, ch in enumerate(WORD):
+        w, d = glyph_outline(fontget(WGHT[ch]), ch, x, dot=(ch == "."), small=(i > SMALL_FROM))
+        glyphs.append({"ch": ch, "x": round(x, 2), "w": round(w, 2)})
+        ink.append(d)
+        x += w + (gaps["%s-%s" % (ch, WORD[i + 1])] if i < len(WORD) - 1 else 0)
+    return x, glyphs, "".join(ink)
+
+
+def main():
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--font", required=True, help="path to Nunito[wght].ttf (SIL OFL 1.1)")
+    ap.add_argument("--gaps", help="JSON with per-pair gap overrides")
+    args = ap.parse_args()
+    gaps = dict(GAPS)
+    if args.gaps:
+        gaps.update(json.load(open(args.gaps)))
+    total, glyphs, ink_d = build(gaps, load_font(args.font))
+    badge_d, tri_d, tri_hole = badge_path(), triangle_path(True), triangle_path(False)
+    text_x = BADGE_W + BADGE_GAP
+    W_FULL = round(text_x + total, 2)
+    W_TEXT = round(total, 2)
+    vb_full = "0 %s %s %s" % (f(CY - BADGE_H / 2), f(W_FULL), f(BADGE_H))
+    vb_text = "0 %s %s %s" % (f(-OV), f(W_TEXT), f(CAP + 2 * OV))
+    root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    head = ('<?xml version="1.0" encoding="UTF-8"?>\n<!-- POLUTEK.COM. Letters: outlines of Nunito (c) 2014 The Nunito Project Authors, '
+            'SIL Open Font License 1.1, modified (per-letter weight, narrowed, re-spaced); see NOTICE-Nunito-OFL.txt. '
+            'Generated by scripts/brand/generate-wordmark.py. -->\n')
+
+    def svg(vb, body, label="POLUTEK.COM"):
+        return head + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="%s" role="img" aria-label="%s"><title>%s</title>%s</svg>\n' % (vb, label, label, body)
+    tg = 'transform="translate(%s 0)"' % f(text_x)
+    files = {
+        "polutek-wordmark.svg": svg(vb_full, '<path fill="#2563eb" d="%s"/><path fill="#fff" d="%s"/><g %s><path fill="#111827" d="%s"/></g>' % (badge_d, tri_d, tg, ink_d)),
+        "polutek-wordmark-nobadge.svg": svg(vb_text, '<path fill="#111827" d="%s"/>' % ink_d),
+        "polutek-wordmark-mono.svg": svg(vb_full, '<path fill="currentColor" d="%s%s"/><g %s><path fill="currentColor" d="%s"/></g>' % (badge_d, tri_hole, tg, ink_d)),
+        "polutek-wordmark-mono-nobadge.svg": svg(vb_text, '<path fill="currentColor" d="%s"/>' % ink_d),
+    }
+    os.makedirs(os.path.join(root, "public", "brand"), exist_ok=True)
+    for name, text in files.items():
+        with open(os.path.join(root, "public", "brand", name), "w", newline="\n", encoding="utf-8") as fh:
+            fh.write(text)
+    ts = ('// Generated by scripts/brand/generate-wordmark.py: do not edit by hand.\n'
+          'export const WORDMARK_VIEWBOX_FULL = "%s";\nexport const WORDMARK_VIEWBOX_TEXT = "%s";\n'
+          'export const WORDMARK_TEXT_X = %s;\n'
+          'export const BADGE_PATH =\n  "%s";\nexport const PLAY_PATH =\n  "%s";\n'
+          'export const INK_PATH =\n  "%s";\n') % (vb_full, vb_text, f(text_x), badge_d, tri_d, ink_d)
+    with open(os.path.join(root, "app", "components", "brand", "polutek-wordmark-paths.ts"), "w", newline="\n", encoding="utf-8") as fh:
+        fh.write(ts)
+    json.dump({"total": total, "glyphs": glyphs, "textX": text_x, "full": W_FULL}, open(os.path.join(os.environ.get("WM_META_DIR", root), "wordmark-meta.json") if os.environ.get("WM_META_DIR") else os.devnull, "w"))
+    print("text width", W_TEXT, "lockup width", W_FULL, "aspect(lockup)", round(W_FULL / BADGE_H, 3))
+
+
+if __name__ == "__main__":
+    main()

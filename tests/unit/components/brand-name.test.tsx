@@ -4,6 +4,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import BrandName from "@/app/components/BrandName";
+import PolutekWordmark from "@/app/components/brand/PolutekWordmark";
 import { BRAND_LOGO_VARIANT } from "@/lib/ui-flags";
 
 describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
@@ -22,8 +23,31 @@ describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
       const svg = screen.getByRole("img", { name: "POLUTEK.COM" });
 
       expect(svg.tagName.toLowerCase()).toBe("svg");
-      expect(container.querySelectorAll("path").length).toBe(2);
       expect(container.querySelector("text")).toBeNull();
+      expect(container.querySelectorAll("path").length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("draws the play badge (brand blue, white triangle) to the left of the wordmark by default; the letters, .COM included, are ink", () => {
+      const { container } = render(<BrandName variant="wordmark" />);
+      const svg = container.firstElementChild as SVGElement;
+      const paths = Array.from(container.querySelectorAll("path"));
+
+      expect(svg.getAttribute("data-brand-badge")).toBe("true");
+      expect(paths).toHaveLength(3);
+      expect(paths[0].getAttribute("style")).toContain("--chan-blue");
+      expect(paths[1].getAttribute("fill")).toBe("#fff");
+      expect(paths[2].getAttribute("style")).toContain("--chan-ink");
+      // the badge is 1.2 x cap tall: the lockup viewBox is 120 units high
+      expect(svg.getAttribute("viewBox")?.split(" ")[3]).toBe("120");
+    });
+
+    it("can be drawn without the badge (text only)", () => {
+      const { container } = render(<PolutekWordmark badge={false} />);
+      const svg = container.firstElementChild as SVGElement;
+
+      expect(svg.getAttribute("data-brand-badge")).toBe("false");
+      expect(container.querySelectorAll("path")).toHaveLength(1);
+      expect(svg.getAttribute("viewBox")?.split(" ")[3]).toBe("102.4");
     });
 
     it("is hidden from assistive tech when decorative", () => {
@@ -36,11 +60,11 @@ describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
     });
 
     it("is height-driven: the caller's class wins over the default height", () => {
-      const { container } = render(<BrandName variant="wordmark" className="h-[21px]" />);
+      const { container } = render(<BrandName variant="wordmark" className="h-[30px]" />);
       const cls = container.firstElementChild?.getAttribute("class") ?? "";
 
-      expect(cls).toContain("h-[21px]");
-      expect(cls).not.toContain(" h-[18px]");
+      expect(cls).toContain("h-[30px]");
+      expect(cls).not.toContain(" h-[21px]");
       expect(cls).toContain("w-auto");
     });
   });
