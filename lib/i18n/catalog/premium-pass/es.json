@@ -128,5 +128,11 @@
  "one-time, no end date": "pago único, sin fecha de fin",
  "one-time, {0} days": "pago único, {0} días",
  "or unlimited access, no subscription": "o acceso ilimitado, sin suscripción",
- "test mode": "modo de prueba"
+ "test mode": "modo de prueba",
+ "Company registered in Poland": "Sociedad registrada en Polonia",
+ "Tax ID (NIP): {0}": "NIP (id. fiscal): {0}",
+ "Seller information": "Información del vendedor",
+ "You are buying from the seller named above. Invoice details and contact are in the Terms.": "Compras al vendedor indicado arriba. Los datos de facturación y de contacto están en los Términos.",
+ "Demo mode: nothing will be charged.": "Modo demo: no se cobrará nada.",
+ "Payments are encrypted and handled by a trusted provider. We never store your card details.": "Los pagos están cifrados y los gestiona un proveedor de confianza. Nunca guardamos los datos de tu tarjeta."
 }

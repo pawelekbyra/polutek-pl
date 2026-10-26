@@ -12,6 +12,7 @@ import type { PatronCurrency } from "@/lib/modules/patron-zone/domain/config";
 import type { PatronOfferProduct, PremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
 import { TIP_CURRENCY_SYMBOLS, describeTipMethod, tipCurrencyTitle } from "../support/tip-flow-config";
 import { TipSelect } from "../support/TipSelect";
+import { PassSellerCard } from "./PassSellerCard";
 import { price, productName, productNote, vatLine } from "./pass-copy";
 import styles from "./premium-pass.module.css";
 
@@ -99,6 +100,7 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
       {notice && <p className={styles.noticeWarn} role="alert">{notice}</p>}
 
       <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} />
+      <PassSellerCard tx={tx} />
       <PassLegalLinks tx={tx} language={language} />
     </>
   );
@@ -129,6 +131,7 @@ export function PassMethodStep({ tx, language, offer, product, currency, methods
 
       <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} />
 
+      <PassSellerCard tx={tx} />
       <PassLegalLinks tx={tx} language={language} />
     </>
   );

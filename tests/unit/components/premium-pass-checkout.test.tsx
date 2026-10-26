@@ -335,10 +335,11 @@ describe('patron checkout, step 3 in demo mode (simulated payment)', () => {
     expect(screen.queryByTestId('stripe-elements')).toBeNull();
   });
 
-  it('the footer shows only the seller, with the full abbreviation and no e-mail', async () => {
+  it('the old seller footer is gone: the bottom line is the provider-neutral demo notice, the seller is a card', async () => {
     open();
     const dialog = await screen.findByRole('dialog');
-    expect(dialog.textContent?.replace(/ /g, ' ')).toContain('Sprzedawca: POLUTEK Sp. z o.o.');
+    expect(dialog.querySelectorAll('[data-seller-card]')).toHaveLength(1);
+    expect(dialog.querySelector('[data-secure-footer]')).toHaveTextContent('Tryb demonstracyjny: nic nie zostanie pobrane.');
     expect(dialog).not.toHaveTextContent('@polutek.com');
     expect(dialog).not.toHaveTextContent('pawelperfect.com');
   });
@@ -389,6 +390,22 @@ describe('patron checkout, step 3 with real Stripe payments', () => {
     open({ mode: 'stripe', available: true, stripeMode: 'live' });
     const dialog = within(await screen.findByRole('dialog'));
     expect(dialog.queryByText('Tryb testowy')).toBeNull();
+  });
+
+  it('seller card in every step (compact in step 3) and the provider-neutral footer without the word Stripe', async () => {
+    open(TEST);
+    const dialog = within(await screen.findByRole('dialog'));
+    const root = screen.getByRole('dialog');
+    expect(root.querySelector('[data-seller-card]')).toHaveTextContent('Spółka zarejestrowana w Polsce');
+    expect(root.querySelector('[data-secure-footer]')).toHaveTextContent('Płatność jest szyfrowana i obsługuje ją zaufany operator płatności.');
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    await dialog.findByRole('heading', { name: 'Metoda płatności' });
+    expect(root.querySelector('[data-seller-card]')).toHaveTextContent('Spółka zarejestrowana w Polsce');
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    await dialog.findByRole('textbox', { name: 'Kod BLIK' });
+    expect(root.querySelectorAll('[data-seller-card]')).toHaveLength(1);
+    expect(root.querySelector('[data-seller-card]')).not.toHaveTextContent('Spółka zarejestrowana');
+    expect(root.querySelector('[data-secure-footer]')!.textContent).not.toMatch(/stripe/i);
   });
 
   it('the BLIK form is the tip gateway\'s; the summary stays visible; paying needs the code AND both boxes; consent is recorded before the confirmation; access shows after the server confirms', async () => {
