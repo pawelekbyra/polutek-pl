@@ -1,7 +1,6 @@
 "use client";
 
 import { Captions as CaptionsLayer, Gesture, PlayButton, useMediaState } from "@vidstack/react";
-import { PlayIcon, ReplayIcon } from "@vidstack/react/icons";
 import { cn } from "@/lib/utils";
 import { CaptionsSync, CaptionsToggleButton } from "./CaptionsToggle";
 import { PlayerSettingsMenu } from "./PlayerSettingsMenu";
@@ -14,6 +13,7 @@ import {
   PlayPauseButton,
   VolumeControl,
 } from "./controls/ControlButtons";
+import { PlayGlyph, ReplayGlyph } from "./controls/PlayerIcons";
 import { ScrubBar } from "./controls/ScrubBar";
 import { usePlayerCopy } from "./polutek-controls-copy";
 
@@ -40,8 +40,8 @@ function CenterStage() {
       ) : paused ? (
         <PlayButton className="mc-hero" aria-label={label} title={label}>
           {ended
-            ? <ReplayIcon className="mc-hero-icon" aria-hidden="true" />
-            : <PlayIcon className="mc-hero-icon" aria-hidden="true" />}
+            ? <ReplayGlyph className="mc-hero-icon" testId="replay-icon" />
+            : <PlayGlyph className="mc-hero-icon" testId="play-icon" />}
         </PlayButton>
       ) : null}
     </div>

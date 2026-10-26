@@ -1,9 +1,9 @@
 "use client";
 
 import { FullscreenButton, MuteButton, PlayButton, Time, VolumeSlider, useMediaRemote, useMediaState } from "@vidstack/react";
-import { PauseIcon, PlayIcon } from "@vidstack/react/icons";
 import { Maximize, Minimize, PictureInPicture2, Volume1, Volume2, VolumeX } from "lucide-react";
 import { usePlayerCopy } from "../polutek-controls-copy";
+import { PlayPauseGlyph } from "./PlayerIcons";
 
 /**
  * Line icons of the control bar: one family (lucide), one optical size (20px box) and one true stroke width
@@ -23,7 +23,7 @@ export function PlayPauseButton() {
 
   return (
     <PlayButton className="mc-btn mc-play" aria-label={label} title={`${label} (k)`}>
-      {paused ? <PlayIcon className="mc-icon mc-icon--solid" /> : <PauseIcon className="mc-icon mc-icon--solid" />}
+      <PlayPauseGlyph paused={paused} className="mc-glyph" />
     </PlayButton>
   );
 }
