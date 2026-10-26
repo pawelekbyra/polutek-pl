@@ -81,17 +81,17 @@ def round_cap(c, rxo, ryo, rxi, ryi, t):
 CAP_W = {  # target ink width / cap height (measured from the reference, +-4%), per glyph
     "P": 0.715, "O": 0.90, "L": 0.607, "U": 0.794, "T": 0.77, "E": 0.607, "K": 0.765, "C": 0.735, "M": 1.06,
 }
-WGHT = {"P": 900, "O": 875, "L": 900, "U": 875, "T": 900, "E": 900, "K": 875, "C": 1000, "M": 1000, ".": 1000}
-# ".COM": small, black, on the same baseline: cap height about a third of the big letters. A heavier
-# instance (1000 vs 875-900) keeps the stems readable at 6-7 px, the proportions stay natural.
-SMALL_CAP = 33.0
+WGHT = {"P": 900, "O": 875, "L": 900, "U": 875, "T": 900, "E": 900, "K": 875, "C": 975, "M": 975, ".": 975}
+# ".COM": small, black, on the same baseline: cap height 0.40 of the big letters (POLUTEK cap divided by 2.5). A heavier
+# instance (975 vs 875-900) keeps the stems readable at 6-7 px, the proportions stay natural.
+SMALL_CAP = 40.0
 SMALL_XS = 1.0
 SMALL_FROM = 7            # index of "." in WORD
-DOT_D = 10.0         # the dot is as wide as a stem
+DOT_D = 12.0         # the dot is as wide as a stem
 WORD = ["P", "O", "L", "U", "T", "E", "K", ".", "C", "O", "M"]
 # Optical gaps (edge to edge, cap/100 units) after each pair, tuned so the area between neighbouring
 # glyph profiles is even.
-GAPS = {"P-O": 10.8, "O-L": 14.7, "L-U": 5, "U-T": 5, "T-E": 5, "E-K": 14.2, "K-.": 12, ".-C": 5.5, "C-O": 5.5, "O-M": 5.8}
+GAPS = {"P-O": 10.8, "O-L": 14.7, "L-U": 5, "U-T": 5, "T-E": 5, "E-K": 14.2, "K-.": 12, ".-C": 6.5, "C-O": 6.5, "O-M": 7}
 
 
 def load_font(path):
@@ -141,7 +141,7 @@ def glyph_outline(font, ch, x, dot=False, small=False):
 
 # ---------------------------------------------------------------- play badge
 BADGE_H, BADGE_W = 120.0, 168.0          # 1.2 x cap, 1.4 : 1
-BADGE_GAP = 45.0                          # to the P: 0.45 x cap
+BADGE_GAP = 32.0                          # to the P: 0.32 x cap
 CY = 50.0                                 # vertically centred on the cap-height middle
 
 
