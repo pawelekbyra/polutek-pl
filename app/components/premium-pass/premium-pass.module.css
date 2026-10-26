@@ -131,8 +131,8 @@
 
 /* ---------- patron checkout: steps, amount, notices ---------- */
 /* Centred above the footer line, in the same bottom block (border-top is drawn once, above the dots). */
-.stepDots { display: flex; justify-content: center; gap: 6px; margin: 0; padding: 8px 0 0; list-style: none; border-top: 1px solid var(--chan-line, #e1e6ef); }
-.stepDots + .secureFooter { border-top: 0; padding-top: 6px; }
+/* The dots sit between the title row and the first field, centred: 10px under the title, 14px above the first label (the body's --pass-title-gap padding minus the pull-up). */
+.stepDots { display: flex; justify-content: center; gap: 6px; margin: 10px 0 calc(14px - var(--pass-title-gap)); padding: 0; list-style: none; }
 .stepPip { width: 8px; height: 8px; border-radius: 50%; background: var(--chan-line-soft, #d5dce8); transition: background-color 160ms ease; }
 .stepPipNow { background: var(--chan-ink, #111827); }
 .srOnly { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
