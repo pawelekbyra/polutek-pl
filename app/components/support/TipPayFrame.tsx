@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { cn } from "@/lib/utils";
 import type { Stripe } from "@stripe/stripe-js";
 import type { SupportedCurrency } from "@/lib/constants";
 import type { TipConfirmOutcome } from "./tip-confirm";
@@ -51,8 +52,8 @@ export function PayStepFrame({
   const copy = describeTipMethod(method, tx);
   return (
     <TipStepLayout footer={footer}>
-      <TipStepHeading title={copy.title} />
-      <div className="mb-5 flex items-center justify-between gap-3 rounded-[14px] border border-[var(--cm-amber-28)] bg-[var(--chan-amber-soft)] px-4 py-3">
+      {!props.patron && <TipStepHeading title={copy.title} />}
+      <div className={cn("mb-5 flex items-center justify-between gap-3 rounded-[14px] border px-4 py-3", props.patron ? "border-[var(--chan-line)] bg-[var(--chan-card)]" : "border-[var(--cm-amber-28)] bg-[var(--chan-amber-soft)]")}>
         <p className="m-0 text-[14px] font-bold text-[var(--chan-ink)]">
           <span className="tabular-nums">{formatTipAmount(amount, currency, language)}</span>
           <span className="mx-1.5 text-[var(--chan-muted)]">·</span>

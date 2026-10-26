@@ -96,7 +96,7 @@ describe('PremiumPassOverlay (patron zone)', () => {
     renderOverlay(true);
     fireEvent.click(screen.getAllByRole('button', { name: /Zostań patronem · od 14,99\s*zł/ })[0]!);
     const dialog = await screen.findByRole('dialog');
-    expect(dialog).toHaveTextContent('Zostań patronem');
+    expect(dialog).toHaveTextContent('Kup se Premium');
     expect(dialog).toHaveTextContent('Uzyskaj dostęp do strefy premium');
     expect(dialog).toHaveTextContent('Wybierz dostęp');
     expect(dialog).toHaveTextContent('Sprzedawca:');
