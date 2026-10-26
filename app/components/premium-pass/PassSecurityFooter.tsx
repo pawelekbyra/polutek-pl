@@ -11,8 +11,8 @@ import { getLocalizedHref } from "@/lib/i18n/routing";
 import { cn } from "@/lib/utils";
 import styles from "./premium-pass.module.css";
 
-/** The three step dots, centred above the footer line (they used to sit next to the title). */
-function PassStepDots({ tx, step }: { tx: Tx; step: number }) {
+/** The three step dots, centred in the gap between the title and the first field. */
+export function PassStepDots({ tx, step }: { tx: Tx; step: number }) {
   const pips = [tx("Dostęp", "Access"), tx("Metoda", "Method"), tx("Płatność", "Payment")];
   return (
     <ol className={styles.stepDots} aria-label={tx("Etapy zakupu", "Checkout steps")}>
@@ -23,13 +23,8 @@ function PassStepDots({ tx, step }: { tx: Tx; step: number }) {
   );
 }
 
-export function PassSecurityFooter({ tx, demo, language, links = false, step }: { tx: Tx; demo: boolean; language: Locale; links?: boolean; step?: number }) {
-  return (
-    <>
-      {step !== undefined && <PassStepDots tx={tx} step={step} />}
-      <PassFooterLine tx={tx} demo={demo} language={language} links={links} />
-    </>
-  );
+export function PassSecurityFooter({ tx, demo, language, links = false }: { tx: Tx; demo: boolean; language: Locale; links?: boolean }) {
+  return <PassFooterLine tx={tx} demo={demo} language={language} links={links} />;
 }
 
 function PassFooterLine({ tx, demo, language, links }: { tx: Tx; demo: boolean; language: Locale; links: boolean }) {

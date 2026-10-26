@@ -23,7 +23,7 @@ import { ArrowLeft } from "../icons";
 import { CrossIcon } from "./PassIcons";
 import { PassMethodStep, PassPayHead, PassPlanStep } from "./PassPlanSteps";
 import { PassConsent, PassDemoSummary, PassStripePay, type PassConsentErrors, type PassConsentState } from "./PassPaymentStep";
-import { PassSecurityFooter } from "./PassSecurityFooter";
+import { PassSecurityFooter, PassStepDots } from "./PassSecurityFooter";
 import { PassDeclined, PassMaxAhead, PassPending, PassSuccess } from "./PassSuccess";
 import { newRequestId, price } from "./pass-copy";
 import { fetchPassStatus, pollPatronPayment, postDemoCheckout, postPatronConsent, postPatronIntent } from "./usePremiumPass";
@@ -358,6 +358,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
             </DialogPrimitive.Close>
           </div>
 
+          {stepNumber !== null && <PassStepDots tx={tx} step={stepNumber} />}
           {showSteps && <p className={styles.srOnly} role="status" aria-live="polite">{tx("Krok {0} z 3", "Step {0} of 3", stepNumber)}</p>}
           {testMode && stage.kind !== "success" && (
             <p className={styles.testNote}><span className={styles.testBadge}>{tx("Tryb testowy", "Test mode")}</span> {tx("Nic nie zostanie pobrane naprawdę. Karta testowa: 4242 4242 4242 4242, dowolna data i CVC.", "Nothing is really charged. Test card: 4242 4242 4242 4242, any date and CVC.")}</p>
@@ -477,7 +478,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
             </div>
           )}
 
-          {stepNumber !== null && <PassSecurityFooter tx={tx} demo={!stripeMode} language={language} links={stage.kind !== "pay"} step={stepNumber} />}
+          {stepNumber !== null && <PassSecurityFooter tx={tx} demo={!stripeMode} language={language} links={stage.kind !== "pay"} />}
         </DialogPrimitive.Popup>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
