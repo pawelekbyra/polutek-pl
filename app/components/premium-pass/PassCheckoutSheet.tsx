@@ -22,6 +22,8 @@ import { ArrowLeft } from "../icons";
 import { CrossIcon } from "./PassIcons";
 import { PassMethodStep, PassOrderSummary, PassPlanStep } from "./PassPlanSteps";
 import { PassConsent, PassDemoSummary, PassStripePay, type PassConsentErrors, type PassConsentState } from "./PassPaymentStep";
+import { PassSecurityFooter } from "./PassSecurityFooter";
+import { PassSellerCard } from "./PassSellerCard";
 import { PassDeclined, PassMaxAhead, PassPending, PassSuccess } from "./PassSuccess";
 import { newRequestId, price } from "./pass-copy";
 import { fetchPassStatus, pollPatronPayment, postDemoCheckout, postPatronConsent, postPatronIntent } from "./usePremiumPass";
@@ -428,6 +430,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
               <div className={styles.payHead}>
                 {heading(tx("Płatność", "Payment"))}
                 <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} compact />
+                <PassSellerCard tx={tx} compact />
               </div>
               <TipBackContext.Provider value={{ onBack: backToMethod, label: tx("Wstecz", "Back") }}>
                 <PassStripePay
@@ -455,6 +458,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
               <div className={styles.sheetBody}>
                 {heading(tx("Płatność", "Payment"))}
                 <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} compact />
+                <PassSellerCard tx={tx} compact />
                 <PassDemoSummary tx={tx} language={language} amountMinor={amountMinor} currency={currency} method={method} onChangeMethod={backToMethod} />
                 <PassConsent tx={tx} language={language} ids={ids} value={consent} errors={consentErrors} onChange={(value) => { setConsent(value); setConsentErrors({}); }} termsRef={termsRef} waiverRef={waiverRef} />
                 {email && <p className={styles.muted} style={{ margin: 0 }}>{tx("Potwierdzenie trafi na {0}", "The confirmation goes to {0}", email)}</p>}
@@ -484,9 +488,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
             </div>
           )}
 
-          <div className={styles.seller}>
-            <span>{tx("Sprzedawca: {0}", "Seller: {0}", "POLUTEK Sp. z o.o.")}</span>
-          </div>
+          {(stage.kind === "plan" || stage.kind === "method" || stage.kind === "pay") && <PassSecurityFooter tx={tx} demo={!stripeMode} />}
         </DialogPrimitive.Popup>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>

@@ -40,6 +40,8 @@ Nazwy zmiennych `PREMIUM_PASS_*` i prefiks `xp.premium_pass` w tabeli `AppSettin
 2. **Metoda płatności** (PLN: BLIK, Przelewy24, karta; inne waluty: karta; Stripe zawęża listę przy tworzeniu płatności), regulamin i polityka tylko jako linki. PaymentIntent powstaje dopiero przy przejściu z kroku 2 do 3.
 3. **Płatność** formularzami bramki napiwkowej (`TipPayStep`, `TipPayFrame` z opcjonalnym `patron`: BLIK, P24, karta, Apple/Google Pay, reszta przez Payment Element) i dwa pola zgód: regulamin z polityką oraz natychmiastowy dostęp z utratą prawa odstąpienia (art. 38 pkt 13 u.p.k.). Przycisk jest nieaktywny, dopóki oba nie są zaznaczone; tuż przed potwierdzeniem w Stripe przeglądarka zapisuje zgodę na swojej nieopłaconej płatności (`POST /api/user/premium-pass/consent` → `Payment.metadata.consents`); jeśli zapis się nie uda, płatność nie rusza.
 
+Karta sprzedawcy (`PassSellerCard`, dane w jednym obiekcie `PATRON_SELLER` w `pass-copy.ts`: nazwa, linia „Spółka zarejestrowana w Polsce”, `nip: null` do uzupełnienia jedną zmianą) stoi między podsumowaniem a linkami prawnymi w krokach 1 i 2, a w kroku 3 jest wariantem jednowierszowym; przycisk (i) rozwija krótki akapit. Dolna linia okna (`PassSecurityFooter`) jest neutralna wobec operatora płatności (nie nazywa Stripe); w trybie demo mówi, że nic nie zostanie pobrane.
+
 Dostępność: wskaźnik kroków (`<ol>`, `aria-current="step"`), komunikat `aria-live`, fokus na nagłówku kroku, lista rozwijana z klawiatury, błędy w `role="alert"`, `prefers-reduced-motion`, układ sprawdzony na 375 px w harnessie przeglądarki (nie na prawdziwym telefonie).
 
 ## Przepływ pieniędzy i przyznawanie dostępu (nie ma równoległego stosu płatności)

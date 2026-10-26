@@ -10,6 +10,17 @@ export function sellerName(tx: Tx): string {
   return tx("POLUTEK Sp. z o.o. (dane demo)", "POLUTEK Sp. z o.o. (demo data)");
 }
 
+/**
+ * The seller shown on the seller card of the checkout (steps 1-3). ONE place to edit once the company exists:
+ * `nip` is null until the owner supplies it (the card then shows no tax id at all); never put an invented number here.
+ * `registryLine` is the claim "registered in Poland": the owner must confirm it when the company is registered.
+ */
+export const PATRON_SELLER: { name: string; registryLine: (tx: Tx) => string; nip: string | null } = {
+  name: "POLUTEK Sp. z o.o.",
+  registryLine: (tx) => tx("Spółka zarejestrowana w Polsce", "Company registered in Poland"),
+  nip: null,
+};
+
 /** The one contact address of the patron zone (owner decision 2026-10-21). */
 export const PATRON_SUPPORT_EMAIL = "support@polutek.com";
 
