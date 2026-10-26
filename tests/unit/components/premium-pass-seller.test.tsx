@@ -18,7 +18,9 @@ describe('seller card', () => {
   it('shows the NBSP-protected name and the registry line, and no NIP by default', () => {
     render(<PassSellerCard tx={txFor('pl')} />);
     const card = screen.getByRole('region', { name: 'Sprzedawca' });
-    expect(card).toHaveTextContent('Sprzedawca: POLUTEK Sp. z o.o.');
+    // The label is on its own row and the company name (bold) on the next one, so the name never breaks away from it.
+    expect(card.querySelector('span')?.textContent).toBe('Sprzedawca:');
+    expect(card.querySelector('b')?.textContent?.replace(/ /g, ' ')).toBe('POLUTEK Sp. z o.o.');
     expect(card.textContent).toContain('Sp. z o.o.');
     expect(card).toHaveTextContent('Spółka zarejestrowana w Polsce');
     expect(card).not.toHaveTextContent('NIP');
