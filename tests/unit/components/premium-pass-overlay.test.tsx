@@ -99,7 +99,8 @@ describe('PremiumPassOverlay (patron zone)', () => {
     expect(dialog).toHaveTextContent('Zostań patronem');
     expect(dialog).toHaveTextContent('Uzyskaj dostęp do strefy premium');
     expect(dialog).toHaveTextContent('Wybierz dostęp');
-    expect(dialog).toHaveTextContent('Sprzedawca: POLUTEK Sp. z o.o.');
+    expect(dialog).toHaveTextContent('Sprzedawca:');
+    expect(dialog.textContent?.replace(/ /g, ' ')).toContain('POLUTEK Sp. z o.o.');
     expect(dialog).not.toHaveTextContent('dane demo');
     expect(dialog.querySelector('[data-demo-ribbon]')).toBeNull();
   });

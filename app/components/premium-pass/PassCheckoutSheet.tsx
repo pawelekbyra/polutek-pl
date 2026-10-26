@@ -488,7 +488,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
             </div>
           )}
 
-          {(stage.kind === "plan" || stage.kind === "method" || stage.kind === "pay") && <PassSecurityFooter tx={tx} demo={!stripeMode} />}
+          {(stage.kind === "plan" || stage.kind === "method" || stage.kind === "pay") && <PassSecurityFooter tx={tx} demo={!stripeMode} language={language} links={stage.kind !== "pay"} />}
         </DialogPrimitive.Popup>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
