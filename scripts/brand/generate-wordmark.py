@@ -81,17 +81,17 @@ def round_cap(c, rxo, ryo, rxi, ryi, t):
 CAP_W = {  # target ink width / cap height (measured from the reference, +-4%), per glyph
     "P": 0.715, "O": 0.90, "L": 0.607, "U": 0.794, "T": 0.77, "E": 0.607, "K": 0.765, "C": 0.735, "M": 1.06,
 }
-WGHT = {"P": 900, "O": 875, "L": 900, "U": 875, "T": 900, "E": 900, "K": 875, "C": 975, "M": 975, ".": 975}
-# ".COM": small, black, on the same baseline: cap height 0.40 of the big letters (POLUTEK cap divided by 2.5). A heavier
-# instance (975 vs 875-900) keeps the stems readable at 6-7 px, the proportions stay natural.
-SMALL_CAP = 40.0
+WGHT = {"P": 900, "O": 875, "L": 900, "U": 875, "T": 900, "E": 900, "K": 875, "C": 925, "M": 925, ".": 925}
+# ".COM": small, black, on the same baseline: cap height 0.50 of the big letters (half of POLUTEK). A heavier
+# instance (925 vs 875-900) keeps the stems readable at 6-7 px, the proportions stay natural.
+SMALL_CAP = 50.0
 SMALL_XS = 1.0
 SMALL_FROM = 7            # index of "." in WORD
-DOT_D = 12.0         # the dot is as wide as a stem
+DOT_D = 14.0         # the dot is as wide as a stem
 WORD = ["P", "O", "L", "U", "T", "E", "K", ".", "C", "O", "M"]
 # Optical gaps (edge to edge, cap/100 units) after each pair, tuned so the area between neighbouring
 # glyph profiles is even.
-GAPS = {"P-O": 10.8, "O-L": 14.7, "L-U": 5, "U-T": 5, "T-E": 5, "E-K": 14.2, "K-.": 12, ".-C": 6.5, "C-O": 6.5, "O-M": 7}
+GAPS = {"P-O": 10.8, "O-L": 14.7, "L-U": 5, "U-T": 5, "T-E": 5, "E-K": 14.2, "K-.": 12, ".-C": 8, "C-O": 8, "O-M": 8.8}
 
 
 def load_font(path):
@@ -141,7 +141,7 @@ def glyph_outline(font, ch, x, dot=False, small=False):
 
 # ---------------------------------------------------------------- play badge
 BADGE_H, BADGE_W = 120.0, 168.0          # 1.2 x cap, 1.4 : 1
-BADGE_GAP = 17.0                          # to the P: 0.17 x cap
+BADGE_GAP = 28.4                          # to the P: 0.284 x cap = 5 px at 17.5 px caps (3 px + 2 px more, owner request)
 BADGE_OUTLINE = 9.0                       # black outline, inset (inside the badge footprint): 0.075 x badge height
 CY = 50.0                                 # vertically centred on the cap-height middle
 
