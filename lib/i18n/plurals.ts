@@ -29,6 +29,17 @@ const NOUNS = {
     pt: { one: "comentário", other: "comentários" },
     zh: { other: "条评论" },
   },
+  // The Polish brand word is "subskrajber"; with a digit the masculine-personal plural takes the genitive.
+  subscribers: {
+    pl: { one: "subskrajber", few: "subskrajberów", many: "subskrajberów", other: "subskrajberów" },
+    en: { one: "subscriber", other: "subscribers" },
+    de: { one: "Abonnent", other: "Abonnenten" },
+    es: { one: "suscriptor", other: "suscriptores" },
+    fr: { one: "abonné", other: "abonnés" },
+    it: { one: "iscritto", other: "iscritti" },
+    pt: { one: "inscrito", other: "inscritos" },
+    zh: { other: "订阅者" },
+  },
   videos: {
     pl: { one: "film", few: "filmy", many: "filmów", other: "filmu" },
     en: { one: "video", other: "videos" },

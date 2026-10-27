@@ -1,11 +1,20 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { intlLocale } from "@/lib/i18n/ui"
+import type { Locale } from "@/lib/i18n/routing"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatCount(count: number): string {
+/**
+ * Compact count ("1.5K"). With a `language` it follows that language's own rules through Intl (decimal separator and
+ * the abbreviation, e.g. "1,5 tys." in Polish); without one it keeps the English-style K/M of older call sites.
+ */
+export function formatCount(count: number, language?: Locale): string {
+  if (language) {
+    return new Intl.NumberFormat(intlLocale(language), { notation: "compact", maximumFractionDigits: 1 }).format(count);
+  }
   if (count >= 1000000) {
     return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
   }

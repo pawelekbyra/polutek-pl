@@ -173,7 +173,7 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
             </h1>
             <ul className="mt-3 flex flex-wrap justify-center md:justify-start gap-2 text-[13px] font-sans" aria-label={tx("Informacje o kanale", "Channel details")}>
                <li className="channel-profile-chip font-bold text-[var(--chan-ink)]">@{creator.handle ?? creator.slug}</li>
-               <li className="channel-profile-chip text-[var(--chan-muted)]">{formatCount(allVideos.length)} {countedNoun(locale, "videos", allVideos.length)}</li>
+               <li className="channel-profile-chip text-[var(--chan-muted)]">{formatCount(allVideos.length, locale)} {countedNoun(locale, "videos", allVideos.length)}</li>
             </ul>
             <p className="mt-4 text-[15px] leading-relaxed text-[var(--chan-body)] max-w-2xl mx-auto md:mx-0 font-sans whitespace-pre-line">
                {displayBio}

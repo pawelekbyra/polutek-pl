@@ -82,17 +82,17 @@ export default function ChannelAbout({
           )}
           <div>
             <dt className="text-[var(--chan-muted)]">{tx("Subskrybenci", "Subscribers")}</dt>
-            <dd className="font-semibold">{formatCount(subscribersCount)}</dd>
+            <dd className="font-semibold">{formatCount(subscribersCount, locale)}</dd>
           </div>
           <div>
             <dt className="text-[var(--chan-muted)]">{tx("Filmy", "Videos")}</dt>
             <dd className="font-semibold">
-              {formatCount(videoCount)} {countedNoun(locale, "videos", videoCount)}
+              {formatCount(videoCount, locale)} {countedNoun(locale, "videos", videoCount)}
             </dd>
           </div>
           <div>
             <dt className="text-[var(--chan-muted)]">{tx("Wyświetlenia", "Views")}</dt>
-            <dd className="font-semibold">{formatCount(about.totalViews)}</dd>
+            <dd className="font-semibold">{formatCount(about.totalViews, locale)}</dd>
           </div>
         </dl>
       </aside>

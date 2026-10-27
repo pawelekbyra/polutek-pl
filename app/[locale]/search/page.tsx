@@ -18,7 +18,7 @@ import { getLocalizedHref, isLocale, toContentLocale, type Locale } from "@/lib/
 import { getServerTx } from "@/lib/i18n/server-tx";
 import { countedNoun } from "@/lib/i18n/plurals";
 import { intlLocale, type Tx } from "@/lib/i18n/ui";
-import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
+import { getSearchSnippet, getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { buildSearchQuery } from "@/lib/search-href";
 import { videoCategoryLabel } from "@/lib/video-category-label";
 import { toVideoAccessTier } from "@/lib/access-tier";
@@ -140,6 +140,7 @@ export default async function SearchPage(props: SearchPageProps) {
               {page?.items.map((video) => {
                 const gated = toVideoAccessTier(video.tier) !== "PUBLIC" && !viewer.signedIn;
                 const title = getVideoDisplayTitle(video, toContentLocale(locale));
+                const snippet = getSearchSnippet(video, toContentLocale(locale)); // null for gated videos (the service drops it)
                 return (
                   <article
                     key={video.id}
@@ -171,7 +172,7 @@ export default async function SearchPage(props: SearchPageProps) {
                           {title}
                         </Link>
                       </h2>
-                      {video.snippet ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--chan-body)]">{video.snippet}</p> : null}
+                      {snippet ? <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--chan-body)]">{snippet}</p> : null}
                       <p className="mt-3 text-xs font-bold uppercase tracking-widest text-[var(--chan-muted)]">
                         {video.creator?.name ?? APP_NAME} · {video.views.toLocaleString(intlLocale(locale))} {countedNoun(locale, "views", video.views)}
                         {gated ? <> · {tx("Logowanie", "Login")}</> : null}
