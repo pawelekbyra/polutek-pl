@@ -278,7 +278,8 @@ describe("PolutekControls: one-row bar (quality badge, time chip, picture-in-pic
     const view = render(<PolutekControls />);
     const bar = view.container.querySelector(".mc-bar")!;
     const children = Array.from(bar.children);
-    expect(children[0].className).toContain("mc-track-area");
+    expect(children[0].className).toContain("mc-volume");
+    expect(children[1].className).toContain("mc-track-area");
     expect(view.container.querySelector(".mc-bar .mc-play")).toBeNull();
     expect(children.some((el) => el.classList.contains("mc-track-area"))).toBe(true);
     expect(children[children.length - 1].className).toBe("mc-group");
@@ -322,35 +323,6 @@ describe("PolutekControls: one-row bar (quality badge, time chip, picture-in-pic
     const menus = view.getAllByRole("menu");
     expect(menus).toHaveLength(1);
     expect(menus[0].getAttribute("aria-label")).toBe("Rozdziały");
-  });
-
-  it("below 400px the captions switch is a 'Napisy' entry of the settings menu", () => {
-    const original = window.matchMedia;
-    window.matchMedia = ((query: string) => ({
-      matches: query === "(max-width: 399px)",
-      media: query,
-      addEventListener: () => undefined,
-      removeEventListener: () => undefined,
-    })) as unknown as typeof window.matchMedia;
-    try {
-      media.state = { ...media.state, hasCaptions: true, textTrack: { kind: "subtitles", language: "pl", mode: "showing" } };
-      const view = render(<PolutekControls />);
-      fireEvent.click(view.getByRole("button", { name: "Ustawienia" }));
-      const entry = view.getByRole("menuitemcheckbox", { name: "Napisy" });
-      expect(entry.getAttribute("aria-checked")).toBe("true");
-      fireEvent.click(entry);
-      expect(media.toggleCaptions).toHaveBeenCalledTimes(1);
-      expect(view.queryByRole("menu")).toBeNull();
-      cleanup();
-
-      // No captions on the video: no entry.
-      media.state = { ...media.state, hasCaptions: false, textTrack: null };
-      const none = render(<PolutekControls />);
-      fireEvent.click(none.getByRole("button", { name: "Ustawienia" }));
-      expect(none.queryByRole("menuitemcheckbox", { name: "Napisy" })).toBeNull();
-    } finally {
-      window.matchMedia = original;
-    }
   });
 
   it("wide screens keep captions on the bar, not in the menu", () => {

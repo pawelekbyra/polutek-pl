@@ -10,8 +10,8 @@ import { PlayPauseGlyph } from "./PlayerIcons";
  * (1.5 CSS px whatever the box, `absoluteStrokeWidth`). Play and pause stay filled glyphs (Vidstack's), the
  * convention every player uses for the primary action.
  */
-/** Below this width the captions switch leaves the row for the settings menu (globals.css hides the button). */
-export const CAPTIONS_IN_MENU_QUERY = "(max-width: 399px)";
+/** Dormant: the CC switch stays on the bar at every width (owner 2026-10-28); a width here would move it into the settings menu. */
+export const CAPTIONS_IN_MENU_QUERY = "(max-width: 0px)"; // dormant: the CC switch stays on the bar at every width
 
 export const LINE_ICON = { size: 20, strokeWidth: 1.5, absoluteStrokeWidth: true, className: "mc-icon", "aria-hidden": true } as const;
 

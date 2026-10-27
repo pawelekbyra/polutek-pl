@@ -956,7 +956,11 @@
   }
   .mc-menu-item-hint-text { max-width:16ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   /* Entries the bar shows itself on wide screens (picture-in-picture, chapters). */
-  .mc-menu-item--narrow { display:none; }
+  .mc-menu-item--narrow { display:flex; }
+  .mc-menu-sep.mc-menu-item--narrow { display:block; }
+  /* Chapters and picture-in-picture are reached from the settings menu on every width (owner 2026-10-28: the bar keeps
+     volume on the left; captions, quality and fullscreen on the right). */
+  .mc-pip, .mc-chapters > .mc-btn { display:none; }
 
   /* Centre overlay while paused / ended / buffering. */
   .mc-center {
@@ -1054,9 +1058,7 @@
     .mc-play { width:34px; height:26px; }
     .mc-btn--badge { padding:0 4px; }
     .mc-track-area { margin:0 6px; }
-    .mc-duration, .mc-pip, .mc-chapters > .mc-btn { display:none; }
-    .mc-menu-item--narrow { display:flex; }
-    .mc-menu-sep.mc-menu-item--narrow { display:block; }
+    .mc-duration { display:none; }
     .mc-chip { font-size:11px; height:20px; padding:0 7px; }
     /* The chapters panel is a sheet over the bottom of the player (inside its frame, no corners of its own):
        its anchor is the control bar, so it spans the player's width. */
@@ -1073,11 +1075,6 @@
      settings menu's "Chapters" entry. */
   @media (max-width:480px) {
     .mc-chip--playhead .mc-chip-chapter { display:none; }
-  }
-  /* Below 400px the captions switch moves into the settings menu ("Napisy" entry, CAPTIONS_IN_MENU_QUERY), so the
-     phone row is: play | track | sound | quality | fullscreen. */
-  @media (max-width:399px) {
-    .mc-caption { display:none; }
   }
 
   @media (prefers-reduced-motion:reduce) {
