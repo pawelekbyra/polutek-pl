@@ -187,7 +187,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                   its own box edge). Pulling the box closer compensates for most of that recess
                   so both visual gaps roughly match — a full -9px overcorrected and looked too
                   tight. */}
-              <div className="flex items-center sm:hidden -mr-[5px]">
+              <div className="flex items-center md:hidden -mr-[5px]">
                 <button
                   type="button"
                   onClick={() => setIsMobileSearchOpen(true)}
