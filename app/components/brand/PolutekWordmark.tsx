@@ -1,5 +1,5 @@
 /**
- * The POLUTEK.COM lockup as outlined SVG paths: a flat play badge (blue fill, black inset outline), then the wordmark. No web font,
+ * The POLUTEK.COM lockup as outlined SVG paths: a flat play badge (blue rounded rectangle, white triangle), then the wordmark. No web font,
  * no <text>, crisp at any DPR.
  *
  * Artwork: the letters are modified outlines of Nunito (SIL Open Font License 1.1, notice in
@@ -19,8 +19,7 @@
  */
 import { cn } from "@/lib/utils";
 import {
-  BADGE_FILL_PATH,
-  BADGE_OUTLINE_PATH,
+  BADGE_PATH,
   BLUE_PATH,
   INK_PATH,
   PLAY_PATH,
@@ -54,8 +53,7 @@ export default function PolutekWordmark({
     >
       {badge ? (
         <>
-          <path style={{ fill: "var(--chan-ink, #111827)" }} d={BADGE_OUTLINE_PATH} />
-          <path style={{ fill: "var(--chan-blue, #2563eb)" }} d={BADGE_FILL_PATH} />
+          <path style={{ fill: "var(--chan-blue, #2563eb)" }} d={BADGE_PATH} />
           <path fill="#fff" d={PLAY_PATH} />
         </>
       ) : null}
