@@ -95,6 +95,7 @@ describe('patron checkout, step 1 (currency and option)', () => {
     expect(summaryOf(dialog)).toHaveTextContent('Dostęp bez limitu');
     expect(summaryOf(dialog)).toHaveTextContent('29,99');
     expect(summaryOf(dialog)).toHaveTextContent('zawiera VAT');
+    expect(dialog.getByText('zawiera VAT').closest('[class*="orderTotal"]')).toHaveTextContent('Razem do zapłaty (brutto)'); // the note sits inside the total bar, not as a line under the box
     // payment method and legal links belong to step 2; nothing to tick, no text field
     expect(dialog.queryByRole('combobox', { name: 'Metoda płatności' })).toBeNull();
     expect(dialog.queryAllByRole('checkbox')).toHaveLength(0);

@@ -5,7 +5,6 @@
 // and the Terms / Privacy Policy as plain LINKS: nothing to tick before step 3. The browser only names a product and a
 // currency; the server owns the price table.
 import React, { useId } from "react";
-import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/routing";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import type { Tx } from "@/lib/i18n/ui";
@@ -41,9 +40,9 @@ export function PassOrderSummary({ tx, language, offer, product, currency, compa
         <div className={styles.orderTotal}>
           <span>{tx("Razem do zapłaty (brutto)", "Total to pay (incl. VAT)")}</span>
           <b>{total}</b>
+          <small>{vatLine(tx)}</small>
         </div>
       </div>
-      <p className={cn(styles.muted, styles.vatLine)}>{vatLine(tx)}</p>
     </div>
   );
 }
