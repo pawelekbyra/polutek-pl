@@ -36,7 +36,9 @@ describe('comments UI production contract', () => {
     const source = embedded();
 
     expect(source).toContain('onError: (error) =>');
-    expect(source).toContain('setComposerError(message);');
+    // The error shown is a translated text chosen by the API error code (audit S05), never the server's raw message.
+    expect(source).toContain('setComposerError(');
+    expect(source).toContain('commentErrorText(error, tx,');
     expect(source).toContain('onSuccess: () =>');
     expect(source).toContain('setNewComment("");');
     expect(source).toContain('errorMessage={composerError}');
