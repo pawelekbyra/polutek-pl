@@ -188,19 +188,20 @@ export function PlaylistQueueLayer({
   currentVideoId: string;
   knownVideoIds: readonly string[];
   language: Locale;
-  onSwitch: (videoId: string, query: string) => void;
+  /** `auto` is true for the hand-over at the end of a video (no focus move for the viewer). */
+  onSwitch: (videoId: string, query: string, auto?: boolean) => void;
   autoAdvance?: boolean;
 }) {
-  const select = (index: number) => {
+  const select = (index: number, auto = false) => {
     const plan = planQueueSelect(queue, index, knownVideoIds);
     if (!plan) return;
     if (!plan.inPlace) window.location.assign(`${getLocalizedHref(language, "home")}?${plan.query}`);
-    else if (plan.videoId !== currentVideoId) onSwitch(plan.videoId, plan.query);
+    else if (plan.videoId !== currentVideoId) onSwitch(plan.videoId, plan.query, auto);
   };
   return (
     <>
       <PlaylistQueuePanel queue={queue} currentVideoId={currentVideoId} onSelect={select} />
-      {autoAdvance && <PlaylistAutoAdvance queue={queue} currentVideoId={currentVideoId} onAdvance={select} />}
+      {autoAdvance && <PlaylistAutoAdvance queue={queue} currentVideoId={currentVideoId} onAdvance={(index) => select(index, true)} />}
     </>
   );
 }

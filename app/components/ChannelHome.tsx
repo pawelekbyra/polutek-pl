@@ -29,6 +29,7 @@ import type { PlaylistQueueDto } from "@/lib/modules/playlists/domain/playlist.d
 import { PlaylistQueueLayer } from "./playlists/PlaylistQueuePanel";
 import { planSidebarSwitch } from "./playlists/queue-navigation";
 import { TIP_GATE_ENABLED } from "./channel/tip-gate";
+import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 
 // Hidden since 2026-10-21, kept on purpose (see tip-gate.ts).
 const SupportModal = dynamic(() => import("./channel/SupportModal"), { ssr: false });
@@ -249,6 +250,25 @@ function ChannelHomeContent({
     return () => window.removeEventListener(GO_HOME_EVENT, goToHero);
   }, [goToHero]);
 
+  // After a shallow video switch there is no page load to tell a screen-reader user what changed: announce the new
+  // video in a polite live region and, for a deliberate pick, move the focus to its title. (document.title stays
+  // the site title on purpose, see CLAUDE.md §4.13.)
+  const focusTitleRef = useRef(false);
+  const announcedVideoRef = useRef<string | undefined>(selectedId);
+  const [announcement, setAnnouncement] = useState("");
+  const selectedTitle = selectedVideo ? getVideoDisplayTitle(selectedVideo, language) : "";
+  useEffect(() => {
+    if (!selectedId || announcedVideoRef.current === selectedId) return;
+    announcedVideoRef.current = selectedId;
+    setAnnouncement(tx("Wybrano film: {0}", "Now showing: {0}", selectedTitle));
+    if (focusTitleRef.current) {
+      focusTitleRef.current = false;
+      document.getElementById("video-title")?.focus({ preventScroll: true });
+    }
+    // The announcement text is built once per switch; a language change alone must not repeat it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
+
   // Hidden since 2026-10-21, kept on purpose: the tip gate (SupportModal) is switched off by TIP_GATE_ENABLED, so
   // nothing opens it (the "polutek:open-support" event has no dispatcher, the URL triggers below are inert). It is
   // mounted only while open, so Stripe.js would be loaded only by viewers who actually open it.
@@ -311,7 +331,10 @@ function ChannelHomeContent({
   // player and ready comments instead of a spinner and a skeleton.
   // Called from a click/tap (a user gesture), so the picked video starts with sound.
   // `query` is the address' query string without "?" (`v=<slug>`, plus the playlist context inside a playlist).
-  const switchVideo = (clickedId: string, query: string) => {
+  const switchVideo = (clickedId: string, query: string, auto = false) => {
+    // A deliberate pick moves the keyboard focus to the new video's title (the sidebar item it came from is
+    // re-rendered); an automatic hand-over (the playlist's next video) never takes the focus.
+    focusTitleRef.current = !auto;
     preloader?.selectVideo(clickedId);
     void preloader?.warmVideo(clickedId, { includeComments: true, priority: "critical" });
     setSelectionState({
@@ -366,7 +389,7 @@ function ChannelHomeContent({
         currentVideoId={selectedVideo.id}
         knownVideoIds={[...(allVideos || []), ...(extraVideo ? [extraVideo] : [])].map((v) => v.id)}
         language={language}
-        onSwitch={switchVideo}
+        onSwitch={(videoId, query, auto) => switchVideo(videoId, query, auto)}
         autoAdvance={autoAdvance}
       />
     ) : null;
@@ -382,6 +405,9 @@ function ChannelHomeContent({
   return (
     <>
       <PreloadProgressBar />
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {announcement}
+      </div>
       <div className="min-h-screen bg-[var(--chan-nav)] bg-[radial-gradient(circle_at_top_left,var(--cm-blue-9),transparent_34%),radial-gradient(circle_at_top_right,var(--cm-amber-8),transparent_30%),linear-gradient(180deg,var(--cm-card-72),transparent_42%)]">
       <div className="mx-auto max-w-[1180px] px-4 pb-8 md:px-6 lg:px-8 lg:pb-10 lg:pt-5">
         <div className="grid grid-cols-12 gap-5 lg:items-start xl:gap-6">

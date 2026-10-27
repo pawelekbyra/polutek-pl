@@ -323,6 +323,37 @@ describe("PolutekControls: one-row bar (quality badge, time chip, picture-in-pic
     expect(menus[0].getAttribute("aria-label")).toBe("Rozdziały");
   });
 
+  it("A13: Tab leaves the settings menu, parks the focus on its button and keeps the items out of the Tab order", () => {
+    const view = render(<PolutekControls />);
+    const gear = view.getByRole("button", { name: "Ustawienia" });
+    fireEvent.click(gear);
+    const items = view.getAllByRole("menuitemradio");
+    expect(items.every((el) => el.getAttribute("tabindex") === "-1")).toBe(true);
+    items[0].focus();
+    fireEvent.keyDown(items[0], { key: "Tab" });
+    expect(view.queryByRole("menu")).toBeNull();
+    expect(document.activeElement).toBe(gear);
+  });
+
+  it("A12: closing the chapters panel opened from settings returns the focus to the visible settings button when the panel's own button is hidden", () => {
+    media.chapters = [
+      { cue: { startTime: 0 }, label: "Wstęp", selected: true },
+      { cue: { startTime: 20 }, label: "Temat", selected: false },
+      { cue: { startTime: 40 }, label: "Koniec", selected: false },
+    ];
+    const view = render(<PolutekControls />);
+    // On a phone CSS hides the chapters button (.mc-chapters > .mc-btn); jsdom has no stylesheet, so hide it by hand.
+    (view.container.querySelector(".mc-chapters > .mc-btn") as HTMLElement).style.display = "none";
+    const gear = view.getByRole("button", { name: "Ustawienia" });
+    fireEvent.click(gear);
+    fireEvent.click(view.getByRole("menuitem", { name: /Rozdziały/ }));
+    const panel = view.getByRole("menu", { name: "Rozdziały" });
+    expect(panel.querySelectorAll('[tabindex="-1"]').length).toBe(3);
+    fireEvent.keyDown(view.getAllByRole("menuitem")[0], { key: "Escape" });
+    expect(view.queryByRole("menu")).toBeNull();
+    expect(document.activeElement).toBe(gear);
+  });
+
   it("wide screens keep captions on the bar, not in the menu", () => {
     media.state = { ...media.state, hasCaptions: true, textTrack: null };
     const view = render(<PolutekControls />);
