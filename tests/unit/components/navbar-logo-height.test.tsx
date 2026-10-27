@@ -11,6 +11,7 @@ import BrandName from "@/app/components/BrandName";
 // add height: jsdom has no layout, so this pins the classes that guarantee it (the real heights were
 // measured in a browser harness, see the PR description).
 const navbarSource = readFileSync(path.join(process.cwd(), "app/components/Navbar.tsx"), "utf8");
+const channelHomeSource = readFileSync(path.join(process.cwd(), "app/components/ChannelHome.tsx"), "utf8");
 
 describe("the logo does not influence the height of the top bar", () => {
   afterEach(() => cleanup());
@@ -40,6 +41,20 @@ describe("the logo does not influence the height of the top bar", () => {
     expect(heights.length).toBeGreaterThan(0);
     expect(Math.max(...heights)).toBeLessThanOrEqual(34);
     expect(cls.some((c) => /^(?:m|mt|mb|my|p|pt|pb|py|min-h)-/.test(c) && !/^m-0$|^p-0$/.test(c))).toBe(false);
+  });
+
+  it("on phones the logo starts on the page gutter: nav px-2 + link ml-2 = 16px = the content wrapper's px-4", () => {
+    const nav = navbarSource.match(/<nav aria-label=\{navLabel\} className="([^"]+)"/)?.[1].split(/\s+/) ?? [];
+    const link = navbarSource.match(/<BrandHomeLink[\s\S]*?className="([^"]+)"/)?.[1].split(/\s+/) ?? [];
+    const wrapper = channelHomeSource.match(/className="(mx-auto max-w-\[1180px\][^"]*)"/)?.[1].split(/\s+/) ?? [];
+    const rem = (classes: string[], prefix: string) => Number(classes.find((c) => c.startsWith(`${prefix}-`))?.slice(prefix.length + 1)) * 4;
+
+    expect(rem(nav, "px") + rem(link, "ml")).toBe(16);
+    expect(rem(wrapper, "px")).toBe(16);
+    // from md up the nav padding alone is the gutter (the link has md:ml-0), as in the wrapper
+    expect(link).toContain("md:ml-0");
+    expect(nav).toContain("md:px-6");
+    expect(wrapper).toContain("md:px-6");
   });
 
   it("the wordmark svg is display:block (no inline baseline gap)", () => {
