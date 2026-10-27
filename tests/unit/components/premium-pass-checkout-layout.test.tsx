@@ -78,6 +78,7 @@ describe('patron checkout layout', () => {
     expect(pill.className).toContain('h-7'); // 28 px pill, hit area grown to 44 px by the ::before
     expect(pill.className).toContain('before:-top-2.5');
     expect(FIELD_LABEL_CLASS).toMatch(/text-\[13px\].*text-\[var\(--chan-body\)\]|text-\[var\(--chan-body\)\].*text-\[13px\]/);
+    expect(FIELD_LABEL_CLASS).toContain('font-[weight:var(--field-label-weight,400)]'); // regular in the gate, bold in the checkout via the one variable
     expect(FIELD_LABEL_CLASS).toContain('mb-[var(--field-label-gap,8px)]'); // label to field: one variable (8 px in the gate, 0 in the checkout, like step 3)
     fireEvent.click(dialog.getByRole('button', { name: /^Dalej/ }));
     await dialog.findByRole('heading', { name: 'Metoda płatności' });

@@ -9,6 +9,7 @@ import { Loader2 } from "../icons";
 import { buildTipReturnUrl, readConfirmResult, type TipConfirmOutcome } from "./tip-confirm";
 import { TIP_CRYPTO_PLACEHOLDER, TIP_FALLBACK_METHOD, formatTipAmount } from "./tip-flow-config";
 import { TipPrimaryButton } from "./TipStepLayout";
+import { FIELD_LABEL_WEIGHT } from "./TipSelect";
 import { ErrorLine, PayStepFrame, type TipPayStepProps } from "./TipPayFrame";
 import { TipWalletForm } from "./TipWalletForm";
 import type { Tx } from "@/lib/i18n/ui";
@@ -142,7 +143,7 @@ function BlikForm(props: TipPayStepProps) {
       }
     >
       <label className="block">
-        <span className="mb-2 block text-[13px] leading-[1.55] text-[var(--chan-body)]">
+        <span className={`mb-2 block text-[13px] leading-[1.55] ${FIELD_LABEL_WEIGHT} text-[var(--chan-body)]`}>
           {tx("Kod BLIK z aplikacji banku", "BLIK code from your banking app")}
         </span>
         <input
