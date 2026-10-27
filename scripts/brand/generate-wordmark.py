@@ -78,13 +78,26 @@ def round_cap(c, rxo, ryo, rxi, ryi, t):
 
 
 # ---------------------------------------------------------------- glyphs (Nunito outlines)
-CAP_W = {  # target ink width / cap height (measured from the reference, +-4%), per glyph
-    "P": 0.715, "O": 0.90, "L": 0.607, "U": 0.794, "T": 0.77, "E": 0.607, "K": 0.765,
+# One table for the width and weight of every letter (everything that decides the rhythm of the word is here).
+#   width  ink width / cap height. The simple letters (P, L, E, T, K, U) share about the same width (0.70-0.76), the round
+#          O is about 10% wider than U (optical overshoot of a round form).
+#   wght   Nunito weight instance the outline is taken from (stem and bar weights were matched at 900 / 875).
+#   stem   (E, L) wanted stem thickness / cap height. These two letters are naturally narrow, so they are not stretched as a
+#          whole: only the stem is condensed to the common stem weight and the arms are lengthened (xk = x of the stem's inner
+#          edge in font units), which keeps the bar thickness and the rounded ends as drawn.
+LETTERS = {
+    "P": {"width": 0.73, "wght": 900},
+    "O": {"width": 0.84, "wght": 900},
+    "L": {"width": 0.70, "wght": 900, "stem": 0.222, "xk": 248},
+    "U": {"width": 0.76, "wght": 900},
+    "T": {"width": 0.76, "wght": 900},
+    "E": {"width": 0.70, "wght": 900, "stem": 0.222, "xk": 240},
+    "K": {"width": 0.76, "wght": 875},
 }
-WGHT = {"P": 900, "O": 875, "L": 900, "U": 875, "T": 900, "E": 900, "K": 875}
+WGHT = {k: v["wght"] for k, v in LETTERS.items()}
 WORD = ["P", "O", "L", "U", "T", "E", "K"]
-# Optical gaps (edge to edge, cap/100 units) after each pair: the area between neighbouring glyph profiles is even.
-GAPS = {"P-O": 10.8, "O-L": 14.7, "L-U": 5, "U-T": 5, "T-E": 5, "E-K": 14.2}
+# Optical gaps (edge to edge, cap/100 units) after each pair, tuned so the area between neighbouring glyph profiles is even.
+GAPS = {"P-O": 11.58, "O-L": 16.5, "L-U": 3.5, "U-T": 6.0, "T-E": 6.0, "E-K": 15.08}
 
 
 def load_font(path):
@@ -102,8 +115,10 @@ def load_font(path):
 def glyph_outline(font, ch, x):
     """Returns (ink width, path) of glyph ch placed with its left ink edge at x (cap = 100 units)."""
     from fontTools.pens.boundsPen import BoundsPen
+    from fontTools.pens.recordingPen import RecordingPen
     from fontTools.pens.svgPathPen import SVGPathPen
     from fontTools.pens.transformPen import TransformPen
+    spec = LETTERS[ch]
     gs = font.getGlyphSet()
     cmap = font.getBestCmap()
     lb = BoundsPen(gs); gs[cmap[ord("L")]].draw(lb)
@@ -111,10 +126,22 @@ def glyph_outline(font, ch, x):
     unit = 100.0 / cap
     bp = BoundsPen(gs); gs[cmap[ord(ch)]].draw(bp)
     x0, y0, x1, y1 = bp.bounds
-    sx = CAP_W[ch] * cap / (x1 - x0) * unit            # horizontal scale to the target width
+    want = spec["width"] * cap                                    # wanted ink width in font units
+    if "xk" in spec:                                              # stem condensed, arms lengthened
+        xk = spec["xk"]
+        stem_w = xk - x0
+        s1 = spec["stem"] * cap / stem_w
+        s2 = (want - stem_w * s1) / (x1 - xk)
+        mapx = lambda X: (X - x0) * s1 if X <= xk else stem_w * s1 + (X - xk) * s2
+    else:                                                         # plain horizontal scale
+        k = want / (x1 - x0)
+        mapx = lambda X: (X - x0) * k
+    rec = RecordingPen(); gs[cmap[ord(ch)]].draw(rec)
+    mapped = RecordingPen()
+    mapped.value = [(op, tuple((mapx(px), py) for px, py in args)) for op, args in rec.value]
     pen = SVGPathPen(gs, ntos=f)
-    gs[cmap[ord(ch)]].draw(TransformPen(pen, (sx, 0, 0, -unit, x - x0 * sx, 100.0)))
-    return (x1 - x0) * sx, pen.getCommands()
+    mapped.replay(TransformPen(pen, (unit, 0, 0, -unit, x, 100.0)))
+    return want * unit, pen.getCommands()
 
 
 # ---------------------------------------------------------------- play badge
