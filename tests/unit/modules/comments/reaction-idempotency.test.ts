@@ -62,6 +62,7 @@ function createFakeDb() {
 
   return {
     db: {
+      $executeRaw: async () => 1,
       commentReaction: table(commentReactions, ['userId', 'commentId']),
       videoLike: table(videoLikes, ['userId', 'videoId']),
       videoDislike: table(videoDislikes, ['userId', 'videoId']),
@@ -129,5 +130,29 @@ describe('setVideoReaction (target state, race-safe)', () => {
     await repo.setVideoReaction('u1', 'v1', null);
     await repo.setVideoReaction('u1', 'v1', null);
     expect(fake.video).toMatchObject({ likesCount: 0, dislikesCount: 0 });
+  });
+});
+
+describe('reaction pair lock (DB-10, DB-11)', () => {
+  it('takes the (user, target) advisory lock before touching any reaction row', async () => {
+    const order: string[] = [];
+    const fake = createFakeDb();
+    fake.db.$executeRaw = async (_strings: TemplateStringsArray, key: string) => {
+      order.push(`lock:${key}`);
+      return 1;
+    };
+    const original = fake.db.videoDislike.deleteMany;
+    fake.db.videoDislike.deleteMany = async (args: unknown) => {
+      order.push('deleteDislike');
+      return original(args);
+    };
+    const repo = new CommentRepository(fake.db);
+
+    await repo.setVideoReaction('u1', 'v1', 'LIKE');
+    await repo.setCommentReaction('u1', 'c1', null);
+
+    expect(order[0]).toBe('lock:reaction:video:u1:v1');
+    expect(order[1]).toBe('deleteDislike');
+    expect(order).toContain('lock:reaction:comment:u1:c1');
   });
 });

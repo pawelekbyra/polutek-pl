@@ -56,24 +56,24 @@ export async function setCommentReaction(
       return fail({ type: "FORBIDDEN", message: "Brak dostępu do interakcji pod tym filmem." });
     }
 
-    const { result, likeDelta } = await ctx.db.writeTransaction(async (tx: WriteTx) => {
-      const txRepo = new CommentRepository(tx);
-      const { likeDelta } = await txRepo.setCommentReaction(userId, commentId, reaction);
-      return { result: await txRepo.getCommentReactionSnapshot(userId, commentId), likeDelta };
-    });
-
     // The creator's like IS the heart: when the channel's creator likes a comment it gets the creator's heart (and
     // its author is told once), and taking the like back takes the heart off. Anyone else's like is a plain like.
-    let isHearted: boolean | undefined;
     const creatorUserId = await new CommentRepository(prisma).findVideoCreatorId(comment.videoId);
     const likedByCreator = creatorUserId === userId && comment.authorId !== userId;
-    if (likedByCreator && likeDelta !== 0) {
-      isHearted = likeDelta > 0;
-      if (comment.isHearted !== isHearted) {
-        await ctx.db.writeTransaction(async (tx: WriteTx) => new CommentRepository(tx).setHeart(commentId, isHearted!));
-        if (isHearted) await notifyCreatorLike({ commentId });
+
+    // The heart is written in the same transaction as the reaction (under the reaction-pair lock), so concurrent
+    // like/unlike of the creator cannot leave the heart opposite to the final reaction state.
+    const { result, likeDelta, isHearted } = await ctx.db.writeTransaction(async (tx: WriteTx) => {
+      const txRepo = new CommentRepository(tx);
+      const { likeDelta } = await txRepo.setCommentReaction(userId, commentId, reaction);
+      let isHearted: boolean | undefined;
+      if (likedByCreator && likeDelta !== 0) {
+        isHearted = likeDelta > 0;
+        if (comment.isHearted !== isHearted) await txRepo.setHeart(commentId, isHearted);
       }
-    }
+      return { result: await txRepo.getCommentReactionSnapshot(userId, commentId), likeDelta, isHearted };
+    });
+    if (isHearted && comment.isHearted !== isHearted) await notifyCreatorLike({ commentId });
 
     // Best-effort side effect, kept outside the transaction: a notification failure must never
     // roll back or fail the reaction itself. Only a like that actually got added notifies.

@@ -77,12 +77,23 @@ export class CommentRepository {
   }
 
   /**
+   * Serialises every change of one (user, target) reaction pair for the rest of the transaction
+   * (transaction-scoped advisory lock). Without it two concurrent requests of one user can each read a
+   * stale "other" reaction (video LIKE and DISLIKE live in separate tables) or clear a row the other
+   * request has just added, which leaves both reactions set or the counter off by one.
+   */
+  private async lockReactionPair(kind: "video" | "comment", userId: string, targetId: string): Promise<void> {
+    await this.write.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`reaction:${kind}:${userId}:${targetId}`}))`;
+  }
+
+  /**
    * Sets the viewer's reaction to a video to exactly `target` (LIKE, DISLIKE or none) and moves
    * the counters by what actually changed. Idempotent and safe under concurrent requests: the
    * insert is `ON CONFLICT DO NOTHING` and every counter delta comes from the affected row count.
    * Must run inside a transaction.
    */
   async setVideoReaction(userId: string, videoId: string, target: ReactionTarget): Promise<void> {
+    await this.lockReactionPair("video", userId, videoId);
     const removedLikes = target === "LIKE" ? 0 : (await this.write.videoLike.deleteMany({ where: { userId, videoId } })).count;
     const removedDislikes = target === "DISLIKE" ? 0 : (await this.write.videoDislike.deleteMany({ where: { userId, videoId } })).count;
     const addedLikes = target === "LIKE"
@@ -144,6 +155,7 @@ export class CommentRepository {
    * `setVideoReaction`. Must run inside a transaction. Returns the change of `likesCount`.
    */
   async setCommentReaction(userId: string, commentId: string, target: ReactionTarget): Promise<{ likeDelta: number }> {
+    await this.lockReactionPair("comment", userId, commentId);
     let likeDelta = 0;
     if (target === null) {
       likeDelta -= (await this.write.commentReaction.deleteMany({ where: { userId, commentId, type: "LIKE" } })).count;
