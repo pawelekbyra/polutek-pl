@@ -2,10 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const m = vi.hoisted(() => ({
   video: { deleteAdminVideo: vi.fn(), getAdminVideoDetails: vi.fn(), getAdminVideoList: vi.fn(), reorderAdminVideos: vi.fn(), updateAdminVideo: vi.fn() },
-  pipeline: { getPipelineState: vi.fn(), purgeVideoStorage: vi.fn(async () => undefined), snapshotVideoStorage: vi.fn(async () => ({ keys: ["a"] })) },
+  pipeline: {
+    getPipelineState: vi.fn(),
+    purgeVideoStorageStrict: vi.fn(async () => ({ hlsObjects: 0, originals: 0 })),
+    snapshotVideoStorageInTx: vi.fn(async () => ({ assetKeys: ["videos/v1/v/v1"], originals: [] })),
+  },
   audit: { recordAuditEventSafe: vi.fn(async () => undefined) },
   deletePublic: vi.fn(async () => undefined),
 }));
+vi.mock("@/lib/prisma", () => ({ prisma: {} }));
 vi.mock("@/lib/modules/video", () => m.video);
 vi.mock("@/lib/modules/video-pipeline", () => m.pipeline);
 vi.mock("@/lib/modules/audit", () => m.audit);
@@ -62,22 +67,51 @@ describe("saveChannelLayout", () => {
 });
 
 describe("deleteVideoWithStorage", () => {
-  it("snapshots storage, deletes the row, purges R2 and our own subtitle files", async () => {
+  const tx = () => ({ durableJob: { createMany: vi.fn(async () => ({ count: 1 })), updateMany: vi.fn(async () => ({ count: 0 })) } });
+
+  it("records what the video owns in R2 as a durable job INSIDE the delete transaction (before the row and its cascade are gone)", async () => {
     m.video.getAdminVideoDetails.mockResolvedValue(ok({ id: "v1", subtitleUrlPl: "https://thumbs.example.com/videos/v1/subtitles/h.vtt", subtitleUrlEn: "https://other.example.com/x.vtt" }));
-    m.video.deleteAdminVideo.mockResolvedValue(ok({ id: "v1" }));
+    const t = tx();
+    const order: string[] = [];
+    m.video.deleteAdminVideo.mockImplementation(async (_id: string, _ctx: unknown, options: { beforeDelete: (tx: unknown) => Promise<void> }) => {
+      await options.beforeDelete(t);
+      order.push("row deleted");
+      return ok({ id: "v1" });
+    });
+    t.durableJob.createMany.mockImplementation(async () => { order.push("manifest saved"); return { count: 1 }; });
+
     const r = await deleteVideoWithStorage("v1", ctx);
+
     expect(r.ok).toBe(true);
-    expect(m.pipeline.snapshotVideoStorage).toHaveBeenCalledBefore(m.video.deleteAdminVideo);
-    expect(m.pipeline.purgeVideoStorage).toHaveBeenCalledWith("v1", { keys: ["a"] });
-    expect(m.deletePublic).toHaveBeenCalledTimes(1);
-    expect(m.deletePublic).toHaveBeenCalledWith("videos/v1/subtitles/h.vtt");
+    expect(order).toEqual(["manifest saved", "row deleted"]);
+    expect(m.pipeline.snapshotVideoStorageInTx).toHaveBeenCalledWith(t, "v1");
+    const job = (t.durableJob.createMany.mock.calls[0] as any)[0].data[0];
+    expect(job).toMatchObject({ kind: "STORAGE_CLEANUP", dedupeKey: "v1" });
+    expect(job.payload).toEqual({ videoId: "v1", snapshot: { assetKeys: ["videos/v1/v/v1"], originals: [] }, publicKeys: ["videos/v1/subtitles/h.vtt"] });
   });
 
-  it("purges nothing when the delete is refused", async () => {
+  it("the delete does not purge R2 synchronously any more: no inline purge call, only the queued job", async () => {
+    m.video.getAdminVideoDetails.mockResolvedValue(ok({ id: "v1", subtitleUrlPl: null, subtitleUrlEn: null }));
+    m.video.deleteAdminVideo.mockResolvedValue(ok({ id: "v1" }));
+    await deleteVideoWithStorage("v1", ctx);
+    expect(m.deletePublic).not.toHaveBeenCalled();
+  });
+
+  it("when the manifest cannot be saved the delete fails and the video stays (no orphaned objects without a record)", async () => {
+    m.video.getAdminVideoDetails.mockResolvedValue(ok({ id: "v1", subtitleUrlPl: null, subtitleUrlEn: null }));
+    m.pipeline.snapshotVideoStorageInTx.mockRejectedValueOnce(new Error("db down"));
+    m.video.deleteAdminVideo.mockImplementation(async (_id: string, _ctx: unknown, options: { beforeDelete: (tx: unknown) => Promise<void> }) => {
+      await options.beforeDelete(tx()); // the real use case runs this inside the transaction: a throw rolls the delete back
+      return ok({ id: "v1" });
+    });
+    await expect(deleteVideoWithStorage("v1", ctx)).rejects.toThrow("db down");
+  });
+
+  it("queues nothing when the delete is refused", async () => {
     m.video.getAdminVideoDetails.mockResolvedValue(ok({ id: "v1", subtitleUrlPl: null, subtitleUrlEn: null }));
     m.video.deleteAdminVideo.mockResolvedValue({ ok: false, error: { code: "VIDEO_NOT_FOUND" } });
     const r = await deleteVideoWithStorage("v1", ctx);
     expect(r.ok).toBe(false);
-    expect(m.pipeline.purgeVideoStorage).not.toHaveBeenCalled();
+    expect(m.pipeline.snapshotVideoStorageInTx).not.toHaveBeenCalled();
   });
 });

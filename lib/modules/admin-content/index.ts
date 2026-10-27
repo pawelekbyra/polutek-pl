@@ -8,3 +8,4 @@ export * from "./domain/thumbnail-state";
 export * from "./application/media-uploads";
 export * from "./application/content";
 export * from "./application/default-thumbnail";
+export * from "./application/storage-cleanup-job";

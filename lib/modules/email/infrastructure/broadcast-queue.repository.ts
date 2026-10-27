@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
 import type { BroadcastCounts } from "../domain/email.dto";
 import { findEligibleRecipients } from "./broadcast-audience";
@@ -8,6 +9,8 @@ export type ClaimedBroadcast = {
   htmlPl: string;
   subjectEn: string;
   htmlEn: string;
+  /** Random owner token of this run's lease (`BroadcastEmail.lockedBy`); every later write of the run needs it. */
+  leaseToken: string;
 };
 
 export type QueuedRecipient = {
@@ -20,7 +23,7 @@ export type QueuedRecipient = {
 
 /** Everything the broadcast sender needs from the database (a fake implements it in tests). */
 export interface BroadcastQueueStore {
-  /** Takes the oldest due broadcast and leases it to this run; null when there is nothing to send. */
+  /** Takes the oldest due broadcast and leases it to this run (owner token in `leaseToken`); null when there is nothing to send. */
   claimNext(leaseMs: number): Promise<ClaimedBroadcast | null>;
   /** PENDING recipients whose retry time has come, oldest first. */
   loadDueRecipients(broadcastId: string, limit: number): Promise<QueuedRecipient[]>;
@@ -32,10 +35,12 @@ export interface BroadcastQueueStore {
   scheduleRetry(recipientId: string, reason: string, attemptCount: number, at: Date): Promise<void>;
   /** Any PENDING recipient left (including ones waiting for a retry)? */
   hasPending(broadcastId: string): Promise<boolean>;
-  /** Hands the broadcast back (lease cleared); `nextRunAt` delays the next run after a 429. */
-  release(broadcastId: string, nextRunAt: Date | null): Promise<void>;
-  /** All recipients done: SENT, or PARTIAL_FAILED when some failed. Leaves a CANCELLED broadcast alone. */
-  finalize(broadcastId: string): Promise<void>;
+  /** Extends the lease while this run still owns it. false = another run took the broadcast over: stop and write nothing more. */
+  renewLease(broadcastId: string, leaseToken: string, leaseMs: number): Promise<boolean>;
+  /** Hands the broadcast back (lease cleared) if this run still owns it; `nextRunAt` delays the next run after a 429. */
+  release(broadcastId: string, leaseToken: string, nextRunAt: Date | null): Promise<void>;
+  /** All recipients done: SENT, or PARTIAL_FAILED when some failed. Only for the lease owner; leaves a CANCELLED broadcast alone. */
+  finalize(broadcastId: string, leaseToken: string): Promise<void>;
 }
 
 /** Recipient statuses grouped the way the admin reads them. */
@@ -60,10 +65,12 @@ export class BroadcastQueueRepository implements BroadcastQueueStore {
    */
   async claimNext(leaseMs: number): Promise<ClaimedBroadcast | null> {
     const leaseSeconds = Math.ceil(leaseMs / 1000);
-    const rows = await this.db.$queryRaw<ClaimedBroadcast[]>`
+    const leaseToken = randomUUID();
+    const rows = await this.db.$queryRaw<Array<Omit<ClaimedBroadcast, "leaseToken">>>`
       UPDATE "BroadcastEmail" AS b
       SET "status" = 'SENDING',
           "lockedUntil" = (now() AT TIME ZONE 'UTC') + make_interval(secs => ${leaseSeconds}::double precision),
+          "lockedBy" = ${leaseToken},
           "nextRunAt" = NULL,
           "updatedAt" = (now() AT TIME ZONE 'UTC')
       WHERE b."id" = (
@@ -77,7 +84,17 @@ export class BroadcastQueueRepository implements BroadcastQueueStore {
       )
       RETURNING b."id", b."subjectPl", b."htmlPl", b."subjectEn", b."htmlEn"
     `;
-    return rows[0] ?? null;
+    return rows[0] ? { ...rows[0], leaseToken } : null;
+  }
+
+  async renewLease(broadcastId: string, leaseToken: string, leaseMs: number) {
+    const changed = await this.db.$executeRaw`
+      UPDATE "BroadcastEmail"
+      SET "lockedUntil" = (now() AT TIME ZONE 'UTC') + make_interval(secs => ${Math.ceil(leaseMs / 1000)}::double precision),
+          "updatedAt" = (now() AT TIME ZONE 'UTC')
+      WHERE "id" = ${broadcastId} AND "status" = 'SENDING' AND "lockedBy" = ${leaseToken}
+    `;
+    return changed === 1;
   }
 
   loadDueRecipients(broadcastId: string, limit: number): Promise<QueuedRecipient[]> {
@@ -131,14 +148,14 @@ export class BroadcastQueueRepository implements BroadcastQueueStore {
     return count > 0;
   }
 
-  async release(broadcastId: string, nextRunAt: Date | null) {
+  async release(broadcastId: string, leaseToken: string, nextRunAt: Date | null) {
     await this.db.broadcastEmail.updateMany({
-      where: { id: broadcastId, status: "SENDING" },
-      data: { lockedUntil: null, nextRunAt },
+      where: { id: broadcastId, status: "SENDING", lockedBy: leaseToken },
+      data: { lockedUntil: null, lockedBy: null, nextRunAt },
     });
   }
 
-  async finalize(broadcastId: string) {
+  async finalize(broadcastId: string, leaseToken: string) {
     const grouped = await this.db.broadcastEmailRecipient.groupBy({
       by: ["status"],
       where: { broadcastEmailId: broadcastId },
@@ -146,13 +163,14 @@ export class BroadcastQueueRepository implements BroadcastQueueStore {
     });
     const counts = summarizeRecipientStatuses(grouped.map((g) => ({ status: g.status, _count: g._count })));
     await this.db.broadcastEmail.updateMany({
-      where: { id: broadcastId, status: "SENDING" },
+      where: { id: broadcastId, status: "SENDING", lockedBy: leaseToken },
       data: {
         status: counts.failed > 0 ? (counts.sent > 0 ? "PARTIAL_FAILED" : "FAILED") : "SENT",
         sentAt: new Date(),
         sentCount: counts.sent,
         errorCount: counts.failed,
         lockedUntil: null,
+        lockedBy: null,
         nextRunAt: null,
       },
     });

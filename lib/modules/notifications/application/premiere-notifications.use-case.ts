@@ -1,8 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
-import { buildNewVideoParams, buildPremiereCopy, newVideoHref } from "../domain/new-video";
-import { deliverNewVideoNotifications } from "./new-video-fan-out.use-case";
+import { enqueueNewVideoFanOut } from "./new-video-fan-out.use-case";
 
 /**
  * Premiere notifications (CLAUDE.md 4.18): a video published with a future `premiereAt` is skipped by
@@ -12,19 +11,20 @@ import { deliverNewVideoNotifications } from "./new-video-fan-out.use-case";
  * - Candidates: PUBLISHED, `premiereAt <= now`, `premiereNotifiedAt` null, VISIBLE/AGE_RESTRICTED,
  *   public channel (ACTIVE/LIMITED, not deleted): the same eligibility as the publish-time fan-out.
  *   UNLISTED, DRAFT and ARCHIVED videos never qualify.
- * - Each video is CLAIMED first with `updateMany where premiereNotifiedAt is null` (the first run
- *   wins, a parallel run gets count 0 and skips), then fanned out like a new video (same audience,
- *   preference, owner exclusion, advisory lock and chunking, same NEW_VIDEO kind so per-user dedupe
- *   holds across both paths). If the delivery throws, the claim is released so the next run retries
- *   (per-user dedupe makes the retry safe).
+ * - Each candidate is put in the durable queue (`NEW_VIDEO_FANOUT` job, one per video, variant
+ *   "premiere"); the same cron tick then runs the queue (see the route). The job, not this function,
+ *   delivers the notifications and sets `premiereNotifiedAt` when the LAST page is written, so a
+ *   process that dies half-way no longer leaves a video "claimed" forever: the unfinished job is
+ *   taken over after its lease runs out and continues from its cursor. A candidate stays a candidate
+ *   until the job finished, and enqueueing it again is a no-op while the job is pending (a finished
+ *   job that skipped the video is opened again; a DEAD one is left for an operator).
  */
 
 export const PREMIERE_BATCH_DEFAULT = 50;
 
 export type PremiereNotificationsResult = {
   candidates: number;
-  claimed: number;
-  notifications: number;
+  enqueued: number;
   failed: number;
 };
 
@@ -50,42 +50,17 @@ export async function notifyDuePremieres(deps: PremiereNotificationsDeps = {}): 
     },
     orderBy: { premiereAt: "asc" },
     take,
-    select: {
-      id: true,
-      title: true,
-      titleEn: true,
-      slug: true,
-      creator: { select: { id: true, name: true, userId: true } },
-    },
+    select: { id: true },
   });
 
-  const result: PremiereNotificationsResult = { candidates: due.length, claimed: 0, notifications: 0, failed: 0 };
+  const result: PremiereNotificationsResult = { candidates: due.length, enqueued: 0, failed: 0 };
   for (const video of due) {
-    // Atomic claim: exactly one concurrent run gets count 1.
-    const claim = await db.video.updateMany({
-      where: { id: video.id, status: "PUBLISHED", premiereNotifiedAt: null },
-      data: { premiereNotifiedAt: now },
-    });
-    if (claim.count !== 1) continue;
-    result.claimed += 1;
     try {
-      const copyInput = { channelName: video.creator.name, title: video.title, titleEn: video.titleEn };
-      const copy = buildPremiereCopy(copyInput);
-      result.notifications += await deliverNewVideoNotifications(db, {
-        videoId: video.id,
-        channel: video.creator,
-        copy,
-        href: newVideoHref(video.slug),
-        template: { key: "premiere", params: buildNewVideoParams(copyInput) },
-      });
+      await enqueueNewVideoFanOut(video.id, "premiere", ["DONE"], db);
+      result.enqueued += 1;
     } catch (error) {
       result.failed += 1;
-      logger.error("[notifications] premiere fan-out failed", { videoId: video.id, error: error instanceof Error ? error.message : String(error) });
-      try {
-        await db.video.updateMany({ where: { id: video.id, premiereNotifiedAt: now }, data: { premiereNotifiedAt: null } });
-      } catch (releaseError) {
-        logger.error("[notifications] releasing premiere claim failed", { videoId: video.id, error: releaseError instanceof Error ? releaseError.message : String(releaseError) });
-      }
+      logger.error("[notifications] enqueueing premiere fan-out failed", { videoId: video.id, error: error instanceof Error ? error.message : String(error) });
     }
   }
   return result;

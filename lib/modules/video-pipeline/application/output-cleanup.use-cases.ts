@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { UseCaseResult, ok, fail } from "@/lib/modules/shared/result";
@@ -95,5 +96,68 @@ export async function purgeVideoStorage(
   } catch (error) {
     logger.warn("purgeVideoStorage failed (non-fatal)", { videoId, error: String(error) });
   }
+  return result;
+}
+
+/**
+ * Same as `snapshotVideoStorage`, but INSIDE the transaction that deletes the video (DB-24): the Video
+ * row is locked first (`FOR UPDATE`), so an encode worker adding an asset at the same moment either
+ * is listed here or fails its foreign key afterwards, and nothing can be created outside the manifest.
+ * The caller stores the result as a durable clean-up job in the same transaction.
+ */
+export async function snapshotVideoStorageInTx(tx: Prisma.TransactionClient, videoId: string): Promise<VideoStorageSnapshot> {
+  await tx.$executeRaw`SELECT 1 FROM "Video" WHERE "id" = ${videoId} FOR UPDATE`;
+  const [assets, originals] = await Promise.all([
+    tx.videoAsset.findMany({ where: { videoId, provider: "SELF_HLS" }, select: { objectKey: true } }),
+    tx.videoOriginal.findMany({ where: { videoId }, select: { objectKey: true, uploadId: true, status: true } }),
+  ]);
+  return { assetKeys: assets.map((a) => a.objectKey), originals };
+}
+
+/**
+ * Removes the objects of a deleted video's manifest and THROWS when any removal failed (or R2 is not
+ * configured while the manifest is not empty), so the durable job retries. Every delete is idempotent
+ * (a missing prefix/object is not an error), so a retry after a partial run is safe. Scope is exactly
+ * what `purgeVideoStorage` removes: version prefixes of own HLS assets and the video's originals.
+ */
+export async function purgeVideoStorageStrict(
+  videoId: string,
+  snapshot: VideoStorageSnapshot,
+  deps?: { hls?: HlsDeleter | null; originals?: Pick<OriginalsMultipart, "deleteObject" | "abort"> | null },
+): Promise<{ hlsObjects: number; originals: number }> {
+  const result = { hlsObjects: 0, originals: 0 };
+  const hlsKeys = snapshot.assetKeys.filter((key) => {
+    const version = parseVersionNumber(key);
+    return Boolean(version) && key === hlsAssetKey(videoId, version as number);
+  });
+  const originalsToRemove = snapshot.originals.filter((o) => o.objectKey.startsWith(`originals/${videoId}/`));
+  if (hlsKeys.length === 0 && originalsToRemove.length === 0) return result;
+
+  const hls = deps?.hls === undefined ? defaultHlsWriter() : deps.hls;
+  const originals = deps?.originals === undefined ? OriginalsMultipart.fromEnv() : deps.originals;
+  const failures: string[] = [];
+  if (hlsKeys.length > 0 && !hls) failures.push("R2 HLS storage not configured");
+  if (originalsToRemove.length > 0 && !originals) failures.push("R2 originals storage not configured");
+  if (hls) {
+    for (const key of hlsKeys) {
+      try {
+        result.hlsObjects += await hls.deletePrefix(`${key}/`);
+      } catch (error) {
+        failures.push(`hls ${key}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+  }
+  if (originals) {
+    for (const o of originalsToRemove) {
+      if (o.status === "UPLOADING" && o.uploadId) await originals.abort(o.objectKey, o.uploadId).catch(() => undefined);
+      try {
+        await originals.deleteObject(o.objectKey);
+        result.originals += 1;
+      } catch (error) {
+        failures.push(`original ${o.objectKey}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+  }
+  if (failures.length > 0) throw new Error(`Storage clean-up of video ${videoId} incomplete: ${failures.join("; ").slice(0, 400)}`);
   return result;
 }

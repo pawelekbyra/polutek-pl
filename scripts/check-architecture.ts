@@ -407,6 +407,7 @@ function checkAdminApp() {
 // to a function that authorizes).
 const AUTHZ_MODULES = ['video', 'video-pipeline', 'admin-content', 'channel', 'sales', 'creator-analytics', 'playlists'];
 const AUTHZ_EXEMPT: Record<string, string> = {
+  'lib/modules/admin-content/application/storage-cleanup-job.ts': 'job runner (cron/kick as system): the manifest is written inside deleteVideoWithStorage after video.delete authorization, the handler only repeats what that deletion already allowed',
   'lib/modules/creator-analytics/application/context.ts': 'wiring helpers; every analytics use case calls authorize() itself',
   'lib/modules/creator-analytics/application/snapshot-subscribers.use-case.ts': 'daily cron; refuses any actor other than system',
   'lib/modules/video/application/admin-video-payload.ts': 'pure DTO helper, no I/O',

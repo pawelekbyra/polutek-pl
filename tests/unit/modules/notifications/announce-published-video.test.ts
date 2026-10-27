@@ -8,7 +8,7 @@ import { announcePublishedVideo } from "@/lib/modules/video/application/announce
 
 describe("announcePublishedVideo", () => {
   it("hands the video to the fan-out", async () => {
-    notify.mockResolvedValueOnce({ status: "done", inApp: 1 });
+    notify.mockResolvedValueOnce({ status: "queued" });
     await announcePublishedVideo("v1");
     expect(notify).toHaveBeenCalledWith("v1");
   });

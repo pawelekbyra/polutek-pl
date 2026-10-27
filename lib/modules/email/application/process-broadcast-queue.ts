@@ -6,6 +6,7 @@ import {
   BROADCAST_LEASE_MS,
   BROADCAST_RUN_BUDGET_MS,
   BROADCAST_SEND_INTERVAL_MS,
+  BROADCAST_SEND_TIMEOUT_MS,
   classifySendFailure,
 } from "../domain/broadcast-queue.policy";
 import { renderBroadcastMessage } from "../domain/broadcast-message";
@@ -23,6 +24,8 @@ export type BroadcastRunResult = {
   /** Set when Resend said 429: the broadcast waits until then. */
   pausedUntil: string | null;
   finished: boolean;
+  /** True when another run took the broadcast over (lease expired under a stalled send): this run stopped without finishing it. */
+  leaseLost: boolean;
 };
 
 export type SendBroadcastMail = (broadcast: ClaimedBroadcast, recipient: QueuedRecipient, nickname: string | null) => Promise<EmailSendResult>;
@@ -33,6 +36,7 @@ export type BroadcastQueueDeps = {
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
   budgetMs?: number;
+  sendTimeoutMs?: number;
 };
 
 const appUrl = () => process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -72,6 +76,23 @@ export const sendBroadcastMail: SendBroadcastMail = async (broadcast, recipient,
 };
 
 /**
+ * A send that hangs (provider not answering) must not hold the run past its lease: after the timeout the
+ * recipient is treated like a network error and retried later. If the provider did accept the mail after all,
+ * the idempotency key of the retry makes it a no-op there, and the recipient status is only ever written from PENDING.
+ */
+async function sendWithTimeout(send: SendBroadcastMail, timeoutMs: number, broadcast: ClaimedBroadcast, recipient: QueuedRecipient, nickname: string | null): Promise<EmailSendResult> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<EmailSendResult>((resolve) => {
+    timer = setTimeout(() => resolve({ ok: false, error: { name: "send_timeout", message: "Send timed out" } }), timeoutMs);
+  });
+  try {
+    return await Promise.race([send(broadcast, recipient, nickname), timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+/**
  * One run of the broadcast queue (called by /api/cron/send-broadcasts every minute). Takes one due
  * broadcast, sends to its pending recipients one by one at a safe pace until the time budget is
  * used, and hands the broadcast back. Every recipient is re-checked right before sending, so a
@@ -84,13 +105,15 @@ export async function processBroadcastQueue(deps: BroadcastQueueDeps): Promise<B
   const now = deps.now ?? Date.now;
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
   const budgetMs = deps.budgetMs ?? BROADCAST_RUN_BUDGET_MS;
+  const sendTimeoutMs = deps.sendTimeoutMs ?? BROADCAST_SEND_TIMEOUT_MS;
   const startedAt = now();
-  const result: BroadcastRunResult = { broadcastId: null, sent: 0, skipped: 0, failed: 0, retried: 0, pausedUntil: null, finished: false };
+  const result: BroadcastRunResult = { broadcastId: null, sent: 0, skipped: 0, failed: 0, retried: 0, pausedUntil: null, finished: false, leaseLost: false };
 
   const broadcast = await store.claimNext(BROADCAST_LEASE_MS);
   if (!broadcast) return result;
   result.broadcastId = broadcast.id;
 
+  const token = broadcast.leaseToken;
   let pauseUntil: Date | null = null;
   try {
     outer: while (now() - startedAt < budgetMs) {
@@ -109,8 +132,16 @@ export async function processBroadcastQueue(deps: BroadcastQueueDeps): Promise<B
           continue;
         }
 
+        // Renewed before every send: a long run keeps its lease, and a run that was too slow (the lease ran out and
+        // another run owns the broadcast now) stops here instead of sending to the same people again.
+        if (!(await store.renewLease(broadcast.id, token, BROADCAST_LEASE_MS))) {
+          result.leaseLost = true;
+          logger.warn(`[broadcast] lease of broadcast ${broadcast.id} lost; this run stops`);
+          return result;
+        }
+
         const attempt = recipient.attemptCount + 1;
-        const outcome = await send(broadcast, recipient, current.name);
+        const outcome = await sendWithTimeout(send, sendTimeoutMs, broadcast, recipient, current.name);
         if (outcome.ok) {
           await store.markSent(recipient.id, outcome.id);
           result.sent++;
@@ -134,14 +165,14 @@ export async function processBroadcastQueue(deps: BroadcastQueueDeps): Promise<B
     }
 
     if (!pauseUntil && !(await store.hasPending(broadcast.id))) {
-      await store.finalize(broadcast.id);
+      await store.finalize(broadcast.id, token);
       result.finished = true;
     } else {
-      await store.release(broadcast.id, pauseUntil);
+      await store.release(broadcast.id, token, pauseUntil);
     }
   } catch (error) {
     // Hand the broadcast back at once; the next run continues where this one stopped.
-    await store.release(broadcast.id, null).catch(() => undefined);
+    await store.release(broadcast.id, token, null).catch(() => undefined);
     throw error;
   }
 

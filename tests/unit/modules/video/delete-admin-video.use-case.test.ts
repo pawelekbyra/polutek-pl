@@ -147,4 +147,29 @@ describe('deleteAdminVideo use-case', () => {
       }),
     }));
   });
+
+  it('runs beforeDelete inside the delete transaction, before the row is deleted', async () => {
+    const { prisma, ctx } = makeCtx();
+    const existing = makeVideo({ asset: makeAsset() });
+    prisma.video.findUnique.mockResolvedValue(existing);
+    prisma.video.delete.mockResolvedValue(existing);
+    const beforeDelete = vi.fn(async () => {
+      expect(prisma.video.delete).not.toHaveBeenCalled();
+    });
+
+    const result = await deleteAdminVideo('v1', ctx, { beforeDelete });
+
+    expect(result.ok).toBe(true);
+    expect(beforeDelete).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not delete (and records no audit event) when beforeDelete fails, e.g. the R2 manifest could not be saved', async () => {
+    const { prisma, ctx } = makeCtx();
+    prisma.video.findUnique.mockResolvedValue(makeVideo({ asset: makeAsset() }));
+
+    await expect(deleteAdminVideo('v1', ctx, { beforeDelete: async () => { throw new Error('manifest failed'); } })).rejects.toThrow('manifest failed');
+
+    expect(prisma.video.delete).not.toHaveBeenCalled();
+    expect(prisma.auditLog.create).not.toHaveBeenCalled();
+  });
 });
