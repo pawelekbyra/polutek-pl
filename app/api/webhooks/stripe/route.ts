@@ -3,8 +3,12 @@ import { logger } from "@/lib/logger";
 import { handleStripeWebhook, PaymentError } from '@/lib/modules/payments';
 import { createAppContext } from '@/lib/modules/shared/app-context';
 import { getCorrelationId } from '@/lib/utils/correlation';
+import { RequestBodyTooLargeError, readRequestTextWithLimit } from '@/lib/utils/request-body';
 
 export const dynamic = 'force-dynamic';
+
+/** Stripe events are a few KB (a dispute with evidence can reach some hundred KB); anything past this is not Stripe (audit S03). */
+const MAX_STRIPE_WEBHOOK_BODY_BYTES = 1_000_000;
 
 /**
  * Stripe → app. Public route (middleware `isPublicRoute`), authenticated by the Stripe signature
@@ -14,11 +18,22 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   const requestId = getCorrelationId() || req.headers.get('x-request-id') || 'stripe-webhook';
   const signature = req.headers.get('stripe-signature');
-  const body = await req.text();
 
   if (!signature) {
     logger.warn('[StripeWebhook] Rejected: request without a stripe-signature header.');
     return NextResponse.json({ error: 'Missing stripe-signature' }, { status: 400 });
+  }
+
+  // Read with a byte limit, before anything is buffered whole and before the signature check.
+  let body: string;
+  try {
+    body = await readRequestTextWithLimit(req, MAX_STRIPE_WEBHOOK_BODY_BYTES);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      logger.warn('[StripeWebhook] Rejected: payload too large.');
+      return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
+    }
+    throw error;
   }
 
   try {

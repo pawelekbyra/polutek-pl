@@ -68,7 +68,7 @@ export interface ProcessorPorts {
     deletePrefix(prefix: string): Promise<number>;
   };
   encoder: {
-    probe(file: string): Promise<SourceProbe>;
+    probe(file: string, signal?: AbortSignal): Promise<SourceProbe>;
     encode(args: {
       input: string;
       out: string;
@@ -236,7 +236,7 @@ export async function processEncodeJob(job: VideoEncodeJob, ports: ProcessorPort
     await stage("PROBING", 0);
     let probe: SourceProbe;
     try {
-      probe = await ports.encoder.probe(sourcePath);
+      probe = await ports.encoder.probe(sourcePath, controller.signal);
     } catch (err) {
       if (controller.signal.aborted) throw new EncodeCancelledError();
       throw err;

@@ -17,8 +17,8 @@ export function readEncoderSettings(env: NodeJS.ProcessEnv = process.env): Encod
 /** Real encoder: scripts/hls/encode-hls.mjs run as a library (no shell, no temp scripts). */
 export function createEncoder(settings: EncoderSettings = readEncoderSettings()): ProcessorPorts["encoder"] {
   return {
-    async probe(file: string): Promise<SourceProbe> {
-      const info = await probeSource(file);
+    async probe(file: string, signal?: AbortSignal): Promise<SourceProbe> {
+      const info = await probeSource(file, { signal });
       return {
         width: info.width,
         height: info.height,

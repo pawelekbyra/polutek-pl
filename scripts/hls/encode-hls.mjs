@@ -338,9 +338,12 @@ export function buildEncodeArgs({ input, ladder, frameRate, interlaced, color, h
 /**
  * Runs a child process. Options: `niceLevel` (not on Windows), `signal` (AbortSignal: kills the
  * child and rejects with name "AbortError"), `onProgressSeconds` (ffmpeg only: called with the
- * encoded media seconds parsed from `-progress pipe:1`; stdout is then not buffered).
+ * encoded media seconds parsed from `-progress pipe:1`; stdout is then not buffered), `timeoutMs` (kills the
+ * child and rejects with name "TimeoutError") and `maxStdoutBytes` (kills the child when buffered stdout grows
+ * past it; rejects with name "OutputLimitError"). Both exist so a hostile or broken source cannot hold the single
+ * encoder forever or fill its memory through ffprobe.
  */
-function run(cmd, args, { niceLevel, signal, onProgressSeconds } = {}) {
+export function run(cmd, args, { niceLevel, signal, onProgressSeconds, timeoutMs, maxStdoutBytes } = {}) {
   return new Promise((resolve, reject) => {
     const abortError = () => Object.assign(new Error('aborted'), { name: 'AbortError' });
     if (signal?.aborted) return reject(abortError());
@@ -351,10 +354,24 @@ function run(cmd, args, { niceLevel, signal, onProgressSeconds } = {}) {
     let stderr = '';
     let pending = '';
     let aborted = false;
+    let failure = null;
     const onAbort = () => { aborted = true; child.kill('SIGKILL'); };
     signal?.addEventListener('abort', onAbort, { once: true });
+    const timer = timeoutMs
+      ? setTimeout(() => {
+          failure = Object.assign(new Error(`${cmd} timed out after ${timeoutMs} ms`), { name: 'TimeoutError' });
+          child.kill('SIGKILL');
+        }, timeoutMs)
+      : null;
     child.stdout.on('data', (d) => {
-      if (!onProgressSeconds) { stdout += d; return; }
+      if (!onProgressSeconds) {
+        stdout += d;
+        if (maxStdoutBytes && stdout.length > maxStdoutBytes && !failure) {
+          failure = Object.assign(new Error(`${cmd} output exceeded ${maxStdoutBytes} bytes`), { name: 'OutputLimitError' });
+          child.kill('SIGKILL');
+        }
+        return;
+      }
       pending += d;
       const lines = pending.split('\n');
       pending = lines.pop() ?? '';
@@ -364,18 +381,29 @@ function run(cmd, args, { niceLevel, signal, onProgressSeconds } = {}) {
       }
     });
     child.stderr.on('data', (d) => { stderr += d; if (stderr.length > 2_000_000) stderr = stderr.slice(-1_000_000); });
-    child.on('error', (err) => { signal?.removeEventListener('abort', onAbort); reject(err); });
+    child.on('error', (err) => { clearTimeout(timer); signal?.removeEventListener('abort', onAbort); reject(err); });
     child.on('close', (code) => {
+      clearTimeout(timer);
       signal?.removeEventListener('abort', onAbort);
       if (aborted) reject(abortError());
+      else if (failure) reject(failure);
       else if (code === 0) resolve({ stdout, stderr });
       else reject(new Error(`${cmd} exited with ${code}\n${stderr.slice(-2000)}`));
     });
   });
 }
 
-export async function probeSource(input) {
-  const { stdout } = await run('ffprobe', ['-v', 'error', '-print_format', 'json', '-show_streams', '-show_format', input]);
+/** ffprobe on an untrusted source: bounded in time and output, and cancellable (audit S04). */
+export const PROBE_TIMEOUT_MS = 60_000;
+export const PROBE_MAX_STDOUT_BYTES = 4_000_000;
+
+/** @param {string} input @param {{ signal?: AbortSignal, timeoutMs?: number }} [options] */
+export async function probeSource(input, { signal, timeoutMs = PROBE_TIMEOUT_MS } = {}) {
+  const { stdout } = await run('ffprobe', ['-v', 'error', '-print_format', 'json', '-show_streams', '-show_format', input], {
+    signal,
+    timeoutMs,
+    maxStdoutBytes: PROBE_MAX_STDOUT_BYTES,
+  });
   const data = JSON.parse(stdout);
   const video = data.streams.find((s) => s.codec_type === 'video' && s.disposition?.attached_pic !== 1);
   if (!video) throw new Error('Source has no video stream');
@@ -410,7 +438,10 @@ async function measureLoudness(input, opts, runOpts = {}) {
 }
 
 async function probeRung(rungDir) {
-  const { stdout } = await run('ffprobe', ['-v', 'error', '-print_format', 'json', '-show_streams', path.join(rungDir, 'index.m3u8')]);
+  const { stdout } = await run('ffprobe', ['-v', 'error', '-print_format', 'json', '-show_streams', path.join(rungDir, 'index.m3u8')], {
+    timeoutMs: PROBE_TIMEOUT_MS,
+    maxStdoutBytes: PROBE_MAX_STDOUT_BYTES,
+  });
   const v = JSON.parse(stdout).streams.find((s) => s.codec_type === 'video');
   return { profile: v.profile, level: v.level, width: v.width, height: v.height };
 }
@@ -434,7 +465,10 @@ async function checkSegmentsStartWithKeyframe(rungDir, parsed) {
     const data = await readFile(path.join(rungDir, s.uri));
     const tmp = path.join(rungDir, '.probe.mp4');
     await writeFile(tmp, Buffer.concat([init, data]));
-    const { stdout } = await run('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'packet=flags', '-read_intervals', '%+#1', '-of', 'csv=p=0', tmp]);
+    const { stdout } = await run('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'packet=flags', '-read_intervals', '%+#1', '-of', 'csv=p=0', tmp], {
+      timeoutMs: PROBE_TIMEOUT_MS,
+      maxStdoutBytes: PROBE_MAX_STDOUT_BYTES,
+    });
     if (!stdout.trim().startsWith('K')) bad.push(s.uri);
     await rm(tmp, { force: true });
   }
@@ -540,7 +574,7 @@ export async function encodeHls(options) {
   const log = options.log ?? (() => {});
   const opts = { ...DEFAULTS, ...(options.opts ?? {}) };
   const t0 = Date.now();
-  const info = await probeSource(input);
+  const info = await probeSource(input, { signal });
   const frameRate = chooseFrameRate(info.avgFrameRate);
   let ladder = planLadder(info.width, info.height);
   if (maxHeight) ladder = ladder.filter((r) => Math.min(r.width, r.height) <= maxHeight);

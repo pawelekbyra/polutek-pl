@@ -5,7 +5,7 @@ vi.mock("@/lib/modules/video-pipeline/application/process-encode-job", () => ({
   processEncodeJob: vi.fn(async (job: VideoEncodeJob) => (job.id === "bad" ? Promise.reject(new Error("boom")) : "succeeded")),
 }));
 
-import { runWorkerLoop } from "@/lib/modules/video-pipeline/application/worker-loop";
+import { abortableSleep, runWorkerLoop } from "@/lib/modules/video-pipeline/application/worker-loop";
 import { processEncodeJob } from "@/lib/modules/video-pipeline/application/process-encode-job";
 
 const job = (id: string) => ({ id, videoId: "v", attemptCount: 1 }) as unknown as VideoEncodeJob;
@@ -51,5 +51,24 @@ describe("runWorkerLoop", () => {
     stop.abort();
     const d = deps([job("a")], { shutdown: stop.signal });
     expect((await runWorkerLoop(d)).processed).toEqual([]);
+  });
+});
+
+describe('abortableSleep (audit W21)', () => {
+  it('removes its abort listener when the timer wins, so idle polling does not leak listeners', async () => {
+    const controller = new AbortController();
+    const add = vi.spyOn(controller.signal, 'addEventListener');
+    const remove = vi.spyOn(controller.signal, 'removeEventListener');
+    for (let i = 0; i < 20; i += 1) await abortableSleep(1, controller.signal);
+    expect(add).toHaveBeenCalledTimes(20);
+    expect(remove).toHaveBeenCalledTimes(20);
+  });
+
+  it('resolves at once on an abort, and for an already aborted signal', async () => {
+    const controller = new AbortController();
+    const pending = abortableSleep(60_000, controller.signal);
+    controller.abort();
+    await expect(pending).resolves.toBeUndefined();
+    await expect(abortableSleep(60_000, controller.signal)).resolves.toBeUndefined();
   });
 });
