@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { readSingleKeyShortcuts, writeSingleKeyShortcuts } from "@admin/lib/single-key-shortcuts";
 import { Icon } from "../icons";
 
 const ROWS: [string[], string][] = [
@@ -14,9 +15,13 @@ const ROWS: [string[], string][] = [
   [["Esc"], "Zamknij okno, menu albo paletę"],
 ];
 
-/** List of keyboard shortcuts; single-letter shortcuts never fire inside inputs or dialogs (WCAG 2.1.4). */
+/** List of keyboard shortcuts. Single-letter shortcuts never fire inside inputs or dialogs and can be switched off here (WCAG 2.1.4). */
 export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const [singleKeys, setSingleKeys] = useState(true);
+  useEffect(() => {
+    if (open) setSingleKeys(readSingleKeyShortcuts());
+  }, [open]);
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
@@ -32,6 +37,19 @@ export function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () 
         </button>
       </div>
       <div className="modal-body">
+        <label className="field-check" style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 12 }}>
+          <input
+            type="checkbox"
+            checked={singleKeys}
+            onChange={(e) => {
+              setSingleKeys(e.target.checked);
+              writeSingleKeyShortcuts(e.target.checked);
+            }}
+          />
+          <span>
+            Skróty jednoznakowe włączone (g…, ?, /, [ ], j, k, h, z, p, w). Wyłącz, jeśli piszesz dyktowaniem albo urządzeniem, które wysyła pojedyncze litery. Ctrl K i Esc działają zawsze.
+          </span>
+        </label>
         <table className="table table-compact">
           <caption className="sr-only">Skróty klawiszowe</caption>
           <tbody>

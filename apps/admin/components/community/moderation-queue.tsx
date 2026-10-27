@@ -3,7 +3,9 @@
  * The moderation queue (prototype #/spolecznosc?tab=moderacja): comments held for review or reported. Keyboard:
  * j/k next/previous, h hide, z keep (approve a held one), p hold, w mute the author. Every decision is one atomic
  * request (comment + its reports) and shows a "Cofnij" toast that restores both. Single-letter keys never fire in
- * inputs or while a dialog is open (WCAG 2.1.4), and the active item keeps focus so a screen reader follows.
+ * inputs or while a dialog is open, can be switched off for the whole panel (Skróty klawiszowe; WCAG 2.1.4), and the
+ * four that change a comment (h z p w) only act while focus is in the queue or on nothing at all, never on a control
+ * elsewhere on the page. The active item keeps focus so a screen reader follows.
  */
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,6 +17,7 @@ import { Icon } from "@admin/components/icons";
 import { useToast } from "@admin/components/shell/toasts";
 import { Badge } from "@admin/components/badge";
 import { REPORT_REASON } from "@admin/lib/community-format";
+import { readSingleKeyShortcuts } from "@admin/lib/single-key-shortcuts";
 import type { PanelComment } from "@/lib/modules/comments";
 
 type Decision = "hide" | "hold" | "keep";
@@ -30,6 +33,7 @@ export function ModerationQueue({ items }: { items: PanelComment[] }) {
   const [muteError, setMuteError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const refs = useRef<Map<string, HTMLElement>>(new Map());
+  const queueRef = useRef<HTMLElement>(null);
   const visible = items.filter((c) => !done.has(c.id));
   const current = visible[Math.min(active, Math.max(0, visible.length - 1))];
 
@@ -75,7 +79,11 @@ export function ModerationQueue({ items }: { items: PanelComment[] }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey || typing(e.target) || document.querySelector("dialog[open]") || !visible.length) return;
+      if (!readSingleKeyShortcuts()) return;
       const k = e.key.toLowerCase();
+      const t = e.target;
+      const decisionScope = t === document || t === document.body || (t instanceof Node && !!queueRef.current?.contains(t));
+      if ((k === "h" || k === "z" || k === "p" || k === "w") && !decisionScope) return;
       if (k === "j" || k === "k") {
         e.preventDefault();
         const i = Math.max(0, Math.min(visible.length - 1, active + (k === "j" ? 1 : -1)));
@@ -124,9 +132,9 @@ export function ModerationQueue({ items }: { items: PanelComment[] }) {
   return (
     <>
       <p className="text-2 kbd-tip mb-3">
-        Klawisze: <kbd>j</kbd>/<kbd>k</kbd> następny/poprzedni, <kbd>h</kbd> ukryj, <kbd>z</kbd> zostaw (zatwierdź wstrzymany), <kbd>p</kbd> wstrzymaj, <kbd>w</kbd> wycisz autora.
+        Klawisze: <kbd>j</kbd>/<kbd>k</kbd> następny/poprzedni, <kbd>h</kbd> ukryj, <kbd>z</kbd> zostaw (zatwierdź wstrzymany), <kbd>p</kbd> wstrzymaj, <kbd>w</kbd> wycisz autora. Skróty jednoznakowe wyłączysz w oknie „Skróty klawiszowe” (Ctrl K, potem „Pokaż wszystkie skróty”).
       </p>
-      <section className="card card-flush" aria-label="Kolejka moderacji">
+      <section ref={queueRef} className="card card-flush" aria-label="Kolejka moderacji">
         {visible.map((c, i) => {
           const held = c.status === "HELD_FOR_REVIEW";
           const canMute = !!c.author && !c.author.isDeleted && !c.author.isAdmin && !c.author.mutedUntil;
