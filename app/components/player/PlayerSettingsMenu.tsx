@@ -190,7 +190,9 @@ export function PlayerSettingsMenu() {
     chaptersMenu.setOpen(true);
   };
 
-  const badge = qualityBadge(quality?.height);
+  // On a phone the quality text would take the room of the progress track and the CC switch: a plain gear there.
+  const phone = useMediaQuery("(max-width: 640px)");
+  const badge = phone ? null : qualityBadge(quality?.height);
   const triggerLabel = badge ? `${copy.settings} (${badge})` : copy.settings;
   const qualityTitleId = `${menuId}-quality`;
   const speedTitleId = `${menuId}-speed`;
