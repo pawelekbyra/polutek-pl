@@ -168,10 +168,10 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={panelId}
-        className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transform-none motion-reduce:transition-none"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transform-none motion-reduce:transition-none"
       >
-        <span className="flex h-[34px] w-[34px] items-center justify-center overflow-hidden rounded-full border border-[var(--chan-line)]">
-          {avatarImage(34)}
+        <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-[var(--chan-line)]">
+          {avatarImage(36)}
         </span>
       </button>
 

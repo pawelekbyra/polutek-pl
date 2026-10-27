@@ -359,6 +359,10 @@
     --chan-blue: #2563eb;
     /* Very dark blue of the POLUTEK wordmark in the header logo: hue 228 deg, a deeper blue than --chan-blue (221 deg), dark (contrast 11.51:1 on --chan-nav, 12.14:1 on white). */
     --brand-ink-blue: #092598;
+    /* Top bar height (phones, and desktop with the wordmark): 3px + 40px controls + 3px + the 1px bottom line. It follows the logo
+       (Navbar: link min-h-10 + py-1 around the logo), so with the glasses variant the desktop bar grows by itself; this value is
+       used where something hangs under the phone bar (the language list). navbar-logo-height.test.tsx keeps both in step. */
+    --header-h: 47px;
     --chan-blue-soft: #eff3fe;
     --chan-amber: #f59e0b;
     --chan-amber-bright: #fbbf24;
