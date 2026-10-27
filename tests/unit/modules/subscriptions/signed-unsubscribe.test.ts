@@ -58,6 +58,7 @@ function makeDb(options: { preferences?: PreferenceRow[]; userEmail?: string; la
   });
 
   const tx = {
+    $queryRaw: vi.fn().mockResolvedValue([]),
     user: {
       findUnique: vi.fn().mockResolvedValue({ id: 'user_opaque_1', email: options.userEmail ?? 'person@example.com', language: options.language ?? 'pl' }),
     },

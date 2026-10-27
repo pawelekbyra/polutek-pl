@@ -34,6 +34,8 @@ export class SubscribeUseCase {
       const subscriptionRepo = new SubscriptionRepository(tx);
       const preferenceRepo = new EmailPreferenceRepository(tx);
 
+      await subscriptionRepo.lockUser(userId, tx);
+
       const prefResult = await preferenceRepo.recordExplicitContentOptIn(userId, trustedEmail, tx);
 
       if (!prefResult.recorded) {

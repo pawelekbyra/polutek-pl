@@ -45,6 +45,8 @@ export class UnsubscribeUseCase {
       const subscriptionRepo = new SubscriptionRepository(tx);
       const preferenceRepo = new EmailPreferenceRepository(tx);
 
+      await subscriptionRepo.lockUser(userId, tx);
+
       const deleted = await subscriptionRepo.deleteByUserIdAndCreatorId(userId, channel.id, tx);
       const remaining = await subscriptionRepo.countByUserId(userId, tx);
 
