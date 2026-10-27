@@ -21,7 +21,7 @@ export function ChaptersMenu() {
   const player = useMediaPlayer();
   const options = useChapterOptions();
   const controlsVisible = useMediaState("controlsVisible") as boolean | undefined;
-  const { open, setOpen } = useChaptersMenu();
+  const { open, setOpen, opener } = useChaptersMenu();
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -30,8 +30,14 @@ export function ChaptersMenu() {
 
   const close = useCallback((returnFocus: boolean) => {
     setOpen(false);
-    if (returnFocus) triggerRef.current?.focus();
-  }, [setOpen]);
+    if (returnFocus) {
+      // On a phone the panel's own button is hidden by CSS (it cannot take focus): go back to what opened the panel.
+      const trigger = triggerRef.current;
+      const visible = trigger && getComputedStyle(trigger).display !== "none";
+      (visible ? trigger : (opener.current ?? trigger))?.focus();
+    }
+    opener.current = null;
+  }, [setOpen, opener]);
 
   // Controls hide after inactivity (and take the panel with them): close it too.
   useEffect(() => {
@@ -96,7 +102,8 @@ export function ChaptersMenu() {
         close(true);
         break;
       case "Tab":
-        setOpen(false);
+        // Leave the menu in the direction of Tab: park the focus on the button first so the browser continues from there.
+        close(true);
         break;
       default:
         break;
@@ -140,6 +147,7 @@ export function ChaptersMenu() {
                 key={option.cue.startTime}
                 type="button"
                 role="menuitem"
+                tabIndex={-1}
                 aria-current={option.selected ? "true" : undefined}
                 className={cn("mc-menu-item mc-chapter-item", option.selected && "mc-menu-item--on")}
                 onClick={() => choose(option.cue.startTime)}

@@ -126,7 +126,7 @@ export default function MySubscriptionsList({ initialRows }: { initialRows: MySu
                   <span className="block truncate font-brand text-[16px] font-bold text-[var(--chan-muted)]">{row.name}</span>
                 )}
                 <p className="truncate text-[12.5px] text-[var(--chan-muted)] tabular-nums">
-                  @{row.handle ?? row.slug} · {formatCount(row.videosCount)} {countedNoun(language, "videos", row.videosCount)}
+                  @{row.handle ?? row.slug} · {formatCount(row.videosCount, language)} {countedNoun(language, "videos", row.videosCount)}
                   {lastVideo ? ` · ${tx("ostatni film", "latest video")}: ${lastVideo}` : ""}
                   {!row.available ? ` · ${tx("kanał niedostępny", "channel unavailable")}` : ""}
                 </p>

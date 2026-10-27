@@ -39,8 +39,10 @@ export interface SearchViewer {
 export interface PublicSearchItem extends PublicVideoDTO {
   tags: string[];
   category: VideoCategory | null;
-  /** Short plain-text excerpt; null for videos behind sign-in (title and thumbnail only). */
+  /** Short plain-text excerpt of the (Polish) description; null for videos behind sign-in (title and thumbnail only). */
   snippet: string | null;
+  /** The same excerpt of the English description (null when there is none); pick with `getSearchSnippet`. */
+  snippetEn: string | null;
 }
 
 export interface PublicSearchPage {
@@ -206,6 +208,7 @@ async function hydrate(ids: string[]): Promise<PublicSearchItem[]> {
       tags,
       category: isVideoCategory(row.category) ? row.category : null,
       snippet: gated ? null : snippetOf(dto.description),
+      snippetEn: gated ? null : snippetOf(dto.descriptionEn),
     });
   }
   return items;

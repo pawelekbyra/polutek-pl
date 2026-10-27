@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { formatPremiereDate } from "@/lib/premiere";
+import { formatPremiereDate, formatPremiereDateLong } from "@/lib/premiere";
 import styles from "./CockpitComingSoon.module.css";
 import { PremieraLettering } from "./PremieraLettering";
 import { HudBackdrop } from "./HudBackdrop";
@@ -254,7 +254,7 @@ export function CockpitComingSoon({
   }, []);
 
   const unitLabels = [tx("DNI", "DAYS"), tx("GODZ", "HRS"), tx("MIN", "MIN"), tx("SEK", "SEC")];
-  const premiereDate = formatPremiereDate(premiereAt);
+  const premiereDate = formatPremiereDate(premiereAt, tx.language);
   const enter = (delay: number) =>
     reduceMotion
       ? { initial: false as const, animate: { opacity: 1, y: 0 }, transition: { duration: 0 } }
@@ -275,7 +275,7 @@ export function CockpitComingSoon({
       <span className={`${styles.corner} ${styles.cornerBr}`} aria-hidden="true" />
 
       <div className={styles.content}>
-        <motion.span className={styles.date} {...enter(0.1)}>
+        <motion.span className={styles.date} role="img" aria-label={formatPremiereDateLong(premiereAt, tx.language)} {...enter(0.1)}>
           <Segments text={premiereDate} tightOnes />
         </motion.span>
 

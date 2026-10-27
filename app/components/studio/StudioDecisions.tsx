@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
-import { StudioApiError, jsonBody, studioApi } from "./studio-client";
+import { jsonBody, studioApi } from "./studio-client";
+import { studioErrorText } from "./studio-errors";
 import { Badge, CharCounter, Card, Field, Notice, inputClass, smallButtonClass, smallGhostButtonClass } from "./ui";
 
 type AppealState = {
@@ -49,7 +50,7 @@ export default function StudioDecisions() {
       setItems(data.items);
       setError(null);
     } catch (e) {
-      setError(e instanceof StudioApiError ? e.message : tx("Nie udało się wczytać decyzji.", "Could not load the decisions."));
+      setError(studioErrorText(e, tx, tx("Nie udało się wczytać decyzji.", "Could not load the decisions.")));
     }
   }, [tx]);
 
@@ -99,7 +100,7 @@ export default function StudioDecisions() {
       setDone(tx("Odwołanie zostało wysłane. Rozpatrzy je człowiek, a o wyniku dostaniesz powiadomienie.", "Your appeal was sent. A person will review it and you will be notified of the result."));
       await load();
     } catch (e) {
-      setError(e instanceof StudioApiError ? e.message : tx("Nie udało się wysłać odwołania.", "Could not send the appeal."));
+      setError(studioErrorText(e, tx, tx("Nie udało się wysłać odwołania.", "Could not send the appeal.")));
     } finally {
       setBusy(false);
     }

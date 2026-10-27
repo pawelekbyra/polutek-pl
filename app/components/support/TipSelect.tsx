@@ -84,6 +84,8 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
   const listRef = useRef<HTMLUListElement>(null);
   const listId = useId();
   const labelId = useId();
+  const optionId = (index: number) => `${listId}-opt-${index}`;
+  const typeahead = useRef({ text: "", at: 0 });
   const selected = options.find((option) => option.value === value) ?? null;
   const selectedIcon = selected?.icon;
   const SelectedIcon = typeof selectedIcon === "function" ? selectedIcon : null;
@@ -109,6 +111,12 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
     };
   }, [open]);
 
+  // The active option follows the arrows with aria-activedescendant; keep it inside the scrolled list.
+  useEffect(() => {
+    if (!open) return;
+    document.getElementById(`${listId}-opt-${active}`)?.scrollIntoView?.({ block: "nearest" });
+  }, [open, active, listId]);
+
   const setOpen = (next: boolean) => setPosition(next && triggerRef.current ? measureList(triggerRef.current, !!compact) : null);
 
   const toggle = () => {
@@ -128,11 +136,38 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
       setOpen(false);
       return;
     }
+    if (event.key === "Tab" && open) {
+      // Tab leaves the control and takes the list with it (no choice is made).
+      setOpen(false);
+      return;
+    }
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
       if (!open) return toggle();
       const step = event.key === "ArrowDown" ? 1 : -1;
       setActive((index) => (index + step + options.length) % options.length);
+      return;
+    }
+    if ((event.key === "Home" || event.key === "End") && open) {
+      event.preventDefault();
+      setActive(event.key === "Home" ? 0 : options.length - 1);
+      return;
+    }
+    if (event.key.length === 1 && event.key !== " " && !event.ctrlKey && !event.metaKey && !event.altKey && options.length > 0) {
+      // Type-ahead: jump to the next option whose title starts with the typed text.
+      const now = Date.now();
+      const memory = typeahead.current;
+      memory.text = now - memory.at > 700 ? event.key.toLowerCase() : memory.text + event.key.toLowerCase();
+      memory.at = now;
+      const from = open ? active : Math.max(0, options.findIndex((option) => option.value === value));
+      for (let step = 0; step < options.length; step += 1) {
+        const index = (from + (memory.text.length === 1 ? step + 1 : step)) % options.length;
+        if (options[index].title.toLowerCase().startsWith(memory.text)) {
+          if (!open) toggle();
+          setActive(index);
+          break;
+        }
+      }
       return;
     }
     if ((event.key === "Enter" || event.key === " ") && open) {
@@ -155,7 +190,8 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
           aria-labelledby={labelId}
           aria-haspopup="listbox"
           aria-expanded={open}
-          aria-controls={listId}
+          aria-controls={open ? listId : undefined}
+          aria-activedescendant={open ? optionId(active) : undefined}
           disabled={disabled}
           onClick={toggle}
           onKeyDown={onKeyDown}
@@ -177,6 +213,7 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
               {options.map((option, index) => (
                 <li
                   key={option.value}
+                  id={optionId(index)}
                   role="option"
                   aria-selected={option.value === value}
                   onClick={() => choose(option.value)}
@@ -215,7 +252,8 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
           aria-labelledby={labelId}
           aria-haspopup="listbox"
           aria-expanded={open}
-          aria-controls={listId}
+          aria-controls={open ? listId : undefined}
+          aria-activedescendant={open ? optionId(active) : undefined}
           disabled={disabled}
           onClick={toggle}
           onKeyDown={onKeyDown}
@@ -258,6 +296,7 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
               return (
                 <li
                   key={option.value}
+                  id={optionId(index)}
                   role="option"
                   aria-selected={isSelected}
                   onClick={() => choose(option.value)}

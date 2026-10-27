@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
-import { StudioApiError, jsonBody, studioApi, type StudioLimits } from "./studio-client";
+import { jsonBody, studioApi, type StudioLimits } from "./studio-client";
+import { studioErrorText } from "./studio-errors";
 import { uploadOriginal, type UploadProgress } from "./upload-original";
 import { confirmLeave, setUnsavedWork } from "./unsaved-guard";
 import { DESCRIPTION_MAX, TITLE_MAX, formatLimitDuration, titleFromFileName, validateCoverFile, visibilityToFields, type VisibilityMode } from "./video-form";
@@ -35,6 +36,14 @@ export default function StudioUploadWizard({
 }) {
   const { tx } = useLanguage();
   const [step, setStep] = useState<Step>(1);
+  // Moving on replaces the buttons that had the focus: park it on the current step marker ("Step 2: Visibility").
+  const currentStepRef = useRef<HTMLLIElement>(null);
+  const shownStep = useRef<Step>(1);
+  useEffect(() => {
+    if (shownStep.current === step) return;
+    shownStep.current = step;
+    currentStepRef.current?.focus({ preventScroll: true });
+  }, [step]);
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -191,7 +200,7 @@ export default function StudioUploadWizard({
     } catch (e) {
       if (controller.signal.aborted) return;
       setError(
-        e instanceof StudioApiError ? e.message : tx("Przesyłanie nie powiodło się. Spróbuj ponownie.", "Upload failed. Please try again."),
+        studioErrorText(e, tx, tx("Przesyłanie nie powiodło się. Spróbuj ponownie.", "Upload failed. Please try again.")),
       );
       setPhase("error");
     }
@@ -224,8 +233,10 @@ export default function StudioUploadWizard({
         {steps.map((s) => (
           <li
             key={s.id}
+            ref={step === s.id ? currentStepRef : undefined}
+            tabIndex={step === s.id ? -1 : undefined}
             aria-current={step === s.id ? "step" : undefined}
-            className={`rounded-full px-3 py-1 text-[13px] font-semibold ${
+            className={`rounded-full px-3 py-1 text-[13px] font-semibold outline-none ${
               step === s.id ? "bg-[var(--chan-ink)] text-[var(--chan-card)]" : "bg-[var(--chan-surface)] text-[var(--chan-muted)]"
             }`}
           >

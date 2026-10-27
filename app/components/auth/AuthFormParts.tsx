@@ -36,7 +36,7 @@ export function Field({
           type={isPassword && revealed ? "text" : type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`w-full rounded-[12px] border border-[var(--chan-line)] bg-[var(--chan-surface)] py-2 pl-3 font-sans text-[15px] text-[var(--chan-ink)] outline-none transition-colors focus:border-[var(--chan-blue)] focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]/40 ${isPassword ? "pr-16" : "pr-3"}`}
+          className={`w-full rounded-[12px] border border-[var(--chan-control-border)] bg-[var(--chan-surface)] py-2 pl-3 font-sans text-[15px] text-[var(--chan-ink)] outline-none transition-colors focus:border-[var(--chan-blue)] focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]/40 ${isPassword ? "pr-16" : "pr-3"}`}
           {...rest}
         />
         {isPassword && (

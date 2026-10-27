@@ -68,7 +68,7 @@ export function PlayerErrorOverlay({
   const retryLabel = tx("Spróbuj ponownie", "Try again");
 
   return (
-    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[var(--chan-nav,#f7f9fc)] p-6 text-center text-[var(--chan-ink,#111827)] motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300 [container-type:inline-size]">
+    <div role="alert" className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[var(--chan-nav,#f7f9fc)] p-6 text-center text-[var(--chan-ink,#111827)] motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300 [container-type:inline-size]">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-[18px] border border-red-500/20 bg-[var(--cm-card-92-white)] text-red-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_16px_32px_-12px_rgba(220,38,38,0.3)]">
         <CircleAlert className="h-7 w-7" aria-hidden="true" />
       </div>

@@ -61,7 +61,7 @@ describe("GET /api/search", () => {
     const body = await res.json();
     expect(body.nextCursor).toBe("abc");
     expect(Object.keys(body.items[0]).sort()).toEqual(
-      ["category", "channel", "duration", "id", "isAdult", "publishedAt", "slug", "snippet", "tags", "thumbnailUrl", "tier", "title", "titleEn", "views"].sort(),
+      ["category", "channel", "duration", "id", "isAdult", "publishedAt", "slug", "snippet", "snippetEn", "tags", "thumbnailUrl", "tier", "title", "titleEn", "views"].sort(),
     );
     expect(body.items[0].channel).toEqual({ id: "c1", name: "K", slug: "k" });
   });

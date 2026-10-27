@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
 import { PLAYLIST_DESCRIPTION_MAX, PLAYLIST_TITLE_MAX, type PlaylistVisibilityValue } from "@/lib/modules/playlists/domain/playlist-rules";
-import { StudioApiError } from "./studio-client";
 import { CharCounter, Field, Notice, buttonClass, ghostButtonClass, inputClass } from "./ui";
 
 /** Shared pieces of the playlist screens: the visibility texts, the error text and the title/description/visibility form. */
@@ -23,9 +22,8 @@ export function useVisibilityText() {
   return { label, hint };
 }
 
-export function errorText(error: unknown, fallback: string): string {
-  return error instanceof StudioApiError ? error.message : fallback;
-}
+import { studioErrorText as errorText } from "./studio-errors";
+export { errorText };
 
 export type FormValues = { title: string; description: string; visibility: PlaylistVisibilityValue };
 
@@ -56,7 +54,7 @@ export function PlaylistForm({
       await onSubmit({ title: values.title.trim(), description: values.description.trim() || null, visibility: values.visibility });
       setMessage({ kind: "success", text: tx("Zapisano.", "Saved.") });
     } catch (e) {
-      setMessage({ kind: "error", text: errorText(e, tx("Nie udało się zapisać playlisty.", "Could not save the playlist.")) });
+      setMessage({ kind: "error", text: errorText(e, tx, tx("Nie udało się zapisać playlisty.", "Could not save the playlist.")) });
     } finally {
       setBusy(false);
     }

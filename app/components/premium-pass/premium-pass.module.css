@@ -85,7 +85,9 @@
 @container (max-width: 340px) { .stageSub { display: none; } }
 .goldBtn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px; border: 0; border-radius: var(--pass-radius-btn); cursor: pointer; background: linear-gradient(180deg, #fcd34d, var(--pass-gold-strong)); color: var(--pass-gold-ink); font-weight: 800; font-size: 15px; letter-spacing: -.005em; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .55), 0 14px 30px -14px rgba(245, 158, 11, .9); white-space: nowrap; transition: transform 160ms, filter 160ms; }
 .goldBtn:hover { filter: brightness(1.04); transform: translateY(-1px); }
-.goldBtn:focus-visible, .inkBtn:focus-visible, .lineBtn:focus-visible, .ghostBtn:focus-visible, .stageLink:focus-visible, .fab:focus-visible { outline: 3px solid var(--pass-gold); outline-offset: 2px; }
+.goldBtn:focus-visible, .stageLink:focus-visible, .fab:focus-visible { outline: 3px solid var(--pass-gold); outline-offset: 2px; }
+/* The light checkout buttons sit on white: gold (1.7:1) would not show there, so they use the site focus ring (A15). */
+.inkBtn:focus-visible, .lineBtn:focus-visible, .ghostBtn:focus-visible { outline: 3px solid var(--chan-focus-ring, #2563eb); outline-offset: 2px; }
 .goldBtn svg { width: 18px; height: 18px; flex: 0 0 auto; }
 .wide { width: 100%; min-height: 50px; }
 .stageLink { color: var(--pass-on-stage); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, var(--pass-gold) 70%, transparent); min-height: 24px; display: inline-flex; align-items: center; }

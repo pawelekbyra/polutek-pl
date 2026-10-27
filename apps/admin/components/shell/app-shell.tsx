@@ -9,6 +9,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import type { NavCounts } from "@/lib/modules/admin-overview";
 import { ALL_NAV, BOTTOM_NAV, NAV, NAV_FOOT, activeNavId, type NavItem } from "@admin/lib/nav";
+import { readSingleKeyShortcuts } from "@admin/lib/single-key-shortcuts";
 import { Icon } from "../icons";
 import { CommandPalette } from "./command-palette";
 import { ShortcutsDialog } from "./shortcuts-dialog";
@@ -108,6 +109,8 @@ export function AppShell({ children, counts, health, viewer, sample, now }: { ch
         return;
       }
       if (e.ctrlKey || e.metaKey || e.altKey || isTyping(e.target) || document.querySelector("dialog[open]")) return;
+      // Everything below is a single printable key: the operator can switch these off (WCAG 2.1.4).
+      if (!readSingleKeyShortcuts()) return;
       const k = e.key;
       if (gAt.current && Date.now() - gAt.current < 1200) {
         gAt.current = 0;

@@ -12,6 +12,7 @@ import VideoPlayer from './VideoPlayer';
 import { SafeAvatar } from './SafeAvatar';
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
 import { intlLocale } from "@/lib/i18n/ui";
+import { countedNoun } from "@/lib/i18n/plurals";
 import { useLanguage } from './LanguageContext';
 import { useToast } from '@/app/hooks/useToast';
 import { logger } from '@/lib/logger';
@@ -119,7 +120,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   }, [video.id, initialIsSubscribed, video.creator?.subscribersCount]);
 
   const subscribersCount = localSubState.subscribersCount;
-  const subscribersLabel = subscribersCount === 1 ? t.subscribersOne : t.subscribers;
+  const subscribersLabel = countedNoun(language, "subscribers", subscribersCount);
 
   const [interactionState, setInteractionState] = useState({
     isLiked: (userId ? initialInteraction?.liked : false) || false,
@@ -288,7 +289,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
 
         {/* INFO SECTION */}
         <div className="space-y-3 pb-1 lg:px-2">
-          <h1 className="font-brand font-bold not-italic uppercase text-[22px] md:text-[30px] tracking-[0.005em] text-[var(--chan-ink)] leading-[1.16] mb-2">
+          <h1 id="video-title" tabIndex={-1} className="font-brand font-bold not-italic uppercase outline-none text-[22px] md:text-[30px] tracking-[0.005em] text-[var(--chan-ink)] leading-[1.16] mb-2">
              {displayTitle}
           </h1>
           {typeof video.fundraisingProgress === 'number' && (
@@ -320,7 +321,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
                     {video.creator?.name || MAIN_CREATOR_NAME}
                   </Link>
                   <span className="text-[12.5px] font-medium text-[var(--chan-muted)] mt-[1px] tabular-nums">
-                     {formatCount(subscribersCount)} {subscribersLabel}
+                     {formatCount(subscribersCount, language)} {subscribersLabel}
                   </span>
                </div>
                <div className="flex min-w-0 flex-1 justify-end lg:flex-none lg:justify-start lg:ml-[6px]">
@@ -432,7 +433,7 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
            <div>
              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mb-1.5">
                 <span className="font-sans text-[12px] font-bold not-italic tabular-nums text-[var(--chan-ink)]">
-                   {localViewsCount.toLocaleString(intlLocale(language))} {t.views}
+                   {localViewsCount.toLocaleString(intlLocale(language))} {countedNoun(language, "views", localViewsCount)}
                 </span>
                 <span aria-hidden="true" className="h-[3px] w-[3px] rounded-full bg-[var(--chan-line-soft)]" />
                 <span className="font-sans text-[12px] font-semibold not-italic text-[var(--chan-muted)]">

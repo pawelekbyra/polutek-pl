@@ -36,6 +36,7 @@ import { CommentThread } from "./components/CommentThread";
 import { CommentLoadingSkeleton } from "@/components/skeletons";
 import { usePageRevealReady } from "../preload/PageRevealGate";
 import type { InitialCommentsPage } from "./initial-comments";
+import { commentErrorText } from "./comment-errors";
 
 interface EmbeddedCommentsProps {
   userProfile?: {
@@ -317,11 +318,10 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
             }
           },
           onError: (error) => {
-            const message =
-              error instanceof Error
-                ? error.message
-                : tx("Nie udało się dodać komentarza. Spróbuj ponownie.", "Could not add your comment. Try again.");
-            setComposerError(message);
+            // Never the server's raw text (Polish, or a bare "Request failed"): a translated text by code.
+            setComposerError(
+              commentErrorText(error, tx, tx("Nie udało się dodać komentarza. Spróbuj ponownie.", "Could not add your comment. Try again.")),
+            );
           },
         },
       );

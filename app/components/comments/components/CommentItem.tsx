@@ -29,6 +29,7 @@ import {
 import { useRenderClock } from "../../RenderClock";
 import { useLongPress } from "../hooks/useLongPress";
 import { consumeCommentDeepLink } from "../deep-link";
+import { commentErrorText } from "../comment-errors";
 
 interface CommentItemProps {
   comment: CommentView;
@@ -161,11 +162,7 @@ function CommentItemComponent({
       setIsEditing(false);
     } catch (error) {
       // Keep the editor and the typed text so nothing is lost.
-      setEditError(
-        error instanceof Error && error.message
-          ? error.message
-          : tx("Nie udało się zapisać zmian.", "Could not save your changes."),
-      );
+      setEditError(commentErrorText(error, tx, tx("Nie udało się zapisać zmian.", "Could not save your changes.")));
     } finally {
       setIsSavingEdit(false);
     }
