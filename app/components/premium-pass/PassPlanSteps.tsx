@@ -43,7 +43,7 @@ export function PassOrderSummary({ tx, language, offer, product, currency, compa
           <b>{total}</b>
         </div>
       </div>
-      <p className={cn(styles.muted, styles.vatLine)}>{vatLine(tx, offer.vatRatePercent)}</p>
+      <p className={cn(styles.muted, styles.vatLine)}>{vatLine(tx)}</p>
     </div>
   );
 }
@@ -89,15 +89,17 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
             options={offer.currencies.map((code) => ({ value: code, icon: TIP_CURRENCY_SYMBOLS[code], title: tipCurrencyTitle(tx, code), short: `${TIP_CURRENCY_SYMBOLS[code]} · ${code}` }))}
           />
         </div>
-        {offer.products.map((p) => (
-          <label key={p.id} className={styles.product}>
-            <input type="radio" name={`${ids}-product`} value={p.id} checked={p.id === product.id} onChange={() => onProduct(p.id)} />
-            {p.bestValue ? <span className={styles.bestValue}>{tx("Bestseller", "Bestseller")}</span> : <span className={styles.badgeSlot} aria-hidden="true" />}
-            <span className={styles.productName}>{productName(tx, p.id)}</span>
-            <span className={styles.productPrice}>{price(language, p.prices[currency], currency)}</span>
-            <span className={styles.productNote}>{productNote(tx, p)}</span>
-          </label>
-        ))}
+        <div className={styles.productGrid}>
+          {offer.products.map((p) => (
+            <label key={p.id} className={styles.product}>
+              <input type="radio" name={`${ids}-product`} value={p.id} checked={p.id === product.id} onChange={() => onProduct(p.id)} />
+              {p.bestValue ? <span className={styles.bestValue}>{tx("Bestseller", "Bestseller")}</span> : <span className={styles.badgeSlot} aria-hidden="true" />}
+              <span className={styles.productName}>{productName(tx, p.id)}</span>
+              <span className={styles.productPrice}>{price(language, p.prices[currency], currency)}</span>
+              <span className={styles.productNote}>{productNote(tx, p)}</span>
+            </label>
+          ))}
+        </div>
       </fieldset>
 
       {notice && <p className={styles.noticeWarn} role="alert">{notice}</p>}

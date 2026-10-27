@@ -122,7 +122,7 @@
  "does not renew": "sans renouvellement",
  "for the project's patrons only": "réservé aux mécènes du projet",
  "gross": "TTC",
- "gross amount, includes {0}% VAT": "montant TTC, dont {0} % de TVA",
+ "includes VAT": "TVA incluse",
  "one-time": "paiement unique",
  "one-time, no end date": "paiement unique, sans date de fin",
  "one-time, {0} days": "paiement unique, {0} jours",

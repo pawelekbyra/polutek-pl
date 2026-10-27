@@ -94,7 +94,7 @@ describe('patron checkout, step 1 (currency and option)', () => {
     expect(within(group).getAllByText('Bestseller')).toHaveLength(1);
     expect(summaryOf(dialog)).toHaveTextContent('Dostęp bez limitu');
     expect(summaryOf(dialog)).toHaveTextContent('29,99');
-    expect(summaryOf(dialog)).toHaveTextContent('zawiera 23% VAT');
+    expect(summaryOf(dialog)).toHaveTextContent('zawiera VAT');
     // payment method and legal links belong to step 2; nothing to tick, no text field
     expect(dialog.queryByRole('combobox', { name: 'Metoda płatności' })).toBeNull();
     expect(dialog.queryAllByRole('checkbox')).toHaveLength(0);

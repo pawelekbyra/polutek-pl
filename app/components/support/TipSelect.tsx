@@ -21,7 +21,7 @@ interface TipSelectProps {
   onChange: (value: string) => void;
   /** Greyed out and not openable (e.g. while the choice is locked). */
   disabled?: boolean;
-  /** A small grey pill (36 px, hit area 44 px) instead of the full field; the label stays for screen readers only, the caller shows its own text beside it. */
+  /** A small grey pill (28 px, hit area 44 px) instead of the full field; the label stays for screen readers only, the caller shows its own text beside it. */
   compact?: boolean;
 }
 
@@ -30,8 +30,8 @@ interface ListPosition {
   style: React.CSSProperties;
 }
 
-/** The one typography of a field label in the gate and the patron checkout (13 px, body colour, 8 px above the field); the checkout's own labels (legend, step heading) import it. */
-export const FIELD_LABEL_CLASS = "mb-2 block text-[13px] leading-[1.55] text-[var(--chan-body)]";
+/** The one typography of a field label in the gate and the patron checkout (13 px, body colour, --field-label-gap above the field: 8 px in the gate, set once by the checkout); the checkout's own labels (legend, step heading) import it. */
+export const FIELD_LABEL_CLASS = "mb-[var(--field-label-gap,8px)] block text-[13px] leading-[1.55] text-[var(--chan-body)]";
 
 const LIST_GAP = 6;
 const EDGE = 8;
@@ -157,7 +157,7 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
           disabled={disabled}
           onClick={toggle}
           onKeyDown={onKeyDown}
-          className="relative inline-flex h-9 items-center gap-1.5 rounded-full bg-[#eef1f6] px-3 text-[13px] font-bold text-[var(--chan-ink)] before:absolute before:-inset-y-1 before:inset-x-0 before:content-[''] hover:bg-[#e4e8ef] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] disabled:opacity-50"
+          className="relative inline-flex -mt-2 h-7 -translate-y-[3px] items-center gap-1.5 rounded-full bg-[#eef1f6] px-3 text-[13px] font-bold text-[var(--chan-ink)] before:absolute before:-bottom-1.5 before:-top-2.5 before:inset-x-0 before:content-[''] hover:bg-[#e4e8ef] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] disabled:opacity-50"
         >
           <span>{selected?.short ?? selected?.title ?? "—"}</span>
           <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200 motion-reduce:transition-none", open && "rotate-180")} />

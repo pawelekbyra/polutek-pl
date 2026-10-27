@@ -122,7 +122,7 @@
  "does not renew": "不自动续期",
  "for the project's patrons only": "仅限项目赞助者",
  "gross": "含税",
- "gross amount, includes {0}% VAT": "含税金额，包含 {0}% 增值税",
+ "includes VAT": "含增值税",
  "one-time": "一次性",
  "one-time, no end date": "一次性付款，无结束日期",
  "one-time, {0} days": "一次性付款，{0} 天",
