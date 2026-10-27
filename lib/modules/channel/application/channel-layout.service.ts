@@ -78,7 +78,27 @@ export class ChannelLayoutService {
                     { publishedAt: { lte: now } },
                 ],
             },
-            include: { creator: true }
+            // Only what the sidebar item, its sort and the lock/premium decisions read (W03): no descriptions, chapters,
+            // search text or the full channel row for every video of the list.
+            select: {
+                id: true,
+                slug: true,
+                title: true,
+                titleEn: true,
+                thumbnailUrl: true,
+                thumbnailPublicUrl: true,
+                tier: true,
+                status: true,
+                duration: true,
+                views: true,
+                publishedAt: true,
+                premiereAt: true,
+                createdAt: true,
+                sidebarOrder: true,
+                creatorId: true,
+                isMainFeatured: true,
+                creator: { select: { id: true, name: true, slug: true } },
+            },
         });
 
         // Sort on the viewer-facing publish date so a premiered video ranks

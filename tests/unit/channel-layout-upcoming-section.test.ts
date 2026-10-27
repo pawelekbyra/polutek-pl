@@ -57,6 +57,17 @@ describe('ChannelLayoutService UPCOMING section', () => {
     return ChannelLayoutService.getSidebarLayout(userId);
   }
 
+  it('reads only the columns the sidebar needs, not whole video rows (W03)', async () => {
+    await layoutFor('user-1');
+    const args = findMany.mock.calls[0]![0] as { select?: Record<string, unknown>; include?: unknown };
+    expect(args.include).toBeUndefined();
+    expect(args.select).toBeDefined();
+    for (const heavy of ['description', 'descriptionEn', 'chapters', 'searchText', 'tags', 'subtitleUrlPl']) {
+      expect(args.select).not.toHaveProperty(heavy);
+    }
+    expect(args.select).toMatchObject({ id: true, slug: true, thumbnailPublicUrl: true, premiereAt: true, isMainFeatured: true });
+  });
+
   it('lists upcoming premieres soonest first, with their premiere time', async () => {
     const layout = await layoutFor('user-1');
     const upcoming = layout.sections.find((s) => s.type === 'UPCOMING');

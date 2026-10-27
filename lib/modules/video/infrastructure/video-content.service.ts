@@ -194,6 +194,20 @@ export class VideoContentService {
           ...(await buildPublicVideoWhere()),
           showInSidebar: true,
         },
+        // Columns no public list item reads (W03): the search text, chapters, subtitles and internal moderation and
+        // pipeline bookkeeping are not loaded for every video of the list.
+        omit: {
+          searchText: true,
+          chapters: true,
+          subtitleUrlPl: true,
+          subtitleUrlEn: true,
+          moderationReason: true,
+          moderationChangedAt: true,
+          publishAfterAssetReadyError: true,
+          premiereNotifiedAt: true,
+          activeOriginalId: true,
+          activePlaybackRouteId: true,
+        },
         include: {
           creator: {
             include: {
