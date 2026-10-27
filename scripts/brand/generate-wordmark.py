@@ -250,8 +250,8 @@ def main():
         return head + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="%s" role="img" aria-label="%s"><title>%s</title>%s</svg>\n' % (vb, label, label, body)
     tg = 'transform="translate(%s 0)"' % f(text_x)
     files = {
-        "polutek-wordmark.svg": svg(vb_full, '<path fill="#2563eb" d="%s"/><path fill="#fff" d="%s"/><g %s><path fill="#092598" d="%s"/></g>' % (badge_d, tri_d, tg, ink_d)),
-        "polutek-wordmark-nobadge.svg": svg(vb_text, '<path fill="#092598" d="%s"/>' % ink_d),
+        "polutek-wordmark.svg": svg(vb_full, '<path fill="#2563eb" d="%s"/><path fill="#fff" d="%s"/><g %s><path fill="#0d084e" d="%s"/></g>' % (badge_d, tri_d, tg, ink_d)),
+        "polutek-wordmark-nobadge.svg": svg(vb_text, '<path fill="#0d084e" d="%s"/>' % ink_d),
         "polutek-wordmark-mono.svg": svg(vb_full, '<path fill="currentColor" d="%s%s"/><g %s><path fill="currentColor" d="%s"/></g>' % (badge_d, tri_hole, tg, ink_d)),
         "polutek-wordmark-mono-nobadge.svg": svg(vb_text, '<path fill="currentColor" d="%s"/>' % ink_d),
     }
