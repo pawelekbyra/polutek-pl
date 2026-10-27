@@ -13,7 +13,7 @@ import { BEACON_MAX_BYTES } from '../../../lib/telemetry/beacon-constants';
 import { RowBuffer } from './buffer';
 import { createSaltStore, createSql, insertRows } from './db';
 import { processBeacon } from './handler';
-import { RETENTION_INTERVAL_MS, ROLLUP_INTERVAL_MS, runRetention, runRollup } from './maintenance';
+import { RETENTION_INTERVAL_MS, ROLLUP_INTERVAL_MS, runExclusive, runRetention, runRollup } from './maintenance';
 import { TokenBucketLimiter } from './rate-limit';
 import { SaltCache } from './visitor';
 
@@ -130,7 +130,7 @@ async function flush() {
 
 async function safely(name: string, job: () => Promise<void>) {
   try {
-    await job();
+    if (!(await runExclusive(name, job))) console.warn(`[pp-collector] ${name} still running, tick skipped`);
   } catch (error) {
     console.error(`[pp-collector] ${name} failed`, error instanceof Error ? error.message : error);
   }

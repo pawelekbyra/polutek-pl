@@ -5,6 +5,24 @@ import { warsawDay } from './visitor';
 export const ROLLUP_INTERVAL_MS = 5 * 60 * 1000;
 export const RETENTION_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
+const running = new Set<string>();
+
+/**
+ * Runs `job` unless the previous run of the same `name` is still going (W23): a rollup that takes longer than its
+ * interval must not pile up behind itself on the collector's tiny connection pool and starve the beacon inserts.
+ * Returns false when the tick was skipped.
+ */
+export async function runExclusive(name: string, job: () => Promise<void>): Promise<boolean> {
+  if (running.has(name)) return false;
+  running.add(name);
+  try {
+    await job();
+    return true;
+  } finally {
+    running.delete(name);
+  }
+}
+
 function previousDay(day: string): string {
   const date = new Date(`${day}T12:00:00Z`);
   date.setUTCDate(date.getUTCDate() - 1);
