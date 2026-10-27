@@ -69,6 +69,15 @@ describe("UNLISTED stays off every public list", () => {
     expect(firstWhere(hoisted.videoFindMany).status).toBe("PUBLISHED");
   });
 
+  it("the list query leaves heavy and internal columns out (W03)", async () => {
+    await VideoContentService.getAllVideos();
+    const args = (hoisted.videoFindMany.mock.calls[0] as unknown as [{ omit?: Record<string, boolean> }])[0];
+    expect(args.omit).toMatchObject({ searchText: true, chapters: true });
+    for (const needed of ["description", "descriptionEn", "tags", "category", "thumbnailPublicUrl", "fundraisingGoalMinor"]) {
+      expect(args.omit).not.toHaveProperty(needed);
+    }
+  });
+
   it("search is PUBLISHED only", async () => {
     await VideoSearchService.searchPublicVideos("kot");
     expect(firstWhere(hoisted.videoFindMany).status).toBe("PUBLISHED");
