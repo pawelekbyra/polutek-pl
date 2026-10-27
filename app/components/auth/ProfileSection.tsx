@@ -4,7 +4,7 @@
 // ("Pseudonim"): the same rules and taken check as at sign-up (lib/auth/nickname.ts), saved to
 // User.name through PATCH /api/user/nickname.
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "../LanguageContext";
 import { appendQueryString, switchLocalePath, type Locale } from "@/lib/i18n/routing";
@@ -69,6 +69,7 @@ export function ProfileSection({ tx }: { tx: Tx }) {
   const [nickname, setNickname] = useState(currentName);
   const [loading, setLoading] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
@@ -142,10 +143,16 @@ export function ProfileSection({ tx }: { tx: Tx }) {
           alt=""
           className="h-14 w-14 shrink-0 rounded-full border border-[var(--chan-line)] object-cover"
         />
-        <label className="cursor-pointer text-[13px] font-bold text-[var(--chan-ink)] underline hover:opacity-70">
+        {/* A real button (reachable with Tab, Enter and Space) opens the hidden file input (WCAG 2.1.1, audit A07). */}
+        <button
+          type="button"
+          onClick={() => avatarInputRef.current?.click()}
+          disabled={avatarLoading}
+          className="cursor-pointer rounded text-[13px] font-bold text-[var(--chan-ink)] underline hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--chan-blue)] disabled:cursor-default disabled:opacity-60"
+        >
           {avatarLoading ? (tx("Wgrywanie...", "Uploading...")) : (tx("Zmień zdjęcie", "Change photo"))}
-          <input type="file" accept="image/*" className="hidden" onChange={onAvatar} disabled={avatarLoading} />
-        </label>
+        </button>
+        <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" tabIndex={-1} aria-hidden="true" onChange={onAvatar} disabled={avatarLoading} />
       </div>
       <Field label={tx("Pseudonim", "Nickname")} value={nickname} onChange={setNickname} autoComplete="nickname" />
       <p className="-mt-1 text-[12px] text-[var(--chan-muted)]">
