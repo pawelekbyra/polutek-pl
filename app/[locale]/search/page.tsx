@@ -23,6 +23,9 @@ import { buildSearchQuery } from "@/lib/search-href";
 import { videoCategoryLabel } from "@/lib/video-category-label";
 import { toVideoAccessTier } from "@/lib/access-tier";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { getClientIp } from "@/lib/api/client-ip";
+import { takeSearchBudget } from "@/lib/search-rate-limit";
 import { APP_NAME } from "@/lib/constants";
 import { auth } from "@/lib/auth/server";
 import { toAuthSessionSnapshot } from "@/lib/auth/session-snapshot";
@@ -54,6 +57,9 @@ export default async function SearchPage(props: SearchPageProps) {
   let facets: SearchFacets | null = null;
   let failed = false;
   try {
+    // Same request budget as GET /api/search (W01): the page must not be a way around the API limit. Browsing the
+    // facets (no search criteria) does not run a search and is not counted.
+    if (criteria && !(await takeSearchBudget(getClientIp(await headers()))).success) throw new Error("search rate limited");
     [page, facets] = await Promise.all([
       criteria ? searchPublicVideos(params, viewer) : Promise.resolve(null),
       criteria ? Promise.resolve(null) : getSearchFacets(viewer),

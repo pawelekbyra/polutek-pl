@@ -91,11 +91,11 @@ function filtersSql(params: PublicSearchParams, now: Date): Prisma.Sql[] {
 }
 
 /** Channels (public ones) whose name or handle contains a query word: word -> channel ids. */
-async function channelsMatchingTokens(tokens: string[]): Promise<Map<string, string[]>> {
+async function channelsMatchingTokens(db: SearchDb, tokens: string[]): Promise<Map<string, string[]>> {
   const result = new Map<string, string[]>();
   if (tokens.length === 0) return result;
   const patterns = tokens.map(toLikePattern);
-  const rows = await prisma.$queryRaw<{ id: string; n: string }[]>(Prisma.sql`
+  const rows = await db.$queryRaw<{ id: string; n: string }[]>(Prisma.sql`
     SELECT c."id", video_search_normalize(concat_ws(' ', c."name", c."handle")) AS n
     FROM "Creator" c
     WHERE c."status" IN ('ACTIVE'::"ChannelStatus", 'LIMITED'::"ChannelStatus") AND c."deletedAt" IS NULL
@@ -211,10 +211,27 @@ async function hydrate(ids: string[]): Promise<PublicSearchItem[]> {
   return items;
 }
 
+/** Upper bound for the two ranking statements of one search page (the LIKE fallback scans the catalogue). */
+export const SEARCH_STATEMENT_TIMEOUT_MS = 4000;
+
+type SearchDb = Pick<Prisma.TransactionClient, "$queryRaw">;
+
+/** Runs the search statements in a short transaction whose statements are cancelled by PostgreSQL after the timeout. */
+async function withSearchTimeout<T>(fn: (db: SearchDb) => Promise<T>): Promise<T> {
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.$queryRaw`SELECT set_config('statement_timeout', ${String(SEARCH_STATEMENT_TIMEOUT_MS)}, true)`;
+      return fn(tx);
+    },
+    { timeout: SEARCH_STATEMENT_TIMEOUT_MS * 2 + 2000 },
+  );
+}
+
 async function runPage(params: PublicSearchParams, viewer: SearchViewer, mode: SearchMode, cursor: SearchCursor | null, now: Date): Promise<PublicSearchPage> {
-  const channelIds = await channelsMatchingTokens(params.tokens);
-  const sql = buildSearchSql({ params, viewer, mode, cursor, channelIds, now });
-  const rows = await prisma.$queryRaw<Candidate[]>(sql);
+  const rows = await withSearchTimeout(async (db) => {
+    const channelIds = await channelsMatchingTokens(db, params.tokens);
+    return db.$queryRaw<Candidate[]>(buildSearchSql({ params, viewer, mode, cursor, channelIds, now }));
+  });
   const hasMore = rows.length > params.limit;
   const page = rows.slice(0, params.limit);
   const last = page[page.length - 1];

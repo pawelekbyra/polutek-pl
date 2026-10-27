@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parsePublicSearchParams, searchPublicVideos } from "@/lib/modules/video";
 import { auth } from "@/lib/auth/server";
-import { rateLimit } from "@/lib/rate-limit";
+import { takeSearchBudget } from "@/lib/search-rate-limit";
 import { getMediaClientIp } from "@/lib/media/rate-limit";
 import { handleApiError } from "@/lib/errors";
 
@@ -10,13 +10,11 @@ export const dynamic = "force-dynamic";
 // Public on purpose (middleware.ts). What may appear is decided inside the query (PUBLISHED, visible channel, past premiere,
 // 18+ only for signed-in viewers); gated tiers come back as title and thumbnail only. The answer depends on the viewer
 // (18+), so it is never stored by a shared cache.
-const SEARCH_LIMIT = 60;
-const SEARCH_WINDOW_MS = 60 * 1000;
 const NO_STORE = { "Cache-Control": "private, no-store" };
 
 export async function GET(req: NextRequest) {
   try {
-    const limited = await rateLimit({ key: `search:${getMediaClientIp(req)}`, limit: SEARCH_LIMIT, windowMs: SEARCH_WINDOW_MS });
+    const limited = await takeSearchBudget(getMediaClientIp(req));
     if (!limited.success) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429, headers: { ...NO_STORE, "Retry-After": "60" } });
     }
