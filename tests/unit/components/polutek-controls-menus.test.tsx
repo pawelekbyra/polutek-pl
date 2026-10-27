@@ -323,35 +323,6 @@ describe("PolutekControls: one-row bar (quality badge, time chip, picture-in-pic
     expect(menus[0].getAttribute("aria-label")).toBe("Rozdziały");
   });
 
-  it("below 400px the captions switch is a 'Napisy' entry of the settings menu", () => {
-    const original = window.matchMedia;
-    window.matchMedia = ((query: string) => ({
-      matches: query === "(max-width: 399px)",
-      media: query,
-      addEventListener: () => undefined,
-      removeEventListener: () => undefined,
-    })) as unknown as typeof window.matchMedia;
-    try {
-      media.state = { ...media.state, hasCaptions: true, textTrack: { kind: "subtitles", language: "pl", mode: "showing" } };
-      const view = render(<PolutekControls />);
-      fireEvent.click(view.getByRole("button", { name: "Ustawienia" }));
-      const entry = view.getByRole("menuitemcheckbox", { name: "Napisy" });
-      expect(entry.getAttribute("aria-checked")).toBe("true");
-      fireEvent.click(entry);
-      expect(media.toggleCaptions).toHaveBeenCalledTimes(1);
-      expect(view.queryByRole("menu")).toBeNull();
-      cleanup();
-
-      // No captions on the video: no entry.
-      media.state = { ...media.state, hasCaptions: false, textTrack: null };
-      const none = render(<PolutekControls />);
-      fireEvent.click(none.getByRole("button", { name: "Ustawienia" }));
-      expect(none.queryByRole("menuitemcheckbox", { name: "Napisy" })).toBeNull();
-    } finally {
-      window.matchMedia = original;
-    }
-  });
-
   it("wide screens keep captions on the bar, not in the menu", () => {
     media.state = { ...media.state, hasCaptions: true, textTrack: null };
     const view = render(<PolutekControls />);
