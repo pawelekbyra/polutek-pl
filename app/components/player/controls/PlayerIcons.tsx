@@ -15,10 +15,10 @@ export function PlayGlyph({ className, testId }: { className?: string; testId?: 
   return (
     <svg {...BASE} className={className} data-testid={testId}>
       <path
-        d="M9.1 6.4 17.9 12 9.1 17.6Z"
+        d="M9.6 7.8 16.4 12 9.6 16.2Z"
         fill="currentColor"
         stroke="currentColor"
-        strokeWidth={3}
+        strokeWidth={4.6}
         strokeLinejoin="round"
       />
     </svg>
@@ -42,12 +42,12 @@ export function ReplayGlyph({ className, testId }: { className?: string; testId?
       data-testid={testId}
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.8}
+      strokeWidth={2.3}
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d="M5.76 8.4A7.2 7.2 0 1 1 4.8 12" />
-      <path d="M5.4 4.4v4.2h4.2" />
+      <path d="M5.9 8.6A7 7 0 1 1 5 12" />
+      <path d="M5.2 4.6v4.4h4.4" />
     </svg>
   );
 }
