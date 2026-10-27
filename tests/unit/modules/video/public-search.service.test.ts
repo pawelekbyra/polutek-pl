@@ -2,14 +2,26 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const hoisted = vi.hoisted(() => ({ queryRaw: vi.fn(), findMany: vi.fn() }));
 
-vi.mock("@/lib/prisma", () => ({ prisma: { $queryRaw: hoisted.queryRaw, video: { findMany: hoisted.findMany } } }));
+vi.mock("@/lib/prisma", () => {
+  const prisma = {
+    $queryRaw: hoisted.queryRaw,
+    video: { findMany: hoisted.findMany },
+    // The search statements run in a transaction that sets statement_timeout first (W01); that first call is a set_config.
+    $transaction: async (fn: (tx: unknown) => unknown) =>
+      fn({
+        $queryRaw: (strings: TemplateStringsArray | { sql?: string }, ...rest: unknown[]) =>
+          Array.isArray(strings) && String(strings[0]).includes("set_config") ? Promise.resolve([]) : (hoisted.queryRaw as (...a: unknown[]) => unknown)(strings, ...rest),
+      }),
+  };
+  return { prisma };
+});
 vi.mock("@/lib/modules/channel", async () => ({
   MainChannelService: { getOptional: vi.fn() },
   publiclyVisibleChannelWhere: () => ({ status: { in: ["ACTIVE", "LIMITED"] }, deletedAt: null }),
   ...(await vi.importActual<typeof import("@/lib/modules/channel/domain/channel-avatar")>("@/lib/modules/channel/domain/channel-avatar")),
 }));
 
-import { buildSearchSql, clearSearchFacetCache, getSearchFacets, searchPublicVideos, visibilitySql } from "@/lib/modules/video/application/public-search.service";
+import { SEARCH_STATEMENT_TIMEOUT_MS, buildSearchSql, clearSearchFacetCache, getSearchFacets, searchPublicVideos, visibilitySql } from "@/lib/modules/video/application/public-search.service";
 import { decodeSearchCursor, encodeSearchCursor, parsePublicSearchParams } from "@/lib/modules/video/domain/search-query";
 
 const NOW = new Date("2026-10-19T12:00:00.000Z");
@@ -136,6 +148,17 @@ describe("searchPublicVideos", () => {
     const next = decodeSearchCursor(page.nextCursor, "relevance");
     expect(next).toMatchObject({ mode: "fts", rel: 10, id: "v1", pub: Date.parse("2026-10-01T00:00:00Z") });
     expect(hoisted.findMany.mock.calls[0]![0].where).toMatchObject({ status: "PUBLISHED" });
+  });
+
+  it("runs the ranking statements under a PostgreSQL statement_timeout (W01)", async () => {
+    const { prisma } = await import("@/lib/prisma");
+    const spy = vi.spyOn(prisma as unknown as { $transaction: (fn: (tx: unknown) => unknown) => unknown }, "$transaction");
+    hoisted.queryRaw.mockResolvedValue([]);
+    hoisted.findMany.mockResolvedValue([]);
+    await searchPublicVideos(parse({ q: "kot" }), guest, NOW);
+    expect(spy).toHaveBeenCalled();
+    expect(SEARCH_STATEMENT_TIMEOUT_MS).toBe(4000);
+    spy.mockRestore();
   });
 
   it("ends the list when the last page is short", async () => {
