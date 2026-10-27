@@ -101,7 +101,9 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
       playbackSource.indexOf('const plan = await buildSelfHlsPlan')
     );
 
-    expect(denialBlock).toContain('return unavailablePlan');
+    // The denial returns the unavailable plan (optionally with offer data: prices only, no source/token).
+    expect(denialBlock).toContain('unavailablePlan(');
+    expect(denialBlock).toContain('deniedPlan');
     expect(denialBlock).not.toContain('SelfHlsTokenService.sign');
     expect(denialBlock).not.toContain('buildSelfHlsPlan');
     expect(denialBlock).not.toContain('videoPlaybackSession.create');
