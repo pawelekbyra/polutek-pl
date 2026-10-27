@@ -33,14 +33,13 @@ describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
       const paths = Array.from(container.querySelectorAll("path"));
 
       expect(svg.getAttribute("data-brand-badge")).toBe("true");
-      expect(paths).toHaveLength(5);
-      // black (ink) outline drawn inside the badge footprint, blue fill, white triangle, ink letters
-      expect(paths[0].getAttribute("style")).toContain("--chan-ink");
-      expect(paths[1].getAttribute("style")).toContain("--chan-blue");
-      expect(paths[2].getAttribute("fill")).toBe("#fff");
-      expect(paths[3].getAttribute("style")).toContain("--chan-ink");
+      expect(paths).toHaveLength(4);
+      // flat blue badge (no outline), white triangle, ink letters, blue .COM
+      expect(paths[0].getAttribute("style")).toContain("--chan-blue");
+      expect(paths[1].getAttribute("fill")).toBe("#fff");
+      expect(paths[2].getAttribute("style")).toContain("--chan-ink");
       // the small .COM is the Subscribe-button blue (--chan-blue)
-      expect(paths[4].getAttribute("style")).toContain("--chan-blue");
+      expect(paths[3].getAttribute("style")).toContain("--chan-blue");
       // the badge is 1.2 x cap tall: the lockup viewBox is 120 units high
       expect(svg.getAttribute("viewBox")?.split(" ")[3]).toBe("120");
     });
