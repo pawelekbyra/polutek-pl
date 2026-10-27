@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Pin, PinOff } from "lucide-react";
 import { useLanguage } from "@/app/components/LanguageContext";
-import { StudioApiError, jsonBody, studioApi, type StudioComment, type StudioCommentList } from "./studio-client";
+import { jsonBody, studioApi, type StudioComment, type StudioCommentList } from "./studio-client";
+import { studioErrorText } from "./studio-errors";
 import { Badge, Card, Notice, inputClass, smallButtonClass, smallDangerGhostButtonClass, smallGhostButtonClass } from "./ui";
 import { BlockViewerButton, BlockedViewersCard } from "./StudioBans";
 
@@ -27,7 +28,7 @@ export default function StudioComments() {
       setData(await studioApi<StudioCommentList>(`/api/studio/comments?${params.toString()}`));
       setError(null);
     } catch (e) {
-      setError(e instanceof StudioApiError ? e.message : tx("Nie udało się wczytać komentarzy.", "Could not load comments."));
+      setError(studioErrorText(e, tx, tx("Nie udało się wczytać komentarzy.", "Could not load comments.")));
     }
   }, [filter, tx]);
 
@@ -44,7 +45,7 @@ export default function StudioComments() {
       setReplyText("");
       await load();
     } catch (e) {
-      setError(e instanceof StudioApiError ? e.message : tx("Nie udało się wykonać akcji.", "Could not complete the action."));
+      setError(studioErrorText(e, tx, tx("Nie udało się wykonać akcji.", "Could not complete the action.")));
     } finally {
       setBusyId(null);
     }

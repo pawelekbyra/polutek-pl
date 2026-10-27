@@ -15,6 +15,7 @@ import { CommentReportReasonDto } from "@/lib/modules/comments/domain/comment-fr
 import type { Locale } from "@/lib/i18n/routing";
 import type { Tx } from "@/lib/i18n/ui";
 import { useOptionalTx } from "@/lib/i18n/language-context";
+import { commentErrorText } from "../comment-errors";
 
 /** Same limit as the report API (`note` max 500). */
 export const REPORT_NOTE_MAX_LENGTH = 500;
@@ -58,11 +59,7 @@ export function ReportDialog({ isOpen, onClose, onSubmit, language }: ReportDial
       onClose();
     } catch (submitError) {
       // Keep the dialog (and the typed note) so the viewer can retry.
-      setError(
-        submitError instanceof Error && submitError.message
-          ? submitError.message
-          : tx("Nie udało się wysłać zgłoszenia.", "Could not send the report."),
-      );
+      setError(commentErrorText(submitError, tx, tx("Nie udało się wysłać zgłoszenia.", "Could not send the report.")));
     } finally {
       setIsSubmitting(false);
     }

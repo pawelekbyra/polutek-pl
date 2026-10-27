@@ -12,7 +12,8 @@ import {
   type ChannelAboutProblem,
 } from "@/lib/modules/channel/domain/channel-about";
 import { BANNER_ACCEPT, BANNER_MAX_FILE_BYTES, validateBannerFile } from "@/lib/modules/channel/domain/channel-banner-limits";
-import { StudioApiError, jsonBody, studioApi, type StudioChannelAbout } from "./studio-client";
+import { jsonBody, studioApi, type StudioChannelAbout } from "./studio-client";
+import { studioErrorText } from "./studio-errors";
 import { fileToBannerDataUrl } from "./banner-image";
 import { Card, Field, Notice, buttonClass, inputClass, smallDangerGhostButtonClass, smallGhostButtonClass, ghostButtonClass } from "./ui";
 
@@ -38,7 +39,7 @@ export default function StudioChannelAbout({ onChanged }: { onChanged?: () => vo
       setEmail(about.contactEmail ?? "");
       setLoaded(true);
     } catch (e) {
-      setMessage({ kind: "error", text: e instanceof StudioApiError ? e.message : tx("Nie udało się wczytać danych kanału.", "Could not load the channel data.") });
+      setMessage({ kind: "error", text: studioErrorText(e, tx, tx("Nie udało się wczytać danych kanału.", "Could not load the channel data.")) });
     }
   }, [tx]);
 
@@ -73,7 +74,7 @@ export default function StudioChannelAbout({ onChanged }: { onChanged?: () => vo
       setMessage({ kind: "success", text: success });
       onChanged?.();
     } catch (e) {
-      setMessage({ kind: "error", text: e instanceof StudioApiError ? e.message : tx("Nie udało się zapisać zmian.", "Could not save the changes.") });
+      setMessage({ kind: "error", text: studioErrorText(e, tx, tx("Nie udało się zapisać zmian.", "Could not save the changes.")) });
     } finally {
       setBusy(null);
     }

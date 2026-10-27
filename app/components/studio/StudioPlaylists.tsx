@@ -42,7 +42,7 @@ function PlaylistList({ channelSlug, onOpen }: { channelSlug: string; onOpen: (i
       setItems((await studioApi<{ items: StudioPlaylistSummaryDto[] }>("/api/studio/playlists")).items);
       setError(null);
     } catch (e) {
-      setError(errorText(e, tx("Nie udało się wczytać playlist.", "Could not load the playlists.")));
+      setError(errorText(e, tx, tx("Nie udało się wczytać playlist.", "Could not load the playlists.")));
     }
   }, [tx]);
 
@@ -140,7 +140,7 @@ function PlaylistEditor({ id, channelSlug, onBack }: { id: string; channelSlug: 
       setPlaylist(await studioApi<StudioPlaylistDto>(`/api/studio/playlists/${encodeURIComponent(id)}`));
       setError(null);
     } catch (e) {
-      setError(errorText(e, tx("Nie udało się wczytać playlisty.", "Could not load the playlist.")));
+      setError(errorText(e, tx, tx("Nie udało się wczytać playlisty.", "Could not load the playlist.")));
     }
   }, [id, tx]);
 
@@ -169,7 +169,7 @@ function PlaylistEditor({ id, channelSlug, onBack }: { id: string; channelSlug: 
       setNotice(tx("Kolejność zapisana.", "Order saved."));
     } catch (e) {
       setPlaylist(previous);
-      setError(errorText(e, tx("Nie udało się zapisać kolejności.", "Could not save the order.")));
+      setError(errorText(e, tx, tx("Nie udało się zapisać kolejności.", "Could not save the order.")));
       void load();
     } finally {
       setSaving(false);
@@ -184,7 +184,7 @@ function PlaylistEditor({ id, channelSlug, onBack }: { id: string; channelSlug: 
       setError(null);
       await load();
     } catch (e) {
-      setError(errorText(e, tx("Nie udało się usunąć filmu z playlisty.", "Could not remove the video from the playlist.")));
+      setError(errorText(e, tx, tx("Nie udało się usunąć filmu z playlisty.", "Could not remove the video from the playlist.")));
     } finally {
       setSaving(false);
     }
@@ -197,7 +197,7 @@ function PlaylistEditor({ id, channelSlug, onBack }: { id: string; channelSlug: 
       onBack();
     } catch (e) {
       setConfirmDelete(false);
-      setError(errorText(e, tx("Nie udało się usunąć playlisty.", "Could not delete the playlist.")));
+      setError(errorText(e, tx, tx("Nie udało się usunąć playlisty.", "Could not delete the playlist.")));
     } finally {
       setDeleting(false);
     }

@@ -22,7 +22,7 @@ export default function StudioPlaylistPicker({ playlistId, present, onAdded, onE
         const data = await studioApi<StudioVideoList>(`/api/studio/videos?${params.toString()}`);
         if (!cancelled) setResults(data.items);
       } catch (e) {
-        if (!cancelled) onError(errorText(e, tx("Nie udało się wczytać filmów.", "Could not load the videos.")));
+        if (!cancelled) onError(errorText(e, tx, tx("Nie udało się wczytać filmów.", "Could not load the videos.")));
       }
     }, 250);
     return () => {
@@ -38,7 +38,7 @@ export default function StudioPlaylistPicker({ playlistId, present, onAdded, onE
       onError(null);
       await onAdded();
     } catch (e) {
-      onError(errorText(e, tx("Nie udało się dodać filmu.", "Could not add the video.")));
+      onError(errorText(e, tx, tx("Nie udało się dodać filmu.", "Could not add the video.")));
     } finally {
       setBusyId(null);
     }

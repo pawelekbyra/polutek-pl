@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
-import { StudioApiError, jsonBody, studioApi, type StudioLimits } from "./studio-client";
+import { jsonBody, studioApi, type StudioLimits } from "./studio-client";
+import { studioErrorText } from "./studio-errors";
 import { uploadOriginal, type UploadProgress } from "./upload-original";
 import { confirmLeave, setUnsavedWork } from "./unsaved-guard";
 import { DESCRIPTION_MAX, TITLE_MAX, formatLimitDuration, titleFromFileName, validateCoverFile, visibilityToFields, type VisibilityMode } from "./video-form";
@@ -199,7 +200,7 @@ export default function StudioUploadWizard({
     } catch (e) {
       if (controller.signal.aborted) return;
       setError(
-        e instanceof StudioApiError ? e.message : tx("Przesyłanie nie powiodło się. Spróbuj ponownie.", "Upload failed. Please try again."),
+        studioErrorText(e, tx, tx("Przesyłanie nie powiodło się. Spróbuj ponownie.", "Upload failed. Please try again.")),
       );
       setPhase("error");
     }

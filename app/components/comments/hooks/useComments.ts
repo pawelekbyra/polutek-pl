@@ -9,6 +9,7 @@ import type { InitialCommentsPage } from "../initial-comments";
 import type { Locale } from "@/lib/i18n/routing";
 import type { Tx } from "@/lib/i18n/ui";
 import { useOptionalTx } from "@/lib/i18n/language-context";
+import { commentErrorText } from "../comment-errors";
 
 type CommentsPage = {
   comments: CommentView[];
@@ -62,28 +63,13 @@ async function parseCommentPostResponse(res: Response, tx: Tx): Promise<PostComm
   const data = await res.json().catch(() => null) as any;
 
   if (!res.ok || data?.success === false) {
-    const code = data?.code;
-    let message = data?.message || data?.errors?.fieldErrors?.text?.[0];
-
-    if (!message || code) {
-      message =
-        code === "AUTH_REQUIRED" ? tx("Musisz być zalogowany, żeby komentować.", "You must be signed in to comment.") :
-        code === "ONBOARDING_REQUIRED" ? tx("Najpierw wybierz pseudonim w oknie powitalnym, potem możesz komentować.", "Choose a nickname in the welcome window first, then you can comment.") :
-        code === "PASS_REQUIRED" ? tx("Zostań patronem, aby komentować ten film.", "Become a patron to comment on this video.") : // patron zone
-        code === "COMMENT_FORBIDDEN" ? tx("Nie masz uprawnień do komentowania tego filmu.", "You don't have permission to comment on this video.") :
-        code === "COMMENT_RATE_LIMITED" ? tx("Zbyt dużo komentarzy. Spróbuj ponownie za chwilę.", "Too many comments. Try again in a moment.") :
-        code === "COMMENT_VALIDATION_ERROR" ? tx("Nieprawidłowe dane komentarza.", "Invalid comment data.") :
-        code === "COMMENT_TOO_LONG" ? tx("Komentarz jest za długi.", "Comment is too long.") :
-        message || (res.status === 401
-          ? tx("Musisz być zalogowany, żeby komentować.", "You must be signed in to comment.")
-          : res.status === 403
-            ? tx("Nie masz uprawnień do komentowania tego filmu.", "You don't have permission to comment on this video.")
-            : res.status === 429
-              ? tx("Zbyt dużo komentarzy. Spróbuj ponownie za chwilę.", "Too many comments. Try again in a moment.")
-              : tx("Nie udało się dodać komentarza.", "Failed to add comment."));
-    }
-
-    throw new CommentPostError(message, res.status, code);
+    // The server's own (Polish) message is never shown: the code, then the status, pick a translated text.
+    const code = typeof data?.code === "string" ? data.code : undefined;
+    const fallback =
+      res.status === 403
+        ? tx("Nie masz uprawnień do komentowania tego filmu.", "You don't have permission to comment on this video.")
+        : tx("Nie udało się dodać komentarza.", "Failed to add comment.");
+    throw new CommentPostError(commentErrorText({ code, status: res.status }, tx, fallback), res.status, code);
   }
 
   return data as PostCommentResponse;
