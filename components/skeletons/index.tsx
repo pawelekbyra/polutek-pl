@@ -93,15 +93,15 @@ export function HomePageSkeleton() {
 export function SkeletonNavbar() {
   return (
     <div className="polutek-watch-nav sticky top-0 z-[1000] flex w-full flex-col">
-      <div className="flex min-h-[54px] w-full items-center justify-between gap-3 px-4 py-2 md:gap-5 md:px-6 lg:px-8">
-        <Skeleton className="h-[26px] w-[132px]" />
+      <div className="flex w-full items-center justify-between gap-3 px-4 py-[3px] md:gap-5 md:px-6 lg:px-8">
+        <div className="flex min-h-10 items-center py-1"><Skeleton className="h-[26px] w-[132px]" /></div>
         <div className="mx-2 hidden max-w-[548px] flex-1 md:flex">
-          <Skeleton className="h-[38px] w-full rounded-full" />
+          <Skeleton className="h-10 w-full rounded-full" />
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <Skeleton className="h-[38px] w-[78px] rounded-full" />
-          <Skeleton className="h-[38px] w-[38px] rounded-full" />
-          <Skeleton className="h-[38px] w-[92px] rounded-full" />
+          <Skeleton className="h-10 w-[78px] rounded-full" />
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <Skeleton className="h-10 w-[92px] rounded-full" />
         </div>
       </div>
     </div>

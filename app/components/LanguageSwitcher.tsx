@@ -168,7 +168,7 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
       ) : variant === "icon" ? (
         <button
           {...triggerProps}
-          className="flex h-[38px] w-[38px] items-center justify-center rounded-full text-[var(--chan-ink)] transition-[background-color,box-shadow] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
+          className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--chan-ink)] transition-[background-color,box-shadow] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
         >
           <Globe className="h-5 w-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
         </button>
@@ -199,7 +199,7 @@ export default function LanguageSwitcher({ language, onSelect, variant = "pill" 
               ? `${styles.panelUp} absolute bottom-[calc(100%+6px)] left-0 z-[1200] flex w-[min(256px,calc(100vw-32px))] flex-col overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] font-sans text-[var(--chan-ink)] shadow-[0_-20px_50px_rgba(15,23,42,0.18)]`
               : variant === "dropdown"
               ? `${styles.panel} absolute right-0 top-[calc(100%+6px)] z-[1200] flex w-[min(256px,80vw)] flex-col overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.18)]`
-              : `${styles.panel} fixed left-2 right-2 top-[60px] z-[1100] flex flex-col overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.14)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+8px)] sm:w-[256px]`
+              : `${styles.panel} fixed left-2 right-2 top-[calc(var(--header-h)+5px)] z-[1100] flex flex-col overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] font-sans text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.14)] sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+8px)] sm:w-[256px]`
           }
         >
           <div
