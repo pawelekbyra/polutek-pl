@@ -357,6 +357,8 @@
     --chan-muted-2: #475467;
     --chan-body: #344054;
     --chan-blue: #2563eb;
+    /* Dark navy of the POLUTEK wordmark in the header logo (contrast 15.2:1 on --chan-nav, 16.0:1 on white). */
+    --brand-navy: #0b1f4a;
     --chan-blue-soft: #eff3fe;
     --chan-amber: #f59e0b;
     --chan-amber-bright: #fbbf24;
