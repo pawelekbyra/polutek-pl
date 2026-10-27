@@ -2,6 +2,7 @@ import type { VideoAsset } from '@prisma/client';
 import type { AppContext } from '@/lib/modules/shared/app-context';
 import { SelfHlsTokenService } from '../infrastructure/self-hls-token.service';
 import type { PlaybackAssetContract, PlaybackPlan } from '../domain/playback.dto';
+import { isAdultVideo } from '@/lib/modules/video/domain/video-visibility';
 import { PLAYBACK_HEARTBEAT_INTERVAL_SECONDS, PLAYBACK_SESSION_MAX_AGE_MS } from '@/lib/modules/video';
 
 /**
@@ -18,11 +19,37 @@ export function parseSelfHlsObjectKey(objectKey: string, videoId: string): strin
   return m && m[1] === videoId ? m[2] : null;
 }
 
+/**
+ * Only a plain public, published, non-adult video outside the patron zone gets the long-lived public
+ * delivery token; everything else is protected (short token, private cache headers at the edge).
+ * Reads the raw tier on purpose: an unknown value is never public.
+ */
+export function isPublicDelivery(v: {
+  tier?: string | null;
+  premiumPassGated?: boolean;
+  isAdminPreview?: boolean;
+  status?: string | null;
+  moderationStatus?: string | null;
+  isAdult?: boolean | null;
+}): boolean {
+  return (
+    (v.tier ?? 'PUBLIC') === 'PUBLIC' &&
+    !v.premiumPassGated &&
+    !v.isAdminPreview &&
+    v.status === 'PUBLISHED' &&
+    !isAdultVideo({ moderationStatus: v.moderationStatus ?? undefined, isAdult: v.isAdult ?? undefined })
+  );
+}
+
 export type SelfHlsPlanArgs = {
   ctx: AppContext;
   videoId: string;
   asset: VideoAsset;
   tier: string;
+  /** See isPublicDelivery(); false = protected delivery. */
+  publicDelivery: boolean;
+  /** End of the viewer's grant (patron pass): the token never outlives it. */
+  accessEndsAt?: Date | null;
   thumbnailUrl: string;
   isAdminPreview: boolean;
   ipHash?: string;
@@ -44,7 +71,11 @@ export async function buildSelfHlsPlan(args: SelfHlsPlanArgs): Promise<PlaybackP
     return null;
   }
 
-  const signed = SelfHlsTokenService.sign({ videoId, version, secret }, SelfHlsTokenService.baseUrl());
+  const ttlSeconds = SelfHlsTokenService.ttlSeconds({ isPublic: args.publicDelivery, accessEndsAt: args.accessEndsAt });
+  const signed = SelfHlsTokenService.sign(
+    { videoId, version, secret, ttlSeconds, isPublic: args.publicDelivery && SelfHlsTokenService.publicMarkerEnabled() },
+    SelfHlsTokenService.baseUrl(),
+  );
   const sessionId = await reuseOrCreateSession(args);
 
   return {

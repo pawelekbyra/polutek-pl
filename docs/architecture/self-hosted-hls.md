@@ -23,7 +23,7 @@ Oryginał trafia z przeglądarki admina do prywatnego R2 `polutek`, kolejka w Po
 
 ## Ochrona: uczciwie
 
-- Token (HMAC-SHA256, TTL 6 h) wydawany wyłącznie po `checkVideoAccess()` i bramce premiery (CLAUDE.md §4.3/§4.15); odmowa nie niesie żadnego URL. Odnowienie tokenu przechodzi tę samą pełną kontrolę. Worker odrzuca brak/zły/wygasły token (403) przed cache i R2; ścieżki i rozszerzenia to biała lista.
+- Token (HMAC-SHA256, TTL: 30 min dla filmów chronionych, 6 h dla publicznych; szczegóły i nagłówki cache: docs/operations/HLS-SELF-HOSTED.md) wydawany wyłącznie po `checkVideoAccess()` i bramce premiery (CLAUDE.md §4.3/§4.15); odmowa nie niesie żadnego URL. Odnowienie tokenu przechodzi tę samą pełną kontrolę. Worker odrzuca brak/zły/wygasły token (403) przed cache i R2; ścieżki i rozszerzenia to biała lista.
 - Token nie jest związany z widzem: zalogowany widz może skopiować URL i pobrać pliki na czas TTL. To kontrola dostępu, nie DRM. Przy treściach darmowych po zalogowaniu (§4.4) akceptowalne.
 - Jeden sekret `HLS_TOKEN_SECRET` (Worker, `app.env`, `.ai-secrets`); rotacja unieważnia naraz wszystkie trwające odtworzenia (odtwarzacz odnowi token sam przy 403).
 

@@ -17,4 +17,6 @@ export type AccessDecisionDto = {
   premiereAt?: string;
   /** patron zone (docs/architecture/patron-zone.md): ISO end of the viewer's active demo pass for this video. */
   premiumPassUntil?: string;
+  /** patron zone: the video is behind the pass (also when the pass is lifetime and has no end date). Playback treats its delivery as protected. */
+  premiumPassGated?: boolean;
 };

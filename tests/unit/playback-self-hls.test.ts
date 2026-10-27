@@ -248,4 +248,102 @@ describe('SELF_HLS playback plan', () => {
     expect(signed.expiresAt.getTime()).toBeLessThanOrEqual(Date.now() + 61_000);
     expect(SelfHlsTokenService.baseUrl({ HLS_DELIVERY_BASE_URL: 'https://v.test/' } as never)).toBe('https://v.test');
   });
+
+  describe('delivery token lifetime and kind (audit S08, S09)', () => {
+    const user: Actor = { type: 'user', userId: 'u1' };
+    const ttlOf = (r: Awaited<ReturnType<typeof plan>>) => Math.round((new Date(r.source!.expiresAt!).getTime() - Date.now()) / 1000);
+    const tokenOf = (r: Awaited<ReturnType<typeof plan>>) => new URL(r.source!.playbackUrl!).pathname.split('/')[2];
+
+    afterEach(() => {
+      delete process.env.HLS_TOKEN_TTL_PROTECTED_SECONDS;
+      delete process.env.HLS_TOKEN_TTL_PUBLIC_SECONDS;
+      delete process.env.HLS_PUBLIC_TOKEN_MARKER;
+    });
+
+    it('protected video (LOGGED_IN): 30 minute token without the public marker', async () => {
+      const r = await plan(user);
+      expect(ttlOf(r)).toBeGreaterThan(30 * 60 - 5);
+      expect(ttlOf(r)).toBeLessThanOrEqual(30 * 60);
+      expect(tokenOf(r).endsWith('.pub')).toBe(false);
+    });
+
+    it.each(['PAID', 'SOMETHING_UNKNOWN'])('tier %s is protected too (raw tier, never public by default)', async (tier) => {
+      prisma.video.findUnique.mockResolvedValue(video({ tier }));
+      const r = await plan(user);
+      expect(ttlOf(r)).toBeLessThanOrEqual(30 * 60);
+      expect(tokenOf(r).endsWith('.pub')).toBe(false);
+    });
+
+    it('public published video keeps the 6 hour token, with the signed public marker', async () => {
+      prisma.video.findUnique.mockResolvedValue(video({ tier: 'PUBLIC' }));
+      const r = await plan({ type: 'guest' });
+      expect(ttlOf(r)).toBeGreaterThan(6 * 3600 - 5);
+      const token = tokenOf(r);
+      expect(token.endsWith('.pub')).toBe(true);
+      const id = new URL(r.source!.playbackUrl!).pathname.split('/')[3];
+      expect(await verifyToken(SECRET, id, 'v1', token, Math.floor(Date.now() / 1000))).toBe(true);
+    });
+
+    it('a public video in the patron zone, a draft preview and an adult video are protected', async () => {
+      prisma.video.findUnique.mockResolvedValue(video({ tier: 'PUBLIC' }));
+      vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true, premiumPassGated: true } } as never);
+      expect(tokenOf(await plan(user)).endsWith('.pub')).toBe(false);
+
+      vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true } } as never);
+      prisma.video.findUnique.mockResolvedValue(video({ tier: 'PUBLIC', status: 'DRAFT' }));
+      expect(tokenOf(await plan({ type: 'admin', userId: 'a1' } as Actor)).endsWith('.pub')).toBe(false);
+
+      prisma.video.findUnique.mockResolvedValue(video({ tier: 'PUBLIC', isAdult: true }));
+      expect(tokenOf(await plan(user)).endsWith('.pub')).toBe(false);
+    });
+
+    it('a pass that ends sooner than the TTL caps the token; a lifetime pass keeps the full TTL', async () => {
+      const endsIn = 10 * 60;
+      vi.mocked(checkVideoAccess).mockResolvedValue({
+        ok: true,
+        data: { hasAccess: true, premiumPassGated: true, premiumPassUntil: new Date(Date.now() + endsIn * 1000).toISOString() },
+      } as never);
+      const capped = await plan(user);
+      expect(ttlOf(capped)).toBeLessThanOrEqual(endsIn);
+      expect(ttlOf(capped)).toBeGreaterThan(endsIn - 5);
+
+      vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: true, premiumPassGated: true } } as never);
+      expect(ttlOf(await plan(user))).toBeGreaterThan(30 * 60 - 5);
+    });
+
+    it('TTLs are configurable, clamped, and fall back on garbage', async () => {
+      process.env.HLS_TOKEN_TTL_PROTECTED_SECONDS = '900';
+      expect(ttlOf(await plan(user))).toBeLessThanOrEqual(900);
+      process.env.HLS_TOKEN_TTL_PROTECTED_SECONDS = '5';
+      expect(SelfHlsTokenService.ttlSeconds({ isPublic: false })).toBe(300);
+      process.env.HLS_TOKEN_TTL_PROTECTED_SECONDS = 'abc';
+      expect(SelfHlsTokenService.ttlSeconds({ isPublic: false })).toBe(1800);
+      process.env.HLS_TOKEN_TTL_PUBLIC_SECONDS = '7200';
+      expect(SelfHlsTokenService.ttlSeconds({ isPublic: true })).toBe(7200);
+    });
+
+    it('a grant that ended already still gets the minimum TTL, never a negative one', () => {
+      expect(SelfHlsTokenService.ttlSeconds({ isPublic: false, accessEndsAt: new Date(Date.now() - 1000) })).toBe(30);
+    });
+
+    it('HLS_PUBLIC_TOKEN_MARKER=off issues the original format for public videos (rollback with an old Worker)', async () => {
+      process.env.HLS_PUBLIC_TOKEN_MARKER = 'off';
+      prisma.video.findUnique.mockResolvedValue(video({ tier: 'PUBLIC' }));
+      expect(tokenOf(await plan({ type: 'guest' })).endsWith('.pub')).toBe(false);
+    });
+
+    it('a renewal re-checks access in full: a viewer who lost access gets no token', async () => {
+      vi.mocked(checkVideoAccess).mockResolvedValue({ ok: true, data: { hasAccess: false, reason: 'PASS_REQUIRED' } } as never);
+      const r = await PlaybackService.createPlaybackPlanWithContext(
+        VIDEO_ID,
+        createAppContext({ actor: user, prisma: prisma as never }),
+        'ip1',
+        'ua1',
+        { reuseSessionId: 'sess-old' },
+      );
+      expect(r.canPlay).toBe(false);
+      expect(r.source).toBeUndefined();
+      expect(vi.mocked(checkVideoAccess)).toHaveBeenCalled();
+    });
+  });
 });

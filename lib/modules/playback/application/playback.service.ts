@@ -7,7 +7,7 @@ import { selectPrimaryVideoAsset } from '@/lib/modules/video';
 import { isUpcomingPremiere, toPremiereDate } from '@/lib/modules/video/domain/premiere';
 import { resolvePublicThumbnailSrc } from '@/lib/modules/media';
 import { VideoStatus, type VideoAsset } from '@prisma/client';
-import { buildSelfHlsPlan } from './self-hls-plan';
+import { buildSelfHlsPlan, isPublicDelivery } from './self-hls-plan';
 import { assetSizeToNumber } from '@/lib/modules/video';
 import { SelfHlsTokenService } from '../infrastructure/self-hls-token.service';
 import { parseStoredChapters, type Chapter } from '@/lib/video-chapters';
@@ -311,6 +311,16 @@ export class PlaybackService {
       tier,
       thumbnailUrl,
       isAdminPreview: isAdminPreviewSession(actor.type, video.status, video.premiereAt),
+      // Short token and private cache headers for everything that is not a plain public video (audit S08, S09).
+      publicDelivery: isPublicDelivery({
+        tier: video.tier as string | null | undefined,
+        premiumPassGated: decision.premiumPassGated === true,
+        isAdminPreview: isAdminPreviewSession(actor.type, video.status, video.premiereAt),
+        status: video.status,
+        moderationStatus: (video as { moderationStatus?: string }).moderationStatus,
+        isAdult: (video as { isAdult?: boolean }).isAdult,
+      }),
+      accessEndsAt: decision.premiumPassUntil ? new Date(decision.premiumPassUntil) : null,
       ipHash,
       userAgentHash,
       safeAsset,
