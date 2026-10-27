@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 /** Small presentational pieces shared by the Studio sections (tokens `--chan-*`, same look as the site). */
 
 export const inputClass =
-  "w-full rounded-xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-3 py-2 text-[14px] text-[var(--chan-ink)] focus:border-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] focus-visible:ring-offset-1 disabled:opacity-60";
+  "w-full rounded-xl border border-[var(--chan-control-border)] bg-[var(--chan-card)] px-3 py-2 text-[14px] text-[var(--chan-ink)] focus:border-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] focus-visible:ring-offset-1 disabled:opacity-60";
 
 export const buttonClass =
   "inline-flex min-h-10 items-center justify-center rounded-xl bg-[var(--chan-ink)] px-4 py-2 text-[14px] font-semibold text-[var(--chan-card)] transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50";
