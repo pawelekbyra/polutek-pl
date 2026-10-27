@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
-import { StudioApiError, jsonBody, studioApi } from "./studio-client";
+import { jsonBody, studioApi } from "./studio-client";
+import { studioErrorText } from "./studio-errors";
 import { Card, Notice, inputClass, smallButtonClass, smallDangerGhostButtonClass, smallGhostButtonClass } from "./ui";
 
 /** Both pieces talk through this event, so blocking in the comment list refreshes the block list below it. */
@@ -35,7 +36,7 @@ export function BlockViewerButton({ userId, name }: { userId: string; name: stri
       setMessage({ kind: "success", text: tx("Użytkownik został zablokowany.", "The user was blocked.") });
       window.dispatchEvent(new Event(BANS_CHANGED));
     } catch (e) {
-      setMessage({ kind: "error", text: e instanceof StudioApiError ? e.message : tx("Nie udało się zablokować użytkownika.", "Could not block the user.") });
+      setMessage({ kind: "error", text: studioErrorText(e, tx, tx("Nie udało się zablokować użytkownika.", "Could not block the user.")) });
     } finally {
       setBusy(false);
     }
@@ -93,7 +94,7 @@ export function BlockedViewersCard() {
       setItems(data.items);
       setError(null);
     } catch (e) {
-      setError(e instanceof StudioApiError ? e.message : tx("Nie udało się wczytać zablokowanych użytkowników.", "Could not load the blocked users."));
+      setError(studioErrorText(e, tx, tx("Nie udało się wczytać zablokowanych użytkowników.", "Could not load the blocked users.")));
     }
   }, [tx]);
 
@@ -110,7 +111,7 @@ export function BlockedViewersCard() {
       await studioApi("/api/studio/bans", { method: "DELETE", ...jsonBody({ userId }) });
       await load();
     } catch (e) {
-      setError(e instanceof StudioApiError ? e.message : tx("Nie udało się odblokować użytkownika.", "Could not unblock the user."));
+      setError(studioErrorText(e, tx, tx("Nie udało się odblokować użytkownika.", "Could not unblock the user.")));
     } finally {
       setBusyId(null);
     }

@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
-import { StudioApiError, jsonBody, studioApi, studioThumbnailSrc, type StudioVideo } from "./studio-client";
+import { jsonBody, studioApi, studioThumbnailSrc, type StudioVideo } from "./studio-client";
+import { studioErrorText as errorText } from "./studio-errors";
 import { confirmLeave, setUnsavedWork } from "./unsaved-guard";
 import { DESCRIPTION_MAX, TITLE_MAX, isFormDirty, validateCoverFile, videoToForm, visibilityAction, type EditorForm, type EditorVisibility } from "./video-form";
 import { areChaptersEqual, chaptersPayload, rowProblems } from "./chapters-form";
@@ -15,10 +16,6 @@ export interface PipelineView {
   summary: "NO_ORIGINAL" | "UPLOADING" | "QUEUED" | "ENCODING" | "READY" | "FAILED" | "CANCELLED" | "UPLOAD_FAILED";
   job: { id: string; progressPercent: number; stage: string; failureReason: string | null } | null;
   original: { failureReason: string | null } | null;
-}
-
-function errorText(e: unknown, fallback: string): string {
-  return e instanceof StudioApiError ? e.message : fallback;
 }
 
 /** Studio -> video editor: form on the left, preview card (thumbnail, processing, status, link) on the right. */
@@ -53,7 +50,7 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
   );
 
   useEffect(() => {
-    loadVideo(true).catch((e) => setMessage({ kind: "error", text: errorText(e, tx("Nie udało się wczytać filmu.", "Could not load the video.")) }));
+    loadVideo(true).catch((e) => setMessage({ kind: "error", text: errorText(e, tx, tx("Nie udało się wczytać filmu.", "Could not load the video.")) }));
   }, [loadVideo, tx]);
 
   // Leaving with unsaved changes asks first (reload and tab close through beforeunload, in-app moves through confirmLeave).
@@ -97,7 +94,7 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
       await loadVideo(resetForm);
       setMessage({ kind: "success", text: success });
     } catch (e) {
-      setMessage({ kind: "error", text: errorText(e, tx("Nie udało się zapisać zmian.", "Could not save the changes.")) });
+      setMessage({ kind: "error", text: errorText(e, tx, tx("Nie udało się zapisać zmian.", "Could not save the changes.")) });
     } finally {
       setBusy(false);
     }
@@ -154,7 +151,7 @@ export default function StudioVideoEditor({ id, onBack }: { id: string; onBack: 
       setUnsavedWork(false);
       onBack();
     } catch (e) {
-      setMessage({ kind: "error", text: errorText(e, tx("Nie udało się usunąć filmu.", "Could not delete the video.")) });
+      setMessage({ kind: "error", text: errorText(e, tx, tx("Nie udało się usunąć filmu.", "Could not delete the video.")) });
       setBusy(false);
     }
   };

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
-import { StudioApiError, studioApi, studioThumbnailSrc, type StudioVideo, type StudioVideoList as VideoListData } from "./studio-client";
+import { studioApi, studioThumbnailSrc, type StudioVideo, type StudioVideoList as VideoListData } from "./studio-client";
+import { studioErrorText } from "./studio-errors";
 import { buildVideoListQuery, type SortKey, type StatusFilter } from "./video-form";
 import { Badge, Card, Notice, buttonClass, ghostButtonClass, inputClass } from "./ui";
 
@@ -36,7 +37,7 @@ export default function StudioVideoList({ onUpload, onEdit }: { onUpload: () => 
         setList(data);
         setError(null);
       })
-      .catch((e) => !cancelled && setError(e instanceof StudioApiError ? e.message : tx("Nie udało się wczytać filmów.", "Could not load videos.")));
+      .catch((e) => !cancelled && setError(studioErrorText(e, tx, tx("Nie udało się wczytać filmów.", "Could not load videos."))));
     return () => {
       cancelled = true;
     };

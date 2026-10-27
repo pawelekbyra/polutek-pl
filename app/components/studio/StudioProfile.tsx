@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
-import { StudioApiError, jsonBody, studioApi, type StudioChannel } from "./studio-client";
+import { jsonBody, studioApi, type StudioChannel } from "./studio-client";
+import { studioErrorText } from "./studio-errors";
 import StudioChannelAbout from "./StudioChannelAbout";
 import { Card, Field, Notice, buttonClass, dangerButtonClass, inputClass } from "./ui";
 
@@ -24,7 +25,7 @@ export default function StudioProfile({ channel, onChanged }: { channel: StudioC
       setMessage({ kind: "success", text: success });
       onChanged();
     } catch (e) {
-      setMessage({ kind: "error", text: e instanceof StudioApiError ? e.message : tx("Nie udało się zapisać zmian.", "Could not save the changes.") });
+      setMessage({ kind: "error", text: studioErrorText(e, tx, tx("Nie udało się zapisać zmian.", "Could not save the changes.")) });
     } finally {
       setBusy(null);
     }

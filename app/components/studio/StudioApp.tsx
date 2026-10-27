@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
-import { StudioApiError, jsonBody, studioApi, studioThumbnailSrc, type StudioCommentList, type StudioMe, type StudioVideo, type StudioVideoList } from "./studio-client";
+import { jsonBody, studioApi, studioThumbnailSrc, type StudioCommentList, type StudioMe, type StudioVideo, type StudioVideoList } from "./studio-client";
+import { studioErrorText } from "./studio-errors";
 import { Badge, Card, Field, Notice, buttonClass, focusRingClass, ghostButtonClass, inputClass } from "./ui";
 import { confirmLeave } from "./unsaved-guard";
 import StudioContent, { type ContentView } from "./StudioContent";
@@ -40,7 +41,7 @@ export default function StudioApp() {
       setMe(await studioApi<StudioMe>("/api/studio/me"));
       setError(null);
     } catch (e) {
-      setError(e instanceof StudioApiError ? e.message : tx("Nie udało się wczytać Studia.", "Could not load the Studio."));
+      setError(studioErrorText(e, tx, tx("Nie udało się wczytać Studia.", "Could not load the Studio.")));
     }
   }, [tx]);
 
@@ -305,7 +306,7 @@ function CreateChannel({ mode, onCreated }: { mode: StudioMe["channelCreation"];
       await studioApi("/api/studio/channel", { method: "POST", ...jsonBody({ name, handle }) });
       onCreated();
     } catch (e) {
-      setMessage({ kind: "error", text: e instanceof StudioApiError ? e.message : tx("Nie udało się założyć kanału.", "Could not create the channel.") });
+      setMessage({ kind: "error", text: studioErrorText(e, tx, tx("Nie udało się założyć kanału.", "Could not create the channel.")) });
     } finally {
       setBusy(false);
     }

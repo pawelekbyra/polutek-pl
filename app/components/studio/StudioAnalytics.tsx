@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/app/components/LanguageContext";
 import type { AnalyticsOverview, AnalyticsVideoList, VideoDetail } from "@/lib/modules/creator-analytics";
-import { StudioApiError, studioApi } from "./studio-client";
+import { studioApi } from "./studio-client";
+import { studioErrorText } from "./studio-errors";
 import { Card, Notice, focusRingClass, ghostButtonClass } from "./ui";
 import AnalyticsOverviewView from "./analytics/AnalyticsOverviewView";
 import AnalyticsVideosView from "./analytics/AnalyticsVideosView";
@@ -24,7 +25,7 @@ function useStudioData<T>(path: string): Loaded<T> {
       .then((data) => !cancelled && setResult({ state: "ready", data }))
       .catch((e) => {
         if (cancelled) return;
-        const message = e instanceof StudioApiError ? e.message : tx("Nie udało się wczytać statystyk.", "Could not load the statistics.");
+        const message = studioErrorText(e, tx, tx("Nie udało się wczytać statystyk.", "Could not load the statistics."));
         setResult({ state: "error", message });
       });
     return () => {
