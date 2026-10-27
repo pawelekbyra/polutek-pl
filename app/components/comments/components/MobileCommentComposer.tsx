@@ -31,8 +31,11 @@ const MAX_FIELD_HEIGHT = 120;
  * strip, a growing field and a round send button. The draft survives closing the bar. Anything that cannot be
  * typed into (signed out, comments off, still loading) is the regular composer's message.
  *
- * The bar is always mounted (invisible when closed) so the field can be focused synchronously inside the tap,
- * which is what makes iOS raise the keyboard. The field is 16 px: smaller text makes iOS zoom the page on focus.
+ * The bar is always mounted so the field can be focused synchronously inside the tap, which is what makes iOS
+ * raise the keyboard. While closed it is `inert` and `visibility: hidden` (nothing in it is reachable by Tab or a
+ * screen reader); `openSheet` lifts both imperatively right before the focus call, because a React state update
+ * would land too late for iOS. When open it behaves as a modal: Tab is trapped inside, Escape and a close button
+ * dismiss it, and focus returns to whatever opened it. The field is 16 px: smaller text makes iOS zoom the page on focus.
  */
 export const MobileCommentComposer = React.forwardRef<MobileComposerHandle, Props>(function MobileCommentComposer(
   props,
@@ -62,6 +65,9 @@ export const MobileCommentComposer = React.forwardRef<MobileComposerHandle, Prop
   const [mounted, setMounted] = React.useState(false);
   const [showAllEmoji, setShowAllEmoji] = React.useState(false);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const formRef = React.useRef<HTMLFormElement>(null);
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const openerRef = React.useRef<HTMLElement | null>(null);
   const draftRef = React.useRef(newComment);
   draftRef.current = newComment;
   const keyboardInset = useKeyboardInset(open);
@@ -76,6 +82,16 @@ export const MobileCommentComposer = React.forwardRef<MobileComposerHandle, Prop
   React.useEffect(() => setMounted(true), []);
 
   const openSheet = React.useCallback(() => {
+    const active = document.activeElement;
+    openerRef.current =
+      active instanceof HTMLElement && active !== document.body && !formRef.current?.contains(active) ? active : null;
+    // Lift the closed-state guards synchronously: a hidden or inert field cannot take focus, and iOS only raises
+    // the keyboard when the focus happens inside the tap.
+    const form = formRef.current;
+    if (form) {
+      form.removeAttribute("inert");
+      form.style.visibility = "visible";
+    }
     setOpen(true);
     textareaRef.current?.focus({ preventScroll: true });
   }, []);
@@ -87,6 +103,11 @@ export const MobileCommentComposer = React.forwardRef<MobileComposerHandle, Prop
     setIsInputFocused(false);
     // An empty draft has no use for a reply target; a typed one keeps it until sent or cancelled.
     if (!draftRef.current.trim()) setReplyTo(null);
+    // Give focus back to whatever opened the bar (the "Add a comment" line or a comment's Reply button).
+    const opener = openerRef.current;
+    openerRef.current = null;
+    const target = opener?.isConnected ? opener : triggerRef.current;
+    target?.focus({ preventScroll: true });
   }, [setIsInputFocused, setReplyTo]);
 
   React.useImperativeHandle(ref, () => ({ open: openSheet, close: closeSheet }), [openSheet, closeSheet]);
@@ -94,7 +115,29 @@ export const MobileCommentComposer = React.forwardRef<MobileComposerHandle, Prop
   React.useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeSheet();
+      if (event.key === "Escape") {
+        closeSheet();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      // Modal focus trap: Tab and Shift+Tab cycle inside the bar and never reach the page behind the scrim.
+      const form = formRef.current;
+      if (!form) return;
+      const items = Array.from(form.querySelectorAll<HTMLElement>("button:not([disabled]), textarea:not([disabled])"));
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      if (!active || !form.contains(active)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus({ preventScroll: true });
+      } else if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus({ preventScroll: true });
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus({ preventScroll: true });
+      }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -142,22 +185,34 @@ export const MobileCommentComposer = React.forwardRef<MobileComposerHandle, Prop
         )}
       />
       <form
+        ref={formRef}
         role="dialog"
         aria-modal={open}
         aria-label={placeholder}
+        inert={!open}
         onSubmit={handleSubmit}
         noValidate
         style={{
+          visibility: open ? "visible" : "hidden",
           bottom: inset,
           paddingBottom: inset > 0 ? 8 : "max(8px, env(safe-area-inset-bottom))",
         }}
         className={cn(
           "fixed inset-x-0 z-[1101] rounded-t-2xl border-t border-[var(--chan-line)] bg-[var(--chan-card)] shadow-[0_-12px_32px_rgba(15,23,42,0.18)]",
           // Slides up on open. On close it is gone at once: fading or sliding it while the keyboard leaves looked
-          // like a ghost bar over the page (it stays focusable, invisible, so the next tap can open the keyboard).
+          // like a ghost bar over the page (it is inert and hidden from Tab and screen readers while closed).
           open ? "animate-in slide-in-from-bottom-3 duration-200 motion-reduce:animate-none" : "pointer-events-none opacity-0",
         )}
       >
+        {/* Always-available way out that keeps the draft; shown only when it has keyboard focus (touch users have the scrim). */}
+        <button
+          type="button"
+          onClick={closeSheet}
+          className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:right-3 focus-visible:top-2 focus-visible:z-10 focus-visible:rounded-full focus-visible:bg-[var(--chan-surface)] focus-visible:px-3 focus-visible:py-1.5 focus-visible:text-[12px] focus-visible:font-bold focus-visible:text-[var(--chan-ink)]"
+        >
+          {tx("Zamknij komentarz", "Close comment")}
+        </button>
+
         {replyTo ? (
           <div className="flex items-center gap-2 px-4 pt-3 text-[12px] text-[var(--chan-muted)]">
             <CornerDownRight size={12} aria-hidden="true" className="shrink-0 text-[var(--chan-blue)]" />
@@ -292,6 +347,7 @@ export const MobileCommentComposer = React.forwardRef<MobileComposerHandle, Prop
           className="border border-[var(--chan-line)]"
         />
         <button
+          ref={triggerRef}
           type="button"
           onClick={openSheet}
           aria-haspopup="dialog"

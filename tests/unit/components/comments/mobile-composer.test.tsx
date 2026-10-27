@@ -62,7 +62,8 @@ describe('phone comment composer', () => {
   });
 
   it('keeps the field at 16 px (smaller text makes iOS zoom the page) and enables send for a draft', () => {
-    renderComposer({ newComment: 'Cześć' });
+    const { ref } = renderComposer({ newComment: 'Cześć' });
+    act(() => ref.current?.open());
     expect(screen.getByRole('textbox').className).toContain('text-[16px]');
     expect(screen.getByRole('button', { name: 'Skomentuj' })).toBeEnabled();
   });
@@ -97,3 +98,54 @@ describe('phone comment composer', () => {
     expect(screen.queryByRole('textbox')).toBeNull();
   });
 });
+
+describe('phone comment composer: accessibility (A03, A08)', () => {
+  const dialog = () => document.querySelector('form[role="dialog"]') as HTMLFormElement;
+
+  it('keeps the closed bar out of Tab order and the accessibility tree (inert + hidden)', () => {
+    renderComposer();
+    expect(dialog().hasAttribute('inert')).toBe(true);
+    expect(dialog().style.visibility).toBe('hidden');
+    expect(dialog().getAttribute('aria-modal')).toBe('false');
+  });
+
+  it('lifts the guards synchronously on open so the field can take focus inside the tap', () => {
+    renderComposer();
+    fireEvent.click(screen.getByRole('button', { name: 'Dodaj komentarz' }));
+    expect(dialog().hasAttribute('inert')).toBe(false);
+    expect(dialog().style.visibility).toBe('visible');
+    expect(dialog().getAttribute('aria-modal')).toBe('true');
+    expect(screen.getByRole('textbox')).toHaveFocus();
+  });
+
+  it('closes with the explicit close button and returns focus to the line that opened it', () => {
+    renderComposer();
+    const trigger = screen.getByRole('button', { name: 'Dodaj komentarz' });
+    trigger.focus();
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole('button', { name: 'Zamknij komentarz' }));
+    expect(dialog().hasAttribute('inert')).toBe(true);
+    expect(trigger).toHaveFocus();
+  });
+
+  it('closes on Escape and gives focus back to the opener', () => {
+    renderComposer();
+    const trigger = screen.getByRole('button', { name: 'Dodaj komentarz' });
+    trigger.focus();
+    fireEvent.click(trigger);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(trigger).toHaveFocus();
+  });
+
+  it('traps Tab inside the open bar in both directions', () => {
+    const { ref } = renderComposer({ newComment: 'Cześć' });
+    act(() => ref.current?.open());
+    const send = screen.getByRole('button', { name: 'Skomentuj' });
+    send.focus();
+    fireEvent.keyDown(document, { key: 'Tab' });
+    expect(screen.getByRole('button', { name: 'Zamknij komentarz' })).toHaveFocus();
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+    expect(send).toHaveFocus();
+  });
+});
+
