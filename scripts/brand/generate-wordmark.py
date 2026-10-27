@@ -89,10 +89,11 @@ SMALL_XS = 1.0
 SMALL_FROM = 7            # index of "." in WORD
 DOT_D = 14.0         # the dot is as wide as a stem
 WORD = ["P", "O", "L", "U", "T", "E", "K", ".", "C", "O", "M"]
-# K-. equals BADGE_GAP (ink to ink, same as badge-to-P) and .-C is set so that the ink gap to the dot, measured on the
-# dot's rows, is the same (C bulges away from the baseline, hence the smaller bounding-box gap). Optical gaps (edge to edge, cap/100 units) after each pair, tuned so the area between neighbouring
-# glyph profiles is even.
-GAPS = {"P-O": 10.8, "O-L": 14.7, "L-U": 5, "U-T": 5, "T-E": 5, "E-K": 14.2, "K-.": 28.4, ".-C": 23.9, "C-O": 8, "O-M": 8.8}
+# The visible hole between the K and the C (K's right ink to C's left ink, the dot sits inside it) equals the
+# badge-to-P gap (BADGE_GAP) as rendered in the browser; the dot is centred in it (equal ink gaps to K and C on the
+# dot's rows; the C bulges away from the baseline, hence the smaller bounding-box gap on that side). The other gaps are
+# optical: the area between neighbouring glyph profiles is even.
+GAPS = {"P-O": 10.8, "O-L": 14.7, "L-U": 5, "U-T": 5, "T-E": 5, "E-K": 14.2, "K-.": 9.83, ".-C": 5.33, "C-O": 8, "O-M": 8.8}
 
 
 def load_font(path):
