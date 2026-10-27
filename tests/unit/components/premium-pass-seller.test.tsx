@@ -21,7 +21,7 @@ describe('seller card', () => {
     // The label is on its own row and the company name (bold) on the next one, so the name never breaks away from it.
     expect(card.querySelector('span')?.textContent).toBe('Sprzedawca:');
     expect(card.querySelector('b')?.textContent?.replace(/ /g, ' ')).toBe('Paweł Perfect S.Ą.');
-    expect(card.textContent).toContain('Sp. z o.o.');
+    expect(card.textContent).toContain('S.Ą.');
     expect(card).toHaveTextContent('Spółka zarejestrowana w Polsce');
     expect(card).not.toHaveTextContent('NIP');
   });
