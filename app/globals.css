@@ -357,8 +357,8 @@
     --chan-muted-2: #475467;
     --chan-body: #344054;
     --chan-blue: #2563eb;
-    /* Very dark blue of the POLUTEK wordmark in the header logo: hue 219 deg, close to --chan-blue (221 deg), darker (contrast 12.43:1 on --chan-nav, 13.11:1 on white). */
-    --brand-ink-blue: #0b2d6b;
+    /* Very dark blue of the POLUTEK wordmark in the header logo: hue 228 deg, a deeper blue than --chan-blue (221 deg), dark (contrast 11.51:1 on --chan-nav, 12.14:1 on white). */
+    --brand-ink-blue: #092598;
     --chan-blue-soft: #eff3fe;
     --chan-amber: #f59e0b;
     --chan-amber-bright: #fbbf24;
