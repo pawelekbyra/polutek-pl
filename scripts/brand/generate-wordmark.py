@@ -93,7 +93,7 @@ WORD = ["P", "O", "L", "U", "T", "E", "K", ".", "C", "O", "M"]
 # badge-to-P gap (BADGE_GAP) as rendered in the browser; the dot is centred in it (equal ink gaps to K and C on the
 # dot's rows; the C bulges away from the baseline, hence the smaller bounding-box gap on that side). The other gaps are
 # optical: the area between neighbouring glyph profiles is even.
-GAPS = {"P-O": 10.8, "O-L": 14.7, "L-U": 5, "U-T": 5, "T-E": 5, "E-K": 14.2, "K-.": 9.83, ".-C": 5.33, "C-O": 8, "O-M": 8.8}
+GAPS = {"P-O": 10.8, "O-L": 14.7, "L-U": 5, "U-T": 5, "T-E": 5, "E-K": 14.2, "K-.": 15.19, ".-C": 10.69, "C-O": 8, "O-M": 8.8}
 
 
 def load_font(path):
@@ -143,7 +143,7 @@ def glyph_outline(font, ch, x, dot=False, small=False):
 
 # ---------------------------------------------------------------- play badge
 BADGE_H, BADGE_W = 120.0, 168.0          # 1.2 x cap, 1.4 : 1
-BADGE_GAP = 28.4                          # to the P: 0.284 x cap = 5 px at 17.5 px caps (3 px + 2 px more, owner request)
+BADGE_GAP = 39.83                         # to the P: 0.398 x cap = 7 px at the phone render (21 px tall); was 28.4 (5 px)
 BADGE_OUTLINE = 9.0                       # black outline, inset (inside the badge footprint): 0.075 x badge height
 CY = 50.0                                 # vertically centred on the cap-height middle
 
