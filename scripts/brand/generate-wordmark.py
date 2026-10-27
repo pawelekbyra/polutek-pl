@@ -89,11 +89,11 @@ SMALL_XS = 1.0
 SMALL_FROM = 7            # index of "." in WORD
 DOT_D = 14.0         # the dot is as wide as a stem
 WORD = ["P", "O", "L", "U", "T", "E", "K", ".", "C", "O", "M"]
-# The visible hole between the K and the C (K's right ink to C's left ink, the dot sits inside it) is 1 px wider than
-# the badge-to-P gap at the 21 px phone render (7 px vs 6 px, measured in Chrome); the dot is centred in it (equal ink
+# The visible hole between the K and the C (K's right ink to C's left ink, the dot sits inside it) is 2 px wider than
+# the badge-to-P gap at the 21 px phone render (8 px vs 6 px, measured in Chrome); the dot is centred in it (equal ink
 # gaps to K and C on the dot's rows; the C bulges away from the baseline, hence the smaller bounding-box gap on that
 # side). The other gaps are optical: the area between neighbouring glyph profiles is even.
-GAPS = {"P-O": 10.8, "O-L": 14.7, "L-U": 5, "U-T": 5, "T-E": 5, "E-K": 14.2, "K-.": 15.19, ".-C": 10.69, "C-O": 8, "O-M": 8.8}
+GAPS = {"P-O": 10.8, "O-L": 14.7, "L-U": 5, "U-T": 5, "T-E": 5, "E-K": 14.2, "K-.": 18.05, ".-C": 13.55, "C-O": 8, "O-M": 8.8}
 
 
 def load_font(path):
