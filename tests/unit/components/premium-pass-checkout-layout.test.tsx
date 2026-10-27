@@ -65,14 +65,18 @@ describe('patron checkout layout', () => {
     expect(dialog.getByRole('combobox', { name: 'Metoda płatności' })).toBeInTheDocument();
   });
 
-  it('every field label in the modal (legend of step 1, currency, payment heading of step 3) shares one typography class', async () => {
+  it('step 1: the "Wybierz dostęp" label sits in one row with the small currency pill ("Waluta" is screen-reader only); the other field labels share one typography class', async () => {
     openCheckout();
     const dialog = within(await screen.findByRole('dialog'));
-    const legend = dialog.getByText('Wybierz dostęp');
-    const currency = dialog.getByText('Waluta');
-    expect(legend.tagName).toBe('LEGEND');
-    expect(legend.className).toBe(currency.className);
-    expect(legend.className).toBe(FIELD_LABEL_CLASS);
+    const legend = dialog.getAllByText('Wybierz dostęp').find((el) => el.tagName === 'LEGEND')!;
+    expect(legend.className).toContain('sr-only');
+    const visible = dialog.getAllByText('Wybierz dostęp').find((el) => el.tagName === 'SPAN')!;
+    expect(visible).toHaveAttribute('aria-hidden', 'true');
+    const pill = dialog.getByRole('combobox', { name: 'Waluta' });
+    expect(visible.parentElement).toBe(pill.closest('div')?.parentElement); // same row
+    expect(dialog.getByText('Waluta').className).toContain('sr-only');
+    expect(pill.className).toContain('h-9'); // 36 px line, hit area grown to 44 px by the ::before
+    expect(pill.className).toContain('before:-inset-y-1');
     expect(FIELD_LABEL_CLASS).toMatch(/text-\[13px\].*text-\[var\(--chan-body\)\]|text-\[var\(--chan-body\)\].*text-\[13px\]/);
     expect(FIELD_LABEL_CLASS).toContain('mb-2'); // label to field: 8 px everywhere
     fireEvent.click(dialog.getByRole('button', { name: /^Dalej/ }));

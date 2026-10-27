@@ -12,7 +12,7 @@ import type { Tx } from "@/lib/i18n/ui";
 import type { PatronCurrency } from "@/lib/modules/patron-zone/domain/config";
 import type { PatronOfferProduct, PremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
 import { TIP_CURRENCY_SYMBOLS, describeTipMethod, tipCurrencyTitle } from "../support/tip-flow-config";
-import { FIELD_LABEL_CLASS, TipSelect } from "../support/TipSelect";
+import { TipSelect } from "../support/TipSelect";
 import { PassSellerCard } from "./PassSellerCard";
 import { price, productName, productNote, vatLine } from "./pass-copy";
 import styles from "./premium-pass.module.css";
@@ -77,7 +77,18 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
         </p>
       )}
       <fieldset className={styles.products} disabled={busy || access?.lifetime === true}>
-        <legend className={FIELD_LABEL_CLASS}>{tx("Wybierz dostęp", "Choose your access")}</legend>
+        <legend className="sr-only">{tx("Wybierz dostęp", "Choose your access")}</legend>
+        <div className={styles.accessHead}>
+          <span aria-hidden="true">{tx("Wybierz dostęp", "Choose your access")}</span>
+          <TipSelect
+            label={tx("Waluta", "Currency")}
+            value={currency}
+            onChange={(code) => onCurrency(code as PatronCurrency)}
+            disabled={busy || access?.lifetime === true}
+            compact
+            options={offer.currencies.map((code) => ({ value: code, icon: TIP_CURRENCY_SYMBOLS[code], title: tipCurrencyTitle(tx, code), short: `${TIP_CURRENCY_SYMBOLS[code]} · ${code}` }))}
+          />
+        </div>
         {offer.products.map((p) => (
           <label key={p.id} className={styles.product}>
             <input type="radio" name={`${ids}-product`} value={p.id} checked={p.id === product.id} onChange={() => onProduct(p.id)} />
@@ -89,13 +100,6 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
         ))}
       </fieldset>
 
-      <TipSelect
-        label={tx("Waluta", "Currency")}
-        value={currency}
-        onChange={(code) => onCurrency(code as PatronCurrency)}
-        disabled={busy || access?.lifetime === true}
-        options={offer.currencies.map((code) => ({ value: code, icon: TIP_CURRENCY_SYMBOLS[code], title: tipCurrencyTitle(tx, code) }))}
-      />
       {notice && <p className={styles.noticeWarn} role="alert">{notice}</p>}
 
       <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} />
