@@ -264,14 +264,14 @@
   /* Windows rendered into <body> (sign-in, account, dialogs) sit outside the shells above; this
      zero-specificity default gives them the same visible focus, and any component ring wins over it. */
   :where(a, button, [role="button"], [role="menuitem"], summary, input, select, textarea):focus-visible {
-    outline: 3px solid rgba(37, 99, 235, .45);
+    outline: 3px solid var(--chan-focus-ring);
     outline-offset: 2px;
   }
 
   .channel-page-shell :is(a, button):focus-visible,
   .public-visual-shell :is(a, button):focus-visible,
   .admin-visual-shell :is(a, button):focus-visible {
-    outline: 3px solid rgba(37, 99, 235, .45);
+    outline: 3px solid var(--chan-focus-ring);
     outline-offset: 3px;
   }
 
@@ -351,6 +351,9 @@
     --chan-surface: #f0f3f8;
     --chan-surface-raised: #ffffff;
     --chan-line: #e1e6ef;
+    /* Borders of text fields and the focus ring are state indicators, not decoration: at least 3:1 on the card (#fff), the page (#f7f9fc) and the surface (#f0f3f8) (WCAG 1.4.11). Keep --chan-line for dividers. */
+    --chan-control-border: #7d889c;
+    --chan-focus-ring: #2563eb;
     --chan-line-soft: #d5dce8;
     --chan-ink: #111827;
     --chan-muted: #5d6679;

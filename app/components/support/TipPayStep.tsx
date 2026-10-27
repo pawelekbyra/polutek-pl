@@ -249,7 +249,7 @@ function CardFormInner(props: TipPayStepProps) {
           onChange={(event) => setComplete(event.complete)}
           options={{
             hidePostalCode: true,
-            style: { base: { fontSize: "16px", color: "#1a1a1a", "::placeholder": { color: "#9ca3af" } } },
+            style: { base: { fontSize: "16px", color: "#1a1a1a", "::placeholder": { color: "#5d6679" } } },
           }}
         />
       </div>
