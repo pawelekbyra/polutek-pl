@@ -94,4 +94,8 @@ describe('public video visibility policy', () => {
       creator: { status: 'SUSPENDED' },
     }, now)).toBe(false);
   });
+  it('never lists a video removed by moderation, even while its publish status is PUBLISHED (audit DB-02)', async () => {
+    const where = await buildPublicVideoWhere(now);
+    expect(where.moderationStatus).toEqual({ not: 'REMOVED' });
+  });
 });

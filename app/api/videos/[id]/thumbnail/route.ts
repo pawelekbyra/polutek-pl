@@ -11,6 +11,7 @@ import {
   PRIVATE_THUMBNAIL_CACHE_CONTROL,
 } from "@/lib/modules/media";
 import { resolveVideoThumbnailUrl } from "@/lib/modules/media";
+import { isVideoPubliclyVisible } from "@/lib/modules/video/domain/public-visibility";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,14 @@ export async function GET(
     // 1. Resolve video and its thumbnail URL
     const video = await ctx.prisma.video.findUnique({
       where: { id: videoId },
-      select: { id: true, thumbnailUrl: true, status: true }
+      select: {
+        id: true,
+        thumbnailUrl: true,
+        status: true,
+        publishedAt: true,
+        moderationStatus: true,
+        creator: { select: { status: true, deletedAt: true } },
+      },
     });
 
     if (!video) {
@@ -45,11 +53,13 @@ export async function GET(
     }
 
     // 2. Thumbnail Access Policy
-    // - Published and unlisted videos: thumbnails are public (regardless of patron-only playback).
+    // - Published and unlisted videos that are due, not removed and on a visible channel: thumbnails are public
+    //   (regardless of patron-only playback).
     // - Drafts/Archived/Unpublished: platform staff and members of the video's
     //   channel whose role allows `video.preview` (CLAUDE.md 4.23); nobody else.
     // An unlisted video is reachable by link, so its cover is too (it is never copied to the public bucket).
-    const isPublic = video.status === "PUBLISHED" || video.status === "UNLISTED";
+    // Public means what the link rules say (audit S05): due, not removed by moderation, on a publicly visible channel.
+    const isPublic = isVideoPubliclyVisible(video);
     let mayPreview = false;
     if (!isPublic) {
       if (actor.type === "admin") {

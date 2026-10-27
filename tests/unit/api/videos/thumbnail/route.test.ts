@@ -48,6 +48,9 @@ describe('GET /api/videos/[videoId]/thumbnail', () => {
       id: 'v1',
       thumbnailUrl: 'https://images.unsplash.com/photo-123',
       status: 'PUBLISHED',
+      publishedAt: null,
+      moderationStatus: 'NONE',
+      creator: { status: 'ACTIVE', deletedAt: null },
     });
 
     const req = new NextRequest('http://localhost/api/videos/v1/thumbnail');
@@ -110,6 +113,9 @@ describe('GET /api/videos/[videoId]/thumbnail', () => {
       id: 'v1',
       thumbnailUrl: '/api/videos/v1/thumbnail',
       status: 'PUBLISHED',
+      publishedAt: null,
+      moderationStatus: 'NONE',
+      creator: { status: 'ACTIVE', deletedAt: null },
     });
 
     const req = new NextRequest('http://localhost/api/videos/v1/thumbnail');
@@ -167,5 +173,18 @@ describe('GET /api/videos/[videoId]/thumbnail', () => {
       expect(authorize).not.toHaveBeenCalled();
       expect(ThumbnailResponseService.getThumbnailResponse).toHaveBeenCalledWith('v1', expect.any(String), expect.stringContaining('private'));
     });
+  });
+  it.each([
+    ['removed by moderation', { moderationStatus: 'REMOVED' }],
+    ['on a suspended channel', { creator: { status: 'SUSPENDED', deletedAt: null } }],
+    ['not yet due', { publishedAt: new Date('2999-01-01T00:00:00Z') }],
+  ])('a guest cannot read the thumbnail of a PUBLISHED video that is %s (audit S05)', async (_label, patch) => {
+    vi.mocked(getActorFromAuth).mockResolvedValue({ type: 'guest' } as any);
+    mockPrisma.video.findUnique.mockResolvedValue({
+      id: 'v1', thumbnailUrl: 'https://cdn.example/t.jpg', status: 'PUBLISHED', publishedAt: null,
+      moderationStatus: 'NONE', creator: { status: 'ACTIVE', deletedAt: null }, ...patch,
+    });
+    const res = await GET(new NextRequest('http://localhost/api/videos/v1/thumbnail'), { params: Promise.resolve({ id: 'v1' }) });
+    expect(res.status).toBe(403);
   });
 });

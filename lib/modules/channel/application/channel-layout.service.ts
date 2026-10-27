@@ -71,6 +71,7 @@ export class ChannelLayoutService {
             where: {
                 creatorId: mainChannel.id,
                 status: VideoStatus.PUBLISHED,
+                moderationStatus: { not: 'REMOVED' },
                 showInSidebar: true,
                 OR: [
                     { publishedAt: null },

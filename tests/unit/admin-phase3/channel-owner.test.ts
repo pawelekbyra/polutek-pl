@@ -13,6 +13,7 @@ function makeCtx(over: { actor?: AppContext["actor"]; user?: object | null; upda
   const prisma = {
     appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
     creator: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn(async () => channel), updateMany: vi.fn(async () => ({ count: over.updateCount ?? 1 })), update: vi.fn(async ({ data }: { data: object }) => ({ ...channel, ...data })) },
+    channelMember: { deleteMany: vi.fn(async () => ({ count: 1 })), upsert: vi.fn(async () => ({})) },
     user: { findUnique: vi.fn(async () => (over.user === undefined ? { id: "u-new", email: "new@x.pl", name: "Nowy", isDeleted: false } : over.user)), findMany: vi.fn(async () => [{ id: "u-new", email: "new@x.pl", name: "Nowy" }]) },
   };
   const ctx = { actor: over.actor ?? { type: "admin", userId: "adm1" }, prisma, db: { read: prisma, writeTransaction: async (fn: (tx: unknown) => unknown) => fn(prisma) } } as unknown as AppContext;
@@ -28,6 +29,17 @@ describe("changeChannelOwner", () => {
     expect(r).toMatchObject({ ok: true, data: { previousUserId: "u-old", owner: { email: "new@x.pl" } } });
     expect(prisma.creator.updateMany).toHaveBeenCalledWith({ where: { id: "ch1", userId: "u-old" }, data: { userId: "u-new" } });
     expect(audit.recordAuditEvent).toHaveBeenCalledWith(ctx, expect.objectContaining({ action: "CHANNEL_OWNER_CHANGED", targetId: "ch1", metadata: { before: { userId: "u-old" }, after: { userId: "u-new" }, reason: "zmiana konta" } }), expect.anything());
+  });
+
+  it("moves the OWNER membership with the owner column: old owner's OWNER row removed, new owner upserted as OWNER (audit DB-01)", async () => {
+    const { ctx, prisma } = makeCtx();
+    await changeChannelOwner(ctx, { userId: "u-new" });
+    expect(prisma.channelMember.deleteMany).toHaveBeenCalledWith({ where: { channelId: "ch1", userId: "u-old", role: "OWNER" } });
+    expect(prisma.channelMember.upsert).toHaveBeenCalledWith(expect.objectContaining({
+      where: { channelId_userId: { channelId: "ch1", userId: "u-new" } },
+      create: expect.objectContaining({ role: "OWNER" }),
+      update: expect.objectContaining({ role: "OWNER" }),
+    }));
   });
 
   it("refuses non-admins, the same owner, deleted or unknown accounts and a lost race", async () => {

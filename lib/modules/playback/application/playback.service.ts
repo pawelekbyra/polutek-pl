@@ -218,7 +218,9 @@ export class PlaybackService {
 
     const decision = accessResult.data;
 
-    if (!video && !decision.hasAccess && decision.reason === 'NOT_FOUND') {
+    // A hidden video (draft, archived, removed, hidden channel) answers exactly like one that does not exist: no title,
+    // no poster (audit S06). `video` is only used for those two fields before this point.
+    if (!decision.hasAccess && decision.reason === 'NOT_FOUND') {
       return unavailablePlan({
         videoId,
         status: 'UNAVAILABLE',
