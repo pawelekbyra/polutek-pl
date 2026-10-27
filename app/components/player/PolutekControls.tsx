@@ -9,6 +9,7 @@ import { ChaptersMenuProvider } from "./chapters/chapters-menu-context";
 import {
   DurationLabel,
   FullscreenToggleButton,
+  PlayPauseButton,
   PipToggleButton,
   VolumeControl,
 } from "./controls/ControlButtons";
@@ -49,7 +50,7 @@ function CenterStage() {
 
 /**
  * The player's own controls (no Vidstack layout, no Controls.Root: a plain div keeps Vidstack's CSS out of it).
- * One slim row over a bottom scrim, everything on one baseline (no play/pause button: tap the video or press k/space): progress track with the time chip |
+ * One slim row over a bottom scrim, everything on one baseline play/pause (left) | progress track with the time chip |
  * duration (wide screens) | sound, captions, chapters, picture-in-picture, quality/settings, fullscreen. Narrow
  * screens drop the duration, the slider part of the volume, the chapters and picture-in-picture buttons (both stay
  * reachable from the settings menu), so a 360px phone keeps a long track. Visibility follows Vidstack's
@@ -69,6 +70,7 @@ export default function PolutekControls({ className }: { className?: string }) {
         <div className="mc-scrim" />
         <div className="mc-bottom">
           <div className="mc-bar">
+            <PlayPauseButton />
             <div className="mc-track-area">
               <ScrubBar />
             </div>
