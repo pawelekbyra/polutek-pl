@@ -89,8 +89,8 @@ SMALL_XS = 1.0
 SMALL_FROM = 7            # index of "." in WORD
 DOT_D = 14.0         # the dot is as wide as a stem
 WORD = ["P", "O", "L", "U", "T", "E", "K", ".", "C", "O", "M"]
-# The visible hole between the K and the C (K's right ink to C's left ink, the dot sits inside it) is 1 px wider than
-# the badge-to-P gap at the 21 px phone render (7 px vs 6 px, measured in Chrome); the dot is centred in it (equal ink
+# The visible hole between the K and the C (K's right ink to C's left ink, the dot sits inside it) is 2 px wider than
+# the badge-to-P gap at the 21 px phone render (7 px vs 5 px, measured in Chrome); the dot is centred in it (equal ink
 # gaps to K and C on the dot's rows; the C bulges away from the baseline, hence the smaller bounding-box gap on that
 # side). The other gaps are optical: the area between neighbouring glyph profiles is even.
 GAPS = {"P-O": 10.8, "O-L": 14.7, "L-U": 5, "U-T": 5, "T-E": 5, "E-K": 14.2, "K-.": 15.19, ".-C": 10.69, "C-O": 8, "O-M": 8.8}
@@ -143,7 +143,7 @@ def glyph_outline(font, ch, x, dot=False, small=False):
 
 # ---------------------------------------------------------------- play badge
 BADGE_H, BADGE_W = 120.0, 168.0          # 1.2 x cap, 1.4 : 1
-BADGE_GAP = 34.12                         # to the P: 0.341 x cap = 6 px at the phone render (21 px tall)
+BADGE_GAP = 28.41                         # to the P: 0.284 x cap = 5 px at the phone render (21 px tall)
 CY = 50.0                                 # vertically centred on the cap-height middle
 
 
@@ -247,8 +247,8 @@ def main():
         return head + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="%s" role="img" aria-label="%s"><title>%s</title>%s</svg>\n' % (vb, label, label, body)
     tg = 'transform="translate(%s 0)"' % f(text_x)
     files = {
-        "polutek-wordmark.svg": svg(vb_full, '<path fill="#2563eb" d="%s"/><path fill="#fff" d="%s"/><g %s><path fill="#111827" d="%s"/><path fill="#2563eb" d="%s"/></g>' % (badge_d, tri_d, tg, ink_d, blue_d)),
-        "polutek-wordmark-nobadge.svg": svg(vb_text, '<path fill="#111827" d="%s"/><path fill="#2563eb" d="%s"/>' % (ink_d, blue_d)),
+        "polutek-wordmark.svg": svg(vb_full, '<path fill="#2563eb" d="%s"/><path fill="#fff" d="%s"/><g %s><path fill="#0b1f4a" d="%s"/><path fill="#2563eb" d="%s"/></g>' % (badge_d, tri_d, tg, ink_d, blue_d)),
+        "polutek-wordmark-nobadge.svg": svg(vb_text, '<path fill="#0b1f4a" d="%s"/><path fill="#2563eb" d="%s"/>' % (ink_d, blue_d)),
         "polutek-wordmark-mono.svg": svg(vb_full, '<path fill="currentColor" d="%s%s"/><g %s><path fill="currentColor" d="%s%s"/></g>' % (badge_d, tri_hole, tg, ink_d, blue_d)),
         "polutek-wordmark-mono-nobadge.svg": svg(vb_text, '<path fill="currentColor" d="%s%s"/>' % (ink_d, blue_d)),
     }
