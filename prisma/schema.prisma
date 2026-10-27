@@ -699,6 +699,8 @@ model Subscription {
   @@unique([userId, creatorId])
   @@index([userId])
   @@index([creatorId])
+  /// Keyset paging of a channel's audience by userId (NEW_VIDEO fan-out job).
+  @@index([creatorId, userId])
 }
 
 enum NotificationKind {
@@ -735,6 +737,8 @@ model Notification {
 
   @@index([userId, createdAt])
   @@index([userId, read])
+  /// Per-video "who already got it" lookup of the NEW_VIDEO fan-out job (kind + videoId, then a page of userIds).
+  @@index([kind, videoId, userId])
 }
 
 /// Per-user opt-out toggles for non-essential notification categories.
@@ -1430,6 +1434,10 @@ model BroadcastEmail {
   requestKey     String?                 @unique
   /// Lease of the send-broadcasts cron run that is sending this broadcast (crash = lease expires).
   lockedUntil    DateTime?
+  /// Random token of the run that holds the lease. Every write of that run (lease renewal, release, finalize) is
+  /// conditional on it, so a run that lost its lease (stalled, taken over) can no longer touch the broadcast. NULL on
+  /// rows from before the column existed and on a released broadcast.
+  lockedBy       String?
   /// Not before this time (set after a provider 429 / quota error).
   nextRunAt      DateTime?
   createdAt      DateTime                @default(now())
@@ -1808,4 +1816,41 @@ model PlaylistItem {
   @@unique([playlistId, videoId])
   @@index([playlistId, position])
   @@index([videoId])
+}
+
+enum DurableJobStatus {
+  PENDING
+  DONE
+  /// Gave up after the maximum number of attempts; kept for an operator (lastError says why).
+  DEAD
+}
+
+/// Small durable work queue for jobs that must survive a process crash and never run twice at once: the NEW_VIDEO
+/// notification fan-out and the R2 clean-up of a deleted video. One row per (kind, dedupeKey). A runner takes a job
+/// with `FOR UPDATE SKIP LOCKED` and a lease (`lockedBy` = random token, `lockedUntil` = expiry); every write of that
+/// run is conditional on the token, so a stalled run whose lease expired cannot overwrite the one that took over.
+/// `cursor` is the resume point of a long job (e.g. the last userId notified). Same pattern as VideoEncodeJob and the
+/// e-mail broadcast queue, see lib/modules/shared/durable-job.ts.
+model DurableJob {
+  id          String           @id @default(uuid())
+  /// "NEW_VIDEO_FANOUT" | "STORAGE_CLEANUP" (free text on purpose: a new kind needs no migration).
+  kind        String
+  /// What the job is about (a video id); enqueueing the same (kind, dedupeKey) again does not create a second job.
+  dedupeKey   String
+  payload     Json
+  status      DurableJobStatus @default(PENDING)
+  /// Failed runs so far (drives the exponential backoff and the move to DEAD).
+  attempts    Int              @default(0)
+  cursor      String?
+  /// Not before this time (backoff after a failure).
+  runAfter    DateTime         @default(now())
+  lockedBy    String?
+  lockedUntil DateTime?
+  lastError   String?
+  completedAt DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([kind, dedupeKey])
+  @@index([status, runAfter])
 }

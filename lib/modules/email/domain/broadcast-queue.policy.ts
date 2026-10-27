@@ -15,6 +15,8 @@ export const BROADCAST_SEND_INTERVAL_MS = 250;
 export const BROADCAST_RUN_BUDGET_MS = 50_000;
 /** A run holds the broadcast this long; if the process dies the next run takes over after it. */
 export const BROADCAST_LEASE_MS = 5 * 60_000;
+/** One send call may take this long; a hanging provider call is cut and the recipient retried (well inside the lease). */
+export const BROADCAST_SEND_TIMEOUT_MS = 20_000;
 /** Recipients loaded per round trip. */
 export const BROADCAST_BATCH_SIZE = 25;
 /** A recipient whose send keeps failing with a temporary error is given up after this many tries. */

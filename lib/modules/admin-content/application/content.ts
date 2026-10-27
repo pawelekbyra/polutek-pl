@@ -16,13 +16,14 @@ import {
   type AdminVideoDetailsDto,
   type AdminVideoDto,
 } from "@/lib/modules/video";
-import { getPipelineState, purgeVideoStorage, snapshotVideoStorage, type PipelineStateDto } from "@/lib/modules/video-pipeline";
+import { getPipelineState, type PipelineStateDto } from "@/lib/modules/video-pipeline";
 import { MainChannelService } from "@/lib/modules/channel";
 import { authorize } from "@/lib/modules/authz";
 import { R2ThumbnailStorageClient, parsePublicThumbnailUrl } from "@/lib/modules/media";
 import { recordAuditEventSafe } from "@/lib/modules/audit";
 import { translationSubtitleUrls } from "@/lib/modules/translations";
 import { thumbnailState, type ThumbnailState } from "../domain/thumbnail-state";
+import { enqueueStorageCleanupInTx, kickStorageCleanup } from "./storage-cleanup-job";
 
 export const CONTENT_PAGE_SIZE = 20;
 
@@ -81,25 +82,25 @@ export async function getThumbnailSource(videoId: string, ctx: AppContext): Prom
 }
 
 /**
- * Deleting a film = note what it owns in R2, delete the rows (cascade), then purge HLS, originals and
- * the panel's subtitle files. Same order as the old route, now in one use case.
+ * Deleting a film = delete the rows (cascade) and, IN THE SAME TRANSACTION, record what the film owns in R2 as a
+ * durable clean-up job (HLS outputs, originals, the panel's own subtitle files). The job then removes the objects
+ * (right away, and by the minute cron if this process dies or R2 refuses) until every removal is confirmed.
  */
 export async function deleteVideoWithStorage(videoId: string, ctx: AppContext): Promise<UseCaseResult<AdminVideoDto, AppError>> {
   const denied = await authorize(ctx, "video.delete", { videoId });
   if (denied) return fail(denied);
   const details = await getAdminVideoDetails({ idOrSlug: videoId }, ctx);
   const subtitles = new Set([...(details.ok ? [details.data.subtitleUrlPl, details.data.subtitleUrlEn] : []), ...(await translationSubtitleUrls(videoId, ctx).catch(() => [] as string[]))]);
-  const storage = await snapshotVideoStorage(videoId, ctx).catch(() => null);
-  const result = await deleteAdminVideo(videoId, ctx);
-  if (!result.ok) return fail(result.error as AppError);
-  if (storage) await purgeVideoStorage(videoId, storage).catch(() => undefined);
+  const publicKeys: string[] = [];
   if (R2ThumbnailStorageClient.isPublicServingConfigured()) {
-    const client = new R2ThumbnailStorageClient();
     for (const url of subtitles) {
       const key = parsePublicThumbnailUrl(url, process.env);
-      if (key && key.includes("/subtitles/")) await client.deletePublic(key).catch(() => undefined);
+      if (key && key.includes("/subtitles/")) publicKeys.push(key);
     }
   }
+  const result = await deleteAdminVideo(videoId, ctx, { beforeDelete: (tx) => enqueueStorageCleanupInTx(tx, videoId, publicKeys) });
+  if (!result.ok) return fail(result.error as AppError);
+  kickStorageCleanup();
   return ok(result.data);
 }
 

@@ -8,8 +8,9 @@ type Row = QueuedRecipient & { status: string; error?: string; nextAttemptAt?: n
 
 /** In-memory queue with the same contract as BroadcastQueueRepository. */
 function fakeStore(rows: Row[], options: { eligibleUserIds?: string[]; leased?: boolean } = {}) {
-  const broadcast: ClaimedBroadcast = { id: 'b1', subjectPl: 'Nowy film', htmlPl: '<p>Cześć {{firstName}}</p>', subjectEn: '', htmlEn: '' };
-  const state = { status: 'READY', lockedUntil: null as number | null, nextRunAt: null as Date | null, finalized: false };
+  const broadcast = { id: 'b1', subjectPl: 'Nowy film', htmlPl: '<p>Cześć {{firstName}}</p>', subjectEn: '', htmlEn: '' };
+  // `owner` models BroadcastEmail.lockedBy: only the run holding the current token may renew, release or finalize.
+  const state = { status: 'READY', owner: null as string | null, claims: 0, nextRunAt: null as Date | null, finalized: false };
   let clock = 0;
   const store: BroadcastQueueStore & { state: typeof state; rows: Row[]; tick: (ms: number) => void } = {
     state,
@@ -19,7 +20,8 @@ function fakeStore(rows: Row[], options: { eligibleUserIds?: string[]; leased?: 
       if (options.leased) return null;
       if (!['READY', 'SENDING'].includes(state.status)) return null;
       state.status = 'SENDING';
-      return broadcast;
+      state.owner = `token-${++state.claims}`;
+      return { ...broadcast, leaseToken: state.owner } satisfies ClaimedBroadcast;
     }),
     loadDueRecipients: vi.fn(async (_id, limit) =>
       rows.filter((r) => r.status === 'PENDING' && (r.nextAttemptAt ?? 0) <= clock).slice(0, limit)),
@@ -34,8 +36,18 @@ function fakeStore(rows: Row[], options: { eligibleUserIds?: string[]; leased?: 
       Object.assign(rows.find((r) => r.id === id)!, { error: reason, attemptCount, nextAttemptAt: at.getTime() });
     }),
     hasPending: vi.fn(async () => rows.some((r) => r.status === 'PENDING')),
-    release: vi.fn(async (_id, nextRunAt) => { state.nextRunAt = nextRunAt; }),
-    finalize: vi.fn(async () => { state.finalized = true; state.status = 'SENT'; }),
+    renewLease: vi.fn(async (_id, token) => state.status === 'SENDING' && state.owner === token),
+    release: vi.fn(async (_id, token, nextRunAt) => {
+      if (state.owner !== token) return;
+      state.nextRunAt = nextRunAt;
+      state.owner = null;
+    }),
+    finalize: vi.fn(async (_id, token) => {
+      if (state.owner !== token) return;
+      state.finalized = true;
+      state.status = 'SENT';
+      state.owner = null;
+    }),
   };
   return { store, now: () => clock };
 }
@@ -56,7 +68,7 @@ describe('broadcast queue run', () => {
     expect(send).toHaveBeenCalledTimes(3);
     expect(sleep).toHaveBeenCalledWith(BROADCAST_SEND_INTERVAL_MS);
     expect(store.rows.map((r) => r.providerId)).toEqual(['re_r1', 're_r2', 're_r3']);
-    expect(store.finalize).toHaveBeenCalledWith('b1');
+    expect(store.finalize).toHaveBeenCalledWith('b1', 'token-1');
   });
 
   it('does nothing when another run holds the broadcast (no double sending)', async () => {
@@ -83,7 +95,7 @@ describe('broadcast queue run', () => {
     expect(send).toHaveBeenCalledTimes(1);
     expect(store.rows.every((r) => r.status === 'PENDING' && r.attemptCount === 0)).toBe(true);
     expect(result.pausedUntil).not.toBeNull();
-    expect(store.release).toHaveBeenCalledWith('b1', expect.any(Date));
+    expect(store.release).toHaveBeenCalledWith('b1', 'token-1', expect.any(Date));
     expect(store.finalize).not.toHaveBeenCalled();
   });
 
@@ -95,7 +107,7 @@ describe('broadcast queue run', () => {
     expect(store.rows[0]).toMatchObject({ status: 'PENDING', attemptCount: 1 });
     expect(store.rows[0].nextAttemptAt).toBeGreaterThan(0);
     expect(store.rows[1]).toMatchObject({ status: 'FAILED', attemptCount: BROADCAST_MAX_ATTEMPTS });
-    expect(store.release).toHaveBeenCalledWith('b1', null);
+    expect(store.release).toHaveBeenCalledWith('b1', 'token-1', null);
   });
 
   it('marks a permanent error FAILED at once', async () => {
@@ -112,7 +124,7 @@ describe('broadcast queue run', () => {
     expect(result.sent).toBe(2);
     expect(result.finished).toBe(false);
     expect(store.rows[2].status).toBe('PENDING');
-    expect(store.release).toHaveBeenCalledWith('b1', null);
+    expect(store.release).toHaveBeenCalledWith('b1', 'token-1', null);
   });
 
   it('releases the broadcast when the database fails mid-run, so the next run resumes', async () => {
@@ -120,7 +132,53 @@ describe('broadcast queue run', () => {
     vi.mocked(store.markSent).mockRejectedValueOnce(new Error('db down'));
     const send = vi.fn<SendBroadcastMail>(async () => ({ ok: true, id: 'x' }));
     await expect(processBroadcastQueue({ store, send, now, sleep: async () => undefined })).rejects.toThrow('db down');
-    expect(store.release).toHaveBeenCalledWith('b1', null);
+    expect(store.release).toHaveBeenCalledWith('b1', 'token-1', null);
+  });
+});
+
+describe('broadcast lease ownership', () => {
+  it('renews the lease before every send', async () => {
+    const { store, now } = fakeStore([recipient(1), recipient(2), recipient(3)]);
+    const send = vi.fn<SendBroadcastMail>(async () => ({ ok: true, id: 'x' }));
+    await processBroadcastQueue({ store, send, now, sleep: async () => undefined });
+    expect(store.renewLease).toHaveBeenCalledTimes(3);
+    expect(store.renewLease).toHaveBeenCalledWith('b1', 'token-1', expect.any(Number));
+  });
+
+  it('a run whose lease was taken over stops sending and cannot finalize or release the new owner\'s broadcast', async () => {
+    const { store, now } = fakeStore([recipient(1), recipient(2), recipient(3)]);
+    const send = vi.fn<SendBroadcastMail>(async (_b, r) => {
+      // While the first send hangs, the lease runs out and a second run takes the broadcast over.
+      if (r.id === 'r1') store.state.owner = 'token-other';
+      return { ok: true, id: 'x' };
+    });
+    const result = await processBroadcastQueue({ store, send, now, sleep: async () => undefined });
+    expect(result.leaseLost).toBe(true);
+    expect(result.finished).toBe(false);
+    expect(send).toHaveBeenCalledTimes(1); // r2 and r3 are left to the new owner
+    expect(store.finalize).not.toHaveBeenCalled();
+    expect(store.release).not.toHaveBeenCalled();
+    expect(store.state.owner).toBe('token-other');
+  });
+
+  it('a late finalize or release from the old run is ignored by the store once someone else owns the lease', async () => {
+    const { store } = fakeStore([]);
+    const first = await store.claimNext(1);
+    store.state.status = 'SENDING';
+    store.state.owner = 'token-new';
+    await store.finalize(first!.id, first!.leaseToken);
+    await store.release(first!.id, first!.leaseToken, null);
+    expect(store.state.finalized).toBe(false);
+    expect(store.state.owner).toBe('token-new');
+  });
+
+  it('cuts a hanging send at the timeout and retries that recipient later instead of holding the lease', async () => {
+    const { store, now } = fakeStore([recipient(1), recipient(2)]);
+    const send = vi.fn<SendBroadcastMail>((_b, r) => (r.id === 'r1' ? new Promise(() => undefined) : Promise.resolve({ ok: true, id: 'x' })));
+    const result = await processBroadcastQueue({ store, send, now, sleep: async () => undefined, sendTimeoutMs: 5 });
+    expect(result).toMatchObject({ retried: 1, sent: 1 });
+    expect(store.rows[0]).toMatchObject({ status: 'PENDING', attemptCount: 1, error: 'send_timeout' });
+    expect(store.rows[0].nextAttemptAt).toBeGreaterThan(0);
   });
 });
 

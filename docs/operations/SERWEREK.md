@@ -264,7 +264,7 @@ dopóki następny przebieg się nie powiedzie. Szablon: `polutek-cron@.service`.
 | `polutek-cron-prune-playback-sessions` | `prune-playback-sessions` | 05:00 | kasuje sesje odtwarzania starsze niż 30 dni, niezaliczone jako wyświetlenie |
 | `polutek-cron-purge-deleted-comments` | `purge-deleted-comments` | 05:15 | kasuje treść komentarzy usuniętych przez autorów ponad 30 dni temu |
 | `polutek-cron-sync-public-thumbnails` | `sync-public-thumbnails` | 06:00 | uzgadnia publiczny bucket miniatur z opublikowanymi filmami |
-| `polutek-cron-premiere-notifications` | `premiere-notifications` | co minutę | wysyła powiadomienie „Premiera: <tytuł>” obserwującym, gdy minął `premiereAt` filmu (jednorazowo: `Video.premiereNotifiedAt` zajmowane atomowo; pusta kolejka = nic; porcja do 50 filmów na przebieg) |
+| `polutek-cron-premiere-notifications` | `premiere-notifications` | co minutę | kolejkuje „Premiera: <tytuł>” dla filmów, którym minął `premiereAt` (do 50 na przebieg), a potem **uruchamia trwałą kolejkę zadań** (`DurableJob`, CLAUDE.md §4.32): rozsyłka powiadomień `NEW_VIDEO_FANOUT` (także dokończenie przerwanej rozsyłki przy publikacji; strony po 500, wznowienie od kursora) i czyszczenie R2 po usuniętych filmach `STORAGE_CLEANUP` (ponawiane do skutku; po 8 porażkach status `DEAD`); pusta kolejka = nic |
 | `polutek-cron-subscriber-snapshots` | `subscriber-snapshots` | 23:50 | zapisuje liczbę subskrybentów każdego aktywnego kanału na dzień UTC (`SubscriberSnapshot`, idempotentnie: ponowny przebieg tego samego dnia nadpisuje wiersz); zasila wykres w Statystykach Studia |
 | `serwerek-backup` | skrypt `backup.sh` | 02:30 czasu lokalnego (`Persistent=true`) | nocna kopia (patrz „Kopie zapasowe”) |
 | `serwerek-own-mail-events` | skrypt `own-mail-events.sh` → `POST /api/cron/own-mail-events` | co 5 min | wysyła log Postfixa własnego toru poczty do aplikacji: twarde odbicia adresu zawieszają adres, blokady po stronie odbiorców dają niezerowy kod wyjścia i alarm w `health.sh` (nic nie robi, gdy kontener `pp-mail-lab` nie działa; patrz [`MAIL-OWN-TRANSPORT.md`](MAIL-OWN-TRANSPORT.md)) |
@@ -291,7 +291,7 @@ WantedBy=timers.target
 ```
 
 Instalacja po wdrożeniu aplikacji z migracją `20261019120000_video_premiere_notified_at`: `install -m 644 deploy/serwerek/systemd/polutek-cron-premiere-notifications.timer /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now polutek-cron-premiere-notifications.timer`.
-Ręczny przebieg: `systemctl start polutek-cron@premiere-notifications.service`, wynik w `journalctl -u 'polutek-cron@premiere-notifications' -n 20` (odpowiedź JSON: `candidates`, `claimed`, `notifications`, `failed`). Równoważnie: `curl -H "Authorization: Bearer $CRON_SECRET" http://127.0.0.1:3000/api/cron/premiere-notifications`.
+Ręczny przebieg: `systemctl start polutek-cron@premiere-notifications.service`, wynik w `journalctl -u 'polutek-cron@premiere-notifications' -n 20` (odpowiedź JSON: `candidates`, `enqueued`, `failed` oraz `fanOut` i `cleanup` z licznikami `claimed`, `done`, `continued`, `retried`, `dead`, `leaseLost`; zadania `DEAD`: `SELECT kind, "dedupeKey", "lastError" FROM "DurableJob" WHERE status = 'DEAD'`). Równoważnie: `curl -H "Authorization: Bearer $CRON_SECRET" http://127.0.0.1:3000/api/cron/premiere-notifications`.
 
 `polutek-cron@.service` celowo nie ma `OnFailure=` (jednominutowy cron przy wdrożeniu zasypałby pocztę); o stanie `failed` powiadamia `health.sh`. Pozostałe jednostki `serwerek-*` mają `OnFailure=serwerek-alert@%n.service` (jeden e-mail).
 
