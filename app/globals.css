@@ -1074,11 +1074,6 @@
   @media (max-width:480px) {
     .mc-chip--playhead .mc-chip-chapter { display:none; }
   }
-  /* Below 400px the captions switch moves into the settings menu ("Napisy" entry, CAPTIONS_IN_MENU_QUERY), so the
-     phone row is: play | track | sound | quality | fullscreen. */
-  @media (max-width:399px) {
-    .mc-caption { display:none; }
-  }
 
   @media (prefers-reduced-motion:reduce) {
     .mc-scrim, .mc-bottom, .mc-btn, .mc-hero, .mc-chip, .mc-glyph-swap > svg,
