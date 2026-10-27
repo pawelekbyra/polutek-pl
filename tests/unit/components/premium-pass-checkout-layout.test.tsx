@@ -75,10 +75,10 @@ describe('patron checkout layout', () => {
     const pill = dialog.getByRole('combobox', { name: 'Waluta' });
     expect(visible.parentElement).toBe(pill.closest('div')?.parentElement); // same row
     expect(dialog.getByText('Waluta').className).toContain('sr-only');
-    expect(pill.className).toContain('h-9'); // 36 px line, hit area grown to 44 px by the ::before
-    expect(pill.className).toContain('before:-inset-y-1');
+    expect(pill.className).toContain('h-7'); // 28 px pill, hit area grown to 44 px by the ::before
+    expect(pill.className).toContain('before:-top-2.5');
     expect(FIELD_LABEL_CLASS).toMatch(/text-\[13px\].*text-\[var\(--chan-body\)\]|text-\[var\(--chan-body\)\].*text-\[13px\]/);
-    expect(FIELD_LABEL_CLASS).toContain('mb-2'); // label to field: 8 px everywhere
+    expect(FIELD_LABEL_CLASS).toContain('mb-[var(--field-label-gap,8px)]'); // label to field: one variable (8 px in the gate, 0 in the checkout, like step 3)
     fireEvent.click(dialog.getByRole('button', { name: /^Dalej/ }));
     await dialog.findByRole('heading', { name: 'Metoda płatności' });
     expect(dialog.getByRole('combobox', { name: 'Metoda płatności' }).closest('div')?.parentElement?.querySelector('span')?.className).toBe(FIELD_LABEL_CLASS);

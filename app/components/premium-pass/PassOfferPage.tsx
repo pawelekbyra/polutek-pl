@@ -126,7 +126,7 @@ export default async function PassOfferPage({ params }: PassOfferPageProps) {
                       <b>{price(locale, product.prices[currency], currency)}</b>
                       <span>{tx("jednorazowo", "one-time")}</span>
                     </div>
-                    <div className={styles.muted}>{vatLine(tx, offer.vatRatePercent)}</div>
+                    <div className={styles.muted}>{vatLine(tx)}</div>
                     <ul className={styles.perks}>
                       <li>{tx("Wszystkie filmy strefy patrona ({0})", "All patron zone videos ({0})", offer.premiumCount)}</li>
                       <li>{product.days === null ? tx("Dostęp od razu i bez końca", "Instant access with no end date") : tx("Dostęp od razu, na {0} dni", "Instant access for {0} days", product.days)}</li>

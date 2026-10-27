@@ -122,7 +122,7 @@
  "does not renew": "não é renovado",
  "for the project's patrons only": "somente para os apoiadores do projeto",
  "gross": "bruto",
- "gross amount, includes {0}% VAT": "valor bruto, inclui {0}% de IVA",
+ "includes VAT": "IVA incluído",
  "one-time": "pagamento único",
  "one-time, no end date": "pagamento único, sem data de término",
  "one-time, {0} days": "pagamento único, {0} dias",

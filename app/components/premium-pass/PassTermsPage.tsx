@@ -8,7 +8,6 @@ import Footer from "@/app/components/Footer";
 import { getActorFromAuth } from "@/lib/api/auth";
 import {
   PATRON_PRICES,
-  PATRON_VAT_RATE_PERCENT,
   premiumPassFor,
   resolvePremiumPayments,
 } from "@/lib/modules/patron-zone";
@@ -57,7 +56,7 @@ export default async function PassTermsPage({ params, expected }: PassTermsPageP
           <li>{tx("Dostęp otwiera się od razu po potwierdzeniu płatności. Przed zapłatą prosimy o zgodę na to, że od rozpoczęcia oglądania tracisz prawo odstąpienia od umowy (treści cyfrowe).", "Access opens right after the payment is confirmed. Before you pay we ask for your consent that once you start watching you lose the right to withdraw from the contract (digital content).")}</li>
           <li>{tx("Reklamacje i zwroty: support@polutek.com.", "Complaints and refunds: support@polutek.com.")}</li>
         </ul>
-        <p className="mt-4 text-[14px] text-[var(--chan-muted)]">{sellerLine(tx)} · {vatLine(tx, PATRON_VAT_RATE_PERCENT)} · {PATRON_SUPPORT_EMAIL}</p>
+        <p className="mt-4 text-[14px] text-[var(--chan-muted)]">{sellerLine(tx)} · {vatLine(tx)} · {PATRON_SUPPORT_EMAIL}</p>
         <p className="mt-8">
           <a className="font-bold underline" href={getLocalizedHref(locale, "terms")}>{tx("Regulamin serwisu", "Terms of service")}</a>
         </p>

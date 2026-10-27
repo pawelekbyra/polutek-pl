@@ -28,8 +28,8 @@ export function sellerLine(tx: Tx): string {
   return tx("Sprzedawca: {0}", "Seller: {0}", sellerName(tx));
 }
 
-export function vatLine(tx: Tx, rate: number): string {
-  return tx("kwota brutto, zawiera {0}% VAT", "gross amount, includes {0}% VAT", rate);
+export function vatLine(tx: Tx): string {
+  return tx("zawiera VAT", "includes VAT");
 }
 
 /** Stripe method ids and the demo ids share one label (the tip gateway's own tile copy). */
