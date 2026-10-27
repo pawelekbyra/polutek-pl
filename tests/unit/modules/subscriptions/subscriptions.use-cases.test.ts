@@ -33,6 +33,7 @@ vi.mock('@/lib/modules/channel', () => ({
 const mockRepoInstance = {
   findByUserIdAndCreatorId: vi.fn(),
   createIfMissing: vi.fn(),
+  lockUser: vi.fn(),
   deleteByUserIdAndCreatorId: vi.fn(),
   countByUserId: vi.fn(),
   setNotify: vi.fn(),

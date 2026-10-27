@@ -35,6 +35,10 @@ export class ChannelRepository {
 
   async syncSubscribersCount(id: string, tx?: WriteTx) {
     const db = tx || (this.db as PrismaClient);
+    // Row lock first: concurrent subscribe/unsubscribe transactions of one channel recount one after the other,
+    // so each COUNT sees the rows the previous transaction committed (READ COMMITTED) and nobody writes a stale
+    // number. The lock is held until the surrounding transaction ends.
+    await db.$queryRaw`SELECT "id" FROM "Creator" WHERE "id" = ${id} FOR UPDATE`;
     const realCount = await db.subscription.count({
       where: { creatorId: id },
     });

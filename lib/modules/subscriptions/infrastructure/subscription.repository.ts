@@ -1,5 +1,5 @@
 import { ReadDb, WriteTx } from "@/lib/modules/shared/db";
-import { Prisma, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 export class SubscriptionRepository {
   constructor(private db: ReadDb) {}
@@ -38,27 +38,32 @@ export class SubscriptionRepository {
     });
   }
 
+  /**
+   * Idempotent subscribe. `INSERT ... ON CONFLICT DO NOTHING` (createMany + skipDuplicates) never aborts the
+   * surrounding PostgreSQL transaction, unlike a caught P2002 where the following SELECT would fail with
+   * "current transaction is aborted".
+   */
   async createIfMissing(userId: string, creatorId: string, tx?: WriteTx) {
     const db = tx || (this.db as PrismaClient);
-    try {
-      const subscription = await db.subscription.create({
-        data: { userId, creatorId },
-        select: { id: true, createdAt: true, notify: true },
-      });
-      return { subscription, created: true };
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002"
-      ) {
-        const subscription = await db.subscription.findUnique({
-          where: { userId_creatorId: { userId, creatorId } },
-          select: { id: true, createdAt: true, notify: true },
-        });
-        if (subscription) return { subscription, created: false };
-      }
-      throw error;
-    }
+    const inserted = await db.subscription.createMany({
+      data: [{ userId, creatorId }],
+      skipDuplicates: true,
+    });
+    const subscription = await db.subscription.findUnique({
+      where: { userId_creatorId: { userId, creatorId } },
+      select: { id: true, createdAt: true, notify: true },
+    });
+    if (!subscription) throw new Error("Subscription row missing right after insert");
+    return { subscription, created: inserted.count > 0 };
+  }
+
+  /**
+   * Serialises the subscribe/unsubscribe transactions of one user (transaction-scoped advisory lock), so the
+   * "last subscription gone" check that withdraws the global e-mail consent cannot be fooled by a concurrent
+   * unsubscribe from another channel. Take it before any channel row lock to keep the lock order fixed.
+   */
+  async lockUser(userId: string, tx: WriteTx) {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"subscriptions:user:" + userId}))`;
   }
 
   async countByCreatorId(creatorId: string, tx?: WriteTx) {
