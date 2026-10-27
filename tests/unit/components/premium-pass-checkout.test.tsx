@@ -87,7 +87,7 @@ describe('patron checkout, step 1 (currency and option)', () => {
     const dialog = within(await screen.findByRole('dialog'));
     expect(dialog.getByRole('heading', { name: 'Uzyskaj dostęp do strefy premium' })).toBeInTheDocument();
     expect(dialog.queryByText(/Zostań patronem i uzyskaj/)).toBeNull(); // the lead no longer repeats the title
-    expect(dialog.getByRole('combobox', { name: 'Waluta' })).toHaveTextContent('Złoty (PLN)');
+    expect(dialog.getByRole('combobox', { name: 'Waluta' })).toHaveTextContent('zł · PLN'); // a small pill beside the "Wybierz dostęp" label, not a full field
     const group = dialog.getByRole('group', { name: 'Wybierz dostęp' });
     const cards = within(group).getAllByRole('radio') as HTMLInputElement[];
     expect(cards.map((r) => [r.value, r.checked])).toEqual([['ACCESS_30D', false], ['ACCESS_LIFETIME', true]]);
@@ -123,7 +123,7 @@ describe('patron checkout, step 1 (currency and option)', () => {
       expect.stringContaining('Złoty'), expect.stringContaining('Euro'), expect.stringContaining('Dolar'), expect.stringContaining('Frank'), expect.stringContaining('Funt'),
     ]);
     fireEvent.click(await screen.findByRole('option', { name: /Euro/ }));
-    expect(combo).toHaveTextContent('Euro (EUR)');
+    expect(combo).toHaveTextContent('€ · EUR');
     expect(dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }).closest('label')).toHaveTextContent('3,99');
     expect(dialog.getByRole('radio', { name: /Dostęp bez limitu/ }).closest('label')).toHaveTextContent('7,99');
     expect(dialog.getByRole('button', { name: N('Dalej · 7,99 €') })).toBeInTheDocument();
@@ -236,7 +236,7 @@ describe('patron checkout, step 2 (payment method)', () => {
     await dialog.findByRole('heading', { name: 'Metoda płatności' });
     fireEvent.click(dialog.getByRole('button', { name: 'Wstecz' }));
     expect(await dialog.findByRole('heading', { name: 'Uzyskaj dostęp do strefy premium' })).toBeInTheDocument();
-    expect(dialog.getByRole('combobox', { name: 'Waluta' })).toHaveTextContent('Euro (EUR)');
+    expect(dialog.getByRole('combobox', { name: 'Waluta' })).toHaveTextContent('€ · EUR');
     expect((dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }) as HTMLInputElement).checked).toBe(true);
   });
 });
