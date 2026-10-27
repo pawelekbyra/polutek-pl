@@ -11,7 +11,7 @@ import { getLocalizedHref } from "@/lib/i18n/routing";
 import { cn } from "@/lib/utils";
 import styles from "./premium-pass.module.css";
 
-/** The three step dots, centred in the gap between the title and the first field. */
+/** The three step dots, centred at the bottom, just above the action bar's top line. */
 export function PassStepDots({ tx, step }: { tx: Tx; step: number }) {
   const pips = [tx("Dostęp", "Access"), tx("Metoda", "Method"), tx("Płatność", "Payment")];
   return (
