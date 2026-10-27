@@ -27,19 +27,18 @@ describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
       expect(container.querySelectorAll("path").length).toBeGreaterThanOrEqual(1);
     });
 
-    it("draws the play badge (brand blue, white triangle) to the left of the wordmark by default; POLUTEK is ink and the small .COM is blue", () => {
+    it("draws the play badge (brand blue, white triangle) to the left of the wordmark by default; POLUTEK is navy", () => {
       const { container } = render(<BrandName variant="wordmark" />);
       const svg = container.firstElementChild as SVGElement;
       const paths = Array.from(container.querySelectorAll("path"));
 
       expect(svg.getAttribute("data-brand-badge")).toBe("true");
-      expect(paths).toHaveLength(4);
-      // flat blue badge (no outline), white triangle, navy POLUTEK, blue .COM
+      expect(paths).toHaveLength(3);
+      // flat blue badge (no outline), white triangle, navy POLUTEK; no ".COM" path (nothing else is blue)
       expect(paths[0].getAttribute("style")).toContain("--chan-blue");
       expect(paths[1].getAttribute("fill")).toBe("#fff");
       expect(paths[2].getAttribute("style")).toContain("--brand-navy");
-      // the small .COM is the Subscribe-button blue (--chan-blue)
-      expect(paths[3].getAttribute("style")).toContain("--chan-blue");
+      expect(paths.filter((p) => (p.getAttribute("style") ?? "").includes("--chan-blue"))).toHaveLength(1);
       // the badge is 1.2 x cap tall: the lockup viewBox is 120 units high
       expect(svg.getAttribute("viewBox")?.split(" ")[3]).toBe("120");
     });
@@ -49,7 +48,8 @@ describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
       const svg = container.firstElementChild as SVGElement;
 
       expect(svg.getAttribute("data-brand-badge")).toBe("false");
-      expect(container.querySelectorAll("path")).toHaveLength(2);
+      expect(container.querySelectorAll("path")).toHaveLength(1);
+      expect(container.querySelector("path")?.getAttribute("style")).toContain("--brand-navy");
       expect(svg.getAttribute("viewBox")?.split(" ")[3]).toBe("102.4");
     });
 

@@ -1,4 +1,4 @@
-"""Generates the POLUTEK.COM lockup (play badge + wordmark) as outlined SVG paths.
+"""Generates the POLUTEK lockup (play badge + wordmark) as outlined SVG paths.
 
 Usage (from the repo root):
     python scripts/brand/generate-wordmark.py --font path/to/Nunito[wght].ttf [--gaps gaps.json]
@@ -79,21 +79,12 @@ def round_cap(c, rxo, ryo, rxi, ryi, t):
 
 # ---------------------------------------------------------------- glyphs (Nunito outlines)
 CAP_W = {  # target ink width / cap height (measured from the reference, +-4%), per glyph
-    "P": 0.715, "O": 0.90, "L": 0.607, "U": 0.794, "T": 0.77, "E": 0.607, "K": 0.765, "C": 0.735, "M": 1.06,
+    "P": 0.715, "O": 0.90, "L": 0.607, "U": 0.794, "T": 0.77, "E": 0.607, "K": 0.765,
 }
-WGHT = {"P": 900, "O": 875, "L": 900, "U": 875, "T": 900, "E": 900, "K": 875, "C": 925, "M": 925, ".": 925}
-# ".COM": small, black, on the same baseline: cap height 0.50 of the big letters (half of POLUTEK). A heavier
-# instance (925 vs 875-900) keeps the stems readable at 6-7 px, the proportions stay natural.
-SMALL_CAP = 50.0
-SMALL_XS = 1.0
-SMALL_FROM = 7            # index of "." in WORD
-DOT_D = 14.0         # the dot is as wide as a stem
-WORD = ["P", "O", "L", "U", "T", "E", "K", ".", "C", "O", "M"]
-# The visible hole between the K and the C (K's right ink to C's left ink, the dot sits inside it) is 2 px wider than
-# the badge-to-P gap at the 21 px phone render (7 px vs 5 px, measured in Chrome); the dot is centred in it (equal ink
-# gaps to K and C on the dot's rows; the C bulges away from the baseline, hence the smaller bounding-box gap on that
-# side). The other gaps are optical: the area between neighbouring glyph profiles is even.
-GAPS = {"P-O": 10.8, "O-L": 14.7, "L-U": 5, "U-T": 5, "T-E": 5, "E-K": 14.2, "K-.": 15.19, ".-C": 10.69, "C-O": 8, "O-M": 8.8}
+WGHT = {"P": 900, "O": 875, "L": 900, "U": 875, "T": 900, "E": 900, "K": 875}
+WORD = ["P", "O", "L", "U", "T", "E", "K"]
+# Optical gaps (edge to edge, cap/100 units) after each pair: the area between neighbouring glyph profiles is even.
+GAPS = {"P-O": 10.8, "O-L": 14.7, "L-U": 5, "U-T": 5, "T-E": 5, "E-K": 14.2}
 
 
 def load_font(path):
@@ -108,10 +99,8 @@ def load_font(path):
     return get
 
 
-def glyph_outline(font, ch, x, dot=False, small=False):
-    """Returns (ink width, path) of glyph ch placed with its left ink edge at x (cap = 100 units).
-    small=True draws the ".COM" letters: cap SMALL_CAP units tall on the same baseline, from a heavier
-    instance (so the stems stay readable at 6-7 px) and with natural (not narrowed) proportions."""
+def glyph_outline(font, ch, x):
+    """Returns (ink width, path) of glyph ch placed with its left ink edge at x (cap = 100 units)."""
     from fontTools.pens.boundsPen import BoundsPen
     from fontTools.pens.svgPathPen import SVGPathPen
     from fontTools.pens.transformPen import TransformPen
@@ -122,19 +111,6 @@ def glyph_outline(font, ch, x, dot=False, small=False):
     unit = 100.0 / cap
     bp = BoundsPen(gs); gs[cmap[ord(ch)]].draw(bp)
     x0, y0, x1, y1 = bp.bounds
-    if dot:
-        sx = sy = DOT_D / (x1 - x0)
-        # sit the dot on the baseline with a hair of overshoot
-        ty = (100 + 0.1) + y0 * sy
-        pen = SVGPathPen(gs, ntos=f)
-        gs[cmap[ord(ch)]].draw(TransformPen(pen, (sx, 0, 0, -sy, x - x0 * sx, ty)))
-        return (x1 - x0) * sx, pen.getCommands()
-    if small:
-        u = SMALL_CAP / cap
-        sx = u * SMALL_XS
-        pen = SVGPathPen(gs, ntos=f)
-        gs[cmap[ord(ch)]].draw(TransformPen(pen, (sx, 0, 0, -u, x - x0 * sx, 100.0)))
-        return (x1 - x0) * sx, pen.getCommands()
     sx = CAP_W[ch] * cap / (x1 - x0) * unit            # horizontal scale to the target width
     pen = SVGPathPen(gs, ntos=f)
     gs[cmap[ord(ch)]].draw(TransformPen(pen, (sx, 0, 0, -unit, x - x0 * sx, 100.0)))
@@ -211,13 +187,13 @@ def triangle_path(cw=True):
 
 def build(gaps, fontget):
     x = 0.0
-    glyphs, ink, blue = [], [], []
+    glyphs, ink = [], []
     for i, ch in enumerate(WORD):
-        w, d = glyph_outline(fontget(WGHT[ch]), ch, x, dot=(ch == "."), small=(i > SMALL_FROM))
+        w, d = glyph_outline(fontget(WGHT[ch]), ch, x)
         glyphs.append({"ch": ch, "x": round(x, 2), "w": round(w, 2)})
-        (blue if i >= SMALL_FROM else ink).append(d)
+        ink.append(d)
         x += w + (gaps["%s-%s" % (ch, WORD[i + 1])] if i < len(WORD) - 1 else 0)
-    return x, glyphs, "".join(ink), "".join(blue)
+    return x, glyphs, "".join(ink)
 
 
 def main():
@@ -229,7 +205,7 @@ def main():
     gaps = dict(GAPS)
     if args.gaps:
         gaps.update(json.load(open(args.gaps)))
-    total, glyphs, ink_d, blue_d = build(gaps, load_font(args.font))
+    total, glyphs, ink_d = build(gaps, load_font(args.font))
     badge_d = badge_path(0.0)                       # the whole badge footprint, one flat shape
     tri_hole = triangle_path(False)                 # mono variants: the triangle is a hole in the badge
     tri_d = triangle_path(True)
@@ -247,10 +223,10 @@ def main():
         return head + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="%s" role="img" aria-label="%s"><title>%s</title>%s</svg>\n' % (vb, label, label, body)
     tg = 'transform="translate(%s 0)"' % f(text_x)
     files = {
-        "polutek-wordmark.svg": svg(vb_full, '<path fill="#2563eb" d="%s"/><path fill="#fff" d="%s"/><g %s><path fill="#0b1f4a" d="%s"/><path fill="#2563eb" d="%s"/></g>' % (badge_d, tri_d, tg, ink_d, blue_d)),
-        "polutek-wordmark-nobadge.svg": svg(vb_text, '<path fill="#0b1f4a" d="%s"/><path fill="#2563eb" d="%s"/>' % (ink_d, blue_d)),
-        "polutek-wordmark-mono.svg": svg(vb_full, '<path fill="currentColor" d="%s%s"/><g %s><path fill="currentColor" d="%s%s"/></g>' % (badge_d, tri_hole, tg, ink_d, blue_d)),
-        "polutek-wordmark-mono-nobadge.svg": svg(vb_text, '<path fill="currentColor" d="%s%s"/>' % (ink_d, blue_d)),
+        "polutek-wordmark.svg": svg(vb_full, '<path fill="#2563eb" d="%s"/><path fill="#fff" d="%s"/><g %s><path fill="#0a2342" d="%s"/></g>' % (badge_d, tri_d, tg, ink_d)),
+        "polutek-wordmark-nobadge.svg": svg(vb_text, '<path fill="#0a2342" d="%s"/>' % ink_d),
+        "polutek-wordmark-mono.svg": svg(vb_full, '<path fill="currentColor" d="%s%s"/><g %s><path fill="currentColor" d="%s"/></g>' % (badge_d, tri_hole, tg, ink_d)),
+        "polutek-wordmark-mono-nobadge.svg": svg(vb_text, '<path fill="currentColor" d="%s"/>' % ink_d),
     }
     os.makedirs(os.path.join(root, "public", "brand"), exist_ok=True)
     for name, text in files.items():
@@ -260,7 +236,7 @@ def main():
           'export const WORDMARK_VIEWBOX_FULL = "%s";\nexport const WORDMARK_VIEWBOX_TEXT = "%s";\n'
           'export const WORDMARK_TEXT_X = %s;\n'
           'export const BADGE_PATH =\n  "%s";\nexport const PLAY_PATH =\n  "%s";\n'
-          'export const INK_PATH =\n  "%s";\nexport const BLUE_PATH =\n  "%s";\n') % (vb_full, vb_text, f(text_x), badge_d, tri_d, ink_d, blue_d)
+          'export const INK_PATH =\n  "%s";\n') % (vb_full, vb_text, f(text_x), badge_d, tri_d, ink_d)
     with open(os.path.join(root, "app", "components", "brand", "polutek-wordmark-paths.ts"), "w", newline="\n", encoding="utf-8") as fh:
         fh.write(ts)
     json.dump({"total": total, "glyphs": glyphs, "textX": text_x, "full": W_FULL}, open(os.path.join(os.environ.get("WM_META_DIR", root), "wordmark-meta.json") if os.environ.get("WM_META_DIR") else os.devnull, "w"))
