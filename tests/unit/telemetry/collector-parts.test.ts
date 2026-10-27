@@ -3,7 +3,7 @@ import { classifyBrowser, classifyDevice, classifyOs, isBotUserAgent, normalizeC
 import { SaltCache, attemptId, warsawDay, watchedBits, type SaltStore } from '@/services/pp-collector/src/visitor';
 import { TokenBucketLimiter } from '@/services/pp-collector/src/rate-limit';
 import { RowBuffer } from '@/services/pp-collector/src/buffer';
-import { rollupDays } from '@/services/pp-collector/src/maintenance';
+import { rollupDays, runExclusive } from '@/services/pp-collector/src/maintenance';
 
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
 const WINDOWS_EDGE = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36 Edg/129.0.0.0';
@@ -89,5 +89,24 @@ describe('limits', () => {
     expect(buffer.dropped).toBe(1);
     expect(buffer.drain().vitals).toHaveLength(2);
     expect(buffer.size).toBe(0);
+  });
+});
+
+describe('maintenance single flight (W23)', () => {
+  it('skips a tick while the same job still runs, and runs again once it finished', async () => {
+    let release!: () => void;
+    const slow = vi.fn(() => new Promise<void>((resolve) => { release = resolve; }));
+    const first = runExclusive('rollup', slow);
+    expect(await runExclusive('rollup', slow)).toBe(false);
+    expect(slow).toHaveBeenCalledTimes(1);
+    expect(await runExclusive('retention', async () => undefined)).toBe(true); // other jobs are independent
+    release();
+    expect(await first).toBe(true);
+    expect(await runExclusive('rollup', async () => undefined)).toBe(true);
+  });
+
+  it('frees the slot when the job fails', async () => {
+    await expect(runExclusive('rollup', async () => { throw new Error('x'); })).rejects.toThrow('x');
+    expect(await runExclusive('rollup', async () => undefined)).toBe(true);
   });
 });
