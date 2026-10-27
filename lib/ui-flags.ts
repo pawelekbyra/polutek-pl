@@ -16,6 +16,7 @@ export type BrandLogoVariant = "wordmark" | "glasses";
 /**
  * Single switch for the header logo. "wordmark" = outlined SVG wordmark (app/components/brand/PolutekWordmark.tsx);
  * "glasses" = the sunglasses image (public/logo-glasses.svg), kept in the code and restorable with this one line
- * (owner: "przywróć okularki" -> set this to "glasses"). Favicon, app icons and the manifest are not affected.
+ * (owner: "przywróć okularki" -> set this to "glasses"). Since 2026-10-27 the owner has the glasses live again; the wordmark is
+ * finished and frozen (see CLAUDE.md, logo section) and comes back by setting this to "wordmark". Favicon, app icons and the manifest are not affected.
  */
-export const BRAND_LOGO_VARIANT: BrandLogoVariant = "wordmark";
+export const BRAND_LOGO_VARIANT: BrandLogoVariant = "glasses";

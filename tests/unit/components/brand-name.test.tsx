@@ -10,11 +10,11 @@ import { BRAND_LOGO_VARIANT } from "@/lib/ui-flags";
 describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
   afterEach(() => cleanup());
 
-  it("ships the wordmark as the site logo", () => {
-    expect(BRAND_LOGO_VARIANT).toBe("wordmark");
+  it("ships the glasses as the site logo (the finished wordmark is kept, one switch away)", () => {
+    expect(BRAND_LOGO_VARIANT).toBe("glasses");
     const { container } = render(<BrandName />);
-    expect(container.querySelector('svg[data-brand-logo="wordmark"]')).not.toBeNull();
-    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelector("img")).not.toBeNull();
+    expect(container.querySelector('svg[data-brand-logo="wordmark"]')).toBeNull();
   });
 
   describe("wordmark variant", () => {
