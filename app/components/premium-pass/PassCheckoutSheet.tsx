@@ -337,6 +337,8 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
 
   const stepNumber = stage.kind === "plan" ? 1 : stage.kind === "method" ? 2 : stage.kind === "pay" ? 3 : null;
   const showSteps = stepNumber !== null;
+  // The dots sit at the bottom, directly above the action bar's top line (outside the scrolling body, so they never scroll or add scroll).
+  const dots = stepNumber !== null ? <PassStepDots tx={tx} step={stepNumber} /> : null;
   const retry = () => { resetAttempt(); setIntent(null); setStage({ kind: "plan" }); };
 
   // `hidden`: the heading stays for screen readers and for the focus of the step, it is just not drawn (step 1 has no subtitle).
@@ -358,7 +360,6 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
             </DialogPrimitive.Close>
           </div>
 
-          {stepNumber !== null && <PassStepDots tx={tx} step={stepNumber} />}
           {showSteps && <p className={styles.srOnly} role="status" aria-live="polite">{tx("Krok {0} z 3", "Step {0} of 3", stepNumber)}</p>}
           {testMode && stage.kind !== "success" && (
             <p className={styles.testNote}><span className={styles.testBadge}>{tx("Tryb testowy", "Test mode")}</span> {tx("Nic nie zostanie pobrane naprawdę. Karta testowa: 4242 4242 4242 4242, dowolna data i CVC.", "Nothing is really charged. Test card: 4242 4242 4242 4242, any date and CVC.")}</p>
@@ -382,6 +383,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
                   busy={busy}
                 />
               </div>
+              {dots}
               <div className={styles.pay}>
                 <button type="button" className={styles.inkBtn} onClick={toMethod} disabled={access?.lifetime === true || (stripeMode && !stripeReady)}>
                   {tx("Dalej · {0}", "Next · {0}", total)}
@@ -408,6 +410,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
                   busy={busy}
                 />
               </div>
+              {dots}
               <div className={styles.pay}>
                 <div className={styles.payRow}>
                   <button type="button" className={styles.backBtn} onClick={backToPlan} disabled={busy} aria-label={tx("Wstecz", "Back")}><ArrowLeft /></button>
@@ -424,7 +427,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
               <div className={styles.payHead}>
                 <PassPayHead heading={heading(tx("Płatność", "Payment"))} tx={tx} language={language} offer={offer} product={product} currency={currency} />
               </div>
-              <TipBackContext.Provider value={{ onBack: backToMethod, label: tx("Wstecz", "Back"), patron: true }}>
+              <TipBackContext.Provider value={{ onBack: backToMethod, label: tx("Wstecz", "Back"), patron: true, aboveBar: dots }}>
                 <PassStripePay
                   language={language}
                   amountMinor={amountMinor}
@@ -453,6 +456,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
                 <PassConsent tx={tx} language={language} ids={ids} value={consent} errors={consentErrors} onChange={(value) => { setConsent(value); setConsentErrors({}); }} termsRef={termsRef} waiverRef={waiverRef} />
                 {email && <p className={styles.muted}>{tx("Potwierdzenie trafi na {0}", "The confirmation goes to {0}", email)}</p>}
               </div>
+              {dots}
               <div className={styles.pay}>
                 <div className={styles.payRow}>
                   <button type="button" className={styles.backBtn} onClick={backToMethod} aria-label={tx("Wstecz", "Back")}><ArrowLeft /></button>

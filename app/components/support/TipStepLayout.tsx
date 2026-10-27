@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { ArrowLeft } from "../icons";
 
 /** The gate's "back" action, or null on the first/last step; drawn next to the footer button. */
-export const TipBackContext = createContext<{ onBack: () => void; label: string; /** The patron checkout: its 18 px gutters, neutral back button and 50 px buttons. */ patron?: boolean } | null>(null);
+export const TipBackContext = createContext<{ onBack: () => void; label: string; /** The patron checkout: its 18 px gutters, neutral back button and 50 px buttons. */ patron?: boolean; /** Rendered between the scrolling body and the footer's top line (the patron checkout's step dots). */ aboveBar?: React.ReactNode } | null>(null);
 
 /**
  * One step of the tip gate: a scrollable body and a footer pinned to the bottom of the
@@ -25,6 +25,7 @@ export function TipStepLayout({
   return (
     <>
       <div className={cn("tip-select-scroll min-h-0 flex-1 overflow-y-auto pt-0", back?.patron ? "px-[18px] pb-2.5" : "px-5 pb-4 md:px-7", bodyClassName)}>{children}</div>
+      {footer && back?.aboveBar}
       {footer && (
         <div className={cn("shrink-0 border-t border-[var(--chan-line)]", back?.patron ? "px-[18px] pb-[calc(10px+env(safe-area-inset-bottom))] pt-2.5" : "px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-4 md:px-7 md:pb-5")}>
           {back ? (

@@ -83,14 +83,25 @@ describe('patron checkout layout', () => {
     expect(pay.className).toContain(FIELD_LABEL_CLASS);
   });
 
-  it('the three step dots sit under the title row, centred, not in the title row', async () => {
+  it('the three step dots sit at the bottom, right above the action bar (outside the scrolling body, not in the title row)', async () => {
     openCheckout();
     const dialog = await screen.findByRole('dialog');
     const dots = within(dialog).getByRole('list', { name: 'Etapy zakupu' });
     expect(within(dots).getAllByRole('listitem')).toHaveLength(3);
     const title = within(dialog).getByRole('heading', { level: 2 });
     expect(title.parentElement?.contains(dots)).toBe(false);
-    expect(title.parentElement?.nextElementSibling).toBe(dots);
+    expect(title.parentElement?.nextElementSibling).not.toBe(dots);
+    const button = within(dialog).getByRole('button', { name: /^Dalej/ });
+    const bar = button.parentElement;
+    expect(dots.nextElementSibling).toBe(bar);
+    expect(dots.previousElementSibling?.contains(dots)).toBe(false);
+  });
+
+  it('the dots take no part in the scroll: a plain flex item with ~9px under it, no pull-up margin', () => {
+    const rule = css.match(/\.stepDots \{([^}]*)\}/)?.[1] ?? '';
+    expect(rule).toContain('flex: 0 0 auto');
+    expect(rule).toContain('padding: 0 0 9px');
+    expect(rule).not.toMatch(/--pass-title-gap/);
   });
 
   it('one variable, --pass-title-gap, sets the distance from the title row to the first label in every step (no per-step hacks)', () => {
@@ -100,7 +111,7 @@ describe('patron checkout layout', () => {
     expect(css).not.toMatch(/\.sheetHead \+ \.sheetBody/);
     // defined twice (default + short-phone override) and consumed by exactly two containers: no per-step values
     expect((css.match(/--pass-title-gap:/g) ?? []).length).toBe(2);
-    expect((css.match(/var\(--pass-title-gap\)/g) ?? []).length).toBe(3);
+    expect((css.match(/var\(--pass-title-gap\)/g) ?? []).length).toBe(2);
   });
 
   it('radii and the blue family come from tokens (fields 16, cards 14, pills 999)', () => {
