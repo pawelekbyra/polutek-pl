@@ -22,7 +22,7 @@ import { HlsWriter, OriginalsReader, hlsBucketName, makeR2Client, readR2Credenti
 import { createEncoder } from "@/lib/modules/video-pipeline/infrastructure/encoder.adapter";
 import { resolveJobDurationLimit } from "@/lib/modules/video-pipeline/application/channel-limits";
 import { createSelfHlsFinalizer } from "@/lib/modules/video-pipeline/application/finalize-self-hls";
-import { runWorkerLoop } from "@/lib/modules/video-pipeline/application/worker-loop";
+import { abortableSleep, runWorkerLoop } from "@/lib/modules/video-pipeline/application/worker-loop";
 import { WORKER_HEARTBEAT_SETTING } from "@/lib/modules/video-pipeline/application/encode-queue.use-cases";
 
 function log(message: string, extra: Record<string, unknown> = {}) {
@@ -60,11 +60,7 @@ async function main() {
     shutdown: shutdown.signal,
     now: () => new Date(),
     log,
-    sleep: (ms, signal) =>
-      new Promise<void>((resolve) => {
-        const timer = setTimeout(resolve, ms);
-        signal.addEventListener("abort", () => { clearTimeout(timer); resolve(); }, { once: true });
-      }),
+    sleep: abortableSleep,
     beat: async () => {
       const value = new Date().toISOString();
       await prisma.appSetting.upsert({ where: { key: WORKER_HEARTBEAT_SETTING }, create: { key: WORKER_HEARTBEAT_SETTING, value }, update: { value } });

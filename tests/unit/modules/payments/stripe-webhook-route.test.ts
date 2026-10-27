@@ -23,6 +23,16 @@ function stripeRequest(headers: Record<string, string> = { 'stripe-signature': '
 }
 
 describe('Stripe Webhook Route Actor Verification', () => {
+  it('rejects an oversized body with 413 before the handler sees it (audit S03)', async () => {
+    const res = await POST(new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'test-sig' },
+      body: 'x'.repeat(1_000_001),
+    }));
+    expect(res.status).toBe(413);
+    expect(handleStripeWebhook).not.toHaveBeenCalled();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });

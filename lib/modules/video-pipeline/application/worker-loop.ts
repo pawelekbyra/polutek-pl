@@ -19,6 +19,25 @@ export interface WorkerLoopDeps {
 }
 
 /**
+ * Waits `ms`, or until `signal` aborts. The abort listener is removed again when the timer wins, so an idle worker
+ * polling every few seconds does not pile up one listener per turn on the shutdown signal (audit W21).
+ */
+export function abortableSleep(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise<void>((resolve) => {
+    if (signal.aborted) return resolve();
+    const onAbort = () => {
+      clearTimeout(timer);
+      resolve();
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
+/**
  * Pull loop: sweep abandoned jobs, claim the next due one, process it, repeat. One job at a
  * time by construction. Errors inside a turn are logged and never kill the loop (a poison job
  * is bounded by maxAttempts, a DB blip just delays the next turn).
@@ -40,7 +59,8 @@ export async function runWorkerLoop(deps: WorkerLoopDeps): Promise<{ processed: 
       }
       deps.log("job claimed", { jobId: job.id, videoId: job.videoId, attempt: job.attemptCount });
       const outcome = await processEncodeJob(job, deps.portsFor(job));
-      processed.push(outcome);
+      // The history is a test hook (maxTurns); a long-lived production loop would only grow it (audit W30).
+      if (deps.maxTurns !== undefined) processed.push(outcome);
       deps.log("job finished", { jobId: job.id, outcome });
     } catch (error) {
       deps.log("worker turn failed", { error: error instanceof Error ? error.message : String(error) });

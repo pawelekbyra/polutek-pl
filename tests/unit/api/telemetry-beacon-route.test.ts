@@ -34,6 +34,15 @@ afterEach(() => {
 });
 
 describe('POST /api/t', () => {
+  it('drops an oversized body even without a Content-Length, and never forwards it (audit S03)', async () => {
+    const stream = new ReadableStream({ start(controller) { controller.enqueue(new TextEncoder().encode('x'.repeat(40_000))); controller.close(); } });
+    const req = new Request('https://www.pawelperfect.com/api/t', { method: 'POST', body: stream, headers: { 'content-type': 'text/plain' }, duplex: 'half' } as RequestInit);
+    const res = await POST(req);
+    expect(res.status).toBe(204);
+    await runAfter();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('answers 204 at once and hands the body to the collector afterwards, without cookies', async () => {
     const res = await POST(beacon('{"v":1}', { 'cf-ipcountry': 'PL', 'cf-connecting-ip': '203.0.113.5', 'sec-gpc': '1' }));
     expect(res.status).toBe(204);

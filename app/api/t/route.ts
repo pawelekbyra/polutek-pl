@@ -1,6 +1,7 @@
 import { after } from "next/server";
 import { getClientIp } from "@/lib/api/client-ip";
 import { BEACON_MAX_BYTES } from "@/lib/telemetry/beacon-constants";
+import { RequestBodyTooLargeError, readRequestTextWithLimit } from "@/lib/utils/request-body";
 import { telemetryCollectorUrl } from "@/lib/telemetry/config";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,14 @@ export async function POST(req: Request) {
 
   const declared = Number(req.headers.get("content-length") || 0);
   if (declared > BEACON_MAX_BYTES) return new Response(null, NO_CONTENT);
-  const body = await req.text();
+  // A missing or lying Content-Length does not defeat the limit: the stream is cut at BEACON_MAX_BYTES (audit S03).
+  let body: string;
+  try {
+    body = await readRequestTextWithLimit(req, BEACON_MAX_BYTES);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) return new Response(null, NO_CONTENT);
+    throw error;
+  }
   if (!body || body.length > BEACON_MAX_BYTES) return new Response(null, NO_CONTENT);
 
   const forward: Record<string, string> = {
