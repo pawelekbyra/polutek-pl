@@ -85,40 +85,55 @@ export async function startOriginalUpload(input: { videoId: string } & UploadReq
     const active = await ctx.prisma.videoEncodeJob.findFirst({ where: { videoId: video.id, status: { in: ["QUEUED", "RUNNING"] } }, select: { id: true } });
     if (active) return fail(new AppError("Dla tego filmu trwa kodowanie. Poczekaj na koniec albo je anuluj.", 409, "ENCODE_ALREADY_ACTIVE"));
 
-    // An unfinished earlier upload of this video is abandoned (and its multipart upload aborted so R2 frees the parts).
-    const stale = await ctx.prisma.videoOriginal.findMany({ where: { videoId: video.id, status: "UPLOADING" } });
-    for (const old of stale) {
-      if (old.uploadId) await storage.abort(old.objectKey, old.uploadId).catch(() => undefined);
-      await ctx.prisma.videoOriginal.update({ where: { id: old.id }, data: { status: "ABANDONED", failureReason: "Zastąpiony nowym uploadem." } });
-    }
-
     const { fileSize, extension, contentType } = checked.value;
     const { partSize, partCount } = planParts(fileSize);
     const objectKey = originalObjectKey(video.id, (deps?.now ?? Date.now)(), extension);
     const uploadId = await storage.create(objectKey, contentType);
 
-    const latest = await ctx.prisma.videoOriginal.findFirst({ where: { videoId: video.id }, orderBy: { version: "desc" }, select: { version: true } });
+    // Limit check, abandoning of earlier uploads and the new row are one transaction under a per-channel lock
+    // (S13/DB-05): parallel starts for different videos of one channel queue up and each sees the rows of the
+    // previous one, so the daily/queue/storage limits cannot be passed by racing requests. The check above stays
+    // as the cheap early refusal. R2 calls stay outside the transaction.
     let original: VideoOriginal;
+    let abandoned: VideoOriginal[] = [];
     try {
-      original = await ctx.prisma.videoOriginal.create({
-        data: {
-          videoId: video.id,
-          version: (latest?.version ?? 0) + 1,
-          bucket: storage.bucket,
-          objectKey,
-          originalFileName: sanitizeFileName(input.fileName),
-          mimeType: contentType,
-          sizeBytes: BigInt(fileSize),
-          status: "UPLOADING",
-          uploadId,
-          uploadPartSize: partSize,
-          uploadPartCount: partCount,
-          uploadStartedAt: new Date(),
-        },
+      const reserved = await ctx.db.writeTransaction(async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`upload-start:${channel.id}`}))`;
+        const refused = await channelUploadLimitError({ ...ctx, prisma: tx } as AppContext, channel, checked.value.fileSize);
+        if (refused) throw refused;
+
+        // An unfinished earlier upload of this video is abandoned (its multipart upload is aborted below so R2 frees the parts).
+        const stale = await tx.videoOriginal.findMany({ where: { videoId: video.id, status: "UPLOADING" } });
+        for (const old of stale) {
+          await tx.videoOriginal.update({ where: { id: old.id }, data: { status: "ABANDONED", failureReason: "Zastąpiony nowym uploadem." } });
+        }
+        const latest = await tx.videoOriginal.findFirst({ where: { videoId: video.id }, orderBy: { version: "desc" }, select: { version: true } });
+        const created = await tx.videoOriginal.create({
+          data: {
+            videoId: video.id,
+            version: (latest?.version ?? 0) + 1,
+            bucket: storage.bucket,
+            objectKey,
+            originalFileName: sanitizeFileName(input.fileName),
+            mimeType: contentType,
+            sizeBytes: BigInt(fileSize),
+            status: "UPLOADING",
+            uploadId,
+            uploadPartSize: partSize,
+            uploadPartCount: partCount,
+            uploadStartedAt: new Date(),
+          },
+        });
+        return { created, stale };
       });
+      original = reserved.created;
+      abandoned = reserved.stale;
     } catch (error) {
       await storage.abort(objectKey, uploadId).catch(() => undefined);
       throw error;
+    }
+    for (const old of abandoned) {
+      if (old.uploadId) await storage.abort(old.objectKey, old.uploadId).catch(() => undefined);
     }
 
     await recordAuditEvent(ctx, {
@@ -199,6 +214,11 @@ export async function completeOriginalMultipart(
 
     // Retried "complete" after success: just make sure the job exists.
     if (original.status === "READY") {
+      // The first attempt may have died between READY and the active pointer: repair it (no-op when it is right).
+      await ctx.prisma.video.updateMany({
+        where: { id: video.id, OR: [{ activeOriginalId: null }, { activeOriginalId: { not: original.id } }] },
+        data: { activeOriginalId: original.id },
+      });
       const queued = await enqueueEncode({ videoId: video.id, originalId: original.id }, ctx);
       if (!queued.ok) return fail(queued.error);
       return ok({ originalId: original.id, job: queued.data });
@@ -239,13 +259,21 @@ export async function completeOriginalMultipart(
     const container = sniffVideoContainer(await storage.readHead(original.objectKey, SNIFF_BYTES));
     if (!container) return reject("UPLOAD_BAD_CONTENT", "Zawartość pliku nie jest rozpoznanym formatem wideo.");
 
+    // One transaction (DB-06): READY of the new file is a compare-and-set from UPLOADING (a concurrent abort or a
+    // newer start that abandoned this row wins and is never silently reverted), and the previous READY files and
+    // the active pointer move with it, so a crash cannot leave half of the switch.
     const now = new Date();
-    await ctx.prisma.videoOriginal.updateMany({ where: { videoId: video.id, status: "READY", id: { not: original.id } }, data: { status: "SUPERSEDED", supersededAt: now } });
-    await ctx.prisma.videoOriginal.update({
-      where: { id: original.id },
-      data: { status: "READY", uploadCompletedAt: now, verifiedAt: now, uploadId: null, sizeBytes: BigInt(head.sizeBytes), mimeType: mimeForContainer(container), failureReason: null },
+    const promoted = await ctx.db.writeTransaction(async (tx) => {
+      const cas = await tx.videoOriginal.updateMany({
+        where: { id: original.id, status: "UPLOADING" },
+        data: { status: "READY", uploadCompletedAt: now, verifiedAt: now, uploadId: null, sizeBytes: BigInt(head.sizeBytes), mimeType: mimeForContainer(container), failureReason: null },
+      });
+      if (cas.count === 0) return false;
+      await tx.videoOriginal.updateMany({ where: { videoId: video.id, status: "READY", id: { not: original.id } }, data: { status: "SUPERSEDED", supersededAt: now } });
+      await tx.video.update({ where: { id: video.id }, data: { activeOriginalId: original.id } });
+      return true;
     });
-    await ctx.prisma.video.update({ where: { id: video.id }, data: { activeOriginalId: original.id } });
+    if (!promoted) return fail(new AppError("Ten upload nie jest otwarty (zakończony, przerwany albo odrzucony).", 409, "UPLOAD_NOT_OPEN"));
     if (input.publishAfterReady) await requestPublishAfterAssetReady(video.id, ctx);
 
     const queued = await enqueueEncode({ videoId: video.id, originalId: original.id }, ctx);
