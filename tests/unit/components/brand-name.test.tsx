@@ -27,17 +27,17 @@ describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
       expect(container.querySelectorAll("path").length).toBeGreaterThanOrEqual(1);
     });
 
-    it("draws the play badge (brand blue, white triangle) to the left of the wordmark by default; POLUTEK is navy", () => {
+    it("draws the play badge (brand blue, white triangle) to the left of the wordmark by default; POLUTEK is dark blue", () => {
       const { container } = render(<BrandName variant="wordmark" />);
       const svg = container.firstElementChild as SVGElement;
       const paths = Array.from(container.querySelectorAll("path"));
 
       expect(svg.getAttribute("data-brand-badge")).toBe("true");
       expect(paths).toHaveLength(3);
-      // flat blue badge (no outline), white triangle, navy POLUTEK; no ".COM" path (nothing else is blue)
+      // flat blue badge (no outline), white triangle, dark-blue POLUTEK; no ".COM" path (nothing else is blue)
       expect(paths[0].getAttribute("style")).toContain("--chan-blue");
       expect(paths[1].getAttribute("fill")).toBe("#fff");
-      expect(paths[2].getAttribute("style")).toContain("--brand-navy");
+      expect(paths[2].getAttribute("style")).toContain("--brand-ink-blue");
       expect(paths.filter((p) => (p.getAttribute("style") ?? "").includes("--chan-blue"))).toHaveLength(1);
       // the badge is 1.2 x cap tall: the lockup viewBox is 120 units high
       expect(svg.getAttribute("viewBox")?.split(" ")[3]).toBe("120");
@@ -49,7 +49,7 @@ describe("BrandName (the header logo, one switch: BRAND_LOGO_VARIANT)", () => {
 
       expect(svg.getAttribute("data-brand-badge")).toBe("false");
       expect(container.querySelectorAll("path")).toHaveLength(1);
-      expect(container.querySelector("path")?.getAttribute("style")).toContain("--brand-navy");
+      expect(container.querySelector("path")?.getAttribute("style")).toContain("--brand-ink-blue");
       expect(svg.getAttribute("viewBox")?.split(" ")[3]).toBe("102.4");
     });
 
