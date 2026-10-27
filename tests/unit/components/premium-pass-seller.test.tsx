@@ -20,7 +20,7 @@ describe('seller card', () => {
     const card = screen.getByRole('region', { name: 'Sprzedawca' });
     // The label is on its own row and the company name (bold) on the next one, so the name never breaks away from it.
     expect(card.querySelector('span')?.textContent).toBe('Sprzedawca:');
-    expect(card.querySelector('b')?.textContent?.replace(/ /g, ' ')).toBe('POLUTEK Sp. z o.o.');
+    expect(card.querySelector('b')?.textContent?.replace(/ /g, ' ')).toBe('Paweł Perfect Sp. z o.o.');
     expect(card.textContent).toContain('Sp. z o.o.');
     expect(card).toHaveTextContent('Spółka zarejestrowana w Polsce');
     expect(card).not.toHaveTextContent('NIP');
@@ -50,7 +50,7 @@ describe('seller card', () => {
     PATRON_SELLER.nip = '1234567890';
     render(<PassSellerCard tx={txFor('pl')} compact />);
     const card = screen.getByRole('region', { name: 'Sprzedawca' });
-    expect(card).toHaveTextContent('Sprzedawca: POLUTEK Sp. z o.o.');
+    expect(card).toHaveTextContent('Sprzedawca: Paweł Perfect Sp. z o.o.');
     expect(card).not.toHaveTextContent('Spółka zarejestrowana');
     expect(screen.getByRole('button', { name: 'Informacje o sprzedawcy' })).toBeInTheDocument();
   });

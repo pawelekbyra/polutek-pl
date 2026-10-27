@@ -747,7 +747,7 @@
   .mc-play:active { transform: scale(.96); }
   .mc-play:focus-visible {
     outline:none;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 0 0 2px rgba(255,255,255,.92), 0 0 0 4px var(--chan-blue);
+    box-shadow: 0 0 0 2px rgba(255,255,255,.92), 0 0 0 4px var(--chan-blue);
   }
   .mc-glyph-swap { position:relative; display:block; width:20px; height:20px; }
   .mc-glyph-swap > svg {
@@ -973,13 +973,10 @@
      bar's easing. */
   .mc-hero {
     display:grid; place-items:center;
-    width:56px; height:56px; padding:0;
+    width:72px; height:72px; padding:0;
     border:0; border-radius:999px;
-    background: rgba(14,15,18,.55);
-    backdrop-filter: blur(10px) saturate(1.3);
-    -webkit-backdrop-filter: blur(10px) saturate(1.3);
+    background: transparent;
     color:#fff;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 10px 28px rgba(0,0,0,.24);
     pointer-events:auto;
     transition: background-color .16s var(--mc-ease), transform .16s var(--mc-ease);
     animation: mc-hero-in .24s var(--mc-ease-out);
@@ -987,14 +984,14 @@
     -webkit-tap-highlight-color: transparent;
   }
   @keyframes mc-hero-in { from { opacity:0; transform: scale(.9); } }
-  @media (hover:hover) { .mc-hero:hover { background: rgba(14,15,18,.7); } }
+  @media (hover:hover) { .mc-hero:hover { transform: scale(1.06); } }
   .mc-hero:active { transform: scale(.96); }
   .mc-hero:focus-visible {
     outline:none;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 0 0 2px rgba(255,255,255,.92), 0 0 0 4px var(--chan-blue);
   }
 
-  .mc-hero-icon { display:block; width:28px; height:28px; }
+  .mc-hero-icon { display:block; width:48px; height:48px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.45)); }
 
   .mc-spinner {
     display:grid; place-items:center;
