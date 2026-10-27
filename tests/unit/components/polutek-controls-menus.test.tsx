@@ -234,10 +234,10 @@ describe("PolutekControls: captions switch and settings menu", () => {
     expect(source).toMatch(/PLAYER_KEY_SHORTCUTS = \{ \.\.\.MEDIA_KEY_SHORTCUTS, speedUp: '', slowDown: '', \.\.\.CHAPTER_KEY_SHORTCUTS \}/);
   });
 
-  it("has no CC button for a video without captions", () => {
+  it("shows an inert crossed CC for a video without captions", () => {
     media.state = { ...media.state, hasCaptions: false, textTrack: null };
     const view = render(<PolutekControls />);
-    expect(view.queryByRole("button", { name: "Napisy" })).toBeNull();
+    expect(view.getByRole("button", { name: "Napisy" }).getAttribute("aria-disabled")).toBe("true");
   });
 });
 
@@ -274,11 +274,12 @@ describe("PolutekControls: one-row bar (quality badge, time chip, picture-in-pic
     expect(trigger.querySelector("svg")).not.toBeNull();
   });
 
-  it("lays play, track, duration and the icon group out in one row, with the time chip on the track", () => {
+  it("lays track (first, no play button), duration and the icon group out in one row, with the time chip on the track", () => {
     const view = render(<PolutekControls />);
     const bar = view.container.querySelector(".mc-bar")!;
     const children = Array.from(bar.children);
-    expect(children[0].className).toContain("mc-play");
+    expect(children[0].className).toContain("mc-track-area");
+    expect(view.container.querySelector(".mc-bar .mc-play")).toBeNull();
     expect(children.some((el) => el.classList.contains("mc-track-area"))).toBe(true);
     expect(children[children.length - 1].className).toBe("mc-group");
     expect(view.container.querySelector(".mc-track-area .mc-chip--playhead")).not.toBeNull();

@@ -15,7 +15,7 @@ export function PlayGlyph({ className, testId }: { className?: string; testId?: 
   return (
     <svg {...BASE} className={className} data-testid={testId}>
       <path
-        d="M9.6 7.8 16.4 12 9.6 16.2Z"
+        d="M9.73 7.8 16.53 12 9.73 16.2Z"
         fill="currentColor"
         stroke="currentColor"
         strokeWidth={4.6}

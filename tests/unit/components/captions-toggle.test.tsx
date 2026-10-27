@@ -34,10 +34,14 @@ describe("CaptionsToggleButton", () => {
   });
   afterEach(() => cleanup());
 
-  it("is not rendered when the video has no captions in the page language", () => {
+  it("without captions in the page language: crossed CC, dimmed and inert (no toggle)", () => {
     media.state = { hasCaptions: false, textTrack: null };
     const view = render(<CaptionsToggleButton />);
-    expect(view.container.querySelector("button")).toBeNull();
+    const button = view.getByRole("button", { name: "Napisy" });
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+    expect(button.querySelector("svg")?.getAttribute("data-crossed")).toBe("true");
+    fireEvent.click(button);
+    expect(media.toggleCaptions).not.toHaveBeenCalled();
   });
 
   it("captions on: plain CC icon, pressed, tooltip offers to turn them off", () => {

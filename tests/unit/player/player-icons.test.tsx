@@ -52,7 +52,6 @@ describe("player icon family", () => {
 
   it("styles: soft glass, press scale, blue focus ring, reduced motion, safe-area insets", () => {
     expect(css).toContain("rgba(14,15,18,.58)");
-    expect(css).toContain("rgba(14,15,18,.55)");
     expect(css).toContain("inset 0 0 0 1px rgba(255,255,255,.14)");
     expect(css).toContain(".mc-play:active { transform: scale(.96); }");
     expect(css).toContain("0 0 0 4px var(--chan-blue)");

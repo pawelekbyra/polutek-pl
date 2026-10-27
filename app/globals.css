@@ -737,6 +737,7 @@
   /* Play/pause: the only bar control with a surface, a soft glass pill (translucent dark, 1px inner hairline,
      blur where supported). Press scales to .96; the focus ring is a white gap plus the brand blue, visible on
      any frame. The two glyphs cross-fade in 160ms (PlayPauseGlyph). */
+  .mc-caption--none { opacity:.4; cursor:default; }
   .mc-play {
     width:40px; height:28px;
     background: rgba(14,15,18,.58);
