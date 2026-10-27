@@ -18,6 +18,8 @@
   --pass-gap: 16px;
   /* Label text -> the field under it, in every step (1: "Wybierz dostęp" -> cards, 2: "Metoda płatności" -> field, 3: "Płatność" -> summary): just the label's own line box. The gate's default is 8 px (FIELD_LABEL_CLASS). */
   --field-label-gap: 0px;
+  /* Section / field labels ("Wybierz dostęp", "Metoda płatności", "Płatność", "Kod BLIK…"): bold in the checkout only; hints and notes stay regular. */
+  --field-label-weight: 600;
   --pass-gutter: 18px;
   --pass-box-y: 12px;
   --pass-bar-y: 10px;
@@ -148,7 +150,7 @@
 .productGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .products legend { padding: 0; }
 .accessHead { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: var(--field-label-gap); }
-.accessHead > span { font-size: 13px; line-height: 1.55; color: var(--chan-body, #344054); }
+.accessHead > span { font-size: 13px; line-height: 1.55; font-weight: var(--field-label-weight, 400); color: var(--chan-body, #344054); }
 .products:disabled { opacity: .5; }
 .product { position: relative; display: grid; align-content: start; gap: 2px; padding: var(--pass-box-y) 12px calc(var(--pass-box-y) - 1px); border-radius: var(--pass-r-card); border: 1px solid var(--chan-line, #e1e6ef); background: var(--chan-card, #fff); cursor: pointer; font-size: 13px; }
 .product:has(input:checked) { border: 2px solid var(--chan-ink, #111827); padding: calc(var(--pass-box-y) - 1px) 11px calc(var(--pass-box-y) - 2px); background: var(--chan-amber-soft, #fff3d6); }

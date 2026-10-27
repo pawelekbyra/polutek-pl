@@ -31,7 +31,9 @@ interface ListPosition {
 }
 
 /** The one typography of a field label in the gate and the patron checkout (13 px, body colour, --field-label-gap above the field: 8 px in the gate, set once by the checkout); the checkout's own labels (legend, step heading) import it. */
-export const FIELD_LABEL_CLASS = "mb-[var(--field-label-gap,8px)] block text-[13px] leading-[1.55] text-[var(--chan-body)]";
+/** Label weight: regular in the gate, the checkout sets --field-label-weight once (bold section labels). */
+export const FIELD_LABEL_WEIGHT = "font-[weight:var(--field-label-weight,400)]";
+export const FIELD_LABEL_CLASS = `mb-[var(--field-label-gap,8px)] block text-[13px] leading-[1.55] ${FIELD_LABEL_WEIGHT} text-[var(--chan-body)]`;
 
 const LIST_GAP = 6;
 const EDGE = 8;
