@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Tx } from "@/lib/i18n/ui";
 
@@ -10,7 +10,26 @@ import type { Tx } from "@/lib/i18n/ui";
  * (the visible circle is 32 px), and the title keeps a matching gap on both sides so a long or
  * two-line title never runs under the button.
  */
-export function AuthDialogTop({ title, tx, onClose }: { title: string; tx: Tx; onClose: () => void }) {
+export function AuthDialogTop({
+  title,
+  tx,
+  onClose,
+  viewKey,
+}: {
+  title: string;
+  tx: Tx;
+  onClose: () => void;
+  /** Changes whenever the window shows another screen; the focus then moves to the new title (WCAG 2.4.3). */
+  viewKey?: string;
+}) {
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const shownView = useRef(viewKey);
+  useEffect(() => {
+    // The first view is focused by the dialog itself; later ones replace the controls that had the focus.
+    if (shownView.current === viewKey) return;
+    shownView.current = viewKey;
+    titleRef.current?.focus({ preventScroll: true });
+  }, [viewKey]);
   return (
     <>
       <button
@@ -28,7 +47,7 @@ export function AuthDialogTop({ title, tx, onClose }: { title: string; tx: Tx; o
         </span>
       </button>
       <DialogHeader className="px-9 text-center">
-        <DialogTitle className="text-balance font-brand text-2xl font-bold tracking-tight text-[var(--chan-ink)]">{title}</DialogTitle>
+        <DialogTitle ref={titleRef} tabIndex={-1} className="text-balance outline-none font-brand text-2xl font-bold tracking-tight text-[var(--chan-ink)]">{title}</DialogTitle>
       </DialogHeader>
     </>
   );

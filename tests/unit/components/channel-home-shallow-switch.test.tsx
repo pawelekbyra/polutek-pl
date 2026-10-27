@@ -29,7 +29,12 @@ vi.mock('@/app/components/channel/SidebarPlaylist', () => ({
 vi.mock('@/app/components/Hero', () => ({
   default: (props: { video: PublicVideoDTO; initialInteraction?: unknown; startWithSound?: boolean }) => {
     mocks.heroProps.push({ videoId: props.video.id, initialInteraction: props.initialInteraction, startWithSound: props.startWithSound });
-    return <div data-testid="hero">{props.video.id}</div>;
+    return (
+      <div>
+        <h1 id="video-title" tabIndex={-1}>{props.video.id}</h1>
+        <div data-testid="hero">{props.video.id}</div>
+      </div>
+    );
   },
 }));
 vi.mock('@/app/components/LanguageContext', () => ({
@@ -123,6 +128,26 @@ describe('ChannelHome shallow video switching', () => {
     expect(pushState).toHaveBeenCalledTimes(1);
     expect(pushState.mock.calls[0][0]).toEqual({ polutekVideoId: 'video_1' });
     expect(pushState.mock.calls[0][2]).toBe('/');
+  });
+
+  it('announces a switched video in a live region and moves the focus to its title (A11), but not at page load', () => {
+    render(<ChannelHome mainVideo={main} allVideos={[main, second]} />);
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent('');
+    expect(document.getElementById('video-title')).not.toHaveFocus();
+
+    fireEvent.click(screen.getAllByText('pick-video-2')[0]);
+    expect(status).toHaveTextContent('Wybrano film: video_2');
+    expect(document.getElementById('video-title')).toHaveFocus();
+  });
+
+  it('announces Back/Forward switches without taking the focus', () => {
+    render(<ChannelHome mainVideo={main} allVideos={[main, second]} />);
+    act(() => {
+      window.dispatchEvent(new PopStateEvent('popstate', { state: { polutekVideoId: 'video_2' } }));
+    });
+    expect(screen.getByRole('status')).toHaveTextContent('Wybrano film: video_2');
+    expect(document.getElementById('video-title')).not.toHaveFocus();
   });
 
   it('does nothing on the logo when the hero video is already shown', () => {

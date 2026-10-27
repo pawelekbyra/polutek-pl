@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect, useRef, useState } from "react";
 import { useUser } from "@/lib/auth/react";
 import { useAuthModal } from "./auth/AuthModalProvider";
 import UserMenu from "./auth/UserMenu";
@@ -41,6 +41,18 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
   // The search page passes its query; elsewhere the box starts empty.
   const [searchValue, setSearchValue] = useState(initialQuery);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  // Closing the phone search unmounts the focused control; focus goes back to the button that opened it.
+  const searchTriggerRef = useRef<HTMLButtonElement>(null);
+  const restoreSearchFocusRef = useRef(false);
+  const closeMobileSearch = () => {
+    restoreSearchFocusRef.current = true;
+    setIsMobileSearchOpen(false);
+  };
+  useEffect(() => {
+    if (isMobileSearchOpen || !restoreSearchFocusRef.current) return;
+    restoreSearchFocusRef.current = false;
+    searchTriggerRef.current?.focus();
+  }, [isMobileSearchOpen]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,10 +118,15 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
       </a>
       <nav aria-label={navLabel} className="flex w-full items-center justify-between gap-3 overflow-visible px-2 py-[3px] md:gap-5 md:px-6 lg:px-8">
         {isMobileSearchOpen ? (
-          <div className="flex-1 flex items-center gap-2 px-1 animate-in slide-in-from-top-4 duration-200">
+          <div
+            className="flex-1 flex items-center gap-2 px-1 animate-in slide-in-from-top-4 duration-200"
+            onKeyDown={(event) => {
+              if (event.key === "Escape") closeMobileSearch();
+            }}
+          >
             <button
               type="button"
-              onClick={() => setIsMobileSearchOpen(false)}
+              onClick={closeMobileSearch}
               aria-label={closeSearchLabel}
               className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] transition-[background-color,box-shadow] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)]"
             >
@@ -189,6 +206,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                   tight. */}
               <div className="flex items-center md:hidden -mr-[5px]">
                 <button
+                  ref={searchTriggerRef}
                   type="button"
                   onClick={() => setIsMobileSearchOpen(true)}
                   aria-label={openSearchLabel}

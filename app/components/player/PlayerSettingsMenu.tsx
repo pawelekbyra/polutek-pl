@@ -155,7 +155,8 @@ export function PlayerSettingsMenu() {
         close(true);
         break;
       case "Tab":
-        setOpen(false);
+        // Leave the menu in the direction of Tab: park the focus on the button first so the browser continues from there.
+        close(true);
         break;
       default:
         break;
@@ -187,6 +188,7 @@ export function PlayerSettingsMenu() {
 
   const openChapters = () => {
     close(false);
+    chaptersMenu.opener.current = triggerRef.current;
     chaptersMenu.setOpen(true);
   };
 
@@ -229,7 +231,7 @@ export function PlayerSettingsMenu() {
               <div id={qualityTitleId} className="mc-menu-title">{copy.quality}</div>
               <button
                 type="button"
-                role="menuitemradio"
+                role="menuitemradio" tabIndex={-1}
                 aria-checked={autoQuality !== false}
                 className={cn("mc-menu-item", autoQuality !== false && "mc-menu-item--on")}
                 onClick={() => chooseQuality(-1)}
@@ -242,7 +244,7 @@ export function PlayerSettingsMenu() {
                   <button
                     key={`${item.height}-${index}`}
                     type="button"
-                    role="menuitemradio"
+                    role="menuitemradio" tabIndex={-1}
                     aria-checked={checked}
                     className={cn("mc-menu-item", checked && "mc-menu-item--on")}
                     onClick={() => chooseQuality(index)}
@@ -260,7 +262,7 @@ export function PlayerSettingsMenu() {
               <button
                 key={value}
                 type="button"
-                role="menuitemradio"
+                role="menuitemradio" tabIndex={-1}
                 aria-checked={rate === value}
                 className={cn("mc-menu-item", rate === value && "mc-menu-item--on")}
                 onClick={() => chooseRate(value)}
@@ -276,7 +278,7 @@ export function PlayerSettingsMenu() {
           {captionsInMenu && (
             <button
               type="button"
-              role="menuitemcheckbox"
+              role="menuitemcheckbox" tabIndex={-1}
               aria-checked={captionsOn}
               aria-keyshortcuts="c"
               className={cn("mc-menu-item", captionsOn && "mc-menu-item--on")}
@@ -288,7 +290,7 @@ export function PlayerSettingsMenu() {
           {chapterOptions.length > 0 && (
             <button
               type="button"
-              role="menuitem"
+              role="menuitem" tabIndex={-1}
               aria-haspopup="menu"
               className="mc-menu-item mc-menu-item--narrow mc-menu-item--nav"
               onClick={openChapters}
@@ -301,7 +303,7 @@ export function PlayerSettingsMenu() {
             </button>
           )}
           {canPip && (
-            <button type="button" role="menuitem" className="mc-menu-item mc-menu-item--narrow" onClick={togglePip}>
+            <button type="button" role="menuitem" tabIndex={-1} className="mc-menu-item mc-menu-item--narrow" onClick={togglePip}>
               {inPip ? copy.exitPictureInPicture : copy.pictureInPicture}
             </button>
           )}

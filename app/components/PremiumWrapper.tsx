@@ -436,7 +436,11 @@ function PlaybackPlanStateOverlay({
 
   return (
     <PlayerStateFrame className={isThumbnail ? "rounded-lg" : undefined}>
-      <div className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-[var(--chan-nav)] p-6 text-center text-[var(--chan-ink)] [container-type:inline-size]">
+      {/* A failure is announced at once (alert); "being prepared" and the like are polite status text. */}
+      <div
+        role={safeState === "ERROR" || safeState === "UNAVAILABLE" ? "alert" : "status"}
+        className="absolute inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-[var(--chan-nav)] p-6 text-center text-[var(--chan-ink)] [container-type:inline-size]"
+      >
         <div
           aria-hidden="true"
           className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,var(--cm-blue-10),transparent_34%),radial-gradient(circle_at_84%_82%,var(--cm-amber-8),transparent_30%)]"
