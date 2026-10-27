@@ -45,8 +45,8 @@ export function CaptionsIcon({ crossed }: { crossed: boolean }) {
 }
 
 /**
- * Captions on/off switch. Shown only when the video has a caption track in the page language
- * (VideoPlayer mounts only that one); without it there is nothing to switch, so no button.
+ * Captions on/off switch. Always in the row so the control is easy to find; when the video has no caption track
+ * in the page language (VideoPlayer mounts only that one) it shows the crossed icon, dimmed and inert.
  * Plain CC icon = captions on, crossed CC = off. The label stays "Captions" and the state is in
  * aria-pressed (a toggle button must not also change its name); the tooltip says what a click does.
  */
@@ -55,7 +55,13 @@ export function CaptionsToggleButton() {
   const remote = useMediaRemote();
   const hasCaptions = useMediaState("hasCaptions");
   const track = useMediaState("textTrack");
-  if (!hasCaptions) return null;
+  if (!hasCaptions) {
+    return (
+      <button type="button" className="mc-btn mc-caption mc-caption--none" aria-label={copy.captions} aria-disabled="true" title={copy.captions} tabIndex={-1}>
+        <CaptionsIcon crossed />
+      </button>
+    );
+  }
 
   const isOn = Boolean(track && isTrackCaptionKind(track));
   const hint = isOn ? copy.disableCaptions : copy.enableCaptions;
