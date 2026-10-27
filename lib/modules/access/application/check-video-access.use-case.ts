@@ -104,13 +104,15 @@ export async function checkVideoAccess(
     ? toPremiereDate(video.premiereAt)?.toISOString()
     : undefined;
   let premiumPassUntil: string | undefined;
+  let premiumPassGated = false;
   const decide = (decision: AccessDecisionDto) =>
-    ok({ ...decision, videoId: resolvedVideoId, ...(upcomingPremiereAt ? { premiereAt: upcomingPremiereAt } : {}), ...(decision.hasAccess && premiumPassUntil ? { premiumPassUntil } : {}) });
+    ok({ ...decision, videoId: resolvedVideoId, ...(upcomingPremiereAt ? { premiereAt: upcomingPremiereAt } : {}), ...(decision.hasAccess && premiumPassUntil ? { premiumPassUntil } : {}), ...(decision.hasAccess && premiumPassGated ? { premiumPassGated } : {}) });
 
   // patron zone (docs/architecture/patron-zone.md): a live video behind the demo pass needs an active
   // pass, for staff on the public site too (owner decision 2026-10-20). Off = null, nothing changes.
   const passGate = isPublished ? await premiumPassGate(ctx, video, now) : null;
   if (passGate && "denied" in passGate) return decide({ hasAccess: false, reason: "PASS_REQUIRED" });
+  if (passGate) premiumPassGated = true;
   if (passGate) premiumPassUntil = passGate.activeUntil ?? undefined; // lifetime access has no end date to show
 
   // Staff and members of the channel with `video.preview` see their non-archived content

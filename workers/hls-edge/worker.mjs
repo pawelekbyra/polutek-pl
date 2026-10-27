@@ -6,6 +6,10 @@
  * URL:  https://video.pawelperfect.com/h/<exp>.<sig>/<videoId>/<version>/<file>
  *   exp  unix seconds (token expiry)
  *   sig  base64url(HMAC-SHA256(HLS_TOKEN_SECRET, "<videoId>/<version>/<exp>"))
+ * A PUBLIC video's token is "<exp>.<sig>.pub" with sig over "<videoId>/<version>/<exp>/pub".
+ * Tokens without ".pub" (protected videos, and every token issued before ".pub" existed) get
+ * PRIVATE response headers bounded by the token's remaining life; only ".pub" tokens get the
+ * long public cache (audit S09). Deploy this Worker BEFORE the app starts issuing ".pub" tokens.
  *
  * One token covers every file of one video version (playlists, init, segments,
  * poster), so the playlists only need RELATIVE URIs and both hls.js and native
@@ -37,6 +41,8 @@ const CONTENT_TYPES = {
 
 const IMMUTABLE = 'public, max-age=31536000, immutable';
 const SHORT = 'public, max-age=300';
+/** Longest a client may reuse a playlist of a protected video without asking again. */
+const PROTECTED_PLAYLIST_MAX_AGE = 60;
 
 const enc = new TextEncoder();
 
@@ -49,22 +55,41 @@ function base64urlDecode(s) {
 }
 
 /** Message that is signed for a video version; must match lib/modules/playback self-hls-token.service. */
-export function tokenMessage(videoId, version, exp) {
-  return `${videoId}/${version}/${exp}`;
+export function tokenMessage(videoId, version, exp, isPublic = false) {
+  return `${videoId}/${version}/${exp}${isPublic ? '/pub' : ''}`;
 }
 
-/** Verifies "<exp>.<sig>". Constant-time compare through WebCrypto. */
-export async function verifyToken(secret, videoId, version, token, nowSeconds) {
-  if (!secret || typeof token !== 'string') return false;
-  const dot = token.indexOf('.');
-  if (dot < 1) return false;
-  const expText = token.slice(0, dot);
-  const sigText = token.slice(dot + 1);
-  if (!/^\d{10}$/.test(expText) || !/^[A-Za-z0-9_-]{43}$/.test(sigText)) return false;
-  const exp = Number(expText);
-  if (exp <= nowSeconds) return false;
+const TOKEN_RE = /^(\d{10})\.([A-Za-z0-9_-]{43})(\.pub)?$/;
+
+/** Verifies "<exp>.<sig>[.pub]". Returns { exp, isPublic } or null. Constant-time compare through WebCrypto. */
+export async function checkToken(secret, videoId, version, token, nowSeconds) {
+  if (!secret || typeof token !== 'string') return null;
+  const m = TOKEN_RE.exec(token);
+  if (!m) return null;
+  const exp = Number(m[1]);
+  if (exp <= nowSeconds) return null;
+  const isPublic = m[3] === '.pub';
   const key = await hmacKey(secret);
-  return crypto.subtle.verify('HMAC', key, base64urlDecode(sigText), enc.encode(tokenMessage(videoId, version, exp)));
+  const ok = await crypto.subtle.verify('HMAC', key, base64urlDecode(m[2]), enc.encode(tokenMessage(videoId, version, exp, isPublic)));
+  return ok ? { exp, isPublic } : null;
+}
+
+/** Boolean form of checkToken. */
+export async function verifyToken(secret, videoId, version, token, nowSeconds) {
+  return (await checkToken(secret, videoId, version, token, nowSeconds)) !== null;
+}
+
+/**
+ * Cache-Control sent to the CLIENT (the copy kept in the Worker's own cache is always the long
+ * public one, see objectHeaders: that cache sits behind the token check). Public video: long and
+ * public. Protected: private (no shared cache may keep it) and never longer than the token's
+ * remaining life, so a browser copy does not outlive the access the token stood for.
+ */
+export function clientCacheControl(ext, token, nowSeconds) {
+  if (token.isPublic) return ext === 'm3u8' ? SHORT : IMMUTABLE;
+  const remaining = Math.max(0, token.exp - nowSeconds);
+  const maxAge = ext === 'm3u8' ? Math.min(remaining, PROTECTED_PLAYLIST_MAX_AGE) : remaining;
+  return `private, max-age=${maxAge}`;
 }
 
 /** The imported HMAC key, kept for the life of the isolate (re-imported only if the secret changes). */
@@ -83,6 +108,7 @@ export function contentRange(range, size) {
   return { offset, length, header: `bytes ${offset}-${offset + length - 1}/${size}` };
 }
 
+/** Headers of the copy stored in the Worker's own edge cache (never sent as is to a protected client). */
 function objectHeaders(parsed, object) {
   const headers = new Headers();
   headers.set('Content-Type', CONTENT_TYPES[parsed.ext]);
@@ -142,8 +168,8 @@ export default {
     if (!parsed) return plain(404, 'Not found', request, env);
 
     const nowSeconds = Math.floor(Date.now() / 1000);
-    const ok = await verifyToken(env.HLS_TOKEN_SECRET, parsed.videoId, parsed.version, parsed.token, nowSeconds);
-    if (!ok) return plain(403, 'Forbidden', request, env);
+    const token = await checkToken(env.HLS_TOKEN_SECRET, parsed.videoId, parsed.version, parsed.token, nowSeconds);
+    if (!token) return plain(403, 'Forbidden', request, env);
 
     const cacheUrl = `https://${url.host}/c/${parsed.videoId}/${parsed.version}/${parsed.rest}`;
     const cache = caches.default;
@@ -198,7 +224,7 @@ export default {
     const out = new Response(method === 'HEAD' ? null : response.body, response);
     for (const [k, v] of corsHeaders(request, env)) out.headers.set(k, v);
     out.headers.set('X-Hls-Cache', cacheStatus);
-    out.headers.set('Cache-Control', parsed.ext === 'm3u8' ? SHORT : IMMUTABLE);
+    out.headers.set('Cache-Control', clientCacheControl(parsed.ext, token, nowSeconds));
     return out;
   },
 };
