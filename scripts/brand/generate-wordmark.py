@@ -89,9 +89,10 @@ SMALL_XS = 1.0
 SMALL_FROM = 7            # index of "." in WORD
 DOT_D = 14.0         # the dot is as wide as a stem
 WORD = ["P", "O", "L", "U", "T", "E", "K", ".", "C", "O", "M"]
-# Optical gaps (edge to edge, cap/100 units) after each pair, tuned so the area between neighbouring
+# K-. equals BADGE_GAP (ink to ink, same as badge-to-P) and .-C is set so that the ink gap to the dot, measured on the
+# dot's rows, is the same (C bulges away from the baseline, hence the smaller bounding-box gap). Optical gaps (edge to edge, cap/100 units) after each pair, tuned so the area between neighbouring
 # glyph profiles is even.
-GAPS = {"P-O": 10.8, "O-L": 14.7, "L-U": 5, "U-T": 5, "T-E": 5, "E-K": 14.2, "K-.": 12, ".-C": 8, "C-O": 8, "O-M": 8.8}
+GAPS = {"P-O": 10.8, "O-L": 14.7, "L-U": 5, "U-T": 5, "T-E": 5, "E-K": 14.2, "K-.": 28.4, ".-C": 23.9, "C-O": 8, "O-M": 8.8}
 
 
 def load_font(path):
@@ -210,13 +211,13 @@ def triangle_path(cw=True):
 
 def build(gaps, fontget):
     x = 0.0
-    glyphs, ink = [], []
+    glyphs, ink, blue = [], [], []
     for i, ch in enumerate(WORD):
         w, d = glyph_outline(fontget(WGHT[ch]), ch, x, dot=(ch == "."), small=(i > SMALL_FROM))
         glyphs.append({"ch": ch, "x": round(x, 2), "w": round(w, 2)})
-        ink.append(d)
+        (blue if i >= SMALL_FROM else ink).append(d)
         x += w + (gaps["%s-%s" % (ch, WORD[i + 1])] if i < len(WORD) - 1 else 0)
-    return x, glyphs, "".join(ink)
+    return x, glyphs, "".join(ink), "".join(blue)
 
 
 def main():
@@ -228,7 +229,7 @@ def main():
     gaps = dict(GAPS)
     if args.gaps:
         gaps.update(json.load(open(args.gaps)))
-    total, glyphs, ink_d = build(gaps, load_font(args.font))
+    total, glyphs, ink_d, blue_d = build(gaps, load_font(args.font))
     badge_d = badge_path(0.0)                       # outer shape: the black outline
     badge_in = badge_path(BADGE_OUTLINE)            # inner shape: the blue fill (inset stroke, footprint unchanged)
     badge_ring = badge_d + badge_path(BADGE_OUTLINE, cw=False)
@@ -247,10 +248,10 @@ def main():
         return head + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="%s" role="img" aria-label="%s"><title>%s</title>%s</svg>\n' % (vb, label, label, body)
     tg = 'transform="translate(%s 0)"' % f(text_x)
     files = {
-        "polutek-wordmark.svg": svg(vb_full, '<path fill="#111827" d="%s"/><path fill="#2563eb" d="%s"/><path fill="#fff" d="%s"/><g %s><path fill="#111827" d="%s"/></g>' % (badge_d, badge_in, tri_d, tg, ink_d)),
-        "polutek-wordmark-nobadge.svg": svg(vb_text, '<path fill="#111827" d="%s"/>' % ink_d),
-        "polutek-wordmark-mono.svg": svg(vb_full, '<path fill="currentColor" d="%s%s"/><g %s><path fill="currentColor" d="%s"/></g>' % (badge_ring, tri_d, tg, ink_d)),
-        "polutek-wordmark-mono-nobadge.svg": svg(vb_text, '<path fill="currentColor" d="%s"/>' % ink_d),
+        "polutek-wordmark.svg": svg(vb_full, '<path fill="#111827" d="%s"/><path fill="#2563eb" d="%s"/><path fill="#fff" d="%s"/><g %s><path fill="#111827" d="%s"/><path fill="#2563eb" d="%s"/></g>' % (badge_d, badge_in, tri_d, tg, ink_d, blue_d)),
+        "polutek-wordmark-nobadge.svg": svg(vb_text, '<path fill="#111827" d="%s"/><path fill="#2563eb" d="%s"/>' % (ink_d, blue_d)),
+        "polutek-wordmark-mono.svg": svg(vb_full, '<path fill="currentColor" d="%s%s"/><g %s><path fill="currentColor" d="%s%s"/></g>' % (badge_ring, tri_d, tg, ink_d, blue_d)),
+        "polutek-wordmark-mono-nobadge.svg": svg(vb_text, '<path fill="currentColor" d="%s%s"/>' % (ink_d, blue_d)),
     }
     os.makedirs(os.path.join(root, "public", "brand"), exist_ok=True)
     for name, text in files.items():
@@ -260,7 +261,7 @@ def main():
           'export const WORDMARK_VIEWBOX_FULL = "%s";\nexport const WORDMARK_VIEWBOX_TEXT = "%s";\n'
           'export const WORDMARK_TEXT_X = %s;\n'
           'export const BADGE_OUTLINE_PATH =\n  "%s";\nexport const BADGE_FILL_PATH =\n  "%s";\nexport const PLAY_PATH =\n  "%s";\n'
-          'export const INK_PATH =\n  "%s";\n') % (vb_full, vb_text, f(text_x), badge_d, badge_in, tri_d, ink_d)
+          'export const INK_PATH =\n  "%s";\nexport const BLUE_PATH =\n  "%s";\n') % (vb_full, vb_text, f(text_x), badge_d, badge_in, tri_d, ink_d, blue_d)
     with open(os.path.join(root, "app", "components", "brand", "polutek-wordmark-paths.ts"), "w", newline="\n", encoding="utf-8") as fh:
         fh.write(ts)
     json.dump({"total": total, "glyphs": glyphs, "textX": text_x, "full": W_FULL}, open(os.path.join(os.environ.get("WM_META_DIR", root), "wordmark-meta.json") if os.environ.get("WM_META_DIR") else os.devnull, "w"))
