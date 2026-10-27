@@ -49,7 +49,7 @@ function PlayerProbe() {
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
-describe("PremiumWrapper token renewal", () => {
+describe("PremiumWrapper token renewal", { timeout: 15_000 }, () => {
   beforeEach(() => {
     seen.mounts = 0;
     seen.urls = [];
@@ -61,13 +61,15 @@ describe("PremiumWrapper token renewal", () => {
 
   it("renews a token that is about to expire in place: same session asked for, player never unmounted", async () => {
     const fetchMock = vi.fn()
-      .mockResolvedValueOnce(json(readyPlan("old", 60_000))) // expires within the 2-minute window
+      // Expires within the 2-minute window. A short token is renewed halfway (at least 5 s after it arrives), so that a
+      // token cut short by the end of a pass does not cause a request storm (audit S08).
+      .mockResolvedValueOnce(json(readyPlan("old", 6_000)))
       .mockResolvedValueOnce(json(readyPlan("new", 6 * 3600_000)));
     vi.stubGlobal("fetch", fetchMock);
 
     render(<PremiumWrapper videoId={VIDEO_ID} requiredTier="LOGGED_IN"><PlayerProbe /></PremiumWrapper>);
 
-    await waitFor(() => expect(seen.urls.at(-1)).toContain("/h/new/"));
+    await waitFor(() => expect(seen.urls.at(-1)).toContain("/h/new/"), { timeout: 9_000 });
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock.mock.calls[1][0]).toBe(`/api/media-source/${VIDEO_ID}?session=playback-session`);
     expect(seen.mounts).toBe(1);
@@ -76,13 +78,13 @@ describe("PremiumWrapper token renewal", () => {
 
   it("keeps the current plan when the renewal fails on the server side (5xx)", async () => {
     const fetchMock = vi.fn()
-      .mockResolvedValueOnce(json(readyPlan("old", 60_000)))
+      .mockResolvedValueOnce(json(readyPlan("old", 6_000)))
       .mockResolvedValue(json({ error: "boom" }, 503));
     vi.stubGlobal("fetch", fetchMock);
 
     render(<PremiumWrapper videoId={VIDEO_ID} requiredTier="LOGGED_IN"><PlayerProbe /></PremiumWrapper>);
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2), { timeout: 9_000 });
     expect(screen.getByTestId("player")).toBeTruthy();
     expect(seen.urls.at(-1)).toContain("/h/old/");
     expect(seen.mounts).toBe(1);

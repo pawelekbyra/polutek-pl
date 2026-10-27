@@ -115,7 +115,7 @@ describe("premium-pass access matrix", () => {
               // hero and upcoming premiere are never behind the pass, even when listed
               expect(decision, `${video}`).toEqual(baseline);
             } else if (name === "testerWithPass") {
-              expect(decision).toEqual({ ...baseline, premiumPassUntil: "2026-11-20T10:00:00.000Z" });
+              expect(decision).toEqual({ ...baseline, premiumPassUntil: "2026-11-20T10:00:00.000Z", premiumPassGated: true });
             } else {
               expect(decision).toMatchObject({ hasAccess: false, reason: "PASS_REQUIRED" });
               expect(decision.premiumPassUntil).toBeUndefined();
