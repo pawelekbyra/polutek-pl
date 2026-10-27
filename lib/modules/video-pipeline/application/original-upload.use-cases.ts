@@ -263,10 +263,11 @@ export async function completeOriginalMultipart(
     // newer start that abandoned this row wins and is never silently reverted), and the previous READY files and
     // the active pointer move with it, so a crash cannot leave half of the switch.
     const now = new Date();
+    const verifiedSize = BigInt(head.sizeBytes);
     const promoted = await ctx.db.writeTransaction(async (tx) => {
       const cas = await tx.videoOriginal.updateMany({
         where: { id: original.id, status: "UPLOADING" },
-        data: { status: "READY", uploadCompletedAt: now, verifiedAt: now, uploadId: null, sizeBytes: BigInt(head.sizeBytes), mimeType: mimeForContainer(container), failureReason: null },
+        data: { status: "READY", uploadCompletedAt: now, verifiedAt: now, uploadId: null, sizeBytes: verifiedSize, mimeType: mimeForContainer(container), failureReason: null },
       });
       if (cas.count === 0) return false;
       await tx.videoOriginal.updateMany({ where: { videoId: video.id, status: "READY", id: { not: original.id } }, data: { status: "SUPERSEDED", supersededAt: now } });
