@@ -4,7 +4,7 @@ import { useEffect, useId, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { PlaybackPlanStatus } from "@/lib/modules/playback";
 import { cn } from "@/lib/utils";
-import { formatPremiereCountdown, formatPremiereDate, toPremiereDate } from "@/lib/premiere";
+import { formatPremiereCountdown, formatPremiereDate, formatPremiereDateLong, toPremiereDate } from "@/lib/premiere";
 import dynamic from "next/dynamic";
 import { PremieraLettering } from "./coming-soon/PremieraLettering";
 import { useAuthModal } from "./auth/AuthModalProvider";
@@ -103,11 +103,11 @@ export function AccessLockOverlay({ state, variant, premiereAt }: AccessLockOver
               variant === "thumbnailCompact" && styles.compactTiny,
             )}
             role="img"
-            aria-label={`${tx("Premiera", "Premiere")} ${formatPremiereDate(premiereDate)}`}
+            aria-label={`${tx("Premiera", "Premiere")} ${formatPremiereDateLong(premiereDate, language)}`}
           >
             <PremieraLettering tx={tx} className={styles.compactPremiereLabel} />
             <span className={styles.compactPremiereDate} aria-hidden="true">
-              {tightenSegmentOnes(formatPremiereDate(premiereDate), styles.compactPremiereDateOne)}
+              {tightenSegmentOnes(formatPremiereDate(premiereDate, language), styles.compactPremiereDateOne)}
             </span>
           </div>
         </PlayerStateFrame>

@@ -39,6 +39,17 @@ export function getVideoDisplayDescription(
   return video.description || '';
 }
 
+/** The search-result excerpt in the content language: English for every interface language but Polish, else the Polish one. */
+export function getSearchSnippet(
+  item: { snippet?: string | null; snippetEn?: string | null },
+  language: VideoTitleLanguage = 'en',
+) {
+  if (language !== 'pl' && item.snippetEn) {
+    return item.snippetEn;
+  }
+  return item.snippet ?? null;
+}
+
 export function getCanonicalVideoDescription(video: VideoDescriptionSource) {
   return video.description || video.descriptionEn || '';
 }

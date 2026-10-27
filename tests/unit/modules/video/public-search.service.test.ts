@@ -23,6 +23,7 @@ vi.mock("@/lib/modules/channel", async () => ({
 
 import { SEARCH_STATEMENT_TIMEOUT_MS, buildSearchSql, clearSearchFacetCache, getSearchFacets, searchPublicVideos, visibilitySql } from "@/lib/modules/video/application/public-search.service";
 import { decodeSearchCursor, encodeSearchCursor, parsePublicSearchParams } from "@/lib/modules/video/domain/search-query";
+import { getSearchSnippet } from "@/lib/video-title-overrides";
 
 const NOW = new Date("2026-10-19T12:00:00.000Z");
 const guest = { signedIn: false };
@@ -167,11 +168,22 @@ describe("searchPublicVideos", () => {
     expect((await searchPublicVideos(parse({ q: "kot" }), guest, NOW)).nextCursor).toBeNull();
   });
 
+  it("S06: gives an excerpt of the English description too, so English-language pages do not show the Polish one", async () => {
+    hoisted.queryRaw.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: "v1", rel: 1, pop: 0, views: 0, pub: new Date() }]);
+    hoisted.findMany.mockResolvedValue([videoRow({ description: "Opis filmu", descriptionEn: "Film description" })]);
+    const [item] = (await searchPublicVideos(parse({ q: "kot" }), guest, NOW)).items;
+    expect(item).toMatchObject({ snippet: "Opis filmu", snippetEn: "Film description" });
+    expect(getSearchSnippet(item!, "pl")).toBe("Opis filmu");
+    for (const language of ["en", "de", "zh"]) expect(getSearchSnippet(item!, language)).toBe("Film description");
+    // No English description: every language falls back to the Polish excerpt.
+    expect(getSearchSnippet({ snippet: "Opis filmu", snippetEn: null }, "en")).toBe("Opis filmu");
+  });
+
   it("shows only title and thumbnail of a video behind sign-in", async () => {
     hoisted.queryRaw.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: "v1", rel: 1, pop: 0, views: 0, pub: new Date() }]);
     hoisted.findMany.mockResolvedValue([videoRow({ tier: "LOGGED_IN", description: "Tajny opis", descriptionEn: "Secret" })]);
     const [item] = (await searchPublicVideos(parse({ q: "kot" }), guest, NOW)).items;
-    expect(item).toMatchObject({ title: "Film", description: null, descriptionEn: null, snippet: null, tier: "LOGGED_IN" });
+    expect(item).toMatchObject({ title: "Film", description: null, descriptionEn: null, snippet: null, snippetEn: null, tier: "LOGGED_IN" });
     expect(item!.thumbnailUrl).toBeTruthy();
   });
 

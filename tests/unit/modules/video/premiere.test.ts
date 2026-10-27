@@ -4,7 +4,7 @@ import {
   isAllowedPremiereChange,
   isUpcomingPremiere,
 } from "@/lib/modules/video";
-import { formatPremiereCountdown, formatPremiereDate } from "@/lib/premiere";
+import { formatPremiereCountdown, formatPremiereDate, formatPremiereDateLong } from "@/lib/premiere";
 import { createTx } from "@/lib/i18n/ui";
 
 const NOW = new Date("2026-10-01T12:00:00.000Z");
@@ -75,6 +75,21 @@ describe("premiere formatting", () => {
   it("formats the date in Europe/Warsaw", () => {
     // 23:00 UTC on 31 Dec is already 1 Jan in Warsaw (CET, UTC+1).
     expect(formatPremiereDate(new Date("2026-12-31T23:00:00.000Z"))).toBe("1.01.2027");
+  });
+
+  it("S10: Polish keeps day-first, every other language gets an unambiguous year-first date (same Warsaw day)", () => {
+    const target = new Date("2027-07-02T22:30:00.000Z"); // 3 July in Warsaw (CEST, UTC+2)
+    expect(formatPremiereDate(target, "pl")).toBe("3.07.2027");
+    for (const language of ["en", "de", "es", "fr", "it", "pt", "zh"] as const) {
+      expect(formatPremiereDate(target, language)).toBe("2027.07.03");
+    }
+  });
+
+  it("S10: the screen-reader date is written out in the viewer's language, in the same Warsaw day", () => {
+    const target = new Date("2027-07-02T22:30:00.000Z");
+    expect(formatPremiereDateLong(target, "en")).toBe("July 3, 2027");
+    expect(formatPremiereDateLong(target, "de")).toBe("3. Juli 2027");
+    expect(formatPremiereDateLong(target, "pl")).toBe("3 lipca 2027");
   });
 
   it("counts down to the given premiere and clamps at zero", () => {

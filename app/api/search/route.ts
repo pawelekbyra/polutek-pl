@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
           title: item.title,
           titleEn: item.titleEn ?? null,
           snippet: item.snippet,
+          snippetEn: item.snippetEn ?? null,
           thumbnailUrl: item.thumbnailUrl,
           duration: item.duration ?? null,
           tier: item.tier,
