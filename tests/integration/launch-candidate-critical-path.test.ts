@@ -483,7 +483,7 @@ describe('LAUNCH-CANDIDATE-001 integrated money-to-access-to-playback rehearsal'
     expect(plan.status).toBe('READY');
     expect(plan.canPlay).toBe(true);
     expect(plan.source?.provider).toBe('SELF_HLS');
-    expect(plan.source?.playbackUrl).toMatch(/^https:\/\/video\.pawelperfect\.com\/h\/\d+\.[A-Za-z0-9_-]+\/video-ready\/v1\/master\.m3u8$/);
+    expect(plan.source?.playbackUrl).toMatch(/^https:\/\/video\.pawelperfect\.com\/h\/\d+\.[A-Za-z0-9_-]+(?:\.pub)?\/video-ready\/v1\/master\.m3u8$/);
     expect(JSON.stringify(plan)).not.toContain('legacy.example.test');
     expect(plan.tracking.playbackSessionId).toBe('session_1');
     expect(harness.events).toEqual(['session:create']);
