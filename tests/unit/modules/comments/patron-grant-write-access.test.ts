@@ -137,6 +137,7 @@ describe('Comments write access on PATRON-tier videos (sign-in only, no PatronGr
         findUnique: vi.fn(),
         delete: vi.fn(),
       },
+      $executeRaw: vi.fn().mockResolvedValue(1),
       $transaction: vi.fn((cb) => cb(mockPrisma)),
     };
 
