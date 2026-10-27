@@ -40,6 +40,14 @@ export async function changeChannelOwner(
       // Compare-and-set on the previous owner: two tabs cannot both "win" silently.
       const { count } = await tx.creator.updateMany({ where: { id: channel.id, userId: channel.userId }, data: { userId: owner.id } });
       if (count === 0) throw new AppError("Konto kanału zmieniło się w międzyczasie. Odśwież stronę.", 409, "CHANNEL_OWNER_CONFLICT");
+      // An explicit membership wins over the owner column (authz roleOf), so the two must move together (audit DB-01):
+      // the new owner becomes OWNER (also when they were an EDITOR before) and the previous owner's OWNER row goes away.
+      await tx.channelMember.deleteMany({ where: { channelId: channel.id, userId: channel.userId, role: "OWNER" } });
+      await tx.channelMember.upsert({
+        where: { channelId_userId: { channelId: channel.id, userId: owner.id } },
+        create: { channelId: channel.id, userId: owner.id, role: "OWNER", acceptedAt: new Date() },
+        update: { role: "OWNER", acceptedAt: new Date() },
+      });
       await recordAuditEvent(ctx, {
         action: "CHANNEL_OWNER_CHANGED",
         targetType: "Creator",

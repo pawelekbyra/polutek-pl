@@ -27,6 +27,8 @@ export async function buildPublicVideoWhere(now: Date = new Date()): Promise<Pri
   const mainChannel = await MainChannelService.getOptional(createAppContext());
   return {
     status: VideoStatus.PUBLISHED,
+    // A video taken down by moderation stays out of every public list even while its publish status is PUBLISHED.
+    moderationStatus: { not: 'REMOVED' },
     creatorId: mainChannel?.id || 'none',
     creator: publiclyVisibleChannelWhere(),
     ...visiblePublishedAtFilter(now),
