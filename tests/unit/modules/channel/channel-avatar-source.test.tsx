@@ -40,6 +40,8 @@ vi.mock("@/app/components/ChannelVideoCard", () => ({
 vi.mock("@/app/components/SafeAvatar", () => ({
   SafeAvatar: ({ src }: { src?: string | null }) => <span data-avatar={src ?? ""} />,
 }));
+// Async server component (reads playlists itself): irrelevant here, and an async child cannot render in renderToStaticMarkup.
+vi.mock("@/app/components/playlists/ChannelPlaylistsSection", () => ({ default: () => null }));
 vi.mock("@/lib/auth/server", () => ({ auth: authMock }));
 vi.mock("@/lib/modules/users", () => ({ getOrCreateCurrentUser: currentUserMock }));
 
