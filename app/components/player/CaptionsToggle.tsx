@@ -17,7 +17,7 @@ export function CaptionsIcon({ crossed }: { crossed: boolean }) {
 
 /**
  * Captions on/off switch. Always in the row so the control is easy to find; when the video has no caption track
- * in the page language (VideoPlayer mounts only that one) it shows the crossed icon, dimmed and inert.
+ * in the page language (VideoPlayer mounts only that one) it shows the crossed icon, inert (full white, crossed).
  * Plain CC icon = captions on, crossed CC = off. The label stays "Captions" and the state is in
  * aria-pressed (a toggle button must not also change its name); the tooltip says what a click does.
  */

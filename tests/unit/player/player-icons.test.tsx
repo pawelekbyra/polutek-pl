@@ -115,12 +115,22 @@ describe("player icon set (Marker)", () => {
     expect(css).toMatch(/\.mc-hero-icon\s*\{ display:block; width:48px; height:48px;/);
     expect(css).toContain(".mc-menu-check, .mc-menu-hint-icon { width:16px; height:16px;");
     expect(css).not.toContain('content:"\\2713"');
-    expect(css).toContain("rgba(14,15,18,.58)");
-    expect(css).toContain("inset 0 0 0 1px rgba(255,255,255,.14)");
-    expect(css).toContain(".mc-play:active { transform: scale(.96); }");
-    expect(css).toContain("0 0 0 4px var(--chan-blue)");
+    expect(css).toMatch(/\.mc-play \{ --mc-play-glyph: 26px; width:40px; height:40px; \}/);
+    expect(css).toMatch(/\.mc-icon--volume \{ width:23px; height:23px; stroke-width:2\.09; \}/);
     expect(css).toMatch(/\.mc-glyph-swap > svg,\s*\n\s*\.mc-vol-slider/);
     expect(css).toContain("env(safe-area-inset-bottom, 0px)");
     expect(css).toContain("env(safe-area-inset-left, 0px)");
+  });
+
+  it("styles: play is a plain icon button (no pill, no ring of its own), CC stays full white, track is white", () => {
+    const play = css.match(/\.mc-play \{[^}]*\}/g)!.join("\n");
+    expect(play).not.toMatch(/background|box-shadow|backdrop-filter|border/);
+    expect(css).not.toContain(".mc-play:active");
+    expect(css).not.toContain(".mc-play:focus-visible");
+    expect(css).toMatch(/\.mc-caption--none \{ cursor:default; \}/);
+    expect(css).not.toMatch(/\.mc-caption--none[^}]*opacity/);
+    expect(css.match(/\.mc-scrub-track \{[^}]*\}/)![0]).toContain("rgba(255,255,255,.88)");
+    expect(css).toMatch(/\.mc-scrub-buffer \{[^}]*rgba\(255,255,255,\.55\)/);
+    expect(css).toMatch(/\.mc-scrub-fill \{[^}]*var\(--chan-blue\)/);
   });
 });
