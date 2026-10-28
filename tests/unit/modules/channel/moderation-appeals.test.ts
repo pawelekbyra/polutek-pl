@@ -19,7 +19,7 @@ function makePrisma(over: { existingAppeal?: { status: string } | null } = {}) {
       update: vi.fn(async () => ({})),
     },
     moderationDecision: { create: vi.fn(async () => ({ id: "out1" })) },
-    video: { findUnique: vi.fn(async () => ({ id: "v1", moderationStatus: "REMOVED" })), update: vi.fn(async () => ({})) },
+    video: { findUnique: vi.fn(async () => ({ id: "v1", moderationStatus: "REMOVED" })), update: vi.fn(async () => ({})), updateMany: vi.fn(async () => ({ count: 1 })) },
     auditLog: { findFirst: vi.fn(async () => ({ metadata: { before: { moderationStatus: "VISIBLE" } } })), create: vi.fn() },
   };
   const prisma = {
@@ -108,7 +108,7 @@ describe("staff resolution", () => {
     const { prisma, tx } = makePrisma();
     const res = await resolveModerationAppeal(ctx(staff, prisma), { appealId: "a1", outcome: "UPHELD", reasonPublic: "Film nie narusza zasad." });
     expect(res.ok).toBe(true);
-    expect(tx.video.update).toHaveBeenCalledWith({ where: { id: "v1" }, data: { moderationStatus: "VISIBLE" } });
+    expect(tx.video.updateMany).toHaveBeenCalledWith({ where: { id: "v1", moderationStatus: "REMOVED" }, data: { moderationStatus: "VISIBLE" } });
     expect(tx.moderationDecision.create.mock.calls[0][0].data.action).toBe("APPEAL_UPHELD");
   });
 
@@ -116,8 +116,16 @@ describe("staff resolution", () => {
     const { prisma, tx } = makePrisma();
     const res = await resolveModerationAppeal(ctx(staff, prisma), { appealId: "a1", outcome: "REJECTED", reasonPublic: "Decyzja zostaje w mocy." });
     expect(res.ok).toBe(true);
-    expect(tx.video.update).not.toHaveBeenCalled();
+    expect(tx.video.updateMany).not.toHaveBeenCalled();
     expect(tx.moderationDecision.create.mock.calls[0][0].data.action).toBe("APPEAL_REJECTED");
+  });
+
+  it("W03: a newer decision made between read and write is not overwritten (nothing reverted)", async () => {
+    const { prisma, tx } = makePrisma();
+    tx.video.updateMany.mockResolvedValueOnce({ count: 0 });
+    const res = await resolveModerationAppeal(ctx(staff, prisma), { appealId: "a1", outcome: "UPHELD", reasonPublic: "Film nie narusza zasad." });
+    expect(res.ok).toBe(true);
+    expect(tx.video.update).not.toHaveBeenCalled();
   });
 
   it("cannot resolve twice", async () => {

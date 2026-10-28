@@ -323,8 +323,9 @@ async function revertDecisionEffect(
     const meta = await auditFor(tx, decision.id, ["VIDEO_MODERATION_CHANGED", "CONTENT_REPORT_RESOLVED"]);
     const prev = meta?.before?.moderationStatus;
     const target = prev && VIDEO_STATES.includes(prev) && prev !== decided ? prev : "VISIBLE";
-    await tx.video.update({ where: { id: video.id }, data: { moderationStatus: target as never } });
-    return { reverted: true, note: `Moderacja filmu: ${decided} -> ${target}.` };
+    // Conditional on the status still being the decided one: a newer decision made between the read and this write wins.
+    const { count } = await tx.video.updateMany({ where: { id: video.id, moderationStatus: decided as never }, data: { moderationStatus: target as never } });
+    return count > 0 ? { reverted: true, note: `Moderacja filmu: ${decided} -> ${target}.` } : { reverted: false, note: "Moderacja filmu zmieniła się w międzyczasie; nic nie cofnięto." };
   }
 
   if (action === "CHANNEL_STRIKE_ISSUED") {

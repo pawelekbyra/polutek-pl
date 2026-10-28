@@ -51,7 +51,7 @@ export interface CreateVideoInput {
   isAdult?: boolean;
   /**
    * Only with `publishAfterAssetReady`: what the video becomes when processing finishes (default PUBLISHED).
-   * Not a column: the create use case stores it as a pending setting (application/ready-visibility.ts).
+   * Stored in `Video.publishAfterAssetReadyVisibility` in the same INSERT as the flag.
    */
   readyVisibility?: "PUBLISHED" | "UNLISTED";
 }
@@ -291,6 +291,8 @@ export class VideoRepository {
       publishAfterAssetReadyRequestedAt: input.publishAfterAssetReady ? (input.publishAfterAssetReadyRequestedAt || new Date()) : null,
       publishAfterAssetReadyCompletedAt: null,
       publishAfterAssetReadyError: null,
+      // Same INSERT as the flag: the target visibility can never be missing for a pending auto-publication.
+      publishAfterAssetReadyVisibility: input.publishAfterAssetReady ? (input.readyVisibility === "UNLISTED" ? "UNLISTED" : "PUBLISHED") : null,
       ...(input.tags !== undefined ? { tags: input.tags } : {}),
       ...(input.category !== undefined ? { category: input.category } : {}),
       ...(input.commentsMode !== undefined ? { commentsMode: input.commentsMode } : {}),

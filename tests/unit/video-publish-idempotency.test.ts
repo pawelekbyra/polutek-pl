@@ -1,10 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { attemptPublishAfterAssetReady } from '../../lib/modules/video/application/publish-after-asset-ready.use-case';
+import { attemptPublishAfterAssetReady, requestPublishAfterAssetReady } from '../../lib/modules/video/application/publish-after-asset-ready.use-case';
 import { publishAdminVideo } from '../../lib/modules/video/application/publish-admin-video.use-case';
+import { unlistAdminVideo } from '../../lib/modules/video/application/unlist-admin-video.use-case';
 import { recordAuditEvent } from '../../lib/modules/audit';
 
 vi.mock('../../lib/modules/video/application/publish-admin-video.use-case', () => ({
   publishAdminVideo: vi.fn()
+}));
+
+vi.mock('../../lib/modules/video/application/unlist-admin-video.use-case', () => ({
+  unlistAdminVideo: vi.fn()
 }));
 
 vi.mock('../../lib/modules/audit', () => ({
@@ -46,7 +51,7 @@ const mockPrisma: any = {
     findFirst: vi.fn().mockResolvedValue(readyRouteVideo),
     update: vi.fn()
   },
-  // The target visibility of an auto-publication ("PUBLISHED" or "UNLISTED") is a small per-video setting.
+  // Legacy store of the target visibility (rows written before Video.publishAfterAssetReadyVisibility existed).
   appSetting: {
     findUnique: vi.fn().mockResolvedValue(null),
     deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
@@ -75,7 +80,8 @@ describe('attemptPublishAfterAssetReady Idempotency', () => {
       id: videoId,
       status: 'DRAFT',
       publishAfterAssetReady: true,
-      publishAfterAssetReadyCompletedAt: null
+      publishAfterAssetReadyCompletedAt: null,
+      publishAfterAssetReadyVisibility: 'PUBLISHED',
     });
 
     vi.mocked(publishAdminVideo).mockResolvedValueOnce({
@@ -105,7 +111,8 @@ describe('attemptPublishAfterAssetReady Idempotency', () => {
       id: videoId,
       status: 'DRAFT',
       publishAfterAssetReady: true,
-      publishAfterAssetReadyCompletedAt: null
+      publishAfterAssetReadyCompletedAt: null,
+      publishAfterAssetReadyVisibility: 'PUBLISHED',
     });
 
     vi.mocked(publishAdminVideo).mockResolvedValueOnce({
@@ -134,7 +141,8 @@ describe('attemptPublishAfterAssetReady Idempotency', () => {
       id: videoId,
       status: 'DRAFT',
       publishAfterAssetReady: true,
-      publishAfterAssetReadyCompletedAt: null
+      publishAfterAssetReadyCompletedAt: null,
+      publishAfterAssetReadyVisibility: 'PUBLISHED',
     });
 
     vi.mocked(publishAdminVideo).mockResolvedValueOnce({
@@ -170,6 +178,7 @@ describe('attemptPublishAfterAssetReady is readiness-driven', () => {
       status: 'DRAFT',
       publishAfterAssetReady: true,
       publishAfterAssetReadyCompletedAt: null,
+      publishAfterAssetReadyVisibility: 'PUBLISHED',
     });
     vi.mocked(publishAdminVideo).mockResolvedValue({ ok: true } as any);
 
@@ -195,5 +204,102 @@ describe('attemptPublishAfterAssetReady is readiness-driven', () => {
     await attemptPublishAfterAssetReady(videoId, mockCtx);
 
     expect(publishAdminVideo).not.toHaveBeenCalled();
+  });
+});
+
+describe('attemptPublishAfterAssetReady target visibility (A01)', () => {
+  const videoId = 'video-vis';
+  const pending = (extra: object = {}) => ({
+    id: videoId,
+    status: 'DRAFT',
+    publishAfterAssetReady: true,
+    publishAfterAssetReadyCompletedAt: null,
+    publishAfterAssetReadyError: null,
+    ...extra,
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockPrisma.video.findFirst.mockResolvedValue(readyRouteVideo);
+    mockPrisma.appSetting.findUnique.mockResolvedValue(null);
+    mockPrisma.video.update.mockResolvedValue({});
+    vi.mocked(publishAdminVideo).mockResolvedValue({ ok: true } as any);
+    vi.mocked(unlistAdminVideo).mockResolvedValue({ ok: true } as any);
+  });
+
+  it('typed UNLISTED goes through unlist and never through publish', async () => {
+    mockPrisma.video.findUnique.mockResolvedValue(pending({ publishAfterAssetReadyVisibility: 'UNLISTED' }));
+    await attemptPublishAfterAssetReady(videoId, mockCtx);
+    expect(unlistAdminVideo).toHaveBeenCalledWith(videoId, mockCtx);
+    expect(publishAdminVideo).not.toHaveBeenCalled();
+  });
+
+  it('typed PUBLISHED publishes', async () => {
+    mockPrisma.video.findUnique.mockResolvedValue(pending({ publishAfterAssetReadyVisibility: 'PUBLISHED' }));
+    await attemptPublishAfterAssetReady(videoId, mockCtx);
+    expect(publishAdminVideo).toHaveBeenCalledWith(videoId, mockCtx);
+    expect(unlistAdminVideo).not.toHaveBeenCalled();
+  });
+
+  it('no data at all stops the publication, records why and never publishes', async () => {
+    mockPrisma.video.findUnique.mockResolvedValue(pending({ publishAfterAssetReadyVisibility: null }));
+    await attemptPublishAfterAssetReady(videoId, mockCtx);
+    expect(publishAdminVideo).not.toHaveBeenCalled();
+    expect(unlistAdminVideo).not.toHaveBeenCalled();
+    expect(mockPrisma.video.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: videoId },
+      data: { publishAfterAssetReadyError: expect.stringContaining('wstrzymana') },
+    }));
+  });
+
+  it('an unknown typed value is treated as no data (not as PUBLISHED)', async () => {
+    mockPrisma.video.findUnique.mockResolvedValue(pending({ publishAfterAssetReadyVisibility: 'PUBLIC' }));
+    await attemptPublishAfterAssetReady(videoId, mockCtx);
+    expect(publishAdminVideo).not.toHaveBeenCalled();
+    expect(unlistAdminVideo).not.toHaveBeenCalled();
+  });
+
+  it('legacy job (column NULL) with the old AppSetting UNLISTED row is finished as UNLISTED', async () => {
+    mockPrisma.video.findUnique.mockResolvedValue(pending());
+    mockPrisma.appSetting.findUnique.mockResolvedValue({ value: 'UNLISTED' });
+    await attemptPublishAfterAssetReady(videoId, mockCtx);
+    expect(mockPrisma.appSetting.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { key: `video_ready_visibility:${videoId}` } }));
+    expect(unlistAdminVideo).toHaveBeenCalledWith(videoId, mockCtx);
+    expect(publishAdminVideo).not.toHaveBeenCalled();
+  });
+
+  it('a failing legacy lookup postpones the publication instead of publishing', async () => {
+    mockPrisma.video.findUnique.mockResolvedValue(pending());
+    mockPrisma.appSetting.findUnique.mockRejectedValue(new Error('db down'));
+    await attemptPublishAfterAssetReady(videoId, mockCtx);
+    expect(publishAdminVideo).not.toHaveBeenCalled();
+    expect(unlistAdminVideo).not.toHaveBeenCalled();
+  });
+});
+
+describe('requestPublishAfterAssetReady (A01)', () => {
+  const txPrisma: any = {
+    video: { findUnique: vi.fn(), update: vi.fn() },
+    $transaction: vi.fn((cb: any) => cb(txPrisma)),
+  };
+  const ctx: any = { prisma: txPrisma, actor: { type: 'admin', userId: 'admin-id' } };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    txPrisma.video.findUnique.mockResolvedValue({ id: 'v1', status: 'DRAFT', publishAfterAssetReady: false, publishAfterAssetReadyCompletedAt: null });
+    txPrisma.video.update.mockResolvedValue({});
+  });
+
+  it('writes the target visibility in the same update as the flag', async () => {
+    await requestPublishAfterAssetReady('v1', ctx, 'UNLISTED');
+    expect(txPrisma.video.update).toHaveBeenCalledTimes(1);
+    expect(txPrisma.video.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ publishAfterAssetReady: true, publishAfterAssetReadyVisibility: 'UNLISTED' }),
+    }));
+  });
+
+  it('a failed write aborts the request (error propagates, nothing swallowed)', async () => {
+    txPrisma.video.update.mockRejectedValue(new Error('write failed'));
+    await expect(requestPublishAfterAssetReady('v1', ctx, 'UNLISTED')).rejects.toThrow('write failed');
   });
 });

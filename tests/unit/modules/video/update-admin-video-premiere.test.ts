@@ -77,18 +77,41 @@ describe('updateAdminVideo premieres', () => {
     expect(mockPrisma.video.updateMany.mock.calls[0][0].data.publishedAt).toBeUndefined();
   });
 
-  it('"Premiera" on a draft goes through the publish use case and keeps its blockers', async () => {
+  it('"Premiera" on a draft that cannot publish is refused as a whole, nothing is half-saved', async () => {
     givenExisting({ status: 'DRAFT', assets: [] });
     const premiereAt = new Date(Date.now() + 3 * DAY);
     const result = await updateAdminVideo({ id: 'v1', status: VideoStatus.PUBLISHED, premiereAt }, ctx);
 
-    // The premiere is saved; publication is refused because the draft has no READY asset.
-    expect(mockPrisma.video.updateMany).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ premiereAt }),
-    }));
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.name).toBe('VideoNotReadyForPublicationError');
+    expect(mockPrisma.video.updateMany).not.toHaveBeenCalled();
     expect(mockPrisma.video.update).not.toHaveBeenCalled();
+  });
+
+  // A05: "publikuj natychmiast" (status PUBLISHED without premiere) used to report success and leave a draft.
+  it('"Natychmiast" on a draft that cannot publish fails instead of reporting a saved draft', async () => {
+    givenExisting({ status: 'DRAFT', assets: [] });
+    const result = await updateAdminVideo({ id: 'v1', title: 'x', status: VideoStatus.PUBLISHED, premiereAt: null }, ctx);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.name).toBe('VideoNotReadyForPublicationError');
+    expect(mockPrisma.video.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('"Natychmiast" on a publishable draft saves, then publishes through the publish use case', async () => {
+    const ready = {
+      status: 'DRAFT', title: 'T', slug: 't', thumbnailUrl: 'x', description: 'd', publishedAt: null,
+      activePlaybackRoute: { asset: { provider: 'SELF_HLS', processingState: 'READY', objectKey: 'videos/v1/v/v1' } },
+    };
+    givenExisting(ready);
+    mockPrisma.video.update.mockImplementation(({ data }: any) => Promise.resolve({ ...ready, id: 'v1', creatorId: 'c1', tier: 'PUBLIC', ...data }));
+    const result = await updateAdminVideo({ id: 'v1', title: 'x', status: VideoStatus.PUBLISHED, premiereAt: null }, ctx);
+
+    expect(mockPrisma.video.updateMany).toHaveBeenCalled();
+    expect(mockPrisma.video.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ status: 'PUBLISHED' }),
+    }));
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data.status).toBe('PUBLISHED');
   });
 });
 
@@ -99,6 +122,7 @@ describe('createAdminVideo premieres', () => {
     auditLog: { create: vi.fn() },
     appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
     creator: { findFirst: vi.fn().mockResolvedValue(null), findUnique: vi.fn().mockResolvedValue(mockMainChannel) },
+    $transaction: vi.fn((cb) => cb(mockPrisma)),
   } as any;
   const ctx = createAppContext({ actor: { type: 'admin', userId: 'a1' }, prisma: mockPrisma });
 
@@ -115,5 +139,37 @@ describe('createAdminVideo premieres', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.code).toBe('VIDEO_INVALID_PREMIERE');
     expect(mockPrisma.video.create).not.toHaveBeenCalled();
+  });
+
+  // A01: the target visibility is written in the same INSERT as the flag; a failed write fails the creation.
+  it('stores the target visibility next to the flag in one INSERT', async () => {
+    mockPrisma.video.create.mockImplementation(({ data }: any) => Promise.resolve({ ...data, id: 'v1' }));
+    const result = await createAdminVideo(
+      { title: 'T', slug: 't', tier: AccessTier.PUBLIC, publishAfterAssetReady: true, readyVisibility: 'UNLISTED' },
+      ctx,
+    );
+    expect(result.ok).toBe(true);
+    expect(mockPrisma.video.create).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.video.create.mock.calls[0][0].data).toMatchObject({
+      publishAfterAssetReady: true,
+      publishAfterAssetReadyVisibility: 'UNLISTED',
+    });
+  });
+
+  it('an explicit PUBLISHED target is stored too; without the flag nothing is stored', async () => {
+    mockPrisma.video.create.mockImplementation(({ data }: any) => Promise.resolve({ ...data, id: 'v1' }));
+    await createAdminVideo({ title: 'T', slug: 't', tier: AccessTier.PUBLIC, publishAfterAssetReady: true }, ctx);
+    expect(mockPrisma.video.create.mock.calls[0][0].data.publishAfterAssetReadyVisibility).toBe('PUBLISHED');
+    await createAdminVideo({ title: 'T', slug: 't2', tier: AccessTier.PUBLIC, readyVisibility: 'UNLISTED' }, ctx);
+    expect(mockPrisma.video.create.mock.calls[1][0].data.publishAfterAssetReadyVisibility).toBeNull();
+  });
+
+  it('a failed write does not end in a video: the error propagates and no setting is written on the side', async () => {
+    mockPrisma.video.create.mockRejectedValue(new Error('db down'));
+    await expect(createAdminVideo(
+      { title: 'T', slug: 't', tier: AccessTier.PUBLIC, publishAfterAssetReady: true, readyVisibility: 'UNLISTED' },
+      ctx,
+    )).rejects.toThrow('db down');
+    expect(mockPrisma.appSetting).not.toHaveProperty('upsert');
   });
 });
