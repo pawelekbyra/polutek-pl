@@ -33,6 +33,9 @@ const CROSS_MODULE_INTERNAL_IMPORT_ALLOWLIST: Record<string, Record<string, stri
   'lib/modules/users/application/patron-read-model.ts': {
     'patron/domain/patron-read-model': 'Pure, no-side-effect derivation helper re-exported for admin user read models; routing through the patron module\'s public index would entangle it with tests that mock the whole @/lib/modules/patron barrel (grantPatron/revokePatron).',
   },
+  'lib/modules/playback/application/self-hls-plan.ts': {
+    'video/domain/video-visibility': VISIBILITY_HELPER_REASON,
+  },
   'lib/modules/playback/application/playback.service.ts': {
     'video/domain/premiere': PREMIERE_HELPER_REASON,
   },
@@ -407,6 +410,7 @@ function checkAdminApp() {
 // to a function that authorizes).
 const AUTHZ_MODULES = ['video', 'video-pipeline', 'admin-content', 'channel', 'sales', 'creator-analytics', 'playlists'];
 const AUTHZ_EXEMPT: Record<string, string> = {
+  'lib/modules/video/application/get-public-video-chapters.ts': 'public SEO read: raw PUBLIC/PUBLISHED query; getPublicChapterClips applies canExposeChapterClips and excludes patron-zone videos',
   'lib/modules/admin-content/application/storage-cleanup-job.ts': 'job runner (cron/kick as system): the manifest is written inside deleteVideoWithStorage after video.delete authorization, the handler only repeats what that deletion already allowed',
   'lib/modules/creator-analytics/application/context.ts': 'wiring helpers; every analytics use case calls authorize() itself',
   'lib/modules/creator-analytics/application/snapshot-subscribers.use-case.ts': 'daily cron; refuses any actor other than system',
