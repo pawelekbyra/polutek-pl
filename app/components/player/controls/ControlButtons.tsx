@@ -1,19 +1,20 @@
 "use client";
 
 import { FullscreenButton, MuteButton, PlayButton, Time, VolumeSlider, useMediaRemote, useMediaState } from "@vidstack/react";
-import { Maximize, Minimize, PictureInPicture2, Volume1, Volume2, VolumeX } from "lucide-react";
 import { usePlayerCopy } from "../polutek-controls-copy";
-import { PlayPauseGlyph } from "./PlayerIcons";
+import {
+  FullscreenEnterIcon,
+  FullscreenExitIcon,
+  PictureInPictureIcon,
+  PlayPauseGlyph,
+  VolumeHighIcon,
+  VolumeLowIcon,
+  VolumeMutedIcon,
+} from "./PlayerIconSet";
 
-/**
- * Line icons of the control bar: one family (lucide), one optical size (20px box) and one true stroke width
- * (1.5 CSS px whatever the box, `absoluteStrokeWidth`). Play and pause stay filled glyphs (Vidstack's), the
- * convention every player uses for the primary action.
- */
+/** The bar's icons are the "Marker" set (PlayerIconSet.tsx); `.mc-icon` (globals.css) sets the 20px box. */
 /** Dormant: the CC switch stays on the bar at every width (owner 2026-10-28); a width here would move it into the settings menu. */
 export const CAPTIONS_IN_MENU_QUERY = "(max-width: 0px)";
-
-export const LINE_ICON = { size: 20, strokeWidth: 1.5, absoluteStrokeWidth: true, className: "mc-icon", "aria-hidden": true } as const;
 
 /** Play/pause: the one control with a surface of its own, a compact dark pill at the left of the row. */
 export function PlayPauseButton() {
@@ -44,7 +45,7 @@ export function VolumeControl() {
   return (
     <div className="mc-volume">
       <MuteButton className="mc-btn" aria-label={label} title={`${label} (m)`}>
-        {isMuted ? <VolumeX {...LINE_ICON} /> : volume < 0.5 ? <Volume1 {...LINE_ICON} /> : <Volume2 {...LINE_ICON} />}
+        {isMuted ? <VolumeMutedIcon className="mc-icon" /> : volume < 0.5 ? <VolumeLowIcon className="mc-icon" /> : <VolumeHighIcon className="mc-icon" />}
       </MuteButton>
       {canSetVolume && (
         <VolumeSlider.Root className="mc-vol-slider" aria-label={copy.volume}>
@@ -78,7 +79,7 @@ export function PipToggleButton() {
       title={label}
       onClick={(event) => (inPip ? remote.exitPictureInPicture?.(event.nativeEvent) : remote.enterPictureInPicture?.(event.nativeEvent))}
     >
-      <PictureInPicture2 {...LINE_ICON} />
+      <PictureInPictureIcon className="mc-icon" />
     </button>
   );
 }
@@ -92,7 +93,7 @@ export function FullscreenToggleButton() {
   const label = isFullscreen ? copy.exitFullscreen : copy.fullscreen;
   return (
     <FullscreenButton className="mc-btn" aria-label={label} title={`${label} (f)`}>
-      {isFullscreen ? <Minimize {...LINE_ICON} /> : <Maximize {...LINE_ICON} />}
+      {isFullscreen ? <FullscreenExitIcon className="mc-icon" /> : <FullscreenEnterIcon className="mc-icon" />}
     </FullscreenButton>
   );
 }
