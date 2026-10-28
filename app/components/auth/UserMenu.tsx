@@ -85,15 +85,18 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
       if (event.key === "Escape") close();
     };
     document.addEventListener("keydown", onKey);
-    // The page behind must not scroll: lock both the root and the body (either may be the scroller) and keep the
-    // layout from jumping when the scrollbar disappears.
+    // The page behind must not scroll: lock both the root and the body (either may be the scroller). `html` has
+    // `scrollbar-gutter: stable` (globals.css), so the scrollbar's space stays reserved while it is hidden and the
+    // layout does not move. Padding the body as well would shift the page by the scrollbar's width a second time, so
+    // it is added only in a browser without scrollbar-gutter support (where the gutter is NOT kept).
     const root = document.documentElement;
     const body = document.body;
     const previous = { rootOverflow: root.style.overflow, bodyOverflow: body.style.overflow, bodyPaddingRight: body.style.paddingRight };
+    const gutterKept = typeof CSS !== "undefined" && CSS.supports("scrollbar-gutter", "stable");
     const scrollbar = window.innerWidth - root.clientWidth;
     root.style.overflow = "hidden";
     body.style.overflow = "hidden";
-    if (scrollbar > 0) body.style.paddingRight = `${scrollbar}px`;
+    if (!gutterKept && scrollbar > 0) body.style.paddingRight = `${scrollbar}px`;
     closeRef.current?.focus();
     return () => {
       document.removeEventListener("keydown", onKey);
