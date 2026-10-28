@@ -1101,5 +1101,7 @@
  "Check the channel name.": "请检查频道名称。",
  "That handle is not available. Choose another.": "该用户名不可用，请换一个。",
  "Check the details in the About section.": "请检查“简介”部分的内容。",
- "Server error. Please try again.": "服务器错误，请重试。"
+ "Server error. Please try again.": "服务器错误，请重试。",
+ "Pay with a Multibanco reference": "使用 Multibanco 参考号付款",
+ "MB WAY app": "MB WAY 应用"
 }

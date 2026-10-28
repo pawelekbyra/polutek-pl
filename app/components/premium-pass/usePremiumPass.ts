@@ -85,6 +85,27 @@ export async function postPatronIntent(input: { requestId: string; productId: st
   }
 }
 
+/**
+ * The payment methods Stripe offers for this product and currency (step 2 tiles, before "Dalej"). Names only, no
+ * payment is created. Any failure or an unknown answer is `null`: the caller keeps its default candidates.
+ */
+export async function fetchPatronMethods(input: { productId: string; currency: string }): Promise<string[] | null> {
+  try {
+    const res = await fetch("/api/user/premium-pass/methods", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: JSON_HEADERS,
+      body: JSON.stringify(input),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json().catch(() => null)) as { paymentMethodTypes?: unknown } | null;
+    const types = data?.paymentMethodTypes;
+    return Array.isArray(types) && types.length > 0 && types.every((t) => typeof t === "string") ? (types as string[]) : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Records that the two boxes were ticked on the viewer's own unpaid payment; false aborts the confirmation. */
 export async function postPatronConsent(input: { paymentId: string; method?: string }): Promise<boolean> {
   try {
