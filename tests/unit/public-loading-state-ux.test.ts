@@ -97,9 +97,9 @@ describe("public loading/access state UX contracts", () => {
     const loading = read("app/components/PlayerLoadingState.tsx");
 
     expect(loading).toContain("polutek-player-loader-mark");
-    expect(loading).toContain("polutek-player-loader-progress");
     expect(loading).toContain("var(--chan-nav,#f7f9fc)");
-    expect(loading).toContain('from "lucide-react"');
+    expect(loading).toContain("SpinnerArcIcon");
+    expect(loading).not.toContain("lucide-react");
     expect(loading).not.toContain("scribble");
     expect(loading).not.toContain("spark");
     expect(loading).toContain('role="status"');
