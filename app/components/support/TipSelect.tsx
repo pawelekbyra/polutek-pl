@@ -3,7 +3,15 @@
 import React, { useEffect, useId, useRef, useState, type ComponentType } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
-import { Check, ChevronDown } from "../icons";
+import { Check } from "../icons";
+
+function SelectChevron({ className }: { className: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={className}>
+      <path d="M5 9.5 10.6 14a2.25 2.25 0 0 0 2.8 0L19 9.5" />
+    </svg>
+  );
+}
 
 export interface TipSelectOption {
   value: string;
@@ -198,18 +206,7 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
           className="relative inline-flex -mt-2 h-7 -translate-y-[3px] items-center gap-1.5 rounded-full bg-[var(--pass-blue-soft,var(--chan-blue-soft))] ring-1 ring-inset ring-[var(--pass-blue-line,var(--chan-line))] px-3 text-[13px] font-bold text-[var(--chan-ink)] before:absolute before:-bottom-1.5 before:-top-2.5 before:inset-x-0 before:content-[''] hover:bg-[var(--pass-blue-fill,var(--chan-blue-soft))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] disabled:opacity-50"
         >
           <span>{selected?.short ?? selected?.title ?? "—"}</span>
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-            className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200 motion-reduce:transition-none", open && "rotate-180")}
-          >
-            <path d="M5 9.5 10.6 14a2.25 2.25 0 0 0 2.8 0L19 9.5" />
-          </svg>
+          <SelectChevron className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200 motion-reduce:transition-none", open && "rotate-180")} />
         </button>
         {position &&
           createPortal(
@@ -281,7 +278,7 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
             <span className="block truncate text-[15px] font-extrabold text-[var(--chan-ink)]">{selected?.title ?? "—"}</span>
             {selected?.hint && <span className="block truncate text-[12px] text-[var(--chan-body)]">{selected.hint}</span>}
           </span>
-          <ChevronDown
+          <SelectChevron
             className={cn(
               "h-4 w-4 shrink-0 text-[var(--chan-ink)] transition-transform duration-200 motion-reduce:transition-none",
               open && "rotate-180",
