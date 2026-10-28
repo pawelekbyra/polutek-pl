@@ -266,4 +266,94 @@ describe('hls edge worker', () => {
       expect(clientCacheControl('m4s', { exp: nowS - 5, isPublic: false }, nowS)).toBe('private, max-age=0');
     });
   });
+
+  describe('captions under the video token', () => {
+    const HASH = 'ab'.repeat(32);
+    const FILE = `pl-${HASH}.vtt`;
+    const CAP = `captions/${FILE}`;
+    const KEY = `videos/${VIDEO}/captions/${FILE}`;
+    const VTT = 'WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nTekst\n';
+    const withClock = async (fn: () => Promise<void>) => {
+      const real = Date.now;
+      Date.now = () => NOW;
+      try {
+        await fn();
+      } finally {
+        Date.now = real;
+      }
+    };
+    const sign = (isPublic: boolean, version = 'v1', ttlSeconds = 1800) =>
+      SelfHlsTokenService.sign({ videoId: VIDEO, version, secret: SECRET, nowMs: NOW, ttlSeconds, isPublic }, 'https://x').token;
+
+    it('parses only the exact caption shape', () => {
+      expect(parsePath(`/h/t/${VIDEO}/v1/${CAP}`)).toMatchObject({ captionFile: FILE, ext: 'vtt' });
+      expect(parsePath(`/h/t/${VIDEO}/v1/720p/seg_00000.m4s`)?.captionFile).toBeNull();
+      for (const rest of ['captions/x.vtt', `captions/${FILE.toUpperCase()}`, `captions/sub/${FILE}`, `captions/${FILE}.m3u8`, 'captions/pl-abc.vtt']) {
+        expect(parsePath(`/h/t/${VIDEO}/v1/${rest}`)).toBeNull();
+      }
+    });
+
+    it('serves a protected token the private file, with private headers and the VTT content type', async () => {
+      await withClock(async () => {
+        const { env, gets } = makeEnv({ [KEY]: VTT });
+        const res = await worker.fetch(new Request(url(sign(false), CAP), { headers: { Origin: 'https://www.pawelperfect.com' } }), env, ctx);
+        expect(res.status).toBe(200);
+        expect(await res.text()).toBe(VTT);
+        expect(res.headers.get('content-type')).toBe('text/vtt; charset=utf-8');
+        expect(res.headers.get('cache-control')).toBe('private, max-age=1800');
+        expect(res.headers.get('access-control-allow-origin')).toBe('https://www.pawelperfect.com');
+        expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+        expect(gets).toEqual([KEY]);
+      });
+    });
+
+    it('a public token gets the long public cache; the cache copy is shared across versions and token kinds', async () => {
+      await withClock(async () => {
+        const { env, gets } = makeEnv({ [KEY]: VTT });
+        const pub = await worker.fetch(new Request(url(sign(true), CAP)), env, ctx);
+        expect(pub.headers.get('cache-control')).toBe('public, max-age=31536000, immutable');
+        await Promise.all(pending.splice(0));
+        // Same file for the same video through another version token and a protected token: one R2 read in total.
+        const other = await worker.fetch(new Request(`https://video.pawelperfect.com/h/${sign(false, 'v2')}/${VIDEO}/v2/${CAP}`), env, ctx);
+        expect(other.headers.get('x-hls-cache')).toBe('HIT');
+        expect(other.headers.get('cache-control')).toMatch(/^private/);
+        expect(gets).toHaveLength(1);
+        expect([...cache.store.keys()].some((k) => k.includes('/captions/'))).toBe(true);
+      });
+    });
+
+    it('403 without a valid token (also when the file is cached) and for a token of another video', async () => {
+      await withClock(async () => {
+        const { env } = makeEnv({ [KEY]: VTT });
+        await worker.fetch(new Request(url(sign(false), CAP)), env, ctx);
+        await Promise.all(pending.splice(0));
+        const nowS = Math.floor(NOW / 1000);
+        expect((await worker.fetch(new Request(url(`${nowS + 100}.${'A'.repeat(43)}`, CAP)), env, ctx)).status).toBe(403);
+        expect((await worker.fetch(new Request(url(sign(false, 'v1', -10), CAP)), env, ctx)).status).toBe(403);
+        const otherVideoToken = SelfHlsTokenService.sign({ videoId: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', version: 'v1', secret: SECRET, nowMs: NOW, ttlSeconds: 1800 }, 'https://x').token;
+        expect((await worker.fetch(new Request(url(otherVideoToken, CAP)), env, ctx)).status).toBe(403);
+      });
+    });
+
+    it('404 for a missing caption, and it never falls back to a file inside the version folder', async () => {
+      await withClock(async () => {
+        const { env, gets } = makeEnv({ [`videos/${VIDEO}/v/v1/${CAP}`]: 'inside the version folder' });
+        const res = await worker.fetch(new Request(url(sign(false), CAP)), env, ctx);
+        expect(res.status).toBe(404);
+        expect(gets).toEqual([KEY]);
+      });
+    });
+
+    it('answers Range and HEAD for a caption like for other files', async () => {
+      await withClock(async () => {
+        const { env, heads } = makeEnv({ [KEY]: VTT });
+        const head = await worker.fetch(new Request(url(sign(false), CAP), { method: 'HEAD' }), env, ctx);
+        expect(head.status).toBe(200);
+        expect(heads).toEqual([KEY]);
+        const range = await worker.fetch(new Request(url(sign(false), CAP), { headers: { Range: 'bytes=0-5' } }), env, ctx);
+        expect(range.status).toBe(206);
+        expect(await range.text()).toBe('WEBVTT');
+      });
+    });
+  });
 });

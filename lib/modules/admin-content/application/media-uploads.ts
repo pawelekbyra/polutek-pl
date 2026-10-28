@@ -1,12 +1,12 @@
 /**
  * Cover and subtitle uploads of the admin panel. The bytes are checked here (magic bytes, real WebVTT),
- * stored in R2, and the video row is changed only through updateAdminVideo (public thumbnail sync, old
+ * stored in R2 (covers: private thumbnails bucket; subtitles: private HLS bucket), and the video row is changed only through updateAdminVideo (public thumbnail sync, old
  * cover clean-up, audit). No Vercel Blob fallback: the panel writes to R2 only.
  */
 import type { AppContext } from "@/lib/modules/shared/app-context";
 import { AppError } from "@/lib/modules/shared/app-error";
 import { fail, ok, type UseCaseResult } from "@/lib/modules/shared/result";
-import { R2ThumbnailStorageClient, parsePublicThumbnailUrl } from "@/lib/modules/media";
+import { R2CaptionStorageClient, R2ThumbnailStorageClient, captionObjectKey, formatCaptionRef, parseCaptionRef, parsePublicThumbnailUrl } from "@/lib/modules/media";
 import { getAdminVideoById, updateAdminVideo } from "@/lib/modules/video";
 import { recordAuditEventSafe } from "@/lib/modules/audit";
 import { authorize } from "@/lib/modules/authz";
@@ -38,14 +38,30 @@ export async function uploadVideoCover(
   return ok({ thumbnailUrl: storageUrl });
 }
 
-type SubtitleStorage = Pick<R2ThumbnailStorageClient, "putPrivate" | "copyToPublic" | "deletePrivate" | "deletePublic">;
+/** Private caption files (bucket `polutek-hls`) plus the old public bucket, from which only legacy files are removed. */
+export type SubtitleStorage = {
+  putCaption: R2CaptionStorageClient["putCaption"];
+  deleteCaption: R2CaptionStorageClient["deleteCaption"];
+  /** Legacy: files of the public thumbnails bucket (before captions became private). Absent when that bucket is not configured. */
+  deletePublic?: (key: string) => Promise<void>;
+};
 
-const defaultSubtitleStorage = (): SubtitleStorage | null => (R2ThumbnailStorageClient.isPublicServingConfigured() ? new R2ThumbnailStorageClient() : null);
+const defaultSubtitleStorage = (): SubtitleStorage | null => {
+  if (!R2CaptionStorageClient.isConfigured()) return null;
+  const captions = new R2CaptionStorageClient();
+  const legacy = R2ThumbnailStorageClient.isPublicServingConfigured() ? new R2ThumbnailStorageClient() : null;
+  return {
+    putCaption: (input) => captions.putCaption(input),
+    deleteCaption: (videoId, key) => captions.deleteCaption(videoId, key),
+    ...(legacy ? { deletePublic: (key: string) => legacy.deletePublic(key) } : {}),
+  };
+};
 
 /**
- * Subtitles are served from the public R2 host (the player fetches them like the thumbnails) under a
- * content-hashed key `videos/<id>/subtitles/<hash>.vtt`; the public-thumbnail reconcile leaves that prefix
- * alone. The previous file of the same language is removed after the row points at the new one.
+ * Subtitles are PRIVATE files of the HLS bucket: `videos/<id>/captions/<lang>-<sha256>.vtt` (content-hashed), never a
+ * public object. The video row keeps a reference `hlscap:<lang>-<sha256>.vtt`; the playback plan turns it into a URL
+ * under the video's own delivery token, only for a viewer who may play (CLAUDE.md 4.7, workers/hls-edge). The previous
+ * file of the same language is removed after the row points at the new one; a failed row write removes the new file.
  * pl and en live in Video.subtitleUrlPl/En (the player reads them); en is mirrored into its translation row;
  * other languages live on their VideoTranslation row, which must exist first (title saved).
  */
@@ -66,15 +82,23 @@ export async function uploadVideoSubtitle(
   if (!previous.ok) return fail(previous.error);
 
   const bytes = new TextEncoder().encode(check.text);
-  const { key } = await storage.putPrivate({ scope: `videos/${current.data.id}/subtitles`, bytes, contentType: "text/vtt; charset=utf-8", extension: "vtt" });
-  const url = await storage.copyToPublic(key);
-  await storage.deletePrivate(key).catch(() => undefined);
+  let stored: { file: string; key: string };
+  try {
+    stored = await storage.putCaption({ videoId: current.data.id, lang: input.lang, bytes });
+  } catch (error) {
+    return fail(new AppError(`Nie udało się zapisać napisów w magazynie: ${error instanceof Error ? error.message : "błąd R2"}`, 502, "CAPTION_STORAGE_FAILED"));
+  }
+  const ref = formatCaptionRef(stored.file);
 
-  const written = await writeSubtitle(input.lang, current.data.id, url, ctx);
-  if (!written.ok) return fail(written.error);
-  await removeOldSubtitleObject(previous.data, url, storage);
+  const written = await writeSubtitle(input.lang, current.data.id, ref, ctx);
+  if (!written.ok) {
+    // The row does not point at the new file: do not leave it behind (unless it is the file the row already uses).
+    if (previous.data !== ref) await storage.deleteCaption(current.data.id, stored.key).catch(() => undefined);
+    return fail(written.error);
+  }
+  await removeOldSubtitleObject(current.data.id, previous.data, ref, storage);
   await recordAuditEventSafe(ctx, { action: "VIDEO_SUBTITLES_UPLOADED", targetType: "Video", targetId: current.data.id, metadata: { lang: input.lang, cues: check.cues, sizeBytes: bytes.length } });
-  return ok({ url, cues: check.cues });
+  return ok({ url: ref, cues: check.cues });
 }
 
 export async function removeVideoSubtitle(
@@ -91,7 +115,7 @@ export async function removeVideoSubtitle(
   if (!previous.ok || !previous.data) return ok({ removed: false });
   const written = await writeSubtitle(input.lang, current.data.id, null, ctx);
   if (!written.ok) return fail(written.error);
-  if (storage) await removeOldSubtitleObject(previous.data, null, storage);
+  if (storage) await removeOldSubtitleObject(current.data.id, previous.data, null, storage);
   await recordAuditEventSafe(ctx, { action: "VIDEO_SUBTITLES_REMOVED", targetType: "Video", targetId: current.data.id, metadata: { lang: input.lang } });
   return ok({ removed: true });
 }
@@ -115,9 +139,20 @@ async function writeSubtitle(lang: string, videoId: string, url: string | null, 
   return setTranslationSubtitle({ videoId, language: lang, url }, ctx);
 }
 
-async function removeOldSubtitleObject(previousUrl: string | null | undefined, keepUrl: string | null, storage: SubtitleStorage) {
-  if (!previousUrl || previousUrl === keepUrl) return;
-  const key = parsePublicThumbnailUrl(previousUrl, process.env);
-  // Only our own subtitle objects are deleted; an external URL from the old panel is just forgotten.
-  if (key && key.includes("/subtitles/")) await storage.deletePublic(key).catch(() => undefined);
+async function removeOldSubtitleObject(videoId: string, previousValue: string | null | undefined, keepValue: string | null, storage: SubtitleStorage) {
+  if (!previousValue || previousValue === keepValue) return;
+  const ref = parseCaptionRef(previousValue);
+  if (ref) {
+    // A private caption (the file name carries the language, so no other language shares it).
+    try {
+      await storage.deleteCaption(videoId, captionObjectKey(videoId, ref.file));
+    } catch {
+      /* best effort, like every old-file removal; a leftover private file is not reachable by anyone */
+    }
+    return;
+  }
+  // Legacy public file (before captions became private). Only our own subtitle objects are deleted;
+  // an external URL from the old panel is just forgotten.
+  const key = parsePublicThumbnailUrl(previousValue, process.env);
+  if (key && key.includes("/subtitles/") && storage.deletePublic) await storage.deletePublic(key).catch(() => undefined);
 }

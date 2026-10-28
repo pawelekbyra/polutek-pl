@@ -173,7 +173,7 @@ export default async function FilmPage({ params }: Props) {
                     </span>
                     <div className="li-main">
                       <span className="li-title">{lang === "pl" ? "Polski" : "Angielski"}</span>
-                      <span className="li-sub">{url ? "plik WebVTT na publicznym hoście" : "brak pliku"}</span>
+                      <span className="li-sub">{url ? "plik WebVTT, prywatny (tylko z tokenem filmu)" : "brak pliku"}</span>
                     </div>
                     {url ? <State kind="ok">Jest</State> : <span className="muted">brak</span>}
                   </li>

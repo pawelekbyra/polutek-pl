@@ -51,6 +51,8 @@ export type SelfHlsTtlInput = {
 export type SelfHlsSignedUrl = {
   token: string;
   masterUrl: string;
+  /** "<base>/h/<token>/<videoId>/<version>": the folder every file of this token (HLS and captions) lives under. */
+  deliveryPrefix: string;
   expiresAt: Date;
 };
 
@@ -109,9 +111,11 @@ export class SelfHlsTokenService {
     const isPublic = input.isPublic === true;
     const sig = createHmac('sha256', input.secret).update(tokenMessage(input.videoId, input.version, exp, isPublic)).digest('base64url');
     const token = isPublic ? `${exp}.${sig}.pub` : `${exp}.${sig}`;
+    const deliveryPrefix = `${baseUrl}/h/${token}/${input.videoId}/${input.version}`;
     return {
       token,
-      masterUrl: `${baseUrl}/h/${token}/${input.videoId}/${input.version}/master.m3u8`,
+      masterUrl: `${deliveryPrefix}/master.m3u8`,
+      deliveryPrefix,
       expiresAt: new Date(exp * 1000),
     };
   }
