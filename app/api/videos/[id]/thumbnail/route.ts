@@ -11,7 +11,7 @@ import {
   PRIVATE_THUMBNAIL_CACHE_CONTROL,
 } from "@/lib/modules/media";
 import { resolveVideoThumbnailUrl } from "@/lib/modules/media";
-import { isVideoPubliclyVisible } from "@/lib/modules/video/domain/public-visibility";
+import { isVideoPubliclyVisible } from "@/lib/modules/video";
 
 export const dynamic = "force-dynamic";
 

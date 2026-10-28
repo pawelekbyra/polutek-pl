@@ -321,8 +321,8 @@ describe("POST /api/user/premium-pass/intent (stripe mode: the real payment star
     }
   });
 
-  it("refuses any payment before it exists when unlimited access is already held", async () => {
-    setStripe("test");
+  it("refuses live payments before they exist when unlimited access is already held", async () => {
+    setStripe("live", "on");
     store.set("xp.premium_pass:u1", row({ lifetime: true, lifetimePaymentId: "pay_0" }));
     for (const productId of ["ACCESS_30D", "ACCESS_LIFETIME"]) {
       const res = await post(intent, "/api/user/premium-pass/intent", input({ productId }));
@@ -332,14 +332,28 @@ describe("POST /api/user/premium-pass/intent (stripe mode: the real payment star
     expect(createCheckoutIntent).not.toHaveBeenCalled();
   });
 
-  it("refuses 30 more days beyond the horizon before a payment exists, but allows unlimited (it converts)", async () => {
-    setStripe("test");
+  it("refuses live purchases beyond the horizon, but allows unlimited (it converts)", async () => {
+    setStripe("live", "on");
     store.set("xp.premium_pass:u1", row({ expiresAt: new Date(Date.now() + 340 * DAY).toISOString() }));
     const res = await post(intent, "/api/user/premium-pass/intent", input({ productId: "ACCESS_30D" }));
     expect(res.status).toBe(409);
     expect((await res.json()).code).toBe("MAX_AHEAD");
     expect(createCheckoutIntent).not.toHaveBeenCalled();
     expect((await post(intent, "/api/user/premium-pass/intent", input({ productId: "ACCESS_LIFETIME" }))).status).toBe(200);
+  });
+
+  it("allows repeated test payments after lifetime access and beyond the renewal horizon without removing access", async () => {
+    setStripe("test");
+    for (const existing of [{ lifetime: true, lifetimePaymentId: "pay_0" }, { expiresAt: new Date(Date.now() + 400 * DAY).toISOString() }]) {
+      const saved = row(existing);
+      store.set("xp.premium_pass:u1", saved);
+      for (const productId of ["ACCESS_30D", "ACCESS_LIFETIME"]) {
+        const res = await post(intent, "/api/user/premium-pass/intent", input({ productId }));
+        expect(res.status).toBe(200);
+      }
+      expect(store.get("xp.premium_pass:u1")).toBe(saved);
+    }
+    expect(createCheckoutIntent).toHaveBeenCalledTimes(4);
   });
 
   it("maps a finished attempt, a payment in progress and a provider error", async () => {

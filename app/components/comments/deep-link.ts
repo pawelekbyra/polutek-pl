@@ -46,11 +46,27 @@ function forgetStored() {
 
 let pendingId: string | null = typeof window === "undefined" ? null : (readHash() ?? readStored());
 const openedWithTarget = pendingId !== null;
+let revision = 0;
+const listeners = new Set<() => void>();
+export const commentDeepLinkRevision = () => revision;
+export function subscribeCommentDeepLink(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+}
+export function requestCommentDeepLink(commentId: string): void {
+  if (!/^[A-Za-z0-9-]+$/.test(commentId)) return;
+  pendingId = commentId;
+  try { window.sessionStorage.setItem(COMMENT_TARGET_STORAGE_KEY, `${commentId}|${Date.now()}`); } catch { /* Storage is optional. */ }
+  revision++;
+  listeners.forEach((listener) => listener());
+}
+
 
 if (typeof window !== "undefined") {
   // A link followed on the same document (no reload) arrives as a hash change.
   window.addEventListener("hashchange", () => {
-    pendingId = readHash() ?? pendingId;
+    const target = readHash();
+    if (target) requestCommentDeepLink(target);
   });
 }
 

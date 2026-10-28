@@ -6,6 +6,10 @@ import {
   UserNotificationPage,
   notificationLanguage,
   safeNotificationHref,
+  userNotificationType,
+  decodeUserNotificationCursor,
+  encodeUserNotificationCursor,
+  USER_NOTIFICATIONS_MAX_LIMIT,
 } from "../domain/user-notifications";
 import { notificationViewerLanguage, renderNotification } from "../domain/notification-render";
 
@@ -26,14 +30,31 @@ export async function listUserNotifications(
   query: { limit: number; cursor?: string; unreadOnly?: boolean },
 ): Promise<UserNotificationPage> {
   const userId = ownerId(ctx);
+  if (!Number.isInteger(query.limit) || query.limit < 1 || query.limit > USER_NOTIFICATIONS_MAX_LIMIT) {
+    throw new AppError("Invalid notification page size.", 400, "INVALID_REQUEST");
+  }
+  const snapshotTime = ctx.now();
+  const snapshotAt = snapshotTime.toISOString();
+  let boundary = query.cursor ? decodeUserNotificationCursor(query.cursor) : null;
+  if (query.cursor && !boundary) {
+    // Accept old clients' id cursors, but never let another user's id reposition this feed.
+    if (query.cursor.startsWith("v1:")) throw new AppError("Invalid notification cursor.", 400, "INVALID_CURSOR");
+    boundary = await ctx.prisma.notification.findFirst({
+      where: { id: query.cursor, userId }, select: { id: true, createdAt: true },
+    });
+    if (!boundary) throw new AppError("Invalid notification cursor.", 400, "INVALID_CURSOR");
+  }
   const [user, rows, unreadCount] = await Promise.all([
     ctx.prisma.user.findUnique({ where: { id: userId }, select: { language: true } }),
     ctx.prisma.notification.findMany({
-      where: { userId, ...(query.unreadOnly ? { read: false } : {}) },
+      where: {
+        userId,
+        createdAt: { lte: snapshotTime },
+        ...(query.unreadOnly ? { read: false } : {}),
+        ...(boundary ? { OR: [{ createdAt: { lt: boundary.createdAt } }, { createdAt: boundary.createdAt, id: { lt: boundary.id } }] } : {}),
+      },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: query.limit + 1,
-      // A cursor id that is not the caller's only repositions inside the caller's own rows.
-      ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
       select: { id: true, kind: true, titlePl: true, titleEn: true, bodyPl: true, bodyEn: true, templateKey: true, params: true, href: true, read: true, createdAt: true },
     }),
     ctx.prisma.notification.count({ where: { userId, read: false } }),
@@ -49,6 +70,7 @@ export async function listUserNotifications(
     return {
       id: n.id,
       kind: n.kind,
+      type: userNotificationType(n.kind, n.templateKey),
       title: rendered ? rendered.title : pl ? n.titlePl : n.titleEn,
       body: rendered ? rendered.body : pl ? n.bodyPl : n.bodyEn,
       href: safeNotificationHref(n.href),
@@ -56,7 +78,7 @@ export async function listUserNotifications(
       createdAt: n.createdAt.toISOString(),
     };
   });
-  return { items, nextCursor: rows.length > query.limit ? page[page.length - 1].id : null, unreadCount };
+  return { items, nextCursor: rows.length > query.limit ? encodeUserNotificationCursor(page[page.length - 1]) : null, unreadCount, snapshotAt };
 }
 
 /** Marks one (`id`, which must be the caller's) or all unread notifications as read; idempotent. */
@@ -65,7 +87,10 @@ export async function markNotificationsRead(
   input: MarkNotificationsReadInput,
 ): Promise<{ updated: number; unreadCount: number }> {
   const userId = ownerId(ctx);
-  const where = "all" in input ? { userId, read: false } : { id: input.id, userId, read: false };
+  // A delayed mark-all request must not consume notifications that arrived after the displayed snapshot.
+  const now = ctx.now();
+  const before = "all" in input && input.before ? new Date(Math.min(Date.parse(input.before), now.getTime())) : now;
+  const where = "all" in input ? { userId, read: false, createdAt: { lte: before } } : { id: input.id, userId, read: false };
   const { count } = await ctx.prisma.notification.updateMany({ where, data: { read: true } });
   const unreadCount = await ctx.prisma.notification.count({ where: { userId, read: false } });
   return { updated: count, unreadCount };

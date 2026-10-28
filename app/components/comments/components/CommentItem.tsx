@@ -29,6 +29,7 @@ import {
 import { useRenderClock } from "../../RenderClock";
 import { useLongPress } from "../hooks/useLongPress";
 import { consumeCommentDeepLink } from "../deep-link";
+import { useCommentDeepLinkRevision } from "../useCommentDeepLinkRevision";
 import { commentErrorText } from "../comment-errors";
 
 interface CommentItemProps {
@@ -118,6 +119,7 @@ function CommentItemComponent({
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] motion-reduce:transition-none";
   // Creator heart: shown to everyone, set only from the admin panel (decision 8, docs/architecture/admin-phase5.md).
   const isHearted = comment.isHearted === true;
+  const deepLinkRevision = useCommentDeepLinkRevision();
   const [isHighlighted, setIsHighlighted] = useState(false);
   const commentRef = useRef<HTMLDivElement>(null);
   // Server render time during hydration, live time after (RenderClock): no text swap on load.
@@ -126,6 +128,7 @@ function CommentItemComponent({
   useEffect(() => {
     if (typeof window !== "undefined" && consumeCommentDeepLink(comment.id)) {
       setIsHighlighted(true);
+      commentRef.current?.focus({ preventScroll: true });
       const shouldReduceMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
@@ -138,9 +141,10 @@ function CommentItemComponent({
       return () => {
         clearTimeout(settle);
         clearTimeout(timer);
+        setIsHighlighted(false);
       };
     }
-  }, [comment.id]);
+  }, [comment.id, deepLinkRevision]);
 
   const startEditing = () => {
     setEditText(comment.text || "");
@@ -203,6 +207,7 @@ function CommentItemComponent({
     <div
       id={`comment-${comment.id}`}
       ref={commentRef}
+      tabIndex={-1}
       className={cn(
         "relative flex items-start gap-3 rounded-lg transition-colors duration-300 motion-reduce:transition-none",
         isReply ? "group/reply" : "group/comment",

@@ -21,11 +21,17 @@ export async function viewerNotificationsContext(
     windowMs: 60 * 1000,
   });
   if (!limit.success) {
-    return { response: NextResponse.json({ error: "RATE_LIMITED", message: "Too many requests. Please try again shortly." }, { status: 429 }) };
+    return { response: NextResponse.json({ error: "RATE_LIMITED", message: "Too many requests. Please try again shortly." }, { status: 429, headers: { "Cache-Control": "private, no-store", "Retry-After": "60" } }) };
   }
   return { ctx: createAppContext({ actor }) };
 }
 
+/** Authentication failures and server errors are viewer-specific too; never cache them. */
+export function privateNotificationResponse(response: NextResponse): NextResponse {
+  response.headers.set("Cache-Control", "private, no-store");
+  return response;
+}
+
 export function invalidRequest(message: string, details?: unknown) {
-  return NextResponse.json({ error: "INVALID_REQUEST", message, ...(details ? { details } : {}) }, { status: 400 });
+  return privateNotificationResponse(NextResponse.json({ error: "INVALID_REQUEST", message, ...(details ? { details } : {}) }, { status: 400 }));
 }

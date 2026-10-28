@@ -57,10 +57,10 @@ export async function startPatronPayment(ctx: AppContext, input: PatronIntentInp
   const amountMinor = patronPrice(input.productId, input.currency);
   if (!product || amountMinor === null) return { ok: false, code: "PRODUCT_INVALID" };
 
-  // Refused BEFORE any payment exists: unlimited access already held, or 30 more days would pass the horizon.
+  // Live purchases are blocked before creating a payment; test payments can be repeated without resetting access.
   const now = ctx.now();
   const current = await readPass(ctx.prisma, userId);
-  const block = purchaseBlock(current, product, now);
+  const block = payments.stripeMode === "test" ? null : purchaseBlock(current, product, now);
   if (block === "ALREADY_LIFETIME") return { ok: false, code: "ALREADY_LIFETIME" };
   if (block === "MAX_AHEAD") {
     await countFunnelEvent(ctx, "max_ahead");

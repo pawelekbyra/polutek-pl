@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/errors";
-import { invalidRequest, viewerNotificationsContext } from "@/lib/api/viewer-notifications-route";
+import { invalidRequest, privateNotificationResponse, viewerNotificationsContext } from "@/lib/api/viewer-notifications-route";
 import { listUserNotifications, listUserNotificationsQuerySchema } from "@/lib/modules/notifications";
 
 export const dynamic = "force-dynamic";
@@ -24,8 +24,8 @@ export async function GET(req: NextRequest) {
       cursor: parsed.data.cursor,
       unreadOnly: parsed.data.unread,
     });
-    return NextResponse.json(page, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json(page, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
-    return handleApiError(error);
+    return privateNotificationResponse(handleApiError(error));
   }
 }

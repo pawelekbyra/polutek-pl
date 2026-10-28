@@ -1104,5 +1104,9 @@
  "Check the details in the About section.": "Prüfen Sie die Angaben im Bereich „Info“.",
  "Server error. Please try again.": "Serverfehler. Bitte versuchen Sie es erneut.",
  "Pay with a Multibanco reference": "Mit einer Multibanco-Referenz bezahlen",
- "MB WAY app": "MB-WAY-App"
+ "MB WAY app": "MB-WAY-App",
+ "Could not save read notifications. Please try again.": "Der Lesestatus konnte nicht gespeichert werden. Bitte versuche es erneut.",
+ "This comment is no longer available.": "Dieser Kommentar ist nicht mehr verfügbar.",
+ "Could not load the comment.": "Der Kommentar konnte nicht geladen werden.",
+ "When someone replies to your comment or a new video appears, you will see it here.": "Wenn jemand auf deinen Kommentar antwortet oder ein neues Video erscheint, siehst du es hier."
 }

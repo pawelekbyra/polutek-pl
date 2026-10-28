@@ -34,6 +34,7 @@ albo znika w tym samym PR. Historia jest w git.
 | Strefa patrona: audyt przed prawdziwą sprzedażą (P0/P1/P2) | [`architecture/patron-zone-audit.md`](architecture/patron-zone-audit.md) |
 | Miniatury w R2 | [`architecture/thumbnails-r2.md`](architecture/thumbnails-r2.md) |
 | Premiery i pasek zbiórki | [`architecture/premieres-and-fundraising.md`](architecture/premieres-and-fundraising.md) |
+| Powiadomienia widza: panel, nawigacja, spójność odczytu | [`architecture/notifications.md`](architecture/notifications.md) |
 | Komentarze i reakcje | [`architecture/comments-and-reactions.md`](architecture/comments-and-reactions.md) |
 | Powłoka publiczna, ładowanie, odtwarzacz, napisy | [`architecture/public-shell-and-player.md`](architecture/public-shell-and-player.md) |
 | Syndykacja: RSS, oEmbed, odtwarzacz do osadzania, ramkowanie | [`architecture/syndication-embed.md`](architecture/syndication-embed.md) |

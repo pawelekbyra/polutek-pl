@@ -42,13 +42,16 @@ export async function getCommentContext(
       if (accessResult.data.reason === 'NOT_FOUND' || accessResult.data.reason === 'DELETED') {
         return fail({ type: "NOT_FOUND", message: "Film nie istnieje lub został usunięty." });
       }
-      return fail({ type: "FORBIDDEN", message: "Brak dostępu do komentarzy." });
+      // Match the public comment list: login/pass-required videos still expose their visible discussion.
+      if (accessResult.data.reason !== 'LOGIN_REQUIRED' && accessResult.data.reason !== 'PASS_REQUIRED') {
+        return fail({ type: "FORBIDDEN", message: "Brak dostępu do komentarzy." });
+      }
     }
 
     const userId = actor.type === 'user' || actor.type === 'admin' ? actor.userId : null;
     const videoCreatorId = await repo.findVideoCreatorId(comment.videoId);
     const canModerate = await canModerateVideoComments(ctx, comment.videoId);
-    const context: CommentDtoContext = { userId, canModerate, videoCreatorId, hasVideoAccess: true };
+    const context: CommentDtoContext = { userId, canModerate, videoCreatorId, hasVideoAccess: accessResult.data.hasAccess };
 
     const isViewable = (row: { status: typeof comment.status; deletedReason: typeof comment.deletedReason; author: { isDeleted: boolean } | null }) =>
       canSeeCommentContent(row, context) && row.author?.isDeleted !== true;
@@ -56,7 +59,8 @@ export async function getCommentContext(
     if (!isViewable(comment)) return fail(NOT_FOUND);
 
     const full = await repo.findCommentForDto(commentId, userId, canModerate);
-    if (!full) return fail(NOT_FOUND);
+    // Moderation or account deletion can happen between the lightweight lookup and the DTO read.
+    if (!full || !isViewable(full)) return fail(NOT_FOUND);
 
     let parentComment: CommentDto | null = null;
     if (comment.parentId) {

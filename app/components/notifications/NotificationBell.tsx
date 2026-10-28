@@ -1,6 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useRouter } from "next/navigation";
+import { useNotificationFeed } from "./useNotificationFeed";
+import { NotificationIcon } from "./NotificationIcon";
+import { navigateNotification } from "./notification-navigation";
 import { BellIcon } from "../icons/MarkerBellIcons";
 import {
   DropdownMenu,
@@ -12,58 +16,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { localizedPathFromLegacyPath } from "@/lib/i18n/routing";
 import { useLanguage } from "../LanguageContext";
-import { NOTIFICATIONS_CHANGED_EVENT, formatNotificationAge } from "./notification-events";
-
-type BellItem = {
-  id: string;
-  title: string;
-  body: string;
-  href: string | null;
-  read: boolean;
-  createdAt: string;
-};
-
-type BellPage = { items: BellItem[]; nextCursor: string | null; unreadCount: number };
-
-const PAGE_SIZE = 10;
-const POLL_MS = 60_000;
-
-async function fetchPage(cursor?: string, signal?: AbortSignal): Promise<BellPage | null> {
-  const query = new URLSearchParams({ limit: String(PAGE_SIZE) });
-  if (cursor) query.set("cursor", cursor);
-  try {
-    const response = await fetch(`/api/user/notifications?${query}`, { cache: "no-store", signal });
-    return response.ok ? ((await response.json()) as BellPage) : null;
-  } catch {
-    return null;
-  }
-}
-
-async function fetchUnreadCount(signal?: AbortSignal): Promise<number | null> {
-  try {
-    const response = await fetch("/api/user/notifications/unread-count", { cache: "no-store", signal });
-    if (!response.ok) return null;
-    const body = (await response.json()) as { unreadCount?: unknown };
-    return typeof body.unreadCount === "number" ? body.unreadCount : null;
-  } catch {
-    return null;
-  }
-}
-
-function postRead(body: { id: string } | { all: true }) {
-  // keepalive: the request survives the navigation that clicking a notification link starts.
-  return fetch("/api/user/notifications/read", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    keepalive: true,
-  }).catch(() => undefined);
-}
+import { formatNotificationAge } from "./notification-events";
 
 /** In-site paths are stored language-neutral (`/watch/<slug>`); https links are used as they are. */
 function resolveHref(href: string | null, language: Parameters<typeof localizedPathFromLegacyPath>[1]) {
   if (href === null) return { href: null, external: false };
-  if (/^https:/i.test(href)) return { href, external: true };
+  if (/^https:/i.test(href)) {
+    const url = new URL(href);
+    if (url.origin !== window.location.origin) return { href, external: true };
+    href = `${url.pathname}${url.search}${url.hash}`;
+  }
   // The anchor (#comment-...) is carried through untouched; the rest is localized as before.
   const hashAt = href.indexOf("#");
   const hash = hashAt >= 0 ? href.slice(hashAt) : "";
@@ -81,112 +43,32 @@ function resolveHref(href: string | null, language: Parameters<typeof localizedP
 export default function NotificationBell() {
   const { language, tx } = useLanguage();
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<BellItem[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [unread, setUnread] = useState(0);
-  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
+  const { items, unread, countReady, nextCursor, status, loadingMore, writing, writeError, refresh, loadMore, markRead } = useNotificationFeed(open, language);
   const [announcement, setAnnouncement] = useState("");
+  const [now, setNow] = useState(() => Date.now());
   const knownUnread = useRef<number | null>(null);
+  const router = useRouter();
 
-  const applyCount = useCallback(
-    (count: number) => {
-      setUnread(count);
-      const previous = knownUnread.current;
-      knownUnread.current = count;
-      if (previous !== null && count > previous) {
-        setAnnouncement(tx("Nowe powiadomienia: {0}", "New notifications: {0}", count));
-      }
-    },
-    [tx],
-  );
-
-  const apply = useCallback(
-    (page: BellPage, mode: "replace" | "append") => {
-      setItems((current) =>
-        mode === "append" ? [...current, ...page.items.filter((n) => !current.some((c) => c.id === n.id))] : page.items,
-      );
-      setNextCursor(page.nextCursor);
-      applyCount(page.unreadCount);
-    },
-    [applyCount],
-  );
-
-  // The light poll: just the number, never the list.
-  const pollCount = useCallback(
-    async (signal?: AbortSignal) => {
-      const count = await fetchUnreadCount(signal);
-      if (signal?.aborted || count === null) return;
-      applyCount(count);
-    },
-    [applyCount],
-  );
-
-  const refresh = useCallback(
-    async (signal?: AbortSignal) => {
-      const page = await fetchPage(undefined, signal);
-      if (signal?.aborted) return;
-      if (!page) {
-        setStatus("error");
-        return;
-      }
-      setStatus("idle");
-      apply(page, "replace");
-    },
-    [apply],
-  );
-
-  // Count on mount, then every minute while the tab is visible and again when it comes back.
   useEffect(() => {
-    const controller = new AbortController();
-    void pollCount(controller.signal);
-    const tick = () => {
-      if (document.visibilityState === "visible") void pollCount(controller.signal);
-    };
-    const timer = window.setInterval(tick, POLL_MS);
-    document.addEventListener("visibilitychange", tick);
-    return () => {
-      controller.abort();
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", tick);
-    };
-  }, [pollCount]);
+    if (!countReady) return;
+    const previous = knownUnread.current;
+    knownUnread.current = unread;
+    if (previous !== null && unread > previous) setAnnouncement(tx("Nowe powiadomienia: {0}", "New notifications: {0}", unread));
+  }, [unread, countReady, tx]);
 
-  // Something just created a notification for this viewer (a new account's welcome): count it now, not in a minute.
   useEffect(() => {
-    const onChanged = () => void pollCount();
-    window.addEventListener(NOTIFICATIONS_CHANGED_EVENT, onChanged);
-    return () => window.removeEventListener(NOTIFICATIONS_CHANGED_EVENT, onChanged);
-  }, [pollCount]);
+    if (!open) return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(timer);
+  }, [open]);
 
-  const onOpenChange = (next: boolean) => {
-    setOpen(next);
-    if (next) {
-      setStatus("loading");
-      void refresh();
-    }
-  };
-
-  const markRead = (id: string) => {
-    const target = items.find((n) => n.id === id);
-    setItems((current) => current.map((n) => (n.id === id ? { ...n, read: true } : n)));
-    if (target && !target.read) {
-      setUnread((count) => Math.max(0, count - 1));
-      knownUnread.current = Math.max(0, (knownUnread.current ?? 1) - 1);
-    }
-    void postRead({ id });
-  };
-
-  const markAllRead = () => {
-    setItems((current) => current.map((n) => ({ ...n, read: true })));
-    setUnread(0);
-    knownUnread.current = 0;
-    void postRead({ all: true });
-  };
-
-  const loadMore = async () => {
-    if (!nextCursor) return;
-    const page = await fetchPage(nextCursor);
-    if (page) apply(page, "append");
+  const followNotification = (event: MouseEvent, href: string, external: boolean) => {
+    if (external || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    setOpen(false);
+    // Let the menu return focus before the destination takes it.
+    requestAnimationFrame(() => navigateNotification(href, router));
   };
 
   const label =
@@ -195,16 +77,16 @@ export default function NotificationBell() {
       : tx("Powiadomienia", "Notifications");
   const badge = unread > 99 ? "99+" : String(unread);
   const itemClassName =
-    "flex min-h-12 w-full flex-col items-start gap-0.5 rounded-xl px-3 py-2.5 text-left text-[13px] text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]";
+    "flex min-h-14 w-full items-start gap-3 rounded-xl px-3 py-3 text-left text-[13px] text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--chan-focus-ring)] active:bg-[var(--chan-line)] motion-reduce:transition-none";
   const actionClassName =
-    "min-h-10 rounded-xl px-3 py-2 text-[13px] font-semibold text-[var(--chan-muted)] hover:text-[var(--chan-ink)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]";
+    "min-h-11 justify-center rounded-xl px-3 py-2 text-[13px] font-semibold text-[var(--chan-muted)] hover:text-[var(--chan-ink)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]";
 
   return (
     <>
       <span role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {announcement}
       </span>
-      <DropdownMenu open={open} onOpenChange={onOpenChange}>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger
           aria-label={label}
           className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] active:scale-95 motion-reduce:transform-none motion-reduce:transition-none"
@@ -227,52 +109,78 @@ export default function NotificationBell() {
           sideOffset={-3}
           // Above the sticky top bar (z-[1000]): the positioner is the stacking context, so the z-index goes on it.
           positionerClassName="z-[1100]"
-          className="z-[1100] max-h-[70vh] w-[min(22rem,calc(100vw-1rem))] overflow-y-auto rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-2 font-sans text-[var(--chan-ink)] shadow-[0_24px_60px_-18px_rgba(15,23,42,0.28)] ring-0"
+          aria-label={tx("Powiadomienia", "Notifications")}
+          aria-busy={status === "loading" || loadingMore}
+          className="z-[1100] max-h-[min(70dvh,600px)] w-[min(22rem,calc(100vw-1rem))] overflow-y-auto rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-2 font-sans text-[var(--chan-ink)] shadow-[0_24px_60px_-18px_rgba(15,23,42,0.28)] ring-0"
         >
-          <DropdownMenuLabel className="px-3 pb-1 pt-2">
-            <span className="text-[15px] font-bold text-[var(--chan-ink)]">{tx("Powiadomienia", "Notifications")}</span>
-          </DropdownMenuLabel>
+          <div className="flex min-h-11 items-center justify-between gap-3 px-3 pb-0.5">
+            <DropdownMenuLabel className="p-0">
+              <span className="text-[15px] font-bold text-[var(--chan-ink)]">{tx("Powiadomienia", "Notifications")}</span>
+            </DropdownMenuLabel>
+            {unread > 0 && status === "idle" && (
+              <DropdownMenuItem
+                closeOnClick={false}
+                disabled={writing}
+                onClick={() => markRead()}
+                className="min-h-11 max-w-[55%] shrink-0 cursor-pointer rounded-lg px-2 text-right text-[12px] leading-tight font-semibold text-[var(--chan-blue)] hover:bg-[var(--chan-blue-soft)] focus:bg-[var(--chan-blue-soft)] focus:text-[var(--chan-blue)]"
+              >
+                {tx("Oznacz wszystkie jako przeczytane", "Mark all as read")}
+              </DropdownMenuItem>
+            )}
+          </div>
           <DropdownMenuSeparator className="mx-2 my-1 bg-[var(--chan-line)]" />
 
           {status === "loading" && items.length === 0 && (
-            <p className="px-3 py-4 text-[13px] text-[var(--chan-muted)]">{tx("Ładowanie…", "Loading…")}</p>
+            <div role="status" aria-label={tx("Ładowanie…", "Loading…")} className="flex flex-col gap-1">
+              {[0, 1, 2].map((i) => (
+                <div key={i} aria-hidden="true" className="flex items-start gap-3 px-3 py-3">
+                  <span className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-[var(--chan-surface)] motion-reduce:animate-none" />
+                  <span className="flex flex-1 flex-col gap-2 pt-1">
+                    <span className="h-3 w-4/5 animate-pulse rounded bg-[var(--chan-surface)] motion-reduce:animate-none" />
+                    <span className="h-3 w-3/5 animate-pulse rounded bg-[var(--chan-surface)] motion-reduce:animate-none" />
+                  </span>
+                </div>
+              ))}
+            </div>
           )}
           {status === "error" && (
-            <p role="alert" className="px-3 py-4 text-[13px] text-red-600">
-              {tx("Nie udało się wczytać powiadomień.", "Could not load notifications.")}
-            </p>
+            <div className="flex flex-col items-center gap-2 px-4 py-6 text-center">
+              <p role="alert" className="text-[13px] text-[var(--chan-ink)]">{tx("Nie udało się wczytać powiadomień.", "Could not load notifications.")}</p>
+              <DropdownMenuItem closeOnClick={false} onClick={() => void refresh()} className="min-h-11 cursor-pointer justify-center rounded-full bg-[var(--chan-blue-soft)] px-4 text-[13px] font-semibold text-[var(--chan-blue)] focus:bg-[var(--chan-blue-soft)] focus:text-[var(--chan-blue)]">
+                {tx("Spróbuj ponownie", "Try again")}
+              </DropdownMenuItem>
+            </div>
           )}
           {status === "idle" && items.length === 0 && (
-            <p className="px-3 py-4 text-[13px] text-[var(--chan-muted)]">{tx("Brak powiadomień.", "No notifications.")}</p>
+            <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
+              <span aria-hidden="true" className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--chan-surface)] text-[var(--chan-muted)]"><BellIcon size={28} /></span>
+              <p className="text-[14px] font-semibold text-[var(--chan-ink)]">{tx("Brak powiadomień.", "No notifications.")}</p>
+              <p className="max-w-[16rem] text-[12px] text-[var(--chan-muted)]">{tx("Gdy ktoś odpowie na Twój komentarz albo pojawi się nowy film, zobaczysz to tutaj.", "When someone replies to your comment or a new video appears, you will see it here.")}</p>
+            </div>
           )}
 
           {items.map((n) => {
             const link = resolveHref(n.href, language);
             const content = (
               <>
-                <span className="flex w-full items-start gap-2">
-                  {!n.read && (
-                    <span aria-hidden="true" className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[var(--chan-blue)]" />
-                  )}
-                  <span className={n.read ? "font-medium" : "font-bold"}>
+                <NotificationIcon type={n.type} unread={!n.read} />
+                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className={`line-clamp-2 [overflow-wrap:anywhere] text-[14px] leading-snug ${n.read ? "font-medium" : "font-bold"}`}>
                     {n.title}
                     {!n.read && <span className="sr-only"> ({tx("nieprzeczytane", "unread")})</span>}
                   </span>
+                  {n.body && <span className="line-clamp-2 [overflow-wrap:anywhere] text-[12px] leading-snug text-[var(--chan-muted)]">{n.body}</span>}
+                  <time dateTime={n.createdAt} title={new Date(n.createdAt).toLocaleString(language, { dateStyle: "medium", timeStyle: "short" })} className={`text-[11px] ${n.read ? "text-[var(--chan-muted)]" : "font-semibold text-[var(--chan-blue)]"}`}>
+                    {formatNotificationAge(n.createdAt, language, now)}
+                  </time>
                 </span>
-                {n.body && <span className="line-clamp-2 w-full text-[12px] text-[var(--chan-muted)]">{n.body}</span>}
-                <time
-                  dateTime={n.createdAt}
-                  title={new Date(n.createdAt).toLocaleString(language, { dateStyle: "medium", timeStyle: "short" })}
-                  className="text-[11px] text-[var(--chan-muted)]"
-                >
-                  {formatNotificationAge(n.createdAt, language)}
-                </time>
+                {!n.read && <span aria-hidden="true" className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--chan-blue)]" />}
               </>
             );
             return link.href ? (
               <DropdownMenuItem
                 key={n.id}
-                onClick={() => markRead(n.id)}
+                onClick={(event) => { markRead(n.id); followNotification(event, link.href!, link.external); }}
                 render={<a href={link.href} {...(link.external ? { target: "_blank", rel: "noopener noreferrer" } : {})} />}
                 className={`${itemClassName} ${n.read ? "" : "bg-[var(--chan-blue)]/[0.07]"}`}
               >
@@ -285,15 +193,11 @@ export default function NotificationBell() {
             );
           })}
 
-          {(nextCursor || unread > 0) && <DropdownMenuSeparator className="mx-2 my-1 bg-[var(--chan-line)]" />}
+          {writeError && <p role="alert" className="px-3 py-2 text-[13px] text-[var(--chan-ink)]">{tx("Nie udało się zapisać odczytu powiadomień. Spróbuj ponownie.", "Could not save read notifications. Please try again.")}</p>}
+          {nextCursor && <DropdownMenuSeparator className="mx-2 my-1 bg-[var(--chan-line)]" />}
           {nextCursor && (
-            <DropdownMenuItem closeOnClick={false} onClick={() => void loadMore()} className={actionClassName}>
-              {tx("Pokaż starsze", "Show older")}
-            </DropdownMenuItem>
-          )}
-          {unread > 0 && (
-            <DropdownMenuItem closeOnClick={false} onClick={markAllRead} className={actionClassName}>
-              {tx("Oznacz wszystkie jako przeczytane", "Mark all as read")}
+            <DropdownMenuItem closeOnClick={false} disabled={loadingMore || writing} onClick={() => void loadMore()} className={actionClassName}>
+              {loadingMore ? tx("Ładowanie…", "Loading…") : tx("Pokaż starsze", "Show older")}
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>
