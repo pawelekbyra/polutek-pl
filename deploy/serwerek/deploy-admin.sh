@@ -11,6 +11,7 @@
 # commit first (it applies migrations); this script never migrates.
 # Needs admin.env (root, 600): DATABASE_URL, ADMIN_AUTH_SECRET, ADMIN_APP_URL, CF_ACCESS_TEAM_DOMAIN, CF_ACCESS_AUD ...
 # Sign-in: ADMIN_AUTH_MODE=access (default; Cloudflare Access e-mail code, no enrollment) or passkey (legacy, needs admin-enroll).
+# Lock: .deploy.lock (flock), shared with deploy.sh; a second deploy exits 75 at once (DEPLOY_LOCK_HELD=1: lock inherited on fd 9).
 # State: .current-admin-image / .previous-admin-image.
 set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")"
@@ -19,6 +20,10 @@ HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-120}"
 KEEP_IMAGES="${KEEP_IMAGES:-3}"
 log() { printf '[deploy-admin %s] %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 die() { log "ERROR: $*" >&2; exit 1; }
+if [[ "${DEPLOY_LOCK_HELD:-}" != "1" ]]; then
+  exec 9>.deploy.lock
+  flock -n 9 || { log "another deploy is already running (lock $PWD/.deploy.lock); try again when it finishes" >&2; exit 75; }
+fi
 
 tag="${1:-}"; [[ -n "$tag" ]] || die "usage: $0 <tag> [--rollback|--stop]"
 mode="${2:-deploy}"
@@ -57,7 +62,7 @@ start_admin() { ADMIN_IMAGE="$1" compose up -d --no-deps admin; }
 if [[ "$mode" == "--rollback" ]]; then
   prev="$(cat .previous-admin-image 2>/dev/null || true)"; [[ -n "$prev" ]] || die "no previous panel image recorded"
   log "rollback to $prev"
-  start_admin "$prev"; wait_healthy "$prev" || die "previous panel image is not healthy either"
+  { start_admin "$prev" && wait_healthy "$prev"; } || die "previous panel image is not healthy either"
   printf '%s' "$prev" > .current-admin-image
   exit 0
 fi
@@ -72,8 +77,8 @@ else
 fi
 
 log "starting panel on $new_image"
-start_admin "$new_image"
-if wait_healthy "$new_image"; then
+# A failing "compose up" itself must reach the rollback below, so it is part of the condition.
+if start_admin "$new_image" && wait_healthy "$new_image"; then
   if [[ "$prev_image" != "$new_image" ]]; then
     [[ -n "$prev_image" ]] && printf '%s' "$prev_image" > .previous-admin-image
     printf '%s' "$new_image" > .current-admin-image
@@ -87,12 +92,12 @@ if wait_healthy "$new_image"; then
   exit 0
 fi
 
-log "panel did not become healthy in ${HEALTH_TIMEOUT}s; last logs:"
+log "panel failed to start or did not become healthy in ${HEALTH_TIMEOUT}s; last logs:"
 compose logs --tail 40 admin >&2 || true
 if [[ -n "$prev_image" ]] && docker image inspect "$prev_image" >/dev/null 2>&1; then
   log "rolling back to $prev_image"
-  start_admin "$prev_image"
-  wait_healthy "$prev_image" && die "panel deploy of $tag FAILED, rolled back to $prev_image" || die "panel deploy FAILED and rollback is NOT healthy"
+  if start_admin "$prev_image" && wait_healthy "$prev_image"; then die "panel deploy of $tag FAILED, rolled back to $prev_image"; fi
+  die "panel deploy FAILED and rollback is NOT healthy"
 fi
 compose stop admin || true
 die "panel deploy of $tag FAILED and there is no previous image; panel stopped (the site is not affected)"
