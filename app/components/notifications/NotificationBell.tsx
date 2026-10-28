@@ -222,7 +222,9 @@ export default function NotificationBell() {
 
         <DropdownMenuContent
           align="end"
-          sideOffset={8}
+          // Negative offset: the panel laps over the bottom edge of the top bar by a few px (it starts inside the bar's lower padding)
+          // instead of hanging clear below it (owner 2026-10-28).
+          sideOffset={-3}
           className="z-[1100] max-h-[70vh] w-[min(22rem,calc(100vw-1rem))] overflow-y-auto rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-2 font-sans text-[var(--chan-ink)] shadow-[0_24px_60px_-18px_rgba(15,23,42,0.28)] ring-0"
         >
           <DropdownMenuLabel className="px-3 pb-1 pt-2">
