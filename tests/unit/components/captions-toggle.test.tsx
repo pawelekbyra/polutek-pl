@@ -34,12 +34,14 @@ describe("CaptionsToggleButton", () => {
   });
   afterEach(() => cleanup());
 
-  it("without captions in the page language: crossed CC, dimmed and inert (no toggle)", () => {
+  it("without captions in the page language: crossed CC at full white and inert (no toggle)", () => {
     media.state = { hasCaptions: false, textTrack: null };
     const view = render(<CaptionsToggleButton />);
     const button = view.getByRole("button", { name: "Napisy" });
     expect(button.getAttribute("aria-disabled")).toBe("true");
     expect(button.querySelector("svg")?.getAttribute("data-crossed")).toBe("true");
+    expect(button.getAttribute("tabindex")).toBe("-1");
+    expect(button.className).toContain("mc-caption--none");
     fireEvent.click(button);
     expect(media.toggleCaptions).not.toHaveBeenCalled();
   });

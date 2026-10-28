@@ -2,6 +2,7 @@
 
 import { Captions as CaptionsLayer, Gesture, PlayButton, useMediaState } from "@vidstack/react";
 import { cn } from "@/lib/utils";
+import { SpinnerArcIcon } from "../icons/MarkerUiIcons";
 import { CaptionsSync, CaptionsToggleButton } from "./CaptionsToggle";
 import { PlayerSettingsMenu } from "./PlayerSettingsMenu";
 import { ChaptersMenu } from "./chapters/ChaptersMenu";
@@ -35,7 +36,7 @@ function CenterStage() {
     >
       {waiting ? (
         <div className="mc-spinner" role="status" aria-label={copy.buffering}>
-          <span className="mc-spinner-ring" aria-hidden="true" />
+          <SpinnerArcIcon className="mc-spinner-arc" />
         </div>
       ) : paused ? (
         <PlayButton className="mc-hero" aria-label={label} title={label}>
