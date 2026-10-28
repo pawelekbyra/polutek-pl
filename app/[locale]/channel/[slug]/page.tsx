@@ -14,7 +14,8 @@ import { formatCount, getBaseUrl } from '@/lib/utils';
 import SubscribeButton from '@/app/components/SubscribeButton';
 import ReportButton from '@/app/components/ReportButton';
 import { prisma } from '@/lib/prisma';
-import { getLocaleAlternates, getLocalizedHref, isLocale, type Locale } from '@/lib/i18n/routing';
+import { getLocaleAlternates, getLocalizedHref } from '@/lib/i18n/routing';
+import { resolvePageLocale } from '@/lib/i18n/page-locale';
 import { SITE_TITLE } from '@/lib/constants';
 import { getServerTx } from '@/lib/i18n/server-tx';
 import { countedNoun } from '@/lib/i18n/plurals';
@@ -28,8 +29,8 @@ export const revalidate = 60;
 
 export async function generateMetadata(props: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
   const params = await props.params;
-  if (!isLocale(params.locale)) notFound();
-  const locale: Locale = params.locale;
+  const locale = await resolvePageLocale(params.locale);
+  if (!locale) notFound();
   const tx = await getServerTx(locale);
   // The channel header only (no video catalog), shared with the page below: one read per request.
   const creator = await getChannelHeaderCached(params.slug);
@@ -68,8 +69,8 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
 
 export default async function ChannelPage(props: { params: Promise<{ locale: string; slug: string }> }) {
   const params = await props.params;
-  if (!isLocale(params.locale)) notFound();
-  const locale: Locale = params.locale;
+  const locale = await resolvePageLocale(params.locale);
+  if (!locale) notFound();
   const tx = await getServerTx(locale);
   let authState: { userId: string | null } = { userId: null };
   try {

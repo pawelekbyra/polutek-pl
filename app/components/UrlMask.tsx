@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { withRealUrl } from "@/lib/i18n/real-location";
 
 /**
  * Public URL masking.
@@ -20,6 +21,10 @@ import { usePathname, useSearchParams } from "next/navigation";
  * shared deep link still opens the correct content on first load — only the
  * bar is rewritten afterwards, which the owner accepted (video links stop being
  * copyable from the address bar).
+ *
+ * The real page is not lost: before the address is collapsed, its path and query are written into the
+ * history entry's state (lib/i18n/real-location.ts), so the language switcher can open the same
+ * channel / search / playlist / video in another language instead of the home page.
  */
 const KEEP_URL_PATTERNS: RegExp[] = [
   // Legal pages keep their own address.
@@ -73,7 +78,7 @@ function UrlMaskEffect() {
     try {
       // Preserve Next's history state object so the App Router client router
       // stays consistent; only the visible URL changes.
-      window.history.replaceState(window.history.state, "", "/");
+      window.history.replaceState(withRealUrl(window.history.state, { pathname: currentPath, search }), "", "/");
     } catch {
       // Masking is cosmetic — never let it break navigation.
     }
