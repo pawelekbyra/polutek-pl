@@ -36,6 +36,7 @@ function makeCtx(overrides: Partial<Record<string, any>> = {}) {
   const calls: string[] = [];
   const video = {
     update: vi.fn(async (args: any) => { calls.push(`db.update:${args.data.thumbnailPublicUrl}`); return {}; }),
+    updateMany: vi.fn(async (args: any) => { calls.push(`db.promote:${args.data.thumbnailPublicUrl}`); return { count: 1 }; }),
     count: vi.fn(async () => 0),
     findMany: vi.fn(async () => []),
     ...overrides,
@@ -63,7 +64,10 @@ describe('syncPublicThumbnail', () => {
 
     expect(action).toBe('promoted');
     expect(r2.copyToPublic).toHaveBeenCalledWith('videos/v1/covers/a.webp');
-    expect(video.update).toHaveBeenCalledWith({ where: { id: 'v1' }, data: { thumbnailPublicUrl: publicUrl('videos/v1/covers/a.webp') } });
+    expect(video.updateMany).toHaveBeenCalledWith({
+      where: { id: 'v1', status: 'PUBLISHED', thumbnailUrl: privateUrl('videos/v1/covers/a.webp') },
+      data: { thumbnailPublicUrl: publicUrl('videos/v1/covers/a.webp') },
+    });
   });
 
   it('does nothing when the public copy already matches', async () => {
@@ -99,7 +103,7 @@ describe('syncPublicThumbnail', () => {
     }, ctx);
 
     expect(action).toBe('promoted');
-    expect(calls).toEqual([`db.update:${publicUrl('videos/v1/covers/new.webp')}`, 'r2.delete:videos/v1/covers/old.webp']);
+    expect(calls).toEqual([`db.promote:${publicUrl('videos/v1/covers/new.webp')}`, 'r2.delete:videos/v1/covers/old.webp']);
   });
 
   it('keeps a public object another video still references', async () => {
@@ -114,7 +118,17 @@ describe('syncPublicThumbnail', () => {
     const { ctx, video } = makeCtx();
     const action = await syncPublicThumbnail({ id: 'v1', status: 'PUBLISHED', thumbnailUrl: privateUrl('videos/v1/covers/a.webp'), thumbnailPublicUrl: null }, ctx);
     expect(action).toBe('skipped');
+    expect(video.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('A17: a video unpublished while the copy ran does not get a public URL, and the fresh copy is removed', async () => {
+    const { ctx, video, calls } = makeCtx({ updateMany: vi.fn(async () => ({ count: 0 })) });
+    const key = 'videos/v1/covers/a.webp';
+    const action = await syncPublicThumbnail({ id: 'v1', status: 'PUBLISHED', thumbnailUrl: privateUrl(key), thumbnailPublicUrl: null }, ctx);
+
+    expect(action).toBe('skipped');
     expect(video.update).not.toHaveBeenCalled();
+    expect(calls).toEqual([`r2.delete:${key}`]);
   });
 
   it('swallows storage errors so the calling use case still succeeds', async () => {

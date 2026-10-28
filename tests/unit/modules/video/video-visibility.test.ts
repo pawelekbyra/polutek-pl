@@ -89,9 +89,11 @@ describe('VideoPolicy for UNLISTED', () => {
 });
 
 describe('ready visibility setting', () => {
-  it('defaults to PUBLISHED and only UNLISTED is special', () => {
-    expect(parseReadyVisibility(undefined)).toBe('PUBLISHED');
-    expect(parseReadyVisibility('garbage')).toBe('PUBLISHED');
+  it('never defaults to PUBLISHED: only the two known values parse, anything else is unknown', () => {
+    expect(parseReadyVisibility(undefined)).toBeNull();
+    expect(parseReadyVisibility(null)).toBeNull();
+    expect(parseReadyVisibility('garbage')).toBeNull();
+    expect(parseReadyVisibility('PUBLISHED')).toBe('PUBLISHED');
     expect(parseReadyVisibility('UNLISTED')).toBe('UNLISTED');
     expect(readyVisibilityKey('v1')).toBe('video_ready_visibility:v1');
   });

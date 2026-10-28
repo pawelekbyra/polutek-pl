@@ -17,6 +17,21 @@ const required = process.env.ENCODE_SMOKE === '1';
 
 if (required && !hasFfmpeg) throw new Error('ENCODE_SMOKE=1 but ffmpeg/ffprobe are not on PATH');
 
+// HDR tone mapping needs zimg's zscale and ffmpeg's tonemap filter; distro/minimal ffmpeg builds may lack them.
+const hasToneMapFilters =
+  hasFfmpeg &&
+  (() => {
+    const filters = spawnSync('ffmpeg', ['-hide_banner', '-filters'], { encoding: 'utf8' }).stdout ?? '';
+    return /\bzscale\b/.test(filters) && /\btonemap\b/.test(filters);
+  })();
+
+if (required && hasFfmpeg && !hasToneMapFilters) {
+  throw new Error('ENCODE_SMOKE=1 but this ffmpeg has no zscale/tonemap filters (needed for HDR tone mapping)');
+}
+if (hasFfmpeg && !hasToneMapFilters) {
+  console.warn('[encode-hls.ffmpeg] skipping the HLG tone-mapping test: this ffmpeg build has no zscale/tonemap filters');
+}
+
 const work = hasFfmpeg ? mkdtempSync(path.join(tmpdir(), 'encode-hls-')) : '';
 afterAll(() => {
   if (work) rmSync(work, { recursive: true, force: true });
@@ -69,12 +84,18 @@ describe.skipIf(!hasFfmpeg)('encode-hls with real ffmpeg', () => {
     expect(master).not.toContain('mp4a');
   }, 180_000);
 
-  it('tone-maps an HLG (HDR) source to BT.709 SDR instead of rejecting it', async () => {
+  it.skipIf(!hasToneMapFilters)('tone-maps an HLG (HDR) source to BT.709 SDR instead of rejecting it', async (ctx) => {
     const src = makeClip('hlg.mp4', [
       '-f', 'lavfi', '-i', 'testsrc2=size=1280x720:rate=25:duration=3',
       '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p',
       '-color_primaries', 'bt2020', '-color_trc', 'arib-std-b67', '-colorspace', 'bt2020nc',
     ]);
+    // Some libx264 builds (e.g. the distro ffmpeg 8 on Ubuntu) silently drop the HLG colour tags, so the fixture itself is not
+    // HDR there. That says nothing about the encoder under test: skip instead of failing.
+    if (!(await probeSource(src)).hdr) {
+      console.warn('[encode-hls.ffmpeg] skipping the HLG tone-mapping test: this libx264 build does not write the HLG colour tags');
+      ctx.skip();
+    }
     expect((await probeSource(src)).hdr).toBe(true);
     const out = path.join(work, 'hlg');
     const { issues } = await encodeHls({ input: src, out, opts: FAST });
