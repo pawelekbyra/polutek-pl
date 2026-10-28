@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { isTrackCaptionKind, useChapterOptions, useChapterTitle, useMediaRemote, useMediaState } from "@vidstack/react";
-import { ChevronRight, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChaptersMenu } from "./chapters/chapters-menu-context";
-import { LINE_ICON } from "./controls/ControlButtons";
+import { CheckIcon, ChevronRightIcon, SettingsIcon } from "./controls/PlayerIconSet";
 import { usePlayerCopy } from "./polutek-controls-copy";
 import { qualityBadge } from "./quality-label";
 import { CAPTIONS_IN_MENU_QUERY } from "./controls/ControlButtons";
@@ -214,7 +213,7 @@ export function PlayerSettingsMenu() {
         aria-controls={open ? menuId : undefined}
         onClick={() => setOpen((value) => !value)}
       >
-        {badge ? <span className="mc-quality-badge" aria-hidden="true">{badge}</span> : <Settings {...LINE_ICON} />}
+        {badge ? <span className="mc-quality-badge" aria-hidden="true">{badge}</span> : <SettingsIcon className="mc-icon" />}
       </button>
 
       {open && (
@@ -237,6 +236,7 @@ export function PlayerSettingsMenu() {
                 onClick={() => chooseQuality(-1)}
               >
                 {autoLabel}
+                {autoQuality !== false && <CheckIcon className="mc-menu-check" />}
               </button>
               {sortedQualities.map(({ item, index }) => {
                 const checked = autoQuality === false && quality?.height === item.height;
@@ -250,6 +250,7 @@ export function PlayerSettingsMenu() {
                     onClick={() => chooseQuality(index)}
                   >
                     {item.height}p
+                    {checked && <CheckIcon className="mc-menu-check" />}
                   </button>
                 );
               })}
@@ -268,6 +269,7 @@ export function PlayerSettingsMenu() {
                 onClick={() => chooseRate(value)}
               >
                 {rateLabel(value, copy.speedNormal)}
+                {rate === value && <CheckIcon className="mc-menu-check" />}
               </button>
             ))}
           </div>
@@ -285,6 +287,7 @@ export function PlayerSettingsMenu() {
               onClick={toggleCaptions}
             >
               {copy.captions}
+              {captionsOn && <CheckIcon className="mc-menu-check" />}
             </button>
           )}
           {chapterOptions.length > 0 && (
@@ -298,7 +301,7 @@ export function PlayerSettingsMenu() {
               <span>{copy.chapters}</span>
               <span className="mc-menu-item-hint">
                 {chapterTitle ? <span className="mc-menu-item-hint-text">{chapterTitle}</span> : null}
-                <ChevronRight size={16} strokeWidth={1.5} absoluteStrokeWidth aria-hidden="true" />
+                <ChevronRightIcon className="mc-menu-hint-icon" />
               </span>
             </button>
           )}

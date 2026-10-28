@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/app/components/Navbar";
@@ -14,7 +15,8 @@ import {
   type PublicSearchParams,
   type SearchFacets,
 } from "@/lib/modules/video";
-import { getLocalizedHref, isLocale, toContentLocale, type Locale } from "@/lib/i18n/routing";
+import { getLocalizedHref, toContentLocale, type Locale } from "@/lib/i18n/routing";
+import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { getServerTx } from "@/lib/i18n/server-tx";
 import { countedNoun } from "@/lib/i18n/plurals";
 import { intlLocale, type Tx } from "@/lib/i18n/ui";
@@ -41,10 +43,16 @@ type SearchPageProps = {
 const softChip =
   "inline-flex items-center gap-1.5 rounded-full border border-[var(--chan-line)] bg-[var(--chan-card)] px-3 py-1.5 text-xs font-semibold text-[var(--chan-ink)] transition hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]";
 
+// Result pages are thin and unbounded (many query/filter/cursor variants): never indexed, in any language and
+// whatever the site stage is. (robots.txt keeps them out of the crawl as well; they are not in the sitemap.)
+export function generateMetadata(): Metadata {
+  return { robots: { index: false, follow: false } };
+}
+
 export default async function SearchPage(props: SearchPageProps) {
   const [{ locale: rawLocale }, rawParams] = await Promise.all([props.params, props.searchParams]);
-  if (!isLocale(rawLocale)) notFound();
-  const locale: Locale = rawLocale;
+  const locale = await resolvePageLocale(rawLocale);
+  if (!locale) notFound();
   const tx = await getServerTx(locale);
   const params = parsePublicSearchParams(rawParams);
   const criteria = hasSearchCriteria(params);

@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useId, useRef, type KeyboardEvent } from "react";
 import { useChapterOptions, useMediaPlayer, useMediaState } from "@vidstack/react";
-import { ListVideo } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { LINE_ICON } from "../controls/ControlButtons";
+import { ChaptersIcon, CheckIcon } from "../controls/PlayerIconSet";
 import { formatClock } from "@/lib/video-start-time";
 import { usePlayerCopy } from "../polutek-controls-copy";
 import { useChaptersMenu } from "./chapters-menu-context";
@@ -128,7 +127,7 @@ export function ChaptersMenu() {
         aria-controls={open ? menuId : undefined}
         onClick={() => setOpen((value) => !value)}
       >
-        <ListVideo {...LINE_ICON} />
+        <ChaptersIcon className="mc-icon" />
       </button>
 
       {open && (
@@ -154,6 +153,7 @@ export function ChaptersMenu() {
               >
                 <span className="mc-chapter-item-time">{formatClock(option.cue.startTime)}</span>
                 <span className="mc-chapter-item-title">{option.label}</span>
+                {option.selected && <CheckIcon className="mc-menu-check" />}
               </button>
             ))}
           </div>

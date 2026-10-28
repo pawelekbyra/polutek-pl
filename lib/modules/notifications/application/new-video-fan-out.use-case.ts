@@ -64,7 +64,7 @@ type Announceable = {
 type Skipped = Extract<NewVideoFanOutResult, { status: "skipped" }>;
 
 /** Is the video announceable right now? Shared by the enqueue step and the job run (state may change in between). */
-async function evaluateNewVideo(db: PrismaClient, videoId: string, now: Date): Promise<{ skipped: Skipped } | { video: Announceable }> {
+async function evaluateNewVideo(db: Pick<Prisma.TransactionClient, "video">, videoId: string, now: Date): Promise<{ skipped: Skipped } | { video: Announceable }> {
   const video = await db.video.findUnique({
     where: { id: videoId },
     select: {
@@ -160,10 +160,14 @@ export function createNewVideoFanOutHandler(deps: { db?: PrismaClient; now?: () 
       if (page.length === 0) break;
       const ids = page.map((s) => s.userId);
       const last = ids[ids.length - 1];
-      await db.$transaction(async (tx) => {
+      const stillAnnounceable = await db.$transaction(async (tx) => {
         // Old-version code (during a deploy) and a second job of the same video wait for each other, so the
         // "already notified" read below cannot be stale: there is no unique index on (user, video).
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${newVideoLockKey(video.id)}))`;
+        // The video may have been made unlisted, removed or its channel frozen since the run began (audit W21):
+        // look again before every page, in the page's own transaction, and stop without writing when it is no
+        // longer announceable. Pages already written stay (they were allowed when written).
+        if ("skipped" in (await evaluateNewVideo(tx, video.id, clock()))) return false;
         const already = await tx.notification.findMany({
           where: { kind: "NEW_VIDEO", videoId: video.id, userId: { in: ids } },
           select: { userId: true },
@@ -188,7 +192,12 @@ export function createNewVideoFanOutHandler(deps: { db?: PrismaClient; now?: () 
         }
         // Same transaction as the page: either the rows and the cursor are both saved, or neither (a lost lease throws and rolls the rows back).
         await ctx.checkpoint(last, tx);
+        return true;
       });
+      if (!stillAnnounceable) {
+        logger.info("[notifications] new-video fan-out stopped mid-way: video no longer announceable", { videoId });
+        return "done";
+      }
       cursor = last;
       if (page.length < FAN_OUT_PAGE_SIZE) break;
       if (ctx.shouldYield()) return "continue";

@@ -24,7 +24,7 @@ import {
 import { VideoContentService } from "@/lib/modules/video/infrastructure/video-content.service";
 import type { PublicVideoDTO } from "@/app/types/video";
 import { getServerTx } from "@/lib/i18n/server-tx";
-import { isLocale, type Locale } from "@/lib/i18n/routing";
+import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
 import { APP_NAME } from "@/lib/constants";
 import { DemoRibbon } from "./DemoRibbon";
@@ -37,14 +37,14 @@ export type PassOfferPageProps = { params: Promise<{ locale: string }> };
 
 export async function passOfferMetadata(props: PassOfferPageProps): Promise<Metadata> {
   const { locale: raw } = await props.params;
-  const tx = await getServerTx(isLocale(raw) ? raw : "pl");
+  const tx = await getServerTx((await resolvePageLocale(raw)) ?? "pl");
   return { title: `${tx("Zostań patronem", "Become a patron")} · ${APP_NAME}`, robots: { index: false, follow: false } };
 }
 
 export default async function PassOfferPage({ params }: PassOfferPageProps) {
   const { locale: raw } = await params;
-  if (!isLocale(raw)) notFound();
-  const locale: Locale = raw;
+  const locale = await resolvePageLocale(raw);
+  if (!locale) notFound();
   const actor = await getActorFromAuth();
   const config = premiumPassFor(actor);
   if (!config) notFound();

@@ -37,11 +37,27 @@ function toResource(row: ChannelRow): ChannelResource {
   return { id: row.id, ownerUserId: row.userId, status: row.status, members: row.members };
 }
 
+/**
+ * A ready-made `ChannelResource` often carries only owner and status. Without `members` the policy would fall back to
+ * "owner or nothing" and wrongly deny a manager, editor or moderator of that channel (audit S18). When the caller
+ * did not say anything about members, load the asking user's own membership row. The owner needs no lookup (the
+ * fallback already makes them OWNER), and a caller that passes `members` (even empty) is trusted as is.
+ */
+async function withOwnMembership(ctx: AppContext, channel: ChannelResource, userId: string): Promise<ChannelResource> {
+  if (channel.members !== undefined) return channel;
+  if (channel.ownerUserId && channel.ownerUserId === userId) return channel;
+  const members = await ctx.prisma.channelMember.findMany({
+    where: { channelId: channel.id, userId },
+    select: { userId: true, role: true },
+  });
+  return { ...channel, members };
+}
+
 /** Loads the channel facts for a target. Only called for ordinary users; staff and system never reach it. */
 async function loadChannel(ctx: AppContext, target: AuthzTarget, userId: string): Promise<ChannelResource | null> {
   if (!target) return null;
-  if ("channel" in target) return target.channel;
   const db = ctx.prisma;
+  if ("channel" in target) return withOwnMembership(ctx, target.channel, userId);
   const select = channelFacts(userId);
   if ("channelId" in target) {
     const row = await db.creator.findUnique({ where: { id: target.channelId }, select });

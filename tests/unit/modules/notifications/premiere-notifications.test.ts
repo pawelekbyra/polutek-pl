@@ -49,6 +49,7 @@ function makeDb(videos: V[], subscribers: string[] = ["u1", "u2"]) {
   const store = createMemoryJobStore();
   const matches = (v: V, where: any): boolean => {
     if (where.status && v.status !== where.status) return false;
+    if (where.id?.notIn?.includes(v.id)) return false;
     if (where.premiereAt && (v.premiereAt === null || v.premiereAt > where.premiereAt.lte)) return false;
     if (where.premiereNotifiedAt === null && v.premiereNotifiedAt !== null) return false;
     if (where.moderationStatus && !where.moderationStatus.in.includes(v.moderationStatus)) return false;
@@ -70,6 +71,9 @@ function makeDb(videos: V[], subscribers: string[] = ["u1", "u2"]) {
     subscription: { findMany: vi.fn(async (_args?: unknown) => subscribers.map((userId) => ({ userId }))) },
     // DurableJobRepository.enqueue = createMany(skipDuplicates) + conditional updateMany; both land in the in-memory store.
     durableJob: {
+      findMany: vi.fn(async ({ where, take }: { where: { kind: string; status: string }; take: number }) =>
+        store.jobs.filter((j) => j.kind === where.kind && j.status === where.status).slice(0, take).map((j) => ({ dedupeKey: j.dedupeKey })),
+      ),
       createMany: vi.fn(async ({ data }: { data: Array<{ kind: string; dedupeKey: string; payload: unknown }> }) => {
         for (const d of data) await store.enqueue({ kind: d.kind as "NEW_VIDEO_FANOUT", dedupeKey: d.dedupeKey, payload: d.payload });
         return { count: data.length };
@@ -85,6 +89,7 @@ function makeDb(videos: V[], subscribers: string[] = ["u1", "u2"]) {
       const staged: Array<Record<string, unknown>> = [];
       const tx = {
         $executeRaw: vi.fn().mockResolvedValue(1),
+        video: { findUnique: async ({ where }: { where: { id: string } }) => videos.find((v) => v.id === where.id) ?? null },
         notification: {
           findMany: vi.fn(async ({ where }: { where: { videoId: string; userId: { in: string[] } } }) =>
             created.filter((n) => n.videoId === where.videoId && where.userId.in.includes(n.userId as string)).map((n) => ({ userId: n.userId })),
@@ -104,6 +109,23 @@ function makeDb(videos: V[], subscribers: string[] = ["u1", "u2"]) {
     runDurableJobs({ store, handlers: { NEW_VIDEO_FANOUT: createNewVideoFanOutHandler({ db: db as never, now }) }, now: () => store.clock.now });
   return { db: db as never, raw: db, created, store, runJobs };
 }
+
+describe("notifyDuePremieres and DEAD jobs (W22)", () => {
+  it("does not let dead premieres fill the batch forever: newer premieres still reach the queue", async () => {
+    const early = (id: string, minute: number) => video({ id, slug: id, premiereAt: new Date(`2026-10-19T11:0${minute}:00Z`) });
+    const videos = [early("old1", 1), early("old2", 2), early("fresh", 5)];
+    const { db, store } = makeDb(videos);
+    // The two oldest premieres ran into a broken transport and ended DEAD.
+    await store.enqueue({ kind: "NEW_VIDEO_FANOUT", dedupeKey: "old1", payload: { variant: "premiere" } });
+    await store.enqueue({ kind: "NEW_VIDEO_FANOUT", dedupeKey: "old2", payload: { variant: "premiere" } });
+    store.jobs.forEach((j) => (j.status = "DEAD"));
+
+    const result = await notifyDuePremieres({ db, now: () => NOW, batchSize: 2 });
+    expect(result).toEqual({ candidates: 1, enqueued: 1, failed: 0 });
+    expect(store.jobs.find((j) => j.dedupeKey === "fresh")).toMatchObject({ status: "PENDING" });
+    expect(store.jobs.filter((j) => j.status === "DEAD").map((j) => j.dedupeKey).sort()).toEqual(["old1", "old2"]);
+  });
+});
 
 describe("notifyDuePremieres", () => {
   it("puts a premiere that started in the durable queue; the job then sends the premiere texts and marks the video", async () => {

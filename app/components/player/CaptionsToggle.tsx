@@ -1,47 +1,18 @@
 "use client";
 
-import { useEffect, useId } from "react";
+import { useEffect } from "react";
 import { isTrackCaptionKind, useMediaPlayer, useMediaRemote, useMediaState } from "@vidstack/react";
 import { useCaptionsEnabled } from "./captions";
+import { CaptionsOffIcon, CaptionsOnIcon } from "./controls/PlayerIconSet";
 import { usePlayerCopy } from "./polutek-controls-copy";
 
 /**
- * The CC glyph, drawn like the rest of the bar's line icons (20px box, 1.5px stroke): a rounded frame with two
- * "C" arcs. `crossed` adds a diagonal slash with a cut-out gap around it (captions off).
+ * The CC glyph of the "Marker" set: `CaptionsOnIcon` (rounded frame with two "C" arcs), and for captions off
+ * `CaptionsOffIcon` (the same with a diagonal slash). `data-crossed` tells the two apart for CSS and tests.
  */
 export function CaptionsIcon({ crossed }: { crossed: boolean }) {
-  const maskId = `mc-cc-mask-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      width={20}
-      height={20}
-      className="mc-icon"
-      aria-hidden="true"
-      focusable="false"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      data-crossed={crossed ? "true" : "false"}
-    >
-      {crossed && (
-        <defs>
-          <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20">
-            <rect width="20" height="20" fill="white" stroke="none" />
-            <line x1="2" y1="2" x2="18" y2="18" stroke="black" strokeWidth="4.5" />
-          </mask>
-        </defs>
-      )}
-      <g mask={crossed ? `url(#${maskId})` : undefined}>
-        <rect x="2.25" y="4.25" width="15.5" height="11.5" rx="3" />
-        <path d="M9.1 8.4a2 2 0 1 0 0 3.2" />
-        <path d="M14.1 8.4a2 2 0 1 0 0 3.2" />
-      </g>
-      {crossed && <line x1="3" y1="3" x2="17" y2="17" />}
-    </svg>
-  );
+  const Icon = crossed ? CaptionsOffIcon : CaptionsOnIcon;
+  return <Icon className="mc-icon" data-crossed={crossed ? "true" : "false"} />;
 }
 
 /**

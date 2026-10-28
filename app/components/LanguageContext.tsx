@@ -5,7 +5,7 @@ import { isLocale, type Locale } from '@/lib/i18n/routing';
 import { loadCatalog } from '@/lib/i18n/catalog';
 import { translations, type Dictionary } from '@/lib/i18n/dictionary';
 import { createTx, htmlLang, type Catalog } from '@/lib/i18n/ui';
-import { LanguageContext, useOptionalTx } from '@/lib/i18n/language-context';
+import { LanguageContext, useOptionalTx, type LanguageChoice } from '@/lib/i18n/language-context';
 
 export { translations };
 
@@ -44,6 +44,7 @@ export const LanguageProvider: React.FC<{
   // so we start from that value: correct first paint, no hydration mismatch.
   const [language, setLanguageState] = useState<Language>(forcedLanguage ?? initialLanguage ?? "pl");
   const [isInitialized, setIsInitialized] = useState(false);
+  const [choice, setChoice] = useState<LanguageChoice | null>(null);
   const [catalogs, setCatalogs] = useState<Partial<Record<Language, Catalog>>>(() =>
     initialCatalog && initialCatalogLanguage ? { [initialCatalogLanguage]: initialCatalog } : {},
   );
@@ -133,6 +134,7 @@ export const LanguageProvider: React.FC<{
   const setLanguage = useCallback((lang: Language) => {
     persistLanguage(lang);
     applyLanguage(lang);
+    setChoice((previous) => ({ language: lang, seq: (previous?.seq ?? 0) + 1 }));
   }, [applyLanguage]);
 
   const t = useMemo(() => translations[language], [language]);
@@ -142,10 +144,11 @@ export const LanguageProvider: React.FC<{
   const contextValue = useMemo(() => ({
     language,
     setLanguage,
+    choice,
     isInitialized,
     t,
     tx,
-  }), [language, setLanguage, isInitialized, t, tx]);
+  }), [language, setLanguage, choice, isInitialized, t, tx]);
 
   return (
     <LanguageContext.Provider value={contextValue}>
