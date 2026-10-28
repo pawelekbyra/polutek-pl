@@ -9,6 +9,7 @@ import {
   CaptionsOffIcon,
   CaptionsOnIcon,
   PLAYER_ICONS,
+  PAUSE_BAR_STROKE,
   PLAYER_ICON_STROKE,
   PauseIcon,
   PlayIcon,
@@ -84,6 +85,20 @@ describe("player icon set (Marker)", () => {
     expect(render(<PauseIcon />).container.querySelectorAll("path")).toHaveLength(2);
     cleanup();
     expect(render(<ReplayIcon />).container.querySelectorAll("path")).toHaveLength(2);
+  });
+
+  it("pause is two solid bars with their own width, wider than the set line and not thinned by the strokeWidth prop", () => {
+    const view = render(<PauseIcon strokeWidth={1} />);
+    const bars = [...view.container.querySelectorAll("path")];
+    expect(bars).toHaveLength(2);
+    for (const bar of bars) expect(bar.getAttribute("stroke-width")).toBe(String(PAUSE_BAR_STROKE));
+    expect(PAUSE_BAR_STROKE).toBeGreaterThan(PLAYER_ICON_STROKE);
+  });
+
+  it("the white glow is only on the big centre mark, not on the control-bar glyphs", () => {
+    expect(css).toMatch(/\.mc-hero-icon \{[^}]*rgba\(255,255,255/);
+    const barRules = css.split("\n").filter((l) => /\.mc-(icon|glyph-swap|play)\b/.test(l) && /filter/.test(l));
+    for (const l of barRules) expect(l).not.toMatch(/rgba\(255,\s*255,\s*255/);
   });
 
   it("the swap keeps both glyphs and flips only a data attribute", () => {
