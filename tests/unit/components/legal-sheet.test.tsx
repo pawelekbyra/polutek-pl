@@ -24,7 +24,6 @@ const { LegalLink } = await import('@/app/components/legal/legal-sheet-context')
 const N = (text: string) => (name: string) => name.replace(/\s/g, ' ') === text;
 const read = (file: string) => fs.readFileSync(path.join(process.cwd(), file), 'utf8');
 
-const PASS_TERMS = 'Regulamin strefy patrona (projekt)';
 const TERMS = 'Regulamin serwisu';
 const PRIVACY = 'Polityka Prywatności';
 
@@ -64,12 +63,13 @@ describe('legal sheet in the patron checkout', () => {
     await screen.findByRole('dialog', { name: 'Kup se Premium' });
     const open = vi.spyOn(window, 'open');
     const terms = within(checkout()).getByRole('link', { name: 'Regulamin' });
-    expect(terms).toHaveAttribute('href', '/regulamin-premium'); // works without JavaScript
+    expect(terms).toHaveAttribute('href', '/regulamin'); // the site Terms page, works without JavaScript
     expect(terms).toHaveAttribute('target', '_blank');
     expect(terms).toHaveAttribute('aria-haspopup', 'dialog');
     expect(fireEvent.click(terms)).toBe(false); // default (navigation) prevented
-    const dialog = await sheet(PASS_TERMS);
-    expect(await within(dialog).findByText(/To jest projekt regulaminu i pokaz sprzedaży/)).toBeInTheDocument();
+    const dialog = await sheet(TERMS);
+    expect(await within(dialog).findByText(/Informacje o serwisie/)).toBeInTheDocument(); // the real Terms, the same component as /regulamin
+    expect(within(dialog).queryByText(/To jest projekt regulaminu/)).toBeNull();
     expect(open).not.toHaveBeenCalled();
   });
 
@@ -78,7 +78,7 @@ describe('legal sheet in the patron checkout', () => {
     await screen.findByRole('dialog', { name: 'Kup se Premium' });
     const terms = within(checkout()).getByRole('link', { name: 'Regulamin' });
     expect(fireEvent.click(terms, { ctrlKey: true })).toBe(true);
-    expect(screen.queryByRole('dialog', { name: PASS_TERMS })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: TERMS })).toBeNull();
   });
 
   it('is a proper modal dialog: role, aria-modal, labelled by its title, a fixed Close button, the new-tab fallback, no test ribbon', async () => {
@@ -104,9 +104,9 @@ describe('legal sheet in the patron checkout', () => {
     const link = within(checkout()).getByRole('link', { name: 'Regulamin' });
     link.focus();
     fireEvent.click(link);
-    const dialog = await sheet(PASS_TERMS);
+    const dialog = await sheet(TERMS);
     fireEvent.keyDown(document.activeElement ?? dialog, { key: 'Escape' });
-    await waitFor(() => expect(screen.queryByRole('dialog', { name: PASS_TERMS })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: TERMS })).toBeNull());
     expect(onOpenChange).not.toHaveBeenCalled();
     expect(screen.getByRole('dialog', { name: 'Kup se Premium' })).toBeInTheDocument();
     expect(document.activeElement).toBe(link);
@@ -132,7 +132,7 @@ describe('legal sheet in the patron checkout', () => {
     const { onOpenChange } = renderCheckout();
     await screen.findByRole('dialog', { name: 'Kup se Premium' });
     fireEvent.click(within(checkout()).getByRole('link', { name: 'Regulamin' }));
-    const dialog = await sheet(PASS_TERMS);
+    const dialog = await sheet(TERMS);
     const backdrop = document.querySelector('[class*="backdrop"]') as HTMLElement;
     expect(backdrop).toBeTruthy();
     fireEvent.pointerDown(backdrop);
@@ -150,7 +150,7 @@ describe('legal sheet in the patron checkout', () => {
     await screen.findByRole('dialog', { name: 'Kup se Premium' });
     const parent = checkout();
     fireEvent.click(within(parent).getByRole('link', { name: 'Regulamin' }));
-    const dialog = await sheet(PASS_TERMS);
+    const dialog = await sheet(TERMS);
     expect(parent).toHaveAttribute('data-base-ui-inert');
     expect(dialog).not.toHaveAttribute('data-base-ui-inert');
     expect(document.activeElement && dialog.contains(document.activeElement)).toBe(true); // focus moved into the sheet (its title)
@@ -166,7 +166,7 @@ describe('legal sheet in the patron checkout', () => {
     fireEvent.click(within(privacy).getByRole('button', { name: 'Zamknij' }));
     await waitFor(() => expect(privacy).not.toBeInTheDocument());
     fireEvent.click(within(checkout()).getByRole('link', { name: 'Regulamin' }));
-    await sheet(PASS_TERMS);
+    await sheet(TERMS);
   });
 
   it('step 3: the consent links open the sheet and the checkout keeps its choices (option, ticked box)', async () => {
@@ -185,8 +185,8 @@ describe('legal sheet in the patron checkout', () => {
     fireEvent.click(within(privacy).getByRole('button', { name: 'Zamknij' }));
     await waitFor(() => expect(privacy).not.toBeInTheDocument());
 
-    fireEvent.click(within(checkout()).getAllByRole('link', { name: 'Regulamin strefy patrona' }).at(-1)!); // the consent label's link (the seller card note has one too)
-    const passTerms = await sheet(PASS_TERMS);
+    fireEvent.click(within(checkout()).getByRole('link', { name: 'Regulamin' })); // the consent label's link (one per step, no duplicate in the seller card)
+    const passTerms = await sheet(TERMS);
     fireEvent.keyDown(document.activeElement ?? passTerms, { key: 'Escape' });
     await waitFor(() => expect(passTerms).not.toBeInTheDocument());
 
@@ -204,7 +204,7 @@ describe('legal sheet in the patron checkout', () => {
     await within(checkout()).findByRole('heading', { name: 'Płatność' });
   }
 
-  it('the seller card links to the Patron Zone Terms (in steps 1, 2 and 3)', async () => {
+  it('each step has exactly one link to the Terms and none to the Patron Zone Terms draft; the seller card carries no link of its own', async () => {
     renderCheckout();
     await screen.findByRole('dialog', { name: 'Kup se Premium' });
     for (const step of [1, 2, 3]) {
@@ -213,29 +213,28 @@ describe('legal sheet in the patron checkout', () => {
         fireEvent.click(within(checkout()).getByRole('button', { name: N('Dalej · 29,99 zł') }));
         await within(checkout()).findByRole('heading', { name: 'Płatność' });
       }
-      const card = checkout().querySelector('[data-seller-card]') as HTMLElement;
-      const link = within(card).getByRole('link', { name: 'Regulamin strefy patrona', hidden: true });
-      expect(link).toHaveAttribute('href', '/regulamin-premium');
-      fireEvent.click(link);
-      const dialog = await sheet(PASS_TERMS);
-      expect(await within(dialog).findByText(/Sprzedawca:/)).toBeInTheDocument(); // the seller information is in the document
-      fireEvent.click(within(dialog).getByRole('button', { name: 'Zamknij' }));
-      await waitFor(() => expect(dialog).not.toBeInTheDocument());
+      expect(within(checkout()).getAllByRole('link', { name: 'Regulamin' })).toHaveLength(1);
+      expect(checkout().querySelectorAll('a[href="/regulamin-premium"]')).toHaveLength(0);
+      expect(checkout().querySelector('[data-seller-card] a')).toBeNull();
     }
   });
 
-  it('from the Patron Zone Terms the link to the site Terms swaps the document inside the same sheet; closing returns to the first opener', async () => {
-    renderCheckout();
-    await screen.findByRole('dialog', { name: 'Kup se Premium' });
-    const opener = within(checkout()).getByRole('link', { name: 'Regulamin' });
+  it('opening another document while the sheet is open swaps it in the same sheet; closing returns to the FIRST opener', async () => {
+    const { LegalSheetProvider } = await import('@/app/components/legal/LegalSheet');
+    render(
+      <LegalSheetProvider tx={txFor('pl')} language="pl" demo>
+        <a href="/regulamin" onClick={(e) => e.preventDefault()}>x</a>
+        <LegalLink doc="terms" language="pl">Link regulaminu</LegalLink>
+        <LegalLink doc="privacy" language="pl">Link polityki</LegalLink>
+      </LegalSheetProvider>,
+    );
+    const opener = screen.getByRole('link', { name: 'Link regulaminu' });
     fireEvent.click(opener);
-    const dialog = await sheet(PASS_TERMS);
-    const inner = await within(dialog).findByRole('link', { name: TERMS === 'Regulamin serwisu' ? 'Regulamin serwisu' : TERMS });
-    expect(inner).toHaveAttribute('href', expect.stringContaining('regulamin'));
-    fireEvent.click(inner);
-    expect(await within(dialog).findByRole('heading', { name: TERMS })).toBeInTheDocument();
-    expect(await within(dialog).findByText(/Informacje o serwisie/)).toBeInTheDocument();
-    expect(screen.getAllByRole('dialog').filter((d) => d.getAttribute('aria-modal') === 'true')).toHaveLength(1); // still one sheet
+    const dialog = await sheet(TERMS);
+    fireEvent.click(screen.getByRole('link', { name: 'Link polityki', hidden: true }));
+    expect(await within(dialog).findByRole('heading', { name: PRIVACY })).toBeInTheDocument();
+    expect(await within(dialog).findByText(/Administratorem danych jest/)).toBeInTheDocument();
+    expect(document.activeElement).toBe(within(dialog).getByRole('heading', { name: PRIVACY }));
     fireEvent.click(within(dialog).getByRole('button', { name: 'Zamknij' }));
     await waitFor(() => expect(dialog).not.toBeInTheDocument());
     expect(document.activeElement).toBe(opener);
@@ -247,7 +246,7 @@ describe('legal sheet in the patron checkout', () => {
     const locked = () => document.documentElement.style.overflow === 'hidden' || document.documentElement.style.overflowY === 'hidden';
     expect(locked()).toBe(true);
     fireEvent.click(within(checkout()).getByRole('link', { name: 'Regulamin' }));
-    const dialog = await sheet(PASS_TERMS);
+    const dialog = await sheet(TERMS);
     expect(locked()).toBe(true);
     fireEvent.click(within(dialog).getByRole('button', { name: 'Zamknij' }));
     await waitFor(() => expect(dialog).not.toBeInTheDocument());
@@ -278,7 +277,7 @@ describe('legal sheet in the patron checkout', () => {
       const { onOpenChange } = renderCheckout();
       await screen.findByRole('dialog', { name: 'Kup se Premium' });
       fireEvent.click(within(checkout()).getByRole('link', { name: 'Regulamin' }));
-      const dialog = await sheet(PASS_TERMS);
+      const dialog = await sheet(TERMS);
       const head = dialog.querySelector('[class*="head"]') as HTMLElement;
       swipe(head, 100, 140);
       expect(dialog).toBeInTheDocument();
@@ -293,7 +292,7 @@ describe('legal sheet in the patron checkout', () => {
       renderCheckout();
       await screen.findByRole('dialog', { name: 'Kup se Premium' });
       fireEvent.click(within(checkout()).getByRole('link', { name: 'Regulamin' }));
-      const dialog = await sheet(PASS_TERMS);
+      const dialog = await sheet(TERMS);
       const head = dialog.querySelector('[class*="head"]') as HTMLElement;
       fireEvent.pointerDown(head, { pointerId: 3, pointerType: 'mouse', isPrimary: true, clientY: 0 });
       fireEvent.pointerUp(head, { pointerId: 3, pointerType: 'mouse', isPrimary: true, clientY: 400 });
@@ -340,12 +339,17 @@ describe('legal documents inside the checkout: one mechanism, one source of text
     expect(body).toContain('<PassTermsContent');
     for (const component of ['RegulaminContent', 'TermsContentEn', 'PolitykaContent', 'PrivacyContentEn']) expect(body).toContain(`<${component} />`);
     expect(read('app/components/premium-pass/PassTermsContent.tsx')).not.toContain('DemoRibbon');
+    // the draft stays only for its own page: nothing in the checkout links to it
+    const offenders = fs.readdirSync(path.join(process.cwd(), 'app/components/premium-pass')).filter((f) => /\.tsx$/.test(f) && /doc="passTerms"/.test(read(`app/components/premium-pass/${f}`)));
+    expect(offenders).toEqual([]);
   });
 
-  it('the stylesheet gives the sheet a 44 px Close, safe areas, contained scrolling, a higher layer than the checkout and reduced motion', () => {
+  it('the sheet is full screen on every width, with a readable 760 px column and the 44 px Close; safe areas, contained scrolling, a higher layer than the checkout and reduced motion', () => {
     const css = read('app/components/legal/legal-sheet.module.css');
     expect(css).toMatch(/\.close\s*\{[^}]*min-height:\s*44px/);
     expect(css).toMatch(/\.close\s*\{[^}]*min-width:\s*44px/);
+    expect(css).toMatch(/\.sheet\s*\{[^}]*inset:\s*0;[^}]*width:\s*100%;[^}]*height:\s*100dvh/);
+    expect(css).toContain('760px');
     expect(css).toContain('env(safe-area-inset-top)');
     expect(css).toContain('env(safe-area-inset-bottom)');
     expect(css).toMatch(/\.body\s*\{[^}]*overscroll-behavior:\s*contain/);
