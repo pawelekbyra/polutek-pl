@@ -1,6 +1,6 @@
 "use client";
 
-import { VolumeX } from "lucide-react";
+import { VolumeMutedIcon } from "./controls/PlayerIconSet";
 import { usePlayerCopy } from "./polutek-controls-copy";
 
 /**
@@ -21,7 +21,7 @@ export function UnmuteHint({ visible, onUnmute }: { visible: boolean; onUnmute: 
       title={copy.unmute}
       className="absolute left-3 top-3 z-40 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white shadow-[0_6px_18px_rgba(0,0,0,0.35)] backdrop-blur-sm transition-[transform,background-color] duration-150 hover:bg-black/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 active:scale-95 motion-reduce:transition-none"
     >
-      <VolumeX aria-hidden="true" className="h-5 w-5 shrink-0" strokeWidth={2} />
+      <VolumeMutedIcon className="h-5 w-5 shrink-0" />
     </button>
   );
 }

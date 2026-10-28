@@ -735,7 +735,6 @@
     /* Lift the glyphs off bright frames without a visible halo. */
     filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.35));
   }
-  .mc-icon--solid { width:18px; height:18px; }
 
   /* Play/pause: the only bar control with a surface, a soft glass pill (translucent dark, 1px inner hairline,
      blur where supported). Press scales to .96; the focus ring is a white gap plus the brand blue, visible on
@@ -951,7 +950,8 @@
   .mc-menu-item:hover, .mc-menu-item:focus-visible { background: rgba(255,255,255,.1); outline:none; }
   .mc-menu-item:focus-visible { box-shadow: inset 0 0 0 2px rgba(255,255,255,.8); }
   .mc-menu-item--on { font-weight:600; }
-  .mc-menu-item--on::after { content:"\2713"; font-weight:600; }
+  /* Selected entry: the set's check icon (CheckIcon) at the end of the row, 16px like the chevron hint. */
+  .mc-menu-check, .mc-menu-hint-icon { width:16px; height:16px; flex-shrink:0; }
   .mc-menu-sep { height:1px; margin:6px 0; background: rgba(255,255,255,.12); }
   .mc-menu-item-hint {
     display:flex; align-items:center; gap:4px; min-width:0;

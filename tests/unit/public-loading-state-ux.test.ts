@@ -79,9 +79,9 @@ describe("public loading/access state UX contracts", () => {
 
     expect(controlsCopy).toContain("Odtwórz ponownie");
     expect(controls).toContain("mc-center--ended");
-    // Icons: lucide line icons plus the custom play/pause/replay family (controls/PlayerIcons.tsx).
-    expect(controls).toContain('from "lucide-react"');
-    expect(controls).toContain("PlayerIcons");
+    // Icons: the "Marker" set in one file (controls/PlayerIconSet.tsx), no lucide in the player controls.
+    expect(controls).toContain("PlayerIconSet");
+    expect(controls).not.toContain('from "lucide-react"');
     expect(controls).not.toContain("SeekButton");
     expect(controls).not.toContain("PIPButton");
     expect(controls).not.toContain("Cofnij 10 sekund");
