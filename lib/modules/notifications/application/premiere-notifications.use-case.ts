@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
-import { enqueueNewVideoFanOut } from "./new-video-fan-out.use-case";
+import { enqueueNewVideoFanOut, NEW_VIDEO_FANOUT_KIND } from "./new-video-fan-out.use-case";
 
 /**
  * Premiere notifications (CLAUDE.md 4.18): a video published with a future `premiereAt` is skipped by
@@ -21,6 +21,8 @@ import { enqueueNewVideoFanOut } from "./new-video-fan-out.use-case";
  */
 
 export const PREMIERE_BATCH_DEFAULT = 50;
+/** How many DEAD fan-out jobs are excluded from candidate selection at most. */
+const DEAD_EXCLUSION_LIMIT = 1000;
 
 export type PremiereNotificationsResult = {
   candidates: number;
@@ -39,8 +41,18 @@ export async function notifyDuePremieres(deps: PremiereNotificationsDeps = {}): 
   const now = (deps.now ?? (() => new Date()))();
   const take = Math.max(1, Math.min(deps.batchSize ?? PREMIERE_BATCH_DEFAULT, 200));
 
+  // Premieres whose fan-out job ended DEAD are left to an operator (audit W22). Without this they stay the oldest
+  // candidates, fill the whole batch every minute and starve newer premieres. Bounded, newest first.
+  const dead = await db.durableJob.findMany({
+    where: { kind: NEW_VIDEO_FANOUT_KIND, status: "DEAD" },
+    orderBy: { updatedAt: "desc" },
+    take: DEAD_EXCLUSION_LIMIT,
+    select: { dedupeKey: true },
+  });
+
   const due = await db.video.findMany({
     where: {
+      ...(dead.length > 0 ? { id: { notIn: dead.map((job) => job.dedupeKey) } } : {}),
       status: "PUBLISHED",
       premiereAt: { not: null, lte: now },
       premiereNotifiedAt: null,

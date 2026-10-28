@@ -34,6 +34,7 @@ describe('Admin Comment Use Cases', () => {
       findReportById: vi.fn(),
       resolveReport: vi.fn(),
       refreshPendingReportsCount: vi.fn().mockResolvedValue(0),
+      lockCommentForReports: vi.fn().mockResolvedValue(undefined),
     };
     (CommentRepository as any).mockImplementation(function() { return mockRepo; });
     ctx = createAppContext({ actor: { type: 'admin', userId: 'admin-1' }, prisma: { $transaction: (fn: any) => fn({}) } as any });
@@ -153,5 +154,8 @@ describe('Admin Comment Use Cases', () => {
     const result = await resolveCommentReport('r1', CommentReportStatus.DISMISSED, ctx);
     expect(result.ok).toBe(true);
     expect(mockRepo.refreshPendingReportsCount).toHaveBeenCalledWith('c1');
+    // The recount queues up behind new reports of the same comment (audit W18).
+    expect(mockRepo.lockCommentForReports).toHaveBeenCalledWith('c1');
+    expect(mockRepo.lockCommentForReports.mock.invocationCallOrder[0]).toBeLessThan(mockRepo.resolveReport.mock.invocationCallOrder[0]);
   });
 });

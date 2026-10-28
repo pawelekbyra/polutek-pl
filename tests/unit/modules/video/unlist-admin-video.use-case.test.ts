@@ -15,6 +15,7 @@ describe('unlistAdminVideo and the PUBLISHED <-> UNLISTED <-> DRAFT transitions'
       deleteMany: vi.fn(),
     },
     creator: { findUnique: vi.fn(), findFirst: vi.fn() },
+    channelMember: { findMany: vi.fn().mockResolvedValue([]) },
     auditLog: { create: vi.fn() },
     $transaction: vi.fn((cb: any) => cb(mockPrisma)),
   } as any;

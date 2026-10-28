@@ -11,6 +11,7 @@ describe('unpublishAdminVideo use-case', () => {
     video: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
     appSetting: { findUnique: vi.fn().mockResolvedValue({ value: 'main-channel-id' }) },
     creator: { findUnique: vi.fn(), findFirst: vi.fn() },
+    channelMember: { findMany: vi.fn().mockResolvedValue([]) },
     auditLog: { create: vi.fn() },
     $transaction: vi.fn((cb: any) => cb(mockPrisma)),
   } as any;
