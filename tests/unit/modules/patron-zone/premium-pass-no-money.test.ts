@@ -29,6 +29,7 @@ const sources = ROOTS.flatMap(files).map((file) => ({ file, text: read(file) }))
 /** The only files of the patron zone that may talk to Stripe or the payments module (server and browser). */
 const STRIPE_ALLOWED = new Set([
   "lib/modules/patron-zone/application/patron-checkout.use-case.ts", // createCheckoutIntent (the tip gateway's)
+  "lib/modules/patron-zone/application/preview-payment-methods.use-case.ts", // throw-away probe intent: reads the method names, cancels it, stores nothing, grants nothing
   "app/components/premium-pass/PassCheckoutSheet.tsx", // getStripeBrowser(): Stripe.js only once the checkout is open
   "app/components/premium-pass/PassPaymentStep.tsx", // <Elements> around the tip gateway's own forms
   "lib/modules/patron-zone/domain/payments-mode.ts", // pure env helpers (which key set), no Stripe SDK and no network

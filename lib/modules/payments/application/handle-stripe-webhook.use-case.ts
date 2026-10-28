@@ -186,6 +186,9 @@ async function dispatchEvent(event: Stripe.Event, keySet: StripeKeySet, repo: Pa
     }
     case 'payment_intent.canceled': {
       const intent = event.data.object;
+      // The throw-away intent of the patron-zone method preview (patron-zone/application/preview-payment-methods):
+      // canceled right after creation on purpose and tied to no payment, so it is dropped without a lookup.
+      if (intent.metadata?.probe === 'patron-methods') return 'ignored';
       const payment = await repo.findByIntentId(intent.id, ctx.db.read);
       if (!payment) return 'ignored';
       if (crossesKeySets(payment, keySet, event)) return 'ignored';

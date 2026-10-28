@@ -9,5 +9,6 @@ export * from "./domain/offer";
 export * from "./application/pass-access";
 export * from "./application/checkout-demo.use-case";
 export * from "./application/patron-checkout.use-case";
+export * from "./application/preview-payment-methods.use-case";
 export * from "./application/patron-grant";
 export * from "./application/demo-controls.use-case";

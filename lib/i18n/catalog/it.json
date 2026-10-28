@@ -1101,5 +1101,7 @@
  "Check the channel name.": "Controlla il nome del canale.",
  "That handle is not available. Choose another.": "Questo handle non è disponibile. Scegline un altro.",
  "Check the details in the About section.": "Controlla i dati nella sezione «Informazioni».",
- "Server error. Please try again.": "Errore del server. Riprova."
+ "Server error. Please try again.": "Errore del server. Riprova.",
+ "Pay with a Multibanco reference": "Paga con un riferimento Multibanco",
+ "MB WAY app": "App MB WAY"
 }

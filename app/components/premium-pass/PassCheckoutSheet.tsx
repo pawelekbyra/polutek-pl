@@ -27,7 +27,7 @@ import { PassConsent, PassDemoSummary, PassStripePay, type PassConsentErrors, ty
 import { PassSecurityFooter, PassStepDots } from "./PassSecurityFooter";
 import { PassDeclined, PassMaxAhead, PassPending, PassSuccess } from "./PassSuccess";
 import { newRequestId, price } from "./pass-copy";
-import { fetchPassStatus, pollPatronPayment, postDemoCheckout, postPatronConsent, postPatronIntent } from "./usePremiumPass";
+import { fetchPassStatus, pollPatronPayment, fetchPatronMethods, postDemoCheckout, postPatronConsent, postPatronIntent } from "./usePremiumPass";
 import styles from "./premium-pass.module.css";
 
 type ActivePass = Exclude<PassStatusDto, { state: "none" }>;
@@ -123,7 +123,9 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   const [stage, setStage] = useState<Stage>({ kind: "plan" });
   const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
   const [wallets, setWallets] = useState<TipWallet[]>([]);
-  const [stripeTypes, setStripeTypes] = useState<string[] | null>(null);
+  // The method list of Stripe for ONE product + currency (the amount decides some methods): a list is used only while the
+  // key still matches, so a late answer or a leftover from another currency can never show on the wrong tiles.
+  const [stripeTypes, setStripeTypes] = useState<{ key: string; types: string[] } | null>(null);
   const [picked, setPicked] = useState<string | null>(null);
   const [intent, setIntent] = useState<{ paymentId: string; clientSecret: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -132,9 +134,11 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   const [consentErrors, setConsentErrors] = useState<PassConsentErrors>({});
   const [access, setAccess] = useState<{ lifetime: boolean; expiresAt: string | null } | null>(null);
 
+  const typesKey = `${product.id}:${currency}`;
+  const stripeList = stripeReady && stripeTypes?.key === typesKey ? stripeTypes.types : null;
   const methods = useMemo(
-    () => getTipMethodTiles(stripeReady && stripeTypes ? stripeTypes : candidateTypes(currency), wallets, false),
-    [stripeReady, stripeTypes, wallets, currency],
+    () => getTipMethodTiles(stripeList ?? candidateTypes(currency), wallets, false),
+    [stripeList, wallets, currency],
   );
   const method = picked && methods.includes(picked) ? picked : (() => {
     const last = readLastTipMethod();
@@ -233,6 +237,20 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Step 2 shows Stripe's REAL list for this product + currency, asked as soon as the step is shown (and again when the
+  // product or currency changed meanwhile). Until the answer arrives, and when there is none, the candidate tiles stay.
+  // A creating-nothing preview on the server (no payment, no client secret). Demo mode has no Stripe to ask.
+  useEffect(() => {
+    if (!open || !stripeReady || stage.kind !== "method" || stripeTypes?.key === typesKey) return;
+    let stale = false;
+    void fetchPatronMethods({ productId: product.id, currency }).then((types) => {
+      if (!stale && types) setStripeTypes({ key: typesKey, types });
+    });
+    return () => { stale = true; };
+    // typesKey already carries the product and the currency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, stripeReady, stage.kind, typesKey]);
+
   // Focus follows the step: the heading of the new step takes focus, screen readers announce it.
   const firstStage = useRef(true);
   useEffect(() => {
@@ -273,7 +291,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
     if (cancelledRef.current) return;
     if (outcome.kind === "ready") {
       const tiles = getTipMethodTiles(outcome.paymentMethodTypes, wallets, false);
-      setStripeTypes(outcome.paymentMethodTypes);
+      setStripeTypes({ key: typesKey, types: outcome.paymentMethodTypes });
       if (!tiles.includes(method)) {
         setPicked(tiles[0] ?? null);
         setNotice(tx("Ta metoda nie jest dostępna dla tej płatności. Wybierz inną.", "This method is not available for this payment. Please choose another."));
