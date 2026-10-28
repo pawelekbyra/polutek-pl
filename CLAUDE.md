@@ -110,7 +110,7 @@ Rozsyłka ma jedną grupę odbiorców (`lib/modules/email/infrastructure/broadca
 
 ### 4.7 Napisy
 
-`Video.subtitleUrlPl`/`En` trafiają jako `textTracks` do planu tylko odtwarzalnego; odtwarzacz montuje tylko ścieżkę w języku strony, host `.vtt` musi być w CSP `connect-src`. Opis: `docs/architecture/public-shell-and-player.md`.
+`Video.subtitleUrlPl`/`En` trafiają jako `textTracks` do planu tylko odtwarzalnego; odtwarzacz montuje tylko ścieżkę w języku strony. **Napisy są prywatne (audyt W01/S10):** panel zapisuje WebVTT w `polutek-hls` (`videos/<id>/captions/<język>-<sha256>.vtt`), w bazie jest odnośnik `hlscap:<plik>` (nie adres; `lib/modules/media/domain/protected-caption.ts`), a plan zamienia go na adres Workera z TYM SAMYM tokenem co film (`withDeliveryCaptions` w `self-hls-plan.ts`), więc adres napisów istnieje tylko po decyzji dostępu i bramce premiery, wygasa razem z tokenem i jest odnawiany z planem. Nigdy nie kopiuj napisów do publicznego bucketa ani nie wpisuj ich adresu do `PublicVideoDTO`. Stare wartości-URL działają do migracji (`scripts/migrate-captions-to-private.ts`, `docs/operations/HLS-SELF-HOSTED.md` „Napisy prywatne”). Opis: `docs/architecture/public-shell-and-player.md`.
 
 ### 4.8 Miniatury
 

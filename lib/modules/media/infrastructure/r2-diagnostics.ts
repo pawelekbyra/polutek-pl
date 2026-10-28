@@ -13,8 +13,8 @@ export const R2_VARS: readonly R2VarDefinition[] = [
   { name: "CLOUDFLARE_R2_SECRET_ACCESS_KEY", secret: true, bucket: false, required: true, expected: "Secret Access Key z tej samej pary (nie wartość pola Token)." },
   { name: "CLOUDFLARE_R2_BUCKET_VIDEO_ORIGINALS", secret: false, bucket: true, required: true, expected: "Nazwa bucketu z oryginałami filmów, bez https:// i bez ścieżki." },
   { name: "CLOUDFLARE_R2_BUCKET_THUMBNAILS_PRIVATE", secret: false, bucket: true, required: true, expected: "Prywatny bucket miniatur (okładki, domyślna miniatura)." },
-  { name: "CLOUDFLARE_R2_BUCKET_THUMBNAILS_PUBLIC", secret: false, bucket: true, required: false, expected: "Publiczny bucket miniatur i napisów (serwowany przez NEXT_PUBLIC_R2_PUBLIC_HOST)." },
-  { name: "CLOUDFLARE_R2_BUCKET_HLS", secret: false, bucket: true, required: false, expected: "Bucket z wersjami HLS (zapisuje encoder; panel ich nie czyta bezpośrednio)." },
+  { name: "CLOUDFLARE_R2_BUCKET_THUMBNAILS_PUBLIC", secret: false, bucket: true, required: false, expected: "Publiczny bucket miniatur (serwowany przez NEXT_PUBLIC_R2_PUBLIC_HOST); stare publiczne napisy do czasu migracji do prywatnego miejsca." },
+  { name: "CLOUDFLARE_R2_BUCKET_HLS", secret: false, bucket: true, required: false, expected: "Prywatny bucket z wersjami HLS (zapisuje encoder) i napisami filmów (zapisuje panel, videos/<id>/captions/); token R2 musi mieć Object Read & Write." },
 ] as const;
 
 type Env = Record<string, string | undefined>;

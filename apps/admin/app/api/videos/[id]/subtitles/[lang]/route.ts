@@ -5,7 +5,7 @@ import { jsonError, panelRouteContext, readUploadedFile, resultResponse, unautho
 
 export const dynamic = "force-dynamic";
 
-/** WebVTT subtitles for one language (pl, en or a translation language): validated, then served from the public R2 host. */
+/** WebVTT subtitles for one language (pl, en or a translation language): validated, then stored privately (HLS bucket) and served only behind the video's delivery token. */
 export async function POST(request: Request, props: { params: Promise<{ id: string; lang: string }> }) {
   const ctx = await panelRouteContext(request);
   if (!ctx) return unauthorizedJson();

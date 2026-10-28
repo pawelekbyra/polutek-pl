@@ -19,7 +19,7 @@ import {
 import { getPipelineState, type PipelineStateDto } from "@/lib/modules/video-pipeline";
 import { MainChannelService } from "@/lib/modules/channel";
 import { authorize } from "@/lib/modules/authz";
-import { R2ThumbnailStorageClient, parsePublicThumbnailUrl } from "@/lib/modules/media";
+import { R2ThumbnailStorageClient, captionObjectKey, parseCaptionRef, parsePublicThumbnailUrl } from "@/lib/modules/media";
 import { recordAuditEventSafe } from "@/lib/modules/audit";
 import { translationSubtitleUrls } from "@/lib/modules/translations";
 import { thumbnailState, type ThumbnailState } from "../domain/thumbnail-state";
@@ -92,13 +92,23 @@ export async function deleteVideoWithStorage(videoId: string, ctx: AppContext): 
   const details = await getAdminVideoDetails({ idOrSlug: videoId }, ctx);
   const subtitles = new Set([...(details.ok ? [details.data.subtitleUrlPl, details.data.subtitleUrlEn] : []), ...(await translationSubtitleUrls(videoId, ctx).catch(() => [] as string[]))]);
   const publicKeys: string[] = [];
-  if (R2ThumbnailStorageClient.isPublicServingConfigured()) {
-    for (const url of subtitles) {
-      const key = parsePublicThumbnailUrl(url, process.env);
+  const captionKeys: string[] = [];
+  for (const value of subtitles) {
+    const ref = parseCaptionRef(value);
+    if (ref) {
+      // The key is built from the row's real id (the argument may be a slug); an id of an unexpected shape just has no manifest entry.
+      try {
+        captionKeys.push(captionObjectKey(details.ok ? details.data.id : videoId, ref.file));
+      } catch {
+        /* not one of our ids */
+      }
+    } else if (R2ThumbnailStorageClient.isPublicServingConfigured()) {
+      // Legacy file of the public bucket (before captions became private).
+      const key = parsePublicThumbnailUrl(value, process.env);
       if (key && key.includes("/subtitles/")) publicKeys.push(key);
     }
   }
-  const result = await deleteAdminVideo(videoId, ctx, { beforeDelete: (tx) => enqueueStorageCleanupInTx(tx, videoId, publicKeys) });
+  const result = await deleteAdminVideo(videoId, ctx, { beforeDelete: (tx) => enqueueStorageCleanupInTx(tx, videoId, publicKeys, captionKeys) });
   if (!result.ok) return fail(result.error as AppError);
   kickStorageCleanup();
   return ok(result.data);

@@ -2,6 +2,7 @@ import type { VideoAsset } from '@prisma/client';
 import type { AppContext } from '@/lib/modules/shared/app-context';
 import { SelfHlsTokenService } from '../infrastructure/self-hls-token.service';
 import type { PlaybackAssetContract, PlaybackPlan } from '../domain/playback.dto';
+import { captionDeliveryPath, parseCaptionRef } from '@/lib/modules/media';
 import { isAdultVideo } from '@/lib/modules/video/domain/video-visibility';
 import { PLAYBACK_HEARTBEAT_INTERVAL_SECONDS, PLAYBACK_SESSION_MAX_AGE_MS } from '@/lib/modules/video';
 
@@ -61,6 +62,23 @@ export type SelfHlsPlanArgs = {
   reuseSessionId?: string;
 };
 
+/**
+ * Caption tracks of a plan: a stored reference (`hlscap:...`, a private file) becomes a delivery URL under the
+ * SAME token as the video; anything else was already filtered to https URLs / same-site paths and stays.
+ * A reference that cannot be resolved is dropped, so a plan never carries a raw reference.
+ */
+export function withDeliveryCaptions(player: PlaybackPlan['player'], deliveryPrefix: string): PlaybackPlan['player'] {
+  if (!player.textTracks?.length) return player;
+  const textTracks = player.textTracks.flatMap((track) => {
+    const ref = parseCaptionRef(track.src);
+    if (ref) return [{ ...track, src: `${deliveryPrefix}/${captionDeliveryPath(ref.file)}` }];
+    return track.src.startsWith('hlscap:') ? [] : [track];
+  });
+  const { textTracks: _dropped, ...withoutTracks } = player;
+  void _dropped;
+  return textTracks.length > 0 ? { ...withoutTracks, textTracks } : withoutTracks;
+}
+
 /** Returns a READY plan, or null when our HLS cannot be served (caller answers with an ERROR plan). */
 export async function buildSelfHlsPlan(args: SelfHlsPlanArgs): Promise<PlaybackPlan | null> {
   const { videoId, asset } = args;
@@ -93,7 +111,8 @@ export async function buildSelfHlsPlan(args: SelfHlsPlanArgs): Promise<PlaybackP
       expiresAt: signed.expiresAt.toISOString(),
       asset: args.safeAsset,
     },
-    player: args.player,
+    // Captions ride on the same token as the video: issued only here, after the access decision and the premiere gate.
+    player: withDeliveryCaptions(args.player, signed.deliveryPrefix),
     diagnostics: {
       warnings: args.warnings,
       sourceConfidence: 'HIGH',

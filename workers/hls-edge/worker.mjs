@@ -11,6 +11,11 @@
  * PRIVATE response headers bounded by the token's remaining life; only ".pub" tokens get the
  * long public cache (audit S09). Deploy this Worker BEFORE the app starts issuing ".pub" tokens.
  *
+ * Captions (WebVTT) of the video are served under the SAME token: GET .../<version>/captions/<lang>-<sha256>.vtt
+ * reads the private object videos/<videoId>/captions/<lang>-<sha256>.vtt (not inside the version folder, so a
+ * re-encode keeps them; the version in the URL only has to match the token). Mirror of
+ * lib/modules/media/domain/protected-caption.ts. Deploy this Worker BEFORE the app issues caption URLs.
+ *
  * One token covers every file of one video version (playlists, init, segments,
  * poster), so the playlists only need RELATIVE URIs and both hls.js and native
  * Safari HLS simply inherit "/h/<exp>.<sig>/<videoId>/<version>/" - no headers,
@@ -27,6 +32,8 @@
 
 const ID_RE = /^[A-Za-z0-9-]{8,64}$/;
 const VERSION_RE = /^[A-Za-z0-9_-]{1,32}$/;
+/** Caption files: "captions/<lang>-<sha256>.vtt" (anything else below "captions/" is not served). */
+const CAPTION_REST_RE = /^captions\/([a-z]{2,8}-[0-9a-f]{64}\.vtt)$/;
 const REST_RE = /^[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*\.[A-Za-z0-9]{2,5}$/;
 
 const CONTENT_TYPES = {
@@ -119,7 +126,7 @@ function objectHeaders(parsed, object) {
   return headers;
 }
 
-/** Splits "/h/<token>/<id>/<version>/<rest>" or returns null. */
+/** Splits "/h/<token>/<id>/<version>/<rest>" or returns null. `captionFile` is set for a caption path. */
 export function parsePath(pathname) {
   const parts = pathname.split('/');
   // ['', 'h', token, id, version, ...rest]
@@ -129,7 +136,11 @@ export function parsePath(pathname) {
   if (!ID_RE.test(videoId) || !VERSION_RE.test(version) || !REST_RE.test(rest)) return null;
   const ext = rest.slice(rest.lastIndexOf('.') + 1).toLowerCase();
   if (!CONTENT_TYPES[ext]) return null;
-  return { token, videoId, version, rest, ext };
+  if (rest.startsWith('captions/')) {
+    const caption = CAPTION_REST_RE.exec(rest);
+    return caption ? { token, videoId, version, rest, ext, captionFile: caption[1] } : null;
+  }
+  return { token, videoId, version, rest, ext, captionFile: null };
 }
 
 function corsHeaders(request, env) {
@@ -171,7 +182,10 @@ export default {
     const token = await checkToken(env.HLS_TOKEN_SECRET, parsed.videoId, parsed.version, parsed.token, nowSeconds);
     if (!token) return plain(403, 'Forbidden', request, env);
 
-    const cacheUrl = `https://${url.host}/c/${parsed.videoId}/${parsed.version}/${parsed.rest}`;
+    // Captions are per video (content-hashed name), so their cache entry does not depend on the version.
+    const cacheUrl = parsed.captionFile
+      ? `https://${url.host}/c/${parsed.videoId}/captions/${parsed.captionFile}`
+      : `https://${url.host}/c/${parsed.videoId}/${parsed.version}/${parsed.rest}`;
     const cache = caches.default;
     const range = request.headers.get('Range');
     const lookup = new Request(cacheUrl, { method: 'GET', headers: range ? { Range: range } : {} });
@@ -180,7 +194,9 @@ export default {
     let cacheStatus = 'HIT';
     if (!response) {
       cacheStatus = 'MISS';
-      const objectKey = `videos/${parsed.videoId}/v/${parsed.version}/${parsed.rest}`;
+      const objectKey = parsed.captionFile
+        ? `videos/${parsed.videoId}/captions/${parsed.captionFile}`
+        : `videos/${parsed.videoId}/v/${parsed.version}/${parsed.rest}`;
       const fillCache = async () => {
         const object = await env.HLS.get(objectKey);
         if (object) await cache.put(new Request(cacheUrl, { method: 'GET' }), new Response(object.body, { status: 200, headers: objectHeaders(parsed, object) }));
