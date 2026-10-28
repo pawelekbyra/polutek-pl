@@ -4,7 +4,7 @@ import { logger } from "@/lib/logger";
 import { DurableJobRepository } from "@/lib/modules/shared/durable-job.repository";
 import { runDurableJobs, type JobHandler, type RunJobsResult } from "@/lib/modules/shared/durable-job";
 import { purgeVideoStorageStrict, snapshotVideoStorageInTx, type VideoStorageSnapshot } from "@/lib/modules/video-pipeline";
-import { R2ThumbnailStorageClient } from "@/lib/modules/media";
+import { R2CaptionStorageClient, R2ThumbnailStorageClient, isCaptionKeyOf } from "@/lib/modules/media";
 
 /**
  * Durable R2 clean-up of a deleted video (DB-24). The manifest (what the video owns in R2) is written
@@ -21,13 +21,15 @@ export type StorageCleanupManifest = {
   snapshot: VideoStorageSnapshot;
   /** Keys in the public thumbnails bucket (our own subtitle files), already filtered to `/subtitles/`. */
   publicKeys: string[];
+  /** Keys in the private HLS bucket (the panel's caption files, `videos/<id>/captions/...`). Absent in manifests written before captions became private. */
+  captionKeys?: string[];
 };
 
 /** Call inside the video delete transaction (`deleteAdminVideo`'s `beforeDelete`). Nothing is enqueued for a video that owns nothing in R2. */
-export async function enqueueStorageCleanupInTx(tx: Prisma.TransactionClient, videoId: string, publicKeys: string[]): Promise<void> {
+export async function enqueueStorageCleanupInTx(tx: Prisma.TransactionClient, videoId: string, publicKeys: string[], captionKeys: string[] = []): Promise<void> {
   const snapshot = await snapshotVideoStorageInTx(tx, videoId);
-  if (snapshot.assetKeys.length === 0 && snapshot.originals.length === 0 && publicKeys.length === 0) return;
-  const manifest: StorageCleanupManifest = { videoId, snapshot, publicKeys };
+  if (snapshot.assetKeys.length === 0 && snapshot.originals.length === 0 && publicKeys.length === 0 && captionKeys.length === 0) return;
+  const manifest: StorageCleanupManifest = { videoId, snapshot, publicKeys, ...(captionKeys.length > 0 ? { captionKeys } : {}) };
   // enqueue() only touches the transaction it is given, so the repository needs no client of its own here.
   await new DurableJobRepository(tx as unknown as PrismaClient).enqueue({ kind: STORAGE_CLEANUP_KIND, dedupeKey: videoId, payload: manifest }, tx);
 }
@@ -37,12 +39,14 @@ function parseManifest(payload: unknown): StorageCleanupManifest {
   if (!p || typeof p.videoId !== "string" || !p.snapshot || !Array.isArray(p.snapshot.assetKeys) || !Array.isArray(p.snapshot.originals)) {
     throw new Error("Invalid storage clean-up manifest");
   }
-  return { videoId: p.videoId, snapshot: p.snapshot, publicKeys: Array.isArray(p.publicKeys) ? p.publicKeys.filter((k): k is string => typeof k === "string") : [] };
+  const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((k): k is string => typeof k === "string") : []);
+  return { videoId: p.videoId, snapshot: p.snapshot, publicKeys: strings(p.publicKeys), captionKeys: strings(p.captionKeys) };
 }
 
 export type StorageCleanupDeps = {
   purge?: typeof purgeVideoStorageStrict;
   publicStorage?: { isConfigured(): boolean; deletePublic(key: string): Promise<unknown> };
+  captionStorage?: { isConfigured(): boolean; deleteCaption(videoId: string, key: string): Promise<unknown> };
 };
 
 export function createStorageCleanupHandler(deps: StorageCleanupDeps = {}): JobHandler<Prisma.TransactionClient> {
@@ -62,6 +66,17 @@ export function createStorageCleanupHandler(deps: StorageCleanupDeps = {}): JobH
         await storage.deletePublic(key).catch(() => failed.push(key));
       }
       if (failed.length > 0) throw new Error(`Public clean-up failed for ${failed.length} subtitle file(s)`);
+    }
+    const captionKeys = (manifest.captionKeys ?? []).filter((key) => isCaptionKeyOf(manifest.videoId, key));
+    if (captionKeys.length > 0) {
+      const captions = deps.captionStorage ?? {
+        isConfigured: () => R2CaptionStorageClient.isConfigured(),
+        deleteCaption: (videoId: string, key: string) => new R2CaptionStorageClient().deleteCaption(videoId, key),
+      };
+      if (!captions.isConfigured()) throw new Error("Private caption storage not configured");
+      const failed: string[] = [];
+      for (const key of captionKeys) await captions.deleteCaption(manifest.videoId, key).catch(() => failed.push(key));
+      if (failed.length > 0) throw new Error(`Caption clean-up failed for ${failed.length} file(s)`);
     }
     return "done";
   };

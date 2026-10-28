@@ -7,7 +7,7 @@ const pipeline = vi.hoisted(() => ({
   purgeVideoStorageStrict: vi.fn(async () => ({ hlsObjects: 1, originals: 1 })),
 }));
 vi.mock("@/lib/modules/video-pipeline", () => pipeline);
-vi.mock("@/lib/modules/media", () => ({ R2ThumbnailStorageClient: { isPublicServingConfigured: () => true } }));
+vi.mock("@/lib/modules/media", async () => ({ ...(await vi.importActual<object>("@/lib/modules/media/domain/protected-caption")), R2ThumbnailStorageClient: { isPublicServingConfigured: () => true }, R2CaptionStorageClient: { isConfigured: () => true } }));
 
 import { createStorageCleanupHandler, enqueueStorageCleanupInTx } from "@/lib/modules/admin-content/application/storage-cleanup-job";
 import { runDurableJobs } from "@/lib/modules/shared/durable-job";
@@ -101,5 +101,48 @@ describe("storage clean-up job", () => {
     const { store, run } = await setup({ purge: vi.fn() }, { nonsense: true });
     expect(await run()).toMatchObject({ retried: 1 });
     expect(store.jobs[0].lastError).toMatch(/Invalid storage clean-up manifest/);
+  });
+
+  describe("private caption files", () => {
+    const VID = "c52f0407-b0e8-4b5c-b6d3-a9f152653002";
+    const KEY = `videos/${VID}/captions/pl-${"a".repeat(64)}.vtt`;
+    const manifest = { videoId: VID, snapshot: { assetKeys: [], originals: [] }, publicKeys: [], captionKeys: [KEY] };
+
+    it("deletes the private caption keys of the manifest (and only keys of this video's caption folder)", async () => {
+      const deleteCaption = vi.fn(async () => undefined);
+      const { store, run } = await setup(
+        { purge: async () => ({ hlsObjects: 0, originals: 0 }), captionStorage: { isConfigured: () => true, deleteCaption } },
+        { ...manifest, captionKeys: [KEY, `videos/${VID}/v/v1/master.m3u8`, `videos/other-video-id/captions/pl-${"a".repeat(64)}.vtt`] },
+      );
+      expect(await run()).toMatchObject({ done: 1 });
+      expect(deleteCaption).toHaveBeenCalledTimes(1);
+      expect(deleteCaption).toHaveBeenCalledWith(VID, KEY);
+      expect(store.jobs[0].status).toBe("DONE");
+    });
+
+    it("retries while the private store refuses, and fails when it is not configured", async () => {
+      const deleteCaption = vi.fn().mockRejectedValueOnce(new Error("503")).mockResolvedValue(undefined);
+      const { store, run } = await setup({ purge: async () => ({ hlsObjects: 0, originals: 0 }), captionStorage: { isConfigured: () => true, deleteCaption } }, manifest);
+      expect(await run()).toMatchObject({ retried: 1 });
+      store.clock.now = store.jobs[0].runAfter;
+      expect(await run()).toMatchObject({ done: 1 });
+
+      const off = await setup({ purge: async () => ({ hlsObjects: 0, originals: 0 }), captionStorage: { isConfigured: () => false, deleteCaption: vi.fn() } }, manifest);
+      expect(await off.run()).toMatchObject({ retried: 1 });
+      expect(off.store.jobs[0].lastError).toMatch(/not configured/);
+    });
+
+    it("a manifest written before captions became private still works", async () => {
+      const { run } = await setup({ purge: async () => ({ hlsObjects: 0, originals: 0 }), publicStorage: { isConfigured: () => true, deletePublic: async () => undefined } });
+      expect(await run()).toMatchObject({ done: 1 });
+    });
+
+    it("enqueues a manifest that has only caption keys", async () => {
+      pipeline.snapshotVideoStorageInTx.mockResolvedValueOnce({ assetKeys: [], originals: [] });
+      const tx = { durableJob: { createMany: vi.fn(async () => ({ count: 1 })), updateMany: vi.fn() } };
+      await enqueueStorageCleanupInTx(tx as never, VID, [], [KEY]);
+      const row = (tx.durableJob.createMany.mock.calls[0] as any)[0].data[0];
+      expect(row.payload).toMatchObject({ videoId: VID, publicKeys: [], captionKeys: [KEY] });
+    });
   });
 });

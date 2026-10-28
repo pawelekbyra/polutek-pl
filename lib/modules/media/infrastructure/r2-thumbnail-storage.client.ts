@@ -134,6 +134,18 @@ export class R2ThumbnailStorageClient {
     return buildPublicThumbnailUrl(publicHost, key);
   }
 
+  /** Reads an object of the public bucket through the S3 API (used by the captions migration). */
+  async getPublic(key: string): Promise<Uint8Array | null> {
+    const bucket = requireEnv("CLOUDFLARE_R2_BUCKET_THUMBNAILS_PUBLIC");
+    try {
+      const result = await makeClient().send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+      return result.Body ? await result.Body.transformToByteArray() : null;
+    } catch (err) {
+      if (isNotFound(err)) return null;
+      throw err;
+    }
+  }
+
   async deletePublic(key: string): Promise<void> {
     const bucket = requireEnv("CLOUDFLARE_R2_BUCKET_THUMBNAILS_PUBLIC");
     await makeClient().send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
