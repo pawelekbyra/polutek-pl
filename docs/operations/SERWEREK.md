@@ -251,7 +251,7 @@ Pliki env opisano w „Sekrety”. Lista zmiennych aplikacji i ich znaczenie: `.
 
 ## 8. Zadania cykliczne
 
-Brak Vercel Crons (`vercel.json` ma pustą tablicę `crons`). Trasy `GET /api/cron/<nazwa>` woła `scripts/serwerek/cron-runner.sh <nazwa>` z nagłówkiem `Authorization: Bearer $CRON_SECRET`
+Brak Vercel Crons (Vercel jest wyłączony, `vercel.json` usunięty). Trasy `GET /api/cron/<nazwa>` woła `scripts/serwerek/cron-runner.sh <nazwa>` z nagłówkiem `Authorization: Bearer $CRON_SECRET`
 (sekret z `/etc/serwerek/cron.env`, przekazany przez stdin do `curl`, więc nie widać go w `ps`); kod HTTP inny niż 2xx daje niezerowy kod wyjścia, a jednostka zostaje `failed`,
 dopóki następny przebieg się nie powiedzie. Szablon: `polutek-cron@.service`. Każdy przebieg zapisuje wiersz `cron:<nazwa>` w `telemetry.job_run`. Godziny w tabeli są w UTC (CEST = UTC+2).
 

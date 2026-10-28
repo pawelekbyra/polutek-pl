@@ -6,7 +6,7 @@ import { NextRequest } from "next/server";
 afterEach(() => vi.unstubAllEnvs());
 
 describe("getClientIp", () => {
-  it("default (Vercel): last x-forwarded-for hop, then x-real-ip, then unknown", () => {
+  it("default: last x-forwarded-for hop, then x-real-ip, then unknown", () => {
     expect(getClientIp(new Headers({ "x-forwarded-for": "9.9.9.9, 4.4.4.4" }))).toBe("4.4.4.4");
     expect(getClientIp(new Headers({ "x-real-ip": "5.5.5.5" }))).toBe("5.5.5.5");
     expect(getClientIp(new Headers())).toBe("unknown");

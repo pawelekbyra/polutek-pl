@@ -7,7 +7,6 @@ export class MediaPolicy {
     return new Set([
       ...parseMediaHosts(env.MEDIA_BUCKET_HOST),
       ...parseMediaHosts(env.NEXT_PUBLIC_R2_PUBLIC_HOST),
-      ...parseMediaHosts(env.NEXT_PUBLIC_BLOB_PUBLIC_HOST),
       ...parseMediaHosts(env.ALLOWED_MEDIA_HOSTS),
     ]);
   }
@@ -81,7 +80,6 @@ export class MediaPolicy {
     const hostname = url.hostname.toLowerCase();
     const allowedAvatarHosts = new Set([
       ...parseMediaHosts(env.ALLOWED_AVATAR_HOSTS),
-      ...parseMediaHosts(env.NEXT_PUBLIC_BLOB_PUBLIC_HOST),
     ]);
 
     return hostname.endsWith('.clerk.com') || allowedAvatarHosts.has(hostname);

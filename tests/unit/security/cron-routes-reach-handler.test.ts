@@ -13,7 +13,7 @@ function cronRouteFiles(dir: string): string[] {
 }
 
 describe('cron routes', () => {
-  it('are public in middleware so Vercel Cron (no Clerk session) reaches the handler', () => {
+  it('are public in middleware so the systemd cron timers (no session) reach the handler', () => {
     expect(middleware).toContain("'/api/cron/(.*)'");
   });
 

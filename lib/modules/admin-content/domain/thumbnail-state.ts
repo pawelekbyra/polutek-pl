@@ -13,7 +13,7 @@ export function thumbnailState(row: Row, env: Record<string, string | undefined>
   const url = row.thumbnailUrl?.trim() || "";
   if (!url || url === "/logo.png") return { kind: "warn", label: "Domyślna", detail: "film nie ma własnej miniatury, strona pokazuje domyślną kanału" };
   const privateKey = parsePrivateThumbnailStorageUrl(url, env);
-  if (!privateKey) return { kind: "info", label: "Stara (Blob)", detail: "miniatura z poprzedniego magazynu; działa przez proxy, nowa trafi do R2" };
+  if (!privateKey) return { kind: "info", label: "Obca", detail: "miniatura spoza naszego magazynu R2; działa przez proxy, nowa trafi do R2" };
   if (row.status !== "PUBLISHED") return { kind: "ok", label: "Własna", detail: "kopia publiczna powstanie przy publikacji" };
   const publicKey = parsePublicThumbnailUrl(row.thumbnailPublicUrl, env);
   if (publicKey === privateKey) return { kind: "ok", label: "Własna", detail: "kopia publiczna aktualna" };
