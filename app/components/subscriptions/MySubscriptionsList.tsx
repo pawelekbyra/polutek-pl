@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { SHOW_SUBSCRIPTION_BELL } from "@/lib/ui-flags";
 import Link from "next/link";
-import { BellOff, BellRing } from "lucide-react";
+import { BellOffIcon, BellRingIcon } from "../icons/MarkerBellIcons";
 import { SafeAvatar } from "@/app/components/SafeAvatar";
 import { useLanguage } from "@/app/components/LanguageContext";
 import { getLocalizedHref } from "@/lib/i18n/routing";
@@ -142,7 +142,7 @@ export default function MySubscriptionsList({ initialRows }: { initialRows: MySu
                   title={bellLabel}
                   className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--chan-line)] text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] disabled:cursor-wait disabled:opacity-50"
                 >
-                  {rowState.notify ? <BellRing size={16} strokeWidth={1.8} /> : <BellOff size={16} strokeWidth={1.8} />}
+                  {rowState.notify ? <BellRingIcon size={16} /> : <BellOffIcon size={16} />}
                 </button>
                 )}
                 <button

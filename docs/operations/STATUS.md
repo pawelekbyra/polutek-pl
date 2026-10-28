@@ -97,8 +97,7 @@ Pomysł pracy agenta bezpośrednio na serwerku bez GitHuba (bundle, własne repo
 1. **2FA i dostęp:** włączyć TOTP albo passkey na swoich kontach (strona, Cloudflare, GitHub, Google, Resend, Stripe, PP Support); zapisać offline
    klucz `serwerek-backups.agekey` (druga kopia, np. w menedżerze haseł); token GitHub `read:packages` do `docker login ghcr.io` na serwerze (SERWEREK.md §24).
 2. ~~Domena `pawelperfect.pl`~~ **Porzucona (decyzja właściciela 2026-10-07):** nie odnawiamy. Nic od niej nie zależy (miniatury są na `thumbs.pawelperfect.com`, baza nie ma żadnego adresu `.pl`); strefa w Cloudflare skasuje się sama około 14.10, domena `pawelperfect.pl` w Resend usunięta 2026-10-07 (za potwierdzeniem właściciela).
-3. **Baza Neon `NEON-krau`** (stara kopia danych testowych): usunąć w panelu Vercel → Storage → `NEON-krau` → Delete (agent nie może: blokada nieodwracalnych
-   usunięć). W tym samym miejscu `upstashpolutek` i `BLOB-krau`.
+3. **Resztki Vercela (decyzja właściciela 2026-10-28: Vercel wyłączony całkowicie).** Kod i baza są czyste (nic nie wskazuje na Vercel). Do zrobienia przez właściciela w panelu Vercel: Storage → `NEON-krau`, `upstashpolutek`, `BLOB-krau` → Delete; potem usunąć projekt `polutek.pl`, unieważnić tokeny i usunąć `BLOB_READ_WRITE_TOKEN` z `app.env` (agent nie może: blokada nieodwracalnych usunięć).
 4. **Start publiczny:** do startu zostaje CPX22; wtedy Workers Paid (5 USD/mies.; na planie darmowym po 100 tys. żądań dziennie wideo nie działa do północy UTC)
    i powiększenie serwera (opcje: sekcja Hetzner niżej). Test obciążenia: [`LOAD-TEST.md`](LOAD-TEST.md) (komfortowo ~8 wizyt/s, granica ~16–17 wizyt/s).
 5. **Analityka bez zgody:** prawnik ocenia przed startem (EDPB 2/2023, art. 399 PKE); wyłącznik `TELEMETRY_BEACON=off`
@@ -188,7 +187,7 @@ Opis, bramki, stan etapów: [`../architecture/multi-creator-platform.md`](../arc
 - Deploy restartuje koder w trakcie kodowania (kodowanie zaczyna od zera).
 - Zrobione 2026-10-05: martwe `MUX_*` usunięte z `app.env`, usługa `serwerek-placeholder` wyłączona, reguły tunelu `test.` i `apptest.` usunięte (kopia konfiguracji: `/root/.ai-secrets/cloudflare-backup/`). Zostały nieszkodliwe resztki: rekordy DNS `test.` i `apptest.` oraz ich aplikacje Cloudflare Access (do usunięcia przy okazji).
 - Zrobione 2026-10-05: usunięte rekordy DNS Clerka (5 w `pawelperfect.com`, 5 w `pawelperfect.pl`; kopie: `/root/.ai-secrets/dns-backup/`). Rekordy Google DKIM usunięte wcześniej; `google-site-verification` zostają do sprawdzenia.
-- Jedna miniatura (`dla-patronow`) nadal idzie przez proxy ze starego Vercel Blob: przenieść do R2, potem usunąć `BLOB_READ_WRITE_TOKEN` i `@vercel/blob`.
+- Miniatura `dla-patronow` jest już w R2 (sprawdzone 2026-10-28), a `@vercel/blob` usunięty z kodu; zostaje martwy `BLOB_READ_WRITE_TOKEN` w `app.env` (usuwa właściciel razem z Blob, pkt 3 wyżej).
 - Około 230 zdalnych gałęzi bez scalonego PR-a: do przejrzenia i skasowania.
 - Pamięć aplikacji rośnie z ruchem (do ~830 MiB przy przeciążeniu): ustawić `NODE_OPTIONS=--max-old-space-size` zgodnie z limitem kontenera (LOAD-TEST.md, rekomendacje).
 

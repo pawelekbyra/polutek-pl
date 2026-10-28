@@ -66,7 +66,7 @@ function validateCurrency(errors: string[], env: EnvRecord, key: string) {
 }
 
 function hasAnyMediaHost(env: EnvRecord) {
-  return ['MEDIA_BUCKET_HOST', 'NEXT_PUBLIC_R2_PUBLIC_HOST', 'NEXT_PUBLIC_BLOB_PUBLIC_HOST', 'ALLOWED_MEDIA_HOSTS']
+  return ['MEDIA_BUCKET_HOST', 'NEXT_PUBLIC_R2_PUBLIC_HOST', 'ALLOWED_MEDIA_HOSTS']
     .some((key) => hasValue(env, key));
 }
 
@@ -93,7 +93,7 @@ export function validateAppEnv(env: EnvRecord = process.env, mode: EnvValidation
     }
 
     if (!hasAnyMediaHost(env)) {
-      errors.push('At least one exact media host allowlist env is required in production: MEDIA_BUCKET_HOST, NEXT_PUBLIC_R2_PUBLIC_HOST, NEXT_PUBLIC_BLOB_PUBLIC_HOST, or ALLOWED_MEDIA_HOSTS.');
+      errors.push('At least one exact media host allowlist env is required in production: MEDIA_BUCKET_HOST, NEXT_PUBLIC_R2_PUBLIC_HOST, or ALLOWED_MEDIA_HOSTS.');
     }
 
     if (!hasWritableRateLimitStore(env)) {

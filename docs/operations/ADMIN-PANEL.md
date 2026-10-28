@@ -48,7 +48,6 @@ Kolejność ma znaczenie; nic z tego nie dzieje się samo.
    CLOUDFLARE_R2_BUCKET_THUMBNAILS_PUBLIC=polutek-thumbnails
    NEXT_PUBLIC_R2_PUBLIC_HOST=thumbs.pawelperfect.pl  # publiczne miniatury i napisy VTT
    ALLOWED_THUMBNAIL_HOSTS=...                        # jak w app.env (podgląd starych miniatur)
-   BLOB_READ_WRITE_TOKEN=...                          # opcjonalnie: 6 starych miniatur z Vercel Blob
    ```
    Oraz jednorazowo CORS bucketa oryginałów z originem panelu (przeglądarka PUT-uje części prosto do R2):
    `npx wrangler r2 bucket cors set polutek --file scripts/hls/originals-cors.json` (plik ma już

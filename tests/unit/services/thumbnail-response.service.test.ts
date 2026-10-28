@@ -5,11 +5,6 @@ import {
   PRIVATE_THUMBNAIL_CACHE_CONTROL,
 } from '@/lib/modules/media/infrastructure/thumbnail-response.service';
 import { MediaPolicy } from '@/lib/modules/media';
-import { get } from '@vercel/blob';
-
-vi.mock('@vercel/blob', () => ({
-  get: vi.fn(),
-}));
 
 const r2Get = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/modules/media/infrastructure/r2-thumbnail-storage.client', () => ({
@@ -76,45 +71,10 @@ describe('ThumbnailResponseService', () => {
     expect(res.headers.get('Cache-Control')).toContain('s-maxage');
   });
 
-  it('streams allowed Vercel Blob URLs using private access', async () => {
-    vi.mocked(MediaPolicy.isAllowedThumbnailUrl).mockReturnValue(true);
-    const blobUrl = 'https://my-store.public.blob.vercel-storage.com/img.webp';
-
-    vi.mocked(get).mockResolvedValue({
-      statusCode: 200,
-      stream: new ReadableStream(),
-      headers: new Headers({ 'Content-Type': 'image/webp', 'Content-Length': '100' }),
-    } as any);
-
-    const res = await ThumbnailResponseService.getThumbnailResponse('v1', blobUrl);
-    expect(res.status).toBe(200);
-    expect(res.headers.get('Content-Type')).toBe('image/webp');
-    expect(get).toHaveBeenCalledWith(blobUrl, { access: 'private' });
-  });
-
-  it('handles Vercel Blob 304 Not Modified', async () => {
-    vi.mocked(MediaPolicy.isAllowedThumbnailUrl).mockReturnValue(true);
-    const blobUrl = 'https://my-store.public.blob.vercel-storage.com/img.webp';
-
-    vi.mocked(get).mockResolvedValue({
-      statusCode: 304,
-      stream: null,
-      headers: new Headers({ 'ETag': '"abc"' }),
-    } as any);
-
-    const res = await ThumbnailResponseService.getThumbnailResponse('v1', blobUrl);
-    expect(res.status).toBe(304);
-    expect(res.headers.get('ETag')).toBe('"abc"');
-  });
-
-  it('returns 502 if Vercel Blob fetch fails', async () => {
-    vi.mocked(MediaPolicy.isAllowedThumbnailUrl).mockReturnValue(true);
-    const blobUrl = 'https://my-store.public.blob.vercel-storage.com/img.webp';
-
-    vi.mocked(get).mockRejectedValue(new Error('Vercel Blob Error'));
-
-    const res = await ThumbnailResponseService.getThumbnailResponse('v1', blobUrl);
-    expect(res.status).toBe(502);
+  it('no longer special-cases legacy Vercel Blob hosts: the policy decides (403 when not allow-listed)', async () => {
+    vi.mocked(MediaPolicy.isAllowedThumbnailUrl).mockReturnValue(false);
+    const res = await ThumbnailResponseService.getThumbnailResponse('v1', 'https://my-store.public.blob.vercel-storage.com/img.webp');
+    expect(res.status).toBe(403);
   });
 
   describe('private R2 thumbnails', () => {

@@ -21,7 +21,7 @@ describe('rate limit store config', () => {
     })).toBe('upstash');
   });
 
-  it('falls back to writable Vercel KV REST envs', () => {
+  it('falls back to the writable KV_REST_API_* envs (srh gateway)', () => {
     const env = {
       NODE_ENV: 'production',
       KV_REST_API_URL: 'https://example-kv.upstash.io',

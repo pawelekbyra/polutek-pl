@@ -19,7 +19,6 @@ const configuredImageHosts = Array.from(new Set([
   ...parseHosts(process.env.ALLOWED_THUMBNAIL_HOSTS),
   ...parseHosts(process.env.ALLOWED_COMMENT_IMAGE_HOSTS),
   ...parseHosts(process.env.NEXT_PUBLIC_R2_PUBLIC_HOST),
-  ...parseHosts(process.env.NEXT_PUBLIC_BLOB_PUBLIC_HOST),
 ]));
 
 // Beta (test version) stage: same rule as lib/site-stage.ts (default ON; NEXT_PUBLIC_SITE_BETA=false at
@@ -28,7 +27,6 @@ const siteIsBeta = !['false', '0', 'no', 'off'].includes((process.env.NEXT_PUBLI
 
 const nextConfig = {
   // Self-hosted container build (deploy/serwerek/Dockerfile) sets NEXT_OUTPUT=standalone.
-  // Unset on Vercel, so the normal build is unchanged.
   ...(process.env.NEXT_OUTPUT === 'standalone' ? { output: 'standalone' } : {}),
   productionBrowserSourceMaps: false,
   // No `X-Powered-By: Next.js` on every response.

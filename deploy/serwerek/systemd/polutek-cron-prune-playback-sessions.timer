@@ -1,5 +1,5 @@
 [Unit]
-Description=polutek cron prune-playback-sessions, daily 05:00 UTC (same as vercel.json)
+Description=polutek cron prune-playback-sessions, daily 05:00 UTC (schedule inherited from the retired Vercel config)
 
 [Timer]
 OnCalendar=*-*-* 05:00:00 UTC
