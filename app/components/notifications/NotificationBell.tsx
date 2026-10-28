@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bell } from "lucide-react";
+import { BellIcon } from "../icons/MarkerBellIcons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -209,7 +209,7 @@ export default function NotificationBell() {
           aria-label={label}
           className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] active:scale-95 motion-reduce:transform-none motion-reduce:transition-none"
         >
-          <Bell className="h-5 w-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+          <BellIcon size={20} className="shrink-0" />
           {unread > 0 && (
             <span
               aria-hidden="true"
