@@ -3,7 +3,7 @@
 import React, { useEffect, useId, useRef, useState, type ComponentType } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
-import { Check, ChevronDown } from "../icons";
+import { Check } from "../icons";
 
 export interface TipSelectOption {
   value: string;
@@ -34,6 +34,18 @@ interface ListPosition {
 /** Label weight: regular in the gate, the checkout sets --field-label-weight once (bold section labels). */
 export const FIELD_LABEL_WEIGHT = "font-[weight:var(--field-label-weight,400)]";
 export const FIELD_LABEL_CLASS = `mb-[var(--field-label-gap,8px)] block text-[13px] leading-[1.55] ${FIELD_LABEL_WEIGHT} text-[var(--chan-body)]`;
+
+/**
+ * The select arrow: a soft chevron (round caps and joins, 2px stroke), not the stemmed down-arrow the icon set's chevron
+ * alias points to. Takes the colour of the text around it.
+ */
+function SoftChevron({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" className={className}>
+      <path d="m7 9.5 5 5 5-5" />
+    </svg>
+  );
+}
 
 const LIST_GAP = 6;
 const EDGE = 8;
@@ -195,10 +207,10 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
           disabled={disabled}
           onClick={toggle}
           onKeyDown={onKeyDown}
-          className="relative inline-flex -mt-2 h-7 -translate-y-[3px] items-center gap-1.5 rounded-full bg-[#eef1f6] px-3 text-[13px] font-bold text-[var(--chan-ink)] before:absolute before:-bottom-1.5 before:-top-2.5 before:inset-x-0 before:content-[''] hover:bg-[#e4e8ef] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] disabled:opacity-50"
+          className="relative inline-flex -mt-2 h-7 -translate-y-[3px] items-center gap-1.5 rounded-full border border-[#9fc3f5] bg-[#d4e7ff] pl-3 pr-2 text-[13px] font-bold text-[var(--chan-ink)] before:absolute before:-bottom-1.5 before:-top-2.5 before:inset-x-0 before:content-[''] hover:border-[var(--chan-blue)] hover:bg-[#c5dcfb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] disabled:opacity-50"
         >
           <span>{selected?.short ?? selected?.title ?? "—"}</span>
-          <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200 motion-reduce:transition-none", open && "rotate-180")} />
+          <SoftChevron className={cn("-mr-0.5 h-4 w-4 shrink-0 text-[var(--chan-blue)] transition-transform duration-200 motion-reduce:transition-none", open && "rotate-180")} />
         </button>
         {position &&
           createPortal(
@@ -270,9 +282,9 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
             <span className="block truncate text-[15px] font-extrabold text-[var(--chan-ink)]">{selected?.title ?? "—"}</span>
             {selected?.hint && <span className="block truncate text-[12px] text-[var(--chan-body)]">{selected.hint}</span>}
           </span>
-          <ChevronDown
+          <SoftChevron
             className={cn(
-              "h-4 w-4 shrink-0 text-[var(--chan-ink)] transition-transform duration-200 motion-reduce:transition-none",
+              "h-5 w-5 shrink-0 text-[var(--chan-blue)] transition-transform duration-200 motion-reduce:transition-none",
               open && "rotate-180",
             )}
           />
