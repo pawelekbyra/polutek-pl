@@ -37,7 +37,12 @@ export async function checkVideoAccess(
     where: isUuid(videoIdOrSlug) ? { id: videoIdOrSlug } : { slug: videoIdOrSlug },
     include: {
         creator: {
-            select: { id: true, slug: true, userId: true, status: true, deletedAt: true }
+            // The asking user's own membership too (audit S18): a manager, editor, moderator or translator
+            // of the video's channel may preview it, not only the owner. Never the whole member list.
+            select: {
+              id: true, slug: true, userId: true, status: true, deletedAt: true,
+              members: { where: { userId: actor.type === 'user' ? actor.userId : '' }, select: { userId: true, role: true } },
+            }
         }
     }
   });
@@ -65,7 +70,7 @@ export async function checkVideoAccess(
   const isStaff = actor.type === 'admin';
   const canPreview = isStaff || (
     actor.type === 'user' && !!channel &&
-    can(toPrincipal(actor), "video.preview", { id: channel.id, ownerUserId: channel.userId, status: channel.status }).allow
+    can(toPrincipal(actor), "video.preview", { id: channel.id, ownerUserId: channel.userId, status: channel.status, members: channel.members ?? [] }).allow
   );
 
   // 3. Channel visibility (any channel, not only the main one)

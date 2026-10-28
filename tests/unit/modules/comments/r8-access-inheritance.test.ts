@@ -25,6 +25,7 @@ describe('R8 Comments Access and Permissions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockPrisma = {
+      channelMember: { findMany: vi.fn().mockResolvedValue([]) },
       comment: {
         findUnique: vi.fn(),
         findMany: vi.fn(),

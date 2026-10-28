@@ -22,6 +22,7 @@ function ctxFor(actor: Actor, channelId?: string) {
       findUnique: vi.fn(async ({ where }: { where: { id: string } }) => (where.id === "r-b" ? { commentId: "c-b" } : where.id === "r-a" ? { commentId: "c-a" } : null)),
       count: vi.fn(async () => 0),
     },
+    channelMember: { findMany: vi.fn().mockResolvedValue([]) },
     $transaction: undefined,
   };
   const ctx = createAppContext({ actor, prisma: prisma as never, channelId, now: () => new Date("2026-10-13T12:00:00Z") }) as AppContext;

@@ -58,6 +58,7 @@ function makeDb(opts: { video?: ReturnType<typeof makeVideo> | null; subscribers
       const staged: Array<Record<string, unknown>> = [];
       const tx = {
         $executeRaw: vi.fn().mockResolvedValue(1),
+        video: { findUnique: vi.fn(async () => video) },
         notification: {
           findMany: vi.fn(async ({ where }: { where: { userId: { in: string[] } } }) =>
             created.filter((n) => where.userId.in.includes(n.userId as string)).map((n) => ({ userId: n.userId })),
@@ -127,6 +128,23 @@ describe("new video fan-out job", () => {
     expect(t.subscriptionQueries.every((q) => q.take === FAN_OUT_PAGE_SIZE)).toBe(true);
     expect(t.subscriptionQueries.map((q) => q.where.userId.gt)).toEqual([undefined, `u${String(FAN_OUT_PAGE_SIZE - 1).padStart(5, "0")}`, `u${String(FAN_OUT_PAGE_SIZE * 2 - 1).padStart(5, "0")}`]);
     expect(t.created.filter((n) => n.titlePl)).toHaveLength(FAN_OUT_PAGE_SIZE * 2 + 200);
+  });
+
+  it("re-checks the video before every page: unlisted mid-run stops the rest and leaves the video unannounced (W21)", async () => {
+    const t = await setup({ subscribers: users(FAN_OUT_PAGE_SIZE * 2 + 10) });
+    // The creator unlists the video right after the first page has been written.
+    let pages = 0;
+    const realTransaction = t.raw.$transaction.getMockImplementation()!;
+    t.raw.$transaction.mockImplementation(async (fn: (x: unknown) => Promise<unknown>) => {
+      const result = await realTransaction(fn);
+      pages += 1;
+      if (pages === 1) (t.video as { status: string }).status = "UNLISTED";
+      return result;
+    });
+    expect(await t.run()).toMatchObject({ done: 1 });
+    expect(t.created.filter((n) => n.titlePl)).toHaveLength(FAN_OUT_PAGE_SIZE);
+    expect(t.video!.premiereNotifiedAt).toBeNull();
+    expect(t.store.jobs[0].status).toBe("DONE");
   });
 
   it("resumes after a crash in the middle: the page in flight is rolled back, the next run continues after the saved cursor, nobody gets two", async () => {

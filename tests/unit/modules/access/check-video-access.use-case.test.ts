@@ -267,6 +267,32 @@ describe('checkVideoAccess Use Case Matrix', () => {
         expect(result.ok && result.data.hasAccess).toBe(true);
     });
 
+    it('lets a member of the video channel preview a draft by the role matrix (audit S18), not members of other channels', async () => {
+      const draft = (members: { userId: string; role: string }[]) => ({
+        ...baseVideo,
+        status: VideoStatus.DRAFT,
+        publishedAt: null,
+        creator: { id: 'other', userId: 'owner-x', status: 'ACTIVE', members },
+      });
+      // video.preview: EDITOR, MANAGER, MODERATOR, TRANSLATOR yes; every role of THIS channel is a member row here.
+      for (const role of ['MANAGER', 'EDITOR', 'MODERATOR', 'TRANSLATOR']) {
+        mockPrisma.video.findFirst.mockResolvedValue(draft([{ userId: 'member-1', role }]));
+        const result = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'member-1' }));
+        expect(result.ok && result.data.hasAccess, role).toBe(true);
+      }
+      // A stranger, and a member of some other channel (the query returns no row for this channel), see nothing.
+      mockPrisma.video.findFirst.mockResolvedValue(draft([]));
+      const stranger = await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'member-of-elsewhere' }));
+      expect(stranger.ok && stranger.data.reason).toBe('NOT_FOUND');
+    });
+
+    it('asks the database for the viewer own membership only, never the member list', async () => {
+      mockPrisma.video.findFirst.mockResolvedValue({ ...baseVideo, creator: { ...baseVideo.creator, userId: 'owner-x', members: [] } });
+      await checkVideoAccess({ videoIdOrSlug: 'v1' }, createCtx({ type: 'user', userId: 'member-1' }));
+      const select = mockPrisma.video.findFirst.mock.calls[0][0].include.creator.select;
+      expect(select.members.where).toEqual({ userId: 'member-1' });
+    });
+
     it('lets the channel owner (and staff) open a draft, nobody else', async () => {
         const draft = {
           ...baseVideo,
