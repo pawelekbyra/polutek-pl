@@ -194,6 +194,8 @@ po zmianie w repo kopiuje się je ręcznie (z kopią poprzedniego pliku: `cp -a 
 
 ### Procedura (z TAKT lub z klonu na serwerku), tylko na zgodę właściciela
 
+Wdrożenia (`deploy.sh`, `deploy-admin.sh`, a w `mergedeploy.sh` także podmiana `src/`) biorą wspólną blokadę `flock` na `/opt/serwerek/apps/polutek/.deploy.lock`; drugie wdrożenie kończy się od razu kodem 75. Wynik `OK (WITH WARNINGS): ... is live` oznacza: strona działa, ale encoder lub kolektor nie wstał albo kontrola gotowości (baza przez `/api/health` z `HEALTHCHECK_TOKEN` z `app.env`, kontenery `redis` i `srh`) coś zgłosiła; ostrzeżenie trafia też do `telemetry.job_run` (status `ok`, szczegół `WITH WARNINGS`), a obraz, którego start się nie udał, nie jest zapisywany jako bieżący. Czyszczenie obrazów nie usuwa żadnego obrazu wskazywanego przez pliki `.current-*` i `.previous-*`.
+
 Przed wdrożeniem z migracjami uruchom `/opt/serwerek/scripts/backup.sh` i sprawdź `fail=0` w `/var/log/serwerek/backup.log` (tak zrobiono 2026-10-05 przed `d47e3861`; poprzednie `src/` zachowano w `/root/src-before-d47e3861-*`). Kolejność przy zmianach schematu: migracja (`deploy.sh`) → obraz strony → obraz panelu (`deploy-admin.sh`).
 
 ```bash
@@ -303,6 +305,8 @@ Ręczny przebieg: `systemctl start polutek-cron@premiere-notifications.service`,
 
 - **lokalnie** w `/opt/serwerek/backups` (katalog 700, pliki 600), rotacja 7 dni: `pg-<kontener>-<ts>.sql.gz` (`pg_dumpall` każdego działającego kontenera Postgresa: `polutek-db-1` i `pp-support-db-1`),
   `configs-<ts>.tar.gz` (apps, docs, scripts, cron.d, nasze jednostki systemd; BEZ plików env, `*.bak*`, `*.log`, `src/`), `pp-support-storage-<ts>.tar.gz` (załączniki PP Support).
+  `manifest-<ts>.txt` (nazwa, rozmiar i SHA-256 każdego pliku przebiegu, `complete=yes|no`; szyfrowany i wysyłany razem z resztą).
+  Lista wymaganych baz: `BACKUP_REQUIRED_DBS` (domyślnie `polutek-db-1 pp-support-db-1`, można ustawić w `backup.env`). Zatrzymany lub brakujący wymagany kontener, pusty (< `BACKUP_MIN_DUMP_BYTES`, domyślnie 200 B) lub uszkodzony zrzut albo brak `configs-<ts>.tar.gz` kończą przebieg `fail=1` i kodem 1. Nieudany przebieg kasuje tylko pliki starsze niż 14 dni (udany: 7 dni).
   Zrzuty przedwdrożeniowe `pre-deploy-*.sql.gz` rotuje `deploy.sh` (10 ostatnich);
 - **poza serwerem** w prywatnym buckecie R2 `serwerek-backups` wyłącznie pliki zaszyfrowane `age` kluczem publicznym właściciela (`AGE_RECIPIENT` w `/etc/serwerek/backup.env`),
   plus `secrets-<ts>.tar.gz.age` ze wszystkimi plikami env, tokenem tunelu i katalogiem `secrets/` (sekrety nigdy nie leżą w kopii jawnie). Po wysyłce `rclone check` (rozmiar i MD5). Nic niezaszyfrowanego nie jest wysyłane;
