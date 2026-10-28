@@ -104,7 +104,7 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
       {notice && <p className={styles.noticeWarn} role="alert">{notice}</p>}
 
       <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} />
-      <PassSellerCard tx={tx} language={language} />
+      <PassSellerCard tx={tx} />
     </>
   );
 }
@@ -117,7 +117,7 @@ export function PassPayHead({ heading, tx, ...summary }: { heading: React.ReactN
         {heading}
         <PassOrderSummary tx={tx} {...summary} compact />
       </div>
-      <PassSellerCard tx={tx} language={summary.language} compact />
+      <PassSellerCard tx={tx} compact />
     </>
   );
 }
@@ -146,7 +146,7 @@ export function PassMethodStep({ tx, language, offer, product, currency, methods
       {notice && <p className={styles.noticeWarn} role="alert">{notice}</p>}
 
       <PassOrderSummary tx={tx} language={language} offer={offer} product={product} currency={currency} />
-      <PassSellerCard tx={tx} language={language} />
+      <PassSellerCard tx={tx} />
     </>
   );
 }

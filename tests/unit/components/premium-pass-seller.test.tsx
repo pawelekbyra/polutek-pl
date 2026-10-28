@@ -16,7 +16,7 @@ afterEach(() => {
 
 describe('seller card', () => {
   it('shows the NBSP-protected name and the registry line, and no NIP by default', () => {
-    render(<PassSellerCard tx={txFor('pl')} language="pl" />);
+    render(<PassSellerCard tx={txFor('pl')} />);
     const card = screen.getByRole('region', { name: 'Sprzedawca' });
     // The label is on its own row and the company name (bold) on the next one, so the name never breaks away from it.
     expect(card.querySelector('span')?.textContent).toBe('Sprzedawca:');
@@ -28,12 +28,12 @@ describe('seller card', () => {
 
   it('shows the NIP only when one is configured', () => {
     PATRON_SELLER.nip = '1234567890';
-    render(<PassSellerCard tx={txFor('pl')} language="pl" />);
+    render(<PassSellerCard tx={txFor('pl')} />);
     expect(screen.getByRole('region', { name: 'Sprzedawca' })).toHaveTextContent('Spółka zarejestrowana w Polsce, NIP: 1234567890');
   });
 
   it('the info button toggles the extra paragraph with aria-expanded / aria-controls', () => {
-    render(<PassSellerCard tx={txFor('pl')} language="pl" />);
+    render(<PassSellerCard tx={txFor('pl')} />);
     const button = screen.getByRole('button', { name: 'Informacje o sprzedawcy' });
     expect(button).toHaveAttribute('aria-expanded', 'false');
     const note = document.getElementById(button.getAttribute('aria-controls')!)!;
@@ -48,7 +48,7 @@ describe('seller card', () => {
 
   it('the compact variant (step 3) drops the registry line and keeps the info button', () => {
     PATRON_SELLER.nip = '1234567890';
-    render(<PassSellerCard tx={txFor('pl')} language="pl" compact />);
+    render(<PassSellerCard tx={txFor('pl')} compact />);
     const card = screen.getByRole('region', { name: 'Sprzedawca' });
     expect(card).toHaveTextContent('Sprzedawca: Paweł Perfect S.Ą.');
     expect(card).not.toHaveTextContent('Spółka zarejestrowana');
@@ -56,7 +56,7 @@ describe('seller card', () => {
   });
 
   it('speaks English too', () => {
-    render(<PassSellerCard tx={txFor('en')} language="en" />);
+    render(<PassSellerCard tx={txFor('en')} />);
     expect(screen.getByRole('region', { name: 'Seller' })).toHaveTextContent('Company registered in Poland');
   });
 });

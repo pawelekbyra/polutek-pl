@@ -269,8 +269,6 @@
 .sellerCardNoteOpen { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows 220ms ease, visibility 0s; }
 .sellerCardNote > div { min-height: 0; overflow: hidden; }
 .sellerCardNote p { margin: 0; padding: 10px 6px 0 0; font-size: 13px; line-height: 1.45; color: var(--chan-body, #344054); }
-.sellerCardNote a { color: var(--chan-blue, #2563eb); text-decoration: underline; text-underline-offset: 2px; }
-.sellerCardNote p:last-child { padding-top: 4px; }
 .sellerCardCompact { padding-top: 6px; padding-bottom: 6px; }
 .sellerCardCompact .sellerCardRow { gap: 10px; }
 .sellerCardCompact .sellerCardIcon { width: 20px; height: 20px; }
