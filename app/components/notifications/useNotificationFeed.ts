@@ -19,7 +19,7 @@ export function useNotificationFeed(open: boolean, language: string) {
   const [countReady, setCountReady] = useState(false);
   const [unread, setUnread] = useState(0);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "error">("loading");
   const [loadingMore, setLoadingMore] = useState(false);
   const [writeError, setWriteError] = useState(false);
   const [writing, setWriting] = useState(false);

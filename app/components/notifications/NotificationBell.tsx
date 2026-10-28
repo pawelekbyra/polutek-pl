@@ -77,7 +77,7 @@ export default function NotificationBell() {
       : tx("Powiadomienia", "Notifications");
   const badge = unread > 99 ? "99+" : String(unread);
   const itemClassName =
-    "flex min-h-14 w-full items-start gap-3 rounded-xl px-3 py-3 text-left text-[13px] text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--chan-blue)] active:bg-[var(--chan-line)] motion-reduce:transition-none";
+    "flex min-h-14 w-full items-start gap-3 rounded-xl px-3 py-3 text-left text-[13px] text-[var(--chan-ink)] transition-colors hover:bg-[var(--chan-surface)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--chan-focus-ring)] active:bg-[var(--chan-line)] motion-reduce:transition-none";
   const actionClassName =
     "min-h-11 justify-center rounded-xl px-3 py-2 text-[13px] font-semibold text-[var(--chan-muted)] hover:text-[var(--chan-ink)] focus:bg-[var(--chan-surface)] focus:text-[var(--chan-ink)]";
 
@@ -165,11 +165,11 @@ export default function NotificationBell() {
               <>
                 <NotificationIcon type={n.type} unread={!n.read} />
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span className={`break-words text-[14px] leading-snug ${n.read ? "font-medium" : "font-bold"}`}>
+                  <span className={`line-clamp-2 [overflow-wrap:anywhere] text-[14px] leading-snug ${n.read ? "font-medium" : "font-bold"}`}>
                     {n.title}
                     {!n.read && <span className="sr-only"> ({tx("nieprzeczytane", "unread")})</span>}
                   </span>
-                  {n.body && <span className="line-clamp-2 break-words text-[12px] leading-snug text-[var(--chan-muted)]">{n.body}</span>}
+                  {n.body && <span className="line-clamp-2 [overflow-wrap:anywhere] text-[12px] leading-snug text-[var(--chan-muted)]">{n.body}</span>}
                   <time dateTime={n.createdAt} title={new Date(n.createdAt).toLocaleString(language, { dateStyle: "medium", timeStyle: "short" })} className={`text-[11px] ${n.read ? "text-[var(--chan-muted)]" : "font-semibold text-[var(--chan-blue)]"}`}>
                     {formatNotificationAge(n.createdAt, language, now)}
                   </time>
@@ -193,7 +193,7 @@ export default function NotificationBell() {
             );
           })}
 
-          {writeError && <p role="alert" className="px-3 py-2 text-[13px] text-red-600">{tx("Nie udało się zapisać odczytu powiadomień. Spróbuj ponownie.", "Could not save read notifications. Please try again.")}</p>}
+          {writeError && <p role="alert" className="px-3 py-2 text-[13px] text-[var(--chan-ink)]">{tx("Nie udało się zapisać odczytu powiadomień. Spróbuj ponownie.", "Could not save read notifications. Please try again.")}</p>}
           {nextCursor && <DropdownMenuSeparator className="mx-2 my-1 bg-[var(--chan-line)]" />}
           {nextCursor && (
             <DropdownMenuItem closeOnClick={false} disabled={loadingMore || writing} onClick={() => void loadMore()} className={actionClassName}>
