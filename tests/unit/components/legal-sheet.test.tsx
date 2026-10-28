@@ -153,7 +153,8 @@ describe('legal sheet in the patron checkout', () => {
     const dialog = await sheet(TERMS);
     expect(parent).toHaveAttribute('data-base-ui-inert');
     expect(dialog).not.toHaveAttribute('data-base-ui-inert');
-    expect(document.activeElement && dialog.contains(document.activeElement)).toBe(true); // focus moved into the sheet (its title)
+    // Focus moves into the sheet (its title) a moment after it mounts: wait for it instead of asserting at once (flaky under load).
+    await waitFor(() => expect(document.activeElement && dialog.contains(document.activeElement)).toBe(true));
   });
 
   it('step 2: both footer links open their documents in the sheet', async () => {
