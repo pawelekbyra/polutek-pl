@@ -14,6 +14,12 @@
 #   app.env    runtime env of the app (DATABASE_URL, BETTER_AUTH_SECRET, GOOGLE_*, TURNSTILE_*, STRIPE_*, CRON_SECRET, TRUST_CF_CONNECTING_IP=true ...)
 #   db.env     POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB
 #   build.env  PUBLIC build args only: NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY, NEXT_PUBLIC_R2_PUBLIC_HOST ...
+# Lock: .deploy.lock (flock) shared with deploy-admin.sh; a second deploy exits 75 at once. scripts/ops/mergedeploy.sh takes
+#   the lock itself before it replaces ./src and passes it on with DEPLOY_LOCK_HELD=1 (fd 9 inherited).
+# Outcome: "OK: <image> is live" = app healthy and encoder/collector running (or not configured). "OK (WITH WARNINGS): ..."
+#   = app live, but encoder/collector did not start, or the readiness check failed; the warning is also in telemetry.job_run
+#   (status ok, detail "... WITH WARNINGS ..."; the table allows only running|ok|fail) and a failed worker/collector start does
+#   NOT promote that image to .current-*-image.
 # State: .current-image / .previous-image (image refs). --rollback restores CODE only, never the schema. Migrations were additive until
 # 20261005210000_cleanup_dead_schema (destructive): after such a migration the previous image may select dropped columns and fail,
 # so roll back by restoring the pre-deploy dump (docs/architecture/db-cleanup-2026-10-05.md).
@@ -31,7 +37,7 @@ BACKUP_KEEP="${BACKUP_KEEP:-10}"
 log() { printf '[deploy %s] %s\n' "$(date -u +%H:%M:%S)" "$*"; }
 # Every deploy outcome lands in telemetry.job_run as "deploy" (the change axis of the admin panel); best effort.
 record_deploy() { # $1 = ok|fail, $2 = detail
-  local common=/opt/serwerek/scripts/common.sh
+  local common="${SERWEREK_COMMON:-/opt/serwerek/scripts/common.sh}"   # override: tests
   if [[ -r "$common" ]]; then
     # shellcheck disable=SC1090
     . "$common"
@@ -40,6 +46,13 @@ record_deploy() { # $1 = ok|fail, $2 = detail
   return 0
 }
 die() { log "ERROR: $*" >&2; record_deploy fail "$*"; exit 1; }
+# One deploy at a time (src, compose and .current-* are shared). Not a failure of a deploy, so no telemetry row.
+if [[ "${DEPLOY_LOCK_HELD:-}" != "1" ]]; then
+  exec 9>.deploy.lock
+  flock -n 9 || { log "another deploy is already running (lock $PWD/.deploy.lock); try again when it finishes" >&2; exit 75; }
+fi
+warnings=()
+START_SETTLE="${START_SETTLE:-5}"
 
 tag="${1:-}"; [[ -n "$tag" ]] || die "usage: $0 <tag> [--rollback]"
 mode="${2:-deploy}"
@@ -67,34 +80,89 @@ wait_healthy() { # $1 = image ref (for logs)
 
 start_app() { APP_IMAGE="$1" docker compose up -d --no-deps app; }
 
+# After "compose up" a container can still exit or crash-loop: check it is really running after a short settle time.
+service_running() { # $1 = compose service
+  local cid
+  sleep "$START_SETTLE"
+  cid="$(docker compose ps -q "$1" 2>/dev/null || true)"
+  [[ -n "$cid" && "$(docker inspect -f '{{.State.Status}}' "$cid" 2>/dev/null || true)" == "running" ]]
+}
+
 # pp-collector (analytics beacons -> schema "telemetry") is optional and best-effort like the encoder: it runs only
 # when collector.env exists (docs/operations/SERWEREK.md, "Telemetria") and never fails or rolls back an app deploy.
+# Return: 0 running, 1 failed to start / not running (the caller warns), 2 not configured (collector.env missing).
 start_collector() { # $1 = collector image ref
-  [[ -f collector.env ]] || { log "collector.env missing, collector not started (see docs/architecture/admin-telemetry.md)"; return 0; }
-  docker image inspect "$1" >/dev/null 2>&1 || { log "collector image $1 missing, collector not started"; return 0; }
-  if COLLECTOR_IMAGE="$1" docker compose up -d --no-deps collector; then log "collector running on $1"; else log "WARN: collector failed to start on $1"; fi
+  [[ -f collector.env ]] || { log "collector.env missing, collector not started (see docs/architecture/admin-telemetry.md)"; return 2; }
+  docker image inspect "$1" >/dev/null 2>&1 || { log "WARN: collector image $1 missing, collector not started"; return 1; }
+  if COLLECTOR_IMAGE="$1" docker compose up -d --no-deps collector && service_running collector; then
+    log "collector running on $1"
+  else
+    log "WARN: collector failed to start or is not running on $1"; return 1
+  fi
 }
 
 # The video encoder (own HLS pipeline) is optional and best-effort: it only runs when worker.env exists, and a failure
-# here never fails or rolls back an app deploy. A running job is handed back to the queue when the container stops.
+# here never fails or rolls back an app deploy (it does turn the outcome into "OK (WITH WARNINGS)").
+# A running job is handed back to the queue when the container stops. Return codes as start_collector.
 start_encoder() { # $1 = worker image ref
-  [[ -f worker.env ]] || { log "worker.env missing, encoder not started (see docs/operations/VIDEO-PIPELINE.md)"; return 0; }
-  docker image inspect "$1" >/dev/null 2>&1 || { log "worker image $1 missing, encoder not started"; return 0; }
+  [[ -f worker.env ]] || { log "worker.env missing, encoder not started (see docs/operations/VIDEO-PIPELINE.md)"; return 2; }
+  docker image inspect "$1" >/dev/null 2>&1 || { log "WARN: worker image $1 missing, encoder not started"; return 1; }
   mkdir -p /opt/serwerek/data/video-work && chown 1000:1000 /opt/serwerek/data/video-work 2>/dev/null || true
-  if ENCODER_IMAGE="$1" docker compose up -d --no-deps encoder; then log "encoder running on $1"; else log "WARN: encoder failed to start on $1"; fi
+  if ENCODER_IMAGE="$1" docker compose up -d --no-deps encoder && service_running encoder; then
+    log "encoder running on $1"
+  else
+    log "WARN: encoder failed to start or is not running on $1"; return 1
+  fi
+}
+
+# Post-deploy readiness (best effort, warnings only): database reachable from the app (needs HEALTHCHECK_TOKEN in app.env;
+# the token goes to curl through stdin, never on a command line) and redis + srh containers running (rate limits, auth counters).
+readiness_check() {
+  local token body svc cid
+  token="$(grep -E '^HEALTHCHECK_TOKEN=' app.env 2>/dev/null | tail -n 1 | cut -d= -f2- | tr -d '"\r' || true)"
+  if [[ -n "$token" ]]; then
+    body="$(printf 'header = "x-health-token: %s"\n' "$token" | curl -sS -m 10 -K - http://127.0.0.1:3000/api/health 2>/dev/null || true)"
+    if grep -Eq '"database"[[:space:]]*:[[:space:]]*"ok"' <<<"$body"; then
+      log "readiness: database reachable from the app"
+    else
+      log "WARN: readiness: app does not report a reachable database"; warnings+=("readiness: database not confirmed by /api/health")
+    fi
+  else
+    log "readiness: HEALTHCHECK_TOKEN missing in app.env, database probe skipped"
+  fi
+  for svc in redis srh; do
+    cid="$(docker compose ps -q "$svc" 2>/dev/null || true)"
+    if [[ -z "$cid" ]]; then log "readiness: $svc not defined or not created in this compose project, skipped"; continue; fi
+    if [[ "$(docker inspect -f '{{.State.Status}}' "$cid" 2>/dev/null || true)" == "running" ]]; then
+      log "readiness: $svc running"
+    else
+      log "WARN: readiness: $svc is not running (rate limits and auth counters need it; start: docker compose up -d $svc)"; warnings+=("$svc not running")
+    fi
+  done
 }
 
 if [[ "$mode" == "--rollback" ]]; then
   prev="$(cat .previous-image 2>/dev/null || true)"; [[ -n "$prev" ]] || die "no previous image recorded"
   log "rollback to $prev"
-  start_app "$prev"; wait_healthy "$prev" || die "rollback image is not healthy either"
+  { start_app "$prev" && wait_healthy "$prev"; } || die "rollback image is not healthy either"
   cp .current-image .rolled-back-from 2>/dev/null || true
   printf '%s' "$prev" > .current-image
   prev_worker="$(cat .previous-worker-image 2>/dev/null || true)"
-  if [[ -n "$prev_worker" ]]; then start_encoder "$prev_worker"; printf '%s' "$prev_worker" > .current-worker-image; fi
+  if [[ -n "$prev_worker" ]]; then
+    rc=0; start_encoder "$prev_worker" || rc=$?
+    if (( rc == 1 )); then warnings+=("encoder not running on $prev_worker"); else printf '%s' "$prev_worker" > .current-worker-image; fi
+  fi
   prev_collector="$(cat .previous-collector-image 2>/dev/null || true)"
-  if [[ -n "$prev_collector" ]]; then start_collector "$prev_collector"; printf '%s' "$prev_collector" > .current-collector-image; fi
-  record_deploy ok "rollback to $prev"
+  if [[ -n "$prev_collector" ]]; then
+    rc=0; start_collector "$prev_collector" || rc=$?
+    if (( rc == 1 )); then warnings+=("collector not running on $prev_collector"); else printf '%s' "$prev_collector" > .current-collector-image; fi
+  fi
+  if (( ${#warnings[@]} )); then
+    log "WARN: rollback to $prev done WITH WARNINGS: ${warnings[*]}"
+    record_deploy ok "rollback to $prev WITH WARNINGS: ${warnings[*]}"
+  else
+    record_deploy ok "rollback to $prev"
+  fi
   exit 0
 fi
 
@@ -129,7 +197,7 @@ docker compose up -d db
 for _ in $(seq 1 30); do [[ "$(docker inspect -f '{{.State.Health.Status}}' "$(docker compose ps -q db)" 2>/dev/null)" == "healthy" ]] && break; sleep 2; done
 # The dump holds e-mails, password hashes, encrypted 2FA secrets and payments: root-only (dir 700, files 600),
 # whatever the shell's umask. Only the last BACKUP_KEEP pre-deploy dumps are kept.
-backups=/opt/serwerek/backups
+backups="${BACKUP_DIR:-/opt/serwerek/backups}"   # same variable as scripts/serwerek/backup.sh; override: tests
 dump="$backups/pre-deploy-$tag-$(date -u +%Y%m%dT%H%M%S).sql.gz"
 log "pre-deploy dump -> $dump"
 (
@@ -145,31 +213,43 @@ MIGRATOR_IMAGE="$migrator_image" docker compose --profile tools run --rm migrate
 
 # 3. Restart app on the new image, wait for health, roll back on failure.
 log "starting app on $new_image"
-start_app "$new_image"
-if wait_healthy "$new_image"; then
+# A failing "compose up" itself (port, network, mount) must reach the rollback below, so it is part of the condition.
+if start_app "$new_image" && wait_healthy "$new_image"; then
   if [[ "$prev_image" != "$new_image" ]]; then
     [[ -n "$prev_image" ]] && printf '%s' "$prev_image" > .previous-image
     printf '%s' "$new_image" > .current-image
   fi
   # Keep the last N app/migrator images for rollbacks, drop the rest and dangling layers.
   # Encoder next to the app (after the app is healthy, so a broken worker image never delays the site).
+  # A start that failed is a warning and does NOT promote the image to .current-*-image (the state keeps the last version
+  # that was known to run); "not configured" (no worker.env / collector.env) keeps the old behaviour.
   prev_worker="$(cat .current-worker-image 2>/dev/null || true)"
-  start_encoder "$worker_image"
-  if [[ "$prev_worker" != "$worker_image" ]]; then
+  rc=0; start_encoder "$worker_image" || rc=$?
+  if (( rc == 1 )); then
+    warnings+=("encoder not running on $worker_image")
+  elif [[ "$prev_worker" != "$worker_image" ]]; then
     [[ -n "$prev_worker" ]] && printf '%s' "$prev_worker" > .previous-worker-image
     printf '%s' "$worker_image" > .current-worker-image
   fi
   prev_collector="$(cat .current-collector-image 2>/dev/null || true)"
-  start_collector "$collector_image"
-  if [[ "$prev_collector" != "$collector_image" ]]; then
+  rc=0; start_collector "$collector_image" || rc=$?
+  if (( rc == 1 )); then
+    warnings+=("collector not running on $collector_image")
+  elif [[ "$prev_collector" != "$collector_image" ]]; then
     [[ -n "$prev_collector" ]] && printf '%s' "$prev_collector" > .previous-collector-image
     printf '%s' "$collector_image" > .current-collector-image
   fi
+  readiness_check
+  # Never remove an image that a state file points at (current or previous, of any service), nor this deploy's images.
+  protected=" $new_image $migrator_image $worker_image $collector_image $prev_image "
+  for state_file in .current-image .previous-image .current-worker-image .previous-worker-image .current-collector-image .previous-collector-image; do
+    protected+="$(cat "$state_file" 2>/dev/null || true) "
+  done
   for repo in polutek-app polutek-migrator polutek-worker polutek-collector; do
     docker images "$repo" --format '{{.Tag}}' | grep -v '^current$' | tail -n +$((KEEP_IMAGES + 1)) | while read -r t; do
-      [[ "$repo:$t" == "$new_image" || "$repo:$t" == "$prev_image" ]] && continue
+      [[ "$protected" == *" $repo:$t "* ]] && continue
       docker rmi "$repo:$t" >/dev/null 2>&1 || true
-    done
+    done || true   # best effort: no tag to remove (grep finds nothing) must not fail a finished deploy
   done
   docker image prune -f >/dev/null 2>&1 || true
   # Build cache grows by GBs per build on this 75 GB disk (44 GB on 2026-10-04): keep a bounded warm cache.
@@ -186,16 +266,21 @@ if wait_healthy "$new_image"; then
         && log "docs synced to /opt/serwerek/docs"
     } || log "WARN: docs sync failed (ignored)"
   fi
-  record_deploy ok "live on $new_image"
-  log "OK: $new_image is live"
+  if (( ${#warnings[@]} )); then
+    record_deploy ok "live on $new_image WITH WARNINGS: ${warnings[*]}"
+    log "OK (WITH WARNINGS): $new_image is live, but: ${warnings[*]}"
+  else
+    record_deploy ok "live on $new_image"
+    log "OK: $new_image is live"
+  fi
   exit 0
 fi
 
-log "new image did not become healthy in ${HEALTH_TIMEOUT}s; last logs:"
+log "new image failed to start or did not become healthy in ${HEALTH_TIMEOUT}s; last logs:"
 docker compose logs --tail 40 app >&2 || true
 if [[ -n "$prev_image" ]] && docker image inspect "$prev_image" >/dev/null 2>&1; then
   log "rolling back to $prev_image"
-  start_app "$prev_image"
-  wait_healthy "$prev_image" && die "deploy of $tag FAILED, rolled back to $prev_image" || die "deploy of $tag FAILED and rollback to $prev_image is NOT healthy"
+  if start_app "$prev_image" && wait_healthy "$prev_image"; then die "deploy of $tag FAILED, rolled back to $prev_image"; fi
+  die "deploy of $tag FAILED and rollback to $prev_image is NOT healthy"
 fi
 die "deploy of $tag FAILED and there is no previous image to roll back to"

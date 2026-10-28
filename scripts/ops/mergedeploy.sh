@@ -84,6 +84,10 @@ state=$(gh pr view "$PR" --json state --jq .state); echo "PR: $state"
 
 git fetch -q origin main
 full="${TAG}\$(date +%m%d%H%M)"
-git archive origin/main | ssh serwerek "cd /opt/serwerek/apps/polutek && rm -rf src && mkdir src && tar -x -C src && (nohup ./deploy.sh ${full} > deploy-${TAG}.log 2>&1 < /dev/null &); sleep 1; echo deploy-started"
-ssh serwerek "until grep -qE 'OK: polutek-app|FAILED|migration failed|\] ERROR: ' /opt/serwerek/apps/polutek/deploy-${TAG}.log; do sleep 10; done; grep -E '^\[deploy' /opt/serwerek/apps/polutek/deploy-${TAG}.log | tail -2"
+# Remote lock (.deploy.lock, the same file deploy.sh / deploy-admin.sh flock): taken BEFORE ./src is replaced and handed to
+# deploy.sh through the inherited fd 9 (DEPLOY_LOCK_HELD=1), so two deploys never share src or the .current-* files.
+git archive origin/main | ssh serwerek "cd /opt/serwerek/apps/polutek && exec 9>.deploy.lock && { flock -n 9 || { echo 'deploy-busy: inny deploy trwa (.deploy.lock)'; exit 75; }; } && rm -rf src && mkdir src && tar -x -C src && (DEPLOY_LOCK_HELD=1 nohup ./deploy.sh ${full} > deploy-${TAG}.log 2>&1 < /dev/null &); sleep 1; echo deploy-started"
+rc=${PIPESTATUS[1]}
+[ "$rc" -eq 0 ] || { echo "deploy nie wystartowal (ssh/blokada, kod $rc); main jest scalony, wdroz pozniej"; exit 4; }
+ssh serwerek "until grep -qE 'OK: polutek-app|OK \(WITH WARNINGS\): polutek-app|FAILED|migration failed|\] ERROR: ' /opt/serwerek/apps/polutek/deploy-${TAG}.log; do sleep 10; done; grep -E '^\[deploy' /opt/serwerek/apps/polutek/deploy-${TAG}.log | tail -2"
 curl -s -o /dev/null -w "www %{http_code}\n" https://www.pawelperfect.com/en
