@@ -986,20 +986,7 @@
     animation: mc-hero-in .24s var(--mc-ease-out);
     cursor:pointer;
     -webkit-tap-highlight-color: transparent;
-    position:relative; isolation:isolate;
   }
-  /* The big play / replay mark stands out of any picture with a soft frosted halo: the picture behind it is blurred and
-     dimmed in a disc whose edge fades out (a radial mask), so there is no ring, no border and no hard edge (owner
-     2026-10-28: no frame, but a blurred background so the icon reads on bright frames too). */
-  .mc-hero::before {
-    content:""; position:absolute; inset:-22px; z-index:-1; border-radius:50%; pointer-events:none;
-    background: radial-gradient(circle, rgba(8,10,16,.62) 0%, rgba(8,10,16,.46) 48%, rgba(8,10,16,.2) 66%, rgba(8,10,16,0) 78%);
-    -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2);
-    -webkit-mask-image: radial-gradient(circle, #000 0%, #000 52%, transparent 74%);
-    mask-image: radial-gradient(circle, #000 0%, #000 52%, transparent 74%);
-    transition: opacity .2s var(--mc-ease);
-  }
-  @media (hover:hover) { .mc-hero:hover::before { opacity:.88; } }
   @keyframes mc-hero-in { from { opacity:0; transform: scale(.9); } }
   @media (hover:hover) { .mc-hero:hover { transform: scale(1.06); } }
   .mc-hero:active { transform: scale(.96); }
@@ -1008,7 +995,9 @@
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 0 0 2px rgba(255,255,255,.92), 0 0 0 4px var(--chan-blue);
   }
 
-  .mc-hero-icon { display:block; width:48px; height:48px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.45)); }
+  /* A very light white glow that follows the SHAPE of the mark (a blurred contour of the icon, no disc behind it), plus a barely
+     there shadow so it still reads on bright frames (owner 2026-10-28: subtle, not a halo). */
+  .mc-hero-icon { display:block; width:48px; height:48px; filter: drop-shadow(0 0 3px rgba(255,255,255,.38)) drop-shadow(0 0 9px rgba(255,255,255,.2)) drop-shadow(0 1px 4px rgba(0,0,0,.22)); }
 
   .mc-spinner {
     display:grid; place-items:center;
