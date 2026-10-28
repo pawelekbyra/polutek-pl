@@ -1,7 +1,7 @@
 /**
  * Single source of truth for "who is calling" (rate limits, audit log).
  *
- * Default (Vercel): the LAST X-Forwarded-For hop, then X-Real-IP. Vercel appends the
+ * Default: the LAST X-Forwarded-For hop, then X-Real-IP. The trusted proxy appends the
  * real client address, so the first hop is client-controlled and must not be trusted.
  *
  * Self-hosted behind a Cloudflare Tunnel (see docs/operations/SERWEREK.md): set

@@ -164,7 +164,7 @@ export async function updateAdminVideo(
   // gets copied there. Runs before the old private object is deleted below.
   await syncPublicThumbnail(updated, ctx);
 
-  // Cleanup old cover if it was replaced and it was our owned storage (R2 or Blob)
+  // Cleanup old cover if it was replaced and it was our owned storage (private R2 bucket)
   if (safeInput.thumbnailUrl && existing.thumbnailUrl && safeInput.thumbnailUrl !== existing.thumbnailUrl) {
     await MediaStorageService.deleteOwnedThumbnail(existing.thumbnailUrl);
   }

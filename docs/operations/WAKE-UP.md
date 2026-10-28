@@ -282,7 +282,7 @@ Service token Access `support-mail-ingest` wygasa po roku (**2027-10-02**; `SUPP
 ### 3.5 Scenariusz C: Cloudflare od zera (tylko streszczenie)
 
 Kolejność, jeśli konto/strefa przepadły: (1) nowa strefa i serwery nazw w rejestratorze, (2) tunel (`cloudflared tunnel create` albo API `cfd_tunnel`) i ingress z tabeli 3.2, (3) DNS wg 3.1 z kopii w `dns-backup/` (poczta: `DNS_BACKUP_mail_2026-10-02.md` jako wzór, ale rekordy DKIM SES/Resend/Postmark trzeba wystawić od nowa u dostawców), (4) Access: aplikacje i polityka wg `ADMIN-PANEL.md` rozdz. 1 i `SERWEREK.md` „Jak dodać hostname”, nowy `CF_ACCESS_AUD` do `admin.env`, (5) R2: buckety i CORS (zawartość oryginałów/HLS jest utracona, jeśli bucketów nie ma: rozdz. 10), (6) Workery z 3.3, (7) Email Routing, (8) Turnstile (nowe klucze `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY`), (9) zmiana RP ID kluczy dostępu użytkowników przy zmianie domeny (`CLAUDE.md` §4.12: klucze są związane z `pawelperfect.com`).
-Adresy miniatur w bazie są pełnymi adresami S3 konta R2 (`thumbnails-r2.md`): nowe konto R2 wymaga ich przepisania (`scripts/migrate-thumbnails-to-r2.ts` jest dla Vercel Blob, nie dla zmiany konta: **DO POTWIERDZENIA**).
+Adresy miniatur w bazie są pełnymi adresami S3 konta R2 (`thumbnails-r2.md`): nowe konto R2 wymaga ich przepisania (skryptu do zmiany konta R2 nie ma: **DO POTWIERDZENIA**).
 
 ## 4. Budowa i wdrożenie aplikacji
 

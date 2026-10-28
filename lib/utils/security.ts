@@ -35,7 +35,6 @@ export function generateCSP({ embeddable = false }: CspOptions = {}) {
   const configuredMediaHosts = [
     ...parseMediaHosts(process.env.MEDIA_BUCKET_HOST),
     ...parseMediaHosts(process.env.NEXT_PUBLIC_R2_PUBLIC_HOST),
-    ...parseMediaHosts(process.env.NEXT_PUBLIC_BLOB_PUBLIC_HOST),
     ...parseMediaHosts(process.env.ALLOWED_MEDIA_HOSTS),
   ];
 
@@ -50,7 +49,6 @@ export function generateCSP({ embeddable = false }: CspOptions = {}) {
     'img.clerk.com',
     ...parseMediaHosts(process.env.ALLOWED_COMMENT_IMAGE_HOSTS),
     ...parseMediaHosts(process.env.ALLOWED_THUMBNAIL_HOSTS),
-    ...parseMediaHosts(process.env.NEXT_PUBLIC_BLOB_PUBLIC_HOST),
     // Public thumbnails of published videos are served straight from the public R2 bucket.
     'thumbs.pawelperfect.com',
     ...parseMediaHosts(process.env.NEXT_PUBLIC_R2_PUBLIC_HOST),

@@ -1,5 +1,5 @@
 [Unit]
-Description=polutek cron stripe-reconciliation, every 15 minutes (vercel.json had it dropped on Hobby)
+Description=polutek cron stripe-reconciliation, every 15 minutes (never ran on Vercel Hobby)
 
 [Timer]
 OnCalendar=*-*-* *:00/15:00 UTC

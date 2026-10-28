@@ -19,7 +19,7 @@ Oznaczenia: **DO POTWIERDZENIA** = informacja z dokumentów repo, której nie sp
 | **Postmark** | rezerwa dostawcy poczty | skonfigurowany, nieużywany | `POSTMARK_SERVER_TOKEN`, `POSTMARK_WEBHOOK_*` (jeśli ustawione) | nic |
 | **Google** | klient OAuth logowania (One Tap), Workspace (do anulowania), Gmail właściciela | stan niejasny | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | logowanie Google przestaje działać (hasło i klucz dostępu zostają) |
 | **Rejestratory domen** | `pawelperfect.com` (Cloudflare Registrar), `pawelperfect.pl` (home.pl, porzucona) | patrz rozdz. 3 | konsole rejestratorów | wygaśnięcie `.com` = śmierć projektu (adres, poczta, klucze dostępu) |
-| **Vercel, Neon, Clerk, Mux, Cloudflare Stream, Upstash** | wycofane (rozdz. 4) | odcięte, resztki do usunięcia | `BLOB_READ_WRITE_TOKEN` (jedna miniatura) | nic produkcyjnego poza jedną miniaturą |
+| **Vercel, Neon, Clerk, Mux, Cloudflare Stream, Upstash** | wycofane (rozdz. 4) | odcięte, kod i baza bez odwołań (2026-10-28), resztki do usunięcia w panelu | martwy `BLOB_READ_WRITE_TOKEN` w `app.env` (nic go nie czyta) | nic |
 
 Konta „centralne”, bez których nie odzyskasz reszty (rozdz. 5): skrzynka `pawel.perfect@gmail.com`, komputer właściciela (klucz SSH, folder sekretów), klucz prywatny `age`.
 
@@ -122,8 +122,8 @@ Część konta Cloudflare (2.1). Widżet chroni rejestrację, logowanie i reset 
 
 | Usługa | Status | Co jeszcze zostało |
 |---|---|---|
-| **Vercel** | odcięty; projekt `polutek.pl` wstrzymany (zespół `pawelperfect-5617s-projects`) | magazyny `NEON-krau`, `upstashpolutek`, `BLOB-krau` do usunięcia przez właściciela w panelu Vercel (agent nie może: blokada nieodwracalnych usunięć) |
-| **Vercel Blob** | używany jeszcze przez jedną miniaturę (`dla-patronow`) | `BLOB_READ_WRITE_TOKEN` w `app.env`; po przeniesieniu miniatury do R2 usunąć token i `@vercel/blob` (`STATUS.md`) |
+| **Vercel** | wyłączony całkowicie (decyzja właściciela 2026-10-28); projekt `polutek.pl` wstrzymany (zespół `pawelperfect-5617s-projects`) | magazyny `NEON-krau`, `upstashpolutek`, `BLOB-krau` do usunięcia przez właściciela w panelu Vercel (agent nie może: blokada nieodwracalnych usunięć) |
+| **Vercel Blob** | wyłączony z kodu (`@vercel/blob` usunięty); w bazie zero adresów Vercela (2026-10-28), miniatura `dla-patronow` jest w R2 | magazyn `BLOB-krau` w panelu Vercel i `BLOB_READ_WRITE_TOKEN` w `app.env` do usunięcia przez właściciela (`STATUS.md` pkt 3) |
 | **Neon** | wycofany; baza produkcyjna to lokalny Postgres | projekt `restless-glade-19830690` z danymi testowymi czeka na usunięcie przez właściciela |
 | **Clerk** | wycofany; rekordy DNS usunięte 2026-10-05 | instancja Clerk może jeszcze istnieć (koszt/limity): **DO POTWIERDZENIA**; identyfikatory użytkowników w bazie mają format Clerk (`user_...`), to tylko ID |
 | **Mux**, **Cloudflare Stream**, **YouTube**, **Vimeo** | wycofane (`MUX_*` usunięte z `app.env` 2026-10-05) | czy w koncie Cloudflare nie ma aktywnej subskrypcji Stream: **DO POTWIERDZENIA**; klucze w `secrets.full-from-pc.env` |

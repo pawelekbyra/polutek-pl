@@ -58,7 +58,7 @@ describe('isDerivedThumbnailUrl', () => {
     expect(isDerivedThumbnailUrl('/api/videos/v1/thumbnail', process.env)).toBe(true);
     expect(isDerivedThumbnailUrl(publicUrl(KEY), process.env)).toBe(true);
     expect(isDerivedThumbnailUrl(privateUrl(KEY), process.env)).toBe(false);
-    expect(isDerivedThumbnailUrl('https://abc.public.blob.vercel-storage.com/x.webp', process.env)).toBe(false);
+    expect(isDerivedThumbnailUrl('https://old.example.com/x.webp', process.env)).toBe(false);
     expect(isDerivedThumbnailUrl('/logo.png', process.env)).toBe(false);
     expect(isDerivedThumbnailUrl('', process.env)).toBe(false);
     expect(isDerivedThumbnailUrl(null, process.env)).toBe(false);

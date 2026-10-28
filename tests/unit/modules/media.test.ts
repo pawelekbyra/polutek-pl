@@ -5,7 +5,6 @@ describe('Media Module', () => {
   const env = {
     MEDIA_BUCKET_HOST: 'media.example.com',
     ALLOWED_MEDIA_HOSTS: 'cdn.example.com',
-    NEXT_PUBLIC_BLOB_PUBLIC_HOST: 'blob.example.com',
     ALLOWED_AVATAR_HOSTS: 'avatars.com',
   };
 
@@ -72,7 +71,6 @@ describe('Media Module', () => {
       expect(MediaPolicy.isAllowedAvatarUrl('https://img.clerk.com/abc', env)).toBe(true);
       expect(MediaPolicy.isAllowedAvatarUrl('https://any.clerk.com/abc', env)).toBe(true);
       expect(MediaPolicy.isAllowedAvatarUrl('https://avatars.com/me.jpg', env)).toBe(true);
-      expect(MediaPolicy.isAllowedAvatarUrl('https://blob.example.com/me.jpg', env)).toBe(true);
     });
 
     it('should block unauthorized avatar hosts', () => {

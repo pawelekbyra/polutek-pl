@@ -63,8 +63,8 @@ describe('resolvePublicThumbnailSrc', () => {
     expect(resolvePublicThumbnailSrc({ ...published, thumbnailPublicUrl: null }, env)).toBe('/api/videos/v1/thumbnail');
   });
 
-  it('keeps legacy Blob thumbnails and unconfigured environments on the proxy', () => {
-    expect(resolvePublicThumbnailSrc({ ...published, thumbnailUrl: 'https://x.public.blob.vercel-storage.com/a.webp' }, env)).toBe('/api/videos/v1/thumbnail');
+  it('keeps foreign-host thumbnails and unconfigured environments on the proxy', () => {
+    expect(resolvePublicThumbnailSrc({ ...published, thumbnailUrl: 'https://old.example.com/a.webp' }, env)).toBe('/api/videos/v1/thumbnail');
     expect(resolvePublicThumbnailSrc(published, {})).toBe('/api/videos/v1/thumbnail');
   });
 });

@@ -14,7 +14,7 @@ afterEach(() => {
 
 describe("next/image remote hosts (SEC-08)", () => {
   it("lets the optimizer fetch only our thumbnail host and legacy avatars, never wildcards or demo hosts", async () => {
-    for (const name of ["ALLOWED_THUMBNAIL_HOSTS", "ALLOWED_COMMENT_IMAGE_HOSTS", "NEXT_PUBLIC_R2_PUBLIC_HOST", "NEXT_PUBLIC_BLOB_PUBLIC_HOST"]) {
+    for (const name of ["ALLOWED_THUMBNAIL_HOSTS", "ALLOWED_COMMENT_IMAGE_HOSTS", "NEXT_PUBLIC_R2_PUBLIC_HOST"]) {
       vi.stubEnv(name, "");
     }
     const hosts = (await loadPatterns()).map((p) => p.hostname).sort();
@@ -22,9 +22,9 @@ describe("next/image remote hosts (SEC-08)", () => {
   });
 
   it("adds an explicitly configured host, https only", async () => {
-    vi.stubEnv("NEXT_PUBLIC_BLOB_PUBLIC_HOST", "abc.public.blob.vercel-storage.com");
+    vi.stubEnv("ALLOWED_THUMBNAIL_HOSTS", "cdn.example.com");
     const patterns = await loadPatterns();
-    expect(patterns.map((p) => p.hostname)).toContain("abc.public.blob.vercel-storage.com");
+    expect(patterns.map((p) => p.hostname)).toContain("cdn.example.com");
     expect(patterns.every((p) => p.protocol === "https" && !p.hostname.includes("*"))).toBe(true);
   });
 });

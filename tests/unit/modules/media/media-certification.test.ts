@@ -5,7 +5,6 @@ import { isBlockedPrivateHostname, isSafeLocalPath } from '@/lib/modules/media/d
 describe('Media Module Certification', () => {
   const env = {
     MEDIA_BUCKET_HOST: 'media.polutek.pl',
-    NEXT_PUBLIC_BLOB_PUBLIC_HOST: 'blob.polutek.pl',
     ALLOWED_MEDIA_HOSTS: 'external.com',
     ALLOWED_THUMBNAIL_HOSTS: 'thumbnails.com',
     ALLOWED_AVATAR_HOSTS: 'avatars.com',
