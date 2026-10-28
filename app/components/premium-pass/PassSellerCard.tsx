@@ -44,7 +44,7 @@ export function PassSellerCard({ tx, language, compact }: { tx: Tx; language: Lo
       <div className={cn(styles.sellerCardNote, open && styles.sellerCardNoteOpen)} id={noteId}>
         <div>
           <p>{tx("Zakupu dokonujesz od sprzedawcy wskazanego powyżej. Dane do faktury i kontakt znajdziesz w Regulaminie.", "You are buying from the seller named above. Invoice details and contact are in the Terms.")}</p>
-          <p><LegalLink doc="passTerms" language={language}>{tx("Regulamin strefy patrona", "Patron Zone Terms")}</LegalLink></p>
+          <p><LegalLink doc="terms" language={language}>{tx("Regulamin", "Terms")}</LegalLink></p>
         </div>
       </div>
     </section>

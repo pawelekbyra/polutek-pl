@@ -54,7 +54,7 @@ export function PassConsent({
             tx,
             "Akceptuję {0} i {1}.",
             "I accept the {0} and the {1}.",
-            <LegalLink doc="passTerms" language={language}>{tx("Regulamin strefy patrona", "Patron Zone Terms")}</LegalLink>,
+            <LegalLink doc="terms" language={language}>{tx("Regulamin", "Terms")}</LegalLink>,
             <LegalLink doc="privacy" language={language}>{tx("Politykę prywatności", "Privacy Policy")}</LegalLink>,
           )}
         </label>

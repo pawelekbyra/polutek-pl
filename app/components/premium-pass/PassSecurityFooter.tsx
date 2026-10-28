@@ -32,7 +32,7 @@ function PassFooterLine({ tx, demo, language, links }: { tx: Tx; demo: boolean; 
     return (
       <p className={styles.secureFooter} data-secure-footer="" data-legal-footer="">
         <span className={styles.legalRow}>
-          <LegalLink doc="passTerms" language={language}>{tx("Regulamin", "Terms")}</LegalLink>
+          <LegalLink doc="terms" language={language}>{tx("Regulamin", "Terms")}</LegalLink>
           {" "}{tx("i", "and")}{" "}
           <LegalLink doc="privacy" language={language}>{tx("Polityka prywatności", "Privacy Policy")}</LegalLink>
         </span>
