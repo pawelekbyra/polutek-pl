@@ -55,6 +55,26 @@ export const publicVideoOrderBy: Prisma.VideoOrderByWithRelationInput[] = [
   { createdAt: 'desc' },
 ];
 
+/**
+ * Columns no public list item reads (W03): the descriptions (the open video's one is loaded on its own), the search
+ * text, chapters, subtitles and internal moderation and pipeline bookkeeping. One list for the home list and the
+ * channel page.
+ */
+export const publicVideoListOmit = {
+  description: true,
+  descriptionEn: true,
+  searchText: true,
+  chapters: true,
+  subtitleUrlPl: true,
+  subtitleUrlEn: true,
+  moderationReason: true,
+  moderationChangedAt: true,
+  publishAfterAssetReadyError: true,
+  premiereNotifiedAt: true,
+  activeOriginalId: true,
+  activePlaybackRouteId: true,
+} as const;
+
 export class VideoContentService {
   /**
    * Returns only PUBLIC and PUBLISHED videos for sitemap indexing.
@@ -123,8 +143,9 @@ export class VideoContentService {
         title: getCanonicalVideoTitle(video),
         titleEn: video.titleEn,
         slug: video.slug,
-        description: video.description,
-        descriptionEn: video.descriptionEn,
+        // The list queries leave the descriptions out (W03): the key is then absent (not null), which the UI reads as
+        // "not loaded yet" and fetches for the open video only (getPublicVideoDetail).
+        ...('description' in video ? { description: video.description, descriptionEn: video.descriptionEn } : {}),
         thumbnailUrl: resolvePublicThumbnailSrc(video, process.env),
         duration: video.duration,
         tier: toVideoAccessTier(video.tier),
@@ -194,28 +215,18 @@ export class VideoContentService {
           ...(await buildPublicVideoWhere()),
           showInSidebar: true,
         },
-        // Columns no public list item reads (W03): the search text, chapters, subtitles and internal moderation and
-        // pipeline bookkeeping are not loaded for every video of the list.
-        omit: {
-          searchText: true,
-          chapters: true,
-          subtitleUrlPl: true,
-          subtitleUrlEn: true,
-          moderationReason: true,
-          moderationChangedAt: true,
-          publishAfterAssetReadyError: true,
-          premiereNotifiedAt: true,
-          activeOriginalId: true,
-          activePlaybackRouteId: true,
-        },
+        omit: publicVideoListOmit,
+        // Only the channel fields a list item shows (not the whole channel row once per video).
         include: {
           creator: {
-            include: {
-              user: {
-                select: { imageUrl: true, email: true }
-              }
-            }
-          }
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              subscribersCount: true,
+              user: { select: { imageUrl: true } },
+            },
+          },
         },
         orderBy: publicVideoOrderBy
       });
@@ -278,6 +289,29 @@ export class VideoContentService {
       console.error("[GET_PUBLIC_VIDEO_BY_ID_OR_SLUG_ERROR]", e);
       return null;
     }
+  }
+
+  /**
+   * The description of one video the public may open by link (the same visibility rule as getPublicVideoByIdOrSlug),
+   * or null. The home list carries no descriptions (W03): the open video's one is read here.
+   */
+  static async getPublicVideoDetail(idOrSlug: string): Promise<{ id: string; description: string | null; descriptionEn: string | null } | null> {
+    const key = idOrSlug.trim();
+    if (!key || key.length > 200) return null;
+    const video = await prisma.video.findFirst({
+      where: { OR: [{ id: key }, { slug: key }] },
+      select: {
+        id: true,
+        description: true,
+        descriptionEn: true,
+        status: true,
+        publishedAt: true,
+        moderationStatus: true,
+        creator: { select: { status: true, deletedAt: true } },
+      },
+    });
+    if (!video || !isVideoPubliclyVisible(video as any)) return null;
+    return { id: video.id, description: video.description, descriptionEn: video.descriptionEn };
   }
 
   static async getMainFeaturedVideo(): Promise<PublicVideoDTO | null> {

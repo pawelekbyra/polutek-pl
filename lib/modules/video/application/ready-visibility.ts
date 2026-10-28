@@ -1,10 +1,13 @@
 import type { AppContext } from "@/lib/modules/shared/app-context";
 
 /**
- * What a video becomes when it publishes itself after processing ("publish when ready"): PUBLISHED (default) or
- * UNLISTED. The video table has no column for it (the flag `publishAfterAssetReady` only says "do it"), so the
- * choice is kept as a small per-video setting that lives only while the auto-publication is pending and is removed
- * when it completes, is cancelled or the video is deleted. A missing or unknown value means PUBLISHED.
+ * What a video becomes when it publishes itself after processing ("publish when ready"): PUBLISHED or UNLISTED.
+ * The choice is stored in `Video.publishAfterAssetReadyVisibility`, written in the same statement/transaction as the
+ * flag `publishAfterAssetReady`. NULL means "unknown" and never means PUBLISHED: the auto-publication then stops.
+ *
+ * Legacy: before that column existed the choice lived in a loose `AppSetting` row (`video_ready_visibility:<id>`,
+ * present only for UNLISTED). Pending jobs created in that format are still honoured by `resolveReadyVisibility`
+ * (an UNLISTED row wins); the row is deleted when the auto-publication ends.
  */
 export type ReadyVisibility = "PUBLISHED" | "UNLISTED";
 
@@ -12,30 +15,30 @@ export function readyVisibilityKey(videoId: string): string {
   return `video_ready_visibility:${videoId}`;
 }
 
-export function parseReadyVisibility(value: string | null | undefined): ReadyVisibility {
-  return value === "UNLISTED" ? "UNLISTED" : "PUBLISHED";
+/** Strict: anything other than the two known values is `null` (unknown), never PUBLISHED. */
+export function parseReadyVisibility(value: string | null | undefined): ReadyVisibility | null {
+  return value === "UNLISTED" || value === "PUBLISHED" ? value : null;
 }
 
-export async function getReadyVisibility(videoId: string, ctx: Pick<AppContext, "prisma">): Promise<ReadyVisibility> {
-  const row = await ctx.prisma.appSetting.findUnique({ where: { key: readyVisibilityKey(videoId) }, select: { value: true } });
-  return parseReadyVisibility(row?.value);
+/**
+ * Target visibility of a pending auto-publication, or `null` when it cannot be determined. Throws when the legacy
+ * lookup fails (callers must treat that as "do not publish now").
+ */
+export async function resolveReadyVisibility(
+  video: { id: string; publishAfterAssetReadyVisibility?: string | null },
+  ctx: Pick<AppContext, "prisma">,
+): Promise<ReadyVisibility | null> {
+  const typed = parseReadyVisibility(video.publishAfterAssetReadyVisibility);
+  if (typed) return typed;
+  const row = await ctx.prisma.appSetting.findUnique({ where: { key: readyVisibilityKey(video.id) }, select: { value: true } });
+  return row?.value === "UNLISTED" ? "UNLISTED" : null;
 }
 
-/** `PUBLISHED` removes the setting (it is the default); `UNLISTED` stores it. Best effort: never throws. */
-export async function setReadyVisibility(videoId: string, visibility: ReadyVisibility, ctx: Pick<AppContext, "prisma">): Promise<void> {
-  const key = readyVisibilityKey(videoId);
-  try {
-    if (visibility === "PUBLISHED") {
-      await ctx.prisma.appSetting.deleteMany({ where: { key } });
-      return;
-    }
-    await ctx.prisma.appSetting.upsert({ where: { key }, create: { key, value: "UNLISTED" }, update: { value: "UNLISTED" } });
-  } catch {
-    // The video keeps the default (PUBLISHED on auto-publication would be wrong for UNLISTED, so callers that
-    // need the value verify with getReadyVisibility before relying on it).
-  }
-}
-
+/** Removes the legacy AppSetting row. Best effort: never throws (the typed column is the source of truth). */
 export async function clearReadyVisibility(videoId: string, ctx: Pick<AppContext, "prisma">): Promise<void> {
-  await setReadyVisibility(videoId, "PUBLISHED", ctx);
+  try {
+    await ctx.prisma.appSetting.deleteMany({ where: { key: readyVisibilityKey(videoId) } });
+  } catch {
+    // A stale legacy row is harmless: it is only read while the typed column is NULL and the flag is pending.
+  }
 }

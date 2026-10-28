@@ -66,6 +66,14 @@ export type PublicCreatorPageDTO = PublicCreatorDTO & {
   videos: PublicVideoDTO[];
 };
 
+/**
+ * A public channel page's header data: the channel itself without its video list (W04). `videoCount` is the number of
+ * its public videos (counted by the database, not by loading them); `about.totalViews` their summed views.
+ */
+export type PublicCreatorHeaderDTO = Omit<PublicCreatorPageDTO, 'videos'> & {
+  videoCount: number;
+};
+
 export interface PublicVideoDTO {
   id: string;
   creatorId: string;

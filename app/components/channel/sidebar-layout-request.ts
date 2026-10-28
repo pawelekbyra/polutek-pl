@@ -11,6 +11,8 @@ export type SidebarLayoutSection = {
   type: "FREE" | "LOGGED_IN" | "UPCOMING" | "ANNOUNCEMENT";
   title: string;
   items: SidebarLayoutItem[];
+  /** The whole section's size when only a window of it is in `items` (absent = items is all of it). */
+  total?: number;
 };
 
 export type SidebarLayout = {
@@ -71,6 +73,25 @@ async function fetchSidebarLayout(
     if (controller.signal.aborted) return { status: "aborted" };
     logger.error("Failed to fetch sidebar layout", err);
     return { status: "error" };
+  }
+}
+
+/**
+ * The next page of one section ("More"). Not shared or cached: it follows a click, and the viewer is checked by the
+ * caller when it lands. Null on any failure.
+ */
+export async function fetchSidebarSectionPage(
+  type: SidebarLayoutSection["type"],
+  offset: number,
+): Promise<SidebarLayoutSection | null> {
+  try {
+    const res = await fetch(`/api/channel/sidebar?section=${type}&offset=${offset}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    const data: SidebarLayout = await res.json();
+    return data.sections.find((section) => section.type === type) ?? null;
+  } catch (err) {
+    logger.error("Failed to fetch the next sidebar page", err);
+    return null;
   }
 }
 

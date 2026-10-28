@@ -97,7 +97,9 @@ const Hero: React.FC<HeroProps> = ({ video, initialInteraction, initialIsSubscri
   const [isExpanded, setIsExpanded] = useState(false);
   const displayTitle = getVideoDisplayTitle(video, language);
   const [localViewsCount, setLocalViewsCount] = useState(video.views || 0);
-  const displayDescription = (language !== 'pl' && video.descriptionEn) ? video.descriptionEn : (video.description || t.noDescription);
+  // `description === undefined` = not loaded yet (the list carries none, useVideoDescription fetches it): show nothing
+  // rather than "no description" until it arrives.
+  const displayDescription = (language !== 'pl' && video.descriptionEn) ? video.descriptionEn : (video.description || (video.description === undefined ? '' : t.noDescription));
 
   useEffect(() => {
     setMounted(true);

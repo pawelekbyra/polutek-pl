@@ -1,11 +1,12 @@
 import { AppContext } from "@/lib/modules/shared/app-context";
 import { recordAuditEvent } from "@/lib/modules/audit";
+import { logger } from "@/lib/logger";
 import { publishAdminVideo } from "./publish-admin-video.use-case";
 import { MainChannelService } from "@/lib/modules/channel";
 import { VideoRepository } from "../infrastructure/video.repository";
 import { VideoPolicy } from "../domain/video.policy";
 import { unlistAdminVideo } from "./unlist-admin-video.use-case";
-import { getReadyVisibility, setReadyVisibility, type ReadyVisibility } from "./ready-visibility";
+import { resolveReadyVisibility, type ReadyVisibility } from "./ready-visibility";
 
 export async function requestPublishAfterAssetReady(videoId: string, ctx: AppContext, visibility: ReadyVisibility = "PUBLISHED"): Promise<void> {
   const now = new Date();
@@ -19,6 +20,8 @@ export async function requestPublishAfterAssetReady(videoId: string, ctx: AppCon
         publishAfterAssetReadyRequestedAt: current.publishAfterAssetReadyRequestedAt || now,
         publishAfterAssetReadyCompletedAt: null,
         publishAfterAssetReadyError: null,
+        // Same transaction as the flag: a failed write aborts the whole request.
+        publishAfterAssetReadyVisibility: visibility,
       },
     });
     if (!current.publishAfterAssetReady) {
@@ -30,7 +33,6 @@ export async function requestPublishAfterAssetReady(videoId: string, ctx: AppCon
       }, tx);
     }
   });
-  await setReadyVisibility(videoId, visibility, ctx);
 }
 
 export async function attemptPublishAfterAssetReady(videoId: string, ctx: AppContext, triggerProvider?: string): Promise<void> {
@@ -39,7 +41,7 @@ export async function attemptPublishAfterAssetReady(videoId: string, ctx: AppCon
 
   const current = await videoDelegate.findUnique({
     where: { id: videoId },
-    select: { id: true, status: true, publishAfterAssetReady: true, publishAfterAssetReadyCompletedAt: true },
+    select: { id: true, status: true, publishAfterAssetReady: true, publishAfterAssetReadyCompletedAt: true, publishAfterAssetReadyVisibility: true, publishAfterAssetReadyError: true },
   });
   if (!current?.publishAfterAssetReady || current.publishAfterAssetReadyCompletedAt || current.status === "PUBLISHED" || current.status === "UNLISTED") return;
 
@@ -62,9 +64,21 @@ export async function attemptPublishAfterAssetReady(videoId: string, ctx: AppCon
   }
 
   // "Niepubliczny" was chosen at creation: it becomes UNLISTED through the same blockers, never PUBLISHED.
-  // A failed read must not fall back to PUBLISHED: an unlisted video would leak onto the lists. Wait and retry.
-  const target = await getReadyVisibility(videoId, ctx).catch(() => null);
-  if (!target) return;
+  // Unknown target (legacy row without data, or a failed read) must never fall back to PUBLISHED: an unlisted video
+  // would leak onto the lists. Stop here (the video stays a draft) and say so; the creator can publish by hand.
+  const target = await resolveReadyVisibility(current, ctx).catch((error) => {
+    logger.error("[AUTO_PUBLISH_VISIBILITY_READ_ERROR] Cannot read the target visibility; publication postponed", { videoId, error });
+    return "ERROR" as const;
+  });
+  if (target === "ERROR") return; // transient: retried on the next trigger
+  if (!target) {
+    const message = "Brak zapisanej docelowej widoczności po kodowaniu; automatyczna publikacja wstrzymana. Opublikuj film ręcznie.";
+    logger.error("[AUTO_PUBLISH_VISIBILITY_MISSING] Target visibility unknown; auto-publication stopped", { videoId });
+    if (current.publishAfterAssetReadyError !== message) {
+      await videoDelegate.update({ where: { id: videoId }, data: { publishAfterAssetReadyError: message } }).catch(() => undefined);
+    }
+    return;
+  }
   const result = target === "UNLISTED" ? await unlistAdminVideo(videoId, ctx) : await publishAdminVideo(videoId, ctx);
   if (result.ok) {
     await recordAuditEvent(ctx, {

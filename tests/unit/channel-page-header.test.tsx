@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 
-const { getCreatorBySlug, creatorFindUnique } = vi.hoisted(() => ({
-  getCreatorBySlug: vi.fn(),
-  creatorFindUnique: vi.fn(),
+const { getChannelHeader, getChannelVideosPage } = vi.hoisted(() => ({
+  getChannelHeader: vi.fn(),
+  getChannelVideosPage: vi.fn(),
 }));
 
 vi.mock("@/app/components/Navbar", () => ({ default: () => <nav data-testid="navbar" /> }));
@@ -24,12 +24,14 @@ vi.mock("@/lib/modules/users", () => ({ getOrCreateCurrentUser: vi.fn() }));
 vi.mock("@/lib/channel/main-channel.service", () => ({
   MainChannelService: { getConfiguredSlug: () => "polutek" },
 }));
+vi.mock("@/lib/modules/channel/application/channel-page.loader", () => ({
+  getChannelHeaderCached: getChannelHeader,
+}));
 vi.mock("@/lib/modules/channel/infrastructure/creator-content.service", () => ({
-  CreatorContentService: { getCreatorBySlug },
+  CreatorContentService: { getChannelVideosPage },
 }));
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    creator: { findUnique: creatorFindUnique },
     subscription: { findUnique: vi.fn() },
   },
 }));
@@ -43,8 +45,8 @@ async function render(locale: "pl" | "en" = "pl") {
 
 describe("/[locale]/channel/[slug] header", () => {
   beforeEach(() => {
-    creatorFindUnique.mockResolvedValue({ subscribersCount: 7, displaySubscribersCount: null });
-    getCreatorBySlug.mockResolvedValue({
+    getChannelVideosPage.mockResolvedValue([]);
+    getChannelHeader.mockResolvedValue({
       id: "creator-1",
       name: "Paweł Perfect",
       slug: "polutek",
@@ -53,7 +55,7 @@ describe("/[locale]/channel/[slug] header", () => {
       // A legacy cover value still sitting in the database must not reach the page.
       bannerUrl: "https://example.com/old-cover.jpg",
       subscribersCount: 7,
-      videos: [],
+      videoCount: 0,
     });
   });
 
@@ -78,8 +80,7 @@ describe("/[locale]/channel/[slug] header", () => {
   });
 
   it("shows the uploaded banner above the header and an About tab with links, stats and opt-in contact", async () => {
-    creatorFindUnique.mockResolvedValueOnce({ subscribersCount: 12500, displaySubscribersCount: null });
-    getCreatorBySlug.mockResolvedValueOnce({
+    getChannelHeader.mockResolvedValueOnce({
       id: "creator-1",
       name: "Paweł Perfect",
       slug: "polutek",
@@ -93,7 +94,7 @@ describe("/[locale]/channel/[slug] header", () => {
         joinedAt: "2025-03-04T00:00:00.000Z",
         totalViews: 2500,
       },
-      videos: [],
+      videoCount: 0,
     });
 
     const html = await render("en");
@@ -117,15 +118,16 @@ describe("/[locale]/channel/[slug] header", () => {
   });
 
   it("labels the video count in English on the English page", async () => {
-    getCreatorBySlug.mockResolvedValueOnce({
+    getChannelHeader.mockResolvedValueOnce({
       id: "creator-1",
       name: "Paweł Perfect",
       slug: "polutek",
       imageUrl: null,
       bio: null,
       subscribersCount: 7,
-      videos: [{ id: "v1", title: "Film 1", creatorId: "creator-1" }],
+      videoCount: 1,
     });
+    getChannelVideosPage.mockResolvedValueOnce([{ id: "v1", title: "Film 1", creatorId: "creator-1" }]);
 
     const html = await render("en");
 
