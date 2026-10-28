@@ -150,7 +150,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                   className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-3.5 text-[var(--chan-ink)]"
                   aria-label={searchLabel}
                 >
-                  <Search className="h-5 w-5 shrink-0" strokeWidth={1.8} />
+                  <Search className="h-5 w-5 shrink-0 text-[var(--chan-ink)]" strokeWidth={2} />
                 </button>
               </div>
             </form>
@@ -188,7 +188,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                     className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-3.5 text-[var(--chan-ink)]"
                     aria-label={searchLabel}
                   >
-                    <Search className="h-5 w-5 shrink-0" strokeWidth={1.8} />
+                    <Search className="h-5 w-5 shrink-0 text-[var(--chan-ink)]" strokeWidth={2} />
                   </button>
                 </div>
               </form>
@@ -213,7 +213,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                   aria-expanded={isMobileSearchOpen}
                   className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95"
                 >
-                  <Search className="h-5 w-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                  <Search className="h-5 w-5 shrink-0 text-[var(--chan-ink)]" strokeWidth={2} aria-hidden="true" />
                 </button>
               </div>
 

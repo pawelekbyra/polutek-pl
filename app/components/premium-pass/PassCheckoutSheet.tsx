@@ -102,6 +102,9 @@ export interface PassCheckoutSheetProps {
 
 export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId, onWatch, watchLabel }: PassCheckoutSheetProps) {
   const { tx, language } = useLanguage();
+  // Start the dialog closed even when its host mounts it open, so Base UI runs the entry transition.
+  const [dialogReady, setDialogReady] = useState(false);
+  useEffect(() => setDialogReady(true), []);
   const { user } = useUser();
   const ids = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -202,7 +205,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
     setStage({ kind: "plan" });
     void fetchPassStatus("checkout").then((status) => {
       if (cancelledRef.current) return;
-      if (status?.pass.state === "active") setAccess({ lifetime: status.pass.lifetime, expiresAt: status.pass.expiresAt });
+      if (!testMode && status?.pass.state === "active") setAccess({ lifetime: status.pass.lifetime, expiresAt: status.pass.expiresAt });
     });
     return () => { cancelledRef.current = true; };
     // Only on opening: a re-render of the parent (new offer object) must not reset an attempt in progress.
@@ -347,7 +350,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   );
 
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={(next) => { if (!locked) onOpenChange(next); }} disablePointerDismissal>
+    <DialogPrimitive.Root open={open && dialogReady} onOpenChange={(next) => { if (!locked) onOpenChange(next); }} disablePointerDismissal>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Backdrop className={styles.overlay} />
         <DialogPrimitive.Popup className={cn(styles.pass, styles.sheet)} aria-labelledby={`${ids}-title`} aria-busy={locked} initialFocus={titleRef}>

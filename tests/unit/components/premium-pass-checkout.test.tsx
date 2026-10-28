@@ -389,6 +389,23 @@ describe('patron checkout, step 3 with real Stripe payments', () => {
     expect(Object.keys(jsonBody('/premium-pass/intent')).sort()).toEqual(['currency', 'productId', 'requestId']);
   });
 
+  it('test purchases remain enabled after lifetime access, including both plans and currency selection', async () => {
+    route({
+      '/premium-pass/intent': () => new Response(JSON.stringify(READY), { status: 200 }),
+      '/api/user/premium-pass': () => new Response(JSON.stringify({ offer: {}, pass: { ...activePass('STRIPE'), lifetime: true, expiresAt: null } }), { status: 200 }),
+    });
+    open(TEST);
+    const dialog = within(await screen.findByRole('dialog'));
+    await waitFor(() => expect(calls('/api/user/premium-pass')).toHaveLength(1));
+    expect(dialog.getByRole('combobox', { name: 'Waluta' })).toBeEnabled();
+    for (const radio of dialog.getAllByRole('radio')) expect(radio).toBeEnabled();
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    await dialog.findByRole('heading', { name: 'Metoda płatności' });
+    clickNext(dialog, 'Dalej · 29,99 zł');
+    await screen.findAllByTestId('stripe-elements');
+    expect(calls('/intent')).toHaveLength(1);
+  });
+
   it('live mode shows no test label', async () => {
     open({ mode: 'stripe', available: true, stripeMode: 'live' });
     const dialog = within(await screen.findByRole('dialog'));
