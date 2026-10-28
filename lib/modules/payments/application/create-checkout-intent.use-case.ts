@@ -9,6 +9,7 @@ import { InvalidPaymentRequestError, UserNotFoundError, PaymentProviderError, Pa
 import { PaymentRepository } from "../infrastructure/payment.repository";
 import { MainChannelService } from "@/lib/modules/channel";
 import { getStripeClient } from "../infrastructure/stripe-client";
+import { keySetForNewPayment, paymentKeySet, STRIPE_KEY_SET_METADATA_FIELD } from "@/lib/payments/stripe-key-sets";
 import { logger } from "@/lib/logger";
 import { APP_NAME } from "@/lib/constants";
 
@@ -63,7 +64,11 @@ export async function createCheckoutIntent(
   }
 
   const repo = new PaymentRepository();
-  const stripe = getStripeClient();
+  // Patron-zone payments use the premium key set when it is configured (test keys for the owner's trial), tips and
+  // everything else the default set. The choice is stored on the payment, so every later call for it (reuse,
+  // webhook, reconciliation, refunds) talks to the same Stripe mode.
+  const keySet = keySetForNewPayment(input.purpose);
+  const stripe = getStripeClient(keySet);
   const currency = PaymentPolicy.getDbCurrency(input.currency);
 
   const user = await repo.findUser(input.userId, ctx.db.read);
@@ -78,8 +83,10 @@ export async function createCheckoutIntent(
     const mainChannel = await MainChannelService.getRequired(ctx);
     const creatorId = mainChannel.id;
 
-    let stripeCustomerId = user.stripeCustomerId;
-    if (!stripeCustomerId) {
+    // A customer belongs to one Stripe account mode: the stored id is a live-mode customer, so a premium-set
+    // (test mode) payment is created without a customer and never touches User.stripeCustomerId.
+    let stripeCustomerId = keySet === "premium" ? null : user.stripeCustomerId;
+    if (keySet === "default" && !stripeCustomerId) {
       const customer = await stripe.customers.create({ email: user.email, metadata: { userId: user.id } });
       stripeCustomerId = customer.id;
       await repo.updateStripeCustomerId(user.id, stripeCustomerId, ctx.prisma);
@@ -97,6 +104,7 @@ export async function createCheckoutIntent(
           ...(input.requestId ? { requestId: input.requestId } : {}),
           ...(input.purpose ? { purpose: input.purpose } : {}),
           ...(input.purpose && input.productId ? { productId: input.productId } : {}),
+          ...(keySet === "premium" ? { [STRIPE_KEY_SET_METADATA_FIELD]: keySet } : {}),
         },
         requestId: input.requestId ?? null,
       }, ctx.prisma);
@@ -135,10 +143,11 @@ type CheckoutUser = { id: string; language: string | null; stripeCustomerId: str
  */
 async function createIntentFor(payment: PaymentDto, user: CheckoutUser, ctx: AppContext): Promise<Stripe.PaymentIntent> {
   const repo = new PaymentRepository();
-  const intent = await getStripeClient().paymentIntents.create({
+  const intent = await getStripeClient(paymentKeySet(payment.metadata)).paymentIntents.create({
     amount: payment.amountMinor,
     currency: PaymentPolicy.getStripeCurrency(payment.currency),
-    customer: user.stripeCustomerId ?? undefined,
+    // The stored customer id is a default-set (live) customer; a premium-set payment is created without one.
+    customer: paymentKeySet(payment.metadata) === "premium" ? undefined : user.stripeCustomerId ?? undefined,
     description: isPremiumPassPayment(payment.metadata) ? patronIntentDescription(user.language) : tipIntentDescription(user.language),
     metadata: {
       userId: user.id,
@@ -166,13 +175,20 @@ async function reuseAttempt(
   ctx: AppContext,
 ): Promise<UseCaseResult<CheckoutResultDto, CheckoutError>> {
   const repo = new PaymentRepository();
-  const stripe = getStripeClient();
+  // The existing attempt keeps the key set it was created with, whatever the configuration is now.
+  const stripe = getStripeClient(paymentKeySet(existing.metadata));
   const currency = PaymentPolicy.getDbCurrency(input.currency);
 
   // patron zone: a tip attempt and a patron-zone attempt never touch each other's payment. Otherwise the
   // tip route (its own, lower limits) could re-price a patron payment through its request id.
   if (isPremiumPassPayment(existing.metadata) !== (input.purpose === PAYMENT_PURPOSE_PREMIUM_PASS)) {
     return failure(new InvalidPaymentRequestError("This payment attempt belongs to another flow."));
+  }
+
+  // The browser loads Stripe.js with the key of the CURRENT set; an unpaid attempt created with the other set could
+  // not be paid from there. The client starts a fresh attempt (new requestId) instead of reusing it.
+  if (existing.status === PaymentStatus.PENDING && paymentKeySet(existing.metadata) !== keySetForNewPayment(input.purpose)) {
+    return failure(new InvalidPaymentRequestError("This payment attempt was started with different payment keys. Start a new one."));
   }
 
   // Paid, failed to start, canceled: the client starts a fresh attempt with a new requestId.

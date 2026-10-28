@@ -13,7 +13,7 @@
 # Files next to this script (all root, 600, NOT in git):
 #   app.env    runtime env of the app (DATABASE_URL, BETTER_AUTH_SECRET, GOOGLE_*, TURNSTILE_*, STRIPE_*, CRON_SECRET, TRUST_CF_CONNECTING_IP=true ...)
 #   db.env     POSTGRES_USER / POSTGRES_PASSWORD / POSTGRES_DB
-#   build.env  PUBLIC build args only: NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY, NEXT_PUBLIC_R2_PUBLIC_HOST ...
+#   build.env  PUBLIC build args only: NEXT_PUBLIC_APP_URL, NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY, NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY (optional), NEXT_PUBLIC_R2_PUBLIC_HOST ...
 # Lock: .deploy.lock (flock) shared with deploy-admin.sh; a second deploy exits 75 at once. scripts/ops/mergedeploy.sh takes
 #   the lock itself before it replaces ./src and passes it on with DEPLOY_LOCK_HELD=1 (fd 9 inherited).
 # Outcome: "OK: <image> is live" = app healthy and encoder/collector running (or not configured). "OK (WITH WARNINGS): ..."

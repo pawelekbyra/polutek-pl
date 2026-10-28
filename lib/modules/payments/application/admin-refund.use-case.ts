@@ -7,6 +7,7 @@ import { logger } from "@/lib/logger";
 import { PaymentStatus } from "@prisma/client";
 import Stripe from "stripe";
 import { getStripeClient } from "../infrastructure/stripe-client";
+import { paymentKeySet } from "@/lib/payments/stripe-key-sets";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { recordAlert } from "@/lib/observability";
 
@@ -152,7 +153,7 @@ export async function adminRefund(
 
   let stripeRefund: Stripe.Refund;
   try {
-    const stripe = getStripeClient();
+    const stripe = getStripeClient(paymentKeySet(payment.metadata));
     stripeRefund = await stripe.refunds.create({
       payment_intent: payment.stripeIntentId!,
       amount: requestedAmount,

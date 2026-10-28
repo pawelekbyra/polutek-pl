@@ -42,4 +42,24 @@ describe('getStripeBrowser (Stripe.js only for the tip gate, PAY-07)', () => {
     await expect(getStripeBrowser()).resolves.toBeNull();
     expect(loadStripe).not.toHaveBeenCalled();
   });
+
+  it('the premium key set loads Stripe.js with the patron-zone publishable key, separately from the shared one', async () => {
+    process.env.NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY = 'pk_test_premium';
+    loadStripe.mockImplementation(async (key: string) => ({ key }));
+    const { getStripeBrowser } = await import('@/lib/payments/stripe-browser');
+
+    await expect(getStripeBrowser('premium')).resolves.toEqual({ key: 'pk_test_premium' });
+    await expect(getStripeBrowser()).resolves.toEqual({ key: 'pk_test_dummy' });
+    await getStripeBrowser('premium');
+    expect(loadStripe).toHaveBeenCalledTimes(2);
+    expect(loadStripe.mock.calls.map((call) => call[0])).toEqual(['pk_test_premium', 'pk_test_dummy']);
+    delete process.env.NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY;
+  });
+
+  it('the premium key set never falls back to the shared key when no premium key is built in', async () => {
+    delete process.env.NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY;
+    const { getStripeBrowser } = await import('@/lib/payments/stripe-browser');
+    await expect(getStripeBrowser('premium')).resolves.toBeNull();
+    expect(loadStripe).not.toHaveBeenCalled();
+  });
 });

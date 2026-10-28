@@ -125,7 +125,8 @@ describe('LAUNCH-SECURITY-001 security boundary regressions', () => {
     const refundIndex = stripeUseCase.indexOf('syncRefundsFromStripe({');
     const disputeIndex = stripeUseCase.indexOf('handleDispute({');
 
-    expect(stripeUseCase).toContain('if (!endpointSecret)');
+    // No configured signing secret at all is a config error (500); a payload that verifies with none of them is rejected.
+    expect(stripeUseCase).toContain('if (accepted.length === 0)');
     expect(constructIndex).toBeGreaterThan(-1);
     expect(lockIndex).toBeGreaterThan(constructIndex);
     expect(fulfillIndex).toBeGreaterThan(lockIndex);

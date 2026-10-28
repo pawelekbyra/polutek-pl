@@ -5,6 +5,7 @@ import { logger } from "@/lib/logger";
 import { PaymentRepository } from "../infrastructure/payment.repository";
 import { getStripeClient } from "../infrastructure/stripe-client";
 import { fulfillPayment } from "./fulfill-payment.use-case";
+import { paymentKeySet, stripeSecretKeyFor } from "@/lib/payments/stripe-key-sets";
 
 /** An unpaid tip older than this is treated as abandoned: its intent is canceled. */
 export const ABANDONED_PAYMENT_AFTER_MS = 24 * 60 * 60 * 1000;
@@ -27,7 +28,7 @@ export type ReconcileResult = "fulfilled" | "canceled" | "unchanged" | "errors";
  * still fulfilled.
  */
 export async function reconcilePaymentWithStripe(
-  payment: { id: string; status: PaymentStatus; stripeIntentId: string | null; createdAt: Date },
+  payment: { id: string; status: PaymentStatus; stripeIntentId: string | null; createdAt: Date; metadata?: unknown },
   ctx: AppContext,
 ): Promise<ReconcileResult> {
   const repo = new PaymentRepository();
@@ -44,7 +45,19 @@ export async function reconcilePaymentWithStripe(
       return "unchanged";
     }
 
-    const stripe = getStripeClient();
+    // Each payment is read with the key set it was created with (a test-mode premium intent read with the live key
+    // would be "unknown to Stripe"). If that set is not configured any more (the owner went back to demo), the
+    // payment cannot be asked about: it is left alone, and an abandoned unpaid row is closed locally.
+    const keySet = paymentKeySet(payment.metadata);
+    if (keySet === "premium" && !stripeSecretKeyFor(keySet)) {
+      if (abandoned && payment.status === PaymentStatus.PENDING) {
+        logger.warn(`[ReconcilePayment] Payment ${payment.id} belongs to the ${keySet} Stripe key set, which is not configured; canceling the abandoned row.`);
+        const count = await repo.markUnpaidPaymentCanceled(payment.id, ctx.prisma);
+        return count > 0 ? "canceled" : "unchanged";
+      }
+      return "unchanged";
+    }
+    const stripe = getStripeClient(keySet);
     const intent = await stripe.paymentIntents.retrieve(payment.stripeIntentId);
 
     if (intent.status === "succeeded") {

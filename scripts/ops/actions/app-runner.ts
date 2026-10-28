@@ -21,6 +21,7 @@ import { prisma } from "@/lib/prisma";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import { CommentPolicy, hideAdminComment, restoreAdminComment } from "@/lib/modules/comments";
 import { adminRefund, getStripeClient } from "@/lib/modules/payments";
+import { paymentKeySet, type StripeKeySet } from "@/lib/payments/stripe-key-sets";
 import { changeUserRoleAsAdmin } from "@/lib/modules/users";
 import type { CommentStatus, Prisma } from "@prisma/client";
 
@@ -189,7 +190,7 @@ async function loadPayment(db: Tx | typeof prisma, paymentId: string) {
     where: { id: paymentId },
     select: {
       id: true, status: true, amountMinor: true, refundedAmountMinor: true, currency: true, createdAt: true,
-      refundedAt: true, refundReason: true, stripeIntentId: true, user: { select: { name: true } },
+      refundedAt: true, refundReason: true, stripeIntentId: true, metadata: true, user: { select: { name: true } },
     },
   });
   if (!pay) return null;
@@ -205,13 +206,14 @@ async function loadPayment(db: Tx | typeof prisma, paymentId: string) {
     hasStripeIntent: Boolean(pay.stripeIntentId),
     payerName: cut(pay.user?.name ?? null, 120),
     stripeIntentId: pay.stripeIntentId,
+    keySet: paymentKeySet(pay.metadata),
   };
 }
 
-async function stripeRefunds(intentId: string | null) {
+async function stripeRefunds(intentId: string | null, keySet: StripeKeySet = "default") {
   if (!intentId) return { ok: true, refunds: [] };
   try {
-    const list = await getStripeClient().refunds.list({ payment_intent: intentId, limit: 20 });
+    const list = await getStripeClient(keySet).refunds.list({ payment_intent: intentId, limit: 20 });
     return {
       ok: true,
       refunds: list.data.map((r) => ({ id: r.id, amountMinor: r.amount, currency: r.currency.toUpperCase(), status: r.status, created: new Date(r.created * 1000).toISOString() })),
@@ -223,13 +225,13 @@ async function stripeRefunds(intentId: string | null) {
 
 /** Płatność bez id PaymentIntent (nie jest potrzebne na komputerze właściciela). */
 function publicPayment(pay: NonNullable<Awaited<ReturnType<typeof loadPayment>>>) {
-  return Object.fromEntries(Object.entries(pay).filter(([key]) => key !== "stripeIntentId"));
+  return Object.fromEntries(Object.entries(pay).filter(([key]) => key !== "stripeIntentId" && key !== "keySet"));
 }
 
 async function paymentInspect(p: Params) {
   const paymentId = requireUuid(p.paymentId, "paymentId");
   const { payment, admin } = await readOnly(async (tx) => ({ payment: await loadPayment(tx, paymentId), admin: await resolveAdmin(tx, p.adminUserId) }));
-  const stripe = payment ? await stripeRefunds(payment.stripeIntentId) : { ok: true, refunds: [] };
+  const stripe = payment ? await stripeRefunds(payment.stripeIntentId, payment.keySet) : { ok: true, refunds: [] };
   return {
     ok: true,
     payment: payment ? publicPayment(payment) : null,

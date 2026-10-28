@@ -69,3 +69,48 @@ describe("PREMIUM_PASS_PAYMENTS", () => {
     expect(readPremiumPaymentsDto(null)).toEqual({ mode: "stripe", available: false });
   });
 });
+
+// Dedicated patron-zone key set (PREMIUM_PASS_STRIPE_*): the checkout can run on Stripe TEST keys while the tips keep
+// the live STRIPE_* keys.
+describe("dedicated patron-zone Stripe keys", () => {
+  const premiumTest = { PREMIUM_PASS_STRIPE_SECRET_KEY: "sk_test_p", NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY: "pk_test_p", PREMIUM_PASS_STRIPE_WEBHOOK_SECRET: "whsec_p" };
+  const premiumLive = { PREMIUM_PASS_STRIPE_SECRET_KEY: "sk_live_p", NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY: "pk_live_p", PREMIUM_PASS_STRIPE_WEBHOOK_SECRET: "whsec_p" };
+
+  it("without the new variables nothing changes (no keySet in the state or the DTO)", () => {
+    const state = resolvePremiumPayments({ ...live, PREMIUM_PASS_PAYMENTS: "stripe", PLATFORM_GATE_SALES: "on" });
+    expect(state).toEqual({ mode: "stripe", available: true, stripeMode: "live" });
+    expect(toPremiumPaymentsDto(state)).toEqual({ mode: "stripe", available: true, stripeMode: "live" });
+  });
+
+  it("premium TEST keys work with the sales gate closed while STRIPE_* are LIVE (tips unaffected)", () => {
+    const state = resolvePremiumPayments({ ...live, ...premiumTest, PREMIUM_PASS_PAYMENTS: "stripe" });
+    expect(state).toEqual({ mode: "stripe", available: true, stripeMode: "test", keySet: "premium" });
+    expect(toPremiumPaymentsDto(state)).toEqual({ mode: "stripe", available: true, stripeMode: "test", keySet: "premium" });
+    expect(readPremiumPaymentsDto(toPremiumPaymentsDto(state))).toEqual({ mode: "stripe", available: true, stripeMode: "test", keySet: "premium" });
+  });
+
+  it("premium LIVE keys still need PLATFORM_GATE_SALES=on", () => {
+    expect(resolvePremiumPayments({ ...test, ...premiumLive, PREMIUM_PASS_PAYMENTS: "stripe" })).toEqual({ mode: "stripe", available: false, reason: "SALES_GATE_OFF" });
+    expect(resolvePremiumPayments({ ...test, ...premiumLive, PREMIUM_PASS_PAYMENTS: "stripe", PLATFORM_GATE_SALES: "on" })).toMatchObject({ available: true, stripeMode: "live", keySet: "premium" });
+  });
+
+  it("checks consistency on the premium keys, not on STRIPE_* (valid STRIPE_* cannot rescue a broken premium set)", () => {
+    const env = { ...live, PREMIUM_PASS_PAYMENTS: "stripe", PLATFORM_GATE_SALES: "on" };
+    expect(resolvePremiumPayments({ ...env, ...premiumTest, NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY: "pk_live_p" })).toEqual({ mode: "stripe", available: false, reason: "KEYS_MIXED" });
+    expect(resolvePremiumPayments({ ...env, ...premiumTest, PREMIUM_PASS_STRIPE_SECRET_KEY: "garbage" })).toEqual({ mode: "stripe", available: false, reason: "KEYS_MISSING" });
+  });
+
+  it("a mixed STRIPE_* pair does not matter once the premium set is complete", () => {
+    const mixedDefault = { STRIPE_SECRET_KEY: "sk_live_x", NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_x", STRIPE_WEBHOOK_SECRET: "whsec_x" };
+    expect(resolvePremiumPayments({ ...mixedDefault, ...premiumTest, PREMIUM_PASS_PAYMENTS: "stripe" })).toMatchObject({ available: true, stripeMode: "test", keySet: "premium" });
+  });
+
+  it("a partly set premium set is ignored: the checkout behaves exactly as with STRIPE_*", () => {
+    const partial = { ...test, PREMIUM_PASS_STRIPE_SECRET_KEY: "sk_live_p", PREMIUM_PASS_PAYMENTS: "stripe" };
+    expect(resolvePremiumPayments(partial)).toEqual({ mode: "stripe", available: true, stripeMode: "test" });
+  });
+
+  it("demo stays demo whatever premium keys exist", () => {
+    expect(resolvePremiumPayments({ ...premiumTest })).toEqual({ mode: "demo" });
+  });
+});

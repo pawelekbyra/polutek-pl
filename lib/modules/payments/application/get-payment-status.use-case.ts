@@ -5,6 +5,7 @@ import { PaymentError } from '../domain/payment.errors';
 import { fulfillPayment } from './fulfill-payment.use-case';
 import { getStripeClient } from '../infrastructure/stripe-client';
 import { logger } from '@/lib/logger';
+import { paymentKeySet, stripeSecretKeyFor } from '@/lib/payments/stripe-key-sets';
 
 /** What the payer's screen needs to know about one tip. A tip never grants access, so there is no "access" state. */
 export type PaymentUiStatus = 'PROCESSING' | 'SUCCEEDED' | 'FAILED' | 'REFUNDED';
@@ -16,6 +17,7 @@ type OwnedPayment = {
   currency: string;
   status: PaymentStatus;
   stripeIntentId: string | null;
+  metadata?: unknown;
 };
 
 /** Local statuses that the fast path re-checks with Stripe (a "failed" tip may still have succeeded on a later attempt). */
@@ -48,10 +50,11 @@ export function toPaymentUiStatus(status: PaymentStatus): PaymentUiStatus {
  * the supporter marker is a system action, exactly as in the webhook.
  */
 async function reconcileWithStripe(payment: OwnedPayment, ctx: AppContext): Promise<void> {
-  if (!payment.stripeIntentId || !process.env.STRIPE_SECRET_KEY) return;
+  const keySet = paymentKeySet(payment.metadata);
+  if (!payment.stripeIntentId || !stripeSecretKeyFor(keySet)) return;
 
   try {
-    const intent = await getStripeClient().paymentIntents.retrieve(payment.stripeIntentId);
+    const intent = await getStripeClient(keySet).paymentIntents.retrieve(payment.stripeIntentId);
     if (intent.status !== 'succeeded') return;
 
     const result = await fulfillPayment({
@@ -91,6 +94,7 @@ export async function getOwnedPaymentStatus(
       currency: true,
       status: true,
       stripeIntentId: true,
+      metadata: true,
       createdAt: true,
       updatedAt: true,
     } as const;
