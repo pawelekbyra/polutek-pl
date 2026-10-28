@@ -104,7 +104,17 @@ export async function syncPublicThumbnail(
 
     const client = new R2ThumbnailStorageClient();
     const publicUrl = await client.copyToPublic(privateKey!);
-    await ctx.prisma.video.update({ where: { id: video.id }, data: { thumbnailPublicUrl: publicUrl } });
+    // The copy takes time. A concurrent unpublish/cover change may have demoted the video meanwhile, so the URL is
+    // written only while the video is still PUBLISHED with the same private cover (one atomic statement). Otherwise
+    // the fresh copy is dropped again instead of making a draft's cover public.
+    const written = await ctx.prisma.video.updateMany({
+      where: { id: video.id, status: VideoStatus.PUBLISHED, thumbnailUrl: video.thumbnailUrl },
+      data: { thumbnailPublicUrl: publicUrl },
+    });
+    if (written.count === 0) {
+      await deletePublicCopyIfUnreferenced(ctx, client, publicUrl, video.id);
+      return "skipped";
+    }
 
     if (current && current !== publicUrl) {
       await deletePublicCopyIfUnreferenced(ctx, client, current, video.id);

@@ -34,7 +34,7 @@ export async function cancelAutoPublish(
     // Conditional on the flag still being set: a publication that won the race keeps its completed state.
     const { count } = await tx.video.updateMany({
       where: { id: videoId, creatorId: channel.id, publishAfterAssetReady: true, status: { notIn: ["PUBLISHED", "UNLISTED"] } },
-      data: { publishAfterAssetReady: false, publishAfterAssetReadyRequestedAt: null, publishAfterAssetReadyError: null },
+      data: { publishAfterAssetReady: false, publishAfterAssetReadyRequestedAt: null, publishAfterAssetReadyError: null, publishAfterAssetReadyVisibility: null },
     });
     if (count === 1) {
       await recordAuditEvent(

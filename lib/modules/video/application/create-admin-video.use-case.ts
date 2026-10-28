@@ -12,7 +12,6 @@ import { isAllowedPremiereChange } from "../domain/premiere";
 import { resolveVideoMetadata } from "../domain/video-metadata";
 import { Prisma } from "@prisma/client";
 import { isDerivedThumbnailUrl } from "@/lib/modules/media";
-import { setReadyVisibility } from "./ready-visibility";
 
 const DEFAULT_DRAFT_THUMBNAIL_URL = "/logo.png";
 
@@ -157,7 +156,6 @@ export async function createAdminVideo(
     }
 
     if (normalizedInput.publishAfterAssetReady) {
-      if (normalizedInput.readyVisibility === "UNLISTED") await setReadyVisibility(video.id, "UNLISTED", ctx);
       try {
         await recordAuditEvent(ctx, {
           action: 'VIDEO_PUBLISH_AFTER_ASSET_READY_REQUESTED',

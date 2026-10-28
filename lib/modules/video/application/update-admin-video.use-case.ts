@@ -47,6 +47,14 @@ export async function updateAdminVideo(
   }
 
   const nextStatus = input.status || existing.status;
+  // Asking an unpublished video for status PUBLISHED is a request to publish it: the edit repository never writes
+  // PUBLISHED itself, so this goes through publishAdminVideo below. Refuse up front when it cannot publish, so the
+  // edit is not half-saved and the caller never gets a success for a video that stays a draft.
+  const requestsPublication = input.status === 'PUBLISHED' && existing.status !== 'PUBLISHED';
+  if (requestsPublication) {
+      const blockers = VideoPolicy.getPublicationBlockers(existing);
+      if (blockers.length > 0) return fail(new VideoNotReadyForPublicationError(blockers[0].message, blockers[0].code));
+  }
   const nextTier = input.tier || existing.tier;
 
   if (input.status === 'UNLISTED' && !isAllowedStatusTransition(existing.status, 'UNLISTED')) {
@@ -161,10 +169,10 @@ export async function updateAdminVideo(
     await MediaStorageService.deleteOwnedThumbnail(existing.thumbnailUrl);
   }
 
-  // "Premiera" on a draft (the form sends status PUBLISHED with a premiere): publish
-  // it through the canonical publish use case, which keeps the publication
-  // blockers; the video then waits in "Coming soon" until premiereAt.
-  if (input.status === 'PUBLISHED' && existing.status !== 'PUBLISHED' && input.premiereAt instanceof Date) {
+  // Status PUBLISHED on an unpublished video ("publish now" or "Premiera" with a date): publish it through the
+  // canonical publish use case, which keeps the publication blockers; with a premiere the video then waits in
+  // "Coming soon" until premiereAt. The result is the publication's result, never a bare "saved".
+  if (requestsPublication) {
     return publishAdminVideo(updated.id, ctx);
   }
 
