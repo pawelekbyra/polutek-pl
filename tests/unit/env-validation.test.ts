@@ -42,6 +42,16 @@ describe('validateAppEnv', () => {
     expect(badSecret.errors.join(' ')).toMatch(/whsec_/);
   });
 
+  it('applies the same Stripe rules to the optional patron-zone key set', () => {
+    const premium = { PREMIUM_PASS_STRIPE_SECRET_KEY: 'sk_test_p', NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY: 'pk_test_p', PREMIUM_PASS_STRIPE_WEBHOOK_SECRET: 'whsec_p' };
+    // live STRIPE_* next to a test premium set is the intended trial set-up
+    expect(validateAppEnv({ ...productionEnv, STRIPE_SECRET_KEY: 'sk_live_x', NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_live_x', ...premium }, 'production').errors).toEqual([]);
+    const mixed = validateAppEnv({ ...productionEnv, ...premium, NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY: 'pk_live_p' }, 'production');
+    expect(mixed.errors.join(' ')).toMatch(/PREMIUM_PASS_STRIPE_SECRET_KEY.*same mode/);
+    const badSecret = validateAppEnv({ ...productionEnv, ...premium, PREMIUM_PASS_STRIPE_WEBHOOK_SECRET: 'sk_test_oops' }, 'production');
+    expect(badSecret.errors.join(' ')).toMatch(/PREMIUM_PASS_STRIPE_WEBHOOK_SECRET.*whsec_/);
+  });
+
   it('does not require the retired MAIN_CREATOR_SLUG (the main channel is the main_channel_id setting)', () => {
     const result = validateAppEnv(productionEnv, 'production');
 

@@ -180,7 +180,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
     setAccess(null);
     if (stripeReady) {
       // The first and only place that asks for Stripe.js: the checkout was opened.
-      const promise = getStripeBrowser();
+      const promise = getStripeBrowser(offer.payments.mode === "stripe" && offer.payments.keySet === "premium" ? "premium" : "default");
       setStripePromise(promise);
       promise
         .then((stripe) => stripe?.paymentRequest({ country: "PL", currency: currency.toLowerCase(), total: { label: "Patron", amount: 100 }, disableWallets: ["link", "browserCard"] }).canMakePayment())

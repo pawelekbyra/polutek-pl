@@ -4,6 +4,7 @@ import { PaymentStatus } from "@prisma/client";
 import { createAppContext } from "@/lib/modules/shared/app-context";
 import { reconcilePaymentWithStripe, reconcileRefundsWithStripe } from "@/lib/modules/payments";
 import { timingSafeEqual } from "crypto";
+import { premiumKeysConfigured, stripeSecretKeyFor } from "@/lib/payments/stripe-key-sets";
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +33,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!process.env.STRIPE_SECRET_KEY) {
+  // Each payment is checked with the key set it was made with (tips: STRIPE_*, patron-zone payments made with the
+  // premium test keys: PREMIUM_PASS_STRIPE_*), so at least one set has to exist; a payment whose own set is
+  // missing is skipped by reconcilePaymentWithStripe.
+  if (!stripeSecretKeyFor("default") && !(premiumKeysConfigured() && stripeSecretKeyFor("premium"))) {
     logger.error("[Cron:StripeReconciliation] STRIPE_SECRET_KEY is missing");
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
@@ -52,7 +56,7 @@ export async function GET(req: NextRequest) {
     },
     orderBy: { createdAt: 'asc' },
     take: recover ? RECOVERY_BATCH_SIZE : BATCH_SIZE,
-    select: { id: true, status: true, stripeIntentId: true, createdAt: true },
+    select: { id: true, status: true, stripeIntentId: true, createdAt: true, metadata: true },
   });
 
   const counts = { checked: 0, fulfilled: 0, canceled: 0, unchanged: 0, errors: 0 };

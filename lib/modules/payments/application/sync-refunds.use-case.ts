@@ -4,6 +4,7 @@ import { logger } from "@/lib/logger";
 import { recordAlert } from "@/lib/observability";
 import { PaymentRepository } from "../infrastructure/payment.repository";
 import { getStripeClient } from "../infrastructure/stripe-client";
+import { paymentKeySet, stripeSecretKeyFor } from "@/lib/payments/stripe-key-sets";
 import { fetchEffectiveRefundedMinor } from "../infrastructure/stripe-refunds";
 import { PaymentError } from "../domain/payment.errors";
 import { applyRefundedTotal } from "./handle-refund.use-case";
@@ -56,7 +57,15 @@ export async function syncRefundsFromStripe(
         return { matched: true, refundedMinor: payment.refundedAmountMinor ?? 0, deltaMinor: 0 };
       }
 
-      const stripeTotal = await fetchEffectiveRefundedMinor(getStripeClient(), payment.stripeIntentId);
+      // A payment is asked about at the Stripe mode it was made in. If that key set is not configured now (the
+      // premium trial was switched off), it cannot be asked: mark it checked so it does not block the cron batch.
+      const keySet = paymentKeySet(payment.metadata);
+      if (keySet === "premium" && !stripeSecretKeyFor(keySet)) {
+        logger.warn(`[SyncRefunds] Payment ${payment.id} belongs to the ${keySet} Stripe key set, which is not configured; refunds not checked.`);
+        await repo.markRefundsChecked(payment.id, ctx.now(), tx);
+        return { matched: true, refundedMinor: payment.refundedAmountMinor ?? 0, deltaMinor: 0 };
+      }
+      const stripeTotal = await fetchEffectiveRefundedMinor(getStripeClient(keySet), payment.stripeIntentId);
       const applied = await applyRefundedTotal(payment, stripeTotal, { allowDecrease: true, admin: input.admin }, ctx, tx, repo);
       await repo.markRefundsChecked(payment.id, ctx.now(), tx);
       return { matched: true, ...applied };

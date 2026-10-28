@@ -7,6 +7,7 @@ import { logger } from "@/lib/logger";
 import { recordAuditEvent } from "@/lib/modules/audit";
 import Stripe from "stripe";
 import { getStripeClient } from "../infrastructure/stripe-client";
+import { paymentKeySet } from "@/lib/payments/stripe-key-sets";
 
 export interface AdminDisputeSyncInput {
   paymentId: string;
@@ -45,7 +46,7 @@ export async function adminDisputeSync(
 
   let dispute: Stripe.Dispute | null = null;
   try {
-    const stripe = getStripeClient();
+    const stripe = getStripeClient(paymentKeySet(payment.metadata));
     const charges = await stripe.charges.list({ payment_intent: payment.stripeIntentId, limit: 1 });
     const charge = charges.data[0];
 
