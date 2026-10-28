@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import EmailSubscriptionConsentModal from '@/app/components/subscriptions/EmailSubscriptionConsentModal';
 import React from 'react';
 import { txFor } from "../../i18n/mock-language";
@@ -12,13 +12,14 @@ vi.mock('@/app/components/LanguageContext', () => ({
   useLanguage: () => ({
     language: lang.language, tx: txFor(lang.language),
     t: {
-      confirmSubscribeTitle: 'CZY CHCESZ SUBSKRYBOWAĆ?',
+      subscribe: 'SUBSKRYBUJ',
       confirmSubscribeText: 'Subskrypcja oznacza zgodę na otrzymywanie powiadomień mailowych o nowościach.',
-      yes: 'TAK',
-      no: 'NIE',
     }
   })
 }));
+
+const SUBSCRIBE = { name: 'SUBSKRYBUJ' };
+const NOT_NOW = { name: 'Nie teraz' };
 
 describe('EmailSubscriptionConsentModal', () => {
   afterEach(() => {
@@ -35,10 +36,11 @@ describe('EmailSubscriptionConsentModal', () => {
       />
     );
 
-    expect(screen.getByText('CZY CHCESZ SUBSKRYBOWAĆ?')).not.toBeNull();
-    expect(screen.getByText('Subskrypcja oznacza zgodę na otrzymywanie powiadomień mailowych o nowościach.')).not.toBeNull();
-    expect(screen.getByText('TAK')).not.toBeNull();
-    expect(screen.getByText('NIE')).not.toBeNull();
+    expect(screen.getByText('Chcesz subskrybować?')).not.toBeNull();
+    expect(screen.getByText('Dostaniesz powiadomienie o nowych filmach i premierach.')).not.toBeNull();
+    expect(screen.getByText(/Subskrypcja oznacza zgodę na otrzymywanie powiadomień mailowych o nowościach\./)).not.toBeNull();
+    expect(screen.getByRole('button', SUBSCRIBE)).not.toBeNull();
+    expect(screen.getByRole('button', NOT_NOW)).not.toBeNull();
   });
 
   it('renders nothing when closed', () => {
@@ -53,7 +55,7 @@ describe('EmailSubscriptionConsentModal', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('calls onConfirm when TAK is clicked', () => {
+  it('calls onConfirm when Subscribe is clicked', () => {
     const onConfirm = vi.fn();
     render(
       <EmailSubscriptionConsentModal
@@ -63,11 +65,11 @@ describe('EmailSubscriptionConsentModal', () => {
       />
     );
 
-    fireEvent.click(screen.getByText('TAK'));
+    fireEvent.click(screen.getByRole('button', SUBSCRIBE));
     expect(onConfirm).toHaveBeenCalled();
   });
 
-  it('calls onDismiss when NIE is clicked', () => {
+  it('calls onDismiss when Not now is clicked, and when the close button is clicked', () => {
     const onDismiss = vi.fn();
     render(
       <EmailSubscriptionConsentModal
@@ -77,8 +79,10 @@ describe('EmailSubscriptionConsentModal', () => {
       />
     );
 
-    fireEvent.click(screen.getByText('NIE'));
-    expect(onDismiss).toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', NOT_NOW));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Zamknij' }));
+    expect(onDismiss).toHaveBeenCalledTimes(2);
   });
 
   it('shows error message when provided', () => {
@@ -91,7 +95,7 @@ describe('EmailSubscriptionConsentModal', () => {
       />
     );
 
-    expect(screen.getByText('Something went wrong')).not.toBeNull();
+    expect(screen.getByRole('alert').textContent).toBe('Something went wrong');
   });
 
   it('disables buttons when pending', () => {
@@ -104,8 +108,37 @@ describe('EmailSubscriptionConsentModal', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'TAK' })).toHaveProperty('disabled', true);
-    expect(screen.getByRole('button', { name: 'NIE' })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', SUBSCRIBE)).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', NOT_NOW)).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: 'Zamknij' })).toHaveProperty('disabled', true);
+  });
+
+  it('while pending, marks the primary button busy and Escape does not dismiss', () => {
+    const onDismiss = vi.fn();
+    render(<EmailSubscriptionConsentModal open pending onConfirm={() => {}} onDismiss={onDismiss} />);
+    expect(screen.getByRole('button', SUBSCRIBE).getAttribute('aria-busy')).toBe('true');
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
+
+  it('names the channel in the title, and falls back to a generic title without one', () => {
+    const { rerender } = render(
+      <EmailSubscriptionConsentModal open channelName="  Paweł Perfect " onConfirm={() => {}} onDismiss={() => {}} />
+    );
+    expect(screen.getByRole('dialog').textContent).toContain('Subskrybować Paweł Perfect?');
+    rerender(<EmailSubscriptionConsentModal open channelName="   " onConfirm={() => {}} onDismiss={() => {}} />);
+    expect(screen.getByRole('dialog').textContent).toContain('Chcesz subskrybować?');
+  });
+
+  it('is a labelled, described dialog, moves focus into itself and closes on Escape', async () => {
+    const onDismiss = vi.fn();
+    render(<EmailSubscriptionConsentModal open channelName="Kanał" onConfirm={() => {}} onDismiss={onDismiss} />);
+    const dialog = screen.getByRole('dialog');
+    expect(document.getElementById(dialog.getAttribute('aria-labelledby') ?? '')?.textContent).toBe('Subskrybować Kanał?');
+    expect(document.getElementById(dialog.getAttribute('aria-describedby') ?? '')?.textContent).toContain('Dostaniesz powiadomienie');
+    await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+    await waitFor(() => expect(onDismiss).toHaveBeenCalled());
   });
 
   it("links the Privacy Policy and the Terms in the reader's language, in a new tab, and says how to withdraw", () => {

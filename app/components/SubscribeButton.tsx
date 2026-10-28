@@ -224,6 +224,7 @@ export default function SubscribeButton({
       <EmailSubscriptionConsentModal
         open={showConfirm}
         pending={isPending}
+        channelName={creatorName}
         onConfirm={() => {
           setShowConfirm(false);
           executeSubscribe();
