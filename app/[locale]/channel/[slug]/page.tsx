@@ -3,13 +3,13 @@ import Navbar from '@/app/components/Navbar';
 import Footer from '@/app/components/Footer';
 import { auth } from "@/lib/auth/server";
 import { Metadata } from 'next';
-import { PublicVideoDTO } from '@/app/types/video';
 import Link from 'next/link';
 import { SafeAvatar } from '@/app/components/SafeAvatar';
 import { CreatorContentService as ContentService } from '@/lib/modules/channel/infrastructure/creator-content.service';
+import { getChannelHeaderCached } from '@/lib/modules/channel/application/channel-page.loader';
 import { getOrCreateCurrentUser } from '@/lib/modules/users';
 import { createAppContext } from '@/lib/modules/shared/app-context';
-import ChannelVideoCard from '@/app/components/ChannelVideoCard';
+import ChannelVideoGrid from '@/app/components/channel/ChannelVideoGrid';
 import { formatCount, getBaseUrl } from '@/lib/utils';
 import SubscribeButton from '@/app/components/SubscribeButton';
 import ReportButton from '@/app/components/ReportButton';
@@ -31,7 +31,8 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   if (!isLocale(params.locale)) notFound();
   const locale: Locale = params.locale;
   const tx = await getServerTx(locale);
-  const creator = await ContentService.getCreatorBySlug(params.slug).catch(() => null);
+  // The channel header only (no video catalog), shared with the page below: one read per request.
+  const creator = await getChannelHeaderCached(params.slug);
   if (!creator) return { title: SITE_TITLE };
 
   const baseUrl = getBaseUrl();
@@ -77,7 +78,7 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
     authState = { userId: null };
   }
 
-  const creator = await ContentService.getCreatorBySlug(params.slug).catch(() => null);
+  const creator = await getChannelHeaderCached(params.slug);
   const userId = authState.userId;
 
   if (!creator) {
@@ -102,7 +103,9 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
   }
 
   const userCtx = createAppContext();
-  const [, initialSubscription] = await Promise.all([
+  // The header (above) is read fresh on every request, subscriber count included; the videos are the first page only,
+  // the rest comes with "Show more" (W04).
+  const [, initialSubscription, firstVideos] = await Promise.all([
     userId ? getOrCreateCurrentUser(userCtx, userId).catch(() => null) : Promise.resolve(null),
     userId
       ? prisma.subscription.findUnique({
@@ -110,32 +113,16 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
           select: { id: true, notify: true },
         }).catch(() => null)
       : Promise.resolve(null),
+    ContentService.getChannelVideosPage(creator).catch(() => []),
   ]);
 
-  const freshCreator = await prisma.creator.findUnique({
-      where: { id: creator.id },
-      select: { subscribersCount: true, displaySubscribersCount: true }
-  }).catch(() => null);
-
-  if (freshCreator) {
-      creator.subscribersCount = freshCreator.subscribersCount;
-  }
   // The channel's own avatar from the public creator DTO (resolveChannelAvatarUrl, same as the home
   // page strip). Never the signed-in viewer's image.
   const channelAvatar = creator.imageUrl || null;
 
-  const allVideos: PublicVideoDTO[] = (creator.videos || []).map((v: PublicVideoDTO) => ({
-    ...v,
-    creator: {
-      id: creator.id,
-      name: creator.name,
-      slug: creator.slug,
-      imageUrl: channelAvatar,
-      subscribersCount: creator.subscribersCount || 0
-    }
-  }));
+  const videoCount = creator.videoCount;
 
-  const aboutData = creator.about ?? { bannerImageUrl: null, links: [], contactEmail: null, joinedAt: '', totalViews: allVideos.reduce((sum, v) => sum + (v.views ?? 0), 0) };
+  const aboutData = creator.about ?? { bannerImageUrl: null, links: [], contactEmail: null, joinedAt: '', totalViews: 0 };
   const bannerUrl = aboutData.bannerImageUrl;
   const displayName = creator.name;
   const displayBio = creator.bio || (tx("Witamy na oficjalnym kanale.", "Welcome to the official channel."));
@@ -173,7 +160,7 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
             </h1>
             <ul className="mt-3 flex flex-wrap justify-center md:justify-start gap-2 text-[13px] font-sans" aria-label={tx("Informacje o kanale", "Channel details")}>
                <li className="channel-profile-chip font-bold text-[var(--chan-ink)]">@{creator.handle ?? creator.slug}</li>
-               <li className="channel-profile-chip text-[var(--chan-muted)]">{formatCount(allVideos.length, locale)} {countedNoun(locale, "videos", allVideos.length)}</li>
+               <li className="channel-profile-chip text-[var(--chan-muted)]">{formatCount(videoCount, locale)} {countedNoun(locale, "videos", videoCount)}</li>
             </ul>
             <p className="mt-4 text-[15px] leading-relaxed text-[var(--chan-body)] max-w-2xl mx-auto md:mx-0 font-sans whitespace-pre-line">
                {displayBio}
@@ -196,17 +183,13 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
           labels={{ videos: tx("Wideo", "Videos"), about: tx("O kanale", "About") }}
           videos={(
             <>
-        {allVideos.length > 0 ? (
-          <div className="channel-video-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-8 py-7">
-            {allVideos.map((video, index) => (
-              <ChannelVideoCard
-                key={video.id}
-                video={video}
-                isLoggedIn={!!userId}
-                index={index}
-              />
-            ))}
-          </div>
+        {firstVideos.length > 0 ? (
+          <ChannelVideoGrid
+            channelId={creator.id}
+            initialVideos={firstVideos}
+            total={videoCount}
+            isLoggedIn={!!userId}
+          />
         ) : (
           <div className="py-20 text-center space-y-4">
              <div className="text-4xl opacity-20">🎬</div>
@@ -227,7 +210,7 @@ export default async function ChannelPage(props: { params: Promise<{ locale: str
               description={displayBio}
               about={aboutData}
               subscribersCount={creator.subscribersCount || 0}
-              videoCount={allVideos.length}
+              videoCount={videoCount}
             />
           )}
         />

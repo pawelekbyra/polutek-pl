@@ -8,7 +8,7 @@ describe('/[locale]/channel/[slug] page', () => {
 
     const source = readFileSync(join(process.cwd(), 'app/[locale]/channel/[slug]/page.tsx'), 'utf8');
 
-    expect(source).toContain('ContentService.getCreatorBySlug(params.slug)');
+    expect(source).toContain('getChannelHeaderCached(params.slug)');
     expect(source).not.toMatch(/redirect\(['"]\/['"]\)/);
     expect(source).not.toContain('flags.multiCreator');
   });

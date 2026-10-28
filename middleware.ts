@@ -109,6 +109,10 @@ const isPublicRoute = createRouteMatcher([
   // optimizer fetches it without auth cookies.
   '/api/videos/(.*)/thumbnail',
   '/api/channel/sidebar',
+  // Next page of a public channel's videos (the route serves only publicly visible channels).
+  '/api/channel/videos',
+  // The description of one publicly visible video (the home list carries none).
+  '/api/videos/(.*)/description',
   // User avatars shown next to public comments; the route hides deleted accounts itself.
   '/api/avatars/(.*)',
   // Channel banners shown on public channel pages; the route serves only publicly visible channels.

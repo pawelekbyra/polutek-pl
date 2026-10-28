@@ -36,10 +36,12 @@ describe("shared visual system contracts", () => {
 
   it("keeps the channel grid proportional and removes placeholder tabs that did nothing", () => {
     const channel = read("app/[locale]/channel/[slug]/page.tsx");
+    const grid = read("app/components/channel/ChannelVideoGrid.tsx");
     const card = read("app/components/ChannelVideoCard.tsx");
 
     expect(channel).toContain("channel-page-shell");
-    expect(channel).toContain("xl:grid-cols-4");
+    // The grid lives in ChannelVideoGrid (first page from the server, "Show more" appends).
+    expect(grid).toContain("xl:grid-cols-4");
     expect(channel).not.toContain('"Playlisty"');
     expect(channel).not.toContain('"Społeczność"');
     expect(card).toContain("channel-video-card-media");

@@ -432,6 +432,9 @@ const AUTHZ_EXEMPT: Record<string, string> = {
   'lib/modules/channel/application/content-report.use-case.ts': 'any signed-in viewer may report; the target must be publicly visible, duplicates and a daily cap apply',
   'lib/modules/channel/application/channel-layout.service.ts': 'public sidebar read',
   'lib/modules/channel/application/home-content.loader.ts': 'public home read',
+  'lib/modules/channel/application/channel-page.loader.ts': 'public channel page header read (visibility is decided in the query: publicly visible channels only)',
+  'lib/modules/channel/application/list-public-channel-videos.use-case.ts': 'public read: the published videos of a publicly visible channel only (the header lookup refuses anything else)',
+  'lib/modules/video/application/get-public-video-detail.ts': 'public read: the description of a video the public may open (VideoContentService.getPublicVideoDetail applies the visibility rule)',
   'lib/modules/channel/application/main-channel.service.ts': 'channel resolver, no permissions',
   'lib/modules/playlists/application/playlist-public.use-cases.ts': 'public read (whitelisted DTOs; PRIVATE, deleted and hidden-channel playlists are "not found", items filtered per viewer)',
 };
