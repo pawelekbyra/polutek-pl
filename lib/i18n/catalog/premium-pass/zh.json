@@ -31,7 +31,6 @@
  "Complaints and refunds: support@polutek.com.": "投诉与退款：support@polutek.com。",
  "Confirming your payment…": "正在确认你的付款…",
  "Consent to immediate access": "同意立即访问",
- "Currency": "货币",
  "DEMO MODE": "演示模式",
  "Delete my access": "删除我的访问权限",
  "Demo mode · simulated payment · nothing will be charged": "演示模式 · 模拟付款 · 不会扣取任何费用",
@@ -133,5 +132,7 @@
  "Seller information": "卖家信息",
  "You are buying from the seller named above. Invoice details and contact are in the Terms.": "你正在向上述卖家购买。发票信息和联系方式见条款。",
  "Demo mode: nothing will be charged.": "演示模式：不会扣款。",
- "Payments are encrypted and handled by a trusted provider. We never store your card details.": "付款经过加密，由值得信赖的服务商处理。我们绝不会保存你的银行卡信息。"
+ "Payments are encrypted and handled by a trusted provider. We never store your card details.": "付款经过加密，由值得信赖的服务商处理。我们绝不会保存你的银行卡信息。",
+ "Payment currency": "支付币种",
+ "Changing the currency changes the prices below.": "更改币种会改变下方的价格。"
 }

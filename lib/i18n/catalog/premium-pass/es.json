@@ -31,7 +31,6 @@
  "Complaints and refunds: support@polutek.com.": "Reclamaciones y reembolsos: support@polutek.com.",
  "Confirming your payment…": "Confirmando tu pago…",
  "Consent to immediate access": "Consentimiento al acceso inmediato",
- "Currency": "Moneda",
  "DEMO MODE": "MODO DEMO",
  "Delete my access": "Eliminar mi acceso",
  "Demo mode · simulated payment · nothing will be charged": "Modo demo · pago simulado · no se cobrará nada",
@@ -133,5 +132,7 @@
  "Seller information": "Información del vendedor",
  "You are buying from the seller named above. Invoice details and contact are in the Terms.": "Compras al vendedor indicado arriba. Los datos de facturación y de contacto están en los Términos.",
  "Demo mode: nothing will be charged.": "Modo demo: no se cobrará nada.",
- "Payments are encrypted and handled by a trusted provider. We never store your card details.": "Los pagos están cifrados y los gestiona un proveedor de confianza. Nunca guardamos los datos de tu tarjeta."
+ "Payments are encrypted and handled by a trusted provider. We never store your card details.": "Los pagos están cifrados y los gestiona un proveedor de confianza. Nunca guardamos los datos de tu tarjeta.",
+ "Payment currency": "Moneda de pago",
+ "Changing the currency changes the prices below.": "Al cambiar la moneda, cambian los precios de abajo."
 }

@@ -387,7 +387,10 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
 
           {showSteps && <p className={styles.srOnly} role="status" aria-live="polite">{tx("Krok {0} z 3", "Step {0} of 3", stepNumber)}</p>}
           {testMode && stage.kind !== "success" && (
-            <p className={styles.testNote}><span className={styles.testBadge}>{tx("Tryb testowy", "Test mode")}</span> {tx("Nic nie zostanie pobrane naprawdę. Karta testowa: 4242 4242 4242 4242, dowolna data i CVC.", "Nothing is really charged. Test card: 4242 4242 4242 4242, any date and CVC.")}</p>
+            <div className={styles.testNote} role="note">
+              <span className={styles.testBadge}>{tx("Tryb testowy", "Test mode")}</span>
+              <p>{tx("Nic nie zostanie pobrane naprawdę. Karta testowa: 4242 4242 4242 4242, dowolna data i CVC.", "Nothing is really charged. Test card: 4242 4242 4242 4242, any date and CVC.")}</p>
+            </div>
           )}
 
           {stage.kind === "plan" && (

@@ -5,13 +5,15 @@
 // and the Terms / Privacy Policy as plain LINKS: nothing to tick before step 3. The browser only names a product and a
 // currency; the server owns the price table.
 import React, { useId } from "react";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n/routing";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import type { Tx } from "@/lib/i18n/ui";
 import type { PatronCurrency } from "@/lib/modules/patron-zone/domain/config";
 import type { PatronOfferProduct, PremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
 import { TIP_CURRENCY_SYMBOLS, describeTipMethod, tipCurrencyTitle } from "../support/tip-flow-config";
-import { TipSelect } from "../support/TipSelect";
+import { FIELD_LABEL_CLASS, TipSelect } from "../support/TipSelect";
 import { PassSellerCard } from "./PassSellerCard";
 import { price, productName, productNote, vatLine } from "./pass-copy";
 import styles from "./premium-pass.module.css";
@@ -29,18 +31,18 @@ export function PassOrderSummary({ tx, language, offer, product, currency, compa
   }
   return (
     <div role="group" aria-label={tx("Podsumowanie zamówienia", "Order summary")}>
+      {/* Everything is left-aligned (name, note, label, total, VAT): nothing sits at the right edge, where a browser's floating buttons can cover it. */}
       <div className={styles.order}>
         <div className={styles.orderLine}>
-          <div>
-            <b>{productName(tx, product.id)}</b>
-            <div className={styles.muted}>{productNote(tx, product)}, {tx("nie odnawia się", "does not renew")}</div>
-          </div>
-          <b>{total}</b>
+          <b>{productName(tx, product.id)}</b>
+          <div className={styles.muted}>{productNote(tx, product)}, {tx("nie odnawia się", "does not renew")}</div>
         </div>
         <div className={styles.orderTotal}>
           <span>{tx("Razem do zapłaty (brutto)", "Total to pay (incl. VAT)")}</span>
-          <b>{total}</b>
-          <small>{vatLine(tx)}</small>
+          <div className={styles.orderTotalSum}>
+            <b>{total}</b>
+            <small>{vatLine(tx)}</small>
+          </div>
         </div>
       </div>
     </div>
@@ -75,24 +77,28 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
           {tx("Płatności są chwilowo niedostępne. Spróbuj ponownie później.", "Payments are temporarily unavailable. Please try again later.")}
         </p>
       )}
-      <fieldset className={styles.products} disabled={busy || access?.lifetime === true}>
-        <legend className="sr-only">{tx("Wybierz dostęp", "Choose your access")}</legend>
-        <div className={styles.accessHead}>
-          <span aria-hidden="true">{tx("Wybierz dostęp", "Choose your access")}</span>
-          <TipSelect
-            label={tx("Waluta", "Currency")}
-            value={currency}
-            onChange={(code) => onCurrency(code as PatronCurrency)}
-            disabled={busy || access?.lifetime === true}
-            compact
-            options={offer.currencies.map((code) => ({ value: code, icon: TIP_CURRENCY_SYMBOLS[code], title: tipCurrencyTitle(tx, code), short: `${TIP_CURRENCY_SYMBOLS[code]} · ${code}` }))}
-          />
-        </div>
+      {/* Currency first, as its own clearly labelled control: it decides the prices of the options right below it. */}
+      <div className={styles.currencyBlock} data-currency-block="">
+        <TipSelect
+          tile
+          label={tx("Waluta płatności", "Payment currency")}
+          hint={tx("Zmiana waluty zmienia ceny poniżej.", "Changing the currency changes the prices below.")}
+          value={currency}
+          onChange={(code) => onCurrency(code as PatronCurrency)}
+          disabled={busy || access?.lifetime === true}
+          options={offer.currencies.map((code) => ({ value: code, icon: TIP_CURRENCY_SYMBOLS[code], title: tipCurrencyTitle(tx, code) }))}
+        />
+      </div>
+      <fieldset className={styles.products} role="radiogroup" aria-labelledby={`${ids}-access`} disabled={busy || access?.lifetime === true}>
+        <legend id={`${ids}-access`} className={cn(FIELD_LABEL_CLASS, styles.productsLegend)}>{tx("Wybierz dostęp", "Choose your access")}</legend>
         <div className={styles.productGrid}>
           {offer.products.map((p) => (
             <label key={p.id} className={styles.product}>
               <input type="radio" name={`${ids}-product`} value={p.id} checked={p.id === product.id} onChange={() => onProduct(p.id)} />
-              {p.bestValue ? <span className={styles.bestValue}>{tx("Bestseller", "Bestseller")}</span> : <span className={styles.badgeSlot} aria-hidden="true" />}
+              <span className={styles.productTop}>
+                {p.bestValue ? <span className={styles.bestValue}>{tx("Bestseller", "Bestseller")}</span> : <span className={styles.badgeSlot} aria-hidden="true" />}
+                <span className={styles.marker} aria-hidden="true"><Check size={14} strokeWidth={3} /></span>
+              </span>
               <span className={styles.productName}>{productName(tx, p.id)}</span>
               <span className={styles.productPrice}>{price(language, p.prices[currency], currency)}</span>
               <span className={styles.productNote}>{productNote(tx, p)}</span>
@@ -138,6 +144,7 @@ export function PassMethodStep({ tx, language, offer, product, currency, methods
         </p>
       )}
       <TipSelect
+        tile
         label={tx("Metoda płatności", "Payment method")}
         value={method}
         onChange={onMethod}
