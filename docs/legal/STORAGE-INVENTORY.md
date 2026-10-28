@@ -27,11 +27,17 @@ Cloudflare Turnstile (formularze logowania) nie używa cookies.
 | `app-language` | localStorage | język (kopia cookie) |
 | `polutek:player-sound` | localStorage | wybór dźwięku odtwarzacza |
 | `polutek:captions` | localStorage | napisy wyłączone przez widza |
+| `polutek:player-quality` | localStorage | jakość obrazu wybrana przez widza w menu odtwarzacza |
+| `polutek:player-rate` | localStorage | prędkość odtwarzania wybrana przez widza (brak wpisu = 1x) |
+| `polutek:watch-progress` | localStorage | miejsce, w którym niezalogowany widz przerwał oglądanie (ID filmów, pozycja i czas; do 30 filmów), do wznowienia |
+| `polutek:playlist-autoplay` | localStorage | włączone/wyłączone automatyczne przejście do kolejnego filmu playlisty |
 | `cockpit-sound` | localStorage | dźwięk kokpitu premiery |
 | `tip-last-method` | localStorage | ostatnia metoda napiwku |
 | `polutek:email-consent-prompt-dismissed:<userId>` | localStorage | nie pokazuj ponownie prośby o zgodę e-mail (zawiera ID konta) |
 | `polutek:revealed` | sessionStorage | bramka wejścia pokazana w tej karcie |
 | `pp:tip-attempt-id` | sessionStorage | wznowienie próby napiwku po przekierowaniu |
+| `pp:patron-attempt-id` | sessionStorage | wznowienie próby zakupu dostępu patrona po zamknięciu i otwarciu okna płatności |
+| `pp:comment-target` | sessionStorage | identyfikator komentarza z linku (`#comment-...`) i czas, by po wejściu przewinąć do niego; ważny minutę |
 | `sso-return-to` | sessionStorage | powrót na stronę po logowaniu Google |
 
 Poza zakresem publicznej strony: wznowienie uploadu w panelu administratora (`multipart-uploader`).
