@@ -16,7 +16,7 @@ import {
 /** Dormant: the CC switch stays on the bar at every width (owner 2026-10-28); a width here would move it into the settings menu. */
 export const CAPTIONS_IN_MENU_QUERY = "(max-width: 0px)";
 
-/** Play/pause: the one control with a surface of its own, a compact dark pill at the left of the row. */
+/** Play/pause: the main action, a plain icon button (larger glyph, no surface) at the left of the row. */
 export function PlayPauseButton() {
   const copy = usePlayerCopy();
   const paused = useMediaState("paused");
@@ -45,7 +45,7 @@ export function VolumeControl() {
   return (
     <div className="mc-volume">
       <MuteButton className="mc-btn" aria-label={label} title={`${label} (m)`}>
-        {isMuted ? <VolumeMutedIcon className="mc-icon" /> : volume < 0.5 ? <VolumeLowIcon className="mc-icon" /> : <VolumeHighIcon className="mc-icon" />}
+        {isMuted ? <VolumeMutedIcon className="mc-icon mc-icon--volume" /> : volume < 0.5 ? <VolumeLowIcon className="mc-icon mc-icon--volume" /> : <VolumeHighIcon className="mc-icon mc-icon--volume" />}
       </MuteButton>
       {canSetVolume && (
         <VolumeSlider.Root className="mc-vol-slider" aria-label={copy.volume}>
