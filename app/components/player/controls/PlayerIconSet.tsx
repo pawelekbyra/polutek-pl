@@ -20,6 +20,9 @@ export type PlayerIconProps = {
 
 export const PLAYER_ICON_STROKE = 2.4;
 
+/** Width of each pause bar in the 24px box (a solid bar, not the 2.4 line of the rest of the set). */
+export const PAUSE_BAR_STROKE = 3.6;
+
 function IconSvg({ className, testId, strokeWidth = PLAYER_ICON_STROKE, children, ...rest }: PlayerIconProps & { children: ReactNode }) {
   return (
     <svg
@@ -48,11 +51,17 @@ export function PlayIcon(props: PlayerIconProps) {
   );
 }
 
+/**
+ * Pause (variant B of the 2026-10-28 redesign, chosen by the owner): two slim, tall, solid bars. Each bar is one
+ * hand-wobbled centre line drawn with its own thick round-capped stroke (3.6 in the 24 box: the bar is 3.6 wide and
+ * ~15 tall with fully rounded ends), gap 4.4 between the bars, the right bar a hair higher and straighter like a
+ * second pen stroke. The width belongs to the path, so the `strokeWidth` prop does not thin the bars.
+ */
 export function PauseIcon(props: PlayerIconProps) {
   return (
     <IconSvg {...props}>
-      <path d="M8.82 5.82C8.82 6.12 8.82 7 8.82 7.59C8.82 8.18 8.82 8.77 8.82 9.36C8.82 9.95 8.82 10.54 8.82 11.13C8.82 11.72 8.82 12.32 8.82 12.91C8.82 13.5 8.82 14.09 8.82 14.68C8.82 15.27 8.82 15.86 8.82 16.45C8.82 17.04 8.82 17.92 8.82 18.22" />
-      <path d="M15.13 5.59C15.13 5.88 15.13 6.77 15.13 7.36C15.13 7.95 15.13 8.54 15.13 9.13C15.13 9.72 15.13 10.31 15.13 10.9C15.13 11.49 15.13 12.08 15.13 12.68C15.13 13.27 15.13 13.86 15.13 14.45C15.13 15.04 15.13 15.63 15.13 16.22C15.13 16.81 15.13 17.69 15.13 17.99" />
+      <path strokeWidth={PAUSE_BAR_STROKE} d="M8.1 6.3L8 9.2L8.06 12L7.98 14.8L8.04 17.7" />
+      <path strokeWidth={PAUSE_BAR_STROKE} d="M16 6.1L15.93 9L15.97 11.9L15.9 14.7L15.96 17.5" />
     </IconSvg>
   );
 }
