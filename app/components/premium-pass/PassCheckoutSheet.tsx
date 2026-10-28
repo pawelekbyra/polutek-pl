@@ -16,6 +16,7 @@ import type { PatronCurrency } from "@/lib/modules/patron-zone/domain/config";
 import { defaultProduct, type PremiumPassOffer } from "@/lib/modules/patron-zone/domain/offer";
 import { maskEmail, type PassMethod, type PassStatusDto } from "@/lib/modules/patron-zone/domain/pass-state";
 import { useLanguage } from "../LanguageContext";
+import { LegalSheetProvider } from "../legal/LegalSheet";
 import { TIP_WALLETS, getTipMethodTiles, readLastTipMethod, rememberTipMethod, type TipWallet } from "../support/tip-flow-config";
 import { TipBackContext } from "../support/TipStepLayout";
 import { FIELD_LABEL_CLASS } from "../support/TipSelect";
@@ -351,6 +352,8 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
       <DialogPrimitive.Portal>
         <DialogPrimitive.Backdrop className={styles.overlay} />
         <DialogPrimitive.Popup className={cn(styles.pass, styles.sheet)} aria-labelledby={`${ids}-title`} aria-busy={locked} initialFocus={titleRef}>
+          {/* Legal documents open in a sheet ON TOP of this dialog (nested), so nothing here is unmounted or reset. */}
+          <LegalSheetProvider tx={tx} language={language} demo={!stripeMode}>
           <div className={styles.sheetHead}>
             <DialogPrimitive.Title render={<h2 ref={titleRef} tabIndex={-1} id={`${ids}-title`} className={styles.sheetTitle} />}>
               {tx("Kup se Premium", "Get Premium")}
@@ -483,6 +486,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
           )}
 
           {stepNumber !== null && <PassSecurityFooter tx={tx} demo={!stripeMode} language={language} links={stage.kind !== "pay"} />}
+          </LegalSheetProvider>
         </DialogPrimitive.Popup>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>

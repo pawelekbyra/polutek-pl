@@ -8,9 +8,10 @@ import { Elements } from "@stripe/react-stripe-js";
 import type { Stripe, StripeElementsOptions } from "@stripe/stripe-js";
 import { cn } from "@/lib/utils";
 import type { SupportedCurrency } from "@/lib/constants";
-import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
+import type { Locale } from "@/lib/i18n/routing";
 import { txRich } from "@/lib/i18n/rich";
 import { stripeLocale, type Tx } from "@/lib/i18n/ui";
+import { LegalLink } from "../legal/legal-sheet-context";
 import { describeTipMethod } from "../support/tip-flow-config";
 import { TipPayStep } from "../support/TipPayStep";
 import type { TipConfirmOutcome } from "../support/tip-confirm";
@@ -53,8 +54,8 @@ export function PassConsent({
             tx,
             "Akceptuję {0} i {1}.",
             "I accept the {0} and the {1}.",
-            <a href={getLocalizedHref(language, "passTerms")} target="_blank" rel="noopener">{tx("Regulamin strefy patrona", "Patron Zone Terms")}</a>,
-            <a href={getLocalizedHref(language, "privacy")} target="_blank" rel="noopener">{tx("Politykę prywatności", "Privacy Policy")}</a>,
+            <LegalLink doc="passTerms" language={language}>{tx("Regulamin strefy patrona", "Patron Zone Terms")}</LegalLink>,
+            <LegalLink doc="privacy" language={language}>{tx("Politykę prywatności", "Privacy Policy")}</LegalLink>,
           )}
         </label>
         {errors.terms && <p id={`${ids}-terms-error`} className={styles.error}>{consentError}</p>}

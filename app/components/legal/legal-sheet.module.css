@@ -1,0 +1,58 @@
+/* Legal sheet: a second dialog on top of a dialog (the patron checkout). Tokens are the site's --chan-* ones (the sheet is
+   portalled outside the checkout, so the checkout's scoped --pass-* tokens are not available); the fallbacks equal the
+   checkout's, so the two look like one family (and follow a dark theme the moment the tokens define one). */
+.backdrop {
+  position: fixed; inset: 0; z-index: 9992; background: rgba(5, 7, 13, .55);
+  /* A touch on the dimmed area closes the sheet (outside press); it must never scroll what is behind. */
+  touch-action: none;
+  transition: opacity 200ms ease;
+}
+.sheet {
+  position: fixed; z-index: 9993; display: flex; flex-direction: column; overflow: hidden; outline: none;
+  background: var(--chan-card, #fff); color: var(--chan-ink, #111827);
+  border: 1px solid var(--chan-line, #e1e6ef); box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .6);
+  /* Phone: a bottom sheet with a safe top margin; the dimmed checkout stays visible above it. */
+  left: 0; right: 0; bottom: 0; top: max(40px, env(safe-area-inset-top));
+  border-radius: 20px 20px 0 0; border-bottom: 0;
+  transition: transform 220ms var(--ease-enter, cubic-bezier(.16, 1, .3, 1)), opacity 180ms ease;
+}
+/* From 561 px: centred without transforms (so the swipe offset is free to use transform); margin:auto does the centring. */
+@media (min-width: 561px) {
+  .sheet { inset: 0; margin: auto; width: min(640px, calc(100vw - 32px)); height: min(680px, 86dvh); border-radius: 20px; border-bottom: 1px solid var(--chan-line, #e1e6ef); }
+}
+.backdrop[data-starting-style], .backdrop[data-ending-style] { opacity: 0; }
+.sheet[data-starting-style], .sheet[data-ending-style] { opacity: 0; transform: translateY(24px); }
+
+/* Fixed header: the title, the secondary "open in a new tab" action and the big Close button never scroll away. */
+.head { flex: 0 0 auto; padding: 8px 8px 10px 20px; border-bottom: 1px solid var(--chan-line, #e1e6ef); touch-action: none; user-select: none; -webkit-user-select: none; }
+.grabber { display: block; width: 40px; height: 4px; margin: 0 auto 8px; border-radius: 999px; background: var(--chan-line-soft, #d5dce8); }
+@media (min-width: 561px) { .grabber { display: none; } .head { padding-top: 12px; } }
+.headRow { display: flex; align-items: flex-start; gap: 12px; }
+.headText { flex: 1 1 auto; min-width: 0; padding-top: 2px; }
+.title { margin: 0; font-size: 19px; line-height: 1.2; font-weight: 800; letter-spacing: -.01em; outline: none; overflow-wrap: anywhere; }
+.newTab {
+  display: inline-flex; align-items: center; gap: 5px; min-height: 32px; margin-top: 2px; padding-right: 4px;
+  font-size: 12.5px; color: var(--chan-muted, #5d6679); text-decoration: underline; text-underline-offset: 2px;
+}
+.newTab svg { width: 13px; height: 13px; flex: 0 0 auto; }
+.close {
+  flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 0 14px 0 12px;
+  border: 0; border-radius: 12px; cursor: pointer; font: inherit; font-size: 15px; font-weight: 700;
+  background: var(--chan-surface, #f0f3f8); color: var(--chan-ink, #111827);
+}
+.close svg { width: 20px; height: 20px; stroke-width: 2.2; flex: 0 0 auto; }
+.close:hover { background: var(--chan-line, #e1e6ef); }
+.close:focus-visible, .newTab:focus-visible, .body:focus-visible { outline: 3px solid var(--chan-focus-ring, #2563eb); outline-offset: 2px; }
+.body:focus-visible { outline-offset: -3px; }
+
+/* The only scrolling part. overscroll-behavior stops scroll chaining to the page (and, on iOS 16+, the rubber band
+   from dragging the checkout); the bottom padding keeps the last line clear of the home indicator. */
+.body {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  padding: 16px 20px calc(24px + env(safe-area-inset-bottom)); color: var(--chan-ink, #111827);
+}
+.loading { margin: 0; color: var(--chan-muted, #5d6679); font-size: 14px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop, .sheet { transition: none; }
+}
