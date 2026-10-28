@@ -116,7 +116,7 @@ describe("player icon set (Marker)", () => {
     expect(css).toContain(".mc-menu-check, .mc-menu-hint-icon { width:16px; height:16px;");
     expect(css).not.toContain('content:"\\2713"');
     expect(css).toMatch(/\.mc-play \{ --mc-play-glyph: 26px; width:40px; height:40px; \}/);
-    expect(css).toMatch(/\.mc-icon--volume \{ width:23px; height:23px; stroke-width:2\.09; \}/);
+    expect(css).toMatch(/\.mc-icon--volume \{ width:26px; height:26px; stroke-width:1\.85; \}/);
     expect(css).toMatch(/\.mc-glyph-swap > svg,\s*\n\s*\.mc-vol-slider/);
     expect(css).toContain("env(safe-area-inset-bottom, 0px)");
     expect(css).toContain("env(safe-area-inset-left, 0px)");
@@ -129,8 +129,11 @@ describe("player icon set (Marker)", () => {
     expect(css).not.toContain(".mc-play:focus-visible");
     expect(css).toMatch(/\.mc-caption--none \{ cursor:default; \}/);
     expect(css).not.toMatch(/\.mc-caption--none[^}]*opacity/);
-    expect(css.match(/\.mc-scrub-track \{[^}]*\}/)![0]).toContain("rgba(255,255,255,.88)");
-    expect(css).toMatch(/\.mc-scrub-buffer \{[^}]*rgba\(255,255,255,\.55\)/);
+    expect(css.match(/\.mc-scrub-track \{[^}]*\}/)![0]).toContain("rgba(255,255,255,.92)");
+    expect(css).toMatch(/\.mc-scrub-buffer \{[^}]*background:#fff;/);
+    // No grey: time text is pure white; one time label at a time (playhead chip yields to the preview).
+    expect(css).toMatch(/--mc-fg-muted: #fff;/);
+    expect(css).toContain(".mc-scrub:has(.mc-chip--preview[data-visible]) .mc-chip--playhead");
     expect(css).toMatch(/\.mc-scrub-fill \{[^}]*var\(--chan-blue\)/);
   });
 });
