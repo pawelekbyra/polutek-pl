@@ -8,17 +8,21 @@ import {
   listUserNotificationsQuerySchema,
   markNotificationsReadSchema,
   safeNotificationHref,
+  userNotificationType,
+  encodeUserNotificationCursor,
+  decodeUserNotificationCursor,
 } from "@/lib/modules/notifications/domain/user-notifications";
 
 function ctxFor(actor: unknown, overrides: Record<string, unknown> = {}) {
   const notification = {
     count: vi.fn().mockResolvedValue(3),
+    findFirst: vi.fn().mockResolvedValue(null),
     findMany: vi.fn().mockResolvedValue([]),
     updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     ...overrides,
   };
   const prisma = { notification, user: { findUnique: vi.fn().mockResolvedValue({ language: "pl" }) } };
-  return { ctx: { actor, prisma } as never, notification, prisma };
+  return { ctx: { actor, prisma, now: () => new Date("2026-10-28T12:00:00Z") } as never, notification, prisma };
 }
 const user = { type: "user", userId: "me" };
 
@@ -51,11 +55,13 @@ describe("viewer notifications", () => {
   it("lists own rows paged, in the account language, with a cursor", async () => {
     const { ctx, notification } = ctxFor(user, { findMany: vi.fn().mockResolvedValue([row("a"), row("b"), row("c")]) });
     const page = await listUserNotifications(ctx, { limit: 2 });
-    expect(notification.findMany.mock.calls[0][0].where).toEqual({ userId: "me" });
+    expect(notification.findMany.mock.calls[0][0].where).toEqual({ userId: "me", createdAt: { lte: new Date("2026-10-28T12:00:00Z") } });
     expect(notification.findMany.mock.calls[0][0].take).toBe(3);
     expect(page.items.map((n) => n.id)).toEqual(["a", "b"]);
     expect(page.items[0].title).toBe("Tytul");
-    expect(page.nextCursor).toBe("b");
+    expect(page.nextCursor).toBe(encodeUserNotificationCursor(row("b")));
+    expect(page.snapshotAt).toBe("2026-10-28T12:00:00.000Z");
+    expect(page.items[0].type).toBe("new_video");
     expect(page.unreadCount).toBe(3);
   });
 
@@ -65,7 +71,7 @@ describe("viewer notifications", () => {
     const page = await listUserNotifications(ctx, { limit: 5, unreadOnly: true });
     expect(page.items[0].title).toBe("Title");
     expect(page.nextCursor).toBeNull();
-    expect(notification.findMany.mock.calls[0][0].where).toEqual({ userId: "me", read: false });
+    expect(notification.findMany.mock.calls[0][0].where).toEqual({ userId: "me", read: false, createdAt: { lte: new Date("2026-10-28T12:00:00Z") } });
   });
 
   it("renders keyed rows in the account language and falls back to stored text otherwise", async () => {
@@ -110,8 +116,61 @@ describe("viewer notifications", () => {
   it("marks all of the caller's unread rows read", async () => {
     const { ctx, notification } = ctxFor(user);
     const result = await markNotificationsRead(ctx, { all: true });
-    expect(notification.updateMany).toHaveBeenCalledWith({ where: { userId: "me", read: false }, data: { read: true } });
+    expect(notification.updateMany).toHaveBeenCalledWith({ where: { userId: "me", read: false, createdAt: { lte: new Date("2026-10-28T12:00:00Z") } }, data: { read: true } });
     expect(result).toEqual({ updated: 1, unreadCount: 3 });
+  });
+
+  it("uses a stable keyset after a boundary notification was removed, including equal timestamps", async () => {
+    const boundary = row("b");
+    const cursor = encodeUserNotificationCursor(boundary);
+    expect(decodeUserNotificationCursor(cursor)).toEqual({ id: "b", createdAt: boundary.createdAt });
+    const { ctx, notification } = ctxFor(user);
+    await listUserNotifications(ctx, { limit: 2, cursor });
+    expect(notification.findFirst).not.toHaveBeenCalled();
+    expect(notification.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: {
+      userId: "me", createdAt: { lte: new Date("2026-10-28T12:00:00Z") }, OR: [{ createdAt: { lt: boundary.createdAt } }, { createdAt: boundary.createdAt, id: { lt: "b" } }],
+    } }));
+    expect(notification.findMany.mock.calls[0][0]).not.toHaveProperty("cursor");
+  });
+
+  it("supports own legacy cursors but refuses foreign, missing and malformed cursors", async () => {
+    const { ctx, notification } = ctxFor(user);
+    notification.findFirst.mockResolvedValueOnce({ id: "old", createdAt: row("old").createdAt });
+    await listUserNotifications(ctx, { limit: 2, cursor: "old" });
+    expect(notification.findFirst).toHaveBeenCalledWith({ where: { id: "old", userId: "me" }, select: { id: true, createdAt: true } });
+    for (const cursor of ["foreign", "deleted", "v1:bad", "v1:9999999999999999:n1"]) {
+      await expect(listUserNotifications(ctx, { limit: 2, cursor })).rejects.toMatchObject({ statusCode: 400, code: "INVALID_CURSOR" });
+    }
+  });
+
+  it("bounds rows to the same pre-query snapshot used by mark-all while counting every unread arrival", async () => {
+    const { ctx, notification } = ctxFor(user);
+    const page = await listUserNotifications(ctx, { limit: 10 });
+    expect(notification.findMany.mock.calls[0][0].where.createdAt).toEqual({ lte: new Date(page.snapshotAt) });
+    expect(notification.count).toHaveBeenCalledWith({ where: { userId: "me", read: false } });
+    await markNotificationsRead(ctx, { all: true, before: page.snapshotAt });
+    expect(notification.updateMany.mock.calls[0][0].where.createdAt).toEqual(notification.findMany.mock.calls[0][0].where.createdAt);
+  });
+
+  it("does not mark arrivals after the displayed snapshot read and clamps future cutoffs to the server clock", async () => {
+    const { ctx, notification } = ctxFor(user);
+    await markNotificationsRead(ctx, { all: true, before: "2026-10-28T11:59:00.000Z" });
+    expect(notification.updateMany).toHaveBeenLastCalledWith({ where: { userId: "me", read: false, createdAt: { lte: new Date("2026-10-28T11:59:00Z") } }, data: { read: true } });
+    await markNotificationsRead(ctx, { all: true, before: "2027-01-01T00:00:00.000Z" });
+    expect(notification.updateMany).toHaveBeenLastCalledWith({ where: { userId: "me", read: false, createdAt: { lte: new Date("2026-10-28T12:00:00Z") } }, data: { read: true } });
+  });
+
+  it("rejects browser-normalized and encoded redirect tricks, bad ports and malformed URLs", () => {
+    for (const href of ["/\\evil.example", "/%2Fevil.example", "/%5cevil.example", "/%252fevil.example", "/%250a/evil.example", "/\tevil.example", "/bad%escape", "https://ok.example:99999/", "https://user:password@ok.example/", "https://", "https:///", "https://ok.example/\\evil"]) {
+      expect(safeNotificationHref(href), href).toBeNull();
+    }
+    expect(safeNotificationHref("/watch/film#comment-abc")).toBe("/watch/film#comment-abc");
+    expect(safeNotificationHref("https://ok.example:8443/path?q=1#here")).toBe("https://ok.example:8443/path?q=1#here");
+  });
+
+  it("derives event types independently of translated text and ignores keys of another kind", () => {
+    const cases = [["COMMENT", "creator_like", "creator_like"], ["COMMENT", "comment_like", "comment_like"], ["COMMENT", "comment_reply", "comment_reply"], ["NEW_VIDEO", "premiere", "premiere"], ["NEW_VIDEO", null, "new_video"], ["WELCOME", null, "welcome"], ["PATRON", null, "support"], ["SUPPORT", null, "support"], ["MODERATION", null, "moderation"], ["SYSTEM", null, "announcement"], ["SYSTEM", "creator_like", "announcement"]] as const;
+    for (const [kind, key, expected] of cases) expect(userNotificationType(kind, key)).toBe(expected);
   });
 
   it("validates query and body", () => {
@@ -120,5 +179,7 @@ describe("viewer notifications", () => {
     expect(markNotificationsReadSchema.safeParse({ id: "a", all: true }).success).toBe(false);
     expect(markNotificationsReadSchema.safeParse({}).success).toBe(false);
     expect(markNotificationsReadSchema.safeParse({ all: true }).success).toBe(true);
+    expect(markNotificationsReadSchema.safeParse({ all: true, before: "bad" }).success).toBe(false);
+    expect(markNotificationsReadSchema.safeParse({ all: true, before: "2026-10-28T12:00:00.000Z" }).success).toBe(true);
   });
 });

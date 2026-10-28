@@ -160,3 +160,21 @@ describe('ChannelHome shallow video switching', () => {
     expect(pushState).not.toHaveBeenCalled();
   });
 });
+
+describe('notifications in the current video shell', () => {
+  beforeEach(() => { window.scrollTo = vi.fn(); window.matchMedia = vi.fn().mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }); });
+  afterEach(() => cleanup());
+  it('claims a known video, preserves history state and selects the comments without starting its video with sound', async () => {
+    const { navigateNotification } = await import('@/app/components/notifications/notification-navigation');
+    window.history.replaceState({ other: 'preserved' }, '', '/');
+    const router = { push: vi.fn() };
+    render(<ChannelHome mainVideo={main} allVideos={[main, second]} />);
+    act(() => navigateNotification('/watch/second#comment-c1', router));
+    expect(screen.getByTestId('hero')).toHaveTextContent('video_2');
+    expect(router.push).not.toHaveBeenCalled();
+    expect(window.history.state).toMatchObject({ polutekVideoId: 'video_2', polutekCommentId: 'c1', other: 'preserved', __ppRealUrl: '/?v=second' });
+    expect(mocks.heroProps.at(-1)?.startWithSound).toBe(false);
+    act(() => navigateNotification('/watch/unknown#comment-c2', router));
+    expect(router.push).toHaveBeenCalledWith('/watch/unknown#comment-c2', { scroll: false });
+  });
+});

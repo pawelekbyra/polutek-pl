@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { handleApiError } from "@/lib/errors";
-import { viewerNotificationsContext } from "@/lib/api/viewer-notifications-route";
+import { privateNotificationResponse, viewerNotificationsContext } from "@/lib/api/viewer-notifications-route";
 import { countUnreadNotifications } from "@/lib/modules/notifications";
 
 export const dynamic = "force-dynamic";
@@ -11,8 +11,8 @@ export async function GET() {
     const session = await viewerNotificationsContext("read");
     if ("response" in session) return session.response;
     const unreadCount = await countUnreadNotifications(session.ctx);
-    return NextResponse.json({ unreadCount }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json({ unreadCount }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
-    return handleApiError(error);
+    return privateNotificationResponse(handleApiError(error));
   }
 }

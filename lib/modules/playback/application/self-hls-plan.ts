@@ -3,8 +3,7 @@ import type { AppContext } from '@/lib/modules/shared/app-context';
 import { SelfHlsTokenService } from '../infrastructure/self-hls-token.service';
 import type { PlaybackAssetContract, PlaybackPlan } from '../domain/playback.dto';
 import { captionDeliveryPath, parseCaptionRef } from '@/lib/modules/media';
-import { isAdultVideo } from '@/lib/modules/video/domain/video-visibility';
-import { PLAYBACK_HEARTBEAT_INTERVAL_SECONDS, PLAYBACK_SESSION_MAX_AGE_MS } from '@/lib/modules/video';
+import { isAdultVideo, PLAYBACK_HEARTBEAT_INTERVAL_SECONDS, PLAYBACK_SESSION_MAX_AGE_MS } from '@/lib/modules/video';
 
 /**
  * Own HLS playback (provider SELF_HLS), the only video source we have. Only

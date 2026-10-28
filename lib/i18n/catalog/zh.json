@@ -1104,5 +1104,8 @@
  "Check the details in the About section.": "请检查“简介”部分的内容。",
  "Server error. Please try again.": "服务器错误，请重试。",
  "Pay with a Multibanco reference": "使用 Multibanco 参考号付款",
- "MB WAY app": "MB WAY 应用"
+ "MB WAY app": "MB WAY 应用",
+ "Could not save read notifications. Please try again.": "无法保存通知已读状态，请重试。",
+ "This comment is no longer available.": "这条评论已不可用。",
+ "Could not load the comment.": "无法加载评论。"
 }

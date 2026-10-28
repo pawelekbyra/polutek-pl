@@ -244,7 +244,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                 <div aria-hidden="true" className="h-10 w-10 shrink-0" />
               )}
 
-              {SHOW_NOTIFICATION_BELL && isLoaded && isSignedIn && <NotificationBell />}
+              {SHOW_NOTIFICATION_BELL && isLoaded && isSignedIn && <NotificationBell key={userId} />}
 
               {isLoaded && isSignedIn && (
                 <UserMenu isAdmin={isAdmin} />

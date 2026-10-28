@@ -27,7 +27,7 @@ import type { CommentReportReasonDto } from "@/lib/modules/comments/domain/comme
 import { CommentComposer } from "./components/CommentComposer";
 import { MobileCommentComposer, type MobileComposerHandle } from "./components/MobileCommentComposer";
 import { useIsPhone } from "./hooks/useIsPhone";
-import { clearCommentDeepLink, pendingCommentDeepLink } from "./deep-link";
+import { useCommentDeepLinkContext, uniqueComments } from "./hooks/useCommentDeepLinkContext";
 import { CommentItem } from "./components/CommentItem";
 import { AnimatePresence } from "framer-motion";
 import { CommentMotionItem, AnimatedCount } from "./components/comment-motion";
@@ -201,17 +201,8 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
 
   const { mutate: postComment } = postMutation;
 
-  // A link to a comment that is not on the first page (a notification about an older comment): load further pages
-  // until it is on screen (its own item scrolls to it), or give up once the list is exhausted.
-  useEffect(() => {
-    const target = pendingCommentDeepLink();
-    if (!target || isLoading || isFetchingNextPage) return;
-    if (document.getElementById(`comment-${target}`)) return;
-    if (hasNextPage) void fetchNextPage();
-    else clearCommentDeepLink();
-  }, [data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]);
-
-  const comments = data?.pages?.flatMap((page) => page.comments || []) ?? [];
+  const { error: deepLinkError, retry: retryDeepLink } = useCommentDeepLinkContext(videoId, sortBy, Boolean(data) && !isLoading && !isPlaceholderData && !isError);
+  const comments = uniqueComments(data?.pages?.flatMap((page) => page.comments || []) ?? []);
   const totalCount = data?.pages?.[0]?.totalCount ?? 0;
   const viewer = data?.pages?.[0]?.viewer;
 
@@ -353,6 +344,10 @@ const EmbeddedComments: React.FC<EmbeddedCommentsProps> = ({
       ref={commentsTopRef}
       className="relative flex max-w-full flex-col gap-4 pb-4"
     >
+      {deepLinkError && <p role="status" className="rounded-xl bg-[var(--chan-surface)] px-4 py-3 text-[13px] text-[var(--chan-muted)]">
+        {deepLinkError.kind === "missing" ? tx("Ten komentarz nie jest już dostępny.", "This comment is no longer available.") : tx("Nie udało się wczytać komentarza.", "Could not load the comment.")}
+        {deepLinkError.kind === "network" && <button type="button" onClick={retryDeepLink} className="ml-2 underline">{tx("Spróbuj ponownie", "Try again")}</button>}
+      </p>}
       {/* Back to comments top */}
       {showStickyHeader &&
         createPortal(

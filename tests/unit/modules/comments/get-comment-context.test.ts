@@ -60,6 +60,43 @@ describe('GET comment context (deep link) never leaks moderated content', () => 
     expect(result.ok).toBe(false);
   });
 
+  it('rechecks visibility after the DTO read to cover concurrent moderation and account deletion', async () => {
+    repo.findCommentById.mockResolvedValue(comment(CommentStatus.VISIBLE));
+    for (const full of [comment(CommentStatus.HIDDEN), comment(CommentStatus.VISIBLE, true)]) {
+      repo.findCommentForDto.mockResolvedValue(full);
+      const result = await getCommentContext({ commentId: 'c1' }, as({ type: 'user', userId: 'someone' }));
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.type).toBe('NOT_FOUND');
+    }
+  });
+
+  it('lets a guest read visible public and login-required discussions without enabling interactions', async () => {
+    repo.findCommentById.mockResolvedValue(comment(CommentStatus.VISIBLE));
+    repo.findCommentForDto.mockResolvedValue(comment(CommentStatus.VISIBLE));
+    for (const access of [{ hasAccess: true }, { hasAccess: false, reason: 'LOGIN_REQUIRED' }, { hasAccess: false, reason: 'PASS_REQUIRED' }]) {
+      vi.mocked(checkVideoAccess).mockResolvedValue(ok(access as any));
+      const result = await getCommentContext({ commentId: 'c1' }, as({ type: 'guest' }));
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.comment.text).toBe('held content');
+        expect(result.data.comment.viewerCanEdit).toBe(false);
+        expect(result.data.comment.viewerCanDelete).toBe(false);
+        expect(result.data.comment.viewerCanModerate).toBe(false);
+      }
+    }
+  });
+
+  it('does not reveal context of deleted/missing videos or other access denials', async () => {
+    repo.findCommentById.mockResolvedValue(comment(CommentStatus.VISIBLE));
+    for (const reason of ['NOT_FOUND', 'DELETED', 'PAYMENT_REQUIRED', 'COMING_SOON']) {
+      vi.mocked(checkVideoAccess).mockResolvedValue(ok({ hasAccess: false, reason } as any));
+      const result = await getCommentContext({ commentId: 'c1' }, as({ type: 'guest' }));
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error.type).toBe(reason === 'NOT_FOUND' || reason === 'DELETED' ? 'NOT_FOUND' : 'FORBIDDEN');
+    }
+    expect(repo.findCommentForDto).not.toHaveBeenCalled();
+  });
+
   it('lets the video creator review a held comment', async () => {
     repo.findCommentById.mockResolvedValue(comment(CommentStatus.HELD_FOR_REVIEW));
     repo.findCommentForDto.mockResolvedValue(comment(CommentStatus.HELD_FOR_REVIEW));

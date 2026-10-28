@@ -240,9 +240,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .stageInner, .sheet, .playerChip { animation: none; }
-  .overlay { animation: none; }
-  .overlay, .sheet { transition: none; }
-  .stepPip { transition: none; }
+  .sheet, .overlay, .stepPip { transition: none; }
   .playerChip { opacity: 1; }
   .goldBtn { transition: none; }
   .goldBtn:hover { transform: none; }

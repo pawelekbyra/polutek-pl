@@ -20,7 +20,9 @@ import { RenderClockProvider } from "./RenderClock";
 import { useSearchParams } from "next/navigation";
 // Rendered on the server with its first page (HomeExperience), so the list is in the first HTML.
 import EmbeddedComments from "./comments/EmbeddedComments";
-import { openedWithCommentDeepLink } from "./comments/deep-link";
+import { openedWithCommentDeepLink, pendingCommentDeepLink, requestCommentDeepLink } from "./comments/deep-link";
+import { VIDEO_HISTORY_STATE_KEY, readHistoryVideoId, scrollToMediaOnMobile, type ChannelViewState } from "./channel/home-history";
+import { useNotificationVideoNavigation, NOTIFICATION_COMMENT_HISTORY_KEY } from "./notifications/useNotificationVideoNavigation";
 import type { InitialCommentsPage } from "./comments/initial-comments";
 import { pickHomeVideo } from "@/lib/home-video-selection";
 import { ViewerShelves } from "./channel/ViewerShelves";
@@ -72,16 +74,7 @@ interface ChannelHomeProps {
   renderedAt?: string;
 }
 
-type ChannelViewState = {
-  routeVideoId: string | undefined;
-  selectedVideoId: string | undefined;
-  activeTab: "comments" | "videos";
-  /**
-   * The selected video was picked with a click or tap (a user gesture, so the browser lets it
-   * start with sound). Never set for the first video, a route change or Back/Forward.
-   */
-  startWithSound: boolean;
-};
+
 
 
 export default function ChannelHome({
@@ -122,25 +115,6 @@ export default function ChannelHome({
   );
 }
 
-function scrollToMediaOnMobile() {
-  if (typeof window === "undefined") return;
-
-  const isMobileLayout = window.matchMedia?.("(max-width: 1023px)").matches ?? true;
-  if (!isMobileLayout) return;
-
-  const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-  window.scrollTo({ top: 0, behavior: prefersReducedMotion ? "auto" : "smooth" });
-}
-
-// Key under which a shallow video switch stores the selected video in the history
-// entry's state, so Back/Forward can restore it without a server round trip.
-const VIDEO_HISTORY_STATE_KEY = "polutekVideoId";
-
-function readHistoryVideoId(state: unknown): string | undefined {
-  if (!state || typeof state !== "object") return undefined;
-  const value = (state as Record<string, unknown>)[VIDEO_HISTORY_STATE_KEY];
-  return typeof value === "string" ? value : undefined;
-}
 
 function ChannelHomeContent({
   mainVideo,
@@ -188,25 +162,31 @@ function ChannelHomeContent({
   const serverInteractionVideoId = resolveVideoId(currentVideoId);
   const activeTab = selectionState.activeTab;
   const preloader = useAppPreload();
+  useNotificationVideoNavigation({ videos: [mainVideo, extraVideo, ...allVideos], language, onSelect: (id, comment) => {
+    focusTitleRef.current = !comment;
+    if (queue) setClosedQueueSlug(queue.slug);
+    preloader?.selectVideo(id);
+    void preloader?.warmVideo(id, { includeComments: true, priority: "critical" });
+    setSelectionState({ routeVideoId: currentVideoId, selectedVideoId: id, activeTab: "comments", startWithSound: !comment });
+  } });
+
 
   const setActiveTab = (activeTab: "comments" | "videos") => {
     setSelectionState((current) => ({ ...current, activeTab }));
   };
 
-  // The first run (the page just opened) takes a phone to the player, except when the page was opened by a link to a
-  // comment: that one scrolls to the comment instead.
+  // Comment targets own the scroll; ordinary mobile selections scroll to the player.
   const firstMediaScroll = useRef(true);
   useEffect(() => {
     const first = firstMediaScroll.current;
     firstMediaScroll.current = false;
-    if (first && openedWithCommentDeepLink()) return;
+    if ((first && openedWithCommentDeepLink()) || pendingCommentDeepLink()) return;
     if (selectedVideo?.id) {
       scrollToMediaOnMobile();
     }
   }, [selectedVideo?.id]);
 
-  // Back/Forward across shallow video switches: restore the video recorded in the
-  // history entry. The first entry is tagged on mount so Back can return to it.
+  // Restore shallow video selections on Back/Forward; tag the initial entry too.
   useEffect(() => {
     try {
       if (!readHistoryVideoId(window.history.state) && selectedVideo?.id) {
@@ -221,6 +201,8 @@ function ChannelHomeContent({
     const onPopState = (event: PopStateEvent) => {
       const videoId = readHistoryVideoId(event.state);
       if (!videoId) return;
+      const target = event.state?.[NOTIFICATION_COMMENT_HISTORY_KEY];
+      if (typeof target === "string") requestCommentDeepLink(target);
       // Back/Forward is not a gesture on the player: the video starts muted (unmute hint shown).
       setSelectionState((current) => ({ ...current, selectedVideoId: videoId, activeTab: "comments", startWithSound: false }));
     };
@@ -230,8 +212,7 @@ function ChannelHomeContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // The logo ("polutek:go-home"): back to the hero video. A shallow switch like picking a video in the
-  // sidebar (no server round trip, no loading screen); the address goes back to the plain home URL.
+  // The logo restores the hero locally and the plain home URL.
   const heroId = mainVideo?.id;
   const selectedId = selectedVideo?.id;
   const goToHero = useCallback(() => {
@@ -252,9 +233,7 @@ function ChannelHomeContent({
     return () => window.removeEventListener(GO_HOME_EVENT, goToHero);
   }, [goToHero]);
 
-  // After a shallow video switch there is no page load to tell a screen-reader user what changed: announce the new
-  // video in a polite live region and, for a deliberate pick, move the focus to its title. (document.title stays
-  // the site title on purpose, see CLAUDE.md §4.13.)
+  // Announce local selections and focus their title after deliberate picks (§4.13).
   const focusTitleRef = useRef(false);
   const announcedVideoRef = useRef<string | undefined>(selectedId);
   const [announcement, setAnnouncement] = useState("");
@@ -328,11 +307,8 @@ function ChannelHomeContent({
 
   const sortedVideos = [...(allVideos || [])].sort(compareSidebarItems);
 
-  // Intent (hover/focus/touch) is handled by SidebarPlaylist: it warms the playback plan, the
-  // first seconds of the stream and the first page of comments, so a click lands on a ready
-  // player and ready comments instead of a spinner and a skeleton.
-  // Called from a click/tap (a user gesture), so the picked video starts with sound.
-  // `query` is the address' query string without "?" (`v=<slug>`, plus the playlist context inside a playlist).
+  // Sidebar intent warms playback and comments. A deliberate pick starts with sound.
+  // `query` carries the slug and optional playlist context, without the leading "?".
   const switchVideo = (clickedId: string, query: string, auto = false) => {
     // A deliberate pick moves the keyboard focus to the new video's title (the sidebar item it came from is
     // re-rendered); an automatic hand-over (the playlist's next video) never takes the focus.

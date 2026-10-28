@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleApiError } from "@/lib/errors";
-import { invalidRequest, viewerNotificationsContext } from "@/lib/api/viewer-notifications-route";
+import { invalidRequest, privateNotificationResponse, viewerNotificationsContext } from "@/lib/api/viewer-notifications-route";
 import { markNotificationsRead, markNotificationsReadSchema } from "@/lib/modules/notifications";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Marks notifications as read: `{ "id": "<notification id>" }` for one of the caller's own, or
- * `{ "all": true }` for every unread one. Idempotent. Answers `{ updated, unreadCount }`.
+ * `{ "all": true, "before": "<snapshotAt>" }` for unread rows visible at that snapshot (before is optional). Idempotent. Answers `{ updated, unreadCount }`.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) return invalidRequest('Send { "id": "..." } or { "all": true }.');
 
     const result = await markNotificationsRead(session.ctx, parsed.data);
-    return NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json(result, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
-    return handleApiError(error);
+    return privateNotificationResponse(handleApiError(error));
   }
 }
