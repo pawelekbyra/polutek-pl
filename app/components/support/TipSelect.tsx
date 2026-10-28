@@ -21,7 +21,7 @@ interface TipSelectProps {
   onChange: (value: string) => void;
   /** Greyed out and not openable (e.g. while the choice is locked). */
   disabled?: boolean;
-  /** A small grey pill (28 px, hit area 44 px) instead of the full field; the label stays for screen readers only, the caller shows its own text beside it. */
+  /** A small blue pill (28 px, hit area 44 px) instead of the full field; the label stays for screen readers only, the caller shows its own text beside it. */
   compact?: boolean;
 }
 
@@ -195,10 +195,21 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
           disabled={disabled}
           onClick={toggle}
           onKeyDown={onKeyDown}
-          className="relative inline-flex -mt-2 h-7 -translate-y-[3px] items-center gap-1.5 rounded-full bg-[#eef1f6] px-3 text-[13px] font-bold text-[var(--chan-ink)] before:absolute before:-bottom-1.5 before:-top-2.5 before:inset-x-0 before:content-[''] hover:bg-[#e4e8ef] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] disabled:opacity-50"
+          className="relative inline-flex -mt-2 h-7 -translate-y-[3px] items-center gap-1.5 rounded-full bg-[var(--pass-blue-soft,var(--chan-blue-soft))] ring-1 ring-inset ring-[var(--pass-blue-line,var(--chan-line))] px-3 text-[13px] font-bold text-[var(--chan-ink)] before:absolute before:-bottom-1.5 before:-top-2.5 before:inset-x-0 before:content-[''] hover:bg-[var(--pass-blue-fill,var(--chan-blue-soft))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-ink)] disabled:opacity-50"
         >
           <span>{selected?.short ?? selected?.title ?? "—"}</span>
-          <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200 motion-reduce:transition-none", open && "rotate-180")} />
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            className={cn("h-3.5 w-3.5 shrink-0 transition-transform duration-200 motion-reduce:transition-none", open && "rotate-180")}
+          >
+            <path d="M5 9.5 10.6 14a2.25 2.25 0 0 0 2.8 0L19 9.5" />
+          </svg>
         </button>
         {position &&
           createPortal(
