@@ -85,6 +85,8 @@ describe('Comments write access on PATRON-tier videos (sign-in only, no PatronGr
   beforeEach(() => {
     vi.clearAllMocks();
     mockPrisma = {
+      channelMember: { findMany: vi.fn().mockResolvedValue([]) },
+      $queryRaw: vi.fn().mockResolvedValue([]),
       channelBan: { findUnique: vi.fn().mockResolvedValue(null) },
       video: {
         findFirst: vi.fn(),

@@ -7,7 +7,7 @@ import { auth } from "@/lib/auth/server";
 import { toAuthSessionSnapshot } from "@/lib/auth/session-snapshot";
 import { AuthSessionSeedProvider } from "@/lib/auth/react";
 import { getServerTx } from "@/lib/i18n/server-tx";
-import { isLocale, type Locale } from "@/lib/i18n/routing";
+import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { APP_NAME } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -17,15 +17,15 @@ type StudioPageProps = { params: Promise<{ locale: string }> };
 /** The Studio is a signed-in workspace: never indexed, never cached. */
 export async function generateMetadata(props: StudioPageProps): Promise<Metadata> {
   const { locale: rawLocale } = await props.params;
-  const locale: Locale = isLocale(rawLocale) ? rawLocale : "pl";
+  const locale = (await resolvePageLocale(rawLocale)) ?? "pl";
   const tx = await getServerTx(locale);
   return { title: `${tx("Studio twórcy", "Creator Studio")} · ${APP_NAME}`, robots: { index: false, follow: false } };
 }
 
 export default async function StudioPage(props: StudioPageProps) {
   const { locale: rawLocale } = await props.params;
-  if (!isLocale(rawLocale)) notFound();
-  const locale: Locale = rawLocale;
+  const locale = await resolvePageLocale(rawLocale);
+  if (!locale) notFound();
   const tx = await getServerTx(locale);
   // The session goes into the first HTML so the navbar renders final. The middleware already redirected
   // signed-out visitors to the sign-in dialog; the Studio API re-checks the session on every call.

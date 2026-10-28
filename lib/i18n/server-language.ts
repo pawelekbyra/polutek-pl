@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies, headers } from "next/headers";
 import { auth } from "@/lib/auth/server";
 import { prisma } from "@/lib/prisma";
@@ -46,12 +47,18 @@ export async function resolveInitialLanguage(): Promise<AppLanguage> {
   );
 }
 
+/** One negotiation (account lookup included) per request: layout, metadata and pages share it. */
+const negotiatedLanguage = cache(() => resolveInitialLanguage());
+
 /**
- * Language of the page being rendered, for `<html lang>`: the locale written in the URL
- * ("/pl/...", "/en/...", passed on by the proxy), otherwise the viewer's language from
- * resolveInitialLanguage(). Matches what LanguageProvider renders first.
+ * Language of the request being served: the single answer the root layout (`<html lang>`, provider,
+ * catalog), the metadata and every page of the response use. The locale written in the URL
+ * ("/pl/...", "/en/...", passed on by the proxy) when there is one, otherwise the viewer's
+ * negotiated language (resolveInitialLanguage()). Pages behind a bare address (rewritten to /pl by
+ * the proxy, which carries no route locale) take it from here through `resolvePageLocale()`
+ * (lib/i18n/page-locale.ts) instead of from the `[locale]` segment, which is only a placeholder there.
  */
 export async function resolveDocumentLanguage(): Promise<AppLanguage> {
   const routeLocale = (await headers()).get(ROUTE_LOCALE_HEADER);
-  return isLocale(routeLocale) ? routeLocale : resolveInitialLanguage();
+  return isLocale(routeLocale) ? routeLocale : negotiatedLanguage();
 }

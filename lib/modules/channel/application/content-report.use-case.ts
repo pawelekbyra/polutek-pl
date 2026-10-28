@@ -1,6 +1,7 @@
 import type { ReportTargetType } from "@prisma/client";
 import type { AppContext } from "@/lib/modules/shared/app-context";
 import { AppError } from "@/lib/modules/shared/app-error";
+import type { WriteTx } from "@/lib/modules/shared/db";
 import { fail, ok, type UseCaseResult } from "@/lib/modules/shared/result";
 import { MainChannelPolicy } from "../domain/channel.policy";
 import { sendReportReceipt } from "../infrastructure/moderation-notice";
@@ -40,17 +41,25 @@ export async function createContentReport(
   }
 
   const since = new Date(ctx.now().getTime() - 24 * 60 * 60 * 1000);
-  const [duplicate, today] = await Promise.all([
-    ctx.prisma.contentReport.findFirst({ where: { reporterId, targetType: input.targetType, targetId: input.targetId, status: "PENDING" }, select: { id: true } }),
-    ctx.prisma.contentReport.count({ where: { reporterId, createdAt: { gte: since } } }),
-  ]);
-  if (duplicate) return fail(new AppError("Już zgłosiłeś tę treść. Zgłoszenie czeka na rozpatrzenie.", 409, "ALREADY_REPORTED"));
-  if (today >= DAILY_CAP) return fail(new AppError("Za dużo zgłoszeń jednego dnia. Spróbuj jutro.", 429, "REPORT_RATE_LIMITED"));
-
-  const report = await ctx.prisma.contentReport.create({
-    data: { targetType: input.targetType, targetId: input.targetId, channelId, reporterId, reason: input.reason, note },
-    select: { id: true },
+  // Check and write under one lock per reporter (audit W19): parallel requests of one account would otherwise all see
+  // "no duplicate" and "cap not reached" and each store a report. The lock is held until the transaction ends.
+  const outcome = await ctx.db.writeTransaction(async (tx: WriteTx): Promise<{ error: AppError } | { report: { id: string } }> => {
+    const raw = tx as unknown as { $executeRaw?: (q: TemplateStringsArray, ...v: unknown[]) => Promise<unknown> };
+    if (typeof raw.$executeRaw === "function") await raw.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"content-report:" + reporterId}))`;
+    const [duplicate, today] = await Promise.all([
+      tx.contentReport.findFirst({ where: { reporterId, targetType: input.targetType, targetId: input.targetId, status: "PENDING" }, select: { id: true } }),
+      tx.contentReport.count({ where: { reporterId, createdAt: { gte: since } } }),
+    ]);
+    if (duplicate) return { error: new AppError("Już zgłosiłeś tę treść. Zgłoszenie czeka na rozpatrzenie.", 409, "ALREADY_REPORTED") };
+    if (today >= DAILY_CAP) return { error: new AppError("Za dużo zgłoszeń jednego dnia. Spróbuj jutro.", 429, "REPORT_RATE_LIMITED") };
+    const created = await tx.contentReport.create({
+      data: { targetType: input.targetType, targetId: input.targetId, channelId, reporterId, reason: input.reason, note },
+      select: { id: true },
+    });
+    return { report: created };
   });
+  if ("error" in outcome) return fail(outcome.error);
+  const report = outcome.report;
   // Receipt to the reporter (DSA art. 16(4)); best effort, never fails the report.
   await sendReportReceipt(ctx, { reportId: report.id, reporterId });
   return ok({ id: report.id });

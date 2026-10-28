@@ -55,10 +55,13 @@ export async function reportComment(
 
     const created = await ctx.db.writeTransaction(async (tx: WriteTx) => {
       const txRepo = new CommentRepository(tx);
+      // Reports of one comment are written and counted one at a time (audit W18).
+      await txRepo.lockCommentForReports(commentId);
       // One report per user and comment (unique constraint); a repeated report is a no-op.
       if (!(await txRepo.createReport({ commentId, reporterId: userId, reason, note }))) return false;
 
       const pending = await txRepo.refreshPendingReportsCount(commentId);
+      // The conditional transition (only from VISIBLE) keeps a comment a moderator already decided on untouched.
       if (pending >= REPORT_HOLD_THRESHOLD && !authorIsProtected) {
         await txRepo.transitionStatus(commentId, [CommentStatus.VISIBLE], {
           status: CommentStatus.HELD_FOR_REVIEW,

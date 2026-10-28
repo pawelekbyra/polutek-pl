@@ -25,7 +25,7 @@ function ctxFor(actor: Actor, channelStatus = "ACTIVE") {
     create: vi.fn(async () => ({ id: "reply-1" })),
     update: vi.fn(async () => ({})),
   };
-  const prisma = { comment };
+  const prisma = { comment, channelMember: { findMany: vi.fn().mockResolvedValue([]) } };
   const ctx = createAppContext({ actor, prisma: prisma as never, now: () => new Date("2026-10-13T12:00:00Z") }) as AppContext;
   return { ctx, comment };
 }

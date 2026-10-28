@@ -29,6 +29,7 @@ describe('reportComment', () => {
     repo = {
       findCommentById: vi.fn().mockResolvedValue(commentBy({ id: 'viewer-9', role: 'USER' })),
       findVideoCreatorId: vi.fn().mockResolvedValue('creator-1'),
+      lockCommentForReports: vi.fn().mockResolvedValue(undefined),
       createReport: vi.fn().mockResolvedValue(true),
       refreshPendingReportsCount: vi.fn().mockResolvedValue(REPORT_HOLD_THRESHOLD),
       transitionStatus: vi.fn().mockResolvedValue(true),
@@ -41,6 +42,14 @@ describe('reportComment', () => {
     const result = await reportComment({ commentId: 'c1', reason: 'SPAM' }, ctx());
     expect(result.ok).toBe(true);
     expect(repo.transitionStatus).toHaveBeenCalledWith('c1', [CommentStatus.VISIBLE], expect.objectContaining({ status: CommentStatus.HELD_FOR_REVIEW }));
+  });
+
+  it('locks the comment before it writes and counts reports (parallel reports cannot all see a count of 1)', async () => {
+    await reportComment({ commentId: 'c1', reason: 'SPAM' }, ctx());
+    expect(repo.lockCommentForReports).toHaveBeenCalledWith('c1');
+    const order = (fn: any) => fn.mock.invocationCallOrder[0];
+    expect(order(repo.lockCommentForReports)).toBeLessThan(order(repo.createReport));
+    expect(order(repo.createReport)).toBeLessThan(order(repo.refreshPendingReportsCount));
   });
 
   it('stays visible below the threshold', async () => {

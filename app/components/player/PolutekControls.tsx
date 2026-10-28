@@ -13,7 +13,7 @@ import {
   PipToggleButton,
   VolumeControl,
 } from "./controls/ControlButtons";
-import { PlayGlyph, ReplayGlyph } from "./controls/PlayerIcons";
+import { PlayIcon, ReplayIcon } from "./controls/PlayerIconSet";
 import { ScrubBar } from "./controls/ScrubBar";
 import { usePlayerCopy } from "./polutek-controls-copy";
 
@@ -40,8 +40,8 @@ function CenterStage() {
       ) : paused ? (
         <PlayButton className="mc-hero" aria-label={label} title={label}>
           {ended
-            ? <ReplayGlyph className="mc-hero-icon" testId="replay-icon" />
-            : <PlayGlyph className="mc-hero-icon" testId="play-icon" />}
+            ? <ReplayIcon className="mc-hero-icon" testId="replay-icon" />
+            : <PlayIcon className="mc-hero-icon" testId="play-icon" />}
         </PlayButton>
       ) : null}
     </div>

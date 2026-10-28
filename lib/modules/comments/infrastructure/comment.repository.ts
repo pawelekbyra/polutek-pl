@@ -222,6 +222,20 @@ export class CommentRepository {
     return await this.write.comment.update({ where: { id }, data });
   }
 
+  /**
+   * Rewrites the author's own comment only while it is still VISIBLE, in one conditional write: a moderator who hides,
+   * holds or deletes the comment between the check and the write wins. A status other than VISIBLE (the video holds new
+   * text for review) also drops the pin, like every other way out of VISIBLE. Returns whether the edit was stored.
+   */
+  async updateTextIfVisible(id: string, authorId: string, data: { text: string; editedAt: Date; status: CommentStatus }): Promise<boolean> {
+    const unpin = data.status === CommentStatus.VISIBLE ? {} : { pinnedAt: null };
+    const { count } = await this.write.comment.updateMany({
+      where: { id, authorId, status: CommentStatus.VISIBLE },
+      data: { ...data, ...unpin },
+    });
+    return count > 0;
+  }
+
   async findVideoCreatorId(videoId: string): Promise<string | null> {
     const video = await this.db.video.findUnique({ where: { id: videoId }, select: { creator: { select: { userId: true } } } });
     return video?.creator?.userId || null;
@@ -285,6 +299,17 @@ export class CommentRepository {
 
   async setHeart(id: string, isHearted: boolean): Promise<void> {
     await this.write.comment.update({ where: { id }, data: { isHearted } });
+  }
+
+  /**
+   * Row lock on the comment for the rest of the transaction (`SELECT ... FOR UPDATE`). Reports of one comment, and
+   * the resolving of them, queue up here (audit W18): under READ COMMITTED three transactions that each insert a
+   * report and count the pending ones would otherwise each see only their own row, store 1, and never reach the
+   * hold threshold. After the lock the count sees every report already committed. Must run inside a transaction,
+   * before the report is written.
+   */
+  async lockCommentForReports(commentId: string): Promise<void> {
+    await this.write.$queryRaw`SELECT "id" FROM "Comment" WHERE "id" = ${commentId} FOR UPDATE`;
   }
 
   /** Records one report per user and comment; a repeated report is a no-op. Returns whether a new report was stored. */
