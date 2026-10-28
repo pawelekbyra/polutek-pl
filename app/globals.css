@@ -997,22 +997,19 @@
      there shadow so it still reads on bright frames (owner 2026-10-28: subtle, not a halo). */
   .mc-hero-icon { display:block; width:48px; height:48px; filter: drop-shadow(0 0 3px rgba(255,255,255,.38)) drop-shadow(0 0 9px rgba(255,255,255,.2)) drop-shadow(0 1px 4px rgba(0,0,0,.22)); }
 
+  /* Buffering mark: one arc drawn with the same Marker stroke as the icons (SpinnerArcIcon, 2.4 in the 24 box = 4.8px at
+     48px, round ends), white, no disc and no border behind it. The glow is the big play mark's: a drop-shadow on the WRAPPER
+     (it follows the shape of the arc and stays put while only the arc inside turns). The start-up frame and the thumbnail
+     loader reuse these two classes. */
   .mc-spinner {
     display:grid; place-items:center;
     width:48px; height:48px;
-    border-radius:999px;
-    background: rgba(14,15,18,.5);
-    backdrop-filter:blur(8px);
     color:#fff;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+    filter: drop-shadow(0 0 3px rgba(255,255,255,.38)) drop-shadow(0 0 9px rgba(255,255,255,.2)) drop-shadow(0 1px 4px rgba(0,0,0,.22));
   }
-  /* Plain CSS ring instead of an icon glyph: it rotates perfectly regardless of library. */
-  .mc-spinner-ring {
-    width:22px; height:22px;
-    border-radius:999px;
-    border:2.5px solid rgba(255,255,255,.28);
-    border-top-color:#fff;
-    animation:mc-spin .8s linear infinite;
+  .mc-spinner-arc {
+    display:block; width:48px; height:48px;
+    animation:mc-spin .9s linear infinite;
   }
 
   @keyframes mc-spin { to { transform:rotate(360deg); } }
@@ -1083,7 +1080,8 @@
     .mc-scrim, .mc-bottom, .mc-btn, .mc-hero, .mc-chip, .mc-glyph-swap > svg,
     .mc-vol-slider, .mc-scrub-track, .mc-scrub-thumb { transition:none; }
     .mc-hero { animation:none; }
-    .mc-spinner-ring { animation:none; }
+    /* Reduced motion: a slow turn, still clearly alive (a frozen arc would look like a broken icon). */
+    .mc-spinner-arc { animation-duration:3.2s; }
     .mc-menu { animation:none; }
   }
 }
