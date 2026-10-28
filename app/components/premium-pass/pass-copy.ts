@@ -7,7 +7,7 @@ import { describeTipMethod } from "../support/tip-flow-config";
 
 /** Owner decision 2026-10-20: the seller shown in the checkout and the receipt (the company does not exist yet). */
 export function sellerName(tx: Tx): string {
-  return tx("Paweł Perfect S.Ą. (dane demo)", "Paweł Perfect S.Ą. (demo data)");
+  return tx("Paweł Perfect sp. z o.o. (dane demo)", "Paweł Perfect sp. z o.o. (demo data)");
 }
 
 /**
@@ -16,7 +16,7 @@ export function sellerName(tx: Tx): string {
  * `registryLine` is the claim "registered in Poland": the owner must confirm it when the company is registered.
  */
 export const PATRON_SELLER: { name: string; registryLine: (tx: Tx) => string; nip: string | null } = {
-  name: "Paweł Perfect S.Ą.",
+  name: "Paweł Perfect sp. z o.o.",
   registryLine: (tx) => tx("Spółka zarejestrowana w Polsce", "Company registered in Poland"),
   nip: null,
 };
