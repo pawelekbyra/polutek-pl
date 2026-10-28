@@ -368,8 +368,9 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   return (
     <DialogPrimitive.Root open={open} onOpenChange={(next) => { if (!locked) onOpenChange(next); }} disablePointerDismissal>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Backdrop className={styles.overlay} />
-        <DialogPrimitive.Popup className={cn(styles.pass, styles.sheet)} aria-labelledby={`${ids}-title`} aria-busy={locked} initialFocus={titleRef}>
+        {/* A tap on the dimmed area closes the checkout. Done on the backdrop itself (not base-ui's outside press, which stays disabled): Stripe's 3DS / wallet / BLIK layers are appended to <body> and must never count as an outside press. */}
+        <DialogPrimitive.Backdrop className={styles.overlay} onClick={() => { if (!locked) onOpenChange(false); }} />
+        <DialogPrimitive.Popup className={cn(styles.pass, styles.sheet)} aria-modal="true" aria-labelledby={`${ids}-title`} aria-busy={locked} initialFocus={titleRef}>
           {/* Legal documents open in a sheet ON TOP of this dialog (nested), so nothing here is unmounted or reset. */}
           <LegalSheetProvider tx={tx} language={language} demo={!stripeMode}>
           <div className={styles.sheetHead}>
