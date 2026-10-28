@@ -4,7 +4,9 @@ import type { SVGProps } from "react";
  * Hand-drawn "Marker" icons (set B: 24 grid, 2.4 line, round caps and joins, no fills, light hand wobble) for the buffering
  * spinner, the player's error screen, the top bar's search (lens, close) and anything else that needs the same hand.
  * Same drawing method and wrapper as the player set (`player/controls/PlayerIconSet.tsx`) and the bell: plain JSX paths
- * inheriting `currentColor`, no icon library, no raw HTML injection. 20px in the bar gives a 2px line.
+ * inheriting `currentColor`, no icon library, no raw HTML injection. The player-style icons draw a 2.4 line (2px at 20px);
+ * the top bar's lens and close (`SearchIcon`, `CloseIcon`) use the thin pen of the Szeruj/Lajk icons instead: `strokeWidth`
+ * defaults to `ICON_PEN_PX * 24 / size`, i.e. 1.2px on screen at any size.
  *
  * Generated from icongen/gen_ui.py (path data is not edited by hand). The spinner arc has no offset so that it
  * turns around the centre of the box.
@@ -27,6 +29,14 @@ function MarkerIcon({ size = 24, strokeWidth = 2.4, ...rest }: MarkerIconProps &
       {...rest}
     />
   );
+}
+
+/** Rendered pen width in CSS px for the top bar's lens and close: equal to Szeruj/Lajk (16px icon, strokeWidth 1.8). */
+export const ICON_PEN_PX = 1.2;
+
+function penStrokeWidth(size: number | string): number {
+  const px = typeof size === "number" ? size : Number.parseFloat(size);
+  return Number.isFinite(px) && px > 0 ? Math.round(((ICON_PEN_PX * 24) / px) * 1000) / 1000 : 1.8;
 }
 
 export function SpinnerArcIcon(props: MarkerIconProps) {
@@ -58,18 +68,18 @@ export function RefreshIcon(props: MarkerIconProps) {
 
 export function SearchIcon(props: MarkerIconProps) {
   return (
-    <MarkerIcon {...props}>
-      <path d="M16.66 10.26C16.67 10.82 16.6 11.4 16.48 11.95C16.35 12.49 16.16 13.05 15.91 13.54C15.65 14.04 15.31 14.53 14.93 14.93C14.54 15.33 14.07 15.69 13.59 15.97C13.1 16.25 12.56 16.46 12.02 16.61C11.48 16.76 10.9 16.84 10.34 16.85C9.77 16.87 9.19 16.82 8.65 16.69C8.1 16.56 7.55 16.35 7.08 16.06C6.6 15.77 6.16 15.38 5.78 14.97C5.4 14.56 5.08 14.07 4.81 13.57C4.54 13.08 4.31 12.55 4.14 12.01C3.98 11.47 3.84 10.91 3.81 10.35C3.77 9.79 3.8 9.2 3.94 8.66C4.07 8.11 4.31 7.58 4.6 7.1C4.88 6.61 5.26 6.17 5.66 5.77C6.05 5.37 6.5 5.01 6.98 4.71C7.45 4.4 7.97 4.13 8.5 3.96C9.04 3.79 9.62 3.67 10.17 3.67C10.73 3.66 11.31 3.75 11.85 3.91C12.39 4.07 12.91 4.33 13.39 4.62C13.87 4.92 14.32 5.28 14.72 5.68C15.11 6.08 15.48 6.53 15.77 7.02C16.05 7.5 16.28 8.03 16.43 8.58C16.58 9.12 16.66 9.7 16.66 10.26Z" />
-      <path d="M15.29 15.15C15.5 15.36 16.13 15.98 16.54 16.4C16.96 16.82 17.38 17.23 17.79 17.65C18.21 18.07 18.63 18.48 19.04 18.9C19.46 19.32 20.09 19.94 20.29 20.15" />
+    <MarkerIcon {...props} strokeWidth={props.strokeWidth ?? penStrokeWidth(props.size ?? 24)}>
+      <path d="M17.76 10.66C17.77 11.21 17.71 11.78 17.6 12.32C17.48 12.86 17.32 13.41 17.09 13.92C16.86 14.42 16.58 14.92 16.23 15.35C15.89 15.78 15.48 16.18 15.04 16.52C14.6 16.85 14.1 17.13 13.59 17.34C13.08 17.56 12.53 17.72 11.98 17.82C11.44 17.92 10.87 17.97 10.32 17.95C9.76 17.93 9.2 17.86 8.66 17.72C8.13 17.57 7.6 17.35 7.13 17.07C6.65 16.78 6.21 16.41 5.83 16.02C5.44 15.62 5.11 15.16 4.81 14.69C4.52 14.22 4.28 13.7 4.08 13.18C3.88 12.67 3.71 12.12 3.62 11.58C3.52 11.03 3.47 10.46 3.51 9.91C3.54 9.36 3.66 8.79 3.84 8.27C4.03 7.76 4.31 7.25 4.62 6.79C4.93 6.34 5.31 5.91 5.71 5.53C6.11 5.15 6.56 4.79 7.03 4.49C7.5 4.2 8 3.94 8.53 3.75C9.05 3.57 9.61 3.43 10.16 3.39C10.7 3.34 11.28 3.38 11.82 3.48C12.36 3.59 12.91 3.78 13.41 4.01C13.91 4.25 14.39 4.56 14.83 4.89C15.27 5.23 15.68 5.62 16.04 6.05C16.4 6.47 16.72 6.94 16.97 7.43C17.23 7.92 17.43 8.46 17.56 9C17.69 9.53 17.76 10.1 17.76 10.66Z" />
+      <path d="M16.19 16.05C16.39 16.25 16.98 16.83 17.37 17.23C17.76 17.62 18.15 18.01 18.54 18.4C18.94 18.79 19.33 19.18 19.72 19.58C20.11 19.97 20.7 20.55 20.89 20.75" />
     </MarkerIcon>
   );
 }
 
 export function CloseIcon(props: MarkerIconProps) {
   return (
-    <MarkerIcon {...props}>
-      <path d="M6.22 6.18C6.41 6.37 6.99 6.95 7.38 7.34C7.77 7.73 8.15 8.11 8.54 8.5C8.93 8.89 9.31 9.27 9.7 9.66C10.09 10.05 10.47 10.43 10.86 10.82C11.25 11.21 11.63 11.59 12.02 11.98C12.41 12.37 12.79 12.75 13.18 13.14C13.57 13.53 13.95 13.91 14.34 14.3C14.73 14.69 15.11 15.07 15.5 15.46C15.89 15.85 16.27 16.23 16.66 16.62C17.05 17.01 17.63 17.59 17.82 17.78" />
-      <path d="M17.87 6.12C17.68 6.31 17.1 6.89 16.71 7.28C16.33 7.66 15.94 8.05 15.55 8.44C15.17 8.82 14.78 9.21 14.39 9.6C14.01 9.98 13.62 10.37 13.23 10.76C12.85 11.14 12.46 11.53 12.07 11.92C11.69 12.3 11.3 12.69 10.91 13.08C10.53 13.46 10.14 13.85 9.75 14.24C9.37 14.62 8.98 15.01 8.59 15.4C8.21 15.78 7.82 16.17 7.43 16.56C7.05 16.94 6.47 17.52 6.27 17.72" />
+    <MarkerIcon {...props} strokeWidth={props.strokeWidth ?? penStrokeWidth(props.size ?? 24)}>
+      <path d="M5.82 5.78C6.03 5.99 6.65 6.61 7.06 7.02C7.47 7.43 7.89 7.85 8.3 8.26C8.71 8.67 9.13 9.09 9.54 9.5C9.95 9.91 10.37 10.33 10.78 10.74C11.19 11.15 11.61 11.57 12.02 11.98C12.43 12.39 12.85 12.81 13.26 13.22C13.67 13.63 14.09 14.05 14.5 14.46C14.91 14.87 15.33 15.29 15.74 15.7C16.15 16.11 16.57 16.53 16.98 16.94C17.39 17.35 18.01 17.97 18.22 18.18" />
+      <path d="M18.27 5.72C18.07 5.92 17.45 6.54 17.03 6.96C16.62 7.37 16.21 7.78 15.79 8.2C15.38 8.61 14.97 9.02 14.55 9.44C14.14 9.85 13.73 10.26 13.31 10.68C12.9 11.09 12.49 11.5 12.07 11.92C11.66 12.33 11.25 12.74 10.83 13.16C10.42 13.57 10.01 13.98 9.59 14.4C9.18 14.81 8.77 15.22 8.35 15.64C7.94 16.05 7.53 16.46 7.11 16.88C6.7 17.29 6.08 17.91 5.87 18.12" />
     </MarkerIcon>
   );
 }

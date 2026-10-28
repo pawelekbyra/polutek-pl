@@ -81,8 +81,8 @@ describe("error, refresh, lens and close icons (set B, Marker)", () => {
 
   const icons = { AlertIcon, RefreshIcon, SearchIcon, CloseIcon, SpinnerArcIcon };
 
-  it("are plain JSX with the same stroke as the bell: 2.4 in the 24 box, so 2px at 20px", () => {
-    for (const [name, Icon] of Object.entries(icons)) {
+  it("are plain JSX; error/refresh/spinner keep the set weight 2.4 (2px at 20px)", () => {
+    for (const [name, Icon] of Object.entries({ AlertIcon, RefreshIcon, SpinnerArcIcon })) {
       const view = render(<Icon size={20} />);
       const svg = view.container.querySelector("svg")!;
       expect(svg.getAttribute("width"), name).toBe("20");
@@ -90,6 +90,23 @@ describe("error, refresh, lens and close icons (set B, Marker)", () => {
       expect(svg.getAttribute("stroke-linejoin"), name).toBe("round");
       expect(svg.querySelectorAll("path").length, name).toBeGreaterThan(0);
       for (const path of Array.from(svg.querySelectorAll("path"))) expect(path.getAttribute("fill")).toBeNull();
+      view.unmount();
+    }
+  });
+
+  it("the lens and the close X use the thin Szeruj/Lajk pen: 1.2px on screen at any size", () => {
+    for (const [name, Icon] of Object.entries({ SearchIcon, CloseIcon })) {
+      for (const size of [16, 20, 22, 24]) {
+        const view = render(<Icon size={size} />);
+        const svg = view.container.querySelector("svg")!;
+        const strokeWidth = Number(svg.getAttribute("stroke-width"));
+        expect(strokeWidth * (size / 24), `${name} ${size}px`).toBeCloseTo(1.2, 2);
+        expect(svg.getAttribute("stroke-linecap"), name).toBe("round");
+        expect(svg.querySelectorAll("path").length, name).toBeGreaterThan(0);
+        view.unmount();
+      }
+      const view = render(<Icon size={22} strokeWidth={2} />);
+      expect(view.container.querySelector("svg")!.getAttribute("stroke-width"), name).toBe("2");
       view.unmount();
     }
   });
@@ -111,8 +128,8 @@ describe("error, refresh, lens and close icons (set B, Marker)", () => {
     expect(wrapper).toContain("RefreshIcon");
 
     const navbar = read("app/components/Navbar.tsx");
-    expect(navbar.match(/<SearchIcon size=\{20\}/g)).toHaveLength(3);
-    expect(navbar.match(/<CloseIcon size=\{20\}/g)).toHaveLength(1);
+    expect(navbar.match(/<SearchIcon size=\{22\}/g)).toHaveLength(3);
+    expect(navbar.match(/<CloseIcon size=\{22\}/g)).toHaveLength(1);
     expect(navbar).not.toMatch(/import \{[^}]*\b(Search|X)\b[^}]*\} from "lucide-react"/);
     expect(navbar).not.toContain("<Search ");
   });
