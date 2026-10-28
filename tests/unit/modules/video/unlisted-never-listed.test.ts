@@ -72,8 +72,9 @@ describe("UNLISTED stays off every public list", () => {
   it("the list query leaves heavy and internal columns out (W03)", async () => {
     await VideoContentService.getAllVideos();
     const args = (hoisted.videoFindMany.mock.calls[0] as unknown as [{ omit?: Record<string, boolean> }])[0];
-    expect(args.omit).toMatchObject({ searchText: true, chapters: true });
-    for (const needed of ["description", "descriptionEn", "tags", "category", "thumbnailPublicUrl", "fundraisingGoalMinor"]) {
+    // The descriptions are loaded for the open video only (getPublicVideoDetail), not for the whole list.
+    expect(args.omit).toMatchObject({ description: true, descriptionEn: true, searchText: true, chapters: true });
+    for (const needed of ["title", "titleEn", "tags", "category", "thumbnailPublicUrl", "fundraisingGoalMinor"]) {
       expect(args.omit).not.toHaveProperty(needed);
     }
   });

@@ -39,12 +39,27 @@ export type SidebarItem = {
     };
 };
 
+export type SidebarSectionType = "FREE" | "LOGGED_IN" | "UPCOMING" | "ANNOUNCEMENT";
+
 export type SidebarSection = {
     id: string;
     // UPCOMING = scheduled premieres not reached yet (CLAUDE.md "Premieres").
-    type: "FREE" | "LOGGED_IN" | "UPCOMING" | "ANNOUNCEMENT";
+    type: SidebarSectionType;
     title: string;
     items: SidebarItem[];
+    /** How many videos the whole section has (items is only the requested window of it). */
+    total: number;
+};
+
+/** Videos of one section the sidebar shows at first and per "More" request (W03). */
+export const SIDEBAR_PAGE_SIZE = 24;
+export const SIDEBAR_PAGE_SIZE_MAX = 60;
+
+export type SidebarPageOptions = {
+    /** Only this section, from `offset` (the "More" request); without it every section from its start. */
+    section?: SidebarSectionType;
+    offset?: number;
+    limit?: number;
 };
 
 export class ChannelLayoutService {
@@ -52,7 +67,14 @@ export class ChannelLayoutService {
      * `viewer.isStaff` comes from the resolved Actor (`actor.type === "admin"`, lib/api/auth), never from reading
      * `User.role` here (stage 8): it only lifts the cosmetic lock flags, playback is still decided by checkVideoAccess.
      */
-    static async getSidebarLayout(userId: string | null, currentVideoId?: string, viewer: { isStaff?: boolean } = {}) {
+    static async getSidebarLayout(
+        userId: string | null,
+        currentVideoId?: string,
+        viewer: { isStaff?: boolean } = {},
+        page: SidebarPageOptions = {},
+    ) {
+        const limit = Math.min(Math.max(Math.floor(page.limit ?? SIDEBAR_PAGE_SIZE), 1), SIDEBAR_PAGE_SIZE_MAX);
+        const offset = page.section ? Math.max(Math.floor(page.offset ?? 0), 0) : 0;
         let viewerState: SidebarViewerState = "ANONYMOUS";
 
         if (userId) {
@@ -146,32 +168,22 @@ export class ChannelLayoutService {
             } : undefined
         });
 
-        if (freeVideos.length > 0) {
+        // Each section keeps its full order; only the window of it that is sent is cut (W03): the first page of every
+        // section, or, for a "More" request, the next page of the one section asked for.
+        const addSection = (id: string, type: SidebarSectionType, title: string, all: typeof sortedVideos) => {
+            if (all.length === 0 || (page.section && page.section !== type)) return;
             sections.push({
-                id: 'section-free',
-                type: 'FREE',
-                title: 'Publiczne',
-                items: freeVideos.map(mapItem)
+                id,
+                type,
+                title,
+                items: all.slice(offset, offset + limit).map(mapItem),
+                total: all.length,
             });
-        }
+        };
 
-        if (loggedInVideos.length > 0) {
-            sections.push({
-                id: 'section-logged-in',
-                type: 'LOGGED_IN',
-                title: 'Dla zalogowanych',
-                items: loggedInVideos.map(mapItem)
-            });
-        }
-
-        if (upcomingVideos.length > 0) {
-            sections.push({
-                id: 'section-upcoming',
-                type: 'UPCOMING',
-                title: 'Już wkrótce',
-                items: upcomingVideos.map(mapItem)
-            });
-        }
+        addSection('section-free', 'FREE', 'Publiczne', freeVideos);
+        addSection('section-logged-in', 'LOGGED_IN', 'Dla zalogowanych', loggedInVideos);
+        addSection('section-upcoming', 'UPCOMING', 'Już wkrótce', upcomingVideos);
 
         return {
             viewerState,

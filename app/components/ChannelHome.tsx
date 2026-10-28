@@ -30,6 +30,7 @@ import { PlaylistQueueLayer } from "./playlists/PlaylistQueuePanel";
 import { planSidebarSwitch } from "./playlists/queue-navigation";
 import { TIP_GATE_ENABLED } from "./channel/tip-gate";
 import { getVideoDisplayTitle } from "@/lib/video-title-overrides";
+import { useVideoDescription } from "./video/useVideoDescription";
 
 // Hidden since 2026-10-21, kept on purpose (see tip-gate.ts).
 const SupportModal = dynamic(() => import("./channel/SupportModal"), { ssr: false });
@@ -180,7 +181,8 @@ function ChannelHomeContent({
     selectionState.routeVideoId === currentVideoId
       ? selectionState.selectedVideoId
       : currentVideoId;
-  const selectedVideo = pickHomeVideo(clientSelectedVideoId, { allVideos: allVideos || [], mainVideo, extraVideo });
+  // The list has no descriptions (W03): the open video's one comes from the server or is fetched here.
+  const selectedVideo = useVideoDescription(pickHomeVideo(clientSelectedVideoId, { allVideos: allVideos || [], mainVideo, extraVideo }));
   // The server computed the viewer's like/dislike only for the video it rendered;
   // after a shallow switch Hero fetches it for the newly selected video itself.
   const serverInteractionVideoId = resolveVideoId(currentVideoId);

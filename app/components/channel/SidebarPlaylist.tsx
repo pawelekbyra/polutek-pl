@@ -26,10 +26,12 @@ import { usePremiereClock } from "@/lib/hooks/usePremiereClock";
 import { useRenderClock } from "../RenderClock";
 import {
   acquireSidebarLayout,
+  fetchSidebarSectionPage,
   releaseSidebarLayout,
   sidebarLayoutViewerKey,
   type SidebarLayout,
   type SidebarLayoutItem,
+  type SidebarLayoutSection,
 } from "./sidebar-layout-request";
 
 type Translations = { views: string };
@@ -122,6 +124,48 @@ export function SidebarPlaylist({
       releaseSidebarLayout(viewerKey, request);
     };
   }, [authLoaded, authUserId, isSignedIn, premiereNowMs]);
+
+  // "More": the next page of one section is appended to what is on screen (same order, no repeats). A layout that
+  // was replaced meanwhile (sign-in, a premiere reached) is not touched by a page that was asked for the old one.
+  const [loadingMore, setLoadingMore] = useState<SidebarLayoutSection["type"] | null>(null);
+  const loadMore = async (section: SidebarLayoutSection) => {
+    if (loadingMore) return;
+    const asked = layoutViewerKeyRef.current;
+    const askedLayout = layout;
+    setLoadingMore(section.type);
+    const next = await fetchSidebarSectionPage(section.type, section.items.length);
+    setLoadingMore(null);
+    if (!next || layoutViewerKeyRef.current !== asked) return;
+    setLayout((current) => {
+      if (!current || current !== askedLayout) return current;
+      return {
+        ...current,
+        sections: current.sections.map((candidate) => {
+          if (candidate.type !== section.type) return candidate;
+          const known = new Set(candidate.items.map((item) => item.id));
+          return {
+            ...candidate,
+            items: [...candidate.items, ...next.items.filter((item) => !known.has(item.id))],
+            total: next.total ?? candidate.total,
+          };
+        }),
+      };
+    });
+  };
+
+  const renderMoreButton = (section: SidebarLayoutSection) =>
+    typeof section.total === "number" && section.items.length < section.total ? (
+      <button
+        type="button"
+        data-testid={`sidebar-more-${section.type}`}
+        onClick={() => void loadMore(section)}
+        disabled={loadingMore !== null}
+        aria-busy={loadingMore === section.type}
+        className="mt-1 w-full rounded-[12px] border border-[var(--cm-line-80)] px-3 py-2 text-[12px] font-bold text-[var(--chan-blue)] transition-colors hover:bg-[var(--chan-surface)] disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        {tx("Pokaż więcej", "Show more")}
+      </button>
+    ) : null;
 
   const renderVideoItem = (
     video: SidebarLayoutItem,
@@ -351,12 +395,14 @@ export function SidebarPlaylist({
         <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
           {renderSectionHeader(publicSectionTitle)}
           {publicSection.items.map((v, i) => renderVideoItem(v, true, false, i))}
+          {renderMoreButton(publicSection)}
         </div>
       )}
       {loggedInSection && (
         <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col">
           {renderSectionHeader(loggedInSectionTitle)}
           {loggedInSection.items.map((v, i) => renderVideoItem(v, false, false, i))}
+          {renderMoreButton(loggedInSection)}
         </div>
       )}
 
@@ -364,6 +410,7 @@ export function SidebarPlaylist({
         <div className="mb-0.5 last:mb-0 lg:mb-0 lg:flex lg:flex-1 lg:flex-col" data-testid="sidebar-upcoming-section">
           {renderSectionHeader(upcomingSectionTitle, amberDot)}
           {upcomingSection.items.map((v, i) => renderVideoItem(v, false, true, i))}
+          {renderMoreButton(upcomingSection)}
         </div>
       )}
 

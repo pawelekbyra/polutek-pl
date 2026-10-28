@@ -9,11 +9,12 @@ const OWNER_AVATAR = "/api/avatars/channel-owner?v=3";
 const ADMIN_AVATAR = "/api/avatars/first-admin?v=9";
 const VIEWER_AVATAR = "/api/avatars/logged-in-viewer?v=7";
 
-const { appSettingFindUnique, creatorFindUnique, videoFindMany, videoFindFirst, userFindFirst, authMock, currentUserMock } = vi.hoisted(() => ({
+const { appSettingFindUnique, creatorFindUnique, videoFindMany, videoFindFirst, videoAggregate, userFindFirst, authMock, currentUserMock } = vi.hoisted(() => ({
   appSettingFindUnique: vi.fn(),
   creatorFindUnique: vi.fn(),
   videoFindMany: vi.fn(),
   videoFindFirst: vi.fn(),
+  videoAggregate: vi.fn(),
   userFindFirst: vi.fn(),
   authMock: vi.fn(),
   currentUserMock: vi.fn(),
@@ -23,13 +24,14 @@ vi.mock("@/lib/prisma", () => ({
   prisma: {
     appSetting: { findUnique: appSettingFindUnique },
     creator: { findUnique: creatorFindUnique },
-    video: { findMany: videoFindMany, findFirst: videoFindFirst },
+    video: { findMany: videoFindMany, findFirst: videoFindFirst, aggregate: videoAggregate },
     user: { findFirst: userFindFirst },
     subscription: { findUnique: vi.fn().mockResolvedValue(null) },
   },
 }));
 vi.mock("@/app/components/Navbar", () => ({ default: () => <nav /> }));
 vi.mock("@/app/components/Footer", () => ({ default: () => <footer /> }));
+vi.mock("@/app/components/playlists/ChannelPlaylistsSection", () => ({ default: () => null }));
 vi.mock("@/app/components/SubscribeButton", () => ({ default: () => <button type="button">Subscribe</button> }));
 vi.mock("@/app/components/ReportButton", () => ({ default: () => <button type="button">Report</button> }));
 vi.mock("@/app/components/ChannelVideoCard", () => ({
@@ -92,6 +94,7 @@ function seed(ownerImageUrl: string | null, adminImageUrl: string | null) {
   creatorFindUnique.mockResolvedValue(row);
   videoFindMany.mockResolvedValue(row.videos.map((v) => ({ ...v, creator: { ...row, videos: undefined } })));
   videoFindFirst.mockResolvedValue({ ...row.videos[0], creator: { ...row, videos: undefined } });
+  videoAggregate.mockResolvedValue({ _count: { _all: 2 }, _sum: { views: 0 } });
   userFindFirst.mockResolvedValue(adminImageUrl === null ? null : { imageUrl: adminImageUrl });
 }
 
@@ -142,9 +145,10 @@ describe("channel avatar source (home page vs channel page)", () => {
     expect(home.featured).toBe(OWNER_AVATAR);
     expect(home.list).toEqual([OWNER_AVATAR, OWNER_AVATAR]);
 
-    const creator = await CreatorContentService.getCreatorBySlug("polutek");
+    const creator = await CreatorContentService.getCreatorHeaderBySlug("polutek");
     expect(creator?.imageUrl).toBe(OWNER_AVATAR);
-    expect(creator?.videos.map((v) => v.creator?.imageUrl)).toEqual([OWNER_AVATAR, OWNER_AVATAR]);
+    const pageVideos = await CreatorContentService.getChannelVideosPage(creator!);
+    expect(pageVideos.map((v) => v.creator?.imageUrl)).toEqual([OWNER_AVATAR, OWNER_AVATAR]);
 
     const html = await renderChannelPage();
     expect(headerAvatars(html)).toEqual([OWNER_AVATAR, OWNER_AVATAR]);

@@ -25,6 +25,7 @@ import { getHomeViewerActor, loadHeroPlaybackPlan, loadInitialComments } from '.
 import { getServerTx } from '@/lib/i18n/server-tx';
 import { getVideoProgressSeconds, listContinueWatching } from '@/lib/modules/watch-progress';
 import { isVideoFavorited } from '@/lib/modules/favorites';
+import { VideoContentService } from '@/lib/modules/video/infrastructure/video-content.service';
 import { getPlaylistQueue, parseListParam, parseQueueIndex, PLAYLIST_INDEX_PARAM, PLAYLIST_LIST_PARAM } from '@/lib/modules/playlists';
 
 interface HomeExperienceProps {
@@ -133,6 +134,15 @@ export default async function HomeExperience({ locale, videoId, q, t, list, i }:
     return { sidebar, comments, playback };
   };
 
+  // The home list carries no descriptions (W03); the open video's one is read here, in parallel with the viewer's data,
+  // and put back into the list so the first HTML shows it. Other videos fetch theirs on selection (useVideoDescription).
+  const detailPromise = selectedVideo && selectedVideo.description === undefined
+    ? VideoContentService.getPublicVideoDetail(selectedVideo.id).catch((e) => {
+        logger.error('[HOME_VIDEO_DETAIL_ERROR]', e);
+        return null;
+      })
+    : null;
+
   let userDb = null;
   let initialInteraction = { liked: false, disliked: false, favorited: false };
   let initialIsSubscribed = false;
@@ -184,6 +194,12 @@ export default async function HomeExperience({ locale, videoId, q, t, list, i }:
   } else {
     viewerPieces = await loadViewerPieces();
   }
+
+  const detail = detailPromise ? await detailPromise : null;
+  const withDetail = <T extends PublicVideoDTO | null | undefined>(video: T): T =>
+    detail && video && video.id === detail.id
+      ? { ...video, description: detail.description, descriptionEn: detail.descriptionEn }
+      : video;
 
   // One clock for every relative date in the first HTML ("3 months ago"), so the browser renders
   // the same text during hydration instead of swapping it in afterwards.
@@ -267,8 +283,8 @@ export default async function HomeExperience({ locale, videoId, q, t, list, i }:
         <Navbar isHome />
         <main id="main" tabIndex={-1} className="relative focus:outline-none">
           <ChannelHome
-            mainVideo={mainVideo}
-            allVideos={allVideos}
+            mainVideo={withDetail(mainVideo)}
+            allVideos={detail ? allVideos.map(withDetail) : allVideos}
             extraVideo={selection.extraVideo}
             currentVideoId={videoId}
             userProfile={userProfile}

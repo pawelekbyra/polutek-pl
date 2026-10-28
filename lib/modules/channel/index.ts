@@ -1,5 +1,7 @@
 export * from "./application/main-channel.service";
-export { ChannelLayoutService } from "./application/channel-layout.service";
+export * from "./application/list-public-channel-videos.use-case";
+export { ChannelLayoutService, SIDEBAR_PAGE_SIZE, SIDEBAR_PAGE_SIZE_MAX } from "./application/channel-layout.service";
+export type { SidebarSectionType } from "./application/channel-layout.service";
 export * from "./application/get-admin-channel-settings.use-case";
 export * from "./application/update-admin-channel-settings.use-case";
 export * from "./application/resync-subscribers.use-case";
