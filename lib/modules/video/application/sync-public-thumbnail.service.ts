@@ -108,7 +108,7 @@ export async function syncPublicThumbnail(
     // written only while the video is still PUBLISHED with the same private cover (one atomic statement). Otherwise
     // the fresh copy is dropped again instead of making a draft's cover public.
     const written = await ctx.prisma.video.updateMany({
-      where: { id: video.id, status: VideoStatus.PUBLISHED, thumbnailUrl: video.thumbnailUrl },
+      where: { id: video.id, status: VideoStatus.PUBLISHED, thumbnailUrl: video.thumbnailUrl! },
       data: { thumbnailPublicUrl: publicUrl },
     });
     if (written.count === 0) {
