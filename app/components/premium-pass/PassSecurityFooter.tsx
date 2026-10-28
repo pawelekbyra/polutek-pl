@@ -7,8 +7,8 @@ import React from "react";
 import { Lock } from "lucide-react";
 import type { Tx } from "@/lib/i18n/ui";
 import type { Locale } from "@/lib/i18n/routing";
-import { getLocalizedHref } from "@/lib/i18n/routing";
 import { cn } from "@/lib/utils";
+import { LegalLink } from "../legal/legal-sheet-context";
 import styles from "./premium-pass.module.css";
 
 /** The three step dots, centred at the bottom, just above the action bar's top line. */
@@ -32,9 +32,9 @@ function PassFooterLine({ tx, demo, language, links }: { tx: Tx; demo: boolean; 
     return (
       <p className={styles.secureFooter} data-secure-footer="" data-legal-footer="">
         <span className={styles.legalRow}>
-          <a href={getLocalizedHref(language, "passTerms")} target="_blank" rel="noopener">{tx("Regulamin", "Terms")}</a>
+          <LegalLink doc="passTerms" language={language}>{tx("Regulamin", "Terms")}</LegalLink>
           {" "}{tx("i", "and")}{" "}
-          <a href={getLocalizedHref(language, "privacy")} target="_blank" rel="noopener">{tx("Polityka prywatności", "Privacy Policy")}</a>
+          <LegalLink doc="privacy" language={language}>{tx("Polityka prywatności", "Privacy Policy")}</LegalLink>
         </span>
       </p>
     );
