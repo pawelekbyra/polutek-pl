@@ -23,9 +23,10 @@ describe('notification bell interactions', () => {
     render(<NotificationBell />);
     fireEvent.click(screen.getByRole('button', { name: /Powiadomienia/ }));
     const link = await screen.findByRole('menuitem', { name: /Notification like/ });
-    expect(link.querySelector('svg')).toHaveClass('lucide-thumbs-up');
+    expect(link.querySelector('[data-notification-type="comment_like"] svg')).not.toBeNull(); // Marker set B, not lucide
+    expect(link.querySelector('svg.lucide')).toBeNull();
     expect(link.querySelector('svg')?.parentElement).toHaveAttribute('aria-hidden', 'true');
-    expect(screen.getByRole('menuitem', { name: /Notification reply/ }).querySelector('svg')).toHaveClass('lucide-message-circle');
+    expect(screen.getByRole('menuitem', { name: /Notification reply/ }).querySelector('[data-notification-type="comment_reply"] svg')).not.toBeNull();
     expect(link).toHaveAttribute('href', '/watch/first#comment-c1');
     fireEvent.click(link);
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/watch/first#comment-c1', { scroll: false }));

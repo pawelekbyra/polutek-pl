@@ -1107,5 +1107,6 @@
  "MB WAY app": "App MB WAY",
  "Could not save read notifications. Please try again.": "No se pudo guardar el estado de lectura. Inténtalo de nuevo.",
  "This comment is no longer available.": "Este comentario ya no está disponible.",
- "Could not load the comment.": "No se pudo cargar el comentario."
+ "Could not load the comment.": "No se pudo cargar el comentario.",
+ "When someone replies to your comment or a new video appears, you will see it here.": "Cuando alguien responda a tu comentario o aparezca un vídeo nuevo, lo verás aquí."
 }

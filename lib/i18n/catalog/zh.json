@@ -1107,5 +1107,6 @@
  "MB WAY app": "MB WAY 应用",
  "Could not save read notifications. Please try again.": "无法保存通知已读状态，请重试。",
  "This comment is no longer available.": "这条评论已不可用。",
- "Could not load the comment.": "无法加载评论。"
+ "Could not load the comment.": "无法加载评论。",
+ "When someone replies to your comment or a new video appears, you will see it here.": "当有人回复你的评论或有新视频发布时，你会在这里看到。"
 }

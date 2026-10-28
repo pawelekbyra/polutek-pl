@@ -20,7 +20,7 @@ function penStrokeWidth(size: number | string): number {
   return Number.isFinite(px) && px > 0 ? Math.round(((ICON_PEN_PX * 24) / px) * 1000) / 1000 : 1.8;
 }
 
-function MarkerIcon({ size = 24, strokeWidth, ...rest }: MarkerIconProps & { children: React.ReactNode }) {
+export function MarkerIcon({ size = 24, strokeWidth, ...rest }: MarkerIconProps & { children: React.ReactNode }) {
   return (
     <svg
       width={size}
