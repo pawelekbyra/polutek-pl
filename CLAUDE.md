@@ -133,7 +133,9 @@ Kliknięcie imienia lub awatara autora komentarza otwiera małą kartę profilu 
 
 Język startowy: konto → cookie `app-language` → kraj (`PL` → pl) → `Accept-Language` → `en`. Osiem języków interfejsu: `pl`, `en` mają własne treści, `de`, `es`, `fr`, `it`, `pt`, `zh` tłumaczą tylko interfejs i pokazują treści angielskie (strony prawne też).
 Teksty zapisuje się `tx("polski", "english")` i tłumaczy katalogami `lib/i18n/catalog/*.json` (klucz = tekst angielski; nowy tekst wymaga wpisu we wszystkich sześciu katalogach, test parytetu inaczej pada).
-Maile są tylko po polsku i angielsku. Zapis języka zalogowanego: wyłącznie `PATCH /api/user/language` przez `AuthLifecycleProvider`. Szczegóły: `docs/operations/I18N.md` i `docs/architecture/i18n-and-legal.md`.
+**Jeden język na odpowiedź:** adres z językiem (`/de/...`) wygrywa nad kontem i ciasteczkiem (layout, strona, metadane i klient dają ten sam); adres bez prefiksu proxy przepisuje na `/pl/...` bez nagłówka `x-pp-route-locale`, więc segment `pl` jest tylko zastępnikiem, a język strony (`resolvePageLocale()`, `lib/i18n/page-locale.ts`) i layoutu to ten sam wynik negocjacji. Nowa strona w `app/[locale]` bierze język z `resolvePageLocale()`, nie z `params.locale` (wyjątek: trasy o nazwie w jednym języku, np. `regulamin`). Zmiana języka otwiera tę samą stronę (kanał, wyszukiwanie z `q`, playlistę, `?v=`): prawdziwy adres UrlMask zapisuje w stanie wpisu historii (`lib/i18n/real-location.ts`), bo `usePathname()` widzi już adres zamaskowany do `/`.
+
+Maile są tylko po polsku i angielsku. Zapis języka zalogowanego: wyłącznie `PATCH /api/user/language` przez `AuthLifecycleProvider` i `createLanguageSaver` (po jednym żądaniu naraz, ostatni wybór wygrywa, ponowienia, komunikat o awarii); zapisywany jest tylko świadomy wybór (`setLanguage`), nie język z adresu. Konto stosuje się tylko tam, gdzie adres nie nazywa języka. Szczegóły: `docs/operations/I18N.md` i `docs/architecture/i18n-and-legal.md`.
 
 ### 4.12 Logowanie: Better Auth
 

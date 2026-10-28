@@ -5,9 +5,8 @@
 // User.name through PATCH /api/user/nickname.
 
 import React, { useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "../LanguageContext";
-import { appendQueryString, switchLocalePath, type Locale } from "@/lib/i18n/routing";
+import { useSwitchLanguage } from "../useSwitchLanguage";
 import {
   checkNicknameAvailability,
   isSameNickname,
@@ -25,16 +24,8 @@ import type { Tx } from "@/lib/i18n/ui";
 import { LANGUAGE_OPTIONS } from "@/app/components/language-switcher/languages";
 
 function LanguageField({ tx }: { tx: Tx }) {
-  const { language, setLanguage } = useLanguage();
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const switchLanguage = (locale: Locale) => {
-    if (locale === language) return;
-    setLanguage(locale);
-    router.push(appendQueryString(switchLocalePath(pathname || "/", locale), searchParams));
-  };
+  const { language } = useLanguage();
+  const switchLanguage = useSwitchLanguage();
 
   return (
     <div className="flex items-center justify-between rounded-[12px] border border-[var(--chan-line)] px-3 py-2.5">

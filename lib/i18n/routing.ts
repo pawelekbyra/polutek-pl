@@ -79,7 +79,9 @@ export function localizedPathFromLegacyPath(pathname: string, locale: Locale): s
   if (pathname === "/regulamin") return getLocalizedHref(locale, "terms");
   if (pathname === "/polityka-prywatnosci") return getLocalizedHref(locale, "privacy");
   if (pathname === "/subskrypcje") return getLocalizedHref(locale, "subscriptions");
+  if (pathname === "/studio") return getLocalizedHref(locale, "studio");
   if (pathname === "/premium") return getLocalizedHref(locale, "pass"); // patron zone
+  if (pathname === "/regulamin-premium") return getLocalizedHref(locale, "passTerms"); // patron zone
   return null;
 }
 
@@ -103,6 +105,20 @@ export function switchLocalePath(pathname: string, targetLocale: Locale): string
   if (segment === "premium") return getLocalizedHref(targetLocale, "pass"); // patron zone
   if (segment === "regulamin-premium" || segment === "premium-terms") return getLocalizedHref(targetLocale, "passTerms"); // patron zone
   return getLocalizedHref(targetLocale, "home");
+}
+
+/**
+ * Address of the same page in another language, with its query string kept (`?v=` video, `q` search,
+ * `list`/`i` playlist, filters, ...). `pathname` is the page's real path, with or without a language prefix.
+ */
+export function switchLocaleHref(pathname: string, search: string | URLSearchParams | null | undefined, targetLocale: Locale): string {
+  return appendQueryString(switchLocalePath(pathname || "/", targetLocale), search);
+}
+
+/** The home page, with or without a language prefix ("/", "/pl", "/de", ...). */
+export function isHomePathname(pathname: string): boolean {
+  const parts = pathname.split("/").filter(Boolean);
+  return parts.length === 0 || (parts.length === 1 && isLocale(parts[0]));
 }
 
 export function getRouteLocaleFromPathname(pathname: string): Locale | null {
