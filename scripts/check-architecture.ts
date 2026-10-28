@@ -411,6 +411,7 @@ function checkAdminApp() {
 const AUTHZ_MODULES = ['video', 'video-pipeline', 'admin-content', 'channel', 'sales', 'creator-analytics', 'playlists'];
 const AUTHZ_EXEMPT: Record<string, string> = {
   'lib/modules/video/application/get-public-video-chapters.ts': 'public SEO read: raw PUBLIC/PUBLISHED query; getPublicChapterClips applies canExposeChapterClips and excludes patron-zone videos',
+  'lib/modules/admin-content/application/captions-migration.ts': 'logic of the operator script scripts/migrate-captions-to-private.ts over injected ports (run by hand on the server with DB and R2 credentials; no actor, no HTTP surface)',
   'lib/modules/admin-content/application/storage-cleanup-job.ts': 'job runner (cron/kick as system): the manifest is written inside deleteVideoWithStorage after video.delete authorization, the handler only repeats what that deletion already allowed',
   'lib/modules/creator-analytics/application/context.ts': 'wiring helpers; every analytics use case calls authorize() itself',
   'lib/modules/creator-analytics/application/snapshot-subscribers.use-case.ts': 'daily cron; refuses any actor other than system',

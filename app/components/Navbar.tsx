@@ -13,7 +13,8 @@ import BrandName from "./BrandName";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { useSwitchLanguage } from "./useSwitchLanguage";
 import { resolveNavbarAdminUiState } from "@/lib/navbar-admin-ui";
-import { Search, X, LogIn } from "lucide-react";
+import { LogIn } from "lucide-react";
+import { CloseIcon, SearchIcon } from "./icons/MarkerUiIcons";
 import { getLocalizedHref, type Locale } from "@/lib/i18n/routing";
 
 type ServerAdminState = {
@@ -130,7 +131,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
               aria-label={closeSearchLabel}
               className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] transition-[background-color,box-shadow] duration-160 hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)]"
             >
-              <X className="h-5 w-5 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+              <CloseIcon size={22} className="shrink-0" />
             </button>
             <form onSubmit={handleSearch} role="search" className="flex-1 flex min-w-0">
               <div className="relative flex h-10 min-w-0 flex-1 items-center rounded-full border border-[var(--cm-line-82)] bg-[var(--cm-card-74-white)] shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] transition-[border-color,background-color,box-shadow] duration-200 focus-within:border-[var(--cm-blue-55)] focus-within:bg-[var(--cm-card-45-white)] focus-within:shadow-[0_0_0_3px_var(--cm-blue-14)]">
@@ -150,7 +151,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                   className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-3.5 text-[var(--chan-ink)]"
                   aria-label={searchLabel}
                 >
-                  <Search className="h-5 w-5 shrink-0 text-[var(--chan-ink)]" strokeWidth={2} />
+                  <SearchIcon size={22} className="shrink-0" />
                 </button>
               </div>
             </form>
@@ -188,7 +189,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                     className="absolute right-0 top-1/2 flex h-8 -translate-y-1/2 items-center justify-center pl-3 pr-3.5 text-[var(--chan-ink)]"
                     aria-label={searchLabel}
                   >
-                    <Search className="h-5 w-5 shrink-0 text-[var(--chan-ink)]" strokeWidth={2} />
+                    <SearchIcon size={22} className="shrink-0" />
                   </button>
                 </div>
               </form>
@@ -213,7 +214,7 @@ const Navbar = ({ initialQuery = "", isHome = false }: { initialQuery?: string; 
                   aria-expanded={isMobileSearchOpen}
                   className="flex h-10 w-10 items-center justify-center rounded-full text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] active:scale-95"
                 >
-                  <Search className="h-5 w-5 shrink-0 text-[var(--chan-ink)]" strokeWidth={2} aria-hidden="true" />
+                  <SearchIcon size={22} className="shrink-0" />
                 </button>
               </div>
 

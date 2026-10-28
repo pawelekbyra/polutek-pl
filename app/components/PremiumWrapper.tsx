@@ -9,7 +9,7 @@ import React, {
   useState,
   useCallback,
 } from "react";
-import { RefreshCcw, AlertCircle } from "./icons";
+import { AlertIcon, RefreshIcon } from "./icons/MarkerUiIcons";
 import type {
   PlaybackPlan,
   PlaybackPlanStatus,
@@ -448,7 +448,7 @@ function PlaybackPlanStateOverlay({
 
         <div className="relative z-10 flex max-w-md flex-col items-center gap-[clamp(12px,2cqi,20px)] rounded-[22px] border border-[var(--cm-line-82)] bg-[var(--cm-card-90-white-2)] px-[clamp(22px,5cqi,42px)] py-[clamp(24px,5cqi,38px)] shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_24px_54px_-28px_rgba(15,23,42,0.34)]">
           <div className="flex h-[clamp(56px,11cqi,72px)] w-[clamp(56px,11cqi,72px)] items-center justify-center rounded-[18px] border border-[var(--cm-blue-18-line)] bg-[var(--chan-blue-soft)] text-[var(--chan-blue)] shadow-[0_14px_30px_-18px_var(--cm-blue-58)]">
-            <AlertCircle className="h-[clamp(28px,6cqi,36px)] w-[clamp(28px,6cqi,36px)]" />
+            <AlertIcon className="h-[clamp(28px,6cqi,36px)] w-[clamp(28px,6cqi,36px)]" />
           </div>
 
           <div className="flex flex-col gap-[clamp(8px,1.5cqi,12px)]">
@@ -476,7 +476,7 @@ function PlaybackPlanStateOverlay({
               onClick={onRetry}
               className="mt-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-[14px] bg-[var(--chan-blue)] px-[clamp(20px,5cqi,32px)] text-[clamp(11px,2.4cqi,14px)] font-bold uppercase tracking-wider text-white shadow-[0_12px_26px_-14px_var(--cm-blue-70)] transition-[transform,background-color] duration-160 hover:-translate-y-px hover:bg-[var(--cm-blue-88-black)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 motion-reduce:transition-none"
             >
-              <RefreshCcw size={16} className="flex-shrink-0" aria-hidden="true" />
+              <RefreshIcon size={16} className="flex-shrink-0" />
               <span>{content.actionLabel}</span>
             </button>
           )}

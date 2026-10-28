@@ -9,3 +9,5 @@ export * from './infrastructure/storage.service';
 export * from './infrastructure/thumbnail-response.service';
 export * from './infrastructure/r2-thumbnail-storage.client';
 export * from './infrastructure/r2-diagnostics';
+export * from './domain/protected-caption';
+export * from './infrastructure/r2-caption-storage.client';

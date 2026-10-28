@@ -13,13 +13,13 @@ Oznaczenia: **DO POTWIERDZENIA** = informacja z dokumentów repo, której nie sp
 | **Cloudflare** (jedno konto) | DNS, rejestrator `pawelperfect.com`, Tunnel, Access, Workery, R2, Email Routing, Turnstile | aktywne, plan Free | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_R2_*`, `tunnel.env`, `TURNSTILE_*`, `CF_ACCESS_*` | cała strona, wideo, panel, poczta przychodząca, kopie: przerwa |
 | **Hetzner Cloud** | serwer produkcyjny `serwerek` | aktywne, płatne | `HETZNER_API_TOKEN` | strona, baza i kodowanie leżą; po usunięciu serwera dane z ostatnich kopii tylko w R2 |
 | **GitHub** | repozytorium (źródło prawdy), prywatne | aktywne; Actions nie działa | `gh` na komputerze właściciela; `GITHUB_TOKEN` puste | nie da się pobrać kodu na nowy serwer; zapas: klon na komputerze właściciela |
-| **Stripe** | napiwki, webhook, zwroty | aktywne, tryb live | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | okno napiwku nie działa; film i konta nie są dotknięte |
+| **Stripe** | napiwki, webhook, zwroty | aktywne, tryb live | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (+ opcjonalnie `PREMIUM_PASS_STRIPE_*`, niżej) | okno napiwku nie działa; film i konta nie są dotknięte |
 | **Amazon SES (AWS)** | główny nadawca poczty od 2026-10-11 | aktywne, dostęp produkcyjny | `SES_SMTP_USER`, `SES_SMTP_PASS`, `EMAIL_PROVIDER=ses` | poczta spada na Resend (jeśli klucz działa) |
 | **Resend** | poczta awaryjna, wysyłka PP Support, alerty serwera i strażnika | aktywne, plan darmowy | `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `SMTP_PASSWORD` (PP Support), `/etc/serwerek/alert.env` | PP Support nie odpowiada klientom, brak alertów, brak poczty awaryjnej |
 | **Postmark** | rezerwa dostawcy poczty | skonfigurowany, nieużywany | `POSTMARK_SERVER_TOKEN`, `POSTMARK_WEBHOOK_*` (jeśli ustawione) | nic |
 | **Google** | klient OAuth logowania (One Tap), Workspace (do anulowania), Gmail właściciela | stan niejasny | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | logowanie Google przestaje działać (hasło i klucz dostępu zostają) |
 | **Rejestratory domen** | `pawelperfect.com` (Cloudflare Registrar), `pawelperfect.pl` (home.pl, porzucona) | patrz rozdz. 3 | konsole rejestratorów | wygaśnięcie `.com` = śmierć projektu (adres, poczta, klucze dostępu) |
-| **Vercel, Neon, Clerk, Mux, Cloudflare Stream, Upstash** | wycofane (rozdz. 4) | odcięte, resztki do usunięcia | `BLOB_READ_WRITE_TOKEN` (jedna miniatura) | nic produkcyjnego poza jedną miniaturą |
+| **Vercel, Neon, Clerk, Mux, Cloudflare Stream, Upstash** | wycofane (rozdz. 4) | odcięte, kod i baza bez odwołań (2026-10-28), resztki do usunięcia w panelu | martwy `BLOB_READ_WRITE_TOKEN` w `app.env` (nic go nie czyta) | nic |
 
 Konta „centralne”, bez których nie odzyskasz reszty (rozdz. 5): skrzynka `pawel.perfect@gmail.com`, komputer właściciela (klucz SSH, folder sekretów), klucz prywatny `age`.
 
@@ -55,6 +55,7 @@ Konta „centralne”, bez których nie odzyskasz reszty (rozdz. 5): skrzynka `p
 
 - **Do czego:** napiwki (PaymentIntent), webhook, zwroty i spory z panelu. Konto `acct_1SOk8E…` (skrócone w dokumentach), kraj PL, tryb live (`AGENT_ACCESS.md`).
 - **Poświadczenia:** `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (wypalany w obrazie przez `build.env`); w `admin.env` osobny klucz ograniczony (zwroty, spory) jako `STRIPE_SECRET_KEY` panelu. Wersja API przypięta w kodzie: `2026-02-25.clover`.
+- **Osobny zestaw kluczy kasy premium (opcjonalny):** `PREMIUM_PASS_STRIPE_SECRET_KEY`, `NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY` (wypalany w obrazie przez `build.env`, ale musi być też w `app.env`), `PREMIUM_PASS_STRIPE_WEBHOOK_SECRET`. Wszystkie trzy albo żadna; zwykle klucze **testowe** tego samego konta Stripe, żeby kasa premium działała z prawdziwym Stripe bez pieniędzy, a napiwki zostają na kluczach live. Webhook trybu testowego wskazuje na ten sam adres `/api/webhooks/stripe`. W `admin.env` panelu potrzebny jest dodatkowo `PREMIUM_PASS_STRIPE_SECRET_KEY` (ograniczony klucz testowy), żeby zwroty i spory płatności testowych działały w panelu. Instrukcja: `docs/architecture/patron-zone.md`, „Osobne klucze Stripe”.
 - **Gdzie loguje się właściciel:** Stripe Dashboard. Adres konta: brak danych w repo.
 - **Stan konfiguracji:** webhook nigdy nie dostał udanej wpłaty (stan na 2026-10-05, `STATUS.md`); czy to się zmieniło: **DO POTWIERDZENIA**. Endpoint musi subskrybować także `refund.created`, `refund.updated`, `refund.failed`.
 - **Zasady:** odczyt swobodnie; zwroty, wypłaty i wszystko, co rusza pieniądze, tylko za zgodą właściciela (`CLAUDE.md` §8.1). Agent nie wykonuje wpłat.
@@ -121,8 +122,8 @@ Część konta Cloudflare (2.1). Widżet chroni rejestrację, logowanie i reset 
 
 | Usługa | Status | Co jeszcze zostało |
 |---|---|---|
-| **Vercel** | odcięty; projekt `polutek.pl` wstrzymany (zespół `pawelperfect-5617s-projects`) | magazyny `NEON-krau`, `upstashpolutek`, `BLOB-krau` do usunięcia przez właściciela w panelu Vercel (agent nie może: blokada nieodwracalnych usunięć) |
-| **Vercel Blob** | używany jeszcze przez jedną miniaturę (`dla-patronow`) | `BLOB_READ_WRITE_TOKEN` w `app.env`; po przeniesieniu miniatury do R2 usunąć token i `@vercel/blob` (`STATUS.md`) |
+| **Vercel** | wyłączony całkowicie (decyzja właściciela 2026-10-28); projekt `polutek.pl` wstrzymany (zespół `pawelperfect-5617s-projects`) | magazyny `NEON-krau`, `upstashpolutek`, `BLOB-krau` do usunięcia przez właściciela w panelu Vercel (agent nie może: blokada nieodwracalnych usunięć) |
+| **Vercel Blob** | wyłączony z kodu (`@vercel/blob` usunięty); w bazie zero adresów Vercela (2026-10-28), miniatura `dla-patronow` jest w R2 | magazyn `BLOB-krau` w panelu Vercel i `BLOB_READ_WRITE_TOKEN` w `app.env` do usunięcia przez właściciela (`STATUS.md` pkt 3) |
 | **Neon** | wycofany; baza produkcyjna to lokalny Postgres | projekt `restless-glade-19830690` z danymi testowymi czeka na usunięcie przez właściciela |
 | **Clerk** | wycofany; rekordy DNS usunięte 2026-10-05 | instancja Clerk może jeszcze istnieć (koszt/limity): **DO POTWIERDZENIA**; identyfikatory użytkowników w bazie mają format Clerk (`user_...`), to tylko ID |
 | **Mux**, **Cloudflare Stream**, **YouTube**, **Vimeo** | wycofane (`MUX_*` usunięte z `app.env` 2026-10-05) | czy w koncie Cloudflare nie ma aktywnej subskrypcji Stream: **DO POTWIERDZENIA**; klucze w `secrets.full-from-pc.env` |

@@ -29,8 +29,10 @@ const sources = ROOTS.flatMap(files).map((file) => ({ file, text: read(file) }))
 /** The only files of the patron zone that may talk to Stripe or the payments module (server and browser). */
 const STRIPE_ALLOWED = new Set([
   "lib/modules/patron-zone/application/patron-checkout.use-case.ts", // createCheckoutIntent (the tip gateway's)
+  "lib/modules/patron-zone/application/preview-payment-methods.use-case.ts", // throw-away probe intent: reads the method names, cancels it, stores nothing, grants nothing
   "app/components/premium-pass/PassCheckoutSheet.tsx", // getStripeBrowser(): Stripe.js only once the checkout is open
   "app/components/premium-pass/PassPaymentStep.tsx", // <Elements> around the tip gateway's own forms
+  "lib/modules/patron-zone/domain/payments-mode.ts", // pure env helpers (which key set), no Stripe SDK and no network
 ]);
 
 describe("premium-pass: where money can move", () => {
@@ -126,9 +128,9 @@ describe("premium-pass: where money can move", () => {
     const sheet = read("app/components/premium-pass/PassCheckoutSheet.tsx");
     expect(sheet).not.toMatch(/^[^/\n]*\bloadStripe\(/m);
     expect(sheet).not.toMatch(/^(?:const|let)\s.*getStripeBrowser\(/m);
-    const calls = [...sheet.matchAll(/getStripeBrowser\(\)/g)].length;
+    const calls = [...sheet.matchAll(/getStripeBrowser\(/g)].length;
     expect(calls).toBe(1);
-    expect(sheet.indexOf("getStripeBrowser()")).toBeGreaterThan(sheet.indexOf("useEffect(() => {\n    if (!open) return;"));
+    expect(sheet.indexOf("getStripeBrowser(")).toBeGreaterThan(sheet.indexOf("useEffect(() => {\n    if (!open) return;"));
   });
 
   it("shows no struck-through or 'was' price (no discount, so no Omnibus information)", () => {

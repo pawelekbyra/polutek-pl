@@ -77,8 +77,8 @@ describe("thumbnailState", () => {
     expect(thumbnailState({ status: "DRAFT", thumbnailUrl: "/logo.png", thumbnailPublicUrl: null }, env).label).toBe("Domyślna");
   });
 
-  it("knows an old Blob cover", () => {
-    expect(thumbnailState({ status: "PUBLISHED", thumbnailUrl: "https://x.public.blob.vercel-storage.com/a.jpg", thumbnailPublicUrl: null }, env).kind).toBe("info");
+  it("flags a cover outside our R2 bucket", () => {
+    expect(thumbnailState({ status: "PUBLISHED", thumbnailUrl: "https://old.example.com/a.jpg", thumbnailPublicUrl: null }, env).kind).toBe("info");
   });
 
   it("checks the public copy of a published film", () => {

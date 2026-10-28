@@ -79,9 +79,9 @@ describe("public loading/access state UX contracts", () => {
 
     expect(controlsCopy).toContain("Odtwórz ponownie");
     expect(controls).toContain("mc-center--ended");
-    // Icons: lucide line icons plus the custom play/pause/replay family (controls/PlayerIcons.tsx).
-    expect(controls).toContain('from "lucide-react"');
-    expect(controls).toContain("PlayerIcons");
+    // Icons: the "Marker" set in one file (controls/PlayerIconSet.tsx), no lucide in the player controls.
+    expect(controls).toContain("PlayerIconSet");
+    expect(controls).not.toContain('from "lucide-react"');
     expect(controls).not.toContain("SeekButton");
     expect(controls).not.toContain("PIPButton");
     expect(controls).not.toContain("Cofnij 10 sekund");
@@ -97,9 +97,9 @@ describe("public loading/access state UX contracts", () => {
     const loading = read("app/components/PlayerLoadingState.tsx");
 
     expect(loading).toContain("polutek-player-loader-mark");
-    expect(loading).toContain("polutek-player-loader-progress");
     expect(loading).toContain("var(--chan-nav,#f7f9fc)");
-    expect(loading).toContain('from "lucide-react"');
+    expect(loading).toContain("SpinnerArcIcon");
+    expect(loading).not.toContain("lucide-react");
     expect(loading).not.toContain("scribble");
     expect(loading).not.toContain("spark");
     expect(loading).toContain('role="status"');

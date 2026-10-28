@@ -735,25 +735,20 @@
     /* Lift the glyphs off bright frames without a visible halo. */
     filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.35));
   }
-  .mc-icon--solid { width:18px; height:18px; }
 
-  /* Play/pause: the only bar control with a surface, a soft glass pill (translucent dark, 1px inner hairline,
-     blur where supported). Press scales to .96; the focus ring is a white gap plus the brand blue, visible on
-     any frame. The two glyphs cross-fade in 160ms (PlayPauseGlyph). */
-  .mc-caption--none { opacity:.4; cursor:default; }
-  .mc-play {
-    width:40px; height:28px;
-    background: rgba(14,15,18,.58);
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 2px 8px rgba(0,0,0,.16);
-    backdrop-filter: blur(10px) saturate(1.3);
-    -webkit-backdrop-filter: blur(10px) saturate(1.3);
-  }
-  .mc-play:active { transform: scale(.96); }
-  .mc-play:focus-visible {
-    outline:none;
-    box-shadow: 0 0 0 2px rgba(255,255,255,.92), 0 0 0 4px var(--chan-blue);
-  }
-  .mc-glyph-swap { position:relative; display:block; width:20px; height:20px; }
+  /* Volume: the speaker glyph fills less of its 24 box than the other icons (ink 16 x 11 px at 20px against
+     17 x 13-17), so it looked small. A 23px box evens the optical size; the stroke is kept at the bar's 2px
+     (2.4 x 20 / 23) so the line does not thicken. */
+  .mc-icon--volume { width:23px; height:23px; stroke-width:2.09; }
+
+  /* No-captions CC: crossed icon at full white like its neighbours, only inert (aria-disabled, no toggle). */
+  .mc-caption--none { cursor:default; }
+
+  /* Play/pause: a plain icon button in the language of the other controls (no pill, no outline). It is the main
+     action, so the glyph is ~30% larger (26px) and the box 40px; hover wash, focus ring and press come from
+     .mc-btn. */
+  .mc-play { --mc-play-glyph: 26px; width:40px; height:40px; }
+  .mc-glyph-swap { position:relative; display:block; width:var(--mc-play-glyph, 20px); height:var(--mc-play-glyph, 20px); }
   .mc-glyph-swap > svg {
     position:absolute; inset:0; width:100%; height:100%;
     transition: opacity .16s var(--mc-ease), transform .16s var(--mc-ease);
@@ -798,8 +793,10 @@
   .mc-scrub-track {
     position:relative; width:100%;
     height:3px; border-radius:999px;
-    background: rgba(255,255,255,.22);
-    box-shadow: 0 0 0 .5px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.2);
+    /* Unplayed part: white like the icons. Painted only to the right of the buffered part (a gradient sized by
+       --chapter-progress), so the buffer is a dimmer step, not a layer over the white. */
+    background: linear-gradient(rgba(255,255,255,.88), rgba(255,255,255,.88)) right / calc(100% - var(--chapter-progress, 0%)) 100% no-repeat;
+    box-shadow: 0 0 0 .5px rgba(0,0,0,.28), 0 1px 3px rgba(0,0,0,.4);
     overflow:hidden;
     transition: height .2s var(--mc-ease);
   }
@@ -810,7 +807,7 @@
   .mc-scrub-buffer {
     position:absolute; inset:0 auto 0 0;
     width: var(--chapter-progress, 0%);
-    background: rgba(255,255,255,.3);
+    background: rgba(255,255,255,.55);
     border-radius:inherit;
   }
   /* Watched part in the brand blue: it identifies the player and keeps its contrast on bright frames,
@@ -951,7 +948,8 @@
   .mc-menu-item:hover, .mc-menu-item:focus-visible { background: rgba(255,255,255,.1); outline:none; }
   .mc-menu-item:focus-visible { box-shadow: inset 0 0 0 2px rgba(255,255,255,.8); }
   .mc-menu-item--on { font-weight:600; }
-  .mc-menu-item--on::after { content:"\2713"; font-weight:600; }
+  /* Selected entry: the set's check icon (CheckIcon) at the end of the row, 16px like the chevron hint. */
+  .mc-menu-check, .mc-menu-hint-icon { width:16px; height:16px; flex-shrink:0; }
   .mc-menu-sep { height:1px; margin:6px 0; background: rgba(255,255,255,.12); }
   .mc-menu-item-hint {
     display:flex; align-items:center; gap:4px; min-width:0;
@@ -995,24 +993,23 @@
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 0 0 2px rgba(255,255,255,.92), 0 0 0 4px var(--chan-blue);
   }
 
-  .mc-hero-icon { display:block; width:48px; height:48px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.45)); }
+  /* A very light white glow that follows the SHAPE of the mark (a blurred contour of the icon, no disc behind it), plus a barely
+     there shadow so it still reads on bright frames (owner 2026-10-28: subtle, not a halo). */
+  .mc-hero-icon { display:block; width:48px; height:48px; filter: drop-shadow(0 0 3px rgba(255,255,255,.38)) drop-shadow(0 0 9px rgba(255,255,255,.2)) drop-shadow(0 1px 4px rgba(0,0,0,.22)); }
 
+  /* Buffering mark: one arc drawn with the same Marker stroke as the icons (SpinnerArcIcon, 2.4 in the 24 box = 4.8px at
+     48px, round ends), white, no disc and no border behind it. The glow is the big play mark's: a drop-shadow on the WRAPPER
+     (it follows the shape of the arc and stays put while only the arc inside turns). The start-up frame and the thumbnail
+     loader reuse these two classes. */
   .mc-spinner {
     display:grid; place-items:center;
     width:48px; height:48px;
-    border-radius:999px;
-    background: rgba(14,15,18,.5);
-    backdrop-filter:blur(8px);
     color:#fff;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+    filter: drop-shadow(0 0 3px rgba(255,255,255,.38)) drop-shadow(0 0 9px rgba(255,255,255,.2)) drop-shadow(0 1px 4px rgba(0,0,0,.22));
   }
-  /* Plain CSS ring instead of an icon glyph: it rotates perfectly regardless of library. */
-  .mc-spinner-ring {
-    width:22px; height:22px;
-    border-radius:999px;
-    border:2.5px solid rgba(255,255,255,.28);
-    border-top-color:#fff;
-    animation:mc-spin .8s linear infinite;
+  .mc-spinner-arc {
+    display:block; width:48px; height:48px;
+    animation:mc-spin .9s linear infinite;
   }
 
   @keyframes mc-spin { to { transform:rotate(360deg); } }
@@ -1031,8 +1028,7 @@
   @media (pointer:coarse) {
     .mc-controls { --mc-row: 44px; }
     .mc-btn { height:44px; }
-    .mc-play { height:28px; }
-    .mc-play::before { content:""; position:absolute; inset:-8px -4px; }
+    .mc-play { height:44px; }
     .mc-scrub { height:44px; --media-slider-preview-offset: -6px; }
     .mc-scrub-thumb { transform: translate(-50%, -50%) scale(.75); }
     .mc-vol-slider { display:none; }
@@ -1040,7 +1036,7 @@
   @media (hover:none) { .mc-vol-slider { display:none; } }
 
   /* Narrow screens: the track must dominate the row (owner's reference). Icons stay 20px; buttons shrink to
-     32px boxes (still above the 24px AA minimum), gaps go to 0, the play pill and side padding tighten. The
+     32px boxes (still above the 24px AA minimum), gaps go to 0, the play button and side padding tighten. The
      44px touch hit area stays on the track only. */
   @media (max-width:640px) {
     /* The row hugs the bottom edge: 36px tall with 1px under it puts the pill ~6px (the icons ~9px) above the
@@ -1054,7 +1050,9 @@
     }
     .mc-bar, .mc-group { gap:0; }
     .mc-btn, .mc-play { height: var(--mc-btn); }
-    .mc-play { width:34px; height:26px; }
+    /* Phone: 40 x 36 box, 24px glyph; the ::before pads the touch target to 44 x 44. */
+    .mc-play { --mc-play-glyph: 24px; width:40px; height:var(--mc-row); }
+    .mc-play::before { content:""; position:absolute; inset:-4px -2px; }
     .mc-btn--badge { padding:0 4px; }
     .mc-track-area { margin:0 6px; }
     .mc-duration, .mc-pip, .mc-chapters > .mc-btn { display:none; }
@@ -1082,7 +1080,8 @@
     .mc-scrim, .mc-bottom, .mc-btn, .mc-hero, .mc-chip, .mc-glyph-swap > svg,
     .mc-vol-slider, .mc-scrub-track, .mc-scrub-thumb { transition:none; }
     .mc-hero { animation:none; }
-    .mc-spinner-ring { animation:none; }
+    /* Reduced motion: a slow turn, still clearly alive (a frozen arc would look like a broken icon). */
+    .mc-spinner-arc { animation-duration:3.2s; }
     .mc-menu { animation:none; }
   }
 }

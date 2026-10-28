@@ -10,10 +10,13 @@ import {
   GooglePayIcon,
   IDEALIcon,
   KlarnaIcon,
+  MBWayIcon,
   MobilePayIcon,
+  MultibancoIcon,
   PayPalIcon,
   Przelewy24Icon,
   RevolutIcon,
+  SofortIcon,
   SwishIcon,
   TWINTIcon,
   VisaIcon,
@@ -73,6 +76,9 @@ const METHOD_COPY: Record<string, { icon: IconComponent; title: (tx: Tx) => stri
   revolut_pay: { icon: RevolutIcon, title: () => "Revolut Pay", hint: (tx) => tx("Aplikacja Revolut", "Revolut app") },
   ideal: { icon: IDEALIcon, title: () => "iDEAL", hint: (tx) => tx("Bank w Holandii", "Dutch bank transfer") },
   bancontact: { icon: BancontactIcon, title: () => "Bancontact", hint: (tx) => tx("Bank w Belgii", "Belgian bank transfer") },
+  sofort: { icon: SofortIcon, title: () => "Sofort", hint: (tx) => tx("Szybki przelew z Twojego banku", "Instant transfer from your bank") },
+  multibanco: { icon: MultibancoIcon, title: () => "Multibanco", hint: (tx) => tx("Płatność z referencją Multibanco", "Pay with a Multibanco reference") },
+  mb_way: { icon: MBWayIcon, title: () => "MB WAY", hint: (tx) => tx("Aplikacja MB WAY", "MB WAY app") },
   eps: { icon: BankIcon, title: () => "EPS", hint: (tx) => tx("Bank w Austrii", "Austrian bank transfer") },
   twint: { icon: TWINTIcon, title: () => "TWINT", hint: (tx) => tx("Aplikacja TWINT", "TWINT app") },
   mobilepay: { icon: MobilePayIcon, title: () => "MobilePay", hint: (tx) => tx("Aplikacja MobilePay", "MobilePay app") },
@@ -83,7 +89,7 @@ const METHOD_COPY: Record<string, { icon: IconComponent; title: (tx: Tx) => stri
 };
 
 // Local instant methods first, then card, then accounts/wallets. Unknown methods go last.
-const METHOD_ORDER = ["blik", "apple_pay", "google_pay", "p24", "ideal", "bancontact", "eps", "twint", "swish", "mobilepay", "card", "paypal", "revolut_pay", "klarna"];
+const METHOD_ORDER = ["blik", "apple_pay", "google_pay", "p24", "ideal", "bancontact", "eps", "sofort", "mb_way", "multibanco", "twint", "swish", "mobilepay", "card", "paypal", "revolut_pay", "klarna"];
 
 // Not shown as a tile: Link is Stripe's own saved-details network.
 const HIDDEN_TILE_METHODS = new Set(["link"]);

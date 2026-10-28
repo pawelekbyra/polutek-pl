@@ -34,12 +34,14 @@ describe("CaptionsToggleButton", () => {
   });
   afterEach(() => cleanup());
 
-  it("without captions in the page language: crossed CC, dimmed and inert (no toggle)", () => {
+  it("without captions in the page language: crossed CC at full white and inert (no toggle)", () => {
     media.state = { hasCaptions: false, textTrack: null };
     const view = render(<CaptionsToggleButton />);
     const button = view.getByRole("button", { name: "Napisy" });
     expect(button.getAttribute("aria-disabled")).toBe("true");
     expect(button.querySelector("svg")?.getAttribute("data-crossed")).toBe("true");
+    expect(button.getAttribute("tabindex")).toBe("-1");
+    expect(button.className).toContain("mc-caption--none");
     fireEvent.click(button);
     expect(media.toggleCaptions).not.toHaveBeenCalled();
   });
@@ -53,7 +55,7 @@ describe("CaptionsToggleButton", () => {
     expect(button.getAttribute("aria-keyshortcuts")).toBe("c");
     expect(button.getAttribute("title")).toBe("Wyłącz napisy (c)");
     expect(button.querySelector("svg")?.getAttribute("data-crossed")).toBe("false");
-    expect(button.querySelectorAll("line")).toHaveLength(0);
+    expect(button.querySelectorAll("svg > path")).toHaveLength(3);
   });
 
   it("captions off: crossed CC icon, not pressed, tooltip offers to turn them on", () => {
@@ -63,7 +65,8 @@ describe("CaptionsToggleButton", () => {
     expect(button.getAttribute("aria-pressed")).toBe("false");
     expect(button.getAttribute("title")).toBe("Włącz napisy (c)");
     expect(button.querySelector("svg")?.getAttribute("data-crossed")).toBe("true");
-    expect(button.querySelector("svg > line")).not.toBeNull();
+    // The crossed icon is the set's "captions off": the frame, two C arcs and the slash (4 strokes vs 3 when on).
+    expect(button.querySelectorAll("svg > path")).toHaveLength(4);
   });
 
   it("uses English copy on the English site", () => {

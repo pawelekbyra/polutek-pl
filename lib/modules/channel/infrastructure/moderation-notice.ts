@@ -47,22 +47,32 @@ export async function notifyChannelOwnerOfDecision(ctx: AppContext, input: Decis
     const reason = input.reasonPublic.slice(0, 500);
     const always = isAlwaysNotifiedAction(input.action);
 
-    await sendNotification(
-      {
-        userId: owner.userId,
-        kind: "MODERATION",
-        titlePl: headline,
-        titleEn: "A moderation decision about your channel",
-        bodyPl: `${reason}\n\nMożesz się odwołać w sekcji „Decyzje i odwołania” w Studiu.`,
-        bodyEn: `${reason}\n\nYou can appeal in the "Decisions and appeals" section of the Studio.`,
-        href: DECISIONS_HREF,
-        channelId: input.channelId,
-        videoId: input.videoId ?? undefined,
-        force: always,
-        skipTemplate: true,
-      },
-      ctx.prisma as never,
-    );
+    // In-app and e-mail are separate attempts (audit W20): a failing notification must not stop the mail, and a
+    // failing mail transport must not hide the in-app notice.
+    try {
+      await sendNotification(
+        {
+          userId: owner.userId,
+          kind: "MODERATION",
+          titlePl: headline,
+          titleEn: "A moderation decision about your channel",
+          bodyPl: `${reason}
+
+Możesz się odwołać w sekcji „Decyzje i odwołania” w Studiu.`,
+          bodyEn: `${reason}
+
+You can appeal in the "Decisions and appeals" section of the Studio.`,
+          href: DECISIONS_HREF,
+          channelId: input.channelId,
+          videoId: input.videoId ?? undefined,
+          force: always,
+          skipTemplate: true,
+        },
+        ctx.prisma as never,
+      );
+    } catch (error) {
+      logger.error("[moderation-notice] in-app notification failed", { decisionId: input.decisionId, error: error instanceof Error ? error.message : String(error) });
+    }
 
     if (!owner.email) return;
     const email = await import("@/lib/modules/email");

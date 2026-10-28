@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { PREMIUM_STRIPE_ENV, stripeSecretKeyFor, type StripeKeySet } from "@/lib/payments/stripe-key-sets";
 
 /**
  * The single explicit Stripe API version the whole codebase targets.
@@ -14,24 +15,29 @@ import Stripe from "stripe";
  */
 const STRIPE_API_VERSION: Stripe.LatestApiVersion = "2026-02-25.clover";
 
-let stripeClient: Stripe | null = null;
+const stripeClients: Partial<Record<StripeKeySet, Stripe>> = {};
 
 /**
- * Returns the single shared Stripe client for the app.
+ * Returns the shared Stripe client of a key set (memoized per set).
  *
- * Constructed lazily (so a missing `STRIPE_SECRET_KEY` only throws when Stripe is actually
- * needed, never at import time) and memoized afterward. Every call site that needs a Stripe
- * client must go through this helper instead of constructing `new Stripe(...)` itself, so the
- * API version and client config live in exactly one place.
+ * `default` is STRIPE_SECRET_KEY (tips and everything else); `premium` is PREMIUM_PASS_STRIPE_SECRET_KEY and is used
+ * only for payments that carry the premium marker (see `paymentKeySet`). The premium set never falls back to the
+ * default key: a payment created with test keys read with the live key would 404 (and vice versa).
+ *
+ * Constructed lazily (so a missing key only throws when Stripe is actually needed, never at import time). Every
+ * call site that needs a Stripe client must go through this helper instead of constructing `new Stripe(...)`
+ * itself, so the API version and client config live in exactly one place.
  */
-export function getStripeClient(): Stripe {
-  if (stripeClient) return stripeClient;
+export function getStripeClient(keySet: StripeKeySet = "default"): Stripe {
+  const cached = stripeClients[keySet];
+  if (cached) return cached;
 
-  const key = process.env.STRIPE_SECRET_KEY;
+  const key = stripeSecretKeyFor(keySet);
   if (!key) {
-    throw new Error("STRIPE_SECRET_KEY is missing");
+    throw new Error(`${keySet === "premium" ? PREMIUM_STRIPE_ENV.secretKey : "STRIPE_SECRET_KEY"} is missing`);
   }
 
-  stripeClient = new Stripe(key, { apiVersion: STRIPE_API_VERSION });
-  return stripeClient;
+  const client = new Stripe(key, { apiVersion: STRIPE_API_VERSION });
+  stripeClients[keySet] = client;
+  return client;
 }

@@ -97,6 +97,7 @@
  "Could not add your comment. Try again.": "Não foi possível adicionar seu comentário. Tente novamente.",
  "Could not load comments.": "Não foi possível carregar os comentários.",
  "Could not load the replies.": "Não foi possível carregar as respostas.",
+ "Could not save the language to your account.": "Não foi possível salvar o idioma na sua conta.",
  "Could not load the video.": "Não foi possível carregar o vídeo.",
  "Could not load the video. Please try again in a moment.": "Não foi possível carregar o vídeo. Tente novamente em instantes.",
  "Could not play this video.": "Não foi possível reproduzir este vídeo.",
@@ -1101,5 +1102,7 @@
  "Check the channel name.": "Verifique o nome do canal.",
  "That handle is not available. Choose another.": "Esse identificador não está disponível. Escolha outro.",
  "Check the details in the About section.": "Verifique os dados na secção «Informações».",
- "Server error. Please try again.": "Erro do servidor. Tente novamente."
+ "Server error. Please try again.": "Erro do servidor. Tente novamente.",
+ "Pay with a Multibanco reference": "Pague com uma referência Multibanco",
+ "MB WAY app": "App MB WAY"
 }

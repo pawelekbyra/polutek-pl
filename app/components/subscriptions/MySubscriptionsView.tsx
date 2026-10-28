@@ -13,7 +13,8 @@ import { ListMySubscriptionsUseCase } from "@/lib/modules/subscriptions";
 import { VideoContentService } from "@/lib/modules/video/infrastructure/video-content.service";
 import type { PublicVideoDTO } from "@/app/types/video";
 import { getServerTx } from "@/lib/i18n/server-tx";
-import { getLocalizedHref, isLocale, type Locale } from "@/lib/i18n/routing";
+import { getLocalizedHref } from "@/lib/i18n/routing";
+import { resolvePageLocale } from "@/lib/i18n/page-locale";
 import { APP_NAME } from "@/lib/constants";
 
 /** Latest videos of the subscribed channels shown below the list. */
@@ -24,7 +25,7 @@ export type MySubscriptionsPageProps = { params: Promise<{ locale: string }> };
 /** The page is personal: never indexed, never cached. */
 export async function mySubscriptionsMetadata(props: MySubscriptionsPageProps): Promise<Metadata> {
   const { locale: rawLocale } = await props.params;
-  const locale: Locale = isLocale(rawLocale) ? rawLocale : "pl";
+  const locale = (await resolvePageLocale(rawLocale)) ?? "pl";
   const tx = await getServerTx(locale);
   return {
     title: `${tx("Moje subskrypcje", "My subscriptions")} · ${APP_NAME}`,
@@ -34,8 +35,8 @@ export async function mySubscriptionsMetadata(props: MySubscriptionsPageProps): 
 
 export default async function MySubscriptionsView(props: MySubscriptionsPageProps) {
   const { locale: rawLocale } = await props.params;
-  if (!isLocale(rawLocale)) notFound();
-  const locale: Locale = rawLocale;
+  const locale = await resolvePageLocale(rawLocale);
+  if (!locale) notFound();
   const tx = await getServerTx(locale);
 
   // The proxy only checks that a session cookie exists; the page validates the session for real.

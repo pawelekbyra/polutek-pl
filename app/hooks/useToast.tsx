@@ -61,6 +61,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** Like useToast, but undefined outside a ToastProvider (background code that must not throw). */
+export function useOptionalToast(): ToastContextType["toast"] | undefined {
+  return useContext(ToastContext)?.toast;
+}
+
 export function useToast() {
   const context = useContext(ToastContext);
   if (!context) {

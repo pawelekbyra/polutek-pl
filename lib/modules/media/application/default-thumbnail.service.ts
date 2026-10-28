@@ -26,7 +26,7 @@ async function resolveDefaultThumbnailUrl(): Promise<string | null> {
 }
 
 // Returns the raw storage/external URL. Callers stream it server-side via
-// ThumbnailResponseService (which handles private Vercel Blob access), so a
+// ThumbnailResponseService (which reads the private R2 bucket), so a
 // relative proxy path must never be returned here — server-side fetch of a
 // relative URL fails.
 export async function resolveVideoThumbnailUrl(thumbnailUrl: string | null | undefined): Promise<string | null> {

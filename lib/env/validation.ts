@@ -66,7 +66,7 @@ function validateCurrency(errors: string[], env: EnvRecord, key: string) {
 }
 
 function hasAnyMediaHost(env: EnvRecord) {
-  return ['MEDIA_BUCKET_HOST', 'NEXT_PUBLIC_R2_PUBLIC_HOST', 'NEXT_PUBLIC_BLOB_PUBLIC_HOST', 'ALLOWED_MEDIA_HOSTS']
+  return ['MEDIA_BUCKET_HOST', 'NEXT_PUBLIC_R2_PUBLIC_HOST', 'ALLOWED_MEDIA_HOSTS']
     .some((key) => hasValue(env, key));
 }
 
@@ -93,7 +93,7 @@ export function validateAppEnv(env: EnvRecord = process.env, mode: EnvValidation
     }
 
     if (!hasAnyMediaHost(env)) {
-      errors.push('At least one exact media host allowlist env is required in production: MEDIA_BUCKET_HOST, NEXT_PUBLIC_R2_PUBLIC_HOST, NEXT_PUBLIC_BLOB_PUBLIC_HOST, or ALLOWED_MEDIA_HOSTS.');
+      errors.push('At least one exact media host allowlist env is required in production: MEDIA_BUCKET_HOST, NEXT_PUBLIC_R2_PUBLIC_HOST, or ALLOWED_MEDIA_HOSTS.');
     }
 
     if (!hasWritableRateLimitStore(env)) {
@@ -111,6 +111,16 @@ export function validateAppEnv(env: EnvRecord = process.env, mode: EnvValidation
   }
   if (hasValue(env, 'STRIPE_WEBHOOK_SECRET') && !env.STRIPE_WEBHOOK_SECRET!.trim().startsWith('whsec_')) {
     errors.push('STRIPE_WEBHOOK_SECRET must be an endpoint signing secret (starts with whsec_).');
+  }
+
+  // The optional patron-zone set (PREMIUM_PASS_STRIPE_*, usually Stripe TEST keys) follows the same rules on its own.
+  const premiumSecretMode = stripeMode(env.PREMIUM_PASS_STRIPE_SECRET_KEY);
+  const premiumPublishableMode = stripeMode(env.NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY);
+  if (premiumSecretMode && premiumPublishableMode && premiumSecretMode !== premiumPublishableMode) {
+    errors.push(`PREMIUM_PASS_STRIPE_SECRET_KEY is a ${premiumSecretMode} key but NEXT_PUBLIC_PREMIUM_PASS_STRIPE_PUBLISHABLE_KEY is a ${premiumPublishableMode} key; both must be the same mode.`);
+  }
+  if (hasValue(env, 'PREMIUM_PASS_STRIPE_WEBHOOK_SECRET') && !env.PREMIUM_PASS_STRIPE_WEBHOOK_SECRET!.trim().startsWith('whsec_')) {
+    errors.push('PREMIUM_PASS_STRIPE_WEBHOOK_SECRET must be an endpoint signing secret (starts with whsec_).');
   }
 
   validateUrl(errors, env, 'NEXT_PUBLIC_APP_URL');

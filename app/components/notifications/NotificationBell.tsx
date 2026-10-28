@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bell } from "lucide-react";
+import { BellIcon } from "../icons/MarkerBellIcons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -209,7 +209,7 @@ export default function NotificationBell() {
           aria-label={label}
           className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] active:scale-95 motion-reduce:transform-none motion-reduce:transition-none"
         >
-          <Bell className="h-5 w-5 shrink-0 text-[var(--chan-ink)]" strokeWidth={2} aria-hidden="true" />
+          <BellIcon size={24} className="shrink-0" />
           {unread > 0 && (
             <span
               aria-hidden="true"
@@ -222,7 +222,11 @@ export default function NotificationBell() {
 
         <DropdownMenuContent
           align="end"
-          sideOffset={8}
+          // Negative offset: the panel laps over the bottom edge of the top bar by a few px (it starts inside the bar's lower padding)
+          // instead of hanging clear below it (owner 2026-10-28).
+          sideOffset={-3}
+          // Above the sticky top bar (z-[1000]): the positioner is the stacking context, so the z-index goes on it.
+          positionerClassName="z-[1100]"
           className="z-[1100] max-h-[70vh] w-[min(22rem,calc(100vw-1rem))] overflow-y-auto rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-2 font-sans text-[var(--chan-ink)] shadow-[0_24px_60px_-18px_rgba(15,23,42,0.28)] ring-0"
         >
           <DropdownMenuLabel className="px-3 pb-1 pt-2">

@@ -18,6 +18,8 @@ export async function resolveCommentReport(reportId: string, status: CommentRepo
     if (!report) return fail({ type: "NOT_FOUND", message: "Zgłoszenie nie istnieje." });
     const updated = await ctx.db.writeTransaction(async (tx: WriteTx) => {
       const txRepo = new CommentRepository(tx);
+      // Same lock as a new report on this comment, so the recount below never races with one (audit W18).
+      await txRepo.lockCommentForReports(report.commentId);
       const resolved = await txRepo.resolveReport(reportId, { status, resolvedAt: ctx.now(), resolvedById: actorId });
       await txRepo.refreshPendingReportsCount(report.commentId);
       await recordAuditEvent(ctx, { action: `REPORT_${status}`, targetType: "COMMENT", targetId: report.commentId, metadata: { reportId } }, tx);

@@ -2,43 +2,88 @@
 
 import React from "react";
 import { cleanup, render } from "@testing-library/react";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { PauseGlyph, PlayGlyph, PlayPauseGlyph, ReplayGlyph } from "@/app/components/player/controls/PlayerIcons";
+import {
+  CaptionsOffIcon,
+  CaptionsOnIcon,
+  PLAYER_ICONS,
+  PLAYER_ICON_STROKE,
+  PauseIcon,
+  PlayIcon,
+  PlayPauseGlyph,
+  ReplayIcon,
+} from "@/app/components/player/controls/PlayerIconSet";
 
 const css = readFileSync(join(process.cwd(), "app/globals.css"), "utf8");
 
-describe("player icon family", () => {
+/** Keys of the design file (set B, "Marker") that the player has to carry. */
+const SET_KEYS = [
+  "play", "pause", "replay", "volume-high", "volume-low", "volume-muted", "captions-on", "captions-off", "chapters",
+  "picture-in-picture", "settings", "fullscreen-enter", "fullscreen-exit", "check", "chevron-right", "speed", "back",
+];
+
+function sourceFiles(dir: string): string[] {
+  return readdirSync(dir).flatMap((name) => {
+    const full = join(dir, name);
+    return statSync(full).isDirectory() ? sourceFiles(full) : /\.tsx?$/.test(name) ? [full] : [];
+  });
+}
+
+describe("player icon set (Marker)", () => {
   afterEach(() => cleanup());
 
-  it("play is a round-joined triangle whose centroid is the box centre", () => {
-    const view = render(<PlayGlyph />);
-    const path = view.container.querySelector("path")!;
-    expect(path.getAttribute("stroke-linejoin")).toBe("round");
-    const points = [...path.getAttribute("d")!.matchAll(/(-?\d+\.?\d*) (-?\d+\.?\d*)/g)].map((m) => [Number(m[1]), Number(m[2])]);
-    expect(points).toHaveLength(3);
-    const cx = points.reduce((a, p) => a + p[0], 0) / 3;
-    const cy = points.reduce((a, p) => a + p[1], 0) / 3;
-    expect(Math.abs(cx - 12)).toBeLessThan(0.1);
-    expect(Math.abs(cy - 12)).toBeLessThan(0.1);
+  it("carries every icon of the set, no more and no less", () => {
+    expect(Object.keys(PLAYER_ICONS).sort()).toEqual([...SET_KEYS].sort());
   });
 
-  it("pause is two soft bars, symmetric about the centre", () => {
-    const view = render(<PauseGlyph />);
-    const bars = [...view.container.querySelectorAll("rect")].map((r) => ({
-      x: Number(r.getAttribute("x")), w: Number(r.getAttribute("width")), rx: Number(r.getAttribute("rx")),
-    }));
-    expect(bars).toHaveLength(2);
-    expect(bars[0].rx).toBeGreaterThanOrEqual(1.5);
-    expect((bars[0].x + bars[1].x + bars[1].w) / 2).toBeCloseTo(12, 5);
-  });
-
-  it("replay is an open arc with round caps, hidden from assistive tech", () => {
-    const view = render(<ReplayGlyph />);
+  it.each(SET_KEYS)("%s is a decorative 24x24 stroke-only SVG with at least one path and no text", (key) => {
+    const Icon = PLAYER_ICONS[key as keyof typeof PLAYER_ICONS];
+    const view = render(<Icon className="mc-icon" testId="the-icon" />);
     const svg = view.container.querySelector("svg")!;
-    expect(svg.getAttribute("stroke-linecap")).toBe("round");
+    expect(svg.getAttribute("viewBox")).toBe("0 0 24 24");
     expect(svg.getAttribute("aria-hidden")).toBe("true");
+    expect(svg.getAttribute("focusable")).toBe("false");
+    expect(svg.getAttribute("class")).toBe("mc-icon");
+    expect(svg.getAttribute("data-testid")).toBe("the-icon");
+    expect(svg.getAttribute("fill")).toBe("none");
+    expect(svg.getAttribute("stroke")).toBe("currentColor");
+    expect(svg.getAttribute("stroke-width")).toBe(String(PLAYER_ICON_STROKE));
+    expect(svg.getAttribute("stroke-linecap")).toBe("round");
+    expect(svg.getAttribute("stroke-linejoin")).toBe("round");
+    expect(svg.textContent).toBe("");
+    // Only paths, each with real path data inside the box (no fills, no scripts, no raw markup).
+    const children = [...svg.children];
+    expect(children.length).toBeGreaterThan(0);
+    for (const child of children) {
+      expect(child.tagName.toLowerCase()).toBe("path");
+      expect(child.getAttribute("d")).toMatch(/^M[\d.\s,CLMZHVcz-]+$/);
+      expect(child.hasAttribute("fill")).toBe(false);
+    }
+  });
+
+  it("the stroke can be tuned per use without touching the path data", () => {
+    const view = render(<PlayIcon strokeWidth={2} />);
+    expect(view.container.querySelector("svg")!.getAttribute("stroke-width")).toBe("2");
+  });
+
+  it("captions on and off differ by the slash and carry data-crossed", () => {
+    const on = render(<CaptionsOnIcon data-crossed="false" />);
+    expect(on.container.querySelectorAll("path")).toHaveLength(3);
+    expect(on.container.querySelector("svg")!.getAttribute("data-crossed")).toBe("false");
+    cleanup();
+    const off = render(<CaptionsOffIcon data-crossed="true" />);
+    expect(off.container.querySelectorAll("path")).toHaveLength(4);
+    expect(off.container.querySelector("svg")!.getAttribute("data-crossed")).toBe("true");
+  });
+
+  it("play / pause / replay keep their parts: one shape, two bars, an arc with its arrowhead", () => {
+    expect(render(<PlayIcon />).container.querySelectorAll("path")).toHaveLength(1);
+    cleanup();
+    expect(render(<PauseIcon />).container.querySelectorAll("path")).toHaveLength(2);
+    cleanup();
+    expect(render(<ReplayIcon />).container.querySelectorAll("path")).toHaveLength(2);
   });
 
   it("the swap keeps both glyphs and flips only a data attribute", () => {
@@ -50,13 +95,42 @@ describe("player icon family", () => {
     expect(view.container.querySelector(".mc-glyph-swap")?.getAttribute("data-state")).toBe("playing");
   });
 
-  it("styles: soft glass, press scale, blue focus ring, reduced motion, safe-area insets", () => {
-    expect(css).toContain("rgba(14,15,18,.58)");
-    expect(css).toContain("inset 0 0 0 1px rgba(255,255,255,.14)");
-    expect(css).toContain(".mc-play:active { transform: scale(.96); }");
-    expect(css).toContain("0 0 0 4px var(--chan-blue)");
+  it("the set file is plain JSX: no raw HTML injection", () => {
+    const source = readFileSync(join(process.cwd(), "app/components/player/controls/PlayerIconSet.tsx"), "utf8");
+    expect(source).not.toContain("dangerouslySetInnerHTML");
+  });
+
+  it("the player no longer uses lucide or the old custom glyphs (error overlay and loader keep theirs)", () => {
+    const root = join(process.cwd(), "app/components/player");
+    for (const file of sourceFiles(root)) {
+      const source = readFileSync(file, "utf8");
+      expect(source, file).not.toContain("lucide-react");
+      expect(source, file).not.toContain("LINE_ICON");
+      expect(source, file).not.toMatch(/b(PlayGlyph|PauseGlyph|ReplayGlyph)b/);
+    }
+  });
+
+  it("styles: sizes come from CSS, soft glass, press scale, blue focus ring, reduced motion, safe-area insets", () => {
+    expect(css).toMatch(/\.mc-icon\s*\{\s*width:20px; height:20px;/);
+    expect(css).toMatch(/\.mc-hero-icon\s*\{ display:block; width:48px; height:48px;/);
+    expect(css).toContain(".mc-menu-check, .mc-menu-hint-icon { width:16px; height:16px;");
+    expect(css).not.toContain('content:"\\2713"');
+    expect(css).toMatch(/\.mc-play \{ --mc-play-glyph: 26px; width:40px; height:40px; \}/);
+    expect(css).toMatch(/\.mc-icon--volume \{ width:23px; height:23px; stroke-width:2\.09; \}/);
     expect(css).toMatch(/\.mc-glyph-swap > svg,\s*\n\s*\.mc-vol-slider/);
     expect(css).toContain("env(safe-area-inset-bottom, 0px)");
     expect(css).toContain("env(safe-area-inset-left, 0px)");
+  });
+
+  it("styles: play is a plain icon button (no pill, no ring of its own), CC stays full white, track is white", () => {
+    const play = css.match(/\.mc-play \{[^}]*\}/g)!.join("\n");
+    expect(play).not.toMatch(/background|box-shadow|backdrop-filter|border/);
+    expect(css).not.toContain(".mc-play:active");
+    expect(css).not.toContain(".mc-play:focus-visible");
+    expect(css).toMatch(/\.mc-caption--none \{ cursor:default; \}/);
+    expect(css).not.toMatch(/\.mc-caption--none[^}]*opacity/);
+    expect(css.match(/\.mc-scrub-track \{[^}]*\}/)![0]).toContain("rgba(255,255,255,.88)");
+    expect(css).toMatch(/\.mc-scrub-buffer \{[^}]*rgba\(255,255,255,\.55\)/);
+    expect(css).toMatch(/\.mc-scrub-fill \{[^}]*var\(--chan-blue\)/);
   });
 });

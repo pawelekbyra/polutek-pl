@@ -5,7 +5,7 @@ import { AppContext } from '@/lib/modules/shared/app-context';
 import { getPrimaryPlayableAsset } from '../domain/primary-playable-asset';
 import { selectPrimaryVideoAsset } from '@/lib/modules/video';
 import { isUpcomingPremiere, toPremiereDate } from '@/lib/modules/video/domain/premiere';
-import { resolvePublicThumbnailSrc } from '@/lib/modules/media';
+import { parseCaptionRef, resolvePublicThumbnailSrc } from '@/lib/modules/media';
 import { VideoStatus, type VideoAsset } from '@prisma/client';
 import { buildSelfHlsPlan, isPublicDelivery } from './self-hls-plan';
 import { assetSizeToNumber } from '@/lib/modules/video';
@@ -55,10 +55,15 @@ function posterFor(video?: { id: string; status?: string | null; thumbnailUrl?: 
   return video?.id ? resolvePublicThumbnailSrc(video, process.env) : '';
 }
 
-/** A WebVTT URL the browser may load: absolute https or a same-site path. Anything else is dropped. */
+/**
+ * A WebVTT source for the plan: a stored private-caption reference (kept as is; self-hls-plan turns it into a
+ * delivery URL with the video's token), or a URL the browser may load: absolute https or a same-site path
+ * (files of the old public bucket and pasted URLs). Anything else is dropped.
+ */
 function safeSubtitleUrl(value: string | null | undefined): string | null {
   const url = value?.trim();
   if (!url) return null;
+  if (parseCaptionRef(url)) return url;
   if (url.startsWith('/') && !url.startsWith('//')) return url;
   try {
     return new URL(url).protocol === 'https:' ? url : null;

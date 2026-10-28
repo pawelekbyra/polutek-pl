@@ -125,4 +125,41 @@ describe('patron checkout layout', () => {
     expect(css).toMatch(/--pass-r-pill: 999px;/);
     for (const hex of ['#d4e7ff', '#9fc3f5', '#e8f1ff', '#bcd4f6']) expect(css.split(hex).length - 1).toBe(1); // defined once, used via var()
   });
+
+  it('desktop (>= 900px): a floating side panel at the right edge (16px margins, 16px radius, notification-window shadow), slides in from the TOP, light backdrop; below 900px nothing changes', () => {
+    const start = css.indexOf('@media (min-width: 900px) {\n  .overlay {');
+    const block = start < 0 ? '' : css.slice(start, css.indexOf('\n}\n', start));
+    expect(block).not.toBe('');
+    expect(block).toMatch(/\.overlay \{[^}]*background: rgba\(5, 7, 13, \.2\)/); // only slightly dimmed
+    const sheet = block.match(/\.sheet \{([^}]*)\}/)?.[1] ?? '';
+    expect(sheet).toMatch(/right: 16px; top: 16px; bottom: 16px/);
+    expect(sheet).toMatch(/left: auto/);
+    expect(sheet).toMatch(/width: min\(520px, calc\(100vw - 32px\)\)/);
+    expect(sheet).toMatch(/border-radius: 16px/);
+    expect(sheet).toMatch(/border: 1px solid var\(--chan-line/);
+    expect(sheet).toContain('box-shadow: 0 24px 60px -18px rgba(15, 23, 42, .28)');
+    expect(sheet).toMatch(/animation: sheetDrop 240ms/);
+    expect(css).toMatch(/@keyframes sheetDrop \{ from \{ opacity: 0; transform: translateY\(-32px\); \}/); // from the top, not from the right
+    expect(block).not.toMatch(/translateX/);
+    expect(block).toMatch(/\.sheet\[data-ending-style\] \{ opacity: 0; transform: translateY\(-32px\); \}/); // the exit is the reverse
+    // reduced motion: no animation and no transition; phone rule (<= 560px) still full screen, square
+    expect(css).toMatch(/prefers-reduced-motion: reduce\) \{[^@]*\.overlay \{ animation: none; \}\s*\.overlay, \.sheet \{ transition: none; \}/);
+    expect(css).toMatch(/@media \(max-width: 560px\) \{\s*\.sheet \{ left: 0; right: 0; top: 0; bottom: 0; width: 100%; height: 100dvh;[^}]*border-radius: 0;/);
+    // the base (centred) rule is untouched for 561-899px
+    expect(css).toMatch(/\.sheet \{ position: fixed; z-index: 9991; left: 50%; top: 50%;/);
+  });
+
+  it('the dialog is modal (aria-modal) and a tap on the dimmed backdrop closes it; a tap inside does not', async () => {
+    const onOpenChange = vi.fn();
+    const offer = buildPremiumPassOffer({ signedIn: true, premiumCount: 2 });
+    render(<PassCheckoutSheet open onOpenChange={onOpenChange} offer={offer} onWatch={() => undefined} />);
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveAttribute('aria-modal', 'true');
+    fireEvent.click(within(dialog).getByRole('heading', { level: 2 }));
+    expect(onOpenChange).not.toHaveBeenCalled();
+    const backdrop = document.querySelector('[class*="overlay"]') as HTMLElement;
+    expect(backdrop).not.toBeNull();
+    fireEvent.click(backdrop);
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
 });

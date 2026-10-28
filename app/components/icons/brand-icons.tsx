@@ -214,6 +214,33 @@ export function CryptoIcon({ className }: { className?: string }) {
   );
 }
 
+export function SofortIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
+      <rect width="24" height="24" rx="4" fill="#EF809F" />
+      <text x="12" y="15.5" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" fontFamily="system-ui,-apple-system,sans-serif">S</text>
+    </svg>
+  );
+}
+
+export function MultibancoIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
+      <rect width="24" height="24" rx="4" fill="#1F5AA6" />
+      <text x="12" y="15.5" textAnchor="middle" fill="white" fontSize="9" fontWeight="bold" fontFamily="system-ui,-apple-system,sans-serif">MB</text>
+    </svg>
+  );
+}
+
+export function MBWayIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={cn("h-5 w-5 shrink-0", className)}>
+      <rect width="24" height="24" rx="4" fill="#D4202C" />
+      <text x="12" y="15.5" textAnchor="middle" fill="white" fontSize="9" fontWeight="bold" fontFamily="system-ui,-apple-system,sans-serif">MB</text>
+    </svg>
+  );
+}
+
 /** Generic bank icon */
 export function BankIcon({ className }: { className?: string }) {
   return (

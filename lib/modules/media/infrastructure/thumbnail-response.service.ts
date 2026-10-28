@@ -1,4 +1,3 @@
-import { get } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { MediaPolicy } from "@/lib/modules/media";
 import { parsePrivateThumbnailStorageUrl } from "../domain/r2-thumbnail";
@@ -29,47 +28,7 @@ export class ThumbnailResponseService {
   ): Promise<NextResponse> {
     const effectiveCacheControl = resolveThumbnailCacheControl(cacheControl);
     try {
-      // 1. Vercel Blob URLs (our own storage) are always trusted — no MediaPolicy needed
-      if (this.isVercelBlobUrl(thumbnailUrl)) {
-        // For Vercel Blob (even if private), use backend access to get the stream
-        try {
-          // Use get() with private access to retrieve the authenticated stream directly
-          const result = await get(thumbnailUrl, { access: "private" });
-
-          if (!result) {
-            return new NextResponse("Thumbnail not found in storage", { status: 404 });
-          }
-
-          const resHeaders = new Headers();
-          // Type-safe header transfer from undici Headers to standard Headers
-          result.headers.forEach((value, key) => {
-            resHeaders.set(key, value);
-          });
-          resHeaders.set("Cache-Control", effectiveCacheControl);
-
-          if (result.statusCode === 304) {
-            return new NextResponse(null, {
-              status: 304,
-              headers: resHeaders,
-            });
-          }
-
-          if (!result.stream) {
-            logger.error("[ThumbnailResponseService] Unexpected null stream for 200 response", { videoId });
-            return new NextResponse("Thumbnail content unavailable", { status: 502 });
-          }
-
-          return new NextResponse(result.stream, {
-            status: 200,
-            headers: resHeaders,
-          });
-        } catch (error) {
-          logger.error("[ThumbnailResponseService] Vercel Blob fetch failed", { videoId, error });
-          return new NextResponse("Internal Storage Error", { status: 502 });
-        }
-      }
-
-      // 2. Our private R2 thumbnail bucket — authenticated S3 read, never a plain fetch.
+      // 1. Our private R2 thumbnail bucket — authenticated S3 read, never a plain fetch.
       const r2Key = parsePrivateThumbnailStorageUrl(thumbnailUrl, process.env);
       if (r2Key) {
         try {
@@ -91,13 +50,13 @@ export class ThumbnailResponseService {
         }
       }
 
-      // 3. For other external URLs, validate against MediaPolicy first
+      // 2. For other external URLs, validate against MediaPolicy first
       if (!MediaPolicy.isAllowedThumbnailUrl(thumbnailUrl, process.env)) {
         logger.warn("[ThumbnailResponseService] Blocked unauthorized thumbnail host", { videoId, thumbnailUrl });
         return new NextResponse("Unauthorized Thumbnail Host", { status: 403 });
       }
 
-      // 4. Stream external URL to avoid Next Image config restrictions
+      // 3. Stream external URL to avoid Next Image config restrictions
       try {
         const response = await fetch(thumbnailUrl);
 
@@ -134,18 +93,4 @@ export class ThumbnailResponseService {
     }
   }
 
-  private static isVercelBlobUrl(url: string): boolean {
-    try {
-      const hostname = new URL(url).hostname.toLowerCase();
-      if (hostname.endsWith(".blob.vercel-storage.com")) return true;
-      const customHost = process.env.NEXT_PUBLIC_BLOB_PUBLIC_HOST;
-      if (customHost) {
-        const customHostname = new URL(customHost.startsWith('http') ? customHost : `https://${customHost}`).hostname.toLowerCase();
-        return hostname === customHostname;
-      }
-      return false;
-    } catch {
-      return false;
-    }
-  }
 }

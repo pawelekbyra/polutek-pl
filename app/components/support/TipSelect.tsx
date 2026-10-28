@@ -280,7 +280,7 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
           </span>
           <SelectChevron
             className={cn(
-              "h-4 w-4 shrink-0 text-[var(--chan-ink)] transition-transform duration-200 motion-reduce:transition-none",
+              "h-5 w-5 shrink-0 text-[var(--chan-blue)] transition-transform duration-200 motion-reduce:transition-none",
               open && "rotate-180",
             )}
           />

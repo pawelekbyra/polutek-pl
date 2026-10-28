@@ -11,11 +11,14 @@ import {
   RequestBodyTooLargeError,
   readRequestJsonWithLimit,
 } from "@/lib/utils/request-body";
+import { rateLimit } from "@/lib/rate-limit";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
 const MAX_EDIT_REQUEST_BODY_BYTES = 10_000;
+/** Edits per account and minute: the same pace the other comment writes (reactions, reports) are held to. */
+const EDITS_PER_MINUTE = 10;
 const editSchema = z.object({ text: z.string().trim().min(1).max(5000) });
 
 const unauthorized = () =>
@@ -33,6 +36,16 @@ export async function PATCH(
   try {
     const actor = await getActorFromAuth();
     if (actor.type === "guest") return unauthorized();
+
+    if ("userId" in actor) {
+      const limited = await rateLimit({ key: `comment-edits:${actor.userId}`, limit: EDITS_PER_MINUTE, windowMs: 60_000 });
+      if (!limited.success) {
+        return NextResponse.json(
+          { success: false, error: "RATE_LIMITED", message: "Zbyt wiele edycji. Spróbuj za chwilę." },
+          { status: 429 },
+        );
+      }
+    }
 
     let body: unknown;
     try {

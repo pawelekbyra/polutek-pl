@@ -6,7 +6,7 @@ import { MediaHostEnv, parseMediaHosts } from './media-safety';
 //   only reachable through the authenticated S3 API, so the value stored in
 //   `Video.thumbnailUrl` is the S3-endpoint URL of the object — absolute (so
 //   `resolveVideoThumbnailUrl()` can hand it to server-side streaming) but not
-//   fetchable without credentials, exactly like a private Vercel Blob URL.
+//   fetchable without credentials, exactly like any private bucket URL.
 // - a PUBLIC bucket (custom domain / r2.dev, `NEXT_PUBLIC_R2_PUBLIC_HOST`) that
 //   only ever holds copies of PUBLISHED videos' thumbnails, under the same
 //   content-hashed key. `Video.thumbnailPublicUrl` records the copy.
@@ -113,7 +113,7 @@ export interface PublicThumbnailSourceInput {
 /**
  * The thumbnail `src` to put in a public DTO. A published video whose public
  * R2 copy matches its current private thumbnail is served straight from R2;
- * everything else (drafts, Blob/legacy thumbnails, default fallback, a copy
+ * everything else (drafts, legacy/foreign-host thumbnails, default fallback, a copy
  * not synced yet) goes through `/api/videos/[id]/thumbnail`, which enforces
  * the admin-only draft policy server-side.
  */

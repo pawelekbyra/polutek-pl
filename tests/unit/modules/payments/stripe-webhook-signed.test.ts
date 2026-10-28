@@ -209,6 +209,23 @@ describe('Stripe webhook with real signatures', () => {
 
     expect(payment.status).toBe('CANCELED');
   });
+
+  it('quietly ignores the canceled probe intent of the patron-zone method preview (no payment, no change, 200)', async () => {
+    const payment = seedPayment();
+
+    const response = await POST(signedRequest('payment_intent.canceled', intent('pi_probe', null, { status: 'canceled', metadata: { probe: 'patron-methods' } })));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ outcome: 'ignored' });
+    expect(payment.status).toBe('PENDING');
+  });
+
+  it('ignores a canceled intent of no known payment (200, ignored)', async () => {
+    const response = await POST(signedRequest('payment_intent.canceled', intent('pi_unknown', null, { status: 'canceled' })));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({ outcome: 'ignored' });
+  });
 });
 
 describe('refunds and disputes keep the supporter marker while another paid tip exists (PAY-05)', () => {

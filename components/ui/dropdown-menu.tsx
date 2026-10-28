@@ -24,8 +24,12 @@ function DropdownMenuContent({
   side = "bottom",
   sideOffset = 4,
   className,
+  positionerClassName,
   ...props
-}: MenuPrimitive.Popup.Props &
+}: MenuPrimitive.Popup.Props & {
+  /** Classes of the Positioner (the stacking context of the portalled menu): a menu that must sit above a sticky header needs its z-index HERE, a z-index on the popup is trapped inside the positioner. */
+  positionerClassName?: string
+} &
   Pick<
     MenuPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset"
@@ -33,7 +37,7 @@ function DropdownMenuContent({
   return (
     <MenuPrimitive.Portal>
       <MenuPrimitive.Positioner
-        className="isolate z-50 outline-none"
+        className={cn("isolate z-50 outline-none", positionerClassName)}
         align={align}
         alignOffset={alignOffset}
         side={side}

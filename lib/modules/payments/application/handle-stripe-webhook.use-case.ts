@@ -16,6 +16,14 @@ import { logger } from "@/lib/logger";
 import { startTimer, recordDurationMetric, recordAlert } from "@/lib/observability";
 import Stripe from 'stripe';
 import { getStripeClient } from "../infrastructure/stripe-client";
+import {
+  paymentKeySet,
+  premiumKeysConfigured,
+  secretKeyIsLive,
+  stripeWebhookSecretFor,
+  PREMIUM_STRIPE_ENV,
+  type StripeKeySet,
+} from "@/lib/payments/stripe-key-sets";
 
 export interface HandleStripeWebhookInput {
   /** The raw request body, exactly as received (the signature covers these bytes). */
@@ -30,12 +38,26 @@ export interface HandleStripeWebhookInput {
  */
 export type StripeWebhookOutcome = 'processed' | 'duplicate' | 'ignored';
 
-/** Live keys are sk_live_/rk_live_; everything else (sk_test_, rk_test_) is test mode. */
-function secretKeyIsLive(): boolean | null {
-  const key = process.env.STRIPE_SECRET_KEY ?? '';
-  if (/^(sk|rk)_live_/.test(key)) return true;
-  if (/^(sk|rk)_test_/.test(key)) return false;
-  return null;
+/**
+ * The signing secrets this server accepts, each tagged with the key set it belongs to. One URL receives two Stripe
+ * endpoints: the live one (tips, STRIPE_WEBHOOK_SECRET) and, when the premium set is configured, the test-mode one
+ * of the patron-zone checkout (PREMIUM_PASS_STRIPE_WEBHOOK_SECRET). A missing secret only removes its own set.
+ */
+function acceptedWebhookSecrets(): Array<{ keySet: StripeKeySet; secret: string }> {
+  const accepted: Array<{ keySet: StripeKeySet; secret: string }> = [];
+  const live = stripeWebhookSecretFor('default');
+  if (live) accepted.push({ keySet: 'default', secret: live });
+  const premium = premiumKeysConfigured() ? stripeWebhookSecretFor('premium') : undefined;
+  if (premium) accepted.push({ keySet: 'premium', secret: premium });
+  return accepted;
+}
+
+/** True (and alerts) when the payment was made with the other key set than the one that verified this event. */
+function crossesKeySets(payment: { id: string; metadata: unknown } | null, verifiedWith: StripeKeySet, event: Stripe.Event): boolean {
+  if (!payment || paymentKeySet(payment.metadata) === verifiedWith) return false;
+  logger.warn(`[StripeWebhook] Ignored ${event.id} (${event.type}): payment ${payment.id} belongs to the ${paymentKeySet(payment.metadata)} Stripe key set but the event was signed for the ${verifiedWith} set.`);
+  recordAlert('stripe.webhook.key_set_mismatch', { eventType: event.type });
+  return true;
 }
 
 function intentIdOf(value: string | { id: string } | null | undefined): string | null {
@@ -56,27 +78,38 @@ export async function handleStripeWebhook(
   const repo = new PaymentRepository();
   const lockService = new StripeEventLockService({ read: ctx.db.read, write: ctx.prisma });
 
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!endpointSecret) {
+  const accepted = acceptedWebhookSecrets();
+  if (accepted.length === 0) {
     logger.error('[StripeWebhook] Rejected: STRIPE_WEBHOOK_SECRET is not set on this server.');
     recordAlert('stripe.webhook.config_missing', {});
     return fail(new PaymentWebhookConfigError('STRIPE_WEBHOOK_SECRET is missing'));
   }
 
-  let event: Stripe.Event;
-  try {
-    // Pure signature check; needs no API key, only the endpoint's signing secret.
-    event = Stripe.webhooks.constructEvent(input.body, input.signature, endpointSecret);
-  } catch (err: unknown) {
-    const reason = err instanceof Error ? err.message : String(err);
-    logger.warn(`[StripeWebhook] Rejected: signature verification failed (${reason}). Check that STRIPE_WEBHOOK_SECRET is the signing secret of this exact endpoint and mode, and that nothing in front of the app changes the body.`);
+  let event: Stripe.Event | null = null;
+  let keySet: StripeKeySet = 'default';
+  let lastReason = '';
+  for (const candidate of accepted) {
+    try {
+      // Pure signature check; needs no API key, only the endpoint's signing secret. The first secret that
+      // verifies decides the key set; a payload that verifies with none is rejected.
+      event = Stripe.webhooks.constructEvent(input.body, input.signature, candidate.secret);
+      keySet = candidate.keySet;
+      break;
+    } catch (err: unknown) {
+      lastReason = err instanceof Error ? err.message : String(err);
+    }
+  }
+  if (!event) {
+    logger.warn(`[StripeWebhook] Rejected: signature verification failed (${lastReason}). Check that STRIPE_WEBHOOK_SECRET (or ${PREMIUM_STRIPE_ENV.webhookSecret}) is the signing secret of this exact endpoint and mode, and that nothing in front of the app changes the body.`);
     recordAlert('stripe.webhook.signature_invalid', {});
     return fail(new PaymentWebhookSignatureError('Webhook signature verification failed'));
   }
 
-  const keyIsLive = secretKeyIsLive();
+  // Each set's events must match the mode of that set's own secret key: a test-mode event never reaches a payment
+  // of the live set and a live event never reaches one of the (test) premium set.
+  const keyIsLive = secretKeyIsLive(keySet);
   if (keyIsLive !== null && event.livemode !== keyIsLive) {
-    logger.warn(`[StripeWebhook] Ignored ${event.id} (${event.type}): event livemode=${event.livemode} but STRIPE_SECRET_KEY is ${keyIsLive ? 'live' : 'test'}.`);
+    logger.warn(`[StripeWebhook] Ignored ${event.id} (${event.type}): event livemode=${event.livemode} but the ${keySet} Stripe secret key is ${keyIsLive ? 'live' : 'test'}.`);
     recordAlert('stripe.webhook.mode_mismatch', { eventType: event.type });
     return ok({ received: true, outcome: 'ignored' });
   }
@@ -106,7 +139,7 @@ export async function handleStripeWebhook(
   }
 
   try {
-    const outcome = await dispatchEvent(event, repo, ctx);
+    const outcome = await dispatchEvent(event, keySet, repo, ctx);
     await lockService.releaseWithSuccess(event.id);
     logger.info(`[StripeWebhook] ${event.id} (${event.type}) ${outcome}.`);
     recordDurationMetric('stripe.webhook.processing_time', startedAt, { eventType: event.type, status: outcome });
@@ -120,7 +153,7 @@ export async function handleStripeWebhook(
   }
 }
 
-async function dispatchEvent(event: Stripe.Event, repo: PaymentRepository, ctx: AppContext): Promise<StripeWebhookOutcome> {
+async function dispatchEvent(event: Stripe.Event, keySet: StripeKeySet, repo: PaymentRepository, ctx: AppContext): Promise<StripeWebhookOutcome> {
   switch (event.type) {
     case 'payment_intent.succeeded': {
       const intent = event.data.object;
@@ -129,6 +162,7 @@ async function dispatchEvent(event: Stripe.Event, repo: PaymentRepository, ctx: 
         logger.info(`[StripeWebhook] ${event.id}: intent ${intent.id} has no paymentId metadata; not created by this app.`);
         return 'ignored';
       }
+      if (crossesKeySets(await repo.findById(intent.metadata.paymentId, ctx.db.read), keySet, event)) return 'ignored';
       const result = await fulfillPayment({
         paymentId: intent.metadata.paymentId,
         stripeIntentId: intent.id,
@@ -152,8 +186,12 @@ async function dispatchEvent(event: Stripe.Event, repo: PaymentRepository, ctx: 
     }
     case 'payment_intent.canceled': {
       const intent = event.data.object;
+      // The throw-away intent of the patron-zone method preview (patron-zone/application/preview-payment-methods):
+      // canceled right after creation on purpose and tied to no payment, so it is dropped without a lookup.
+      if (intent.metadata?.probe === 'patron-methods') return 'ignored';
       const payment = await repo.findByIntentId(intent.id, ctx.db.read);
       if (!payment) return 'ignored';
+      if (crossesKeySets(payment, keySet, event)) return 'ignored';
       await repo.markUnpaidPaymentCanceled(payment.id, ctx.prisma);
       return 'processed';
     }
@@ -173,6 +211,8 @@ async function dispatchEvent(event: Stripe.Event, repo: PaymentRepository, ctx: 
         logger.info(`[StripeWebhook] ${event.id}: ${event.type} has no payment_intent; not a payment of this app.`);
         return 'ignored';
       }
+      const known = paymentId ? await repo.findById(paymentId, ctx.db.read) : await repo.findByIntentId(stripeIntentId!, ctx.db.read);
+      if (crossesKeySets(known, keySet, event)) return 'ignored';
       const result = await syncRefundsFromStripe({ paymentId, stripeIntentId: stripeIntentId ?? undefined }, ctx);
       if (!result.ok) throw result.error;
       return 'processed';
@@ -185,7 +225,8 @@ async function dispatchEvent(event: Stripe.Event, repo: PaymentRepository, ctx: 
       if (!stripeIntentId) return 'ignored';
       // Stripe does not guarantee event order: act on the dispute's state now, not on the
       // snapshot inside this (possibly late) event.
-      const current = await getStripeClient().disputes.retrieve(eventDispute.id);
+      if (crossesKeySets(await repo.findByIntentId(stripeIntentId, ctx.db.read), keySet, event)) return 'ignored';
+      const current = await getStripeClient(keySet).disputes.retrieve(eventDispute.id);
       const result = await handleDispute({
         stripeIntentId,
         disputeId: current.id,

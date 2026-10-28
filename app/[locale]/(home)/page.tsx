@@ -1,7 +1,8 @@
 import { Metadata } from 'next';
 import { getHomeContentCached, getHomeSelectionCached } from '@/lib/modules/channel/application/home-content.loader';
 import { APP_NAME, SITE_TITLE } from '@/lib/constants';
-import { getExplicitLocaleHref, getLocaleAlternates, isLocale, type Locale } from '@/lib/i18n/routing';
+import { getExplicitLocaleHref, getLocaleAlternates } from '@/lib/i18n/routing';
+import { resolvePageLocale } from '@/lib/i18n/page-locale';
 import { getBaseUrl } from '@/lib/utils';
 import { getBetaSiteText } from '@/lib/site-stage-metadata';
 import { getVideoDisplayDescription, getVideoDisplayTitle } from '@/lib/video-title-overrides';
@@ -31,8 +32,8 @@ function durationToIso8601(duration?: string | null): string | undefined {
 
 export async function generateMetadata(props: { params: Promise<{ locale: string }>; searchParams: Promise<{ v?: string }> }): Promise<Metadata> {
   const [{ locale: rawLocale }, searchParams] = await Promise.all([props.params, props.searchParams]);
-  if (!isLocale(rawLocale)) return { title: SITE_TITLE };
-  const locale: Locale = rawLocale;
+  const locale = await resolvePageLocale(rawLocale);
+  if (!locale) return { title: SITE_TITLE };
 
   const content = await getHomeContentCached();
   if (content.status !== 'ready') return { title: (await getBetaSiteText(locale))?.title ?? SITE_TITLE };
@@ -60,17 +61,20 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
   // An unlisted video (link only) and an adult one (signed-in viewers only) must never be indexed: the page of
   // such a video says so, whatever the site stage is. The fallback to the hero never carries this status.
   const noIndexVideo = shouldNoIndexVideo(selectedVideo ? { status: selectedVideo.status, isAdult: selectedVideo.isAdult } : null);
+  // The video's title in the page's content language (Polish, or English for every other language), the same as
+  // the screen and the JSON-LD show.
+  const videoTitle = selectedVideo ? getVideoDisplayTitle(selectedVideo, locale) : undefined;
 
   return {
     ...(noIndexVideo ? { robots: { index: false, follow: false, nocache: true } } : {}),
     // Browser tab always reads www.pawelperfect.com regardless of the selected video; the
     // per-video title is kept only for social/OG previews below.
     title: betaText?.title ?? SITE_TITLE,
-    description: betaText?.description ?? selectedVideo?.title ?? creator?.bio ?? `${APP_NAME} — kanał wideo`,
+    description: betaText?.description ?? videoTitle ?? creator?.bio ?? `${APP_NAME} — kanał wideo`,
     alternates,
     openGraph: {
-      title: betaText?.title ?? selectedVideo?.title ?? SITE_TITLE,
-      description: betaText?.description ?? selectedVideo?.title ?? creator?.bio ?? undefined,
+      title: betaText?.title ?? videoTitle ?? SITE_TITLE,
+      description: betaText?.description ?? videoTitle ?? creator?.bio ?? undefined,
       url: alternates.canonical,
       siteName: SITE_TITLE,
       locale: locale === 'pl' ? 'pl_PL' : 'en_US',
@@ -79,7 +83,7 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
     },
     twitter: {
       card: selectedVideo?.thumbnailUrl ? 'summary_large_image' : 'summary',
-      title: betaText?.title ?? selectedVideo?.title ?? SITE_TITLE,
+      title: betaText?.title ?? videoTitle ?? SITE_TITLE,
       ...(betaText ? { description: betaText.description } : {}),
       images: selectedVideo?.thumbnailUrl ? [selectedVideo.thumbnailUrl] : [],
     },
@@ -88,8 +92,8 @@ export async function generateMetadata(props: { params: Promise<{ locale: string
 
 export default async function Home(props: { params: Promise<{ locale: string }>; searchParams: Promise<{ v?: string, q?: string, t?: string, list?: string, i?: string }> }) {
   const { locale: rawLocale } = await props.params;
-  if (!isLocale(rawLocale)) notFound();
-  const locale: Locale = rawLocale;
+  const locale = await resolvePageLocale(rawLocale);
+  if (!locale) notFound();
   const searchParams = await props.searchParams;
 
   const { selectedVideo } = await getHomeSelectionCached(searchParams.v);

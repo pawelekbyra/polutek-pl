@@ -27,6 +27,7 @@ beforeEach(() => {
   ];
   audits = [];
   prisma = {
+    channelMember: { findMany: vi.fn().mockResolvedValue([]) },
     comment: {
       findMany: vi.fn(async ({ where }: any) => comments.filter((c) => where.id.in.includes(c.id))),
       updateMany: vi.fn(async ({ where, data }: any) => {
