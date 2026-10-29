@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useLayoutEffect, useState } from "react";
 import { ADMIN_PANEL_ORIGIN } from "@/lib/admin-legacy-redirects";
 import { useAuth, useUser } from "@/lib/auth/react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -17,21 +17,22 @@ interface AccountModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isAdmin: boolean;
+  initialSection?: Section;
 }
 
 type Section = "profile" | "notifications" | "email" | "connections" | "security" | "passkeys" | "danger" | "pass";
 
-export default function AccountModal({ open, onOpenChange, isAdmin }: AccountModalProps) {
+export default function AccountModal({ open, onOpenChange, isAdmin, initialSection = "profile" }: AccountModalProps) {
   const { user } = useUser();
   const { signOut } = useAuth();
   const { language } = useLanguage();
   const { tx } = useLanguage();
-  const [section, setSection] = useState<Section>("profile");
+  const [section, setSection] = useState<Section>(initialSection);
   const pass = usePremiumPassStatus(open); // patron zone: null when the patron zone is invisible (404)
 
-  useEffect(() => {
-    if (open) setSection("profile");
-  }, [open]);
+  useLayoutEffect(() => {
+    if (open) setSection(initialSection);
+  }, [open, initialSection]);
 
   if (!user) return null;
 

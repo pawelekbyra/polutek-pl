@@ -1108,5 +1108,22 @@
  "This comment is no longer available.": "这条评论已不可用。",
  "Could not load the comment.": "无法加载评论。",
  "When someone replies to your comment or a new video appears, you will see it here.": "当有人回复你的评论或有新视频发布时，你会在这里看到。",
-  "You can withdraw consent at any time. Details: {0} and {1}.": "你可以随时撤回同意。详情：{0}和{1}。"
+  "You can withdraw consent at any time. Details: {0} and {1}.": "你可以随时撤回同意。详情：{0}和{1}。",
+  "Unread: {0}": "未读：{0}",
+  "Your updates in one place": "在此查看所有动态",
+  "Notification filter": "通知筛选",
+  "Unread": "未读",
+  "Show new notifications": "显示新通知",
+  "All caught up": "全部已读",
+  "New messages will appear here.": "新消息将显示在这里。",
+  "Notification list": "通知列表",
+  "Could not refresh notifications. Your previous messages are still here.": "无法刷新通知，之前的消息仍然保留在此。",
+  "Could not load older notifications.": "无法加载更早的通知。",
+  "Notification settings": "通知设置",
+  "Refreshing…": "正在刷新…",
+  "Refresh": "刷新",
+  "Mark as unread": "标为未读",
+  "Mark as read": "标为已读",
+  "Collapse message": "收起消息",
+  "Show full message": "显示完整消息"
 }

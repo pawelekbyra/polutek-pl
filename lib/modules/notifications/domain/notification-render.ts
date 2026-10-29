@@ -38,14 +38,14 @@ export const NOTIFICATION_TEMPLATE_PARAMS: Record<NotificationTemplateKey, reado
 
 export const NOTIFICATION_TEMPLATES: Record<NotificationTemplateKey, Record<NotificationLanguage, Copy>> = {
   welcome: {
-    pl: { title: "Witaj!", body: "Dziękujemy za dołączenie! Wszystkie filmy są dostępne po zalogowaniu." },
-    en: { title: "Welcome!", body: "Thank you for joining! Every video is available once you are signed in." },
-    de: { title: "Willkommen!", body: "Danke, dass du dabei bist! Alle Videos sind nach der Anmeldung verfügbar." },
-    es: { title: "¡Bienvenido!", body: "¡Gracias por unirte! Todos los vídeos están disponibles al iniciar sesión." },
-    fr: { title: "Bienvenue !", body: "Merci de nous avoir rejoints ! Toutes les vidéos sont disponibles une fois connecté." },
-    it: { title: "Benvenuto!", body: "Grazie per esserti iscritto! Tutti i video sono disponibili dopo l'accesso." },
-    pt: { title: "Bem-vindo!", body: "Obrigado por se juntar a nós! Todos os vídeos ficam disponíveis depois de entrar na sua conta." },
-    zh: { title: "欢迎！", body: "感谢你的加入！登录后即可观看所有视频。" },
+    pl: { title: "Witaj!", body: "Dziękujemy za dołączenie! Obserwuj ulubione kanały i odkrywaj nowe filmy." },
+    en: { title: "Welcome!", body: "Thanks for joining! Follow your favorite channels and discover new videos." },
+    de: { title: "Willkommen!", body: "Danke, dass du dabei bist! Folge deinen Lieblingskanälen und entdecke neue Videos." },
+    es: { title: "¡Bienvenido!", body: "¡Gracias por unirte! Sigue tus canales favoritos y descubre nuevos vídeos." },
+    fr: { title: "Bienvenue !", body: "Merci de nous avoir rejoints ! Suivez vos chaînes préférées et découvrez de nouvelles vidéos." },
+    it: { title: "Benvenuto!", body: "Grazie per esserti iscritto! Segui i tuoi canali preferiti e scopri nuovi video." },
+    pt: { title: "Bem-vindo!", body: "Obrigado por se juntar a nós! Siga os seus canais favoritos e descubra novos vídeos." },
+    zh: { title: "欢迎！", body: "感谢你的加入！关注喜欢的频道，发现新视频。" },
   },
   support_thanks: {
     pl: { title: "Dziękuję za wsparcie!", body: "Twój napiwek dotarł. Dziękuję, to dla mnie wiele znaczy." },

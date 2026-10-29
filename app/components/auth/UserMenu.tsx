@@ -48,6 +48,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
   // The panel slides out before it unmounts: `closing` plays the exit animation, then `open` goes false.
   const [closing, setClosing] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [accountSection, setAccountSection] = useState<"profile" | "notifications">("profile");
   const [channels, setChannels] = useState<SubscribedChannel[] | null>(null);
   const [failed, setFailed] = useState(false);
   // Studio is only offered to accounts that have a channel or may create one (the creation gate is closed for most).
@@ -72,6 +73,21 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
     dismiss();
     triggerRef.current?.focus();
   }, [dismiss]);
+
+  const openAccount = useCallback((section: "profile" | "notifications") => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = null;
+    setOpen(false);
+    setClosing(false);
+    setAccountSection(section);
+    setAccountOpen(true);
+  }, []);
+
+  useEffect(() => {
+    const openSettings = () => openAccount("notifications");
+    window.addEventListener("polutek:open-notification-settings", openSettings);
+    return () => window.removeEventListener("polutek:open-notification-settings", openSettings);
+  }, [openAccount]);
 
   useEffect(
     () => () => {
@@ -228,10 +244,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
                 <button
                   type="button"
                   className={itemClass}
-                  onClick={() => {
-                    dismiss();
-                    setAccountOpen(true);
-                  }}
+                  onClick={() => openAccount("profile")}
                 >
                   <Settings className={iconClass} strokeWidth={1.8} aria-hidden="true" />
                   {tx("Moje konto", "My account")}
@@ -299,7 +312,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
         </div>
       ) : null}
 
-      <AccountModal open={accountOpen} onOpenChange={setAccountOpen} isAdmin={isAdmin} />
+      <AccountModal open={accountOpen} onOpenChange={setAccountOpen} isAdmin={isAdmin} initialSection={accountSection} />
     </>
   );
 }

@@ -1108,5 +1108,22 @@
  "This comment is no longer available.": "Este comentário já não está disponível.",
  "Could not load the comment.": "Não foi possível carregar o comentário.",
  "When someone replies to your comment or a new video appears, you will see it here.": "Quando alguém responder ao seu comentário ou surgir um novo vídeo, você verá aqui.",
-  "You can withdraw consent at any time. Details: {0} and {1}.": "Pode retirar o consentimento a qualquer momento. Detalhes: {0} e {1}."
+  "You can withdraw consent at any time. Details: {0} and {1}.": "Pode retirar o consentimento a qualquer momento. Detalhes: {0} e {1}.",
+  "Unread: {0}": "Não lidas: {0}",
+  "Your updates in one place": "As suas novidades num só lugar",
+  "Notification filter": "Filtro de notificações",
+  "Unread": "Não lidas",
+  "Show new notifications": "Mostrar novas notificações",
+  "All caught up": "Tudo lido",
+  "New messages will appear here.": "As novas mensagens aparecerão aqui.",
+  "Notification list": "Lista de notificações",
+  "Could not refresh notifications. Your previous messages are still here.": "Não foi possível atualizar as notificações. As mensagens anteriores continuam aqui.",
+  "Could not load older notifications.": "Não foi possível carregar as notificações anteriores.",
+  "Notification settings": "Definições de notificações",
+  "Refreshing…": "A atualizar…",
+  "Refresh": "Atualizar",
+  "Mark as unread": "Marcar como não lida",
+  "Mark as read": "Marcar como lida",
+  "Collapse message": "Recolher mensagem",
+  "Show full message": "Mostrar mensagem completa"
 }

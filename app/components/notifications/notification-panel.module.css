@@ -1,0 +1,56 @@
+.positioner { z-index: 1100; isolation: isolate; outline: none; }
+.panel {
+  display: flex; flex-direction: column; width: min(390px, calc(100vw - 16px)); max-height: min(76dvh, 640px, var(--available-height, 640px));
+  overflow: hidden; position: relative; border: 1px solid var(--chan-line); border-radius: 16px; background: var(--chan-card); color: var(--chan-ink);
+  box-shadow: 0 24px 60px -18px rgba(15,23,42,.28); outline: none; font-family: var(--font-geist-sans, sans-serif);
+  transform-origin: var(--transform-origin); transition: opacity 160ms ease, transform 160ms ease;
+}
+.panel[data-starting-style], .panel[data-ending-style] { opacity: 0; transform: translateY(-4px) scale(.98); }
+.head { flex: none; padding: 18px 58px 12px 16px; }
+.title { margin: 0; font-size: 18px; line-height: 1.3; font-weight: 750; letter-spacing: -.02em; outline: none; }
+.subtitle { margin: 5px 0 0; font-size: 12px; line-height: 1.4; color: var(--chan-muted); }
+.toolbar { flex: none; display: flex; gap: 8px; align-items: center; padding: 0 12px 10px; border-bottom: 1px solid var(--chan-line); }
+.filters { display: flex; flex: 1; min-width: 0; gap: 2px; padding: 3px; border-radius: 12px; background: var(--chan-surface); }
+.filter { display: flex; flex: 1; min-width: 0; justify-content: center; align-items: center; min-height: 44px; padding: 6px 9px; border: 0; border-radius: 9px; color: var(--chan-muted); font-size: 12px; font-weight: 650; cursor: pointer; background: none; }
+.filter[aria-pressed="true"] { background: var(--chan-card); color: var(--chan-ink); box-shadow: 0 1px 4px rgba(23,23,23,.08); }
+.markAll { display: flex; min-height: 44px; max-width: 104px; align-items: center; gap: 5px; padding: 5px 7px; border: 0; border-radius: 10px; color: var(--chan-blue); background: none; font-size: 11px; line-height: 1.3; font-weight: 650; text-align: left; cursor: pointer; }
+.markAll svg { flex: none; }
+.markAll:hover { background: var(--chan-blue-soft); }
+.newItems { flex: none; margin: 8px 12px 0; min-height: 44px; border: 0; border-radius: 10px; color: var(--chan-blue); background: var(--chan-blue-soft); font-size: 13px; font-weight: 650; cursor: pointer; }
+.scroll { overflow-y: auto; overscroll-behavior: contain; min-height: 0; flex: 1; padding: 6px; scroll-padding-block: 8px; }
+.list { margin: 0; padding: 0; list-style: none; }
+.item { display: flex; gap: 10px; align-items: flex-start; position: relative; padding: 12px 4px 9px 10px; border-radius: 12px; }
+.item + .item { margin-top: 3px; }
+.unread { background: color-mix(in srgb, var(--chan-blue) 6%, transparent); }
+.itemText { flex: 1; min-width: 0; }
+.destination { display: flex; flex-direction: column; gap: 5px; width: 100%; text-align: left; text-decoration: none; background: none; border: 0; padding: 0; color: inherit; cursor: pointer; border-radius: 4px; }
+.itemTitle { display: block; overflow-wrap: anywhere; font-size: 13px; line-height: 1.45; font-weight: 700; }
+.readTitle { font-weight: 550; }
+.itemBody { display: block; overflow-wrap: anywhere; white-space: pre-wrap; color: var(--chan-muted); font-size: 12px; line-height: 1.5; }
+.clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.itemMeta { display: flex; flex-wrap: wrap; column-gap: 10px; align-items: center; margin-top: 5px; color: var(--chan-muted); font-size: 11px; }
+.itemMeta time { padding-block: 4px; }
+.expand { display: inline-flex; min-height: 28px; align-items: center; padding: 3px 0; border: 0; color: var(--chan-blue); background: none; font-size: 11px; font-weight: 600; text-align: left; cursor: pointer; }
+.readButton { display: grid; place-items: center; flex: none; width: 44px; height: 44px; margin: -6px 0 0 -5px; border: 0; border-radius: 50%; color: var(--chan-blue); background: none; cursor: pointer; }
+.readButton:hover { background: var(--chan-blue-soft); }
+.unreadAction { width: 10px; height: 10px; border: 1.5px solid currentColor; border-radius: 50%; }
+.empty { padding: 26px 20px; text-align: center; }
+.emptyIcon { display: inline-flex; width: 52px; height: 52px; align-items: center; justify-content: center; margin-bottom: 12px; border-radius: 50%; background: var(--chan-surface); color: var(--chan-muted); }
+.emptyTitle { margin: 0 0 7px; font-size: 14px; font-weight: 650; }
+.emptyHint { margin: 0; font-size: 12px; line-height: 1.5; color: var(--chan-muted); }
+.message { padding: 12px; text-align: center; font-size: 12px; line-height: 1.5; color: var(--chan-muted); }
+.message p { margin: 0 0 4px; }
+.retry, .more { min-height: 44px; padding: 8px 12px; border: 0; border-radius: 10px; color: var(--chan-blue); font-size: 12px; font-weight: 650; background: var(--chan-blue-soft); cursor: pointer; }
+.more { display: block; width: 100%; margin-top: 7px; background: var(--chan-surface); color: var(--chan-ink); }
+.footer { flex: none; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 12px; border-top: 1px solid var(--chan-line); }
+.settings, .refresh { min-height: 40px; padding: 5px 4px; border: 0; border-radius: 6px; background: none; font-size: 11px; font-weight: 600; color: var(--chan-muted); cursor: pointer; }
+.settings:hover, .refresh:hover { color: var(--chan-blue); }
+.skeleton { display: flex; gap: 10px; padding: 13px 10px; }
+.skeletonCircle { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--chan-surface); }
+.skeletonText { flex: 1; display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+.skeletonText span { height: 10px; width: 85%; border-radius: 4px; background: var(--chan-surface); }
+.skeletonText span:last-child { width: 60%; }
+.panel button:not([data-close-button]):disabled { cursor: wait; opacity: .5; }
+.panel button:not([data-close-button]):focus-visible, .panel a:focus-visible { outline: 2px solid var(--chan-blue); outline-offset: 2px; }
+@media (max-width: 359px) { .markAll { max-width: 86px; font-size: 10px; } .filter { padding-inline: 5px; font-size: 11px; } .item { gap: 8px; padding-left: 8px; } }
+@media (prefers-reduced-motion: reduce) { .panel { transition: none; } }

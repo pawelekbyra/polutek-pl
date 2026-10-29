@@ -36,25 +36,31 @@ export async function notifyCommentLike(input: { commentId: string; likerId: str
     if (!comment || comment.authorId === input.likerId || comment.status !== CommentStatus.VISIBLE || comment.author?.isDeleted) return;
     const t = notificationTemplates.commentLike;
     const href = commentHref(comment.video?.slug, comment.id);
-    const recent = await prisma.notification.findFirst({
-      where: {
-        userId: comment.authorId,
-        kind: t.kind,
-        titleEn: t.titleEn,
-        ...(href ? { href } : {}),
-        OR: [{ read: false }, { createdAt: { gte: new Date(Date.now() - LIKE_NOTIFICATION_COOLDOWN_MS) } }],
-      },
-      select: { id: true },
+    await prisma.$transaction(async (tx) => {
+      // Stable recipient/resource/event identity: competing reactions cannot both pass the cooldown check.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`comment-notification:${comment.authorId}:${comment.id}:${t.templateKey}`}))`;
+      const recent = await tx.notification.findFirst({
+        where: {
+          userId: comment.authorId,
+          kind: t.kind,
+          ...(href ? { href } : { params: { path: ["targetCommentId"], equals: comment.id } }),
+          AND: [
+            { OR: [{ templateKey: t.templateKey }, { params: { path: ["eventType"], equals: t.templateKey } }, { titleEn: t.titleEn }] },
+            { OR: [{ read: false }, { createdAt: { gte: new Date(Date.now() - LIKE_NOTIFICATION_COOLDOWN_MS) } }] },
+          ],
+        },
+        select: { id: true },
+      });
+      if (recent) return;
+      await sendNotification({ userId: comment.authorId, kind: t.kind, templateKey: t.templateKey, params: { targetCommentId: comment.id }, titlePl: t.titlePl, titleEn: t.titleEn, bodyPl: t.bodyPl, bodyEn: t.bodyEn, href }, tx);
     });
-    if (recent) return;
-    await sendNotification({ userId: comment.authorId, kind: t.kind, templateKey: t.templateKey, titlePl: t.titlePl, titleEn: t.titleEn, bodyPl: t.bodyPl, bodyEn: t.bodyEn, href });
   } catch (error) {
     console.error("[COMMENT_LIKE_NOTIFICATION_ERROR]", error);
   }
 }
 
 /** Somebody answered `answeredCommentId`: its author hears about it (not when they answered themselves). */
-export async function notifyCommentReply(input: { answeredCommentId: string; replierId: string; replyText: string }): Promise<void> {
+export async function notifyCommentReply(input: { answeredCommentId: string; replyCommentId?: string; replierId: string; replyText: string }): Promise<void> {
   try {
     const answered = await prisma.comment.findUnique({
       where: { id: input.answeredCommentId },
@@ -73,7 +79,7 @@ export async function notifyCommentReply(input: { answeredCommentId: string; rep
       titleEn: t.titleEn,
       bodyPl: body,
       bodyEn: body,
-      href: commentHref(answered.video?.slug, answered.id),
+      href: commentHref(answered.video?.slug, input.replyCommentId ?? answered.id),
       // The like template an admin may edit must not overwrite this text.
       skipTemplate: true,
     });
@@ -103,12 +109,20 @@ export async function notifyCreatorLike(input: { commentId: string }): Promise<v
     if (comment.video?.creator?.userId === comment.authorId) return;
     const t = notificationTemplates.creatorLike;
     const href = commentHref(comment.video?.slug, comment.id);
-    const already = await prisma.notification.findFirst({
-      where: { userId: comment.authorId, kind: t.kind, titleEn: t.titleEn, ...(href ? { href } : {}) },
-      select: { id: true },
+    await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`comment-notification:${comment.authorId}:${comment.id}:${t.templateKey}`}))`;
+      const already = await tx.notification.findFirst({
+        where: {
+          userId: comment.authorId,
+          kind: t.kind,
+          ...(href ? { href } : { params: { path: ["targetCommentId"], equals: comment.id } }),
+          OR: [{ templateKey: t.templateKey }, { params: { path: ["eventType"], equals: t.templateKey } }, { titleEn: t.titleEn }],
+        },
+        select: { id: true },
+      });
+      if (already) return;
+      await sendNotification({ userId: comment.authorId, kind: t.kind, templateKey: t.templateKey, params: { targetCommentId: comment.id }, titlePl: t.titlePl, titleEn: t.titleEn, bodyPl: t.bodyPl, bodyEn: t.bodyEn, href, skipTemplate: true }, tx);
     });
-    if (already) return;
-    await sendNotification({ userId: comment.authorId, kind: t.kind, templateKey: t.templateKey, titlePl: t.titlePl, titleEn: t.titleEn, bodyPl: t.bodyPl, bodyEn: t.bodyEn, href, skipTemplate: true });
   } catch (error) {
     console.error("[CREATOR_LIKE_NOTIFICATION_ERROR]", error);
   }

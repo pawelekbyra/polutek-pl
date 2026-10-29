@@ -6,8 +6,8 @@ import { listUserNotifications, listUserNotificationsQuerySchema } from "@/lib/m
 export const dynamic = "force-dynamic";
 
 /**
- * The signed-in viewer's notifications, newest first, in the language of `User.language`.
- * `?limit=` (1-50, default 20), `?cursor=` (`nextCursor` of the previous page), `?unread=1`.
+ * The signed-in viewer's notifications, newest first, in the selected UI language (account language fallback).
+ * `?limit=` (1-50, default 20), `?cursor=` (`nextCursor` of the previous page), `?unread=1`, `?language=` or up to 50 own `?ids=` for state reconciliation.
  * Answers `{ items, nextCursor, unreadCount }`; `unreadCount` counts every unread row, not just the page.
  * Never cached: it is per viewer.
  */
@@ -23,6 +23,8 @@ export async function GET(req: NextRequest) {
       limit: parsed.data.limit,
       cursor: parsed.data.cursor,
       unreadOnly: parsed.data.unread,
+      language: parsed.data.language,
+      ids: parsed.data.ids,
     });
     return NextResponse.json(page, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
