@@ -55,14 +55,25 @@ describe("account ProfileSection (nickname)", () => {
     expect(screen.queryByText("Nickname")).toBeNull();
   });
 
-  it("uses a frameless profile card, larger avatar and light gray nickname field", () => {
+  it("uses a frameless aligned profile card with a larger avatar and gray nickname field", () => {
     const { container } = render(<ProfileSection tx={createTx("pl")} />);
     const section = container.querySelector("section");
     const avatar = container.querySelector('img[src="/default-avatar.jpg"]');
     const nickname = screen.getByLabelText("Pseudonim");
+    const column = section?.firstElementChild;
+    const language = screen.getByRole("combobox", { name: "Język interfejsu" });
+    const save = screen.getByRole("button", { name: "Zapisz" });
     expect(section?.className).toBe("w-full");
-    expect(avatar?.className).toContain("h-24 w-24");
+    expect(avatar?.className).toContain("h-28 w-28");
     expect(nickname.className).toContain("bg-[var(--chan-surface)]");
+    expect(column?.children).toHaveLength(4);
+    expect(column?.children[1].contains(nickname)).toBe(true);
+    expect(column?.children[2].contains(language)).toBe(true);
+    expect(column?.children[3].contains(save)).toBe(true);
+    expect(column?.children[1].className).toContain("w-full");
+    expect(column?.children[2].className).toContain("w-full");
+    expect(column?.children[3].className).toContain("w-full");
+    expect(screen.queryByText("To nazwa widoczna na stronie, np. przy Twoich komentarzach.")).toBeNull();
   });
 
   it("rejects an invalid nickname with the sign-up messages, without calling the server", async () => {

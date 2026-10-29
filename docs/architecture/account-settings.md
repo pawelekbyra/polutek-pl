@@ -22,10 +22,12 @@ dostępu, usunięcie konta oraz warunkową strefę patrona.
 - Panel profilu nie pokazuje ośmiu języków jako siatki. Selektor `@base-ui/react/select` otwiera
   listę portaled poza przewijanym panelem, pokazuje nazwy własne i flagi języków oraz obsługuje
   klawiaturę. Zmiana nadal używa istniejącego `useSwitchLanguage` i zapisu preferencji konta.
-- Sekcja Profil zaczyna się od lekkiej wizytówki bez ramki: wyśrodkowany avatar 96 px z małą,
+- Sekcja Profil zaczyna się od lekkiej wizytówki bez ramki: wyśrodkowany avatar 112 px z małą,
   klawiaturowo dostępną akcją zmiany zdjęcia przy krawędzi, a następnie centralnie edytowany
-  pseudonim na jasnoszarym tle, krótki opis i zapis. Zawartość wizytówki ma mały odstęp od tytułu
-  sekcji. Język jest osobną kartą preferencji poniżej wizytówki.
+  pseudonim na jasnoszarym tle, karta języka i przycisk zapisu. Pod polem nicku nie ma tekstu
+  pomocniczego. Te cztery elementy są ułożone w jednej kolumnie o jednakowej szerokości i równym
+  odstępie pionowym; karta języka jest bezpośrednio pod nickiem, a zapis na końcu. Zawartość ma mały
+  odstęp od tytułu sekcji, dzięki czemu mieści się bez przewijania na wysokich ekranach telefonu.
 
 ## Wzorce dostępności
 
