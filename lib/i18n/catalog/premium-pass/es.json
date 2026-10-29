@@ -77,7 +77,6 @@
  "Support the project and enter the patron zone: material you won't find anywhere else. Choose 30-day or unlimited access. No subscription.": "Apoya el proyecto y entra en la zona de mecenas: material que no encontrarás en ningún otro sitio. Elige acceso de 30 días o ilimitado. Sin suscripción.",
  "TEST MODE": "MODO DE PRUEBA",
  "Terms of service": "Condiciones del servicio",
- "Test mode": "Modo de prueba",
  "The account is free. After signing in you come back to the purchase.": "La cuenta es gratuita. Tras iniciar sesión volverás a la compra.",
  "The confirmation goes to {0}": "La confirmación se enviará a {0}",
  "The patron zone is a closed part of the site with videos for the project's patrons.": "La zona de mecenas es una parte cerrada del sitio con vídeos para los mecenas del proyecto.",
@@ -132,6 +131,6 @@
  "You are buying from the seller named above. Invoice details and contact are in the Terms.": "Compras al vendedor indicado arriba. Los datos de facturación y de contacto están en los Términos.",
  "Demo mode: nothing will be charged.": "Modo demo: no se cobrará nada.",
  "Payments are encrypted and handled by a trusted provider. We never store your card details.": "Los pagos están cifrados y los gestiona un proveedor de confianza. Nunca guardamos los datos de tu tarjeta.",
- "Try the Premium checkout — nothing will be charged in test mode.": "Prueba la compra Premium: en el modo de prueba no se te cobrará nada.",
+ "Choose Premium access and explore content made for patrons. This is a test checkout, so you can go through it without a real payment.": "Elige el acceso Premium y descubre contenido para mecenas. Esta es una compra de prueba que puedes completar sin realizar un pago real.",
  "Payment currency": "Moneda de pago"
 }

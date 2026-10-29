@@ -138,7 +138,7 @@ describe("premium-pass: where money can move", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("the demo marker is shown only in demo mode and never inside the checkout modal", () => {
+  it("demo markers stay in demo mode; the test checkout uses a plain reassurance message", () => {
     const sheet = read("app/components/premium-pass/PassCheckoutSheet.tsx");
     const offer = read("app/components/premium-pass/PassOfferPage.tsx");
     const stage = read("app/components/premium-pass/PremiumPassOverlay.tsx");
@@ -146,6 +146,6 @@ describe("premium-pass: where money can move", () => {
     expect(offer).toContain("{demo && <DemoRibbon />}");
     expect(stage).toContain('{demo && <span className={styles.stageDemo}>{tx("TRYB DEMO", "DEMO MODE")}</span>}');
     expect(stage).toContain('tx("TRYB TESTOWY", "TEST MODE")');
-    expect(sheet).toContain('tx("Tryb testowy", "Test mode")');
+    expect(sheet).toContain('tx("Wybierz dostęp Premium i odkrywaj materiały przygotowane dla patronów. To wersja testowa kasy, więc możesz przejść cały proces bez prawdziwej płatności.", "Choose Premium access and explore content made for patrons. This is a test checkout, so you can go through it without a real payment.")');
   });
 });

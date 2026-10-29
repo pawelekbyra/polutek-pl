@@ -77,7 +77,6 @@
  "Support the project and enter the patron zone: material you won't find anywhere else. Choose 30-day or unlimited access. No subscription.": "支持本项目，进入赞助者专区：这里的内容别处看不到。可选 30 天或无限期访问。无需订阅。",
  "TEST MODE": "测试模式",
  "Terms of service": "服务条款",
- "Test mode": "测试模式",
  "The account is free. After signing in you come back to the purchase.": "账户免费。登录后会回到购买流程。",
  "The confirmation goes to {0}": "确认信息将发送至 {0}",
  "The patron zone is a closed part of the site with videos for the project's patrons.": "赞助者专区是网站的非公开部分，提供给项目赞助者的视频。",
@@ -132,6 +131,6 @@
  "You are buying from the seller named above. Invoice details and contact are in the Terms.": "你正在向上述卖家购买。发票信息和联系方式见条款。",
  "Demo mode: nothing will be charged.": "演示模式：不会扣款。",
  "Payments are encrypted and handled by a trusted provider. We never store your card details.": "付款经过加密，由值得信赖的服务商处理。我们绝不会保存你的银行卡信息。",
- "Try the Premium checkout — nothing will be charged in test mode.": "体验 Premium 结账流程，测试模式下不会扣款。",
+ "Choose Premium access and explore content made for patrons. This is a test checkout, so you can go through it without a real payment.": "选择 Premium 访问权限，探索为支持者准备的内容。这是测试结账流程，你可以完整体验而不会产生真实付款。",
  "Payment currency": "支付货币"
 }

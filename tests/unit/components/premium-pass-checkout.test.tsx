@@ -8,6 +8,9 @@ import { txFor } from '../i18n/mock-language';
 import { buildPremiumPassOffer } from '@/lib/modules/patron-zone/domain/offer';
 import type { PremiumPaymentsDto } from '@/lib/modules/patron-zone/domain/payments-mode';
 
+const passSound = vi.hoisted(() => ({ play: vi.fn(), preload: vi.fn() }));
+vi.mock('@/app/components/premium-pass/pass-cash-sound', () => ({ playPassCashSound: passSound.play, preloadPassCashSound: passSound.preload }));
+
 vi.mock('@/lib/auth/react', () => ({
   useAuth: () => ({ userId: 'u1', isLoaded: true }),
   useUser: () => ({ user: { primaryEmailAddress: { emailAddress: 'pawel.perfect@gmail.com' } } }),
@@ -372,10 +375,12 @@ describe('patron checkout, step 3 with real Stripe payments', () => {
 
   const TEST = { mode: 'stripe', available: true, stripeMode: 'test' } as const;
 
-  it('test mode: labelled "Tryb testowy", Stripe.js only now; the payment is created at the step 2 -> 3 move, for product and currency (no amount sent)', async () => {
+  it('test mode: encourages Premium without a framed label; Stripe.js only now; the payment is created at the step 2 -> 3 move', async () => {
     open(TEST);
     const dialog = within(await screen.findByRole('dialog'));
-    expect(dialog.getByText('Tryb testowy')).toBeInTheDocument();
+    expect(dialog.getByText(/Wybierz dostęp Premium i odkrywaj materiały przygotowane dla patronów\./)).toBeInTheDocument();
+    expect(dialog.getByText(/bez prawdziwej płatności\./)).toBeInTheDocument();
+    expect(dialog.queryByText('Tryb testowy')).toBeNull();
     await waitFor(() => expect(getStripeBrowser).toHaveBeenCalledTimes(1));
     await pickCurrency(dialog, 'Euro');
     fireEvent.click(dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }));
@@ -410,6 +415,14 @@ describe('patron checkout, step 3 with real Stripe payments', () => {
     open({ mode: 'stripe', available: true, stripeMode: 'live' });
     const dialog = within(await screen.findByRole('dialog'));
     expect(dialog.queryByText('Tryb testowy')).toBeNull();
+  });
+
+  it('plays the cash sound when the X is clicked', async () => {
+    passSound.play.mockClear();
+    open(TEST);
+    const dialog = within(await screen.findByRole('dialog'));
+    fireEvent.click(dialog.getByRole('button', { name: 'Zamknij' }));
+    expect(passSound.play).toHaveBeenCalledTimes(1);
   });
 
   it('seller card in every step (compact in step 3) and the provider-neutral footer without the word Stripe', async () => {

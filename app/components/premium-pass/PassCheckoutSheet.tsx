@@ -154,7 +154,6 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
   const locked = busy || processing;
   const changeOpen = (next: boolean) => {
     if (locked || next === open) return;
-    if (!next) playPassCashSound();
     onOpenChange(next);
   };
 
@@ -388,12 +387,12 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
             <DialogPrimitive.Title render={<h2 ref={titleRef} tabIndex={-1} id={`${ids}-title`} className={styles.sheetTitle} />}>
               {tx("Kup se Premium", "Get Premium")}
             </DialogPrimitive.Title>
-            <DialogPrimitive.Close disabled={locked} aria-label={tx("Zamknij", "Close")} render={<CloseButton />} />
+            <DialogPrimitive.Close disabled={locked} aria-label={tx("Zamknij", "Close")} onClick={playPassCashSound} render={<CloseButton />} />
           </div>
 
           {showSteps && <p className={styles.srOnly} role="status" aria-live="polite">{tx("Krok {0} z 3", "Step {0} of 3", stepNumber)}</p>}
           {testMode && stage.kind !== "success" && (
-            <p className={styles.testNote}><span className={styles.testBadge}>{tx("Tryb testowy", "Test mode")}</span><span>{tx("Podejrzyj zakup Premium — w trybie testowym nic nie zapłacisz.", "Try the Premium checkout — nothing will be charged in test mode.")}</span></p>
+            <p className={styles.testNote}>{tx("Wybierz dostęp Premium i odkrywaj materiały przygotowane dla patronów. To wersja testowa kasy, więc możesz przejść cały proces bez prawdziwej płatności.", "Choose Premium access and explore content made for patrons. This is a test checkout, so you can go through it without a real payment.")}</p>
           )}
 
           {stage.kind === "plan" && (
