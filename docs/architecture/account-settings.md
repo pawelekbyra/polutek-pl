@@ -12,13 +12,15 @@ dostępu, usunięcie konta oraz warunkową strefę patrona.
   stanem aktywnym i osobnym kolorem dla usuwania konta. Strzałki klawiatury przenoszą fokus i od razu
   aktywują sekcję.
 - Na mniejszych ekranach lista zakładek jest zastąpiona jednym własnym selektorem Base UI. Rozwijane
-  menu używa kolorów, ikon i stanów zaznaczenia panelu; portal pozwala mu wyjść poza przewijany
-  obszar dialogu. Aktywna zawartość mieści się w dialogu, a przewijanie nie przesuwa nagłówka ani
-  stopki.
+  menu poprzedza niebieskawa etykieta „Wybierz sekcję”; przycisk i lista mają wyraźny kontrast,
+  ikony i stany zaznaczenia panelu. Portal pozwala menu wyjść poza przewijany obszar dialogu.
+  Aktywna zawartość mieści się w dialogu, a przewijanie nie przesuwa nagłówka ani stopki.
 - Panel profilu nie pokazuje ośmiu języków jako siatki. Selektor `@base-ui/react/select` otwiera
   listę portaled poza przewijanym panelem, pokazuje nazwy własne i flagi języków oraz obsługuje
   klawiaturę. Zmiana nadal używa istniejącego `useSwitchLanguage` i zapisu preferencji konta.
-- W formularzu profilu kolejność priorytetów to pseudonim, avatar, język.
+- Sekcja Profil zaczyna się od osobnej wizytówki: wyśrodkowany avatar 72 px z małą, klawiaturowo
+  dostępną akcją zmiany zdjęcia przy krawędzi, a następnie centralnie edytowany pseudonim, krótki
+  opis i zapis. Język jest osobną kartą preferencji poniżej wizytówki.
 
 ## Wzorce dostępności
 

@@ -5,7 +5,7 @@
 // User.name through PATCH /api/user/nickname.
 
 import React, { useRef, useState } from "react";
-import { Check, ChevronDown, Globe } from "lucide-react";
+import { Camera, Check, ChevronDown, Globe, LoaderCircle } from "lucide-react";
 import { Select } from "@base-ui/react/select";
 import { useLanguage } from "../LanguageContext";
 import { useSwitchLanguage } from "../useSwitchLanguage";
@@ -20,7 +20,7 @@ import {
   normalizeNickname,
   validateNickname,
 } from "@/lib/auth/nickname";
-import { Feedback, Field, Primary, useAccountUser } from "./AccountSections";
+import { Feedback, Primary, useAccountUser } from "./AccountSections";
 import { authErrorMessage } from "@/lib/auth/errors";
 import { refreshSession } from "@/lib/auth/react";
 import { avatarProblemMessage, validateAvatarFile } from "@/lib/auth/avatar";
@@ -145,33 +145,53 @@ export function ProfileSection({ tx }: { tx: Tx }) {
   }
 
   return (
-    <form onSubmit={save} className="space-y-3">
+    <form onSubmit={save} className="space-y-4">
       <Feedback error={error} info={info} />
-      <Field label={tx("Pseudonim", "Nickname")} value={nickname} onChange={setNickname} autoComplete="nickname" />
-      <p className="-mt-1 text-[12px] text-[var(--chan-muted)]">
-        {tx("To nazwa widoczna na stronie, np. przy Twoich komentarzach.", "The name shown on the site, e.g. with your comments.")}
-      </p>
-      <div className="flex items-center gap-3">
-        {/* Avatar is a small data URL or a local file; plain img avoids next/image config for the account panel. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={user.imageUrl}
-          alt=""
-          className="h-14 w-14 shrink-0 rounded-full border border-[var(--chan-line)] object-cover"
-        />
-        {/* A real button (reachable with Tab, Enter and Space) opens the hidden file input (WCAG 2.1.1, audit A07). */}
-        <button
-          type="button"
-          onClick={() => avatarInputRef.current?.click()}
-          disabled={avatarLoading}
-          className="cursor-pointer rounded text-[13px] font-bold text-[var(--chan-ink)] underline hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--chan-blue)] disabled:cursor-default disabled:opacity-60"
-        >
-          {avatarLoading ? (tx("Wgrywanie...", "Uploading...")) : (tx("Zmień zdjęcie", "Change photo"))}
-        </button>
-        <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" tabIndex={-1} aria-hidden="true" onChange={onAvatar} disabled={avatarLoading} />
-      </div>
+      <section className="rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-surface)] px-4 py-5 sm:px-6 sm:py-6">
+        <div className="mx-auto flex w-full max-w-md flex-col items-center">
+          <div className="relative">
+            {/* Avatar images are supplied by the account; plain img avoids next/image config here. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={user.imageUrl}
+              alt=""
+              className="h-[72px] w-[72px] shrink-0 rounded-full border border-white object-cover shadow-[0_6px_18px_rgba(37,99,235,0.16)] ring-2 ring-[var(--chan-blue-soft)]"
+            />
+            {/* Keyboard-accessible edit control, positioned beside the avatar without crowding its center. */}
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={avatarLoading}
+              aria-label={avatarLoading ? tx("Wgrywanie...", "Uploading...") : tx("Zmień zdjęcie", "Change photo")}
+              title={avatarLoading ? tx("Wgrywanie...", "Uploading...") : tx("Zmień zdjęcie", "Change photo")}
+              className="absolute -right-2 bottom-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 border-[var(--chan-surface)] bg-[var(--chan-blue)] text-white shadow-sm transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--chan-surface)] disabled:cursor-default disabled:opacity-70"
+            >
+              {avatarLoading ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Camera className="h-4 w-4" strokeWidth={1.9} aria-hidden="true" />}
+            </button>
+            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" tabIndex={-1} aria-hidden="true" onChange={onAvatar} disabled={avatarLoading} />
+          </div>
+
+          <label className="mt-4 block w-full text-center">
+            <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--chan-muted)]">
+              {tx("Pseudonim", "Nickname")}
+            </span>
+            <input
+              type="text"
+              value={nickname}
+              autoComplete="nickname"
+              onChange={(event) => setNickname(event.target.value)}
+              className="w-full rounded-xl border border-[var(--chan-control-border)] bg-[var(--chan-card)] px-3 py-2.5 text-center font-brand text-[18px] font-bold text-[var(--chan-ink)] outline-none transition-colors focus-visible:border-[var(--chan-blue)] focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
+            />
+          </label>
+          <p className="mt-2 max-w-sm text-center text-[12px] leading-relaxed text-[var(--chan-muted)]">
+            {tx("To nazwa widoczna na stronie, np. przy Twoich komentarzach.", "The name shown on the site, e.g. with your comments.")}
+          </p>
+          <div className="mt-4 w-full">
+            <Primary loading={loading} label={tx("Zapisz", "Save")} />
+          </div>
+        </div>
+      </section>
       <LanguageField tx={tx} />
-      <Primary loading={loading} label={tx("Zapisz", "Save")} />
     </form>
   );
 }

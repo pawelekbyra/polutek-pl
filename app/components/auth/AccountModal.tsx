@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useLayoutEffect, useState } from "react";
-import { Bell, Check, ChevronDown, HeartHandshake, KeyRound, Link2, LogOut, Mail, Shield, Trash2, UserRound, type LucideIcon } from "lucide-react";
+import { Bell, Check, ChevronDown, HeartHandshake, KeyRound, Link2, LogOut, Mail, Shield, SlidersHorizontal, Trash2, UserRound, type LucideIcon } from "lucide-react";
 import { Select } from "@base-ui/react/select";
 import { Tabs } from "@base-ui/react/tabs";
 import { ADMIN_PANEL_ORIGIN } from "@/lib/admin-legacy-redirects";
@@ -101,11 +101,15 @@ export default function AccountModal({ open, onOpenChange, isAdmin, initialSecti
           </Tabs.List>
 
           <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
-            <div className="flex-none border-b border-[var(--chan-line)] px-5 py-3 md:hidden">
+            <div className="flex-none border-b border-[var(--chan-blue)]/20 bg-[var(--chan-blue-soft)]/75 px-5 py-2.5 md:hidden">
+              <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--chan-blue)]">
+                <SlidersHorizontal className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
+                {tx("Wybierz sekcję", "Choose a section")}
+              </p>
               <Select.Root value={section} onValueChange={(value) => value && setSection(value as Section)}>
                 <Select.Trigger
                   aria-label={tx("Sekcja konta", "Account section")}
-                  className="flex h-11 w-full items-center justify-between gap-3 rounded-xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-3.5 text-left text-[13px] font-semibold text-[var(--chan-ink)] outline-none transition-colors hover:bg-[var(--chan-surface)] focus-visible:border-[var(--chan-blue)] focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]/20"
+                  className="flex h-11 w-full items-center justify-between gap-3 rounded-xl border border-[var(--chan-blue)]/30 bg-[var(--chan-card)] px-3.5 text-left text-[13px] font-semibold text-[var(--chan-ink)] shadow-[0_2px_8px_rgba(37,99,235,0.08)] outline-none transition-colors hover:border-[var(--chan-blue)]/55 hover:bg-white focus-visible:border-[var(--chan-blue)] focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]/20"
                 >
                   <Select.Value>
                     {(value: Section | null) => {
@@ -119,14 +123,14 @@ export default function AccountModal({ open, onOpenChange, isAdmin, initialSecti
                 </Select.Trigger>
                 <Select.Portal>
                   <Select.Positioner side="bottom" sideOffset={6} align="start" alignItemWithTrigger={false} className="z-[1200] w-[var(--anchor-width)]">
-                    <Select.Popup className="max-h-(--available-height) overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-1 text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.2)]">
+                    <Select.Popup className="max-h-(--available-height) overflow-hidden rounded-2xl border border-[var(--chan-blue)]/20 bg-[var(--chan-surface)] p-1 text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.2)]">
                       <Select.List className="max-h-[min(60dvh,420px)] overflow-y-auto overscroll-contain">
                         {sections.map(({ id, label, icon: Icon, danger }) => (
                           <Select.Item
                             key={id}
                             value={id}
                             label={label}
-                            className={`group flex min-h-10 cursor-pointer items-center gap-3 rounded-xl px-3 text-[13px] font-semibold outline-none data-highlighted:bg-[var(--chan-surface)] ${danger ? "text-red-600 data-highlighted:bg-red-50 data-selected:bg-red-50" : "text-[var(--chan-muted)] data-selected:bg-[var(--chan-blue-soft)] data-selected:text-[var(--chan-blue)]"}`}
+                            className={`group flex min-h-10 cursor-pointer items-center gap-3 rounded-xl px-3 text-[13px] font-semibold outline-none data-highlighted:bg-[var(--chan-card)] ${danger ? "text-red-600 data-highlighted:bg-red-50 data-selected:bg-red-50" : "text-[var(--chan-muted)] data-selected:bg-[var(--chan-card)] data-selected:text-[var(--chan-blue)] data-selected:shadow-sm"}`}
                           >
                             <Icon className="h-[17px] w-[17px] shrink-0" strokeWidth={1.8} aria-hidden="true" />
                             <Select.ItemText className="min-w-0 flex-1 truncate">{label}</Select.ItemText>
