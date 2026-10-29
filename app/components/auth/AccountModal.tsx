@@ -98,7 +98,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin, initialSecti
           </Tabs.List>
 
           <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
-            <div className="flex-none border-b border-[var(--chan-blue)]/20 bg-[var(--chan-blue-soft)]/75 px-4 py-1.5 md:hidden">
+            <div className="flex-none px-4 py-1.5 md:hidden">
               <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--chan-blue)]">
                 <SlidersHorizontal className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
                 {tx("Wybierz sekcję", "Choose a section")}
