@@ -641,7 +641,8 @@
     --mc-ease: cubic-bezier(.2, 0, 0, 1);
     --mc-ease-out: cubic-bezier(.16, 1, .3, 1);
     --mc-fg: rgba(255,255,255,.96);
-    --mc-fg-muted: rgba(255,255,255,.72);
+    --mc-fg-muted: #fff;
+    --mc-text-shadow: 0 1px 2px rgba(0,0,0,.55), 0 0 3px rgba(0,0,0,.3);
     --mc-hover: rgba(255,255,255,.14);
     --mc-glass: rgba(14,15,18,.66);
     --mc-row: 40px;
@@ -739,7 +740,7 @@
   /* Volume: the speaker glyph fills less of its 24 box than the other icons (ink 16 x 11 px at 20px against
      17 x 13-17), so it looked small. A 23px box evens the optical size; the stroke is kept at the bar's 2px
      (2.4 x 20 / 23) so the line does not thicken. */
-  .mc-icon--volume { width:23px; height:23px; stroke-width:2.09; }
+  .mc-icon--volume { width:26px; height:26px; stroke-width:1.85; }
 
   /* No-captions CC: crossed icon at full white like its neighbours, only inert (aria-disabled, no toggle). */
   .mc-caption--none { cursor:default; }
@@ -774,7 +775,7 @@
     color: var(--mc-fg-muted);
     font-size:12px; font-weight:500; line-height:1; letter-spacing:.01em;
     font-variant-numeric: tabular-nums;
-    text-shadow: 0 1px 2px rgba(0,0,0,.4);
+    text-shadow: var(--mc-text-shadow);
     white-space:nowrap;
   }
 
@@ -787,7 +788,7 @@
     cursor:pointer; touch-action:none;
     outline:none;
   }
-  .mc-scrub-chapters { display:flex; align-items:center; width:100%; height:100%; }
+  .mc-scrub-chapters { display:flex; align-items:center; width:100%; height:100%; filter: drop-shadow(0 0 2px rgba(0,0,0,.35)); }
   .mc-scrub-chapter { flex:none; box-sizing:border-box; display:flex; align-items:center; height:100%; }
   .mc-scrub-chapter:not(:last-child) { padding-right:3px; }
   .mc-scrub-track {
@@ -795,7 +796,7 @@
     height:3px; border-radius:999px;
     /* Unplayed part: white like the icons. Painted only to the right of the buffered part (a gradient sized by
        --chapter-progress), so the buffer is a dimmer step, not a layer over the white. */
-    background: linear-gradient(rgba(255,255,255,.88), rgba(255,255,255,.88)) right / calc(100% - var(--chapter-progress, 0%)) 100% no-repeat;
+    background: linear-gradient(rgba(255,255,255,.92), rgba(255,255,255,.92)) right / calc(100% - var(--chapter-progress, 0%)) 100% no-repeat;
     box-shadow: 0 0 0 .5px rgba(0,0,0,.28), 0 1px 3px rgba(0,0,0,.4);
     overflow:hidden;
     transition: height .2s var(--mc-ease);
@@ -807,7 +808,7 @@
   .mc-scrub-buffer {
     position:absolute; inset:0 auto 0 0;
     width: var(--chapter-progress, 0%);
-    background: rgba(255,255,255,.55);
+    background:#fff;
     border-radius:inherit;
   }
   /* Watched part in the brand blue: it identifies the player and keeps its contrast on bright frames,
@@ -850,6 +851,7 @@
     color:#fff;
     font-size:12px; font-weight:600; line-height:1; letter-spacing:.01em;
     font-variant-numeric: tabular-nums;
+    text-shadow: var(--mc-text-shadow);
     white-space:nowrap;
     pointer-events:none;
   }
@@ -858,8 +860,13 @@
     left: clamp(0px, calc(var(--slider-fill) - var(--mc-chip-w, 40px) / 2), calc(100% - var(--mc-chip-w, 40px)));
     transition: opacity .16s var(--mc-ease);
   }
+  /* One time label at a time: the preview chip takes the playhead chip place (same spot), so the playhead chip
+     must also yield on keyboard/touch focus and whenever the preview is visible, not only on pointer/drag
+     (both showing at once printed the time twice, overlapped). */
   .mc-scrub[data-pointing] .mc-chip--playhead,
-  .mc-scrub[data-dragging] .mc-chip--playhead { opacity:0; }
+  .mc-scrub[data-dragging] .mc-chip--playhead,
+  .mc-scrub[data-focus] .mc-chip--playhead,
+  .mc-scrub:has(.mc-chip--preview[data-visible]) .mc-chip--playhead { opacity:0; visibility:hidden; transition: opacity .16s var(--mc-ease), visibility 0s .16s; }
   .mc-chip--preview {
     opacity:0;
     transform: translateY(2px);
@@ -874,7 +881,7 @@
     content:""; display:inline-block;
     width:1px; height:10px; margin-right:6px;
     vertical-align:-1px;
-    background: rgba(255,255,255,.24);
+    background: rgba(255,255,255,.5);
   }
   .mc-chip-chapter:empty { display:none; }
 
@@ -896,7 +903,8 @@
   .mc-vol-track {
     position:relative; width:100%;
     height:3px; border-radius:999px;
-    background: rgba(255,255,255,.26);
+    background: rgba(255,255,255,.55);
+    box-shadow: 0 0 0 .5px rgba(0,0,0,.28), 0 1px 3px rgba(0,0,0,.4);
     overflow:hidden;
   }
   .mc-vol-fill {
@@ -1034,6 +1042,8 @@
     .mc-vol-slider { display:none; }
   }
   @media (hover:none) { .mc-vol-slider { display:none; } }
+  /* Touch target of the (larger) mute button: at least 40px wide. */
+  @media (pointer:coarse) { .mc-volume > .mc-btn { min-width:40px; } }
 
   /* Narrow screens: the track must dominate the row (owner's reference). Icons stay 20px; buttons shrink to
      32px boxes (still above the 24px AA minimum), gaps go to 0, the play button and side padding tighten. The
