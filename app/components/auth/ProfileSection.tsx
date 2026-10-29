@@ -147,7 +147,10 @@ export function ProfileSection({ tx }: { tx: Tx }) {
   return (
     <form onSubmit={save} className="space-y-3">
       <Feedback error={error} info={info} />
-      <LanguageField tx={tx} />
+      <Field label={tx("Pseudonim", "Nickname")} value={nickname} onChange={setNickname} autoComplete="nickname" />
+      <p className="-mt-1 text-[12px] text-[var(--chan-muted)]">
+        {tx("To nazwa widoczna na stronie, np. przy Twoich komentarzach.", "The name shown on the site, e.g. with your comments.")}
+      </p>
       <div className="flex items-center gap-3">
         {/* Avatar is a small data URL or a local file; plain img avoids next/image config for the account panel. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -167,10 +170,7 @@ export function ProfileSection({ tx }: { tx: Tx }) {
         </button>
         <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" tabIndex={-1} aria-hidden="true" onChange={onAvatar} disabled={avatarLoading} />
       </div>
-      <Field label={tx("Pseudonim", "Nickname")} value={nickname} onChange={setNickname} autoComplete="nickname" />
-      <p className="-mt-1 text-[12px] text-[var(--chan-muted)]">
-        {tx("To nazwa widoczna na stronie, np. przy Twoich komentarzach.", "The name shown on the site, e.g. with your comments.")}
-      </p>
+      <LanguageField tx={tx} />
       <Primary loading={loading} label={tx("Zapisz", "Save")} />
     </form>
   );

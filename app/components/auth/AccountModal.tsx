@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useLayoutEffect, useState } from "react";
-import { Bell, ChevronDown, HeartHandshake, KeyRound, Link2, LogOut, Mail, Shield, Trash2, UserRound, type LucideIcon } from "lucide-react";
+import { Bell, Check, ChevronDown, HeartHandshake, KeyRound, Link2, LogOut, Mail, Shield, Trash2, UserRound, type LucideIcon } from "lucide-react";
+import { Select } from "@base-ui/react/select";
 import { Tabs } from "@base-ui/react/tabs";
 import { ADMIN_PANEL_ORIGIN } from "@/lib/admin-legacy-redirects";
 import { useAuth, useUser } from "@/lib/auth/react";
@@ -101,18 +102,42 @@ export default function AccountModal({ open, onOpenChange, isAdmin, initialSecti
 
           <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
             <div className="flex-none border-b border-[var(--chan-line)] px-5 py-3 md:hidden">
-              <label htmlFor="account-section-select" className="sr-only">{tx("Sekcja konta", "Account section")}</label>
-              <div className="relative">
-                <select
-                  id="account-section-select"
-                  value={section}
-                  onChange={(event) => setSection(event.target.value as Section)}
-                  className="h-11 w-full appearance-none rounded-xl border border-[var(--chan-line)] bg-[var(--chan-card)] pl-3.5 pr-11 text-[13px] font-semibold text-[var(--chan-ink)] outline-none transition-colors focus:border-[var(--chan-blue)] focus:ring-2 focus:ring-[var(--chan-blue)]/20"
+              <Select.Root value={section} onValueChange={(value) => value && setSection(value as Section)}>
+                <Select.Trigger
+                  aria-label={tx("Sekcja konta", "Account section")}
+                  className="flex h-11 w-full items-center justify-between gap-3 rounded-xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-3.5 text-left text-[13px] font-semibold text-[var(--chan-ink)] outline-none transition-colors hover:bg-[var(--chan-surface)] focus-visible:border-[var(--chan-blue)] focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]/20"
                 >
-                  {sections.map(({ id, label }) => <option key={id} value={id}>{label}</option>)}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--chan-muted)]" aria-hidden="true" />
-              </div>
+                  <Select.Value>
+                    {(value: Section | null) => {
+                      const selected = sections.find((item) => item.id === value);
+                      if (!selected) return null;
+                      const Icon = selected.icon;
+                      return <span className="flex min-w-0 items-center gap-2.5"><Icon className={`h-4 w-4 shrink-0 ${selected.danger ? "text-red-600" : "text-[var(--chan-blue)]"}`} strokeWidth={1.8} aria-hidden="true" /><span className="truncate">{selected.label}</span></span>;
+                    }}
+                  </Select.Value>
+                  <Select.Icon><ChevronDown className="h-4 w-4 shrink-0 text-[var(--chan-muted)]" aria-hidden="true" /></Select.Icon>
+                </Select.Trigger>
+                <Select.Portal>
+                  <Select.Positioner side="bottom" sideOffset={6} align="start" alignItemWithTrigger={false} className="z-[1200] w-[var(--anchor-width)]">
+                    <Select.Popup className="max-h-(--available-height) overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-1 text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.2)]">
+                      <Select.List className="max-h-[min(60dvh,420px)] overflow-y-auto overscroll-contain">
+                        {sections.map(({ id, label, icon: Icon, danger }) => (
+                          <Select.Item
+                            key={id}
+                            value={id}
+                            label={label}
+                            className={`group flex min-h-10 cursor-pointer items-center gap-3 rounded-xl px-3 text-[13px] font-semibold outline-none data-highlighted:bg-[var(--chan-surface)] ${danger ? "text-red-600 data-highlighted:bg-red-50 data-selected:bg-red-50" : "text-[var(--chan-muted)] data-selected:bg-[var(--chan-blue-soft)] data-selected:text-[var(--chan-blue)]"}`}
+                          >
+                            <Icon className="h-[17px] w-[17px] shrink-0" strokeWidth={1.8} aria-hidden="true" />
+                            <Select.ItemText className="min-w-0 flex-1 truncate">{label}</Select.ItemText>
+                            <Select.ItemIndicator><Check className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" /></Select.ItemIndicator>
+                          </Select.Item>
+                        ))}
+                      </Select.List>
+                    </Select.Popup>
+                  </Select.Positioner>
+                </Select.Portal>
+              </Select.Root>
             </div>
 
             <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-7 sm:py-6">
