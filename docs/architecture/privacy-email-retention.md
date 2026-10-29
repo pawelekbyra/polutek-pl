@@ -18,6 +18,8 @@ Stan 2026-10-05. Kod: `lib/modules/privacy/`, `lib/modules/email/`, `lib/email-d
 
 ## E-mail
 
+- Potwierdzenie subskrypcji (`EmailSubscriptionConsentModal`): mała karta w stylu logowania (maks. 340 px, 16 px marginesu na telefonie), wyśrodkowany tytuł i opis, niebieskie „Tak” i neutralne „Nie” obok siebie (min. 44 px), poniżej informacja o wycofaniu zgody i linki prawne. Zamknięcie X, Escape lub kliknięciem poza kartą nie zapisuje zgody; podczas zapisu zamykanie jest zablokowane.
+
 - **Teksty maili systemowych są w kodzie** (`lib/email-defaults.ts`, zmienne w `lib/modules/email/domain/email-template-registry.ts`). Nic nie zasiewa `EmailTemplate`; wiersz systemowy jest używany tylko, gdy ma `customizedAt`
   (administrator zapisał go w panelu); „Przywróć domyślny” kasuje wiersz. Nigdy nie zapisuj tekstów domyślnych do bazy. Zapisany w bazie szablon ma pierwszeństwo przed domyślnym.
 - **Jeden transport:** `sendEmail()` w `lib/modules/email/infrastructure/resend-email.transport.ts` (wrapper, zwykły tekst, Reply-To, tagi `app=pawelperfect` + `kind`). Wartości szablonu są escapowane (`render-email.ts`),
