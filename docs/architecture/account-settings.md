@@ -15,7 +15,9 @@ dostępu, usunięcie konta oraz warunkową strefę patrona.
   aktywują sekcję.
 - Na mniejszych ekranach lista zakładek jest zastąpiona jednym własnym selektorem Base UI. Rozwijane
   menu poprzedza niebieskawa etykieta „Wybierz sekcję”; przycisk i lista mają wyraźny kontrast,
-  ikony i stany zaznaczenia panelu. Portal pozwala menu wyjść poza przewijany obszar dialogu.
+  ikony i stany zaznaczenia panelu. Samo zamknięte pole selektora ma ten sam jasnoniebieski odcień
+  co aktywna zakładka desktopowa; zewnętrzny pasek zachowuje osobne tło. Portal pozwala menu wyjść
+  poza przewijany obszar dialogu.
   Aktywna zawartość mieści się w dialogu, a przewijanie nie przesuwa nagłówka ani stopki.
 - Panel profilu nie pokazuje ośmiu języków jako siatki. Selektor `@base-ui/react/select` otwiera
   listę portaled poza przewijanym panelem, pokazuje nazwy własne i flagi języków oraz obsługuje

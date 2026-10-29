@@ -106,7 +106,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin, initialSecti
               <Select.Root value={section} onValueChange={(value) => value && setSection(value as Section)}>
                 <Select.Trigger
                   aria-label={tx("Sekcja konta", "Account section")}
-                  className="flex h-11 w-full items-center justify-between gap-3 rounded-xl border border-[var(--chan-blue)]/30 bg-[var(--chan-card)] px-3.5 text-left text-[13px] font-semibold text-[var(--chan-ink)] shadow-[0_2px_8px_rgba(37,99,235,0.08)] outline-none transition-colors hover:border-[var(--chan-blue)]/55 hover:bg-white focus-visible:border-[var(--chan-blue)] focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]/20"
+                  className="flex h-11 w-full items-center justify-between gap-3 rounded-xl border border-[var(--chan-blue)]/30 bg-[var(--chan-blue-soft)] px-3.5 text-left text-[13px] font-semibold text-[var(--chan-ink)] shadow-[0_2px_8px_rgba(37,99,235,0.08)] outline-none transition-colors hover:border-[var(--chan-blue)]/55 hover:bg-[var(--chan-blue-soft)] focus-visible:border-[var(--chan-blue)] focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]/20"
                 >
                   <Select.Value>
                     {(value: Section | null) => {
