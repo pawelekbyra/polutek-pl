@@ -13,11 +13,11 @@ dostępu, usunięcie konta oraz warunkową strefę patrona.
 - Od breakpointu `md` sekcje są pionowymi kartami `@base-ui/react/tabs` z ikonami Lucide, czytelnym
   stanem aktywnym i osobnym kolorem dla usuwania konta. Strzałki klawiatury przenoszą fokus i od razu
   aktywują sekcję.
-- Na mniejszych ekranach lista zakładek jest zastąpiona jednym własnym selektorem Base UI. Rozwijane
-  menu poprzedza etykieta „Wybierz sekcję”; przycisk i lista mają wyraźny kontrast, ikony i stany
-  zaznaczenia panelu. Samo zamknięte pole selektora ma ten sam jasnoniebieski odcień co aktywna
-  zakładka desktopowa, a obszar wokół ma białe tło bez poziomego separatora. Portal pozwala menu
-  wyjść poza przewijany obszar dialogu.
+- Na mniejszych ekranach lista zakładek jest zastąpiona jednym własnym selektorem Base UI. Pod
+  przyciskiem znajduje się wyrównana do jego prawej krawędzi etykieta „Wybierz sekcję” bez ikony;
+  przycisk i lista mają wyraźny kontrast, ikony i stany zaznaczenia panelu. Samo zamknięte pole
+  selektora ma ten sam jasnoniebieski odcień co aktywna zakładka desktopowa, a obszar wokół ma białe
+  tło bez poziomego separatora. Portal pozwala menu wyjść poza przewijany obszar dialogu.
   Aktywna zawartość mieści się w dialogu, a przewijanie nie przesuwa nagłówka ani stopki.
 - Panel profilu nie pokazuje ośmiu języków jako siatki. Selektor `@base-ui/react/select` otwiera
   listę portaled poza przewijanym panelem, pokazuje nazwy własne i flagi języków oraz obsługuje

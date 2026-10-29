@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useLayoutEffect, useState } from "react";
-import { Bell, Check, ChevronDown, HeartHandshake, KeyRound, Link2, LogOut, Mail, Shield, SlidersHorizontal, Trash2, UserRound, type LucideIcon } from "lucide-react";
+import { Bell, Check, ChevronDown, HeartHandshake, KeyRound, Link2, LogOut, Mail, Shield, Trash2, UserRound, type LucideIcon } from "lucide-react";
 import { Select } from "@base-ui/react/select";
 import { Tabs } from "@base-ui/react/tabs";
 import { ADMIN_PANEL_ORIGIN } from "@/lib/admin-legacy-redirects";
@@ -99,10 +99,6 @@ export default function AccountModal({ open, onOpenChange, isAdmin, initialSecti
 
           <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
             <div className="flex-none px-4 py-1.5 md:hidden">
-              <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--chan-blue)]">
-                <SlidersHorizontal className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
-                {tx("Wybierz sekcję", "Choose a section")}
-              </p>
               <Select.Root value={section} onValueChange={(value) => value && setSection(value as Section)}>
                 <Select.Trigger
                   aria-label={tx("Sekcja konta", "Account section")}
@@ -139,6 +135,9 @@ export default function AccountModal({ open, onOpenChange, isAdmin, initialSecti
                   </Select.Positioner>
                 </Select.Portal>
               </Select.Root>
+              <p className="mt-1 text-right text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--chan-blue)]">
+                {tx("Wybierz sekcję", "Choose a section")}
+              </p>
             </div>
 
             <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-4 py-2 sm:px-7 sm:py-6">
