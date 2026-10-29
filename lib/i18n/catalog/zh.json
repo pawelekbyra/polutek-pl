@@ -1125,5 +1125,12 @@
   "Mark as unread": "标为未读",
   "Mark as read": "标为已读",
   "Collapse message": "收起消息",
-  "Show full message": "显示完整消息"
+  "Show full message": "显示完整消息",
+  "Email": "电子邮件",
+  "Delete account": "删除账户",
+  "Manage your profile, language and account security.": "管理个人资料、语言和账户安全。",
+  "Account sections": "账户分区",
+  "Account section": "账户分区",
+  "Interface language": "界面语言",
+  "Language used across the site.": "网站界面使用的语言。"
 }

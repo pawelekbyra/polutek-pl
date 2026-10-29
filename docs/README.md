@@ -16,6 +16,7 @@ albo znika w tym samym PR. Historia jest w git.
 | Temat | Plik |
 |---|---|
 | Logowanie i konta (Better Auth) | [`architecture/auth-better-auth.md`](architecture/auth-better-auth.md) |
+| Panel widza „Moje konto”: nawigacja i ustawienia profilu | [`architecture/account-settings.md`](architecture/account-settings.md) |
 | Własny HLS: decyzje i budowa | [`architecture/self-hosted-hls.md`](architecture/self-hosted-hls.md) |
 | PP Support: architektura i projekt agenta AI | [`architecture/support-center.md`](architecture/support-center.md) |
 | Własna wysyłka poczty (plan na później) | [`architecture/self-hosted-mail-plan.md`](architecture/self-hosted-mail-plan.md) |

@@ -5,8 +5,13 @@
 // User.name through PATCH /api/user/nickname.
 
 import React, { useRef, useState } from "react";
+import { Check, ChevronDown, Globe } from "lucide-react";
+import { Select } from "@base-ui/react/select";
 import { useLanguage } from "../LanguageContext";
 import { useSwitchLanguage } from "../useSwitchLanguage";
+import LanguageFlag from "../language-switcher/LanguageFlag";
+import { LANGUAGE_OPTIONS } from "../language-switcher/languages";
+import type { Locale } from "@/lib/i18n/routing";
 import {
   checkNicknameAvailability,
   isSameNickname,
@@ -21,35 +26,52 @@ import { refreshSession } from "@/lib/auth/react";
 import { avatarProblemMessage, validateAvatarFile } from "@/lib/auth/avatar";
 import { fileToAvatarDataUrl } from "@/lib/auth/avatar-client";
 import type { Tx } from "@/lib/i18n/ui";
-import { LANGUAGE_OPTIONS } from "@/app/components/language-switcher/languages";
 
 function LanguageField({ tx }: { tx: Tx }) {
   const { language } = useLanguage();
   const switchLanguage = useSwitchLanguage();
 
   return (
-    <div className="flex items-center justify-between rounded-[12px] border border-[var(--chan-line)] px-3 py-2.5">
-      <span className="text-[13px] font-bold text-[var(--chan-ink)]">{tx("Język", "Language")}</span>
-      <div className="flex flex-wrap justify-end gap-1" role="group" aria-label={tx("Język", "Language")}>
-        {LANGUAGE_OPTIONS.map(({ locale, label, lang }) => (
-          <button
-            key={locale}
-            type="button"
-            lang={lang}
-            aria-label={label}
-            aria-pressed={language === locale}
-            onClick={() => switchLanguage(locale)}
-            className={
-              "rounded-full px-3 py-1 text-[12px] font-bold uppercase tracking-wide transition-colors " +
-              (language === locale
-                ? "bg-[var(--chan-ink)] text-white"
-                : "text-[var(--chan-muted)] hover:bg-[var(--chan-surface)]")
-            }
-          >
-            {locale}
-          </button>
-        ))}
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-4 py-3">
+      <div className="min-w-0">
+        <p className="text-[13px] font-bold text-[var(--chan-ink)]">{tx("Język", "Language")}</p>
+        <p className="mt-0.5 text-[11px] leading-relaxed text-[var(--chan-muted)]">
+          {tx("Język interfejsu strony.", "Language used across the site.")}
+        </p>
       </div>
+      <Select.Root value={language} onValueChange={(value) => value && switchLanguage(value as Locale)}>
+        <Select.Trigger
+          aria-label={tx("Język interfejsu", "Interface language")}
+          className="inline-flex h-9 min-w-[104px] shrink-0 items-center gap-1.5 rounded-lg border border-[var(--chan-line)] bg-[var(--chan-card)] px-2.5 text-[13px] font-semibold text-[var(--chan-ink)] outline-none transition-colors hover:bg-[var(--chan-surface)] focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
+        >
+          <Globe className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden="true" />
+          <Select.Value>
+            {(value: Locale | null) => LANGUAGE_OPTIONS.find((option) => option.locale === value)?.label ?? "Polski"}
+          </Select.Value>
+          <Select.Icon><ChevronDown className="h-3.5 w-3.5 text-[var(--chan-muted)]" aria-hidden="true" /></Select.Icon>
+        </Select.Trigger>
+        <Select.Portal>
+          <Select.Positioner side="bottom" sideOffset={6} align="end" alignItemWithTrigger={false} className="z-[1200]">
+            <Select.Popup className="max-h-(--available-height) min-w-[190px] overflow-hidden rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-1.5 text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(15,23,42,0.2)]">
+              <Select.List className="max-h-[min(60dvh,420px)] overflow-y-auto overscroll-contain">
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <Select.Item
+                    key={option.locale}
+                    value={option.locale}
+                    label={option.label}
+                    lang={option.lang}
+                    className="group flex min-h-10 cursor-pointer items-center gap-2.5 rounded-xl px-2.5 text-[13px] outline-none data-highlighted:bg-[var(--chan-surface)] data-selected:font-semibold data-selected:text-[var(--chan-blue)]"
+                  >
+                    <LanguageFlag option={option} size={22} />
+                    <Select.ItemText className="min-w-0 flex-1 truncate">{option.label}</Select.ItemText>
+                    <Select.ItemIndicator><Check className="h-4 w-4" strokeWidth={2.2} aria-hidden="true" /></Select.ItemIndicator>
+                  </Select.Item>
+                ))}
+              </Select.List>
+            </Select.Popup>
+          </Select.Positioner>
+        </Select.Portal>
+      </Select.Root>
     </div>
   );
 }

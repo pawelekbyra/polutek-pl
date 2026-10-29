@@ -1125,5 +1125,12 @@
   "Mark as unread": "Marcar como não lida",
   "Mark as read": "Marcar como lida",
   "Collapse message": "Recolher mensagem",
-  "Show full message": "Mostrar mensagem completa"
+  "Show full message": "Mostrar mensagem completa",
+  "Email": "E-mail",
+  "Delete account": "Excluir conta",
+  "Manage your profile, language and account security.": "Gerencie o perfil, o idioma e a segurança da sua conta.",
+  "Account sections": "Seções da conta",
+  "Account section": "Seção da conta",
+  "Interface language": "Idioma da interface",
+  "Language used across the site.": "Idioma da interface do site."
 }

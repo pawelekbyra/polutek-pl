@@ -151,6 +151,8 @@ Pełny opis: `docs/architecture/auth-better-auth.md`. Reguły do zachowania:
   optymistycznym sprawdzeniem ciasteczka sesji (`getSessionCookie`); ciasteczko nigdy nie jest dowodem tożsamości.
 - Sekrety: `BETTER_AUTH_SECRET` (≥ 32 znaki; rotacja wylogowuje wszystkich i **blokuje konta z 2FA**: procedura w dokumencie auth), `GOOGLE_*`, `TURNSTILE_*`. Zmiana dokumentów prawnych: podnieś `LEGAL_DOCUMENTS_VERSION`.
 
+Panel widza „Moje konto” (`app/components/auth/AccountModal.tsx`) korzysta z pionowych zakładek Base UI na desktopie i pojedynczego selektora sekcji na telefonie. Sekcje pozostają osobnymi komponentami; język profilu wybiera się przez portaled `@base-ui/react/select`, a zmianę zapisuje istniejące `useSwitchLanguage`. Nie przywracaj siatki przycisków dla języków ani wielorzędowej nawigacji. Szczegóły bieżącego układu: `docs/architecture/account-settings.md`.
+
 ### 4.13 Powłoka publiczna, ładowanie, odtwarzacz
 
 Strona główna jest `force-dynamic` + `no-store` (nigdy do współdzielonego cache). Jest brama wejściowa „Follow the white rabbit” (nie usuwaj bez prośby). **W sesji nic nie renderuje strony głównej na serwerze:** przełączanie filmu przez

@@ -1125,5 +1125,12 @@
   "Mark as unread": "Als ungelesen markieren",
   "Mark as read": "Als gelesen markieren",
   "Collapse message": "Nachricht einklappen",
-  "Show full message": "Vollständige Nachricht anzeigen"
+  "Show full message": "Vollständige Nachricht anzeigen",
+  "Email": "E-Mail",
+  "Delete account": "Konto löschen",
+  "Manage your profile, language and account security.": "Verwalte dein Profil, deine Sprache und die Sicherheit deines Kontos.",
+  "Account sections": "Kontobereiche",
+  "Account section": "Kontobereich",
+  "Interface language": "Sprache der Benutzeroberfläche",
+  "Language used across the site.": "Sprache der Website-Oberfläche."
 }
