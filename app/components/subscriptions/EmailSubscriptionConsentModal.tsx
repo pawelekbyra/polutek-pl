@@ -52,7 +52,7 @@ export default function EmailSubscriptionConsentModal({
           <DialogTitle className="min-w-0 break-words px-6 text-balance font-brand text-2xl font-bold leading-tight tracking-tight">
             {t.confirmSubscribeTitle}
           </DialogTitle>
-          <DialogDescription className="text-sm leading-relaxed text-[var(--chan-muted)]">
+          <DialogDescription className="text-left text-sm leading-relaxed text-[var(--chan-muted)]">
             {t.confirmSubscribeText}
           </DialogDescription>
 
@@ -87,7 +87,7 @@ export default function EmailSubscriptionConsentModal({
               tx,
               "Zgodę wycofasz w każdej chwili linkiem w każdej wiadomości. Szczegóły: {0} i {1}.",
               "You can withdraw consent at any time with the link in every message. Details: {0} and {1}.",
-              <LegalDocLink doc="privacy" language={language}>{tx("Polityka prywatności", "Privacy Policy")}</LegalDocLink>,
+              <><br /><LegalDocLink doc="privacy" language={language}>{tx("Polityka prywatności", "Privacy Policy")}</LegalDocLink></>,
               <LegalDocLink doc="terms" language={language}>{tx("Regulamin", "Terms")}</LegalDocLink>,
             )}
           </p>
