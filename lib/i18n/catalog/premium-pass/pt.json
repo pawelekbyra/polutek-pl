@@ -31,7 +31,6 @@
  "Complaints and refunds: support@polutek.com.": "Reclamações e reembolsos: support@polutek.com.",
  "Confirming your payment…": "Confirmando o seu pagamento…",
  "Consent to immediate access": "Consentimento para acesso imediato",
- "Currency": "Moeda",
  "DEMO MODE": "MODO DEMONSTRAÇÃO",
  "Delete my access": "Excluir meu acesso",
  "Demo mode · simulated payment · nothing will be charged": "Modo demonstração · pagamento simulado · nada será cobrado",
@@ -50,7 +49,6 @@
  "Is this a subscription?": "É uma assinatura?",
  "Method": "Forma",
  "No. Every payment is a one-time payment: 30-day access ends after 30 days, unlimited access has no end. Nothing is charged again and there is nothing to cancel.": "Não. Cada pagamento é único: o acesso de 30 dias termina após 30 dias, o ilimitado não tem fim. Nada é cobrado novamente e não há nada para cancelar.",
- "Nothing is really charged. Test card: 4242 4242 4242 4242, any date and CVC.": "Nada é realmente cobrado. Cartão de teste: 4242 4242 4242 4242, qualquer data e CVC.",
  "On every device you sign in on": "Em todos os dispositivos em que você entrar",
  "Open in a new tab": "Abrir em uma nova guia",
  "Order no.": "N.º do pedido",
@@ -133,5 +131,7 @@
  "Seller information": "Informações sobre o vendedor",
  "You are buying from the seller named above. Invoice details and contact are in the Terms.": "Estás a comprar ao vendedor indicado acima. Os dados de faturação e o contacto estão nos Termos.",
  "Demo mode: nothing will be charged.": "Modo demo: nada será cobrado.",
- "Payments are encrypted and handled by a trusted provider. We never store your card details.": "Os pagamentos são cifrados e tratados por um prestador de confiança. Nunca guardamos os dados do teu cartão."
+ "Payments are encrypted and handled by a trusted provider. We never store your card details.": "Os pagamentos são cifrados e tratados por um prestador de confiança. Nunca guardamos os dados do teu cartão.",
+ "Try the Premium checkout — nothing will be charged in test mode.": "Experimenta a compra Premium — nada será cobrado no modo de teste.",
+ "Payment currency": "Moeda de pagamento"
 }

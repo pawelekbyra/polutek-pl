@@ -15,6 +15,7 @@ import { PassCheckoutSheet } from "./PassCheckoutSheet";
 import { DemoControls } from "./DemoControls";
 import { LockIcon, TicketIcon } from "./PassIcons";
 import { passDate, price } from "./pass-copy";
+import { playPassCashSound, preloadPassCashSound } from "./pass-cash-sound";
 import styles from "./premium-pass.module.css";
 
 /** Set before the sign-in window opens; read once after sign-in to reopen the checkout on the same video. */
@@ -63,6 +64,8 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
   const demo = offer.payments.mode === "demo";
   const testMode = offer.payments.mode === "stripe" && offer.payments.available && offer.payments.stripeMode === "test";
 
+  useEffect(() => preloadPassCashSound(), []);
+
   // After sign-in the plan is requested again; the overlay of the new (signed-in) plan reopens the checkout.
   useEffect(() => {
     if (isLoaded && signedIn && takeCheckoutIntent()) setCheckoutOpen(true);
@@ -70,6 +73,7 @@ export function PremiumPassOverlay({ offer, poster, title, variant, onRefresh }:
 
   const start = useCallback(() => {
     if (signedIn) {
+      playPassCashSound();
       setCheckoutOpen(true);
       return;
     }

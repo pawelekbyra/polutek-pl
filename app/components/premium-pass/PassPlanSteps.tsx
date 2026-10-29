@@ -1,6 +1,6 @@
 "use client";
 // patron zone (docs/architecture/patron-zone.md): the first two of the three checkout steps and the order
-// summary that stays visible in all three. Step 1: the currency (the tip gateway's own currency picker and list) and
+// summary that stays visible in all three. Step 1: the currency (the tip gateway's own currency list) and
 // the choice of two fixed options, prices in that currency. Step 2: the payment method (the tip gateway's dropdown)
 // and the Terms / Privacy Policy as plain LINKS: nothing to tick before step 3. The browser only names a product and a
 // currency; the server owns the price table.
@@ -77,17 +77,15 @@ export function PassPlanStep({ tx, language, offer, product, currency, onProduct
       )}
       <fieldset className={styles.products} disabled={busy || access?.lifetime === true}>
         <legend className="sr-only">{tx("Wybierz dostęp", "Choose your access")}</legend>
-        <div className={styles.accessHead}>
-          <span aria-hidden="true">{tx("Wybierz dostęp", "Choose your access")}</span>
-          <TipSelect
-            label={tx("Waluta", "Currency")}
-            value={currency}
-            onChange={(code) => onCurrency(code as PatronCurrency)}
-            disabled={busy || access?.lifetime === true}
-            compact
-            options={offer.currencies.map((code) => ({ value: code, icon: TIP_CURRENCY_SYMBOLS[code], title: tipCurrencyTitle(tx, code), short: `${TIP_CURRENCY_SYMBOLS[code]} · ${code}` }))}
-          />
-        </div>
+        <TipSelect
+          label={tx("Waluta płatności", "Payment currency")}
+          value={currency}
+          onChange={(code) => onCurrency(code as PatronCurrency)}
+          disabled={busy || access?.lifetime === true}
+          currencyPicker
+          options={offer.currencies.map((code) => ({ value: code, icon: TIP_CURRENCY_SYMBOLS[code], title: tipCurrencyTitle(tx, code), short: `${TIP_CURRENCY_SYMBOLS[code]} · ${code}` }))}
+        />
+        <div className={styles.accessTitle}>{tx("Wybierz dostęp", "Choose your access")}</div>
         <div className={styles.productGrid}>
           {offer.products.map((p) => (
             <label key={p.id} className={styles.product}>

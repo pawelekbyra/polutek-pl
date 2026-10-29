@@ -65,18 +65,22 @@ describe('patron checkout layout', () => {
     expect(dialog.getByRole('combobox', { name: 'Metoda płatności' })).toBeInTheDocument();
   });
 
-  it('step 1: the "Wybierz dostęp" label sits in one row with the small currency pill ("Waluta" is screen-reader only); the other field labels share one typography class', async () => {
+  it('step 1: the currency is a full-width blue field before the access cards; field labels share one typography class', async () => {
     openCheckout();
     const dialog = within(await screen.findByRole('dialog'));
     const legend = dialog.getAllByText('Wybierz dostęp').find((el) => el.tagName === 'LEGEND')!;
     expect(legend.className).toContain('sr-only');
-    const visible = dialog.getAllByText('Wybierz dostęp').find((el) => el.tagName === 'SPAN')!;
-    expect(visible).toHaveAttribute('aria-hidden', 'true');
-    const pill = dialog.getByRole('combobox', { name: 'Waluta' });
-    expect(visible.parentElement).toBe(pill.closest('div')?.parentElement); // same row
-    expect(dialog.getByText('Waluta').className).toContain('sr-only');
-    expect(pill.className).toContain('h-7'); // 28 px pill, hit area grown to 44 px by the ::before
-    expect(pill.className).toContain('before:-top-2.5');
+    const visible = dialog.getAllByText('Wybierz dostęp').find((el) => el.tagName === 'DIV')!;
+    expect(visible).toBeInTheDocument();
+    const currencyLabel = dialog.getByText('Waluta płatności');
+    const field = dialog.getByRole('combobox', { name: 'Waluta płatności' });
+    expect(currencyLabel.className).toBe(FIELD_LABEL_CLASS);
+    expect(field.className).toContain('min-h-[52px]');
+    expect(field.className).toContain('w-full');
+    expect(field.querySelector('span[aria-hidden="true"]')?.className).toContain('h-10 w-10 rounded-full');
+    expect(field.querySelectorAll('span[aria-hidden="true"]')[1]?.className).toContain('h-9 w-9');
+    expect(field.querySelectorAll('span[aria-hidden="true"]')[1]?.className).toContain('rounded-full');
+    expect(field.parentElement?.parentElement?.nextElementSibling).toBe(visible); // access cards follow the currency field
     expect(FIELD_LABEL_CLASS).toMatch(/text-\[13px\].*text-\[var\(--chan-body\)\]|text-\[var\(--chan-body\)\].*text-\[13px\]/);
     expect(FIELD_LABEL_CLASS).toContain('font-[weight:var(--field-label-weight,400)]'); // regular in the gate, bold in the checkout via the one variable
     expect(FIELD_LABEL_CLASS).toContain('mb-[var(--field-label-gap,8px)]'); // label to field: one variable (8 px in the gate, 0 in the checkout, like step 3)

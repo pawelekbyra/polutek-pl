@@ -66,7 +66,7 @@ const clickNext = (dialog: Dialog, label: string) => fireEvent.click(dialog.getB
 const summaryOf = (dialog: Dialog) => dialog.getByRole('group', { name: 'Podsumowanie zamówienia' });
 
 async function pickCurrency(dialog: Dialog, title: string) {
-  const combo = dialog.getByRole('combobox', { name: 'Waluta' });
+  const combo = dialog.getByRole('combobox', { name: 'Waluta płatności' });
   fireEvent.click(combo);
   fireEvent.click(await screen.findByRole('option', { name: new RegExp(title) }));
 }
@@ -87,7 +87,7 @@ describe('patron checkout, step 1 (currency and option)', () => {
     const dialog = within(await screen.findByRole('dialog'));
     expect(dialog.getByRole('heading', { name: 'Uzyskaj dostęp do strefy premium' })).toBeInTheDocument();
     expect(dialog.queryByText(/Zostań patronem i uzyskaj/)).toBeNull(); // the lead no longer repeats the title
-    expect(dialog.getByRole('combobox', { name: 'Waluta' })).toHaveTextContent('zł · PLN'); // a small pill beside the "Wybierz dostęp" label, not a full field
+    expect(dialog.getByRole('combobox', { name: 'Waluta płatności' })).toHaveTextContent('Złoty (PLN)');
     const group = dialog.getByRole('group', { name: 'Wybierz dostęp' });
     const cards = within(group).getAllByRole('radio') as HTMLInputElement[];
     expect(cards.map((r) => [r.value, r.checked])).toEqual([['ACCESS_30D', false], ['ACCESS_LIFETIME', true]]);
@@ -117,14 +117,14 @@ describe('patron checkout, step 1 (currency and option)', () => {
   it('lists the tip gateway\'s currencies and the prices follow the chosen currency', async () => {
     open();
     const dialog = within(await screen.findByRole('dialog'));
-    const combo = dialog.getByRole('combobox', { name: 'Waluta' });
+    const combo = dialog.getByRole('combobox', { name: 'Waluta płatności' });
     fireEvent.click(combo);
     const titles = (await screen.findAllByRole('option')).map((o) => o.textContent);
     expect(titles).toEqual([
       expect.stringContaining('Złoty'), expect.stringContaining('Euro'), expect.stringContaining('Dolar'), expect.stringContaining('Frank'), expect.stringContaining('Funt'),
     ]);
     fireEvent.click(await screen.findByRole('option', { name: /Euro/ }));
-    expect(combo).toHaveTextContent('€ · EUR');
+    expect(combo).toHaveTextContent('Euro (EUR)');
     expect(dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }).closest('label')).toHaveTextContent('3,99');
     expect(dialog.getByRole('radio', { name: /Dostęp bez limitu/ }).closest('label')).toHaveTextContent('7,99');
     expect(dialog.getByRole('button', { name: N('Dalej · 7,99 €') })).toBeInTheDocument();
@@ -156,7 +156,7 @@ describe('patron checkout, step 1 (currency and option)', () => {
     const dialog = within(await screen.findByRole('dialog'));
     await waitFor(() => expect(dialog.getByRole('button', { name: N('Dalej · 29,99 zł') })).toBeDisabled());
     expect(dialog.queryByText(/Masz już dostęp/)).toBeNull();
-    expect(dialog.getByRole('combobox', { name: 'Waluta' })).toBeDisabled();
+    expect(dialog.getByRole('combobox', { name: 'Waluta płatności' })).toBeDisabled();
     for (const radio of dialog.getAllByRole('radio')) expect(radio).toBeDisabled();
   });
 
@@ -237,7 +237,7 @@ describe('patron checkout, step 2 (payment method)', () => {
     await dialog.findByRole('heading', { name: 'Metoda płatności' });
     fireEvent.click(dialog.getByRole('button', { name: 'Wstecz' }));
     expect(await dialog.findByRole('heading', { name: 'Uzyskaj dostęp do strefy premium' })).toBeInTheDocument();
-    expect(dialog.getByRole('combobox', { name: 'Waluta' })).toHaveTextContent('€ · EUR');
+    expect(dialog.getByRole('combobox', { name: 'Waluta płatności' })).toHaveTextContent('Euro (EUR)');
     expect((dialog.getByRole('radio', { name: /Dostęp na 30 dni/ }) as HTMLInputElement).checked).toBe(true);
   });
 });
@@ -397,7 +397,7 @@ describe('patron checkout, step 3 with real Stripe payments', () => {
     open(TEST);
     const dialog = within(await screen.findByRole('dialog'));
     await waitFor(() => expect(calls('/api/user/premium-pass')).toHaveLength(1));
-    expect(dialog.getByRole('combobox', { name: 'Waluta' })).toBeEnabled();
+    expect(dialog.getByRole('combobox', { name: 'Waluta płatności' })).toBeEnabled();
     for (const radio of dialog.getAllByRole('radio')) expect(radio).toBeEnabled();
     clickNext(dialog, 'Dalej · 29,99 zł');
     await dialog.findByRole('heading', { name: 'Metoda płatności' });

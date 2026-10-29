@@ -6,7 +6,7 @@ import { Select } from "@base-ui/react/select";
 import { Tabs } from "@base-ui/react/tabs";
 import { ADMIN_PANEL_ORIGIN } from "@/lib/admin-legacy-redirects";
 import { useAuth, useUser } from "@/lib/auth/react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useLanguage } from "../LanguageContext";
 import { ProfileSection } from "./ProfileSection";
 import { EmailSection, ConnectionsSection, DangerSection } from "./AccountSections";
@@ -70,9 +70,6 @@ export default function AccountModal({ open, onOpenChange, isAdmin, initialSecti
           <DialogTitle className="font-brand text-[23px] font-bold leading-tight tracking-tight text-[var(--chan-ink)] sm:text-[26px]">
             {tx("Moje konto", "My account")}
           </DialogTitle>
-          <DialogDescription className="max-w-xl text-[13px] leading-relaxed text-[var(--chan-muted)]">
-            {tx("Zarządzaj profilem, językiem i bezpieczeństwem konta.", "Manage your profile, language and account security.")}
-          </DialogDescription>
         </DialogHeader>
 
         <Tabs.Root

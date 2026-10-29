@@ -31,7 +31,6 @@
  "Complaints and refunds: support@polutek.com.": "Réclamations et remboursements : support@polutek.com.",
  "Confirming your payment…": "Confirmation de ton paiement…",
  "Consent to immediate access": "Accord pour l’accès immédiat",
- "Currency": "Devise",
  "DEMO MODE": "MODE DÉMO",
  "Delete my access": "Supprimer mon accès",
  "Demo mode · simulated payment · nothing will be charged": "Mode démo · paiement simulé · rien ne sera débité",
@@ -50,7 +49,6 @@
  "Is this a subscription?": "Est-ce un abonnement ?",
  "Method": "Moyen",
  "No. Every payment is a one-time payment: 30-day access ends after 30 days, unlimited access has no end. Nothing is charged again and there is nothing to cancel.": "Non. Chaque paiement est un paiement unique : l’accès de 30 jours se termine après 30 jours, l’accès illimité n’a pas de fin. Rien n’est débité à nouveau et il n’y a rien à résilier.",
- "Nothing is really charged. Test card: 4242 4242 4242 4242, any date and CVC.": "Rien n’est réellement débité. Carte de test : 4242 4242 4242 4242, n’importe quelle date et CVC.",
  "On every device you sign in on": "Sur chaque appareil où tu te connectes",
  "Open in a new tab": "Ouvrir dans un nouvel onglet",
  "Order no.": "N° de commande",
@@ -133,5 +131,7 @@
  "Seller information": "Informations sur le vendeur",
  "You are buying from the seller named above. Invoice details and contact are in the Terms.": "Tu achètes auprès du vendeur indiqué ci-dessus. Les données de facturation et le contact figurent dans les Conditions.",
  "Demo mode: nothing will be charged.": "Mode démo : rien ne sera débité.",
- "Payments are encrypted and handled by a trusted provider. We never store your card details.": "Les paiements sont chiffrés et gérés par un prestataire de confiance. Nous ne conservons jamais les données de ta carte."
+ "Payments are encrypted and handled by a trusted provider. We never store your card details.": "Les paiements sont chiffrés et gérés par un prestataire de confiance. Nous ne conservons jamais les données de ta carte.",
+ "Try the Premium checkout — nothing will be charged in test mode.": "Découvre le paiement Premium — aucun montant ne sera débité en mode test.",
+ "Payment currency": "Devise de paiement"
 }

@@ -31,6 +31,8 @@ interface TipSelectProps {
   disabled?: boolean;
   /** A small blue pill (28 px, hit area 44 px) instead of the full field; the label stays for screen readers only, the caller shows its own text beside it. */
   compact?: boolean;
+  /** Checkout currency field: a prominent blue field with a currency badge and rounded chevron. */
+  currencyPicker?: boolean;
 }
 
 interface ListPosition {
@@ -80,10 +82,10 @@ function measureList(trigger: HTMLElement, compact = false): ListPosition {
 }
 
 /**
- * The gate's own dropdown (instead of the browser's system list): a warm field whose list
+ * The gate's own dropdown (instead of the browser's system list): a themed field whose list
  * floats on top of the step, so nothing below it moves.
  */
-export function TipSelect({ label, value, options, onChange, disabled = false, compact }: TipSelectProps) {
+export function TipSelect({ label, value, options, onChange, disabled = false, compact, currencyPicker = false }: TipSelectProps) {
   const [position, setPosition] = useState<ListPosition | null>(null);
   const open = position !== null;
   const [active, setActive] = useState(0);
@@ -272,18 +274,24 @@ export function TipSelect({ label, value, options, onChange, disabled = false, c
               <SelectedIcon className="h-6 w-6" />
             </span>
           ) : selectedIconStr ? (
-            <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center text-[15px] font-bold text-[var(--chan-ink)]">{selectedIconStr}</span>
+            <span aria-hidden="true" className={cn("flex shrink-0 items-center justify-center font-bold text-[var(--chan-ink)]", currencyPicker ? "h-10 w-10 rounded-full border border-[#9fc3f5] bg-white/70 text-[17px]" : "h-6 w-6 text-[15px]")}>{selectedIconStr}</span>
           ) : null}
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[15px] font-extrabold text-[var(--chan-ink)]">{selected?.title ?? "—"}</span>
             {selected?.hint && <span className="block truncate text-[12px] text-[var(--chan-body)]">{selected.hint}</span>}
           </span>
-          <SelectChevron
-            className={cn(
-              "h-5 w-5 shrink-0 text-[var(--chan-blue)] transition-transform duration-200 motion-reduce:transition-none",
-              open && "rotate-180",
-            )}
-          />
+          {currencyPicker ? (
+            <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#9fc3f5] bg-white/70">
+              <SelectChevron className={cn("h-5 w-5 text-[var(--chan-blue)] transition-transform duration-200 motion-reduce:transition-none", open && "rotate-180")} />
+            </span>
+          ) : (
+            <SelectChevron
+              className={cn(
+                "h-5 w-5 shrink-0 text-[var(--chan-blue)] transition-transform duration-200 motion-reduce:transition-none",
+                open && "rotate-180",
+              )}
+            />
+          )}
         </button>
       </div>
       {position &&
