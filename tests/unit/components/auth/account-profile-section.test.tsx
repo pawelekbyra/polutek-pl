@@ -55,6 +55,16 @@ describe("account ProfileSection (nickname)", () => {
     expect(screen.queryByText("Nickname")).toBeNull();
   });
 
+  it("uses a frameless profile card, larger avatar and light gray nickname field", () => {
+    const { container } = render(<ProfileSection tx={createTx("pl")} />);
+    const section = container.querySelector("section");
+    const avatar = container.querySelector('img[src="/default-avatar.jpg"]');
+    const nickname = screen.getByLabelText("Pseudonim");
+    expect(section?.className).toBe("w-full");
+    expect(avatar?.className).toContain("h-24 w-24");
+    expect(nickname.className).toContain("bg-[var(--chan-surface)]");
+  });
+
   it("rejects an invalid nickname with the sign-up messages, without calling the server", async () => {
     render(<ProfileSection tx={createTx("pl")} />);
     setNickname("ab");

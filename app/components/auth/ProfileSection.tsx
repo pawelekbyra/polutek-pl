@@ -32,7 +32,7 @@ function LanguageField({ tx }: { tx: Tx }) {
   const switchLanguage = useSwitchLanguage();
 
   return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-4 py-3">
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-3 py-2 sm:px-4 sm:py-3">
       <div className="min-w-0">
         <p className="text-[13px] font-bold text-[var(--chan-ink)]">{tx("Język", "Language")}</p>
         <p className="mt-0.5 text-[11px] leading-relaxed text-[var(--chan-muted)]">
@@ -145,9 +145,9 @@ export function ProfileSection({ tx }: { tx: Tx }) {
   }
 
   return (
-    <form onSubmit={save} className="space-y-4">
+    <form onSubmit={save} className="space-y-2 sm:space-y-4">
       <Feedback error={error} info={info} />
-      <section className="rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-surface)] px-4 py-5 sm:px-6 sm:py-6">
+      <section className="w-full">
         <div className="mx-auto flex w-full max-w-md flex-col items-center">
           <div className="relative">
             {/* Avatar images are supplied by the account; plain img avoids next/image config here. */}
@@ -155,7 +155,7 @@ export function ProfileSection({ tx }: { tx: Tx }) {
             <img
               src={user.imageUrl}
               alt=""
-              className="h-[72px] w-[72px] shrink-0 rounded-full border border-white object-cover shadow-[0_6px_18px_rgba(37,99,235,0.16)] ring-2 ring-[var(--chan-blue-soft)]"
+              className="h-24 w-24 shrink-0 rounded-full border border-white object-cover shadow-[0_6px_18px_rgba(37,99,235,0.16)] ring-2 ring-[var(--chan-blue-soft)]"
             />
             {/* Keyboard-accessible edit control, positioned beside the avatar without crowding its center. */}
             <button
@@ -171,7 +171,7 @@ export function ProfileSection({ tx }: { tx: Tx }) {
             <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" tabIndex={-1} aria-hidden="true" onChange={onAvatar} disabled={avatarLoading} />
           </div>
 
-          <label className="mt-4 block w-full text-center">
+          <label className="mt-2 block w-full text-center sm:mt-4">
             <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--chan-muted)]">
               {tx("Pseudonim", "Nickname")}
             </span>
@@ -180,13 +180,13 @@ export function ProfileSection({ tx }: { tx: Tx }) {
               value={nickname}
               autoComplete="nickname"
               onChange={(event) => setNickname(event.target.value)}
-              className="w-full rounded-xl border border-[var(--chan-control-border)] bg-[var(--chan-card)] px-3 py-2.5 text-center font-brand text-[18px] font-bold text-[var(--chan-ink)] outline-none transition-colors focus-visible:border-[var(--chan-blue)] focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
+              className="w-full rounded-xl border border-[var(--chan-control-border)] bg-[var(--chan-surface)] px-3 py-2 text-center font-brand text-[18px] font-bold text-[var(--chan-ink)] outline-none transition-colors focus-visible:border-[var(--chan-blue)] focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] sm:py-2.5"
             />
           </label>
-          <p className="mt-2 max-w-sm text-center text-[12px] leading-relaxed text-[var(--chan-muted)]">
+          <p className="mt-1 max-w-sm text-center text-[11px] leading-relaxed text-[var(--chan-muted)] sm:mt-2 sm:text-[12px]">
             {tx("To nazwa widoczna na stronie, np. przy Twoich komentarzach.", "The name shown on the site, e.g. with your comments.")}
           </p>
-          <div className="mt-4 w-full">
+          <div className="mt-2 w-full sm:mt-4">
             <Primary loading={loading} label={tx("Zapisz", "Save")} />
           </div>
         </div>

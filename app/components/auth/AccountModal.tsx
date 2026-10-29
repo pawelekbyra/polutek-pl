@@ -65,8 +65,8 @@ export default function AccountModal({ open, onOpenChange, isAdmin, initialSecti
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[calc(100dvh-24px)] w-[min(920px,calc(100vw-24px))] max-w-none flex-col gap-0 overflow-hidden rounded-3xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-0 text-[var(--chan-ink)] shadow-[0_28px_90px_-30px_rgba(15,23,42,0.4)] sm:max-w-none">
-        <DialogHeader className="relative flex-none border-b border-[var(--chan-line)] px-5 py-5 pr-16 sm:px-8 sm:py-6">
+      <DialogContent className="flex max-h-[calc(100dvh-12px)] w-[min(920px,calc(100vw-24px))] max-w-none flex-col gap-0 overflow-hidden rounded-3xl border border-[var(--chan-line)] bg-[var(--chan-card)] p-0 text-[var(--chan-ink)] shadow-[0_28px_90px_-30px_rgba(15,23,42,0.4)] sm:max-h-[calc(100dvh-24px)] sm:max-w-none">
+        <DialogHeader className="relative flex-none border-b border-[var(--chan-line)] px-5 py-3 pr-16 sm:px-8 sm:py-6">
           <DialogTitle className="font-brand text-[23px] font-bold leading-tight tracking-tight text-[var(--chan-ink)] sm:text-[26px]">
             {tx("Moje konto", "My account")}
           </DialogTitle>
@@ -98,8 +98,8 @@ export default function AccountModal({ open, onOpenChange, isAdmin, initialSecti
           </Tabs.List>
 
           <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
-            <div className="flex-none border-b border-[var(--chan-blue)]/20 bg-[var(--chan-blue-soft)]/75 px-5 py-2.5 md:hidden">
-              <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--chan-blue)]">
+            <div className="flex-none border-b border-[var(--chan-blue)]/20 bg-[var(--chan-blue-soft)]/75 px-4 py-1.5 md:hidden">
+              <p className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--chan-blue)]">
                 <SlidersHorizontal className="h-3 w-3" strokeWidth={2} aria-hidden="true" />
                 {tx("Wybierz sekcję", "Choose a section")}
               </p>
@@ -141,12 +141,12 @@ export default function AccountModal({ open, onOpenChange, isAdmin, initialSecti
               </Select.Root>
             </div>
 
-            <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-7 sm:py-6">
+            <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-4 py-2 sm:px-7 sm:py-6">
               {sections.map(({ id, label }) => (
                 <Tabs.Panel key={id} value={id} aria-label={label} className="min-w-0 outline-none">
                   {section === id ? (
                     <>
-                      <h2 className="mb-5 font-brand text-[18px] font-bold tracking-tight text-[var(--chan-ink)]">{label}</h2>
+                      <h2 className={`${section === "profile" ? "mb-1" : "mb-5"} font-brand text-[18px] font-bold tracking-tight text-[var(--chan-ink)]`}>{label}</h2>
                       {panel(id)}
                     </>
                   ) : null}
@@ -156,7 +156,7 @@ export default function AccountModal({ open, onOpenChange, isAdmin, initialSecti
           </div>
         </Tabs.Root>
 
-        <div className="flex flex-none items-center justify-between gap-4 border-t border-[var(--chan-line)] bg-[var(--chan-surface)]/45 px-5 py-3.5 sm:px-8">
+        <div className="flex flex-none items-center justify-between gap-4 border-t border-[var(--chan-line)] bg-[var(--chan-surface)]/45 px-4 py-2 sm:px-8 sm:py-3.5">
           {isAdmin ? (
             <a href={ADMIN_PANEL_ORIGIN} target="_blank" rel="noopener noreferrer" className="rounded-lg px-2 py-1.5 text-[12px] font-bold text-[var(--chan-muted)] underline decoration-[var(--chan-line)] underline-offset-4 transition-colors hover:text-[var(--chan-blue)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]">
               {tx("Panel admina", "Admin panel")}

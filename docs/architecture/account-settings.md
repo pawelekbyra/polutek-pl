@@ -7,7 +7,9 @@ dostępu, usunięcie konta oraz warunkową strefę patrona.
 ## Układ i nawigacja
 
 - Dialog ma szerokość dopasowaną do treści (maksymalnie 920 px), stały nagłówek i stopkę oraz jeden
-  przewijany obszar aktywnej sekcji. Przycisk zamknięcia pochodzi ze wspólnego `DialogContent`.
+  przewijany obszar aktywnej sekcji. Na telefonie nagłówek, wybór sekcji i stopka mają kompaktowe
+  odstępy, a profil mieści wizytówkę i język bez wewnętrznego przewijania na wysokich ekranach.
+  Przycisk zamknięcia pochodzi ze wspólnego `DialogContent`.
 - Od breakpointu `md` sekcje są pionowymi kartami `@base-ui/react/tabs` z ikonami Lucide, czytelnym
   stanem aktywnym i osobnym kolorem dla usuwania konta. Strzałki klawiatury przenoszą fokus i od razu
   aktywują sekcję.
@@ -18,9 +20,10 @@ dostępu, usunięcie konta oraz warunkową strefę patrona.
 - Panel profilu nie pokazuje ośmiu języków jako siatki. Selektor `@base-ui/react/select` otwiera
   listę portaled poza przewijanym panelem, pokazuje nazwy własne i flagi języków oraz obsługuje
   klawiaturę. Zmiana nadal używa istniejącego `useSwitchLanguage` i zapisu preferencji konta.
-- Sekcja Profil zaczyna się od osobnej wizytówki: wyśrodkowany avatar 72 px z małą, klawiaturowo
-  dostępną akcją zmiany zdjęcia przy krawędzi, a następnie centralnie edytowany pseudonim, krótki
-  opis i zapis. Język jest osobną kartą preferencji poniżej wizytówki.
+- Sekcja Profil zaczyna się od lekkiej wizytówki bez ramki: wyśrodkowany avatar 96 px z małą,
+  klawiaturowo dostępną akcją zmiany zdjęcia przy krawędzi, a następnie centralnie edytowany
+  pseudonim na jasnoszarym tle, krótki opis i zapis. Zawartość wizytówki ma mały odstęp od tytułu
+  sekcji. Język jest osobną kartą preferencji poniżej wizytówki.
 
 ## Wzorce dostępności
 
