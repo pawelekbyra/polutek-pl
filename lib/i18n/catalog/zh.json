@@ -486,7 +486,6 @@
  "You are the last administrator. Give someone else admin rights first.": "你是最后一名管理员，请先将管理员权限授予其他人。",
  "You can also use the Google button.": "你也可以使用 Google 按钮。",
  "You can download your data first:": "您可以先下载自己的数据：",
- "You can withdraw consent at any time with the link in every message. Details: {0} and {1}.": "你可以随时通过每封邮件中的链接撤回同意。详情见{0}和{1}。",
  "You cannot unlink your last sign-in method.": "不能取消关联最后一种登录方式。",
  "You don't have guts to log in": "你没胆登录",
  "You don't have permission to comment on this video.": "你没有权限评论该视频。",
@@ -1108,5 +1107,6 @@
  "Could not save read notifications. Please try again.": "无法保存通知已读状态，请重试。",
  "This comment is no longer available.": "这条评论已不可用。",
  "Could not load the comment.": "无法加载评论。",
- "When someone replies to your comment or a new video appears, you will see it here.": "当有人回复你的评论或有新视频发布时，你会在这里看到。"
+ "When someone replies to your comment or a new video appears, you will see it here.": "当有人回复你的评论或有新视频发布时，你会在这里看到。",
+  "You can withdraw consent at any time. Details: {0} and {1}.": "你可以随时撤回同意。详情：{0}和{1}。"
 }

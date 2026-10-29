@@ -129,7 +129,7 @@ describe("error, refresh, lens and close icons (set B, Marker)", () => {
 
     const navbar = read("app/components/Navbar.tsx");
     expect(navbar.match(/<SearchIcon size=\{22\}/g)).toHaveLength(3);
-    expect(navbar.match(/<CloseIcon size=\{22\}/g)).toHaveLength(1);
+    expect(navbar).toContain("<CloseButton onClick={closeMobileSearch}");
     expect(navbar).not.toMatch(/import \{[^}]*\b(Search|X)\b[^}]*\} from "lucide-react"/);
     expect(navbar).not.toContain("<Search ");
   });

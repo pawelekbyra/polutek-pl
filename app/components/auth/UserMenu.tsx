@@ -3,11 +3,12 @@
 import { Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Home, LayoutDashboard, LogOut, Settings, ShieldCheck, Users, X } from "lucide-react";
+import { BookOpen, Home, LayoutDashboard, LogOut, Settings, ShieldCheck, Users } from "lucide-react";
 import { useAuth, useUser } from "@/lib/auth/react";
 import { ADMIN_PANEL_ORIGIN } from "@/lib/admin-legacy-redirects";
 import { getLocalizedHref } from "@/lib/i18n/routing";
 import { useLanguage } from "../LanguageContext";
+import { CloseButton } from "@/components/ui/close-button";
 import AccountModal from "./AccountModal";
 import LanguageSwitcher from "../LanguageSwitcher";
 import { useSwitchLanguage } from "../useSwitchLanguage";
@@ -195,7 +196,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
             className={`absolute right-0 top-0 flex h-full w-[min(88vw,320px)] flex-col overscroll-contain bg-[var(--chan-card)] shadow-2xl duration-200 ${closing ? "animate-out slide-out-to-right fill-mode-forwards" : "animate-in slide-in-from-right"}`}
           >
             <div className="border-b border-[var(--chan-line)]">
-            <div className="flex items-start gap-3 p-4 pb-2">
+            <div className="flex items-start gap-3 p-4 pb-2 pr-14">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--chan-line)]">
                 {avatarImage(48)}
               </span>
@@ -203,15 +204,7 @@ export default function UserMenu({ isAdmin }: UserMenuProps) {
                 <p className="truncate text-[15px] font-bold text-[var(--chan-ink)]">{displayName}</p>
                 {email && email !== displayName ? <p className="truncate text-[12px] text-[var(--chan-muted)]">{email}</p> : null}
               </div>
-              <button
-                ref={closeRef}
-                type="button"
-                onClick={close}
-                aria-label={tx("Zamknij menu", "Close menu")}
-                className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] hover:bg-[var(--chan-surface)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
-              >
-                <X className={iconClass} strokeWidth={1.8} aria-hidden="true" />
-              </button>
+              <CloseButton ref={closeRef} onClick={close} aria-label={tx("Zamknij menu", "Close menu")} />
             </div>
             <div className="flex justify-end px-4 pb-3">
               <Suspense fallback={null}>

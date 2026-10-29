@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CloseButton } from "@/components/ui/close-button";
 import type { Tx } from "@/lib/i18n/ui";
 
 /**
@@ -32,20 +33,11 @@ export function AuthDialogTop({
   }, [viewKey]);
   return (
     <>
-      <button
-        type="button"
+      <CloseButton
         onClick={onClose}
         data-testid="auth-dialog-close"
-        className="group absolute right-1.5 top-1.5 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)]"
         aria-label={tx("Zamknij okno logowania", "Close sign-in dialog")}
-      >
-        <span
-          aria-hidden="true"
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--chan-surface)] text-[18px] font-black leading-none text-[var(--chan-ink)] transition-colors group-hover:bg-[var(--chan-line)]"
-        >
-          ×
-        </span>
-      </button>
+      />
       <DialogHeader className="px-9 text-center">
         <DialogTitle ref={titleRef} tabIndex={-1} className="text-balance outline-none font-brand text-2xl font-bold tracking-tight text-[var(--chan-ink)]">{title}</DialogTitle>
       </DialogHeader>

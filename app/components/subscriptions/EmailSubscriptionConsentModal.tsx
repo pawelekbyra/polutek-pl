@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { CloseButton } from "@/components/ui/close-button";
 import { useLanguage } from "../LanguageContext";
 import { LegalDocLink } from "../legal/LegalDocLink";
 import {
@@ -41,13 +42,7 @@ export default function EmailSubscriptionConsentModal({
         showCloseButton={false}
         className="!w-[calc(100%-2rem)] !max-w-[340px] max-h-[calc(100dvh-2rem)] grid-cols-[minmax(0,1fr)] gap-0 overflow-y-auto rounded-2xl border border-[var(--chan-line)] bg-[var(--chan-card)] px-5 py-6 text-[var(--chan-ink)] shadow-[0_20px_50px_rgba(23,23,23,0.14)] ring-0 sm:px-6 sm:py-7 motion-reduce:animate-none"
       >
-        <DialogClose
-          disabled={pending}
-          aria-label={tx("Zamknij", "Close")}
-          className="group absolute right-1.5 top-1.5 inline-flex h-11 w-11 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] disabled:opacity-60"
-        >
-          <span aria-hidden="true" className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--chan-surface)] text-[18px] font-black leading-none transition-colors group-hover:bg-[var(--chan-line)]">×</span>
-        </DialogClose>
+        <DialogClose disabled={pending} aria-label={tx("Zamknij", "Close")} render={<CloseButton />} />
         <DialogHeader className="gap-3 text-center">
           <DialogTitle className="min-w-0 break-words px-6 text-balance font-brand text-2xl font-bold leading-tight tracking-tight">
             {t.confirmSubscribeTitle}
@@ -82,11 +77,11 @@ export default function EmailSubscriptionConsentModal({
             {t.no}
           </button>
         </div>
-          <p data-testid="email-consent-legal" className="mt-4 text-center text-xs leading-relaxed text-[var(--chan-muted)]">
+          <p data-testid="email-consent-legal" className="mt-4 text-center text-[11px] min-[360px]:text-xs leading-relaxed text-[var(--chan-muted)]">
             {txRich(
               tx,
-              "Zgodę wycofasz w każdej chwili linkiem w każdej wiadomości. Szczegóły: {0} i {1}.",
-              "You can withdraw consent at any time with the link in every message. Details: {0} and {1}.",
+              "Zgodę wycofasz w każdej chwili. Szczegóły: {0} i {1}.",
+              "You can withdraw consent at any time. Details: {0} and {1}.",
               <><br /><LegalDocLink doc="privacy" language={language}>{tx("Polityka prywatności", "Privacy Policy")}</LegalDocLink></>,
               <LegalDocLink doc="terms" language={language}>{tx("Regulamin", "Terms")}</LegalDocLink>,
             )}

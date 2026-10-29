@@ -111,9 +111,6 @@
 .sheetHead { position: relative; display: flex; align-items: flex-start; gap: 12px; padding: calc(12px + env(safe-area-inset-top)) var(--pass-gutter) 0; }
 .sheetTitle { margin: 0; font-size: 20px; line-height: 1.1; font-weight: 800; letter-spacing: -.01em; outline: none; }
 /* The close button stays in its corner and no longer sets the height of the row: the title's top edge lines up with the button's top edge and everything below rises. */
-.close { position: absolute; top: calc(2px + env(safe-area-inset-top)); right: 6px; z-index: 3; width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; display: grid; place-items: center; color: var(--chan-ink, #111827); cursor: pointer; }
-.close svg { width: 20px; height: 20px; stroke-width: 2.2; }
-.close:disabled { opacity: .4; cursor: not-allowed; }
 .sheetBody { padding: var(--pass-title-gap) var(--pass-gutter) 10px; display: flex; flex-direction: column; gap: var(--pass-gap); flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 .sheetBody > * { flex-shrink: 0; }
 .sheetBody :global([id]) { scroll-margin: 16px 0 120px; }

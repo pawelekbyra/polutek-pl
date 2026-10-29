@@ -21,7 +21,7 @@ import { TIP_WALLETS, getTipMethodTiles, readLastTipMethod, rememberTipMethod, t
 import { TipBackContext } from "../support/TipStepLayout";
 import { FIELD_LABEL_CLASS } from "../support/TipSelect";
 import { ArrowLeft } from "../icons";
-import { CrossIcon } from "./PassIcons";
+import { CloseButton } from "@/components/ui/close-button";
 import { PassMethodStep, PassPayHead, PassPlanStep } from "./PassPlanSteps";
 import { PassConsent, PassDemoSummary, PassStripePay, type PassConsentErrors, type PassConsentState } from "./PassPaymentStep";
 import { PassSecurityFooter, PassStepDots } from "./PassSecurityFooter";
@@ -380,9 +380,7 @@ export function PassCheckoutSheet({ open, onOpenChange, offer, initialProductId,
             <DialogPrimitive.Title render={<h2 ref={titleRef} tabIndex={-1} id={`${ids}-title`} className={styles.sheetTitle} />}>
               {tx("Kup se Premium", "Get Premium")}
             </DialogPrimitive.Title>
-            <DialogPrimitive.Close className={styles.close} disabled={locked} aria-label={tx("Zamknij", "Close")}>
-              <CrossIcon className="h-4 w-4" />
-            </DialogPrimitive.Close>
+            <DialogPrimitive.Close disabled={locked} aria-label={tx("Zamknij", "Close")} render={<CloseButton />} />
           </div>
 
           {showSteps && <p className={styles.srOnly} role="status" aria-live="polite">{tx("Krok {0} z 3", "Step {0} of 3", stepNumber)}</p>}

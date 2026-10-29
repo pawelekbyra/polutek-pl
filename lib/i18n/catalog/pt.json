@@ -486,7 +486,6 @@
  "You are the last administrator. Give someone else admin rights first.": "Você é o último administrador. Dê direitos de administrador a outra pessoa primeiro.",
  "You can also use the Google button.": "Você também pode usar o botão do Google.",
  "You can download your data first:": "Antes, você pode baixar seus dados:",
- "You can withdraw consent at any time with the link in every message. Details: {0} and {1}.": "Você pode retirar o consentimento a qualquer momento pelo link em todas as mensagens. Detalhes: {0} e {1}.",
  "You cannot unlink your last sign-in method.": "Você não pode desvincular seu último método de login.",
  "You don't have guts to log in": "Você não tem coragem de entrar",
  "You don't have permission to comment on this video.": "Você não tem permissão para comentar neste vídeo.",
@@ -1108,5 +1107,6 @@
  "Could not save read notifications. Please try again.": "Não foi possível guardar o estado de leitura. Tenta novamente.",
  "This comment is no longer available.": "Este comentário já não está disponível.",
  "Could not load the comment.": "Não foi possível carregar o comentário.",
- "When someone replies to your comment or a new video appears, you will see it here.": "Quando alguém responder ao seu comentário ou surgir um novo vídeo, você verá aqui."
+ "When someone replies to your comment or a new video appears, you will see it here.": "Quando alguém responder ao seu comentário ou surgir um novo vídeo, você verá aqui.",
+  "You can withdraw consent at any time. Details: {0} and {1}.": "Pode retirar o consentimento a qualquer momento. Detalhes: {0} e {1}."
 }
