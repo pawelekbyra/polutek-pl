@@ -100,7 +100,7 @@ Zbudowany (`buildMorningReport`, `runMorningReport`), **wyłączony domyślnie**
 
 ## 7. Cloudflare i dane krawędzi (interfejs, bez danych)
 
-C14 (ruch Workera HLS względem 100 tys./dobę) i C15 (cache hit, kody 403/404/5xx na `video.`) oraz kontrola krzyżowa ruchu **nie mają jeszcze źródła**: moduł kolektora odpytujący Cloudflare GraphQL nie istnieje, a panel z założenia nie woła Cloudflare przy renderze (brak sekretów, brak sieci). Zaprojektowany interfejs: kolektor wstawia wiersze do `telemetry.external_snapshot (source = 'cloudflare', kind, fetched_at, payload)`, panel czyta najnowszy wiersz każdego rodzaju, waliduje zodem (`application/edge.ts`) i pokazuje wiek. Kształty ładunków:
+C14 (ruch Workera HLS względem 100 tys./dobę) i C15 (cache hit, kody 403/404/5xx na `video.`) są zbierane przez `services/pp-collector/src/cloudflare.ts`; kolektor odpytuje Cloudflare GraphQL co 15 minut i zapisuje atomowo migawki do `telemetry.external_snapshot (source = 'cloudflare', kind, fetched_at, payload)`. Panel nie odpytuje Cloudflare przy renderze: odczytuje najnowszy zapis i pokazuje jego wiek. Konfiguracja jest opcjonalna: `CLOUDFLARE_ANALYTICS_API_TOKEN`, `CLOUDFLARE_ACCOUNT_TAG`, `CLOUDFLARE_ZONE_TAG`, `CLOUDFLARE_HLS_WORKER_NAME` w `collector.env`; bez pełnego kompletu kolektor działa jak wcześniej. Token potrzebuje uprawnienia odczytu analityki. Zapytania używają adaptacyjnych zbiorów Cloudflare, więc liczniki są przybliżone; alarm limitu musi mieć bezpieczny zapas, a nie reagować dopiero przy 100%. Kontrola krzyżowa ruchu www nadal nie ma źródła. Kształty ładunków:
 
 | `kind` | `payload` |
 |---|---|

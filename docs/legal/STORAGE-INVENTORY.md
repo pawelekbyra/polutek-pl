@@ -27,6 +27,7 @@ Cloudflare Turnstile (formularze logowania) nie używa cookies.
 | `app-language` | localStorage | język (kopia cookie) |
 | `polutek:player-sound` | localStorage | wybór dźwięku odtwarzacza |
 | `polutek:captions` | localStorage | napisy wyłączone przez widza |
+| `polutek:caption-language` | localStorage | język napisów wybrany przez widza |
 | `polutek:player-quality` | localStorage | jakość obrazu wybrana przez widza w menu odtwarzacza |
 | `polutek:player-rate` | localStorage | prędkość odtwarzania wybrana przez widza (brak wpisu = 1x) |
 | `polutek:watch-progress` | localStorage | miejsce, w którym niezalogowany widz przerwał oglądanie (ID filmów, pozycja i czas; do 30 filmów), do wznowienia |

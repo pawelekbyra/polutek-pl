@@ -39,6 +39,7 @@ export function EdgeCard({ edge, now }: { edge: EdgeSnapshot; now: Date }) {
   return (
     <Card id="h-edge" title="Worker HLS i krawędź video." meta={<span className="age"><Icon name="clock" />dane z {edge.fetchedAt.slice(11, 16)} UTC</span>}>
       <div className="stack-sm">
+        <p className="muted">Estymacja Cloudflare Analytics; zbiory są adaptacyjnie próbkowane. Limit ustaw z bezpiecznym zapasem.</p>
         {pct !== null ? (
           <>
             <div className="limit-head">

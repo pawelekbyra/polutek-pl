@@ -406,6 +406,7 @@ Stan 2026-10-05: włączona (kontener `polutek-collector-1` healthy).
 - Baza: schemat `telemetry`, role `pp_collector` (zapis) i `pp_analytics_ro` (odczyt).
 - **Włączenie (raz):** skopiuj `scripts/serwerek/telemetry-enable.sh` do `/opt/serwerek/apps/polutek/` (jest tam) i uruchom; nadaje `pp_collector` losowe hasło, zapisuje `collector.env` (600),
   dopisuje `TELEMETRY_COLLECTOR_URL=http://collector:3200` do `app.env` (z kopią), startuje kolektor i odtwarza `app` (kilka sekund przerwy). Wpis w `ai-log`.
+- **Migawki Cloudflare (opcjonalnie):** po włączeniu telemetrii dodaj do `collector.env` token GraphQL z prawem tylko do odczytu analityki oraz `CLOUDFLARE_ACCOUNT_TAG`, `CLOUDFLARE_ZONE_TAG` i `CLOUDFLARE_HLS_WORKER_NAME`. Zmienne nie trafiają do aplikacji www; plik zostaje `root:600`. Wdrożenie kolektora uruchamia poller co 15 minut. Bez kompletu zmiennych ruch video pozostaje „bez pomiaru”; instrukcja i ograniczenie dokładności przez próbkowanie adaptacyjne: `HLS-SELF-HOSTED.md`.
 - **Wyłączenie bez przebudowy:** `TELEMETRY_BEACON=off` w `app.env` i `docker compose up -d --no-deps app`; całkowicie: usuń `TELEMETRY_COLLECTOR_URL` i `docker compose stop collector`.
 - Sprawdzenie: `docker compose logs --tail 20 collector` (przy ruchu co minutę linia `pp-collector stats`) oraz wiersze `telemetry.job_run` (rollup co 5 min, retencja co 6 h).
 - Retencja: surowe 90 dni, agregaty 25 miesięcy, `job_run` 400 dni, sól dnia kasowana po dniu.
