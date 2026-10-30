@@ -87,7 +87,7 @@ function NotificationBellForAccount({ accountId }: { accountId: string | null })
     <span role="status" aria-live="polite" aria-atomic="true" className="sr-only">{announcement}</span>
     <Popover.Root open={open} onOpenChange={setOpen} modal="trap-focus">
       <Popover.Trigger aria-label={label} className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[var(--chan-ink)] transition-[transform,background-color,box-shadow] duration-160 hover:-translate-y-px hover:bg-[var(--chan-surface)] hover:shadow-[0_4px_12px_rgba(23,23,23,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--chan-blue)] active:scale-95 motion-reduce:transform-none motion-reduce:transition-none">
-        <BellIcon size={24} className="shrink-0" />
+        <BellIcon size={24} strokeWidth={1.5} className="shrink-0 text-[var(--chan-ink)]" />
         {feed.unread > 0 && <span aria-hidden="true" className="absolute right-0 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--chan-blue)] px-1 text-[10px] font-bold leading-none text-white">{badge}</span>}
       </Popover.Trigger>
       <Popover.Portal>

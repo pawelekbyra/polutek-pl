@@ -4,9 +4,8 @@ import type { SVGProps } from "react";
  * Hand-drawn "Marker" icons (24 grid, round caps and joins, no fills, very light hand wobble) for the notification bell
  * and the Subscribe button. Plain JSX paths, inheriting currentColor.
  *
- * Pen weight: the line is the same as the "Szeruj" and "Lajk/Dislajk" icons under the video (lucide at 16px, strokeWidth
- * 1.8, i.e. 1.2px on screen), whatever the icon size: `strokeWidth` defaults to `ICON_PEN_PX * 24 / size`, so the
- * rendered line is 1.2px at 16px, 22px, 24px alike (the old 2.4 default drew 2px at 20px and looked far too heavy).
+ * Pen weight: 1.2px on screen at every size: `strokeWidth` defaults to `ICON_PEN_PX * 24 / size`, so the rendered
+ * line is consistent at 16px, 22px, 24px and other sizes. The top-bar bell overrides it to match the globe's weight.
  * The shapes use the lucide bell's proportions (dome r6, flared skirt, x 3..21) so the icon fills its box.
  * Generated from icongen/gen_bell.py (path data is not edited by hand).
  */
