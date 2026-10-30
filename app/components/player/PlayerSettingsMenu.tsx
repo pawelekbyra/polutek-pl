@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
-import { isTrackCaptionKind, useChapterOptions, useChapterTitle, useMediaRemote, useMediaState } from "@vidstack/react";
+import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
+import { isTrackCaptionKind, useChapterOptions, useChapterTitle, useMediaRemote, useMediaState, type TextTrack } from "@vidstack/react";
 import { cn } from "@/lib/utils";
 import { useChaptersMenu } from "./chapters/chapters-menu-context";
 import { CheckIcon, ChevronRightIcon, SettingsIcon } from "./controls/PlayerIconSet";
 import { usePlayerCopy } from "./polutek-controls-copy";
 import { qualityBadge } from "./quality-label";
-import { CAPTIONS_IN_MENU_QUERY } from "./controls/ControlButtons";
+import { writeCaptionLanguage, writeCaptionsEnabled } from "./captions";
 import { useMediaQuery } from "./use-media-query";
 import {
   PLAYBACK_RATES,
@@ -31,10 +31,10 @@ function rateLabel(rate: number, normal: string): string {
 }
 
 /**
- * The player's settings menu: quality (Auto + the renditions of the HLS manifest), speed (0.5x-2x)
+ * The player's settings menu: quality (Auto + the renditions of the HLS manifest), speed (0.5x-2x), subtitles
  * and picture-in-picture where the browser offers it. On narrow screens it also holds the entries the bar drops
- * there (picture-in-picture, the chapters panel; `mc-menu-item--narrow`), and below 400px the captions switch
- * (rendered only then, so the keyboard never lands on a hidden item). The trigger shows the quality of the
+ * there (picture-in-picture, the chapters panel; `mc-menu-item--narrow`). The subtitle choices are available here
+ * on every screen size. The trigger shows the quality of the
  * rendition being played ("HD", "4K", "SD"), or a gear while that is unknown. The viewer's choices are remembered
  * (player-preferences.ts). It is a plain button + menu (roles `menu`, `menuitemradio`): Enter/Space
  * opens it, arrows move, Escape closes and returns the focus. Speed keyboard shortcuts stay off
@@ -54,9 +54,13 @@ export function PlayerSettingsMenu() {
   const chapterOptions = useChapterOptions();
   const chapterTitle = useChapterTitle();
   const chaptersMenu = useChaptersMenu();
-  const hasCaptions = useMediaState("hasCaptions") as boolean | undefined;
+  const rawTextTracks = useMediaState("textTracks") as Iterable<TextTrack> | undefined;
+  const textTracks = Array.from(rawTextTracks ?? []);
+  const captionTracks = textTracks
+    .map((track, index) => ({ track, index }))
+    .filter(({ track }) => isTrackCaptionKind(track));
+  const hasCaptions = captionTracks.length > 0;
   const textTrack = useMediaState("textTrack");
-  const captionsInMenu = useMediaQuery(CAPTIONS_IN_MENU_QUERY) && Boolean(hasCaptions);
   const captionsOn = Boolean(textTrack && isTrackCaptionKind(textTrack));
 
   const [open, setOpen] = useState(false);
@@ -174,8 +178,16 @@ export function PlayerSettingsMenu() {
     close(true);
   };
 
-  const toggleCaptions = (event: { nativeEvent: Event }) => {
-    remote.toggleCaptions(event.nativeEvent);
+  const selectCaption = (index: number, language: string, event: MouseEvent<HTMLButtonElement>) => {
+    remote.changeTextTrackMode(index, "showing", event.nativeEvent);
+    writeCaptionLanguage(language);
+    writeCaptionsEnabled(true);
+    close(true);
+  };
+
+  const disableCaptions = (event: MouseEvent<HTMLButtonElement>) => {
+    for (const { index } of captionTracks) remote.changeTextTrackMode(index, "disabled", event.nativeEvent);
+    writeCaptionsEnabled(false);
     close(true);
   };
 
@@ -274,21 +286,39 @@ export function PlayerSettingsMenu() {
             ))}
           </div>
 
-          {captionsInMenu ? (
+          {hasCaptions ? (
             <div className="mc-menu-sep" role="separator" />
           ) : (canPip || chapterOptions.length > 0) && <div className="mc-menu-sep mc-menu-item--narrow" role="separator" />}
-          {captionsInMenu && (
-            <button
-              type="button"
-              role="menuitemcheckbox" tabIndex={-1}
-              aria-checked={captionsOn}
-              aria-keyshortcuts="c"
-              className={cn("mc-menu-item", captionsOn && "mc-menu-item--on")}
-              onClick={toggleCaptions}
-            >
-              {copy.captions}
-              {captionsOn && <CheckIcon className="mc-menu-check" />}
-            </button>
+          {hasCaptions && (
+            <div role="group" aria-labelledby={`${menuId}-captions`}>
+              <div id={`${menuId}-captions`} className="mc-menu-title">{copy.captions}</div>
+              <button
+                type="button"
+                role="menuitemradio" tabIndex={-1}
+                aria-checked={!captionsOn}
+                className={cn("mc-menu-item", !captionsOn && "mc-menu-item--on")}
+                onClick={disableCaptions}
+              >
+                {copy.captionsOff}
+                {!captionsOn && <CheckIcon className="mc-menu-check" />}
+              </button>
+              {captionTracks.map(({ track, index }) => {
+                const checked = textTrack === track && captionsOn;
+                return (
+                  <button
+                    key={`${track.language}-${index}`}
+                    type="button"
+                    role="menuitemradio" tabIndex={-1}
+                    aria-checked={checked}
+                    className={cn("mc-menu-item", checked && "mc-menu-item--on")}
+                    onClick={(event) => selectCaption(index, track.language, event)}
+                  >
+                    {track.label || track.language}
+                    {checked && <CheckIcon className="mc-menu-check" />}
+                  </button>
+                );
+              })}
+            </div>
           )}
           {chapterOptions.length > 0 && (
             <button

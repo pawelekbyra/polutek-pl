@@ -3,8 +3,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CAPTIONS_STORAGE_KEY,
+  CAPTION_LANGUAGE_STORAGE_KEY,
   pickCaptionTrack,
+  readCaptionLanguage,
   readCaptionsEnabled,
+  writeCaptionLanguage,
   writeCaptionsEnabled,
 } from "@/app/components/player/captions";
 
@@ -23,10 +26,15 @@ describe("pickCaptionTrack", () => {
     expect(pickCaptionTrack([PL, EN, enGb], "en-GB")).toBe(enGb);
   });
 
-  it("never falls back to another language", () => {
-    expect(pickCaptionTrack([PL], "en")).toBeNull();
-    expect(pickCaptionTrack([EN], "pl")).toBeNull();
+  it("falls back to an available language when the page language is missing", () => {
+    expect(pickCaptionTrack([PL], "en")).toBe(PL);
+    expect(pickCaptionTrack([EN], "pl")).toBe(EN);
     expect(pickCaptionTrack([], "pl")).toBeNull();
+  });
+
+  it("prefers the viewer's saved subtitle language", () => {
+    expect(pickCaptionTrack([PL, EN], "pl", "en")).toBe(EN);
+    expect(pickCaptionTrack([PL], "en", "de")).toBe(PL);
   });
 
   it("ignores tracks that are not captions or subtitles", () => {
@@ -51,6 +59,13 @@ describe("captions preference", () => {
     expect(readCaptionsEnabled()).toBe(false);
     writeCaptionsEnabled(true);
     expect(localStorage.getItem(CAPTIONS_STORAGE_KEY)).toBeNull();
+    expect(readCaptionsEnabled()).toBe(true);
+  });
+
+  it("remembers the selected subtitle language separately from on/off", () => {
+    writeCaptionLanguage(" EN ");
+    expect(localStorage.getItem(CAPTION_LANGUAGE_STORAGE_KEY)).toBe("en");
+    expect(readCaptionLanguage()).toBe("en");
     expect(readCaptionsEnabled()).toBe(true);
   });
 
