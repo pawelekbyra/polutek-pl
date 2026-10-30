@@ -11,7 +11,7 @@ export type NotificationFilter = "all" | "unread";
 type ReadAction = { id?: string; read: boolean; before?: string };
 
 /** Own-account state. Silent probes reconcile rows without discarding pagination or inserting above the reading cursor. */
-export function useNotificationFeed(open: boolean, language: string, filter: NotificationFilter = "all", accountId?: string | null) {
+export function useNotificationFeed(open: boolean, language: string, filter: NotificationFilter = "all", accountId?: string | null, pageSize = PAGE_SIZE) {
   const [items, setItems] = useState<UserNotificationDTO[]>([]);
   const [countReady, setCountReady] = useState(false);
   const [unread, setUnread] = useState(0);
@@ -46,7 +46,7 @@ export function useNotificationFeed(open: boolean, language: string, filter: Not
   openRef.current = open;
   filterRef.current = filter;
   itemsRef.current = items;
-  const url = useCallback((extra = "") => `/api/user/notifications?limit=${PAGE_SIZE}&language=${encodeURIComponent(language)}${filter === "unread" ? "&unread=1" : ""}${extra}`, [language, filter]);
+  const url = useCallback((extra = "") => `/api/user/notifications?limit=${pageSize}&language=${encodeURIComponent(language)}${filter === "unread" ? "&unread=1" : ""}${extra}`, [language, filter, pageSize]);
   const overlay = useCallback((rows: UserNotificationDTO[]) => rows.map((item) => optimistic.current.has(item.id) ? { ...item, read: optimistic.current.get(item.id)! } : item), []);
 
   useEffect(() => {

@@ -9,7 +9,7 @@ import { useNotificationFeed, type NotificationFilter } from "./useNotificationF
 import { NotificationRow } from "./NotificationRow";
 import { navigateNotification } from "./notification-navigation";
 import { BellIcon, SubscribeCheckIcon } from "../icons/MarkerBellIcons";
-import { localizedPathFromLegacyPath } from "@/lib/i18n/routing";
+import { getLocalizedHref, localizedPathFromLegacyPath } from "@/lib/i18n/routing";
 import { useLanguage } from "../LanguageContext";
 import { NOTIFICATION_SETTINGS_EVENT } from "./notification-events";
 import styles from "./notification-panel.module.css";
@@ -41,7 +41,7 @@ function NotificationBellForAccount({ accountId }: { accountId: string | null })
   const { language, tx } = useLanguage();
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<NotificationFilter>("all");
-  const feed = useNotificationFeed(open, language, filter, accountId);
+  const feed = useNotificationFeed(open, language, filter, accountId, 5);
   const [announcement, setAnnouncement] = useState("");
   const [now, setNow] = useState(() => Date.now());
   const knownUnread = useRef<number | null>(null);
@@ -126,13 +126,13 @@ function NotificationBellForAccount({ accountId }: { accountId: string | null })
               {feed.refreshError && <div className={styles.message}><p role="alert">{tx("Nie udało się odświeżyć powiadomień. Zachowaliśmy poprzednie wiadomości.", "Could not refresh notifications. Your previous messages are still here.")}</p>{retry(() => void feed.refresh())}</div>}
               {feed.writeError && <div className={styles.message}><p role="alert">{tx("Nie udało się zapisać odczytu powiadomień. Spróbuj ponownie.", "Could not save read notifications. Please try again.")}</p>{retry(() => void feed.retryWrite())}</div>}
               {feed.moreError && <div className={styles.message}><p role="alert">{tx("Nie udało się wczytać starszych powiadomień.", "Could not load older notifications.")}</p>{retry(() => void feed.loadMore())}</div>}
-              {feed.nextCursor && !feed.moreError && <button type="button" className={styles.more} disabled={feed.loadingMore || feed.writing} onClick={() => void feed.loadMore()}>
-                {feed.loadingMore ? tx("Ładowanie…", "Loading…") : tx("Pokaż starsze", "Show older")}
-              </button>}
             </div>
             <div className={styles.footer}>
-              <button type="button" className={styles.settings} onClick={openSettings}>{tx("Ustawienia powiadomień", "Notification settings")}</button>
-              <button type="button" className={styles.refresh} disabled={feed.refreshing || feed.writing || feed.status === "loading"} onClick={() => void feed.refresh()}>{feed.refreshing ? tx("Odświeżanie…", "Refreshing…") : tx("Odśwież", "Refresh")}</button>
+              <a href={getLocalizedHref(language, "notifications")} className={styles.viewAll} onClick={(event) => followNotification(event, getLocalizedHref(language, "notifications"), false)}>{tx("Zobacz wszystkie", "Notifications")}</a>
+              <div className={styles.footerLinks}>
+                <button type="button" className={styles.settings} onClick={openSettings}>{tx("Ustawienia powiadomień", "Notification settings")}</button>
+                <button type="button" className={styles.refresh} disabled={feed.refreshing || feed.writing || feed.status === "loading"} onClick={() => void feed.refresh()}>{feed.refreshing ? tx("Odświeżanie…", "Refreshing…") : tx("Odśwież", "Refresh")}</button>
+              </div>
             </div>
           </Popover.Popup>
         </Popover.Positioner>

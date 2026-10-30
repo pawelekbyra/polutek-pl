@@ -1,8 +1,14 @@
 # Powiadomienia widza
 
+## Dwa widoki
+
+Dzwonek otwiera szybki podgląd pięciu najnowszych wpisów. Link „Zobacz wszystkie” prowadzi do prywatnej, lokalizowanej strony `/powiadomienia` (`/en/notifications`), która pokazuje pełną historię strumieniem stron po 20 wpisów i zachowuje filtry, odczyt, aktualizację oraz bezpośrednią nawigację. Panel jest nawigacją szybką; strona jest miejscem do przeglądania historii. Oba widoki korzystają z tego samego hooka, API, licznika i synchronizacji odczytu.
+
+Strona wymaga prawdziwej sesji, ma `noindex` i nie jest cache'owana. Bez sesji wraca do logowania z adresem powrotu. Ustawienia powiadomień nadal otwierają sekcję w „Moje konto”.
+
 Panel przy dzwonku jest zakotwiczonym dialogiem z normalną listą i przyciskami. Na małym ekranie mieści się w viewportcie, a przewija się tylko lista; nagłówek, filtr i stopka pozostają na miejscu. Ikona pochodzi ze stabilnego `type` DTO: odpowiedź, zwykły lajk, serce twórcy, film, premiera, powitanie, wsparcie, moderacja albo komunikat systemowy. Ikony są dekoracyjne; znaczenie przekazuje też tekst. Fokus trafia do tytułu dialogu, pozostaje w nim podczas otwarcia i wraca do dzwonka po zamknięciu; Escape i widoczny przycisk zamknięcia są dostępne. Zwykłe przyciski i odnośniki zachowują standardową klawiaturę, bez semantyki `menuitem` dla wierszy.
 
-Panel ma filtry „Wszystkie” i „Nieprzeczytane”, jawne akcje odczytu/ponownego oznaczenia oraz „Oznacz wszystkie”. Rozwinięcie ujawnia pełny tytuł i treść. Wpis bez celu pozostaje czytelny i rozwijalny zamiast znikać za nieaktywnym linkiem. Samo otwarcie panelu nigdy nie oznacza wpisów jako przeczytanych.
+Oba widoki mają filtry „Wszystkie” i „Nieprzeczytane”, jawne akcje odczytu/ponownego oznaczenia oraz „Oznacz wszystkie”. Rozwinięcie ujawnia pełny tytuł i treść. Wpis bez celu pozostaje czytelny i rozwijalny zamiast znikać za nieaktywnym linkiem. Samo otwarcie widoku nigdy nie oznacza wpisów jako przeczytanych. Panel nie ładuje starszych stron — do pełnej historii prowadzi link „Zobacz wszystkie”.
 
 Odświeżanie co 60 s działa tylko dla widocznej karty. Przy zamkniętym panelu pobierany jest wyłącznie licznik. Gdy panel jest otwarty, ciche odświeżenie nie zastępuje załadowanych stron ani nie przestawia czytelnika: aktualizuje tekst/stan znanych ID osobnym, ograniczonym zapytaniem i sygnalizuje nowe wpisy przyciskiem. Dopiero jawne pokazanie nowych wpisów wstawia je nad historią; uzupełnianie przerwy w aktywnym kanale jest ograniczone do pięciu stron i 8 s na kliknięcie. Błędy pierwszego pobrania, odświeżania, starszej strony i zapisu są rozdzielone, a ponowienie zachowuje odpowiednio poprzednią listę lub kursor. Żądania kończą się timeoutem po 15 s.
 

@@ -28,6 +28,9 @@ describe('notification bell interactions', () => {
     expect(link.closest('li')!.querySelector('svg.lucide')).toBeNull();
     expect(link.closest('li')!.querySelector('svg')?.parentElement).toHaveAttribute('aria-hidden', 'true');
     expect(link.closest('ul')!.querySelector('[data-notification-type="comment_reply"] svg')).not.toBeNull();
+    const viewAll = await screen.findByRole('link', { name: 'Zobacz wszystkie' });
+    expect(viewAll).toHaveAttribute('href', '/powiadomienia');
+    expect(vi.mocked(fetch).mock.calls.some(([url]) => url.includes('limit=5'))).toBe(true);
     expect(link).toHaveAttribute('href', '/watch/first#comment-c1');
     fireEvent.click(link);
     await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/watch/first#comment-c1', { scroll: false }));

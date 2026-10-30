@@ -42,7 +42,10 @@
 .message p { margin: 0 0 4px; }
 .retry, .more { min-height: 44px; padding: 8px 12px; border: 0; border-radius: 10px; color: var(--chan-blue); font-size: 12px; font-weight: 650; background: var(--chan-blue-soft); cursor: pointer; }
 .more { display: block; width: 100%; margin-top: 7px; background: var(--chan-surface); color: var(--chan-ink); }
-.footer { flex: none; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 12px; border-top: 1px solid var(--chan-line); }
+.footer { flex: none; display: grid; gap: 2px; padding: 8px 12px 6px; border-top: 1px solid var(--chan-line); }
+.viewAll { display: flex; min-height: 42px; align-items: center; justify-content: center; border-radius: 11px; background: var(--chan-blue); color: white; font-size: 13px; font-weight: 750; text-decoration: none; }
+.viewAll:hover { filter: brightness(.96); }
+.footerLinks { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .settings, .refresh { min-height: 40px; padding: 5px 4px; border: 0; border-radius: 6px; background: none; font-size: 11px; font-weight: 600; color: var(--chan-muted); cursor: pointer; }
 .settings:hover, .refresh:hover { color: var(--chan-blue); }
 .skeleton { display: flex; gap: 10px; padding: 13px 10px; }
@@ -52,5 +55,24 @@
 .skeletonText span:last-child { width: 60%; }
 .panel button:not([data-close-button]):disabled { cursor: wait; opacity: .5; }
 .panel button:not([data-close-button]):focus-visible, .panel a:focus-visible { outline: 2px solid var(--chan-blue); outline-offset: 2px; }
+.center { display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--chan-line); border-radius: 20px; background: var(--chan-card); color: var(--chan-ink); box-shadow: 0 18px 50px -30px rgba(15,23,42,.3); font-family: var(--font-geist-sans, sans-serif); }
+.centerHead { padding: 24px 24px 18px; }
+.centerHead .title { font-size: 26px; }
+.centerHead .subtitle { font-size: 14px; }
+.centerToolbar { padding: 0 20px 16px; }
+.centerToolbar .filters { max-width: 360px; }
+.centerToolbar .filter { font-size: 13px; }
+.centerToolbar .markAll { max-width: none; padding-inline: 12px; font-size: 13px; }
+.centerScroll { flex: none; min-height: 240px; overflow: visible; padding: 12px; }
+.centerScroll .item { padding: 16px 10px 13px 12px; }
+.centerScroll .itemTitle { font-size: 15px; }
+.centerScroll .itemBody { font-size: 14px; }
+.centerScroll .itemMeta { font-size: 12px; }
+.centerFooter { padding: 8px 20px; }
+.centerFooter .settings, .centerFooter .refresh { font-size: 13px; }
+.center .empty { padding-block: 56px; }
+.center .emptyTitle { font-size: 17px; }
+.center .emptyHint { max-width: 440px; margin-inline: auto; font-size: 14px; }
 @media (max-width: 359px) { .markAll { max-width: 86px; font-size: 10px; } .filter { padding-inline: 5px; font-size: 11px; } .item { gap: 8px; padding-left: 8px; } }
+@media (max-width: 600px) { .centerHead { padding: 20px 16px 14px; } .centerHead .title { font-size: 22px; } .centerToolbar { align-items: stretch; flex-direction: column; padding-inline: 12px; } .centerToolbar .filters { max-width: none; } .centerToolbar .markAll { justify-content: center; } .centerScroll { padding: 6px; } }
 @media (prefers-reduced-motion: reduce) { .panel { transition: none; } }
