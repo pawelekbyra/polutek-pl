@@ -630,23 +630,36 @@
       "id": "R21",
       "title": "Kontrakty API są zbyt rozproszone dla dużej liczby klientów",
       "baseline_priority_and_evidence": "P2, B",
-      "status": "DO_WERYFIKACJI",
-      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "status": "POTWIERDZONE_ZRODLOWO_I_KOMPONENTOWO",
+      "note": "Osobne typy klientów uploaderów i rzutowanie JSON as T potwierdzone. Rzeczywisty studioApi przy syntetycznym 200 zwraca zmieniony kształt/null bez błędu kontraktu; prawidłowe 200/403 kontrolne działają. Bez dowodu, że realny backend zwraca zły kontrakt.",
       "source_report": "../RAPORT.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D02"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
+      "impact_plain_language": "Zmiana odpowiedzi serwera może ujawnić się dopiero w interfejsie, bo typ generyczny klienta nie sprawdza otrzymanego JSON w trakcie działania.",
+      "conditions": "Zmiana pól lub nie-JSON przy statusie 200; w tej partii wyłącznie syntetyczny fetch/Response, nie rzeczywista rozbieżność HTTP.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D02-ARCHITEKTURA-I-UTRZYMYWALNOSC.md",
+        "ZALEZNOSCI-MODULOW.csv",
+        "SCENARIUSZE-ARCHITEKTURA.csv",
+        "evidence/batch12-review.json",
+        "evidence/api-contract-probe.json"
+      ],
+      "counterarguments": [
+        "Backend ma walidację wejść i wspólne use casey; błędny status 403 jest obsługiwany poprawnie.",
+        "Osiem zależności DTO od app/types znika po transpile; to kierunek współdzielenia typów, nie wykazany import UI/sekretów do przeglądarki.",
+        "PeerTube też używa generycznych klientów; OpenAPI link nie jest walidacją odpowiedzi.",
+        "Wznawianie uploadu to wcześniej znane osobne R22, nie nowy problem."
+      ],
       "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "proposed_fix": "Wspólny kontrakt request/response uploadu/job/playback poza UI, współdzielony silnik z adapterami, kontrola odpowiedzi na granicy i testy prawdziwego HTTP zgodne z kontraktem.",
+      "acceptance_test": "Niezgodna zmiana pola/statusu/JSON zatrzymuje kontrolę kontraktu przed wdrożeniem; UI, panel i Studio uzgodnione z rzeczywistą odpowiedzią, nie wyłącznie mockiem.",
+      "independent_review": "PENDING",
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "evidence_level": "A_ACTUAL_STUDIO_JSON_CLIENT_WITH_SYNTHETIC_FETCH_B_DUPLICATED_CLIENT_CONTRACTS"
     },
     {
       "id": "R22",
@@ -1124,6 +1137,50 @@
       "retest": null,
       "created_at": "2026-11-01",
       "deployment_scope": "CREATOR_ACCOUNT_CLEANUP_AND_PUBLIC_PROFILE;PRODUCTION_OCCURRENCE_UNVERIFIED"
+    },
+    {
+      "id": "R34",
+      "kind": "DLUG_ARCHITEKTONICZNY_NIE_PODATNOSC_BEZPIECZENSTWA",
+      "title": "Cykliczne wejścia modułów i kontekst utrudniają izolację infrastruktury",
+      "priority": "P2_PRZED_SZERSZYM_ROZWOJEM_KONTRAKTOW_I_MODULOW",
+      "baseline_priority_and_evidence": "NEW: P2 architecture debt; source dependency graph and actual context wiring with explicit constructor probe",
+      "status": "POTWIERDZONE_JAKO_SPRZEZENIE_STRUKTURALNE",
+      "evidence_level": "A_ACTUAL_CONTEXT_IMPORT_CONSTRUCTOR_PROBE_AND_B_TRANSPILE_STATIC_DEPENDENCY_GRAPH",
+      "note": "Graf po transpile ma SCC 77 plików, a video/channel publiczne index tworzą jawny cykl. Oba mają statyczną osiągalność 269 plików i lib/prisma. Sam import AppContext inicjalizuje domyślny klient-probe przed przekazaniem własnego DB. Nie wykazano błędu produkcji, rozmiaru bundle ani kary wydajności.",
+      "source_report": "obszary/D02-ARCHITEKTURA-I-UTRZYMYWALNOSC.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D02",
+        "D18"
+      ],
+      "impact_plain_language": "Zmiana lub import małego fragmentu wideo może wymagać szerszego otoczenia modułów i utrudniać proste, izolowane sprawdzenie. Wstrzykiwanie bazy jest możliwe, ale jej domyślna inicjalizacja następuje wcześniej.",
+      "conditions": "Zaobserwowane źródła i izolowana ewaluacja CommonJS w VM; graf ESNext po elision nie jest produkcyjnym bundlerem Next/SWC.",
+      "evidence_paths": [
+        "obszary/D02-ARCHITEKTURA-I-UTRZYMYWALNOSC.md",
+        "ZALEZNOSCI-MODULOW.csv",
+        "SCENARIUSZE-ARCHITEKTURA.csv",
+        "evidence/batch12-review.json",
+        "evidence/architecture-graph.json",
+        "evidence/architecture-import-probe.json",
+        "tools/architecture-graph.cjs",
+        "tools/architecture-import-probe.cjs"
+      ],
+      "counterarguments": [
+        "Cykle nie dowodzą awarii; bundler może usunąć nieużywane eksporty, nie zmierzono cold start/bundle.",
+        "Modularny monolit jest rozsądny dla kilkunastu twórców; nie zaleca się automatycznie mikroserwisów.",
+        "Publiczny authz index i bezpośredni helper widoczności są izolowane od domyślnej bazy w kontrolach.",
+        "DurableJobStore już rozdziela port od implementacji — istnieje lokalny wzorzec do wykorzystania.",
+        "Wstrzyknięta baza w kontekście jest respektowana; problemem jest sprzężenie inicjalizacji, nie użycie cudzej bazy.",
+        "Brak niezależnego drugiego przeglądu i pełnej aplikacji."
+      ],
+      "standard_refs": [],
+      "proposed_fix": "Stopniowo wydzielić wąskie publiczne wejścia dla czystych reguł/kontraktów i operacji serwerowych; tworzenie domyślnej infrastruktury w miejscu składania aplikacji. Rozliczać cykle i importy AST, zachować jawne wyjątki zamiast masowo zakazywać wszystkich importów.",
+      "acceptance_test": "Uzgodnione czyste wejścia importują się i wykonują bez inicjalizacji DB/SDK; podanie testowego DB nie tworzy domyślnego klienta. Konkretna pętla video/channel przerwana lub jawnie ograniczona z testem, a reguły cykli/importów nie rozszerzają długu. Integracje zweryfikowane osobno.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "deployment_scope": "STRUCTURAL_ARCHITECTURE_AND_TEST_ISOLATION;PRODUCTION_FAILURE_UNVERIFIED",
+      "id_history_note": "R34 first registered in batch12. Batch10 initial export label R34 was provisional, folded into existing R16 before registry insertion; do not confuse those artifacts."
     }
   ]
 }

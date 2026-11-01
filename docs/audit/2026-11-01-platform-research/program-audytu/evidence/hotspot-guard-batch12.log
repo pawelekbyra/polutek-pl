@@ -1,0 +1,5 @@
+Hotspot guard failed: file size budget exceeded. Split the module or add a documented temporary exception.
+- app/components/ChannelHome.tsx: 471 lines > 470 (client-component) — Watch-page shell; grew by the playlist context (docs/architecture/playlists.md: queue state, shallow switch shared with the sidebar). The queue logic itself lives in app/components/playlists/.
+- app/components/premium-pass/PassCheckoutSheet.tsx: 517 lines > 450 (client-component)
+- app/components/studio/StudioUploadWizard.tsx: 501 lines > 450 (client-component)
+- app/components/studio/StudioVideoEditor.tsx: 515 lines > 450 (client-component)

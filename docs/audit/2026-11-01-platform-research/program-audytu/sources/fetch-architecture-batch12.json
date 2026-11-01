@@ -1,0 +1,18 @@
+[
+  {
+    "date": "2026-11-01",
+    "file": "typescript-38-release-notes.md",
+    "url": "https://raw.githubusercontent.com/microsoft/TypeScript-Website/v2/packages/documentation/copy/en/release-notes/TypeScript%203.8.md",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "eee328132a62cd5e8e6c0beda74084be93240b0319bf3da7effb48be67f630f8"
+  },
+  {
+    "date": "2026-11-01",
+    "file": "typescript-website-LICENSE",
+    "url": "https://raw.githubusercontent.com/microsoft/TypeScript-Website/v2/LICENSE",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "d6239afa918961b465b07bf7411cbe34ff6685854f58553db7966f4881a0211f"
+  }
+]

@@ -128,3 +128,14 @@
 - Dwa istniejące pliki Vitest: jeden passed (22 assertions), jeden zablokowany Prisma przed rejestracją; globalny exit 1. Pełnego zestawu/generowania nie ponawiano.
 - Cenniki R2/Workers pobrano online HTTP 200, CC BY 4.0. Model ma trzy poziomy widzów, sześć osi wrażliwości, warianty twórców i 10 kontroli arytmetyki. Główny wariant ~582 USD/miesiąc tylko wybrane R2+Workers; pozostałe koszty nieoszacowane. Brak faktury i benchmarku CPU/bitrate/cache.
 - PeerTube: 13 źródeł częściowo, konkretne kolejki/runnery/wektor wyszukiwania/CTE/pule/repliki z ograniczeniami. Bez runtime i równego benchmarku. 13 obszarów rozpoczętych, 5 niezbadanych, zero zamkniętych; ASVS 51/294, wejścia 70/210. Następnie D02.
+
+## 1 listopada 2026 — partia 12: architektura, granice i kontrakty
+
+- Rozpoczęto D02. Przegląd wybranych fragmentów 52 plików; mechaniczny graf AST 1701 plików TS/TSX nie jest ręcznym audytem ani typecheck. 32 katalogi modułów z shared, 31 index. Wszystkie źródła zgodne z baseline.
+- Nowy R34: cykliczne publiczne wejścia modułów i inicjalizacja domyślnego DB przed injection. Jedna SCC 77 plików w grafie po transpile, jawny krótki cykl video/channel, osiągalność po 269 nakładających się plików. Konstruktor-probe w VM wywołany raz przy imporcie AppContext, własna baza jest respektowana. To dług architektoniczny, bez udowodnionej awarii/bundle/wycieku.
+- R34 pierwszy raz w rejestrze; historyczny roboczy eksport R34 z initial JSON partii 10 był wcześniej przypisany R16 i nie był ustaleniem rejestru. Zachowano stare dowody bez zmiany bytes.
+- R21 mocniejszy: rzeczywisty studioApi na syntetycznym fetch zwraca zmieniony JSON/null bez schematu; poprawne 200/403 kontrolne działają. Brak dowodu niezgodności działającego backendu, R22 nie odkryto ponownie.
+- Bramka architektury exit 0; dziewięć syntetycznych prób pokazuje jej granice (dynamiczne importy/cykle/komentarz authorize). Hotspots exit 1 dla czterech komponentów, w tym jednego o jedną linię. Nie uznano LOC za samodzielny defekt funkcji ani nie naprawiano aplikacji.
+- Trzy istniejące pliki Vitest, 12/12 passed, exit 0 podzbioru. 12 modułów TS wykonanych w VM i 17 obserwacji komponentów/bramki. Zero pełnego HTTP/SQL/Next/Prisma. Bez ponawiania pełnego CI, generowania i npm audit.
+- 18 źródeł PeerTube częściowo, kontrakty w pakietach i OpenAPI/TS references oraz ograniczenia: barrels, modele w controllerach, strict=false, docUrl/typy bez dowodu walidacji body. Brak runtime, równego grafu i benchmarku. Oficjalne TypeScript type-only import docs i CC BY 4.0 HTTP 200.
+- Rejestr R01–R34; 14 obszarów rozpoczętych/4 niezbadane, żaden zamknięty. ASVS 51/294, wejścia 70/210 bez zaliczenia. Następnie D15, z zachowaniem decyzji wizualnych właściciela.

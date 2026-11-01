@@ -30,7 +30,7 @@ Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-aud
 | [Scenariusze prywatności](program-audytu/SCENARIUSZE-PRYWATNOSC.csv) | 15 obserwacji komponentów, pełny stos niewykonany |
 | [Scenariusze pełnego HTTP](program-audytu/SCENARIUSZE-D03-D04.csv) | 46 planowanych prób; osobne kolumny dla dowodów izolowanych i SQL, powiązania z D06/D07/D08/D11/D14 |
 | [Powierzchnia wejść](program-audytu/POWIERZCHNIA-WEJSC.csv) | Trasy, Server Actions, strony, zdarzenia workerów i wejścia operacyjne do kontroli |
-| [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R33, statusy i przypisanie do obszarów; raport bazowy zachowuje wcześniejsze 22 |
+| [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R34, statusy i przypisanie do obszarów; raport bazowy zachowuje wcześniejsze 22 |
 | [Pokrycie obszarów](program-audytu/POKRYCIE.csv) | Ocena postępu bez ukrywania niezbadanych elementów |
 | [ASVS — 345 wymagań](program-audytu/ASVS-POKRYCIE.csv) | Lista do kwalifikacji i sprawdzania; nie lista zaliczonych testów |
 | [Plan eksperymentów i pomiarów](PLAN-WERYFIKACJI.md) | Dalsze testy runtime, awarie, benchmark i model kosztów |
@@ -113,3 +113,15 @@ PYTHONDONTWRITEBYTECODE=1 python3 docs/audit/2026-11-01-platform-research/progra
 ```
 
 Skrypty zapisują wyniki badania w evidence; SQL wyłącznie temp tables i ROLLBACK. Ponowny benchmark zmieni czasy/hashe archiwum i wymaga nowej partii, nie nadpisywania historycznego dowodu bez adnotacji. Dwa istniejące pliki Vitest dały 22 passed assertions i jeden plik zablokowany przed rejestracją przez Prisma; globalny exit 1. Nie interpretować jako zielonego zestawu.
+
+
+Partia 12: [D02 — architektura i utrzymywalność](program-audytu/obszary/D02-ARCHITEKTURA-I-UTRZYMYWALNOSC.md), [zależności modułów](program-audytu/ZALEZNOSCI-MODULOW.csv), [17 scenariuszy](program-audytu/SCENARIUSZE-ARCHITEKTURA.csv). Nowe R34 opisuje dług strukturalny cyklicznych wejść i inicjalizacji DB przed injection; nie udowodnioną awarię produkcji. R21 rozszerzono o syntetyczną próbę rzeczywistego klienta JSON. Mechaniczny AST 1701 plików nie jest 1701 ręcznymi audytami; wybrane fragmenty 52 plików Polutka i 18 PeerTube. 14 obszarów rozpoczętych, żaden zamknięty.
+
+```bash
+node docs/audit/2026-11-01-platform-research/program-audytu/tools/architecture-graph.cjs
+node docs/audit/2026-11-01-platform-research/program-audytu/tools/architecture-import-probe.cjs
+node docs/audit/2026-11-01-platform-research/program-audytu/tools/api-contract-probe.cjs
+PYTHONDONTWRITEBYTECODE=1 python3 docs/audit/2026-11-01-platform-research/program-audytu/tools/architecture-guard-probe.py
+```
+
+Wymagane istniejące node_modules i Node 22; skrypty wyłącznie badawcze, zapisują evidence. Graf zawiera ścieżki/hashe/zależności, nie treść całego kodu. Probe konstruktora nie jest zainstalowanym klientem Prisma. Bramka architektury przeszła, hotspots nie przeszła (cztery pliki); trzy celowane pliki Vitest dały 12/12 passed. Pełny stos i typecheck nadal niepotwierdzone. R34 ma tu pierwszy wpis rejestru; roboczy eksport R34 w historycznym initial JSON partii 10 był przypisany do istniejącego R16 i nie jest tym nowym ustaleniem.

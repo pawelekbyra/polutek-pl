@@ -1,0 +1,454 @@
+{
+  "date": "2026-11-01",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "7771016f1415423d32720997c73523dfa0276773",
+  "source_review_scope": [
+    {
+      "file": ".github/workflows/ci.yml",
+      "sha256": "1fa10b7c27b247adf30bd47b551d12710163e1c6b1b3ec2215697b7ddf64791a",
+      "scope": "PARTIAL commands/local-CI architecture and hotspots steps/documented workflow; full local CI not executed"
+    },
+    {
+      "file": "app/components/studio/studio-client.ts",
+      "sha256": "3a981dd4e29a66facbccb621196fd66affe6b0d3175a5272159d5dbeedab4576",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "app/components/studio/upload-original.ts",
+      "sha256": "1123222f97220ba566d070bf44041eecce7d0717afe5a06555b61b41fe896fce",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "app/types/video.ts",
+      "sha256": "43a3985f277fc8a88edb69e8fee27954254085a58137beb5cbca3ba5bf1454c3",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "apps/admin/tsconfig.json",
+      "sha256": "b4260a0c9eca75a5ea6e4a8539a05346affc974f0b6559b3d06c3065570628a2",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "docs/architecture/stage-8-cleanup-plan.md",
+      "sha256": "cad04334b0585d041587f79addf7d1bee09a3e3d94d42a895dc9ee591d30699f",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "docs/operations/LOCAL-CI.md",
+      "sha256": "48f41e99dfec1c90a9fb556bfe5c69ce2e9bee986d9c7d22160abc0305cf89ef",
+      "scope": "PARTIAL commands/local-CI architecture and hotspots steps/documented workflow; full local CI not executed"
+    },
+    {
+      "file": "lib/modules/authz/application/authorize.ts",
+      "sha256": "413a71b6f7a34d8312468ce18cd52903acf49578c01ec2c506b34abdbef65190",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/authz/domain/actions.ts",
+      "sha256": "c2dabfc1cafeaba57181973124c2dd83d4e96eb6cf71bbb1331cc5f32aa24373",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/authz/domain/matrix.ts",
+      "sha256": "272fda1181c6f48773efab7eb4be11ff1f9d402c45d48b180cecd48d264292fa",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/authz/domain/policy.ts",
+      "sha256": "aeb1af92943609a25625c965215dc58d516a8630c86ddf707d2d9740f46fa842",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/authz/domain/principal.ts",
+      "sha256": "6f574bd025e6be3b384ed39c586b82b74a3f88c994600c1639b7da512ec3acf9",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/authz/domain/resources.ts",
+      "sha256": "315e32dcb4153a97a6cd9bf462cd3c769b83cfd93274f13613dac280defb0f34",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/authz/index.ts",
+      "sha256": "5608d795bf2371e29a2bafb6b50c916b95f4f82f078fcd78f2a9c6b4b7987722",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/channel/application/channel-layout.service.ts",
+      "sha256": "d92172630f3793ecf08c8e24e1e6239ec13e8f5e0e2f1be8e09f4d93f38ff5cc",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/channel/application/main-channel.service.ts",
+      "sha256": "9b3d9977e8a1cbe5162260e7f28a1d60638e43f5e61b5a72b5a5ec0393bfabd3",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/channel/domain/channel.policy.ts",
+      "sha256": "826aa89d3823d2ebba5a8d00fb6dd2e281587c16455c4385951bc3aa4d9806ea",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/channel/index.ts",
+      "sha256": "c887281ddc9674d292d78167acd9c190c1a9a5ea564f06017aba585f1e829307",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/channel/infrastructure/creator-content.service.ts",
+      "sha256": "fbe44d2e92911a8177a4f1ea99b2135521446ba52946ab4837f2bbe76a2b46d4",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/media/application/default-thumbnail.service.ts",
+      "sha256": "c29a885acdeeea2c8ca5afff7b948146d31483ea6dfc3046134d58b7fbdaba00",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/media/index.ts",
+      "sha256": "6b791b6fce902c0eeabc18b60e0e634a4916d4f1153f1794d57db7bc82856800",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/media/infrastructure/thumbnail-response.service.ts",
+      "sha256": "7279cfc65fae69143adaf16fd9305837e1c0bddd368cdd97085bd54e60656531",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/privacy/index.ts",
+      "sha256": "b6c896078d4f7aad283fa4c2098d810ce3f62e72a202bff3801ee2c068b31079",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/shared/app-context.ts",
+      "sha256": "27773c8d3ec5204d0bfd8832178d78644fb4a46d501fd759618bc10286c8e711",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/shared/app-error.ts",
+      "sha256": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/shared/db.ts",
+      "sha256": "9e7cb95bd7baaca620b0f4b330f6254a4d18a6438ceeee568d0567e89147f694",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/shared/durable-job.repository.ts",
+      "sha256": "84ece1fbeecb4a4065d73ebc7ba39c75aa019fbce87b93e2b020e7744cee10b6",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/shared/durable-job.ts",
+      "sha256": "d4be5dc2cd4715532bafb8a72f79954be0597a641f2f6144302e06bbdd1abff8",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/shared/result.ts",
+      "sha256": "b6720e5acb2cbd0b60c49c4faa55421470a8cf98f1ff101ccc5d6029900fd6b7",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/users/domain/user.errors.ts",
+      "sha256": "c551ee841aa0562a135060857a992c1a151a66a78d83f264919c3858b7ed82e6",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/users/domain/user.policy.ts",
+      "sha256": "e325af848550814e3535460e010c9fd08f99056df6c3941299449eb426c25c6e",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/video/application/get-public-video-list.use-case.ts",
+      "sha256": "0cdd7abbc56c0ab671094327b788b15d8d532732d06229dfbc6415c0032eda9f",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/video/domain/public-visibility.ts",
+      "sha256": "1504ea35108fc360b3ea89b9100701a9acb67def65d0ca97e40ee7e1c04a9e96",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/video/domain/video-visibility.ts",
+      "sha256": "f453481e0b1b4798291fa7ff07ccb375b46b62f76ba466ba041f05440d40f7e9",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/video/domain/video.dto.ts",
+      "sha256": "9b50e67a22ddf003c5351f90a660d18f93ea81d4f148cbefcbd2f9f4fc63ba43",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/video/index.ts",
+      "sha256": "073eecc70deff64f591134e4d0c2e968fdfa8ec82c864d899d7d812369e5669f",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/video/infrastructure/video-content.service.ts",
+      "sha256": "cc746419c3d37822fd25e06f7e3104dea46171ed18ac6bbe903857e249fe93d1",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/modules/video/infrastructure/video.repository.ts",
+      "sha256": "ff10ebcab2f0acefeff5fc5ed11da1f37c9e135838471e704aecda1e58fe1049",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/prisma.ts",
+      "sha256": "036a65c0323a8bd563efdd33a151f25bcb22bbbad4994a481cfb3d4b3b63706c",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "lib/video-upload/multipart-uploader.ts",
+      "sha256": "317a47a73f2935032aae6bf70709e4c5ce29f2abdac7fa5c0c6d8a75f0f38e33",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "package.json",
+      "sha256": "402fa1299a550cb4ee8905c2bb5ff31f086b38396125e5dd9e7b33b54ea165b7",
+      "scope": "PARTIAL commands/local-CI architecture and hotspots steps/documented workflow; full local CI not executed"
+    },
+    {
+      "file": "scripts/check-architecture.ts",
+      "sha256": "e0b9dfba99a10998c27ee0bd4a6df43c40042e35a2660b9ebbbf6dbbdcc390f5",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "scripts/check-hotspots.ts",
+      "sha256": "3ff22a4cb41c904b0eccb625de5636850c66fe2fd5c3eb00cabb2c9caeea0455",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "scripts/ops/local-ci.mjs",
+      "sha256": "938c1865d2077067e7d8754d03292d305015d9b710893265856a709e724f3cd1",
+      "scope": "PARTIAL commands/local-CI architecture and hotspots steps/documented workflow; full local CI not executed"
+    },
+    {
+      "file": "tests/unit/api-contracts.test.ts",
+      "sha256": "5255105ff6cca29a7782f8ceeaf1310d0a855b19d09effb4217e27ef506f9d5d",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "tests/unit/canonical-boundaries.test.ts",
+      "sha256": "1f299eebf8fe9e646d19f8f6516b07c557189028f96c9a0b23947739f348ac31",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "tests/unit/modules/authz/schema-contract.test.ts",
+      "sha256": "4ae6527ff2182538b1fab20a504e25f106354611a8adbbca2f32b05b3ebd5282",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "tests/unit/modules/email/email-boundary.test.ts",
+      "sha256": "a6eb82d97682459db276a74192758f993ff502493327d563046a3a9d47950884",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "tests/unit/modules/users/user-errors.test.ts",
+      "sha256": "3a715cd3ef933a0e4cc4c719f5e0068ac07734fbbd9f90a9f067d2ac003e2289",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "tests/unit/modules/users/user-policy.test.ts",
+      "sha256": "5aa068640c3d729c6ff9258b95d4934064a73155f6a1cddbeeb0465b3e0ea905",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "tests/unit/studio/upload-original.test.ts",
+      "sha256": "815fd179a07db87bd0620a08864a45a0e4ece8d54d3937d589d746fe9cc41066",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    },
+    {
+      "file": "tsconfig.json",
+      "sha256": "33848d661323b8c9e79a8f56925df5fe28a0615aefb41f9bed4f58036aa7c5f7",
+      "scope": "PARTIAL selected imports/exports/interfaces/guards/dependency injection/response cast/test assertions; not whole-file audit. Large UI files counted mechanically, not manually reviewed."
+    }
+  ],
+  "mechanical_AST_files": 1701,
+  "mechanical_AST_is_manual_review": false,
+  "graph_counts": {
+    "files": 1701,
+    "application_files": 1133,
+    "modules": 32,
+    "source_import_export_edges": 7888,
+    "transpiled_edges": 6947,
+    "file_cycles_emitted": 1,
+    "file_cycles_declared_including_types": 2,
+    "module_cycles": 1,
+    "unresolved_local": 33,
+    "parse_diagnostics": 0
+  },
+  "graph_known_resolution_limits": {
+    "existing_CSS_outside_TS_resolver": 31,
+    "generated_Next_declarations_not_available": 2,
+    "unexplained_local_resolution_errors": 0
+  },
+  "module_directories": 32,
+  "public_index_files": 31,
+  "shared_has_no_public_index": true,
+  "actual_TS_modules_unique": 12,
+  "generated_prisma_client_executed": false,
+  "import_probe_observations": 4,
+  "import_probe_external_boundary": "PrismaClient constructor probe only; no methods/engine/DB, in isolated VM, no node_modules replacement",
+  "guard_probe_observations": 9,
+  "guard_probe_exit": 0,
+  "contract_probe_observations": 4,
+  "contract_probe_real_HTTP": false,
+  "application_guard_runs": {
+    "architecture": {
+      "exit_code": 0,
+      "log": "evidence/architecture-guard-batch12.log",
+      "authz_checked_files": 34,
+      "authz_exempt_files": 32,
+      "admin_files_checked": 166
+    },
+    "hotspots": {
+      "exit_code": 1,
+      "log": "evidence/hotspot-guard-batch12.log",
+      "exceeded_files": [
+        {
+          "file": "app/components/ChannelHome.tsx",
+          "counted_lines": 471,
+          "limit": 470
+        },
+        {
+          "file": "app/components/premium-pass/PassCheckoutSheet.tsx",
+          "counted_lines": 517,
+          "limit": 450
+        },
+        {
+          "file": "app/components/studio/StudioUploadWizard.tsx",
+          "counted_lines": 501,
+          "limit": 450
+        },
+        {
+          "file": "app/components/studio/StudioVideoEditor.tsx",
+          "counted_lines": 515,
+          "limit": 450
+        }
+      ],
+      "functional_bug_or_security_proof": false
+    }
+  },
+  "targeted_vitest": {
+    "exit_code": 0,
+    "passed_files": 3,
+    "registered_and_passed": 12,
+    "failed_or_pending": 0,
+    "full_suite_repeated": false,
+    "command": "PATH=<Node22>/bin:$PATH node node_modules/vitest/vitest.mjs run tests/unit/modules/email/email-boundary.test.ts tests/unit/modules/users/user-policy.test.ts tests/unit/modules/users/user-errors.test.ts --maxWorkers=1 --reporter=json --outputFile=<evidence>/architecture-targeted-vitest.json"
+  },
+  "explicit_cycle": [
+    "lib/modules/video/index.ts",
+    "lib/modules/video/application/get-public-video-list.use-case.ts",
+    "lib/modules/channel/index.ts",
+    "lib/modules/channel/application/channel-layout.service.ts",
+    "lib/modules/video/index.ts"
+  ],
+  "video_public_index_path_to_prisma": [
+    "lib/modules/video/index.ts",
+    "lib/modules/video/application/public-search.service.ts",
+    "lib/prisma.ts"
+  ],
+  "new_distinct_findings": [
+    "R34"
+  ],
+  "existing_finding_extended": "R21",
+  "R34_id_note": "First registry insertion here is architecture debt. Batch10 initial provisional export R34 was never registered and was folded into existing R16. Earlier raw JSON stays unchanged.",
+  "source_observations_not_new_vulnerabilities": [
+    "Four LOC budget failures",
+    "Guard fitness synthetic examples",
+    "Eight shared DTO dependencies on app/types all elided in transpiled graph; no runtime UI leak inferred",
+    "Three domain imports use Prisma enums, not evidence of DB connection"
+  ],
+  "peertube_partial_review": {
+    "sha": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
+    "files": [
+      {
+        "file": "support/doc/development/server.md",
+        "sha256": "2041cec086238d11312da060eb81556f6cd7976fe8c62d196b8d44947b0acc95"
+      },
+      {
+        "file": "support/doc/development/lib.md",
+        "sha256": "7eedbc21213b18150febdc02f70e5ca2f0163fd495fb282f85853158df450c4d"
+      },
+      {
+        "file": "packages/models/package.json",
+        "sha256": "66948b91cfa273da45090e7c86859d60a8ed08ec404a103d375dd55f14f9cfea"
+      },
+      {
+        "file": "packages/models/src/index.ts",
+        "sha256": "f3d9250e3b7c6cd1e35903aa16080be4de29f50b442446699ab027458cdc38cd"
+      },
+      {
+        "file": "packages/models/src/videos/video.model.ts",
+        "sha256": "c8078bbeda8a8d8897d8c46f5cf795e6a7d75cd12949a38e95f6e829a58bbde7"
+      },
+      {
+        "file": "packages/models/src/videos/video-create.model.ts",
+        "sha256": "5e756c42734ad0769383ba2aef75c1529d102025c4b3d84d3b743fb60d687bc0"
+      },
+      {
+        "file": "packages/models/tsconfig.json",
+        "sha256": "428ad4623437a4fb18333f4a7cb7d4a4b2d123f7390c02c7d4526441bc62cbfb"
+      },
+      {
+        "file": "packages/core-utils/package.json",
+        "sha256": "92e0ecbb04e05f1c3d3237afffbae5588a5ad4d0bd83a040aacf0d6ab960cfe0"
+      },
+      {
+        "file": "packages/core-utils/src/index.ts",
+        "sha256": "d66fb541697b6164090391188239da2b20c46042323eca4ae614190430a7bfa3"
+      },
+      {
+        "file": "server/tsconfig.json",
+        "sha256": "e456b2c10cf9d91bc900b141a50ee87711e9f7e3eb7fffe8b7963e2f1c053ebc"
+      },
+      {
+        "file": "server/tsconfig.lib.json",
+        "sha256": "20be803056d411c2435f1860e70f19b8086ff2f963ce9621bd4866122f05c882"
+      },
+      {
+        "file": "tsconfig.base.json",
+        "sha256": "a5185208abed329025a8c292aeba0ecdbb70d8dfeeb98f216c5973d6363804f2"
+      },
+      {
+        "file": "server/core/controllers/api/videos/index.ts",
+        "sha256": "eb3eb2fa725be8b24dea406cb4a9b8360de04088e4b2d7dfd653d54a56365f8d"
+      },
+      {
+        "file": "server/core/middlewares/doc.ts",
+        "sha256": "0a1b75c0bd31b865df37a09de59035b9e14c92abf05ec92420b8f91d56c19c89"
+      },
+      {
+        "file": "packages/server-commands/src/videos/videos-command.ts",
+        "sha256": "85eb9d7a2cb2d708b4e4b3034798e3af81b8b7362a8fb2b3ff17d3f41ebd18d3"
+      },
+      {
+        "file": "scripts/ci.sh",
+        "sha256": "d81a383907fa2ae927aef3f03b39a840907798a3860ad65db141d48898a1e4b3"
+      },
+      {
+        "file": "package.json",
+        "sha256": "30c666212359d62450a94e36a0d7951cd85009073688b385a0c63edd0b742b8c"
+      },
+      {
+        "file": "support/doc/api/openapi.yaml",
+        "sha256": "7bf0011bdd74e508f70c41d747cda68869acb4d2d0343293cdd886fbe20533de"
+      }
+    ],
+    "scope": "Selected package exports/dependencies, shared API interfaces, TS references/options, controller imports, OpenAPI link middleware and spec header, ci lint/spec-validation and command wrapper. No full-file sign-off or complete dependency graph.",
+    "executed": false,
+    "benchmark": false,
+    "limitations": [
+      "Uses barrels/controllers-to-model too; no proof cycle free",
+      "Base strict=false/noImplicitAny=false, versus Polutek strict=true declaration; enforcement needs actual checks",
+      "openapiOperationDoc sets docs URL, does not validate response body",
+      "Command generic response types do not establish runtime schema validation",
+      "Separate OpenAPI/models/validators can drift; no round-trip validation executed"
+    ]
+  },
+  "full_HTTP_or_SQL_executed": false,
+  "production_access": false,
+  "independent_review": "PENDING"
+}

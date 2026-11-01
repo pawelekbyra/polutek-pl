@@ -1,0 +1,69 @@
+{
+  "date": "2026-11-01",
+  "finding": "R21",
+  "actual_source": "app/components/studio/studio-client.ts",
+  "sha256": "3a981dd4e29a66facbccb621196fd66affe6b0d3175a5272159d5dbeedab4576",
+  "observations": [
+    {
+      "case": "correct_success_shape",
+      "synthetic_status": 200,
+      "injected_fetch": true,
+      "request": {
+        "credentials": "same-origin"
+      },
+      "returned": {
+        "originalId": "synthetic-original",
+        "partSize": 16777216,
+        "partCount": 1
+      },
+      "threw": false,
+      "error": null
+    },
+    {
+      "case": "renamed_success_field_not_rejected",
+      "synthetic_status": 200,
+      "injected_fetch": true,
+      "request": {
+        "credentials": "same-origin"
+      },
+      "returned": {
+        "renamedOriginalId": "synthetic-original",
+        "partSize": 16777216,
+        "partCount": 1
+      },
+      "threw": false,
+      "error": null
+    },
+    {
+      "case": "invalid_json_success_returns_null",
+      "synthetic_status": 200,
+      "injected_fetch": true,
+      "request": {
+        "credentials": "same-origin"
+      },
+      "returned": null,
+      "threw": false,
+      "error": null
+    },
+    {
+      "case": "forbidden_error_control",
+      "synthetic_status": 403,
+      "injected_fetch": true,
+      "request": {
+        "credentials": "same-origin"
+      },
+      "returned": null,
+      "threw": true,
+      "error": {
+        "name": "StudioApiError",
+        "status": 403,
+        "code": "FORBIDDEN"
+      }
+    }
+  ],
+  "limitations": [
+    "No real server/HTTP/WAF response observed; synthetic fetch/Response only",
+    "No proof actual backend returns wrong schema",
+    "TypeScript generic T is erased; shared schemas and end-to-end contract enforcement remain to assess"
+  ]
+}
