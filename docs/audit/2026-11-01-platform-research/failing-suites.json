@@ -1,0 +1,926 @@
+[
+  [
+    "tests/integration/email-event-idempotency.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/integration/launch-candidate-critical-path.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/access-source-of-truth.test.ts",
+    "Cannot read properties of undefined (reading 'PUBLIC')\n"
+  ],
+  [
+    "tests/unit/admin-video-payload.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/api-route-smoke.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/auth-route-boundaries-dynamic.test.ts",
+    "[vitest] There was an error when mocking a module. If you are using \"vi.mock\" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock\n"
+  ],
+  [
+    "tests/unit/bola-protection.test.ts",
+    "[vitest] There was an error when mocking a module. If you are using \"vi.mock\" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock\n"
+  ],
+  [
+    "tests/unit/canonical-boundaries.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/channel-layout-paging.test.ts",
+    "\nTypeError: Cannot read properties of undefined (reading 'PUBLIC')\n    at /workspace/polutek-pl/lib/data/initial-content.ts:24:22\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at VitestModuleEvaluator._runInlinedModule (file:///workspace/polutek-pl/node_modules/vitest/dist/module-evaluator.js:206:4)\n    at VitestModuleRunner.directRequest (file:///workspace/polutek-pl/node_modules/vite/dist/node/module-runner.js:1259:59)\n    at VitestModuleRunner.cachedRequest (file:///workspace/polutek-pl/node_modules/vite/dist/node/module-runner.js:1166:73)\n    at /workspace/polutek-pl/lib/modules/channel/infrastructure/creator-content.service.ts:3:1\n    at VitestModuleEval"
+  ],
+  [
+    "tests/unit/channel-layout-patron-grant.test.ts",
+    "\nTypeError: Cannot read properties of undefined (reading 'PUBLIC')\n    at /workspace/polutek-pl/lib/data/initial-content.ts:24:22\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at VitestModuleEvaluator._runInlinedModule (file:///workspace/polutek-pl/node_modules/vitest/dist/module-evaluator.js:206:4)\n    at VitestModuleRunner.directRequest (file:///workspace/polutek-pl/node_modules/vite/dist/node/module-runner.js:1259:59)\n    at VitestModuleRunner.cachedRequest (file:///workspace/polutek-pl/node_modules/vite/dist/node/module-runner.js:1166:73)\n    at /workspace/polutek-pl/lib/modules/channel/infrastructure/creator-content.service.ts:3:1\n    at VitestModuleEval"
+  ],
+  [
+    "tests/unit/channel-layout-upcoming-section.test.ts",
+    "\nTypeError: Cannot read properties of undefined (reading 'PUBLIC')\n    at /workspace/polutek-pl/lib/data/initial-content.ts:24:22\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at VitestModuleEvaluator._runInlinedModule (file:///workspace/polutek-pl/node_modules/vitest/dist/module-evaluator.js:206:4)\n    at VitestModuleRunner.directRequest (file:///workspace/polutek-pl/node_modules/vite/dist/node/module-runner.js:1259:59)\n    at VitestModuleRunner.cachedRequest (file:///workspace/polutek-pl/node_modules/vite/dist/node/module-runner.js:1166:73)\n    at /workspace/polutek-pl/lib/modules/channel/infrastructure/creator-content.service.ts:3:1\n    at VitestModuleEval"
+  ],
+  [
+    "tests/unit/comment-reactions-route.test.ts",
+    "[vitest] There was an error when mocking a module. If you are using \"vi.mock\" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock\n"
+  ],
+  [
+    "tests/unit/comments-privacy.test.ts",
+    "Prisma.validator is not a function\n"
+  ],
+  [
+    "tests/unit/comments-route.test.ts",
+    "[vitest] There was an error when mocking a module. If you are using \"vi.mock\" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock\n"
+  ],
+  [
+    "tests/unit/content-visibility.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/home-viewer-data.test.ts",
+    "[vitest] There was an error when mocking a module. If you are using \"vi.mock\" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock\n"
+  ],
+  [
+    "tests/unit/legal-docs-consistency.test.ts",
+    "Prisma.validator is not a function\n"
+  ],
+  [
+    "tests/unit/media-source-safety.test.ts",
+    "Cannot read properties of undefined (reading 'PUBLIC')\n"
+  ],
+  [
+    "tests/unit/notifications-polish.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/patron-grant-truth.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/patron-tier-comments-sign-in.test.ts",
+    "Prisma.validator is not a function\n"
+  ],
+  [
+    "tests/unit/playback-chapters.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/playback-denied-subtitle-leak.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/playback-premiere-gate.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/playback-protected-captions.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/playback-self-hls.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/primary-playable-asset.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/r7-inventory-audit.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/sitemap-security.test.ts",
+    "Cannot read properties of undefined (reading 'PUBLIC')\n"
+  ],
+  [
+    "tests/unit/subscriptions-route.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/unsubscribe-page.test.tsx",
+    "Cannot read properties of undefined (reading 'PUBLIC')\n"
+  ],
+  [
+    "tests/unit/video-publish-idempotency.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/video-upload-flow.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-analytics/components.test.tsx",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-analytics/domain.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-analytics/live-route.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-analytics/live.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-analytics/migration.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-analytics/morning-report.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-analytics/series.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-analytics/use-cases.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-analytics/world-map.test.tsx",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-analytics/world.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-app/access-guard.test.ts",
+    "[vitest] There was an error when mocking a module. If you are using \"vi.mock\" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock\n"
+  ],
+  [
+    "tests/unit/admin-app/access-proxy.test.ts",
+    "[vitest] There was an error when mocking a module. If you are using \"vi.mock\" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock\n"
+  ],
+  [
+    "tests/unit/admin-app/admin-enroll.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-app/community-actions.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-app/community-export-route.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-app/components.test.tsx",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-app/proxy.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-app/tresci-actions.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-content/captions-migration.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-content/files.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-content/media-uploads.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-phase3/channel-owner.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-phase3/comms-actions.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-phase3/comms.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-phase3/default-thumbnail.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-phase3/gate-audit.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-phase3/integrations.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-phase3/r2-diagnostics.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-phase3/revenue-actions.test.ts",
+    "[vitest] There was an error when mocking a module. If you are using \"vi.mock\" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock\n"
+  ],
+  [
+    "tests/unit/admin-phase3/security-actions.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-phase3/translator.test.ts",
+    "Cannot read properties of undefined (reading 'PUBLIC')\n"
+  ],
+  [
+    "tests/unit/admin-overview/overview-use-cases.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-overview/server-headroom.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/admin-overview/time-and-rules.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/api/access-route.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/api/media-source-route.test.ts",
+    "[vitest] There was an error when mocking a module. If you are using \"vi.mock\" factory, make sure there are no top level variables inside, since this call is hoisted to top of the file. Read more: https://vitest.dev/api/vi.html#vi-mock\n"
+  ],
+  [
+    "tests/unit/api/nickname-available-route.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/api/playback-event-route.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/api/user-language-route.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/auth/onboarding-enforcement.test.ts",
+    "Cannot read properties of undefined (reading 'VISIBLE')\n"
+  ],
+  [
+    "tests/unit/cron/prune-playback-sessions.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/cron/purge-deleted-comments.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/cron/stripe-reconciliation.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/launch/content-diagnostics.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/audit.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/media.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/users.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/privacy/playback-client-hash-routes.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/privacy/retention-jobs.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/privacy/terms-acceptance.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/security/launch-security-boundaries.test.ts",
+    "Cannot read properties of undefined (reading 'VISIBLE')\n"
+  ],
+  [
+    "tests/unit/services/public-video-search.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/services/video-search-service.test.ts",
+    "\nTypeError: Cannot read properties of undefined (reading 'PUBLIC')\n    at /workspace/polutek-pl/lib/data/initial-content.ts:24:22\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at VitestModuleEvaluator._runInlinedModule (file:///workspace/polutek-pl/node_modules/vitest/dist/module-evaluator.js:206:4)\n    at VitestModuleRunner.directRequest (file:///workspace/polutek-pl/node_modules/vite/dist/node/module-runner.js:1259:59)\n    at VitestModuleRunner.cachedRequest (file:///workspace/polutek-pl/node_modules/vite/dist/node/module-runner.js:1166:73)\n    at /workspace/polutek-pl/lib/modules/video/infrastructure/video-content.service.ts:4:1\n    at VitestModuleEvaluato"
+  ],
+  [
+    "tests/unit/site-stage/site-stage.test.ts",
+    "\nError: @prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n    at new PrismaClient (/workspace/polutek-pl/node_modules/.prisma/client/default.js:43:11)\n    at prismaClientSingleton (/workspace/polutek-pl/lib/prisma.ts:4:10)\n    at /workspace/polutek-pl/lib/prisma.ts:13:44\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at VitestModuleEvaluator._runInlinedModule (file:///workspace/polutek-pl/node_modules/vitest/dist/module-evaluator.js:206:4)\n    at VitestModuleRunner.directRequest (file:///workspace/polutek-pl/node_modules/vite/dist/node/module-runner.js:1259:59)\n    at VitestModuleRunner.cachedRequest (file:///works"
+  ],
+  [
+    "tests/unit/syndication/channel-feed-route.test.ts",
+    "Cannot read properties of undefined (reading 'PUBLIC')\n"
+  ],
+  [
+    "tests/unit/syndication/embed-eligibility.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/syndication/embed-page.test.tsx",
+    "Cannot read properties of undefined (reading 'PUBLIC')\n"
+  ],
+  [
+    "tests/unit/syndication/oembed.test.ts",
+    "Cannot read properties of undefined (reading 'PUBLIC')\n"
+  ],
+  [
+    "tests/unit/translations/domain.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/video-pipeline/channel-limits.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/video-pipeline/finalize-self-hls.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/api/payments/payment-status-route.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/api/resend/resend-webhook-route.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/access/check-video-access.use-case.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/admin-community/community.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/audit/get-audit-logs.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/audit/record-audit-event.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/authz/authorize.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/authz/channel-membership-roles.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/authz/schema-contract.test.ts",
+    "\nTypeError: Cannot convert undefined or null to object\n    at Function.values (<anonymous>)\n    at /workspace/polutek-pl/tests/unit/modules/authz/schema-contract.test.ts:12:54\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n "
+  ],
+  [
+    "tests/unit/modules/channel/active-channel.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/channel/admin-channel.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/channel/channel-about.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/channel/channel-avatar-source.test.tsx",
+    "Cannot read properties of undefined (reading 'PUBLIC')\n"
+  ],
+  [
+    "tests/unit/modules/channel/channel-certification.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/channel/channel-lifecycle.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/channel/channel-moderation.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/channel/channel-videos-page.test.ts",
+    "Cannot read properties of undefined (reading 'PUBLIC')\n"
+  ],
+  [
+    "tests/unit/modules/channel/channel.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/channel/content-report-concurrency.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/channel/content-report.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/channel/main-channel-by-id.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/channel/moderation-appeals.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/channel/moderation-notice.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/channel/resync-subscribers.use-case.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/creator-analytics/snapshot-cron.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/creator-analytics/use-cases.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/comments/admin-comment-use-cases.test.ts",
+    "Prisma.validator is not a function\n"
+  ],
+  [
+    "tests/unit/modules/comments/channel-ban.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/comments/comment-anonymization.test.ts",
+    "Prisma.validator is not a function\n"
+  ],
+  [
+    "tests/unit/modules/comments/comment-badge-safety.test.ts",
+    "Prisma.validator is not a function\n"
+  ],
+  [
+    "tests/unit/modules/comments/comment-notifications.test.ts",
+    "\nAssertionError: expected \"vi.fn()\" to be called 1 times, but got 0 times\n    at /workspace/polutek-pl/tests/unit/modules/comments/comment-notifications.test.ts:64:32\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20"
+  ],
+  [
+    "tests/unit/modules/comments/comment-policy.test.ts",
+    "Cannot read properties of undefined (reading 'VISIBLE')\n"
+  ],
+  [
+    "tests/unit/modules/comments/comment-visibility.test.ts",
+    "Prisma.validator is not a function\n"
+  ],
+  [
+    "tests/unit/modules/comments/comment.repository.test.ts",
+    "Prisma.validator is not a function\n"
+  ],
+  [
+    "tests/unit/modules/comments/comments-mode.test.ts",
+    "Prisma.validator is not a function\n"
+  ],
+  [
+    "tests/unit/modules/comments/core-flows.test.ts",
+    "Prisma.validator is not a function\n"
+  ],
+  [
+    "tests/unit/modules/comments/creator-reply-authz.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/comments/get-comment-context.test.ts",
+    "Prisma.validator is not a function\n"
+  ],
+  [
+    "tests/unit/modules/comments/list-comment-replies-public-read.test.ts",
+    "Prisma.validator is not a function\n"
+  ],
+  [
+    "tests/unit/modules/comments/moderation-bulk.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/comments/moderation-channel-authz.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/comments/patron-grant-write-access.test.ts",
+    "Prisma.validator is not a function\n"
+  ],
+  [
+    "tests/unit/modules/comments/public-moderation-rights.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/comments/r8-access-inheritance.test.ts",
+    "Prisma.validator is not a function\n"
+  ],
+  [
+    "tests/unit/modules/comments/reaction-idempotency.test.ts",
+    "Prisma.validator is not a function\n"
+  ],
+  [
+    "tests/unit/modules/comments/report-comment.test.ts",
+    "Cannot read properties of undefined (reading 'VISIBLE')\n"
+  ],
+  [
+    "tests/unit/modules/comments/set-reaction-use-cases.test.ts",
+    "Cannot read properties of undefined (reading 'VISIBLE')\n"
+  ],
+  [
+    "tests/unit/modules/comments/update-comment-restrictions.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/email/broadcast-queue.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/email/broadcasts.use-cases.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/email/email-event-lock.repository.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/email/email-templates.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/email/handle-resend-webhook.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/email/send-transactional-email.test.ts",
+    "\n"
+  ],
+  [
+    "tests/unit/modules/health/check-health.use-case.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/media/media-safety-hardening.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/media/protected-caption.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/notifications/notification-render.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/patron/admin-set-supporter.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/patron/grant-patron.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/patron/recalculate-patron-status.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/patron/revoke-patron.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/patron-zone/premium-pass-access.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/patron-zone/premium-pass-config.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/patron-zone/premium-pass-fulfilment.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/patron-zone/premium-pass-method-preview.test.ts",
+    "Cannot read properties of undefined (reading 'PUBLIC')\n"
+  ],
+  [
+    "tests/unit/modules/patron-zone/premium-pass-payments-mode.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/patron-zone/premium-pass-plan.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/playlists/playlist-domain.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/playlists/playlist-manage.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/playlists/playlist-public.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/sales/sales-use-cases.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/sales/split.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/payments/admin-dispute-sync.use-case.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/payments/admin-payments-list.test.ts",
+    "\nTypeError: Cannot read properties of undefined (reading 'SUCCEEDED')\n    at /workspace/polutek-pl/tests/unit/modules/payments/admin-payments-list.test.ts:47:31\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promi"
+  ],
+  [
+    "tests/unit/modules/payments/admin-refund.use-case.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/payments/checkout-route.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/payments/create-checkout-intent-key-sets.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/payments/create-checkout-intent.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/payments/fulfill-payment.use-case.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/payments/payment-settings.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/payments/payment-status.use-case.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/payments/reconcile-key-sets.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/payments/refund-sync.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/payments/stripe-webhook-premium-keys.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/payments/stripe-webhook-route.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/payments/stripe-webhook-signed.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/payments/webhook-out-of-order.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/users/account-deletion-cleanup.use-case.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/users/admin-manage-user.use-case.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/users/admin-user-safety.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/users/export-admin-users.use-case.test.ts",
+    "Prisma.validator is not a function\n"
+  ],
+  [
+    "tests/unit/modules/users/get-admin-user-details.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/users/get-admin-users-stats.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/users/get-user-access-profile.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/users/list-admin-users.test.ts",
+    "Prisma.validator is not a function\n"
+  ],
+  [
+    "tests/unit/modules/watch-progress/video-progress.use-cases.test.ts",
+    "Cannot read properties of undefined (reading 'PENDING')\n"
+  ],
+  [
+    "tests/unit/modules/video/archive-admin-video.use-case.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/cancel-auto-publish.use-case.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/create-admin-video.use-case.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/delete-admin-video.use-case.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/fundraising.test.ts",
+    "Cannot read properties of undefined (reading 'SUCCEEDED')\n"
+  ],
+  [
+    "tests/unit/modules/video/get-admin-video-by-id.use-case.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/get-admin-video-details.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/premiere.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/public-search.service.test.ts",
+    "Cannot read properties of undefined (reading 'PUBLIC')\n"
+  ],
+  [
+    "tests/unit/modules/video/public-video-dto-r2-thumbnail.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/public-visibility.test.ts",
+    "Cannot read properties of undefined (reading 'PUBLIC')\n"
+  ],
+  [
+    "tests/unit/modules/video/record-playback-event.use-case.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/reorder-admin-videos.use-case.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/resync-admin-video-stats.use-case.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/sync-public-thumbnail.service.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/thumbnail-proxy-path.test.ts",
+    "Cannot read properties of undefined (reading 'PUBLIC')\n"
+  ],
+  [
+    "tests/unit/modules/video/thumbnail-public-url-writeback.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/unlist-admin-video.use-case.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/unlisted-never-listed.test.ts",
+    "Cannot read properties of undefined (reading 'PUBLIC')\n"
+  ],
+  [
+    "tests/unit/modules/video/unpublish-admin-video.use-case.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/update-admin-video-premiere.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/update-admin-video.use-case.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/video-asset-selection.test.ts",
+    "\nTypeError: Cannot read properties of undefined (reading 'CLOUDFLARE_STREAM')\n    at asset (/workspace/polutek-pl/tests/unit/modules/video/video-asset-selection.test.ts:10:31)\n    at /workspace/polutek-pl/tests/unit/modules/video/video-asset-selection.test.ts:32:21\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at"
+  ],
+  [
+    "tests/unit/modules/video/video-chapters-update.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/video-content-service-safety-wiring.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/video-dto.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/video-metadata.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/video-playback-route-service.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/video-public-detail.test.ts",
+    "Cannot read properties of undefined (reading 'PUBLIC')\n"
+  ],
+  [
+    "tests/unit/modules/video/video-repository-predicates.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/video-repository-safety.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/video/video.policy.test.ts",
+    "Cannot read properties of undefined (reading 'PUBLIC')\n"
+  ],
+  [
+    "tests/unit/modules/shared/actor.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/subscriptions/email-preference.repository.test.ts",
+    "\nTypeError: Right-hand side of 'instanceof' is not an object\n    at isPrismaErrorCode (/workspace/polutek-pl/lib/utils/db.ts:8:5)\n    at EmailPreferenceRepository.upsertPreference (/workspace/polutek-pl/lib/modules/subscriptions/infrastructure/email-preference.repository.ts:155:11)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at /workspace/polutek-pl/tests/unit/modules/subscriptions/email-preference.repository.test.ts:157:22\n    at file:///workspace/polutek-pl/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20\nTypeError: Right-hand side of 'instanceof' is not an object\n    at isPrismaErrorCode (/workspace/polutek-pl/lib/utils/db.ts:8:5)\n    at EmailP"
+  ],
+  [
+    "tests/unit/modules/subscriptions/list-subscribed-channels.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/subscriptions/signed-unsubscribe.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/subscriptions/subscriptions-route-boundary.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/subscriptions/subscriptions-route-channel.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ],
+  [
+    "tests/unit/modules/subscriptions/subscriptions.use-cases.test.ts",
+    "\nTypeError: Cannot read properties of undefined (reading 'PUBLISHED')\n    at Function.execute (/workspace/polutek-pl/lib/modules/subscriptions/application/list-my-subscriptions.use-case.ts:44:29)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at /workspace/polutek-pl/tests/unit/modules/subscriptions/subscriptions.use-cases.test.ts:381:22"
+  ],
+  [
+    "tests/unit/api/videos/thumbnail/route.test.ts",
+    "@prisma/client did not initialize yet. Please run \"prisma generate\" and try to import it again.\n"
+  ]
+]

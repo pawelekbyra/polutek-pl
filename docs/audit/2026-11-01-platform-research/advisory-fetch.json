@@ -1,0 +1,20 @@
+[
+  {
+    "id": "GHSA-2464-fhr4-w9xw",
+    "exit": 0,
+    "title": "Next.js: Unauthenticated Remote Code Execution in Image Optimization API when SVG files are used \u00b7 GHSA-2464-fhr4-w9xw \u00b7 GitHub Advisory Database \u00b7 GitHub",
+    "error": ""
+  },
+  {
+    "id": "GHSA-wq5f-xc86-pv6w",
+    "exit": 0,
+    "title": "sharp : Vulnerability in librsvg dependency CVE-2026-96889 \u00b7 GHSA-wq5f-xc86-pv6w \u00b7 GitHub Advisory Database \u00b7 GitHub",
+    "error": ""
+  },
+  {
+    "id": "GHSA-mrhx-c7xc-m3w5",
+    "exit": 0,
+    "title": "Zod can exhaust memory while validating oversized constrained collections \u00b7 CVE-2023-54404 \u00b7 GitHub Advisory Database \u00b7 GitHub",
+    "error": ""
+  }
+]

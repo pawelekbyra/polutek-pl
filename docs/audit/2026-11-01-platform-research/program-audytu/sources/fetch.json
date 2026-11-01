@@ -1,0 +1,51 @@
+[
+  {
+    "name": "owasp-asvs",
+    "url": "https://raw.githubusercontent.com/OWASP/ASVS/master/README.md",
+    "exit": 0,
+    "bytes": 11286,
+    "error": ""
+  },
+  {
+    "name": "owasp-wstg",
+    "url": "https://raw.githubusercontent.com/OWASP/wstg/master/README.md",
+    "exit": 0,
+    "bytes": 5175,
+    "error": ""
+  },
+  {
+    "name": "owasp-samm",
+    "url": "https://raw.githubusercontent.com/owaspsamm/core/master/README.md",
+    "exit": 0,
+    "bytes": 754,
+    "error": ""
+  },
+  {
+    "name": "wcag",
+    "url": "https://raw.githubusercontent.com/w3c/wcag/main/README.md",
+    "exit": 0,
+    "bytes": 21432,
+    "error": ""
+  },
+  {
+    "name": "web-vitals",
+    "url": "https://raw.githubusercontent.com/GoogleChrome/web-vitals/main/README.md",
+    "exit": 0,
+    "bytes": 58423,
+    "error": ""
+  },
+  {
+    "name": "slsa",
+    "url": "https://raw.githubusercontent.com/slsa-framework/slsa/main/README.md",
+    "exit": 0,
+    "bytes": 3699,
+    "error": ""
+  },
+  {
+    "name": "peertube-architecture",
+    "url": "https://raw.githubusercontent.com/Chocobozzz/PeerTube/develop/support/doc/development/architecture.md",
+    "exit": 22,
+    "bytes": 0,
+    "error": "curl: (22) The requested URL returned error: 404\n"
+  }
+]

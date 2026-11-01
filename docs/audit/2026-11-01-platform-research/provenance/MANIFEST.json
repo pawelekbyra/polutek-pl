@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-01",
+  "repositories": {
+    "polutek": {
+      "path": "/workspace/polutek-pl",
+      "head": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "status": ""
+    },
+    "peertube": {
+      "path": "/workspace/PeerTube",
+      "head": "fa7d2b5d8a44bbec99159b11e91763f7d2308faa",
+      "status": ""
+    }
+  },
+  "evidence_files": {
+    "BACKLOG.csv": "3c2b1b9417096fa0e404e4668e14d3385fc925ff3eab36f6da1f0c71d6f24b0d",
+    "GHSA-2464-fhr4-w9xw.html": "fb1fa051ab1d077bbead51da2eee9be77e10866c6e2bd3daf4d44e2fdde782d3",
+    "GHSA-mrhx-c7xc-m3w5.html": "8a3438097c7fa67e8ebbfd37d4a4a4c37ee75fe65ebe6da77571e705ad9aabf8",
+    "GHSA-wq5f-xc86-pv6w.html": "e4c0a5830bdd72a1644763317e08be1f8fe3f4cd66a5bf10de8844464724014b",
+    "PLAN-WERYFIKACJI.md": "8c97ea0f95c463c521432fa2e75ad5dc6035e9b411af8ed70388cbaf238c34d9",
+    "RAPORT.md": "10774d67c72955d5f95ff0016d2f02bc41a70d55263b817646816396fed16f9f",
+    "advisory-fetch.json": "46a33168f54966e8bee20f3a80ffdec5ff15f641c37c8de16f4c9525823ba6fa",
+    "architecture.log": "a2a6ceeedf261ee197a748f230eb19a6e6cb8d7758e30ddfaf4a903723f0e005",
+    "checks.json": "8da53565706a70b84a58d2d64bad94676eda8a6957819543bd095ddf05fb7641",
+    "failing-suites.json": "1fad342bba2ef45a64ab2e5feea4446421f6d23ad853f412e467c54937597953",
+    "migrations-sql.json": "abad311a78cfe708d1e4fb2cf260a67478514c162ab0ff7eb6599bacab64720f",
+    "npm-audit-production.json": "198ab46f5667bdf43617fcdcc408a6d6e466971bab99d2182b33aeb8e6b70aeb",
+    "pipeline-experiments.json": "63e45b6d3dfe9b37f570208638a26c780211022f48ef6e73a58f5fa58110a34a",
+    "pipeline-experiments.ts": "12d820bf341fcf7706898613615de08246844206ddfcb38cc70670aebe7a9afa",
+    "prisma-generate-no-engine.log": "7e3d815394eb5c8a343a0fa73816ee8fb965a9765064844520901a1a543decaf",
+    "storage-experiment.json": "8c3b512ece10dcb487d921a5214ce87bc6bcc78ffd9dafcb7cb3d0d3fa8b2146",
+    "storage-experiment.ts": "616ce91e05ae52c5585edc7723d9ccd40aae9c4d3522c6913d7167699c78852f",
+    "typecheck.log": "b19c3b7783efe60c16304de2166909ad21d4e4b6f1709fb728316885c89e4f53",
+    "unit-full.log": "2e373be566ae954fe8edba608404a16b8accfd7cc73e91fdec9c1e25d87f98e1",
+    "vitest-results.json": "65618fac220df5d89a6d6eaf7e50ceaebaa62a32f230b794492ee91f2c82bacc"
+  }
+}

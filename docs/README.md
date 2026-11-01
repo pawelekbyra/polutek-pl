@@ -10,6 +10,7 @@ albo znika w tym samym PR. Historia jest w git.
 | Zasady dla agentów AI, mapa repo, niezmienniki | [`../CLAUDE.md`](../CLAUDE.md) |
 | Opis serwera i sekretów dla agenta (praca bez GitHuba wycofana 2026-10-07) | [`operations/HANDOFF-SERVER-AGENT.md`](operations/HANDOFF-SERVER-AGENT.md) |
 | Otwarte prace, decyzje do podjęcia, kolejność | [`operations/STATUS.md`](operations/STATUS.md) |
+| Trwałe badanie platformy, porównanie z PeerTube i program pełnego audytu (gałąź `docs/polutek-platform-audit`) | [`audit/2026-11-01-platform-research/README.md`](audit/2026-11-01-platform-research/README.md) |
 
 ## Jak to jest zbudowane (`architecture/`)
 
