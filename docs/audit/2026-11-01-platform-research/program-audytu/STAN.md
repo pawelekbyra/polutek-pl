@@ -1,6 +1,6 @@
 # Stan badania — punkt wznowienia
 
-Aktualizacja: 1 listopada 2026. Program v1.0, partia 02: częściowy D03/D04. Tryb: analiza, bez zmian aplikacji i produkcji.
+Aktualizacja: 1 listopada 2026. Program v1.0, partia 03: cofnięcie sesji oraz playlisty i cancel/state. Tryb: analiza, bez zmian aplikacji i produkcji.
 
 ## Cel i decyzje właściciela
 
@@ -15,7 +15,7 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 02: częściowy D03/D04. Tr
 - Polutek: `/workspace/polutek-pl`, `c397b9e548ca2c628e21457ac69d66e54b12ddbd`.
 - PeerTube: `/workspace/PeerTube`, `fa7d2b5d8a44bbec99159b11e91763f7d2308faa`.
 - Program: [PROGRAM.md](PROGRAM.md).
-- Rodzic commitu partii 02: `15dffc0a14139946853699db1d840b4b00155375`. Dowód braku zmian aplikacji: [partia 01](evidence/source-scope.json), [partia 02](evidence/source-scope-batch02.json). SHA finalnego zapisu sprawdzić w historii Git gałęzi. Dodatkowe commity dokumentacyjne nie są automatycznie zmianą badanej implementacji.
+- Rodzic commitu partii 03: `310316505808c759c157c74eba59cdb66a7168fc`. Dowód braku zmian aplikacji: [partia 01](evidence/source-scope.json), [partia 02](evidence/source-scope-batch02.json), [partia 03](evidence/source-scope-batch03.json). SHA finalnego zapisu sprawdzić w historii Git gałęzi. Dodatkowe commity dokumentacyjne nie są automatycznie zmianą badanej implementacji.
 
 ## Gotowe
 
@@ -35,12 +35,17 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 02: częściowy D03/D04. Tr
 14. Osobny eksperyment wykonuje rzeczywisty kod z atrapami: cztery obserwacje tożsamości/Studia, 11 decyzji authorize oraz trzy próby kontekstu publikacji. Potwierdzono R23: finalizer nie przekazuje kanału zadania, więc auto-publish filmu spoza main cicho kończy się przed publikacją. Kontrola z poprawnym kontekstem dochodzi do granicy publikatora. Publikator i aktywacja route nie są realnymi usługami w tym eksperymencie.
 15. R13 potwierdzono jako różnicę polityki świeżości Access/legacy w kodzie; R14 jako fail-open liczników potwierdzone trzema testami. Brak dowodu przejęcia konta lub aktywnej konfiguracji produkcji; niezależny przegląd nadal PENDING. Nowy R23 ma osobny wpis, nie zmienia historycznego raportu 22 ustaleń.
 16. Zapisano [42 scenariusze D03/D04](SCENARIUSZE-D03-D04.csv), każdy HTTP_NIEWYKONANE w znaczeniu kolumny http_status=NIEWYKONANE. Rozpoczęto przegląd 12 rekordów metod tras; pozostałe 267 wejść NIEZBADANE. Stan ASVS: 28 W_TRAKCIE, 317 NIEZBADANE, zero zaliczonych. Pobrano i przeczytano trzy konkretne metody OWASP WSTG v4.2 z HTTP 200.
+17. Partia 03: [43 pliki w częściowym zakresie przeglądu](evidence/batch03-review.json), z nakładaniem się na wcześniejsze partie; nie sumować tego z poprzednią liczbą jako nowych ani kompletnie zaudytowanych plików. Sprawdzono znany mechanizm cache i dodano R24 jako potwierdzony kompromis, nie nowy błąd biblioteki/produkcji.
+18. Rzeczywiste lokalne HTTP Better Auth 1.7.7 z oficjalnym adapterem pamięci: po logout i revoke-other prawidłowy pełny cache cookie nadal rozpoznaje cofniętą sesję; odczyt fresh i samo cookie tokenu odmawiają; po ponad 62 rzeczywistych sekundach replay odmawia. [Skrypt/wynik/ograniczenia](obszary/D03-TOZSAMOSC-I-SESJE.md). Brak Next/Prisma/hooków aplikacji; nie jest to pełna próba Polutka. Pierwsze wykonanie nie zapisało metadanych pakietu; zachowano log, poprawiono skrypt i powtórzono cały eksperyment z exit 0.
+19. [19 obserwacji zasobów](evidence/resource-scope-experiment.json): 12 playlist i 7 cancel/state, rzeczywiste use case'y/authz/repozytoria z atrapą DB. Odmowy dla cudzych zasobów bez zmian stanu, legalne kontrole dodatnie działają. Rollback dotyczy atrapy, nie poziomu izolacji PostgreSQL. Nie powtarzano Vitest; jego wyniki z partii 02 pozostają takie same.
+20. Aktualnie 43 scenariusze pełnego HTTP Polutka (dodano IA-043); wszystkie pełne próby nadal NIEWYKONANE. Osobne kolumny rozróżniają wykonane izolowane HTTP biblioteki i funkcje. Rozpoczęto 25 rekordów wejść, 254 NIEZBADANE. ASVS nadal 28 W_TRAKCIE i 317 NIEZBADANE, zero zaliczonych. Uzupełniono R24 przy wymaganiach cofnięcia sesji i zmian uprawnień.
+21. Oficjalny opis Better Auth v1.7.7 pobrany online potwierdza kompromis cache i środki ograniczające jego wpływ. PeerTube jawnie czyści serwerowy cache i rozsyła unieważnienia; nie testowano tego przy awarii Redis. Otwarte pytania playlist: COUNT pod współbieżnym tworzeniem, lock po ID przed sprawdzeniem kanału, cofnięcie członkostwa między authorize a zapisem. Nie są jeszcze potwierdzonymi usterkami.
 
 `NIEZBADANE` w nowej macierzy oznacza brak zakończonej procedury programu dla całego obszaru. Nie oznacza, że wcześniejsze przeglądy i eksperymenty nie istnieją. Referencje bazowe zapisano oddzielnie.
 
 ## Blokady i niewiadome
 
-- Obserwowany runtime nie dopuszcza `binaries.prisma.sh`; instalacja/generowanie klienta zatrzymuje się na proxy HTTP 403. Reguła była zapisana w draft wcześniej, lecz nie zaobserwowano jej zastosowania. Nie wyłączać weryfikacji TLS/checksum.
+- Obserwowany runtime nie dopuszcza `binaries.prisma.sh`; instalacja/generowanie klienta zatrzymuje się na proxy HTTP 403. [Ponowne pojedyncze sprawdzenie w partii 03](evidence/prisma-network-batch03.json): curl exit 56, odmowa CONNECT 403, brak odpowiedzi docelowego HTTP. Reguła była zapisana w draft wcześniej, lecz nie zaobserwowano jej zastosowania. Nie wyłączać weryfikacji TLS/checksum ani ponawiać całego zestawu testów przy niezmienionych warunkach.
 - Dlatego pełny typecheck/runtime/testy Prisma nie są potwierdzone. Wyników bazowego pełnego Vitest nie interpretować jako w pełni zielonego zestawu ani listy potwierdzonych usterek aplikacji.
 - PeerTube nie był instalowany/uruchamiany. Nie ma porównawczego benchmarku.
 - Nie ustalono konkretnych docelowych progów ruchu, SLO, RPO/RTO i budżetu; trzeba je doprecyzować przy mapie produktu. Samo „duża platforma” nie jest deklaracją pojemności.
@@ -55,7 +60,7 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 02: częściowy D03/D04. Tr
 
 ## Następne działanie
 
-Kontynuować D03/D04 według macierzy: w pierwszej kolejności cofnięcie sesji (replay cookie i 60 s cache) oraz pełne powiązanie videoId/originalId/jobId z kanałem. Najpierw sprawdzić, czy blokada binariów Prisma nadal obowiązuje; nie ponawiać całego Vitest, jeżeli warunki się nie zmieniły. Gdy runtime nadal zablokowany, przejść do przeglądu niezamkniętych wejść: pipeline cancel/state, playlisty, moderacja/bany/odwołania, role i języki panelu oraz Server Actions. Sprawdzić granice tworzenia aktora system, zawieszenie kanału podczas zadania i cofnięcie członkostwa w trakcie zapisu. Każde wejście aktualizować indywidualnie. R23 wymaga drugiego przeglądu i późniejszego testu rzeczywistego workera; nie implementować poprawki w ramach audytu. D01/D03/D04 pozostają W_TRAKCIE. Docelowa skala, SLO i budżet nadal otwarte.
+Kontynuować D03/D04: moderacja/bany/odwołania, role i dozwolone języki panelu oraz Server Actions. Dla R24 przejść od biblioteki do pełnego Polutka dopiero po udanym przygotowaniu Prisma; nie powtarzać samego pomiaru 62 s bez zmiany warunków. W playlistach i cancel/state kontynuować brakujące odczyty/pola, współbieżność i uprawnienia zmienione w trakcie operacji; podstawowe wiązanie identyfikatorów ma już odtwarzalny dowód, nie zaczynać go od nowa. Sprawdzić granice tworzenia aktora system i zawieszenie kanału podczas zadania. R23 wymaga drugiego przeglądu i rzeczywistego workera. Wszystkie pełne scenariusze HTTP nadal otwarte. D01/D03/D04 pozostają W_TRAKCIE. Nie implementować poprawek w ramach audytu; docelowa skala, SLO i budżet nadal otwarte.
 
 Przed rozpoczęciem: odczytać ten plik, PROGRAM.md i właściwe instrukcje repo; porównać bieżący HEAD z podanym wyżej. Nie powtarzać wykonanych testów bez zmiany wersji, diagnozy lub warunków.
 

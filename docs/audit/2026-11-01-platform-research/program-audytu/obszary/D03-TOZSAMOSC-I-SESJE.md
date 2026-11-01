@@ -1,12 +1,12 @@
 # D03 — tożsamość i sesje
 
-1 listopada 2026, partia 02. **W_TRAKCIE.** Badany kod: `c397b9e548ca2c628e21457ac69d66e54b12ddbd`. Nie uruchomiono pełnej aplikacji ani nie sprawdzono produkcyjnej konfiguracji Cloudflare, Google i Better Auth.
+1 listopada 2026, partie 02–03. **W_TRAKCIE.** Badany kod: `c397b9e548ca2c628e21457ac69d66e54b12ddbd`. Nie uruchomiono pełnej aplikacji ani nie sprawdzono produkcyjnej konfiguracji Cloudflare, Google i Better Auth. Partia 03 dodaje rzeczywiste lokalne HTTP samej biblioteki Better Auth.
 
 ## Wniosek dla właściciela
 
 Polutek ma sensowne zabezpieczenia kont: centralne rozpoznawanie użytkownika, ponowny odczyt roli z bazy, osobne konta panelu, weryfikację podpisanych tokenów panelu i kontrolę potwierdzenia użytkownika przy passkey. Tych mechanizmów nie trzeba wyrzucać tylko dlatego, że powstały z pomocą AI.
 
-Nie mamy jednak jeszcze dowodu, że cała ścieżka logowania, odzyskania konta i cofnięcia dostępu działa prawidłowo w przeglądarce. Istotne decyzje wymagające oceny przed otwarciem dużej platformy to: 12-godzinna świeżość potwierdzenia w panelu Access (R13), przepuszczanie prób logowania podczas awarii liczników Redis (R14), 60-sekundowy cache sesji WWW i uznawanie Google za wystarczająco silne logowanie bez osobnego sprawdzenia, czy użyto drugiego składnika. Ostatnie dwie pozycje są pytaniami do weryfikacji, nie nowymi dowiedzionymi przejęciami kont.
+Nie mamy jednak jeszcze dowodu, że cała ścieżka logowania, odzyskania konta i cofnięcia dostępu działa prawidłowo w przeglądarce. Istotne decyzje wymagające oceny przed otwarciem dużej platformy to: 12-godzinna świeżość potwierdzenia w panelu Access (R13), przepuszczanie prób logowania podczas awarii liczników Redis (R14), 60-sekundowy cache sesji WWW (R24) i uznawanie Google za wystarczająco silne logowanie bez osobnego sprawdzenia, czy użyto drugiego składnika. Partia 03 potwierdza mechanizm opóźnienia cofnięcia sesji z R24; nie potwierdza przejęcia konta w produkcji. Siła logowania Google pozostaje pytaniem do weryfikacji.
 
 ## Cztery różne pojęcia administratora
 
@@ -57,15 +57,44 @@ Dodawanie/usuwanie klucza wymaga sesji młodszej niż 24 h. Należy ocenić, czy
 
 [Magazyn liczników auth](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/lib/auth/rate-limit-storage.ts) przy błędzie przepuszcza żądanie, a liczniki zwracają 0. Trzy istniejące testy awarii/timeout przeszły. **R14 potwierdzone w zakresie tego mechanizmu**, nie jako udowodnione przejęcie konta. CAPTCHA i wymaganie hasła pozostają odrębnymi kontrolami; sam kod mówi, że licznik TOTP jest w bazie. Pełnej odporności tych zabezpieczeń przy awarii nie sprawdzono. Dla dużej platformy potrzebny jest test limitów na brzegu, monitorowania awarii i wyboru kontrolowanej degradacji.
 
-## Cofnięcie sesji — otwarta weryfikacja
+## R24 — cofnięcie sesji i 60-sekundowy cache
 
-Cache cookie WWW wynosi 60 s. Bieżący odczyt User chroni przed nieaktualną rolą i `isDeleted` w badanych resolverach, ale sam nie sprawdza, czy konkretny token sesji usunięto z bazy. Trzeba zapisać komplet cookie, wylogować/unieważnić na drugim urządzeniu i odtworzyć stare cookie natychmiast oraz po TTL. Powtórzyć dla resetu hasła, zmiany hasła, usunięcia konta i panelu Access. Nie potwierdzono jeszcze czasu rzeczywistego cofnięcia; nie wolno opisywać go jako „natychmiastowego” na podstawie samego usunięcia wiersza sesji. Nie mylić z tokenami wideo z R07.
+**Partia 03: potwierdzony kompromis projektu, priorytet P2 do oceny polityki.** R24 rejestruje znane zachowanie mechanizmu cache, a nie nowy błąd kryptografii ani dowiedzione przejęcie konta. [Kod operatora](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/lib/modules/users/application/admin-user-safety.use-case.ts#L63) już mówi, że po usunięciu sesji cache może utrzymać zalogowanie przez minutę. Oficjalna [dokumentacja Better Auth v1.7.7](https://github.com/better-auth/better-auth/blob/v1.7.7/docs/content/docs/concepts/session-management.mdx#L235), sprawdzona online, wprost opisuje to ograniczenie i wymienia krótszy TTL lub wyłączenie cache dla wrażliwych operacji jako środki zaradcze. Kopia i [nota MIT](../sources/better-auth-1.7.7-LICENSE.txt) są zachowane; [rejestr pobrania](../sources/fetch-session-batch03.json).
+
+**Co wykonano:** [skrypt](../tools/session-revocation-experiment.mjs) uruchamia Better Auth 1.7.7 z oficjalnym adapterem pamięci na HTTP pod 127.0.0.1. Importuje stałe sesji z kodu Polutka: 30 dni, updateAge 1 dzień, freshAge 1 dzień i cache 60 s. Tworzy tylko sztuczne konto, losowy sekret i hasło. Po prawdziwych żądaniach wylogowania/cofnięcia sesji czeka 62 rzeczywiste sekundy. Nie przestawia zegara. Tokenów, haseł i wartości cookie nie zapisuje w wynikach.
+
+| Próba | Wynik wywołania `/get-session` |
+|---|---|
+| Przed wylogowaniem | Sesja rozpoznana |
+| Zwykły klient po zastosowaniu ciasteczek usuwających z odpowiedzi logout | Brak sesji |
+| Odtworzenie kompletu wcześniejszych cookie po logout; w magazynie zostało 0 sesji | Sesja nadal rozpoznana z cache |
+| Te same cookie, ale `disableCookieCache=true` | Brak sesji |
+| Wyłącznie stare cookie tokenu, bez `session_data` | Brak sesji |
+| Urządzenie cofnięte przez `revoke-other-sessions` | Cache nadal rozpoznaje sesję; świeży odczyt odmawia |
+| Urządzenie, które cofnęło pozostałe sesje | Nadal legalnie zalogowane przy świeżym odczycie |
+| Replay obu cofniętych kompletów cookie po ponad 62 s | Brak sesji |
+
+Ważne: endpoint biblioteki zwraca **HTTP 200 i null**, gdy nie ma sesji. W JSON dowodu pole `authenticated`, a nie sam status 200, rozróżnia wyniki. Obserwowano natychmiastowe akceptowanie cache i odmowę po TTL; nie wyznaczono z dokładnością do milisekundy ostatniego momentu akceptacji.
+
+[Wynik](../evidence/session-revocation-experiment.json) i [log](../evidence/session-revocation-experiment.log). Pierwsze wykonanie doszło do sprawdzeń, lecz nie zapisało raportu przez błąd odczytu metadanych pakietu; zachowano [log tego wykonania](../evidence/session-revocation-first-run.log). Po poprawie samego zapisu metadanych wykonano cały pomiar ponownie i uzyskano exit 0. To nie był błąd aplikacji.
+
+**Granice dowodu:** biblioteka i protokół HTTP są rzeczywiste, lecz nie uruchomiono Next, Prisma/PostgreSQL, hooków Polutka, MFA ani Cloudflare. Rejestracja fixture nie wymaga weryfikacji e-mail, limity są wyłączone, a cookie w lokalnym HTTP nie ma Secure. Nie badano tym eksperymentem bezpieczeństwa rejestracji ani flag cookie. Nie zmienia to wyników wcześniejszego Vitest i nie zalicza prób całego Polutka.
+
+**Powiązanie z aplikacją:** `auth()` domyślnie korzysta z cache, a `resolveStudioSession` nie wymusza fresh. Bieżący odczyt `User` w resolverze aktora sprawdza rolę i `isDeleted`; nie sprawdza unieważnienia konkretnej sesji. Dlatego odebranie roli albo usunięcie konta ma dodatkową ochronę, której nie daje samo cofnięcie sesji aktywnego użytkownika. Przykładowe niewymuszające fresh wejścia to [Studio](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/lib/api/studio-session.ts#L23), [profil](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/app/api/user/profile/route.ts#L11) i [kontekst powiadomień](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/lib/api/viewer-notifications-route.ts#L17). Nie odtworzono ich przez HTTP ze starymi cookie; wpływ konkretnych operacji nadal wymaga testu całej aplikacji. `requireAdminActor` oraz usunięcie własnego konta wymuszają świeży odczyt, co należy zachować.
+
+**Warunek ryzyka:** osoba lub urządzenie ma kompletny wcześniejszy zestaw prawidłowych cookie. Samo znalezienie publicznego ID użytkownika, znajomość hasła innej osoby albo podrobienie losowego cookie nie wystarcza. Zwykłe wylogowanie lokalnego klienta działa. Ryzyko dotyczy przede wszystkim oczekiwania „wyloguj inne urządzenie natychmiast”, gdy tamto urządzenie zachowało cache.
+
+**Kierunek dalszych prac:** ustalić, gdzie minuta jest akceptowalna, a gdzie odwołanie musi działać natychmiast. Możliwe rozwiązania to świeży odczyt dla wybranych działań, rezygnacja z cache sesji albo kontrola wersji/epoki odwołania przy bieżącym odczycie konta. Żadne nie zostało wdrożone. Samo ponowne usunięcie wiersza sesji nie unieważni już podpisanego cache w drugim urządzeniu. Nie mylić z tokenami wideo R07 ani sesją panelu Access R13.
+
+Do wykonania na pełnym Polutku: pojedyncze revoke, revoke-other, revoke-all, logout, reset/zmiana hasła, usunięcie konta, democja i role kanałowe; replay przed i po TTL, z pomiarem odczytu oraz mutacji. ASVS 7.4.1 i 8.3.2 pozostają W_TRAKCIE z przypisanym R24; nie ogłoszono zgodności aplikacji ani formalnej certyfikacji.
 
 ## Dowody, PeerTube i wymagane domknięcie
 
 [Podsumowanie przebiegów](../evidence/identity-authz-review.json), [pierwszy JSON Vitest](../evidence/identity-authz-vitest.json), [drugi JSON Vitest](../evidence/auth-failure-passkey-vitest.json), [eksperyment źródłowy](../evidence/identity-context-experiment.json). Razem 18 plików testowych: 10 przeszło w całości, 1 zakończył się dwoma błędami sprawdzeń enumów, 7 zatrzymało się przy ładowaniu. Zarejestrowano 123 testy: 121 przeszło, 2 nie przeszły z powodu brakujących enumów wygenerowanego klienta. Liczba 123 nie obejmuje przypadków z plików, które nie załadowały się. Eksperyment jest osobnym dowodem, nie zaliczeniem zablokowanych testów.
 
 W PeerTube [testy sesji OAuth](https://github.com/Chocobozzz/PeerTube/blob/fa7d2b5d8a44bbec99159b11e91763f7d2308faa/packages/tests/src/api/users/oauth.ts#L380) po cofnięciu tokenu wykonują prawdziwe `getMyInfo` z oczekiwaniem 401; są też scenariusze restartu serwera. [Testy 2FA](https://github.com/Chocobozzz/PeerTube/blob/fa7d2b5d8a44bbec99159b11e91763f7d2308faa/packages/tests/src/api/users/two-factor.ts) uruchamiają instancję i sprawdzają limit błędnych haseł. Przeczytano ich kod, nie wykonano ich w tym środowisku. To konkretny wzorzec dla testów Polutka, nie dowód ogólnej wyższości zabezpieczeń PeerTube.
+
+Partia 03: PeerTube też [cache'uje tokeny](https://github.com/Chocobozzz/PeerTube/blob/fa7d2b5d8a44bbec99159b11e91763f7d2308faa/server/core/lib/auth/oauth-token.ts#L16). Różnica: [revokeToken](https://github.com/Chocobozzz/PeerTube/blob/fa7d2b5d8a44bbec99159b11e91763f7d2308faa/server/core/lib/auth/oauth-token.ts#L60) jawnie usuwa token z cache, a [TokensCache](https://github.com/Chocobozzz/PeerTube/blob/fa7d2b5d8a44bbec99159b11e91763f7d2308faa/server/core/lib/auth/tokens-cache.ts) rozsyła unieważnienie przez Redis do innych procesów. Hooki modeli tokenu i użytkownika także czyszczą cache. Warto przejąć zasadę **odwołanie obejmuje każdą warstwę cache**. Nie kopiować automatycznie topologii Redis; nie sprawdzono ich zachowania przy utracie komunikatu lub awarii Redis. Cache serwerowy z mechanizmem unieważnienia i podpisany cache na kliencie mają inne właściwości.
 
 Sprawdzone online metody OWASP: WSTG v4.2 [wylogowanie](../sources/wstg-v42-logout.md) i [blokada prób](../sources/wstg-v42-lockout.md); [zapis pobrania](../sources/fetch-identity-authz.json). Do testów nie należy kopiować bez oceny wszystkich historycznych sugestii WSTG, np. jednego limitu minut dla każdego produktu. W ASVS rozpoczęto konkretne wymagania, ale żadnego nie ogłoszono zaliczonym w skali całej aplikacji.
 

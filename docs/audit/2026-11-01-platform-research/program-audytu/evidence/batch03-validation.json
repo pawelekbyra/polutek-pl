@@ -1,0 +1,35 @@
+{
+  "date": "2026-11-01",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "application_paths_changed": [],
+  "local_links_checked": 71,
+  "broken_local_links": [],
+  "asvs_status_counts": {
+    "NIEZBADANE": 317,
+    "W_TRAKCIE": 28
+  },
+  "entry_status_counts": {
+    "NIEZBADANE": 254,
+    "W_TRAKCIE": 25
+  },
+  "planned_full_application_http_scenarios": 43,
+  "full_application_http_scenarios_executed": 0,
+  "isolated_library_http_scenarios": 2,
+  "isolated_resource_observations": 19,
+  "stable_finding_count": 24,
+  "baseline_source_hashes_match": true,
+  "source_files_partially_reviewed_this_batch": 43,
+  "research_script_syntax": "both passed node --check",
+  "resource_experiment_repeat": "byte-identical output; baseline source hashes enforced",
+  "library_experiment": "exit 0 after reporting-path fix; real 62-second wait; no repeat needed after unchanged successful run",
+  "diff_whitespace_check": "passed git diff --check",
+  "credential_pattern_scan": "No matches in changed/new files for listed patterns; not a complete secret-detection guarantee",
+  "credential_patterns": [
+    "private_key",
+    "github_token",
+    "stripe_live_secret",
+    "database_uri",
+    "aws_access_key"
+  ],
+  "scope": "Artifact consistency and accurately scoped experiment checks; not full application runtime validation or certification."
+}

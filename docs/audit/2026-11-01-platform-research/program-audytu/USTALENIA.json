@@ -569,6 +569,50 @@
       "retest": null,
       "created_at": "2026-11-01",
       "deployment_scope": "MULTI_CREATOR_IMPLEMENTATION;CURRENT_PRODUCTION_UNKNOWN"
+    },
+    {
+      "id": "R24",
+      "title": "Cofnięcie sesji WWW nie unieważnia od razu jej 60-sekundowego cache cookie",
+      "kind": "RYZYKO_ZNANY_KOMPROMIS_PROJEKTU",
+      "priority": "P2_OCENA_POLITYKI_COFNIECIA",
+      "baseline_priority_and_evidence": "NEW REGISTER ENTRY: P2; real isolated library HTTP + source review",
+      "status": "POTWIERDZONE",
+      "evidence_level": "A_ISOLATED_REAL_LIBRARY_HTTP_WITH_MEMORY_ADAPTER_AND_B_APPLICATION_SOURCE",
+      "note": "Zachowanie znane i opisane już w kodzie operatora oraz oficjalnej dokumentacji Better Auth. Nowy wpis audytu z pomiarem, nie nowy błąd biblioteki ani dowód przejęcia konta na produkcji.",
+      "source_report": "obszary/D03-TOZSAMOSC-I-SESJE.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D03",
+        "D04"
+      ],
+      "impact_plain_language": "Urządzenie z zachowanym pełnym zestawem cookie może być nadal rozpoznawane do wygaśnięcia cache po cofnięciu sesji. Oczekiwanie natychmiastowego odcięcia wymaga osobnych kontroli.",
+      "conditions": "cookieCache włączony, TTL 60 s; ważny podpisany cache i token sesji; sesja cofnięta w magazynie; odczyt bez disableCookieCache. Wpływ konkretnych tras Polutka wymaga pełnego testu.",
+      "evidence_paths": [
+        "evidence/session-revocation-experiment.json",
+        "evidence/session-revocation-experiment.log",
+        "tools/session-revocation-experiment.mjs",
+        "evidence/batch03-review.json",
+        "sources/better-auth-1.7.7-session-management.mdx"
+      ],
+      "counterarguments": [
+        "Lokalny klient po wylogowaniu i zastosowaniu Set-Cookie nie ma sesji.",
+        "Odczyt fresh i odtworzenie samego cookie tokenu odmawiają; po ponad 62 s pełny replay też odmawia.",
+        "Wymaga posiadania wcześniejszych prawidłowych cookie; nie daje wejścia osobie bez tych danych.",
+        "Aktualny odczyt User/roli/isDeleted chroni odrębnie przed democją i usunięciem konta; niektóre wrażliwe operacje wymuszają fresh.",
+        "Kod Polutka i dostawca opisują ten kompromis; 60 s jest jednym z wariantów rekomendowanych w dokumentacji dostawcy.",
+        "Eksperyment pomija Next/Prisma/hooki/aplikacyjne endpointy i nie mierzy ostatniej milisekundy ważności."
+      ],
+      "standard_refs": [
+        "v5.0.0-7.4.1",
+        "v5.0.0-8.3.2",
+        "WSTG-v42-SESS-06"
+      ],
+      "proposed_fix": "Ustalić wymagany czas cofnięcia według operacji; rozważyć fresh, wyłączenie cache lub porównanie wersji cofnięcia. Nie traktować ponownego delete sesji jako unieważnienia podpisanego cache.",
+      "acceptance_test": "Pełny Polutek z DB i dwoma klientami: logout/revoke one/other/all/reset hasła; replay kompletów i samego tokenu natychmiast oraz po TTL; faktyczne prywatne odczyty i mutacje zgodne z zatwierdzonym progiem.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "deployment_scope": "WWW_SESSION_CONFIGURATION;PRODUCTION_REPLAY_NOT_TESTED"
     }
   ]
 }

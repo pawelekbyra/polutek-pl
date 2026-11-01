@@ -1,0 +1,18 @@
+Initial logout and other-session revocation observations complete; waiting for real 60-second cache expiry. No cookie/token output.
+node:internal/modules/esm/resolve:318
+  return new ERR_PACKAGE_PATH_NOT_EXPORTED(
+         ^
+
+Error [ERR_PACKAGE_PATH_NOT_EXPORTED]: Package subpath './package.json' is not defined by "exports" in /workspace/polutek-pl/node_modules/better-auth/package.json
+    at exportsNotFound (node:internal/modules/esm/resolve:318:10)
+    at packageExportsResolve (node:internal/modules/esm/resolve:665:9)
+    at resolveExports (node:internal/modules/cjs/loader:664:36)
+    at Function._findPath (node:internal/modules/cjs/loader:731:31)
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1415:27)
+    at Function.resolve (node:internal/modules/helpers:157:19)
+    at file:///workspace/polutek-pl/docs/audit/2026-11-01-platform-research/program-audytu/tools/session-revocation-experiment.mjs:123:57
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  code: 'ERR_PACKAGE_PATH_NOT_EXPORTED'
+}
+
+Node.js v22.23.4

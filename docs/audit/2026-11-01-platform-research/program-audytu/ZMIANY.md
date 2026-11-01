@@ -37,3 +37,13 @@
 - Zapisano 42 scenariusze do wykonania, 12 metod tras oznaczono W_TRAKCIE. ASVS: 28 rozpoczętych, 317 niezbadanych, zero zaliczonych.
 - Pobrano trzy szczegółowe metody OWASP WSTG v4.2; porównano źródła kontroli/testów PeerTube. Nie skopiowano implementacji PeerTube ani nie zmieniono aplikacji/produkcji.
 - Następny krok: replay i unieważnianie sesji, pozostałe wejścia kanałowe i role panelu; rzeczywiste HTTP po odblokowaniu przygotowania Prisma.
+
+## 1 listopada 2026 — partia 03: pomiar cofnięcia sesji i zakres zasobów
+
+- Ponowne pojedyncze sprawdzenie potwierdza odmowę CONNECT do binaries.prisma.sh. Nie ponawiano pełnego Vitest ani nie zmieniano klienta Prisma.
+- Uruchomiono lokalne HTTP Better Auth 1.7.7 z oficjalnym adapterem pamięci i stałymi sesji Polutka. Replay pełnych cookie po logout/revoke-other działał przed TTL, odczyt fresh odmawiał; po 62 s oba replaye odmawiały. Osobny zapis różnic wobec aplikacji i pierwszego błędu metadanych skryptu.
+- Dodano R24 jako zmierzone, znane ograniczenie/kompromis cache. Potwierdzają je już komentarz operatora i pobrana oficjalna dokumentacja. Nie jest to przejęcie konta udowodnione na produkcji ani nowy błąd Better Auth.
+- Wykonano 19 obserwacji rzeczywistych funkcji playlist i cancel/state z atrapą DB, bez mockowania odpowiedzi authorize. Odmowy obcych zasobów nie zmieniają stanu; kontrole legalne działają. Nie zaliczono prawdziwych blokad/izolacji PostgreSQL ani pełnego HTTP.
+- Rozszerzono częściowy przegląd o osiem metod playlist, dwie pipeline i trzy powiązane wejścia użytkownika. Aktualnie 25 rekordów W_TRAKCIE i 254 NIEZBADANE. Rejestr scenariuszy ma 43 pozycje i oddzielny wynik izolowany.
+- Zachowano 28 rozpoczętych i zero zaliczonych wymagań ASVS. Otwarte pytania quota/lock/czasu cofnięcia członkostwa są pytaniami, nie dodatkowymi dowiedzionymi lukami.
+- Porównano unieważnianie cache PeerTube i zapisano dokumentację/licencję Better Auth z oficjalnego tagu. Nie kopiowano implementacji PeerTube. Aplikacja i produkcja pozostają bez zmian.

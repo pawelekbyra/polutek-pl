@@ -1,6 +1,6 @@
 # D04 — role i izolacja twórców
 
-1 listopada 2026, partia 02. **W_TRAKCIE.** SHA Polutka: `c397b9e548ca2c628e21457ac69d66e54b12ddbd`. Zakres tej partii: rdzeń uprawnień, kontekst Studia, wybrane ścieżki filmów/uploadu i przekazanie kanału do automatycznej publikacji. Nie zakończono przeglądu wszystkich 279 wejść systemu.
+1 listopada 2026, partie 02–03. **W_TRAKCIE.** SHA Polutka: `c397b9e548ca2c628e21457ac69d66e54b12ddbd`. Zakres: rdzeń uprawnień, kontekst Studia, wybrane ścieżki filmów/uploadu, przekazanie kanału do automatycznej publikacji, a następnie playlisty i stan/anulowanie kodowania. Nie zakończono przeglądu wszystkich 279 wejść systemu.
 
 ## Wniosek dla właściciela
 
@@ -69,6 +69,36 @@ Kontrargument sprawdzony: film może być niegotowy albo mieć złe metadane. Ob
 **Priorytet P1 przed szerszym dopuszczeniem twórców**, nie awaria potwierdzona na obecnej produkcji. Proponowany kierunek: kontekst per zadanie wyznaczony z autorytatywnego powiązania filmu z kanałem, walidacja zgodności ze zleceniem i jawny wynik publikacji. Nie wystarczy bez sprawdzenia przekleić dowolnego ID z danych wejściowych. Trzeba też zachować ochronę przed utratą dzierżawy (R02), zawieszeniem/usunięciem kanału, zmianą filmu i retry.
 
 Test odbioru po przyszłej poprawce: dwa różne kanały, PUBLIC i UNLISTED, rzeczywista kolejka/worker i DB; sukces obu legalnych publikacji, brak publikacji po zamrożeniu/usunięciu kanału, brak przejęcia przez cudze zadanie i poprawność powtórzeń. Zmiana nie została wykonana.
+
+## Partia 03 — playlisty i zadania kodowania
+
+Prześledzono wszystkie osiem jawnych metod w czterech plikach tras zarządzania playlistami: lista/utworzenie, szczegóły/edycja/usunięcie, dodanie/usunięcie filmu i kolejność. Wejście bierze `channelId` z rozwiązanego Studia, a [schemat JSON](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/lib/api/studio-playlist-schemas.ts) dopuszcza wyłącznie jawne pola. Następnie [use case](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/lib/modules/playlists/application/playlist-manage.use-cases.ts) sprawdza uprawnienie do kanału, a [repozytorium](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/lib/modules/playlists/infrastructure/playlist.repository.ts) wyszukuje playlistę przez `id + channelId + deletedAt:null`. Dodawany film jest sprawdzany przez `id + creatorId`. Operacje na elementach są związane z rozwiązaną playlistą. Cudzy identyfikator nie zmienia kanału kontekstu.
+
+Odczyty Studia używają `playlist.update`, więc MODERATOR/TRANSLATOR kanału nie widzi tych roboczych playlist. To konsekwencja obecnej macierzy, nie brak sprawdzenia. Ocenę publicznych playlist i ich pól należy zakończyć osobno; nie wynika ona z ochrony zapisów.
+
+**Eksperyment:** [skrypt](../tools/resource-scope-experiment.cjs) uruchamia niezmienione authorize/policy, use case'y i repozytoria. Powtórnie używa atrapy bazy z istniejących testów repo oraz jawnej atrapy audytu. Nie zastępuje authorize z góry wybraną odpowiedzią FORBIDDEN. Każdy załadowany plik ma hash zgodny z bazowym inwentarzem. [Wynik](../evidence/resource-scope-experiment.json) zawiera 19 obserwacji: 12 playlist i 7 kolejki.
+
+| Próba | Wynik w eksperymencie |
+|---|---|
+| Obcy właściciel edytuje/usuwa/dodaje/usuwa element/zmienia kolejność cudzej playlisty przez własny kanał | 404 i niezmieniony stan |
+| Właściciel dodaje film obcego kanału do własnej playlisty | 404 i niezmieniony stan |
+| Właściciel podmienia element kolejności na cudzy film | 409 i niezmieniony stan |
+| Gość, obca osoba lub moderator edytuje playlistę | Odpowiednio 401/403 i niezmieniony stan |
+| Legalny EDITOR zmienia kolejność własnej playlisty | Sukces; oczekiwana kolejność |
+| Wstrzyknięty błąd w połowie zmiany kolejności | Atrapa transakcji odtwarza poprzedni stan |
+| Własny videoId i cudzy jobId albo cudzy videoId/jobId | Anulowanie odrzucone 404; brak zmian zadań i audytu |
+| MODERATOR anuluje zadanie własnego kanału | 403; brak zmian |
+| Właściciel anuluje własne zadanie | Własne CANCELLED, obce pozostaje RUNNING |
+| Odczyt stanu kodowania cudzego filmu / przez moderatora | 404 / 403 |
+| Odczyt własnego filmu przez właściciela | Sukces dla fixture bez oryginału/assetów/historii |
+
+To mocniejszy dowód niż samo znalezienie wywołania guarda: podmieniane są identyfikatory i sprawdzany jest brak zmiany stanu. Nadal jest to model I/O, nie prawdziwa baza ani kompletne HTTP Polutka. Rollback atrapy nie potwierdza poziomu izolacji PostgreSQL; pozytywny odczyt pustego pipeline nie potwierdza pełnego DTO dla wszystkich stanów i assetów. Liczba 19 nie powiększa liczby zaliczonych testów Vitest.
+
+[cancelEncode](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/lib/modules/video-pipeline/application/encode-queue.use-cases.ts#L113) przechodzi przez requireVideo, a [repozytorium](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/lib/modules/video-pipeline/infrastructure/encode-job.repository.ts#L247) wiąże jobId z videoId. `getPipelineState` sprawdza kanał filmu i `video.update`, zanim pobierze stan. [Trasa Studia](https://github.com/pawelekbyra/polutek-pl/blob/c397b9e548ca2c628e21457ac69d66e54b12ddbd/app/api/studio/videos/%5Bid%5D/pipeline/route.ts) usuwa część wewnętrznych ID i kluczy storage z odpowiedzi. Przegląd nie potwierdza jeszcze, czy wszystkie zagnieżdżone pola mają właściwy zakres ujawnienia.
+
+**Otwarte kwestie, bez nowego potwierdzonego znaleziska:** playlistowy lock bierze ID przed `findInChannel`, więc trzeba ocenić zakres blokowania obcego wiersza; limit liczby playlist jest sprawdzany przez COUNT bez widocznego wspólnego locka kanału; uprawnienia są sprawdzane przed wejściem w transakcję. Nie wywołano jeszcze rzeczywistego przeciążenia, przekroczenia quota ani cofnięcia członkostwa w środku transakcji. Te pytania należą także do D06/D07/D14. Nie należy zmieniać ich w dowiedzione obejście uprawnień bez sprawdzenia osiągalności i uzgodnionej granicy operacji.
+
+R24 z [D03](D03-TOZSAMOSC-I-SESJE.md) dotyczy rozpoznania tożsamości na wejściu. Poprawne ograniczenie zasobu nie zastępuje cofnięcia sesji: urządzenie rozpoznane z cache nadal może działać z aktualnie zachowaną rolą. Odebranie członkostwa i cofnięcie sesji są osobnymi zdarzeniami do zbadania.
 
 ## Co warto przejąć z PeerTube
 
