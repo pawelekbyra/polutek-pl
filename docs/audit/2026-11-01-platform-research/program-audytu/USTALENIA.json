@@ -158,23 +158,40 @@
       "id": "R07",
       "title": "Cofnięcie dostępu ma okno zależne od tokenów i cache",
       "baseline_priority_and_evidence": "P1/P2, B",
-      "status": "DO_WERYFIKACJI",
-      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "status": "POTWIERDZONE",
+      "note": "Historical mechanism retained and reproduced in batch 07. Documentation already accepts bearer-link copying for free sign-in content. Snapshots of new denial plus old-token replay; no actual logout/mutation/Cloudflare/HTTP run.",
       "source_report": "../RAPORT.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D09"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
-      "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "impact_plain_language": "Odmowa nowego planu nie cofa wcześniej wydanego linku: przy badanych ustawieniach chroniony TTL to 30 min, publiczny 6 h. Zachowane kopie klienta/cache mają osobny cykl życia.",
+      "conditions": "Ważny wcześniej wydany token, obiekt w origin lub ciepłym cache. Worker sprawdza podpis/exp i zakres filmu/wersji, bez aktualnej decyzji konta/treści.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D09-ODTWARZANIE-TOKENY-I-CACHE.md",
+        "evidence/playback-access-experiment.json",
+        "tools/playback-access-experiment.cjs",
+        "evidence/batch07-review.json"
+      ],
+      "counterarguments": [
+        "Znany kompromis opisany już w dokumentacji, nie fałszowanie podpisu ani automatyczna nowa luka.",
+        "Worker odrzuca wygasły/zmieniony token przed cache; wykonano kontrole.",
+        "Zegar i migawki stanu są symulowane, nie wykonano realnego wylogowania/refundu ani produkcyjnego TTL.",
+        "Już pobrane bajty i cache klienta wymagają osobnej polityki; test nie ustala rzeczywistego czasu eviction/purge."
+      ],
+      "standard_refs": [
+        "v5.0.0-8.3.2",
+        "v5.0.0-9.2.1"
+      ],
+      "proposed_fix": "Ustalić dopuszczalny czas cofnięcia dla docelowego produktu. Przy wymaganiu szybszego cofnięcia potrzebny spójny mechanizm epoki/unieważniania i purge, z oceną kosztów/dostępności.",
+      "acceptance_test": "Pełne logout, blokada kanału, unpublish, refund i usunięcie; stary/nowy token oraz cache edge/klienta oceniane oddzielnie według ustalonego czasu egzekwowania.",
+      "independent_review": "PENDING",
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "kind": "RYZYKO_ZNANY_KOMPROMIS_PROJEKTU",
+      "priority": "P2_OCENA_POLITYKI_PRZED_DUZA_PLATFORMA_I_SPRZEDAZA",
+      "evidence_level": "A_ACTUAL_ACCESS_PLAN_AND_WORKER_WITH_EXPLICIT_FAKE_IO_SIMULATED_CLOCK_AND_B_SOURCE"
     },
     {
       "id": "R08",
@@ -835,6 +852,46 @@
       "proposed_fix": "Wspólny protokół aktywacji i retirement zasobu; rezerwacja/oznaczenie pod blokadą, odmowa aktywacji wycofywanego assetu i trwałe sprzątanie. Dodatkowy SELECT sam nie zamyka okna.",
       "acceptance_test": "Kontrolowane dwa porządki aktywacji i usuwania, wolny magazyn, restart i retry: aktywna wersja nie znika; PUBLISHED/UNLISTED chronione, DRAFT zgodny z polityką.",
       "deployment_scope": "AUTHORIZED_ADMIN_DELETE_ASSET_VS_WORKER_ACTIVATION;PRODUCTION_OCCURRENCE_UNVERIFIED"
+    },
+    {
+      "id": "R30",
+      "kind": "USTERKA",
+      "title": "Przyszła premiera ujawnia metadane filmu pomimo centralnej odmowy NOT_FOUND",
+      "priority": "P2",
+      "baseline_priority_and_evidence": "NEW: P2; actual access→plan→sanitizer with fake DB and source wiring",
+      "status": "POTWIERDZONE",
+      "evidence_level": "A_ACTUAL_COMPONENT_CHAIN_WITH_EXPLICIT_FAKE_DB_AND_B_SOURCE",
+      "note": "Trzy warianty z rzeczywistą decyzją NOT_FOUND odtwarzają tytuł/poster, a dla obcego zalogowanego termin premiery. Pełnego HTTP/Prisma i pobrania obrazka nie wykonano.",
+      "source_report": "obszary/D09-ODTWARZANIE-TOKENY-I-CACHE.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D04",
+        "D09",
+        "D12"
+      ],
+      "impact_plain_language": "Znając ID ukrytego filmu z przyszłą premierą można otrzymać tytuł i adres miniatury, a obce konto także termin. Token i źródło filmu nadal są zablokowane.",
+      "conditions": "PUBLISHED, przyszłe premiereAt, centralny NOT_FOUND z powodu REMOVED albo ukrytego kanału, zwykły gość/obcy użytkownik, znany ID. Bramka premiery wyprzedza redakcję metadanych NOT_FOUND.",
+      "evidence_paths": [
+        "obszary/D09-ODTWARZANIE-TOKENY-I-CACHE.md",
+        "evidence/playback-access-experiment.json",
+        "tools/playback-access-experiment.cjs",
+        "evidence/batch07-review.json"
+      ],
+      "counterarguments": [
+        "Brak źródła, tokenu, napisów i sesji we wszystkich wariantach; nie dowiedziono odtwarzania filmu.",
+        "Bez przyszłej premiery NOT_FOUND poprawnie ukrywa tytuł/poster; nieistniejący i ARCHIVED też chronione.",
+        "Adres miniatury w fixture to proxy, nie dowód uzyskania prywatnego obrazu.",
+        "Wymagana znajomość ID; nie wykazano masowego zgadywania UUID ani realnego dispatchu HTTP."
+      ],
+      "standard_refs": [
+        "v5.0.0-8.2.3"
+      ],
+      "proposed_fix": "Obsłużyć odmowę NOT_FOUND przed budowaniem planu premiery, zachowując blokadę wydania tokenu i legalne podglądy.",
+      "acceptance_test": "HTTP dla gościa, obcego użytkownika, członka i personelu: hidden/REMOVED z przyszłą premierą bez title/poster/premiereAt, normalna premiera i dozwolony podgląd nadal działają.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "deployment_scope": "MEDIA_SOURCE_PLAN_PREMIERE_BEFORE_NOT_FOUND_REDACTION;PRODUCTION_OCCURRENCE_UNVERIFIED"
     }
   ]
 }

@@ -1,13 +1,13 @@
 # Stan badania — punkt wznowienia
 
-Aktualizacja: 1 listopada 2026. Program v1.0, partia 06: granice finalizacji, audytu i usuwania HLS. Tryb: analiza, bez zmian aplikacji i produkcji.
+Aktualizacja: 1 listopada 2026. Program v1.0, partia 07: odtwarzanie, tokeny, cache i prywatność premiery. Tryb: analiza, bez zmian aplikacji i produkcji.
 
 ## Cel i decyzje właściciela
 
 - Docelowo duża platforma konkurująca z PeerTube funkcjami i skalą.
 - Badanie ma być pogłębione i wieloobszarowe. Właściciel nie programuje; wnioski mają objaśniać wpływ na produkt i biznes.
 - Dotychczasowe porównanie jest bazą i próbą metody, a nie zamkniętym pełnym audytem.
-- Program i źródła są przygotowane. Rozpoczęto D01, D03, D04, D06, D07, D08 i D11; nie wykonano pełnej oceny 345 wymagań.
+- Program i źródła są przygotowane. Rozpoczęto D01, D03, D04, D06, D07, D08, D09 i D11; nie wykonano pełnej oceny 345 wymagań.
 - Następnie właściciel polecił zachować poprzednie badanie i rozwijać całość na jednej gałęzi GitHub: `docs/polutek-platform-audit`. Katalog w repo: `docs/audit/2026-11-01-platform-research/`. Po każdej partii commit i push; bez automatycznego scalenia ani wdrożenia.
 
 ## Wersje
@@ -15,7 +15,7 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 06: granice finalizacji, au
 - Polutek: `/workspace/polutek-pl`, `c397b9e548ca2c628e21457ac69d66e54b12ddbd`.
 - PeerTube: `/workspace/PeerTube`, `fa7d2b5d8a44bbec99159b11e91763f7d2308faa`.
 - Program: [PROGRAM.md](PROGRAM.md).
-- Rodzic commitu partii 06: `9e3ee45e2950e5b7396fdb6be2e2ef0515d94885`. Dowód braku zmian aplikacji: [partia 01](evidence/source-scope.json), [partia 02](evidence/source-scope-batch02.json), [partia 03](evidence/source-scope-batch03.json), [partia 04](evidence/source-scope-batch04.json), [partia 05](evidence/source-scope-batch05.json), [partia 06](evidence/source-scope-batch06.json). SHA finalnego zapisu sprawdzić w historii Git gałęzi. Dodatkowe commity dokumentacyjne nie są automatycznie zmianą badanej implementacji.
+- Rodzic commitu partii 07: `7f56467fe764594c78874ce442fca4d545a626ef`. Dowód braku zmian aplikacji: [partia 01](evidence/source-scope.json), [partia 02](evidence/source-scope-batch02.json), [partia 03](evidence/source-scope-batch03.json), [partia 04](evidence/source-scope-batch04.json), [partia 05](evidence/source-scope-batch05.json), [partia 06](evidence/source-scope-batch06.json), [partia 07](evidence/source-scope-batch07.json). SHA finalnego zapisu sprawdzić w historii Git gałęzi. Dodatkowe commity dokumentacyjne nie są automatycznie zmianą badanej implementacji.
 
 ## Gotowe
 
@@ -56,6 +56,13 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 06: granice finalizacji, au
 35. Pozytywne granice: normalny pipeline zachowuje pięć obiektów; błąd przed COMMIT pozostawia starą aktywną wersję; błąd statusu po finalizerze zachowuje nowy wynik. Już aktywna wersja PUBLISHED/UNLISTED jest chroniona przed kasowaniem. DRAFT i nieaktywny wynik zachowują zamierzoną politykę. Pierwszy błąd konfiguracji transpileModule zachowano w logu, poprawiono wyłącznie harness i powtórzono przebieg z exit 0. Nie ponawiano Vitest ani wcześniejszych identycznych R03/R04.
 36. R02 doprecyzowano jako POTWIERDZONE w granicach komponentów/atrap: rzeczywista aktywacja odbywa się po zasymulowanej utracie własności, choć repozytorium odrzuca końcowy status. Nie wykonano prawdziwego takeover z czasem dzierżawy i dwóch procesów. R28/R29 mają własne ID; niezależny przegląd wszystkich pozostaje PENDING. PeerTube pokazuje fazy zakończenia i callback przed nieodwracalnymi zmianami; nie testowano równoważnych awarii.
 37. Bieżąca powierzchnia ma 280 rekordów: dopisano pominięty osobny proces encoder, znany już z diagramu. 49 W_TRAKCIE, 231 NIEZBADANE; rozpoczęto także encodeAction. ASVS: 34 W_TRAKCIE, 311 NIEZBADANE, zero zaliczonych. 46 scenariuszy pełnego HTTP pozostaje niewykonanych; dodatkowe 11 pipeline ma otwartą walidację pełnego stosu. D08 rozpoczęto, D09 pozostaje do pogłębienia.
+38. Partia 07: [D09](obszary/D09-ODTWARZANIE-TOKENY-I-CACHE.md), [38 scenariuszy odtwarzania](SCENARIUSZE-ODTWARZANIE.csv), [częściowy zakres 54 plików](evidence/batch07-review.json), nakładający się na poprzednie partie. Wykonano 31 modułów TS i niezmienioną funkcję Workera w Node; nie zaliczono całych plików ani Cloudflare.
+39. Celowany istniejący Vitest: [JSON](evidence/playback-targeted-vitest.json), [log](evidence/playback-targeted-vitest.log), exit 0. Cztery pliki, 33 zarejestrowane testy, 33 przeszły, zero failed/pending. Dziesięć suites to grupy zagnieżdżone. Zakres: Worker, klient tokenów i viewer cache; pełnego zestawu nie powtarzano, Prisma pozostaje zablokowane.
+40. [38 obserwacji](evidence/playback-access-experiment.json): 15 planów, pięć sesji, 14 zachowań Workera, cztery pary nowej odmowy i starego tokenu. 30 poprawnych kontroli, trzy warianty R30 i pięć obserwacji właściwości R07. Rzeczywiste checkVideoAccess→PlaybackService→signer→sanitizer, jawne atrapy DB/cache/R2 i patron gate off. Zegar oraz migawki zmiany stanu są symulowane; brak rzeczywistego logout/refundu/HTTP/Cloudflare. Tokenów i podpisanych URL-i nie drukowano. Skrypt od pierwszego przebiegu miał exit 0; dodano przezroczysty zapis decyzji NOT_FOUND i wykonano finalny przebieg.
+41. R30: przy PUBLISHED, przyszłym premiereAt i centralnym NOT_FOUND (REMOVED lub ukryty kanał) plan po sanitizerze zachowuje tytuł/poster, dla obcego użytkownika także termin. Bez przyszłej premiery oraz dla nieistniejącego/ARCHIVED redakcja działa. Token, źródło, napisy i sesja są nieobecne. P2, znany ID; adres proxy nie dowodzi wydania obrazka. Niezależny przegląd PENDING.
+42. R07 doprecyzowano jako potwierdzony znany kompromis: nowy plan odmawia, stary podpis przechodzi przed exp (30 min/6 h przy badanych ustawieniach), po symulowanym exp 403 przed cache. Cache może zwrócić kopię po usunięciu origin. Nie ustalono rzeczywistych TTL produkcji/purge/eviction ani czasu działania pobranych kopii. R07 zachowuje ID i historyczną ocenę; nie jest automatycznie nową usterką ani R24.
+43. Pozytywne wyniki obejmują tampering, sprawdzenie podpisu przed wspólnym cache, private dla chronionego tokenu nawet po publicznej kopii, ochronę napisów i odmowę przypisania cudzej sesji. Testy React odrzucają spóźnioną odpowiedź starego widza i odnawiają token przez dwie symulowane godziny. Nie jest to pomiar rzeczywistego odtwarzania.
+44. Pobrano online oficjalne Cloudflare Cache API i CC BY 4.0, z hashami/atrybucją; lokalny cache.delete nie dowodzi globalnego purge. W PeerTube token pliku ma 8 h, Redis/LRU i odrębne kontrole; nie udowodniono natychmiastowego cofnięcia każdego linku po logout. Bieżące wejścia: 280, w tym 52 W_TRAKCIE i 228 NIEZBADANE. ASVS: 36 W_TRAKCIE, 309 NIEZBADANE, zero zaliczonych. Istniejące 46 scenariuszy HTTP i 11 pipeline bez zmian; 38 odtwarzania ma osobną otwartą walidację pełnego stosu.
 
 `NIEZBADANE` w nowej macierzy oznacza brak zakończonej procedury programu dla całego obszaru. Nie oznacza, że wcześniejsze przeglądy i eksperymenty nie istnieją. Referencje bazowe zapisano oddzielnie.
 
@@ -73,12 +80,13 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 06: granice finalizacji, au
 - Oddzielna badawcza baza SQL ma nazwę w `../migrations-sql.json`. Nie ma historii migracji Prisma.
 - W partii 05 potwierdzono jej działanie przez lokalny socket Dockera. Skrypt `tools/database-integrity-experiment.py` korzysta z nazwy tej bazy, kontroluje hashe źródeł i usuwa własne fixture; nie uruchamia Prisma ani pełnej aplikacji.
 - Partia 06: lokalny Docker 28.4.0 i PostgreSQL nadal działały. `tools/pipeline-boundaries-experiment.cjs` wykonuje komponenty z atrapami; `tools/playback-cascade-experiment.py` używa helpera SQL z partii 05, dwóch połączeń i usuwa własne fixture. Skrypty nie wymagają zmiany instrukcji ani kodu aplikacji.
+- Partia 07 nie wymagała Dockera ani sieci produkcji. Node 22 wykonał cztery pliki Vitest i `tools/playback-access-experiment.cjs` z symulowanym zegarem/atrapami; oficjalną dokumentację cache pobrano przez dozwolone raw.githubusercontent.com.
 - Skrypty eksperymentów pipeline i storage znajdują się w katalogu nadrzędnym; działają na atrapach usług i plikach tymczasowych.
 - Nie zakładać, że procesy lub kontenery przeżyją odtworzenie środowiska. Sprawdzić ich stan przed użyciem.
 
 ## Następne działanie
 
-Przejść do D09: pełny przepływ planu odtwarzania, tokeny/cache, cofnięcie dostępu po wylogowaniu/banie/zmianie widoczności, napisy i segmenty. D08 wymaga jeszcze formatów/FFmpeg, multipart i starych oryginałów, prawdziwego takeover/restartów oraz realnego magazynu. R26–R29 i rozszerzony R02 mają opisane dowody i kontrole; nie powtarzać ich identycznie bez zmiany. Po odblokowaniu Prisma wykonać pełne próby R28/R29 i dwóch workerów; nie podstawiać fałszywego klienta. D06 nadal obejmuje pozostałe modele, role, migracje na danych/drift, kaskady i indeksy; pieniądze/retencję/restore rozliczać w D10/D12/D17. Pełne scenariusze HTTP, pełny pipeline i niezależne przeglądy pozostają otwarte. Nie zmieniać aplikacji ani produkcji; parametry skali/SLO/budżetu nadal wymagają określenia.
+Przejść do D05: bezpieczeństwo wejść, walidacja plików/FFmpeg, SSRF i granice żądań; uwzględnić bazowe R01/R15 oraz aktualne zależności. D09 ma dowody komponentów i osobne testy, lecz wymaga pełnego HTTP, rzeczywistych mutacji/logout/refund, Cloudflare/Range/purge, cache przeglądarek i Safari. D08 nadal wymaga formatów/jakości, multipart, starych oryginałów, prawdziwego takeover/restartów i magazynu. Nie powtarzać identycznych zaliczonych testów i reprodukcji bez zmiany. Po odblokowaniu Prisma wykonać pełne próby odtwarzania/R28–R30 i dwóch workerów; nie podstawiać fałszywego klienta. Pozostałe modele/migracje/role, pieniądze, prywatność, skala/koszty i restore rozliczać w dalszych obszarach. Niezależne przeglądy pozostają otwarte. Nie zmieniać aplikacji ani produkcji; parametry skali/SLO/budżetu nadal wymagają określenia.
 
 Przed rozpoczęciem: odczytać ten plik, PROGRAM.md i właściwe instrukcje repo; porównać bieżący HEAD z podanym wyżej. Nie powtarzać wykonanych testów bez zmiany wersji, diagnozy lub warunków.
 

@@ -1,0 +1,26 @@
+[
+  {
+    "date": "2026-11-01",
+    "file": "cloudflare-workers-cache.mdx",
+    "url": "https://raw.githubusercontent.com/cloudflare/cloudflare-docs/production/src/content/docs/workers/runtime-apis/cache.mdx",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "521f39815dc21cf37c45f061d4284952e1746e6670cd1fdca1296b65e4cc23df",
+    "review_scope": "Cache locality, response/request headers, match origin behavior, Range Content-Length condition and local/global deletion sections; not all linked documents",
+    "attribution": "Cloudflare and contributors, Cloudflare documentation, CC BY 4.0",
+    "copy_changes": "Verbatim copy, no changes",
+    "version_note": "Mutable production branch; archived bytes/hash identify the downloaded version, not the deployed runtime."
+  },
+  {
+    "date": "2026-11-01",
+    "file": "cloudflare-docs-LICENSE.txt",
+    "url": "https://raw.githubusercontent.com/cloudflare/cloudflare-docs/production/LICENSE",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "9e5f1b3c610b9c2da5c313bf81d577a7d1acec686bdb0384edefa6df0f90cd94",
+    "review_scope": "CC BY 4.0 license and attribution",
+    "attribution": "Cloudflare and contributors, Cloudflare documentation, CC BY 4.0",
+    "copy_changes": "Verbatim copy, no changes",
+    "version_note": "Mutable production branch; archived bytes/hash identify the downloaded version, not the deployed runtime."
+  }
+]

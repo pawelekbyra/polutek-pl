@@ -123,3 +123,7 @@ Konkretny wzorzec do przejęcia to [test edycji i usuwania cudzego filmu](https:
 OWASP [WSTG v4.2 ATHZ-04](../sources/wstg-v42-idor.md), pobrane online, zaleca mapowanie każdego odwołania do zasobu oraz co najmniej dwa konta o różnych własnościach/uprawnieniach. Zapisano [macierz dalszych prób](../SCENARIUSZE-D03-D04.csv); wszystkie pełne próby HTTP pozostają niewykonane.
 
 Do zamknięcia D04: wszystkie wejścia i pola, role panelu i języki tłumacza, członkostwo/invites/transfer własności, playlisty, komentarze/bany/odwołania, podgląd i tokeny wideo, eksporty i finanse, Server Actions i systemowe crony/workery, cofnięcie uprawnień w trakcie operacji oraz ujemne testy międzykanałowe. Nie uznajemy obecności słowa `authorize` za zaliczenie trasy.
+
+## Uzupełnienie: partia 07
+
+[D09](D09-ODTWARZANIE-TOKENY-I-CACHE.md) dodaje R30: rzeczywisty checkVideoAccess odmawia NOT_FOUND, lecz późniejsza bramka premiery pozostawia tytuł/poster ukrytego filmu, a obcemu zalogowanemu także termin. Źródło, napisy, token i sesja pozostają zablokowane. Sprawdzono też pięć granic ponownego użycia sesji odtwarzania: cudzy użytkownik, film lub fingerprint gościa dostają nową sesję zamiast cudzej. Jawna atrapa DB; brak pełnego HTTP/Prisma. Nie zmienia to otwartych granic pozostałych zasobów D04.

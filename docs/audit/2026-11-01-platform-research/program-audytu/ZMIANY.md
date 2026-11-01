@@ -77,3 +77,13 @@
 - Potwierdzono w zakresie modeli normalną kolejność pipeline, ochronę przed błędem przed COMMIT i po finalizerze oraz odmowę kasowania już aktywnej wersji PUBLISHED/UNLISTED. Niezależny przegląd pozostaje PENDING.
 - Dodano brakujący rekord procesu encoder: 280 wejść, 49 rozpoczętych i 231 niezbadanych. 46 scenariuszy pełnego HTTP bez zmian; 11 osobnych pipeline z otwartą walidacją pełnego stosu. ASVS: 34 rozpoczęte, 311 niezbadanych, zero zaliczonych.
 - PeerTube porównano źródłowo pod kątem faz zakończenia i nieodwracalnych zmian; bez automatycznego przypisywania odporności na R28/R29. Kolejny zakres D09. Kod aplikacji i produkcja bez zmian.
+
+## 1 listopada 2026 — partia 07: odtwarzanie, tokeny, cache i R30
+
+- Rozpoczęto D09; częściowy zakres 54 plików, z nakładaniem na wcześniejsze partie. Niezmienione checkVideoAccess, pełny PlaybackService, signer, sanitizer i funkcja Workera wykonane z jawnymi granicami I/O.
+- Cztery istniejące pliki celowanego Vitest: 33/33, zero failed/pending. Dodatkowy skrypt ma 38 obserwacji: 30 poprawnych kontroli, trzy warianty R30 i pięć właściwości znanego R07. Nie sumujemy tego jako niezależnych wymagań ani pełnego stosu.
+- R30: NOT_FOUND ukrytego/usuniętego filmu z przyszłą premierą zostaje obsłużone dopiero po planie premiery, który zachowuje title/poster/termin. Bez źródła/tokenu/napisów/sesji; P2 i niezależny przegląd PENDING.
+- R07 rozszerzono o faktyczne wydanie podpisu, odmowę nowego planu i replay do exp w funkcji Workera. Migawki i zegar symulowane, nie rzeczywiste logout/refund. Zachowano interpretację znanego kompromisu; pełne TTL/purge/cache produkcji niezweryfikowane.
+- Pozytywne wyniki: kontrola podpisu przed cache, związanie z filmem/wersją/rodzajem, chronione nagłówki private, ochrona napisów i sesji, porzucenie odpowiedzi starego widza i odnawianie tokenu. Brak odtwarzania filmu w przeglądarce i rzeczywistej platformy Cloudflare.
+- Oficjalną dokumentację Cloudflare i licencję CC BY 4.0 pobrano online. PeerTube porównano przez Redis/LRU, kontrolę praw i TTL 8 h; nie założono, że każdy logout natychmiast usuwa wszystkie tokeny wideo. Nie kopiowano implementacji.
+- 280 wejść: 52 rozpoczęte, 228 niezbadanych. ASVS: 36 rozpoczętych, 309 niezbadanych, zero zaliczonych. Osobne 38 scenariuszy odtwarzania z pełnym stosem niewykonanym; wcześniejsze scenariusze i surowe wyniki zachowane. Kolejny zakres D05. Aplikacja i produkcja bez zmian.
