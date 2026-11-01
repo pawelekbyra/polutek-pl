@@ -1,13 +1,13 @@
 # Stan badania — punkt wznowienia
 
-Aktualizacja: 1 listopada 2026. Program v1.0, partia 10: prywatność, eksport, usunięcie i retencja. Tryb: analiza, bez zmian aplikacji i produkcji.
+Aktualizacja: 1 listopada 2026. Program v1.0, partia 11: wydajność, pojemność i model kosztów. Tryb: analiza, bez zmian aplikacji i produkcji.
 
 ## Cel i decyzje właściciela
 
-- Docelowo duża platforma konkurująca z PeerTube funkcjami i skalą.
+- Docelowo duża platforma konkurująca z PeerTube funkcjami i skalą. Bieżący cel pomiaru z partii 11 według właściciela: kilkunastu twórców i 10 tys. widzów w szczycie (odpowiedź na pytanie o widzów jednoczesnych). 15 twórców to przybliżenie do modelu, nie dokładna decyzja. Nie utożsamiać liczby twórców z liczbą widzów.
 - Badanie ma być pogłębione i wieloobszarowe. Właściciel nie programuje; wnioski mają objaśniać wpływ na produkt i biznes.
 - Dotychczasowe porównanie jest bazą i próbą metody, a nie zamkniętym pełnym audytem.
-- Program i źródła są przygotowane. Rozpoczęto D01, D03, D04, D05, D06, D07, D08, D09, D10, D11 i D12; nie wykonano pełnej oceny 345 wymagań.
+- Program i źródła są przygotowane. Rozpoczęto D01, D03, D04, D05, D06, D07, D08, D09, D10, D11, D12, D13 i D14; nie wykonano pełnej oceny 345 wymagań.
 - Następnie właściciel polecił zachować poprzednie badanie i rozwijać całość na jednej gałęzi GitHub: `docs/polutek-platform-audit`. Katalog w repo: `docs/audit/2026-11-01-platform-research/`. Po każdej partii commit i push; bez automatycznego scalenia ani wdrożenia.
 
 ## Wersje
@@ -15,7 +15,7 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 10: prywatność, eksport, 
 - Polutek: `/workspace/polutek-pl`, `c397b9e548ca2c628e21457ac69d66e54b12ddbd`.
 - PeerTube: `/workspace/PeerTube`, `fa7d2b5d8a44bbec99159b11e91763f7d2308faa`.
 - Program: [PROGRAM.md](PROGRAM.md).
-- Rodzic commitu partii 10: `ffd645e8a51a43b0eac37a17690614477cbac78a`. Dowód braku zmian aplikacji: [partia 01](evidence/source-scope.json), [partia 02](evidence/source-scope-batch02.json), [partia 03](evidence/source-scope-batch03.json), [partia 04](evidence/source-scope-batch04.json), [partia 05](evidence/source-scope-batch05.json), [partia 06](evidence/source-scope-batch06.json), [partia 07](evidence/source-scope-batch07.json), [partia 08](evidence/source-scope-batch08.json), [partia 09](evidence/source-scope-batch09.json), [partia 10](evidence/source-scope-batch10.json). SHA finalnego zapisu sprawdzić w historii Git gałęzi. Dodatkowe commity dokumentacyjne nie są automatycznie zmianą badanej implementacji.
+- Rodzic commitu partii 11: `b5d982f8822746518e83329d07e548b873dbc42c`. Dowód braku zmian aplikacji: [partia 01](evidence/source-scope.json), [partia 02](evidence/source-scope-batch02.json), [partia 03](evidence/source-scope-batch03.json), [partia 04](evidence/source-scope-batch04.json), [partia 05](evidence/source-scope-batch05.json), [partia 06](evidence/source-scope-batch06.json), [partia 07](evidence/source-scope-batch07.json), [partia 08](evidence/source-scope-batch08.json), [partia 09](evidence/source-scope-batch09.json), [partia 10](evidence/source-scope-batch10.json), [partia 11](evidence/source-scope-batch11.json). SHA finalnego zapisu sprawdzić w historii Git gałęzi. Dodatkowe commity dokumentacyjne nie są automatycznie zmianą badanej implementacji.
 
 ## Gotowe
 
@@ -87,6 +87,13 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 10: prywatność, eksport, 
 63. Rzeczywisty processBeacon odrzucił DNT, obcy origin i automated; poprawna próbka nie zapisała raw IP/account ID/full referer, zachowała host i signed_in. Nie uznano tego za certyfikat prawnej anonimowości ani pełnej sieci/klienta/retencji. Pobrano online OWASP privacy cheat sheet i CC BY-SA 4.0, HTTP 200. Źródła i kopie dostawców bez prywatnych danych.
 64. PeerTube: wybrane fragmenty 16 plików eksportu/JWT/quota/ZIP/expiry/kaskad i testów. Wzorce obejmują exporter kanałów/settings, zadanie poza HTTP i powiązane usuwanie Account/VideoChannels. Ograniczenia: osobny zapis modelu/job, buforowane JSON/AP i best-effort usuwanie plików; nie dowiedziono braku orphanów ani skasowania federacyjnych kopii. PeerTube nie uruchamiano, benchmarku brak. Rejestr R01–R33; 68 wejść W_TRAKCIE i 212 NIEZBADANE, ASVS 50 W_TRAKCIE i 295 NIEZBADANE, zero zaliczonych. Jedenaście obszarów rozpoczętych, siedem niezbadanych; żaden zamknięty. Kolejny zakres D13/D14.
 
+65. Partia 11: [D13](obszary/D13-WYDAJNOSC-I-POJEMNOSC.md), [D14](obszary/D14-KOSZTY-I-LIMITY.md), [21 scenariuszy](SCENARIUSZE-SKALA.csv), [29 plików w częściowym zakresie](evidence/batch11-review.json), nakładających się na poprzednie partie. Właściciel określił kilkunastu twórców/10000 widzów; roboczo 15 twórców, warianty 10–19. Bez zmian aplikacji i produkcji.
+66. Sześć rzeczywistych modułów TS wykonanych; builder SQL używa jawnie oficjalnego runtime szablonów Prisma, bez wygenerowanego klienta/DTO/DB w VM. 16 prawdziwych EXPLAIN PostgreSQL 17.11 na tymczasowych kopiach tabel/indeksów/defaultów/checks i realnej funkcji triggera: 1000/10000 syntetycznych filmów, 100 kanałów. Przy 10000: rare FTS 1,223 ms, common FTS 172,963 ms, częsty LIKE 168,053 ms. Jedna próbka/przypadek; brak p95/pojemności/hydrate/kanałowego lookup/facets/HTTP/konkurencji. ROLLBACK, temp tables, brak trwałych fixture.
+67. Dwa istniejące pliki Vitest: search-query 22 passed; channel-limits zablokowany Prisma przed rejestracją; globalny exit 1. Cztery syntetyczne podsumowania wykonane rzeczywistym summarize.py: poprawne 200 i 500/500 unexpected (np. 429) oba exit 0, 5xx i powolne p95 exit 11/10. Aktualny hash helper z syntetycznym kluczem HMAC nie odpowiada plain SHA cleanup. R11 rozszerzone, bez dowodu błędnych odpowiedzi starego testu i bez nowego ruchu.
+68. R10: źródłowo globalnie jedno świeże RUNNING; same repliki encodera nie zwiększą współbieżności. R06: quota originals nie obejmuje HLS/SUPERSEDED i żądań. To istniejące ustalenia; R01–R33 bez nowych ID, historia priorytetów zachowana, niezależny przegląd PENDING. Mała liczba twórców ma znaczenie: przy 30 uploadach ×8 min/miesiąc i niezmierzonym RTF=2 model wymaga 8 h kodowania, nie farmy encoderów.
+69. Oficjalne R2/Workers pricing pobrane online HTTP 200, hashe i CC BY 4.0. Model: trzy poziomy widzów dla 15 twórców, sześć osi wrażliwości oraz 10 kontroli arytmetyki. Cel 10000 w szczycie przy średniej 25% i innych jawnych założeniach: 1,8 mln h oglądania, 1,539 mld Worker requests i 582,29 USD/miesiąc wyłącznie za wybrane R2+Workers. Brak hostingu/DB/encodera/backupów/obsługi/podatków; nie pełny budżet ani dowód skali. JSON wejściowy do zmiany i skrypt odtwarzalny.
+70. PeerTube: 13 wybranych źródeł, kolejki/konfigurowalna concurrency, local/remote runner builder, preliczony TSVECTOR i FTS/trigram CTE, pool i opt-in read replicas/read-your-writes, role procesów. Nie wykonano PeerTube ani równego benchmarku; opisano koszt złożoności i granice awarii Redis. Bieżąco 70 wejść W_TRAKCIE/210 NIEZBADANE; ASVS 51/294, zero zaliczonych; 13 obszarów rozpoczętych/5 niezbadanych, żaden zamknięty. Kolejny zakres D02: architektura, granice modułów i utrzymywalność.
+
 `NIEZBADANE` w nowej macierzy oznacza brak zakończonej procedury programu dla całego obszaru. Nie oznacza, że wcześniejsze przeglądy i eksperymenty nie istnieją. Referencje bazowe zapisano oddzielnie.
 
 ## Blokady i niewiadome
@@ -95,7 +102,7 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 10: prywatność, eksport, 
 - Nowe npm audit w partii 08 zostało odrzucone przed wykonaniem przez automatyczną kontrolę: ujawnienie grafu zależności prywatnego projektu. [Zapis](evidence/npm-audit-not-executed-batch08.json). Bez obejścia; dwa znane publiczne advisory pobrano GET, brak świeżego pełnego skanu.
 - Dlatego pełny typecheck/runtime/testy Prisma nie są potwierdzone. Wyników bazowego pełnego Vitest nie interpretować jako w pełni zielonego zestawu ani listy potwierdzonych usterek aplikacji.
 - PeerTube nie był instalowany/uruchamiany. Nie ma porównawczego benchmarku.
-- Nie ustalono konkretnych docelowych progów ruchu, SLO, RPO/RTO i budżetu; trzeba je doprecyzować przy mapie produktu. Samo „duża platforma” nie jest deklaracją pojemności.
+- W partii 11 ustalono scenariusz kilkunastu twórców i 10000 widzów w szczycie. Nadal brakuje profilu dobowego/żądań, konkretnych SLO, RPO/RTO i pełnego budżetu. Wybrana liczba widzów nie jest potwierdzoną pojemnością aplikacji.
 
 ## Lokalne zasoby
 
@@ -108,12 +115,13 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 10: prywatność, eksport, 
 - Partia 08 użyła hostowego FFmpeg/ffprobe 7.1.5 i własnego serwera loopback; nie uruchamiała Docker FFmpeg 8.0.1 ani bazy. Czytniki i procesy w skryptach tools/input-boundaries-experiment.cjs oraz tools/ffmpeg-input-experiment.mjs; nie wymagają pełnej aplikacji.
 - Partia 09: lokalny Docker 28.4.0/PostgreSQL 17.11 działały; dwa protokoły SQL użyły istniejącej bazy badawczej i ROLLBACK. tools/payment-boundaries-experiment.cjs działa na atrapach i rzeczywistym podpisie SDK bez sieci; tools/payment-total-sql-experiment.py wymaga lokalnego Dockera i helpera z partii 05.
 - Partia 10 nie wymagała Dockera ani usług zewnętrznych. tools/privacy-boundaries-experiment.cjs uruchamia komponenty z kontrolowanymi atrapami i syntetycznymi osobami; dostawcy/audyt/DB są jawne. Nie odblokowano Prisma.
+- Partia 11: istniejący lokalny PostgreSQL 17.11 i helper Session z partii 05 (bez wywoływania jego main). tools/search-query-plans.py używa temp tables i ROLLBACK; capture SQL z sześciu rzeczywistych modułów wymaga Node 22 i oficjalnego runtime szablonów SQL, nie klienta Prisma. Model kosztów i próba summarizera nie korzystają z sieci ani kont dostawców.
 - Skrypty eksperymentów pipeline i storage znajdują się w katalogu nadrzędnym; działają na atrapach usług i plikach tymczasowych.
 - Nie zakładać, że procesy lub kontenery przeżyją odtworzenie środowiska. Sprawdzić ich stan przed użyciem.
 
 ## Następne działanie
 
-Przejść do D13/D14: wydajność, pojemność i koszt, najpierw mapa obciążeń i bezpieczne pomiary lokalne. Uwzględnić R06/R10/R11/R16, rozdzielenie control plane i dostawy wideo oraz docelowy koszt twórcy/oglądania/kodowania/retencji. Progi ruchu/SLO/budżetu nadal nieuzgodnione, nie udawać porównawczego benchmarku bez równych warunków. Bez produkcji i cudzych instancji. D12 pozostaje otwarte: wszystkie modele/retencja, transfer i fizyczny purge kanału/plików, pełne HTTP/Prisma, logi/dostawcy/backup/restore oraz podstawa prawna. R33 i rozszerzony R16 wymagają niezależnego przeglądu; nie tworzyć duplikatu R34 dla eksportu znanego już z baseline. D10/D05/D08/D09 mają otwarte próby pełnego stosu. Nie powtarzać identycznych testów ani odrzuconego npm audit, nie podstawiać Prisma i nie wysyłać grafu inną drogą. Nie zmieniać aplikacji ani produkcji.
+Przejść do D02: architektura i utrzymywalność. Zmapować granice modułów/importy, największe odpowiedzialności i spójność kontraktów, krytyczne sprzężenia i koszt bezpiecznej zmiany; porównać konkretne rozwiązania PeerTube bez uznawania większego repo za lepsze. Zachować bieżący scenariusz kilkunastu twórców/10000 widzów. D13/D14 otwarte: pełny stos/Prisma/HTTP, reprezentatywna współbieżność/SLO, heartbeat/renewal, CPU/cache, katalog/retencja i pełny koszt. Nie przenosić lokalnych EXPLAIN do deklaracji pojemności. R06/R10/R11 wymagają niezależnego przeglądu. D12 i wcześniejsze mają niewykonane próby pełnego stosu. Nie powtarzać identycznych testów ani odrzuconego npm audit, nie podstawiać klienta Prisma i nie wysyłać grafu inną drogą. Nie zmieniać aplikacji ani produkcji.
 
 Przed rozpoczęciem: odczytać ten plik, PROGRAM.md i właściwe instrukcje repo; porównać bieżący HEAD z podanym wyżej. Nie powtarzać wykonanych testów bez zmiany wersji, diagnozy lub warunków.
 

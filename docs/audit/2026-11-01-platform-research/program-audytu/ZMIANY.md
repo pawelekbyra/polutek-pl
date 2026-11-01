@@ -117,3 +117,14 @@
 - Kontrole usuwania/rollback modelu/kolejek i retry/retencji technicznej zadziałały. processBeacon usuwał badane bezpośrednie identyfikatory i odmawiał DNT/origin/automated. Brak certyfikacji anonimowości, prawa i faktycznych harmonogramów.
 - PeerTube porównano w wybranych fragmentach 16 plików: domenowe eksportery, ZIP/job/JWT/expiry/kaskady oraz ich ograniczenia pamięci, outbox i usuwania plików. Nie uruchamiano PeerTube. OWASP privacy/CC BY-SA pobrano online z HTTP 200 i hashami.
 - Rejestr R01–R33. Wejścia 68 rozpoczętych/212 niezbadanych; ASVS 50/295, zero zaliczonych. Jedenaście z 18 obszarów rozpoczętych; żaden zamknięty. Kolejny zakres D13/D14, bez zmian aplikacji i produkcji.
+
+## 1 listopada 2026 — partia 11: wydajność, pojemność i koszty
+
+- Właściciel doprecyzował scenariusz: kilkunastu twórców i 10000 widzów jednocześnie w szczycie. 15 twórców to przybliżenie z wariantami 10–19, nie utożsamienie twórców z widzami.
+- D13/D14 rozpoczęte: 29 źródeł częściowo, sześć wykonanych modułów TS i oficjalny runtime szablonów SQL (bez wygenerowanego klienta), 16 lokalnych EXPLAIN na temp tabelach, 21 scenariuszy z pełnym stosem NIEWYKONANE.
+- Common FTS/LIKE przy 10000 syntetycznych filmów ~173/168 ms, rare FTS ~1 ms; jedna próbka, brak p95 lub liczby widzów z tych pomiarów. ROLLBACK, bez trwałych danych i aplikacji.
+- R11 rozszerzono: syntetyczny unexpected_status nie odrzuca summarizera; kontrole 5xx/p95 odrzucone. Hash cleanup SHA nie odpowiada bieżącemu HMAC z synthetic key. Bez k6/ruchu produkcyjnego i bez twierdzenia, że stary test miał błędne odpowiedzi.
+- R06/R10 ponownie przejrzane źródłowo: quota nie jest pełnym kosztem, globalnie jeden encode; przy małej liczbie uploadów nie wykazano potrzeby wielu encoderów. R01–R33, bez nowych ID, niezależny przegląd PENDING.
+- Dwa istniejące pliki Vitest: jeden passed (22 assertions), jeden zablokowany Prisma przed rejestracją; globalny exit 1. Pełnego zestawu/generowania nie ponawiano.
+- Cenniki R2/Workers pobrano online HTTP 200, CC BY 4.0. Model ma trzy poziomy widzów, sześć osi wrażliwości, warianty twórców i 10 kontroli arytmetyki. Główny wariant ~582 USD/miesiąc tylko wybrane R2+Workers; pozostałe koszty nieoszacowane. Brak faktury i benchmarku CPU/bitrate/cache.
+- PeerTube: 13 źródeł częściowo, konkretne kolejki/runnery/wektor wyszukiwania/CTE/pule/repliki z ograniczeniami. Bez runtime i równego benchmarku. 13 obszarów rozpoczętych, 5 niezbadanych, zero zamkniętych; ASVS 51/294, wejścia 70/210. Następnie D02.

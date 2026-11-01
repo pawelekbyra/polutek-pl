@@ -99,3 +99,17 @@ Jedenasty skrypt wykonuje rzeczywiste czytniki na native Request/FormData, z jaw
 Trzynasty skrypt wykonuje komponenty płatności i prawdziwy HMAC SDK Stripe na syntetycznym sekrecie: 18 obserwacji, jawne atrapy DB/Stripe API/audytu, bez sieci i pieniędzy. Czternasty korzysta z lokalnej badawczej bazy i helpera siódmego skryptu: dwa sekwencyjne protokoły SQL, własne fixture ROLLBACK. Nie uruchamiają pełnej aplikacji/Prisma. D10 osobno zapisuje sześć plików Vitest zablokowanych przed rejestracją, zero wykonanych testów.
 
 Piętnasty skrypt wykonuje cleanup/eksport/retencję/publiczny header kanału/kolektor na syntetycznych danych: 15 obserwacji, jawne atrapy i kontrola nazw pól schematu. Nie uruchamia Prisma, HTTP ani dostawców. D12 oddzielnie zapisuje 19 passed assertions z trzech plików Vitest i dwa pliki zablokowane; globalny exit 1. Początkowy roboczy numer R34 dla eksportu przypisano do istniejącego R16, bez nowego ID w rejestrze.
+
+
+Partia 11: [D13 — wydajność i pojemność](program-audytu/obszary/D13-WYDAJNOSC-I-POJEMNOSC.md), [D14 — koszty i limity](program-audytu/obszary/D14-KOSZTY-I-LIMITY.md), [21 scenariuszy](program-audytu/SCENARIUSZE-SKALA.csv), [parametry kosztów](program-audytu/ZALOZENIA-KOSZTOW.json). Właściciel wskazał kilkunastu twórców i 10000 widzów w szczycie. Pomiar obejmuje 16 lokalnych planów SQL, bez potwierdzenia pojemności całej aplikacji. Warunkowy rachunek wybranych R2+Workers nie jest pełnym budżetem. R06/R10/R11 rozszerzone, bez nowego ID; 13 obszarów rozpoczętych, żaden zamknięty. PeerTube: 13 konkretnych częściowo przeczytanych źródeł, bez równego benchmarku.
+
+Odtworzenie partii 11 z katalogu repo (Node 22 z lokalnych tools, istniejące node_modules; lokalny SQL wymaga istniejącego kontenera i bazy badawczej, bez resetu):
+
+```bash
+node docs/audit/2026-11-01-platform-research/program-audytu/tools/search-sql-capture.cjs
+PYTHONDONTWRITEBYTECODE=1 python3 docs/audit/2026-11-01-platform-research/program-audytu/tools/search-query-plans.py
+PYTHONDONTWRITEBYTECODE=1 python3 docs/audit/2026-11-01-platform-research/program-audytu/tools/loadtest-summary-probe.py
+PYTHONDONTWRITEBYTECODE=1 python3 docs/audit/2026-11-01-platform-research/program-audytu/tools/capacity-cost-model.py
+```
+
+Skrypty zapisują wyniki badania w evidence; SQL wyłącznie temp tables i ROLLBACK. Ponowny benchmark zmieni czasy/hashe archiwum i wymaga nowej partii, nie nadpisywania historycznego dowodu bez adnotacji. Dwa istniejące pliki Vitest dały 22 passed assertions i jeden plik zablokowany przed rejestracją przez Prisma; globalny exit 1. Nie interpretować jako zielonego zestawu.

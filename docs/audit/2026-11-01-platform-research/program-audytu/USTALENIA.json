@@ -155,24 +155,34 @@
       "id": "R06",
       "title": "Limit magazynu nie jest limitem rzeczywistego kosztu",
       "baseline_priority_and_evidence": "P1, B",
-      "status": "DO_WERYFIKACJI",
-      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "status": "POTWIERDZONE_ZRODLOWO",
+      "note": "Ponownie przeczytano SUM tylko wybranych originals bez HLS/SUPERSEDED. Model kosztów opiera się na jawnych założeniach i oficjalnym cenniku; nie dowodzi aktualnego rachunku ani naruszenia limitu produkcji.",
       "source_report": "../RAPORT.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D08",
         "D14"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
+      "impact_plain_language": "Limit kanału nie oznacza maksymalnego rachunku platformy; oglądanie i dodatkowe kopie mają osobne koszty.",
+      "conditions": "Własny kanał zwykłego użytkownika; HLS/stare wersje/operacje i widzowie nie są ograniczone przez sam SUM aktywnych originals.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D13-WYDAJNOSC-I-POJEMNOSC.md",
+        "obszary/D14-KOSZTY-I-LIMITY.md",
+        "evidence/batch11-review.json"
+      ],
+      "counterarguments": [
+        "Limity pliku/dnia/kolejki/długości są celowe i istnieją; główny kanał/staff mają inne zasady.",
+        "Mała liczba twórców ogranicza średni koszt kodowania w obecnym modelu; 10 tys. widzów to osobna oś.",
+        "Nie wykonano quota/Prisma ani faktury dostawcy w tej partii."
+      ],
       "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "proposed_fix": "Osobno mierzyć quota produktu oraz storage fizyczny, zaległe cleanup, operacje Workera/R2 i budżet konta; ustalić alarmy i politykę limitów.",
+      "acceptance_test": "Uzgodnione metryki obejmują aktualne/stare oryginały, HLS, retry/purge i oglądanie; rachunek uzgadniany z dostawcą.",
+      "independent_review": "PENDING",
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "evidence_level": "B_SOURCE_QUOTA_SUM_AND_CONDITIONAL_COST_MODEL_NOT_RUNTIME_INVOICE"
     },
     {
       "id": "R07",
@@ -262,45 +272,67 @@
       "id": "R10",
       "title": "Obecna topologia nie jest architekturą dużej platformy",
       "baseline_priority_and_evidence": "P2, B",
-      "status": "DO_WERYFIKACJI",
-      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "status": "POTWIERDZONE_ZRODLOWO",
+      "note": "Compose deklaruje wspólny host/zasoby i DB max_connections=60. claimNext globalnie dopuszcza jedno świeże RUNNING. To zamierzona ochrona małego hosta; nie dowód awarii ani potrzeby wielu encoderów przy kilkunastu twórcach.",
       "source_report": "../RAPORT.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D13"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
+      "impact_plain_language": "Wideo omija serwer aplikacji, ale wejścia, sesje i baza nadal wymagają osobnego budżetu; same repliki encodera nie zwiększą kodowania.",
+      "conditions": "Przejrzana deklaracja Compose i protokół claim; faktyczna konfiguracja produkcji nieodczytana.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D13-WYDAJNOSC-I-POJEMNOSC.md",
+        "obszary/D14-KOSZTY-I-LIMITY.md",
+        "evidence/batch11-review.json"
+      ],
+      "counterarguments": [
+        "Dostawa HLS przez Worker/R2 jest już oddzielona od aplikacji.",
+        "Jeden encode chroni 2 vCPU; przy 30 filmach miesięcznie model wymaga tylko 8 h pracy, RTF niezmierzone.",
+        "Złożoność PeerTube nie stanowi sama dowodu większej niezawodności."
+      ],
       "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "proposed_fix": "Zmierzony profil aplikacji/bazy/watch heartbeat i kodowania, budżet połączeń per proces, plan separacji usług i dopiero potem kontrolowana współbieżność kodowania z fencing.",
+      "acceptance_test": "Docelowy mix 10000 szczytowych widzów przechodzi ustalone SLO lokalnego środowiska reprezentatywnego; kolejka ma zmierzony czas oczekiwania i zachowuje integralność po awariach.",
+      "independent_review": "PENDING",
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "evidence_level": "B_DECLARED_TOPOLOGY_AND_GLOBAL_ENCODE_CLAIM_NO_PRODUCTION_CAPACITY_PROOF"
     },
     {
       "id": "R11",
       "title": "Historyczny load test nie uzasadnia dzisiejszej deklaracji skali",
       "baseline_priority_and_evidence": "P2, C/D",
-      "status": "DO_WERYFIKACJI",
-      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "status": "POTWIERDZONE",
+      "note": "Historyczny pomiar dotyczy wejść gości/obrazu z 4 października. Rzeczywisty summarizer zaakceptował syntetyczne 500/500 unexpected status przy server_errors=0. Cleanup SHA nie odpowiada aktualnemu HMAC. Nie wykonano nowego k6/HTTP/produkcji.",
       "source_report": "../RAPORT.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D13"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
+      "impact_plain_language": "Stary wynik nie odpowiada na pytanie o 10 tys. widzów; przed nowym pomiarem trzeba zapewnić mierzenie poprawnych odpowiedzi i sprzątanie testowych sesji.",
+      "conditions": "Szybkie nieoczekiwane statusy przy spełnionym rate/p95; nowe sesje HMAC zamiast historycznego SHA.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D13-WYDAJNOSC-I-POJEMNOSC.md",
+        "obszary/D14-KOSZTY-I-LIMITY.md",
+        "evidence/batch11-review.json",
+        "evidence/loadtest-summary-probe.json",
+        "evidence/search-sql-capture.json"
+      ],
+      "counterarguments": [
+        "K6 ma bezpieczniki i raportuje unexpected_status; operator może zauważyć błędy ręcznie.",
+        "Kontrole 5xx i powolnego p95 odrzucono kodem 11/10.",
+        "Syntetyczny JSON nie dowodzi wystąpienia takich odpowiedzi podczas starego testu."
+      ],
       "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "proposed_fix": "Przed nowym testem akceptacja poprawnych statusów/treści, jawny cleanup aktualnych testowych sesji, workload otwarcia/odtwarzania/odnowienia/heartbeat i wersjonowany raport SLO.",
+      "acceptance_test": "Scenariusz sam odrzuca nieoczekiwane odpowiedzi, usuwa wyłącznie fixture i mierzy aktualny obraz/katalog/mix; brak mylenia wejść/s z liczbą odtwarzających.",
+      "independent_review": "PENDING",
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "evidence_level": "A_ACTUAL_SUMMARIZER_SYNTHETIC_METRICS_AND_HASH_HELPER_B_HISTORICAL_CAPACITY_CONFIG"
     },
     {
       "id": "R12",
