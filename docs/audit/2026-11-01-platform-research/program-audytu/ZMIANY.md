@@ -66,3 +66,14 @@
 - Fixture integralności wycofano, transakcyjne usunięto; schemat i triggery bez trwałych zmian. Wynik odtworzono po zmianie kontroli baseline/parsera. Nie powtarzano Vitest.
 - D06 rozpoczęto, D07 uzupełniono; 47 wejść W_TRAKCIE, 232 NIEZBADANE. Scenariusze pełnego HTTP: 46, wszystkie niewykonane. ASVS: 33 rozpoczęte, 312 niezbadanych, zero zaliczonych.
 - Pobrano oficjalną dokumentację PostgreSQL 17 i notę licencyjną. Helpery PeerTube są punktem odniesienia dla polityki transakcji, bez twierdzenia o rozwiązaniu tych samych przypadków. Aplikacja i produkcja bez zmian.
+
+## 1 listopada 2026 — partia 06: finalizacja, audyt i usuwanie HLS
+
+- Rozpoczęto D08, częściowy zakres 29 plików z nakładaniem na poprzednie partie. Wykonano 16 niezmienionych modułów w jawnym harnessie z atrapami I/O: 11 obserwacji, siedem poprawnych kontroli i cztery świadectwa trzech problemów.
+- R28: wyjątek audytu po COMMIT aktywacji wywołuje cleanup. Nowy asset znika z trasą; wcześniej istniejący pozostaje ACTIVE w DB z pustym prefiksem, a kolejny retry zgłasza sukces bez PUT/HEAD/LIST/DELETE. R29: aktywacja podczas usuwania unieważnia wcześniejsze sprawdzenie użycia, lecz kasowanie trwa dalej.
+- R02 rozszerzono o rzeczywisty finalizer/serwis tras/repozytorium statusu; nie dodano nowego ID dla tego samego problemu. Własność zadania zasymulowano, pełnego takeover nie wykonano.
+- Osobno trzy protokoły realnego PostgreSQL sprawdziły COMMIT i kaskady FK na dwóch połączeniach. Fixture usunięte; żadna próba nie używała produkcji, R2, FFmpeg ani wygenerowanego Prisma.
+- Zachowano początkowy błąd konfiguracji transpileModule; poprawiono interoperacyjność w skrypcie badawczym i wykonano całość ponownie. Nie powtarzano Vitest ani identycznych R03/R04.
+- Potwierdzono w zakresie modeli normalną kolejność pipeline, ochronę przed błędem przed COMMIT i po finalizerze oraz odmowę kasowania już aktywnej wersji PUBLISHED/UNLISTED. Niezależny przegląd pozostaje PENDING.
+- Dodano brakujący rekord procesu encoder: 280 wejść, 49 rozpoczętych i 231 niezbadanych. 46 scenariuszy pełnego HTTP bez zmian; 11 osobnych pipeline z otwartą walidacją pełnego stosu. ASVS: 34 rozpoczęte, 311 niezbadanych, zero zaliczonych.
+- PeerTube porównano źródłowo pod kątem faz zakończenia i nieodwracalnych zmian; bez automatycznego przypisywania odporności na R28/R29. Kolejny zakres D09. Kod aplikacji i produkcja bez zmian.

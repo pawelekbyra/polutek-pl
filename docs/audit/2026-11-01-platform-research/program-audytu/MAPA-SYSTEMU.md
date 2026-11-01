@@ -62,7 +62,7 @@ node docs/audit/2026-11-01-platform-research/program-audytu/tools/build-system-m
 | Migracje SQL | 81 | Historia schematu, nie liczba aktualnych tabel |
 | Statyczne nazwy `process.env` | 88 | Bez wartości; nie obejmują wszystkich odwołań pośrednich i bindingów workerów |
 
-CSV ma 279 rekordów: 147 metod tras, 46 akcji, 54 stron, 5 zdarzeń workerów, 2 endpointy kolektora, 15 timerów i 10 plików operatora. Crony są już częścią tras HTTP — nie sumujemy ich drugi raz.
+Pierwotna ekstrakcja CSV miała 279 rekordów: 147 metod tras, 46 akcji, 54 stron, 5 zdarzeń workerów, 2 endpointy kolektora, 15 timerów i 10 plików operatora. Crony są już częścią tras HTTP — nie sumujemy ich drugi raz. W partii 06 dodano ręcznie osobny rekord procesu encoder (`scripts/video-worker.ts:57`), obecnego na diagramie, lecz pominiętego jako osobne wejście w ekstrakcji. Bieżący CSV ma **280 rekordów**; historyczny wynik AST pozostaje zachowany. Nie jest to obietnica, że wszystkie możliwe wejścia są już rozpoznane.
 
 **Ograniczenia ekstrakcji:** Better Auth ma catch-all, a Next generuje własne transporty Server Actions. Nazwy wywołań są odczytem składni, nie analizą wszystkich możliwych wykonań. Obraz PP Support i infrastruktura dostawców nie są zinwentaryzowane tym parserem. Zero diagnostyk parsera oznacza jedynie poprawne odczytanie składni przez parser TypeScript; nie jest typecheck ani testem aplikacji.
 

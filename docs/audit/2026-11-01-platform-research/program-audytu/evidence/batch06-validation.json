@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-01",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "application_paths_changed": [],
+  "local_links_checked": 126,
+  "broken_local_links": [],
+  "asvs_status_counts": {
+    "NIEZBADANE": 311,
+    "W_TRAKCIE": 34
+  },
+  "entry_status_counts": {
+    "NIEZBADANE": 231,
+    "W_TRAKCIE": 49
+  },
+  "entry_count": 280,
+  "new_entry": "scripts/video-worker.ts:57 runWorkerLoop",
+  "planned_full_application_http_scenarios": 46,
+  "full_application_http_scenarios_executed": 0,
+  "pipeline_scenarios": 11,
+  "full_stack_pipeline_scenarios_executed": 0,
+  "stable_finding_count": 29,
+  "distinct_new_findings": 2,
+  "existing_finding_extended": "R02",
+  "earlier_findings_preserved_except_documented_R02_extension": true,
+  "earlier_raw_evidence_and_source_files_preserved": 57,
+  "source_files_partially_reviewed_this_batch": 29,
+  "actual_typescript_modules_executed": 16,
+  "component_positive_controls": 7,
+  "component_problem_witnesses": 4,
+  "real_postgres_protocol_observations": 3,
+  "real_postgres_positive_controls": 1,
+  "baseline_source_hashes_match": true,
+  "fixtures_removed": true,
+  "node_version": "v22.23.4",
+  "research_script_syntax": "passed node --check and Python ast.parse",
+  "component_repeat": "byte-identical JSON with final harness; PostgreSQL not repeated without a change",
+  "prisma_client_executed": false,
+  "real_r2_ffmpeg_or_full_playback_executed": false,
+  "vitest_repeated": false,
+  "diff_whitespace_check": "passed git diff --check",
+  "credential_pattern_scan": "No matches in changed/new files for listed patterns; not complete secret detection",
+  "credential_patterns": [
+    "private_key",
+    "github_token",
+    "stripe_live_secret",
+    "database_uri",
+    "aws_access_key"
+  ],
+  "scope": "Artifact consistency, actual components with explicit fake I/O, and separate SQL protocols. Not full application/security/production certification."
+}

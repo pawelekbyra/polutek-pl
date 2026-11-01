@@ -15,11 +15,13 @@ Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-aud
 | [D04: role i izolacja](program-audytu/obszary/D04-ROLE-I-IZOLACJA.md) | Role, R23 oraz 19 obserwacji zakresu playlist i kolejki na rzeczywistych funkcjach z atrapą DB |
 | [D06: dane i integralność](program-audytu/obszary/D06-DANE-I-INTEGRALNOSC.md) | 15 prób na prawdziwym PostgreSQL; działające FK/unique/triggery i granice odpowiedzialności aplikacji |
 | [D07: transakcje i ponowienia](program-audytu/obszary/D07-TRANSAKCJE-I-PONOWIENIA.md) | R26: limit playlist przy współbieżności; R27: opóźnione ukończenie uploadu cofa wybór oryginału |
+| [D08: kodowanie i usuwanie](program-audytu/obszary/D08-UPLOAD-KODOWANIE-I-USUWANIE.md) | R28: błąd audytu po aktywacji kasuje wynik; R29: aktywacja podczas kasowania; mocniejszy dowód R02 |
+| [Scenariusze pipeline](program-audytu/SCENARIUSZE-PIPELINE.csv) | 11 obserwacji komponentów, osobne dowody SQL i otwarta walidacja pełnego stosu |
 | [Niezmienniki danych](program-audytu/NIEZMIENNIKI-DANYCH.csv) | Wyniki bezpośrednich prób SQL oddzielone od pełnej oceny aplikacji |
 | [D11: moderacja i nadużycia](program-audytu/obszary/D11-MODERACJA-I-NADUZYCIA.md) | Granice komentarzy, banów i odwołań; R25: stare odwołanie cofa nowsze ograniczenie po cyklu statusu |
 | [Scenariusze pełnego HTTP](program-audytu/SCENARIUSZE-D03-D04.csv) | 46 planowanych prób; osobne kolumny dla dowodów izolowanych i SQL, powiązania z D06/D07/D08/D11/D14 |
 | [Powierzchnia wejść](program-audytu/POWIERZCHNIA-WEJSC.csv) | Trasy, Server Actions, strony, zdarzenia workerów i wejścia operacyjne do kontroli |
-| [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R27, statusy i przypisanie do obszarów; raport bazowy zachowuje wcześniejsze 22 |
+| [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R29, statusy i przypisanie do obszarów; raport bazowy zachowuje wcześniejsze 22 |
 | [Pokrycie obszarów](program-audytu/POKRYCIE.csv) | Ocena postępu bez ukrywania niezbadanych elementów |
 | [ASVS — 345 wymagań](program-audytu/ASVS-POKRYCIE.csv) | Lista do kwalifikacji i sprawdzania; nie lista zaliczonych testów |
 | [Plan eksperymentów i pomiarów](PLAN-WERYFIKACJI.md) | Dalsze testy runtime, awarie, benchmark i model kosztów |
@@ -57,6 +59,8 @@ node docs/audit/2026-11-01-platform-research/program-audytu/tools/session-revoca
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/resource-scope-experiment.cjs
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/moderation-boundaries-experiment.cjs
 python3 docs/audit/2026-11-01-platform-research/program-audytu/tools/database-integrity-experiment.py
+node docs/audit/2026-11-01-platform-research/program-audytu/tools/pipeline-boundaries-experiment.cjs
+PYTHONDONTWRITEBYTECODE=1 python3 docs/audit/2026-11-01-platform-research/program-audytu/tools/playback-cascade-experiment.py
 ```
 
 Pierwsze dwa eksperymenty wywołują rzeczywisty procesor/klasę magazynu z atrapami portów. Nie łączą się z R2 ani produkcyjną bazą. Nie zastępują pełnych testów lokalnego stosu.
@@ -68,5 +72,7 @@ Czwarty uruchamia prawdziwy serwer HTTP Better Auth pod 127.0.0.1 z oficjalnym a
 Szósty wykonuje 26 obserwacji moderacji i języków panelu z atrapami I/O. Dwa warianty odtwarzają ten sam R25 dla kanału i filmu; pozostałe są kontrolami i przykładami poprawnych granic. Brak prawdziwej DB, HTTP i dispatchu Server Actions; szczegóły w D11/D04.
 
 Siódmy wymaga Dockera z lokalnym kontenerem PostgreSQL i badawczej bazy wskazanej w historycznym manifeście migracji. Wykonuje 15 prób integralności, dwa protokoły limitu i przeplot ponowienia uploadu. Tworzy losowe fixture, wycofuje lub usuwa je po badaniu i nie zmienia schematu publicznego. To rzeczywiste SQL z protokołem przejrzanego kodu; nie uruchamia TypeScript/Prisma ani pełnych żądań aplikacji.
+
+Ósmy łączy rzeczywiste komponenty procesora, finalizera, tras, audytu i cleanup z jawnymi atrapami I/O: 11 obserwacji, w tym siedem poprawnych kontroli. Nie uruchamia Prisma, R2, FFmpeg ani autoryzacji panelu. Dziewiąty używa lokalnego PostgreSQL i helpera siódmego skryptu; sprawdza trzy protokoły COMMIT/kaskad i usuwa własne fixture. Te dwa poziomy dowodu są rozliczone oddzielnie w D08.
 
 Pełna walidacja runtime była zablokowana pobieraniem silnika/checksum Prisma. Ten stan pozostaje jawną niewiadomą, nie domyślnym zaliczeniem testów.

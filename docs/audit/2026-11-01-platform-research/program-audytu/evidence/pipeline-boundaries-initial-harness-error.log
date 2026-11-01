@@ -1,0 +1,4 @@
+TypeError: Cannot read properties of undefined (reading 'join')
+    at processEncodeJob (lib/modules/video-pipeline/application/process-encode-job.ts:85:41)
+    at pipelineCase (/workspace/polutek-pl/docs/audit/2026-11-01-platform-research/program-audytu/tools/pipeline-boundaries-experiment.cjs:177:27)
+    at async main (/workspace/polutek-pl/docs/audit/2026-11-01-platform-research/program-audytu/tools/pipeline-boundaries-experiment.cjs:216:21)

@@ -62,3 +62,5 @@ Warto rozważyć silniejsze ograniczenia tam, gdzie pomylenie relacji miałoby d
 Nie wyłączano triggerów dla wygody testu. Pozytywne wyniki chronią przed badanymi zwykłymi instrukcjami SQL; nie dowodzą odporności na administratora DB, który może zmienić schemat, uprawnienia albo sam trigger. Nie zweryfikowano uprawnień ról produkcyjnych. Dla LedgerEntry odczytano definicję triggera w katalogu, ale nie wykonano prób na księdze finansowej w tej partii.
 
 Do zamknięcia D06: pozostałe tabele i CHECK/FK, soft/hard delete i kaskady, indeksy według realnych zapytań, migracje na danych i rollback wdrożenia, drift/Prisma, blokady i izolacja, pieniądze/księga, eksport/retencja oraz odtworzenie z backupu. Wyniki SQL w tej partii rozszerzają dowody; nie zamykają audytu bazy.
+
+Uzupełnienie partii 06: [trzy protokoły PostgreSQL](../evidence/playback-cascade-experiment.json) potwierdziły COMMIT aktywacji oraz kaskadowe usunięcie trasy po DELETE jej assetu, z wyzerowaniem wskaźnika i bez przywrócenia poprzedniego isPrimary. Są dowodem skutku FK dla [R28/R29 w D08](D08-UPLOAD-KODOWANIE-I-USUWANIE.md), a nie wykonaniem całych funkcji Prisma ani awarii audytu na prawdziwej DB.

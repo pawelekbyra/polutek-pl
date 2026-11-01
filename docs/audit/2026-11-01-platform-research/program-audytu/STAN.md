@@ -1,13 +1,13 @@
 # Stan badania — punkt wznowienia
 
-Aktualizacja: 1 listopada 2026. Program v1.0, partia 05: integralność i protokoły transakcji na PostgreSQL. Tryb: analiza, bez zmian aplikacji i produkcji.
+Aktualizacja: 1 listopada 2026. Program v1.0, partia 06: granice finalizacji, audytu i usuwania HLS. Tryb: analiza, bez zmian aplikacji i produkcji.
 
 ## Cel i decyzje właściciela
 
 - Docelowo duża platforma konkurująca z PeerTube funkcjami i skalą.
 - Badanie ma być pogłębione i wieloobszarowe. Właściciel nie programuje; wnioski mają objaśniać wpływ na produkt i biznes.
 - Dotychczasowe porównanie jest bazą i próbą metody, a nie zamkniętym pełnym audytem.
-- Program i źródła są przygotowane. Rozpoczęto D01, D03, D04, D06, D07 i D11; nie wykonano pełnej oceny 345 wymagań.
+- Program i źródła są przygotowane. Rozpoczęto D01, D03, D04, D06, D07, D08 i D11; nie wykonano pełnej oceny 345 wymagań.
 - Następnie właściciel polecił zachować poprzednie badanie i rozwijać całość na jednej gałęzi GitHub: `docs/polutek-platform-audit`. Katalog w repo: `docs/audit/2026-11-01-platform-research/`. Po każdej partii commit i push; bez automatycznego scalenia ani wdrożenia.
 
 ## Wersje
@@ -15,7 +15,7 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 05: integralność i protok
 - Polutek: `/workspace/polutek-pl`, `c397b9e548ca2c628e21457ac69d66e54b12ddbd`.
 - PeerTube: `/workspace/PeerTube`, `fa7d2b5d8a44bbec99159b11e91763f7d2308faa`.
 - Program: [PROGRAM.md](PROGRAM.md).
-- Rodzic commitu partii 05: `50d614e6f7061b02a0633aeeec5208351f4580d5`. Dowód braku zmian aplikacji: [partia 01](evidence/source-scope.json), [partia 02](evidence/source-scope-batch02.json), [partia 03](evidence/source-scope-batch03.json), [partia 04](evidence/source-scope-batch04.json), [partia 05](evidence/source-scope-batch05.json). SHA finalnego zapisu sprawdzić w historii Git gałęzi. Dodatkowe commity dokumentacyjne nie są automatycznie zmianą badanej implementacji.
+- Rodzic commitu partii 06: `9e3ee45e2950e5b7396fdb6be2e2ef0515d94885`. Dowód braku zmian aplikacji: [partia 01](evidence/source-scope.json), [partia 02](evidence/source-scope-batch02.json), [partia 03](evidence/source-scope-batch03.json), [partia 04](evidence/source-scope-batch04.json), [partia 05](evidence/source-scope-batch05.json), [partia 06](evidence/source-scope-batch06.json). SHA finalnego zapisu sprawdzić w historii Git gałęzi. Dodatkowe commity dokumentacyjne nie są automatycznie zmianą badanej implementacji.
 
 ## Gotowe
 
@@ -50,6 +50,12 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 05: integralność i protok
 29. R26: realny protokół COUNT/INSERT na dwóch połączeniach kończy się 101 playlistami przy limicie 100, podczas gdy kontrola sekwencyjna kończy się na 100. R27: opóźniony retry starego READY po ukończeniu v2 przestawia aktywny oryginał na v1 SUPERSEDED. Samo ukończenie v2 i zwykły retry mają poprawne kontrole. Ustalenia potwierdzają SQL przejrzanego protokołu, nie pełne funkcje TypeScript/Prisma/HTTP ani produkcję. Niezależny przegląd PENDING.
 30. Próby integralności cofnięto; osobne fixture transakcyjne usunięto. Nie zmieniono trwałego schematu, triggerów i kodu aplikacji. Skrypt wymusza bazę badawczą i hashe źródeł. Pierwszy odczyt wielowierszowego JSON katalogu wymagał poprawy parsera przed mutacjami; później pełny przebieg miał exit 0, a odtwarzalność sprawdzono ponownie. Vitest nie powtarzano.
 31. Aktualnie 46 scenariuszy pełnego HTTP (IA-045/R26 i IA-046/R27), wszystkie pełne próby nadal NIEWYKONANE. 47 wejść W_TRAKCIE, 232 NIEZBADANE. ASVS: 33 W_TRAKCIE, 312 NIEZBADANE, zero zaliczonych. Oficjalny opis izolacji PostgreSQL 17 pobrano online i zestawiono z wynikiem. Przegląd helperów transakcji PeerTube nie jest dowodem ich odporności na te konkretne przypadki.
+32. Partia 06: [D08](obszary/D08-UPLOAD-KODOWANIE-I-USUWANIE.md), [11 scenariuszy pipeline](SCENARIUSZE-PIPELINE.csv) i [zakres 29 plików](evidence/batch06-review.json). To częściowy zakres nakładający się na poprzednie partie; 16 niezmienionych modułów wykonano w skrypcie komponentów, bez zaliczenia całych plików.
+33. [11 obserwacji komponentów z atrapami](evidence/pipeline-boundaries-experiment.json): siedem poprawnych kontroli, dwa warianty nowego R28, jeden R29 oraz mocniejszy dowód istniejącego R02. R28: audyt po COMMIT rzuca, cleanup kasuje aktywowany wynik; przy istniejącym asset/ACTIVE kolejny retry zgłasza sukces bez operacji magazynu pomimo pustego prefiksu. R29: aktywacja po sprawdzeniu użycia, ale przed końcem usuwania, nie chroni przed trwającym cleanup. Pełnego Prisma/HTTP/R2/FFmpeg nie wykonano.
+34. [Trzy osobne protokoły PostgreSQL](evidence/playback-cascade-experiment.json) potwierdziły COMMIT i skutki FK: usunięty asset zabiera nową trasę, wskaźnik null, poprzednia trasa PREVIOUS i primary=false. Dwa połączenia, jedna poprawna kontrola, fixture usunięte. To osobny poziom dowodu, nie pełna próba awarii audytu.
+35. Pozytywne granice: normalny pipeline zachowuje pięć obiektów; błąd przed COMMIT pozostawia starą aktywną wersję; błąd statusu po finalizerze zachowuje nowy wynik. Już aktywna wersja PUBLISHED/UNLISTED jest chroniona przed kasowaniem. DRAFT i nieaktywny wynik zachowują zamierzoną politykę. Pierwszy błąd konfiguracji transpileModule zachowano w logu, poprawiono wyłącznie harness i powtórzono przebieg z exit 0. Nie ponawiano Vitest ani wcześniejszych identycznych R03/R04.
+36. R02 doprecyzowano jako POTWIERDZONE w granicach komponentów/atrap: rzeczywista aktywacja odbywa się po zasymulowanej utracie własności, choć repozytorium odrzuca końcowy status. Nie wykonano prawdziwego takeover z czasem dzierżawy i dwóch procesów. R28/R29 mają własne ID; niezależny przegląd wszystkich pozostaje PENDING. PeerTube pokazuje fazy zakończenia i callback przed nieodwracalnymi zmianami; nie testowano równoważnych awarii.
+37. Bieżąca powierzchnia ma 280 rekordów: dopisano pominięty osobny proces encoder, znany już z diagramu. 49 W_TRAKCIE, 231 NIEZBADANE; rozpoczęto także encodeAction. ASVS: 34 W_TRAKCIE, 311 NIEZBADANE, zero zaliczonych. 46 scenariuszy pełnego HTTP pozostaje niewykonanych; dodatkowe 11 pipeline ma otwartą walidację pełnego stosu. D08 rozpoczęto, D09 pozostaje do pogłębienia.
 
 `NIEZBADANE` w nowej macierzy oznacza brak zakończonej procedury programu dla całego obszaru. Nie oznacza, że wcześniejsze przeglądy i eksperymenty nie istnieją. Referencje bazowe zapisano oddzielnie.
 
@@ -66,12 +72,13 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 05: integralność i protok
 - Kontener lokalnego PostgreSQL: `polutek-cloud-db`; dane deweloperskie, nie produkcyjne.
 - Oddzielna badawcza baza SQL ma nazwę w `../migrations-sql.json`. Nie ma historii migracji Prisma.
 - W partii 05 potwierdzono jej działanie przez lokalny socket Dockera. Skrypt `tools/database-integrity-experiment.py` korzysta z nazwy tej bazy, kontroluje hashe źródeł i usuwa własne fixture; nie uruchamia Prisma ani pełnej aplikacji.
+- Partia 06: lokalny Docker 28.4.0 i PostgreSQL nadal działały. `tools/pipeline-boundaries-experiment.cjs` wykonuje komponenty z atrapami; `tools/playback-cascade-experiment.py` używa helpera SQL z partii 05, dwóch połączeń i usuwa własne fixture. Skrypty nie wymagają zmiany instrukcji ani kodu aplikacji.
 - Skrypty eksperymentów pipeline i storage znajdują się w katalogu nadrzędnym; działają na atrapach usług i plikach tymczasowych.
 - Nie zakładać, że procesy lub kontenery przeżyją odtworzenie środowiska. Sprawdzić ich stan przed użyciem.
 
 ## Następne działanie
 
-Kontynuować D07/D08/D09: rzeczywiste granice upload/worker/cleanup i aktywnej trasy, publikacja oraz cofnięcie dostępu do treści. R26/R27 mają już protokół SQL i warunki kontroli; nie powtarzać identycznego przebiegu bez zmiany. Następne wartościowe próby to realne funkcje/Prisma po odblokowaniu silnika, dwa finalizery z utraconą dzierżawą, cleanup podczas użycia/zmiany assetu i weryfikacja nieaktualnej wersji źródła. Bez Prisma można dalej używać właściwie opisanych prób SQL i analizy źródłowej; nie podstawiać fałszywego klienta. W D06 pozostają pozostałe modele, uprawnienia DB, migracje na istniejących danych/drift, kaskady i indeksy; pieniądze/retencję/restore rozliczać w D10/D12/D17. Wszystkie pełne scenariusze HTTP i niezależne przeglądy pozostają otwarte. Nie zmieniać aplikacji ani produkcji; parametry skali/SLO/budżetu nadal wymagają określenia.
+Przejść do D09: pełny przepływ planu odtwarzania, tokeny/cache, cofnięcie dostępu po wylogowaniu/banie/zmianie widoczności, napisy i segmenty. D08 wymaga jeszcze formatów/FFmpeg, multipart i starych oryginałów, prawdziwego takeover/restartów oraz realnego magazynu. R26–R29 i rozszerzony R02 mają opisane dowody i kontrole; nie powtarzać ich identycznie bez zmiany. Po odblokowaniu Prisma wykonać pełne próby R28/R29 i dwóch workerów; nie podstawiać fałszywego klienta. D06 nadal obejmuje pozostałe modele, role, migracje na danych/drift, kaskady i indeksy; pieniądze/retencję/restore rozliczać w D10/D12/D17. Pełne scenariusze HTTP, pełny pipeline i niezależne przeglądy pozostają otwarte. Nie zmieniać aplikacji ani produkcji; parametry skali/SLO/budżetu nadal wymagają określenia.
 
 Przed rozpoczęciem: odczytać ten plik, PROGRAM.md i właściwe instrukcje repo; porównać bieżący HEAD z podanym wyżej. Nie powtarzać wykonanych testów bez zmiany wersji, diagnozy lub warunków.
 

@@ -29,24 +29,39 @@
       "id": "R02",
       "title": "Utrata zadania nie odcina wszystkich skutków starego workera",
       "baseline_priority_and_evidence": "P1, A/B",
-      "status": "DO_WERYFIKACJI",
-      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "status": "POTWIERDZONE",
+      "note": "Baseline evidence retained. Batch 06 executes actual processor/finalizer/route/audit/repository with explicit fake I/O: activation survives simulated ownership loss while guarded status rejects old worker. No real takeover or full application test.",
       "source_report": "../RAPORT.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D07",
         "D08"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
-      "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "impact_plain_language": "Stary worker może zmienić aktywną wersję, mimo że jego końcowy zapis zadania jest już odrzucany; historyczny dowód obejmuje też sprzątanie współdzielonego prefiksu.",
+      "conditions": "Utrata własności po ostatnim sprawdzeniu i przed finalizacją lub w jej trakcie; finalizer nie otrzymuje tokenu próby i nie wiąże aktywacji z właścicielem zadania.",
+      "evidence_paths": [
+        "../pipeline-experiments.ts",
+        "../pipeline-experiments.json",
+        "evidence/pipeline-boundaries-experiment.json",
+        "tools/pipeline-boundaries-experiment.cjs",
+        "obszary/D08-UPLOAD-KODOWANIE-I-USUWANIE.md"
+      ],
+      "counterarguments": [
+        "Repozytorium poprawnie odrzuca końcowy zapis starego workerId; problem dotyczy wcześniejszych skutków.",
+        "Takeover zasymulowano na granicy DB; nie przeprowadzono realnego requeue ani dwóch procesów.",
+        "Eksperyment nie dowodzi produkcyjnego incydentu ani obejścia roli widza."
+      ],
+      "standard_refs": [
+        "v5.0.0-15.4.2"
+      ],
+      "proposed_fix": "Powiązać aktywację ze sprawdzaną transakcyjnie własnością próby; izolować prefiksy prób i ograniczyć sprzątanie do własnej próby.",
+      "acceptance_test": "Pełne dwa workery, pauza A, takeover przez B, wznowienie A: A nie aktywuje i nie usuwa wyniku B; odrzucenie statusu nie jest jedyną ochroną.",
+      "independent_review": "PENDING",
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "kind": "USTERKA",
+      "priority": "P1",
+      "evidence_level": "A_ISOLATED_ACTUAL_COMPONENTS_WITH_EXPLICIT_FAKE_IO_AND_B_SOURCE"
     },
     {
       "id": "R03",
@@ -733,6 +748,93 @@
       "proposed_fix": "Normalne ukończenie i retry muszą spójnie rozstrzygać wersję/status pod wspólnym lockiem lub CAS; stare zakończenie nie może reaktywować SUPERSEDED. Zachować odzyskiwanie kolejkowania po przerwie DB→enqueue.",
       "acceptance_test": "Pełny stos: zatrzymać retry A po odczycie READY, ukończyć v2, wznowić A. Wskaźnik zostaje v2 READY; zwykły retry, SUPERSEDED, abandon/cancel, aktywna kolejka i crash/retry nie cofają wersji.",
       "deployment_scope": "ORIGINAL_UPLOAD_READY_RETRY_PROTOCOL;PRODUCTION_OCCURRENCE_NOT_VERIFIED"
+    },
+    {
+      "kind": "USTERKA",
+      "status": "POTWIERDZONE",
+      "priority": "P1",
+      "evidence_level": "A_ACTUAL_COMPONENTS_FAKE_IO_PLUS_SEPARATE_REAL_POSTGRES_CASCADES_AND_B_SOURCE",
+      "source_report": "obszary/D08-UPLOAD-KODOWANIE-I-USUWANIE.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "evidence_paths": [
+        "obszary/D08-UPLOAD-KODOWANIE-I-USUWANIE.md",
+        "evidence/pipeline-boundaries-experiment.json",
+        "tools/pipeline-boundaries-experiment.cjs",
+        "evidence/playback-cascade-experiment.json",
+        "tools/playback-cascade-experiment.py",
+        "evidence/batch06-review.json"
+      ],
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "id": "R28",
+      "title": "Błąd audytu po COMMIT aktywacji uruchamia usuwanie wyniku HLS",
+      "baseline_priority_and_evidence": "NEW: P1; actual component chain/fake I/O and separate real PostgreSQL FK effects",
+      "note": "Dwa warianty błędu po zatwierdzeniu odtworzono na niezmienionych komponentach z atrapą DB/storage. Kaskady potwierdzono oddzielnie na PostgreSQL; realnego błędu audytu/Prisma/R2/HTTP nie wykonano.",
+      "domains": [
+        "D07",
+        "D08",
+        "D09",
+        "D16"
+      ],
+      "impact_plain_language": "Aktywowany wynik może stracić pliki lub trasę. Gdy READY+ACTIVE pozostają w bazie, późniejszy retry zgłasza sukces mimo pustego prefiksu.",
+      "conditions": "activateRoute zatwierdza nową trasę i primary, a późniejszy AuditLog.create rzuca. Finalizer/processor interpretują to jako brak finalizacji. Wariant fałszywego sukcesu wymaga assetu z wcześniejszej nieukończonej próby.",
+      "counterarguments": [
+        "Błąd przed COMMIT zachowuje starą trasę; błąd statusu po powrocie finalizera zachowuje pliki. Kontrole wykonano.",
+        "Poprzednie pliki pozostają, lecz isPrimary=false blokuje badaną kwalifikację; pełnego playback i CDN nie wykonano.",
+        "Brak dowodu wystąpienia w produkcji, utraty oryginału lub wycieku.",
+        "Częstości awarii audytu nie ustalono. Sam SQL sprawdza skutek DELETE, nie wstrzykuje awarii AuditLog.create."
+      ],
+      "standard_refs": [
+        "v5.0.0-2.3.3",
+        "v5.0.0-16.5.3"
+      ],
+      "proposed_fix": "Rozróżnić błąd przed/po COMMIT; wiązać obowiązkowy audyt transakcyjnie lub dostarczać trwale. Chronić aktywowane obiekty przed cleanup i uzgadniać faktyczny wynik przed uznaniem retry za sukces.",
+      "acceptance_test": "Awaria audytu po COMMIT, nowy/istniejący asset i restart: zachowana odtwarzalna wersja, pełne obiekty, brak succeeded przy pustym prefiksie; zachować poprawne kontrole awarii przed COMMIT i po finalizerze.",
+      "deployment_scope": "WORKER_ACTIVATION_AUDIT_ERROR_PATH;PRODUCTION_OCCURRENCE_UNVERIFIED"
+    },
+    {
+      "kind": "USTERKA",
+      "status": "POTWIERDZONE",
+      "priority": "P1",
+      "evidence_level": "A_ACTUAL_COMPONENTS_FAKE_IO_PLUS_SEPARATE_REAL_POSTGRES_CASCADES_AND_B_SOURCE",
+      "source_report": "obszary/D08-UPLOAD-KODOWANIE-I-USUWANIE.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "evidence_paths": [
+        "obszary/D08-UPLOAD-KODOWANIE-I-USUWANIE.md",
+        "evidence/pipeline-boundaries-experiment.json",
+        "tools/pipeline-boundaries-experiment.cjs",
+        "evidence/playback-cascade-experiment.json",
+        "tools/playback-cascade-experiment.py",
+        "evidence/batch06-review.json"
+      ],
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "id": "R29",
+      "title": "Równoległa aktywacja omija wcześniejsze sprawdzenie użycia kasowanej wersji HLS",
+      "baseline_priority_and_evidence": "NEW: P1 before broader concurrent content management; actual components/fake I/O plus PostgreSQL protocol",
+      "note": "Rzeczywiste deleteSelfHlsAsset i activateRoute wykonano w kontrolowanym przeplocie z atrapami. Osobne połączenia SQL potwierdzają przeplot odczyt/COMMIT/DELETE i skutki kaskad. Bez pełnego dispatchu i R2.",
+      "domains": [
+        "D06",
+        "D07",
+        "D08",
+        "D09"
+      ],
+      "impact_plain_language": "Usuwanie uznaje wersję za nieużywaną, lecz worker aktywuje ją podczas I/O; kontynuacja kasowania usuwa właśnie wybrany wynik i nie przywraca poprzedniej trasy.",
+      "conditions": "Legalna akcja personelu, PUBLISHED, znany READY asset bez ACTIVE; aktywacja dokładnie tego assetu między sprawdzeniem a końcem kasowania.",
+      "counterarguments": [
+        "Już aktywna wersja PUBLISHED/UNLISTED jest odrzucana bez kasowania; wykonano kontrole.",
+        "Sekwencyjne usunięcie nieaktywnej wersji zachowuje starą ACTIVE.",
+        "Kasowanie aktywnej wersji DRAFT jest zamierzone.",
+        "Nie dowiedziono dostępu zwykłego widza, awarii każdego kasowania ani utraty oryginału. Pełny stos i produkcja niewykonane."
+      ],
+      "standard_refs": [
+        "v5.0.0-15.4.2"
+      ],
+      "proposed_fix": "Wspólny protokół aktywacji i retirement zasobu; rezerwacja/oznaczenie pod blokadą, odmowa aktywacji wycofywanego assetu i trwałe sprzątanie. Dodatkowy SELECT sam nie zamyka okna.",
+      "acceptance_test": "Kontrolowane dwa porządki aktywacji i usuwania, wolny magazyn, restart i retry: aktywna wersja nie znika; PUBLISHED/UNLISTED chronione, DRAFT zgodny z polityką.",
+      "deployment_scope": "AUTHORIZED_ADMIN_DELETE_ASSET_VS_WORKER_ACTIVATION;PRODUCTION_OCCURRENCE_UNVERIFIED"
     }
   ]
 }

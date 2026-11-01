@@ -1,0 +1,605 @@
+{
+  "kind": "UNCHANGED_TYPESCRIPT_COMPONENTS_WITH_EXPLICIT_FAKE_IO",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "observations": [
+    {
+      "name": "pipeline_control",
+      "kind": "ACTUAL_COMPONENTS_FAKE_IO",
+      "outcome": "succeeded",
+      "state": {
+        "active_route_id": "route-new",
+        "assets": [
+          {
+            "id": "asset-old",
+            "isPrimary": false
+          },
+          {
+            "id": "asset-new",
+            "isPrimary": true
+          }
+        ],
+        "routes": [
+          {
+            "id": "route-old",
+            "status": "PREVIOUS",
+            "assetId": "asset-old"
+          },
+          {
+            "id": "route-new",
+            "status": "ACTIVE",
+            "assetId": "asset-new"
+          }
+        ],
+        "new_prefix_objects": 5,
+        "old_prefix_objects": 1,
+        "job_status": "SUCCEEDED",
+        "job_worker": "A",
+        "selected_fallback_id": "asset-new",
+        "fallback_eligibility": "READY"
+      },
+      "retry": null,
+      "events": [
+        "storage_delete:videos/video/v/v2/",
+        "asset_create",
+        "tx_begin",
+        "routes_demoted",
+        "route_create",
+        "video_pointer_update",
+        "tx_commit",
+        "audit_attempt:VIDEO_PLAYBACK_ROUTE_ACTIVATED"
+      ],
+      "storage_calls_total": {
+        "put": 5,
+        "exists": 1,
+        "count": 1,
+        "delete": 1
+      }
+    },
+    {
+      "name": "audit_failure_new_asset",
+      "kind": "ACTUAL_COMPONENTS_FAKE_IO",
+      "outcome": "retry",
+      "state": {
+        "active_route_id": null,
+        "assets": [
+          {
+            "id": "asset-old",
+            "isPrimary": false
+          }
+        ],
+        "routes": [
+          {
+            "id": "route-old",
+            "status": "PREVIOUS",
+            "assetId": "asset-old"
+          }
+        ],
+        "new_prefix_objects": 0,
+        "old_prefix_objects": 1,
+        "job_status": "QUEUED",
+        "job_worker": null,
+        "selected_fallback_id": "asset-old",
+        "fallback_eligibility": "NO_PRIMARY_ASSET"
+      },
+      "retry": null,
+      "events": [
+        "storage_delete:videos/video/v/v2/",
+        "asset_create",
+        "tx_begin",
+        "routes_demoted",
+        "route_create",
+        "video_pointer_update",
+        "tx_commit",
+        "audit_attempt:VIDEO_PLAYBACK_ROUTE_ACTIVATED",
+        "asset_delete_and_modeled_fk_cascade",
+        "storage_delete:videos/video/v/v2/"
+      ],
+      "storage_calls_total": {
+        "put": 5,
+        "exists": 1,
+        "count": 1,
+        "delete": 2
+      }
+    },
+    {
+      "name": "audit_failure_existing_asset_then_retry",
+      "kind": "ACTUAL_COMPONENTS_FAKE_IO",
+      "outcome": "retry",
+      "state": {
+        "active_route_id": "route-new",
+        "assets": [
+          {
+            "id": "asset-old",
+            "isPrimary": false
+          },
+          {
+            "id": "asset-new",
+            "isPrimary": true
+          }
+        ],
+        "routes": [
+          {
+            "id": "route-old",
+            "status": "PREVIOUS",
+            "assetId": "asset-old"
+          },
+          {
+            "id": "route-new",
+            "status": "ACTIVE",
+            "assetId": "asset-new"
+          }
+        ],
+        "new_prefix_objects": 0,
+        "old_prefix_objects": 1,
+        "job_status": "QUEUED",
+        "job_worker": null,
+        "selected_fallback_id": "asset-new",
+        "fallback_eligibility": "READY"
+      },
+      "retry": {
+        "outcome": "succeeded",
+        "state": {
+          "active_route_id": "route-new",
+          "assets": [
+            {
+              "id": "asset-old",
+              "isPrimary": false
+            },
+            {
+              "id": "asset-new",
+              "isPrimary": true
+            }
+          ],
+          "routes": [
+            {
+              "id": "route-old",
+              "status": "PREVIOUS",
+              "assetId": "asset-old"
+            },
+            {
+              "id": "route-new",
+              "status": "ACTIVE",
+              "assetId": "asset-new"
+            }
+          ],
+          "new_prefix_objects": 0,
+          "old_prefix_objects": 1,
+          "job_status": "SUCCEEDED",
+          "job_worker": "A",
+          "selected_fallback_id": "asset-new",
+          "fallback_eligibility": "READY"
+        },
+        "events": [],
+        "storage_calls": {
+          "put": 0,
+          "exists": 0,
+          "count": 0,
+          "delete": 0
+        }
+      },
+      "events": [
+        "storage_delete:videos/video/v/v2/",
+        "tx_begin",
+        "routes_demoted",
+        "route_create",
+        "video_pointer_update",
+        "tx_commit",
+        "audit_attempt:VIDEO_PLAYBACK_ROUTE_ACTIVATED",
+        "storage_delete:videos/video/v/v2/"
+      ],
+      "storage_calls_total": {
+        "put": 5,
+        "exists": 1,
+        "count": 1,
+        "delete": 2
+      }
+    },
+    {
+      "name": "post_finalize_status_error_control",
+      "kind": "ACTUAL_COMPONENTS_FAKE_IO",
+      "outcome": "retry",
+      "state": {
+        "active_route_id": "route-new",
+        "assets": [
+          {
+            "id": "asset-old",
+            "isPrimary": false
+          },
+          {
+            "id": "asset-new",
+            "isPrimary": true
+          }
+        ],
+        "routes": [
+          {
+            "id": "route-old",
+            "status": "PREVIOUS",
+            "assetId": "asset-old"
+          },
+          {
+            "id": "route-new",
+            "status": "ACTIVE",
+            "assetId": "asset-new"
+          }
+        ],
+        "new_prefix_objects": 5,
+        "old_prefix_objects": 1,
+        "job_status": "QUEUED",
+        "job_worker": null,
+        "selected_fallback_id": "asset-new",
+        "fallback_eligibility": "READY"
+      },
+      "retry": null,
+      "events": [
+        "storage_delete:videos/video/v/v2/",
+        "asset_create",
+        "tx_begin",
+        "routes_demoted",
+        "route_create",
+        "video_pointer_update",
+        "tx_commit",
+        "audit_attempt:VIDEO_PLAYBACK_ROUTE_ACTIVATED",
+        "status_write_error"
+      ],
+      "storage_calls_total": {
+        "put": 5,
+        "exists": 1,
+        "count": 1,
+        "delete": 1
+      }
+    },
+    {
+      "name": "activation_transaction_error_control",
+      "kind": "ACTUAL_COMPONENTS_FAKE_IO",
+      "outcome": "retry",
+      "state": {
+        "active_route_id": "route-old",
+        "assets": [
+          {
+            "id": "asset-old",
+            "isPrimary": true
+          }
+        ],
+        "routes": [
+          {
+            "id": "route-old",
+            "status": "ACTIVE",
+            "assetId": "asset-old"
+          }
+        ],
+        "new_prefix_objects": 0,
+        "old_prefix_objects": 1,
+        "job_status": "QUEUED",
+        "job_worker": null,
+        "selected_fallback_id": "asset-old",
+        "fallback_eligibility": "READY"
+      },
+      "retry": null,
+      "events": [
+        "storage_delete:videos/video/v/v2/",
+        "asset_create",
+        "tx_begin",
+        "routes_demoted",
+        "route_create",
+        "tx_rollback",
+        "asset_delete_and_modeled_fk_cascade",
+        "storage_delete:videos/video/v/v2/"
+      ],
+      "storage_calls_total": {
+        "put": 5,
+        "exists": 1,
+        "count": 1,
+        "delete": 2
+      }
+    },
+    {
+      "name": "lost_claim_actual_finalizer",
+      "kind": "ACTUAL_COMPONENTS_FAKE_IO",
+      "outcome": "lost",
+      "state": {
+        "active_route_id": "route-new",
+        "assets": [
+          {
+            "id": "asset-old",
+            "isPrimary": false
+          },
+          {
+            "id": "asset-new",
+            "isPrimary": true
+          }
+        ],
+        "routes": [
+          {
+            "id": "route-old",
+            "status": "PREVIOUS",
+            "assetId": "asset-old"
+          },
+          {
+            "id": "route-new",
+            "status": "ACTIVE",
+            "assetId": "asset-new"
+          }
+        ],
+        "new_prefix_objects": 5,
+        "old_prefix_objects": 1,
+        "job_status": "RUNNING",
+        "job_worker": "B",
+        "selected_fallback_id": "asset-new",
+        "fallback_eligibility": "READY"
+      },
+      "retry": null,
+      "events": [
+        "storage_delete:videos/video/v/v2/",
+        "simulated_claim_reassigned_to_B",
+        "asset_create",
+        "tx_begin",
+        "routes_demoted",
+        "route_create",
+        "video_pointer_update",
+        "tx_commit",
+        "audit_attempt:VIDEO_PLAYBACK_ROUTE_ACTIVATED",
+        "job_write_rejected"
+      ],
+      "storage_calls_total": {
+        "put": 5,
+        "exists": 1,
+        "count": 1,
+        "delete": 1
+      }
+    },
+    {
+      "name": "published_active_refused",
+      "kind": "ACTUAL_COMPONENTS_FAKE_IO",
+      "result": "ASSET_IN_USE",
+      "storage_delete_calls": 0,
+      "activated_during_delete": null,
+      "state": {
+        "active_route_id": "route-new",
+        "assets": [
+          {
+            "id": "asset-old",
+            "isPrimary": false
+          },
+          {
+            "id": "asset-new",
+            "isPrimary": true
+          }
+        ],
+        "routes": [
+          {
+            "id": "route-old",
+            "status": "PREVIOUS",
+            "assetId": "asset-old"
+          },
+          {
+            "id": "route-new",
+            "status": "ACTIVE",
+            "assetId": "asset-new"
+          }
+        ],
+        "new_prefix_objects": 1,
+        "old_prefix_objects": 1,
+        "job_status": "RUNNING",
+        "job_worker": "A",
+        "selected_fallback_id": "asset-new",
+        "fallback_eligibility": "READY"
+      },
+      "events": []
+    },
+    {
+      "name": "unlisted_active_refused",
+      "kind": "ACTUAL_COMPONENTS_FAKE_IO",
+      "result": "ASSET_IN_USE",
+      "storage_delete_calls": 0,
+      "activated_during_delete": null,
+      "state": {
+        "active_route_id": "route-new",
+        "assets": [
+          {
+            "id": "asset-old",
+            "isPrimary": false
+          },
+          {
+            "id": "asset-new",
+            "isPrimary": true
+          }
+        ],
+        "routes": [
+          {
+            "id": "route-old",
+            "status": "PREVIOUS",
+            "assetId": "asset-old"
+          },
+          {
+            "id": "route-new",
+            "status": "ACTIVE",
+            "assetId": "asset-new"
+          }
+        ],
+        "new_prefix_objects": 1,
+        "old_prefix_objects": 1,
+        "job_status": "RUNNING",
+        "job_worker": "A",
+        "selected_fallback_id": "asset-new",
+        "fallback_eligibility": "READY"
+      },
+      "events": []
+    },
+    {
+      "name": "draft_active_allowed",
+      "kind": "ACTUAL_COMPONENTS_FAKE_IO",
+      "result": "DELETED",
+      "storage_delete_calls": 1,
+      "activated_during_delete": null,
+      "state": {
+        "active_route_id": null,
+        "assets": [
+          {
+            "id": "asset-old",
+            "isPrimary": false
+          }
+        ],
+        "routes": [
+          {
+            "id": "route-old",
+            "status": "PREVIOUS",
+            "assetId": "asset-old"
+          }
+        ],
+        "new_prefix_objects": 0,
+        "old_prefix_objects": 1,
+        "job_status": "RUNNING",
+        "job_worker": "A",
+        "selected_fallback_id": "asset-old",
+        "fallback_eligibility": "NO_PRIMARY_ASSET"
+      },
+      "events": [
+        "cleanup_passed_guard",
+        "asset_delete_and_modeled_fk_cascade",
+        "audit_attempt:VIDEO_SELF_HLS_ASSET_DELETED"
+      ]
+    },
+    {
+      "name": "inactive_cleanup_control",
+      "kind": "ACTUAL_COMPONENTS_FAKE_IO",
+      "result": "DELETED",
+      "storage_delete_calls": 1,
+      "activated_during_delete": null,
+      "state": {
+        "active_route_id": "route-old",
+        "assets": [
+          {
+            "id": "asset-old",
+            "isPrimary": true
+          }
+        ],
+        "routes": [
+          {
+            "id": "route-old",
+            "status": "ACTIVE",
+            "assetId": "asset-old"
+          }
+        ],
+        "new_prefix_objects": 0,
+        "old_prefix_objects": 1,
+        "job_status": "RUNNING",
+        "job_worker": "A",
+        "selected_fallback_id": "asset-old",
+        "fallback_eligibility": "READY"
+      },
+      "events": [
+        "cleanup_passed_guard",
+        "asset_delete_and_modeled_fk_cascade",
+        "audit_attempt:VIDEO_SELF_HLS_ASSET_DELETED"
+      ]
+    },
+    {
+      "name": "activation_overlaps_cleanup",
+      "kind": "ACTUAL_COMPONENTS_FAKE_IO",
+      "result": "DELETED",
+      "storage_delete_calls": 1,
+      "activated_during_delete": {
+        "active_route_id": "route-new",
+        "assets": [
+          {
+            "id": "asset-old",
+            "isPrimary": false
+          },
+          {
+            "id": "asset-new",
+            "isPrimary": true
+          }
+        ],
+        "routes": [
+          {
+            "id": "route-old",
+            "status": "PREVIOUS",
+            "assetId": "asset-old"
+          },
+          {
+            "id": "route-new",
+            "status": "ACTIVE",
+            "assetId": "asset-new"
+          }
+        ],
+        "new_prefix_objects": 1,
+        "old_prefix_objects": 1,
+        "job_status": "RUNNING",
+        "job_worker": "A",
+        "selected_fallback_id": "asset-new",
+        "fallback_eligibility": "READY"
+      },
+      "state": {
+        "active_route_id": null,
+        "assets": [
+          {
+            "id": "asset-old",
+            "isPrimary": false
+          }
+        ],
+        "routes": [
+          {
+            "id": "route-old",
+            "status": "PREVIOUS",
+            "assetId": "asset-old"
+          }
+        ],
+        "new_prefix_objects": 0,
+        "old_prefix_objects": 1,
+        "job_status": "RUNNING",
+        "job_worker": "A",
+        "selected_fallback_id": "asset-old",
+        "fallback_eligibility": "NO_PRIMARY_ASSET"
+      },
+      "events": [
+        "cleanup_passed_guard",
+        "tx_begin",
+        "routes_demoted",
+        "route_create",
+        "video_pointer_update",
+        "tx_commit",
+        "audit_attempt:VIDEO_PLAYBACK_ROUTE_ACTIVATED",
+        "asset_delete_and_modeled_fk_cascade",
+        "audit_attempt:VIDEO_SELF_HLS_ASSET_DELETED"
+      ]
+    }
+  ],
+  "actual_source_sha256": {
+    "lib/modules/video-pipeline/application/process-encode-job.ts": "c93fa1a91c2e753d321bee952af3eb03d26121e2e346e2d5ee8c4c6d66835af6",
+    "lib/modules/video-pipeline/domain/encode-job.state.ts": "c8670992e7994df56eaa0c44936823a00d3f3257917a45b9f8a4f1ea7b58a221",
+    "lib/modules/video-pipeline/domain/keys.ts": "c9e7c96b99e798e640247a3fcbacac60caa606e932bd0353a5c14216a7296a4d",
+    "lib/modules/video-pipeline/infrastructure/encode-job.repository.ts": "7f6aade8a70173d032f0b5d375eb57faa0be9da25a7261dcf094ea19deb90d7b",
+    "lib/modules/video-pipeline/application/finalize-self-hls.ts": "b8258141def95e163bdc220a76ee296c7f0ad018557647de1a0c8db55a02f89e",
+    "lib/modules/shared/app-context.ts": "27773c8d3ec5204d0bfd8832178d78644fb4a46d501fd759618bc10286c8e711",
+    "lib/modules/video/application/video-playback-route.service.ts": "77274646b92f2176964ede7d3660bd85d72dd6fcc5cb433ba102085fab8218ac",
+    "lib/modules/shared/app-error.ts": "d1807b317008f6210013706daccd3df3b01234e759d1c445d7af0a8555daab8a",
+    "lib/modules/audit/application/record-audit-event.use-case.ts": "baa7c5a45e014c73e16f0c94f5a359c68299d508ad19cf3480f079ee4e06c4dd",
+    "lib/modules/audit/infrastructure/audit.repository.ts": "cf53b9e0f0189abf83d277798f0eedf27f7f3f700324a431d908ba206843b704",
+    "lib/modules/video/domain/video-asset-selection.ts": "000a83ff31d906d226a25dfee97629f107fc4f9e3bda9452fd52060cf77ffb43",
+    "lib/modules/video/domain/video-asset.constants.ts": "22e110c56f16ab6349c05642e54214093fd50a5543c371f497c8ec51488d490e",
+    "lib/modules/playback/domain/primary-playable-asset.ts": "71f33593517b0c8da5dc317016180b83b479a427a5d2da1168d63af44b039cb5",
+    "lib/modules/video-pipeline/application/output-cleanup.use-cases.ts": "b2cae56d237bc76b72f806c396635cb54bb360f83dd8e901ea6e15ea03712c44",
+    "lib/modules/shared/result.ts": "b6720e5acb2cbd0b60c49c4faa55421470a8cf98f1ff101ccc5d6029900fd6b7",
+    "lib/modules/video-pipeline/application/video-guard.ts": "dd35a6607a5626ed4bdaa6695b1b82aa7ba48869846d2056fc50a5abbbc1b584"
+  },
+  "explicit_boundaries": [
+    "../infrastructure/r2-multipart",
+    "../infrastructure/r2-storage",
+    "@/lib/logger",
+    "@/lib/modules/audit",
+    "@/lib/modules/authz",
+    "@/lib/modules/channel",
+    "@/lib/modules/media",
+    "@/lib/modules/video",
+    "@/lib/prisma",
+    "@prisma/client"
+  ],
+  "limits": [
+    "No actual Prisma client, database, HTTP, R2, encoder or publication was executed.",
+    "Fake DB models transactions/cascades; their PostgreSQL behavior is checked separately.",
+    "Legal staff authorization/channel lookup assumed by explicit boundary; no auth bypass claim.",
+    "Runtime enum strings derived from pinned Prisma schema; JsonNull placeholder is local to this harness.",
+    "Loss of claim and audit/status failures are deterministic injected I/O events, not observed production incidents.",
+    "Playback selection/eligibility helpers executed; complete PlaybackService and viewers were not executed."
+  ]
+}

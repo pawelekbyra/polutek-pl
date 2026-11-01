@@ -1,0 +1,29 @@
+{
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "audit_parent_sha": "9e3ee45e2950e5b7396fdb6be2e2ef0515d94885",
+  "application_diff_paths": [],
+  "checked_paths": [
+    "app",
+    "apps",
+    "lib",
+    "prisma",
+    "workers",
+    "services",
+    "scripts",
+    "deploy",
+    "components",
+    "public",
+    "tests",
+    "package.json",
+    "package-lock.json",
+    "next.config.mjs",
+    "next.config.ts",
+    "tsconfig.json",
+    "vitest.config.ts",
+    "middleware.ts",
+    "proxy.ts",
+    "Dockerfile"
+  ],
+  "method": "git diff baseline over application/configuration/tests/deployment; batch 06 changes research only",
+  "production_access": false
+}
