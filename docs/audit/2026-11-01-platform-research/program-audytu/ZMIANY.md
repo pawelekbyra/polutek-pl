@@ -107,3 +107,13 @@
 - R17 wzmocniono modelem dwóch wywołań przyszłego refundOrder przed CAS. Nie uznano bieżącego adminRefund Stripe za dowiedziony podwójny refund. Znane ręczne polityki dostępu po częściowym/cofniętym refundzie i sporze zachowano jako znane. Niezależny przegląd R17/R31/R32 PENDING.
 - Pobrano oficjalny README/MIT Stripe SDK v20.4.1; PeerTube support przejrzano jako treść Markdown, bez fikcyjnego benchmarku księgi marketplace i bez uruchamiania PeerTube.
 - 63 wejścia rozpoczęte, 217 niezbadanych. ASVS 47 rozpoczętych, 298 niezbadanych, zero zaliczonych. Dziesięć z 18 obszarów rozpoczętych; żaden zamknięty. Dodano 20 scenariuszy z pełnym stosem niewykonanym. Kolejny zakres D12; kod aplikacji i produkcja bez zmian.
+
+## 1 listopada 2026 — partia 10: prywatność i cykl danych
+
+- Rozpoczęto D12: częściowy zakres 44 plików, 20 wykonanych modułów TS, 24 kategorii macierzy cyklu danych i 15 obserwacji komponentów. Brak HTTP/Prisma/SQL/produkcji; atrapy i granice jawne.
+- R33: cleanup konta pozostawia ACTIVE kanał; rzeczywisty publiczny header nadal zwraca kontakt/bio. Nie rozstrzygnięto prawnej retencji opublikowanego profilu; potrzebna polityka transferu/ukrycia/anonimizacji/usunięcia. Niezależny przegląd PENDING.
+- R16 ma mocniejszy dowód istniejących braków eksportu i zbuforowanej architektury. Roboczy R34 z initial JSON scalono z R16 przed wpisem do rejestru. Nie nadmuchano liczby znalezisk; oba przebiegi exit 0, kopia initial zachowana, aplikacja bez zmian.
+- Pięć istniejących plików Vitest: trzy passed, dwa zablokowane Prisma przed rejestracją; 19/19 assertions passed, globalny exit 1. Pełnego zestawu nie powtarzano.
+- Kontrole usuwania/rollback modelu/kolejek i retry/retencji technicznej zadziałały. processBeacon usuwał badane bezpośrednie identyfikatory i odmawiał DNT/origin/automated. Brak certyfikacji anonimowości, prawa i faktycznych harmonogramów.
+- PeerTube porównano w wybranych fragmentach 16 plików: domenowe eksportery, ZIP/job/JWT/expiry/kaskady oraz ich ograniczenia pamięci, outbox i usuwania plików. Nie uruchamiano PeerTube. OWASP privacy/CC BY-SA pobrano online z HTTP 200 i hashami.
+- Rejestr R01–R33. Wejścia 68 rozpoczętych/212 niezbadanych; ASVS 50/295, zero zaliczonych. Jedenaście z 18 obszarów rozpoczętych; żaden zamknięty. Kolejny zakres D13/D14, bez zmian aplikacji i produkcji.

@@ -1,0 +1,16 @@
+id,case,component_status,finding,evidence,full_stack_status,limit
+PRV-001,own_export_filters_and_allowlists,OBSERVED,,evidence/privacy-boundaries-experiment.json,NIEWYKONANE,Actual functions with schema-checked fake DB/rollback/provider/audit; no HTTP/Prisma/SQL/production
+PRV-002,export_omits_channel_and_pass_records,OBSERVED,R16,evidence/privacy-boundaries-experiment.json,NIEWYKONANE,Actual functions with schema-checked fake DB/rollback/provider/audit; no HTTP/Prisma/SQL/production
+PRV-003,export_unbounded_find_many_queries,OBSERVED,R16,evidence/privacy-boundaries-experiment.json,NIEWYKONANE,Actual functions with schema-checked fake DB/rollback/provider/audit; no HTTP/Prisma/SQL/production
+PRV-004,deletion_cleans_legacy_account_data,OBSERVED,,evidence/privacy-boundaries-experiment.json,NIEWYKONANE,Actual functions with schema-checked fake DB/rollback/provider/audit; no HTTP/Prisma/SQL/production
+PRV-005,deleted_owner_channel_header_still_public,OBSERVED,R33,evidence/privacy-boundaries-experiment.json,NIEWYKONANE,Actual functions with schema-checked fake DB/rollback/provider/audit; no HTTP/Prisma/SQL/production
+PRV-006,additional_account_data_retained,OBSERVED,,evidence/privacy-boundaries-experiment.json,NIEWYKONANE,Actual functions with schema-checked fake DB/rollback/provider/audit; no HTTP/Prisma/SQL/production
+PRV-007,explicitly_deleted_channel_hidden_control,OBSERVED,,evidence/privacy-boundaries-experiment.json,NIEWYKONANE,Actual functions with schema-checked fake DB/rollback/provider/audit; no HTTP/Prisma/SQL/production
+PRV-008,deletion_audit_failure_model_rolls_back,OBSERVED,,evidence/privacy-boundaries-experiment.json,NIEWYKONANE,Actual functions with schema-checked fake DB/rollback/provider/audit; no HTTP/Prisma/SQL/production
+PRV-009,provider_failure_keeps_deletion_and_retry_queues,OBSERVED,,evidence/privacy-boundaries-experiment.json,NIEWYKONANE,Actual functions with schema-checked fake DB/rollback/provider/audit; no HTTP/Prisma/SQL/production
+PRV-010,provider_retry_success_drains_queues,OBSERVED,,evidence/privacy-boundaries-experiment.json,NIEWYKONANE,Actual functions with schema-checked fake DB/rollback/provider/audit; no HTTP/Prisma/SQL/production
+PRV-011,technical_retention_cutoff_and_replay,OBSERVED,,evidence/privacy-boundaries-experiment.json,NIEWYKONANE,Actual functions with schema-checked fake DB/rollback/provider/audit; no HTTP/Prisma/SQL/production
+PRV-012,collector_minimizes_request_identifiers,OBSERVED,,evidence/privacy-boundaries-experiment.json,NIEWYKONANE,Actual functions with schema-checked fake DB/rollback/provider/audit; no HTTP/Prisma/SQL/production
+PRV-013,collector_dnt_drops,OBSERVED,,evidence/privacy-boundaries-experiment.json,NIEWYKONANE,Actual functions with schema-checked fake DB/rollback/provider/audit; no HTTP/Prisma/SQL/production
+PRV-014,collector_foreign_origin_drops,OBSERVED,,evidence/privacy-boundaries-experiment.json,NIEWYKONANE,Actual functions with schema-checked fake DB/rollback/provider/audit; no HTTP/Prisma/SQL/production
+PRV-015,collector_automated_drops,OBSERVED,,evidence/privacy-boundaries-experiment.json,NIEWYKONANE,Actual functions with schema-checked fake DB/rollback/provider/audit; no HTTP/Prisma/SQL/production

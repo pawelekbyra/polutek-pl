@@ -1,0 +1,54 @@
+{
+  "date": "2026-11-01",
+  "validation": "PASSED_ARTIFACT_CONSISTENCY_NOT_FULL_APPLICATION_TESTS",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "application_paths_changed": [],
+  "domain_status_counts": {
+    "W_TRAKCIE": 11,
+    "NIEZBADANE": 7
+  },
+  "asvs_status_counts": {
+    "NIEZBADANE": 295,
+    "W_TRAKCIE": 50
+  },
+  "entry_status_counts": {
+    "W_TRAKCIE": 68,
+    "NIEZBADANE": 212
+  },
+  "stable_finding_count": 33,
+  "new_distinct_findings": [
+    "R33"
+  ],
+  "existing_finding_extended": "R16",
+  "provisional_R34_deduplicated_before_registry": true,
+  "other_findings_and_historical_priorities_preserved": true,
+  "earlier_raw_evidence_and_source_files_preserved": 104,
+  "partial_baseline_source_files": 44,
+  "peertube_partial_reference_files": 16,
+  "peertube_executed": false,
+  "comparative_benchmark": false,
+  "actual_TS_modules": 20,
+  "component_observations": 15,
+  "lifecycle_categories": 24,
+  "generated_Prisma_client_executed": false,
+  "targeted_vitest_passed_files": 3,
+  "targeted_vitest_blocked_files": 2,
+  "targeted_vitest_registered_and_passed": 19,
+  "targeted_vitest_global_exit": 1,
+  "full_suite_repeated": false,
+  "full_application_HTTP_or_SQL_executed_this_batch": false,
+  "real_person_or_production_data_used": false,
+  "local_links_checked": 231,
+  "broken_local_links": [],
+  "research_script_syntax": "Node --check passed; no extra runtime execution",
+  "whitespace_check": "git diff --check passed",
+  "credential_scan": "No listed patterns found in changed/new artifacts; bounded scan, not exhaustive secret detection",
+  "credential_patterns": [
+    "private_key",
+    "github_token",
+    "stripe_live_secret",
+    "database_uri",
+    "aws_access_key"
+  ],
+  "scope": "Source hashes/artifact/result consistency; actual components with explicit fake DB/provider boundaries. No legal opinion or complete privacy/security certification."
+}

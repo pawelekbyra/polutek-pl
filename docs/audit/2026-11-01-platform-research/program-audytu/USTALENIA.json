@@ -436,23 +436,42 @@
       "id": "R16",
       "title": "Eksport danych wymaga rozwoju razem z domeną i skalą",
       "baseline_priority_and_evidence": "P2, B",
-      "status": "DO_WERYFIKACJI",
-      "note": "Imported from the baseline report. This status requests a second review; it does not discard existing evidence or mark the claim false.",
+      "status": "POTWIERDZONE",
+      "note": "Potwierdzono wcześniej opisane pominięcie kategorii kanału/dostępu oraz dziewięć findMany bez take/cursor. Nie wykonano pomiaru OOM ani oceny prawnej kompletności. Provisional R34 folded into this existing finding before registry insertion.",
       "source_report": "../RAPORT.md",
       "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
       "domains": [
         "D12"
       ],
-      "impact_plain_language": null,
-      "conditions": null,
-      "evidence_paths": null,
-      "counterarguments": null,
-      "standard_refs": [],
-      "proposed_fix": null,
-      "acceptance_test": null,
-      "independent_review": null,
+      "impact_plain_language": "Pobierany plik nie obejmuje niektórych danych kanału i płatnego dostępu. Duże historie są pobierane i serializowane naraz w pamięci żądania.",
+      "conditions": "Konto z danymi kanału/członkostwa i AppSetting patrona; dla problemu pojemności rosnące kolekcje. Pełne HTTP i granica zasobów niezweryfikowane.",
+      "evidence_paths": [
+        "../RAPORT.md",
+        "obszary/D12-PRYWATNOSC-I-CYKL-DANYCH.md",
+        "CYKL-DANYCH.csv",
+        "SCENARIUSZE-PRYWATNOSC.csv",
+        "evidence/batch10-review.json",
+        "tools/privacy-boundaries-experiment.cjs",
+        "evidence/privacy-boundaries-experiment.json"
+      ],
+      "counterarguments": [
+        "Allowlisty pól i scope po userId działają w modelu; istniejące testy eksportu przeszły.",
+        "Endpoint bierze ID z aktora i ma no-store/rate limit; dispatch auth nie został tu wykonany.",
+        "Pominięcia były już opisane w bazowym R16, nie nowe znalezisko.",
+        "Nie jest to opinia o wymaganym prawem zakresie ani dowód OOM/DoS. PeerTube także buforuje część danych eksportu."
+      ],
+      "standard_refs": [
+        "v5.0.0-14.1.2",
+        "v5.0.0-14.2.4"
+      ],
+      "proposed_fix": "Zdefiniować zakres per kategoria danych, wersjonować kontrakt i objąć nowe modele. Większe eksporty jako zadania z limitem zasobów, paginacją/streamingiem i wygasającym pobraniem.",
+      "acceptance_test": "Konto twórcy/płatnika: kompletność według ustalonej polityki, brak cudzych danych i sekretów, duża historia poniżej ustalonego limitu pamięci/czasu; testy pobrania i wygasania archiwum.",
+      "independent_review": "PENDING",
       "retest": null,
-      "created_at": "2026-11-01"
+      "created_at": "2026-11-01",
+      "kind": "NIEPELNY_ZAKRES_I_ARCHITEKTURA_EKSPORTU",
+      "priority": "P2",
+      "evidence_level": "A_ACTUAL_EXPORT_WITH_EXPLICIT_FILTER_SELECT_FAKE_DB_AND_B_SOURCE_NO_CAPACITY_BENCHMARK"
     },
     {
       "id": "R17",
@@ -1030,6 +1049,49 @@
       "acceptance_test": "Permutacje refund/open/lost/won/replay i częściowych kwot, druga wpłata oraz waluty: UserPaymentTotal zgodne z kanonicznym agregatem po każdym kroku.",
       "deployment_scope": "USER_PAYMENT_TOTAL_AGGREGATE;NO_DEMONSTRATED_EXTERNAL_MONEY_MOVEMENT;PRODUCTION_OCCURRENCE_UNVERIFIED",
       "evidence_level": "A_ACTUAL_COMPONENTS_FAKE_DB_AND_B_REAL_LOCAL_POSTGRESQL_INSPECTED_PROTOCOL"
+    },
+    {
+      "id": "R33",
+      "kind": "NIESPOJNOSC_CYKLU_DANYCH",
+      "title": "Usunięcie konta właściciela pozostawia publiczny profil jego kanału",
+      "priority": "P1_PRZED_SZERSZYM_OTWARCIEM_KANALOW_I_USUWANIEM_KONT_TWORCOW",
+      "baseline_priority_and_evidence": "NEW: P1 readiness for creator account deletion; actual component chain with explicit fake DB",
+      "status": "POTWIERDZONE",
+      "evidence_level": "A_ACTUAL_ACCOUNT_CLEANUP_TO_PUBLIC_CHANNEL_HEADER_POLICY_DTO_WITH_EXPLICIT_FAKE_DB",
+      "note": "User zostaje tombstone, Creator nadal ACTIVE; rzeczywisty publiczny nagłówek zwraca stary kontakt i bio. Bez HTTP/Prisma/cache i bez opinii prawnej o obowiązku usunięcia wszystkich opublikowanych treści.",
+      "source_report": "obszary/D12-PRYWATNOSC-I-CYKL-DANYCH.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "domains": [
+        "D12",
+        "D01",
+        "D04"
+      ],
+      "impact_plain_language": "Po usunięciu konta twórcy jego stary e-mail kontaktowy, nazwa i biografia mogą nadal być publiczne w kanale. Nowe kategorie danych nie są objęte tym samym cleanup co dane konta.",
+      "conditions": "Właściciel ACTIVE niegłównego kanału z publicContactEmail/bio, wywołanie account cleanup zamiast osobnego channel deletion. Uzgodnienie transferu/retencji kanału nie jest częścią badanej ścieżki.",
+      "evidence_paths": [
+        "obszary/D12-PRYWATNOSC-I-CYKL-DANYCH.md",
+        "CYKL-DANYCH.csv",
+        "SCENARIUSZE-PRYWATNOSC.csv",
+        "evidence/batch10-review.json",
+        "tools/privacy-boundaries-experiment.cjs",
+        "evidence/privacy-boundaries-experiment.json"
+      ],
+      "counterarguments": [
+        "Profil mógł być wcześniej świadomie publiczny i mieć inną politykę retencji niż konto; trzeba ją określić i zakomunikować.",
+        "Metody logowania, konto User i treść własnych komentarzy są czyszczone w kontrolnej próbie; nie wykazano ponownego loginu.",
+        "DELETED/deletedAt na kanale prawidłowo ukrywa publiczny nagłówek.",
+        "Baza/aggregate/non-main resolution są jawnymi atrapami; nie wykonano HTTP/Prisma/browser/cache ani produkcji."
+      ],
+      "standard_refs": [
+        "v5.0.0-14.2.4",
+        "v5.0.0-14.2.7"
+      ],
+      "proposed_fix": "Przed cleanup konta rozliczyć posiadane kanały: transfer/ukrycie/anonimizacja/usunięcie według jawnej polityki, z osobną ochroną kanału głównego i innych członków oraz planem plików.",
+      "acceptance_test": "Widz i twórca, wiele kanałów/członków, główny kanał, publiczny profil po usunięciu, audyt/rollback/retry i pliki: wynik zgodny z ustaloną polityką, bez pozostawionych niezamierzonych danych.",
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "deployment_scope": "CREATOR_ACCOUNT_CLEANUP_AND_PUBLIC_PROFILE;PRODUCTION_OCCURRENCE_UNVERIFIED"
     }
   ]
 }
