@@ -1,13 +1,13 @@
 # Stan badania — punkt wznowienia
 
-Aktualizacja: 1 listopada 2026. Program v1.0, partia 04: moderacja, odwołania i języki panelu. Tryb: analiza, bez zmian aplikacji i produkcji.
+Aktualizacja: 1 listopada 2026. Program v1.0, partia 05: integralność i protokoły transakcji na PostgreSQL. Tryb: analiza, bez zmian aplikacji i produkcji.
 
 ## Cel i decyzje właściciela
 
 - Docelowo duża platforma konkurująca z PeerTube funkcjami i skalą.
 - Badanie ma być pogłębione i wieloobszarowe. Właściciel nie programuje; wnioski mają objaśniać wpływ na produkt i biznes.
 - Dotychczasowe porównanie jest bazą i próbą metody, a nie zamkniętym pełnym audytem.
-- Program i źródła są przygotowane. Rozpoczęto D01, D03, D04, D07 i D11; nie wykonano pełnej oceny 345 wymagań.
+- Program i źródła są przygotowane. Rozpoczęto D01, D03, D04, D06, D07 i D11; nie wykonano pełnej oceny 345 wymagań.
 - Następnie właściciel polecił zachować poprzednie badanie i rozwijać całość na jednej gałęzi GitHub: `docs/polutek-platform-audit`. Katalog w repo: `docs/audit/2026-11-01-platform-research/`. Po każdej partii commit i push; bez automatycznego scalenia ani wdrożenia.
 
 ## Wersje
@@ -15,7 +15,7 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 04: moderacja, odwołania i
 - Polutek: `/workspace/polutek-pl`, `c397b9e548ca2c628e21457ac69d66e54b12ddbd`.
 - PeerTube: `/workspace/PeerTube`, `fa7d2b5d8a44bbec99159b11e91763f7d2308faa`.
 - Program: [PROGRAM.md](PROGRAM.md).
-- Rodzic commitu partii 04: `bf5bc2c113176cb7d485e253cfb7da4bf795b932`. Dowód braku zmian aplikacji: [partia 01](evidence/source-scope.json), [partia 02](evidence/source-scope-batch02.json), [partia 03](evidence/source-scope-batch03.json), [partia 04](evidence/source-scope-batch04.json). SHA finalnego zapisu sprawdzić w historii Git gałęzi. Dodatkowe commity dokumentacyjne nie są automatycznie zmianą badanej implementacji.
+- Rodzic commitu partii 05: `50d614e6f7061b02a0633aeeec5208351f4580d5`. Dowód braku zmian aplikacji: [partia 01](evidence/source-scope.json), [partia 02](evidence/source-scope-batch02.json), [partia 03](evidence/source-scope-batch03.json), [partia 04](evidence/source-scope-batch04.json), [partia 05](evidence/source-scope-batch05.json). SHA finalnego zapisu sprawdzić w historii Git gałęzi. Dodatkowe commity dokumentacyjne nie są automatycznie zmianą badanej implementacji.
 
 ## Gotowe
 
@@ -45,6 +45,11 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 04: moderacja, odwołania i
 24. R25 potwierdzone w modelu: po SUSPENDED → ACTIVE → nowym SUSPENDED stare odwołanie przywraca ACTIVE; po REMOVED → VISIBLE → nowym REMOVED przywraca VISIBLE. Oryginalna decyzja bez nowszej cofa się prawidłowo, późniejszy inny status pozostaje. Problem porównania wartości zamiast tożsamości decyzji występuje nawet przy sekwencyjnych działaniach. P1 przed szerszą moderacją, niezależny przegląd PENDING, brak dowodu wystąpienia na produkcji.
 25. Kontrole dodatnie: cudze odwołanie i komentarze odrzucone; zawieszony OWNER może się odwołać; creator DTO nie ujawnia reasonInternal; moderator nie banuje cudzego kanału; EDITOR nie banuje; brak banowania siebie/członków/ADMIN. Translator nie zapisuje nieprzydzielonego języka i nie zatwierdza szkiców nawet z pustymi grantami. Źródłowo sprawdzono gate/context i domyślne OWNER przy uploadzie napisów; nie zaliczono prawdziwego dispatchu Server Actions.
 26. Aktualnie 44 scenariusze pełnego HTTP (nowy IA-044 dla R25); wszystkie pełne próby nadal NIEWYKONANE. 45 rekordów wejść W_TRAKCIE, 234 NIEZBADANE. ASVS: 31 W_TRAKCIE, 314 NIEZBADANE, zero zaliczonych. D07/D11 rozpoczęto częściowo; R25 ma własny wpis, a historyczne raporty/wyniki pozostają zachowane.
+27. Partia 05: [D06](obszary/D06-DANE-I-INTEGRALNOSC.md), [D07](obszary/D07-TRANSAKCJE-I-PONOWIENIA.md), [15 niezmienników SQL](NIEZMIENNIKI-DANYCH.csv), [zakres 29 plików](evidence/batch05-review.json). Liczba plików jest częściowym zakresem i nakłada się na wcześniejsze partie, nie dowodzi przeczytania/zaudytowania każdego w całości.
+28. Lokalny Docker i istniejąca baza SQL działają: PostgreSQL 17.11, READ COMMITTED. [Katalog 13 tabel](evidence/database-catalog-batch05.json): 30 constraints, 66 indeksów, 5 jawnych triggerów. [Rzeczywiste próby SQL](evidence/database-integrity-experiment.json): 15 prób, osiem oczekiwanych odmów i siedem akceptacji. Z akceptacji sześć pokazuje granice wymuszania przynależności/ACTIVE w DB, jedna jest prawidłową anonimizacją audytu. To nie sześć nowych luk HTTP.
+29. R26: realny protokół COUNT/INSERT na dwóch połączeniach kończy się 101 playlistami przy limicie 100, podczas gdy kontrola sekwencyjna kończy się na 100. R27: opóźniony retry starego READY po ukończeniu v2 przestawia aktywny oryginał na v1 SUPERSEDED. Samo ukończenie v2 i zwykły retry mają poprawne kontrole. Ustalenia potwierdzają SQL przejrzanego protokołu, nie pełne funkcje TypeScript/Prisma/HTTP ani produkcję. Niezależny przegląd PENDING.
+30. Próby integralności cofnięto; osobne fixture transakcyjne usunięto. Nie zmieniono trwałego schematu, triggerów i kodu aplikacji. Skrypt wymusza bazę badawczą i hashe źródeł. Pierwszy odczyt wielowierszowego JSON katalogu wymagał poprawy parsera przed mutacjami; później pełny przebieg miał exit 0, a odtwarzalność sprawdzono ponownie. Vitest nie powtarzano.
+31. Aktualnie 46 scenariuszy pełnego HTTP (IA-045/R26 i IA-046/R27), wszystkie pełne próby nadal NIEWYKONANE. 47 wejść W_TRAKCIE, 232 NIEZBADANE. ASVS: 33 W_TRAKCIE, 312 NIEZBADANE, zero zaliczonych. Oficjalny opis izolacji PostgreSQL 17 pobrano online i zestawiono z wynikiem. Przegląd helperów transakcji PeerTube nie jest dowodem ich odporności na te konkretne przypadki.
 
 `NIEZBADANE` w nowej macierzy oznacza brak zakończonej procedury programu dla całego obszaru. Nie oznacza, że wcześniejsze przeglądy i eksperymenty nie istnieją. Referencje bazowe zapisano oddzielnie.
 
@@ -60,12 +65,13 @@ Aktualizacja: 1 listopada 2026. Program v1.0, partia 04: moderacja, odwołania i
 - Node 22.23.4: `/workspace/.cloud-setup/tools/node-v22.23.4-linux-x64/bin`.
 - Kontener lokalnego PostgreSQL: `polutek-cloud-db`; dane deweloperskie, nie produkcyjne.
 - Oddzielna badawcza baza SQL ma nazwę w `../migrations-sql.json`. Nie ma historii migracji Prisma.
+- W partii 05 potwierdzono jej działanie przez lokalny socket Dockera. Skrypt `tools/database-integrity-experiment.py` korzysta z nazwy tej bazy, kontroluje hashe źródeł i usuwa własne fixture; nie uruchamia Prisma ani pełnej aplikacji.
 - Skrypty eksperymentów pipeline i storage znajdują się w katalogu nadrzędnym; działają na atrapach usług i plikach tymczasowych.
 - Nie zakładać, że procesy lub kontenery przeżyją odtworzenie środowiska. Sprawdzić ich stan przed użyciem.
 
 ## Następne działanie
 
-Przejść do D06/D07: integralność schematu i wersjonowanie stanów, powiązania video/original/job/asset oraz transakcje/ponowienia. Zacząć od niezmienników, które powinny bronić przed podmianą zasobu i utratą aktualnej decyzji; R25 ma już odtwarzalną reprodukcję i wymaga drugiego przeglądu, nie kolejnego identycznego eksperymentu. Można wykorzystać istniejącą lokalną bazę SQL i psql po sprawdzeniu jej stanu, bez udawania poprawnie wygenerowanego Prisma. W D11 pozostają pełne mutacje komentarzy/bulk/undo, zgłoszenia, koszt ataku i awarie powiadomień. W D04 pozostaje pełne wywołanie panelowych Server Actions i odwołanie grantów w trakcie operacji. R23/R24/R25 wymagają pełnego stosu po odblokowaniu Prisma; samego pomiaru 62 s nie powtarzać. Nie implementować poprawek ani wdrożeń w audycie; skala, SLO i budżet nadal otwarte.
+Kontynuować D07/D08/D09: rzeczywiste granice upload/worker/cleanup i aktywnej trasy, publikacja oraz cofnięcie dostępu do treści. R26/R27 mają już protokół SQL i warunki kontroli; nie powtarzać identycznego przebiegu bez zmiany. Następne wartościowe próby to realne funkcje/Prisma po odblokowaniu silnika, dwa finalizery z utraconą dzierżawą, cleanup podczas użycia/zmiany assetu i weryfikacja nieaktualnej wersji źródła. Bez Prisma można dalej używać właściwie opisanych prób SQL i analizy źródłowej; nie podstawiać fałszywego klienta. W D06 pozostają pozostałe modele, uprawnienia DB, migracje na istniejących danych/drift, kaskady i indeksy; pieniądze/retencję/restore rozliczać w D10/D12/D17. Wszystkie pełne scenariusze HTTP i niezależne przeglądy pozostają otwarte. Nie zmieniać aplikacji ani produkcji; parametry skali/SLO/budżetu nadal wymagają określenia.
 
 Przed rozpoczęciem: odczytać ten plik, PROGRAM.md i właściwe instrukcje repo; porównać bieżący HEAD z podanym wyżej. Nie powtarzać wykonanych testów bez zmiany wersji, diagnozy lub warunków.
 

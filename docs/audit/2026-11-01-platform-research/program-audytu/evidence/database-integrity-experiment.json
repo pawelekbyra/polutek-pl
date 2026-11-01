@@ -1,0 +1,250 @@
+{
+  "kind": "REAL_LOCAL_POSTGRESQL_DIRECT_SQL_AND_TRANSACTION_PROTOCOL",
+  "application_baseline_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+  "database_metadata": {
+    "database": "polutek_research_1793539467",
+    "server_version": "17.11 (Debian 17.11-1.pgdg13+2)",
+    "transaction_isolation": "read committed"
+  },
+  "migration_origin": "Existing isolated database from archived 81/81 SQL migration run; not Prisma migration engine or production upgrade",
+  "integrity_probes": [
+    {
+      "id": "D06-01",
+      "sqlstate": "23503",
+      "constraint": "VideoAsset_videoId_fkey",
+      "database_accepted": false,
+      "title": "Foreign key rejects missing video",
+      "expected_database_accepted": false,
+      "expected_sqlstate": "23503",
+      "scope": "Direct SQL only; accepted cross-links are not demonstrated HTTP exploits"
+    },
+    {
+      "id": "D06-02",
+      "sqlstate": "23505",
+      "constraint": "VideoOriginal_videoId_version_key",
+      "database_accepted": false,
+      "title": "Original version unique per video",
+      "expected_database_accepted": false,
+      "expected_sqlstate": "23505",
+      "scope": "Direct SQL only; accepted cross-links are not demonstrated HTTP exploits"
+    },
+    {
+      "id": "D06-03",
+      "sqlstate": "23505",
+      "constraint": "VideoEncodeJob_idempotencyKey_key",
+      "database_accepted": false,
+      "title": "Encode idempotency key unique",
+      "expected_database_accepted": false,
+      "expected_sqlstate": "23505",
+      "scope": "Direct SQL only; accepted cross-links are not demonstrated HTTP exploits"
+    },
+    {
+      "id": "D06-04",
+      "sqlstate": "23505",
+      "constraint": "PlaylistItem_playlistId_videoId_key",
+      "database_accepted": false,
+      "title": "Playlist item video unique within playlist",
+      "expected_database_accepted": false,
+      "expected_sqlstate": "23505",
+      "scope": "Direct SQL only; accepted cross-links are not demonstrated HTTP exploits"
+    },
+    {
+      "id": "D06-05",
+      "sqlstate": null,
+      "database_accepted": true,
+      "title": "Active original can reference another video at DB level",
+      "expected_database_accepted": true,
+      "expected_sqlstate": null,
+      "scope": "Direct SQL only; accepted cross-links are not demonstrated HTTP exploits"
+    },
+    {
+      "id": "D06-06",
+      "sqlstate": null,
+      "database_accepted": true,
+      "title": "Active playback route can reference another video at DB level",
+      "expected_database_accepted": true,
+      "expected_sqlstate": null,
+      "scope": "Direct SQL only; accepted cross-links are not demonstrated HTTP exploits"
+    },
+    {
+      "id": "D06-07",
+      "sqlstate": null,
+      "database_accepted": true,
+      "title": "Route can bind asset of another video at DB level",
+      "expected_database_accepted": true,
+      "expected_sqlstate": null,
+      "scope": "Direct SQL only; accepted cross-links are not demonstrated HTTP exploits"
+    },
+    {
+      "id": "D06-08",
+      "sqlstate": null,
+      "database_accepted": true,
+      "title": "Job can bind original of another video at DB level",
+      "expected_database_accepted": true,
+      "expected_sqlstate": null,
+      "scope": "Direct SQL only; accepted cross-links are not demonstrated HTTP exploits"
+    },
+    {
+      "id": "D06-09",
+      "sqlstate": null,
+      "database_accepted": true,
+      "title": "Playlist can bind video of another channel at DB level",
+      "expected_database_accepted": true,
+      "expected_sqlstate": null,
+      "scope": "Direct SQL only; accepted cross-links are not demonstrated HTTP exploits"
+    },
+    {
+      "id": "D06-10",
+      "sqlstate": null,
+      "database_accepted": true,
+      "title": "More than one ACTIVE route per video is allowed at DB level",
+      "expected_database_accepted": true,
+      "expected_sqlstate": null,
+      "scope": "Direct SQL only; accepted cross-links are not demonstrated HTTP exploits"
+    },
+    {
+      "id": "D06-11",
+      "sqlstate": "P0001",
+      "constraint": "",
+      "database_accepted": false,
+      "title": "Moderation decision UPDATE refused by trigger",
+      "expected_database_accepted": false,
+      "expected_sqlstate": "P0001",
+      "scope": "Direct SQL only; accepted cross-links are not demonstrated HTTP exploits"
+    },
+    {
+      "id": "D06-12",
+      "sqlstate": "P0001",
+      "constraint": "",
+      "database_accepted": false,
+      "title": "Moderation decision DELETE refused by trigger",
+      "expected_database_accepted": false,
+      "expected_sqlstate": "P0001",
+      "scope": "Direct SQL only; accepted cross-links are not demonstrated HTTP exploits"
+    },
+    {
+      "id": "D06-13",
+      "sqlstate": "P0001",
+      "constraint": "",
+      "database_accepted": false,
+      "title": "Audit content UPDATE refused by trigger",
+      "expected_database_accepted": false,
+      "expected_sqlstate": "P0001",
+      "scope": "Direct SQL only; accepted cross-links are not demonstrated HTTP exploits"
+    },
+    {
+      "id": "D06-14",
+      "sqlstate": "P0001",
+      "constraint": "",
+      "database_accepted": false,
+      "title": "Recent audit DELETE refused by trigger",
+      "expected_database_accepted": false,
+      "expected_sqlstate": "P0001",
+      "scope": "Direct SQL only; accepted cross-links are not demonstrated HTTP exploits"
+    },
+    {
+      "id": "D06-15",
+      "sqlstate": null,
+      "database_accepted": true,
+      "title": "Audit anonymization allowed by documented exception",
+      "expected_database_accepted": true,
+      "expected_sqlstate": null,
+      "scope": "Direct SQL only; accepted cross-links are not demonstrated HTTP exploits"
+    }
+  ],
+  "quota_protocol_experiments": [
+    {
+      "mode": "sequential_control",
+      "isolation": "READ COMMITTED",
+      "limit": 100,
+      "initial": 99,
+      "observed_A": 99,
+      "observed_B": 100,
+      "final": 100,
+      "steps": [
+        {
+          "operation": "A_count",
+          "value": 99
+        },
+        {
+          "operation": "A_insert"
+        },
+        {
+          "operation": "A_commit"
+        },
+        {
+          "operation": "B_count",
+          "value": 100
+        },
+        {
+          "operation": "B_commit",
+          "inserted": false
+        }
+      ],
+      "reproduces_limit_bypass": false
+    },
+    {
+      "mode": "overlapping_transactions",
+      "isolation": "READ COMMITTED",
+      "limit": 100,
+      "initial": 99,
+      "observed_A": 99,
+      "observed_B": 99,
+      "final": 101,
+      "steps": [
+        {
+          "operation": "A_count",
+          "value": 99
+        },
+        {
+          "operation": "B_count",
+          "value": 99
+        },
+        {
+          "operation": "A_insert"
+        },
+        {
+          "operation": "A_commit"
+        },
+        {
+          "operation": "B_insert"
+        },
+        {
+          "operation": "B_commit",
+          "inserted": true
+        }
+      ],
+      "reproduces_limit_bypass": true
+    }
+  ],
+  "completion_retry_protocol": {
+    "kind": "INSPECTED_SQL_PROTOCOL_TWO_CONNECTIONS",
+    "retry_initial_status": "READY",
+    "control_without_new_completion": {
+      "active_version": 1,
+      "active_status": "READY"
+    },
+    "after_new_completion": {
+      "active_version": 2,
+      "active_status": "READY"
+    },
+    "after_delayed_retry": {
+      "active_version": 1,
+      "active_status": "SUPERSEDED"
+    },
+    "original_status_at_enqueue_check": "SUPERSEDED",
+    "application_source_enqueue_requires": "READY",
+    "reproduces_pointer_to_superseded_original": true,
+    "limit": "Actual completeOriginalMultipart/enqueueEncode/Prisma/HTTP not executed; read, promotion, pointer repair, and enqueue-check SQL preserve inspected ordering/conditions."
+  },
+  "fixtures_removed": true,
+  "limits": "No actual TypeScript/Prisma/Next HTTP execution. COUNT/INSERT protocol omits auth, audit and slug selection, whose source was reviewed. No production role/permission or existing-data verification.",
+  "application_source_sha256": {
+    "prisma/schema.prisma": "4c551fbbf69f64c98cfa86216ab19a9037050717583de13db9278cb0f3f7d9f6",
+    "lib/modules/playlists/application/playlist-manage.use-cases.ts": "610d09a7f594d4f16ec246a5640473ef4110e0e77328f8cfb5a2909a843e5ac1",
+    "lib/modules/playlists/infrastructure/playlist.repository.ts": "7fb8c83448b641eaed6de33117df3b1c9c3f26049417272fc9e2ce119362a8b6",
+    "lib/modules/playlists/domain/playlist-rules.ts": "e8f860f20185d05b57a65f1ad5ebcbbd3e79805b7c616e5a6d6269b2f5dbb1f1",
+    "lib/modules/video-pipeline/application/original-upload.use-cases.ts": "41b659dee9b051f7191dd2bc94e4ca5ce92483698f79b34703ff03160cfd0033",
+    "lib/modules/video-pipeline/application/encode-queue.use-cases.ts": "1c6f2f8a33679ce6851efc0fc19b8ffc87adaedb6415ca1de084df7a49e2d9c9"
+  }
+}

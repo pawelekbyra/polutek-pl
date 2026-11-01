@@ -56,3 +56,13 @@
 - Pozytywne wyniki: własny zawieszony twórca zachowuje odwołanie, prywatne powody nie trafiają do badanego DTO/komunikatu, cudze zasoby i języki są odrzucane. Nie uznano pustych grantów za pełne uprawnienia ani helpera napisów bez własnego guarda za automatyczne osiągalne obejście.
 - Rozpoczęto 20 dalszych rekordów wejść: aktualnie 45 W_TRAKCIE i 234 NIEZBADANE. Scenariusze pełnego HTTP: 44, żaden niezaliczony. ASVS: 31 rozpoczętych, 314 niezbadanych, zero zaliczonych.
 - D07 i D11 oznaczono W_TRAKCIE. Kolejny krok: D06/D07, integralność relacji i wersji stanu; nie powtarzać bez powodu istniejących reprodukcji. Kod aplikacji i produkcja bez zmian.
+
+## 1 listopada 2026 — partia 05: rzeczywisty PostgreSQL, R26 i R27
+
+- Użyto wyłącznie lokalnej bazy badawczej po wcześniejszych migracjach SQL; potwierdzono PostgreSQL 17.11 i READ COMMITTED. Nie odblokowano ani nie zastąpiono klienta Prisma.
+- Katalog 13 wybranych tabel: 30 ograniczeń, 66 indeksów, 5 jawnych triggerów. Wykonano 15 prób integralności z kontrolą SQLSTATE/constraint; osiem odmów i siedem akceptacji rozliczono według oczekiwanego zakresu DB.
+- Potwierdzono działanie wybranych FK/unique i triggerów moderacji/audytu. Akceptacja powiązań niespełniających przynależności pokazuje granicę odpowiedzialności aplikacji, nie automatyczną lukę HTTP.
+- Dodano R26: dwa nakładające się COUNT/INSERT dają 101 przy limicie 100; kontrola sekwencyjna daje 100. Dodano R27: spóźniony READY-retry po ukończeniu nowej wersji wskazuje SUPERSEDED. Protokół jest realnym SQL odpowiadającym kodowi, bez wykonania TypeScript/Prisma/HTTP.
+- Fixture integralności wycofano, transakcyjne usunięto; schemat i triggery bez trwałych zmian. Wynik odtworzono po zmianie kontroli baseline/parsera. Nie powtarzano Vitest.
+- D06 rozpoczęto, D07 uzupełniono; 47 wejść W_TRAKCIE, 232 NIEZBADANE. Scenariusze pełnego HTTP: 46, wszystkie niewykonane. ASVS: 33 rozpoczęte, 312 niezbadanych, zero zaliczonych.
+- Pobrano oficjalną dokumentację PostgreSQL 17 i notę licencyjną. Helpery PeerTube są punktem odniesienia dla polityki transakcji, bez twierdzenia o rozwiązaniu tych samych przypadków. Aplikacja i produkcja bez zmian.

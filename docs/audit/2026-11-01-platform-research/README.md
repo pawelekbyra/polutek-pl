@@ -13,10 +13,13 @@ Jedno długoterminowe badanie rozwijane na gałęzi **`docs/polutek-platform-aud
 | [D01: produkt i zakres](program-audytu/obszary/D01-PRODUKT-I-ZAKRES.md) | 22 obietnice produktu i rozdzielenie implementacji od aktywnej konfiguracji |
 | [D03: tożsamość i sesje](program-audytu/obszary/D03-TOZSAMOSC-I-SESJE.md) | Konta WWW/panelu, zakres R13/R14 i R24: realny pomiar cofania sesji w izolowanym HTTP biblioteki |
 | [D04: role i izolacja](program-audytu/obszary/D04-ROLE-I-IZOLACJA.md) | Role, R23 oraz 19 obserwacji zakresu playlist i kolejki na rzeczywistych funkcjach z atrapą DB |
+| [D06: dane i integralność](program-audytu/obszary/D06-DANE-I-INTEGRALNOSC.md) | 15 prób na prawdziwym PostgreSQL; działające FK/unique/triggery i granice odpowiedzialności aplikacji |
+| [D07: transakcje i ponowienia](program-audytu/obszary/D07-TRANSAKCJE-I-PONOWIENIA.md) | R26: limit playlist przy współbieżności; R27: opóźnione ukończenie uploadu cofa wybór oryginału |
+| [Niezmienniki danych](program-audytu/NIEZMIENNIKI-DANYCH.csv) | Wyniki bezpośrednich prób SQL oddzielone od pełnej oceny aplikacji |
 | [D11: moderacja i nadużycia](program-audytu/obszary/D11-MODERACJA-I-NADUZYCIA.md) | Granice komentarzy, banów i odwołań; R25: stare odwołanie cofa nowsze ograniczenie po cyklu statusu |
-| [Scenariusze D03/D04](program-audytu/SCENARIUSZE-D03-D04.csv) | 44 planowane próby pełnego HTTP Polutka; osobne kolumny dla dowodów izolowanych i powiązania z D07/D11 |
+| [Scenariusze pełnego HTTP](program-audytu/SCENARIUSZE-D03-D04.csv) | 46 planowanych prób; osobne kolumny dla dowodów izolowanych i SQL, powiązania z D06/D07/D08/D11/D14 |
 | [Powierzchnia wejść](program-audytu/POWIERZCHNIA-WEJSC.csv) | Trasy, Server Actions, strony, zdarzenia workerów i wejścia operacyjne do kontroli |
-| [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R25, statusy i przypisanie do obszarów; raport bazowy zachowuje wcześniejsze 22 |
+| [Rejestr ustaleń](program-audytu/USTALENIA.json) | Stabilne R01–R27, statusy i przypisanie do obszarów; raport bazowy zachowuje wcześniejsze 22 |
 | [Pokrycie obszarów](program-audytu/POKRYCIE.csv) | Ocena postępu bez ukrywania niezbadanych elementów |
 | [ASVS — 345 wymagań](program-audytu/ASVS-POKRYCIE.csv) | Lista do kwalifikacji i sprawdzania; nie lista zaliczonych testów |
 | [Plan eksperymentów i pomiarów](PLAN-WERYFIKACJI.md) | Dalsze testy runtime, awarie, benchmark i model kosztów |
@@ -53,6 +56,7 @@ node docs/audit/2026-11-01-platform-research/program-audytu/tools/identity-conte
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/session-revocation-experiment.mjs
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/resource-scope-experiment.cjs
 node docs/audit/2026-11-01-platform-research/program-audytu/tools/moderation-boundaries-experiment.cjs
+python3 docs/audit/2026-11-01-platform-research/program-audytu/tools/database-integrity-experiment.py
 ```
 
 Pierwsze dwa eksperymenty wywołują rzeczywisty procesor/klasę magazynu z atrapami portów. Nie łączą się z R2 ani produkcyjną bazą. Nie zastępują pełnych testów lokalnego stosu.
@@ -62,5 +66,7 @@ Trzeci skrypt wykonuje niezmienione moduły TypeScript przez transpiler z jawnym
 Czwarty uruchamia prawdziwy serwer HTTP Better Auth pod 127.0.0.1 z oficjalnym adapterem pamięci i stałymi sesji Polutka. Zajmuje około 62 sekund rzeczywistego czasu; wartości cookie i sekretów nie są drukowane. Nie uruchamia Next ani produkcyjnej integracji auth. Piąty sprawdza 19 przypadków playlist i kolejki na rzeczywistych funkcjach, z atrapą bazy. Szczegóły i granice dowodu opisują D03/D04.
 
 Szósty wykonuje 26 obserwacji moderacji i języków panelu z atrapami I/O. Dwa warianty odtwarzają ten sam R25 dla kanału i filmu; pozostałe są kontrolami i przykładami poprawnych granic. Brak prawdziwej DB, HTTP i dispatchu Server Actions; szczegóły w D11/D04.
+
+Siódmy wymaga Dockera z lokalnym kontenerem PostgreSQL i badawczej bazy wskazanej w historycznym manifeście migracji. Wykonuje 15 prób integralności, dwa protokoły limitu i przeplot ponowienia uploadu. Tworzy losowe fixture, wycofuje lub usuwa je po badaniu i nie zmienia schematu publicznego. To rzeczywiste SQL z protokołem przejrzanego kodu; nie uruchamia TypeScript/Prisma ani pełnych żądań aplikacji.
 
 Pełna walidacja runtime była zablokowana pobieraniem silnika/checksum Prisma. Ten stan pozostaje jawną niewiadomą, nie domyślnym zaliczeniem testów.

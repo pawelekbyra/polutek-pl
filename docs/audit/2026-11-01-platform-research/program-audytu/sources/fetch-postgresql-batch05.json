@@ -1,0 +1,22 @@
+[
+  {
+    "date": "2026-11-01",
+    "file": "postgresql-17-mvcc.sgml",
+    "url": "https://raw.githubusercontent.com/postgres/postgres/REL_17_STABLE/doc/src/sgml/mvcc.sgml",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "b0dafb2a3fd2d9204deb075ed2cb2d74b6496523bb5d4867a2f4a3d9758a6314",
+    "review_scope": "Read Committed explanation and serialization failure retry sections, not entire chapter",
+    "version_note": "PostgreSQL documentation branch 17; not pinned to exact server minor commit"
+  },
+  {
+    "date": "2026-11-01",
+    "file": "postgresql-17-COPYRIGHT.txt",
+    "url": "https://raw.githubusercontent.com/postgres/postgres/REL_17_STABLE/COPYRIGHT",
+    "http_status": 200,
+    "curl_exit": 0,
+    "sha256": "3d6af92ff8a4c2cdf69afb1cf44edea727922f5cd0cf8b5f72b11cdecac8fdfd",
+    "review_scope": "License/attribution",
+    "version_note": "PostgreSQL documentation branch 17; not pinned to exact server minor commit"
+  }
+]

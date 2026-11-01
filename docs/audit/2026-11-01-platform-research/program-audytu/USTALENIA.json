@@ -652,6 +652,87 @@
       "retest": null,
       "created_at": "2026-11-01",
       "deployment_scope": "MODERATION_APPEAL_CODE;PRODUCTION_OCCURRENCE_NOT_VERIFIED"
+    },
+    {
+      "kind": "USTERKA",
+      "status": "POTWIERDZONE",
+      "evidence_level": "A_REAL_POSTGRESQL_INSPECTED_SQL_PROTOCOL_AND_B_SOURCE_REVIEW",
+      "source_report": "obszary/D07-TRANSAKCJE-I-PONOWIENIA.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "evidence_paths": [
+        "evidence/database-integrity-experiment.json",
+        "tools/database-integrity-experiment.py",
+        "evidence/batch05-review.json",
+        "obszary/D07-TRANSAKCJE-I-PONOWIENIA.md"
+      ],
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "id": "R26",
+      "title": "Równoczesne tworzenie playlist może przekroczyć limit 100",
+      "priority": "P2",
+      "baseline_priority_and_evidence": "NEW: P2; real PostgreSQL COUNT/INSERT protocol + source review",
+      "note": "Rzeczywiste transakcje na lokalnym READ COMMITTED, zgodne z przejrzanym COUNT/INSERT. Nie wykonano TypeScript/Prisma/HTTP ani nie sprawdzono izolacji produkcji.",
+      "domains": [
+        "D06",
+        "D07",
+        "D14"
+      ],
+      "impact_plain_language": "Dwa legalne żądania mogą przy stanie 99 utworzyć dwie playlisty; końcowo jest 101 zamiast maksymalnie 100.",
+      "conditions": "Ten sam kanał, 99 aktywnych playlist, dwa odczyty COUNT przed zatwierdzeniem pierwszego zapisu, różne slugi, READ COMMITTED i brak dodatkowej serializacji kanału.",
+      "counterarguments": [
+        "Przy sekwencyjnych żądaniach drugi COUNT widzi 100 i limit działa; sprawdzono kontrolę.",
+        "Unique slug nadal chroni slug, ale różne slugi nie kolidują.",
+        "Odtworzono 101, nie nieograniczony wzrost ani wyciek.",
+        "Izolacji produkcyjnej nie odczytano. Protokół pomija auth/audit/generowanie sluga, które nie są widocznym mutexem per kanał."
+      ],
+      "standard_refs": [
+        "v5.0.0-2.3.4"
+      ],
+      "proposed_fix": "Egzekwować limit pod wspólną blokadą kanału/licznika lub przez właściwą izolację i retry; istniejący uploader ma analogiczny advisory lock per kanał.",
+      "acceptance_test": "Dwa i więcej prawdziwych żądań przy 99 playlistach: końcowo najwyżej 100; legalna odmowa pozostałych, różne slugi/role/procesy, soft delete, retry i audyt spójne.",
+      "deployment_scope": "PLAYLIST_COUNT_INSERT_PROTOCOL_READ_COMMITTED;PRODUCTION_CONFIGURATION_UNVERIFIED"
+    },
+    {
+      "kind": "USTERKA",
+      "status": "POTWIERDZONE",
+      "evidence_level": "A_REAL_POSTGRESQL_INSPECTED_SQL_PROTOCOL_AND_B_SOURCE_REVIEW",
+      "source_report": "obszary/D07-TRANSAKCJE-I-PONOWIENIA.md",
+      "affected_sha": "c397b9e548ca2c628e21457ac69d66e54b12ddbd",
+      "evidence_paths": [
+        "evidence/database-integrity-experiment.json",
+        "tools/database-integrity-experiment.py",
+        "evidence/batch05-review.json",
+        "obszary/D07-TRANSAKCJE-I-PONOWIENIA.md"
+      ],
+      "independent_review": "PENDING",
+      "retest": null,
+      "created_at": "2026-11-01",
+      "id": "R27",
+      "title": "Spóźnione ponowienie ukończenia uploadu cofa wskaźnik na zastąpiony oryginał",
+      "priority": "P1_PRZED_SZERSZYM_UZYCIEM_PIPELINE",
+      "baseline_priority_and_evidence": "NEW: P1; real PostgreSQL state protocol + source review",
+      "note": "Potwierdzony przeplot odczyt/ukończenie nowej wersji/naprawa wskaźnika przez SQL na dwóch połączeniach. Funkcji TypeScript/Prisma/HTTP nie wykonano; odmowa enqueue wynika z przejrzanego kodu i odczytu SUPERSEDED.",
+      "domains": [
+        "D06",
+        "D07",
+        "D08"
+      ],
+      "impact_plain_language": "Film może wskazywać stary oryginał SUPERSEDED mimo gotowej nowszej wersji; kolejne kodowanie może odmawiać, a odpowiedź błędu nie przywraca poprawnego wskaźnika.",
+      "conditions": "Retry v1 odczytuje READY; ukończenie v2 atomowo zastępuje v1 i ustawia wskaźnik na v2; retry v1 kontynuuje na starym obiekcie i przestawia activeOriginalId, bo obecny wskaźnik jest inny.",
+      "counterarguments": [
+        "Świeży odczyt v1 po ukończeniu v2 zobaczy SUPERSEDED i nie wejdzie w gałąź READY; nieaktualny wcześniejszy odczyt jest konieczny.",
+        "Zwykły retry bez nowszego ukończenia oraz samo ukończenie v2 zachowują poprawny stan; odtworzono kontrole.",
+        "Nie dowiedziono awarii bieżącego playback, utraty pliku ani wycieku; activePlaybackRouteId jest oddzielny.",
+        "Późniejsze poprawne ponowienie v2 może naprawić wskaźnik, ale nie jest gwarantowane.",
+        "Nie wywołano całej aplikacji ani R2. Source-protocol SQL zachowuje sprawdzane warunki; nie jest wygenerowanym klientem Prisma."
+      ],
+      "standard_refs": [
+        "v5.0.0-15.4.2"
+      ],
+      "proposed_fix": "Normalne ukończenie i retry muszą spójnie rozstrzygać wersję/status pod wspólnym lockiem lub CAS; stare zakończenie nie może reaktywować SUPERSEDED. Zachować odzyskiwanie kolejkowania po przerwie DB→enqueue.",
+      "acceptance_test": "Pełny stos: zatrzymać retry A po odczycie READY, ukończyć v2, wznowić A. Wskaźnik zostaje v2 READY; zwykły retry, SUPERSEDED, abandon/cancel, aktywna kolejka i crash/retry nie cofają wersji.",
+      "deployment_scope": "ORIGINAL_UPLOAD_READY_RETRY_PROTOCOL;PRODUCTION_OCCURRENCE_NOT_VERIFIED"
     }
   ]
 }
